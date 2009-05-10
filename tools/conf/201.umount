@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+#On vzctl stop we may need to configure things on the hardware node.
+#
+#Specialized umount script for DNS server container with private datacenter wide 
+#	movable IP
+#
+
+VEID="201";
+IPv4="209.177.154.68";
+NETMASK="255.255.254.0";
+PRIVATEIPS="10.0.0.0/255.255.255.0";
+SERVICE="53";
+
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \"`;
+if [ $? != 0 ]; then
+	echo "grep $VEID.conf | cut for CTIP failed!";
+	exit 1;
+fi
+
+
+#ip section
+/sbin/ifconfig eth0:$VEID down;
+if [ $? != 0 ]; then
+	echo "/sbin/ifconfig eth0:$VEID down; failed!";
+	exit 1;
+fi
+
+#iptables section
+/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $IPv4 -p tcp -m tcp --dport $SERVICE\
+			 -j DNAT --to-destination $CTIP:$SERVICE;
+if [ $? != 0 ]; then
+	echo "iptables: error 1";
+	exit 1;
+fi
+/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $IPv4 -p udp -m udp --dport $SERVICE\
+			 -j DNAT --to-destination $CTIP:$SERVICE;
+if [ $? != 0 ]; then
+	echo "iptables: error 2";
+	exit 1;
+fi
+#special rule for making sure DNS answers come from public IP
+/sbin/iptables -t nat -D POSTROUTING -p udp -m udp -s $CTIP -j SNAT --to-source $IPv4;
+if [ $? != 0 ]; then
+	echo "iptables: error 3";
+	exit 1;
+fi
+
+echo "ct0 ip eth0:$VEID $IPv4 and iptables entries removed";
+exit 0;

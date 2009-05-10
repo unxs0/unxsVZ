@@ -1,0 +1,6 @@
+1	server config	1	1	1186441980	0	0
+2	sendmail	1	1	1186441988	0	0
+3	postfix	1	1	1186441995	0	0
+4	procmail	1	1	1186442004	0	0
+5	spamassassin	1	1	1186442011	0	0
+6	clamav	1	1	1186442018	0	0

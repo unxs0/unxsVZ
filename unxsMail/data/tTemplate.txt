@@ -1,0 +1,108 @@
+1	standard procmail file	1	1	1185542882	1	1186443151	Available vars when used with backend tUserConfig modify and tUser new:\
+\
+cLogin\
+cDomain\
+cUserType\
+cServer\
+cStatus\
+cOwner\
+cCreatedBy\
+\
+This template usually ends up as a .procmailrc in the users linux home dir on\
+one or more mail cluster servers depending on uTemplateType\
+\
+Site with lots of examples and information about procmail:\
+\
+http://lipas.uwasa.fi/~ts/info/proctips.html	# SpamAssassin sample procmailrc\
+# ==============================\
+\
+# The following line is only used if you use a system-wide /etc/procmailrc.\
+# See procmailrc(5) for infos on what it exactly does, the short version:\
+#  * It ensures that the correct user is passed to spamd if spamc is used\
+#  * The folders the mail is filed to later on is owned by the user, not\
+#    root.\
+DROPPRIVS=yes\
+\
+# Pipe the mail through spamassassin (replace 'spamassassin' with 'spamc'\
+# if you use the spamc/spamd combination)\
+#\
+# The condition line ensures that only messages smaller than 500 kB\
+# (500 * 1024 = 512000 bytes) are processed by SpamAssassin. Most spam\
+# isn't bigger than a few k and working with big messages can bring\
+# SpamAssassin to its knees.\
+#\
+# The lock file ensures that only 1 spamassassin invocation happens\
+# at 1 time, to keep the load down.\
+#\
+:0fw: spamassassin.lock\
+* < 512000\
+| spamassassin\
+\
+# Mails with a score of 15 or higher are almost certainly spam (with 0.05%\
+# false positives according to rules/STATISTICS.txt). Let's put them in a\
+# different mbox. (This one is optional.)\
+:0:\
+* ^X-Spam-Level: \\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\
+almost-certainly-spam\
+\
+# All mail tagged as spam (eg. with a score higher than the set threshold)\
+# is moved to "probably-spam".\
+:0:\
+* ^X-Spam-Status: Yes\
+probably-spam\
+\
+# Work around procmail bug: any output on stderr will cause the "F" in "From"\
+# to be dropped.  This will re-add it.\
+# NOTE: This is probably NOT needed in recent versions of procmail\
+:0\
+* ^^rom[ ]\
+{\
+  LOG="*** Dropped F off From_ header! Fixing up. "\
+  \
+  :0 fhw\
+  | sed -e '1s/^/F/'\
+}\
+\
+	1	4
+2	standard spamassassin file	1	1	1185543978	1	1186443160	Available vars when used with backend tUserConfig modify and tUser new:\
+\
+cLogin\
+cDomain\
+cUserType\
+cServer\
+cStatus\
+cOwner\
+cCreatedBy\
+\
+\
+This template usually becomes a file in a user home dir, for example:\
+\
+/home/joe/.spamassassin/user_prefs	#\
+# SpamAssassin user preferences file.  See 'perldoc Mail::SpamAssassin::Conf'\
+# for details of what can be tweaked.\
+###########################################################################\
+\
+# How many points before a mail is considered spam.\
+# required_score                5\
+\
+# Whitelist and blacklist addresses are now file-glob-style patterns, so\
+# "friend@somewhere.com", "*@isp.com", or "*.domain.net" will all work.\
+# whitelist_from        someone@somewhere.com\
+\
+# Add your own customised scores for some tests below.  The default scores are\
+# read from the installed spamassassin rules files, but you can override them\
+# here.  To see the list of tests and their default scores, go to\
+# http://spamassassin.apache.org/tests.html .\
+#\
+# score SYMBOLIC_TEST_NAME n.nn\
+\
+# Speakers of Asian languages, like Chinese, Japanese and Korean, will almost\
+# definitely want to uncomment the following lines.  They will switch off some\
+# rules that detect 8-bit characters, which commonly trigger on mails using CJK\
+# character sets, or that assume a western-style charset is in use.\
+#\
+# score HTML_COMMENT_8BITS      0\
+# score UPPERCASE_25_50         0\
+# score UPPERCASE_50_75         0\
+# score UPPERCASE_75_100        0\
+	1	5

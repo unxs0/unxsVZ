@@ -1,0 +1,10 @@
+<table>
+<tr bgcolor=black>
+<td class=tablehead>Item</td>
+<td class=tablehead>Catalog</td>
+<td class=tablehead>Price</td>
+<td class=tablehead>Qty</td>
+<td class=tablehead>Tax</td>
+<td class=tablehead>Ext</td>
+</tr>
+

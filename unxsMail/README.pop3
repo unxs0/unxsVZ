@@ -1,0 +1,15 @@
+SMTP After POP Setup
+
+If you want to provide the SMTP after POP feature, you can easily implement 
+it using QPopper and unxsMail. 
+
+Download our modified QPopper from:
+	http://openisp.net/other/unxsisp-qpopper4.0.tgz
+
+Make sure that your unxsMail/local.h database information matches 
+unxsisp-qpopper4.0/popper/mysqlMail.c file.
+Also, look for the SERVER_GROUP define and set its value to the tServerGroup 
+row id that corresponds to your SMTP server group.
+
+Compile, and install at the POP server you want to use and you are done.
+

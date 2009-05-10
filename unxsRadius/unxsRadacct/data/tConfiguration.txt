@@ -1,0 +1,7 @@
+0	1236342751	1	cFromEmail	1		1	0	support@unixservice.com	0
+1	1236342771	1	cMTAArgs	2	Since cMTA is mail. Then we can use optional cMTAArgs to send a bcc to support	1	1236343171	-b support@unixservice.com	0
+1	1236342784	1	cMTA	3	Used in mainfunc.h to contstruct a popen() in conjuntion with cMTAArgs.\
+\
+See also cHoldUsersEmail and cFromEmail in this same table.	1	1236343119	mail	0
+1	1236342806	1	cHoldUsersEmail	4	When sending an automated placed on hold we can optionally use the\
+cHoldUsersEmail specified email instead of the cFromEmail.	1	1236343255	accounting@unixservice.com	0

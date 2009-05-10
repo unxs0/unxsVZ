@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+#On vzctl stop we may need to configure things on the hardware node.
+#
+#Specialized umount script for all ports open server container with public datacenter 
+# wide movable IP
+#
+
+VEID="777";
+
+CTIP=`grep "^IP_ADDRESS=" /tmp/$VEID.conf | cut -f 2 -d \"`;
+if [ $? != 0 ]; then
+        echo "grep $VEID.conf | cut for CTIP failed!";
+        exit 1;
+fi
+
+for cIP in $CTIP;
+do
+
+	/sbin/iptables -D RH-Firewall-1-INPUT -i eth0\
+	      -d $cIP -j ACCEPT
+	if [ $? != 0 ]; then
+	        echo "iptables: 1 failed!";
+	        exit 1;
+	fi
+done
+
+echo "ct0 $VEID $CTIP iptables entries deleted for all ports";
+exit 0;

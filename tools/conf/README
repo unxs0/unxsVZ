@@ -1,0 +1,12 @@
+The VEID.mount and VEID.umount files in this dir are only simple examples to be 
+used as basis for tTemplate.cTemplate entries.
+
+The way unxsVZ implements the mount/umount system can easily be extended to a
+VEID.start/VEID.stop system.
+
+Further, one can envision that the OpenVZ start/stop script system could be used
+for a one time only on container creation for configuration of an "appliance" 
+container that could then come up configured and ready for use
+based on tProperty configuration entries. For the one time only system to work
+the start script would have to be deleted by the same script after configuration
+success. The stop script would not be used in this case.

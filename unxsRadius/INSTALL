@@ -1,0 +1,96 @@
+$Id: INSTALL 1262 2007-06-30 22:36:38Z Gary $
+
+Hi...release early, often...in this case very early.
+
+Prerequisites
+-------------
+mySQL server and client libs installed and running on same server as the application.
+You must know the root password. (Paranoids: Check the install script in mainfunc.h)
+
+Must have a running Apache server on the same server with cgi capabilities.
+Should be SSL enabled if possible (see below for intranet or other just "testing"
+non-SSL setup)
+
+FreeRADIUS Server Installation
+---------------------------------
+Just run the installradius.sh shell script at this directory and you are done :)
+
+Example BASH Install Instructions
+---------------------------------
+shell>tar xzf mysqlRadius2N.M.tar.gz
+shell>cd mysqlRadius2
+shell>export CGIDIR=/apache/cgi-bin/ (or whatever your Apache cgi-bin dir is)
+shell>vi local.h
+	Edit to taste
+shell>vi makefile
+	Edit to taste
+shell>make
+	Make sure everything is ok. Fix anything broken.
+shell>make install
+shell>export ISMROOT=/home/joe
+	Or whatever dir the mysql application project dir is in.
+shell>/cgi-bin/mysqlRadius2.cgi Initialize <your mysql password for root>
+	This will setup application and allow you to login as user "Root" password "wsxedc".
+	Change the passwd asap for real world applications.
+
+CSS Images
+----------
+Your apache htdocs dir must have an images directory and you must copy all
+the main.c StyleSheet() images there.
+
+SSL Only Setup
+-------------
+If you have an SSL server handy edit local.h and comment out:
+//#define SSLONLY
+like so...
+#define SSLONLY
+Then
+shell>rm *.o
+shell>make
+
+Read More
+---------
+cp docs/tutorial.html to a browser accesible place or sym link to it if possible.
+Read it!
+
+Standard OpenISP setup backup operations
+----------------------------------------
+(Loose instructions adjust to fit for your particular setup)
+shell>useradd -d openisp
+shell>mkdir -p ~openisp/mysqlRadius2/data
+shell>chown mysql ~openisp/mysqlRadius2/data
+shell>crontab -e
+Adding the following: Where mysqlpasswd is replaced by YOUR real mysql root passwd.
+
+#
+#mysqlRadius2
+#
+##backup
+20 3 * * * ISMROOT=~openisp;export ISMROOT;/cgi-bin/mysqlRadius2.cgi Backup mysqlpasswd > /dev/null
+
+Other backup ideas
+------------------
+You should probably cross server backup all your OpenISP module data like so. Note that this
+involves using GRANT ALL mysql statements and a very secure internal ISP LAN. See mysql manual.
+Think about ISP organization with edge servers with 2 NICs and an ISP admin firewall zone with
+the mysql database server or replication cluster servers.
+
+All servers should have internal mirror backup drives or other cheap fast and reliable backup
+system (NFS and cpio in ISP admin firewall zone?)
+
+shell>crontab -e
+Add something like the following after setting up mysql for remote access from ONLY the IP in
+question in a VERY secure LAN (non routable IP's...switched hubs...behind firewall...etc)
+
+#Extra backup of mysqlRadius2 data only even days, using mysqldump from 192.168.100.23
+20 4 * * */2 /usr/local/mysql/bin/mysqldump -e -h 192.168.0.43 -u mysqlradius2 -pwsxedc --all {{cLCProject}} > ~openisp/mysqlRadius2/data/dumpall.txt
+
+Loose your data and your fired
+------------------------------
+Don't be lazy backup and rebackup and database warehouse your mission critical data ALWAYS!
+Need help contact us!
+
+Legalese
+--------
+This doc is GPL. Don't forget to give us credit when you quote this stuff.
+Copyright 2003-2007 OpenISP, Unixservice and Gary Wallis.

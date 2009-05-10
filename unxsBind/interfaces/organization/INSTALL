@@ -1,0 +1,31 @@
+idnsOrg Quick Install Instructions
+
+Prerequisites:
+
+You must have your iDNS system installed. Minimally the backend interface (iDNS.cgi) and the database setup.
+
+Instructions:
+
+1. Set your CGIDIR environment variable (if not set) to the directory where you wish to install the idnsAdmin.cgi binary. E.g.:
+
+	# export CGIDIR=/cgi-bin/
+
+2. Compile and install with a single command the binary file. Run the following command at this directory:
+
+	# make install
+	
+3. If you didn't installed the CSS style sheet (See idnsAdmin Quick Install Instructions) you have to install it running:
+
+	# cp ../admin/templates/styles.css <your web server root folder> (E.g.: /var/www/htdocs/)
+
+4. Then, you install the system templates with the command:
+
+	# ./importTemplates.sh
+
+4. Lastly, the final fancy touch, you have to install the interface images. For doing so you have to run:
+
+	# cp -R ./templates/images <your web server root folder> (E.g.: /var/www/htdocs/)
+
+Then login and enjoy your idnsAdmin interface :)
+
+

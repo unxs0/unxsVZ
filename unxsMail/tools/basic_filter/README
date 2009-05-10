@@ -1,0 +1,11 @@
+INSTALL
+
+To install basic_filter, please copy the 'filter' folder as is to the /var/spool/ directory. Also remember to ensure clamav:clamav ownership on folder!
+
+Procedure:
+
+# cp -R ./filter /var/spool/
+# chown -R clamav:clamav /var/spool/filter
+
+and voila.
+

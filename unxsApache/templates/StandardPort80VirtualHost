@@ -1,0 +1,24 @@
+{{cCondListen}}
+<VirtualHost {{cIP}}:80>
+ServerAdmin {{cWebmaster}}@{{cDomain}}
+DocumentRoot {{cWebRoot}}/{{cDomain}}/htdocs
+ServerName {{cDomain}}
+{{cParkedDomains}}
+ErrorLog {{cWebRoot}}/{{cDomain}}/logs/error_log
+CustomLog {{cWebRoot}}/{{cDomain}}/logs/access_log combined
+
+<Directory "{{cWebRoot}}/{{cDomain}}/htdocs">
+AllowOverride All
+Options All
+Allow from All
+</Directory>
+
+ScriptAlias /{{cCGI}}/ {{cWebRoot}}/{{cDomain}}/{{cCGI}}/
+
+<Directory "{{cWebRoot}}/{{cDomain}}/{{cCGI}}">
+AllowOverride None
+Options FollowSymLinks
+Allow from All
+</Directory>
+
+</VirtualHost>

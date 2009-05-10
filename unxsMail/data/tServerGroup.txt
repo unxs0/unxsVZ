@@ -1,0 +1,2 @@
+1	postfix frontend cluster	1	1	1186439129	0	0
+2	sendmail pop3 farm	1	1	1186439137	0	0

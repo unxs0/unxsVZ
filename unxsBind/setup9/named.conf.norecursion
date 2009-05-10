@@ -1,0 +1,42 @@
+//$Id: named.conf.norecursion,v 1.1 2003/05/22 14:19:22 ggw Exp $
+//setup9/named.conf.norecursion iDNS project file
+//tweaked for named 9 no recursive lookups (for your zones only not for general
+//users trying to find www.acme.org etc.
+//local.h must also be setup for BIND 9
+
+options {
+	directory "/usr/local/idns/named.d";
+	//modified for multiple NS on single server
+	//listen-on { {{cIpNumber}}; 127.0.0.1; };
+	listen-on { {{cIpNumber}}; };
+	query-source address {{cIpNumber}} port 53;
+	pid-file "/usr/local/idns/named.pid";
+
+	recursion no;
+};
+
+logging {
+
+        channel info_log {
+                file "/var/log/named-idns.log" versions 3 size 10m ;
+		severity info;
+		print-category yes;
+        };
+
+        category default         { info_log;    };
+};
+
+//
+//rndc configuration
+//
+//Your system most likely requires that you run
+//> rndc-confgen > /etc/rndc.conf
+//	note that /etc/rndc.conf file path is only as an example check your system
+//then insert bottom part of /etc/rndc.conf here
+//removed the # comments please ;)
+
+//The zones in the /usr/local/idns/named.d files below 
+//are managed by iDNS.cgi
+
+include "master.zones";
+//include "slave.zones";

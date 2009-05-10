@@ -1,0 +1,5 @@
+1	tUser Tab	1	1	1186495150	0	0	The user table (tUser) is mostly used for mail end user linux accounts. These\
+are the actual pop, imap or webmail capable accounts. In other words they are\
+related to system accounts that receive email. Note that the real-world email\
+address, for example, joe@someco.com is not related to the pop login, or to the\
+tUser.cLogin for downloading mail for that email address.

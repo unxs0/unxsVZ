@@ -1,0 +1,1 @@
+1	cSessionID	1	1	1236342458	0	0	The RADIUS accounting session identification string.

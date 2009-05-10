@@ -1,0 +1,266 @@
+$Id: INSTALL 684 2008-12-19 19:58:28Z hus $
+Copyright (C) 2006-2009 Gary Wallis and Hugo Urquiza
+This file is distributed under the terms of the FSF GPLv3. See fsf.org for more
+information and complete license text.
+
+Basic Installation
+==================
+
+For installing the latest iDNS version you have to download a stable .tar.gz
+(The ones that are even number releases). Once downloaded, uncompress it with:
+
+# tar zxf iDNS2.4.tar.gz
+
+Then enter the iDNS directory just created:
+
+# cd iDNS
+
+And lastly run 'make' (As root) to install your software:
+
+# make; make install
+
+Building Environment Check
+==========================
+
+The make command will run a script which comes with the iDNS distribution 
+called buildcheck.sh. That script will check the sanity of your building
+environment previous to iDNS compilation and install.
+If you don't have MySQL installed at your server, the script will try to
+figure out how to install it for you based in your distribution and will
+install it. 
+After installing the required MySQL packages (mysql, mysql-server, and 
+mysql-devel) the script will ask you the MySQL root user password you want
+to use. It will then start the MySQL server and set the root user password.
+The script will also will check if BIND is installed, in case is not, it
+will try to install it for you based in your distribution.
+If you have these software packages installed, but they are outdated, the
+script will try to update them as well.
+Moreover, the required OpenISP libraries will be downloaded and installed for
+you if neccesary.
+
+Afer checking the building environment, the make command will carry on with
+iDNS compilation.
+
+Installation Script
+===================
+
+Once the iDNS software it's compiled, the 'make install' command will install
+it in your system. The 'make install' command runs the install.sh script.
+This script will first of all ask you if it's a first time install.
+BE EXTREMELY CAREFUL: If you already have iDNS installed, you should not 
+answer 'yes' to the first time install question. In that case it will delete
+your iDNS database and the /usr/local/idns directory (Where BIND9 config
+and zone files are kept.)
+
+If it's a first time install you'll be asked a series of questions:
+
+ 1. What will be the MySQL user to use for the installation (Typically root.)
+ 2. Your MySQL root user password.
+ 3. The IP address where you want BIND to listen (Apart from defaut 127.0.0.1.)
+ 4. Your Apache web server root directory (Typically /var/www/html.)
+
+Afterwards, it will try to figure out your cgi-bin directory location, if that
+can't be done it will ask you for it. Please note that the cgi-bin directory
+variable ($CGIDIR) will be set even if it's not a first time install.
+
+Then, it will install your iDNS.cgi binary into the $CGIDIR directory. If that
+can't be done, the installation will be aborted.
+
+After installing the iDNS.cgi binary, if it's a first time installation, the
+script will proceed to delete your iDNS database and the /usr/local/idns 
+directory if they exist. Don't worry, if they don't the script won't raise any
+errors.
+
+Following that, the required images for the iDNS backend interface will be
+installed at your web server root directory /images/ folder that will be 
+created if it does not exist. If that can't be done a warning message will be 
+displayed.
+
+The iDNS database will then be initialized with the default data:
+
+ 1. A sample ASP company called 'DNS ASP Company', with two contacts:
+    idnsAdmin (Backend Admin user) and idnsOrg (Organization Admin user.)
+    Both contacts have the same 'wsxedc' password and can be used for you
+    to take a look at the various interfaces iDNS comes with.
+ 2. Three zones: ns1.yourdomain.com, ns2.yourdomain.com, 
+    0.0.168.192-in-addr.arpa with their respective resource records.
+    One forward record for ns1.yourdomain.com and ns2.yourdomain.com
+    and two reverse records for these IP addresses, 192.168.0.1 and
+    192.168.0.2. All these zones and RRs are owned by the 'DNS ASP Company' 
+    company.
+ 3. A sample block for 192.168.0.0/24, owned by the 'DNS ASP Company' company.
+ 4. A nameserver set called 'Your NS Set', which has two servers configured,
+    a master (ns1.yourdomain.com) and a slave (ns2.yourdomain.com.)
+ 5. idnsAdmin and idnsOrg interfaces glossary data.
+ 6. Other configuration data.
+
+When all the data is in place at the database, the script will setup your
+/usr/local/idns directory contents, for later starting the BIND daemon.
+
+Following that, both idnsAdmin and idnsOrg interfaces will be installed, and
+their respective templates will be imported into the iDNS database, as well as
+their required images will be placed your web server root directory /images/ 
+folder.
+
+At that point, the script is ready to start the BIND daemon. If that can't be
+done a warning will be displayed and the command the script tried to execite
+to start the BIND daemon.
+
+Post Install Testing
+====================
+
+It's strongly recommended that you test your installation once it's ready.
+iDNS from version 2.4 provides a quick way to this. Simply run:
+
+# make test
+
+The test script will add a resource record to the ns1.yourdomain.com zone,
+then will process the iDNS job queue and test with dig @localhost.
+If the new resource record is server correctly it means your iDNS is correctly
+installed at your server.
+
+Slave Server Setup
+==================
+
+For setting up iDNS at your slave server(s), you have to follow the same 
+procedure as described above in this file. But a couple of things need your
+manual intervention.
+
+ 1. local.h file editing:
+  BEFORE running make and make install at the slave server, make sure you
+  edit the local.h file and set the values of the DBIP0 and DBIP1 macros.
+  These macros, specify the IP addresses that will be used for accesing
+  the iDNS database. They are two, as the connect function will try the first
+  (DBIP0) and then the second (DBIP1) in case the first fails. If you don't
+  have more that one MySQL host IP (Which would be the case if you are not
+  using MySQL proxies for accessing the MySQL server) you have to set both
+  macros with the same value.
+  Following with our example data, the local.h file section should look like 
+  this at the slave server:
+
+  #define DBIP0 "192.168.0.1"
+  #define DBIP1 "192.168.0.1"
+
+ 2. Grant MySQL access from the slave to the master:
+  For allowing the iDNS.cgi binary at the slave servers to connect to the MySQL
+  server running at the master server, you must make sure the following 
+  command is executed at the master server MySQL command line:
+
+  mysql> GRANT ALL ON idns.* to idns@192.168.0.2 IDENTIFIED BY 'wsxedc';
+
+  (Replace 192.168.0.2 by your slave server IP address.)
+
+ 3. /usr/local/idns/named.conf editing:
+  Once the installation is completed, edit the /usr/local/idns/named.conf and
+  comment or remove the line that reads:
+  
+  include "master.zones";
+  
+  And uncomment the following line:
+
+  //include "slave.zones"
+
+ 4. allfiles slave:
+  Lastly you have to run the following command:
+
+  $CGIDIR/iDNS.cgi allfiles slave ns2.yourdomain.com 192.168.0.1
+
+  Please replace ns2.yourdomain.com by the name you gave to yor slave server
+  and 192.168.0.1 for your master server IP address.
+
+rndc Setup
+==========
+
+For security sake, it's recommended that you setup your rndc key. For doing so
+you have to run:
+
+# rndc-confgen -a -c /etc/rndc.key
+# chmod 600 /etc/rndc.key
+# chown named:named /etc/rndc.key
+
+Then edit the /etc/rndc.conf file and place the following contents:
+
+    options {
+
+        default-server 127.0.0.1;
+        default-key "rndc-key";
+
+    };
+
+    server 127.0.0.1 {
+
+        key "rndc-key";
+
+    };
+
+    key "rndc-key" {
+
+        algorithm hmac-md5;
+        secret "xxxxxxxxxxxxxxxxxxx";
+
+    };
+You have to copy the key statement from /etc/rndc.key
+Please note that the key names (In this case, "rndc-key") must match the name 
+of the key in /etc/rndc.key.
+
+Lastly add the following lines to your /usr/local/idns/named.conf file:
+
+include "/etc/rndc.key";
+controls {
+	inet 127.0.0.1 allow { 127.0.0.1; } keys { "rndc-key"; };
+}
+
+Don't forget to run:
+
+# named-checkconf /usr/local/idns/named.conf
+
+After all these modifications. You never know what can go wrong ;)
+
+Master Server crontab Setup
+===========================
+
+For the iDNS software to update the BIND configuration files after the 
+database operations, it relies on its job queue processor. You have to add it
+to your root user crontab file, with a line like this for your master server:
+
+* * * * * /var/www/cgi-bin/iDNS.cgi ProcessJobQueue ns1.yourdomain.com >> /var/l
+og/idns-cron.log 2>&1;
+
+Slave Server crontab Setup
+==========================
+
+As said above, same is also true for the slave server(s), but the crontab line 
+is slightly different:
+
+* * * * * /var/www/cgi-bin/iDNS.cgi jobqueue slave ns2.yourdomain.com 192.168.0.1 >> /var/log/idns-cron.log 2>&1;
+
+Uninstalling iDNS
+=================
+
+If you wish to uninstall iDNS, there's a quick way to do so. Just run:
+
+# make clean-install
+
+At the iDNS source code directory. The uninstall script will ask you about your
+Apache web server root directory and then will remove iDNS and all its software
+dependencies if they where installed by the installation script.
+
+Useful links
+============
+
+Unixservice: Will provide you with commercial support for iDNS at very 
+competitive fees! Call us now and get free email support.
+
+http://www.unixservice.com
+
+MySQL Proxy (MySQL Manual): http://dev.mysql.com/doc/refman/5.1/en/mysql-proxy.html
+
+Thanks
+======
+www.isc.org
+Thanks to a real internet guru Paul Vixie for his kind words of support!
+Thanks to the hundreds of users worldwide that support this OSS/GPL project.
+Thanks to all the people who kindly sent patches and bug reports, that make
+this software better and better everyday.
+
+

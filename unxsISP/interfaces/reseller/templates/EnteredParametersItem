@@ -1,0 +1,11 @@
+<tr>
+	<td valign=top>
+	<strong>{{cParamLabel}}</strong>
+	</td>
+	<td valign=top>
+	<input type=hidden name=cParamName.{{iParamIndex}} value="{{cParameter}}">
+	<input type=hidden name=cParam.{{iParamIndex}} value="{{cParamValue}}">
+	{{cParamValue}}
+	</td>
+</tr>
+

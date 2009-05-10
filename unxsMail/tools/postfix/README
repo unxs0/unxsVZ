@@ -1,0 +1,18 @@
+PREREQUISITES
+
+1. Postfix installed.
+1. Spamasssin installed.
+1. basic_filter installed.
+
+INSTALL
+
+In the conf/ directory you will find the basic Postfix configuration files for a mysqlMail2 controlled system.
+
+To install follow the following steps:
+
+1. Shutdown Postfix (if running)
+2. Copy the files in the conf/ dir to /etc/postfix
+3. Open /etc/postfix/main.cf with your favourite text editor
+4. Edit the value of myhostname and inet_interfaces variables
+3. Start Postfix
+

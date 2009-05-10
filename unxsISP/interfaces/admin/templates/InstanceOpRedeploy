@@ -1,0 +1,3 @@
+<tr><td><input type=submit class=largestButton title='Redeploy instance'  name=gcFunction value='{{gcNewStep}}Redeploy Instance' {{cHoldStyle}}></td></tr>
+<tr><td><input type=submit class=largestButton title='Redeploy instance'  name=gcFunction value='{{gcNewStep}}Remove Instance' {{cCancelStyle}}></td></tr>
+
