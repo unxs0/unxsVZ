@@ -1,0 +1,20 @@
+1	tSite	1	1	1183471641	1	1183582441	cDomain is the website FQDN (with no www usually.) Most hosting for non SSL (or\
+non future SSL -ecommerce sites) is done with name based sites (sites that share\
+an IP, usually of a root IP based site -the webfarm or reseller master site.)\
+uStatus and uSite are set by the system on creation. uServer should be set to\
+the default (or for a cluster web farm system you may want to assign this site\
+to one of many master webfarm servers.) cParkedDomains is a list (one per line)\
+of FQDNs (each line preceeded by mandatory ServerAlias) that also have DNS A or\
+CNAME records pointing to a name based site (IP based sites do not need this\
+text area set.) cIP is the unique IP number allocated for non name based sites\
+OR the shared IP number of the sites root IP based site (this is taken care for\
+you in Step 2.) Depending on the type of site you will be able to select from a\
+list of configuration templates during Step 2. These will configure your new\
+site for you providing the cVirtualHost (and maybe the cSSLVirtualHost)\
+sections. The other options should only be changed by experienced users.\
+\
+cParkedDomains Example:\
+\
+ServerAlias www.acme.com\
+ServerAlias acme.net\
+ServerAlias www.acme.net

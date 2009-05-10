@@ -1,0 +1,56 @@
+1235603970	1	2	1	1	0	0	%s\\tCrypt-Password := "%s"\
+\\tService-Type = Framed,\
+\\tFramed-Protocol = PPP,\
+\\tFramed-IP-Address = 255.255.255.254,\
+\\tFramed-IP-Netmask = 255.255.255.255,\
+\\tFramed-Routing = None,\
+\\tFramed-MTU = 1500	0	0	0	0	0	0	0	0	0	0	
+1235603970	1	2	1	2	1	1235605402	%s\\tCleartext-Password := "%s"\
+\\tService-Type = Framed,\
+\\tFramed-Protocol = PPP,\
+\\tFramed-IP-Address = 255.255.255.254,\
+\\tFramed-IP-Netmask = 255.255.255.255,\
+\\tFramed-Routing = None,\
+\\tFramed-MTU = 1500	0	0	0	0	0	0	0	0	0	1	
+1235627202	5	2	2	3	0	0	%s\	Crypt-Password := "%s"\
+\	Service-Type = Framed,\
+\	Framed-Protocol = PPP,\
+\	Framed-IP-Address = 255.255.255.254,\
+\	Framed-IP-Netmask = 255.255.255.255,\
+\	Framed-Routing = None,\
+\	Framed-MTU = 1500	0	0	0	0	0	0	0	0	0	0	CopyToAllNames from uProfile=1
+1235627202	5	2	3	4	0	0	%s\	Crypt-Password := "%s"\
+\	Service-Type = Framed,\
+\	Framed-Protocol = PPP,\
+\	Framed-IP-Address = 255.255.255.254,\
+\	Framed-IP-Netmask = 255.255.255.255,\
+\	Framed-Routing = None,\
+\	Framed-MTU = 1500	0	0	0	0	0	0	0	0	0	0	CopyToAllNames from uProfile=1
+1235627202	5	2	4	5	0	0	%s\	Crypt-Password := "%s"\
+\	Service-Type = Framed,\
+\	Framed-Protocol = PPP,\
+\	Framed-IP-Address = 255.255.255.254,\
+\	Framed-IP-Netmask = 255.255.255.255,\
+\	Framed-Routing = None,\
+\	Framed-MTU = 1500	0	0	0	0	0	0	0	0	0	0	CopyToAllNames from uProfile=1
+1235627215	5	2	2	6	0	0	%s\	Cleartext-Password := "%s"\
+\	Service-Type = Framed,\
+\	Framed-Protocol = PPP,\
+\	Framed-IP-Address = 255.255.255.254,\
+\	Framed-IP-Netmask = 255.255.255.255,\
+\	Framed-Routing = None,\
+\	Framed-MTU = 1500	0	0	0	0	0	0	0	0	0	1	CopyToAllNames from uProfile=2
+1235627215	5	2	3	7	0	0	%s\	Cleartext-Password := "%s"\
+\	Service-Type = Framed,\
+\	Framed-Protocol = PPP,\
+\	Framed-IP-Address = 255.255.255.254,\
+\	Framed-IP-Netmask = 255.255.255.255,\
+\	Framed-Routing = None,\
+\	Framed-MTU = 1500	0	0	0	0	0	0	0	0	0	1	CopyToAllNames from uProfile=2
+1235627215	5	2	4	8	0	0	%s\	Cleartext-Password := "%s"\
+\	Service-Type = Framed,\
+\	Framed-Protocol = PPP,\
+\	Framed-IP-Address = 255.255.255.254,\
+\	Framed-IP-Netmask = 255.255.255.255,\
+\	Framed-Routing = None,\
+\	Framed-MTU = 1500	0	0	0	0	0	0	0	0	0	1	CopyToAllNames from uProfile=2

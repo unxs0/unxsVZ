@@ -1,0 +1,120 @@
+
+<body marginwidth="0" marginheight="0">
+
+<div align="center" class="standard2colnee">
+
+<table cellspacing="0" cellpadding="0" border="0" width=1200>
+	<tr valign="top">
+	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>
+
+		<td align="right">
+
+
+	<!-- one row, one cell table to span the page-->
+	<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">
+		<tr>
+
+			<!-- Navigation -->
+			<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>
+				<table width="100%" border="0" cellpadding="0" cellspacing="0">
+					<tr>
+					</tr>
+				</table>
+			</td>
+		</tr>
+<tr><td>&nbsp;</td></tr>
+							<tr>
+								<td class="mastbg2">
+
+									<table cellspacing="0" cellpadding="0" border="0" width="100%">
+									<tr valign="top">
+										
+										<td align="right" class="padt10">																				
+												<table cellspacing="0" cellpadding="0" border="0">
+													<tr>
+													<td>&nbsp;</td>
+
+													</tr>
+												</table>
+										</td>
+										
+										
+									</tr>
+									</table>
+								</td>
+							</tr>
+
+			</table>
+		</td>
+	</tr>
+</table>
+
+
+
+<form method=post action={{cCGI}} style="margin:0px;">
+<table width=1200  border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td>
+
+&nbsp;
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
+  <tr>
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+    <td class="hdrtout padlt8" width="100%">
+		<h6 class="modhdr">Your Wifi Account Management Tools</h6>
+	</td>
+	<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+  </tr>
+  <tr>
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>
+
+    <td valign="top" width=33%>
+	
+	
+	
+<table border="0" cellspacing="8" cellpadding="0" width="50%" class="table_content">
+	<tr>
+	<td width=150>
+	<fieldset><legend class=modhdr>Reset your Password</legend>
+	<table>
+	<tr>
+	<td valign=top><strong>Your email address</strong></td>
+	<td valign=top><input type=text name=cEmail maxlength=255 size=30></td>
+	<td valign=top>
+	<strong><u>Hints</u></strong><br>
+	This tool allow you to reset your Airnetworks Wifi password. 
+	After you enter your email address, press the button below to receive your updated password via email.
+	Please note that your email address is used to check if you have an account, for that <strong>you must enter the email address
+	you used when you purchased the service.</strong>
+	</tr>
+	<tr>
+	<td colspan=2 align=center><input class=largestButton type=submit name=gcFunction value="Send me my new password"></td>
+	</table>
+	</fieldset>
+	</td>
+	</table>
+	
+	
+	
+	
+	</td>
+<td><img src="/images/clear.gif" width="9" height="9" /></td>
+		 
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td></td>
+
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+  </tr>
+</table>
+
+<br />
+
+	</td>
+  </tr>
+</table>
+</form>
+
+

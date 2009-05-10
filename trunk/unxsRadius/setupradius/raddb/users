@@ -1,0 +1,29 @@
+#users mysqlRadius2.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $
+#For uServer:1
+#Unlimited:1022344509 uUser:0 uServer:0 uClearText:0 uStaticIP:0
+joetester	Crypt-Password := "$1$EguHeNAi$Sv3lxcjme1Jby0U6bsjAn1"
+	Service-Type = Framed,
+	Framed-Protocol = PPP,
+	Framed-IP-Address = 255.255.255.254,
+	Framed-IP-Netmask = 255.255.255.255,
+	Framed-Routing = None,
+	Framed-MTU = 1500
+#
+#Unlimited:1022345063 uUser:0 uServer:0 uClearText:1 uStaticIP:0
+test	Cleartext-Password := "test"
+	Service-Type = Framed,
+	Framed-Protocol = PPP,
+	Framed-IP-Address = 255.255.255.254,
+	Framed-IP-Netmask = 255.255.255.255,
+	Framed-Routing = None,
+	Framed-MTU = 1500
+#
+#Unlimited:1022344509 uUser:0 uServer:0 uClearText:0 uStaticIP:0
+hugo.tester	Crypt-Password := "$1$FoxTL3F2$16Pc4uJDbnfd0pmZ3suss0"
+	Service-Type = Framed,
+	Framed-Protocol = PPP,
+	Framed-IP-Address = 255.255.255.254,
+	Framed-IP-Netmask = 255.255.255.255,
+	Framed-Routing = None,
+	Framed-MTU = 1500
+#

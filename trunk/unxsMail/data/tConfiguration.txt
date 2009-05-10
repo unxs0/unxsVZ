@@ -1,0 +1,11 @@
+1	1185399386	1	Unix mail account	1	This is a global (uServer=0) system wide configuration entry.\
+\
+This configuration entry sets a semi-colon separated value list of all required\
+uConfigSpec values to be created or modified on tUser changes.	1	1185975259	1;	0
+1	1185399764	1	Advanced mail account	2	This is a global (uServer=0) system wide configuration entry.\
+\
+This configuration entry sets a semi-colon separated value list of all required\
+uConfigSpec values for associated templates to be created or modified on\
+tUser changes.\
+\
+The templates are associated via the tConfigSpec.uTemplate 	1	1185975295	1;2;	0

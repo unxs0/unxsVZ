@@ -1,0 +1,5 @@
+0	0	1	1	1183756175	1	Backoffice
+0	0	1	1	1183756205	2	Admin interface
+0	0	1	1	1183756226	3	End-user interface
+0	0	1	1	1183756243	4	System event
+0	0	1	1	1220919385	6	Login/logout info

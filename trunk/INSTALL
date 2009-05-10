@@ -1,0 +1,56 @@
+$Id: INSTALL 1757 2008-08-10 20:20:39Z Gary $
+
+Hi...release early, often...in this case very early.
+
+Prerequisites
+-------------
+mySQL server and client libs installed and running on same server as the application.
+You must know the root password. (Paranoids: Check the install script in mainfunc.h)
+
+Must have a running Apache server on the same server with cgi capabilities.
+Should be SSL enabled if possible (see below for intranet or other just "testing"
+non-SSL setup)
+
+
+Example BASH Install Instructions
+---------------------------------
+shell>tar xzf unxsVZN.M.tar.gz
+shell>cd unxsVZ
+shell>export CGIDIR=/var/www/cgi-bin/ (or whatever your Apache cgi-bin dir is)
+shell>vi local.h
+	Edit to taste
+shell>vi makefile
+	Edit to taste
+shell>make
+	Make sure everything is ok. Fix anything broken.
+shell>make install
+shell>export ISMROOT=/home/joe
+	Or whatever dir the mysql application project dir is in.
+shell>/cgi-bin/unxsVZ.cgi Initialize <your mysql password for root>
+	This will setup application and allow you to login as user "Root" password "wsxedc".
+	Change the passwd asap for real world applications.
+
+CSS Images
+----------
+Your apache htdocs dir must have an images directory and you must copy all
+the main.c StyleSheet() images there.
+
+SSL Only Setup
+-------------
+If you have an SSL server handy edit local.h and comment out:
+//#define SSLONLY
+like so...
+#define SSLONLY
+Then
+shell>rm *.o
+shell>make
+
+Read More
+---------
+cp docs/tutorial.html to a browser accesible place or sym link to it if possible.
+Read it!
+
+Legalese
+--------
+This doc is GPL. Don't forget to give us credit when you quote this stuff.
+Copyright 2003-2009 OpenISP, Unixservice and Gary Wallis.

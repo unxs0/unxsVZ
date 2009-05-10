@@ -1,0 +1,299 @@
+
+<body marginwidth="0" marginheight="0">
+
+<div align="center" class="standard2colnee">
+
+<table cellspacing="0" cellpadding="0" border="0" width=1200>
+	<tr valign="top">
+	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>
+
+		<td align="right">
+
+
+	<!-- one row, one cell table to span the page-->
+	<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">
+		<tr>
+
+			<!-- Navigation -->
+			<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>
+				<table width="100%" border="0" cellpadding="0" cellspacing="0">
+					<tr>	
+						<td class="wpsUnSelectedPlace" nowrap height="100%">
+						<a title='Overall system information' class="wpsUnSelectedPlaceLink" href='ispAdmin.cgi?gcPage=Dashboard'><b class ="font10pt">Dashboard</b></a>
+						</td>
+						<td class="wpsUnSelectedPlace" nowrap height="100%">
+						<a title='Customer management' class="wpsUnSelectedPlaceLink" href='ispAdmin.cgi?gcPage=Customer'><b class ="font10pt">Customers</b></a>
+						</td>
+						<td class="wpsUnSelectedPlace" nowrap height="100%">
+						<a title='Invoice management' class="wpsUnSelectedPlaceLink" href='ispAdmin.cgi?gcPage=Invoice'><b class ="font10pt">Invoices</b></a>
+						</td>
+						<td class="wpsSelectedPlace" nowrap height="100%">
+						<a title='Product management' class="wpsSelectedPlaceLink" href='ispAdmin.cgi?gcPage=Product'><b class ="font10pt">Products</b></a>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr><td valign=top align=right class=notice>
+{{gcName}} ({{gcOrgName}}) logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout
+</a></td></tr>
+							<tr>
+								<td class="mastbg2">
+
+									<table cellspacing="0" cellpadding="0" border="0" width="100%">
+									<tr valign="top">
+										
+										<td align="right" class="padt10">																				
+											<form action=ispAdmin.cgi method="post">
+												<table cellspacing="0" cellpadding="0" border="0">
+													<tr>
+														<td><input type="text" value="Search Products" class="searchinp" name=cSearch onfocus="this.select();" title="Search for products with a keyword" /></td>
+
+														<td valign="middle" style="padding: 0px 4px 0px 4px;"></td><td class="padlt6rt10"><input type="image" src="/images/btn_mast_search.gif" alt="Search" width="17" height="17" border="0" title="Find one or more products based on input search pattern" /></td>
+													</tr>
+												</table>
+												<input type=hidden name=gcFunction value=Search>
+												<input type=hidden name=gcPage value=Product>
+											</form>									 
+										</td>
+										
+										
+									</tr>
+									</table>
+								</td>
+							</tr>
+
+			</table>
+		</td>
+	</tr>
+</table>
+
+
+<form method=post action={{cCGI}} style="margin:0px;">
+<table width=1200  border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td>
+{{gcMessage}}
+
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
+  <tr>
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+    <td class="hdrtout padlt8" width="33%"><h6 class="modhdr">Product Management</h6></td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+    <td width="10"> </td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+    <td class="hdrtout padlt8">
+                <h6 class="modhdr">Product Data </h6></td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+  </tr>
+  <tr>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td valign="top">
+
+
+
+<table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
+                <tr>
+                  <td> </td>
+                  <td> </td>
+                </tr>
+                <tr>
+                        <td colspan=2>
+                                <input type=hidden name=gcPage value=Product>
+                                {{funcProductNavList}}
+<br>
+<br>
+<br>
+</td>
+                </tr>
+		<tr>
+		<td>
+<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Product Tab Details')"><strong>Product Tab Details</strong></a></td>
+		</tr>
+		<tr>
+		<td colspan=2>
+At this page you are able to create modify and delete products. Product services are displayed at the bottom of this page in the 'Product Services' table.
+A product can have an unlimited	number of services associated with it. Add services using the 'Add Service to Product' tool above and remove them by clicking in the 'Remove' link at this page bottom table. Please note that you won't be able to modify or delete products that are currently in use by one or more clients. To search for a product enter part of its name at the 'Search Products' input above and press &lt;Enter&gt; or the [>] button. The search results will be displayed at this panel in the 'Search Results' section. The search is case insensitive and you can use % and _ SQL LIKE matching chars. (E.g. 'Website%')
+		</td>
+		<tr>
+		<td>
+<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Add Service to Product')"><strong>Add Service to Product</strong></a></td>		
+		</tr>
+		<tr>
+		<td colspan=2>
+		{{funcServicesToAdd}}
+<input {{cBtnStatus}} type=submit title='Add the selected service to the loaded product' name=gcFunction value='Add Service' class=largeButton>
+		</td>
+		</tr>
+        </table>
+
+
+
+
+
+        </td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td> </td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td valign="top">
+
+
+<table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
+        <tr>
+          <td width="22%" valign="top"> </td>
+          <td width="78%"> </td>
+        </tr>
+        <tr>
+                <td valign="top">
+<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Product Name')"><strong>Product Name</strong></a></td>
+		<td>
+		<input type=hidden name=cLabel value="{{cLabel}}">
+<input {{gcInputStatus}} type=text title="A valid product name. E.g.: 'Mailbox Only' (Required)" name=cLabel value="{{cLabel}}" class={{cLabelStyle}}>
+                </td>
+	</tr>
+
+        <tr>
+                <td valign="top">
+<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Period')"><strong>Period</strong></a></td>
+		<td>
+		<input type=hidden name=uPeriod value="{{uPeriod}}">
+                {{funcSelectPeriod}}
+		</td>
+	</tr>
+        <tr>
+                <td valign="top">
+<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Price')"><strong>Price</strong></a></td>
+		<td>
+		<input type=hidden name=mPrice value="{{mPrice}}">
+<input {{gcInputStatus}} type=text title="The price of the product. E.g.: '17.95' (Required)" name=mPrice value="{{mPrice}}" class={{mPriceStyle}}>
+                </td>
+	</tr>
+        <tr>
+                <td valign="top">
+<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Cost')"><strong>Cost</strong></a></td>
+		<td>
+		<input type=hidden name=mCost value="{{mCost}}">
+<input {{gcInputStatus}} type=text title="The cost of the product. E.g.: '11.30' (Optional)" name=mCost value="{{mCost}}" class={{mCostStyle}}>
+                </td>
+	</tr>
+        <tr>
+                <td valign="top">
+<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Setup Fee')"><strong>Setup Fee</strong></a></td>
+		<td>
+		<input type=hidden name=mSetupFee value="{{mSetupFee}}">
+<input {{gcInputStatus}} type=text title="The product setup fee. E.g.: '8.45' (Optional)" name=mSetupFee value="{{mSetupFee}}" class={{mSetupFeeStyle}}>
+                </td>
+	</tr>
+        <tr>
+                <td valign="top">
+<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Release Fee')"><strong>Release Fee</strong></a></td>
+		<td>
+		<input type=hidden name=mReleaseFee value="{{mReleaseFee}}">
+<input {{gcInputStatus}} type=text title="The product release fee. E.g.: '8.45' (Optional)" name=mReleaseFee value="{{mReleaseFee}}" class={{mReleaseFeeStyle}}>
+                </td>
+	</tr>
+        <tr>
+                <td valign="top">
+<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Additional Info')"><strong>Additional Info</strong></a></td>
+		<td>
+		<input type=hidden name=cComment value="{{cComment}}">
+		<textarea name=cComment cols="40" rows="4" class={{cCommentStyle}}>{{cComment}}</textarea>
+                </td>
+	</tr>
+	<tr>
+		<td valign="top">
+<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Product Available')"><strong>Product Available</strong></a></td>
+		<td>
+		<input type=hidden name=uAvailable value="{{uAvailable}}">
+		{{funcSelectAvailable}}
+		</td>
+	</tr>
+	<tr>
+                <td colspan=2>
+<br>
+<br>
+	{{funcProductNavBar}}
+	</td>
+        </tr>
+</table>
+
+
+
+        </td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+  </tr>
+</table>
+
+<br /></td>
+    <td> </td>
+  </tr>
+<tr>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
+  <t>
+
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+    <td class="hdrtout padlt8"><h6 class="modhdr">Product Services</h6></td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+  </tr>
+  <tr>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td>
+
+
+<table border="0" cellspacing="0" cellpadding="7" width="100%" class="table_content" style="margin-top:5px;">
+        <tr bgcolor="#e9e9e9">
+                <td class="title_list">
+                        Name
+                </td>
+                <td class="title_list">
+                        Server
+                </td>
+		<td>&nbsp;</td>
+        </tr>
+
+        {{funcProductServices}}
+</table>
+
+
+        </td>
+</tr>
+</td>
+<tr>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+
+    <td></td>
+  </tr>
+</table>
+</td>
+</tr>
+</td>
+</tr>
+</table>
+<input type=hidden name=uProduct value="{{uProduct}}">
+
+<input type=hidden name=uOwner value="{{uOwner}}">
+<input type=hidden name=uCreatedBy value="{{uCreatedBy}}">
+<input type=hidden name=uCreatedDate value="{{uCreatedDate}}">
+<input type=hidden name=uModBy value="{{uModBy}}">
+<input type=hidden name=uModDate value="{{uModDate}}">
+
+</form>
+

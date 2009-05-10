@@ -1,0 +1,26 @@
+1	1190743127	1	UpdateInfo	1	mysqlISP2-RAD3 1 12 2	0	1191611700	uModDate	0
+0	1192546591	1	cExtmysqlRadius2DbIp	2	If this parameter exists it is used to verify unique logins\
+during service instance configuration.\
+\
+Related:\
+cExtmysqlRadiusDbName\
+cExtmysqlRadiusDbPwd	1	0		0
+0	1192546642	1	cExtmysqlRadius2DbName	3	If this parameter exists it is used to verify unique logins\
+during service instance configuration.\
+\
+Related:\
+cExtmysqlRadiusDbIp\
+cExtmysqlRadiusDbPwd	1	0	mysqlradius2	0
+0	1192546686	1	cExtmysqlRadius2DbPwd	4	If this parameter exists it is used to verify unique logins\
+during service instance configuration.\
+\
+Related:\
+cExtmysqlRadiusDbIp\
+cExtmysqlRadiusDbName	1	0	wsxedc	0
+0	1192547055	1	cExtmysqlRadius2DbLogin	5	If this parameter exists it is used to verify unique logins\
+during service instance configuration.\
+\
+Related:\
+cExtmysqlRadiusDbIp\
+cExtmysqlRadiusDbPwd\
+cExtmysqlRadiusDbName	1	0	mysqlradius2	0

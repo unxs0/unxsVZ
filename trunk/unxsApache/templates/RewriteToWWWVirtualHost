@@ -1,0 +1,35 @@
+{{cCondListen}}
+<VirtualHost {{cIP}}:80>
+ServerAdmin {{cWebmaster}}@{{cDomain}}
+DocumentRoot {{cWebRoot}}/{{cDomain}}/htdocs
+ServerName {{cDomain}}
+{{cParkedDomains}}
+ErrorLog {{cWebRoot}}/{{cDomain}}/logs/error_log
+CustomLog {{cWebRoot}}/{{cDomain}}/logs/access_log combined
+
+<Directory "{{cWebRoot}}/{{cDomain}}/htdocs">
+AllowOverride All
+Options All
+Allow from All
+</Directory>
+
+ScriptAlias /{{cCGI}}/ {{cWebRoot}}/{{cDomain}}/{{cCGI}}/
+
+<Directory "{{cWebRoot}}/{{cDomain}}/{{cCGI}}">
+AllowOverride None
+Options FollowSymLinks
+Allow from All
+</Directory>
+
+<IfModule mod_rewrite.c>
+RewriteEngine on
+RewriteCond %{HTTP_HOST}   !^www\.{{cDomainEscDot}} [NC]
+RewriteCond %{HTTP_HOST}   !^$
+RewriteCond %{SERVER_PORT} !^80$
+RewriteRule ^/(.*)         http://www.{{cDomain}}:%{SERVER_PORT}/$1 [L,R]
+RewriteCond %{HTTP_HOST}   !^www\.{{cDomainEscDot}} [NC]
+RewriteCond %{HTTP_HOST}   !^$
+RewriteRule ^/(.*)         http://www.{{cDomain}}/$1 [L,R]
+</IfModule>
+
+</VirtualHost>

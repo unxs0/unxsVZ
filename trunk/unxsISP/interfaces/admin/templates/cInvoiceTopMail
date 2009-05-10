@@ -1,0 +1,11 @@
+<strong>{{cInvoice}}</strong><br>
+Ship To:<br>
+{{cLabel}}<br>
+({{cEmail}})<br>
+{{cAddr1}} {{cAddr2}}<br>
+{{cCity}}, {{cState}} {{cZip}}<br>
+{{cCountry}}<br>
+<br>
+<!--Charge:<br>
+{{cCardName}} with {{cCardType}} {{cCardNumber}} {{cCardExp}}<br>
+-->

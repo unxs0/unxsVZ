@@ -1,0 +1,11 @@
+#README $Id$
+
+/etc/rc.local is used for S99local server boot
+/usr/sbin/start-mysqlproxy.sh is used by the nanny.pl and the rc.local
+/usr/sbin/mysqlproxy-nanny.pl is the perl daemon that if the proxy dies
+	(no pid) it restarts it. In the future it could also be improved to 
+	actually check functionality of proxy and if not working kill it and
+	restart anew.
+
+The start-mysqlproxy.sh have to be customized for container IP and the set of
+MySQL servers they front for.

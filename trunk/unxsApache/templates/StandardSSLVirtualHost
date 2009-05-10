@@ -1,0 +1,34 @@
+{{cCondListen}}
+<VirtualHost {{cIP}}:443>
+DocumentRoot "{{cWebRoot}}/{{cDomain}}/htdocs"
+ServerName {{cDomain}}
+ServerAdmin {{cWebmaster}}@{{cDomain}}
+CustomLog {{cWebRoot}}/{{cDomain}}/logs/sslaccess_log combined
+ErrorLog {{cWebRoot}}/{{cDomain}}/logs/sslerror_log
+ScriptAlias /{{cCGI}}/ "{{cWebRoot}}/{{cDomain}}/{{cCGI}}/"
+DirectoryIndex index.html index.htm
+
+<Directory "{{cWebRoot}}/{{cDomain}}/{{cCGI}}">
+  AllowOverride None
+  Options FollowSymLinks
+</Directory>
+
+<Directory "{{cWebRoot}}/{{cDomain}}/htdocs">
+  AllowOverride All
+  Options All
+</Directory>
+
+SSLEngine on
+SSLCertificateFile {{cSSLCertFile}}
+
+<Files ~ "\.(cgi|shtml)$">
+  SSLOptions +StdEnvVars
+</Files>
+
+<Directory "{{cWebRoot}}/{{cDomain}}/htdocs">
+  SSLOptions +StdEnvVars
+</Directory>
+
+SetEnvIf User-Agent ".*MSIE.*" nokeepalive ssl-unclean-shutdown
+
+</VirtualHost>

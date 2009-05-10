@@ -1,0 +1,313 @@
+#
+#FILE
+#	$Id: ApacheSSLConfHeader 1322 2007-07-17 14:41:57Z Gary $
+#	ApacheSSLConfHeader template
+#PURPOSE
+#	mysqlApache2 webfarm manager template.
+#	Top (header part) of final httpd.conf file, created by mysqlApache2.
+#AUTHOR/LEGAL
+#	(C) 2007 Gary Wallis for Unixservice
+#MORE
+#	Apache 2.0.47 DSO version
+#VARS
+#	cApacheSSLDir, cServerIP, cServerDomain, cServerAdmin
+#
+###Global section 1a
+
+ServerRoot {{cApacheSSLDir}}
+PidFile logs/httpd.pid
+ErrorLog logs/error_log
+LogLevel warn
+DocumentRoot {{cApacheSSLDir}}/htdocs
+
+###Module section
+
+LoadModule access_module modules/mod_access.so
+LoadModule auth_module modules/mod_auth.so
+LoadModule include_module modules/mod_include.so
+LoadModule log_config_module modules/mod_log_config.so
+LoadModule env_module modules/mod_env.so
+LoadModule expires_module modules/mod_expires.so
+LoadModule headers_module modules/mod_headers.so
+LoadModule setenvif_module modules/mod_setenvif.so
+LoadModule mime_module modules/mod_mime.so
+LoadModule autoindex_module modules/mod_autoindex.so
+LoadModule asis_module modules/mod_asis.so
+LoadModule info_module modules/mod_info.so
+LoadModule cgi_module modules/mod_cgi.so
+LoadModule vhost_alias_module modules/mod_vhost_alias.so
+LoadModule negotiation_module modules/mod_negotiation.so
+LoadModule dir_module modules/mod_dir.so
+LoadModule imap_module modules/mod_imap.so
+LoadModule actions_module modules/mod_actions.so
+LoadModule alias_module modules/mod_alias.so
+LoadModule rewrite_module modules/mod_rewrite.so
+LoadModule ssl_module modules/mod_ssl.so
+
+
+###Global section 1b
+
+Listen {{cServerIP}}:8000
+User openisp
+Group openisp
+ServerAdmin {{cServerAdmin}}
+
+
+###Module configuration section
+
+#LoadModule php4_module modules/mod_php4.so
+<IfModule mod_php4.c>
+        PHPINIDir /etc
+        <IfModule mod_mime.c>
+                AddType application/x-httpd-php .php
+                AddType application/x-httpd-php .php3
+                AddType application/x-httpd-php .php4
+                AddType application/x-httpd-php .phtml
+                AddType application/x-httpd-php-source .phps
+        </IfModule>
+</IfModule>
+
+#LoadModule perl_module modules/mod_perl.so
+<IfModule mod_perl.c>
+        #PerlTrace all
+        <IfDefine APACHE2>
+                PerlRequire "/etc/httpd/conf/addon-modules/apache2-mod_perl-startup.pl"
+        </IfDefine>
+        <IfModule mod_mime.c>
+                AddType application/x-httpd-perl .pl
+        </IfModule>
+</ifModule>
+
+
+<IfModule mod_ssl.c>
+
+<IfModule mod_mime.c>
+   AddType application/x-x509-ca-cert .crt
+   AddType application/x-pkcs7-crl    .crl
+</IfModule>
+
+SSLPassPhraseDialog     builtin
+SSLSessionCache         dbm:/var/cache/apache2/ssl_scache
+SSLSessionCacheTimeout  300
+SSLMutex                file:/var/cache/apache2/ssl_mutex
+
+SSLRandomSeed startup builtin
+SSLRandomSeed connect builtin
+
+</IfModule>
+
+
+###Global Section 2
+
+#Old commonhttpd.conf now included in template
+#Check for many system dependent elements in this section
+<Directory />
+  Options -All -Multiviews
+  AllowOverride None
+  <IfModule mod_access.c>
+    Order deny,allow
+    Deny from all
+  </IfModule>
+</Directory>
+
+<IfModule mod_dir.c>
+    DirectoryIndex index.html index.html.var index.php index.php3 index.shtml index.cgi index.pl index.htm Default.htm default.htm index.xml
+</IfModule>
+
+AccessFileName .htaccess
+
+<IfModule mod_access.c>
+<Files ~ "^\.ht">
+    Order allow,deny
+    Deny from all
+</Files>
+</IfModule>
+
+UseCanonicalName Off
+
+<IfModule mod_mime.c>
+    TypesConfig {{cApacheSSLDir}}/conf/mime.types
+</IfModule>
+
+DefaultType text/plain
+
+HostnameLookups Off
+
+<IfModule mod_log_config.c>
+        LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+        CustomLog logs/access_log combined
+</IfModule>
+
+#Avoid giving black hats info
+UseCanonicalName Off
+ServerTokens Prod
+ServerSignature Off
+
+<IfModule mod_alias.c>
+    #We use system icons, thanks!
+    Alias /icons/ /var/www/icons/
+    ScriptAlias /cgi-bin/ {{cApacheSSLDir}}/cgi-bin/
+</IfModule>
+
+<IfModule mod_autoindex.c>
+
+    <IfDefine !APACHE2>
+      IndexOptions FancyIndexing NameWidth=*
+    </IfDefine>
+    <IfDefine APACHE2>
+      IndexOptions FancyIndexing VersionSort NameWidth=*
+    </IfDefine>
+    AddIconByEncoding (CMP,/icons/compressed.gif) x-compress x-gzip
+    AddIconByType (TXT,/icons/text.png) text/*
+    AddIconByType (IMG,/icons/image2.png) image/*
+    AddIconByType (SND,/icons/sound2.png) audio/*
+    AddIconByType (VID,/icons/movie.png) video/*
+    AddIcon /icons/binary.png .bin .exe
+    AddIcon /icons/binhex.png .hqx
+    AddIcon /icons/tar.png .tar
+    AddIcon /icons/world2.png .wrl .wrl.gz .vrml .vrm .iv
+    AddIcon /icons/compressed.png .Z .z .tgz .gz .zip .bz2
+    AddIcon /icons/a.png .ps .ai .eps
+    AddIcon /icons/layout.png .html .shtml .htm .pdf
+    AddIcon /icons/text.png .txt
+    AddIcon /icons/c.png .c
+    AddIcon /icons/p.png .pl .py .php .php3
+    AddIcon /icons/f.png .for
+    AddIcon /icons/dvi.png .dvi
+    AddIcon /icons/uuencoded.png .uu
+    AddIcon /icons/script.png .conf .sh .shar .csh .ksh .tcl
+    AddIcon /icons/tex.png .tex
+    AddIcon /icons/bomb.png core
+
+    AddIcon /icons/back.png ..
+    AddIcon /icons/hand.right.png README
+    AddIcon /icons/folder.png ^^DIRECTORY^^
+    AddIcon /icons/blank.png ^^BLANKICON^^
+
+    DefaultIcon /icons/unknown.png
+
+    ReadmeName README.html
+    HeaderName HEADER.html
+
+    IndexIgnore .??* *~ *# HEADER* RCS CVS *,v *,t
+
+</IfModule>
+
+<IfModule mod_mime.c>
+
+    AddEncoding x-compress Z
+    AddEncoding x-gzip gz tgz
+
+    AddLanguage en .en
+    AddLanguage es .es
+
+    AddDefaultCharset Off
+
+    <IfModule mod_negotiation.c>
+        LanguagePriority en cs de es fr it da nl et el ja kr no pl pt pt-br ru ltz ca sv tw ro
+    </IfModule>
+
+    AddCharset ISO-8859-1  .iso8859-1  .latin1
+    AddCharset ISO-8859-2  .iso8859-2  .latin2 .cen
+    AddCharset ISO-8859-3  .iso8859-3  .latin3
+    AddCharset ISO-8859-4  .iso8859-4  .latin4
+    AddCharset UTF-8       .utf8
+
+    AddCharset GB2312      .gb2312 .gb
+    AddCharset utf-7       .utf7
+    AddCharset utf-8       .utf8
+
+    AddType application/x-tar .tgz
+    AddType image/x-icon .ico
+
+    AddHandler cgi-script .cgi
+
+    AddHandler type-map var
+
+    AddType text/html .shtml
+    <IfDefine APACHE2>
+      AddOutputFilter INCLUDES .shtml
+    </IfDefine>
+    <IfDefine !APACHE2>
+      AddHandler server-parsed .shtml
+    </IfDefine>
+    AddHandler imap-file map
+
+</IfModule>
+
+<IfModule mod_setenvif.c>
+
+    BrowserMatch "Mozilla/2" nokeepalive
+    BrowserMatch "MSIE 4\.0b2;" nokeepalive downgrade-1.0 force-response-1.0
+    BrowserMatch "RealPlayer 4\.0" force-response-1.0
+    BrowserMatch "Java/1\.0" force-response-1.0
+    BrowserMatch "JDK/1\.0" force-response-1.0
+
+    BrowserMatch "Microsoft Data Access Internet Publishing Provider" redirect-carfully
+    BrowserMatch "^WebDrive" redirect-carefully
+    BrowserMatch "^gnome-vfs" redirect-carefully
+
+</IfModule>
+
+<Directory {{cApacheSSLDir}}/htdocs>
+
+    Options -Indexes FollowSymLinks MultiViews
+    AllowOverride All
+    <IfModule mod_access.c>
+      Order allow,deny
+      Allow from all
+    </IfModule>
+</Directory>
+
+<Directory {{cApacheSSLDir}}/cgi-bin>
+    AllowOverride All
+    Options ExecCGI
+    <IfModule mod_access.c>
+      Order allow,deny
+      Allow from all
+    </IfModule>
+</Directory>
+
+<Directory icons>
+    Options -Indexes MultiViews
+    AllowOverride None
+    <IfModule mod_access.c>
+      Order allow,deny
+      Allow from all
+    </IfModule>
+</Directory>
+
+
+###Performance section
+
+Timeout 100
+KeepAlive On
+MaxKeepAliveRequests 200
+KeepAliveTimeout 15
+
+<IfModule prefork.c>
+StartServers         5
+MinSpareServers      5
+MaxSpareServers     10
+MaxClients         150
+MaxRequestsPerChild  0
+</IfModule>
+
+<IfModule worker.c>
+StartServers         2
+MaxClients         150
+MinSpareThreads     25
+
+MaxSpareThreads     75
+ThreadsPerChild     25
+MaxRequestsPerChild  0
+</IfModule>
+
+<IfModule perchild.c>
+NumServers           5
+StartThreads         5
+MinSpareThreads      5
+MaxSpareThreads     10
+MaxThreadsPerChild  20
+MaxRequestsPerChild  0
+</IfModule>

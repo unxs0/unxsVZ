@@ -1,0 +1,3 @@
+1	1184006983	1	cWebRoot	1	This is the path to all the website home dirs. Eg. /usr/local/acme-hosting.com	1	1184102388	/var/local/web
+0	1184102492	1	cCGI	2	This is the name of the CGI directory. Note: Not the name of the CGI path.	1	0	cgi-bin
+0	1184102559	1	cWebmaster	3	This is the name of the webmaster part of webmaster@domain.dom	1	0	webmaster

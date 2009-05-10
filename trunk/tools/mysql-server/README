@@ -1,0 +1,4 @@
+#README $Id$
+
+You only need to call mysql-server-nanny.pl from rc.local. It will use /etc/init.d/mysqld start for starting the server in case of failure.
+

@@ -1,0 +1,2 @@
+1	standard procmail file	1	1	1185977403	0	0	~/.procmailrc	~	users	444	1
+2	standard spamassassin file	1	1	1185977452	0	0	~/.spamassassin/user_prefs	~	users	444	2

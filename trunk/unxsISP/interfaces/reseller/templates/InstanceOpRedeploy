@@ -1,0 +1,2 @@
+<tr><td><input type=submit class=largestButton title='Redeploy instance'  name=gcFunction value='{{gcNewStep}}Redeploy Instance'></td></tr>
+

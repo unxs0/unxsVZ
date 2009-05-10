@@ -1,0 +1,17 @@
+1	Root	1	1	1235455690	1	1235622000	This is the only user that can create new company tClient records. The Root user\
+must also be authorized as backend root role and be uClient 1.\
+\
+Once a company is created and has an admin contact, that admin role contact\
+should then add other company contacts.		
+2	Unixservice, LLC	1	1	1235598582	1	1235621865	Initialize sample company for testing company-contact-role model.\
+\
+This is a company. It has two contacts. Both backend authorized, one root role\
+and the other with an admin role.	supportgrp@unixservice.com	
+3	Support Root	2	1	1235598893	1	1235621703	Initialize sample company for testing company-contact-role model.\
+\
+This is a root level user contact of a company.	supportgrp@unixservice.com	
+5	Support Admin	2	1	1235598996	1	1235621766	Initialize sample company for testing company-contact-role model.\
+\
+This is an admin level user/role contact of a company.\
+\
+	supportgrp@unixservice.com	

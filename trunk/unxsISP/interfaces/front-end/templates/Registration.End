@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<script language="JavaScript" src="/popups.js"></script>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Riedel Gmbh Registration Page</title>
+<style>
+body { font-family:verdana, sans-serif; color:#565c5e; margin:0px 0px 0px 0px; background-color:#ffffff; }
+a, a:visited { color:#565c5e; text-decoration:underline; }
+body td, body th { font-size:12px; ; }
+body select { font-size:12px; ; border:1px solid #dddddd; }
+a:hover { color:#0000FF; text-decoration:underline; }
+/* for links w/o underlines */
+.nound, .nound:visited { text-decoration:none; }
+.nound:hover { text-decoration:underline; }
+
+input.smallButton { font-family:verdana, sans-serif;width:50px; font-size:.97em;}
+input.largeButton {width:150px; font-family:verdana, sans-serif; font-size:.97em;}
+input.largestButton {width:190px; font-family:verdana, sans-serif; font-size:.97em;}
+.type_fields
+{
+	height:15px;
+	margin:0px 0 0px 0;
+	padding:0px;
+	border: 1px solid #554295;
+	background-color:#eeeeee;
+	font:bold 10px Arial, Helvetica, sans-serif;
+	color:#554295;
+}
+
+.Stil1 {font-size: 18px}
+</style>
+
+</head>
+
+<body>
+<table width="70%" border="0" align="center">
+  <tr>
+    <td><img src=/images/unxslogo.jpg /></td>
+  </tr>
+  <tr>
+    <td><table width="100%" border="0">
+      <tr>
+        <td><div align="right">{{gcMessage}}</div></td>
+      </tr>
+      <tr>
+      <form method=post>
+        <td><table width="70%" border="0" align="center">
+          <tr>
+            <td colspan="2" bgcolor="#FFBBBB"><b>Registration Completed</b></td>
+          </tr>
+	  <tr>  <td colspan="2">Thank you for registering!</td></tr>
+	  <tr>  <td colspan="2">Your login user is {{cFirstName}}.{{cLastName}}</td></tr>
+	  <tr>  <td colspan="2">Once your registration is approved you will be notified of your password</td></tr>
+	  </table>
+      </tr>
+    </table></td>
+  </tr>
+</table>
+</body>
+</html>
+
+
+

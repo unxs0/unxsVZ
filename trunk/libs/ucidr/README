@@ -1,0 +1,24 @@
+libucidr 1.0
+
+Note: server1> as used below is an example command line prompt.
+
+
+1-. How to install this LGPL library:
+
+server1> make install 
+
+should do the trick ;)
+
+
+2-. How to use it in your programs:
+
+Place an include in your program file or header file where needed
+
+#include <openisp/ucidr.h>
+
+Link to this small static library, for example:
+
+server1> cc example.o -o example /usr/lib/openisp/libucidr.a
+
+
+3-. For more information see the included makefile and example.c file.
