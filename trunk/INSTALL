@@ -1,5 +1,32 @@
 $Id: INSTALL 1757 2008-08-10 20:20:39Z Gary $
 
+RPM and yum based install is now available.
+
+yum setup:
+
+Download http://unixservice.com/rpm/i386/unxsyum-1.0-1.i386.rpm
+
+# rpm -i unxsyum-1.0-1.i386.rpm
+# yum search unxsvz
+
+rpm's can be used alone are of course here:
+
+http://unixservice.com/rpm
+
+---
+
+If you repackage an rpm for FreeBSD, OpenSolaris, OpenBSD etc...please let us know and we will add it to the 
+repo above.
+
+---
+
+The remainder of this document is now deprecated but may have useful information.
+Much more information at the project Trac site:
+
+http://openisp.net/openisp/unxsVZ
+
+----
+
 Hi...release early, often...in this case very early.
 
 Prerequisites
