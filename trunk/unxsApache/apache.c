@@ -2325,8 +2325,8 @@ int NewSiteJob(unsigned uJob, unsigned uSite)
 
 	char cNewSiteTar[256]={"newwebsite/newwebsite.tar"};
 	char cSiteTar[512]={""};
-	char cWebRoot[256]={"/var/local/web"};
-	char cApacheDir[256]={"/var/local/apache"};
+	char cWebRoot[256]={"/var/www/unxsapache/sites/"};
+	char cApacheDir[256]={"/var/www/unxsapache/conf.d/"};
 	//char cApacheUser[256]={"openisp"};
 	char cWebSiteDir[512]={""};
 	char cDomain[100]={""};
@@ -2386,7 +2386,7 @@ int NewSiteJob(unsigned uJob, unsigned uSite)
 		}
 	}
 	
-	sprintf(cQuery,"cd %s; tar xf %s",cWebSiteDir,cSiteTar);
+	sprintf(cQuery,"tar -C %s -xf %s%s",cWebSiteDir,cWebRoot,cSiteTar);
 	if(system(cQuery))
 	{
 		TextError(cQuery,1);
