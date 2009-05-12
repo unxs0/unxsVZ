@@ -1,6 +1,6 @@
 /*
 FILE
-	tServer source code of mysqlApache2.cgi
+	tServer source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id: tserver.c 2355 2008-12-29 21:44:56Z hus-admin $
 PURPOSE
@@ -149,7 +149,7 @@ void tServer(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetServer();
-				mysqlApache2("New tServer table created");
+				unxsApache("New tServer table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtServer(unsigned uMode)
 	uServer=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tServer",uServer);
-	mysqlApache2Log(uServer,"tServer","New");
+	unxsApacheLog(uServer,"tServer","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetServer(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uServer,"tServer","Del");
+		unxsApacheLog(uServer,"tServer","Del");
 #endif
 		tServer(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uServer,"tServer","DelError");
+		unxsApacheLog(uServer,"tServer","DelError");
 #endif
 		tServer(LANG_NBR_RECNOTDELETED);
 	}
@@ -455,7 +455,7 @@ void ModtServer(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tServer",uServer);
-	mysqlApache2Log(uServer,"tServer","Mod");
+	unxsApacheLog(uServer,"tServer","Mod");
 #endif
 	tServer(gcQuery);
 

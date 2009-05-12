@@ -2,7 +2,7 @@
 FILE 
 	main.c
 	$Id: main.c 2595 2009-03-02 16:44:02Z hus $
-	mysqlRAD2.cgi created application file for mysqlApache2.cgi
+	mysqlRAD2.cgi created application file for unxsApache.cgi
 	(tAuthorize.cPasswd template set)
 	mysqlRAD2 to mysqlRAD3 transition template
 PURPOSE
@@ -84,7 +84,7 @@ void DashBoard(const char *cOptionalMsg);
 //Only local
 void ConnectDb(void);
 void NoSuchFunction(void);
-void mysqlApache2(const char *cResult);
+void unxsApache(const char *cResult);
 void InitialInstall(void);
 const char *cUserLevel(unsigned uPermLevel);
 
@@ -113,7 +113,7 @@ int main(int iArgc, char *cArgv[])
 	sysinfo(SI_HOSTNAME, gcHostname, 98);
 #endif
 
-	if(!strstr(cArgv[0],"mysqlApache2.cgi"))
+	if(!strstr(cArgv[0],"unxsApache.cgi"))
 		CalledByAlias(iArgc,cArgv);
 
 	if(getenv("REMOTE_HOST")!=NULL)
@@ -155,11 +155,11 @@ int main(int iArgc, char *cArgv[])
 		if(gcFunction[0])
 		{
 			if(!strcmp(gcFunction,"Main"))
-				mysqlApache2("");
+				unxsApache("");
 			else if(!strcmp(gcFunction,"Logout"))
 			{
-				printf("Set-Cookie: mysqlApache2Login=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				printf("Set-Cookie: mysqlApache2Passwd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsApacheLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsApachePasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				gcCookie[0]=0;
                                 guPermLevel=0;
                                 guLoginClient=0;
@@ -214,7 +214,7 @@ int main(int iArgc, char *cArgv[])
 
 		}
 
-		mysqlApache2(ISPNAME);
+		unxsApache(ISPNAME);
 
 	}//end get method interface section
 
@@ -281,7 +281,7 @@ int main(int iArgc, char *cArgv[])
 
 #include "mainfunc.h"
 
-void mysqlApache2(const char *cResult)
+void unxsApache(const char *cResult)
 {
 	Header_ism3("Main",0);
 
@@ -292,7 +292,7 @@ void mysqlApache2(const char *cResult)
 
 	Footer_ism3();
 
-}//void mysqlApache2(const char *cResult)
+}//void unxsApache(const char *cResult)
 
 
 void StyleSheet(void)
@@ -467,11 +467,11 @@ void Header_ism3(char *title, int js)
 {
 	printf("Content-type: text/html\n\n");
 	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-        printf("<html><head><title>mysqlApache2 %s </title>",title);
+        printf("<html><head><title>unxsApache %s </title>",title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
 
-	printf("</head><body><form action=mysqlApache2.cgi method=post><blockquote>\n");
+	printf("</head><body><form action=unxsApache.cgi method=post><blockquote>\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tSite") || !strcmp(gcFunction,"tSiteTools") ||
@@ -540,7 +540,7 @@ void Header_ism3(char *title, int js)
 
 
 	//Login info
-	printf("<font size=3><b>mysqlApache2</b></font> \n ");
+	printf("<font size=3><b>unxsApache</b></font> \n ");
 	if(!guPermLevel)
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>Your IP address %s has been logged</font>",gcHost);
 	else
@@ -549,7 +549,7 @@ void Header_ism3(char *title, int js)
 		
 	//Logout link
 	if(guSSLCookieLogin)
-		printf(" <a title='Erase login cookies' href=mysqlApache2.cgi?gcFunction=Logout>Logout</a> ");
+		printf(" <a title='Erase login cookies' href=unxsApache.cgi?gcFunction=Logout>Logout</a> ");
 
 	//Generate Menu Items
 	printf("\n<!-- tab menu -->\n");
@@ -566,7 +566,7 @@ void Header_ism3(char *title, int js)
 		printf(">\n");
 	else
 		printf(" id=current>\n");
-		printf("\t\t\t<a title='Home start page' href=mysqlApache2.cgi?gcFunction=Main>Main</a>\n");
+		printf("\t\t\t<a title='Home start page' href=unxsApache.cgi?gcFunction=Main>Main</a>\n");
 	printf("\t\t\t</li>\n");
 
 	//tSite
@@ -578,7 +578,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tSite' href=mysqlApache2.cgi?gcFunction=tSite>tSite</a>\n");
+	  printf("\t\t\t<a title='tSite' href=unxsApache.cgi?gcFunction=tSite>tSite</a>\n");
 	}
 	//tSiteUser
 	if(guPermLevel>=20)
@@ -589,7 +589,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tSiteUser' href=mysqlApache2.cgi?gcFunction=tSiteUser>tSiteUser</a>\n");
+	  printf("\t\t\t<a title='tSiteUser' href=unxsApache.cgi?gcFunction=tSiteUser>tSiteUser</a>\n");
 	}
 	//tMySQL
 	if(guPermLevel>=20)
@@ -600,7 +600,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMySQL' href=mysqlApache2.cgi?gcFunction=tMySQL>tMySQL</a>\n");
+	  printf("\t\t\t<a title='tMySQL' href=unxsApache.cgi?gcFunction=tMySQL>tMySQL</a>\n");
 	}
 	//tMySQLUser
 	if(guPermLevel>=20)
@@ -611,7 +611,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMySQLUser' href=mysqlApache2.cgi?gcFunction=tMySQLUser>tMySQLUser</a>\n");
+	  printf("\t\t\t<a title='tMySQLUser' href=unxsApache.cgi?gcFunction=tMySQLUser>tMySQLUser</a>\n");
 	}
 	//tIP
 	if(guPermLevel>=20)
@@ -622,7 +622,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tIP' href=mysqlApache2.cgi?gcFunction=tIP>tIP</a>\n");
+	  printf("\t\t\t<a title='tIP' href=unxsApache.cgi?gcFunction=tIP>tIP</a>\n");
 	}
 	//tSSLCert
 	if(guPermLevel>=20)
@@ -633,7 +633,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tSSLCert' href=mysqlApache2.cgi?gcFunction=tSSLCert>tSSLCert</a>\n");
+	  printf("\t\t\t<a title='tSSLCert' href=unxsApache.cgi?gcFunction=tSSLCert>tSSLCert</a>\n");
 	}
 	//tClient
 	if(guPermLevel>=7)
@@ -644,7 +644,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Customer or Customer Contact Info' href=mysqlApache2.cgi?gcFunction=tClient>tClient</a>\n");
+	  printf("\t\t\t<a title='Customer or Customer Contact Info' href=unxsApache.cgi?gcFunction=tClient>tClient</a>\n");
 	}
 	//tTemplate
 	if(guPermLevel>=20)
@@ -655,7 +655,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplate' href=mysqlApache2.cgi?gcFunction=tTemplate>tTemplate</a>\n");
+	  printf("\t\t\t<a title='tTemplate' href=unxsApache.cgi?gcFunction=tTemplate>tTemplate</a>\n");
 	}
 	//tTemplateSet
 	if(guPermLevel>=20)
@@ -666,7 +666,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateSet' href=mysqlApache2.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
+	  printf("\t\t\t<a title='tTemplateSet' href=unxsApache.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
 	}
 	//tTemplateType
 	if(guPermLevel>=20)
@@ -677,7 +677,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateType' href=mysqlApache2.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
+	  printf("\t\t\t<a title='tTemplateType' href=unxsApache.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
 	}
 	//tJob
 	if(guPermLevel>=20)
@@ -688,7 +688,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tJob' href=mysqlApache2.cgi?gcFunction=tJob>tJob</a>\n");
+	  printf("\t\t\t<a title='tJob' href=unxsApache.cgi?gcFunction=tJob>tJob</a>\n");
 	}
 	//tLog
 	if(guPermLevel>=20)
@@ -699,7 +699,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLog' href=mysqlApache2.cgi?gcFunction=tLog>tLog</a>\n");
+	  printf("\t\t\t<a title='tLog' href=unxsApache.cgi?gcFunction=tLog>tLog</a>\n");
 	}
 	//tLogType
 	if(guPermLevel>=20)
@@ -710,7 +710,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogType' href=mysqlApache2.cgi?gcFunction=tLogType>tLogType</a>\n");
+	  printf("\t\t\t<a title='tLogType' href=unxsApache.cgi?gcFunction=tLogType>tLogType</a>\n");
 	}
 	//tLogMonth
 	if(guPermLevel>=20)
@@ -721,7 +721,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogMonth' href=mysqlApache2.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
+	  printf("\t\t\t<a title='tLogMonth' href=unxsApache.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
 	}
 	//tMonth
 	if(guPermLevel>=20)
@@ -732,7 +732,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMonth' href=mysqlApache2.cgi?gcFunction=tMonth>tMonth</a>\n");
+	  printf("\t\t\t<a title='tMonth' href=unxsApache.cgi?gcFunction=tMonth>tMonth</a>\n");
 	}
 	//tConfiguration
 	if(guPermLevel>=20)
@@ -743,7 +743,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tConfiguration' href=mysqlApache2.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
+	  printf("\t\t\t<a title='tConfiguration' href=unxsApache.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
 	}
 	//tServer
 	if(guPermLevel>=20)
@@ -754,7 +754,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tServer' href=mysqlApache2.cgi?gcFunction=tServer>tServer</a>\n");
+	  printf("\t\t\t<a title='tServer' href=unxsApache.cgi?gcFunction=tServer>tServer</a>\n");
 	}
 	//tStatus
 	if(guPermLevel>=20)
@@ -765,7 +765,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tStatus' href=mysqlApache2.cgi?gcFunction=tStatus>tStatus</a>\n");
+	  printf("\t\t\t<a title='tStatus' href=unxsApache.cgi?gcFunction=tStatus>tStatus</a>\n");
 	}
 	//tJobStatus
 	if(guPermLevel>=20)
@@ -776,7 +776,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tJobStatus' href=mysqlApache2.cgi?gcFunction=tJobStatus>tJobStatus</a>\n");
+	  printf("\t\t\t<a title='tJobStatus' href=unxsApache.cgi?gcFunction=tJobStatus>tJobStatus</a>\n");
 	}
 	//tAuthorize
 	if(guPermLevel>=20)
@@ -787,7 +787,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Login Authorization' href=mysqlApache2.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
+	  printf("\t\t\t<a title='Login Authorization' href=unxsApache.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
 	}
 	//tGlossary
 	if(guPermLevel>=20)
@@ -798,7 +798,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tGlossary' href=mysqlApache2.cgi?gcFunction=tGlossary>tGlossary</a>\n");
+	  printf("\t\t\t<a title='tGlossary' href=unxsApache.cgi?gcFunction=tGlossary>tGlossary</a>\n");
 	}
 
 	
@@ -828,7 +828,7 @@ void ConnectDb(void)
         {
 		if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
 		{
-	                mysqlApache2("Database server unavailable. Did you run mysqlApache2.cgi Initialize &lt;mysqlpwd&gt;?");
+	                unxsApache("Database server unavailable. Did you run unxsApache.cgi Initialize &lt;mysqlpwd&gt;?");
 		}
         }
 
@@ -839,7 +839,7 @@ void NoSuchFunction(void)
 {
 	 
 	sprintf(gcQuery,"[%s] Not Recognized",gcFunction);
-	mysqlApache2(gcQuery);
+	unxsApache(gcQuery);
 }
 
 void ProcessControlVars(pentry entries[], int x)
@@ -1245,7 +1245,7 @@ char *TextAreaSave(char *cField)
 	else
 		cCopy=(char *)cField;
 
-	if(!cCopy) mysqlApache2("TextAreaInput() malloc error");
+	if(!cCopy) unxsApache("TextAreaInput() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1285,7 +1285,7 @@ char *TransformAngleBrackets(char *cField)
 	if(!uNum) return(cField);
 	cCopy=(char *)malloc( ( (strlen(cField)) + (uNum*4) + 1 ));
 
-	if(!cCopy) mysqlApache2("TransformAngleBrackets() malloc error");
+	if(!cCopy) unxsApache("TransformAngleBrackets() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1328,7 +1328,7 @@ char *EncodeDoubleQuotes(char *cField)
 	if(!uNum) return(cField);
 	cCopy=(char *)malloc( ( (strlen(cField)) + (uNum*5) + 1 ));
 
-	if(!cCopy) mysqlApache2("EncodeDoubleQuotes() malloc error");
+	if(!cCopy) unxsApache("EncodeDoubleQuotes() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1443,8 +1443,8 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
 
 void InitialInstall(void)
 {
-	mysqlApache2("Please run\
-		mysqlApache2.cgi Initialize &lt;mysqlpwd&gt; from the command line");
+	unxsApache("Please run\
+		unxsApache.cgi Initialize &lt;mysqlpwd&gt; from the command line");
 
 }//void InitialInstall(void)
 
@@ -1685,14 +1685,14 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: mysqlApache2Login=%s;\n",gcLogin);
-		printf("Set-Cookie: mysqlApache2Passwd=%s;\n",gcPasswd);
+		printf("Set-Cookie: unxsApacheLogin=%s;\n",gcLogin);
+		printf("Set-Cookie: unxsApachePasswd=%s;\n",gcPasswd);
 		strncpy(gcUser,gcLogin,41);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 		mysql_query(&gMysql,gcQuery);
-		mysqlApache2("DashBoard");
+		unxsApache("DashBoard");
 	}
 	else
 	{
@@ -1773,7 +1773,7 @@ void SSLCookieLogin(void)
 	//Parse out login and passwd from cookies
 #ifdef SSLONLY
 	if(getenv("HTTPS")==NULL) 
-		mysqlApache2("Non SSL access denied");
+		unxsApache("Non SSL access denied");
 #endif
 
 	if(getenv("HTTP_COOKIE")!=NULL)
@@ -1782,9 +1782,9 @@ void SSLCookieLogin(void)
 	if(gcCookie[0])
 	{
 
-	if((ptr=strstr(gcCookie,"mysqlApache2Login=")))
+	if((ptr=strstr(gcCookie,"unxsApacheLogin=")))
 	{
-		ptr+=strlen("mysqlApache2Login=");
+		ptr+=strlen("unxsApacheLogin=");
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
@@ -1796,9 +1796,9 @@ void SSLCookieLogin(void)
 			strncpy(gcLogin,ptr,99);
 		}
 	}
-	if((ptr=strstr(gcCookie,"mysqlApache2Passwd=")))
+	if((ptr=strstr(gcCookie,"unxsApachePasswd=")))
 	{
-		ptr+=strlen("mysqlApache2Passwd=");
+		ptr+=strlen("unxsApachePasswd=");
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
@@ -1819,7 +1819,7 @@ void SSLCookieLogin(void)
 	strncpy(gcUser,gcLogin,41);
 	GetPLAndClient(gcUser);
 	if(!guPermLevel || !guLoginClient)
-		mysqlApache2("Access denied");
+		unxsApache("Access denied");
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
 
@@ -1900,7 +1900,7 @@ void GetClientOwner(unsigned uClient, unsigned *uOwner)
 
 
 
-void mysqlApache2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+void unxsApacheLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 {
         char cQuery[512];
 
@@ -1909,7 +1909,7 @@ void mysqlApache2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
         mysql_query(&gMysql,cQuery);
 
-}//void mysqlApache2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+}//void unxsApacheLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
 
 long unsigned luGetCreatedDate(char *cTableName, unsigned uTablePK)
@@ -1961,7 +1961,7 @@ void htmlPlainTextError(const char *cError)
 	char cQuery[1024];
 
 	printf("Content-type: text/plain\n\n");
-	printf("Please report this mysqlApache2 fatal error ASAP:\n%s\n",cError);
+	printf("Please report this unxsApache fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
         sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",guPermLevel,guLoginClient,gcLogin,gcHost,cError,gcHostname,guLoginClient,guCompany);

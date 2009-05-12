@@ -1,6 +1,6 @@
 /*
 FILE
-	tMySQL source code of mysqlApache2.cgi
+	tMySQL source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2009 for Unixservice
 	$Id: module.c.template 2459 2009-02-11 12:04:10Z Gary $
 PURPOSE
@@ -149,7 +149,7 @@ void tMySQL(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetMySQL();
-				mysqlApache2("New tMySQL table created");
+				unxsApache("New tMySQL table created");
                 	}
 			else
 			{
@@ -338,7 +338,7 @@ void NewtMySQL(unsigned uMode)
 	uMySQL=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tMySQL",uMySQL);
-	mysqlApache2Log(uMySQL,"tMySQL","New");
+	unxsApacheLog(uMySQL,"tMySQL","New");
 #endif
 
 	if(!uMode)
@@ -364,14 +364,14 @@ void DeletetMySQL(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uMySQL,"tMySQL","Del");
+		unxsApacheLog(uMySQL,"tMySQL","Del");
 #endif
 		tMySQL(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uMySQL,"tMySQL","DelError");
+		unxsApacheLog(uMySQL,"tMySQL","DelError");
 #endif
 		tMySQL(LANG_NBR_RECNOTDELETED);
 	}
@@ -440,7 +440,7 @@ void ModtMySQL(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tMySQL",uMySQL);
-	mysqlApache2Log(uMySQL,"tMySQL","Mod");
+	unxsApacheLog(uMySQL,"tMySQL","Mod");
 #endif
 	tMySQL(gcQuery);
 

@@ -13,7 +13,9 @@ AUTHOR
 #include "local.h"
 char *strptime(const char *s, const char *format, struct tm *tm);
 
-static char cTableList[64][32]={"tSite","tSiteUser","tMySQL","tMySQLUser","tIP","tClient","tTemplate","tTemplateSet","tTemplateType","tJob","tLog","tLogType","tLogMonth","tMonth","tConfiguration","tServer","tStatus","tJobStatus","tAuthorize","tGlossary","tSSLCert",""};
+static char cTableList[64][32]={"tAuthorize","tClient","tConfiguration","tGlossary","tIP","tJob",
+			"tJobStatus","tLog","tLogMonth","tLogType","tMonth","tMySQL","tMySQLUser",
+			"tServer","tSite","tSiteUser","tSSLCert","tStatus","tTemplate","tTemplateSet","tTemplateType",""};
 
 char cInitTableList[64][32]={"tConfiguration","tGlossary","tIP","tJobStatus","tLogType","tServer","tStatus","tTemplate","tTemplateSet","tTemplateType",""};
 
@@ -51,7 +53,7 @@ int iExtMainCommands(pentry entries[], int x)
 	{
 		if(!strcmp(gcCommand,"Dashboard"))
 		{
-			mysqlApache2("DashBoard");
+			unxsApache("DashBoard");
 		}
 	}
 	return(0);
@@ -207,7 +209,7 @@ void ExtMainContent(void)
 	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);
 
 	OpenRow("Application Summary","black");
-	printf("<td>Webfarm manager (this is the technical back-office interface.) Uses flexible configuration templates sets and types that can be crafted for almost any scenario and any text file configured httpd server. Will manage from a central location n websites on m servers. Supports extra httpd daemon on same server for better SSL performance.<p>Will soon support replicated webfarm servers and end user and reseller template based dynamic interfaces for 24x7 self-help and self-up-sell.<p>mysqlApache2 manages this cluster of webfarm servers (or a single simple server) via an asynchronous job queue.<p>Will soon support deployment check jobs for quick dashboard status/health overview from external deployment/changes confirmation.<p>Designed to work with mysqlBind/mysqlSendmail/mysqlPostfix to provide quick deployment of complete hosting services.</td></tr>\n");
+	printf("<td>Webfarm manager (this is the technical back-office interface.) Uses flexible configuration templates sets and types that can be crafted for almost any scenario and any text file configured httpd server. Will manage from a central location n websites on m servers. Supports extra httpd daemon on same server for better SSL performance.<p>Will soon support replicated webfarm servers and end user and reseller template based dynamic interfaces for 24x7 self-help and self-up-sell.<p>unxsApache manages this cluster of webfarm servers (or a single simple server) via an asynchronous job queue.<p>Will soon support deployment check jobs for quick dashboard status/health overview from external deployment/changes confirmation.<p>Designed to work with mysqlBind/mysqlSendmail/mysqlPostfix to provide quick deployment of complete hosting services.</td></tr>\n");
 
 	if(guPermLevel>9)
 	{
@@ -215,7 +217,7 @@ void ExtMainContent(void)
 		OpenRow("Table List","black");
 		printf("<td>\n");
 		for(i=0;cTableList[i][0];i++)
-			printf("<a href=mysqlApache2.cgi?gcFunction=%.32s>%.32s</a><br>\n",
+			printf("<a href=unxsApache.cgi?gcFunction=%.32s>%.32s</a><br>\n",
 				cTableList[i],cTableList[i]);
 		printf("</td></tr>\n");
         	OpenRow("Admin Functions","black");
@@ -314,7 +316,7 @@ void RestoreAll(char *cPasswd)
 		exit(1);
 	}
 
-	printf("Restoring mysqlApache2 data from .txt file in %s/mysqlApache2/data...\n\n",cISMROOT);
+	printf("Restoring unxsApache data from .txt file in %s/unxsApache/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -329,7 +331,7 @@ void RestoreAll(char *cPasswd)
 
 	for(i=0;cTableList[i][0];i++)
 	{
-sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/mysqlApache2/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cTableList[i],cTableList[i]);
+sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsApache/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cTableList[i],cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -360,7 +362,7 @@ void Restore(char *cPasswd, char *cTableName)
 		exit(1);
 	}
 
-	printf("Restoring mysqlApache2 data from .txt file in %s/mysqlApache2/data...\n\n",cISMROOT);
+	printf("Restoring unxsApache data from .txt file in %s/unxsApache/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -373,7 +375,7 @@ void Restore(char *cPasswd, char *cTableName)
 		exit(1);
 	}
 
-	sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/mysqlApache2/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cTableName,cTableName);
+	sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsApache/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cTableName,cTableName);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -403,7 +405,7 @@ void Backup(char *cPasswd)
 		exit(1);
 	}
 
-	printf("Backing up mysqlApache2 data to .txt files in %s/mysqlApache2/data...\n\n",cISMROOT);
+	printf("Backing up unxsApache data to .txt files in %s/unxsApache/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -420,7 +422,7 @@ void Backup(char *cPasswd)
 	{
 		char cFileName[300];
 
-		sprintf(cFileName,"%s/mysqlApache2/data/%s.txt"
+		sprintf(cFileName,"%s/unxsApache/data/%s.txt"
 				,cISMROOT,cTableList[i]);
 		unlink(cFileName);
 
@@ -457,7 +459,7 @@ void Initialize(char *cPasswd)
 		exit(1);
 	}
 
-	printf("Creating db and setting permissions, installing data from %s/mysqlApache2...\n\n",cISMROOT);
+	printf("Creating db and setting permissions, installing data from %s/unxsApache...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -516,19 +518,24 @@ mysql_query(&gMysql,gcQuery);
 	CreatetIP();
 	CreatetJob();
 	CreatetJobStatus();
+	CreatetLog();
+	CreatetLogMonth();
 	CreatetLogType();
+	CreatetMonth();
+	CreatetMySQL();
+	CreatetMySQLUser();
 	CreatetServer();
+	CreatetSite();
+	CreatetSiteUser();
+	CreatetSSLCert();
 	CreatetStatus();
 	CreatetTemplate();
 	CreatetTemplateSet();
 	CreatetTemplateType();
-	CreatetSSLCert();
-	CreatetLog();
-	CreatetMonth();
 
         for(i=0;cInitTableList[i][0];i++)
         {
-                sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/mysqlApache2/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cInitTableList[i],cInitTableList[i]);
+                sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsApache/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cInitTableList[i],cInitTableList[i]);
                 mysql_query(&gMysql,gcQuery);
                 if(mysql_errno(&gMysql))
                 {
@@ -660,7 +667,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 
 void CalledByAlias(int iArgc,char *cArgv[])
 {
-	if(strstr(cArgv[0],"mysqlApache2RSS.xml"))
+	if(strstr(cArgv[0],"unxsApacheRSS.xml"))
 	{
 		MYSQL_RES *res;
 		MYSQL_ROW field;
@@ -682,7 +689,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 
 		//This is the standard place. With much parsing nonsense we can
 		//	do better by using env vars
-		sprintf(cLinkStart,"%s://%s/cgi-bin/mysqlApache2.cgi",cHTTP,gcHost);
+		sprintf(cLinkStart,"%s://%s/cgi-bin/unxsApache.cgi",cHTTP,gcHost);
 
 		printf("Content-type: text/xml\n\n");
 
@@ -690,11 +697,11 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		printf("<?xml version='1.0' encoding='UTF-8'?>\n");
 		printf("<rss version='2.0'>\n");
 		printf("<channel>\n");
-		printf("<title>mysqlApache2 RSS tJob Errors</title>\n");
-		printf("<link>http://openisp.net/mysqlApache2</link>\n");
-		printf("<description>mysqlApache2 tJob Errors</description>\n");
+		printf("<title>unxsApache RSS tJob Errors</title>\n");
+		printf("<link>http://openisp.net/unxsApache</link>\n");
+		printf("<description>unxsApache tJob Errors</description>\n");
 		printf("<lastBuildDate>%.199s</lastBuildDate>\n",cRSSDate);
-		printf("<generator>mysqlApache2 RSS Generator</generator>\n");
+		printf("<generator>unxsApache RSS Generator</generator>\n");
 		printf("<docs>http://blogs.law.harvard.edu/tech/rss</docs>\n");
 		printf("<ttl>120</ttl>\n");
 
@@ -712,7 +719,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("\n<item>\n");
-			printf("<title>mysqlApache2.tJob.uJob=%s</title>\n",field[0]);
+			printf("<title>unxsApache.tJob.uJob=%s</title>\n",field[0]);
 			printf("<link>%s?gcFunction=tJob&amp;uJob=%s</link>\n",cLinkStart,
 							field[0]);
 			printf("<description>cJobName=%s Server=%s uUser=%s\ncJobData=(%s)</description>\n",field[2],field[1],field[3],field[4]);

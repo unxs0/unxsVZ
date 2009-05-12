@@ -1,6 +1,6 @@
 /*
 FILE
-	tSiteUser source code of mysqlApache2.cgi
+	tSiteUser source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id: tsiteuser.c 2471 2009-02-18 19:02:14Z hus-admin $
 PURPOSE
@@ -215,7 +215,7 @@ void tSiteUser(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetSiteUser();
-				mysqlApache2("New tSiteUser table created");
+				unxsApache("New tSiteUser table created");
                 	}
 			else
 			{
@@ -490,7 +490,7 @@ void NewtSiteUser(unsigned uMode)
 	uSiteUser=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tSiteUser",uSiteUser);
-	mysqlApache2Log(uSiteUser,"tSiteUser","New");
+	unxsApacheLog(uSiteUser,"tSiteUser","New");
 #endif
 
 	if(!uMode)
@@ -518,14 +518,14 @@ void DeletetSiteUser(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uSiteUser,"tSiteUser","Del");
+		unxsApacheLog(uSiteUser,"tSiteUser","Del");
 #endif
 		tSiteUser(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uSiteUser,"tSiteUser","DelError");
+		unxsApacheLog(uSiteUser,"tSiteUser","DelError");
 #endif
 		tSiteUser(LANG_NBR_RECNOTDELETED);
 	}
@@ -618,7 +618,7 @@ void ModtSiteUser(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tSiteUser",uSiteUser);
-	mysqlApache2Log(uSiteUser,"tSiteUser","Mod");
+	unxsApacheLog(uSiteUser,"tSiteUser","Mod");
 #endif
 	tSiteUser(gcQuery);
 

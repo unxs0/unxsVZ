@@ -1,6 +1,6 @@
 /*
 FILE
-	tMySQLUser source code of mysqlApache2.cgi
+	tMySQLUser source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2009 for Unixservice
 	$Id: module.c.template 2459 2009-02-11 12:04:10Z Gary $
 PURPOSE
@@ -167,7 +167,7 @@ void tMySQLUser(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetMySQLUser();
-				mysqlApache2("New tMySQLUser table created");
+				unxsApache("New tMySQLUser table created");
                 	}
 			else
 			{
@@ -391,7 +391,7 @@ void NewtMySQLUser(unsigned uMode)
 	uMySQLUser=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tMySQLUser",uMySQLUser);
-	mysqlApache2Log(uMySQLUser,"tMySQLUser","New");
+	unxsApacheLog(uMySQLUser,"tMySQLUser","New");
 #endif
 
 	if(!uMode)
@@ -417,14 +417,14 @@ void DeletetMySQLUser(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uMySQLUser,"tMySQLUser","Del");
+		unxsApacheLog(uMySQLUser,"tMySQLUser","Del");
 #endif
 		tMySQLUser(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uMySQLUser,"tMySQLUser","DelError");
+		unxsApacheLog(uMySQLUser,"tMySQLUser","DelError");
 #endif
 		tMySQLUser(LANG_NBR_RECNOTDELETED);
 	}
@@ -500,7 +500,7 @@ void ModtMySQLUser(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tMySQLUser",uMySQLUser);
-	mysqlApache2Log(uMySQLUser,"tMySQLUser","Mod");
+	unxsApacheLog(uMySQLUser,"tMySQLUser","Mod");
 #endif
 	tMySQLUser(gcQuery);
 

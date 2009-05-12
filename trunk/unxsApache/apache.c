@@ -270,7 +270,7 @@ void InitializeParams(structExtJobParameters *structExtParam)
 		//GetConfiguration("cDefaultMaxIPs",cValue,1);
 		sscanf(cValue,"%u",&uMaxIPs);
 
-		//Multiple website hosting servers running off a single mysqlApache2.
+		//Multiple website hosting servers running off a single unxsApache.
 		//Note: tConfiguration: Must be in dummy staging area the same domain for all
 		//servers
 		//GetConfiguration("cIPBasedRootSite",cIPBasedRootSite,1);
@@ -338,14 +338,14 @@ int InformExtJob(char *cRemoteMsg,char *cServer,unsigned uJob,unsigned uJobStatu
 
 	time(&clock);
 
-	sprintf(gcQuery,"UPDATE tJob SET cServer='%s',cRemoteMsg='%.32s',uModBy=1,uModDate=%lu,uJobStatus=%u WHERE uJob=%u",
-			cServer,TextAreaSave(cRemoteMsg),clock,uJobStatus,uJob);
+	sprintf(gcQuery,"UPDATE tJob SET cServer='%s',cRemoteMsg='%.32s',uModBy=1,uModDate=UNIX_TIMESTAMP_NOW(),uJobStatus=%u WHERE uJob=%u",
+			cServer,TextAreaSave(cRemoteMsg),uJobStatus,uJob);
 	printf("InformExtJob(): %s\n",gcQuery);
 	mysql_query(&mysqlext,gcQuery);
 	if(mysql_errno(&mysqlext))
 	{
 		fprintf(stderr,"InformExtJob():%s\n%s\n",mysql_error(&mysqlext),gcQuery);
-		SubmitISPJob("mysqlApache2.InformExtJob.Failed",
+		SubmitISPJob("unxsApache.InformExtJob.Failed",
 				(char *)mysql_error(&mysqlext),cServer,clock);
 		return(1);
 	}
@@ -382,7 +382,8 @@ int InformExtJob(char *cRemoteMsg,char *cServer,unsigned uJob,unsigned uJobStatu
 		return(0);
 	}
 
-	sprintf(gcQuery,"select uJobStatus=%u,(max(uJobStatus)=min(uJobStatus)),cJobName FROM tJob WHERE uJobGroup=%u GROUP BY uJobGroup",mysqlISP_Deployed,uJobGroup);
+	sprintf(gcQuery,"SELECT uJobStatus=%u,(max(uJobStatus)=min(uJobStatus)),cJobName "
+			"FROM tJob WHERE uJobGroup=%u GROUP BY uJobGroup",mysqlISP_Deployed,uJobGroup);
 	printf("InformExtJob(): %s\n",gcQuery);
 	mysql_query(&mysqlext,gcQuery);
 	if(mysql_errno(&mysqlext))
@@ -403,7 +404,8 @@ int InformExtJob(char *cRemoteMsg,char *cServer,unsigned uJob,unsigned uJobStatu
 				else if(strstr(field[2],".Hold"))
 					uInstanceStatus=mysqlISP_OnHold;
 
-				sprintf(gcQuery,"UPDATE tInstance SET uStatus=%u,uModBy=1,uModDate=%lu WHERE uInstance=%u",uInstanceStatus,clock,uInstance);
+				sprintf(gcQuery,"UPDATE tInstance SET uStatus=%u,uModBy=1,uModDate=UNIX_TIMESTAMP_NOW() WHERE uInstance=%u",
+					uInstanceStatus,uInstance);
 				printf("InformExtJob(): %s\n",gcQuery);
 				mysql_query(&mysqlext,gcQuery);
 				if(mysql_errno(&mysqlext))
@@ -424,7 +426,9 @@ int SubmitISPJob(char *cJobName,char *cJobData,char *cServer,unsigned uJobDate)
 
 	time(&clock);
 	
-	sprintf(gcQuery,"INSERT INTO tJob SET  cServer='%s', cJobName='%s', cJobData='%.1024s', uJobDate=%u, uOwner=1, uCreatedBy=1, uCreatedDate=%lu, uJobStatus=%u, cLabel='mysqlApache2.SubmitISPJob'",
+	sprintf(gcQuery,"INSERT INTO tJob SET  cServer='%s', cJobName='%s', cJobData='%.1024s',"
+			" uJobDate=%u, uOwner=1, uCreatedBy=1, uCreatedDate=%lu, uJobStatus=%u,"
+			"cLabel='unxsApache.SubmitISPJob'",
 			cServer
 			,cJobName
 			,TextAreaSave(cJobData)
@@ -443,11 +447,13 @@ int SubmitISPJob(char *cJobName,char *cJobData,char *cServer,unsigned uJobDate)
 }//int SubmitISPJob()
 
 
-int SubmitExtSingleJob(const char *cJobName,char *cJobData,const char *cServer,unsigned uJobDate, unsigned uJob, unsigned uJobSite,const char *cResource,unsigned uOwner)
+int SubmitExtSingleJob(const char *cJobName,char *cJobData,const char *cServer,unsigned uJobDate,
+			unsigned uJob, unsigned uJobSite,const char *cResource,unsigned uOwner)
 {
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE cJobName='%s' AND cJobData='%s' AND cServer='%s' AND uJobSite=%u",cJobName,cJobData,cServer,uJobSite);
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE cJobName='%s' AND cJobData='%s' AND cServer='%s'"
+			" AND uJobSite=%u",cJobName,cJobData,cServer,uJobSite);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -560,8 +566,9 @@ void ProcessExtJobQueue(char *cServer)
 	time(&clock);
 
 
-	sprintf(gcQuery,"SELECT cJobName,cJobData,uJob,uJobClient FROM tJob WHERE (cServer='Any' OR cServer='%s') AND (uJobStatus=%u OR uJobStatus=%u "
-			"OR uJobStatus=%u) AND uJobDate<=%lu AND cJobName LIKE 'mysqlApache2.%%'",
+	sprintf(gcQuery,"SELECT cJobName,cJobData,uJob,uJobClient FROM tJob WHERE (cServer='Any'"
+			" OR cServer='%s') AND (uJobStatus=%u OR uJobStatus=%u "
+			"OR uJobStatus=%u) AND uJobDate<=%lu AND cJobName LIKE 'unxsApache.%%'",
 			cServer
 			,9
 			,10
@@ -595,7 +602,7 @@ void ProcessExtJobQueue(char *cServer)
 		//Here we need to create a new tClient if needed.
 		//Need to create new tSiteUser and tProFTP entries
 		//Then the tSite entries
-		if(!strcmp("mysqlApache2.VH.New",field[0]))
+		if(!strcmp("unxsApache.VH.New",field[0]))
 		{
 			unsigned uCurrentIPSites=0;
 			unsigned uCurrentSites=0;
@@ -634,7 +641,7 @@ void ProcessExtJobQueue(char *cServer)
 			//2-. cIP stuff
 			//3-. Admin account stuff
 			//
-sprintf(gcQuery,"SELECT uSite FROM tSite WHERE cDomain='%s' AND uServer=%u",
+			sprintf(gcQuery,"SELECT uSite FROM tSite WHERE cDomain='%s' AND uServer=%u",
 				structExtParam.cDomain,uTargetServer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -656,8 +663,9 @@ sprintf(gcQuery,"SELECT uSite FROM tSite WHERE cDomain='%s' AND uServer=%u",
 			}
 			mysql_free_result(res2);
 
-sprintf(gcQuery,"SELECT tSiteUser.uSiteUser FROM tSiteUser,tSite WHERE tSiteUser.cLogin='%s' AND tSiteUser.uSite=tSite.uSite AND tSite.uServer=%u",
-		structExtParam.cLogin,uTargetServer);
+			sprintf(gcQuery,"SELECT tSiteUser.uSiteUser FROM tSiteUser,tSite WHERE "
+					"tSiteUser.cLogin='%s' AND tSiteUser.uSite=tSite.uSite AND tSite.uServer=%u",
+					structExtParam.cLogin,uTargetServer);
 
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -723,7 +731,7 @@ sprintf(gcQuery,"SELECT tSiteUser.uSiteUser FROM tSiteUser,tSite WHERE tSiteUser
 				}
 
 				//Special requirements for multiple server 
-				//based mysqlApache2.system
+				//based unxsApache.system
 				GetIPVirtualHost(structExtParam.cIPBasedRootSite,
 						cIP,uTargetServer);
 				if(!cIP[0])
@@ -874,12 +882,12 @@ sprintf(gcQuery,"SELECT tSiteUser.uSiteUser FROM tSiteUser,tSite WHERE tSiteUser
 			SubmitExtSingleJob("ExtNewSite",structExtParam.cDomain,structExtParam.cServer,clock,uJob,uSite,structExtParam.cDomain,uOwner);
 			SubmitExtSingleJob("ExtNewSiteUser",structExtParam.cLogin,structExtParam.cServer,clock,uJob,uSite,structExtParam.cLogin,uOwner);
 			
-			InformExtJob("mysqlApache2.ExtNewSite",cServer,uJob,mysqlISP_RemotelyQueued);
+			InformExtJob("unxsApache.ExtNewSite",cServer,uJob,mysqlISP_RemotelyQueued);
 
 		}//VH.New
 		//Wow that is long....
 
-		else if(!strcmp("mysqlApache2.VH.Cancel",field[0]))
+		else if(!strcmp("unxsApache.VH.Cancel",field[0]))
 		{
 			printf("\n%s(%s):\n",field[0],field[2]);
 			ParseExtParams(&structExtParam,field[1]);
@@ -894,8 +902,8 @@ sprintf(gcQuery,"SELECT tSiteUser.uSiteUser FROM tSiteUser,tSite WHERE tSiteUser
 			uTargetServer=GetuServer(structExtParam.cServer);
 
 			//Allow cancel of any status site
-sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND cDomain='%s'",
-				uTargetServer,structExtParam.cDomain);
+			sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND cDomain='%s'",
+					uTargetServer,structExtParam.cDomain);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
         		{
@@ -916,7 +924,7 @@ sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND cDomain='%s'",
 					SubmitExtSingleJob("ExtDelSite",
 						structExtParam.cLogin,structExtParam.cServer,
 							clock,uJob,uSite,structExtParam.cLogin,uOwner);
-					InformExtJob("mysqlApache2.ExtDelSite",
+					InformExtJob("unxsApache.ExtDelSite",
 						cServer,uJob,mysqlISP_RemotelyQueued);
 				}
 				else
@@ -928,7 +936,7 @@ sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND cDomain='%s'",
 			}
 		}//VH.Cancel
 
-		else if(!strcmp("mysqlApache2.VH.Mod",field[0]))
+		else if(!strcmp("unxsApache.VH.Mod",field[0]))
 		{	
 			printf("\n%s(%s):\n",field[0],field[2]);
 			ParseExtParams(&structExtParam,field[1]);
@@ -962,10 +970,10 @@ sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND cDomain='%s'",
 					//modification needed.
 					if(!ExtModify(&structExtParam,
 							uSite,uJob,cServer))
-					InformExtJob("mysqlApache2.ExtModify",
+					InformExtJob("unxsApache.ExtModify",
 						cServer,uJob,mysqlISP_RemotelyQueued);
 					else
-					InformExtJob("mysqlApache2.ExtModify error",
+					InformExtJob("unxsApache.ExtModify error",
 						cServer,uJob,mysqlISP_Waiting);
 				}
 				else
@@ -977,7 +985,7 @@ sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND cDomain='%s'",
 			}
 		}//VH.Mod
 
-		else if(!strcmp("mysqlApache2.VH.Hold",field[0]))
+		else if(!strcmp("unxsApache.VH.Hold",field[0]))
 		{	
 			printf("\n%s(%s):\n",field[0],field[2]);
 			ParseExtParams(&structExtParam,field[1]);
@@ -1014,7 +1022,7 @@ sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND cDomain='%s'",
 					SubmitExtSingleJob("ExtHoldSite",
 						structExtParam.cLogin,structExtParam.cServer,
 							clock,uJob,uSite,structExtParam.cLogin,uOwner);
-					InformExtJob("mysqlApache2.ExtHoldSite",
+					InformExtJob("unxsApache.ExtHoldSite",
 						cServer,uJob,mysqlISP_RemotelyQueued);
 				}
 				else
@@ -1027,7 +1035,7 @@ sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND cDomain='%s'",
 
 		}//VH.Hold
 
-		else if(!strcmp("mysqlApache2.VH.RemoveHold",field[0]))
+		else if(!strcmp("unxsApache.VH.RemoveHold",field[0]))
 		{	
 			printf("\n%s(%s):\n",field[0],field[2]);
 			ParseExtParams(&structExtParam,field[1]);
@@ -1040,8 +1048,8 @@ sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND cDomain='%s'",
 			}
 			uTargetServer=GetuServer(structExtParam.cServer);
 
-sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND"
-			" cDomain='%s' AND uStatus=%u",
+			sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND"
+				" cDomain='%s' AND uStatus=%u",
 				uTargetServer,
 				structExtParam.cDomain,
 				STATUS_HOLD);
@@ -1065,7 +1073,7 @@ sprintf(gcQuery,"SELECT uSite FROM tSite WHERE uServer=%u AND"
 					SubmitExtSingleJob("ExtRemoveHold",
 						structExtParam.cLogin,structExtParam.cServer,
 							clock,uJob,uSite,structExtParam.cLogin,uOwner);
-					InformExtJob("mysqlApache2.ExtRemoveHold",
+					InformExtJob("unxsApache.ExtRemoveHold",
 						cServer,uJob,mysqlISP_RemotelyQueued);
 				}
 				else
@@ -1105,7 +1113,9 @@ void HandleOtherPrevQueuedJobs(unsigned uSite,char *cServer)
 	//site. This is not meant for mod jobs however.
 
 	//We need the list of all local waiting jobs
-sprintf(gcQuery,"SELECT uJob,cJobData FROM tJob WHERE uJobSite=%u AND uJobStatus=%u AND (cJobName='ExtHoldSite' OR cJobName='ExtDelSite')",uSite,JOBSTATUS_WAITING);
+	sprintf(gcQuery,"SELECT uJob,cJobData FROM tJob WHERE uJobSite=%u AND "
+			"uJobStatus=%u AND (cJobName='ExtHoldSite' OR cJobName='ExtDelSite')",
+			uSite,JOBSTATUS_WAITING);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -1129,7 +1139,7 @@ sprintf(gcQuery,"SELECT uJob,cJobData FROM tJob WHERE uJobSite=%u AND uJobStatus
 			char cMsg[33];
 			unsigned uExtJob=0;
 
-			sprintf(cMsg,"mysqlApache2.extra uJob=%s",field[0]);
+			sprintf(cMsg,"unxsApache.extra uJob=%s",field[0]);
 			sscanf(cp+5,"%u",&uExtJob);
 			InformExtJob(cMsg,cServer,uExtJob,mysqlISP_Canceled);
 		}
@@ -1175,8 +1185,8 @@ int ExtModify(structExtJobParameters *structExtParam, unsigned uSite,
 
 			if(strcmp(structExtParam->cPasswd,field[0]))
 			{
-				sprintf(gcQuery,"UPDATE tSiteUser SET cPasswd='%s',uModBy=1,uModDate=%lu WHERE uSite=%u AND cLogin='%s'",
-						structExtParam->cPasswd,clock,uSite,structExtParam->cLogin);
+				sprintf(gcQuery,"UPDATE tSiteUser SET cPasswd='%s',uModBy=1,uModDate=UNIX_TIMESTAMP_NOW() WHERE uSite=%u AND cLogin='%s'",
+						structExtParam->cPasswd,uSite,structExtParam->cLogin);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -1250,8 +1260,8 @@ int ExtModify(structExtJobParameters *structExtParam, unsigned uSite,
 	{
 		if(uPD)
 		{
-sprintf(gcQuery,"UPDATE tSite SET uModDate=%lu,uModBy=1 WHERE uSite=%u",
-					clock,uSite);
+			sprintf(gcQuery,"UPDATE tSite SET uModDate=UNIX_TIMESTAMP_NOW(),uModBy=1 WHERE uSite=%u",
+					uSite);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -1265,7 +1275,8 @@ sprintf(gcQuery,"UPDATE tSite SET uModDate=%lu,uModBy=1 WHERE uSite=%u",
 		}
 		if(uWZ)
 		{
-sprintf(gcQuery,"UPDATE tSite SET uWebalizer=%u,uModDate=%lu,uModBy=1 WHERE uSite=%u",structExtParam->uWebalizer,clock,uSite);
+			sprintf(gcQuery,"UPDATE tSite SET uWebalizer=%u,uModDate=UNIX_TIMESTAMP_NOW(),"
+					"uModBy=1 WHERE uSite=%u",structExtParam->uWebalizer,uSite);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -1278,7 +1289,8 @@ sprintf(gcQuery,"UPDATE tSite SET uWebalizer=%u,uModDate=%lu,uModBy=1 WHERE uSit
 		}
 		if(uSQ)
 		{
-sprintf(gcQuery,"UPDATE tSite SET uMySQL=%u,uModDate=%lu,uModBy=1 WHERE uSite=%u",structExtParam->uMySQL,clock,uSite);
+			sprintf(gcQuery,"UPDATE tSite SET uMySQL=%u,uModDate=UNIX_TIMESTAMP_NOW(),"
+					"uModBy=1 WHERE uSite=%u",structExtParam->uMySQL,uSite);
 
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -1391,7 +1403,7 @@ void ModifyParkedDomains(char *cIP, char *cDomain, char *cParkedDomains,
 	//htmlPlainTextError(cVirtualHost);
 
 
-sprintf(gcQuery,"UPDATE tSite SET cVirtualHost='%s' WHERE uSite=%u"
+	sprintf(gcQuery,"UPDATE tSite SET cVirtualHost='%s' WHERE uSite=%u"
 			,TextAreaSave(cVirtualHost)
 			,uSite);
 	mysql_query(&gMysql,gcQuery);
@@ -1520,7 +1532,9 @@ void ScheduleJob(unsigned uSite,
 	
 	time(&clock);
 
-        sprintf(gcQuery,"INSERT INTO tJob (cServer,cLabel,cJobData,cJobName,uJobSite,uJobDate,uJobStatus,uOwner,uCreatedBy,uCreatedDate) SELECT cLabel,'%s','%s','%s',%u,%lu,%u,%u,%u,%lu FROM tServer WHERE uServer=%u",
+        sprintf(gcQuery,"INSERT INTO tJob (cServer,cLabel,cJobData,cJobName,uJobSite,"
+			"uJobDate,uJobStatus,uOwner,uCreatedBy,uCreatedDate) "
+			"SELECT cLabel,'%s','%s','%s',%u,%lu,%u,%u,%u,%lu FROM tServer WHERE uServer=%u",
 			"Priority=Normal",
 			cJobData,
 			cJobName,
@@ -1543,7 +1557,7 @@ void UpdateVHStatus(unsigned uSite,unsigned uVHStatus)
 	time_t clock;
 
 	time(&clock);
-	sprintf(gcQuery,"UPDATE tSite SET uStatus=%u,uModBy=1,uModDate=%lu WHERE uSite=%u",uVHStatus,clock,uSite);
+	sprintf(gcQuery,"UPDATE tSite SET uStatus=%u,uModBy=1,uModDate=UNIX_TIMESTAMP_NOW() WHERE uSite=%u",uVHStatus,uSite);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
                 fprintf(stderr,"%s\n",mysql_error(&gMysql));
@@ -1626,7 +1640,9 @@ void ProcessJobQueue(char *cServer)
 
 	//The order by is to insure that sites are done first. This is needed
 	//to insure site server group id needs to exist to create the site users.
-        sprintf(gcQuery,"SELECT uJob,cJobName,uJobSite,uJobSiteUser,cJobData,uJobDate,uJobStatus,cLabel FROM tJob WHERE cServer='%s' AND uJobDate<%lu AND uJobStatus=1 ORDER BY uJobSiteUser LIMIT 20",cServer,luClock);
+        sprintf(gcQuery,"SELECT uJob,cJobName,uJobSite,uJobSiteUser,cJobData,uJobDate,"
+			"uJobStatus,cLabel FROM tJob WHERE cServer='%s' AND uJobDate<%lu "
+			"AND uJobStatus=1 ORDER BY uJobSiteUser LIMIT 20",cServer,luClock);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		TextError(mysql_error(&gMysql),0);
@@ -1648,7 +1664,7 @@ void ProcessJobQueue(char *cServer)
 			sscanf(cLine,"mysqlISP2.tJob.uJob=%u",&uExtJob);
 		}
 			
-printf("Running: %s\n",field[1]);		
+		printf("Running: %s\n",field[1]);		
 		if(!strcmp(field[1],"NewSiteUser") || !strcmp(field[1],"ExtNewSiteUser"))
 		{
 			if(!strcmp(field[1],"ExtNewSiteUser"))
@@ -1959,53 +1975,6 @@ void ExtConnectDb(unsigned uHtml)
 }//end of ExtConnectDb()
 
 
-void CreateNewClient(structExtJobParameters *structExtParam)
-{
-	time_t luClock;
-	MYSQL_RES *res;
-
-	//Create new tClient if needed
-	time(&luClock);
-	if(structExtParam->uISPClient>1)
-	{
-		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient=%u",
-			structExtParam->uISPClient);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			fprintf(stderr,"%s\n",mysql_error(&gMysql));
-			return;
-		}
-
-		res=mysql_store_result(&gMysql);
-		if(!mysql_num_rows(res)) 
-		{
-			sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cInfo='(uISPClient)',uClient=%u,uOwner=1,uCreatedBy=1,uCreatedDate=%lu",structExtParam->cClientName,structExtParam->uISPClient,luClock);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
-				mysql_free_result(res);
-				return;
-			}
-		}
-		else
-		{
-			sprintf(gcQuery,"UPDATE tClient SET cLabel='%s',cInfo='(uISPClient)',uModBy=1,uModDate=%lu WHERE uClient=%u",structExtParam->cClientName,luClock,structExtParam->uISPClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
-				mysql_free_result(res);
-				return;
-			}
-		}
-		mysql_free_result(res);
-	}
-
-}//void CreateNewClient(structExtJobParameters *structExtParam)
-			
-
 void GetCurrentIPSites(unsigned uLoginClient,unsigned *uCurrentIPSites,
 				unsigned uHtml,unsigned uServer)
 {
@@ -2132,7 +2101,9 @@ void GetIPVirtualHost(char *cName, char *cValue, unsigned uServer)
                 strcpy(cValue,field[0]);
 		if(!cName[0])
 		{
-		sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=%lu WHERE uIP=%s",guLoginClient,(unsigned long)clock,field[1]);
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,"
+					"uModDate=UNIX_TIMESTAMP_NOW() WHERE uIP=%s",
+					guLoginClient,field[1]);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -2187,7 +2158,8 @@ int HoldSite(unsigned uSite,unsigned uServer)
         MYSQL_ROW field;
 	unsigned uRetVal=0;
 
-	sprintf(gcQuery,"SELECT tSiteUser.cLogin FROM tSiteUser,tSite WHERE tSiteUser.uSite=tSite.uSite AND tSite.uSite=%u",uSite);
+	sprintf(gcQuery,"SELECT tSiteUser.cLogin FROM tSiteUser,tSite WHERE "
+			"tSiteUser.uSite=tSite.uSite AND tSite.uSite=%u",uSite);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2276,7 +2248,9 @@ int RemoveHold(unsigned uSite,unsigned uServer)
         MYSQL_ROW field;
 	unsigned uRetVal=0;
 
-	sprintf(gcQuery,"SELECT tSiteUser.cLogin,tSiteUser.cPasswd FROM tSiteUser,tSite WHERE tSiteUser.uSite=tSite.uSite AND tSite.uSite=%u",uSite);
+	sprintf(gcQuery,"SELECT tSiteUser.cLogin,tSiteUser.cPasswd FROM "
+			"tSiteUser,tSite WHERE tSiteUser.uSite=tSite.uSite "
+			"AND tSite.uSite=%u",uSite);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2362,7 +2336,9 @@ int NewSiteJob(unsigned uJob, unsigned uSite)
         MYSQL_ROW field;
 	char cQuery[1024];
 
-	sprintf(cQuery,"SELECT tSite.cDomain FROM tSiteUser,tSite WHERE tSiteUser.uSite=tSite.uSite AND tSite.uSite=%u AND tSiteUser.uAdmin=1",uSite);
+	sprintf(cQuery,"SELECT tSite.cDomain FROM tSiteUser,tSite WHERE "
+			"tSiteUser.uSite=tSite.uSite AND tSite.uSite=%u "
+			"AND tSiteUser.uAdmin=1",uSite);
         mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
                 TextError(mysql_error(&gMysql),0);
@@ -2662,7 +2638,7 @@ void UpdateJobStatus(unsigned uJob,unsigned uJobStatus)
 	char cQuery[256];
 
         sprintf(cQuery,"UPDATE tJob SET uJobStatus=%u WHERE uJob=%u",
-							uJobStatus,uJob);
+			uJobStatus,uJob);
         mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
 		TextError(mysql_error(&gMysql),0);
@@ -2675,7 +2651,7 @@ void UpdateSiteStatus(unsigned uSite,unsigned uStatus)
 	char cQuery[256];
 
         sprintf(cQuery,"UPDATE tSite SET uStatus=%u WHERE uSite=%u",
-							uStatus,uSite);
+			uStatus,uSite);
         mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
 		TextError(mysql_error(&gMysql),0);
@@ -2688,7 +2664,7 @@ void UpdateSiteUserStatus(unsigned uSiteUser,unsigned uStatus)
 	char cQuery[256];
 
         sprintf(cQuery,"UPDATE tSiteUser SET uStatus=%u WHERE uSiteUser=%u",
-							uStatus,uSiteUser);
+			uStatus,uSiteUser);
 	printf("UpdateSiteUserStatus(): %s\n",cQuery);
         mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
@@ -2701,10 +2677,14 @@ void TextError(const char *cError, unsigned uContinue)
 {
 	char cQuery[1024];
 
-	printf("\nPlease report this mysqlApache2. error ASAP:\n%s\n",cError);
+	printf("\nPlease report this unxsApache. error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
-        sprintf(cQuery,"INSERT INTO tLog SET cLabel='TextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",guPermLevel,guLoginClient,gcUser,gcHost,cError,gcHostname,guLoginClient);
+        sprintf(cQuery,"INSERT INTO tLog SET cLabel='TextError',uLogType=4,"
+			"uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',"
+			"cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			guPermLevel,guLoginClient,gcUser,gcHost,cError,gcHostname,guLoginClient);
         mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
 		printf("Another error occurred while attempting to log: %s\n",
@@ -2826,7 +2806,7 @@ int MakeAndCheckConfFiles(const char *cServer)
 	}
 	mysql_free_result(res);
 
-	fprintf(fp,"\n#Built by webfarm automation system mysqlApache2.\n#$Id: apache.c 2409 2009-01-14 16:21:13Z hus-admin $ (C) 2007 Unixservice\n");
+	fprintf(fp,"\n#Built by webfarm automation system unxsApache.\n#$Id: apache.c 2409 2009-01-14 16:21:13Z hus-admin $ (C) 2007 Unixservice\n");
 	fclose(fp);
 
 	GetConfiguration("cApacheSSLDir",cApacheSSLDir,0,0);
@@ -2852,7 +2832,8 @@ int MakeAndCheckConfFiles(const char *cServer)
 		mysql_free_result(res);
 	}
 
-        sprintf(gcQuery,"SELECT cSSLVirtualHost,cDomain FROM tSite WHERE uServer=%u AND uStatus=%u AND cSSLVirtualHost!='' AND uNameBased=0 ORDER BY cDomain",uServer,STATUS_ACTIVE);
+        sprintf(gcQuery,"SELECT cSSLVirtualHost,cDomain FROM tSite WHERE uServer=%u AND uStatus=%u "
+			"AND cSSLVirtualHost!='' AND uNameBased=0 ORDER BY cDomain",uServer,STATUS_ACTIVE);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		TextError(mysql_error(&gMysql),0);
@@ -2865,12 +2846,14 @@ int MakeAndCheckConfFiles(const char *cServer)
 	}
 	mysql_free_result(res);
 
-	fprintf(fp,"\n#Built by webfarm automation system mysqlApache2.\n#$Id: apache.c 2409 2009-01-14 16:21:13Z hus-admin $ (C) 2007 Unixservice\n");
+	fprintf(fp,"\n#Built by webfarm automation system unxsApache.\n#$Id: apache.c 2409 2009-01-14 16:21:13Z hus-admin $ (C) 2007 Unixservice\n");
 	fclose(fp);
 
 	//Here we create all the SSL cert files
 	GetConfiguration("cWebRoot",cWebRoot,0,0);
-	sprintf(gcQuery,"SELECT tSite.cDomain,tSSLCert.cDomain,tSSLCert.cCert,tSSLCert.cKey FROM tSite,tSSLCert WHERE tSite.uSSLCert=tSSLCert.uSSLCert AND tSite.uNameBased=0 AND tSite.uServer=%u AND tSite.uStatus=%u",uServer,STATUS_ACTIVE);
+	sprintf(gcQuery,"SELECT tSite.cDomain,tSSLCert.cDomain,tSSLCert.cCert,tSSLCert.cKey FROM "
+			"tSite,tSSLCert WHERE tSite.uSSLCert=tSSLCert.uSSLCert AND tSite.uNameBased=0 "
+			"AND tSite.uServer=%u AND tSite.uStatus=%u",uServer,STATUS_ACTIVE);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
                 TextError(mysql_error(&gMysql),0);
@@ -3243,7 +3226,8 @@ int DelSiteJob(unsigned uJob, unsigned uSite)
 	printf("DelSiteJob(%u,%u)\n",uJob,uSite);
 
 	//Delete all site users from system and from tSiteUser
-        sprintf(gcQuery,"SELECT tSiteUser.cLogin,tSite.cDomain,tSite.uNameBased,tSite.cIP FROM tSiteUser,tSite WHERE tSiteUser.uSite=tSite.uSite AND tSiteUser.uSite=%u",uSite);
+        sprintf(gcQuery,"SELECT tSiteUser.cLogin,tSite.cDomain,tSite.uNameBased,tSite.cIP FROM "
+			"tSiteUser,tSite WHERE tSiteUser.uSite=tSite.uSite AND tSiteUser.uSite=%u",uSite);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		TextError(mysql_error(&gMysql),0);

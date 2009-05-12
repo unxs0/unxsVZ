@@ -316,7 +316,7 @@ void tJobNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-printf("<a class=darkLink href=mysqlApache2.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
+printf("<a class=darkLink href=unxsApache.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
 	        }
 	}
         mysql_free_result(res);

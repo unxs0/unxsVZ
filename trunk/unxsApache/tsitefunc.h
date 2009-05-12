@@ -346,7 +346,7 @@ void ExttSiteCommands(pentry entries[], int x)
         			mysql_query(&gMysql,gcQuery);
         			if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
-				mysqlApache2Log(uSite,"tSite","DelJob");
+				unxsApacheLog(uSite,"tSite","DelJob");
 				tSite("Site (and it's users) scheduled for immeditate deletion. Site files will remain for 30 days.");
 			}
 			else
@@ -498,14 +498,14 @@ void ExttSiteButtons(void)
 			printf("<u>New: <i>Step 1</i> Tips</u><br>");
 			printf("Frist you must enter a cDomain, decide if it will be an IP or named based site, "
 				"select a uServer (and if a name based site set your cParkedDomains.) Much more "
-				"information here: <a href=mysqlApache2.cgi?gcFunction=tGlossary&uGlossary=1>tSite help</a>.\n");
+				"information here: <a href=unxsApache.cgi?gcFunction=tGlossary&uGlossary=1>tSite help</a>.\n");
                         printf("<p><input type=submit class=largeButton name=gcCommand value='Step 2'>");
                 break;
 		case 3000:
 			printf("<u>New: <i>Step 2</i> Tips</u><br>");
 			printf("Now you must enter a login name and password. This will be used by the site "
 				"administrator for uploading content and managing his site with optional "
-				"mysqlApache2 interfaces. The login and password should adhere to your security "
+				"unxsApache interfaces. The login and password should adhere to your security "
 				"standards and should never be related to the site or company/contact/user name.\n");
                         printf("<p><input type=text name=cLogin maxlength=32 value='%s'> Login",
 					cLogin);
@@ -605,7 +605,7 @@ void ExttSiteButtons(void)
 			printf("<u>Table Tips</u><br>");
 			printf("The tSite table is the basis for all websites. It is where you configure "
 				"and deploy your webfarm websites among many other management and report "
-				"activities (<a href=mysqlApache2.cgi?gcFunction=tGlossary&uGlossary=1>tSite help</a>.)\n");
+				"activities (<a href=unxsApache.cgi?gcFunction=tGlossary&uGlossary=1>tSite help</a>.)\n");
 			printf("<p><u>Record Context Info</u><br>");
 			if(!uSite)
 				printf("No site selected.");
@@ -766,7 +766,7 @@ void tSiteNavList(void)
 	if(mysql_num_rows(res))
 	{	
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlApache2.cgi?gcFunction=tSite"
+			printf("<a class=darkLink href=unxsApache.cgi?gcFunction=tSite"
 				"&uSite=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
@@ -791,7 +791,7 @@ void tSiteContextInfo(void)
 	{	
 		printf("(tSiteUser.cLogin/uStatus)<br>\n");
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlApache2.cgi?gcFunction=tSiteUser&uSiteUser=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
+			printf("<a class=darkLink href=unxsApache.cgi?gcFunction=tSiteUser&uSiteUser=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
 	}
         mysql_free_result(res);
 
@@ -1063,7 +1063,7 @@ int LocalModtSite(void)
 	if(mysql_errno(&gMysql))
 		return(4);
 	uModDate=luGetModDate("tSite",uSite);
-	mysqlApache2Log(uSite,"tSite","Mod");
+	unxsApacheLog(uSite,"tSite","Mod");
 
 	return(0);
 

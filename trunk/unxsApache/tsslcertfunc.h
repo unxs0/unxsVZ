@@ -279,7 +279,7 @@ void tSSLCertNavList(void)
         	printf("<p><u>tSSLCertNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlApache2.cgi?gcFunction=tSSLCert"
+			printf("<a class=darkLink href=unxsApache.cgi?gcFunction=tSSLCert"
 				"&uSSLCert=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);

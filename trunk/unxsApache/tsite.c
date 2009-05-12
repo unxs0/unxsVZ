@@ -1,6 +1,6 @@
 /*
 FILE
-	tSite source code of mysqlApache2.cgi
+	tSite source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id: tsite.c 2469 2009-02-18 17:07:15Z hus-admin $
 PURPOSE
@@ -241,7 +241,7 @@ void tSite(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetSite();
-				mysqlApache2("New tSite table created");
+				unxsApache("New tSite table created");
                 	}
 			else
 			{
@@ -586,7 +586,7 @@ void NewtSite(unsigned uMode)
 	uSite=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tSite",uSite);
-	mysqlApache2Log(uSite,"tSite","New");
+	unxsApacheLog(uSite,"tSite","New");
 #endif
 
 	if(!uMode)
@@ -614,14 +614,14 @@ void DeletetSite(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uSite,"tSite","Del");
+		unxsApacheLog(uSite,"tSite","Del");
 #endif
 		tSite(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uSite,"tSite","DelError");
+		unxsApacheLog(uSite,"tSite","DelError");
 #endif
 		tSite(LANG_NBR_RECNOTDELETED);
 	}
@@ -724,7 +724,7 @@ void ModtSite(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tSite",uSite);
-	mysqlApache2Log(uSite,"tSite","Mod");
+	unxsApacheLog(uSite,"tSite","Mod");
 #endif
 	tSite(gcQuery);
 
@@ -838,6 +838,6 @@ void CreatetSite(void)
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tSite ( uSite INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cDomain VARCHAR(64) NOT NULL DEFAULT '',unique (cDomain,uServer), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cParkedDomains TEXT NOT NULL DEFAULT '', cIP VARCHAR(16) NOT NULL DEFAULT '',index (cIP), cVirtualHost TEXT NOT NULL DEFAULT '', uNameBased INT UNSIGNED NOT NULL DEFAULT 0, uHDQuota INT UNSIGNED NOT NULL DEFAULT 0, uTrafficQuota INT UNSIGNED NOT NULL DEFAULT 0, uWebalizer INT UNSIGNED NOT NULL DEFAULT 0, uMySQL INT UNSIGNED NOT NULL DEFAULT 0, uMaxUsers INT UNSIGNED NOT NULL DEFAULT 0, uStatus INT UNSIGNED NOT NULL DEFAULT 0, uServer INT UNSIGNED NOT NULL DEFAULT 0, cSSLVirtualHost TEXT NOT NULL DEFAULT '', uSSLCert INT UNSIGNED NOT NULL DEFAULT 0, uClient INT UNSIGNED NOT NULL DEFAULT 0)");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		mysqlApache2(mysql_error(&gMysql));
+		unxsApache(mysql_error(&gMysql));
 }//CreatetSite()
 
