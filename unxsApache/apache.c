@@ -2325,8 +2325,8 @@ int NewSiteJob(unsigned uJob, unsigned uSite)
 
 	char cNewSiteTar[256]={"newwebsite/newwebsite.tar"};
 	char cSiteTar[512]={""};
-	char cWebRoot[256]={"/var/www/unxsapache/sites/"};
-	char cApacheDir[256]={"/var/www/unxsapache/conf.d/"};
+	char cWebRoot[256]={"/var/www/unxsapache/sites"};
+	char cApacheDir[256]={"/var/www/unxsapache/conf.d"};
 	//char cApacheUser[256]={"openisp"};
 	char cWebSiteDir[512]={""};
 	char cDomain[100]={""};
@@ -2359,7 +2359,7 @@ int NewSiteJob(unsigned uJob, unsigned uSite)
 	//Check for required installation files
 	GetConfiguration("cApacheDir",cApacheDir,0,0);
 	GetConfiguration("cNewSiteTar",cNewSiteTar,0,0);
-	sprintf(cSiteTar,"%s/%s",cApacheDir,cNewSiteTar);
+	sprintf(cSiteTar,"%s/%s",cWebRoot,cNewSiteTar);
 	if(stat(cSiteTar,&info))
 	{
 		sprintf(cQuery,"NewSiteJob() No:\n%s\n",cSiteTar);
@@ -2385,8 +2385,8 @@ int NewSiteJob(unsigned uJob, unsigned uSite)
 			return(51);
 		}
 	}
-	
-	sprintf(cQuery,"tar -C %s -xf %s%s",cWebSiteDir,cWebRoot,cSiteTar);
+
+	sprintf(cQuery,"tar -C %s -xf %s",cWebSiteDir,cSiteTar);
 	if(system(cQuery))
 	{
 		TextError(cQuery,1);
@@ -2422,6 +2422,7 @@ int NewSiteJob(unsigned uJob, unsigned uSite)
 		fprintf(fp,"\n");
 		fclose(fp);
 	}
+	printf("End of NewSiteJob()\n");
 	return(0);
 
 }//int NewSiteJob(unsigned uJob,unsigned uSite)
