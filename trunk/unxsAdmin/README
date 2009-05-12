@@ -1,0 +1,25 @@
+This unxsVZ dir will host the unxsadmin rpm that will be required for all
+other unxsVZ admin web interfaces. It will provide the shared 
+html/css/images/js required by any unxsX web interface.
+
+The intial idea is to leverage the CentOS 5 httpd/apache2 setup via a:
+
+/etc/httpd/conf.d/unxs.conf 
+
+That will provide an SSL only location to /var/www/unxs on a random
+high number port.
+
+The proposed base structure of the /var/www/unxs dir will be:
+
+/var/www/unxs/cgi-bin
+/var/www/unxs/logs
+/var/www/unxs/html
+/var/www/unxs/html/images
+/var/www/unxs/html/js
+/var/www/unxs/html/css
+
+Other packages will be able to add additional content. For example, unxsBind 
+would add at least:
+
+/var/www/unxs/cgi-bin/iDNS.cgi
+/var/www/unxs/cgi-bin/idnsAdmin.cgi
