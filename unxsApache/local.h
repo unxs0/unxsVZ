@@ -8,12 +8,10 @@ LEGAL
 */
 
 //Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
-#define DBNAME "mysqlapache2"
-//#define DBIP0 "70.38.123.57"
-//#define DBIP1 "70.38.123.58"
+#define DBNAME "unxsapache"
 #define DBIP0 NULL 
 #define DBIP1 NULL
-#define DBLOGIN "mysqlapache2"
+#define DBLOGIN "unxsapache"
 #define DBPASSWD "wsxedc"
 #define DBPORT 0
 #define DBSOCKET NULL
@@ -22,7 +20,7 @@ LEGAL
 //#define DBPORT 4306
 //#define DBSOCKET "/var/lib/mysql/mysql4.sock"
 
-//mysqlapache2 can report to us once a week some useful for
+//unxsapache can report to us once a week some useful for
 //debugging and development statistics.
 //This is very helpful to us and in the end we hope for yourself.
 //For improving and developing this software

@@ -292,7 +292,7 @@ void tMySQLNavList(void)
         	printf("<p><u>tMySQLNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlApache2.cgi?gcFunction=tMySQL"
+			printf("<a class=darkLink href=unxsApache.cgi?gcFunction=tMySQL"
 				"&uMySQL=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

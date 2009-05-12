@@ -319,7 +319,7 @@ void tSiteUserNavList(void)
 	if(mysql_num_rows(res))
 	{	
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlApache2.cgi?gcFunction=tSiteUser"
+			printf("<a class=darkLink href=unxsApache.cgi?gcFunction=tSiteUser"
 			"&uSiteUser=%s>%s (%s)</a><br>\n",field[0],field[1],field[2]);
 	}
         mysql_free_result(res);
@@ -395,7 +395,7 @@ int LocalModtSiteUser(void)
 	if(mysql_errno(&gMysql))
 		return(4);
 	uModDate=luGetModDate("tSiteUser",uSiteUser);
-	mysqlApache2Log(uSiteUser,"tSiteUser","Mod");
+	unxsApacheLog(uSiteUser,"tSiteUser","Mod");
 
 	return(0);
 

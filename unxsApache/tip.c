@@ -1,6 +1,6 @@
 /*
 FILE
-	tIP source code of mysqlApache2.cgi
+	tIP source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id: tip.c 2355 2008-12-29 21:44:56Z hus-admin $
 PURPOSE
@@ -169,7 +169,7 @@ void tIP(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetIP();
-				mysqlApache2("New tIP table created");
+				unxsApache("New tIP table created");
                 	}
 			else
 			{
@@ -376,7 +376,7 @@ void NewtIP(unsigned uMode)
 	uIP=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tIP",uIP);
-	mysqlApache2Log(uIP,"tIP","New");
+	unxsApacheLog(uIP,"tIP","New");
 #endif
 
 	if(!uMode)
@@ -404,14 +404,14 @@ void DeletetIP(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uIP,"tIP","Del");
+		unxsApacheLog(uIP,"tIP","Del");
 #endif
 		tIP(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uIP,"tIP","DelError");
+		unxsApacheLog(uIP,"tIP","DelError");
 #endif
 		tIP(LANG_NBR_RECNOTDELETED);
 	}
@@ -491,7 +491,7 @@ void ModtIP(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tIP",uIP);
-	mysqlApache2Log(uIP,"tIP","Mod");
+	unxsApacheLog(uIP,"tIP","Mod");
 #endif
 	tIP(gcQuery);
 

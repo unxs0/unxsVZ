@@ -1,6 +1,6 @@
 /*
 FILE
-	tSSLCert source code of mysqlApache2.cgi
+	tSSLCert source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id: tsslcert.c 2355 2008-12-29 21:44:56Z hus-admin $
 PURPOSE
@@ -161,7 +161,7 @@ void tSSLCert(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetSSLCert();
-				mysqlApache2("New tSSLCert table created");
+				unxsApache("New tSSLCert table created");
                 	}
 			else
 			{
@@ -396,7 +396,7 @@ void NewtSSLCert(unsigned uMode)
 	uSSLCert=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tSSLCert",uSSLCert);
-	mysqlApache2Log(uSSLCert,"tSSLCert","New");
+	unxsApacheLog(uSSLCert,"tSSLCert","New");
 #endif
 
 	if(!uMode)
@@ -424,14 +424,14 @@ void DeletetSSLCert(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uSSLCert,"tSSLCert","Del");
+		unxsApacheLog(uSSLCert,"tSSLCert","Del");
 #endif
 		tSSLCert(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uSSLCert,"tSSLCert","DelError");
+		unxsApacheLog(uSSLCert,"tSSLCert","DelError");
 #endif
 		tSSLCert(LANG_NBR_RECNOTDELETED);
 	}
@@ -515,7 +515,7 @@ void ModtSSLCert(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tSSLCert",uSSLCert);
-	mysqlApache2Log(uSSLCert,"tSSLCert","Mod");
+	unxsApacheLog(uSSLCert,"tSSLCert","Mod");
 #endif
 	tSSLCert(gcQuery);
 
@@ -601,6 +601,6 @@ void CreatetSSLCert(void)
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tSSLCert ( uSSLCert INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cDomain VARCHAR(100) NOT NULL DEFAULT '',unique (cDomain), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cCert TEXT NOT NULL DEFAULT '', cKey TEXT NOT NULL DEFAULT '', cRequest TEXT NOT NULL DEFAULT '' )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		mysqlApache2(mysql_error(&gMysql));
+		unxsApache(mysql_error(&gMysql));
 }//CreatetSSLCert()
 

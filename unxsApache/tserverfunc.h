@@ -316,7 +316,7 @@ void tServerNavList(void)
 	{	
 	        while((field=mysql_fetch_row(res)))
 		{
-			printf("<a class=darkLink href=mysqlApache2.cgi?gcFunction=tServer"
+			printf("<a class=darkLink href=unxsApache.cgi?gcFunction=tServer"
 				"&uServer=%s&cSearch=%s>%s</a><br>\n",field[0],cURLEncode(cSearch),field[1]);
 			if(++uCount>=100)
 			{

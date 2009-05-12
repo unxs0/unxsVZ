@@ -1,6 +1,6 @@
 /*
 FILE
-	tLogMonth source code of mysqlApache2.cgi
+	tLogMonth source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id: tlogmonth.c 2355 2008-12-29 21:44:56Z hus-admin $
 PURPOSE
@@ -187,7 +187,7 @@ void tLogMonth(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetLogMonth();
-				mysqlApache2("New tLogMonth table created");
+				unxsApache("New tLogMonth table created");
                 	}
 			else
 			{

@@ -273,7 +273,7 @@ void tTemplateSetNavList(void)
 	if(mysql_num_rows(res))
 	{	
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlApache2.cgi?gcFunction=tTemplateSet"
+			printf("<a class=darkLink href=unxsApache.cgi?gcFunction=tTemplateSet"
 				"&uTemplateSet=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

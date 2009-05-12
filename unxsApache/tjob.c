@@ -1,6 +1,6 @@
 /*
 FILE
-	tJob source code of mysqlApache2.cgi
+	tJob source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id: tjob.c 2355 2008-12-29 21:44:56Z hus-admin $
 PURPOSE
@@ -187,7 +187,7 @@ void tJob(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetJob();
-				mysqlApache2("New tJob table created");
+				unxsApache("New tJob table created");
                 	}
 			else
 			{
@@ -473,7 +473,7 @@ void NewtJob(unsigned uMode)
 	uJob=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tJob",uJob);
-	mysqlApache2Log(uJob,"tJob","New");
+	unxsApacheLog(uJob,"tJob","New");
 #endif
 
 	if(!uMode)
@@ -501,14 +501,14 @@ void DeletetJob(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uJob,"tJob","Del");
+		unxsApacheLog(uJob,"tJob","Del");
 #endif
 		tJob(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uJob,"tJob","DelError");
+		unxsApacheLog(uJob,"tJob","DelError");
 #endif
 		tJob(LANG_NBR_RECNOTDELETED);
 	}
@@ -612,7 +612,7 @@ void ModtJob(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tJob",uJob);
-	mysqlApache2Log(uJob,"tJob","Mod");
+	unxsApacheLog(uJob,"tJob","Mod");
 #endif
 	tJob(gcQuery);
 

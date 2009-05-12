@@ -1,6 +1,6 @@
 /*
 FILE
-	tMonth source code of mysqlApache2.cgi
+	tMonth source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id: tmonth.c 2355 2008-12-29 21:44:56Z hus-admin $
 PURPOSE
@@ -149,7 +149,7 @@ void tMonth(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetMonth();
-				mysqlApache2("New tMonth table created");
+				unxsApache("New tMonth table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtMonth(unsigned uMode)
 	uMonth=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tMonth",uMonth);
-	mysqlApache2Log(uMonth,"tMonth","New");
+	unxsApacheLog(uMonth,"tMonth","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetMonth(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uMonth,"tMonth","Del");
+		unxsApacheLog(uMonth,"tMonth","Del");
 #endif
 		tMonth(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uMonth,"tMonth","DelError");
+		unxsApacheLog(uMonth,"tMonth","DelError");
 #endif
 		tMonth(LANG_NBR_RECNOTDELETED);
 	}
@@ -454,7 +454,7 @@ void ModtMonth(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tMonth",uMonth);
-	mysqlApache2Log(uMonth,"tMonth","Mod");
+	unxsApacheLog(uMonth,"tMonth","Mod");
 #endif
 	tMonth(gcQuery);
 

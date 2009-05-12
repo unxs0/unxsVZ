@@ -1,6 +1,6 @@
 /*
 FILE
-	tStatus source code of mysqlApache2.cgi
+	tStatus source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id: tstatus.c 2355 2008-12-29 21:44:56Z hus-admin $
 PURPOSE
@@ -149,7 +149,7 @@ void tStatus(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetStatus();
-				mysqlApache2("New tStatus table created");
+				unxsApache("New tStatus table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtStatus(unsigned uMode)
 	uStatus=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tStatus",uStatus);
-	mysqlApache2Log(uStatus,"tStatus","New");
+	unxsApacheLog(uStatus,"tStatus","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetStatus(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uStatus,"tStatus","Del");
+		unxsApacheLog(uStatus,"tStatus","Del");
 #endif
 		tStatus(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uStatus,"tStatus","DelError");
+		unxsApacheLog(uStatus,"tStatus","DelError");
 #endif
 		tStatus(LANG_NBR_RECNOTDELETED);
 	}
@@ -455,7 +455,7 @@ void ModtStatus(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tStatus",uStatus);
-	mysqlApache2Log(uStatus,"tStatus","Mod");
+	unxsApacheLog(uStatus,"tStatus","Mod");
 #endif
 	tStatus(gcQuery);
 

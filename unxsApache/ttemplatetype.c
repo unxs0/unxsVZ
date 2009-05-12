@@ -1,6 +1,6 @@
 /*
 FILE
-	tTemplateType source code of mysqlApache2.cgi
+	tTemplateType source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id: ttemplatetype.c 2355 2008-12-29 21:44:56Z hus-admin $
 PURPOSE
@@ -149,7 +149,7 @@ void tTemplateType(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetTemplateType();
-				mysqlApache2("New tTemplateType table created");
+				unxsApache("New tTemplateType table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtTemplateType(unsigned uMode)
 	uTemplateType=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tTemplateType",uTemplateType);
-	mysqlApache2Log(uTemplateType,"tTemplateType","New");
+	unxsApacheLog(uTemplateType,"tTemplateType","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetTemplateType(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uTemplateType,"tTemplateType","Del");
+		unxsApacheLog(uTemplateType,"tTemplateType","Del");
 #endif
 		tTemplateType(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlApache2Log(uTemplateType,"tTemplateType","DelError");
+		unxsApacheLog(uTemplateType,"tTemplateType","DelError");
 #endif
 		tTemplateType(LANG_NBR_RECNOTDELETED);
 	}
@@ -455,7 +455,7 @@ void ModtTemplateType(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tTemplateType",uTemplateType);
-	mysqlApache2Log(uTemplateType,"tTemplateType","Mod");
+	unxsApacheLog(uTemplateType,"tTemplateType","Mod");
 #endif
 	tTemplateType(gcQuery);
 

@@ -277,7 +277,7 @@ void tIPNavList(void)
 	if(mysql_num_rows(res))
 	{	
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlApache2.cgi?gcFunction=tIP"
+			printf("<a class=darkLink href=unxsApache.cgi?gcFunction=tIP"
 				"&uIP=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);

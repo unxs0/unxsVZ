@@ -74,7 +74,7 @@ extern unsigned guMode;
 extern int guError;
 extern char gcErrormsg[];
 
-void mysqlApache2(const char *cResult);
+void unxsApache(const char *cResult);
 void ConnectDb(void);
 void Footer_ism3(void);
 void Header_ism3(char *cMsg, int iJs);
@@ -108,7 +108,7 @@ void htmlPlainTextError(const char *cError);
 unsigned uAllowMod(const unsigned uOwner, const unsigned uCreatedBy);
 unsigned uAllowDel(const unsigned uOwner, const unsigned uCreatedBy);
 
-void mysqlApache2Log(unsigned uTablePK, char *cTableName, char *cLogEntry);
+void unxsApacheLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 
  //Standard tInputFunc functions
 char *WordToLower(char *cInput);

@@ -333,7 +333,7 @@ void tMySQLUserNavList(void)
         	printf("<p><u>tMySQLUserNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlApache2.cgi?gcFunction=tMySQLUser"
+			printf("<a class=darkLink href=unxsApache.cgi?gcFunction=tMySQLUser"
 				"&uMySQLUser=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}
