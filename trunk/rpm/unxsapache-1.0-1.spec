@@ -25,7 +25,10 @@ make
 cd $RPM_BUILD_DIR
 
 %install
+export CGIDIR=/var/www/cgi-bin/
 make install
+mkdir -p /var/www/html/images/
+cp ./images/*.gif /var/www/html/images/
 mkdir /var/local/apache
 mkdir /var/local/apache/bin
 mkdir /var/local/apache/cgi-bin
