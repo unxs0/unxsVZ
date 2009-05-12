@@ -33,19 +33,15 @@ RELEASE= 0.1
 #CFLAGS= -DLinux -DFreeBSD -Wall 
 #FreeBSD=1
 
-ifdef FreeBSD
-	LIBS= /usr/local/lib/mysql/libmysqlclient.a -lz -lm /usr/lib/libcrypt.a /usr/lib/openisp/libtemplate.a
-else
-	LIBS= /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl /usr/lib/openisp/libtemplate.a
-endif
+LIBS= -L/usr/lib/mysql -lmysqlclient -lz -lm -lcrypt /usr/lib/openisp/libtemplate.a
 
 
 
-all: mysqlApache2.cgi
+all: unxsApache.cgi
 
-mysqlApache2.cgi: tsite.o tsiteuser.o tmysql.o tmysqluser.o tip.o tsslcert.o tclient.o ttemplate.o ttemplateset.o ttemplatetype.o tjob.o tlog.o tlogtype.o tlogmonth.o tmonth.o tconfiguration.o tserver.o tstatus.o tjobstatus.o tauthorize.o tglossary.o  apache.o main.o cgi.o
-	cc tsite.o tsiteuser.o tmysql.o tmysqluser.o tip.o tsslcert.o tclient.o ttemplate.o ttemplateset.o ttemplatetype.o tjob.o tlog.o tlogtype.o tlogmonth.o tmonth.o tconfiguration.o tserver.o tstatus.o tjobstatus.o tauthorize.o tglossary.o  apache.o main.o cgi.o -o mysqlApache2.cgi $(LIBS) 
-	#mail -s "mysqlApache2$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
+unxsApache.cgi: tsite.o tsiteuser.o tmysql.o tmysqluser.o tip.o tsslcert.o tclient.o ttemplate.o ttemplateset.o ttemplatetype.o tjob.o tlog.o tlogtype.o tlogmonth.o tmonth.o tconfiguration.o tserver.o tstatus.o tjobstatus.o tauthorize.o tglossary.o  apache.o main.o cgi.o
+	cc tsite.o tsiteuser.o tmysql.o tmysqluser.o tip.o tsslcert.o tclient.o ttemplate.o ttemplateset.o ttemplatetype.o tjob.o tlog.o tlogtype.o tlogmonth.o tmonth.o tconfiguration.o tserver.o tstatus.o tjobstatus.o tauthorize.o tglossary.o  apache.o main.o cgi.o -o unxsApache.cgi $(LIBS) 
+	#mail -s "unxsApache$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
 
 tsite.o: tsite.c mysqlrad.h language.h tsitefunc.h local.h
 	cc -c tsite.c -o tsite.o $(CFLAGS)
@@ -127,17 +123,17 @@ clean:
 cleandist:
 	rm -f *.o *.gz
 
-install: mysqlApache2.cgi
-	install -s mysqlApache2.cgi $(CGIDIR)mysqlApache2.cgi
-	rm mysqlApache2.cgi
+install: unxsApache.cgi
+	install -s unxsApache.cgi $(CGIDIR)unxsApache.cgi
+	rm unxsApache.cgi
 
 distribution:
-	cd ..;  tar czvf mysqlApache2/mysqlApache2$(RELEASE).tar.gz --exclude .svn\
-		mysqlApache2/*.h\
-		mysqlApache2/*.c\
-		mysqlApache2/data\
-		mysqlApache2/docs\
-		mysqlApache2/makefile\
-		mysqlApache2/CHANGES\
-		mysqlApache2/LICENSE\
-		mysqlApache2/INSTALL
+	cd ..;  tar czvf unxsApache/unxsApache$(RELEASE).tar.gz --exclude .svn\
+		unxsApache/*.h\
+		unxsApache/*.c\
+		unxsApache/data\
+		unxsApache/docs\
+		unxsApache/makefile\
+		unxsApache/CHANGES\
+		unxsApache/LICENSE\
+		unxsApache/INSTALL

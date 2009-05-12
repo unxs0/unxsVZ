@@ -244,8 +244,8 @@ void ExttSiteCommands(pentry entries[], int x)
 					if(cSSLVirtualHostTemplate[0] && cSSLVirtualHostTemplate[0]!='-' && !uSSLCert)
 						tSite("<blink>Must select a tSSLCert</blink>");
 				}
-				if(!strcmp(cIP,"0.0.0.0"))
-					tSite("<blink>Must select a valid cIP-3</blink>");
+				//if(!strcmp(cIP,"0.0.0.0"))
+				//	tSite("<blink>Must select a valid cIP-3</blink>");
 
 				SetVirtualHostSections();
 
@@ -931,7 +931,12 @@ void DropDownIPBasedSite(const char *cSelectName,unsigned uSelector)
         }
         else
         {
-		printf("<select name=%s><option title='No selection'>---</option></select>\n",cSelectName);
+		//
+		//If no results, the sites shall be named based to the default host
+		//which is already running afterwards you install the httpd package
+		//in CentOS.
+		//
+		printf("<select name=%s><option title='Default selection'>0.0.0.0</option></select>\n",cSelectName);
         }
         printf("</select>\n");
 
