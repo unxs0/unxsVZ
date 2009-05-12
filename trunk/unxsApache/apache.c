@@ -2700,13 +2700,11 @@ int MakeAndCheckConfFiles(const char *cServer)
 	MYSQL_ROW field;
 	unsigned uServer=0;
 	FILE *fp;
-	char cWebRoot[256]={"/var/local/web"};
-	char cApacheDir[256]={"/var/local/apache"};
-	char cApacheSSLDir[256]={"/var/local/apache_ssl"};
+	char cApacheDir[256]={"/var/www/unxsapache/conf.d/"};
+	char cApacheSSLDir[256]={"/var/www/unxsapache/conf.d"};
 	char cServerIP[256]={"10.0.0.7"};
 	char cServerDomain[256]={"myisp.net"};
 	char cServerAdmin[256]={"support@myisp.net"};
-	struct t_template template;
 	unsigned uRetVal=0;
 
 	if(!cServer[0])
@@ -2734,7 +2732,8 @@ int MakeAndCheckConfFiles(const char *cServer)
 		return(1);
 	}
 
-        sprintf(gcQuery,"SELECT cIP,uNameBased FROM tSite WHERE uServer=%u AND uStatus=%u ORDER BY cDomain",uServer,STATUS_ACTIVE);
+        sprintf(gcQuery,"SELECT cIP,uNameBased FROM tSite WHERE uServer=%u AND uStatus=%u AND cIP!='0.0.0.0' "
+			"ORDER BY cDomain",uServer,STATUS_ACTIVE);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		TextError(mysql_error(&gMysql),0);
@@ -2760,39 +2759,6 @@ int MakeAndCheckConfFiles(const char *cServer)
 	}
 
 
-	//Almost 100% common template vars for both SSL and port 80 conf files
-	template.cpName[0]="cApacheDir";
-	template.cpValue[0]=cApacheDir;
-
-	template.cpName[1]="cServerIP";
-	template.cpValue[1]=cServerIP;
-
-	template.cpName[2]="cServerDomain";
-	template.cpValue[2]=cServerDomain;
-
-	template.cpName[3]="cServerAdmin";
-	template.cpValue[3]=cServerAdmin;
-
-	template.cpName[4]="";
-
-
-	sprintf(gcQuery,"%s/conf/httpd.conf",cApacheDir);
-	if(!(fp=fopen(gcQuery,"w")))
-	{
-		TextError(gcQuery,1);
-		return(7);
-	}
-	else
-	{
-		TemplateSelect("ApacheConfHeader");
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			Template(field[0],&template,fp);
-		}
-		mysql_free_result(res);
-	}
-
         sprintf(gcQuery,"SELECT cVirtualHost,cDomain FROM tSite WHERE uServer=%u AND uStatus=%u ORDER BY uNameBased",uServer,STATUS_ACTIVE);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -2800,6 +2766,12 @@ int MakeAndCheckConfFiles(const char *cServer)
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
+		sprintf(gcQuery,"%s/%s.conf",cApacheDir,field[1]);
+		if(!(fp=fopen(gcQuery,"w")))
+		{
+			TextError(gcQuery,1);
+			return(uRetVal);
+		}
 		fprintf(fp,"\n#Start cVirtualHost section %s\n",field[1]);
 		fprintf(fp,"%s",field[0]);
 		fprintf(fp,"#End cVirtualHost section %s\n",field[1]);
@@ -2811,27 +2783,6 @@ int MakeAndCheckConfFiles(const char *cServer)
 
 	GetConfiguration("cApacheSSLDir",cApacheSSLDir,0,0);
 
-	sprintf(gcQuery,"%s/conf/httpd.conf",cApacheSSLDir);
-	if(!(fp=fopen(gcQuery,"w")))
-	{
-		TextError(gcQuery,1);
-		return(7);
-	}
-	else
-	{
-		TemplateSelect("ApacheSSLConfHeader");
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			//Almost ;)
-			template.cpName[0]="cApacheSSLDir";
-			template.cpValue[0]=cApacheSSLDir;
-
-			Template(field[0],&template,fp);
-		}
-		mysql_free_result(res);
-	}
-
         sprintf(gcQuery,"SELECT cSSLVirtualHost,cDomain FROM tSite WHERE uServer=%u AND uStatus=%u "
 			"AND cSSLVirtualHost!='' AND uNameBased=0 ORDER BY cDomain",uServer,STATUS_ACTIVE);
         mysql_query(&gMysql,gcQuery);
@@ -2840,6 +2791,12 @@ int MakeAndCheckConfFiles(const char *cServer)
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
+		sprintf(gcQuery,"%s/%s.conf",cApacheSSLDir,field[1]);
+		if(!(fp=fopen(gcQuery,"a")))
+		{
+			TextError(gcQuery,1);
+			return(uRetVal);
+		}
 		fprintf(fp,"\n#Start cSSLVirtualHost section %s\n",field[1]);
 		fprintf(fp,"%s",field[0]);
 		fprintf(fp,"#End cSSLVirtualHost section %s\n",field[1]);
@@ -2848,7 +2805,7 @@ int MakeAndCheckConfFiles(const char *cServer)
 
 	fprintf(fp,"\n#Built by webfarm automation system unxsApache.\n#$Id: apache.c 2409 2009-01-14 16:21:13Z hus-admin $ (C) 2007 Unixservice\n");
 	fclose(fp);
-
+/*
 	//Here we create all the SSL cert files
 	GetConfiguration("cWebRoot",cWebRoot,0,0);
 	sprintf(gcQuery,"SELECT tSite.cDomain,tSSLCert.cDomain,tSSLCert.cCert,tSSLCert.cKey FROM "
@@ -2869,7 +2826,7 @@ int MakeAndCheckConfFiles(const char *cServer)
 		}
 	}
 	mysql_free_result(res);
-
+*/
 	uRetVal+=CheckConfFiles(cApacheDir,cApacheSSLDir);
 
 	
@@ -2885,38 +2842,20 @@ int CheckConfFiles(char *cApacheDir, char *cApacheSSLDir)
 {
 	unsigned uRetVal=0;
 
-	//Use httpd -t -f to check generated configuration files for non runtime syntax
+	//Use httpd -t
 	//error checking.
-	sprintf(gcQuery,"%1$s/bin/httpd -t -f %1$s/conf/httpd.conf > /dev/null 2>&1",
-			cApacheDir);
+	sprintf(gcQuery,"/usr/sbin/httpd -t");
 	if(system(gcQuery))
 	{
 		TextError("httpd.conf configuration error",1);
 		uRetVal++;
 	}
-	sprintf(gcQuery,"%1$s/bin/httpd -t -f %1$s/conf/httpd.conf > /dev/null 2>&1",
-			cApacheSSLDir);
-	if(system(gcQuery))
-	{
-		printf("%s\n",gcQuery);
-		
-		TextError("SSL httpd.conf configuration error",1);
-		uRetVal++;
-	}
 
 	//Now check for warnings
-	sprintf(gcQuery,"%1$s/bin/httpd -t -f %1$s/conf/httpd.conf 2>&1 | grep -i warn > /dev/null 2>&1",
-			cApacheDir);
+	sprintf(gcQuery,"/usr/sbin/httpd -t 2>&1 | grep -i warn > /dev/null 2>&1");
 	if(!system(gcQuery))
 	{
 		TextError("httpd.conf configuration warning",1);
-		uRetVal++;
-	}
-	sprintf(gcQuery,"%1$s/bin/httpd -t -f %1$s/conf/httpd.conf 2>&1 | grep -i warn > /dev/null 2>&1",
-			cApacheSSLDir);
-	if(!system(gcQuery))
-	{
-		TextError("SSL httpd.conf configuration warning",1);
 		uRetVal++;
 	}
 
