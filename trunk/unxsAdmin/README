@@ -23,3 +23,23 @@ would add at least:
 
 /var/www/unxs/cgi-bin/iDNS.cgi
 /var/www/unxs/cgi-bin/idnsAdmin.cgi
+
+---
+Notes on quick package building
+
+cd unxsVZ
+tar czvf unxsAdmin.tar.gz unxsAdmin/ --exclude .svn
+mv unxsAdmin.tar.gz ../rpm-staging/
+cd ../rpm-staging
+tar xzf unxsAdmin.tar.gz
+rm unxsAdmin.tar.gz
+mv unxsAdmin unxsadmin-1.0
+tar czvf unxsadmin-1.0.tar.gz unxsadmin-1.0/
+cp unxsadmin-1.0.tar.gz /usr/src/redhat/SOURCES
+cp unxsadmin-1.0/unxsadmin-1.0-1.spec /usr/src/redhat/SPECS
+rm -r unxsadmin-1.0
+cd /usr/src/redhat/SPECS
+rpmbuild -ba unxsadmin-1.0-1.spec
+
+sftp the src and binary rpms to the publication server
+sftp the unxsadmin-1.0.tar.gz to the source server as specified in the spec file
