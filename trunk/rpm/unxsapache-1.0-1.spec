@@ -52,6 +52,32 @@ cp newwebsite.tar /var/local/apache/newwebsite/
 %files
 %doc INSTALL LICENSE
 /var/www/cgi-bin/unxsApache.cgi
+/var/www/html/images/calendar.gif
+/var/www/html/images/hairline.gif
+/var/www/html/images/left.gif
+/var/www/html/images/left_on.gif
+/var/www/html/images/right.gif
+/var/www/html/images/right_last.gif
+/var/www/html/images/right_on.gif
+/var/local/apache
+/var/local/apache/bin
+/var/local/apache/cgi-bin
+/var/local/apache/conf
+/var/local/apache/etc
+/var/local/apache/logs
+/var/local/apache/newwebsite
+/var/local/apache_ssl
+/var/local/apache_ssl/bin
+/var/local/apache_ssl/cgi-bin
+/var/local/apache_ssl/conf
+/var/local/apache_ssl/etc
+/var/local/apache_ssl/htdocs
+/var/local/apache_ssl/logs
+/var/local/apache_ssl/modules
+/var/local/apache/modules
 
+%changelog
+* Mon Apr 11 2009 - Hugo Urquiza <support2@unixservice.com>
+- Initial RPM release
 
 
