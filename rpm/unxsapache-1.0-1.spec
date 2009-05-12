@@ -26,6 +26,23 @@ cd $RPM_BUILD_DIR
 
 %install
 make install
+mkdir /var/local/apache
+mkdir /var/local/apache/bin
+mkdir /var/local/apache/cgi-bin
+mkdir /var/local/apache/conf
+mkdir /var/local/apache/etc
+mkdir /var/local/apache/logs
+mkdir /var/local/apache/newwebsite
+ln -s /usr/lib/httpd/modules/ /var/local/apache/modules
+mkdir /var/local/apache_ssl
+mkdir /var/local/apache_ssl/bin
+mkdir /var/local/apache_ssl/cgi-bin
+mkdir /var/local/apache_ssl/conf
+mkdir /var/local/apache_ssl/etc
+mkdir /var/local/apache_ssl/htdocs
+mkdir /var/local/apache_ssl/logs
+ln -s /usr/lib/httpd/modules/ /var/local/apache_ssl/modules
+cp newwebsite.tar /var/local/apache/newwebsite/
 
 %clean
 
