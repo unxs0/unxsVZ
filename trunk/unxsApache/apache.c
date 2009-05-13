@@ -28,7 +28,7 @@ void UpdateSiteStatus(unsigned uSite,unsigned uStatus);
 void UpdateSiteUserStatus(unsigned uSiteUser,unsigned uStatus);
 void TextError(const char *cError, unsigned uContinue);
 int MakeAndCheckConfFiles(const char *cServer);
-int CheckConfFiles(char *cApacheDir, char *cApacheSSLDir);
+int CheckConfFiles(void);
 
 //These are all local server OPs
 int RestartHTTPDaemons(void);
@@ -2829,7 +2829,7 @@ int MakeAndCheckConfFiles(const char *cServer)
 	}
 	mysql_free_result(res);
 */
-	uRetVal+=CheckConfFiles(cApacheDir,cApacheSSLDir);
+	uRetVal+=CheckConfFiles();
 
 	
 	//Restart httpd daemons should be done after same check and check for
@@ -2840,7 +2840,7 @@ int MakeAndCheckConfFiles(const char *cServer)
 }//int MakeAndCheckConfFiles(const char *cServer)
 
 
-int CheckConfFiles(char *cApacheDir, char *cApacheSSLDir)
+int CheckConfFiles(void)
 {
 	unsigned uRetVal=0;
 
@@ -2933,13 +2933,7 @@ int RestartHTTPDaemons(void)
 
 int CommandLineRestart(void)
 {
-	char cApacheDir[256]={"/var/local/apache"};
-	char cApacheSSLDir[256]={"/var/local/apache_ssl"};
-
-	GetConfiguration("cApacheDir",cApacheDir,0,0);
-	GetConfiguration("cApacheSSLDir",cApacheSSLDir,0,0);
-
-	if(!CheckConfFiles(cApacheDir,cApacheSSLDir))
+	if(!CheckConfFiles())
 		return(RestartHTTPDaemons());
 
 	printf("CheckConfFiles() returned non zero value\n");
@@ -2950,13 +2944,7 @@ int CommandLineRestart(void)
 
 int CommandLineCheckConfFiles(void)
 {
-	char cApacheDir[256]={"/var/local/apache"};
-	char cApacheSSLDir[256]={"/var/local/apache_ssl"};
-
-	GetConfiguration("cApacheDir",cApacheDir,0,0);
-	GetConfiguration("cApacheSSLDir",cApacheSSLDir,0,0);
-
-	return(CheckConfFiles(cApacheDir,cApacheSSLDir));
+	return(CheckConfFiles());
 
 }//int CommandLineCheckConfFiles(void)
 
@@ -3107,6 +3095,7 @@ int DelSiteJob(unsigned uJob, unsigned uSite)
         MYSQL_ROW field;
 	unsigned uOnlyOnce=1;
 	unsigned uRetVal=0;
+	char cApacheDir[256]={"/var/www/unxsapache/conf.d"};
 
 	//debug only
 	printf("DelSiteJob(%u,%u)\n",uJob,uSite);
@@ -3167,6 +3156,10 @@ int DelSiteJob(unsigned uJob, unsigned uSite)
 		TextError(mysql_error(&gMysql),1);
 		uRetVal++;
 	}
+
+	//Delete the site .conf file
+	sprintf(gcQuery,"%s/%s",cApacheDir,field[1]);
+	unlink(gcQuery);
 
 	//Do not delete site dir now. We may need the files. This can be done monthly.
 	//Further we can keep the files 30 days after this job ran.
