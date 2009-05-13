@@ -1,10 +1,10 @@
 Summary: unxsadmin provides the http shared content and conf for all unxsVZ web admins
 Name: unxsadmin
-Version: 1.0
+Version: 1.1
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsadmin-1.0.tar.gz
+Source: http://unixservice.com/source/unxsadmin-1.1.tar.gz
 URL: http://openisp.net/openisp/unxsAdmin
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -47,6 +47,6 @@ cd $RPM_BUILD_DIR
 /etc/httpd/conf.d/unxs.conf
 
 %changelog
-* Tue Apr 11 2009 Gary Wallis <support@unixservice.com> 
-- Initial RPM release
+* Wed Apr 11 2009 Gary Wallis <support@unixservice.com> 
+- Fixed unxs.conf 
 
