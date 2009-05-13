@@ -1,3 +1,0 @@
-1	Root	1	1	1238945751	1	1238946996	0.0.0.0	12	1	$1$t/DC4...$KUOetwBdGbS47H8Rz3xhM/	
-2	idnsAdmin	2	1	1229038652	0	0	0.0.0.0	12	3	..M0/uAvCFhis	
-3	idnsOrg	2	1	1229038805	0	0	0.0.0.0	6	4	..M0/uAvCFhis	
