@@ -92,7 +92,7 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-cp $LCNAME-$2/$LCNAME-$2-$3.spec /usr/src/redhat/SPECS
+cp $LCNAME-$2/$LCNAME.spec /usr/src/redhat/SPECS/$LCNAME-$2-$3.spec
 if [ $? != 0 ];then
 	echo error 10;
 	exit 1;
