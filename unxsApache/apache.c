@@ -2873,23 +2873,16 @@ int RestartHTTPDaemons(void)
 	struct stat statInfo;
 	unsigned uRetVal=0;
 	unsigned uApacheRestart=0;
-	unsigned uApacheSSLRestart=0;
-	char cApacheDir[256]={"/var/local/apache"};
-	char cApacheSSLDir[256]={"/var/local/apache_ssl"};
 	//Let's do some tests to see how apache2 with mod_ssl handles graceful
 	//restarts.
 	//
 	//First. If the daemons are not running we better start them.
 
-	GetConfiguration("cApacheDir",cApacheDir,0,0);
-	GetConfiguration("cApacheSSLDir",cApacheSSLDir,0,0);
-
 	//Check to see if apache is running. Two scenarios no PID in assumed place
 	//and if PID file no root process with assumed sig
-	sprintf(gcQuery,"%s/logs/httpd.pid",cApacheDir);
-	if(!stat(gcQuery,&statInfo))
+	if(!stat("/var/run/httpd.pid",&statInfo))
 	{
-		sprintf(gcQuery,"ps -ef | grep `cat %s/logs/httpd.pid` | grep apache | grep -w 1 >/dev/null 2>&1",cApacheDir);
+		sprintf(gcQuery,"ps -ef | grep `/var/run/httpd.pid` | grep httpd | grep -w 1 >/dev/null 2>&1");
 		if(system(gcQuery))
 			uApacheRestart=1;
 	}
@@ -2903,9 +2896,7 @@ int RestartHTTPDaemons(void)
 		//Not running start
 		TextError("Apache server not running. Trying to start...",1);
 
-		sprintf(gcQuery,"%1$s/bin/httpd -f %1$s/conf/httpd.conf >/dev/null 2>&1",
-						cApacheDir);
-		if(system(gcQuery))
+		if(system("/etc/init.d/httpd start"))
 		{
 			TextError("!Apache server not running. Failed to start!",1);
 			uApacheRestart=2;
@@ -2914,73 +2905,27 @@ int RestartHTTPDaemons(void)
 
 	}
 
-	//Check to see if apache_ssl is running
-	sprintf(gcQuery,"%s/logs/httpd.pid",cApacheSSLDir);
-	if(!stat(gcQuery,&statInfo))
-	{
-		sprintf(gcQuery,"ps -ef | grep `cat %s/logs/httpd.pid` | grep apache | grep -w 1 >/dev/null 2>&1",cApacheSSLDir);
-		if(system(gcQuery))
-			uApacheSSLRestart=1;
-	}
-	else
-	{
-		uApacheSSLRestart=1;
-	}
-
-	if(uApacheSSLRestart)
-	{
-		//Not running start
-		TextError("Apache SSL server not running. Trying to start...",1);
-
-		sprintf(gcQuery,"%1$s/bin/httpd -DSSL -f %1$s/conf/httpd.conf >/dev/null 2>&1",
-				cApacheSSLDir);
-		if(system(gcQuery))
-		{
-			TextError("!Apache SSL server not running. Failed to start!",1);
-			uApacheSSLRestart=2;
-			uRetVal++;
-		}
-
-	}
-
-	if(uApacheRestart || uApacheSSLRestart)
+	if(uApacheRestart)
 	{
 		if(uApacheRestart==1)
 			TextError("Apache server was started",1);
-		if(uApacheSSLRestart==1)
-			TextError("Apache SSL server was started",1);
-
 		return(uRetVal);
 	}
 
 	//Second. If the daemons are running graceful restart
-	sprintf(gcQuery,"kill -USR1 `cat %1$s/logs/httpd.pid` >/dev/null 2>&1",cApacheDir);
+	sprintf(gcQuery,"kill -USR1 `cat /var/run/httpd.pid` >/dev/null 2>&1");
 	if(system(gcQuery))
 	{
 		TextError("Apache server graceful restart error",1);
 		uRetVal++;
 	}
 
-	sprintf(gcQuery,"kill -USR1 `cat %1$s/logs/httpd.pid` >/dev/null 2>&1",cApacheSSLDir);
-	if(system(gcQuery))
-	{
-		TextError("Apache SSL server graceful restart error",1);
-		uRetVal++;
-	}
-
-	sprintf(gcQuery,"%s/logs/httpd.pid",cApacheDir);
-	if(stat(gcQuery,&statInfo))
+	if(stat("/var/run/httpd.pid",&statInfo))
 	{
 		TextError("Apache server httpd.pid not found!",1);
 		uRetVal++;
 	}
 
-	sprintf(gcQuery,"%s/logs/httpd.pid",cApacheSSLDir);
-	if(stat(gcQuery,&statInfo))
-	{
-		TextError("Apache SSL server httpd.pid not found!",1);
-		uRetVal++;
-	}
 
 	return(uRetVal);
 
