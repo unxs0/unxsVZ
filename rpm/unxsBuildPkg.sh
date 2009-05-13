@@ -44,6 +44,16 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
+if [ ! -d ./$1 ];then
+	echo "No such subsystem $1 !";
+	exit 1;
+fi
+
+if [ ! -f ./$1/$LCNAME.spec ];then
+	echo "Your updated spec file should be here $1/$LCNAME.spec ";
+	exit 1;
+fi
+
 tar czvf $1.tar.gz $1/ --exclude .svn
 if [ $? != 0 ];then
 	echo error 2;
