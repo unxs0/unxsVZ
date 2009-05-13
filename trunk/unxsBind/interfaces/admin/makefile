@@ -9,18 +9,17 @@
 #	Must customize CGINAME 
 #
 
-CGINAME= idnsAdmin.cgi
+CGINAME=idnsAdmin.cgi
 
-CFLAGS= -DLinux -Wall
-LIBS= /usr/lib/mysql/libmysqlclient.a /usr/lib/openisp/libtemplate.a /usr/lib/openisp/libucidr.a -lz -lcrypt -lm -lssl
+CFLAGS=-Wall
+LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl
 
 interface.cgi: main.o adminuser.o customer.o customercontact.o glossary.o zone.o resource.o bulkop.o report.o \
-		restorezone.o restoreresource.o dashboard.o ../../cgi.o /usr/lib/openisp/libtemplate.a /usr/lib/openisp/libucidr.a \
-		/usr/include/openisp/template.h /usr/include/openisp/ucidr.h
+		restorezone.o restoreresource.o dashboard.o ../../cgi.o 
 	cc main.o adminuser.o customer.o customercontact.o glossary.o zone.o resource.o bulkop.o report.o \
 	restorezone.o restoreresource.o dashboard.o ../../cgi.o -o interface.cgi $(LIBS)
 
-main.o: main.c interface.h ../../local.h ../../mysqlrad.h /usr/include/openisp/template.h /usr/include/openisp/ucidr.h
+main.o: main.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
 
 customercontact.o: customercontact.c interface.h ../../local.h ../../mysqlrad.h
@@ -60,6 +59,6 @@ clean:
 	rm -f *.o *.cgi
 	
 install: interface.cgi
-	install -s interface.cgi $(CGIDIR)$(CGINAME)
+	install -s interface.cgi /var/www/unxs/cgi-bin/$(CGINAME)
 	rm -f interface.cgi
 

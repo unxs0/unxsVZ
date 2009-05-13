@@ -9,8 +9,8 @@
 #	per zone named.stats logging
 #
 
-CFLAGS= -DLinux -Wall
-LIBS= /usr/lib/mysql/libmysqlclient.a -lssl -lz -lm
+CFLAGS=-Wall
+LIBS=-L/usr/lib/mysql -lmysqlclient -lssl -lz -lm
 
 tHitCollector: main.o
 	cc main.o -o tHitCollector $(LIBS)
@@ -22,6 +22,5 @@ clean:
 	rm -f *.o tHitCollector
 	
 install: tHitCollector
-	install -s tHitCollector /usr/sbin/tHitCollector
-	chmod 700 /usr/sbin/tHitCollector
+	install -m 700 -s tHitCollector /usr/sbin/tHitCollector
 	rm -f tHitCollector

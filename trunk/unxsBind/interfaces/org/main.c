@@ -14,7 +14,8 @@ REQUIRES
 #include "interface.h"
 
 #ifdef EXPERIMENTAL
-#warning "You are compiling with the EXPERIMENTAL flag on. You may include in progress code, not tested and possibly not working!" 
+#warning "You are compiling with the EXPERIMENTAL flag on. You may include in "
+		"progress code, not tested and possibly not working!" 
 #warning "You have been warned." 
 #endif
 
@@ -85,12 +86,7 @@ int main(int argc, char *argv[])
 			guBrowserFirefox=1;
 	}
 
-#if defined(Linux)
 	gethostname(gcHostname, 98);
-#else
-	//Solaris
-	sysinfo(SI_HOSTNAME, gcHostname, 98);
-#endif
 	
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{

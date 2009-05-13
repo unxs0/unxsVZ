@@ -11,14 +11,13 @@
 
 CGINAME= idnsOrg.cgi
 
-CFLAGS= -DLinux -Wall
-iDNS_MYSQL_LIB= /usr/lib/mysql/libmysqlclient.a
-LIBS= $(iDNS_MYSQL_LIB) /usr/lib/openisp/libtemplate.a /usr/lib/openisp/libucidr.a -lz -lcrypt -lm -lssl
+CFLAGS=-Wall
+LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl
 
-interface.cgi: main.o zone.o resource.o glossary.o bulkop.o ../../cgi.o /usr/lib/openisp/libtemplate.a /usr/lib/openisp/libucidr.a
+interface.cgi: main.o zone.o resource.o glossary.o bulkop.o ../../cgi.o 
 	cc main.o zone.o resource.o glossary.o bulkop.o ../../cgi.o -o interface.cgi $(LIBS)
 
-main.o: main.c interface.h ../../local.h ../../mysqlrad.h /usr/include/openisp/template.h /usr/include/openisp/ucidr.h
+main.o: main.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
 
 zone.o: zone.c interface.h ../../local.h ../../mysqlrad.h
@@ -37,6 +36,6 @@ clean:
 	rm -f *.o *.cgi
 	
 install: interface.cgi
-	install -s interface.cgi $(CGIDIR)$(CGINAME)
+	install -s interface.cgi /var/www/unxs/cgi-bin/$(CGINAME)
 	rm -f interface.cgi
 

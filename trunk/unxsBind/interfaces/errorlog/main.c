@@ -4,7 +4,7 @@ FILE
 	$Id: main.c 667 2007-06-29 16:25:24Z Gary $
 	/usr/sbin/idns-logerror
 AUTHOR
-	(C) 2006-2007, Gary Wallis for Unixservice USA
+	(C) 2006-2009, Gary Wallis for Unixservice USA
 PURPOSE
 	Read and follow the end of a logfile (tail -f style.)
 	Add to master iDNS tLog named error messages of dashboard interest
@@ -131,10 +131,12 @@ int main(int iArgc, char *cArgv[])
 
 			if(cZone[0])
 			{
-        			if (!mysql_real_connect(&gMysql,DBIP,DBLOGIN,
+        			if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,
 					DBPASSWD,DBNAME,0,NULL,0))
         			{
-			                fprintf(efp,"Database server unavailable!\n");
+        				if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,
+						DBPASSWD,DBNAME,0,NULL,0))
+			                		fprintf(efp,"Database server unavailable!\n");
 					goto Return_Point;
         			}
 				//debug only
@@ -152,7 +154,8 @@ int main(int iArgc, char *cArgv[])
 				res=mysql_store_result(&gMysql);
 				if((field=mysql_fetch_row(res)))
 				{
-					sprintf(cQuery,"SELECT uLog FROM tLog WHERE uLogType=5 AND cLabel='%.64s' AND cMessage='xfer-in %s'\n",cZone,cError);
+					sprintf(cQuery,"SELECT uLog FROM tLog WHERE uLogType=5 AND cLabel='%.64s'"
+							" AND cMessage='xfer-in %s'\n",cZone,cError);
 					mysql_query(&gMysql,cQuery);
 					if(mysql_errno(&gMysql))
 					{
@@ -163,7 +166,9 @@ int main(int iArgc, char *cArgv[])
 					res2=mysql_store_result(&gMysql);
 					if((field2=mysql_fetch_row(res2)))
 					{
-						sprintf(cQuery,"UPDATE tLog SET uPermLevel=uPermLevel+1,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,cServer='%.64s' WHERE uLog=%s",cHostname,field2[0]);
+						sprintf(cQuery,"UPDATE tLog SET uPermLevel=uPermLevel+1,"
+								"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,"
+								"cServer='%.64s' WHERE uLog=%s",cHostname,field2[0]);
 						mysql_query(&gMysql,cQuery);
 						if(mysql_errno(&gMysql))
 						{
@@ -175,7 +180,11 @@ int main(int iArgc, char *cArgv[])
 					else
 					{
 						//uPermLevel as repeat counter
-						sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.64s',uLogType=5,cMessage='xfer-in %s',cServer='%.64s',uPermLevel=1,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cTableName='tZone',uTablePK=%s",cZone,cError,cHostname,field[0]);
+						sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.64s',uLogType=5,"
+								"cMessage='xfer-in %s',cServer='%.64s',uPermLevel=1,"
+								"uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+								"cTableName='tZone',uTablePK=%s",
+									cZone,cError,cHostname,field[0]);
 						mysql_query(&gMysql,cQuery);
 						if(mysql_errno(&gMysql))
 						{
