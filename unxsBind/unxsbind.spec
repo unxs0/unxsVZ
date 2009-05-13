@@ -4,7 +4,7 @@ Version: 1.0
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-1.1.tar.gz
+Source: http://unixservice.com/source/unxsbind-1.0.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -74,7 +74,7 @@ cd $RPM_BUILD_DIR
 %clean
 
 %files
-%doc LICENSE README
+%doc LICENSE INSTALL
 /usr/local/share/unxsBind
 /usr/local/idns
 /var/www/unxs/cgi-bin/iDNS.cgi
