@@ -2882,7 +2882,7 @@ int RestartHTTPDaemons(void)
 	//and if PID file no root process with assumed sig
 	if(!stat("/var/run/httpd.pid",&statInfo))
 	{
-		sprintf(gcQuery,"ps -ef | grep `/var/run/httpd.pid` | grep httpd | grep -w 1 >/dev/null 2>&1");
+		sprintf(gcQuery,"ps -ef | grep `cat /var/run/httpd.pid` | grep httpd | grep -w 1 >/dev/null 2>&1");
 		if(system(gcQuery))
 			uApacheRestart=1;
 	}
