@@ -2481,7 +2481,7 @@ int NewSiteUserJob(unsigned uJob,unsigned uSiteUser)
 			TextError(gcQuery,1);
 			return(1);
 		}
-		sprintf(gcQuery,"/usr/sbin/useradd -u %u -d %s -g %u -c %s -s %s %s",
+		sprintf(gcQuery,"/usr/sbin/useradd -u %u -d %s -g %u -c %s -s %s %s > /dev/null 2>&1",
 			uUID,cWebSiteDir,uGID,field[3],"/bin/bash",field[0]);
 		if(system(gcQuery))
 		{
@@ -2665,7 +2665,6 @@ void UpdateSiteUserStatus(unsigned uSiteUser,unsigned uStatus)
 
         sprintf(cQuery,"UPDATE tSiteUser SET uStatus=%u WHERE uSiteUser=%u",
 			uStatus,uSiteUser);
-	printf("UpdateSiteUserStatus(): %s\n",cQuery);
         mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
 		TextError(mysql_error(&gMysql),0);
