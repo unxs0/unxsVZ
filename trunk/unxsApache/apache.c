@@ -2422,7 +2422,6 @@ int NewSiteJob(unsigned uJob, unsigned uSite)
 		fprintf(fp,"\n");
 		fclose(fp);
 	}
-	printf("End of NewSiteJob()\n");
 	return(0);
 
 }//int NewSiteJob(unsigned uJob,unsigned uSite)
@@ -2776,12 +2775,14 @@ int MakeAndCheckConfFiles(const char *cServer)
 		fprintf(fp,"\n#Start cVirtualHost section %s\n",field[1]);
 		fprintf(fp,"%s",field[0]);
 		fprintf(fp,"#End cVirtualHost section %s\n",field[1]);
+		fprintf(fp,"\n#Built by webfarm automation system unxsApache.\n"
+			"#$Id: apache.c 2409 2009-01-14 16:21:13Z hus-admin $ (C) 2007-2009 Unixservice\n");
+		fclose(fp);
+		
 	}
 	mysql_free_result(res);
 
-	fprintf(fp,"\n#Built by webfarm automation system unxsApache.\n#$Id: apache.c 2409 2009-01-14 16:21:13Z hus-admin $ (C) 2007 Unixservice\n");
-	fclose(fp);
-
+	printf("Std vhost files OK\n!");
 	GetConfiguration("cApacheSSLDir",cApacheSSLDir,0,0);
 
         sprintf(gcQuery,"SELECT cSSLVirtualHost,cDomain FROM tSite WHERE uServer=%u AND uStatus=%u "
@@ -2792,7 +2793,9 @@ int MakeAndCheckConfFiles(const char *cServer)
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
+		printf("ssl loop start\n!");
 		sprintf(gcQuery,"%s/%s.conf",cApacheSSLDir,field[1]);
+		printf("Trying to open %s\n",gcQuery);
 		if(!(fp=fopen(gcQuery,"a")))
 		{
 			TextError(gcQuery,1);
@@ -2801,11 +2804,13 @@ int MakeAndCheckConfFiles(const char *cServer)
 		fprintf(fp,"\n#Start cSSLVirtualHost section %s\n",field[1]);
 		fprintf(fp,"%s",field[0]);
 		fprintf(fp,"#End cSSLVirtualHost section %s\n",field[1]);
+		fclose(fp);
+		fprintf(fp,"\n#Built by webfarm automation system unxsApache.\n"
+			"#$Id: apache.c 2409 2009-01-14 16:21:13Z hus-admin $ (C) 2007-2009 Unixservice\n");
+		fclose(fp);
 	}
 	mysql_free_result(res);
 
-	fprintf(fp,"\n#Built by webfarm automation system unxsApache.\n#$Id: apache.c 2409 2009-01-14 16:21:13Z hus-admin $ (C) 2007 Unixservice\n");
-	fclose(fp);
 /*
 	//Here we create all the SSL cert files
 	GetConfiguration("cWebRoot",cWebRoot,0,0);
@@ -2834,6 +2839,7 @@ int MakeAndCheckConfFiles(const char *cServer)
 	//Restart httpd daemons should be done after same check and check for
 	//critical items like server certificates and log directories
 	//that will bring down services for all sites :(
+	printf("MakeAndCheckConfFiles() end OK\n");
 	return(uRetVal);
 
 }//int MakeAndCheckConfFiles(const char *cServer)
