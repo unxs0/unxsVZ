@@ -54,6 +54,20 @@ if [ ! -f ./$1/$LCNAME.spec ];then
 	exit 1;
 fi
 
+SPECVER=`grep -w "Version: ..." ./$1/$LCNAME.spec`;
+grep -w "Version: $2" ./$1/$LCNAME.spec > /dev/null 2>&1;
+if [ $? != 0 ];then
+	echo "Your spec file seems to have the wrong version number $SPECVER, you specify $2";
+	exit 1;
+fi
+
+SPECREL=`grep -w "Release: ." ./$1/$LCNAME.spec`;
+grep -w "Release: $3" ./$1/$LCNAME.spec > /dev/null 2>&1;
+if [ $? != 0 ];then
+	echo "Your spec file seems to have the wrong release number $SPECREL, you specify $3";
+	exit 1;
+fi
+
 tar czvf $1.tar.gz $1/ --exclude .svn
 if [ $? != 0 ];then
 	echo error 2;
