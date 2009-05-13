@@ -3158,8 +3158,12 @@ int DelSiteJob(unsigned uJob, unsigned uSite)
 	}
 
 	//Delete the site .conf file
-	sprintf(gcQuery,"%s/%s",cApacheDir,field[1]);
-	unlink(gcQuery);
+	sprintf(gcQuery,"%s/%s.conf",cApacheDir,field[1]);
+	if(unlink(gcQuery))
+	{
+		TextError("unlink() failed",1);
+		uRetVal++;
+	}
 
 	//Do not delete site dir now. We may need the files. This can be done monthly.
 	//Further we can keep the files 30 days after this job ran.
