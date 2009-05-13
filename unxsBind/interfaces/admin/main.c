@@ -82,12 +82,8 @@ int main(int argc, char *argv[])
 		if(strstr(getenv("HTTP_USER_AGENT"),"Firefox"))
 			guBrowserFirefox=1;
 	}
-#if defined(Linux)
+
 	gethostname(gcHostname, 98);
-#else
-	//Solaris
-	sysinfo(SI_HOSTNAME, gcHostname, 98);
-#endif
 
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{

@@ -3,6 +3,6 @@
 <head>
 <title>{{cTitle}}</title>
 
-<link rel=StyleSheet href=/styles.css type="text/css">
-<script language="JavaScript" src="/popups.js"></script>
+<link rel=StyleSheet href=/css/styles.css type="text/css">
+<script language="JavaScript" src="/css/popups.js"></script>
 </head>
