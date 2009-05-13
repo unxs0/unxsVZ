@@ -1112,7 +1112,7 @@ void SetVirtualHostSections(void)
 	MYSQL_ROW field;
 	struct t_template template;
 	char cDomainEscDot[100]={""};
-	char cWebRoot[256]={"/var/local/web"};
+	char cWebRoot[256]={"/var/www/unxsapache/sites"};
 	char cCGI[256]={"cgi-bin"};
 	char cWebmaster[256]={"webmaster"};
 	char cCondListen[64]={""};

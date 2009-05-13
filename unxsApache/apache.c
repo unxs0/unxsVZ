@@ -2782,7 +2782,6 @@ int MakeAndCheckConfFiles(const char *cServer)
 	}
 	mysql_free_result(res);
 
-	printf("Std vhost files OK\n!");
 	GetConfiguration("cApacheSSLDir",cApacheSSLDir,0,0);
 
         sprintf(gcQuery,"SELECT cSSLVirtualHost,cDomain FROM tSite WHERE uServer=%u AND uStatus=%u "
@@ -2793,9 +2792,7 @@ int MakeAndCheckConfFiles(const char *cServer)
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		printf("ssl loop start\n!");
 		sprintf(gcQuery,"%s/%s.conf",cApacheSSLDir,field[1]);
-		printf("Trying to open %s\n",gcQuery);
 		if(!(fp=fopen(gcQuery,"a")))
 		{
 			TextError(gcQuery,1);
@@ -2839,7 +2836,6 @@ int MakeAndCheckConfFiles(const char *cServer)
 	//Restart httpd daemons should be done after same check and check for
 	//critical items like server certificates and log directories
 	//that will bring down services for all sites :(
-	printf("MakeAndCheckConfFiles() end OK\n");
 	return(uRetVal);
 
 }//int MakeAndCheckConfFiles(const char *cServer)
