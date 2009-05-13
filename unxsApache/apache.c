@@ -2439,7 +2439,7 @@ int NewSiteUserJob(unsigned uJob,unsigned uSiteUser)
 	unsigned uSite=0;
 	unsigned uGID=0;
 	unsigned uUID=0;
-	char cWebRoot[256]={"/var/local/web"};
+	char cWebRoot[256]={"/var/www/unxsapache/sites"};
 	char cWebSiteDir[256]={""};
 	struct passwd *structPasswd;
 	unsigned uRetVal;
