@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: tlogmonthfunc.h 671 2007-07-02 14:12:16Z Gary $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2006 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
  
 */
 

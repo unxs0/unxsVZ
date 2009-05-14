@@ -1,4 +1,4 @@
-// $Id: language.h 1334 2007-07-23 22:39:47Z Gary $
+// $Id$
 // English: USA
 // Navigation bar buttons and results
 

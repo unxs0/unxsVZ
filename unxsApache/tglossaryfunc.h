@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: modulefunc.h.template 1165 2006-10-23 14:56:27Z admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2006 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
  
 */
 

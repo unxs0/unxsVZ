@@ -1,12 +1,12 @@
 /*
 FILE
-	$Id: tauthorizefunc.h 2076 2008-10-23 15:17:55Z Gary $
+	$Id$
 PURPOSE
 	Non-schema dependent tauthorize.c expansion.
 AUTHOR
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Gary Wallis.
  
 */
 

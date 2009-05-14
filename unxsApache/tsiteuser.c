@@ -2,7 +2,7 @@
 FILE
 	tSiteUser source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tsiteuser.c 2471 2009-02-18 19:02:14Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tsiteuserfunc.h while 

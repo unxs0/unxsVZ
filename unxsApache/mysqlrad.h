@@ -1,8 +1,8 @@
 /*
 FILE
-	$Id: mysqlrad.h.template 1937 2008-10-07 15:00:33Z hus $
+	$Id$
 AUTHOR
-	(C) 2001-2008 Gary Wallis and Hugo Urquiza. 
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza. 
 */
 
 #include <stdio.h>
@@ -29,13 +29,7 @@ AUTHOR
 
 #include "cgi.h"
 
-//This is an example tune for your system
-#ifdef FreeBSD
-	#include "/usr/local/include/mysql/mysql.h"
-#else
-	#include <mysql/mysql.h>
-#endif
-
+#include <mysql/mysql.h>
 
 #include <unistd.h>
 #include <locale.h>

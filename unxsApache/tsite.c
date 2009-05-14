@@ -2,7 +2,7 @@
 FILE
 	tSite source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tsite.c 2469 2009-02-18 17:07:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tsitefunc.h while 

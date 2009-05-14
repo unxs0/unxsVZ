@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: cgi.h 1263 2007-06-30 23:38:30Z Gary $
+	$Id$
 LEGAL
 	Public Domain. See cgi.c file for more info
 */

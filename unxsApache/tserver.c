@@ -2,7 +2,7 @@
 FILE
 	tServer source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tserver.c 2355 2008-12-29 21:44:56Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tserverfunc.h while 
