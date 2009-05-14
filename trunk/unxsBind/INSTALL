@@ -1,1 +1,85 @@
-See http://openisp.net/openisp/unxsVZ for install information.
+Very quick CentOS 5 install guide
+---------------------------------
+
+Will provide a working system on your server for your
+evaluation very quickly.
+
+Single # is a command line operation
+Double ## is a comment in command line operations
+
+Does not cover setting installing a correct SSL cert, other servers,
+editing your named.conf etc...etc...
+
+Does not cover setting up boot init.d scripts for starting 
+named, httpd and mysqld etc...
+
+---
+1-. Setup your /etc/yum.repos.d/ with the unxs.repo:
+
+# wget http://unixservice.com/rpm/i386/unxsyum-1.0-1.i386.rpm
+
+## (optionally check md5sum of what you just downloaded)
+# wget http://unixservice.com/rpm/i386/unxsyum-1.0-1.i386.rpm.md5sum
+# md5sum -c unxsyum-1.0-1.i386.rpm.md5sum
+## (if ok proceed to install rpm - we will not mention this check 
+##	again but can be used for all our downloads.)
+
+# rpm -i unxsyum-1.0-1.i386.rpm
+
+Faster method? 
+Optionally just create /etc/yum.repos.d/unxs.conf with this content:
+
+[unxsVZ]
+name=unxsVZ
+baseurl=http://unixservice.com/rpm/
+enabled=1
+gpgcheck=0
+md5check=1
+
+---
+2-. Use yum to install unxsbind and restart apache2:
+
+# yum install unxsbind
+# /etc/init.d/httpd restart
+
+---
+3-. Load initial data:
+
+# export ISMROOT=/usr/local/share
+# /var/www/unxs/cgi-bin/iDNS.cgi Initialize <your root mysql password>
+
+---
+4-. Start your BIND named daemon.
+
+# /usr/sbin/named -c /usr/local/idns/named.conf
+# rndc status
+
+##(if the above did not work -should have been done by rpm, run this
+##	and try the above again. Or run it to change the IP)
+# export ISMROOT=/usr/local/share
+# /var/www/unxs/cgi-bin/iDNS.cgi installbind 127.0.0.1
+
+---
+5-. Setup your root crontab
+
+# crontab -e
+
+Then place this in your crontab:
+
+#
+#iDNS job queue processing
+#
+#Dual master configuration
+* * * * * /usr/sbin/iDNS.cgi ProcessJobQueue ns1.yourdomain.com >> /var/log/idns-cron.log 2>&1
+
+#Place next line in root crontab for iDNS tHit subsystem
+*/5 * * * * /usr/sbin/bind9-genstats.sh >> /var/log/idns-cron.log 2>&1
+
+
+---
+6-. Load idnsAdmin and idnsOrg templates:
+
+---
+7-. Test everything. If you find anything wrong in this guide,
+	in any interface, in the initial DNS system provided, please email us at
+	support @ unixservice . com

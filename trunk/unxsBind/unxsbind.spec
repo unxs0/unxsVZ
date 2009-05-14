@@ -9,7 +9,7 @@ URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: unxsadmin, mysql-server
+Requires: unxsadmin, mysql-server, bind >= 9.3.4 , bind-utils
 
 %description
 unxsBind iDNS provides a professional DNS BIND 9 manager. For 1 to 1000's of NSs.
@@ -50,6 +50,7 @@ make install
 #mkdir section
 mkdir -p /usr/local/idns
 mkdir -p /usr/local/share/iDNS/data
+mkdir -p /usr/local/share/iDNS/setup9
 mkdir -p /usr/local/share/iDNS/admin/templates
 mkdir -p /usr/local/share/iDNS/org/templates
 #cp files section
@@ -62,15 +63,22 @@ cp `find ./interfaces/admin/templates/ -type f -print` /usr/local/share/iDNS/adm
 cp `find ./interfaces/org/templates/ -type f -print` /usr/local/share/iDNS/org/templates/
 cp data/*.txt /usr/local/share/iDNS/data/
 chown -R mysql:mysql /usr/local/share/iDNS/data
+cp setup9/rndc.conf /etc/rndc.conf
+cp setup9/* /usr/local/share/iDNS/setup9/
+/usr/bin/dig @e.root-servers.net . ns > /usr/local/share/iDNS/setup9/root.cache
 #make section
 cd interfaces/admin
 make install
 cd ../org
 make install
 cd ../thit
+cp bind9-genstats.sh /usr/sbin/bind9-genstats.sh
 make install
 cd ../errorlog
 make install
+#things we can do with no data loaded
+export ISMROOT=/usr/local/share
+/var/www/unxs/cgi-bin/iDNS.cgi installbind 127.0.0.1
 cd $RPM_BUILD_DIR
 
 %clean
@@ -83,9 +91,10 @@ cd $RPM_BUILD_DIR
 /var/www/unxs/cgi-bin/idnsAdmin.cgi
 /var/www/unxs/cgi-bin/idnsOrg.cgi
 /usr/sbin/tHitCollector
+/usr/sbin/bind9-genstats.sh
 /usr/sbin/idns-logerror
 
 %changelog
-* Wed Apr 11 2009 Gary Wallis <support@unixservice.com> 
-- Fixed unxs.conf 
+* Thu May 14 2009 Gary Wallis <support@unixservice.com> 
+- Initial rpm release
 
