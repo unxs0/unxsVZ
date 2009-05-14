@@ -1,13 +1,11 @@
 /*
-
-	$Id: lastmonth.c 668 2007-07-02 13:50:59Z root $
 FILE	lastmonth.c 
-AUTHOR	(C) 2002, ggw@openisp.net. GPL licensed.
+	$Id: lastmonth.c 668 2007-07-02 13:50:59Z root $
+AUTHOR	(C) 2002-2009, support @ openisp.net. GPL licensed.
 PURPOSE
 	Return last month with correct year and with wraparound
 PROBLEMS
 	Depends on setlocale()?
-
 */
 
 

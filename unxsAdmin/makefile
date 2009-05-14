@@ -1,9 +1,10 @@
 #
 # FILE
-#       iDNS/tools/makefile
+#       unxsAdmin/makefile
 #       $Id$
 # AUTHOR/LEGAL
 # (C) 2001-2009 Gary Wallis under GPL License see www.fsf.org for details
+#
 
 lastmonth: lastmonth.c
 	cc lastmonth.c -o lastmonth
