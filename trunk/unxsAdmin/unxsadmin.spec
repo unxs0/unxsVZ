@@ -1,10 +1,10 @@
-Summary: unxsadmin provides the http shared content and conf for all unxsVZ web admins
+Summary: unxsadmin provides the http shared content and httpd conf.d file for all unxsVZ web admins
 Name: unxsadmin
-Version: 1.1
+Version: 1.2
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsadmin-1.1.tar.gz
+Source: http://unixservice.com/source/unxsadmin-1.2.tar.gz
 URL: http://openisp.net/openisp/unxsAdmin
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -16,13 +16,16 @@ unxsadmin provides the http shared content and conf for all unxsVZ web admins.
 It provides the dir layout in /var/www/unxs and all the shared css, js and image
 content needed by unxsVZ family of web administration interfaces like
 unxsMail, unxsApache, unxsVZ, unxsBind and unxsISP.
+It also provides some common binary utilities like lastmonth.
 
 %prep
 %setup
 
 %build
+make
 
 %install
+make install
 mkdir -p /var/www/unxs/cgi-bin
 mkdir -p /var/www/unxs/logs
 mkdir -p /var/www/unxs/html/images
@@ -45,6 +48,7 @@ cd $RPM_BUILD_DIR
 %doc README
 /var/www/unxs
 /etc/httpd/conf.d/unxs.conf
+/usr/bin/lastmonth
 
 %changelog
 * Wed Apr 11 2009 Gary Wallis <support@unixservice.com> 
