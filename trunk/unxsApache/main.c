@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 2595 2009-03-02 16:44:02Z hus $
+	$Id$
 	mysqlRAD2.cgi created application file for unxsApache.cgi
 	(tAuthorize.cPasswd template set)
 	mysqlRAD2 to mysqlRAD3 transition template
@@ -23,10 +23,6 @@ HELP
 
 #include "mysqlrad.h"
 #include <ctype.h>
-#ifdef Solaris
-        char *crypt(char *passwd, char *salt);
-#endif
-
 #include "language.h"
 #include "local.h"
 
@@ -64,7 +60,7 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id: main.c 2595 2009-03-02 16:44:02Z hus $";
+char *gcBuildInfo="$Id$";
 char *gcRADStatus="Start";
 
 //Local

@@ -1,6 +1,6 @@
 /*
 FILE
-        $Id: local.h 1306 2007-07-12 15:41:30Z Gary $
+        $Id$
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL

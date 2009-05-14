@@ -2,7 +2,7 @@
 FILE
 	tMySQL source code of unxsApache.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2009 for Unixservice
-	$Id: module.c.template 2459 2009-02-11 12:04:10Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tmysqlfunc.h while 

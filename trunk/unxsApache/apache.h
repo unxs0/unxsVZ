@@ -1,7 +1,7 @@
 /*
 FILE
 	apache.h
-	$Id: apache.h 1303 2007-07-11 21:37:44Z Gary $
+	$Id$
 PURPOSE
 	Specific application defines and prototypes
 AUTHOR/LEGAL

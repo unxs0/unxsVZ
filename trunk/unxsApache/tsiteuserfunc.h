@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: tsiteuserfunc.h 1311 2007-07-13 14:46:27Z Gary $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
  
 */
 

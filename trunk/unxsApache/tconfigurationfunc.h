@@ -1,12 +1,12 @@
 /*
 FILE
-	$Id: tconfigurationfunc.h 2 2006-10-31 13:16:25Z root $
+	$Id$
 PURPOSE
 	Non-schema dependent tconfiguration.c expansion.
 AUTHOR
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
-	(C) 2001-2004 Gary Wallis.
+	(C) 2001-2009 Gary Wallis.
  
 */
 
