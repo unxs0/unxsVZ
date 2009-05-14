@@ -12,7 +12,7 @@ Packager: Unixservice Support Group <supportgrp@unixservice.com>
 Requires: unxsadmin, mysql-server
 
 %description
-unxsBind provides a professional DNS BIND 9 manager. For 1 to 1000's of NSs.
+unxsBind iDNS provides a professional DNS BIND 9 manager. For 1 to 1000's of NSs.
 
 Main features supported:
 
@@ -48,18 +48,20 @@ make
 %install
 make install
 #mkdir section
-mkdir -p /usr/local/share/unxsBind/data
-mkdir -p /usr/local/share/unxsBind/admin/templates
-mkdir -p /usr/local/share/unxsBind/org/templates
+mkdir -p /usr/local/idns
+mkdir -p /usr/local/share/iDNS/data
+mkdir -p /usr/local/share/iDNS/admin/templates
+mkdir -p /usr/local/share/iDNS/org/templates
 #cp files section
 cp -u images/* /var/www/unxs/html/images/
 cp -u interfaces/admin/templates/images/* /var/www/unxs/html/images/
 cp -u interfaces/admin/templates/css/* /var/www/unxs/html/css/
 cp -u interfaces/org/templates/images/* /var/www/unxs/html/images/
 cp -u interfaces/org/templates/css/* /var/www/unxs/html/css/
-cp `find ./interfaces/admin/templates/ -type f -print` /usr/local/share/unxsBind/admin/templates/
-cp `find ./interfaces/org/templates/ -type f -print` /usr/local/share/unxsBind/org/templates/
-cp data/*.txt /usr/local/share/unxsBind/data/
+cp `find ./interfaces/admin/templates/ -type f -print` /usr/local/share/iDNS/admin/templates/
+cp `find ./interfaces/org/templates/ -type f -print` /usr/local/share/iDNS/org/templates/
+cp data/*.txt /usr/local/share/iDNS/data/
+chown -R mysql:mysql /usr/local/share/iDNS/data
 #make section
 cd interfaces/admin
 make install
@@ -75,7 +77,7 @@ cd $RPM_BUILD_DIR
 
 %files
 %doc LICENSE INSTALL
-/usr/local/share/unxsBind
+/usr/local/share/iDNS
 /usr/local/idns
 /var/www/unxs/cgi-bin/iDNS.cgi
 /var/www/unxs/cgi-bin/idnsAdmin.cgi

@@ -336,6 +336,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			if(guPermLevel>=7)
 			{
 				ProcesstZoneVars(entries,x);
+				strcpy(cMainAddress,"0.0.0.0");
 				//Check global conditions for new record here
 				guMode=2000;
 				tZone(LANG_NB_CONFIRMNEW);
