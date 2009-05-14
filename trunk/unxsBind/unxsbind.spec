@@ -52,13 +52,13 @@ mkdir -p /usr/local/share/unxsBind/data
 mkdir -p /usr/local/share/unxsBind/admin/templates
 mkdir -p /usr/local/share/unxsBind/org/templates
 #cp files section
-cp -u images/*.gif /var/www/unxs/html/images/
+cp -u images/* /var/www/unxs/html/images/
 cp -u interfaces/admin/templates/images/* /var/www/unxs/html/images/
 cp -u interfaces/admin/templates/css/* /var/www/unxs/html/css/
 cp -u interfaces/org/templates/images/* /var/www/unxs/html/images/
 cp -u interfaces/org/templates/css/* /var/www/unxs/html/css/
-cp interfaces/admin/templates/* /usr/local/share/unxsBind/admin/templates/
-cp interfaces/org/templates/* /usr/local/share/unxsBind/org/templates/
+cp `find ./interfaces/admin/templates/ -type f -print` /usr/local/share/unxsBind/admin/templates/
+cp `find ./interfaces/org/templates/ -type f -print` /usr/local/share/unxsBind/org/templates/
 cp data/*.txt /usr/local/share/unxsBind/data/
 #make section
 cd interfaces/admin
