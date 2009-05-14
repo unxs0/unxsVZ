@@ -25,7 +25,7 @@ make
 cd $RPM_BUILD_DIR
 
 %install
-export CGIDIR=/var/www/unxs/cgi-bin
+install -s unxsApache.cgi /var/www/unxs/cgi-bin/unxsApache.cgi
 
 %clean
 
@@ -33,6 +33,7 @@ export CGIDIR=/var/www/unxs/cgi-bin
 %doc INSTALL LICENSE
 /etc/httpd/conf.d/unxsapache.conf
 /var/www/unxsapache
+/var/www/unxs/cgi-bin/unxsApache.cgi
 
 %changelog
 * Thu May 14 2009 - Hugo Urquiza <support2@unixservice.com>
