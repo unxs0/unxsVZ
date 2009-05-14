@@ -1,6 +1,6 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
-Version: 1.0
+Version: 1.1
 Release: 1
 License: GPL
 Group: System Environment/Applications
@@ -64,6 +64,7 @@ cp `find ./interfaces/org/templates/ -type f -print` /usr/local/share/iDNS/org/t
 cp data/*.txt /usr/local/share/iDNS/data/
 chown -R mysql:mysql /usr/local/share/iDNS/data
 cp setup9/rndc.conf /etc/rndc.conf
+cp setup9/rndc.key /etc/rndc.key
 cp setup9/* /usr/local/share/iDNS/setup9/
 /usr/bin/dig @e.root-servers.net . ns > /usr/local/share/iDNS/setup9/root.cache
 #make section
