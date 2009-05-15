@@ -70,7 +70,7 @@ Then place this in your crontab:
 #iDNS job queue processing
 #
 #Dual master configuration
-* * * * * /usr/sbin/iDNS.cgi ProcessJobQueue ns1.yourdomain.com >> /var/log/idns-cron.log 2>&1
+* * * * * /var/www/unxs/cgi-bin/iDNS.cgi ProcessJobQueue ns1.yourdomain.com >> /var/log/idns-cron.log 2>&1
 
 #Place next line in root crontab for iDNS tHit subsystem
 */5 * * * * /usr/sbin/bind9-genstats.sh >> /var/log/idns-cron.log 2>&1
