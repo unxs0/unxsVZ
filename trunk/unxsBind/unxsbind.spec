@@ -4,7 +4,7 @@ Version: 1.1
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-1.0.tar.gz
+Source: http://unixservice.com/source/unxsbind-1.1.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -57,8 +57,6 @@ mkdir -p /usr/local/share/iDNS/org/templates
 cp -u images/* /var/www/unxs/html/images/
 cp -u interfaces/admin/templates/images/* /var/www/unxs/html/images/
 cp -u interfaces/admin/templates/css/* /var/www/unxs/html/css/
-cp -u interfaces/org/templates/images/* /var/www/unxs/html/images/
-cp -u interfaces/org/templates/css/* /var/www/unxs/html/css/
 cp `find ./interfaces/admin/templates/ -type f -print` /usr/local/share/iDNS/admin/templates/
 cp `find ./interfaces/org/templates/ -type f -print` /usr/local/share/iDNS/org/templates/
 cp data/*.txt /usr/local/share/iDNS/data/
@@ -96,6 +94,8 @@ cd $RPM_BUILD_DIR
 /usr/sbin/idns-logerror
 
 %changelog
+* Thu May 14 2009 Hugo Urquiza <support2@unixservice.com>
+- Minor fixes and updates.
 * Thu May 14 2009 Gary Wallis <support@unixservice.com> 
 - Initial rpm release
 
