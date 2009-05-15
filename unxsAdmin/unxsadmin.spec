@@ -1,7 +1,7 @@
 Summary: unxsadmin provides the http shared content and httpd conf.d file for all unxsVZ web admins
 Name: unxsadmin
-Version: 1.2
-Release: 1
+Version: 1.3
+Release: 2
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsadmin-1.2.tar.gz
@@ -51,6 +51,8 @@ cd $RPM_BUILD_DIR
 /usr/bin/lastmonth
 
 %changelog
+* Fri May 15 2009 Hugo Urquiza <support2@unixservice.com>
+- RPM rebuild removing extra files
 * Wed Apr 11 2009 Gary Wallis <support@unixservice.com> 
 - Fixed unxs.conf 
 
