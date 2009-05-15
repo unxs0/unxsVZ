@@ -26,6 +26,8 @@ cd $RPM_BUILD_DIR
 
 %install
 install -s unxsApache.cgi /var/www/unxs/cgi-bin/unxsApache.cgi
+mkdir -p /usr/local/share/unxsApache/data
+cp data/*.txt /usr/local/share/unxsApache/data/
 
 %clean
 
@@ -34,8 +36,11 @@ install -s unxsApache.cgi /var/www/unxs/cgi-bin/unxsApache.cgi
 /etc/httpd/conf.d/unxsapache.conf
 /var/www/unxsapache
 /var/www/unxs/cgi-bin/unxsApache.cgi
+/usr/local/share/unxsApache/data/
 
 %changelog
+* Fri May 14 2009 - Hugo Urquiza <support2@unixservice.com>
+- Updated RPM to include initialization data, updated INSTALL document
 * Thu May 14 2009 - Hugo Urquiza <support2@unixservice.com>
 - RPM updated for complying with the unxsapache package.
 * Mon Apr 11 2009 - Hugo Urquiza <support2@unixservice.com>
