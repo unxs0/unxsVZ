@@ -1,7 +1,7 @@
 Summary: Webfarm manager (this is the technical back-office interface.) Uses flexible configuration templates sets and types that can be crafted for almost any scenario and any text file configured httpd server.
 Name: unxsapache
 Version: 1.0
-Release: 1
+Release: 2
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsapache-1.0.tar.gz
@@ -9,7 +9,7 @@ URL: http://openisp.net/openisp/unxsVZ
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: mysql >= 5.0.45, httpd, mod_ssl, unxsadmin
+Requires: mysql-server >= 5.0.45, httpd, mod_ssl, unxsadmin
 
 %description
 Webfarm manager (this is the technical back-office interface.) Uses flexible configuration templates sets and types that can be crafted for almost any scenario and any text file configured httpd server. Will manage from a central location n websites on m servers. Supports extra httpd daemon on same server for better SSL performance.
@@ -39,7 +39,7 @@ cp data/*.txt /usr/local/share/unxsApache/data/
 /usr/local/share/unxsApache/data/
 
 %changelog
-* Fri May 14 2009 - Hugo Urquiza <support2@unixservice.com>
+* Fri May 15 2009 - Hugo Urquiza <support2@unixservice.com>
 - Updated RPM to include initialization data, updated INSTALL document
 * Thu May 14 2009 - Hugo Urquiza <support2@unixservice.com>
 - RPM updated for complying with the unxsapache package.
