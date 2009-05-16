@@ -18,8 +18,9 @@ if ! test -e $RRDFILE; then
 fi
  
 eval `grep venet0 /proc/net/dev  | awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
- 
-nice /usr/bin/rrdtool update $RRDFILE N:$CTIN:$CTOUT
+
+#note reversal 
+nice /usr/bin/rrdtool update $RRDFILE N:$CTOUT:$CTIN
 
 PNGFILE="/var/www/html/traffic/$HOSTNAME.png"
 

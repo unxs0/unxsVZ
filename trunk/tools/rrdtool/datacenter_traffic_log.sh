@@ -1,6 +1,8 @@
 #!/bin/sh
+#
+#This script varies from the others only runs on a single node or external node server.
 
-DATACENTER="Market Street"; 
+DATACENTER="MarketStreet"; 
 RRDFILE="/var/lib/rrd/$DATACENTER.rrd"
  
 if ! test -e $RRDFILE; then
@@ -22,13 +24,14 @@ eval `grep venet0 /proc/net/dev  | awk -F: '{print $2}' | awk '{printf"CTIN0=%-1
 eval `ssh moon grep venet0 /proc/net/dev  | awk -F: '{print $2}' | awk '{printf"CTIN1=%-15d\nCTOUT1=%-15d\n", $1, $9}'`
 CTIN=$(( $CTIN0 + $CTIN1 ));
 CTOUT=$(( $CTOUT0 + $CTOUT1 ));
- 
-nice /usr/bin/rrdtool update $RRDFILE N:$CTIN:$CTOUT
+
+#note reversal 
+nice /usr/bin/rrdtool update $RRDFILE N:$CTOUT:$CTIN
 
 PNGFILE="/var/www/html/traffic/$DATACENTER.png"
 
 nice /usr/bin/rrdtool graph $PNGFILE \
-		--title="$DATACENTER node traffic" \
+		--title="$DATACENTER traffic" \
 		--vertical-label="bytes per second" \
 		--base=1000 \
 		--height=120 \
