@@ -11,6 +11,11 @@ PURPOSE
 
 
 #include "mysqlrad.h"
+void GetConfiguration(const char *cName,char *cValue,
+		unsigned uDatacenter,
+		unsigned uNode,
+		unsigned uContainer,
+		unsigned uHtml);
 
 //Table Variables
 //Table Variables
@@ -243,6 +248,21 @@ void tDatacenter(const char *cResult)
 
 void tDatacenterInput(unsigned uMode)
 {
+	if(uDatacenter)
+	{
+		char cConfigBuffer[256]={""};
+
+		GetConfiguration("cDatacenterTrafficDirURL",cConfigBuffer,uDatacenter,0,0,0);
+		if(cConfigBuffer[0])
+		{
+	
+			OpenRow("Graph","black");
+			printf("<a href=%s><img src=%s border=0></a>\n",cConfigBuffer,cConfigBuffer);
+			printf("</td></tr>\n");
+		}
+	}
+
+//uContainer
 
 //uDatacenter
 	OpenRow(LANG_FL_tDatacenter_uDatacenter,"black");
