@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
 Version: 1.1
-Release: 5
+Release: 6
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-1.1.tar.gz
@@ -53,6 +53,7 @@ mkdir -p /usr/local/share/iDNS/data
 mkdir -p /usr/local/share/iDNS/setup9
 mkdir -p /usr/local/share/iDNS/admin/templates
 mkdir -p /usr/local/share/iDNS/org/templates
+mkdir -p /var/log/named
 #cp files section
 cp -u images/* /var/www/unxs/html/images/
 cp -u interfaces/admin/templates/images/* /var/www/unxs/html/images/
@@ -92,10 +93,11 @@ cd $RPM_BUILD_DIR
 /usr/sbin/tHitCollector
 /usr/sbin/bind9-genstats.sh
 /usr/sbin/idns-logerror
+/var/log/named
 
 %changelog
 * Mon May 18 2009 Hugo Urquiza <support2@unixservice.com>
-- Added rrdtool as required package.
+- Added rrdtool as required package. Updated file list and mkdir section.
 * Thu May 14 2009 Hugo Urquiza <support2@unixservice.com>
 - Minor fixes and updates.
 * Thu May 14 2009 Gary Wallis <support@unixservice.com> 
