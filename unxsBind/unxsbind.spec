@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
 Version: 1.1
-Release: 4
+Release: 5
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-1.1.tar.gz
@@ -9,7 +9,7 @@ URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: unxsadmin, mysql-server, bind >= 9.3.4 , bind-utils
+Requires: unxsadmin, mysql-server, bind >= 9.3.4 , bind-utils, rrdtool
 
 %description
 unxsBind iDNS provides a professional DNS BIND 9 manager. For 1 to 1000's of NSs.
@@ -94,6 +94,8 @@ cd $RPM_BUILD_DIR
 /usr/sbin/idns-logerror
 
 %changelog
+* Mon May 18 2009 Hugo Urquiza <support2@unixservice.com>
+- Added rrdtool as required package.
 * Thu May 14 2009 Hugo Urquiza <support2@unixservice.com>
 - Minor fixes and updates.
 * Thu May 14 2009 Gary Wallis <support@unixservice.com> 
