@@ -1,22 +1,24 @@
 Summary: unxsadmin provides the http shared content and httpd conf.d file for all unxsVZ web admins
 Name: unxsadmin
-Version: 1.3
+Version: 1.4
 Release: 2
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsadmin-1.2.tar.gz
-URL: http://openisp.net/openisp/unxsAdmin
+Source: http://unixservice.com/source/unxsadmin-1.4.tar.gz
+URL: http://openisp.net/unxsAdmin
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: httpd, mod_ssl
+Requires: httpd, mod_ssl, rrdtool
 
 %description
 unxsadmin provides the http shared content and conf for all unxsVZ web admins.
 It provides the dir layout in /var/www/unxs and all the shared css, js and image
-content needed by unxsVZ family of web administration interfaces like
-unxsMail, unxsApache, unxsVZ, unxsBind and unxsISP.
-It also provides some common binary utilities like lastmonth.
+content needed by unxsVZ family of ISP web administration interfaces like
+unxsMail, unxsApache, unxsVZ, unxsBind, unxsRadius and unxsISP.
+It also provides some common binary utilities like lastmonth and
+rrdtool that are used by more than one unxsVZ included unxsISP software
+module.
 
 %prep
 %setup
@@ -51,8 +53,8 @@ cd $RPM_BUILD_DIR
 /usr/bin/lastmonth
 
 %changelog
-* Fri May 15 2009 Hugo Urquiza <support2@unixservice.com>
-- RPM rebuild removing extra files
-* Wed Apr 11 2009 Gary Wallis <support@unixservice.com> 
-- Fixed unxs.conf 
+* Tue May 19 2009 Gary Wallis <support2@unixservice.com>
+- Had to clean out /var/www/unxs
+* Tue May 19 2009 Gary Wallis <support2@unixservice.com>
+- New version.
 
