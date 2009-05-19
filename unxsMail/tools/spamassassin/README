@@ -1,0 +1,6 @@
+Contents of this directory:
+
+ - scores.cf: Special SA file for disabling scoring for all the rules. It 
+should be used for store SA configuration (For implementing te per mbox SA 
+settings support.)
+
