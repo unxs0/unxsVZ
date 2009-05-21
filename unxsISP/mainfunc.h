@@ -1000,7 +1000,7 @@ void ArchiveInvoice(char *cMonth, char *cYear, char *cTablePath,char *cPasswd)
 	}
 
 	mySQLRootConnect(cPasswd);
-	mysql_query(&gMysql,"USE mysqlisp2");
+	mysql_query(&gMysql,"USE unxsisp");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
@@ -1473,7 +1473,7 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 
 
 	mySQLRootConnect(cPasswd);
-	mysql_query(&gMysql,"USE mysqlisp2");
+	mysql_query(&gMysql,"USE unxsisp");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));

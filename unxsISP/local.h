@@ -12,8 +12,8 @@ LEGAL
 #define DBIP1 NULL
 //#define DBIP0 "200.43.140.17"
 //#define DBIP1 "200.43.140.250"
-#define DBNAME "mysqlisp2"
-#define DBLOGIN "mysqlisp2"
+#define DBNAME "unxsisp"
+#define DBLOGIN "unxsisp"
 #define DBPASSWD "wsxedc"
 #define DBPORT 0
 #define DBSOCKET NULL
@@ -22,7 +22,7 @@ LEGAL
 //#define DBPORT 4306
 //#define DBSOCKET "/var/lib/mysql/mysql4.sock"
 
-//mysqlisp2 can report to us once a week some useful for
+//unxsisp can report to us once a week some useful for
 //debugging and development statistics.
 //This is very helpful to us and in the end we hope for yourself.
 //For improving and developing this software
