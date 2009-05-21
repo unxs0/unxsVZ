@@ -1,7 +1,7 @@
 #
-# $Id: makefile.template 693 2006-07-27 22:58:07Z ggw $
+#FILE
 #
-# (C) 2001-2004 Gary Wallis.
+# (C) 2001-2009 Gary Wallis for Unixservice, LLC.
 #
 # Notes:
 #	Must use gmake (usually same as make in linux)
@@ -21,31 +21,13 @@
 #	Please remove the mail line below after first make.
 #
 
-#Change these for your system: Ex. -DSolaris instead of -DLinux
-#CFLAGS=-O -DLinux -Wall
-CFLAGS= -DLinux -Wall
-RELEASE= 0.1
-
-#FreeBSD make support un comment the next two lines. Yes you need both -D and the gmake
-#define. Also check mysqlrad.h for FreeBSD parts and adjust for your system.
-#In general "grep -l FreeBSD *" and then check the files to see if you need to change
-#anything else.
-#CFLAGS= -DLinux -DFreeBSD -Wall 
-#FreeBSD=1
-
-ifdef FreeBSD
-	LIBS= /usr/local/lib/mysql/libmysqlclient.a -lz -lm /usr/lib/libcrypt.a
-else
-	LIBS= /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl
-endif
-
-
+CFLAGS=-Wall
+LIBS=-L/usr/lib/mysql/ -lmysqlclient -lz -lcrypt -lm -lssl
 
 all: mysqlRadius2.cgi
 
 mysqlRadius2.cgi: tuser.o tprofile.o tprofilename.o tserver.o tnas.o tjob.o tjobstatus.o tconfiguration.o tservergroup.o tnasgroup.o tlog.o tlogtype.o tmonth.o tlogmonth.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tclient.o tauthorize.o  radius.o main.o cgi.o
 	cc tuser.o tprofile.o tprofilename.o tserver.o tnas.o tjob.o tjobstatus.o tconfiguration.o tservergroup.o tnasgroup.o tlog.o tlogtype.o tmonth.o tlogmonth.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tclient.o tauthorize.o  radius.o main.o cgi.o -o mysqlRadius2.cgi $(LIBS) 
-	#mail -s "mysqlRadius2$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
 
 tuser.o: tuser.c mysqlrad.h language.h tuserfunc.h local.h
 	cc -c tuser.c -o tuser.o $(CFLAGS)
@@ -125,16 +107,5 @@ cleandist:
 	rm -f *.o *.gz
 
 install: mysqlRadius2.cgi
-	install -s mysqlRadius2.cgi $(CGIDIR)mysqlRadius2.cgi
+	install -s mysqlRadius2.cgi /var/www/unxs/cgi-bin/mysqlRadius2.cgi
 	rm mysqlRadius2.cgi
-
-distribution:
-	cd ..;  tar czvf mysqlRadius2/mysqlRadius2$(RELEASE).tar.gz --exclude .svn\
-		mysqlRadius2/*.h\
-		mysqlRadius2/*.c\
-		mysqlRadius2/data\
-		mysqlRadius2/docs\
-		mysqlRadius2/makefile\
-		mysqlRadius2/CHANGES\
-		mysqlRadius2/LICENSE\
-		mysqlRadius2/INSTALL

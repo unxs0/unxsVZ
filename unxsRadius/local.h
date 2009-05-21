@@ -6,11 +6,11 @@ PURPOSE
 LEGAL
         Copyright 2002-2009 Gary Wallis for Unixservice
 */
-#define DBIP0 "10.10.10.100"
-#define DBIP1 "10.10.10.101"
+//#define DBIP0 "10.10.10.100"
+//#define DBIP1 "10.10.10.101"
 //These two lines next should be in the public distro:
-//#define DBIP0 NULL
-//#define DBIP1 NULL
+#define DBIP0 NULL
+#define DBIP1 NULL
 #define DBNAME "mysqlradius2"
 #define DBLOGIN "mysqlradius2"
 #define DBPASSWD "wsxedc"

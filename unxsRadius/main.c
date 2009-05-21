@@ -23,10 +23,6 @@ HELP
 
 #include "mysqlrad.h"
 #include <ctype.h>
-#ifdef Solaris
-        char *crypt(char *passwd, char *salt);
-#endif
-
 #include "language.h"
 #include "local.h"
 
@@ -66,7 +62,7 @@ unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
 char *gcBuildInfo="$Id: main.c.template 1606 2007-10-12 21:27:11Z hus $";
-char *gcRADStatus="Branched";
+char *gcRADStatus="Forked";
 
 //Local
 void Footer_ism3(void);
@@ -107,12 +103,7 @@ int main(int iArgc, char *cArgv[])
 	register int x;
 	int cl=0;
 
-#if defined(Linux)
 	gethostname(gcHostname, 98);
-#else
-	//Solaris
-	sysinfo(SI_HOSTNAME, gcHostname, 98);
-#endif
 
 	if(!strstr(cArgv[0],"mysqlRadius2.cgi"))
 		CalledByAlias(iArgc,cArgv);

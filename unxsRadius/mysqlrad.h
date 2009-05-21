@@ -13,14 +13,7 @@ AUTHOR
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-//This is an example tune for your system
-#ifndef Linux
-        #include <sys/systeminfo.h>
-#else
-        #ifndef FreeBSD
-                #include <crypt.h>
-        #endif
-#endif
+#include <crypt.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -29,13 +22,7 @@ AUTHOR
 
 #include "cgi.h"
 
-//This is an example tune for your system
-#ifdef FreeBSD
-	#include "/usr/local/include/mysql/mysql.h"
-#else
-	#include <mysql/mysql.h>
-#endif
-
+#include <mysql/mysql.h>
 
 #include <unistd.h>
 #include <locale.h>
