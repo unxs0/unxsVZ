@@ -1,0 +1,25 @@
+In this directory we will develop an interface into unxsRadius data for the creation of a dynamic dhcpd
+based on a dhcpd.conf file created with cLogin's of MAC format. Like those used in conjunction with unxsNAC.
+
+Example of dhcpd.conf relevant section
+
+
+class "High Priority User Cisco" {
+	hardware ethernet 00:c0:c3:49:2b:57;//Thomas Hoell
+	...more users
+}
+
+...more classes
+
+subnet 10.0.10.0 netmask 255.255.255.0 {
+	pool {
+		allow members of "High Priority User Cisco";
+		range 10.0.10.3 10.0.10.254;
+	}
+}
+
+...more subnets with class restrictions
+
+Where "High Priority User Cisco" is a tProfileName.cLabel
+Where tUser.cLogin is the MAC
+Where tClient.cLabel is the client name via tUser.uClient
