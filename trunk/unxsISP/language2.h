@@ -446,7 +446,7 @@
 #define LANG_FL_tInvoice_uInvoiceStatus "uInvoiceStatus"
 #define LANG_FT_tInvoice_uInvoiceStatus "Invoice status"
 #define LANG_FL_tInvoice_uQueueStatus "uQueueStatus"
-#define LANG_FT_tInvoice_uQueueStatus "mysqlISP2 tJob queue status"
+#define LANG_FT_tInvoice_uQueueStatus "unxsISP tJob queue status"
 #define LANG_FL_tInvoice_uClient "uClient"
 #define LANG_FT_tInvoice_uClient "Client ID"
 #define LANG_FL_tInvoice_mTotal "mTotal"
@@ -526,7 +526,7 @@
 #define LANG_FL_tInvoice_uModDate "uModDate"
 #define LANG_FT_tInvoice_uModDate "Unix seconds date last update"
 #define LANG_FL_tInvoice_uQueueStatus "uQueueStatus"
-#define LANG_FT_tInvoice_uQueueStatus "mysqlISP2 tJob queue status"
+#define LANG_FT_tInvoice_uQueueStatus "unxsISP tJob queue status"
 //tInvoiceMonth
 #define LANG_FL_tInvoiceMonth_uInvoiceMonth "uInvoice"
 #define LANG_FT_tInvoiceMonth_uInvoiceMonth "Primary Key"

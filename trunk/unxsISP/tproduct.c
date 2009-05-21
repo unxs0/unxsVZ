@@ -1,6 +1,6 @@
 /*
 FILE
-	tProduct source code of mysqlISP2.cgi
+	tProduct source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -203,7 +203,7 @@ void tProduct(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetProduct();
-				mysqlISP2("New tProduct table created");
+				unxsISP("New tProduct table created");
                 	}
 			else
 			{
@@ -501,7 +501,7 @@ void NewtProduct(unsigned uMode)
 	uProduct=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tProduct",uProduct);
-	mysqlISP2Log(uProduct,"tProduct","New");
+	unxsISPLog(uProduct,"tProduct","New");
 #endif
 
 	if(!uMode)
@@ -529,14 +529,14 @@ void DeletetProduct(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uProduct,"tProduct","Del");
+		unxsISPLog(uProduct,"tProduct","Del");
 #endif
 		tProduct(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uProduct,"tProduct","DelError");
+		unxsISPLog(uProduct,"tProduct","DelError");
 #endif
 		tProduct(LANG_NBR_RECNOTDELETED);
 	}
@@ -631,7 +631,7 @@ void ModtProduct(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tProduct",uProduct);
-	mysqlISP2Log(uProduct,"tProduct","Mod");
+	unxsISPLog(uProduct,"tProduct","Mod");
 #endif
 	tProduct(gcQuery);
 

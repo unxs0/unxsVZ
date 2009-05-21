@@ -1,6 +1,6 @@
 /*
 FILE
-	tGlossary source code of mysqlISP2.cgi
+	tGlossary source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tglossary.c 1335 2007-07-23 23:15:44Z Gary $
 PURPOSE
@@ -153,7 +153,7 @@ void tGlossary(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetGlossary();
-				mysqlISP2("New tGlossary table created");
+				unxsISP("New tGlossary table created");
                 	}
 			else
 			{
@@ -360,7 +360,7 @@ void NewtGlossary(unsigned uMode)
 	uGlossary=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tGlossary",uGlossary);
-	mysqlISP2Log(uGlossary,"tGlossary","New");
+	unxsISPLog(uGlossary,"tGlossary","New");
 #endif
 
 	if(!uMode)
@@ -388,14 +388,14 @@ void DeletetGlossary(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uGlossary,"tGlossary","Del");
+		unxsISPLog(uGlossary,"tGlossary","Del");
 #endif
 		tGlossary(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uGlossary,"tGlossary","DelError");
+		unxsISPLog(uGlossary,"tGlossary","DelError");
 #endif
 		tGlossary(LANG_NBR_RECNOTDELETED);
 	}
@@ -475,7 +475,7 @@ void ModtGlossary(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tGlossary",uGlossary);
-	mysqlISP2Log(uGlossary,"tGlossary","Mod");
+	unxsISPLog(uGlossary,"tGlossary","Mod");
 #endif
 	tGlossary(gcQuery);
 

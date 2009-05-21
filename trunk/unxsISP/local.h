@@ -46,7 +46,7 @@ LEGAL
 #define RELEASESHORT "2rc1"
 
 //This should almost never have to changed since it is for integrating other
-//mysqlISP2 related software with mysqlISP2.tClient and .tAuthorize
+//unxsISP related software with unxsISP.tClient and .tAuthorize
 #define TCLIENT "tClient"
 #define TAUTHORIZE "tAuthorize"
 

@@ -277,7 +277,7 @@ void tStatusNavList(void)
 	if(mysql_num_rows(res))
 	{	
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tStatus&uStatus=%s>%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tStatus&uStatus=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 

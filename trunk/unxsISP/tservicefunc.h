@@ -472,7 +472,7 @@ void tServiceNavList(void)
 	{	
 	        while((field=mysql_fetch_row(res)))
 		{
-				printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tService&uService=%s>",field[0]);
+				printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tService&uService=%s>",field[0]);
 				if(field[2][0]=='0')
 					printf("<font color=gray>%s</font></a><br>\n",field[1]);
 				else
@@ -506,7 +506,7 @@ void tServiceConfigList(unsigned uGroup)
 	if(mysql_num_rows(res))
 	{	
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tConfig&uConfig=%s&uService=%u>%s=%s</a><br>\n",
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tConfig&uConfig=%s&uService=%u>%s=%s</a><br>\n",
 				field[0],uGroup,field[1],field[2]);
 	}
 	mysql_free_result(res);

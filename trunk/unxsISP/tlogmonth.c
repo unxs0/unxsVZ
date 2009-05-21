@@ -1,6 +1,6 @@
 /*
 FILE
-	tLogMonth source code of mysqlISP2.cgi
+	tLogMonth source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tlogmonth.c 1335 2007-07-23 23:15:44Z Gary $
 PURPOSE
@@ -187,7 +187,7 @@ void tLogMonth(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetLogMonth();
-				mysqlISP2("New tLogMonth table created");
+				unxsISP("New tLogMonth table created");
                 	}
 			else
 			{

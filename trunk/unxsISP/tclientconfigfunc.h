@@ -61,7 +61,7 @@ void ExttClientConfigCommands(pentry entries[], int x)
 				uInstanceStatus=GetInstanceStatus(uInstance);
 				//sprintf(gcQuery,"%u %u",uInstance,uInstanceStatus);
 				//tClientConfig(gcQuery);
-				if(uInstanceStatus==mysqlISP_NeverDeployed)
+				if(uInstanceStatus==unxsISP_NeverDeployed)
 					uDeployed=0;
 				GetParamInfo(uParameter,&structParam);
 				if(!structParam.uAllowMod)
@@ -96,7 +96,7 @@ void ExttClientConfigCommands(pentry entries[], int x)
 					tClientConfig("No uInstance, start with tInstance");
 
 				uInstanceStatus=GetInstanceStatus(uInstance);
-				if(uInstanceStatus==mysqlISP_NeverDeployed)
+				if(uInstanceStatus==unxsISP_NeverDeployed)
 					uDeployed=0;
 				GetParamInfo(uParameter,&structParam);
 				if(!structParam.uModPostDeploy && uDeployed)
@@ -156,7 +156,7 @@ void ExttClientConfigCommands(pentry entries[], int x)
 				        if(mysql_errno(&gMysql))
 			                	htmlPlainTextError(mysql_error(&gMysql));
 				
-					if(uInstanceStatus!=mysqlISP_Deployed)
+					if(uInstanceStatus!=unxsISP_Deployed)
 					{
 						tClientConfig("Product instance service parameter updated. Must redeploy for change to take effect.");
 					}
@@ -164,10 +164,10 @@ void ExttClientConfigCommands(pentry entries[], int x)
 					{
 
 						sprintf(gcQuery,"UPDATE tInstance SET uStatus=%u,uModBy=%u,uModDate=%lu WHERE uStatus=%u AND uInstance=%u",
-								mysqlISP_WaitingRedeployment,
+								unxsISP_WaitingRedeployment,
 								guLoginClient,
 								clock,
-								mysqlISP_Deployed,
+								unxsISP_Deployed,
 								uInstance);
 
 			        		mysql_query(&gMysql,gcQuery);
@@ -226,7 +226,7 @@ void ExttClientConfigButtons(void)
 	
 	if(uInstance && uExtClient)
 	        printf("<a class=darkLink title='Return to editing other service parameters' "
-			"href=mysqlISP2.cgi?gcFunction=tInstance&uInstance=%u&uExtClient=%u>[Return]</a><p>\n",uInstance,uExtClient);
+			"href=unxsISP.cgi?gcFunction=tInstance&uInstance=%u&uExtClient=%u>[Return]</a><p>\n",uInstance,uExtClient);
 
 	switch(guMode)
         {
@@ -252,7 +252,7 @@ void ExttClientConfigButtons(void)
 	{
 
 		printf("<p><u><a class=darkLink title='Client this parameter belongs to. Short cut back to tClient' "
-			"href=mysqlISP2.cgi?gcFunction=tClient&uClient=%u>%s</a></u>",uExtClient,ForeignKey("tClient","cLabel",uExtClient));
+			"href=unxsISP.cgi?gcFunction=tClient&uClient=%u>%s</a></u>",uExtClient,ForeignKey("tClient","cLabel",uExtClient));
 		printf("<input type=hidden name=uExtClient value=%u>",
 				uExtClient);
 		printf("<input type=hidden name=uInstance value=%u>\n",
@@ -406,7 +406,7 @@ void tClientConfigNavList(void)
 	if(mysql_num_rows(res))
 	{	
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tClientConfig"
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tClientConfig"
 				"&uConfig=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
@@ -432,7 +432,7 @@ void ClientServiceConfigList(void)
 
         res=mysql_store_result(&gMysql);
         while((field=mysql_fetch_row(res)))
-                printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tClientConfig&uConfig=%s"
+                printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tClientConfig&uConfig=%s"
 			"&uInstance=%u&uExtClient=%u>%s=%s</a><br>\n",field[0],uInstance,uExtClient,field[1],field[2]);
         
 	mysql_free_result(res);

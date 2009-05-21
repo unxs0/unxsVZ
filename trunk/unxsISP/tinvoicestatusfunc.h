@@ -277,7 +277,7 @@ void tInvoiceStatusNavList(void)
         	printf("<p><u>tInvoiceStatusNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tInvoiceStatus"
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tInvoiceStatus"
 				"&uInvoiceStatus=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);

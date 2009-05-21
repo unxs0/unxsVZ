@@ -1,6 +1,6 @@
 /*
 FILE
-	tInstance source code of mysqlISP2.cgi
+	tInstance source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -175,7 +175,7 @@ void tInstance(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetInstance();
-				mysqlISP2("New tInstance table created");
+				unxsISP("New tInstance table created");
                 	}
 			else
 			{
@@ -416,7 +416,7 @@ void NewtInstance(unsigned uMode)
 	uInstance=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tInstance",uInstance);
-	mysqlISP2Log(uInstance,"tInstance","New");
+	unxsISPLog(uInstance,"tInstance","New");
 #endif
 
 	if(!uMode)
@@ -444,14 +444,14 @@ void DeletetInstance(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uInstance,"tInstance","Del");
+		unxsISPLog(uInstance,"tInstance","Del");
 #endif
 		tInstance(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uInstance,"tInstance","DelError");
+		unxsISPLog(uInstance,"tInstance","DelError");
 #endif
 		tInstance(LANG_NBR_RECNOTDELETED);
 	}
@@ -538,7 +538,7 @@ void ModtInstance(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tInstance",uInstance);
-	mysqlISP2Log(uInstance,"tInstance","Mod");
+	unxsISPLog(uInstance,"tInstance","Mod");
 #endif
 	tInstance(gcQuery);
 

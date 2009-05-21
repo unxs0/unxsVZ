@@ -1,6 +1,6 @@
 /*
 FILE
-	tInvoiceStatus source code of mysqlISP2.cgi
+	tInvoiceStatus source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -149,7 +149,7 @@ void tInvoiceStatus(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetInvoiceStatus();
-				mysqlISP2("New tInvoiceStatus table created");
+				unxsISP("New tInvoiceStatus table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtInvoiceStatus(unsigned uMode)
 	uInvoiceStatus=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tInvoiceStatus",uInvoiceStatus);
-	mysqlISP2Log(uInvoiceStatus,"tInvoiceStatus","New");
+	unxsISPLog(uInvoiceStatus,"tInvoiceStatus","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetInvoiceStatus(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uInvoiceStatus,"tInvoiceStatus","Del");
+		unxsISPLog(uInvoiceStatus,"tInvoiceStatus","Del");
 #endif
 		tInvoiceStatus(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uInvoiceStatus,"tInvoiceStatus","DelError");
+		unxsISPLog(uInvoiceStatus,"tInvoiceStatus","DelError");
 #endif
 		tInvoiceStatus(LANG_NBR_RECNOTDELETED);
 	}
@@ -454,7 +454,7 @@ void ModtInvoiceStatus(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tInvoiceStatus",uInvoiceStatus);
-	mysqlISP2Log(uInvoiceStatus,"tInvoiceStatus","Mod");
+	unxsISPLog(uInvoiceStatus,"tInvoiceStatus","Mod");
 #endif
 	tInvoiceStatus(gcQuery);
 

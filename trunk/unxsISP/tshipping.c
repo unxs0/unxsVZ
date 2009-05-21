@@ -1,6 +1,6 @@
 /*
 FILE
-	tShipping source code of mysqlISP2.cgi
+	tShipping source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -173,7 +173,7 @@ void tShipping(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetShipping();
-				mysqlISP2("New tShipping table created");
+				unxsISP("New tShipping table created");
                 	}
 			else
 			{
@@ -450,7 +450,7 @@ void NewtShipping(unsigned uMode)
 	uShipping=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tShipping",uShipping);
-	mysqlISP2Log(uShipping,"tShipping","New");
+	unxsISPLog(uShipping,"tShipping","New");
 #endif
 
 	if(!uMode)
@@ -478,14 +478,14 @@ void DeletetShipping(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uShipping,"tShipping","Del");
+		unxsISPLog(uShipping,"tShipping","Del");
 #endif
 		tShipping(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uShipping,"tShipping","DelError");
+		unxsISPLog(uShipping,"tShipping","DelError");
 #endif
 		tShipping(LANG_NBR_RECNOTDELETED);
 	}
@@ -574,7 +574,7 @@ void ModtShipping(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tShipping",uShipping);
-	mysqlISP2Log(uShipping,"tShipping","Mod");
+	unxsISPLog(uShipping,"tShipping","Mod");
 #endif
 	tShipping(gcQuery);
 

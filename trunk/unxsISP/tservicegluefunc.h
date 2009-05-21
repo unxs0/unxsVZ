@@ -259,7 +259,7 @@ void tServiceGlueNavList(void)
         	printf("<p><u>tServiceGlueNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tServiceGlue"
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tServiceGlue"
 				"&uServiceGlue=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);

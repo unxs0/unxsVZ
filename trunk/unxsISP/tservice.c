@@ -1,6 +1,6 @@
 /*
 FILE
-	tService source code of mysqlISP2.cgi
+	tService source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -171,7 +171,7 @@ void tService(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetService();
-				mysqlISP2("New tService table created");
+				unxsISP("New tService table created");
                 	}
 			else
 			{
@@ -413,7 +413,7 @@ void NewtService(unsigned uMode)
 	uService=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tService",uService);
-	mysqlISP2Log(uService,"tService","New");
+	unxsISPLog(uService,"tService","New");
 #endif
 
 	if(!uMode)
@@ -441,14 +441,14 @@ void DeletetService(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uService,"tService","Del");
+		unxsISPLog(uService,"tService","Del");
 #endif
 		tService(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uService,"tService","DelError");
+		unxsISPLog(uService,"tService","DelError");
 #endif
 		tService(LANG_NBR_RECNOTDELETED);
 	}
@@ -533,7 +533,7 @@ void ModtService(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tService",uService);
-	mysqlISP2Log(uService,"tService","Mod");
+	unxsISPLog(uService,"tService","Mod");
 #endif
 	tService(gcQuery);
 

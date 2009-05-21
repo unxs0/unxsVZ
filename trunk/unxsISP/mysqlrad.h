@@ -74,7 +74,7 @@ extern unsigned guMode;
 extern int guError;
 extern char gcErrormsg[];
 
-void mysqlISP2(const char *cResult);
+void unxsISP(const char *cResult);
 void ConnectDb(void);
 void Footer_ism3(void);
 void Header_ism3(char *cMsg, int iJs);
@@ -119,7 +119,7 @@ void ExtSelectSearchAdmin(const char *cTable,const char *cVarList,const char *cS
 void ExtSelectRowAdmin(const char *cTable,const char *cVarList,unsigned uRow);
 
 
-void mysqlISP2Log(unsigned uTablePK, char *cTableName, char *cLogEntry);
+void unxsISPLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 
  //Standard tInputFunc functions
 char *WordToLower(char *cInput);

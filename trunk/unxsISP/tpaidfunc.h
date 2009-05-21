@@ -160,9 +160,9 @@ void ExttPaidButtons(void)
                         	printf("<p><input class=lwarnButton type=submit name=gcCommand value='Recreate mTotals'><p>");
                         printf("<p><font size=2>");
 			if(uInvoice)
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tInvoice&uInvoice=%u>[Invoice]</a><br>\n",uInvoice);
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tInvoice&uInvoice=%u>[Invoice]</a><br>\n",uInvoice);
 			if(uClient)
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tClient&uClient=%u>[Client]</a><br>\n",uClient);
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tClient&uClient=%u>[Client]</a><br>\n",uClient);
 
 	}
 
@@ -551,7 +551,7 @@ void InternalPaymentProcessing(unsigned const uExtPaid)
 				sprintf(mAmount,"%2.2lf",dPaidAmount);
 				dPaidAmount=0.0;
 				UpdateClientPaymentInfo(uExtPaid);
-				UpdateInvoicePaymentInfo(mysqlISP_PaidInvoice,
+				UpdateInvoicePaymentInfo(unxsISP_PaidInvoice,
 								uExtPaid,uInvoicePayment);
 
 				if(uExtPaid)
@@ -583,7 +583,7 @@ void InternalPaymentProcessing(unsigned const uExtPaid)
 				sprintf(mAmount,"%2.2lf",dPaidAmount);
 				dPaidAmount=0.0;
 				UpdateClientPaymentInfo(uExtPaid);
-				UpdateInvoicePaymentInfo(mysqlISP_PartialInvoice,
+				UpdateInvoicePaymentInfo(unxsISP_PartialInvoice,
 								uExtPaid,uInvoicePayment);
 
 				if(uExtPaid)
@@ -614,7 +614,7 @@ void InternalPaymentProcessing(unsigned const uExtPaid)
 				sprintf(mAmount,"%2.2lf",dInvoiceAmount);
 				dPaidAmount-=dInvoiceAmount;
 				UpdateClientPaymentInfo(uExtPaid);
-				UpdateInvoicePaymentInfo(mysqlISP_PaidInvoice,
+				UpdateInvoicePaymentInfo(unxsISP_PaidInvoice,
 								uExtPaid,uInvoicePayment);
 
 				if(uExtPaid)

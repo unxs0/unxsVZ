@@ -335,14 +335,14 @@ void RecentJobList(void)
 				"AND tJob.uModDate>=%1$lu ORDER BY uJobGroup DESC,uJob DESC LIMIT 101",
 				u24HrsAgo
 				,guCompany
-				,mysqlISP_Waiting
-				,mysqlISP_RemotelyQueued);
+				,unxsISP_Waiting
+				,unxsISP_RemotelyQueued);
 	else
 	        sprintf(gcQuery,"SELECT tJob.uJob,tJob.cJobName," TCLIENT ".cLabel,tJob.uJobStatus FROM "
 				"tJob," TCLIENT " WHERE tClient.uClient=tJob.uJobClient AND "
 				"tJob.uModDate>=%lu AND tJob.uJobStatus!=%u AND tJob.uJobStatus!=%u "
 				"ORDER BY uJobGroup DESC,uJob DESC LIMIT 101",
-				u24HrsAgo,mysqlISP_Waiting,mysqlISP_RemotelyQueued);
+				u24HrsAgo,unxsISP_Waiting,unxsISP_RemotelyQueued);
 
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -360,12 +360,12 @@ void RecentJobList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			sscanf(field[3],"%u",&uJobStatus);
-			//if(uJobStatus==mysqlISP2_FatalError)
+			//if(uJobStatus==unxsISP_FatalError)
 			if(uJobStatus==4)
 				cColor="red";
 			else
 				cColor="black";
-				printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tJob&uJob=%s>"
+				printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tJob&uJob=%s>"
 					"<font color=%s>%s %s</font></a><br>\n",
 						field[0],cColor,field[2],field[1]);
 			uCount++;
@@ -396,13 +396,13 @@ void JobList(void)
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT DISTINCT " TCLIENT ".cLabel,tJob.uJobClient FROM tJob," TCLIENT " WHERE "
 				"tJob.uJobClient=" TCLIENT ".uClient AND ( tJob.uJobStatus=%u OR tJob.uJobStatus=%u) LIMIT 101",
-				mysqlISP_Waiting,mysqlISP_RemotelyQueued);
+				unxsISP_Waiting,unxsISP_RemotelyQueued);
 	else
 		sprintf(gcQuery,"SELECT DISTINCT " TCLIENT ".cLabel,tJob.uJobClient FROM tJob," TCLIENT " WHERE "
 				"tJob.uJobClient=" TCLIENT ".uClient AND ( tJob.uJobStatus=%1$u OR tJob.uJobStatus=%2$u ) "
 				"AND (tJob.uOwner=%3$u OR " TCLIENT ".uOwner IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%3$u)"
 				" OR tJob.uJobClient=%3$u) LIMIT 101",
-				mysqlISP_Waiting,mysqlISP_RemotelyQueued,guCompany);
+				unxsISP_Waiting,unxsISP_RemotelyQueued,guCompany);
 
 	/*printf("%s",gcQuery);
 	retur/;*/
@@ -420,10 +420,10 @@ void JobList(void)
 	 time(&clock);
 	 while((field=mysql_fetch_row(res)) && uClientCount<101)
 	 {
-		printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tClient&uClient=%s>%s</a>:<br>\n", field[1],field[0]);
+		printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tClient&uClient=%s>%s</a>:<br>\n", field[1],field[0]);
 
 		sprintf(gcQuery,"SELECT uJob,cJobName,uJobStatus,uJobDate FROM tJob WHERE uJobClient=%s AND "
-				"( uJobStatus=%u OR uJobStatus=%u ) ORDER BY uJob DESC LIMIT 11",field[1],mysqlISP_Waiting,mysqlISP_RemotelyQueued);
+				"( uJobStatus=%u OR uJobStatus=%u ) ORDER BY uJob DESC LIMIT 11",field[1],unxsISP_Waiting,unxsISP_RemotelyQueued);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -440,11 +440,11 @@ void JobList(void)
 			else
 				cPostAtr="";
 			sscanf(field2[2],"%u",&uJobStatus);
-			if(uJobStatus==mysqlISP_RemotelyQueued)
+			if(uJobStatus==unxsISP_RemotelyQueued)
 				cColor="green";
 			else
 				cColor="gray";
-			printf("&nbsp;&nbsp;<a class=darkLink href=mysqlISP2.cgi?gcFunction=tJob&uJob=%s><font color=%s>%s%s</font></a><br>\n",
+			printf("&nbsp;&nbsp;<a class=darkLink href=unxsISP.cgi?gcFunction=tJob&uJob=%s><font color=%s>%s%s</font></a><br>\n",
 				field2[0],cColor,field2[1],cPostAtr);
 			uJobCount++;
 		}
@@ -500,7 +500,7 @@ int UpdateInfo(void)
 		if(field[0]!=NULL) sscanf(field[0],"%u",&uMaxuZone);
 	mysql_free_result(res);
 
-	sprintf(cInfo,"mysqlISP2%s %u %u %u",RELEASESHORT,guLoginClient,guPermLevel,uMaxuZone);
+	sprintf(cInfo,"unxsISP%s %u %u %u",RELEASESHORT,guLoginClient,guPermLevel,uMaxuZone);
 
 	if(!cInfo[0])
 		return(4);

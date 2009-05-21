@@ -119,7 +119,7 @@ void ExttConfigButtons(void)
 	OpenFieldSet("tConfig Aux Panel",100);
 	
 	if(uGroup)
-		printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tService&uService=%u>[Return]</a>",uGroup);
+		printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tService&uService=%u>[Return]</a>",uGroup);
 
 	switch(guMode)
         {
@@ -140,7 +140,7 @@ void ExttConfigButtons(void)
 		default:
 			//Quick link to parameter
 			if(uParameter)
-        			printf("<p><a class=darkLink href=mysqlISP2.cgi?gcFunction=tParameter&uParameter=%u>%s</tr>\n",
+        			printf("<p><a class=darkLink href=unxsISP.cgi?gcFunction=tParameter&uParameter=%u>%s</tr>\n",
 					uParameter,ForeignKey("tParameter","cParameter",uParameter));
 
 

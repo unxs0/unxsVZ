@@ -120,10 +120,10 @@ void ExttInvoiceItemsButtons(void)
 	if(uInvoice)
 	{
 		if(uSearch)
-		printf("<a class=darkLink title='Return to same tInvoice' href=mysqlISP2.cgi?gcFunction=tInvoice&uInvoice=%u&uSearch=%u>[Return]</a><p>\n",
+		printf("<a class=darkLink title='Return to same tInvoice' href=unxsISP.cgi?gcFunction=tInvoice&uInvoice=%u&uSearch=%u>[Return]</a><p>\n",
 				uInvoice,uSearch);
 		else
-		printf("<a class=darkLink title='Return to same tInvoice' href=mysqlISP2.cgi?gcFunction=tInvoice&uInvoice=%u>[Return]</a><p>\n",uInvoice);
+		printf("<a class=darkLink title='Return to same tInvoice' href=unxsISP.cgi?gcFunction=tInvoice&uInvoice=%u>[Return]</a><p>\n",uInvoice);
 	}
 
 	switch(guMode)

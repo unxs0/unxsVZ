@@ -337,7 +337,7 @@ sprintf(gcQuery,"SELECT tInvoiceItems%s%s.uInvoiceItems,tInvoiceItems%s%s.mPrice
 		printf("<u>Total</u><br>%2.2f\n",dTotal);
 
 		if(uClient)
-			printf("<p><a class=darkLink href=mysqlISP2.cgi?gcFunction=tClient&uClient=%u>[Client]</a><br>\n",uClient);
+			printf("<p><a class=darkLink href=unxsISP.cgi?gcFunction=tClient&uClient=%u>[Client]</a><br>\n",uClient);
 
 	}
 

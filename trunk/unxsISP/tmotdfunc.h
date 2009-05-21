@@ -276,7 +276,7 @@ void tMotdNavList(void)
         	printf("<p><u>tMotdNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tMotd"
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tMotd"
 				"&uMotd=%s>%s</a><br>\n",field[0],field[1]);
 	        
 	}

@@ -41,11 +41,11 @@ endif
 
 
 
-all: mysqlISP2.cgi
+all: unxsISP.cgi
 
-mysqlISP2.cgi: tclient.o tproduct.o tservice.o tinstance.o tjob.o tclientconfig.o tconfig.o tparameter.o tparamtype.o tperiod.o tstatus.o tauthorize.o tserviceglue.o tinvoice.o tinvoicemonth.o tpaid.o tinvoiceitems.o tinvoicestatus.o ttemplate.o tconfiguration.o tpayment.o taccounttype.o tshipping.o tproducttype.o tserver.o tglossary.o tlog.o tlogtype.o tlogmonth.o tmonth.o ttemplateset.o tjobstatus.o ttemplatetype.o tmotd.o  mysqlisp.o main.o cgi.o
-	cc tclient.o tproduct.o tservice.o tinstance.o tjob.o tclientconfig.o tconfig.o tparameter.o tparamtype.o tperiod.o tstatus.o tauthorize.o tserviceglue.o tinvoice.o tinvoicemonth.o tpaid.o tinvoiceitems.o tinvoicestatus.o ttemplate.o tconfiguration.o tpayment.o taccounttype.o tshipping.o tproducttype.o tserver.o tglossary.o tlog.o tlogtype.o tlogmonth.o tmonth.o ttemplateset.o tjobstatus.o ttemplatetype.o tmotd.o  mysqlisp.o main.o cgi.o -o mysqlISP2.cgi $(LIBS) 
-	#mail -s "mysqlISP2$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
+unxsISP.cgi: tclient.o tproduct.o tservice.o tinstance.o tjob.o tclientconfig.o tconfig.o tparameter.o tparamtype.o tperiod.o tstatus.o tauthorize.o tserviceglue.o tinvoice.o tinvoicemonth.o tpaid.o tinvoiceitems.o tinvoicestatus.o ttemplate.o tconfiguration.o tpayment.o taccounttype.o tshipping.o tproducttype.o tserver.o tglossary.o tlog.o tlogtype.o tlogmonth.o tmonth.o ttemplateset.o tjobstatus.o ttemplatetype.o tmotd.o  mysqlisp.o main.o cgi.o
+	cc tclient.o tproduct.o tservice.o tinstance.o tjob.o tclientconfig.o tconfig.o tparameter.o tparamtype.o tperiod.o tstatus.o tauthorize.o tserviceglue.o tinvoice.o tinvoicemonth.o tpaid.o tinvoiceitems.o tinvoicestatus.o ttemplate.o tconfiguration.o tpayment.o taccounttype.o tshipping.o tproducttype.o tserver.o tglossary.o tlog.o tlogtype.o tlogmonth.o tmonth.o ttemplateset.o tjobstatus.o ttemplatetype.o tmotd.o  mysqlisp.o main.o cgi.o -o unxsISP.cgi $(LIBS) 
+	#mail -s "unxsISP$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
 
 tclient.o: tclient.c mysqlrad.h language.h tclientfunc.h local.h
 	cc -c tclient.c -o tclient.o $(CFLAGS)
@@ -167,17 +167,17 @@ clean:
 cleandist:
 	rm -f *.o *.gz
 
-install: mysqlISP2.cgi
-	install -s mysqlISP2.cgi $(CGIDIR)mysqlISP2.cgi
-	rm mysqlISP2.cgi
+install: unxsISP.cgi
+	install -s unxsISP.cgi $(CGIDIR)unxsISP.cgi
+	rm unxsISP.cgi
 
 distribution:
-	cd ..;  tar czvf mysqlISP2/mysqlISP2$(RELEASE).tar.gz --exclude .svn\
-		mysqlISP2/*.h\
-		mysqlISP2/*.c\
-		mysqlISP2/data\
-		mysqlISP2/docs\
-		mysqlISP2/makefile\
-		mysqlISP2/CHANGES\
-		mysqlISP2/LICENSE\
-		mysqlISP2/INSTALL
+	cd ..;  tar czvf unxsISP/unxsISP$(RELEASE).tar.gz --exclude .svn\
+		unxsISP/*.h\
+		unxsISP/*.c\
+		unxsISP/data\
+		unxsISP/docs\
+		unxsISP/makefile\
+		unxsISP/CHANGES\
+		unxsISP/LICENSE\
+		unxsISP/INSTALL

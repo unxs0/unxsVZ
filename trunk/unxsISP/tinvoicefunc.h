@@ -56,7 +56,7 @@ void GetBillingTraffic(unsigned const uInstance,char *mHours);
 //tinstancefunc.h
 void htmlDateSelectTable(void);
 time_t cDateToUnixTime(char *cDate);
-//mysqlISP2 remote server connections
+//unxsISP remote server connections
 extern MYSQL mysqlext;
 void ExtConnectDb(char *cDbName, char *cDbIp, char *cDbPwd, char *cDbLogin);
 void TextConnectDb(void);
@@ -315,7 +315,7 @@ void ExttInvoiceCommands(pentry entries[], int x)
 				if(!uInvoice) 
 					tInvoice("No uInvoice?");
 				uInvoiceStatus=GetInvoiceStatus(uInvoice,&uQueueStatus);
-				if(uInvoiceStatus!=mysqlISP_NewInvoice) 
+				if(uInvoiceStatus!=unxsISP_NewInvoice) 
 					tInvoice("Can't modify wrong status. Might have just changed.");
                         	guMode=2002;
 				tInvoice(LANG_NB_CONFIRMMOD);
@@ -332,7 +332,7 @@ void ExttInvoiceCommands(pentry entries[], int x)
 				if(!uInvoice) 
 					tInvoice("No uInvoice?");
 				uInvoiceStatus=GetInvoiceStatus(uInvoice,&uQueueStatus);
-				if(uInvoiceStatus!=mysqlISP_NewInvoice) 
+				if(uInvoiceStatus!=unxsISP_NewInvoice) 
 					tInvoice("Can't modify wrong status. Might have just changed.");
                         	guMode=0;
 
@@ -645,7 +645,7 @@ void RemoveInvoices(void)
 				" AND tInvoice.uInvoiceStatus=%u AND tInvoice.uQueueStatus=0 AND ( tInstance.uBilled=0 OR "
 				"(EXTRACT(MONTH FROM FROM_UNIXTIME(tInstance.uBilled))=EXTRACT(MONTH FROM NOW()) "
 				"AND EXTRACT(YEAR FROM FROM_UNIXTIME(tInstance.uBilled))=EXTRACT(YEAR FROM NOW())) )",
-				mysqlISP_Deployed,mysqlISP_DeployedMod,mysqlISP_OnHold,mysqlISP_WaitingRedeployment,mysqlISP_WaitingHold,mysqlISP_NewInvoice);
+				unxsISP_Deployed,unxsISP_DeployedMod,unxsISP_OnHold,unxsISP_WaitingRedeployment,unxsISP_WaitingHold,unxsISP_NewInvoice);
 	else
 		sprintf(gcQuery,"UPDATE tInstance,tClient,tInvoice SET tInstance.uBilled=0,tClient.mBalance=tClient.mBalance-tInvoice.mTotal "
 				"WHERE tInstance.uClient=tClient.uClient AND tInvoice.uClient=tClient.uClient AND tInstance.uClient=tClient.uClient "
@@ -654,8 +654,8 @@ void RemoveInvoices(void)
 				"tInvoice.uQueueStatus=0 AND tInvoice.uOwner=%u AND ( tInstance.uBilled=0 OR (EXTRACT(MONTH FROM "
 				"FROM_UNIXTIME(tInstance.uBilled))=EXTRACT(MONTH FROM NOW()) AND EXTRACT(YEAR FROM "
 				"FROM_UNIXTIME(tInstance.uBilled))!=EXTRACT(YEAR FROM NOW())) )"
-				,guLoginClient,guLoginClient,mysqlISP_Deployed,mysqlISP_DeployedMod,mysqlISP_OnHold,
-				mysqlISP_WaitingRedeployment,mysqlISP_WaitingHold,mysqlISP_NewInvoice,guLoginClient);
+				,guLoginClient,guLoginClient,unxsISP_Deployed,unxsISP_DeployedMod,unxsISP_OnHold,
+				unxsISP_WaitingRedeployment,unxsISP_WaitingHold,unxsISP_NewInvoice,guLoginClient);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -666,14 +666,14 @@ void RemoveInvoices(void)
 				"tInvoice.uInvoice=tInvoiceItems.uInvoice AND tInvoice.uInvoiceStatus=%u "
 				"AND tInvoice.uQueueStatus=0 AND EXTRACT(MONTH FROM FROM_UNIXTIME(tInvoice.uCreatedDate))"
 				"=EXTRACT(MONTH FROM NOW()) AND EXTRACT(YEAR FROM FROM_UNIXTIME(tInvoice.uCreatedDate))"
-				"=EXTRACT(YEAR FROM NOW())",mysqlISP_NewInvoice);
+				"=EXTRACT(YEAR FROM NOW())",unxsISP_NewInvoice);
 	else
 		sprintf(gcQuery,"DELETE tInvoice,tInvoiceItems FROM tInvoice,tInvoiceItems WHERE "
 				"tInvoice.uInvoice=tInvoiceItems.uInvoice AND tInvoice.uOwner=%u "
 				"AND tInvoice.uInvoiceStatus=%u AND tInvoice.uQueueStatus=0 AND "
 				"EXTRACT(MONTH FROM FROM_UNIXTIME(tInvoice.uCreatedDate))="
 				"EXTRACT(MONTH FROM NOW()) AND EXTRACT(YEAR FROM "
-				"FROM_UNIXTIME(tInvoice.uCreatedDate))=EXTRACT(YEAR FROM NOW())",guLoginClient,mysqlISP_NewInvoice);
+				"FROM_UNIXTIME(tInvoice.uCreatedDate))=EXTRACT(YEAR FROM NOW())",guLoginClient,unxsISP_NewInvoice);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -717,11 +717,11 @@ void InvoiceItemList(unsigned uInvoice)
 			dTotal+=dPrice;
 
 			if(uSearch)
-				printf("%u-. <a class=darkLink href=mysqlISP2.cgi?gcFunction=tInvoiceItems"
+				printf("%u-. <a class=darkLink href=unxsISP.cgi?gcFunction=tInvoiceItems"
 					"&uInvoiceItems=%s&uSearch=%u>%s. $%s</a>\n",
 					uCount,field[0],uSearch,field[2],field[1]);
 			else
-				printf("%u-. <a class=darkLink href=mysqlISP2.cgi?gcFunction=tInvoiceItems"
+				printf("%u-. <a class=darkLink href=unxsISP.cgi?gcFunction=tInvoiceItems"
 					"&uInvoiceItems=%s>%s. $%s</a>\n",
 					uCount,field[0],field[2],field[1]);
 			printf("<br>\n");
@@ -731,11 +731,11 @@ void InvoiceItemList(unsigned uInvoice)
 		printf("<u>Total</u><br>$%2.2f\n",dTotal);
 
 		if(dTotal > 0.0001)
-			printf("<p><a class=darkLink href=mysqlISP2.cgi?gcFunction=tPaid"
+			printf("<p><a class=darkLink href=unxsISP.cgi?gcFunction=tPaid"
 				"&uClient=%u&uPayment=%u&mTotal=%2.2lf>[Post Manual Payment]</a>\n",uClient,uPayment,dTotal);
 
 		if(uClient)
-			printf("<p><a class=darkLink href=mysqlISP2.cgi?gcFunction=tClient&uClient=%u>[Client]</a><br>\n",uClient);
+			printf("<p><a class=darkLink href=unxsISP.cgi?gcFunction=tClient&uClient=%u>[Client]</a><br>\n",uClient);
 
 	}
 
@@ -746,9 +746,9 @@ void EmailInvoicesJob(time_t luJobTime)
 {
 	//First change tInvoiceStatus
 	if(guPermLevel>9)
-		sprintf(gcQuery,"UPDATE tInvoice SET uQueueStatus=%u WHERE uQueueStatus=0",mysqlISP_MailQueuedInvoice);
+		sprintf(gcQuery,"UPDATE tInvoice SET uQueueStatus=%u WHERE uQueueStatus=0",unxsISP_MailQueuedInvoice);
 	else
-		sprintf(gcQuery,"UPDATE tInvoice SET uQueueStatus=%u WHERE uQueueStatus=0 AND uOwner=%u",mysqlISP_MailQueuedInvoice,guLoginClient);
+		sprintf(gcQuery,"UPDATE tInvoice SET uQueueStatus=%u WHERE uQueueStatus=0 AND uOwner=%u",unxsISP_MailQueuedInvoice,guLoginClient);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -764,9 +764,9 @@ void PrintInvoicesJob(time_t luJobTime)
 {
 	//First change tInvoiceStatus
 	if(guPermLevel>9)
-		sprintf(gcQuery,"UPDATE tInvoice SET uQueueStatus=%u WHERE uQueueStatus=0",mysqlISP_PrintQueuedInvoice);
+		sprintf(gcQuery,"UPDATE tInvoice SET uQueueStatus=%u WHERE uQueueStatus=0",unxsISP_PrintQueuedInvoice);
 	else
-		sprintf(gcQuery,"UPDATE tInvoice SET uQueueStatus=%u WHERE uQueueStatus=0 AND uOwner=%u",mysqlISP_PrintQueuedInvoice,guLoginClient);
+		sprintf(gcQuery,"UPDATE tInvoice SET uQueueStatus=%u WHERE uQueueStatus=0 AND uOwner=%u",unxsISP_PrintQueuedInvoice,guLoginClient);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -792,11 +792,11 @@ unsigned GetCurrentNewInvoices(void)
 				"uInvoiceStatus=%u AND uQueueStatus=0 AND "
 				"EXTRACT(MONTH FROM FROM_UNIXTIME(tInvoice.uCreatedDate))=EXTRACT(MONTH FROM NOW()) "
 				"AND EXTRACT(YEAR FROM FROM_UNIXTIME(tInvoice.uCreatedDate))=EXTRACT(YEAR FROM NOW())",
-				guLoginClient,mysqlISP_NewInvoice);
+				guLoginClient,unxsISP_NewInvoice);
 	else
 		sprintf(gcQuery,"SELECT COUNT(uInvoice) FROM tInvoice WHERE uInvoiceStatus=%u AND uQueueStatus=0 AND "
 				"EXTRACT(MONTH FROM FROM_UNIXTIME(tInvoice.uCreatedDate))=EXTRACT(MONTH FROM NOW()) "
-				"AND EXTRACT(YEAR FROM FROM_UNIXTIME(tInvoice.uCreatedDate))=EXTRACT(YEAR FROM NOW())",mysqlISP_NewInvoice);
+				"AND EXTRACT(YEAR FROM FROM_UNIXTIME(tInvoice.uCreatedDate))=EXTRACT(YEAR FROM NOW())",unxsISP_NewInvoice);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		tInvoice(mysql_error(&gMysql));
@@ -839,11 +839,11 @@ void SubmitInvoiceJob(char *cJobType,time_t luJobDate)
 	char cJobName[33]={""};
 	time_t luClock;
 	
-	sprintf(cJobName,"mysqlISP2.tInvoice.%.20s",cJobType);
+	sprintf(cJobName,"unxsISP.tInvoice.%.20s",cJobType);
 
 	//Remove all waiting jobs by jobname and authorized user: Study this further
 	sprintf(gcQuery,"DELETE FROM tJob WHERE uInstance=0 AND uJobStatus=%u AND cJobName='%s' AND uOwner=%u AND uJobClient=%u",
-			mysqlISP_Waiting,cJobName,guLoginClient,guLoginClient);
+			unxsISP_Waiting,cJobName,guLoginClient,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -857,7 +857,7 @@ void SubmitInvoiceJob(char *cJobType,time_t luJobDate)
 				guLoginClient,
 				cJobType,
 				luJobDate,
-				mysqlISP_Waiting,
+				unxsISP_Waiting,
 				guLoginClient,
 				guLoginClient,
 				luClock);
@@ -1597,7 +1597,7 @@ void ProcessClientWebUsageProduct(structWebsiteUsage *structWebUsage,
 					guLoginClient,
 					luClock,
 					structWebUsage->cDomain,cLabel,
-					mysqlISP_Waiting,
+					unxsISP_Waiting,
 					luClock);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -1865,11 +1865,11 @@ unsigned GenerateInvoicesCommand(unsigned uHtml)
 			"tClient.uPayment=tClientPayment.uPayment AND tProduct.uProduct=tInstance.uProduct AND "
 			"tInstance.uClient=tClient.uClient AND tInstance.uBilled=0 AND ( tInstance.uStatus=%u OR "
 			"tInstance.uStatus=%u OR tInstance.uStatus=%u OR tInstance.uStatus=%u OR tInstance.uStatus=%u ) ORDER BY tClient.uClient",
-				mysqlISP_Deployed,
-				mysqlISP_DeployedMod,
-				mysqlISP_OnHold,
-				mysqlISP_WaitingRedeployment,
-				mysqlISP_WaitingHold);
+				unxsISP_Deployed,
+				unxsISP_DeployedMod,
+				unxsISP_OnHold,
+				unxsISP_WaitingRedeployment,
+				unxsISP_WaitingHold);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2057,15 +2057,15 @@ unsigned GenerateInvoicesCommand(unsigned uHtml)
 				sscanf(field[22],"%u",&uProductType);
 				sscanf(field[0],"%u",&uInstance);
 
-				if( uProductType==mysqlISP_BillingOnly && 
-					( uProductPeriod==mysqlISP_BillingHourly ||
-						uProductPeriod==mysqlISP_BillingTraffic ) )
+				if( uProductType==unxsISP_BillingOnly && 
+					( uProductPeriod==unxsISP_BillingHourly ||
+						uProductPeriod==unxsISP_BillingTraffic ) )
 				{
 					//Used for both hours and traffic. GB or MB? Does it
 					//matter?
 					char mHours[16]={"1.0"};
 
-					if(uProductPeriod==mysqlISP_BillingHourly)
+					if(uProductPeriod==unxsISP_BillingHourly)
 						GetBillingHours(uInstance,mHours);
 					else
 						GetBillingTraffic(uInstance,mHours);
@@ -2125,18 +2125,18 @@ uInstance 0
 
 //Product related
 //Tied to tProductType
-#define mysqlISP_BillingOnly 5
+#define unxsISP_BillingOnly 5
 //Tied to tPeriod
-#define mysqlISP_BillingHourly 7
-#define mysqlISP_BillingStorage 9
-#define mysqlISP_BillingTraffic 10
+#define unxsISP_BillingHourly 7
+#define unxsISP_BillingStorage 9
+#define unxsISP_BillingTraffic 10
 
 
 */
 
 		
-				if(uProductPeriod==mysqlISP_BillingHourly ||
-					uProductPeriod==mysqlISP_BillingTraffic )
+				if(uProductPeriod==unxsISP_BillingHourly ||
+					uProductPeriod==unxsISP_BillingTraffic )
 					sprintf(cInvoiceItemLabel,"%.255s. %2.2lf %.32s at $%.12s/%.12s. %s i"
 							"billing-only product. Created %u/%u. Last payment %u/%u.",
 						field[6],
@@ -2825,7 +2825,7 @@ unsigned CreateNewInvoice(unsigned uClient, unsigned uHtml)
 			"SELECT %u,%u,%u,%lu,cFirstName,cLastName,cEmail,cAddr1,cAddr2,cCity,cState,cZip,cCountry,cCardType,"
 			"cCardNumber,uExpMonth,uExpYear,cCardName,cShipName,cShipAddr1,cShipAddr2,cShipCity,cShipState,"
 			"cShipZip,cShipCountry,cTelephone,cFax,uClient,uPayment FROM tClient WHERE uClient=%u",
-					mysqlISP_NewInvoice,
+					unxsISP_NewInvoice,
 					guCompany,
 					guLoginClient,
 					luClock,

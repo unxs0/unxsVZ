@@ -1,6 +1,6 @@
 /*
 FILE
-	tAuthorize source code of mysqlISP2.cgi
+	tAuthorize source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tauthorize.c 2086 2008-10-23 19:21:51Z Gary $
 PURPOSE
@@ -168,7 +168,7 @@ void tAuthorize(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetAuthorize();
-				mysqlISP2("New tAuthorize table created");
+				unxsISP("New tAuthorize table created");
                 	}
 			else
 			{
@@ -426,7 +426,7 @@ void NewtAuthorize(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uAuthorize=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate(TAUTHORIZE,uAuthorize);
-	mysqlISP2Log(uAuthorize,TAUTHORIZE,"New");
+	unxsISPLog(uAuthorize,TAUTHORIZE,"New");
 
 	if(!uMode)
 	{
@@ -444,12 +444,12 @@ void DeletetAuthorize(void)
 	//tAuthorize("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlISP2Log(uAuthorize,TAUTHORIZE,"Del");
+		unxsISPLog(uAuthorize,TAUTHORIZE,"Del");
 		tAuthorize(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlISP2Log(uAuthorize,TAUTHORIZE,"DelError");
+		unxsISPLog(uAuthorize,TAUTHORIZE,"DelError");
 		tAuthorize(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -518,7 +518,7 @@ void ModtAuthorize(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate(TAUTHORIZE,uAuthorize);
-	mysqlISP2Log(uAuthorize,TAUTHORIZE,"Mod");
+	unxsISPLog(uAuthorize,TAUTHORIZE,"Mod");
 	tAuthorize(gcQuery);
 
 }//ModtAuthorize(void)

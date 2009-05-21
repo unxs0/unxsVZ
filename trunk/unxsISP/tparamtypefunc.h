@@ -276,7 +276,7 @@ void tParamTypeNavList(void)
         	printf("<p><u>tParamTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tParamType"
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tParamType"
 				"&uParamType=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);

@@ -285,10 +285,10 @@ void tIsm5NavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(cSearch[0])
-printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tIsm5&uIsm5=%s&cSearch=%s>%s/%s/%s</a><br>\n",
+printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tIsm5&uIsm5=%s&cSearch=%s>%s/%s/%s</a><br>\n",
 			field[0],cSearch,field[1],field[2],field[3]);
 			else
-printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tIsm5&uIsm5=%s>%s/%s/%s</a><br>\n",
+printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tIsm5&uIsm5=%s>%s/%s/%s</a><br>\n",
 				field[0],field[1],field[2],field[3]);
 	        }
 	}
