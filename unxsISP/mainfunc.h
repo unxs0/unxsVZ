@@ -81,7 +81,7 @@ int iExtMainCommands(pentry entries[], int x)
 	if(!strcmp(gcFunction,"MainTools"))
 	{
 		if(!strcmp(gcCommand,"Dashboard"))
-			mysqlISP2("DashBoard");
+			unxsISP("DashBoard");
 	}
 
 	return(0);
@@ -111,7 +111,7 @@ void ExtMainContent(void)
 		OpenRow("Table List","black");
 		printf("<td>\n");
 		for(i=0;cTableList[i][0];i++)
-			printf("<a href=mysqlISP2.cgi?gcFunction=%.32s>%.32s</a><br>\n",
+			printf("<a href=unxsISP.cgi?gcFunction=%.32s>%.32s</a><br>\n",
 				cTableList[i],cTableList[i]);
 		printf("</td></tr>\n");
         	OpenRow("Admin Functions","black");
@@ -286,7 +286,7 @@ if(guPermLevel>11)
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		sscanf(mysqlField[1],"%lu",&luClock);
-		printf("<td></td><td>%s</td><td colspan=2><a href=mysqlISP2.cgi?gcFunction=tZone&uZone=%s>%s"
+		printf("<td></td><td>%s</td><td colspan=2><a href=unxsISP.cgi?gcFunction=tZone&uZone=%s>%s"
 			"</a> %s (%s times)</td><td>%s</td></tr>\n",
 				ctime(&luClock),mysqlField[5],mysqlField[3],mysqlField[0],mysqlField[4],mysqlField[2]);
 	}
@@ -303,7 +303,7 @@ if(guPermLevel>11)
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		sscanf(mysqlField[1],"%lu",&luClock);
-		printf("<td></td><td>%s</td><td colspan=2>%s...<a href=mysqlISP2.cgi?gcFunction=tLog&uLog=%s>"
+		printf("<td></td><td>%s</td><td colspan=2>%s...<a href=unxsISP.cgi?gcFunction=tLog&uLog=%s>"
 				"(More)</a></td><td>%s</td></tr>\n",
 					ctime(&luClock),cShortenText(mysqlField[0],10),mysqlField[3],mysqlField[2]);
 	}
@@ -346,7 +346,7 @@ if(guPermLevel>11)
 
 	//
 	OpenRow("Jobs Pending (Last 10)","black");
-	sprintf(cWhere,"tJob.uJobClient=tClient.uClient AND tJob.uJobStatus!=%u",mysqlISP_Deployed);
+	sprintf(cWhere,"tJob.uJobClient=tClient.uClient AND tJob.uJobStatus!=%u",unxsISP_Deployed);
 
 	if(guPermLevel>11) //Let's avoid the 'table/alias is not unique' error ;)
 		ExtDashboardSelect("tJob,tClient",
@@ -413,7 +413,7 @@ void RestoreAll(char *cPasswd)
 		exit(1);
 	}
 
-	printf("Restoring mysqlISP2 data from .txt file in %s/mysqlISP2/data...\n\n",cISMROOT);
+	printf("Restoring unxsISP data from .txt file in %s/unxsISP/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -429,7 +429,7 @@ void RestoreAll(char *cPasswd)
 
 	for(i=0;cTableList[i][0];i++)
 	{
-sprintf(gcQuery,"load data infile '%s/mysqlISP2/data/%s.txt' replace into table %s",cISMROOT,cTableList[i],cTableList[i]);
+sprintf(gcQuery,"load data infile '%s/unxsISP/data/%s.txt' replace into table %s",cISMROOT,cTableList[i],cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -462,7 +462,7 @@ void Restore(char *cTableName,char *cPasswd)
 		exit(1);
 	}
 
-	printf("Restoring mysqlISP2 data from .txt file in %s/mysqlISP2/data...\n\n",cISMROOT);
+	printf("Restoring unxsISP data from .txt file in %s/unxsISP/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -476,7 +476,7 @@ void Restore(char *cTableName,char *cPasswd)
 		exit(1);
 	}
 
-	sprintf(gcQuery,"load data infile '%s/mysqlISP2/data/%s.txt' replace into table %s",cISMROOT,cTableName,cTableName);
+	sprintf(gcQuery,"load data infile '%s/unxsISP/data/%s.txt' replace into table %s",cISMROOT,cTableName,cTableName);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -508,7 +508,7 @@ void Backup(char *cPasswd)
 		exit(1);
 	}
 
-	printf("Backing up mysqlISP2 data to .txt files in %s/mysqlISP2/data...\n\n",cISMROOT);
+	printf("Backing up unxsISP data to .txt files in %s/unxsISP/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -526,7 +526,7 @@ void Backup(char *cPasswd)
 	{
 		char cFileName[300];
 
-		sprintf(cFileName,"%s/mysqlISP2/data/%s.txt"
+		sprintf(cFileName,"%s/unxsISP/data/%s.txt"
 				,cISMROOT,cTableList[i]);
 		unlink(cFileName);
 
@@ -566,7 +566,7 @@ void Initialize(char *cPasswd)
 		exit(1);
 	}
 
-	printf("Creating db and setting permissions, installing data from %s/mysqlISP2...\n\n",
+	printf("Creating db and setting permissions, installing data from %s/unxsISP...\n\n",
 					cISMROOT);
 
 	//connect as root to master db
@@ -652,7 +652,7 @@ void Initialize(char *cPasswd)
 
         for(i=0;cInitTableList[i][0];i++)
         {
-                sprintf(gcQuery,"load data infile '%s/mysqlISP2/data/%s.txt' replace into table %s",cISMROOT,cInitTableList[i],cInitTableList[i]);
+                sprintf(gcQuery,"load data infile '%s/unxsISP/data/%s.txt' replace into table %s",cISMROOT,cInitTableList[i],cInitTableList[i]);
                 mysql_query(&gMysql,gcQuery);
                 if(mysql_errno(&gMysql))
                 {
@@ -1132,7 +1132,7 @@ void ArchiveInvoice(char *cMonth, char *cYear, char *cTablePath,char *cPasswd)
 	}
 
 	printf("Copied invoice data and archived into: %s\n",cInvoiceTableName);
-	printf("Use mysqlISP2 tInvoiceMonth to use it.\n");
+	printf("Use unxsISP tInvoiceMonth to use it.\n");
 
 
 	//Need to do the same with tInvoiceItems but make sure we only archive
@@ -1351,7 +1351,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 
 void CalledByAlias(int iArgc,char *cArgv[])
 {
-	if(strstr(cArgv[0],"mysqlISP2RSS.xml"))
+	if(strstr(cArgv[0],"unxsISPRSS.xml"))
 	{
 		MYSQL_RES *res;
 		MYSQL_ROW field;
@@ -1373,7 +1373,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 
 		//This is the standard place. With much parsing nonsense we can
 		//	do better by using env vars
-		sprintf(cLinkStart,"%s://%s/cgi-bin/mysqlISP2.cgi",cHTTP,gcHost);
+		sprintf(cLinkStart,"%s://%s/cgi-bin/unxsISP.cgi",cHTTP,gcHost);
 
 		printf("Content-type: text/xml\n\n");
 
@@ -1381,11 +1381,11 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		printf("<?xml version='1.0' encoding='UTF-8'?>\n");
 		printf("<rss version='2.0'>\n");
 		printf("<channel>\n");
-		printf("<title>mysqlISP2 RSS tJob Errors</title>\n");
-		printf("<link>http://openisp.net/mysqlISP2</link>\n");
-		printf("<description>mysqlISP2 tJob Errors</description>\n");
+		printf("<title>unxsISP RSS tJob Errors</title>\n");
+		printf("<link>http://openisp.net/unxsISP</link>\n");
+		printf("<description>unxsISP tJob Errors</description>\n");
 		printf("<lastBuildDate>%.199s</lastBuildDate>\n",cRSSDate);
-		printf("<generator>mysqlISP2 RSS Generator</generator>\n");
+		printf("<generator>unxsISP RSS Generator</generator>\n");
 		printf("<docs>http://blogs.law.harvard.edu/tech/rss</docs>\n");
 		printf("<ttl>120</ttl>\n");
 
@@ -1403,7 +1403,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("\n<item>\n");
-			printf("<title>mysqlISP2.tJob.uJob=%s</title>\n",field[0]);
+			printf("<title>unxsISP.tJob.uJob=%s</title>\n",field[0]);
 			printf("<link>%s?gcFunction=tJob&amp;uJob=%s</link>\n",cLinkStart,
 							field[0]);
 			printf("<description>cJobName=%s Server=%s uUser=%s\ncJobData=(%s)</description>\n",field[2],field[1],field[3],field[4]);
@@ -1698,7 +1698,7 @@ void TextError(const char *cError, unsigned uContinue)
 {
 	char cQuery[1024];
 
-	printf("\nPlease report this mysqlISP2 fatal error ASAP:\n%s\n",cError);
+	printf("\nPlease report this unxsISP fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
         sprintf(cQuery,"INSERT INTO tLog SET cLabel='TextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",guPermLevel,guLoginClient,gcUser,gcHost,cError,gcHostname,guLoginClient);
@@ -1802,9 +1802,9 @@ void GenerateInvoices(void)
 	*/
 	//1. Get client id(s) from tInstace: outer loop
 	sprintf(gcQuery,"SELECT DISTINCT uClient FROM tInstance WHERE tInstance.uStatus=%u OR tInstance.uStatus=%u OR tInstance.uStatus=%u",
-			mysqlISP_WaitingInitial
-			,mysqlISP_DeployedMod
-			,mysqlISP_Deployed
+			unxsISP_WaitingInitial
+			,unxsISP_DeployedMod
+			,unxsISP_Deployed
 	       );
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1890,8 +1890,8 @@ tClient.uOwner 19
 			
 				sprintf(gcQuery,"SELECT uProduct FROM tInstance WHERE uClient=%s AND (uStatus=%u OR uStatus=%u)",
 						field[0]
-						,mysqlISP_DeployedMod
-						,mysqlISP_Deployed
+						,unxsISP_DeployedMod
+						,unxsISP_Deployed
 						);
 
 				mysql_query(&gMysql,gcQuery);
@@ -1988,8 +1988,8 @@ tClient.uOwner 19
 		
 			sprintf(gcQuery,"SELECT uProduct FROM tInstance WHERE uClient=%s AND (uStatus=%u OR uStatus=%u)",
 					field[0]
-					,mysqlISP_DeployedMod
-					,mysqlISP_Deployed
+					,unxsISP_DeployedMod
+					,unxsISP_Deployed
 					);
 			//printf("%s\n",gcQuery);
 			mysql_query(&gMysql,gcQuery);

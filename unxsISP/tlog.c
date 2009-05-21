@@ -195,7 +195,7 @@ void tLog(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetLog();
-				mysqlISP2("New tLog table created");
+				unxsISP("New tLog table created");
                 	}
 			else
 			{
@@ -417,7 +417,7 @@ void NewtLog(unsigned uMode)
 	uLog=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tLog",uLog);
-	mysqlISP2Log(uLog,"tLog","New");
+	unxsISPLog(uLog,"tLog","New");
 #endif
 
 	if(!uMode)
@@ -445,14 +445,14 @@ void DeletetLog(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uLog,"tLog","Del");
+		unxsISPLog(uLog,"tLog","Del");
 #endif
 		tLog(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uLog,"tLog","DelError");
+		unxsISPLog(uLog,"tLog","DelError");
 #endif
 		tLog(LANG_NBR_RECNOTDELETED);
 	}
@@ -550,7 +550,7 @@ void ModtLog(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tLog",uLog);
-	mysqlISP2Log(uLog,"tLog","Mod");
+	unxsISPLog(uLog,"tLog","Mod");
 #endif
 	tLog(gcQuery);
 

@@ -1,6 +1,6 @@
 /*
 FILE
-	tTemplateType source code of mysqlISP2.cgi
+	tTemplateType source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: ttemplatetype.c 1335 2007-07-23 23:15:44Z Gary $
 PURPOSE
@@ -149,7 +149,7 @@ void tTemplateType(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetTemplateType();
-				mysqlISP2("New tTemplateType table created");
+				unxsISP("New tTemplateType table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtTemplateType(unsigned uMode)
 	uTemplateType=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tTemplateType",uTemplateType);
-	mysqlISP2Log(uTemplateType,"tTemplateType","New");
+	unxsISPLog(uTemplateType,"tTemplateType","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetTemplateType(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uTemplateType,"tTemplateType","Del");
+		unxsISPLog(uTemplateType,"tTemplateType","Del");
 #endif
 		tTemplateType(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uTemplateType,"tTemplateType","DelError");
+		unxsISPLog(uTemplateType,"tTemplateType","DelError");
 #endif
 		tTemplateType(LANG_NBR_RECNOTDELETED);
 	}
@@ -455,7 +455,7 @@ void ModtTemplateType(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tTemplateType",uTemplateType);
-	mysqlISP2Log(uTemplateType,"tTemplateType","Mod");
+	unxsISPLog(uTemplateType,"tTemplateType","Mod");
 #endif
 	tTemplateType(gcQuery);
 

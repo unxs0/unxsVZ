@@ -285,7 +285,7 @@ void tParameterNavList(void)
 				printf("<br><u>%s</u><br>\n",ForeignKey("tProductType","cLabel",strtoul(field[3],NULL,10)));
 				sprintf(cProdType,"%.15s",field[3]);
 			}
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tParameter"
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tParameter"
 				"&uParameter=%s>%s (%s)</a><br>\n",field[0],field[1],field[2]);
 		}
 	        

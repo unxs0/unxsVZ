@@ -1,6 +1,6 @@
 /*
 FILE
-	tConfiguration source code of mysqlISP2.cgi
+	tConfiguration source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tconfiguration.c 1335 2007-07-23 23:15:44Z Gary $
 PURPOSE
@@ -167,7 +167,7 @@ void tConfiguration(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetConfiguration();
-				mysqlISP2("New tConfiguration table created");
+				unxsISP("New tConfiguration table created");
                 	}
 			else
 			{
@@ -395,7 +395,7 @@ void NewtConfiguration(unsigned uMode)
 	uConfiguration=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tConfiguration",uConfiguration);
-	mysqlISP2Log(uConfiguration,"tConfiguration","New");
+	unxsISPLog(uConfiguration,"tConfiguration","New");
 #endif
 
 	if(!uMode)
@@ -423,14 +423,14 @@ void DeletetConfiguration(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uConfiguration,"tConfiguration","Del");
+		unxsISPLog(uConfiguration,"tConfiguration","Del");
 #endif
 		tConfiguration(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uConfiguration,"tConfiguration","DelError");
+		unxsISPLog(uConfiguration,"tConfiguration","DelError");
 #endif
 		tConfiguration(LANG_NBR_RECNOTDELETED);
 	}
@@ -514,7 +514,7 @@ void ModtConfiguration(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tConfiguration",uConfiguration);
-	mysqlISP2Log(uConfiguration,"tConfiguration","Mod");
+	unxsISPLog(uConfiguration,"tConfiguration","Mod");
 #endif
 	tConfiguration(gcQuery);
 

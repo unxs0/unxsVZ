@@ -1,6 +1,6 @@
 /*
 FILE
-	tServiceGlue source code of mysqlISP2.cgi
+	tServiceGlue source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -132,7 +132,7 @@ void tServiceGlue(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetServiceGlue();
-				mysqlISP2("New tServiceGlue table created");
+				unxsISP("New tServiceGlue table created");
                 	}
 			else
 			{
@@ -290,7 +290,7 @@ void NewtServiceGlue(unsigned uMode)
 	uServiceGlue=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tServiceGlue",uServiceGlue);
-	mysqlISP2Log(uServiceGlue,"tServiceGlue","New");
+	unxsISPLog(uServiceGlue,"tServiceGlue","New");
 #endif
 
 	if(!uMode)
@@ -318,14 +318,14 @@ void DeletetServiceGlue(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uServiceGlue,"tServiceGlue","Del");
+		unxsISPLog(uServiceGlue,"tServiceGlue","Del");
 #endif
 		tServiceGlue(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uServiceGlue,"tServiceGlue","DelError");
+		unxsISPLog(uServiceGlue,"tServiceGlue","DelError");
 #endif
 		tServiceGlue(LANG_NBR_RECNOTDELETED);
 	}
@@ -401,7 +401,7 @@ void ModtServiceGlue(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tServiceGlue",uServiceGlue);
-	mysqlISP2Log(uServiceGlue,"tServiceGlue","Mod");
+	unxsISPLog(uServiceGlue,"tServiceGlue","Mod");
 #endif
 	tServiceGlue(gcQuery);
 

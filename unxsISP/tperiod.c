@@ -1,6 +1,6 @@
 /*
 FILE
-	tPeriod source code of mysqlISP2.cgi
+	tPeriod source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -149,7 +149,7 @@ void tPeriod(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetPeriod();
-				mysqlISP2("New tPeriod table created");
+				unxsISP("New tPeriod table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtPeriod(unsigned uMode)
 	uPeriod=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tPeriod",uPeriod);
-	mysqlISP2Log(uPeriod,"tPeriod","New");
+	unxsISPLog(uPeriod,"tPeriod","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetPeriod(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uPeriod,"tPeriod","Del");
+		unxsISPLog(uPeriod,"tPeriod","Del");
 #endif
 		tPeriod(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uPeriod,"tPeriod","DelError");
+		unxsISPLog(uPeriod,"tPeriod","DelError");
 #endif
 		tPeriod(LANG_NBR_RECNOTDELETED);
 	}
@@ -454,7 +454,7 @@ void ModtPeriod(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tPeriod",uPeriod);
-	mysqlISP2Log(uPeriod,"tPeriod","Mod");
+	unxsISPLog(uPeriod,"tPeriod","Mod");
 #endif
 	tPeriod(gcQuery);
 

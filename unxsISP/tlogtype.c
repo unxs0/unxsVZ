@@ -1,6 +1,6 @@
 /*
 FILE
-	tLogType source code of mysqlISP2.cgi
+	tLogType source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tlogtype.c 1335 2007-07-23 23:15:44Z Gary $
 PURPOSE
@@ -149,7 +149,7 @@ void tLogType(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetLogType();
-				mysqlISP2("New tLogType table created");
+				unxsISP("New tLogType table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtLogType(unsigned uMode)
 	uLogType=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tLogType",uLogType);
-	mysqlISP2Log(uLogType,"tLogType","New");
+	unxsISPLog(uLogType,"tLogType","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetLogType(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uLogType,"tLogType","Del");
+		unxsISPLog(uLogType,"tLogType","Del");
 #endif
 		tLogType(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uLogType,"tLogType","DelError");
+		unxsISPLog(uLogType,"tLogType","DelError");
 #endif
 		tLogType(LANG_NBR_RECNOTDELETED);
 	}
@@ -455,7 +455,7 @@ void ModtLogType(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tLogType",uLogType);
-	mysqlISP2Log(uLogType,"tLogType","Mod");
+	unxsISPLog(uLogType,"tLogType","Mod");
 #endif
 	tLogType(gcQuery);
 

@@ -3,7 +3,7 @@ FILE
 	$Id: tproductfunc.h,v 1.29 2004/06/12 16:26:14 ggw Exp $
 PURPOSE
 	tproduct.c expansion non-schema dependent file.
-	For application gcFunctionality regarding mysqlISP2 products and related
+	For application gcFunctionality regarding unxsISP products and related
 	issues. Example service and paramaters. Billing and accouting issues.
 
 AUTHOR
@@ -89,7 +89,7 @@ void CheckForUnBilledUse(unsigned const uProduct)
 	if(!strcmp(mLocalPrice,mPrice) && !strcmp(mLocalSetupFee,mSetupFee))
 		return;
 
-	sprintf(gcQuery,"SELECT uProduct FROM tInstance WHERE uProduct=%u AND uBilled=0 AND uStatus!=%u",uProduct,mysqlISP_Canceled);
+	sprintf(gcQuery,"SELECT uProduct FROM tInstance WHERE uProduct=%u AND uBilled=0 AND uStatus!=%u",uProduct,unxsISP_Canceled);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		tProduct(mysql_error(&gMysql));
@@ -440,7 +440,7 @@ void tProductNavList(void)
 				}
 			}
 
-			printf("&nbsp;<a class=darkLink href=mysqlISP2.cgi?gcFunction=tProduct&uProduct=%s>",field[0]);
+			printf("&nbsp;<a class=darkLink href=unxsISP.cgi?gcFunction=tProduct&uProduct=%s>",field[0]);
 			if(field[2][0]=='0')
 				printf("<font color=gray>%s</font></a><br>\n",field[1]);
 			else
@@ -464,7 +464,7 @@ void tProductNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-			printf("&nbsp;<a class=darkLink href=mysqlISP2.cgi?gcFunction=tProduct&uProduct=%s>",field[0]);
+			printf("&nbsp;<a class=darkLink href=unxsISP.cgi?gcFunction=tProduct&uProduct=%s>",field[0]);
 			if(field[2][0]=='0')
 				printf("<font color=gray>%s</font></a><br>\n",field[1]);
 			else
@@ -498,7 +498,7 @@ void tProductServiceList(void)
 		printf("<p><u>tProduct Services</u><br>");
 
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tService&uService=%s>%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tService&uService=%s>%s</a><br>\n",field[0],field[1]);
 	}
 	mysql_free_result(res);
 									

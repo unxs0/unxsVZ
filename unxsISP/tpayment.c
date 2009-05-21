@@ -1,6 +1,6 @@
 /*
 FILE
-	tPayment source code of mysqlISP2.cgi
+	tPayment source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -235,7 +235,7 @@ void tPayment(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetPayment();
-				mysqlISP2("New tPayment table created");
+				unxsISP("New tPayment table created");
                 	}
 			else
 			{
@@ -533,7 +533,7 @@ void NewtPayment(unsigned uMode)
 	uPayment=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tPayment",uPayment);
-	mysqlISP2Log(uPayment,"tPayment","New");
+	unxsISPLog(uPayment,"tPayment","New");
 #endif
 
 	if(!uMode)
@@ -561,14 +561,14 @@ void DeletetPayment(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uPayment,"tPayment","Del");
+		unxsISPLog(uPayment,"tPayment","Del");
 #endif
 		tPayment(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uPayment,"tPayment","DelError");
+		unxsISPLog(uPayment,"tPayment","DelError");
 #endif
 		tPayment(LANG_NBR_RECNOTDELETED);
 	}
@@ -667,7 +667,7 @@ void ModtPayment(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tPayment",uPayment);
-	mysqlISP2Log(uPayment,"tPayment","Mod");
+	unxsISPLog(uPayment,"tPayment","Mod");
 #endif
 	tPayment(gcQuery);
 

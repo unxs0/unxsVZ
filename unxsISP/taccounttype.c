@@ -1,6 +1,6 @@
 /*
 FILE
-	tAccountType source code of mysqlISP2.cgi
+	tAccountType source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -149,7 +149,7 @@ void tAccountType(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetAccountType();
-				mysqlISP2("New tAccountType table created");
+				unxsISP("New tAccountType table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtAccountType(unsigned uMode)
 	uAccountType=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tAccountType",uAccountType);
-	mysqlISP2Log(uAccountType,"tAccountType","New");
+	unxsISPLog(uAccountType,"tAccountType","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetAccountType(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uAccountType,"tAccountType","Del");
+		unxsISPLog(uAccountType,"tAccountType","Del");
 #endif
 		tAccountType(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uAccountType,"tAccountType","DelError");
+		unxsISPLog(uAccountType,"tAccountType","DelError");
 #endif
 		tAccountType(LANG_NBR_RECNOTDELETED);
 	}
@@ -454,7 +454,7 @@ void ModtAccountType(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tAccountType",uAccountType);
-	mysqlISP2Log(uAccountType,"tAccountType","Mod");
+	unxsISPLog(uAccountType,"tAccountType","Mod");
 #endif
 	tAccountType(gcQuery);
 

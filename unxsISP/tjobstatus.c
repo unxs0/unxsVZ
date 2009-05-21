@@ -1,6 +1,6 @@
 /*
 FILE
-	tJobStatus source code of mysqlISP2.cgi
+	tJobStatus source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tjobstatus.c 1335 2007-07-23 23:15:44Z Gary $
 PURPOSE
@@ -149,7 +149,7 @@ void tJobStatus(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetJobStatus();
-				mysqlISP2("New tJobStatus table created");
+				unxsISP("New tJobStatus table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtJobStatus(unsigned uMode)
 	uJobStatus=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tJobStatus",uJobStatus);
-	mysqlISP2Log(uJobStatus,"tJobStatus","New");
+	unxsISPLog(uJobStatus,"tJobStatus","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetJobStatus(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uJobStatus,"tJobStatus","Del");
+		unxsISPLog(uJobStatus,"tJobStatus","Del");
 #endif
 		tJobStatus(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlISP2Log(uJobStatus,"tJobStatus","DelError");
+		unxsISPLog(uJobStatus,"tJobStatus","DelError");
 #endif
 		tJobStatus(LANG_NBR_RECNOTDELETED);
 	}
@@ -455,7 +455,7 @@ void ModtJobStatus(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tJobStatus",uJobStatus);
-	mysqlISP2Log(uJobStatus,"tJobStatus","Mod");
+	unxsISPLog(uJobStatus,"tJobStatus","Mod");
 #endif
 	tJobStatus(gcQuery);
 

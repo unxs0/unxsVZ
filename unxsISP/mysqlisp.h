@@ -7,45 +7,45 @@ PURPOSE
 */
 
 //Instance status only
-#define mysqlISP_NeverDeployed 1
-#define mysqlISP_WaitingInitial 2
-#define mysqlISP_DeployedMod 3
-#define mysqlISP_OnHold 6
-#define mysqlISP_WaitingRedeployment 9 
-#define mysqlISP_WaitingCancel 11 
-#define mysqlISP_WaitingHold 12 
+#define unxsISP_NeverDeployed 1
+#define unxsISP_WaitingInitial 2
+#define unxsISP_DeployedMod 3
+#define unxsISP_OnHold 6
+#define unxsISP_WaitingRedeployment 9 
+#define unxsISP_WaitingCancel 11 
+#define unxsISP_WaitingHold 12 
 //Job status Only
-#define mysqlISP_RemotelyQueued 7
-#define mysqlISP_Waiting 10
+#define unxsISP_RemotelyQueued 7
+#define unxsISP_Waiting 10
 //Both
-#define mysqlISP_Deployed 4
-#define mysqlISP_Canceled 5
+#define unxsISP_Deployed 4
+#define unxsISP_Canceled 5
 
 //Product related
 //Tied to tProductType
-#define mysqlISP_BillingOnly 5
+#define unxsISP_BillingOnly 5
 //Tied to tPeriod
-#define mysqlISP_BillingHourly 7
-#define mysqlISP_BillingStorage 9
-#define mysqlISP_BillingTraffic 10
+#define unxsISP_BillingHourly 7
+#define unxsISP_BillingStorage 9
+#define unxsISP_BillingTraffic 10
 
 //These values must match tInvoiceStatus.uInvoiceStatus
 //Invoice related
 //Open invoices start at 1
-#define mysqlISP_NewInvoice 1
-#define mysqlISP_SentInvoice 2
-#define mysqlISP_PartialInvoice 4
-#define mysqlISP_PastDueInvoice 6
-#define mysqlISP_BadDebtInvoice 7
-#define mysqlISP_CollectionInvoice 8
+#define unxsISP_NewInvoice 1
+#define unxsISP_SentInvoice 2
+#define unxsISP_PartialInvoice 4
+#define unxsISP_PastDueInvoice 6
+#define unxsISP_BadDebtInvoice 7
+#define unxsISP_CollectionInvoice 8
 //Closed invoices start at 100
-#define mysqlISP_PaidInvoice 110
-#define mysqlISP_VoidInvoice 210
-#define mysqlISP_ReceiptSentInvoice 211
+#define unxsISP_PaidInvoice 110
+#define unxsISP_VoidInvoice 210
+#define unxsISP_ReceiptSentInvoice 211
 
 //Invoice job queue related
-#define mysqlISP_MailQueuedInvoice 10
-#define mysqlISP_PrintQueuedInvoice 11
+#define unxsISP_MailQueuedInvoice 10
+#define unxsISP_PrintQueuedInvoice 11
 
 
 typedef struct {

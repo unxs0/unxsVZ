@@ -43,7 +43,7 @@ void ExttLogButtons(void)
 	printf("<u>Table Tips</u><br>");
 	printf("This table holds the non-archived logged and MD5 signed operations that have taken place in the system. "
 		"Usually data is available here only for the current month. When possible context related info is provided below. "
-		"Current mysqlISP2 version does not save delete (Del) operation data.<p><a href=iDNS.cgi?gcFunction=tLogMonth>tLogMonth</a> "
+		"Current unxsISP version does not save delete (Del) operation data.<p><a href=iDNS.cgi?gcFunction=tLogMonth>tLogMonth</a> "
 		"allows access to all archived (read-only and compressed) monthly tLog data sets. These archives are created from the "
 		"command line usually by crontab operation.");
 
@@ -245,10 +245,10 @@ void LogSummary(void)
 			{
 
 				if(!strcmp(cLabel,"Del"))
-					printf("<a title='Jump to tDeletedResource entry' href=mysqlISP2.cgi?gcFunction=tDeletedResource&uDeletedResource=%u>"
+					printf("<a title='Jump to tDeletedResource entry' href=unxsISP.cgi?gcFunction=tDeletedResource&uDeletedResource=%u>"
 						"tDeletedResource</a><blockquote>\n",uTPK);
 				else
-					printf("<a title='Jump to tResource entry' href=mysqlISP2.cgi?gcFunction=tResource&uResource=%u>tResource</a>"
+					printf("<a title='Jump to tResource entry' href=unxsISP.cgi?gcFunction=tResource&uResource=%u>tResource</a>"
 						"<blockquote>\n",uTPK);
 
 				printf("cZone=%s<br>\n",ForeignKey("tZone","cZone",uZone));
@@ -264,7 +264,7 @@ void LogSummary(void)
 
 			if(uLoginClient)
 			{
-				printf("Contact=<a title='Jump to tClient entry' href=mysqlISP2.cgi?gcFunction=tClient&uClient=%u>%s</a><br></blockquote>\n",
+				printf("Contact=<a title='Jump to tClient entry' href=unxsISP.cgi?gcFunction=tClient&uClient=%u>%s</a><br></blockquote>\n",
 					uLoginClient,
 					ForeignKey(TCLIENT,"cLabel",uLoginClient));
 			}

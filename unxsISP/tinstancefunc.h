@@ -53,7 +53,7 @@ NOTES
 #include "mysqlisp.h"
 
 
-//mysqlISP2 remote server connections
+//unxsISP remote server connections
 MYSQL mysqlext;
 
 //First Hold and Cancel pre status to WaitingCancel or WaitingHold
@@ -152,16 +152,16 @@ void ExttInstanceCommands(pentry entries[], int x)
 					tInstance("Must supply valid uProduct");
 				//Must refresh uStatus	
 				uStatus=GetInstanceStatus(uInstance);	
-				if(  uStatus!=mysqlISP_NeverDeployed &&
-						uStatus!=mysqlISP_Canceled &&
-						uStatus!=mysqlISP_DeployedMod &&
-						uStatus!=mysqlISP_OnHold &&
-						uStatus!=mysqlISP_WaitingCancel &&
-						uStatus!=mysqlISP_WaitingHold)
+				if(  uStatus!=unxsISP_NeverDeployed &&
+						uStatus!=unxsISP_Canceled &&
+						uStatus!=unxsISP_DeployedMod &&
+						uStatus!=unxsISP_OnHold &&
+						uStatus!=unxsISP_WaitingCancel &&
+						uStatus!=unxsISP_WaitingHold)
 					tInstance("Can't deploy incorrect uStatus");
 
-				if(uStatus==mysqlISP_Canceled ||
-						uStatus==mysqlISP_NeverDeployed)
+				if(uStatus==unxsISP_Canceled ||
+						uStatus==unxsISP_NeverDeployed)
 					CheckAllParameters(0);
 				else
 					CheckAllParameters(1);
@@ -169,7 +169,7 @@ void ExttInstanceCommands(pentry entries[], int x)
 				GetProductAccountingVars(uProduct,mPrice,mSetupFee,
 								mReleaseFee,&uProductType,&uPeriod);
 
-				if(uProductType==mysqlISP_BillingOnly)
+				if(uProductType==unxsISP_BillingOnly)
                         		guMode=2999;
 				else
                         		guMode=3000;
@@ -201,18 +201,18 @@ void ExttInstanceCommands(pentry entries[], int x)
 				}
 
 				uStatus=GetInstanceStatus(uInstance);	
-				if(  uStatus!=mysqlISP_NeverDeployed &&
-						uStatus!=mysqlISP_Canceled &&
-						uStatus!=mysqlISP_DeployedMod &&
-						uStatus!=mysqlISP_OnHold &&
-						uStatus!=mysqlISP_WaitingCancel &&
-						uStatus!=mysqlISP_WaitingHold)
+				if(  uStatus!=unxsISP_NeverDeployed &&
+						uStatus!=unxsISP_Canceled &&
+						uStatus!=unxsISP_DeployedMod &&
+						uStatus!=unxsISP_OnHold &&
+						uStatus!=unxsISP_WaitingCancel &&
+						uStatus!=unxsISP_WaitingHold)
 					tInstance("Can't deploy incorrect uStatus. uStatus may have just changed.");
 
                         	guMode=3000;
 
-				if(uStatus==mysqlISP_Canceled ||
-					uStatus==mysqlISP_NeverDeployed)
+				if(uStatus==unxsISP_Canceled ||
+					uStatus==unxsISP_NeverDeployed)
 					CheckAllParameters(0);
 				else
 					CheckAllParameters(1);
@@ -220,26 +220,26 @@ void ExttInstanceCommands(pentry entries[], int x)
 				//Accounting rule
 				GetProductAccountingVars(uProduct,mPrice,mSetupFee,
 								mReleaseFee,&uProductType,&uPeriod);
-				if(uProductType!=mysqlISP_BillingOnly)
+				if(uProductType!=unxsISP_BillingOnly)
 				{
 
-					if(uStatus==mysqlISP_NeverDeployed || 
-							uStatus==mysqlISP_Canceled)
+					if(uStatus==unxsISP_NeverDeployed || 
+							uStatus==unxsISP_Canceled)
 						SubmitInstanceJob("New",uDeployTime);
-					else if(uStatus==mysqlISP_DeployedMod ||
-							uStatus==mysqlISP_OnHold )
+					else if(uStatus==unxsISP_DeployedMod ||
+							uStatus==unxsISP_OnHold )
 						SubmitInstanceJob("Mod",uDeployTime);
 
 					//Change status to appropiate waiting status
-					if(uStatus==mysqlISP_NeverDeployed ||
-							uStatus==mysqlISP_Canceled)
-						uStatus=mysqlISP_WaitingInitial;
+					if(uStatus==unxsISP_NeverDeployed ||
+							uStatus==unxsISP_Canceled)
+						uStatus=unxsISP_WaitingInitial;
 					else
-						uStatus=mysqlISP_WaitingRedeployment;
+						uStatus=unxsISP_WaitingRedeployment;
 				}
 				else
 				{
-					uStatus=mysqlISP_Deployed;
+					uStatus=unxsISP_Deployed;
 				}
 
 				sprintf(gcQuery,"UPDATE tInstance SET uStatus=%u,uModBy=%u,uModDate=%lu WHERE uInstance=%u",
@@ -248,7 +248,7 @@ void ExttInstanceCommands(pentry entries[], int x)
 		        	if(mysql_errno(&gMysql))
 					tClientConfig(mysql_error(&gMysql));
 				guMode=0;
-				if(uProductType==mysqlISP_BillingOnly)
+				if(uProductType==unxsISP_BillingOnly)
 					tInstance("'Billing Only' product deployed.");
 				else
 					tInstance("Job submitted.");
@@ -265,15 +265,15 @@ void ExttInstanceCommands(pentry entries[], int x)
 				if(!uInstance)
 					tInstance("Must supply valid uInstance");
 				uStatus=GetInstanceStatus(uInstance);	
-				if(  uStatus!=mysqlISP_Deployed &&
-						uStatus!=mysqlISP_DeployedMod &&
-						uStatus!=mysqlISP_WaitingHold &&
-						uStatus!=mysqlISP_WaitingRedeployment 
-						&& uStatus!=mysqlISP_OnHold)
+				if(  uStatus!=unxsISP_Deployed &&
+						uStatus!=unxsISP_DeployedMod &&
+						uStatus!=unxsISP_WaitingHold &&
+						uStatus!=unxsISP_WaitingRedeployment 
+						&& uStatus!=unxsISP_OnHold)
 					tInstance("Can't cancel incorrect uStatus");
 				GetProductAccountingVars(uProduct,mPrice,mSetupFee,
 								mReleaseFee,&uProductType,&uPeriod);
-				if(uProductType!=mysqlISP_BillingOnly)
+				if(uProductType!=unxsISP_BillingOnly)
 					guMode=4000;
 				else
 					guMode=3999;
@@ -290,14 +290,14 @@ void ExttInstanceCommands(pentry entries[], int x)
 				if(!uInstance)
 					tInstance("Must supply valid uInstance");
 				uStatus=GetInstanceStatus(uInstance);	
-				if(  uStatus!=mysqlISP_Deployed &&
-						uStatus!=mysqlISP_DeployedMod &&
-						uStatus!=mysqlISP_WaitingHold &&
-						uStatus!=mysqlISP_WaitingRedeployment 
-						&& uStatus!=mysqlISP_OnHold)
+				if(  uStatus!=unxsISP_Deployed &&
+						uStatus!=unxsISP_DeployedMod &&
+						uStatus!=unxsISP_WaitingHold &&
+						uStatus!=unxsISP_WaitingRedeployment 
+						&& uStatus!=unxsISP_OnHold)
 					tInstance("Can't cancel incorrect uStatus. uStatus may have changed.");
 				time(&luClock);
-				if(uProductType!=mysqlISP_BillingOnly)
+				if(uProductType!=unxsISP_BillingOnly)
 				{
 					if(cDay[0] && cDay[0]!='N')
 					{
@@ -309,7 +309,7 @@ void ExttInstanceCommands(pentry entries[], int x)
 						uDeployTime=luClock;
 					}
 					sprintf(gcQuery,"UPDATE tInstance SET uStatus=%u,uModBy=%u,uModDate=%lu WHERE uInstance=%u",
-							uStatus=mysqlISP_WaitingCancel,uModBy=guLoginClient,uModDate=luClock,uInstance);
+							uStatus=unxsISP_WaitingCancel,uModBy=guLoginClient,uModDate=luClock,uInstance);
 			        	mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -318,14 +318,14 @@ void ExttInstanceCommands(pentry entries[], int x)
 				else
 				{
 					sprintf(gcQuery,"UPDATE tInstance SET uStatus=%u,uModBy=%u,uModDate=%lu WHERE uInstance=%u",
-							uStatus=mysqlISP_Canceled,uModBy=guLoginClient,uModDate=luClock,uInstance);
+							uStatus=unxsISP_Canceled,uModBy=guLoginClient,uModDate=luClock,uInstance);
 			        	mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
 				}
 
 
-				if(uProductType==mysqlISP_BillingOnly)
+				if(uProductType==unxsISP_BillingOnly)
 					tInstance("'Billing Only' product canceled.");
 				else
 					tInstance("Cancel job submitted.");
@@ -342,10 +342,10 @@ void ExttInstanceCommands(pentry entries[], int x)
 				if(!uInstance)
 					tInstance("Must supply valid uInstance");
 				uStatus=GetInstanceStatus(uInstance);	
-				if(  uStatus!=mysqlISP_Deployed &&
-						uStatus!=mysqlISP_DeployedMod &&
-						uStatus!=mysqlISP_WaitingRedeployment 
-						&& uStatus!=mysqlISP_WaitingCancel)
+				if(  uStatus!=unxsISP_Deployed &&
+						uStatus!=unxsISP_DeployedMod &&
+						uStatus!=unxsISP_WaitingRedeployment 
+						&& uStatus!=unxsISP_WaitingCancel)
 					tInstance("Can't hold incorrect uStatus. uStatus may have changed.");
 				guMode=5000;
 				tInstance("Please confirm");
@@ -361,10 +361,10 @@ void ExttInstanceCommands(pentry entries[], int x)
 				if(!uInstance)
 					tInstance("Must supply valid uInstance");
 				uStatus=GetInstanceStatus(uInstance);	
-				if(  uStatus!=mysqlISP_Deployed &&
-						uStatus!=mysqlISP_DeployedMod &&
-						uStatus!=mysqlISP_WaitingRedeployment 
-						&& uStatus!=mysqlISP_WaitingCancel)
+				if(  uStatus!=unxsISP_Deployed &&
+						uStatus!=unxsISP_DeployedMod &&
+						uStatus!=unxsISP_WaitingRedeployment 
+						&& uStatus!=unxsISP_WaitingCancel)
 					tInstance("Can't hold incorrect uStatus. uStatus may have changed.");
 				time(&luClock);
 				if(cDay[0] && cDay[0]!='N')
@@ -378,7 +378,7 @@ void ExttInstanceCommands(pentry entries[], int x)
 				}
 				uPrevStatus=uStatus;
 				sprintf(gcQuery,"UPDATE tInstance SET uStatus=%u,uModBy=%u,uModDate=%lu WHERE uInstance=%u",
-						uStatus=mysqlISP_WaitingHold,uModBy=guLoginClient,uModDate=luClock,uInstance);
+						uStatus=unxsISP_WaitingHold,uModBy=guLoginClient,uModDate=luClock,uInstance);
 		        	mysql_query(&gMysql,gcQuery);
 		        	if(mysql_errno(&gMysql))
 					tClientConfig(mysql_error(&gMysql));
@@ -396,8 +396,8 @@ void ExttInstanceCommands(pentry entries[], int x)
 				if(!uInstance)
 					tInstance("Must supply valid uInstance");
 				uStatus=GetInstanceStatus(uInstance);	
-				if(  uStatus!=mysqlISP_WaitingHold 
-						&& uStatus!=mysqlISP_WaitingCancel)
+				if(  uStatus!=unxsISP_WaitingHold 
+						&& uStatus!=unxsISP_WaitingCancel)
 					tInstance("Can't release incorrect uStatus. uStatus may have changed.");
 				ReaduPrevStatus();
 				//Support for jobless deployments
@@ -405,10 +405,10 @@ void ExttInstanceCommands(pentry entries[], int x)
 				{
 					switch(uStatus)
 					{
-						case mysqlISP_WaitingHold:
-						case mysqlISP_WaitingCancel:
+						case unxsISP_WaitingHold:
+						case unxsISP_WaitingCancel:
 						default:
-							uPrevStatus=mysqlISP_Deployed;
+							uPrevStatus=unxsISP_Deployed;
 					}
 				}
 				
@@ -431,10 +431,10 @@ void ExttInstanceCommands(pentry entries[], int x)
 				switch(uPrevStatus)
 				{
 					//No jobs needed but keep error jobs: cRemoteMsg non empty string.
-					case mysqlISP_Deployed:
-					case mysqlISP_DeployedMod:
+					case unxsISP_Deployed:
+					case unxsISP_DeployedMod:
 						sprintf(gcQuery,"DELETE FROM tJob WHERE uInstance=%u AND uJobStatus=%u AND cRemoteMsg=''",
-								uInstance,mysqlISP_Waiting);
+								uInstance,unxsISP_Waiting);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -442,13 +442,13 @@ void ExttInstanceCommands(pentry entries[], int x)
 					break;
 
 					//Replace jobs
-					case mysqlISP_WaitingHold:
+					case unxsISP_WaitingHold:
 						SubmitInstanceJob("Hold",uDeployTime);
 					break;
-					case mysqlISP_WaitingCancel:
+					case unxsISP_WaitingCancel:
 						SubmitInstanceJob("Cancel",uDeployTime);
 					break;
-					case mysqlISP_WaitingRedeployment:
+					case unxsISP_WaitingRedeployment:
 						SubmitInstanceJob("Mod",uDeployTime);
 					break;
 				}
@@ -461,13 +461,13 @@ void ExttInstanceCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstInstanceVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy) && (uStatus==mysqlISP_NeverDeployed || uStatus==mysqlISP_WaitingInitial))
+			if(uAllowDel(uOwner,uCreatedBy) && (uStatus==unxsISP_NeverDeployed || uStatus==unxsISP_WaitingInitial))
 			{
 				MYSQL_RES *res;
 
 				if(!uInstance)
 					tInstance("Must supply valid uInstance");
-				sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uInstance=%u AND uJobStatus=%u",uInstance,mysqlISP_RemotelyQueued);
+				sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uInstance=%u AND uJobStatus=%u",uInstance,unxsISP_RemotelyQueued);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -483,14 +483,14 @@ void ExttInstanceCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstInstanceVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy) && (uStatus==mysqlISP_NeverDeployed || uStatus==mysqlISP_WaitingInitial))
+			if(uAllowDel(uOwner,uCreatedBy) && (uStatus==unxsISP_NeverDeployed || uStatus==unxsISP_WaitingInitial))
 			{
 				MYSQL_RES *res;
 
 				if(!uInstance)
 					tInstance("Must supply valid uInstance");
 
-				sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uInstance=%u AND uJobStatus=%u",uInstance,mysqlISP_RemotelyQueued);
+				sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uInstance=%u AND uJobStatus=%u",uInstance,unxsISP_RemotelyQueued);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -503,7 +503,7 @@ void ExttInstanceCommands(pentry entries[], int x)
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
 
-				sprintf(gcQuery,"DELETE FROM tJob WHERE uInstance=%u AND uJobStatus=%u",uInstance,mysqlISP_Waiting);
+				sprintf(gcQuery,"DELETE FROM tJob WHERE uInstance=%u AND uJobStatus=%u",uInstance,unxsISP_Waiting);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -545,12 +545,12 @@ void ExttInstanceCommands(pentry entries[], int x)
 					tInstance("Must provide uProduct");
 
 				if( (uAlreadyDeployedChecked && guPermLevel>9) && 
-					( uStatus==mysqlISP_NeverDeployed ||
-					(uStatus==mysqlISP_WaitingInitial && 
+					( uStatus==unxsISP_NeverDeployed ||
+					(uStatus==unxsISP_WaitingInitial && 
 						guPermLevel>11 && guLoginClient==1) ) )
 				{
 					CheckAllParameters(0);
-					uStatus=mysqlISP_Deployed;
+					uStatus=unxsISP_Deployed;
 
 				}
                         	guMode=0;
@@ -571,7 +571,7 @@ void ExttInstanceButtons(void)
 	
 	if(uExtClient)
 	{
-		printf("<a class=darkLink title='Return to current client page' href=mysqlISP2.cgi?gcFunction=tClient&uClient=%u>[Return]</a>\n",uExtClient);
+		printf("<a class=darkLink title='Return to current client page' href=unxsISP.cgi?gcFunction=tClient&uClient=%u>[Return]</a>\n",uExtClient);
 		printf("<input type=hidden name=uExtClient value=%u>\n",uExtClient);
 	}
 
@@ -614,10 +614,10 @@ void ExttInstanceButtons(void)
 			printf("<p><u>Review record data</u><br>");
                         printf(LANG_NBB_CONFIRMMOD);
                         printf("<br>\n");
-			if( ( (guPermLevel>9 && uStatus==mysqlISP_NeverDeployed) ||
-				(guPermLevel>11 && uStatus==mysqlISP_WaitingInitial 
+			if( ( (guPermLevel>9 && uStatus==unxsISP_NeverDeployed) ||
+				(guPermLevel>11 && uStatus==unxsISP_WaitingInitial 
 					&& guLoginClient==1) )
-					&& uProductType!=mysqlISP_BillingOnly)
+					&& uProductType!=unxsISP_BillingOnly)
 				printf("<font color=red>Already"
 					" deployed</font> <input type=checkbox"
 					" name=uAlreadyDeployed >"
@@ -756,35 +756,35 @@ void ExttInstanceNavBar(void)
 
 	if(uAllowMod(uOwner,uCreatedBy))   
 	{
-		if(  uStatus==mysqlISP_NeverDeployed ||
-			uStatus==mysqlISP_Canceled || 
-			uStatus==mysqlISP_DeployedMod ||
-			uStatus==mysqlISP_OnHold ||
-			uStatus==mysqlISP_WaitingCancel ||
-			uStatus==mysqlISP_WaitingHold)
+		if(  uStatus==unxsISP_NeverDeployed ||
+			uStatus==unxsISP_Canceled || 
+			uStatus==unxsISP_DeployedMod ||
+			uStatus==unxsISP_OnHold ||
+			uStatus==unxsISP_WaitingCancel ||
+			uStatus==unxsISP_WaitingHold)
 				printf(LANG_NBB_DEPLOY);
 
 		printf(LANG_NBB_MODIFY);
 
-		if(uStatus==mysqlISP_Deployed ||
-			uStatus==mysqlISP_DeployedMod ||
-			uStatus==mysqlISP_OnHold ||
-			uStatus==mysqlISP_WaitingHold ||
-			uStatus==mysqlISP_WaitingRedeployment )
+		if(uStatus==unxsISP_Deployed ||
+			uStatus==unxsISP_DeployedMod ||
+			uStatus==unxsISP_OnHold ||
+			uStatus==unxsISP_WaitingHold ||
+			uStatus==unxsISP_WaitingRedeployment )
 				printf(LANG_NBB_CANCEL);
 
-		if(uStatus==mysqlISP_Deployed ||
-			uStatus==mysqlISP_DeployedMod ||
-			uStatus==mysqlISP_WaitingCancel ||
-			uStatus==mysqlISP_WaitingRedeployment )
+		if(uStatus==unxsISP_Deployed ||
+			uStatus==unxsISP_DeployedMod ||
+			uStatus==unxsISP_WaitingCancel ||
+			uStatus==unxsISP_WaitingRedeployment )
 				printf(LANG_NBB_HOLD);
 
-		if(uStatus==mysqlISP_WaitingCancel ||
-			uStatus==mysqlISP_WaitingHold )
+		if(uStatus==unxsISP_WaitingCancel ||
+			uStatus==unxsISP_WaitingHold )
 				printf(LANG_NBB_RELEASE);
 	}
 
-	if(uAllowDel(uOwner,uCreatedBy) && (uStatus==mysqlISP_NeverDeployed || uStatus==mysqlISP_WaitingInitial))
+	if(uAllowDel(uOwner,uCreatedBy) && (uStatus==unxsISP_NeverDeployed || uStatus==unxsISP_WaitingInitial))
 		printf(LANG_NBB_DELETE);
 
 	printf(LANG_NBB_SKIPNEXT);
@@ -824,7 +824,7 @@ void ClientProductConfigList(void)
 				strcpy(cService,field[3]);
 				printf("<br><u>%s</u><br><br>",cService);
 			}
-			printf("<a class=darkLink href=mysqlISP2.cgi?gcFunction=tClientConfig&uConfig=%s"
+			printf("<a class=darkLink href=unxsISP.cgi?gcFunction=tClientConfig&uConfig=%s"
 				"&uInstance=%u&uExtClient=%u>%s=%s</a><br>\n",field[0],uInstance,uClient,field[1],field[2]);
         	}
 	}
@@ -1035,7 +1035,7 @@ int CheckParameterValue(char *cValue, char *cParamType, char *cRange, unsigned u
 	        sprintf(gcQuery,"SELECT tClientConfig.uConfig FROM tClientConfig,tParameter,tInstance WHERE "
 				"tClientConfig.cValue='%s' AND tParameter.uParameter=tClientConfig.uParameter "
 				"AND tClientConfig.uGroup=tInstance.uInstance AND tParameter.cParameter='%s' "
-				"AND tInstance.uStatus!=%u",cValue,cParameter,mysqlISP_Canceled);
+				"AND tInstance.uStatus!=%u",cValue,cParameter,unxsISP_Canceled);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
                 	htmlPlainTextError(mysql_error(&gMysql));
@@ -1148,7 +1148,7 @@ void CheckAllParameters(unsigned uDeployed)
 
         res=mysql_store_result(&gMysql);
 	if(!mysql_num_rows(res))
-		tInstance("Empty product instance, contact mysqlISP2 admin");
+		tInstance("Empty product instance, contact unxsISP admin");
         while((field=mysql_fetch_row(res)))
 	{
 		if(field[4][0]=='0')
@@ -1185,7 +1185,7 @@ void ReaduPrevStatus(void)
 	char *cp;
 
         sprintf(gcQuery,"SELECT cJobData FROM tJob WHERE uInstance=%u AND uJobStatus=%u"
-						,uInstance,mysqlISP_Waiting);
+						,uInstance,unxsISP_Waiting);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
                 htmlPlainTextError(mysql_error(&gMysql));
@@ -1201,7 +1201,7 @@ void ReaduPrevStatus(void)
 
 
 //tProductType.txt dependent define
-#define mysqlISP_ProductType_BILLINGONLY 5
+#define unxsISP_ProductType_BILLINGONLY 5
 void SubmitInstanceJob(char *cJobType,time_t uJobDate)
 {
         MYSQL_RES *res;
@@ -1224,7 +1224,7 @@ void SubmitInstanceJob(char *cJobType,time_t uJobDate)
 		sscanf(field[0],"%u",&uProductType);
 	mysql_free_result(res);
 
-	if(uProductType==mysqlISP_ProductType_BILLINGONLY)
+	if(uProductType==unxsISP_ProductType_BILLINGONLY)
 		return;
 
 
@@ -1232,7 +1232,7 @@ void SubmitInstanceJob(char *cJobType,time_t uJobDate)
 
 	//Remove all waiting jobs of same product instance
         sprintf(gcQuery,"DELETE FROM tJob WHERE uInstance=%u AND uJobStatus=%u"
-						,uInstance,mysqlISP_Waiting);
+						,uInstance,unxsISP_Waiting);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
                 htmlPlainTextError(mysql_error(&gMysql));
@@ -1290,7 +1290,7 @@ void SubmitSingleServiceJob(unsigned uService,unsigned uInstance,char *cJobType,
 
 		//Remove all waiting jobs of same product instance and service by 
 		//jobname: Study this further
-		sprintf(gcQuery,"DELETE FROM tJob WHERE uInstance=%u AND uJobStatus=%u AND cJobName='%s'",uInstance,mysqlISP_Waiting,cJobName);
+		sprintf(gcQuery,"DELETE FROM tJob WHERE uInstance=%u AND uJobStatus=%u AND cJobName='%s'",uInstance,unxsISP_Waiting,cJobName);
 		mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -1361,7 +1361,7 @@ void SubmitServiceJob(unsigned uService,char *cJobName, char *cServer,unsigned u
 			cServer,
 			uClient,
 			uJobDate,
-			mysqlISP_Waiting,
+			unxsISP_Waiting,
 			guLoginClient,
 			guLoginClient,
 			(unsigned long)luClock);
