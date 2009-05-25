@@ -1,7 +1,7 @@
-0	1202193845	1	cRadiusdPath	3		1	0	/usr/local/sbin/radiusd	0
-0	1202193807	1	cRaddbDir	2		1	0	/usr/local/etc/raddb	0
-1	1202193889	1	cRadiusdArgs	4	-i 196.28.58.205 -p 1812	1	1212020806		0
-1	1202193916	1	cRadiusdPID	5		1	1212021363	/usr/local/var/run/radiusd/radiusd.pid	0
+0	1202193845	1	cRadiusdPath	3		1	0	/usr/sbin/radiusd	0
+0	1202193807	1	cRaddbDir	2		1	0	/etc/raddb	0
+1	1202193889	1	cRadiusdArgs	4		1	1212020806	-y	0
+1	1202193916	1	cRadiusdPID	5		1	1212021363	/var/run/radiusd.pid	0
 1	1202193929	1	cRadiusdUID	6		1	1202194148	501	0
 1	1202195774	1	UpdateInfo	7	mysqlRadius 2.0 5 10 1	1	1235684246	uModDate	1
 0	1212031999	1	cCryptMethod	8		1	0	MD5	0
