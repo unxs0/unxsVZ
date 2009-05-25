@@ -584,7 +584,7 @@ void RestoreAll(char *cPasswd)
 
 	for(i=0;cTableList[i][0];i++)
 	{
-sprintf(gcQuery,"load data infile '%s/unxsRadacct/data/%s.txt' replace into table %s",cISMROOT,cTableList[i],cTableList[i]);
+sprintf(gcQuery,"load data local infile '%s/unxsRadacct/data/%s.txt' replace into table %s",cISMROOT,cTableList[i],cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
