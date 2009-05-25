@@ -652,7 +652,7 @@ void Initialize(char *cPasswd)
 		exit(1);
 	}
 
-	printf("Creating db and setting permissions, installing data from %s/mysqlRadius...\n\n",cISMROOT);
+	printf("Creating db and setting permissions, installing data from %s/unxsRadius...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
