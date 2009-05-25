@@ -2,7 +2,7 @@
 #	Configuration file for the rlm_attr_filter module.
 #	Please see rlm_attr_filter(5) manpage for more information.
 #
-#	$Id: attrs,v 1.7 2006/11/24 14:54:39 aland Exp $
+#	$Id: attrs,v 1.4.8.1 2005/06/11 22:20:40 nbk Exp $
 #
 #	This file contains security and configuration information
 #	for each realm. The first field is the realm name and
@@ -100,30 +100,6 @@
 # matched an entry with no Fall-Through)
 #
 
-airnetworks.com.pr
-	Service-Type == Framed-User,
-	Service-Type == Login-User,
-	Login-Service == Telnet,
-	Login-Service == Rlogin,
-	Login-Service == TCP-Clear,
-	Login-TCP-Port <= 65536,
-	Framed-IP-Address == 255.255.255.254,
-	Framed-IP-Netmask == 255.255.255.255,
-	Framed-Protocol == PPP,
-	Framed-Protocol == SLIP,
-	Framed-Compression == Van-Jacobson-TCP-IP,
-	Framed-MTU >= 576,
-	Framed-Filter-ID =* ANY,
-	Reply-Message =* ANY,
-	Proxy-State =* ANY,
-	MS-MPPE-Recv-Key =* ANY,
-	MS-MPPE-Send-Key =* ANY,
-	MS-CHAP-MPPE-Keys =* ANY,
-	State =* ANY,
-	Session-Timeout <= 28800,
-	Idle-Timeout <= 600,
-	Port-Limit <= 2
-
 DEFAULT
 	Service-Type == Framed-User,
 	Service-Type == Login-User,
@@ -140,11 +116,6 @@ DEFAULT
 	Framed-Filter-ID =* ANY,
 	Reply-Message =* ANY,
 	Proxy-State =* ANY,
-	EAP-Message =* ANY,
-	MS-MPPE-Recv-Key =* ANY,
-	MS-MPPE-Send-Key =* ANY,
-	MS-CHAP-MPPE-Keys =* ANY,
-	State =* ANY,
 	Session-Timeout <= 28800,
 	Idle-Timeout <= 600,
 	Port-Limit <= 2
