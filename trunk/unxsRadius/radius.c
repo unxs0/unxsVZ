@@ -729,7 +729,7 @@ int ReloadRadius(unsigned uHtml,unsigned uServer)
 		GetConfiguration("cRadiusdUID",cRadiusdUID,uHtml);
 
 	//debug only
-	////printf("[debug]Server:%u\ncParam:%s\ncRadiusdArgs:%s\ncRadiusdPath:%s\ncRaddbDir:%s\ncRadiusdPID:%s\ncRadiusdUID:%s\n",uServer,cParam,cRadiusdArgs,cRadiusdPath,cRaddbDir,cRadiusdPID,cRadiusdUID);
+	//////printf("[debug]Server:%u\ncParam:%s\ncRadiusdArgs:%s\ncRadiusdPath:%s\ncRaddbDir:%s\ncRadiusdPID:%s\ncRadiusdUID:%s\n",uServer,cParam,cRadiusdArgs,cRadiusdPath,cRaddbDir,cRadiusdPID,cRadiusdUID);
 	if(cRadiusdUID[0])
 	{
 		sscanf(cRadiusdUID,"%u",&uid);
@@ -813,18 +813,18 @@ int ReloadRadius(unsigned uHtml,unsigned uServer,unsigned uStopRequired)
 		GetConfiguration("cRadiusdPID",cRadiusdPID,uHtml);
 
 	//debug only
-	////printf("[debug]Server:%u\ncParam:%s\ncRadiusdArgs:%s\ncRadiusdPath:%s\ncRaddbDir:%s\ncRadiusdPID:%s\n",uServer,cParam,cRadiusdArgs,cRadiusdPath,cRaddbDir,cRadiusdPID);
+	//////printf("[debug]Server:%u\ncParam:%s\ncRadiusdArgs:%s\ncRadiusdPath:%s\ncRaddbDir:%s\ncRadiusdPID:%s\n",uServer,cParam,cRadiusdArgs,cRadiusdPath,cRaddbDir,cRadiusdPID);
 	if(access(cRadiusdPID,R_OK)==0) 
 	{
 		//If pid file exists, the radius server may be running
 		sprintf(gcQuery,"kill -0 `cat %s` 2> /dev/null",cRadiusdPID);
-		printf("[debug] running: %s\n",gcQuery);
+		////printf("[debug] running: %s\n",gcQuery);
 		if(system(gcQuery))
 		{
 			//We don't have a radius server running, just a dead pidfile
 			//Try to start again radius server
 			//and remove stale pidfile!
-			printf("[debug] Dead pidfile\n");
+		//	//printf("[debug] Dead pidfile\n");
 			unlink(cRadiusdPID);
 			StartRadiusServer(cRadiusdPath,cRadiusdArgs,uHtml);
 		}
@@ -832,13 +832,13 @@ int ReloadRadius(unsigned uHtml,unsigned uServer,unsigned uStopRequired)
 	else
 	{
 		//No pid file, start radius server
-		printf("[debug] No pid file, start radius server (%s)\n",cRadiusdPID);
+		////printf("[debug] No pid file, start radius server (%s)\n",cRadiusdPID);
 		StartRadiusServer(cRadiusdPath,cRadiusdArgs,uHtml);
 	}
 	
 	if(uStopRequired)
 	{
-		printf("[debug] Stop required\n");
+		////printf("[debug] Stop required\n");
 		StopRadiusServer(cRadiusdPID);
 		StartRadiusServer(cRadiusdPath,cRadiusdArgs,uHtml);
 	}
@@ -866,7 +866,7 @@ void StartRadiusServer(char *cRadiusdPath,char *cRadiusdArgs,unsigned uHtml)
 	char cMsg[256];
 	int i=0;
 	sprintf(gcQuery,"%s %s",cRadiusdPath,cRadiusdArgs);
-	printf("[debug] Running %s\n",gcQuery);
+	//printf("[debug] Running %s\n",gcQuery);
 	i=system(gcQuery);
 	
 	if(i)
@@ -899,7 +899,7 @@ void StopRadiusServer(char *cRadiusdPID)
 	if(access(cRadiusdPID,R_OK)==0)
 	{
 		sprintf(gcQuery,"kill -TERM `cat %s` > /dev/null",cRadiusdPID);
-		printf("[debug] running: %s\n",gcQuery);
+		//printf("[debug] running: %s\n",gcQuery);
 		if(system(gcQuery))
 		{
 			printf("I couldn't stop radius server using the pidfile.\n");
@@ -1556,7 +1556,7 @@ int InformExtJob(char *cRemoteMsg,char *cServer,unsigned uJob,unsigned uJobStatu
 		return(1);
 	}
 	//Special case, invalid instances, only we update tInstance and exit
-	//printf("[debug]JobStatus=%u\n",uJobStatus);
+	////printf("[debug]JobStatus=%u\n",uJobStatus);
 	if(uJobStatus==mysqlISP_Invalid)
 	{
 		sprintf(gcQuery,"SELECT uInstance FROM tJob WHERE uJob=%u",uJob);
