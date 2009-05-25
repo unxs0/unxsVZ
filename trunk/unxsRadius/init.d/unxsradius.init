@@ -11,7 +11,7 @@
 . /etc/rc.d/init.d/functions
 
 RADIUSD=/usr/sbin/radiusd
-UNXSRADIUS=/var/www/unxsRadius.cgi
+UNXSRADIUS=/var/www/unxs/cgi-bin/unxsRadius.cgi
 LOCKF=/var/lock/subsys/radiusd
 CONFIG=/etc/raddb/radiusd.conf
 SERVERNAME="localhost";
