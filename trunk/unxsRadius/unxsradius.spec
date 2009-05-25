@@ -27,6 +27,7 @@ cd $RPM_BUILD_DIR
 install -s unxsRadius.cgi /var/www/unxs/cgi-bin/unxsRadius.cgi
 install -s unxsRadacct/unxsRadacct.cgi /var/www/unxs/cgi-bin/unxsRadacct.cgi
 mkdir -p /usr/local/share/unxsRadius/data
+mkdir -p /usr/local/share/unxsRadacct/data/
 cp data/*.txt /usr/local/share/unxsRadius/data/
 cp unxsRadacct/data/*.txt /usr/local/share/unxsRadacct/data/
 
