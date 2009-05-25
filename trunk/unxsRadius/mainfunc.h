@@ -237,7 +237,7 @@ void ExtMainContent(void)
 	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);
 
 	OpenRow("Application Summary","black");
-	printf("<td>Mission critical RADIUS server central administration system. With company-contact-role model and support for disjoint sets of RADIUS server configuration and users. Can be controlled via master ISP mysqlISP2/ispAdmin.</td></tr>\n");
+	printf("<td>Mission critical RADIUS server central administration system. With company-contact-role model and support for disjoint sets of RADIUS server configuration and users. Can be controlled via master ISP unxsISP/ispAdmin.</td></tr>\n");
 
 	if(guPermLevel>9)
 	{
