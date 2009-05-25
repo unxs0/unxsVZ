@@ -729,7 +729,7 @@ int ReloadRadius(unsigned uHtml,unsigned uServer)
 		GetConfiguration("cRadiusdUID",cRadiusdUID,uHtml);
 
 	//debug only
-	//printf("uServer:%u\ncParam:%s\ncRadiusdArgs:%s\ncRadiusdPath:%s\ncRaddbDir:%s\ncRadiusdPID:%s\ncRadiusdUID:%s\n",uServer,cParam,cRadiusdArgs,cRadiusdPath,cRaddbDir,cRadiusdPID,cRadiusdUID);
+	////printf("[debug]Server:%u\ncParam:%s\ncRadiusdArgs:%s\ncRadiusdPath:%s\ncRaddbDir:%s\ncRadiusdPID:%s\ncRadiusdUID:%s\n",uServer,cParam,cRadiusdArgs,cRadiusdPath,cRaddbDir,cRadiusdPID,cRadiusdUID);
 	if(cRadiusdUID[0])
 	{
 		sscanf(cRadiusdUID,"%u",&uid);
@@ -813,7 +813,7 @@ int ReloadRadius(unsigned uHtml,unsigned uServer,unsigned uStopRequired)
 		GetConfiguration("cRadiusdPID",cRadiusdPID,uHtml);
 
 	//debug only
-	//printf("uServer:%u\ncParam:%s\ncRadiusdArgs:%s\ncRadiusdPath:%s\ncRaddbDir:%s\ncRadiusdPID:%s\n",uServer,cParam,cRadiusdArgs,cRadiusdPath,cRaddbDir,cRadiusdPID);
+	////printf("[debug]Server:%u\ncParam:%s\ncRadiusdArgs:%s\ncRadiusdPath:%s\ncRaddbDir:%s\ncRadiusdPID:%s\n",uServer,cParam,cRadiusdArgs,cRadiusdPath,cRaddbDir,cRadiusdPID);
 	if(access(cRadiusdPID,R_OK)==0) 
 	{
 		//If pid file exists, the radius server may be running
@@ -1556,7 +1556,7 @@ int InformExtJob(char *cRemoteMsg,char *cServer,unsigned uJob,unsigned uJobStatu
 		return(1);
 	}
 	//Special case, invalid instances, only we update tInstance and exit
-	printf("uJobStatus=%u\n",uJobStatus);
+	//printf("[debug]JobStatus=%u\n",uJobStatus);
 	if(uJobStatus==mysqlISP_Invalid)
 	{
 		sprintf(gcQuery,"SELECT uInstance FROM tJob WHERE uJob=%u",uJob);
