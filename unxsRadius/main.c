@@ -2,7 +2,7 @@
 FILE 
 	main.c
 	$Id: main.c.template 1606 2007-10-12 21:27:11Z hus $
-	mysqlRAD2.cgi created application file for mysqlRadius2.cgi
+	mysqlRAD2.cgi created application file for unxsRadius.cgi
 	(tAuthorize.cPasswd template set)
 	mysqlRAD2 to mysqlRAD3 transition template
 PURPOSE
@@ -81,7 +81,7 @@ void DashBoard(const char *cOptionalMsg);
 //Only local
 void ConnectDb(void);
 void NoSuchFunction(void);
-void mysqlRadius2(const char *cResult);
+void unxsRadius(const char *cResult);
 void InitialInstall(void);
 const char *cUserLevel(unsigned uPermLevel);
 
@@ -105,7 +105,7 @@ int main(int iArgc, char *cArgv[])
 
 	gethostname(gcHostname, 98);
 
-	if(!strstr(cArgv[0],"mysqlRadius2.cgi"))
+	if(!strstr(cArgv[0],"unxsRadius.cgi"))
 		CalledByAlias(iArgc,cArgv);
 
 	if(getenv("REMOTE_HOST")!=NULL)
@@ -147,11 +147,11 @@ int main(int iArgc, char *cArgv[])
 		if(gcFunction[0])
 		{
 			if(!strcmp(gcFunction,"Main"))
-				mysqlRadius2("");
+				unxsRadius("");
 			else if(!strcmp(gcFunction,"Logout"))
 			{
-				printf("Set-Cookie: mysqlRadius2Login=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				printf("Set-Cookie: mysqlRadius2Passwd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsRadiusLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsRadiusPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,"
 						"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 						,gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
@@ -208,7 +208,7 @@ int main(int iArgc, char *cArgv[])
 
 		}
 
-		mysqlRadius2(ISPNAME);
+		unxsRadius(ISPNAME);
 
 	}//end get method interface section
 
@@ -274,7 +274,7 @@ int main(int iArgc, char *cArgv[])
 
 #include "mainfunc.h"
 
-void mysqlRadius2(const char *cResult)
+void unxsRadius(const char *cResult)
 {
 	Header_ism3("Main",0);
 
@@ -285,7 +285,7 @@ void mysqlRadius2(const char *cResult)
 
 	Footer_ism3();
 
-}//void mysqlRadius2(const char *cResult)
+}//void unxsRadius(const char *cResult)
 
 
 void StyleSheet(void)
@@ -460,13 +460,13 @@ void Header_ism3(char *title, int js)
 {
 	printf("Content-type: text/html\n\n");
 	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-        printf("<html><head><title>mysqlRadius2 %s </title>",title);
+        printf("<html><head><title>unxsRadius %s </title>",title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
         if(js)
                 jsCalendarHeader();
 
-	printf("</head><body><form action=mysqlRadius2.cgi method=post><blockquote>\n");
+	printf("</head><body><form action=unxsRadius.cgi method=post><blockquote>\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tUser") || !strcmp(gcFunction,"tUserTools") ||
@@ -532,7 +532,7 @@ void Header_ism3(char *title, int js)
 
 
 	//Login info
-	printf("<font size=3><b>mysqlRadius2</b></font> \n ");
+	printf("<font size=3><b>unxsRadius</b></font> \n ");
 	if(!guPermLevel)
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>Your IP address %s has been logged</font>",gcHost);
 	else
@@ -541,7 +541,7 @@ void Header_ism3(char *title, int js)
 
 	//Logout link
 	if(guSSLCookieLogin)
-		printf(" <a title='Erase login cookies' href=mysqlRadius2.cgi?gcFunction=Logout>Logout</a> ");
+		printf(" <a title='Erase login cookies' href=unxsRadius.cgi?gcFunction=Logout>Logout</a> ");
 
 	//Generate Menu Items
 	printf("\n<!-- tab menu -->\n");
@@ -558,7 +558,7 @@ void Header_ism3(char *title, int js)
 		printf(">\n");
 	else
 		printf(" id=current>\n");
-		printf("\t\t\t<a title='Home start page' href=mysqlRadius2.cgi?gcFunction=Main>Main</a>\n");
+		printf("\t\t\t<a title='Home start page' href=unxsRadius.cgi?gcFunction=Main>Main</a>\n");
 	printf("\t\t\t</li>\n");
 
 	//tUser
@@ -570,7 +570,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Radius users' href=mysqlRadius2.cgi?gcFunction=tUser>tUser</a>\n");
+	  printf("\t\t\t<a title='Radius users' href=unxsRadius.cgi?gcFunction=tUser>tUser</a>\n");
 	}
 	//tProfile
 	if(guPermLevel>=20)
@@ -581,7 +581,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Radius profiles' href=mysqlRadius2.cgi?gcFunction=tProfile>tProfile</a>\n");
+	  printf("\t\t\t<a title='Radius profiles' href=unxsRadius.cgi?gcFunction=tProfile>tProfile</a>\n");
 	}
 	//tProfileName
 	if(guPermLevel>=20)
@@ -592,7 +592,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Radius profile names' href=mysqlRadius2.cgi?gcFunction=tProfileName>tProfileName</a>\n");
+	  printf("\t\t\t<a title='Radius profile names' href=unxsRadius.cgi?gcFunction=tProfileName>tProfileName</a>\n");
 	}
 	//tServer
 	if(guPermLevel>=20)
@@ -603,7 +603,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Radius servers' href=mysqlRadius2.cgi?gcFunction=tServer>tServer</a>\n");
+	  printf("\t\t\t<a title='Radius servers' href=unxsRadius.cgi?gcFunction=tServer>tServer</a>\n");
 	}
 	//tNAS
 	if(guPermLevel>=10)
@@ -614,7 +614,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Network access servers' href=mysqlRadius2.cgi?gcFunction=tNAS>tNAS</a>\n");
+	  printf("\t\t\t<a title='Network access servers' href=unxsRadius.cgi?gcFunction=tNAS>tNAS</a>\n");
 	}
 	//tJob
 	if(guPermLevel>=20)
@@ -625,7 +625,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Local job queue' href=mysqlRadius2.cgi?gcFunction=tJob>tJob</a>\n");
+	  printf("\t\t\t<a title='Local job queue' href=unxsRadius.cgi?gcFunction=tJob>tJob</a>\n");
 	}
 	//tJobStatus
 	if(guPermLevel>=20)
@@ -636,7 +636,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tJobStatus' href=mysqlRadius2.cgi?gcFunction=tJobStatus>tJobStatus</a>\n");
+	  printf("\t\t\t<a title='tJobStatus' href=unxsRadius.cgi?gcFunction=tJobStatus>tJobStatus</a>\n");
 	}
 	//tConfiguration
 	if(guPermLevel>=20)
@@ -647,7 +647,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Application configuration parameters' href=mysqlRadius2.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
+	  printf("\t\t\t<a title='Application configuration parameters' href=unxsRadius.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
 	}
 	//tServerGroup
 	if(guPermLevel>=20)
@@ -658,7 +658,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Group of servers glue table' href=mysqlRadius2.cgi?gcFunction=tServerGroup>tServerGroup</a>\n");
+	  printf("\t\t\t<a title='Group of servers glue table' href=unxsRadius.cgi?gcFunction=tServerGroup>tServerGroup</a>\n");
 	}
 	//tNASGroup
 	if(guPermLevel>=20)
@@ -669,7 +669,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Group of servers for uNAS glue table' href=mysqlRadius2.cgi?gcFunction=tNASGroup>tNASGroup</a>\n");
+	  printf("\t\t\t<a title='Group of servers for uNAS glue table' href=unxsRadius.cgi?gcFunction=tNASGroup>tNASGroup</a>\n");
 	}
 	//tLog
 	if(guPermLevel>=20)
@@ -680,7 +680,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLog' href=mysqlRadius2.cgi?gcFunction=tLog>tLog</a>\n");
+	  printf("\t\t\t<a title='tLog' href=unxsRadius.cgi?gcFunction=tLog>tLog</a>\n");
 	}
 	//tLogType
 	if(guPermLevel>=20)
@@ -691,7 +691,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogType' href=mysqlRadius2.cgi?gcFunction=tLogType>tLogType</a>\n");
+	  printf("\t\t\t<a title='tLogType' href=unxsRadius.cgi?gcFunction=tLogType>tLogType</a>\n");
 	}
 	//tMonth
 	if(guPermLevel>=20)
@@ -702,7 +702,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMonth' href=mysqlRadius2.cgi?gcFunction=tMonth>tMonth</a>\n");
+	  printf("\t\t\t<a title='tMonth' href=unxsRadius.cgi?gcFunction=tMonth>tMonth</a>\n");
 	}
 	//tLogMonth
 	if(guPermLevel>=20)
@@ -713,7 +713,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogMonth' href=mysqlRadius2.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
+	  printf("\t\t\t<a title='tLogMonth' href=unxsRadius.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
 	}
 	//tGlossary
 	if(guPermLevel>=20)
@@ -724,7 +724,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tGlossary' href=mysqlRadius2.cgi?gcFunction=tGlossary>tGlossary</a>\n");
+	  printf("\t\t\t<a title='tGlossary' href=unxsRadius.cgi?gcFunction=tGlossary>tGlossary</a>\n");
 	}
 	//tTemplate
 	if(guPermLevel>=20)
@@ -735,7 +735,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplate' href=mysqlRadius2.cgi?gcFunction=tTemplate>tTemplate</a>\n");
+	  printf("\t\t\t<a title='tTemplate' href=unxsRadius.cgi?gcFunction=tTemplate>tTemplate</a>\n");
 	}
 	//tTemplateSet
 	if(guPermLevel>=20)
@@ -746,7 +746,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateSet' href=mysqlRadius2.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
+	  printf("\t\t\t<a title='tTemplateSet' href=unxsRadius.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
 	}
 	//tTemplateType
 	if(guPermLevel>=20)
@@ -757,7 +757,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateType' href=mysqlRadius2.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
+	  printf("\t\t\t<a title='tTemplateType' href=unxsRadius.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
 	}
 	//tClient
 	if(guPermLevel>=7)
@@ -768,7 +768,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Client Info' href=mysqlRadius2.cgi?gcFunction=tClient>tClient</a>\n");
+	  printf("\t\t\t<a title='Client Info' href=unxsRadius.cgi?gcFunction=tClient>tClient</a>\n");
 	}
 	//tAuthorize
 	if(guPermLevel>=20)
@@ -779,7 +779,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Login Authorization' href=mysqlRadius2.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
+	  printf("\t\t\t<a title='Login Authorization' href=unxsRadius.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
 	}
 
 	
@@ -822,7 +822,7 @@ void NoSuchFunction(void)
 {
 	 
 	sprintf(gcQuery,"[%s] Not Recognized",gcFunction);
-	mysqlRadius2(gcQuery);
+	unxsRadius(gcQuery);
 }
 
 void ProcessControlVars(pentry entries[], int x)
@@ -1259,7 +1259,7 @@ char *TextAreaSave(char *cField)
 	else
 		cCopy=(char *)cField;
 
-	if(!cCopy) mysqlRadius2("TextAreaInput() malloc error");
+	if(!cCopy) unxsRadius("TextAreaInput() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1299,7 +1299,7 @@ char *TransformAngleBrackets(char *cField)
 	if(!uNum) return(cField);
 	cCopy=(char *)malloc( ( (strlen(cField)) + (uNum*4) + 1 ));
 
-	if(!cCopy) mysqlRadius2("TransformAngleBrackets() malloc error");
+	if(!cCopy) unxsRadius("TransformAngleBrackets() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1342,7 +1342,7 @@ char *EncodeDoubleQuotes(char *cField)
 	if(!uNum) return(cField);
 	cCopy=(char *)malloc( ( (strlen(cField)) + (uNum*5) + 1 ));
 
-	if(!cCopy) mysqlRadius2("EncodeDoubleQuotes() malloc error");
+	if(!cCopy) unxsRadius("EncodeDoubleQuotes() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1457,8 +1457,8 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
 
 void InitialInstall(void)
 {
-	mysqlRadius2("Please run\
-		mysqlRadius2.cgi Initialize &lt;mysqlpwd&gt; from the command line");
+	unxsRadius("Please run\
+		unxsRadius.cgi Initialize &lt;mysqlpwd&gt; from the command line");
 
 }//void InitialInstall(void)
 
@@ -1699,8 +1699,8 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: mysqlRadius2Login=%s;\n",gcLogin);
-		printf("Set-Cookie: mysqlRadius2Passwd=%s;\n",gcPasswd);
+		printf("Set-Cookie: unxsRadiusLogin=%s;\n",gcLogin);
+		printf("Set-Cookie: unxsRadiusPasswd=%s;\n",gcPasswd);
 		strncpy(gcUser,gcLogin,41);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
@@ -1709,7 +1709,7 @@ void SetLogin(void)
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 		mysql_query(&gMysql,gcQuery);
-		mysqlRadius2("DashBoard");
+		unxsRadius("DashBoard");
 	}
 	else
 	{
@@ -1797,7 +1797,7 @@ void SSLCookieLogin(void)
 	//Parse out login and passwd from cookies
 #ifdef SSLONLY
 	if(getenv("HTTPS")==NULL) 
-		mysqlRadius2("Non SSL access denied");
+		unxsRadius("Non SSL access denied");
 #endif
 
 	if(getenv("HTTP_COOKIE")!=NULL)
@@ -1806,9 +1806,9 @@ void SSLCookieLogin(void)
 	if(gcCookie[0])
 	{
 
-		if((cPtr=strstr(gcCookie,"mysqlRadius2Login=")))
+		if((cPtr=strstr(gcCookie,"unxsRadiusLogin=")))
 		{
-			cPtr+=strlen("mysqlRadius2Login=");
+			cPtr+=strlen("unxsRadiusLogin=");
 			if((cPtr2=strchr(cPtr,';')))
 			{
 				*cPtr2=0;
@@ -1820,9 +1820,9 @@ void SSLCookieLogin(void)
 				sprintf(gcLogin,"%.99s",cPtr);
 			}
 		}
-		if((cPtr=strstr(gcCookie,"mysqlRadius2Passwd=")))
+		if((cPtr=strstr(gcCookie,"unxsRadiusPasswd=")))
 		{
-			cPtr+=strlen("mysqlRadius2Passwd=");
+			cPtr+=strlen("unxsRadiusPasswd=");
 			if((cPtr2=strchr(cPtr,';')))
 			{
 				*cPtr2=0;
@@ -1843,7 +1843,7 @@ void SSLCookieLogin(void)
 	strncpy(gcUser,gcLogin,41);
 	GetPLAndClient(gcUser);
 	if(!guPermLevel || !guLoginClient)
-		mysqlRadius2("Access denied");
+		unxsRadius("Access denied");
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
 
@@ -1927,7 +1927,7 @@ void GetClientOwner(unsigned uClient, unsigned *uOwner)
 }//void GetClientOwner(unsigned uClient, unsigned *uOwner)
 
 
-void mysqlRadius2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+void unxsRadiusLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 {
         char cQuery[512];
 
@@ -1952,7 +1952,7 @@ void mysqlRadius2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
         mysql_query(&gMysql,cQuery);
 
-}//void mysqlRadius2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+}//void unxsRadiusLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
 
 long unsigned luGetCreatedDate(char *cTableName, unsigned uTablePK)
@@ -2004,7 +2004,7 @@ void htmlPlainTextError(const char *cError)
 	char cQuery[1024];
 
 	printf("Content-type: text/plain\n\n");
-	printf("Please report this mysqlRadius2 fatal error ASAP:\n%s\n",cError);
+	printf("Please report this unxsRadius fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
         sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s (%.24s)\",cServer='%s',cHash=MD5(CONCAT('%u','%u','%s','%s',\"%s (%.24s)\",'%s',UNIX_TIMESTAMP(NOW()),'%s')),uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uTablePK=%u,cTableName='errno'",

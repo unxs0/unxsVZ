@@ -194,7 +194,7 @@ void tLog(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetLog();
-				mysqlRadius2("New tLog table created");
+				unxsRadius("New tLog table created");
                 	}
 			else
 			{
@@ -515,7 +515,7 @@ void NewtLog(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uLog=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tLog",uLog);
-	mysqlRadius2Log(uLog,"tLog","New");
+	unxsRadiusLog(uLog,"tLog","New");
 
 	if(!uMode)
 	{
@@ -534,12 +534,12 @@ void DeletetLog(void)
 	//tLog("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadius2Log(uLog,"tLog","Del");
+		unxsRadiusLog(uLog,"tLog","Del");
 		tLog(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadius2Log(uLog,"tLog","DelError");
+		unxsRadiusLog(uLog,"tLog","DelError");
 		tLog(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -620,7 +620,7 @@ void ModtLog(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tLog",uLog);
-	mysqlRadius2Log(uLog,"tLog","Mod");
+	unxsRadiusLog(uLog,"tLog","Mod");
 	tLog(gcQuery);
 
 }//ModtLog(void)

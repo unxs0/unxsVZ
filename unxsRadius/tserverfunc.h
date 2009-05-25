@@ -279,7 +279,7 @@ void tServerNavList(void)
 
         res=mysql_store_result(&gMysql);
         while((field=mysql_fetch_row(res)))
-                printf("<a class=darkLink href=mysqlRadius2.cgi?gcFunction=tServer"
+                printf("<a class=darkLink href=unxsRadius.cgi?gcFunction=tServer"
 			"&uServer=%s>%s</a><br>\n",field[0],field[1]);
         mysql_free_result(res);
 

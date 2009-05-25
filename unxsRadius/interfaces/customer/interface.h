@@ -31,7 +31,7 @@ char *IPNumber(char *cInput);
 const char *cUserLevel(unsigned uPermLevel);
 char *TextAreaSave(char *cField);
 char *FQDomainName(char *cInput);
-void mysqlRadius2Log(unsigned uTablePK, char *cTableName, char *cLogEntry);
+void unxsRadiusLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 void GetConfiguration(const char *cName, char *cValue);
 
 

@@ -1,6 +1,6 @@
 /*
 FILE
-	tProfileName source code of mysqlRadius2.cgi
+	tProfileName source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -148,7 +148,7 @@ void tProfileName(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetProfileName();
-				mysqlRadius2("New tProfileName table created");
+				unxsRadius("New tProfileName table created");
                 	}
 			else
 			{
@@ -336,7 +336,7 @@ void NewtProfileName(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uProfileName=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tProfileName",uProfileName);
-	mysqlRadius2Log(uProfileName,"tProfileName","New");
+	unxsRadiusLog(uProfileName,"tProfileName","New");
 
 	if(!uMode)
 	{
@@ -355,12 +355,12 @@ void DeletetProfileName(void)
 	//tProfileName("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadius2Log(uProfileName,"tProfileName","Del");
+		unxsRadiusLog(uProfileName,"tProfileName","Del");
 		tProfileName(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadius2Log(uProfileName,"tProfileName","DelError");
+		unxsRadiusLog(uProfileName,"tProfileName","DelError");
 		tProfileName(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -419,7 +419,7 @@ void ModtProfileName(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tProfileName",uProfileName);
-	mysqlRadius2Log(uProfileName,"tProfileName","Mod");
+	unxsRadiusLog(uProfileName,"tProfileName","Mod");
 	tProfileName(gcQuery);
 
 }//ModtProfileName(void)

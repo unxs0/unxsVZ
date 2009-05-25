@@ -1,6 +1,6 @@
 /*
 FILE
-	tLogMonth source code of mysqlRadius2.cgi
+	tLogMonth source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tlogmonth.c 1335 2007-07-23 23:15:44Z Gary $
 PURPOSE
@@ -186,7 +186,7 @@ void tLogMonth(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetLogMonth();
-				mysqlRadius2("New tLogMonth table created");
+				unxsRadius("New tLogMonth table created");
                 	}
 			else
 			{

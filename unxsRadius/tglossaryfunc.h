@@ -316,7 +316,7 @@ void tGlossaryNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-printf("<a class=darkLink href=mysqlRadius2.cgi?gcFunction=tGlossary\
+printf("<a class=darkLink href=unxsRadius.cgi?gcFunction=tGlossary\
 &uGlossary=%s>%s</a><br>\n",field[0],field[1]);
 	        }
 	}

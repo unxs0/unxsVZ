@@ -1,4 +1,4 @@
-#clients mysqlRadius2.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $
+#clients unxsRadius.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $
 #uServer:1
 #localhost
 127.0.0.1		testing123

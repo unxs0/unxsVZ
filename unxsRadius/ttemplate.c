@@ -1,6 +1,6 @@
 /*
 FILE
-	tTemplate source code of mysqlRadius2.cgi
+	tTemplate source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id: ttemplate.c 2316 2008-12-19 19:40:15Z hus-admin $
 PURPOSE
@@ -176,7 +176,7 @@ void tTemplate(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetTemplate();
-				mysqlRadius2("New tTemplate table created");
+				unxsRadius("New tTemplate table created");
                 	}
 			else
 			{
@@ -406,7 +406,7 @@ void NewtTemplate(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uTemplate=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tTemplate",uTemplate);
-	mysqlRadius2Log(uTemplate,"tTemplate","New");
+	unxsRadiusLog(uTemplate,"tTemplate","New");
 
 	if(!uMode)
 	{
@@ -425,12 +425,12 @@ void DeletetTemplate(void)
 	//tTemplate("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadius2Log(uTemplate,"tTemplate","Del");
+		unxsRadiusLog(uTemplate,"tTemplate","Del");
 		tTemplate(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadius2Log(uTemplate,"tTemplate","DelError");
+		unxsRadiusLog(uTemplate,"tTemplate","DelError");
 		tTemplate(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -496,7 +496,7 @@ void ModtTemplate(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tTemplate",uTemplate);
-	mysqlRadius2Log(uTemplate,"tTemplate","Mod");
+	unxsRadiusLog(uTemplate,"tTemplate","Mod");
 	tTemplate(gcQuery);
 
 }//ModtTemplate(void)

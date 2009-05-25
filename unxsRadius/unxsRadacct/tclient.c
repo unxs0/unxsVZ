@@ -1,6 +1,6 @@
 /*
 FILE
-	tClient source code of mysqlRadacct2.cgi
+	tClient source code of unxsRadacct.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tclient.c 2076 2008-10-23 15:17:55Z Gary $
 PURPOSE
@@ -160,7 +160,7 @@ void tClient(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetClient();
-				mysqlRadacct2("New tClient table created");
+				unxsRadacct("New tClient table created");
                 	}
 			else
 			{
@@ -389,7 +389,7 @@ void NewtClient(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uClient=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate(TCLIENT,uClient);
-	mysqlRadacct2Log(uClient,TCLIENT,"New");
+	unxsRadacctLog(uClient,TCLIENT,"New");
 
 	if(!uMode)
 	{
@@ -407,12 +407,12 @@ void DeletetClient(void)
 	//tClient("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadacct2Log(uClient,TCLIENT,"Del");
+		unxsRadacctLog(uClient,TCLIENT,"Del");
 		tClient(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadacct2Log(uClient,TCLIENT,"DelError");
+		unxsRadacctLog(uClient,TCLIENT,"DelError");
 		tClient(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -480,7 +480,7 @@ void ModtClient(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate(TCLIENT,uClient);
-	mysqlRadacct2Log(uClient,TCLIENT,"Mod");
+	unxsRadacctLog(uClient,TCLIENT,"Mod");
 	tClient(gcQuery);
 
 }//ModtClient(void)

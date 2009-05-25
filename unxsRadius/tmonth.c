@@ -1,6 +1,6 @@
 /*
 FILE
-	tMonth source code of mysqlRadius2.cgi
+	tMonth source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tmonth.c 1335 2007-07-23 23:15:44Z Gary $
 PURPOSE
@@ -148,7 +148,7 @@ void tMonth(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetMonth();
-				mysqlRadius2("New tMonth table created");
+				unxsRadius("New tMonth table created");
                 	}
 			else
 			{
@@ -336,7 +336,7 @@ void NewtMonth(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uMonth=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tMonth",uMonth);
-	mysqlRadius2Log(uMonth,"tMonth","New");
+	unxsRadiusLog(uMonth,"tMonth","New");
 
 	if(!uMode)
 	{
@@ -355,12 +355,12 @@ void DeletetMonth(void)
 	//tMonth("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadius2Log(uMonth,"tMonth","Del");
+		unxsRadiusLog(uMonth,"tMonth","Del");
 		tMonth(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadius2Log(uMonth,"tMonth","DelError");
+		unxsRadiusLog(uMonth,"tMonth","DelError");
 		tMonth(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -416,7 +416,7 @@ void ModtMonth(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tMonth",uMonth);
-	mysqlRadius2Log(uMonth,"tMonth","Mod");
+	unxsRadiusLog(uMonth,"tMonth","Mod");
 	tMonth(gcQuery);
 
 }//ModtMonth(void)

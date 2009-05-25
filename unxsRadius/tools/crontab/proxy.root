@@ -1,1 +1,1 @@
-* * * * * /usr/local/bin/mysqlRadius2.cgi ProcessJobQueue radius-proxy0 >> /var/log/mysqlRadius2.log 2>&1;
+* * * * * /usr/local/bin/unxsRadius.cgi ProcessJobQueue radius-proxy0 >> /var/log/unxsRadius.log 2>&1;

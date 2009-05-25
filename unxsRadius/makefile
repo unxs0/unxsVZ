@@ -24,10 +24,10 @@
 CFLAGS=-Wall
 LIBS=-L/usr/lib/mysql/ -lmysqlclient -lz -lcrypt -lm -lssl
 
-all: mysqlRadius2.cgi
+all: unxsRadius.cgi
 
-mysqlRadius2.cgi: tuser.o tprofile.o tprofilename.o tserver.o tnas.o tjob.o tjobstatus.o tconfiguration.o tservergroup.o tnasgroup.o tlog.o tlogtype.o tmonth.o tlogmonth.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tclient.o tauthorize.o  radius.o main.o cgi.o
-	cc tuser.o tprofile.o tprofilename.o tserver.o tnas.o tjob.o tjobstatus.o tconfiguration.o tservergroup.o tnasgroup.o tlog.o tlogtype.o tmonth.o tlogmonth.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tclient.o tauthorize.o  radius.o main.o cgi.o -o mysqlRadius2.cgi $(LIBS) 
+unxsRadius.cgi: tuser.o tprofile.o tprofilename.o tserver.o tnas.o tjob.o tjobstatus.o tconfiguration.o tservergroup.o tnasgroup.o tlog.o tlogtype.o tmonth.o tlogmonth.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tclient.o tauthorize.o  radius.o main.o cgi.o
+	cc tuser.o tprofile.o tprofilename.o tserver.o tnas.o tjob.o tjobstatus.o tconfiguration.o tservergroup.o tnasgroup.o tlog.o tlogtype.o tmonth.o tlogmonth.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tclient.o tauthorize.o  radius.o main.o cgi.o -o unxsRadius.cgi $(LIBS) 
 
 tuser.o: tuser.c mysqlrad.h language.h tuserfunc.h local.h
 	cc -c tuser.c -o tuser.o $(CFLAGS)
@@ -106,6 +106,6 @@ clean:
 cleandist:
 	rm -f *.o *.gz
 
-install: mysqlRadius2.cgi
-	install -s mysqlRadius2.cgi /var/www/unxs/cgi-bin/mysqlRadius2.cgi
-	rm mysqlRadius2.cgi
+install: unxsRadius.cgi
+	install -s unxsRadius.cgi /var/www/unxs/cgi-bin/unxsRadius.cgi
+	rm unxsRadius.cgi

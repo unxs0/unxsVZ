@@ -284,7 +284,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 		     END OF TERMS AND CONDITIONS
 
-mysqlRadacct2 is a company-contact-role multiple user RADIUS accounting data collection, reporting
+unxsRadacct is a company-contact-role multiple user RADIUS accounting data collection, reporting
 and warehousing application. It has a CLI and at least one backend web interface.
 
 Copyright (C) 2001-2009 Gary G. Wallis for Unixservice.

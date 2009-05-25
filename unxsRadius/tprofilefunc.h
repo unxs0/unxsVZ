@@ -360,7 +360,7 @@ void tProfileNavList(unsigned uUser, unsigned uServer)
 			strcpy(cStaticIP,"");
 		else
 			strcpy(cStaticIP,"StaticIP");
-                printf("<a class=darkLink href=mysqlRadius2.cgi?gcFunction=tProfile"
+                printf("<a class=darkLink href=unxsRadius.cgi?gcFunction=tProfile"
 			"&uProfile=%s>%s (%s %s %s %s)</a><br>\n",field[0],field[1],
 			ForeignKey("tUser","cLogin",uExtUser),
 			ForeignKey("tServer","cLabel",uExtServer),

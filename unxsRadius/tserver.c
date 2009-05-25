@@ -1,6 +1,6 @@
 /*
 FILE
-	tServer source code of mysqlRadius2.cgi
+	tServer source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tserver.c 1291 2007-07-09 23:20:17Z Gary $
 PURPOSE
@@ -148,7 +148,7 @@ void tServer(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetServer();
-				mysqlRadius2("New tServer table created");
+				unxsRadius("New tServer table created");
                 	}
 			else
 			{
@@ -336,7 +336,7 @@ void NewtServer(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uServer=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tServer",uServer);
-	mysqlRadius2Log(uServer,"tServer","New");
+	unxsRadiusLog(uServer,"tServer","New");
 
 	if(!uMode)
 	{
@@ -355,12 +355,12 @@ void DeletetServer(void)
 	//tServer("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadius2Log(uServer,"tServer","Del");
+		unxsRadiusLog(uServer,"tServer","Del");
 		tServer(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadius2Log(uServer,"tServer","DelError");
+		unxsRadiusLog(uServer,"tServer","DelError");
 		tServer(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -418,7 +418,7 @@ void ModtServer(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tServer",uServer);
-	mysqlRadius2Log(uServer,"tServer","Mod");
+	unxsRadiusLog(uServer,"tServer","Mod");
 	tServer(gcQuery);
 
 }//ModtServer(void)

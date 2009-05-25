@@ -148,7 +148,7 @@ void tTemplateType(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetTemplateType();
-				mysqlRadius2("New tTemplateType table created");
+				unxsRadius("New tTemplateType table created");
                 	}
 			else
 			{
@@ -335,7 +335,7 @@ void NewtTemplateType(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uTemplateType=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tTemplateType",uTemplateType);
-	mysqlRadius2Log(uTemplateType,"tTemplateType","New");
+	unxsRadiusLog(uTemplateType,"tTemplateType","New");
 
 	if(!uMode)
 	{
@@ -354,12 +354,12 @@ void DeletetTemplateType(void)
 	//tTemplateType("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadius2Log(uTemplateType,"tTemplateType","Del");
+		unxsRadiusLog(uTemplateType,"tTemplateType","Del");
 		tTemplateType(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadius2Log(uTemplateType,"tTemplateType","DelError");
+		unxsRadiusLog(uTemplateType,"tTemplateType","DelError");
 		tTemplateType(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -434,7 +434,7 @@ void ModtTemplateType(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tTemplateType",uTemplateType);
-	mysqlRadius2Log(uTemplateType,"tTemplateType","Mod");
+	unxsRadiusLog(uTemplateType,"tTemplateType","Mod");
 	tTemplateType(gcQuery);
 
 }//ModtTemplateType(void)

@@ -278,7 +278,7 @@ void tTemplateNavList(void)
 	if(mysql_num_rows(res))
 	{	
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlRadius2.cgi?gcFunction=tTemplate&uTemplate=%s>%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=unxsRadius.cgi?gcFunction=tTemplate&uTemplate=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 

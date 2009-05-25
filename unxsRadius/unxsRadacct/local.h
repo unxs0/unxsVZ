@@ -12,8 +12,8 @@ LEGAL
 #define DBIP1 NULL
 //#define DBIP0 "192.168.0.4"
 //#define DBIP1 "192.168.0.5"
-#define DBNAME "mysqlradacct2"
-#define DBLOGIN "mysqlradacct2"
+#define DBNAME "unxsradacct"
+#define DBLOGIN "unxsradacct"
 #define DBPASSWD "wsxedc"
 #define DBPORT0 3306
 #define DBPORT1 3307
@@ -23,7 +23,7 @@ LEGAL
 //#define DBPORT 4306
 //#define DBSOCKET "/var/lib/mysql/mysql4.sock"
 
-//mysqlradacct2 can report to us once a week some useful for
+//unxsradacct can report to us once a week some useful for
 //debugging and development statistics.
 //This is very helpful to us and in the end we hope for yourself.
 //For improving and developing this software
@@ -47,14 +47,14 @@ LEGAL
 
 //Master tClient
 #define TCLIENT "tClient"
-//#define TCLIENT "mysqlisp2.tClient"
+//#define TCLIENT "unxsisp.tClient"
 #define TAUTHORIZE "tAuthorize"
-//#define TAUTHORIZE "mysqlisp2.tAuthorize"
-//If you use the global ISP tClient and tAuthorize tables in mysqlisp2 db you may need to
+//#define TAUTHORIZE "unxsisp.tAuthorize"
+//If you use the global ISP tClient and tAuthorize tables in unxsisp db you may need to
 //	issue a SQL commands like: 
 //
-//	mysql> grant select on mysqlisp2.tClient to mysqlradacct2@localhost identified by 'wsxedc';
-//	mysql> grant select on mysqlisp2.tAuthorize to mysqlradacct2@localhost identified by 'wsxedc';
+//	mysql> grant select on unxsisp.tClient to unxsradacct@localhost identified by 'wsxedc';
+//	mysql> grant select on unxsisp.tAuthorize to unxsradacct@localhost identified by 'wsxedc';
 //
 //	Note: You will have to turn off MOD, DEL and NEW functionality in tclientfunc.h and tauthorizefunc.h
 //	if you only grant select. If you grant all...then understand the possible consequences.
