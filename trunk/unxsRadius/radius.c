@@ -11,7 +11,7 @@ TODO
 NOTES
 	1-.
 	If an external (mysqlISP) job provides for example
-	mysqlRadius2.Server2=tristan, then we will currently add this server to the
+	unxsRadius.Server2=tristan, then we will currently add this server to the
 	user and create a local job for that "slave" server. This job will be
 	not be prefixed with "Ext", therefore it will not notify mysqlISP if it 
 	fails for whatever reason. To fix this issue we need to pass to local
@@ -23,7 +23,7 @@ NOTES
 	above, see uJob=.
 	2-.
 	mysqlISP now provides all mysqlX subsystems the global ISP customer id
-	number as part of the cJobData. mysqlRadius2.needs to use this also. This 
+	number as part of the cJobData. unxsRadius.needs to use this also. This 
 	is how I think we should: uISPClient should be the owner of the tUser entry
 	and we should create a tClient but no tAuthorize for now.
 
@@ -184,7 +184,7 @@ printf("CreateClientConf(%u,%u)\n",uHtml,uServer);
 
         res=mysql_store_result(&gMysql);
 
-	fprintf(fp,"#naslist mysqlRadius2.$Id: radius.c,v 2.0 2008/02/87 03:10:43 hdu $\n");
+	fprintf(fp,"#naslist unxsRadius.$Id: radius.c,v 2.0 2008/02/87 03:10:43 hdu $\n");
 	fprintf(fp,"#uServer:%u\n",uServer);
 
         while((field=mysql_fetch_row(res)))
@@ -253,7 +253,7 @@ int MakeUsersFile(unsigned uHtml, unsigned uServer, char *cLogin)
 	sprintf(cFile,"%s/users",cRaddbDir);
 
 	//See if the file is locked by this software
-	sprintf(cFileLock,"%s.mysqlRadius2.lock",cFile);
+	sprintf(cFileLock,"%s.unxsRadius.lock",cFile);
 	if(!stat(cFileLock,&structStat))
 	{
 		sleep(5);
@@ -307,7 +307,7 @@ int MakeUsersFile(unsigned uHtml, unsigned uServer, char *cLogin)
 	if(!uAddMode)
 	{
 //Page header
-fprintf(fp,"#users mysqlRadius2.$Id$\n");
+fprintf(fp,"#users unxsRadius.$Id$\n");
 fprintf(fp,"#For uServer:%u\n",uServer);
 
 		//Outside select for each active uUser
@@ -547,7 +547,7 @@ int MakeClientsFile(unsigned uHtml, unsigned uServer)
 
         res=mysql_store_result(&gMysql);
 
-	fprintf(fp,"#clients mysqlRadius2.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $\n");
+	fprintf(fp,"#clients unxsRadius.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $\n");
 	fprintf(fp,"#uServer:%u\n",uServer);
 
         while((field=mysql_fetch_row(res)))
@@ -610,7 +610,7 @@ int MakeNASListFile(unsigned uHtml, unsigned uServer)
 
         res=mysql_store_result(&gMysql);
 
-	fprintf(fp,"#naslist mysqlRadius2.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $\n");
+	fprintf(fp,"#naslist unxsRadius.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $\n");
 	fprintf(fp,"#uServer:%u\n",uServer);
 
         while((field=mysql_fetch_row(res)))
@@ -672,7 +672,7 @@ int MakeNASPasswdFile(unsigned uHtml, unsigned uServer)
 
         res=mysql_store_result(&gMysql);
 
-	fprintf(fp,"#naspasswd mysqlRadius2.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $\n");
+	fprintf(fp,"#naspasswd unxsRadius.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $\n");
 	fprintf(fp,"#uServer:%u\n",uServer);
 
         while((field=mysql_fetch_row(res)))
@@ -1091,7 +1091,7 @@ unsigned uGetClientOwner(unsigned uClient)
 }//unsigned uGetClientOwner(unsigned uClient)
 
 
-//Needs tConfiguration cExtmysqlRadius2.p/Db/Pwd set.
+//Needs tConfiguration cExtunxsRadius.p/Db/Pwd set.
 void ProcessExtJobQueue(char *cServer)
 {
 	MYSQL_RES *res;
@@ -1114,7 +1114,7 @@ void ProcessExtJobQueue(char *cServer)
 	//printf("ProcessExtJobQueue()\n");
 
 	sprintf(gcQuery,"SELECT cJobName,cJobData,uJob,cServer,uJobClient FROM tJob WHERE (cServer='Any' OR cServer='%s') "
-			"AND uJobStatus=%u AND uJobDate<=%lu AND cJobName LIKE 'mysqlRadius2.%%'",cServer,mysqlISP_Waiting,clock);
+			"AND uJobStatus=%u AND uJobDate<=%lu AND cJobName LIKE 'unxsRadius.%%'",cServer,mysqlISP_Waiting,clock);
 
 	//Debug only	
 	//printf("%s\n",gcQuery);
@@ -1141,7 +1141,7 @@ void ProcessExtJobQueue(char *cServer)
 
 		sscanf(field[2],"%u",&uJob);
 
-		if(!strcmp("mysqlRadius2.Unlim.New",field[0]))
+		if(!strcmp("unxsRadius.Unlim.New",field[0]))
 		{	
 			MYSQL_RES *mysqlRes;
 			MYSQL_ROW mysqlField;
@@ -1273,7 +1273,7 @@ void ProcessExtJobQueue(char *cServer)
 
 			SubmitExtSingleJob("ExtNewUser",
 					structExtParam.cLogin,cServer,clock,uJob);
-			InformExtJob("mysqlRadius2.ExtNewUser",cServer,uJob,
+			InformExtJob("unxsRadius.ExtNewUser",cServer,uJob,
 						mysqlISP_RemotelyQueued);
 
 			//CreateNewClient(&structExtParam);
@@ -1282,7 +1282,7 @@ void ProcessExtJobQueue(char *cServer)
 		}//NewUser
 
 		//Cancel
-		else if(!strcmp("mysqlRadius2.Unlim.Cancel",field[0]))
+		else if(!strcmp("unxsRadius.Unlim.Cancel",field[0]))
 		{
 			MYSQL_RES *res2;
 			unsigned uServer=0;
@@ -1332,7 +1332,7 @@ void ProcessExtJobQueue(char *cServer)
 
 		//Mod
 		//Implicit hold release on each mod: uOnHold=0
-		else if(!strcmp("mysqlRadius2.Unlim.Mod",field[0]))
+		else if(!strcmp("unxsRadius.Unlim.Mod",field[0]))
 		{	
 			unsigned uServer=0;
 			printf("\n%s(%s):\n",field[0],field[2]);
@@ -1387,7 +1387,7 @@ void ProcessExtJobQueue(char *cServer)
 			InformExtJob("User modified",cServer,uJob,mysqlISP_Deployed);
 		}//Mod
 
-		else if(!strcmp("mysqlRadius2.Unlim.Hold",field[0]))
+		else if(!strcmp("unxsRadius.Unlim.Hold",field[0]))
 		{	
 			unsigned uServer=0;
 			printf("\n%s(%s):\n",field[0],field[2]);
@@ -1425,7 +1425,7 @@ void ProcessExtJobQueue(char *cServer)
 			InformExtJob("User set on hold",cServer,uJob,mysqlISP_Deployed);
 		}//Hold
 
-		else if(!strcmp("mysqlRadius2.Unlim.RemoveHold",field[0]))
+		else if(!strcmp("unxsRadius.Unlim.RemoveHold",field[0]))
 		{	
 			unsigned uServer=0;
 			printf("\n%s(%s):\n",field[0],field[2]);
@@ -1551,7 +1551,7 @@ int InformExtJob(char *cRemoteMsg,char *cServer,unsigned uJob,unsigned uJobStatu
 	if(mysql_errno(&mysqlext))
 	{
 		fprintf(stderr,"%s\n",mysql_error(&mysqlext));
-		SubmitISPJob("mysqlRadius2.InformExtJob.Failed",
+		SubmitISPJob("unxsRadius.InformExtJob.Failed",
 				(char *)mysql_error(&mysqlext),cServer,clock);
 		return(1);
 	}
@@ -1655,7 +1655,7 @@ int SubmitISPJob(char *cJobName,char *cJobData,const char *cServer,unsigned uJob
 
 	time(&clock);
 	
-	sprintf(gcQuery,"INSERT INTO tJob SET  cServer='%s', cJobName='%s', cJobData='%.1024s', uJobDate=%u, uOwner=1, uCreatedBy=1, uCreatedDate=%lu, uJobStatus=%u, cLabel='mysqlRadius2.SubmitISPJob'",
+	sprintf(gcQuery,"INSERT INTO tJob SET  cServer='%s', cJobName='%s', cJobData='%.1024s', uJobDate=%u, uOwner=1, uCreatedBy=1, uCreatedDate=%lu, uJobStatus=%u, cLabel='unxsRadius.SubmitISPJob'",
 			cServer
 			,cJobName
 			,TextAreaSave(cJobData)
@@ -1933,7 +1933,7 @@ void ProcessJobQueue(unsigned uTestMode,char *cServer)
 						uOnlyOnce=0;
 					}
 
-					sprintf(cMsg,"mysqlRadius2.%.20s",field[0]);
+					sprintf(cMsg,"unxsRadius.%.20s",field[0]);
 					sscanf(cp+5,"%u",&uExtJob);
 					InformExtJob(cMsg,cServer,uExtJob,mysqlISP_Deployed);
 				}

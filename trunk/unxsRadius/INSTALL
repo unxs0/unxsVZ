@@ -17,8 +17,8 @@ Just run the installradius.sh shell script at this directory and you are done :)
 
 Example BASH Install Instructions
 ---------------------------------
-shell>tar xzf mysqlRadius2N.M.tar.gz
-shell>cd mysqlRadius2
+shell>tar xzf unxsRadiusN.M.tar.gz
+shell>cd unxsRadius
 shell>export CGIDIR=/apache/cgi-bin/ (or whatever your Apache cgi-bin dir is)
 shell>vi local.h
 	Edit to taste
@@ -29,7 +29,7 @@ shell>make
 shell>make install
 shell>export ISMROOT=/home/joe
 	Or whatever dir the mysql application project dir is in.
-shell>/cgi-bin/mysqlRadius2.cgi Initialize <your mysql password for root>
+shell>/cgi-bin/unxsRadius.cgi Initialize <your mysql password for root>
 	This will setup application and allow you to login as user "Root" password "wsxedc".
 	Change the passwd asap for real world applications.
 
@@ -57,16 +57,16 @@ Standard OpenISP setup backup operations
 ----------------------------------------
 (Loose instructions adjust to fit for your particular setup)
 shell>useradd -d openisp
-shell>mkdir -p ~openisp/mysqlRadius2/data
-shell>chown mysql ~openisp/mysqlRadius2/data
+shell>mkdir -p ~openisp/unxsRadius/data
+shell>chown mysql ~openisp/unxsRadius/data
 shell>crontab -e
 Adding the following: Where mysqlpasswd is replaced by YOUR real mysql root passwd.
 
 #
-#mysqlRadius2
+#unxsRadius
 #
 ##backup
-20 3 * * * ISMROOT=~openisp;export ISMROOT;/cgi-bin/mysqlRadius2.cgi Backup mysqlpasswd > /dev/null
+20 3 * * * ISMROOT=~openisp;export ISMROOT;/cgi-bin/unxsRadius.cgi Backup mysqlpasswd > /dev/null
 
 Other backup ideas
 ------------------
@@ -82,8 +82,8 @@ shell>crontab -e
 Add something like the following after setting up mysql for remote access from ONLY the IP in
 question in a VERY secure LAN (non routable IP's...switched hubs...behind firewall...etc)
 
-#Extra backup of mysqlRadius2 data only even days, using mysqldump from 192.168.100.23
-20 4 * * */2 /usr/local/mysql/bin/mysqldump -e -h 192.168.0.43 -u mysqlradius2 -pwsxedc --all {{cLCProject}} > ~openisp/mysqlRadius2/data/dumpall.txt
+#Extra backup of unxsRadius data only even days, using mysqldump from 192.168.100.23
+20 4 * * */2 /usr/local/mysql/bin/mysqldump -e -h 192.168.0.43 -u mysqlradius2 -pwsxedc --all {{cLCProject}} > ~openisp/unxsRadius/data/dumpall.txt
 
 Loose your data and your fired
 ------------------------------

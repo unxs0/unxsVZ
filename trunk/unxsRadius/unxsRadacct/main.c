@@ -2,7 +2,7 @@
 FILE 
 	main.c
 	$Id: main.c.template 1588 2007-10-12 15:23:47Z hus $
-	mysqlRAD2.cgi created application file for mysqlRadacct2.cgi
+	mysqlRAD2.cgi created application file for unxsRadacct.cgi
 	(tAuthorize.cPasswd template set)
 	mysqlRAD2 to mysqlRAD3 transition template
 PURPOSE
@@ -85,7 +85,7 @@ void DashBoard(const char *cOptionalMsg);
 //Only local
 void ConnectDb(void);
 void NoSuchFunction(void);
-void mysqlRadacct2(const char *cResult);
+void unxsRadacct(const char *cResult);
 void InitialInstall(void);
 const char *cUserLevel(unsigned uPermLevel);
 
@@ -114,7 +114,7 @@ int main(int iArgc, char *cArgv[])
 	sysinfo(SI_HOSTNAME, gcHostname, 98);
 #endif
 
-	if(!strstr(cArgv[0],"mysqlRadacct2.cgi"))
+	if(!strstr(cArgv[0],"unxsRadacct.cgi"))
 		CalledByAlias(iArgc,cArgv);
 
 	if(getenv("REMOTE_HOST")!=NULL)
@@ -156,11 +156,11 @@ int main(int iArgc, char *cArgv[])
 		if(gcFunction[0])
 		{
 			if(!strcmp(gcFunction,"Main"))
-				mysqlRadacct2("");
+				unxsRadacct("");
 			else if(!strcmp(gcFunction,"Logout"))
 			{
-				printf("Set-Cookie: mysqlRadacct2Login=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				printf("Set-Cookie: mysqlRadacct2Passwd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsRadacctLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsRadacctPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,"
 						"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
@@ -201,7 +201,7 @@ int main(int iArgc, char *cArgv[])
 
 		}
 
-		mysqlRadacct2(ISPNAME);
+		unxsRadacct(ISPNAME);
 
 	}//end get method interface section
 
@@ -259,7 +259,7 @@ int main(int iArgc, char *cArgv[])
 
 #include "mainfunc.h"
 
-void mysqlRadacct2(const char *cResult)
+void unxsRadacct(const char *cResult)
 {
 	Header_ism3("Main",0);
 
@@ -270,7 +270,7 @@ void mysqlRadacct2(const char *cResult)
 
 	Footer_ism3();
 
-}//void mysqlRadacct2(const char *cResult)
+}//void unxsRadacct(const char *cResult)
 
 
 void StyleSheet(void)
@@ -445,13 +445,13 @@ void Header_ism3(char *title, int js)
 {
 	printf("Content-type: text/html\n\n");
 	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-        printf("<html><head><title>mysqlRadacct2 %s </title>",title);
+        printf("<html><head><title>unxsRadacct %s </title>",title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
         if(js)
                 jsCalendarHeader();
 
-	printf("</head><body><form action=mysqlRadacct2.cgi method=post><blockquote>\n");
+	printf("</head><body><form action=unxsRadacct.cgi method=post><blockquote>\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tRadacct") || !strcmp(gcFunction,"tRadacctTools") ||
@@ -493,7 +493,7 @@ void Header_ism3(char *title, int js)
 
 
 	//Login info
-	printf("<font size=3><b>mysqlRadacct2</b></font> \n ");
+	printf("<font size=3><b>unxsRadacct</b></font> \n ");
 	if(!guPermLevel)
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>Your IP address %s has been logged</font>",gcHost);
 	else
@@ -502,7 +502,7 @@ void Header_ism3(char *title, int js)
 
 	//Logout link
 	if(guSSLCookieLogin)
-		printf(" <a title='Erase login cookies' href=mysqlRadacct2.cgi?gcFunction=Logout>Logout</a> ");
+		printf(" <a title='Erase login cookies' href=unxsRadacct.cgi?gcFunction=Logout>Logout</a> ");
 
 	//Generate Menu Items
 	printf("\n<!-- tab menu -->\n");
@@ -519,7 +519,7 @@ void Header_ism3(char *title, int js)
 		printf(">\n");
 	else
 		printf(" id=current>\n");
-		printf("\t\t\t<a title='Home start page' href=mysqlRadacct2.cgi?gcFunction=Main>Main</a>\n");
+		printf("\t\t\t<a title='Home start page' href=unxsRadacct.cgi?gcFunction=Main>Main</a>\n");
 	printf("\t\t\t</li>\n");
 
 	//tRadacct
@@ -531,7 +531,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tRadacct' href=mysqlRadacct2.cgi?gcFunction=tRadacct>tRadacct</a>\n");
+	  printf("\t\t\t<a title='tRadacct' href=unxsRadacct.cgi?gcFunction=tRadacct>tRadacct</a>\n");
 	}
 	//tMonth
 	if(guPermLevel>=20)
@@ -542,7 +542,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMonth' href=mysqlRadacct2.cgi?gcFunction=tMonth>tMonth</a>\n");
+	  printf("\t\t\t<a title='tMonth' href=unxsRadacct.cgi?gcFunction=tMonth>tMonth</a>\n");
 	}
 	//tRadacctMonth
 	if(guPermLevel>=20)
@@ -553,7 +553,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tRadacctMonth' href=mysqlRadacct2.cgi?gcFunction=tRadacctMonth>tRadacctMonth</a>\n");
+	  printf("\t\t\t<a title='tRadacctMonth' href=unxsRadacct.cgi?gcFunction=tRadacctMonth>tRadacctMonth</a>\n");
 	}
 	//tConfiguration
 	if(guPermLevel>=20)
@@ -564,7 +564,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tConfiguration' href=mysqlRadacct2.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
+	  printf("\t\t\t<a title='tConfiguration' href=unxsRadacct.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
 	}
 	//tLog
 	if(guPermLevel>=20)
@@ -575,7 +575,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLog' href=mysqlRadacct2.cgi?gcFunction=tLog>tLog</a>\n");
+	  printf("\t\t\t<a title='tLog' href=unxsRadacct.cgi?gcFunction=tLog>tLog</a>\n");
 	}
 	//tLogType
 	if(guPermLevel>=20)
@@ -586,7 +586,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogType' href=mysqlRadacct2.cgi?gcFunction=tLogType>tLogType</a>\n");
+	  printf("\t\t\t<a title='tLogType' href=unxsRadacct.cgi?gcFunction=tLogType>tLogType</a>\n");
 	}
 	//tLogMonth
 	if(guPermLevel>=20)
@@ -597,7 +597,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogMonth' href=mysqlRadacct2.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
+	  printf("\t\t\t<a title='tLogMonth' href=unxsRadacct.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
 	}
 	//tGlossary
 	if(guPermLevel>=20)
@@ -608,7 +608,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tGlossary' href=mysqlRadacct2.cgi?gcFunction=tGlossary>tGlossary</a>\n");
+	  printf("\t\t\t<a title='tGlossary' href=unxsRadacct.cgi?gcFunction=tGlossary>tGlossary</a>\n");
 	}
 	//tServer
 	if(guPermLevel>=20)
@@ -619,7 +619,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tServer' href=mysqlRadacct2.cgi?gcFunction=tServer>tServer</a>\n");
+	  printf("\t\t\t<a title='tServer' href=unxsRadacct.cgi?gcFunction=tServer>tServer</a>\n");
 	}
 	//tMonthLog
 	if(guPermLevel>=20)
@@ -630,7 +630,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMonthLog' href=mysqlRadacct2.cgi?gcFunction=tMonthLog>tMonthLog</a>\n");
+	  printf("\t\t\t<a title='tMonthLog' href=unxsRadacct.cgi?gcFunction=tMonthLog>tMonthLog</a>\n");
 	}
 	//tAuthorize
 	if(guPermLevel>=20)
@@ -641,7 +641,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Login Authorization' href=mysqlRadacct2.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
+	  printf("\t\t\t<a title='Login Authorization' href=unxsRadacct.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
 	}
 	//tClient
 	if(guPermLevel>=7)
@@ -652,7 +652,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Client Info' href=mysqlRadacct2.cgi?gcFunction=tClient>tClient</a>\n");
+	  printf("\t\t\t<a title='Client Info' href=unxsRadacct.cgi?gcFunction=tClient>tClient</a>\n");
 	}
 
 	
@@ -681,7 +681,7 @@ void ConnectDb(void)
         if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT0,DBSOCKET,0))
         {
 		if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT1,DBSOCKET,0))
-	                mysqlRadacct2("Database server unavailable. Did you run mysqlRadacct2.cgi Initialize &lt;mysqlpwd&gt;?");
+	                unxsRadacct("Database server unavailable. Did you run unxsRadacct.cgi Initialize &lt;mysqlpwd&gt;?");
         }
 
 }//end of ConnectDb()
@@ -691,7 +691,7 @@ void NoSuchFunction(void)
 {
 	 
 	sprintf(gcQuery,"[%s] Not Recognized",gcFunction);
-	mysqlRadacct2(gcQuery);
+	unxsRadacct(gcQuery);
 }
 
 void ProcessControlVars(pentry entries[], int x)
@@ -1097,7 +1097,7 @@ char *TextAreaSave(char *cField)
 	else
 		cCopy=(char *)cField;
 
-	if(!cCopy) mysqlRadacct2("TextAreaInput() malloc error");
+	if(!cCopy) unxsRadacct("TextAreaInput() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1137,7 +1137,7 @@ char *TransformAngleBrackets(char *cField)
 	if(!uNum) return(cField);
 	cCopy=(char *)malloc( ( (strlen(cField)) + (uNum*4) + 1 ));
 
-	if(!cCopy) mysqlRadacct2("TransformAngleBrackets() malloc error");
+	if(!cCopy) unxsRadacct("TransformAngleBrackets() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1180,7 +1180,7 @@ char *EncodeDoubleQuotes(char *cField)
 	if(!uNum) return(cField);
 	cCopy=(char *)malloc( ( (strlen(cField)) + (uNum*5) + 1 ));
 
-	if(!cCopy) mysqlRadacct2("EncodeDoubleQuotes() malloc error");
+	if(!cCopy) unxsRadacct("EncodeDoubleQuotes() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1294,8 +1294,8 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
 
 void InitialInstall(void)
 {
-	mysqlRadacct2("Please run\
-		mysqlRadacct2.cgi Initialize &lt;mysqlpwd&gt; from the command line");
+	unxsRadacct("Please run\
+		unxsRadacct.cgi Initialize &lt;mysqlpwd&gt; from the command line");
 
 }//void InitialInstall(void)
 
@@ -1536,14 +1536,14 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: mysqlRadacct2Login=%s;\n",gcLogin);
-		printf("Set-Cookie: mysqlRadacct2Passwd=%s;\n",gcPasswd);
+		printf("Set-Cookie: unxsRadacctLogin=%s;\n",gcLogin);
+		printf("Set-Cookie: unxsRadacctPasswd=%s;\n",gcPasswd);
 		strncpy(gcUser,gcLogin,41);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 		mysql_query(&gMysql,gcQuery);
-		mysqlRadacct2("DashBoard");
+		unxsRadacct("DashBoard");
 	}
 	else
 	{
@@ -1624,7 +1624,7 @@ void SSLCookieLogin(void)
 	//Parse out login and passwd from cookies
 #ifdef SSLONLY
 	if(getenv("HTTPS")==NULL) 
-		mysqlRadacct2("Non SSL access denied");
+		unxsRadacct("Non SSL access denied");
 #endif
 
 	if(getenv("HTTP_COOKIE")!=NULL)
@@ -1633,9 +1633,9 @@ void SSLCookieLogin(void)
 	if(gcCookie[0])
 	{
 
-	if((ptr=strstr(gcCookie,"mysqlRadacct2Login=")))
+	if((ptr=strstr(gcCookie,"unxsRadacctLogin=")))
 	{
-		ptr+=strlen("mysqlRadacct2Login=");
+		ptr+=strlen("unxsRadacctLogin=");
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
@@ -1647,9 +1647,9 @@ void SSLCookieLogin(void)
 			strncpy(gcLogin,ptr,99);
 		}
 	}
-	if((ptr=strstr(gcCookie,"mysqlRadacct2Passwd=")))
+	if((ptr=strstr(gcCookie,"unxsRadacctPasswd=")))
 	{
-		ptr+=strlen("mysqlRadacct2Passwd=");
+		ptr+=strlen("unxsRadacctPasswd=");
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
@@ -1670,7 +1670,7 @@ void SSLCookieLogin(void)
 	strncpy(gcUser,gcLogin,41);
 	GetPLAndClient(gcUser);
 	if(!guPermLevel || !guLoginClient)
-		mysqlRadacct2("Access denied");
+		unxsRadacct("Access denied");
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
 
@@ -1750,7 +1750,7 @@ void GetClientOwner(unsigned uClient, unsigned *uOwner)
 }//void GetClientOwner(unsigned uClient, unsigned *uOwner)
 
 
-void mysqlRadacct2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+void unxsRadacctLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 {
         char cQuery[512];
 
@@ -1775,7 +1775,7 @@ void mysqlRadacct2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
         mysql_query(&gMysql,cQuery);
 
-}//void mysqlRadacct2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+}//void unxsRadacctLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
 
 long unsigned luGetCreatedDate(char *cTableName, unsigned uTablePK)
@@ -1827,7 +1827,7 @@ void htmlPlainTextError(const char *cError)
 	char cQuery[1024];
 
 	printf("Content-type: text/plain\n\n");
-	printf("Please report this mysqlRadacct2 fatal error ASAP:\n%s\n",cError);
+	printf("Please report this unxsRadacct fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
         sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s (%.24s)\",cServer='%s',cHash=MD5(CONCAT('%u','%u','%s','%s',\"%s (%.24s)\",'%s',UNIX_TIMESTAMP(NOW()),'%s')),uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uTablePK=%u,cTableName='errno'",

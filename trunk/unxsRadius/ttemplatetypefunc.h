@@ -281,7 +281,7 @@ void tTemplateTypeNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-			printf("<a class=darkLink href=mysqlRadius2.cgi?gcFunction=tTemplateType"
+			printf("<a class=darkLink href=unxsRadius.cgi?gcFunction=tTemplateType"
 				"&uTemplateType=%s>%s</a><br>\n",field[0],field[1]);
 	        }
 	}

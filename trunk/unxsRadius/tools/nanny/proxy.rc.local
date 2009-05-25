@@ -8,7 +8,7 @@ touch /var/lock/subsys/local
 
 #who watches the watchers?
 #radiusd started by init.d system see chkconfig --list
-#still in alpha since we need to check joint operation with mysqlRadius2.cgi crontab ops
+#still in alpha since we need to check joint operation with unxsRadius.cgi crontab ops
 #for proxies...tNAS changes only?
 /usr/sbin/radius-proxy-nanny.pl
 

@@ -121,7 +121,7 @@ void ExtMainShell(int argc, char *argv[])
 
 		printf("\nNotes:\n");
                 printf("\t<Mon> is 3 letter us en locale name abbreviation for month. Ex. Apr\n");
-                printf("\t<path to mysql table> is something like /var/mysql/data/mysqlradacct2\n");
+                printf("\t<path to mysql table> is something like /var/mysql/data/unxsradacct\n");
                 printf("\t<realm> has no @ in front.\n");
 	}
         exit(0);
@@ -136,7 +136,7 @@ int iExtMainCommands(pentry entries[], int x)
 	{
 		if(!strcmp(gcCommand,"Dashboard"))
 		{
-			mysqlRadacct2("DashBoard");
+			unxsRadacct("DashBoard");
 		}
 	}
 
@@ -238,7 +238,7 @@ void ExtMainContent(void)
 	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);
 
 	OpenRow("Application Summary","black");
-	printf("<td>mysqlRadacct2 is a RADIUS accounting data collection, reporting and warehousing application. It has a CLI and at least one backend web interface. It also allows for account hold management based on collected usage statistics. mysqlRadius2 is usually used with this application. mysqlISP2 can be a master enterprise application that controls all RADIUS infrastructure servers.</td></tr>\n");
+	printf("<td>unxsRadacct is a RADIUS accounting data collection, reporting and warehousing application. It has a CLI and at least one backend web interface. It also allows for account hold management based on collected usage statistics. unxsRadius is usually used with this application. mysqlISP2 can be a master enterprise application that controls all RADIUS infrastructure servers.</td></tr>\n");
 
 	if(guPermLevel>9)
 	{
@@ -246,7 +246,7 @@ void ExtMainContent(void)
 		OpenRow("Table List","black");
 		printf("<td>\n");
 		for(i=0;cTableList[i][0];i++)
-			printf("<a href=mysqlRadacct2.cgi?gcFunction=%.32s>%.32s</a><br>\n",
+			printf("<a href=unxsRadacct.cgi?gcFunction=%.32s>%.32s</a><br>\n",
 				cTableList[i],cTableList[i]);
 		printf("</td></tr>\n");
         	OpenRow("Admin Functions","black");
@@ -301,7 +301,7 @@ void Extract(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 
 
 	/*mySQLRootConnect(cPasswd);
-	mysql_query(&gMysql,"use mysqlradacct2");
+	mysql_query(&gMysql,"use unxsradacct");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
@@ -570,12 +570,12 @@ void RestoreAll(char *cPasswd)
 
 	if(!cISMROOT[0]) NoISMROOTMsg();
 
-	printf("Restoring mysqlRadacct2 data from .txt file in %s/mysqlRadacct2/data...\n\n",cISMROOT);
+	printf("Restoring unxsRadacct data from .txt file in %s/unxsRadacct/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
 
-	mysql_query(&gMysql,"use mysqlradacct2");
+	mysql_query(&gMysql,"use unxsradacct");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
@@ -584,7 +584,7 @@ void RestoreAll(char *cPasswd)
 
 	for(i=0;cTableList[i][0];i++)
 	{
-sprintf(gcQuery,"load data infile '%s/mysqlRadacct2/data/%s.txt' replace into table %s",cISMROOT,cTableList[i],cTableList[i]);
+sprintf(gcQuery,"load data infile '%s/unxsRadacct/data/%s.txt' replace into table %s",cISMROOT,cTableList[i],cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -612,19 +612,19 @@ void Restore(char *cPasswd, char *cTableName)
 
 	if(!cISMROOT[0]) NoISMROOTMsg();
 
-	printf("Restoring mysqlRadacct2 data from .txt file in %s/mysqlRadacct2/data...\n\n",cISMROOT);
+	printf("Restoring unxsRadacct data from .txt file in %s/unxsRadacct/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
 
-	mysql_query(&gMysql,"use mysqlradacct2");
+	mysql_query(&gMysql,"use unxsradacct");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
 		exit(1);
 	}
 
-	sprintf(gcQuery,"load data infile '%s/mysqlRadacct2/data/%s.txt' replace into table %s",cISMROOT,cTableName,cTableName);
+	sprintf(gcQuery,"load data infile '%s/unxsRadacct/data/%s.txt' replace into table %s",cISMROOT,cTableName,cTableName);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -650,12 +650,12 @@ void Backup(char *cPasswd)
 
 	if(!cISMROOT[0]) NoISMROOTMsg();
 
-	printf("Backing up mysqlRadacct2 data to .txt files in %s/mysqlRadacct2/data...\n\n",cISMROOT);
+	printf("Backing up unxsRadacct data to .txt files in %s/unxsRadacct/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
 
-	mysql_query(&gMysql,"use mysqlradacct2");
+	mysql_query(&gMysql,"use unxsradacct");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
@@ -666,7 +666,7 @@ void Backup(char *cPasswd)
 	{
 		char cFileName[300];
 
-		sprintf(cFileName,"%s/mysqlRadacct2/data/%s.txt",cISMROOT,cTableList[i]);
+		sprintf(cFileName,"%s/unxsRadacct/data/%s.txt",cISMROOT,cTableList[i]);
 		unlink(cFileName);
 
 		sprintf(gcQuery,"SELECT * INTO OUTFILE '%s' FROM %s",cFileName,cTableList[i]);
@@ -699,13 +699,13 @@ void Initialize(char *cPasswd)
 
 	if(!cISMROOT[0]) NoISMROOTMsg();
 
-	printf("Creating db and setting permissions, installing data from %s/mysqlRadacct2...\n\n",cISMROOT);
+	printf("Creating db and setting permissions, installing data from %s/unxsRadacct...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
 
 	//Create database
-	mysql_query(&gMysql,"CREATE DATABASE mysqlradacct2");
+	mysql_query(&gMysql,"CREATE DATABASE unxsradacct");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
@@ -713,7 +713,7 @@ void Initialize(char *cPasswd)
 	}
 
 	//Grant localaccess privileges.
-	mysql_query(&gMysql,"GRANT ALL ON mysqlradacct2.* TO mysqlradacct2@localhost IDENTIFIED BY 'wsxedc'");
+	mysql_query(&gMysql,"GRANT ALL ON unxsradacct.* TO mysqlradacct2@localhost IDENTIFIED BY 'wsxedc'");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
@@ -721,7 +721,7 @@ void Initialize(char *cPasswd)
 	}
 	
 	//Change to mysqlbind db. Then initialize some tables with needed data
-	mysql_query(&gMysql,"USE mysqlradacct2");
+	mysql_query(&gMysql,"USE unxsradacct");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
@@ -749,7 +749,7 @@ void Initialize(char *cPasswd)
 
         for(i=0;cInitTableList[i][0];i++)
         {
-                sprintf(gcQuery,"LOAD DATA INFILE '%s/mysqlRadacct2/data/%s.txt' REPLACE INTO TABLE %s",
+                sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRadacct/data/%s.txt' REPLACE INTO TABLE %s",
 				cISMROOT,cInitTableList[i],cInitTableList[i]);
                 mysql_query(&gMysql,gcQuery);
                 if(mysql_errno(&gMysql))
@@ -926,7 +926,7 @@ void HoldUsers(char *cMaxHours, char *cPasswd, unsigned uWarnOnly, char *cTableN
 
 	mySQLRootConnect(cPasswd);//for local mysqlRaddacct database
 
-	mysql_query(&gMysql,"use mysqlradacct2");
+	mysql_query(&gMysql,"use unxsradacct");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
@@ -967,7 +967,7 @@ void HoldUsers(char *cMaxHours, char *cPasswd, unsigned uWarnOnly, char *cTableN
 		        MYSQL_ROW field2;
 			unsigned uCount=0;
 			char cHoldUsersEmail[256]={""};
-			char cFromEmail[256]={"mysqlradacct2"};
+			char cFromEmail[256]={"unxsradacct"};
 			char cMTA[256]={"mail"};
 			char cMTAArgs[256]={""};
 			char cExtJobQueueDbIp[256]={""};
@@ -1354,7 +1354,7 @@ void UpdateSchema(char *cPasswd)
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
 
-	mysql_query(&gMysql,"use mysqlradacct2");
+	mysql_query(&gMysql,"use unxsradacct");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
@@ -1487,7 +1487,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 
 void CalledByAlias(int iArgc,char *cArgv[])
 {
-	if(strstr(cArgv[0],"mysqlRadacct2RSS.xml"))
+	if(strstr(cArgv[0],"unxsRadacctRSS.xml"))
 	{
 		MYSQL_RES *res;
 		MYSQL_ROW field;
@@ -1509,7 +1509,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 
 		//This is the standard place. With much parsing nonsense we can
 		//	do better by using env vars
-		sprintf(cLinkStart,"%s://%s/cgi-bin/mysqlRadacct2.cgi",cHTTP,gcHost);
+		sprintf(cLinkStart,"%s://%s/cgi-bin/unxsRadacct.cgi",cHTTP,gcHost);
 
 		printf("Content-type: text/xml\n\n");
 
@@ -1517,11 +1517,11 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		printf("<?xml version='1.0' encoding='UTF-8'?>\n");
 		printf("<rss version='2.0'>\n");
 		printf("<channel>\n");
-		printf("<title>mysqlRadacct2 RSS tJob Errors</title>\n");
-		printf("<link>http://openisp.net/mysqlRadacct2</link>\n");
-		printf("<description>mysqlRadacct2 tJob Errors</description>\n");
+		printf("<title>unxsRadacct RSS tJob Errors</title>\n");
+		printf("<link>http://openisp.net/unxsRadacct</link>\n");
+		printf("<description>unxsRadacct tJob Errors</description>\n");
 		printf("<lastBuildDate>%.199s</lastBuildDate>\n",cRSSDate);
-		printf("<generator>mysqlRadacct2 RSS Generator</generator>\n");
+		printf("<generator>unxsRadacct RSS Generator</generator>\n");
 		printf("<docs>http://blogs.law.harvard.edu/tech/rss</docs>\n");
 		printf("<ttl>120</ttl>\n");
 
@@ -1539,7 +1539,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("\n<item>\n");
-			printf("<title>mysqlRadacct2.tJob.uJob=%s</title>\n",field[0]);
+			printf("<title>unxsRadacct.tJob.uJob=%s</title>\n",field[0]);
 			printf("<link>%s?gcFunction=tJob&amp;uJob=%s</link>\n",cLinkStart,
 							field[0]);
 			printf("<description>cJobName=%s Server=%s uUser=%s\ncJobData=(%s)</description>\n",field[2],field[1],field[3],field[4]);

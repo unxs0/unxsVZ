@@ -1,6 +1,6 @@
 /*
 FILE
-	tServerGroup source code of mysqlRadius2.cgi
+	tServerGroup source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -128,7 +128,7 @@ void tServerGroup(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetServerGroup();
-				mysqlRadius2("New tServerGroup table created");
+				unxsRadius("New tServerGroup table created");
                 	}
 			else
 			{

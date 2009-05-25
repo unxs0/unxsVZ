@@ -1,6 +1,6 @@
 /*
 FILE
-	tRadacct source code of mysqlRadacct2.cgi
+	tRadacct source code of unxsRadacct.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -192,7 +192,7 @@ void tRadacct(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetRadacct();
-				mysqlRadacct2("New tRadacct table created");
+				unxsRadacct("New tRadacct table created");
                 	}
 			else
 			{
@@ -548,7 +548,7 @@ void NewtRadacct(unsigned uMode)
 	uRadacct=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tRadacct",uRadacct);
-	mysqlRadacct2Log(uRadacct,"tRadacct","New");
+	unxsRadacctLog(uRadacct,"tRadacct","New");
 #endif
 
 	if(!uMode)
@@ -576,14 +576,14 @@ void DeletetRadacct(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlRadacct2Log(uRadacct,"tRadacct","Del");
+		unxsRadacctLog(uRadacct,"tRadacct","Del");
 #endif
 		tRadacct(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlRadacct2Log(uRadacct,"tRadacct","DelError");
+		unxsRadacctLog(uRadacct,"tRadacct","DelError");
 #endif
 		tRadacct(LANG_NBR_RECNOTDELETED);
 	}
@@ -689,7 +689,7 @@ void ModtRadacct(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tRadacct",uRadacct);
-	mysqlRadacct2Log(uRadacct,"tRadacct","Mod");
+	unxsRadacctLog(uRadacct,"tRadacct","Mod");
 #endif
 	tRadacct(gcQuery);
 

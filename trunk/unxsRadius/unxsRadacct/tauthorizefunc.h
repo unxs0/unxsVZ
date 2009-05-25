@@ -162,9 +162,9 @@ void ExttAuthorizeButtons(void)
 			printf("Here you can change a passwd for a login of a contact or a non company affiliated login user. Other more complex changes can be done on other fields, but you should seek guidance from experienced users first. Clicking on the modify (new or delete) button will provide more details. All changes are two step operations so there is no danger on clicking on the 'New', 'Modify' or 'Delete' buttons.<p>\n");
 			printf("<u>Record Context Info</u><br>");
 			if(uCertClient>1 && uOwner>1)
-				printf("This login appears to belong to a <a class=darkLink href=mysqlRadacct2.cgi?gcFunction=tClient&uClient=%u>'%s'</a> company contact '<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>%s</a>'.<br>The uPerm corresponds to permission level '%s'.",uOwner,ForeignKey("tClient","cLabel",uOwner),uCertClient,ForeignKey("tClient","cLabel",uCertClient),cUserLevel(uPerm));
+				printf("This login appears to belong to a <a class=darkLink href=unxsRadacct.cgi?gcFunction=tClient&uClient=%u>'%s'</a> company contact '<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>%s</a>'.<br>The uPerm corresponds to permission level '%s'.",uOwner,ForeignKey("tClient","cLabel",uOwner),uCertClient,ForeignKey("tClient","cLabel",uCertClient),cUserLevel(uPerm));
 			else if(uOwner>1)
-				printf("This login appears to belong to a '<a class=darkLink href=mysqlRadacct2.cgi?gcFunction=tClient&uClient=%u>%s</a>' company contact, but that has been root aliased to usually run the back-office with complete permissions. <br>The uPerm corresponds to permission level '%s'.",uOwner,ForeignKey("tClient","cLabel",uOwner),cUserLevel(uPerm));
+				printf("This login appears to belong to a '<a class=darkLink href=unxsRadacct.cgi?gcFunction=tClient&uClient=%u>%s</a>' company contact, but that has been root aliased to usually run the back-office with complete permissions. <br>The uPerm corresponds to permission level '%s'.",uOwner,ForeignKey("tClient","cLabel",uOwner),cUserLevel(uPerm));
 			printf("<p>\n");
 			tAuthorizeNavList();
 	}
@@ -312,7 +312,7 @@ void tAuthorizeNavList(void)
 	{
         	printf("<p><u>tAuthorizeNavList</u><br>\n");
         	while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlRadacct2.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
+			printf("<a class=darkLink href=unxsRadacct.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
 				"%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
 	}
         mysql_free_result(res);

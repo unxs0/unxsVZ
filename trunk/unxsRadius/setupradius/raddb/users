@@ -1,4 +1,4 @@
-#users mysqlRadius2.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $
+#users unxsRadius.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $
 #For uServer:1
 #Unlimited:1022344509 uUser:0 uServer:0 uClearText:0 uStaticIP:0
 joetester	Crypt-Password := "$1$EguHeNAi$Sv3lxcjme1Jby0U6bsjAn1"

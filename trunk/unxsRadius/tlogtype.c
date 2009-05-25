@@ -1,6 +1,6 @@
 /*
 FILE
-	tLogType source code of mysqlRadius2.cgi
+	tLogType source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tlogtype.c 1335 2007-07-23 23:15:44Z Gary $
 PURPOSE
@@ -148,7 +148,7 @@ void tLogType(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetLogType();
-				mysqlRadius2("New tLogType table created");
+				unxsRadius("New tLogType table created");
                 	}
 			else
 			{
@@ -336,7 +336,7 @@ void NewtLogType(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uLogType=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tLogType",uLogType);
-	mysqlRadius2Log(uLogType,"tLogType","New");
+	unxsRadiusLog(uLogType,"tLogType","New");
 
 	if(!uMode)
 	{
@@ -355,12 +355,12 @@ void DeletetLogType(void)
 	//tLogType("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadius2Log(uLogType,"tLogType","Del");
+		unxsRadiusLog(uLogType,"tLogType","Del");
 		tLogType(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadius2Log(uLogType,"tLogType","DelError");
+		unxsRadiusLog(uLogType,"tLogType","DelError");
 		tLogType(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -420,7 +420,7 @@ void ModtLogType(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tLogType",uLogType);
-	mysqlRadius2Log(uLogType,"tLogType","Mod");
+	unxsRadiusLog(uLogType,"tLogType","Mod");
 	tLogType(gcQuery);
 
 }//ModtLogType(void)

@@ -364,7 +364,7 @@ void LogMonthSummary(void)
 		sscanf(ForeignKey("tResource","uZone",uTPK),"%u",&uZone);
 		sscanf(ForeignKey("tResource","uRRType",uTPK),"%u",&uRRType);
 
-		printf("<a class=darkLink title='Jump to tResource entry' href=mysqlRadacct2.cgi?gcFunction=tResource&uResource=%u>tResource</a><blockquote>\n",uTPK);
+		printf("<a class=darkLink title='Jump to tResource entry' href=unxsRadacct.cgi?gcFunction=tResource&uResource=%u>tResource</a><blockquote>\n",uTPK);
 		printf("cZone=%s<br>\n",ForeignKey("tZone","cZone",uZone));
 		printf("cName=%s<br>\n",ForeignKey("tResource","cName",uTPK));
 		printf("RRType=%s<br>\n",ForeignKey("tRRType","cLabel",uRRType));

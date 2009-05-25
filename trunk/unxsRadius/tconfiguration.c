@@ -1,6 +1,6 @@
 /*
 FILE
-	tConfiguration source code of mysqlRadius2.cgi
+	tConfiguration source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tconfiguration.c 1326 2007-07-18 22:34:36Z Gary $
 PURPOSE
@@ -164,7 +164,7 @@ void tConfiguration(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetConfiguration();
-				mysqlRadius2("New tConfiguration table created");
+				unxsRadius("New tConfiguration table created");
                 	}
 			else
 			{
@@ -388,7 +388,7 @@ void NewtConfiguration(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uConfiguration=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tConfiguration",uConfiguration);
-	mysqlRadius2Log(uConfiguration,"tConfiguration","New");
+	unxsRadiusLog(uConfiguration,"tConfiguration","New");
 
 	if(!uMode)
 	{
@@ -407,12 +407,12 @@ void DeletetConfiguration(void)
 	//tConfiguration("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadius2Log(uConfiguration,"tConfiguration","Del");
+		unxsRadiusLog(uConfiguration,"tConfiguration","Del");
 		tConfiguration(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadius2Log(uConfiguration,"tConfiguration","DelError");
+		unxsRadiusLog(uConfiguration,"tConfiguration","DelError");
 		tConfiguration(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -477,7 +477,7 @@ void ModtConfiguration(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tConfiguration",uConfiguration);
-	mysqlRadius2Log(uConfiguration,"tConfiguration","Mod");
+	unxsRadiusLog(uConfiguration,"tConfiguration","Mod");
 	tConfiguration(gcQuery);
 
 }//ModtConfiguration(void)

@@ -23,7 +23,7 @@
 
 #Changed for use with /etc/raddb yum free radius install for proxy use only
 #	See restart change also. See chkconfig --list also for boot control
-#	must test with mysqlRadius2.cgi crontab restarts also.
+#	must test with unxsRadius.cgi crontab restarts also.
 #	sleep changed to 11 to miss minute crontabs always.
 $pid_file_location = '/var/run/radiusd/radiusd.pid';
 
@@ -50,7 +50,7 @@ for (;;) {
  restart:
 	#printf("restarting\n");
 
-	#system("/usr/local/bin/mysqlRadius2.cgi Start radius-proxy0");
+	#system("/usr/local/bin/unxsRadius.cgi Start radius-proxy0");
 	system("/etc/init.d/radiusd restart > /dev/null 2>&1");
 	sleep 11;
 }

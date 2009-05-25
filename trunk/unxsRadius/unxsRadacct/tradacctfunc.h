@@ -91,7 +91,7 @@ void ExttRadacctButtons(void)
 			" name=gcCommand value='User Report'><br>");
 	printf("<input title='Current month top users' class=largeButton type=submit name=gcCommand"
 			" value='Top Users Report'><br>");
-	printf("<input title='Current month top Cisco WLAN users via mysqlRadius2.tUser.cIP' class=largeButton"
+	printf("<input title='Current month top Cisco WLAN users via unxsRadius.tUser.cIP' class=largeButton"
 			" type=submit name=gcCommand value='Top Users by Cisco MAC'><br>");
 	printf("<input title='Current month error records' class=largeButton type=submit name=gcCommand"
 			" value='Error Report'><br>");

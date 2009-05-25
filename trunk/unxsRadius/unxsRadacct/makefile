@@ -41,11 +41,11 @@ endif
 
 
 
-all: mysqlRadacct2.cgi
+all: unxsRadacct.cgi
 
-mysqlRadacct2.cgi: tradacct.o tmonth.o tradacctmonth.o tconfiguration.o tlog.o tlogtype.o tlogmonth.o tglossary.o tserver.o tmonthlog.o tauthorize.o tclient.o   main.o cgi.o
-	cc tradacct.o tmonth.o tradacctmonth.o tconfiguration.o tlog.o tlogtype.o tlogmonth.o tglossary.o tserver.o tmonthlog.o tauthorize.o tclient.o   main.o cgi.o -o mysqlRadacct2.cgi $(LIBS) 
-	#mail -s "mysqlRadacct2$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
+unxsRadacct.cgi: tradacct.o tmonth.o tradacctmonth.o tconfiguration.o tlog.o tlogtype.o tlogmonth.o tglossary.o tserver.o tmonthlog.o tauthorize.o tclient.o   main.o cgi.o
+	cc tradacct.o tmonth.o tradacctmonth.o tconfiguration.o tlog.o tlogtype.o tlogmonth.o tglossary.o tserver.o tmonthlog.o tauthorize.o tclient.o   main.o cgi.o -o unxsRadacct.cgi $(LIBS) 
+	#mail -s "unxsRadacct$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
 
 tradacct.o: tradacct.c mysqlrad.h language.h tradacctfunc.h local.h
 	cc -c tradacct.c -o tradacct.o $(CFLAGS)
@@ -98,17 +98,17 @@ clean:
 cleandist:
 	rm -f *.o *.gz
 
-install: mysqlRadacct2.cgi
-	install -s mysqlRadacct2.cgi $(CGIDIR)mysqlRadacct2.cgi
-	rm mysqlRadacct2.cgi
+install: unxsRadacct.cgi
+	install -s unxsRadacct.cgi $(CGIDIR)unxsRadacct.cgi
+	rm unxsRadacct.cgi
 
 distribution:
-	cd ..;  tar czvf mysqlRadacct2/mysqlRadacct2$(RELEASE).tar.gz --exclude .svn\
-		mysqlRadacct2/*.h\
-		mysqlRadacct2/*.c\
-		mysqlRadacct2/data\
-		mysqlRadacct2/docs\
-		mysqlRadacct2/makefile\
-		mysqlRadacct2/CHANGES\
-		mysqlRadacct2/LICENSE\
-		mysqlRadacct2/INSTALL
+	cd ..;  tar czvf unxsRadacct/unxsRadacct$(RELEASE).tar.gz --exclude .svn\
+		unxsRadacct/*.h\
+		unxsRadacct/*.c\
+		unxsRadacct/data\
+		unxsRadacct/docs\
+		unxsRadacct/makefile\
+		unxsRadacct/CHANGES\
+		unxsRadacct/LICENSE\
+		unxsRadacct/INSTALL

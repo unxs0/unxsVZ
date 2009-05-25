@@ -11,8 +11,8 @@ LEGAL
 //These two lines next should be in the public distro:
 #define DBIP0 NULL
 #define DBIP1 NULL
-#define DBNAME "mysqlradius2"
-#define DBLOGIN "mysqlradius2"
+#define DBNAME "unxsradius"
+#define DBLOGIN "unxsradius"
 #define DBPASSWD "wsxedc"
 #define DBPORT0 3306
 #define DBPORT1 3306
@@ -46,9 +46,9 @@ LEGAL
 
 //Master tClient
 #define TCLIENT "tClient"
-//#define TCLIENT "mysqlisp2.tClient"
+//#define TCLIENT "unxsisp.tClient"
 #define TAUTHORIZE "tAuthorize"
-//#define TAUTHORIZE "mysqlisp2.tAuthorize"
+//#define TAUTHORIZE "unxsisp.tAuthorize"
 
 //We will shortly remove all non freeradius code
 #define FREE_RADIUS

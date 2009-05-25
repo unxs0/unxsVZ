@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006 Gary Wallis for Unixservice
 PURPOSE
-	mysqlRadius2 Organization (Company) Interface
+	unxsRadius Organization (Company) Interface
 REQUIRES
 	OpenISP libtemplates.a and templates.h
 */
@@ -662,7 +662,7 @@ char *FQDomainName(char *cInput)
 }//char *FQDomainName(char *cInput)
 
 
-void mysqlRadius2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+void unxsRadiusLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 {
         char cQuery[512];
 
@@ -686,7 +686,7 @@ void mysqlRadius2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
         mysql_query(&gMysql,cQuery);
 
-}//void mysqlRadius2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+}//void unxsRadiusLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
 
 void GetConfiguration(const char *cName, char *cValue)

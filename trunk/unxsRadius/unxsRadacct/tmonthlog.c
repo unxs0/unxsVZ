@@ -1,6 +1,6 @@
 /*
 FILE
-	tMonthLog source code of mysqlRadacct2.cgi
+	tMonthLog source code of unxsRadacct.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -149,7 +149,7 @@ void tMonthLog(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetMonthLog();
-				mysqlRadacct2("New tMonthLog table created");
+				unxsRadacct("New tMonthLog table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtMonthLog(unsigned uMode)
 	uMonthLog=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tMonthLog",uMonthLog);
-	mysqlRadacct2Log(uMonthLog,"tMonthLog","New");
+	unxsRadacctLog(uMonthLog,"tMonthLog","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetMonthLog(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlRadacct2Log(uMonthLog,"tMonthLog","Del");
+		unxsRadacctLog(uMonthLog,"tMonthLog","Del");
 #endif
 		tMonthLog(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlRadacct2Log(uMonthLog,"tMonthLog","DelError");
+		unxsRadacctLog(uMonthLog,"tMonthLog","DelError");
 #endif
 		tMonthLog(LANG_NBR_RECNOTDELETED);
 	}
@@ -465,7 +465,7 @@ void ModtMonthLog(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tMonthLog",uMonthLog);
-	mysqlRadacct2Log(uMonthLog,"tMonthLog","Mod");
+	unxsRadacctLog(uMonthLog,"tMonthLog","Mod");
 #endif
 	tMonthLog(gcQuery);
 

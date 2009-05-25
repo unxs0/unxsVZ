@@ -4,7 +4,7 @@ FILE
 AUTHOR
 	(C) 2008 Hugo Urquiza for Unixservice
 PURPOSE
-	mysqlRadius2 Customer Interface
+	unxsRadius Customer Interface
 	program file.
 	Initially, this module handles  all the password related requests.
 */
@@ -80,16 +80,16 @@ void MyAccountCommands(pentry entries[], int x)
 
 void htmlMyAccountPwdOut(void)
 {
-	 htmlHeader("mysqlRadius2 User Interface","Header");
-	 htmlMyAccountPage("mysqlRadius2 User Interface","MyAccountPwdMsg");
+	 htmlHeader("unxsRadius User Interface","Header");
+	 htmlMyAccountPage("unxsRadius User Interface","MyAccountPwdMsg");
 	 htmlFooter("Footer");
 }//void htmlMyAccountPwdOut(void)
 
 
 void htmlMyAccount(void)
 {
-	htmlHeader("mysqlRadius2 User Interface","Header");
-	htmlMyAccountPage("mysqlRadius2 User Interface","MyAccount.Body");
+	htmlHeader("unxsRadius User Interface","Header");
+	htmlMyAccountPage("unxsRadius User Interface","MyAccount.Body");
 	htmlFooter("Footer");
 
 }//void htmlMyAccount(void)
@@ -209,10 +209,10 @@ void ResetPassword(char *cEmail)
 	//This function will reset the password of the user pointed by the email address at cEmail
 	//For that we need to:
 	//1. Get first and last names from mysqlCart db
-	//2. Get mysqlRadius2.tUser.uUser for the login, which is {{cFirstName}}.{{cLastName}}@{{cRadiusDomain}}
+	//2. Get unxsRadius.tUser.uUser for the login, which is {{cFirstName}}.{{cLastName}}@{{cRadiusDomain}}
 	//3. Generate a random password
-	//4. Update mysqlRadius2.tUser record
-	//5. Submit a mysqlRadius2 'Mod' job
+	//4. Update unxsRadius.tUser record
+	//5. Submit a unxsRadius 'Mod' job
 	//6. Email the customer with her new login information.
 	//
 	
@@ -253,7 +253,7 @@ void ResetPassword(char *cEmail)
 	else
 		sprintf(cLogin,"%s.%s",cFirstName,cLastName);
 	
-	//2. Get mysqlRadius2.tUser.uUser for the login
+	//2. Get unxsRadius.tUser.uUser for the login
 	sprintf(gcQuery,"SELECT uUser FROM tUser WHERE cLogin='%s' AND uOnHold=0",cLogin); //Only active accounts ;)
 	mysql_query(&gMysql,gcQuery);
 
@@ -276,13 +276,13 @@ void ResetPassword(char *cEmail)
 	sprintf(cPasswd,"%s",cPwdSave);
 	EncryptPasswd(&gMysql,cPasswd);
 
-	//4. Update mysqlRadius2.tUser record
+	//4. Update unxsRadius.tUser record
 	if((Update_tUser(uUser,cPasswd)))
 	{
 	}
 	else
 	{
-		gcMessage="<font color=red>Update of the mysqlRadius2.tUser record failed. Please contact support with this message</font>";
+		gcMessage="<font color=red>Update of the unxsRadius.tUser record failed. Please contact support with this message</font>";
 		htmlMyAccountPwdOut();
 	}
 

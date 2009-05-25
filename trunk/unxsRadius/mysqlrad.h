@@ -61,7 +61,7 @@ extern unsigned guMode;
 extern int guError;
 extern char gcErrormsg[];
 
-void mysqlRadius2(const char *cResult);
+void unxsRadius(const char *cResult);
 void ConnectDb(void);
 void Footer_ism3(void);
 void Header_ism3(char *cMsg, int iJs);
@@ -101,7 +101,7 @@ void ExtSelect(const char *cTable,const char *cVarList,unsigned uMaxResults);
 void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField, const char *cSearch,const char *cExtraCond,unsigned uMaxResults);
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
 
-void mysqlRadius2Log(unsigned uTablePK, char *cTableName, char *cLogEntry);
+void unxsRadiusLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 
  //Standard tInputFunc functions
 char *WordToLower(char *cInput);

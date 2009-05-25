@@ -75,7 +75,7 @@ int iExtMainCommands(pentry entries[], int x)
 	{
 		if(!strcmp(gcCommand,"Dashboard"))
 		{
-			mysqlRadius2("DashBoard");
+			unxsRadius("DashBoard");
 		}
 	}
 
@@ -245,7 +245,7 @@ void ExtMainContent(void)
 		OpenRow("Table List","black");
 		printf("<td>\n");
 		for(i=0;cTableList[i][0];i++)
-			printf("<a href=mysqlRadius2.cgi?gcFunction=%.32s>%.32s</a><br>\n",
+			printf("<a href=unxsRadius.cgi?gcFunction=%.32s>%.32s</a><br>\n",
 				cTableList[i],cTableList[i]);
 		printf("</td></tr>\n");
         	OpenRow("Admin Functions","black");
@@ -395,7 +395,7 @@ void RestoreAll(char *cPasswd)
 
 	for(i=0;cTableList[i][0];i++)
 	{
-sprintf(gcQuery,"load data infile '%s/mysqlRadius2/data/%s.txt' replace into table %s",cISMROOT,cTableList[i],cTableList[i]);
+sprintf(gcQuery,"load data infile '%s/unxsRadius/data/%s.txt' replace into table %s",cISMROOT,cTableList[i],cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -419,11 +419,11 @@ void ImportUsers(char *cPasswd)
 
 	//Help useful if ISMROOT is unset
 	printf("Importing mysqlRadius tUser data\n");
-	printf("\tFrom $ISMROOT/mysqlRadius2/data/userimport.txt\n");
+	printf("\tFrom $ISMROOT/unxsRadius/data/userimport.txt\n");
 	printf("\tWhere this is a , delimited, optionally \"field\" enclosed flat file.\n");
 	printf("\tFormat login,clearpasswd,profilenumber,userid.\n");
 	printf("And:\n");
-	printf("\tFrom $ISMROOT/mysqlRadius2/data/profileimport.txt\n");
+	printf("\tFrom $ISMROOT/unxsRadius/data/profileimport.txt\n");
 	printf("\tWhere this is a , delimited, optionally \"field\" enclosed flat file.\n");
 	printf("\tFormat profilename,profilenumber.\n\n");
 	
@@ -453,7 +453,7 @@ void ImportUsers(char *cPasswd)
 
 	printf("User import\n");
 	
-sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/mysqlRadius2/data/userimport.txt' REPLACE INTO TABLE tUser FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' (cLogin,cEnterPasswd,uProfileName,uUser)",cISMROOT);
+sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsRadius/data/userimport.txt' REPLACE INTO TABLE tUser FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' (cLogin,cEnterPasswd,uProfileName,uUser)",cISMROOT);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -518,7 +518,7 @@ sprintf(gcQuery,"UPDATE tUser SET uClearText=1,uSimulUse=1,uOwner=9999,uCreatedB
 	/////////
 	printf("Profile import\n");
 	
-sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/mysqlRadius2/data/profileimport.txt' REPLACE INTO TABLE tProfileName FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' (cLabel,uProfileName)",cISMROOT);
+sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsRadius/data/profileimport.txt' REPLACE INTO TABLE tProfileName FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' (cLabel,uProfileName)",cISMROOT);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -568,7 +568,7 @@ void Restore(char *cPasswd, char *cTableName)
 		exit(1);
 	}
 
-	sprintf(gcQuery,"load data infile '%s/mysqlRadius2/data/%s.txt' replace into table %s",cISMROOT,cTableName,cTableName);
+	sprintf(gcQuery,"load data infile '%s/unxsRadius/data/%s.txt' replace into table %s",cISMROOT,cTableName,cTableName);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -598,7 +598,7 @@ void Backup(char *cPasswd)
 	}
 
 	printf("Backing up mysqlRadius data to .txt files in \
-%s/mysqlRadius2/data...\n\n",cISMROOT);
+%s/unxsRadius/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -615,7 +615,7 @@ void Backup(char *cPasswd)
 	{
 		char cFileName[300];
 
-		sprintf(cFileName,"%s/mysqlRadius2/data/%s.txt"
+		sprintf(cFileName,"%s/unxsRadius/data/%s.txt"
 				,cISMROOT,cTableList[i]);
 		unlink(cFileName);
 
@@ -752,7 +752,7 @@ void UpdateSchema(char *cPasswd)
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
 
-	mysql_query(&gMysql,"use mysqlradius2");
+	mysql_query(&gMysql,"use unxsradius");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
@@ -882,7 +882,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 
 void CalledByAlias(int iArgc,char *cArgv[])
 {
-	if(strstr(cArgv[0],"mysqlRadius2RSS.xml"))
+	if(strstr(cArgv[0],"unxsRadiusRSS.xml"))
 	{
 		MYSQL_RES *res;
 		MYSQL_ROW field;
@@ -904,7 +904,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 
 		//This is the standard place. With much parsing nonsense we can
 		//	do better by using env vars
-		sprintf(cLinkStart,"%s://%s/cgi-bin/mysqlRadius2.cgi",cHTTP,gcHost);
+		sprintf(cLinkStart,"%s://%s/cgi-bin/unxsRadius.cgi",cHTTP,gcHost);
 
 		printf("Content-type: text/xml\n\n");
 
@@ -912,11 +912,11 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		printf("<?xml version='1.0' encoding='UTF-8'?>\n");
 		printf("<rss version='2.0'>\n");
 		printf("<channel>\n");
-		printf("<title>mysqlRadius2 RSS tJob Errors</title>\n");
-		printf("<link>http://openisp.net/mysqlRadius2</link>\n");
-		printf("<description>mysqlRadius2 tJob Errors</description>\n");
+		printf("<title>unxsRadius RSS tJob Errors</title>\n");
+		printf("<link>http://openisp.net/unxsRadius</link>\n");
+		printf("<description>unxsRadius tJob Errors</description>\n");
 		printf("<lastBuildDate>%.199s</lastBuildDate>\n",cRSSDate);
-		printf("<generator>mysqlRadius2 RSS Generator</generator>\n");
+		printf("<generator>unxsRadius RSS Generator</generator>\n");
 		printf("<docs>http://blogs.law.harvard.edu/tech/rss</docs>\n");
 		printf("<ttl>120</ttl>\n");
 
@@ -934,7 +934,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("\n<item>\n");
-			printf("<title>mysqlRadius2.tJob.uJob=%s</title>\n",field[0]);
+			printf("<title>unxsRadius.tJob.uJob=%s</title>\n",field[0]);
 			printf("<link>%s?gcFunction=tJob&amp;uJob=%s</link>\n",cLinkStart,
 							field[0]);
 			printf("<description>cJobName=%s Server=%s uUser=%s\ncJobData=(%s)</description>\n",field[2],field[1],field[3],field[4]);
@@ -1264,7 +1264,7 @@ void TextError(const char *cError, unsigned uContinue)
 {
 	char cQuery[1024];
 
-	printf("\nPlease report this mysqlRadius2 fatal error ASAP:\n%s\n",cError);
+	printf("\nPlease report this unxsRadius fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
         sprintf(cQuery,"INSERT INTO tLog SET cLabel='TextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",guPermLevel,guLoginClient,gcUser,gcHost,cError,gcHostname,guLoginClient);

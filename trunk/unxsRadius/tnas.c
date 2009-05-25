@@ -1,6 +1,6 @@
 /*
 FILE
-	tNAS source code of mysqlRadius2.cgi
+	tNAS source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -172,7 +172,7 @@ void tNAS(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetNAS();
-				mysqlRadius2("New tNAS table created");
+				unxsRadius("New tNAS table created");
                 	}
 			else
 			{
@@ -444,7 +444,7 @@ void NewtNAS(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uNAS=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tNAS",uNAS);
-	mysqlRadius2Log(uNAS,"tNAS","New");
+	unxsRadiusLog(uNAS,"tNAS","New");
 
 	if(!uMode)
 	{
@@ -463,12 +463,12 @@ void DeletetNAS(void)
 	//tNAS("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadius2Log(uNAS,"tNAS","Del");
+		unxsRadiusLog(uNAS,"tNAS","Del");
 		tNAS(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadius2Log(uNAS,"tNAS","DelError");
+		unxsRadiusLog(uNAS,"tNAS","DelError");
 		tNAS(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -537,7 +537,7 @@ void ModtNAS(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tNAS",uNAS);
-	mysqlRadius2Log(uNAS,"tNAS","Mod");
+	unxsRadiusLog(uNAS,"tNAS","Mod");
 	tNAS(gcQuery);
 
 }//ModtNAS(void)

@@ -291,7 +291,7 @@ void tJobNavList(void)
 	{
 	        printf("<p><u>tJobNavList</u><br>\n");
 	        while((field=mysql_fetch_row(res)))
-	                printf("<a class=darkLink href=mysqlRadius2.cgi?gcFunction=tJob"
+	                printf("<a class=darkLink href=unxsRadius.cgi?gcFunction=tJob"
 				"&uJob=%s>%s.%s:%s</a><br>\n",field[0],field[1],field[2],field[3]);
 	}
         mysql_free_result(res);

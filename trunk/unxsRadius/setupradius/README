@@ -1,4 +1,4 @@
-This directory includes the default raddb folder for quick mysqlRadius2 install.
+This directory includes the default raddb folder for quick unxsRadius install.
 
 Please note that the MySQL queries for accounting are setup for mysqlRadaact2! You should not further edit them, unless you find an error ;)
 

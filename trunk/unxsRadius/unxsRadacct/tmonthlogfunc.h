@@ -317,7 +317,7 @@ void tMonthLogNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-printf("<a class=darkLink href=mysqlRadacct2.cgi?gcFunction=tMonthLog\
+printf("<a class=darkLink href=unxsRadacct.cgi?gcFunction=tMonthLog\
 &uMonthLog=%s>%s</a><br>\n",field[0],field[1]);
 	        }
 	}

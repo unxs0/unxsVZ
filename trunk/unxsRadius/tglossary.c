@@ -1,6 +1,6 @@
 /*
 FILE
-	tGlossary source code of mysqlRadius2.cgi
+	tGlossary source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1176 2006-10-27 16:15:00Z ggw $
 PURPOSE
@@ -152,7 +152,7 @@ void tGlossary(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetGlossary();
-				mysqlRadius2("New tGlossary table created");
+				unxsRadius("New tGlossary table created");
                 	}
 			else
 			{
@@ -354,7 +354,7 @@ void NewtGlossary(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uGlossary=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tGlossary",uGlossary);
-	mysqlRadius2Log(uGlossary,"tGlossary","New");
+	unxsRadiusLog(uGlossary,"tGlossary","New");
 
 	if(!uMode)
 	{
@@ -373,12 +373,12 @@ void DeletetGlossary(void)
 	//tGlossary("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadius2Log(uGlossary,"tGlossary","Del");
+		unxsRadiusLog(uGlossary,"tGlossary","Del");
 		tGlossary(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadius2Log(uGlossary,"tGlossary","DelError");
+		unxsRadiusLog(uGlossary,"tGlossary","DelError");
 		tGlossary(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -438,7 +438,7 @@ void ModtGlossary(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tGlossary",uGlossary);
-	mysqlRadius2Log(uGlossary,"tGlossary","Mod");
+	unxsRadiusLog(uGlossary,"tGlossary","Mod");
 	tGlossary(gcQuery);
 
 }//ModtGlossary(void)

@@ -1,6 +1,6 @@
 /*
 FILE
-	tJobStatus source code of mysqlRadius2.cgi
+	tJobStatus source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tjobstatus.c 1291 2007-07-09 23:20:17Z Gary $
 PURPOSE
@@ -148,7 +148,7 @@ void tJobStatus(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetJobStatus();
-				mysqlRadius2("New tJobStatus table created");
+				unxsRadius("New tJobStatus table created");
                 	}
 			else
 			{
@@ -336,7 +336,7 @@ void NewtJobStatus(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uJobStatus=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tJobStatus",uJobStatus);
-	mysqlRadius2Log(uJobStatus,"tJobStatus","New");
+	unxsRadiusLog(uJobStatus,"tJobStatus","New");
 
 	if(!uMode)
 	{
@@ -355,12 +355,12 @@ void DeletetJobStatus(void)
 	//tJobStatus("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlRadius2Log(uJobStatus,"tJobStatus","Del");
+		unxsRadiusLog(uJobStatus,"tJobStatus","Del");
 		tJobStatus(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlRadius2Log(uJobStatus,"tJobStatus","DelError");
+		unxsRadiusLog(uJobStatus,"tJobStatus","DelError");
 		tJobStatus(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -419,7 +419,7 @@ void ModtJobStatus(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tJobStatus",uJobStatus);
-	mysqlRadius2Log(uJobStatus,"tJobStatus","Mod");
+	unxsRadiusLog(uJobStatus,"tJobStatus","Mod");
 	tJobStatus(gcQuery);
 
 }//ModtJobStatus(void)

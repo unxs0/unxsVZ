@@ -1,6 +1,6 @@
 /*
 FILE
-	tNASGroup source code of mysqlRadius2.cgi
+	tNASGroup source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
 PURPOSE
@@ -128,7 +128,7 @@ void tNASGroup(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetNASGroup();
-				mysqlRadius2("New tNASGroup table created");
+				unxsRadius("New tNASGroup table created");
                 	}
 			else
 			{
