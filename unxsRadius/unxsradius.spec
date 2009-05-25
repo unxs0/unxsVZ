@@ -32,8 +32,8 @@ mkdir -p /usr/local/share/unxsRadacct/data/
 cp data/*.txt /usr/local/share/unxsRadius/data/
 cp -r tools/* /usr/local/share/unxsRadius/tools
 cp -r setupradius/ /usr/local/share/unxsRadius/
-cp init.d/unxsradius.init /etc/init.d/
-cp init.d/unxsradius.sysconfig /etc/sysconfig
+cp init.d/unxsradius.init /etc/init.d/unxsradius
+cp init.d/unxsradius.sysconfig /etc/sysconfig/unxsradius
 cp unxsRadacct/data/*.txt /usr/local/share/unxsRadacct/data/
 
 %clean
