@@ -1,10 +1,10 @@
 /*
 FILE
-	$Id: mainfunc.h,v 1.25 2004/08/03 15:27:52 ggw-private Exp $
+	$Id
 PURPOSE
 	CLI and main tab related functions.
 AUTHOR
-	(Template and mysqlRAD2/RAD3 author: (C) 2001-2009 Gary Wallis.)
+	(Template and mysqlRAD2/RAD3 author: (C) 2001-2009 Gary Wallis and Hugo Urquiza.)
 */
 
 
@@ -822,7 +822,7 @@ void AcctReport(char *cTableName)
 	}
 	else
 	{
-		printf("For %u users. $Id: mainfunc.h,v 1.25 2004/08/03 15:27:52 ggw-private Exp $\n",uFound);
+		printf("For %u users. $Id$\n",uFound);
 		exit(0);
 	}
 
@@ -864,7 +864,7 @@ void AcctReportLegacy(char *cTableName)
 	}
 	else
 	{
-		printf("For %u users. $Id: mainfunc.h,v 1.25 2004/08/03 15:27:52 ggw-private Exp $\n",uFound);
+		printf("For %u users. $Id$\n",uFound);
 		exit(0);
 	}
 
@@ -905,7 +905,7 @@ void AcctReportLegacyProxy(char *cRealm,char *cTableName)
 	}
 	else
 	{
-		printf("For %u realm:%s users. $Id: mainfunc.h,v 1.25 2004/08/03 15:27:52 ggw-private Exp $\n",uFound,cRealm);
+		printf("For %u realm:%s users. $Id$\n",uFound,cRealm);
 		exit(0);
 	}
 

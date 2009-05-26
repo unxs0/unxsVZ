@@ -1,11 +1,10 @@
 /*
 FILE
-	$Id: tserverfunc.h,v 1.3 2002/05/27 16:07:04 ggw Exp $
-	(tAuthorize.cPasswd template set member)
+	$Id$
 PURPOSE
 
 AUTHOR
-	Template and mysqlRAD2 author: (c) 2001,2002 Gary Wallis.
+	Template and mysqlRAD2 author: (C) 2001-2009 Gary Wallis and Hugo Urquiza.
 	GPL License applies, see www.fsf.org for details
 
  

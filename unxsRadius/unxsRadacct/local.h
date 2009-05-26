@@ -1,17 +1,15 @@
 /*
 FILE
-        $Id: local.h.template 1262 2007-06-30 22:36:38Z Gary $
+        $Id$
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL
-        Copyright 2001-2007 Gary Wallis
+        Copyright 2001-2009 Gary Wallis and Hugo Urquiza
 */
 
 //Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
 #define DBIP0 NULL
 #define DBIP1 NULL
-//#define DBIP0 "192.168.0.4"
-//#define DBIP1 "192.168.0.5"
 #define DBNAME "unxsradacct"
 #define DBLOGIN "unxsradacct"
 #define DBPASSWD "wsxedc"

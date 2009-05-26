@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: tlogfunc.h 666 2007-06-29 13:40:38Z Gary $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
  
 */
 

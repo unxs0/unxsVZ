@@ -1,8 +1,8 @@
 /*
 FILE
 	tGlossary source code of unxsRadacct.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: module.c.template 1176 2006-10-27 16:15:00Z ggw $
+	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tglossaryfunc.h while 
