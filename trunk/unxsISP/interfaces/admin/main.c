@@ -305,7 +305,7 @@ void htmlFooter(char *cTemplateName)
 			template.cpName[1]="cIspUrl";
 			template.cpValue[1]=ISPURL;
 			template.cpName[2]="cCopyright";
-			template.cpValue[2]="&copy; 2007-2009 Riedel GmbH. All Rights Reserved.";
+			template.cpValue[2]="&copy; 2007-2009 Unixservice. All Rights Reserved.";
 			template.cpName[3]="";
 
 			printf("\n<!-- Start htmlFooter(%s) -->\n",cTemplateName); 
