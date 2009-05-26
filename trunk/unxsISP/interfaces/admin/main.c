@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006-2008 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	mysqlISP2 Organization (Company) Interface
+	unxsISP Organization (Company) Interface
 REQUIRES
 	OpenISP libtemplates.a and templates.h
 */
@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 
 void htmlLogin(void)
 {
-	htmlHeader("mysqlISP2 System","Header");
+	htmlHeader("unxsISP System","Header");
 	htmlLoginPage("","AdminLogin.Body");
 	htmlFooter("Footer");
 
@@ -772,7 +772,7 @@ char *FQDomainName(char *cInput)
 }//char *FQDomainName(char *cInput)
 
 
-void mysqlISP2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+void unxsISPLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 {
         char cQuery[512];
 
@@ -797,7 +797,7 @@ void mysqlISP2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
         mysql_query(&gMysql,cQuery);
 
-}//void mysqlISP2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+}//void unxsISPLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
 
 int ReadPullDown(const char *cTableName,const char *cFieldName,const char *cLabel)
@@ -822,7 +822,7 @@ int ReadPullDown(const char *cTableName,const char *cFieldName,const char *cLabe
 
 void htmlDashBoard(void)
 {
-	htmlHeader("mysqlISP2 System","Header");
+	htmlHeader("unxsISP System","Header");
 	htmlDashBoardPage("","DashBoard.Body");
 	htmlFooter("Footer");
 

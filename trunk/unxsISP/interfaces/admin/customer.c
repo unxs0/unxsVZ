@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006-2008 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	mysqlISP2 Admin (Owner) Interface
+	unxsISP Admin (Owner) Interface
 	program file.
 */
 
@@ -639,7 +639,7 @@ void CustomerCommands(pentry entries[], int x)
 
 void htmlProductDeployWizard(unsigned uStep)
 {
-	htmlHeader("mysqlISP2 Admin Interface","Header");
+	htmlHeader("unxsISP Admin Interface","Header");
 	sprintf(gcQuery,"ProductDeploy.%u",uStep);
 	htmlCustomerPage("",gcQuery);
 	
@@ -657,7 +657,7 @@ void htmlCustomer(void)
 		}
 	}
 
-	htmlHeader("mysqlISP2 Admin Interface","Header");
+	htmlHeader("unxsISP Admin Interface","Header");
 	htmlCustomerPage("","Customer.Body");
 	htmlFooter("Footer");
 
@@ -1057,12 +1057,12 @@ void NewCustomer(void)
 	if(uCustomer)
 	{
 		gcMessage="New Customer created OK";
-		mysqlISP2Log(uCustomer,"tClient","New");
+		unxsISPLog(uCustomer,"tClient","New");
 	}
 	else
 	{
 		gcMessage="New Customer NOT created";
-		mysqlISP2Log(uCustomer,"tClient","New Fail");
+		unxsISPLog(uCustomer,"tClient","New Fail");
 	}
 	uOwner=guOrg;
 	uCreatedBy=guLoginClient;
@@ -1129,12 +1129,12 @@ void ModCustomer(void)
 	if(mysql_affected_rows(&gMysql))
 	{
 		gcMessage="Customer modified OK";
-		mysqlISP2Log(uCustomer,"tClient","Mod");
+		unxsISPLog(uCustomer,"tClient","Mod");
 	}
 	else
 	{
 		gcMessage="Customer NOT modified";
-		mysqlISP2Log(uCustomer,"tClient","Mod Fail");
+		unxsISPLog(uCustomer,"tClient","Mod Fail");
 	}
 	uModBy=guLoginClient;
 	time(&uModDate);
@@ -1157,12 +1157,12 @@ void DelCustomer(void)
 	if(mysql_affected_rows(&gMysql))
 	{
 		gcMessage="Customer deleted OK";
-		mysqlISP2Log(uCustomer,"tClient","Del");
+		unxsISPLog(uCustomer,"tClient","Del");
 	}
 	else
 	{
 		gcMessage="Customer NOT deleted";
-		mysqlISP2Log(uCustomer,"tClient","Del Fail");
+		unxsISPLog(uCustomer,"tClient","Del Fail");
 	}
 	sprintf(gcQuery,"DELETE FROM tInstance WHERE uOwner='%u'",uCustomer);
 	mysql_query(&gMysql,gcQuery);

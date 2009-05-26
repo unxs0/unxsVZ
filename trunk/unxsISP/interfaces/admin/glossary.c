@@ -52,7 +52,7 @@ void GlossaryGetHook(entry gentries[],int x)
 
 void htmlGlossary(void)
 {
-	htmlHeader("mysqlISP2 System","Header");
+	htmlHeader("unxsISP System","Header");
 	htmlGlossaryPage("","Glossary.Body");
 	htmlFooter("Footer");
 
