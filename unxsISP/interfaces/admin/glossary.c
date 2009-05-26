@@ -1,12 +1,11 @@
 /*
 FILE 
 	glossary.c
-	$Id: glossary.c 74 2007-10-19 19:50:50Z Hugo $
+	$Id$
 AUTHOR
-	(C) 2006-2008 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	iDNS Admin (Owner) Interface
-	program file.
+	ispAdmin program file.
 */
 
 #include "interface.h"

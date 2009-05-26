@@ -1,9 +1,9 @@
 /*
 FILE 
 	customer.c
-	$Id: customer.c 295 2008-05-29 14:59:18Z Hugo $
+	$Id$
 AUTHOR
-	(C) 2006-2008 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
 	unxsISP Admin (Owner) Interface
 	program file.

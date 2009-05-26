@@ -1,10 +1,11 @@
 /* 
 FILE
 	styles.css
+	$Id$
 PURPOSE
-	Provide idnsAdmin/idnsOrg stylesheet 
+	Provide Unixservice interfaces stylesheet 
 AUTHOR
-	Hugo Urquiza for Unixservice. (C) 2006-2008.
+	Hugo Urquiza for Unixservice. (C) 2006-2009.
 */
 
 body { font-family:verdana, sans-serif; color:#565c5e; margin:0px 0px 0px 0px; background-color:#ffffff; }

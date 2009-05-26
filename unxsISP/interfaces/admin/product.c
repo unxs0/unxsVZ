@@ -1,9 +1,9 @@
 /*
 FILE 
 	product.c
-	$Id: product.c 226 2007-12-03 16:42:52Z Hugo $
+	$Id$
 AUTHOR
-	(C) 2007-2008 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2007-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
 	unxsISP Admin (Owner) Interface
 	program file.

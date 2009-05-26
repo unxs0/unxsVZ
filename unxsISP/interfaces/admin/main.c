@@ -1,11 +1,11 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 225 2007-12-03 16:32:37Z Hugo $
+	$Id$
 AUTHOR
-	(C) 2006-2008 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	unxsISP Organization (Company) Interface
+	ispAdmin main module.
 REQUIRES
 	OpenISP libtemplates.a and templates.h
 */
