@@ -1,9 +1,9 @@
 /*
 FILE 
 	instance.c
-	$Id: instance.c 252 2007-12-19 19:21:11Z Hugo $
+	$Id$
 AUTHOR
-	(C) 2006-2008 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
 	Provides the functions and UI for product instance management.
 */

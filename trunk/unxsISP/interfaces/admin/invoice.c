@@ -1,9 +1,9 @@
 /*
 FILE 
 	order.c
-	$Id: invoice.c 110 2007-10-26 20:34:46Z Hugo $
+	$Id$
 AUTHOR
-	(C) 2007-2008 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2007-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
 	ispAdmin  Interface
 	program file.

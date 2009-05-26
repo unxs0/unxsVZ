@@ -1,9 +1,9 @@
 #
 #FILE
 #	makefile
-#	$Id: makefile 209 2007-11-21 01:13:26Z Hugo $
+#	$Id$
 #AUTHOR
-#	(C) 2006-2008 Gary Wallis and Hugo Urquiza for Unixservice
+#	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 #PURPOSE
 #	General purpose RAD3 interface makefile
 #	Must customize CGINAME 
@@ -12,7 +12,7 @@
 CGINAME= ispAdmin.cgi
 
 CFLAGS= -DLinux -Wall
-LIBS= /usr/lib/mysql/libmysqlclient.a /usr/lib/openisp/libtemplate.a /usr/lib/openisp/libucidr.a -lz -lcrypt -lm -lssl
+LIBS= -L/usr/lib/mysql -lmysqlclient /usr/lib/openisp/libtemplate.a /usr/lib/openisp/libucidr.a -lz -lcrypt -lm -lssl
 
 interface.cgi: main.o customer.o glossary.o invoice.o product.o instance.o ../../cgi.o
 	cc main.o customer.o glossary.o invoice.o product.o instance.o ../../cgi.o -o interface.cgi $(LIBS)

@@ -1,9 +1,9 @@
 /*
 FILE
 	interface.h
-	$Id: interface.h 209 2007-11-21 01:13:26Z Hugo $
+	$Id$
 AUTHOR
-	(C) 2006-2008 Gary Wallis for Unixservice
+	(C) 2006-2009 Gary Wallis for Unixservice
 
 */
 
