@@ -1,7 +1,7 @@
-$/*
+/*
 FILE
 	tLog source code template
-	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
+	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009 
 	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
@@ -43,7 +43,6 @@ static char cServer[65]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -502,12 +501,8 @@ void NewtLog(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uLog FROM tLog\
-				WHERE uLog=%u"
-							,uLog);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
+	sprintf(gcQuery,"SELECT uLog FROM tLog WHERE uLog=%u",uLog);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
@@ -519,15 +514,13 @@ void NewtLog(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uLog=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tLog",uLog);
 	unxsRadacctLog(uLog,"tLog","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uLog);
-	tLog(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uLog);
+		tLog(gcQuery);
 	}
 
 }//NewtLog(unsigned uMode)
@@ -535,29 +528,18 @@ void NewtLog(unsigned uMode)
 
 void DeletetLog(void)
 {
-#ifdef ISM3FIELDS
-	sprintf(gcQuery,"DELETE FROM tLog WHERE uLog=%u AND ( uOwner=%u OR %u>9 )"
-					,uLog,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tLog WHERE uLog=%u"
-					,uLog);
-#endif
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
+	sprintf(gcQuery,"DELETE FROM tLog WHERE uLog=%u",uLog);
+	macro_mySQLQueryHTMLError;
 
 	//tLog("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsRadacctLog(uLog,"tLog","Del");
-#endif
 		tLog(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsRadacctLog(uLog,"tLog","DelError");
-#endif
 		tLog(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -566,51 +548,48 @@ void DeletetLog(void)
 
 void Insert_tLog(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tLog SET uLog=%u,cLabel='%s',uLogType=%u,cHash='%s',uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',uTablePK='%s',cTableName='%s',cMessage='%s',cServer='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uLog
-			,TextAreaSave(cLabel)
-			,uLogType
-			,TextAreaSave(cHash)
-			,uPermLevel
-			,uLoginClient
-			,TextAreaSave(cLogin)
-			,TextAreaSave(cHost)
-			,TextAreaSave(uTablePK)
-			,TextAreaSave(cTableName)
-			,TextAreaSave(cMessage)
-			,TextAreaSave(cServer)
-			,uOwner
-			,uCreatedBy
-			);
-
-	mysql_query(&gMysql,gcQuery);
+	sprintf(gcQuery,"INSERT INTO tLog SET uLog=%u,cLabel='%s',uLogType=%u,cHash='%s',uPermLevel=%u,"
+			"uLoginClient=%u,cLogin='%s',cHost='%s',uTablePK='%s',cTableName='%s',cMessage='%s',"
+			"cServer='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uLog
+				,TextAreaSave(cLabel)
+				,uLogType
+				,TextAreaSave(cHash)
+				,uPermLevel
+				,uLoginClient
+				,TextAreaSave(cLogin)
+				,TextAreaSave(cHost)
+				,TextAreaSave(uTablePK)
+				,TextAreaSave(cTableName)
+				,TextAreaSave(cMessage)
+				,TextAreaSave(cServer)
+				,uOwner
+				,uCreatedBy);
+	macro_mySQLQueryHTMLError;
 
 }//void Insert_tLog(void)
 
 
 void Update_tLog(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tLog SET uLog=%u,cLabel='%s',uLogType=%u,cHash='%s',uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',uTablePK='%s',cTableName='%s',cMessage='%s',cServer='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
-			uLog
-			,TextAreaSave(cLabel)
-			,uLogType
-			,TextAreaSave(cHash)
-			,uPermLevel
-			,uLoginClient
-			,TextAreaSave(cLogin)
-			,TextAreaSave(cHost)
-			,TextAreaSave(uTablePK)
-			,TextAreaSave(cTableName)
-			,TextAreaSave(cMessage)
-			,TextAreaSave(cServer)
-			,uModBy
-			,cRowid);
-
-	mysql_query(&gMysql,gcQuery);
+	sprintf(gcQuery,"UPDATE tLog SET uLog=%u,cLabel='%s',uLogType=%u,cHash='%s',uPermLevel=%u,"
+			"uLoginClient=%u,cLogin='%s',cHost='%s',uTablePK='%s',cTableName='%s',"
+			"cMessage='%s',cServer='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+				uLog
+				,TextAreaSave(cLabel)
+				,uLogType
+				,TextAreaSave(cHash)
+				,uPermLevel
+				,uLoginClient
+				,TextAreaSave(cLogin)
+				,TextAreaSave(cHost)
+				,TextAreaSave(uTablePK)
+				,TextAreaSave(cTableName)
+				,TextAreaSave(cMessage)
+				,TextAreaSave(cServer)
+				,uModBy
+				,cRowid);
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tLog(void)
 
@@ -620,21 +599,11 @@ void ModtLog(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
-	sprintf(gcQuery,"SELECT uLog,uModDate FROM tLog WHERE uLog=%u"
-						,uLog);
-#else
-	sprintf(gcQuery,"SELECT uLog FROM tLog\
-				WHERE uLog=%u"
-						,uLog);
-#endif
-
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
+	sprintf(gcQuery,"SELECT uLog,uModDate FROM tLog WHERE uLog=%u",uLog);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	//if(i<1) tLog("<blink>Record does not exist");
@@ -643,19 +612,15 @@ void ModtLog(void)
 	if(i>1) tLog(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tLog(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tLog(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tLog",uLog);
 	unxsRadacctLog(uLog,"tLog","Mod");
-#endif
 	tLog(gcQuery);
 
 }//ModtLog(void)
@@ -744,9 +709,7 @@ void tLogList(void)
 
 void CreatetLog(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tLog ( uTablePK VARCHAR(32) NOT NULL DEFAULT '', cHost VARCHAR(32) NOT NULL DEFAULT '', uLoginClient INT UNSIGNED NOT NULL DEFAULT 0, cLogin VARCHAR(32) NOT NULL DEFAULT '', uPermLevel INT UNSIGNED NOT NULL DEFAULT 0, cTableName VARCHAR(32) NOT NULL DEFAULT '', uLog INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(64) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cHash VARCHAR(32) NOT NULL DEFAULT '', uLogType INT UNSIGNED NOT NULL DEFAULT 0,index (uLogType), cMessage VARCHAR(255) NOT NULL DEFAULT '', cServer VARCHAR(64) NOT NULL DEFAULT '' )");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tLog ( uTablePK VARCHAR(32) NOT NULL DEFAULT '', cHost VARCHAR(32) NOT NULL DEFAULT '', uLoginClient INT UNSIGNED NOT NULL DEFAULT 0, cLogin VARCHAR(32) NOT NULL DEFAULT '', uPermLevel INT UNSIGNED NOT NULL DEFAULT 0, cTableName VARCHAR(32) NOT NULL DEFAULT '', uLog INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(64) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cHash VARCHAR(32) NOT NULL DEFAULT '', uLogType INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uLogType), cMessage VARCHAR(255) NOT NULL DEFAULT '', cServer VARCHAR(64) NOT NULL DEFAULT '' )");
+	macro_mySQLQueryHTMLError;
 }//CreatetLog()
 
