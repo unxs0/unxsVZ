@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: ttemplatesetfunc.h 1975 2008-10-09 14:00:41Z ggw $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2008 Gary Wallis and Hugo Urquiza.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
  
 */
 

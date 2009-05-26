@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: cgi.h,v 1.11 2003/03/05 18:09:17 ggw Exp $
+	$Id$
 LEGAL
 	Public Domain. See cgi.c file for more info
 */

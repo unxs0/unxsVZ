@@ -1,13 +1,13 @@
 /*
 FILE
-	$Id: tprofilefunc.h,v 1.6 2004/02/28 20:19:54 ggw-ssl2 Exp $
+	$Id$
 PURPOSE
 
 AUTHOR
 	Template code and mysqlRAD2/RAD3 software: (C) 2001-2009 Gary Wallis.
 
 LEGAL
-	File (C) 2001-2009 Gary Wallis
+	File (C) 2001-2009 Gary Wallis and Hugo Urquiza
 	LICENCE included in distribution
 	GPL License applies, see www.fsf.org for details
 */

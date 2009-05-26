@@ -1,11 +1,10 @@
 /*
 FILE
-	$Id: tprofilenamefunc.h,v 1.2 2002/05/27 16:07:04 ggw Exp $
+	$Id$
 PURPOSE
 
 AUTHOR
-	Template and mysqlRAD2/RAD3 software: (C) 2001-2009 Gary Wallis.
-	File (C) 2001-2009 Gary Wallis.
+	File (C) 2001-2009 Gary Wallis and Hugo Urquiza.
 
 	GPL License applies, see www.fsf.org for details.
 	LICENSE included in distribution.

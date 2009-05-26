@@ -1,11 +1,10 @@
 /*
 FILE
-	$Id: tnasgroupfunc.h,v 1.1 2002/05/23 15:56:53 ggw Exp $
-	(tAuthorize.cPasswd template set member)
+	$Id$
 PURPOSE
 
 AUTHOR
-	Template and mysqlRAD2 author: (c) 2001,2002 Gary Wallis.
+	Template and mysqlRAD2 author: (c) 2001-2009 Gary Wallis and Hugo Urquiza.
 	GPL License applies, see www.fsf.org for details
 
  
