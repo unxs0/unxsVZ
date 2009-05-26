@@ -1,8 +1,8 @@
 /*
 FILE
 	tJobStatus source code of unxsRadius.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tjobstatus.c 1291 2007-07-09 23:20:17Z Gary $
+	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tjobstatusfunc.h while 

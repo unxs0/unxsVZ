@@ -1,14 +1,13 @@
 /*
 FILE
-	$Id: tnasfunc.h,v 1.5 2004/03/11 03:10:43 ggw-ssl2 Exp $
-	(tAuthorize.cPasswd template set member)
+	$Id$
 PURPOSE
 	Provide web interface functionality as separate from schema as possible
 	for RADIUS NAS/RAS server info. Usually administrates multiple server raddb/client.conf files
 	or similar.
 
 AUTHOR/LEGAL
-	Template and mysqlRAD2 software: (C) 2001-2009 Gary Wallis.
+	Template and mysqlRAD2 software: (C) 2001-2009 Gary Wallis and Hugo Urquiza.
 	GPL License applies, see www.fsf.org for details
 	LICENSE included in distribution.
 

@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $
+	$Id$
 	radius.c part of the mysqlradius.cgi application
 PURPOSE
 	raddb/users and raddb/clients file generation
 LEGAL
-	(C) 2002, Gary Wallis. GPL License Applies.
+	(C) 2002-2009, Gary Wallis and Hugo Urquiza. GPL License Applies.
 TODO
 	mysqlISP interface jobqueue
 NOTES
@@ -184,7 +184,7 @@ printf("CreateClientConf(%u,%u)\n",uHtml,uServer);
 
         res=mysql_store_result(&gMysql);
 
-	fprintf(fp,"#naslist unxsRadius.$Id: radius.c,v 2.0 2008/02/87 03:10:43 hdu $\n");
+	fprintf(fp,"#naslist unxsRadius.$Id$\n");
 	fprintf(fp,"#uServer:%u\n",uServer);
 
         while((field=mysql_fetch_row(res)))
@@ -547,7 +547,7 @@ int MakeClientsFile(unsigned uHtml, unsigned uServer)
 
         res=mysql_store_result(&gMysql);
 
-	fprintf(fp,"#clients unxsRadius.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $\n");
+	fprintf(fp,"#clients unxsRadius.$Id$\n");
 	fprintf(fp,"#uServer:%u\n",uServer);
 
         while((field=mysql_fetch_row(res)))
@@ -610,7 +610,7 @@ int MakeNASListFile(unsigned uHtml, unsigned uServer)
 
         res=mysql_store_result(&gMysql);
 
-	fprintf(fp,"#naslist unxsRadius.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $\n");
+	fprintf(fp,"#naslist unxsRadius.$Id$\n");
 	fprintf(fp,"#uServer:%u\n",uServer);
 
         while((field=mysql_fetch_row(res)))
@@ -672,7 +672,7 @@ int MakeNASPasswdFile(unsigned uHtml, unsigned uServer)
 
         res=mysql_store_result(&gMysql);
 
-	fprintf(fp,"#naspasswd unxsRadius.$Id: radius.c,v 1.39 2004/03/11 03:10:43 ggw-ssl2 Exp $\n");
+	fprintf(fp,"#naspasswd unxsRadius.$Id$\n");
 	fprintf(fp,"#uServer:%u\n",uServer);
 
         while((field=mysql_fetch_row(res)))

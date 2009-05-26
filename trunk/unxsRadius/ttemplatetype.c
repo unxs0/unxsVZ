@@ -1,8 +1,8 @@
 /*
 FILE
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2009
+	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	GPL LICENSE included with ditribution.
-	$Id: ttemplatetype.c 2485 2009-02-20 17:05:18Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in ttemplatetypefunc.h while 

@@ -1,13 +1,11 @@
 /*
 FILE
-        $Id: local.h,v 1.11 2004/08/03 15:13:39 ggw Exp $
+        $Id$
 PURPOSE
         Localization constants
 LEGAL
-        Copyright 2002-2009 Gary Wallis for Unixservice
+        Copyright 2002-2009 Gary Wallis and Hugo Urquiza for Unixservice
 */
-//#define DBIP0 "10.10.10.100"
-//#define DBIP1 "10.10.10.101"
 //These two lines next should be in the public distro:
 #define DBIP0 NULL
 #define DBIP1 NULL

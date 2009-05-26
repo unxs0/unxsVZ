@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: mainfunc.h,v 1.29 2004/08/03 15:13:39 ggw Exp $
+	$Id$
 	(sslauthlogin template set member)
 PURPOSE
 
 AUTHOR
-	(Template and mysqlRAD2 author: (c) 2001,2002 Gary Wallis.)
+	(Template and mysqlRAD2 author: (C) 2002-2009 Gary Wallis and Hugo Urquiza.)
  
 */
 

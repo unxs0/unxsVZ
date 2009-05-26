@@ -1,7 +1,7 @@
 #
 #FILE
-#
-# (C) 2001-2009 Gary Wallis for Unixservice, LLC.
+#	$Id$
+# (C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 #
 # Notes:
 #	Must use gmake (usually same as make in linux)

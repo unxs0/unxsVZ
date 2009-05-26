@@ -2,7 +2,7 @@
 FILE
 	tTemplate source code of unxsRadius.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: ttemplate.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in ttemplatefunc.h while 
