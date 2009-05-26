@@ -1,7 +1,7 @@
 #
-# $Id: makefile.template 693 2006-07-27 22:58:07Z ggw $
+# $Id$
 #
-# (C) 2001-2004 Gary Wallis.
+# (C) 2001-2009 Gary Wallis and Hugo Urquiza.
 #
 # Notes:
 #	Must use gmake (usually same as make in linux)
