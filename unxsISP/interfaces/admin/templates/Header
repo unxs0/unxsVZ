@@ -3,7 +3,7 @@
 <head>
 <title>{{cTitle}}</title>
 
-<link rel="stylesheet" type="text/css" href=/styles.css />
-<script language="JavaScript" src="/popups.js"></script>
+<link rel="stylesheet" type="text/css" href=/css/styles.css />
+<script language="JavaScript" src="/css/popups.js"></script>
 
 </head>

@@ -35,6 +35,7 @@ cp data/*.txt /usr/local/share/unxsISP/data
 %doc INSTALL LICENSE
 /var/www/unxs/cgi-bin/unxsISP.cgi
 /var/www/unxs/cgi-bin/ispAdmin.cgi
+/usr/local/share/unxsISP/
 
 %changelog
 * Tue May 26 2009 - Hugo Urquiza <support2@unixservice.com>
