@@ -1,11 +1,10 @@
 /*
 FILE
-	$Id: tism5func.h,v 1.2 2004/09/15 23:52:55 ggw Exp $
-	(tAuthorize.cPasswd template set member)
+	$Id$
 PURPOSE
 
 AUTHOR
-	Ism5 and mysqlRAD2 author: (c) 2001,2002 Gary Wallis.
+	Ism5 and mysqlRAD2 author: (C) 2001-2009 Gary Wallis and Hugo Urquiza.
 	GPL License applies, see www.fsf.org for details
 
  

@@ -1,7 +1,7 @@
 #
-# $Id: makefile.template 693 2006-07-27 22:58:07Z ggw $
+# $Id$
 #
-# (C) 2001-2004 Gary Wallis.
+# (C) 2001-2009 Gary Wallis and Hugo Urquiza.
 #
 # Notes:
 #	Must use gmake (usually same as make in linux)
@@ -33,13 +33,7 @@ RELEASE= 0.1
 #CFLAGS= -DLinux -DFreeBSD -Wall 
 #FreeBSD=1
 
-ifdef FreeBSD
-	LIBS= /usr/local/lib/mysql/libmysqlclient.a -lz -lm /usr/lib/libcrypt.a /usr/lib/openisp/libtemplate.a 
-else
-	LIBS= /usr/lib/mysql/libmysqlclient.a /usr/lib/openisp/libtemplate.a -lz -lcrypt -lm -lssl
-endif
-
-
+LIBS= -L/usr/lib/mysql -lmysqlclient /usr/lib/openisp/libtemplate.a -lz -lcrypt -lm -lssl
 
 all: unxsISP.cgi
 

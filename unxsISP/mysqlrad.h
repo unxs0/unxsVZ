@@ -1,8 +1,8 @@
 /*
 FILE
-	$Id: mysqlrad.h.template 1269 2007-07-02 21:51:06Z Gary $
+	$Id$
 AUTHOR
-	(C) 2001-2008 Gary Wallis and Hugo Urquiza. 
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza. 
 */
 
 #include <stdio.h>

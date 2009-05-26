@@ -1,11 +1,10 @@
 /*
 FILE
-	$Id: tinvoiceitemsfunc.h,v 1.9 2004/05/25 15:46:44 ggw Exp $
-	(tAuthorize.cPasswd template set member)
+	$Id$
 PURPOSE
 
 AUTHOR
-	Template and mysqlRAD2 author: (c) 2001,2002 Gary Wallis.
+	Template and mysqlRAD2 author: (C) 2001-2009 Gary Wallis and Hugo Urquiza.
 	GPL License applies, see www.fsf.org for details
 
  

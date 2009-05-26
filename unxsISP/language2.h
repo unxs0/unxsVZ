@@ -1,4 +1,4 @@
-// $Id: language.h,v 1.37 2004/09/15 03:07:57 ggw Exp $
+// $Id$
 // English: USA
 // Navigation bar buttons and results
 

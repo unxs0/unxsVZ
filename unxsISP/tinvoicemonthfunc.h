@@ -1,12 +1,12 @@
 /*
 FILE
-	$Id: tinvoicemonthfunc.h,v 1.5 2004/07/03 14:56:35 ggw Exp $
+	$Id$
 PURPOSE
 
 	Archive RO myISAM tables and be able to use them at will.
 
 AUTHOR
-	(C) 2001-2004 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file included.
 
