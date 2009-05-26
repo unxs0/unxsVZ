@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: tinstancefunc.h,v 1.63 2004/09/18 15:05:36 ggw Exp $
+	$Id$
 PURPOSE
 	tinstance.c non-schema dependent application file
 
 AUTHOR
-	(C) 2001-2004 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
 	GPL License applies, see www.fsf.org for details
 	See LICENSE included
 

@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: mainfunc.h,v 1.64 2004/09/15 03:12:06 ggw Exp $
+	$Id$
 PURPOSE
 	Command line interface, and main page.
 
 AUTHOR
-	(C) 2001-2004 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza
 	GPL License applies. Included in this distribution in file LICENSE.
 NOTES
 	Cleaned out customer specific import gcFunctions in CVS if needed later.
@@ -16,9 +16,6 @@ NOTES
 
 #include "local.h"
 #include "mysqlisp.h"
-/*#include <uradius.h> //Our uRadiusLib
-#include <openisp/servermonitor.h> //our generic server monitoring lib
-*/
 
 #define macro_mySQLQueryErrorText	mysql_query(&gMysql,gcQuery);\
 					if(mysql_errno(&gMysql))\

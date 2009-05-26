@@ -1,12 +1,12 @@
 /*
 FILE
-	$Id: tclientfunc.h 2086 2008-10-23 19:21:51Z Gary $
+	$Id$
 PURPOSE
 	Non-schema dependent tclient.c expansion.
 AUTHOR
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
 */
 
 #define BO_CUSTOMER	"Back-Office Customer"

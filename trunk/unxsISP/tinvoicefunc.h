@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tinvoicefunc.h,v 1.75 2004/07/29 15:40:13 ggw Exp $
+	$Id$
 PURPOSE
 	Table where invoices with different statuses are kept usually
 	closed invoices will be extracted along with their tInvoiceItems
@@ -9,7 +9,7 @@ PURPOSE
 	the hidden tInvoiceItemsMonth parallel table.
 
 AUTHOR
-	(C) 2001-2004 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
 	GPL License applies, see www.fsf.org for details
 	License included see LICENSE file.
 

@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tconfigfunc.h,v 1.12 2004/06/10 00:44:59 ggw Exp $
+	$Id$
 PURPOSE
 	tConfig table left panel web gui extensions to tconfig.c
 
@@ -8,7 +8,7 @@ AUTHOR
 	Template and mysqlRAD2 author: (c) 2001,2002 Gary Wallis.
 	GPL License applies, see www.fsf.org for details
 	See included LICENSE
-	(C) 2001-2004 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
 
  
 */

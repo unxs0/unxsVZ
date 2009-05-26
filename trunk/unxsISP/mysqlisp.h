@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: mysqlisp.h,v 1.14 2004/07/29 17:44:53 ggw Exp $
+	$Id$
 PURPOSE
 	Shared constants, data and prototypes.
 

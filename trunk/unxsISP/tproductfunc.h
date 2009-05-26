@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tproductfunc.h,v 1.29 2004/06/12 16:26:14 ggw Exp $
+	$Id$
 PURPOSE
 	tproduct.c expansion non-schema dependent file.
 	For application gcFunctionality regarding unxsISP products and related
@@ -8,7 +8,7 @@ PURPOSE
 
 AUTHOR
 	GPL License applies, see www.fsf.org for details
-	(C) 2001-2004, Gary Wallis
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
 	See LICENSE file in this distribution.
 
  
