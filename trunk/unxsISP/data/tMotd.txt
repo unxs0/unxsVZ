@@ -1,1 +1,1 @@
-1	Hi mysqlISP2 user!	1	1	1235827200	0	0
+1	Hi unxsISP user!	1	1	1235827200	0	0

@@ -1,0 +1,386 @@
+1	Customer Tab Details	11	1	1191006888	1	1192818533	ISP customers are managed here. At the bottom of this screen a table that has\
+the current loaded customer's products will appear. By clicking on the product\
+name below you will access another screen that will allow you to modify the\
+product parameters. To search for a customer, enter part of her last name in the\
+above 'Search Customers' box and press <Enter> or the [>] button. The search\
+results will be displayed in this panel. By clicking one item of the search\
+results list you will load the selected customer. Search is case insensitive,\
+you can use % and _ SQL LIKE matching chars. (E.g.: 'd%ar')
+2	Product Name	11	1	1191529986	1	1191530080	The product name identifies a product uniquely in the system. You will use this\
+product name later in the 'Add Product Wizard' at the Customers tab.<br>\
+<br>\
+This is a required value. E.g.: 'Website and email'\
+
+3	Product Tab Details	11	1	1191530044	1	1192821867	At this page you are able to create modify and delete products. Product services\
+are displayed at the bottom of this page in the 'Product Services' table. A\
+product can have an unlimited number of services associated with it. Add\
+services using the 'Add Service to Product' tool above and remove them by\
+clicking in the 'Remove' link at this page bottom table. Please note that you\
+won't be able to modify or delete products that are currently in use by one or\
+more clients. To search for a product enter part of its name at the 'Search\
+Products' input above and press <Enter> or the [>] button. The search results\
+will be displayed at this panel in the 'Search Results' section. The search is\
+case insensitive and you can use % and _ SQL LIKE matching chars. (E.g. 'Website%')>
+4	Period	11	1	1191530378	1	1191530408	The product billing period is the period in which the product will billed to the\
+customer, which means an invoice will be generated and sent to her email\
+address.<br>\
+<br>\
+You can configure the billing periods you want to add using the unxsISP\
+backend <a href=/unxsISP.cgi?gcFunction=tPeriod target=_blank>here</a> and\
+those values will be available for select at the 'Period' dropdown.<br>\
+<br>\
+This is a required value. E.g.: 'Monthly'.\
+
+5	Price	11	1	1191530528	0	0	The product price is what will be billed to the customer recurrently based on\
+the period selection<br>\
+<br>\
+This is a required value. E.g.: '15.75'.\
+
+6	Cost	11	1	1191530584	1	1191530595	The product deployment cost is the money amount that the product costs to be\
+deployed for a customer.<br>\
+<br>\
+This is an optional value. E.g.: '5.30'.\
+
+7	Setup Fee	11	1	1191530650	0	0	The product setup fee is the money of amount that will be charged to the\
+customer only one time for product deployment.<br>\
+<br>\
+This is an optional value. E.g.: '10.25'.\
+
+8	Release Fee	11	1	1191530820	0	0	Once a product deployment is put on hold, this value indicates the money amount\
+that will be charged to the customer for releasing the hold.<br>\
+<br>\
+This is an optional value. E.g.: '10.25'.\
+
+9	Additional Info	11	1	1191531216	0	0	write me
+43	Address 2	11	1	1188952551	1	1189018102	This is an optional field to enter extra address information. \
+<br>\
+E.g.: 'Suite\
+ #35'\
+
+44	Phone	11	1	1188952591	1	1189018854	This is an optional field to enter a valid phone number.\
+<br>\
+E.g: (555) 555-5555.\
+\
+n
+45	State	11	1	1188952645	1	1189002447	At this field you select the state from a drop-down.\
+<br>\
+E.g.: 'California'\
+\
+\
+
+46	City	11	1	1188952769	21	1237785196	At this field you enter the city name.<br>\
+<br>\
+E.g.: 'Hermosa Beach'\
+<br>\
+This field is required.
+47	Zip Code	11	1	1188952797	21	1237785247	At this field you enter the zip code.<br>\
+<br>\
+E.g. '55416' or '33701-4313'.<br>\
+<br>\
+The first example corresponds to a standard ZIP code, meanwhile the second\
+example corresponds to a ZIP +4 code which allow a piece of mail to be direc\
+ted\
+to a more precise location than by the ZIP code alone.\
+<br>\
+This field is required.\
+\
+\
+
+50	Company Name	11	1	1192658539	21	1237784980	The name of the company the customer belong to.<br>\
+E.g.: 'Acme Widgets'\
+<br>\
+This field is required.
+51	Company Registration	11	1	1192658573	0	0	
+49	Fax	11	1	1188952926	1	1189018812	This is an optional field to enter a valid fax number.\
+<br>\
+E.g: (555) 555-5555.
+52	VAT Number	11	1	1192658833	0	0	The VAT registration number of the customer company<br>\
+E.g.:' \	GB 123456789'\
+
+53	First Name	11	1	1192658893	21	1237784956	The first name of the customer.<br>\
+E.g.: 'John'\
+<br>\
+This field is required.
+54	Last Name	11	1	1192658958	21	1237785006	The last name of the customer.<br>\
+E.g.: 'Doe'\
+<br>\
+This field is required.
+57	Email Address	11	1	1192659247	21	1237785295	The customer email address.<br>\
+E.g.: 'johndoe@isp.net'\
+<br>\
+This field is required.
+56	ID Number	11	1	1192659088	0	0	The customer ID number.<br>\
+\
+
+58	Address 1	11	1	1192659438	0	0	The customer street address.<br>\
+E.g.: 'Main Street 657'\
+
+59	Country	11	1	1192660252	21	1237785268	At this field you enter the country name of the customer.<br>\
+<br>\
+E.g. 'U.S.'\
+<br>\
+This field is required.\
+\
+
+60	Payment Method	11	1	1192660439	0	0	At this field you select the payment method the customer will use.<br>\
+<br>\
+E.g. 'Credit Card'\
+\
+\
+
+61	Card Type	11	1	1192660536	0	0	At this field you select the payment customer credit card type.<br>\
+<br>\
+E.g. 'Visa'\
+\
+\
+
+62	Card Number	11	1	1192660936	0	0	At this field you enter the customer credit card number. The number of digits of\
+the credit card number will vary based on the selected credit card type.\
+<br>\
+American Express: 15 digits. E.g.: '341111111111111'<br>\
+Visa: 13 o4 16 digits. E.g.: '4111111111111111'<br>\
+MasterCard: 16 digits. E.g.: '5431111111111111'<br>\
+Discover: 16 digits. E.g.:  '6011601160116611'<br>\
+\
+\
+\
+
+63	Expiration Month	11	1	1192661051	0	0	At this field you select the credit card expiration month.<br>\
+E.g.: 'March'\
+\
+
+64	Expiration Year	11	1	1192661095	0	0	At this field you select the credit card expiration year.<br>\
+E.g.: '2009'\
+\
+
+65	Card Name	11	1	1192661209	0	0	At this field you enter the credit card name.<br>\
+E.g.: 'Charles Doe'\
+\
+
+66	ACH Debits	11	1	1192661342	0	0	At this field you enter the customer 'Routing Transit Number' (RTN).<br>\
+\
+\
+
+67	Ship Name	11	1	1192661461	0	0	The name of the person that will receive the deployed products, if they are\
+deliverable. (I.e. modems, etc)<br>\
+E.g.:'Jane Doe'\
+\
+\
+\
+
+68	Ship Address 1	11	1	1192661525	0	0	The shipping street address.<br>\
+E.g.: 'Main Street 546'\
+\
+\
+\
+
+69	Ship Address 2	11	1	1192661602	0	0	Shipping street address additional information.<br>\
+E.g.: 'Suite #86'\
+\
+\
+\
+
+70	Ship City	11	1	1192661664	0	0	The shipping city name.<br>\
+E.g.: 'Hermosa Beach'\
+\
+\
+\
+
+71	Ship State	11	1	1192661744	0	0	The shipping state name.<br>\
+E.g.: 'California'\
+\
+\
+\
+\
+
+72	Ship Zip Code	11	1	1192661829	0	0	At this field you enter the shipping zip code.<br>\
+<br>\
+E.g. '55416' or '33701-4313'.<br>\
+<\
+br>\
+The first example corresponds to a standard ZIP code, meanwhile the second\
+example corresponds to a ZIP +4 code which allow a piece of mail to be direc\
+ted\
+to a more precise location than by the ZIP code alone.\
+\
+\
+\
+\
+
+73	Telephone	11	1	1192662077	21	1237785056	At this field you enter your valid phone number.\
+<br>\
+E.g: (555) 555-5555.\
+<br>\
+This field is required.\
+\
+\
+
+74	Fax	11	1	1192662130	0	0	This is an optional field to enter a valid fax number.\
+<br>\
+E.g: (555) 555-5555.
+75	Mobile	11	1	1192662206	0	0	This is an optional field to enter a valid mobile phone number.\
+<br>\
+E.g: (555) 555-5555.
+76	Bank Name	11	1	1192662993	0	0	The name of the bank where the customer has her account
+77	Bank Name	11	1	1192663087	0	0	The name of the bank where the customer has her account.<br>\
+E.g.: 'Bank of America'\
+
+78	Branch Name	11	1	1192663823	0	0	The name of the bank branch name where the customer has her account.<br>\
+E.g.: 'BofA Los Angeles'\
+
+79	Branch Code	11	1	1192664130	0	0	The branch code of the bank branch name where the customer has her account.<br>\
+\
+
+80	Account Holder	11	1	1192664312	0	0	The name of the account holder.<br>\
+E.g.: 'Jane Doe'\
+\
+\
+
+81	Account Number	11	1	1192665377	0	0	The name of the account holder.<br>\
+E.g.: 'Jane Doe'\
+\
+\
+
+82	Account Type	11	1	1192665852	0	0	At this field you select the bank account type.<br>\
+E.g.: 'Current'\
+\
+\
+
+83	Password	11	1	1192666618	0	0	At this field you enter a password that will be used for the customer for\
+accessing the interfaces.<br>\
+E.g.: 'wsxedc'\
+\
+\
+
+84	Status Indicators	11	1	1192816886	1	1192816960	This dashboard section displays the various status indicators of the services\
+at your ISP.\
+<br>\
+A red box next to the service name indicates that the service is either down or\
+not responding quickly. These service timeouts vary according to the service.<br>\
+A green box next to the service name indicates that the service is up and running.
+85	General Usage (Last 20	11	1	1192817580	0	0	This dashboard section displays the last twenty New, Modify and Delete\
+statistics for the backend and the different unxsISP interfaces.<br>\
+The first column displays the date of the operation, the second the operation\
+and the MySQL table, the third the user that made the operation and lastly the\
+IP address from she was connected.\
+
+86	Login Activity (Last 20)	11	1	1192817759	0	0	This dashboard section displays the last twenty logins and logouts \
+statistics for the backend and the different unxsISP interfaces.<br>\
+The first column displays the login or logout date, the second shows if it was a\
+login or a logout and the user name, the third the FQDN or IP address of the\
+host at which the user accessed and lastly,  the IP address from she was connected.\
+\
+
+87	Pending Jobs (Last 20)	11	1	1192818027	0	0	This dashboard section displays the last twenty pending jobs in the unxsISP\
+job queue.<br>\
+If you see many jobs here it may indicate a problem in your system.<br>\
+The first column displays the job date, the second the job name (E.g.:\
+'unxsRadius.Unlim.Mod'), the third the customer name, and the last the name of\
+the server that must run the job.\
+\
+
+88	System Messages (Last 20)	11	1	1192818325	0	0	This dashboard section displays the last twenty pending system messages\
+submitted by the unxsISP backend or its interfaces.<br>\
+The first column displays the message date, the second the message text, and the\
+last column the FQDN or IP address of the host running the interface or backend.\
+\
+
+89	Invoice Tab Details	11	1	1192818621	0	0	At this page you are able to review and update the status of the invoices\
+generated by the unxsISP backend. Everyday the backend generates the invoices\
+for the customers. Once reviewed here the invoices can be sent by email using\
+the [Email Invoice] button. Also you can change the invoice status by selecting\
+it from the dropdown below and pressing the [Update Invoice Status] button. To\
+search for invoices enter either the invoice number, the client number, the\
+client and invoice number (E.g.: 321-123) or the client last name in the 'Search\
+Invoices' input above and then press <Enter> or the [>] button. When searching\
+using client last name, search is case insensitive and you can use % and _ SQL\
+LIKE matching chars. (E.g.: '%th'.)
+90	Product Instance Tab Details	11	1	1192819893	0	0	This page provides the ability to modify the editable parameters of a customer\
+product instance.\
+An instance of a product is a product that has been deployed for a customer.\
+Each product is made of an unlimited amount of services which at the same time\
+have n parameters. Those parameters are viewable or editable at this page based\
+on the parameter configuration.
+91	Radius Login	11	1	1192820600	0	0	At this field you enter the radius account login user for the customer.<br>\
+E.g. 'johnadsl'\
+
+92	Radius Password	11	1	1192821375	0	0	At this field you enter the radius account password. Please note that after you\
+modify (in the product instance page) or go to the next step (in the product\
+deployment wizard) this field will be encrypted using MD5.<br>\
+E.g.:'wsxedc'\
+
+93	Radius Profile	11	1	1192821623	1	1192821798	At this field you select the radius profile that will be used for the radius\
+account. The radius profile determines the radius service parameters for the\
+user, such as connection days, etc.<br>\
+E.g.:'Weekend Warrior'\
+
+94	Add Service to Product	11	1	1192822011	0	0	With this tool you add services to a product. Select the service from the\
+dropdown and press the [Add Service] button. Please note that you won't be able\
+to add services to a product that was already deployed for a customer. To remove\
+the service for the product, just use the 'Remove' link in the 'Product\
+Services' table.\
+
+95	Product Available	11	1	1192822345	0	0	This yes/no field indicates if the product is available for deploying it to a\
+customer.\
+
+101	Team Status	11	21	1237784025	0	0	Here you select the function that's assigned to you in your team. Available\
+options are:<br>\
+<br>\
+1. Team Captain.<br>\
+2. Event Management.<br>\
+3. Staff<br>\
+4. Media<br>\
+
+111	MAC	11	21	1237784363	21	1237784708	In computer networking, a Media Access Control address (MAC address), Ethernet\
+Hardware Address (EHA), hardware address, adapter address or physical address is\
+a quasi-unique identifier assigned to most network adapters or network interface\
+cards (NICs) by the manufacturer for identification. If assigned by the\
+manufacturer, a MAC address usually encodes the manufacturer's registered\
+identification number.\
+<br>\
+This identification will be used to control your access to the Access Point in\
+order to provide you with the internet services.<br>\
+<br>\
+<b>How to obtain your MAC address?</b><br>\
+<br>\
+<b>Windows Users:</b><br>\
+Open the Start Menu, go to the Run command and execute: cmd.exe. A black window\
+(Resembling an old DOS command line will appear, there run the ipconfig command.\
+You'll see the MAC address below to the network card description, as you can see\
+here:<br>\
+<br>\
+<img src=http://upload.wikimedia.org/wikipedia/en/6/6c/Ipconfig_win_xp.png><br>\
+<br>\
+<b>Linux Users:</b><br>\
+Just open a terminal (xterm) and run the following command:<br>\
+<br>\
+<pre\
+# ifconfig | grep HWaddr\
+eth0      Link encap:Ethernet  HWaddr 00:1B:21:15:99:E4\
+</pre>\
+You'll see the MAC address of all your network interfaces, please choose the one\
+which corresponds to your wireless NIC.<br>\
+<br>\
+<b>Macintosh Users:</b><br>\
+Open 'System Preferences' (usually found in the Dock) and select Network.  Pick\
+a location and specify the interface whose MAC address is desired in the Show:\
+drop down list.  For 'Built-in Ethernet', select the Ethernet tab.  Read the MAC\
+address labeled 'Ethernet ID:'.<br>\
+<br>\
+<img src=http://www-dcn.fnal.gov/DCG-Docs/mac/MAC_OS_X_01.jpg><br>\
+<br>\
+
+121	VPN Required	11	21	1237784757	0	0	Here you select if you need VPN access or not. Riedel's VPN provides...[Edit me]\
+\
+
+131	Hostname	11	21	1237784899	0	0	A hostname (occasionally also, a sitename) is the unique name by which a\
+network-attached device (which could consist of a computer, file server, network\
+storage device, fax machine, copier, cable modem, etc.) is known on a network.\
+The hostname is used to identify a particular host in various forms of\
+electronic communication such as the World Wide Web, e-mail or Usenet.\
+At this field you indicate your computer hostname.\
+
+141	Street Address	11	21	1237785136	0	0	The customer street address.<br>\
+E.g.: 'Main Street 657'\
+<br>\
+This field is required.
