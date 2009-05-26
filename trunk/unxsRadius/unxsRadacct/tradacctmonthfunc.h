@@ -1,11 +1,10 @@
 /*
 FILE
-	$Id: tradacctmonthfunc.h,v 1.9 2004/03/09 13:51:04 ggw-private Exp $
-	(tAuthorize.cPasswd template set member)
+	$Id$
 PURPOSE
 
 AUTHOR
-	Template and mysqlRAD2 author: (c) 2001,2002 Gary Wallis.
+	Template and mysqlRAD2 author: (C) 2001-2009 Gary Wallis and Hugo Urquiza.
 	GPL License applies, see www.fsf.org for details
 
  

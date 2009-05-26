@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id: main.c.template 1588 2007-10-12 15:23:47Z hus $
+	$Id$
 	mysqlRAD2.cgi created application file for unxsRadacct.cgi
 	(tAuthorize.cPasswd template set)
 	mysqlRAD2 to mysqlRAD3 transition template
@@ -11,7 +11,7 @@ PURPOSE
 	you mess with them in non standard ways...lol.
 	
 LEGAL
-	(C) Gary Wallis 2001-2007. All Rights Reserved.
+	(C) Gary Wallis and Hugo Urquiza 2001-2009. All Rights Reserved.
 	LICENSE file should be included in distribution.
 OTHER
 	Only Linux supported by openisp.net. 
@@ -65,7 +65,7 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id: main.c.template 1588 2007-10-12 15:23:47Z hus $";
+char *gcBuildInfo="$Id$";
 char *gcRADStatus="Forked";
 
 //Local
