@@ -1,8 +1,8 @@
 /*
 FILE
 	tClientConfig source code of unxsISP.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
+	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tclientconfigfunc.h while 

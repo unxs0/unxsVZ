@@ -1,8 +1,8 @@
 /*
 FILE
 	tLogType source code of unxsISP.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tlogtype.c 1335 2007-07-23 23:15:44Z Gary $
+	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tlogtypefunc.h while 

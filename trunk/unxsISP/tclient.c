@@ -4,6 +4,8 @@ FILE
 	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
+AUTHOR
+	(C) Gary Wallis and Hugo Urquiza 2001-2009
 */
 
 
