@@ -1,8 +1,8 @@
 /*
 FILE
 	tAuthorize source code of unxsISP.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tauthorize.c 2086 2008-10-23 19:21:51Z Gary $
+	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tauthorizefunc.h while 

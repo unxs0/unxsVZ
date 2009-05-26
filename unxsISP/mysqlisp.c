@@ -1,11 +1,11 @@
 /*
 FILE
 	mysqlisp.c
-	$Id: mysqlisp.c,v 1.15 2004/07/29 17:44:53 ggw Exp $
+	$Id$
 PURPOSE
 	Jobqueue and other special gcCommand line processing.
 LEGAL
-	(C) 2004, Gary Wallis. GPL License Applies.
+	(C) 2004-2009 Gary Wallis and Hugo Urquiza. GPL License Applies.
 WORK IN PROGRESS
 	Using print invoice gcFunction to develop basic templates and procedures.
 	Then once that is working ok. Will do the mail invoice gcFunction.
