@@ -86,12 +86,12 @@ void InvoiceCommands(pentry entries[], int x)
 				htmlPlainTextError(mysql_error(&gMysql));
 			if(mysql_affected_rows(&gMysql))
 			{
-				mysqlISP2Log(uInvoice,"tInvoice","Mod");
+				unxsISPLog(uInvoice,"tInvoice","Mod");
 				gcMessage="Invoice status updated.";
 			}
 			else
 			{
-				mysqlISP2Log(uInvoice,"tInvoice","Mod Error");
+				unxsISPLog(uInvoice,"tInvoice","Mod Error");
 				gcMessage="<blink>Invoice status not updated. Contact support.</blink>";
 			}
 		}
@@ -110,12 +110,12 @@ void InvoiceCommands(pentry entries[], int x)
 				htmlPlainTextError(mysql_error(&gMysql));
 			if(mysql_affected_rows(&gMysql))
 			{
-				mysqlISP2Log(uInvoice,"tInvoice","Mod");
+				unxsISPLog(uInvoice,"tInvoice","Mod");
 				gcMessage="Invoice voided.";
 			}
 			else
 			{
-				mysqlISP2Log(uInvoice,"tInvoice","Mod Error");
+				unxsISPLog(uInvoice,"tInvoice","Mod Error");
 				gcMessage="<blink>Invoice status not updated. Contact support.</blink>";
 			}
 			ReStockItems(uInvoice);
@@ -129,7 +129,7 @@ void InvoiceCommands(pentry entries[], int x)
 
 void htmlInvoice(void)
 {
-	htmlHeader("mysqlISP2 Admin","Header");
+	htmlHeader("unxsISP Admin","Header");
 	htmlInvoicePage("","Invoice.Body");
 	htmlFooter("Footer");
 

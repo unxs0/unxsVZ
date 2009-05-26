@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2007-2008 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	mysqlISP2 Admin (Owner) Interface
+	unxsISP Admin (Owner) Interface
 	program file.
 */
 
@@ -320,7 +320,7 @@ void ProductCommands(pentry entries[], int x)
 				if(uServiceGlue)
 				{
 					gcMessage="Service added to product OK";
-					mysqlISP2Log(uServiceGlue,"tServiceGlue","New");
+					unxsISPLog(uServiceGlue,"tServiceGlue","New");
 				}
 				else
 					gcMessage="Could not add service";
@@ -349,7 +349,7 @@ void htmlProduct(void)
 			fclose(fp);
 		}
 	}
-	htmlHeader("mysqlISP2 Admin Interface","Header");
+	htmlHeader("unxsISP Admin Interface","Header");
 	htmlProductPage("","Product.Body");
 	htmlFooter("Footer");
 
@@ -568,12 +568,12 @@ void NewProduct(void)
 	if(uProduct)
 	{
 		gcMessage="Product created OK";
-		mysqlISP2Log(uProduct,"tProduct","New");
+		unxsISPLog(uProduct,"tProduct","New");
 	}
 	else
 	{
 		gcMessage="Product NOT created";
-		mysqlISP2Log(uProduct,"tProduct","New Fail");
+		unxsISPLog(uProduct,"tProduct","New Fail");
 	}
 	gcMessage=gcQuery;
 	time(&uCreatedDate);
@@ -605,12 +605,12 @@ void ModProduct(void)
 	if(mysql_affected_rows(&gMysql))
 	{
 		gcMessage="Product modified OK";
-		mysqlISP2Log(uProduct,"tProduct","Mod");
+		unxsISPLog(uProduct,"tProduct","Mod");
 	}
 	else
 	{
 		gcMessage="Product NOT modified";
-		mysqlISP2Log(uProduct,"tProduct","Mod Fail");
+		unxsISPLog(uProduct,"tProduct","Mod Fail");
 	}
 	time(&uModDate);
 	uModBy=guLoginClient;
@@ -629,12 +629,12 @@ void DelProduct(void)
 	if(mysql_affected_rows(&gMysql))
 	{
 		gcMessage="Product deleted OK";
-		mysqlISP2Log(uProduct,"tProduct","Del");
+		unxsISPLog(uProduct,"tProduct","Del");
 	}
 	else
 	{
 		gcMessage="Product NOT deleted";
-		mysqlISP2Log(uProduct,"tProduct","Del Fail");
+		unxsISPLog(uProduct,"tProduct","Del Fail");
 	}
 
 }//void DelProduct(void)
@@ -777,7 +777,7 @@ void funcProductServices(FILE *fp)
 				,field[2]
 				);
 		if(!uIsProductDeployed())
-				fprintf(fp,"<td><a title='Remove the selected service from the product' href=ispAdmin.cgi?gcPage=Product&uProduct=%u&gcFunction=RemoveService&uService=%s onclick=\"return confirm('Are you sure you want to remove this service?','mysqlISP2 Admin Interface')\">Remove</a></td></tr>\n",
+				fprintf(fp,"<td><a title='Remove the selected service from the product' href=ispAdmin.cgi?gcPage=Product&uProduct=%u&gcFunction=RemoveService&uService=%s onclick=\"return confirm('Are you sure you want to remove this service?','unxsISP Admin Interface')\">Remove</a></td></tr>\n",
 				uProduct
 				,field[0]
 				);

@@ -235,7 +235,7 @@ void InstanceCommands(pentry entries[], int x)
 
 void htmlInstance(void)
 {
-	htmlHeader("mysqlISP2 Admin Interface","Header");
+	htmlHeader("unxsISP Admin Interface","Header");
 	if(gcNewStep[0])
 		htmlInstancePage("","Instance-Step.Body");
 	else
