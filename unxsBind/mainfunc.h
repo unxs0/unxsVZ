@@ -153,6 +153,15 @@ void DashBoard(const char *cOptionalMsg)
 	if(cConfigBuffer[0])
 		printf("<img src='%s'>\n",cConfigBuffer);
 
+	cConfigBuffer[0]=0;
+	GetConfiguration("mrcstatus",cConfigBuffer,1);
+	if(cConfigBuffer[0])
+	{
+		OpenRow("Replication Status","black");
+		printf("<img src='%s'>\n",cConfigBuffer);
+	}
+
+
 	OpenRow("Cluster BIND Errors (Last 10)","black");
 	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer,cLabel,uPermLevel,uTablePK FROM tLog WHERE uLogType=5 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 10");
 	mysql_query(&gMysql,gcQuery);
