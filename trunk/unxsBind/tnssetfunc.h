@@ -305,23 +305,10 @@ void tNSSetNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uContactParentCompany=0;
 
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
-	if(guReseller==1) guReseller=0;//...except Root companies
-	
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uNSSet,cLabel FROM tNSSet ORDER BY cLabel");
-	else
-		sprintf(gcQuery,"SELECT tNSSet.uNSSet,"
-				" tNSSet.cLabel"
-				" FROM tNSSet,tClient"
-				" WHERE tNSSet.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				uContactParentCompany
-				,uContactParentCompany);
-        mysql_query(&gMysql,gcQuery);
+	ExtSelect("tNSSet","tNSSet.uNSSet,tNSSet.cLabel",0);
+        
+	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
         	printf("<p><u>tNSSetNavList</u><br>\n");

@@ -175,65 +175,21 @@ void ExttServerGetHook(entry gentries[], int x)
 
 void ExttServerSelect(void)
 {
-
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT %s FROM tServer ORDER BY"
-				" uServer",
-				VAR_LIST_tServer);
-	else //If you own it, the company you work for owns the company that owns it,
-		//you created it, or your company owns it you can at least read access it
-		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
-	sprintf(gcQuery,"SELECT %s FROM tServer,tClient WHERE tServer.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" ORDER BY uServer",
-					VAR_LIST_tServer,uContactParentCompany,uContactParentCompany);
-					
+	ExtSelect("tServer",VAR_LIST_tServer,0);
 
 }//void ExttServerSelect(void)
 
 
 void ExttServerSelectRow(void)
 {
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-                sprintf(gcQuery,"SELECT %s FROM tServer WHERE uServer=%u",
-			VAR_LIST_tServer,uServer);
-	else
-                sprintf(gcQuery,"SELECT %s FROM tServer,tClient"
-                                " WHERE tServer.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" AND tServer.uServer=%u",
-                        		VAR_LIST_tServer
-					,uContactParentCompany,uContactParentCompany
-					,uServer);
-
+	ExtSelectRow("tServer",VAR_LIST_tServer,uServer);
 }//void ExttServerSelectRow(void)
 
 
 void ExttServerListSelect(void)
 {
 	char cCat[512];
-	unsigned uContactParentCompany=0;
-	
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT %s FROM tServer",
-				VAR_LIST_tServer);
-	else
-		sprintf(gcQuery,"SELECT %s FROM tServer,tClient"
-				" WHERE tServer.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				VAR_LIST_tServer
-				,uContactParentCompany
-				,uContactParentCompany);
+	ExtListSelect("tServer",VAR_LIST_tServer);
 
 	//Changes here must be reflected below in ExttServerListFilter()
         if(!strcmp(gcFilter,"uServer"))
@@ -305,22 +261,8 @@ void tServerNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
-	if(guReseller==1) guReseller=0;//...except Root companies
 	
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uServer,cLabel FROM tServer ORDER BY cLabel");
-	else
-		sprintf(gcQuery,"SELECT tServer.uServer,"
-				" tServer.cLabel"
-				" FROM tServer,tClient"
-				" WHERE tServer.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				uContactParentCompany
-				,uContactParentCompany);
+	ExtSelect("tServer","tServer.uServer,tServer.cLabel",0);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {

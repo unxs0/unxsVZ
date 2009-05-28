@@ -270,7 +270,7 @@ void ExtMainContent(void)
 	OpenRow("Build Information","black");
 	printf("<td>%s</td></tr>\n",gcBuildInfo);
 
-	OpenRow("RAD Status","black");
+	OpenRow("Status","black");
 	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);
 
 	OpenRow("Application Summary","black");
