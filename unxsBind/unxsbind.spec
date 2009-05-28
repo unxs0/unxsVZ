@@ -4,7 +4,7 @@ Version: 1.2
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-1.1.tar.gz
+Source: http://unixservice.com/source/unxsbind-1.2.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -65,6 +65,7 @@ chown -R mysql:mysql /usr/local/share/iDNS/data
 cp setup9/rndc.conf /etc/rndc.conf
 cp setup9/rndc.key /etc/rndc.key
 cp setup9/* /usr/local/share/iDNS/setup9/
+cp agents/mysqlcluster/mysqlcluster.sh /usr/sbin/
 /usr/bin/dig @e.root-servers.net . ns > /usr/local/share/iDNS/setup9/root.cache
 #make section
 cd interfaces/admin
@@ -96,10 +97,10 @@ cd $RPM_BUILD_DIR
 /var/www/unxs/html/images/green.gif
 /var/www/unxs/html/images/red.gif
 /var/log/named
-
+/usr/sbin/mysqlcluster.sh
 %changelog
 * Thu May 28 2009 Hugo Urquiza <support2@unixservice.com>
-
+- Minor code fixes, added mysqlcluster.sh
 * Mon May 18 2009 Hugo Urquiza <support2@unixservice.com>
 - Added rrdtool as required package. Updated file list and mkdir section.
 * Thu May 14 2009 Hugo Urquiza <support2@unixservice.com>
