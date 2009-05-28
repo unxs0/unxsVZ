@@ -175,65 +175,22 @@ void ExttNSTypeGetHook(entry gentries[], int x)
 
 void ExttNSTypeSelect(void)
 {
-
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT %s FROM tNSType ORDER BY"
-				" uNSType",
-				VAR_LIST_tNSType);
-	else //If you own it, the company you work for owns the company that owns it,
-		//you created it, or your company owns it you can at least read access it
-		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
-	sprintf(gcQuery,"SELECT %s FROM tNSType,tClient WHERE tNSType.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" ORDER BY uNSType",
-					VAR_LIST_tNSType,uContactParentCompany,uContactParentCompany);
-					
+	ExtSelect("tNSType",VAR_LIST_tNSType,0);
 
 }//void ExttNSTypeSelect(void)
 
 
 void ExttNSTypeSelectRow(void)
 {
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-                sprintf(gcQuery,"SELECT %s FROM tNSType WHERE uNSType=%u",
-			VAR_LIST_tNSType,uNSType);
-	else
-                sprintf(gcQuery,"SELECT %s FROM tNSType,tClient"
-                                " WHERE tNSType.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" AND tNSType.uNSType=%u",
-                        		VAR_LIST_tNSType
-					,uContactParentCompany,uContactParentCompany
-					,uNSType);
-
+	ExtSelectRow("tNSType",VAR_LIST_tNSType,uNSType);
 }//void ExttNSTypeSelectRow(void)
 
 
 void ExttNSTypeListSelect(void)
 {
 	char cCat[512];
-	unsigned uContactParentCompany=0;
 	
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT %s FROM tNSType",
-				VAR_LIST_tNSType);
-	else
-		sprintf(gcQuery,"SELECT %s FROM tNSType,tClient"
-				" WHERE tNSType.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				VAR_LIST_tNSType
-				,uContactParentCompany
-				,uContactParentCompany);
+	ExtListSelect("tNSType",VAR_LIST_tNSType);
 
 	//Changes here must be reflected below in ExttNSTypeListFilter()
         if(!strcmp(gcFilter,"uNSType"))
@@ -305,22 +262,8 @@ void tNSTypeNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uContactParentCompany=0;
 
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
-	if(guReseller==1) guReseller=0;//...except Root companies
-	
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uNSType,cLabel FROM tNSType ORDER BY cLabel");
-	else
-		sprintf(gcQuery,"SELECT tNSType.uNSType,"
-				" tNSType.cLabel"
-				" FROM tNSType,tClient"
-				" WHERE tNSType.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				uContactParentCompany
-				,uContactParentCompany);
+	ExtSelect("tNSType","tNSType.uNSType,tNSType.cLabel",0);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {

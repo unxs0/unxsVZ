@@ -175,44 +175,14 @@ void ExttNSGetHook(entry gentries[], int x)
 
 void ExttNSSelect(void)
 {
-
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT %s FROM tNS ORDER BY"
-				" uNS",
-				VAR_LIST_tNS);
-	else //If you own it, the company you work for owns the company that owns it,
-		//you created it, or your company owns it you can at least read access it
-		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
-	sprintf(gcQuery,"SELECT %s FROM tNS,tClient WHERE tNS.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" ORDER BY uNS",
-					VAR_LIST_tNS,uContactParentCompany,uContactParentCompany);
-					
+	ExtSelect("tNS",VAR_LIST_tNS,0);
 
 }//void ExttNSSelect(void)
 
 
 void ExttNSSelectRow(void)
 {
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-                sprintf(gcQuery,"SELECT %s FROM tNS WHERE uNS=%u",
-			VAR_LIST_tNS,uNS);
-	else
-                sprintf(gcQuery,"SELECT %s FROM tNS,tClient"
-                                " WHERE tNS.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" AND tNS.uNS=%u",
-                        		VAR_LIST_tNS
-					,uContactParentCompany,uContactParentCompany
-					,uNS);
+	ExtSelectRow("tNS",VAR_LIST_tNS,uNS);
 
 }//void ExttNSSelectRow(void)
 
@@ -220,20 +190,8 @@ void ExttNSSelectRow(void)
 void ExttNSListSelect(void)
 {
 	char cCat[512];
-	unsigned uContactParentCompany=0;
 	
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT %s FROM tNS",
-				VAR_LIST_tNS);
-	else
-		sprintf(gcQuery,"SELECT %s FROM tNS,tClient"
-				" WHERE tNS.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				VAR_LIST_tNS
-				,uContactParentCompany
-				,uContactParentCompany);
+	ExtListSelect("tNS",VAR_LIST_tNS);
 
 	//Changes here must be reflected below in ExttNSListFilter()
         if(!strcmp(gcFilter,"uNS"))
@@ -305,23 +263,10 @@ void tNSNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uContactParentCompany=0;
 
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
-	if(guReseller==1) guReseller=0;//...except Root companies
-	
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uNS,cFQDN FROM tNS ORDER BY cFQDN");
-	else
-		sprintf(gcQuery,"SELECT tNS.uNS,"
-				" tNS.cFQDN"
-				" FROM tNS,tClient"
-				" WHERE tNS.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				uContactParentCompany
-				,uContactParentCompany);
-        mysql_query(&gMysql,gcQuery);
+	ExtSelect("tNS","tNS.uNS,tNS.cFQDN",0);
+        
+	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
         	printf("<p><u>tNSNavList</u><br>\n");
