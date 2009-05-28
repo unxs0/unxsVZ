@@ -3,9 +3,9 @@ FILE
 	glossary.c
 	$Id$
 AUTHOR
-	(C) 2006 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	iDNS Admin (Owner) Interface
+	unxsMailAdmin Interface
 	program file.
 */
 

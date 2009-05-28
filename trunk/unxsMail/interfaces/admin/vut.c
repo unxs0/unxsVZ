@@ -3,7 +3,7 @@ FILE
 	vut.c
 	$Id$
 AUTHOR
-	(C) 2008 Hugo Urquiza for Unixservice
+	(C) 2008-2009 Hugo Urquiza for Unixservice
 PURPOSE
 	mail2Admin program file. Provides code 
 	for VUT management
