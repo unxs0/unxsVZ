@@ -31,7 +31,7 @@ char *IPNumber(char *cInput);
 const char *cUserLevel(unsigned uPermLevel);
 char *TextAreaSave(char *cField);
 char *FQDomainName(char *cInput);
-void mysqlRadius2Log(unsigned uTablePK, char *cTableName, char *cLogEntry);
+void unxsRadiusLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 void SubmitJob(char *cJobName,char *cDomain,char *cLogin,char *cServerGroup,char *cJobData,
 		unsigned uJobTarget,unsigned uJobTargetUser,unsigned uOwner,unsigned uCreatedBy);
 const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);

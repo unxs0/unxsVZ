@@ -1,7 +1,7 @@
 #
-# $Id: makefile.template 693 2006-07-27 22:58:07Z ggw $
+# $Id$
 #
-# (C) 2001-2004 Gary Wallis.
+# (C) 2001-2009 Gary Wallis and Hugo Urquiza.
 #
 # Notes:
 #	Must use gmake (usually same as make in linux)
@@ -26,26 +26,15 @@
 CFLAGS= -DLinux -Wall
 RELEASE= 0.1
 
-#FreeBSD make support un comment the next two lines. Yes you need both -D and the gmake
-#define. Also check mysqlrad.h for FreeBSD parts and adjust for your system.
-#In general "grep -l FreeBSD *" and then check the files to see if you need to change
-#anything else.
-#CFLAGS= -DLinux -DFreeBSD -Wall 
-#FreeBSD=1
-
-ifdef FreeBSD
-	LIBS= /usr/local/lib/mysql/libmysqlclient.a -lz -lm /usr/lib/libcrypt.a /usr/lib/openisp/libtemplate.a
-else
-	LIBS= /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl /usr/lib/openisp/libtemplate.a
-endif
+LIBS= -L/usr/lib/mysql -lmysqlclient -lz -lcrypt -lm -lssl /usr/lib/openisp/libtemplate.a
 
 
 
-all: mysqlMail2.cgi
+all: unxsMail.cgi
 
-mysqlMail2.cgi: tuser.o talias.o tdomain.o tvut.o tvutentries.o taccess.o trelay.o tlocal.o tusertype.o tuserconfig.o tserverconfig.o tconfigspec.o tclient.o tauthorize.o tstatus.o tjobstatus.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o tjob.o tserver.o tservergroup.o tservergroupglue.o tconfiguration.o tholduser.o trequest.o twhitelist.o tblacklist.o tvacation.o mail.o  main.o cgi.o
-	cc tuser.o talias.o tdomain.o tvut.o tvutentries.o taccess.o trelay.o tlocal.o tusertype.o tuserconfig.o tserverconfig.o tconfigspec.o tclient.o tauthorize.o tstatus.o tjobstatus.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o tjob.o tserver.o tservergroup.o tservergroupglue.o tconfiguration.o tholduser.o trequest.o twhitelist.o tblacklist.o tvacation.o mail.o  main.o cgi.o -o mysqlMail2.cgi $(LIBS) 
-	#mail -s "mysqlMail2$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
+unxsMail.cgi: tuser.o talias.o tdomain.o tvut.o tvutentries.o taccess.o trelay.o tlocal.o tusertype.o tuserconfig.o tserverconfig.o tconfigspec.o tclient.o tauthorize.o tstatus.o tjobstatus.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o tjob.o tserver.o tservergroup.o tservergroupglue.o tconfiguration.o tholduser.o trequest.o twhitelist.o tblacklist.o tvacation.o mail.o  main.o cgi.o
+	cc tuser.o talias.o tdomain.o tvut.o tvutentries.o taccess.o trelay.o tlocal.o tusertype.o tuserconfig.o tserverconfig.o tconfigspec.o tclient.o tauthorize.o tstatus.o tjobstatus.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o tjob.o tserver.o tservergroup.o tservergroupglue.o tconfiguration.o tholduser.o trequest.o twhitelist.o tblacklist.o tvacation.o mail.o  main.o cgi.o -o unxsMail.cgi $(LIBS) 
+	#mail -s "unxsMail$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
 
 tuser.o: tuser.c mysqlrad.h language.h tuserfunc.h local.h
 	cc -c tuser.c -o tuser.o $(CFLAGS)
@@ -165,17 +154,17 @@ clean:
 cleandist:
 	rm -f *.o *.gz
 
-install: mysqlMail2.cgi
-	install -s mysqlMail2.cgi $(CGIDIR)mysqlMail2.cgi
-	rm mysqlMail2.cgi
+install: unxsMail.cgi
+	install -s unxsMail.cgi $(CGIDIR)unxsMail.cgi
+	rm unxsMail.cgi
 
 distribution:
-	cd ..;  tar czvf mysqlMail2/mysqlMail2$(RELEASE).tar.gz --exclude .svn\
-		mysqlMail2/*.h\
-		mysqlMail2/*.c\
-		mysqlMail2/data\
-		mysqlMail2/docs\
-		mysqlMail2/makefile\
-		mysqlMail2/CHANGES\
-		mysqlMail2/LICENSE\
-		mysqlMail2/INSTALL
+	cd ..;  tar czvf unxsMail/unxsMail$(RELEASE).tar.gz --exclude .svn\
+		unxsMail/*.h\
+		unxsMail/*.c\
+		unxsMail/data\
+		unxsMail/docs\
+		unxsMail/makefile\
+		unxsMail/CHANGES\
+		unxsMail/LICENSE\
+		unxsMail/INSTALL

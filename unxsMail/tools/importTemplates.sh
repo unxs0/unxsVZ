@@ -11,7 +11,7 @@
 #	Gary Wallis
 #	for Unixservice (C) 2007
 #
-cRADProgram="mysqlMail2";
+cRADProgram="unxsMail";
 
 if [ $2 ]; then
 	if [ $CGIDIR ]; then

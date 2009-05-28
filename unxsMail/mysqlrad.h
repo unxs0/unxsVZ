@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: mysqlrad.h 2857 2009-04-10 17:39:52Z hus $
+	$Id$
 AUTHOR
 	(C) 2001-2009 Gary Wallis and Hugo Urquiza. 
 */
@@ -74,7 +74,7 @@ extern unsigned guMode;
 extern int guError;
 extern char gcErrormsg[];
 
-void mysqlMail2(const char *cResult);
+void unxsMail(const char *cResult);
 void ConnectDb(void);
 void Footer_ism3(void);
 void Header_ism3(char *cMsg, int iJs);
@@ -115,7 +115,7 @@ void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearch
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
 
 
-void mysqlMail2Log(unsigned uTablePK, char *cTableName, char *cLogEntry);
+void unxsMailLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 char *cURLEncode(char *cURL);
 
  //Standard tInputFunc functions

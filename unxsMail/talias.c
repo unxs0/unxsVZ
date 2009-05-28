@@ -1,8 +1,8 @@
 /*
 FILE
-	tAlias source code of mysqlMail2.cgi
+	tAlias source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: talias.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in taliasfunc.h while 
@@ -163,7 +163,7 @@ void tAlias(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetAlias();
-				mysqlMail2("New tAlias table created");
+				unxsMail("New tAlias table created");
                 	}
 			else
 			{
@@ -377,7 +377,7 @@ void NewtAlias(unsigned uMode)
 	uAlias=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tAlias",uAlias);
-	mysqlMail2Log(uAlias,"tAlias","New");
+	unxsMailLog(uAlias,"tAlias","New");
 #endif
 
 	if(!uMode)
@@ -405,14 +405,14 @@ void DeletetAlias(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uAlias,"tAlias","Del");
+		unxsMailLog(uAlias,"tAlias","Del");
 #endif
 		tAlias(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uAlias,"tAlias","DelError");
+		unxsMailLog(uAlias,"tAlias","DelError");
 #endif
 		tAlias(LANG_NBR_RECNOTDELETED);
 	}
@@ -492,7 +492,7 @@ void ModtAlias(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tAlias",uAlias);
-	mysqlMail2Log(uAlias,"tAlias","Mod");
+	unxsMailLog(uAlias,"tAlias","Mod");
 #endif
 	tAlias(gcQuery);
 

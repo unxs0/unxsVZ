@@ -4,7 +4,7 @@ FILE
 AUTHOR
 	(C) 2008 Hugo Urquiza for Unixservice
 PURPOSE
-	mysqlMail2 User Interface Interface
+	unxsMail User Interface Interface
 	program file.
 	This module handles the account adding request
 	and the password reset request.
@@ -163,9 +163,9 @@ void MyAccountCommands(pentry entries[], int x)
 
 void htmlPasswordReset(unsigned uStep)
 {
-	htmlHeader("mysqlMail2 User Interface","Header");
+	htmlHeader("unxsMail User Interface","Header");
 	sprintf(gcQuery,"MyAccountPwdReset.%u",uStep);
-	htmlMyAccountPage("mysqlMail2 User Interface",gcQuery);
+	htmlMyAccountPage("unxsMail User Interface",gcQuery);
 	htmlFooter("Footer");
 	
 }//void htmlPasswordReset(void)
@@ -173,8 +173,8 @@ void htmlPasswordReset(unsigned uStep)
 
 void htmlCreateAccount(void)
 {
-	htmlHeader("mysqlMail2 User Interface","Header");
-	htmlMyAccountPage("mysqlMail2 User Interface","MyAccountCreate");
+	htmlHeader("unxsMail User Interface","Header");
+	htmlMyAccountPage("unxsMail User Interface","MyAccountCreate");
 	htmlFooter("Footer");
 	
 }//void htmlCreateAccount(void)
@@ -182,16 +182,16 @@ void htmlCreateAccount(void)
 
 void htmlCmdOutput(void)
 {
-	 htmlHeader("mysqlMail2 User Interface","Header");
-	 htmlMyAccountPage("mysqlMail2 User Interface","MyAccountPwdMsg");
+	 htmlHeader("unxsMail User Interface","Header");
+	 htmlMyAccountPage("unxsMail User Interface","MyAccountPwdMsg");
 	 htmlFooter("Footer");
 }//void htmlCmdOutput(void)
 
 
 void htmlMyAccount(void)
 {
-	htmlHeader("mysqlMail2 User Interface","Header");
-	htmlMyAccountPage("mysqlMail2 User Interface","MyAccount.Body");
+	htmlHeader("unxsMail User Interface","Header");
+	htmlMyAccountPage("unxsMail User Interface","MyAccount.Body");
 	htmlFooter("Footer");
 
 }//void htmlMyAccount(void)
@@ -460,8 +460,8 @@ void ResetPassword(char *cEmail)
 	//This function will reset the password of the user pointed by the email address at cEmail
 	//For that we need to:
 	//1. Generate a random password
-	//2. Update mysqlMail2.tUser record
-	//3. Submit a mysqlMail2 'Mod' job
+	//2. Update unxsMail.tUser record
+	//3. Submit a unxsMail 'Mod' job
 	//4. Email the customer with her new login information.
 	//
 	
@@ -473,7 +473,7 @@ void ResetPassword(char *cEmail)
 	sprintf(cPasswd,"%s",cPwdSave);
 	EncryptPasswd(cPasswd);
 
-	//4. Update mysqlMail2.tUser record
+	//4. Update unxsMail.tUser record
 	if((Update_tUser(cPasswd)))
 	{
 		MYSQL_RES *res;
@@ -508,7 +508,7 @@ void ResetPassword(char *cEmail)
 	}
 	else
 	{
-		gcMessage="<font color=red>Update of the mysqlMail2.tUser record failed. Please contact support with this message</font>";
+		gcMessage="<font color=red>Update of the unxsMail.tUser record failed. Please contact support with this message</font>";
 	}
 
 }//void ResetPassword(char *cEmail)

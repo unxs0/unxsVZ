@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: tglossaryfunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2006 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
  
 */
 

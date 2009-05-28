@@ -1,8 +1,8 @@
 /*
 FILE
-	tLogMonth source code of mysqlMail2.cgi
+	tLogMonth source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tlogmonth.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tlogmonthfunc.h while 
@@ -187,7 +187,7 @@ void tLogMonth(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetLogMonth();
-				mysqlMail2("New tLogMonth table created");
+				unxsMail("New tLogMonth table created");
                 	}
 			else
 			{

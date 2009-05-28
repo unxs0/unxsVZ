@@ -1,8 +1,8 @@
 /*
 FILE
-	tMonth source code of mysqlMail2.cgi
+	tMonth source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tmonth.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tmonthfunc.h while 
@@ -149,7 +149,7 @@ void tMonth(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetMonth();
-				mysqlMail2("New tMonth table created");
+				unxsMail("New tMonth table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtMonth(unsigned uMode)
 	uMonth=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tMonth",uMonth);
-	mysqlMail2Log(uMonth,"tMonth","New");
+	unxsMailLog(uMonth,"tMonth","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetMonth(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uMonth,"tMonth","Del");
+		unxsMailLog(uMonth,"tMonth","Del");
 #endif
 		tMonth(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uMonth,"tMonth","DelError");
+		unxsMailLog(uMonth,"tMonth","DelError");
 #endif
 		tMonth(LANG_NBR_RECNOTDELETED);
 	}
@@ -454,7 +454,7 @@ void ModtMonth(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tMonth",uMonth);
-	mysqlMail2Log(uMonth,"tMonth","Mod");
+	unxsMailLog(uMonth,"tMonth","Mod");
 #endif
 	tMonth(gcQuery);
 

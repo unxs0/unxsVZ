@@ -1,8 +1,8 @@
 /*
 FILE
-	tLocal source code of mysqlMail2.cgi
+	tLocal source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tlocal.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tlocalfunc.h while 
@@ -159,7 +159,7 @@ void tLocal(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetLocal();
-				mysqlMail2("New tLocal table created");
+				unxsMail("New tLocal table created");
                 	}
 			else
 			{
@@ -359,7 +359,7 @@ void NewtLocal(unsigned uMode)
 	uLocal=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tLocal",uLocal);
-	mysqlMail2Log(uLocal,"tLocal","New");
+	unxsMailLog(uLocal,"tLocal","New");
 #endif
 
 	if(!uMode)
@@ -387,14 +387,14 @@ void DeletetLocal(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uLocal,"tLocal","Del");
+		unxsMailLog(uLocal,"tLocal","Del");
 #endif
 		tLocal(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uLocal,"tLocal","DelError");
+		unxsMailLog(uLocal,"tLocal","DelError");
 #endif
 		tLocal(LANG_NBR_RECNOTDELETED);
 	}
@@ -474,7 +474,7 @@ void ModtLocal(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tLocal",uLocal);
-	mysqlMail2Log(uLocal,"tLocal","Mod");
+	unxsMailLog(uLocal,"tLocal","Mod");
 #endif
 	tLocal(gcQuery);
 

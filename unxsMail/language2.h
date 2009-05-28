@@ -1,4 +1,4 @@
-// $Id: language2.h 2824 2009-04-01 19:53:48Z hus $
+// $Id$
 // Spanish: Argentina
 // Navigation bar buttons and results
 

@@ -1,8 +1,8 @@
 /*
 FILE
-	tLogType source code of mysqlMail2.cgi
+	tLogType source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tlogtype.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tlogtypefunc.h while 
@@ -149,7 +149,7 @@ void tLogType(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetLogType();
-				mysqlMail2("New tLogType table created");
+				unxsMail("New tLogType table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtLogType(unsigned uMode)
 	uLogType=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tLogType",uLogType);
-	mysqlMail2Log(uLogType,"tLogType","New");
+	unxsMailLog(uLogType,"tLogType","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetLogType(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uLogType,"tLogType","Del");
+		unxsMailLog(uLogType,"tLogType","Del");
 #endif
 		tLogType(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uLogType,"tLogType","DelError");
+		unxsMailLog(uLogType,"tLogType","DelError");
 #endif
 		tLogType(LANG_NBR_RECNOTDELETED);
 	}
@@ -455,7 +455,7 @@ void ModtLogType(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tLogType",uLogType);
-	mysqlMail2Log(uLogType,"tLogType","Mod");
+	unxsMailLog(uLogType,"tLogType","Mod");
 #endif
 	tLogType(gcQuery);
 

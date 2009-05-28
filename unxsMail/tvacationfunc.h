@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: modulefunc.h.template 2459 2009-02-11 12:04:10Z Gary $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -320,7 +320,7 @@ void tVacationNavList(void)
         	printf("<p><u>tVacationNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tVacation"
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tVacation"
 				"&uVacation=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

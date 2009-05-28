@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tconfigspecfunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -142,7 +142,7 @@ void ExttConfigSpecButtons(void)
 			printf("<u>Table Tips</u><br>");
 			printf("The tConfigSpec table is used to associate a uTemplate template with a destination file path and "
 				"other file related properties. This allows us to push new configuration files based on templates "
-				"to a set of servers via a server agent (usually just another mysqlMail2 running a job queue via "
+				"to a set of servers via a server agent (usually just another unxsMail running a job queue via "
 				"cron.) This agent then installs them in the correct place with the correct ownership and file permissions.");
 			if(uConfigSpec)
 			{
@@ -304,7 +304,7 @@ void tConfigSpecNavList(void)
         	printf("<p><u>tConfigSpecNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tConfigSpec&uConfigSpec=%s&cSearch=%s>%s</a><br>\n",
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tConfigSpec&uConfigSpec=%s&cSearch=%s>%s</a><br>\n",
 					field[0]
 					,cURLEncode(cSearch)
 					,field[1]);

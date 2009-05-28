@@ -2,7 +2,7 @@
 FILE
 	tLog source code template
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tlog.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tlogfunc.h while 
@@ -195,7 +195,7 @@ void tLog(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetLog();
-				mysqlMail2("New tLog table created");
+				unxsMail("New tLog table created");
                 	}
 			else
 			{
@@ -521,7 +521,7 @@ void NewtLog(unsigned uMode)
 	uLog=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tLog",uLog);
-	mysqlMail2Log(uLog,"tLog","New");
+	unxsMailLog(uLog,"tLog","New");
 #endif
 
 	if(!uMode)
@@ -549,14 +549,14 @@ void DeletetLog(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uLog,"tLog","Del");
+		unxsMailLog(uLog,"tLog","Del");
 #endif
 		tLog(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uLog,"tLog","DelError");
+		unxsMailLog(uLog,"tLog","DelError");
 #endif
 		tLog(LANG_NBR_RECNOTDELETED);
 	}
@@ -654,7 +654,7 @@ void ModtLog(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tLog",uLog);
-	mysqlMail2Log(uLog,"tLog","Mod");
+	unxsMailLog(uLog,"tLog","Mod");
 #endif
 	tLog(gcQuery);
 

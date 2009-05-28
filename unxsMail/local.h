@@ -1,6 +1,6 @@
 /*
 FILE
-        $Id: local.h 2913 2009-04-24 14:49:03Z hus-admin $
+        $Id$
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL
@@ -8,12 +8,10 @@ LEGAL
 */
 
 //Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
-#define DBIP0 "10.0.0.10"
-#define DBIP1 "10.0.0.11"
-//#define DBIP0 NULL
-//#define DBIP1 NULL
-#define DBNAME "mysqlmail2"
-#define DBLOGIN "mysqlmail2"
+#define DBIP0 NULL
+#define DBIP1 NULL
+#define DBNAME "unxsmail"
+#define DBLOGIN "unxsmail"
 #define DBPASSWD "wsxedc"
 #define DBPORT 0
 #define DBSOCKET NULL
@@ -22,7 +20,7 @@ LEGAL
 //#define DBPORT 4306
 //#define DBSOCKET "/var/lib/mysql/mysql4.sock"
 
-//mysqlmail2 can report to us once a week some useful for
+//unxsmail can report to us once a week some useful for
 //debugging and development statistics.
 //This is very helpful to us and in the end we hope for yourself.
 //For improving and developing this software

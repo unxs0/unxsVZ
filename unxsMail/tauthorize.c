@@ -1,8 +1,8 @@
 /*
 FILE
-	tAuthorize source code of mysqlMail2.cgi
+	tAuthorize source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tauthorize.c 2903 2009-04-23 12:34:55Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tauthorizefunc.h while 
@@ -168,7 +168,7 @@ void tAuthorize(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetAuthorize();
-				mysqlMail2("New tAuthorize table created");
+				unxsMail("New tAuthorize table created");
                 	}
 			else
 			{
@@ -426,7 +426,7 @@ void NewtAuthorize(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uAuthorize=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate(TAUTHORIZE,uAuthorize);
-	mysqlMail2Log(uAuthorize,TAUTHORIZE,"New");
+	unxsMailLog(uAuthorize,TAUTHORIZE,"New");
 
 	if(!uMode)
 	{
@@ -444,12 +444,12 @@ void DeletetAuthorize(void)
 	//tAuthorize("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlMail2Log(uAuthorize,TAUTHORIZE,"Del");
+		unxsMailLog(uAuthorize,TAUTHORIZE,"Del");
 		tAuthorize(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlMail2Log(uAuthorize,TAUTHORIZE,"DelError");
+		unxsMailLog(uAuthorize,TAUTHORIZE,"DelError");
 		tAuthorize(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -518,7 +518,7 @@ void ModtAuthorize(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate(TAUTHORIZE,uAuthorize);
-	mysqlMail2Log(uAuthorize,TAUTHORIZE,"Mod");
+	unxsMailLog(uAuthorize,TAUTHORIZE,"Mod");
 	tAuthorize(gcQuery);
 
 }//ModtAuthorize(void)

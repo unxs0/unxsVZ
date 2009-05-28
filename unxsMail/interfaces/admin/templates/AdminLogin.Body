@@ -15,7 +15,7 @@
 <table border="0" cellspacing="0" cellpadding="0" align="center">
 <tr>
 <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-<td class="hdrtout padlt8" align=center><h6 class="modhdr">mysqlMail2 System</h6></td>
+<td class="hdrtout padlt8" align=center><h6 class="modhdr">unxsMail System</h6></td>
 <td valign="top" width="9" class="hdrtout padlt8"></td>
 </tr>
 <tr>
@@ -40,7 +40,7 @@
 <td><input title='Your password for the above login' type="password" name="gcPasswd" size=40 class="type_fields"></td>
 </tr>
 <tr>
-<td height="40"><input title='Login with your mysqlMail2 System login and password' class=largeButton type=submit name=gcFunction value='Login'></td>
+<td height="40"><input title='Login with your unxsMail System login and password' class=largeButton type=submit name=gcFunction value='Login'></td>
 </tr>
 <tr>
 <td>To login please enter your username and password and click login.</td>

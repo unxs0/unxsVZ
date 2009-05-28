@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tclientfunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 PURPOSE
 	Non-schema dependent tclient.c expansion.
 AUTHOR
@@ -345,7 +345,7 @@ void ExttClientButtons(void)
                 break;
 
                 case 3000:
-			printf("<u>Authorize: Step 1 Tips</u><br>Depending on the user level you may authorize a contact to access interfaces (like the organization/contact portal.) Or even to use this back-office. In the 'Login' you would enter a login (that can be the same as the tClient.cLabel) for this contact and a password. The most common user permission level is 'Organization Admin' that would allow this contact to login to the idnsOrg.cgi interface and have full control over the companies DNS resource records. The second most common user level is 'Back-Office Root' that will allow the user full access to this back-office mysqlMail2.cgi interface.<p>\n");
+			printf("<u>Authorize: Step 1 Tips</u><br>Depending on the user level you may authorize a contact to access interfaces (like the organization/contact portal.) Or even to use this back-office. In the 'Login' you would enter a login (that can be the same as the tClient.cLabel) for this contact and a password. The most common user permission level is 'Organization Admin' that would allow this contact to login to the idnsOrg.cgi interface and have full control over the companies DNS resource records. The second most common user level is 'Back-Office Root' that will allow the user full access to this back-office unxsMail.cgi interface.<p>\n");
 			if(guPermLevel>7)
 				PermLevelDropDown(cuPerm);
 			printf("<br>Login <input type=text title='Login to use' name=cLogin value='%s'"
@@ -393,7 +393,7 @@ void ExttClientButtons(void)
 			if(uAuthorize)
 			{
 				printf("<p><u>Edit tAuthorize record</u><br>\n");
-				printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tAuthorize&uAuthorize=%u>Go to %s tAuthorize record</a><br>\n",
+				printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tAuthorize&uAuthorize=%u>Go to %s tAuthorize record</a><br>\n",
 					uAuthorize
 					,cLabel);
 			}
@@ -890,7 +890,7 @@ void ContactsNavList(void)
         	printf("<p><u>Controlled Companies or Contacts NavList</u><br>\n");
 		while((field=mysql_fetch_row(res)))
         	{
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tClient&uClient=%s&uOnlyASPs=%u"
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tClient&uClient=%s&uOnlyASPs=%u"
 				,field[0],uOnlyASPs);
 			if(cSearch)
 			{
@@ -909,7 +909,7 @@ void htmlRecordContext(void)
 {
 	printf("<p><u>Record Context Info</u><br>");
 	if(uOwner>1)
-		printf("'%s' appears to be an ASP or a reseller owned company or a contact of <a class=darkLink href=mysqlMail2.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
+		printf("'%s' appears to be an ASP or a reseller owned company or a contact of <a class=darkLink href=unxsMail.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
 	else if(uOwner==1 && strcmp(cLabel,"Root"))
 		printf("'%s' appears to be an ASP root company",cLabel);
 	else if(uOwner==1 && !strcmp(cLabel,"Root"))
@@ -940,7 +940,7 @@ void tClientNavList(void)
 	if(mysql_num_rows(res))
 	{
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tClient&uClient=%s&cSearch=%s>%s</a><br>\n",
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tClient&uClient=%s&cSearch=%s>%s</a><br>\n",
 				field[0]
 				,cURLEncode(cSearch)
 				,field[1]

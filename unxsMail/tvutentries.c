@@ -1,8 +1,8 @@
 /*
 FILE
-	tVUTEntries source code of mysqlMail2.cgi
+	tVUTEntries source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tvutentries.c 2908 2009-04-23 21:36:31Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tvutentriesfunc.h while 
@@ -165,7 +165,7 @@ void tVUTEntries(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetVUTEntries();
-				mysqlMail2("New tVUTEntries table created");
+				unxsMail("New tVUTEntries table created");
                 	}
 			else
 			{
@@ -394,7 +394,7 @@ void NewtVUTEntries(unsigned uMode)
 	uVUTEntries=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tVUTEntries",uVUTEntries);
-	mysqlMail2Log(uVUTEntries,"tVUTEntries","New");
+	unxsMailLog(uVUTEntries,"tVUTEntries","New");
 #endif
 
 	if(!uMode)
@@ -422,14 +422,14 @@ void DeletetVUTEntries(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uVUTEntries,"tVUTEntries","Del");
+		unxsMailLog(uVUTEntries,"tVUTEntries","Del");
 #endif
 		tVUTEntries(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uVUTEntries,"tVUTEntries","DelError");
+		unxsMailLog(uVUTEntries,"tVUTEntries","DelError");
 #endif
 		tVUTEntries(LANG_NBR_RECNOTDELETED);
 	}
@@ -511,7 +511,7 @@ void ModtVUTEntries(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tVUTEntries",uVUTEntries);
-	mysqlMail2Log(uVUTEntries,"tVUTEntries","Mod");
+	unxsMailLog(uVUTEntries,"tVUTEntries","Mod");
 #endif
 	tVUTEntries(gcQuery);
 

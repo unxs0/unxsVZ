@@ -33,7 +33,7 @@
 #	filter    unix  -       n       n       -       10      pipe
 #	  flags=Rq user=clamav argv=/var/spool/filter/basic_filter.sh -f ${sender} -- ${recipient}
 #
-#	Note that $4 is ${recipient} and is used below with mysqlMail2 ActiveUser
+#	Note that $4 is ${recipient} and is used below with unxsMail ActiveUser
 #
 #INSTALL NOTES
 #
@@ -49,8 +49,8 @@ TRASH_DIR=/var/spool/filter/trash;
 VIRUS_DIR=/var/spool/filter/trash;
 
 #paths to programs and program paramters
-MYSQL_MAIL2="/cgi-bin/mysqlMail2.cgi";
-MYSQL_MAIL2_ACTIVEUSER="/cgi-bin/mysqlMail2.cgi ActiveUser";
+MYSQL_MAIL2="/cgi-bin/unxsMail.cgi";
+MYSQL_MAIL2_ACTIVEUSER="/cgi-bin/unxsMail.cgi ActiveUser";
 SENDMAIL="/usr/sbin/sendmail -G -i"; # NEVER NEVER NEVER use "-t" here.
 #This is the default. It may change if you run the ActiveUser command
 SPAMC_USER="clamav";

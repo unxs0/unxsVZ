@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tservergroupfunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -277,7 +277,7 @@ void tServerGroupNavList(void)
 	if(mysql_num_rows(res))
 	{	
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tServerGroup"
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tServerGroup"
 				"&uServerGroup=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);

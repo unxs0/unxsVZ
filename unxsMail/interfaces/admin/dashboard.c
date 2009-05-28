@@ -16,7 +16,7 @@ void init_sockaddr (struct sockaddr_in *name,const char *hostname,uint16_t port)
 
 void htmlDashBoard(void)
 {
-	htmlHeader("mysqlMail2 System","Header");
+	htmlHeader("unxsMail System","Header");
 	htmlDashBoardPage("","DashBoard.Body");
 	htmlFooter("Footer");
 

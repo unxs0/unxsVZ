@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tuserconfigfunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -456,13 +456,13 @@ void tUserConfigNavList(void)
 			if(field[2]==NULL) continue; // Skip records like: (null)/standard procmail file, 
 							//can be done using MySQL IF, but it might slow dwn the query.
 
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tUserConfig&uUserConfig=%s&cSearch=%s>%s/%s</a><br>\n",
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tUserConfig&uUserConfig=%s&cSearch=%s>%s/%s</a><br>\n",
 					field[0],cURLEncode(cSearch),field[2],field[1]);
 			if( (uCount++) >= 100)
 				printf("Restrict cSearch further, only 100 items listed\n");
 	        }
 		if(uUser)
-		printf("<br><a class=darkLink href=mysqlMail2.cgi?gcFunction=tUser&uUser=%u>Quick link to tUser</a><br>\n",uUser);
+		printf("<br><a class=darkLink href=unxsMail.cgi?gcFunction=tUser&uUser=%u>Quick link to tUser</a><br>\n",uUser);
 	}
 	else
 		printf("No records found");

@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: trelayfunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -334,7 +334,7 @@ void tRelayNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			uCount++;
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tRelay"
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tRelay"
 					"&uRelay=%s&cSearch=%s>%s</a><br>\n",field[0],cURLEncode(cSearch),field[1]);
 			if(uCount>=100)
 			{
@@ -412,7 +412,7 @@ void tRelayContextInfo(void)
 	if(mysql_num_rows(res))
 	{	
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",
 						field[0],field[1],field[2]);
 	}
 	else

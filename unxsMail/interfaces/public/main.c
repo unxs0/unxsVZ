@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006-2008 Gary Wallis for Unixservice
 PURPOSE
-	mysqlMail2 User Interface
+	unxsMail User Interface
 REQUIRES
 	OpenISP libtemplates.a and templates.h
 */
@@ -714,7 +714,7 @@ char *FQDomainName(char *cInput)
 }//char *FQDomainName(char *cInput)
 
 
-void mysqlMail2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+void unxsMailLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 {
         char cQuery[512];
 
@@ -738,7 +738,7 @@ void mysqlMail2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
         mysql_query(&gMysql,cQuery);
 
-}//void mysqlMail2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+}//void unxsMailLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
 
 void GetConfiguration(const char *cName, char *cValue, unsigned uServer, unsigned uHtml)

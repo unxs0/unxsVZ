@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: mainfunc.h 2909 2009-04-23 21:38:44Z hus-admin $
+	$Id$
 PURPOSE
 	Included in main.c. For command line interface and html main link.
 
@@ -59,7 +59,7 @@ int iExtMainCommands(pentry entries[], int x)
 	{
 		if(!strcmp(gcCommand,"Dashboard"))
 		{
-			mysqlMail2("DashBoard");
+			unxsMail("DashBoard");
 		}
 	}
 	return(0);
@@ -211,7 +211,7 @@ void ExtMainContent(void)
 		OpenRow("Table List","black");
 		printf("<td>\n");
 		for(i=0;cTableList[i][0];i++)
-			printf("<a href=mysqlMail2.cgi?gcFunction=%.32s>%.32s</a><br>\n",
+			printf("<a href=unxsMail.cgi?gcFunction=%.32s>%.32s</a><br>\n",
 				cTableList[i],cTableList[i]);
 		printf("</td></tr>\n");
         	OpenRow("Admin Functions","black");
@@ -351,7 +351,7 @@ void RestoreAll(char *cPasswd)
 		exit(1);
 	}
 
-	printf("Restoring mysqlMail2 data from .txt file in %s/mysqlMail2/data...\n\n",cISMROOT);
+	printf("Restoring unxsMail data from .txt file in %s/unxsMail/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -366,7 +366,7 @@ void RestoreAll(char *cPasswd)
 
 	for(i=0;cTableList[i][0];i++)
 	{
-sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/mysqlMail2/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cTableList[i],cTableList[i]);
+sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsMail/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cTableList[i],cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -397,7 +397,7 @@ void Restore(char *cPasswd, char *cTableName)
 		exit(1);
 	}
 
-	printf("Restoring mysqlMail2 data from .txt file in %s/mysqlMail2/data...\n\n",cISMROOT);
+	printf("Restoring unxsMail data from .txt file in %s/unxsMail/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -410,7 +410,7 @@ void Restore(char *cPasswd, char *cTableName)
 		exit(1);
 	}
 
-	sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/mysqlMail2/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cTableName,cTableName);
+	sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsMail/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cTableName,cTableName);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -440,7 +440,7 @@ void Backup(char *cPasswd)
 		exit(1);
 	}
 
-	printf("Backing up mysqlMail2 data to .txt files in %s/mysqlMail2/data...\n\n",cISMROOT);
+	printf("Backing up unxsMail data to .txt files in %s/unxsMail/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -457,7 +457,7 @@ void Backup(char *cPasswd)
 	{
 		char cFileName[300];
 
-		sprintf(cFileName,"%s/mysqlMail2/data/%s.txt"
+		sprintf(cFileName,"%s/unxsMail/data/%s.txt"
 				,cISMROOT,cTableList[i]);
 		unlink(cFileName);
 
@@ -494,7 +494,7 @@ void Initialize(char *cPasswd)
 		exit(1);
 	}
 
-	printf("Creating db and setting permissions, installing data from %s/mysqlMail2...\n\n",cISMROOT);
+	printf("Creating db and setting permissions, installing data from %s/unxsMail...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -565,7 +565,7 @@ void Initialize(char *cPasswd)
 	
         for(i=0;cInitTableList[i][0];i++)
         {
-                sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/mysqlMail2/data/%s.txt' REPLACE INTO TABLE %s",
+                sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsMail/data/%s.txt' REPLACE INTO TABLE %s",
 				cISMROOT,cInitTableList[i],cInitTableList[i]);
                 mysql_query(&gMysql,gcQuery);
                 if(mysql_errno(&gMysql))
@@ -702,7 +702,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 
 void CalledByAlias(int iArgc,char *cArgv[])
 {
-	if(strstr(cArgv[0],"mysqlMail2RSS.xml"))
+	if(strstr(cArgv[0],"unxsMailRSS.xml"))
 	{
 		MYSQL_RES *res;
 		MYSQL_ROW field;
@@ -724,7 +724,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 
 		//This is the standard place. With much parsing nonsense we can
 		//	do better by using env vars
-		sprintf(cLinkStart,"%s://%s/cgi-bin/mysqlMail2.cgi",cHTTP,gcHost);
+		sprintf(cLinkStart,"%s://%s/cgi-bin/unxsMail.cgi",cHTTP,gcHost);
 
 		printf("Content-type: text/xml\n\n");
 
@@ -732,11 +732,11 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		printf("<?xml version='1.0' encoding='UTF-8'?>\n");
 		printf("<rss version='2.0'>\n");
 		printf("<channel>\n");
-		printf("<title>mysqlMail2 RSS tJob Errors</title>\n");
-		printf("<link>http://openisp.net/mysqlMail2</link>\n");
-		printf("<description>mysqlMail2 tJob Errors</description>\n");
+		printf("<title>unxsMail RSS tJob Errors</title>\n");
+		printf("<link>http://openisp.net/unxsMail</link>\n");
+		printf("<description>unxsMail tJob Errors</description>\n");
 		printf("<lastBuildDate>%.199s</lastBuildDate>\n",cRSSDate);
-		printf("<generator>mysqlMail2 RSS Generator</generator>\n");
+		printf("<generator>unxsMail RSS Generator</generator>\n");
 		printf("<docs>http://blogs.law.harvard.edu/tech/rss</docs>\n");
 		printf("<ttl>120</ttl>\n");
 
@@ -754,7 +754,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("\n<item>\n");
-			printf("<title>mysqlMail2.tJob.uJob=%s</title>\n",field[0]);
+			printf("<title>unxsMail.tJob.uJob=%s</title>\n",field[0]);
 			printf("<link>%s?gcFunction=tJob&amp;uJob=%s</link>\n",cLinkStart,
 							field[0]);
 			printf("<description>cJobName=%s Server=%s uUser=%s\ncJobData=(%s)</description>\n",field[2],field[1],field[3],field[4]);
@@ -1085,7 +1085,7 @@ void TextError(const char *cError, unsigned uContinue)
 {
 	char cQuery[1024];
 
-	printf("\nPlease report this mysqlMail2 fatal error ASAP:\n%s\n",cError);
+	printf("\nPlease report this unxsMail fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
         sprintf(cQuery,"INSERT INTO tLog SET cLabel='TextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",guPermLevel,guLoginClient,gcUser,gcHost,cError,gcHostname,guLoginClient);

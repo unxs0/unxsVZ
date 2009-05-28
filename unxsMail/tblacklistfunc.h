@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: modulefunc.h.template 2459 2009-02-11 12:04:10Z Gary $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -345,14 +345,14 @@ void tBlackListNavList(void)
 	{	
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tBlackList"
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tBlackList"
 				"&uBlackList=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}
         mysql_free_result(res);
 
 	if(uUser)
-		printf("<p><a class=darkLink href=mysqlMail2.cgi?gcFunction=tUser&uUser=%u "
+		printf("<p><a class=darkLink href=unxsMail.cgi?gcFunction=tUser&uUser=%u "
 			"title='Go back to the tUser record you were working on'>"
 			"Back to tUser record</a></p>\n",uUser);
 

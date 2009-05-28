@@ -1,8 +1,8 @@
 /*
 FILE
-	tStatus source code of mysqlMail2.cgi
+	tStatus source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tstatus.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tstatusfunc.h while 
@@ -149,7 +149,7 @@ void tStatus(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetStatus();
-				mysqlMail2("New tStatus table created");
+				unxsMail("New tStatus table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtStatus(unsigned uMode)
 	uStatus=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tStatus",uStatus);
-	mysqlMail2Log(uStatus,"tStatus","New");
+	unxsMailLog(uStatus,"tStatus","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetStatus(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uStatus,"tStatus","Del");
+		unxsMailLog(uStatus,"tStatus","Del");
 #endif
 		tStatus(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uStatus,"tStatus","DelError");
+		unxsMailLog(uStatus,"tStatus","DelError");
 #endif
 		tStatus(LANG_NBR_RECNOTDELETED);
 	}
@@ -455,7 +455,7 @@ void ModtStatus(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tStatus",uStatus);
-	mysqlMail2Log(uStatus,"tStatus","Mod");
+	unxsMailLog(uStatus,"tStatus","Mod");
 #endif
 	tStatus(gcQuery);
 

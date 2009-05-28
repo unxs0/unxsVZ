@@ -1,8 +1,8 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 2904 2009-04-23 12:36:46Z hus-admin $
-	mysqlRAD2.cgi created application file for mysqlMail2.cgi
+	$Id$
+	mysqlRAD2.cgi created application file for unxsMail.cgi
 	(tAuthorize.cPasswd template set)
 	mysqlRAD2 to mysqlRAD3 transition template
 PURPOSE
@@ -65,7 +65,7 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id: main.c 2904 2009-04-23 12:36:46Z hus-admin $";
+char *gcBuildInfo="$Id$";
 char *gcRADStatus="Start";
 
 //Local
@@ -85,7 +85,7 @@ void DashBoard(const char *cOptionalMsg);
 //Only local
 void ConnectDb(void);
 void NoSuchFunction(void);
-void mysqlMail2(const char *cResult);
+void unxsMail(const char *cResult);
 void InitialInstall(void);
 const char *cUserLevel(unsigned uPermLevel);
 
@@ -114,7 +114,7 @@ int main(int iArgc, char *cArgv[])
 	sysinfo(SI_HOSTNAME, gcHostname, 98);
 #endif
 
-	if(!strstr(cArgv[0],"mysqlMail2.cgi"))
+	if(!strstr(cArgv[0],"unxsMail.cgi"))
 		CalledByAlias(iArgc,cArgv);
 
 	if(getenv("REMOTE_HOST")!=NULL)
@@ -156,11 +156,11 @@ int main(int iArgc, char *cArgv[])
 		if(gcFunction[0])
 		{
 			if(!strcmp(gcFunction,"Main"))
-				mysqlMail2("");
+				unxsMail("");
 			else if(!strcmp(gcFunction,"Logout"))
 			{
-				printf("Set-Cookie: mysqlMail2Login=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				printf("Set-Cookie: mysqlMail2Passwd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsMailLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsMailPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 				mysql_query(&gMysql,gcQuery);
 				gcCookie[0]=0;
@@ -243,7 +243,7 @@ int main(int iArgc, char *cArgv[])
 
 		}
 
-		mysqlMail2(ISPNAME);
+		unxsMail(ISPNAME);
 
 	}//end get method interface section
 
@@ -321,7 +321,7 @@ int main(int iArgc, char *cArgv[])
 
 #include "mainfunc.h"
 
-void mysqlMail2(const char *cResult)
+void unxsMail(const char *cResult)
 {
 	Header_ism3("Main",0);
 
@@ -332,7 +332,7 @@ void mysqlMail2(const char *cResult)
 
 	Footer_ism3();
 
-}//void mysqlMail2(const char *cResult)
+}//void unxsMail(const char *cResult)
 
 
 void StyleSheet(void)
@@ -507,11 +507,11 @@ void Header_ism3(char *title, int js)
 {
 	printf("Content-type: text/html\n\n");
 	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-        printf("<html><head><title>mysqlMail2 %s </title>",title);
+        printf("<html><head><title>unxsMail %s </title>",title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
 
-	printf("</head><body><form action=mysqlMail2.cgi method=post><blockquote>\n");
+	printf("</head><body><form action=unxsMail.cgi method=post><blockquote>\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tUser") || !strcmp(gcFunction,"tUserTools") ||
@@ -618,7 +618,7 @@ void Header_ism3(char *title, int js)
 		ExttVacationNavBar();
 
 	//Login info
-	printf("<font size=3><b>mysqlMail2</b></font> \n ");
+	printf("<font size=3><b>unxsMail</b></font> \n ");
 	if(!guPermLevel)
 	{
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>Your IP address %s has been logged</font>",gcHost);
@@ -633,7 +633,7 @@ void Header_ism3(char *title, int js)
 
 	//Logout link
 	if(guSSLCookieLogin)
-		printf(" <a title='Erase login cookies' href=mysqlMail2.cgi?gcFunction=Logout>Logout</a> ");
+		printf(" <a title='Erase login cookies' href=unxsMail.cgi?gcFunction=Logout>Logout</a> ");
 
 	//Generate Menu Items
 	printf("\n<!-- tab menu -->\n");
@@ -650,7 +650,7 @@ void Header_ism3(char *title, int js)
 		printf(">\n");
 	else
 		printf(" id=current>\n");
-		printf("\t\t\t<a title='Home start page' href=mysqlMail2.cgi?gcFunction=Main>Main</a>\n");
+		printf("\t\t\t<a title='Home start page' href=unxsMail.cgi?gcFunction=Main>Main</a>\n");
 	printf("\t\t\t</li>\n");
 
 	//tUser
@@ -662,7 +662,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Pop3 Users' href=mysqlMail2.cgi?gcFunction=tUser>tUser</a>\n");
+	  printf("\t\t\t<a title='Pop3 Users' href=unxsMail.cgi?gcFunction=tUser>tUser</a>\n");
 	}
 	//tAlias
 	if(guPermLevel>=20)
@@ -673,7 +673,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='sendmail aliases file image' href=mysqlMail2.cgi?gcFunction=tAlias>tAlias</a>\n");
+	  printf("\t\t\t<a title='sendmail aliases file image' href=unxsMail.cgi?gcFunction=tAlias>tAlias</a>\n");
 	}
 	//tDomain
 	if(guPermLevel>=10)
@@ -684,7 +684,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Domains' href=mysqlMail2.cgi?gcFunction=tDomain>tDomain</a>\n");
+	  printf("\t\t\t<a title='Domains' href=unxsMail.cgi?gcFunction=tDomain>tDomain</a>\n");
 	}
 	//tVUT
 	if(guPermLevel>=20)
@@ -695,7 +695,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='sendmail virtual user table domains' href=mysqlMail2.cgi?gcFunction=tVUT>tVUT</a>\n");
+	  printf("\t\t\t<a title='sendmail virtual user table domains' href=unxsMail.cgi?gcFunction=tVUT>tVUT</a>\n");
 	}
 	//tVUTEntries
 	if(guPermLevel>=20)
@@ -706,7 +706,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='sendmail virtual user table entries' href=mysqlMail2.cgi?gcFunction=tVUTEntries>tVUTEntries</a>\n");
+	  printf("\t\t\t<a title='sendmail virtual user table entries' href=unxsMail.cgi?gcFunction=tVUTEntries>tVUTEntries</a>\n");
 	}
 	//tAccess
 	if(guPermLevel>=20)
@@ -717,7 +717,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Sendmail relay file' href=mysqlMail2.cgi?gcFunction=tAccess>tAccess</a>\n");
+	  printf("\t\t\t<a title='Sendmail relay file' href=unxsMail.cgi?gcFunction=tAccess>tAccess</a>\n");
 	}
 	//tRelay
 	if(guPermLevel>=20)
@@ -728,7 +728,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tRelay' href=mysqlMail2.cgi?gcFunction=tRelay>tRelay</a>\n");
+	  printf("\t\t\t<a title='tRelay' href=unxsMail.cgi?gcFunction=tRelay>tRelay</a>\n");
 	}
 	//tLocal
 	if(guPermLevel>=20)
@@ -739,7 +739,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Sendmail cw file of local domains' href=mysqlMail2.cgi?gcFunction=tLocal>tLocal</a>\n");
+	  printf("\t\t\t<a title='Sendmail cw file of local domains' href=unxsMail.cgi?gcFunction=tLocal>tLocal</a>\n");
 	}
 	//tUserType
 	if(guPermLevel>=20)
@@ -750,7 +750,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tUserType' href=mysqlMail2.cgi?gcFunction=tUserType>tUserType</a>\n");
+	  printf("\t\t\t<a title='tUserType' href=unxsMail.cgi?gcFunction=tUserType>tUserType</a>\n");
 	}
 	//tUserConfig
 	if(guPermLevel>=20)
@@ -761,7 +761,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tUserConfig' href=mysqlMail2.cgi?gcFunction=tUserConfig>tUserConfig</a>\n");
+	  printf("\t\t\t<a title='tUserConfig' href=unxsMail.cgi?gcFunction=tUserConfig>tUserConfig</a>\n");
 	}
 	//tServerConfig
 	if(guPermLevel>=20)
@@ -772,7 +772,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tServerConfig' href=mysqlMail2.cgi?gcFunction=tServerConfig>tServerConfig</a>\n");
+	  printf("\t\t\t<a title='tServerConfig' href=unxsMail.cgi?gcFunction=tServerConfig>tServerConfig</a>\n");
 	}
 	//tConfigSpec
 	if(guPermLevel>=20)
@@ -783,7 +783,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tConfigSpec' href=mysqlMail2.cgi?gcFunction=tConfigSpec>tConfigSpec</a>\n");
+	  printf("\t\t\t<a title='tConfigSpec' href=unxsMail.cgi?gcFunction=tConfigSpec>tConfigSpec</a>\n");
 	}
 	//tClient
 	if(guPermLevel>=7)
@@ -794,7 +794,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Client Info' href=mysqlMail2.cgi?gcFunction=tClient>tClient</a>\n");
+	  printf("\t\t\t<a title='Client Info' href=unxsMail.cgi?gcFunction=tClient>tClient</a>\n");
 	}
 	//tAuthorize
 	if(guPermLevel>=20)
@@ -805,7 +805,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Login Authorization' href=mysqlMail2.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
+	  printf("\t\t\t<a title='Login Authorization' href=unxsMail.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
 	}
 	//tStatus
 	if(guPermLevel>=20)
@@ -816,7 +816,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='User status' href=mysqlMail2.cgi?gcFunction=tStatus>tStatus</a>\n");
+	  printf("\t\t\t<a title='User status' href=unxsMail.cgi?gcFunction=tStatus>tStatus</a>\n");
 	}
 	//tJobStatus
 	if(guPermLevel>=20)
@@ -827,7 +827,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Job queue entry status' href=mysqlMail2.cgi?gcFunction=tJobStatus>tJobStatus</a>\n");
+	  printf("\t\t\t<a title='Job queue entry status' href=unxsMail.cgi?gcFunction=tJobStatus>tJobStatus</a>\n");
 	}
 	//tTemplate
 	if(guPermLevel>=20)
@@ -838,7 +838,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplate' href=mysqlMail2.cgi?gcFunction=tTemplate>tTemplate</a>\n");
+	  printf("\t\t\t<a title='tTemplate' href=unxsMail.cgi?gcFunction=tTemplate>tTemplate</a>\n");
 	}
 	//tTemplateSet
 	if(guPermLevel>=20)
@@ -849,7 +849,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateSet' href=mysqlMail2.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
+	  printf("\t\t\t<a title='tTemplateSet' href=unxsMail.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
 	}
 	//tTemplateType
 	if(guPermLevel>=20)
@@ -860,7 +860,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateType' href=mysqlMail2.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
+	  printf("\t\t\t<a title='tTemplateType' href=unxsMail.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
 	}
 	//tLog
 	if(guPermLevel>=20)
@@ -871,7 +871,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLog' href=mysqlMail2.cgi?gcFunction=tLog>tLog</a>\n");
+	  printf("\t\t\t<a title='tLog' href=unxsMail.cgi?gcFunction=tLog>tLog</a>\n");
 	}
 	//tLogType
 	if(guPermLevel>=20)
@@ -882,7 +882,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogType' href=mysqlMail2.cgi?gcFunction=tLogType>tLogType</a>\n");
+	  printf("\t\t\t<a title='tLogType' href=unxsMail.cgi?gcFunction=tLogType>tLogType</a>\n");
 	}
 	//tLogMonth
 	if(guPermLevel>=20)
@@ -893,7 +893,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogMonth' href=mysqlMail2.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
+	  printf("\t\t\t<a title='tLogMonth' href=unxsMail.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
 	}
 	//tMonth
 	if(guPermLevel>=20)
@@ -904,7 +904,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMonth' href=mysqlMail2.cgi?gcFunction=tMonth>tMonth</a>\n");
+	  printf("\t\t\t<a title='tMonth' href=unxsMail.cgi?gcFunction=tMonth>tMonth</a>\n");
 	}
 	//tGlossary
 	if(guPermLevel>=20)
@@ -915,7 +915,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tGlossary' href=mysqlMail2.cgi?gcFunction=tGlossary>tGlossary</a>\n");
+	  printf("\t\t\t<a title='tGlossary' href=unxsMail.cgi?gcFunction=tGlossary>tGlossary</a>\n");
 	}
 	//tJob
 	if(guPermLevel>=20)
@@ -926,7 +926,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tJob' href=mysqlMail2.cgi?gcFunction=tJob>tJob</a>\n");
+	  printf("\t\t\t<a title='tJob' href=unxsMail.cgi?gcFunction=tJob>tJob</a>\n");
 	}
 	//tServer
 	if(guPermLevel>=20)
@@ -937,7 +937,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tServer' href=mysqlMail2.cgi?gcFunction=tServer>tServer</a>\n");
+	  printf("\t\t\t<a title='tServer' href=unxsMail.cgi?gcFunction=tServer>tServer</a>\n");
 	}
 	//tServerGroup
 	if(guPermLevel>=20)
@@ -948,7 +948,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tServerGroup' href=mysqlMail2.cgi?gcFunction=tServerGroup>tServerGroup</a>\n");
+	  printf("\t\t\t<a title='tServerGroup' href=unxsMail.cgi?gcFunction=tServerGroup>tServerGroup</a>\n");
 	}
 	//tServerGroupGlue
 	if(guPermLevel>=20)
@@ -959,7 +959,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='ttServerGroupGlue' href=mysqlMail2.cgi?gcFunction=tServerGroupGlue>tServerGroupGlue</a>\n");
+	  printf("\t\t\t<a title='ttServerGroupGlue' href=unxsMail.cgi?gcFunction=tServerGroupGlue>tServerGroupGlue</a>\n");
 	}
 	//tConfiguration
 	if(guPermLevel>=20)
@@ -970,7 +970,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tConfiguration' href=mysqlMail2.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
+	  printf("\t\t\t<a title='tConfiguration' href=unxsMail.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
 	}
 	//tHoldUser
 	if(guPermLevel>=20)
@@ -981,7 +981,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tHoldUser' href=mysqlMail2.cgi?gcFunction=tHoldUser>tHoldUser</a>\n");
+	  printf("\t\t\t<a title='tHoldUser' href=unxsMail.cgi?gcFunction=tHoldUser>tHoldUser</a>\n");
 	}
 	//tRequest
 	if(guPermLevel>=20)
@@ -992,7 +992,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Account Creation Request Table' href=mysqlMail2.cgi?gcFunction=tRequest>tRequest</a>\n");
+	  printf("\t\t\t<a title='Account Creation Request Table' href=unxsMail.cgi?gcFunction=tRequest>tRequest</a>\n");
 	}
 
 	//tWhiteList
@@ -1004,7 +1004,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Whitelist entries table' href=mysqlMail2.cgi?gcFunction=tWhiteList>tWhiteList</a>\n");
+	  printf("\t\t\t<a title='Whitelist entries table' href=unxsMail.cgi?gcFunction=tWhiteList>tWhiteList</a>\n");
 	}
 	
 	//tBlackList
@@ -1016,7 +1016,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Blacklist entries table' href=mysqlMail2.cgi?gcFunction=tBlackList>tBlackList</a>\n");
+	  printf("\t\t\t<a title='Blacklist entries table' href=unxsMail.cgi?gcFunction=tBlackList>tBlackList</a>\n");
 	}
 
 	//tVacation
@@ -1028,7 +1028,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Vacation messages and status table' href=mysqlMail2.cgi?gcFunction=tVacation>tVacation</a>\n");
+	  printf("\t\t\t<a title='Vacation messages and status table' href=unxsMail.cgi?gcFunction=tVacation>tVacation</a>\n");
 	}
 
 	printf("\t\t\t</ol>\n");
@@ -1056,7 +1056,7 @@ void ConnectDb(void)
         if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
         {
 		if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-			mysqlMail2("Database server unavailable. Did you run mysqlMail2.cgi Initialize &lt;mysqlpwd&gt;?");
+			unxsMail("Database server unavailable. Did you run unxsMail.cgi Initialize &lt;mysqlpwd&gt;?");
         }
 
 }//end of ConnectDb()
@@ -1066,7 +1066,7 @@ void NoSuchFunction(void)
 {
 	 
 	sprintf(gcQuery,"[%s] Not Recognized",gcFunction);
-	mysqlMail2(gcQuery);
+	unxsMail(gcQuery);
 }
 
 void ProcessControlVars(pentry entries[], int x)
@@ -1472,7 +1472,7 @@ char *TextAreaSave(char *cField)
 	else
 		cCopy=(char *)cField;
 
-	if(!cCopy) mysqlMail2("TextAreaInput() malloc error");
+	if(!cCopy) unxsMail("TextAreaInput() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1512,7 +1512,7 @@ char *TransformAngleBrackets(char *cField)
 	if(!uNum) return(cField);
 	cCopy=(char *)malloc( ( (strlen(cField)) + (uNum*4) + 1 ));
 
-	if(!cCopy) mysqlMail2("TransformAngleBrackets() malloc error");
+	if(!cCopy) unxsMail("TransformAngleBrackets() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1555,7 +1555,7 @@ char *EncodeDoubleQuotes(char *cField)
 	if(!uNum) return(cField);
 	cCopy=(char *)malloc( ( (strlen(cField)) + (uNum*5) + 1 ));
 
-	if(!cCopy) mysqlMail2("EncodeDoubleQuotes() malloc error");
+	if(!cCopy) unxsMail("EncodeDoubleQuotes() malloc error");
 
 	i=0;
 	while(cField[i])
@@ -1671,8 +1671,8 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
 
 void InitialInstall(void)
 {
-	mysqlMail2("Please run\
-		mysqlMail2.cgi Initialize &lt;mysqlpwd&gt; from the command line");
+	unxsMail("Please run\
+		unxsMail.cgi Initialize &lt;mysqlpwd&gt; from the command line");
 
 }//void InitialInstall(void)
 
@@ -1913,14 +1913,14 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: mysqlMail2Login=%s;\n",gcLogin);
-		printf("Set-Cookie: mysqlMail2Passwd=%s;\n",gcPasswd);
+		printf("Set-Cookie: unxsMailLogin=%s;\n",gcLogin);
+		printf("Set-Cookie: unxsMailPasswd=%s;\n",gcPasswd);
 		strncpy(gcUser,gcLogin,41);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 		mysql_query(&gMysql,gcQuery);
-		mysqlMail2("DashBoard");
+		unxsMail("DashBoard");
 	}
 	else
 	{
@@ -2001,7 +2001,7 @@ void SSLCookieLogin(void)
 	//Parse out login and passwd from cookies
 #ifdef SSLONLY
 	if(getenv("HTTPS")==NULL) 
-		mysqlMail2("Non SSL access denied");
+		unxsMail("Non SSL access denied");
 #endif
 
 	if(getenv("HTTP_COOKIE")!=NULL)
@@ -2010,9 +2010,9 @@ void SSLCookieLogin(void)
 	if(gcCookie[0])
 	{
 
-	if((ptr=strstr(gcCookie,"mysqlMail2Login=")))
+	if((ptr=strstr(gcCookie,"unxsMailLogin=")))
 	{
-		ptr+=strlen("mysqlMail2Login=");
+		ptr+=strlen("unxsMailLogin=");
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
@@ -2024,9 +2024,9 @@ void SSLCookieLogin(void)
 			strncpy(gcLogin,ptr,99);
 		}
 	}
-	if((ptr=strstr(gcCookie,"mysqlMail2Passwd=")))
+	if((ptr=strstr(gcCookie,"unxsMailPasswd=")))
 	{
-		ptr+=strlen("mysqlMail2Passwd=");
+		ptr+=strlen("unxsMailPasswd=");
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
@@ -2047,7 +2047,7 @@ void SSLCookieLogin(void)
 	strncpy(gcUser,gcLogin,41);
 	GetPLAndClient(gcUser);
 	if(!guPermLevel || !guLoginClient)
-		mysqlMail2("Access denied");
+		unxsMail("Access denied");
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
 
@@ -2127,7 +2127,7 @@ void GetClientOwner(unsigned uClient, unsigned *uOwner)
 }//void GetClientOwner(unsigned uClient, unsigned *uOwner)
 
 
-void mysqlMail2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+void unxsMailLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 {
         char cQuery[512];
 
@@ -2152,7 +2152,7 @@ void mysqlMail2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
         mysql_query(&gMysql,cQuery);
 
-}//void mysqlMail2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+}//void unxsMailLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
 
 long unsigned luGetCreatedDate(char *cTableName, unsigned uTablePK)
@@ -2204,7 +2204,7 @@ void htmlPlainTextError(const char *cError)
 	char cQuery[1024];
 
 	printf("Content-type: text/plain\n\n");
-	printf("Please report this mysqlMail2 fatal error ASAP:\n%s\n",cError);
+	printf("Please report this unxsMail fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
         sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s (%.24s)\",cServer='%s',cHash=MD5(CONCAT('%u','%u','%s','%s',\"%s (%.24s)\",'%s',UNIX_TIMESTAMP(NOW()),'%s')),uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uTablePK=%u,cTableName='errno'",

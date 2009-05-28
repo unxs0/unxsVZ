@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tdomainfunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -366,7 +366,7 @@ void tDomainNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			uCount++;
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tDomain&uDomain=%s&cSearch=%s>%s</a><br>\n",
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tDomain&uDomain=%s&cSearch=%s>%s</a><br>\n",
 					field[0]
 					,cURLEncode(cSearch)
 					,field[1]);
@@ -505,7 +505,7 @@ void tDomainContextInfo(void)
 	if(mysql_num_rows(res))
 	{	
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tVUT&uVUT=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tVUT&uVUT=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
 	}
 	else
 	{
@@ -525,7 +525,7 @@ void tDomainContextInfo(void)
 	if(mysql_num_rows(res))
 	{	
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tAccess&uAccess=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tAccess&uAccess=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
 	}
 	else
 	{
@@ -545,7 +545,7 @@ void tDomainContextInfo(void)
 	if(mysql_num_rows(res))
 	{	
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tLocal&uLocal=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tLocal&uLocal=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
 	}
 	else
 	{
@@ -565,7 +565,7 @@ void tDomainContextInfo(void)
 	if(mysql_num_rows(res))
 	{	
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tRelay&uRelay=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tRelay&uRelay=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
 	}
 	else
 	{

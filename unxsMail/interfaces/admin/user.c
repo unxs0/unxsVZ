@@ -271,7 +271,7 @@ void UserCommands(pentry entries[], int x)
 						uDomain,uUser,
 						guCompany,guLoginClient);
 					sprintf(cStatus,"%.32s",ForeignKey("tStatus","cLabel",3));
-					mysqlMail2Log(uUser,"tUser","Pending Del");
+					unxsMailLog(uUser,"tUser","Pending Del");
 					gcMessage="User scheduled for deletion";
 				}
 				else
@@ -293,8 +293,8 @@ void UserCommands(pentry entries[], int x)
 
 void htmlUser(void)
 {
-	htmlHeader("mysqlMail2 System","Header");
-	htmlUserPage("mysqlMail2 System","User.Body");
+	htmlHeader("unxsMail System","Header");
+	htmlUserPage("unxsMail System","User.Body");
 	htmlFooter("Footer");
 
 }//void htmlUser(void)
@@ -691,7 +691,7 @@ void InsertUser(void)
 	if((uUser=mysql_insert_id(&gMysql)))
 	{
 		gcMessage="User added OK";
-		mysqlMail2Log(uUser,"tUser","New");
+		unxsMailLog(uUser,"tUser","New");
 	}
 	else
 		gcMessage="<blink>Error:</blink> Failed to add user. Contact support ASAP";
@@ -721,7 +721,7 @@ void UpdateUser(void)
 	if(mysql_affected_rows(&gMysql))
 	{
 		gcMessage="User modified OK";
-		mysqlMail2Log(uUser,"tUser","Mod");
+		unxsMailLog(uUser,"tUser","Mod");
 	}
 	else
 		gcMessage="<blink>Error:</blink> Failed to modify user. Contact support ASAP";

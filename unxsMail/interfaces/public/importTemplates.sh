@@ -14,5 +14,5 @@
 #	command line arg $1 for example
 #
 for i in `find ./templates/* -type f`; do 
-	/cgi-bin/mysqlMail2.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i plain;
+	/cgi-bin/unxsMail.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i plain;
 done

@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tservergroupgluefunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -263,7 +263,7 @@ void tServerGroupGlueNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tServerGroupGlue&uServerGroupGlue=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
+printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tServerGroupGlue&uServerGroupGlue=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
 	        }
 	}
         mysql_free_result(res);

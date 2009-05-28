@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tusertypefunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -278,7 +278,7 @@ void tUserTypeNavList(void)
         	printf("<p><u>tUserTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tUserType&uUserType=%s>%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tUserType&uUserType=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 
