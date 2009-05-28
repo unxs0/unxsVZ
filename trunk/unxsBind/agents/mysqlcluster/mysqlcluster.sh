@@ -2,6 +2,7 @@
 #
 #FILE
 #	mysqlcluster.sh
+#	$Id$
 #
 #PURPOSE
 #	Connect to all members of a MySQL replication cluster and check slave status.
@@ -15,6 +16,9 @@
 #	Must install the images in this dir into /var/www/unxs/html/images/ 
 #
 
+#
+#Modify the line below with your MyQSL root user password.
+PASSWD="ultrasecret"
 
 if [ "$1" == "" ] || [ "$2" == "" ];then
 	echo "usage: $0 <host1> <host2>"
@@ -24,7 +28,7 @@ fi
 
 
 #local server
-echo "show slave status\G" | /usr/bin/mysql -pZorBexin | grep "Seconds_Behind_Master: 0" > /dev/null;
+echo "show slave status\G" | /usr/bin/mysql -p$PASSWD | grep "Seconds_Behind_Master: 0" > /dev/null;
 if [ $? == 0 ];then
 	uLocalStatus="0";
 else
@@ -32,7 +36,7 @@ else
 fi
 
 #server1
-ssh $1 "echo 'show slave status\G' | /usr/bin/mysql -pZorBexin | grep 'Seconds_Behind_Master: 0'" > /dev/null;
+ssh $1 "echo 'show slave status\G' | /usr/bin/mysql -p$PASSWD | grep 'Seconds_Behind_Master: 0'" > /dev/null;
 if [ $? == 0 ];then
 	uHost1Status="0";
 else
@@ -40,7 +44,7 @@ else
 fi
 
 #server2
-ssh $2 "echo 'show slave status\G' | /usr/bin/mysql -pZorBexin | grep 'Seconds_Behind_Master: 0'" > /dev/null;
+ssh $2 "echo 'show slave status\G' | /usr/bin/mysql -p$PASSWD | grep 'Seconds_Behind_Master: 0'" > /dev/null;
 if [ $? == 0 ];then
 	uHost2Status="0";
 else
