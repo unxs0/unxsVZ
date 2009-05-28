@@ -203,7 +203,7 @@ void ExtMainContent(void)
 	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);
 
 	OpenRow("Application Summary","black");
-	printf("<td>New RAD3 based sendmail and postfix controller as well as confiiguration generator for all mail services across multiple servers and multiple mail domains. For ESMTP, pop3, imap, webmail, clamAV, Spamassassin, procmail, etc. Replaces older tech mysqlSendmail and mysqlPostfix.</td></tr>\n");
+	printf("<td>New RAD3 based sendmail and postfix controller as well as configuration generator for all mail services across multiple servers and multiple mail domains. For ESMTP, pop3, imap, webmail, clamAV, Spamassassin, procmail, etc. Replaces older tech mysqlSendmail and mysqlPostfix.</td></tr>\n");
 
 	if(guPermLevel>9)
 	{
