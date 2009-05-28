@@ -1,9 +1,9 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 799 2007-08-27 18:23:37Z hugo $
+	$Id$
 AUTHOR
-	(C) 2006-2008 Gary Wallis for Unixservice
+	(C) 2006-2009 Gary Wallis for Unixservice
 PURPOSE
 	unxsMail User Interface
 REQUIRES
