@@ -11,7 +11,9 @@ Please read and test the mysqlcluster.sh script for more information.
 
 To use:
 
-cd <to this dir>
+cd unxsBind/images
 cp -i *.gif /var/www/unxs/html/images
 crontab -e
 <and add an entry for the mysqlcluster.sh script>
+
+(binary rpm may have already installed the images)
