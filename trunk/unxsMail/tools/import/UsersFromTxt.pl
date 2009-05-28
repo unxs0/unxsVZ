@@ -17,10 +17,10 @@
 #
 #Config section start, you must edit this as required
 
-$cmysqlMail2Db='mysqlmail2';
-$cmysqlMail2Login='mysqlmail2';
-$cmysqlMail2Pwd='wsxedc';
-$cmysqlMail2IP='196.25.27.117';
+$cunxsMailDb='mysqlmail2';
+$cunxsMailLogin='mysqlmail2';
+$cunxsMailPwd='wsxedc';
+$cunxsMailIP='196.25.27.117';
 
 #Please set this vars carefully
 $uDefaultServerGroup=2;
@@ -40,7 +40,7 @@ if($uDefaultConf eq 1) { die('I think you should not run me before configuring m
 
  srand (time ^ $$ ^ unpack "%L*", `ps axww | gzip`);
 
-my $mysqlMail2Db=DBI->connect ("DBI:mysql:$cmysqlMail2Db:$cmysqlMail2IP",$cmysqlMail2Login,$cmysqlMail2Pwd) or die DBI->errstr;
+my $unxsMailDb=DBI->connect ("DBI:mysql:$cunxsMailDb:$cunxsMailIP",$cunxsMailLogin,$cunxsMailPwd) or die DBI->errstr;
 
 
 #
@@ -68,7 +68,7 @@ while(($cUser=<DATA>))
 		$cVirtualEmail=$cLogin;
 		
 		$cQuery="SELECT uUser FROM tUser WHERE cLogin='$cLogin'";
-		my $res=$mysqlMail2Db->prepare($cQuery);
+		my $res=$unxsMailDb->prepare($cQuery);
 		$res->execute();
 		if((@field=$res->fetchrow_array()))
 		{
@@ -80,13 +80,13 @@ while(($cUser=<DATA>))
 		#$1$DO0Fo...$/KAal9bGTImNII4EmWGwg.
 		#Default crypt() password (qazwsx)
 		$cQuery="INSERT INTO tUser SET cLogin='$cTargetEmail',uDomain=$uDomain,cPasswd='\$1\$DO0Fo...\$/KAal9bGTImNII4EmWGwg.',uUserType=1,uServerGroup=$uDefaultServerGroup,uStatus=4,uOwner=35,uCreatedBy=36,uCreatedDate=UNIX_TIMESTAMP(NOW())";
-		$run=$mysqlMail2Db->prepare($cQuery);
+		$run=$unxsMailDb->prepare($cQuery);
 		$run->execute() or die mysql_error();
 		#print("$cQuery\n");
 
 		#Insert tVUT record if it applies
 		$cQuery="SELECT uVUT FROM tVUT WHERE cDomain='$cDomain'";
-		my $res=$mysqlMail2Db->prepare($cQuery);
+		my $res=$unxsMailDb->prepare($cQuery);
 		$res->execute();
 		if((@field=$res->fetchrow_array()))
 		{
@@ -95,13 +95,13 @@ while(($cUser=<DATA>))
 		else
 		{
 			$cQuery="INSERT INTO tVUT SET cDomain='$cDomain',uServerGroup=$uDefaultServerGroup,uOwner=35,uCreatedBy=36,uCreatedDate=UNIX_TIMESTAMP(NOW())";
-			$run=$mysqlMail2Db->prepare($cQuery);
+			$run=$unxsMailDb->prepare($cQuery);
 			$run->execute() or die mysql_error();
 			#print("$cQuery\n");
-			$uVUT=$mysqlMail2Db->{ q{mysql_insertid}};
+			$uVUT=$unxsMailDb->{ q{mysql_insertid}};
 		}
 		$cQuery="INSERT INTO tVUTEntries SET cVirtualEmail='$cVirtualEmail',uOwner=35,uCreatedBy=36,uCreatedDate=UNIX_TIMESTAMP(NOW()),cTargetEmail='$cTargetEmail',uVUT=$uVUT";
-		 $run=$mysqlMail2Db->prepare($cQuery);
+		 $run=$unxsMailDb->prepare($cQuery);
 		 $run->execute() or die mysql_error();
 		 #print("$cQuery\n");
 	}
@@ -111,7 +111,7 @@ while(($cUser=<DATA>))
 	}
 }
 #	$cQuery="INSERT INTO tLocal SET cDomain='$field[0]',uOwner=$field[1],uCreatedBy=$field[2],uCreatedDate=UNIX_TIMESTAMP(NOW()),uServerGroup=$uDefaultServerGroup;";
-#	$run=$mysqlMail2Db->prepare($cQuery);
+#	$run=$unxsMailDb->prepare($cQuery);
 #debug only
 #	print("$cQuery\n");
 #	$run->execute() or die $cQuery;
@@ -124,7 +124,7 @@ sub uGetDomain($)
 	my $cDomain=shift;
 
 	$cQuery="SELECT uDomain FROM tDomain WHERE cDomain='$cDomain'";
-	my $res=$mysqlMail2Db->prepare($cQuery); 
+	my $res=$unxsMailDb->prepare($cQuery); 
 	$res->execute(); 
 	if((@field=$res->fetchrow_array())) 
 	{

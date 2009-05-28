@@ -13,7 +13,7 @@ do
         #As these are full email addresses, we must look thet mailbox name via VUT
         #Please note that VUT rebuild should be made semi-automatically
         #after running this script, by modifying any of the tVUTEntries records
-        #at mysqlMail2 db.
+        #at unxsMail db.
         cMbox=`grep $line /etc/mail/virtusertable | cut -d " " -f 2`;
         uResults=`grep $line /etc/mail/virtusertable | wc -l`;
         if [ "$uResults" = "1" ]; then

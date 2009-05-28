@@ -265,7 +265,7 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 		{
 			struct t_template template;
 			template.cpName[0]="cTitle";
-			template.cpValue[0]="mysqlMail2 System Admin Interface";
+			template.cpValue[0]="unxsMail System Admin Interface";
 		
 			template.cpName[1]="";
 
@@ -753,7 +753,7 @@ char *FQDomainName(char *cInput)
 }//char *FQDomainName(char *cInput)
 
 
-void mysqlMail2Log(unsigned uTablePK, char *cTableName, char *cLogEntry)
+void unxsMailLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 {
         char cQuery[512];
 

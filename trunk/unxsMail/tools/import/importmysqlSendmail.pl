@@ -2,7 +2,7 @@
 #FILE
 #	importmysqlSendmail.pl
 #PURPOSE
-#	Import mysqlSendmail data into mysqlMail2 database
+#	Import mysqlSendmail data into unxsMail database
 #AUTHOR
 #	(C) 2008 Hugo Urquiza for Unixservice.
 #USAGE
@@ -18,10 +18,10 @@ $cmysqlSendmailLogin='mysqlsendmail';
 $cmysqlSendmailPwd='wsxedc';
 $cmysqlSendmailIP='baldomero.servicoopsa.com.ar';
 
-$cmysqlMail2Db='mysqlmail2';
-$cmysqlMail2Login='mysqlmail2';
-$cmysqlMail2Pwd='wsxedc';
-$cmysqlMail2IP='localhost';
+$cunxsMailDb='mysqlmail2';
+$cunxsMailLogin='mysqlmail2';
+$cunxsMailPwd='wsxedc';
+$cunxsMailIP='localhost';
 
 #Please set this vars carefully
 $uDefaultServerGroup=3;
@@ -39,45 +39,45 @@ if($uDefaultConf eq 1) { die('I think you should not run me before configuring m
 
 
 my $mysqlSendMailDb=DBI->connect ("DBI:mysql:$cmysqlSendmailDb:$cmysqlSendmailIP",$cmysqlSendmailLogin,$cmysqlSendmailPwd) or die DBI->errstr;
-my $mysqlMail2Db=DBI->connect ("DBI:mysql:$cmysqlMail2Db:$cmysqlMail2IP",$cmysqlMail2Login,$cmysqlMail2Pwd) or die DBI->errstr;
+my $unxsMailDb=DBI->connect ("DBI:mysql:$cunxsMailDb:$cunxsMailIP",$cunxsMailLogin,$cunxsMailPwd) or die DBI->errstr;
 
 #
-#Whipe out _EVERY_ table we are going to import at mysqlMail2 db.
+#Whipe out _EVERY_ table we are going to import at unxsMail db.
 #Careful!
 
-#print("Truncating mysqlMail2 data tables...");
+#print("Truncating unxsMail data tables...");
 
 #
 #tDomain
 #$cQuery="TRUNCATE tDomain";
-#$run=$mysqlMail2Db->prepare($cQuery);
+#$run=$unxsMailDb->prepare($cQuery);
 #$run->execute() or die DBI->errstr;
 
 #
 #tUser
 #$cQuery="TRUNCATE tUser";
-#$run=$mysqlMail2Db->prepare($cQuery);
+#$run=$unxsMailDb->prepare($cQuery);
 #$run->execute() or die DBI->errstr;
 
 #
 #tVUT
 #$cQuery="TRUNCATE tVUT";
-#$run=$mysqlMail2Db->prepare($cQuery);
+#$run=$unxsMailDb->prepare($cQuery);
 #$run->execute() or die DBI->errstr;
 
 #tVUTEntries
 #$cQuery="TRUNCATE tVUTEntries";
-#$run=$mysqlMail2Db->prepare($cQuery);
+#$run=$unxsMailDb->prepare($cQuery);
 #$run->execute() or die DBI->errstr;
 
 #tAccess
 #$cQuery="TRUNCATE tAccess";
-#$run=$mysqlMail2Db->prepare($cQuery);
+#$run=$unxsMailDb->prepare($cQuery);
 #$run->execute() or die DBI->errstr;
 
 #tLocal
 #$cQuery="TRUNCATE tLocal";
-#$run=$mysqlMail2Db->prepare($cQuery);
+#$run=$unxsMailDb->prepare($cQuery);
 #$run->execute() or die DBI->errstr;
 
 #print("OK\n");
@@ -97,7 +97,7 @@ $res->execute();
 while((@field=$res->fetchrow_array()))
 {
 	$cQuery="INSERT INTO tDomain SET cDomain='$field[1]',uOwner=$field[2],uCreatedBy=$field[3],uCreatedDate=$field[4],uModBy=$field[5],uModDate=$field[6]";
-	$run=$mysqlMail2Db->prepare($cQuery);
+	$run=$unxsMailDb->prepare($cQuery);
 #debug only
 #	print("$cQuery\n");
 	$run->execute() or die DBI->errstr;
@@ -136,7 +136,7 @@ while((@field=$res->fetchrow_array()))
 
 	$cQuery="INSERT INTO tUser SET cLogin='$field[1]',uDomain=0,cPasswd='$cPasswd',uUserType=$uDefaultUserType,uServerGroup=$uDefaultServerGroup,uStatus=4,uOwner=$field[4],uCreatedBy=$field[5],uCreatedDate=$field[6],uModBy=$field[7],uModDate=$field[8]";
 	
-	$res3=$mysqlMail2Db->prepare($cQuery);
+	$res3=$unxsMailDb->prepare($cQuery);
 	$res3->execute() or die DBI->errstr;
 	#print("$cQuery\n");
 	
@@ -153,7 +153,7 @@ while((@field=$res->fetchrow_array()))
 	if($cDomain eq '') { $cDomain=$cDefaultDomain; }
 	
 	$cQuery="SELECT uDomain FROM tDomain WHERE cDomain='$cDomain'";
-	$res4=$mysqlMail2Db->prepare($cQuery);
+	$res4=$unxsMailDb->prepare($cQuery);
 	$res4->execute() or die DBI->errstr;
 	#print("$cQuery\n");
 
@@ -162,7 +162,7 @@ while((@field=$res->fetchrow_array()))
 	$rv=$dbh->{mysql_insertid};
 
 	$cQuery="UPDATE tUser SET uDomain=$uDomain WHERE uUser=$rv";
-	$res5=$mysqlMail2Db->prepare($cQuery);
+	$res5=$unxsMailDb->prepare($cQuery);
 	$res5->execute() or die DBI->errstr;
 	#print("$cQuery\n");
 }
@@ -183,14 +183,14 @@ $res->execute() or die DBI->errstr;
 while((@field=$res->fetchrow_array()))
 {
 	$cQuery="INSERT INTO tVUT SET uVUT=$field[0],uServerGroup=$uDefaultServerGroup,cDomain='$field[1]',uOwner=$field[2],uCreatedBy=$field[3],uCreatedDate=$field[4],uModBy=$field[5],uModDate=$field[6]";
-	$run=$mysqlMail2Db->prepare($cQuery);
+	$run=$unxsMailDb->prepare($cQuery);
 	$run->execute() or die DBI->errstr;
 }
 
 #
 #tVUTEntries can be imported using mysqldump ;)
 system("mysqldump -h $cmysqlSendmailIP -u $cmysqlSendmailLogin -p$cmysqlSendmailPwd $cmysqlSendmailDb tVUTEntries > /tmp/tVUTEntries.dump");
-system("mysql -h $cmysqlMail2IP -u $cmysqlMail2Login -p$cmysqlMail2Pwd $cmysqlMail2Db < /tmp/tVUTEntries.dump");
+system("mysql -h $cunxsMailIP -u $cunxsMailLogin -p$cunxsMailPwd $cunxsMailDb < /tmp/tVUTEntries.dump");
 
 print("OK\n");
 
@@ -208,7 +208,7 @@ $res->execute() or die DBI->errstr;
 while((@field=$res->fetchrow_array()))
 {
 	$cQuery="INSERT INTO tAccess SET uServerGroup=$uDefaultServerGroup,cDomainIP='$field[0]',cRelayAttr='$field[1]',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())";
-	$run=$mysqlMail2Db->prepare($cQuery);
+	$run=$unxsMailDb->prepare($cQuery);
 	$run->execute() or die DBI->errstr;
 }
 
@@ -227,7 +227,7 @@ $res->execute() or die DBI->errstr;
 while((@field=$res->fetchrow_array()))
 {
 	$cQuery="INSERT INTO tLocal SET uServerGroup=$uDefaultServerGroup,cDomain='$field[0]',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())";
-	$run=$mysqlMail2Db->prepare($cQuery);
+	$run=$unxsMailDb->prepare($cQuery);
 	$run->execute() or die DBI->errstr;
 }
 

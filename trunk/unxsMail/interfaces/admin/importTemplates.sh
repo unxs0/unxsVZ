@@ -12,12 +12,12 @@
 #	Jonathan Petersson
 #
 if [ ! -z "$CGIDIR" ]; then
-    if [ -e "${CGIDIR}mysqlMail2.cgi" ]; then
+    if [ -e "${CGIDIR}unxsMail.cgi" ]; then
     for i in `find ./templates/* -type f`; do
-        ${CGIDIR}mysqlMail2.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i plain;
+        ${CGIDIR}unxsMail.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i plain;
     done
     else
-    echo "mysqlMail2.cgi isn't present in the CGIDIR you've defined!";
+    echo "unxsMail.cgi isn't present in the CGIDIR you've defined!";
     fi
 else
     echo "You haven't defined a CGIDIR, export CGIDIR=/cgi-bin/";

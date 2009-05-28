@@ -241,8 +241,8 @@ void DomainCommands(pentry entries[], int x)
 
 void htmlDomain(void)
 {
-	htmlHeader("mysqlMail2 System","Header");
-	htmlDomainPage("mysqlMail2 System","Domain.Body");
+	htmlHeader("unxsMail System","Header");
+	htmlDomainPage("unxsMail System","Domain.Body");
 	htmlFooter("Footer");
 
 }//void htmlDomain(void)
@@ -466,7 +466,7 @@ void InsertDomain(void)
 	if((uDomain=mysql_insert_id(&gMysql)))
 	{
 		gcMessage="Domain added OK";
-		mysqlMail2Log(uDomain,"tDomain","New");
+		unxsMailLog(uDomain,"tDomain","New");
 	}
 	else
 	{
@@ -484,7 +484,7 @@ void InsertDomain(void)
 	if((uLocal=mysql_insert_id(&gMysql)))
 	{
 		gcMessage="Domain added OK";
-		mysqlMail2Log(uLocal,"tLocal","New");
+		unxsMailLog(uLocal,"tLocal","New");
 	}
 
 	//Lastly, we set the required ism3 fields, in case the user tries to modify the record after adding it
@@ -506,7 +506,7 @@ void UpdateDomain(void)
 	if(mysql_affected_rows(&gMysql))
 	{
 		gcMessage="Domain modified OK";
-		mysqlMail2Log(uDomain,"tDomain","Mod");
+		unxsMailLog(uDomain,"tDomain","Mod");
 	}
 	else
 	{
@@ -523,7 +523,7 @@ void UpdateDomain(void)
 
 	if(mysql_affected_rows(&gMysql))
 	{
-		mysqlMail2Log(uLocal,"tLocal","Mod");
+		unxsMailLog(uLocal,"tLocal","Mod");
 		gcMessage="Domain modified OK";
 	}
 	else
@@ -541,7 +541,7 @@ void DeleteDomain(void)
 	if(mysql_affected_rows(&gMysql))
 	{
 		gcMessage="Domain deleted OK";
-		mysqlMail2Log(uDomain,"tDomain","Del");
+		unxsMailLog(uDomain,"tDomain","Del");
 	}
 	else
 	{
@@ -555,7 +555,7 @@ void DeleteDomain(void)
 	if(mysql_affected_rows(&gMysql))
 	{
 		gcMessage="Domain deleted OK";
-		mysqlMail2Log(uLocal,"tLocal","Del");
+		unxsMailLog(uLocal,"tLocal","Del");
 	}
 	else
 		gcMessage="tLocal not deleted";

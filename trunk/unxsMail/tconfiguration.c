@@ -1,8 +1,8 @@
 /*
 FILE
-	tConfiguration source code of mysqlMail2.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tconfiguration.c 2316 2008-12-19 19:40:15Z hus-admin $
+	tConfiguration source code of unxsMail.cgi
+	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tconfigurationfunc.h while 
@@ -167,7 +167,7 @@ void tConfiguration(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetConfiguration();
-				mysqlMail2("New tConfiguration table created");
+				unxsMail("New tConfiguration table created");
                 	}
 			else
 			{
@@ -395,7 +395,7 @@ void NewtConfiguration(unsigned uMode)
 	uConfiguration=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tConfiguration",uConfiguration);
-	mysqlMail2Log(uConfiguration,"tConfiguration","New");
+	unxsMailLog(uConfiguration,"tConfiguration","New");
 #endif
 
 	if(!uMode)
@@ -423,14 +423,14 @@ void DeletetConfiguration(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uConfiguration,"tConfiguration","Del");
+		unxsMailLog(uConfiguration,"tConfiguration","Del");
 #endif
 		tConfiguration(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uConfiguration,"tConfiguration","DelError");
+		unxsMailLog(uConfiguration,"tConfiguration","DelError");
 #endif
 		tConfiguration(LANG_NBR_RECNOTDELETED);
 	}
@@ -514,7 +514,7 @@ void ModtConfiguration(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tConfiguration",uConfiguration);
-	mysqlMail2Log(uConfiguration,"tConfiguration","Mod");
+	unxsMailLog(uConfiguration,"tConfiguration","Mod");
 #endif
 	tConfiguration(gcQuery);
 

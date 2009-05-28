@@ -12,10 +12,10 @@
 #
 #Config section start, you must edit this as required
 
-$cmysqlMail2Db='mysqlmail2';
-$cmysqlMail2Login='mysqlmail2';
-$cmysqlMail2Pwd='wsxedc';
-$cmysqlMail2IP='196.25.27.117';
+$cunxsMailDb='mysqlmail2';
+$cunxsMailLogin='mysqlmail2';
+$cunxsMailPwd='wsxedc';
+$cunxsMailIP='196.25.27.117';
 
 #Please set this vars carefully
 $uDefaultServerGroup=2;
@@ -35,7 +35,7 @@ if($uDefaultConf eq 1) { die('I think you should not run me before configuring m
 
  srand (time ^ $$ ^ unpack "%L*", `ps axww | gzip`);
 
-my $mysqlMail2Db=DBI->connect ("DBI:mysql:$cmysqlMail2Db:$cmysqlMail2IP",$cmysqlMail2Login,$cmysqlMail2Pwd) or die DBI->errstr;
+my $unxsMailDb=DBI->connect ("DBI:mysql:$cunxsMailDb:$cunxsMailIP",$cunxsMailLogin,$cunxsMailPwd) or die DBI->errstr;
 
 
 open(DATA, "mboxes") || die("Could not open file!");
@@ -49,7 +49,7 @@ while(($cUser=<DATA>))
 	#printf("Login=$cLogin, Domain)$cDomain\n");
 	
 	$cQuery="SELECT cVirtualEmail,(SELECT cDomain FROM tVUT WHERE tVUT.uVUT=tVUTEntries.uVUT) FROM tVUTEntries WHERE cTargetEmail='$cNewName'";
-	my $res=$mysqlMail2Db->prepare($cQuery);
+	my $res=$unxsMailDb->prepare($cQuery);
 	$res->execute();
 	if((@field=$res->fetchrow_array()))
 	{

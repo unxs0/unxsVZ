@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tconfigurationfunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 PURPOSE
 	Non-schema dependent tconfiguration.c expansion.
 AUTHOR
@@ -272,7 +272,7 @@ void tConfigurationNavList(void)
 	if(mysql_num_rows(res))
 	{	
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tConfiguration&uConfiguration=%s>%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tConfiguration&uConfiguration=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 

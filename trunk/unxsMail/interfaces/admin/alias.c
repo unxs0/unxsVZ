@@ -235,8 +235,8 @@ void AliasCommands(pentry entries[], int x)
 
 void htmlAlias(void)
 {
-	htmlHeader("mysqlMail2 System","Header");
-	htmlAliasPage("mysqlMail2 System","Alias.Body");
+	htmlHeader("unxsMail System","Header");
+	htmlAliasPage("unxsMail System","Alias.Body");
 	htmlFooter("Footer");
 
 }//void htmlAlias(void)
@@ -504,7 +504,7 @@ void InsertAlias(void)
 	if((uAlias=mysql_insert_id(&gMysql)))
 	{
 		gcMessage="Alias added OK";
-		mysqlMail2Log(uAlias,"tAlias","New");
+		unxsMailLog(uAlias,"tAlias","New");
 	}
 	else
 	{
@@ -528,7 +528,7 @@ void UpdateAlias(void)
 	if(mysql_affected_rows(&gMysql))
 	{
 		gcMessage="Alias modified OK";
-		mysqlMail2Log(uAlias,"tAlias","Mod");
+		unxsMailLog(uAlias,"tAlias","Mod");
 	}
 	else
 	{
@@ -547,7 +547,7 @@ void DeleteAlias(void)
 	if(mysql_affected_rows(&gMysql))
 	{
 		gcMessage="Alias deleted OK";
-		mysqlMail2Log(uAlias,"tAlias","Del");
+		unxsMailLog(uAlias,"tAlias","Del");
 	}
 	else
 	{

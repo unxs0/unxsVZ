@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tserverconfigfunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -421,13 +421,13 @@ void tServerConfigNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tServerConfig"
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tServerConfig"
 					"&uServerConfig=%s&cSearch=%s>%s/%s</a><br>\n",field[0],cURLEncode(cSearch),field[2],field[1]);
 			if( (uCount++) >= 100)
 				printf("Restrict cSearch further, only 100 items listed\n");
 	        }
 		if(uServerGroup)
-		printf("<br><a class=darkLink href=mysqlMail2.cgi?gcFunction=tServerGroup&uServerGroup=%u>Quick link to tServerGroup</a><br>\n",uServerGroup);
+		printf("<br><a class=darkLink href=unxsMail.cgi?gcFunction=tServerGroup&uServerGroup=%u>Quick link to tServerGroup</a><br>\n",uServerGroup);
 	}
         mysql_free_result(res);
 

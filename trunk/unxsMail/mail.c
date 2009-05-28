@@ -1,7 +1,7 @@
 /*
 FILE
 	mail.c
-	$Id: mail.c 2876 2009-04-14 18:19:48Z hus-admin $
+	$Id$
 PURPOSE
 	Mostly command line functions and common functions that are used in more than
 	one tXfunc.h file.
@@ -292,7 +292,7 @@ void ProcessExtJobQueue(char *cServer)
 
 	time(&clock);
 	sprintf(gcQuery,"SELECT cJobName,cJobData,uJob,uJobClient FROM tJob WHERE (cServer='Any' OR cServer='%s') AND uJobStatus=%u "
-			"AND uJobDate<=%lu AND cJobName LIKE 'mysqlMail2.%%'",cServer,mysqlISP_Waiting,clock);
+			"AND uJobDate<=%lu AND cJobName LIKE 'unxsMail.%%'",cServer,mysqlISP_Waiting,clock);
 
 	//Debug only	
 	//printf("%s\n",gcQuery);
@@ -314,9 +314,9 @@ void ProcessExtJobQueue(char *cServer)
 		sscanf(field[3],"%u",&uJobClient);
 		if(!(uOwner=uGetClientOwner(uJobClient))) uOwner=1; //Safe default. Should inform? How?
 
-		if(!strcmp("mysqlMail2.MailBox.New",field[0]))
+		if(!strcmp("unxsMail.MailBox.New",field[0]))
 		{
-			printf("mysqlMail2.MailBox.New\n");
+			printf("unxsMail.MailBox.New\n");
 
 			ParseExtParams(&structExtParam,field[1]);
 		
@@ -453,11 +453,11 @@ void ProcessExtJobQueue(char *cServer)
 			sprintf(cJobData,"mysqlISP2.tJob.uJob=%u\n",uJob);
 			SubmitJob("ExtNewUser",structExtParam.cDomain,structExtParam.cLogin,structExtParam.cServerGroup,cJobData,uDomain,uUser,uOwner,1);
 			
-			InformExtJob("Jobs queued at mysqlMail2",cServer,uJob,mysqlISP_RemotelyQueued);	
+			InformExtJob("Jobs queued at unxsMail",cServer,uJob,mysqlISP_RemotelyQueued);	
 			
-		}//if(!strcmp("mysqlMail2.MailBox.New",field[0]))
+		}//if(!strcmp("unxsMail.MailBox.New",field[0]))
 		
-		else if(!strcmp("mysqlMail2.MailBox.Mod",field[0]))
+		else if(!strcmp("unxsMail.MailBox.Mod",field[0]))
 		{
 			ParseExtParams(&structExtParam,field[1]);
 			InformExtJob("Running job",cServer,uJob,mysqlISP_Running);
@@ -541,11 +541,11 @@ void ProcessExtJobQueue(char *cServer)
 			sprintf(cJobData,"mysqlISP2.tJob.uJob=%u\n",uJob);
 			SubmitJob("ExtModUser",structExtParam.cDomain,structExtParam.cLogin,structExtParam.cServerGroup,cJobData,uDomain,uUser,uOwner,1);
 			
-			InformExtJob("Jobs queued at mysqlMail2",cServer,uJob,mysqlISP_RemotelyQueued);
+			InformExtJob("Jobs queued at unxsMail",cServer,uJob,mysqlISP_RemotelyQueued);
 			
-		}//else if(!strcmp("mysqlMail2.MailBox.Mod",field[0]))
+		}//else if(!strcmp("unxsMail.MailBox.Mod",field[0]))
 
-		else if(!strcmp("mysqlMail2.MailBox.Hold",field[0]))
+		else if(!strcmp("unxsMail.MailBox.Hold",field[0]))
 		{
 			//To hold an email account we will save the user password to a db table
 			//tHoldUser, upon hold removal we will update the tUser record with that stored
@@ -555,7 +555,7 @@ void ProcessExtJobQueue(char *cServer)
 			InformExtJob("Running job",cServer,uJob,mysqlISP_Running);
 
 			//Debug only
-			//printf("mysqlMail2.MailBox.Hold\n");
+			//printf("unxsMail.MailBox.Hold\n");
 			
 			uUser=uRowId("tUser","cLogin",structExtParam.cLogin);
 			
@@ -615,14 +615,14 @@ void ProcessExtJobQueue(char *cServer)
 				
 				sprintf(cJobData,"mysqlISP2.tJob.uJob=%u\n",uJob);
 				SubmitJob("ExtModUser",structExtParam.cDomain,structExtParam.cLogin,structExtParam.cServerGroup,cJobData,uDomain,uUser,uOwner,1);
-				InformExtJob("Jobs queued at mysqlMail2",cServer,uJob,mysqlISP_RemotelyQueued);
+				InformExtJob("Jobs queued at unxsMail",cServer,uJob,mysqlISP_RemotelyQueued);
 				//Debug only
 				//printf("End OK\n");
 			}
 		
-		}//else if(!strcmp("mysqlMail2.MailBox.Hold",field[0]))
+		}//else if(!strcmp("unxsMail.MailBox.Hold",field[0]))
 
-		else if(!strcmp("mysqlMail2.MailBox.RemoveHold",field[0]))
+		else if(!strcmp("unxsMail.MailBox.RemoveHold",field[0]))
 		{
 			//Update tUser with the tHoldUser information and remove tHoldUser record
 			
@@ -673,12 +673,12 @@ void ProcessExtJobQueue(char *cServer)
 				sprintf(cJobData,"mysqlISP2.tJob.uJob=%u\n",uJob);
 				SubmitJob("ExtModUser",structExtParam.cDomain,structExtParam.cLogin,structExtParam.cServerGroup,cJobData,uDomain,uUser,uOwner,1);
 				
-				InformExtJob("Jobs queued at mysqlMail2",cServer,uJob,mysqlISP_RemotelyQueued);
+				InformExtJob("Jobs queued at unxsMail",cServer,uJob,mysqlISP_RemotelyQueued);
 			}
 	
-		}//else if(!strcmp("mysqlMail2.MailBox.RemoveHold",field[0]))
+		}//else if(!strcmp("unxsMail.MailBox.RemoveHold",field[0]))
 
-		else if(!strcmp("mysqlMail2.MailBox.Cancel",field[0]))
+		else if(!strcmp("unxsMail.MailBox.Cancel",field[0]))
 		{
 			
 			//Remove tUser and tVUT entries associated with the user
@@ -732,14 +732,14 @@ void ProcessExtJobQueue(char *cServer)
 				SubmitJob("ExtModVUT",structExtParam.cDomain,cVirtualEmail,structExtParam.cServerGroup,cJobData,0,0,uOwner,1);
 				sprintf(cJobData,"mysqlISP2.tJob.uJob=%u\n",uJob);
 				SubmitJob("ExtDelUser",structExtParam.cDomain,structExtParam.cLogin,structExtParam.cServerGroup,"",uDomain,uUser,uOwner,1);
-				InformExtJob("Jobs queued at mysqlMail2",cServer,uJob,mysqlISP_RemotelyQueued);
+				InformExtJob("Jobs queued at unxsMail",cServer,uJob,mysqlISP_RemotelyQueued);
 					
 			}
 			sprintf(cJobData,"mysqlISP2.tJob.uJob=%u\n",uJob);
 			SubmitJob("ExtDelUser",structExtParam.cDomain,structExtParam.cLogin,structExtParam.cServerGroup,cJobData,uDomain,uUser,uOwner,1);
-			InformExtJob("Jobs queued at mysqlMail2",cServer,uJob,mysqlISP_RemotelyQueued);
+			InformExtJob("Jobs queued at unxsMail",cServer,uJob,mysqlISP_RemotelyQueued);
 
-		}//else if(!strcmp("mysqlMail2.MailBox.Cancel",field[0]))
+		}//else if(!strcmp("unxsMail.MailBox.Cancel",field[0]))
 
 		
 		else if(1)
@@ -768,7 +768,7 @@ int InformExtJob(char *cRemoteMsg,char *cServer,unsigned uJob,unsigned uJobStatu
 	if(mysql_errno(&mysqlext))
 	{
 		fprintf(stderr,"InformExtJob():%s\n%s\n",mysql_error(&mysqlext),gcQuery);
-		SubmitISPJob("mysqlMail2.InformExtJob.Failed",
+		SubmitISPJob("unxsMail.InformExtJob.Failed",
 				(char *)mysql_error(&mysqlext),cServer,clock);
 		return(1);
 	}
@@ -2022,7 +2022,7 @@ int NewVUTConfigJob(unsigned uJob)
 		printf("cPath=%s\n",cPath);
 		return(1);
 	}
-	fprintf(fp,"#mysqlMail2::NewVUTConfigJob() $Id: mail.c 2876 2009-04-14 18:19:48Z hus-admin $\n");
+	fprintf(fp,"#unxsMail::NewVUTConfigJob() $Id$\n");
 
 	//Write file and set ownership and perms
         sprintf(gcQuery,"SELECT cVirtualEmail,cDomain,cTargetEmail FROM tVUT,tVUTEntries,tServerGroupGlue WHERE tVUT.uVUT=tVUTEntries.uVUT AND tVUT.uServerGroup=tServerGroupGlue.uServerGroup AND tServerGroupGlue.uServer=%u ORDER BY cDomain,cVirtualEmail",uServer);
@@ -2136,7 +2136,7 @@ int MakeAccessFile(unsigned uServer)
                	return(1);
         }
 
-	fprintf(fp,"#OpenISP mysqlMail2.MakeAccessFile() $Id: mail.c 2876 2009-04-14 18:19:48Z hus-admin $\n");
+	fprintf(fp,"#OpenISP unxsMail.MakeAccessFile() $Id$\n");
 
 	
 	sprintf(gcQuery,"SELECT DISTINCT cDomainIP,cRelayAttr FROM tAccess WHERE uServerGroup=%u",uServerGroup);
@@ -2310,7 +2310,7 @@ int MakeLocalFile(unsigned uServer)
                	return(1);
         }
 
-	fprintf(fp,"#OpenISP mysqlMail2.MakeLocalFile() $Id: mail.c 2876 2009-04-14 18:19:48Z hus-admin $\n");
+	fprintf(fp,"#OpenISP unxsMail.MakeLocalFile() $Id$\n");
 
 	sprintf(gcQuery,"SELECT cDomain FROM tLocal WHERE uServerGroup=%u",uServerGroup);
         mysql_query(&gMysql,gcQuery);
@@ -2724,7 +2724,7 @@ int NewAliasFile(unsigned uServer)
 		return(1);
         }
 
-	fprintf(fp,"#OpenISP mysqlMail2.MakeAliasFile() $Id: mail.c 2876 2009-04-14 18:19:48Z hus-admin $\n");
+	fprintf(fp,"#OpenISP unxsMail.MakeAliasFile() $Id$\n");
 
 	sprintf(gcQuery,"SELECT cUser,cTargetEmail FROM tAlias WHERE uServerGroup=%u",uServerGroup);
         mysql_query(&gMysql,gcQuery);
@@ -2765,7 +2765,7 @@ unsigned MakeWhiteListFile(unsigned uServer)
 		return(1);
 	}
 
-	fprintf(fp,"#OpenISP mysqlMail2.MakeWhiteListFile() $Id: mail.c 2876 2009-04-14 18:19:48Z hus-admin $\n");
+	fprintf(fp,"#OpenISP unxsMail.MakeWhiteListFile() $Id$\n");
 
 	sprintf(gcQuery,"SELECT cLabel FROM tWhiteList WHERE uServerGroup=%u AND uUser=0",uServerGroup);
 	mysql_query(&gMysql,gcQuery);
@@ -2806,7 +2806,7 @@ unsigned MakeBlackListFile(unsigned uServer)
 		return(1);
 	}
 
-	fprintf(fp,"#OpenISP mysqlMail2.MakeBlackListFile() $Id: mail.c 2876 2009-04-14 18:19:48Z hus-admin $\n");
+	fprintf(fp,"#OpenISP unxsMail.MakeBlackListFile() $Id$\n");
 
 	sprintf(gcQuery,"SELECT cLabel FROM tBlackList WHERE uServerGroup=%u AND uUser=0",uServerGroup);
 	mysql_query(&gMysql,gcQuery);

@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tlogmonthfunc.h 2317 2008-12-19 20:39:19Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -364,7 +364,7 @@ void LogMonthSummary(void)
 		sscanf(ForeignKey("tResource","uZone",uTPK),"%u",&uZone);
 		sscanf(ForeignKey("tResource","uRRType",uTPK),"%u",&uRRType);
 
-		printf("<a class=darkLink title='Jump to tResource entry' href=mysqlMail2.cgi?gcFunction=tResource&uResource=%u>tResource</a><blockquote>\n",uTPK);
+		printf("<a class=darkLink title='Jump to tResource entry' href=unxsMail.cgi?gcFunction=tResource&uResource=%u>tResource</a><blockquote>\n",uTPK);
 		printf("cZone=%s<br>\n",ForeignKey("tZone","cZone",uZone));
 		printf("cName=%s<br>\n",ForeignKey("tResource","cName",uTPK));
 		printf("RRType=%s<br>\n",ForeignKey("tRRType","cLabel",uRRType));

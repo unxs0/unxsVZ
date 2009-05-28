@@ -1,8 +1,8 @@
 /*
 FILE
-	tWhiteList source code of mysqlMail2.cgi
+	tWhiteList source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2009 for Unixservice
-	$Id: module.c.template 2459 2009-02-11 12:04:10Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in twhitelistfunc.h while 
@@ -161,7 +161,7 @@ void tWhiteList(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetWhiteList();
-				mysqlMail2("New tWhiteList table created");
+				unxsMail("New tWhiteList table created");
                 	}
 			else
 			{
@@ -370,7 +370,7 @@ void NewtWhiteList(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uWhiteList=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tWhiteList",uWhiteList);
-	mysqlMail2Log(uWhiteList,"tWhiteList","New");
+	unxsMailLog(uWhiteList,"tWhiteList","New");
 
 	if(!uMode)
 	{
@@ -389,12 +389,12 @@ void DeletetWhiteList(void)
 	//tWhiteList("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlMail2Log(uWhiteList,"tWhiteList","Del");
+		unxsMailLog(uWhiteList,"tWhiteList","Del");
 		tWhiteList(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlMail2Log(uWhiteList,"tWhiteList","DelError");
+		unxsMailLog(uWhiteList,"tWhiteList","DelError");
 		tWhiteList(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -463,7 +463,7 @@ void ModtWhiteList(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tWhiteList",uWhiteList);
-	mysqlMail2Log(uWhiteList,"tWhiteList","Mod");
+	unxsMailLog(uWhiteList,"tWhiteList","Mod");
 	tWhiteList(gcQuery);
 
 }//ModtWhiteList(void)

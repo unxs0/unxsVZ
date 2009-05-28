@@ -1,8 +1,8 @@
 /*
 FILE
-	tTemplateSet source code of mysqlMail2.cgi
+	tTemplateSet source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: ttemplateset.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in ttemplatesetfunc.h while 
@@ -149,7 +149,7 @@ void tTemplateSet(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetTemplateSet();
-				mysqlMail2("New tTemplateSet table created");
+				unxsMail("New tTemplateSet table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtTemplateSet(unsigned uMode)
 	uTemplateSet=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tTemplateSet",uTemplateSet);
-	mysqlMail2Log(uTemplateSet,"tTemplateSet","New");
+	unxsMailLog(uTemplateSet,"tTemplateSet","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetTemplateSet(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uTemplateSet,"tTemplateSet","Del");
+		unxsMailLog(uTemplateSet,"tTemplateSet","Del");
 #endif
 		tTemplateSet(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uTemplateSet,"tTemplateSet","DelError");
+		unxsMailLog(uTemplateSet,"tTemplateSet","DelError");
 #endif
 		tTemplateSet(LANG_NBR_RECNOTDELETED);
 	}
@@ -455,7 +455,7 @@ void ModtTemplateSet(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tTemplateSet",uTemplateSet);
-	mysqlMail2Log(uTemplateSet,"tTemplateSet","Mod");
+	unxsMailLog(uTemplateSet,"tTemplateSet","Mod");
 #endif
 	tTemplateSet(gcQuery);
 

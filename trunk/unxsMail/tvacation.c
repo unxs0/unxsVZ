@@ -1,8 +1,8 @@
 /*
 FILE
-	tVacation source code of mysqlMail2.cgi
+	tVacation source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2009 for Unixservice
-	$Id: module.c.template 2459 2009-02-11 12:04:10Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tvacationfunc.h while 
@@ -162,7 +162,7 @@ void tVacation(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetVacation();
-				mysqlMail2("New tVacation table created");
+				unxsMail("New tVacation table created");
                 	}
 			else
 			{
@@ -371,7 +371,7 @@ void NewtVacation(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uVacation=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tVacation",uVacation);
-	mysqlMail2Log(uVacation,"tVacation","New");
+	unxsMailLog(uVacation,"tVacation","New");
 
 	if(!uMode)
 	{
@@ -390,12 +390,12 @@ void DeletetVacation(void)
 	//tVacation("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlMail2Log(uVacation,"tVacation","Del");
+		unxsMailLog(uVacation,"tVacation","Del");
 		tVacation(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlMail2Log(uVacation,"tVacation","DelError");
+		unxsMailLog(uVacation,"tVacation","DelError");
 		tVacation(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -463,7 +463,7 @@ void ModtVacation(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tVacation",uVacation);
-	mysqlMail2Log(uVacation,"tVacation","Mod");
+	unxsMailLog(uVacation,"tVacation","Mod");
 	tVacation(gcQuery);
 
 }//ModtVacation(void)

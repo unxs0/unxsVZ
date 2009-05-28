@@ -1,8 +1,8 @@
 /*
 FILE
-	tHoldUser source code of mysqlMail2.cgi
+	tHoldUser source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tholduser.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tholduserfunc.h while 
@@ -153,7 +153,7 @@ void tHoldUser(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetHoldUser();
-				mysqlMail2("New tHoldUser table created");
+				unxsMail("New tHoldUser table created");
                 	}
 			else
 			{
@@ -360,7 +360,7 @@ void NewtHoldUser(unsigned uMode)
 	uHoldUser=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tHoldUser",uHoldUser);
-	mysqlMail2Log(uHoldUser,"tHoldUser","New");
+	unxsMailLog(uHoldUser,"tHoldUser","New");
 #endif
 
 	if(!uMode)
@@ -388,14 +388,14 @@ void DeletetHoldUser(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uHoldUser,"tHoldUser","Del");
+		unxsMailLog(uHoldUser,"tHoldUser","Del");
 #endif
 		tHoldUser(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uHoldUser,"tHoldUser","DelError");
+		unxsMailLog(uHoldUser,"tHoldUser","DelError");
 #endif
 		tHoldUser(LANG_NBR_RECNOTDELETED);
 	}
@@ -475,7 +475,7 @@ void ModtHoldUser(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tHoldUser",uHoldUser);
-	mysqlMail2Log(uHoldUser,"tHoldUser","Mod");
+	unxsMailLog(uHoldUser,"tHoldUser","Mod");
 #endif
 	tHoldUser(gcQuery);
 

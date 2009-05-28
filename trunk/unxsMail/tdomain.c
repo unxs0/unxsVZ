@@ -1,8 +1,8 @@
 /*
 FILE
-	tDomain source code of mysqlMail2.cgi
+	tDomain source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tdomain.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tdomainfunc.h while 
@@ -149,7 +149,7 @@ void tDomain(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetDomain();
-				mysqlMail2("New tDomain table created");
+				unxsMail("New tDomain table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtDomain(unsigned uMode)
 	uDomain=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tDomain",uDomain);
-	mysqlMail2Log(uDomain,"tDomain","New");
+	unxsMailLog(uDomain,"tDomain","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetDomain(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uDomain,"tDomain","Del");
+		unxsMailLog(uDomain,"tDomain","Del");
 #endif
 		tDomain(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uDomain,"tDomain","DelError");
+		unxsMailLog(uDomain,"tDomain","DelError");
 #endif
 		tDomain(LANG_NBR_RECNOTDELETED);
 	}
@@ -455,7 +455,7 @@ void ModtDomain(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tDomain",uDomain);
-	mysqlMail2Log(uDomain,"tDomain","Mod");
+	unxsMailLog(uDomain,"tDomain","Mod");
 #endif
 	tDomain(gcQuery);
 

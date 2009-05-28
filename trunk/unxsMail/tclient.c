@@ -1,8 +1,8 @@
 /*
 FILE
-	tClient source code of mysqlMail2.cgi
+	tClient source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tclient.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tclientfunc.h while 
@@ -160,7 +160,7 @@ void tClient(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetClient();
-				mysqlMail2("New tClient table created");
+				unxsMail("New tClient table created");
                 	}
 			else
 			{
@@ -389,7 +389,7 @@ void NewtClient(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uClient=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate(TCLIENT,uClient);
-	mysqlMail2Log(uClient,TCLIENT,"New");
+	unxsMailLog(uClient,TCLIENT,"New");
 
 	if(!uMode)
 	{
@@ -407,12 +407,12 @@ void DeletetClient(void)
 	//tClient("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		mysqlMail2Log(uClient,TCLIENT,"Del");
+		unxsMailLog(uClient,TCLIENT,"Del");
 		tClient(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		mysqlMail2Log(uClient,TCLIENT,"DelError");
+		unxsMailLog(uClient,TCLIENT,"DelError");
 		tClient(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -480,7 +480,7 @@ void ModtClient(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate(TCLIENT,uClient);
-	mysqlMail2Log(uClient,TCLIENT,"Mod");
+	unxsMailLog(uClient,TCLIENT,"Mod");
 	tClient(gcQuery);
 
 }//ModtClient(void)

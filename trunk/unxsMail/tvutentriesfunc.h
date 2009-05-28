@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tvutentriesfunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -196,7 +196,7 @@ void ExttVUTEntriesButtons(void)
 				tVUTEntriesNavList();
 
 				if(uVUT)
-					printf("<p><a class=darkLink href=mysqlMail2.cgi?gcFunction=tVUT&uVUT=%u>Quick link to tVUT</a><br>\n",uVUT);
+					printf("<p><a class=darkLink href=unxsMail.cgi?gcFunction=tVUT&uVUT=%u>Quick link to tVUT</a><br>\n",uVUT);
 			}
 	}
 	CloseFieldSet();
@@ -354,7 +354,7 @@ void tVUTEntriesNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			uCount++;
-printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tVUTEntries&uVUTEntries=%s&cSearch=%s>%s@%s:%s</a><br>\n",
+printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tVUTEntries&uVUTEntries=%s&cSearch=%s>%s@%s:%s</a><br>\n",
 		field[0],cURLEncode(cSearch),field[1],field[3],field[2]);
 			if(uCount>=100)
 			{
@@ -500,7 +500,7 @@ void tVUTEntriesContextInfo(void)
 
 		if(mysql_num_rows(res))
 			while((field=mysql_fetch_row(res)))
-				printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tAlias&uAlias=%s>%s/%s</a><br>\n",
+				printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tAlias&uAlias=%s>%s/%s</a><br>\n",
 						field[0],field[1],field[2]);
 		else
 			printf("No users<br>\n");
@@ -508,7 +508,7 @@ void tVUTEntriesContextInfo(void)
 	else
 	{
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tUser&uUser=%s>%s/%s</a><br>\n",
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tUser&uUser=%s>%s/%s</a><br>\n",
 					field[0],field[1],field[2]);
 	}
 
@@ -525,7 +525,7 @@ void tVUTEntriesContextInfo(void)
 	if(mysql_num_rows(res))
 	{	
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",
 						field[0],field[1],field[2]);
 	}
 	else

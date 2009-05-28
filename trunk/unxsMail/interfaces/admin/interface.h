@@ -32,7 +32,7 @@ char *IPNumber(char *cInput);
 const char *cUserLevel(unsigned uPermLevel);
 char *TextAreaSave(char *cField);
 char *FQDomainName(char *cInput);
-void mysqlMail2Log(unsigned uTablePK, char *cTableName, char *cLogEntry);
+void unxsMailLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 int ReadPullDown(const char *cTableName,const char *cFieldName,const char *cLabel);
 void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template);	
 void htmlPlainTextError(const char *cError);

@@ -1,8 +1,8 @@
 /*
 FILE
-	tUser source code of mysqlMail2.cgi
+	tUser source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tuser.c 2906 2009-04-23 21:00:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tuserfunc.h while 
@@ -205,7 +205,7 @@ void tUser(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetUser();
-				mysqlMail2("New tUser table created");
+				unxsMail("New tUser table created");
                 	}
 			else
 			{
@@ -479,7 +479,7 @@ void NewtUser(unsigned uMode)
 	uUser=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tUser",uUser);
-	mysqlMail2Log(uUser,"tUser","New");
+	unxsMailLog(uUser,"tUser","New");
 #endif
 
 	if(!uMode)
@@ -507,14 +507,14 @@ void DeletetUser(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uUser,"tUser","Del");
+		unxsMailLog(uUser,"tUser","Del");
 #endif
 		tUser(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uUser,"tUser","DelError");
+		unxsMailLog(uUser,"tUser","DelError");
 #endif
 		tUser(LANG_NBR_RECNOTDELETED);
 	}
@@ -605,7 +605,7 @@ void ModtUser(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tUser",uUser);
-	mysqlMail2Log(uUser,"tUser","Mod");
+	unxsMailLog(uUser,"tUser","Mod");
 #endif
 	tUser(gcQuery);
 

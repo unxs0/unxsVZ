@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: taliasfunc.h 2914 2009-04-24 16:32:51Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -336,7 +336,7 @@ void tAliasNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			uCount++;
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tAlias&uAlias=%s&cSearch=%s>%s</a><br>\n",
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tAlias&uAlias=%s&cSearch=%s>%s</a><br>\n",
 				field[0]
 				,cURLEncode(cSearch)
 				,field[1]);
@@ -397,7 +397,7 @@ void tAliasContextInfo(void)
 	if(mysql_num_rows(res))
 	{	
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tUser&uUser=%s>%s/%s</a><br>\n",
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tUser&uUser=%s>%s/%s</a><br>\n",
 						field[0],field[1],field[2]);
 	}
 	else
@@ -419,7 +419,7 @@ void tAliasContextInfo(void)
 	if(mysql_num_rows(res))
 	{	
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=mysqlMail2.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",
 						field[0],field[1],field[2]);
 	}
 	else

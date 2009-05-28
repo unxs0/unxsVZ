@@ -2,7 +2,7 @@
 #FILE
 #	importBaldomero.pl
 #PURPOSE
-#	Import baldomero mysqlSendmail data into mysqlMail2 database
+#	Import baldomero mysqlSendmail data into unxsMail database
 #AUTHOR
 #	(C) 2008 Hugo Urquiza for Unixservice.
 #USAGE
@@ -14,10 +14,10 @@
 #Config section start, you must edit this as required
 
 
-$cmysqlMail2Db='mysqlmail2';
-$cmysqlMail2Login='mysqlmail2';
-$cmysqlMail2Pwd='wsxedc';
-$cmysqlMail2IP='localhost';
+$cunxsMailDb='mysqlmail2';
+$cunxsMailLogin='mysqlmail2';
+$cunxsMailPwd='wsxedc';
+$cunxsMailIP='localhost';
 
 #Please set this vars carefully
 $uDefaultServerGroup=3;
@@ -34,7 +34,7 @@ use DBI;
 if($uDefaultConf eq 1) { die('I think you should not run me before configuring me'); }
 
 
-my $mysqlMail2Db=DBI->connect ("DBI:mysql:$cmysqlMail2Db:$cmysqlMail2IP",$cmysqlMail2Login,$cmysqlMail2Pwd) or die DBI->errstr;
+my $unxsMailDb=DBI->connect ("DBI:mysql:$cunxsMailDb:$cunxsMailIP",$cunxsMailLogin,$cunxsMailPwd) or die DBI->errstr;
 
 
 print("Importing data...\n");
@@ -71,7 +71,7 @@ while(my $cLine = <DATASRC>)
 
 	$cQuery="INSERT INTO tUser SET cLogin='$cLogin',cPasswd='$cPasswd',uDomain=$uDomain,uUserType=$uDefaultUserType,uServerGroup=$uDefaultServerGroup,uStatus=4,uOwner=11,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())";
 	
-	$res3=$mysqlMail2Db->prepare($cQuery);
+	$res3=$unxsMailDb->prepare($cQuery);
 	$res3->execute() or die DBI->errstr;
 #	print("$cQuery\n");
 	
@@ -86,7 +86,7 @@ sub uGetDomain
 
 	$cQuery="SELECT uDomain FROM tDomain WHERE cDomain='$cDomain'";
 	#print("cQuery=$cQuery\n");
-	$res4=$mysqlMail2Db->prepare($cQuery);
+	$res4=$unxsMailDb->prepare($cQuery);
 	$res4->execute() or die DBI->errstr;
 	#print("$cQuery\n");
 

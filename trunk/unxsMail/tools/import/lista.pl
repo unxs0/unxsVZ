@@ -2,7 +2,7 @@
 #FILE
 #	importmysqlSendmail.pl
 #PURPOSE
-#	Import mysqlSendmail data into mysqlMail2 database
+#	Import mysqlSendmail data into unxsMail database
 #AUTHOR
 #	(C) 2008 Hugo Urquiza for Unixservice.
 #USAGE

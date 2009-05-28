@@ -10,19 +10,19 @@
 #       and pray.
 #
 
-$cmysqlMail2Db='mysqlmail2';
-$cmysqlMail2Login='mysqlmail2';
-$cmysqlMail2Pwd='wsxedc';
-$cmysqlMail2IP='localhost';
+$cunxsMailDb='mysqlmail2';
+$cunxsMailLogin='mysqlmail2';
+$cunxsMailPwd='wsxedc';
+$cunxsMailIP='localhost';
 $uServerGroup=11;
 
 use DBI;
 
 
-my $mysqlMail2Db=DBI->connect ("DBI:mysql:$cmysqlMail2Db:$cmysqlMail2IP",$cmysqlMail2Login,$cmysqlMail2Pwd) or die DBI->errstr;
+my $unxsMailDb=DBI->connect ("DBI:mysql:$cunxsMailDb:$cunxsMailIP",$cunxsMailLogin,$cunxsMailPwd) or die DBI->errstr;
 
 $cQuery="SELECT cLogin FROM tUser WHERE uServerGroup='$uServerGroup'";
-$res=$mysqlMail2Db->prepare($cQuery);
+$res=$unxsMailDb->prepare($cQuery);
 $res->execute() or die DBI->errstr;
 
 while((@field=$res->fetchrow_array()))

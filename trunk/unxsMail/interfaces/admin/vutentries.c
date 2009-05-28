@@ -269,8 +269,8 @@ void VUTEntriesCommands(pentry entries[], int x)
 
 void htmlVUTEntries(void)
 {
-	htmlHeader("mysqlMail2 System","Header");
-	htmlVUTEntriesPage("mysqlMail2 System","VUTEntries.Body");
+	htmlHeader("unxsMail System","Header");
+	htmlVUTEntriesPage("unxsMail System","VUTEntries.Body");
 	htmlFooter("Footer");
 
 }//void htmlVUTEntries(void)
@@ -676,7 +676,7 @@ void InsertVUTEntries(void)
 
 	if((uVUTEntries=mysql_insert_id(&gMysql)))
 	{
-		mysqlMail2Log(uVUTEntries,"tVUTEntries","New");
+		unxsMailLog(uVUTEntries,"tVUTEntries","New");
 		gcMessage="VUT entry created  OK";
 	}
 	else
@@ -703,7 +703,7 @@ void UpdateVUTEntries(void)
 	
 	if(mysql_affected_rows(&gMysql))
 	{
-		mysqlMail2Log(uVUTEntries,"tVUTEntries","Mod");
+		unxsMailLog(uVUTEntries,"tVUTEntries","Mod");
 		gcMessage="VUT entry modified OK";
 	}
 	else
@@ -720,7 +720,7 @@ void DeleteVUTEntries(void)
 
 	if(mysql_affected_rows(&gMysql))
 	{
-		mysqlMail2Log(uVUTEntries,"tVUTEntries","Del");
+		unxsMailLog(uVUTEntries,"tVUTEntries","Del");
 		gcMessage="VUT entry deleted OK";
 	}
 	else

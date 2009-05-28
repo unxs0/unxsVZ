@@ -6,7 +6,7 @@ PREREQUISITES
 
 INSTALL
 
-In the conf/ directory you will find the basic Postfix configuration files for a mysqlMail2 controlled system.
+In the conf/ directory you will find the basic Postfix configuration files for a unxsMail controlled system.
 
 To install follow the following steps:
 

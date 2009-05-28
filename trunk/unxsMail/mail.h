@@ -1,7 +1,7 @@
 /*
 FILE
 	mail.h
-	$Id: mail.h 2317 2008-12-19 20:39:19Z hus-admin $
+	$Id$
 PURPOSE
 	Specific application defines and prototypes
 AUTHOR/LEGAL

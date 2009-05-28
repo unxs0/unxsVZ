@@ -1,8 +1,8 @@
 /*
 FILE
-	tServerGroup source code of mysqlMail2.cgi
+	tServerGroup source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tservergroup.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tservergroupfunc.h while 
@@ -149,7 +149,7 @@ void tServerGroup(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetServerGroup();
-				mysqlMail2("New tServerGroup table created");
+				unxsMail("New tServerGroup table created");
                 	}
 			else
 			{
@@ -342,7 +342,7 @@ void NewtServerGroup(unsigned uMode)
 	uServerGroup=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tServerGroup",uServerGroup);
-	mysqlMail2Log(uServerGroup,"tServerGroup","New");
+	unxsMailLog(uServerGroup,"tServerGroup","New");
 #endif
 
 	if(!uMode)
@@ -370,14 +370,14 @@ void DeletetServerGroup(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uServerGroup,"tServerGroup","Del");
+		unxsMailLog(uServerGroup,"tServerGroup","Del");
 #endif
 		tServerGroup(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uServerGroup,"tServerGroup","DelError");
+		unxsMailLog(uServerGroup,"tServerGroup","DelError");
 #endif
 		tServerGroup(LANG_NBR_RECNOTDELETED);
 	}
@@ -455,7 +455,7 @@ void ModtServerGroup(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tServerGroup",uServerGroup);
-	mysqlMail2Log(uServerGroup,"tServerGroup","Mod");
+	unxsMailLog(uServerGroup,"tServerGroup","Mod");
 #endif
 	tServerGroup(gcQuery);
 

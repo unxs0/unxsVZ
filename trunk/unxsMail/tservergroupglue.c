@@ -1,8 +1,8 @@
 /*
 FILE
-	tServerGroupGlue source code of mysqlMail2.cgi
+	tServerGroupGlue source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tservergroupglue.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tservergroupgluefunc.h while 
@@ -144,7 +144,7 @@ void tServerGroupGlue(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetServerGroupGlue();
-				mysqlMail2("New tServerGroupGlue table created");
+				unxsMail("New tServerGroupGlue table created");
                 	}
 			else
 			{
@@ -288,7 +288,7 @@ void NewtServerGroupGlue(unsigned uMode)
 	uServerGroupGlue=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tServerGroupGlue",uServerGroupGlue);
-	mysqlMail2Log(uServerGroupGlue,"tServerGroupGlue","New");
+	unxsMailLog(uServerGroupGlue,"tServerGroupGlue","New");
 #endif
 
 	if(!uMode)
@@ -316,14 +316,14 @@ void DeletetServerGroupGlue(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uServerGroupGlue,"tServerGroupGlue","Del");
+		unxsMailLog(uServerGroupGlue,"tServerGroupGlue","Del");
 #endif
 		tServerGroupGlue(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uServerGroupGlue,"tServerGroupGlue","DelError");
+		unxsMailLog(uServerGroupGlue,"tServerGroupGlue","DelError");
 #endif
 		tServerGroupGlue(LANG_NBR_RECNOTDELETED);
 	}
@@ -399,7 +399,7 @@ void ModtServerGroupGlue(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tServerGroupGlue",uServerGroupGlue);
-	mysqlMail2Log(uServerGroupGlue,"tServerGroupGlue","Mod");
+	unxsMailLog(uServerGroupGlue,"tServerGroupGlue","Mod");
 #endif
 	tServerGroupGlue(gcQuery);
 

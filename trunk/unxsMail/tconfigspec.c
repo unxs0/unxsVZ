@@ -1,8 +1,8 @@
 /*
 FILE
-	tConfigSpec source code of mysqlMail2.cgi
+	tConfigSpec source code of unxsMail.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tconfigspec.c 2316 2008-12-19 19:40:15Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tconfigspecfunc.h while 
@@ -187,7 +187,7 @@ void tConfigSpec(const char *cResult)
 			if(strstr(mysql_error(&gMysql)," doesn't exist"))
                 	{
 				CreatetConfigSpec();
-				mysqlMail2("New tConfigSpec table created");
+				unxsMail("New tConfigSpec table created");
                 	}
 			else
 			{
@@ -485,7 +485,7 @@ void NewtConfigSpec(unsigned uMode)
 	uConfigSpec=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tConfigSpec",uConfigSpec);
-	mysqlMail2Log(uConfigSpec,"tConfigSpec","New");
+	unxsMailLog(uConfigSpec,"tConfigSpec","New");
 #endif
 
 	if(!uMode)
@@ -513,14 +513,14 @@ void DeletetConfigSpec(void)
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uConfigSpec,"tConfigSpec","Del");
+		unxsMailLog(uConfigSpec,"tConfigSpec","Del");
 #endif
 		tConfigSpec(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		mysqlMail2Log(uConfigSpec,"tConfigSpec","DelError");
+		unxsMailLog(uConfigSpec,"tConfigSpec","DelError");
 #endif
 		tConfigSpec(LANG_NBR_RECNOTDELETED);
 	}
@@ -614,7 +614,7 @@ void ModtConfigSpec(void)
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
 	uModDate=luGetModDate("tConfigSpec",uConfigSpec);
-	mysqlMail2Log(uConfigSpec,"tConfigSpec","Mod");
+	unxsMailLog(uConfigSpec,"tConfigSpec","Mod");
 #endif
 	tConfigSpec(gcQuery);
 
