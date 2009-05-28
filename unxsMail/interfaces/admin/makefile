@@ -1,9 +1,9 @@
 #
 #FILE
 #	makefile
-#	$Id: makefile 72 2006-10-17 15:25:58Z ggw $
+#	$Id$
 #AUTHOR
-#	(C) 2006-2008, Gary Wallis and Hugo Urquiza for Unixservice
+#	(C) 2006-2009, Gary Wallis and Hugo Urquiza for Unixservice
 #PURPOSE
 #	General purpose RAD3 interface makefile
 #	Must customize CGINAME 

@@ -1,9 +1,9 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 212 2006-12-14 16:11:14Z ggw $
+	$Id$
 AUTHOR
-	(C) 2006-2008 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
 	mail2Admin main file.
 

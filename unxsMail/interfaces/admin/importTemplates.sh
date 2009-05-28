@@ -1,13 +1,13 @@
 #!/bin/bash
 #
 #FILE
-# $Id: importTemplates.sh 421 2007-02-22 22:42:48Z root $
+# $Id$
 #PURPOSE
 #	Import mail2Admin.cgi templates in one fell swoop.
 #	Very useful when moving application to new server.
 #	Or during development work with vi editing of templates.
 #AUTHOR
-#	Hugo Urquiza for Unixservice (C) 2007-2008
+#	Hugo Urquiza for Unixservice (C) 2007-2009
 #CONTRIBUTORS
 #	Jonathan Petersson
 #

@@ -5,7 +5,7 @@ PURPOSE
 	Provide the functions for the mail2Admin
 	interface dashboard
 AUTHOR
-	(C) Hugo Urquiza 2008 for Unixservice.
+	(C) Hugo Urquiza 2008-2009 for Unixservice.
 */
 
 #include "interface.h"
