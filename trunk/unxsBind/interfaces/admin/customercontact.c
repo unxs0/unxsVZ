@@ -648,7 +648,8 @@ void htmlCustomerContactPage(char *cTitle, char *cTemplateName)
 
 void NewCustomerContact(void)
 {
-	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cInfo='%s',cEmail='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cInfo='%s',cEmail='%s',uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cClientName
 			,cInfo
 			,cEmail
@@ -660,13 +661,13 @@ void NewCustomerContact(void)
 
 	guContact=mysql_insert_id(&gMysql);
 
-	if(strncmp(cPassword,"..",2) && uSaveClrPassword)
+	if(strncmp(cPassword,"..",2) && strncmp(cPassword,"$1$",3) && uSaveClrPassword)
 		sprintf(cClearPassword,"%.99s",cPassword);
 	
-	EncryptPasswdWithSalt(cPassword,"..");
-
+	EncryptPasswd(cPassword);
 	
-	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',uPerm=%u,uCertClient=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',uPerm=%u,"
+			"uCertClient=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cUserName
 			,cPassword
 			,cClearPassword
@@ -702,7 +703,8 @@ void ModCustomerContact(void)
 {
 	unsigned uWasMod=0;
 
-	sprintf(gcQuery,"UPDATE tClient SET cLabel='%s',cEmail='%s',cInfo='%s',uModBy=%u,uOwner=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uClient=%u",
+	sprintf(gcQuery,"UPDATE tClient SET cLabel='%s',cEmail='%s',cInfo='%s',uModBy=%u,uOwner=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uClient=%u",
 			cClientName
 			,cEmail
 			,cInfo
@@ -717,15 +719,16 @@ void ModCustomerContact(void)
 	uWasMod=mysql_affected_rows(&gMysql);
 	
 
-	if(strncmp(cPassword,"..",2) && uSaveClrPassword)
+	if(strncmp(cPassword,"..",2) && strncmp(cPassword,"$1$",3) && uSaveClrPassword)
 		sprintf(cClearPassword,"%.99s",cPassword);
 	else
 		cClearPassword[0]=0;
 
-	if(strncmp(cPassword,"..",2))
-		EncryptPasswdWithSalt(cPassword,"..");
+	if(strncmp(cPassword,"..",2) && strncmp(cPassword,"$1$",3))
+		EncryptPasswd(cPassword);
 	
-	sprintf(gcQuery,"UPDATE tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',uPerm=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uCertClient=%u",
+	sprintf(gcQuery,"UPDATE tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',uPerm=%u,"
+			"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uCertClient=%u",
 			cUserName
 			,cPassword
 			,cClearPassword
@@ -1330,6 +1333,21 @@ void funcContactLast7DaysActivity(FILE *fp)
 	mysql_free_result(res);
 
 }//void funcContactLast7DaysActivity(FILE *fp)
+
+
+static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
+        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+void to64(s, v, n)
+  register char *s;
+  register long v;
+  register int n;
+{
+    while (--n >= 0) {
+        *s++ = itoa64[v&0x3f];
+        v >>= 6;
+    }
+}//void to64(s, v, n)
 
 
 void EncryptPasswd(char *pw)
