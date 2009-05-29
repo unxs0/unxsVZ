@@ -655,7 +655,7 @@ void EncryptPasswdWithSalt(char *pw, char *salt)
 
 int iValidLogin(int mode)
 {
-	char cSalt[3]={""};
+	char cSalt[16]={""};
 	char cPassword[100]={""};
 
 	//Notes:
@@ -666,7 +666,11 @@ int iValidLogin(int mode)
 	{
 		if(!mode)
 		{
-			sprintf(cSalt,"%.2s",cPassword);
+			//MD5 vs DES salt determination
+			if(cPassword[0]=='$' && cPassword[2]=='$')
+				sprintf(cSalt,"%.12s",cPassword);
+			else
+				sprintf(cSalt,"%.2s",cPassword);
 			EncryptPasswdWithSalt(gcPasswd,cSalt);
 			if(!strcmp(gcPasswd,cPassword))
 					return 1;
