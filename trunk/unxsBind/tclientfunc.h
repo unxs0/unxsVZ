@@ -48,6 +48,7 @@ unsigned IsAuthUser(char *cLabel, unsigned uOwner, unsigned uCertClient);
 void PermLevelDropDown(char *cuPerm);
 
 void EncryptPasswdWithSalt(char *cPasswd,char *cSalt);
+void EncryptPasswd(char *cPasswd);//main.c
 void GetClientMaxParams(unsigned uClient,unsigned *uMaxSites,unsigned *uMaxIPs);
 const char *cUserLevel(unsigned uPermLevel);
 unsigned uMaxClientsReached(unsigned uClient);
@@ -183,7 +184,7 @@ void ExttClientCommands(pentry entries[], int x)
 				mysql_free_result(res);
 				sprintf(gcQuery,"DELETE FROM " TAUTHORIZE 
 					" WHERE (cLabel='%s' OR uCertClient=%u)"
-					" AND (uOwner=%u OR uOwner=%u)",cLabel,uClient,uClient,guLoginClient);
+					" AND (uOwner=%u OR uOwner=%u)",cLabel,uClient,uClient,guCompany);
 				mysql_query(&gMysql,gcQuery);
         			if(mysql_errno(&gMysql))
                 			tClient(mysql_error(&gMysql));
@@ -249,7 +250,7 @@ void ExttClientCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				time_t clock;
-				char cClrPasswd[33];
+				char cClrPasswd[33]={""};
 
 			        time(&clock);
 				
@@ -272,8 +273,8 @@ void ExttClientCommands(pentry entries[], int x)
 					tClient(gcQuery);
 				}
 		
-				sprintf(cClrPasswd,"%.32s",cPasswd);
-				EncryptPasswdWithSalt(cPasswd,"..");
+				//sprintf(cClrPasswd,"%.32s",cPasswd);
+				EncryptPasswd(cPasswd);
 				if(uPerm==12) uClient=1;//uCertClient root alias temp hack
 				sprintf(gcQuery,"INSERT INTO " TAUTHORIZE " SET cLabel='%s',uPerm=%u,"
 					"uCertClient=%u,cPasswd='%s',uOwner=%u,uCreatedBy=%u,"

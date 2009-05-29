@@ -61,7 +61,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstAuthorizeVars(entries,x);
-			if(guPermLevel>=12)
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=2001;
 				tAuthorize(LANG_NB_CONFIRMDEL);
@@ -70,7 +70,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstAuthorizeVars(entries,x);
-			if(guPermLevel>=12)
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
 				DeletetAuthorize();
@@ -280,7 +280,7 @@ void ExttAuthorizeNavBar(void)
 	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if(guPermLevel>=12)
+	if(uAllowDel(uOwner,uCreatedBy))
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
