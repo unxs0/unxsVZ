@@ -81,7 +81,7 @@ void GetConfiguration(const char *cName, char *cValue, unsigned uHtml);
 void CreateMasterFiles(char *cMasterNS, char *cZone,unsigned uModDBFiles,
 		unsigned uModStubs,unsigned uDebug);//bind.c
 void CreateSlaveFiles(char *cSlaveNS,char *cZone,char *cMasterIP,unsigned uDebug);//bind.c
-void InstallNamedFiles(char *cIpNum);
+void InstallNamedFiles(char *cIpNum);//bind.c
 void Initialize(char *cPasswd);
 void ExportTable(char *cTable, char *cFile);
 void SlaveJobQueue(char *cNSSet, char *cMasterIP);//bind.c
