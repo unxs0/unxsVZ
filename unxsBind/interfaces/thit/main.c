@@ -167,7 +167,7 @@ int main(int iArgc, char *cArgv[])
 		printf("Creating rrdtool graph %s\n",cZone);
 
 		sprintf(cQuery,"rrdtool graph /var/log/named/%1$s.png"
-				" --title=\"%1$s mysqlBind aggregated stats\""
+				" --title=\"%1$s iDNS aggregated stats\""
 				" --vertical-label=\"events per second\""
 				" --base=1000"
 				" --height=120"
