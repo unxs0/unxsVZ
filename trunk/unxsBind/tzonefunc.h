@@ -399,8 +399,11 @@ void ExttZoneCommands(pentry entries[], int x)
 				else
 					uOwner=uDDClient;
 
-				if(SubmitJob("New",uNSSet,cZone,0,0))
-					htmlPlainTextError(mysql_error(&gMysql));
+				if(uSubmitJob)
+				{
+					if(SubmitJob("New",uNSSet,cZone,0,0))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
 #ifndef DEBUG_REPORT_STATS_OFF
 				UpdateInfo();
 #endif
@@ -972,6 +975,8 @@ void ExttZoneButtons(void)
 			}
                         printf("<br>");
                         printf(LANG_NBB_CONFIRMNEW);
+			printf("<br>uSubmitJob <input title='If not checked, no job will "
+				"be created for the new zone ' type=checkbox name=uSubmitJob checked>");
                 break;
 
                 case 2001:
