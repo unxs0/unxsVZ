@@ -17,12 +17,22 @@ void tNSSetMembers(unsigned uNSSet);
 
 void ExtProcesstNSSetVars(pentry entries[], int x)
 {
-	/*
 	register int i;
 	for(i=0;i<x;i++)
 	{
+		if(!strncmp(entries[i].name,"uNSSet",6))
+		{
+			unsigned uCheckedNSSet=0;
+
+			sscanf(entries[i].name,"uNSSet%u",&uCheckedNSSet);
+			if(uCheckedNSSet)
+			{
+				sprintf(gcQuery,"DELETE FROM tNSSet WHERE uNSSet=%u AND ( uOwner=%u OR %u>9 )"
+					,uCheckedNSSet,guLoginClient,guPermLevel);
+				macro_mySQLQueryHTMLError;
+			}
+		}
 	}
-	*/
 }//void ExtProcesstNSSetVars(pentry entries[], int x)
 
 
@@ -322,9 +332,18 @@ void tNSSetNavList(void)
         	printf("<p><u>tNSSetNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tNSSet"
-				"&uNSSet=%s>%s</a><br>\n",
-				field[0],field[1]);
+		{
+			if(guLoginClient==1)
+				printf("<input type=checkbox name=uNSSet%s>"
+					"<a class=darkLink href=iDNS.cgi?gcFunction=tNSSet"
+					"&uNSSet=%s>%s</a><br>\n",field[0],field[0],field[1]);
+			else
+				printf("<a class=darkLink href=iDNS.cgi?gcFunction=tNSSet"
+					"&uNSSet=%s>%s</a><br>\n",field[0],field[1]);
+		}
+		if(guLoginClient==1)
+			printf("<input title='Deletes all the tNSSet entries marked in checkboxes above'"
+				" class=lwarnButton type=submit name=gcCommand value='Delete Checked'>");
 	}
         mysql_free_result(res);
 

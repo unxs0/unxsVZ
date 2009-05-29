@@ -31,7 +31,6 @@ static char cuServerPullDown[256]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -373,9 +372,7 @@ void NewtNS(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uNS FROM tNS\
-				WHERE uNS=%u"
-							,uNS);
+	sprintf(gcQuery,"SELECT uNS FROM tNS WHERE uNS=%u",uNS);
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -387,15 +384,13 @@ void NewtNS(unsigned uMode)
 	Insert_tNS();
 	//sprintf(gcQuery,"New record %u added");
 	uNS=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tNS",uNS);
 	iDNSLog(uNS,"tNS","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uNS);
-	tNS(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uNS);
+		tNS(gcQuery);
 	}
 
 }//NewtNS(unsigned uMode)
@@ -403,27 +398,18 @@ void NewtNS(unsigned uMode)
 
 void DeletetNS(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tNS WHERE uNS=%u AND ( uOwner=%u OR %u>9 )"
 					,uNS,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tNS WHERE uNS=%u"
-					,uNS);
-#endif
 	macro_mySQLQueryHTMLError;
 	//tNS("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		iDNSLog(uNS,"tNS","Del");
-#endif
 		tNS(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		iDNSLog(uNS,"tNS","DelError");
-#endif
 		tNS(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -472,7 +458,6 @@ void ModtNS(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -485,15 +470,8 @@ void ModtNS(void)
 				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
 			,uNS,guLoginClient,guLoginClient);
 	else
-	sprintf(gcQuery,"SELECT uNS,uModDate FROM tNS\
-				WHERE uNS=%u"
+		sprintf(gcQuery,"SELECT uNS,uModDate FROM tNS WHERE uNS=%u"
 						,uNS);
-#else
-	sprintf(gcQuery,"SELECT uNS FROM tNS\
-				WHERE uNS=%u"
-						,uNS);
-#endif
-
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -503,18 +481,14 @@ void ModtNS(void)
 	if(i>1) tNS(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tNS(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tNS(field[0]);
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tNS",uNS);
 	iDNSLog(uNS,"tNS","Mod");
-#endif
 	tNS(gcQuery);
 
 }//ModtNS(void)
