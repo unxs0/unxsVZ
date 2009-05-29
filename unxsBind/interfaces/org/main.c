@@ -437,12 +437,12 @@ void SSLCookieLogin(void)
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
-			sprintf(gcPasswd,"%.20s",ptr);
+			sprintf(gcPasswd,"%.99s",ptr);
 			*ptr2=';';
 		}
 		else
 		{
-			sprintf(gcPasswd,"%.20s",ptr);
+			sprintf(gcPasswd,"%.99s",ptr);
 		}
 	}
 	
