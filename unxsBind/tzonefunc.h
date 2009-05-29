@@ -528,7 +528,7 @@ void ExttZoneCommands(pentry entries[], int x)
 				tZone("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcFind,"Remove Generated PTRs")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			guMode=2002;
 			sprintf(gcQuery,
@@ -540,7 +540,7 @@ void ExttZoneCommands(pentry entries[], int x)
 
 		}
 		else if(!strcmp(gcFind,"Generate Arpa Zones")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			guMode=2002;
 			ProcesstZoneVars(entries,x);
@@ -548,20 +548,20 @@ void ExttZoneCommands(pentry entries[], int x)
 			GenerateArpaZones();
 		}
 		else if(!strcmp(gcCommand,"Mass Operations")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			MassOperations();
 		}
 		else if(!strcmp(gcCommand,"Zones From Blocks")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 
 			ProcesstZoneVars(entries,x);
 			htmlZonesFromBlocks();
 		}
 		else if(!strcmp(gcCommand,"Customer Zones")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!uDDClient)
@@ -572,7 +572,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			htmlCustomerZones();
 		}
 		else if(!strcmp(gcFind,"Zone List")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!cMassList[0])
@@ -583,7 +583,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			htmlZoneList();
 		}
 		else if(!strcmp(gcFind,"Copy to Views")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!cMassList[0])
@@ -594,7 +594,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			htmlMassCopyToOtherViews();
 		}
 		else if(!strcmp(gcFind,"In tZone?")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!cMassList[0])
@@ -605,7 +605,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			htmlInZone();
 		}
 		else if(!strcmp(gcFind,"Secondary Service Cleanup")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!cMassList[0])
@@ -616,7 +616,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			htmlSecondaryServiceCleanup();
 		}
 		else if(!strcmp(gcFind,"Secondary Service Only")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!cMassList[0])
@@ -627,7 +627,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			htmlSecondaryServiceOnly();
 		}
 		else if(!strcmp(gcFind,"Mass Update")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!cMassList[0])
@@ -638,7 +638,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			htmlMassUpdate();
 		}
 		else if(!strcmp(gcFind,"Mass Delete")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!cMassList[0])
@@ -649,7 +649,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			htmlMassDelete();
 		}
 		else if(!strcmp(gcFind,"Mass PTR Check")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!cMassList[0])
@@ -660,7 +660,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			htmlMassPTRCheck();
 		}
 		else if(!strcmp(gcFind,"Mass named-checkzone")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!cMassList[0])
@@ -671,7 +671,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			htmlMassCheckZone();
 		}
 		else if(!strcmp(gcFind,"Mass Resource Import")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!cMassList[0])
@@ -682,7 +682,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			htmlMassResourceImport();
 		}
 		else if(!strcmp(gcFind,"Mass Resource Fix")
-				&& guPermLevel>11)
+				&& guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!cMassList[0])
@@ -693,7 +693,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			MassOperations();
 			//htmlMassResourceFix();
 		}
-		else if(!strcmp(gcCommand,"Delegation Tools") && guPermLevel>=11)
+		else if(!strcmp(gcCommand,"Delegation Tools") && guPermLevel>=10)
 		{
 			ProcesstZoneVars(entries,x);
 			guMode=4000;
@@ -706,7 +706,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			else
 				tZone("<blink>Error</blink>: Denied by permissions settings");
 		}
-		else if(!strcmp(gcCommand,"Confirm Delegation") && guPermLevel>=11)
+		else if(!strcmp(gcCommand,"Confirm Delegation") && guPermLevel>=10)
 		{
 #define IP_BLOCK_CIDR 1
 #define IP_BLOCK_DASH 2
@@ -884,7 +884,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			tZone("IP block delegation done");
 			
 		}
-		else if(!strcmp(gcCommand,"Remove Delegation") && guPermLevel>11)
+		else if(!strcmp(gcCommand,"Remove Delegation") && guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!uAllowDel(uOwner,uCreatedBy))
@@ -892,7 +892,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			guMode=5000;
 			tZone("");
 		}
-		else if(!strcmp(gcCommand,"Confirm Del. Removal") && guPermLevel>11)
+		else if(!strcmp(gcCommand,"Confirm Del. Removal") && guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			if(!uAllowDel(uOwner,uCreatedBy))
@@ -929,22 +929,22 @@ void ExttZoneCommands(pentry entries[], int x)
 			CloneZone(cZone,cTargetZone,uView);
 			//Submit new job for cTargetZone
 		}
-		else if(!strcmp(gcFind,"Check SOA") && guPermLevel>11)
+		else if(!strcmp(gcFind,"Check SOA") && guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			htmlCheckSOA();
 		}
-		else if(!strcmp(gcFind,"Master Zone File") && guPermLevel>11)
+		else if(!strcmp(gcFind,"Master Zone File") && guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			htmlMasterZoneFile();
 		}
-		else if(!strcmp(gcFind,"Check master.zones") && guPermLevel>11)
+		else if(!strcmp(gcFind,"Check master.zones") && guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			htmlMasterZonesCheck();
 		}
-		else if(!strcmp(gcFind,"Run named-checkzone") && guPermLevel>11)
+		else if(!strcmp(gcFind,"Run named-checkzone") && guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
 			htmlMasterNamedCheckZone();
@@ -1053,7 +1053,7 @@ void ExttZoneButtons(void)
 			}
 			tZoneContextInfo();
 			printf("<p><u>Other Zone Tools</u><br>");
-			if(uZone)
+			if(uZone && guPermLevel>9)
 			{
 				printf("<input class=largeButton title='Check SOA via dig text output' "
 					"type=submit name=gcFind value='Check SOA'>"); 
@@ -1064,18 +1064,21 @@ void ExttZoneButtons(void)
 				printf("<br><input class=largeButton title='Verify that cZone has no errors that "
 					"may cause it not to load or propagate' type=submit name=gcFind"
 					" value='Run named-checkzone'>"); 
-				if(guPermLevel>11&&strstr(cZone,".in-addr.arpa"))
+				if(guPermLevel>9&&strstr(cZone,".in-addr.arpa"))
 					printf("<br><input class=largeButton title='IP Block Delegation Tools' "
 						"type=submit name=gcCommand value='Delegation Tools'>\n");
 			}
-			printf("<p><u>Other Tools</u><br>");
-			printf("<input class=largeButton title='Mass/Bulk operations' type=submit"
-				" name=gcCommand value='Mass Operations'><br>\n");
-			printf("<p><u>Clone Zone</u><br>");
-			printf("<input type=text name=cTargetZone size=30 title='Enter the name of the zone you "
-				"wish to clone the loaded zone to'<br>\n");
-			printf("<input class=lwarnButton title='Clone the loaded zone into a new zone entered above'"
-				" type=submit name=gcCommand value='Clone Zone'><br>\n");
+			if(guPermLevel>9)
+			{
+				printf("<p><u>Other Tools</u><br>");
+				printf("<input class=largeButton title='Mass/Bulk operations' type=submit"
+					" name=gcCommand value='Mass Operations'><br>\n");
+				printf("<p><u>Clone Zone</u><br>");
+				printf("<input type=text name=cTargetZone size=30 title='Enter the name of the zone you "
+					"wish to clone the loaded zone to'<br>\n");
+				printf("<input class=lwarnButton title='Clone the loaded zone into a new zone entered above'"
+					" type=submit name=gcCommand value='Clone Zone'><br>\n");
+			}
 
 	}
 
@@ -1878,7 +1881,8 @@ void htmlInZone(void)
 						"AND tZone.cZone='%s' AND tZone.uOwner=%u",cZone,uDDClient);
 			else
 				sprintf(gcQuery,"SELECT tResource.cName,tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
-						"tResource.cParam2 FROM tResource,tZone,tRRType WHERE tResource.uZone=tZone.uZone "
+						"tResource.cParam2 FROM tResource,tZone,tRRType WHERE"
+						" tResource.uZone=tZone.uZone "
 						"AND tResource.uRRType=tRRType.uRRType AND tZone.cZone='%s'",cZone);
 		}
 		else
@@ -2084,13 +2088,13 @@ void htmlSecondaryServiceOnly(void)
 		}
 
 NSSetSelected:
-		if(!uDDClient) uDDClient=guLoginClient;
+		if(!uDDClient) uDDClient=guCompany;
 		if(uOnExistUpdate)
 			sprintf(gcQuery,"UPDATE tZone SET uNSSet=%u,uSecondaryOnly=1,uModBy=1,"
 					"uModDate=UNIX_TIMESTAMP(NOW()) WHERE cZone='%s' AND uView=2 "
-					"AND uSecondaryOnly=0",
+					"AND uSecondaryOnly=0 AND uOwner=%u",
 					uNSSet,
-					cZone);
+					cZone,uDDClient);
 		else
 			sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=%u,uView=2,"
 					"uSecondaryOnly=1,uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -2105,8 +2109,11 @@ NSSetSelected:
 		}
 		if(uOnExistUpdate)
 		{
-			SubmitJob("Modify",uNSSet,cZone,0,0);
-			printf("Updated %s and created modify job\n",cZone);
+			if(mysql_affected_rows(&gMysql))
+			{
+				SubmitJob("Modify",uNSSet,cZone,0,0);
+				printf("Updated %s and created modify job\n",cZone);
+			}
 		}
 		else
 		{
@@ -2182,7 +2189,8 @@ void htmlMassUpdate(void)
 		}
 
 		//First check tZone
-		sprintf(gcQuery,"SELECT uNSSet,uZone FROM tZone WHERE cZone='%s'",cZone);
+		sprintf(gcQuery,"SELECT uNSSet,uZone FROM tZone WHERE cZone='%s' AND uOwner=%u"
+					,cZone,guCompany);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -2306,10 +2314,11 @@ void htmlMassDelete(void)
 
 		//First check tZone
 		if(uDDClient)
-		sprintf(gcQuery,"SELECT uZone,uNSSet FROM tZone WHERE cZone='%s' AND uOwner=%u",cZone,uDDClient);
+			sprintf(gcQuery,"SELECT uZone,uNSSet FROM tZone WHERE cZone='%s' AND uOwner=%u",
+							cZone,uDDClient);
 		else
-		sprintf(gcQuery,"SELECT uZone,uNSSet FROM tZone WHERE cZone='%s'",
-			cZone);
+			sprintf(gcQuery,"SELECT uZone,uNSSet FROM tZone WHERE cZone='%s' AND uOwner=%u",
+							cZone,guCompany);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -2517,7 +2526,8 @@ void CustomerDropDown(unsigned uSelector)
         }
         else
         {
-	printf("<select name=cCustomerDropDown><option title='No selection'>---</option></select>\n");
+		printf("<select name=cCustomerDropDown><option title='No selection'>---"
+				"</option></select>\n");
         }
         printf("</select>\n");
 
@@ -2557,7 +2567,8 @@ void htmlMassResourceFix(void)
 				"tResource.cName,tZone.cZone FROM tResource,tZone WHERE "
 				"tResource.uZone=tZone.uZone AND tResource.cName LIKE '%%%s' "
 				"AND tResource.cName NOT LIKE '%%.%s' AND tZone.uView=2 AND "
-				"tZone.uSecondaryOnly=0",cNamePart,cNamePart);
+				"tZone.uSecondaryOnly=0 AND tZone.uOwner=%u",
+					cNamePart,cNamePart,guCompany);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -2574,7 +2585,8 @@ void htmlMassResourceFix(void)
 			sscanf(field[2],"%u",&uResource);
 			sprintf(cZone,"%.255s",field[4]);
 			//Debug only
-			printf("Will fix this tResource.cName=(%s) using (%s). uResource=%u of cZone=(%s)\n",field[3],cNamePart,uResource,cZone);
+			printf("Will fix this tResource.cName=(%s) using (%s). uResource=%u of cZone=(%s)\n",
+					field[3],cNamePart,uResource,cZone);
 			uFoundCount++;
 
 			//If the original cName and the $ORIGIN change part are the same skip
@@ -2582,9 +2594,11 @@ void htmlMassResourceFix(void)
 				continue;
 
 			//2-. Fix section
-			//Ex. SELECT CONCAT(SUBSTR(cName,1,INSTR(cName,'lhr1.uk.asc-services.net.')-1),'.lhr1.uk.asc-services.net.') FROM tResource WHERE uResource=98526;
+			//Ex. SELECT CONCAT(SUBSTR(cName,1,INSTR(cName,'lhr1.uk.asc-services.net.')-1),
+			//'.lhr1.uk.asc-services.net.') FROM tResource WHERE uResource=98526;
 			sprintf(gcQuery,"UPDATE tResource SET cName=CONCAT(SUBSTR(cName,1,(INSTR(cName,'%s')-1)),'.%s')"
-					"WHERE uResource=%u",cNamePart,cNamePart,uResource);
+					"WHERE uResource=%u AND uOwner=%u",
+							cNamePart,cNamePart,uResource,guCompany);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -2680,7 +2694,8 @@ void htmlMassResourceImport(void)
 			printf("cZone=(%s)\n",cZone);
 
 			//First check tZone
-			sprintf(gcQuery,"SELECT uZone,uNSSet,uOwner FROM tZoneImport WHERE cZone='%s' AND uSecondaryOnly=0 AND uView=%u",cZone,uView);
+			sprintf(gcQuery,"SELECT uZone,uNSSet,uOwner FROM tZoneImport WHERE cZone='%s' AND"
+						" uSecondaryOnly=0 AND uView=%u",cZone,uView);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -2811,7 +2826,8 @@ void htmlZonesFromBlocks(void)
 			while((field2=mysql_fetch_row(res2)))
 			{
 				uFound++;
-				printf("cBlock=%s;cZone=%s;uView=%s;uSecondaryOnly=%s;\n",field[0],cZone,field2[1],field2[2]);
+				printf("cBlock=%s;cZone=%s;uView=%s;uSecondaryOnly=%s;\n",
+					field[0],cZone,field2[1],field2[2]);
 			}
 		}
 		else
@@ -2889,8 +2905,8 @@ void htmlMassCopyToOtherViews(void)
 				"uMailServers,cMainAddress,uRegistrar,uSecondaryOnly,"
 				"tNSSet.cMasterIPs,cOptions,uOwner FROM "
 				"tZone,tNSSet WHERE cZone='%s' AND uView=%u "
-				"AND tZone.uNSSet=tNSSet.uNSSet"
-				,cZone,uView);
+				"AND tZone.uNSSet=tNSSet.uNSSet AND tZone.uOwner=%u"
+				,cZone,uView,guCompany);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -3000,7 +3016,8 @@ void htmlMassCopyToOtherViews(void)
 DoNotInsertZone:
 			//debug only
 			//printf("DoNotInsertZone: uZone=%u uTargetZone=%u\n",uZone,uTargetZone);
-			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2,uOwner FROM tResource WHERE uZone=%u",uZone);
+			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2,uOwner FROM tResource WHERE uZone=%u",
+					uZone);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -3117,11 +3134,13 @@ void htmlMassPTRCheck(void)
 		if(uIgnorecParam1)
 			sprintf(cQuery,"SELECT tZone.uZone FROM tZone,tResource "
 			"WHERE tResource.uZone=tZone.uZone AND tZone.cZone='%s' "
-			"AND tResource.cName='%u' AND tResource.uRRType=7",cArpaZone,uLastOctet);
+			"AND tResource.cName='%u' AND tResource.uRRType=7",
+				cArpaZone,uLastOctet);
 		else
 			sprintf(cQuery,"SELECT tZone.uZone FROM tZone,tResource "
 			"WHERE tResource.uZone=tZone.uZone AND tZone.cZone='%s' "
-			"AND tResource.cName='%u' AND tResource.cParam1='%s' AND tResource.uRRType=7",cArpaZone,uLastOctet,cFQDN);
+			"AND tResource.cName='%u' AND tResource.cParam1='%s' AND tResource.uRRType=7",
+				cArpaZone,uLastOctet,cFQDN);
 		//Debug only
 		//printf("%s\n",cQuery);
 		mysql_query(&gMysql,cQuery);
@@ -3234,9 +3253,11 @@ void tZoneNavList(void)
 	}
 
 	if(uSearchSecOnly)
-		ExtSelectSearch("tZone","uZone,cZone,(SELECT tView.cLabel FROM tView WHERE tView.uView=tZone.uView)","cZone",cSearch,"uSecondaryOnly=1",20);
+		ExtSelectSearch("tZone","uZone,cZone,(SELECT tView.cLabel FROM tView WHERE tView.uView=tZone.uView)",
+					"cZone",cSearch,"uSecondaryOnly=1",20);
 	else
-		ExtSelectSearch("tZone","uZone,cZone,(SELECT tView.cLabel FROM tView WHERE tView.uView=tZone.uView)","cZone",cSearch,NULL,20);
+		ExtSelectSearch("tZone","uZone,cZone,(SELECT tView.cLabel FROM tView WHERE tView.uView=tZone.uView)",
+					"cZone",cSearch,NULL,20);
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -3435,15 +3456,16 @@ void CloneZone(char *cSourceZone,char *cTargetZone,unsigned uView)
 	MYSQL_ROW field;
 	unsigned uSrcZone=0;
 
-	//Sanity check, can't only clone to new zones
-	sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u",cTargetZone,uView);
+	//Sanity check
+	sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u AND uOwner=%u",
+			cTargetZone,uView,guCompany);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 
 	if(mysql_num_rows(res))
-		tZone("<blink>Error:</blink> Can't only clone to non-existant zone!");
+		tZone("<blink>Error:</blink> Target zone must exist and be owned by your company");
 	
 	mysql_free_result(res);
 
