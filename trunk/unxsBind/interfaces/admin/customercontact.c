@@ -70,6 +70,7 @@ void htmlCustomerContactWizard(unsigned uStep);
 char *cPermLevel(unsigned uPerm);
 unsigned EmailExists(char *cEmail);
 
+void EncryptPasswd(char *pw);
 void SetCustomerContactFieldsOn(void);
 void LoadCustomerContact(void);
 	
@@ -1330,4 +1331,37 @@ void funcContactLast7DaysActivity(FILE *fp)
 
 }//void funcContactLast7DaysActivity(FILE *fp)
 
+
+void EncryptPasswd(char *pw)
+{
+	//Notes:
+	//	We should change time based salt 
+	//	(could be used for faster dictionary attack)
+	//	to /dev/random based system.
+
+        char salt[3];
+        char passwd[102]={""};
+        char *cpw;
+	char cMethod[16] ={""}; 
+
+	GetConfiguration("cCryptMethod",cMethod,0);
+	if(!strcmp(cMethod,"MD5"))
+	{
+		char cSalt[] = "$1$01234567$";
+	    	(void)srand((int)time((time_t *)NULL));
+    		to64(&cSalt[3],rand(),8);
+		cpw = crypt(pw,cSalt);
+		// error not verified, str NULL ("") returned	
+	}
+	else
+	{
+		// default DES method
+	        sprintf(passwd,"%.99s",pw);
+    		(void)srand((int)time((time_t *)NULL));
+    		to64(&salt[0],rand(),2);
+		cpw=crypt(passwd,salt);
+	}	
+	sprintf(pw,"%.99s",cpw);
+
+}//void EncryptPasswd(char *pw)
 
