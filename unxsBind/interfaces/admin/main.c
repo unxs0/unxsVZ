@@ -195,10 +195,13 @@ int main(int argc, char *argv[])
 	{
 		if(!strncmp(gcFunction,"Logout",5))
 		{
-		printf("Set-Cookie: idnsAdminLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-		printf("Set-Cookie: idnsAdminPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-		printf("Set-Cookie: iDNSSessionCookie=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=7,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+			printf("Set-Cookie: idnsAdminLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: idnsAdminPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: iDNSSessionCookie=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=7,uPermLevel=%u,"
+				"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 			mysql_query(&gMysql,gcQuery);
         		guPermLevel=0;
 			gcUser[0]=0;
@@ -214,7 +217,28 @@ int main(int argc, char *argv[])
 
 	//First page after valid login
 	if(!strcmp(gcFunction,"Login"))
-		htmlDashBoard();
+	{
+		if(guPermLevel>9)
+		{
+			htmlDashBoard();
+		}
+		else
+		{
+			//This should not be needed but can't find the error. And this works for now.
+			printf("Set-Cookie: idnsAdminLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: idnsAdminPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: iDNSSessionCookie=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='perm logout %.99s',uLogType=7,uPermLevel=%u,"
+				"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+			mysql_query(&gMysql,gcQuery);
+        		guPermLevel=0;
+			gcUser[0]=0;
+			guLoginClient=0;
+			htmlLogin();
+		}
+	}
 
 	//Per page command tree
 	CustomerCommands(entries,i);

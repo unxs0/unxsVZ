@@ -20,7 +20,7 @@ You must have your iDNS backend system installed (iDNS.cgi) and tested.
 Instructions:
 
 1-. Set your CGIDIR environment variable (if not set) to the directory where you wish to install the 
-	idnsAdmin.cgi binary. 
+	idnsAdmin.cgi binary and also where you have the iDNS.cgi already installed. 
 
 	Example:
 

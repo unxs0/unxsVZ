@@ -311,7 +311,7 @@ void tClientInput(unsigned uMode)
 	OpenRow(LANG_FL_tClient_cCode,"black");
 	printf("<input title='%s' type=text name=cCode value=\"%s\" size=40 maxlength=32 "
 ,LANG_FT_tClient_cCode,EncodeDoubleQuotes(cCode));
-	if(guPermLevel>=7 && uMode)
+	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
 	}
