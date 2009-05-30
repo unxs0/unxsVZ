@@ -1011,8 +1011,8 @@ void funcCompanyNavList(FILE *fp,unsigned uSetCookie)
 	if(!cSearch[0]) return;
 
         sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE uClient!=1 AND "
-			"cLabel LIKE '%s%%' AND (uOwner=1 OR uOwner=%u) AND cCode='Organization' ORDER BY cLabel",
-				cSearch,guOrg);
+			"cLabel LIKE '%s%%' AND (uClient=%u OR uOwner=%u) AND cCode='Organization' ORDER BY cLabel",
+				cSearch,guOrg,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
