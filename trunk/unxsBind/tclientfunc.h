@@ -118,6 +118,7 @@ void ExttClientCommands(pentry entries[], int x)
 				}
 				guMode=2000;
 				//These just for GUI cleanup
+				cCode[0]=0;
 				uModDate=0;
 				uModBy=0;
 				tClient(LANG_NB_CONFIRMNEW);
@@ -143,9 +144,15 @@ void ExttClientCommands(pentry entries[], int x)
 				guMode=0;
 
 				if(!uForClient)
+				{
 					uOwner=guCompany;
+					sprintf(cCode,"Organization");
+				}
 				else
+				{
 					uOwner=uForClient;
+					sprintf(cCode,"Contact");
+				}
 				uClient=0;//Update .c this is dumb
 				uCreatedBy=guLoginClient;
 				//These just for GUI cleanup
@@ -310,7 +317,7 @@ void ExttClientButtons(void)
         {
                 case 2000:
 			printf("<u>New: Step 1 Tips</u><br>");
-			printf("Here you would usually enter a new company name into cLabel. Optionally some standardized company info in cInfo, like addresses phone numbers and such. A main company email is usually helpful, and cCode can be used for easy matching with other databases you may have for your customers like a CRM or accounting software etc. <br>If you are creating a contact for an existing company select that company from the drop down select below and use cLabel for the contact name (Ex. Anne Flechter) and the cInfo would be the contacts personal phone numbers and or address etc.");
+			printf("Here you would usually enter a new company name into cLabel. Optionally some standardized company info in cInfo, like addresses phone numbers and such. A main company email is usually helpful, cCode is used internally. <br>If you are creating a contact for an existing company select that company from the drop down select below and use cLabel for the contact name (Ex. Anne Flechter) and the cInfo would be the contacts personal phone numbers and or address etc.");
 			if(guPermLevel>7)
 			{
 				if(uOwner==1)
@@ -378,7 +385,7 @@ void ExttClientButtons(void)
 				htmlRecordContext();
 			}
 
-			if(uClient && guPermLevel>9 && uClient!=guLoginClient 
+			if( strcmp(cCode,"Organization") && uClient && guPermLevel>9 && uClient!=guLoginClient 
 				&& !IsAuthUser(cLabel,uOwner,uClient) &&guMode!=5 && uOwner!=1)
 			{
 				printf("<p><input class=largeButton title='Authorize %s to manage his company resources' type=submit name=gcCommand value='Authorize'>",cLabel);
@@ -633,13 +640,14 @@ void tTablePullDownResellers(unsigned uSelector)
 	if(guPermLevel>11)
 	{
 		sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT
-				" WHERE uOwner=1 AND uClient!=1"
+				" WHERE cCode='Organization' AND uClient!=1"
 				" ORDER BY cLabel");
 	}
 	else
 	{
 		sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT
 				" WHERE cLabel!='%s'"
+				" AND cCode='Organization'"
 				" AND (uClient=%u OR uOwner"
 				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u OR uClient=%u))"
 				" ORDER BY cLabel",
@@ -806,7 +814,7 @@ void ContactsNavList(void)
 		return;
 
 	//Login info
-	if(uOwner!=1)
+	if(uOwner!=1 && strcmp(cCode,"Organization"))
 	{
 		tAuthorizeNavList();
 	}
@@ -845,8 +853,10 @@ void ContactsNavList(void)
 void htmlRecordContext(void)
 {
 	printf("<p><u>Record Context Info</u><br>");
-	if(uOwner>1)
-		printf("'%s' appears to be an ASP or a reseller owned company or a contact of <a class=darkLink href=iDNS.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
+	if(uOwner>1 && strcmp(cCode,"Contact"))
+		printf("'%s' appears to be a reseller or ASP owned company or organization",cLabel);
+	else if(uOwner>1 && strcmp(cCode,"Organization"))
+		printf("'%s' appears to be a contact of <a class=darkLink href=iDNS.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
 	else if(uOwner==1 && strcmp(cLabel,"Root"))
 		printf("'%s' appears to be an ASP root company",cLabel);
 	else if(uOwner==1 && !strcmp(cLabel,"Root"))

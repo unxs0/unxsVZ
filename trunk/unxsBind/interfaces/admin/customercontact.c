@@ -5,8 +5,8 @@ FILE
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	iDNS Admin (Owner) Interface
-	program file.
+	Contacts TAB.
+	idnsAdmin interface program file.
 */
 
 #include "interface.h"
@@ -204,7 +204,10 @@ void CustomerContactCommands(pentry entries[], int x)
 	{
 		ProcessCustomerContactVars(entries,x);
 		if(!strcmp(gcFunction,"New"))
-		{			
+		{
+			cClientName[0]=0;
+			cUserName[0]=0;
+			cPassword[0]=0;
 			sprintf(gcNewStep,"Confirm ");
 			gcMessage="<blink>Enter/modify data, review, then confirm. Any other action to cancel.</blink>";
 			gcInputStatus[0]=0;
@@ -214,6 +217,9 @@ void CustomerContactCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Confirm New"))
 		{
+			//If login not supplied create same as contact name
+			if(cClientName[0] && !cUserName[0])
+				sprintf(cUserName,"%.99s",cClientName);
 			if(!ValidateCustomerContactInput())
 			{
 				sprintf(gcNewStep,"Confirm ");
@@ -324,7 +330,8 @@ void CustomerContactCommands(pentry entries[], int x)
 					}
 					else
 					{
-						sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s'",cUserName);
+						sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s'",
+							cUserName);
 						mysql_query(&gMysql,gcQuery);
 						
 						if(mysql_errno(&gMysql))
@@ -649,7 +656,7 @@ void htmlCustomerContactPage(char *cTitle, char *cTemplateName)
 void NewCustomerContact(void)
 {
 	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cInfo='%s',cEmail='%s',uOwner=%u,uCreatedBy=%u,"
-			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			"uCreatedDate=UNIX_TIMESTAMP(NOW()),cCode='Contact'",
 			cClientName
 			,cInfo
 			,cEmail
@@ -921,7 +928,8 @@ void funcTablePullDownResellers(FILE *fp,unsigned uUseStatus)
 		cTitle="Select the Company you want to create the Company Contact for";
 	else
 		cTitle="Select the Company you want to create the Administrator for";
-	sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel FROM tClient WHERE uOwner=1 ORDER BY cLabel");
+	sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel FROM tClient WHERE"
+			" (uOwner=1 OR uOwner=%u) AND cCode='Organization' ORDER BY cLabel",guOrg);
 
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -938,14 +946,17 @@ void funcTablePullDownResellers(FILE *fp,unsigned uUseStatus)
         {
 		if(!strcmp(gcPage,"AdminUser") || !strcmp(gcPage,"Zone"))
 		{
-			fprintf(fp,"<select title='%s' name=cForClientPullDown class=%s %s>\n",cTitle,cForClientPullDownStyle,gcInputStatus);
+			fprintf(fp,"<select title='%s' name=cForClientPullDown class=%s %s>\n",
+					cTitle,cForClientPullDownStyle,gcInputStatus);
 		}
 		else
 		{
 			if(uUseStatus)
-	                	fprintf(fp,"<select title='%s' name=cForClientPullDown class=%s disabled>\n",cTitle,cForClientPullDownStyle);
+	                	fprintf(fp,"<select title='%s' name=cForClientPullDown class=%s disabled>\n",
+					cTitle,cForClientPullDownStyle);
 			else
-				fprintf(fp,"<select title='%s' name=cForClientPullDown class=type_textarea>\n",cTitle);
+				fprintf(fp,"<select title='%s' name=cForClientPullDown class=type_textarea>\n",
+					cTitle);
 		}
 
                 //Default no selection
@@ -970,7 +981,7 @@ void funcTablePullDownResellers(FILE *fp,unsigned uUseStatus)
         }
         else
         {
-        fprintf(fp,"<select name=cForClientPullDown class=type_textarea><option>---</option></select>\n");
+	        fprintf(fp,"<select name=cForClientPullDown class=type_textarea><option>---</option></select>\n");
         }
         fprintf(fp,"</select>\n");
 

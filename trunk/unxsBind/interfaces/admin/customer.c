@@ -5,8 +5,8 @@ FILE
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	iDNS Admin (Owner) Interface
-	program file.
+	Companies TAB.
+	idnsAdmin interface program file.
 */
 
 
@@ -123,7 +123,8 @@ void LoadCustomer(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uClient,cLabel,cInfo,cEmail,cCode,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate FROM tClient WHERE uClient=%u",uClient);
+	sprintf(gcQuery,"SELECT uClient,cLabel,cInfo,cEmail,cCode,uOwner,uCreatedBy,uCreatedDate,"
+				"uModBy,uModDate FROM tClient WHERE uClient=%u",uClient);
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
@@ -225,7 +226,8 @@ void CustomerCommands(pentry entries[], int x)
 			}
 			
 			sprintf(gcDelStep,"Confirm ");
-			gcMessage="Double check you have selected the correct record to delete. Then confirm. Any other action to cancel.";
+			gcMessage="Double check you have selected the correct record to delete."
+					" Then confirm. Any other action to cancel.";
 		}
 		else if(!strcmp(gcFunction,"Confirm Delete"))
 		{
@@ -564,6 +566,7 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
 
 }//void htmlCustomerPage()
 
+
 void funcCustomerContacts(FILE *fp)
 {
 	MYSQL_RES *res;
@@ -602,13 +605,17 @@ void SelectCustomer(char *cLabel,unsigned uMode)
 	if(!uMode)
 	{
 		if(strstr(cLabel,"%")==NULL)
-			sprintf(gcQuery,"SELECT %s FROM tClient WHERE cLabel='%s' AND uOwner=1",VAR_LIST_tClient,cLabel);
+			sprintf(gcQuery,"SELECT %s FROM tClient WHERE cLabel='%s' AND (uOwner=1 OR uOwner=%u)",
+					VAR_LIST_tClient,cLabel,guOrg);
 		else
-			sprintf(gcQuery,"SELECT %s FROM tClient WHERE cLabel LIKE '%s' AND uOwner=1 ORDER BY cLabel",VAR_LIST_tClient,cLabel);
+			sprintf(gcQuery,"SELECT %s FROM tClient WHERE cLabel LIKE '%s' AND (uOwner=1 OR uOwner=%u)"
+					" ORDER BY cLabel",
+					VAR_LIST_tClient,cLabel,guOrg);
 	}
 	else
 	{
-		sprintf(gcQuery,"SELECT %s FROM tClient WHERE uClient=%s",VAR_LIST_tClient,cLabel);
+		sprintf(gcQuery,"SELECT %s FROM tClient WHERE uClient=%s",
+				VAR_LIST_tClient,cLabel);
 	}
 
 	mysql_query(&gMysql,gcQuery);
@@ -624,12 +631,13 @@ void NewCustomer(void)
 {
 	time(&uCreatedDate);
 
-	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cEmail='%s',cInfo='%s',cCode='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=%lu",
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cEmail='%s',cInfo='%s',cCode='%s',"
+				"uOwner=%u,uCreatedBy=%u,uCreatedDate=%lu",
 			cCompanyName
 			,cEmail
 			,cInfo
 			,cCode
-			,1
+			,guOrg
 			,guLoginClient
 			,uCreatedDate);
 
@@ -668,7 +676,8 @@ void ModCustomer(void)
 {
 	time(&uModDate);
 
-	sprintf(gcQuery,"UPDATE tClient SET cLabel='%s',cEmail='%s',cInfo='%s',cCode='%s',uModBy=%u,uModDate=%lu WHERE uClient=%u",
+	sprintf(gcQuery,"UPDATE tClient SET cLabel='%s',cEmail='%s',cInfo='%s',cCode='%s',"
+				"uModBy=%u,uModDate=%lu WHERE uClient=%u",
 			cCompanyName
 			,cEmail
 			,cInfo
@@ -1001,8 +1010,9 @@ void funcCompanyNavList(FILE *fp,unsigned uSetCookie)
 	
 	if(!cSearch[0]) return;
 
-        sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE tClient.uClient!=1 AND "
-			"tClient.cLabel LIKE '%s%%' AND tClient.uOwner=1 ORDER BY cLabel",cSearch);
+        sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE uClient!=1 AND "
+			"cLabel LIKE '%s%%' AND (uOwner=1 OR uOwner=%u) AND cCode='Organization' ORDER BY cLabel",
+				cSearch,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1038,15 +1048,16 @@ void funcCompanyNavList(FILE *fp,unsigned uSetCookie)
 		while((field=mysql_fetch_row(res)))
 		{
 			uCount++;
-			fprintf(fp,"<a class=darkLink href=\"idnsAdmin.cgi?gcPage=Customer&uClient=%1$s\">%2$s</a><br>\n",field[0],field[1]);
+			fprintf(fp,"<a class=darkLink href=\"idnsAdmin.cgi?gcPage="
+					"Customer&uClient=%1$s\">%2$s</a><br>\n",field[0],field[1]);
 
 			if(uCount==MAX_RESULTS) break;
 		}
 		if(uCount<uResults)
-			fprintf(fp,"Only the first %u shown (%u results). If the company you are looking for is not in the list above "
-				"please further refine your search.<br>",uCount,uResults);
+			fprintf(fp,"Only the first %u shown (%u results). If the company"
+					" you are looking for is not in the list above "
+					"please further refine your search.<br>",uCount,uResults);
 		//We free result and return outside this if
-		
 	}
 	else if(!uResults)
 	{
