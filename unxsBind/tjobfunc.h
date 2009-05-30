@@ -34,7 +34,7 @@ void ExttJobCommands(pentry entries[], int x)
 	if(!strcmp(gcFunction,"tJobTools"))
 	{
 		//ModuleFunctionProcess()
-		if(!strcmp(gcCommand,"Purge") && guPermLevel>=12)
+		if(!strcmp(gcCommand,"Purge") && guPermLevel>11)
                 {
 			sprintf(gcQuery,"DELETE FROM tJob");
 			mysql_query(&gMysql,gcQuery);
@@ -97,7 +97,7 @@ void ExttJobCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstJobVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tJob(LANG_NB_CONFIRMMOD);
@@ -108,7 +108,7 @@ void ExttJobCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstJobVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				uModBy=guLoginClient;
 				ModtJob();
@@ -145,10 +145,8 @@ void ExttJobButtons(void)
                 break;
 
 		default:
-			if(guPermLevel>9)
-			{	
-			printf("<input class=largeButton type=submit name=gcCommand value=Purge>");
-			}
+			if(guPermLevel>11)
+				printf("<input class=largeButton type=submit name=gcCommand value=Purge>");
 
 			printf("<p><u>tJobNavList</u><br>\n");
 			tJobNavList();
