@@ -2212,7 +2212,7 @@ char *cURLEncode(char *cURL)
 //12 root level
 unsigned uAllowDel(const unsigned uOwner, const unsigned uCreatedBy)
 {
-	if(guListMode || !uOwner) return(0);
+	if(guListMode) return(0);
 
 	if(uOwner) GetClientOwner(uOwner,&guReseller);//Get owner of the owner
 	
@@ -2229,7 +2229,7 @@ unsigned uAllowDel(const unsigned uOwner, const unsigned uCreatedBy)
 unsigned uAllowMod(const unsigned uOwner, const unsigned uCreatedBy)
 {
 
-	if(guListMode || !uOwner) return(0);
+	if(guListMode) return(0);
 
 	if(uOwner) GetClientOwner(uOwner,&guReseller);//Get owner of the owner
 

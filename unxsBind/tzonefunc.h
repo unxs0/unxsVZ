@@ -1448,7 +1448,7 @@ void ExttZoneNavBar(void)
 	if(uAllowDel(uOwner,uCreatedBy))
 		printf(LANG_NBB_DELETE);
 
-	if(uOwner)
+	if(uOwner || guLoginClient==1)
 		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);

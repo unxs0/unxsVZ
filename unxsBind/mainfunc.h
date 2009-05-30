@@ -46,6 +46,7 @@ void CreatetLogTable(char *cTableName);
 
 void ExtracttHit(char *cMonth, char *cYear, char *cPasswd, char *cTablePath);
 void CreatetHitTable(char *cTableName);
+void ZeroSystem(void);
 
 //bind.c
 void Import(void);
@@ -125,6 +126,11 @@ int iExtMainCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,"Tutorial"))
 		{
 			Tutorial();
+		}
+		else if(!strcmp(gcCommand,"Zero System"))
+		{
+			ZeroSystem();
+			Admin();
 		}
 	}
 	return(0);
@@ -329,7 +335,8 @@ void RestoreAll(char *cPasswd)
 
 	for(i=0;cTableList[i][0];i++)
 	{
-sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/iDNS/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cTableList[i],cTableList[i]);
+		sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/iDNS/data/%s.txt' REPLACE INTO TABLE %s",
+			cISMROOT,cTableList[i],cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -424,7 +431,7 @@ void Backup(char *cPasswd)
 				,cISMROOT,cTableList[i]);
 		unlink(cFileName);
 
-sprintf(gcQuery,"SELECT * INTO OUTFILE '%s' FROM %s",cFileName,cTableList[i]);
+		sprintf(gcQuery,"SELECT * INTO OUTFILE '%s' FROM %s",cFileName,cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -1242,11 +1249,15 @@ void Admin(void)
 	
 	printf("<input type=hidden name=gcFunction value=MainTools>");
 
-	if(guPermLevel > 7 )
+	if(guPermLevel>7)
 	{
 		printf("<input title=\"View this system's named.conf file\" class=largeButton type=submit name=gcCommand value=NamedConf><br>");
 		printf("<input title=\"View this system's master.zones file\" class=largeButton type=submit name=gcCommand value=MasterZones><br>");
-		printf("<input title='Tutorial' class=largeButton type=submit name=gcCommand value=Tutorial><br>");
+		printf("<input title='Tutorial' class=largeButton type=submit name=gcCommand value=Tutorial>");
+		if(guPermLevel>11 && guLoginClient==1 )
+		printf("<p><input title='DANGER truncates all tables, then installs distro init data from"
+			" /usr/local/share/iDNS/data'"
+			" class=lwarnButton type=submit name=gcCommand value='Zero System'>");
 	}
 
 	printf("</td></tr></table></form>");
@@ -2223,3 +2234,29 @@ void ImportFromDb(char *cSourceDbName, char *cTargetDbName, char *cPasswd)
 	printf("ImportFromDb() end\n");
 
 }//void ImportFromDb()
+
+
+void ZeroSystem(void)
+{
+	register int i;
+
+	//Any failure will need CLI initialize!
+	for(i=0;cTableList[i][0];i++)
+	{
+        	sprintf(gcQuery,"TRUNCATE %s",cTableList[i]);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+	//Only valid for new rpm layout
+	for(i=0;cInitTableList[i][0];i++)
+	{
+		sprintf(gcQuery,"LOAD DATA LOCAL INFILE '/usr/local/share/iDNS/data/%s.txt' REPLACE INTO TABLE %s",
+				cInitTableList[i],cInitTableList[i]);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+}//void ZeroSystem(void)
