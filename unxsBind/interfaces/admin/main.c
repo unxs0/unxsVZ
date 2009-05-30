@@ -288,7 +288,10 @@ void htmlPlainTextError(const char *cError)
 	printf("Content-type: text/plain\n\n");
 	printf("Please report this idnsAdmin fatal error ASAP:\n%s\n",cError);
 	//Attempt to report error in tLog
-        sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",guPermLevel,guLoginClient,gcLogin,gcHost,cError,gcHostname,guOrg,guLoginClient);
+        sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,"
+			"cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				guPermLevel,guLoginClient,gcLogin,gcHost,cError,gcHostname,guOrg,guLoginClient);
         mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
 		printf("Another error occurred while attempting to log: %s\n",
@@ -329,7 +332,8 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 	}
 	else
 	{
-	printf("<html><head><title>%s</title></head><body bgcolor=white><font face=Arial,Helvetica",cTitle);
+		printf("<html><head><title>%s</title></head><body bgcolor=white><font face=Arial,Helvetica",
+					cTitle);
 	}
 
 }//void htmlHeader()
@@ -401,6 +405,7 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
 		}
 		mysql_free_result(res);
 	}
+
 }//void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
 
 
@@ -599,7 +604,8 @@ void GetPLAndClient(char *cUser)
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 
-	sprintf(gcQuery,"SELECT tAuthorize.uPerm,tAuthorize.uCertClient,tAuthorize.uOwner FROM tAuthorize,tClient WHERE tAuthorize.cLabel='%s'",
+	sprintf(gcQuery,"SELECT tAuthorize.uPerm,tAuthorize.uCertClient,tAuthorize.uOwner FROM"
+				" tAuthorize,tClient WHERE tAuthorize.cLabel='%s'",
 		cUser);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -704,7 +710,8 @@ void SetLogin(void)
 		guSSLCookieLogin=1;
 		//tLogType.cLabel='admin login'->uLogType=7
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=7,uPermLevel=%u,uLoginClient=%u,"
-				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 		mysql_query(&gMysql,gcQuery);
 	}
@@ -860,7 +867,10 @@ void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
         char cQuery[512];
 
 	//uLogType==2 is this org interface
-        sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.63s',uLogType=3,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',uTablePK='%u',cTableName='%.31s',cHash=MD5(CONCAT('%s','%u','%u','%s','%s','%u','%s','%s')),uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+        sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.63s',uLogType=3,uPermLevel=%u,uLoginClient=%u,"
+			"cLogin='%.99s',cHost='%.99s',uTablePK='%u',cTableName='%.31s',"
+			"cHash=MD5(CONCAT('%s','%u','%u','%s','%s','%u','%s','%s')),uOwner=%u,"
+			"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cLogEntry,
 			guPermLevel,
 			guLoginClient,
