@@ -39,3 +39,4 @@
 1	1171320799	3	cHostMaster	17		2	1181685219	hostmaster.openisp.net
 3	1229122872	3	allzone.stats	18		2	1229123036	/images/allzone.stats.png
 0	1238946687	1	cCryptMethod	19	MD5 or DES encryption for login passwords.	1	0	MD5
+3	1229122872	3	mrcstatus	20		2	1229123036	/images/mrcstatus.gif
