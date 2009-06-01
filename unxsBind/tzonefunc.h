@@ -976,7 +976,7 @@ void ExttZoneButtons(void)
                         printf("<br>");
                         printf(LANG_NBB_CONFIRMNEW);
 			printf("<br>uSubmitJob <input title='If not checked, no job will "
-				"be created for the new zone ' type=checkbox name=uSubmitJob checked>");
+				"be created for the new zone ' type=checkbox name=uSubmitJob checked value=1>");
                 break;
 
                 case 2001:
