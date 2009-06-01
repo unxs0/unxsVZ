@@ -13,7 +13,7 @@
 </thead><tbody>
 <tr>
 	<td>open</td>
-	<td>https://192.168.22.128:9333/cgi-bin/iDNS.cgi?gcFunction=Logout</td>
+	<td>/cgi-bin/iDNS.cgi?gcFunction=Logout</td>
 	<td></td>
 </tr>
 <tr>
@@ -27,7 +27,7 @@
 	<td>wsxedc</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>gcFunction</td>
 	<td></td>
 </tr>
@@ -42,12 +42,12 @@
 	<td></td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>gcCommand</td>
 	<td></td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcCommand' and @value='Zero System']</td>
 	<td></td>
 </tr>
