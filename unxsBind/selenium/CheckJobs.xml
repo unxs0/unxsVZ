@@ -4,22 +4,22 @@
 <head profile="http://selenium-ide.openqa.org/profiles/test-case">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <link rel="selenium.base" href="" />
-<title>AddRR</title>
+<title>CheckJobs</title>
 </head>
 <body>
 <table cellpadding="1" cellspacing="1" border="1">
 <thead>
-<tr><td rowspan="1" colspan="3">AddRR</td></tr>
+<tr><td rowspan="1" colspan="3">CheckJobs</td></tr>
 </thead><tbody>
 <tr>
 	<td>open</td>
-	<td>/cgi-bin/idnsOrg.cgi?gcFunction=Logout</td>
+	<td>/cgi-bin/iDNS.cgi?gcFunction=Logout</td>
 	<td></td>
 </tr>
 <tr>
 	<td>type</td>
 	<td>gcLogin</td>
-	<td>Acme User</td>
+	<td>John Doe</td>
 </tr>
 <tr>
 	<td>type</td>
@@ -32,54 +32,64 @@
 	<td></td>
 </tr>
 <tr>
-	<td>selectAndWait</td>
+	<td>clickAndWait</td>
+	<td>link=tJob</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cJob</td>
+	<td>New</td>
+</tr>
+<tr>
+	<td>assertValue</td>
 	<td>cZone</td>
-	<td>label=acmevirt.net</td>
+	<td>acmevirt.net</td>
 </tr>
 <tr>
 	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Modify SOA']</td>
+	<td>//input[@name='gcFind' and @value=' &gt;']</td>
 	<td></td>
 </tr>
 <tr>
-	<td>type</td>
-	<td>cHostmaster</td>
-	<td>hostmaster.acmevirt.net</td>
+	<td>assertValue</td>
+	<td>cJob</td>
+	<td>New</td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cZone</td>
+	<td>acmevirt.net</td>
 </tr>
 <tr>
 	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Modify SOA Confirm']</td>
+	<td>//input[@name='gcFind' and @value=' &gt;']</td>
 	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cJob</td>
+	<td>Modify</td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cZone</td>
+	<td>acmevirt.net</td>
 </tr>
 <tr>
 	<td>clickAndWait</td>
-	<td>//td[2]/a/b</td>
+	<td>//input[@name='gcFind' and @value=' &gt;']</td>
 	<td></td>
 </tr>
 <tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='New']</td>
-	<td></td>
+	<td>assertValue</td>
+	<td>cJob</td>
+	<td>Modify</td>
 </tr>
 <tr>
-	<td>type</td>
-	<td>cName</td>
-	<td>@</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>cParam1</td>
-	<td>192.168.0.22</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>cComment</td>
-	<td>Test</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='New Confirm']</td>
-	<td></td>
+	<td>assertValue</td>
+	<td>cZone</td>
+	<td>acmevirt.net</td>
 </tr>
 
 </tbody></table>

@@ -13,7 +13,7 @@
 </thead><tbody>
 <tr>
 	<td>open</td>
-	<td>https://192.168.22.128:9333/cgi-bin/idnsAdmin.cgi?gcFunction=Logout</td>
+	<td>/cgi-bin/idnsAdmin.cgi?gcFunction=Logout</td>
 	<td></td>
 </tr>
 <tr>
@@ -47,17 +47,17 @@
 	<td></td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>link=Acme Virtualization Co.</td>
 	<td></td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//td[4]/a/b</td>
 	<td></td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='New']</td>
 	<td></td>
 </tr>
@@ -67,7 +67,7 @@
 	<td>acmevirt.net</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
 	<td></td>
 </tr>
