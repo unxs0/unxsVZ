@@ -69,11 +69,81 @@
 <tr>
 	<td>type</td>
 	<td>cLabel</td>
-	<td>Acme Operator</td>
+	<td>Acme Admin</td>
 </tr>
 <tr>
 	<td>click</td>
 	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Authorize']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuPerm</td>
+	<td>label=Back-Office Admin</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cPasswd</td>
+	<td>wsxedc</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLogin</td>
+	<td>Acme Admin</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Authorize']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cForClientPullDown</td>
+	<td>label=Acme Virtualization Co.</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLabel</td>
+	<td>Acme User</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Authorize']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuPerm</td>
+	<td>label=Organization Admin</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cPasswd</td>
+	<td>wsxedc</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLogin</td>
+	<td>Acme User</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Authorize']</td>
 	<td></td>
 </tr>
 
