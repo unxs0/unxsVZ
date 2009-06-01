@@ -1577,7 +1577,7 @@ void SaveZone(void)
 		htmlPlainTextError(mysql_error(&gMysql));
 
 
-sprintf(gcQuery,"INSERT INTO tDeletedZone SET uDeletedZone='%s',cZone='%s',uNameServer='%u',cHostmaster='%s',uSerial='%s',uExpire='%s',uRefresh='%s',uTTL='%s',uRetry='%s',uZoneTTL='%s',uMailServers='%s',uView='%s',cMainAddress='%s',uRegistrar='%s',uSecondaryOnly='%u',cOptions='%s',uOwner='%u',uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+sprintf(gcQuery,"INSERT INTO tDeletedZone SET uDeletedZone='%s',cZone='%s',uNSSet='%u',cHostmaster='%s',uSerial='%s',uExpire='%s',uRefresh='%s',uTTL='%s',uRetry='%s',uZoneTTL='%s',uMailServers='%s',uView='%s',cMainAddress='%s',uRegistrar='%s',uSecondaryOnly='%u',cOptions='%s',uOwner='%u',uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
 		cuZone,
 		gcZone,
 		uGetuNameServer(gcZone),
