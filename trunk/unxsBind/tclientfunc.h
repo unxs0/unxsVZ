@@ -189,9 +189,12 @@ void ExttClientCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 					tClient("Can't delete client with resources");
 				mysql_free_result(res);
+				if(uCertClient==1)
+					tClient("Can't delete client with uCertClient=1");
+
 				sprintf(gcQuery,"DELETE FROM " TAUTHORIZE 
-					" WHERE (cLabel='%s' OR uCertClient=%u)"
-					" AND (uOwner=%u OR uOwner=%u)",cLabel,uClient,uClient,guCompany);
+					" WHERE (cLabel='%s' OR uCertClient=%u)",
+					cLabel,uClient);
 				mysql_query(&gMysql,gcQuery);
         			if(mysql_errno(&gMysql))
                 			tClient(mysql_error(&gMysql));
