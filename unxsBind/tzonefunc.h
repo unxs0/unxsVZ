@@ -104,7 +104,6 @@ void PassDirectHtml(char *file);//bind.c aux section
 
 void ExtProcesstZoneVars(pentry entries[], int x)
 {
-
 	register int i;
 	for(i=0;i<x;i++)
 	{
@@ -133,7 +132,7 @@ void ExtProcesstZoneVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"cTargetZone"))
 			sprintf(cTargetZone,"%.99s",entries[i].val);
 	}
-	
+
 }//void ExtProcesstZoneVars(pentry entries[], int x)
 
 

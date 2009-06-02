@@ -1865,7 +1865,7 @@ void InstallNamedFiles(char *cIpNum)
 		mkdir(gcQuery,0777);
 	}
 
-	sprintf(gcQuery,"cat %s/unxsBind/%s/named.conf|sed -e \"s/{{cIpNumber}}/%s/g\" > /usr/local/idns/named.conf",cISMROOT,cSetupDir,IPNumber(cIpNum));	
+	sprintf(gcQuery,"cat %s/iDNS/%s/named.conf|sed -e \"s/{{cIpNumber}}/%s/g\" > /usr/local/idns/named.conf",cISMROOT,cSetupDir,IPNumber(cIpNum));	
 	if(system(gcQuery))
 		 printf("Error configuring named.conf\n");
 
@@ -1877,11 +1877,11 @@ void InstallNamedFiles(char *cIpNum)
 	if(system(gcQuery))
 		 printf("Error configuring slave.zones\n");
 
-	sprintf(gcQuery,"cat %s/unxsBind/%s/localhost > /usr/local/idns/named.d/master/localhost",cISMROOT,cSetupDir);	
+	sprintf(gcQuery,"cat %s/iDNS/%s/localhost > /usr/local/idns/named.d/master/localhost",cISMROOT,cSetupDir);	
 	if(system(gcQuery))
 		 printf("Error configuring localhost\n");
 
-	sprintf(gcQuery,"cat %s/unxsBind/%s/127.0.0 > /usr/local/idns/named.d/master/127.0.0",cISMROOT,cSetupDir);	
+	sprintf(gcQuery,"cat %s/iDNS/%s/127.0.0 > /usr/local/idns/named.d/master/127.0.0",cISMROOT,cSetupDir);	
 	if(system(gcQuery))
 		 printf("Error configuring 127.0.0\n");
 
