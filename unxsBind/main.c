@@ -2216,8 +2216,8 @@ unsigned uAllowDel(const unsigned uOwner, const unsigned uCreatedBy)
 
 	if(uOwner) GetClientOwner(uOwner,&guReseller);//Get owner of the owner
 	
-	if( (guPermLevel>11 && uOwner==guCompany) //r3
-				|| (guPermLevel>11 && guCompany==guReseller) //r4
+	if( (guPermLevel>9 && uOwner==guCompany) //r3
+				|| (guPermLevel>9 && guCompany==guReseller) //r4
 				|| (guPermLevel>9 && uCreatedBy==guLoginClient && uOwner==guCompany) //r5
 				|| (guPermLevel>11 && guCompany==1) //r1
 				|| (guPermLevel>11 && guLoginClient==1) )//r2
