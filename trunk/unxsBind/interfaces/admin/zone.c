@@ -44,7 +44,7 @@ static char *cMasterIPsStyle="type_fields_off";
 static unsigned uSecondaryOnly=0;
 
 //The default NS must be =1 (for new zones)
-static char cuNameServer[16]={"1"};
+char cuNameServer[16]={"1"};
 
 static char cuMailServers[16]={"0"};
 static char *cuMailServersStyle="type_fields_off";

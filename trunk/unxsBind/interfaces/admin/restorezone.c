@@ -25,7 +25,7 @@ static char cuRefresh[16]={""};
 static char cuTTL[16]={""};
 static char cuRetry[16]={""};
 static char cuZoneTTL[16]={""};
-static char cuNameServer[16]={""};
+extern char cuNameServer[];
 static char cCompany[100]={""};
 static unsigned uView=0;
 static unsigned uRegistrar=0;
@@ -140,6 +140,7 @@ void RestoreZoneCommands(pentry entries[], int x)
 			DeleteRestoreZone(uDeletedZone);
 			//
 			//Submit job to restore zone all across the cluster
+			sscanf(cuNameServer,"%u",&uNameServer);
 			time(&luClock);
 			if(AdminSubmitJob("New",uNameServer,cZone,0,luClock))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -278,8 +279,8 @@ void htmlRestoreZonePage(char *cTitle, char *cTemplateName)
 			template.cpName[10]="cNSSet";
 			template.cpValue[10]=cNSSet;
 
-			template.cpName[11]="cNSs";
-			template.cpValue[11]=cNSs;
+			template.cpName[11]="uNameServer";
+			template.cpValue[11]=cuNameServer;
 
 			template.cpName[12]="cMainAddress";
 			template.cpValue[12]=cMainAddress;
@@ -373,7 +374,7 @@ void LoadDeletedZone(unsigned uRowId)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	
-	sprintf(gcQuery,"SELECT uDeletedZone,tDeletedZone.cZone,cHostmaster,tDeletedZone.uSerial,tDeletedZone.uExpire,tDeletedZone.uRefresh,tDeletedZone.uTTL,tDeletedZone.uRetry,tDeletedZone.uZoneTTL,tView.cLabel,tClient.cLabel,tDeletedZone.uNameServer,tNameServer.cLabel,tNameServer.cList,tDeletedZone.uView,tDeletedZone.uRegistrar,tDeletedZone.uOwner,tDeletedZone.uMailServers,tDeletedZone.uSecondaryOnly,tDeletedZone.cOptions,tNameServer.cMasterIPs FROM tDeletedZone,tView,tClient,tNameServer WHERE uDeletedZone=%u AND tView.uView=tDeletedZone.uView AND tClient.uClient=tDeletedZone.uOwner AND tDeletedZone.uNameserver=tNameServer.uNameServer",uRowId);
+	sprintf(gcQuery,"SELECT uDeletedZone,tDeletedZone.cZone,cHostmaster,tDeletedZone.uSerial,tDeletedZone.uExpire,tDeletedZone.uRefresh,tDeletedZone.uTTL,tDeletedZone.uRetry,tDeletedZone.uZoneTTL,tView.cLabel,tClient.cLabel,tDeletedZone.uNSSet,tNSSet.cLabel,tDeletedZone.uView,tDeletedZone.uRegistrar,tDeletedZone.uOwner,tDeletedZone.uMailServers,tDeletedZone.uSecondaryOnly,tDeletedZone.cOptions,tNSSet.cMasterIPs FROM tDeletedZone,tView,tClient,tNSSet WHERE uDeletedZone=%u AND tView.uView=tDeletedZone.uView AND tClient.uClient=tDeletedZone.uOwner AND tDeletedZone.uNSSet=tNSSet.uNSSet",uRowId);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -397,14 +398,14 @@ void LoadDeletedZone(unsigned uRowId)
 		sprintf(cuNameServer,"%.15s",field[11]);
 		sscanf(field[11],"%u",&uNameServer);
 		sprintf(cNSSet,"%99s",field[12]);
-		sprintf(cNSs,"%.1023s",field[13]);
-		sscanf(field[14],"%u",&uView);
-		sscanf(field[15],"%u",&uRegistrar);
-		sscanf(field[16],"%u",&uOwner);
-		sscanf(field[17],"%u",&uMailServers);
-		sscanf(field[18],"%u",&uSecondaryOnly);
-		sprintf(cOptions,"%.254s",field[19]);
-		sprintf(cMasterIPs,"%.99s",field[20]);
+//		sprintf(cNSs,"%.1023s",field[13]);
+		sscanf(field[13],"%u",&uView);
+		sscanf(field[14],"%u",&uRegistrar);
+		sscanf(field[15],"%u",&uOwner);
+		sscanf(field[16],"%u",&uMailServers);
+		sscanf(field[17],"%u",&uSecondaryOnly);
+		sprintf(cOptions,"%.254s",field[18]);
+		sprintf(cMasterIPs,"%.99s",field[19]);
 		sprintf(cNavList,"<a href='idnsAdmin.cgi?gcPage=RestoreZone&uDeletedZone=%u'>%s [%s]</a><br>\n",uDeletedZone,cZone,cView);
 		gcMessage="1 record(s) found.";
 	}
@@ -468,7 +469,10 @@ void RestoreZone(unsigned uRowId)
 {
 	//
 	//Restore tZone record
-sprintf(gcQuery,"INSERT INTO tZone SET uZone=%u,cZone='%s',uNameServer=%u,cHostmaster='%s',uSerial=%s,uExpire=%s,uRefresh=%s,uTTL=%s,uRetry=%s,uZoneTTL=%s,uMailServers=%u,uView=%u,cMainAddress='%s',uRegistrar=%u,uSecondaryOnly=%u,cOptions='%s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tZone SET uZone=%u,cZone='%s',uNSSet=%u,cHostmaster='%s',"
+			"uSerial=%s,uExpire=%s,uRefresh=%s,uTTL=%s,uRetry=%s,uZoneTTL=%s,uMailServers=%u,"
+			"uView=%u,cMainAddress='%s',uRegistrar=%u,uSecondaryOnly=%u,cOptions='%s',uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 		uDeletedZone
 		,cZone
 		,uNameServer
@@ -486,7 +490,8 @@ sprintf(gcQuery,"INSERT INTO tZone SET uZone=%u,cZone='%s',uNameServer=%u,cHostm
 		,uSecondaryOnly
 		,cOptions
 		,uOwner
-	);
+		,guLoginClient
+		);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
