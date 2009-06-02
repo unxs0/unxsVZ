@@ -269,7 +269,7 @@ void htmlRestoreZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[7]=gcModStep;
 
 			template.cpName[8]="cZone";
-			template.cpValue[8]=gcZone;
+			template.cpValue[8]=cZone;
 
 			template.cpName[9]="gcMessage";
 			template.cpValue[9]=gcMessage;
@@ -285,8 +285,8 @@ void htmlRestoreZonePage(char *cTitle, char *cTemplateName)
 			template.cpName[12]="cMainAddress";
 			template.cpValue[12]=cMainAddress;
 
-			template.cpName[13]="cZone";
-			template.cpValue[13]=cZone;
+			template.cpName[13]="uResource";
+			template.cpValue[13]=cuResource;
 
 			template.cpName[14]="cHostmaster";
 			template.cpValue[14]=cHostmaster;
@@ -336,10 +336,7 @@ void htmlRestoreZonePage(char *cTitle, char *cTemplateName)
 			template.cpName[28]="uView";
 			template.cpValue[28]=cuView;
 
-			template.cpName[29]="uResource";
-			template.cpValue[29]=cuResource;
-
-			template.cpName[30]="";
+			template.cpName[29]="";
 						
 			printf("\n<!-- Start htmlRestoreZonePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
