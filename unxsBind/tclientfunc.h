@@ -189,15 +189,29 @@ void ExttClientCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 					tClient("Can't delete client with resources");
 				mysql_free_result(res);
-				if(uCertClient==1)
-					tClient("Can't delete client with uCertClient=1");
-
-				sprintf(gcQuery,"DELETE FROM " TAUTHORIZE 
-					" WHERE (cLabel='%s' OR uCertClient=%u)",
-					cLabel,uClient);
-				mysql_query(&gMysql,gcQuery);
-        			if(mysql_errno(&gMysql))
-                			tClient(mysql_error(&gMysql));
+				
+				if(!strcmp(cCode,"Contact"))
+				{
+					sprintf(gcQuery,"DELETE FROM " TAUTHORIZE 
+						" WHERE (cLabel='%s' OR uCertClient=%u)",
+						cLabel,uClient);
+					mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tClient(mysql_error(&gMysql));
+				}
+				else if(!strcmp(cCode,"Organization"))
+				{
+					sprintf(gcQuery,"DELETE FROM " TCLIENT 
+						" WHERE uOwner=%u",uClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						tClient(mysql_error(&gMysql));
+					sprintf(gcQuery,"DELETE FROM " TAUTHORIZE
+						" WHERE uOwner=%u",uClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						tClient(mysql_error(&gMysql));
+				}
                         	guMode=5;
                         	DeletetClient();
 			}
