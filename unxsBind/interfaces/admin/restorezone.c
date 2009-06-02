@@ -464,6 +464,18 @@ void funcDeletedRRs(FILE *fp,unsigned uShowLinks)
 
 void RestoreZone(unsigned uRowId)
 {
+	MYSQL_RES *res;
+	sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u",cZone,uView);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+		gcMessage="<blink>Error</blink> The zone already exists in the system. Can't restore";
+		htmlRestoreZone();
+	}
+
 	//
 	//Restore tZone record
 	sprintf(gcQuery,"INSERT INTO tZone SET uZone=%u,cZone='%s',uNSSet=%u,cHostmaster='%s',"
