@@ -1620,14 +1620,18 @@ unsigned uHasDeletedRR(char *cuZone)
 
 void ZoneDiagnostics(void)
 {
-	char cNamedCheckZone[100]={"/usr/local/sbin/named-checkzone"}; //will get from tConfiguration
-	char cDig[100]={"/usr/local/bin/dig"}; //will get from tConfiguration
+	char cBinDir[100]={"/usr/sbin"};
 	char cView[100]={""};
 	char cZoneFile[256]={""};
-	
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
 	FILE *fp;
 	
 	register int i;
+	
+	GetConfiguration("cBinDir",cBinDir,1);
+
 	printf("Content-type: text/plain\n\n");
 	
 	sprintf(cView,"%.99s",cGetViewLabel(cuView));
@@ -1636,7 +1640,7 @@ void ZoneDiagnostics(void)
 	
 	sprintf(cZoneFile,"/usr/local/idns/named.d/master/%s/%c/%s",cView,gcZone[0],gcZone);
 
-	sprintf(gcQuery,"%s %s %s",cNamedCheckZone,gcZone,cZoneFile);
+	sprintf(gcQuery,"%s/named-checkzone %s %s",cBinDir,gcZone,cZoneFile);
 	printf("Testing with:%s\n\n",gcQuery);
 	
 	if((fp=popen(gcQuery,"r")))
@@ -1649,23 +1653,39 @@ void ZoneDiagnostics(void)
 		perror("popen");
 
 	printf("\n\n");	
-	sprintf(gcQuery,"%s @ns2.unixservice.com soa %s",cDig,gcZone);
-	printf("Testing with dig:%s\n",gcQuery);
-	if((fp=popen(gcQuery,"r")))
+	//Get master FQDN
+	sprintf(gcQuery,"SELECT cFQDN FROM tNS WHERE uNSType=1 OR uNSType=2 AND uNSSet="
+			"(SELECT uNSSet FROM tZone WHERE cZone='%s' AND uView='%s') LIMIT 1",
+			gcZone
+			,cuView
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if((field=mysql_fetch_row(res)))
 	{
-		while(!feof(fp))
+		sprintf(gcQuery,"%s/dig @%s soa %s",cBinDir,field[0],gcZone);
+		printf("Testing with dig:%s\n",gcQuery);
+		if((fp=popen(gcQuery,"r")))
 		{
-			fgets(gcQuery,512,fp);
-			printf("%s",gcQuery);
+			while(!feof(fp))
+			{
+				fgets(gcQuery,512,fp);
+				printf("%s",gcQuery);
+			}
+			pclose(fp);
 		}
-		pclose(fp);
+		else
+			perror("popen");
 	}
 	else
-		perror("popen");
+		printf("Error: It seems you don't have any master NS configured to test against.\n");
 	
 	printf("\n\n");
 
-	sprintf(gcQuery,"%s soa %s",cDig,gcZone);
+	sprintf(gcQuery,"%s/dig soa %s",cBinDir,gcZone);
 	printf("Testing with :%s\n",gcQuery);
 	if((fp=popen(gcQuery,"r")))
 	{
