@@ -1048,7 +1048,7 @@ void DelZone(void)
 	{
 		gcMessage="Zone Deleted";
 		iDNSLog(uGetuZone(gcZone,cuView),"tZone","Del");
-		sprintf(gcQuery,"DELETE FROM tResource WHERE uZone'%s'",cuZone);
+		sprintf(gcQuery,"DELETE FROM tResource WHERE uZone='%s'",cuZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -1592,7 +1592,7 @@ void SaveZone(void)
 	//
 	//Copy the tResource records to tDeletedResource
 		
-	sprintf(gcQuery,"INSERT INTO tDeletedResource (uDeleteDeletedResource,uZone,cName,uTTL,uRRType,cParam1,cParam2,"
+	sprintf(gcQuery,"INSERT INTO tDeletedResource (uDeletedResource,uZone,cName,uTTL,uRRType,cParam1,cParam2,"
 			"cComment,uCreatedBy,uCreatedDate) SELECT uResource,uZone,cName,uTTL,uRRType,"
 			"cParam1,cParam2,cComment,uCreatedBy,UNIX_TIMESTAMP(NOW()) FROM tResource "
 			"WHERE uZone=%s",
