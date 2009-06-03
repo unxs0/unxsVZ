@@ -178,13 +178,6 @@ d>
                         <input  title='A valid email address of the Company, e.g.: info@acmewidgets.com (Optional)' type=text name=cEmail value='{{cEmail}}' size=40 maxlength=99 {{gcInputStatus}} class={{cEmailStyle}}></td>
         </tr>
         <tr>
-                <td>                   
-		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Company Code')"><strong>Company Code</strong></a></td>
-                <td>
-			<input type=hidden name=cCode value='{{cCode}}'>
-                        <input title='Unique alphanumeric Code that identifies the Company. e.g. COMP4567 (Optional)' type=text name=cCode value='{{cCode}}' size=40 maxlength=99 {{gcInputStatus}} class={{cCodeStyle}}></td>
-        </tr>
-        <tr>
                 <td>                        
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Additional Info')"><strong>Additional Info</strong></a></td>
                 <td>
