@@ -1048,6 +1048,11 @@ void DelZone(void)
 	{
 		gcMessage="Zone Deleted";
 		iDNSLog(uGetuZone(gcZone,cuView),"tZone","Del");
+		sprintf(gcQuery,"DELETE FROM tResource WHERE uZone'%s'",cuZone);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
 	}
 	else
 	{
@@ -1559,71 +1564,43 @@ unsigned uGetuNameServer(char *cZone)
 void SaveZone(void)
 {
 	//This function will copy a deleted zone and its resource records to tDeletedZone adn tDeletedResource respectively
-	unsigned uZone=0;
-
-	sscanf(cuZone,"%u",&uZone);
-	MYSQL_RES *res;
-	MYSQL_ROW field;
 
 	//Avoid any kind of DUP records error!
-	sprintf(gcQuery,"DELETE FROM tDeletedZone WHERE uDeletedZone='%u'",uZone);;
+	sprintf(gcQuery,"DELETE FROM tDeletedZone WHERE uDeletedZone='%s'",cuZone);;
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	
-	sprintf(gcQuery,"DELETE FROM tDeletedResource WHERE uZone='%u'",uZone);
+	sprintf(gcQuery,"DELETE FROM tDeletedResource WHERE uZone='%s'",cuZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 
 
-sprintf(gcQuery,"INSERT INTO tDeletedZone SET uDeletedZone='%s',cZone='%s',uNSSet='%u',cHostmaster='%s',uSerial='%s',uExpire='%s',uRefresh='%s',uTTL='%s',uRetry='%s',uZoneTTL='%s',uMailServers='%s',uView='%s',cMainAddress='%s',uRegistrar='%s',uSecondaryOnly='%u',cOptions='%s',uOwner='%u',uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
-		cuZone,
-		gcZone,
-		uGetuNameServer(gcZone),
-		cHostmaster,
-		cuSerial,
-		cuExpire,
-		cuRefresh,
-		cuTTL,
-		cuRetry,
-		cuZoneTTL,
-		cuMailServers,
-		cuView,
-		cMainAddress,
-		cuRegistrar,
-		uSecondaryOnly,
-		cOptions,
-		uGetZoneOwner(uZone));
+	sprintf(gcQuery,"INSERT INTO tDeletedZone (uDeletedZone,cZone,uNSSet,cHostmaster,"
+			"uSerial,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,uMailServers,uView,"
+			"cMainAddress,uRegistrar,uSecondaryOnly,cOptions,uOwner,uCreatedDate,"
+			"uCreatedBy) SELECT uZone,cZone,uNSSet,cHostmaster,uSerial,uExpire,"
+			"uRefresh,uTTL,uRetry,uZoneTTL,uMailServers,uView,cMainAddress,uRegistrar,"
+			"uSecondaryOnly,cOptions,uOwner,uCreatedDate,uCreatedBy FROM tZone "
+			"WHERE uZone='%s'",
+			cuZone
+			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	//
 	//Copy the tResource records to tDeletedResource
 		
-	sprintf(gcQuery,"SELECT %s FROM tResource WHERE uZone=%u",VAR_LIST_tResource,uZone);
+	sprintf(gcQuery,"INSERT INTO tDeletedResource (uDeleteDeletedResource,uZone,cName,uTTL,uRRType,cParam1,cParam2,"
+			"cComment,uCreatedBy,uCreatedDate) SELECT uResource,uZone,cName,uTTL,uRRType,"
+			"cParam1,cParam2,cComment,uCreatedBy,UNIX_TIMESTAMP(NOW()) FROM tResource "
+			"WHERE uZone=%s",
+			cuZone
+			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%s',uZone='%s',cName='%s',uTTL='%s',uRRType='%s',cParam1='%s',cParam2='%s',cComment='%s',uOwner='%s',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-		field[0],
-		field[1],
-		field[2],
-		field[3],
-		field[4],
-		field[5],
-		field[6],
-		field[7],
-		field[8]);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-	}
-	mysql_free_result(res);
 
 }//void SaveZone(void)
 
