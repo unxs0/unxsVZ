@@ -395,7 +395,6 @@ void LoadDeletedZone(unsigned uRowId)
 		sprintf(cuNameServer,"%.15s",field[11]);
 		sscanf(field[11],"%u",&uNameServer);
 		sprintf(cNSSet,"%99s",field[12]);
-//		sprintf(cNSs,"%.1023s",field[13]);
 		sscanf(field[13],"%u",&uView);
 		sscanf(field[14],"%u",&uRegistrar);
 		sscanf(field[15],"%u",&uOwner);
@@ -478,29 +477,14 @@ void RestoreZone(unsigned uRowId)
 
 	//
 	//Restore tZone record
-	sprintf(gcQuery,"INSERT INTO tZone SET uZone=%u,cZone='%s',uNSSet=%u,cHostmaster='%s',"
-			"uSerial=%s,uExpire=%s,uRefresh=%s,uTTL=%s,uRetry=%s,uZoneTTL=%s,uMailServers=%u,"
-			"uView=%u,cMainAddress='%s',uRegistrar=%u,uSecondaryOnly=%u,cOptions='%s',uOwner=%u,"
-			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-		uDeletedZone
-		,cZone
-		,uNameServer
-		,cHostmaster
-		,cuSerial
-		,cuExpire
-		,cuRefresh
-		,cuTTL
-		,cuRetry
-		,cuZoneTTL
-		,uMailServers
-		,uView
-		,cMainAddress
-		,uRegistrar
-		,uSecondaryOnly
-		,cOptions
-		,uOwner
-		,guLoginClient
-		);
+	sprintf(gcQuery,"INSERT INTO tZone (cZone,uNSSet,cHostmaster,uSerial,uExpire,"
+			"uRefresh,uTTL,uRetry,uZoneTTL,uMailServers,uView,cMainAddress,"
+			"uRegistrar,uSecondaryOnly,cOptions,uOwner,uCreatedBy,uCreatedDate) "
+			"VALUES (SELECT cZone,uNSSet,cHostmaster,uSerial,uExpire,uRefresh,"
+			"uTTL,uRetry,uZoneTTL,uMailServers,uView,cMainAddress,uRegistrar,"
+			"uSecondaryOnly,cOptions,uOwner,uCreatedBy,UNIX_TIMESTAMP(NOW()) "
+			"FROM tDeletedZone WHERE uDeletedZone=%u",uRowId
+			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -513,34 +497,17 @@ void RestoreRRs(unsigned uRowId)
 {
 	//
 	//Restore tResource record(s) if available
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-
-	sprintf(gcQuery,"SELECT %s FROM tDeletedResource WHERE uZone=%u",VAR_LIST_tDeletedResource,uRowId);
+	
+	sprintf(gcQuery,"INSERT INTO tResource VALUES (uZone,cName,uTTL,uRRType,cParam1,cParam2,"
+			"cComment,uCreatedBy,uCreatedDate) VALUES (SELECT uZone,cName,uTTL,uRRType,"
+			"cParam1,cParam2,cComment,uCreatedBy,UNIX_TIMESTAMP(NOW()) FROM tDeletedResource "
+			"WHERE uZone=%u",
+			uRowId
+			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-				
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-sprintf(gcQuery,"INSERT INTO tResource SET uResource='%s',uZone='%s',cName='%s',uTTL='%s',uRRType='%s',cParam1='%s',cParam2='%s',cComment='%s',uOwner='%s',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			field[0],
-			field[1],
-			field[2],
-			field[3],
-			field[4],
-			field[5],
-			field[6],
-			field[7],
-			field[8]);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		sscanf(field[0],"%u",&uResource);
-		iDNSLog(uResource,"tResource","New (Restore RR)");	
-	}
-	mysql_free_result(res);
+
 }//void RestoreRRs(unsigned uRowId)
 
 
@@ -552,7 +519,8 @@ void DeleteRestoreZone(unsigned uRowId)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-			
+	htmlPlainTextError(gcQuery);
+
 	sprintf(gcQuery,"DELETE FROM tDeletedResource WHERE uZone=%u",uRowId);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
