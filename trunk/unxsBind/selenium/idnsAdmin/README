@@ -1,0 +1,16 @@
+Please note that the test cases in this directory are expected to work with 
+the default initialization data. You **should not** run then in your production
+environment as it may result in an important loss of production data.
+
+You have been warned!
+
+------
+
+Instructions to use these test cases:
+
+ 1. Download and install the Firefox addon Selenium IDE
+ 2. Download this directory to your computer.
+ 3. Load the test suite you want to run.
+ 4. Play it.
+
+
