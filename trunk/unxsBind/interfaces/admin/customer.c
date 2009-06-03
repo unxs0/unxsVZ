@@ -26,9 +26,6 @@ static char *cEmailStyle="type_fields_off";
 static char cInfo[513]={""};
 static char *cInfoStyle="type_textarea_off";
 
-static char cCode[100]={""};
-static char *cCodeStyle="type_fields_off";
-
 static char cNavList[8192]={"No results."};
 
 static char cSearch[100]={""};
@@ -70,8 +67,6 @@ void ProcessCustomerVars(pentry entries[], int x)
 			sprintf(cCompanyName,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cEmail"))
 			sprintf(cEmail,"%.99s",entries[i].val);
-		else if(!strcmp(entries[i].name,"cCode"))
-			sprintf(cCode,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cSearch"))
 			sprintf(cSearch,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uClient"))
@@ -123,7 +118,7 @@ void LoadCustomer(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uClient,cLabel,cInfo,cEmail,cCode,uOwner,uCreatedBy,uCreatedDate,"
+	sprintf(gcQuery,"SELECT uClient,cLabel,cInfo,cEmail,uOwner,uCreatedBy,uCreatedDate,"
 				"uModBy,uModDate FROM tClient WHERE uClient=%u",uClient);
 	mysql_query(&gMysql,gcQuery);
 
@@ -137,12 +132,11 @@ void LoadCustomer(void)
 		sprintf(cCompanyName,"%.100s",field[1]);			
 		sprintf(cInfo,"%.513s",field[2]);
 		sprintf(cEmail,"%.100s",field[3]);
-		sprintf(cCode,"%.100s",field[4]);
-		sscanf(field[5],"%u",&uOwner);
-		sscanf(field[6],"%u",&uCreatedBy);
-		sscanf(field[7],"%lu",&uCreatedDate);
-		sscanf(field[8],"%u",&uModBy);
-		sscanf(field[9],"%lu",&uModDate);
+		sscanf(field[4],"%u",&uOwner);
+		sscanf(field[5],"%u",&uCreatedBy);
+		sscanf(field[6],"%lu",&uCreatedDate);
+		sscanf(field[7],"%u",&uModBy);
+		sscanf(field[8],"%lu",&uModDate);
 		
 		if(strcmp(gcCustomer,cCompanyName))
 		{
@@ -282,21 +276,6 @@ void CustomerCommands(pentry entries[], int x)
 						}
 					}
 					break;
-				case 3:
-					if(cCode[0])
-					{
-						sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cCode='%s'",cCode);
-						mysql_query(&gMysql,gcQuery);
-						res=mysql_store_result(&gMysql);
-
-						if(mysql_num_rows(res))
-						{
-							gcMessage="<blink>Company code already used</blink>";
-							cCodeStyle="type_fields_req";
-							htmlCustomerWizard(3);
-						}
-					}
-					break;
 			}
 			uStep++;
 			htmlCustomerWizard(uStep);			
@@ -331,7 +310,6 @@ void CustomerCommands(pentry entries[], int x)
 		{
 			cCompanyName[0]=0;
 			cEmail[0]=0;
-			cCode[0]=0;
 			cInfo[0]=0;
 		}
 		htmlCustomer();
@@ -475,8 +453,8 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
 			template.cpName[14]="cInfo";
 			template.cpValue[14]=cInfo;
 
-			template.cpName[15]="cCode";
-			template.cpValue[15]=cCode;
+			template.cpName[15]="uModByForm";
+			template.cpValue[15]=cuModByForm;
 
 			template.cpName[16]="cLabelStyle";
 			template.cpValue[16]=cLabelStyle;
@@ -493,8 +471,8 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
 			template.cpName[20]="cuClient";
 			template.cpValue[20]=cuClient;
 
-			template.cpName[21]="cCodeStyle";
-			template.cpValue[21]=cCodeStyle;
+			template.cpName[21]="uModDateForm";
+			template.cpValue[21]=cuModDateForm;
 
 			template.cpName[22]="cSearch";
 			template.cpValue[22]=cSearch;
@@ -547,10 +525,7 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
 			template.cpName[37]="uModByForm";
 			template.cpValue[37]=cuModByForm;
 
-			template.cpName[38]="uModDateForm";
-			template.cpValue[38]=cuModDateForm;
-
-			template.cpName[39]="";
+			template.cpName[38]="";
 
 			printf("\n<!-- Start htmlCustomerPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -631,12 +606,11 @@ void NewCustomer(void)
 {
 	time(&uCreatedDate);
 
-	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cEmail='%s',cInfo='%s',cCode='%s',"
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cEmail='%s',cInfo='%s',cCode='Organization',"
 				"uOwner=%u,uCreatedBy=%u,uCreatedDate=%lu",
 			cCompanyName
 			,cEmail
 			,cInfo
-			,cCode
 			,guOrg
 			,guLoginClient
 			,uCreatedDate);
@@ -676,12 +650,11 @@ void ModCustomer(void)
 {
 	time(&uModDate);
 
-	sprintf(gcQuery,"UPDATE tClient SET cLabel='%s',cEmail='%s',cInfo='%s',cCode='%s',"
+	sprintf(gcQuery,"UPDATE tClient SET cLabel='%s',cEmail='%s',cInfo='%s',"
 				"uModBy=%u,uModDate=%lu WHERE uClient=%u",
 			cCompanyName
 			,cEmail
 			,cInfo
-			,cCode
 			,guLoginClient
 			,uModDate
 			,uClient);
@@ -848,14 +821,11 @@ unsigned uHasContacts(char *cLabel)
 
 unsigned ValidateCustomerInput(void)
 {
-	MYSQL_RES *res;
-
 	if(!cCompanyName[0])
 	{
 		cLabelStyle="type_fields_req";
 		gcMessage="<blink>Customer Name can't be empty</blink>";
 		cEmailStyle="type_fields";
-		cCodeStyle="type_fields";
 		cInfoStyle="type_textarea";
 		return(0);
 	}
@@ -871,7 +841,6 @@ unsigned ValidateCustomerInput(void)
 			{
 				cLabelStyle="type_fields_req";
 				cEmailStyle="type_fields";
-				cCodeStyle="type_fields";
 				cInfoStyle="type_textarea";
 				gcMessage="<blink>Customer Name contains invalid characters</blink>";
 				return(0);
@@ -884,57 +853,12 @@ unsigned ValidateCustomerInput(void)
 		{
 			cEmailStyle="type_fields_req";
 			cLabelStyle="type_fields";
-			cCodeStyle="type_fields";
 			cInfoStyle="type_textarea";
 			gcMessage="<blink>Email has to be a valid email address</blink>";
 			return(0);
 		}
 	}
-	if(cCode[0])
-	{
-		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cCode='%s'",cCode);
-		mysql_query(&gMysql,gcQuery);
 
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-
-		res=mysql_store_result(&gMysql);
-
-
-		if(mysql_num_rows(res))
-		{
-			if(strcmp(gcFunction,"Confirm Modify"))
-			{
-				cCodeStyle="type_fields_req";
-				cLabelStyle="type_fields";
-				cEmailStyle="type_fields";
-				cInfoStyle="type_textarea";
-				gcMessage="<blink>Company Code already exists</blink>";
-				return(0);
-			}
-			else
-			{
-				MYSQL_ROW field;
-				field=mysql_fetch_row(res);
-				//
-				//If we are modyfing a record this condition indicates that we are trying 
-				//to use an existent Company Code 
-				unsigned uDbClient=0;
-
-				sscanf(field[0],"%u",&uDbClient);
-				if(uClient!=uDbClient)
-				{
-					cCodeStyle="type_fields_req";
-					cLabelStyle="type_fields";
-					cEmailStyle="type_fields";
-					cInfoStyle="type_textarea";
-					gcMessage="<blink>Company Code already exists</blink>";
-					return(0);
-				}
-			}
-		}
-		mysql_free_result(res);
-	}
 	return(1);
 		
 }//unsigned ValidateInput(void)
@@ -944,7 +868,6 @@ void SetCustomerFieldsOn(void)
 {
 	cLabelStyle="type_fields";
 	cEmailStyle="type_fields";
-	cCodeStyle="type_fields";
 	cInfoStyle="type_textarea";
 
 }//void SetCustomerFieldsOn(void)
