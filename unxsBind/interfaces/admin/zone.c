@@ -1621,6 +1621,7 @@ unsigned uHasDeletedRR(char *cuZone)
 void ZoneDiagnostics(void)
 {
 	char cBinDir[100]={"/usr/sbin"};
+	char *cp;
 	char cView[100]={""};
 	char cZoneFile[256]={""};
 	MYSQL_RES *res;
@@ -1653,6 +1654,10 @@ void ZoneDiagnostics(void)
 		perror("popen");
 
 	printf("\n\n");	
+	//'Guess' dig binary location
+	if((cp=strstr(cBinDir,"/sbin")))
+		*cp=0;
+
 	//Get master FQDN
 	sprintf(gcQuery,"SELECT cFQDN FROM tNS WHERE uNSType=1 OR uNSType=2 AND uNSSet="
 			"(SELECT uNSSet FROM tZone WHERE cZone='%s' AND uView='%s') LIMIT 1",
@@ -1666,7 +1671,7 @@ void ZoneDiagnostics(void)
 
 	if((field=mysql_fetch_row(res)))
 	{
-		sprintf(gcQuery,"%s/dig @%s soa %s",cBinDir,field[0],gcZone);
+		sprintf(gcQuery,"%s/bin/dig @%s soa %s",cBinDir,field[0],gcZone);
 		printf("Testing with dig:%s\n",gcQuery);
 		if((fp=popen(gcQuery,"r")))
 		{
@@ -1685,7 +1690,7 @@ void ZoneDiagnostics(void)
 	
 	printf("\n\n");
 
-	sprintf(gcQuery,"%s/dig soa %s",cBinDir,gcZone);
+	sprintf(gcQuery,"%s/bin/dig soa %s",cBinDir,gcZone);
 	printf("Testing with :%s\n",gcQuery);
 	if((fp=popen(gcQuery,"r")))
 	{
