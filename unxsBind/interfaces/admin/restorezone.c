@@ -477,10 +477,10 @@ void RestoreZone(unsigned uRowId)
 
 	//
 	//Restore tZone record
-	sprintf(gcQuery,"INSERT INTO tZone (cZone,uNSSet,cHostmaster,uSerial,uExpire,"
+	sprintf(gcQuery,"INSERT INTO tZone (uZone,cZone,uNSSet,cHostmaster,uSerial,uExpire,"
 			"uRefresh,uTTL,uRetry,uZoneTTL,uMailServers,uView,cMainAddress,"
 			"uRegistrar,uSecondaryOnly,cOptions,uOwner,uCreatedBy,uCreatedDate) "
-			"SELECT cZone,uNSSet,cHostmaster,uSerial,uExpire,uRefresh,"
+			"SELECT uDeletedZone,cZone,uNSSet,cHostmaster,uSerial,uExpire,uRefresh,"
 			"uTTL,uRetry,uZoneTTL,uMailServers,uView,cMainAddress,uRegistrar,"
 			"uSecondaryOnly,cOptions,uOwner,uCreatedBy,UNIX_TIMESTAMP(NOW()) "
 			"FROM tDeletedZone WHERE uDeletedZone=%u",uRowId
