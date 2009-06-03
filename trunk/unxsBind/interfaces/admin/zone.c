@@ -922,7 +922,6 @@ void SelectZone(unsigned uSetCookie)
 		if(!gcMessage[0]) gcMessage="Zone Selected";
 		if(uHasDeletedRR(cuZone))
 			cRestoreRRStatus="";
-		gcMessage="1 record(s) found.";
 		if(uSetCookie)
 			sys_SetSessionCookie();
 	}
