@@ -143,7 +143,7 @@ void RestoreZoneCommands(pentry entries[], int x)
 			sscanf(cuNameServer,"%u",&uNameServer);
 			time(&luClock);
 			if(AdminSubmitJob("New",uNameServer,cZone,0,luClock))
-				htmlPlainTextError(gcQuery);
+				htmlPlainTextError(mysql_error(&gMysql));
 			gcMessage="Zone restored ok. Wait a few minutes so it gets propapagated trough the NS cluster.";
 			
 		}
@@ -361,7 +361,7 @@ void SearchDeletedZone(char *cSearchTerm)
 	sprintf(gcQuery,"SELECT tDeletedZone.uDeletedZone,tDeletedZone.cZone,tView.cLabel FROM tDeletedZone,tView,tClient WHERE tView.uView=tDeletedZone.uView AND tDeletedZone.cZone LIKE '%s%%' AND tDeletedZone.uOwner=tClient.uClient",cSearchTerm);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(gcQuery);
+		htmlPlainTextError(mysql_error(&gMysql));
 	
 }//void SearchDeletedZone(char *cSearchTerm)
 
@@ -375,7 +375,7 @@ void LoadDeletedZone(unsigned uRowId)
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(gcQuery);
+		htmlPlainTextError(mysql_error(&gMysql));
 	
 	res=mysql_store_result(&gMysql);
 
@@ -426,7 +426,7 @@ void funcDeletedRRs(FILE *fp,unsigned uShowLinks)
 	
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(gcQuery);
+		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
@@ -467,7 +467,7 @@ void RestoreZone(unsigned uRowId)
 	sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u",cZone,uView);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(gcQuery);
+		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{
@@ -487,7 +487,7 @@ void RestoreZone(unsigned uRowId)
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(gcQuery);
+		htmlPlainTextError(mysql_error(&gMysql));
 
 	iDNSLog(uDeletedZone,"tZone","New (Restore Zone)");
 	
@@ -506,7 +506,7 @@ void RestoreRRs(unsigned uRowId)
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(gcQuery);
+		htmlPlainTextError(mysql_error(&gMysql));
 
 }//void RestoreRRs(unsigned uRowId)
 
@@ -518,12 +518,12 @@ void DeleteRestoreZone(unsigned uRowId)
 	sprintf(gcQuery,"DELETE FROM tDeletedZone WHERE uDeletedZone=%u",uRowId);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(gcQuery);
+		htmlPlainTextError(mysql_error(&gMysql));
 
 	sprintf(gcQuery,"DELETE FROM tDeletedResource WHERE uZone=%u",uRowId);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(gcQuery);
+		htmlPlainTextError(mysql_error(&gMysql));
 
 }///void DeleteRestoreZone(unsigned uRowId)
 
