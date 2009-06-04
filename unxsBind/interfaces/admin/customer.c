@@ -823,14 +823,14 @@ unsigned ValidateCustomerInput(void)
 {
 	if(!cCompanyName[0])
 	{
+		SetCustomerFieldsOn();
 		cLabelStyle="type_fields_req";
 		gcMessage="<blink>Error: </blink>Customer Name can't be empty";
-		cEmailStyle="type_fields";
-		cInfoStyle="type_textarea";
 		return(0);
 	}
 	else
 	{
+		MYSQL_RES *res;
 		//
 		//Check for valid characters, no punctuation symbols allowed except '.' in Customer Name
 		register int i;
@@ -839,21 +839,34 @@ unsigned ValidateCustomerInput(void)
 		{
 			if(!isalnum(cCompanyName[i]) && cCompanyName[i]!='.' && cCompanyName[i]!=' ' && cCompanyName[i]!='-')
 			{
+				SetCustomerFieldsOn();
 				cLabelStyle="type_fields_req";
-				cEmailStyle="type_fields";
-				cInfoStyle="type_textarea";
 				gcMessage="<blink>Error: </blink>Customer Name contains invalid characters";
 				return(0);
 			}
+		}
+		if(!strcmp(gcFunction,"Confirm New"))
+		{
+			sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cCompanyName);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				cLabelStyle="type_fields_req";
+				gcMessage="<blink>Error: </blink>Customer Name already in use";
+				return(0);
+			}
+			mysql_free_result(res);
 		}
 	}
 	if(cEmail[0])
 	{
 		if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
 		{
+			SetCustomerFieldsOn();
 			cEmailStyle="type_fields_req";
-			cLabelStyle="type_fields";
-			cInfoStyle="type_textarea";
 			gcMessage="<blink>Error: </blink>Email has to be a valid email address";
 			return(0);
 		}
