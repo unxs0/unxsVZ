@@ -215,7 +215,7 @@ void ResourceCommands(pentry entries[], int x)
 		}
 		else if(1)
 		{
-			gcMessage="<blink>Redirected to 'Zones.' You must select a zone first</blink>";
+			gcMessage="<blink>Error: </blink>Redirected to 'Zones.' You must select a zone first";
 			htmlZone();
 		}
 	}
@@ -282,7 +282,7 @@ void ResourceGetHook(entry gentries[],int x)
 		
 		if(!uZoneExists(gcZone,cuView))
 		{
-			gcMessage="<blink>Redirected to 'Zones'. The zone you are trying to select doesn't exist in tZone</blink>";
+			gcMessage="<blink>Error: </blink>Redirected to 'Zones'. The zone you are trying to select doesn't exist in tZone";
 			htmlZone();
 		}
 		
@@ -290,7 +290,7 @@ void ResourceGetHook(entry gentries[],int x)
 		//Check if the zone is a secondary only zone
 		if(uZoneIsSecondary(gcZone,cuView))
 		{
-			gcMessage="<blink>Redirected to 'Zones'. You can't edit RRs in a secondary only zone</blink>";
+			gcMessage="<blink>Error: </blink>Redirected to 'Zones'. You can't edit RRs in a secondary only zone";
 			htmlZone();
 		}
 		
@@ -299,7 +299,7 @@ void ResourceGetHook(entry gentries[],int x)
 	}
 	else if(1)
 	{
-		gcMessage="<blink>Redirected to 'Zones.' You must select a zone first</blink>";
+		gcMessage="<blink>Error: </blink>Redirected to 'Zones.' You must select a zone first";
 		htmlZone();
 	}
 
@@ -685,7 +685,7 @@ void SelectResource(void)
 			cuNameServer[0]=0;
 			uResource=0;
 			uZone=0;
-			gcMessage="<blink>Error: No resource selected. Contact admin!</blink>";
+			gcMessage="<blink>Error: </blink>Error: No resource selected. Contact admin!";
 		}
 	}
 	mysql_free_result(res);
@@ -730,7 +730,7 @@ void UpdateResource(void)
 	}
 	else
 	{
-		gcMessage="<blink>Zone Resource Not Modified</blink>";
+		gcMessage="<blink>Error: </blink>Zone Resource Not Modified";
 	}
 	time(&uModDate);
 	uModBy=guLoginClient;
@@ -780,7 +780,7 @@ void NewResource(void)
 	}
 	else
 	{
-		gcMessage="<blink>Zone Resource Not Created</blink>";
+		gcMessage="<blink>Error: </blink>Zone Resource Not Created";
 	}
 	uOwner=uGetZoneOwner(uZone);
 	uCreatedBy=guLoginClient;
@@ -806,7 +806,7 @@ void DelResource(void)
 	}
 	else
 	{
-		gcMessage="<blink>Zone Resource Not Deleted</blink>";
+		gcMessage="<blink>Error: </blink>Zone Resource Not Deleted";
 	}
 	
 	uResource=0;
@@ -875,7 +875,7 @@ unsigned RRCheck(void)
 		sprintf(cuTTL,"0");
 	if(!isdigit(cuTTL[strlen(cuTTL)-1]))
 	{
-		gcMessage="<blink>Resource TTL should be specified in seconds only</blink>";
+		gcMessage="<blink>Error: </blink>Resource TTL should be specified in seconds only";
 		return(17);
 	}
 
@@ -902,7 +902,7 @@ unsigned RRCheck(void)
 	//1-. Allow empty cName unless PTR record
 	if(!cName[0] && !strcmp(cRRType,"PTR"))
 	{
-		gcMessage="<blink>Resource name is required by us for PTR type records</blink>";
+		gcMessage="<blink>Error: </blink>Resource name is required by us for PTR type records";
 		return(1);
 	}
 
@@ -919,11 +919,11 @@ unsigned RRCheck(void)
 				if(strstr(cName+strlen(cName)-strlen(gcZone),gcZone))
 				{
 					strcat(cName,".");
-					gcMessage="<blink>We have added a final period. If this correct confirm</blink>";
+					gcMessage="<blink>Error: </blink>We have added a final period. If this correct confirm";
 					cNameStyle="type_fields_req";
 					return(2);
 				}
-				gcMessage="<blink>If Name is fully qualified it must end with the zone and final period</blink>";
+				gcMessage="<blink>Error: </blink>If Name is fully qualified it must end with the zone and final period";
 				cNameStyle="type_fields_req";
 				return(2);
 			}
@@ -937,7 +937,7 @@ unsigned RRCheck(void)
 		if(!isalnum(cName[i]) && cName[i]!='-' && cName[i]!='.' && cName[i]!='@' && cName[i]!='_'
 				&& cName[i]!='*' )
 		{
-			gcMessage="<blink>Name can be empty or have only letters, numbers, the default origin @ symbol. Or dashes (-) and periods (.)</blink>";
+			gcMessage="<blink>Error: </blink>Name can be empty or have only letters, numbers, the default origin @ symbol. Or dashes (-) and periods (.)";
 			cNameStyle="type_fields_req";
 			return(2);
 		}
@@ -956,7 +956,7 @@ unsigned RRCheck(void)
 		////Ticket #323 CNAME record pointing to itself
 		if(!cName[0] && !strcmp(gcZone,cParam1))
 		{
-			gcMessage="<blink>Can't create a CNAME record pointing to itself</blink>";
+			gcMessage="<blink>Error: </blink>Can't create a CNAME record pointing to itself";
 			cParam1Style="type_fields_req";
 			cNameStyle="type_fields_req";
 			return(3);
@@ -970,7 +970,7 @@ unsigned RRCheck(void)
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res))
 		{
-			gcMessage="<blink>CNAME records are singleton type. RR w/the same name found.</blink>";
+			gcMessage="<blink>Error: </blink>CNAME records are singleton type. RR w/the same name found.";
 			cNameStyle="type_fields_req";
 			return(3);
 		}
@@ -979,7 +979,7 @@ unsigned RRCheck(void)
 		if(!cParam1[0])
 		{
 			sprintf(cParam1,"%s.",gcZone);
-			sprintf(gcQuery,"<blink>%s is required. Common CNAME default entry made for you, check/change if needed</blink>",cParam1Label);
+			sprintf(gcQuery,"<blink>Error: </blink>%s is required. Common CNAME default entry made for you, check/change if needed",cParam1Label);
 			gcMessage=gcQuery;
 			cParam1Style="type_fields_req";
 			return(3);
@@ -998,7 +998,7 @@ unsigned RRCheck(void)
 			//Ticket #323 CNAME record pointing to itself
 			if(!strcmp(cName,cParam1) || !strcmp(gcZone,cParam1))
 			{
-				gcMessage="<blink>Can't create a CNAME record pointing to itself</blink>";
+				gcMessage="<blink>Error: </blink>Can't create a CNAME record pointing to itself";
 				cParam1Style="type_fields_req";
 				cNameStyle="type_fields_req";
 				return(3);
@@ -1016,7 +1016,7 @@ unsigned RRCheck(void)
 				if(strcmp(cParam1,cParam1Save))
 				{
 					sprintf(gcQuery,
-						"<blink>%s was changed check/fix</blink>",
+						"<blink>Error: </blink>%s was changed check/fix",
 							cParam1Label);
 					gcMessage=gcQuery;
 					cParam1Style="type_fields_req";
@@ -1040,7 +1040,7 @@ unsigned RRCheck(void)
 				if(strcmp(cParam1,cParam1Save))
 				{
 					sprintf(gcQuery,
-						"<blink>%s was changed check/fix</blink>",
+						"<blink>Error: </blink>%s was changed check/fix",
 							cParam1Label);
 					gcMessage=gcQuery;
 					cParam1Style="type_fields_req";
@@ -1055,7 +1055,7 @@ unsigned RRCheck(void)
 
 		if(!strcmp(gcZone+strlen(gcZone)-5,".arpa"))
 		{
-			gcMessage="<blink>Can not add A records to arpa zones</blink>";
+			gcMessage="<blink>Error: </blink>Can not add A records to arpa zones";
 			return(6);
 		}
 		sscanf(cParam1,"%u.%u.%u.%u",&a,&b,&c,&d);
@@ -1070,7 +1070,7 @@ unsigned RRCheck(void)
 		if(!a || !d)
 		{
 			sprintf(gcQuery,
-				"<blink>Invalid IP Number for %s</blink>",
+				"<blink>Error: </blink>Invalid IP Number for %s",
 							cParam1Label);
 			gcMessage=gcQuery;
 			cParam1Style="type_fields_req";
@@ -1078,7 +1078,7 @@ unsigned RRCheck(void)
 		}
 		if(uRRExists(gcZone,cRRType,cName,cParam1))
 		{
-			gcMessage="<blink>Resource record already exists</blink>";
+			gcMessage="<blink>Error: </blink>Resource record already exists";
 			cParam1Style="type_fields_req";
 			cNameStyle="type_fields_req";
 			cRRTypeStyle="type_fields_req";
@@ -1097,7 +1097,7 @@ unsigned RRCheck(void)
 
 			if(!uPtr)
 			{
-			sprintf(gcQuery,"<blink>Class-C in-addr.arpa zone PTR must be the last octet of rev dns IP</blink>");
+			sprintf(gcQuery,"<blink>Error: </blink>Class-C in-addr.arpa zone PTR must be the last octet of rev dns IP");
 			gcMessage=gcQuery;
 			cNameStyle="type_fields_req";			
 			return(8);
@@ -1105,7 +1105,7 @@ unsigned RRCheck(void)
 
 			if(uPtr>254)
 			{
-			sprintf(gcQuery,"<blink>PTR value out of range (1-254 allowed only)</blink>");
+			sprintf(gcQuery,"<blink>Error: </blink>PTR value out of range (1-254 allowed only)");
 			gcMessage=gcQuery;
 			cNameStyle="type_fields_req";			
 			return(8);
@@ -1113,7 +1113,7 @@ unsigned RRCheck(void)
 
 			if(uPtrLen!=strlen(cName))
 			{
-			sprintf(gcQuery,"<blink>PTR was changed check</blink>");
+			sprintf(gcQuery,"<blink>Error: </blink>PTR was changed check");
 			cNameStyle="type_fields_req";
 			gcMessage=gcQuery;
 			return(8);
@@ -1123,7 +1123,7 @@ unsigned RRCheck(void)
 			if(!a)
 			{
 			sprintf(gcQuery,
-				"<blink>Unexpected in-addr.arpa zone name format</blink>");
+				"<blink>Error: </blink>Unexpected in-addr.arpa zone name format");
 			gcMessage=gcQuery;
 			cNameStyle="type_fields_req";
 			return(8);
@@ -1131,7 +1131,7 @@ unsigned RRCheck(void)
 
 			if(uRRExists(gcZone,cRRType,cName,cParam1))
 			{
-			gcMessage="<blink>Resource record already exists</blink>";
+			gcMessage="<blink>Error: </blink>Resource record already exists";
 			cNameStyle="type_fields_req";
 			cParam1Style="type_fields_req";
 			cRRTypeStyle="type_fields_req";
@@ -1148,7 +1148,7 @@ unsigned RRCheck(void)
 			//So, code below, commented out
 /*			if(!InMyBlocks(cParam2))
 			{
-			gcMessage="<blink>IP Number not in any of your IP blocks</blink>";
+			gcMessage="<blink>Error: </blink>IP Number not in any of your IP blocks";
 			cNameStyle="type_fields_req";
 			return(18);
 			}
@@ -1161,7 +1161,7 @@ unsigned RRCheck(void)
 		FQDomainName(cParam1);
 		if(!cParam1[0])
 		{
-			sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
+			sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam1Label);
 			gcMessage=gcQuery;
 			cParam1Style="type_fields_req";
 			return(8);
@@ -1172,14 +1172,14 @@ unsigned RRCheck(void)
 	{
 		if(!strcmp(gcZone+strlen(gcZone)-5,".arpa"))
 		{
-			gcMessage="<blink>Can not add MX records to arpa zones</blink>";
+			gcMessage="<blink>Error: </blink>Can not add MX records to arpa zones";
 			return(9);
 		}
 		sscanf(cParam1,"%u",&a);
 		sprintf(cParam1,"%u",a);
 		if(!a || a>1000)
 		{
-			sprintf(gcQuery,"<blink>Invalid MX Priority Number for %s</blink>",
+			sprintf(gcQuery,"<blink>Error: </blink>Invalid MX Priority Number for %s",
 					cParam1Label);
 			gcMessage=gcQuery;
 			cParam1Style="type_fields_req";
@@ -1188,7 +1188,7 @@ unsigned RRCheck(void)
 		FQDomainName(cParam2);
 		if(!cParam2[0])
 		{
-			sprintf(gcQuery,"<blink>%s is required</blink>",cParam2Label);
+			sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam2Label);
 			gcMessage=gcQuery;
 			cParam2Style="type_fields_req";
 			return(11);
@@ -1202,7 +1202,7 @@ unsigned RRCheck(void)
 		cParam2[0]=0;
 		if(!cParam1[0])
 		{
-			sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
+			sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam1Label);
 			gcMessage=gcQuery;
 			cParam1Style="type_fields_req";
 			return(12);
@@ -1221,7 +1221,7 @@ unsigned RRCheck(void)
 	{
 		if(!cParam1[0])
 		{
-			sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
+			sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam1Label);
 			gcMessage=gcQuery;
 			cParam1Style="type_fields_req";
 			return(13);
@@ -1235,7 +1235,7 @@ unsigned RRCheck(void)
 
 		if(!cParam2[0])
 		{
-			sprintf(gcQuery,"<blink>%s is required</blink>",cParam2Label);
+			sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam2Label);
 			gcMessage=gcQuery;
 			cParam2Style="type_fields_req";
 			return(14);
@@ -1253,7 +1253,7 @@ unsigned RRCheck(void)
 		cParam2[0]=0;
 		if(!cParam1[0])
 		{
-			sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
+			sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam1Label);
 			gcMessage=gcQuery;
 			cParam1Style="type_fields_req";
 			return(15);
@@ -1277,7 +1277,7 @@ unsigned RRCheck(void)
 		{
 			if(cp!=cParam1+strlen(cParam1)-1)
 			{
-				sprintf(gcQuery,"<blink>Stray \" in TXT value</blink>");
+				sprintf(gcQuery,"<blink>Error: </blink>Stray \" in TXT value");
 				gcMessage=gcQuery;
 				cParam1Style="type_fields_req";
 				return(15);
@@ -1290,7 +1290,7 @@ unsigned RRCheck(void)
 		unsigned uI=0;
 		if(!cName[0])
 		{
-			gcMessage="<blink>Service protocol and domain required</blink>";
+			gcMessage="<blink>Error: </blink>Service protocol and domain required";
 			cNameStyle="type_fields_req";
 			return(16);
 		}
@@ -1303,7 +1303,7 @@ unsigned RRCheck(void)
 				cName[x]=tolower(cName[x]);
 			if((strstr(cName,"_tcp")==NULL)||(strstr(cName,"_udp")))
 			{
-				gcMessage="<blink>Service protocol required</blink>";
+				gcMessage="<blink>Error: </blink>Service protocol required";
 				cNameStyle="type_fields_req";
 				return(16);
 			}
@@ -1311,39 +1311,39 @@ unsigned RRCheck(void)
 			
 		if(!cParam1[0])
 		{
-			gcMessage="<blink>Priority required</blink>";
+			gcMessage="<blink>Error: </blink>Priority required";
 			cParam1Style="type_fields_req";
 			return(16);
 		}
 		if(!cParam2[0])
 		{
-			gcMessage="<blink>Weight required</blink>";
+			gcMessage="<blink>Error: </blink>Weight required";
 			cParam2Style="type_fields_req";
 			return(16);
 		}
 		if(!cParam3[0])
 		{
-			gcMessage="<blink>Port required</blink>";
+			gcMessage="<blink>Error: </blink>Port required";
 			cParam3Style="type_fields_req";
 			return(16);
 		}
 		if(!cParam4[0])
 		{
-			gcMessage="<blink>Target host required</blink>";
+			gcMessage="<blink>Error: </blink>Target host required";
 			cParam4Style="type_fields_req";
 			return(16);                          
 		}
 
 		if((strstr(cName,gcZone)==NULL))
 		{
-			gcMessage="Must include zone name in service parameter. E.g.: _sip._tcp.example.com.</blink>";
+			gcMessage="Must include zone name in service parameter. E.g.: _sip._tcp.example.com.";
 			cNameStyle="type_fields_req";
 			return(17);
 		}
 		sscanf(cParam1,"%u",&uI);
 		if(!uI && !(isdigit(cParam1[0])))
 		{
-			gcMessage="<blink>Must specify numerical priority</blink>";
+			gcMessage="<blink>Error: </blink>Must specify numerical priority";
 			cParam1Style="type_fields_req";
 			return(17);
 		}
@@ -1351,7 +1351,7 @@ unsigned RRCheck(void)
 		sscanf(cParam2,"%u",&uI);
 		if(!uI && (!isdigit(cParam2[0])))
 		{
-			gcMessage="<blink>Must specify numerical weight</blink>";
+			gcMessage="<blink>Error: </blink>Must specify numerical weight";
 			cParam2Style="type_fields_req";
 			return(17);
 		}
@@ -1359,7 +1359,7 @@ unsigned RRCheck(void)
 		sscanf(cParam3,"%u",&uI);
 		if((!uI) || (uI>65535))
 		{
-			gcMessage="<blink>Invalid port number</blink>";
+			gcMessage="<blink>Error: </blink>Invalid port number";
 			cParam3Style="type_fields_req";
 			return(17);
 		}
@@ -1370,7 +1370,7 @@ unsigned RRCheck(void)
 	}
 	else if(1)
 	{
-		gcMessage="<blink>Must select valid Resource Type (A,MX,PTR,TXT,NS,CNAME,HINFO,SRV)</blink>";
+		gcMessage="<blink>Error: </blink>Must select valid Resource Type (A,MX,PTR,TXT,NS,CNAME,HINFO,SRV)";
 		cRRTypeStyle="type_fields_req";
 		return(16);
 	}
@@ -1667,7 +1667,7 @@ void MasterFunctionSelect(void)
 		SelectResource();
 		if(strstr(cComment,"Delegation"))
 		{
-			gcMessage="<blink>Modification of delegation records is not allowed</blink>";
+			gcMessage="<blink>Error: </blink>Modification of delegation records is not allowed";
 			htmlResource();
 		}
 		sprintf(gcModStep," Confirm");
@@ -1726,7 +1726,7 @@ void MasterFunctionSelect(void)
 			}
 			else
 			{
-				gcMessage="<blink>Contact admin: uNameServer error (mod)</blink>";
+				gcMessage="<blink>Error: </blink>Contact admin: uNameServer error (mod)";
 			}
 		}
 		htmlResource();
@@ -1765,7 +1765,7 @@ void MasterFunctionSelect(void)
 			}
 			else
 			{
-				gcMessage="<blink>Contact admin: uNameServer error (new)</blink>";
+				gcMessage="<blink>Error: </blink>Contact admin: uNameServer error (new)";
 			}
 		}
 		htmlResource();
@@ -1805,7 +1805,7 @@ void MasterFunctionSelect(void)
 			}
 			else
 			{
-				gcMessage="<blink>Contact admin: uNameServer error (del)</blink>";
+				gcMessage="<blink>Error: </blink>Contact admin: uNameServer error (del)";
 			}
 		}
 		LoadRRTypeLabels();
@@ -1840,7 +1840,7 @@ void MasterFunctionSelect(void)
 				}
 				if(!cName[0] && !strcmp(cRRType,"PTR"))
 				{
-					gcMessage="<blink>Resource name is required by us for PTR type records</blink>";
+					gcMessage="<blink>Error: </blink>Resource name is required by us for PTR type records";
 					cNameStyle="type_fields_req";
 					htmlResourceWizard(uStep);
 				}
@@ -1857,11 +1857,11 @@ void MasterFunctionSelect(void)
 							if(strstr(cName+strlen(cName)-strlen(gcZone),gcZone))
 							{
 								strcat(cName,".");
-								gcMessage="<blink>We have added a final period. If this correct confirm</blink>";
+								gcMessage="<blink>Error: </blink>We have added a final period. If this correct confirm";
 								cNameStyle="type_fields_req";
 								htmlResourceWizard(uStep);
 							}
-							gcMessage="<blink>If Name is fully qualified it must end with the zone and final period</blink>";
+							gcMessage="<blink>Error: </blink>If Name is fully qualified it must end with the zone and final period";
 							htmlResourceWizard(uStep);
 						}
 					}
@@ -1874,7 +1874,7 @@ void MasterFunctionSelect(void)
 					if(!isalnum(cName[i]) && cName[i]!='-' && cName[i]!='.' && cName[i]!='@'&& cName[i]!='*' &&
 						cName[i]!='_')
 					{
-						gcMessage="<blink>Name can be empty or have only letters, numbers, the default origin @ symbol. Or dashes (-) and periods (.)</blink>";
+						gcMessage="<blink>Error: </blink>Name can be empty or have only letters, numbers, the default origin @ symbol. Or dashes (-) and periods (.)";
 						cNameStyle="type_fields_req";
 						htmlResourceWizard(uStep);
 					}
@@ -1904,7 +1904,7 @@ void MasterFunctionSelect(void)
 				if(!cParam1[0])
 				{
 					sprintf(cParam1,"%s.",gcZone);
-					sprintf(gcQuery,"<blink>%s is required. Common CNAME default entry made for you, check/change if needed</blink>",cParam1Label);
+					sprintf(gcQuery,"<blink>Error: </blink>%s is required. Common CNAME default entry made for you, check/change if needed",cParam1Label);
 					gcMessage=gcQuery;
 					cParam1Style="type_fields_req";
 					htmlResourceWizard(uStep);
@@ -1922,7 +1922,7 @@ void MasterFunctionSelect(void)
 					//Ticket #323 CNAME record pointing to itself
 					if(!strcmp(cName,cParam1) || !strcmp(gcZone,cParam1))
 					{
-						gcMessage="<blink>Can't create a CNAME record pointing to itself</blink>";
+						gcMessage="<blink>Error: </blink>Can't create a CNAME record pointing to itself";
 						cParam1Style="type_fields_req";
 						cNameStyle="type_fields_req";
 						htmlResourceWizard(uStep);
@@ -1940,7 +1940,7 @@ void MasterFunctionSelect(void)
 						if(strcmp(cParam1,cParam1Save))
 						{
 							sprintf(gcQuery,
-								"<blink>%s was changed check/fix</blink>",
+								"<blink>Error: </blink>%s was changed check/fix",
 								cParam1Label);
 							gcMessage=gcQuery;
 							cParam1Style="type_fields_req";
@@ -1964,7 +1964,7 @@ void MasterFunctionSelect(void)
 						if(strcmp(cParam1,cParam1Save))
 						{
 							sprintf(gcQuery,
-								"<blink>%s was changed check/fix</blink>",
+								"<blink>Error: </blink>%s was changed check/fix",
 								cParam1Label);
 							gcMessage=gcQuery;
 							cParam1Style="type_fields_req";
@@ -1979,7 +1979,7 @@ void MasterFunctionSelect(void)
 
 					if(!strcmp(gcZone+strlen(gcZone)-5,".arpa"))
 					{
-						gcMessage="<blink>Can not add A records to arpa zones</blink>";
+						gcMessage="<blink>Error: </blink>Can not add A records to arpa zones";
 						
 						htmlResourceWizard(uStep);
 					}
@@ -1995,7 +1995,7 @@ void MasterFunctionSelect(void)
 					if(!a || !d)
 					{
 						sprintf(gcQuery,
-							"<blink>Invalid IP Number for %s</blink>",
+							"<blink>Error: </blink>Invalid IP Number for %s",
 							cParam1Label);
 						gcMessage=gcQuery;
 						cParam1Style="type_fields_req";
@@ -2003,7 +2003,7 @@ void MasterFunctionSelect(void)
 					}
 					if(uRRExists(gcZone,cRRType,cName,cParam1))
 					{
-						gcMessage="<blink>Resource record already exists</blink>";
+						gcMessage="<blink>Error: </blink>Resource record already exists";
 						cParam1Style="type_fields_req";
 						htmlResourceWizard(uStep);
 					}
@@ -2020,7 +2020,7 @@ void MasterFunctionSelect(void)
 
 						if(!uPtr)
 						{
-							sprintf(gcQuery,"<blink>Class-C in-addr.arpa zone PTR must be the last octet of rev dns IP</blink>");
+							sprintf(gcQuery,"<blink>Error: </blink>Class-C in-addr.arpa zone PTR must be the last octet of rev dns IP");
 							gcMessage=gcQuery;
 							cNameStyle="type_fields_req";
 							htmlResourceWizard(uStep);
@@ -2028,7 +2028,7 @@ void MasterFunctionSelect(void)
 
 						if(uPtr>254)
 						{
-							sprintf(gcQuery,"<blink>PTR value out of range (1-254 allowed only)</blink>");
+							sprintf(gcQuery,"<blink>Error: </blink>PTR value out of range (1-254 allowed only)");
 							gcMessage=gcQuery;
 							cNameStyle="type_fields_req";
 							htmlResourceWizard(uStep);
@@ -2036,7 +2036,7 @@ void MasterFunctionSelect(void)
 
 						if(uPtrLen!=strlen(cName))
 						{
-							sprintf(gcQuery,"<blink>PTR was changed check</blink>");
+							sprintf(gcQuery,"<blink>Error: </blink>PTR was changed check");
 							gcMessage=gcQuery;
 							cNameStyle="type_fields_req";
 							htmlResourceWizard(uStep);
@@ -2046,7 +2046,7 @@ void MasterFunctionSelect(void)
 						if(!a)
 						{
 							sprintf(gcQuery,
-								"<blink>Unexpected in-addr.arpa zone name format</blink>");
+								"<blink>Error: </blink>Unexpected in-addr.arpa zone name format");
 							gcMessage=gcQuery;
 							cNameStyle="type_fields_req";
 							htmlResourceWizard(uStep);
@@ -2054,7 +2054,7 @@ void MasterFunctionSelect(void)
 
 						if(uRRExists(gcZone,cRRType,cName,cParam1))
 						{
-							gcMessage="<blink>Resource record already exists</blink>";
+							gcMessage="<blink>Error: </blink>Resource record already exists";
 							cNameStyle="type_fields_req";
 							htmlResourceWizard(uStep);
 						}
@@ -2064,7 +2064,7 @@ void MasterFunctionSelect(void)
 						/*sprintf(cParam2,"%u.%u.%u.%u",a,b,c,uPtr);
 						if(!InMyBlocks(cParam2))
 						{
-							gcMessage="<blink>IP Number not in any of your IP blocks</blink>";
+							gcMessage="<blink>Error: </blink>IP Number not in any of your IP blocks";
 							cNameStyle="type_fields_req";
 							htmlResourceWizard(1);
 						}
@@ -2077,7 +2077,7 @@ void MasterFunctionSelect(void)
 					FQDomainName(cParam1);
 					if(!cParam1[0])
 					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
+						sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam1Label);
 						gcMessage=gcQuery;
 						cParam1Style="type_fields_req";
 						htmlResourceWizard(uStep);
@@ -2088,7 +2088,7 @@ void MasterFunctionSelect(void)
 				{
 					if(!strcmp(gcZone+strlen(gcZone)-5,".arpa"))
 					{
-						gcMessage="<blink>Can not add MX records to arpa zones</blink>";
+						gcMessage="<blink>Error: </blink>Can not add MX records to arpa zones";
 						cRRTypeStyle="type_fields_req";
 						htmlResourceWizard(uStep);
 					}
@@ -2096,7 +2096,7 @@ void MasterFunctionSelect(void)
 					sprintf(cParam1,"%.99u",a);
 					if(!a || a>1000)
 					{
-						sprintf(gcQuery,"<blink>Invalid MX Priority Number for %s</blink>",
+						sprintf(gcQuery,"<blink>Error: </blink>Invalid MX Priority Number for %s",
 							cParam1Label);
 						gcMessage=gcQuery;
 						cParam1Style="type_fields_req";
@@ -2105,7 +2105,7 @@ void MasterFunctionSelect(void)
 					FQDomainName(cParam2);
 					if(!cParam2[0])
 					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam2Label);
+						sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam2Label);
 						gcMessage=gcQuery;
 						cParam2Style="type_fields_req";
 						htmlResourceWizard(uStep);
@@ -2118,7 +2118,7 @@ void MasterFunctionSelect(void)
 					cParam2[0]=0;
 					if(!cParam1[0])
 					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
+						sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam1Label);
 						gcMessage=gcQuery;
 						cParam1Style="type_fields_req";
 						htmlResourceWizard(uStep);
@@ -2136,7 +2136,7 @@ void MasterFunctionSelect(void)
 				{
 					if(!cParam1[0])
 					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
+						sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam1Label);
 						gcMessage=gcQuery;
 						cParam1Style="type_fields_req";
 						htmlResourceWizard(uStep);
@@ -2149,7 +2149,7 @@ void MasterFunctionSelect(void)
 
 					if(!cParam2[0])
 					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam2Label);
+						sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam2Label);
 						gcMessage=gcQuery;
 						cParam2Style="type_fields_req";
 						htmlResourceWizard(uStep);
@@ -2167,7 +2167,7 @@ void MasterFunctionSelect(void)
 					cParam2[0]=0;
 					if(!cParam1[0])
 					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
+						sprintf(gcQuery,"<blink>Error: </blink>%s is required",cParam1Label);
 						gcMessage=gcQuery;
 						cParam1Style="type_fields_req";
 						htmlResourceWizard(uStep);
@@ -2191,7 +2191,7 @@ void MasterFunctionSelect(void)
 					{
 						if(cp!=cParam1+strlen(cParam1)-1)
 						{
-							sprintf(gcQuery,"<blink>Stray \" in TXT value</blink>");
+							sprintf(gcQuery,"<blink>Error: </blink>Stray \" in TXT value");
 							gcMessage=gcQuery;
 							cParam1Style="type_fields_req";
 							htmlResourceWizard(uStep);
@@ -2201,7 +2201,7 @@ void MasterFunctionSelect(void)
 				}
 				else if(1)
 				{
-					gcMessage="<blink>Must select valid Resource Type (A,MX,PTR,TXT,NS,CNAME,HINFO)</blink>";
+					gcMessage="<blink>Error: </blink>Must select valid Resource Type (A,MX,PTR,TXT,NS,CNAME,HINFO)";
 					cRRTypeStyle="type_fields_req";
 					htmlResourceWizard(uStep);
 				}
@@ -2246,7 +2246,7 @@ void MasterFunctionSelect(void)
 			}
 			else
 			{
-				gcMessage="<blink>Contact admin: uNameServer error (new)</blink>";
+				gcMessage="<blink>Error: </blink>Contact admin: uNameServer error (new)";
 			}
 		}
 		htmlResource();
@@ -2544,7 +2544,7 @@ unsigned OnLineZoneCheck(void)
 					cp=strstr(cLine,cZoneFile);
 					cp=cp+strlen(cZoneFile)+2; //2 more chars ': '
 					gcMessage=malloc(256);
-					//sprintf(gcMessage,"<blink>Error: </blink> The RR has an error: %s",cp);
+					//sprintf(gcMessage,"<blink>Error: </blink>Error:  The RR has an error: %s",cp);
 				}
 			}
 			pclose(zfp);

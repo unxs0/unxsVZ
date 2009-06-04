@@ -199,7 +199,7 @@ void AdminUserCommands(pentry entries[], int x)
 			if(mysql_num_rows(res))
 			{
 				cUserNameStyle="type_fields_req";
-				gcMessage="<blink>Login User already exists</blink>";
+				gcMessage="<blink>Error: </blink>Login User already exists";
 				sprintf(gcNewStep,"Confirm ");
 				gcInputStatus[0]=0;				
 				htmlAdminUser();
@@ -221,7 +221,7 @@ void AdminUserCommands(pentry entries[], int x)
 			MYSQL_RES *res;
 			if(!cuClient[0])
 			{
-				gcMessage="<blink>Can't modify. No record selected</blink>";
+				gcMessage="<blink>Error: </blink>Can't modify. No record selected";
 				htmlAdminUser();
 			}
 			SelectAdminUser(cuClient,1);
@@ -237,7 +237,7 @@ void AdminUserCommands(pentry entries[], int x)
 				ModAdminUser();
 			}
 			else
-				gcMessage="<blink>Can't modify. No record selected</blink>";
+				gcMessage="<blink>Error: </blink>Can't modify. No record selected";
 
 			htmlAdminUser();
 		}
@@ -252,7 +252,7 @@ void AdminUserCommands(pentry entries[], int x)
 			MYSQL_RES *res;
 			if(!cuClient[0])
 			{
-				gcMessage="<blink>No record selected</blink>";
+				gcMessage="<blink>Error: </blink>No record selected";
 				htmlAdminUser();
 			}
 			SelectAdminUser(cuClient,1);
@@ -261,7 +261,7 @@ void AdminUserCommands(pentry entries[], int x)
 			if(mysql_num_rows(res))
 				 DelAdminUser();
 			else
-				gcMessage="<blink>Can't delete unexistant record</blink>";
+				gcMessage="<blink>Error: </blink>Can't delete unexistant record";
 
 			htmlAdminUser();
 		}
@@ -282,7 +282,7 @@ void AdminUserCommands(pentry entries[], int x)
 					if(!cClientName[0])
 					{
 						cClientNameStyle="type_fields_req";
-						gcMessage="<blink>Contact Name must be provided</blink>";
+						gcMessage="<blink>Error: </blink>Contact Name must be provided";
 						htmlAdminUserWizard(1);
 					}
 					else
@@ -294,7 +294,7 @@ void AdminUserCommands(pentry entries[], int x)
 						if(mysql_num_rows(res))
 						{
 							mysql_free_result(res);
-							gcMessage="<blink>Contact Name already exists</blink>";
+							gcMessage="<blink>Error: </blink>Contact Name already exists";
 							cClientNameStyle="type_fields_req";
 							htmlAdminUserWizard(1);
 						}
@@ -304,7 +304,7 @@ void AdminUserCommands(pentry entries[], int x)
 						if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
 						{
 							cEmailStyle="type_fields_req";
-							gcMessage="<blink>Email format is incorrect</blink>";
+							gcMessage="<blink>Error: </blink>Email format is incorrect";
 							htmlAdminUserWizard(1);
 						}
 					}
@@ -329,14 +329,14 @@ void AdminUserCommands(pentry entries[], int x)
 						if(mysql_num_rows(res))
 						{
 							cUserNameStyle="type_fields_req";
-							gcMessage="<blink>Login User already exists</blink>";
+							gcMessage="<blink>Error: </blink>Login User already exists";
 							htmlAdminUserWizard(2);
 						}
 					}
 					if(!cPassword[0] || (strlen(cPassword)<5))
 					{
 						cPasswordStyle="type_fields_req";
-						gcMessage="<blink>Password with at least 5 chars is required</blink>";
+						gcMessage="<blink>Error: </blink>Password with at least 5 chars is required";
 						htmlAdminUserWizard(2);
 					}
 					break;
@@ -356,7 +356,7 @@ void AdminUserCommands(pentry entries[], int x)
 			if(mysql_num_rows(res))
 			{
 				cClientNameStyle="type_fields_req";
-				gcMessage="<blink>Client already exists</blink>";				
+				gcMessage="<blink>Error: </blink>Client already exists";				
 				htmlAdminUserWizard(4);
 				
 			}
@@ -690,7 +690,7 @@ void NewAdminUser(void)
 	else
 	{
 		iDNSLog(uClient,"tClient","New Fail");
-		gcMessage="<blink>Admin User NOT created</blink>";
+		gcMessage="<blink>Error: </blink>Admin User NOT created";
 	}
 	time(&uCreatedDate);
 	uOwner=uForClient;
@@ -765,7 +765,7 @@ void ModAdminUser(void)
 	else
 	{
 		iDNSLog(uClient,"tClient","Mod Fail");
-		gcMessage="<blink>Administrator User NOT modified</blink>";
+		gcMessage="<blink>Error: </blink>Administrator User NOT modified";
 	}
 	uModBy=guLoginClient;
 	time(&uModDate);
@@ -811,7 +811,7 @@ void DelAdminUser(void)
 	else
 	{
 		iDNSLog(uClient,"tClient","Del Fail");
-		gcMessage="<blink>Admin User NOT deleted</blink>";
+		gcMessage="<blink>Error: </blink>Admin User NOT deleted";
 	}
 
 }//void DelAdminUser(void)
@@ -821,7 +821,7 @@ unsigned ValidateAdminUserInput(void)
 {
 	if(!cUserName[0])
 	{
-		gcMessage="<blink>Login is required.</blink>";
+		gcMessage="<blink>Error: </blink>Login is required.";
 		cUserNameStyle="type_fields_req";
 		return(0);
 	}
@@ -840,14 +840,14 @@ unsigned ValidateAdminUserInput(void)
 				cClientNameStyle="type_fields";
 				cEmailStyle="type_fields";
 				cInfoStyle="type_textarea";
-				gcMessage="<blink>Login contains invalid chars.</blink> ";
+				gcMessage="<blink>Error: </blink>Login contains invalid chars. ";
 				return(0);
 			}
 		}
 	}
 	if(!cPassword[0])
 	{
-		gcMessage="<blink>Password must be provided.</blink>";
+		gcMessage="<blink>Error: </blink>Password must be provided.";
 		cPasswordStyle="type_fields_req";
 		cUserNameStyle="type_fields";
 		cClientNameStyle="type_fields";
@@ -858,7 +858,7 @@ unsigned ValidateAdminUserInput(void)
 	{
 		if(strlen(cPassword)<5)
 		{
-			gcMessage="<blink>Password must be at least 5 characters.</blink>";
+			gcMessage="<blink>Error: </blink>Password must be at least 5 characters.";
 			cPasswordStyle="type_fields_req";			
 			cUserNameStyle="type_fields";
 			cClientNameStyle="type_fields";
@@ -869,7 +869,7 @@ unsigned ValidateAdminUserInput(void)
 	}
 	if(!cClientName[0])
 	{
-		gcMessage="<blink>'Contact Name' must be provided.</blink>";
+		gcMessage="<blink>Error: </blink>'Contact Name' must be provided.";
 		cClientNameStyle="type_fields_req";		
 		cUserNameStyle="type_fields";
 		cEmailStyle="type_fields";
@@ -891,7 +891,7 @@ unsigned ValidateAdminUserInput(void)
 				cEmailStyle="type_fields";
 				cPasswordStyle="type_fields";
 				cInfoStyle="type_textarea";
-				gcMessage="<blink>'Contact Name' has invalid chars";
+				gcMessage="<blink>Error: </blink>'Contact Name' has invalid chars";
 				return(0);
 			}
 		}

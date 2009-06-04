@@ -81,7 +81,7 @@ void RestoreResourceCommands(pentry entries[], int x)
 		{
 			if(!uDeletedResource)
 			{
-				gcMessage="<blink>Must select a RR to restore</blink>";
+				gcMessage="<blink>Error: </blink>Must select a RR to restore";
 				htmlRestoreResource("");
 			}
 			sprintf(gcNewStep,"Confirm");
@@ -300,7 +300,7 @@ void LoadDeletedResource(unsigned uRowId)
 		sscanf(field[13],"%u",&uNameServer);
 	}
 	else
-		gcMessage="<blink>Could not load record</blink>";
+		gcMessage="<blink>Error: </blink>Could not load record";
 
 }//void LoadDeletedResource(unsigned uRowId)
 

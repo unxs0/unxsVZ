@@ -150,7 +150,7 @@ void LoadCustomer(void)
 		gcMessage="1 record(s) found";
 	}
 	else
-		gcMessage="<blink>No records found.</blink>";
+		gcMessage="<blink>Error: </blink>No records found.";
 
 	mysql_free_result(res);
 
@@ -190,7 +190,7 @@ void CustomerCommands(pentry entries[], int x)
 		{
 			if(!uClient)
 			{
-				gcMessage="<blink>Can't modify. No record selected</blink>";
+				gcMessage="<blink>Error: </blink>Can't modify. No record selected";
 				htmlCustomer();
 			}
 			if(!ValidateCustomerInput())
@@ -205,17 +205,17 @@ void CustomerCommands(pentry entries[], int x)
 		{
 			if(uHasZones(cCompanyName))
 			{
-				gcMessage="<blink>Can't delete a Company  with zones</blink>";
+				gcMessage="<blink>Error: </blink>Can't delete a Company  with zones";
 				htmlCustomer();
 			}
 			else if(uHasBlocks(cCompanyName))
 			{
-				gcMessage="<blink>Can't delete a Company with blocks</blink>";
+				gcMessage="<blink>Error: </blink>Can't delete a Company with blocks";
 				htmlCustomer();
 			}
 			else if(uHasContacts(cCompanyName))
 			{
-				gcMessage="<blink>Can't delete a Company with contacts</blink>";
+				gcMessage="<blink>Error: </blink>Can't delete a Company with contacts";
 				htmlCustomer();
 			}
 			
@@ -227,7 +227,7 @@ void CustomerCommands(pentry entries[], int x)
 		{
 			if(!uClient)
 			{
-				gcMessage="<blink>No record selected</blink>";
+				gcMessage="<blink>Error: </blink>No record selected";
 				htmlCustomer();
 			}
 			DelCustomer();
@@ -248,7 +248,7 @@ void CustomerCommands(pentry entries[], int x)
 				case 1:
 					if(!cCompanyName[0])
 					{
-						gcMessage="<blink>Company name can't be empty</blink>";
+						gcMessage="<blink>Error: </blink>Company name can't be empty";
 						cLabelStyle="type_fields_req";
 						htmlCustomerWizard(1);
 					}
@@ -259,7 +259,7 @@ void CustomerCommands(pentry entries[], int x)
 					if(mysql_num_rows(res))
 					{
 						mysql_free_result(res);
-						gcMessage="<blink>Company already exists</blink>";
+						gcMessage="<blink>Error: </blink>Company already exists";
 						cLabelStyle="type_fields_req";
 						htmlCustomerWizard(1);
 					}
@@ -271,7 +271,7 @@ void CustomerCommands(pentry entries[], int x)
 						if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
 						{
 							cEmailStyle="type_fields_req";
-							gcMessage="<blink>Email has to be a valid email address</blink>";
+							gcMessage="<blink>Error: </blink>Email has to be a valid email address";
 							htmlCustomerWizard(2);
 						}
 					}
@@ -298,7 +298,7 @@ void CustomerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				gcMessage="<blink>Company already exists!</blink>";
+				gcMessage="<blink>Error: </blink>Company already exists!";
 				cLabelStyle="type_fields_req";
 			}
 			mysql_free_result(res);
@@ -824,7 +824,7 @@ unsigned ValidateCustomerInput(void)
 	if(!cCompanyName[0])
 	{
 		cLabelStyle="type_fields_req";
-		gcMessage="<blink>Customer Name can't be empty</blink>";
+		gcMessage="<blink>Error: </blink>Customer Name can't be empty";
 		cEmailStyle="type_fields";
 		cInfoStyle="type_textarea";
 		return(0);
@@ -842,7 +842,7 @@ unsigned ValidateCustomerInput(void)
 				cLabelStyle="type_fields_req";
 				cEmailStyle="type_fields";
 				cInfoStyle="type_textarea";
-				gcMessage="<blink>Customer Name contains invalid characters</blink>";
+				gcMessage="<blink>Error: </blink>Customer Name contains invalid characters";
 				return(0);
 			}
 		}
@@ -854,7 +854,7 @@ unsigned ValidateCustomerInput(void)
 			cEmailStyle="type_fields_req";
 			cLabelStyle="type_fields";
 			cInfoStyle="type_textarea";
-			gcMessage="<blink>Email has to be a valid email address</blink>";
+			gcMessage="<blink>Error: </blink>Email has to be a valid email address";
 			return(0);
 		}
 	}

@@ -77,7 +77,7 @@ void BulkOpCommands(pentry entries[], int x)
 		{
 			if(!cMassList[0])
 			{
-				gcMessage="<blink>cMassList empty.</blink> Read manual for list format.";
+				gcMessage="<blink>Error: </blink>cMassList empty. Read manual for list format.";
 				htmlBulkOp();
 			}
 			

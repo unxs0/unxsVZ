@@ -254,7 +254,7 @@ void ReportCommands(pentry entries[], int x)
 
 			if(!cMonthHit[0])
 			{
-				gcMessage="<blink>You have to select the month for the hits report</blink>";
+				gcMessage="<blink>Error: </blink>You have to select the month for the hits report";
 				htmlReport();
 			}
 			//load the archived data
