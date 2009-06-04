@@ -209,7 +209,7 @@ void CustomerContactCommands(pentry entries[], int x)
 			cUserName[0]=0;
 			cPassword[0]=0;
 			sprintf(gcNewStep,"Confirm ");
-			gcMessage="<blink>Enter/modify data, review, then confirm. Any other action to cancel.</blink>";
+			gcMessage="<blink>Error: </blink>Enter/modify data, review, then confirm. Any other action to cancel.";
 			gcInputStatus[0]=0;
 			SetCustomerContactFieldsOn();
 			gcPermInputStatus[0]=0;
@@ -231,7 +231,7 @@ void CustomerContactCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Modify"))
 		{
 			sprintf(gcModStep,"Confirm ");
-			gcMessage="<blink>Enter/modify data, review, then confirm. Any other action to cancel.</blink>";
+			gcMessage="<blink>Error: </blink>Enter/modify data, review, then confirm. Any other action to cancel.";
 			gcInputStatus[0]=0;
 			gcPermInputStatus[0]=0;
 			SetCustomerContactFieldsOn();
@@ -241,7 +241,7 @@ void CustomerContactCommands(pentry entries[], int x)
 		{
 			if(!guContact)
 			{
-				gcMessage="<blink>Can't modify. No record selected</blink>";
+				gcMessage="<blink>Error: </blink>Can't modify. No record selected";
 				htmlCustomerContact();
 			}
 			if(!ValidateCustomerContactInput())
@@ -255,14 +255,14 @@ void CustomerContactCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Delete"))
 		{
 			sprintf(gcDelStep,"Confirm ");
-			gcMessage="<blink>Double check you have selected the correct record to delete. Then confirm. Any other action to cancel.</blink>";
+			gcMessage="<blink>Error: </blink>Double check you have selected the correct record to delete. Then confirm. Any other action to cancel.";
 			htmlCustomerContact();
 		}		
 		else if(!strcmp(gcFunction,"Confirm Delete"))
 		{
 			if(!guContact)
 			{
-				gcMessage="<blink>No record selected</blink>";
+				gcMessage="<blink>Error: </blink>No record selected";
 				htmlCustomerContact();
 			}
 			DelCustomerContact();
@@ -281,7 +281,7 @@ void CustomerContactCommands(pentry entries[], int x)
 				case 1:
 					if(!uForClient)
 					{
-						gcMessage="<blink>Customer must be specified</blink>";
+						gcMessage="<blink>Error: </blink>Customer must be specified";
 						cForClientPullDownStyle="type_fields_req";
 						htmlCustomerContactWizard(1);
 					}
@@ -300,7 +300,7 @@ void CustomerContactCommands(pentry entries[], int x)
 					if(mysql_num_rows(res))
 					{
 						mysql_free_result(res);
-						gcMessage="<blink>Contact already exists</blink>";
+						gcMessage="<blink>Error: </blink>Contact already exists";
 						cClientNameStyle="type_fields_req";
 						htmlCustomerContactWizard(2);
 					}
@@ -308,7 +308,7 @@ void CustomerContactCommands(pentry entries[], int x)
 					if(!cClientName[0])
 					{
 						cClientNameStyle="type_fields_req";
-						gcMessage="<blink>Contact name is required</blink>";
+						gcMessage="<blink>Error: </blink>Contact name is required";
 						htmlCustomerContactWizard(2);
 					}
 					if(cEmail[0])
@@ -316,7 +316,7 @@ void CustomerContactCommands(pentry entries[], int x)
 						if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
 						{
 							cEmailStyle="type_fields_req";
-							gcMessage="<blink>Email format is incorrect</blink>";
+							gcMessage="<blink>Error: </blink>Email format is incorrect";
 							htmlCustomerContactWizard(2);
 						}
 					}
@@ -325,7 +325,7 @@ void CustomerContactCommands(pentry entries[], int x)
 					if(!cUserName[0])
 					{
 						cUserNameStyle="type_fields_req";
-						gcMessage="<blink>Login name is required</blink>";
+						gcMessage="<blink>Error: </blink>Login name is required";
 						htmlCustomerContactWizard(3);
 					}
 					else
@@ -342,14 +342,14 @@ void CustomerContactCommands(pentry entries[], int x)
 						if(mysql_num_rows(res))
 						{
 							cUserNameStyle="type_fields_req";
-							gcMessage="<blink>Login User already exists</blink>";
+							gcMessage="<blink>Error: </blink>Login User already exists";
 							htmlCustomerContactWizard(3);
 						}
 					}
 					if(!cPassword[0] || (strlen(cPassword)<5))
 					{
 						cPasswordStyle="type_fields_req";
-						gcMessage="<blink>Password with at least 5 chars is required</blink>";
+						gcMessage="<blink>Error: </blink>Password with at least 5 chars is required";
 						htmlCustomerContactWizard(3);
 					}
 					break;
@@ -375,7 +375,7 @@ void CustomerContactCommands(pentry entries[], int x)
 			if(mysql_num_rows(res))
 			{
 				cClientNameStyle="type_fields_req";
-				gcMessage="<blink>Client already exists</blink>";				
+				gcMessage="<blink>Error: </blink>Client already exists";				
 				htmlCustomerContactWizard(4);
 				
 			}
@@ -411,7 +411,7 @@ void CustomerContactCommands(pentry entries[], int x)
 		else if(1)
 		{
 			//Old behavior
-			//gcMessage="<blink>Redirected to 'Companies'. You must select a Company first</blink>";
+			//gcMessage="<blink>Error: </blink>Redirected to 'Companies'. You must select a Company first";
 			//htmlCustomer();
 			htmlCustomerContact();
 		}
@@ -695,7 +695,7 @@ void NewCustomerContact(void)
 	else
 	{
 		iDNSLog(guContact,"tClient","New Fail");
-		gcMessage="<blink>Company contact NOT created</blink>";
+		gcMessage="<blink>Error: </blink>Company contact NOT created";
 	}
 	
 	time(&uCreatedDate);
@@ -757,7 +757,7 @@ void ModCustomerContact(void)
 	else
 	{
 		iDNSLog(guContact,"tClient","Mod Fail");
-		gcMessage="<blink>Company contact NOT modified</blink>";
+		gcMessage="<blink>Error: </blink>Company contact NOT modified";
 	}
 	time(&uModDate);
 	uModBy=guLoginClient;
@@ -788,7 +788,7 @@ void DelCustomerContact(void)
 	else
 	{
 		iDNSLog(guContact,"tClient","Del Fail");
-		gcMessage="<blink>Company contact NOT deleted</blink>";
+		gcMessage="<blink>Error: </blink>Company contact NOT deleted";
 	}
 	guContact=0;
 	sys_SetSessionCookie();
@@ -800,7 +800,7 @@ unsigned ValidateCustomerContactInput(void)
 {
 	if(!cUserName[0])
 	{
-		gcMessage="<blink>Login is required.</blink>";
+		gcMessage="<blink>Error: </blink>Login is required.";
 		cUserNameStyle="type_fields_req";
 		cUserNameStyle="type_fields";
 		cPasswordStyle="type_fields";
@@ -828,14 +828,14 @@ unsigned ValidateCustomerContactInput(void)
 				cEmailStyle="type_fields";
 				cInfoStyle="type_textarea";
 				cPermPullDownStyle="type_fields";
-				gcMessage="<blink>Login contains invalid chars.</blink>";
+				gcMessage="<blink>Error: </blink>Login contains invalid chars.";
 				return(0);
 			}
 		}
 	}
 	if(!cPassword[0])
 	{
-		gcMessage="<blink>Password must be provided.</blink>";
+		gcMessage="<blink>Error: </blink>Password must be provided.";
 		cPasswordStyle="type_fields_req";
 		cUserNameStyle="type_fields";
 		cForClientPullDownStyle="type_fields";
@@ -849,7 +849,7 @@ unsigned ValidateCustomerContactInput(void)
 	{
 		if(strlen(cPassword)<5)
 		{
-			gcMessage="<blink>Password must be at least 5 characters.</blink>";
+			gcMessage="<blink>Error: </blink>Password must be at least 5 characters.";
 			cPasswordStyle="type_fields_req";
 			cUserNameStyle="type_fields";
 			cForClientPullDownStyle="type_fields";
@@ -862,7 +862,7 @@ unsigned ValidateCustomerContactInput(void)
 	}
 	if(!cClientName[0])
 	{
-		gcMessage="<blink>'Contact Name' must be provided.</blink>";
+		gcMessage="<blink>Error: </blink>'Contact Name' must be provided.";
 		SetCustomerContactFieldsOn();
 		cClientNameStyle="type_fields_req";
 		return(0);
@@ -878,7 +878,7 @@ unsigned ValidateCustomerContactInput(void)
 			{
 				SetCustomerContactFieldsOn();
 				cClientNameStyle="type_fields_req";
-				gcMessage="<blink>'Contact Name' has invalid chars</blink>";
+				gcMessage="<blink>Error: </blink>'Contact Name' has invalid chars";
 				return(0);
 			}
 		}
@@ -887,7 +887,7 @@ unsigned ValidateCustomerContactInput(void)
 	{
 		if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
 		{
-			gcMessage="<blink>'Email Address' must be provided.</blink>";
+			gcMessage="<blink>Error: </blink>'Email Address' must be provided.";
 			SetCustomerContactFieldsOn();
 			cEmailStyle="type_fields_req";
 			return(0);
@@ -898,7 +898,7 @@ unsigned ValidateCustomerContactInput(void)
 			{
 				SetCustomerContactFieldsOn();
 				cEmailStyle="type_fields_req";
-				gcMessage="<blink>The entered email address is already used.</blink>";
+				gcMessage="<blink>Error: </blink>The entered email address is already used.";
 				return(0);
 			}
 		}
@@ -906,7 +906,7 @@ unsigned ValidateCustomerContactInput(void)
 	}
 	if(!uForClient)
 	{
-		gcMessage="<blink>Please select a Company to create the Contact for.</blink>";
+		gcMessage="<blink>Error: </blink>Please select a Company to create the Contact for.";
 		SetCustomerContactFieldsOn();
 		cForClientPullDownStyle="type_fields_req";
 		return(0);

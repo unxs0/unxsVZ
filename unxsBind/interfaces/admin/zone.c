@@ -273,7 +273,7 @@ void ZoneCommands(pentry entries[], int x)
 				}
 				else
 				{
-					gcMessage="<blink>Contact admin: uNameServer error";
+					gcMessage="<blink>Error: </blink>Contact admin: uNameServer error";
 				}
 				SelectZone(1);
 			}
@@ -315,7 +315,7 @@ void ZoneCommands(pentry entries[], int x)
 				}
 				else
 				{
-					gcMessage="<blink>Contact admin: uNameServer error";
+					gcMessage="<blink>Error: </blink>Contact admin: uNameServer error";
 				}
 				SelectZone(1);
 			}
@@ -348,7 +348,7 @@ void ZoneCommands(pentry entries[], int x)
 				}
 				else
 				{
-					gcMessage="<blink>Contact admin: uNameServer error";
+					gcMessage="<blink>Error: </blink>Contact admin: uNameServer error";
 				}
 			}
 			htmlZone();
@@ -943,7 +943,7 @@ void SelectZone(unsigned uSetCookie)
 		cuMailServers[0]=0;
 		cuRegistrar[0]=0;
 		cOptions[0]=0;
-		gcMessage="<blink>No Zone Selected</blink>";
+		gcMessage="<blink>Error: </blink>No Zone Selected";
 	}
 	
 	mysql_free_result(res);
@@ -1024,7 +1024,7 @@ void NewZone(void)
 	}
 	else
 	{
-		gcMessage="<blink>Zone Not Created Modified</blink>";
+		gcMessage="<blink>Error: </blink>Zone Not Created Modified";
 	}
 	
 	//Set session cookie
@@ -1055,7 +1055,7 @@ void DelZone(void)
 	}
 	else
 	{
-		gcMessage="<blink>Zone Not Deleted</blink>";
+		gcMessage="<blink>Error: </blink>Zone Not Deleted";
 	}
 
 	//Set session cookie
@@ -1079,7 +1079,7 @@ void UpdateZone(void)
 
 	if(!gcZone[0] || gcZone[0]=='-')
 	{
-		gcMessage="<blink>Unknown/empty zone was not modified</blink>";
+		gcMessage="<blink>Error: </blink>Unknown/empty zone was not modified";
 		return;
 	}
 
@@ -1148,7 +1148,7 @@ void UpdateZone(void)
 	}
 	else
 	{
-		gcMessage="<blink>Zone Not Modified</blink>";
+		gcMessage="<blink>Error: </blink>Zone Not Modified";
 	}
 
 	//Update tResource.uOwner; only for forward zones!
@@ -1403,7 +1403,7 @@ unsigned ValidateZoneInput(void)
 	if(!gcZone[0])
 	{
 		cZoneStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>No zone name specified!";
+		gcMessage="<blink>Error: </blink>Error: No zone name specified!";
 		return(0);
 	}
 
@@ -1417,7 +1417,7 @@ unsigned ValidateZoneInput(void)
 		if(mysql_num_rows(res))
 		{
 			cZoneStyle="type_fields_req";
-			gcMessage="<blink>Zone name already in use!</blink>";
+			gcMessage="<blink>Error: </blink>Zone name already in use!";
 			return(0);
 		}
 		mysql_free_result(res);
@@ -1436,7 +1436,7 @@ unsigned ValidateZoneInput(void)
 			if(strcmp(gcZone,field[0]))
 			{
 				cZoneStyle="type_fields_req";
-				gcMessage="<blink>Error: </blink>You can't change a zone name, delete it and create it again";
+				gcMessage="<blink>Error: </blink>Error: You can't change a zone name, delete it and create it again";
 				return(0);
 			}
 		}
@@ -1456,24 +1456,24 @@ unsigned ValidateZoneInput(void)
 	
 	if(!cHostmaster[0])
 	{
-		gcMessage="<blink>Must provide SOA Hostmaster Email (@ is first .).</blink>";
+		gcMessage="<blink>Error: </blink>Must provide SOA Hostmaster Email (@ is first .).";
 		uValid=0;
 		cHostmasterStyle="type_fields_req";
 	}
 	if(strlen(cHostmaster)<6)
 	{
-		gcMessage="<blink>FQDN Hostmaster required. Must specify 'email.' in front.</blink>";
+		gcMessage="<blink>Error: </blink>FQDN Hostmaster required. Must specify 'email.' in front.";
 		uValid=0;
 	}
 	if(!strchr(cHostmaster,'.'))
 	{
-		gcMessage="<blink>Must use a FQDN for Hostmaster with 'email.' in front</blink>";
+		gcMessage="<blink>Error: </blink>Must use a FQDN for Hostmaster with 'email.' in front";
 		uValid=0;
 		cHostmasterStyle="type_fields_req";
 	}
 	if(cHostmaster[strlen(cHostmaster)-1]=='.')
 	{
-		gcMessage="<blink>email.FQDN Hostmaster should not end with a period.</blink>";
+		gcMessage="<blink>Error: </blink>email.FQDN Hostmaster should not end with a period.";
 		uValid=0;
 		cHostmasterStyle="type_fields_req";
 	}
@@ -1487,38 +1487,38 @@ unsigned ValidateZoneInput(void)
 
 	if(!uExpire || uExpire>1000000)
 	{
-		gcMessage="<blink>Expire TTL out of range</blink>";
+		gcMessage="<blink>Error: </blink>Expire TTL out of range";
 		uValid=0;
 		cuExpireStyle="type_fields_req";		
 	}
 	if(!uRefresh || uRefresh>100000)
 	{
-		gcMessage="<blink>Refresh TTL out of range</blink>";
+		gcMessage="<blink>Error: </blink>Refresh TTL out of range";
 		uValid=0;
 		cuRefreshStyle="type_fields_req";
 	}
 	if(!uTTL || uTTL>100000)
 	{
-		gcMessage="<blink>Default TTL out of range</blink>";
+		gcMessage="<blink>Error: </blink>Default TTL out of range";
 		uValid=0;
 		cuTTLStyle="type_fields_req";		
 	}
 	if(!uRetry || uRetry>100000)
 	{
-		gcMessage="<blink>Retry TTL out of range</blink>";
+		gcMessage="<blink>Error: </blink>Retry TTL out of range";
 		uValid=0;
 		cuRetryStyle="type_fields_req";
 	}
 	if(!uZoneTTL || uZoneTTL>100000)
 	{
-		gcMessage="<blink>Negative TTL out of range</blink>";
+		gcMessage="<blink>Error: </blink>Negative TTL out of range";
 		uValid=0;
 		cuZoneTTLStyle="type_fields_req";
 	}
 	//Sanity checks from BIND source db_load.c
 	if(  uExpire < (uRefresh + uRetry) )
 	{
-		gcMessage="<blink>SOA expire value is less than SOA refresh+retry</blink>";
+		gcMessage="<blink>Error: </blink>SOA expire value is less than SOA refresh+retry";
 		uValid=0;
 		cuExpireStyle="type_fields_req";
 		cuRetryStyle="type_fields_req";
@@ -1526,7 +1526,7 @@ unsigned ValidateZoneInput(void)
 	}
 	if(  uExpire < (uRefresh + (10 * uRetry)) )
 	{
-		gcMessage="<blink>SOA expire value is less than refresh + 10 * retry</blink>";
+		gcMessage="<blink>Error: </blink>SOA expire value is less than refresh + 10 * retry";
 		uValid=0;
 		cuExpireStyle="type_fields_req";
 		cuRetryStyle="type_fields_req";
@@ -1534,19 +1534,19 @@ unsigned ValidateZoneInput(void)
 	}
 	if(  uExpire < (7 * 24 * 3600) )
 	{
-		gcMessage="<blink>SOA expire value is less than 7 days</blink>";
+		gcMessage="<blink>Error: </blink>SOA expire value is less than 7 days";
 		uValid=0;
 		cuExpireStyle="type_fields_req";
 	}
 	if(  uExpire > ( 183 * 24 * 3600) )
 	{
-		gcMessage="<blink>SOA expire value is greater than 6 months</blink>";
+		gcMessage="<blink>Error: </blink>SOA expire value is greater than 6 months";
 		uValid=0;
 		cuExpireStyle="type_fields_req";
 	}
 	if(  uRefresh < (uRetry * 2))
 	{
-		gcMessage="<blink>SOA refresh value is less than 2 * retry</blink>";
+		gcMessage="<blink>Error: </blink>SOA refresh value is less than 2 * retry";
 		uValid=0;
 		cuRetryStyle="type_fields_req";
 		cuRefreshStyle="type_fields_req";
@@ -1554,7 +1554,7 @@ unsigned ValidateZoneInput(void)
 
 	if(!uForClient)
 	{
-		gcMessage="<blink>Must select a Company</blink>";
+		gcMessage="<blink>Error: </blink>Must select a Company";
 		uValid=0;
 		cForClientPullDownStyle="type_fields_req";
 	}

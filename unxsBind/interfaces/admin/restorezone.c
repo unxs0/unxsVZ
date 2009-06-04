@@ -123,7 +123,7 @@ void RestoreZoneCommands(pentry entries[], int x)
 		{
 			if(!uDeletedZone)
 			{
-				gcMessage="<blink>You must select a zone to restore.</blink>";
+				gcMessage="<blink>Error: </blink>You must select a zone to restore.";
 				htmlRestoreZone();
 			}
 			gcMessage="Double check that you want to restore this zone and all its RRs";
@@ -471,7 +471,7 @@ void RestoreZone(unsigned uRowId)
 	res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{
-		gcMessage="<blink>Error</blink> The zone already exists in the system. Can't restore";
+		gcMessage="<blink>Error: </blink>Error The zone already exists in the system. Can't restore";
 		htmlRestoreZone();
 	}
 
