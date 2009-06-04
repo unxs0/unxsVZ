@@ -1400,6 +1400,13 @@ unsigned ValidateZoneInput(void)
 	unsigned uZoneTTL=0;
 	MYSQL_RES *res;
 
+	if(!gcZone[0])
+	{
+		cZoneStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink>No zone name specified!";
+		return(0);
+	}
+
 	if(!strcmp(gcFunction,"Confirm New"))
 	{
 		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u",gcZone,uGetView(cSelectView));
@@ -1415,7 +1422,26 @@ unsigned ValidateZoneInput(void)
 		}
 		mysql_free_result(res);
 	}
+	else if(!strcmp(gcFunction,"Confirm Modify"))
+	{
+		MYSQL_ROW field;
 
+		sprintf(gcQuery,"SELECT cZone FROM tZone WHERE uZone='%s'",cuZone);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			if(strcmp(gcZone,field[0]))
+			{
+				cZoneStyle="type_fields_req";
+				gcMessage="<blink>Error: </blink>You can't change a zone name, delete it and create it again";
+				return(0);
+			}
+		}
+		mysql_free_result(res);
+	}
 	if(uSecondaryOnly)
 	{
 		//
