@@ -1,18 +1,18 @@
-1	ActTableRowContact	2	1	1242405579	1	1243885104		<tr><td>{{cAction}}</td><td>{{cRowId}}</td><td>{{cTable}}</td><td>{{cDate}}</td></tr>\
+1	ActTableRowContact	2	1	1242405579	1	1244083473		<tr><td>{{cAction}}</td><td>{{cRowId}}</td><td>{{cTable}}</td><td>{{cDate}}</td></tr>\
 \
 	1	0
-2	ActTableRowLabelAdmin	2	1	1242405579	1	1243885104		<tr>\
+2	ActTableRowLabelAdmin	2	1	1242405579	1	1244083473		<tr>\
 <td class=title_list><b>Action</b></td><td class=title_list><b>Row ID</b></td>\
 <td class=title_list><b>Table</b></td><td class=title_list><b>Date</b></td>\
 <tr>\
 	1	0
-3	ActTableRowLabelContact	2	1	1242405580	1	1243885104		<tr>\
+3	ActTableRowLabelContact	2	1	1242405580	1	1244083473		<tr>\
 <td class=title_list><b>Action</b></td><td class=title_list><b>Row ID/Zone</b></td>\
 <td class=title_list><b>Table</b></td><td class=title_list><b>Date</b></td>\
 <tr>\
 \
 	1	0
-4	AdminBulkOp.Body	2	1	1242405580	1	1243885104		\	\
+4	AdminBulkOp.Body	2	1	1242405580	1	1244083473		\	\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -255,7 +255,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 <input type=hidden name=uNameServer value='{{uNameServer}}'>\
 </form>\
 	1	0
-5	AdminLogin.Body	2	1	1242405580	1	1243885105		<body marginwidth="0" marginheight="0">\
+5	AdminLogin.Body	2	1	1242405580	1	1244083473		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -325,7 +325,7 @@ your username and password and then press the login button or hit enter to conti
 </table>\
 </div>\
 	1	0
-6	Admin.Resource.Body	2	1	1242405580	1	1243885105		\
+6	Admin.Resource.Body	2	1	1242405580	1	1244083474		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -671,7 +671,7 @@ your username and password and then press the login button or hit enter to conti
 <input type=hidden name=cCustomer value="{{cCustomer}}">\
 </form>\
 	1	0
-7	Admin.ResourceWizard.1	2	1	1242405581	1	1243885106		\
+7	Admin.ResourceWizard.1	2	1	1242405581	1	1244083474		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -933,7 +933,7 @@ your username and password and then press the login button or hit enter to conti
 <input type=hidden name=uStep value=1>\
 </form>\
 	1	0
-8	Admin.ResourceWizard.2	2	1	1242405582	1	1243885106		<body marginwidth="0" marginheight="0">\
+8	Admin.ResourceWizard.2	2	1	1242405582	1	1244083474		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -1192,7 +1192,7 @@ your username and password and then press the login button or hit enter to conti
 \
 </form>\
 	1	0
-9	Admin.ResourceWizard.3	2	1	1242405582	1	1243885107		\
+9	Admin.ResourceWizard.3	2	1	1242405582	1	1244083475		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -1479,7 +1479,7 @@ your username and password and then press the login button or hit enter to conti
 <input type=hidden name=uTTL value=0>\
 </form>\
 	1	0
-10	AdminUser.Body	2	1	1242405582	1	1243885107		<body marginwidth="0" marginheight="0">\
+10	AdminUser.Body	2	1	1242405582	1	1244083475		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -1816,7 +1816,7 @@ At this tab you can manage your iDNS system administrators and root users. An ad
 \
 </form>\
 	1	0
-11	AdminUserWizard.1	2	1	1242405583	1	1243885108		<body marginwidth="0" marginheight="0">\
+11	AdminUserWizard.1	2	1	1242405583	1	1244083476		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -2018,7 +2018,7 @@ In this step you should enter the administrator information, such as his name (E
 </table>\
 </form>\
 	1	0
-12	AdminUserWizard.2	2	1	1242405583	1	1243885108		<body marginwidth="0" marginheight="0">\
+12	AdminUserWizard.2	2	1	1242405583	1	1244083476		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -2229,7 +2229,7 @@ In this step you should enter the administrator information, such as his name (E
 </form>\
 \
 	1	0
-13	AdminUserWizard.3	2	1	1242405584	1	1243885109		<body marginwidth="0" marginheight="0">\
+13	AdminUserWizard.3	2	1	1242405584	1	1244083476		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -2457,7 +2457,7 @@ In this step you should enter the administrator information, such as his name (E
 </form>\
 \
 	1	0
-14	Admin.Zone.Body	2	1	1242405584	1	1243885109		\
+14	Admin.Zone.Body	2	1	1242405584	1	1244083477		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -2873,7 +2873,7 @@ After opening fields for both creation or modification, each field has a yellow 
 <input type=hidden name=uZone value='{{uZone}}'>\
 </form>\
 	1	0
-15	css	2	1	1242405585	1	1243885111		K 25\
+15	css	2	1	1242405585	1	1244083478		K 25\
 svn:wc:ra_dav:version-url\
 V 76\
 /public-svn/unxsVZ/!svn/ver/30/trunk/unxsBind/interfaces/admin/templates/css\
@@ -2891,7 +2891,7 @@ V 87\
 /public-svn/unxsVZ/!svn/ver/30/trunk/unxsBind/interfaces/admin/templates/css/styles.css\
 END\
 	1	0
-16	Customer.Body	2	1	1242405586	1	1243885111		\
+16	Customer.Body	2	1	1242405586	1	1244083478		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -3071,13 +3071,6 @@ d>\
                         <input  title='A valid email address of the Company, e.g.: info@acmewidgets.com (Optional)' type=text name=cEmail value='{{cEmail}}' size=40 maxlength=99 {{gcInputStatus}} class={{cEmailStyle}}></td>\
         </tr>\
         <tr>\
-                <td>                   \
-\	\	<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Company Code')"><strong>Company Code</strong></a></td>\
-                <td>\
-\	\	\	<input type=hidden name=cCode value='{{cCode}}'>\
-                        <input title='Unique alphanumeric Code that identifies the Company. e.g. COMP4567 (Optional)' type=text name=cCode value='{{cCode}}' size=40 maxlength=99 {{gcInputStatus}} class={{cCodeStyle}}></td>\
-        </tr>\
-        <tr>\
                 <td>                        \
 \	\	<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Additional Info')"><strong>Additional Info</strong></a></td>\
                 <td>\
@@ -3213,7 +3206,7 @@ d>\
 </form>\
 \
 	1	0
-17	CustomerUser.Body	2	1	1242405586	1	1243885112		<body marginwidth="0" marginheight="0">\
+17	CustomerUser.Body	2	1	1242405586	1	1244083479		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -3565,7 +3558,7 @@ Company contacts are the persons authorized by the company to modify zone data v
 <input type=hidden name=uResource value='{{uResource}}'>\
 </form>\
 	1	0
-18	CustomerUserWizard.1	2	1	1242405587	1	1243885112		<body marginwidth="0" marginheight="0">\
+18	CustomerUserWizard.1	2	1	1242405587	1	1244083479		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -3755,7 +3748,7 @@ In this step you select the company (Organization, Enterprise, NGO) for which yo
 </table>\
 </form>\
 	1	0
-19	CustomerUserWizard.2	2	1	1242405587	1	1243885113		<body marginwidth="0" marginheight="0">\
+19	CustomerUserWizard.2	2	1	1242405587	1	1244083479		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -3961,7 +3954,7 @@ In this step you should enter the contact information, such as his name (E.g: Jo
 <input type=hidden name=uForClient value={{uForClient}}>\
 </form>\
 	1	0
-20	CustomerUserWizard.3	2	1	1242405588	1	1243885113		<body marginwidth="0" marginheight="0">\
+20	CustomerUserWizard.3	2	1	1242405588	1	1244083480		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -4172,7 +4165,7 @@ In this step you should enter the contact information, such as his name (E.g: Jo
 </form>\
 \
 	1	0
-21	CustomerUserWizard.4	2	1	1242405588	1	1243885113		<body marginwidth="0" marginheight="0">\
+21	CustomerUserWizard.4	2	1	1242405588	1	1244083480		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -4419,7 +4412,7 @@ In this step you should enter the contact information, such as his name (E.g: Jo
 </form>\
 \
 	1	0
-22	CustomerWizard.1	2	1	1242405588	1	1243885114		\
+22	CustomerWizard.1	2	1	1242405588	1	1244083480		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -4614,7 +4607,7 @@ d>\
 </form>\
 \
 	1	0
-23	CustomerWizard.2	2	1	1242405589	1	1243885114		<body marginwidth="0" marginheight="0">\
+23	CustomerWizard.2	2	1	1242405589	1	1244083481		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -4819,7 +4812,7 @@ d>\
 </form>\
 \
 	1	0
-24	CustomerWizard.3	2	1	1242405589	1	1243885115		<body marginwidth="0" marginheight="0">\
+24	CustomerWizard.3	2	1	1242405589	1	1244083481		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -5024,7 +5017,7 @@ d>\
 </form>\
 \
 	1	0
-25	CustomerWizard.4	2	1	1242405589	1	1243885115		\
+25	CustomerWizard.4	2	1	1242405589	1	1244083481		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -5242,7 +5235,7 @@ d>\
 </form>\
 \
 	1	0
-26	DashBoard.Body	2	1	1242405590	1	1243885116		\
+26	DashBoard.Body	2	1	1242405590	1	1244083482		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -5404,12 +5397,12 @@ d>\
 \
 \
 	1	0
-27	Footer	2	1	1242405590	1	1243885116		<div align=center class=footer>{{cCopyright}}</div>\
+27	Footer	2	1	1242405590	1	1244083482		<div align=center class=footer>{{cCopyright}}</div>\
 \
 </body>\
 </html>\
 	1	0
-28	Glossary.Body	2	1	1242405590	1	1243885116		<body onLoad="window.focus()">\
+28	Glossary.Body	2	1	1242405590	1	1244083482		<body onLoad="window.focus()">\
 <form method=post>\
 <table width="100%" border="0" cellspacing="0" cellpadding="0" class="table_header2">\
   <tr>\
@@ -5445,7 +5438,7 @@ d>\
 <br>\
 \
 	1	0
-29	Header	2	1	1242405590	1	1243885116		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\
+29	Header	2	1	1242405590	1	1244083482		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\
 <html>\
 <head>\
 <title>{{cTitle}}</title>\
@@ -5454,7 +5447,7 @@ d>\
 <script language="JavaScript" src="/css/popups.js"></script>\
 </head>\
 	1	0
-30	images	2	1	1242405590	1	1243885119		âPNG\
+30	images	2	1	1242405590	1	1244083484		âPNG\
 \
 OiCCPPhotoshop ICC profileÿ‰!¢éÉ£àä ˚·{£k÷º˜ÊÕ˛µ◊>Á¨Ûù≥œ¿ñH3Q5Ä©B‡É«ƒ∆·‰.@Å\
 $pdÄr`)¨ÇB(ÜÕ∞*`/‘@4¿QhÜìp.¬U∏=p˙aû¡(ºÅ\	A»a!⁄àbäX#éôÖ¯!¡Hã$ …àQ"Kë5H1RäT UHÚ=r9á\\F∫ë;»ùb@q§¯S‚(R jJÂÂ4Âeò2AU£öR›®°T5èZB≠°∂RØQá®4uö9ÕÉIK•≠¢ï”hh˜iØËt∫›ïNó–W“ÀÈGËóËÙwÜÉ«àg(õgwØòL¶”ã«T071ÎòÁôôoUX*∂*|ë \
@@ -5847,12 +5840,12 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 <br>\
 \
 	1	0
-31	LastWWActTableFooter	2	1	1242405594	1	1243885120		</table>\
+31	LastWWActTableFooter	2	1	1242405594	1	1244083484		</table>\
 </td>\
 </tr>\
 </table>\
 	1	0
-32	LastWWActTableTop	2	1	1242405594	1	1243885120		<table border='0' cellspacing='0' cellpadding='0' width='100%%' style='border: solid gray 1px'>\
+32	LastWWActTableTop	2	1	1242405594	1	1244083484		<table border='0' cellspacing='0' cellpadding='0' width='100%%' style='border: solid gray 1px'>\
 <tr bgcolor=#e9e9e9>\
 <td class='box_title'>\
 <b>Last\
@@ -5863,7 +5856,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 <table border='0' cellspacing='0' cellpadding='7' width='100%%' class='table_content' style='margin-top:5px;'>\
 \
 	1	0
-33	Report.Body	2	1	1242405594	1	1243885120		\
+33	Report.Body	2	1	1242405594	1	1244083484		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -6066,7 +6059,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 <input type=hidden name=cCustomer value="{{cCustomer}}">\
 </form>\
 	1	0
-34	ReportFocus.Body	2	1	1242405594	1	1243885120		<body marginwidth="0" marginheight="0">\
+34	ReportFocus.Body	2	1	1242405594	1	1244083485		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -6255,22 +6248,22 @@ To view a company hit statistics search it with the tool above, click on its nam
 \
 </form>\
 	1	0
-35	ReportHitsTop20.Footer	2	1	1242405595	1	1243885121		</table>\
+35	ReportHitsTop20.Footer	2	1	1242405595	1	1244083485		</table>\
 \
 	1	0
-36	ReportHitsTop20.Header	2	1	1242405595	1	1243885121		<table width=30% border=0 style='border: solid black 1px'>\
+36	ReportHitsTop20.Header	2	1	1242405595	1	1244083485		<table width=30% border=0 style='border: solid black 1px'>\
 <tr><td><strong>#</strong></td><td><strong>Zone name</strong></td><td align=right><strong>Hits</strong></td><tr>\
 \
 \	\	\
 	1	0
-37	ReportHitsTop20.Row	2	1	1242405595	1	1243885121		<tr>\
+37	ReportHitsTop20.Row	2	1	1242405595	1	1244083485		<tr>\
 \	<td>{{uCount}}</td>\
 \	<td><a class=darkLink href="idnsAdmin.cgi?gcPage=Report&gcFunction=ZoneFocus&uHit={{uHit}}&cCustomer={{cCustomer}}&cZone={{cZone}}&uView={{uView}}&uResource={{uResource}}">{{cZoneList}}</a></td>\
 \	<td align=right>{{uHitCount}}</td>\
 </tr>\
 \
 	1	0
-38	ReportOverallChanges	2	1	1242405595	1	1243885121		<fieldset>\
+38	ReportOverallChanges	2	1	1242405595	1	1244083485		<fieldset>\
 <legend>System wide changes</legend>\
 <table border=0 style='border: solid black 1px' width=100%>\
 \	<tr>\
@@ -6314,7 +6307,7 @@ To view a company hit statistics search it with the tool above, click on its nam
 </fieldset>\
 \
 	1	0
-39	ReportRightPanel	2	1	1242405595	1	1243885121		<fieldset>\
+39	ReportRightPanel	2	1	1242405595	1	1244083485		<fieldset>\
 <legend>Change statistics</legend>\
 <table border=0 style='border: solid black 1px' width=100%>\
 \	<tr>\
@@ -6345,7 +6338,7 @@ To view a company hit statistics search it with the tool above, click on its nam
 </fieldset>\
 \
 	1	0
-40	RestoreResource.Body	2	1	1242405595	1	1243885121		\	\
+40	RestoreResource.Body	2	1	1242405595	1	1244083485		\	\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -6629,7 +6622,7 @@ To go back to the zone you were working with, just click on the Zones tab.\
 \
 </form>\
 	1	0
-41	RestoreZone.Body	2	1	1242405595	1	1243885122		<body marginwidth="0" marginheight="0">\
+41	RestoreZone.Body	2	1	1242405595	1	1244083486		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
