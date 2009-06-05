@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type" />
+  <title>Test Suite</title>
+</head>
+<body>
+<table id="suiteTable" cellpadding="1" cellspacing="1" border="1" class="selenium"><tbody>
+<tr><td><b>Test Suite</b></td></tr>
+<tr><td><a href="CreateCompany.xml">CreateCompany</a></td></tr>
+<tr><td><a href="CreateContact.xml">CreateContact</a></td></tr>
+<tr><td><a href="CreateZone.xml">CreateZone</a></td></tr>
+<tr><td><a href="ModifySOA.xml">ModifySOA</a></td></tr>
+<tr><td><a href="CreateRRs.xml">CreateRRs</a></td></tr>
+<tr><td><a href="CreateRRWizard.xml">CreateRRWizard</a></td></tr>
+<tr><td><a href="CreateOtherZone.xml">CreateOtherZone</a></td></tr>
+<tr><td><a href="BulkImport.xml">BulkImport</a></td></tr>
+</tbody></table>
+</body>
+</html>
