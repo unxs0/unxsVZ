@@ -1,10 +1,10 @@
 /*
 FILE
-        $Id: local.h 2467 2009-02-17 17:50:00Z Gary $
+        $Id$
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL
-        Copyright 2001-2007 Gary Wallis
+        Copyright 2001-2009 Gary Wallis
 */
 
 //Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
@@ -37,7 +37,7 @@ LEGAL
 //for security.
 //Make sure mySQL ports are firewalled correctly if used on other servers.
 //VPN them?
-//#define SSLONLY
+#define SSLONLY
 
 //You should customize these for your own ISP
 #define EXTISPNAME "unixservice"

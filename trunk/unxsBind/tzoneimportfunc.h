@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tzoneimportfunc.h 774 2009-04-06 22:19:58Z dylan $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

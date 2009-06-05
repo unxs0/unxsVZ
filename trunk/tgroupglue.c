@@ -2,7 +2,7 @@
 FILE
 	tGroupGlue source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tgroupglue.c 2468 2009-02-17 22:43:51Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tgroupgluefunc.h while 

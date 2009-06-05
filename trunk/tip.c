@@ -2,7 +2,7 @@
 FILE
 	tIP source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tip.c 2829 2009-04-03 00:40:45Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tipfunc.h while 

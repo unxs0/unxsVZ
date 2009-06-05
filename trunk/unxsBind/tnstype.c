@@ -2,7 +2,7 @@
 FILE
 	tNSType source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tnstype.c 787 2009-04-13 21:40:51Z hus $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tnstypefunc.h while 

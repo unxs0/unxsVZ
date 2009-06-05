@@ -1,21 +1,16 @@
 /*
 FILE 
-	main.c
-	$Id: main.c 2919 2009-04-25 20:25:59Z Gary $
-	mysqlRAD2.cgi created application file for unxsVZ.cgi
-	(tAuthorize.cPasswd template set)
-	mysqlRAD2 to mysqlRAD3 transition template
+	unxsVZ/main.c
 PURPOSE
 	Main cgi interface and common functions used for all the other
 	table tx.c files and their schema independent txfunc.h files -until
 	you mess with them in non standard ways...lol.
 	
 LEGAL
-	(C) Gary Wallis 2001-2007. All Rights Reserved.
-	LICENSE file should be included in distribution.
+	(C) Gary Wallis 2001-2009. All Rights Reserved. 
+	GPLv2 LICENSE file should be included in distribution.
 OTHER
-	Only Linux supported by openisp.net. 
-	Please share your ports with us.
+	Only tested on CentOS 5 Linux.
 HELP
 	support @ openisp . net
 
@@ -23,9 +18,6 @@ HELP
 
 #include "mysqlrad.h"
 #include <ctype.h>
-#ifdef Solaris
-        char *crypt(char *passwd, char *salt);
-#endif
 
 #include "language.h"
 #include "local.h"
@@ -65,7 +57,7 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id: main.c 2919 2009-04-25 20:25:59Z Gary $";
+char *gcBuildInfo="$Id$";
 char *gcRADStatus="Forked";
 
 //Local
@@ -107,12 +99,7 @@ int main(int iArgc, char *cArgv[])
 	register int x;
 	int cl=0;
 
-#if defined(Linux)
 	gethostname(gcHostname, 98);
-#else
-	//Solaris
-	sysinfo(SI_HOSTNAME, gcHostname, 98);
-#endif
 
 	if(!strstr(cArgv[0],"unxsVZ.cgi"))
 		CalledByAlias(iArgc,cArgv);

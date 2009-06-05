@@ -2,7 +2,7 @@
 FILE
 	tNode source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tnode.c 2065 2008-10-22 23:20:13Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tnodefunc.h while 

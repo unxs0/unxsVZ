@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: cgi.c 658 2008-12-18 16:15:37Z hus $
+	$Id$
 LEGAL
 	Public Domain
 	

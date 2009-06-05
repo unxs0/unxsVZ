@@ -2,7 +2,7 @@
 FILE
 	tJob source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tjob.c 781 2009-04-08 21:26:35Z dylan $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tjobfunc.h while 

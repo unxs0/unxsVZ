@@ -2,7 +2,7 @@
 FILE
 	tAuthorize source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tauthorize.c 795 2009-04-23 12:49:05Z ggw $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tauthorizefunc.h while 

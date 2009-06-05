@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tauthorizefunc.h 755 2009-04-04 15:48:23Z dylan $
+	$Id$
 PURPOSE
 	Non-schema dependent tauthorize.c expansion.
 AUTHOR

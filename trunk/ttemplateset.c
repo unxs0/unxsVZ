@@ -2,7 +2,7 @@
 FILE
 	tTemplateSet source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: ttemplateset.c 2061 2008-10-22 19:56:08Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in ttemplatesetfunc.h while 

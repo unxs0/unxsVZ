@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tgrouptypefunc.h 2468 2009-02-17 22:43:51Z Gary $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

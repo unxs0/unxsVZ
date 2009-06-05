@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tviewfunc.h 782 2009-04-08 21:41:19Z dylan $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

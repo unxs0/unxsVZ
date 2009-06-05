@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tgroupgluefunc.h 2065 2008-10-22 23:20:13Z Gary $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

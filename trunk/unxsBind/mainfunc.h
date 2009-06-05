@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: mainfunc.h 775 2009-04-07 16:08:13Z ggw $
+	$Id$
 PURPOSE
 	Included in main.c. For command line interface and html main link.
 

@@ -2,7 +2,7 @@
 FILE
 	tTemplate source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: ttemplate.c 767 2009-04-05 21:29:40Z dylan $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in ttemplatefunc.h while 

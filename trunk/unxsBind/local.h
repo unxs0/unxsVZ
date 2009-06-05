@@ -1,6 +1,6 @@
 /*
 FILE
-        $Id: local.h 796 2009-05-05 19:30:16Z dylan $
+        $Id$
 PURPOSE
         Localization constants
 LEGAL

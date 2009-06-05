@@ -2,7 +2,7 @@
 FILE
 	tDeletedZone source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tdeletedzone.c 710 2009-02-13 13:41:18Z dylan $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tdeletedzonefunc.h while 

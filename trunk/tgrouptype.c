@@ -2,7 +2,7 @@
 FILE
 	tGroupType source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tgrouptype.c 1852 2008-09-17 15:49:22Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tgrouptypefunc.h while 

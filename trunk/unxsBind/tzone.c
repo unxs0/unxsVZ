@@ -2,7 +2,7 @@
 FILE
 	tZone source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tzone.c 774 2009-04-06 22:19:58Z dylan $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tzonefunc.h while 

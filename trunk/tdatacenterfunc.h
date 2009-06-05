@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tdatacenterfunc.h 2076 2008-10-23 15:17:55Z Gary $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -13,6 +13,7 @@ static unsigned uClone=0;
 static unsigned uOldDatacenter=0;
 //ModuleFunctionProtos()
 void tDatacenterNavList(void);
+void tDatacenterHealth(void);
 
 //tnodefunc.h
 void CopyProperties(unsigned uOldNode,unsigned uNewNode,unsigned uType);
@@ -181,6 +182,7 @@ void ExttDatacenterButtons(void)
 			tGroupNavList();
 			tNodeNavList(uDatacenter);
 			tDatacenterNavList();
+			tDatacenterHealth();
 	}
 	CloseFieldSet();
 
@@ -347,13 +349,64 @@ void tDatacenterNavList(void)
         	printf("<p><u>tDatacenterNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tDatacenter\
-&uDatacenter=%s>%s</a><br>\n",field[0],field[1]);
-	        }
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tDatacenter&uDatacenter=%s>"
+				"%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 
 }//void tDatacenterNavList(void)
+
+
+void tDatacenterHealth(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+
+	sprintf(gcQuery,"SELECT cValue,uKey,cLabel FROM tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND uType=3 AND cName='1k-blocks.luUsage'"
+			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tDatacenterHealth</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Top Ten Containers by Usage</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s %s</a><br>\n",field[1],field[2],field[0]);
+	}
+        mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT cValue,uKey,cLabel,cName FROM tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND uType=3 AND cName LIKE '%%.luFailcnt'"
+			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tDatacenterHealth</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Top Ten Containers by X.luFailcnt</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s %s=%s</a><br>\n",field[1],field[2],field[3],field[0]);
+	}
+        mysql_free_result(res);
+
+}//void tDatacenterHealth(void)
 
 

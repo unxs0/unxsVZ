@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tclientfunc.h 2448 2009-02-04 15:39:22Z hus-admin $
+	$Id$
 PURPOSE
 	Non-schema dependent tclient.c expansion.
 AUTHOR

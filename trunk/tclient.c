@@ -2,7 +2,7 @@
 FILE
 	tClient source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tclient.c 2076 2008-10-23 15:17:55Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tclientfunc.h while 

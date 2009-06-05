@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: mysqlrad.h 710 2009-02-13 13:41:18Z dylan $
+	$Id$
 AUTHOR
 	(C) 2001-2009 Gary Wallis and Hugo Urquiza. 
 */

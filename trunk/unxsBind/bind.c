@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: bind.c 781 2009-04-08 21:26:35Z dylan $
+	$Id$
 AUTHOR
 	(C) Gary Wallis and Hugo Urquiza 2001-2009.
 PURPOSE

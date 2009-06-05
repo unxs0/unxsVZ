@@ -2,7 +2,7 @@
 FILE
 	tLogType source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tlogtype.c 1815 2008-08-23 00:43:43Z ggw $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tlogtypefunc.h while 

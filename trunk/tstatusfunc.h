@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tstatusfunc.h 2451 2009-02-09 13:56:56Z hus-admin $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

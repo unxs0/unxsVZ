@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tconfigurationfunc.h 658 2008-12-18 16:15:37Z hus $
+	$Id$
 PURPOSE
 	Non-schema dependent tconfiguration.c expansion.
 AUTHOR

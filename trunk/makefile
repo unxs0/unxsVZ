@@ -1,51 +1,22 @@
 #
-# $Id: makefile.template 693 2006-07-27 22:58:07Z ggw $
+#FILE
+#	unxsVZ/makefile
+#	$Id$
+#AUTHOR/LEGAL
+#	(C) 2001-2009 Gary Wallis for Unixservice. GPLv2 license applies.
 #
-# (C) 2001-2004 Gary Wallis.
-#
-# Notes:
-#	Must use gmake (usually same as make in linux)
-#
-#	Must set env variable CGIDIR with trailing / for placing cgi in
-#	target directory. Ex Bash shell: CGIDIR=/cgi-bin/ ; export CGIDIR
-#
-#       Use mySQL version 3.23.39 or later:
-#       Requires /usr/lib/mysql/libmysqlclient.a
-#       Requires /usr/include/mysql/mysql.h
-#
-#	These mysqlRAD generated files have only been tested extensively
-#	on Linux x86. Please share your ports.
-#
-#	For help contact support @ openisp . net
-#
-#	Please remove the mail line below after first make.
+#NOTES
+#	We only develop and test on Linux CentOS-5 and distribute via yum and rpm.
+#	Feel free to repackage for your OS and let us know.
 #
 
-#Change these for your system: Ex. -DSolaris instead of -DLinux
-#CFLAGS=-O -DLinux -Wall
-CFLAGS= -DLinux -Wall
-RELEASE= 1.1
-
-#FreeBSD make support un comment the next two lines. Yes you need both -D and the gmake
-#define. Also check mysqlrad.h for FreeBSD parts and adjust for your system.
-#In general "grep -l FreeBSD *" and then check the files to see if you need to change
-#anything else.
-#CFLAGS= -DLinux -DFreeBSD -Wall 
-#FreeBSD=1
-
-ifdef FreeBSD
-	LIBS= /usr/local/lib/mysql/libmysqlclient.a -lz -lm /usr/lib/libcrypt.a
-else
-	LIBS= /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl /usr/lib/openisp/libucidr.a /usr/lib/openisp/libtemplate.a
-endif
-
-
+CFLAGS=-Wall
+LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate
 
 all: unxsVZ.cgi
 
 unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o  jobqueue.o main.o cgi.o
 	cc tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o  jobqueue.o main.o cgi.o -o unxsVZ.cgi $(LIBS) 
-	mail -s "unxsVZ$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
 
 tdatacenter.o: tdatacenter.c mysqlrad.h language.h tdatacenterfunc.h local.h
 	cc -c tdatacenter.c -o tdatacenter.o $(CFLAGS)
@@ -135,27 +106,12 @@ main.o: main.c mysqlrad.h mainfunc.h language.h local.h
 cgi.o: cgi.h cgi.c
 	cc -c cgi.c -o cgi.o $(CFLAGS)
 
-#List: jobqueue.o
 jobqueue.o: jobqueue.c mysqlrad.h local.h
 	cc -c jobqueue.c -o jobqueue.o $(CFLAGS)
 
 clean:
 	rm -f *.o
 
-cleandist:
-	rm -f *.o *.gz
-
 install: unxsVZ.cgi
-	install -s unxsVZ.cgi $(CGIDIR)unxsVZ.cgi
+	install -s unxsVZ.cgi /var/www/unxs/cgi-bin/unxsVZ.cgi
 	rm unxsVZ.cgi
-
-distribution:
-	cd ..;  tar czvf unxsVZ/unxsVZ$(RELEASE).tar.gz --exclude .svn\
-		unxsVZ/*.h\
-		unxsVZ/*.c\
-		unxsVZ/data\
-		unxsVZ/docs\
-		unxsVZ/makefile\
-		unxsVZ/CHANGES\
-		unxsVZ/LICENSE\
-		unxsVZ/INSTALL
