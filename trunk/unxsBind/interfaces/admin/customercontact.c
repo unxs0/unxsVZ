@@ -209,7 +209,7 @@ void CustomerContactCommands(pentry entries[], int x)
 			cUserName[0]=0;
 			cPassword[0]=0;
 			sprintf(gcNewStep,"Confirm ");
-			gcMessage="<blink>Error: </blink>Enter/modify data, review, then confirm. Any other action to cancel.";
+			gcMessage="Enter/modify data, review, then confirm. Any other action to cancel.";
 			gcInputStatus[0]=0;
 			SetCustomerContactFieldsOn();
 			gcPermInputStatus[0]=0;
@@ -231,7 +231,7 @@ void CustomerContactCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Modify"))
 		{
 			sprintf(gcModStep,"Confirm ");
-			gcMessage="<blink>Error: </blink>Enter/modify data, review, then confirm. Any other action to cancel.";
+			gcMessage="Enter/modify data, review, then confirm. Any other action to cancel.";
 			gcInputStatus[0]=0;
 			gcPermInputStatus[0]=0;
 			SetCustomerContactFieldsOn();
@@ -255,7 +255,7 @@ void CustomerContactCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Delete"))
 		{
 			sprintf(gcDelStep,"Confirm ");
-			gcMessage="<blink>Error: </blink>Double check you have selected the correct record to delete. Then confirm. Any other action to cancel.";
+			gcMessage="Double check you have selected the correct record to delete. Then confirm. Any other action to cancel.";
 			htmlCustomerContact();
 		}		
 		else if(!strcmp(gcFunction,"Confirm Delete"))
