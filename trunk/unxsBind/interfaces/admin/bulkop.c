@@ -20,8 +20,8 @@ static unsigned uDebug=0;
 //Local only
 char *ParseTextAreaLines(char *cTextArea);
 void BulkResourceImport(void);
-unsigned uGetZoneNameServer(char *cZone);
-unsigned ProcessRRLine(unsigned uLineNumber,const char *cLine,char *cZoneName,const unsigned uZone, unsigned uCustId,const unsigned uNameServer,const unsigned uCreatedBy,const char *cComment);
+unsigned uGetZoneNSSet(char *cZone);
+unsigned ProcessRRLine(unsigned uLineNumber,const char *cLine,char *cZoneName,const unsigned uZone, unsigned uCustId,const unsigned uNSSet,const unsigned uCreatedBy,const char *cComment);
 unsigned uGetPTROwner(char *cZone, char *cFirstDigit);
 
 //resource.c
@@ -184,7 +184,7 @@ void BulkResourceImport(void)
 	unsigned uZone;
 	unsigned uView=2;//external
 	unsigned uZoneOwner;
-	unsigned uNameServer;
+	unsigned uNSSet;
 	unsigned uZoneCount=0,uResourceCount=0,uImportCount=0,uZoneFoundCount=0;
 	unsigned uOnlyOncePerZone=1;
 	static char cMsg[128];
@@ -249,7 +249,7 @@ void BulkResourceImport(void)
 			uOnlyOncePerZone=0;
 			uZone=0;
 			uZoneOwner=0;
-			uNameServer=0;
+			uNSSet=0;
 			uZoneCount++;
 			char cuSerial[100]={""};
 			if((cp=strchr(cLine,';')))
@@ -260,7 +260,7 @@ void BulkResourceImport(void)
 			strcat(cImportMsg,cMsg);
 			
 			//First check tZone
-			sprintf(gcQuery,"SELECT uZone,uNameServer,uOwner FROM tZone WHERE cZone='%s' AND uSecondaryOnly=0 AND uView=%u",gcZone,uView);
+			sprintf(gcQuery,"SELECT uZone,uNSSet,uOwner FROM tZone WHERE cZone='%s' AND uSecondaryOnly=0 AND uView=%u",gcZone,uView);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -272,7 +272,7 @@ void BulkResourceImport(void)
 			if((field=mysql_fetch_row(res)))
 			{
 				sscanf(field[0],"%u",&uZone);
-				sscanf(field[1],"%u",&uNameServer);
+				sscanf(field[1],"%u",&uNSSet);
 				sscanf(field[2],"%u",&uZoneOwner);
 			}
 			else if(uCreateZones)
@@ -281,10 +281,10 @@ void BulkResourceImport(void)
 				//
 				//If we set the parameter to create non-existant zones, create it :) (using the default from zone.c)
 				SerialNum(cuSerial);
-				uNameServer=1;
-				sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNameServer=%u,cHostmaster='nsadmin.unixservice.com',uSerial='%s',uExpire=604800,uRefresh=10800,uTTL=86400,uRetry=3600,uZoneTTL=86400,uMailServers=0,cMainAddress='',uView=%u,uRegistrar=0,cOptions='',uSecondaryOnly=0,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uNSSet=1;
+				sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=%u,cHostmaster='nsadmin.unixservice.com',uSerial='%s',uExpire=604800,uRefresh=10800,uTTL=86400,uRetry=3600,uZoneTTL=86400,uMailServers=0,cMainAddress='',uView=%u,uRegistrar=0,cOptions='',uSecondaryOnly=0,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						gcZone
-						,uNameServer
+						,uNSSet
 						,cuSerial
 						,uView
 						,uGetClient(gcOrgName) // Will create the zones for the ASP. Manual ownership update may be required later.
@@ -308,12 +308,12 @@ void BulkResourceImport(void)
 				uZoneOwner=uGetClient(gcOrgName);
 
 				time(&luClock);
-				if(AdminSubmitJob("New",uNameServer,gcZone,0,luClock))
+				if(AdminSubmitJob("New",uNSSet,gcZone,0,luClock))
 					htmlPlainTextError(mysql_error(&gMysql));
 
 			}
 			mysql_free_result(res);
-			if(!uZone || !uZoneOwner || !uNameServer)
+			if(!uZone || !uZoneOwner || !uNSSet)
 			{
 				sprintf(cMsg,"%u: Valid %s not found. Skipping.\n",uLineNumber,gcZone);
 				strcat(cImportMsg,cMsg);
@@ -331,7 +331,7 @@ void BulkResourceImport(void)
 			//If we have no defined zone keep on going.
 			if(!uZone) continue;
 			uZoneOwner=uGetZoneOwner(uZone);
-			uResource=ProcessRRLine(uLineNumber,cLine,gcZone,uZone,uZoneOwner,uNameServer,guLoginClient,"BulkResourceImport()");
+			uResource=ProcessRRLine(uLineNumber,cLine,gcZone,uZone,uZoneOwner,uNSSet,guLoginClient,"BulkResourceImport()");
 			if(uResource && (mysql_affected_rows(&gMysql)==1))
 			{
 				uResourceCount++;
@@ -340,7 +340,7 @@ void BulkResourceImport(void)
 				if(uOnlyOncePerZone && !uDebug)
 				{
 					time_t luClock;
-					uNameServer=uGetuNameServer(gcZone);
+					uNSSet=uGetuNameServer(gcZone);
 					sprintf(cuView,"%.9u",uView);
 					//Submit job for first RR. Time for now + 5 minutes
 					//This should allow for many more RRs to be added
@@ -348,7 +348,7 @@ void BulkResourceImport(void)
 					UpdateSerialNum(gcZone,cuView);
 					time(&luClock);
 					luClock+=300;
-					AdminSubmitJob("Modify",uNameServer,gcZone,0,luClock);
+					AdminSubmitJob("Modify",uNSSet,gcZone,0,luClock);
 					uOnlyOncePerZone=0;
 				}
 				iDNSLog(uResource,"tResource","New");
@@ -413,7 +413,7 @@ char *ParseTextAreaLines(char *cTextArea)
 }//char *ParseTextAreaLines(char *cTextArea)
 
 
-unsigned ProcessRRLine(unsigned uLineNumber,const char *cLine,char *cZoneName,const unsigned uZone,unsigned uCustId,const unsigned uNameServer,const unsigned uCreatedBy,const char *cComment)
+unsigned ProcessRRLine(unsigned uLineNumber,const char *cLine,char *cZoneName,const unsigned uZone,unsigned uCustId,const unsigned uNSSet,const unsigned uCreatedBy,const char *cComment)
 {
 	char cName[100]={""};
 	char cNamePlus[200]={""};
@@ -558,8 +558,8 @@ unsigned ProcessRRLine(unsigned uLineNumber,const char *cLine,char *cZoneName,co
 	}
 	else if(!strcasecmp(cType,"NS"))
 	{
-		MYSQL_RES *res;
-		char cNS[100];
+		//MYSQL_RES *res;
+		//char cNS[100];
 
 		uRRType=2;
 		if(!cParam1[0] || cParam2[0])
@@ -588,9 +588,10 @@ unsigned ProcessRRLine(unsigned uLineNumber,const char *cLine,char *cZoneName,co
 		}
 
 		//Get rid of last period for check
+		/*
 		strcpy(cNS,cParam1);
 		cNS[strlen(cNS)-1]=0;
-		sprintf(gcQuery,"SELECT uNameServer FROM tNameServer WHERE uNameServer=%u AND ( (cList LIKE '%s MASTER%%') OR (cList LIKE '%%%s SLAVE%%'))",uNameServer,cNS,cNS);
+		sprintf(gcQuery,"SELECT uNSSet FROM tNSSet WHERE uNSSet=%u AND ( (cList LIKE '%s MASTER%%') OR (cList LIKE '%%%s SLAVE%%'))",uNSSet,cNS,cNS);
 
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
@@ -602,12 +603,13 @@ unsigned ProcessRRLine(unsigned uLineNumber,const char *cLine,char *cZoneName,co
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res)) 
 		{
-			sprintf(cMsg,"%u: error %s:NS RR Ignored. Part of uNameServer cList\n",
+			sprintf(cMsg,"%u: error %s:NS RR Ignored. Part of uNSSet cList\n",
 					uLineNumber,cZoneName);
 			strcat(cImportMsg,cMsg);
 			return(0);
 		}
 		mysql_free_result(res);
+		*/
 	}
 	else if(!strcasecmp(cType,"MX"))
 	{
