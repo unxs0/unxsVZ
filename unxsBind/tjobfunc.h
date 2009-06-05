@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tjobfunc.h 710 2009-02-13 13:41:18Z dylan $
+	$Id$
 PURPOSE
 	Non-schema dependent tjob.c expansion.
 AUTHOR

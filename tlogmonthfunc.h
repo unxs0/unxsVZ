@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tlogmonthfunc.h 1979 2008-10-09 16:15:43Z hus $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

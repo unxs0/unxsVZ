@@ -2,7 +2,7 @@
 FILE
 	tClient source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tclient.c 727 2009-03-12 16:59:10Z hus-admin $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tclientfunc.h while 

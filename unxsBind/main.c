@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 796 2009-05-05 19:30:16Z dylan $
+	$Id$
 PURPOSE
 	Main cgi interface and common functions used for all the other
 	table tx.c files and their schema independent txfunc.h files -until
@@ -57,7 +57,7 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id: main.c 796 2009-05-05 19:30:16Z dylan $";
+char *gcBuildInfo="$Id$";
 char *gcRADStatus="Forked";
 
 //Local

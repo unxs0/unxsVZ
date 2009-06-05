@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tipfunc.h 2829 2009-04-03 00:40:45Z Gary $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

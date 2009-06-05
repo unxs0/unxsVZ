@@ -2,7 +2,7 @@
 FILE
 	tLogType source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tlogtype.c 657 2008-12-18 15:56:33Z hus $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tlogtypefunc.h while 

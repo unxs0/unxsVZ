@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tresourcefunc.h 782 2009-04-08 21:41:19Z dylan $
+	$Id$
 PURPOSE
 	Non-schema dependent tresource.c expansion.
 AUTHOR

@@ -2,7 +2,7 @@
 FILE
 	tContainer source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tcontainer.c 2926 2009-05-02 20:54:25Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tcontainerfunc.h while 

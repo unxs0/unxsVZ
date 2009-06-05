@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: ttemplatefunc.h 767 2009-04-05 21:29:40Z dylan $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

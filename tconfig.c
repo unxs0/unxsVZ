@@ -2,7 +2,7 @@
 FILE
 	tConfig source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tconfig.c 1826 2008-08-24 00:32:35Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tconfigfunc.h while 

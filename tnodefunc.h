@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tnodefunc.h 2076 2008-10-23 15:17:55Z Gary $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

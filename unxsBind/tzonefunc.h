@@ -1,6 +1,6 @@
  /*
 FILE
-	$Id: tzonefunc.h 791 2009-04-13 22:16:24Z hus $
+	$Id$
 PURPOSE
 	Non-schema dependent tzone.c expansion.
 AUTHORS
