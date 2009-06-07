@@ -50,6 +50,13 @@ if [ -f /tmp/dhcpd.conf.md5sum.prev ] && [ -f /tmp/dhcpd.conf.md5sum ]; then
                         echo "fatal error 5 roll back attempted";
                         exit 1;
                 fi
+		/etc/init.d/dhcpd configtest;
+                if [ $? != 0 ];then
+			#roll back
+			cp /etc/dhcpd.conf.bak /etc/dhcpd.conf;
+                        echo "fatal error 6 roll back attempted";
+                        exit 1;
+                fi
 		/etc/init.d/dhcpd restart;
                 if [ $? != 0 ];then
                         echo "fatal error 6";
