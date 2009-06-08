@@ -213,7 +213,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>
 <table border="0" cellspacing="0" cellpadding="7" width="100%" class="table_content" style="margin-top:5px;">
 	<tr>
 		<td>		
-		<{{textarea}} cols=190 rows=10 class="type_textarea" disabled>{{cImportMsg}}</{{textarea}}>
+		<{{textarea}} name=cMsg cols=190 rows=10 class="type_textarea" disabled>{{cImportMsg}}</{{textarea}}>
 		</td>
 	</tr>
 </table>
