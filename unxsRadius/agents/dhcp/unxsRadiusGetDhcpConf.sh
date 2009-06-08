@@ -43,7 +43,7 @@ if [ -f /tmp/dhcpd.conf.md5sum.prev ] && [ -f /tmp/dhcpd.conf.md5sum ]; then
                         echo "fatal error 4";
                         exit 1;
                 fi
-		/usr/bin/md5sum -c /tmp/dhcpd.conf.md5sum;
+		/usr/bin/md5sum -c /tmp/dhcpd.conf.md5sum > /dev/null 2>&1;
                 if [ $? != 0 ];then
 			#roll back
 			cp /etc/dhcpd.conf.bak /etc/dhcpd.conf;
@@ -57,7 +57,7 @@ if [ -f /tmp/dhcpd.conf.md5sum.prev ] && [ -f /tmp/dhcpd.conf.md5sum ]; then
                         echo "fatal error 6 roll back attempted";
                         exit 1;
                 fi
-		/etc/init.d/dhcpd restart;
+		/etc/init.d/dhcpd restart > /dev/null 2>&1;
                 if [ $? != 0 ];then
                         echo "fatal error 6";
                         exit 1;
