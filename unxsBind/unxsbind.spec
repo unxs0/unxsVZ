@@ -1,6 +1,6 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
-Version: 1.10
+Version: 1.11
 Release: 1
 License: GPL
 Group: System Environment/Applications
@@ -80,6 +80,7 @@ make install
 #things we can do with no data loaded
 export ISMROOT=/usr/local/share
 /var/www/unxs/cgi-bin/iDNS.cgi installbind 127.0.0.1
+chmod -R og+x /usr/local/idns
 cd $RPM_BUILD_DIR
 
 %clean
@@ -99,6 +100,8 @@ cd $RPM_BUILD_DIR
 /var/log/named
 /usr/sbin/mysqlcluster.sh
 %changelog
+* Tue Jun 02 2009 Hugo Urquiza <support2@unixservice.com>
+- Several fixes and updates
 * Thu May 28 2009 Hugo Urquiza <support2@unixservice.com>
 - Minor code fixes, added mysqlcluster.sh
 * Mon May 18 2009 Hugo Urquiza <support2@unixservice.com>
