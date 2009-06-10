@@ -2544,7 +2544,7 @@ unsigned OnLineZoneCheck(void)
 					cp=strstr(cLine,cZoneFile);
 					cp=cp+strlen(cZoneFile)+2; //2 more chars ': '
 					gcMessage=malloc(256);
-					//sprintf(gcMessage,"<blink>Error: </blink>Error:  The RR has an error: %s",cp);
+					sprintf(gcMessage,"<blink>Error: </blink> The RR has an error: %s",cp);
 				}
 			}
 			pclose(zfp);
