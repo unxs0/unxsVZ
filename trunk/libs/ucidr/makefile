@@ -3,12 +3,9 @@
 #	makefile
 #	$Id: makefile 1182 2006-11-01 15:16:26Z ggw $
 #AUTHOR/LEGAL
-#	(C) 2006-2009 Gary Wallis for Unixservice, LLC
-#	This program is distributed under the terms of the 
-#	GNU Lesser General Public License. 
-#	See included LICENSE file.
+# (C) 2006 Gary Wallis.
 #PURPOSE
-#	Create and install libucidr a very small
+#	Create and install openisp libucidr a very small
 #	basic cdir math lib developed initially for
 #	checking to see if a given ipv4 is in a
 #	given arbitrary ipv4 CIDR block such as 10.0.0.0/24

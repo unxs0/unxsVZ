@@ -1,15 +1,14 @@
 /*
 FILE
 	ucidr.c
-	$Id: ucidr.c 2822 2009-03-30 15:38:41Z Gary $
+	$Id: ucidr.c 1193 2006-11-28 23:05:53Z ggw $
 PURPOSE
 	Create and install openisp libucidr a very small
 	basic cdir math lib developed initially for
 	checking to see if a given ipv4 is in a
 	given arbitrary ipv4 CIDR block such as 10.0.0.0/24
 AUTHOR
-	(C) 2006-2009 Gary Wallis for Unixservice, LLC.
-	This program is distributed under the LGPL. See included LICENSE.
+	(C) 2006-2008 Gary Wallis and Huguo Urquiza for Unixservice
 REQUIRES
 CONTENTS
 	See ucidr.h
@@ -20,6 +19,8 @@ TODO
 */
 
 #include "ucidr.h"
+
+static unsigned Version_2_0;
 
 
 unsigned ExpandCIDR4(const char *cCIDR4, char *cIPs[])
@@ -140,3 +141,53 @@ unsigned uInIpv4Format(const char *cIPv4,unsigned *uIPv4)
 	return(1);
 
 }//unsigned uInIpv4Format()
+
+
+unsigned uGetNumIPs(char *cCIDR4)
+{
+	//
+	//Given a CIDR block, this function returns how many host IP addresses are contained in the block
+	// 
+	unsigned uNumIPs=0;
+	unsigned uA=0;
+	unsigned uB=0;
+	unsigned uC=0;
+	unsigned uD=0;
+	unsigned uE=0;
+	
+	Version_2_0=0; //This has no effect, it just avoid a compiler warning.
+
+	if((uA>255)||(uB>255)||(uC>255)||(uD>255)) return(0);
+	
+	sscanf(cCIDR4,"%u.%u.%u.%u/%u",&uA,&uB,&uC,&uD,&uE);
+	
+	uNumIPs=(unsigned)2<<(32-uE-1);
+	
+	if(!uNumIPs)
+		uNumIPs=1;
+	else
+		uNumIPs=uNumIPs-2; //minus network address and broadcast address
+	
+	return(uNumIPs);
+
+}//unsigned uGetNumIPs(char *cCIDR4)
+
+
+unsigned uGetNumNets(char *cCIDR4)
+{
+	//
+	//Given a CIDR block, this function returns how many networks are within the block
+	//
+	unsigned uNumIPs=0;
+	unsigned uNumNets=0;
+	
+	uNumIPs=uGetNumIPs(cCIDR4);
+	
+	uNumNets=(unsigned)ceil((uNumIPs/255));
+
+	if(!uNumNets) uNumNets=1;
+	
+	return(uNumNets);
+
+}//unsigned uGetuNumNets(char *cCIDR4)
+
