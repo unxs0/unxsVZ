@@ -1,14 +1,14 @@
 /*
 FILE
-	example.c
-	$Id: example.c 2822 2009-03-30 15:38:41Z Gary $
+	ucidr.c
+	$Id: example.c 1193 2006-11-28 23:05:53Z ggw $
 PURPOSE
 	Illustrate the use of libucidr.a
 AUTHOR
-	(C) 2006-2009 Gary Wallis for Unixservice
-	This file is hereby Released into the public domain.
+	(C) 2006 Gary Wallis for Unixservice
 REQUIRES
 	libucidr.a
+
 */
 
 #include <openisp/ucidr.h>
@@ -24,8 +24,7 @@ int main(int iArgc, char *cArgv[])
 
 	if(iArgc<3)
 	{
-		printf("Usage: %s <cIP in dotted quad format> <cIP/cCIDR>\nCIDR limits: 8-32\n"
-			"IP limits no 255 values allowed\n",cArgv[0]);
+		printf("Usage: %s <cIP in dotted quad format> <cIP/cCIDR>\nCIDR limits: 8-32\nIP limits no 255 values allowed\n",cArgv[0]);
 		exit(0);
 	}
 
