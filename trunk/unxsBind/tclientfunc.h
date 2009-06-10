@@ -854,7 +854,7 @@ void ContactsNavList(void)
         	{
 			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tClient&uClient=%s&uOnlyASPs=%u"
 				,field[0],uOnlyASPs);
-			if(cSearch)
+			if(cSearch[0])
 			{
 				spacetoplus(cSearch);
 				printf("&cSearch=%s",cSearch);
