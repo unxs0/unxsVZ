@@ -35,7 +35,9 @@ Instructions:
 
 	Example for installing the CSS stylesheet:
 
-	# cp -i ./templates/css/styles.css  /var/www/unxs/html/css
+	# mkdir /var/www/unxs/html/css/
+	# cp -i ./templates/css/styles.css  /var/www/unxs/html/css/
+	# cp -i ./templates/css/popups.js  /var/www/unxs/html/css/
 
 	For installing the system templates:
 

@@ -434,7 +434,7 @@ void ExttUserListSelect(void)
         if(!strcmp(gcFilter,"uUser"))
         {
                 sscanf(gcCommand,"%u",&uUser);
-		if(guPermLevel<10)
+		if(guPermLevel<12)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
@@ -445,7 +445,7 @@ void ExttUserListSelect(void)
         }
         else if(!strcmp(gcFilter,"cLogin"))
         {
-		if(guPermLevel<10)
+		if(guPermLevel<12)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
