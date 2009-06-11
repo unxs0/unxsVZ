@@ -2225,24 +2225,30 @@ void PrepareTestData(void)
 	
 	if(!strcmp(gcFunction,"New Confirm"))
 		sprintf(gcQuery,"INSERT INTO tResourceTest SET cName='%s',uTTL=%s,uRRType=%u,cParam1='%s'"
-				",cParam2='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
+				",cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
 				cName,
 				cuTTL,
 				uRRType,
 				cParam1,
 				cParam2,
+				cParam3,
+				cParam4,
 				TextAreaSave(cComment),
 				guOrg,
 				guLoginClient,
 				uZone);
 	else if(!strcmp(gcFunction,"Modify Confirm"))
 		sprintf(gcQuery,"UPDATE tResourceTest SET cName='%s',uTTL=%s,uRRType=%u,cParam1='%s',cParam2='%s',"
-				"cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uResource=%u",
+				"cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) "
+				"WHERE uResource=%u",
 				cName,
 				cuTTL,
 				uRRType,
 				cParam1,
 				cParam2,
+				cParam3,
+				cParam4,
 				TextAreaSave(cComment),
 				guLoginClient,
 				uResource);
