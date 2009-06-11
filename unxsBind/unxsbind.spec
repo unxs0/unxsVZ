@@ -1,10 +1,10 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
-Version: 1.11
+Version: 1.12
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-1.11.tar.gz
+Source: http://unixservice.com/source/unxsbind-1.12.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -100,6 +100,8 @@ cd $RPM_BUILD_DIR
 /var/log/named
 /usr/sbin/mysqlcluster.sh
 %changelog
+* Thu Jun 11 2009 Hugo Urquiza <support2@unixservice.com>
+- Minor idnsAdmin and idnsOrg updates.
 * Tue Jun 02 2009 Hugo Urquiza <support2@unixservice.com>
 - Several fixes and updates
 * Thu May 28 2009 Hugo Urquiza <support2@unixservice.com>
