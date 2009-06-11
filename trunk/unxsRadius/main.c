@@ -2119,7 +2119,7 @@ unsigned uAllowMod(const unsigned uOwner, const unsigned uCreatedBy)
 
 void ExtListSelect(const char *cTable,const char *cVarList)
 {
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+	if(guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT %s FROM %s",
 					cVarList,cTable);
 	else 
@@ -2133,7 +2133,7 @@ void ExtListSelect(const char *cTable,const char *cVarList)
 
 void ExtSelect(const char *cTable,const char *cVarList,unsigned uMaxResults)
 {
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+	if(guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT %1$s FROM %2$s ORDER BY %2$s._rowid",
 					cVarList,cTable);
 	else 
@@ -2163,7 +2163,7 @@ void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearch
 	sprintf(cTableCopy,"%.255s",cTable);
 	if((cp=strchr(cTableCopy,','))) *cp=0; //If cTable is tTable1,tTable2 use only tTable1
 
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+	if(guPermLevel>11)//Root can read access all
 	{
 		if(cExtraCond!=NULL)
 			sprintf(gcQuery,"SELECT %1$s FROM %2$s WHERE %3$s LIKE '%4$s%%' AND %5$s ORDER BY %3$s",
@@ -2204,7 +2204,7 @@ void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearch
 
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow)
 {
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+	if(guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT %s FROM %s WHERE u%s=%u",
 					cVarList,cTable,cTable+1,uRow);
 	else 
