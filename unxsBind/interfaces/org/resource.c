@@ -31,6 +31,12 @@ static char *cParam1Style="type_fields_off";
 static char cParam2[256]={""};
 static char *cParam2Style="type_fields_off";
 
+static char cParam3[256]={""};
+static char *cParam3Style="type_fields_off";
+
+static char cParam4[256]={""};
+static char *cParam4Style="type_fields_off";
+
 static char cComment[256]={""};
 static char *cCommentStyle="type_fields_off";
 
@@ -40,6 +46,10 @@ static char cParam1Label[33]={""};
 static char cParam1Tip[100]={""};
 static char cParam2Label[33]={""};
 static char cParam2Tip[100]={""};
+static char cParam3Label[33]={""};
+static char cParam3Tip[100]={""};
+static char cParam4Label[33]={""};
+static char cParam4Tip[100]={""};
 static char cNameLabel[33]={""};
 static char cNameTip[100]={""};
 static unsigned uStep=0;
@@ -108,6 +118,10 @@ void ProcessResourceVars(pentry entries[], int x)
 			sprintf(cParam1,"%.255s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cParam2"))
 			sprintf(cParam2,"%.255s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cParam3"))
+			sprintf(cParam3,"%.255s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cParam4"))
+			sprintf(cParam4,"%.255s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cComment"))
 			sprintf(cComment,"%.255s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uNameServer"))
@@ -343,35 +357,22 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			template.cpName[26]="cNameTip";
 			template.cpValue[26]=cNameTip;
 
-
-			template.cpName[27]="cMetaParam2";
-
-			if(strcmp(cParam2Label,"Not Used"))
-			{
-				char cBuffer[1024]={""};
-sprintf(cBuffer,"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\"><strong>%s</strong></a>\n</td><td><input title='%s' type=text name=cParam2 value='%s' size=40 maxlength=255 class=%s></td></tr>\n",cParam2Label,cParam2Label,cParam2Tip,cParam2,cParam2Style);
-				template.cpValue[27]=cBuffer;
-			}
-			else
-			{
-				template.cpValue[27]="";
-			}
-			 template.cpName[28]="cNameStyle";
-			 template.cpValue[28]=cNameStyle;
-
-			 template.cpName[29]="cuTTLStyle";
-			 template.cpValue[29]=cuTTLStyle;
-
-			 template.cpName[30]="cRRTypeStyle";
-			 template.cpValue[30]=cRRTypeStyle;
-
-			 template.cpName[31]="cParam1Style";
-			 template.cpValue[31]=cParam1Style;			 						 
+			template.cpName[27]="cCommentStyle";
+			template.cpValue[27]=cCommentStyle;
 			
-			template.cpName[32]="cCommentStyle";
-			template.cpValue[32]=cCommentStyle;
+			template.cpName[28]="cNameStyle";
+			template.cpValue[28]=cNameStyle;
+
+			template.cpName[29]="cuTTLStyle";
+			template.cpValue[29]=cuTTLStyle;
+
+			template.cpName[30]="cRRTypeStyle";
+			template.cpValue[30]=cRRTypeStyle;
+
+			template.cpName[31]="cParam1Style";
+			template.cpValue[31]=cParam1Style;			 						 
 			
-			template.cpName[33]="";
+			template.cpName[32]="";
 
 			printf("\n<!-- Start htmlResourcePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -388,15 +389,85 @@ sprintf(cBuffer,"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:wind
 }//void htmlResourcePage()
 
 
+void funcMetaParam(FILE *fp)
+{
+	//This function will display the extra parameter inputs based on RRType
+	
+	if(!strcmp(cRRType,"SRV"))
+	{
+		fprintf(fp,"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('"
+			"?gcPage=Glossary&cLabel=%s','Glossary','height=600,width=500,status=yes,toolbar=no,"
+			"menubar=no,location=no,scrollbars=1')\"><strong>%s</strong></a>\n</td>"
+			"<td><input title='%s' type=text name=cParam2 value='%s' size=40 maxlength=255 class=%s></td>"
+			"</tr>\n"
+			"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s',"
+			"'Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\">"
+			"<strong>%s</strong></a>\n</td>"
+			"<td><input title='%s' type=text name=cParam3 value='%s' size=40 maxlength=255 class=%s></td>"
+			"</tr>\n"
+			"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s',"
+			"'Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\">"
+			"<strong>%s</strong></a>\n</td>"
+			"<td><input title='%s' type=text name=cParam4 value='%s' size=40 maxlength=255 class=%s></td>"
+			"</tr>\n",
+				cParam2Label
+				,cParam2Label
+				,cParam2Tip
+				,cParam2
+				,cParam2Style
+				,cParam3Label
+				,cParam3Label
+				,cParam3Tip
+				,cParam3
+				,cParam3Style
+				,cParam4Label
+				,cParam4Label
+				,cParam4Tip
+				,cParam4
+				,cParam4Style
+			);
+	}
+	else if(strcmp(cRRType,"SRV") && strcmp(cParam2Label,"Not Used"))
+	{
+		fprintf(fp,"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s',"
+			"'Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\">"
+			"<strong>%s</strong></a>\n</td><td><input title='%s' type=text name=cParam2 value='%s' size=40 maxlength=255 "
+			"class=%s></td></tr>\n",
+			cParam2Label
+			,cParam2Label
+			,cParam2Tip
+			,cParam2
+			,cParam2Style
+       			);
+	}
+}//void funcMetaParam(FILE *fp)
+
+
 void SelectResource(void)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
 	if(uResource)
-	sprintf(gcQuery,"SELECT tResource.cName,tResource.uTTL,tRRType.cLabel,tResource.cParam1,tResource.cParam2,tResource.cComment,tZone.uNSSet,tResource.uResource,tResource.uZone,tRRType.cParam1Label,tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cNameLabel,tRRType.cNameTip FROM tResource,tRRType,tZone WHERE tZone.uZone=tResource.uZone AND tResource.uRRType=tRRType.uRRType AND tZone.cZone='%s' AND tZone.uView=2 AND tResource.uResource=%u",gcZone,uResource);
+		sprintf(gcQuery,"SELECT tResource.cName,tResource.uTTL,tRRType.cLabel,"
+				"tResource.cParam1,tResource.cParam2,tResource.cComment,"
+				"tZone.uNSSet,tResource.uResource,tResource.uZone,tRRType.cParam1Label,"
+				"tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cParam3Label,"
+				"tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
+				"tRRType.cNameTip,tResource.cParam3,tResource.cParam4 FROM tResource,tRRType,"
+				"tZone WHERE tZone.uZone=tResource.uZone AND tResource.uRRType=tRRType.uRRType "
+				"AND tZone.cZone='%s' AND tZone.uView=2 AND tResource.uResource=%u",
+				gcZone,uResource);
 	else
-	sprintf(gcQuery,"SELECT tResource.cName,tResource.uTTL,tRRType.cLabel,tResource.cParam1,tResource.cParam2,tResource.cComment,tZone.uNSSet,tResource.uResource,tResource.uZone,tRRType.cParam1Label,tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cNameLabel,tRRType.cNameTip FROM tResource,tRRType,tZone WHERE tZone.uZone=tResource.uZone AND tResource.uRRType=tRRType.uRRType AND tZone.cZone='%s' AND tZone.uView=2 AND (tResource.uOwner=%u OR tResource.uOwner=%u) ORDER BY tRRType.uRRType,tResource.cName LIMIT 1",gcZone,guLoginClient,guOrg);
+		sprintf(gcQuery,"SELECT tResource.cName,tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
+				"tResource.cParam2,tResource.cComment,tZone.uNSSet,tResource.uResource,"
+				"tResource.uZone,tRRType.cParam1Label,tRRType.cParam1Tip,tRRType.cParam2Label,"
+				"tRRType.cParam2Tip,tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,"
+				"tRRType.cParam4Tip,tRRType.cNameLabel,tRRType.cNameTip,tResource.cParam3,"
+				"tResource.cParam4 FROM tResource,tRRType,tZone WHERE tZone.uZone=tResource.uZone "
+				"AND tResource.uRRType=tRRType.uRRType AND tZone.cZone='%s' AND tZone.uView=2 AND "
+				"(tResource.uOwner=%u OR tResource.uOwner=%u) ORDER BY tRRType.uRRType,"
+				"tResource.cName LIMIT 1",gcZone,guLoginClient,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -416,19 +487,34 @@ void SelectResource(void)
 		sprintf(cParam1Tip,"%.99s",field[10]);
 		sprintf(cParam2Label,"%.32s",field[11]);
 		sprintf(cParam2Tip,"%.99s",field[12]);
-		sprintf(cNameLabel,"%.32s",field[13]);
-		sprintf(cNameTip,"%.99s",field[14]);
-
+		sprintf(cParam3Label,"%.32s",field[13]);
+		sprintf(cParam3Tip,"%.99s",field[14]);
+		sprintf(cParam4Label,"%.32s",field[15]);
+		sprintf(cParam4Tip,"%.99s",field[16]);
+		sprintf(cNameLabel,"%.32s",field[17]);
+		sprintf(cNameTip,"%.99s",field[18]);
+		sprintf(cParam3,"%.255s",field[19]);
+		sprintf(cParam4,"%.255s",field[20]);
 		if(!gcMessage[0]) gcMessage="Zone Resource Selected";
 	}
 	else
 	{
 		mysql_free_result(res);
 		if(!strstr(gcZone,"in-addr.arpa"))//A RR and has rights via uOwner
-		sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cNameLabel,tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=1 AND tZone.cZone='%s' AND tZone.uView=2 AND (tZone.uOwner=%u OR tZone.uOwner=%u)",gcZone,guLoginClient,guOrg);
+			sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,"
+					"tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cParam3Label,"
+					"tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
+					"tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=1 AND tZone.cZone='%s' "
+					"AND tZone.uView=2 AND (tZone.uOwner=%u OR tZone.uOwner=%u)",
+					gcZone,guLoginClient,guOrg);
 		else	//PTR RR and has rights via zone.c 
 			//(low grade cross-site scrpting security issue for registered login)
-		sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cNameLabel,tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=7 AND tZone.cZone='%s' AND tZone.uView=2 AND (tZone.uOwner=1 OR tZone.uOwner=0)",gcZone);
+			sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,"
+					"tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cParam3Label,"
+					"tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
+					"tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=7 AND tZone.cZone='%s' "
+					"AND tZone.uView=2 AND (tZone.uOwner=1 OR tZone.uOwner=%u)",
+					gcZone,guOrg);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -442,8 +528,12 @@ void SelectResource(void)
 			sprintf(cParam1Tip,"%.99s",field[4]);
 			sprintf(cParam2Label,"%.32s",field[5]);
 			sprintf(cParam2Tip,"%.99s",field[6]);
-			sprintf(cNameLabel,"%.32s",field[7]);
-			sprintf(cNameTip,"%.99s",field[8]);
+			sprintf(cParam3Label,"%.32s",field[7]);
+			sprintf(cParam3Tip,"%.99s",field[8]);
+			sprintf(cParam4Label,"%.32s",field[9]);
+			sprintf(cParam4Tip,"%.99s",field[10]);
+			sprintf(cNameLabel,"%.32s",field[11]);
+			sprintf(cNameTip,"%.99s",field[12]);
 
 			cName[0]=0;
 			cuTTL[0]=0;
@@ -488,12 +578,16 @@ void UpdateResource(void)
 		return;
 	}
 	
-	sprintf(gcQuery,"UPDATE tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uResource=%u",
+	sprintf(gcQuery,"UPDATE tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',"
+			"cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) "
+			"WHERE uResource=%u",
 			cName,
 			uTTL,
 			uRRType,
 			cParam1,
 			cParam2,
+			cParam3,
+			cParam4,
 			TextAreaSave(cComment),
 			guLoginClient,uResource);
 	mysql_query(&gMysql,gcQuery);
@@ -531,12 +625,16 @@ void NewResource(void)
 
 	uZone=uGetuZone(gcZone);
 	
-	sprintf(gcQuery,"INSERT INTO tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
+	sprintf(gcQuery,"INSERT INTO tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',"
+			"cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
 			cName,
 			uTTL,
 			uRRType,
 			cParam1,
 			cParam2,
+			cParam3,
+			cParam4,
 			TextAreaSave(cComment),
 			guOrg,
 			guLoginClient,
@@ -649,7 +747,7 @@ unsigned RRCheck(void)
 	if(cName[0])
 	{
 		sscanf(cName,"%s",gcQuery);
-		sprintf(cName,"%.25s",gcQuery);
+		sprintf(cName,"%.255s",gcQuery);
 	}
 	
 	if(cParam1[0] && strcmp(cRRType,"TXT") && strcmp(cRRType,"HINFO"))
@@ -730,7 +828,7 @@ unsigned RRCheck(void)
 		//don't allow same name CNAME records
 		if(strcmp(gcFunction,"Modify Confirm")) 
 		{
-			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u AND uResource!=%u",cName,uGetuZone(gcZone),uResource);
+			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u AND uRRType=5",cName,uGetuZone(gcZone));
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -2076,7 +2174,7 @@ unsigned OnLineZoneCheck(void)
 			return(1);
 		}
 	}
-	unlink(cZoneFile);
+//	unlink(cZoneFile);
 
 	return(0);
 
@@ -2219,7 +2317,7 @@ void PrepareTestData(void)
 
 	sprintf(gcQuery,"INSERT INTO tResourceTest (uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,"
 			"uModDate,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,cComment,uZone) "
-			"SELECT cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
+			"SELECT uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
 			"cParam1,cParam2,cParam3,cParam4,cComment,uZone FROM tResource WHERE "
 			"uZone=%u",uZone);
 	mysql_query(&gMysql,gcQuery);

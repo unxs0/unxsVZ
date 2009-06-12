@@ -122,7 +122,7 @@
 			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel={{cNameLabel}}')"><strong>{{cNameLabel}}</strong></a>
 		</td>
 		<td>
-			<input title='{{cNameTip}}' type=text name=cName value='{{cName}}' size=40 maxlength=99 {{gcInputStatus}} class={{cNameStyle}}>
+			<input title='{{cNameTip}}' type=text name=cName value='{{cName}}' size=40 maxlength=254 {{gcInputStatus}} class={{cNameStyle}}>
 		</td>
 	</tr>
 	
@@ -162,8 +162,7 @@
 			<input title='{{cParam1Tip}}' type=text name=cParam1 value='{{cParam1}}' size=40 maxlength=255 {{gcInputStatus}} class={{cParam1Style}}>
 		</td>
 	</tr>
-	
-	{{cMetaParam2}}	
+	{{funcMetaParam}}
 	<tr>
 	<td>		
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Resource Comment')"><strong>Resource Comment</strong></a></td>

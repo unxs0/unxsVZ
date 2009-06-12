@@ -99,7 +99,8 @@ void htmlResource(void);
 void htmlResourcePage(char *cTitle, char *cTemplateName);
 void funcSelectRRType(FILE *fp,unsigned uUseStatus);
 void htmlResourceWizard(unsigned uStep);
-	
+void funcMetaParam(FILE *fp);
+
 //glossary.c
 void GlossaryGetHook(entry gentries[],int x);
 void htmlGlossary(void);
