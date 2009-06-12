@@ -652,13 +652,13 @@ unsigned RRCheck(void)
 		sprintf(cName,"%.25s",gcQuery);
 	}
 	
-	if(cParam1[0] && strcmp(cRRType,"TXT"))
+	if(cParam1[0] && strcmp(cRRType,"TXT") && strcmp(cRRType,"HINFO"))
 	{
 		sscanf(cParam1,"%s",gcQuery);
 		sprintf(cParam1,"%.99s",gcQuery);
 	}
 	
-	if(cParam2[0])
+	if(cParam2[0] && strcmp(cRRType,"HINFO"))
 	{
 		sscanf(cParam2,"%s",gcQuery);
 		sprintf(cParam2,"%.99s",gcQuery);
@@ -728,18 +728,21 @@ unsigned RRCheck(void)
 		}
 
 		//don't allow same name CNAME records
-		sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u AND uResource!=%u",cName,uGetuZone(gcZone),uResource);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		if(mysql_num_rows(res))
+		if(strcmp(gcFunction,"Modify Confirm")) 
 		{
-			gcMessage="<blink>CNAME records are singleton type. RR w/the same name found.</blink>";
-			cNameStyle="type_fields_req";
-			return(3);
+			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u AND uResource!=%u",cName,uGetuZone(gcZone),uResource);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				gcMessage="<blink>CNAME records are singleton type. RR w/the same name found.</blink>";
+				cNameStyle="type_fields_req";
+				return(3);
+			}
+			mysql_free_result(res);
 		}
-		mysql_free_result(res);
 		
 		if(!cParam1[0])
 		{
@@ -2214,7 +2217,7 @@ void PrepareTestData(void)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 
-	sprintf(gcQuery,"INSERT INTO tResourceTest (cName,uOwner,uCreatedBy,uCreatedDate,uModBy,"
+	sprintf(gcQuery,"INSERT INTO tResourceTest (uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,"
 			"uModDate,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,cComment,uZone) "
 			"SELECT cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
 			"cParam1,cParam2,cParam3,cParam4,cComment,uZone FROM tResource WHERE "
