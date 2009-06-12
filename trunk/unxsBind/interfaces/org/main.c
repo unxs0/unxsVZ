@@ -361,6 +361,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcSelectRRType(fp,0);
 	else if(!strcmp(cFunction,"funcNSSetMembers"))
 		funcNSSetMembers(fp);
+	else if(!strcmp(cFunction,"funcMetaParam"))
+		funcMetaParam(fp);
 #ifdef EXPERIMENTAL
 	else if(!strcmp(cFunction,"funcZoneStatus"))
 		funcZoneStatus(fp);
