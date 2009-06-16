@@ -52,6 +52,8 @@ unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 //tnodefunc.h
 void DelProperties(unsigned uNode,unsigned uType);
 
+//jobqueue.c
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 
 void ExtProcesstContainerVars(pentry entries[], int x)
 {
@@ -467,6 +469,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+				
 				guMode=7001;
 				tContainer("Select Migration Target");
 			}
@@ -482,21 +485,28 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
 				time_t uActualModDate= -1;
 				unsigned uNewVeid=0;
+				char cTargetNodeIPv4[32]={""};
 
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+					tContainer("<blink>Error</blink>: This record was modified. Reload it!");
 
                         	guMode=7001;
 				if(!uWizIPv4)
 					tContainer("<blink>Error</blink>: You must select an IP!");
 				if(uTargetNode==0)
-					tContainer("<blink>Error</blink>: Please select a valid target node");
+					tContainer("<blink>Error</blink>: Please select a valid target node!");
+				if(uTargetNode==uNode)
+					tContainer("<blink>Error</blink>: Can't clone to same node!");
+				GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
+				if(!cTargetNodeIPv4[0])
+					tContainer("<blink>Error</blink>: Your target node is"
+							" missing it's cIPv4 property!");
                         	guMode=0;
 
-				sprintf(cWizLabel,"%.25s.clone",cLabel);
+				sprintf(cWizLabel,"%.25s-clone",cLabel);
 				sprintf(cWizHostname,"%.93s.clone",cHostname);
 				sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%s',"
 							"cHostname='%s',"
