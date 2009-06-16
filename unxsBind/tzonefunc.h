@@ -713,6 +713,7 @@ void ExttZoneCommands(pentry entries[], int x)
 #define IP_BLOCK_CIDR 1
 #define IP_BLOCK_DASH 2
 			unsigned uA,uB,uC,uD,uE,uNumIPs;
+			unsigned uMa,uMb,uMc,uMd;
 			unsigned uIPBlockFormat;
 			char cNS[100]={""};
 			char cName[100]={""};
@@ -738,11 +739,18 @@ void ExttZoneCommands(pentry entries[], int x)
 			sscanf(cIPBlock,"%s",gcQuery);
 			sprintf(cIPBlock,"%.99s",gcQuery);
 			
+			sscanf(cZone,"%u.%u.%u.in-addr.arpa",&uMc,uMb,uMa);
+
 			if(strchr(cIPBlock,'/'))
 			{
 				//cIPBlock is in CIDR format
 				sscanf(cIPBlock,"%u.%u.%u.%u/%u",&uA,&uB,&uC,&uD,&uE);
 
+				if((uA!=uMa) || (uB!=uMb) || (uC != uMc))
+				{
+					guMode=4001;
+					tZone("<blink>Error:</blink> The entered block is not inside the loaded zone.");
+				}
 
 				//CIDR only checks and calculations
 				if(uE<24)
@@ -774,6 +782,12 @@ void ExttZoneCommands(pentry entries[], int x)
 			{
 				//cIPBlock is in dash format
 				sscanf(cIPBlock,"%u.%u.%u.%u-%u",&uA,&uB,&uC,&uD,&uE);
+
+				if((uA!=uMa) || (uB!=uMb) || (uC != uMc))
+				{
+					guMode=4001;
+					tZone("<blink>Error:</blink> The entered range is not inside the loaded zone.");
+				}
 
 				if(uE>255)
 				{
