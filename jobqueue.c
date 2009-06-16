@@ -1593,12 +1593,14 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 	}
 
+/*	
 	if(uDebug)
 	{
 		printf("uNewVeid=%u uTargetNode=%u cNewIP=%s cHostname=%s cTargetNodeIPv4=%s cSourceContainerIP=%s\n",
 				uNewVeid,uTargetNode,cNewIP,cHostname,cTargetNodeIPv4,cSourceContainerIP);
 		return;
 	}
+*/
 
 	//1-. vzdump w/suspend on source node
 	//2-. scp dump to target node
