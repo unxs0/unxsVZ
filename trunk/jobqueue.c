@@ -1484,6 +1484,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	char cTargetNodeIPv4[256]={""};
 	unsigned uNewVeid=0;
 	unsigned uTargetNode=0;
+	unsigned uDebug=1;
 	char cSourceContainerIP[32]={""};
 	char cNewIP[32]={""};
 	char cHostname[100]={""};
@@ -1498,21 +1499,28 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(!uTargetNode)
 	{
 		printf("CloneContainer() error: Could not determine uTargetNode\n");
-		tJobErrorUpdate(uJob,"uTargetNode==0");
-		goto CommonExit;
+		if(!uDebug)
+		{
+			tJobErrorUpdate(uJob,"uTargetNode==0");
+			goto CommonExit;
+		}
 	}
 
-	sscanf(cJobData,"uNewVeid=%u;",&uNewVeid);
+	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%u;",&uNewVeid);
 	if(!uNewVeid)
 	{
 		printf("CloneContainer() error: Could not determine uNewVeid\n");
-		tJobErrorUpdate(uJob,"uNewVeid==0");
-		goto CommonExit;
+		if(!uDebug)
+		{
+			tJobErrorUpdate(uJob,"uNewVeid==0");
+			goto CommonExit;
+		}
 	}
 
 	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.cHostname FROM tIP,tContainer WHERE tIP.uIP=tContainer.uIPv4"
 			" AND tContainer.uContainer=%u",uNewVeid);
 	mysqlrad_Query_TextErr_Exit;
+        res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
 		sprintf(cNewIP,"%.31s",field[0]);
@@ -1523,20 +1531,27 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(!cNewIP[0])
 	{
 		printf("CloneContainer() error: Could not determine cNewIP\n");
-		tJobErrorUpdate(uJob,"No cNewIP");
-		goto CommonExit;
+		if(!uDebug)
+		{
+			tJobErrorUpdate(uJob,"No cNewIP");
+			goto CommonExit;
+		}
 	}
 
 	if(!cHostname[0])
 	{
 		printf("CloneContainer() error: Could not determine cHostname\n");
-		tJobErrorUpdate(uJob,"No cHostname");
-		goto CommonExit;
+		if(!uDebug)
+		{
+			tJobErrorUpdate(uJob,"No cHostname");
+			goto CommonExit;
+		}
 	}
 
 	sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer WHERE tIP.uIP=tContainer.uIPv4"
 			" AND tContainer.uContainer=%u",uContainer);
 	mysqlrad_Query_TextErr_Exit;
+        res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 		sprintf(cSourceContainerIP,"%.31s",field[0]);
 	mysql_free_result(res);
@@ -1544,16 +1559,30 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(!cSourceContainerIP[0])
 	{
 		printf("CloneContainer() error: Could not determine cSourceContainerIP\n");
-		tJobErrorUpdate(uJob,"No cSourceContainerIP");
-		goto CommonExit;
+		if(!uDebug)
+		{
+			tJobErrorUpdate(uJob,"No cSourceContainerIP");
+			goto CommonExit;
+		}
 	}
 
 	GetNodeProp(uTargetNode,"IPv4",cTargetNodeIPv4);
 	if(!cTargetNodeIPv4[0])
 	{
 		printf("CloneContainer() error: Could not determine cTargetNodeIPv4. uTargetNode=%u;\n",uTargetNode);
-		tJobErrorUpdate(uJob,"cTargetNodeIPv4");
-		goto CommonExit;
+		if(!uDebug)
+		{
+			tJobErrorUpdate(uJob,"cTargetNodeIPv4");
+			goto CommonExit;
+		}
+	}
+
+	
+	if(uDebug)
+	{
+		printf("uNewVeid=%u uTargetNode=%u cNewIP=%s cHostname=%s cTargetNodeIPv4=%s cSourceContainerIP=%s\n",
+				uNewVeid,uTargetNode,cNewIP,cHostname,cTargetNodeIPv4,cSourceContainerIP);
+		return;
 	}
 
 	//1-. vzdump w/suspend on source node
@@ -1568,83 +1597,118 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 	//1-.
 	sprintf(gcQuery,"vzdump --suspend %u",uContainer);
-	if(system(gcQuery))
+	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
 		tJobErrorUpdate(uJob,"error 1");
 		goto CommonExit;
 	}
+	else if(uDebug)
+	{
+		printf("%s\n",gcQuery);
+	}
 
 	//2-.
 	sprintf(gcQuery,"nice scp /vz/dump/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar",
 				uContainer,cTargetNodeIPv4,uContainer);
-	if(system(gcQuery))
+	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
 		tJobErrorUpdate(uJob,"error 2");
 		goto CommonExit;
 	}
+	else if(uDebug)
+	{
+		printf("%s\n",gcQuery);
+	}
 
 	//3-.
 	sprintf(gcQuery,"ssh %s 'vzdump --restore /vz/dump/vzdump-%u.tar %u'",
 				cTargetNodeIPv4,uContainer,uNewVeid);
-	if(system(gcQuery))
+	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
 		tJobErrorUpdate(uJob,"error 3");
 		goto CommonExit;
 	}
+	else if(uDebug)
+	{
+		printf("%s\n",gcQuery);
+	}
 
 	//4a-.
 	sprintf(gcQuery,"ssh %s 'vzctl set %u --hostname %s --save'",
 				cTargetNodeIPv4,uNewVeid,cHostname);
-	if(system(gcQuery))
+	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
 		tJobErrorUpdate(uJob,"error 4a");
 		goto CommonExit;
 	}
+	else if(uDebug)
+	{
+		printf("%s\n",gcQuery);
+	}
 
 	//4b-.
 	sprintf(gcQuery,"ssh %s 'vzctl set %u --ipdel %s --save'",
 				cTargetNodeIPv4,uNewVeid,cSourceContainerIP);
-	if(system(gcQuery))
+	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
 		tJobErrorUpdate(uJob,"error 4b");
 		goto CommonExit;
 	}
+	else if(uDebug)
+	{
+		printf("%s\n",gcQuery);
+	}
 
 	//4c-.
 	sprintf(gcQuery,"ssh %s 'vzctl set %u --ipadd %s --save'",
 				cTargetNodeIPv4,uNewVeid,cNewIP);
-	if(system(gcQuery))
+	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
 		tJobErrorUpdate(uJob,"error 4c");
 		goto CommonExit;
 	}
+	else if(uDebug)
+	{
+		printf("%s\n",gcQuery);
+	}
 
 	//5a-.
 	sprintf(gcQuery,"ssh %s 'rm -f /etc/vz/conf/%u.umount /etc/vz/conf/%u.mount'",
 				cTargetNodeIPv4,uNewVeid,uNewVeid);
-	if(system(gcQuery))
+	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
 		tJobErrorUpdate(uJob,"error 5a");
 		goto CommonExit;
+	}
+	else if(uDebug)
+	{
+		printf("%s\n",gcQuery);
 	}
 
 	//5b-. Create new umount and mount files if applicable
 
 	//6-.
 	sprintf(gcQuery,"ssh %s 'vzctl start %u'",cTargetNodeIPv4,uNewVeid);
-	if(system(gcQuery))
+	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
 		tJobErrorUpdate(uJob,"error 6");
 		goto CommonExit;
 	}
+	else if(uDebug)
+	{
+		printf("%s\n",gcQuery);
+	}
+
+	if(uDebug)
+		return;
 
 	//Everything ok
 	SetContainerStatus(uContainer,1);//Active
