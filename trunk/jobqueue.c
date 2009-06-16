@@ -41,6 +41,7 @@ void DestroyContainer(unsigned uJob,unsigned uContainer);
 void StopContainer(unsigned uJob,unsigned uContainer);
 void StartContainer(unsigned uJob,unsigned uContainer);
 void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData);
+void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
@@ -153,6 +154,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	if(!strcmp(cJobName,"MigrateContainer"))
 	{
 		MigrateContainer(uJob,uContainer,cJobData);
+	}
+	else if(!strcmp(cJobName,"CloneContainer"))
+	{
+		CloneContainer(uJob,uContainer,cJobData);
 	}
 	else if(!strcmp(cJobName,"NewContainer"))
 	{
@@ -1470,6 +1475,171 @@ CommonExit:
 	return;
 
 }//void MountFilesContainer(unsigned uJob,unsigned uContainer);
+
+
+void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
+{
+	char cTargetNodeIPv4[256]={""};
+	unsigned uTargetNode=0;
+	char cSourceContainerIP[32]={""};
+	char cNewIP[32]={""};
+	char cHostname[100]={""};
+	unsigned uNewVeid=0;
+
+	//CloneWizard created a new tContainer with "Awaiting Clone" status.
+	//CloneWizard created a job (this job) that runs on the source container node.
+	//The created job has job data to complete the operations on source and
+	//target nodes.
+	//vzdump script must be installed on all datacenter nodes.
+
+	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
+	if(!uTargetNode)
+	{
+		printf("CloneContainer() error: Could not determine uTargetNode\n");
+		tJobErrorUpdate(uJob,"uTargetNode==0");
+		goto CommonExit;
+	}
+
+	sscanf(cJobData,"cSourceContainerIP=%s;",cSourceContainerIP);
+	if(!cNewIP[0])
+	{
+		printf("CloneContainer() error: Could not determine cSourceContainerIP\n");
+		tJobErrorUpdate(uJob,"No cSourceContainerIP");
+		goto CommonExit;
+	}
+
+	sscanf(cJobData,"cNewIP=%s;",cNewIP);
+	if(!cNewIP[0])
+	{
+		printf("CloneContainer() error: Could not determine cNewIP\n");
+		tJobErrorUpdate(uJob,"No cNewIP");
+		goto CommonExit;
+	}
+
+	sscanf(cJobData,"cHostname=%s;",cHostname);
+	if(!cNewIP[0])
+	{
+		printf("CloneContainer() error: Could not determine cHostname\n");
+		tJobErrorUpdate(uJob,"No cHostname");
+		goto CommonExit;
+	}
+
+	sscanf(cJobData,"uNewVeid=%u;",&uNewVeid);
+	if(!uNewVeid)
+	{
+		printf("CloneContainer() error: Could not determine uNewVeid\n");
+		tJobErrorUpdate(uJob,"uNewVeid==0");
+		goto CommonExit;
+	}
+
+	GetNodeProp(uTargetNode,"IPv4",cTargetNodeIPv4);
+	if(!cTargetNodeIPv4[0])
+	{
+		printf("CloneContainer() error: Could not determine cTargetNodeIPv4. uTargetNode=%u;\n",uTargetNode);
+		tJobErrorUpdate(uJob,"cTargetNodeIPv4");
+		goto CommonExit;
+	}
+
+	//1-. vzdump w/suspend on source node
+	//2-. scp dump to target node
+	//3-. restore on target node to new veid
+	//4-. change ip and hostname
+	//5-. change any other /etc/vz/conf/veid.x files for new IP
+	//6-. start new veid
+	//7-. update source container status
+	//8-. update target container status
+
+
+	//1-.
+	sprintf(gcQuery,"vzdump --suspend %u",uContainer);
+	if(system(gcQuery))
+	{
+		printf("CloneContainer() error: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"error 1");
+		goto CommonExit;
+	}
+
+	//2-.
+	sprintf(gcQuery,"nice scp /vz/dump/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar",
+				uContainer,cTargetNodeIPv4,uContainer);
+	if(system(gcQuery))
+	{
+		printf("CloneContainer() error: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"error 2");
+		goto CommonExit;
+	}
+
+	//3-.
+	sprintf(gcQuery,"ssh %s 'vzdump --restore /vz/dump/vzdump-%u.tar %u'",
+				cTargetNodeIPv4,uContainer,uNewVeid);
+	if(system(gcQuery))
+	{
+		printf("CloneContainer() error: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"error 3");
+		goto CommonExit;
+	}
+
+	//4a-.
+	sprintf(gcQuery,"ssh %s 'vzctl set %u --hostname %s --save'",
+				cTargetNodeIPv4,uNewVeid,cHostname);
+	if(system(gcQuery))
+	{
+		printf("CloneContainer() error: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"error 4a");
+		goto CommonExit;
+	}
+
+	//4b-.
+	sprintf(gcQuery,"ssh %s 'vzctl set %u --ipdel %s --save'",
+				cTargetNodeIPv4,uNewVeid,cSourceContainerIP);
+	if(system(gcQuery))
+	{
+		printf("CloneContainer() error: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"error 4b");
+		goto CommonExit;
+	}
+
+	//4c-.
+	sprintf(gcQuery,"ssh %s 'vzctl set %u --ipadd %s --save'",
+				cTargetNodeIPv4,uNewVeid,cNewIP);
+	if(system(gcQuery))
+	{
+		printf("CloneContainer() error: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"error 4c");
+		goto CommonExit;
+	}
+
+	//5a-.
+	sprintf(gcQuery,"ssh %s 'rm -f /etc/vz/conf/%u.umount /etc/vz/conf/%u.mount'",
+				cTargetNodeIPv4,uNewVeid,uNewVeid);
+	if(system(gcQuery))
+	{
+		printf("CloneContainer() error: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"error 5a");
+		goto CommonExit;
+	}
+
+	//5b-. Create new umount and mount files if applicable
+
+	//6-.
+	sprintf(gcQuery,"ssh %s 'vzctl start %u'",cTargetNodeIPv4,uNewVeid);
+	if(system(gcQuery))
+	{
+		printf("CloneContainer() error: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"error 6");
+		goto CommonExit;
+	}
+
+	//Everything ok
+	SetContainerStatus(uContainer,1);//Active
+	SetContainerStatus(uNewVeid,1);//Active
+	tJobDoneUpdate(uJob);
+
+CommonExit:
+	return;
+
+}//void CloneContainer(...)
+
 
 
 //Required by libtemplate
