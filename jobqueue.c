@@ -1488,6 +1488,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	char cSourceContainerIP[32]={""};
 	char cNewIP[32]={""};
 	char cHostname[100]={""};
+	char cName[32]={""};
 
 	//CloneWizard created a new tContainer with "Awaiting Clone" status.
 	//CloneWizard created a job (this job) that runs on the source container node.
@@ -1517,14 +1518,16 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 	}
 
-	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.cHostname FROM tIP,tContainer WHERE tIP.uIP=tContainer.uIPv4"
-			" AND tContainer.uContainer=%u",uNewVeid);
+	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.cHostname,tContainer.cLabel FROM tIP,tContainer"
+				" WHERE tIP.uIP=tContainer.uIPv4"
+				" AND tContainer.uContainer=%u",uNewVeid);
 	mysqlrad_Query_TextErr_Exit;
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
 		sprintf(cNewIP,"%.31s",field[0]);
 		sprintf(cHostname,"%.99s",field[1]);
+		sprintf(cName,"%.31s",field[2]);
 	}
 	mysql_free_result(res);
 
@@ -1548,6 +1551,16 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 	}
 
+	if(!cName[0])
+	{
+		printf("CloneContainer() error: Could not determine cName\n");
+		if(!uDebug)
+		{
+			tJobErrorUpdate(uJob,"No cName");
+			goto CommonExit;
+		}
+	}
+
 	sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer WHERE tIP.uIP=tContainer.uIPv4"
 			" AND tContainer.uContainer=%u",uContainer);
 	mysqlrad_Query_TextErr_Exit;
@@ -1566,6 +1579,9 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 	}
 
+	//This needs it's tcontainerfunc.h counterpart on new and a tConfiguration entry
+	//to set this IP to either the internal transfer IP or the public IP if servers
+	//have only one NIC (yuck ;)
 	GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
 	if(!cTargetNodeIPv4[0])
 	{
@@ -1577,7 +1593,6 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 	}
 
-	
 	if(uDebug)
 	{
 		printf("uNewVeid=%u uTargetNode=%u cNewIP=%s cHostname=%s cTargetNodeIPv4=%s cSourceContainerIP=%s\n",
@@ -1588,7 +1603,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//1-. vzdump w/suspend on source node
 	//2-. scp dump to target node
 	//3-. restore on target node to new veid
-	//4-. change ip and hostname
+	//4-. change ip, name and hostname
 	//5-. change any other /etc/vz/conf/veid.x files for new IP
 	//6-. start new veid
 	//7-. update source container status
@@ -1651,6 +1666,20 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4b-.
+	sprintf(gcQuery,"ssh %s 'vzctl set %u --name %s --save'",
+				cTargetNodeIPv4,uNewVeid,cName);
+	if(uDebug==0 && system(gcQuery))
+	{
+		printf("CloneContainer() error: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"error 4a");
+		goto CommonExit;
+	}
+	else if(uDebug)
+	{
+		printf("%s\n",gcQuery);
+	}
+
+	//4c-.
 	sprintf(gcQuery,"ssh %s 'vzctl set %u --ipdel %s --save'",
 				cTargetNodeIPv4,uNewVeid,cSourceContainerIP);
 	if(uDebug==0 && system(gcQuery))
@@ -1664,7 +1693,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		printf("%s\n",gcQuery);
 	}
 
-	//4c-.
+	//4d-.
 	sprintf(gcQuery,"ssh %s 'vzctl set %u --ipadd %s --save'",
 				cTargetNodeIPv4,uNewVeid,cNewIP);
 	if(uDebug==0 && system(gcQuery))
