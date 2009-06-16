@@ -1479,12 +1479,14 @@ CommonExit:
 
 void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 {
+        MYSQL_RES *res;
+        MYSQL_ROW field;
 	char cTargetNodeIPv4[256]={""};
+	unsigned uNewVeid=0;
 	unsigned uTargetNode=0;
 	char cSourceContainerIP[32]={""};
 	char cNewIP[32]={""};
 	char cHostname[100]={""};
-	unsigned uNewVeid=0;
 
 	//CloneWizard created a new tContainer with "Awaiting Clone" status.
 	//CloneWizard created a job (this job) that runs on the source container node.
@@ -1500,15 +1502,24 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		goto CommonExit;
 	}
 
-	sscanf(cJobData,"cSourceContainerIP=%s;",cSourceContainerIP);
-	if(!cNewIP[0])
+	sscanf(cJobData,"uNewVeid=%u;",&uNewVeid);
+	if(!uNewVeid)
 	{
-		printf("CloneContainer() error: Could not determine cSourceContainerIP\n");
-		tJobErrorUpdate(uJob,"No cSourceContainerIP");
+		printf("CloneContainer() error: Could not determine uNewVeid\n");
+		tJobErrorUpdate(uJob,"uNewVeid==0");
 		goto CommonExit;
 	}
 
-	sscanf(cJobData,"cNewIP=%s;",cNewIP);
+	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.cHostname FROM tIP,tContainer WHERE tIP.uIP=tContainer.uIPv4"
+			" AND tContainer.uContainer=%u",uNewVeid);
+	mysqlrad_Query_TextErr_Exit;
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cNewIP,"%.31s",field[0]);
+		sprintf(cHostname,"%.99s",field[1]);
+	}
+	mysql_free_result(res);
+
 	if(!cNewIP[0])
 	{
 		printf("CloneContainer() error: Could not determine cNewIP\n");
@@ -1516,19 +1527,24 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		goto CommonExit;
 	}
 
-	sscanf(cJobData,"cHostname=%s;",cHostname);
-	if(!cNewIP[0])
+	if(!cHostname[0])
 	{
 		printf("CloneContainer() error: Could not determine cHostname\n");
 		tJobErrorUpdate(uJob,"No cHostname");
 		goto CommonExit;
 	}
 
-	sscanf(cJobData,"uNewVeid=%u;",&uNewVeid);
-	if(!uNewVeid)
+	sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer WHERE tIP.uIP=tContainer.uIPv4"
+			" AND tContainer.uContainer=%u",uContainer);
+	mysqlrad_Query_TextErr_Exit;
+	if((field=mysql_fetch_row(res)))
+		sprintf(cSourceContainerIP,"%.31s",field[0]);
+	mysql_free_result(res);
+
+	if(!cSourceContainerIP[0])
 	{
-		printf("CloneContainer() error: Could not determine uNewVeid\n");
-		tJobErrorUpdate(uJob,"uNewVeid==0");
+		printf("CloneContainer() error: Could not determine cSourceContainerIP\n");
+		tJobErrorUpdate(uJob,"No cSourceContainerIP");
 		goto CommonExit;
 	}
 

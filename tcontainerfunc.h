@@ -40,6 +40,8 @@ void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 void htmlContainerNotes(unsigned uContainer);
 unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode);
+unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
+				unsigned uTargetNode, unsigned uNewVeid);
 void htmlHealth(unsigned uContainer,unsigned uType);
 void htmlGroups(unsigned uNode, unsigned uContainer);
 unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
@@ -453,6 +455,112 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
 		}
+                else if(!strcmp(gcCommand,"Clone Wizard"))
+                {
+                        ProcesstContainerVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			{
+				time_t uActualModDate= -1;
+
+                        	guMode=0;
+
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+				guMode=7001;
+				tContainer("Select Migration Target");
+			}
+			else
+			{
+				tContainer("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Confirm Clone"))
+                {
+                        ProcesstContainerVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			{
+				time_t uActualModDate= -1;
+				unsigned uNewVeid=0;
+
+                        	guMode=0;
+
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+
+                        	guMode=7001;
+				if(!uWizIPv4)
+					tContainer("<blink>Error</blink>: You must select an IP!");
+				if(uTargetNode==0)
+					tContainer("<blink>Error</blink>: Please select a valid target node");
+                        	guMode=0;
+
+				sprintf(cWizLabel,"%.25s.clone",cLabel);
+				sprintf(cWizHostname,"%.93s.clone",cHostname);
+				sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%s',"
+							"cHostname='%s',"
+							"uIPv4=%u,"
+							"uOSTemplate=%u,"
+							"uConfig=%u,"
+							"uNameserver=%u,"
+							"uSearchdomain=%u,"
+							"uDatacenter=%u,"
+							"uNode=%u,"
+							"uStatus=81,"
+							"uOwner=%u,"
+							"uCreatedBy=%u,"
+							"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							cWizLabel,
+							cWizHostname,
+							uWizIPv4,
+							uOSTemplate,
+							uConfig,
+							uNameserver,
+							uSearchdomain,
+							uDatacenter,
+							uTargetNode,
+							guCompany,
+							guLoginClient);
+        			mysql_query(&gMysql,gcQuery);
+			        if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				uNewVeid=mysql_insert_id(&gMysql);
+
+
+				if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid))
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+							",cName='Name',cValue='%s'",
+								uNewVeid,cWizLabel);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+							" WHERE uIP=%u",uWizIPv4);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					uModBy=guLoginClient;
+					uStatus=81;
+					SetContainerStatus(uContainer,81);//Awaiting Clone
+					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+					tContainer("CloneContainerJob() Done");
+				}
+				else
+				{
+					sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uNewVeid);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					tContainer("<blink>Error</blink>: No jobs created!");
+				}
+			}
+			else
+			{
+				tContainer("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
                 else if(!strcmp(gcCommand,"Migration Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
@@ -496,7 +604,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode))
 				{
 					uStatus=21;
-					SetContainerStatus(uContainer,21);//Awaiting Deletion
+					SetContainerStatus(uContainer,21);//Awaiting Migration
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("MigrateContainerJob() Done");
 				}
@@ -759,7 +867,7 @@ void ExttContainerButtons(void)
                 break;
 
                 case 3001:
-                        printf("<p><u>Live Migration Wizard</u><br>");
+                        printf("<p><u>Migration Wizard</u><br>");
 			printf("Here you will select the hardware node target. If the selected node is"
 				" oversubscribed, not available, or scheduled for maintenance. You will"
 				" be informed at the next step\n<p>\n");
@@ -767,6 +875,20 @@ void ExttContainerButtons(void)
 			printf("<p><input title='Create a migration job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Migration'>\n");
+                break;
+
+                case 7001:
+                        printf("<p><u>Clone Wizard</u><br>");
+			printf("Here you will select the hardware node target. If the selected node is"
+				" oversubscribed, not available, or scheduled for maintenance. You will"
+				" be informed at the next step\n<p>\n");
+			printf("Select target node ");
+			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
+			printf("<br>Select new IPv4 ");
+			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
+			printf("<p><input title='Create a clone job for the current container'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Clone'>\n");
                 break;
 
                 case 2000:
@@ -815,11 +937,11 @@ void ExttContainerButtons(void)
 					" Creates and installs OS and VZ conf templates on all nodes.'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Template Wizard'><br>\n");
-					printf("<input disabled title='Backup a container to another hardware node."
-					" The backup will be an offline container."
-					" It maybe kept updated via rsync on a configurable basis.'"
+					printf("<input title='Clone a container to current or another hardware node."
+					" The clone will be an online container with another IP and hostname."
+					" It will be kept updated via rsync on a configurable basis.'"
 					" type=submit class=largeButton"
-					" name=gcCommand value='Backup Wizard'><br>\n");
+					" name=gcCommand value='Clone Wizard'><br>\n");
 					printf("<input title='Change current container IPv4'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='IP Change Wizard'><br>\n");
@@ -1496,3 +1618,30 @@ unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 	return(uCount);
 
 }//unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+
+
+unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
+				unsigned uTargetNode, unsigned uNewVeid)
+{
+	unsigned uCount=0;
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CloneContainer(%u)',cJobName='CloneContainer'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=1"
+			",cJobData='"
+			"uTargetNode=%u;\n"
+			"uNewVeid=%u;\n'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				uTargetNode,
+				uNewVeid,
+				guCompany,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	return(uCount);
+
+}//unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
