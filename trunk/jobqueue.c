@@ -845,7 +845,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		goto CommonExit;
 	}
 
-	GetNodeProp(uTargetNode,"IPv4",cTargetNodeIPv4);
+	GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
 	if(!cTargetNodeIPv4[0])
 	{
 		printf("MigrateContainer() error: Could not determine cTargetNodeIPv4. uTargetNode=%u;\n",uTargetNode);
@@ -1566,7 +1566,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 	}
 
-	GetNodeProp(uTargetNode,"IPv4",cTargetNodeIPv4);
+	GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
 	if(!cTargetNodeIPv4[0])
 	{
 		printf("CloneContainer() error: Could not determine cTargetNodeIPv4. uTargetNode=%u;\n",uTargetNode);
