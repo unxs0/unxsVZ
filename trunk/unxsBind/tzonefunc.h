@@ -713,7 +713,7 @@ void ExttZoneCommands(pentry entries[], int x)
 #define IP_BLOCK_CIDR 1
 #define IP_BLOCK_DASH 2
 			unsigned uA,uB,uC,uD,uE,uNumIPs;
-			unsigned uMa,uMb,uMc,uMd;
+			unsigned uMa,uMb,uMc;
 			unsigned uIPBlockFormat;
 			char cNS[100]={""};
 			char cName[100]={""};
@@ -739,8 +739,8 @@ void ExttZoneCommands(pentry entries[], int x)
 			sscanf(cIPBlock,"%s",gcQuery);
 			sprintf(cIPBlock,"%.99s",gcQuery);
 			
-			sscanf(cZone,"%u.%u.%u.in-addr.arpa",&uMc,uMb,uMa);
-
+			sscanf(cZone,"%u.%u.%u.in-addr.arpa",&uMc,&uMb,&uMa);
+			
 			if(strchr(cIPBlock,'/'))
 			{
 				//cIPBlock is in CIDR format
