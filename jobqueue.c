@@ -5,12 +5,17 @@ FILE
 PURPOSE
 	Command line processing of jobs in the tJob queue.
 AUTHOR
-	Gary Wallis for Unxiservice (C) 2008-2009. GPL2 License applies.
+	Gary Wallis for Unxiservice (C) 2008-2009. GPLv2 License applies.
 NOTES
-	1-. Most if not all void functions should report then exit on failure.
-	2-. Skip all jobs that have errors, we try to process as many as possible.
+	We still use KISS code, var naming conventions, and UK style C indentation 
+	to make our software readable and writable by any programmer. At the same
+	time this approach (although with redundant code) has kept these programs
+	lean and faster than anything available in any other language.
 TODO
-	1-. Set a running job status.
+	Create more #define based "macros," to help the compiler optimize the
+	many simple, fast but redundant code blocks.
+	Get rid of any goto statements that do not add too many layers of nested
+	logic that makes the code hard to maintain by non-authors.
 */
 
 #include "mysqlrad.h"
@@ -23,8 +28,9 @@ TODO
 						exit(2);\
 					}
 
-//external protos
-void TextConnectDb(void); //main.c
+//the following prototype declarations should provide a 
+//	table of contents
+
 
 //local protos
 void ProcessJobQueue(void);
@@ -48,8 +54,10 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
+int CreateMountFiles(unsigned uContainer, unsigned uOverwrite);
 
 //extern protos
+void TextConnectDb(void); //main.c
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 
@@ -426,121 +434,12 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	{
 
 
-		//0-. Create VEID.mount and VEID.umount files if container so specifies via tProperty
-		//	and everything needed is available: template and template vars from tProperty.
-        	MYSQL_RES *res2;
-	        MYSQL_ROW field2;
-		FILE *fp;
-		char cTemplateName[256]={""};//required
-		char cFile[100]={""};//required
-		char cVeID[32]={""};//required
-		char cService1[256]={"80"};//default
-		char cService2[256]={"443"};//default
-		char cNodeIP[256]={""};//required
-		char cNetmask[256]={"255.255.255.0"};//default
-		char cPrivateIPs[256]={"10.0.0.0/24"};//default
-
-		sprintf(cVeID,"%u",uContainer);	
-
-		GetContainerProp(uContainer,"cVEID.mount",cTemplateName);
-		if(cTemplateName[0])
+		//0-. vz conf mount umount files if applicable. 1 is for overwrite existing files
+		if(CreateMountFiles(uContainer,1))
 		{
-			GetContainerProp(uContainer,"cNodeIP",cNodeIP);
-			GetContainerProp(uContainer,"cNetmask",cNetmask);
-			GetContainerProp(uContainer,"cPrivateIPs",cPrivateIPs);
-			GetContainerProp(uContainer,"cService1",cService1);
-			GetContainerProp(uContainer,"cService2",cService2);
-
-			sprintf(cFile,"/etc/vz/conf/%u.mount",uContainer);
-			if((fp=fopen(cFile,"w"))==NULL)
-			{
-				printf("NewContainer() error: %s\n",cFile);
-				tJobErrorUpdate(uJob,"VEID.mount create failed");
-				goto CommonExit;
-			}
-
-			TemplateSelect(cTemplateName);
-			res2=mysql_store_result(&gMysql);
-			if((field2=mysql_fetch_row(res2)))
-			{
-				struct t_template template;
-
-				template.cpName[0]="cNodeIP";
-				template.cpValue[0]=cNodeIP;
-						
-				template.cpName[1]="cNetmask";
-				template.cpValue[1]=cNetmask;
-						
-				template.cpName[2]="cPrivateIPs";
-				template.cpValue[2]=cPrivateIPs;
-						
-				template.cpName[3]="cVeID";
-				template.cpValue[3]=cVeID;
-
-				template.cpName[4]="cService1";
-				template.cpValue[4]=cService1;
-						
-				template.cpName[5]="cService2";
-				template.cpValue[5]=cService2;
-						
-				template.cpName[6]="";
-				Template(field2[0],&template,fp);
-			}
-			mysql_free_result(res2);
-			fclose(fp);
-			chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
-
-			cTemplateName[0]=0;
-			GetContainerProp(uContainer,"cVEID.umount",cTemplateName);
-			if(cTemplateName[0])
-			{
-				sprintf(cFile,"/etc/vz/conf/%u.umount",uContainer);
-				if((fp=fopen(cFile,"w"))==NULL)
-				{
-					printf("NewContainer() error: %s\n",cFile);
-					tJobErrorUpdate(uJob,"VEID.umount create failed");
-					goto CommonExit;
-				}
-	
-				TemplateSelect(cTemplateName);
-				res2=mysql_store_result(&gMysql);
-				if((field2=mysql_fetch_row(res2)))
-				{
-					struct t_template template;
-	
-					template.cpName[0]="cNodeIP";
-					template.cpValue[0]=cNodeIP;
-							
-					template.cpName[1]="cNetmask";
-					template.cpValue[1]=cNetmask;
-							
-					template.cpName[2]="cPrivateIPs";
-					template.cpValue[2]=cPrivateIPs;
-							
-					template.cpName[3]="cVeID";
-					template.cpValue[3]=cVeID;
-	
-					template.cpName[4]="cService1";
-					template.cpValue[4]=cService1;
-							
-					template.cpName[5]="cService2";
-					template.cpValue[5]=cService2;
-							
-					template.cpName[6]="";
-					Template(field2[0],&template,fp);
-				}
-				mysql_free_result(res2);
-				fclose(fp);
-				chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
-			}
-			else
-			{
-				printf("NewContainer() error: %s missing\n",cTemplateName);
-				tJobErrorUpdate(uJob,"Missing VEID.umount!");
-				goto CommonExit;
-			}
+			tJobErrorUpdate(uJob,"CreateMountFiles(x,1) failed");
+			goto CommonExit;
 		}
-
 
 		//vzctl [flags] create veid --ostemplate name] [--config name] [--private path] 
 		//[--root path] [--ipadd addr] [--hostname name]
@@ -551,7 +450,6 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		{
 			printf("NewContainer() error: %s\n",gcQuery);
 			tJobErrorUpdate(uJob,"vzctl create failed");
-			goto CommonExit;
 		}
 
 		//2-.
@@ -1353,125 +1251,14 @@ CommonExit:
 
 void MountFilesContainer(unsigned uJob,unsigned uContainer)
 {
-	//0-. Create VEID.mount and VEID.umount files if container so specifies via tProperty
-	//	and everything needed is available: template and template vars from tProperty.
-        MYSQL_RES *res2;
-        MYSQL_ROW field2;
-	FILE *fp;
-	char cTemplateName[256]={""};//required
-	char cFile[100]={""};//required
-	char cVeID[32]={""};//required
-	char cService1[256]={"80"};//default
-	char cService2[256]={"443"};//default
-	char cNodeIP[256]={""};//required
-	char cNetmask[256]={"255.255.255.0"};//default
-	char cPrivateIPs[256]={"10.0.0.0/24"};//default
-	struct stat statInfo;
-
-	sprintf(cVeID,"%u",uContainer);	
-
-	GetContainerProp(uContainer,"cVEID.mount",cTemplateName);
-	sprintf(cFile,"/etc/vz/conf/%u.mount",uContainer);
-	if(cTemplateName[0] && stat(cFile,&statInfo))
+	//0 means do not overwrite existing files.
+	if(CreateMountFiles(uContainer,0))
 	{
-		GetContainerProp(uContainer,"cNodeIP",cNodeIP);
-		GetContainerProp(uContainer,"cNetmask",cNetmask);
-		GetContainerProp(uContainer,"cPrivateIPs",cPrivateIPs);
-		GetContainerProp(uContainer,"cService1",cService1);
-		GetContainerProp(uContainer,"cService2",cService2);
-
-		if((fp=fopen(cFile,"w"))==NULL)
-		{
-			printf("MountFilesContainer() error: %s\n",cFile);
-			tJobErrorUpdate(uJob,"VEID.mount create failed");
-			goto CommonExit;
-		}
-
-		TemplateSelect(cTemplateName);
-		res2=mysql_store_result(&gMysql);
-		if((field2=mysql_fetch_row(res2)))
-		{
-			struct t_template template;
-
-			template.cpName[0]="cNodeIP";
-			template.cpValue[0]=cNodeIP;
-					
-			template.cpName[1]="cNetmask";
-			template.cpValue[1]=cNetmask;
-					
-			template.cpName[2]="cPrivateIPs";
-			template.cpValue[2]=cPrivateIPs;
-					
-			template.cpName[3]="cVeID";
-			template.cpValue[3]=cVeID;
-
-			template.cpName[4]="cService1";
-			template.cpValue[4]=cService1;
-					
-			template.cpName[5]="cService2";
-			template.cpValue[5]=cService2;
-					
-			template.cpName[6]="";
-			Template(field2[0],&template,fp);
-		}
-		mysql_free_result(res2);
-		fclose(fp);
-		chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
-
-		cTemplateName[0]=0;
-		GetContainerProp(uContainer,"cVEID.umount",cTemplateName);
-		sprintf(cFile,"/etc/vz/conf/%u.umount",uContainer);
-		if(cTemplateName[0] && stat(cFile,&statInfo))
-		{
-			if((fp=fopen(cFile,"w"))==NULL)
-			{
-				printf("MountFilesContainer() error: %s\n",cFile);
-				tJobErrorUpdate(uJob,"VEID.umount create failed");
-				goto CommonExit;
-			}
-
-			TemplateSelect(cTemplateName);
-			res2=mysql_store_result(&gMysql);
-			if((field2=mysql_fetch_row(res2)))
-			{
-				struct t_template template;
-
-				template.cpName[0]="cNodeIP";
-				template.cpValue[0]=cNodeIP;
-						
-				template.cpName[1]="cNetmask";
-				template.cpValue[1]=cNetmask;
-						
-				template.cpName[2]="cPrivateIPs";
-				template.cpValue[2]=cPrivateIPs;
-						
-				template.cpName[3]="cVeID";
-				template.cpValue[3]=cVeID;
-
-				template.cpName[4]="cService1";
-				template.cpValue[4]=cService1;
-						
-				template.cpName[5]="cService2";
-				template.cpValue[5]=cService2;
-						
-				template.cpName[6]="";
-				Template(field2[0],&template,fp);
-			}
-			mysql_free_result(res2);
-			fclose(fp);
-			chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
-		}
-		else
-		{
-			printf("MountFilesContainer() error: %s missing\n",cTemplateName);
-			tJobErrorUpdate(uJob,"Missing VEID.umount!");
-			goto CommonExit;
-		}
+		tJobErrorUpdate(uJob,"CreateMountFiles(x,0) failed");
+		return;
 	}
 
 	tJobDoneUpdate(uJob);
-
-CommonExit:
 	return;
 
 }//void MountFilesContainer(unsigned uJob,unsigned uContainer);
@@ -1484,7 +1271,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	char cTargetNodeIPv4[256]={""};
 	unsigned uNewVeid=0;
 	unsigned uTargetNode=0;
-	unsigned uDebug=1;
+	unsigned uDebug=0;
 	char cSourceContainerIP[32]={""};
 	char cNewIP[32]={""};
 	char cHostname[100]={""};
@@ -1673,7 +1460,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
-		tJobErrorUpdate(uJob,"error 4a");
+		tJobErrorUpdate(uJob,"error 4b");
 		goto CommonExit;
 	}
 	else if(uDebug)
@@ -1687,7 +1474,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
-		tJobErrorUpdate(uJob,"error 4b");
+		tJobErrorUpdate(uJob,"error 4c");
 		goto CommonExit;
 	}
 	else if(uDebug)
@@ -1701,7 +1488,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
-		tJobErrorUpdate(uJob,"error 4c");
+		tJobErrorUpdate(uJob,"error 4d");
 		goto CommonExit;
 	}
 	else if(uDebug)
@@ -1709,21 +1496,13 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		printf("%s\n",gcQuery);
 	}
 
-	//5a-.
-	sprintf(gcQuery,"ssh %s 'rm -f /etc/vz/conf/%u.umount /etc/vz/conf/%u.mount'",
-				cTargetNodeIPv4,uNewVeid,uNewVeid);
-	if(uDebug==0 && system(gcQuery))
+	//5-. Create new umount and mount files if applicable
+	//1 is for overwrite mode yes
+	if(CreateMountFiles(uContainer,1))
 	{
-		printf("CloneContainer() error: %s.\n",gcQuery);
-		tJobErrorUpdate(uJob,"error 5a");
+		tJobErrorUpdate(uJob,"CreateMountFiles(x,1) 5 failed");
 		goto CommonExit;
 	}
-	else if(uDebug)
-	{
-		printf("%s\n",gcQuery);
-	}
-
-	//5b-. Create new umount and mount files if applicable
 
 	//6-.
 	sprintf(gcQuery,"ssh %s 'vzctl start %u'",cTargetNodeIPv4,uNewVeid);
@@ -1752,8 +1531,132 @@ CommonExit:
 }//void CloneContainer(...)
 
 
-
 //Required by libtemplate
 void AppFunctions(FILE *fp,char *cFunction)
 {
 }//void AppFunctions(FILE *fp,char *cFunction)
+
+
+int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
+{
+	//Create VEID.mount and VEID.umount files if container so specifies via tProperty
+	//	and everything needed is available: template and template vars from tProperty.
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
+	FILE *fp;
+	char cTemplateName[256]={""};//required
+	char cFile[100]={""};//required
+	char cVeID[32]={""};//required
+	char cService1[256]={"80"};//default
+	char cService2[256]={"443"};//default
+	char cNodeIP[256]={""};//required
+	char cNetmask[256]={"255.255.255.0"};//default
+	char cPrivateIPs[256]={"10.0.0.0/24"};//default
+	struct stat statInfo;
+
+	sprintf(cVeID,"%u",uContainer);	
+
+	GetContainerProp(uContainer,"cVEID.mount",cTemplateName);
+	sprintf(cFile,"/etc/vz/conf/%u.mount",uContainer);
+	//Do not overwrite existing mount files! Do that before if you really want to.
+	//stat returns 0 if file exists
+	if(cTemplateName[0] && (stat(cFile,&statInfo) || uOverwrite))
+	{
+		GetContainerProp(uContainer,"cNodeIP",cNodeIP);
+		GetContainerProp(uContainer,"cNetmask",cNetmask);
+		GetContainerProp(uContainer,"cPrivateIPs",cPrivateIPs);
+		GetContainerProp(uContainer,"cService1",cService1);
+		GetContainerProp(uContainer,"cService2",cService2);
+
+		if((fp=fopen(cFile,"w"))==NULL)
+		{
+			printf("CreateMountFiles() error: %s\n",cFile);
+			goto CommonExit;
+		}
+
+		TemplateSelect(cTemplateName);
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			struct t_template template;
+
+			template.cpName[0]="cNodeIP";
+			template.cpValue[0]=cNodeIP;
+					
+			template.cpName[1]="cNetmask";
+			template.cpValue[1]=cNetmask;
+					
+			template.cpName[2]="cPrivateIPs";
+			template.cpValue[2]=cPrivateIPs;
+					
+			template.cpName[3]="cVeID";
+			template.cpValue[3]=cVeID;
+
+			template.cpName[4]="cService1";
+			template.cpValue[4]=cService1;
+					
+			template.cpName[5]="cService2";
+			template.cpValue[5]=cService2;
+					
+			template.cpName[6]="";
+			Template(field2[0],&template,fp);
+		}
+		mysql_free_result(res2);
+		fclose(fp);
+		chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
+
+		cTemplateName[0]=0;
+		GetContainerProp(uContainer,"cVEID.umount",cTemplateName);
+		sprintf(cFile,"/etc/vz/conf/%u.umount",uContainer);
+		if(cTemplateName[0] && (stat(cFile,&statInfo) || uOverwrite) )
+		{
+			if((fp=fopen(cFile,"w"))==NULL)
+			{
+				printf("CreateMountFiles() error: %s\n",cFile);
+				goto CommonExit;
+			}
+
+			TemplateSelect(cTemplateName);
+			res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+			{
+				struct t_template template;
+
+				template.cpName[0]="cNodeIP";
+				template.cpValue[0]=cNodeIP;
+						
+				template.cpName[1]="cNetmask";
+				template.cpValue[1]=cNetmask;
+						
+				template.cpName[2]="cPrivateIPs";
+				template.cpValue[2]=cPrivateIPs;
+						
+				template.cpName[3]="cVeID";
+				template.cpValue[3]=cVeID;
+
+				template.cpName[4]="cService1";
+				template.cpValue[4]=cService1;
+						
+				template.cpName[5]="cService2";
+				template.cpValue[5]=cService2;
+						
+				template.cpName[6]="";
+				Template(field2[0],&template,fp);
+			}
+			mysql_free_result(res2);
+			fclose(fp);
+			chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
+		}
+		else
+		{
+			printf("CreateMountFiles() error: %s missing\n",cTemplateName);
+			goto CommonExit;
+		}
+	}
+
+	return(0);
+
+CommonExit:
+	return(1);
+
+}//int CreateMountFiles()
