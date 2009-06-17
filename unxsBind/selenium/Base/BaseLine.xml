@@ -19,7 +19,7 @@
 <tr>
 	<td>type</td>
 	<td>gcLogin</td>
-	<td>Root</td>
+	<td>John Doe</td>
 </tr>
 <tr>
 	<td>type</td>
@@ -52,9 +52,9 @@
 	<td>info@acmewebhosting.net</td>
 </tr>
 <tr>
-	<td>type</td>
-	<td>cCode</td>
-	<td>COMPTEST</td>
+	<td>select</td>
+	<td>cForClientPullDown</td>
+	<td>label=---</td>
 </tr>
 <tr>
 	<td>clickAndWait</td>
@@ -215,6 +215,51 @@
 	<td>assertValue</td>
 	<td>cZone</td>
 	<td>acmewebhosting.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tClient</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcCommand</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLabel</td>
+	<td>Acme Admin</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cForClientPullDown</td>
+	<td>label=Acme Webhosting</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Authorize']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cPasswd</td>
+	<td>wsxedc</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Authorize']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Logout</td>
+	<td></td>
 </tr>
 
 </tbody></table>
