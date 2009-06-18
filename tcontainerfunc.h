@@ -471,7 +471,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
 				
 				guMode=7001;
-				tContainer("Select Migration Target");
+				tContainer("Select Target Node and IPv4");
 			}
 			else
 			{
@@ -891,7 +891,12 @@ void ExttContainerButtons(void)
                         printf("<p><u>Clone Wizard</u><br>");
 			printf("Here you will select the hardware node target. If the selected node is"
 				" oversubscribed, not available, or scheduled for maintenance. You will"
-				" be informed at the next step\n<p>\n");
+				" be informed at the next step.\n<p>\n"
+				"You also must carefully select a new IP that usually will of the same type"
+				" as the source container. Caveat-emptor.<p>"
+				"Any mount/umount files of the source container will not be used"
+				" by the new cloned container. This issue will be left for manual"
+				" or automated failover to the cloned container.<p>");
 			printf("Select target node ");
 			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
 			printf("<br>Select new IPv4 ");

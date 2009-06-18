@@ -1393,14 +1393,15 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//2-. scp dump to target node
 	//3-. restore on target node to new veid
 	//4-. change ip, name and hostname
-	//5-. change any other /etc/vz/conf/veid.x files for new IP
+	//5-. remove any other /etc/vz/conf/veid.x files
 	//6-. start new veid
 	//7-. update source container status
 	//8-. update target container status
+	//9-. remove /vz/dump files
 
 
 	//1-.
-	sprintf(gcQuery,"vzdump --suspend %u",uContainer);
+	sprintf(gcQuery,"vzdump --suspend %u > /dev/null 2>&1",uContainer);
 	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
@@ -1413,7 +1414,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//2-.
-	sprintf(gcQuery,"nice scp /vz/dump/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar",
+	sprintf(gcQuery,"nice scp /vz/dump/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar > /dev/null 2>&1",
 				uContainer,cTargetNodeIPv4,uContainer);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1427,7 +1428,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//3-.
-	sprintf(gcQuery,"ssh %s 'vzdump --restore /vz/dump/vzdump-%u.tar %u'",
+	sprintf(gcQuery,"ssh %s 'vzdump --restore /vz/dump/vzdump-%u.tar %u' > /dev/null 2>&1",
 				cTargetNodeIPv4,uContainer,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1441,7 +1442,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4a-.
-	sprintf(gcQuery,"ssh %s 'vzctl set %u --hostname %s --save'",
+	sprintf(gcQuery,"ssh %s 'vzctl set %u --hostname %s --save' > /dev/null 2>&1",
 				cTargetNodeIPv4,uNewVeid,cHostname);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1455,7 +1456,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4b-.
-	sprintf(gcQuery,"ssh %s 'vzctl set %u --name %s --save'",
+	sprintf(gcQuery,"ssh %s 'vzctl set %u --name %s --save' > /dev/null 2>&1",
 				cTargetNodeIPv4,uNewVeid,cName);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1469,7 +1470,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4c-.
-	sprintf(gcQuery,"ssh %s 'vzctl set %u --ipdel %s --save'",
+	sprintf(gcQuery,"ssh %s 'vzctl set %u --ipdel %s --save' > /dev/null 2>&1",
 				cTargetNodeIPv4,uNewVeid,cSourceContainerIP);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1483,7 +1484,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4d-.
-	sprintf(gcQuery,"ssh %s 'vzctl set %u --ipadd %s --save'",
+	sprintf(gcQuery,"ssh %s 'vzctl set %u --ipadd %s --save' > /dev/null 2>&1",
 				cTargetNodeIPv4,uNewVeid,cNewIP);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1496,16 +1497,26 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		printf("%s\n",gcQuery);
 	}
 
-	//5-. Create new umount and mount files if applicable
-	//1 is for overwrite mode yes
-	if(CreateMountFiles(uContainer,1))
+	//5-. Remove umount and mount files if found
+	//Business logic: Target container may have these files, but we need them only if we
+	//failover to this cloned VE. Also we defer to that action the setup of the
+	//containers tProperty values needed for processing the umount/mount templates:
+	//cNetmask, cNodeIP, cPrivateIPs, cService1, cService2, cVEID.mount and cVEID.umount.
+	sprintf(gcQuery,"ssh %1$s 'rm -f /etc/vz/conf/%2$u.umount /etc/vz/conf/%2$u.mount'",
+				cTargetNodeIPv4,uNewVeid);
+	if(uDebug==0 && system(gcQuery))
 	{
-		tJobErrorUpdate(uJob,"CreateMountFiles(x,1) 5 failed");
+		printf("CloneContainer() error: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"error 5");
 		goto CommonExit;
+	}
+	else if(uDebug)
+	{
+		printf("%s\n",gcQuery);
 	}
 
 	//6-.
-	sprintf(gcQuery,"ssh %s 'vzctl start %u'",cTargetNodeIPv4,uNewVeid);
+	sprintf(gcQuery,"ssh %s 'vzctl start %u' > /dev/null 2>&1",cTargetNodeIPv4,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
@@ -1520,10 +1531,25 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(uDebug)
 		return;
 
-	//Everything ok
+	//7-. 8-. Everything ok
 	SetContainerStatus(uContainer,1);//Active
 	SetContainerStatus(uNewVeid,1);//Active
 	tJobDoneUpdate(uJob);
+
+	//9a-. local
+	sprintf(gcQuery,"rm -f /vz/dump/vzdump-%u.tar",uNewVeid);
+	if(uDebug==0 && system(gcQuery))
+		printf("CloneContainer() non critical error: %s.\n",gcQuery);
+	else if(uDebug)
+		printf("%s\n",gcQuery);
+
+	//9b-. remote
+	sprintf(gcQuery,"ssh %s 'rm -f /vz/dump/vzdump-%u.tar'",cTargetNodeIPv4,uNewVeid);
+	if(uDebug==0 && system(gcQuery))
+		printf("CloneContainer() non critical error: %s.\n",gcQuery);
+	else if(uDebug)
+		printf("%s\n",gcQuery);
+
 
 CommonExit:
 	return;
