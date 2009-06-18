@@ -9,15 +9,28 @@ AUTHOR/LEGAL
 */
 
 static unsigned uClone=0;
+static unsigned uTargetNode=0;
+static char cuTargetNodePullDown[256]={""};
+static unsigned uWizIPv4=0;
+static char cuWizIPv4PullDown[32]={""};
+
 
 //ModuleFunctionProtos()
 void CopyProperties(unsigned uOldNode,unsigned uNewNode,unsigned uType);
 void DelProperties(unsigned uNode,unsigned uType);
 void tNodeNavList(unsigned uDataCenter);
 void htmlHealth(unsigned uContainer,unsigned uType);
-
 void tContainerNavList(unsigned uNode);//tcontainerfunc.h
 void htmlGroups(unsigned uNode, unsigned uContainer);
+
+//external
+//tcontainerfunc.h
+unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
+				unsigned uTargetNode, unsigned uNewVeid);
+unsigned CloneNode(char *cTargetNodeIPv4, unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4);
+//tcontainer.c
+void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
+                        const char *cOrderby, unsigned uSelector, unsigned uMode);
 
 void ExtProcesstNodeVars(pentry entries[], int x)
 {
@@ -26,6 +39,16 @@ void ExtProcesstNodeVars(pentry entries[], int x)
 	{
 		if(!strcmp(entries[i].name,"uClone")) 
 			uClone=1;
+		else if(!strcmp(entries[i].name,"cuTargetNodePullDown"))
+		{
+			sprintf(cuTargetNodePullDown,"%.255s",entries[i].val);
+			uTargetNode=ReadPullDown("tNode","cLabel",cuTargetNodePullDown);
+		}
+		else if(!strcmp(entries[i].name,"cuWizIPv4PullDown"))
+		{
+			sprintf(cuWizIPv4PullDown,"%.31s",entries[i].val);
+			uWizIPv4=ReadPullDown("tIP","cLabel",cuWizIPv4PullDown);
+		}
 	}
 
 }//void ExtProcesstNodeVars(pentry entries[], int x)
@@ -140,6 +163,62 @@ void ExttNodeCommands(pentry entries[], int x)
 			else
 				tNode("<blink>Error</blink>: Denied by permissions settings");
                 }
+                else if(!strcmp(gcCommand,"Clone Node Wizard"))
+                {
+                        ProcesstNodeVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			{
+				time_t uActualModDate= -1;
+
+                        	guMode=0;
+
+				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+				
+				guMode=7001;
+				tNode("Select Target Node and IPv4 range");
+			}
+			else
+			{
+				tNode("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Confirm Clone Node"))
+                {
+                        ProcesstNodeVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			{
+				time_t uActualModDate= -1;
+				char cTargetNodeIPv4[32]={""};
+
+                        	guMode=0;
+
+				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+
+                        	guMode=7001;
+				if(!uWizIPv4)
+					tNode("<blink>Error</blink>: You must select a start IP!");
+				if(uTargetNode==0)
+					tNode("<blink>Error</blink>: Please select a valid target node!");
+				if(uTargetNode==uNode)
+					tNode("<blink>Error</blink>: Can't clone to same node!");
+				GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
+				if(!cTargetNodeIPv4[0])
+					tNode("<blink>Error</blink>: Your target node is"
+							" missing it's cIPv4 property!");
+                        	guMode=0;
+
+				if(CloneNode(cTargetNodeIPv4,uNode,uTargetNode,uWizIPv4))
+					tNode("<blink>Error</blink>: CloneNode() had an error!");
+				else
+					tNode("Clone node jobs created ok");
+					
+
+			}
+		}
 	}
 
 }//void ExttNodeCommands(pentry entries[], int x)
@@ -150,6 +229,31 @@ void ExttNodeButtons(void)
 	OpenFieldSet("tNode Aux Panel",100);
 	switch(guMode)
         {
+                case 7001:
+                        printf("<p><u>Clone Wizard</u><br>");
+			printf("Here you will select the hardware node target. If the selected node is"
+				" oversubscribed, not available, or scheduled for maintenance. You will"
+				" be informed at the next step.\n<p>\n"
+				"You also must carefully select a new IP range that usually will be of"
+				" the same type as the source container. This is done by selecting a"
+				" starting IPv4 from the select below. Please note that enough available"
+				" IPs starting at the one given must be available for the node clone operation"
+				" to be accomplished.<p>"
+				"Any mount/umount files of the source container will not be used"
+				" by the new cloned container. This issue will be left for manual"
+				" or automated failover to the cloned container. If you wish to"
+				" keep the source and clone containers sync'ed you must specify that"
+				" in each clone container via a 'cSyncSchedule' entry in it's properties table.<p>");
+			printf("Select target node ");
+			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
+			printf("<br>Select start IPv4 ");
+			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
+			printf("<p><input title='Create clone jobs for all the current node`s containers"
+					" that don`t already have clones'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Clone Node'>\n");
+                break;
+
                 case 2000:
 			printf("<p><u>Enter/mod data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
@@ -187,7 +291,7 @@ void ExttNodeButtons(void)
 			if(uNode)
 			{
 				htmlHealth(uNode,2);
-				printf("<p><input disabled type=submit class=largeButton title='Clone all containers"
+				printf("<p><input type=submit class=largeButton title='Clone all containers"
 					" on this node to another node'"
 					" name=gcCommand value='Clone Node Wizard'><br>");
 			}
