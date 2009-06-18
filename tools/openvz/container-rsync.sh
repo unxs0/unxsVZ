@@ -14,7 +14,7 @@
 #
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
-	echo "usage $0 <local veid> <remote veid> <remote-host>";
+	echo "usage $0 <local clone veid> <remote production veid> <remote-server hostname/ip>";
 	exit 0;
 fi
 
@@ -22,6 +22,12 @@ ssh $3 "ls /vz/private/$2" > /dev/null 2>&1;
 if [ $? != 0 ]; then
 	echo "no $3 /vz/private/$2";
 	exit 1;
+fi
+
+grep -l "\-clone" /etc/vz/conf/$1.conf > /dev/null 2>&1;
+if [ $? != 0 ]; then
+        echo "local veid:$1 does not appear to be a clone";
+        exit 1;
 fi
 
 ls /vz/private/$1 > /dev/null 2>&1;
@@ -34,7 +40,7 @@ fi
 /usr/bin/rsync -avxlH \
 		 --delete \
 		--exclude "/proc" --exclude "/sys" --exclude "/dev" --exclude "/tmp" \
-		--exclude "/var/run" --exclude "/etc/sysconfig/network/" --exclude "/etc/sysconfig/network-scripts/" \
+		--exclude "/var/run" --exclude "/etc/sysconfig/network" --exclude "/etc/sysconfig/network-scripts/" \
 		--exclude "/var/lock" --exclude "etc/hosts" --exclude "etc/resolv.conf" \
 		--exclude "/var/lib/mlocate/mlocate.db" --exclude "/etc/rc.d/rc6.d/S00vzreboot" \
 		--exclude "/var/log/" --exclude "/var/lib/random-seed" --exclude "/var/spool/" \
