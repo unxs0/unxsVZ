@@ -48,6 +48,7 @@ unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCo
 unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned CloneNode(char *cTargetNodeIPv4, unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4);
 
 //tnodefunc.h
 void DelProperties(unsigned uNode,unsigned uType);
@@ -892,11 +893,13 @@ void ExttContainerButtons(void)
 			printf("Here you will select the hardware node target. If the selected node is"
 				" oversubscribed, not available, or scheduled for maintenance. You will"
 				" be informed at the next step.\n<p>\n"
-				"You also must carefully select a new IP that usually will of the same type"
+				"You also must carefully select a new IP that usually will be of the same type"
 				" as the source container. Caveat-emptor.<p>"
 				"Any mount/umount files of the source container will not be used"
 				" by the new cloned container. This issue will be left for manual"
-				" or automated failover to the cloned container.<p>");
+				" or automated failover to the cloned container. If you wish to"
+				" keep the source and clone container sync'ed you must specify that"
+				" in the clone container via a 'cSyncSchedule' entry in it's properties table.<p>");
 			printf("Select target node ");
 			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
 			printf("<br>Select new IPv4 ");
@@ -1660,3 +1663,75 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 	return(uCount);
 
 }//unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+
+
+unsigned CloneNode(char *cTargetNodeIPv4, unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4)
+{
+
+	//Loop for all container that belong to source node and do not have clones on the uTargetNode.
+	//For every loop iteration we must get a new available IP from tIP starting at uWizIPv4
+/*
+		sprintf(cWizLabel,"%.25s-clone",cLabel);
+		sprintf(cWizHostname,"%.93s.clone",cHostname);
+		sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%s',"
+					"cHostname='%s',"
+					"uIPv4=%u,"
+					"uOSTemplate=%u,"
+					"uConfig=%u,"
+					"uNameserver=%u,"
+					"uSearchdomain=%u,"
+					"uDatacenter=%u,"
+					"uNode=%u,"
+					"uStatus=81,"
+					"uOwner=%u,"
+					"uCreatedBy=%u,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							cWizLabel,
+							cWizHostname,
+							uWizIPv4,
+							uOSTemplate,
+							uConfig,
+							uNameserver,
+							uSearchdomain,
+							uDatacenter,
+							uTargetNode,
+							guCompany,
+							guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		uNewVeid=mysql_insert_id(&gMysql);
+
+
+		if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid))
+		{
+			sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+					",cName='Name',cValue='%s'",
+						uNewVeid,cWizLabel);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+					" WHERE uIP=%u",uWizIPv4);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+			uModBy=guLoginClient;
+			uStatus=81;
+			SetContainerStatus(uContainer,81);//Awaiting Clone
+			sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+			tContainer("CloneContainerJob() Done");
+		}
+		else
+		{
+			sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uNewVeid);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+			tContainer("<blink>Error</blink>: No jobs created!");
+		}
+
+*/
+	return(0);
+
+}//unsigned CloneNode()
