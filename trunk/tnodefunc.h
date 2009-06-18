@@ -1,11 +1,10 @@
 /*
 FILE
 	$Id$
-	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2007 Gary Wallis.
+AUTHOR/LEGAL
+	(C) 2001-2009 Gary Wallis for Unixservice. GPLv2 license applies.
  
 */
 
@@ -186,7 +185,12 @@ void ExttNodeButtons(void)
 			tContainerNavList(uNode);
 			tNodeNavList(0);
 			if(uNode)
+			{
 				htmlHealth(uNode,2);
+				printf("<p><input disabled type=submit class=largeButton title='Clone all containers"
+					" on this node to another node'"
+					" name=gcCommand value='Clone Node Wizard'><br>");
+			}
 	}
 	CloseFieldSet();
 
