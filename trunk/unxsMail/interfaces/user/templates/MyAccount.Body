@@ -108,7 +108,7 @@
 	</tr>
 	<tr>
 	<td width=33%><a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Confirm Password')"><b>Confirm New Password</b></td>
-	<td><input name=cPasswordConfirm title='Confirm your new password' type=text class=type_fields size=30 maxlength=99></td>
+	<td><input name=cConfirmPassword title='Confirm your new password' type=text class=type_fields size=30 maxlength=99></td>
 	</tr>
 	<tr><td>&nbsp;</td></tr>
 	<tr><td align=center colspan=2><input type=submit class=largeButton name name=gcFunction value='Update your password'></td></tr>
