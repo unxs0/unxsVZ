@@ -33,6 +33,7 @@ void htmlCmdOutput(void);
 void htmlCreateAccount(void);
 void CreateConfigs(void);
 void CreateConfigFromTemplate(unsigned uUserConfig, unsigned uUser, unsigned uConfigSpec);
+void EncryptPasswdWithSalt(char *pw, char *salt);
 
 unsigned AnswerIsCorrect(void);
 unsigned Update_tUser(char *cPasswd);
@@ -85,6 +86,7 @@ void MyAccountCommands(pentry entries[], int x)
 		{
 			if(!ValidateInput())
 				htmlMyAccount();
+
 		}
 		htmlMyAccount();
 	}
@@ -161,6 +163,33 @@ unsigned ValidateInput(void)
 	{
 		gcMessage="<blink>Error: </blink>You must enter your current password";
 		return(0);
+	}
+	else
+	{
+		MYSQL_RES *res;
+		MYSQL_ROW field;
+
+		sprintf(gcQuery,"SELECT cPasswd FROM tUser WHERE uUser=%u",guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			char cSalt[16]={""};
+			char cOldPasswordSave[100]={""};
+
+			sprintf(cSalt,"%.12s",field[0]);
+			sprintf(cOldPasswordSave,"%.99s",cOldPassword);
+			EncryptPasswdWithSalt(cOldPasswordSave,cSalt);
+
+			if(strcmp(cOldPasswordSave,field[0]))
+			{
+				gcMessage="<blink>Error: </blink>Your current password isn't valid";
+				return(0);
+			}
+
+		}
 	}
 	if(!cPasswd[0])
 	{
