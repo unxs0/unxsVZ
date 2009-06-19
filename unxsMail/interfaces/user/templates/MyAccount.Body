@@ -1,4 +1,3 @@
-
 <body marginwidth="0" marginheight="0">
 
 <div align="center" class="standard2colnee">
@@ -18,32 +17,21 @@
 			<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>
+						<td class="wpsSelectedPlace" nowrap height="100%">
+						<a title='Manage your account settings' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=MyAccount'><b class ="font10pt">Account Management</b></a>
+						</td>
+						<td class="wpsUnSelectedPlace" nowrap height="100%">
+						<a title='Manage your spam settings' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=SpamSettings'><b class ="font10pt">Spam Settings</b></a>
+						</td>
 					</tr>
 				</table>
 			</td>
 		</tr>
-<tr><td>&nbsp;</td></tr>
-							<tr>
-								<td class="mastbg2">
-
-									<table cellspacing="0" cellpadding="0" border="0" width="100%">
-									<tr valign="top">
-										
-										<td align="right" class="padt10">																				
-												<table cellspacing="0" cellpadding="0" border="0">
-													<tr>
-													<td>&nbsp;</td>
-
-													</tr>
-												</table>
-										</td>
-										
-										
-									</tr>
-									</table>
-								</td>
-							</tr>
-
+                <tr>
+		<td valign=top align=right class=notice>
+{{gcName}} ({{gcLogin}}) is logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout
+</a></td>
+                </tr>
 			</table>
 		</td>
 	</tr>
@@ -56,41 +44,75 @@
   <tr>
     <td>
 
-&nbsp;
+{{gcMessage}}
 <table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-    <td class="hdrtout padlt8" width="100%">
-		<h6 class="modhdr">Your Email Account Management Tools</h6>
+    <td class="hdrtout padlt8" width="33%">
+		<h6 class="modhdr">Customer Resource Panel</h6>
 	</td>
-	<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+    <td class="hdrtout padlt8">
+		<h6 class="modhdr">Account Settings</h6>
+	</td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
   <tr>
-    <td><img src="/images/clear.gif" width="9" height="9" /></td>
-
-    <td valign="top" width=33%>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td valign="top">
 	
 	
 	
-<table border="0" cellspacing="8" cellpadding="0" width="50%" class="table_content">
-	<tr>
-	<td width=150>
-	<a href=/?gcPage=MyAccount&gcFunction=PasswordReset>Reset your password</a></td>
-	</tr>
+<table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
+		<tr>
+		  <td>&nbsp;</td>
+		  <td>&nbsp;</td>
+		</tr>
+		<tr>
+			<td width=33%>
+			Left panel content
+			</td>
+		</tr>
+			
 	</table>
 	
 	
 	
 	
+	
 	</td>
-<td><img src="/images/clear.gif" width="9" height="9" /></td>
-		 
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
     <td>&nbsp;</td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td valign="top">
+	
+	
+<table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
+	<tr>
+	  <td valign="top">&nbsp;</td>
+	  <td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td valign="top">
+		Right panel content
+		</td>
+	</tr>
+</table>
+	
+	
+	
+	</td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
   </tr>
   <tr>
     <td></td>
-
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
     <td><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
     <td></td>
   </tr>
 </table>
@@ -101,5 +123,3 @@
   </tr>
 </table>
 </form>
-
-
