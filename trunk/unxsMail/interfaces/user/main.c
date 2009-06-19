@@ -137,8 +137,8 @@ int main(int argc, char *argv[])
 	{
 		if(!strncmp(gcFunction,"Logout",5))
 		{
-		printf("Set-Cookie: iRadiusLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-		printf("Set-Cookie: iRadiusPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+		printf("Set-Cookie: unxsMailUserLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+		printf("Set-Cookie: unxsMailUserPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
         		guPermLevel=0;
 			gcUser[0]=0;
 			guLoginClient=0;
@@ -146,14 +146,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
-        /*if(!strcmp(gcFunction,"Login")) SetLogin();
+        if(!strcmp(gcFunction,"Login")) SetLogin();
 
         if(!guPermLevel || !gcUser[0] || !guLoginClient)
-                SSLCookieLogin()¨;
+                SSLCookieLogin();
 
 	//First page after valid login
-	if(!strcmp(gcFunction,"Login"))
-		htmlMyAccountd();*/
+//	if(!strcmp(gcFunction,"Login"))
+//		htmlMyAccountd();
 
 	//Per page command tree
 	MyAccountCommands(entries,i);
@@ -191,7 +191,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="index.cgi";
+			template.cpValue[1]="unxsMailUser.cgi";
 			
 			template.cpName[2]="cMessage";
 			template.cpValue[2]=gcMessage;
@@ -285,7 +285,7 @@ void htmlFooter(char *cTemplateName)
 			template.cpName[1]="cIspUrl";
 			template.cpValue[1]=ISPURL;
 			template.cpName[2]="cCopyright";
-			template.cpValue[2]="&copy; 2008 Unixservice. All Rights Reserved.";
+			template.cpValue[2]="&copy; 2009 Unixservice. All Rights Reserved.";
 			template.cpName[3]="";
 
 			printf("\n<!-- Start htmlFooter(%s) -->\n",cTemplateName); 
@@ -350,7 +350,7 @@ char *cGetPasswd(char *gcLogin)
 	//SQL injection code
 	if((cp=strchr(gcLogin,'\''))) *cp=0;
 
-	sprintf(gcQuery,"SELECT cPasswd FROM tAuthorize WHERE cLabel='%s'",
+	sprintf(gcQuery,"SELECT cPasswd FROM tUser WHERE cLogin='%s'",
 			gcLogin);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -385,9 +385,9 @@ void SSLCookieLogin(void)
 	if(gcCookie[0])
 	{
 
-	if((ptr=strstr(gcCookie,"iRadiusLogin=")))
+	if((ptr=strstr(gcCookie,"unxsMailUserLogin=")))
 	{
-		ptr+=strlen("iRadiusLogin=");
+		ptr+=strlen("unxsMailUserLogin=");
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
@@ -399,18 +399,18 @@ void SSLCookieLogin(void)
 			sprintf(gcLogin,"%.99s",ptr);
 		}
 	}
-	if((ptr=strstr(gcCookie,"iRadiusPasswd=")))
+	if((ptr=strstr(gcCookie,"unxsMailUserPasswd=")))
 	{
-		ptr+=strlen("iRadiusPasswd=");
+		ptr+=strlen("unxsMailUserPasswd=");
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
-			sprintf(gcPasswd,"%.20s",ptr);
+			sprintf(gcPasswd,"%.99s",ptr);
 			*ptr2=';';
 		}
 		else
 		{
-			sprintf(gcPasswd,"%.20s",ptr);
+			sprintf(gcPasswd,"%.99s",ptr);
 		}
 	}
 	
@@ -422,7 +422,8 @@ void SSLCookieLogin(void)
 	sprintf(gcUser,"%.41s",gcLogin);
 	GetPLAndClient(gcUser);
 	if(!guPermLevel || !guLoginClient)
-		htmlPlainTextError("Unexpected guPermLevel or guLoginClient value");
+		printf("Content-type: text/plain\n\nguPermLevel=%u guLoginClient=%u\n",guPermLevel,guLoginClient);
+//		htmlPlainTextError("Unexpected guPermLevel or guLoginClient value");
 		
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
@@ -435,33 +436,18 @@ void GetPLAndClient(char *cUser)
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 
-	sprintf(gcQuery,"SELECT tAuthorize.uPerm,tAuthorize.uCertClient,tClient.cLabel,tClient.uOwner FROM tAuthorize,tClient WHERE tAuthorize.uCertClient=tClient.uClient AND tAuthorize.cLabel='%s'",cUser);
+	sprintf(gcQuery,"SELECT uUser FROM tUser WHERE cLogin='%s'",cUser);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	mysqlRes=mysql_store_result(&gMysql);
 	if((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
-		sscanf(mysqlField[0],"%d",&guPermLevel);
-		sscanf(mysqlField[1],"%u",&guLoginClient);
-		sprintf(gcName,"%.100s",mysqlField[2]);
-		sscanf(mysqlField[3],"%u",&guOrg);
+		sscanf(mysqlField[0],"%u",&guLoginClient);
 	}
 	mysql_free_result(mysqlRes);
 
-	if(guOrg==1)
-		sprintf(gcOrgName,"ASP Provider");
-	else
-	{
-		sprintf(gcQuery,"SELECT cLabel FROM tClient WHERE uClient=%u",guOrg);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		mysqlRes=mysql_store_result(&gMysql);
-		if((mysqlField=mysql_fetch_row(mysqlRes)))
-			sprintf(gcOrgName,"%.100s",mysqlField[0]);
-		mysql_free_result(mysqlRes);
-	}
+	guPermLevel=1;
 
 }//void GetPLAndClient()
 
@@ -481,7 +467,7 @@ void EncryptPasswdWithSalt(char *pw, char *salt)
 
 int iValidLogin(int mode)
 {
-	char cSalt[3]={""};
+	char cSalt[16]={""};
 	char cPassword[100]={""};
 
 	//Notes:
@@ -492,7 +478,7 @@ int iValidLogin(int mode)
 	{
 		if(!mode)
 		{
-			sprintf(cSalt,"%.2s",cPassword);
+			sprintf(cSalt,"%.12s",cPassword);
 			EncryptPasswdWithSalt(gcPasswd,cSalt);
 			if(!strcmp(gcPasswd,cPassword))
 					return 1;
@@ -512,8 +498,8 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: iRadiusLogin=%s;\n",gcLogin);
-		printf("Set-Cookie: iRadiusPasswd=%s;\n",gcPasswd);
+		printf("Set-Cookie: unxsMailUserLogin=%s;\n",gcLogin);
+		printf("Set-Cookie: unxsMailUserPasswd=%s;\n",gcPasswd);
 		sprintf(gcUser,"%.41s",gcLogin);
 		guSSLCookieLogin=1;
 	}
