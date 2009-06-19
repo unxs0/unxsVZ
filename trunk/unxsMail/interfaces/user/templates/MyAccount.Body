@@ -95,10 +95,24 @@
 	  <td>&nbsp;</td>
 	</tr>
 	<tr>
-		<td valign="top">
-		Right panel content
-		</td>
+		<td align=center bgcolor="#e9e9e9" colspan=2 valign="top"><b>Password Update</b></td>		
 	</tr>
+	<tr><td>&nbsp;</td></tr>
+	<tr>
+	<td width=33%><a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Current Password')"><b>Current Password</b></td>
+	<td><input name=cOldPassword title='Enter your current password' type=text class=type_fields size=30 maxlength=99></td>
+	</tr>
+	<tr>
+	<td width=33%><a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=New Password')"><b>New Password</b></td>
+	<td><input name=cPassword title='Enter your new password' type=text class=type_fields size=30 maxlength=99></td>
+	</tr>
+	<tr>
+	<td width=33%><a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Confirm Password')"><b>Confirm New Password</b></td>
+	<td><input name=cPasswordConfirm title='Confirm your new password' type=text class=type_fields size=30 maxlength=99></td>
+	</tr>
+	<tr><td>&nbsp;</td></tr>
+	<tr><td align=center colspan=2><input type=submit class=largeButton name name=gcFunction value='Update your password'></td></tr>
+
 </table>
 	
 	
