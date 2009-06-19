@@ -111,7 +111,7 @@
 	<td><input name=cConfirmPassword title='Confirm your new password' type=text class=type_fields size=30 maxlength=99></td>
 	</tr>
 	<tr><td>&nbsp;</td></tr>
-	<tr><td align=center colspan=2><input type=submit class=largeButton name name=gcFunction value='Update your password'></td></tr>
+	<tr><td align=center colspan=2><input type=submit class=largeButton name=gcFunction value='Update your password'></td></tr>
 
 </table>
 	
@@ -136,4 +136,5 @@
 	</td>
   </tr>
 </table>
+<input type=hidden name=gcPage value='MyAccount'>
 </form>
