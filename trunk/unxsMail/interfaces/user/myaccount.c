@@ -23,27 +23,12 @@ static char cConfirmPasswd[65]={""};
 //
 //Local only functions
 void LowerCase(char *cString);
-void MyGetConfiguration(MYSQL *gMysql,char *cName,char *cValue);
 void to64(register char *s, register long v, register int n);
 void EncryptPasswd(char *pw);
-void LoadSecretQuestion(void);
-void LoadAccountDefaultData(void);
-void htmlPasswordReset(unsigned uStep);
-void htmlCmdOutput(void);
-void htmlCreateAccount(void);
-void CreateConfigs(void);
-void CreateConfigFromTemplate(unsigned uUserConfig, unsigned uUser, unsigned uConfigSpec);
-void EncryptPasswdWithSalt(char *pw, char *salt);
-
-unsigned AnswerIsCorrect(void);
-unsigned Update_tUser(char *cPasswd);
-unsigned uIdStatus(char *cId);
-unsigned uValidUser(char *cEmail);
+void UpdatePassword(void);
 unsigned ValidateInput(void);
-unsigned CreateEmailAccount(void);
-
-char *GenerateRandomPassword(void);
-
+void EncryptPasswdMD5(char *pw);
+void EncryptPasswdWithSalt(char *cPasswd,char *cSalt);
 
 void ProcessMyAccountVars(pentry entries[], int x)
 {
@@ -86,7 +71,7 @@ void MyAccountCommands(pentry entries[], int x)
 		{
 			if(!ValidateInput())
 				htmlMyAccount();
-
+			UpdatePassword();
 		}
 		htmlMyAccount();
 	}
@@ -243,4 +228,45 @@ void LowerCase(char *cString)
 
 }//void LowerCase(char *cString)
 
+
+void UpdatePassword(void)
+{
+	EncryptPasswdMD5(cPasswd);
+	if(Update_tUser(cPasswd))
+		gcMessage="Your account password was updated sucessfully. You need to re-login";
+	else
+		gcMessage="Your account password could not be updated. Contact support ASAP";
+
+
+}//void UpdatePassword(void)
+
+//Passwd stuff
+static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
+        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+void to64(s, v, n)
+  register char *s;
+  register long v;
+  register int n;
+{
+    while (--n >= 0) {
+        *s++ = itoa64[v&0x3f];
+        v >>= 6;
+    }
+}//void to64(s, v, n)
+
+
+void EncryptPasswdMD5(char *pw)
+{
+	char cSalt[] = "$1$01234567$";
+        char *cpw;
+
+    	(void)srand((int)time((time_t *)NULL));
+    	to64(&cSalt[3],rand(),8);
+	
+	cpw = crypt(pw,cSalt);
+	strcpy(pw,cpw);
+
+}//void EncryptPasswdMD5(char *pw)
+//End passwd stuff ;)
 
