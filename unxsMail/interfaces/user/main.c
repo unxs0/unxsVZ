@@ -422,8 +422,7 @@ void SSLCookieLogin(void)
 	sprintf(gcUser,"%.41s",gcLogin);
 	GetPLAndClient(gcUser);
 	if(!guPermLevel || !guLoginClient)
-		printf("Content-type: text/plain\n\nguPermLevel=%u guLoginClient=%u\n",guPermLevel,guLoginClient);
-//		htmlPlainTextError("Unexpected guPermLevel or guLoginClient value");
+		htmlPlainTextError("Unexpected guPermLevel or guLoginClient value");
 		
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
@@ -514,7 +513,6 @@ void SetLogin(void)
 //
 //End login fuctions section
 //
-//RAD / mysqlBind functions
 
 void SubmitJob(char *cJobName,char *cDomain,char *cLogin,char *cServerGroup,char *cJobData,
 		unsigned uJobTarget,unsigned uJobTargetUser,unsigned uOwner,unsigned uCreatedBy)
