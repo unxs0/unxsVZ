@@ -1,0 +1,9 @@
+NOTES
+
+vzdump requires cstream and an MTA. You can get cstream via yum from the rpmforge
+repo. If you have sendmail installed you will have to do an:
+
+rpm -nodeps -i <the vzdump rpm> install. 
+
+This is due to an error in the sendmail packaging not marking it as supplying
+an MTA, on the other hand exim does inform that it supplies an MTA.
