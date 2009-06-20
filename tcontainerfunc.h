@@ -93,6 +93,9 @@ void ExttContainerCommands(pentry entries[], int x)
 	if(!strcmp(gcFunction,"tContainerTools"))
 	{
 		unsigned uNodeDatacenter=0;
+        	MYSQL_RES *res;
+		time_t uActualModDate= -1;
+
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -123,8 +126,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uDatacenter!=uNodeDatacenter)
 					tContainer("<blink>Error</blink>: The specified uNode does not "
 							"belong to the specified uDatacenter.");
-				if(uIPv4==0)
-					tContainer("<blink>Error</blink>: uIPv4==0!");
 				if(uConfig==0)
 					tContainer("<blink>Error</blink>: uConfig==0!");
 				if(uNameserver==0)
@@ -137,6 +138,28 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: cLabel too short!");
 				if(strchr(cLabel,'.'))
 					tContainer("<blink>Error</blink>: cLabel has at least one '.'!");
+				if(strstr(cLabel,"-clone"))
+					tContainer("<blink>Error</blink>: cLabel can't have '-clone'!");
+				if(strstr(cHostname,".clone"))
+					tContainer("<blink>Error</blink>: cHostname can't have '.clone'!");
+				//No same names or hostnames for same datacenter allowed.
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
+						" AND uDatacenter=%u",cHostname,cLabel,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+					mysql_free_result(res);
+					tContainer("<blink>Error</blink>: cHostname or cLabel already used at this"
+							" datacenter!");
+				}
+				mysql_free_result(res);
+
+				if(uIPv4==0)
+					tContainer("<blink>Error</blink>: uIPv4==0!");
+
                         	guMode=0;
 
 				uStatus=11;//Initial setup
@@ -146,14 +169,23 @@ void ExttContainerCommands(pentry entries[], int x)
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				NewtContainer(1);
-				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-						",cName='Name',cValue='%s'",
-							uContainer,cLabel);
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+						" WHERE uIP=%u AND uAvailable=1",uIPv4);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-						" WHERE uIP=%u",uIPv4);
+				if(mysql_affected_rows(&gMysql)!=1)
+				{
+					sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					tContainer("<blink>Error</blink>: Someone grabbed your IP"
+							", No container created!");
+				}
+				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",cName='Name',cValue='%s'",
+							uContainer,cLabel);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -169,6 +201,10 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+
 	                        guMode=2001;
 				tContainer(LANG_NB_CONFIRMDEL);
 			}
@@ -182,12 +218,16 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+
 				guMode=5;
 				uStatus=0;//Internal hack for deploy button
 				DelProperties(uContainer,3);
 				//Release IP
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
-						" WHERE uIP=%u",uIPv4);
+						" WHERE uIP=%u and uAvailable=0",uIPv4);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -208,13 +248,17 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if( (uStatus==11  || uStatus==31) && uAllowMod(uOwner,uCreatedBy))
 			{
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+
 				guMode=2002;
 
 				//UI trick: Set the selected IP as available, otherwise it doesn't show up
 				//at the IP dropdown. Upon confirm modify it will be set unavailable again
 				//or if the IP is changed, it will be 'released' by this query below ;)
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
-						" WHERE uIP=%u",uIPv4);
+						" WHERE uIP=%u AND uAvailable=0",uIPv4);
 						
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
@@ -231,6 +275,10 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if( (uStatus==11  || uStatus==31) && uAllowMod(uOwner,uCreatedBy))
 			{
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+
                         	guMode=2002;
 				//Check entries here
 				if(uContainer==0)
@@ -251,11 +299,34 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: uNameserver==0!");
 				if(uSearchdomain==0)
 					tContainer("<blink>Error</blink>: uSearchdomain==0!");
+				if(strlen(cHostname)<5)
+					tContainer("<blink>Error</blink>: cHostname too short!");
+				if(strlen(cLabel)<2)
+					tContainer("<blink>Error</blink>: cLabel too short!");
+				if(strstr(cLabel,"-clone"))
+					tContainer("<blink>Error</blink>: cLabel can't have '-clone'!");
+				if(strstr(cHostname,".clone"))
+					tContainer("<blink>Error</blink>: cHostname can't have '.clone'!");
+				//No same names or hostnames for same datacenter allowed.
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
+						" AND uContainer!=%u",
+							cHostname,cLabel,uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+					mysql_free_result(res);
+					tContainer("<blink>Error</blink>: cHostname or cLabel already used at this"
+							" datacenter!");
+				}
+				mysql_free_result(res);
                         	guMode=0;
 
 				//Set the selected IP as not available upon modify
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-						" WHERE uIP=%u",uIPv4);
+						" WHERE uIP=%u AND uAvailable=1",uIPv4);
 						
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
@@ -274,8 +345,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==31 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -306,8 +375,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==11 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -339,8 +406,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if((uStatus==1 || uStatus==31) && uAllowDel(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 					
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -369,8 +434,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==1 && uAllowDel(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 					
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -399,8 +462,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 				if(uStatus!=5 && uStatus!=6 && uStatus!=41)
 					tContainer("<blink>Error</blink>: Unexpected uStatus!");
@@ -429,13 +490,11 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
 		}
-                else if(!strcmp(gcCommand,"Create mount files"))
+                else if(!strcmp(gcCommand,"Create Mount Files"))
                 {
                         ProcesstContainerVars(entries,x);
 			if( (uStatus==31 || uStatus==11 ) && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -463,8 +522,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -484,7 +541,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
 				unsigned uNewVeid=0;
 				char cTargetNodeIPv4[32]={""};
 
@@ -541,17 +597,26 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid))
 				{
+					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+							" WHERE uIP=%u AND uAvailable=1",uWizIPv4);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					if(mysql_affected_rows(&gMysql)!=1)
+					{
+						sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uNewVeid);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						tContainer("<blink>Error</blink>: Someone grabbed your IP"
+								", No jobs created!");
+					}
 					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
 							",cName='Name',cValue='%s'",
 								uNewVeid,cWizLabel);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
-					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-							" WHERE uIP=%u",uWizIPv4);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
 					uModBy=guLoginClient;
 					uStatus=81;
 					SetContainerStatus(uContainer,81);//Awaiting Clone
@@ -577,8 +642,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -597,8 +660,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -634,8 +695,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -654,8 +713,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -688,8 +745,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -708,8 +763,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -721,6 +774,20 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: cLabel too short!");
 				if(strchr(cWizLabel,'.'))
 					tContainer("<blink>Error</blink>: cLabel has at least one '.'!");
+				//No same names or hostnames for same datacenter allowed.
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
+						" AND uDatacenter=%u",cHostname,cLabel,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+					mysql_free_result(res);
+					tContainer("<blink>Error</blink>: cHostname or cLabel already used at this"
+							" datacenter!");
+				}
+				mysql_free_result(res);
                         	guMode=0;
 
 				sprintf(gcQuery,"UPDATE tContainer SET cLabel='%s',cHostname='%s'"
@@ -752,8 +819,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -772,7 +837,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
 				unsigned uOldIPv4;
 
                         	guMode=0;
@@ -929,7 +993,10 @@ void ExttContainerButtons(void)
 			printf("Setup or modify a container by selecting a meaningful cLabel,"
 				" a correct datacenter and hardware node. You usually should start with"
 				" a similar container. Most properties are created by data collection agents"
-				", others like <i>Notes</i> are user created and maintained.");
+				", others like <i>Notes</i> are user created and maintained.<p>"
+				"Special properties cVEID.mount and cVEID.umount are used via"
+				" their tTemplate matching values (see tTemplate for more info)"
+				" to create /etc/vz/conf/VEID.(u)mount files.");
 			printf("<p><u>Record Context Info</u><br>");
 			if(uContainer && uNode)
 			{
@@ -955,6 +1022,7 @@ void ExttContainerButtons(void)
 					" Creates and installs OS and VZ conf templates on all nodes.'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Template Wizard'><br>\n");
+					if(!strstr(cLabel,"-clone"))
 					printf("<input title='Clone a container to current or another hardware node."
 					" The clone will be an online container with another IP and hostname."
 					" It will be kept updated via rsync on a configurable basis.'"
@@ -980,12 +1048,12 @@ void ExttContainerButtons(void)
 					printf("<p><input title='Creates a job for starting a stopped container.'"
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Start %.25s'>\n",cLabel);
-
-				if(uStatus==31 || uStatus==11)
+				if( (uStatus==31 || uStatus==11) && !strstr(cLabel,"-clone"))
 					printf("<br><input title='If container mount or umount files do not"
-					" exist they will be created from tProperty data'"
+					" exist they will be created from tProperty data items: cVEID.mount"
+					" and cVEID.umount'"
 					" type=submit class=largeButton"
-					" name=gcCommand value='Create mount files'>\n");
+					" name=gcCommand value='Create Mount Files'>\n");
 			}
 	}
 	CloseFieldSet();
