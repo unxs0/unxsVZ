@@ -27,7 +27,7 @@ void htmlGroups(unsigned uNode, unsigned uContainer);
 //tcontainerfunc.h
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 				unsigned uTargetNode, unsigned uNewVeid);
-unsigned CloneNode(char *cTargetNodeIPv4, unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4);
+unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4);
 //tcontainer.c
 void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
@@ -191,6 +191,7 @@ void ExttNodeCommands(pentry entries[], int x)
 			{
 				time_t uActualModDate= -1;
 				char cTargetNodeIPv4[32]={""};
+				unsigned uRetVal=0;
 
                         	guMode=0;
 
@@ -211,10 +212,20 @@ void ExttNodeCommands(pentry entries[], int x)
 							" missing it's cIPv4 property!");
                         	guMode=0;
 
-				if(CloneNode(cTargetNodeIPv4,uNode,uTargetNode,uWizIPv4))
-					tNode("<blink>Error</blink>: CloneNode() had an error!");
-				else
-					tNode("Clone node jobs created ok");
+				
+				uRetVal=CloneNode(uNode,uTargetNode,uWizIPv4);
+				if(uRetVal==1)
+					tNode("<blink>Error</blink>: You did not select a valid start IP"
+						" no containers for cloning created!");
+				else if(uRetVal==2)
+					tNode("<blink>Error</blink>: No clone jobs created. Already cloned!");
+				else if(uRetVal==3)
+					tNode("<blink>Error</blink>: You did not select a valid start IP"
+						" only some containers for cloning created!");
+				else if(uRetVal)
+					tNode("<blink>Error</blink>: Unexpected CloneNode() error!");
+				else if(!uRetVal)
+					tNode("All clone node jobs created ok");
 					
 
 			}
@@ -238,7 +249,7 @@ void ExttNodeButtons(void)
 				" the same type as the source container. This is done by selecting a"
 				" starting IPv4 from the select below. Please note that enough available"
 				" IPs starting at the one given must be available for the node clone operation"
-				" to be accomplished.<p>"
+				" to be accomplished. The IP range selected must be contiguous via tIP.uIP.<p>"
 				"Any mount/umount files of the source container will not be used"
 				" by the new cloned container. This issue will be left for manual"
 				" or automated failover to the cloned container. If you wish to"
