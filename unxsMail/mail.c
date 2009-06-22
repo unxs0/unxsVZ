@@ -1115,11 +1115,10 @@ void ProcessJobQueue(char *cServer)
 		{
 			unsigned uTargetUser=0;
 			sscanf(field[3],"%u",&uTargetUser);
-			UpdateUserConfig(uTargetUser,uJob);
-			/*if(UpdateUserConfig(uTargetUser))
+			if(UpdateUserConfig(uTargetUser,uJob))
 				UpdateJobStatus(uJob,JOBSTATUS_FATAL_ERROR);
 			else
-				UpdateJobStatus(uJob,JOBSTATUS_DONE);*/
+				UpdateJobStatus(uJob,JOBSTATUS_DONE);
 		}
 
 		//No job handler -yet?
@@ -3023,7 +3022,7 @@ int UpdateUserConfig(unsigned uUser,unsigned uJob)//,unsigned uNew)
 	}
 
 	//printf("uUserConfig=%u\n",uUserConfig);
-	sprintf(gcQuery,"SELECT cConfig,cPath,cOwner,cGroup,,cNewExec,cModExec "
+	sprintf(gcQuery,"SELECT cConfig,cPath,cOwner,cGroup,cNewExec,cModExec "
 			"FROM tUserConfig,tConfigSpec WHERE tUserConfig.uConfigSpec=tConfigSpec.uConfigSpec "
 			"AND tUserConfig.uUser=%u",
 			uUser);
@@ -3046,7 +3045,8 @@ int UpdateUserConfig(unsigned uUser,unsigned uJob)//,unsigned uNew)
 		
 		if((fp=fopen(cPath,"w"))==NULL)
 		{
-			TextError("fopen() error",1);
+			sprintf(gcQuery,"fopen() error. Could not open %s",cPath);
+			TextError(gcQuery,1);
 			return(1);
 		}
 
