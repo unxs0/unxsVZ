@@ -55,7 +55,23 @@ void SpamSettingsCommands(pentry entries[], int x)
 		ProcessSpamSettingsVars(entries,x);
 		if(!strcmp(gcFunction,"Update Settings"))
 		{
-			UpdateSpamSettings();			
+			MYSQL_RES *res;
+			MYSQL_ROW field;
+			char cJobData[100]={""};
+
+			UpdateSpamSettings();
+			
+			sprintf(gcQuery,"SELECT uUserConfig,uConfigSpec FROM tUserConfig WHERE "
+					"cLabel='standard spamassassin file' AND uUser=%u",
+					guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cJobData,"uUserConfig=%s;\nuConfigSpec=%s;\n",field[0],field[1]);
+			MySubmitJob("ModUserConfig",cJobData);
+
 		}
 		htmlSpamSettings();
 	}
