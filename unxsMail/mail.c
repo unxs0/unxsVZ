@@ -48,6 +48,7 @@ unsigned uFileExists(char *cPath,unsigned uSymLink);
 unsigned PrepSingleUserHomeDir(unsigned uUID,char const *cLogin);
 unsigned MakeUserPrefs(unsigned uUser);
 int UpdateVacationStatus(unsigned uUser);
+int UpdateUserConfig(unsigned uUser,unsigned uJob);
 
 //These should be common to all our RAD3 backends
 int ChangeSystemPasswd(char *cLogin, char *cPasswd);
@@ -1109,6 +1110,18 @@ void ProcessJobQueue(char *cServer)
 			else
 				UpdateJobStatus(uJob,JOBSTATUS_DONE);
 		}
+		 else if(        !strcmp(field[1],"NewUserConfig") ||
+		 		!strcmp(field[1],"ModUserConfig") )
+		{
+			unsigned uTargetUser=0;
+			sscanf(field[3],"%u",&uTargetUser);
+			UpdateUserConfig(uTargetUser,uJob);
+			/*if(UpdateUserConfig(uTargetUser))
+				UpdateJobStatus(uJob,JOBSTATUS_FATAL_ERROR);
+			else
+				UpdateJobStatus(uJob,JOBSTATUS_DONE);*/
+		}
+
 		//No job handler -yet?
 		else if(1)
 		{
@@ -2978,4 +2991,38 @@ int UpdateVacationStatus(unsigned uUser)
 	return(0);
 	
 }//int UpdateVacationStatus(unsigned uUser)
+
+
+int UpdateUserConfig(unsigned uUser,unsigned uJob)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cJobData[100]={""};
+	unsigned uUserConfig=0;
+
+	sprintf(gcQuery,"SELECT cJobData FROM tJob WHERE uJob=%u",uJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		TextError(mysql_error(&gMysql),1);
+		return(1);
+	}
+
+	res=mysql_store_result(&gMysql);
+	
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp,*cp2;
+		sprintf(cJobData,"%.99s",field[0]);
+		if((cp=strstr(cJobData,"uUserConfig=")))
+		{
+			cp2=NULL;
+			if((cp2=strchr(cp+12,';'))) *cp2=0;
+			sscanf(cp+12,"%u",&uUserConfig);
+			if(cp2) *cp2=';';
+		}
+	}
+
+	printf("uUserConfig=%u\n",uUserConfig);
+}//int UpdateUserConfig(unsigned uUser)
 
