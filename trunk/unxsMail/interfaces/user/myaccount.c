@@ -72,6 +72,8 @@ void MyAccountCommands(pentry entries[], int x)
 			if(!ValidateInput())
 				htmlMyAccount();
 			UpdatePassword();
+
+			MySubmitJob("ModUser","");
 		}
 		htmlMyAccount();
 	}
@@ -269,4 +271,32 @@ void EncryptPasswdMD5(char *pw)
 
 }//void EncryptPasswdMD5(char *pw)
 //End passwd stuff ;)
+
+
+void MySubmitJob(char *cJobName,char *cJobData)
+{
+	char cDomain[100]={""};
+	char cServerGroup[100]={""};
+	unsigned uDomain=0;
+	unsigned uServerGroup=0;
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uDomain,uServerGroup FROM tUser WHERE uUser=%u",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uDomain);
+		sscanf(field[1],"%u",&uServerGroup);
+	}
+	mysql_free_result(res);
+
+	sprintf(cDomain,"%s",ForeignKey("tDomain","cDomain",uDomain));
+	sprintf(cServerGroup,"%s",ForeignKey("tServerGroup","cLabel",uServerGroup));
+	SubmitJob(cJobName,cDomain,gcLogin,cServerGroup,cJobData,uDomain,guLoginClient,1,1);
+
+}//void MySubmitJob(char *cJobName)
 

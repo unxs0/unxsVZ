@@ -84,6 +84,7 @@ void MyAccountGetHook(entry gentries[],int x);
 void MyAccountCommands(pentry entries[], int x);
 void htmlMyAccount(void);
 void htmlMyAccountPage(char *cTitle, char *cTemplateName);
+void MySubmitJob(char *cJobName,char *cJobData);
 
 //spam.c
 void ProcessSpamSettingsVars(pentry entries[], int x);
