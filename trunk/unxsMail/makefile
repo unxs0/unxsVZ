@@ -155,7 +155,7 @@ cleandist:
 	rm -f *.o *.gz
 
 install: unxsMail.cgi
-	install -s unxsMail.cgi $(CGIDIR)unxsMail.cgi
+	install -s unxsMail.cgi /var/www/unxs/cgi-bin/unxsMail.cgi
 	rm unxsMail.cgi
 
 distribution:
