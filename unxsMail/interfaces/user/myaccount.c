@@ -207,7 +207,7 @@ unsigned ValidateInput(void)
 
 unsigned Update_tUser(char *cPasswd)
 {
-	sprintf(gcQuery,"UPDATE tUser SET cPasswd='%s',uStatus=%u,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uUser=%u'",
+	sprintf(gcQuery,"UPDATE tUser SET cPasswd='%s',uStatus=%u,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uUser=%u",
 			cPasswd
 			,STATUS_PENDING_MOD
 			,guLoginClient);
