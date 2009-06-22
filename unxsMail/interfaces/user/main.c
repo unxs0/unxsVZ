@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{
 		//Get	
-		//SSLCookieLogin();
+		SSLCookieLogin();
 		
 		gcl = getenv("QUERY_STRING");
 		for(i=0;gcl[0] != '\0' && i<MAXGETVARS;i++)
@@ -107,7 +107,10 @@ int main(int argc, char *argv[])
 		{
 			if(!strcmp(gcPage,"MyAccount"))
 				MyAccountGetHook(gentries,i);
+			else if(!strcmp(gcPage,"SpamSettings"))
+				SpamSettingsGetHook(gentries,i);
 		}
+
 	}
 	else
 	{
