@@ -36,7 +36,6 @@ void SpamSettingsGetHook(entry gentries[],int x)
 	for(i=0;i<x;i++)
 	{
 	}
-
 	*/
 	htmlSpamSettings();
 }//void SpamSettingsGetHook(entry gentries[],int x)
