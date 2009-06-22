@@ -85,6 +85,13 @@ void MyAccountCommands(pentry entries[], int x);
 void htmlMyAccount(void);
 void htmlMyAccountPage(char *cTitle, char *cTemplateName);
 
+//spam.c
+void ProcessSpamSettingsVars(pentry entries[], int x);
+void SpamSettingsGetHook(entry gentries[],int x);
+void SpamSettingsCommands(pentry entries[], int x);
+void htmlSpamSettings(void);
+void htmlSpamSettingsPage(char *cTitle, char *cTemplateName);
+
 //glossary.c
 void GlossaryGetHook(entry gentries[],int x);
 void htmlGlossary(void);
