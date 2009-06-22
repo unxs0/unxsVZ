@@ -43,6 +43,7 @@ void SpamSettingsGetHook(entry gentries[],int x)
 	{
 	}
 	*/
+	LoadSpamSettings();
 	htmlSpamSettings();
 }//void SpamSettingsGetHook(entry gentries[],int x)
 
@@ -148,6 +149,7 @@ void LoadSpamSettings(void)
 	if((field=mysql_fetch_row(res)))
 	{
 		cSpamSettings=field[0];
+		gcMessage="Your spam settings were loaded OK";
 	}
 	else
 	{
