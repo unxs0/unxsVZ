@@ -1575,10 +1575,29 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 	char cVeID[32]={""};//required
 	char cService1[256]={"80"};//default
 	char cService2[256]={"443"};//default
+	unsigned uNode=0;
 	char cNodeIP[256]={""};//required
 	char cNetmask[256]={"255.255.255.0"};//default
 	char cPrivateIPs[256]={"10.0.0.0/24"};//default
 	struct stat statInfo;
+
+
+	sprintf(gcQuery,"SELECT uNode FROM tContainer WHERE uContainer=%u",uContainer);
+	mysqlrad_Query_TextErr_Exit;
+	res2=mysql_store_result(&gMysql);
+	if((field2=mysql_fetch_row(res2)))
+	{
+		sscanf(field2[0],"%u",&uNode);
+		GetNodeProp(uNode,"cIPv4",cNodeIP);
+	}
+	mysql_free_result(res2);
+
+	if(!cNodeIP[0])
+	{
+		printf("CreateMountFiles() error: tNode.uNode=%u:cIPv4 missing. Set in node property.\n",
+				uNode);
+		goto CommonExit;
+	}
 
 	sprintf(cVeID,"%u",uContainer);	
 
@@ -1588,7 +1607,6 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 	//stat returns 0 if file exists
 	if(cTemplateName[0] && (stat(cFile,&statInfo) || uOverwrite))
 	{
-		GetContainerProp(uContainer,"cNodeIP",cNodeIP);
 		GetContainerProp(uContainer,"cNetmask",cNetmask);
 		GetContainerProp(uContainer,"cPrivateIPs",cPrivateIPs);
 		GetContainerProp(uContainer,"cService1",cService1);
