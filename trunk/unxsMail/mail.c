@@ -2993,7 +2993,7 @@ int UpdateVacationStatus(unsigned uUser)
 }//int UpdateVacationStatus(unsigned uUser)
 
 
-int UpdateUserConfig(unsigned uUser,unsigned uJob)
+int UpdateUserConfig(unsigned uUser,unsigned uJob)//,unsigned uNew)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -3007,7 +3007,6 @@ int UpdateUserConfig(unsigned uUser,unsigned uJob)
 		TextError(mysql_error(&gMysql),1);
 		return(1);
 	}
-
 	res=mysql_store_result(&gMysql);
 	
 	if((field=mysql_fetch_row(res)))
@@ -3023,6 +3022,38 @@ int UpdateUserConfig(unsigned uUser,unsigned uJob)
 		}
 	}
 
-	printf("uUserConfig=%u\n",uUserConfig);
+	//printf("uUserConfig=%u\n",uUserConfig);
+	sprintf(gcQuery,"SELECT cConfig,cPath,cOwner,cGroup,,cNewExec,cModExec "
+			"FROM tUserConfig,tConfigSpec WHERE tUserConfig.uConfigSpec=tConfigSpec.uConfigSpec "
+			"AND tUserConfig.uUser=%u",
+			uUser);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		TextError(mysql_error(&gMysql),1);
+		return(1);
+	}
+	res=mysql_store_result(&gMysql);
+	
+	if((field=mysql_fetch_row(res)))
+	{
+		char cPath[100]={""};
+		char cLogin[100]={""};
+		FILE *fp;
+
+		sprintf(cLogin,"%.99s",ForeignKey("tUser","cLogin",uUser));
+		sprintf(cPath,field[1],cLogin);
+		
+		if((fp=fopen(cPath,"w"))==NULL)
+		{
+			TextError("fopen() error",1);
+			return(1);
+		}
+
+		fprintf(fp,"%s",field[0]);
+	}
+
+	return(0);
+
 }//int UpdateUserConfig(unsigned uUser)
 
