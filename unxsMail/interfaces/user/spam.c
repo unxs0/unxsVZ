@@ -13,6 +13,12 @@ PURPOSE
 
 #include "interface.h"
 
+char *cSpamSettings="";
+
+void LoadSpamSettings(void);
+void CreateSpamSettings(void);
+void UpdateSpamSettings(void);
+unsigned ValidateSpamSettingsInput(void);
 
 void ProcessSpamSettingsVars(pentry entries[], int x)
 {
@@ -101,7 +107,10 @@ void htmlSpamSettingsPage(char *cTitle, char *cTemplateName)
 			template.cpName[7]="gcMessage";
 			template.cpValue[7]=gcMessage;
 
-			template.cpName[8]="";
+			template.cpName[8]="cSpamSettings";
+			template.cpValue[8]=cSpamSettings;
+
+			template.cpName[9]="";
 
 			printf("\n<!-- Start htmlSpamSettingsPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -123,4 +132,48 @@ unsigned ValidateSpamSettingsInput(void)
 	return(1);
 
 }//unsigned ValidateInput(void)
+
+
+void LoadSpamSettings(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	//uConfigSpec=2: std spamassassin file
+	sprintf(gcQuery,"SELECT cConfig FROM tUserConfig WHERE uConfigSpec=2 AND uUser=%u",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		cSpamSettings=field[0];
+	}
+	else
+	{
+		CreateSpamSettings();
+	}
+
+}//void LoadSpamSettings(void)
+
+
+void CreateSpamSettings(void)
+{
+	sprintf(gcQuery,"INSERT INTO tUserConfig SET uConfigSpec=2,uUser=%1$u,"
+			"cLabel='standard spamassassin file',"
+			"uCreatedBy=(SELECT uCreatedBy FROM tUser WHERE uUser=%1$u),"
+			"uOwner=(SELECT uOwner FROM tUser WHERE uUser=%1$u),"
+			"cConfig=(SELECT cTemplate FROM tTemplate WHERE cLabel='standard spamassassin file'),"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	LoadSpamSettings();
+
+}//void CreateSpamSettings(void)
+
+
+void UpdateSpamSettings(void);
 
