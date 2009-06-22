@@ -3022,10 +3022,10 @@ int UpdateUserConfig(unsigned uUser,unsigned uJob)//,unsigned uNew)
 	}
 
 	//printf("uUserConfig=%u\n",uUserConfig);
-	sprintf(gcQuery,"SELECT cConfig,cPath,cOwner,cGroup,cNewExec,cModExec "
+	sprintf(gcQuery,"SELECT cConfig,cPath,tConfigSpec.cLabel,cOwner,cGroup,cNewExec,cModExec "
 			"FROM tUserConfig,tConfigSpec WHERE tUserConfig.uConfigSpec=tConfigSpec.uConfigSpec "
-			"AND tUserConfig.uUser=%u",
-			uUser);
+			"AND tUserConfig.uUserConfig=%u",
+			uUserConfig);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -3037,12 +3037,27 @@ int UpdateUserConfig(unsigned uUser,unsigned uJob)//,unsigned uNew)
 	if((field=mysql_fetch_row(res)))
 	{
 		char cPath[100]={""};
+		char cDir[256]={""};
 		char cLogin[100]={""};
 		FILE *fp;
+		char *cp;
 
 		sprintf(cLogin,"%.99s",ForeignKey("tUser","cLogin",uUser));
 		sprintf(cPath,field[1],cLogin);
 		
+		//Make sure we have the full path available
+		cp=strtok(cPath,"/");
+		sprintf(cDir,"/%s",cp);
+		mkdir(cDir,0x444);
+		while((cp=strtok(NULL,"/"))!=NULL)
+		{
+			strcat(cDir,"/");
+			strcat(cDir,cp);
+			mkdir(cDir,0x444);
+		}
+		
+		sprintf(cDir,field[1],cLogin);
+		sprintf(cPath,"%s/%s",cDir,field[2]);
 		if((fp=fopen(cPath,"w"))==NULL)
 		{
 			sprintf(gcQuery,"fopen() error. Could not open %s",cPath);
@@ -3050,7 +3065,7 @@ int UpdateUserConfig(unsigned uUser,unsigned uJob)//,unsigned uNew)
 			return(1);
 		}
 
-		fprintf(fp,"%s",field[0]);
+		fprintf(fp,"%s\n",field[0]);
 	}
 
 	return(0);
