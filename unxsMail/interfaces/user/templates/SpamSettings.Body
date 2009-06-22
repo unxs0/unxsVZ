@@ -94,7 +94,10 @@
 	  <td valign="top">&nbsp;</td>
 	  <td>&nbsp;</td>
 	</tr>
-	<tr><td>&nbsp;</td></tr>
+	<tr>
+	<td valign=top width=33%><a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Confirm Password')"><b>Your Spam Settings</b></td>
+	<td valign=top><textarea name=cSpamSettings cols=80 rows=16 class=type_textarea>{{cSpamSettings}}</textarea></td></tr>
+	</tr>
 
 </table>
 	
