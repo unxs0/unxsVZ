@@ -3,7 +3,7 @@
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in container properties\
+cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 \
@@ -32,7 +32,7 @@ if [ $? != 0 ]; then\
 fi\
 \
 #ip section\
-/sbin/ifconfig eth0:$VEID $IPv4 netmask $NETMASK up;\
+/sbin/ifconfig eth0:$VEID $CTIP netmask $NETMASK up;\
 if [ $? != 0 ]; then\
         echo "/sbin/ifconfig eth0:$VEID $IPv4 netmask $NETMASK up; failed!";\
         exit 1;\
@@ -66,13 +66,13 @@ exit 0;\
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in container properties\
+cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 \
 Additional usage info:\
 \
-cVEID.umount=dnsVE.umount\
+cVEID.umount=dnsVE.mount\
 \
 Must be in container property list	#!/bin/bash\
 #\
@@ -322,7 +322,7 @@ be private per node.\
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in container properties\
+cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 cService1=443 Also from container properties\
@@ -386,7 +386,7 @@ be private per node.\
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in container properties\
+cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 cService1=443 Also from container properties\
@@ -600,7 +600,7 @@ exit 0;\
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in container properties\
+cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 \
@@ -651,7 +651,7 @@ exit 0;\
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in container properties\
+cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 \
