@@ -160,7 +160,8 @@ int main(int argc, char *argv[])
 
 	//Per page command tree
 	MyAccountCommands(entries,i);
-	
+	SpamSettingsCommands(entries,i);
+
 	//default logged in page
 	htmlMyAccount();
 	return(0);

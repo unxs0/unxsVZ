@@ -26,8 +26,8 @@ void ProcessSpamSettingsVars(pentry entries[], int x)
 	
 	for(i=0;i<x;i++)
 	{
-		//if(!strcmp(entries[i].name,"cPassword"))
-		//	sprintf(cPasswd,"%.65s",entries[i].val);
+		if(!strcmp(entries[i].name,"cSpamSettings"))
+			cSpamSettings=entries[i].val;
 
 	}
 
@@ -53,8 +53,9 @@ void SpamSettingsCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"SpamSettings"))
 	{
 		ProcessSpamSettingsVars(entries,x);
-		if(!strcmp(gcFunction,"Update your password"))
+		if(!strcmp(gcFunction,"Update Settings"))
 		{
+			UpdateSpamSettings();			
 		}
 		htmlSpamSettings();
 	}
@@ -177,5 +178,19 @@ void CreateSpamSettings(void)
 }//void CreateSpamSettings(void)
 
 
-void UpdateSpamSettings(void);
+void UpdateSpamSettings(void)
+{
+	sprintf(gcQuery,"UPDATE tUserConfig SET cConfig='%s',uModBy=1,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE "
+			"cLabel='standard spamassassin file' AND uUser=%u",
+			TextAreaSave(cSpamSettings)
+			,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	if(mysql_affected_rows(&gMysql))
+		gcMessage="Your spam settings were correctly updated";
+	else
+		gcMessage="Your spam settings were not updated. Contact support ASAP";
 
+}//void UpdateSpamSettings(void)
