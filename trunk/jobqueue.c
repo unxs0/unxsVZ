@@ -1501,7 +1501,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//Business logic: Target container may have these files, but we need them only if we
 	//failover to this cloned VE. Also we defer to that action the setup of the
 	//containers tProperty values needed for processing the umount/mount templates:
-	//cNetmask, cNodeIP, cPrivateIPs, cService1, cService2, cVEID.mount and cVEID.umount.
+	//cNetmask, cExtraNodeIP, cPrivateIPs, cService1, cService2, cVEID.mount and cVEID.umount.
 	sprintf(gcQuery,"ssh %1$s 'rm -f /etc/vz/conf/%2$u.umount /etc/vz/conf/%2$u.mount'",
 				cTargetNodeIPv4,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
@@ -1575,29 +1575,12 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 	char cVeID[32]={""};//required
 	char cService1[256]={"80"};//default
 	char cService2[256]={"443"};//default
-	unsigned uNode=0;
-	char cNodeIP[256]={""};//required
+	char cExtraNodeIP[256]={""};//required
 	char cNetmask[256]={"255.255.255.0"};//default
 	char cPrivateIPs[256]={"10.0.0.0/24"};//default
 	struct stat statInfo;
 
 
-	sprintf(gcQuery,"SELECT uNode FROM tContainer WHERE uContainer=%u",uContainer);
-	mysqlrad_Query_TextErr_Exit;
-	res2=mysql_store_result(&gMysql);
-	if((field2=mysql_fetch_row(res2)))
-	{
-		sscanf(field2[0],"%u",&uNode);
-		GetNodeProp(uNode,"cIPv4",cNodeIP);
-	}
-	mysql_free_result(res2);
-
-	if(!cNodeIP[0])
-	{
-		printf("CreateMountFiles() error: tNode.uNode=%u:cIPv4 missing. Set in node property.\n",
-				uNode);
-		goto CommonExit;
-	}
 
 	sprintf(cVeID,"%u",uContainer);	
 
@@ -1607,6 +1590,13 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 	//stat returns 0 if file exists
 	if(cTemplateName[0] && (stat(cFile,&statInfo) || uOverwrite))
 	{
+		GetContainerProp(uContainer,"cExtraNodeIP",cExtraNodeIP);
+		if(!cExtraNodeIP[0])
+		{
+			printf("CreateMountFiles() error: required cExtraNodeIP container property not found\n");
+			goto CommonExit;
+		}
+
 		GetContainerProp(uContainer,"cNetmask",cNetmask);
 		GetContainerProp(uContainer,"cPrivateIPs",cPrivateIPs);
 		GetContainerProp(uContainer,"cService1",cService1);
@@ -1624,8 +1614,8 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 		{
 			struct t_template template;
 
-			template.cpName[0]="cNodeIP";
-			template.cpValue[0]=cNodeIP;
+			template.cpName[0]="cExtraNodeIP";
+			template.cpValue[0]=cExtraNodeIP;
 					
 			template.cpName[1]="cNetmask";
 			template.cpValue[1]=cNetmask;
@@ -1666,8 +1656,8 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 			{
 				struct t_template template;
 
-				template.cpName[0]="cNodeIP";
-				template.cpValue[0]=cNodeIP;
+				template.cpName[0]="cExtraNodeIP";
+				template.cpValue[0]=cExtraNodeIP;
 						
 				template.cpName[1]="cNetmask";
 				template.cpValue[1]=cNetmask;
