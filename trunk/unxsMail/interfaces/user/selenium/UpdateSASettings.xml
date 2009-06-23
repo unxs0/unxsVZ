@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>SA Settings Update</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">SA Settings Update</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/cgi-bin/unxsMailUser.cgi?gcFunction=Logout</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>gcLogin</td>
+	<td>rudolph</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>gcPasswd</td>
+	<td>wsxedc</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcFunction</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//td[2]/a/b</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Your spam settings were loaded OK*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cSpamSettings</td>
+	<td>#<br /># SpamAssassin user preferences file.&nbsp;&nbsp;See 'perldoc Mail::SpamAssassin::Conf'<br /># for details of what can be tweaked.<br />###########################################################################<br /><br /># How many points before a mail is considered spam.<br /># required_score&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5<br /><br /># Whitelist and blacklist addresses are now file-glob-style patterns, so<br /># &quot;friend@somewhere.com&quot;, &quot;*@isp.com&quot;, or &quot;*.domain.net&quot; will all work.<br /># whitelist_from&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;someone@somewhere.com<br /><br /># Add your own customised scores for some tests below.&nbsp;&nbsp;The default scores are<br /># read from the installed spamassassin rules files, but you can override them<br /># here.&nbsp;&nbsp;To see the list of tests and their default scores, go to<br /># http://spamassassin.apache.org/tests.html .<br />#<br /># score SYMBOLIC_TEST_NAME n.nn<br /><br /># Speakers of Asian languages, like Chinese, Japanese and Korean, will almost<br /># definitely want to uncomment the following lines.&nbsp;&nbsp;They will switch off some<br /># rules that detect 8-bit characters, which commonly trigger on mails using CJK<br /># character sets, or that assume a western-style charset is in use.<br />#<br /># score HTML_COMMENT_8BITS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0<br /># score UPPERCASE_25_50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0<br /># score UPPERCASE_50_75&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0<br /># score UPPERCASE_75_100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0<br /># test<br />#This is a mod test<br /></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcFunction</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Your spam settings were correctly updated*</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
+
