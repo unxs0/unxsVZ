@@ -1003,7 +1003,7 @@ void ExttContainerButtons(void)
 			{
 				if(uStatus==1)
 				{
-					printf("Container is running on ");
+					printf("<br>Container is running on ");
 					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNode&uNode=%u>%s</a>",
 						uNode,ForeignKey("tNode","cLabel",uNode));
 				}
