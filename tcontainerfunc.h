@@ -927,14 +927,13 @@ void ExttContainerButtons(void)
                 case 4001:
                         printf("<p><u>Template Wizard</u><br>");
 			printf("Here you will select the tConfig.cLabel. This label will be"
-				" used for the OS template and the inicial VZ conf file."
-				" !Warning container will be stopped then restarted!"
-				" This may take several minutes to accomplish. When"
-				" job is finished the OSTemplate and it's associated base conf file"
-				" will be available on every hardware node for immediate use."
-				" The only difference from a backup container is that of the speed of"
-				" deployment and that a backup container maybe rsync'd on a"
-				" regular basis. <p>\n");
+				" used for the OS template and the initial VZ conf file."
+				" !Warning container will be stopped for several minutes!"
+				" When job is finished the OSTemplate and it's associated base conf file"
+				" will be available on every hardware node for immediate use,"
+				" if /usr/sbin/allnodescp.sh has been installed."
+				" The all node /vz/template/cache/ file that is created can also be likened"
+				" to a snapshot backup of the running container.<p>\n");
 			printf("<p>tConfig.cLabel <input title='tOSTemplate tail and tConfig label will be set to"
 					" the name provided.' type=text name=cConfigLabel maxlength=32>\n");
 			printf("<p><input title='Create a template job for the current container'"
@@ -1345,6 +1344,7 @@ unsigned CreateStartContainerJob(unsigned uDatacenter, unsigned uNode, unsigned 
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","Start");
 	return(uCount);
 
 }//unsigned CreateStartContainerJob(...)
@@ -1366,6 +1366,7 @@ unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","Destroy");
 	return(uCount);
 
 }//unsigned DestroyContainerJob(...)
@@ -1387,6 +1388,7 @@ unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContai
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","Stop");
 	return(uCount);
 
 }//unsigned StopContainerJob(...)
@@ -1400,6 +1402,7 @@ void CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContaine
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
+	unxsVZLog(uContainer,"tContainer","CancelJob");
 
 }//void CancelContainerJob(...)
 
@@ -1518,6 +1521,7 @@ unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","Migrate");
 	return(uCount);
 
 }//unsigned MigrateContainerJob(...)
@@ -1656,6 +1660,7 @@ unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCo
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","Template");
 	return(uCount);
 
 }//unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
@@ -1677,6 +1682,7 @@ unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCo
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","Hostname");
 	return(uCount);
 
 }//unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
@@ -1699,6 +1705,7 @@ unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContaine
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","ChangeIP");
 	return(uCount);
 
 }//unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
@@ -1726,6 +1733,7 @@ unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","MountFiles");
 	return(uCount);
 
 }//unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
@@ -1753,6 +1761,7 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","CloneContainer");
 	return(uCount);
 
 }//unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)

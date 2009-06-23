@@ -54,7 +54,6 @@ static unsigned uStatus=0;
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -512,10 +511,8 @@ void NewtContainer(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uContainer=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tContainer",uContainer);
 	unxsVZLog(uContainer,"tContainer","New");
-#endif
 
 	if(!uMode)
 	{
@@ -528,27 +525,18 @@ void NewtContainer(unsigned uMode)
 
 void DeletetContainer(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u AND ( uOwner=%u OR %u>9 )"
 					,uContainer,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u"
-					,uContainer);
-#endif
 	MYSQL_RUN;
 	//tContainer("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uContainer,"tContainer","Del");
-#endif
 		tContainer(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uContainer,"tContainer","DelError");
-#endif
 		tContainer(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -609,7 +597,6 @@ void ModtContainer(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -625,12 +612,6 @@ void ModtContainer(void)
 	sprintf(gcQuery,"SELECT uContainer,uModDate FROM tContainer\
 				WHERE uContainer=%u"
 						,uContainer);
-#else
-	sprintf(gcQuery,"SELECT uContainer FROM tContainer\
-				WHERE uContainer=%u"
-						,uContainer);
-#endif
-
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -640,19 +621,15 @@ void ModtContainer(void)
 	if(i>1) tContainer(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tContainer(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tContainer(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tContainer",uContainer);
 	unxsVZLog(uContainer,"tContainer","Mod");
-#endif
 	tContainer(gcQuery);
 
 }//ModtContainer(void)
@@ -738,7 +715,7 @@ void tContainerList(void)
 
 void CreatetContainer(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tContainer ( uContainer INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uDatacenter INT UNSIGNED NOT NULL DEFAULT 0,unique (cLabel,uDatacenter), uNode INT UNSIGNED NOT NULL DEFAULT 0,index (uNode), uStatus INT UNSIGNED NOT NULL DEFAULT 0, uOSTemplate INT UNSIGNED NOT NULL DEFAULT 0, cHostname VARCHAR(64) NOT NULL DEFAULT '', uIPv4 INT UNSIGNED NOT NULL DEFAULT 0, uNameserver INT UNSIGNED NOT NULL DEFAULT 0, uSearchdomain INT UNSIGNED NOT NULL DEFAULT 0, uConfig INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tContainer ( uContainer INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, UNIQUE (cLabel,uDatacenter), uNode INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uNode), uStatus INT UNSIGNED NOT NULL DEFAULT 0, uOSTemplate INT UNSIGNED NOT NULL DEFAULT 0, cHostname VARCHAR(64) NOT NULL DEFAULT '', uIPv4 INT UNSIGNED NOT NULL DEFAULT 0, uNameserver INT UNSIGNED NOT NULL DEFAULT 0, uSearchdomain INT UNSIGNED NOT NULL DEFAULT 0, uConfig INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

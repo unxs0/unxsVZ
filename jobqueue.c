@@ -1120,8 +1120,9 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		goto CommonExit;
 	}
 
-	sprintf(gcQuery,"SELECT tOSTemplate.cLabel"
-			" FROM tContainer,tOSTemplate WHERE tContainer.uContainer=%u",uContainer);
+	sprintf(gcQuery,"SELECT tOSTemplate.cLabel FROM tContainer,tOSTemplate"
+			" WHERE tContainer.uOSTemplate=tOSTemplate.uOSTemplate AND"
+			" tContainer.uContainer=%u",uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
