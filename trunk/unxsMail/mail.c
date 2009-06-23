@@ -48,7 +48,7 @@ unsigned uFileExists(char *cPath,unsigned uSymLink);
 unsigned PrepSingleUserHomeDir(unsigned uUID,char const *cLogin);
 unsigned MakeUserPrefs(unsigned uUser);
 int UpdateVacationStatus(unsigned uUser);
-int UpdateUserConfig(unsigned uUser,unsigned uJob);
+int UpdateUserConfig(unsigned uUser,unsigned uJob,unsigned uNew);
 
 //These should be common to all our RAD3 backends
 int ChangeSystemPasswd(char *cLogin, char *cPasswd);
@@ -1110,17 +1110,24 @@ void ProcessJobQueue(char *cServer)
 			else
 				UpdateJobStatus(uJob,JOBSTATUS_DONE);
 		}
-		 else if(        !strcmp(field[1],"NewUserConfig") ||
-		 		!strcmp(field[1],"ModUserConfig") )
+		else if(!strcmp(field[1],"NewUserConfig"))
 		{
 			unsigned uTargetUser=0;
 			sscanf(field[3],"%u",&uTargetUser);
-			if(UpdateUserConfig(uTargetUser,uJob))
+			if(UpdateUserConfig(uTargetUser,uJob,1))
 				UpdateJobStatus(uJob,JOBSTATUS_FATAL_ERROR);
 			else
 				UpdateJobStatus(uJob,JOBSTATUS_DONE);
 		}
-
+		else if(!strcmp(field[1],"ModUserConfig"))
+		{
+			unsigned uTargetUser=0;
+			sscanf(field[3],"%u",&uTargetUser);
+			if(UpdateUserConfig(uTargetUser,uJob,0))
+				UpdateJobStatus(uJob,JOBSTATUS_FATAL_ERROR);
+			else
+				UpdateJobStatus(uJob,JOBSTATUS_DONE);
+		}
 		//No job handler -yet?
 		else if(1)
 		{
@@ -2992,7 +2999,7 @@ int UpdateVacationStatus(unsigned uUser)
 }//int UpdateVacationStatus(unsigned uUser)
 
 
-int UpdateUserConfig(unsigned uUser,unsigned uJob)//,unsigned uNew)
+int UpdateUserConfig(unsigned uUser,unsigned uJob,unsigned uNew)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -3022,7 +3029,7 @@ int UpdateUserConfig(unsigned uUser,unsigned uJob)//,unsigned uNew)
 	}
 
 	//printf("uUserConfig=%u\n",uUserConfig);
-	sprintf(gcQuery,"SELECT cConfig,cPath,tConfigSpec.cLabel,cOwner,cGroup,cNewExec,cModExec "
+	sprintf(gcQuery,"SELECT cConfig,cPath,tConfigSpec.cLabel,cNewExec,cModExec "
 			"FROM tUserConfig,tConfigSpec WHERE tUserConfig.uConfigSpec=tConfigSpec.uConfigSpec "
 			"AND tUserConfig.uUserConfig=%u",
 			uUserConfig);
@@ -3039,6 +3046,7 @@ int UpdateUserConfig(unsigned uUser,unsigned uJob)//,unsigned uNew)
 		char cPath[100]={""};
 		char cDir[256]={""};
 		char cLogin[100]={""};
+		char cPostDeployCmd[100]={""};
 		FILE *fp;
 		char *cp;
 
@@ -3066,6 +3074,21 @@ int UpdateUserConfig(unsigned uUser,unsigned uJob)//,unsigned uNew)
 		}
 
 		fprintf(fp,"%s\n",field[0]);
+
+		fclose(fp);
+
+		if(uNew)
+			sprintf(cPostDeployCmd,"%.99s",field[3]);
+		else
+			sprintf(cPostDeployCmd,"%.99s",field[4]);
+		if(cPostDeployCmd[0])
+		{
+			if((system(cPostDeployCmd)))
+			{
+				sprintf(gcQuery,"UpdateUserConfig() Warning: Execution of %s failed\n"mcPostDeployCmd);
+				TextError(gcQuery,1);
+			}
+		}
 	}
 
 	return(0);
