@@ -171,8 +171,8 @@ int main(int argc, char *argv[])
 
 void htmlLogin(void)
 {
-	htmlHeader("Radius System","Header");
-	htmlLoginPage("Radius System","Login.Body");
+	htmlHeader("unxsMail User Interface","Header");
+	htmlLoginPage("unxsMail User Interface","Login.Body");
 	htmlFooter("Footer");
 
 }//void htmlLogin(void)
