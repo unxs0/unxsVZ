@@ -70,10 +70,12 @@
 		  <td>&nbsp;</td>
 		  <td>&nbsp;</td>
 		</tr>
+		<tr><td><u><b>Password Update Help</u><b></td></tr>
 		<tr>
-			<td width=33%>
-			Left panel content
-			</td>
+		<td>
+		Here you can update your account password. You have to enter your current password and confirm the new one. Please note that your password must be 5 or more characters long.<br>
+		Once you change your password, you will be redirected to this interface login screen and you have to re-login to continue using it.
+		</td>
 		</tr>
 			
 	</table>
