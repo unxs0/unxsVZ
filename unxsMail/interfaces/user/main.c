@@ -109,6 +109,8 @@ int main(int argc, char *argv[])
 				MyAccountGetHook(gentries,i);
 			else if(!strcmp(gcPage,"SpamSettings"))
 				SpamSettingsGetHook(gentries,i);
+			else if(!strcmp(gcPage,"Glossary"))
+				GlossaryGetHook(gentries,i);
 		}
 
 	}
