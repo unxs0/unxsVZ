@@ -1,5 +1,15 @@
-1	tUser Tab	1	1	1186495150	0	0	The user table (tUser) is mostly used for mail end user linux accounts. These\
-are the actual pop, imap or webmail capable accounts. In other words they are\
-related to system accounts that receive email. Note that the real-world email\
-address, for example, joe@someco.com is not related to the pop login, or to the\
-tUser.cLogin for downloading mail for that email address.
+1	Current Password	1	1	1245758082	0	0	At this field, enter your account current password.\
+
+2	New Password	1	1	1245758097	1	1245758147	At this field, enter your new account password. Password should be a random\
+combination of upper and lowercase characters and numbers. Password must five or\
+more characters long.\
+
+3	Confirm Password	1	1	1245758179	0	0	Confirm your new password at this field.\
+
+4	Your Spam Settings	1	1	1245758359	0	0	Use this textarea to customize your SpamAssassin rules. Every time SA is\
+executed, the configuration file shown at this tab left panel will be loaded.\
+This will allow you to personalize SA to suit your needs!\
+\
+After updating this text area, press the [Update Settings] button. You have to\
+wait a few minutes for the settings to take place at the mail server.\
+
