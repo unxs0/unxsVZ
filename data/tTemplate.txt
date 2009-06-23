@@ -3,7 +3,7 @@
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 \
@@ -20,7 +20,7 @@ Must be in container property list	#!/bin/bash\
 #\
 \
 VEID="{{cVeID}}";\
-IPv4="{{cNodeIP}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
 NETMASK="{{cNetmask}}";\
 PRIVATEIPS="{{cPrivateIPs}}";\
 SERVICE="53";\
@@ -34,31 +34,31 @@ fi\
 #ip section\
 /sbin/ifconfig eth0:$VEID $CTIP netmask $NETMASK up;\
 if [ $? != 0 ]; then\
-        echo "/sbin/ifconfig eth0:$VEID $IPv4 netmask $NETMASK up; failed!";\
+        echo "/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up; failed!";\
         exit 1;\
 fi\
 \
 #iptables section\
-/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $IPv4 -p tcp -m tcp --dport $SERVICE\\\
+/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $SERVICE\\\
                  -j DNAT --to-destination $CTIP:$SERVICE;\
 if [ $? != 0 ]; then\
         echo "iptables: error 1";\
         exit 1;\
 fi\
-/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $IPv4 -p udp -m udp --dport $SERVICE\\\
+/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p udp -m udp --dport $SERVICE\\\
                  -j DNAT --to-destination $CTIP:$SERVICE;\
 if [ $? != 0 ]; then\
         echo "iptables: error 2";\
         exit 1;\
 fi\
 #special rule for making sure DNS answers come from public IP\
-/sbin/iptables -t nat -A POSTROUTING -p udp -m udp -s $CTIP -j SNAT --to-source $IPv4;\
+/sbin/iptables -t nat -A POSTROUTING -p udp -m udp -s $CTIP -j SNAT --to-source $ExtraNodeIPv4;\
 if [ $? != 0 ]; then\
         echo "iptables: error 3";\
         exit 1;\
 fi\
 \
-echo "ct0 ip eth0:$VEID $IPv4 added and iptables operations completed.";\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 added and iptables operations completed.";\
 exit 0;\
 	1	1
 11	dnsVE.umount	1	1	1240231655	1	1240262526	DNS container /etc/vz/conf/VEID.umount template for DNS container\
@@ -66,7 +66,7 @@ exit 0;\
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 \
@@ -83,7 +83,7 @@ Must be in container property list	#!/bin/bash\
 #\
 \
 VEID="{{cVeID}}";\
-IPv4="{{cNodeIP}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
 NETMASK="{{cNetmask}}";\
 PRIVATEIPS="{{cPrivateIPs}}";\
 SERVICE="53";\
@@ -102,26 +102,26 @@ if [ $? != 0 ]; then\
 fi\
 \
 #iptables section\
-/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $IPv4 -p tcp -m tcp --dport $SERVICE\\\
+/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $SERVICE\\\
                          -j DNAT --to-destination $CTIP:$SERVICE;\
 if [ $? != 0 ]; then\
         echo "iptables: error 1";\
         exit 1;\
 fi\
-/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $IPv4 -p udp -m udp --dport $SERVICE\\\
+/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p udp -m udp --dport $SERVICE\\\
                          -j DNAT --to-destination $CTIP:$SERVICE;\
 if [ $? != 0 ]; then\
         echo "iptables: error 2";\
         exit 1;\
 fi\
 #special rule for making sure DNS answers come from public IP\
-/sbin/iptables -t nat -D POSTROUTING -p udp -m udp -s $CTIP -j SNAT --to-source $IPv4;\
+/sbin/iptables -t nat -D POSTROUTING -p udp -m udp -s $CTIP -j SNAT --to-source $ExtraNodeIPv4;\
 if [ $? != 0 ]; then\
         echo "iptables: error 3";\
         exit 1;\
 fi\
 \
-echo "ct0 ip eth0:$VEID $IPv4 and iptables entries removed";\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 and iptables entries removed";\
 exit 0;\
 	1	1
 21	webVE.umount	1	1	1240235905	1	1240262489	Website container /etc/vz/conf/VEID.umount template for public IP that will run\
@@ -322,7 +322,7 @@ be private per node.\
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 cService1=443 Also from container properties\
@@ -341,7 +341,7 @@ Must be in container property list	#!/bin/bash\
 #\
 \
 VEID="{{cVeID}}";\
-IPv4="{{cNodeIP}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
 NETMASK="{{cNetmask}}";\
 PRIVATEIPS="{{cPrivateIPs}}";\
 PRIVATE_SERVICE="{{cService1}}";\
@@ -354,26 +354,26 @@ if [ $? != 0 ]; then\
 fi\
 \
 #ip section\
-/sbin/ifconfig eth0:$VEID $IPv4 netmask $NETMASK up;\
+/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up;\
 if [ $? != 0 ]; then\
-        echo "/sbin/ifconfig eth0:$VEID $IPv4 netmask $NETMASK up; failed!";\
+        echo "/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up; failed!";\
         exit 1;\
 fi\
 \
 #iptables section\
-/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $IPv4 -p tcp -m tcp --dport $PUBLIC_SERVICE\\\
+/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $PUBLIC_SERVICE\\\
                  -j DNAT --to-destination $CTIP:$PRIVATE_SERVICE;\
 if [ $? != 0 ]; then\
         echo "iptables: error 1";\
         exit 1;\
 fi\
-/sbin/iptables -t nat -A POSTROUTING -p tcp -m tcp -s $CTIP -j SNAT --to-source $IPv4;\
+/sbin/iptables -t nat -A POSTROUTING -p tcp -m tcp -s $CTIP -j SNAT --to-source $ExtraNodeIPv4;\
 if [ $? != 0 ]; then\
         echo "iptables: error 3";\
         exit 1;\
 fi\
 \
-echo "ct0 ip eth0:$VEID $IPv4 added and iptables operations completed.";\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 added and iptables operations completed.";\
 exit 0;\
 	1	1
 71	webp2VE.umount	1	1	1240349673	0	0	Web admin container /etc/vz/conf/VEID.umount template for private IPs private per\
@@ -386,7 +386,7 @@ be private per node.\
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 cService1=443 Also from container properties\
@@ -405,7 +405,7 @@ Must be in container property list	#!/bin/bash\
 #\
 \
 VEID="{{cVeID}}";\
-IPv4="{{cNodeIP}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
 NETMASK="{{cNetmask}}";\
 PRIVATEIPS="{{cPrivateIPs}}";\
 PRIVATE_SERVICE="{{cService1}}";\
@@ -425,19 +425,19 @@ if [ $? != 0 ]; then\
 fi\
 \
 #iptables section\
-/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $IPv4 -p tcp -m tcp --dport $PUBLIC_SERVICE\\\
+/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $PUBLIC_SERVICE\\\
                  -j DNAT --to-destination $CTIP:$PRIVATE_SERVICE;\
 if [ $? != 0 ]; then\
         echo "iptables: error 1";\
         exit 1;\
 fi\
-/sbin/iptables -t nat -D POSTROUTING -p tcp -m tcp -s $CTIP -j SNAT --to-source $IPv4;\
+/sbin/iptables -t nat -D POSTROUTING -p tcp -m tcp -s $CTIP -j SNAT --to-source $ExtraNodeIPv4;\
 if [ $? != 0 ]; then\
         echo "iptables: error 3";\
         exit 1;\
 fi\
 \
-echo "ct0 ip eth0:$VEID $IPv4 removed and iptables operations completed.";\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 removed and iptables operations completed.";\
 exit 0;\
 	1	1
 81	mailstoreVE.mount	1	1	1240404992	1	1240434708	mail store container /etc/vz/conf/VEID.mount template for public IP that will run\
@@ -600,7 +600,7 @@ exit 0;\
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 \
@@ -613,11 +613,11 @@ Must be in container property list	#!/bin/bash\
 #On vzctl start we may need to configure things on the hardware node.\
 #\
 #Specialized mount script for mySQL  server container with private datacenter wide\
-#       movable IP. Allows public IP containers access via also public added here IPv4\
+#       movable IP. Allows public IP containers access via also public added here ExtraNodeIPv4\
 #\
 \
 VEID="{{cVeID}}";\
-IPv4="{{cNodeIP}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
 NETMASK="{{cNetmask}}";\
 PRIVATEIPS="{{cPrivateIPs}}";\
 SERVICE="3306";\
@@ -629,21 +629,21 @@ if [ $? != 0 ]; then\
 fi\
 \
 #ip section\
-/sbin/ifconfig eth0:$VEID $IPv4 netmask $NETMASK up;\
+/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up;\
 if [ $? != 0 ]; then\
-        echo "/sbin/ifconfig eth0:$VEID $IPv4 netmask $NETMASK up; failed!";\
+        echo "/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up; failed!";\
         exit 1;\
 fi\
 \
 #iptables section\
-/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $IPv4 -p tcp -m tcp --dport $SERVICE\\\
+/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $SERVICE\\\
                  -j DNAT --to-destination $CTIP:$SERVICE;\
 if [ $? != 0 ]; then\
         echo "iptables: error 1";\
         exit 1;\
 fi\
 \
-echo "ct0 ip eth0:$VEID $IPv4 added and iptables operations completed.";\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 added and iptables operations completed.";\
 exit 0;\
 	1	1
 111	mysqlVE.umount	1	1	1240448334	0	0	mySQL container /etc/vz/conf/VEID.umount template\
@@ -651,7 +651,7 @@ exit 0;\
 Variables with sample values:\
 \
 cVeID=201. Comes directly from jobqueue.c\
-cNodeIP=209.177.154.68 Must be provided in node properties as cIPv4\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
 cNetmask=255.255.254.0 Also from container properties\
 cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
 \
@@ -668,7 +668,7 @@ Must be in container property list	#!/bin/bash\
 #\
 \
 VEID="{{cVeID}}";\
-IPv4="{{cNodeIP}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
 NETMASK="{{cNetmask}}";\
 PRIVATEIPS="{{cPrivateIPs}}";\
 SERVICE="3306";\
@@ -687,14 +687,14 @@ if [ $? != 0 ]; then\
 fi\
 \
 #iptables section\
-/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $IPv4 -p tcp -m tcp --dport $SERVICE\\\
+/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $SERVICE\\\
                          -j DNAT --to-destination $CTIP:$SERVICE;\
 if [ $? != 0 ]; then\
         echo "iptables: error 1";\
         exit 1;\
 fi\
 \
-echo "ct0 ip eth0:$VEID $IPv4 and iptables entries removed";\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 and iptables entries removed";\
 exit 0;\
 	1	1
 121	openPubVE.mount	1	1	1240690495	1	1241008767	Open all service/ports container /etc/vz/conf/VEID.mount template for public IP\
