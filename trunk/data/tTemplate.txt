@@ -32,7 +32,7 @@ if [ $? != 0 ]; then\
 fi\
 \
 #ip section\
-/sbin/ifconfig eth0:$VEID $CTIP netmask $NETMASK up;\
+/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up;\
 if [ $? != 0 ]; then\
         echo "/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up; failed!";\
         exit 1;\
