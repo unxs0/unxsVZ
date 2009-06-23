@@ -39,6 +39,7 @@ void CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContaine
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 void htmlContainerNotes(unsigned uContainer);
+void htmlContainerMount(unsigned uContainer);
 unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 				unsigned uTargetNode, unsigned uNewVeid);
@@ -997,7 +998,7 @@ void ExttContainerButtons(void)
 				"Special properties cVEID.mount and cVEID.umount are used via"
 				" their tTemplate matching values (see tTemplate for more info)"
 				" to create /etc/vz/conf/VEID.(u)mount files.");
-			printf("<p><u>Record Context Info</u><br>");
+			printf("<p><u>Record Context Info</u>");
 			if(uContainer && uNode)
 			{
 				if(uStatus==1)
@@ -1007,6 +1008,7 @@ void ExttContainerButtons(void)
 						uNode,ForeignKey("tNode","cLabel",uNode));
 				}
 				htmlContainerNotes(uContainer);
+				htmlContainerMount(uContainer);
 				htmlGroups(0,uContainer);
 			}
 			tContainerNavList(0);
@@ -1440,9 +1442,31 @@ void htmlContainerNotes(unsigned uContainer)
 		printf("<br><a class=darkLink href=unxsVZ.cgi?"
 				"gcFunction=tProperty&uProperty=%s&cReturn=tContainer_%u>"
 				"Notes</a>:%s\n",field[0],uContainer,field[1]);
+
 	mysql_free_result(res);
 
 }//void htmlContainerNotes(unsigned uContainer)
+
+
+void htmlContainerMount(unsigned uContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uProperty,cValue FROM tProperty WHERE uKey=%u AND uType=3"
+				" AND cName LIKE 'cVEID.mount' ORDER BY uCreatedDate",uContainer);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		printf("<br><a class=darkLink href=unxsVZ.cgi?"
+				"gcFunction=tProperty&uProperty=%s&cReturn=tContainer_%u>"
+				"Mount template</a>:%s\n",field[0],uContainer,field[1]);
+
+	mysql_free_result(res);
+
+}//void htmlContainerMount(unsigned uContainer)
 
 
 void htmlGroups(unsigned uNode, unsigned uContainer)
