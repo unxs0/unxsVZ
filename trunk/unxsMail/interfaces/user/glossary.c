@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	iDNS Admin (Owner) Interface
+	unxsMailUser Interface
 	program file.
 */
 
@@ -52,8 +52,8 @@ void GlossaryGetHook(entry gentries[],int x)
 
 void htmlGlossary(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlGlossaryPage("DNS System","OrgGlossary.Body");
+	htmlHeader("unxsMail User Interface","Header");
+	htmlGlossaryPage("unxsMail User Interface","Glossary.Body");
 	htmlFooter("Footer");
 
 }//void htmlGlossary(void)
@@ -76,7 +76,7 @@ void htmlGlossaryPage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="index.cgi";
+			template.cpValue[1]="unxsMailUser.cgi";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcLogin;

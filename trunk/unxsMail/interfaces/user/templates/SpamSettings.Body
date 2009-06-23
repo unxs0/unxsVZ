@@ -70,12 +70,25 @@
 		  <td>&nbsp;</td>
 		  <td>&nbsp;</td>
 		</tr>
+		<tr><td><u><b>SpamAssassin Settings</b><u></td></tr>
 		<tr>
-			<td width=33%>
-			Left panel content
-			</td>
-		</tr>
-			
+		<td>
+		Here you update your SpamAssassin user preferences. If this is the first time you access this tab, a default content will be placed for you in the text area at the right panel.<br>
+		Edit the text area content as you wish and press then the [Update Settings] button to commit your changes.<br>
+		<br>
+		</td></tr>
+		<tr><td>&nbsp;</td></tr>
+		<tr><td><u><b>SpamAssassin Config Examples</b><u></td></tr>
+		<tr><td>
+		<table>
+		<tr><th>Directive</th><th>Effect</th></tr>
+		<tr><td valign=top width=50%>whitelist_from joe@isp.net</td><td>Whitelists all the messages coming from the joe@isp.net email address</td></tr>
+		<tr><td valign=top>whitelist_from *@isp.net</td><td>Whitelists all the messages coming from the isp.net domain</td></tr>
+		<tr><td valign=top>blacklist_from charly@spammer.com</td><td>Blacklists all the messages coming from the charly@spammer.com email address</td></tr>
+		<tr><td valign=top>blacklist_from *@spammer.com</td><td>Blacklists all the messages coming from the spammer.com domain</td></tr>
+		</table>
+		</td>
+		</tr>	
 	</table>
 	
 	
