@@ -980,7 +980,8 @@ void ExttContainerButtons(void)
                 break;
 
                 case 2001:
-                        printf("<p><u>Think twice</u><br>");
+                        printf("<p><u>Think twice</u>");
+                        printf("<br>Container and it's properties will be removed from unxsVZ database for good.<br>");
                         printf(LANG_NBB_CONFIRMDEL);
                 break;
 
@@ -1766,7 +1767,9 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
         MYSQL_RES *res2;
         MYSQL_ROW field;
 	unsigned uContainer=0;
+	unsigned uDatacenter=0;
 	unsigned uNewVeid=0;
+	unsigned uCount=0;
 
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uOSTemplate,uConfig,uNameserver,uSearchdomain,uDatacenter"
 			",uContainer FROM tContainer WHERE uNode=%u",uSourceNode);
@@ -1788,17 +1791,23 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 			mysql_free_result(res2);
 			continue;
 		}
+		mysql_free_result(res2);
 
-		sprintf(cWizLabel,"%.25s-clone",cLabel);
-		sprintf(cWizHostname,"%.93s.clone",cHostname);
+		sscanf(field[6],"%u",&uDatacenter);
+		sscanf(field[7],"%u",&uContainer);
+		if(!uDatacenter || !uContainer || !field[0][0] || !field[1][0])
+		{
+			mysql_free_result(res);
+			return(4);//no containers added, unexpected error.
+		}
 		sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%.25s-clone',"
-					"cHostname='%93s.clone',"
+					"cHostname='%.93s.clone',"
 					"uIPv4=%u,"
 					"uOSTemplate=%s,"
 					"uConfig=%s,"
 					"uNameserver=%s,"
 					"uSearchdomain=%s,"
-					"uDatacenter=%s,"
+					"uDatacenter=%u,"
 					"uNode=%u,"
 					"uStatus=81,"
 					"uOwner=%u,"
@@ -1806,12 +1815,12 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 							field[0],
 							field[1],
-							uWizIPv4++,
+							uWizIPv4,
 							field[2],
 							field[3],
 							field[4],
 							field[5],
-							field[6],
+							uDatacenter,
 							uTargetNode,
 							guCompany,
 							guLoginClient);
@@ -1820,7 +1829,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 			htmlPlainTextError(mysql_error(&gMysql));
 		uNewVeid=mysql_insert_id(&gMysql);
 
-		if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid))
+		if(CloneContainerJob(uDatacenter,uSourceNode,uContainer,uTargetNode,uNewVeid))
 		{
 			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 					" WHERE uIP=%u AND uAvailable=1",uWizIPv4);
@@ -1837,20 +1846,22 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 				//Operator did not select a large enough contiguous IP block starting 
 				//at uWizIPv4. This is a temp hack. But allows operator to run 
 				//operation again.
-				if(uNewVeid)
-					return(1);//some containers added.
+				if(uCount)
+					return(1);//some containers added, ips not enough.
 				else
 					return(3);//no containers added, ips not enough.
 			}
+			uWizIPv4++;//Now we can increment safely
 			
 			sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-					",cName='Name',cValue='%.25ss-clone'",
+					",cName='Name',cValue='%.25s-clone'",
 						uNewVeid,field[0]);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 			sscanf(field[7],"%u",&uContainer);
 			SetContainerStatus(uContainer,81);//Awaiting Clone
+			uCount++;
 		}
 		else
 		{
