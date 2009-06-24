@@ -3085,7 +3085,7 @@ int UpdateUserConfig(unsigned uUser,unsigned uJob,unsigned uNew)
 		{
 			if((system(cPostDeployCmd)))
 			{
-				sprintf(gcQuery,"UpdateUserConfig() Warning: Execution of %s failed\n"mcPostDeployCmd);
+				sprintf(gcQuery,"UpdateUserConfig() Warning: Execution of %s failed\n",cPostDeployCmd);
 				TextError(gcQuery,1);
 			}
 		}
