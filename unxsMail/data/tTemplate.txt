@@ -106,3 +106,902 @@ This template usually becomes a file in a user home dir, for example:\
 # score UPPERCASE_50_75         0\
 # score UPPERCASE_75_100        0\
 	1	5
+3	Footer	1	1	1245440835	1	1245758234		<div align=center class=footer>{{cCopyright}}</div>\
+\
+</body>\
+</html>\
+	3	0
+4	Header	1	1	1245440836	1	1245758235		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\
+<html>\
+<head>\
+<title>{{cTitle}}</title>\
+\
+<link rel=StyleSheet href=/css/styles.css type="text/css">\
+<script language="JavaScript" src="/css/popups.js"></script>\
+\
+</head>\
+	3	0
+10	Login.Body	1	1	1245441441	1	1245758235		<body marginwidth="0" marginheight="0">\
+\
+<div align="center" class="standard2colnee">\
+\
+<table cellspacing="0" cellpadding="0" border="0" width=1100>\
+\	<tr valign="top">\
+\	\	<td class="padb20"><img src=/images/unxslogo.jpg></td>\
+\	</tr>\
+</table>\
+\
+<table cellspacing="0" cellpadding="0" border="0" width=1192>\
+\	<tr>\
+\	\	<td class="title" colspan="2">\
+<form method=post action={{cCGI}} style="margin:0;">\
+<table border="0" cellspacing="0" cellpadding="0" align="center">\
+<tr>\
+<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>\
+<td class="hdrtout padlt8" align=center><h6 class="modhdr">unxsMail System</h6></td>\
+<td valign="top" width="9" class="hdrtout padlt8"></td>\
+</tr>\
+<tr>\
+<td ><img src="/images/clear.gif" width="9" height="9" ></td>\
+<td>\
+\
+\
+<table border="0" cellspacing="5" cellpadding="0" width="80%" class="table_content" align="center">\
+<tr>\
+<td>&nbsp;</td>\
+</tr>\
+<tr>\
+<td><strong>User Name </strong></td>\
+</tr>\
+<tr>\
+<td><input title='Your login information' type="text" name="gcLogin" size=40 class="type_fields"></td>\
+</tr>\
+<tr>\
+<td><strong>Password</strong></td>\
+</tr>\
+<tr>\
+<td><input title='Your password for the above login' type="password" name="gcPasswd" size=40 class="type_fields"></td>\
+</tr>\
+<tr>\
+<td height="40"><input title='Login with your unxsMail System login and password' class=largeButton type=submit name=gcFunction value='Login'></td>\
+</tr>\
+<tr>\
+<td>To login please enter your username and password and click login.</td>\
+</tr>\
+      \
+</table>\
+\
+</td>\
+<td ><img src="/images/clear.gif" width="9" height="9" ></td>\
+</tr>\
+<tr>\
+<td></td>\
+<td width="9" height="9" ></td>\
+<td></td>\
+</tr>\
+</table>\
+\
+\	\
+</form>\
+\
+                </td>\
+        </tr>\
+\
+</table>\
+</div>\
+	3	0
+5	MyAccount.Body	1	1	1245440836	1	1245758236		<body marginwidth="0" marginheight="0">\
+\
+<div align="center" class="standard2colnee">\
+\
+<table cellspacing="0" cellpadding="0" border="0" width=1200>\
+\	<tr valign="top">\
+\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\
+\	\	<td align="right">\
+\
+\
+\	<!-- one row, one cell table to span the page-->\
+\	<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">\
+\	\	<tr>\
+\
+\	\	\	<!-- Navigation -->\
+\	\	\	<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>\
+\	\	\	\	<table width="100%" border="0" cellpadding="0" cellspacing="0">\
+\	\	\	\	\	<tr>\
+\	\	\	\	\	\	<td class="wpsSelectedPlace" nowrap height="100%">\
+\	\	\	\	\	\	<a title='Manage your account settings' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=MyAccount'><b class ="font10pt">Account Management</b></a>\
+\	\	\	\	\	\	</td>\
+\	\	\	\	\	\	<td class="wpsUnSelectedPlace" nowrap height="100%">\
+\	\	\	\	\	\	<a title='Manage your spam settings' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=SpamSettings'><b class ="font10pt">Spam Settings</b></a>\
+\	\	\	\	\	\	</td>\
+\	\	\	\	\	</tr>\
+\	\	\	\	</table>\
+\	\	\	</td>\
+\	\	</tr>\
+                <tr>\
+\	\	<td valign=top align=right class=notice>\
+{{gcName}} ({{gcLogin}}) is logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout\
+</a></td>\
+                </tr>\
+\	\	\	</table>\
+\	\	</td>\
+\	</tr>\
+</table>\
+\
+\
+\
+<form method=post action={{cCGI}} style="margin:0px;">\
+<table width=1200  border="0" cellspacing="0" cellpadding="0">\
+  <tr>\
+    <td>\
+\
+{{gcMessage}}\
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>\
+  <tr>\
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>\
+    <td class="hdrtout padlt8" width="33%">\
+\	\	<h6 class="modhdr">Customer Resource Panel</h6>\
+\	</td>\
+    <td valign="top" width="9" class="hdrtout padlt8"></td>\
+    <td width="10">&nbsp;</td>\
+    <td valign="top" width="9" class="hdrtout padlt8"></td>\
+    <td class="hdrtout padlt8">\
+\	\	<h6 class="modhdr">Account Settings</h6>\
+\	</td>\
+    <td valign="top" width="9" class="hdrtout padlt8"></td>\
+  </tr>\
+  <tr>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td valign="top">\
+\	\
+\	\
+\	\
+<table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">\
+\	\	<tr>\
+\	\	  <td>&nbsp;</td>\
+\	\	  <td>&nbsp;</td>\
+\	\	</tr>\
+\	\	<tr><td><u><b>Password Update Help</u><b></td></tr>\
+\	\	<tr>\
+\	\	<td>\
+\	\	Here you can update your account password. You have to enter your current password and confirm the new one. Please note that your password must be 5 or more characters long.<br>\
+\	\	Once you change your password, you will be redirected to this interface login screen and you have to re-login to continue using it.\
+\	\	</td>\
+\	\	</tr>\
+\	\	\	\
+\	</table>\
+\	\
+\	\
+\	\
+\	\
+\	\
+\	</td>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td>&nbsp;</td>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td valign="top">\
+\	\
+\	\
+<table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">\
+\	<tr>\
+\	  <td valign="top">&nbsp;</td>\
+\	  <td>&nbsp;</td>\
+\	</tr>\
+\	<tr>\
+\	\	<td align=center bgcolor="#e9e9e9" colspan=2 valign="top"><b>Password Update</b></td>\	\	\
+\	</tr>\
+\	<tr><td>&nbsp;</td></tr>\
+\	<tr>\
+\	<td width=33%><a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Current Password')"><b>Current Password</b></td>\
+\	<td><input name=cOldPassword title='Enter your current password' type=text class=type_fields size=30 maxlength=99></td>\
+\	</tr>\
+\	<tr>\
+\	<td width=33%><a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=New Password')"><b>New Password</b></td>\
+\	<td><input name=cPassword title='Enter your new password' type=text class=type_fields size=30 maxlength=99></td>\
+\	</tr>\
+\	<tr>\
+\	<td width=33%><a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Confirm Password')"><b>Confirm New Password</b></td>\
+\	<td><input name=cConfirmPassword title='Confirm your new password' type=text class=type_fields size=30 maxlength=99></td>\
+\	</tr>\
+\	<tr><td>&nbsp;</td></tr>\
+\	<tr><td align=center colspan=2><input type=submit class=largeButton name=gcFunction value='Update your password'></td></tr>\
+\
+</table>\
+\	\
+\	\
+\	\
+\	</td>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+  </tr>\
+  <tr>\
+    <td></td>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td></td>\
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td></td>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td></td>\
+  </tr>\
+</table>\
+\
+<br />\
+\
+\	</td>\
+  </tr>\
+</table>\
+<input type=hidden name=gcPage value='MyAccount'>\
+</form>\
+	3	0
+6	MyAccountCreate	1	1	1245440836	1	1245758237		\
+<body marginwidth="0" marginheight="0">\
+\
+<div align="center" class="standard2colnee">\
+\
+<table cellspacing="0" cellpadding="0" border="0" width=1200>\
+\	<tr valign="top">\
+\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\
+\	\	<td align="right">\
+\
+\
+\	<!-- one row, one cell table to span the page-->\
+\	<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">\
+\	\	<tr>\
+\
+\	\	\	<!-- Navigation -->\
+\	\	\	<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>\
+\	\	\	\	<table width="100%" border="0" cellpadding="0" cellspacing="0">\
+\	\	\	\	\	<tr>\
+\	\	\	\	\	</tr>\
+\	\	\	\	</table>\
+\	\	\	</td>\
+\	\	</tr>\
+<tr><td>&nbsp;</td></tr>\
+\	\	\	\	\	\	\	<tr>\
+\	\	\	\	\	\	\	\	<td class="mastbg2">\
+\
+\	\	\	\	\	\	\	\	\	<table cellspacing="0" cellpadding="0" border="0" width="100%">\
+\	\	\	\	\	\	\	\	\	<tr valign="top">\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	<td align="right" class="padt10">\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	\	\	<table cellspacing="0" cellpadding="0" border="0">\
+\	\	\	\	\	\	\	\	\	\	\	\	\	<tr>\
+\	\	\	\	\	\	\	\	\	\	\	\	\	<td>&nbsp;</td>\
+\
+\	\	\	\	\	\	\	\	\	\	\	\	\	</tr>\
+\	\	\	\	\	\	\	\	\	\	\	\	</table>\
+\	\	\	\	\	\	\	\	\	\	</td>\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	</tr>\
+\	\	\	\	\	\	\	\	\	</table>\
+\	\	\	\	\	\	\	\	</td>\
+\	\	\	\	\	\	\	</tr>\
+\
+\	\	\	</table>\
+\	\	</td>\
+\	</tr>\
+</table>\
+\
+\
+\
+<form method=post action={{cCGI}} style="margin:0px;">\
+<table width=1200  border="0" cellspacing="0" cellpadding="0">\
+  <tr>\
+    <td>\
+\
+&nbsp;\
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>\
+  <tr>\
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>\
+    <td class="hdrtout padlt8" width="100%">\
+\	\	<h6 class="modhdr">Your Email Account Management Tools</h6>\
+\	</td>\
+\	<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>\
+  </tr>\
+  <tr>\
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>\
+\
+    <td valign="top" width=23%>\
+\	\
+\	\
+\	\
+<table border="0" cellspacing="8" cellpadding="0" width="60%" class="table_content">\
+\	<tr>\
+\	<td>\
+\	<fieldset><legend class=modhdr>Create your Email Account</legend>\
+\	<table>\
+\	<tr><td colspan=2 valign=top align=right>{{cMessage}}</td></tr>\
+\	<tr><td>&nbsp;</td></tr>\
+\	<tr>\
+\	<td valign=top width=33%><strong>Email address</strong></td>\
+\	<td valign=top><input type=text name=cLogin maxlength=64 size=30 value="{{cLogin}}">@airnetworks.com.pr</td>\
+\	</tr>\
+\	<tr><td valign=top><strong>Password</strong></td>\
+\	<td valign=top><input type=password name=cPasswd maxlength=64 size=30></td>\
+\	</tr>\
+\	<tr><td valign=top><strong>Confirm password</strong></td>\
+\	<td valign=top><input type=password name=cConfirmPasswd maxlength=64 size=30></td>\
+\	</tr>\
+\	<tr><td valign=top><strong>Secret Question</strong></td>\
+\	<td valign=top><input type=text name=cSecretQuestion maxlength=64 size=30 value="{{cSecretQuestion}}"></td>\
+\	</tr>\
+\	<tr><td valign=top><strong>Secret Answer</strong></td>\
+\	<td valign=top><input type=text name=cSecretAnswer maxlength=64 size=30 value="{{cSecretAnswer}}"></td>\
+\	</tr>\
+\	<td valign=top>\
+\	<strong><u>Hints</u></strong><br>\
+\	This tool allow you to create your email account. Please fill the form and press the buton below to create your account.\
+\	</tr>\
+\	<tr>\
+\	<td colspan=2 align=center><input class=largestButton type=submit name=gcFunction value="Create my email account"></td>\
+\	</table>\
+\	</fieldset>\
+\	</table>\
+\	\
+\	\
+\	\
+\	\
+\	</td>\
+<td><img src="/images/clear.gif" width="9" height="9" /></td>\
+\	\	 \
+    <td>&nbsp;</td>\
+  </tr>\
+  <tr>\
+    <td></td>\
+\
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td></td>\
+  </tr>\
+</table>\
+\
+<br />\
+\
+\	</td>\
+  </tr>\
+</table>\
+<input type=hidden name=gcPage value='MyAccount'>\
+</form>\
+\
+\
+	3	0
+7	MyAccountPwdMsg	1	1	1245440836	1	1245758238		\
+<body marginwidth="0" marginheight="0">\
+\
+<div align="center" class="standard2colnee">\
+\
+<table cellspacing="0" cellpadding="0" border="0" width=1200>\
+\	<tr valign="top">\
+\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\
+\	\	<td align="right">\
+\
+\
+\	<!-- one row, one cell table to span the page-->\
+\	<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">\
+\	\	<tr>\
+\
+\	\	\	<!-- Navigation -->\
+\	\	\	<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>\
+\	\	\	\	<table width="100%" border="0" cellpadding="0" cellspacing="0">\
+\	\	\	\	\	<tr>\
+\	\	\	\	\	</tr>\
+\	\	\	\	</table>\
+\	\	\	</td>\
+\	\	</tr>\
+<tr><td>&nbsp;</td></tr>\
+\	\	\	\	\	\	\	<tr>\
+\	\	\	\	\	\	\	\	<td class="mastbg2">\
+\
+\	\	\	\	\	\	\	\	\	<table cellspacing="0" cellpadding="0" border="0" width="100%">\
+\	\	\	\	\	\	\	\	\	<tr valign="top">\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	<td align="right" class="padt10">\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	\	\	<table cellspacing="0" cellpadding="0" border="0">\
+\	\	\	\	\	\	\	\	\	\	\	\	\	<tr>\
+\	\	\	\	\	\	\	\	\	\	\	\	\	<td>&nbsp;</td>\
+\
+\	\	\	\	\	\	\	\	\	\	\	\	\	</tr>\
+\	\	\	\	\	\	\	\	\	\	\	\	</table>\
+\	\	\	\	\	\	\	\	\	\	</td>\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	</tr>\
+\	\	\	\	\	\	\	\	\	</table>\
+\	\	\	\	\	\	\	\	</td>\
+\	\	\	\	\	\	\	</tr>\
+\
+\	\	\	</table>\
+\	\	</td>\
+\	</tr>\
+</table>\
+\
+\
+\
+<form method=post action={{cCGI}} style="margin:0px;">\
+<table width=1200  border="0" cellspacing="0" cellpadding="0">\
+  <tr>\
+    <td>\
+\
+&nbsp;\
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>\
+  <tr>\
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>\
+    <td class="hdrtout padlt8" width="100%">\
+\	\	<h6 class="modhdr">Your Email Account Management Tools</h6>\
+\	</td>\
+\	<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>\
+  </tr>\
+  <tr>\
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>\
+\
+    <td valign="top" width=33%>\
+\	\
+\	\
+\	\
+<table border="0" cellspacing="8" cellpadding="0" width="50%" class="table_content">\
+\	<tr>\
+\	<td width=150>\
+\	<fieldset><legend class=modhdr>Reset your Password</legend>\
+\	<table>\
+\	<tr>\
+\	<td valign=top>{{cMessage}}</td>\
+\	</tr>\
+\	</table>\
+\	</fieldset>\
+\	</td>\
+\	</table>\
+\	\
+\	\
+\	\
+\	\
+\	</td>\
+<td><img src="/images/clear.gif" width="9" height="9" /></td>\
+\	\	 \
+    <td>&nbsp;</td>\
+  </tr>\
+  <tr>\
+    <td></td>\
+\
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td></td>\
+  </tr>\
+</table>\
+\
+<br />\
+\
+\	</td>\
+  </tr>\
+</table>\
+</form>\
+\
+\
+	3	0
+8	MyAccountPwdReset.1	1	1	1245440837	1	1245758238		\
+<body marginwidth="0" marginheight="0">\
+\
+<div align="center" class="standard2colnee">\
+\
+<table cellspacing="0" cellpadding="0" border="0" width=1200>\
+\	<tr valign="top">\
+\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\
+\	\	<td align="right">\
+\
+\
+\	<!-- one row, one cell table to span the page-->\
+\	<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">\
+\	\	<tr>\
+\
+\	\	\	<!-- Navigation -->\
+\	\	\	<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>\
+\	\	\	\	<table width="100%" border="0" cellpadding="0" cellspacing="0">\
+\	\	\	\	\	<tr>\
+\	\	\	\	\	</tr>\
+\	\	\	\	</table>\
+\	\	\	</td>\
+\	\	</tr>\
+<tr><td>&nbsp;</td></tr>\
+\	\	\	\	\	\	\	<tr>\
+\	\	\	\	\	\	\	\	<td class="mastbg2">\
+\
+\	\	\	\	\	\	\	\	\	<table cellspacing="0" cellpadding="0" border="0" width="100%">\
+\	\	\	\	\	\	\	\	\	<tr valign="top">\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	<td align="right" class="padt10">\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	\	\	<table cellspacing="0" cellpadding="0" border="0">\
+\	\	\	\	\	\	\	\	\	\	\	\	\	<tr>\
+\	\	\	\	\	\	\	\	\	\	\	\	\	<td>&nbsp;</td>\
+\
+\	\	\	\	\	\	\	\	\	\	\	\	\	</tr>\
+\	\	\	\	\	\	\	\	\	\	\	\	</table>\
+\	\	\	\	\	\	\	\	\	\	</td>\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	</tr>\
+\	\	\	\	\	\	\	\	\	</table>\
+\	\	\	\	\	\	\	\	</td>\
+\	\	\	\	\	\	\	</tr>\
+\
+\	\	\	</table>\
+\	\	</td>\
+\	</tr>\
+</table>\
+\
+\
+\
+<form method=post action={{cCGI}} style="margin:0px;">\
+<table width=1200  border="0" cellspacing="0" cellpadding="0">\
+  <tr>\
+    <td>\
+\
+&nbsp;\
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>\
+  <tr>\
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>\
+    <td class="hdrtout padlt8" width="100%">\
+\	\	<h6 class="modhdr">Your Email Account Management Tools</h6>\
+\	</td>\
+\	<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>\
+  </tr>\
+  <tr>\
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>\
+\
+    <td valign="top" width=33%>\
+\	\
+\	\
+\	\
+<table border="0" cellspacing="8" cellpadding="0" width="50%" class="table_content">\
+\	<tr>\
+\	<td width=150>\
+\	<fieldset><legend class=modhdr>Reset your Password</legend>\
+\	<table>\
+\	<tr>\
+\	<td valign=top><strong>Your email address</strong></td>\
+\	<td valign=top><input type=text name=cLogin maxlength=255 size=30></td>\
+\	<td valign=top>\
+\	<strong><u>Hints</u></strong><br>\
+\	This tool allow you to reset your email account password. \
+\	After you enter your email address, press the button below to go to the step 2 were you must enter the answer of the\
+\	secret question you entetred when you registered your account. If correct, a new random password will be set for your account\
+\	and it will be displayed at this page.\
+\	</tr>\
+\	<tr>\
+\	<td colspan=2 align=center><input class=largestButton type=submit name=gcFunction value="Ask the secret question"></td>\
+\	</table>\
+\	</fieldset>\
+\	</td>\
+\	</table>\
+\	\
+\	\
+\	\
+\	\
+\	</td>\
+<td><img src="/images/clear.gif" width="9" height="9" /></td>\
+\	\	 \
+    <td>&nbsp;</td>\
+  </tr>\
+  <tr>\
+    <td></td>\
+\
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td></td>\
+  </tr>\
+</table>\
+\
+<br />\
+\
+\	</td>\
+  </tr>\
+</table>\
+<input type=hidden name=gcPage value='MyAccount'>\
+</form>\
+\
+\
+	3	0
+9	MyAccountPwdReset.2	1	1	1245440837	1	1245758239		\
+<body marginwidth="0" marginheight="0">\
+\
+<div align="center" class="standard2colnee">\
+\
+<table cellspacing="0" cellpadding="0" border="0" width=1200>\
+\	<tr valign="top">\
+\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\
+\	\	<td align="right">\
+\
+\
+\	<!-- one row, one cell table to span the page-->\
+\	<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">\
+\	\	<tr>\
+\
+\	\	\	<!-- Navigation -->\
+\	\	\	<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>\
+\	\	\	\	<table width="100%" border="0" cellpadding="0" cellspacing="0">\
+\	\	\	\	\	<tr>\
+\	\	\	\	\	</tr>\
+\	\	\	\	</table>\
+\	\	\	</td>\
+\	\	</tr>\
+<tr><td>&nbsp;</td></tr>\
+\	\	\	\	\	\	\	<tr>\
+\	\	\	\	\	\	\	\	<td class="mastbg2">\
+\
+\	\	\	\	\	\	\	\	\	<table cellspacing="0" cellpadding="0" border="0" width="100%">\
+\	\	\	\	\	\	\	\	\	<tr valign="top">\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	<td align="right" class="padt10">\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	\	\	<table cellspacing="0" cellpadding="0" border="0">\
+\	\	\	\	\	\	\	\	\	\	\	\	\	<tr>\
+\	\	\	\	\	\	\	\	\	\	\	\	\	<td>&nbsp;</td>\
+\
+\	\	\	\	\	\	\	\	\	\	\	\	\	</tr>\
+\	\	\	\	\	\	\	\	\	\	\	\	</table>\
+\	\	\	\	\	\	\	\	\	\	</td>\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	\	\
+\	\	\	\	\	\	\	\	\	</tr>\
+\	\	\	\	\	\	\	\	\	</table>\
+\	\	\	\	\	\	\	\	</td>\
+\	\	\	\	\	\	\	</tr>\
+\
+\	\	\	</table>\
+\	\	</td>\
+\	</tr>\
+</table>\
+\
+\
+\
+<form method=post action={{cCGI}} style="margin:0px;">\
+<input type=hidden name=cLogin value='{{cLogin}}'>\
+\
+<table width=1200  border="0" cellspacing="0" cellpadding="0">\
+  <tr>\
+    <td>\
+\
+&nbsp;\
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>\
+  <tr>\
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>\
+    <td class="hdrtout padlt8" width="100%">\
+\	\	<h6 class="modhdr">Your Email Account Management Tools</h6>\
+\	</td>\
+\	<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>\
+  </tr>\
+  <tr>\
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>\
+\
+    <td valign="top" width=33%>\
+\	\
+\	\
+\	\
+<table border="0" cellspacing="8" cellpadding="0" width="50%" class="table_content">\
+\	<tr>\
+\	<td width=150>\
+\	<fieldset><legend class=modhdr>Reset your Password</legend>\
+\	<table>\
+\	<tr>\
+\	<td valign=top><strong>Question</strong></td>\
+\	<td valign=top>{{cSecretQuestion}}</td>\
+\	</tr>\
+\	<tr>\
+\	<td valign=top><strong>Answer</strong></td>\
+\	<td valign=top><input type=text name=cSecretAnswer maxlength=255 size=30></td>\
+\	<td valign=top>\
+\	<strong><u>Hints</u></strong><br>\
+\	Please enter the answer to your secret question to get your new email account password.\
+\	</tr>\
+\	<tr>\
+\	<td colspan=2 align=center><input class=largestButton type=submit name=gcFunction value="Reset my password"></td>\
+\	</table>\
+\	</fieldset>\
+\	</td>\
+\	</table>\
+\	\
+\	\
+\	\
+\	\
+\	</td>\
+<td><img src="/images/clear.gif" width="9" height="9" /></td>\
+\	\	 \
+    <td>&nbsp;</td>\
+  </tr>\
+  <tr>\
+    <td></td>\
+\
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td></td>\
+  </tr>\
+</table>\
+\
+<br />\
+\
+\	</td>\
+  </tr>\
+</table>\
+<input type=hidden name=gcPage value='MyAccount'>\
+</form>\
+\
+\
+	3	0
+11	SpamSettings.Body	1	1	1245645054	1	1245758240		<body marginwidth="0" marginheight="0">\
+\
+<div align="center" class="standard2colnee">\
+\
+<table cellspacing="0" cellpadding="0" border="0" width=1200>\
+\	<tr valign="top">\
+\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\
+\	\	<td align="right">\
+\
+\
+\	<!-- one row, one cell table to span the page-->\
+\	<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">\
+\	\	<tr>\
+\
+\	\	\	<!-- Navigation -->\
+\	\	\	<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>\
+\	\	\	\	<table width="100%" border="0" cellpadding="0" cellspacing="0">\
+\	\	\	\	\	<tr>\
+\	\	\	\	\	\	<td class="wpsUnSelectedPlace" nowrap height="100%">\
+\	\	\	\	\	\	<a title='Manage your account settings' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=MyAccount'><b class ="font10pt">Account Management</b></a>\
+\	\	\	\	\	\	</td>\
+\	\	\	\	\	\	<td class="wpsSelectedPlace" nowrap height="100%">\
+\	\	\	\	\	\	<a title='Manage your spam settings' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=SpamSettings'><b class ="font10pt">Spam Settings</b></a>\
+\	\	\	\	\	\	</td>\
+\	\	\	\	\	</tr>\
+\	\	\	\	</table>\
+\	\	\	</td>\
+\	\	</tr>\
+                <tr>\
+\	\	<td valign=top align=right class=notice>\
+{{gcName}} ({{gcLogin}}) is logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout\
+</a></td>\
+                </tr>\
+\	\	\	</table>\
+\	\	</td>\
+\	</tr>\
+</table>\
+\
+\
+\
+<form method=post action={{cCGI}} style="margin:0px;">\
+<table width=1200  border="0" cellspacing="0" cellpadding="0">\
+  <tr>\
+    <td>\
+\
+{{gcMessage}}\
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>\
+  <tr>\
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>\
+    <td class="hdrtout padlt8" width="33%">\
+\	\	<h6 class="modhdr">Customer Resource Panel</h6>\
+\	</td>\
+    <td valign="top" width="9" class="hdrtout padlt8"></td>\
+    <td width="10">&nbsp;</td>\
+    <td valign="top" width="9" class="hdrtout padlt8"></td>\
+    <td class="hdrtout padlt8">\
+\	\	<h6 class="modhdr">SpamAssassin Settings</h6>\
+\	</td>\
+    <td valign="top" width="9" class="hdrtout padlt8"></td>\
+  </tr>\
+  <tr>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td valign="top">\
+\	\
+\	\
+\	\
+<table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">\
+\	\	<tr>\
+\	\	  <td>&nbsp;</td>\
+\	\	  <td>&nbsp;</td>\
+\	\	</tr>\
+\	\	<tr><td><u><b>SpamAssassin Settings</b><u></td></tr>\
+\	\	<tr>\
+\	\	<td>\
+\	\	Here you update your SpamAssassin user preferences. If this is the first time you access this tab, a default content will be placed for you in the text area at the right panel.<br>\
+\	\	Edit the text area content as you wish and press then the [Update Settings] button to commit your changes.<br>\
+\	\	<br>\
+\	\	</td></tr>\
+\	\	<tr><td>&nbsp;</td></tr>\
+\	\	<tr><td><u><b>SpamAssassin Config Examples</b><u></td></tr>\
+\	\	<tr><td>\
+\	\	<table>\
+\	\	<tr><th>Directive</th><th>Effect</th></tr>\
+\	\	<tr><td valign=top width=50%>whitelist_from joe@isp.net</td><td>Whitelists all the messages coming from the joe@isp.net email address</td></tr>\
+\	\	<tr><td valign=top>whitelist_from *@isp.net</td><td>Whitelists all the messages coming from the isp.net domain</td></tr>\
+\	\	<tr><td valign=top>blacklist_from charly@spammer.com</td><td>Blacklists all the messages coming from the charly@spammer.com email address</td></tr>\
+\	\	<tr><td valign=top>blacklist_from *@spammer.com</td><td>Blacklists all the messages coming from the spammer.com domain</td></tr>\
+\	\	</table>\
+\	\	</td>\
+\	\	</tr>\	\
+\	</table>\
+\	\
+\	\
+\	\
+\	\
+\	\
+\	</td>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td>&nbsp;</td>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td valign="top">\
+\	\
+\	\
+<table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">\
+\	<tr>\
+\	  <td valign="top">&nbsp;</td>\
+\	  <td>&nbsp;</td>\
+\	</tr>\
+\	<tr>\
+\	<td valign=top width=33%><a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Your Spam Settings')"><b>Your Spam Settings</b></td>\
+\	<td valign=top><textarea name=cSpamSettings cols=80 rows=16 class=type_textarea>{{cSpamSettings}}</textarea></td></tr>\
+\	</tr>\
+\	<tr><td>&nbsp;</td></tr>\
+\	<tr>\
+\	<td colspan=2 align=center><input type=submit name=gcFunction class=largeButton title='Updates your spam settings' value='Update Settings'></td>\
+\	</tr>\
+\
+</table>\
+\	\
+\	\
+\	\
+\	</td>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+  </tr>\
+  <tr>\
+    <td></td>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td></td>\
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td></td>\
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
+    <td></td>\
+  </tr>\
+</table>\
+\
+<br />\
+\
+\	</td>\
+  </tr>\
+</table>\
+<input type=hidden name=gcPage value='SpamSettings'>\
+</form>\
+	3	0
+12	Glossary.Body	1	1	1245756950	1	1245758235		<body onLoad="window.focus()">\
+<form method=post>\
+<table width="100%" border="0" cellspacing="0" cellpadding="0" class="table_header2">\
+  <tr>\
+    <td><img src="/images/unxslogo.jpg"  style="margin:10px; "></td>\
+    <td align="right">\
+        <input type="submit" onClick="javascript:window.close()" value="X Close" style="margin:0 20px 0 0;" class="close_button"/>\
+    </td>\
+  </tr>\
+\
+</table>\
+\
+<table width="100%"  border="0" cellspacing="0" cellpadding="5" class="tTitles2">\
+  <tr>\
+    <td class="hdrtout padlt8"><h6 class="modhdr">Glossary: {{cLabel}}</h6></td>\
+  </tr>\
+</table>\
+\
+                <table border="0" cellspacing="0" cellpadding="4" style="margin:25px 0px 0 0px;">\
+            <tr>\
+                                <td>&nbsp;</td>\
+\
+                                <td class="table_center">\
+                                <br>\
+                                        <span>\
+                                        {{cText}}\
+                                        </span>\
+                                </td>\
+                                <td>&nbsp;</td>\
+                                <td>&nbsp;</td>\
+            </tr>\
+\
+          </table>\
+<br>\
+\
+	3	0
