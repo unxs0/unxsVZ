@@ -19,12 +19,13 @@ static char cuWizIPv4PullDown[32]={""};
 void CopyProperties(unsigned uOldNode,unsigned uNewNode,unsigned uType);
 void DelProperties(unsigned uNode,unsigned uType);
 void tNodeNavList(unsigned uDataCenter);
-void htmlHealth(unsigned uContainer,unsigned uType);
 void tContainerNavList(unsigned uNode);//tcontainerfunc.h
 void htmlGroups(unsigned uNode, unsigned uContainer);
 
 //external
 //tcontainerfunc.h
+void htmlHealth(unsigned uContainer,unsigned uType);
+void htmlNodeHealth(unsigned uNode);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 				unsigned uTargetNode, unsigned uNewVeid);
 unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4);
@@ -302,6 +303,7 @@ void ExttNodeButtons(void)
 			if(uNode)
 			{
 				htmlHealth(uNode,2);
+				htmlNodeHealth(uNode);
 				printf("<p><input type=submit class=largeButton title='Clone all containers"
 					" on this node to another node'"
 					" name=gcCommand value='Clone Node Wizard'><br>");
@@ -529,3 +531,32 @@ void DelProperties(unsigned uNode,unsigned uType)
 		htmlPlainTextError(mysql_error(&gMysql));
 
 }//void DelProperties()
+
+
+void htmlNodeHealth(unsigned uNode)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	printf("<u>Node Roll Call</u><br>\n");
+	//Check all node activity via tProperty
+	sprintf(gcQuery,"SELECT tNode.cLabel,FROM_UNIXTIME(MAX(tProperty.uModDate)),"
+			"(UNIX_TIMESTAMP(NOW()) - MAX(tProperty.uModDate) > 300 ) FROM"
+			" tProperty,tNode WHERE tProperty.uKey=tNode.uNode AND"
+			" tProperty.uType=2 GROUP BY tProperty.uKey");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("<font color=");
+		if(field[2][0]=='1') 
+			printf("red>");
+		else
+			printf("black>");
+		printf("%s last contact: %s</font><br>\n",field[0],field[1]);
+	}
+	mysql_free_result(res);
+
+}//void htmlNodeHealth(unsigned uNode)
