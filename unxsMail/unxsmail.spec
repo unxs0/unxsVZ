@@ -33,6 +33,7 @@ cp data/*.txt /usr/local/share/unxsMail/data/
 %files
 %doc INSTALL LICENSE
 /var/www/unxs/cgi-bin/unxsMail.cgi
+/var/www/unxs/cgi-bin/unxsMailUser.cgi
 /usr/local/share/unxsMail/
 
 %changelog

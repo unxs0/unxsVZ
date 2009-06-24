@@ -18,7 +18,7 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 static char cTableList[64][32]={"tAccess","tAlias","tAuthorize","tBlackList","tClient","tConfigSpec","tConfiguration","tDomain","tGlossary","tHoldUser","tJob","tJobStatus","tLocal","tLog","tLogMonth","tLogType","tMonth","tRelay","tRequest","tServer","tServerConfig","tServerGroup","tServerGroupGlue","tStatus","tTemplate","tTemplateSet","tTemplateType","tUser","tUserConfig","tUserType","tVUT","tVUTEntries","tVacation","tWhiteList",""};
 
 
-char cInitTableList[64][32]={"tAuthorize","tClient","tConfigSpec","tConfiguration","tDomain","tJobStatus","tLogType","tServer","tServerGroup","tServerGroupGlue","tStatus","tTemplate","tTemplateSet","tTemplateType","tUserType",""};
+char cInitTableList[64][32]={"tAuthorize","tClient","tConfigSpec","tConfiguration","tDomain","tJobStatus","tLogType","tServer","tServerGroup","tServerGroupGlue","tStatus","tTemplate","tTemplateSet","tTemplateType","tUserType","tGlossary",""};
 
 void ExtMainShell(int argc, char *argv[]);
 void Initialize(char *cPasswd);
