@@ -1,10 +1,10 @@
 Summary: sendmail and postfix controller as well as configuration generator for all mail services across multiple servers and multiple mail domains. 
 Name: unxsmail
-Version: 1.0
+Version: 1.1
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsmail-1.0.tar.gz
+Source: http://unixservice.com/source/unxsmail-1.1.tar.gz
 URL: http://openisp.net/openisp/unxsVZ
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -19,12 +19,13 @@ New RAD3 based sendmail and postfix controller as well as configuration generato
 
 %build
 make
-cd unxsRadacct
+cd interfaces/user
 make
 cd $RPM_BUILD_DIR
 
 %install
 install -s unxsMail.cgi /var/www/unxs/cgi-bin/unxsMail.cgi
+install -s interfaces/user/interface.cgi /var/www/unxs/cgi-bin/unxsMaiUser.cgi
 mkdir -p /usr/local/share/unxsMail/data
 cp data/*.txt /usr/local/share/unxsMail/data/
 
@@ -37,6 +38,8 @@ cp data/*.txt /usr/local/share/unxsMail/data/
 /usr/local/share/unxsMail/
 
 %changelog
+* Wed Jun 24 2009 - Hugo Urquiza <support2@unixservice.com>
+- New unxsMailUser interface, spec file fixes
 * Thu May 28 2009 - Hugo Urquiza <support2@unixservice.com>
 - Initial RPM release
 
