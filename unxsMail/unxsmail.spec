@@ -1,10 +1,10 @@
 Summary: sendmail and postfix controller as well as configuration generator for all mail services across multiple servers and multiple mail domains. 
 Name: unxsmail
-Version: 1.1
+Version: 1.2
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsmail-1.1.tar.gz
+Source: http://unixservice.com/source/unxsmail-1.2.tar.gz
 URL: http://openisp.net/openisp/unxsVZ
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -38,6 +38,8 @@ cp data/*.txt /usr/local/share/unxsMail/data/
 /usr/local/share/unxsMail/
 
 %changelog
+* Thu Jun 25 2009 - Hugo Urquiza <support2@unixservice.com>
+- Minor data file update
 * Wed Jun 24 2009 - Hugo Urquiza <support2@unixservice.com>
 - New unxsMailUser interface, spec file fixes
 * Thu May 28 2009 - Hugo Urquiza <support2@unixservice.com>
