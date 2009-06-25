@@ -2,6 +2,7 @@
 #
 #This script varies from the others only runs on a single node or external node server.
 
+#DATACENTER must not have spaces
 DATACENTER="MarketStreet"; 
 RRDFILE="/var/lib/rrd/$DATACENTER.rrd"
  
@@ -28,7 +29,7 @@ CTOUT=$(( $CTOUT0 + $CTOUT1 ));
 #note reversal 
 nice /usr/bin/rrdtool update $RRDFILE N:$CTOUT:$CTIN
 
-PNGFILE="/var/www/html/traffic/$DATACENTER.png"
+PNGFILE="/var/www/unxs/html/traffic/$DATACENTER.png"
 
 nice /usr/bin/rrdtool graph $PNGFILE \
 		--title="$DATACENTER traffic" \

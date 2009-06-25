@@ -28,7 +28,7 @@ for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
  
 	nice /usr/bin/rrdtool update $RRDFILE N:$CTIN:$CTOUT
 
-	PNGFILE="/var/www/html/traffic/$veid.png"
+	PNGFILE="/var/www/unxs/html/traffic/$veid.png"
 
 	nice /usr/bin/rrdtool graph $PNGFILE \
 			--title="$veid traffic" \
