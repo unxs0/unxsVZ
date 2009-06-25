@@ -1,0 +1,43 @@
+Intro
+-----
+
+These scripts need to be customized for each datacenter/unxsVZ implementation.
+Usually the changes refer to hardware node issues and httpd content serving.
+
+unxsVZ.tConfiguration Setup
+---------------------------
+
+In order to view the graphs in the unxsVZ backend you must setup certain
+tConfiguration name value pairs. Here is the list
+
+unxsVZ.tConfiguration.cLabel:unxsVZ.tConfiguration.cValue
+---------------------------------------------------------
+
+cTrafficDirURL:/traffic
+cNodeTrafficDirURL:/traffic
+cDatacenterTrafficDirURL:/traffic/MarketStreet.png
+
+Installation
+------------
+
+We usually install these scripts chmod 500 in /usr/local/sbin/
+
+Hardware node root (or /etc/cron) crontab example section
+---------------------------------------------------------
+
+*/5 * * * * sleep 30; nice /usr/local/sbin/vz_traffic_log.sh >> /var/log/unxsVZ.ProcessJobQueue.log 2>&1;
+*/5 * * * * sleep 40; nice /usr/local/sbin/node_traffic_log.sh  >> /var/log/unxsVZ.ProcessJobQueue.log 2>&1;
+*/5 * * * * sleep 50; nice /usr/local/sbin/datacenter_traffic_log.sh  >> /var/log/unxsVZ.ProcessJobQueue.log 2>&1;
+
+
+Final Notes
+-----------
+
+Only the cDatacenterTrafficDirURL entry specifies an actual image file. It also is the only
+script that can run on a single hardware node. The filename must match the one used in the
+datacenter_traffic_log.sh script. Of course the rrd can and probably should be
+copied to all nodes along with the current graph. For faster hardware node failure segmentation
+recovery. Following our basic idea of allowing for any hardware node to be a unxsVZ controller,
+and that if any hardware node is down the rest still work together fine.
+
+The other two refer to dirs. These dirs must exist in the context of the unxsVZ URL.

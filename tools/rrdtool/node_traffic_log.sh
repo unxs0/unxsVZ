@@ -22,7 +22,7 @@ eval `grep venet0 /proc/net/dev  | awk -F: '{print $2}' | awk '{printf"CTIN=%-15
 #note reversal 
 nice /usr/bin/rrdtool update $RRDFILE N:$CTOUT:$CTIN
 
-PNGFILE="/var/www/html/traffic/$HOSTNAME.png"
+PNGFILE="/var/www/unxs/html/traffic/$HOSTNAME.png"
 
 nice /usr/bin/rrdtool graph $PNGFILE \
 		--title="$HOSTNAME node traffic" \
