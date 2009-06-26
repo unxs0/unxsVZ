@@ -202,7 +202,7 @@ void BulkResourceImport(void)
 			uResourceCount++;
 			//If we have no defined zone keep on going.
 			if(!uZone) continue;
-			uZoneOwner=guLoginClient;
+			uZoneOwner=guOrg;
 			ProcessRRLine(cLine,gcZone,uZone,uZoneOwner,uNameServer,guLoginClient,
 				"BulkResourceImport()");
 			if(gcMessage[0])
