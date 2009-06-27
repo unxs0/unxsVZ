@@ -50,12 +50,16 @@ unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCo
 unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4);
+char *cRatioColor(float *fRatio);
 
 //tnodefunc.h
 void DelProperties(unsigned uNode,unsigned uType);
 
 //jobqueue.c
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
+
+
+
 
 void ExtProcesstContainerVars(pentry entries[], int x)
 {
@@ -1534,8 +1538,7 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 
 	long unsigned luTotalFailcnt=0;
 	long unsigned luTotalUsage=0,luTotalSoftLimit=0;
-	double fRatio;
-	char *cColor={""};
+	float fRatio;
 	char *cTable={"tContainer"};
 
 	if(uType==3)
@@ -1625,16 +1628,10 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 	mysql_free_result(mysqlRes);
 	if(luTotalSoftLimit==0) luTotalSoftLimit=1;
 	fRatio= ((float) luTotalUsage/ (float) luTotalSoftLimit) * 100.00 ;
-	if(fRatio<20.00)
-		cColor="green";
-	else if(fRatio<30.00)
-		cColor="teal";
-	else if(fRatio<40.00)
-		cColor="yellow";
-	else if(fRatio<90.00)
-		cColor="fuchsia";
-	else if(fRatio>=90.00)
-		cColor="red";
+
+	char *cColor;
+	cColor=cRatioColor(&fRatio);
+
 	printf("Container usage ratio %2.2f%%:"
 		" %lu/%lu <font color=%s>[#######]</font><br>\n",
 		fRatio,luTotalUsage,luTotalSoftLimit,cColor);
@@ -1889,3 +1886,21 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 		return(2);//no containers added
 
 }//unsigned CloneNode()
+
+
+char *cRatioColor(float *fRatio)
+{
+	char *cColor={"black"};
+
+	if(*fRatio<40.00)
+		return(cColor);
+	else if(*fRatio<70.00)
+		cColor="#DAA520";
+	else if(*fRatio<80.00)
+		cColor="fuchsia";
+	else if(*fRatio>=80.00)
+		cColor="red";
+
+	return(cColor);
+
+}//char *cRatioColor(float *fRatio)
