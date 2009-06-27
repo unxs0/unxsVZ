@@ -437,7 +437,6 @@ void tDatacenterHealth(void)
 	float fRatio;
 	char *cColor;
 		
-        printf("<p><u>Top Containers by Usage Ratio</u><br>\n");
 	sprintf(gcQuery,"SELECT luSoftlimit,luUsage,uContainer,cLabel FROM tDiskUsage"
 			" WHERE ((luUsage/luSoftlimit)>0.5)"
 			" ORDER BY (luUsage/luSoftlimit) DESC LIMIT 20");
@@ -448,6 +447,8 @@ void tDatacenterHealth(void)
 		return;
 	}
         res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+        	printf("<p><u>Top 20 Containers by Usage Ratio (50%%+)</u><br>\n");
 	while((field=mysql_fetch_row(res)))
 	{
 		luSoftlimit=0;
@@ -471,7 +472,7 @@ void tDatacenterHealth(void)
 	//2-. None zero historic fail counters
 	sprintf(gcQuery,"SELECT cValue,uKey,cLabel,cName FROM tProperty,tContainer WHERE"
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND cName LIKE '%%.luFailcnt'"
-			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 20");
+			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -483,7 +484,7 @@ void tDatacenterHealth(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>Top Containers by X.luFailcnt</u><br>\n");
+        	printf("<p><u>Top 10 Containers by X.luFailcnt</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
