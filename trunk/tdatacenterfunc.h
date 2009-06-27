@@ -382,7 +382,8 @@ void tDatacenterHealth(void)
 	//1b-. Populate with data per container
 	sprintf(gcQuery,"SELECT tProperty.uKey,tProperty.cValue,tContainer.cLabel FROM tProperty,tContainer"
 			" WHERE tProperty.uKey=tContainer.uContainer AND tProperty.uType=3 AND"
-			" tProperty.cName='1k-blocks.luUsage' AND tContainer.uDatacenter=%u",uDatacenter);
+			" tProperty.cName='1k-blocks.luUsage' AND tContainer.uDatacenter=%u"
+			" AND tContainer.uStatus=1",uDatacenter);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
