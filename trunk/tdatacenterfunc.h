@@ -366,7 +366,8 @@ void tDatacenterHealth(void)
 	//1-. Disk space usage/soft limit ratio
 	//1a-. Create temp table
 	sprintf(gcQuery,"CREATE TEMPORARY TABLE tDiskUsage (uContainer INT UNSIGNED NOT NULL DEFAULT 0,"
-			" luUsage INT UNSIGNED NOT NULL DEFAULT 0, luSoftlimit INT UNSIGNED NOT NULL DEFAULT 0)");
+			" luUsage INT UNSIGNED NOT NULL DEFAULT 0, luSoftlimit INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cLabel VARCHAR(32) NOT NULL DEFAULT '')");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -376,7 +377,9 @@ void tDatacenterHealth(void)
         }
 
 	//1b-. Populate with data per container
-	sprintf(gcQuery,"SELECT uKey,cValue FROM tProperty WHERE uType=3 AND cName='1k-blocks.luUsage'");
+	sprintf(gcQuery,"SELECT tProperty.uKey,tProperty.cValue,tContainer.cLabel FROM tProperty,tContainer"
+			" WHERE tProperty.uKey=tContainer.uContainer AND tProperty.uType=3 AND"
+			" tProperty.cName='1k-blocks.luUsage' AND tContainer.uDatacenter=%u",uDatacenter);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -387,7 +390,8 @@ void tDatacenterHealth(void)
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{	
-		sprintf(gcQuery,"INSERT INTO tDiskUsage SET uContainer=%s,luUsage=%s",field[0],field[1]);
+		sprintf(gcQuery,"INSERT INTO tDiskUsage SET uContainer=%s,luUsage=%s,cLabel='%.32s'",
+			field[0],field[1],field[2]);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
         	{
@@ -426,7 +430,7 @@ void tDatacenterHealth(void)
 	float fRatio;
 		
         printf("<p><u>Top Containers by Usage Ratio</u><br>\n");
-	sprintf(gcQuery,"SELECT luSoftlimit,luUsage,uContainer FROM tDiskUsage ORDER BY"
+	sprintf(gcQuery,"SELECT luSoftlimit,luUsage,uContainer,cLabel FROM tDiskUsage ORDER BY"
 				" (luUsage/luSoftlimit) DESC LIMIT 20");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -449,7 +453,7 @@ void tDatacenterHealth(void)
 		fRatio= ((float) luUsage/ (float) luSoftlimit) * 100.00 ;
 
 		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
-				"%s %s/%s %2.2f%%</a><br>\n",field[2],field[2],field[1],field[0],fRatio);
+				"%s %s/%s %2.2f%%</a><br>\n",field[2],field[3],field[1],field[0],fRatio);
 	}
         mysql_free_result(res);
 
