@@ -23,6 +23,9 @@ void tNodeNavList(unsigned uDataCenter);
 //tgroupfunc.h
 void tGroupNavList(void);
 
+//tcontainerfunc.h
+char *cRatioColor(float *fRatio);
+
 void ExtProcesstDatacenterVars(pentry entries[], int x)
 {
 	register int i;
@@ -428,6 +431,7 @@ void tDatacenterHealth(void)
 	unsigned luSoftlimit;
 	unsigned luUsage;
 	float fRatio;
+	char *cColor;
 		
         printf("<p><u>Top Containers by Usage Ratio</u><br>\n");
 	sprintf(gcQuery,"SELECT luSoftlimit,luUsage,uContainer,cLabel FROM tDiskUsage ORDER BY"
@@ -451,9 +455,10 @@ void tDatacenterHealth(void)
 		if(!luSoftlimit)
 			luSoftlimit=luUsage;
 		fRatio= ((float) luUsage/ (float) luSoftlimit) * 100.00 ;
+		cColor=cRatioColor(&fRatio);
 
 		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
-				"%s %s/%s %2.2f%%</a><br>\n",field[2],field[3],field[1],field[0],fRatio);
+				"<font color=%s>%2.2f%% %s</font></a><br>\n",field[2],cColor,fRatio,field[3]);
 	}
         mysql_free_result(res);
 
