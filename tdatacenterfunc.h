@@ -406,7 +406,10 @@ void tDatacenterHealth(void)
 	}
 	mysql_free_result(res);
 
-	sprintf(gcQuery,"SELECT uKey,cValue FROM tProperty WHERE uType=3 AND cName='1k-blocks.luSoftlimit'");
+	sprintf(gcQuery,"SELECT tProperty.uKey,tProperty.cValue FROM tProperty,tContainer"
+			" WHERE tProperty.uKey=tContainer.uContainer AND tProperty.uType=3 AND"
+			" tProperty.cName='1k-blocks.luSoftLimit' AND tContainer.uDatacenter=%u"
+			" AND tContainer.uStatus=1",uDatacenter);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -435,8 +438,9 @@ void tDatacenterHealth(void)
 	char *cColor;
 		
         printf("<p><u>Top Containers by Usage Ratio</u><br>\n");
-	sprintf(gcQuery,"SELECT luSoftlimit,luUsage,uContainer,cLabel FROM tDiskUsage ORDER BY"
-				" (luUsage/luSoftlimit) DESC LIMIT 20");
+	sprintf(gcQuery,"SELECT luSoftlimit,luUsage,uContainer,cLabel FROM tDiskUsage"
+			" WHERE ((luUsage/luSoftlimit)>0.5)"
+			" ORDER BY (luUsage/luSoftlimit) DESC LIMIT 20");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
