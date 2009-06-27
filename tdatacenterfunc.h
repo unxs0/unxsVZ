@@ -363,43 +363,113 @@ void tDatacenterHealth(void)
         MYSQL_ROW field;
 
 
-	sprintf(gcQuery,"SELECT cValue,uKey,cLabel FROM tProperty,tContainer WHERE"
-			" tProperty.uKey=tContainer.uContainer AND uType=3 AND cName='1k-blocks.luUsage'"
-			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
+	//1-. Disk space usage/soft limit ratio
+	//1a-. Create temp table
+	sprintf(gcQuery,"CREATE TEMPORARY TABLE tDiskUsage (uContainer INT UNSIGNED NOT NULL DEFAULT 0,"
+			" luUsage INT UNSIGNED NOT NULL DEFAULT 0, luSoftlimit INT UNSIGNED NOT NULL DEFAULT 0)");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
         	printf("<p><u>tDatacenterHealth</u><br>\n");
-                printf("%s",mysql_error(&gMysql));
+                printf("a-. %s",mysql_error(&gMysql));
                 return;
         }
 
+	//1b-. Populate with data per container
+	sprintf(gcQuery,"SELECT uKey,cValue FROM tProperty WHERE uType=3 AND cName='1k-blocks.luUsage'");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tDatacenterHealth</u><br>\n");
+                printf("0-. %s",mysql_error(&gMysql));
+                return;
+        }
         res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	while((field=mysql_fetch_row(res)))
 	{	
-        	printf("<p><u>Top Ten Containers by Usage</u><br>\n");
+		sprintf(gcQuery,"INSERT INTO tDiskUsage SET uContainer=%s,luUsage=%s",field[0],field[1]);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+        	{
+        		printf("<p><u>tDatacenterHealth</u><br>\n");
+			printf("1-. %s",mysql_error(&gMysql));
+			return;
+		}
+	}
+	mysql_free_result(res);
 
-	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
-				"%s %s</a><br>\n",field[1],field[2],field[0]);
+	sprintf(gcQuery,"SELECT uKey,cValue FROM tProperty WHERE uType=3 AND cName='1k-blocks.luSoftlimit'");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tDatacenterHealth</u><br>\n");
+                printf("2-. %s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{	
+		sprintf(gcQuery,"UPDATE tDiskUsage SET luSoftlimit=%s WHERE uContainer=%s",field[1],field[0]);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+        	{
+        		printf("<p><u>tDatacenterHealth</u><br>\n");
+			printf("3-. %s",mysql_error(&gMysql));
+			return;
+		}
+	}
+	mysql_free_result(res);
+
+	//1d-. Report
+	unsigned luSoftlimit;
+	unsigned luUsage;
+	float fRatio;
+		
+        printf("<p><u>Top Containers by Usage Ratio</u><br>\n");
+	sprintf(gcQuery,"SELECT luSoftlimit,luUsage,uContainer FROM tDiskUsage ORDER BY"
+				" (luUsage/luSoftlimit) DESC LIMIT 20");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+		printf("4-. %s",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		luSoftlimit=0;
+		luUsage=0;
+		sscanf(field[0],"%u",&luSoftlimit);
+		sscanf(field[1],"%u",&luUsage);
+		//Strange values hack
+		if(!luUsage)
+			luUsage=1;
+		if(!luSoftlimit)
+			luSoftlimit=luUsage;
+		fRatio= ((float) luUsage/ (float) luSoftlimit) * 100.00 ;
+
+		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s %s/%s %2.2f%%</a><br>\n",field[2],field[2],field[1],field[0],fRatio);
 	}
         mysql_free_result(res);
 
+
+	//2-. None zero historic fail counters
 	sprintf(gcQuery,"SELECT cValue,uKey,cLabel,cName FROM tProperty,tContainer WHERE"
-			" tProperty.uKey=tContainer.uContainer AND uType=3 AND cName LIKE '%%.luFailcnt'"
-			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND cName LIKE '%%.luFailcnt'"
+			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 20");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
         	printf("<p><u>tDatacenterHealth</u><br>\n");
-                printf("%s",mysql_error(&gMysql));
+                printf("5-. %s",mysql_error(&gMysql));
                 return;
         }
 
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>Top Ten Containers by X.luFailcnt</u><br>\n");
+        	printf("<p><u>Top Containers by X.luFailcnt</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
