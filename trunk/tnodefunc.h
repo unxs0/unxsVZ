@@ -559,17 +559,17 @@ void htmlNodeHealth(unsigned uNode)
 		char *cColor;
 		char cluPrivvmpagesHeld[256];
 		long unsigned luContainerPrivvmpagesMaxHeld=0;
-		long unsigned luNodePrivvmpagesMaxHeld=1;
+		long unsigned luInstalledRam=1;
 		float fRatio;
 
-		GetNodeProp(uNode,"privvmpages.luMaxHeld",cluPrivvmpagesHeld);
+		GetNodeProp(uNode,"luInstalledRam",cluPrivvmpagesHeld);
 		sscanf(field[0],"%lu",&luContainerPrivvmpagesMaxHeld);
-		sscanf(cluPrivvmpagesHeld,"%lu",&luNodePrivvmpagesMaxHeld);
-		fRatio= ((float) luContainerPrivvmpagesMaxHeld/ (float) luNodePrivvmpagesMaxHeld) * 100.00 ;
+		sscanf(cluPrivvmpagesHeld,"%lu",&luInstalledRam);
+		fRatio= ((float) luContainerPrivvmpagesMaxHeld/ (float) luInstalledRam) * 100.00 ;
 		cColor=cRatioColor(&fRatio);
 		printf("Max held privvmpages ratio %2.2f%%:"
 			" %lu/%lu <font color=%s>[#######]</font><br>\n",
-				fRatio,luContainerPrivvmpagesMaxHeld,luNodePrivvmpagesMaxHeld,cColor);
+				fRatio,luContainerPrivvmpagesMaxHeld,luInstalledRam,cColor);
 	}
 	mysql_free_result(res);
 	
