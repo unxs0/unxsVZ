@@ -561,3 +561,10 @@ void ExttConfigurationNavBar(void);
 
 
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
+
+//Property fixed types
+#define PROP_DATACENTER "1"
+#define PROP_NODE "2"
+#define PROP_CONTAINER "3"
+#define PROP_GROUP "4"
+#define PROP_GROUPTYPE "5"
