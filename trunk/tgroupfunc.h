@@ -14,6 +14,8 @@ AUTHOR
 
 void tGroupNavList(void);
 void tGroupMemberNavList(void);
+void voidCopyGroupType(unsigned uGroupType,unsigned uGroup);	
+void voidDelGroupProperties(unsigned uGroup);
 
 void ExtProcesstGroupVars(pentry entries[], int x)
 {
@@ -50,6 +52,10 @@ void ExttGroupCommands(pentry entries[], int x)
 
                         	guMode=2000;
 				//Check entries here
+				if(strlen(cLabel)<4)
+					tGroup("<blink>Error</blink>: cLabel too short");
+				if(!uGroupType)
+					tGroup("<blink>Error</blink>: uGroupType must be selected");
                         	guMode=0;
 
 				uGroup=0;
@@ -58,7 +64,11 @@ void ExttGroupCommands(pentry entries[], int x)
 				uOwner=guReseller;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
-				NewtGroup(0);
+			
+				NewtGroup(1);
+				mysql_insert_id(&gMysql);
+				voidCopyGroupType(uGroupType,uGroup);	
+				tGroup("New group created properties copied from group type");
 			}
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
@@ -82,6 +92,7 @@ void ExttGroupCommands(pentry entries[], int x)
 				|| (guPermLevel>7 && guReseller==guLoginClient) )
 			{
 				guMode=5;
+				voidDelGroupProperties(uGroup);	
 				DeletetGroup();
 			}
                 }
@@ -155,6 +166,40 @@ void ExttGroupButtons(void)
 
 void ExttGroupAuxTable(void)
 {
+	if(!uGroup) return;
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"%s Property Panel",cLabel);
+	OpenFieldSet(gcQuery,100);
+	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="
+			PROP_GROUP
+			" ORDER BY cName",
+				uGroup);
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+		printf("<table cols=2>");
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("<tr>\n");
+			printf("<td width=100 valign=top><a class=darkLink href=unxsVZ.cgi?"
+					"gcFunction=tProperty&uProperty=%s&cReturn=tGroup_%u>"
+					"%s</a></td><td>%s</td>\n",
+						field[0],uGroup,field[1],field[2]);
+			printf("</tr>\n");
+		}
+		printf("</table>");
+	}
+
+	CloseFieldSet();
+
 
 }//void ExttGroupAuxTable(void)
 
@@ -357,3 +402,28 @@ void tGroupMemberNavList(void)
         mysql_free_result(res);
 
 }//void tGroupMemberNavList(void)
+
+
+void voidCopyGroupType(unsigned uGroupType,unsigned uGroup)
+{
+	//MySQL 5.0+ SQL
+	sprintf(gcQuery,"INSERT INTO tProperty (cName,cValue,uType,uKey,uOwner,uCreatedBy,uCreatedDate)"
+			" SELECT cName,cValue,"PROP_GROUP",%u,%u,%u,UNIX_TIMESTAMP(NOW()) FROM"
+			" tProperty WHERE uKey=%u AND uType="
+			PROP_GROUPTYPE
+					,uGroup,guLoginClient,guCompany,uGroupType);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+		
+}//void voidCopyGroupType()
+
+
+void voidDelGroupProperties(unsigned uGroup)
+{
+	sprintf(gcQuery,"DELETE FROM tProperty WHERE uType="PROP_GROUP" AND uKey=%u",uGroup);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void voidDelGroupProperties(unsigned uGroup)

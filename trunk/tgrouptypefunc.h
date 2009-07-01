@@ -152,6 +152,39 @@ void ExttGroupTypeButtons(void)
 
 void ExttGroupTypeAuxTable(void)
 {
+	if(!uGroupType) return;
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"%s Property Panel",cLabel);
+	OpenFieldSet(gcQuery,100);
+	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="
+			PROP_GROUPTYPE
+			" ORDER BY cName",
+				uGroupType);
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+		printf("<table cols=2>");
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("<tr>\n");
+			printf("<td width=100 valign=top><a class=darkLink href=unxsVZ.cgi?"
+					"gcFunction=tProperty&uProperty=%s&cReturn=tGroupType_%u>"
+					"%s</a></td><td>%s</td>\n",
+						field[0],uGroupType,field[1],field[2]);
+			printf("</tr>\n");
+		}
+		printf("</table>");
+	}
+
+	CloseFieldSet();
 
 }//void ExttGroupTypeAuxTable(void)
 
