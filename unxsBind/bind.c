@@ -2679,16 +2679,18 @@ void ImportCompanies(void)
 		{
 			*cp=0;
 			sscanf(gcQuery,"%u",&uClient);
+		
+			sprintf(cQuery,"INSERT INTO tClient SET uClient=%u,cLabel='%.99s',"
+				"cInfo='ImportCompanies() IMPORTED',uOwner=1,uCreatedBy=1,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",uClient,cp+1);
+			//debug only
+			//printf("%s\n",cQuery);
+			mysql_query(&gMysql,cQuery);
+			if(mysql_errno(&gMysql))
+				fprintf(stdout,"Error: %s\n",mysql_error(&gMysql));
 		}
-
-		sprintf(cQuery,"INSERT INTO tClient SET uClient=%u,cLabel='%.99s',"
-			"cInfo='ImportCompanies() IMPORTED',uOwner=1,uCreatedBy=1,"
-			"uCreatedDate=UNIX_TIMESTAMP(NOW())",uClient,cp+1);
-		//debug only
-		//printf("%s\n",cQuery);
-		mysql_query(&gMysql,cQuery);
-		if(mysql_errno(&gMysql))
-			fprintf(stdout,"Error: %s\n",mysql_error(&gMysql));
+		else
+			printf("Skipping invalid line: %s\n",gcQuery);
 	}
 
 	if(fp) fclose(fp);
