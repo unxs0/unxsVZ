@@ -563,7 +563,7 @@ void htmlNodeHealth(unsigned uNode)
 		char *cColor;
 		char cluPrivvmpagesHeld[256];
 		long unsigned luContainerPrivvmpagesMaxHeld=0;
-		long unsigned luInstalledRam;
+		long unsigned luInstalledRam=0;
 		float fRatio;
 
 		if(field[0]==NULL)

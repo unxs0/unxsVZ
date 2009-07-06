@@ -1,7 +1,9 @@
 #!/bin/sh
 
 HOSTNAME=`hostname`; 
-RRDFILE="/var/lib/rrd/$HOSTNAME.rrd"
+RRDFILE="/var/lib/rrd/$HOSTNAME.rrd";
+#DEV="venet0";
+DEV="eth0";
  
 if ! test -e $RRDFILE; then
 	/usr/bin/rrdtool create $RRDFILE --start N --step 300 \
@@ -17,8 +19,10 @@ if ! test -e $RRDFILE; then
 	RRA:MAX:0.5:288:797
 fi
  
-eval `grep venet0 /proc/net/dev  | awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
+eval `grep $DEV /proc/net/dev  | awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
 
+#debug only
+#echo "$RRDFILE N:$CTOUT:$CTIN"
 #note reversal 
 nice /usr/bin/rrdtool update $RRDFILE N:$CTOUT:$CTIN
 
@@ -44,4 +48,4 @@ nice /usr/bin/rrdtool graph $PNGFILE \
 		"GPRINT:in:LAST:Last in\:%0.0lf" \
 		"GPRINT:out:LAST:Last out\:%0.0lf" > /dev/null 2>&1;
 
-nice scp $PNGFILE moon:$PNGFILE > /dev/null 2>&1;
+nice scp $PNGFILE node2vm:$PNGFILE > /dev/null 2>&1;
