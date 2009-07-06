@@ -7,6 +7,10 @@ PURPOSE
 AUTHOR
 	Gary Wallis for Unxiservice (C) 2008-2009. GPL2 License applies.
 NOTES
+	For latest autonomic functions we need to collect one week of data.
+	This weekly data wil be limited to only a few UBC values, and disk usage
+	quota data. The basic idea is to provide trend information for better
+	informed elastic autonomics.
 */
 
 #include "../../mysqlrad.h"
@@ -395,10 +399,8 @@ void ProcessSingleQuota(unsigned uContainer)
 				{
 					sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
 							"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1 WHERE"
-							" cName='%.63s.%.32s' AND uProperty=%s"
+							" uProperty=%s"
 								,luKnownQuotaVals[i]
-								,cResource
-								,cKnownQuotaVals[i]
 								,field[0]);
 					mysqlrad_Query_TextErr_Exit;
 				}
@@ -417,6 +419,51 @@ void ProcessSingleQuota(unsigned uContainer)
 								,uType
 								,uContainer);
 					mysqlrad_Query_TextErr_Exit;
+
+				}
+				mysql_free_result(res);
+			}
+
+			//Keep one week of usage data for trend analysis
+			for(i=0;i<1;i++)
+			{
+				sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE"
+						" cName=CONCAT('%.63s.%.32s.',DAYOFWEEK(NOW()))"
+							" AND uKey=%u AND uType=%u",
+					cResource,cKnownQuotaVals[i],uContainer,uType);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					exit(2);
+				}
+			       	res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					//Average
+					sprintf(gcQuery,"UPDATE tProperty SET cValue=CONVERT((%lu+cValue)/2,UNSIGNED)"
+							",uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1 WHERE"
+							" uProperty=%s"
+								,luKnownQuotaVals[i]
+								,field[0]);
+					mysqlrad_Query_TextErr_Exit;
+				}
+				else
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET cValue=%lu"
+							",cName=CONCAT('%.63s.%.32s.',DAYOFWEEK(NOW()))"
+							",uType=%u"
+							",uKey=%u"
+							",uOwner=1"
+							",uCreatedBy=1"
+							",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+								,luKnownQuotaVals[i]
+								,cResource
+								,cKnownQuotaVals[i]
+								,uType
+								,uContainer);
+					mysqlrad_Query_TextErr_Exit;
+
 				}
 				mysql_free_result(res);
 			}
