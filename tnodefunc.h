@@ -552,27 +552,41 @@ void htmlNodeHealth(unsigned uNode)
 				" AND tContainer.uNode=%u",uNode);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+	{
+		printf("%s",mysql_error(&gMysql));
+		mysql_free_result(res);
+		return;
+	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
 		char *cColor;
 		char cluPrivvmpagesHeld[256];
 		long unsigned luContainerPrivvmpagesMaxHeld=0;
-		long unsigned luInstalledRam=1;
+		long unsigned luInstalledRam;
 		float fRatio;
+
+		if(field[0]==NULL)
+		{
+			printf("No data available, no containers?<br>\n");
+			goto NextSection;
+		}
 
 		GetNodeProp(uNode,"luInstalledRam",cluPrivvmpagesHeld);
 		sscanf(field[0],"%lu",&luContainerPrivvmpagesMaxHeld);
 		sscanf(cluPrivvmpagesHeld,"%lu",&luInstalledRam);
+		if(luInstalledRam==0)
+			luInstalledRam=1;
+
 		fRatio= ((float) luContainerPrivvmpagesMaxHeld/ (float) luInstalledRam) * 100.00 ;
 		cColor=cRatioColor(&fRatio);
 		printf("Max held privvmpages ratio %2.2f%%:"
 			" %lu/%lu <font color=%s>[#######]</font><br>\n",
 				fRatio,luContainerPrivvmpagesMaxHeld,luInstalledRam,cColor);
 	}
+NextSection:
 	mysql_free_result(res);
-	
+
 	//Check all node activity via tProperty
 	sprintf(gcQuery,"SELECT tNode.cLabel,FROM_UNIXTIME(MAX(tProperty.uModDate)),"
 			"(UNIX_TIMESTAMP(NOW()) - MAX(tProperty.uModDate) > 300 ) FROM"
@@ -580,7 +594,11 @@ void htmlNodeHealth(unsigned uNode)
 			" tProperty.uType=2 GROUP BY tProperty.uKey");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+	{
+		printf("%s",mysql_error(&gMysql));
+		mysql_free_result(res);
+		return;
+	}
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)>0)
 		printf("<u>Node Roll Call</u><br>\n");
