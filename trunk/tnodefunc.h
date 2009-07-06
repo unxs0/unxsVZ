@@ -573,7 +573,6 @@ void htmlNodeHealth(unsigned uNode)
 	}
 	mysql_free_result(res);
 	
-
 	//Check all node activity via tProperty
 	sprintf(gcQuery,"SELECT tNode.cLabel,FROM_UNIXTIME(MAX(tProperty.uModDate)),"
 			"(UNIX_TIMESTAMP(NOW()) - MAX(tProperty.uModDate) > 300 ) FROM"
