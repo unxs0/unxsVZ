@@ -138,7 +138,6 @@ void ExttResourceImportButtons(void)
 		default:
 			if(uZone)
 			{
-				printf("<p><u>tZoneImportNavList</u><br>");
 				printf("<a class=darkLink href=iDNS.cgi?gcFunction=tZoneImport&uZone=%u>",uZone);
 				printf("Back to Zone</a>");
 			}
