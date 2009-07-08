@@ -69,6 +69,7 @@ void PassDirectHtml(char *file);//local also used by tzonefunc.h
 int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtmlMode, 
 					const unsigned uFromZone, const unsigned uZoneOwner);
 void SerialNum(char *serial);//local also used in tzonefunc.h
+unsigned uGetNSSet(char *cNameServer);
 
 //import section
 typedef struct {
@@ -244,7 +245,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		uRRType=1;
 		if(!cParam1[0] || cParam2[0])
 		{
-			fprintf(stdout,"Error %s: Incorrect A format: %s\n",
+			fprintf(stdout,"ProcessRRLine() Error %s: Incorrect A format: %s\n",
 					cZoneName,cLine);
 			return;
 		}
@@ -261,7 +262,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		uRRType=5;
 		if(!cParam1[0] || cParam2[0])
 		{
-			fprintf(stdout,"Error %s: Incorrect CNAME format: %s\n",
+			fprintf(stdout,"ProcessRRLine() Error %s: Incorrect CNAME format: %s\n",
 					cZoneName,cLine);
 			return;
 		}
@@ -294,7 +295,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		uRRType=2;
 		if(!cParam1[0] || cParam2[0])
 		{
-			fprintf(stdout,"Error %s: Incorrect NS format: %s\n",
+			fprintf(stdout,"ProcessRRLine() Error %s: Incorrect NS format: %s\n",
 					cZoneName,cLine);
 			return;
 		}
@@ -316,24 +317,22 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 			}
 		}
 
-		//Get rid of last period for check
+		//Get rid of last period for check.
 		strcpy(cNS,cParam1);
 		cNS[strlen(cNS)-1]=0;
-		sprintf(gcQuery,"SELECT uNSSet FROM tNSSet WHERE uNSSet=%u AND"
-				" ( (cList LIKE '%s MASTER%%') OR (cList LIKE '%%%s SLAVE%%'))",
-					uNSSet,cNS,cNS);
-
+		sprintf(gcQuery,"SELECT uNS FROM tNS WHERE uNSSet=%u AND cFQDN LIKE '%s' ",
+					uNSSet,cNS);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 		{
-			fprintf(stdout,"Error %s: %s\n",cZoneName,mysql_error(&gMysql));
+			fprintf(stdout,"ProcessRRLine() Error %s: %s\n",cZoneName,mysql_error(&gMysql));
 			return;
 		}
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res)) 
 		{
-			fprintf(stdout,"Error %s:NS RR Ignored. Part of uNSSet cList\n",
-					cZoneName);
+			fprintf(stdout,"ProcessRRLine() warning %s:NS RR Ignored. NS belongs to current uNSSet=%u\n",
+					cZoneName,uNSSet);
 			return;
 		}
 		mysql_free_result(res);
@@ -344,14 +343,14 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		uRRType=3;
 		if(!cParam1[0] || !cParam2[0] )
 		{
-			fprintf(stdout,"Error %s: Missing MX param: %s\n",
+			fprintf(stdout,"ProcessRRLine() Error %s: Missing MX param: %s\n",
 					cZoneName,cLine);
 			return;
 		}
 		sscanf(cParam1,"%u",&uMX);
 		if(uMX<1 || uMX>99999)
 		{
-			fprintf(stdout,"Error %s: Incorrect MX format: %s\n",
+			fprintf(stdout,"ProcessRRLine() Error %s: Incorrect MX format: %s\n",
 					cZoneName,cLine);
 			return;
 		}
@@ -380,7 +379,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		uRRType=7;
 		if(!cParam1[0] || cParam2[0])
 		{
-			fprintf(stdout,"Error %s: Incorrect PTR format: %s\n",
+			fprintf(stdout,"ProcessRRLine() Error %s: Incorrect PTR format: %s\n",
 					cZoneName,cLine);
 			return;
 		}
@@ -388,7 +387,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		if(!uFirstDigit)
 		{
 			//Check this rule again
-			fprintf(stdout,"Error %s: Incorrect PTR LHS should start with a non zero digit: %s\n",
+			fprintf(stdout,"ProcessRRLine() Error %s: Incorrect PTR LHS should start with a non zero digit: %s\n",
 				cZoneName,cLine);
 			return;
 		}
@@ -403,7 +402,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		if(!cParam1[0] || cParam1[0]!='\"' || (cParam1[strlen(cParam1)-2]!='\"' &&
 					cParam1[strlen(cParam1)-1]!='\"') )
 		{
-			fprintf(stdout,"Error %s: Incorrect TXT format: %s\n",
+			fprintf(stdout,"ProcessRRLine() Error %s: Incorrect TXT format: %s\n",
 					cZoneName,cParam1);
 			return;
 		}
@@ -441,9 +440,9 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 
 	//Unrecognized lines
 	//Current missing features -we know about and need: hinfo ignored
-	else if(1)
+	else if(1 && cLine[0] && cLine[0]!='\n')
 	{
-		fprintf(stdout,"Error %s: RR Not recognized: %s %s\n",cZoneName,cLine,cType);
+		fprintf(stdout,"ProcessRRLine() Error %s: RR Not recognized: %s %s\n",cZoneName,cLine,cType);
 		return;
 	}
 
@@ -479,7 +478,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 					,uCreatedBy);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
-		fprintf(stdout,"Error %s: %s\n",cZoneName,mysql_error(&gMysql));
+		fprintf(stdout,"ProcessRRLine() Error %s: %s\n",cZoneName,mysql_error(&gMysql));
 
 	return;
 
@@ -493,6 +492,8 @@ void Import(void)
 	register int n,i;
 	char cHostMaster[256]="hostmaster.isp.net";
 	char cuView[256]="2";
+	char cuNSSet[256]="0";
+	char cuOwner[256]="1";
 	char cZoneImportTable[256]="tZoneImport";
 
 	printf("ImportZones() Start\n");
@@ -500,10 +501,19 @@ void Import(void)
 	GetConfiguration("cHostMaster",cHostMaster,0);
 	GetConfiguration("cuView",cuView,0);
 	GetConfiguration("cZoneImportTable",cZoneImportTable,0);
+	GetConfiguration("cuNSSet",cuNSSet,0);
+	GetConfiguration("cuOwner",cuOwner,0);
 
 	printf("Importing master zones from /usr/local/idns/import directory.\n"
 		"File name must be same as zone name.\nOnly A, CNAME, MX, PTR and"
-		" NS records supported.\nSOA ttl values must be seconds.\n");
+		" NS records supported.\nSOA ttl values must be seconds.\n"
+		"You can also set cHostMaster, cuNSSet, cuView, cuOwner and cZoneImportTable in\n"
+		"tConfiguration. Current defaults:\n"
+		"cHostMaster=%s\n"
+		"cuNSSet=%s (if set to zero will try to determine from SOA or fallback to uNSSet=1)\n"
+		"cuView=%s\n"
+		"cuOwner=%s\n"
+		"cZoneImportTable=%s\n\n",cHostMaster,cuNSSet,cuView,cuOwner,cZoneImportTable);
 	printf("Confirm <enter any key>, <ctrl-c> to abort\n");
 	getchar();
 		
@@ -558,28 +568,45 @@ void Import(void)
 				importSOA->cHostmaster[0] )
 			{
 				//All zones will belong to the default #1 NS
-				unsigned uZone,uOwner,uNSSet=1;
+				unsigned uZone,uOwner=1,uNSSet=0;
+
+				sscanf(cuOwner,"%u",&uOwner);
+				sscanf(cuNSSet,"%u",&uNSSet);
 
 				//Import zone
 				importSOA->cNameServer[strlen(importSOA->cNameServer)-1]=0;
 				importSOA->cHostmaster[strlen(importSOA->cHostmaster)-1]=0;
 				//debug only
-				/*
-				printf("uTTL=%u\n",importSOA->uTTL);
-				printf("uSerial=%u\n",importSOA->uSerial);
-				printf("uRefresh=%u\n",importSOA->uRefresh);
-				printf("uRetry=%u\n",importSOA->uRetry);
-				printf("uExp=%u\n",importSOA->uExp);
-				printf("uNegTTL=%u\n",importSOA->uNegTTL);
-				printf("cHostmaster=%s\n",importSOA->cHostmaster);
-				printf("cNameServer=%s\n",importSOA->cNameServer);
-				*/
+				//printf("uTTL=%u\n",importSOA->uTTL);
+				//printf("uSerial=%u\n",importSOA->uSerial);
+				//printf("uRefresh=%u\n",importSOA->uRefresh);
+				//printf("uRetry=%u\n",importSOA->uRetry);
+				//printf("uExp=%u\n",importSOA->uExp);
+				//printf("uNegTTL=%u\n",importSOA->uNegTTL);
+				//printf("cHostmaster=%s\n",importSOA->cHostmaster);
+				//printf("cNameServer=%s\n",importSOA->cNameServer);
+
+				//Try to use an existing tNSSet
+				if(uNSSet==0)
+				{
+					uNSSet=uGetNSSet(importSOA->cNameServer);
+					
+					if(uNSSet==0)
+						uNSSet=1;//First tNSSet
+					else
+						printf("Using uNSSet=%u determined via:%s\n",
+								uNSSet,importSOA->cNameServer);
+				}
+				else
+				{
+					uNSSet=1;//First tNSSet
+				}
 
 
 				//uZoneTTL is the NegTTL
 				sprintf(gcQuery,"INSERT INTO %s SET cZone='%s',uNSSet=%u,uSerial=%u,"
 					"uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,uMailServers=0,"
-					"cMainAddress='0.0.0.0',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+					"cMainAddress='0.0.0.0',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
 					"uModBy=0,uModDate=0,cHostmaster='%s IMPORTED',uView=%.2s"
 					,cZoneImportTable
 					,FQDomainName(namelist[i]->d_name)
@@ -590,6 +617,7 @@ void Import(void)
 					,importSOA->uTTL
 					,importSOA->uRetry
 					,importSOA->uNegTTL
+					,uOwner
 					,cHostMaster
 					,cuView);
 					//,importSOA->cHostmaster);
@@ -926,12 +954,12 @@ void ProcessSORRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 			}
 		}
 
-		//Get rid of last period for check
+		//Get rid of last period for check.
 		strcpy(cNS,cParam1);
 		cNS[strlen(cNS)-1]=0;
-		sprintf(gcQuery,"SELECT uNSSet FROM tNameServer WHERE uNSSet=%u AND"
-				" ( (cList LIKE '%s MASTER%%') OR (cList LIKE '%%%s SLAVE%%'))"
-					,uNSSet,cNS,cNS);
+		sprintf(gcQuery,"SELECT uNS FROM tNS WHERE uNSSet=%u AND cFQDN LIKE '%s' ",
+					uNSSet,cNS);
+		mysql_query(&gMysql,gcQuery);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 		{
@@ -940,13 +968,8 @@ void ProcessSORRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		}
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res)) 
-		{
-		//	fprintf(stdout,"Error %s:NS RR Ignored. Part of uNSSet cList\n",
-		//			cZoneName);
-		//	Silent return, zone files will have plenty of these, don't want the logfile to be filled with 
-		//	this messages
+			//Silent return
 			return;
-		}
 		mysql_free_result(res);
 	}
 	else if(!strcasecmp(cType,"MX"))
@@ -1267,7 +1290,8 @@ char *cPrintNSList(FILE *zfp,char *cuNSSet)
 }//char *cPrintNSList()
 
 
-//Old cList based list. Will be deprecated to tMXSet based sub-schema for 2.8 release
+//We still have not changed to a tMXSet based schema.
+//And we may never since no one really needs to use this old tZone time saver feature.
 void PrintMXList(FILE *zfp,char *cuMailServers)
 {
 	MYSQL_RES *res;
@@ -3510,8 +3534,9 @@ void MassZoneNSUpdate(char *cLabel)
 		fprintf(stdout,"Error: Could not open: /usr/local/idns/csv/zones2NSupdate.txt\n");
 				return;
 	}
-	sprintf(cQuery,"SELECT uNSSet,cMasterIPs FROM tNameServer WHERE cLabel='%.32s' AND cList LIKE '%% MASTER EXTERNAL%%'",
-			cLabel);
+	//3 == MASTER EXTERNAL
+	sprintf(cQuery,"SELECT uNSSet,cMasterIPs FROM tNS,tNSSet WHERE tNS.uNSSet=tNSSet.uNSSet AND"
+			" tNSSet.cLabel='%.32s' AND tNS.uNSType=3",cLabel);
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -3689,3 +3714,28 @@ void ServerJobQueue(char *cServer)
 
 }//void ServerJobQueue(char *cNameServer)
 
+
+unsigned uGetNSSet(char *cNameServer)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uNSSet=0;
+
+	sprintf(gcQuery,"SELECT tNSSet.uNSSet FROM tNSSet,tNS WHERE"
+			" tNSSet.uNSSet=tNS.uNSSet AND"
+			" tNS.cFQDN='%s'",cNameServer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uNSSet);
+	mysql_free_result(res);
+
+	return(uNSSet);
+
+}//unsigned uGetNSSet(char *cNameServer)
