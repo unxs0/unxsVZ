@@ -747,14 +747,15 @@ void ResourceImportRecordList(unsigned uZone)
 		}
 		else
 		{
-			printf("<tr><td valign=top><a class=darkLink href=iDNS.cgi?gcFunction="
+			printf("<tr><td valign=top><input type=checkbox name=ImportRR%s checked>"
+			"<a class=darkLink href=iDNS.cgi?gcFunction="
 			"tResourceImport&uResource=%s&cZone=%s>"
-			"<font color=%s><input type=checkbox name=ImportRR%s checked>%s</font></a>"
+			"<font color=%s>%s</font></a>"
 			"</td><td valign=top>"
 			"<font color=%s>%s</font></td><td valign=top><font color=%s>%s</font></td><td valign=top>"
 			"<font color=%s>%.64s</font></td><td valign=top><font color=%s>%s</font></td>"
 			"<td valign=top><font color=%s>%s</font></td></tr>\n",
-				field[6],cZone,cColorName,cName,field[6],
+				field[6],field[6],cZone,cColorName,cName,
 				cColorTTL,cTTL,cColorType,field[2],
 				cColorParam1,field[3],cColorParam2,field[4],cColorComment,field[5]);
 		}
