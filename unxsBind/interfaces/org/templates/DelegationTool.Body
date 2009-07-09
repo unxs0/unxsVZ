@@ -55,7 +55,7 @@
     <td width="10">&nbsp;</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
-		<h6 class="modhdr">{{cZone}} NS Set, SOA Data</h6>
+		<h6 class="modhdr">{{cZone}} Delegation Tool </h6>
 	</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
