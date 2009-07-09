@@ -2146,6 +2146,9 @@ unsigned OnLineZoneCheck(void)
 		mysql_free_result(res2);
 		fclose(zfp);
 
+		//**** IMPORTANT NOTE *****
+		//Check the named-checkzone binary location for your setup
+		//
 		sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1 > /dev/null",field[0],cZoneFile);
 		if(system(gcQuery))
 		{
@@ -2171,10 +2174,13 @@ unsigned OnLineZoneCheck(void)
 			}
 			pclose(zfp);
 			unlink(cZoneFile);
+			if(!gcMessage[0])
+				gcMessage="No message was set but named-checkzone failed. "
+					"Tipically this indicates a setup problem. Contact support ASAP!";	
 			return(1);
 		}
 	}
-//	unlink(cZoneFile);
+	unlink(cZoneFile);
 
 	return(0);
 
