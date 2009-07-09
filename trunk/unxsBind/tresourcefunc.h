@@ -6,50 +6,9 @@ PURPOSE
 AUTHOR
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
-	(C) 2001-2004 Gary Wallis.
+	(C) 2001-2009 Gary Wallis for Unixservice.
 TODO
 
-	See all TODOs in this file.
-	Move them to CHANGES file.
-
-	All Done?
-	1-.
-	IDEA! Create "wizard" for RFC2317 classless in-addr.arpa delegation
-	This would generate all the below by just entering the tNSSet group
-	from a select box and entering the /CDIR number below would be /26.
-
-	Fix CNAME rule and NS delegation for this best-practices 
-	classless in-addr.arpa delegation
-
-	Example
-
-	You have this in zone "28.100.66.in-addr.arpa":
-
-	0-63    NS    ns1.clientisp.net.
-	        NS    ns2.clientisp.net. (This is not working completely)
-	0       CNAME    0.0-63
-	1       CNAME    1.0-63
-	...
-	63      CNAME    63.0-63
-
-	Your client isp clientisp.net has this in their zone "0-63.28.100.66.in-addr.arpa":
-
-	        NS    ns1.clientisp.net.
-	        NS    ns2.clientisp.net.
-	
-	0       PTR    subnet0.clientisp.net.
-	1       PTR    somehost.clientisp.net.
-	2       PTR    www.clientisp.net.
-	...
-	63      PTR    mail.clientisp.net.
-
-	Needs job for arpa zone mod.
-
-	2-.
-	CNAME help/checker needs to make sure internal RHS entries exist in the
-	zone itself or as higher level zone in of itself...confused yet! lol.
-
- 
 */
 
 //File scope vars
@@ -174,7 +133,7 @@ void RRCheck(int uMode)
 		if(!cParam1[0])
 		{
 				sprintf(cParam1,"%s.",cZone);
-tResource("cParam1 is required. Common default entry made for you, check/change.");
+				tResource("cParam1 is required. Common default entry made for you, check/change.");
 		}
 		else
 		{
@@ -735,7 +694,7 @@ void ResourceLinks(unsigned uZone)
 	{
 	sprintf(gcQuery,"SELECT tResource.cName,tResource.uResource,tRRType.cLabel FROM tResource,tRRType WHERE "
 			"tResource.uZone=%u AND tResource.uRRType=tRRType.uRRType ORDER BY tResource.cName"
-			,uZone);
+				,uZone);
 	}
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) tResource(mysql_error(&gMysql));
@@ -745,9 +704,11 @@ void ResourceLinks(unsigned uZone)
 	while((field=mysql_fetch_row(res)))
 	{
 		if(uArpa)
-		printf("<a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s&cZone=%s>%s %s</a><br>\n",field[1],cZone,field[0],field[2]);
+			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s&cZone=%s>%s %s</a><br>\n",
+				field[1],cZone,field[0],field[2]);
 		else
-		printf("<a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s>%s %s</a><br>\n",field[1],field[0],field[2]);
+			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s>%s %s</a><br>\n",
+				field[1],field[0],field[2]);
 	}
 
 }//void ResourceLinks(unsigned uZone)
@@ -857,7 +818,7 @@ void ExttResourceButtons(void)
 
 	}
 
-	if(uDefault && cSearch[0])
+	if(!uDefault && cSearch[0])
 		printf("<input type=hidden name=cSearch value=\"%s\">",cSearch);
 
 	CloseFieldSet();	
@@ -894,23 +855,22 @@ void ExttResourceGetHook(entry gentries[], int x)
 
 void ExttResourceSelect(void)
 {
-        //Set non search query here for tTableName()i
 
 	if(uZone)
 	{
 		char cExtra[33]={""};
 
 		sprintf(cExtra,"uZone=%u",uZone);
-		
+
 		if(cSearch[0])
-			ExtSelectSearch("tResource",VAR_LIST_tResource,"cName",cSearch,cExtra,20);
+			ExtSelectSearch("tResource",VAR_LIST_tResource,"cName",cSearch,cExtra,0);
 		else
-			ExtSelectSearch("tResource",VAR_LIST_tResource,NULL,NULL,cExtra,20);
+			ExtSelectSearch("tResource",VAR_LIST_tResource,NULL,NULL,cExtra,0);
 	}
 	else
 	{
 		if(cSearch[0])
-			ExtSelectSearch("tResource",VAR_LIST_tResource,"cName",cSearch,NULL,20);
+			ExtSelectSearch("tResource",VAR_LIST_tResource,"cName",cSearch,NULL,0);
 		else
 			ExtSelect("tResource",VAR_LIST_tResource,0);
 	}

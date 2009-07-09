@@ -2280,20 +2280,26 @@ void ExtSelect(const char *cTable,const char *cVarList,unsigned uMaxResults)
 }//void ExtSelect(...)
 
 
-void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch,const char *cExtraCond,unsigned uMaxResults)
+void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField,
+				const char *cSearch,const char *cExtraCond,unsigned uMaxResults)
 {
 	if(guPermLevel>11)//Root can read access all
 	{
-		if(cExtraCond!=NULL)
+		if(cExtraCond!=NULL && cSearchField!=NULL)
 			sprintf(gcQuery,"SELECT %1$s FROM %2$s WHERE %3$s LIKE '%4$s%%' AND %5$s ORDER BY %3$s",
 						cVarList,cTable,cSearchField,cSearch,cExtraCond);
-		else
+		else if(cExtraCond!=NULL && cSearchField==NULL)
+			sprintf(gcQuery,"SELECT %1$s FROM %2$s WHERE %3$s",
+						cVarList,cTable,cExtraCond);
+		else if(cExtraCond==NULL && cSearchField!=NULL)
 			sprintf(gcQuery,"SELECT %1$s FROM %2$s WHERE %3$s LIKE '%4$s%%' ORDER BY %3$s",
 						cVarList,cTable,cSearchField,cSearch);
+		else if(cExtraCond==NULL && cSearchField==NULL)
+			sprintf(gcQuery,"SELECT %1$s FROM %2$s",cVarList,cTable);
 	}
 	else
 	{
-		if(cExtraCond!=NULL)
+		if(cExtraCond!=NULL && cSearchField!=NULL)
 			sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
 				 	" WHERE %4$s LIKE '%5$s%%' AND %6$s AND %3$s.uOwner=" TCLIENT ".uClient"
 					" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
@@ -2301,7 +2307,14 @@ void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearch
 					" ORDER BY %4$s",
 						cVarList,guCompany,
 						cTable,cSearchField,cSearch,cExtraCond);
-		else
+		else if(cExtraCond!=NULL && cSearchField==NULL)
+			sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
+				 	" WHERE %4$s AND %3$s.uOwner=" TCLIENT ".uClient"
+					" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))",
+						cVarList,guCompany,
+						cTable,cExtraCond);
+		else if(cExtraCond!=NULL && cSearchField!=NULL)
 			sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
 				 	" WHERE %4$s LIKE '%5$s%%' AND  %3$s.uOwner=" TCLIENT ".uClient"
 					" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
@@ -2309,6 +2322,12 @@ void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearch
 					" ORDER BY %4$s",
 						cVarList,guCompany,
 						cTable,cSearchField,cSearch);
+		else if(cExtraCond!=NULL && cSearchField==NULL)
+			sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
+				 	" WHERE %3$s.uOwner=" TCLIENT ".uClient"
+					" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))",
+						cVarList,guCompany,cTable);
 	}
 
 	if(uMaxResults)
