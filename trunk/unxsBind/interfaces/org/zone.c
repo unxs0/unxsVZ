@@ -355,8 +355,11 @@ void ZoneCommands(pentry entries[], int x)
 			while(1)
 			{
 				sprintf(cNS,"%.99s",ParseTextAreaLines(cNSList));
+
 				if(!cNS[0]) break;
 				
+				if(cNS[strlen(cNS)-1]!='.') strcat(cNS,"."); //Append end dot if not entered by user
+
 				if(uIPBlockFormat==IP_BLOCK_CIDR)
 					sprintf(cName,"%u/%u",uD,uE);
 				else if(uIPBlockFormat==IP_BLOCK_DASH)
