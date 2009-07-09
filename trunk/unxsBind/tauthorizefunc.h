@@ -233,7 +233,8 @@ void ExttAuthorizeListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tAuthorize.cLabel LIKE '%s' ORDER BY cLabel",gcCommand);
+		sprintf(cCat,"tAuthorize.cLabel LIKE '%s%%' ORDER BY cLabel",
+				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(1)
