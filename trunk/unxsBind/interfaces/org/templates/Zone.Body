@@ -107,6 +107,7 @@
 			<td colspan=2>
 				<input type=hidden name=gcPage value=Zone>
 				<input type=submit title='Select a zone to edit. Not needed if you have javascript enabled in your browser' class=largeButton name=gcFunction value='Select Zone'><br><br>
+				<input type=submit title='Delegate this zone with an easy to follow wizard' class=largeButton  name=gcFunction value='Delegation Tool' {{cDelToolStatus}}>
 				<p>
 				<strong><u>Editing Hints</u></strong><br>
 				To edit, remove or create a new resource record click on it's name, in the list below. Or click on the resource records tab above once you have a zone selected.<br>
