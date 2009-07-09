@@ -4,7 +4,6 @@ CentOS 5+ RPM Building Setup
 To build rpm's make sure you have everythig you need installed:
 
 # yum install rpm-build
-# yum install redhat-rpm-config
 
 And of course you will need everything to compile and make your binaries. Like 
 gcc, make etc...
