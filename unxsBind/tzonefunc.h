@@ -1346,7 +1346,7 @@ void ExttZoneListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tZone.cZone LIKE '%s' ORDER BY tZone.cZone",gcCommand);
+		sprintf(cCat,"tZone.cZone LIKE '%s%%' ORDER BY tZone.cZone",TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cMainAddress"))
@@ -1355,7 +1355,7 @@ void ExttZoneListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tZone.cMainAddress LIKE '%s' ORDER BY tZone.cZone",gcCommand);
+		sprintf(cCat,"tZone.cMainAddress LIKE '%s%%' ORDER BY tZone.cZone",TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uZone"))
@@ -3235,12 +3235,12 @@ void htmlMassPTRCheck(void)
 void htmlMassCheckZone(void)
 {
 	char cLine[100]={"ERROR"};
-
 	printf("Content-type: text/plain\n\n");
 	printf("htmlMassCheckZone() start\n");
 	while(cLine[0])
 	{
 		char cCommand[512]={"ERROR"};
+		FILE *fp;
 
 		sprintf(cLine,"%.99s",ParseTextAreaLines(cMassList));
 		//ParseTextAreaLines() required break;
@@ -3248,7 +3248,14 @@ void htmlMassCheckZone(void)
 
 		sprintf(cCommand,"named-checkzone %.99s /usr/local/idns/named.d/master/external/%c/%.99s",
 			cLine,cLine[0],cLine);
-		printf("%s\n",cCommand);
+		if((fp=popen(gcQuery,"r")))
+		{
+			while(fgets(gcQuery,512,fp))
+			printf("%s",gcQuery);
+			pclose(fp);
+		}
+		else
+			printf("Error: could not run named-checkzone.\n");
 	}
 	printf("htmlMassCheckZone() end\n");
 	exit(0);
