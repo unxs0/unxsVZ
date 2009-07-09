@@ -227,7 +227,8 @@ void ExttLogMonthListSelect(void)
         else if(!strcmp(gcFilter,"cLabel"))
         {
 		strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tLogMonth.cLabel='%s' ORDER BY uLog",gcCommand);
+		sprintf(cCat,"tLogMonth.cLabel LIKE '%s%%' ORDER BY uLog",
+				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uLogType"))
@@ -247,13 +248,15 @@ void ExttLogMonthListSelect(void)
         else if(!strcmp(gcFilter,"cLogin"))
         {
 		strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tLogMonth.cLogin LIKE '%s' ORDER BY cLogin,uLog",gcCommand);
+		sprintf(cCat,"tLogMonth.cLogin LIKE '%s%%' ORDER BY cLogin,uLog",
+				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cHost"))
         {
 		strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tLogMonth.cHost LIKE '%s' ORDER BY cHost,uLog",gcCommand);
+		sprintf(cCat,"tLogMonth.cHost LIKE '%s%%' ORDER BY cHost,uLog",
+				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uTablePK"))

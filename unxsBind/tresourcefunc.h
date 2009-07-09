@@ -950,7 +950,8 @@ void ExttResourceListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tResource.cName LIKE '%s' ORDER BY tResource.cName",gcCommand);
+		sprintf(cCat,"tResource.cName LIKE '%s%%' ORDER BY tResource.cName",
+				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cParam1"))
@@ -959,7 +960,8 @@ void ExttResourceListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tResource.cParam1 LIKE '%s' ORDER BY tResource.cParam1",gcCommand);
+		sprintf(cCat,"tResource.cParam1 LIKE '%s%%' ORDER BY tResource.cParam1",
+				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(1)

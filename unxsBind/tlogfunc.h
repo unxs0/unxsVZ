@@ -108,7 +108,8 @@ void ExttLogListSelect(void)
         else if(!strcmp(gcFilter,"cLabel"))
         {
 		strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tLog.cLabel='%s' ORDER BY uLog",gcCommand);
+		sprintf(cCat,"tLog.cLabel LIKE '%s%%' ORDER BY uLog",
+				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uLogType"))
@@ -128,13 +129,15 @@ void ExttLogListSelect(void)
         else if(!strcmp(gcFilter,"cLogin"))
         {
 		strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tLog.cLogin LIKE '%s' ORDER BY cLogin,uLog",gcCommand);
+		sprintf(cCat,"tLog.cLogin LIKE '%s%%' ORDER BY cLogin,uLog",
+				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cHost"))
         {
 		strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tLog.cHost LIKE '%s' ORDER BY cHost,uLog",gcCommand);
+		sprintf(cCat,"tLog.cHost LIKE '%s%%' ORDER BY cHost,uLog",
+			TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uTablePK"))
