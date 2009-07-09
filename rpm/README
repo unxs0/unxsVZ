@@ -1,0 +1,30 @@
+CentOS 5+ RPM Building Setup
+----------------------------
+
+To build rpm's make sure you have everythig you need installed:
+
+# yum install rpm-build
+# yum install redhat-rpm-config
+
+And of course you will need everything to compile and make your binaries. Like 
+gcc, make etc...
+
+Using provided script
+---------------------
+
+To use our unxsBuildPkg.sh script you will need to create your rpm-staging dir one
+level up from the unxsVZ dir.  You will also need to:
+
+#  export UNXSVZ=/home/joe/unxsVZ 
+
+for example
+
+Notes
+-----
+
+We will use /usr/src/redhat/SOURCES so be careful. Make sure you cleanup correctly
+so as not to add items to your RPM that you did not intend.
+
+We will try to provide correct and as simple as possible .spec files for all unxsVZ
+component software.
+
