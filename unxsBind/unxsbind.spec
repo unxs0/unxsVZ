@@ -103,6 +103,8 @@ cd $RPM_BUILD_DIR
 * Thu Jul 09 2009 Hugo Urquiza <support2@unixservice.com>
 - Added 'Delegation Tools' feature to idnsOrg. Online RR check at idnsOrg minor updates. Backend list filter queries updated.
 * Thu Jul 09 2009 Gary Wallis <support@unixservice.com>
+- iDNS.cgi CLI ImportZone command and tZoneImport and tResourceImport backend bug fixes part-2.
+* Thu Jul 09 2009 Gary Wallis <support@unixservice.com>
 - iDNS.cgi CLI ImportZone command and tZoneImport and tResourceImport backend bug fixes.
 * Thu Jul 2 2009 Hugo Urquiza <support2@unixservice.com>
 - Minor fixes.

@@ -33,7 +33,7 @@ void ExttResourceImportCommands(pentry entries[], int x)
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=10)
+			if(guPermLevel>11)
 			{
 	                        ProcesstResourceImportVars(entries,x);
                         	guMode=2000;
@@ -42,7 +42,7 @@ void ExttResourceImportCommands(pentry entries[], int x)
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=10)
+			if(guPermLevel>11)
 			{
                         	ProcesstResourceImportVars(entries,x);
 
@@ -61,10 +61,7 @@ void ExttResourceImportCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstResourceImportVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
 				tResourceImport(LANG_NB_CONFIRMDEL);
@@ -73,10 +70,7 @@ void ExttResourceImportCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstResourceImportVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
 				DeletetResourceImport();
@@ -85,10 +79,7 @@ void ExttResourceImportCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstResourceImportVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tResourceImport(LANG_NB_CONFIRMMOD);
@@ -97,10 +88,7 @@ void ExttResourceImportCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstResourceImportVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
 				//Check entries here
@@ -257,17 +245,13 @@ void ExttResourceImportNavBar(void)
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=10 && !guListMode)
+	if(guPermLevel>11 && !guListMode)
 		printf(LANG_NBB_NEW);
-
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	
+	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
-
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	
+	if(uAllowDel(uOwner,uCreatedBy))
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
