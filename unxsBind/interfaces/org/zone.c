@@ -491,6 +491,10 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 		if((field=mysql_fetch_row(res)))
 		{
 			struct t_template template;
+			char cuDelegationTTL[10]={""};
+
+			if(uDelegationTTL)
+				sprintf(cuDelegationTTL,"%u",uDelegationTTL);
 			
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
@@ -600,7 +604,25 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			else
 				template.cpValue[31]="No zone selected";
 
-			template.cpName[32]="";
+			template.cpName[32]="cIPBlock";
+			template.cpValue[32]=cIPBlock;
+
+			template.cpName[33]="uDelegationTTL";
+			template.cpValue[33]=cuDelegationTTL;
+
+			template.cpName[34]="cNSList";
+			template.cpValue[34]=cNSList;
+				
+			template.cpName[35]="gcNewStep";
+			template.cpValue[35]=gcNewStep;
+
+			template.cpName[36]="cDelToolStatus";
+			if(strstr(gcZone,"in-addr.arpa"))
+				template.cpValue[36]="";
+			else
+				template.cpValue[36]="disabled";
+
+			template.cpName[37]="";
 
 			printf("\n<!-- Start htmlZonePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
