@@ -575,8 +575,8 @@ void ExttBlockListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tBlock.cLabel LIKE '%s' ORDER BY tBlock.cLabel",
-						gcCommand);
+		sprintf(cCat,"tBlock.cLabel LIKE '%s%%' ORDER BY tBlock.cLabel",
+				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
 	}
         else if(1)
