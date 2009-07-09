@@ -2,7 +2,7 @@
 FILE
 	$Id$
 AUTHOR
-	(C) Gary Wallis and Hugo Urquiza 2001-2009.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice.
 PURPOSE
 	GUI independent code:
 	Creates named configuration and zone data files
@@ -196,6 +196,13 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		else	
 			strcpy(cName,"\t");
 	}
+	else if(cLine[0]==' ')
+	{
+		sscanf(cLine,"%99s %100s %255s %255s %255s %255s\n",
+			cName,cType,cParam1,cParam2,cParam3,cParam4);
+		sprintf(cName,"@");
+		sprintf(cPrevcName,"%.99s",cName);
+	}
 	else if(cLine[0]=='@')
 	{
 		sscanf(cLine,"@ %100s %255s %255s %255s %255s\n",
@@ -212,7 +219,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		sprintf(cPrevcName,"%.99s",cName);
 	}
 
-	if(!cLine[0] || cLine[0]==';')
+	if(!cLine[0] || cLine[0]=='\n')
 			return;
 
 
@@ -691,6 +698,7 @@ AddToExisting:
 		}//If valid file for importing
 
 	}//for each file in import dir
+	printf("\nImportZones() Done\n");
 
 }//void Import(void)
 
