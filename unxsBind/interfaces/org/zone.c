@@ -38,7 +38,13 @@ static char cuNameServer[16]={""};
 
 static char cuZone[16]={"0"};
 
+static char cIPBlock[100]={""};
+static unsigned uDelegationTTL=0;
+static char *cNSList={""};
+
 #include "interface.h"
+#include <openisp/ucidr.h>
+
 unsigned InMyBlocks(char *cIP);//resource.c
 extern unsigned guBrowserFirefox;//main.c
 
@@ -75,6 +81,12 @@ unsigned uGetuZone(char *cZone);
 unsigned uGetuNameServer(char *cZone);
 void SetZoneFieldsOn(void);
 char *cGetPendingJobs(void);
+unsigned uPTRInCIDR(unsigned uZone,char *cIPBlock);
+unsigned uPTRInBlock(unsigned uZone,unsigned uStart,unsigned uEnd);
+void htmlDelegationTool(void);
+void UpdateSerialNum(char *cZone);
+char *ParseTextAreaLines(char *cTextArea);
+
 
 void ProcessZoneVars(pentry entries[], int x)
 {
@@ -106,6 +118,12 @@ void ProcessZoneVars(pentry entries[], int x)
 			sprintf(cNSs,"%.1023s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cNSSet"))
 			sprintf(cNSSet,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cIPBlock"))
+			sprintf(cIPBlock,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uDelegationTTL"))
+			sscanf(entries[i].val,"%u",&uDelegationTTL);
+		else if(!strcmp(entries[i].name,"cNSList"))
+			cNSList=entries[i].val;
 	}
 
 }//void ProcessZoneVars(pentry entries[], int x)
@@ -184,10 +202,262 @@ void ZoneCommands(pentry entries[], int x)
 			}
 			htmlZone();
 		}
-		else if(!strcmp(gcFunction,"Bulk Resource Record Entry"))
+		else if(!strcmp(gcFunction,"Delegation Tool"))
 		{
-			ProcessBulkOpVars(entries,x);
-			htmlBulkOp();
+			htmlDelegationTool();
+		}
+		else if(!strcmp(gcFunction,"Delegate Block"))
+		{
+			sprintf(gcModStep," Confirm");
+			htmlDelegationTool();
+		}
+		else if(!strcmp(gcFunction,"Delegate Block Confirm"))
+		{
+#define IP_BLOCK_CIDR 1
+#define IP_BLOCK_DASH 2
+			unsigned uA,uB,uC,uD,uE,uNumIPs;
+			unsigned uMa,uMb,uMc;
+			unsigned uIPBlockFormat;
+			time_t luClock;
+			char cNS[100]={""};
+			char cName[100]={""};
+			char cParam1[100]={""};
+			unsigned uZone=0;
+			unsigned uTTL=0;
+			unsigned uNameServer=0;
+			
+			SelectZone();
+
+			sscanf(cuZone,"%u",&uZone);
+			sscanf(cuTTL,"%u",&uTTL);
+			sscanf(cuNameServer,"%u",&uNameServer);
+
+			if(!cIPBlock[0])
+			{
+				gcMessage="<blink>cIPBlock is a required value</blink>";
+				sprintf(gcModStep," Confirm");
+				htmlDelegationTool();
+			}
+
+			if(!cNSList[0])
+			{
+				gcMessage="<blink>cNSList is a required value</blink>";
+				sprintf(gcModStep," Confirm");
+				htmlDelegationTool();
+			}
+				
+			//remove extra spaces or any other junk in CIDR
+			sscanf(cIPBlock,"%s",gcQuery);
+			sprintf(cIPBlock,"%.99s",gcQuery);
+			
+			sscanf(gcZone,"%u.%u.%u.in-addr.arpa",&uMc,&uMb,&uMa);
+
+			if(strchr(cIPBlock,'/'))
+			{
+				//cIPBlock is in CIDR format
+				sscanf(cIPBlock,"%u.%u.%u.%u/%u",&uA,&uB,&uC,&uD,&uE);
+
+				if((uA!=uMa) || (uB!=uMb) || (uC != uMc))
+				{
+					gcMessage="<blink>Error:</blink> The entered block is not inside the loaded zone.";
+					sprintf(gcModStep," Confirm");
+					htmlDelegationTool();
+				}
+
+				//CIDR only checks and calculations
+				if(uE<24)
+				{
+					gcMessage="<blink>CIDR not supported</blink>";
+					sprintf(gcModStep," Confirm");
+					htmlDelegationTool();
+				}
+				
+				uNumIPs=2<<(32-uE-1);
+				uNumIPs--;
+
+				if((uD+uNumIPs)>255)
+				{
+					gcMessage="<blink>CIDR range error</blink>";
+					sprintf(gcModStep," Confirm");
+					htmlDelegationTool();
+				}
+				
+				if(uPTRInCIDR(uZone,cIPBlock))
+				{
+					gcMessage="<blink>Delegation overlaps existing PTR records. Can't continue</blink>";
+					sprintf(gcModStep," Confirm");
+					htmlDelegationTool();
+				}
+				
+				uIPBlockFormat=IP_BLOCK_CIDR;
+			}
+			else if(strchr(cIPBlock,'-'))
+			{
+				//cIPBlock is in dash format
+				sscanf(cIPBlock,"%u.%u.%u.%u-%u",&uA,&uB,&uC,&uD,&uE);
+
+				if((uA!=uMa) || (uB!=uMb) || (uC != uMc))
+				{
+					gcMessage="<blink>Error:</blink> The entered IP range is not inside the loaded zone.";
+					sprintf(gcModStep," Confirm");
+					htmlDelegationTool();
+				}
+
+				if(uE>255)
+				{
+					gcMessage="<blink>IP Block incorrect format</blink>";
+					sprintf(gcModStep," Confirm");
+					htmlDelegationTool();
+				}
+				
+				if(uE<uD)
+				{
+					gcMessage="<blink>IP block range error</blink>";
+					sprintf(gcModStep," Confirm");
+					htmlDelegationTool();
+				}
+				
+				if(uPTRInBlock(uZone,uD,uE))
+				{
+					gcMessage="<blink>Delegation overlaps existing PTR records. Can't continue</blink>";
+					sprintf(gcModStep," Confirm");
+					htmlDelegationTool();
+				}
+				
+				uNumIPs=uE-uD;
+				uIPBlockFormat=IP_BLOCK_DASH;
+			}
+			
+			//basic sanity check (common)
+			
+			//add check
+			if(!uA)
+			{
+				gcMessage="<blink>IP Block incorrect format</blink>";
+				sprintf(gcModStep," Confirm");
+				htmlDelegationTool();
+			}
+			if((uA>255)||(uB>255)||(uC>255)||(uD>255))
+			{
+				gcMessage="<blink>IP Block incorrect format</blink>";
+				sprintf(gcModStep," Confirm");
+				htmlDelegationTool();
+			}
+			if(uDelegationTTL>uTTL)
+			{
+				gcMessage="<blink>uDelegationTTL out iof range</blink>";
+				sprintf(gcModStep," Confirm");
+				htmlDelegationTool();
+			}
+			if(!uDelegationTTL)
+				uDelegationTTL=uTTL;
+		
+			while(1)
+			{
+				sprintf(cNS,"%.99s",ParseTextAreaLines(cNSList));
+				if(!cNS[0]) break;
+				
+				if(uIPBlockFormat==IP_BLOCK_CIDR)
+					sprintf(cName,"%u/%u",uD,uE);
+				else if(uIPBlockFormat==IP_BLOCK_DASH)
+					sprintf(cName,"%u-%u",uD,uE);
+
+	sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%s',uTTL=%u,uRRType=2,cParam1='%s',cComment='Delegation (%s)',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uZone
+			,cName
+			,uDelegationTTL
+			,cNS
+			,cIPBlock
+			,guOrg
+			,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+			}
+
+			//$GENERATE 0-255 $ CNAME $.0/24.21.68.217.in-addr.arpa.
+			if(uIPBlockFormat==IP_BLOCK_CIDR)
+				sprintf(cParam1,"$.%u/%u.%u.%u.%u.in-addr.arpa.",
+						uD
+						,uE
+						,uC
+						,uB
+						,uA
+				       );
+			else if(uIPBlockFormat==IP_BLOCK_DASH)
+			{
+				sprintf(cParam1,"$.%u-%u.%u.%u.%u.in-addr.arpa.",
+						uD
+						,uE
+						,uC
+						,uB
+						,uA
+				       );
+			}
+			
+	sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='$GENERATE %u-%u $',uRRType=5,cParam1='%s',cComment='Delegation (%s)',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uZone
+			,uD
+			,(uD+uNumIPs)
+			,cParam1
+			,cIPBlock
+			,guOrg
+			,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+
+			UpdateSerialNum(gcZone);	
+			//if(uSubmitJob)
+			//{
+				if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
+					htmlPlainTextError(mysql_error(&gMysql));
+			//}
+
+			gcMessage="IP block delegation done";
+			htmlDelegationTool();
+			
+		}
+		else if(!strcmp(gcFunction,"Remove Del."))
+		{
+			sprintf(gcNewStep," Confirm");
+			htmlDelegationTool();
+		}
+		else if(!strcmp(gcFunction,"Remove Del. Confirm"))
+		{
+			unsigned uZone=0;
+			unsigned uNameServer=0;
+			time_t luClock;
+
+			time(&luClock);
+			SelectZone();	
+			sscanf(cuZone,"%u",&uZone);
+			sscanf(cuNameServer,"%u",&uNameServer);
+			
+			if(!cIPBlock[0])
+			{
+				gcMessage="<blink>cIPBlock is a required value</blink>";
+				sprintf(gcNewStep," Confirm");
+				htmlDelegationTool();
+			}
+			sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%u AND cComment='Delegation (%s)'",uZone,cIPBlock);
+			mysql_query(&gMysql,gcQuery);
+			if(!mysql_affected_rows(&gMysql))
+			{
+				gcMessage="<blink>No delegation removed</blink>";
+				htmlDelegationTool();
+			}
+			
+			if(mysql_errno(&gMysql))
+				 htmlPlainTextError(mysql_error(&gMysql));
+			UpdateSerialNum(gcZone);
+			//if(uSubmitJob)
+			//{
+				if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
+					htmlPlainTextError(mysql_error(&gMysql));
+			//}
+			gcMessage="IP block delegation removed";
+			htmlDelegationTool();	
 		}
 		else if(gcZone[0])
 		{
@@ -1500,3 +1770,59 @@ void funcNSSetMembers(FILE *fp)
 	mysql_free_result(res);
 
 }//void funcNSSetMembers(FILE *fp)
+
+
+void htmlDelegationTool(void)
+{
+	htmlHeader("DNS System","Header");
+	htmlZonePage("DNS System","DelegationTool.Body");
+	htmlFooter("Footer");
+	
+}//void htmlDelegationTool(void)
+
+
+unsigned uPTRInCIDR(unsigned uZone,char *cIPBlock)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uA,uB,uC;
+	char cIP[100]={""};
+
+	sscanf(gcZone,"%u.%u.%u.",&uC,&uB,&uA);
+	
+	//uRRType=7: PTR
+	sprintf(gcQuery,"SELECT cName FROM tResource WHERE uRRType=7 AND uZone=%u",uZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(cIP,"%u.%u.%u.%s",uA,uB,uC,field[0]);
+		if(uIpv4InCIDR4(cIP,cIPBlock)) return(1);
+	}
+	return(0);
+	
+}//unsigned uPTRInCIDR(unsigned uZone,char *cIPBlock)
+
+
+unsigned uPTRInBlock(unsigned uZone,unsigned uStart,unsigned uEnd)
+{
+	MYSQL_RES *res;
+	register unsigned uI;
+
+	for(uI=uStart;uI<uEnd;uI++)
+	{
+		sprintf(gcQuery,"SELECT cName FROM tResource WHERE uRRType=7 AND uZone=%u AND cName='%u'",uZone,uI);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)) return(1);
+	}
+	
+	return(0);
+	
+}//unsigned uPTRInBlock(unsigned uZone,unsigned uStart,unsigned uEnd)
+
