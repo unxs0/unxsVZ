@@ -2152,9 +2152,10 @@ unsigned OnLineZoneCheck(void)
 		sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1 > /dev/null",field[0],cZoneFile);
 		if(system(gcQuery))
 		{
+			unsigned uMessageSet=0;
 			char cLine[100]={""};
-			sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1",field[0],cZoneFile);
 
+			sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1",field[0],cZoneFile);
 			if((zfp=popen(gcQuery,"r"))==NULL)
 				htmlPlainTextError("popen() failed");
 			
@@ -2169,15 +2170,20 @@ unsigned OnLineZoneCheck(void)
 						cp=cp+strlen(cZoneFile)+2; //2 more chars ': '
 						gcMessage=malloc(256);
 						sprintf(gcMessage,"<blink>Error: </blink> The RR has an error: %s",cp);
+						uMessageSet=1;
 					}
+				}
+				else if(strstr(cLine,"sh: /usr/sbin/named-checkzone: Permission denied"))
+				{
+					gcMessage="<blink>Error: </blink> Can't execute named-checkzone. Fix your permissions";
+					uMessageSet=1;
 				}
 			}
 			pclose(zfp);
 			unlink(cZoneFile);
-			if(!gcMessage[0])
+			if(!uMessageSet)
 				gcMessage="No message was set but named-checkzone failed. "
 					"Tipically this indicates a setup problem. Contact support ASAP!";	
-			return(1);
 		}
 	}
 	unlink(cZoneFile);
