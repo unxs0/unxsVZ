@@ -777,7 +777,7 @@ unsigned TextConnectDb(void)
 
 void PrintUsage(char *arg0)
 {
-	printf("\n%s %s Menu (C) 2001-2008 Gary Wallis\n\nDatabase Ops:\n"
+	printf("\n%s %s Menu (C) 2001-2009 Gary Wallis\n\nDatabase Ops:\n"
 					,arg0,RELEASE);
 	printf("\tInitialize <mysql root passwd>\n");
 	printf("\tBackup|RestoreAll [<mysql root passwd>]\n");
