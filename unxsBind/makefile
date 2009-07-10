@@ -13,7 +13,6 @@
 #	For help contact support @ openisp . net
 #
 CFLAGS= -Wall
-RELEASE= 1.0
 
 LIBS= -L/usr/lib/mysql -L/usr/lib/openisp -lz -lcrypt -lm -lssl -lucidr -lmysqlclient
 
