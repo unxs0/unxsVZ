@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
 Version: 1.18
-Release: 1
+Release: 2
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-1.18.tar.gz
@@ -88,18 +88,101 @@ cd $RPM_BUILD_DIR
 %files
 %doc LICENSE INSTALL
 /usr/local/share/iDNS
-/usr/local/idns
+%config(noreplace) /usr/local/idns/named.conf
+#/usr/local/idns/named.d
+#/usr/local/idns/named.d/master
+%config(noreplace) /usr/local/idns/named.d/master.zones
+/usr/local/idns/named.d/master/0
+/usr/local/idns/named.d/master/1
+%config(noreplace) /usr/local/idns/named.d/master/127.0.0
+/usr/local/idns/named.d/master/2
+/usr/local/idns/named.d/master/3
+/usr/local/idns/named.d/master/4
+/usr/local/idns/named.d/master/5
+/usr/local/idns/named.d/master/6
+/usr/local/idns/named.d/master/7
+/usr/local/idns/named.d/master/8
+/usr/local/idns/named.d/master/9
+/usr/local/idns/named.d/master/a
+/usr/local/idns/named.d/master/b
+/usr/local/idns/named.d/master/c
+/usr/local/idns/named.d/master/d
+/usr/local/idns/named.d/master/e
+/usr/local/idns/named.d/master/f
+/usr/local/idns/named.d/master/g
+/usr/local/idns/named.d/master/h
+/usr/local/idns/named.d/master/i
+/usr/local/idns/named.d/master/j
+/usr/local/idns/named.d/master/k
+/usr/local/idns/named.d/master/l
+%config(noreplace) /usr/local/idns/named.d/master/localhost
+/usr/local/idns/named.d/master/m
+/usr/local/idns/named.d/master/n
+/usr/local/idns/named.d/master/o
+/usr/local/idns/named.d/master/p
+/usr/local/idns/named.d/master/q
+/usr/local/idns/named.d/master/r
+/usr/local/idns/named.d/master/s
+/usr/local/idns/named.d/master/t
+/usr/local/idns/named.d/master/u
+/usr/local/idns/named.d/master/v
+/usr/local/idns/named.d/master/w
+/usr/local/idns/named.d/master/x
+/usr/local/idns/named.d/master/y
+/usr/local/idns/named.d/master/z
+%config(noreplace) /usr/local/idns/named.d/root.cache
+#/usr/local/idns/named.d/slave
+%config(noreplace) /usr/local/idns/named.d/slave.zones
+/usr/local/idns/named.d/slave/0
+/usr/local/idns/named.d/slave/1
+/usr/local/idns/named.d/slave/2
+/usr/local/idns/named.d/slave/3
+/usr/local/idns/named.d/slave/4
+/usr/local/idns/named.d/slave/5
+/usr/local/idns/named.d/slave/6
+/usr/local/idns/named.d/slave/7
+/usr/local/idns/named.d/slave/8
+/usr/local/idns/named.d/slave/9
+/usr/local/idns/named.d/slave/a
+/usr/local/idns/named.d/slave/b
+/usr/local/idns/named.d/slave/c
+/usr/local/idns/named.d/slave/d
+/usr/local/idns/named.d/slave/e
+/usr/local/idns/named.d/slave/f
+/usr/local/idns/named.d/slave/g
+/usr/local/idns/named.d/slave/h
+/usr/local/idns/named.d/slave/i
+/usr/local/idns/named.d/slave/j
+/usr/local/idns/named.d/slave/k
+/usr/local/idns/named.d/slave/l
+/usr/local/idns/named.d/slave/m
+/usr/local/idns/named.d/slave/n
+/usr/local/idns/named.d/slave/o
+/usr/local/idns/named.d/slave/p
+/usr/local/idns/named.d/slave/q
+/usr/local/idns/named.d/slave/r
+/usr/local/idns/named.d/slave/s
+/usr/local/idns/named.d/slave/t
+/usr/local/idns/named.d/slave/u
+/usr/local/idns/named.d/slave/v
+/usr/local/idns/named.d/slave/w
+/usr/local/idns/named.d/slave/x
+/usr/local/idns/named.d/slave/y
+/usr/local/idns/named.d/slave/z
 /var/www/unxs/cgi-bin/iDNS.cgi
 /var/www/unxs/cgi-bin/idnsAdmin.cgi
 /var/www/unxs/cgi-bin/idnsOrg.cgi
 /usr/sbin/tHitCollector
-/usr/sbin/bind9-genstats.sh
+%config(noreplace) /usr/sbin/bind9-genstats.sh
 /usr/sbin/idns-logerror
 /var/www/unxs/html/images/green.gif
 /var/www/unxs/html/images/red.gif
 /var/log/named
-/usr/sbin/mysqlcluster.sh
+%config(noreplace) /usr/sbin/mysqlcluster.sh
+
 %changelog
+* Fri Jul 10 2009 Gary Wallis <support@unixservice.com>
+- Added config file directives for correct update behavior. This is under alpha checking for initial install and update.
 * Thu Jul 09 2009 Hugo Urquiza <support2@unixservice.com>
 - Added 'Delegation Tools' feature to idnsOrg. Online RR check at idnsOrg minor updates. Backend list filter queries updated.
 * Thu Jul 09 2009 Gary Wallis <support@unixservice.com>
