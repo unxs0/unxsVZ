@@ -68,6 +68,23 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
+SPECTAR=`grep "$LCNAME-.....tar.gz" ./$1/$LCNAME.spec`;
+grep "$LCNAME-$2.tar.gz" ./$1/$LCNAME.spec > /dev/null 2>&1;
+if [ $? != 0 ];then
+	echo "Your spec file seems to have the wrong $SPECTAR, you should use $LCNAME-$2.tar.gz";
+	exit 1;
+fi
+
+#rpm-1.19
+LOCALVER=`grep "rpm-...." ./$1/local.h`;
+grep "rpm-$2" ./$1/local.h > /dev/null 2>&1;
+if [ $? != 0 ];then
+	echo "Your local.h file seems to have the wrong line(s):"
+	echo "$LOCALVER"
+	echo "You should change the last part to rpm-$2";
+	exit 1;
+fi
+
 tar czvf $1.tar.gz $1/ --exclude .svn
 if [ $? != 0 ];then
 	echo error 2;
