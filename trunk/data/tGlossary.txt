@@ -1,0 +1,53 @@
+1	Autonomics	1	1	1247282803	1	1247283686	Autonomics refers to programmatic defined changes to container user bean\
+counters (UBCs) or to the replication or migration of containers.\
+\
+<p>\
+In a datacenter, node or container property list it maybe specified with values\
+of <i>Yes</i> or <i>No</i>. If not specified then autonomics functions should\
+not apply.\
+\
+<p>\
+Related terms: Autonomics-Type
+11	Autonomics-Type	1	1	1247283629	1	1247283699	Autonomics-Type refers to the unxsVZ type of programmatic defined changes to\
+container user bean counters (UBCs) or to the replication or migration of\
+containers.\
+\
+<p>\
+In a datacenter, node or container property list it maybe specified with values\
+of:\
+<p>\
+<i>Optimize</i><br>\
+<i>MoveLocal</i><br>\
+<i>MoveGlobal</i><br>\
+<i>ElasticLocal</i><br>\
+<i>ElasticGlobal</i><br>\
+\
+<p>\
+<i>Optimize</i> refers to in place container UBC modification<br>\
+<i>MoveLocal</i> refers to the automated moving of a container to another node\
+in the same datacenter.<br>\
+<i>MoveGlobal</i> same as MoveLocal but may include other datacenter nodes.<br>\
+<i>ElasticLocal</i> refers to the automated expansion and shrinking of the\
+number of functional group containers on nodes in same datacenter.<br>\
+<i>ElasticGlobal</i> same as ElasticLocal but across datacenters<br>\
+\
+<p>\
+Other property parameters will define how the autonomic type will be further\
+defined for use by the autonomic action program.\
+\
+Related terms: Autonomics
+12	cIPv4	1	1	1247285045	0	0	cIPv4 is a 4 octet IP number in string format.\
+\
+<p>\
+Usually used in a node property table to specify the main public IP used by the\
+hardware node (ex. eth0). Other IPs may exist and they are specified by\
+cIPv4-eth1 for example. Usually hardware nodes have at least 2 IPs a datacenter\
+private IP for inter-node high speed communication and another public IP for\
+container connectivity of public services.\
+\
+<p>\
+Node containers may have datacenter or node private IPs and therefore the node\
+may provide DNAT/SNAT for the given container service. The iptables rules that\
+provide for this are usually migratable via /etc/vz/conf/ mount/umount scripts.\
+\
+Related terms: cVEID.mount, cVEID.umount

@@ -2,3 +2,4 @@
 2	Hardware Node	1	1	1218391714	0	0
 3	VZ Container	1	1	1218391744	0	0
 4	Group	1	1	1223300855	0	0
+5	GroupType	1	1	1246453728	0	0
