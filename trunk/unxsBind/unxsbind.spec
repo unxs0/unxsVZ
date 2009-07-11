@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
-Version: 1.20
-Release: 2
+Version: 1.21
+Release: 1
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-1.20.tar.gz
@@ -9,7 +9,7 @@ URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils >= 9.3.4-10 , rrdtool
+Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils >= 9.3.4-10 , rrdtool , chkconfig
 
 %description
 unxsBind iDNS provides a professional DNS BIND 9 manager. For 1 to 1000's of NSs.
@@ -64,6 +64,8 @@ cp data/*.txt /usr/local/share/iDNS/data/
 chown -R mysql:mysql /usr/local/share/iDNS/data
 cp setup9/rndc.conf /etc/rndc.conf
 cp setup9/rndc.key /etc/rndc.key
+cp setup9/unxsbind.init /etc/init.d/unxsbind
+chmod 755 /etc/init.d/unxsbind
 cp setup9/* /usr/local/share/iDNS/setup9/
 cp agents/mysqlcluster/mysqlcluster.sh /usr/sbin/
 /usr/bin/dig @e.root-servers.net . ns > /usr/local/share/iDNS/setup9/root.cache
@@ -82,6 +84,8 @@ export ISMROOT=/usr/local/share
 /var/www/unxs/cgi-bin/iDNS.cgi installbind 127.0.0.1
 chmod -R og+x /usr/local/idns
 chmod 644 /usr/local/idns/named.conf
+/sbin/chkconfig --level 3 named off
+/sbin/chkconfig --level 3 unxsbind on
 cd $RPM_BUILD_DIR
 
 %clean
@@ -90,6 +94,9 @@ cd $RPM_BUILD_DIR
 %doc LICENSE INSTALL
 /usr/local/share/iDNS
 %config(noreplace) /usr/local/idns/named.conf
+%config(noreplace) /etc/rndc.key
+%config(noreplace) /etc/rndc.conf
+/etc/init.d/unxsbind
 #/usr/local/idns/named.d
 #/usr/local/idns/named.d/master
 %config(noreplace) /usr/local/idns/named.d/master.zones
@@ -182,6 +189,8 @@ cd $RPM_BUILD_DIR
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
+* Sat Jul 11 2009 Gary Wallis <support@unixservice.com>
+- Added missing rndc.key and /etc/init.d/unxsbind among other related issues.
 * Fri Jul 10 2009 Hugo Urquiza <support2@unixservice.com>
 - More minor idnsOrg updates
 * Fri Jul 10 2009 Gary Wallis <support@unixservice.com>
