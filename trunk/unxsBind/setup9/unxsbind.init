@@ -1,8 +1,12 @@
 #!/bin/sh
 #
 # unxsbind	This shell script takes care of starting and stopping
-#		the unxsbind controlled BIND9 named daemon
+#		the unxsbind controlled BIND named daemon
 #
+# chkconfig: - 13 87
+# description: named (BIND) is a Domain Name Server (DNS) \
+# that is used to resolve host names to IP addresses.
+
 # Copyright 2009 Unixservice, LLC.
 
 # Source function library.
