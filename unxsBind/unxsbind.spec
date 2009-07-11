@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
 Version: 1.20
-Release: 1
+Release: 2
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-1.20.tar.gz
@@ -9,7 +9,7 @@ URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils, rrdtool
+Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils >= 9.3.4-10 , rrdtool
 
 %description
 unxsBind iDNS provides a professional DNS BIND 9 manager. For 1 to 1000's of NSs.
@@ -81,6 +81,7 @@ make install
 export ISMROOT=/usr/local/share
 /var/www/unxs/cgi-bin/iDNS.cgi installbind 127.0.0.1
 chmod -R og+x /usr/local/idns
+chmod 644 /usr/local/idns/named.conf
 cd $RPM_BUILD_DIR
 
 %clean
@@ -95,80 +96,80 @@ cd $RPM_BUILD_DIR
 /usr/local/idns/named.d/master/0
 /usr/local/idns/named.d/master/1
 %config(noreplace) /usr/local/idns/named.d/master/127.0.0
-/usr/local/idns/named.d/master/2
-/usr/local/idns/named.d/master/3
-/usr/local/idns/named.d/master/4
-/usr/local/idns/named.d/master/5
-/usr/local/idns/named.d/master/6
-/usr/local/idns/named.d/master/7
-/usr/local/idns/named.d/master/8
-/usr/local/idns/named.d/master/9
-/usr/local/idns/named.d/master/a
-/usr/local/idns/named.d/master/b
-/usr/local/idns/named.d/master/c
-/usr/local/idns/named.d/master/d
-/usr/local/idns/named.d/master/e
-/usr/local/idns/named.d/master/f
-/usr/local/idns/named.d/master/g
-/usr/local/idns/named.d/master/h
-/usr/local/idns/named.d/master/i
-/usr/local/idns/named.d/master/j
-/usr/local/idns/named.d/master/k
-/usr/local/idns/named.d/master/l
+%dir /usr/local/idns/named.d/master/2
+%dir /usr/local/idns/named.d/master/3
+%dir /usr/local/idns/named.d/master/4
+%dir /usr/local/idns/named.d/master/5
+%dir /usr/local/idns/named.d/master/6
+%dir /usr/local/idns/named.d/master/7
+%dir /usr/local/idns/named.d/master/8
+%dir /usr/local/idns/named.d/master/9
+%dir /usr/local/idns/named.d/master/a
+%dir /usr/local/idns/named.d/master/b
+%dir /usr/local/idns/named.d/master/c
+%dir /usr/local/idns/named.d/master/d
+%dir /usr/local/idns/named.d/master/e
+%dir /usr/local/idns/named.d/master/f
+%dir /usr/local/idns/named.d/master/g
+%dir /usr/local/idns/named.d/master/h
+%dir /usr/local/idns/named.d/master/i
+%dir /usr/local/idns/named.d/master/j
+%dir /usr/local/idns/named.d/master/k
+%dir /usr/local/idns/named.d/master/l
 %config(noreplace) /usr/local/idns/named.d/master/localhost
-/usr/local/idns/named.d/master/m
-/usr/local/idns/named.d/master/n
-/usr/local/idns/named.d/master/o
-/usr/local/idns/named.d/master/p
-/usr/local/idns/named.d/master/q
-/usr/local/idns/named.d/master/r
-/usr/local/idns/named.d/master/s
-/usr/local/idns/named.d/master/t
-/usr/local/idns/named.d/master/u
-/usr/local/idns/named.d/master/v
-/usr/local/idns/named.d/master/w
-/usr/local/idns/named.d/master/x
-/usr/local/idns/named.d/master/y
-/usr/local/idns/named.d/master/z
+%dir /usr/local/idns/named.d/master/m
+%dir /usr/local/idns/named.d/master/n
+%dir /usr/local/idns/named.d/master/o
+%dir /usr/local/idns/named.d/master/p
+%dir /usr/local/idns/named.d/master/q
+%dir /usr/local/idns/named.d/master/r
+%dir /usr/local/idns/named.d/master/s
+%dir /usr/local/idns/named.d/master/t
+%dir /usr/local/idns/named.d/master/u
+%dir /usr/local/idns/named.d/master/v
+%dir /usr/local/idns/named.d/master/w
+%dir /usr/local/idns/named.d/master/x
+%dir /usr/local/idns/named.d/master/y
+%dir /usr/local/idns/named.d/master/z
 %config(noreplace) /usr/local/idns/named.d/root.cache
 #/usr/local/idns/named.d/slave
 %config(noreplace) /usr/local/idns/named.d/slave.zones
-/usr/local/idns/named.d/slave/0
-/usr/local/idns/named.d/slave/1
-/usr/local/idns/named.d/slave/2
-/usr/local/idns/named.d/slave/3
-/usr/local/idns/named.d/slave/4
-/usr/local/idns/named.d/slave/5
-/usr/local/idns/named.d/slave/6
-/usr/local/idns/named.d/slave/7
-/usr/local/idns/named.d/slave/8
-/usr/local/idns/named.d/slave/9
-/usr/local/idns/named.d/slave/a
-/usr/local/idns/named.d/slave/b
-/usr/local/idns/named.d/slave/c
-/usr/local/idns/named.d/slave/d
-/usr/local/idns/named.d/slave/e
-/usr/local/idns/named.d/slave/f
-/usr/local/idns/named.d/slave/g
-/usr/local/idns/named.d/slave/h
-/usr/local/idns/named.d/slave/i
-/usr/local/idns/named.d/slave/j
-/usr/local/idns/named.d/slave/k
-/usr/local/idns/named.d/slave/l
-/usr/local/idns/named.d/slave/m
-/usr/local/idns/named.d/slave/n
-/usr/local/idns/named.d/slave/o
-/usr/local/idns/named.d/slave/p
-/usr/local/idns/named.d/slave/q
-/usr/local/idns/named.d/slave/r
-/usr/local/idns/named.d/slave/s
-/usr/local/idns/named.d/slave/t
-/usr/local/idns/named.d/slave/u
-/usr/local/idns/named.d/slave/v
-/usr/local/idns/named.d/slave/w
-/usr/local/idns/named.d/slave/x
-/usr/local/idns/named.d/slave/y
-/usr/local/idns/named.d/slave/z
+%dir /usr/local/idns/named.d/slave/0
+%dir /usr/local/idns/named.d/slave/1
+%dir /usr/local/idns/named.d/slave/2
+%dir /usr/local/idns/named.d/slave/3
+%dir /usr/local/idns/named.d/slave/4
+%dir /usr/local/idns/named.d/slave/5
+%dir /usr/local/idns/named.d/slave/6
+%dir /usr/local/idns/named.d/slave/7
+%dir /usr/local/idns/named.d/slave/8
+%dir /usr/local/idns/named.d/slave/9
+%dir /usr/local/idns/named.d/slave/a
+%dir /usr/local/idns/named.d/slave/b
+%dir /usr/local/idns/named.d/slave/c
+%dir /usr/local/idns/named.d/slave/d
+%dir /usr/local/idns/named.d/slave/e
+%dir /usr/local/idns/named.d/slave/f
+%dir /usr/local/idns/named.d/slave/g
+%dir /usr/local/idns/named.d/slave/h
+%dir /usr/local/idns/named.d/slave/i
+%dir /usr/local/idns/named.d/slave/j
+%dir /usr/local/idns/named.d/slave/k
+%dir /usr/local/idns/named.d/slave/l
+%dir /usr/local/idns/named.d/slave/m
+%dir /usr/local/idns/named.d/slave/n
+%dir /usr/local/idns/named.d/slave/o
+%dir /usr/local/idns/named.d/slave/p
+%dir /usr/local/idns/named.d/slave/q
+%dir /usr/local/idns/named.d/slave/r
+%dir /usr/local/idns/named.d/slave/s
+%dir /usr/local/idns/named.d/slave/t
+%dir /usr/local/idns/named.d/slave/u
+%dir /usr/local/idns/named.d/slave/v
+%dir /usr/local/idns/named.d/slave/w
+%dir /usr/local/idns/named.d/slave/x
+%dir /usr/local/idns/named.d/slave/y
+%dir /usr/local/idns/named.d/slave/z
 /var/www/unxs/cgi-bin/iDNS.cgi
 /var/www/unxs/cgi-bin/idnsAdmin.cgi
 /var/www/unxs/cgi-bin/idnsOrg.cgi
@@ -177,7 +178,7 @@ cd $RPM_BUILD_DIR
 /usr/sbin/idns-logerror
 /var/www/unxs/html/images/green.gif
 /var/www/unxs/html/images/red.gif
-/var/log/named
+%dir /var/log/named
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog

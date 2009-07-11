@@ -46,6 +46,6 @@ LEGAL
 
 //End-users: Do not change these!
 //Developers: See makefile also when changing these
-#define RELEASE "1.1"
-#define REV "1.1"
+#define RELEASE "1.1/rpm-2.0"
+#define REV "1.1/rpm-2.0"
 

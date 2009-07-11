@@ -1897,7 +1897,8 @@ void InstallNamedFiles(char *cIpNum)
 		mkdir(gcQuery,0777);
 	}
 
-	sprintf(gcQuery,"cat %s/iDNS/%s/named.conf|sed -e \"s/{{cIpNumber}}/%s/g\" > /usr/local/idns/named.conf",cISMROOT,cSetupDir,IPNumber(cIpNum));	
+	sprintf(gcQuery,"cat %s/iDNS/%s/named.conf|sed -e \"s/{{cIpNumber}}/%s/g\" > /usr/local/idns/named.conf",
+				cISMROOT,cSetupDir,IPNumber(cIpNum));	
 	if(system(gcQuery))
 		 printf("Error configuring named.conf\n");
 

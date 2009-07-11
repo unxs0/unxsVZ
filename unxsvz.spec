@@ -4,7 +4,7 @@ Version: 2.0
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsvz-1.0.tar.gz
+Source: http://unixservice.com/source/unxsvz-2.0.tar.gz
 URL: http://openisp.net/openisp/unxsVZ
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -65,9 +65,9 @@ cd $RPM_BUILD_DIR
 /var/www/html/images/right.gif
 /var/www/html/images/right_last.gif
 /var/www/html/images/right_on.gif
-/usr/local/share/unxsVZ
-/usr/local/sbin/vz_traffic_log.sh
-/var/www/html/traffic
+%dir /usr/local/share/unxsVZ
+%config(noreplace) /usr/local/sbin/vz_traffic_log.sh
+%dir /var/www/html/traffic
 
 %changelog
 * Mon Apr 11 2009 Gary Wallis <support@unixservice.com> 

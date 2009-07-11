@@ -16,6 +16,8 @@ static long unsigned luLimit=0;
 
 //ModuleFunctionProtos()
 unsigned SetUBCJob(unsigned uContainer,char *cSet);
+void htmlReturnLink(void);
+void htmlGlossaryLink(void);
 
 
 void ExtProcesstPropertyVars(pentry entries[], int x)
@@ -305,6 +307,7 @@ void ExttPropertyButtons(void)
 
 		default:
 			htmlReturnLink();
+			htmlGlossaryLink();
 			printf("<u>Table Tips</u><br>");
 			printf("In general the only properties that make sense to edit"
 				" are those that are not VZ UBC properties. The exception being"
@@ -476,3 +479,25 @@ unsigned SetUBCJob(unsigned uContainer,char *cSet)
 	return(uCount);
 
 }//unsigned SetUBCJob(...)
+
+
+void htmlGlossaryLink(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(!cName[0]) return;
+
+	sprintf(gcQuery,"SELECT uGlossary FROM tGlossary WHERE cLabel='%s'",cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("Glossary entry for <a class=darkLink href=unxsVZ.cgi?gcFunction=tGlossary"
+				"&uGlossary=%s>%s</a><p>\n",field[0],cName);
+	}
+	mysql_free_result(res);
+
+}//void htmlGlossaryLink(void)
