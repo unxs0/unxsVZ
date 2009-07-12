@@ -1,10 +1,10 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
-Version: 1.23
+Version: 1.24
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-1.23.tar.gz
+Source: http://unixservice.com/source/unxsbind-1.24.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -81,7 +81,7 @@ cd ../errorlog
 make install
 #things we can do with no data loaded
 export ISMROOT=/usr/local/share
-/var/www/unxs/cgi-bin/iDNS.cgi installbind 127.0.0.1
+/var/www/unxs/cgi-bin/iDNS.cgi installbind 0.0.0.0
 chmod -R og+x /usr/local/idns
 chmod 644 /usr/local/idns/named.conf
 cd $RPM_BUILD_DIR
@@ -93,6 +93,64 @@ if [ -x /sbin/chkconfig ];then
 	fi
 	if [ -x /etc/init.d/unxsbind ];then
 		/sbin/chkconfig --level 3 unxsbind on
+		/etc/init.d/unxsbind start > /dev/null 2>&1
+		if [ $? == 0 ];then
+			cUnxsBindStart="1"
+		fi
+	fi
+	if [ -x /etc/init.d/httpd];then
+		/sbin/chkconfig --level 3 httpd on
+		/etc/init.d/httpd start > /dev/null 2>&1
+		if [ $? == 0 ];then
+			cHttpdStart="1"
+		fi
+	fi
+	if [ -x /etc/init.d/mysqld];then
+		/sbin/chkconfig --level 3 mysqld on
+		/etc/init.d/mysqld start > /dev/null 2>&1
+		if [ $? == 0 ];then
+			cMySQLStart="1"
+		fi
+	fi
+fi
+#if mysqld has no root passwd and we started it then we will set it and finish the data initialize
+if [ -x /usr/bin/mysql ];then
+	if [ "$cMySQLStart" == "1" ]
+		echo "quit" | /usr/bin/mysql  > /dev/null 2>&1
+		if [ $? == 0 ];then
+			/usr/bin/mysqladmin -u root password 'ultrasecret' > /dev/null 2>&1
+			if [ $? == 0 ];then
+				echo "mysqld root password set to 'ultrasecret' change ASAP!"
+				export ISMROOT=/usr/local/share
+				/var/www/unxs/cgi-bin/iDNS.cgi Initialize ultrasecret > /dev/null 2>&1
+				if [ $? == 0 ];then
+					cInitialize="1"
+				fi
+			fi
+		fi
+	fi
+fi
+#let installer now what was done.
+if [ "$cUnxsBindStart" == "1" ] && [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
+			&& [ "$cInitialize" == "1" ];then
+	echo "unxsBind has been installed, intialized and httpd and named have been started.";	
+else 
+	if [ "$cUnxsBindStart" == "1" ] && [ "$cHttpdStart" == "1" ]; then
+		echo "unxsBind has been installed, httpd and named have been started.";	
+		echo "You may need to manually run:";
+		echo "/etc/init.d/mysqld start";
+		echo "/usr/bin/mysqladmin -u root password '<mysql-root-passwd>'";	
+		echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
+		echo "to finish your unxsBind install";	
+	else
+		echo "unxsBind has been installed, mysqld, httpd and/or named have not been started.";	
+		echo "You may need to manually run and check:"
+		echo "/etc/init.d/mysqld start";
+		echo "/usr/bin/mysqladmin -u root password '<mysql-root-passwd>'";	
+		echo "/etc/init.d/unxsbind start";
+		echo "/etc/init.d/httpd start";
+		echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
+		echo "to finish your unxsBind install";	
 	fi
 fi
 

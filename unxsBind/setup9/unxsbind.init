@@ -54,8 +54,13 @@ case "$1" in
 	$0 stop
 	$0 start
 	;;
+  status)
+	if [ -x /usr/sbin/rndc ]; then
+		/usr/sbin/rndc -c /etc/unxsbind-rndc.conf status;
+	fi
+	;;
   *)
-	echo $"Usage: $0 {start|stop|restart}"
+	echo $"Usage: $0 {start|stop|restart|status}"
 	RETVAL=3
 	;;
 esac

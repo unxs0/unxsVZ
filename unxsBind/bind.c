@@ -258,7 +258,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		}
 		if(!strcmp(IPNumber(cParam1),"0.0.0.0"))
 		{
-		printf("Incorrect A IP number format: %s\n",cLine);
+			printf("Incorrect A IP number format: %s\n",cLine);
 			return;
 		}
 	}
@@ -896,7 +896,7 @@ void ProcessSORRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		}
 		if(!strcmp(IPNumber(cParam1),"0.0.0.0"))
 		{
-		printf("Incorrect A IP number format: %s\n",cLine);
+			printf("Incorrect A IP number format: %s\n",cLine);
 			return;
 		}
 	}
@@ -1897,10 +1897,13 @@ void InstallNamedFiles(char *cIpNum)
 		mkdir(gcQuery,0777);
 	}
 
-	sprintf(gcQuery,"cat %s/iDNS/%s/named.conf|sed -e \"s/{{cIpNumber}}/%s/g\" > /usr/local/idns/named.conf",
-				cISMROOT,cSetupDir,IPNumber(cIpNum));	
-	if(system(gcQuery))
-		 printf("Error configuring named.conf\n");
+	if(strcmp(cIpNum,"0.0.0.0"))
+	{
+		sprintf(gcQuery,"cat %s/iDNS/%s/named.conf|sed -e \"s/{{cIpNumber}}/%s/g\" > /usr/local/idns/named.conf",
+			cISMROOT,cSetupDir,IPNumber(cIpNum));	
+		if(system(gcQuery))
+			printf("Error configuring named.conf\n");
+	}
 
 	sprintf(gcQuery,"touch /usr/local/idns/named.d/master.zones");	
 	if(system(gcQuery))
