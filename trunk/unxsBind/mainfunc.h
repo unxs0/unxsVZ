@@ -1141,7 +1141,8 @@ void ExtMainShell(int argc, char *argv[])
 				CreateMasterFiles(argv[3],"",1,1,0);
 				exit(0);
 			}
-			system("/usr/sbin/rndc reload");
+			//Note this is missing the optional port and path that bind.c uses
+			system("/usr/sbin/rndc -c /etc/unxsbind-rndc.conf reload");
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"jobqueue"))
