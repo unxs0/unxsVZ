@@ -38,7 +38,7 @@ case "$1" in
 	echo -n $"Stoping unxsBind controlled named";
 	echo "";
 	if [ -x /usr/sbin/rndc ]; then
-		/usr/sbin/rndc stop;
+		/usr/sbin/rndc -c /etc/unxsbind-rndc.conf stop;
 		if [ $? != 0 ]; then
 			echo -n $"Failed to stop named";
 			echo "";

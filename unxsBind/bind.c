@@ -2157,9 +2157,9 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 		if((uNamedCheckConf(cNameServer))) exit(1); //Exit without reloading the server
 #endif
 		if(cuControlPort[0])
-			sprintf(cCmd,"%s/rndc -p %s reconfig",gcBinDir,cuControlPort);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reconfig",gcBinDir,cuControlPort);
 		else
-			sprintf(cCmd,"%s/rndc reconfig",gcBinDir);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reconfig",gcBinDir);
 		
 		if(system(cCmd))
 			exit(1);
@@ -2288,9 +2288,9 @@ void MasterJobQueue(char *cNameServer)
 	if(uReload)
 	{
 		if(cuControlPort[0])
-			sprintf(cCmd,"%s/rndc -p %s reload",gcBinDir,cuControlPort);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload",gcBinDir,cuControlPort);
 		else
-			sprintf(cCmd,"%s/rndc reload",gcBinDir);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload",gcBinDir);
 		
 		if(system(cCmd))
 			exit(1);
@@ -2298,9 +2298,9 @@ void MasterJobQueue(char *cNameServer)
 	else if(uReconfig)
 	{
 		if(cuControlPort[0])
-			sprintf(cCmd,"%s/rndc -p %s reconfig",gcBinDir,cuControlPort);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reconfig",gcBinDir,cuControlPort);
 		else
-			sprintf(cCmd,"%s/rndc reconfig",gcBinDir);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reconfig",gcBinDir);
 		
 		if(system(cCmd))
 			exit(1);
@@ -2402,9 +2402,9 @@ int ProcessSlaveJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew,
 			printf("Modify for NS %s\n\n",cMasterNS);
 		CreateSlaveFiles(cMasterNS,"",cMasterIP,0);
 		if(cuControlPort[0])
-			sprintf(cCmd,"%s/rndc -p %s reload",gcBinDir,cuControlPort);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload",gcBinDir,cuControlPort);
 		else
-			sprintf(cCmd,"%s/rndc reload",gcBinDir);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload",gcBinDir);
 		system(cCmd);
 		
 		ViewReloadZone(cZone);
@@ -2419,9 +2419,9 @@ int ProcessSlaveJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew,
 		CreateSlaveFiles(cMasterNS,cZone,cMasterIP,0);
 		//This is a hack has to be optimized further
 		if(cuControlPort[0])
-			sprintf(cCmd,"%s/rndc -p %s reload",gcBinDir,cuControlPort);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload",gcBinDir,cuControlPort);
 		else
-			sprintf(cCmd,"%s/rndc reload",gcBinDir);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload",gcBinDir);
 		system(cCmd);
 		ViewReloadZone(cZone);
 		return(1);//reconfigure: new item in slave.zones
@@ -3278,19 +3278,19 @@ unsigned ViewReloadZone(char *cZone)
 		if(field[1][0]=='1')
 		{
 			if(cuControlPort[0])
-				sprintf(cCmd,"%s/rndc -p %s retransfer %s in %s",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s retransfer %s in %s",
 						gcBinDir,cuControlPort,cZone,field[0]);
 			else
-				sprintf(cCmd,"%s/rndc retransfer %s in %s",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf retransfer %s in %s",
 						gcBinDir,cZone,field[0]);
 		}
 		else
 		{
 			if(cuControlPort[0])
-				sprintf(cCmd,"%s/rndc -p %s reload %s in %s",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload %s in %s",
 						gcBinDir,cuControlPort,cZone,field[0]);
 			else
-				sprintf(cCmd,"%s/rndc reload %s in %s",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload %s in %s",
 						gcBinDir,cZone,field[0]);
 		}
 		//debug only

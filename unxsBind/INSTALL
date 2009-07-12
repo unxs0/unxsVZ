@@ -49,10 +49,10 @@ md5check=1
 # /var/www/unxs/cgi-bin/iDNS.cgi Initialize <your root mysql password>
 
 ---
-4-. Start your BIND named daemon.
+4-. Start your BIND named daemon. Note the special rndc conf file that is now used.
 
-# /usr/sbin/named -c /usr/local/idns/named.conf
-# rndc status
+# /etc/init.d/unxsbind start
+# rndc -c /etc/unxsbind-rndc.conf status
 
 ##(if the above did not work -should have been done by rpm, run this
 ##	and try the above again. Or run it to change the IP)

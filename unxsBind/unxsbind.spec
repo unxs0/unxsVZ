@@ -1,10 +1,10 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
-Version: 1.21
+Version: 1.23
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-1.20.tar.gz
+Source: http://unixservice.com/source/unxsbind-1.23.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -62,8 +62,8 @@ cp `find ./interfaces/admin/templates/ -type f -print` /usr/local/share/iDNS/adm
 cp `find ./interfaces/org/templates/ -type f -print` /usr/local/share/iDNS/org/templates/
 cp data/*.txt /usr/local/share/iDNS/data/
 chown -R mysql:mysql /usr/local/share/iDNS/data
-cp setup9/rndc.conf /etc/rndc.conf
-cp setup9/rndc.key /etc/rndc.key
+cp setup9/rndc.key /etc/unxsbind-rndc.key
+cp setup9/rndc.conf /etc/unxsbind-rndc.conf
 cp setup9/unxsbind.init /etc/init.d/unxsbind
 chmod 755 /etc/init.d/unxsbind
 cp setup9/* /usr/local/share/iDNS/setup9/
@@ -84,9 +84,17 @@ export ISMROOT=/usr/local/share
 /var/www/unxs/cgi-bin/iDNS.cgi installbind 127.0.0.1
 chmod -R og+x /usr/local/idns
 chmod 644 /usr/local/idns/named.conf
-/sbin/chkconfig --level 3 named off
-/sbin/chkconfig --level 3 unxsbind on
 cd $RPM_BUILD_DIR
+
+%post
+if [ -x /sbin/chkconfig ];then
+	if [ -x /etc/init.d/named ];then
+		/sbin/chkconfig --level 3 named off
+	fi
+	if [ -x /etc/init.d/unxsbind ];then
+		/sbin/chkconfig --level 3 unxsbind on
+	fi
+fi
 
 %clean
 
@@ -94,8 +102,8 @@ cd $RPM_BUILD_DIR
 %doc LICENSE INSTALL
 /usr/local/share/iDNS
 %config(noreplace) /usr/local/idns/named.conf
-%config(noreplace) /etc/rndc.key
-%config(noreplace) /etc/rndc.conf
+%config(noreplace) /etc/unxsbind-rndc.key
+%config(noreplace) /etc/unxsbind-rndc.conf
 /etc/init.d/unxsbind
 #/usr/local/idns/named.d
 #/usr/local/idns/named.d/master
@@ -183,12 +191,26 @@ cd $RPM_BUILD_DIR
 /usr/sbin/tHitCollector
 %config(noreplace) /usr/sbin/bind9-genstats.sh
 /usr/sbin/idns-logerror
-/var/www/unxs/html/images/green.gif
+/var/www/unxs/html/images/null.gif
 /var/www/unxs/html/images/red.gif
+/var/www/unxs/html/images/yellow.gif
+/var/www/unxs/html/images/green.gif
+/var/www/unxs/html/images/allzone.stats.png
+/var/www/unxs/html/images/bgrd_header_engage.gif
+/var/www/unxs/html/images/bgrd_masthead.gif
+/var/www/unxs/html/images/bgrd_topnav.gif
+/var/www/unxs/html/images/bgrd_topnav_systxt.gif
+/var/www/unxs/html/images/btn_mast_search.gif
+/var/www/unxs/html/images/clear.gif
+/var/www/unxs/html/images/unxslogo.jpg
+/var/www/unxs/html/css/popups.js
+/var/www/unxs/html/css/styles.css
 %dir /var/log/named
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
+* Sat Jul 11 2009 Gary Wallis <support@unixservice.com>
+- Fixed conflict with BIND regarding /etc/rndc.key
 * Sat Jul 11 2009 Gary Wallis <support@unixservice.com>
 - Added missing rndc.key and /etc/init.d/unxsbind among other related issues.
 * Fri Jul 10 2009 Hugo Urquiza <support2@unixservice.com>
