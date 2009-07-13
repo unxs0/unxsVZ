@@ -2154,7 +2154,6 @@ unsigned OnLineZoneCheck(void)
 		{
 			unsigned uMessageSet=0;
 			char cLine[100]={""};
-
 			sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1",field[0],cZoneFile);
 			if((zfp=popen(gcQuery,"r"))==NULL)
 				htmlPlainTextError("popen() failed");
@@ -2181,9 +2180,11 @@ unsigned OnLineZoneCheck(void)
 			}
 			pclose(zfp);
 			unlink(cZoneFile);
+			
 			if(!uMessageSet)
 				gcMessage="No message was set but named-checkzone failed. "
-					"Tipically this indicates a setup problem. Contact support ASAP!";	
+					"Tipically this indicates a setup problem. Contact support ASAP!";
+			return(1);
 		}
 	}
 	unlink(cZoneFile);
