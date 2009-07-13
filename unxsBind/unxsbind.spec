@@ -1,15 +1,15 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
-Version: 1.25
+Version: 1.26
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-1.25.tar.gz
+Source: http://unixservice.com/source/unxsbind-1.26.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils >= 9.3.4-10 , rrdtool == 1.2.30 , chkconfig
+Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils >= 9.3.4-10 , rrdtool , chkconfig
 
 %description
 unxsBind iDNS provides a professional DNS BIND 9 manager. For 1 to 1000's of NSs.
@@ -54,7 +54,6 @@ mkdir -p /usr/local/share/iDNS/setup9
 mkdir -p /usr/local/share/iDNS/admin/templates
 mkdir -p /usr/local/share/iDNS/org/templates
 mkdir -p /var/log/named
-mkdir -p /usr/share/rrdtool/fonts
 #cp files section
 cp -u images/* /var/www/unxs/html/images/
 cp -u interfaces/admin/templates/images/* /var/www/unxs/html/images/
@@ -68,7 +67,7 @@ cp setup9/rndc.conf /etc/unxsbind-rndc.conf
 cp setup9/unxsbind.init /etc/init.d/unxsbind
 chmod 755 /etc/init.d/unxsbind
 cp setup9/* /usr/local/share/iDNS/setup9/
-cp -u setup9/DejaVuSansMono-Roman.ttf /usr/share/rrdtool/fonts/
+cp -u setup9/DejaVuSansMono-Roman.ttf /usr/share/fonts/
 cp agents/mysqlcluster/mysqlcluster.sh /usr/sbin/
 /usr/bin/dig @e.root-servers.net . ns > /usr/local/share/iDNS/setup9/root.cache
 #make section
@@ -159,6 +158,11 @@ fi
 if [ -f /usr/local/share/iDNS/setup9/root-crontab ] && [ -d /var/spool/cron ] && [ -x /usr/sbin/tHitCollector ];then
 	#initialize main stats rrd
 	/usr/sbin/tHitCollector Initialize --cZone allzone.stats > /dev/null 2>&1
+	#new version of rrdtool needs fontconfig font, it was installed
+	#but we need to load into cache
+	if [ -x /usr/bin/fc-cache ];then
+		/usr/bin/fc-cache > /dev/null 2>&1
+	fi
 	#do not add again
 	grep "iDNS" /var/spool/cron/root > /dev/null 2>&1
 	if [ $? != 0 ];then
@@ -281,7 +285,6 @@ fi
 /var/www/unxs/html/css/popups.js
 /var/www/unxs/html/css/styles.css
 %dir /var/log/named
-%dir /usr/share/rrdtool/fonts
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
