@@ -1867,11 +1867,12 @@ void InstallNamedFiles(char *cIpNum)
 	if(!cISMROOT[0])
 	{
 		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe/unxsVZ\n"
-			"If unxsBind dir is located in the /home/joe/unxsVZ dir");
+			"If the iDNS dir is located in the /home/joe/unxsVZ dir. For source"
+			" code installs you may need to 'ln -s unxsBind iDNS' inside your unxsVZ tree.");
 		exit(0);
 	}
 
-	printf("Installing named for IP %s from %s/unxsBind\n",
+	printf("Installing named for IP %s from %s/iDNS\n",
 			IPNumber(cIpNum), cISMROOT);
 	
 	mkdir("/usr/local/idns",0777);
