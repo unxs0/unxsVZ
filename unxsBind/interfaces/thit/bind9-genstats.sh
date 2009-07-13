@@ -6,7 +6,7 @@
 
 #Configure
 STAT_FILE=/usr/local/idns/named.d/named.stats;
-RNDC=/usr/sbin/rndc;
+RNDC="/usr/sbin/rndc -c /etc/unxsbind-rndc.conf";
 THIT=/usr/sbin/tHitCollector;
 
 #Gen named.stats

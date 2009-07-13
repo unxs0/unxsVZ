@@ -1,15 +1,15 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
-Version: 1.24
+Version: 1.25
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-1.24.tar.gz
+Source: http://unixservice.com/source/unxsbind-1.25.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils >= 9.3.4-10 , rrdtool , chkconfig
+Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils >= 9.3.4-10 , rrdtool == 1.2.30 , chkconfig
 
 %description
 unxsBind iDNS provides a professional DNS BIND 9 manager. For 1 to 1000's of NSs.
@@ -54,6 +54,7 @@ mkdir -p /usr/local/share/iDNS/setup9
 mkdir -p /usr/local/share/iDNS/admin/templates
 mkdir -p /usr/local/share/iDNS/org/templates
 mkdir -p /var/log/named
+mkdir -p /usr/share/rrdtool/fonts
 #cp files section
 cp -u images/* /var/www/unxs/html/images/
 cp -u interfaces/admin/templates/images/* /var/www/unxs/html/images/
@@ -67,6 +68,7 @@ cp setup9/rndc.conf /etc/unxsbind-rndc.conf
 cp setup9/unxsbind.init /etc/init.d/unxsbind
 chmod 755 /etc/init.d/unxsbind
 cp setup9/* /usr/local/share/iDNS/setup9/
+cp -u setup9/DejaVuSansMono-Roman.ttf /usr/share/rrdtool/fonts/
 cp agents/mysqlcluster/mysqlcluster.sh /usr/sbin/
 /usr/bin/dig @e.root-servers.net . ns > /usr/local/share/iDNS/setup9/root.cache
 #make section
@@ -98,14 +100,14 @@ if [ -x /sbin/chkconfig ];then
 			cUnxsBindStart="1"
 		fi
 	fi
-	if [ -x /etc/init.d/httpd];then
+	if [ -x /etc/init.d/httpd ];then
 		/sbin/chkconfig --level 3 httpd on
 		/etc/init.d/httpd start > /dev/null 2>&1
 		if [ $? == 0 ];then
 			cHttpdStart="1"
 		fi
 	fi
-	if [ -x /etc/init.d/mysqld];then
+	if [ -x /etc/init.d/mysqld ];then
 		/sbin/chkconfig --level 3 mysqld on
 		/etc/init.d/mysqld start > /dev/null 2>&1
 		if [ $? == 0 ];then
@@ -115,7 +117,7 @@ if [ -x /sbin/chkconfig ];then
 fi
 #if mysqld has no root passwd and we started it then we will set it and finish the data initialize
 if [ -x /usr/bin/mysql ];then
-	if [ "$cMySQLStart" == "1" ]
+	if [ "$cMySQLStart" == "1" ];then
 		echo "quit" | /usr/bin/mysql  > /dev/null 2>&1
 		if [ $? == 0 ];then
 			/usr/bin/mysqladmin -u root password 'ultrasecret' > /dev/null 2>&1
@@ -151,6 +153,21 @@ else
 		echo "/etc/init.d/httpd start";
 		echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
 		echo "to finish your unxsBind install";	
+	fi
+fi
+#cat unxsbind crontab into root crontab
+if [ -f /usr/local/share/iDNS/setup9/root-crontab ] && [ -d /var/spool/cron ] && [ -x /usr/sbin/tHitCollector ];then
+	#initialize main stats rrd
+	/usr/sbin/tHitCollector Initialize --cZone allzone.stats > /dev/null 2>&1
+	#do not add again
+	grep "iDNS" /var/spool/cron/root > /dev/null 2>&1
+	if [ $? != 0 ];then
+		cat /usr/local/share/iDNS/setup9/root-crontab >> /var/spool/cron/root;
+	fi
+	#setup main stats graph
+	if [ -f /var/www/unxs/html/images/allzone.stats.png ] && [ -d /var/log/named ];then
+		rm /var/www/unxs/html/images/allzone.stats.png
+		ln -s /var/log/named/allzone.stats.png /var/www/unxs/html/images/allzone.stats.png
 	fi
 fi
 
@@ -264,11 +281,12 @@ fi
 /var/www/unxs/html/css/popups.js
 /var/www/unxs/html/css/styles.css
 %dir /var/log/named
+%dir /usr/share/rrdtool/fonts
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
 * Sat Jul 11 2009 Gary Wallis <support@unixservice.com>
-- Fixed conflict with BIND regarding /etc/rndc.key
+- Fixed conflict with BIND regarding /etc/rndc.key and added post install and rrdtool issue fixes
 * Sat Jul 11 2009 Gary Wallis <support@unixservice.com>
 - Added missing rndc.key and /etc/init.d/unxsbind among other related issues.
 * Fri Jul 10 2009 Hugo Urquiza <support2@unixservice.com>
