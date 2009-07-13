@@ -1,10 +1,10 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
-Version: 1.26
+Version: 1.27
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-1.26.tar.gz
+Source: http://unixservice.com/source/unxsbind-1.27.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -94,21 +94,21 @@ if [ -x /sbin/chkconfig ];then
 	fi
 	if [ -x /etc/init.d/unxsbind ];then
 		/sbin/chkconfig --level 3 unxsbind on
-		/etc/init.d/unxsbind start > /dev/null 2>&1
+		/etc/init.d/unxsbind restart > /dev/null 2>&1
 		if [ $? == 0 ];then
 			cUnxsBindStart="1"
 		fi
 	fi
 	if [ -x /etc/init.d/httpd ];then
 		/sbin/chkconfig --level 3 httpd on
-		/etc/init.d/httpd start > /dev/null 2>&1
+		/etc/init.d/httpd restart > /dev/null 2>&1
 		if [ $? == 0 ];then
 			cHttpdStart="1"
 		fi
 	fi
 	if [ -x /etc/init.d/mysqld ];then
 		/sbin/chkconfig --level 3 mysqld on
-		/etc/init.d/mysqld start > /dev/null 2>&1
+		/etc/init.d/mysqld restart > /dev/null 2>&1
 		if [ $? == 0 ];then
 			cMySQLStart="1"
 		fi
@@ -127,6 +127,10 @@ if [ -x /usr/bin/mysql ];then
 				if [ $? == 0 ];then
 					cInitialize="1"
 				fi
+				/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 > /dev/null 2>&1
+				if [ $? == 0 ];then
+					cAllfiles="1"
+				fi
 			fi
 		fi
 	fi
@@ -135,23 +139,40 @@ fi
 if [ "$cUnxsBindStart" == "1" ] && [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
 			&& [ "$cInitialize" == "1" ];then
 	echo "unxsBind has been installed, intialized and httpd and named have been started.";	
+	echo "You can proceed to login to your unxsBind interfaces with your browser.";	
 else 
-	if [ "$cUnxsBindStart" == "1" ] && [ "$cHttpdStart" == "1" ]; then
-		echo "unxsBind has been installed, httpd and named have been started.";	
-		echo "You may need to manually run:";
-		echo "/etc/init.d/mysqld start";
-		echo "/usr/bin/mysqladmin -u root password '<mysql-root-passwd>'";	
-		echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
-		echo "to finish your unxsBind install";	
-	else
-		echo "unxsBind has been installed, mysqld, httpd and/or named have not been started.";	
-		echo "You may need to manually run and check:"
-		echo "/etc/init.d/mysqld start";
-		echo "/usr/bin/mysqladmin -u root password '<mysql-root-passwd>'";	
+		echo "It appears that one or more manual operations may be needed to finish";
+		echo "your unxsBind installation.";
+	if [ "$cUnxsBindStart" != "1" ]; then
+		echo "";
+		echo "WARNING: Your unxsBind named was not started, run:";	
+		echo "named-checkconf /usr/local/idns/named.conf";
+		echo "And:";
+		echo "rndc -c /etc/unxsbind.conf status";
+		echo "Fix any problems, then run:";
 		echo "/etc/init.d/unxsbind start";
+	fi
+	if [ "$cHttpdStart" != "1" ]; then
+		echo "";
+		echo "WARNING: Your httpd server was not started, run:";
+		echo "/etc/init.d/httpd configtest";
+		echo "Then check your httpd configuration and then:";
 		echo "/etc/init.d/httpd start";
+	fi
+	if [ "$cMySQLStart" != "1" ]; then
+		echo "";
+		echo "WARNING: Your mysqld server was not started, run:";
+		echo "/etc/init.d/mysqld start";
+		echo "Debug any problems, then, if you do not already know your MySQL root password:";
+		echo "/usr/bin/mysqladmin -u root password '<mysql-root-passwd>'";	
+	fi
+	if [ "$cInitialize" != "1" ]; then
+		echo "";
+		echo "WARNING: Your unxsBind database was not initialized, run:";
+		echo "export ISMROOT=/usr/local/share";
 		echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
-		echo "to finish your unxsBind install";	
+		echo "Debug any problems, check via the mysql CLI, then if needed try again:";
+		echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
 	fi
 fi
 #cat unxsbind crontab into root crontab
@@ -288,6 +309,10 @@ fi
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
+* Mon Jul 13 2009 Gary Wallis <support@unixservice.com>
+- Adding allfiles master post install command
+* Sun Jul 12 2009 Gary Wallis <support@unixservice.com>
+- Fixed man install issues while adding install post script
 * Sat Jul 11 2009 Gary Wallis <support@unixservice.com>
 - Fixed conflict with BIND regarding /etc/rndc.key and added post install and rrdtool issue fixes
 * Sat Jul 11 2009 Gary Wallis <support@unixservice.com>
