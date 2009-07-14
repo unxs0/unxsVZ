@@ -763,7 +763,10 @@ void UpdateDependencies(void)
 	macro_mySQLRunAndStore(res);
 	if(mysql_num_rows(res))
 	{
-		//Update tLocal
+		sprintf(gcQuery,"UPDATE tLocal SET cDomain='%s' WHERE cDomain='%s'",
+			TextAreaSave(cDomain),cOldDomain);
+		macro_mySQLQueryHTMLError;
+		//Submit job ModLocal
 	}
 	mysql_free_result(res);
 
@@ -772,6 +775,10 @@ void UpdateDependencies(void)
 	if(mysql_num_rows(res))
 	{
 		//Update tRelay
+		sprintf(gcQuery,"UPDATE tRelay SET cDomain='%s' WHERE cDomain='%s'",
+			TextAreaSave(cDomain),cOldDomain);
+		macro_mySQLQueryHTMLError;
+		//Submit job ModLocal
 	}
 	mysql_free_result(res);
 
@@ -780,6 +787,10 @@ void UpdateDependencies(void)
 	if(mysql_num_rows(res))
 	{
 		//Update tVUT
+		sprintf(gcQuery,"UPDATE tVUT SET cDomain='%s' WHERE cDomain='%s'",
+			TextAreaSave(cDomain),cOldDomain);
+		macro_mySQLQueryHTMLError;
+		//Submit job ModLocal
 	}
 	mysql_free_result(res);
 
