@@ -39,8 +39,8 @@ LEGAL
 
 //End-users: Do not change these!
 //Developers: See makefile also when changing these
-#define RELEASE "rpm-1.3"
-#define REV "rpm-1.3"
+#define RELEASE "rpm-1.4"
+#define REV "rpm-1.4"
 
 //Master tClient
 #define TCLIENT "tClient"

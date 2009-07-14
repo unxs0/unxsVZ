@@ -2615,7 +2615,7 @@ unsigned PrepSingleUserHomeDir(unsigned uUID,char const *cLogin)
 	{
 		//debug only
 		printf("%s already exists!\n",cPath);
-		return(1);
+		return(0);
 	}
 
 	//debug only
