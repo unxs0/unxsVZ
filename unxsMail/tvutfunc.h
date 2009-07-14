@@ -394,10 +394,10 @@ void tVUTEntriesAuxList(void)
 void BasicVUTCheck(void)
 {
 	if(!cDomain[0])
-		tVUT("<blink>cDomain can't be empty</blink>");
+		tVUT("<blink>Error:</blink> cDomain can't be empty");
 
 	if(!uServerGroup)
-		tVUT("<blink>Must select uServerGroup</blink>");
+		tVUT("<blink>Error:</blink> Must select uServerGroup");
 	
 }//void BasicVUTCheck(void)
 

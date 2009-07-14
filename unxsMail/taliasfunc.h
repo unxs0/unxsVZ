@@ -355,25 +355,25 @@ void tAliasNavList(void)
 void BasicAliasCheck(void)
 {
 	if(!cTargetEmail[0])
-		tAlias("<blink>cTargetEmail is required</blink>");
+		tAlias("<blink>Error: </blink>cTargetEmail is required");
 	if(!isalpha(cTargetEmail[0]))
-		tAlias("<blink>cTargetEmail must not start with a number</blink>");
+		tAlias("<blink>Error: </blink>cTargetEmail must not start with a number");
 	if(strlen(cTargetEmail)<3)
-		tAlias("<blink>cTargetEmail must be at least 3 chars</blink>");
+		tAlias("<blink>Error: </blink>cTargetEmail must be at least 3 chars");
 	if(strstr(cTargetEmail,".."))
-		tAlias("<blink>cTargetEmail may not have two consecutive periods</blink>");
+		tAlias("<blink>Error: </blink>cTargetEmail may not have two consecutive periods");
 
 	if(!cUser[0])
-		tAlias("<blink>cUser is required</blink>");
+		tAlias("<blink>cUser is required");
 	if(!isalpha(cUser[0]))
-		tAlias("<blink>cUser must not start with a number</blink>");
+		tAlias("<blink>Error: </blink>cUser must not start with a number");
 	if(strlen(cUser)<3)
-		tAlias("<blink>cUser must be at least 3 chars</blink>");
+		tAlias("<blink>Error: </blink>cUser must be at least 3 chars");
 	if(strstr(cUser,".."))
-		tAlias("<blink>cUser may not have two consecutive periods</blink>");
+		tAlias("<blink>Error: </blink>cUser may not have two consecutive periods");
 
 	if(!uServerGroup)
-		tAlias("<blink>uServerGroup is required</blink>");
+		tAlias("<blink>Error: </blink>uServerGroup is required");
 }//void BasicAliasCheck(void)
 
 

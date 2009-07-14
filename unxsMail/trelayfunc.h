@@ -354,27 +354,27 @@ void BasicRelayCheck(void)
 	char *cp;
 
 	if(!cDomain[0])
-		tRelay("<blink>cDomain can't be empty</blink>");
+		tRelay("<blink>Error:</blink> cDomain can't be empty");
 	
 	if(strlen(cDomain)<4)
-		tRelay("Must provide valid cDomain");
+		tRelay("<blink>Error:</blink> Must provide valid cDomain");
 
 	if((cp=strchr(cDomain,'.')))
 	{
 		cp++;
 		if(strlen(cp)<2)
-			tDomain("cDomain after '.' part is too short");
+			tDomain("<blink>Error:</blink> cDomain after '.' part is too short");
 	}
 	else
 	{
-		tRelay("cDomain must have '.' TLD part");
+		tRelay("<blink>Error:</blink> cDomain must have '.' TLD part");
 	}
 
 	if(!cTransport[0])
-		tRelay("<blink>cTransport can't be empty</blink>");
+		tRelay("<blink>Error:</blink> cTransport can't be empty");
 	
 	if(!uServerGroup)
-		tRelay("<blink>Must select uServerGroup</blink>");
+		tRelay("<blink>Error:</blink> Must select uServerGroup");
 
 	if(guMode==2000)
 	{
@@ -382,14 +382,14 @@ void BasicRelayCheck(void)
 		mysql_query(&gMysql,gcQuery);
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res))
-			tRelay("<blink>tRelay record existent for cDomain</blink>");
+			tRelay("<blink>Error:</blink> tRelay record existent for cDomain");
 	}
 
 	sprintf(gcQuery,"SELECT uDomain FROM tDomain WHERE cDomain='%s'",cDomain);
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if(!mysql_num_rows(res))
-		tRelay("<blink>cDomain not in tDomain</blink>");
+		tRelay("<blink>Error:</blink> cDomain not in tDomain");
 	
 }//void  BasicRelayCheck(void)
 

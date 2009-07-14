@@ -107,9 +107,9 @@ void ExttDomainCommands(pentry entries[], int x)
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				if(!uDomain)
-					tDomain("<blink>No uDomain!</blink>");
+					tDomain("<blink>Error</blink>: No uDomain!");
 				if(DomainIsInUse(uDomain,cDomain))
-					tDomain("<blink>Domain is in use!</blink>");
+					tDomain("<blink>Error</blink>: Domain is in use!");
 	                        guMode=2001;
 				tDomain(LANG_NB_CONFIRMDEL);
 			}
@@ -125,7 +125,7 @@ void ExttDomainCommands(pentry entries[], int x)
 	                        guMode=2001;
 				BasicDomainCheck();
 				if(DomainIsInUse(uDomain,cDomain))
-					tDomain("<blink>Domain is in use!</blink>");
+					tDomain("<blink>Error</blink>: Domain is in use!");
 
 				guMode=5;
 				DeletetDomain();
@@ -449,20 +449,20 @@ void BasicDomainCheck(void)
 	char *cp;
 
 	if(!cDomain[0])
-		tDomain("<blink>cDomain can't be empty</blink>");
+		tDomain("<blink>Error</blink>: cDomain can't be empty");
 
 	if(strlen(cDomain)<4)
-		tDomain("Must provide valid cDomain");
+		tDomain("<blink>Error</blink>: Must provide valid cDomain");
 
 	if((cp=strchr(cDomain,'.')))
 	{
 		cp++;
 		if(strlen(cp)<2)
-			tDomain("cDomain after '.' part is too short");
+			tDomain("<blink>Error</blink>: cDomain after '.' part is too short");
 	}
 	else
 	{
-		tDomain("cDomain must have '.' TLD part");
+		tDomain("<blink>Error</blink>: cDomain must have '.' TLD part");
 	}
 
 	
@@ -588,7 +588,7 @@ void AlreadyUsedHere(void)
 		htmlPlainTextError(mysql_error(&gMysql));
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
-		tDomain("<blink>Domain already used here!</blink>");
+		tDomain("<blink>Error: </blink>Domain already used here!");
 	mysql_free_result(res);
 
 }//void AlreadyUsedHere(void)

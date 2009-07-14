@@ -331,13 +331,13 @@ void tServerNavList(void)
 void BasicServerCheck(void)
 {
 	if(!cLabel[0])
-		tServer("<blink>cLabel is required</blink>");
+		tServer("<blink>Error:</blink> cLabel is required");
 	if(!isalpha(cLabel[0]))
-		tServer("<blink>cLabel must not start with a number</blink>");
+		tServer("<blink>Error:</blink> cLabel must not start with a number");
 	if(strlen(cLabel)<3)
-		tServer("<blink>cLabel must be at least 3 chars</blink>");
+		tServer("<blink>Error:</blink> cLabel must be at least 3 chars");
 	if(strstr(cLabel,".."))
-		tServer("<blink>cLabel may not have two consecutive periods</blink>");
+		tServer("<blink>Error:</blink> cLabel may not have two consecutive periods");
 
 }//void BasicServerCheck(void)
 

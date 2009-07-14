@@ -177,7 +177,7 @@ void ExttServerConfigCommands(pentry entries[], int x)
                         	guMode=3002;
 				ChecktServerConfigFields();
 				if(!cConfig[0])
-					tServerConfig("<blink>cConfig empty!</blink>");
+					tServerConfig("<blink>Error:</blink> cConfig empty!");
                         	guMode=0;
 
 				sprintf(cServerGroup,"%s",ForeignKey("tServerGroup","cLabel",uServerGroup));
@@ -496,8 +496,8 @@ void CreateServerConfigFromTemplate(unsigned uServerConfig, unsigned uServerGrou
 void ChecktServerConfigFields(void)
 {
 	if(!uServerGroup)
-		tServerConfig("<blink>You must select a valid uServerGroup</blink>");
+		tServerConfig("<blink>Error:</blink> You must select a valid uServerGroup");
 	if(!uConfigSpec)
-		tServerConfig("<blink>You must select a valid uConfigSpec</blink>");
+		tServerConfig("<blink>Error:</blink> You must select a valid uConfigSpec");
 
 }//void ChecktServerConfigFields(void)

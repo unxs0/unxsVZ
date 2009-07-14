@@ -362,15 +362,15 @@ void BasicAccessCheck(void)
 	
 
 	if(!uServerGroup)
-		tAccess("<blink>Must select uServerGroup</blink>");
+		tAccess("<blink>Error: </blink>Must select uServerGroup");
 
 	if(strlen(cDomainIP)<4)
-		tAccess("Must specify a valid cDomainIP");
+		tAccess("<blink>Error: </blink>Must specify a valid cDomainIP");
 	if(strlen(cRelayAttr)<5)
-		tAccess("Must specify a valid cRelayAttr");
+		tAccess("<blink>Error: </blink>Must specify a valid cRelayAttr");
 	
 	if(!uServerGroup)
-		tAccess("<blink>Must select uServerGroup</blink>");
+		tAccess("<blink>Error: </blink>Must select uServerGroup");
 	
 	if(cDomainIP[strlen(cDomainIP)-1]=='.')
 		tAccess("cDomainIP incorrect format, ends with '.'");

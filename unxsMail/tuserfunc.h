@@ -132,7 +132,7 @@ void ExttUserCommands(pentry entries[], int x)
 				}
 				else
 				{
-					tUser("<blink>User status error</blink>");
+					tUser("<blink>Error:</blink> User status error");
 				}
 			}
 			else
@@ -166,7 +166,7 @@ void ExttUserCommands(pentry entries[], int x)
 				sprintf(cPrevSecretAnswer,".%255s",ForeignKey("tUser","cSecretAnswer",uUser));
 				
 				if(!strcmp(cPrevPasswd,cPasswd) && !strcmp(cPrevSecretQuestion,cSecretQuestion) && !strcmp(cPrevSecretAnswer,cSecretAnswer))
-					tUser("<blink>Nothing changed</blink>");
+					tUser("<blink>Error:</blink> Nothing changed");
                         	guMode=0;
 
 				//If MD5 hash prefix assume encrypted
@@ -523,13 +523,13 @@ void tUserContextInfo(void)
 void BasicUserCheck(void)
 {
 	if(!cLogin[0])
-		tUser("<blink>cLogin is required</blink>");
+		tUser("<blink>Error:</blink> cLogin is required");
 	if(!isalpha(cLogin[0]))
-		tUser("<blink>cLogin must not start with a number</blink>");
+		tUser("<blink>Error:</blink> cLogin must not start with a number");
 	if(strlen(cLogin)<2)
-		tUser("<blink>cLogin must be at least 2 chars</blink>");
+		tUser("<blink>Error:</blink> cLogin must be at least 2 chars");
 	if(strstr(cLogin,".."))
-		tUser("<blink>cLogin may not have two consecutive periods</blink>");
+		tUser("<blink>Error:</blink> cLogin may not have two consecutive periods");
 	if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
 	{
 		MYSQL_RES *res;
@@ -539,18 +539,19 @@ void BasicUserCheck(void)
 			htmlPlainTextError(mysql_error(&gMysql));
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res))
-			tUser("<blink>cLogin already exists for selected uServerGroup</blink>");
+			tUser("<blink>Error:</blink> cLogin already exists for selected uServerGroup");
 	}
 	if(!uDomain)
-		tUser("<blink>uDomain is required</blink>");
+		tUser("<blink>Error:</blink> uDomain is required");
 	if(!cPasswd[0])
-		tUser("<blink>cPasswd is required</blink>");
-/*	if(strlen(cPasswd)<6)
-		tUser("<blink>cPasswd must be at least 6 chars</blink>");*/
+		tUser("<blink>Error:</blink> cPasswd is required");
+	if(strlen(cPasswd)<6)
+		tUser("<blink>Error:</blink> cPasswd must be at least 6 chars");
 	if(!uUserType)
-		tUser("<blink>uUserType is required</blink>");
+		tUser("<blink>Error:</blink> uUserType is required");
 	if(!uServerGroup)
-		tUser("<blink>uServerGroup is required</blink>");
+		tUser("<blink>Error:</blink> uServerGroup is required");
+
 }//void BasicUserCheck(void)
 
 
