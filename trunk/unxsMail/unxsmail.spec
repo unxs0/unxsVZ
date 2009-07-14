@@ -1,7 +1,7 @@
 Summary: sendmail and postfix controller as well as configuration generator for all mail services across multiple servers and multiple mail domains. 
 Name: unxsmail
 Version: 1.3
-Release: 1
+Release: 3
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsmail-1.3.tar.gz
@@ -69,14 +69,14 @@ if [ -x /usr/bin/mysql ];then
 	fi
 fi
 #let installer now what was done.
-if [ "$cMySQLStart" == "1"  && "$cHttpdStart" == "1" ] \
+if [ "$cMySQLStart" == "1" ] && [ "$cHttpdStart" == "1" ] \
 			&& [ "$cInitialize" == "1" ];then
 	echo "unxsMail has been installed, intialized and httpd has been started.";	
 	echo "You can proceed to login to your unxsMail interfaces with your browser.";	
 else 
 		echo "It appears that one or more manual operations may be needed to finish";
 		echo "your unxsMail installation.";
-fo
+fi
 %clean
 
 %files
