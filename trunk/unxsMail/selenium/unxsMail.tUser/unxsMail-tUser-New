@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>unxsMail-tUser-New</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">unxsMail-tUser-New</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/cgi-bin/unxsMail.cgi?gcFunction=Logout</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>gcLogin</td>
+	<td>Root</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcFunction</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tUser</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcCommand</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLogin</td>
+	<td>charly</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuDomainPullDown</td>
+	<td>label=acme-hosting.net</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuUserTypePullDown</td>
+	<td>label=Unix mail account</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuServerGroupPullDown</td>
+	<td>label=sendmail pop3 farm</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cPasswd</td>
+	<td>wsxedc</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Main</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tJob</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cLabel</td>
+	<td>NewUser acme-hosting.net charly</td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
