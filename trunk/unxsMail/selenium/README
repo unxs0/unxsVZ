@@ -1,0 +1,5 @@
+*** Short description about the test suites in this directory ***
+
+unxsMail-tDomain : tests tDomain and related (tLocal,tRelay and tVUT) new,
+		   mod and delete functionality.
+		  
