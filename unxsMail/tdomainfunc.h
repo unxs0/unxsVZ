@@ -749,16 +749,9 @@ void UpdateDependencies(void)
 
 	unsigned uServerGroup=0;
 
-	sprintf(gcQuery,"SELECT cDomain FROM tDomain WHERE uDomain=%u",uDomain);
-	macro_mySQLRunAndStore(res);
+	sprintf(cOldDomain,"%.99s",ForeignKey("tDomain","cDomain",uDomain));
 
-	if((field=mysql_fetch_row(res)))
-	{
-		sprintf(cOldDomain,"%.99s",field[0]);
-		mysql_free_result(res);
-	}
-	else
-		return;
+	if(!cOldDomain[0]) return;
 	
 	//Update tLocal, tRelay and tVUT records.
 	//Please note that a job has to be submitted for all these three tables!
