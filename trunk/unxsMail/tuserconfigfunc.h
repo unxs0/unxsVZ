@@ -202,7 +202,7 @@ void ExttUserConfigCommands(pentry entries[], int x)
                         	guMode=3002;
 				ChecktUserConfigFields();
 				if(!cConfig[0])
-					tUserConfig("<blink>cConfig empty!</blink>");
+					tUserConfig("<blink>Error:</blink> cConfig empty!");
                         	guMode=0;
 
 				sscanf(ForeignKey("tUser","uDomain",uUser),"%u",&uDomain);
@@ -561,9 +561,9 @@ void ChecktUserConfigFields(void)
 	char const *cuUser;
 	cuUser=ForeignKey("tUser","cLogin",uUser);
 	if(isdigit(cuUser[0]))
-		tUserConfig("<blink>You must enter a uUser code for an existing user</blink>");
+		tUserConfig("<blink>Error:</blink> You must enter a uUser code for an existing user");
 	if(!uUser)
-		tUserConfig("<blink>You must enter a valid uUser code</blink>");
+		tUserConfig("<blink>Error:</blink> You must enter a valid uUser code");
 	if(!uConfigSpec)
-		tUserConfig("<blink>You must select a valid uConfigSpec</blink>");
+		tUserConfig("<blink>Error:</blink> You must select a valid uConfigSpec");
 }//void ChecktUserConfigFields(void)

@@ -354,20 +354,20 @@ void BasicLocalCheck(void)
 	char *cp;
 
 	if(!cDomain[0])
-		tLocal("<blink>cDomain can't be empty</blink>");
+		tLocal("<blink>Error:</blink> cDomain can't be empty");
 	
 	if(strlen(cDomain)<4)
-		tLocal("Must provide valid cDomain");
+		tLocal("<blink>Error:</blink> Must provide valid cDomain");
 
 	if((cp=strchr(cDomain,'.')))
 	{
 		cp++;
 		if(strlen(cp)<2)
-			tDomain("cDomain after '.' part is too short");
+			tDomain("<blink>Error:</blink> cDomain after '.' part is too short");
 	}
 	else
 	{
-		tLocal("cDomain must have '.' TLD part");
+		tLocal("<blink>Error:</blink> cDomain must have '.' TLD part");
 	}
 
 	if(guMode==2000)
@@ -376,17 +376,17 @@ void BasicLocalCheck(void)
 		mysql_query(&gMysql,gcQuery);
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res))
-			tLocal("<blink>tLocal record existent for cDomain</blink>");
+			tLocal("<blink>Error:</blink> tLocal record existent for cDomain");
 	}
 
 	sprintf(gcQuery,"SELECT uDomain FROM tDomain WHERE cDomain='%s'",cDomain);
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if(!mysql_num_rows(res))
-		tLocal("<blink>cDomain not in tDomain</blink>");
+		tLocal("<blink>Error:</blink> cDomain not in tDomain");
 	
 	if(!uServerGroup)
-		tLocal("<blink>Must select uServerGroup</blink>");
+		tLocal("<blink>Error:</blink> Must select uServerGroup");
 
 }//void BasicLocalCheck(void)
 
