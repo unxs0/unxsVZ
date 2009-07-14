@@ -541,6 +541,13 @@ void BasicUserCheck(void)
 		if(mysql_num_rows(res))
 			tUser("<blink>Error:</blink> cLogin already exists for selected uServerGroup");
 	}
+	else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
+	{
+		char cOldcLogin[100]={""};
+		sprintf(cOldcLogin,ForeignKey("tUser","cLogin",uUser));
+		if(strcmp(cLogin,cOldcLogin))
+			tUser("<blink>Error:</blink> You are not allowed to modify cLogin. Delete and re-create user with new cLogin.");
+	}
 	if(!uDomain)
 		tUser("<blink>Error:</blink> uDomain is required");
 	if(!cPasswd[0])
