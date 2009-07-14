@@ -744,6 +744,10 @@ void UpdateDependencies(void)
 	MYSQL_ROW field;
 
 	char cOldDomain[100]={""};
+	char cJobData[100]={""};
+	char cServerGroup[100]={""};
+
+	unsigned uServerGroup=0;
 
 	sprintf(gcQuery,"SELECT cDomain FROM tDomain WHERE uDomain=%u",uDomain);
 	macro_mySQLRunAndStore(res);
@@ -783,27 +787,49 @@ void UpdateDependencies(void)
 	}
 	mysql_free_result(res);
 
-	sprintf(gcQuery,"SELECT uRelay FROM tRelay WHERE cDomain='%s'",cOldDomain);
+	sprintf(gcQuery,"SELECT uRelay,uServerGroup FROM tRelay WHERE cDomain='%s'",cOldDomain);
 	macro_mySQLRunAndStore(res);
-	if(mysql_num_rows(res))
+	if((field=mysql_fetch_row(res)))
 	{
+		unsigned uRelay=0;
+		
+		sscanf(field[0],"%u",&uRelay);
+		sscanf(field[1],"%u",&uServerGroup);
+
 		//Update tRelay
 		sprintf(gcQuery,"UPDATE tRelay SET cDomain='%s' WHERE cDomain='%s'",
 			TextAreaSave(cDomain),cOldDomain);
 		macro_mySQLQueryHTMLError;
-		//Submit job ModLocal
+		//Submit job ModRelay
+		sprintf(cServerGroup,"%s",ForeignKey("tServerGroup","cLabel",uServerGroup));
+		sprintf(cJobData,"uRelay=%u;\ncDomain=%s;\ncTransport=%s;\n",
+				uRelay,cDomain,cTransport);
+		SubmitJob("ModRelay",cDomain,"",cServerGroup,cJobData,0,0,
+				guCompany,guLoginClient);
 	}
 	mysql_free_result(res);
 
 	sprintf(gcQuery,"SELECT uVUT FROM tVUT WHERE cDomain='%s'",cOldDomain);
 	macro_mySQLRunAndStore(res);
-	if(mysql_num_rows(res))
+	if((field=mysql_fetch_row(res)))
 	{
+		unsigned uVUT=0;
+		
+		sscanf(field[0],"%u",&uVUT);
+		sscanf(field[1],"%u",&uServerGroup);
+
 		//Update tVUT
 		sprintf(gcQuery,"UPDATE tVUT SET cDomain='%s' WHERE cDomain='%s'",
 			TextAreaSave(cDomain),cOldDomain);
 		macro_mySQLQueryHTMLError;
 		//Submit job ModLocal
+		sscanf(ForeignKey("tVUT","uServerGroup",uVUT),"%u",&uServerGroup);
+		sprintf(cDomain,ForeignKey("tVUT","cDomain",uVUT));
+		sprintf(cServerGroup,"%s",ForeignKey("tServerGroup","cLabel",uServerGroup));
+		sprintf(cJobData,"uVUTEntries=0;\ncVirtualEmail=tDomain dep change;\ncTargetEmail=;\ncDomain=%s;\n",
+				cDomain);
+		SubmitJob("ModVUT",cDomain,"tDomain dep change",cServerGroup,cJobData,0,0,
+					guCompany,guLoginClient);
 	}
 	mysql_free_result(res);
 
