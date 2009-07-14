@@ -1,5 +1,22 @@
 *** Short description about the test suites in this directory ***
 
-unxsMail-tDomain : tests tDomain and related (tLocal,tRelay and tVUT) new,
-		   mod and delete functionality.
+unxsMail.tDomain/unxsMail-tDomain.xml
+---------------------------------------
+Tests tDomain and related (tLocal,tRelay and tVUT) new, mod and delete 
+functionality.
+
+unxsMail.tUser/unxsMail-tUser.xml
+Test tUser new, mod and delete operations.
+Please note that you can *not* run this test suite in a single run. You must
+load it in your Selenium interface and execute the test cases one by one
+using the 'Play current test case' button.
+
+The reason for this is that the jobqueue processor must update tUser record
+uStatus field upon creation.
+
+If you are a developer, you probably would run the job queue processor at
+your development sytem, so you may want to delete the second server from
+the tServerGroupGlue table before starting to test.
+
+
 		  
