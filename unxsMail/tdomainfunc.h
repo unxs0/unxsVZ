@@ -759,14 +759,27 @@ void UpdateDependencies(void)
 	//Update tLocal, tRelay and tVUT records.
 	//Please note that a job has to be submitted for all these three tables!
 
-	sprintf(gcQuery,"SELECT uLocal FROM tLocal WHERE cDomain='%s'",cOldDomain);
+	sprintf(gcQuery,"SELECT uLocal,uServerGroup FROM tLocal WHERE cDomain='%s'",cOldDomain);
 	macro_mySQLRunAndStore(res);
-	if(mysql_num_rows(res))
+	if((field=mysql_fetch_row(res)))
 	{
+		unsigned uLocal=0;
+		unsigned uServerGroup=0;
+		char cJobData[100]={""};
+		char cServerGroup[100]={""};
+
+		sscanf(field[0],"%u",&uLocal);
+		sscanf(field[1],"%u",&uServerGroup);
+
 		sprintf(gcQuery,"UPDATE tLocal SET cDomain='%s' WHERE cDomain='%s'",
 			TextAreaSave(cDomain),cOldDomain);
 		macro_mySQLQueryHTMLError;
 		//Submit job ModLocal
+		sprintf(cServerGroup,"%s",ForeignKey("tServerGroup","cLabel",uServerGroup));
+		sprintf(cJobData,"uLocal=%u;\ncDomain=%s;\n",
+				uLocal,cDomain);
+		SubmitJob("ModLocal",cDomain,"",cServerGroup,cJobData,0,0,
+				guCompany,guLoginClient);
 	}
 	mysql_free_result(res);
 
