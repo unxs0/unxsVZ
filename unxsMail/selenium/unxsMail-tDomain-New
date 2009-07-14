@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="https://192.168.238.130:9333" />
+<title>unxsMail-tDomain-New</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">unxsMail-tDomain-New</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/cgi-bin/unxsMail.cgi?gcFunction=Logout</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>gcLogin</td>
+	<td>Root</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>gcPasswd</td>
+	<td>wsxedc</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcFunction</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tDomain</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcCommand</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cDomain</td>
+	<td>testdomain.com</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>uAddtLocal</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>uAddtRelay</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>uAddtVUT</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>uLocalServerGroup</td>
+	<td>label=sendmail pop3 farm</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>uRelayServerGroup</td>
+	<td>label=postfix frontend cluster</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cTransport</td>
+	<td>smtp.testonly.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Main</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tLocal</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFind' and @value='&gt;&gt;']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cDomain</td>
+	<td>testdomain.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Main</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tRelay</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFind' and @value='&gt;&gt;']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cDomain</td>
+	<td>testdomain.com</td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cTransport</td>
+	<td>smtp.testonly.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Main</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tVUT</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFind' and @value='&gt;&gt;']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cDomain</td>
+	<td>testdomain.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Main</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tJob</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cLabel</td>
+	<td>NewLocal testdomain.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFind' and @value=' &gt;']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cLabel</td>
+	<td>NewLocal testdomain.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFind' and @value=' &gt;']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cLabel</td>
+	<td>NewRelay testdomain.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFind' and @value=' &gt;']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cLabel</td>
+	<td>NewRelay testdomain.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFind' and @value=' &gt;']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cLabel</td>
+	<td>NewRelay testdomain.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFind' and @value=' &gt;']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cLabel</td>
+	<td>NewRelay testdomain.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Purge']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Purge']</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
