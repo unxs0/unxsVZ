@@ -24,6 +24,8 @@ void AlreadyUsedHere(void);
 void htmlRelayCheck(void);
 void SelectuServerGroup(char *cInputName, unsigned uSelected);
 void AddExtraRecords(void);
+void UpdateDependencies(void);
+
 
 static unsigned uAddtLocal=0;
 static unsigned uAddtRelay=0;
@@ -155,6 +157,7 @@ void ExttDomainCommands(pentry entries[], int x)
                         	guMode=0;
 
 				uModBy=guLoginClient;
+				UpdateDependencies();
 				ModtDomain();
 			}
 			else
@@ -733,4 +736,52 @@ void AddExtraRecords(void)
 	}
 			
 }//void AddExtraRecords(void)
+
+
+void UpdateDependencies(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	char cOldDomain[100]={""};
+
+	sprintf(gcQuery,"SELECT cDomain FROM tDomain WHERE uDomain=%u",uDomain);
+	macro_mySQLRunAndStore(res);
+
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cOldDomain,"%.99s",field[0]);
+		mysql_free_result(res);
+	}
+	else
+		return;
+	
+	//Update tLocal, tRelay and tVUT records.
+	//Please note that a job has to be submitted for all these three tables!
+
+	sprintf(gcQuery,"SELECT uLocal FROM tLocal WHERE cDomain='%s'",cOldDomain);
+	macro_mySQLRunAndStore(res);
+	if(mysql_num_rows(res))
+	{
+		//Update tLocal
+	}
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uRelay FROM tRelay WHERE cDomain='%s'",cOldDomain);
+	macro_mySQLRunAndStore(res);
+	if(mysql_num_rows(res))
+	{
+		//Update tRelay
+	}
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uVUT FROM tVUT WHERE cDomain='%s'",cOldDomain);
+	macro_mySQLRunAndStore(res);
+	if(mysql_num_rows(res))
+	{
+		//Update tVUT
+	}
+	mysql_free_result(res);
+
+}//void UpdateDependencies(void)
 

@@ -9,7 +9,7 @@
 #	Must set env variable CGIDIR with trailing / for placing cgi in
 #	target directory. Ex Bash shell: CGIDIR=/cgi-bin/ ; export CGIDIR
 #
-#       Use mySQL version 3.23.39 or later:
+#       Use mySQL version 5.0 or later:
 #       Requires /usr/lib/mysql/libmysqlclient.a
 #       Requires /usr/include/mysql/mysql.h
 #
@@ -18,7 +18,6 @@
 #
 #	For help contact support @ openisp . net
 #
-#	Please remove the mail line below after first make.
 #
 
 #Change these for your system: Ex. -DSolaris instead of -DLinux
@@ -34,7 +33,6 @@ all: unxsMail.cgi
 
 unxsMail.cgi: tuser.o talias.o tdomain.o tvut.o tvutentries.o taccess.o trelay.o tlocal.o tusertype.o tuserconfig.o tserverconfig.o tconfigspec.o tclient.o tauthorize.o tstatus.o tjobstatus.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o tjob.o tserver.o tservergroup.o tservergroupglue.o tconfiguration.o tholduser.o trequest.o twhitelist.o tblacklist.o tvacation.o mail.o  main.o cgi.o
 	cc tuser.o talias.o tdomain.o tvut.o tvutentries.o taccess.o trelay.o tlocal.o tusertype.o tuserconfig.o tserverconfig.o tconfigspec.o tclient.o tauthorize.o tstatus.o tjobstatus.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o tjob.o tserver.o tservergroup.o tservergroupglue.o tconfiguration.o tholduser.o trequest.o twhitelist.o tblacklist.o tvacation.o mail.o  main.o cgi.o -o unxsMail.cgi $(LIBS) 
-	#mail -s "unxsMail$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
 
 tuser.o: tuser.c mysqlrad.h language.h tuserfunc.h local.h
 	cc -c tuser.c -o tuser.o $(CFLAGS)
