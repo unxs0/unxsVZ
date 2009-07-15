@@ -393,8 +393,24 @@ void tVUTEntriesAuxList(void)
 
 void BasicVUTCheck(void)
 {
+	char *cp;
+
 	if(!cDomain[0])
 		tVUT("<blink>Error:</blink> cDomain can't be empty");
+
+	if(strlen(cDomain)<4)
+		tDomain("<blink>Error</blink>: Must provide valid cDomain");
+
+	if((cp=strchr(cDomain,'.')))
+	{
+		cp++;
+		if(strlen(cp)<2)
+			tDomain("<blink>Error</blink>: cDomain after '.' part is too short");
+	}
+	else
+	{
+		tDomain("<blink>Error</blink>: cDomain must have '.' TLD part");
+	}
 
 	if(!uServerGroup)
 		tVUT("<blink>Error:</blink> Must select uServerGroup");
