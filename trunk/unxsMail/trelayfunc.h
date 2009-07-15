@@ -370,6 +370,12 @@ void BasicRelayCheck(void)
 		tRelay("<blink>Error:</blink> cDomain must have '.' TLD part");
 	}
 
+	sprintf(gcQuery,"SELECT uDomain FROM tDomain WHERE cDomain='%s'",cDomain);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if(!mysql_num_rows(res))
+		tRelay("<blink>Error:</blink> cDomain not in tDomain");
+	
 	if(!cTransport[0])
 		tRelay("<blink>Error:</blink> cTransport can't be empty");
 	
@@ -385,11 +391,6 @@ void BasicRelayCheck(void)
 			tRelay("<blink>Error:</blink> tRelay record existent for cDomain");
 	}
 
-	sprintf(gcQuery,"SELECT uDomain FROM tDomain WHERE cDomain='%s'",cDomain);
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	if(!mysql_num_rows(res))
-		tRelay("<blink>Error:</blink> cDomain not in tDomain");
 	
 }//void  BasicRelayCheck(void)
 
