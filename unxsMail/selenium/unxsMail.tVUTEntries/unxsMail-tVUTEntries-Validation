@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>unxsMail-tVUTEntries-Validation</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">unxsMail-tVUTEntries-Validation</td></tr>
+</thead><tbody>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Main</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tVUT</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Add Virtual Email']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cVirtualEmail</td>
+	<td>charango</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cTargetEmail</td>
+	<td>thisisnotintuser</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Local cTargetEmail not in tAlias or tUser*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cVirtualEmail</td>
+	<td>charango';DROP TABLE tUser;'</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Local cTargetEmail not in tAlias or tUser*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cTargetEmail</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cVirtualEmail</td>
+	<td>charly</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must specify cTargetEmail*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cVirtualEmail</td>
+	<td>charly@unixservice.com</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cTargetEmail</td>
+	<td>popbox</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cVirtualEmail must not have domain*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cVirtualEmail</td>
+	<td>charly</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cTargetEmail</td>
+	<td>popbox@</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cTargetEmail must not end with @*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cTargetEmail</td>
+	<td>pop3box</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*New tVUTEntries record created. Job(s) created*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcCommand</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cTargetEmail</td>
+	<td>anotherbox</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cVirtualEmail already in use for this domain*</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
