@@ -3766,6 +3766,10 @@ void ExportRRCSV(char *cCompany, char *cOutFile)
 	MYSQL_ROW field;
 
 	unsigned uClient=0;
+
+	sprintf(gcQuery,"USE "DBNAME);
+	macro_mySQLQueryTextError;
+
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",TextAreaSave(cCompany));
 	macro_mySQLRunAndStoreText(res);
 	if((field=mysql_fetch_row(res)))
@@ -3784,7 +3788,7 @@ void ExportRRCSV(char *cCompany, char *cOutFile)
 	{
 		sprintf(gcQuery,"SELECT tZone.cZone,cName,tResource.uTTL,tRRType.cLabel,"
 				"cParam1,cParam2,FROM_UNIXTIME(tResource.uCreatedDate) "
-				"INTO OUTFILE '%s'FIELDS TERMINATED BY ',' OPTIONALLY "
+				"INTO OUTFILE '%s' FIELDS TERMINATED BY ',' OPTIONALLY "
 				"ENCLOSED BY '\"' LINES TERMINATED BY '\n' FROM "
 				"tResource,tZone,tRRType WHERE tResource.uOwner=%u "
 				"AND tRRType.uRRType=tResource.uRRType AND tZone.uZone=tResource.uZone",
@@ -3793,9 +3797,13 @@ void ExportRRCSV(char *cCompany, char *cOutFile)
 			);
 		macro_mySQLQueryTextError;
 		printf("Export complete to %s\n",cOutFile);
+		exit(0);
 	}
 	else
+	{
 		printf("Export to stdout is not implemented yet.\n");
+		exit(0);
+	}
 
 
 }//void ExportRRCSV(char *cCompany)

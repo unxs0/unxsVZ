@@ -827,7 +827,7 @@ void PrintUsage(char *arg0)
 	printf("\tAssociateRegistrarsZones\n");
 	printf("\tCompareZones <DNS server1 IP> <DNS server2 IP> [<uOwner>]\n");
 	printf("\tImportSORRs\n");
-	printf("\tExportRRCSV <company> [out file]\n");
+	printf("\tExportRRCSV <company> [out file] <mysql root passwd>\n");
 	printf("\n");
 	exit(0);
 
@@ -1083,12 +1083,6 @@ void ExtMainShell(int argc, char *argv[])
                 	MonthUsageData(uSimile);
 			exit(0);
 		}
-		else if(!strcmp(argv[1],"ExportRRCSV"))
-		{
-			TextConnectDb();
-			ExportRRCSV(argv[2],"");
-			exit(0);
-		}
 		PrintUsage(argv[0]);
 	}
 	else if(argc==4)
@@ -1133,8 +1127,8 @@ void ExtMainShell(int argc, char *argv[])
 		}
 		else if(!strcmp(argv[1],"ExportRRCSV"))
 		{
-			TextConnectDb();
-			ExportRRCSV(argv[2],argv[3]);
+			mySQLRootConnect(argv[3]);
+			ExportRRCSV(argv[2],"");
 		}
 		PrintUsage(argv[0]);
 	}
@@ -1195,6 +1189,11 @@ void ExtMainShell(int argc, char *argv[])
 		{
 			ImportFromDb(argv[2],argv[3],argv[4]);
 			exit(0);
+		}
+		else if(!strcmp(argv[1],"ExportRRCSV"))
+		{
+			mySQLRootConnect(argv[4]);
+			ExportRRCSV(argv[2],argv[3]);
 		}
 		PrintUsage(argv[0]);
 	}
