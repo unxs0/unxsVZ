@@ -661,7 +661,7 @@ void ExttAuthorizeNavBar(void);
 #define macro_mySQLRunAndStore(res) macro_mySQLQueryHTMLError;\
 					res=mysql_store_result(&gMysql)
 //Text
-#define macro_mySQLRunAndStoreText(res) macro_mySQLQueryBasic;\
+#define macro_mySQLRunAndStoreText(res) macro_mySQLQueryTextError;\
 					res=mysql_store_result(&gMysql)
 
 //MySQL run query and store result w/error checking (Text); uses return() call instead of exit()
