@@ -1485,7 +1485,7 @@ unsigned ValidateZoneInput(void)
 	sscanf(cuRetry,"%u",&uRetry);
 	sscanf(cuZoneTTL,"%u",&uZoneTTL);
 
-	if(!uExpire || uExpire>1000000)
+	if(!uExpire || uExpire>2419200)
 	{
 		gcMessage="<blink>Error: </blink>Expire TTL out of range";
 		uValid=0;

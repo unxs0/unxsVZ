@@ -994,7 +994,7 @@ void UpdateZone(void)
 	sscanf(cuRetry,"%u",&uRetry);
 	sscanf(cuZoneTTL,"%u",&uZoneTTL);
 
-	if(!uExpire || uExpire>1000000)
+	if(!uExpire || uExpire>2419200)
 	{
 		gcMessage="<blink>Expire TTL out of range</blink>";
 		cuExpireStyle="type_fields_req";

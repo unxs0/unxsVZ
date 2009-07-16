@@ -1194,6 +1194,7 @@ void ExtMainShell(int argc, char *argv[])
 		{
 			mySQLRootConnect(argv[4]);
 			ExportRRCSV(argv[2],argv[3]);
+			exit(0);
 		}
 		PrintUsage(argv[0]);
 	}
