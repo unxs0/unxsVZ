@@ -187,7 +187,8 @@ void ZoneCheck(unsigned uMode)
 		guMode=uMode;
 		tZone("uTTL out of range.");
 	}
-	if(!uExpire || uExpire>1000000)
+	//Up to 4 weeks, RFC1912
+	if(!uExpire || uExpire>2419200)
 	{
 		guMode=uMode;
 		tZone("uExpire out of range.");
