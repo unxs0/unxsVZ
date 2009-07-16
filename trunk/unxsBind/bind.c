@@ -3801,7 +3801,24 @@ void ExportRRCSV(char *cCompany, char *cOutFile)
 	}
 	else
 	{
-		printf("Export to stdout is not implemented yet.\n");
+		sprintf(gcQuery,"SELECT tZone.cZone,cName,tResource.uTTL,tRRType.cLabel,"
+				"cParam1,cParam2,FROM_UNIXTIME(tResource.uCreatedDate) "
+				"FROM tResource,tZone,tRRType WHERE tResource.uOwner=%u "
+				"AND tRRType.uRRType=tResource.uRRType AND tZone.uZone=tResource.uZone",
+				uClient
+			);
+		macro_mySQLRunAndStoreText(res);
+		while((field=mysql_fetch_row(res)))
+			printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+				field[0]
+				,field[1]
+				,field[2]
+				,field[3]
+				,field[4]
+				,field[5]
+				,field[6]
+				);
+		mysql_free_result(res);
 		exit(0);
 	}
 
