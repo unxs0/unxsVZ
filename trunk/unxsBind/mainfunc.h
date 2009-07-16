@@ -90,6 +90,8 @@ void MasterJobQueue(char *cNSSet);//bind.c
 void ServerJobQueue(char *cServer);//bind.c
 void ProcessExtJobQueue(char *cServer);//bind.c
 
+void ExportRRCSV(char *cCompany,char *cOutFile);//bind.c
+
 time_t cDateToUnixTime(char *cDate);
 
 extern unsigned guJS;
@@ -809,7 +811,7 @@ void PrintUsage(char *arg0)
 	printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 	printf("\tExtracttHit <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 	printf("\tExample args for Extracts: Apr 2007 passwd /var/lib/mysql/idns\n");
-	printf("\nSpecial Import Ops (Caution):\n");
+	printf("\nSpecial Import/Export Ops (Caution):\n");
 	printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel>\n");
 	printf("\tImportZones\n");
 	printf("\tDropImportedZones\n");
@@ -825,6 +827,7 @@ void PrintUsage(char *arg0)
 	printf("\tAssociateRegistrarsZones\n");
 	printf("\tCompareZones <DNS server1 IP> <DNS server2 IP> [<uOwner>]\n");
 	printf("\tImportSORRs\n");
+	printf("\tExportRRCSV <company> [out file]\n");
 	printf("\n");
 	exit(0);
 
@@ -1080,6 +1083,12 @@ void ExtMainShell(int argc, char *argv[])
                 	MonthUsageData(uSimile);
 			exit(0);
 		}
+		else if(!strcmp(argv[1],"ExportRRCSV"))
+		{
+			TextConnectDb();
+			ExportRRCSV(argv[2],"");
+			exit(0);
+		}
 		PrintUsage(argv[0]);
 	}
 	else if(argc==4)
@@ -1121,6 +1130,11 @@ void ExtMainShell(int argc, char *argv[])
 			TextConnectDb();
 			CompareZones(argv[2],argv[3],"");
 			exit(0);
+		}
+		else if(!strcmp(argv[1],"ExportRRCSV"))
+		{
+			TextConnectDb();
+			ExportRRCSV(argv[2],argv[3]);
 		}
 		PrintUsage(argv[0]);
 	}

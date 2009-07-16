@@ -3795,7 +3795,7 @@ void ExportRRCSV(char *cCompany, char *cOutFile)
 		printf("Export complete to %s\n",cOutFile);
 	}
 	else
-		printf("Export to stdout is not implemented yet");
+		printf("Export to stdout is not implemented yet.\n");
 
 
 }//void ExportRRCSV(char *cCompany)
