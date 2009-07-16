@@ -20,6 +20,8 @@ MYSQL gMysql;
 char gcLine[256];
 unsigned guDryrun=0;
 char gcHostname[100];
+char gcNodeWarnEmail[100]={""};
+char gcDatacenterWarnEmail[100]={""};
 char gcQuery[1024];
 unsigned guDatacenter=0;
 unsigned guNode=0;
