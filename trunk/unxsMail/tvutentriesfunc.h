@@ -396,6 +396,14 @@ void BasicVUTEntriesCheck(void)
 		tVUTEntries("Must specify cTargetEmail");
 	if(strchr(cTargetEmail,','))
 		tVUTEntries("cTargetEmail must not have ','");
+	
+	sprintf(gcQuery,"SELECT uVUTEntries FROM tVUTEntries WHERE cVirtualEmail='%s' AND uVUT=%u",cVirtualEmail,uVUT);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+		tVUTEntries("<blink>Error: </blink>cVirtualEmail already in use for this domain");
 
 	sscanf(ForeignKey("tVUT","uServerGroup",uVUT),"%u",&uServerGroup);
 
