@@ -6,6 +6,7 @@ Tests tDomain and related (tLocal,tRelay and tVUT) new, mod and delete
 functionality.
 
 unxsMail.tUser/unxsMail-tUser.xml
+-----------------------------------
 Test tUser new, mod and delete operations.
 Please note that you can *not* run this test suite in a single run. You must
 load it in your Selenium interface and execute the test cases one by one
@@ -18,5 +19,7 @@ If you are a developer, you probably would run the job queue processor at
 your development sytem, so you may want to delete the second server from
 the tServerGroupGlue table before starting to test.
 
+unxsMail.tVUTEntries/unxsMail-tVUTEntries.xml
+----------------------------------------------
+Test tVUTEntries new, mod and delete functionality.
 
-		  
