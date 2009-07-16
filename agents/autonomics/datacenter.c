@@ -35,6 +35,28 @@ int DatacenterAutonomics(void)
 			sprintf(gcQuery,"guDatacenter=%u guNode=%u",guDatacenter,guNode);
 			logfileLine(gcQuery);
 		}
+		mysql_free_result(res);
+	}
+
+	if(!gcDatacenterWarnEmail[0] && guDatacenter)
+	{
+		//TODO define 1 type datacenter
+		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+			" cName='Warning email' AND tProperty.uKey=%u AND tProperty.uType=1",guDatacenter);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine((char *)mysql_error(&gMysql));
+			sighandlerLeave(400);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(gcDatacenterWarnEmail,"%.99s",field[0]);
+			sprintf(gcQuery,"gcDatacenterWarnEmail=%s",field[0]);
+			logfileLine(gcQuery);
+		}
+		mysql_free_result(res);
 	}
 
 	return(0);

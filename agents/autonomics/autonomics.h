@@ -20,6 +20,8 @@ extern FILE *gEfp;
 extern MYSQL gMysql;
 extern char gcLine[];
 extern unsigned guDryrun;
+extern char gcNodeWarnEmail[];
+extern char gcDatacenterWarnEmail[];
 extern char gcHostname[];
 extern char gcQuery[];
 extern unsigned guDatacenter;
