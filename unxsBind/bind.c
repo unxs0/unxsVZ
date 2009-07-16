@@ -3753,3 +3753,50 @@ unsigned uGetNSSet(char *cNameServer)
 	return(uNSSet);
 
 }//unsigned uGetNSSet(char *cNameServer)
+
+
+void ExportRRCSV(char *cCompany, char *cOutFile)
+{
+	//This function exports the data from the tResource table
+	//into a CSV file. The exported data belongs to the company 
+	//indicated by the cCompany argument.
+	//CSV output file is specified by the cOutFile argument.
+	//If empty, we will just use stdout.
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	unsigned uClient=0;
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",TextAreaSave(cCompany));
+	macro_mySQLRunAndStoreText(res);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uClient);
+	}
+	else
+	{
+		fprintf(stderr,"Company %s not found.\n",cCompany);
+		return;
+	}
+
+	mysql_free_result(res);
+
+	if(cOutFile[0])
+	{
+		sprintf(gcQuery,"SELECT tZone.cZone,cName,tResource.uTTL,tRRType.cLabel,"
+				"cParam1,cParam2,FROM_UNIXTIME(tResource.uCreatedDate) "
+				"INTO OUTFILE '%s'FIELDS TERMINATED BY ',' OPTIONALLY "
+				"ENCLOSED BY '\"' LINES TERMINATED BY '\n' FROM "
+				"tResource,tZone,tRRType WHERE tResource.uOwner=%u "
+				"AND tRRType.uRRType=tResource.uRRType AND tZone.uZone=tResource.uZone",
+				cOutFile
+				,uClient
+			);
+		macro_mySQLQueryTextError;
+		printf("Export complete to %s\n",cOutFile);
+	}
+	else
+		printf("Export to stdout is not implemented yet");
+
+
+}//void ExportRRCSV(char *cCompany)
+
