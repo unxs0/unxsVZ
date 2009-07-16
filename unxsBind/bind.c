@@ -2718,7 +2718,8 @@ void ImportCompanies(void)
 			sscanf(gcQuery,"%u",&uClient);
 		
 			sprintf(cQuery,"INSERT INTO tClient SET uClient=%u,cLabel='%.99s',"
-				"cInfo='ImportCompanies() IMPORTED',uOwner=1,uCreatedBy=1,"
+				"cCode='Organization',cInfo='ImportCompanies() IMPORTED',"
+				"uOwner=1,uCreatedBy=1,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",uClient,cp+1);
 			//debug only
 			//printf("%s\n",cQuery);
