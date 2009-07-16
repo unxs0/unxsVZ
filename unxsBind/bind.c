@@ -3779,7 +3779,7 @@ void ExportRRCSV(char *cCompany, char *cOutFile)
 	else
 	{
 		fprintf(stderr,"Company %s not found.\n",cCompany);
-		return;
+		exit(0);
 	}
 
 	mysql_free_result(res);
@@ -3791,7 +3791,8 @@ void ExportRRCSV(char *cCompany, char *cOutFile)
 				"INTO OUTFILE '%s' FIELDS TERMINATED BY ',' OPTIONALLY "
 				"ENCLOSED BY '\"' LINES TERMINATED BY '\n' FROM "
 				"tResource,tZone,tRRType WHERE tResource.uOwner=%u "
-				"AND tRRType.uRRType=tResource.uRRType AND tZone.uZone=tResource.uZone",
+				"AND tRRType.uRRType=tResource.uRRType AND tZone.uZone=tResource.uZone "
+				"ORDER BY tZone.cZone",
 				cOutFile
 				,uClient
 			);
@@ -3804,7 +3805,8 @@ void ExportRRCSV(char *cCompany, char *cOutFile)
 		sprintf(gcQuery,"SELECT tZone.cZone,cName,tResource.uTTL,tRRType.cLabel,"
 				"cParam1,cParam2,FROM_UNIXTIME(tResource.uCreatedDate) "
 				"FROM tResource,tZone,tRRType WHERE tResource.uOwner=%u "
-				"AND tRRType.uRRType=tResource.uRRType AND tZone.uZone=tResource.uZone",
+				"AND tRRType.uRRType=tResource.uRRType AND tZone.uZone=tResource.uZone "
+				"ORDER BY tZone.cZone",
 				uClient
 			);
 		macro_mySQLRunAndStoreText(res);
