@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
 Version: 1.28
-Release: 1
+Release: 2
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-1.28.tar.gz
@@ -306,6 +306,8 @@ fi
 /var/www/unxs/html/css/popups.js
 /var/www/unxs/html/css/styles.css
 %dir /var/log/named
+/usr/share/fonts/DejaVuSansMono-Roman.ttf
+
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
