@@ -13,7 +13,7 @@
 </thead><tbody>
 <tr>
 	<td>clickAndWait</td>
-	<td>link=@</td>
+	<td>link=mailgw</td>
 	<td></td>
 </tr>
 <tr>
@@ -24,7 +24,7 @@
 <tr>
 	<td>type</td>
 	<td>cName</td>
-	<td>@</td>
+	<td>mailbox</td>
 </tr>
 <tr>
 	<td>type</td>
