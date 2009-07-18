@@ -1143,6 +1143,73 @@ unsigned RRCheck(void)
 		}
 
 	}
+	else if(!strcmp(cRRType,"SRV"))
+	{
+		unsigned uI=0;
+		if(!cName[0])
+		{
+			gcMessage="<blink>Service protocol and domain required</blink>";
+			cNameStyle="type_fields_req";
+			return(16);
+		}
+		if(!cParam1[0])
+		{
+			gcMessage="<blink>Priority required</blink>";
+			cParam1Style="type_fields_req";
+			return(16);
+		}
+		if(!cParam2[0])
+		{
+			gcMessage="<blink>Weight required</blink>";
+			cParam2Style="type_fields_req";
+			return(16);
+		}
+		if(!cParam3[0])
+		{
+			gcMessage="<blink>Port required</blink>";
+			cParam3Style="type_fields_req";
+			return(16);
+		}
+		if(!cParam4[0])
+		{
+			gcMessage="<blink>Target host required</blink>";
+			cParam4Style="type_fields_req";
+			return(16);                          
+		}
+
+		if((strstr(cName,gcZone)==NULL))
+		{
+			gcMessage="Must include zone name in service parameter. E.g.: _sip._tcp.example.com.</blink>";
+			cNameStyle="type_fields_req";
+			return(17);
+		}
+		sscanf(cParam1,"%u",&uI);
+		if(!uI)
+		{
+			gcMessage="<blink>Must specify numerical priority</blink>";
+			cParam1Style="type_fields_req";
+			return(17);
+		}
+		uI=0;
+		sscanf(cParam2,"%u",&uI);
+		if(!uI)
+		{
+			gcMessage="<blink>Must specify numerical weight</blink>";
+			cParam2Style="type_fields_req";
+			return(17);
+		}
+		uI=0;
+		sscanf(cParam3,"%u",&uI);
+		if((!uI) || (uI>65535))
+		{
+			gcMessage="<blink>Invalid port number</blink>";
+			cParam3Style="type_fields_req";
+			return(17);
+		}
+		FQDomainName(cParam4);
+		if(cParam4[strlen(cParam4)-1]!='.') strcat(cParam4,".");
+		if(cName[strlen(cName)-1]!='.') strcat(cName,".");
+	}
 	else if(1)
 	{
 		gcMessage="<blink>Must select valid Resource Type (A,MX,PTR,TXT,NS,CNAME,HINFO)</blink>";
@@ -1318,7 +1385,9 @@ void LoadRRTypeLabels(void)
 	if(!cRRType[0])
 		sprintf(cRRType,"A");
 
-	sprintf(gcQuery,"SELECT cParam1Label,cParam1Tip,cParam2Label,cParam2Tip,cNameLabel,cNameTip FROM tRRType WHERE cLabel='%s'",cRRType);
+	sprintf(gcQuery,"SELECT cParam1Label,cParam1Tip,cParam2Label,cParam2Tip,cNameLabel,"
+			"cNameTip,cParam3Label,cParam3Tip,cParam4Label,cParam4Tip FROM "
+			"tRRType WHERE cLabel='%s'",cRRType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1331,6 +1400,10 @@ void LoadRRTypeLabels(void)
 		sprintf(cParam2Tip,"%.99s",field[3]);
 		sprintf(cNameLabel,"%.32s",field[4]);
 		sprintf(cNameTip,"%.99s",field[5]);
+		sprintf(cParam3Label,"%.32s",field[6]);
+		sprintf(cParam3Tip,"%.99s",field[7]);
+		sprintf(cParam4Label,"%.32s",field[8]);
+		sprintf(cParam4Tip,"%.99s",field[9]);
 	}
 	mysql_free_result(res);
 	
@@ -1342,7 +1415,7 @@ void LoadRRNoType(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cName,uTTL,cParam1,cParam2,cComment FROM tResource WHERE uResource=%u",uResource);
+	sprintf(gcQuery,"SELECT cName,uTTL,cParam1,cParam2,cParam3,cParam4,cComment FROM tResource WHERE uResource=%u",uResource);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1353,7 +1426,9 @@ void LoadRRNoType(void)
 		sprintf(cuTTL,"%.15s",field[1]);
 		sprintf(cParam1,"%.255s",field[2]);
 		sprintf(cParam2,"%.255s",field[3]);
-		sprintf(cComment,"%.255s",field[4]);
+		sprintf(cParam3,"%.255s",field[4]);
+		sprintf(cParam4,"%.255s",field[5]);
+		sprintf(cComment,"%.255s",field[6]);
 	}
 	mysql_free_result(res);
 	
