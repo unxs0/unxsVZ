@@ -820,11 +820,19 @@ void funcRRs(FILE *fp)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	char cParam1[256];
+	char cLocalParam1[256]={""};
 	
 	fprintf(fp,"<!-- funcRRs(fp) Start -->\n");
 
-	sprintf(gcQuery,"SELECT tResource.uResource,tZone.cZone,IF(STRCMP(tResource.cName,''),tResource.cName,'@'),tResource.uTTL,tRRType.cLabel,tResource.cParam1,tResource.cParam2,tResource.cComment FROM tResource,tRRType,tZone WHERE tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType AND (tResource.uOwner=%u OR tResource.uOwner=%u) AND tZone.uView=2 AND tZone.cZone='%s' ORDER BY tResource.uRRType,ABS(tResource.cName)",guLoginClient,guOrg,gcZone);
+	sprintf(gcQuery,"SELECT tResource.uResource,tZone.cZone,IF(STRCMP(tResource.cName,''),"
+			"tResource.cName,'@'),tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
+			"tResource.cParam2,tResource.cComment FROM tResource,tRRType,tZone "
+			"WHERE tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType "
+			"AND (tResource.uOwner=%u OR tResource.uOwner=%u) AND tZone.uView=2 AND "
+			"tZone.cZone='%s' ORDER BY tResource.uRRType,ABS(tResource.cName)",
+			guLoginClient
+			,guOrg
+			,gcZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -838,20 +846,22 @@ void funcRRs(FILE *fp)
 		
 		if((!strcmp(field[4],"TXT")) && strlen(field[5])>10)
 		{
-			strncpy(cParam1,field[5],10);
-			strcat(cParam1,"...");
+			sprintf(cLocalParam1,"%.10s",field[5]);
+			strcat(cLocalParam1,"...");
 		}
 		else
-			sprintf(cParam1,"%.255s",field[5]);
+			sprintf(cLocalParam1,"%.255s",field[5]);
 		
 		fprintf(fp,"<tr>\n");
-		fprintf(fp,"<td valign=top><a class=darkLink href=idnsOrg.cgi?gcPage=Resource&uResource=%s&cZone=%s>%s</a></td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td>\n",
+		fprintf(fp,"<td valign=top><a class=darkLink href=idnsOrg.cgi?gcPage=Resource&uResource=%s"
+			"&cZone=%s>%s</a></td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td>"
+			"<td valign=top>%s</td><td valign=top>%s</td>\n",
 				field[0],
 				field[1],
 				field[2],
 				field[3],
 				field[4],
-				cParam1,
+				cLocalParam1,
 				field[6],
 				field[7]);
 		fprintf(fp,"</tr>\n");

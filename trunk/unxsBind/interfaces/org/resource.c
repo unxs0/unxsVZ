@@ -1527,7 +1527,12 @@ void MasterFunctionSelect(void)
 		switch(uStep)
 		{
 			case 1:
-
+				
+				if(!strcmp(cRRType,"SRV"))
+				{
+					gcMessage="<blink>Error: </blink>SRV records are not supported by this wizard.";
+					htmlResourceWizard(uStep);
+				}
 				//remove extra chars
 				if(cName[0])
 				{
