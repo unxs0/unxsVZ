@@ -1584,13 +1584,13 @@ void MasterFunctionSelect(void)
 			case 2:
 				
 				//remove extra chars
-				if(cParam1[0] && strcmp(cRRType,"TXT"))
+				if(cParam1[0] && strcmp(cRRType,"TXT") && strcmp(cRRType,"HINFO"))
 				{
 					sscanf(cParam1,"%s",gcQuery);
 					sprintf(cParam1,"%.99s",gcQuery);
 				}
 
-				if(cParam2[0])
+				if(cParam2[0] && strcmp(cRRType,"HINFO"))
 				{
 					sscanf(cParam2,"%s",gcQuery);
 					sprintf(cParam2,"%.99s",gcQuery);
@@ -2337,7 +2337,7 @@ void PrepareTestData(void)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	
-	if(!strcmp(gcFunction,"New Confirm"))
+	if(!strcmp(gcFunction,"New Confirm") || !strcmp(gcFunction,"Finish"))
 		sprintf(gcQuery,"INSERT INTO tResourceTest SET cName='%s',uTTL=%s,uRRType=%u,cParam1='%s'"
 				",cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
