@@ -807,6 +807,7 @@ unsigned ValidateCustomerContactInput(void)
 	}
 	else
 	{
+		MYSQL_RES *res;
 		register int i;
 
 		for(i=0;cClientName[i];i++)
@@ -819,6 +820,20 @@ unsigned ValidateCustomerContactInput(void)
 				gcMessage="<blink>Error: </blink>'Contact Name' has invalid chars";
 				return(0);
 			}
+		}
+
+		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND uOwner=%u",
+				TextAreaSave(cClientName)
+				,uForClient
+				);
+		macro_mySQLRunAndStore(res);
+		if(mysql_num_rows(res))
+		{
+			SetCustomerContactFieldsOn();
+			cClientNameStyle="type_fields_req";
+			gcMessage="<blink>Error: </blink>'Contact Name' already exists for selected company,"
+				" perhaps you wanted to create it for another company.";
+			return(0);
 		}
 	}
 	if(!cUserName[0])
