@@ -37,7 +37,7 @@
 	<td></td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='New']</td>
 	<td></td>
 </tr>
@@ -57,7 +57,7 @@
 	<td>This is a test company.<br /><br />Phone: +1 310 (356) 6265 / +1 (630) 206-9449</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
 	<td></td>
 </tr>
