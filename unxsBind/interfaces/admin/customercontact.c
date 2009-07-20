@@ -836,47 +836,7 @@ unsigned ValidateCustomerContactInput(void)
 			return(0);
 		}
 	}
-	if(!cUserName[0])
-	{
-		gcMessage="<blink>Error: </blink>Login is required.";
-		SetCustomerContactFieldsOn();
-		cUserNameStyle="type_fields_req";
-		return(0);
-	}
-	else
-	{
-		//
-		//Check for valid characters, no punctuation symbols allowed except '.' in Login
-		register int i;
 
-		for(i=0;cUserName[i];i++)
-		{
-			if(!isalnum(cUserName[i]) && cUserName[i]!='.' && cUserName[i]!=' ' && cUserName[i]!='-')
-			{
-				SetCustomerContactFieldsOn();
-				cUserNameStyle="type_fields_req";
-				gcMessage="<blink>Error: </blink>Login contains invalid chars.";
-				return(0);
-			}
-		}
-	}
-	if(!cPassword[0])
-	{
-		gcMessage="<blink>Error: </blink>Password must be provided.";
-		SetCustomerContactFieldsOn();
-		cPasswordStyle="type_fields_req";
-		return(0);
-	}
-	else
-	{
-		if(strlen(cPassword)<5)
-		{
-			gcMessage="<blink>Error: </blink>Password must be at least 5 characters.";
-			SetCustomerContactFieldsOn();
-			cPasswordStyle="type_fields_req";
-			return(0);
-		}
-	}
 	if(cEmail[0])
 	{
 		if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
@@ -898,6 +858,61 @@ unsigned ValidateCustomerContactInput(void)
 		}
 			
 	}
+		
+	if(!cUserName[0])
+	{
+		gcMessage="<blink>Error: </blink>Login is required.";
+		SetCustomerContactFieldsOn();
+		cUserNameStyle="type_fields_req";
+		return(0);
+	}
+	else
+	{
+		//
+		//Check for valid characters, no punctuation symbols allowed except '.' in Login
+		register int i;
+		MYSQL_RES *res;
+
+		for(i=0;cUserName[i];i++)
+		{
+			if(!isalnum(cUserName[i]) && cUserName[i]!='.' && cUserName[i]!=' ' && cUserName[i]!='-')
+			{
+				SetCustomerContactFieldsOn();
+				cUserNameStyle="type_fields_req";
+				gcMessage="<blink>Error: </blink>Login contains invalid chars.";
+				return(0);
+			}
+		}
+		sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s'",
+				TextAreaSave(cUserName)
+				);
+		macro_mySQLRunAndStore(res);
+		if(mysql_num_rows(res))
+		{
+			SetCustomerContactFieldsOn();
+			cUserNameStyle="type_fields_req";
+			gcMessage="<blink>Error: </blink>Login already in use";
+			return(0);
+		}
+	}
+	if(!cPassword[0])
+	{
+		gcMessage="<blink>Error: </blink>Password must be provided.";
+		SetCustomerContactFieldsOn();
+		cPasswordStyle="type_fields_req";
+		return(0);
+	}
+	else
+	{
+		if(strlen(cPassword)<5)
+		{
+			gcMessage="<blink>Error: </blink>Password must be at least 5 characters.";
+			SetCustomerContactFieldsOn();
+			cPasswordStyle="type_fields_req";
+			return(0);
+		}
+	}
+	
 	if(!uForClient)
 	{
 		gcMessage="<blink>Error: </blink>Please select a Company to create the Contact for.";
