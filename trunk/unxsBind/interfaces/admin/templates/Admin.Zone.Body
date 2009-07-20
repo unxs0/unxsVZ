@@ -174,7 +174,6 @@ After opening fields for both creation or modification, each field has a yellow 
 	{{funcOptionalGraph}}
 	<tr>
 		<td valign="top">
-		<input type=hidden name=cNSSet value='({{cNSSet}}'>
 <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=NS Set')"><strong>NS Set ({{cNSSet}})</strong></a>
 		</td>
 		<td>

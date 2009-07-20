@@ -171,8 +171,6 @@ void ProcessZoneVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uForClient);
 		else if(!strcmp(entries[i].name,"cNSs"))
 			sprintf(cNSs,"%.1023s",entries[i].val);
-		else if(!strcmp(entries[i].name,"cNSSet"))
-			sprintf(cNSSet,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cMasterIPs"))
 			sprintf(cMasterIPs,"%.255s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uSecondaryOnly"))
@@ -469,6 +467,8 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			sprintf(cuForClient,"%u",uForClient);
 			sprintf(cuSecondaryOnly,"%u",uSecondaryOnly);
 			
+			sprintf(cNSSet,"%s",ForeignKey("tNSSet","cLabel",strtoul(cuNameServer,NULL,10)));
+
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
 			
