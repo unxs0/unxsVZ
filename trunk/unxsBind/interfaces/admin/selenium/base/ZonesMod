@@ -167,6 +167,16 @@
 	<td></td>
 </tr>
 <tr>
+	<td>type</td>
+	<td>//input[@name='cZone' and @value='unixservice.com' and @type='text']</td>
+	<td>unixservice2.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>assertBodyText</td>
 	<td>glob:*You can't change a zone name, delete it and create it again*</td>
 	<td></td>
