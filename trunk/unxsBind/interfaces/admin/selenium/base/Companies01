@@ -12,11 +12,6 @@
 <tr><td rowspan="1" colspan="3">Companies01</td></tr>
 </thead><tbody>
 <tr>
-	<td>open</td>
-	<td>/cgi-bin/idnsAdmin.cgi</td>
-	<td></td>
-</tr>
-<tr>
 	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='New']</td>
 	<td></td>
@@ -49,11 +44,6 @@
 <tr>
 	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
-	<td></td>
-</tr>
-<tr>
-	<td></td>
-	<td></td>
 	<td></td>
 </tr>
 
