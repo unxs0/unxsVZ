@@ -2380,12 +2380,12 @@ void SaveResource(void)
 			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uResource,
 			uZone,
-			TextAreSave(cName),
-			TextAreSave(cuTTL),
+			TextAreaSave(cName),
+			TextAreaSave(cuTTL),
 			uRRType,
-			TextAreSave(cParam1),
-			TextAreSave(cParam2),
-			TextAreSave(cComment),
+			TextAreaSave(cParam1),
+			TextAreaSave(cParam2),
+			TextAreaSave(cComment),
 			uGetZoneOwner(uZone));
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
