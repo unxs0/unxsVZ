@@ -963,19 +963,21 @@ unsigned RRCheck(void)
 		}
 		
 		//don't allow same name CNAME records
-		sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u AND uResource!=%u",cName,uGetuZone(gcZone,cuView),uResource);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		if(mysql_num_rows(res))
+		if(strcmp(gcFunction,"Modify Confirm"))
 		{
-			gcMessage="<blink>Error: </blink>CNAME records are singleton type. RR w/the same name found.";
-			cNameStyle="type_fields_req";
-			return(3);
-		}
-		mysql_free_result(res);
-		
+			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u",cName,uGetuZone(gcZone,cuView));
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				gcMessage="<blink>Error: </blink>CNAME records are singleton type. RR w/the same name found.";
+				cNameStyle="type_fields_req";
+				return(3);
+			}
+			mysql_free_result(res);
+		}		
 		if(!cParam1[0])
 		{
 			sprintf(cParam1,"%s.",gcZone);

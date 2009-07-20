@@ -963,10 +963,11 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
 {
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
+	char cQuery[512]={""};
 
-        sprintf(gcQuery,"SELECT %s FROM %s WHERE _rowid=%u",
+        sprintf(cQuery,"SELECT %s FROM %s WHERE _rowid=%u",
                         cFieldName,cTableName,uKey);
-        mysql_query(&gMysql,gcQuery);
+        mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql)) return(mysql_error(&gMysql));
 
         mysqlRes=mysql_store_result(&gMysql);
