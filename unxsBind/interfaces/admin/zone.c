@@ -1403,7 +1403,7 @@ unsigned ValidateZoneInput(void)
 	if(!gcZone[0])
 	{
 		cZoneStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Error: No zone name specified!";
+		gcMessage="<blink>Error: </blink>No zone name specified!";
 		return(0);
 	}
 
@@ -1436,7 +1436,7 @@ unsigned ValidateZoneInput(void)
 			if(strcmp(gcZone,field[0]))
 			{
 				cZoneStyle="type_fields_req";
-				gcMessage="<blink>Error: </blink>Error: You can't change a zone name, delete it and create it again";
+				gcMessage="<blink>Error: </blink>You can't change a zone name, delete it and create it again";
 				return(0);
 			}
 		}
