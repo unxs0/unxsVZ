@@ -798,68 +798,6 @@ void DelCustomerContact(void)
 
 unsigned ValidateCustomerContactInput(void)
 {
-	if(!cUserName[0])
-	{
-		gcMessage="<blink>Error: </blink>Login is required.";
-		cUserNameStyle="type_fields_req";
-		cUserNameStyle="type_fields";
-		cPasswordStyle="type_fields";
-		cForClientPullDownStyle="type_fields";
-		cClientNameStyle="type_fields";	
-		cEmailStyle="type_fields";
-		cInfoStyle="type_textarea";
-		cPermPullDownStyle="type_fields";
-		return(0);
-	}
-	else
-	{
-		//
-		//Check for valid characters, no punctuation symbols allowed except '.' in Login
-		register int i;
-
-		for(i=0;cUserName[i];i++)
-		{
-			if(!isalnum(cUserName[i]) && cUserName[i]!='.' && cUserName[i]!=' ' && cUserName[i]!='-')
-			{
-				cUserNameStyle="type_fields_req";
-				cPasswordStyle="type_fields";
-				cForClientPullDownStyle="type_fields";
-				cClientNameStyle="type_fields";
-				cEmailStyle="type_fields";
-				cInfoStyle="type_textarea";
-				cPermPullDownStyle="type_fields";
-				gcMessage="<blink>Error: </blink>Login contains invalid chars.";
-				return(0);
-			}
-		}
-	}
-	if(!cPassword[0])
-	{
-		gcMessage="<blink>Error: </blink>Password must be provided.";
-		cPasswordStyle="type_fields_req";
-		cUserNameStyle="type_fields";
-		cForClientPullDownStyle="type_fields";
-		cClientNameStyle="type_fields";
-		cEmailStyle="type_fields";
-		cInfoStyle="type_textarea";
-		cPermPullDownStyle="type_fields";
-		return(0);
-	}
-	else
-	{
-		if(strlen(cPassword)<5)
-		{
-			gcMessage="<blink>Error: </blink>Password must be at least 5 characters.";
-			cPasswordStyle="type_fields_req";
-			cUserNameStyle="type_fields";
-			cForClientPullDownStyle="type_fields";
-			cClientNameStyle="type_fields";
-			cEmailStyle="type_fields";
-			cInfoStyle="type_textarea";
-			cPermPullDownStyle="type_fields";
-			return(0);
-		}
-	}
 	if(!cClientName[0])
 	{
 		gcMessage="<blink>Error: </blink>'Contact Name' must be provided.";
@@ -881,6 +819,47 @@ unsigned ValidateCustomerContactInput(void)
 				gcMessage="<blink>Error: </blink>'Contact Name' has invalid chars";
 				return(0);
 			}
+		}
+	}
+	if(!cUserName[0])
+	{
+		gcMessage="<blink>Error: </blink>Login is required.";
+		SetCustomerContactFieldsOn();
+		cUserNameStyle="type_fields_req";
+		return(0);
+	}
+	else
+	{
+		//
+		//Check for valid characters, no punctuation symbols allowed except '.' in Login
+		register int i;
+
+		for(i=0;cUserName[i];i++)
+		{
+			if(!isalnum(cUserName[i]) && cUserName[i]!='.' && cUserName[i]!=' ' && cUserName[i]!='-')
+			{
+				SetCustomerContactFieldsOn();
+				cUserNameStyle="type_fields_req";
+				gcMessage="<blink>Error: </blink>Login contains invalid chars.";
+				return(0);
+			}
+		}
+	}
+	if(!cPassword[0])
+	{
+		gcMessage="<blink>Error: </blink>Password must be provided.";
+		SetCustomerContactFieldsOn();
+		cPasswordStyle="type_fields_req";
+		return(0);
+	}
+	else
+	{
+		if(strlen(cPassword)<5)
+		{
+			gcMessage="<blink>Error: </blink>Password must be at least 5 characters.";
+			SetCustomerContactFieldsOn();
+			cPasswordStyle="type_fields_req";
+			return(0);
 		}
 	}
 	if(cEmail[0])
