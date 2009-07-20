@@ -886,13 +886,13 @@ unsigned RRCheck(void)
 		sprintf(cName,"%.255s",gcQuery);
 	}
 	
-	if(cParam1[0] && strcmp(cRRType,"TXT")) //trim cParam1 but fot TXT records (ticket #386)
+	if(cParam1[0] && strcmp(cRRType,"TXT") && strcmp(cRRType,"HINFO")) //trim cParam1 but fot TXT records (ticket #386)
 	{
 		sscanf(cParam1,"%s",gcQuery);
 		sprintf(cParam1,"%.99s",gcQuery);
 	}
 	
-	if(cParam2[0])
+	if(cParam2[0] && strcmp(cRRType,"HINFO"))
 	{
 		sscanf(cParam2,"%s",gcQuery);
 		sprintf(cParam2,"%.99s",gcQuery);
