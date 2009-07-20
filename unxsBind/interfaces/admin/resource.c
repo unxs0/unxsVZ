@@ -2374,16 +2374,19 @@ void SaveResource(void)
 	uZone=uGetuZone(gcZone,cuView);
 	uRRType=SelectRRType(cRRType);
 
-sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%u',uZone='%u',cName='%s',uTTL='%s',uRRType='%u',cParam1='%s',cParam2='%s',cComment='%s',uOwner='%u',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-		uResource,
-		uZone,
-		cName,
-		cuTTL,
-		uRRType,
-		cParam1,
-		cParam2,
-		cComment,
-		uGetZoneOwner(uZone));
+	sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%u',"
+			"uZone='%u',cName='%s',uTTL='%s',uRRType='%u',cParam1='%s',"
+			"cParam2='%s',cComment='%s',uOwner='%u',uCreatedBy=1,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uResource,
+			uZone,
+			TextAreSave(cName),
+			TextAreSave(cuTTL),
+			uRRType,
+			TextAreSave(cParam1),
+			TextAreSave(cParam2),
+			TextAreSave(cComment),
+			uGetZoneOwner(uZone));
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
