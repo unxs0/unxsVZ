@@ -12,11 +12,6 @@
 <tr><td rowspan="1" colspan="3">Companies03</td></tr>
 </thead><tbody>
 <tr>
-	<td>open</td>
-	<td>/cgi-bin/idnsAdmin.cgi</td>
-	<td></td>
-</tr>
-<tr>
 	<td>type</td>
 	<td>cSearch</td>
 	<td>a</td>

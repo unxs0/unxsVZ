@@ -12,11 +12,6 @@
 <tr><td rowspan="1" colspan="3">ContactValidation</td></tr>
 </thead><tbody>
 <tr>
-	<td>open</td>
-	<td>/cgi-bin/idnsAdmin.cgi</td>
-	<td></td>
-</tr>
-<tr>
 	<td>clickAndWait</td>
 	<td>//td[3]/a/b</td>
 	<td></td>
@@ -47,17 +42,17 @@
 	<td>dns</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@type='image']</td>
 	<td></td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//td[3]/a/b</td>
 	<td></td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='New']</td>
 	<td></td>
 </tr>
@@ -67,7 +62,7 @@
 	<td>Carol Myers</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
 	<td></td>
 </tr>
@@ -87,24 +82,19 @@
 	<td>u</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@type='image']</td>
 	<td></td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//td[3]/a/b</td>
 	<td></td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='New']</td>
 	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>//input[@name='cEmail' and @value='' and @type='text']</td>
-	<td>iamanotherjohn </td>
 </tr>
 <tr>
 	<td>type</td>
@@ -128,6 +118,36 @@
 </tr>
 <tr>
 	<td>assertBodyText</td>
+	<td>glob:*'Email Address' must be provided.*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cEmail' and @value='iamanotherjohn' and @type='text']</td>
+	<td>iamanotherjohn@unixservice.com</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Login already in use*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cUserName' and @value='John Doe' and @type='text']</td>
+	<td>john.doe</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
 	<td>glob:*Password must be provided.*</td>
 	<td></td>
 </tr>
@@ -137,7 +157,7 @@
 	<td>z</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
 	<td></td>
 </tr>
@@ -152,28 +172,13 @@
 	<td>zqwwegc</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
 	<td></td>
 </tr>
 <tr>
 	<td>assertBodyText</td>
-	<td>glob:*'Email Address' must be provided.*</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>//input[@name='cEmail' and @value='iamanotherjohn' and @type='text']</td>
-	<td>iamanotherjohn@unixservice.com</td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
-	<td></td>
-</tr>
-<tr>
 	<td>glob:*Company contact created OK*</td>
-	<td></td>
 	<td></td>
 </tr>
 

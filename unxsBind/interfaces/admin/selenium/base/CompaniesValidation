@@ -12,11 +12,6 @@
 <tr><td rowspan="1" colspan="3">CompaniesValidation</td></tr>
 </thead><tbody>
 <tr>
-	<td>open</td>
-	<td>/cgi-bin/idnsAdmin.cgi</td>
-	<td></td>
-</tr>
-<tr>
 	<td>clickAndWait</td>
 	<td>//td[2]/a/b</td>
 	<td></td>
