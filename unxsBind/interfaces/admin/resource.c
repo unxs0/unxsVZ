@@ -2684,10 +2684,11 @@ void CreatetResourceTest(void)
 }//void CreatetRestResource(void)
 
 
+
 void PrepareTestData(void)
 {
-	unsigned uZone=uGetuZone(gcZone,cuView);
 	unsigned uRRType=SelectRRType(cRRType);
+	uZone=uGetuZone(gcZone,cuView);
 
 	CreatetResourceTest();
 	sprintf(gcQuery,"DELETE FROM tResourceTest WHERE uZone=%u",uZone);
@@ -2695,16 +2696,17 @@ void PrepareTestData(void)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 
-	sprintf(gcQuery,"INSERT INTO tResourceTest (cName,uOwner,uCreatedBy,uCreatedDate,uModBy,"
+	sprintf(gcQuery,"INSERT INTO tResourceTest (uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,"
 			"uModDate,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,cComment,uZone) "
-			"SELECT cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
+			"SELECT uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
 			"cParam1,cParam2,cParam3,cParam4,cComment,uZone FROM tResource WHERE "
 			"uZone=%u",uZone);
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	
-	if(!strcmp(gcFunction,"New Confirm"))
+	if(!strcmp(gcFunction,"New Confirm") || !strcmp(gcFunction,"Finish"))
 		sprintf(gcQuery,"INSERT INTO tResourceTest SET cName='%s',uTTL=%s,uRRType=%u,cParam1='%s'"
 				",cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
@@ -2733,7 +2735,6 @@ void PrepareTestData(void)
 				TextAreaSave(cComment),
 				guLoginClient,
 				uResource);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
