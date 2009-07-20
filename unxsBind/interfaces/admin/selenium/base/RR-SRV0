@@ -13,11 +13,6 @@
 </thead><tbody>
 <tr>
 	<td>clickAndWait</td>
-	<td>//b</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
 	<td>link=Resources</td>
 	<td></td>
 </tr>
@@ -74,7 +69,7 @@
 <tr>
 	<td>type</td>
 	<td>cName</td>
-	<td>_sip._tcpmodtest.ns1.yourdomain.com.</td>
+	<td>_sip._tcpmodtest.unixservice.com.</td>
 </tr>
 <tr>
 	<td>type</td>
