@@ -33,11 +33,7 @@ RELEASE= 0.1
 #CFLAGS= -DLinux -DFreeBSD -Wall 
 #FreeBSD=1
 
-ifdef FreeBSD
-	LIBS= /usr/local/lib/mysql/libmysqlclient.a -lz -lm /usr/lib/libcrypt.a
-else
-	LIBS= /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl
-endif
+LIBS= -L/usr/lib/mysql/ -lmysqlclient -lz -lcrypt -lm -lssl
 
 
 
