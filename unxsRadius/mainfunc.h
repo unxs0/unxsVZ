@@ -19,7 +19,8 @@ AUTHOR
 					}\
 					mysqlRes=mysql_store_result(&gMysql);
 
-static char cTableList[64][32]={"tUser","tProfile","tProfileName","tServer","tNAS","tJob","tJobStatus","tConfiguration","tServerGroup","tNASGroup","tLog","tLogType","tLogMonth","tMonth","tGlossary","tTemplate","tTemplateSet","tTemplateType","tClient","tAuthorize",""};
+
+static char cTableList[64][32]={"tAuthorize","tClient","tConfiguration","tGlossary","tJob","tJobStatus","tLog","tLogMonth","tLogType","tMonth","tNAS","tNASGroup","tProfile","tProfileName","tServer","tServerGroup","tTemplate","tTemplateSet","tTemplateType","tUser",""};
 
 static char cInitTableList[32][32]={"tClient","tAuthorize","tServer","tNAS","tProfile","tProfileName","tConfiguration","tNASGroup","tUser","tServerGroup","tLogType","tTemplateType",""};
 
