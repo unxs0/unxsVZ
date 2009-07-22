@@ -96,11 +96,6 @@ int MakeNASPasswdFile(unsigned uHtml, unsigned uServer);
 void to64(char *s, long v, int n);
 void EncryptPasswd(char *pw);
 void ConvertEscapedTabs(char *cLine);
-#ifndef FREE_RADIUS
-//If using FreeRADIUS, func prototype is below.
-//Cistron radius server support will go away soon though.
-int ReloadRadius(unsigned uHtml,unsigned uServer);
-#endif
 void GetConfiguration(const char *cName, char *cValue, unsigned uHtml);
 
 MYSQL mysqlext;
@@ -123,7 +118,7 @@ void CreateNewClient(structExtJobParameters *structExtParam);
 void InitializeParams(structExtJobParameters *structExtParam);
 void DeleteClient(structExtJobParameters *structExtParam);
 void TextError(const char *cError, unsigned uContinue);//mainfunc.h
-#ifdef FREE_RADIUS
+
 int CreateClientConf(unsigned uHtml,unsigned uServer);
 void replace_spaces(char *cBuffer);
 void ReleaseFromHold(const unsigned uUser, const unsigned uServer);
@@ -140,7 +135,7 @@ int CreateClientConf(unsigned uHtml,unsigned uServer)
 	char cParam[100]={""}; 
 	char cServer[33]={""};
 
-printf("CreateClientConf(%u,%u)\n",uHtml,uServer);
+	printf("CreateClientConf(%u,%u)\n",uHtml,uServer);
 	if(!uServer)
 	{
 		if(uHtml)
@@ -220,8 +215,6 @@ void replace_spaces(char *cBuffer)
 
 }//void replace_spaces(char *cBuffer)
 
-
-#endif
 
 int MakeUsersFile(unsigned uHtml, unsigned uServer, char *cLogin)
 {
@@ -501,64 +494,7 @@ void EncryptPasswd(char *pw)
 
 int MakeClientsFile(unsigned uHtml, unsigned uServer)
 {
-#ifndef FREE_RADIUS
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-	FILE *fp;
-	char cFile[256]={""};
-	char cRaddbDir[256]={"/usr/local/etc/raddb"};
-
-	GetConfiguration("cRaddbDir",cRaddbDir,uHtml);
-	sprintf(cFile,"%s/clients",cRaddbDir);
-	
-	if(!uServer)
-	{
-		if(uHtml)
-			tNAS("Must specify valid uServer");
-		else
-                	fprintf(stderr,"Must specify valid uServer\n");
-		exit(1);
-	}
-	
-	if(!(fp=fopen(cFile,"w")))
-        {
-		char cMsg[256];
-		sprintf(cMsg,"Can't open %.230s for write",cFile);
-		if(uHtml)
-			tNAS(cMsg);
-		else
-                	fprintf(stderr,"%s\n",cMsg);
-               	return(1);
-        }
-
-	sprintf(gcQuery,"SELECT tNAS.cIP,tNAS.cKey,tNAS.cLabel FROM tNAS,tNASGroup\
-		WHERE tNAS.uNAS=tNASGroup.uNAS AND tNASGroup.uServer=%u\
-		ORDER BY tNAS.cLabel",uServer);
-
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-        {
-		if(uHtml)
-			htmlPlainTextError(mysql_error(&gMysql));
-		else
-                	fprintf(stderr,"%s\n",mysql_error(&gMysql));
-               	exit(1);
-        }
-
-        res=mysql_store_result(&gMysql);
-
-	fprintf(fp,"#clients unxsRadius.$Id$\n");
-	fprintf(fp,"#uServer:%u\n",uServer);
-
-        while((field=mysql_fetch_row(res)))
-		fprintf(fp,"#%s\n%s\t\t%s\n",field[2],field[0],field[1]);
-        mysql_free_result(res);
-	fclose(fp);
-
-	return(0);
-#else
 	return(CreateClientConf(0,uServer));
-#endif
 
 }//int MakeClientsFile()
 
@@ -683,98 +619,6 @@ int MakeNASPasswdFile(unsigned uHtml, unsigned uServer)
 	return(0);
 
 }//int MakeNASPasswdFile()
-
-#ifndef FREE_RADIUS
-//
-///Cistron RADIUS version of ReloadRadius():
-
-int ReloadRadius(unsigned uHtml,unsigned uServer)
-{
-	uid_t uid;
-	char cMsg[256];
-	char cRadiusdArgs[256]={""};
-	char cParam[66]={""};
-	char cRadiusdPath[256]={""};
-	char cRaddbDir[256]={""};
-	char cRadiusdPID[256]={""};
-	char cRadiusdUID[256]={""};
-	char cServer[33]={""};
-
-	//For all only once
-	strcpy(cServer,ForeignKey("tServer","cLabel",uServer));
-
-	sprintf(cParam,"cRadiusdArgs-%s",cServer);
-	GetConfiguration(cParam,cRadiusdArgs,uHtml);
-	if(!cRadiusdArgs[0])
-		GetConfiguration("cRadiusdArgs",cRadiusdArgs,uHtml);
-
-	sprintf(cParam,"cRadiusdPath-%s",cServer);
-	GetConfiguration("cParam",cRadiusdPath,uHtml);
-	if(!cRadiusdPath[0])
-		GetConfiguration("cRadiusdPath",cRadiusdPath,uHtml);
-
-	sprintf(cParam,"cRaddbDir-%s",cServer);
-	GetConfiguration("cParam",cRaddbDir,uHtml);
-	if(!cRaddbDir[0])
-		GetConfiguration("cRaddbDir",cRaddbDir,uHtml);
-
-	sprintf(cParam,"cRadiusdPID-%s",cServer);
-	GetConfiguration("cParam",cRadiusdPID,uHtml);
-	if(!cRadiusdPID[0])
-		GetConfiguration("cRadiusdPID",cRadiusdPID,uHtml);
-
-	sprintf(cParam,"cRadiusdUID-%s",cServer);
-	GetConfiguration("cParam",cRadiusdUID,uHtml);
-	if(!cRadiusdUID[0])
-		GetConfiguration("cRadiusdUID",cRadiusdUID,uHtml);
-
-	//debug only
-	//////printf("[debug]Server:%u\ncParam:%s\ncRadiusdArgs:%s\ncRadiusdPath:%s\ncRaddbDir:%s\ncRadiusdPID:%s\ncRadiusdUID:%s\n",uServer,cParam,cRadiusdArgs,cRadiusdPath,cRaddbDir,cRadiusdPID,cRadiusdUID);
-	if(cRadiusdUID[0])
-	{
-		sscanf(cRadiusdUID,"%u",&uid);
-		setuid(uid);
-	}
-
-	sprintf(gcQuery,"kill -0 `cat %s` 2> /dev/null",cRadiusdPID);
-
-	if(system(gcQuery))
-	{
-		sprintf(gcQuery,"%s -d %s -P %s %s > /dev/null",
-				cRadiusdPath,cRaddbDir,cRadiusdPID,cRadiusdArgs);
-		if(system(gcQuery))
-		{
-			sprintf(cMsg,
-				"Radius daemon was not running. Could not start!");
-			if(uHtml)
-				tUser(cMsg);
-			else
-				fprintf(stderr,"%s\n",cMsg);
-			return(1);
-		}
-		sprintf(cMsg,"Radius daemon was not running. Was started");
-		if(uHtml)
-			tUser(cMsg);
-		else
-			printf("%s\n",cMsg);
-		return(0);
-	}
-	sprintf(gcQuery,"kill -HUP `cat %s` > /dev/null",cRadiusdPID);
-	if(system(gcQuery))
-	{
-		sprintf(cMsg,"Could not reload radius server! Contact support asap.");
-		if(uHtml)
-			tUser(cMsg);
-		else
-			fprintf(stderr,"%s\n",cMsg);
-		return(1);
-	}
-
-	return(0);
-
-}//int ReloadRadius(unsigned uHtml)
-#else
-//FreeRADIUS version of ReloadRadius():
 
 void StartRadiusServer(char *cRadiusdPath,char *cRadiusdArgs,unsigned uHtml);
 void StopRadiusServer(char *cRadiusdPID);
@@ -913,8 +757,6 @@ void StopRadiusServer(char *cRadiusdPID)
 
 }//void StopRadiusServer(void)
 
-
-#endif
 
 void GetConfiguration(const char *cName, char *cValue, unsigned uHtml)
 {
@@ -1319,11 +1161,7 @@ void ProcessExtJobQueue(char *cServer)
 
 			//Rebuild users file
 			MakeUsersFile(0,uServer,"");
-#ifdef FREE_RADIUS
 			ReloadRadius(0,uServer,0);
-#else
-			ReloadRadius(0,uServer);
-#endif
 			//Update instance and job stuff
 			InformExtJob("User removed",cServer,uJob,mysqlISP_Deployed);
 
@@ -1378,11 +1216,7 @@ void ProcessExtJobQueue(char *cServer)
 
 			//Rebuild users file
 			MakeUsersFile(0,uServer,"");
-#ifdef FREE_RADIUS
 			ReloadRadius(0,uServer,0);
-#else
-			ReloadRadius(0,uServer);
-#endif
 			//Update instance and job stuff
 			InformExtJob("User modified",cServer,uJob,mysqlISP_Deployed);
 		}//Mod
@@ -1416,11 +1250,7 @@ void ProcessExtJobQueue(char *cServer)
 
 			//Rebuild users file
 			MakeUsersFile(0,uServer,"");
-#ifdef FREE_RADIUS
 			ReloadRadius(0,uServer,0);
-#else
-			ReloadRadius(0,uServer);
-#endif
 			//Update instance and job stuff
 			InformExtJob("User set on hold",cServer,uJob,mysqlISP_Deployed);
 		}//Hold
@@ -1454,11 +1284,7 @@ void ProcessExtJobQueue(char *cServer)
 
 			//Rebuild users file
 			MakeUsersFile(0,uServer,"");
-#ifdef FREE_RADIUS
 			ReloadRadius(0,uServer,0);
-#else
-			ReloadRadius(0,uServer);
-#endif
 			//Update instance and job stuff
 			InformExtJob("User restored",cServer,uJob,mysqlISP_Deployed);
 		
@@ -1969,22 +1795,13 @@ void ProcessJobQueue(unsigned uTestMode,char *cServer)
 
 		if(uMakeNASFiles)
 		{
-#ifndef FREE_RADIUS
-			MakeClientsFile(0,uServer);
-			MakeNASListFile(0,uServer);//This also calls MakeNASPasswdFile()
-#else
 			CreateClientConf(0,uServer);
-#endif
 		}
 
 		if(uRestartServer)
 		{
 			printf("Calling ReloadRadius(0,%u,%u)\n",uServer,uStopRequired);
-#ifdef FREE_RADIUS
 			ReloadRadius(0,uServer,uStopRequired);
-#else
-			ReloadRadius(0,uServer);
-#endif
 		}
 
 	}//If jobs

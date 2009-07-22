@@ -50,11 +50,7 @@ int MakeClientsFile(unsigned uHtml, unsigned uServer);
 int MakeNASListFile(unsigned uHtml, unsigned uServer);
 unsigned GetuServer(char *cLabel);
 int MakeUsersFile(unsigned uHtml, unsigned uServer, char *cLogin);
-#ifdef FREE_RADIUS
 int ReloadRadius(unsigned uHtml, unsigned uServer,unsigned uStopRequired);
-#else
-int ReloadRadius(unsigned uHtml, unsigned uServer);
-#endif
 int MakeClientsFile(unsigned uHtml, unsigned uServer);
 int MakeNASPasswdFile(unsigned uHtml, unsigned uServer);
 void ProcessExtJobQueue(char *cServer);
@@ -64,9 +60,7 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 void to64(char *s, long v, int n);
 void GetConfiguration(const char *cName, char *cValue, unsigned uHtml);//radius.c
 
-#ifdef FREE_RADIUS
 int CreateClientConf(unsigned uHtml, unsigned uServer);
-#endif
 
 static int i=0;
 
@@ -292,11 +286,7 @@ void ExtMainShell(int argc, char *argv[])
         else if(argc==3 && !strcmp(argv[1],"Start"))
 	{
 		ConnectDb();
-#ifndef FREE_RADIUS
-                ReloadRadius(0,GetuServer(argv[2]));
-#else
 		ReloadRadius(0,GetuServer(argv[2]),0);
-#endif
 		exit(0);
 	}
 	else if(argc==3 && !strcmp(argv[1],"TestJobQueue"))
@@ -332,11 +322,7 @@ void ExtMainShell(int argc, char *argv[])
         else if(argc==3 && !strcmp(argv[1],"MakeNASList"))
 	{
 		ConnectDb();
-#ifndef FREE_RADIUS
-                MakeNASListFile(0,GetuServer(argv[2]));
-#else
 		CreateClientConf(0,GetuServer(argv[2]));
-#endif
 		exit(0);
 	}
         else

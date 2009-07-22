@@ -48,5 +48,3 @@ LEGAL
 #define TAUTHORIZE "tAuthorize"
 //#define TAUTHORIZE "unxsisp.tAuthorize"
 
-//We will shortly remove all non freeradius code
-#define FREE_RADIUS
