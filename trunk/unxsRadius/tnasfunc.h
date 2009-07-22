@@ -86,7 +86,8 @@ void ExttNASCommands(pentry entries[], int x)
 					htmlPlainTextError(mysql_error(&gMysql));
 
 				SubmitNASJob("NewNAS",cLabel,uNAS,0);
-				tNAS("New user added");
+				guMode=0;
+				tNAS("New NAS added");
 			}
 			else
 				tNAS("<blink>Error</blink>: Denied by permissions settings");  
@@ -133,6 +134,7 @@ void ExttNASCommands(pentry entries[], int x)
 				tNASBasicCheck(1);
 				uModBy=guLoginClient;
 				SubmitNASJob("ModNAS",cLabel,uNAS,0);
+				guMode=0;
                 	        ModtNAS();
 			}
 			else
@@ -496,6 +498,22 @@ void tNASBasicCheck(unsigned uMod)
 	{
 		MYSQL_RES *res;
 		MYSQL_ROW field;
+
+		unsigned a,b,c,d;
+		char cNewIP[64]={""};
+
+		sscanf(cIP,"%u.%u.%u.%u",&a,&b,&c,&d);
+		if(a>254) a=0;
+		if(b>254) b=0;
+		if(c>254) c=0;  
+		if(d>254) d=0;
+
+		sprintf(cNewIP,"%u.%u.%u.%u",a,b,c,d);
+		if(strcmp(cNewIP,cIP))
+		{
+			sprintf(cIP,"%s",cNewIP);
+			tNAS("<blink>Warning:</blink> cIP was updated, check/fix");
+		}
 
 		sprintf(gcQuery,"SELECT uNAS FROM tNAS WHERE cIP='%s'",cIP);
 		mysql_query(&gMysql,gcQuery);
