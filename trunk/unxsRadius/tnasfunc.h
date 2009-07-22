@@ -18,12 +18,7 @@ static unsigned uServer=0;
 static char cuServerPullDown[256]={""};
 void NASServerList(void);
 unsigned GetuServer(char *cLabel);
-#ifndef FREE_RADIUS
-int MakeClientsFile(unsigned uHtml, unsigned uServer);
-int MakeNASListFile(unsigned uHtml, unsigned uServer);
-#else
 int CreateClientConf(unsigned uHtml, unsigned uServer);
-#endif 
 void tNASNavList(void);
 
 int SubmitNASJob(char *cJobName,char *cJobData,unsigned uNASGroup,unsigned uJobDate);
@@ -207,30 +202,11 @@ void ExttNASCommands(pentry entries[], int x)
 			ProcesstNASVars(entries,x);
 			if(guPermLevel>=12)
 			{
-#ifndef FREE_RADIUS
-				MakeNASListFile(1,1);
-				tNAS("raddb/naslist file created");
-#else
-				CreateClientConf(1,1);
 				tNAS("raddb/clients.conf file created");
-#endif
 			}
 			else
 				tNAS("<blink>Error</blink>: Denied by permissions settings");  
 		}
-#ifndef FREE_RADIUS
-                else if(!strcmp(gcCommand,"Make Local Clients File"))
-                {
-			ProcesstNASVars(entries,x);
-			if(guPermLevel>=12)
-			{
-				MakeClientsFile(1,1);
-				tNAS("raddb/clients file created");
-			}
-			else
-				tNAS("<blink>Error</blink>: Denied by permissions settings");  
-		}
-#endif
 	}
 
 }//void ExttNASCommands(pentry entries[], int x)
@@ -291,12 +267,8 @@ void ExttNASButtons(void)
 				if(guPermLevel>11)
 				{
 			        	printf("<p><u>Local Server Management</u><br>\n");
-#ifdef FREE_RADIUS
 					printf("<input title='Make raddb/client.conf file on this server' class=largeButton "
 					" type=submit name=gcCommand value='Make Local Clients File'><br>\n");
-#endif
-					printf("<input title='Make raddb/naslist file on this server' class=largeButton "
-					"type=submit name=gcCommand value='Make Local NASList File'>\n");
 				}
 
 			}
