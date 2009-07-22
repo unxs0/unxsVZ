@@ -67,6 +67,7 @@ void ExttProfileNameCommands(pentry entries[], int x)
 			if(guPermLevel>=10)
 			{
 				//Check entries here
+				BasictProfileNameCheck(0);
 				uProfileName=0;
 				uCreatedBy=guLoginClient;
 				if(uForCompany)
@@ -75,6 +76,7 @@ void ExttProfileNameCommands(pentry entries[], int x)
 					uOwner=guCompany;
 				uModBy=0;
 				uModDate=0;
+				guMode=0;
 				NewtProfileName(0);
 			}
 			else
@@ -99,6 +101,7 @@ void ExttProfileNameCommands(pentry entries[], int x)
                         	guMode=2001;
 				if(uProfileNameUsed(uProfileName,uOwner))
 					tProfileName("<blink>Error</blink>: Can't delete, profile is being used.");
+				guMode=0;
                         	DeletetProfileName();
 			}
 			else
@@ -121,6 +124,7 @@ void ExttProfileNameCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy))  
 			{
                         	guMode=2002;
+				BasictProfileNameCheck(1);
 				if(uForCompany)
 				{
 					if(uProfileNameUsed(uProfileName,uOwner))
@@ -335,8 +339,6 @@ void BasictProfileNameCheck(unsigned uMod)
 		}
 		mysql_free_result(res);
 	}
-
-	guMode=0;
 
 }//void BasictProfileNameCheck(unsigned uMod)
 
