@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>New Test</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">New Test</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/cgi-bin/unxsRadius.cgi?gcFunction=Logout</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>gcLogin</td>
+	<td>Root</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>gcPasswd</td>
+	<td>wsxedc</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcFunction</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tUser</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcCommand</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cLogin is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLogin</td>
+	<td>evaristo</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cEnterPasswd is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cEnterPasswd</td>
+	<td>z</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cEnterPasswd is too short*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cEnterPasswd</td>
+	<td>zuytjk5</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must select valid initial server*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuServerPullDown</td>
+	<td>label=unxsrad0</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuProfileNamePullDown</td>
+	<td>label=---</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must select uProfileName from the drop-down*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuProfileNamePullDown</td>
+	<td>label=Engineers</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cIP</td>
+	<td>flor</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cIP was updated, check/fix*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>uSimulUse</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cIP</td>
+	<td>0.0.0.0</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Minimal value for uSimulUse is 1*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>uSimulUse</td>
+	<td>1</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*New user added*</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
+
