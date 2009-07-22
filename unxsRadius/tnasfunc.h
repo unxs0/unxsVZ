@@ -14,6 +14,8 @@ AUTHOR/LEGAL
  
 */
 
+#include <ctype.h>
+
 static unsigned uServer=0;
 static char cuServerPullDown[256]={""};
 void NASServerList(void);
@@ -23,7 +25,7 @@ void tNASNavList(void);
 
 int SubmitNASJob(char *cJobName,char *cJobData,unsigned uNASGroup,unsigned uJobDate);
 
-void tNASBasicCheck(void);
+void tNASBasicCheck(unsigned uMod);
 static void htmlRecordContext(void);
 
 //Extern
@@ -69,12 +71,7 @@ void ExttNASCommands(pentry entries[], int x)
 			if(guPermLevel>=10)
 			{
                         	ProcesstNASVars(entries,x);
-				tNASBasicCheck();
-				if(!uServer)
-				{
-					guMode=2000;
-					tNAS("Must select valid initial server");
-				}
+				tNASBasicCheck(0);
 				uNAS=0;
 				uCreatedBy=guLoginClient;
 				uOwner=guCompany;
@@ -133,7 +130,7 @@ void ExttNASCommands(pentry entries[], int x)
                         ProcesstNASVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy))  
 			{
-				tNASBasicCheck();
+				tNASBasicCheck(1);
 				uModBy=guLoginClient;
 				SubmitNASJob("ModNAS",cLabel,uNAS,0);
                 	        ModtNAS();
@@ -464,38 +461,66 @@ int SubmitNASJob(char *cJobName,char *cJobData,unsigned uNASGroup,unsigned uJobD
 }//int SubmitNASJob()
 
 
-void tNASBasicCheck(void)
+void tNASBasicCheck(unsigned uMod)
 {
-	//Basic sanity checks before deploying a record ;)
-/*	MYSQL_RES *res;
-	MYSQL_ROW field;
+	//
+	//Set guMode in case we find and issue
+	if(uMod)
+		guMode=2002;
+	else
+		guMode=2000;
 
-	sprintf(gcQuery,"SELECT uNAS FROM tNAS WHERE cIP='%s'",cIP);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	
-	res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	if(!cLabel[0])
+		tNAS("<blink>Error: </blink>cLabel is required");
+	else
 	{
-		if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
+		register int i;	
+		if((strlen(cLabel)<4))
+			tNAS("<blink>Error:</blink> cLabel is too short");
+		for(i=0;i<strlen(cLabel);i++)
 		{
-			guMode=2000;
-			tNAS("cIP already in use. Can't create new record");
+			if(!isalnum(cLabel[i]) && cLabel[i]!='.')
+				tNAS("<blink>Error:</blink> cLabel contains invalid chars");
 		}
-		else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
+	}
+
+	if(!cKey[0])
+		tNAS("<blink>Error: </blink>cKey is required");
+	
+	if(!cType[0])
+		tNAS("<blink>Error: </blink>cType is required");
+	
+	if(!cIP[0])
+		tNAS("<blink>Error: </blink>cIP is required");
+	else
+	{
+		MYSQL_RES *res;
+		MYSQL_ROW field;
+
+		sprintf(gcQuery,"SELECT uNAS FROM tNAS WHERE cIP='%s'",cIP);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res))
 		{
-			unsigned udbNAS=0;
-			field=mysql_fetch_row(res);
-			sscanf(field[0],"%u",&udbNAS);
-			if(udbNAS!=uNAS)
+			if(!uMod)
+				tNAS("<blink>Error: </blink>cIP already in use. Can't create new record");
+			else if(uMod)
 			{
-				guMode=2002;
-				tNAS("cIP already in use. Can't modify record");
+				unsigned udbNAS=0;
+				field=mysql_fetch_row(res);
+				sscanf(field[0],"%u",&udbNAS);
+				if(udbNAS!=uNAS)
+					tNAS("<blink>Error: </blink>cIP already in use. Can't modify record");
 			}
 		}
 	}
-*/
+
+	if(!uServer && !uMod)
+		tNAS("<blink>Error: </blink>Must select valid initial server");
+
 }//void tNASBasicCheck(void)
 
 
