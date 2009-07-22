@@ -786,7 +786,7 @@ void BasictUserCheck(unsigned uMod)
 			tUser("<blink>Error:</blink> cLogin is too short");
 		for(i=0;i<strlen(cLogin);i++)
 		{
-			if(!isalnum(cLogin[i] || cLogin[i]!='.'))
+			if(!isalnum(cLogin[i]) && cLogin[i]!='.')
 				tUser("<blink>Error:</blink> cLogin contains invalid chars");
 		}
 	}
@@ -830,9 +830,34 @@ void BasictUserCheck(unsigned uMod)
 		tUser("<blink>Error:</blink> Must select uProfileName from the drop-down");
 	
 	if(!uMod && !uServer)
-		 tUser("Must select valid initial server");
+		 tUser("<blink>Error:</blink> Must select valid initial server");
 
-		
+	if(uSimulUse)
+		tUser("<blink>Error:</blink> Minimal value for uSimulUse is 1");
+
+	if(!cIP[0])
+	{
+		sprintf(cIP,"0.0.0.0");
+		tUser("<blink>Warning:</blink> cIP was updated, check/fix");
+	}
+	else
+	{
+		unsigned u,a,b,c,d;
+		char cNewIP[64]={""};
+
+		sscanf(cIP,"%.u.%u.%u.%u",&a,&b,&c,&d);
+		if(a>254) a=0;
+		if(b>254) b=0;
+		if(c>254) c=0;  
+		if(d>254) d=0;
+
+		sprintf(cNewIP,"%.u.%u.%u.%u",a,b,c,d);
+		if(strcmp(cNewIP,cIP))
+		{
+			sprintf(cIP,"%s",cNewIP);
+			tUser("<blink>Warning:</blink> cIP was updated, check/fix");
+		}
+	}
 	
 }//void BasictUserCheck()
 
