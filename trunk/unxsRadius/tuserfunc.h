@@ -33,9 +33,9 @@ static void htmlRecordContext(void);
 
 //Extern
 int MakeUsersFile(unsigned uHtml, unsigned uServer, char *cLogin);
-int ReloadRadius(unsigned uHtml, unsigned uServer);
 void EncryptPasswd(char *pw);
 void GetConfiguration(const char *cLabel,char *cValue,unsigned uHtml);
+int ReloadRadius(unsigned uHtml,unsigned uServer,unsigned uStopRequired);
 
 void ExtProcesstUserVars(pentry entries[], int x)
 {
@@ -189,7 +189,13 @@ void ExttUserCommands(pentry entries[], int x)
 			ProcesstUserVars(entries,x);
 			if(guPermLevel>=12)
 			{
-				ReloadRadius(1,1);
+				//
+				//Dev note: Probably it will be much wiser to create a 'Reload' job
+				//and submit it, thus you could reload all the server cluster..
+				//Or, use the server dropdown to select which server to reload
+				//instead of calling the function below.
+
+				ReloadRadius(1,1,0);
 				tUser("local radiusd files reloaded");
 			}
 			else
