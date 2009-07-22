@@ -152,7 +152,7 @@
 	<td>label=unxsrad0</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
 	<td></td>
 </tr>
