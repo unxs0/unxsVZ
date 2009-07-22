@@ -22,6 +22,9 @@ static unsigned uForCompany=0;
 void tTablePullDownCompanies(unsigned uSelector);//tprofilefunc.h
 unsigned uProfileNameUsed(const unsigned uProfileName,const unsigned uOwner);//tprofilefunc.h
 
+void BasictProfileNameCheck(unsigned uMod);
+
+
 void ExtProcesstProfileNameVars(pentry entries[], int x)
 {
 
@@ -308,4 +311,32 @@ void tProfileNameNavList(void)
 
 }//void tProfileNameNavList(void)
 
+
+void BasictProfileNameCheck(unsigned uMod)
+{
+	//
+	//Set guMode in case we find and issue
+	if(uMod)
+		guMode=2002;
+	else
+		guMode=2000;
+
+	if(!cLabel[0])
+		tProfileName("<blink>Error: </blink>cLabel is required");
+	
+	if(!uMod)
+	{
+		MYSQL_RES *res;
+		sprintf(gcQuery,"SELECT uProfileName FROM tProfileName WHERE cLabel='%s'",TextAreaSave(cLabel));
+		macro_mySQLRunAndStore(res);
+		if(mysql_num_rows(res))
+		{
+			tProfileName("<blink>Error: </blink>cLabel already in use");
+		}
+		mysql_free_result(res);
+	}
+
+	guMode=0;
+
+}//void BasictProfileNameCheck(unsigned uMod)
 
