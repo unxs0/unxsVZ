@@ -10,6 +10,8 @@ AUTHOR
  
 */
 
+#include <ctype.h> //isalnum() decl
+
 static unsigned uServer=0;
 static char cuServerPullDown[256]={""};
 static char cSearch[100]={""};
@@ -100,8 +102,6 @@ void ExttUserCommands(pentry entries[], int x)
 				uModBy=0;
 				uModDate=0;
 				BasictUserCheck(0);
-				if(!uServer)
-					tUser("Must select valid initial server");
 				guMode=5;
 				strcpy(cPasswd,cEnterPasswd);
 				EncryptPasswd(cPasswd);
@@ -770,21 +770,34 @@ int UpdateInfo(void)
 
 void BasictUserCheck(unsigned uMod)
 {
-	MYSQL_RES *res;
-
+	//
 	//Set guMode in case we find and issue
-	if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
-		guMode=2000;
-	else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
+	if(uMod)
 		guMode=2002;
+	else
+		guMode=2000;
 
 	if(!cLogin[0])
 		tUser("<blink>Error:</blink> cLogin is required");
-
-	if(guMode==2000)
+	else
 	{
-		sprintf(gcQuery,"SELECT uUser FROM tUser WHERE cLogin='%s' AND uOwner=%u",
-				TextAreaSave(cLogin),guCompany);
+		register int i;	
+		if((strlen(cLogin)<4))
+			tUser("<blink>Error:</blink> cLogin is too short");
+		for(i=0;i<strlen(cLogin);i++)
+		{
+			if(!isalnum(cLogin[i] || cLogin[i]!='.'))
+				tUser("<blink>Error:</blink> cLogin contains invalid chars");
+		}
+	}
+
+	if(!uMod)
+	{
+		//
+		//Unique tUser.cLogin check
+		MYSQL_RES *res;
+
+		sprintf(gcQuery,"SELECT uUser FROM tUser WHERE cLogin='%s'",TextAreaSave(cLogin));
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -792,14 +805,34 @@ void BasictUserCheck(unsigned uMod)
 		res=mysql_store_result(&gMysql);
 
 		if(mysql_num_rows(res))
-			tUser("<blink>Error:</blink> cLogin is already used!");
+			tUser("<blink>Error:</blink> cLogin is already used");
 	}
+	else
+	{
+		//
+		//Mod tUser.cLogin check
+		char cOldLogin[100]={""};
 
+		sprintf(cOldLogin,"%.99s",ForeignKey("tUser","cLabel",uUser));
+		if(strcmp(cOldLogin,cLogin))
+			tUser("<blink>Error:</blink> You can't modify cLogin value");
+	}
+		
 	if(!cEnterPasswd[0] && (!uMod || uClearText))
 		tUser("<blink>Error:</blink> cEnterPasswd is required");
-	
+	else
+	{
+		if((strlen(cEnterPasswd))<5)
+			tUser("<blink>Error:</blink> cEnterPasswd is too short");
+	}
+
 	if(!uProfileName)
 		tUser("<blink>Error:</blink> Must select uProfileName from the drop-down");
+	
+	if(!uMod && !uServer)
+		 tUser("Must select valid initial server");
+
+		
 	
 }//void BasictUserCheck()
 
