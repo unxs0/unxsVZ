@@ -59,6 +59,23 @@ int DatacenterAutonomics(void)
 		mysql_free_result(res);
 	}
 
+	if(!gcDatacenterAutonomics[0])
+	{
+		//TODO define 1 type datacenter
+		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+			" cName='Autonomics' AND tProperty.uKey=%u AND tProperty.uType=1",guDatacenter);
+		mysqlQuery_Err_Exit;
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(gcDatacenterAutonomics,"%.99s",field[0]);
+			sprintf(gcQuery,"gcDatacenterAutonomics=%s",field[0]);
+			logfileLine(gcQuery);
+		}
+		mysql_free_result(res);
+	}
+
+
 	return(0);
 
 }//int DatacenterAutonomics(void)
