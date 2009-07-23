@@ -6,7 +6,7 @@ FILE
 AUTHOR
 	(C) 2009, Gary Wallis for Unixservice USA
 PURPOSE
-	Calculate every 10 seconds autonomic rules.
+	Calculate every 7 seconds autonomic rules.
 	If a rule is triggered take configured action.
 	This file: Start, stop handle signals of autonomics daemon.
 NOTES
@@ -19,6 +19,9 @@ FILE *gEfp;
 MYSQL gMysql;
 char gcLine[256];
 unsigned guDryrun=0;
+char gcNodeInstalledRam[100]={""};
+char gcNodeAutonomics[100]={""};
+char gcDatacenterAutonomics[100]={""};
 char gcHostname[100];
 char gcNodeWarnEmail[100]={""};
 char gcDatacenterWarnEmail[100]={""};
@@ -56,9 +59,13 @@ int main(int iArgc, char *cArgv[])
 			return(300);
         	}
 		//Set signal handler
+		//Exit sigs
 		(void) signal(SIGINT,sighandlerLeave);
 		(void) signal(SIGHUP,sighandlerLeave);
 		(void) signal(SIGTERM,sighandlerLeave);
+		//Cont sigs
+		(void) signal(SIGUSR1,sighandlerReload);
+		(void) signal(SIGUSR2,sighandlerReload);
 	}
 
         mysql_init(&gMysql);
@@ -108,6 +115,22 @@ void sighandlerLeave(int iSig)
         exit(iSig);
 
 }//void sighandlerLeave(int iSig)
+
+
+void sighandlerReload(int iSig)
+{
+	sprintf(gcLine,"interrupted by signal:%d %s",iSig,strsignal(iSig));
+	logfileLine(gcLine);
+	guDryrun=0;
+	gcNodeInstalledRam[0]=0;
+	gcNodeAutonomics[0]=0;
+	gcDatacenterAutonomics[0]=0;
+	gcNodeWarnEmail[0]=0;
+	gcDatacenterWarnEmail[0]=0;
+	guDatacenter=0;
+	guNode=0;
+
+}//void sighandlerReload(int iSig)
 
 
 void logfileLine(char *cLogline)

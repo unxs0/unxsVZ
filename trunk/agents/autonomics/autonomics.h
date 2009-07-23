@@ -12,14 +12,27 @@ NOTES
 
 #include "../../mysqlrad.h"
 //#include <ctype.h>
+char *strsignal(int sig);
+
+
 
 #define ERRLOG "/var/log/unxsvz-autonomics.log"
+#define mysqlQuery_Err_Exit	mysql_query(&gMysql,gcQuery);\
+				if(mysql_errno(&gMysql))\
+				{\
+					logfileLine((char *)mysql_error(&gMysql));\
+					sighandlerLeave(400);\
+				}
+
 
 //global data
 extern FILE *gEfp;
 extern MYSQL gMysql;
 extern char gcLine[];
 extern unsigned guDryrun;
+extern char gcNodeInstalledRam[];
+extern char gcNodeAutonomics[];
+extern char gcDatacenterAutonomics[];
 extern char gcNodeWarnEmail[];
 extern char gcDatacenterWarnEmail[];
 extern char gcHostname[];
@@ -31,11 +44,13 @@ extern unsigned guNode;
 //main.c
 void daemonize(void);
 void sighandlerLeave(int iSig);
+void sighandlerReload(int iSig);
 void logfileLine(char *cLogline);
 
 //datacenter.c
 int DatacenterAutonomics(void);
 //node.c
 int NodeAutonomics(void);
+unsigned iNodeMemConstraints(void);
 //container.c
 int ContainerAutonomics(void);
