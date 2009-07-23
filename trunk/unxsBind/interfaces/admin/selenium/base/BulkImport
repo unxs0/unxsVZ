@@ -57,108 +57,43 @@
 	<td></td>
 </tr>
 <tr>
-	<td>clickAndWait</td>
-	<td>//td[4]/a/b</td>
-	<td></td>
-</tr>
-<tr>
 	<td>type</td>
-	<td>cSearch</td>
-	<td>ns1</td>
+	<td>cMassList</td>
+	<td>uCreateZones=1;<br />cZone=newzone.com;<br />@ A 192.168.6.5<br />www CNAME newzone.com.</td>
 </tr>
 <tr>
 	<td>clickAndWait</td>
-	<td>//input[@type='image']</td>
+	<td>//input[@name='gcFunction' and @value='Bulk Resource Import']</td>
 	<td></td>
 </tr>
 <tr>
-	<td>clickAndWait</td>
-	<td>link=info</td>
+	<td>assertBodyText</td>
+	<td>glob:*uCreateZones=1*</td>
 	<td></td>
 </tr>
 <tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Delete']</td>
+	<td>assertBodyText</td>
+	<td>glob:*2: cZone=(newzone.com)*</td>
 	<td></td>
 </tr>
 <tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Delete Confirm']</td>
+	<td>assertBodyText</td>
+	<td>glob:*2: Added zone newzone.com*</td>
 	<td></td>
 </tr>
 <tr>
-	<td>clickAndWait</td>
-	<td>link=alias</td>
+	<td>assertBodyText</td>
+	<td>glob:*Bulk Resource Record Import ends.*</td>
 	<td></td>
 </tr>
 <tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Delete']</td>
+	<td>assertBodyText</td>
+	<td>glob:*1 of 1 tZone.cZone found.*</td>
 	<td></td>
 </tr>
 <tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Delete Confirm']</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=mailgw</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Delete']</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Delete Confirm']</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=router</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Delete']</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Delete Confirm']</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//td[4]/a/b</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>cSearch</td>
-	<td>0</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//input[@type='image']</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=4</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Delete']</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//input[@name='gcFunction' and @value='Delete Confirm']</td>
+	<td>assertBodyText</td>
+	<td>glob:*2 resource lines found 2 imported*</td>
 	<td></td>
 </tr>
 
