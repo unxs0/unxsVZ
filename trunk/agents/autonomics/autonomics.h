@@ -39,6 +39,11 @@ extern char gcHostname[];
 extern char gcQuery[];
 extern unsigned guDatacenter;
 extern unsigned guNode;
+extern int giAutonomicsPrivPagesWarnRatio;
+extern int giAutonomicsPrivPagesActRatio;
+extern unsigned guWarned;
+extern unsigned guActedOn;
+extern char gcLogKey[];
 
 
 //main.c
@@ -52,5 +57,7 @@ int DatacenterAutonomics(void);
 //node.c
 int NodeAutonomics(void);
 unsigned iNodeMemConstraints(void);
+void Log(char *cMessage);
+void SendPrivPagesEmail(char *cEmail, char *cSubjectPrefix);
 //container.c
 int ContainerAutonomics(void);
