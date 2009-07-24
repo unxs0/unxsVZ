@@ -51,3 +51,49 @@ may provide DNAT/SNAT for the given container service. The iptables rules that\
 provide for this are usually migratable via /etc/vz/conf/ mount/umount scripts.\
 \
 Related terms: cVEID.mount, cVEID.umount
+21	WarningEmail	1	1	1247544704	1	1248441294	Used by autonomics subsystem to warn by set email of approaching limitations and\
+other\
+error or warning conditions that may be configured or use system defaults.\
+\
+<p>\
+Accepted values: Single email or comma delimited list of email addresses.<br>\
+Ex. supportgrp@unixservice.com,joe@hosting.co.uk\
+\
+<p>\
+Scope: Can be set at the Datacenter, node or container level. \
+\
+\
+<p>\
+Related terms: Autonomics-PrivPagesWarnRatio and similar.
+31	Autonomics-PrivPagesActRatio	1	1	1248440829	1	1248441133	Autonomics-PrivPagesActRatio refers to a ratio (a percent ratio but the\
+tProperty value is only set as an integer from 0 to 100 with no % sign) that is\
+used by the autonomics agent daemon.\
+<p>\
+Values: Integer from 0 to 100.\
+<p>\
+Context: Only used for nodes.\
+<p>\
+Other: The action taken will depend on the Autonomics-Type for the node. For\
+example, if the type is <i>Move</i> then the largest privvmpages using container\
+on that node will be migrated live to another hardware node that is below the\
+warning level and setup to receive such containers.\
+\
+<p>\
+Related terms: Autonomics, Autonomics-Type, Autonomics-PrivPagesWarnRatio and\
+WarningEmail.
+41	Autonomics-PrivPagesWarnRatio	1	1	1248441050	1	1248441098	Autonomics-PrivPagesWarnRatio refers to a ratio (a percent ratio but the\
+tProperty value is only set as an integer from 0 to 100 with no % sign) that is\
+used by the autonomics agent daemon.\
+<p>\
+Values: Integer from 0 to 100.\
+<p>\
+Context: Only used for nodes.\
+<p>\
+Other: The action taken will depend on the Autonomics-Type for the node and if\
+the warning emails have been set. Usually when this warning ratio threshold is\
+exceeded a warning email will be sent to both the node and the container warn\
+email addresses.\
+\
+<p>\
+Related terms: Autonomics, Autonomics-Type, Autonomics-PrivPagesActRatio and \
+WarningEmail
