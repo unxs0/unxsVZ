@@ -107,11 +107,11 @@ unsigned iNodeMemConstraints(void)
 	if((fp=fopen("/proc/user_beancounters","r"))==NULL)
 		return(8);
 
-	logfileLine("iNodeMemConstraints() start");
 
 	//For each node container
-	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u AND uDatacenter=%u AND"
-				" uStatus=1",guNode,guDatacenter);
+	//sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u AND uDatacenter=%u AND"
+	//			" uStatus=1",guNode,guDatacenter);
+	sprintf(gcQuery,"SELECT uContainer FROM tContainer");
 	mysqlQuery_Err_Exit;
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
@@ -120,7 +120,8 @@ unsigned iNodeMemConstraints(void)
 		sscanf(field[0],"%u",&uContainer);
 		sprintf(cContainerTag,"%u:  kmemsize",uContainer);
 
-		rewind(fp);
+		rewind(fp);//for each container start from beginning this seems like
+			//it can be optimized.
 		while(fgets(cLine,1024,fp)!=NULL)
 		{
 			cResource[0]=0;
@@ -168,8 +169,9 @@ unsigned iNodeMemConstraints(void)
 					break;
 				}
 			}
-		}//while
+		}//file line while
 	}//SQL while
+	mysql_free_result(res);
 
 	fclose(fp);
 	return(0);
