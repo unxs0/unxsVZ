@@ -61,9 +61,9 @@ int main(int iArgc, char *cArgv[])
 		//Set signal handler
 		//Exit sigs
 		(void) signal(SIGINT,sighandlerLeave);
-		(void) signal(SIGHUP,sighandlerLeave);
 		(void) signal(SIGTERM,sighandlerLeave);
 		//Cont sigs
+		(void) signal(SIGHUP,sighandlerReload);
 		(void) signal(SIGUSR1,sighandlerReload);
 		(void) signal(SIGUSR2,sighandlerReload);
 	}
@@ -119,6 +119,10 @@ void sighandlerLeave(int iSig)
 
 void sighandlerReload(int iSig)
 {
+	//node.c scoped
+	extern int giAutonomicsPrivPagesWarnRatio;
+	extern int giAutonomicsPrivPagesActRatio;
+
 	sprintf(gcLine,"interrupted by signal:%d %s",iSig,strsignal(iSig));
 	logfileLine(gcLine);
 	guDryrun=0;
@@ -127,6 +131,8 @@ void sighandlerReload(int iSig)
 	gcDatacenterAutonomics[0]=0;
 	gcNodeWarnEmail[0]=0;
 	gcDatacenterWarnEmail[0]=0;
+	giAutonomicsPrivPagesWarnRatio=0;
+	giAutonomicsPrivPagesActRatio=0;
 	guDatacenter=0;
 	guNode=0;
 
