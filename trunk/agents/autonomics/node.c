@@ -15,6 +15,13 @@ NOTES
 
 #include "autonomics.h"
 
+int giAutonomicsPrivPagesWarnRatio=0;//default never
+int giAutonomicsPrivPagesActRatio=0;//default never
+
+//This is only temporary per container system must be used. It also must have a reset system.
+unsigned guWarned=0;
+unsigned guActedOn=0;
+
 int NodeAutonomics(void)
 {
 	MYSQL_RES *res;
@@ -29,7 +36,7 @@ int NodeAutonomics(void)
 	{
 		//TODO define 2 type node
 		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
-			" cName='Warning email' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+			" cName='WarningEmail' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
 		mysqlQuery_Err_Exit;
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
@@ -73,11 +80,45 @@ int NodeAutonomics(void)
 		mysql_free_result(res);
 	}
 
+	if(!giAutonomicsPrivPagesWarnRatio)
+	{
+		//TODO define 2 type node
+		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+			" cName='Autonomics-PrivPagesWarnRatio' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+		mysqlQuery_Err_Exit;
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%d",&giAutonomicsPrivPagesWarnRatio);
+			sprintf(gcQuery,"giAutonomicsPrivPagesWarnRatio=%d",giAutonomicsPrivPagesWarnRatio);
+			logfileLine(gcQuery);
+		}
+		mysql_free_result(res);
+	}
+
+	if(!giAutonomicsPrivPagesActRatio)
+	{
+		//TODO define 2 type node
+		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+			" cName='Autonomics-PrivPagesActRatio' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+		mysqlQuery_Err_Exit;
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%d",&giAutonomicsPrivPagesActRatio);
+			sprintf(gcQuery,"giAutonomicsPrivPagesActRatio=%d",giAutonomicsPrivPagesActRatio);
+			logfileLine(gcQuery);
+		}
+		mysql_free_result(res);
+	}
+
 	if(gcNodeInstalledRam[0] && gcNodeAutonomics[0]=='Y')
 	{
 		if(iNodeMemConstraints())
 		{
 			logfileLine("iNodeMemConstraints() error");
+			//We locally turn off autonomics for this node until
+			//the error is fixed. Or the daemon is reloaded via SIGHUP
 			gcNodeAutonomics[0]='N';
 		}
 	}
@@ -99,6 +140,7 @@ unsigned iNodeMemConstraints(void)
 	char cResource[64];
 	unsigned uContainer=0;
 	long unsigned luInstalledRam=0;
+	float fPrivPagesRatio;
 
 	sscanf(gcNodeInstalledRam,"%lu",&luInstalledRam);
 	if(!luInstalledRam)
@@ -162,10 +204,46 @@ unsigned iNodeMemConstraints(void)
 			{
 				if(!strcmp(cResource,"privvmpages"))
 				{
-					sprintf(gcQuery,"uContainer=%u %s %lu/%lu ratio=%2.2f",
-							uContainer,cResource,luMaxheld,luInstalledRam,
-							(float) luMaxheld/luInstalledRam * 100.0);
-					logfileLine(gcQuery);
+
+					fPrivPagesRatio=(float) luMaxheld/luInstalledRam * 100.0;
+
+					if(giAutonomicsPrivPagesWarnRatio &&
+						fPrivPagesRatio>=(float)giAutonomicsPrivPagesWarnRatio)
+					{
+
+						if(!guWarned)
+						{
+							//debug only
+							sprintf(gcQuery,"warn uContainer=%u %s %lu/%lu ratio=%2.2f",
+								uContainer,cResource,luMaxheld,
+								luInstalledRam,fPrivPagesRatio);
+							logfileLine(gcQuery);
+							guWarned=1;
+						}
+					}
+					else
+					{
+						guWarned=0;
+					}
+
+					if(giAutonomicsPrivPagesActRatio &&
+						fPrivPagesRatio>=(float)giAutonomicsPrivPagesActRatio)
+					{
+						if(!guActedOn)
+						{
+							//debug only
+							sprintf(gcQuery,"act uContainer=%u %s %lu/%lu ratio=%2.2f",
+								uContainer,cResource,luMaxheld,
+								luInstalledRam,fPrivPagesRatio);
+							logfileLine(gcQuery);
+							guActedOn=1;
+						}
+					}
+					else
+					{
+						guActedOn=0;
+					}
+
 					break;
 				}
 			}

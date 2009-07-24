@@ -42,7 +42,7 @@ int DatacenterAutonomics(void)
 	{
 		//TODO define 1 type datacenter
 		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
-			" cName='Warning email' AND tProperty.uKey=%u AND tProperty.uType=1",guDatacenter);
+			" cName='WarningEmail' AND tProperty.uKey=%u AND tProperty.uType=1",guDatacenter);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{

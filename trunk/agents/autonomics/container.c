@@ -24,7 +24,7 @@ int ContainerAutonomics(void)
 	{
 		//TODO define 3 type container
 		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
-			" cName='Warning email' AND tProperty.uKey=%u AND tProperty.uType=3",uContainer);
+			" cName='WarningEmail' AND tProperty.uKey=%u AND tProperty.uType=3",uContainer);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
