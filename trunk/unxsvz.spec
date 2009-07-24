@@ -1,7 +1,7 @@
 Summary: unxsVZ (CentOS5 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: unxsvz
 Version: 2.0
-Release: 1
+Release: 2
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsvz-2.0.tar.gz
@@ -9,7 +9,7 @@ URL: http://openisp.net/openisp/unxsVZ
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: mysql >= 5.0.45, httpd, mod_ssl, ovzkernel, vzctl, vzdump, cstream
+Requires: mysql >= 5.0.45, httpd, mod_ssl, ovzkernel, vzctl, vzdump, cstream, unxsadmin
 
 %description
 unxsVZ is a multiple datacenter, multiple hardware node, OpenVZ
@@ -40,10 +40,7 @@ cd $RPM_BUILD_DIR
 make install
 cd agents/ubc
 make install
-cd ../../images
-mkdir -p /var/www/html/images/
-cp *.gif /var/www/html/images/
-cd ../data
+cd ../../data
 mkdir -p /usr/local/share/unxsVZ/data/
 cp *.txt /usr/local/share/unxsVZ/data/
 cd ../tools/rrdtool/
@@ -57,19 +54,16 @@ cd $RPM_BUILD_DIR
 %files
 %doc INSTALL LICENSE
 /usr/sbin/unxsUBC
-/var/www/cgi-bin/unxsVZ.cgi
-/var/www/html/images/calendar.gif
-/var/www/html/images/hairline.gif
-/var/www/html/images/left.gif
-/var/www/html/images/left_on.gif
-/var/www/html/images/right.gif
-/var/www/html/images/right_last.gif
-/var/www/html/images/right_on.gif
+/var/www/unxs/cgi-bin/unxsVZ.cgi
 %dir /usr/local/share/unxsVZ
 %config(noreplace) /usr/local/sbin/vz_traffic_log.sh
 %dir /var/www/html/traffic
 
 %changelog
+* Fri Jul 24 2009 Hugo Urquiza <support2@unixservice.com>
+- Updated spec file for correct rpm package building
+* Fri Jul 24 2009 Hugo Urquiza <support2@unixservice.com>
+- Updated spec file for correct rpm package building..
 * Mon Apr 11 2009 Gary Wallis <support@unixservice.com> 
 - Fixed perm install error for vz_traffic_log.sh
 * Mon Apr 11 2009 Gary Wallis <support@unixservice.com> 
