@@ -15,23 +15,17 @@ NOTES
 
 #include "autonomics.h"
 
-int giAutonomicsPrivPagesWarnRatio=0;//default never
-int giAutonomicsPrivPagesActRatio=0;//default never
-
-//This is only temporary per container system must be used. It also must have a reset system.
-unsigned guWarned=0;
-unsigned guActedOn=0;
-
 int NodeAutonomics(void)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	//Load pertinent system settings but only every so often
 	
 	if(!guNode)
 		return(0);
 
+	//Load pertinent system settings but only every so often
+	//If these change a SIGHUP must be issued to this daemon
 	if(!gcNodeWarnEmail[0])
 	{
 		//TODO define 2 type node
@@ -141,6 +135,7 @@ unsigned iNodeMemConstraints(void)
 	unsigned uContainer=0;
 	long unsigned luInstalledRam=0;
 	float fPrivPagesRatio;
+	float fAllNodeContainerMaxheld=0.0;
 
 	sscanf(gcNodeInstalledRam,"%lu",&luInstalledRam);
 	if(!luInstalledRam)
@@ -149,11 +144,16 @@ unsigned iNodeMemConstraints(void)
 	if((fp=fopen("/proc/user_beancounters","r"))==NULL)
 		return(8);
 
-
 	//For each node container
-	//sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u AND uDatacenter=%u AND"
-	//			" uStatus=1",guNode,guDatacenter);
-	sprintf(gcQuery,"SELECT uContainer FROM tContainer");
+	//Main loop. TODO use defines for tStatus.uStatus values.
+	//For efficiency do not search file and parse for containers that should not
+	//be running (according to unxsVZ that is ;)).
+	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u"
+				" AND uDatacenter=%u"
+				" AND uStatus!=11"//Initial Setup
+				" AND uStatus!=6"//Awating Activation
+				" AND uStatus!=31"//Stopped
+						,guNode,guDatacenter);
 	mysqlQuery_Err_Exit;
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
@@ -173,6 +173,7 @@ unsigned iNodeMemConstraints(void)
 			luLimit=0;
 			luFailcnt=0;
 
+			//The first line of a container section has a diff format
 			if(!uStart)
 			{
 				if(strstr(cLine,cContainerTag))
@@ -185,74 +186,124 @@ unsigned iNodeMemConstraints(void)
 	
 			if(uStart==1)
 			{
-				sprintf(cResource,"kmemsize");
-				sscanf(cLine,"%*u:  kmemsize %lu %lu %lu %lu %lu",
-					&luHeld,&luMaxheld,&luBarrier,&luLimit,&luFailcnt);
 				uStart++;
 			}
 			else if(uStart)
 			{
-				sscanf(cLine,"%s %lu %lu %lu %lu %lu",
-					cResource,
-					&luHeld,&luMaxheld,&luBarrier,&luLimit,&luFailcnt);
+				sscanf(cLine,"%s %*u %lu %*u %*u %*u",
+							cResource,&luMaxheld);
 				if(!strcmp("dummy",cResource))
 					continue;
-				uStart++;
-			}
-
-			if(uStart)
-			{
 				if(!strcmp(cResource,"privvmpages"))
 				{
+					//Summation of all container privvmpages max held
+					//for this node
+					fAllNodeContainerMaxheld=+luMaxheld;
 
-					fPrivPagesRatio=(float) luMaxheld/luInstalledRam * 100.0;
+					//debug only
+					//sprintf(gcQuery,"uContainer=%u fAllNodeContainerMaxheld=%2.2f",
+					//				uContainer,fAllNodeContainerMaxheld);
+					//logfileLine(gcQuery);
 
-					if(giAutonomicsPrivPagesWarnRatio &&
-						fPrivPagesRatio>=(float)giAutonomicsPrivPagesWarnRatio)
-					{
-
-						if(!guWarned)
-						{
-							//debug only
-							sprintf(gcQuery,"warn uContainer=%u %s %lu/%lu ratio=%2.2f",
-								uContainer,cResource,luMaxheld,
-								luInstalledRam,fPrivPagesRatio);
-							logfileLine(gcQuery);
-							guWarned=1;
-						}
-					}
-					else
-					{
-						guWarned=0;
-					}
-
-					if(giAutonomicsPrivPagesActRatio &&
-						fPrivPagesRatio>=(float)giAutonomicsPrivPagesActRatio)
-					{
-						if(!guActedOn)
-						{
-							//debug only
-							sprintf(gcQuery,"act uContainer=%u %s %lu/%lu ratio=%2.2f",
-								uContainer,cResource,luMaxheld,
-								luInstalledRam,fPrivPagesRatio);
-							logfileLine(gcQuery);
-							guActedOn=1;
-						}
-					}
-					else
-					{
-						guActedOn=0;
-					}
-
-					break;
+					break;//move on to next container
 				}
 			}
 		}//file line while
 	}//SQL while
 	mysql_free_result(res);
-
 	fclose(fp);
+
+	//
+	//Start use data obtained to take node based action section
+
+	//Start max held privvmpages vs. installed node ram ratio action section
+	fPrivPagesRatio=fAllNodeContainerMaxheld/(float)luInstalledRam * 100.0;
+	//Act 
+	if(giAutonomicsPrivPagesActRatio &&
+		fPrivPagesRatio>=(float)giAutonomicsPrivPagesActRatio)
+	{
+		if(!guActedOn)
+		{
+			sprintf(gcQuery,"act-ratio=%2.2f",fPrivPagesRatio);
+			logfileLine(gcQuery);
+
+			//Send warning email via a forked process
+			if(gcNodeWarnEmail[0])
+				SendPrivPagesEmail(gcNodeWarnEmail,"Act");
+			//Create a system message log entry
+			sprintf(gcQuery,"act-ratio=%2.2f node=%u datacenter=%u",
+					fPrivPagesRatio,guNode,guDatacenter);
+			Log(gcQuery);
+
+			guActedOn=1;
+		}
+	}
+	else if(giAutonomicsPrivPagesActRatio)
+	{
+		guActedOn=0;
+	}
+	//Warn if not acted on already
+	if(!guActedOn && giAutonomicsPrivPagesWarnRatio &&
+		fPrivPagesRatio>=(float)giAutonomicsPrivPagesWarnRatio)
+	{
+
+		if(!guWarned)
+		{
+			sprintf(gcQuery,"warn-ratio=%2.2f",fPrivPagesRatio);
+			logfileLine(gcQuery);
+
+			//Send warning email via a forked process
+			if(gcNodeWarnEmail[0])
+				SendPrivPagesEmail(gcNodeWarnEmail,"Warn");
+			//Create a system message log entry
+			sprintf(gcQuery,"warn-ratio=%2.2f node=%u datacenter=%u",
+					fPrivPagesRatio,guNode,guDatacenter);
+			Log(gcQuery);
+			guWarned=1;
+		}
+	}
+	else if(!guActedOn && giAutonomicsPrivPagesWarnRatio)
+	{
+		guWarned=0;
+	}
+	//End use privvmpages ratio action section
+
+	//End use data take node based action section
+	//
+
 	return(0);
 
 }//unsigned iNodeMemConstraints(void)
 
+
+void Log(char *cMessage)
+{
+        sprintf(gcQuery,"INSERT INTO tLog SET cLabel='autonomics',uLogType=4,uPermLevel=1,uLoginClient=1,cLogin='autonomics',cHost='daemon',cMessage='%s',cServer='%s',cHash=MD5(CONCAT('1','1','autonomics','daemon','%s','%s',UNIX_TIMESTAMP(NOW()),'%s')),uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cMessage,
+			gcHostname,
+			cMessage,
+			gcHostname,
+			gcLogKey);
+	//mysqlQuery_Err_Exit;
+
+}//void Log(char *cMessage)
+
+
+void SendPrivPagesEmail(char *cEmail, char *cSubjectPrefix)
+{
+	switch(fork())
+	{
+		default:
+			return;
+
+		case -1:
+			logfileLine("SendPrivPagesEmail() fork failed");
+			_exit(0);
+
+		case 0:
+			system("touch /tmp/delme.SendPrivPagesEmail");
+			_exit(0);
+		break;
+	}
+
+}//void SendPrivPagesEmail(char *cEmail, char *cSubjectPrefix)

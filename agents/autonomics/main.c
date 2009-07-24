@@ -13,6 +13,7 @@ NOTES
 */
 
 #include "autonomics.h"
+#include <sys/wait.h>
 
 //global data storage
 FILE *gEfp;
@@ -25,9 +26,17 @@ char gcDatacenterAutonomics[100]={""};
 char gcHostname[100];
 char gcNodeWarnEmail[100]={""};
 char gcDatacenterWarnEmail[100]={""};
-char gcQuery[1024];
+char gcQuery[2048];
+char gcLogKey[100]={"Kjhsdfjkui9345kijhsdfiuh43908khjlkjh"};
 unsigned guDatacenter=0;
 unsigned guNode=0;
+int giAutonomicsPrivPagesWarnRatio=0;//default never
+int giAutonomicsPrivPagesActRatio=0;//default never
+unsigned guWarned=0;
+unsigned guActedOn=0;
+pid_t gpidMain;
+
+void sighandlerChild(int iSig);
 
 int main(int iArgc, char *cArgv[])
 {
@@ -66,6 +75,7 @@ int main(int iArgc, char *cArgv[])
 		(void) signal(SIGHUP,sighandlerReload);
 		(void) signal(SIGUSR1,sighandlerReload);
 		(void) signal(SIGUSR2,sighandlerReload);
+		(void) signal(SIGCHLD,sighandlerChild);
 	}
 
         mysql_init(&gMysql);
@@ -80,9 +90,10 @@ int main(int iArgc, char *cArgv[])
 		}
 	}
 
+	gpidMain=getpid();
 	gethostname(gcHostname,99);
-	sprintf(gcLine,"%s started. gcHostname=%s, guDryrun=%u",
-			cArgv[0],gcHostname,guDryrun);
+	sprintf(gcLine,"%s started. gcHostname=%s, guDryrun=%u, pid=%u",
+			cArgv[0],gcHostname,guDryrun,gpidMain);
 	logfileLine(gcLine);
 
 	while(1)
@@ -113,6 +124,23 @@ void sighandlerLeave(int iSig)
 	mysql_close(&gMysql);
 
         exit(iSig);
+
+}//void sighandlerLeave(int iSig)
+
+
+void sighandlerChild(int iSig)
+{
+	int iStatus;
+	pid_t pid;
+
+	pid=getpid();
+	if(pid==gpidMain)
+	{
+		sprintf(gcLine,"interrupted by child signal:%d",iSig);
+		logfileLine(gcLine);
+
+		wait(&iStatus);
+	}
 
 }//void sighandlerLeave(int iSig)
 
