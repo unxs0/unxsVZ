@@ -129,6 +129,7 @@ unsigned iNodeMemConstraints(void)
 	FILE *fp;
 	char cLine[256];
 	char cContainerTag[64];
+	char cMessage[100];
 	register unsigned uStart=0;
 	unsigned long luHeld,luMaxheld,luBarrier,luLimit,luFailcnt;
 	char cResource[64];
@@ -231,9 +232,9 @@ unsigned iNodeMemConstraints(void)
 			if(gcNodeWarnEmail[0])
 				SendPrivPagesEmail(gcNodeWarnEmail,"Act");
 			//Create a system message log entry
-			sprintf(gcQuery,"act-ratio=%2.2f node=%u datacenter=%u",
+			sprintf(cMessage,"act-ratio=%2.2f node=%u datacenter=%u",
 					fPrivPagesRatio,guNode,guDatacenter);
-			Log(gcQuery);
+			Log(cMessage);
 
 			guActedOn=1;
 		}
@@ -256,9 +257,9 @@ unsigned iNodeMemConstraints(void)
 			if(gcNodeWarnEmail[0])
 				SendPrivPagesEmail(gcNodeWarnEmail,"Warn");
 			//Create a system message log entry
-			sprintf(gcQuery,"warn-ratio=%2.2f node=%u datacenter=%u",
+			sprintf(cMessage,"warn-ratio=%2.2f node=%u datacenter=%u",
 					fPrivPagesRatio,guNode,guDatacenter);
-			Log(gcQuery);
+			Log(cMessage);
 			guWarned=1;
 		}
 	}
@@ -284,7 +285,7 @@ void Log(char *cMessage)
 			cMessage,
 			gcHostname,
 			gcLogKey);
-	//mysqlQuery_Err_Exit;
+	mysqlQuery_Err_Exit;
 
 }//void Log(char *cMessage)
 
