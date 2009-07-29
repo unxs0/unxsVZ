@@ -22,6 +22,10 @@ static char cNameLabel[100]={""};
 static char cParam1Label[100]={""};
 static char cParam2Label[100]={""};
 static char cParam2[100]={""};
+static char cParam3[100]={""};
+static char cParam4[100]={""};
+static char cParam3Label[100]={""};
+static char cParam4Label[100]={""};
 static char cComment[255]={""};
 static unsigned uOwner=0;
 static unsigned uNameServer=0;
@@ -279,8 +283,10 @@ void LoadDeletedResource(unsigned uRowId)
 	sprintf(gcQuery,"SELECT tDeletedResource.uDeletedResource,tDeletedResource.uZone,"
 			"tDeletedResource.cName,tDeletedResource.uTTL,tRRType.cLabel,"
 			"tDeletedResource.cParam1,tDeletedResource.cParam2,"
+			"tDeletedResource.cParam3,tDeletedResource.cParam4,"
 			"tDeletedResource.cComment,tDeletedResource.uOwner,"
 			"tRRType.cParam1Label,tRRType.cParam2Label,tRRType.cNameLabel,"
+			"tRRType.cParam3Label,tRRType.cParam4Label,"
 			"tZone.cZone,tZone.uNSSet FROM tDeletedResource,tRRType,tZone "
 			"WHERE tRRType.uRRType=tDeletedResource.uRRType AND "
 			"tZone.uZone=tDeletedResource.uZone AND tDeletedResource.uDeletedResource=%u",uRowId);
@@ -298,13 +304,17 @@ void LoadDeletedResource(unsigned uRowId)
 		sprintf(cRRType,"%.99s",field[4]);
 		sprintf(cParam1,"%.99s",field[5]);
 		sprintf(cParam2,"%.99s",field[6]);
-		sprintf(cComment,"%255s",field[7]);
-		sscanf(field[8],"%u",&uOwner);
-		sprintf(cParam1Label,"%.31s",field[9]);
-		sprintf(cParam2Label,"%.31s",field[10]);
-		sprintf(cNameLabel,"%.31s",field[11]);
-		sprintf(gcZone,"%.255s",field[12]);
-		sscanf(field[13],"%u",&uNameServer);
+		sprintf(cParam3,"%.99s",field[6]);
+		sprintf(cParam4,"%.99s",field[7]);
+		sprintf(cComment,"%255s",field[8]);
+		sscanf(field[9],"%u",&uOwner);
+		sprintf(cParam1Label,"%.31s",field[10]);
+		sprintf(cParam2Label,"%.31s",field[11]);
+		sprintf(cNameLabel,"%.31s",field[12]);
+		sprintf(cParam3Label,"%.31s",field[13]);
+		sprintf(cParam4Label,"%.31s",field[14]);
+		sprintf(gcZone,"%.255s",field[15]);
+		sscanf(field[16],"%u",&uNameServer);
 	}
 	else
 		gcMessage="<blink>Error: </blink>Could not load record";
