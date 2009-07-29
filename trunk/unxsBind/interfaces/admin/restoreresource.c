@@ -227,16 +227,8 @@ void htmlRestoreResourcePage(char *cTitle, char *cTemplateName)
 			template.cpValue[15]=cParam1Label;
 			
 			template.cpName[16]="cMetaParam2";
-			if(strcmp(cParam2Label,"Not Used"))
-			{
-				char cBuffer[1024]={""};
-sprintf(cBuffer,"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\"><strong>%s</strong></a>\n</td><td><input type=text name=cParam2 value='%s' size=40 maxlength=255 class=type_fields_off disabled></td></tr>\n",cParam2Label,cParam2Label,cParam2);
-				template.cpValue[16]=cBuffer;
-			}
-			else
-			{
-				template.cpValue[16]="";
-			}
+			template.cpValue[16]=""; //delme
+			
 			template.cpName[17]="uTTL";
 			template.cpValue[17]=cuTTL;
 

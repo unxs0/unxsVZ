@@ -197,6 +197,7 @@ void ProcessRestoreResourceVars(pentry entries[], int x);
 void htmlRestoreResource(char *cuZone);
 void htmlRestoreResourcePage(char *cTitle, char *cTemplateName);
 void RestoreResourceCommands(pentry entries[], int x);
+void funcRRMetaParam(FILE *fp);
 
 //dashboard.c
 void htmlDashBoard(void);
