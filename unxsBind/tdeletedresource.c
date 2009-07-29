@@ -29,6 +29,10 @@ static char cuRRTypePullDown[256]={""};
 static char cParam1[256]={""};
 //cParam2: Parameter 2 field
 static char cParam2[256]={""};
+//cParam3: Parameter 3 field
+static char cParam3[256]={""};
+//cParam4: Parameter 4 field
+static char cParam4[256]={""};
 //cComment: Optional comment
 static char *cComment={""};
 //uOwner: Record owner
@@ -45,7 +49,7 @@ static long uModDate=0;
 
 
 
-#define VAR_LIST_tDeletedResource "tDeletedResource.uDeletedResource,tDeletedResource.uZone,tDeletedResource.cName,tDeletedResource.uTTL,tDeletedResource.uRRType,tDeletedResource.cParam1,tDeletedResource.cParam2,tDeletedResource.cComment,tDeletedResource.uOwner,tDeletedResource.uCreatedBy,tDeletedResource.uCreatedDate,tDeletedResource.uModBy,tDeletedResource.uModDate"
+#define VAR_LIST_tDeletedResource "tDeletedResource.uDeletedResource,tDeletedResource.uZone,tDeletedResource.cName,tDeletedResource.uTTL,tDeletedResource.uRRType,tDeletedResource.cParam1,tDeletedResource.cParam2,tDeletedResource.cParam3,tDeletedResource.cParam4,tDeletedResource.cComment,tDeletedResource.uOwner,tDeletedResource.uCreatedBy,tDeletedResource.uCreatedDate,tDeletedResource.uModBy,tDeletedResource.uModDate"
 
  //Local only
 void Insert_tDeletedResource(void);
@@ -358,6 +362,32 @@ void tDeletedResourceInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cParam2 value=\"%s\">\n",EncodeDoubleQuotes(cParam2));
 	}
+//cParam3
+	OpenRow(LANG_FL_tResource_cParam3,"black");
+	printf("<input title='%s' type=text name=cParam3 value=\"%s\" size=80 maxlength=255 "
+,LANG_FT_tResource_cParam3,EncodeDoubleQuotes(cParam3));
+	if(guPermLevel>=0 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cParam3 value=\"%s\">\n",EncodeDoubleQuotes(cParam3));
+	}
+//cParam4
+	OpenRow(LANG_FL_tResource_cParam4,"black");
+	printf("<input title='%s' type=text name=cParam4 value=\"%s\" size=80 maxlength=255 "
+,LANG_FT_tResource_cParam4,EncodeDoubleQuotes(cParam4));
+	if(guPermLevel>=0 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cParam4 value=\"%s\">\n",EncodeDoubleQuotes(cParam4));
+	}
 //cComment
 	OpenRow(LANG_FL_tDeletedResource_cComment,"black");
 	printf("<textarea title='%s' cols=40 wrap=hard rows=3 name=cComment "
@@ -493,7 +523,7 @@ void Insert_tDeletedResource(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uDeletedResource
 			,uZone
 			,TextAreaSave(cName)
@@ -501,6 +531,8 @@ void Insert_tDeletedResource(void)
 			,uRRType
 			,TextAreaSave(cParam1)
 			,TextAreaSave(cParam2)
+			,TextAreaSave(cParam3)
+			,TextAreaSave(cParam4)
 			,TextAreaSave(cComment)
 			,uOwner
 			,uCreatedBy
@@ -515,7 +547,7 @@ void Update_tDeletedResource(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tDeletedResource SET uDeletedResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tDeletedResource SET uDeletedResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uDeletedResource
 			,uZone
 			,TextAreaSave(cName)
@@ -523,6 +555,8 @@ void Update_tDeletedResource(char *cRowid)
 			,uRRType
 			,TextAreaSave(cParam1)
 			,TextAreaSave(cParam2)
+			,TextAreaSave(cParam3)
+			,TextAreaSave(cParam4)
 			,TextAreaSave(cComment)
 			,uModBy
 			,cRowid);
