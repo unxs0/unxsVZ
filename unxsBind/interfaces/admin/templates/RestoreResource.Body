@@ -189,7 +189,7 @@ To go back to the zone you were working with, just click on the Zones tab.
 		</td>
 	</tr>
 	
-	{{cMetaParam2}}
+	{{funcRRMetaParam}}
 	<tr>
 	<td>
 		<a class=inputLink href="#" onClick="javascript:window.open('{{iCGI}}?gcPage=Glossary&cLabel=Resource Comment','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')"><strong>Resource Comment</strong></a></td>

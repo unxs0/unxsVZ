@@ -524,6 +524,9 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcMetaParam(fp);
 	else if(!strcmp(cFunction,"funcNSSetMembers"))
 		funcNSSetMembers(fp);
+	else if(!strcmp(cFunction,"funcRRMetaParam"))
+		funcRRMetaParam(fp);
+
 
 }//void AppFunctions(FILE *fp,char *cFunction)
 
