@@ -103,7 +103,7 @@ void RestoreResourceCommands(pentry entries[], int x)
 			time(&luClock);
 			if(AdminSubmitJob("Modify",uNameServer,gcZone,0,luClock))
 				htmlPlainTextError(mysql_error(&gMysql));
-			gcMessage="RR restored ok.";
+			gcMessage="RR restored OK.";
 			htmlRestoreResource("");
 	
 		}
