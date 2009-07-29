@@ -2376,7 +2376,7 @@ void SaveResource(void)
 
 	sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%u',"
 			"uZone='%u',cName='%s',uTTL='%s',uRRType='%u',cParam1='%s',"
-			"cParam2='%s',cComment='%s',uOwner='%u',uCreatedBy=1,"
+			"cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner='%u',uCreatedBy=1,"
 			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uResource,
 			uZone,
@@ -2385,6 +2385,8 @@ void SaveResource(void)
 			uRRType,
 			TextAreaSave(cParam1),
 			TextAreaSave(cParam2),
+			TextAreaSave(cParam3),
+			TextAreaSave(cParam4),
 			TextAreaSave(cComment),
 			uGetZoneOwner(uZone));
 	mysql_query(&gMysql,gcQuery);
