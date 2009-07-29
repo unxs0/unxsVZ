@@ -276,7 +276,14 @@ void LoadDeletedResource(unsigned uRowId)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	
-	sprintf(gcQuery,"SELECT tDeletedResource.uDeletedResource,tDeletedResource.uZone,tDeletedResource.cName,tDeletedResource.uTTL,tRRType.cLabel,tDeletedResource.cParam1,tDeletedResource.cParam2,tDeletedResource.cComment,tDeletedResource.uOwner,tRRType.cParam1Label,tRRType.cParam2Label,tRRType.cNameLabel,tZone.cZone,tZone.uNameServer FROM tDeletedResource,tRRType,tZone WHERE tRRType.uRRType=tDeletedResource.uRRType AND tZone.uZone=tDeletedResource.uZone AND tDeletedResource.uDeletedResource=%u",uRowId);
+	sprintf(gcQuery,"SELECT tDeletedResource.uDeletedResource,tDeletedResource.uZone,"
+			"tDeletedResource.cName,tDeletedResource.uTTL,tRRType.cLabel,"
+			"tDeletedResource.cParam1,tDeletedResource.cParam2,"
+			"tDeletedResource.cComment,tDeletedResource.uOwner,"
+			"tRRType.cParam1Label,tRRType.cParam2Label,tRRType.cNameLabel,"
+			"tZone.cZone,tZone.uNSSet FROM tDeletedResource,tRRType,tZone "
+			"WHERE tRRType.uRRType=tDeletedResource.uRRType AND "
+			"tZone.uZone=tDeletedResource.uZone AND tDeletedResource.uDeletedResource=%u",uRowId);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
