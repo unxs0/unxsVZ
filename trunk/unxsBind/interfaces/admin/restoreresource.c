@@ -396,3 +396,51 @@ void RestoreUpdateSerialNum(unsigned uZone)
 
 
 
+void funcRRMetaParam(FILE *fp)
+{
+	//This function will display the extra parameter inputs based on RRType
+
+	if(!strcmp(cRRType,"SRV"))
+	{
+		fprintf(fp,
+			"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s',"
+			"'Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\">"
+			"<strong>%s</strong></a>\n</td>"
+			"<td><input type=text name=cParam2 value='%s' size=40 maxlength=255 class=type_fields_off></td>"
+			"</tr>\n"
+			"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s',"
+			"'Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\">"
+			"<strong>%s</strong></a>\n</td>"
+			"<td><input type=text name=cParam3 value='%s' size=40 maxlength=255 class=type_fields_off></td>"
+			"</tr>\n"
+			"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s',"
+			"'Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\">"
+			"<strong>%s</strong></a>\n</td>"
+			"<td><input type=text name=cParam4 value='%s' size=40 maxlength=255 class=type_fields_off></td>"
+			"</tr>\n",
+			cParam2Label
+			,cParam2Label
+			,cParam2
+			,cParam3Label
+			,cParam3Label
+			,cParam3
+			,cParam4Label
+			,cParam4Label
+			,cParam4
+			);
+	}
+	else if(strcmp(cRRType,"SRV") && strcmp(cParam2Label,"Not Used"))
+	{
+		fprintf(fp,"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s',"
+			"'Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\">"
+			"<strong>%s</strong></a>\n</td><td><input type=text name=cParam2 value='%s' size=40 "
+			"maxlength=255 class=type_fields_off></td></tr>\n",
+			cParam2Label
+			,cParam2Label
+			,cParam2
+       			);
+	}
+
+}//void funcMetaParam(FILE *fp)
+
+
