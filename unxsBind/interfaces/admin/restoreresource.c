@@ -317,7 +317,10 @@ void LoadDeletedResource(unsigned uRowId)
 void RestoreRR(unsigned uRowId)
 {
 	strcat(cComment,"- restored");
-	sprintf(gcQuery,"INSERT INTO tResource SET uResource='%u',uZone='%u',cName='%s',uRRType='%u',uTTL='%s',cParam1='%s',cParam2='%s',cComment='%s',uOwner='%u',uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tResource SET uResource='%u',uZone='%u',"
+			"cName='%s',uRRType='%u',uTTL='%s',cParam1='%s',"
+			"cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',"
+			"uOwner='%u',uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uDeletedResource
 			,uDeletedZone
 			,cName
@@ -325,6 +328,8 @@ void RestoreRR(unsigned uRowId)
 			,cuTTL
 			,cParam1
 			,cParam2
+			,cParam3
+			,cParam4
 			,cComment
 			,uOwner
 			,guLoginClient
