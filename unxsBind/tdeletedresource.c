@@ -214,12 +214,14 @@ void tDeletedResource(const char *cResult)
 		sscanf(field[4],"%u",&uRRType);
 		sprintf(cParam1,"%.255s",field[5]);
 		sprintf(cParam2,"%.255s",field[6]);
-		cComment=field[7];
-		sscanf(field[8],"%u",&uOwner);
-		sscanf(field[9],"%u",&uCreatedBy);
-		sscanf(field[10],"%lu",&uCreatedDate);
-		sscanf(field[11],"%u",&uModBy);
-		sscanf(field[12],"%lu",&uModDate);
+		sprintf(cParam3,"%.255s",field[7]);
+		sprintf(cParam4,"%.255s",field[8]);
+		cComment=field[9];
+		sscanf(field[10],"%u",&uOwner);
+		sscanf(field[11],"%u",&uCreatedBy);
+		sscanf(field[12],"%lu",&uCreatedDate);
+		sscanf(field[13],"%u",&uModBy);
+		sscanf(field[14],"%lu",&uModDate);
 
 		}
 
@@ -338,7 +340,7 @@ void tDeletedResourceInput(unsigned uMode)
 		tTablePullDown("tRRType;cuRRTypePullDown","cLabel","cLabel",uRRType,0);
 //cParam1
 	OpenRow(LANG_FL_tDeletedResource_cParam1,EmptyString(cParam1));
-	printf("<input title='%s' type=text name=cParam1 value=\"%s\" size=40 maxlength=255 "
+	printf("<input title='%s' type=text name=cParam1 value=\"%s\" size=80 maxlength=255 "
 ,LANG_FT_tDeletedResource_cParam1,EncodeDoubleQuotes(cParam1));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -351,7 +353,7 @@ void tDeletedResourceInput(unsigned uMode)
 	}
 //cParam2
 	OpenRow(LANG_FL_tDeletedResource_cParam2,"black");
-	printf("<input title='%s' type=text name=cParam2 value=\"%s\" size=40 maxlength=255 "
+	printf("<input title='%s' type=text name=cParam2 value=\"%s\" size=80 maxlength=255 "
 ,LANG_FT_tDeletedResource_cParam2,EncodeDoubleQuotes(cParam2));
 	if(guPermLevel>=0 && uMode)
 	{
