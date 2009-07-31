@@ -2263,6 +2263,12 @@ void ZeroSystem(void)
         	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 	}
+	
+	//tResourceTest not in cTableList, is not supposed to be accesed
+	sprintf(gcQuery,"TRUNCATE tResourceTest");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 
 	//Only valid for new rpm layout
 	for(i=0;cInitTableList[i][0];i++)
