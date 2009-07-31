@@ -46,6 +46,9 @@
 <tr><td><a href="RR-HINFO2">RR-HINFO2</a></td></tr>
 <tr><td><a href="RR-SRV0">RR-SRV0</a></td></tr>
 <tr><td><a href="BulkImport">BulkImport</a></td></tr>
+<tr><td><a href="RestoreRR">RestoreRR</a></td></tr>
+<tr><td><a href="RestoreZone">RestoreZone</a></td></tr>
+<tr><td><a href="RestoreSRV">RestoreSRV</a></td></tr>
 </tbody></table>
 </body>
 </html>
