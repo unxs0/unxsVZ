@@ -18,7 +18,7 @@
 </tr>
 <tr>
 	<td>type</td>
-	<td>document.forms[0].elements[13]</td>
+	<td>document.forms[0].elements[12]</td>
 	<td>65535</td>
 </tr>
 <tr>
@@ -33,7 +33,7 @@
 </tr>
 <tr>
 	<td>type</td>
-	<td>document.forms[0].elements[13]</td>
+	<td>document.forms[0].elements[12]</td>
 	<td>604800</td>
 </tr>
 <tr>
