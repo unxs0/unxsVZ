@@ -57,6 +57,8 @@ static time_t uModDate=0;
 
 extern unsigned guBrowserFirefox;//main.c
 void EncryptPasswdWithSalt(char *cPasswd,char *cSalt);//main.c
+unsigned EmailExists(char *cEmail);//customercontact.c
+
 //
 //Local only
 unsigned ValidateAdminUserInput(void);
@@ -167,41 +169,14 @@ void AdminUserCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Confirm New"))
 		{
-			MYSQL_RES *res;
-			SelectAdminUser(cClientName,0);
-                        res=mysql_store_result(&gMysql);
-
-			if(mysql_num_rows(res))
-			{
-				cClientNameStyle="type_fields_req";
-				gcMessage="Client already exists";
-				sprintf(gcNewStep,"Confirm ");
-				gcInputStatus[0]=0;				
-				htmlAdminUser();
-			}
+			//If login not supplied create same as contact name
+			if(cClientName[0] && !cUserName[0])
+				sprintf(cUserName,"%.99s",cClientName);
 														
 			if(!ValidateAdminUserInput())
 			{
 				sprintf(gcNewStep,"Confirm ");
 				gcInputStatus[0]=0;			
-				htmlAdminUser();
-			}
-
-			mysql_free_result(res);
-			sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s'",cUserName);
-			mysql_query(&gMysql,gcQuery);
-						
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-									
-			res=mysql_store_result(&gMysql);
-				
-			if(mysql_num_rows(res))
-			{
-				cUserNameStyle="type_fields_req";
-				gcMessage="<blink>Error: </blink>Login User already exists";
-				sprintf(gcNewStep,"Confirm ");
-				gcInputStatus[0]=0;				
 				htmlAdminUser();
 			}
 			NewAdminUser();
@@ -218,26 +193,18 @@ void AdminUserCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Confirm Modify"))
 		{
-			MYSQL_RES *res;
 			if(!cuClient[0])
 			{
 				gcMessage="<blink>Error: </blink>Can't modify. No record selected";
 				htmlAdminUser();
 			}
-			SelectAdminUser(cuClient,1);
-			res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res))
+			if(!ValidateAdminUserInput())
 			{
-				if(!ValidateAdminUserInput())
-				{
-					sprintf(gcModStep,"Confirm ");
-					gcInputStatus[0]=0;
-					htmlAdminUser();
-				}
-				ModAdminUser();
+				sprintf(gcModStep,"Confirm ");
+				gcInputStatus[0]=0;
+				htmlAdminUser();
 			}
-			else
-				gcMessage="<blink>Error: </blink>Can't modify. No record selected";
+			ModAdminUser();
 
 			htmlAdminUser();
 		}
@@ -249,19 +216,12 @@ void AdminUserCommands(pentry entries[], int x)
 		}		
 		else if(!strcmp(gcFunction,"Confirm Delete"))
 		{
-			MYSQL_RES *res;
 			if(!cuClient[0])
 			{
 				gcMessage="<blink>Error: </blink>No record selected";
 				htmlAdminUser();
 			}
-			SelectAdminUser(cuClient,1);
-			res=mysql_store_result(&gMysql);
-
-			if(mysql_num_rows(res))
-				 DelAdminUser();
-			else
-				gcMessage="<blink>Error: </blink>Can't delete unexistant record";
+			DelAdminUser();
 
 			htmlAdminUser();
 		}
@@ -819,9 +779,71 @@ void DelAdminUser(void)
 
 unsigned ValidateAdminUserInput(void)
 {
+	if(!cClientName[0])
+	{
+		gcMessage="<blink>Error: </blink>'Contact Name' must be provided.";
+		SetAdminUserFieldsOn();
+		cClientNameStyle="type_fields_req";
+		return(0);
+	}
+	else
+	{
+		MYSQL_RES *res;
+		register int i;
+
+		for(i=0;cClientName[i];i++)
+		{
+			if(!isalnum(cClientName[i]) && cClientName[i]!='.'
+				&& cClientName[i]!=' ' && cClientName[i]!='-' && cClientName[i]!=',')
+			{
+				SetAdminUserFieldsOn();
+				cClientNameStyle="type_fields_req";
+				gcMessage="<blink>Error: </blink>'Contact Name' has invalid chars";
+				return(0);
+			}
+		}
+
+		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND uOwner=%u",
+				TextAreaSave(cClientName)
+				,uForClient
+				);
+		macro_mySQLRunAndStore(res);
+		if(mysql_num_rows(res))
+		{
+			SetAdminUserFieldsOn();
+			cClientNameStyle="type_fields_req";
+			gcMessage="<blink>Error: </blink>'Contact Name' already exists for selected company,"
+				" perhaps you wanted to create it for another company.";
+			return(0);
+		}
+	}
+
+	if(cEmail[0])
+	{
+		if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
+		{
+			gcMessage="<blink>Error: </blink>'Email Address' must be provided.";
+			SetAdminUserFieldsOn();
+			cEmailStyle="type_fields_req";
+			return(0);
+		}
+		if(!strcmp(gcFunction,"Confirm New"))
+		{
+			if(EmailExists(cEmail))
+			{
+				SetAdminUserFieldsOn();
+				cEmailStyle="type_fields_req";
+				gcMessage="<blink>Error: </blink>The entered email address is already used.";
+				return(0);
+			}
+		}
+			
+	}
+		
 	if(!cUserName[0])
 	{
 		gcMessage="<blink>Error: </blink>Login is required.";
+		SetAdminUserFieldsOn();
 		cUserNameStyle="type_fields_req";
 		return(0);
 	}
@@ -830,28 +852,35 @@ unsigned ValidateAdminUserInput(void)
 		//
 		//Check for valid characters, no punctuation symbols allowed except '.' in Login
 		register int i;
+		MYSQL_RES *res;
 
 		for(i=0;cUserName[i];i++)
 		{
-			if(!isalnum(cUserName[i]) && cUserName[i]!='.' && cUserName[i]!=' ')
+			if(!isalnum(cUserName[i]) && cUserName[i]!='.' && cUserName[i]!=' ' && cUserName[i]!='-')
 			{
+				SetAdminUserFieldsOn();
 				cUserNameStyle="type_fields_req";
-				cPasswordStyle="type_fields";
-				cClientNameStyle="type_fields";
-				cEmailStyle="type_fields";
-				cInfoStyle="type_textarea";
-				gcMessage="<blink>Error: </blink>Login contains invalid chars. ";
+				gcMessage="<blink>Error: </blink>Login contains invalid chars.";
 				return(0);
 			}
+		}
+		sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s'",
+				TextAreaSave(cUserName)
+				);
+		macro_mySQLRunAndStore(res);
+		if(mysql_num_rows(res))
+		{
+			SetAdminUserFieldsOn();
+			cUserNameStyle="type_fields_req";
+			gcMessage="<blink>Error: </blink>Login already in use";
+			return(0);
 		}
 	}
 	if(!cPassword[0])
 	{
 		gcMessage="<blink>Error: </blink>Password must be provided.";
+		SetAdminUserFieldsOn();
 		cPasswordStyle="type_fields_req";
-		cUserNameStyle="type_fields";
-		cClientNameStyle="type_fields";
-		cEmailStyle="type_fields";
 		return(0);
 	}
 	else
@@ -859,57 +888,19 @@ unsigned ValidateAdminUserInput(void)
 		if(strlen(cPassword)<5)
 		{
 			gcMessage="<blink>Error: </blink>Password must be at least 5 characters.";
-			cPasswordStyle="type_fields_req";			
-			cUserNameStyle="type_fields";
-			cClientNameStyle="type_fields";
-			cEmailStyle="type_fields";
-			cInfoStyle="type_textarea";
+			SetAdminUserFieldsOn();
+			cPasswordStyle="type_fields_req";
 			return(0);
 		}
 	}
-	if(!cClientName[0])
+	
+	if(!uForClient)
 	{
-		gcMessage="<blink>Error: </blink>'Contact Name' must be provided.";
-		cClientNameStyle="type_fields_req";		
-		cUserNameStyle="type_fields";
-		cEmailStyle="type_fields";
-		cPasswordStyle="type_fields";
-		cInfoStyle="type_textarea";
+		gcMessage="<blink>Error: </blink>Please select a Company to create the Contact for.";
+		SetAdminUserFieldsOn();
+		cForClientPullDownStyle="type_fields_req";
+		return(0);
 	}
-	else
-	{
-		//
-		//Check for valid characters, no punctuation symbols allowed except '.' in Contact  Name
-		register int i;
-
-		for(i=0;cClientName[i];i++)
-		{
-			if(!isalnum(cClientName[i]) && cClientName[i]!='.' && cClientName[i]!=' ')
-			{
-				cClientNameStyle="type_fields_req";
-				cUserNameStyle="type_fields";
-				cEmailStyle="type_fields";
-				cPasswordStyle="type_fields";
-				cInfoStyle="type_textarea";
-				gcMessage="<blink>Error: </blink>'Contact Name' has invalid chars";
-				return(0);
-			}
-		}
-	}
-	if(cEmail[0])
-	{
-		if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
-		{
-			gcMessage="Review your input data";
-			cEmailStyle="type_fields_req";
-			cUserNameStyle="type_fields";
-			cClientNameStyle="type_fields";
-			cPasswordStyle="type_fields";
-			cInfoStyle="type_textarea";			
-			return(0);
-		}
-	}
-
 	return(1);
 		
 }//unsigned ValidateAdminInput(void)
