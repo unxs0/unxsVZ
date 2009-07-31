@@ -296,17 +296,17 @@ void LoadDeletedResource(unsigned uRowId)
 		sprintf(cRRType,"%.99s",field[4]);
 		sprintf(cParam1,"%.99s",field[5]);
 		sprintf(cParam2,"%.99s",field[6]);
-		sprintf(cParam3,"%.99s",field[6]);
-		sprintf(cParam4,"%.99s",field[7]);
-		sprintf(cComment,"%255s",field[8]);
-		sscanf(field[9],"%u",&uOwner);
-		sprintf(cParam1Label,"%.31s",field[10]);
-		sprintf(cParam2Label,"%.31s",field[11]);
-		sprintf(cNameLabel,"%.31s",field[12]);
-		sprintf(cParam3Label,"%.31s",field[13]);
-		sprintf(cParam4Label,"%.31s",field[14]);
-		sprintf(gcZone,"%.255s",field[15]);
-		sscanf(field[16],"%u",&uNameServer);
+		sprintf(cParam3,"%.99s",field[7]);
+		sprintf(cParam4,"%.99s",field[8]);
+		sprintf(cComment,"%.255s",field[9]);
+		sscanf(field[10],"%u",&uOwner);
+		sprintf(cParam1Label,"%.31s",field[11]);
+		sprintf(cParam2Label,"%.31s",field[12]);
+		sprintf(cNameLabel,"%.31s",field[13]);
+		sprintf(cParam3Label,"%.31s",field[14]);
+		sprintf(cParam4Label,"%.31s",field[15]);
+		sprintf(gcZone,"%.255s",field[16]);
+		sscanf(field[17],"%u",&uNameServer);
 	}
 	else
 		gcMessage="<blink>Error: </blink>Could not load record";
