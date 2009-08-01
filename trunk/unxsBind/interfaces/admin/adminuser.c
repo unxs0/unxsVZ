@@ -609,7 +609,8 @@ void SelectAdminUser(char *cLabel,unsigned uMode)
 
 void NewAdminUser(void)
 {
-	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cInfo='%s',cEmail='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cInfo='%s',cEmail='%s',cCode='Contact',"
+			"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cClientName
 			,cInfo
 			,cEmail
@@ -630,7 +631,8 @@ void NewAdminUser(void)
 	
 	//
 	//uPerm=10 Back-end admin
-	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',uPerm=%u,uCertClient=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',"
+			"uPerm=%u,uCertClient=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cUserName
 			,cPassword
 			,cClearPassword

@@ -1013,46 +1013,50 @@ void funcPermLevelDropDown(FILE *fp,unsigned uUseStatus)
 	else
 		fprintf(fp,"<select title='Select the permission level %s' name=cuPerm class=%s>\n",cTitle,cPermPullDownStyle);
 
-
-	fprintf(fp,"<option value=1");
-	if(guContactPerm==1)
-		fprintf(fp,"selected");
-	fprintf(fp,">%s</option>\n",ORG_CUSTOMER);
-		
-	fprintf(fp,"<option value=2");
-	if(guContactPerm==2)
-		fprintf(fp,"selected");
-	fprintf(fp,">%s</option>\n",ORG_WEBMASTER);
-
-	if(guContactPerm==3)
-		fprintf(fp,"selected");
-	fprintf(fp,">%s</option>\n",ORG_SALES);
-		
-	fprintf(fp,"<option value=4 ");
-	if(guContactPerm==4)
-		fprintf(fp,"selected");
-	fprintf(fp,">%s</option>\n",ORG_SERVICE);
-
-	fprintf(fp,"<option value=5 ");
-	if(guContactPerm==5)
-		fprintf(fp,"selected");
-	fprintf(fp,">%s</option>\n",ORG_ACCT);
-
-	fprintf(fp,"<option value=6 ");
-	if(guContactPerm==6)
-		fprintf(fp,"selected");
-	fprintf(fp,">%s</option>\n",ORG_ADMIN);
 	
+	if(!strcmp(gcPage,"CustomerUser"))
+	{
+		fprintf(fp,"<option value=1");
+		if(guContactPerm==1)
+			fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",ORG_CUSTOMER);
+		
+		fprintf(fp,"<option value=2");
+		if(guContactPerm==2)
+			fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",ORG_WEBMASTER);
+
+		if(guContactPerm==3)
+			fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",ORG_SALES);
+		
+		fprintf(fp,"<option value=4 ");
+		if(guContactPerm==4)
+			fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",ORG_SERVICE);
+
+		fprintf(fp,"<option value=5 ");
+		if(guContactPerm==5)
+			fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",ORG_ACCT);
+
+		fprintf(fp,"<option value=6 ");
+		if(guContactPerm==6)
+			fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",ORG_ADMIN);
+	}
+	else
+	{
 	fprintf(fp,"<option value=12 ");
-	if(guContactPerm==12)
-		fprintf(fp,"selected");
-	fprintf(fp,">%s</option>\n",BO_ROOT);
+		if(guContactPerm==10)
+			fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",BO_ADMIN);
 
-	fprintf(fp,"<option value=10 ");
-	if(guContactPerm==10)
-		fprintf(fp,"selected");
-	fprintf(fp,">%s</option>\n",BO_ADMIN);
-
+		fprintf(fp,"<option value=10 ");
+		if(guContactPerm==12)
+			fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",BO_ROOT);
+	}
 	fprintf(fp,"</select>\n");
 	
 
