@@ -13,7 +13,7 @@
 </thead><tbody>
 <tr>
 	<td>clickAndWait</td>
-	<td>link=John Doe</td>
+	<td>link=Michael Admin</td>
 	<td></td>
 </tr>
 <tr>
@@ -23,7 +23,7 @@
 </tr>
 <tr>
 	<td>type</td>
-	<td>//input[@name='cClientName' and @value='John Doe' and @type='text']</td>
+	<td>//input[@name='cClientName' and @value='Michael Admin' and @type='text']</td>
 	<td></td>
 </tr>
 <tr>
@@ -39,7 +39,7 @@
 <tr>
 	<td>type</td>
 	<td>//input[@name='cClientName' and @value='' and @type='text']</td>
-	<td>Michael Admin</td>
+	<td>John Doe</td>
 </tr>
 <tr>
 	<td>clickAndWait</td>
@@ -53,17 +53,17 @@
 </tr>
 <tr>
 	<td>type</td>
-	<td>//input[@name='cUserName' and @value='John Doe' and @type='text']</td>
+	<td>//input[@name='cUserName' and @value='Michael Admin' and @type='text']</td>
 	<td></td>
 </tr>
 <tr>
 	<td>type</td>
-	<td>//input[@name='cPassword' and @value='$1$t/DC4...$KUOetwBdGbS47H8Rz3xhM/' and @type='text']</td>
+	<td>//input[@name='cPassword' and @type='text']</td>
 	<td></td>
 </tr>
 <tr>
 	<td>type</td>
-	<td>//input[@name='cClientName' and @value='Michael Admin' and @type='text']</td>
+	<td>//input[@name='cClientName' and @value='John Doe' and @type='text']</td>
 	<td>Jenny Tester</td>
 </tr>
 <tr>
@@ -113,7 +113,7 @@
 </tr>
 <tr>
 	<td>type</td>
-	<td>//input[@name='cEmail' and @value='' and @type='text']</td>
+	<td>//input[@name='cEmail' and @type='text']</td>
 	<td>z</td>
 </tr>
 <tr>
@@ -134,6 +134,11 @@
 <tr>
 	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Admin User modified OK*</td>
 	<td></td>
 </tr>
 
