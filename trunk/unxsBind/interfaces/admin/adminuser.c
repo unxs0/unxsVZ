@@ -665,32 +665,20 @@ void NewAdminUser(void)
 void ModAdminUser(void)
 {
 	unsigned uWasMod=0;
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-	
-	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cClientName);
-	mysql_query(&gMysql,gcQuery);
-
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		sprintf(gcQuery,"UPDATE tClient SET cLabel='%s',cEmail='%s',cInfo='%s',uOwner=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uClient=%s",
+	sprintf(gcQuery,"UPDATE tClient SET cLabel='%s',cEmail='%s',cInfo='%s',uOwner=%u,"
+			"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uClient=%s",
 			cClientName
 			,cEmail
 			,cInfo
 			,uForClient
 			,guLoginClient
-			,field[0]);
-		mysql_query(&gMysql,gcQuery);
+			,cuClient);
+	mysql_query(&gMysql,gcQuery);
 	
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 	
-		sscanf(field[0],"%u",&uClient);
-	}
+	sscanf(cuClient,"%u",&uClient);
 	
 	uWasMod=mysql_affected_rows(&gMysql);
 
@@ -702,9 +690,9 @@ void ModAdminUser(void)
 
 	if(strncmp(cPassword,"..",2) && strncmp(cPassword,"$1$",3))
 		EncryptPasswd(cPassword);
-	//
-	//Strange variable namig notes: cuClient is the tAuthorize row id
-	sprintf(gcQuery,"UPDATE tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',uPerm=%u,uOwner=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uAuthorize='%s'",
+	
+	sprintf(gcQuery,"UPDATE tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',"
+			"uPerm=%u,uOwner=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uCertClient='%s'",
 			cUserName
 			,cPassword
 			,cClearPassword
