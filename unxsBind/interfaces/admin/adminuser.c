@@ -56,7 +56,7 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 extern unsigned guBrowserFirefox;//main.c
-void EncryptPasswdWithSalt(char *cPasswd,char *cSalt);//main.c
+void EncryptPasswd(char *pw);
 unsigned EmailExists(char *cEmail);//customercontact.c
 
 //
@@ -622,10 +622,10 @@ void NewAdminUser(void)
 	uClient=mysql_insert_id(&gMysql);
 	sprintf(cuClient,"%.15u",uClient);
 
-	if(strncmp(cPassword,"..",2) && uSaveClrPassword)
+	if(strncmp(cPassword,"..",2) && strncmp(cPassword,"$1$",3) && uSaveClrPassword)
 		sprintf(cClearPassword,"%.99s",cPassword);
 
-	EncryptPasswdWithSalt(cPassword,"..");
+	EncryptPasswd(cPassword);
 	
 	
 	//
@@ -698,8 +698,8 @@ void ModAdminUser(void)
 	else
 		cClearPassword[0]=0;
 
-	if(strncmp(cPassword,"..",2))
-		EncryptPasswdWithSalt(cPassword,"..");
+	if(strncmp(cPassword,"..",2) && strncmp(cPassword,"$1$",3))
+		EncryptPasswd(cPassword);
 	//
 	//Strange variable namig notes: cuClient is the tAuthorize row id
 	sprintf(gcQuery,"UPDATE tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',uPerm=%u,uOwner=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uAuthorize='%s'",
