@@ -13,6 +13,11 @@
 </thead><tbody>
 <tr>
 	<td>clickAndWait</td>
+	<td>//td[9]/a/b</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
 	<td>link=Michael Admin</td>
 	<td></td>
 </tr>
