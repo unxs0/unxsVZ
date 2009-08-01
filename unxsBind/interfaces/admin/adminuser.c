@@ -1133,12 +1133,12 @@ void funcAdminUsers(FILE *fp)
 		mysql_free_result(res);
 		
 		sprintf(gcQuery,"SELECT tClient.uClient,tAuthorize.cLabel,tAuthorize.uPerm,tClient.cLabel FROM "
-				"tAuthorize,tClient WHERE tAuthorize.uPerm>6 AND tAuthorize.uCertClient=tClient.uClient "
+				"tAuthorize,tClient WHERE tAuthorize.uPerm>=10 AND tAuthorize.uCertClient=tClient.uClient "
 				"AND tClient.uOwner=%u ORDER BY tAuthorize.cLabel",uCompany);
 	}
 	else
 		sprintf(gcQuery,"SELECT tClient.uClient,tAuthorize.cLabel,tAuthorize.uPerm,tClient.cLabel FROM "
-				 "tAuthorize,tClient WHERE tAuthorize.uPerm>6 AND tAuthorize.uCertClient=tClient.uClient ORDER BY tAuthorize.cLabel");
+				 "tAuthorize,tClient WHERE tAuthorize.uPerm>=10 AND tAuthorize.uCertClient=tClient.uClient ORDER BY tAuthorize.cLabel");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
