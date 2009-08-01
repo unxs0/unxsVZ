@@ -72,7 +72,7 @@
 	<td>x</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
 	<td></td>
 </tr>
@@ -87,7 +87,7 @@
 	<td>xmichael@</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
 	<td></td>
 </tr>
@@ -102,13 +102,13 @@
 	<td>michael@unixservice.com</td>
 </tr>
 <tr>
-	<td>click</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
 	<td></td>
 </tr>
 <tr>
 	<td>assertBodyText</td>
-	<td>glob:*'Admin User created OK*</td>
+	<td>glob:*Admin User created OK*</td>
 	<td></td>
 </tr>
 
