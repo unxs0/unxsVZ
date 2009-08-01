@@ -725,29 +725,16 @@ void ModAdminUser(void)
 
 void DelAdminUser(void)
 {
-
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-	
-	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cClientName);
+	sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%s",cuClient);
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%s",field[0]);
-		mysql_query(&gMysql,gcQuery);
-
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+	sscanf(cuClient,"%u",&uClient);
 	
-		sscanf(field[0],"%u",&uClient);
-	}
 
-	sprintf(gcQuery,"DELETE FROM tAuthorize WHERE cLabel='%s'",cUserName);
+	sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient='%s'",cuClient);
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
