@@ -673,13 +673,28 @@ void funcReportResults(FILE *fp)
 	char cuZoneModCountAdmin[16]={"0"};
 	char cuZone[16]={""};
 	char cuHits[16]={"0"};
+	char cZone[100]={""};
+
 	char cLastHitDate[32]={""};
 	time_t luModDate=0;
 	
 	if(!cuHit[0])
 		return;
 
-	sprintf(gcQuery,"SELECT cZone,uHitCount,GREATEST(uModDate,uCreatedDate) FROM tHit WHERE uHit='%s'",cuHit);
+	sprintf(gcQuery,"SELECT cZone FROM tHit WHERE uHit='%s'",cuHit);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cZone,"%.99s",field[0]);
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT SUM(uHitCount),GREATEST(uModDate,uCreatedDate) "
+			"FROM tHit WHERE cZone='%s' GROUP BY cZone",cZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -694,7 +709,7 @@ void funcReportResults(FILE *fp)
 		sscanf(field[2],"%lu",&luModDate);
 		sprintf(cLastHitDate,"%s",ctime(&luModDate));
 
-		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s'",field[0]);
+		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s'",cZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
