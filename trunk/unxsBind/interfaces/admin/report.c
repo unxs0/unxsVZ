@@ -244,6 +244,14 @@ void ReportCommands(pentry entries[], int x)
 			unsigned uTotalHits=0;
 			unsigned uHitCount=0;
 
+			GetConfiguration("cReportEmail",cReportEmail,1);
+
+			if(!cReportEmail[0])
+			{
+				gcMessage="<blink>Error: </blink>You don't have a report email address configured. "
+					"Please create a tConfiguration entry for cReportEmail";
+				htmlReport();
+			}
 			if(!cMonthHit[0])
 			{
 				gcMessage="<blink>Error: </blink>You have to select the month for the hits report";
@@ -273,8 +281,6 @@ void ReportCommands(pentry entries[], int x)
 			fpReport=popen("/usr/lib/sendmail -t","w");
 			if(fpReport==NULL)
 				htmlPlainTextError(strerror(errno));
-			
-			GetConfiguration("cReportEmail",cReportEmail,1);
 			
 			fprintf(fpReport,"To: %s\n",cReportEmail);
 			fprintf(fpReport,"From: histatistics@unixservice.com\n");
