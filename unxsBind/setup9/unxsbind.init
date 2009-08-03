@@ -22,7 +22,7 @@ case "$1" in
 	echo "";
 	if [ -x /usr/sbin/named-checkconf ] && [ -x /usr/sbin/named ] \
 			&& /usr/sbin/named-checkconf /usr/local/idns/named.conf  >/dev/null 2>&1; then
-		/usr/sbin/named -c /usr/local/idns/named.conf;
+		/usr/sbin/named -u named -c /usr/local/idns/named.conf;
 		if [ $? != 0 ]; then
 			echo -n $"Failed to start named";
 			echo "";
