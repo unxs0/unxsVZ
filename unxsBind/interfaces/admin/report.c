@@ -151,14 +151,6 @@ void htmlReportPage(char *cTitle, char *cTemplateName)
 
 			template.cpName[15]="";
 
-			/*
-			if(!strcmp(gcFunction,"ZoneFocus"))
-				template.cpValue[10]=cGetcZone(cuHit);
-			else
-				template.cpValue[10]=cGetClientName(cuClient);
-
-			template.cpName[11]="";
-			*/
 			printf("\n<!-- Start htmlReportPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
 			printf("\n<!-- End htmlReportPage(%s) -->\n",cTemplateName); 
@@ -987,9 +979,10 @@ void funcAvailableZones(FILE *fp)
 
 	fprintf(fp,"<!-- funcAvailableZones() start -->\n");
 
-	sprintf(gcQuery,"SELECT tHit.uHit,tHit.cZone,tHit.uHitCount FROM "
+	sprintf(gcQuery,"SELECT tHit.uHit,tHit.cZone,SUM(tHit.uHitCount) AS uTotalHits FROM "
 			"tZone,tHit,tClient WHERE tZone.cZone=tHit.cZone AND "
-			"tZone.uOwner=tClient.uClient AND tClient.uClient=%s",cuClient);
+			"tZone.uOwner=tClient.uClient AND tClient.uClient=%s GROUP BY cZone "
+			"ORDER BY uTotalHits DESC",cuClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		 htmlPlainTextError(mysql_error(&gMysql));
