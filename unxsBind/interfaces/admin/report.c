@@ -697,8 +697,8 @@ void funcReportResults(FILE *fp)
 	if((field=mysql_fetch_row(res)))
 	{
 		
-		sprintf(cuHits,"%s",field[1]);
-		sscanf(field[2],"%lu",&luModDate);
+		sprintf(cuHits,"%s",field[0]);
+		sscanf(field[1],"%lu",&luModDate);
 		sprintf(cLastHitDate,"%s",ctime(&luModDate));
 
 		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s'",cZone);
