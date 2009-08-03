@@ -373,7 +373,8 @@ void funcReportHitsTop20(FILE *fp)
 	
 	fprintf(fp,"<!-- funcReportHitsTop20(fp) Start -->\n");
 	
-        sprintf(gcQuery,"SELECT uHit,cZone,uHitCount FROM tHit ORDER BY uHitCount DESC LIMIT 20");
+        sprintf(gcQuery,"SELECT uHit,cZone,SUM(uHitCount) AS uTotalHits FROM tHit "
+			"GROUP BY tHit.cZone ORDER BY uTotalHits DESC LIMIT 20");
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
