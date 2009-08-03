@@ -263,12 +263,15 @@ void ReportCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 
-			sprintf(gcQuery,"INSERT tHitMonth (uHit,cZone,uHitCount,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate) SELECT uHit,cZone,uHitCount,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate FROM %s",cMonthHit);
+			sprintf(gcQuery,"INSERT tHitMonth (uHit,cZone,uHitCount,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate) "
+					"SELECT uHit,cZone,uHitCount,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate FROM %s",
+					cMonthHit);
 		        mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 			
-			sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel,tClient.cCode FROM tHitMonth,tZone,tClient WHERE tClient.uClient=tZone.uOwner AND tHitMonth.cZone=tZone.cZone ORDER BY tClient.cLabel");
+			sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel,tClient.cCode FROM tHitMonth,tZone,tClient "
+					"WHERE tClient.uClient=tZone.uOwner AND tHitMonth.cZone=tZone.cZone ORDER BY tClient.cLabel");
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -295,7 +298,9 @@ void ReportCommands(pentry entries[], int x)
 			{
 				if(!uCSVReport)
 					fprintf(fpReport,"Company: %s\n",field[1]);
-				sprintf(gcQuery,"SELECT tHitMonth.cZone,tHitMonth.uHitCount,tZone.uZone FROM tZone,tHitMonth,tClient WHERE tZone.cZone=tHitMonth.cZone AND tZone.uOwner=tClient.uClient AND tClient.uClient=%s",field[0]);
+				sprintf(gcQuery,"SELECT tHitMonth.cZone,tHitMonth.uHitCount,tZone.uZone FROM tZone,tHitMonth,tClient "
+						"WHERE tZone.cZone=tHitMonth.cZone AND tZone.uOwner=tClient.uClient AND tClient.uClient=%s",
+						field[0]);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -348,7 +353,9 @@ void ReportCommands(pentry entries[], int x)
 
 void ReportSearchZone(char *cLabel)
 {
-sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel FROM tHit,tZone,tClient WHERE tClient.uClient=tZone.uOwner AND tHit.cZone=tZone.cZone AND tClient.cLabel LIKE '%s' ORDER BY tClient.cLabel LIMIT 20",cLabel);
+	sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel FROM tHit,tZone,tClient WHERE "
+			"tClient.uClient=tZone.uOwner AND tHit.cZone=tZone.cZone AND tClient.cLabel "
+			"LIKE '%s' ORDER BY tClient.cLabel LIMIT 20",cLabel);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -738,15 +745,11 @@ void funcReportResults(FILE *fp)
 		res2=mysql_store_result(&gMysql);
 		sprintf(cuZoneModCount,"%u",(unsigned) mysql_num_rows(res2));
 
-		//
-		//Notes about the #ifdef lines below:
-		//Sub-queries are only supported in mySQL versions > 4
-		//
-#ifdef MYSQL_HAS_SUBQUERIES
-
 //
 //idnsOrg statistics
-		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='New' AND uLogType=2 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",cuZone);
+		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='New' "
+				"AND uLogType=2 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",
+				cuZone);
 
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -757,7 +760,9 @@ void funcReportResults(FILE *fp)
 		res2=mysql_store_result(&gMysql);
 		sprintf(cuRRNewCount,"%u",(unsigned) mysql_num_rows(res2));
 			
-		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Mod' AND uLogType=2 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",cuZone);
+		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Mod' "
+				"AND uLogType=2 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",
+				cuZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -767,7 +772,9 @@ void funcReportResults(FILE *fp)
 		res2=mysql_store_result(&gMysql);
 		sprintf(cuRRModCount,"%u",(unsigned) mysql_num_rows(res2));
 		
-		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Del' AND uLogType=2 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",cuZone);
+		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Del' "
+				"AND uLogType=2 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",
+				cuZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -779,7 +786,9 @@ void funcReportResults(FILE *fp)
 
 //
 //idnsAdmin statistics
-		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='New' AND uLogType=3 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",cuZone);
+		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='New' "
+				"AND uLogType=3 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",
+				cuZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -789,7 +798,9 @@ void funcReportResults(FILE *fp)
 		res2=mysql_store_result(&gMysql);
 		sprintf(cuRRNewCountAdmin,"%u",(unsigned) mysql_num_rows(res2));
 			
-		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Mod' AND uLogType=3 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",cuZone);
+		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Mod' "
+				"AND uLogType=3 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",
+				cuZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -799,7 +810,9 @@ void funcReportResults(FILE *fp)
 		res2=mysql_store_result(&gMysql);
 		sprintf(cuRRModCountAdmin,"%u",(unsigned) mysql_num_rows(res2));
 		
-		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Del' AND uLogType=3 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",cuZone);
+		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Del' "
+				"AND uLogType=3 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",
+				cuZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -810,7 +823,9 @@ void funcReportResults(FILE *fp)
 		sprintf(cuRRDelCountAdmin,"%u",(unsigned) mysql_num_rows(res2));
 //
 //iDNS back-office statistics
-		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='New' AND uLogType=1 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",cuZone);
+		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='New' "
+				"AND uLogType=1 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",
+				cuZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -820,7 +835,9 @@ void funcReportResults(FILE *fp)
 		res2=mysql_store_result(&gMysql);
 		sprintf(cuRRNewCountBO,"%u",(unsigned) mysql_num_rows(res2));
 			
-		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Mod' AND uLogType=1 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",cuZone);
+		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Mod' "
+				"AND uLogType=1 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",
+				cuZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -830,7 +847,9 @@ void funcReportResults(FILE *fp)
 		res2=mysql_store_result(&gMysql);
 		sprintf(cuRRModCountBO,"%u",(unsigned) mysql_num_rows(res2));
 		
-		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Del' AND uLogType=1 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",cuZone);
+		sprintf(gcQuery,"SELECT uLog FROM tLog WHERE cTableName='tResource' AND cLabel='Del' "
+				"AND uLogType=1 AND uTablePK IN (SELECT tResource.uResource FROM tResource WHERE uZone=%s)",
+				cuZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -840,7 +859,6 @@ void funcReportResults(FILE *fp)
 		res2=mysql_store_result(&gMysql);
 		sprintf(cuRRDelCountBO,"%u",(unsigned) mysql_num_rows(res2));
 		mysql_free_result(res2);//Only free last result others above use same heap space
-#endif
 
 		//Prep template contents
 		template.cpName[0]="uZoneModCount";
