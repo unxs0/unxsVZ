@@ -65,7 +65,7 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 	register unsigned uStart=0;
 	unsigned long luHeld,luMaxheld,luBarrier,luLimit,luFailcnt;
 	char cResource[64];
-	unsigned uType=3;//tContainter type
+	unsigned uType=3;//tContainer type
 
 	sprintf(cContainerTag,"%u:  kmemsize",uContainer);
 	if(uContainer)
@@ -128,7 +128,8 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
         			MYSQL_RES *res;
         			MYSQL_ROW field;
 				register int i;
-				char cKnownUBCVals[8][32]={"luHeld","luMaxheld","luBarrier","luLimit","luFailcnt","luFailDelta","",""};
+				char cKnownUBCVals[8][32]={"luHeld","luMaxheld","luBarrier",
+					"luLimit","luFailcnt","luFailDelta","",""};
 				long unsigned luKnownUBCVals[8];
 
 				//debug only
@@ -270,10 +271,13 @@ void ProcessUBC(void)
 	printf("ProcessUBC() for %s (uNode=%u,uDatacenter=%u)\n",
 			cHostname,uNode,uDatacenter);
 
-	//Main loop
+	//Main loop. TODO use defines for tStatus.uStatus values.
 	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u"
-				" AND uDatacenter=%u AND uStatus=1",
-						uNode,uDatacenter);
+				" AND uDatacenter=%u"
+				" AND uStatus!=11"//Initial Setup
+				" AND uStatus!=6"//Awating Activation
+				" AND uStatus!=31"//Stopped
+						,uNode,uDatacenter);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{

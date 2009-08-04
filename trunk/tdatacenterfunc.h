@@ -214,7 +214,7 @@ void ExttDatacenterAuxTable(void)
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("<tr>\n");
-			printf("<td width=100 valign=top><a class=darkLink href=unxsVZ.cgi?"
+			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
 					"gcFunction=tProperty&uProperty=%s&cReturn=tDatacenter_%u>"
 					"%s</a></td><td valign=top><pre>%s</pre></td>\n",
 						field[0],uDatacenter,field[1],field[2]);
