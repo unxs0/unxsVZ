@@ -1,10 +1,10 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
-Version: 1.30
+Version: 1.31
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-1.30.tar.gz
+Source: http://unixservice.com/source/unxsbind-1.31.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -70,6 +70,8 @@ cp setup9/* /usr/local/share/iDNS/setup9/
 cp -u setup9/DejaVuSansMono-Roman.ttf /usr/share/fonts/
 cp agents/mysqlcluster/mysqlcluster.sh /usr/sbin/
 /usr/bin/dig @e.root-servers.net . ns > /usr/local/share/iDNS/setup9/root.cache
+#permissions section
+chmod 755 /etc/init.d/unxsbind
 #make section
 cd interfaces/admin
 make install
@@ -85,6 +87,7 @@ export ISMROOT=/usr/local/share
 /var/www/unxs/cgi-bin/iDNS.cgi installbind 0.0.0.0
 chmod -R og+x /usr/local/idns
 chmod 644 /usr/local/idns/named.conf
+chown -R named:named /usr/local/idns
 cd $RPM_BUILD_DIR
 
 %post
@@ -311,6 +314,8 @@ fi
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
+* Mon Aug 02 2009 Hugo Urquiza <support2@unixservice.com>
+- Fixed directories permission and ownership, and init.d script minor update.
 * Mon Jul 13 2009 Gary Wallis <support@unixservice.com>
 - Adding allfiles master post install command
 * Sun Jul 12 2009 Gary Wallis <support@unixservice.com>
