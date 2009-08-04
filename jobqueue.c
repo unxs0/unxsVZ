@@ -1576,7 +1576,7 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 	char cVeID[32]={""};//required
 	char cService1[256]={"80"};//default
 	char cService2[256]={"443"};//default
-	char cExtraNodeIP[256]={""};//required
+	char cExtraNodeIP[256]={""};//required by some templates not all TODO fix this mess
 	char cNetmask[256]={"255.255.255.0"};//default
 	char cPrivateIPs[256]={"10.0.0.0/24"};//default
 	struct stat statInfo;

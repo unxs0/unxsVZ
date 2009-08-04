@@ -337,7 +337,7 @@ void ExttNodeAuxTable(void)
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("<tr>");
-			printf("<td width=100 valign=top><a class=darkLink href=unxsVZ.cgi?"
+			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
 					"gcFunction=tProperty&uProperty=%s&cReturn=tNode_%u>"
 					"%s</a></td><td>%s</td>\n",
 						field[0],uNode,field[1],field[2]);
@@ -548,7 +548,8 @@ void htmlNodeHealth(unsigned uNode)
 				" tProperty.cName='privvmpages.luMaxheld'"
 				" AND tProperty.uType=3"
 				" AND tProperty.uKey=tContainer.uContainer"
-				" AND tContainer.uStatus=1"//Active
+				" AND tContainer.uStatus!=11"//Probably active not initial setup
+				" AND tContainer.uStatus!=31"// and not stopped
 				" AND tContainer.uNode=%u",uNode);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))

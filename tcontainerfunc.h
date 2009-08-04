@@ -22,6 +22,8 @@ NOTES
 
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
+static unsigned uFirewallTemplate=0;
+static char cuTemplateDropDown[256]={""};
 static char cConfigLabel[32]={""};
 static char cWizHostname[100]={""};
 static char cWizLabel[32]={""};
@@ -51,6 +53,31 @@ unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContaine
 unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4);
 char *cRatioColor(float *fRatio);
+void htmlGenFirewallInputs(unsigned const uFirewallTemplate);
+unsigned uCheckFirewallSettings(unsigned uFirewallTemplate);
+void htmlFirewallTemplateSelect(unsigned uSelector);
+
+
+void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
+{
+	printf("Fill in according to template and container purpose."
+		" If not sure leave blank or with suggested default value<br>");
+	printf("<input type=text name=cService1 value='80'> Service1 Port<br>");
+	printf("<input type=text name=cService2 value='443'> Service2 Port<br>");
+	printf("<input type=text name=cService2 value=''> Service3 Port<br>");
+	printf("<input type=text name=cService2 value=''> Service4 Port<br>");
+	printf("<input type=text name=cPrivateIPs value='10.0.0.0/24'> Private IPs<br>");
+	printf("<input type=text name=cNetmask value='255.255.255.0'> Netmask<br>");
+	printf("<input title='When container has a private IP"
+		" you will need to provide an available public IP from tIP'"
+		" type=text name=cExtraNodeIP value=''> NAT Node IP<br>");
+
+}//void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
+
+unsigned uCheckFirewallSettings(unsigned uFirewallTemplate)
+{
+	return(0);
+}
 
 //tnodefunc.h
 void DelProperties(unsigned uNode,unsigned uType);
@@ -70,6 +97,15 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cuTargetNodePullDown,"%.255s",entries[i].val);
 			uTargetNode=ReadPullDown("tNode","cLabel",cuTargetNodePullDown);
+		}
+		else if(!strcmp(entries[i].name,"FirewallTemplateSelect"))
+		{
+			sprintf(cuTemplateDropDown,"%.255s",entries[i].val);
+			uFirewallTemplate=ReadPullDown("tTemplate","cLabel",cuTemplateDropDown);
+		}
+		else if(!strcmp(entries[i].name,"uFirewallTemplate"))
+		{
+			sscanf(entries[i].val,"%u",&uFirewallTemplate);
 		}
 		else if(!strcmp(entries[i].name,"cConfigLabel"))
 		{
@@ -107,14 +143,63 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(guPermLevel>=9)
 			{
 	                        ProcesstContainerVars(entries,x);
-                        	guMode=2000;
-	                        tContainer(LANG_NB_CONFIRMNEW);
+                        	guMode=200;
+	                        tContainer("New container step 1/3");
 			}
 			else
 			{
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
                 }
+                else if(!strcmp(gcCommand,"Confirm Firewall Template"))
+                {
+                        ProcesstContainerVars(entries,x);
+			if(guPermLevel>=9)
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error</blink>: This record was modified. Reload it!");
+
+                        	guMode=200;
+				if(!uFirewallTemplate)
+					tContainer("<blink>Error</blink>: uFirewallTemplate==0!");
+
+                        	guMode=201;
+				tContainer("New container step 2/3");
+			}
+			else
+			{
+				tContainer("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Confirm Firewall Settings"))
+                {
+                        ProcesstContainerVars(entries,x);
+			if(guPermLevel>=9)
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error</blink>: This record was modified. Reload it!");
+
+                        	guMode=200;
+				if(!uFirewallTemplate)
+					tContainer("<blink>Unexpected Error</blink>: uFirewallTemplate==0!");
+                        	guMode=201;
+				if(uCheckFirewallSettings(uFirewallTemplate))
+					tContainer("<blink>Error</blink>: Incorrect firewall settings!");
+			
+                        	guMode=2000;
+				tContainer("New container step 3/3");
+			}
+			else
+			{
+				tContainer("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
 			if(guPermLevel>=9)
@@ -780,6 +865,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(strchr(cWizLabel,'.'))
 					tContainer("<blink>Error</blink>: cLabel has at least one '.'!");
 				//No same names or hostnames for same datacenter allowed.
+				//TODO must be fixed to allow only label or only hostname changes
+				//this involves ignoring existing label or hostname for this container.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
 						" AND uDatacenter=%u",cHostname,cLabel,uDatacenter);
 				mysql_query(&gMysql,gcQuery);
@@ -977,8 +1064,30 @@ void ExttContainerButtons(void)
 					" name=gcCommand value='Confirm Clone'>\n");
                 break;
 
+                case 200:
+			printf("<p><u>New container step 1/3</u><br>");
+			printf("Select node firewall template for new container.<p>");
+			htmlFirewallTemplateSelect(uFirewallTemplate);
+			printf("<p><input title='Continue to step 2 of new container wizard'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Firewall Template'>\n");
+                        //printf(LANG_NBB_CONFIRMNEW);
+                break;
+
+                case 201:
+			printf("<p><u>New container step 2/3</u><br>");
+			printf("Complete required firewall settings for <i>%s</i> template.<p>",cuTemplateDropDown);
+			htmlGenFirewallInputs(uFirewallTemplate);
+			printf("<p><input title='Continue to step 3 of new container wizard'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Firewall Settings'>\n");
+			printf("<p><input type=hidden name=uFirewallTemplate value='%u'>\n",uFirewallTemplate);
+                        //printf(LANG_NBB_CONFIRMNEW);
+                break;
+
                 case 2000:
-			printf("<p><u>Enter/mod data</u><br>");
+			printf("<p><u>New container step 3/3</u><br>");
+			printf("Complete required container fields.<p>");
                         printf(LANG_NBB_CONFIRMNEW);
                 break;
 
@@ -1091,7 +1200,7 @@ void ExttContainerAuxTable(void)
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("<tr>");
-			printf("<td width=100 valign=top><a class=darkLink href=unxsVZ.cgi?"
+			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
 					"gcFunction=tProperty&uProperty=%s&cReturn=tContainer_%u>"
 					"%s</a></td><td>%s</td>\n",
 						field[0],uContainer,field[1],field[2]);
@@ -1904,3 +2013,41 @@ char *cRatioColor(float *fRatio)
 	return(cColor);
 
 }//char *cRatioColor(float *fRatio)
+
+
+void htmlFirewallTemplateSelect(unsigned uSelector)
+{
+        register int i,n;
+        MYSQL_RES *mysqlRes;         
+        MYSQL_ROW mysqlField;
+
+        sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE cLabel LIKE '%%.mount' ORDER BY cLabel");
+	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
+	i=mysql_num_rows(mysqlRes);
+        if(i>0)
+        {
+                printf("<select name=FirewallTemplateSelect>\n");
+                //Default no selection
+                printf("<option title='No selection'>---</option>\n");
+                for(n=0;n<i;n++)
+                {
+                        int unsigned field0=0;
+
+                        mysqlField=mysql_fetch_row(mysqlRes);
+                        sscanf(mysqlField[0],"%u",&field0);
+
+                        if(uSelector != field0)
+                             printf("<option>%s</option>\n",mysqlField[1]);
+                        else
+                             printf("<option selected>%s</option>\n",mysqlField[1]);
+                }
+        }
+        else
+        {
+		printf("<select name=FirewallTemplateSelect>"
+				"<option title='No selection'>---</option></select>\n");
+        }
+        printf("</select>\n");
+
+}//void htmlFirewallTemplateSelect(unsigned uSelector)
+

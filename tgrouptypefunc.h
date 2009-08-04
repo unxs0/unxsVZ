@@ -175,7 +175,7 @@ void ExttGroupTypeAuxTable(void)
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("<tr>\n");
-			printf("<td width=100 valign=top><a class=darkLink href=unxsVZ.cgi?"
+			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
 					"gcFunction=tProperty&uProperty=%s&cReturn=tGroupType_%u>"
 					"%s</a></td><td>%s</td>\n",
 						field[0],uGroupType,field[1],field[2]);
