@@ -12,11 +12,6 @@
 <tr><td rowspan="1" colspan="3">RestoreZone</td></tr>
 </thead><tbody>
 <tr>
-	<td>open</td>
-	<td>/cgi-bin/idnsAdmin.cgi?&amp;gcPage=Zone</td>
-	<td></td>
-</tr>
-<tr>
 	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Delete']</td>
 	<td></td>
