@@ -276,8 +276,6 @@ void ReportCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 			res=mysql_store_result(&gMysql);
-			//debug only
-			//fpReport=fopen("/tmp/hitsreport.txt","w");
 			fpReport=popen("/usr/lib/sendmail -t","w");
 			if(fpReport==NULL)
 				htmlPlainTextError(strerror(errno));
@@ -333,8 +331,6 @@ void ReportCommands(pentry entries[], int x)
 				uTotalHits=0;
 				mysql_free_result(res2);
 			}
-			//debug only
-			fclose(fpReport);
 			fprintf(fpReport,".\n");
 			pclose(fpReport);
 			gcMessage="Report emailed ok";
