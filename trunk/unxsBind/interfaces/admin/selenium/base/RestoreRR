@@ -12,14 +12,14 @@
 <tr><td rowspan="1" colspan="3">RestoreRR</td></tr>
 </thead><tbody>
 <tr>
+	<td>clickAndWait</td>
+	<td>//td[4]/a/b</td>
+	<td></td>
+</tr>
+<tr>
 	<td>type</td>
 	<td>cSearch</td>
 	<td>new</td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//td[4]/a/b</td>
-	<td></td>
 </tr>
 <tr>
 	<td>clickAndWait</td>

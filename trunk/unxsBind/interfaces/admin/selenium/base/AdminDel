@@ -33,7 +33,7 @@
 </tr>
 <tr>
 	<td>assertBodyText</td>
-	<td>glob:*¨Admin User deleted OK*</td>
+	<td>glob:*Admin User deleted OK*</td>
 	<td></td>
 </tr>
 
