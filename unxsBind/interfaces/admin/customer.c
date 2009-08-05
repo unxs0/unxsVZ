@@ -522,14 +522,11 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
 			template.cpName[36]="uCreatedDateForm";
 			template.cpValue[36]=cuCreatedDateForm;
 
-			template.cpName[37]="uModByForm";
-			template.cpValue[37]=cuModByForm;
-
-			template.cpName[38]="";
+			template.cpName[37]="";
 
 			printf("\n<!-- Start htmlCustomerPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
-			printf("\n<!-- End htmlCustomerPage(%s) -->\n",cTemplateName); 
+			printf("\n<!-- End htmlCustomerPage(%s)  cuModBy=%s -->\n",cTemplateName,cuModByForm); 
 		}
 		else
 		{
