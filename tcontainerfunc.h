@@ -60,24 +60,82 @@ void htmlFirewallTemplateSelect(unsigned uSelector);
 
 void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
 {
+	char *cService1;
+	char *cService2;
+	char *cService3;
+	char *cService4;
+
+	cService1="";
+	cService2="";
+	cService3="";
+	cService4="";
+
 	printf("Fill in according to template and container purpose."
-		" If not sure leave blank or with suggested default value<br>");
-	printf("<input type=text name=cService1 value='80'> Service1 Port<br>");
-	printf("<input type=text name=cService2 value='443'> Service2 Port<br>");
-	printf("<input type=text name=cService2 value=''> Service3 Port<br>");
-	printf("<input type=text name=cService2 value=''> Service4 Port<br>");
-	printf("<input type=text name=cPrivateIPs value='10.0.0.0/24'> Private IPs<br>");
-	printf("<input type=text name=cNetmask value='255.255.255.0'> Netmask<br>");
-	printf("<input title='When container has a private IP"
-		" you will need to provide an available public IP from tIP'"
-		" type=text name=cExtraNodeIP value=''> NAT Node IP<br>");
+		" If not sure leave blank or with suggested default value.\n");
+	if(strstr(cuTemplateDropDown,"dns"))
+	{
+		cService1="53";
+	}
+	else if(strstr(cuTemplateDropDown,"web"))
+	{
+		cService1="80";
+		cService2="443";
+	}
+	else if(strstr(cuTemplateDropDown,"mailstore"))
+	{
+		cService1="25";
+		cService2="995";
+		cService3="110";
+	}
+	else if(strstr(cuTemplateDropDown,"mx"))
+	{
+		cService1="25";
+		cService2="587";
+	}
+	else if(strstr(cuTemplateDropDown,"smtp"))
+	{
+		cService1="25";
+		cService2="587";
+	}
+	else if(strstr(cuTemplateDropDown,"mysql"))
+	{
+		cService1="3306";
+	}
+	else if(strstr(cuTemplateDropDown,"open"))
+	{
+	}
+	printf("<p><input type=text name=cService1 value='%s'> Service1 Port<br>",cService1);
+	printf("<input type=text name=cService2 value='%s'> Service2 Port<br>",cService2);
+	printf("<input type=text name=cService2 value='%s'> Service3 Port<br>",cService3);
+	printf("<input type=text name=cService2 value='%s'> Service4 Port<br>",cService4);
+	printf("<p>NAT Node IP<br>");
+	tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
+	printf("<br><input type=text name=cPrivateIPs value='10.0.0.0/24'> Private IPs<br>");
+	printf("<input type=text name=cNetmask value='255.255.255.0'> Netmask<br>\n");
 
 }//void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
 
+
 unsigned uCheckFirewallSettings(unsigned uFirewallTemplate)
 {
-	return(0);
-}
+	if(!cuTemplateDropDown[0] && uFirewallTemplate)
+	{
+		MYSQL_RES *res;
+		MYSQL_ROW field;
+
+		sprintf(gcQuery,"SELECT cLabel FROM tTemplate WHERE uTemplate=%u",uFirewallTemplate);
+	        mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+        	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sprintf(cuTemplateDropDown,"%.99s",field[0]);	
+		mysql_free_result(res);
+	}
+
+	//Always return error for now --work in progress
+	return(1);
+}//unsigned uCheckFirewallSettings(unsigned uFirewallTemplate)
 
 //tnodefunc.h
 void DelProperties(unsigned uNode,unsigned uType);
@@ -143,7 +201,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(guPermLevel>=9)
 			{
 	                        ProcesstContainerVars(entries,x);
-                        	guMode=200;
+                        	guMode=2000;
 	                        tContainer("New container step 1/3");
 			}
 			else
@@ -167,7 +225,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: uFirewallTemplate==0!");
 
                         	guMode=201;
-				tContainer("New container step 2/3");
+				tContainer("New container step 3/3");
 			}
 			else
 			{
@@ -192,15 +250,15 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uCheckFirewallSettings(uFirewallTemplate))
 					tContainer("<blink>Error</blink>: Incorrect firewall settings!");
 			
-                        	guMode=2000;
-				tContainer("New container step 3/3");
+				tContainer("New container setup completed");
 			}
 			else
 			{
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
 		}
-		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
+		//else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
+		else if(!strcmp(gcCommand,"Confirm Container Fields"))
                 {
 			if(guPermLevel>=9)
 			{
@@ -250,7 +308,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uIPv4==0)
 					tContainer("<blink>Error</blink>: uIPv4==0!");
 
-                        	guMode=0;
+                        	guMode=200;
 
 				uStatus=11;//Initial setup
 				uContainer=0;
@@ -1065,30 +1123,34 @@ void ExttContainerButtons(void)
                 break;
 
                 case 200:
-			printf("<p><u>New container step 1/3</u><br>");
+			printf("<p><u>New container step 2/3</u><br>");
 			printf("Select node firewall template for new container.<p>");
 			htmlFirewallTemplateSelect(uFirewallTemplate);
-			printf("<p><input title='Continue to step 2 of new container wizard'"
+			printf("<p><input title='Continue to step 3 of new container creation'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Firewall Template'>\n");
                         //printf(LANG_NBB_CONFIRMNEW);
                 break;
 
                 case 201:
-			printf("<p><u>New container step 2/3</u><br>");
+			printf("<p><u>New container step 3/3</u><br>");
 			printf("Complete required firewall settings for <i>%s</i> template.<p>",cuTemplateDropDown);
 			htmlGenFirewallInputs(uFirewallTemplate);
-			printf("<p><input title='Continue to step 3 of new container wizard'"
+			printf("<input type=hidden name=uFirewallTemplate value='%u'>\n",uFirewallTemplate);
+			printf("<p><input title='Finish container creation'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Firewall Settings'>\n");
-			printf("<p><input type=hidden name=uFirewallTemplate value='%u'>\n",uFirewallTemplate);
                         //printf(LANG_NBB_CONFIRMNEW);
                 break;
 
                 case 2000:
-			printf("<p><u>New container step 3/3</u><br>");
-			printf("Complete required container fields.<p>");
-                        printf(LANG_NBB_CONFIRMNEW);
+			printf("<p><u>New container step 1/3</u><br>");
+			printf("Complete required container fields in the right record data panel.<p>");
+			printf("<p><input title='Enter/Mod tContainer record data, then continue"
+					" to step 2 of new container creation'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Container Fields'>\n");
+                        //printf(LANG_NBB_CONFIRMNEW);
                 break;
 
                 case 2001:
