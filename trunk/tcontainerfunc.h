@@ -56,6 +56,7 @@ char *cRatioColor(float *fRatio);
 void htmlGenFirewallInputs(unsigned const uFirewallTemplate);
 unsigned uCheckFirewallSettings(unsigned uFirewallTemplate);
 void htmlFirewallTemplateSelect(unsigned uSelector);
+void AddFirewallProps(unsigned uContainer);
 
 
 void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
@@ -64,6 +65,7 @@ void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
 	char *cService2;
 	char *cService3;
 	char *cService4;
+	unsigned uAllPortsOpen=0;
 
 	cService1="";
 	cService2="";
@@ -103,15 +105,26 @@ void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
 	}
 	else if(strstr(cuTemplateDropDown,"open"))
 	{
+		uAllPortsOpen=1;
+		printf("<p>All ports open for uIPv4 container IP.");
 	}
-	printf("<p><input type=text name=cService1 value='%s'> Service1 Port<br>",cService1);
-	printf("<input type=text name=cService2 value='%s'> Service2 Port<br>",cService2);
-	printf("<input type=text name=cService2 value='%s'> Service3 Port<br>",cService3);
-	printf("<input type=text name=cService2 value='%s'> Service4 Port<br>",cService4);
-	printf("<p>NAT Node IP<br>");
-	tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
-	printf("<br><input type=text name=cPrivateIPs value='10.0.0.0/24'> Private IPs<br>");
-	printf("<input type=text name=cNetmask value='255.255.255.0'> Netmask<br>\n");
+
+	if(!uAllPortsOpen)
+	{
+		printf("<p><input type=text name=cService1 value='%s'> Service1 Port<br>",cService1);
+		printf("<input type=text name=cService2 value='%s'> Service2 Port<br>",cService2);
+		printf("<input type=text name=cService2 value='%s'> Service3 Port<br>",cService3);
+		printf("<input type=text name=cService2 value='%s'> Service4 Port<br>",cService4);
+	}
+	if(strstr(cuTemplateDropDown,"VE"))
+	{
+		printf("<p>DNAT/SNAT Firewall Settings<p>Public or datacenter private IP<br>");
+		tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
+		printf("<br>Netmask for IP above<br>\n");
+		printf("<input type=text name=cNetmask value='255.255.255.0'>");
+		printf("<br>Datacenter wide private IP CIDR block<br>");
+		printf("<input type=text name=cPrivateIPs value='10.0.0.0/24'>\n");
+	}
 
 }//void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
 
@@ -133,8 +146,12 @@ unsigned uCheckFirewallSettings(unsigned uFirewallTemplate)
 		mysql_free_result(res);
 	}
 
-	//Always return error for now --work in progress
-	return(1);
+	//Very basic check...add the rest TODO
+	if(uWizIPv4)
+		return(0);
+	else
+		return(1);
+
 }//unsigned uCheckFirewallSettings(unsigned uFirewallTemplate)
 
 //tnodefunc.h
@@ -237,7 +254,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(guPermLevel>=9)
 			{
-                        	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -246,10 +262,15 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=200;
 				if(!uFirewallTemplate)
 					tContainer("<blink>Unexpected Error</blink>: uFirewallTemplate==0!");
+				if(!uStatus)
+					tContainer("<blink>Unexpected Error</blink>: uStatus==0!");
                         	guMode=201;
 				if(uCheckFirewallSettings(uFirewallTemplate))
 					tContainer("<blink>Error</blink>: Incorrect firewall settings!");
+
+				AddFirewallProps(uContainer);
 			
+                        	guMode=0;
 				tContainer("New container setup completed");
 			}
 			else
@@ -2113,3 +2134,7 @@ void htmlFirewallTemplateSelect(unsigned uSelector)
 
 }//void htmlFirewallTemplateSelect(unsigned uSelector)
 
+
+void AddFirewallProps(unsigned uContainer)
+{
+}//void AddFirewallProps(unsigned uContainer)
