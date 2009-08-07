@@ -292,6 +292,10 @@ void Log(char *cMessage)
 
 void SendPrivPagesEmail(char *cEmail, char *cSubjectPrefix)
 {
+	char cSystemCall[256]={""};
+
+	sprintf(cSystemCall,"touch /tmp/delme.SendPrivPagesEmail.%s.%s",cEmail,cSubjectPrefix);
+
 	switch(fork())
 	{
 		default:
@@ -302,7 +306,7 @@ void SendPrivPagesEmail(char *cEmail, char *cSubjectPrefix)
 			_exit(0);
 
 		case 0:
-			system("touch /tmp/delme.SendPrivPagesEmail");
+			system(cSystemCall);
 			_exit(0);
 		break;
 	}

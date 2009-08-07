@@ -19,7 +19,6 @@ NOTES
 					}\
 					mysqlRes=mysql_store_result(&gMysql);
 
-
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
 static unsigned uFirewallTemplate=0;
@@ -28,6 +27,12 @@ static char cConfigLabel[32]={""};
 static char cWizHostname[100]={""};
 static char cWizLabel[32]={""};
 static char cIPOld[32]={""};
+static char cService1[32]={""};
+static char cService2[32]={""};
+static char cService3[32]={""};
+static char cService4[32]={""};
+static char cPrivateIPs[64]={""};
+static char cNetmask[64]={""};
 static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
 
@@ -113,8 +118,8 @@ void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
 	{
 		printf("<p><input type=text name=cService1 value='%s'> Service1 Port<br>",cService1);
 		printf("<input type=text name=cService2 value='%s'> Service2 Port<br>",cService2);
-		printf("<input type=text name=cService2 value='%s'> Service3 Port<br>",cService3);
-		printf("<input type=text name=cService2 value='%s'> Service4 Port<br>",cService4);
+		printf("<input type=text name=cService3 value='%s'> Service3 Port<br>",cService3);
+		printf("<input type=text name=cService4 value='%s'> Service4 Port<br>",cService4);
 	}
 	if(strstr(cuTemplateDropDown,"VE"))
 	{
@@ -194,6 +199,30 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cWizHostname,"%.99s",WordToLower(entries[i].val));
 		}
+		else if(!strcmp(entries[i].name,"cService1"))
+		{
+			sprintf(cService1,"%.31s",entries[i].val);
+		}
+		else if(!strcmp(entries[i].name,"cService2"))
+		{
+			sprintf(cService2,"%.31s",entries[i].val);
+		}
+		else if(!strcmp(entries[i].name,"cService3"))
+		{
+			sprintf(cService3,"%.31s",entries[i].val);
+		}
+		else if(!strcmp(entries[i].name,"cService4"))
+		{
+			sprintf(cService4,"%.31s",entries[i].val);
+		}
+		else if(!strcmp(entries[i].name,"cNetmask"))
+		{
+			sprintf(cNetmask,"%.63s",entries[i].val);
+		}
+		else if(!strcmp(entries[i].name,"cPrivateIPs"))
+		{
+			sprintf(cPrivateIPs,"%.63s",entries[i].val);
+		}
 		else if(!strcmp(entries[i].name,"cuWizIPv4PullDown"))
 		{
 			sprintf(cuWizIPv4PullDown,"%.31s",entries[i].val);
@@ -262,8 +291,8 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=200;
 				if(!uFirewallTemplate)
 					tContainer("<blink>Unexpected Error</blink>: uFirewallTemplate==0!");
-				if(!uStatus)
-					tContainer("<blink>Unexpected Error</blink>: uStatus==0!");
+				if(uStatus!=11)
+					tContainer("<blink>Unexpected Error</blink>: uStatus not 'Initial Setup'");
                         	guMode=201;
 				if(uCheckFirewallSettings(uFirewallTemplate))
 					tContainer("<blink>Error</blink>: Incorrect firewall settings!");
@@ -353,8 +382,9 @@ void ExttContainerCommands(pentry entries[], int x)
 							", No container created!");
 				}
 				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 						",cName='Name',cValue='%s'",
-							uContainer,cLabel);
+							uContainer,guCompany,guLoginClient,cLabel);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -393,13 +423,21 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				guMode=5;
 				uStatus=0;//Internal hack for deploy button
-				DelProperties(uContainer,3);
-				//Release IP
+				//Release IPs
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
 						" WHERE uIP=%u and uAvailable=0",uIPv4);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
+				//Node IP if any MySQL5+
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel IN"
+						" (SELECT cValue FROM tProperty WHERE uKey=%u"
+						" AND uType=3 AND cName='cNodeIP')",uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				//Now we can remove properties
+				DelProperties(uContainer,3);
 				//Remove from any groups
 				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",uContainer);
 				mysql_query(&gMysql,gcQuery);
@@ -781,8 +819,9 @@ void ExttContainerCommands(pentry entries[], int x)
 								", No jobs created!");
 					}
 					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 							",cName='Name',cValue='%s'",
-								uNewVeid,cWizLabel);
+								uNewVeid,guCompany,guLoginClient,cWizLabel);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -2052,8 +2091,9 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 			uWizIPv4++;//Now we can increment safely
 			
 			sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 					",cName='Name',cValue='%.25s-clone'",
-						uNewVeid,field[0]);
+							uNewVeid,guCompany,guLoginClient,field[0]);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -2137,4 +2177,160 @@ void htmlFirewallTemplateSelect(unsigned uSelector)
 
 void AddFirewallProps(unsigned uContainer)
 {
+	if(cService1[0])
+	{
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE uKey=%u AND uType=3"
+				" AND cName='cService1'",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			",cName='cService1',cValue='%s'",
+				uContainer,guCompany,guLoginClient,cService1);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+	if(cService2[0])
+	{
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE uKey=%u AND uType=3"
+				" AND cName='cService2'",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			",cName='cService2',cValue='%s'",
+				uContainer,guCompany,guLoginClient,cService2);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+	if(cService3[0])
+	{
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE uKey=%u AND uType=3"
+				" AND cName='cService3'",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			",cName='cService3',cValue='%s'",
+				uContainer,guCompany,guLoginClient,cService3);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+	if(cService4[0])
+	{
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE uKey=%u AND uType=3"
+				" AND cName='cService4'",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			",cName='cService4',cValue='%s'",
+				uContainer,guCompany,guLoginClient,cService4);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+	if(cNetmask[0])
+	{
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE uKey=%u AND uType=3"
+				" AND cName='cNetmask'",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			",cName='cNetmask',cValue='%s'",
+				uContainer,guCompany,guLoginClient,cNetmask);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+	if(cPrivateIPs[0])
+	{
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE uKey=%u AND uType=3"
+				" AND cName='cPrivateIPs'",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			",cName='cPrivateIPs',cValue='%s'",
+				uContainer,guCompany,guLoginClient,cPrivateIPs);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+	if(cuWizIPv4PullDown[0])
+	{
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE uKey=%u AND uType=3"
+				" AND cName='cNodeIP'",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			",cName='cNodeIP',cValue='%s'",
+				uContainer,guCompany,guLoginClient,cuWizIPv4PullDown);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		//This needs the corresponding release code on delete/mod and delete container
+		//ops
+		sprintf(gcQuery,"UPDATE tIP SET uAvailable=0 WHERE cLabel='%s'",cuWizIPv4PullDown);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+	if(cuTemplateDropDown[0])
+	{
+		char *cp;
+
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE uKey=%u AND uType=3"
+				" AND (cName='cVEID.mount' OR cName='cVEID.umount')",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			",cName='cVEID.mount',cValue='%s'",
+				uContainer,guCompany,guLoginClient,cuTemplateDropDown);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		if((cp=strchr(cuTemplateDropDown,'.')))
+			sprintf(cp,".umount");
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			",cName='cVEID.umount',cValue='%s'",
+				uContainer,guCompany,guLoginClient,cuTemplateDropDown);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+
 }//void AddFirewallProps(unsigned uContainer)
