@@ -2787,7 +2787,7 @@ void funcCustomerNavList(FILE *fp)
 	
 	char *cRowColor="";
 
-	char cTopMessage[64]={""};
+	static char cTopMessage[64]={""};
 
 	if(cSearch[0])
 	{
@@ -2825,7 +2825,7 @@ void funcCustomerNavList(FILE *fp)
 					" tClient.cState LIKE '%2$s%%' OR tClient.cCountry LIKE '%2$s%%' )"
 					" ORDER BY cLabel",guOrg,cSearch);
 			else
-				sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel FROM " TCLIENT ",tClientConfig"
+				sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel FROM " TCLIENT 
 					" WHERE (tClient.uClient=%1$u OR tClient.uOwner"
 					" IN (SELECT tClient.uClient FROM " TCLIENT " WHERE tClient.uOwner=%1$u OR"
 					" tClient.uClient=%1$u))"
@@ -2858,7 +2858,7 @@ void funcCustomerNavList(FILE *fp)
 					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
 					" ORDER BY cLabel",guOrg);
 	}
-
+	//htmlPlainTextError(gcQuery);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
