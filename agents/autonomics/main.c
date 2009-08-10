@@ -163,6 +163,8 @@ void sighandlerReload(int iSig)
 	giAutonomicsPrivPagesActRatio=0;
 	guDatacenter=0;
 	guNode=0;
+	guWarned=0;
+	guActedOn=0;
 
 }//void sighandlerReload(int iSig)
 

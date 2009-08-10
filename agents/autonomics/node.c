@@ -294,7 +294,7 @@ void SendPrivPagesEmail(char *cEmail, char *cSubjectPrefix)
 {
 	char cSystemCall[256]={""};
 
-	sprintf(cSystemCall,"touch /tmp/delme.SendPrivPagesEmail.%s.%s",cEmail,cSubjectPrefix);
+	sprintf(cSystemCall,"sleep 300;touch /tmp/delme.SendPrivPagesEmail.%s.%s",cEmail,cSubjectPrefix);
 
 	switch(fork())
 	{
