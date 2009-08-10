@@ -1,4 +1,4 @@
-1	AdminLogin.Body	1	1	1192486759	1	1243340120		<body marginwidth="0" marginheight="0">\
+1	AdminLogin.Body	1	1	1192486759	1	1249946621		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -67,7 +67,7 @@
 </table>\
 </div>\
 	1	0
-2	cInvoiceItemFooterMail	1	1	1192486759	1	1243340121		</table>\
+2	cInvoiceItemFooterMail	1	1	1192486759	1	1249946621		</table>\
 <br>\
 <br>\
 {{mInvoiceTax}}<br>\
@@ -76,7 +76,7 @@
 <br>\
 \
 	1	0
-3	cInvoiceItemHeaderMail	1	1	1192486759	1	1243340121		<table>\
+3	cInvoiceItemHeaderMail	1	1	1192486759	1	1249946621		<table>\
 <tr bgcolor=black>\
 <td class=tablehead>Item</td>\
 <td class=tablehead>Catalog</td>\
@@ -87,7 +87,7 @@
 </tr>\
 \
 	1	0
-4	cInvoiceItemMail	1	1	1192486759	1	1243340121		<tr>\
+4	cInvoiceItemMail	1	1	1192486759	1	1249946621		<tr>\
 <td class=item>{{uNum}}</td>\
 <td class=item>{{cProduct}}</td>\
 <td class=item>{{mPrice}}</td>\
@@ -97,7 +97,7 @@
 </tr>\
 \
 	1	0
-5	cInvoiceTopMail	1	1	1192486759	1	1243340122		<strong>{{cInvoice}}</strong><br>\
+5	cInvoiceTopMail	1	1	1192486759	1	1249946622		<strong>{{cInvoice}}</strong><br>\
 Ship To:<br>\
 {{cLabel}}<br>\
 ({{cEmail}})<br>\
@@ -109,7 +109,7 @@ Ship To:<br>\
 {{cCardName}} with {{cCardType}} {{cCardNumber}} {{cCardExp}}<br>\
 -->\
 	1	0
-6	Customer.Body	1	1	1192486759	1	1243340122		<body marginwidth="0" marginheight="0">\
+6	Customer.Body	1	1	1192486759	1	1249946622		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -157,8 +157,8 @@ Ship To:<br>\
 \	\	\	\	\	\	\	\	\	\	\	<form action=ispAdmin.cgi method="post">\
 \	\	\	\	\	\	\	\	\	\	\	\	<table cellspacing="0" cellpadding="0" border="0">\
 \	\	\	\	\	\	\	\	\	\	\	\	\	<tr>\
+\	\	\	\	\	\	\	\	\	\	\	\	\	<td><input value=1 type=checkbox name=uSearchInstance title="Check to search within instance data"></td>\
 \	\	\	\	\	\	\	\	\	\	\	\	\	\	<td><input type="text" value="Search Customers" class="searchinp" name=cSearch onfocus="this.select();" title="Search for customers with a keyword" /></td>\
-\
 \	\	\	\	\	\	\	\	\	\	\	\	\	\	<td valign="middle" style="padding: 0px 4px 0px 4px;"></td><td class="padlt6rt10"><input type="image" src="/images/btn_mast_search.gif" alt="Search" width="17" height="17" border="0" title="Find one or more customers based on input search pattern" /></td>\
 \	\	\	\	\	\	\	\	\	\	\	\	\	</tr>\
 \	\	\	\	\	\	\	\	\	\	\	\	</table>\
@@ -611,7 +611,7 @@ d>\
 \
 \
 	1	0
-7	DashBoard.Body	1	1	1192486759	1	1243340127		\
+7	DashBoard.Body	1	1	1192486759	1	1249946622		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -662,6 +662,7 @@ d>\
 \	\	\	\	\	\	\	\	\	\	\	\	<table cellspacing="0" cellpadding="0" border="0">\
 \	\	\	\	\	\	\	\	\	\	\	\	\	<tr>\
 \	\	\	\	\	\	\	\	\	\	\	\	\	\	<td><input type="text" value="Search Customers" class="searchinp" name=cSearch onfocus="this.select();" title="Search for customers with a keyword" /></td>\
+\	\	\	\	\	\	\	\	\	\	\	\	\	<td><input value=1 type=checkbox name=uSearchInstance title="Check to search within instance data"></td>\
 \
 \	\	\	\	\	\	\	\	\	\	\	\	\	\	<td valign="middle" style="padding: 0px 4px 0px 4px;"></td><td class="padlt6rt10"><input type="image" src="/images/btn_mast_search.gif" alt="Search" width="17" height="17" border="0" title="Find one or more customers based on input search pattern" /></td>\
 \	\	\	\	\	\	\	\	\	\	\	\	\	</tr>\
@@ -734,17 +735,17 @@ d>\
 \
 \
 	1	0
-8	EnteredParametersFooter	1	1	1192486759	1	1243340127		</table>\
+8	EnteredParametersFooter	1	1	1192486759	1	1249946623		</table>\
 </fieldset>\
 \
 	1	0
-9	EnteredParametersHeader	1	1	1192486759	1	1243340128		<fieldset>\
+9	EnteredParametersHeader	1	1	1192486759	1	1249946623		<fieldset>\
 <legend>{{cServiceLabel}} Parameters</legend>\
 <table>\
 <input type=hidden name=uService.{{uServiceCount}} value="{{uService}}">\
 \
 	1	0
-10	EnteredParametersItem	1	1	1192486759	1	1243340128		<tr>\
+10	EnteredParametersItem	1	1	1192486759	1	1249946623		<tr>\
 \	<td valign=top>\
 \	<strong>{{cParamLabel}}</strong>\
 \	</td>\
@@ -756,14 +757,14 @@ d>\
 </tr>\
 \
 	1	0
-11	Footer	1	1	1192486759	1	1243340128		<br>\
+11	Footer	1	1	1192486759	1	1249946623		<br>\
 <br>\
 <div align=center class=footer>{{cCopyright}}</div>\
 \
 </body>\
 </html>\
 	1	0
-12	Glossary.Body	1	1	1192486759	1	1243340129		<body>\
+12	Glossary.Body	1	1	1192486759	1	1249946623		<body>\
 <form method=post>\
 <table width="100%" border="0" cellspacing="0" cellpadding="0" class="table_header2">\
   <tr>\
@@ -799,7 +800,7 @@ d>\
 <br>\
 \
 	1	0
-13	Header	1	1	1192486759	1	1243340129		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\
+13	Header	1	1	1192486759	1	1249946623		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\
 <html>\
 <head>\
 <title>{{cTitle}}</title>\
@@ -809,8 +810,8 @@ d>\
 \
 </head>\
 	1	0
-14	images	1	1	1192486759	1	1243340137		GIF89a	1	0
-15	Instance.Body	1	1	1192486760	1	1243340138		\
+14	images	1	1	1192486759	1	1249946626		GIF89a	1	0
+15	Instance.Body	1	1	1192486760	1	1249946626		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -1024,10 +1025,10 @@ An instance of a product is a product that has been deployed for a customer. Eac
 </form>\
 \
 	1	0
-36	InstanceOpApprove	1	1	1243340045	1	1243340139		<tr><td><input type=submit class=largestButton title='Approve instance'  name=gcFunction value='{{gcNewStep}}Approve Instance'></td></tr>\
+36	InstanceOpApprove	1	1	1243340045	1	1249946626		<tr><td><input type=submit class=largestButton title='Approve instance'  name=gcFunction value='{{gcNewStep}}Approve Instance'></td></tr>\
 \
 	1	0
-37	InstanceParameterInputField	1	1	1243340048	1	1243340142		<tr>\
+37	InstanceParameterInputField	1	1	1243340048	1	1249946627		<tr>\
         <td valign=to width=45%>\
 <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel={{cParamLabel}}')"><strong>{{cParamLabel}}</strong></a></td>\
         <td valign=top>\
@@ -1044,34 +1045,34 @@ An instance of a product is a product that has been deployed for a customer. Eac
 </tr>\
 \
 	1	0
-16	InstanceOpCancelAndHold	1	1	1192486760	1	1243340139		<tr><td><input type=submit title='Cancel product'  name=gcFunction value='{{gcNewStep}}Cancel Instance' {{cCancelStyle}}></td></tr>\
+16	InstanceOpCancelAndHold	1	1	1192486760	1	1249946626		<tr><td><input type=submit title='Cancel product'  name=gcFunction value='{{gcNewStep}}Cancel Instance' {{cCancelStyle}}></td></tr>\
 <tr><td><input type=submit title='Put the prodct instance on hold'  name=gcFunction value='{{gcNewStep}}Hold Instance' {{cHoldStyle}}></td></tr>\
 \
 	1	0
-17	InstanceOpCancelCancel	1	1	1192486760	1	1243340140		<tr><td><input type=submit class=largestButton title='Call off cancel job for the instance and update status'  name=gcFunction value='{{gcNewStep}}Call Off Cancel Job'></td></tr>\
+17	InstanceOpCancelCancel	1	1	1192486760	1	1249946626		<tr><td><input type=submit class=largestButton title='Call off cancel job for the instance and update status'  name=gcFunction value='{{gcNewStep}}Call Off Cancel Job'></td></tr>\
 \
 	1	0
-18	InstanceOpCancelDeployment	1	1	1192486760	1	1243340140		<tr><td><input type=submit class=largestButton title='Cancel the product deployment'  name=gcFunction value='{{gcNewStep}}Cancel Deployment'></td></tr>\
+18	InstanceOpCancelDeployment	1	1	1192486760	1	1249946627		<tr><td><input type=submit class=largestButton title='Cancel the product deployment'  name=gcFunction value='{{gcNewStep}}Cancel Deployment'></td></tr>\
 \
 	1	0
-19	InstanceOpCancelHold	1	1	1192486760	1	1243340140		<tr><td><input type=submit class=largestButton title='Cancel hold operation and update instance status'  name=gcFunction value='{{gcNewStep}}Cancel Hold'></td></tr>\
+19	InstanceOpCancelHold	1	1	1192486760	1	1249946627		<tr><td><input type=submit class=largestButton title='Cancel hold operation and update instance status'  name=gcFunction value='{{gcNewStep}}Cancel Hold'></td></tr>\
 \
 	1	0
-20	InstanceOpCancelRedeploy	1	1	1192486760	1	1243340140		<tr><td><input type=submit class=largestButton title='Cancel redeployment of the instance'  name=gcFunction value='{{gcNewStep}}Cancel Redeployment'></td></tr>\
+20	InstanceOpCancelRedeploy	1	1	1192486760	1	1249946627		<tr><td><input type=submit class=largestButton title='Cancel redeployment of the instance'  name=gcFunction value='{{gcNewStep}}Cancel Redeployment'></td></tr>\
 \
 	1	0
-21	InstanceOpDeploy	1	1	1192486760	1	1243340141		<tr><td><input type=submit class=largestButton title='Deploy the loaded instance' name=gcFunction value='{{gcNewStep}}Deploy'></td></tr>\
+21	InstanceOpDeploy	1	1	1192486760	1	1249946627		<tr><td><input type=submit class=largestButton title='Deploy the loaded instance' name=gcFunction value='{{gcNewStep}}Deploy'></td></tr>\
 \
 	1	0
-22	InstanceOpRedeploy	1	1	1192486760	1	1243340141		<tr><td><input type=submit class=largestButton title='Redeploy instance'  name=gcFunction value='{{gcNewStep}}Redeploy Instance' {{cHoldStyle}}></td></tr>\
+22	InstanceOpRedeploy	1	1	1192486760	1	1249946627		<tr><td><input type=submit class=largestButton title='Redeploy instance'  name=gcFunction value='{{gcNewStep}}Redeploy Instance' {{cHoldStyle}}></td></tr>\
 <tr><td><input type=submit class=largestButton title='Redeploy instance'  name=gcFunction value='{{gcNewStep}}Remove Instance' {{cCancelStyle}}></td></tr>\
 \
 	1	0
-23	InstanceOpRelease	1	1	1192486760	1	1243340141		<tr><td><input type=submit class=largestButton title='Release hold'  name=gcFunction value='{{gcNewStep}}Release Hold'></td></tr>\
+23	InstanceOpRelease	1	1	1192486760	1	1249946627		<tr><td><input type=submit class=largestButton title='Release hold'  name=gcFunction value='{{gcNewStep}}Release Hold'></td></tr>\
 	1	0
-24	InstanceOpUnknown	1	1	1192486760	1	1243340141		<tr><td>Unknowns product instance status. Contact support</td></tr>\
+24	InstanceOpUnknown	1	1	1192486760	1	1249946627		<tr><td>Unknowns product instance status. Contact support</td></tr>\
 	1	0
-25	Invoice.Body	1	1	1192486760	1	1243340144		\
+25	Invoice.Body	1	1	1192486760	1	1249946628		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -1251,7 +1252,7 @@ At this page you are able to review and update the status of the invoices genera
 </form>\
 \
 	1	0
-26	ParameterInputField	1	1	1192486760	1	1243340145		<tr>\
+26	ParameterInputField	1	1	1192486760	1	1249946629		<tr>\
         <td valign=top width=150>\
 <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel={{cParamLabel}}')"><strong>{{cParamLabel}}</strong></a></td>\
         <td valign=top>\
@@ -1263,7 +1264,7 @@ At this page you are able to review and update the status of the invoices genera
 </tr>\
 \
 	1	0
-41	ParameterInputFooterWizard	1	1	1243340053	1	1243340146		</table>\
+41	ParameterInputFooterWizard	1	1	1243340053	1	1249946629		</table>\
 </fieldset>\
 </td>\
 <tr>\
@@ -1274,13 +1275,13 @@ At this page you are able to review and update the status of the invoices genera
 </tr>\
 \
 	1	0
-27	ParameterInputFooter	1	1	1192486760	1	1243340146		</table>\
+27	ParameterInputFooter	1	1	1192486760	1	1249946629		</table>\
 </fieldset>\
 </td>\
 </tr>\
 \
 	1	0
-28	ParameterInputHeader	1	1	1192486760	1	1243340146		<tr>\
+28	ParameterInputHeader	1	1	1192486760	1	1249946629		<tr>\
 <td valign=top colspan=2>\
 \
 <fieldset>\
@@ -1289,7 +1290,7 @@ At this page you are able to review and update the status of the invoices genera
 <input type=hidden name=uService.{{uServiceCount}} value="{{uService}}">\
 \
 	1	0
-29	Product.Body	1	1	1192486760	1	1243340147		\
+29	Product.Body	1	1	1192486760	1	1249946629		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -1589,7 +1590,7 @@ A product can have an unlimited\	number of services associated with it. Add serv
 </form>\
 \
 	1	0
-30	ProductDeploy.1	1	1	1192486760	1	1243340149		\
+30	ProductDeploy.1	1	1	1192486760	1	1249946630		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -1810,7 +1811,7 @@ Step 1:<br>\
 </form>\
 \
 	1	0
-31	ProductDeploy.2	1	1	1192486760	1	1243340151		\
+31	ProductDeploy.2	1	1	1192486760	1	1249946630		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -2033,7 +2034,7 @@ Step 2:<br>\
 </form>\
 \
 	1	0
-32	ProductDeploy.3	1	1	1192486760	1	1243340152		\
+32	ProductDeploy.3	1	1	1192486760	1	1249946630		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -2269,13 +2270,13 @@ Step 3:<br>\
 </form>\
 \
 	1	0
-33	ParameterInputSelectFooter	1	1	1192559587	1	1243340146		\	</select>\
+33	ParameterInputSelectFooter	1	1	1192559587	1	1249946629		\	</select>\
         </td>\
 </tr>\
 \
 \
 	1	0
-34	ParameterInputSelectHeader	1	1	1192559587	1	1243340147		<tr>\
+34	ParameterInputSelectHeader	1	1	1192559587	1	1249946629		<tr>\
         <td valign=top>\
 <a class=inputLink href="#" onClick="javascript:window.open('{{iCGI}}?gcPage=Glossary&cLabel={{cParamLabel}}','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')"><strong>{{cParamLabel}}</strong></a></td>\
         <td valign=top>\
@@ -2287,7 +2288,7 @@ Step 3:<br>\
 <select name={{cParamName}} title="{{cParamTitle}}" class="{{cParamStyle}}" {{cFieldStatus}}>\
 \
 	1	0
-35	cInvoiceShipTopMail	1	1	1243340028	1	1243340122		<h4>{{cInvoice}}</h4>\
+35	cInvoiceShipTopMail	1	1	1243340028	1	1249946622		<h4>{{cInvoice}}</h4>\
 <br>\
 ROCK{{cLabel}}<br> ({{cEmail}}<br>\
 {{cAddr1}} {{cAddr2}}<br>\
@@ -2300,7 +2301,7 @@ Ship to:<br>\
 <p>\
 \
 	1	0
-38	Instance-Step.Body	1	1	1243340048	1	1243340142		\
+38	Instance-Step.Body	1	1	1243340048	1	1249946628		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -2514,7 +2515,7 @@ An instance of a product is a product that has been deployed for a customer. Eac
 </form>\
 \
 	1	0
-39	InstParamInputSelHeader	1	1	1243340051	1	1243340144		<tr>\
+39	InstParamInputSelHeader	1	1	1243340051	1	1249946628		<tr>\
         <td valign=top>\
 <a class=inputLink href="#" onClick="javascript:window.open('{{iCGI}}?gcPage=Glossary&cLabel={{cParamLabel}}','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')"><strong>{{cParamLabel}}</strong></a></td>\
         <td valign=top>\
@@ -2528,7 +2529,7 @@ An instance of a product is a product that has been deployed for a customer. Eac
 <select name={{cParamName}} title="{{cParamTitle}}" class="{{cParamStyle}}" {{cFieldStatus}}>\
 \
 	1	0
-40	ParameterHiddenInputField	1	1	1243340052	1	1243340145		<input type=hidden name={{cParamName}} value="{{cParamValue}}">\
+40	ParameterHiddenInputField	1	1	1243340052	1	1249946629		<input type=hidden name={{cParamName}} value="{{cParamValue}}">\
 <input type=hidden name=cParamName.{{uParamCount}} value="{{cParameter}}">\
 <input type=hidden name=cParamLabel.{{uParamCount}} value="{{cParamLabel}}">\
 \
