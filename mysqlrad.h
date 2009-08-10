@@ -532,7 +532,7 @@ void ExttConfigurationNavBar(void);
 
 //In-line code macros
 
-//Comon
+//Common
 #define _RUN_QUERY mysql_query(&gMysql,gcQuery);if(mysql_errno(&gMysql))
 
 //MySQL run query only w/error checking
@@ -558,6 +558,56 @@ void ExttConfigurationNavBar(void);
 #define MYSQL_RUN_STORE_TEXT_RETURN(res) MYSQL_RUN_TEXT_RETURN res=mysql_store_result(&gMysql)
 //return; if MySQL error
 #define MYSQL_RUN_STORE_TEXT_RET_VOID(res) MYSQL_RUN_TEXT_RET_VOID res=mysql_store_result(&gMysql)
+
+//In-line code macros rev 2
+
+//Common - This macro shouldn't be used directly, as is part of the others only
+#define macro_mySQLQueryBasic mysql_query(&gMysql,gcQuery);\
+				if(mysql_errno(&gMysql))
+
+//MySQL run query only w/error checking
+//HTML
+#define macro_mySQLQueryHTMLError macro_mySQLQueryBasic \
+					htmlPlainTextError(mysql_error(&gMysql))
+//Text
+#define macro_mySQLQueryTextError macro_mySQLQueryBasic\
+					{\
+						fprintf(stderr,"%s\n",mysql_error(&gMysql));\
+						exit(1);\
+					}
+
+//Text with return() instead of exit()
+//return(1); if MySQL error
+#define macro_mySQLRunReturnInt macro_mySQLQueryBasic\
+				{\
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));\
+					return(1);\
+				}
+//return void; if MySQL error
+#define macro_mySQLRunReturnVoid macro_mySQLQueryBasic\
+				{\
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));\
+					return;\
+				}
+
+//MySQL run query and store result w/error checking
+//HTML
+#define macro_mySQLRunAndStore(res) macro_mySQLQueryHTMLError;\
+					res=mysql_store_result(&gMysql)
+//Text
+#define macro_mySQLRunAndStoreText(res) macro_mySQLQueryTextError;\
+					res=mysql_store_result(&gMysql)
+
+//MySQL run query and store result w/error checking (Text); uses return() call instead of exit()
+//return(1); if MySQL error
+#define macro_mySQLRunAndStoreTextIntRet(res) macro_mySQLRunReturnInt;\
+						res=mysql_store_result(&gMysql)
+//return; if MySQL error
+#define macro_mySQLRunAndStoreTextVoidRet(res) macro_mySQLRunReturnVoid;\
+						res=mysql_store_result(&gMysql)
+
+
+//Table Variables
 
 
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);

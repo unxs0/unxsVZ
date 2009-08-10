@@ -1917,12 +1917,12 @@ void SSLCookieLogin(void)
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
-			strncpy(gcPasswd,ptr,20);
+			sprintf(gcPasswd,"%.99s",ptr);
 			*ptr2=';';
 		}
 		else
 		{
-			strncpy(gcPasswd,ptr,20);
+			sprintf(gcPasswd,"%.99s",ptr);
 		}
 	}
 	
@@ -2241,6 +2241,29 @@ void ExtSelect(const char *cTable,const char *cVarList)
 }//void ExtSelect(...)
 
 
+void ExtSelect2(const char *cTable,const char *cVarList,unsigned uMaxResults)
+{
+	if(guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %1$s FROM %2$s ORDER BY %2$s._rowid",
+					cVarList,cTable);
+	else 
+		sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
+				" WHERE %3$s.uOwner=" TCLIENT ".uClient"
+				" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
+				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
+				" ORDER BY %3$s._rowid",
+					cVarList,guCompany,
+					cTable);
+	if(uMaxResults)
+	{
+		char cLimit[33]={""};
+		sprintf(cLimit," LIMIT %u",uMaxResults);
+		strcat(gcQuery,cLimit);
+	}
+
+}//void ExtSelect2(...)
+
+
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow)
 {
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
@@ -2258,4 +2281,53 @@ void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow)
 					cTable,cTable+1,uRow);
 }//void ExtSelectRow(...)
 
+
+//Passwd stuff
+static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
+        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+void to64(s, v, n)
+  register char *s;
+  register long v;
+  register int n;
+{
+    while (--n >= 0) {
+        *s++ = itoa64[v&0x3f];
+        v >>= 6;
+    }
+}//void to64(s, v, n)
+
+
+void EncryptPasswd(char *pw)
+{
+	//Notes:
+	//	We should change time based salt 
+	//	(could be used for faster dictionary attack)
+	//	to /dev/random based system.
+
+        char salt[3];
+        char passwd[102]={""};
+        char *cpw;
+	char cMethod[16] ={""}; 
+
+	GetConfiguration("cCryptMethod",cMethod,0,0,0,0);
+	if(!strcmp(cMethod,"MD5"))
+	{
+		char cSalt[] = "$1$01234567$";
+	    	(void)srand((int)time((time_t *)NULL));
+    		to64(&cSalt[3],rand(),8);
+		cpw = crypt(pw,cSalt);
+		// error not verified, str NULL ("") returned	
+	}
+	else
+	{
+		// default DES method
+	        sprintf(passwd,"%.99s",pw);
+    		(void)srand((int)time((time_t *)NULL));
+    		to64(&salt[0],rand(),2);
+		cpw=crypt(passwd,salt);
+	}	
+	sprintf(pw,"%.99s",cpw);
+
+}//void EncryptPasswd(char *pw)
 

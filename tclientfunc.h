@@ -6,7 +6,7 @@ PURPOSE
 AUTHOR
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
 */
 
 #define BO_CUSTOMER	"Back-Office Customer"
@@ -48,6 +48,7 @@ unsigned IsAuthUser(char *cLabel, unsigned uOwner, unsigned uCertClient);
 void PermLevelDropDown(char *cuPerm);
 
 void EncryptPasswdWithSalt(char *cPasswd,char *cSalt);
+void EncryptPasswd(char *cPasswd);//main.c
 void GetClientMaxParams(unsigned uClient,unsigned *uMaxSites,unsigned *uMaxIPs);
 const char *cUserLevel(unsigned uPermLevel);
 unsigned uMaxClientsReached(unsigned uClient);
@@ -117,6 +118,7 @@ void ExttClientCommands(pentry entries[], int x)
 				}
 				guMode=2000;
 				//These just for GUI cleanup
+				cCode[0]=0;
 				uModDate=0;
 				uModBy=0;
 				tClient(LANG_NB_CONFIRMNEW);
@@ -142,9 +144,15 @@ void ExttClientCommands(pentry entries[], int x)
 				guMode=0;
 
 				if(!uForClient)
+				{
 					uOwner=guCompany;
+					sprintf(cCode,"Organization");
+				}
 				else
+				{
 					uOwner=uForClient;
+					sprintf(cCode,"Contact");
+				}
 				uClient=0;//Update .c this is dumb
 				uCreatedBy=guLoginClient;
 				//These just for GUI cleanup
@@ -181,12 +189,29 @@ void ExttClientCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 					tClient("Can't delete client with resources");
 				mysql_free_result(res);
-				sprintf(gcQuery,"DELETE FROM " TAUTHORIZE 
-					" WHERE (cLabel='%s' OR uCertClient=%u)"
-					" AND (uOwner=%u OR uOwner=%u)",cLabel,uClient,uClient,guLoginClient);
-				mysql_query(&gMysql,gcQuery);
-        			if(mysql_errno(&gMysql))
-                			tClient(mysql_error(&gMysql));
+				
+				if(!strcmp(cCode,"Contact"))
+				{
+					sprintf(gcQuery,"DELETE FROM " TAUTHORIZE 
+						" WHERE (cLabel='%s' OR uCertClient=%u)",
+						cLabel,uClient);
+					mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tClient(mysql_error(&gMysql));
+				}
+				else if(!strcmp(cCode,"Organization"))
+				{
+					sprintf(gcQuery,"DELETE FROM " TCLIENT 
+						" WHERE uOwner=%u",uClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						tClient(mysql_error(&gMysql));
+					sprintf(gcQuery,"DELETE FROM " TAUTHORIZE
+						" WHERE uOwner=%u",uClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						tClient(mysql_error(&gMysql));
+				}
                         	guMode=5;
                         	DeletetClient();
 			}
@@ -249,7 +274,7 @@ void ExttClientCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				time_t clock;
-				char cClrPasswd[33];
+				char cClrPasswd[33]={""};
 
 			        time(&clock);
 				
@@ -272,8 +297,9 @@ void ExttClientCommands(pentry entries[], int x)
 					tClient(gcQuery);
 				}
 		
-				sprintf(cClrPasswd,"%.32s",cPasswd);
-				EncryptPasswdWithSalt(cPasswd,"..");
+				//sprintf(cClrPasswd,"%.32s",cPasswd);
+				EncryptPasswd(cPasswd);
+				if(uPerm==12) uClient=1;//uCertClient root alias temp hack
 				sprintf(gcQuery,"INSERT INTO " TAUTHORIZE " SET cLabel='%s',uPerm=%u,"
 					"uCertClient=%u,cPasswd='%s',uOwner=%u,uCreatedBy=%u,"
 					"uCreatedDate=UNIX_TIMESTAMP(NOW()),cIPMask='0.0.0.0',cClrPasswd='%s'",
@@ -308,7 +334,7 @@ void ExttClientButtons(void)
         {
                 case 2000:
 			printf("<u>New: Step 1 Tips</u><br>");
-			printf("Here you would usually enter a new company name into cLabel. Optionally some standardized company info in cInfo, like addresses phone numbers and such. A main company email is usually helpful, and cCode can be used for easy matching with other databases you may have for your customers like a CRM or accounting software etc. <br>If you are creating a contact for an existing company select that company from the drop down select below and use cLabel for the contact name (Ex. Anne Flechter) and the cInfo would be the contacts personal phone numbers and or address etc.");
+			printf("Here you would usually enter a new company name into cLabel. Optionally some standardized company info in cInfo, like addresses phone numbers and such. A main company email is usually helpful, cCode is used internally. <br>If you are creating a contact for an existing company select that company from the drop down select below and use cLabel for the contact name (Ex. Anne Flechter) and the cInfo would be the contacts personal phone numbers and or address etc.");
 			if(guPermLevel>7)
 			{
 				if(uOwner==1)
@@ -376,7 +402,7 @@ void ExttClientButtons(void)
 				htmlRecordContext();
 			}
 
-			if(uClient && guPermLevel>9 && uClient!=guLoginClient 
+			if( strcmp(cCode,"Organization") && uClient && guPermLevel>9 && uClient!=guLoginClient 
 				&& !IsAuthUser(cLabel,uOwner,uClient) &&guMode!=5 && uOwner!=1)
 			{
 				printf("<p><input class=largeButton title='Authorize %s to manage his company resources' type=submit name=gcCommand value='Authorize'>",cLabel);
@@ -628,29 +654,24 @@ void tTablePullDownResellers(unsigned uSelector)
 
         register int i,n;
     
-	if(guLoginClient==1 && guPermLevel>11)
+	if(guPermLevel>11)
 	{
 		sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT
-				" WHERE cLabel!='Root'"
-				" AND (uClient=1 OR uOwner"
-				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=1 OR uClient=1))"
+				" WHERE cCode='Organization' AND uClient!=1"
 				" ORDER BY cLabel");
 	}
 	else
 	{
-		unsigned uContactParentCompany=0;
-
-		GetClientOwner(guLoginClient,&uContactParentCompany);
-
 		sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT
 				" WHERE cLabel!='%s'"
+				" AND cCode='Organization'"
 				" AND (uClient=%u OR uOwner"
 				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u OR uClient=%u))"
 				" ORDER BY cLabel",
 					gcUser,
-					uContactParentCompany,
-					uContactParentCompany,
-					uContactParentCompany);
+					guCompany,
+					guCompany,
+					guCompany);
 	}
 
         mysql_query(&gMysql,gcQuery);
@@ -810,7 +831,7 @@ void ContactsNavList(void)
 		return;
 
 	//Login info
-	if(uOwner!=1)
+	if(uOwner!=1 && strcmp(cCode,"Organization"))
 	{
 		tAuthorizeNavList();
 	}
@@ -833,7 +854,7 @@ void ContactsNavList(void)
         	{
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%s&uOnlyASPs=%u"
 				,field[0],uOnlyASPs);
-			if(cSearch)
+			if(cSearch[0])
 			{
 				spacetoplus(cSearch);
 				printf("&cSearch=%s",cSearch);
@@ -849,8 +870,10 @@ void ContactsNavList(void)
 void htmlRecordContext(void)
 {
 	printf("<p><u>Record Context Info</u><br>");
-	if(uOwner>1)
-		printf("'%s' appears to be an ASP or a reseller owned company or a contact of <a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
+	if(uOwner>1 && strcmp(cCode,"Contact"))
+		printf("'%s' appears to be a reseller or ASP owned company or organization",cLabel);
+	else if(uOwner>1 && strcmp(cCode,"Organization"))
+		printf("'%s' appears to be a contact of <a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
 	else if(uOwner==1 && strcmp(cLabel,"Root"))
 		printf("'%s' appears to be an ASP root company",cLabel);
 	else if(uOwner==1 && !strcmp(cLabel,"Root"))
