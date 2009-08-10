@@ -22,7 +22,6 @@ static char cLabel[33]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -162,7 +161,7 @@ void tJobStatus(const char *cResult)
 		{
 			if(guMode==6)
 			{
-			sprintf(gcQuery,"SELECT _rowid FROM tJobStatus WHERE uJobStatus=%u"
+				sprintf(gcQuery,"SELECT _rowid FROM tJobStatus WHERE uJobStatus=%u"
 						,uJobStatus);
 				MYSQL_RUN_STORE(res2);
 				field=mysql_fetch_row(res2);
@@ -172,14 +171,13 @@ void tJobStatus(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
-		sscanf(field[0],"%u",&uJobStatus);
-		sprintf(cLabel,"%.32s",field[1]);
-		sscanf(field[2],"%u",&uOwner);
-		sscanf(field[3],"%u",&uCreatedBy);
-		sscanf(field[4],"%lu",&uCreatedDate);
-		sscanf(field[5],"%u",&uModBy);
-		sscanf(field[6],"%lu",&uModDate);
-
+			sscanf(field[0],"%u",&uJobStatus);
+			sprintf(cLabel,"%.32s",field[1]);
+			sscanf(field[2],"%u",&uOwner);
+			sscanf(field[3],"%u",&uCreatedBy);
+			sscanf(field[4],"%lu",&uCreatedDate);
+			sscanf(field[5],"%u",&uModBy);
+			sscanf(field[6],"%lu",&uModDate);
 		}
 
 	}//Internal Skip
@@ -337,15 +335,13 @@ void NewtJobStatus(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uJobStatus=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tJobStatus",uJobStatus);
 	unxsVZLog(uJobStatus,"tJobStatus","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uJobStatus);
-	tJobStatus(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uJobStatus);
+		tJobStatus(gcQuery);
 	}
 
 }//NewtJobStatus(unsigned uMode)
@@ -353,27 +349,18 @@ void NewtJobStatus(unsigned uMode)
 
 void DeletetJobStatus(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tJobStatus WHERE uJobStatus=%u AND ( uOwner=%u OR %u>9 )"
 					,uJobStatus,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tJobStatus WHERE uJobStatus=%u"
-					,uJobStatus);
-#endif
 	MYSQL_RUN;
 	//tJobStatus("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uJobStatus,"tJobStatus","Del");
-#endif
 		tJobStatus(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uJobStatus,"tJobStatus","DelError");
-#endif
 		tJobStatus(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -382,9 +369,8 @@ void DeletetJobStatus(void)
 
 void Insert_tJobStatus(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tJobStatus SET uJobStatus=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tJobStatus SET uJobStatus=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uJobStatus
 			,TextAreaSave(cLabel)
 			,uOwner
@@ -398,9 +384,8 @@ void Insert_tJobStatus(void)
 
 void Update_tJobStatus(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tJobStatus SET uJobStatus=%u,cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tJobStatus SET uJobStatus=%u,cLabel='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uJobStatus
 			,TextAreaSave(cLabel)
 			,uModBy
@@ -416,7 +401,6 @@ void ModtJobStatus(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -432,11 +416,6 @@ void ModtJobStatus(void)
 	sprintf(gcQuery,"SELECT uJobStatus,uModDate FROM tJobStatus\
 				WHERE uJobStatus=%u"
 						,uJobStatus);
-#else
-	sprintf(gcQuery,"SELECT uJobStatus FROM tJobStatus\
-				WHERE uJobStatus=%u"
-						,uJobStatus);
-#endif
 
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
@@ -447,19 +426,14 @@ void ModtJobStatus(void)
 	if(i>1) tJobStatus(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tJobStatus(LANG_NBR_EXTMOD);
-#endif
-
 	Update_tJobStatus(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tJobStatus",uJobStatus);
 	unxsVZLog(uJobStatus,"tJobStatus","Mod");
-#endif
 	tJobStatus(gcQuery);
 
 }//ModtJobStatus(void)
@@ -536,7 +510,7 @@ void tJobStatusList(void)
 
 void CreatetJobStatus(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJobStatus ( uJobStatus INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJobStatus ( uJobStatus INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
 	MYSQL_RUN;
 	
 }//CreatetJobStatus()

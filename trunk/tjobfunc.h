@@ -264,7 +264,16 @@ void tJobNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	//More magic numbers ;)
+	//More magic numbers ;) from pre made fixed schema and content.
+#define tJobStatus_Waiting	1
+#define tJobStatus_Running	2
+#define tJobStatus_DoneOK	3
+#define tJobStatus_DoneErrors	4
+#define tJobStatus_Suspended	5
+#define tJobStatus_Redundant	6
+#define tJobStatus_Cancelled	7
+#define tJobStatus_RemoteWait	10
+#define tJobStatus_Error 	14
 	if(guPermLevel<10)
 		sprintf(gcQuery,"SELECT tJob.uJob\
 				,tJob.cLabel,tNode.cLabel\
@@ -276,7 +285,7 @@ void tJobNavList(void)
 	else
 	        sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tNode.cLabel FROM tJob,tNode"
 					" WHERE tJob.uNode=tNode.uNode AND tJob.uJobStatus!=3"
-					" AND (tJob.uJobStatus=1 OR tJob.uJobStatus=14)");
+					" AND (tJob.uJobStatus=1 OR tJob.uJobStatus=14 OR tJob.uJobStatus=2)");
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))

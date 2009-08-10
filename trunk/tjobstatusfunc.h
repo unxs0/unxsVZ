@@ -178,7 +178,7 @@ void ExttJobStatusSelect(void)
 
 void ExttJobStatusSelectRow(void)
 {
-	ExtSelectRow("tJob",VAR_LIST_tJobStatus,uJobStatus);
+	ExtSelectRow("tJobStatus",VAR_LIST_tJobStatus,uJobStatus);
 
 }//void ExttJobStatusSelectRow(void)
 

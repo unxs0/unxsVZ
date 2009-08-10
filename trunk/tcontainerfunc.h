@@ -35,6 +35,7 @@ static char cPrivateIPs[64]={""};
 static char cNetmask[64]={""};
 static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
+static unsigned uAllPortsOpen=0;
 
 //ModuleFunctionProtos()
 void tContainerNavList(unsigned uNode);
@@ -70,7 +71,6 @@ void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
 	char *cService2;
 	char *cService3;
 	char *cService4;
-	unsigned uAllPortsOpen=0;
 
 	cService1="";
 	cService2="";
@@ -149,10 +149,12 @@ unsigned uCheckFirewallSettings(unsigned uFirewallTemplate)
 		if((field=mysql_fetch_row(res)))
 			sprintf(cuTemplateDropDown,"%.99s",field[0]);	
 		mysql_free_result(res);
+		if(strstr(cuTemplateDropDown,"open"))
+			uAllPortsOpen=1;
 	}
 
 	//Very basic check...add the rest TODO
-	if(uWizIPv4)
+	if(uWizIPv4 || uAllPortsOpen)
 		return(0);
 	else
 		return(1);
@@ -1205,7 +1207,7 @@ void ExttContainerButtons(void)
 
                 case 2000:
 			printf("<p><u>New container step 1/3</u><br>");
-			printf("Complete required container fields in the right record data panel.<p>");
+			printf("Complete required container fields in the record data panel to your right.<p>");
 			printf("<p><input title='Enter/Mod tContainer record data, then continue"
 					" to step 2 of new container creation'"
 					" type=submit class=largeButton"

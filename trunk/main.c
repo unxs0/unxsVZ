@@ -857,7 +857,7 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<a title='tGlossary' href=unxsVZ.cgi?gcFunction=tGlossary>tGlossary</a>\n");
 	}
 	//tJob
-	if(guPermLevel>=20)
+	if(guPermLevel>=7)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tJob") && strcmp(gcFunction,"tJobTools") &&
