@@ -23,7 +23,7 @@
 </tr>
 <tr>
 	<td>clickAndWait</td>
-	<td>//a[5]/font</td>
+	<td>//a[4]/font</td>
 	<td></td>
 </tr>
 <tr>
