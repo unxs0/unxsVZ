@@ -627,7 +627,7 @@ void ExttAuthorizeNavBar(void);
 
 //In-line code macros
 
-//Comon - This macro shouldn't be used directly, as is part of the others only
+//Common - This macro shouldn't be used directly, as is part of the others only
 #define macro_mySQLQueryBasic mysql_query(&gMysql,gcQuery);\
 				if(mysql_errno(&gMysql))
 

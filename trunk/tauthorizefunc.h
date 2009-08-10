@@ -6,14 +6,14 @@ PURPOSE
 AUTHOR
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
  
 */
 
-
+void ExtSelect2(const char *cTable,const char *cVarList,unsigned uMaxResults);
 void tAuthorizeNavList(void);
 
-void EncryptPasswdWithSalt(char *cPasswd,char *cSalt);
+void EncryptPasswd(char *cPasswd);//main.c
 const char *cUserLevel(unsigned uPermLevel);//tclientfunc.h
 
 void ExtProcesstAuthorizeVars(pentry entries[], int x)
@@ -53,7 +53,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 				//Check entries here
 				uAuthorize=0;
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+				uOwner=guLoginClient;
 				uModBy=0;//Never modified
 				NewtAuthorize(0);
 			}
@@ -61,7 +61,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstAuthorizeVars(entries,x);
-			if(guPermLevel>=12)
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=2001;
 				tAuthorize(LANG_NB_CONFIRMDEL);
@@ -70,7 +70,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstAuthorizeVars(entries,x);
-			if(guPermLevel>=12)
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
 				DeletetAuthorize();
@@ -108,12 +108,12 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 				if(cClrPasswd[0])
 				{
 					sprintf(cPasswd,"%.35s",cClrPasswd);
-					EncryptPasswdWithSalt(cPasswd,"..");
+					EncryptPasswd(cPasswd);
 				}
 				else
 				{
-					if(strncmp(cPasswd,"..",2))
-						EncryptPasswdWithSalt(cPasswd,"..");
+					if(strncmp(cPasswd,"..",2) && strncmp(cPasswd,"$1$",3))
+						EncryptPasswd(cPasswd);
 				}
 
 				uModBy=guLoginClient;
@@ -151,7 +151,7 @@ void ExttAuthorizeButtons(void)
 
                 case 2002:
 			printf("<u>Modify: Step 1 Tips</u><br>");
-			printf("Password changing: You have several choices for passwd changing: You can either enter a clear text passwd in cClrPasswd or enter a clear text passwd in cPasswd that will be encrypted into cPasswd and no cClrPasswd will be saved. And finally you can enter a fixed '..' salt DES encrypted passwd into cPasswd.<p>\n");
+			printf("Password changing: You have several choices for passwd changing: You can either enter a clear text passwd in cClrPasswd or enter a clear text passwd in cPasswd that will be encrypted into cPasswd and no cClrPasswd will be saved. And finally you can enter an MD5 $1$ prefixed encrypted password (or for backwards compatability a fixed '..' salt DES encrypted ) passwd into cPasswd.<p>\n");
 			printf("Other field changes: Unless you are absolutely sure what you need done, have 2nd level support (support@unixservice.com) do it for you.<p>\n");
                         printf(LANG_NBB_CONFIRMMOD);
 			printf("<br>\n");
@@ -199,7 +199,8 @@ void ExttAuthorizeGetHook(entry gentries[], int x)
 
 void ExttAuthorizeSelect(void)
 {
-	ExtSelect("tAuthorize",VAR_LIST_tAuthorize);
+	//New ExtSelect() version requires a 3rd argument, the max row count number
+	ExtSelect2("tAuthorize",VAR_LIST_tAuthorize,0);
 }//void ExttAuthorizeSelect(void)
 
 
@@ -232,7 +233,8 @@ void ExttAuthorizeListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tAuthorize.cLabel LIKE '%s' ORDER BY cLabel",gcCommand);
+		sprintf(cCat,"tAuthorize.cLabel LIKE '%s%%' ORDER BY cLabel",
+				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -279,7 +281,7 @@ void ExttAuthorizeNavBar(void)
 	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if(guPermLevel>=12)
+	if(uAllowDel(uOwner,uCreatedBy))
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)

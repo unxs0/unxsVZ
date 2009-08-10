@@ -1,7 +1,7 @@
 /*
 FILE
 	tAuthorize source code of unxsVZ.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
+	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
@@ -11,8 +11,6 @@ PURPOSE
 
 
 #include "mysqlrad.h"
-
-//Table Variables
 //Table Variables
 //uAuthorize: Primary Key
 static unsigned uAuthorize=0;
@@ -25,7 +23,7 @@ static unsigned uPerm=0;
 //uCertClient: User uClient
 static unsigned uCertClient=0;
 //cPasswd: Encrypted cgi login password
-static char cPasswd[36]={""};
+static char cPasswd[101]={""};
 //cClrPasswd: Optionally used non encrypted login password
 static char cClrPasswd[33]={""};
 //uOwner: Record owner
@@ -81,7 +79,7 @@ void ProcesstAuthorizeVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"uCertClient"))
 			sscanf(entries[i].val,"%u",&uCertClient);
 		else if(!strcmp(entries[i].name,"cPasswd"))
-			sprintf(cPasswd,"%.35s",entries[i].val);
+			sprintf(cPasswd,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cClrPasswd"))
 			sprintf(cClrPasswd,"%.32s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
@@ -181,9 +179,9 @@ void tAuthorize(const char *cResult)
 		{
 			if(guMode==6)
 			{
-			sprintf(gcQuery,"SELECT _rowid FROM " TAUTHORIZE " WHERE uAuthorize=%u"
+			sprintf(gcQuery,"SELECT _rowid FROM tAuthorize WHERE uAuthorize=%u"
 						,uAuthorize);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -196,7 +194,7 @@ void tAuthorize(const char *cResult)
 		sprintf(cIpMask,"%.20s",field[2]);
 		sscanf(field[3],"%u",&uPerm);
 		sscanf(field[4],"%u",&uCertClient);
-		sprintf(cPasswd,"%.35s",field[5]);
+		sprintf(cPasswd,"%.100s",field[5]);
 		sprintf(cClrPasswd,"%.32s",field[6]);
 		sscanf(field[7],"%u",&uOwner);
 		sscanf(field[8],"%u",&uCreatedBy);
@@ -208,7 +206,7 @@ void tAuthorize(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tAuthorize",0);
+	Header_ism3(":: tAuthorize",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -307,7 +305,7 @@ void tAuthorizeInput(unsigned uMode)
 	OpenRow(LANG_FL_tAuthorize_uPerm,"black");
 	printf("<input title='%s' type=text name=uPerm value=%u size=16 maxlength=10 "
 ,LANG_FT_tAuthorize_uPerm,uPerm);
-	if(guPermLevel>=12 && uMode)
+	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
 	}
@@ -320,7 +318,7 @@ void tAuthorizeInput(unsigned uMode)
 	OpenRow(LANG_FL_tAuthorize_uCertClient,"black");
 	printf("<input title='%s' type=text name=uCertClient value=%u size=16 maxlength=10 "
 ,LANG_FT_tAuthorize_uCertClient,uCertClient);
-	if(guPermLevel>=12 && uMode)
+	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
 	}
@@ -331,7 +329,7 @@ void tAuthorizeInput(unsigned uMode)
 	}
 //cPasswd
 	OpenRow(LANG_FL_tAuthorize_cPasswd,"black");
-	printf("<input title='%s' type=text name=cPasswd value=\"%s\" size=40 maxlength=35 "
+	printf("<input title='%s' type=text name=cPasswd value=\"%s\" size=40 maxlength=100 "
 ,LANG_FT_tAuthorize_cPasswd,EncodeDoubleQuotes(cPasswd));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -359,21 +357,21 @@ void tAuthorizeInput(unsigned uMode)
 	OpenRow(LANG_FL_tAuthorize_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	}
 //uCreatedBy
 	OpenRow(LANG_FL_tAuthorize_uCreatedBy,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	}
 //uCreatedDate
 	OpenRow(LANG_FL_tAuthorize_uCreatedDate,"black");
@@ -386,11 +384,11 @@ void tAuthorizeInput(unsigned uMode)
 	OpenRow(LANG_FL_tAuthorize_uModBy,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	}
 //uModDate
 	OpenRow(LANG_FL_tAuthorize_uModDate,"black");
@@ -411,8 +409,9 @@ void NewtAuthorize(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uAuthorize FROM " TAUTHORIZE " WHERE uAuthorize=%u",uAuthorize);
-	MYSQL_RUN_STORE(res);
+	sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE uAuthorize=%u"
+							,uAuthorize);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
@@ -421,12 +420,10 @@ void NewtAuthorize(unsigned uMode)
 
 	//insert query
 	Insert_tAuthorize();
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uAuthorize=mysql_insert_id(&gMysql);
-	uCreatedDate=luGetCreatedDate(TAUTHORIZE,uAuthorize);
-	unxsVZLog(uAuthorize,TAUTHORIZE,"New");
+	uCreatedDate=luGetCreatedDate("tAuthorize",uAuthorize);
+	unxsVZLog(uAuthorize,"tAuthorize","New");
 
 	if(!uMode)
 	{
@@ -439,17 +436,18 @@ void NewtAuthorize(unsigned uMode)
 
 void DeletetAuthorize(void)
 {
-	sprintf(gcQuery,"DELETE FROM " TAUTHORIZE " WHERE uAuthorize=%u",uAuthorize);
-	MYSQL_RUN;
+	sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uAuthorize=%u AND ( uOwner=%u OR %u>9 )"
+					,uAuthorize,guLoginClient,guPermLevel);
+	macro_mySQLQueryHTMLError;
 	//tAuthorize("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		unxsVZLog(uAuthorize,TAUTHORIZE,"Del");
+		unxsVZLog(uAuthorize,"tAuthorize","Del");
 		tAuthorize(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		unxsVZLog(uAuthorize,TAUTHORIZE,"DelError");
+		unxsVZLog(uAuthorize,"tAuthorize","DelError");
 		tAuthorize(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -458,7 +456,9 @@ void DeletetAuthorize(void)
 
 void Insert_tAuthorize(void)
 {
-	sprintf(gcQuery,"INSERT INTO " TAUTHORIZE " SET uAuthorize=%u,cLabel='%s',cIpMask='%s',uPerm=%u,uCertClient=%u,cPasswd='%s',cClrPasswd='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+
+	//insert query
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET uAuthorize=%u,cLabel='%s',cIpMask='%s',uPerm=%u,uCertClient=%u,cPasswd='%s',cClrPasswd='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uAuthorize
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cIpMask)
@@ -470,14 +470,16 @@ void Insert_tAuthorize(void)
 			,uCreatedBy
 			);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 	
 }//void Insert_tAuthorize(void)
 
 
 void Update_tAuthorize(char *cRowid)
 {
-	sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uAuthorize=%u,cLabel='%s',cIpMask='%s',uPerm=%u,uCertClient=%u,cPasswd='%s',cClrPasswd='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+
+	//update query
+	sprintf(gcQuery,"UPDATE tAuthorize SET uAuthorize=%u,cLabel='%s',cIpMask='%s',uPerm=%u,uCertClient=%u,cPasswd='%s',cClrPasswd='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uAuthorize
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cIpMask)
@@ -488,7 +490,7 @@ void Update_tAuthorize(char *cRowid)
 			,uModBy
 			,cRowid);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tAuthorize(void)
 
@@ -500,8 +502,20 @@ void ModtAuthorize(void)
 	MYSQL_ROW field;
 	unsigned uPreModDate=0;
 
-	sprintf(gcQuery,"SELECT uAuthorize,uModDate FROM " TAUTHORIZE " WHERE uAuthorize=%u",uAuthorize);
-	MYSQL_RUN_STORE(res);
+	//Mod select gcQuery
+	if(guPermLevel<10)
+	sprintf(gcQuery,"SELECT tAuthorize.uAuthorize,\
+				tAuthorize.uModDate\
+				FROM tAuthorize,tClient\
+				WHERE tAuthorize.uAuthorize=%u\
+				AND tAuthorize.uOwner=tClient.uClient\
+				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+			,uAuthorize,guLoginClient,guLoginClient);
+	else
+	sprintf(gcQuery,"SELECT uAuthorize,uModDate FROM tAuthorize\
+				WHERE uAuthorize=%u"
+						,uAuthorize);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	//if(i<1) tAuthorize("<blink>Record does not exist");
@@ -517,8 +531,8 @@ void ModtAuthorize(void)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-	uModDate=luGetModDate(TAUTHORIZE,uAuthorize);
-	unxsVZLog(uAuthorize,TAUTHORIZE,"Mod");
+	uModDate=luGetModDate("tAuthorize",uAuthorize);
+	unxsVZLog(uAuthorize,"tAuthorize","Mod");
 	tAuthorize(gcQuery);
 
 }//ModtAuthorize(void)
@@ -530,7 +544,7 @@ void tAuthorizeList(void)
 	MYSQL_ROW field;
 
 	ExttAuthorizeListSelect();
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tAuthorizeList",1,"");//1 is auto header list guMode. Opens table!
@@ -582,10 +596,10 @@ void tAuthorizeList(void)
 			,field[4]
 			,field[5]
 			,field[6]
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[7],NULL,10))
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[8],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[7],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[8],NULL,10))
 			,cBuf9
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[10],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[10],NULL,10))
 			,cBuf11
 				);
 
@@ -599,8 +613,8 @@ void tAuthorizeList(void)
 
 void CreatetAuthorize(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tAuthorize ( uAuthorize INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '',unique (cLabel,uOwner), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cIpMask VARCHAR(20) NOT NULL DEFAULT '', uPerm INT UNSIGNED NOT NULL DEFAULT 0, uCertClient INT UNSIGNED NOT NULL DEFAULT 0, cPasswd VARCHAR(35) NOT NULL DEFAULT '', cClrPasswd VARCHAR(32) NOT NULL DEFAULT '' )");
-	MYSQL_RUN;
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tAuthorize ( uAuthorize INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '',unique (cLabel,uOwner), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cIpMask VARCHAR(20) NOT NULL DEFAULT '', uPerm INT UNSIGNED NOT NULL DEFAULT 0, uCertClient INT UNSIGNED NOT NULL DEFAULT 0, cPasswd VARCHAR(100) NOT NULL DEFAULT '', cClrPasswd VARCHAR(32) NOT NULL DEFAULT '' )");
+	macro_mySQLQueryHTMLError;
 
 }//CreatetAuthorize()
 

@@ -1,7 +1,7 @@
 /*
 FILE
 	tClient source code of unxsVZ.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
+	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
@@ -34,7 +34,6 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
-
 
 
 #define VAR_LIST_tClient "tClient.uClient,tClient.cLabel,tClient.cInfo,tClient.cEmail,tClient.cCode,tClient.uOwner,tClient.uCreatedBy,tClient.uCreatedDate,tClient.uModBy,tClient.uModDate"
@@ -173,9 +172,9 @@ void tClient(const char *cResult)
 		{
 			if(guMode==6)
 			{
-			sprintf(gcQuery,"SELECT _rowid FROM " TCLIENT " WHERE uClient=%u"
+			sprintf(gcQuery,"SELECT _rowid FROM tClient WHERE uClient=%u"
 						,uClient);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -271,7 +270,7 @@ void tClientInput(unsigned uMode)
 	OpenRow(LANG_FL_tClient_cLabel,"black");
 	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=100 "
 ,LANG_FT_tClient_cLabel,EncodeDoubleQuotes(cLabel));
-	if(guPermLevel>=0 && uMode)
+	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
 	}
@@ -284,7 +283,7 @@ void tClientInput(unsigned uMode)
 	OpenRow(LANG_FL_tClient_cInfo,"black");
 	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cInfo "
 ,LANG_FT_tClient_cInfo);
-	if(guPermLevel>=0 && uMode)
+	if(guPermLevel>=7 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cInfo);
 	}
@@ -297,7 +296,7 @@ void tClientInput(unsigned uMode)
 	OpenRow(LANG_FL_tClient_cEmail,"black");
 	printf("<input title='%s' type=text name=cEmail value=\"%s\" size=40 maxlength=100 "
 ,LANG_FT_tClient_cEmail,EncodeDoubleQuotes(cEmail));
-	if(guPermLevel>=0 && uMode)
+	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
 	}
@@ -310,7 +309,7 @@ void tClientInput(unsigned uMode)
 	OpenRow(LANG_FL_tClient_cCode,"black");
 	printf("<input title='%s' type=text name=cCode value=\"%s\" size=40 maxlength=32 "
 ,LANG_FT_tClient_cCode,EncodeDoubleQuotes(cCode));
-	if(guPermLevel>=0 && uMode)
+	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
 	}
@@ -323,21 +322,21 @@ void tClientInput(unsigned uMode)
 	OpenRow(LANG_FL_tClient_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	}
 //uCreatedBy
 	OpenRow(LANG_FL_tClient_uCreatedBy,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	}
 //uCreatedDate
 	OpenRow(LANG_FL_tClient_uCreatedDate,"black");
@@ -350,11 +349,11 @@ void tClientInput(unsigned uMode)
 	OpenRow(LANG_FL_tClient_uModBy,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	}
 //uModDate
 	OpenRow(LANG_FL_tClient_uModDate,"black");
@@ -375,8 +374,8 @@ void NewtClient(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uClient FROM " TCLIENT " WHERE uClient=%u",uClient);
-	MYSQL_RUN_STORE(res);
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient=%u",uClient);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
@@ -385,16 +384,15 @@ void NewtClient(unsigned uMode)
 
 	//insert query
 	Insert_tClient();
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uClient=mysql_insert_id(&gMysql);
-	uCreatedDate=luGetCreatedDate(TCLIENT,uClient);
-	unxsVZLog(uClient,TCLIENT,"New");
+	uCreatedDate=luGetCreatedDate("tClient",uClient);
+	unxsVZLog(uClient,"tClient","New");
 
 	if(!uMode)
 	{
-		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uClient);
-		tClient(gcQuery);
+	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uClient);
+	tClient(gcQuery);
 	}
 
 }//NewtClient(unsigned uMode)
@@ -402,17 +400,18 @@ void NewtClient(unsigned uMode)
 
 void DeletetClient(void)
 {
-	sprintf(gcQuery,"DELETE FROM " TCLIENT " WHERE uClient=%u",uClient);
-	MYSQL_RUN;
+	sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%u AND ( uOwner=%u OR %u>9 )"
+					,uClient,guLoginClient,guPermLevel);
+	macro_mySQLQueryHTMLError;
 	//tClient("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		unxsVZLog(uClient,TCLIENT,"Del");
+		unxsVZLog(uClient,"tClient","Del");
 		tClient(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		unxsVZLog(uClient,TCLIENT,"DelError");
+		unxsVZLog(uClient,"tClient","DelError");
 		tClient(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -421,9 +420,9 @@ void DeletetClient(void)
 
 void Insert_tClient(void)
 {
-	sprintf(gcQuery,"INSERT INTO " TCLIENT " SET uClient=%u,cLabel='%s',"
-			"cInfo='%s',cEmail='%s',cCode='%s',uOwner=%u,uCreatedBy=%u,"
-			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+
+	//insert query
+	sprintf(gcQuery,"INSERT INTO tClient SET uClient=%u,cLabel='%s',cInfo='%s',cEmail='%s',cCode='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uClient
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cInfo)
@@ -431,26 +430,27 @@ void Insert_tClient(void)
 			,TextAreaSave(cCode)
 			,uOwner
 			,uCreatedBy
-					);
-	MYSQL_RUN;
+			);
+
+	macro_mySQLQueryHTMLError;
 
 }//void Insert_tClient(void)
 
 
 void Update_tClient(char *cRowid)
 {
-	sprintf(gcQuery,"UPDATE " TCLIENT " SET uClient=%u,cLabel='%s',cInfo='%s',"
-			"cEmail='%s',cCode='%s',uModBy=%u,"
-			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+
+	//update query
+	sprintf(gcQuery,"UPDATE tClient SET uClient=%u,cLabel='%s',cInfo='%s',cEmail='%s',cCode='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uClient
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cInfo)
 			,TextAreaSave(cEmail)
 			,TextAreaSave(cCode)
 			,uModBy
-					,cRowid);
+			,cRowid);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tClient(void)
 
@@ -462,8 +462,20 @@ void ModtClient(void)
 	MYSQL_ROW field;
 	unsigned uPreModDate=0;
 
-	sprintf(gcQuery,"SELECT uClient,uModDate FROM " TCLIENT " WHERE uClient=%u",uClient);
-	MYSQL_RUN_STORE(res);
+	//Mod select gcQuery
+	if(guPermLevel<10)
+	sprintf(gcQuery,"SELECT tClient.uClient,\
+				tClient.uModDate\
+				FROM tClient,tClient\
+				WHERE tClient.uClient=%u\
+				AND tClient.uOwner=tClient.uClient\
+				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+			,uClient,guLoginClient,guLoginClient);
+	else
+	sprintf(gcQuery,"SELECT uClient,uModDate FROM tClient\
+				WHERE uClient=%u"
+						,uClient);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	//if(i<1) tClient("<blink>Record does not exist");
@@ -474,13 +486,11 @@ void ModtClient(void)
 	field=mysql_fetch_row(res);
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tClient(LANG_NBR_EXTMOD);
-
 	Update_tClient(field[0]);
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-	uModDate=luGetModDate(TCLIENT,uClient);
-	unxsVZLog(uClient,TCLIENT,"Mod");
+	uModDate=luGetModDate("tClient",uClient);
+	unxsVZLog(uClient,"tClient","Mod");
 	tClient(gcQuery);
 
 }//ModtClient(void)
@@ -492,7 +502,7 @@ void tClientList(void)
 	MYSQL_ROW field;
 
 	ExttClientListSelect();
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tClientList",1,"");//1 is auto header list guMode. Opens table!
@@ -523,31 +533,32 @@ void tClientList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		time_t luTime7=strtoul(field[7],NULL,10);
-		char cBuf7[32];
-		if(luTime7)
-			ctime_r(&luTime7,cBuf7);
-		else
-			sprintf(cBuf7,"---");
-		time_t luTime9=strtoul(field[9],NULL,10);
-		char cBuf9[32];
-		if(luTime9)
-			ctime_r(&luTime9,cBuf9);
-		else
-			sprintf(cBuf9,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
-			,field[1]
-			,field[2]
-			,field[3]
-			,field[4]
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[5],NULL,10))
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[6],NULL,10))
-			,cBuf7
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[8],NULL,10))
-			,cBuf9
-				);
+                time_t luTime7=strtoul(field[7],NULL,10);
+                char cBuf7[32];
+                if(luTime7)
+                        ctime_r(&luTime7,cBuf7);
+                else
+                        sprintf(cBuf7,"---");
+                time_t luTime9=strtoul(field[9],NULL,10);
+                char cBuf9[32];
+                if(luTime9)
+                        ctime_r(&luTime9,cBuf9);
+                else
+                        sprintf(cBuf9,"---");
+                printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+                        ,field[0]
+                        ,field[0]
+                        ,field[1]
+                        ,field[2]
+                        ,field[3]
+                        ,field[4]
+                        ,ForeignKey(TCLIENT,"cLabel",strtoul(field[5],NULL,10))
+                        ,ForeignKey(TCLIENT,"cLabel",strtoul(field[6],NULL,10))
+                        ,cBuf7
+                        ,ForeignKey(TCLIENT,"cLabel",strtoul(field[8],NULL,10))
+                        ,cBuf9
+                                );
+
 
 	}
 
@@ -560,7 +571,8 @@ void tClientList(void)
 void CreatetClient(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tClient ( uClient INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(100) NOT NULL DEFAULT '',unique (cLabel,uOwner), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cInfo TEXT NOT NULL DEFAULT '', cEmail VARCHAR(100) NOT NULL DEFAULT '', cCode VARCHAR(32) NOT NULL DEFAULT '' )");
-	MYSQL_RUN;
-
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 }//CreatetClient()
 
