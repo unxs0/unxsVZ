@@ -110,7 +110,11 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 					sprintf(cPasswd,"%.35s",cClrPasswd);
 					EncryptPasswd(cPasswd);
 				}
-
+				else
+				{
+					if(strncmp(cPasswd,"..",2) && strncmp(cPasswd,"$1$",3))
+						EncryptPasswd(cPasswd);
+				}
 				uModBy=guLoginClient;
                         	ModtAuthorize();
 			}
