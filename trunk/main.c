@@ -84,7 +84,7 @@ const char *cUserLevel(unsigned uPermLevel);
 int iValidLogin(int iMode);
 void SSLCookieLogin(void);
 void SetLogin(void);
-void EncryptPasswdWithSalt(char *cPw, char *cSalt);
+void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt);
 void GetPLAndClient(char *cUser);
 void htmlSSLLogin(void);
 
@@ -1814,7 +1814,7 @@ void SetLogin(void)
 char *cGetPasswd(char *gcLogin);
 int iValidLogin(int mode)
 {
-	char salt[3]={'/','D',0};
+	char cSalt[16]={""};
 	char cPassword[100]={""};
 
 	//Notes:
@@ -1825,19 +1825,23 @@ int iValidLogin(int mode)
 	{
 		if(!mode)
 		{
-			strncpy(salt,cPassword,2);
-			EncryptPasswdWithSalt(gcPasswd,salt);
+			//MD5 vs DES salt determination
+			if(cPassword[0]=='$' && cPassword[2]=='$')
+				sprintf(cSalt,"%.12s",cPassword);
+			else
+				sprintf(cSalt,"%.2s",cPassword);
+			EncryptPasswdWithSalt(gcPasswd,cSalt);
 			if(!strcmp(gcPasswd,cPassword)) 
 			{
 				//tLogType.cLabel='backend login'->uLogType=6
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
 				MYSQL_RUN;
-				return 1;
+				return(1);
 			}
 		}
 		else
 		{
-			if(!strcmp(gcPasswd,cPassword)) return 1;
+			if(!strcmp(gcPasswd,cPassword)) return(1);
 		}
 	}
 	if(!mode)
@@ -1868,7 +1872,7 @@ char *cGetPasswd(char *gcLogin)
 	mysqlRes=mysql_store_result(&gMysql);
 	cPasswd[0]=0;
 	if((mysqlField=mysql_fetch_row(mysqlRes)))
-		strcpy(cPasswd,mysqlField[0]);
+		sprintf(cPasswd,"%.99s",mysqlField[0]);
 	mysql_free_result(mysqlRes);
 
 	
@@ -1951,18 +1955,21 @@ void htmlSSLLogin(void)
 }//void htmlSSLLogin(void)
 
 
-void EncryptPasswdWithSalt(char *pw, char *salt)
+void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt)
 {
-	char passwd[102]={""};
-	char *cpw;
+	char cPasswd[100]={""};
+	char *cp;
 			
-	strcpy(passwd,pw);
-				
-	cpw=crypt(passwd,salt);
+	sprintf(cPasswd,"%.99s",gcPasswd);
+	cp=crypt(cPasswd,cSalt);
+	sprintf(gcPasswd,"%.99s",cp);
 
-	strcpy(pw,cpw);
+//Debug only
+//printf("Content-type: text/html\n\n");
+//printf("gcPasswd=(%s),cSalt=(%s)",gcPasswd,cSalt);
+//exit(0);
 
-}//void EncryptPasswdWithSalt(char *pw, char *salt)
+}//void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt)
 
 
 
