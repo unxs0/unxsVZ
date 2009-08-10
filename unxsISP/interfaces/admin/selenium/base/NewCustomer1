@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>NewCustomer1</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">NewCustomer1</td></tr>
+</thead><tbody>
+<tr>
+	<td>clickAndWait</td>
+	<td>//td[2]/a/b</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter first name*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cFirstName' and @value='' and @type='text']</td>
+	<td>Rogelio</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter last name*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cLastName' and @value='' and @type='text']</td>
+	<td>Fernandez</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter email address*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cEmail' and @value='' and @type='text']</td>
+	<td>rogelio</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Email has to be a valid email address*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cEmail' and @value='rogelio' and @type='text']</td>
+	<td>rogelio@</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Email has to be a valid email address*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cEmail' and @value='rogelio@' and @type='text']</td>
+	<td>rogelio@openisp.net</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter address information*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cAddr1' and @value='' and @type='text']</td>
+	<td>Marcelo T. de Alvear 657</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter city information*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cCity' and @value='' and @type='text']</td>
+	<td>Buenos Aires</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter state information*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cState' and @value='' and @type='text']</td>
+	<td>Buenos Aires</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter zip code*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cZip' and @value='' and @type='text']</td>
+	<td>C1417GZF</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter country information*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cCountry' and @value='' and @type='text']</td>
+	<td>Argentina</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter telephone information*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cTelephone' and @value='' and @type='text']</td>
+	<td>(011)-4561-5534</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cShipName' and @value='' and @type='text']</td>
+	<td>Jimmy Page</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter shipping address information *</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cShipAddr1' and @value='' and @type='text']</td>
+	<td>Dorrego 432</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter shipping city information*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cShipCity' and @value='' and @type='text']</td>
+	<td>Buenos Aires</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter shipping state information*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cShipState' and @value='' and @type='text']</td>
+	<td>Buenos Aires</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter shipping zip code*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cShipZip' and @value='' and @type='text']</td>
+	<td>C1414CJR</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must enter shipping country information*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cShipCountry' and @value='' and @type='text']</td>
+	<td>Argentina</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//input[@name='gcFunction' and @value='Confirm New']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*New Customer created OK*</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
