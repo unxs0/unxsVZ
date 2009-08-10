@@ -59,6 +59,8 @@ void htmlLogin(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
 void htmlDashBoard(void);
 void htmlDashBoardPage(char *cTitle, char *cTemplateName);
+void EncryptPasswd(char *pw);
+
 
 int main(int argc, char *argv[])
 {
@@ -1283,4 +1285,37 @@ void GetClientOwner(unsigned uClient, unsigned *uOwner)
 
 }//void GetClientOwner(unsigned uClient, unsigned *uOwner)
 
+
+void EncryptPasswd(char *pw)
+{
+	//Notes:
+	//	We should change time based salt 
+	//	(could be used for faster dictionary attack)
+	//	to /dev/random based system.
+
+        char salt[3];
+        char passwd[102]={""};
+        char *cpw;
+	char cMethod[16] ={""}; 
+
+	GetConfiguration("cCryptMethod",cMethod);
+	if(!strcmp(cMethod,"MD5"))
+	{
+		char cSalt[] = "$1$01234567$";
+	    	(void)srand((int)time((time_t *)NULL));
+    		to64(&cSalt[3],rand(),8);
+		cpw = crypt(pw,cSalt);
+		// error not verified, str NULL ("") returned	
+	}
+	else
+	{
+		// default DES method
+	        strcpy(passwd,pw);
+    		(void)srand((int)time((time_t *)NULL));
+    		to64(&salt[0],rand(),2);
+		cpw=crypt(passwd,salt);
+	}	
+	strcpy(pw,cpw);
+
+}//void EncryptPasswd(char *pw)
 
