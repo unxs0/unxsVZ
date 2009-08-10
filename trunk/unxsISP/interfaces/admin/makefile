@@ -39,6 +39,6 @@ clean:
 	rm -f *.o *.cgi
 	
 install: interface.cgi
-	install -s interface.cgi $(CGIDIR)$(CGINAME)
+	install -s interface.cgi /var/www/unxs/cgi-bin/$(CGINAME)
 	rm -f interface.cgi
 

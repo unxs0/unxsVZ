@@ -496,17 +496,16 @@ void SSLCookieLogin(void)
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
-			sprintf(gcPasswd,"%.20s",ptr);
+			sprintf(gcPasswd,"%.99s",ptr);
 			*ptr2=';';
 		}
 		else
 		{
-			sprintf(gcPasswd,"%.20s",ptr);
+			sprintf(gcPasswd,"%.99s",ptr);
 		}
 	}
 	
 	}//if gcCookie[0] time saver
-
 	if(!iValidLogin(1))
 		htmlLogin();
 
@@ -515,7 +514,7 @@ void SSLCookieLogin(void)
 	if(!guPermLevel || !guLoginClient)
 		htmlPlainTextError("Unexpected guPermLevel or guLoginClient value");
 	
-	if(guPermLevel<10)
+	if(guPermLevel<9)
 		htmlLogin();
 
 	gcPasswd[0]=0;
@@ -564,34 +563,43 @@ void GetPLAndClient(char *cUser)
 }//void GetPLAndClient()
 
 
-void EncryptPasswdWithSalt(char *pw, char *salt)
+void EncryptPasswdWithSalt(char *cPassword, char *cSalt)
 {
-	char passwd[102]={""};
-	char *cpw;
+	//Notes:
+	//	This should work with both MD5 and DES
+	//	as long as it is called with the correct salt
+	//
+	char cPasswd[102]={""};
+	char *cPw;
 			
-	sprintf(passwd,"%.101s",pw);
+	sprintf(cPasswd,"%.99s",cPassword);
 				
-	cpw=crypt(passwd,salt);
+	cPw=crypt(cPasswd,cSalt);
 
-	sprintf(pw,"%s",cpw);
+	sprintf(cPassword,"%.99s",cPw);
 
-}//void EncryptPasswdWithSalt(char *pw, char *salt)
+}//void EncryptPasswdWithSalt(char *cPassword, char *cSalt)
 
 
 int iValidLogin(int mode)
 {
-	char cSalt[3]={""};
+	char cSalt[16]={""};
 	char cPassword[100]={""};
 
 	//Notes:
 	//Mode=1 means we have encrypted passwd from cookie
 
 	sprintf(cPassword,"%.99s",cGetPasswd(gcLogin));
+
 	if(cPassword[0])
 	{
 		if(!mode)
 		{
-			sprintf(cSalt,"%.2s",cPassword);
+			//MD5 vs DES salt determination
+			if(cPassword[0]=='$' && cPassword[2]=='$')
+				sprintf(cSalt,"%.12s",cPassword);
+			else
+				sprintf(cSalt,"%.2s",cPassword);
 			EncryptPasswdWithSalt(gcPasswd,cSalt);
 			if(!strcmp(gcPasswd,cPassword))
 			{
