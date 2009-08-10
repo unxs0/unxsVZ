@@ -467,6 +467,7 @@ void CustomerCommands(pentry entries[], int x)
 			{
 				sprintf(gcNewStep,"Confirm ");
 				gcMessage="Enter/modify data, review, then confirm. Any other action to cancel.";
+				uCustomer=0;
 				gcInputStatus[0]=0;
 				SetCustomerFieldsOn();
 				htmlCustomer();
@@ -1196,7 +1197,7 @@ unsigned ValidateCustomerInput(void)
 	{
 		SetCustomerFieldsOn();
 		cLastNameStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter lastname";
+		gcMessage="<blink>Error: </blink>Must enter last name";
 		return(0);
 	}
 
@@ -1209,7 +1210,13 @@ unsigned ValidateCustomerInput(void)
 	}
 	else
 	{
-		//Validate email
+		if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
+		{
+			SetCustomerFieldsOn();
+			cEmailStyle="type_fields_req";
+			gcMessage="<blink>Error: </blink>Email has to be a valid email address";
+			return(0);
+		}
 	}
 	if(!cAddr1[0])
 	{
@@ -1311,7 +1318,7 @@ unsigned ValidateCustomerInput(void)
 		{
 			SetCustomerFieldsOn();
 			cShipCountryStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must enter shipping countryinformation";
+			gcMessage="<blink>Error: </blink>Must enter shipping country information";
 			return(0);
 		}
 		
