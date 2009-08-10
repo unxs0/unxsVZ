@@ -162,7 +162,7 @@ cleandist:
 	rm -f *.o *.gz
 
 install: unxsISP.cgi
-	install -s unxsISP.cgi $(CGIDIR)unxsISP.cgi
+	install -s unxsISP.cgi /var/www/unxs/cgi-bin/unxsISP.cgi
 	rm unxsISP.cgi
 
 distribution:

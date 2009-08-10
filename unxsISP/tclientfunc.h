@@ -55,6 +55,7 @@ void tTablePullDownResellers(unsigned uSelector);
 void ContactsNavList(void);
 void htmlRecordContext(void);
 void tClientNavList(void);
+void EncryptPasswd(char *cPasswd);
 
 
 void ExtProcesstClientVars(pentry entries[], int x)
@@ -272,8 +273,8 @@ void ExttClientCommands(pentry entries[], int x)
 					tClient(gcQuery);
 				}
 		
-				sprintf(cClrPasswd,"%.32s",cPasswd);
-				EncryptPasswdWithSalt(cPasswd,"..");
+				//sprintf(cClrPasswd,"%.32s",cPasswd);
+				EncryptPasswd(cPasswd);
 				if(!uClient) 
 					tClient("No contact loaded");
 
