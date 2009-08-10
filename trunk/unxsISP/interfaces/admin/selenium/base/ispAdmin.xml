@@ -12,6 +12,8 @@
 <tr><td><a href="DeployRadiusProduct">DeployRadiusProduct</a></td></tr>
 <tr><td><a href="NewCustomer0">NewCustomer0</a></td></tr>
 <tr><td><a href="NewCustomer1">NewCustomer1</a></td></tr>
+<tr><td><a href="ModCustomer">ModCustomer</a></td></tr>
+<tr><td><a href="DelCustomer">DelCustomer</a></td></tr>
 </tbody></table>
 </body>
 </html>
