@@ -22,6 +22,8 @@ PURPOSE
 
 unsigned uCustomer=0;
 
+static unsigned uSearchInstance=0;
+
 static char cLabel[33]={""};
 static char cFirstName[33]={""};
 static char *cFirstNameStyle="type_fields_off";
@@ -300,6 +302,8 @@ void ProcessCustomerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%lu",&uCreatedDate);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uSearchInstance"))
+			sscanf(entries[i].val,"%u",&uSearchInstance);
 	}
 
 }//void ProcessUserVars(pentry entries[], int x)
@@ -2788,25 +2792,50 @@ void funcCustomerNavList(FILE *fp)
 	if(cSearch[0])
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel FROM " TCLIENT ",tClientConfig WHERE"
-					" tClient.uClient=tClientConfig.uOwner AND ( (tClient.cFirstName LIKE '%1$s%%' OR "
-					"tClient.cLastName LIKE '%1$s%%')"
-					" OR tClientConfig.cValue LIKE '%1$s%%' OR"
-					" tClient.cEmail LIKE '%1$s%%' OR"
-					" tClient.cCity LIKE '%1$s%%' OR"
-					" tClient.cState LIKE '%1$s%%' OR"
-					" tClient.cCountry LIKE '%1$s%%' ) ORDER BY cLabel",cSearch);
-		else 
-			sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel FROM " TCLIENT ",tClientConfig"
-				" WHERE (tClient.uClient=%1$u OR tClient.uOwner"
-				" IN (SELECT tClient.uClient FROM " TCLIENT " WHERE tClient.uOwner=%1$u OR"
-				" tClient.uClient=%1$u))"
-				" AND ( (tClient.cFirstName LIKE '%2$s%%' OR tClient.cLastName LIKE '%2$s%%') OR ("
-				"tClientConfig.cValue LIKE '%2$s%%' AND tClient.uClient=tClientConfig.uOwner) OR"
-				" tClient.cEmail LIKE '%2$s%%' OR"
-				" tClient.cCity LIKE '%2$s%%' OR"
-				" tClient.cState LIKE '%2$s%%' OR tClient.cCountry LIKE '%2$s%%' )"
-				" ORDER BY cLabel",guOrg,cSearch);
+		{
+			if(uSearchInstance)
+				sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel FROM " TCLIENT ",tClientConfig WHERE"
+						" tClient.uClient=tClientConfig.uOwner AND ( (tClient.cFirstName LIKE '%1$s%%' OR "
+						"tClient.cLastName LIKE '%1$s%%')"
+						" OR tClientConfig.cValue LIKE '%1$s%%' OR"
+						" tClient.cEmail LIKE '%1$s%%' OR"
+						" tClient.cCity LIKE '%1$s%%' OR"
+						" tClient.cState LIKE '%1$s%%' OR"
+						" tClient.cCountry LIKE '%1$s%%' ) ORDER BY cLabel",cSearch);
+			else
+				sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel FROM " TCLIENT " WHERE"
+						" tClient.uClient=tClientConfig.uOwner AND ( (tClient.cFirstName LIKE '%1$s%%' OR "
+						"tClient.cLastName LIKE '%1$s%%')"
+						" OR tClient.cEmail LIKE '%1$s%%' OR"
+						" tClient.cCity LIKE '%1$s%%' OR"
+						" tClient.cState LIKE '%1$s%%' OR"
+						" tClient.cCountry LIKE '%1$s%%' ) ORDER BY cLabel",cSearch);
+		}
+		else
+		{
+			if(uSearchInstance)
+				sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel FROM " TCLIENT ",tClientConfig"
+					" WHERE (tClient.uClient=%1$u OR tClient.uOwner"
+					" IN (SELECT tClient.uClient FROM " TCLIENT " WHERE tClient.uOwner=%1$u OR"
+					" tClient.uClient=%1$u))"
+					" AND ( (tClient.cFirstName LIKE '%2$s%%' OR tClient.cLastName LIKE '%2$s%%') OR ("
+					"tClientConfig.cValue LIKE '%2$s%%' AND tClient.uClient=tClientConfig.uOwner) OR"
+					" tClient.cEmail LIKE '%2$s%%' OR"
+					" tClient.cCity LIKE '%2$s%%' OR"
+					" tClient.cState LIKE '%2$s%%' OR tClient.cCountry LIKE '%2$s%%' )"
+					" ORDER BY cLabel",guOrg,cSearch);
+			else
+				sprintf(gcQuery,"SELECT DISTINCT tClient.uClient,tClient.cLabel FROM " TCLIENT ",tClientConfig"
+					" WHERE (tClient.uClient=%1$u OR tClient.uOwner"
+					" IN (SELECT tClient.uClient FROM " TCLIENT " WHERE tClient.uOwner=%1$u OR"
+					" tClient.uClient=%1$u))"
+					" AND ( (tClient.cFirstName LIKE '%2$s%%' OR tClient.cLastName LIKE '%2$s%%') "
+					" OR tClient.cEmail LIKE '%2$s%%' OR"
+					" tClient.cCity LIKE '%2$s%%' OR"
+					" tClient.cState LIKE '%2$s%%' OR tClient.cCountry LIKE '%2$s%%' )"
+					" ORDER BY cLabel",guOrg,cSearch);
+		}
+
 	}
 	else if(!cSearch[0] && uCustomer)
 	{
