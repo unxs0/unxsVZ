@@ -367,7 +367,7 @@ void CustomerGetHook(entry gentries[],int x)
 
 void LoadCustomer(unsigned uClient)
 {
-	
+//	htmlPlainTextError("LoadCustomer");
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
@@ -2887,8 +2887,11 @@ void funcCustomerNavList(FILE *fp)
 	{
 		if((field=mysql_fetch_row(res)))
 		{
-			sscanf(field[0],"%u",&uCustomer);
-			LoadCustomer(uCustomer);
+			if(strcmp(gcFunction,"Confirm Modify"))
+			{
+				sscanf(field[0],"%u",&uCustomer);
+				LoadCustomer(uCustomer);
+			}
 
 			fprintf(fp,"<a href=ispAdmin.cgi?gcPage=Customer&uCustomer=%s>%s</a><br>\n",field[0],field[1]);
 			mysql_free_result(res);
