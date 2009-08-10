@@ -1303,7 +1303,7 @@ unsigned RRCheck(void)
 			//All lowercase
 			for(x=0;x<strlen(cName);x++)
 				cName[x]=tolower(cName[x]);
-			if((strstr(cName,"_tcp")==NULL)||(strstr(cName,"_udp")))
+			if((strstr(cName,"_tcp")==NULL)&&(strstr(cName,"_udp")==NULL))
 			{
 				gcMessage="<blink>Error: </blink>Service protocol required";
 				cNameStyle="type_fields_req";
