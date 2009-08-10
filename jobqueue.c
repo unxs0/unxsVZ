@@ -1596,11 +1596,11 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 		{
 			//Allow backwards compatability
 			GetContainerProp(uContainer,"cNodeIP",cExtraNodeIP);
-			if(!cExtraNodeIP[0])
-			{
-				printf("CreateMountFiles() error: required cExtraNodeIP container property not found\n");
-				goto CommonExit;
-			}
+			//if(!cExtraNodeIP[0])
+			//{
+			//	printf("CreateMountFiles() error: required cExtraNodeIP container property not found\n");
+			//	goto CommonExit;
+			//}
 		}
 
 		GetContainerProp(uContainer,"cNetmask",cNetmask);
