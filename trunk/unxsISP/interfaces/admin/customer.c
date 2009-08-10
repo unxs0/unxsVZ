@@ -490,7 +490,7 @@ void CustomerCommands(pentry entries[], int x)
 					}
 					else
 					{
-						gcMessage="<blink>Customer already exists!</blink>";
+						gcMessage="<blink>Error: </blink>Customer already exists!";
 						SetCustomerFieldsOn();
 						cFirstNameStyle="type_fields_req";
 						cLastNameStyle="type_fields_req";
@@ -556,7 +556,7 @@ void CustomerCommands(pentry entries[], int x)
 				
 				if(CustomerHasProducts())
 				{
-					gcMessage="<blink>Can't delete a customer with active products</blink>";
+					gcMessage="<blink>Error: </blink>Can't delete a customer with active products";
 					htmlCustomer();
 				}
 				
@@ -576,7 +576,7 @@ void CustomerCommands(pentry entries[], int x)
 			{
 				if(CustomerHasProducts())
 				{
-					gcMessage="<blink>Can't delete a customer with active products</blink>";
+					gcMessage="<blink>Error: </blink>Can't delete a customer with active products";
 					htmlCustomer();
 				}
 				DelCustomer();
@@ -602,7 +602,7 @@ void CustomerCommands(pentry entries[], int x)
 		{
 			if((uStep+1)==2 && !uProductHasServices(uProduct))
 			{
-				gcMessage="<blink>The selected product has no services configured. Can't continue.</blink>";
+				gcMessage="<blink>Error: </blink>The selected product has no services configured. Can't continue.";
 				htmlProductDeployWizard(uStep);
 			}
 			
@@ -632,7 +632,8 @@ void CustomerCommands(pentry entries[], int x)
 			//End of the product deployment wizard.
 			//deploy the product and go back to customers screen.
 			ProcessProductDeploymentVars(entries,x);
-			DeployProduct();	
+			DeployProduct();
+			gcMessage="Product deployed and waiting for activation.";
 			LoadCustomer(uCustomer);
 		}
 		htmlCustomer();
@@ -1188,14 +1189,14 @@ unsigned ValidateCustomerInput(void)
 	{
 		SetCustomerFieldsOn();
 		cFirstNameStyle="type_fields_req";
-		gcMessage="<blink>Must enter first name</blink>";
+		gcMessage="<blink>Error: </blink>Must enter first name";
 		return(0);
 	}
 	if(!cLastName[0])
 	{
 		SetCustomerFieldsOn();
 		cLastNameStyle="type_fields_req";
-		gcMessage="<blink>Must enter lastname</blink>";
+		gcMessage="<blink>Error: </blink>Must enter lastname";
 		return(0);
 	}
 
@@ -1203,7 +1204,7 @@ unsigned ValidateCustomerInput(void)
 	{
 		SetCustomerFieldsOn();
 		cEmailStyle="type_fields_req";
-		gcMessage="<blink>Must enter email address</blink>";
+		gcMessage="<blink>Error: </blink>Must enter email address";
 		return(0);
 	}
 	else
@@ -1214,42 +1215,42 @@ unsigned ValidateCustomerInput(void)
 	{
 		SetCustomerFieldsOn();
 		cAddr1Style="type_fields_req";
-		gcMessage="<blink>Must enter address information</blink>";
+		gcMessage="<blink>Error: </blink>Must enter address information";
 		return(0);
 	}
 	if(!cCity[0])
 	{
 		SetCustomerFieldsOn();
 		cCityStyle="type_fields_req";
-		gcMessage="<blink>Must enter city information</blink>";
+		gcMessage="<blink>Error: </blink>Must enter city information";
 		return(0);
 	}
 	if(!cState[0])
 	{
 		SetCustomerFieldsOn();
 		cStateStyle="type_fields_req";
-		gcMessage="<blink>Must enter state information</blink>";
+		gcMessage="<blink>Error: </blink>Must enter state information";
 		return(0);
 	}
 	if(!cZip[0])
 	{
 		SetCustomerFieldsOn();
 		cZipStyle="type_fields_req";
-		gcMessage="<blink>Must enter zip code</blink>";
+		gcMessage="<blink>Error: </blink>Must enter zip code";
 		return(0);
 	}
 	if(!cCountry[0])
 	{
 		SetCustomerFieldsOn();
 		cCountryStyle="type_fields_req";
-		gcMessage="<blink>Must enter country information</blink>";
+		gcMessage="<blink>Error: </blink>Must enter country information";
 		return(0);
 	}
 	if(!cTelephone[0])
 	{
 		SetCustomerFieldsOn();
 		cTelephoneStyle="type_fields_req";
-		gcMessage="<blink>Must enter telephone information</blink>";
+		gcMessage="<blink>Error: </blink>Must enter telephone information";
 		return(0);
 	}
 	if(strcmp(cCardType,"---"))
@@ -1258,21 +1259,21 @@ unsigned ValidateCustomerInput(void)
 		{
 			SetCustomerFieldsOn();
 			cCardNumberStyle="type_fields_req";
-			gcMessage="<blink>Must enter credit card number</blink>";
+			gcMessage="<blink>Error: </blink>Must enter credit card number";
 			return(0);
 		}
 		if(!uExpMonth)
 		{
 			SetCustomerFieldsOn();
 			cuExpMonthStyle="type_fields_req";
-			gcMessage="<blink>Must select expiration month</blink>";
+			gcMessage="<blink>Error: </blink>Must select expiration month";
 			return(0);
 		}
 		if(!uExpYear)
 		{
 			SetCustomerFieldsOn();
 			cuExpYearStyle="type_fields_req";
-			gcMessage="<blink>Must select expiration year</blink>";
+			gcMessage="<blink>Error: </blink>Must select expiration year";
 			return(0);
 		}
 	}
@@ -1282,35 +1283,35 @@ unsigned ValidateCustomerInput(void)
 		{
 			SetCustomerFieldsOn();
 			cShipAddr1Style="type_fields_req";
-			gcMessage="<blink>Must enter shipping address information</blink>";
+			gcMessage="<blink>Error: </blink>Must enter shipping address information";
 			return(0);
 		}
 		if(!cShipCity[0])
 		{
 			SetCustomerFieldsOn();
 			cShipCityStyle="type_fields_req";
-			gcMessage="<blink>Must enter shipping city information</blink>";
+			gcMessage="<blink>Error: </blink>Must enter shipping city information";
 			return(0);
 		}
 		if(!cShipState[0])
 		{
 			SetCustomerFieldsOn();
 			cShipStateStyle="type_fields_req";
-			gcMessage="<blink>Must enter shipping state information</blink>";
+			gcMessage="<blink>Error: </blink>Must enter shipping state information";
 			return(0);
 		}
 		if(!cShipZip[0])
 		{
 			SetCustomerFieldsOn();
 			cShipZipStyle="type_fields_req";
-			gcMessage="<blink>Must enter shipping zip code/blink>";
+			gcMessage="<blink>Error: </blink>Must enter shipping zip code";
 			return(0);
 		}
 		if(!cShipCountry[0])
 		{
 			SetCustomerFieldsOn();
 			cShipCountryStyle="type_fields_req";
-			gcMessage="<blink>Must enter shipping countryinformation</blink>";
+			gcMessage="<blink>Error: </blink>Must enter shipping countryinformation";
 			return(0);
 		}
 		
@@ -1321,35 +1322,35 @@ unsigned ValidateCustomerInput(void)
 		{
 			SetCustomerFieldsOn();
 			cBranchNameStyle="type_fields_req";
-			gcMessage="<blink>Must enter branch name</blink>";
+			gcMessage="<blink>Error: </blink>Must enter branch name";
 			return(0);
 		}
 		if(!cBranchCode[0])
 		{
 			SetCustomerFieldsOn();
 			cBranchCodeStyle="type_fields_req";
-			gcMessage="<blink>Must enter branch code</blink>";
+			gcMessage="<blink>Error: </blink>Must enter branch code";
 			return(0);
 		}
 	        if(!cAccountHolder[0])
 		{
 			SetCustomerFieldsOn();
 			cAccountHolderStyle="type_fields_req";
-			gcMessage="<blink>Must enter account holder name</blink>";
+			gcMessage="<blink>Error: </blink>Must enter account holder name";
 			return(0);
 		}	
 		if(!cAccountNumber[0])
 		{
 			SetCustomerFieldsOn();
 			cAccountNumberStyle="type_fields_req";
-			gcMessage="<blink>Must enter account number</blink>";
+			gcMessage="<blink>Error: </blink>Must enter account number";
 			return(0);
 		}
 		if(!uAccountType)
 		{
 			SetCustomerFieldsOn();
 			cuAccountTypeStyle="type_fields_req";
-			gcMessage="<blink>Must select account type</blink>";
+			gcMessage="<blink>Error: </blink>Must select account type";
 			return(0);
 		}
 	}	
