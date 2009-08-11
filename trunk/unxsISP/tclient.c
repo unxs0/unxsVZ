@@ -94,6 +94,8 @@ static char mBalance[16]={"0.00"};
 static char mTotal[16]={"0.00"};
 //cInfo: Unformatted info/address etc.
 static char *cInfo={""};
+//cLanguage: indicates customer language for invoice rendering
+static char cLanguage[33]={""};
 //uOwner: Record owner
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
@@ -107,7 +109,7 @@ static time_t uModDate=0;
 
 
 
-#define VAR_LIST_tClient "tClient.uClient,tClient.cLabel,tClient.cFirstName,tClient.cLastName,tClient.cIDNumber,tClient.cEmail,tClient.cAddr1,tClient.cAddr2,tClient.cAddr3,tClient.cCity,tClient.cState,tClient.cZip,tClient.cCountry,tClient.uPayment,tClient.cBankName,tClient.cBranchName,tClient.cBranchCode,tClient.cAccountHolder,tClient.cAccountNumber,tClient.uAccountType,tClient.cCardType,tClient.cCardNumber,tClient.uExpMonth,tClient.uExpYear,tClient.cCardName,tClient.cACHDebits,tClient.cShipName,tClient.cShipAddr1,tClient.cShipAddr2,tClient.cShipAddr3,tClient.cShipCity,tClient.cShipState,tClient.cShipZip,tClient.cShipCountry,tClient.cTelephone,tClient.cMobile,tClient.cFax,tClient.mBalance,tClient.mTotal,tClient.cInfo,tClient.uOwner,tClient.uCreatedBy,tClient.uCreatedDate,tClient.uModBy,tClient.uModDate"
+#define VAR_LIST_tClient "tClient.uClient,tClient.cLabel,tClient.cFirstName,tClient.cLastName,tClient.cIDNumber,tClient.cEmail,tClient.cAddr1,tClient.cAddr2,tClient.cAddr3,tClient.cCity,tClient.cState,tClient.cZip,tClient.cCountry,tClient.uPayment,tClient.cBankName,tClient.cBranchName,tClient.cBranchCode,tClient.cAccountHolder,tClient.cAccountNumber,tClient.uAccountType,tClient.cCardType,tClient.cCardNumber,tClient.uExpMonth,tClient.uExpYear,tClient.cCardName,tClient.cACHDebits,tClient.cShipName,tClient.cShipAddr1,tClient.cShipAddr2,tClient.cShipAddr3,tClient.cShipCity,tClient.cShipState,tClient.cShipZip,tClient.cShipCountry,tClient.cTelephone,tClient.cMobile,tClient.cFax,tClient.mBalance,tClient.mTotal,tClient.cInfo,tClient.cLanguage,tClient.uOwner,tClient.uCreatedBy,tClient.uCreatedDate,tClient.uModBy,tClient.uModDate"
 
  //Local only
 void Insert_tClient(void);
@@ -226,6 +228,8 @@ void ProcesstClientVars(pentry entries[], int x)
 			sprintf(mTotal,"%.15s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cInfo"))
 			cInfo=entries[i].val;
+		else if(!strcmp(entries[i].name,"cLanguage"))
+			sprintf(cLanguage,"%.32s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -373,11 +377,12 @@ void tClient(const char *cResult)
 			sprintf(mBalance,"%.32s",field[37]);
 			sprintf(mTotal,"%.32s",field[38]);
 			cInfo=field[39];
-			sscanf(field[40],"%u",&uOwner);
-			sscanf(field[41],"%u",&uCreatedBy);
-			sscanf(field[42],"%lu",&uCreatedDate);
-			sscanf(field[43],"%u",&uModBy);
-			sscanf(field[44],"%lu",&uModDate);
+			sprintf(cLanguage,"%.32s",field[40]);
+			sscanf(field[41],"%u",&uOwner);
+			sscanf(field[42],"%u",&uCreatedBy);
+			sscanf(field[43],"%lu",&uCreatedDate);
+			sscanf(field[44],"%u",&uModBy);
+			sscanf(field[45],"%lu",&uModDate);
 
 		}
 
@@ -945,6 +950,19 @@ void tClientInput(unsigned uMode)
 		printf("disabled>%s</textarea></td></tr>\n",cInfo);
 		printf("<input type=hidden name=cInfo value=\"%s\" >\n",EncodeDoubleQuotes(cInfo));
 	}
+//cLanguage
+	OpenRow(LANG_FL_tClient_cTelephone,"black");
+	printf("<input title='%s' type=text name=cLanguage value=\"%s\" size=40 maxlength=32 "
+,LANG_FT_tClient_cTelephone,EncodeDoubleQuotes(cTelephone));
+	if(guPermLevel>=0 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cLanguage value=\"%s\">\n",EncodeDoubleQuotes(cLanguage));
+	}
 //uOwner
 	OpenRow(LANG_FL_tClient_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
@@ -1306,7 +1324,7 @@ void tClientList(void)
 
 void CreatetClient(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tClient ( cLabel VARCHAR(32) NOT NULL DEFAULT '', uClient INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cPasswd VARCHAR(20) NOT NULL DEFAULT '', cFirstName VARCHAR(32) NOT NULL DEFAULT '', cLastName VARCHAR(32) NOT NULL DEFAULT '', cEmail VARCHAR(100) NOT NULL DEFAULT '',index (cEmail), cAddr1 VARCHAR(100) NOT NULL DEFAULT '', cAddr2 VARCHAR(100) NOT NULL DEFAULT '', cCity VARCHAR(100) NOT NULL DEFAULT '', cState VARCHAR(100) NOT NULL DEFAULT '', cZip VARCHAR(32) NOT NULL DEFAULT '', cCountry VARCHAR(64) NOT NULL DEFAULT '', cCardType VARCHAR(32) NOT NULL DEFAULT '', cCardNumber VARCHAR(32) NOT NULL DEFAULT '', uExpMonth INT UNSIGNED NOT NULL DEFAULT 0, uExpYear INT UNSIGNED NOT NULL DEFAULT 0, cCardName VARCHAR(64) NOT NULL DEFAULT '', cShipName VARCHAR(100) NOT NULL DEFAULT '', cShipAddr1 VARCHAR(100) NOT NULL DEFAULT '', cShipAddr2 VARCHAR(100) NOT NULL DEFAULT '', cShipCity VARCHAR(100) NOT NULL DEFAULT '', cShipState VARCHAR(100) NOT NULL DEFAULT '', cShipZip VARCHAR(32) NOT NULL DEFAULT '', cShipCountry VARCHAR(64) NOT NULL DEFAULT '', cTelephone VARCHAR(32) NOT NULL DEFAULT '', cFax VARCHAR(32) NOT NULL DEFAULT '', cACHDebits VARCHAR(64) NOT NULL DEFAULT '', uPayment INT UNSIGNED NOT NULL DEFAULT 0, cMobile VARCHAR(32) NOT NULL DEFAULT '', cBankName VARCHAR(32) NOT NULL DEFAULT '', cBranchName VARCHAR(32) NOT NULL DEFAULT '', cBranchCode VARCHAR(6) NOT NULL DEFAULT '', cAccountHolder VARCHAR(100) NOT NULL DEFAULT '', cAccountNumber VARCHAR(100) NOT NULL DEFAULT '', uAccountType INT UNSIGNED NOT NULL DEFAULT 0, mBalance DECIMAL(10,2) NOT NULL DEFAULT 0, mTotal DECIMAL(10,2) NOT NULL DEFAULT 0, cIDNumber VARCHAR(32) NOT NULL DEFAULT '', cAddr3 VARCHAR(100) NOT NULL DEFAULT '', cShipAddr3 VARCHAR(100) NOT NULL DEFAULT '', cInfo TEXT NOT NULL DEFAULT '', cCode VARCHAR(32) NOT NULL DEFAULT '' )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tClient ( cLabel VARCHAR(32) NOT NULL DEFAULT '', uClient INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cPasswd VARCHAR(20) NOT NULL DEFAULT '', cFirstName VARCHAR(32) NOT NULL DEFAULT '', cLastName VARCHAR(32) NOT NULL DEFAULT '', cEmail VARCHAR(100) NOT NULL DEFAULT '',index (cEmail), cAddr1 VARCHAR(100) NOT NULL DEFAULT '', cAddr2 VARCHAR(100) NOT NULL DEFAULT '', cCity VARCHAR(100) NOT NULL DEFAULT '', cState VARCHAR(100) NOT NULL DEFAULT '', cZip VARCHAR(32) NOT NULL DEFAULT '', cCountry VARCHAR(64) NOT NULL DEFAULT '', cCardType VARCHAR(32) NOT NULL DEFAULT '', cCardNumber VARCHAR(32) NOT NULL DEFAULT '', uExpMonth INT UNSIGNED NOT NULL DEFAULT 0, uExpYear INT UNSIGNED NOT NULL DEFAULT 0, cCardName VARCHAR(64) NOT NULL DEFAULT '', cShipName VARCHAR(100) NOT NULL DEFAULT '', cShipAddr1 VARCHAR(100) NOT NULL DEFAULT '', cShipAddr2 VARCHAR(100) NOT NULL DEFAULT '', cShipCity VARCHAR(100) NOT NULL DEFAULT '', cShipState VARCHAR(100) NOT NULL DEFAULT '', cShipZip VARCHAR(32) NOT NULL DEFAULT '', cShipCountry VARCHAR(64) NOT NULL DEFAULT '', cTelephone VARCHAR(32) NOT NULL DEFAULT '', cFax VARCHAR(32) NOT NULL DEFAULT '', cACHDebits VARCHAR(64) NOT NULL DEFAULT '', uPayment INT UNSIGNED NOT NULL DEFAULT 0, cMobile VARCHAR(32) NOT NULL DEFAULT '', cBankName VARCHAR(32) NOT NULL DEFAULT '', cBranchName VARCHAR(32) NOT NULL DEFAULT '', cBranchCode VARCHAR(6) NOT NULL DEFAULT '', cAccountHolder VARCHAR(100) NOT NULL DEFAULT '', cAccountNumber VARCHAR(100) NOT NULL DEFAULT '', uAccountType INT UNSIGNED NOT NULL DEFAULT 0, mBalance DECIMAL(10,2) NOT NULL DEFAULT 0, mTotal DECIMAL(10,2) NOT NULL DEFAULT 0, cIDNumber VARCHAR(32) NOT NULL DEFAULT '', cAddr3 VARCHAR(100) NOT NULL DEFAULT '', cShipAddr3 VARCHAR(100) NOT NULL DEFAULT '', cInfo TEXT NOT NULL DEFAULT '', cCode VARCHAR(32) NOT NULL DEFAULT '', cLanguage VARCHAR(32) NOT NULL DEFAULT 'English' )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
