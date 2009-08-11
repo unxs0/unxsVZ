@@ -1,3 +1,22 @@
 2	unxsRadius.Login	1	2	1192542436	1	1192542469	1	2,32	1	cExtunxsRadiusDb:SELECT uUser FROM tUser WHERE cLogin='%s'  	0	1	0	Radius Login	Radius login account	1	10	
 2	unxsRadius.Passwd	2	2	1192542577	0	0	6	6,15	1		0	1	0	Radius Password	Radius account password	1	20	
 2	unxsRadius.Profile	3	2	1192542843	3	1249945654	13	0,99	1		0	1	0	Radius Profile	Enter radius service profile	1	20	cExtunxsRadiusDb:
+2	iDNS.DomainKey	26	1	1193685118	0	0	2	0,512	1		1	1	0	Domain Key	The site domain key	2	130	
+2	unxsMail.tVUTEntry	25	1	1193684894	0	0	2	0,255	1		0	1	0	tVUT Entry	tVUT Entry in the format: alias;mbox. E.g.: info;wmny4	4	80	
+2	unxsMail.Login	23	1	1193684745	1	1193686354	1	2,32	1		0	0	0	POP3 Login	POP3 service login user	4	70	
+2	unxsMail.Passwd	24	1	1193684807	0	0	6	2,16	1		1	1	0	POP3 Password	POP3 service password	4	80	
+2	unxsMail.Domain	22	1	1193683914	36	1231972667	13	4,64	1		0	0	0	Email Domain	Select the email domain	4	60	cExtunxsMailDb:
+2	unxsApache.NameBased	21	1	1193683736	36	1232052554	8	0,99	1		0	0	1	Name Based Site	Select if the site is IP based or name based	3	50	
+2	unxsApache.cIPBasedRootSite	28	1	1193926033	36	1232052759	2	5,128	1		0	1	0	IP/Root Site	IP address or root site for name based sites	3	30	
+2	unxsApache.Name	20	1	1193683372	1	1193683579	2	2,100	0		0	0	0	IP address / Base Name	Enter an IPv4 address for IP based sites, or a FQDN...	3	40	
+2	unxsApache.Passwd	19	1	1193682518	36	1232052929	6	6,65	1		0	1	0	Password	Website account password	3	30	
+2	unxsApache.Domain	17	1	1193682094	1	1193871613	4	4,64	1		0	1	0	Domain	Fully qualified domain name. Only alphanumerical chars, - and .	1	10	
+2	unxsApache.Login	18	1	1193682362	36	1232052686	1	2,32	1		0	1	0	Login	Website login user	3	20	
+2	iDNS.Domain	14	1	1193069234	1	1193338465	4	4,64	1	cExtiDNSDb:SELECT uZone FROM tZone WHERE cZone='%s'  	1	1	0	Zone Name	The FQDN of the zone that will be deployed	2	100	
+2	iDNS.IP	15	1	1193069322	1	1193073122	11	7,15	0		0	0	0	IP Address	The main IP address for the zone	2	120	
+2	iDNS.View	16	1	1193069397	36	1231971212	2	0,32	0		0	0	1	Bind View	Select the bind view where the zone will be created	2	160	
+2	unxsApache.Server	29	1	1193926857	36	1232052721	2	6,64	1		0	1	0	Server	Select the server in which the website will be deployed	3	60	
+2	iDNS.SPF	27	1	1193685261	0	0	2	0,512	1		1	1	0	Domain SPF Record	The site domain SPF record	2	140	
+2	unxsMail.UserType	30	1	1194374235	36	1231972719	2	4,64	1		0	0	1	User Type	Select the email user type	4	90	
+2	unxsMail.ServerGroup	31	1	1194374278	36	1231972735	2	4,64	1		0	0	1	Server Group	Select the server group for the mailbox	4	100	
+2	unxsRadius.ClearText	41	21	1234827655	21	1234827751	8		1		0	0	1	Use Clear Text Password	Radius login account	1	60	

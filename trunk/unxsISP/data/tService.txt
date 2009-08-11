@@ -1,1 +1,6 @@
 1	Radius Account	2	1	1192543047	1	1192547727	localhost		unxsRadius.Unlim	1
+9	Virtual Website	2	36	1232051555	21	1234537727	web0.astraqom.ca		unxsApache.VH	1
+8	Email Account	2	1	1193685398	21	1234537701	store0.astraqom.ca		mysqlMail2.MailBox	1
+5	DNS Zone	2	1	1193070914	0	0	Any		iDNS.WebZone	1
+7	Website	2	1	1193685335	21	1234537600	web0.astraqom.ca		unxsApache.VH	1
+10	DNS Zone for Virtual Website	2	36	1232052121	0	0	Any		iDNS.WebZone	1
