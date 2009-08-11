@@ -14,6 +14,8 @@
 <tr><td><a href="NewCustomer1">NewCustomer1</a></td></tr>
 <tr><td><a href="ModCustomer">ModCustomer</a></td></tr>
 <tr><td><a href="DelCustomer">DelCustomer</a></td></tr>
+<tr><td><a href="NewProduct">NewProduct</a></td></tr>
+<tr><td><a href="AddService">AddService</a></td></tr>
 </tbody></table>
 </body>
 </html>
