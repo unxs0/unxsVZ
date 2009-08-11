@@ -141,6 +141,8 @@
 #define LANG_FL_tClient_uReseller "uReseller"
 #define LANG_FL_tClient_cInfo "cInfo"
 #define LANG_FT_tClient_cInfo "Unformatted info/address etc."
+#define LANG_FL_tClient_cLanguage "cLanguage"
+#define LANG_FT_tClient_cLanguage "Customer language for invoice rendering"
 #define LANG_FT_tClient_uReseller "tClient row id of the reseller for this customer"
 #define LANG_FL_tClient_uOwner "uOwner"
 #define LANG_FT_tClient_uOwner "Record owner"
