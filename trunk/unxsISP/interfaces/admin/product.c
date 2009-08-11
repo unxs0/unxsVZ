@@ -50,6 +50,7 @@ static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
 
+static unsigned uNoSelect=0;
 
 
 #define VAR_LIST_tProduct "tProduct.cLabel,tProduct.uAvailable,tProduct.uPeriod,tProduct.mPrice,tProduct.mCost,tProduct.mSetupFee,tProduct.cComment,tProduct.mReleaseFee,tProduct.uProductType,tProduct.cTitle,tProduct.uOwner,tProduct.uCreatedBy,tProduct.uCreatedDate,tProduct.uModBy,tProduct.uModDate"
@@ -202,6 +203,7 @@ void ProductCommands(pentry entries[], int x)
 		{	
 			if(guPermLevel>=10)
 			{
+				uNoSelect=1;
 				sprintf(gcNewStep,"Confirm ");
 				gcMessage="Enter/modify data, review, then confirm. Any other action to cancel.";
 				gcInputStatus[0]=0;
@@ -214,12 +216,12 @@ void ProductCommands(pentry entries[], int x)
 				gcMessage="<blink>Error: </blink> Denied by permissions settings";
 				htmlProduct();
 			}
-
 		}
 		else if(!strcmp(gcFunction,"Confirm New"))
 		{
 			if(guPermLevel>=10)
 			{
+				uNoSelect=1;
 				if(!uProductExists())
 				{
 					if(!ValidateProductInput())
@@ -233,7 +235,7 @@ void ProductCommands(pentry entries[], int x)
 				}
 				else
 				{
-					gcMessage="<blink>Product already exists!</blink>";
+					gcMessage="<blink>Error: </blink>Product already exists!";
 					SetProductFieldsOn();
 					gcInputStatus[0]=0;
 					sprintf(gcNewStep,"Confirm ");
@@ -249,6 +251,7 @@ void ProductCommands(pentry entries[], int x)
 		{
 			if(uAllowMod(uOwner,uCreatedBy)&& !uIsProductDeployed())
 			{
+				uNoSelect=1;
 				sprintf(gcModStep,"Confirm ");
 				gcMessage="Enter/modify data, review, then confirm. Any other action to cancel.";
 				SetProductFieldsOn();
@@ -266,6 +269,7 @@ void ProductCommands(pentry entries[], int x)
 			{
 				if(!ValidateProductInput())
 				{
+					uNoSelect=1;
 					sprintf(gcModStep,"Confirm ");
 					gcInputStatus[0]=0;
 					SetProductFieldsOn();
@@ -646,7 +650,7 @@ unsigned ValidateProductInput(void)
 	{
 		SetProductFieldsOn();
 		cLabelStyle="type_fields_req";
-		gcMessage="<blink>Product name can't be empty</blink>";
+		gcMessage="<blink>Error: </blink>Product name can't be empty";
 		return(0);
 	}
 
@@ -654,7 +658,7 @@ unsigned ValidateProductInput(void)
 	{
 		SetProductFieldsOn();
 		cuPeriodStyle="type_fields_req";
-		gcMessage="<blink>Must select product billing period</blink>";
+		gcMessage="<blink>Error: </blink>Must select product billing period";
 		return(0);
 	}
 
@@ -662,7 +666,7 @@ unsigned ValidateProductInput(void)
 	{
 		SetProductFieldsOn();
 		mPriceStyle="type_fields_req";
-		gcMessage="<blink>Must enter product price</blink>";
+		gcMessage="<blink>Error: </blink>Must enter product price";
 		return(0);
 	}
 	else
@@ -672,7 +676,7 @@ unsigned ValidateProductInput(void)
 			if(!isdigit(mPrice[i]) && mPrice[i]!='.')
 			{
 				mPriceStyle="type_fields_req";
-				gcMessage="<blink>Review product price format</blink>";
+				gcMessage="<blink>Error: </blink>Review product price format";
 				return(0);
 			}
 	}
@@ -875,7 +879,10 @@ void funcProductNavList(FILE *fp)
 	unsigned uFound=0;
 	unsigned uDisplayed=0;
 	
-	char cTopMessage[64]={""};
+	static char cTopMessage[64]={""};
+
+	if(uNoSelect) return;
+
 	if(cSearch[0])
 		ExtSelectSearch("tProduct","tProduct.uProduct,tProduct.cLabel","tProduct.cLabel",cSearch,NULL,0);
 	else
