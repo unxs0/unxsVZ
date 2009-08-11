@@ -37,8 +37,8 @@ LIBS= -L/usr/lib/mysql -lmysqlclient /usr/lib/openisp/libtemplate.a -lz -lcrypt 
 
 all: unxsISP.cgi
 
-unxsISP.cgi: tclient.o tproduct.o tservice.o tinstance.o tjob.o tclientconfig.o tconfig.o tparameter.o tparamtype.o tperiod.o tstatus.o tauthorize.o tserviceglue.o tinvoice.o tinvoicemonth.o tpaid.o tinvoiceitems.o tinvoicestatus.o ttemplate.o tconfiguration.o tpayment.o taccounttype.o tshipping.o tproducttype.o tserver.o tglossary.o tlog.o tlogtype.o tlogmonth.o tmonth.o ttemplateset.o tjobstatus.o ttemplatetype.o tmotd.o  mysqlisp.o main.o cgi.o
-	cc tclient.o tproduct.o tservice.o tinstance.o tjob.o tclientconfig.o tconfig.o tparameter.o tparamtype.o tperiod.o tstatus.o tauthorize.o tserviceglue.o tinvoice.o tinvoicemonth.o tpaid.o tinvoiceitems.o tinvoicestatus.o ttemplate.o tconfiguration.o tpayment.o taccounttype.o tshipping.o tproducttype.o tserver.o tglossary.o tlog.o tlogtype.o tlogmonth.o tmonth.o ttemplateset.o tjobstatus.o ttemplatetype.o tmotd.o  mysqlisp.o main.o cgi.o -o unxsISP.cgi $(LIBS) 
+unxsISP.cgi: tclient.o tproduct.o tservice.o tinstance.o tjob.o tclientconfig.o tconfig.o tparameter.o tparamtype.o tperiod.o tstatus.o tauthorize.o tserviceglue.o tinvoice.o tinvoicemonth.o tpaid.o tinvoiceitems.o tinvoicestatus.o ttemplate.o tconfiguration.o tpayment.o taccounttype.o tshipping.o tproducttype.o tserver.o tglossary.o tlog.o tlogtype.o tlogmonth.o tmonth.o ttemplateset.o tjobstatus.o ttemplatetype.o tmotd.o  unxsisp.o main.o cgi.o
+	cc tclient.o tproduct.o tservice.o tinstance.o tjob.o tclientconfig.o tconfig.o tparameter.o tparamtype.o tperiod.o tstatus.o tauthorize.o tserviceglue.o tinvoice.o tinvoicemonth.o tpaid.o tinvoiceitems.o tinvoicestatus.o ttemplate.o tconfiguration.o tpayment.o taccounttype.o tshipping.o tproducttype.o tserver.o tglossary.o tlog.o tlogtype.o tlogmonth.o tmonth.o ttemplateset.o tjobstatus.o ttemplatetype.o tmotd.o  unxsisp.o main.o cgi.o -o unxsISP.cgi $(LIBS) 
 	#mail -s "unxsISP$(RELEASE) `uname -n -s`" support@openisp.net < /dev/null > /dev/null 2>&1
 
 tclient.o: tclient.c mysqlrad.h language.h tclientfunc.h local.h
@@ -150,9 +150,9 @@ main.o: main.c mysqlrad.h mainfunc.h language.h local.h
 cgi.o: cgi.h cgi.c
 	cc -c cgi.c -o cgi.o $(CFLAGS)
 
-#List: mysqlisp.o
-mysqlisp.o: mysqlisp.c mysqlrad.h
-	cc -c mysqlisp.c -o mysqlisp.o $(CFLAGS)
+#List: unxsisp.c.o
+unxsisp.o: unxsisp.c mysqlrad.h
+	cc -c unxsisp.c -o unxsisp.o $(CFLAGS)
 
 
 clean:
