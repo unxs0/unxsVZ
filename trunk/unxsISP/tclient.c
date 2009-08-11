@@ -951,9 +951,9 @@ void tClientInput(unsigned uMode)
 		printf("<input type=hidden name=cInfo value=\"%s\" >\n",EncodeDoubleQuotes(cInfo));
 	}
 //cLanguage
-	OpenRow(LANG_FL_tClient_cTelephone,"black");
+	OpenRow(LANG_FL_tClient_cLanguage,"black");
 	printf("<input title='%s' type=text name=cLanguage value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tClient_cTelephone,EncodeDoubleQuotes(cTelephone));
+,LANG_FT_tClient_cLanguage,EncodeDoubleQuotes(cLanguage));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -1073,7 +1073,7 @@ void Insert_tClient(void)
 		"cAccountHolder='%s',cAccountNumber='%s',uAccountType=%u,cCardType='%s',cCardNumber='%s',"
 		"uExpMonth=%u,uExpYear=%u,cCardName='%s',cACHDebits='%s',cShipName='%s',cShipAddr1='%s',"
 		"cShipAddr2='%s',cShipAddr3='%s',cShipCity='%s',cShipState='%s',cShipZip='%s',cShipCountry='%s',"
-		"cTelephone='%s',cMobile='%s',cFax='%s',cPasswd='%s',mBalance='%s',mTotal='%s',cInfo='%s',uOwner=%u,"
+		"cTelephone='%s',cMobile='%s',cFax='%s',cPasswd='%s',mBalance='%s',mTotal='%s',cInfo='%s',cLanguage='%s'uOwner=%u,"
 		"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uClient
 			,TextAreaSave(cLabel)
@@ -1116,6 +1116,7 @@ void Insert_tClient(void)
 			,TextAreaSave(mBalance)
 			,TextAreaSave(mTotal)
 			,TextAreaSave(cInfo)
+			,TextAreaSave(cLanguage)
 			,uOwner
 			,uCreatedBy
 			);
@@ -1136,7 +1137,7 @@ void Update_tClient(char *cRowid)
 		"uExpMonth=%u,uExpYear=%u,cCardName='%s',cACHDebits='%s',cShipName='%s',cShipAddr1='%s',"
 		"cShipAddr2='%s',cShipAddr3='%s',cShipCity='%s',cShipState='%s',cShipZip='%s',"
 		"cShipCountry='%s',cTelephone='%s',cMobile='%s',cFax='%s',cPasswd='%s',mBalance='%s',"
-		"mTotal='%s',cInfo='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+		"mTotal='%s',cInfo='%s',cLanguage='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uClient
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cFirstName)
@@ -1178,6 +1179,7 @@ void Update_tClient(char *cRowid)
 			,TextAreaSave(mBalance)
 			,TextAreaSave(mTotal)
 			,TextAreaSave(cInfo)
+			,TextAreaSave(cLanguage)
 			,uModBy
 			,cRowid);
 
