@@ -1096,7 +1096,7 @@ void ModCustomer(void)
 	//Neither company data, to do so, must load company
 	
 	sprintf(gcQuery,"UPDATE tClient SET cLabel='%s %s',cFirstName='%s',cLastName='%s',"
-			"cEmail='%s',cAddr1='%s',cAddr2='%s',cAddr3='%s',,cCity='%s',"
+			"cEmail='%s',cAddr1='%s',cAddr2='%s',cAddr3='%s',cCity='%s',"
 			"cState='%s',cZip='%s',cCountry='%s',uPayment='%u',cCardType='%s',"
 			"cCardNumber='%s',uExpMonth='%u',uExpYear='%u',cCardName='%s',"
 			"cACHDebits='%s',cShipName='%s',cShipAddr1='%s',cShipAddr2='%s',"
@@ -1148,6 +1148,8 @@ void ModCustomer(void)
 			,uCustomer
 			);
 	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 
 	if(mysql_affected_rows(&gMysql))
 	{
