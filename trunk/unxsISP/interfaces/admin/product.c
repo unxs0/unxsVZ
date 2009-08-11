@@ -533,9 +533,10 @@ unsigned uProductExists(void)
 unsigned uIsProductDeployed(void)
 {
 	MYSQL_RES *res;
+	char cQuery[100]={""};
 
-	sprintf(gcQuery,"SELECT uInstance FROM tInstance WHERE uProduct='%u'",uProduct);
-	mysql_query(&gMysql,gcQuery);
+	sprintf(cQuery,"SELECT uInstance FROM tInstance WHERE uProduct='%u'",uProduct);
+	mysql_query(&gMysql,cQuery);
 
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -579,7 +580,6 @@ void NewProduct(void)
 		gcMessage="Product NOT created";
 		unxsISPLog(uProduct,"tProduct","New Fail");
 	}
-	gcMessage=gcQuery;
 	time(&uCreatedDate);
 	uOwner=guOrg;
 	uCreatedBy=guLoginClient;
