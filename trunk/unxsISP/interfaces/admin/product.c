@@ -618,7 +618,6 @@ void ModProduct(void)
 		gcMessage="Product NOT modified";
 		unxsISPLog(uProduct,"tProduct","Mod Fail");
 	}
-	htmlPlainTextError(gcQuery);
 	time(&uModDate);
 	uModBy=guLoginClient;
 
