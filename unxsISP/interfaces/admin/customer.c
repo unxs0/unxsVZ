@@ -18,7 +18,7 @@ PURPOSE
 #define ORG_ACCT        "Organization Bookkeeper"
 #define ORG_ADMIN       "Organization Admin"
 
-#define VAR_LIST_tClient "cFirstName,cLastName,cEmail,cAddr1,cAddr2,cCity,cState,cZip,cCountry,uPayment,cCardType,cCardNumber,uExpMonth,uExpYear,cCardName,cACHDebits,cShipName,cShipAddr1,cShipAddr2,cShipCity,cShipState,cShipZip,cShipCountry,cTelephone,cFax,cPasswd,cMobile,cBankName,cBranchName,cBranchCode,cAccountHolder,cAccountNumber,uAccountType,cIDNumber,cAddr3,cShipAddr3,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,cLabel"
+#define VAR_LIST_tClient "cFirstName,cLastName,cEmail,cAddr1,cAddr2,cCity,cState,cZip,cCountry,uPayment,cCardType,cCardNumber,uExpMonth,uExpYear,cCardName,cACHDebits,cShipName,cShipAddr1,cShipAddr2,cShipCity,cShipState,cShipZip,cShipCountry,cTelephone,cFax,cPasswd,cMobile,cBankName,cBranchName,cBranchCode,cAccountHolder,cAccountNumber,uAccountType,cIDNumber,cAddr3,cShipAddr3,cLanguage,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,cLabel"
 
 unsigned uCustomer=0;
 
@@ -129,6 +129,9 @@ static char *cAccountNumberStyle="type_fields_off";
 
 static unsigned uAccountType=0;
 static char *cuAccountTypeStyle="type_fields_off";
+
+static char cLanguage[33]={""};
+static char *cLanguageStyle="type_fields_off";
 
 //uOwner: Record owner
 static unsigned uOwner=0;
@@ -304,6 +307,8 @@ void ProcessCustomerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%lu",&uModDate);
 		else if(!strcmp(entries[i].name,"uSearchInstance"))
 			sscanf(entries[i].val,"%u",&uSearchInstance);
+		else if(!strcmp(entries[i].name,"cLanguage"))
+			sprintf(cLanguage,"%.32s",entries[i].val);
 	}
 
 }//void ProcessUserVars(pentry entries[], int x)
@@ -423,12 +428,13 @@ void LoadCustomer(unsigned uClient)
 		sprintf(cIDNumber,"%.32s",field[33]);
 		sprintf(cAddr3,"%.100s",field[34]);
 		sprintf(cShipAddr3,"%.100s",field[35]);
-		sscanf(field[36],"%u",&uOwner);
-		sscanf(field[37],"%u",&uCreatedBy);
-		sscanf(field[38],"%lu",&uCreatedDate);
-		sscanf(field[39],"%u",&uModBy);
-		sscanf(field[40],"%lu",&uModDate);
-		sprintf(cLabel,"%.32s",field[41]);
+		sprintf(cLanguage,"%.32s",field[36]);
+		sscanf(field[37],"%u",&uOwner);
+		sscanf(field[38],"%u",&uCreatedBy);
+		sscanf(field[39],"%lu",&uCreatedDate);
+		sscanf(field[40],"%u",&uModBy);
+		sscanf(field[41],"%lu",&uModDate);
+		sprintf(cLabel,"%.32s",field[42]);
 
 		if(!cFirstName[0]) sprintf(cFirstName,"%s",cLabel);
 	}
@@ -988,7 +994,10 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
 			template.cpName[91]="cCustomerName";
 			template.cpValue[91]=cCustomerName;
 
-			template.cpName[92]="";
+			template.cpName[92]="cLanguage";
+			template.cpValue[92]=cLanguage;
+
+			template.cpName[93]="";
 
 			printf("\n<!-- Start htmlCustomerPage(%s) -->\n",cTemplateName); 
 //			fpTemplate(stdout,cTemplateName,&template);
@@ -1008,12 +1017,13 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
 
 void NewCustomer(void)
 {
-	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s %s',cFirstName='%s',cLastName='%s',cEmail='%s',cAddr1='%s',cAddr2='%s',cAddr3='%s',cCity='%s',"
-			"cState='%s',cZip='%s',cCountry='%s',uPayment='%u',cCardType='%s',cCardNumber='%s',uExpMonth='%u',uExpYear='%u',cCardName='%s',"
-			"cACHDebits='%s',cShipName='%s',cShipAddr1='%s',cShipAddr2='%s',cShipAddr3='%s',cShipCity='%s',cShipState='%s',cShipZip='%s',"
-			"cShipCountry='%s',cTelephone='%s',cFax='%s',cBankName='%s',"
-			"cBranchName='%s',cBranchCode='%s',cAccountHolder='%s',cAccountNumber='%s',uAccountType='%u',cMobile='%s',cIDNumber='%s',uOwner='%u',"
-			"uCreatedBy='%u',uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s %s',cFirstName='%s',cLastName='%s',cEmail='%s',"
+			"cAddr1='%s',cAddr2='%s',cAddr3='%s',cCity='%s',cState='%s',cZip='%s',cCountry='%s',"
+			"uPayment='%u',cCardType='%s',cCardNumber='%s',uExpMonth='%u',uExpYear='%u',cCardName='%s',"
+			"cACHDebits='%s',cShipName='%s',cShipAddr1='%s',cShipAddr2='%s',cShipAddr3='%s',cShipCity='%s',"
+			"cShipState='%s',cShipZip='%s',cShipCountry='%s',cTelephone='%s',cFax='%s',cBankName='%s',"
+			"cBranchName='%s',cBranchCode='%s',cAccountHolder='%s',cAccountNumber='%s',uAccountType='%u',"
+			"cMobile='%s',cIDNumber='%s',cLanguage='%s',uOwner='%u',uCreatedBy='%u',uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			TextAreaSave(cFirstName)
 			,TextAreaSave(cLastName)
 			,TextAreaSave(cFirstName)
@@ -1051,6 +1061,7 @@ void NewCustomer(void)
 			,uAccountType
 			,TextAreaSave(cMobile)
 			,TextAreaSave(cIDNumber)
+			,TextAreaSave(cLanguage)
 			,guOrg
 			,guLoginClient
 			);
@@ -1084,11 +1095,16 @@ void ModCustomer(void)
 	//Company affilitation can't be modified.
 	//Neither company data, to do so, must load company
 	
-	sprintf(gcQuery,"UPDATE tClient SET cLabel='%s %s',cFirstName='%s',cLastName='%s',cEmail='%s',cAddr1='%s',cAddr2='%s',cAddr3='%s',,cCity='%s',"
-			"cState='%s',cZip='%s',cCountry='%s',uPayment='%u',cCardType='%s',cCardNumber='%s',uExpMonth='%u',uExpYear='%u',cCardName='%s',"
-			"cACHDebits='%s',cShipName='%s',cShipAddr1='%s',cShipAddr2='%s',cShipAddr3='%s',cShipCity='%s',cShipState='%s',cShipZip='%s',"
-			"cShipCountry='%s',cTelephone='%s',cFax='%s',cPasswd='%s',cBankName='%s',cBranchName='%s',cBranchCode='%s',cAccountHolder='%s',"
-			"cAccountNumber='%s',uAccountType='%u',cMobile='%s',cIDNumber='%s',uModBy='%u',uModDate=UNIX_TIMESTAMP(NOW()) WHERE uClient='%u'",
+	sprintf(gcQuery,"UPDATE tClient SET cLabel='%s %s',cFirstName='%s',cLastName='%s',"
+			"cEmail='%s',cAddr1='%s',cAddr2='%s',cAddr3='%s',,cCity='%s',"
+			"cState='%s',cZip='%s',cCountry='%s',uPayment='%u',cCardType='%s',"
+			"cCardNumber='%s',uExpMonth='%u',uExpYear='%u',cCardName='%s',"
+			"cACHDebits='%s',cShipName='%s',cShipAddr1='%s',cShipAddr2='%s',"
+			"cShipAddr3='%s',cShipCity='%s',cShipState='%s',cShipZip='%s',"
+			"cShipCountry='%s',cTelephone='%s',cFax='%s',cPasswd='%s',"
+			"cBankName='%s',cBranchName='%s',cBranchCode='%s',cAccountHolder='%s',"
+			"cAccountNumber='%s',uAccountType='%u',cMobile='%s',cIDNumber='%s',"
+			"cLanguage='%s',uModBy='%u',uModDate=UNIX_TIMESTAMP(NOW()) WHERE uClient='%u'",
 			TextAreaSave(cFirstName)
 			,TextAreaSave(cLastName)
 			,TextAreaSave(cFirstName)
@@ -1127,6 +1143,7 @@ void ModCustomer(void)
 			,uAccountType
 			,TextAreaSave(cMobile)
 			,TextAreaSave(cIDNumber)
+			,TextAreaSave(cLanguage)
 			,guLoginClient
 			,uCustomer
 			);
@@ -1404,6 +1421,7 @@ void SetCustomerFieldsOn(void)
 	cAccountNumberStyle="type_fields";
 	cuAccountTypeStyle="type_fields";
 	cMobileStyle="type_fields";
+	cLanguageStyle="type_fields";
 
 }//void SetCustomerFieldsOn(void)
 
@@ -1678,6 +1696,29 @@ void funcSelectExpYear(FILE *fp)
 	
 }//void funcSelectExpYear(FILE *fp)
 
+
+void funcSelectLanguage(FILE *fp)
+{
+	fprintf(fp,"<select name=cLanguage title='Select language for invoice rendering' class=%s %s>\n",cLanguageStyle,gcInputStatus);
+
+	fprintf(fp,"<option ");
+	if(!strcmp(cLanguage,"English"))
+		fprintf(fp,"selected ");
+	fprintf(fp,">English</option>\n");
+
+	fprintf(fp,"<option ");
+	if(!strcmp(cLanguage,"French"))
+		fprintf(fp,"selected ");
+	fprintf(fp,">French</option>\n");
+	
+	fprintf(fp,"<option ");
+	if(!strcmp(cLanguage,"Spanish"))
+		fprintf(fp,"selected ");
+	fprintf(fp,">Spanish</option>\n");
+
+	fprintf(fp,"</select>\n");
+
+}//void funcSelectLanguage(FILE *fp)
 
 unsigned CustomerHasProducts(void)
 {

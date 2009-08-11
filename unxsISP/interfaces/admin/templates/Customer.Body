@@ -407,6 +407,14 @@ d>
         </tr>
         <tr>
                 <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Language')"><strong>Language</strong></a>          </td>
+                <td>
+			<input type=hidden name=cLanguage value="{{cLanguage}}">
+			{{funcSelectLanguage}}
+			</td>
+        </tr>
+        <tr>
+                <td>
 
                 </td>
                 <td colspan=2>

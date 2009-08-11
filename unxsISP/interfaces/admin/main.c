@@ -424,7 +424,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcProductNavBar(fp);
 	else if(!strcmp(cFunction,"funcInvoiceNavList"))
 		funcInvoiceNavList(fp);
-
+	else if(!strcmp(cFunction,"funcSelectLanguage"))
+		funcSelectLanguage(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
