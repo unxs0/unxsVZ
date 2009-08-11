@@ -1858,7 +1858,7 @@ tClient.uOwner 19
 				sprintf(gcQuery,"UPDATE tInvoice SET cFirstName='%s',cLastName='%s',cEmail='%s',cAddr1='%s',cAddr2='%s',cCity='%s',"
 						"cState='%s',cZip='%s',cCountry='%s',cShipName='%s',cShipAddr1='%s',cShipAddr2='%s',cShipCity='%s',"
 						"cShipState='%s',cShipZip='%s',cShipCountry='%s',cTelephone='%s',cFax='%s',uModBy=1,"
-						"uModDate=UNIX_TIMESTAMP(NOW() WHERE tInvoice.uClient='%s' "
+						"uModDate=UNIX_TIMESTAMP(NOW()) WHERE tInvoice.uClient=%s "
 						"AND tInvoice.uInvoice=%u",
 						field[1]
 						,field[2]
