@@ -589,7 +589,9 @@ void NewProduct(void)
 
 void ModProduct(void)
 {
-	sprintf(gcQuery,"UPDATE tProduct SET cLabel='%s',uAvailable=%u,uPeriod=%u,mPrice='%s',mCost='%s',mSetupFee='%s',cComment='%s',mReleaseFee='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%u",
+	sprintf(gcQuery,"UPDATE tProduct SET cLabel='%s',uAvailable=%u,uPeriod=%u,mPrice='%s',"
+			"mCost='%s',mSetupFee='%s',cComment='%s',mReleaseFee='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%u",
 			TextAreaSave(cLabel)
 			,uAvailable
 			,uPeriod
@@ -598,8 +600,8 @@ void ModProduct(void)
 			,TextAreaSave(mSetupFee)
 			,TextAreaSave(cComment)
 			,TextAreaSave(mReleaseFee)
-			,uProduct
 			,guLoginClient
+			,uProduct
 	       );
 	mysql_query(&gMysql,gcQuery);
 	
@@ -616,6 +618,7 @@ void ModProduct(void)
 		gcMessage="Product NOT modified";
 		unxsISPLog(uProduct,"tProduct","Mod Fail");
 	}
+	htmlPlainTextError(gcQuery);
 	time(&uModDate);
 	uModBy=guLoginClient;
 
