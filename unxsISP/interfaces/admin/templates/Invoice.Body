@@ -123,6 +123,16 @@ At this page you are able to review and update the status of the invoices genera
 <td>
 <input {{gcInputStatus}} title='Update loaded invoice status' name="gcFunction" type="submit" class="largeButton" id="gcFunction" value="Update Invoice Status" />
 </td>
+<tr>
+<td>
+<input title='Email the loaded invoice to the customer email' name="gcFunction" type="submit" class="largeButton" id="gcFunction" value="{{gcNewStep}}Email loaded invoice">
+</td>
+</tr>
+<tr>
+<td>
+<input title='Email all the invoices to the customers' name="gcFunction" type="submit" class="largeButton" id="gcFunction" value="{{gcModStep}}Email all invoices">
+</td>
+</tr>
         </table>
 
 
