@@ -238,6 +238,9 @@ void funcInvoice(FILE *fp)
 	struct t_template template;
 	char cCardExp[42]={""};
 	char cInvoice[32]={""};
+	char cLanguage[32]={""};
+	char cTemplateName[100]={""};
+
 	char cPaymentName[31]={"Unknown"};
 	unsigned uRequireCreditCard=0;
 
@@ -258,6 +261,8 @@ void funcInvoice(FILE *fp)
 	{
 		char cCardNumber[20]={"Error"};
 		unsigned uCardNumberLen=0;
+		
+		sprintf(cLanguage,"%.3s",field[23]);
 
 		template.cpName[0]="cLabel";
 		template.cpValue[0]=field[0];
@@ -369,7 +374,8 @@ void funcInvoice(FILE *fp)
 			}
 			else
 			{
-				fpTemplate(fp,"cInvoiceTopMail",&template);
+				sprintf(cTemplateName,"cInvoiceTopMail%s",cLanguage);
+				fpTemplate(fp,cTemplateName,&template);
 			}
 		}
 	}
@@ -417,7 +423,8 @@ void funcInvoice(FILE *fp)
 		char *cp;
 		char cProduct[100]={""};
 		
-		fileDirectTemplate(fp,"cInvoiceItemHeaderMail");
+		sprintf(cTemplateName,"cInvoiceItemHeaderMail%s",cLanguage);
+		fileDirectTemplate(fp,cTemplateName);
 		
 		while((field=mysql_fetch_row(res)))
 		{
@@ -478,7 +485,8 @@ void funcInvoice(FILE *fp)
 		template.cpValue[2]=cmInvoiceSH;
 
 		template.cpName[3]="";
-		fpTemplate(fp,"cInvoiceItemFooterMail",&template);
+		sprintf(cTemplateName,"cInvoiceItemFooterMail%s",cLanguage);
+		fpTemplate(fp,cTemplateName,&template);
 	}
 	else
 	{
@@ -543,11 +551,11 @@ MYSQL_RES *sqlresultClientInfo(void)
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT cLabel,cLastName,cEmail,cAddr1,cAddr2,cCity,cState,cZip,cCountry,cCardType,cCardNumber,"
 				"cCardName,cShipName,cShipAddr1,cShipAddr2,cShipCity,cShipState,cShipZip,cShipCountry,cTelephone,"
-				"cFax,uExpMonth,uExpYear FROM tClient WHERE uClient=%u",uClient);
+				"cFax,uExpMonth,uExpYear,cLanguage FROM tClient WHERE uClient=%u",uClient);
 	else
 		sprintf(gcQuery,"SELECT cLabel,cLastName,cEmail,cAddr1,cAddr2,cCity,cState,cZip,cCountry,cCardType,"
 				"cCardNumber,cCardName,cShipName,cShipAddr1,cShipAddr2,cShipCity,cShipState,cShipZip,"
-				"cShipCountry,cTelephone,cFax,uExpMonth,uExpYear FROM tClient "
+				"cShipCountry,cTelephone,cFax,uExpMonth,uExpYear,cLanguage FROM tClient "
 				" WHERE uClient=%2$u AND (uClient=%1$u OR uOwner"
 				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
 				" ORDER BY uClient",guOrg,uClient);
