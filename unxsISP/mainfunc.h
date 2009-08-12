@@ -2041,6 +2041,13 @@ tClient.uOwner 19
 		}//End new invoice
 	}//End main customer data loop
 	}//End outer tInstance loop
+	
+	//Final query, common for all invoices, update tInvoice.mTotal in a single step ;)
+	sprintf(gcQuery,"UPDATE tInvoice SET mTotal=(SELECT SUM(mTotal) FROM tInvoiceItems WHERE"
+			" tInvoiceItems.uInvoice=tInvoice.uInvoice)");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		TextError(mysql_error(&gMysql),0);
 
 }//void GenerateInvoices(void)
 
