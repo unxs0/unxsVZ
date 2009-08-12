@@ -11,6 +11,9 @@ AUTHOR
 
 #include "interface.h"
 
+void htmlDashBoardPage(char *cTitle, char *cTemplateName);
+
+
 void htmlDashBoard(void)
 {
 	htmlHeader("unxsISP System","Header");
@@ -94,8 +97,8 @@ void funcDisplayDashBoard(FILE *fp)
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		sscanf(mysqlField[1],"%lu",&luClock);
-		fprintf(fp,"<td></td><td>%s</td><td colspan=2>%s</td><td>%s</td></tr>\n",
-			ctime(&luClock),mysqlField[0],mysqlField[2]);
+		fprintf(fp,"<td></td><td>%s</td><td colspan=2>%s...<a href=# title='%s' class=darkLink>(More)</a></td><td>%s</td></tr>\n",
+			ctime(&luClock),cShortenText(mysqlField[0],10),mysqlField[0],mysqlField[2]);
 	}
 	mysql_free_result(mysqlRes);
 
