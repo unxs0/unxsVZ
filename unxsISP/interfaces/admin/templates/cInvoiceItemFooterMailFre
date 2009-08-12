@@ -1,0 +1,8 @@
+</table>
+<br>
+<br>
+Total d'imp&ocirc;ts: {{mInvoiceTax}}<br>
+Exp&eacute;dition et manipulationn: {{mInvoiceSH}}<br>
+Total: {{mInvoiceTotal}}<br>
+<br>
+
