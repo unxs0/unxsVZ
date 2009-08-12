@@ -2396,9 +2396,10 @@ void GetConfiguration(const char *cName, char *cValue)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	char cQuery[512]={""};
 
-        sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='%s'",cName);
-        mysql_query(&gMysql,gcQuery);
+        sprintf(cQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='%s'",cName);
+        mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
     	      htmlPlainTextError(mysql_error(&gMysql));
         res=mysql_store_result(&gMysql);

@@ -27,8 +27,9 @@ void fileDirectTemplate(FILE *fp,char *cTemplateName);
 unsigned GetPaymentValue(unsigned uInvoice,const char *cName,char *cValue);
 MYSQL_RES *sqlresultClientInfo(void);
 void ReStockItems(unsigned uInvoice);
+char *cGetInvoiceLanguage(unsigned uInvoice);
+unsigned uGetInvoiceClient(unsigned uInvoice);
 
-void SearchInvoice(char *cSearchTerm);
 
 void ProcessInvoiceVars(pentry entries[], int x)
 {
@@ -718,9 +719,80 @@ void funcInvoiceNavList(FILE *fp)
 
 void EmailLoadedInvoice(void)
 {
+	FILE *fp;
+	char cFrom[256]={"root"};
+	char cSubject[256]={""};
+	char cSubjectLang[100]={""};
+	char cBcc[256]={""};
+	char cEmail[256]={""};
+
+	cSubject[255]=0;
+	
+	GetConfiguration("cFromEmailAddr",cFrom);
+	GetConfiguration("cInvoiceBccEmailAddr",cBcc);
+	
+	sprintf(gcQuery,"cSubjectLang%s",cGetInvoiceLanguage(uInvoice));
+	GetConfiguration(gcQuery,cSubjectLang);
+	if(!cSubjectLang[0])
+		sprintf(cSubjectLang,"Invoice #");
+	
+	sprintf(cSubject,"%s %u-%u",cSubjectLang,uGetInvoiceClient(uInvoice),uInvoice);
+
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	//debug only
+	//if((fp=fopen("/tmp/eMailInvoice","w")))
+	{
+		fprintf(fp,"To: %s\n",cEmail);
+		fprintf(fp,"From: %s\n",cFrom);
+		fprintf(fp, "Reply-to: %s\n",cFrom);
+		if(cBcc[0]) fprintf(fp, "Bcc: %s\n",cBcc);
+		fprintf(fp,"Subject: %s\n",cSubject);
+		fprintf(fp,"MIME-Version: 1.0\n");
+		fprintf(fp,"Content-type: text/html\n\n");
+	}
+	pclose(fp);
+
 }//void EmailLoadedInvoice(void)
 
 
 void EmailAllInvoices(void)
 {
+}
+
+char *cGetInvoiceLanguage(unsigned uInvoice)
+{
+	static char cLanguage[32]={""};
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLanguage FROM tClient,tInvoice WHERE tClient.uClient=tInvoice.uClient AND tInvoice.uInvoice=%u",uInvoice);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cLanguage,"%.3s",field[0]);
+	else
+		sprintf(cLanguage,"Eng");
+	
+	return(cLanguage);
+
+}//char *cGetInvoiceLanguage(unsigned uInvoice)
+
+
+unsigned uGetInvoiceClient(unsigned uInvoice)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uClient=0;
+
+	 sprintf(gcQuery,"SELECT uClient FROM tInvoice WHERE uInvoice=%u",uInvoice);
+	 mysql_query(&gMysql,gcQuery);
+	 if(mysql_errno(&gMysql))
+	 	htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uClient);
+	
+	return(uClient);
 }
