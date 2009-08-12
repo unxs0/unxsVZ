@@ -239,7 +239,10 @@ void ShowInvoiceStats(void)
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sprintf(&mTotalDue,"%.31s",field[0]);
+	{
+		if(field[0]!=NULL)
+			sprintf(mTotalDue,"%.31s",field[0]);
+	}
 	mysql_free_result(res);
 
 	sprintf(gcQuery,"SELECT SUM(mTotal) FROM tInvoice WHERE uInvoiceStatus=2");
@@ -248,7 +251,10 @@ void ShowInvoiceStats(void)
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sprintf(mTotalPaid,"%.31s",field[0]);
+	{
+		if(field[0]!=NULL)
+			sprintf(mTotalPaid,"%.31s",field[0]);
+	}
 	mysql_free_result(res);
 
 
