@@ -28,7 +28,8 @@ unsigned GetPaymentValue(unsigned uInvoice,const char *cName,char *cValue);
 MYSQL_RES *sqlresultClientInfo(void);
 void ReStockItems(unsigned uInvoice);
 char *cGetInvoiceLanguage(unsigned uInvoice);
-unsigned uGetInvoiceClient(unsigned uInvoice);
+char *cGetCustomerEmail(unsigned uInvoice);
+void EmailLoadedInvoice(void);
 
 
 void ProcessInvoiceVars(pentry entries[], int x)
@@ -125,6 +126,11 @@ void InvoiceCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Email Loaded Invoice"))
 		{
 			sprintf(gcNewStep,"Confirm ");
+		}
+		else if(!strcmp(gcFunction,"Confirm Email Loaded Invoice"))
+		{
+			EmailLoadedInvoice();
+			gcMessage="Invoice emailed OK";
 		}
 		else if(!strcmp(gcFunction,"Email All Invoices"))
 		{
@@ -724,7 +730,7 @@ void EmailLoadedInvoice(void)
 	char cSubject[256]={""};
 	char cSubjectLang[100]={""};
 	char cBcc[256]={""};
-	char cEmail[256]={""};
+	char cEmail[100]={""};
 
 	cSubject[255]=0;
 	
@@ -736,7 +742,8 @@ void EmailLoadedInvoice(void)
 	if(!cSubjectLang[0])
 		sprintf(cSubjectLang,"Invoice #");
 	
-	sprintf(cSubject,"%s %u-%u",cSubjectLang,uGetInvoiceClient(uInvoice),uInvoice);
+	sprintf(cSubject,"%s %u-%u",cSubjectLang,uClient,uInvoice);
+	sprintf(cEmail,"%s",cGetCustomerEmail(uInvoice));
 
 	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
@@ -780,19 +787,21 @@ char *cGetInvoiceLanguage(unsigned uInvoice)
 }//char *cGetInvoiceLanguage(unsigned uInvoice)
 
 
-unsigned uGetInvoiceClient(unsigned uInvoice)
+char *cGetCustomerEmail(unsigned uInvoice)
 {
+	static char cEmail[100]={""};
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uClient=0;
 
-	 sprintf(gcQuery,"SELECT uClient FROM tInvoice WHERE uInvoice=%u",uInvoice);
-	 mysql_query(&gMysql,gcQuery);
-	 if(mysql_errno(&gMysql))
-	 	htmlPlainTextError(mysql_error(&gMysql));
+	sprintf(gcQuery,"SELECT cEmail FROM tInvoice WHERE uInvoice=%u",uInvoice);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uClient);
+		sprintf(cEmail,"%.99s",field[0]);
 	
-	return(uClient);
-}
+	return(cEmail);
+
+}//char cGetCustomerEmail(unsigned uInvoice)
+
