@@ -384,3 +384,6 @@ At this field you indicate your computer hostname.\
 E.g.: 'Main Street 657'\
 <br>\
 This field is required.
+142	Language	1	1	1250104186	0	0	With this dropdown select customer language for both invoice rendering and\
+emailing. Available languages are Spanish, French and English.\
+
