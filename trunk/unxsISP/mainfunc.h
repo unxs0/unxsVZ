@@ -1954,7 +1954,7 @@ tClient.uOwner 19
 			sprintf(gcQuery,"INSERT INTO tInvoice SET cFirstName='%s',cLastName='%s',cEmail='%s',cAddr1='%s',cAddr2='%s',cCity='%s',"
 					"cState='%s',cZip='%s',cCountry='%s',cShipName='%s',cShipAddr1='%s',cShipAddr2='%s',cShipCity='%s',"
 					"cShipState='%s',cShipZip='%s',cShipCountry='%s',cTelephone='%s',cFax='%s',uOwner=%u,uCreatedBy=1,"
-					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uClient='%s'",
+					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uClient='%s',uInvoiceStatus=1",
 					field[1]
 					,field[2]
 					,field[3]
