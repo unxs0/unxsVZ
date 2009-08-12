@@ -185,5 +185,7 @@ At this page you are able to review and update the status of the invoices genera
 </tr>
 </table>
 <input type=hidden name=gcPage value=Invoice>
+<input type=hidden name=uInvoice value="{{uInvoice}}">
+<input type=hidden name=uClient value="{{uClient}}">
 </form>
 
