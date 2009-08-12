@@ -6,6 +6,3 @@ Ship To:<br>
 {{cCity}}, {{cState}} {{cZip}}<br>
 {{cCountry}}<br>
 <br>
-<!--Charge:<br>
-{{cCardName}} with {{cCardType}} {{cCardNumber}} {{cCardExp}}<br>
--->
