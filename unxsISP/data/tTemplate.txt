@@ -1,4 +1,4 @@
-1	AdminLogin.Body	1	1	1192486759	1	1250031264		<body marginwidth="0" marginheight="0">\
+1	AdminLogin.Body	1	1	1192486759	1	1250101187		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -67,49 +67,46 @@
 </table>\
 </div>\
 	1	0
-2	cInvoiceItemFooterMail	1	1	1192486759	1	1250031264		</table>\
+42	cInvoiceItemFooterMailEng	1	1	1250090216	1	1250101188		</table>\
 <br>\
 <br>\
-{{mInvoiceTax}}<br>\
-{{mInvoiceSH}}<br>\
-{{mInvoiceTotal}}<br>\
+Tax Total: {{mInvoiceTax}}<br>\
+Shipping & Handling: {{mInvoiceSH}}<br>\
+Total: {{mInvoiceTotal}}<br>\
 <br>\
 \
 	1	0
-3	cInvoiceItemHeaderMail	1	1	1192486759	1	1250031264		<table>\
+43	cInvoiceItemHeaderMailEng	1	1	1250090216	1	1250101189		<table>\
 <tr bgcolor=black>\
-<td class=tablehead>Item</td>\
-<td class=tablehead>Catalog</td>\
-<td class=tablehead>Price</td>\
-<td class=tablehead>Qty</td>\
-<td class=tablehead>Tax</td>\
-<td class=tablehead>Ext</td>\
+<td ><font color=white>Item</font></td>\
+<td ><font color=white>Product</font></td>\
+<td ><font color=white>Price</font></td>\
+<td ><font color=white>Quantity</font></td>\
+<td ><font color=white>Tax</font></td>\
+<td ><font color=white>Total</font></td>\
 </tr>\
 \
 	1	0
-4	cInvoiceItemMail	1	1	1192486759	1	1250031265		<tr>\
-<td class=item>{{uNum}}</td>\
-<td class=item>{{cProduct}}</td>\
-<td class=item>{{mPrice}}</td>\
-<td class=item>{{uQuantity}}</td>\
-<td class=item>{{mTax}}</td>\
-<td class=item>{{mTotal}}</td>\
+44	cInvoiceItemMail	1	1	1250090216	1	1250101190		<tr>\
+<td align=right>{{uNum}}</td>\
+<td align=right>{{cProduct}}</td>\
+<td align=right>{{mPrice}}</td>\
+<td align=right>{{uQuantity}}</td>\
+<td align=right>{{mTax}}</td>\
+<td align=right>{{mTotal}}</td>\
 </tr>\
 \
 	1	0
-5	cInvoiceTopMail	1	1	1192486759	1	1250031265		<strong>{{cInvoice}}</strong><br>\
-Ship To:<br>\
+48	cInvoiceTopMailEngSpa	1	1	1250091147	1	1250091208		<strong>Factura No. {{cInvoice}}</strong><br>\
+Enviar a:<br>\
 {{cLabel}}<br>\
 ({{cEmail}})<br>\
 {{cAddr1}} {{cAddr2}}<br>\
 {{cCity}}, {{cState}} {{cZip}}<br>\
 {{cCountry}}<br>\
 <br>\
-<!--Charge:<br>\
-{{cCardName}} with {{cCardType}} {{cCardNumber}} {{cCardExp}}<br>\
--->\
 	1	0
-6	Customer.Body	1	1	1192486759	1	1250031265		<body marginwidth="0" marginheight="0">\
+6	Customer.Body	1	1	1192486759	1	1250101191		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -619,7 +616,7 @@ d>\
 \
 \
 	1	0
-7	DashBoard.Body	1	1	1192486759	1	1250031266		\
+7	DashBoard.Body	1	1	1192486759	1	1250101194		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -743,17 +740,17 @@ d>\
 \
 \
 	1	0
-8	EnteredParametersFooter	1	1	1192486759	1	1250031266		</table>\
+8	EnteredParametersFooter	1	1	1192486759	1	1250101195		</table>\
 </fieldset>\
 \
 	1	0
-9	EnteredParametersHeader	1	1	1192486759	1	1250031266		<fieldset>\
+9	EnteredParametersHeader	1	1	1192486759	1	1250101195		<fieldset>\
 <legend>{{cServiceLabel}} Parameters</legend>\
 <table>\
 <input type=hidden name=uService.{{uServiceCount}} value="{{uService}}">\
 \
 	1	0
-10	EnteredParametersItem	1	1	1192486759	1	1250031266		<tr>\
+10	EnteredParametersItem	1	1	1192486759	1	1250101195		<tr>\
 \	<td valign=top>\
 \	<strong>{{cParamLabel}}</strong>\
 \	</td>\
@@ -765,14 +762,14 @@ d>\
 </tr>\
 \
 	1	0
-11	Footer	1	1	1192486759	1	1250031266		<br>\
+11	Footer	1	1	1192486759	1	1250101196		<br>\
 <br>\
 <div align=center class=footer>{{cCopyright}}</div>\
 \
 </body>\
 </html>\
 	1	0
-12	Glossary.Body	1	1	1192486759	1	1250031266		<body>\
+12	Glossary.Body	1	1	1192486759	1	1250101196		<body>\
 <form method=post>\
 <table width="100%" border="0" cellspacing="0" cellpadding="0" class="table_header2">\
   <tr>\
@@ -808,7 +805,7 @@ d>\
 <br>\
 \
 	1	0
-13	Header	1	1	1192486759	1	1250031267		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\
+13	Header	1	1	1192486759	1	1250101196		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\
 <html>\
 <head>\
 <title>{{cTitle}}</title>\
@@ -818,8 +815,8 @@ d>\
 \
 </head>\
 	1	0
-14	images	1	1	1192486759	1	1250031271		GIF89a	1	0
-15	Instance.Body	1	1	1192486760	1	1250031271		\
+14	images	1	1	1192486759	1	1250101205		GIF89a	1	0
+15	Instance.Body	1	1	1192486760	1	1250101206		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -1033,10 +1030,10 @@ An instance of a product is a product that has been deployed for a customer. Eac
 </form>\
 \
 	1	0
-36	InstanceOpApprove	1	1	1243340045	1	1250031272		<tr><td><input type=submit class=largestButton title='Approve instance'  name=gcFunction value='{{gcNewStep}}Approve Instance'></td></tr>\
+36	InstanceOpApprove	1	1	1243340045	1	1250101208		<tr><td><input type=submit class=largestButton title='Approve instance'  name=gcFunction value='{{gcNewStep}}Approve Instance'></td></tr>\
 \
 	1	0
-37	InstanceParameterInputField	1	1	1243340048	1	1250031273		<tr>\
+37	InstanceParameterInputField	1	1	1243340048	1	1250101211		<tr>\
         <td valign=to width=45%>\
 <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel={{cParamLabel}}')"><strong>{{cParamLabel}}</strong></a></td>\
         <td valign=top>\
@@ -1053,34 +1050,34 @@ An instance of a product is a product that has been deployed for a customer. Eac
 </tr>\
 \
 	1	0
-16	InstanceOpCancelAndHold	1	1	1192486760	1	1250031272		<tr><td><input type=submit title='Cancel product'  name=gcFunction value='{{gcNewStep}}Cancel Instance' {{cCancelStyle}}></td></tr>\
+16	InstanceOpCancelAndHold	1	1	1192486760	1	1250101208		<tr><td><input type=submit title='Cancel product'  name=gcFunction value='{{gcNewStep}}Cancel Instance' {{cCancelStyle}}></td></tr>\
 <tr><td><input type=submit title='Put the prodct instance on hold'  name=gcFunction value='{{gcNewStep}}Hold Instance' {{cHoldStyle}}></td></tr>\
 \
 	1	0
-17	InstanceOpCancelCancel	1	1	1192486760	1	1250031272		<tr><td><input type=submit class=largestButton title='Call off cancel job for the instance and update status'  name=gcFunction value='{{gcNewStep}}Call Off Cancel Job'></td></tr>\
+17	InstanceOpCancelCancel	1	1	1192486760	1	1250101209		<tr><td><input type=submit class=largestButton title='Call off cancel job for the instance and update status'  name=gcFunction value='{{gcNewStep}}Call Off Cancel Job'></td></tr>\
 \
 	1	0
-18	InstanceOpCancelDeployment	1	1	1192486760	1	1250031272		<tr><td><input type=submit class=largestButton title='Cancel the product deployment'  name=gcFunction value='{{gcNewStep}}Cancel Deployment'></td></tr>\
+18	InstanceOpCancelDeployment	1	1	1192486760	1	1250101209		<tr><td><input type=submit class=largestButton title='Cancel the product deployment'  name=gcFunction value='{{gcNewStep}}Cancel Deployment'></td></tr>\
 \
 	1	0
-19	InstanceOpCancelHold	1	1	1192486760	1	1250031272		<tr><td><input type=submit class=largestButton title='Cancel hold operation and update instance status'  name=gcFunction value='{{gcNewStep}}Cancel Hold'></td></tr>\
+19	InstanceOpCancelHold	1	1	1192486760	1	1250101209		<tr><td><input type=submit class=largestButton title='Cancel hold operation and update instance status'  name=gcFunction value='{{gcNewStep}}Cancel Hold'></td></tr>\
 \
 	1	0
-20	InstanceOpCancelRedeploy	1	1	1192486760	1	1250031272		<tr><td><input type=submit class=largestButton title='Cancel redeployment of the instance'  name=gcFunction value='{{gcNewStep}}Cancel Redeployment'></td></tr>\
+20	InstanceOpCancelRedeploy	1	1	1192486760	1	1250101209		<tr><td><input type=submit class=largestButton title='Cancel redeployment of the instance'  name=gcFunction value='{{gcNewStep}}Cancel Redeployment'></td></tr>\
 \
 	1	0
-21	InstanceOpDeploy	1	1	1192486760	1	1250031272		<tr><td><input type=submit class=largestButton title='Deploy the loaded instance' name=gcFunction value='{{gcNewStep}}Deploy'></td></tr>\
+21	InstanceOpDeploy	1	1	1192486760	1	1250101210		<tr><td><input type=submit class=largestButton title='Deploy the loaded instance' name=gcFunction value='{{gcNewStep}}Deploy'></td></tr>\
 \
 	1	0
-22	InstanceOpRedeploy	1	1	1192486760	1	1250031272		<tr><td><input type=submit class=largestButton title='Redeploy instance'  name=gcFunction value='{{gcNewStep}}Redeploy Instance' {{cHoldStyle}}></td></tr>\
+22	InstanceOpRedeploy	1	1	1192486760	1	1250101210		<tr><td><input type=submit class=largestButton title='Redeploy instance'  name=gcFunction value='{{gcNewStep}}Redeploy Instance' {{cHoldStyle}}></td></tr>\
 <tr><td><input type=submit class=largestButton title='Redeploy instance'  name=gcFunction value='{{gcNewStep}}Remove Instance' {{cCancelStyle}}></td></tr>\
 \
 	1	0
-23	InstanceOpRelease	1	1	1192486760	1	1250031272		<tr><td><input type=submit class=largestButton title='Release hold'  name=gcFunction value='{{gcNewStep}}Release Hold'></td></tr>\
+23	InstanceOpRelease	1	1	1192486760	1	1250101210		<tr><td><input type=submit class=largestButton title='Release hold'  name=gcFunction value='{{gcNewStep}}Release Hold'></td></tr>\
 	1	0
-24	InstanceOpUnknown	1	1	1192486760	1	1250031272		<tr><td>Unknowns product instance status. Contact support</td></tr>\
+24	InstanceOpUnknown	1	1	1192486760	1	1250101210		<tr><td>Unknowns product instance status. Contact support</td></tr>\
 	1	0
-25	Invoice.Body	1	1	1192486760	1	1250031273		\
+25	Invoice.Body	1	1	1192486760	1	1250101213		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -1205,6 +1202,16 @@ At this page you are able to review and update the status of the invoices genera
 <td>\
 <input {{gcInputStatus}} title='Update loaded invoice status' name="gcFunction" type="submit" class="largeButton" id="gcFunction" value="Update Invoice Status" />\
 </td>\
+<tr>\
+<td>\
+<input title='Email the loaded invoice to the customer email' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="{{gcNewStep}}Email Loaded Invoice">\
+</td>\
+</tr>\
+<tr>\
+<td>\
+<input title='Email all the invoices to the customers' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="{{gcModStep}}Email All Invoices">\
+</td>\
+</tr>\
         </table>\
 \
 \
@@ -1256,11 +1263,13 @@ At this page you are able to review and update the status of the invoices genera
 </td>\
 </tr>\
 </table>\
-\
+<input type=hidden name=gcPage value=Invoice>\
+<input type=hidden name=uInvoice value="{{uInvoice}}">\
+<input type=hidden name=uClient value="{{uClient}}">\
 </form>\
 \
 	1	0
-26	ParameterInputField	1	1	1192486760	1	1250031274		<tr>\
+26	ParameterInputField	1	1	1192486760	1	1250101214		<tr>\
         <td valign=top width=150>\
 <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel={{cParamLabel}}')"><strong>{{cParamLabel}}</strong></a></td>\
         <td valign=top>\
@@ -1272,7 +1281,7 @@ At this page you are able to review and update the status of the invoices genera
 </tr>\
 \
 	1	0
-41	ParameterInputFooterWizard	1	1	1243340053	1	1250031274		</table>\
+41	ParameterInputFooterWizard	1	1	1243340053	1	1250101215		</table>\
 </fieldset>\
 </td>\
 <tr>\
@@ -1283,13 +1292,13 @@ At this page you are able to review and update the status of the invoices genera
 </tr>\
 \
 	1	0
-27	ParameterInputFooter	1	1	1192486760	1	1250031274		</table>\
+27	ParameterInputFooter	1	1	1192486760	1	1250101215		</table>\
 </fieldset>\
 </td>\
 </tr>\
 \
 	1	0
-28	ParameterInputHeader	1	1	1192486760	1	1250031274		<tr>\
+28	ParameterInputHeader	1	1	1192486760	1	1250101215		<tr>\
 <td valign=top colspan=2>\
 \
 <fieldset>\
@@ -1298,7 +1307,7 @@ At this page you are able to review and update the status of the invoices genera
 <input type=hidden name=uService.{{uServiceCount}} value="{{uService}}">\
 \
 	1	0
-29	Product.Body	1	1	1192486760	1	1250031274		\
+29	Product.Body	1	1	1192486760	1	1250101216		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -1598,7 +1607,7 @@ A product can have an unlimited\	number of services associated with it. Add serv
 </form>\
 \
 	1	0
-30	ProductDeploy.1	1	1	1192486760	1	1250031274		\
+30	ProductDeploy.1	1	1	1192486760	1	1250101218		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -1819,7 +1828,7 @@ Step 1:<br>\
 </form>\
 \
 	1	0
-31	ProductDeploy.2	1	1	1192486760	1	1250031275		\
+31	ProductDeploy.2	1	1	1192486760	1	1250101219		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -2042,7 +2051,7 @@ Step 2:<br>\
 </form>\
 \
 	1	0
-32	ProductDeploy.3	1	1	1192486760	1	1250031275		\
+32	ProductDeploy.3	1	1	1192486760	1	1250101221		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -2278,13 +2287,13 @@ Step 3:<br>\
 </form>\
 \
 	1	0
-33	ParameterInputSelectFooter	1	1	1192559587	1	1250031274		\	</select>\
+33	ParameterInputSelectFooter	1	1	1192559587	1	1250101215		\	</select>\
         </td>\
 </tr>\
 \
 \
 	1	0
-34	ParameterInputSelectHeader	1	1	1192559587	1	1250031274		<tr>\
+34	ParameterInputSelectHeader	1	1	1192559587	1	1250101216		<tr>\
         <td valign=top>\
 <a class=inputLink href="#" onClick="javascript:window.open('{{iCGI}}?gcPage=Glossary&cLabel={{cParamLabel}}','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')"><strong>{{cParamLabel}}</strong></a></td>\
         <td valign=top>\
@@ -2296,7 +2305,7 @@ Step 3:<br>\
 <select name={{cParamName}} title="{{cParamTitle}}" class="{{cParamStyle}}" {{cFieldStatus}}>\
 \
 	1	0
-35	cInvoiceShipTopMail	1	1	1243340028	1	1250031265		<h4>{{cInvoice}}</h4>\
+35	cInvoiceShipTopMail	1	1	1243340028	1	1250090668		<h4>{{cInvoice}}</h4>\
 <br>\
 ROCK{{cLabel}}<br> ({{cEmail}}<br>\
 {{cAddr1}} {{cAddr2}}<br>\
@@ -2309,7 +2318,7 @@ Ship to:<br>\
 <p>\
 \
 	1	0
-38	Instance-Step.Body	1	1	1243340048	1	1250031273		\
+38	Instance-Step.Body	1	1	1243340048	1	1250101211		\
 <body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
@@ -2523,7 +2532,7 @@ An instance of a product is a product that has been deployed for a customer. Eac
 </form>\
 \
 	1	0
-39	InstParamInputSelHeader	1	1	1243340051	1	1250031273		<tr>\
+39	InstParamInputSelHeader	1	1	1243340051	1	1250101212		<tr>\
         <td valign=top>\
 <a class=inputLink href="#" onClick="javascript:window.open('{{iCGI}}?gcPage=Glossary&cLabel={{cParamLabel}}','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')"><strong>{{cParamLabel}}</strong></a></td>\
         <td valign=top>\
@@ -2537,8 +2546,75 @@ An instance of a product is a product that has been deployed for a customer. Eac
 <select name={{cParamName}} title="{{cParamTitle}}" class="{{cParamStyle}}" {{cFieldStatus}}>\
 \
 	1	0
-40	ParameterHiddenInputField	1	1	1243340052	1	1250031273		<input type=hidden name={{cParamName}} value="{{cParamValue}}">\
+40	ParameterHiddenInputField	1	1	1243340052	1	1250101214		<input type=hidden name={{cParamName}} value="{{cParamValue}}">\
 <input type=hidden name=cParamName.{{uParamCount}} value="{{cParameter}}">\
 <input type=hidden name=cParamLabel.{{uParamCount}} value="{{cParamLabel}}">\
+\
+	1	0
+45	cInvoiceTopMailEng	1	1	1250090217	1	1250101190		<strong>Invoice #{{cInvoice}}</strong><br>\
+Ship To:<br>\
+{{cLabel}}<br>\
+({{cEmail}})<br>\
+{{cAddr1}} {{cAddr2}}<br>\
+{{cCity}}, {{cState}} {{cZip}}<br>\
+{{cCountry}}<br>\
+<br>\
+	1	0
+47	cInvoiceItemHeaderMailSpa	1	1	1250091146	1	1250101189		<table>\
+<tr bgcolor=black>\
+<td ><font color=white>Item</font></td>\
+<td ><font color=white>Descripcion</font></td>\
+<td ><font color=white>Precio</font></td>\
+<td ><font color=white>Cantidad</font></td>\
+<td ><font color=white>Impuestos</font></td>\
+<td ><font color=white>Total</font></td>\
+</tr>\
+\
+	1	0
+49	cInvoiceTopMailSpa	1	1	1250091254	1	1250101191		<strong>Factura No. {{cInvoice}}</strong><br>\
+Enviar a:<br>\
+{{cLabel}}<br>\
+({{cEmail}})<br>\
+{{cAddr1}} {{cAddr2}}<br>\
+{{cCity}}, {{cState}} {{cZip}}<br>\
+{{cCountry}}<br>\
+<br>\
+	1	0
+50	cInvoiceItemFooterMailFre	1	1	1250092896	1	1250101188		</table>\
+<br>\
+<br>\
+Total d'imp&ocirc;ts: {{mInvoiceTax}}<br>\
+Exp&eacute;dition et manipulationn: {{mInvoiceSH}}<br>\
+Total: {{mInvoiceTotal}}<br>\
+<br>\
+\
+	1	0
+46	cInvoiceItemFooterMailSpa	1	1	1250091146	1	1250101189		</table>\
+<br>\
+<br>\
+Total de impuestos: {{mInvoiceTax}}<br>\
+Costo de env&iacute;o: {{mInvoiceSH}}<br>\
+Total a pagar: {{mInvoiceTotal}}<br>\
+<br>\
+\
+	1	0
+52	cInvoiceTopMailFre	1	1	1250092896	1	1250101190		<strong>Facture #{{cInvoice}}</strong><br>\
+Exp&eacute;diere &agrave;:<br>\
+{{cLabel}}<br>\
+({{cEmail}})<br>\
+{{cAddr1}} {{cAddr2}}<br>\
+{{cCity}}, {{cState}} {{cZip}}<br>\
+{{cCountry}}<br>\
+<br>\
+	1	0
+51	cInvoiceItemHeaderMailFre	1	1	1250092896	1	1250101189		<table>\
+<tr bgcolor=black>\
+<td ><font color=white>Item</font></td>\
+<td ><font color=white>Produit</font></td>\
+<td ><font color=white>Prix</font></td>\
+<td ><font color=white>Quantit&eacute;</font></td>\
+<td ><font color=white>Imp&ocirc;t</font></td>\
+<td ><font color=white>Total</font></td>\
+</tr>\
 \
 	1	0
