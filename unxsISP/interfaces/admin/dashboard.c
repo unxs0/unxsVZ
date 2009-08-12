@@ -12,6 +12,7 @@ AUTHOR
 #include "interface.h"
 
 void htmlDashBoardPage(char *cTitle, char *cTemplateName);
+void ShowInvoiceStats(void);
 
 
 void htmlDashBoard(void)
@@ -125,6 +126,7 @@ void funcDisplayDashBoard(FILE *fp)
 	}
 	mysql_free_result(mysqlRes);
 	
+	//Deployed products top-ten
 	OpenRow("Top 10 Deployed Products","black");
 	sprintf(gcQuery,"SELECT (SELECT cLabel FROM tProduct WHERE tProduct.uProduct=tInstance.uProduct),"
 			"COUNT(uProduct) AS uHowMany FROM tInstance WHERE uStatus=4 GROUP BY uProduct "
@@ -144,6 +146,12 @@ void funcDisplayDashBoard(FILE *fp)
 			uCount,mysqlField[0],mysqlField[1]);
 	}
 	mysql_free_result(mysqlRes);
+
+	//Invoice stats
+	OpenRow("Month Invoice Statistics","black");
+	fprintf(fp,"</tr><tr bgcolor=#e9e9e9><td bgcolor=ffffff></td><td><b>Total Pending Invoices</b></td><td><b>Total Due Amount</b></td>"
+		"<td><b>Total Paid Invoices</b></td><td><b>Total Paid Amount</b></td></tr>\n");
+	ShowInvoiceStats();
 
 	//login/logout activity
 	OpenRow("Login Activity (Last 20)","black");
@@ -195,4 +203,34 @@ void OpenRow(const char *cFieldLabel, const char *cColor)
 		"('?gcPage=Glossary&cLabel=%.32s','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,"
 		"location=no,scrollbars=1')\"><strong>%.32s</strong></a></td><td>",cFieldLabel,cFieldLabel);
 }
+
+
+void ShowInvoiceStats(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	unsigned uPendingInvoice=0;
+	unsigned uPaidInvoice=0;
+
+	float mTotalDue=0.00;
+	float mTotalPaid=0.00;
+
+	sprintf(gcQuery,"SELECT COUNT(uInvoice) FROM tInvoice WHERE uInvoiceStatus=1");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uPendingInvoice);
+	
+	sprintf(gcQuery,"SELECT COUNT(uInvoice) FROM tInvoice WHERE uInvoiceStatus=2");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uPaidInvoice);
+
+}//void ShowInvoiceStats(void)
 
