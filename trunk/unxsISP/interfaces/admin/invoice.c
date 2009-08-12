@@ -715,3 +715,12 @@ void funcInvoiceNavList(FILE *fp)
 
 }//void funcInvoiceNavList(FILE *fp)
 
+
+void EmailLoadedInvoice(void)
+{
+}//void EmailLoadedInvoice(void)
+
+
+void EmailAllInvoices(void)
+{
+}
