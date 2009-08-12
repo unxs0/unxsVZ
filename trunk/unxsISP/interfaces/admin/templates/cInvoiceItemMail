@@ -1,9 +1,9 @@
 <tr>
-<td class=item>{{uNum}}</td>
-<td class=item>{{cProduct}}</td>
-<td class=item>{{mPrice}}</td>
-<td class=item>{{uQuantity}}</td>
-<td class=item>{{mTax}}</td>
-<td class=item>{{mTotal}}</td>
+<td align=right>{{uNum}}</td>
+<td align=right>{{cProduct}}</td>
+<td align=right>{{mPrice}}</td>
+<td align=right>{{uQuantity}}</td>
+<td align=right>{{mTax}}</td>
+<td align=right>{{mTotal}}</td>
 </tr>
 
