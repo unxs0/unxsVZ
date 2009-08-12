@@ -253,7 +253,7 @@ void funcInvoice(FILE *fp)
 	}
 
 	uRequireCreditCard=GetPaymentValue(uInvoice,"","");
-	sprintf(cInvoice,"Invoice #%u-%u",uClient,uInvoice);
+	sprintf(cInvoice,"%u-%u",uClient,uInvoice);
 
 	res=sqlresultClientInfo();
 
@@ -471,16 +471,16 @@ void funcInvoice(FILE *fp)
 		lfInvoiceTotal+=lfInvoiceSH;
 		//lfInvoiceTotal+=lfInvoiceTax;
 
-		sprintf(cNum,"Total: %2.2f",lfInvoiceTotal);
+		sprintf(cNum,"%2.2f",lfInvoiceTotal);
 		template.cpName[0]="mInvoiceTotal";
 		template.cpValue[0]=cNum;
 
-		sprintf(cmInvoiceTax,"Tax Total: %2.2f",lfInvoiceTax);
+		sprintf(cmInvoiceTax,"%2.2f",lfInvoiceTax);
 		template.cpName[1]="mInvoiceTax";
 		template.cpValue[1]=cmInvoiceTax;
 
 		//sprintf(cmInvoiceSH,"%.2f",lfInvoiceSH);
-		sprintf(cmInvoiceSH,"Shipping & Handling: %2.2f",lfInvoiceSH);
+		sprintf(cmInvoiceSH,"%2.2f",lfInvoiceSH);
 		template.cpName[2]="mInvoiceSH";
 		template.cpValue[2]=cmInvoiceSH;
 
