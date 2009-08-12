@@ -213,8 +213,8 @@ void ShowInvoiceStats(void)
 	unsigned uPendingInvoice=0;
 	unsigned uPaidInvoice=0;
 
-	float mTotalDue=0.00;
-	float mTotalPaid=0.00;
+	char mTotalDue[32]={"0.00"};
+	char mTotalPaid[32]={"0.00"};
 
 	sprintf(gcQuery,"SELECT COUNT(uInvoice) FROM tInvoice WHERE uInvoiceStatus=1");
 	mysql_query(&gMysql,gcQuery);
@@ -223,7 +223,8 @@ void ShowInvoiceStats(void)
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&uPendingInvoice);
-	
+	mysql_free_result(res);
+
 	sprintf(gcQuery,"SELECT COUNT(uInvoice) FROM tInvoice WHERE uInvoiceStatus=2");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -231,6 +232,31 @@ void ShowInvoiceStats(void)
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&uPaidInvoice);
+	
+	sprintf(gcQuery,"SELECT SUM(mTotal) FROM tInvoice WHERE uInvoiceStatus=1");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(&mTotalDue,"%.31s",field[0]);
+	mysql_free_result(res);
 
+	sprintf(gcQuery,"SELECT SUM(mTotal) FROM tInvoice WHERE uInvoiceStatus=2");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(mTotalPaid,"%.31s",field[0]);
+	mysql_free_result(res);
+
+
+	printf("<tr><td></td><td>%u</td><td>%s</td><td>%u</td><td>%s</td></tr>\n",
+		uPendingInvoice
+		,mTotalDue
+		,uPaidInvoice
+		,mTotalPaid
+		);
 }//void ShowInvoiceStats(void)
 
