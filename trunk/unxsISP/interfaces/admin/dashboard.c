@@ -82,6 +82,7 @@ void funcDisplayDashBoard(FILE *fp)
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 	time_t luClock;
+	unsigned uCount=0;
 
 	OpenRow("System Messages (Last 20)","black");
 	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog "
@@ -121,6 +122,26 @@ void funcDisplayDashBoard(FILE *fp)
 		sscanf(mysqlField[1],"%lu",&luClock);
 		fprintf(fp,"<td></td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td></tr>\n",
 			ctime(&luClock),mysqlField[0],mysqlField[3],mysqlField[2],mysqlField[5],mysqlField[4]);
+	}
+	mysql_free_result(mysqlRes);
+	
+	OpenRow("Top 10 Deployed Products","black");
+	sprintf(gcQuery,"SELECT (SELECT cLabel FROM tProduct WHERE tProduct.uProduct=tInstance.uProduct),"
+			"COUNT(uProduct) AS uHowMany FROM tInstance WHERE uStatus=4 GROUP BY uProduct "
+			"ORDER BY uHowMany DESC LIMIT 10");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	mysqlRes=mysql_store_result(&gMysql);
+	fprintf(fp,"</td></tr>\n");
+	while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		uCount++;
+		fprintf(fp,"<td></td><td>%u</td><td>%s</td><td>%s</td></tr>\n",
+			uCount,mysqlField[0],mysqlField[1]);
 	}
 	mysql_free_result(mysqlRes);
 
