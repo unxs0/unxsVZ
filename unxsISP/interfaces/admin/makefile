@@ -14,8 +14,8 @@ CGINAME= ispAdmin.cgi
 CFLAGS= -DLinux -Wall
 LIBS= -L/usr/lib/mysql -lmysqlclient /usr/lib/openisp/libtemplate.a /usr/lib/openisp/libucidr.a -lz -lcrypt -lm -lssl
 
-interface.cgi: main.o customer.o glossary.o invoice.o product.o instance.o ../../cgi.o
-	cc main.o customer.o glossary.o invoice.o product.o instance.o ../../cgi.o -o interface.cgi $(LIBS)
+interface.cgi: main.o customer.o glossary.o invoice.o product.o instance.o dashboard.o ../../cgi.o
+	cc main.o customer.o glossary.o invoice.o product.o instance.o dashboard.o ../../cgi.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
@@ -34,6 +34,9 @@ product.o : product.c interface.h ../../local.h ../../mysqlrad.h
 
 instance.o : instance.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c instance.c -o instance.o $(CFLAGS)
+
+dashboard.o : dashboard.c interface.h ../../local.h ../../mysqlrad.h
+	cc -c dashboard.c -o dashboard.o $(CFLAGS)
 	
 clean:
 	rm -f *.o *.cgi
