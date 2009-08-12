@@ -30,6 +30,7 @@ void ReStockItems(unsigned uInvoice);
 char *cGetInvoiceLanguage(unsigned uInvoice);
 char *cGetCustomerEmail(unsigned uInvoice);
 void EmailLoadedInvoice(void);
+void EmailAllInvoices(void);
 
 
 void ProcessInvoiceVars(pentry entries[], int x)
@@ -135,6 +136,11 @@ void InvoiceCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Email All Invoices"))
 		{
 			sprintf(gcModStep,"Confirm ");
+		}
+		else if(!strcmp(gcFunction,"Confirm Email All Invoices"))
+		{
+			EmailAllInvoices();
+			gcMessage="All invoices emailed  OK";
 		}
 
 		htmlInvoice();
@@ -756,6 +762,7 @@ void EmailLoadedInvoice(void)
 		fprintf(fp,"Subject: %s\n",cSubject);
 		fprintf(fp,"MIME-Version: 1.0\n");
 		fprintf(fp,"Content-type: text/html\n\n");
+		funcInvoice(fp);
 	}
 	pclose(fp);
 
@@ -764,7 +771,24 @@ void EmailLoadedInvoice(void)
 
 void EmailAllInvoices(void)
 {
-}
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	
+	sprintf(gcQuery,"SELECT uInvoice,uClient FROM tInvoice WHERE uInvoiceStatus!=2");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uInvoice);
+		sscanf(field[1],"%u",&uClient);
+		EmailLoadedInvoice();
+	}
+	uInvoice=0;
+	uClient=0;
+
+}//void EmailAllInvoices(void)
 
 char *cGetInvoiceLanguage(unsigned uInvoice)
 {
