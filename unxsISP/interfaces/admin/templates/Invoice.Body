@@ -125,12 +125,12 @@ At this page you are able to review and update the status of the invoices genera
 </td>
 <tr>
 <td>
-<input title='Email the loaded invoice to the customer email' name="gcFunction" type="submit" class="largeButton" id="gcFunction" value="{{gcNewStep}}Email loaded invoice">
+<input title='Email the loaded invoice to the customer email' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="{{gcNewStep}}Email Loaded Invoice">
 </td>
 </tr>
 <tr>
 <td>
-<input title='Email all the invoices to the customers' name="gcFunction" type="submit" class="largeButton" id="gcFunction" value="{{gcModStep}}Email all invoices">
+<input title='Email all the invoices to the customers' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="{{gcModStep}}Email All Invoices">
 </td>
 </tr>
         </table>
@@ -184,6 +184,6 @@ At this page you are able to review and update the status of the invoices genera
 </td>
 </tr>
 </table>
-
+<input type=hidden name=gcPage value=Invoice>
 </form>
 

@@ -121,6 +121,15 @@ void InvoiceCommands(pentry entries[], int x)
 			ReStockItems(uInvoice);
 			
 		}
+		else if(!strcmp(gcFunction,"Email Loaded Invoice"))
+		{
+			sprintf(gcNewStep,"Confirm ");
+		}
+		else if(!strcmp(gcFunction,"Email All Invoices"))
+		{
+			sprintf(gcModStep,"Confirm ");
+		}
+
 		htmlInvoice();
 	}
 
@@ -199,7 +208,13 @@ void htmlInvoicePage(char *cTitle, char *cTemplateName)
 			template.cpName[13]="cVoidStep";
 			template.cpValue[13]=cVoidStep;
 
-			template.cpName[14]="";
+			template.cpName[14]="gcNewStep";
+			template.cpValue[14]=gcNewStep;
+
+			template.cpName[15]="gcModStep";
+			template.cpValue[15]=gcModStep;
+
+			template.cpName[16]="";
 			
 			printf("\n<!-- Start htmlInvoicePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
