@@ -1,0 +1,10 @@
+<table>
+<tr bgcolor=black>
+<td ><font color=white>Item</font></td>
+<td ><font color=white>Descripcion</font></td>
+<td ><font color=white>Precio</font></td>
+<td ><font color=white>Cantidad</font></td>
+<td ><font color=white>Impuestos</font></td>
+<td ><font color=white>Total</font></td>
+</tr>
+
