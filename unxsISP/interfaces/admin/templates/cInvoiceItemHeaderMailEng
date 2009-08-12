@@ -1,10 +1,10 @@
 <table>
 <tr bgcolor=black>
-<td class=tablehead>Item</td>
-<td class=tablehead>Catalog</td>
-<td class=tablehead>Price</td>
-<td class=tablehead>Qty</td>
-<td class=tablehead>Tax</td>
-<td class=tablehead>Ext</td>
+<td ><font color=white>Item</font></td>
+<td ><font color=white>Catalog</font></td>
+<td ><font color=white>Price</font></td>
+<td ><font color=white>Qty</font></td>
+<td ><font color=white>Tax</font></td>
+<td ><font color=white>Ext</font></td>
 </tr>
 
