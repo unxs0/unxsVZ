@@ -79,68 +79,10 @@ void funcDisplayDashBoard(FILE *fp)
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 	time_t luClock;
-	/*
-	OpenRow("Status Indicators","black");
-	 
-	char cRadiusServer[100]={"127.0.0.1:1812"};
-
-	GetConfiguration("cRadiusServer",cRadiusServer);
-
-	fprintf(fp,"<tr><td></td><td><table cellspacing=0 cellpadding=0 border=0><tr><td>radiusd at %.32s &nbsp;</td><td width=10 bgcolor=",cRadiusServer);
-	
-	if(RadiusAuth("steve","testing123",cRadiusServer,"testing123","",1)>1)
-		fprintf(fp,"red");
-	else
-		fprintf(fp,"green");
-	fprintf(fp,">&nbsp;</td></tr></table>\n");
-
-	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE cLabel LIKE 'cWebServer%%' ORDER BY cLabel");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	mysqlRes=mysql_store_result(&gMysql);
-	
-	while((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		printf("<tr><td></td><td><table cellspacing=0 cellpadding=0 border=0><tr><td>apache2 at %.32s &nbsp;</td><td width=10 bgcolor=",
-			mysqlField[0]);
-		if(CheckServer(mysqlField[0],8000,APACHE_SERVER))
-			printf("red");
-		else
-			printf("green");
-		printf(">&nbsp;</td></tr></table></td></tr>");
-	}
-	
-	mysql_free_result(mysqlRes);
-
-	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE cLabel LIKE 'cMailServer%%' ORDER BY cLabel");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	mysqlRes=mysql_store_result(&gMysql);
-	
-	while((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		printf("<tr><td></td><td><table cellspacing=0 cellpadding=0 border=0><tr><td>mail server at %.32s &nbsp;</td><td width=10 bgcolor=",
-			mysqlField[0]);
-		if(CheckServer(mysqlField[0],25,MAIL_SERVER))
-			printf("red");
-		else
-			printf("green");
-		printf(">&nbsp;</td></tr></table></td></tr>");
-	}
-	
-	mysql_free_result(mysqlRes);
-	*/
 
 	OpenRow("System Messages (Last 20)","black");
-	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog WHERE uLogType=4 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 20");
+	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog "
+			"WHERE uLogType=4 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 20");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -159,7 +101,10 @@ void funcDisplayDashBoard(FILE *fp)
 
 	//1-3 backend org admin interfaces
 	OpenRow("General Usage (Last 20)","black");
-	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,tLog.cTableName,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType AND tLog.uLogType<=3 ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 20");
+	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,"
+			"tLog.cTableName,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE "
+			"tLog.uLogType=tLogType.uLogType AND tLog.uLogType<=3 ORDER BY "
+			"GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 20");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -178,7 +123,9 @@ void funcDisplayDashBoard(FILE *fp)
 
 	//login/logout activity
 	OpenRow("Login Activity (Last 20)","black");
-	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cServer,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType AND tLog.uLogType>=6 ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 20");
+	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cServer,"
+			"tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType "
+			"AND tLog.uLogType>=6 ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 20");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -196,7 +143,9 @@ void funcDisplayDashBoard(FILE *fp)
 	mysql_free_result(mysqlRes);
 
 	OpenRow("Pending Jobs (Last 20)","black");
-	sprintf(gcQuery,"SELECT tJob.cJobName,GREATEST(tJob.uCreatedDate,tJob.uModDate),tClient.cLabel,cServer FROM tJob,tClient WHERE tJob.uJobClient=tClient.uClient AND tJob.uJobStatus=%u ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 20",mysqlISP_Waiting);
+	sprintf(gcQuery,"SELECT tJob.cJobName,GREATEST(tJob.uCreatedDate,tJob.uModDate),tClient.cLabel,"
+			"cServer FROM tJob,tClient WHERE tJob.uJobClient=tClient.uClient AND tJob.uJobStatus=%u "
+			"ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 20",mysqlISP_Waiting);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -218,6 +167,8 @@ void funcDisplayDashBoard(FILE *fp)
 
 void OpenRow(const char *cFieldLabel, const char *cColor)
 {
-	printf("<tr><td width=20%% valign=top><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%.32s','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\"><strong>%.32s</strong></a></td><td>",cFieldLabel,cFieldLabel);
+	printf("<tr><td width=20%% valign=top><a class=inputLink href=\"#\" onClick=\"javascript:window.open"
+		"('?gcPage=Glossary&cLabel=%.32s','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,"
+		"location=no,scrollbars=1')\"><strong>%.32s</strong></a></td><td>",cFieldLabel,cFieldLabel);
 }
 

@@ -203,3 +203,6 @@ typedef struct structtClientConfig {
 } structtClientConfig;
 
 
+//dasboard.c
+void htmlDashBoard(void);
+
