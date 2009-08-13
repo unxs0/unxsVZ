@@ -18,6 +18,8 @@ static char cCloneTarget[33]={""};
 void tServiceNavList(void);
 void tServiceConfigList(unsigned uGroup);
 void DeleteFromConfig(unsigned uProduct);
+void tServiceBasicCheck();
+
 
 void ExtProcesstServiceVars(pentry entries[], int x)
 {
@@ -228,7 +230,7 @@ void ExttServiceCommands(pentry entries[], int x)
                         	ProcesstServiceVars(entries,x);
 
                         	guMode=2000;
-				//Check entries here
+				tServiceBasicCheck();
                         	guMode=0;
 
 				uService=0;
@@ -281,7 +283,7 @@ void ExttServiceCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy)) 
 			{
                         	guMode=2002;
-				//Check entries here
+				tServiceBasicCheck();
                         	guMode=0;
 
 				uModBy=guLoginClient;
@@ -522,4 +524,34 @@ void DeleteFromConfig(unsigned uProduct)
 
 }//void DeleteFromConfig(unsigned uProduct)
 
+
+void tServiceBasicCheck()
+{
+	if(!cLabel[0])
+		tService("<blink>Error: </blink>cLabel is required");
+	else
+	{
+		if(guMode==2000)
+		{
+			MYSQL_RES *res;
+			sprintf(gcQuery,"SELECT uServibce FROM tService WHERE cLabel='%s'",cLabel);
+			macro_mySQLRunAndStore(res);
+			if(mysql_num_rows(res))
+				tService("<blink>Error: </blink>cLabel already in use");
+		}
+	}
+	if(!cServer[0])
+		tService("<blink>Error: </blink>cServer is required");
+	if(!cJobName[0])
+		tService("<blink>Error: </blink>cJobName is required");
+	else
+	{
+		if(!strstr(cJobName,"unxsRadius.") &&
+			!strstr(cJobName,"unxsApache.") &&
+			!strstr(cJobName,"unxsMail.") &&
+			!strstr(cJobName,"iDNS."))
+			tService("<blink>Error: </blink>cJobName must include the name of the unxsXXX subsystem.");
+	}
+
+}//void tServiceBasicCheck()
 
