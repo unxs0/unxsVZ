@@ -48,8 +48,8 @@
 											<form action=ispAdmin.cgi method="post">
 												<table cellspacing="0" cellpadding="0" border="0">
 													<tr>
-														<td><input type="text" value="Search Customers" class="searchinp" name=cSearch onfocus="this.select();" title="Search for customers with a keyword" /></td>
 													<td><input value=1 type=checkbox name=uSearchInstance title="Check to search within instance data"></td>
+														<td><input type="text" value="Search Customers" class="searchinp" name=cSearch onfocus="this.select();" title="Search for customers with a keyword" /></td>
 
 														<td valign="middle" style="padding: 0px 4px 0px 4px;"></td><td class="padlt6rt10"><input type="image" src="/images/btn_mast_search.gif" alt="Search" width="17" height="17" border="0" title="Find one or more customers based on input search pattern" /></td>
 													</tr>
