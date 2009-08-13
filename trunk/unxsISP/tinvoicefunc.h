@@ -101,6 +101,28 @@ void ExttInvoiceCommands(pentry entries[], int x)
 			else
 				tInvoice("<blink>Error</blink>: Denied by permissions settings");   
 		}
+		else if(!strcmp(gcCommand,"Email Loaded Invoice"))
+		{
+			if(guPermLevel>=10)
+			{
+				ProcesstInvoiceVars(entries,x);
+				guMode=3003;
+				tInvoice("First Step...");
+			}
+			else
+				tInvoice("<blink>Error</blink>: Denied by permissions settings");
+		}
+		else if(!strcmp(gcCommand,"Confirm Email Loaded Invoice"))
+		{
+			if(guPermLevel>=10)
+			{
+				ProcesstInvoiceVars(entries,x);
+				EmailLoadedInvoice();
+				tInvoice("Invoice emailed");
+			}
+			else
+				tInvoice("<blink>Error</blink>: Denied by permissions settings");
+		}
 		else if(!strcmp(gcCommand,"Print All Invoices"))
                 {
 			if(guPermLevel>=10)
@@ -200,7 +222,14 @@ void ExttInvoiceButtons(void)
 			printf("<input class=lwarnButton title='Email all pending invoices'"
 				" type=submit name=gcCommand value='Confirm Email Invoices'><br>");
                 break;
-
+		
+		case 3003:
+			printf("<p><u>Review Invoice First</u><br>It will be emailed as is. No undo available. "
+				"You can also customize each invoice now, before committing. Press [Search] to backout. "
+				"Do not email invoice again if you do not want to!<p>");
+			printf("<input class=lwarnButton title='Email the current loaded invoice'"
+				" type=submit name=gcCommand value='Confirm Email Loaded Invoice'><br>");
+		break;
 
 		default:
 			uDefault=1;
@@ -223,7 +252,7 @@ void ExttInvoiceButtons(void)
 				printf("<input class=largeButton title='Remove the \"New\" status [Generate Invoices] "
 					"created invoices you own. mySQL 4.0.4+.' type=submit name=gcCommand value='Remove Invoices'><br>");
 				printf("<input class=lwarnButton title='Email the current loaded invoice.' "
-					"type=submit name=gcCommand value='Email Invoices'><br>");
+					"type=submit name=gcCommand value='Email Loaded Invoice'><br>");
 				printf("<input class=lwarnButton title='Email all not already queued invoices your company owns. "
 					"You better check them all first!' type=submit name=gcCommand value='Email Invoices'><br>");
 				printf("<input class=largeButton title='Prints the loaded invoice'"
