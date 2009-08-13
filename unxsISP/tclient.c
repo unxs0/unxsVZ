@@ -1073,7 +1073,7 @@ void Insert_tClient(void)
 		"cAccountHolder='%s',cAccountNumber='%s',uAccountType=%u,cCardType='%s',cCardNumber='%s',"
 		"uExpMonth=%u,uExpYear=%u,cCardName='%s',cACHDebits='%s',cShipName='%s',cShipAddr1='%s',"
 		"cShipAddr2='%s',cShipAddr3='%s',cShipCity='%s',cShipState='%s',cShipZip='%s',cShipCountry='%s',"
-		"cTelephone='%s',cMobile='%s',cFax='%s',cPasswd='%s',mBalance='%s',mTotal='%s',cInfo='%s',cLanguage='%s'uOwner=%u,"
+		"cTelephone='%s',cMobile='%s',cFax='%s',cPasswd='%s',mBalance='%s',mTotal='%s',cInfo='%s',cLanguage='%s',uOwner=%u,"
 		"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uClient
 			,TextAreaSave(cLabel)
