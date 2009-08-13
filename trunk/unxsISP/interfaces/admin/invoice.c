@@ -22,6 +22,8 @@ static char cSearch[100]={""};
 static char cNavList[16384]={""};
 static char cApprovedStep[32]={""};
 static char cVoidStep[32]={""};
+static char *gcPrintCurr="";
+static char *gcPrintAll="";
 
 void fileDirectTemplate(FILE *fp,char *cTemplateName);
 unsigned GetPaymentValue(unsigned uInvoice,const char *cName,char *cValue);
@@ -31,6 +33,8 @@ char *cGetInvoiceLanguage(unsigned uInvoice);
 char *cGetCustomerEmail(unsigned uInvoice);
 void EmailLoadedInvoice(void);
 void EmailAllInvoices(void);
+void PrintInvoices(void);
+void PrintInvoice(void);
 
 
 void ProcessInvoiceVars(pentry entries[], int x)
@@ -142,7 +146,22 @@ void InvoiceCommands(pentry entries[], int x)
 			EmailAllInvoices();
 			gcMessage="All invoices emailed  OK";
 		}
-
+		else if(!strcmp(gcFunction,"Print Loaded Invoice"))
+		{
+			gcPrintCurr="Confirm ";
+		}
+		else if(!strcmp(gcFunction,"Confirm Print Loaded Invoice"))
+		{
+			PrintInvoice();
+		}
+		else if(!strcmp(gcFunction,"Print All Invoices"))
+		{
+			gcPrintAll="Confirm ";
+		}
+		else if(!strcmp(gcFunction,"Confirm Print All Invoices"))
+		{
+			PrintInvoices();
+		}
 		htmlInvoice();
 	}
 
@@ -227,7 +246,13 @@ void htmlInvoicePage(char *cTitle, char *cTemplateName)
 			template.cpName[15]="gcModStep";
 			template.cpValue[15]=gcModStep;
 
-			template.cpName[16]="";
+			template.cpName[16]="gcPrintCurr";
+			template.cpValue[16]=gcPrintCurr;
+
+			template.cpName[17]="gcPrintAll";
+			template.cpValue[17]=gcPrintAll;
+
+			template.cpName[18]="";
 			
 			printf("\n<!-- Start htmlInvoicePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -790,6 +815,7 @@ void EmailAllInvoices(void)
 
 }//void EmailAllInvoices(void)
 
+
 char *cGetInvoiceLanguage(unsigned uInvoice)
 {
 	static char cLanguage[32]={""};
@@ -828,4 +854,48 @@ char *cGetCustomerEmail(unsigned uInvoice)
 	return(cEmail);
 
 }//char cGetCustomerEmail(unsigned uInvoice)
+
+
+void PrintInvoices(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	
+	printf("Content-type: text/html\n\n");
+	printf("<html>\n"
+		"<head>\n"
+		"<style>\n"
+		"@page { size 8.5in 11in; margin: 2cm }\n"
+		"div.page { page-break-after: always }\n"
+		"</style>\n"
+		"</head>\n"
+		"<body>\n");
+
+	sprintf(gcQuery,"SELECT uInvoice,uClient FROM tInvoice WHERE uInvoiceStatus!=2");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uInvoice);
+		sscanf(field[1],"%u",&uClient);
+		printf("<div class=page>\n");
+		funcInvoice(stdout);	
+		printf("</div>\n");
+	}
+	uInvoice=0;
+	uClient=0;
+	exit(0);
+
+}//void PrintInvoices(void)
+
+
+void PrintInvoice(void)
+{
+	printf("Content-type: text/html\n\n");
+	funcInvoice(stdout);
+	exit(0);
+
+}//void PrintInvoice(void)
 

@@ -3,6 +3,7 @@
 
 <div align="center" class="standard2colnee">
 
+<tr>
 <table cellspacing="0" cellpadding="0" border="0" width=1200>
 	<tr valign="top">
 	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>
@@ -131,6 +132,16 @@ At this page you are able to review and update the status of the invoices genera
 <tr>
 <td>
 <input title='Email all the invoices to the customers' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="{{gcModStep}}Email All Invoices">
+</td>
+</tr>
+<tr>
+<td>
+<input title='Print the current loaded invoice' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="{{gcPrintCurr}}Print Loaded Invoice">
+</td>
+</tr>
+<tr>
+<td>
+<input title='Print all the invoices' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="{{gcPrintAll}}Print All Invoices">
 </td>
 </tr>
         </table>
