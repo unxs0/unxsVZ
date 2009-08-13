@@ -122,11 +122,11 @@ At this page you are able to review and update the status of the invoices genera
 		</tr>
 <tr>
 <td>
-<input {{gcInputStatus}} title='Update loaded invoice status' name="gcFunction" type="submit" class="largeButton" id="gcFunction" value="Update Invoice Status" />
+<input {{gcInputStatus}} title='Update loaded invoice status' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="Update Invoice Status" />
 </td>
 <tr>
 <td>
-<input title='Email the loaded invoice to the customer email' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="{{gcNewStep}}Email Loaded Invoice">
+<input {{gcInputStatus}} title='Email the loaded invoice to the customer email' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="{{gcNewStep}}Email Loaded Invoice">
 </td>
 </tr>
 <tr>
@@ -136,7 +136,7 @@ At this page you are able to review and update the status of the invoices genera
 </tr>
 <tr>
 <td>
-<input title='Print the current loaded invoice' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="{{gcPrintCurr}}Print Loaded Invoice">
+<input {{gcInputStatus}} title='Print the current loaded invoice' name="gcFunction" type="submit" class="largestButton" id="gcFunction" value="{{gcPrintCurr}}Print Loaded Invoice">
 </td>
 </tr>
 <tr>
