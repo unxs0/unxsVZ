@@ -140,7 +140,7 @@ char *cGetInvoiceLanguage(unsigned uInvoice);
 char *cGetCustomerEmail(unsigned uInvoice);
 void EmailLoadedInvoice(void);
 void EmailAllInvoices(void);
-
+void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template);
 
 void ExtProcesstInvoiceVars(pentry entries[], int x)
 {
@@ -3226,4 +3226,29 @@ MYSQL_RES *sqlresultClientInfo(void)
 	return(mysql_store_result(&gMysql));
 
 }//MYSQL_RES *sqlresultClientInfo(void)
+
+
+void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
+{
+	if(cTemplateName[0])
+	{	
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+
+		TemplateSelect(cTemplateName);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			fprintf(fp,"<!-- start %s -->\n",cTemplateName);
+			Template(field[0], template, fp);
+		}
+		else
+		{
+			fprintf(fp,"<hr>");
+			fprintf(fp,"<center><font size=1>%s</font>\n",cTemplateName);
+		}
+		mysql_free_result(res);
+	}
+}//void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
+
 
