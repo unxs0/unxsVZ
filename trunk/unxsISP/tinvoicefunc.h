@@ -756,12 +756,6 @@ void EmailInvoicesJob(time_t luJobTime)
 }//void EmailInvoicesJob()
 
 
-void PrintInvoices(void)
-{
-
-}//void PrintInvoices()
-
-
 //Count current 'New' invoices for this user or all if admin/root user.
 //Also must not have a job queue status. The tJob will be fscked up.
 unsigned GetCurrentNewInvoices(void)
@@ -3250,5 +3244,40 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
 		mysql_free_result(res);
 	}
 }//void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
+
+
+void PrintInvoices(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	
+	printf("Content-type: text/html\n\n");
+	printf("<html>\n"
+		"<head>\n"
+		"<style>\n"
+		"@page { size 8.5in 11in; margin: 2cm }\n"
+		"div.page { page-break-after: always }\n"
+		"</style>\n"
+		"</head>\n"
+		"<body>\n");
+
+	sprintf(gcQuery,"SELECT uInvoice,uClient FROM tInvoice WHERE uInvoiceStatus!=2");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uInvoice);
+		sscanf(field[1],"%u",&uClient);
+		printf("<div class=page>\n");
+		funcInvoice(stdout);	
+		printf("</div>\n");
+	}
+	uInvoice=0;
+	uClient=0;
+	exit(0);
+
+}//void PrintInvoices(void)
 
 
