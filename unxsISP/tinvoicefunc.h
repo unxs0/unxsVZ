@@ -222,6 +222,8 @@ void ExttInvoiceButtons(void)
 					"name=gcCommand value='Generate Invoices'><br>");
 				printf("<input class=largeButton title='Remove the \"New\" status [Generate Invoices] "
 					"created invoices you own. mySQL 4.0.4+.' type=submit name=gcCommand value='Remove Invoices'><br>");
+				printf("<input class=lwarnButton title='Email the current loaded invoice.' "
+					"type=submit name=gcCommand value='Email Invoices'><br>");
 				printf("<input class=lwarnButton title='Email all not already queued invoices your company owns. "
 					"You better check them all first!' type=submit name=gcCommand value='Email Invoices'><br>");
 				printf("<input class=largeButton title='Prints the loaded invoice'"
@@ -522,7 +524,6 @@ void InvoiceItemList(unsigned uInvoice)
 	res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{
-		printf("<font size=2>");
 		printf("<p><u>Invoice Items</u><br>");
 
 		while((field=mysql_fetch_row(res)))
