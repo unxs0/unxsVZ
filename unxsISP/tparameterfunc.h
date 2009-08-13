@@ -11,7 +11,7 @@ AUTHOR
 
 //ModuleFunctionProtos()
 
-
+void tParameterBasicCheck(void);
 void tParameterNavList(void);
 
 void ExtProcesstParameterVars(pentry entries[], int x)
@@ -50,7 +50,7 @@ void ExttParameterCommands(pentry entries[], int x)
                         	ProcesstParameterVars(entries,x);
 
                         	guMode=2000;
-				//Check entries here
+				tParameterBasicCheck();
                         	guMode=0;
 
 				uParameter=0;
@@ -102,7 +102,7 @@ void ExttParameterCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
-				//Check entries here
+				tParameterBasicCheck();
                         	guMode=0;
 
 				uModBy=guLoginClient;
@@ -294,4 +294,54 @@ void tParameterNavList(void)
 
 }//void tParameterNavList(void)
 
+
+void tParameterBasicCheck(void)
+{
+	if(!cParameter[0])
+		tParameter("<blink>Error: </blink> cParameter is required");
+	else
+	{
+		if(guMode==2000)
+		{
+			MYSQL_RES *res;
+			sprintf(gcQuery,"SELECT uParameter FROM tParameter WHERE cParameter='%s'",TextAreaSave(cParameter));
+			macro_mySQLRunAndStore(res);
+			if(mysql_num_rows(res))
+				tParameter("<blink>Error: </blink> cParameter already in use");
+		}
+	}
+	if(!uParamType)
+		tParameter("<blink>Error: </blink> uParamType is required");
+	if(!cRange[0])
+		tParameter("<blink>Error: </blink> cRange is required");
+	if(cExtVerify[0])
+	{
+		if(!strstr(cExtVerify,"SELECT")&&!strstr(cExtVerify,"select"))
+			tParameter("<blink>Error: </blink> Your cExtVerify value doesn't make sense");
+		if(!strstr(cExtVerify,"unxsRadius:") &&
+			!strstr(cExtVerify,"iDNS:") &&
+			!strstr(cExtVerify,"unxsMail:") &&
+			!strstr(cExtVerify,"unxsApache:")
+			)
+			tParameter("<blink>Error: </blink> cExtVerify format is <unxsXXX>:<SELECT query>");
+	}
+	if(!uISMOrder)
+		tParameter("<blink>Error: </blink> uISMOrder is required");
+	if(!cISMName[0])
+		tParameter("<blink>Error: </blink> cISMName is required");
+	if(!uProductType)
+		tParameter("<blink>Error: </blink> uProductType is required");
+	
+	if(cExtQuery[0] && uParamType==13)
+	{
+		if(!strstr(cExtVerify,"unxsRadius:") &&
+			!strstr(cExtVerify,"iDNS:") &&
+			!strstr(cExtVerify,"unxsMail:") &&
+			!strstr(cExtVerify,"unxsApache:")
+			)
+			tParameter("<blink>Error: </blink> cExtQuery must specify unxsXXX subsystem, e.g.: unxsRadius:");
+	}
+		
+		
+}//void tParameterBasicCheck(void)
 
