@@ -39,7 +39,7 @@ void ClearForm(void);
 void RemoveInvoices(void);
 void InvoiceItemList(unsigned uInvoice);
 void EmailInvoicesJob(time_t luJobTime);
-void PrintInvoicesJob(time_t luJobTime);
+void PrintInvoices(void);
 unsigned GetCurrentNewInvoices(void);
 unsigned GetNonQueuedInvoices(void);
 void SubmitInvoiceJob(char *cJobType,time_t luJobDate);
@@ -132,6 +132,14 @@ unsigned uCaseAnalyzer(unsigned const uProductPeriod, unsigned const uClientPeri
 				unsigned const uCreatedDateMonth, unsigned const uCreatedDateYear,
 				unsigned const uMonth, unsigned const uYear, unsigned *uCase);
 unsigned CreateNewInvoice(unsigned uClient, unsigned uHtml);
+void fileDirectTemplate(FILE *fp,char *cTemplateName);
+unsigned GetPaymentValue(unsigned uInvoice,const char *cName,char *cValue);
+MYSQL_RES *sqlresultClientInfo(void);
+void ReStockItems(unsigned uInvoice);
+char *cGetInvoiceLanguage(unsigned uInvoice);
+char *cGetCustomerEmail(unsigned uInvoice);
+void EmailLoadedInvoice(void);
+void EmailAllInvoices(void);
 
 
 void ExtProcesstInvoiceVars(pentry entries[], int x)
@@ -270,19 +278,7 @@ void ExttInvoiceCommands(pentry entries[], int x)
 				if(uNewInvoices!=GetNonQueuedInvoices())
 					tInvoice("A new invoice was found. Check this out.");
 
-				time(&luClock);
-				if(cDay[0] && cDay[0]!='N')
-				{
-					sprintf(gcQuery,"%s-%s-%s",cDay,cMonth,cYear);
-					luJobTime=cDateToUnixTime(gcQuery);
-				}
-				else
-				{
-					luJobTime=luClock;
-				}
-
-				PrintInvoicesJob(luJobTime);
-                        	tInvoice("Job created for invoices to be printed");
+				PrintInvoices();
 			}
 			else
 				tInvoice("<blink>Error</blink>: Denied by permissions settings");   
@@ -760,22 +756,10 @@ void EmailInvoicesJob(time_t luJobTime)
 }//void EmailInvoicesJob()
 
 
-void PrintInvoicesJob(time_t luJobTime)
+void PrintInvoices(void)
 {
-	//First change tInvoiceStatus
-	if(guPermLevel>9)
-		sprintf(gcQuery,"UPDATE tInvoice SET uQueueStatus=%u WHERE uQueueStatus=0",unxsISP_PrintQueuedInvoice);
-	else
-		sprintf(gcQuery,"UPDATE tInvoice SET uQueueStatus=%u WHERE uQueueStatus=0 AND uOwner=%u",unxsISP_PrintQueuedInvoice,guLoginClient);
 
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		tInvoice(mysql_error(&gMysql));
-
-	//Submit job
-	SubmitInvoiceJob("Print",luJobTime);
-
-}//void PrintInvoicesJob()
+}//void PrintInvoices()
 
 
 //Count current 'New' invoices for this user or all if admin/root user.
@@ -2906,3 +2890,340 @@ unsigned CreateNewInvoice(unsigned uClient, unsigned uHtml)
 	}//Update tClient.mBalance only if new, or if mysqlApache.Amount has changed.
 
 */
+void funcInvoice(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	struct t_template template;
+	char cCardExp[42]={""};
+	char cInvoice[32]={""};
+	char cLanguage[32]={""};
+	char cTemplateName[100]={""};
+
+	char cPaymentName[31]={"Unknown"};
+	unsigned uRequireCreditCard=0;
+
+	template.cpName[0]="";
+
+	if(!uInvoice || !uClient)
+	{
+		fprintf(fp,"No invoice loaded.");
+		return;
+	}
+
+	uRequireCreditCard=GetPaymentValue(uInvoice,"","");
+	sprintf(cInvoice,"%u-%u",uClient,uInvoice);
+
+	res=sqlresultClientInfo();
+
+	if((field=mysql_fetch_row(res)))
+	{
+		char cCardNumber[20]={"Error"};
+		unsigned uCardNumberLen=0;
+		
+		sprintf(cLanguage,"%.3s",field[23]);
+
+		template.cpName[0]="cLabel";
+		template.cpValue[0]=field[0];
+		
+		template.cpName[1]="cLastName";
+		template.cpValue[1]=field[1];
+
+		template.cpName[2]="cEmail";
+		template.cpValue[2]=field[2];
+
+		template.cpName[3]="cAddr1";
+		template.cpValue[3]=field[3];
+
+		template.cpName[4]="cAddr2";
+		template.cpValue[4]=field[4];
+
+		template.cpName[5]="cCity";
+		template.cpValue[5]=field[5];
+
+		template.cpName[6]="cState";
+		template.cpValue[6]=field[6];
+
+		template.cpName[7]="cZip";
+		template.cpValue[7]=field[7];
+
+		template.cpName[8]="cCountry";
+		template.cpValue[8]=field[8];
+
+		template.cpName[9]="cCardType";
+		template.cpValue[9]=field[9];//see below
+
+		template.cpName[10]="cCardNumber";
+		uCardNumberLen=strlen(field[10]);
+		if(field[9][0]=='A' && uCardNumberLen>14)
+			sprintf(cCardNumber,"XXXXXXXXXXX%.4s",field[10]+11);
+		else if(uCardNumberLen>15)
+			sprintf(cCardNumber,"XXXXXXXXXXXX%.4s",field[10]+12);
+		template.cpValue[10]=cCardNumber;
+
+		template.cpName[11]="cCardName";
+		if(uRequireCreditCard)
+		{
+			template.cpValue[11]=field[11];
+		}
+		else
+		{
+			GetPaymentValue(uInvoice,"cLabel",cPaymentName);
+			template.cpValue[11]=cPaymentName;
+		}
+
+
+		template.cpName[12]="cTelephone";
+		template.cpValue[12]=field[19];
+
+		template.cpName[13]="cFax";
+		template.cpValue[13]=field[20];
+
+		//Template index not equal to field index from here on
+		template.cpName[14]="cCardExp";
+		sprintf(cCardExp,"%s/%s",field[21],field[22]);
+		template.cpValue[14]=cCardExp;
+
+		if(field[12][0])
+		{
+		template.cpName[15]="cShipName";
+		template.cpValue[15]=field[12];//see below
+		template.cpName[16]="cShipAddr1";
+		template.cpValue[16]=field[13];
+		template.cpName[17]="cShipAddr2";
+		template.cpValue[17]=field[14];
+		template.cpName[18]="cShipCity";
+		template.cpValue[18]=field[15];
+		template.cpName[19]="cShipState";
+		template.cpValue[19]=field[16];
+		template.cpName[20]="cShipZip";
+		template.cpValue[20]=field[17];
+		template.cpName[21]="cShipCountry";
+		template.cpValue[21]=field[18];
+		template.cpName[22]="cInvoice";
+		template.cpValue[22]=cInvoice;
+		template.cpName[23]="";
+		}
+		else
+		{
+		template.cpName[15]="cInvoice";
+		template.cpValue[15]=cInvoice;
+		template.cpName[16]="";
+		}
+	}
+
+	if(field)
+	{	
+		if(uRequireCreditCard)
+		{
+			if(field[12][0])
+			{
+				fpTemplate(fp,"cInvoiceCardShipTopMail",&template);
+			}	
+			else
+			{
+				fpTemplate(fp,"cInvoiceCardTopMail",&template);
+			}
+		}
+		else
+		{
+			if(field[12][0])
+			{
+				fpTemplate(fp,"cInvoiceShipTopMail",&template);
+			}
+			else
+			{
+				sprintf(cTemplateName,"cInvoiceTopMail%s",cLanguage);
+				fpTemplate(fp,cTemplateName,&template);
+			}
+		}
+	}
+	else
+	{
+		fprintf(fp,"Unexpected error no invoice found. funcInvoice()");
+		return;
+	}
+	mysql_free_result(res);
+
+	//cInvoiceBody: Products and total
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT tInvoiceItems.uProduct,tProduct.cLabel,tInvoiceItems.uQuantity,"
+				"tInvoiceItems.mPrice,tInvoiceItems.mTax,tInvoiceItems.mSH,tInvoiceItems.mTotal,"
+				"tInvoice.mTotal,tInvoice.mSH FROM tInvoiceItems,tProduct,tInvoice WHERE "
+				"tInvoiceItems.uProduct=tProduct.uProduct AND tInvoiceItems.uInvoice=%u AND "
+				"tInvoiceItems.uClient=%u AND tInvoice.uInvoice=%u", uInvoice,uClient,uInvoice);
+	else
+		sprintf(gcQuery,"SELECT tInvoiceItems.uProduct,tProduct.cLabel,tInvoiceItems.uQuantity,"
+				"tInvoiceItems.mPrice,tInvoiceItems.mTax,tInvoiceItems.mSH,tInvoiceItems.mTotal,"
+				"tInvoice.mTotal,tInvoice.mSH FROM tInvoiceItems,tProduct,tInvoice,tClient WHERE "
+				"tInvoiceItems.uProduct=tProduct.uProduct AND tInvoiceItems.uInvoice=%1$u AND "
+				"tInvoiceItems.uClient=%2$u AND tInvoice.uInvoice=%1$u AND "
+				"tInvoice.uOwner=tClient.uClient AND (tClient.uClient=%3$u OR tClient.uOwner IN "
+				"(SELECT uClient FROM tClient WHERE uOwner=%3$u OR uClient=%3$u))", uInvoice,uClient,guCompany);
+
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+
+
+	if(mysql_num_rows(res))
+	{
+		char cNum[100]={""};
+		char cmInvoiceSH[100];
+		char cmInvoiceTax[100];
+		unsigned uNum=1;
+		double lfTotal=0.0,lfInvoiceTotal=0.0;
+		double lfInvoiceTax=0.0,lfInvoiceSH=0.0;
+		double lfTax=0.0;
+		char *cp;
+		char cProduct[100]={""};
+		
+		sprintf(cTemplateName,"cInvoiceItemHeaderMail%s",cLanguage);
+		fileDirectTemplate(fp,cTemplateName);
+		
+		while((field=mysql_fetch_row(res)))
+		{
+			template.cpName[0]="uProduct";
+			template.cpValue[0]=field[0];
+			
+			sprintf(cProduct,"%s",field[1]);
+			if((cp=strchr(cProduct,'.'))) *cp=0;
+			
+			template.cpName[1]="cProduct";
+			template.cpValue[1]=cProduct;
+			
+			template.cpName[2]="uQuantity";
+			template.cpValue[2]=field[2];
+			
+			template.cpName[3]="mPrice";
+			template.cpValue[3]=field[3];
+			
+			template.cpName[4]="mTax";
+			template.cpValue[4]=field[4];
+			sscanf(field[4],"%lf",&lfTax);	
+			lfInvoiceTax+=lfTax;
+
+			template.cpName[5]="mSH";
+			template.cpValue[5]=field[5];
+		
+			sscanf(field[6],"%lf",&lfTotal);	
+			lfInvoiceTotal+=lfTotal;//tInvoiceItems total
+			template.cpName[6]="mTotal";
+			template.cpValue[6]=field[6];
+
+			sprintf(cNum,"%.3u",uNum++);
+			template.cpName[7]="uNum";
+			template.cpValue[7]=cNum;
+			
+			template.cpName[9]="";
+			fpTemplate(fp,"cInvoiceItemMail",&template);
+			
+			if(uNum==2)
+				sscanf(field[8]," %lf",&lfInvoiceSH);
+		}
+
+
+		lfInvoiceTotal+=lfInvoiceSH;
+		//lfInvoiceTotal+=lfInvoiceTax;
+
+		sprintf(cNum,"%2.2f",lfInvoiceTotal);
+		template.cpName[0]="mInvoiceTotal";
+		template.cpValue[0]=cNum;
+
+		sprintf(cmInvoiceTax,"%2.2f",lfInvoiceTax);
+		template.cpName[1]="mInvoiceTax";
+		template.cpValue[1]=cmInvoiceTax;
+
+		//sprintf(cmInvoiceSH,"%.2f",lfInvoiceSH);
+		sprintf(cmInvoiceSH,"%2.2f",lfInvoiceSH);
+		template.cpName[2]="mInvoiceSH";
+		template.cpValue[2]=cmInvoiceSH;
+
+		template.cpName[3]="";
+		sprintf(cTemplateName,"cInvoiceItemFooterMail%s",cLanguage);
+		fpTemplate(fp,cTemplateName,&template);
+	}
+	else
+	{
+		fprintf(fp,"Unexpected error no invoice items. funcInvoice()\n");
+	}
+	mysql_free_result(res);
+
+}//void funcInvoice(FILE *fp)
+
+
+
+void fileDirectTemplate(FILE *fp,char *cTemplateName)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	
+	if(!fp) return;
+
+	TemplateSelect(cTemplateName);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		fprintf(fp,"%s",field[0]);
+	else
+		fprintf(fp,"Template %s not found\n",cTemplateName);
+	mysql_free_result(res);
+
+}//void fileDirectTemplate(FILE *fp,char *cTemplateName)
+
+
+unsigned GetPaymentValue(unsigned uInvoice,const char *cName,char *cValue)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	
+	unsigned uRequireCreditCard=0;
+
+	if(cName[0])
+	sprintf(gcQuery,"SELECT tPayment.uRequireCreditCard,tPayment.%s FROM tInvoice,tPayment WHERE tInvoice.uPayment=tPayment.uPayment AND tInvoice.uInvoice=%u",
+					cName,uInvoice);
+	else
+	sprintf(gcQuery,"SELECT tPayment.uRequireCreditCard FROM tInvoice,tPayment WHERE tInvoice.uPayment=tPayment.uPayment AND tInvoice.uInvoice=%u",uInvoice);
+
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+		field=mysql_fetch_row(res);
+		sscanf(field[0],"%u",&uRequireCreditCard);
+		if(cName[0]) sprintf(cValue,"%.63s",field[1]);
+	}
+	mysql_free_result(res);
+
+	return(uRequireCreditCard);
+
+}//unsigned GetPaymentValue(unsigned uInvoice,const char *cName,char *cValue)
+
+
+MYSQL_RES *sqlresultClientInfo(void)
+{
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT cLabel,cLastName,cEmail,cAddr1,cAddr2,cCity,cState,cZip,cCountry,cCardType,cCardNumber,"
+				"cCardName,cShipName,cShipAddr1,cShipAddr2,cShipCity,cShipState,cShipZip,cShipCountry,cTelephone,"
+				"cFax,uExpMonth,uExpYear,cLanguage FROM tClient WHERE uClient=%u",uClient);
+	else
+		sprintf(gcQuery,"SELECT cLabel,cLastName,cEmail,cAddr1,cAddr2,cCity,cState,cZip,cCountry,cCardType,"
+				"cCardNumber,cCardName,cShipName,cShipAddr1,cShipAddr2,cShipCity,cShipState,cShipZip,"
+				"cShipCountry,cTelephone,cFax,uExpMonth,uExpYear,cLanguage FROM tClient "
+				" WHERE uClient=%2$u AND (uClient=%1$u OR uOwner"
+				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+				" ORDER BY uClient",guCompany,uClient);
+	
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	return(mysql_store_result(&gMysql));
+
+}//MYSQL_RES *sqlresultClientInfo(void)
+

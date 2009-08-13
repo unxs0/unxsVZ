@@ -65,34 +65,6 @@ void SubmitSingleServiceJob(unsigned uService,unsigned uInstance,char *cJobType,
 void GetProductAccountingVars(unsigned const uProduct, char *mPrice, char *mSetupFee,
                                 char *mReleaseFee, unsigned *uProductType, unsigned *uPeriod);
 
-//template.c
-//Data
-typedef struct t_template {
-        char *name[100];//pointers to var_name strings
-        char *value[100];//pointers to substitution strings
-} t_template ;
-//Globals
-//Used in cases where end user can select from set of templates.
-//Usually from a site cookie.
-extern unsigned guSkin;
-
-
-int TemplateTable(char *cSQLQuery, char *cTableName,struct t_template *template);
-void fileDirectTemplate(FILE *fp,char *cTemplateName);
-void htmlDirectTemplate(char *cTemplateName);
-int htmlTableTemplate(char *cTemplateName,char *cSQLQuery, char *cTableName);
-int htmlStructTemplate(char *cTemplateName,struct t_template *ptrTemplate);
-int fileStructTemplate(FILE *fp, char *cTemplateName,struct t_template *ptrTemplate);
-void Template(char *cTemplate, struct t_template *template, FILE *fp);
-void eMailInvoice(char *cConfigEmail, char *cSubjectHeader, char *cSubjectEnd, 
-		char *cTemplateName, struct t_template *template);
-void eMailPackingSlip(char *cConfigEmail, char *cSubjectHeader, char *cSubjectEnd, 
-		char *cTemplateName, struct t_template *template);
-void eMailTemplate(char *cEmail, char *cSubjectHeader, char *cSubjectEnd, 
-		char *cTemplateName, struct t_template *template);
-void eMailNotice(char *cConfigEmail, char *cSubjectHeader, char *cSubjectEnd, 
-		char *cTemplateName, struct t_template *template);
-void TemplateSelectQuery(char *cTemplateName);
 //Application specific standard functions
 void fileInvoice(FILE *fp);
 void filePackingSlip(FILE *fp);
@@ -106,4 +78,6 @@ void ProcessJobQueue(unsigned const uDebug, char const *cServer);
 void GetBillingHours(unsigned const uInstance,char *mHours);
 void GetBillingTraffic(unsigned const uInstance,char *mTraffic);
 void GetBillingUnits(unsigned const uInstance,char *cShortUnits,char *cLongUnits);
+
+#include <openisp/template.h>
 
