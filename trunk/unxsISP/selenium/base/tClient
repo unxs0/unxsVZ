@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>tClient</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">tClient</td></tr>
+</thead><tbody>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Main</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//a[3]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcCommand</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLabel</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Invalid cLabel!*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLabel</td>
+	<td>Michael Moore</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*New record*added*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Authorize']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuPerm</td>
+	<td>label=Back-Office Admin</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLogin</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Authorize']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Login must be at least 6 chars!*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cLogin</td>
+	<td>Michael Moore</td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Contact Authorized*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLabel</td>
+	<td>Michael J. Moore</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*record 6 modified*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Go to Michael J. Moore tAuthorize record</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertValue</td>
+	<td>cLabel</td>
+	<td>Michael Moore</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcCommand</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cPasswd</td>
+	<td>punkrock</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*record 6 modified*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tClient</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFind' and @value='&gt;&gt;']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Delete']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Delete']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Record Deleted*</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
