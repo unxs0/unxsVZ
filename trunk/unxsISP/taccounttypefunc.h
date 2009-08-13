@@ -11,7 +11,7 @@ AUTHOR
 
 //ModuleFunctionProtos()
 
-
+void tAccountTypeBasicCheck(void);
 void tAccountTypeNavList(void);
 
 void ExtProcesstAccountTypeVars(pentry entries[], int x)
@@ -50,7 +50,7 @@ void ExttAccountTypeCommands(pentry entries[], int x)
                         	ProcesstAccountTypeVars(entries,x);
 
                         	guMode=2000;
-				//Check entries here
+				tAccountTypeBasicCheck();
                         	guMode=0;
 
 				uAccountType=0;
@@ -102,7 +102,7 @@ void ExttAccountTypeCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy))   
 			{
                         	guMode=2002;
-				//Check entries here
+				tAccountTypeBasicCheck();
                         	guMode=0;
 
 				uModBy=guLoginClient;
@@ -282,4 +282,22 @@ void tAccountTypeNavList(void)
 
 }//void tAccountTypeNavList(void)
 
+
+void tAccountTypeBasicCheck(void)
+{
+	if(!cLabel[0])
+		tAccountType("<blink>Error: </blink> cLabel is required");
+	else
+	{
+		if(guMode==2000)
+		{
+			MYSQL_RES *res;
+			sprintf(gcQuery,"SELECT uAccountType FROM tAccountType WHERE cLabel='%s'",TextAreaSave(cLabel));
+			macro_mySQLRunAndStore(res);
+			if(mysql_num_rows(res))
+				tAccountType("<blink>Error: </blink> cLabel already in use");
+		}
+	}
+
+}//void tAccountTypeBasicCheck(void)
 
