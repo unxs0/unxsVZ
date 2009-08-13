@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>tService</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">tService</td></tr>
+</thead><tbody>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tService</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcCommand</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLabel</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cServer</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cJobName</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cLabel is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLabel</td>
+	<td>My Test Service</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cServer is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cServer</td>
+	<td>Any</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cJobName is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cJobName</td>
+	<td>maradona</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cJobName must include the name of the unxsXXX subsystem.*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cJobName</td>
+	<td>unxsRadius.Unlin.Mod</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*New record*added*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='AddParameter']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Must select valid parameter and service*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuParameterPullDown</td>
+	<td>label=unxsRadius.Login</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='AddParameter']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Parameter added*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*unxsRadius.Login=*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=unxsRadius.Login=</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*tConfig Aux Panel*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=[Return]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuParameterPullDown</td>
+	<td>label=unxsRadius.Login</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='DelParameter']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Parameter deleted*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='AddRelated']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Parameter(s) added*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*unxsRadius.ClearText=*unxsRadius.Login=*unxsRadius.Passwd=*unxsRadius.Profile=*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='DelAll']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Parameters deleted*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLabel</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cServer</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cJobName</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cLabel is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cLabel</td>
+	<td>My Test Service-Modified</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cServer is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cServer</td>
+	<td>masterns.unixservice.com.ar</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cJobName is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cJobName</td>
+	<td>maradona</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cJobName must include the name of the unxsXXX subsystem.*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cJobName</td>
+	<td>iDNS.WebZone</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cComment</td>
+	<td>We change the service completely</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*record*modified*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Delete']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Delete']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Record Deleted*</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
