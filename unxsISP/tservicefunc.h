@@ -122,7 +122,7 @@ void ExttServiceCommands(pentry entries[], int x)
                         ProcesstServiceVars(entries,x);
 			
 			if(!uService || !uParameter)
-				tService("Must select valid parameter and service");
+				tService("<blink>Error: </blink>Must select valid parameter and service");
 			sprintf(gcQuery,"SELECT cParameter FROM tParameter WHERE uParameter=%u",uParameter);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -136,7 +136,9 @@ void ExttServiceCommands(pentry entries[], int x)
 				if((cp=strchr(cSubsystem,'.'))) *cp=0;
 
 
-			sprintf(gcQuery,"INSERT INTO tConfig (uConfig,uGroup,uParameter,uOwner,uCreatedBy,uCreatedDate) SELECT 0,%u,uParameter,%u,%u,%lu FROM tParameter WHERE cParameter LIKE '%s%%'",
+				sprintf(gcQuery,"INSERT INTO tConfig "
+						"(uConfig,uGroup,uParameter,uOwner,uCreatedBy,uCreatedDate) "
+						"SELECT 0,%u,uParameter,%u,%u,%lu FROM tParameter WHERE cParameter LIKE '%s%%'",
 					uService,
 					guLoginClient,
 					guLoginClient,
@@ -161,7 +163,7 @@ void ExttServiceCommands(pentry entries[], int x)
                         ProcesstServiceVars(entries,x);
 			
 			if(!uService || !uParameter)
-				tService("Must select valid parameter and service");
+				tService("<blink>Error: </blink>Must select valid parameter and service");
 			sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE uGroup=%u AND uParameter=%u",uService,uParameter);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -188,7 +190,7 @@ void ExttServiceCommands(pentry entries[], int x)
 			{
                         ProcesstServiceVars(entries,x);
 			if(!uService || !uParameter)
-				tService("Must select valid parameter and service");
+				tService("<blink>Error: </blink>Must select valid parameter and service");
 			sprintf(gcQuery,"DELETE FROM tConfig WHERE uGroup=%u AND uParameter=%u",uService,uParameter);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -534,7 +536,7 @@ void tServiceBasicCheck()
 		if(guMode==2000)
 		{
 			MYSQL_RES *res;
-			sprintf(gcQuery,"SELECT uServibce FROM tService WHERE cLabel='%s'",cLabel);
+			sprintf(gcQuery,"SELECT uService FROM tService WHERE cLabel='%s'",cLabel);
 			macro_mySQLRunAndStore(res);
 			if(mysql_num_rows(res))
 				tService("<blink>Error: </blink>cLabel already in use");
