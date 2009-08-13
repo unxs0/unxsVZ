@@ -22,7 +22,6 @@ void GenerateInvoices(void);//Called from both mainfunc.h and webmin
 void ClearForm(void);
 void RemoveInvoices(void);
 void InvoiceItemList(unsigned uInvoice);
-void EmailInvoices(void);
 void PrintInvoices(void);
 unsigned GetCurrentNewInvoices(void);
 unsigned GetNonQueuedInvoices(void);
@@ -46,6 +45,7 @@ void EmailAllInvoices(void);
 void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template);
 void PrintInvoice(void);
 void fileDirectTemplate(FILE *fp,char *cTemplateName);
+void funcInvoice(FILE *fp);
 
 void ExtProcesstInvoiceVars(pentry entries[], int x)
 {
@@ -95,7 +95,7 @@ void ExttInvoiceCommands(pentry entries[], int x)
 			{
                         	ProcesstInvoiceVars(entries,x);
 
-				EmailInvoices();
+				EmailAllInvoices();
                         	tInvoice("Invoices emailed");
 			}
 			else
@@ -558,10 +558,105 @@ void InvoiceItemList(unsigned uInvoice)
 }//void InvoiceItemList(unsigned uInvoice)
 
 
-void EmailInvoices(void)
+void EmailLoadedInvoice(void)
 {
+	FILE *fp;
+	char cFrom[256]={"root"};
+	char cSubject[256]={""};
+	char cSubjectLang[100]={""};
+	char cBcc[256]={""};
+	char cEmail[100]={""};
 
-}//void EmailInvoices()
+	cSubject[255]=0;
+	
+	GetConfiguration("cFromEmailAddr",cFrom,1);
+	GetConfiguration("cInvoiceBccEmailAddr",cBcc,1);
+	
+	sprintf(gcQuery,"cSubjectLang%s",cGetInvoiceLanguage(uInvoice));
+	GetConfiguration(gcQuery,cSubjectLang,1);
+	if(!cSubjectLang[0])
+		sprintf(cSubjectLang,"Invoice #");
+	
+	sprintf(cSubject,"%s %u-%u",cSubjectLang,uClient,uInvoice);
+	sprintf(cEmail,"%s",cGetCustomerEmail(uInvoice));
+
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	//debug only
+	//if((fp=fopen("/tmp/eMailInvoice","w")))
+	{
+		fprintf(fp,"To: %s\n",cEmail);
+		fprintf(fp,"From: %s\n",cFrom);
+		fprintf(fp, "Reply-to: %s\n",cFrom);
+		if(cBcc[0]) fprintf(fp, "Bcc: %s\n",cBcc);
+		fprintf(fp,"Subject: %s\n",cSubject);
+		fprintf(fp,"MIME-Version: 1.0\n");
+		fprintf(fp,"Content-type: text/html\n\n");
+		funcInvoice(fp);
+	}
+	pclose(fp);
+
+}//void EmailLoadedInvoice(void)
+
+
+void EmailAllInvoices(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	
+	sprintf(gcQuery,"SELECT uInvoice,uClient FROM tInvoice WHERE uInvoiceStatus!=2");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uInvoice);
+		sscanf(field[1],"%u",&uClient);
+		EmailLoadedInvoice();
+	}
+	uInvoice=0;
+	uClient=0;
+
+}//void EmailAllInvoices(void)
+
+char *cGetInvoiceLanguage(unsigned uInvoice)
+{
+	static char cLanguage[32]={""};
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLanguage FROM tClient,tInvoice WHERE tClient.uClient=tInvoice.uClient AND tInvoice.uInvoice=%u",uInvoice);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cLanguage,"%.3s",field[0]);
+	else
+		sprintf(cLanguage,"Eng");
+	
+	return(cLanguage);
+
+}//char *cGetInvoiceLanguage(unsigned uInvoice)
+
+
+char *cGetCustomerEmail(unsigned uInvoice)
+{
+	static char cEmail[100]={""};
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cEmail FROM tInvoice WHERE uInvoice=%u",uInvoice);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cEmail,"%.99s",field[0]);
+	
+	return(cEmail);
+
+}//char cGetCustomerEmail(unsigned uInvoice)
 
 
 //Count current 'New' invoices for this user or all if admin/root user.
