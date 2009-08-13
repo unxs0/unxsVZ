@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>tParameter</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">tParameter</td></tr>
+</thead><tbody>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Main</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=tParameter</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gcCommand</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cParameter</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuParamTypePullDown</td>
+	<td>label=---</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cRange</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cExtVerify</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cISMName</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuProductTypePullDown</td>
+	<td>label=---</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>uISMOrder</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cISMHelp</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cParameter is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cParameter</td>
+	<td>unxsRadius.Test</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*uParamType is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuParamTypePullDown</td>
+	<td>label=string</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cRange is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cRange</td>
+	<td>3,20</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*uISMOrder is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>uISMOrder</td>
+	<td>10</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cISMName is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cISMName</td>
+	<td>Test Parameter</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*uProductType is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuProductTypePullDown</td>
+	<td>label=Radius</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Create New Record']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*New record*added*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cParameter</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuParamTypePullDown</td>
+	<td>label=---</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cRange</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cExtVerify</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cISMName</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuProductTypePullDown</td>
+	<td>label=---</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>uISMOrder</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cISMHelp</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cParameter is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cParameter</td>
+	<td>unxsRadius.ModTest</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*uParamType is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuParamTypePullDown</td>
+	<td>label=string</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cRange is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cRange</td>
+	<td>3,20</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*uISMOrder is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>uISMOrder</td>
+	<td>49</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*cISMName is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cYesNouModPostDeploy</td>
+	<td>label=Yes</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cISMName</td>
+	<td>Another Label</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*uProductType is required*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>cuProductTypePullDown</td>
+	<td>label=Radius</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Modify']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*record*modified*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Delete']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcCommand' and @value='Confirm Delete']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertBodyText</td>
+	<td>glob:*Record Deleted*</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>

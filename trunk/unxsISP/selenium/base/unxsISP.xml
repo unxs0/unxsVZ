@@ -10,6 +10,8 @@
 <tr><td><b>Test Suite</b></td></tr>
 <tr><td><a href="Login">Login</a></td></tr>
 <tr><td><a href="tAccountType">tAccountType</a></td></tr>
+<tr><td><a href="tClient">tClient</a></td></tr>
+<tr><td><a href="tParameter">tParameter</a></td></tr>
 </tbody></table>
 </body>
 </html>
