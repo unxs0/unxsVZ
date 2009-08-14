@@ -3864,3 +3864,70 @@ void PrepareTestData(unsigned uResource,char *cName,char *cParam1,char *cParam2,
 
 }//void PrepareTestData(void)
 
+
+void PrepDelToolsTestData(char *cBlock,char *cNSList,unsigned uTTL,unsigned uIPBlockFormat,unsigned uNumIPs)
+{
+	char cNS[100]={""};
+	char cName[100]={""};
+	char cParam1[100]={""};
+	unsigned uA,uB,uC,uD,uE;
+
+	while(1)
+	{
+		sprintf(cNS,"%.99s",ParseTextAreaLines(cNSList));
+		if(!cNS[0]) break;
+				
+		if(uIPBlockFormat==IP_BLOCK_CIDR)
+			sprintf(cName,"%u/%u",uD,uE);
+		else if(uIPBlockFormat==IP_BLOCK_DASH)
+			sprintf(cName,"%u-%u",uD,uE);
+
+		sprintf(gcQuery,"INSERT INTO tResourceTest SET uZone=%u,cName='%s',uTTL=%u,"
+					"uRRType=2,cParam1='%s',cComment='Delegation (%s)',"
+					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uZone
+					,cName
+					,uDelegationTTL
+					,cNS
+					,cIPBlock
+					,uOwner
+					,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+	//$GENERATE 0-255 $ CNAME $.0/24.21.68.217.in-addr.arpa.
+	if(uIPBlockFormat==IP_BLOCK_CIDR)
+		sprintf(cParam1,"$.%u/%u.%u.%u.%u.in-addr.arpa.",
+				uD
+				,uE
+				,uC
+				,uB
+				,uA
+			       );
+	else if(uIPBlockFormat==IP_BLOCK_DASH)
+	{
+		sprintf(cParam1,"$.%u-%u.%u.%u.%u.in-addr.arpa.",
+				uD
+				,uE
+				,uC
+				,uB
+				,uA
+			       );
+	}
+	sprintf(gcQuery,"INSERT INTO tResourceTest SET uZone=%u,cName='$GENERATE %u-%u $',"
+			"uRRType=5,cParam1='%s',cComment='Delegation (%s)',uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uZone
+			,uD
+			,(uD+uNumIPs)
+			,cParam1
+			,cIPBlock
+			,uOwner
+			,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}
