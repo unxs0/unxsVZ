@@ -3865,12 +3865,24 @@ void PrepareTestData(unsigned uResource,char *cName,char *cParam1,char *cParam2,
 }//void PrepareTestData(void)
 
 
-void PrepDelToolsTestData(char *cBlock,char *cNSList,unsigned uTTL,unsigned uIPBlockFormat,unsigned uNumIPs)
+void PrepDelToolsTestData(char *cIPBlock,char *cNSList,unsigned uTTL,unsigned uNumIPs)
 {
 	char cNS[100]={""};
 	char cName[100]={""};
 	char cParam1[100]={""};
 	unsigned uA,uB,uC,uD,uE;
+	unsigned uIPBlockFormat=0;
+
+	if(strchr(cIPBlock,'/'))
+	{
+		sscanf(cIPBlock,"%u.%u.%u.%u/%u",&uA,&uB,&uC,&uD,&uE);
+		uIPBlockFormat=IP_BLOCK_CIDR;
+	}
+	else if(strchr(cIPBlock,'-'))
+	{
+		sscanf(cIPBlock,"%u.%u.%u.%u-%u",&uA,&uB,&uC,&uD,&uE);
+		uIPBlockFormat=IP_BLOCK_DASH;
+	}
 
 	while(1)
 	{
