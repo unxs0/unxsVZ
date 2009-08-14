@@ -104,7 +104,7 @@ void PassDirectHtml(char *file);//bind.c aux section
 void PrepareTestData(unsigned uResource,char *cName,char *cParam1,char *cParam2,char *cParam3,
 			char *cParam4,char *cRRType,char *cComment,unsigned uRRTTL,unsigned uCalledFrom);
 unsigned OnLineZoneCheck(unsigned uCalledFrom);
-void PrepDelToolsTestData(char *cIPBlock,char *cNSList,unsigned uTTL,unsigned uNumIPs);
+void PrepDelToolsTestData(unsigned uNumIPs);
 
 void ExtProcesstZoneVars(pentry entries[], int x)
 {
@@ -723,7 +723,6 @@ void ExttZoneCommands(pentry entries[], int x)
 			char cNS[100]={""};
 			char cName[100]={""};
 			char cParam1[100]={""};
-			char cSaveNSList[1024]={""};
 
 			ProcesstZoneVars(entries,x);
 			if(!uAllowMod(uOwner,uCreatedBy)) 
@@ -839,15 +838,14 @@ void ExttZoneCommands(pentry entries[], int x)
 				uDelegationTTL=uTTL;
 			
 			//named-checkzone online check
-			sprintf(cSaveNSList,"%.1023s",cNSList);
-			PrepDelToolsTestData(cIPBlock,cSaveNSList,uDelegationTTL,uNumIPs);
+			PrepDelToolsTestData(uNumIPs);
 			OnLineZoneCheck(1);
-			
+			fprintf(stderr,"cNSList=%s\n",cNSList);
 			while(1)
 			{
 				sprintf(cNS,"%.99s",ParseTextAreaLines(cNSList));
 				if(!cNS[0]) break;
-				
+				fprintf(stderr,"cNS=%s",cNS);
 				if(uIPBlockFormat==IP_BLOCK_CIDR)
 					sprintf(cName,"%u/%u",uD,uE);
 				else if(uIPBlockFormat==IP_BLOCK_DASH)
@@ -1820,7 +1818,7 @@ char *ParseTextAreaLines(char *cTextArea)
 	static unsigned uEnd=0;
 	static unsigned uStart=0;
 	static char cRetVal[512];
-
+	
 	uStart=uEnd;
 	while(cTextArea[uEnd++])
 	{
@@ -1858,6 +1856,50 @@ char *ParseTextAreaLines(char *cTextArea)
 	return("");
 
 }//char *ParseTextAreaLines(char *cTextArea)
+
+
+char *ParseTextAreaLines2(char *cTextArea)
+{
+	static unsigned uEnd=0;
+	static unsigned uStart=0;
+	static char cRetVal[512];
+	
+	uStart=uEnd;
+	while(cTextArea[uEnd++])
+	{
+		if(cTextArea[uEnd]=='\n' || cTextArea[uEnd]=='\r' || cTextArea[uEnd]==0
+				|| cTextArea[uEnd]==10 || cTextArea[uEnd]==13 )
+		{
+			if(cTextArea[uEnd]==0)
+				break;
+
+			cTextArea[uEnd]=0;
+			sprintf(cRetVal,"%.511s",cTextArea+uStart);
+
+			if(cRetVal[0]=='\n' || cRetVal[0]==13)
+			{
+				uStart=uEnd=0;
+				return("");
+			}
+
+			if(cTextArea[uEnd+1]==10)
+				uEnd+=2;
+			else
+				uEnd++;
+
+			return(cRetVal);
+		}
+	}
+
+	if(uStart!=uEnd)
+	{
+		sprintf(cRetVal,"%.511s",cTextArea+uStart);
+		return(cRetVal);
+	}
+
+	uStart=uEnd=0;
+	return("");
+}
 
 
 void htmlInZone(void)
@@ -3727,7 +3769,7 @@ unsigned OnLineZoneCheck(unsigned uCalledFrom)
 		sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1 > /dev/null",field[0],cZoneFile);
 		if(system(gcQuery))
 		{
-			char cLine[100]={""};
+			char cLine[1024]={""};
 			sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1",field[0],cZoneFile);
 
 			if((zfp=popen(gcQuery,"r"))==NULL)
@@ -3743,17 +3785,20 @@ unsigned OnLineZoneCheck(unsigned uCalledFrom)
 					cp=cp+strlen(cZoneFile)+2; //2 more chars ': '
 					sprintf(gcQuery,"<blink>Error: </blink> The RR has an error: %s",cp);
 					if(uCalledFrom)
+					{
+						guMode=4001;
 						tZone(gcQuery);
+					}
 					else
 						tResource(gcQuery);
 				}
 			}
 			pclose(zfp);
-	//		unlink(cZoneFile);
+			unlink(cZoneFile);
 			return(1);
 		}
 	}
-	//unlink(cZoneFile);
+	unlink(cZoneFile);
 
 	return(0);
 
@@ -3788,14 +3833,16 @@ void CreatetResourceTest(void)
 		htmlPlainTextError(mysql_error(&gMysql));
 }//void CreatetRestResource(void)
 
+char *ParseTextAreaLines2(char *cTextArea);
 
-void PrepDelToolsTestData(char *cIPBlock,char *cNServers,unsigned uDTTL,unsigned uNumIPs)
+void PrepDelToolsTestData(unsigned uNumIPs)
 {
 	char cNS[100]={""};
 	char cName[100]={""};
 	char cParam1[100]={""};
 	unsigned uA,uB,uC,uD,uE;
 	unsigned uIPBlockFormat=0;
+	char cNServers[4096]={""};
 
 	CreatetResourceTest();
 	sprintf(gcQuery,"DELETE FROM tResourceTest WHERE uZone=%u",uZone);
@@ -3824,11 +3871,12 @@ void PrepDelToolsTestData(char *cIPBlock,char *cNServers,unsigned uDTTL,unsigned
 		uIPBlockFormat=IP_BLOCK_DASH;
 	}
 
+	sprintf(cNServers,"%.4095s",cNSList);
+	
 	while(1)
 	{
-		sprintf(cNS,"%.99s",ParseTextAreaLines(cNServers));
+		sprintf(cNS,"%.99s",ParseTextAreaLines2(cNServers));
 		if(!cNS[0]) break;
-				
 		if(uIPBlockFormat==IP_BLOCK_CIDR)
 			sprintf(cName,"%u/%u",uD,uE);
 		else if(uIPBlockFormat==IP_BLOCK_DASH)
@@ -3839,7 +3887,7 @@ void PrepDelToolsTestData(char *cIPBlock,char *cNServers,unsigned uDTTL,unsigned
 					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 					uZone
 					,cName
-					,uDTTL
+					,uDelegationTTL
 					,cNS
 					,cIPBlock
 					,uOwner
@@ -3881,5 +3929,4 @@ void PrepDelToolsTestData(char *cIPBlock,char *cNServers,unsigned uDTTL,unsigned
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-
 }
