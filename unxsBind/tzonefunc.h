@@ -3569,3 +3569,359 @@ void CloneZone(char *cSourceZone,char *cTargetZone,unsigned uView)
 	tZone("Zone cloned OK");
 
 }//void CloneZone(char *cSourceZone,char *cTargetZone);
+
+
+char *GetRRType(unsigned uRRType);
+char *cPrintNSList(FILE *zfp,char *cuNSSet);
+void PrintMXList(FILE *zfp,char *cuMailServers);
+
+
+unsigned OnLineZoneCheck(void)
+{
+	//This function will create a zonefile online and run named-checkzone
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	MYSQL_RES *res2;
+	MYSQL_ROW field2;
+	FILE *zfp;
+	FILE *dnfp;
+	unsigned uZone=0;
+	unsigned uRRType=0;
+	char cTTL[50]={""};
+	char cZoneFile[100]={""};
+
+	PrepareTestData();
+
+	sprintf(cZoneFile,"/tmp/%s",cZone);
+
+	if((zfp=fopen(cZoneFile,"w"))==NULL)
+		htmlPlainTextError("fopen() failed for temp zonefile");
+
+	if((dnfp=fopen("/dev/null","w"))==NULL)
+		htmlPlainTextError("fopen() failed for /dev/null");
+
+	sprintf(gcQuery,"SELECT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
+			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
+			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel FROM tZone,tNSSet,tNS,tView"
+			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
+			" tZone.uView=tView.uView AND tZone.cZone='%s' AND tZone.uView='%u'",cZone,uView);
+
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		char cFirstNS[100]={""};
+		
+		//0 cZone
+		//1 uZone
+		//2 uNameServer
+		//3 cHostmaster
+		//4 uSerial
+		//
+		//5 uTTL default TTL macro directive $TTL. See bind 8.2.x docs
+		//
+		//6 uExpire
+		//7 uRefresh
+		//8 uRetry
+		//9 uZoneTTL is the negative response caching value in the SOA.
+		//  See bind 8.2.x docs
+		//
+		//10 uMailServers
+		//11 cMainAddress
+		//12 tView.cLabel
+		//13 tView.cMaster
+		//14 tView.uOrder
+		sscanf(field[1],"%u",&uZone);
+	
+		if((cp=strchr(field[3],' '))) *cp=0;
+
+		fprintf(zfp,"; %s\n",field[0]);
+		fprintf(zfp,"$TTL %s\n",field[5]);
+	
+		//MASTER HIDDEN support
+		sprintf(cFirstNS,"%.99s",cPrintNSList(dnfp,field[2]));
+		if(cFirstNS[0])
+			fprintf(zfp,
+			"@ IN SOA %s. %s. (\n",cFirstNS,field[3]);
+/*		else
+			fprintf(zfp,
+			"@ IN SOA %s. %s. (\n",cMasterNS,field[3]);*/
+		fprintf(zfp,"\t\t\t%s\t;serial\n",field[4]);
+		fprintf(zfp,"\t\t\t%s\t\t;slave refresh\n",field[7]);
+		fprintf(zfp,"\t\t\t%s\t\t;slave retry\n",field[8]);
+		fprintf(zfp,"\t\t\t%s\t\t;slave expiration\n",field[6]);
+		fprintf(zfp,"\t\t\t%s )\t\t;negative ttl\n\n",
+			field[9]);
+
+		//ns
+		cPrintNSList(zfp,field[2]);
+
+		//mx1
+		PrintMXList(zfp,field[10]);
+		//in a 0.0.0.0 is the null IP number
+		if(field[11][0] && field[11][0]!='0')
+			fprintf(zfp,"\t\tA %s\n;\n",field[11]);
+		fprintf(zfp,";\n");
+
+		//TODO
+		if(!strcmp(field[0]+strlen(field[0])-5,".arpa"))
+			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2 FROM tResourceTest WHERE uZone=%u ORDER BY uResource",uZone);
+		else
+			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4 FROM tResourceTest WHERE uZone=%u ORDER BY cName",uZone);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+		{
+			fprintf(stderr,"%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		res2=mysql_store_result(&gMysql);
+		while((field2=mysql_fetch_row(res2)))
+		{
+			sscanf(field2[2],"%u",&uRRType);
+			if(field2[1][0]!='0') strcpy(cTTL,field2[1]);
+			//Do not write TTL if cName is a $GENERATE line
+			if(strstr(field2[0],"$GENERATE")==NULL)
+			{
+				if(strcmp(GetRRType(uRRType),"SRV"))
+					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\n",
+							field2[0],
+							cTTL,
+							GetRRType(uRRType),
+							field2[3],
+							field2[4]);
+				else
+					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+							field2[0],
+							cTTL,
+							GetRRType(uRRType),
+							field2[3],
+							field2[4],
+							field2[5],
+							field2[6]);
+			}
+			else
+				fprintf(zfp,"%s\t%s\t%s\t%s\n",
+						field2[0],
+						GetRRType(uRRType),
+						field2[3],
+						field2[4]);
+		}
+		mysql_free_result(res2);
+		fclose(zfp);
+
+		sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1 > /dev/null",field[0],cZoneFile);
+		if(system(gcQuery))
+		{
+			char cLine[100]={""};
+			sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1",field[0],cZoneFile);
+
+			if((zfp=popen(gcQuery,"r"))==NULL)
+				htmlPlainTextError("popen() failed");
+			
+			//zone clonetest.com/IN: loading master file /tmp/clonetest.com: CNAME and other data
+			while(fgets(cLine,sizeof cLine,zfp)!=NULL)
+			{
+				if(strstr(cLine,"zone"))
+				{
+					char *cp;
+					cp=strstr(cLine,cZoneFile);
+					cp=cp+strlen(cZoneFile)+2; //2 more chars ': '
+					sprintf(gcQuery,"<blink>Error: </blink> The RR has an error: %s",cp);
+					tZone(gcQuery);
+				}
+			}
+			pclose(zfp);
+			unlink(cZoneFile);
+			return(1);
+		}
+	}
+	unlink(cZoneFile);
+
+	return(0);
+
+}//unsigned OnLineZoneCheck(void)
+
+
+char *GetRRType(unsigned uRRType)
+{
+	MYSQL_RES *res;
+	static char cRRType[100];
+	
+	strcpy(cRRType,"unknown");
+
+	sprintf(gcQuery,"SELECT cLabel FROM tRRType WHERE uRRType=%u",uRRType);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+	{
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	
+	if(mysql_num_rows(res)==1) 
+	{
+		MYSQL_ROW field;
+		if((field=mysql_fetch_row(res)))
+			strcpy(cRRType,field[0]);
+
+	}
+	mysql_free_result(res);
+	return(cRRType);
+
+}//char *GetRRType(unsigned uRRType)
+
+
+char *cPrintNSList(FILE *zfp,char *cuNSSet)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	static char cFirstNS[100]={""};
+	unsigned uFirst=1;
+
+	//Do not include HIDDEN NSs. 2 is the fixed HIDDEN TYPE
+	//This ORDER BY implies that people will use a NS scheme that is alphabetical
+	//in nature like ns1, ns2 etc. This will need to be looked at later ;)
+	sprintf(gcQuery,"SELECT tNS.cFQDN,tNS.uNSType FROM tNSSet,tNS WHERE tNSSet.uNSSet=tNS.uNSSet AND"
+			" tNS.uNSType!=2 AND tNSSet.uNSSet=%s ORDER BY tNS.cFQDN",cuNSSet);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+	{
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+			fprintf(zfp,"\t\tNS %s.\n",FQDomainName(field[0]));
+			if(uFirst)
+			{
+				sprintf(cFirstNS,"%.99s",field[0]);
+				uFirst=0;
+			}
+	}
+	mysql_free_result(res);
+
+	return(cFirstNS);
+
+}//char *cPrintNSList()
+
+
+//Old cList based list. Will be deprecated to tMXSet based sub-schema for 2.8 release
+void PrintMXList(FILE *zfp,char *cuMailServers)
+{
+	MYSQL_RES *res;
+
+	sprintf(gcQuery,"SELECT cList FROM tMailServer WHERE uMailServer=%s",
+			cuMailServers);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+	{
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	
+	if(mysql_num_rows(res)==1) 
+	{
+		MYSQL_ROW field;
+		register int i=0,j=0,uMX=10;
+
+		if((field=mysql_fetch_row(res)))
+		{
+			//parse out
+			while(field[0][i])
+			{
+				if(field[0][i]=='\n' || field[0][i]==0)
+				{
+					field[0][i]=0;
+					if(strlen(FQDomainName(field[0]+j)))
+					{	
+						fprintf(zfp,"\t\tMX %d %s.\n",uMX,
+							FQDomainName(field[0]+j));
+					}
+					i++;
+					j=i;
+					uMX+=10;
+				}
+				i++;
+			}
+			if(field[0][j] && strlen(FQDomainName(field[0]+j)))
+			{	
+				fprintf(zfp,"\t\tMX %d %s.\n",uMX,
+					FQDomainName(field[0]+j));
+			}
+		}
+	}
+	mysql_free_result(res);
+}//PrintMXList(FILE *fp,char *cuMailServers)
+
+
+void CreatetResourceTest(void)
+{
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tResourceTest ( uResource INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cName VARCHAR(100) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uTTL INT UNSIGNED NOT NULL DEFAULT 0, uRRType INT UNSIGNED NOT NULL DEFAULT 0, cParam1 VARCHAR(255) NOT NULL DEFAULT '', cParam2 VARCHAR(255) NOT NULL DEFAULT '', cComment TEXT NOT NULL DEFAULT '', uZone INT UNSIGNED NOT NULL DEFAULT 0,index (uZone), cParam3 VARCHAR(255) NOT NULL DEFAULT '', cParam4 VARCHAR(255) NOT NULL DEFAULT '' )");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+}//void CreatetRestResource(void)
+
+
+
+void PrepareTestData(void)
+{
+	unsigned uRRType=SelectRRType(cRRType);
+
+	CreatetResourceTest();
+	sprintf(gcQuery,"DELETE FROM tResourceTest WHERE uZone=%u",uZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	sprintf(gcQuery,"INSERT INTO tResourceTest (uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,"
+			"uModDate,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,cComment,uZone) "
+			"SELECT uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
+			"cParam1,cParam2,cParam3,cParam4,cComment,uZone FROM tResource WHERE "
+			"uZone=%u",uZone);
+
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	if(!strcmp(gcFunction,"New Confirm") || !strcmp(gcFunction,"Finish"))
+		sprintf(gcQuery,"INSERT INTO tResourceTest SET cName='%s',uTTL=%s,uRRType=%u,cParam1='%s'"
+				",cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
+				cName,
+				cuTTL,
+				uRRType,
+				cParam1,
+				cParam2,
+				cParam3,
+				cParam4,
+				TextAreaSave(cComment),
+				guCompany,
+				guLoginClient,
+				uZone);
+	else if(!strcmp(gcFunction,"Modify Confirm"))
+		sprintf(gcQuery,"UPDATE tResourceTest SET cName='%s',uTTL=%s,uRRType=%u,cParam1='%s',cParam2='%s',"
+				"cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) "
+				"WHERE uResource=%u",
+				cName,
+				cuTTL,
+				uRRType,
+				cParam1,
+				cParam2,
+				cParam3,
+				cParam4,
+				TextAreaSave(cComment),
+				guLoginClient,
+				uResource);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void PrepareTestData(void)
+
