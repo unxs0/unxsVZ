@@ -1,4 +1,4 @@
- /*
+/*
 FILE
 	$Id$
 PURPOSE
@@ -103,9 +103,8 @@ void PassDirectHtml(char *file);//bind.c aux section
 
 void PrepareTestData(unsigned uResource,char *cName,char *cParam1,char *cParam2,char *cParam3,
 			char *cParam4,char *cRRType,char *cComment,unsigned uRRTTL,unsigned uCalledFrom);
-unsigned OnLineZoneCheck(unsigned uResource,char *cName,char *cParam1,char *cParam2,char *cParam3,
-			char *cParam4,char *cRRType,char *cComment, unsigned uRRTTL,unsigned uCalledFrom);
-
+unsigned OnLineZoneCheck(unsigned uCalledFrom);
+void PrepDelToolsTestData(char *cIPBlock,char *cNSList,unsigned uTTL,unsigned uNumIPs);
 
 void ExtProcesstZoneVars(pentry entries[], int x)
 {
@@ -724,6 +723,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			char cNS[100]={""};
 			char cName[100]={""};
 			char cParam1[100]={""};
+			char cSaveNSList[1024]={""};
 
 			ProcesstZoneVars(entries,x);
 			if(!uAllowMod(uOwner,uCreatedBy)) 
@@ -837,7 +837,12 @@ void ExttZoneCommands(pentry entries[], int x)
 			}
 			if(!uDelegationTTL)
 				uDelegationTTL=uTTL;
-		
+			
+			//named-checkzone online check
+			sprintf(cSaveNSList,"%.1023s",cNSList);
+			PrepDelToolsTestData(cIPBlock,cSaveNSList,uDelegationTTL,uNumIPs);
+			OnLineZoneCheck(1);
+			
 			while(1)
 			{
 				sprintf(cNS,"%.99s",ParseTextAreaLines(cNSList));
@@ -3581,8 +3586,7 @@ char *cPrintNSList(FILE *zfp,char *cuNSSet);
 void PrintMXList(FILE *zfp,char *cuMailServers);
 
 
-unsigned OnLineZoneCheck(unsigned uResource,char *cName,char *cParam1,char *cParam2,char *cParam3,
-			char *cParam4,char *cRRType,char *cComment, unsigned uRRTTL,unsigned uCalledFrom)
+unsigned OnLineZoneCheck(unsigned uCalledFrom)
 {
 	//This function will create a zonefile online and run named-checkzone
 	MYSQL_RES *res;
@@ -3596,7 +3600,7 @@ unsigned OnLineZoneCheck(unsigned uResource,char *cName,char *cParam1,char *cPar
 	char cTTL[50]={""};
 	char cZoneFile[100]={""};
 
-	PrepareTestData(uResource,cName,cParam1,cParam2,cParam3,cParam4,cRRType,cComment,uRRTTL,uCalledFrom);
+	//PrepareTestData(uResource,cName,cParam1,cParam2,cParam3,cParam4,cRRType,cComment,uRRTTL,uCalledFrom);
 
 	sprintf(cZoneFile,"/tmp/%s",cZone);
 
@@ -3745,11 +3749,11 @@ unsigned OnLineZoneCheck(unsigned uResource,char *cName,char *cParam1,char *cPar
 				}
 			}
 			pclose(zfp);
-			unlink(cZoneFile);
+	//		unlink(cZoneFile);
 			return(1);
 		}
 	}
-	unlink(cZoneFile);
+	//unlink(cZoneFile);
 
 	return(0);
 
@@ -3785,11 +3789,13 @@ void CreatetResourceTest(void)
 }//void CreatetRestResource(void)
 
 
-
-void PrepareTestData(unsigned uResource,char *cName,char *cParam1,char *cParam2,char *cParam3,
-			char *cParam4,char *cRRType,char *cComment,unsigned uRRTTL,unsigned uCalledFrom)
+void PrepDelToolsTestData(char *cIPBlock,char *cNServers,unsigned uDTTL,unsigned uNumIPs)
 {
-	unsigned uRRType=SelectRRType(cRRType);
+	char cNS[100]={""};
+	char cName[100]={""};
+	char cParam1[100]={""};
+	unsigned uA,uB,uC,uD,uE;
+	unsigned uIPBlockFormat=0;
 
 	CreatetResourceTest();
 	sprintf(gcQuery,"DELETE FROM tResourceTest WHERE uZone=%u",uZone);
@@ -3807,72 +3813,6 @@ void PrepareTestData(unsigned uResource,char *cName,char *cParam1,char *cParam2,
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	
-	if(uCalledFrom)
-	{
-		//Deleg Tools, otherwise we are called from tresourcefunc.h
-		//Insert only
-		sprintf(gcQuery,"INSERT INTO tResourceTest SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s'"
-				",cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
-				cName,
-				uRRTTL,
-				uRRType,
-				cParam1,
-				cParam2,
-				cParam3,
-				cParam4,
-				TextAreaSave(cComment),
-				guCompany,
-				guLoginClient,
-				uZone);
-	}
-	else
-	{
-		if(guMode==2000)
-			sprintf(gcQuery,"INSERT INTO tResourceTest SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s'"
-					",cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
-					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
-					cName,
-					uRRTTL,
-					uRRType,
-					cParam1,
-					cParam2,
-					cParam3,
-					cParam4,
-					TextAreaSave(cComment),
-					guCompany,
-					guLoginClient,
-					uZone);
-		else if(guMode==2002)
-			sprintf(gcQuery,"UPDATE tResourceTest SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',"
-					"cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) "
-					"WHERE uResource=%u",
-					cName,
-					uRRTTL,
-					uRRType,
-					cParam1,
-					cParam2,
-					cParam3,
-					cParam4,
-					TextAreaSave(cComment),
-					guLoginClient,
-					uResource);
-	}
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-}//void PrepareTestData(void)
-
-
-void PrepDelToolsTestData(char *cIPBlock,char *cNSList,unsigned uTTL,unsigned uNumIPs)
-{
-	char cNS[100]={""};
-	char cName[100]={""};
-	char cParam1[100]={""};
-	unsigned uA,uB,uC,uD,uE;
-	unsigned uIPBlockFormat=0;
-
 	if(strchr(cIPBlock,'/'))
 	{
 		sscanf(cIPBlock,"%u.%u.%u.%u/%u",&uA,&uB,&uC,&uD,&uE);
@@ -3886,7 +3826,7 @@ void PrepDelToolsTestData(char *cIPBlock,char *cNSList,unsigned uTTL,unsigned uN
 
 	while(1)
 	{
-		sprintf(cNS,"%.99s",ParseTextAreaLines(cNSList));
+		sprintf(cNS,"%.99s",ParseTextAreaLines(cNServers));
 		if(!cNS[0]) break;
 				
 		if(uIPBlockFormat==IP_BLOCK_CIDR)
@@ -3899,7 +3839,7 @@ void PrepDelToolsTestData(char *cIPBlock,char *cNSList,unsigned uTTL,unsigned uN
 					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 					uZone
 					,cName
-					,uDelegationTTL
+					,uDTTL
 					,cNS
 					,cIPBlock
 					,uOwner
