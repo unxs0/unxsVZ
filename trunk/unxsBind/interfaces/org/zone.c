@@ -1861,3 +1861,147 @@ unsigned uPTRInBlock(unsigned uZone,unsigned uStart,unsigned uEnd)
 	
 }//unsigned uPTRInBlock(unsigned uZone,unsigned uStart,unsigned uEnd)
 
+char *ParseTextAreaLines2(char *cTextArea);
+void CreatetResourceTest(void);
+
+void PrepDelToolsTestData(unsigned uNumIPs)
+{
+	char cNS[100]={""};
+	char cName[100]={""};
+	char cParam1[100]={""};
+	unsigned uA,uB,uC,uD,uE;
+	unsigned uIPBlockFormat=0;
+	char cNServers[4096]={""};
+	unsigned uZone=uGetuZone(gcZone);
+
+	CreatetResourceTest();
+	sprintf(gcQuery,"DELETE FROM tResourceTest WHERE uZone=%u",uZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	sprintf(gcQuery,"INSERT INTO tResourceTest (uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,"
+			"uModDate,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,cComment,uZone) "
+			"SELECT uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
+			"cParam1,cParam2,cParam3,cParam4,cComment,uZone FROM tResource WHERE "
+			"uZone=%u",uZone);
+
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	if(strchr(cIPBlock,'/'))
+	{
+		sscanf(cIPBlock,"%u.%u.%u.%u/%u",&uA,&uB,&uC,&uD,&uE);
+		uIPBlockFormat=IP_BLOCK_CIDR;
+	}
+	else if(strchr(cIPBlock,'-'))
+	{
+		sscanf(cIPBlock,"%u.%u.%u.%u-%u",&uA,&uB,&uC,&uD,&uE);
+		uIPBlockFormat=IP_BLOCK_DASH;
+	}
+
+	sprintf(cNServers,"%.4095s",cNSList);
+	
+	while(1)
+	{
+		sprintf(cNS,"%.99s",ParseTextAreaLines2(cNServers));
+		if(!cNS[0]) break;
+		if(uIPBlockFormat==IP_BLOCK_CIDR)
+			sprintf(cName,"%u/%u",uD,uE);
+		else if(uIPBlockFormat==IP_BLOCK_DASH)
+			sprintf(cName,"%u-%u",uD,uE);
+
+		sprintf(gcQuery,"INSERT INTO tResourceTest SET uZone=%u,cName='%s',uTTL=%u,"
+					"uRRType=2,cParam1='%s',cComment='Delegation (%s)',"
+					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uZone
+					,cName
+					,uDelegationTTL
+					,cNS
+					,cIPBlock
+					,uOwner
+					,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+	//$GENERATE 0-255 $ CNAME $.0/24.21.68.217.in-addr.arpa.
+	if(uIPBlockFormat==IP_BLOCK_CIDR)
+		sprintf(cParam1,"$.%u/%u.%u.%u.%u.in-addr.arpa.",
+				uD
+				,uE
+				,uC
+				,uB
+				,uA
+			       );
+	else if(uIPBlockFormat==IP_BLOCK_DASH)
+	{
+		sprintf(cParam1,"$.%u-%u.%u.%u.%u.in-addr.arpa.",
+				uD
+				,uE
+				,uC
+				,uB
+				,uA
+			       );
+	}
+	sprintf(gcQuery,"INSERT INTO tResourceTest SET uZone=%u,cName='$GENERATE %u-%u $',"
+			"uRRType=5,cParam1='%s',cComment='Delegation (%s)',uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uZone
+			,uD
+			,(uD+uNumIPs)
+			,cParam1
+			,cIPBlock
+			,uOwner
+			,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+}
+
+
+char *ParseTextAreaLines2(char *cTextArea)
+{
+	static unsigned uEnd=0;
+	static unsigned uStart=0;
+	static char cRetVal[512];
+	
+	uStart=uEnd;
+	while(cTextArea[uEnd++])
+	{
+		if(cTextArea[uEnd]=='\n' || cTextArea[uEnd]=='\r' || cTextArea[uEnd]==0
+				|| cTextArea[uEnd]==10 || cTextArea[uEnd]==13 )
+		{
+			if(cTextArea[uEnd]==0)
+				break;
+
+			cTextArea[uEnd]=0;
+			sprintf(cRetVal,"%.511s",cTextArea+uStart);
+
+			if(cRetVal[0]=='\n' || cRetVal[0]==13)
+			{
+				uStart=uEnd=0;
+				return("");
+			}
+
+			if(cTextArea[uEnd+1]==10)
+				uEnd+=2;
+			else
+				uEnd++;
+
+			return(cRetVal);
+		}
+	}
+
+	if(uStart!=uEnd)
+	{
+		sprintf(cRetVal,"%.511s",cTextArea+uStart);
+		return(cRetVal);
+	}
+
+	uStart=uEnd=0;
+	return("");
+}
+
