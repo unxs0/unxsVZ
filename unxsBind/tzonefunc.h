@@ -101,6 +101,11 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 		                unsigned uModStubs, unsigned uDebug);
 void PassDirectHtml(char *file);//bind.c aux section
 
+void PrepareTestData(unsigned uResource,char *cName,char *cParam1,char *cParam2,char *cParam3,
+			char *cParam4,char *cRRType,char *cComment,unsigned uRRTTL,unsigned uCalledFrom);
+unsigned OnLineZoneCheck(unsigned uResource,char *cName,char *cParam1,char *cParam2,char *cParam3,
+			char *cParam4,char *cRRType,char *cComment, unsigned uRRTTL,unsigned uCalledFrom);
+
 
 void ExtProcesstZoneVars(pentry entries[], int x)
 {
@@ -3576,7 +3581,8 @@ char *cPrintNSList(FILE *zfp,char *cuNSSet);
 void PrintMXList(FILE *zfp,char *cuMailServers);
 
 
-unsigned OnLineZoneCheck(char *cName,char *cParam1,char *cParam2,char *cParam3,char *cParam4,char *cRRType,unsigned uRRTTL)
+unsigned OnLineZoneCheck(unsigned uResource,char *cName,char *cParam1,char *cParam2,char *cParam3,
+			char *cParam4,char *cRRType,char *cComment, unsigned uRRTTL,unsigned uCalledFrom)
 {
 	//This function will create a zonefile online and run named-checkzone
 	MYSQL_RES *res;
@@ -3590,7 +3596,7 @@ unsigned OnLineZoneCheck(char *cName,char *cParam1,char *cParam2,char *cParam3,c
 	char cTTL[50]={""};
 	char cZoneFile[100]={""};
 
-	PrepareTestData(cName,cParam1,cParam2,cParam3,cParam4,cRRType,uRRTTL);
+	PrepareTestData(uResource,cName,cParam1,cParam2,cParam3,cParam4,cRRType,cComment,uRRTTL,uCalledFrom);
 
 	sprintf(cZoneFile,"/tmp/%s",cZone);
 
@@ -3732,7 +3738,10 @@ unsigned OnLineZoneCheck(char *cName,char *cParam1,char *cParam2,char *cParam3,c
 					cp=strstr(cLine,cZoneFile);
 					cp=cp+strlen(cZoneFile)+2; //2 more chars ': '
 					sprintf(gcQuery,"<blink>Error: </blink> The RR has an error: %s",cp);
-					tZone(gcQuery);
+					if(uCalledFrom)
+						tZone(gcQuery);
+					else
+						tResource(gcQuery);
 				}
 			}
 			pclose(zfp);
