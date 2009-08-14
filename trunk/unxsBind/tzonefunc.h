@@ -723,6 +723,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			char cNS[100]={""};
 			char cName[100]={""};
 			char cParam1[100]={""};
+			char cLogEntry[100]={""};
 
 			ProcesstZoneVars(entries,x);
 			if(!uAllowMod(uOwner,uCreatedBy)) 
@@ -905,6 +906,8 @@ void ExttZoneCommands(pentry entries[], int x)
 				if(SubmitJob("Modify",uNSSet,cZone,0,0))
 					htmlPlainTextError(mysql_error(&gMysql));
 			}
+			sprintf(cLogEntry,"%s Delegation",cIPBlock);
+			iDNSLog(uZone,"tZone",cLogEntry);
 
 			tZone("IP block delegation done");
 			
@@ -919,6 +922,8 @@ void ExttZoneCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcCommand,"Confirm Del. Removal") && guPermLevel>9)
 		{
+			char cLogEntry[100]={""};
+
 			ProcesstZoneVars(entries,x);
 			if(!uAllowDel(uOwner,uCreatedBy))
 				tZone("<blink>Error</blink>: Denied by permissions settings");
@@ -941,6 +946,8 @@ void ExttZoneCommands(pentry entries[], int x)
 				if(SubmitJob("Modify",uNSSet,cZone,0,0))
 					htmlPlainTextError(mysql_error(&gMysql));
 			}
+			sprintf(cLogEntry,"%s Delegation Removal",cIPBlock);
+			iDNSLog(uZone,"tZone",cLogEntry);
 			tZone("IP block delegation removed");
 		}
 		else if(!strcmp(gcCommand,"Clone Zone"))
