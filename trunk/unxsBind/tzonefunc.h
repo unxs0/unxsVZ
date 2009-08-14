@@ -3576,7 +3576,7 @@ char *cPrintNSList(FILE *zfp,char *cuNSSet);
 void PrintMXList(FILE *zfp,char *cuMailServers);
 
 
-unsigned OnLineZoneCheck(void)
+unsigned OnLineZoneCheck(char *cName,char *cParam1,char *cParam2,char *cParam3,char *cParam4,char *cRRType,unsigned uRRTTL)
 {
 	//This function will create a zonefile online and run named-checkzone
 	MYSQL_RES *res;
@@ -3590,7 +3590,7 @@ unsigned OnLineZoneCheck(void)
 	char cTTL[50]={""};
 	char cZoneFile[100]={""};
 
-	PrepareTestData();
+	PrepareTestData(cName,cParam1,cParam2,cParam3,cParam4,cRRType,uRRTTL);
 
 	sprintf(cZoneFile,"/tmp/%s",cZone);
 
@@ -3618,6 +3618,7 @@ unsigned OnLineZoneCheck(void)
 		
 		//0 cZone
 		//1 uZone
+
 		//2 uNameServer
 		//3 cHostmaster
 		//4 uSerial
@@ -3746,118 +3747,24 @@ unsigned OnLineZoneCheck(void)
 }//unsigned OnLineZoneCheck(void)
 
 
-char *GetRRType(unsigned uRRType)
-{
-	MYSQL_RES *res;
-	static char cRRType[100];
-	
-	strcpy(cRRType,"unknown");
-
-	sprintf(gcQuery,"SELECT cLabel FROM tRRType WHERE uRRType=%u",uRRType);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) 
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	res=mysql_store_result(&gMysql);
-	
-	if(mysql_num_rows(res)==1) 
-	{
-		MYSQL_ROW field;
-		if((field=mysql_fetch_row(res)))
-			strcpy(cRRType,field[0]);
-
-	}
-	mysql_free_result(res);
-	return(cRRType);
-
-}//char *GetRRType(unsigned uRRType)
-
-
-char *cPrintNSList(FILE *zfp,char *cuNSSet)
+unsigned SelectRRType(char *cRRType)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	static char cFirstNS[100]={""};
-	unsigned uFirst=1;
+	unsigned uRRType=0;
 
-	//Do not include HIDDEN NSs. 2 is the fixed HIDDEN TYPE
-	//This ORDER BY implies that people will use a NS scheme that is alphabetical
-	//in nature like ns1, ns2 etc. This will need to be looked at later ;)
-	sprintf(gcQuery,"SELECT tNS.cFQDN,tNS.uNSType FROM tNSSet,tNS WHERE tNSSet.uNSSet=tNS.uNSSet AND"
-			" tNS.uNSType!=2 AND tNSSet.uNSSet=%s ORDER BY tNS.cFQDN",cuNSSet);
+	sprintf(gcQuery,"SELECT uRRType from tRRType WHERE cLabel='%s'",cRRType);
 	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) 
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-			fprintf(zfp,"\t\tNS %s.\n",FQDomainName(field[0]));
-			if(uFirst)
-			{
-				sprintf(cFirstNS,"%.99s",field[0]);
-				uFirst=0;
-			}
-	}
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uRRType);
 	mysql_free_result(res);
 
-	return(cFirstNS);
-
-}//char *cPrintNSList()
-
-
-//Old cList based list. Will be deprecated to tMXSet based sub-schema for 2.8 release
-void PrintMXList(FILE *zfp,char *cuMailServers)
-{
-	MYSQL_RES *res;
-
-	sprintf(gcQuery,"SELECT cList FROM tMailServer WHERE uMailServer=%s",
-			cuMailServers);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) 
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	res=mysql_store_result(&gMysql);
+	return(uRRType);
 	
-	if(mysql_num_rows(res)==1) 
-	{
-		MYSQL_ROW field;
-		register int i=0,j=0,uMX=10;
-
-		if((field=mysql_fetch_row(res)))
-		{
-			//parse out
-			while(field[0][i])
-			{
-				if(field[0][i]=='\n' || field[0][i]==0)
-				{
-					field[0][i]=0;
-					if(strlen(FQDomainName(field[0]+j)))
-					{	
-						fprintf(zfp,"\t\tMX %d %s.\n",uMX,
-							FQDomainName(field[0]+j));
-					}
-					i++;
-					j=i;
-					uMX+=10;
-				}
-				i++;
-			}
-			if(field[0][j] && strlen(FQDomainName(field[0]+j)))
-			{	
-				fprintf(zfp,"\t\tMX %d %s.\n",uMX,
-					FQDomainName(field[0]+j));
-			}
-		}
-	}
-	mysql_free_result(res);
-}//PrintMXList(FILE *fp,char *cuMailServers)
+}//unsigned SelectRRType(char *cRRType)
 
 
 void CreatetResourceTest(void)
@@ -3870,7 +3777,8 @@ void CreatetResourceTest(void)
 
 
 
-void PrepareTestData(void)
+void PrepareTestData(unsigned uResource,char *cName,char *cParam1,char *cParam2,char *cParam3,
+			char *cParam4,char *cRRType,char *cComment,unsigned uRRTTL,unsigned uCalledFrom)
 {
 	unsigned uRRType=SelectRRType(cRRType);
 
@@ -3890,12 +3798,15 @@ void PrepareTestData(void)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	
-	if(!strcmp(gcFunction,"New Confirm") || !strcmp(gcFunction,"Finish"))
-		sprintf(gcQuery,"INSERT INTO tResourceTest SET cName='%s',uTTL=%s,uRRType=%u,cParam1='%s'"
+	if(uCalledFrom)
+	{
+		//Deleg Tools, otherwise we are called from tresourcefunc.h
+		//Insert only
+		sprintf(gcQuery,"INSERT INTO tResourceTest SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s'"
 				",cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
 				cName,
-				cuTTL,
+				uRRTTL,
 				uRRType,
 				cParam1,
 				cParam2,
@@ -3905,20 +3816,39 @@ void PrepareTestData(void)
 				guCompany,
 				guLoginClient,
 				uZone);
-	else if(!strcmp(gcFunction,"Modify Confirm"))
-		sprintf(gcQuery,"UPDATE tResourceTest SET cName='%s',uTTL=%s,uRRType=%u,cParam1='%s',cParam2='%s',"
-				"cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) "
-				"WHERE uResource=%u",
-				cName,
-				cuTTL,
-				uRRType,
-				cParam1,
-				cParam2,
-				cParam3,
-				cParam4,
-				TextAreaSave(cComment),
-				guLoginClient,
-				uResource);
+	}
+	else
+	{
+		if(guMode==2000)
+			sprintf(gcQuery,"INSERT INTO tResourceTest SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s'"
+					",cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
+					cName,
+					uRRTTL,
+					uRRType,
+					cParam1,
+					cParam2,
+					cParam3,
+					cParam4,
+					TextAreaSave(cComment),
+					guCompany,
+					guLoginClient,
+					uZone);
+		else if(guMode==2002)
+			sprintf(gcQuery,"UPDATE tResourceTest SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',"
+					"cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) "
+					"WHERE uResource=%u",
+					cName,
+					uRRTTL,
+					uRRType,
+					cParam1,
+					cParam2,
+					cParam3,
+					cParam4,
+					TextAreaSave(cComment),
+					guLoginClient,
+					uResource);
+	}
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
