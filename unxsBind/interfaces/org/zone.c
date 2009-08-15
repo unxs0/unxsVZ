@@ -86,6 +86,9 @@ unsigned uPTRInBlock(unsigned uZone,unsigned uStart,unsigned uEnd);
 void htmlDelegationTool(void);
 void UpdateSerialNum(char *cZone);
 char *ParseTextAreaLines(char *cTextArea);
+void PrepDelToolsTestData(unsigned uNumIPs);
+unsigned OnLineZoneCheck(void);
+
 
 
 void ProcessZoneVars(pentry entries[], int x)
@@ -351,7 +354,13 @@ void ZoneCommands(pentry entries[], int x)
 			}
 			if(!uDelegationTTL)
 				uDelegationTTL=uTTL;
-		
+			
+			PrepDelToolsTestData(uNumIPs);
+			if(OnLineZoneCheck())
+			{
+				sprintf(gcModStep," Confirm");
+				htmlDelegationTool();
+			}
 			while(1)
 			{
 				sprintf(cNS,"%.99s",ParseTextAreaLines(cNSList));
