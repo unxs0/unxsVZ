@@ -2075,6 +2075,10 @@ void ResourceSetFieldsOn(void)
 		cParam2Style="type_fields";
 	if(strcmp(cCommentStyle,"type_fields_req"))
 		cCommentStyle="type_fields";
+	if(strcmp(cParam3Style,"type_fields_req"))
+		cParam3Style="type_fields";
+	if(strcmp(cParam4Style,"type_fields_req"))
+		cParam4Style="type_fields";
 
 }//void ResourceSetFieldsOn(void)
 
