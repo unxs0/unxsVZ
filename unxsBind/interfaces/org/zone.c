@@ -324,14 +324,14 @@ void ZoneCommands(pentry entries[], int x)
 					sprintf(gcModStep," Confirm");
 					htmlDelegationTool();
 				}
-				
+				/*
 				if(uPTRInBlock(uZone,uD,uE))
 				{
 					gcMessage="<blink>Delegation overlaps existing PTR records. Can't continue</blink>";
 					sprintf(gcModStep," Confirm");
 					htmlDelegationTool();
 				}
-				
+				*/	
 				uNumIPs=uE-uD;
 				uIPBlockFormat=IP_BLOCK_DASH;
 			}

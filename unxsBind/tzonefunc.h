@@ -775,13 +775,13 @@ void ExttZoneCommands(pentry entries[], int x)
 					tZone(gcQuery);
 //					tZone("<blink>CIDR range error</blink>");
 				}
-				
+				/*
 				if(uPTRInCIDR(uZone,cIPBlock))
 				{
 					guMode=4001;
 					tZone("<blink>Delegation overlaps existing PTR records. Can't continue</blink>");
 				}
-				
+				*/
 				uIPBlockFormat=IP_BLOCK_CIDR;
 			}
 			else if(strchr(cIPBlock,'-'))
@@ -806,13 +806,13 @@ void ExttZoneCommands(pentry entries[], int x)
 					guMode=4001;
 					tZone("<blink>IP block range error</blink>");
 				}
-				
+				/*
 				if(uPTRInBlock(uZone,uD,uE))
 				{
 					guMode=4001;
 					tZone("<blink>Delegation overlaps existing PTR records. Can't continue</blink>");
 				}
-				
+				*/
 				uNumIPs=uE-uD;
 				uIPBlockFormat=IP_BLOCK_DASH;
 			}
