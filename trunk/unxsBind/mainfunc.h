@@ -131,7 +131,8 @@ int iExtMainCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcCommand,"Zero System"))
 		{
-			ZeroSystem();
+			if(guPermLevel>=12)
+				ZeroSystem();
 			Admin();
 		}
 	}
