@@ -41,9 +41,9 @@ LEGAL
 
 //End-users: Do not change these!
 //Developers: See makefile also when changing these
-#define RELEASE "2rc1"
-#define REV "2.1"
-#define RELEASESHORT "2rc1"
+#define RELEASE "2rc1/rpm-1.1"
+#define REV "2.1/rpm-1.1"
+#define RELEASESHORT "2rc1/rpm-1.1"
 
 //This should almost never have to changed since it is for integrating other
 //unxsISP related software with unxsISP.tClient and .tAuthorize
