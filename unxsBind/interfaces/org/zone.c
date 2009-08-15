@@ -225,6 +225,7 @@ void ZoneCommands(pentry entries[], int x)
 			char cNS[100]={""};
 			char cName[100]={""};
 			char cParam1[100]={""};
+			char cLogEntry[100]={""};
 			unsigned uZone=0;
 			unsigned uTTL=0;
 			unsigned uNameServer=0;
@@ -420,12 +421,12 @@ void ZoneCommands(pentry entries[], int x)
 				htmlPlainTextError(mysql_error(&gMysql));
 
 			UpdateSerialNum(gcZone);	
-			//if(uSubmitJob)
-			//{
-				if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
-					htmlPlainTextError(mysql_error(&gMysql));
-			//}
+			if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
+				htmlPlainTextError(mysql_error(&gMysql));
+			
 
+			sprintf(cLogEntry,"%s Delegation",cIPBlock);
+			iDNSLog(uZone,"tZone",cLogEntry);
 			gcMessage="IP block delegation done";
 			htmlDelegationTool();
 			
@@ -440,6 +441,7 @@ void ZoneCommands(pentry entries[], int x)
 			unsigned uZone=0;
 			unsigned uNameServer=0;
 			time_t luClock;
+			char cLogEntry[100]={""};
 
 			time(&luClock);
 			SelectZone();	
@@ -463,11 +465,11 @@ void ZoneCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 				 htmlPlainTextError(mysql_error(&gMysql));
 			UpdateSerialNum(gcZone);
-			//if(uSubmitJob)
-			//{
-				if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
-					htmlPlainTextError(mysql_error(&gMysql));
-			//}
+			if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
+				htmlPlainTextError(mysql_error(&gMysql));
+			
+			sprintf(cLogEntry,"%s Delegation Removal",cIPBlock);
+			iDNSLog(uZone,"tZone",cLogEntry);
 			gcMessage="IP block delegation removed";
 			htmlDelegationTool();	
 		}
