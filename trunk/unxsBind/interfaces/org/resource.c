@@ -1231,6 +1231,8 @@ unsigned RRCheck(void)
 		return(16);
 	}
 
+	PrepareTestData();
+
 	if(OnLineZoneCheck())
 	{
 		return(18);
@@ -2117,8 +2119,6 @@ unsigned OnLineZoneCheck(void)
 	char cTTL[50]={""};
 	char cZoneFile[100]={""};
 
-	PrepareTestData();
-
 	sprintf(cZoneFile,"/tmp/%s",gcZone);
 
 	if((zfp=fopen(cZoneFile,"w"))==NULL)
@@ -2247,7 +2247,7 @@ unsigned OnLineZoneCheck(void)
 		if(system(gcQuery))
 		{
 			unsigned uMessageSet=0;
-			char cLine[100]={""};
+			char cLine[1024]={""};
 			sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1",field[0],cZoneFile);
 			if((zfp=popen(gcQuery,"r"))==NULL)
 				htmlPlainTextError("popen() failed");
