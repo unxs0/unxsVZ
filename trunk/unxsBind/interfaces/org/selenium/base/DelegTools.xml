@@ -4,12 +4,12 @@
 <head profile="http://selenium-ide.openqa.org/profiles/test-case">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <link rel="selenium.base" href="https://192.168.238.200:9333/" />
-<title>del-tools-idnsOrg</title>
+<title>DelegTools</title>
 </head>
 <body>
 <table cellpadding="1" cellspacing="1" border="1">
 <thead>
-<tr><td rowspan="1" colspan="3">del-tools-idnsOrg</td></tr>
+<tr><td rowspan="1" colspan="3">DelegTools</td></tr>
 </thead><tbody>
 <tr>
 	<td>clickAndWait</td>
@@ -63,7 +63,7 @@
 </tr>
 <tr>
 	<td>assertBodyText</td>
-	<td>glob:*Delegation overlaps existing PTR records. Can't continue*</td>
+	<td>glob:*The RR has an error: CNAME and other data*</td>
 	<td></td>
 </tr>
 <tr>
@@ -78,7 +78,17 @@
 </tr>
 <tr>
 	<td>assertBodyText</td>
-	<td>glob:*IP block delegation done*</td>
+	<td>glob:*The RR has an error: syntax error*</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>//input[@name='cIPBlock' and @type='text']</td>
+	<td>192.168.0.4/26</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@name='gcFunction' and @value='Delegate Block Confirm']</td>
 	<td></td>
 </tr>
 <tr>
