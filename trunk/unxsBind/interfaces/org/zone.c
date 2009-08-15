@@ -286,12 +286,16 @@ void ZoneCommands(pentry entries[], int x)
 					htmlDelegationTool();
 				}
 				
-				if(uPTRInCIDR(uZone,cIPBlock))
+				//This check is superseded by named-checkzone below, we can safely comment it
+				//it will say:
+				//Error:  The RR has an error: CNAME and other data 
+				//In case this condition is reached, clever isn't it?
+				/*if(uPTRInCIDR(uZone,cIPBlock))
 				{
 					gcMessage="<blink>Delegation overlaps existing PTR records. Can't continue</blink>";
 					sprintf(gcModStep," Confirm");
 					htmlDelegationTool();
-				}
+				}*/
 				
 				uIPBlockFormat=IP_BLOCK_CIDR;
 			}
@@ -375,14 +379,16 @@ void ZoneCommands(pentry entries[], int x)
 				else if(uIPBlockFormat==IP_BLOCK_DASH)
 					sprintf(cName,"%u-%u",uD,uE);
 
-	sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%s',uTTL=%u,uRRType=2,cParam1='%s',cComment='Delegation (%s)',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uZone
-			,cName
-			,uDelegationTTL
-			,cNS
-			,cIPBlock
-			,guOrg
-			,guLoginClient);
+				sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%s',uTTL=%u,uRRType=2,"
+						"cParam1='%s',cComment='Delegation (%s)',uOwner=%u,uCreatedBy=%u,"
+						"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						uZone
+						,cName
+						,uDelegationTTL
+						,cNS
+						,cIPBlock
+						,guOrg
+						,guLoginClient);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -408,14 +414,16 @@ void ZoneCommands(pentry entries[], int x)
 				       );
 			}
 			
-	sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='$GENERATE %u-%u $',uRRType=5,cParam1='%s',cComment='Delegation (%s)',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uZone
-			,uD
-			,(uD+uNumIPs)
-			,cParam1
-			,cIPBlock
-			,guOrg
-			,guLoginClient);
+			sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,"
+					"cName='$GENERATE %u-%u $',uRRType=5,cParam1='%s',"
+					"cComment='Delegation (%s)',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uZone
+					,uD
+					,(uD+uNumIPs)
+					,cParam1
+					,cIPBlock
+					,guOrg
+					,guLoginClient);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
