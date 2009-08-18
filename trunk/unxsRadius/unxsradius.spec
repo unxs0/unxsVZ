@@ -23,6 +23,14 @@ cd unxsRadacct
 make
 cd $RPM_BUILD_DIR
 
+%install
+make install
+cd unxsRadacct
+make install
+cd $RPM_BUILD_DIR
+mkdir -p /usr/local/share/unxsRadius
+cp -R ./data /usr/local/share/unxsRadius
+
 %post
 if [ -x /sbin/chkconfig ];then
 	if [ -x /etc/init.d/httpd ];then
