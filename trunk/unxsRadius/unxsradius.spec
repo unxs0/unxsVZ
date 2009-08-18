@@ -27,9 +27,10 @@ cd $RPM_BUILD_DIR
 make install
 cd unxsRadacct
 make install
-cd $RPM_BUILD_DIR
+cd ../
 mkdir -p /usr/local/share/unxsRadius
 cp -R ./data /usr/local/share/unxsRadius
+cp setupradius/unxsradius /etc/init.d/
 
 %post
 if [ -x /sbin/chkconfig ];then
@@ -45,6 +46,14 @@ if [ -x /sbin/chkconfig ];then
 		/etc/init.d/mysqld restart > /dev/null 2>&1
 		if [ $? == 0 ];then
 			cMySQLStart="1"
+		fi
+	fi
+	if [ -x /etc/init.d/radiusd ];then
+		/sbin/chkconfig del radiusd
+		/sbin/chkconfig --level 3 unxsradius on
+		/etc/init.d/unxsradius start > /dev/null 2>&1
+		if [ $? == 0 ];then
+			cRadiusStart="1"
 		fi
 	fi
 fi
@@ -66,8 +75,8 @@ if [ -x /usr/bin/mysql ];then
 	fi
 fi
 #let installer now what was done.
-if [ "$cMySQLStart" == "1" ] && [ "$cInitialize" == "1" ];then
-	echo "unxsRadius has been installed, intialized and httpd have been started.";	
+if [ "$cMySQLStart" == "1" ] && [ "$cInitialize" == "1" && ] && [ "$cRadiusStart" == "1"] ;then
+	echo "unxsRadius has been installed, intialized, httpd and radiusd have been started.";	
 	echo "You can proceed to login to your unxsRadius interfaces with your browser.";	
 else 
 	echo "It appears that one or more manual operations may be needed to finish";
@@ -93,6 +102,10 @@ else
 		echo "/var/www/unxs/cgi-bin/unxsRadius.cgi Initialize <mysql-root-passwd>";	
 		echo "Debug any problems, check via the mysql CLI, then if needed try again:";
 		echo "/var/www/unxs/cgi-bin/unxsRadius.cgi Initialize <mysql-root-passwd>";	
+	fi
+	if [ "$cRadiusStart" != "1" ]; then
+		echo "";
+		echo "WARNING: Could not start radius daemon";
 	fi
 fi
 
