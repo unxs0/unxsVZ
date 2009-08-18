@@ -95,7 +95,7 @@ cleandist:
 	rm -f *.o *.gz
 
 install: unxsRadacct.cgi
-	install -s unxsRadacct.cgi $(CGIDIR)unxsRadacct.cgi
+	install -s unxsRadacct.cgi /var/www/unxs/cgi-bin/unxsRadacct.cgi
 	rm unxsRadacct.cgi
 
 distribution:

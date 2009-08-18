@@ -37,9 +37,9 @@ LEGAL
 #define EXTISPURL "openisp.net"
 
 //For openisp staff mod only. Staff: Remember to change makefile also.
-#define RELEASE "Release 2.1"
-#define RELEASESHORT "2.1"
-#define REV "2.1"
+#define RELEASE "Release 2.1/rpm-1.0"
+#define RELEASESHORT "2.1/rpm-1.0"
+#define REV "2.1/rpm-1.0"
 
 
 //Master tClient
