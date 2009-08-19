@@ -287,26 +287,27 @@ void LoadCustomer(unsigned uClient)
 }//void LoadCustomer(char *cuClient)
 
 
-unsigned uCustomerExists(char *cFirstName,char *cLastName)
-{
-	MYSQL_RES *res;
-	
-	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s %s'",cFirstName,cLastName);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-	res=mysql_store_result(&gMysql);
-	return(unsigned)mysql_num_rows(res);
-	
-}//unsigned uCustomerExists(cFirstName,cLastName)
-
-
 void CustomerCommands(pentry entries[], int x)
 {
 	if(!strcmp(gcPage,"Customer"))
 	{
 		ProcessCustomerVars(entries,x);
+		
+		if(!strcmp(gcFunction,"Update My Info"))
+		{
+			SetCustomerFieldsOn();
+			sprintf(gcModStep,"Confirm ");
+		}
+		else if(!strcmp(gcFunction,"Confirm Update My Info"))
+		{
+			if(ValidateCustomerInput())
+				ModCustomer();
+			else
+			{
+				SetCustomerFieldsOn();
+				sprintf(gcModStep,"Confirm ");
+			}
+		}
 
 		htmlCustomer();
 	}
