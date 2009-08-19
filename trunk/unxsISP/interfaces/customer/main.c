@@ -110,14 +110,10 @@ int main(int argc, char *argv[])
 		{
 			if(!strcmp(gcPage,"Customer"))
 				CustomerGetHook(gentries,i);
-			else if(!strcmp(gcPage,"Dashboard"))
-				htmlDashBoard();
 			else if(!strcmp(gcPage,"Glossary"))
 				GlossaryGetHook(gentries,i);
 			else if(!strcmp(gcPage,"Invoice"))
 				InvoiceGetHook(gentries,i);
-			else if(!strcmp(gcPage,"Product"))
-				ProductGetHook(gentries,i);
 		}
 	}
 	else
@@ -169,7 +165,7 @@ int main(int argc, char *argv[])
 
 	//First page after valid login
 	if(!strcmp(gcFunction,"Login"))
-		htmlDashBoard();
+		htmlCustomer();
 
 	//Per page command tree
 	CustomerCommands(entries,i);
