@@ -78,90 +78,6 @@ void InvoiceCommands(pentry entries[], int x)
 	{
 		ProcessInvoiceVars(entries,x);
 
-		if(!strcmp(gcFunction,"Approved and Shipped"))
-		{
-			sprintf(cApprovedStep,"Confirm ");
-		}
-		else if(!strcmp(gcFunction,"Confirm Approved and Shipped"))
-		{
-			sprintf(gcQuery,"UPDATE tInvoice SET uInvoiceStatus=%u WHERE uInvoice=%u AND uClient=%u",
-					APPROVED_AND_SHIPPED
-					,uInvoice
-					,uClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			if(mysql_affected_rows(&gMysql))
-			{
-				unxsISPLog(uInvoice,"tInvoice","Mod");
-				gcMessage="Invoice status updated.";
-			}
-			else
-			{
-				unxsISPLog(uInvoice,"tInvoice","Mod Error");
-				gcMessage="<blink>Invoice status not updated. Contact support.</blink>";
-			}
-		}
-		 else if(!strcmp(gcFunction,"Void"))
-		 {
-			 sprintf(cVoidStep,"Confirm ");
-		 }
-		else if(!strcmp(gcFunction,"Confirm Void"))
-		{
-			sprintf(gcQuery,"UPDATE tInvoice SET uInvoiceStatus=%u WHERE uInvoice=%u AND uClient=%u",
-					VOID
-					,uInvoice
-					,uClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			if(mysql_affected_rows(&gMysql))
-			{
-				unxsISPLog(uInvoice,"tInvoice","Mod");
-				gcMessage="Invoice voided.";
-			}
-			else
-			{
-				unxsISPLog(uInvoice,"tInvoice","Mod Error");
-				gcMessage="<blink>Invoice status not updated. Contact support.</blink>";
-			}
-			ReStockItems(uInvoice);
-			
-		}
-		else if(!strcmp(gcFunction,"Email Loaded Invoice"))
-		{
-			sprintf(gcNewStep,"Confirm ");
-		}
-		else if(!strcmp(gcFunction,"Confirm Email Loaded Invoice"))
-		{
-			EmailLoadedInvoice();
-			gcMessage="Invoice emailed OK";
-		}
-		else if(!strcmp(gcFunction,"Email All Invoices"))
-		{
-			sprintf(gcModStep,"Confirm ");
-		}
-		else if(!strcmp(gcFunction,"Confirm Email All Invoices"))
-		{
-			EmailAllInvoices();
-			gcMessage="All invoices emailed  OK";
-		}
-		else if(!strcmp(gcFunction,"Print Loaded Invoice"))
-		{
-			gcPrintCurr="Confirm ";
-		}
-		else if(!strcmp(gcFunction,"Confirm Print Loaded Invoice"))
-		{
-			PrintInvoice();
-		}
-		else if(!strcmp(gcFunction,"Print All Invoices"))
-		{
-			gcPrintAll="Confirm ";
-		}
-		else if(!strcmp(gcFunction,"Confirm Print All Invoices"))
-		{
-			PrintInvoices();
-		}
 		htmlInvoice();
 	}
 
@@ -171,7 +87,7 @@ void InvoiceCommands(pentry entries[], int x)
 void htmlInvoice(void)
 {
 	htmlHeader("unxsISP Admin","Header");
-	htmlInvoicePage("","Invoice.Body");
+	htmlInvoicePage("","MyInvoice.Body");
 	htmlFooter("Footer");
 
 }//void htmlInvoice(void)
@@ -605,38 +521,6 @@ MYSQL_RES *sqlresultClientInfo(void)
 	return(mysql_store_result(&gMysql));
 
 }//MYSQL_RES *sqlresultClientInfo(void)
-
-
-void ReStockItems(unsigned uInvoice)
-{
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-
-	unsigned uChange=0;
-
-	//Re-stock items in tInvoiceItems for this invoice
-	//Needs more error checking but should do for now for root level operator
-	sprintf(gcQuery,"SELECT uProduct,uQuantity FROM tInvoiceItems WHERE uInvoice=%u",uInvoice);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		sprintf(gcQuery,"UPDATE tProduct SET uInStock=uInStock+%s WHERE uProduct=%s",
-				field[1],field[0]);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		uChange++;
-	}
-	mysql_free_result(res);
-
-	if(!uChange)
-		gcMessage="<blink>ReStockItems() failed no updates, Contact support</blink>";
-
-}//void ReStockItems(unsigned uInvoice)
 
 
 char *cShortenText(char *cText,unsigned uWords)
