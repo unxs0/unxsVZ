@@ -79,25 +79,12 @@
                   <td> </td>
                   <td> </td>
                 </tr>
-                <tr>
-                        <td colspan=2>
-                                <input type=hidden name=gcPage value=Customer>
-                                {{funcCustomerNavList}}
-<br>
-<br>
-<br>
-<input {{cBtnStatus}} title='Add a product to the loaded customer' name="gcFunction" type="submit" class="largeButton" id="gcFunction" value="Add Product Wizard" />
-</td>
-                </tr>
-		<tr>
-		<td>
-<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Customer Tab Details')"><strong>Customer Tab Details</strong></a></td>
-		</tr>
-		<tr>
-		<td colspan=2>
-ISP customers are managed here. At the bottom of this screen a table that has the current loaded customer's products will appear. By clicking on the product name below you will access another screen that will allow you to modify the product parameters. To search for a customer, enter part of her last name in the above 'Search Customers' box and press &lt;Enter&gt; or the [>] button. The search results will be displayed in this panel. By clicking one item of the search results list you will load the selected customer. Search is case insensitive, you can use % and _ SQL LIKE matching chars. (E.g.: 'd%ar')
+		<tr><td><input type=submit name=gcFunction value='{{gcModStep}}Update My Info' class=largestButton></td></tr>
+		<tr><td><input type=submit name=gcFunction value='Purchase New Product' class=largestButton></td></tr>
+		<tr><td><input type=submit name=gcFunction value='View My Invoices' class=largestButton></td></tr>
+		<tr><td><input type=submit name=gcFunction value='Subscribe to Recurring Billing' class=largestButton></td></tr>
+
 		</td>
-		</tr>
         </table>
 
 
