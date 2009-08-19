@@ -19,11 +19,11 @@
 			<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>	
-						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='My account management' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">My Account</b></a>
-						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='My invoices management' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">My Invoices</b></a>
+						<a title='My account management' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">My Account</b></a>
+						</td>
+						<td class="wpsSelectedPlace" nowrap height="100%">
+						<a title='My invoices management' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">My Invoices</b></a>
 						</td>
 					</tr>
 				</table>
@@ -94,6 +94,7 @@
                 </tr>
 		<tr>
 		<td colspan=2>
+		{{funcInvoiceNavList}}
 		</td>
         </table>
 
