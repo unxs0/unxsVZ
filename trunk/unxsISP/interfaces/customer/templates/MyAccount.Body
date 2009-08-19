@@ -436,13 +436,7 @@ d>
 </tr>
 </table>
 
-<input type=hidden name=uIsCompany value="{{uIsCompany}}">
-<input type=hidden name=cLabel value="{{cLabel}}">
-<input type=hidden name=uOwner value="{{uOwner}}">
-<input type=hidden name=uCreatedBy value="{{uCreatedBy}}">
-<input type=hidden name=uCreatedDate value="{{uCreatedDate}}">
-<input type=hidden name=uModBy value="{{uModBy}}">
-<input type=hidden name=uModDate value="{{uModDate}}">
+<input type=hidden name=gcPage value="Customer">
 
 </form>
 
