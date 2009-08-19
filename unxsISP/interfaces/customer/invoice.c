@@ -63,10 +63,8 @@ void InvoiceGetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"uInvoice"))
 			sscanf(gentries[i].val,"%u",&uInvoice);
-		else if(!strcmp(gentries[i].name,"uClient"))
-			sscanf(gentries[i].val,"%u",&uClient);
 	}
-
+	uClient=guLoginClient;
 	htmlInvoice();
 
 }//void InvoiceGetHook(entry gentries[],int x)
@@ -86,6 +84,7 @@ void InvoiceCommands(pentry entries[], int x)
 
 void htmlInvoice(void)
 {
+	uClient=guLoginClient;
 	htmlHeader("unxsISP Admin","Header");
 	htmlInvoicePage("","MyInvoice.Body");
 	htmlFooter("Footer");
@@ -552,44 +551,32 @@ void funcInvoiceNavList(FILE *fp)
 	unsigned uDisplayed=0;
 	unsigned uFound=0;
 	char cTopMessage[100]={""};
-
-	if(cSearch[0])
+	char cExtra[100]={""};
+	/*if(cSearch[0])
 	{
 	//Valid formats are:
-	//1. uInvoice-uClient
 	//2. uInvoice
-	//3. Part of last name
-		char cExtra[100]={""};
-		if(strstr(cSearch,"-"))
+		sscanf(cSearch,"%u",&uInvoice);
+		if(uInvoice)
 		{
-			unsigned uClient=0;
-
-			sscanf(cSearch,"%u-%u",&uClient,&uInvoice);
-			sprintf(cExtra,"tInvoice.uInvoice=%u AND tInvoice.uClient=%u",uInvoice,uClient);
-
+			sprintf(cExtra,"tInvoice.uInvoice=%u",uInvoice);
 			ExtSelectSearch("tInvoice","tInvoice.uInvoice,FROM_UNIXTIME(GREATEST(tInvoice.uCreatedDate,tInvoice.uModDate)),"
-				"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tInvoice.uClient),tInvoice.uClient","1","1",
-				cExtra,0);
+				"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tInvoice.uClient),tInvoice.uClient",
+				"1","1",cExtra,0);
 		}
 		else
-		{
-			sscanf(cSearch,"%u",&uInvoice);
-			if(uInvoice)
-			{
-				sprintf(cExtra,"tInvoice.uInvoice=%u",uInvoice);
-				ExtSelectSearch("tInvoice","tInvoice.uInvoice,FROM_UNIXTIME(GREATEST(tInvoice.uCreatedDate,tInvoice.uModDate)),"
-					"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tInvoice.uClient),tInvoice.uClient",
-					"1","1",cExtra,0);
-			}
-			else
-				ExtSelectSearch("tInvoice","tInvoice.uInvoice,FROM_UNIXTIME(GREATEST(tInvoice.uCreatedDate,tInvoice.uModDate)),"
-					"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tInvoice.uClient),tInvoice.uClient",
-					"tInvoice.cLastName",cSearch,NULL,0);
+			ExtSelectSearch("tInvoice","tInvoice.uInvoice,FROM_UNIXTIME(GREATEST(tInvoice.uCreatedDate,tInvoice.uModDate)),"
+				"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tInvoice.uClient),tInvoice.uClient",
+				"tInvoice.cLastName",cSearch,NULL,0);
 		}
 	}
 	else
-		ExtSelect("tInvoice","tInvoice.uInvoice,FROM_UNIXTIME(GREATEST(tInvoice.uCreatedDate,tInvoice.uModDate)),"
-				"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tInvoice.uClient),tInvoice.uClient",0);
+	{*/
+		sprintf(cExtra,"tInvoice.uClient=%u",guLoginClient);
+		ExtSelectSearch("tInvoice","tInvoice.uInvoice,FROM_UNIXTIME(GREATEST(tInvoice.uCreatedDate,tInvoice.uModDate)),"
+				"(SELECT tInvoiceStatus.cLabel FROM tInvoiceStatus WHERE tInvoiceStatus.uInvoiceStatus=tInvoice.uInvoiceStatus)",
+				"1","1",cExtra,0);
+	//}
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -614,7 +601,8 @@ void funcInvoiceNavList(FILE *fp)
 			sscanf(field[0],"%u",&uInvoice);
 			sscanf(field[3],"%u",&uClient);
 			
-			fprintf(fp,"<a href=ispAdmin.cgi?gcPage=Invoice&uInvoice=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
+			fprintf(fp,"<a href=ispAdmin.cgi?gcPage=Invoice&uInvoice=%s>Invoice #%s (%s) [%s]</a><br>\n"
+			,field[0],field[0],field[1],field[2]);
 			mysql_free_result(res);
 			return;
 		}
