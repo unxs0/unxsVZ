@@ -316,8 +316,9 @@ void CustomerCommands(pentry entries[], int x)
 
 void htmlCustomer(void)
 {
-	htmlHeader("unxsISP Admin Interface","Header");
-	htmlCustomerPage("","Customer.Body");
+	if(!gcFunction[0]) LoadCustomer(guLoginClient);
+	htmlHeader("unxsISP Customer Interface","Header");
+	htmlCustomerPage("","MyAccount.Body");
 	htmlFooter("Footer");
 
 }//void htmlCustomer(void)

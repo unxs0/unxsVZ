@@ -1,0 +1,462 @@
+<body marginwidth="0" marginheight="0">
+
+<div align="center" class="standard2colnee">
+
+<table cellspacing="0" cellpadding="0" border="0" width=1200>
+	<tr valign="top">
+	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>
+
+		<td align="right">
+
+
+	<!-- one row, one cell table to span the page-->
+	<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">
+		<tr>
+
+			<!-- Navigation -->
+			<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>
+				<table width="100%" border="0" cellpadding="0" cellspacing="0">
+					<tr>	
+						<td class="wpsSelectedPlace" nowrap height="100%">
+						<a title='My account management' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">My Account</b></a>
+						</td>
+						<td class="wpsUnSelectedPlace" nowrap height="100%">
+						<a title='My invoices management' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">My Invoices</b></a>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr><td valign=top align=right class=notice>
+{{gcName}} ({{gcOrgName}}) logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout
+</a></td></tr>
+							<tr>
+								<td class="mastbg2">
+
+									<table cellspacing="0" cellpadding="0" border="0" width="100%">
+									<tr valign="top">
+										
+										<td align="right" class="padt10">																				
+										</td>
+										
+										
+									</tr>
+									</table>
+								</td>
+							</tr>
+
+			</table>
+		</td>
+	</tr>
+</table>
+
+
+<form method=post action={{cCGI}} style="margin:0px;">
+<table width=1200  border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td>
+{{gcMessage}}
+
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
+  <tr>
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+    <td class="hdrtout padlt8" width="33%"><h6 class="modhdr">My Account Operations</h6></td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+    <td width="10"> </td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+    <td class="hdrtout padlt8">
+                <h6 class="modhdr">My Personal Data</h6></td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+  </tr>
+  <tr>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td valign="top">
+
+
+
+<table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
+                <tr>
+                  <td> </td>
+                  <td> </td>
+                </tr>
+                <tr>
+                        <td colspan=2>
+                                <input type=hidden name=gcPage value=Customer>
+                                {{funcCustomerNavList}}
+<br>
+<br>
+<br>
+<input {{cBtnStatus}} title='Add a product to the loaded customer' name="gcFunction" type="submit" class="largeButton" id="gcFunction" value="Add Product Wizard" />
+</td>
+                </tr>
+		<tr>
+		<td>
+<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Customer Tab Details')"><strong>Customer Tab Details</strong></a></td>
+		</tr>
+		<tr>
+		<td colspan=2>
+ISP customers are managed here. At the bottom of this screen a table that has the current loaded customer's products will appear. By clicking on the product name below you will access another screen that will allow you to modify the product parameters. To search for a customer, enter part of her last name in the above 'Search Customers' box and press &lt;Enter&gt; or the [>] button. The search results will be displayed in this panel. By clicking one item of the search results list you will load the selected customer. Search is case insensitive, you can use % and _ SQL LIKE matching chars. (E.g.: 'd%ar')
+		</td>
+		</tr>
+        </table>
+
+
+
+
+
+        </td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td> </td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td valign="top">
+
+
+<table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
+        <tr>
+          <td width="22%" valign="top"> </td>
+          <td width="78%"> </td>
+        </tr>
+        <tr>
+                <td valign="top">
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=First Name')"><strong>First Name </strong></a></td>
+                <td>
+		<input type=hidden name=uCustomer value={{uCustomer}}>
+		<input type=hidden name="cFirstName" value='{{cFirstName}}'>
+		<input  title='Non empty string with the first name of the customer,e.g.: Joe (Required)' type="text" name="cFirstName" value="{{cFirstName}}" size="40" maxlength="99" {{gcInputStatus}}  class={{cFirstNameStyle}} /></t
+d>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Last Name')"><strong>Last Name</strong></a>          </td>
+                <td>
+			<input type=hidden name=cLastName value="{{cLastName}}">
+                        <input  title='Non empty string with the last name of the customer,e.g.: Doe (Required)' type=text name=cLastName value="{{cLastName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cLastNameStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=ID Number')"><strong>ID Number</strong></a>          </td>
+                <td>
+			<input type=hidden name=cIDNumber value="{{cIDNumber}}">
+                        <input  title='Customer ID number (Required)' type=text name=cIDNumber value="{{cIDNumber}}" size=40 maxlength=99 {{gcInputStatus}} class={{cIDNumberStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Email Address')"><strong>Email Address</strong></a>          </td>
+                <td>
+			<input type=hidden name=cEmail value="{{cEmail}}">
+                        <input  title='A valid email address for the customer,e.g.: johndoe@bigisp.net (Optional)' type=text name=cEmail value="{{cEmail}}" size=40 maxlength=99 {{gcInputStatus}} class={{cEmailStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                  <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Address 1')"><strong>Address 1</strong></a>          </td>
+                <td>
+                        <input type=hidden name=cAddr1 value="{{cAddr1}}">
+                   <input  title='Street mailing address. E.g.: Main Stret 124 (Required)' type=text name=cAddr1 value="{{cAddr1}}" size=40 maxlength=99 {{gcInputStatus}} class={{cAddr1Style}}></td>
+        </tr>
+
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Address 2')"><strong>Address 2</strong></a>          </td>
+                <td>
+			<input type=hidden name=cAddr2 value="{{cAddr2}}">
+                        <input  title='Non empty string with additional address information,e.g.: Suite #34 (Optional)' type=text name=cAddr2 value="{{cAddr2}}" size=40 maxlength=99 {{gcInputStatus}} class={{cAddr2Style}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Address 3')"><strong>Address 3</strong></a>          </td>
+                <td>
+			<input type=hidden name=cAddr3 value="{{cAddr3}}">
+                        <input  title='Non empty string with additional address information,e.g.: Suite #34 (Optional)' type=text name=cAddr3 value="{{cAddr3}}" size=40 maxlength=99 {{gcInputStatus}} class={{cAddr3Style}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=City')"><strong>City</strong></a>          </td>
+                <td>
+			<input type=hidden name=cCity value="{{cCity}}">
+                        <input  title='City name. E.g.: Los Angeles (Required)' type=text name=cCity value="{{cCity}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCityStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=State')"><strong>State</strong></a>          </td>
+                <td>
+			<input type=hidden name=cState value="{{cState}}">
+                        <input  title='State name: E.g.: California (Required)' type=text name=cState value="{{cState}}" size=40 maxlength=99 {{gcInputStatus}} class={{cStateStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Zip Code')"><strong>Zip Code</strong></a>          </td>
+                <td>
+			<input type=hidden name=cZip value="{{cZip}}">
+                        <input  title='Postal or Zip code. E.g. 90001 (Required)' type=text name=cZip value="{{cZip}}" size=40 maxlength=99 {{gcInputStatus}} class={{cZipStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Country')"><strong>Country</strong></a>          </td>
+                <td>
+			<input type=hidden name=cCountry value="{{cCountry}}">
+                        <input  title='Country name. E.g. U.S.A. (Required)' type=text name=cCountry value="{{cCountry}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCountryStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Payment Method')"><strong>Payment Method</strong></a>          </td>
+                <td>
+			<input type=hidden name=uPayment value="{{uPayment}}">
+			{{funcSelectPayment}}
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Type')"><strong>Card Type</strong></a>          </td>
+                <td>
+			<input type=hidden name=cCardType value="{{cCardType}}">
+			{{funcSelectCardType}}
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Number')"><strong>Card Number</strong></a>          </td>
+                <td>
+			<input type=hidden name=cCardNumber value="{{cCardNumber}}">
+                        <input  title='Credit card number. E.g. 411111111111111 (Optional)' type=text name=cCardNumber value="{{cCardNumber}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCardNumberStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Expiration Month')"><strong>Expiration Month</strong></a>          </td>
+                <td>
+			<input type=hidden name=uExpMonth value="{{uExpMonth}}">
+			{{funcSelectExpMonth}}
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Expiration Year')"><strong>Expiration Year</strong></a>          </td>
+                <td>
+			<input type=hidden name=uExpYear value="{{uExpYear}}">
+			{{funcSelectExpYear}}
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Name')"><strong>Card Name</strong></a>          </td>
+                <td>
+			<input type=hidden name=cCardName value="{{cCardName}}">
+                        <input  title='Credit card name. E.g.: John Doe (Required if entered card number)' type=text name=cCardName value="{{cCardName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCardNameStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=ACH Debits')"><strong>ACH Debits</strong></a>          </td>
+                <td>
+			<input type=hidden name=cACHDebits value="{{cACHDebits}}">
+                        <input  title='ABA routing number + account number' type=text name=cACHDebits value="{{cACHDebits}}" size=40 maxlength=99 {{gcInputStatus}} class={{cACHDebitsStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Name')"><strong>Ship Name</strong></a>          </td>
+                <td>
+			<input type=hidden name=cShipName value="{{cShipName}}">
+                        <input  title='hipping address name. E.g. Jane Doe (Optional)' type=text name=cShipName value="{{cShipName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cShipNameStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Address 1')"><strong>Ship Address 1</strong></a>          </td>
+                <td>
+			<input type=hidden name=cShipAddr1 value="{{cShipAddr1}}">
+                        <input  title='Shipping street address. E.g. Another Street 65 (Optional)' type=text name=cShipAddr1 value="{{cShipAddr1}}" size=40 maxlength=99 {{gcInputStatus}} class={{cShipAddr1Style}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Address 2')"><strong>Ship Address 2</strong></a>          </td>
+                <td>
+			<input type=hidden name=cShipAddr2 value="{{cShipAddr2}}">
+                        <input  title='Shipping street address line 2. E.g. Suite 34 (Optional)' type=text name=cShipAddr2 value="{{cShipAddr2}}" size=40 maxlength=99 {{gcInputStatus}} class={{cShipAddr2Style}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Address 3')"><strong>Ship Address 3</strong></a>          </td>
+                <td>
+			<input type=hidden name=cShipAddr3 value="{{cShipAddr3}}">
+                        <input  title='Shipping street address line 2. E.g. Suite 34 (Optional)' type=text name=cShipAddr3 value="{{cShipAddr3}}" size=40 maxlength=99 {{gcInputStatus}} class={{cShipAddr3Style}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship City')"><strong>Ship City</strong></a>          </td>
+                <td>
+			<input type=hidden name=cShipCity value="{{cShipCity}}">
+                        <input  title='Shipping city. E.g. Chicago (Optional)' type=text name=cShipCity value="{{cShipCity}}" size=40 maxlength=99 {{gcInputStatus}} class={{cShipCityStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship State')"><strong>Ship State</strong></a>          </td>
+                <td>
+			<input type=hidden name=cShipState value="{{cShipState}}">
+                        <input  title='Shipping state or province. E.g. New York (Optional)' type=text name=cShipState value="{{cShipState}}" size=40 maxlength=99 {{gcInputStatus}} class={{cShipStateStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Zip Code')"><strong>Ship Zip Code</strong></a>          </td>
+                <td>
+			<input type=hidden name=cShipZip value="{{cShipZip}}">
+                        <input  title='Shipping zip or postal code. E.g. 10008 (optional)' type=text name=cShipZip value="{{cShipZip}}" size=40 maxlength=99 {{gcInputStatus}} class={{cShipZipStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Country')"><strong>Ship Country</strong></a>          </td>
+                <td>
+			<input type=hidden name=cShipCountry value="{{cShipCountry}}">
+                        <input  title='Shipping country name. E.g. U.S.A (Optional)' type=text name=cShipCountry value="{{cShipCountry}}" size=40 maxlength=99 {{gcInputStatus}} class={{cShipCountryStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Telephone')"><strong>Telephone</strong></a>          </td>
+                <td>
+			<input type=hidden name=cTelephone value="{{cTelephone}}">
+                        <input  title='Customer telephone number. E.g +1 555-5555 (Required)' type=text name=cTelephone value="{{cTelephone}}" size=40 maxlength=99 {{gcInputStatus}} class={{cTelephoneStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Fax')"><strong>Fax</strong></a>          </td>
+                <td>
+			<input type=hidden name=cFax value="{{cFax}}">
+                        <input  title='Customer fax number.  E.g +1 555-5555 (Optional)' type=text name=cFax value="{{cFax}}" size=40 maxlength=99 {{gcInputStatus}} class={{cFaxStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Mobile')"><strong>Mobile</strong></a>          </td>
+                <td>
+                        <input type=hidden name=cMobile value="{{cMobile}}">
+                        <input  title='Customer mobile number.  E.g +1 555-5555 (Optional)' type=text name=cMobile value="{{cMobile}}" size=40 maxlength=99 {{gcInputStatus}} class={{cMobileStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Bank Name')"><strong>Bank Name</strong></a>          </td>
+                <td>
+                        <input type=hidden name=cBankName value="{{cBankName}}">
+                        <input  title='Name of the bank where the customer has her account (Optional)' type=text name=cBankName value="{{cBankName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cBankNameStyle}}></td>
+        </tr>	
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Branch Name')"><strong>Branch Name</strong></a>          </td>
+                <td>
+			<input type=hidden name=cBranchName value="{{cBranchName}}">
+                        <input  title='Bank branch name (Required)' type=text name=cBranchName value="{{cBranchName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cBranchNameStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Branch Code')"><strong>Branch Code</strong></a>          </td>
+                <td>
+			<input type=hidden name=cBranchCode value="{{cBranchCode}}">
+                        <input  title='Bank branch code (Required)' type=text name=cBranchCode value="{{cBranchCode}}" size=40 maxlength=6 {{gcInputStatus}} class={{cBranchCodeStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Account Holder')"><strong>Account Holder</strong></a>          </td>
+                <td>
+			<input type=hidden name=cAccountHolder value="{{cAccountHolder}}">
+                        <input  title='Customer bank account holder, E.g.: John Doe (Required)' type=text name=cAccountHolder value="{{cAccountHolder}}" size=40 maxlength=99 {{gcInputStatus}} class={{cAccountHolderStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Account Number')"><strong>Account Number</strong></a>          </td>
+                <td>
+			<input type=hidden name=cAccountNumber value="{{cAccountNumber}}">
+                        <input  title='Customer account number(Required)' type=text name=cAccountNumber value="{{cAccountNumber}}" size=40 maxlength=99 {{gcInputStatus}} class={{cAccountNumberStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Account Type')"><strong>Account Type</strong></a>          </td>
+                <td>
+			<input type=hidden name=uAccountType value="{{uAccountType}}">
+			{{funcSelectAccountType}}
+			</td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Language')"><strong>Language</strong></a>          </td>
+                <td>
+			<input type=hidden name=cLanguage value="{{cLanguage}}">
+			{{funcSelectLanguage}}
+			</td>
+        </tr>
+        <tr>
+                <td>
+
+                </td>
+                <td colspan=2>
+<br>
+<br>
+</td>
+        </tr>
+</table>
+
+
+
+        </td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+  </tr>
+</table>
+
+<br /></td>
+    <td> </td>
+  </tr>
+<tr>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+	
+	</td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+
+    <td></td>
+  </tr>
+</table>
+</td>
+</tr>
+</td>
+</tr>
+</table>
+
+<input type=hidden name=uIsCompany value="{{uIsCompany}}">
+<input type=hidden name=cLabel value="{{cLabel}}">
+<input type=hidden name=uOwner value="{{uOwner}}">
+<input type=hidden name=uCreatedBy value="{{uCreatedBy}}">
+<input type=hidden name=uCreatedDate value="{{uCreatedDate}}">
+<input type=hidden name=uModBy value="{{uModBy}}">
+<input type=hidden name=uModDate value="{{uModDate}}">
+
+</form>
+
+
