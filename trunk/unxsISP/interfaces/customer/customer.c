@@ -124,6 +124,8 @@ static char *cLanguageStyle="type_fields_off";
 static unsigned uPayment=0;
 static char *cuPaymentStyle="type_fields_off";
 
+extern unsigned uSetupRB;
+
 //
 //Local only
 unsigned ValidateCustomerInput(void);
@@ -308,7 +310,13 @@ void CustomerCommands(pentry entries[], int x)
 				sprintf(gcModStep,"Confirm ");
 			}
 		}
-
+		else if(!strcmp(gcFunction,"View My Invoices"))
+			htmlInvoice();
+		else if(!strcmp(gcFunction,"Subscribe to Recurring Billing"))
+		{
+			uSetupRB=1;
+			htmlInvoice();
+		}
 		htmlCustomer();
 	}
 

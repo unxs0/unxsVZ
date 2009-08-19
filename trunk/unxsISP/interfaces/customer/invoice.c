@@ -36,6 +36,7 @@ void EmailAllInvoices(void);
 void PrintInvoices(void);
 void PrintInvoice(void);
 
+unsigned uSetupRB=0;
 
 void ProcessInvoiceVars(pentry entries[], int x)
 {
