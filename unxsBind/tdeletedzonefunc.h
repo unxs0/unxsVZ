@@ -180,34 +180,16 @@ void ExttDeletedZoneCommands(pentry entries[], int x)
 
 			//
 			//Restore tResource record(s) if available
-
-			sprintf(gcQuery,"SELECT %s FROM tDeletedResource WHERE uZone=%u",VAR_LIST_tDeletedResource,uDeletedZone);
+			sprintf(gcQuery,"INSERT INTO tResource (uResource,uZone,cName,uTTL,uRRType,cParam1,"
+					"cParam2,cParam3,cParam4,cComment,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate) "
+					"SELECT uDeletedResource,uZone,cName,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,"
+					"cComment,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate FROM tDeletedResource "
+					"WHERE uZone=%u",uDeletedZone);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 				
-			res=mysql_store_result(&gMysql);
-			while((field=mysql_fetch_row(res)))
-			{
-				sprintf(gcQuery,"INSERT INTO tResource SET uResource='%s',uZone='%s',cName='%s',"
-						"uTTL='%s',uRRType='%s',cParam1='%s',cParam2='%s',cComment='%s',"
-						"uOwner='%s',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						field[0],
-						field[1],
-						field[2],
-						field[3],
-						field[4],
-						field[5],
-						field[6],
-						field[7],
-						field[8]);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
-				sscanf(field[0],"%u",&uResource);
-				iDNSLog(uResource,"tResource","New (Restore RR)");	
-			}
-			mysql_free_result(res);
+			iDNSLog(uDeletedZone,"tResource","Restored zone RR");	
 			//
 			//Now remove tDeletedZone and tDeletedResource records
 			sprintf(gcQuery,"DELETE FROM tDeletedZone WHERE uDeletedZone=%u",uDeletedZone);
