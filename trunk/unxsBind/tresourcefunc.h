@@ -434,8 +434,8 @@ void ExttResourceCommands(pentry entries[], int x)
 				tResource(mysql_error(&gMysql));
 				UpdateSerialNum(uZone);                      	
 				sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%u',uZone='%u',"
-						"cName='%s',uTTL='%u',uRRType='%u',cParam1='%s',cParam2='%s',cComment='%s',"
-						"uOwner='%u',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						"cName='%s',uTTL='%u',uRRType='%u',cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',"
+						"cComment='%s',uOwner='%u',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						uResource,
 						uZone,
 						cName,
@@ -443,6 +443,8 @@ void ExttResourceCommands(pentry entries[], int x)
 						uRRType,
 						cParam1,
 						cParam2,
+						cParam3,
+						cParam4,
 						cComment,
 						uOwner);
 				mysql_query(&gMysql,gcQuery);
