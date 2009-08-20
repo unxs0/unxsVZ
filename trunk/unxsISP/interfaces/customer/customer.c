@@ -325,7 +325,7 @@ void CustomerCommands(pentry entries[], int x)
 
 void htmlCustomer(void)
 {
-	if(!gcFunction[0]) LoadCustomer(guLoginClient);
+	if(!gcFunction[0] || !strcmp(gcFunction,"Login")) LoadCustomer(guLoginClient);
 	htmlHeader("unxsISP Customer Interface","Header");
 	htmlCustomerPage("","MyAccount.Body");
 	htmlFooter("Footer");
@@ -340,7 +340,7 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelect(cTemplateName,guTemplateSet);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
