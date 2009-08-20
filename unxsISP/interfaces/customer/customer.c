@@ -295,11 +295,14 @@ void CustomerCommands(pentry entries[], int x)
 	{
 		ProcessCustomerVars(entries,x);
 		
-		if(!strcmp(gcFunction,"Update My Info"))
+		if(!strcmp(gcFunction,"Update My Info") || !strcmp(gcFunction,"Actualizar Mis Datos"))
 		{
 			gcInputStatus[0]=0;
 			SetCustomerFieldsOn();
-			sprintf(gcModStep,"Confirm ");
+			if(strstr(gcFunction,"Update"))
+				sprintf(gcModStep,"Confirm ");
+			else if(strstr(gcFunction,"Actualizar"))
+				sprintf(gcModStep,"Confirmar ");
 		}
 		else if(!strcmp(gcFunction,"Confirm Update My Info"))
 		{
@@ -312,7 +315,7 @@ void CustomerCommands(pentry entries[], int x)
 				sprintf(gcModStep,"Confirm ");
 			}
 		}
-		else if(!strcmp(gcFunction,"View My Invoices"))
+		else if(!strcmp(gcFunction,"View My Invoices") || !strcmp(gcFunction,"Ver Mis Facturas"))
 			htmlInvoice();
 		else if(!strcmp(gcFunction,"Subscribe to Recurring Billing"))
 		{
