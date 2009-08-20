@@ -39,12 +39,12 @@
 									<tr valign="top">
 										
 										<td align="right" class="padt10">																				
-											<form action=ispAdmin.cgi method="post">
+											<form action=ispClient.cgi method="post">
 												<table cellspacing="0" cellpadding="0" border="0">
 													<tr>
-														<td><input type="text" value="Search Invoices" class="searchinp" name=cSearch onfocus="this.select();" title="Search for companies with a keyword" /></td>
+														<td><input type="text" value="Buscar Facturas" class="searchinp" name=cSearch onfocus="this.select();" title="Ingresar n&uacute;mero de factura para b&uacute;squeda" /></td>
 
-														<td valign="middle" style="padding: 0px 4px 0px 4px;"></td><td class="padlt6rt10"><input type="image" src="/images/btn_mast_search.gif" alt="Search" width="17" height="17" border="0" title="Find one or more companies based on input search pattern" /></td>
+														<td valign="middle" style="padding: 0px 4px 0px 4px;"></td><td class="padlt6rt10"><input type="image" src="/images/btn_mast_search.gif" alt="Search" width="17" height="17" border="0" title="Buscar facturas introduciendo su n&uacute;mero" /></td>
 													</tr>
 												</table>
 												<input type=hidden name=gcFunction value=Search>
@@ -73,12 +73,12 @@
 <table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-    <td class="hdrtout padlt8" width="33%"><h6 class="modhdr">My Invoice Management</h6></td>
+    <td class="hdrtout padlt8" width="33%"><h6 class="modhdr">Operaciones con Mis Facturas</h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td width="10"> </td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
-                <h6 class="modhdr">My Invoice Data </h6></td>
+                <h6 class="modhdr">Informaci&oacute; de Factura</h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
   <tr>
@@ -94,7 +94,7 @@
                 </tr>
 		<tr>
 		<td colspan=2>
-		<u><b>My Invoices</b></u><br><br>
+		<u><b>Mis Facturas</b></u><br><br>
 		{{funcInvoiceNavList}}
 		</td>
         </table>
