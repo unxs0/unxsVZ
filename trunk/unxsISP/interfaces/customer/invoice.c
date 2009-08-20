@@ -85,7 +85,10 @@ void htmlInvoice(void)
 {
 	uClient=guLoginClient;
 	htmlHeader("unxsISP Customer Interface","Header");
-	htmlInvoicePage("","MyInvoice.Body");
+	if(uSetupRB)
+		htmlInvoicePage("","MyInvoiceSubs.Body");
+	else
+		htmlInvoicePage("","MyInvoice.Body");
 	htmlFooter("Footer");
 
 }//void htmlInvoice(void)
@@ -765,4 +768,35 @@ void PrintInvoice(void)
 	exit(0);
 
 }//void PrintInvoice(void)
+
+
+
+void funcProductList(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	
+	fileDirectTemplate(fp,"ProductListHeader");
+
+	sprintf(gcQuery,"SELECT tInstance.uInstance,tInstance.cLabel,"
+			"FROM_UNIXTIME(GREATEST(tInstance.uCreatedDate,tInstance.uModDate)),"
+			"tStatus.cLabel FROM tInstance,tStatus WHERE tInstance.uClient='%u' "
+			"AND tInstance.uStatus=tStatus.uStatus ORDER BY GREATEST(tInstance.uCreatedDate,"
+			"tInstance.uModDate)",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	while((field=mysql_fetch_row(res)))
+	{
+		FromMySQLDate(field[2]);
+		fprintf(fp,"<tr><td>(Instance %s)</td><td>%s</td><td>%s</td></tr>\n",
+				field[1]
+				,field[3]
+				,field[2]
+		       );
+	}
+
+}//void funcProductList(FILE *fp)
 

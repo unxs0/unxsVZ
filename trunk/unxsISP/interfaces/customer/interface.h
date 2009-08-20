@@ -171,6 +171,7 @@ void htmlInvoice(void);
 void htmlInvoicePage(char *cTitle, char *cTemplateName);
 void funcInvoice(FILE *fp);
 void funcInvoiceNavList(FILE *fp);
+void funcProductList(FILE *fp);
 
 //product.c
 void ProcessProductVars(pentry entries[], int x);
