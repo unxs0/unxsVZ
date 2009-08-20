@@ -19,10 +19,10 @@ endif
 
 
 
-all: lfclibtemplate.a
+all: libtemplate-branch.a
 
-lfclibtemplate.a: template.o template.h
-	ar r lfclibtemplate.a template.o
+libtemplate-branch.a: template.o template.h
+	ar r libtemplate-branch.a template.o
 
 template.o: template.c template.h
 	cc -c template.c -o template.o $(CFLAGS)
@@ -30,9 +30,9 @@ template.o: template.c template.h
 clean:
 	rm -f *.o *.a
 
-install: lfclibtemplate.a template.h
+install: libtemplate-branch.a template.h
 	mkdir -p /usr/lib/openisp
 	mkdir -p /usr/include/openisp
-	install lfclibtemplate.a /usr/lib/openisp/lfclibtemplate.a
-	install template.h /usr/include/openisp/lfctemplate.h
-	rm lfclibtemplate.a
+	install libtemplate-branch.a /usr/lib/openisp/libtemplate-branch.a
+	install template.h /usr/include/openisp/template-branch.h
+	rm libtemplate-branch.a
