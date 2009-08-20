@@ -337,7 +337,11 @@ void CustomerCommands(pentry entries[], int x)
 
 void htmlCustomer(void)
 {
-	if(!gcFunction[0] || !strcmp(gcFunction,"Login")) LoadCustomer(guLoginClient);
+	if(!gcFunction[0] || 
+		!strcmp(gcFunction,"Login") || 
+		!strcmp(gcFunction,"Finish"))
+		LoadCustomer(guLoginClient);
+
 	htmlHeader("unxsISP Customer Interface","Header");
 	htmlCustomerPage("","MyAccount.Body");
 	htmlFooter("Footer");
