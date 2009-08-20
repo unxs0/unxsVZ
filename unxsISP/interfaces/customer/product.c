@@ -86,8 +86,10 @@ void ProcessProductDeploymentVars(pentry entries[], int x)
 void htmlProductDeployWizard(unsigned uStep)
 {
 	htmlHeader("unxsISP Admin Interface","Header");
-	sprintf(gcQuery,"ProductDeploy.%u",uStep);
+	sprintf(gcQuery,"CustomerProductDeploy.%u",uStep);
 	htmlCustomerPage("",gcQuery);
+	htmlFooter("Footer");
+
 }//void htmlProductDeployWizard(unsigned uStep)
 
 
