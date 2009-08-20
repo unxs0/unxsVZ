@@ -100,8 +100,8 @@
 
 <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
         <tr>
-          <td width="22%" valign="top"> </td>
-          <td width="78%"> </td>
+          <td width="35%" valign="top"> </td>
+          <td> </td>
         </tr>
         <tr>
                 <td valign="top">
@@ -176,7 +176,7 @@ d>
 
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Zip Code')"><strong>C&odigo; Postal</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Zip Code')"><strong>C&oacute;digo Postal</strong></a>          </td>
                 <td>
 			<input type=hidden name=cZip value="{{cZip}}">
                         <input  title='Postal or Zip code. E.g. 90001 (Required)' type=text name=cZip value="{{cZip}}" size=40 maxlength=99 {{gcInputStatus}} class={{cZipStyle}}></td>
@@ -240,7 +240,7 @@ d>
 
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=ACH Debits')"><strong>Transferencia por D&eacutebito Directo</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=ACH Debits')"><strong>Transferencia por D&eacute;bito Directo</strong></a>          </td>
                 <td>
 			<input type=hidden name=cACHDebits value="{{cACHDebits}}">
                         <input  title='ABA routing number + account number' type=text name=cACHDebits value="{{cACHDebits}}" size=40 maxlength=99 {{gcInputStatus}} class={{cACHDebitsStyle}}></td>
@@ -256,7 +256,7 @@ d>
 
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Address 1')"><strong>Direcci&oacuten de Env&iacute;o 1</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Address 1')"><strong>Direcci&oacute;n de Env&iacute;o 1</strong></a>          </td>
                 <td>
 			<input type=hidden name=cShipAddr1 value="{{cShipAddr1}}">
                         <input  title='Shipping street address. E.g. Another Street 65 (Optional)' type=text name=cShipAddr1 value="{{cShipAddr1}}" size=40 maxlength=99 {{gcInputStatus}} class={{cShipAddr1Style}}></td>
@@ -264,7 +264,7 @@ d>
 
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Address 2')"><strong>Direcci&oacuten de Env&iacute;o 2</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Address 2')"><strong>Direcci&oacute;n de Env&iacute;o 2</strong></a>          </td>
                 <td>
 			<input type=hidden name=cShipAddr2 value="{{cShipAddr2}}">
                         <input  title='Shipping street address line 2. E.g. Suite 34 (Optional)' type=text name=cShipAddr2 value="{{cShipAddr2}}" size=40 maxlength=99 {{gcInputStatus}} class={{cShipAddr2Style}}></td>
@@ -272,7 +272,7 @@ d>
 
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Address 3')"><strong>Direcci&oacuten de Env&iacute;o  3</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Address 3')"><strong>Direcci&oacute;n de Env&iacute;o  3</strong></a>          </td>
                 <td>
 			<input type=hidden name=cShipAddr3 value="{{cShipAddr3}}">
                         <input  title='Shipping street address line 2. E.g. Suite 34 (Optional)' type=text name=cShipAddr3 value="{{cShipAddr3}}" size=40 maxlength=99 {{gcInputStatus}} class={{cShipAddr3Style}}></td>
@@ -355,7 +355,7 @@ d>
         </tr>
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Account Holder')"><strong>Due&ntild;o de la Cuenta</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Account Holder')"><strong>Due&ntilde;o de la Cuenta</strong></a>          </td>
                 <td>
 			<input type=hidden name=cAccountHolder value="{{cAccountHolder}}">
                         <input  title='Customer bank account holder, E.g.: John Doe (Required)' type=text name=cAccountHolder value="{{cAccountHolder}}" size=40 maxlength=99 {{gcInputStatus}} class={{cAccountHolderStyle}}></td>
