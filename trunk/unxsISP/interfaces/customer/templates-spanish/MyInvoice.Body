@@ -19,18 +19,18 @@
 			<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>	
-						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='My account management' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">My Account</b></a>
-						</td>
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='My invoices management' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">My Invoices</b></a>
+						<a title='Manejo de mi cuenta' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">Mi Cuenta</b></a>
+						</td>
+						<td class="wpsUnSelectedPlace" nowrap height="100%">
+						<a title='Manejo de mis facturas' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">Mis Facturas</b></a>
 						</td>
 					</tr>
 				</table>
 			</td>
 		</tr>
 		<tr><td valign=top align=right class=notice>
-{{gcName}} ({{gcLogin}}) of {{gcOrgName}} is logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout
+{{gcName}} ({{gcOrgName}}) conectado desde {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Desconectarse
 </a></td></tr>
 							<tr>
 								<td class="mastbg2">
