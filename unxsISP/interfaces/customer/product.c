@@ -49,7 +49,7 @@ void ProcessProductDeploymentVars(pentry entries[], int x)
 {
 	register int i;
 	unsigned uIndex=0;
-	
+
 	for(i=0;i<x;i++)
 	{
 		if(!strncmp(entries[i].name,"cParam.",7))
@@ -76,16 +76,17 @@ void ProcessProductDeploymentVars(pentry entries[], int x)
 			if(uIndex) uServiceEndPoint[uIndex-1]=uParameterCount;
 			uServicesCount++;
 		}
+		else if(!strcmp(entries[i].name,"uStep"))
+			sscanf(entries[i].val,"%u",&uStep);
 	}
 	if(uServicesCount) uServiceEndPoint[uServicesCount-1]=uParameterCount;
-
 
 }//void ProcessProductDeploymentVars(pentry entries[], int x)
 
 
 void htmlProductDeployWizard(unsigned uStep)
 {
-	htmlHeader("unxsISP Admin Interface","Header");
+	htmlHeader("unxsISP Customer Interface","Header");
 	sprintf(gcQuery,"CustomerProductDeploy.%u",uStep);
 	htmlCustomerPage("",gcQuery);
 	htmlFooter("Footer");
@@ -97,6 +98,8 @@ void ProductCommands(pentry entries[], int x)
 {
 	if(!strcmp(gcPage,"Product"))
 	{
+		ProcessProductDeploymentVars(entries,x);
+		
 		if(!strcmp(gcFunction,"Next"))
 		{
 			if((uStep+1)==2 && !uProductHasServices(uProduct))
@@ -108,7 +111,6 @@ void ProductCommands(pentry entries[], int x)
 			SetParamFieldsOn();
 			if(uStep==2)
 			{
-				ProcessProductDeploymentVars(entries,x);
 				CheckAllParameters();
 			}
 
@@ -120,8 +122,6 @@ void ProductCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Back"))
 		{
 			uStep--;
-			if(uStep==2) // from step 3 to 2, user may want to correct entered data.
-				ProcessProductDeploymentVars(entries,x);
 			if(uStep==0) uStep=1; //little sanity check
 			SetParamFieldsOn();
 			htmlProductDeployWizard(uStep);
@@ -130,7 +130,6 @@ void ProductCommands(pentry entries[], int x)
 		{
 			//End of the product deployment wizard.
 			//deploy the product and go back to customers screen.
-			ProcessProductDeploymentVars(entries,x);
 			DeployProduct();
 			gcMessage="Product deployed and waiting for activation.";
 			htmlCustomer();
@@ -1204,4 +1203,36 @@ void funcDateSelectTable(FILE *fp)
 	fprintf(fp,"</table>\n");
 
 }//void funcDateSelectTable()
+
+
+void funcSelectProduct(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	fprintf(fp,"<!-- funcSelectProduct(fp) start -->\n");
+
+	sprintf(gcQuery,"SELECT uProduct,cLabel FROM tProduct WHERE uAvailable=1 ORDER BY cLabel");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+		
+	fprintf(fp,"<select class=type_fields title='Select the product you want to deploy' name=uProduct>\n");
+
+	sprintf(gcQuery,"%u",uProduct);
+	
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"<option value=%s ",field[0]);
+		if(!strcmp(field[0],gcQuery))
+				fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",field[1]);
+	}
+
+	fprintf(fp,"</select\n");
+
+	fprintf(fp,"<!-- funcSelectProduct(fp) end -->\n");
+
+}//void funcSelectProduct(FILE *fp)
 
