@@ -1,0 +1,8 @@
+</table>
+<br>
+<br>
+Total de impuestos: {{mInvoiceTax}}<br>
+Costo de env&iacute;o: {{mInvoiceSH}}<br>
+Total a pagar: {{mInvoiceTotal}}<br>
+<br>
+
