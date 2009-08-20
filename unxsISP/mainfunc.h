@@ -1305,7 +1305,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 	{
 		printf("Updating tTemplate for %s\n",cTemplate);
 		sprintf(cBuffer,"UPDATE tTemplate SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),"
-				"cTemplate='' WHERE uTemplate=%u",uTemplateSet,uTemplate);
+				"cTemplate='' WHERE uTemplate=%u",uTemplate);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{
