@@ -78,6 +78,8 @@ void ProcessProductDeploymentVars(pentry entries[], int x)
 		}
 		else if(!strcmp(entries[i].name,"uStep"))
 			sscanf(entries[i].val,"%u",&uStep);
+		else if(!strcmp(entries[i].name,"uProduct"))
+			sscanf(entries[i].val,"%u",&uProduct);
 	}
 	if(uServicesCount) uServiceEndPoint[uServicesCount-1]=uParameterCount;
 
@@ -199,7 +201,10 @@ void htmlProductPage(char *cTitle, char *cTemplateName)
 unsigned uProductHasServices(unsigned uProduct)
 {
 	MYSQL_RES *res;
-	sprintf(gcQuery,"SELECT tService.uService,tService.cLabel uService FROM tService,tServiceGlue WHERE tServiceGlue.uServiceGroup=%u AND tService.uService=tServiceGlue.uService AND tService.uAvailable=1 ORDER BY tService.cLabel",uProduct);
+	sprintf(gcQuery,"SELECT tService.uService,tService.cLabel uService FROM "
+			"tService,tServiceGlue WHERE tServiceGlue.uServiceGroup=%u "
+			"AND tService.uService=tServiceGlue.uService AND "
+			"tService.uAvailable=1 ORDER BY tService.cLabel",uProduct);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
