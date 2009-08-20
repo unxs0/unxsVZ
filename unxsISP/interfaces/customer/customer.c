@@ -297,6 +297,7 @@ void CustomerCommands(pentry entries[], int x)
 		
 		if(!strcmp(gcFunction,"Update My Info"))
 		{
+			gcInputStatus[0]=0;
 			SetCustomerFieldsOn();
 			sprintf(gcModStep,"Confirm ");
 		}
@@ -306,6 +307,7 @@ void CustomerCommands(pentry entries[], int x)
 				ModCustomer();
 			else
 			{
+				gcInputStatus[0]=0;
 				SetCustomerFieldsOn();
 				sprintf(gcModStep,"Confirm ");
 			}
