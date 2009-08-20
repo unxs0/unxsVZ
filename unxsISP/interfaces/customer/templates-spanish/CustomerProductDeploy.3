@@ -1,0 +1,218 @@
+
+<body marginwidth="0" marginheight="0">
+
+<div align="center" class="standard2colnee">
+
+<table cellspacing="0" cellpadding="0" border="0" width=1200>
+	<tr valign="top">
+	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>
+
+		<td align="right">
+
+
+	<!-- one row, one cell table to span the page-->
+	<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">
+		<tr>
+
+			<!-- Navigation -->
+			<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>
+				<table width="100%" border="0" cellpadding="0" cellspacing="0">
+					<tr>	
+						<td class="wpsSelectedPlace" nowrap height="100%">
+						<a title='Manejo de mi cuenta' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">Mi Cuenta</b></a>
+						</td>
+						<td class="wpsUnSelectedPlace" nowrap height="100%">
+						<a title='Manejo de mis facturas' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">Mis Facturas</b></a>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr><td valign=top align=right class=notice>
+{{gcName}} ({{gcOrgName}}) conectado desde {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Desconectarse
+</a></td></tr>
+							<tr>
+								<td class="mastbg2">
+
+									<table cellspacing="0" cellpadding="0" border="0" width="100%">
+									<tr valign="top">
+										
+										<td align="right" class="padt10">																				
+										</td>
+										
+										
+									</tr>
+									</table>
+								</td>
+							</tr>
+
+			</table>
+		</td>
+	</tr>
+</table>
+
+
+<form method=post action={{cCGI}} style="margin:0px;">
+<table width=1200  border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td>
+{{gcMessage}}
+
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
+  <tr>
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+    <td class="hdrtout padlt8" width="33%"><h6 class="modhdr">Asistente de Compra de Productos</h6></td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+    <td width="10"> </td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+    <td class="hdrtout padlt8">
+                <h6 class="modhdr">Step 3/3 - Revisar y Confirmar Compra {{cCustomerName}}</h6></td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+  </tr>
+  <tr>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td valign="top">
+
+
+
+<table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
+                <tr>
+                  <td> </td>
+                  <td> </td>
+                </tr>
+		<tr>
+		<td>
+<a class=inputLink href="#" onClick="javascript:window.open('{{iCGI}}?gcPage=Glossary&cLabel=Product Deployment Wizard Details','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')"><strong>Product Deployment Wizard Details</strong></a></td>
+		</tr>
+		<tr>
+		<td colspan=2>
+Paso 3:<br>
+<br>
+ 1. Confirmar los par&aacute;metros ingresados y finalizar.<br>   
+		</td>
+		</tr>
+        </table>
+
+
+
+
+
+        </td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td> </td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td valign="top">
+
+
+<table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
+        <tr>
+          <td width="22%" valign="top"> </td>
+          <td width="78%"> </td>
+        </tr>
+	<tr>
+		<td valign="top">
+		<a class=inputLink href="#" onClick="javascript:window.open('{{iCGI}}?gcPage=Glossary&cLabel=Deployment Date','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')"><strong>Fecha de Inicio para el Producto </strong></a>
+		</td>
+		<td valign="top">
+		{{funcDateSelectTable}}
+		</td>
+	</tr>
+        <tr>
+                <td valign="top">
+		<a class=inputLink href="#" onClick="javascript:window.open('{{iCGI}}?gcPage=Glossary&cLabel=Select Product','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')"><strong>Producto Seleccionado </strong></a>
+                </td>
+		<td>
+		{{cProductLabel}}
+</td>
+        </tr>
+<tr>
+	<td valign=top colspan=2>
+		{{funcEnteredParameters}}
+	</td>
+</tr>
+	<tr>
+                <td colspan=2>
+<br>
+<br>
+		<input type="submit" title='Volver al paso anterior del asistente' class="largeButton" name="gcFunction" value='Atr&acute;s' 
+                <input type="submit" title='Comprar el producto seleccionado' class="largeButton" name="gcFunction" value='Terminar' />
+        </td>
+	</tr>
+</table>
+
+
+
+        </td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+  </tr>
+</table>
+
+<br /></td>
+    <td> </td>
+  </tr>
+<tr>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
+  <t>
+
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+    <td class="hdrtout padlt8"><h6 class="modhdr">Customer Products</h6></td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+  </tr>
+  <tr>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td>
+	
+
+<table border="0" cellspacing="0" cellpadding="7" width="100%" class="table_content" style="margin-top:5px;">
+	<tr bgcolor="#e9e9e9">
+		<td class="title_list">
+			Name
+		</td>
+		<td class="title_list">
+			Status
+		</td>
+		<td class="title_list">
+			Date
+		</td>
+
+	</tr>
+
+	{{funcCustomerProducts}}
+</table>
+
+	
+	</td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+
+    <td></td>
+  </tr>
+</table>
+</td>
+</tr>
+</td>
+</tr>
+</table>
+<input type=hidden name=gcPage value=Product>
+<input type=hidden name=uStep value=3>
+<input type=hidden name=uCustomer value='{{uCustomer}}'>
+<input type=hidden name=uProduct value='{{uProduct}}'>
+</form>
+
