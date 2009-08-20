@@ -1,0 +1,8 @@
+<tr>
+<td valign=top colspan=2>
+
+<fieldset>
+<legend>{{cServiceLabel}} Parameters</legend>
+<table>
+<input type=hidden name=uService.{{uServiceCount}} value="{{uService}}">
+
