@@ -396,6 +396,10 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcSelectProduct(fp);
 	else if(!strcmp(cFunction,"funcProductParameterInput"))
 		funcProductParameterInput(fp);
+	else if(!strcmp(cFunction,"funcDateSelectTable"))
+		funcDateSelectTable(fp);
+	else if(!strcmp(cFunction,"funcEnteredParameters"))
+		funcEnteredParameters(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
