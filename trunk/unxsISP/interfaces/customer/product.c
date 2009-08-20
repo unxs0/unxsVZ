@@ -102,7 +102,8 @@ void ProductCommands(pentry entries[], int x)
 	{
 		ProcessProductDeploymentVars(entries,x);
 		
-		if(!strcmp(gcFunction,"Next"))
+		if(!strcmp(gcFunction,"Next") 
+		|| !strcmp(gcFunction,"Siguiente"))
 		{
 			if((uStep+1)==2 && !uProductHasServices(uProduct))
 			{
@@ -121,14 +122,16 @@ void ProductCommands(pentry entries[], int x)
 
 			htmlProductDeployWizard(uStep);
 		}
-		else if(!strcmp(gcFunction,"Back"))
+		else if(!strcmp(gcFunction,"Back")
+		|| !strcmp(gcFunction,"Atrás"))
 		{
 			uStep--;
 			if(uStep==0) uStep=1; //little sanity check
 			SetParamFieldsOn();
 			htmlProductDeployWizard(uStep);
 		}
-		else if(!strcmp(gcFunction,"Finish"))
+		else if(!strcmp(gcFunction,"Finish")
+		|| !strcmp(gcFunction,"Terminar"))
 		{
 			//End of the product deployment wizard.
 			//deploy the product and go back to customers screen.
