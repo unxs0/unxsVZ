@@ -95,7 +95,6 @@
 		<tr>
 		<td colspan=2>
 		<u><b>My Invoices</b></u><br><br>
-		{{funcProductList}}
 		</td>
         </table>
 
@@ -117,7 +116,15 @@
         </tr>
         <tr>
                 <td valign="top" colspan=2>
-	{{funcInvoice}}	
+		<table cellspacing="5" cellpadding="0" style='border: solid gray 1px' >
+		<tr bgcolor="#e9e9e9">
+		<th>Product Name</th>
+		<th>Status</th>
+		<th>Purchase/Deployment Date</th>
+		<th>Subscribe for Recurring Billing</th>
+		</tr>
+		{{funcProductList}}
+		</table>
 		</td>
         
 </table>

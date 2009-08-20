@@ -776,8 +776,6 @@ void funcProductList(FILE *fp)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	
-	fileDirectTemplate(fp,"ProductListHeader");
-
 	sprintf(gcQuery,"SELECT tInstance.uInstance,tInstance.cLabel,"
 			"FROM_UNIXTIME(GREATEST(tInstance.uCreatedDate,tInstance.uModDate)),"
 			"tStatus.cLabel FROM tInstance,tStatus WHERE tInstance.uClient='%u' "
@@ -791,10 +789,12 @@ void funcProductList(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		FromMySQLDate(field[2]);
-		fprintf(fp,"<tr><td>(Instance %s)</td><td>%s</td><td>%s</td></tr>\n",
+		fprintf(fp,"<tr><td>(Instance %s)</td><td align=center>%s</td><td align=right>%s</td>"
+				"<td align=center><input type=checkbox name=uSubscribe.%s</tr>\n",
 				field[1]
 				,field[3]
 				,field[2]
+				,field[0]
 		       );
 	}
 
