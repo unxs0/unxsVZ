@@ -299,7 +299,8 @@ void CustomerCommands(pentry entries[], int x)
 	{
 		ProcessCustomerVars(entries,x);
 		
-		if(!strcmp(gcFunction,"Update My Info") || !strcmp(gcFunction,"Actualizar Mis Datos"))
+		if(!strcmp(gcFunction,"Update My Info") 
+			|| !strcmp(gcFunction,"Actualizar Mis Datos"))
 		{
 			gcInputStatus[0]=0;
 			SetCustomerFieldsOn();
@@ -319,14 +320,17 @@ void CustomerCommands(pentry entries[], int x)
 				sprintf(gcModStep,"Confirm ");
 			}
 		}
-		else if(!strcmp(gcFunction,"View My Invoices") || !strcmp(gcFunction,"Ver Mis Facturas"))
+		else if(!strcmp(gcFunction,"View My Invoices") 
+			|| !strcmp(gcFunction,"Ver Mis Facturas"))
 			htmlInvoice();
-		else if(!strcmp(gcFunction,"Subscribe to Recurring Billing"))
+		else if(!strcmp(gcFunction,"Subscribe to Recurring Billing")
+			||!strcmp(gcFunction,"Subscribirse al Pago Recurrente"))
 		{
 			uSetupRB=1;
 			htmlInvoice();
 		}
-		else if(!strcmp(gcFunction,"Purchase New Product"))
+		else if(!strcmp(gcFunction,"Purchase New Product")
+			|| !strcmp(gcFunction,"Comprar un Nuevo Producto"))
 			htmlProductDeployWizard(1);
 
 		htmlCustomer();
