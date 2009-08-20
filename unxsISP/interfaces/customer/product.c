@@ -90,7 +90,7 @@ void htmlProductDeployWizard(unsigned uStep)
 {
 	htmlHeader("unxsISP Customer Interface","Header");
 	sprintf(gcQuery,"CustomerProductDeploy.%u",uStep);
-	htmlCustomerPage("",gcQuery);
+	htmlProductPage("",gcQuery);
 	htmlFooter("Footer");
 
 }//void htmlProductDeployWizard(unsigned uStep)
@@ -153,12 +153,15 @@ void htmlProductPage(char *cTitle, char *cTemplateName)
 		if((field=mysql_fetch_row(res)))
 		{
 			struct t_template template;
+			char cuProduct[16]={""};
+
+			sprintf(cuProduct,"%u",uProduct);
 
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="ispAdmin.cgi";
+			template.cpValue[1]="ispClient.cgi";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcLogin;
@@ -181,7 +184,10 @@ void htmlProductPage(char *cTitle, char *cTemplateName)
 			template.cpName[8]="gcInputStatus";
 			template.cpValue[8]=gcInputStatus;
 				
-			template.cpName[9]="";
+			template.cpName[9]="uProduct";
+			template.cpValue[9]=cuProduct;
+
+			template.cpName[10]="";
 
 			printf("\n<!-- Start htmlProductPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
