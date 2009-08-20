@@ -1,0 +1,8 @@
+<tr>
+<td valign=top colspan=2>
+
+<fieldset>
+<legend>Par&aacute;metros de {{cServiceLabel}}</legend>
+<table>
+<input type=hidden name=uService.{{uServiceCount}} value="{{uService}}">
+
