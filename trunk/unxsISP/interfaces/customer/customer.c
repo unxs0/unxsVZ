@@ -134,6 +134,10 @@ void ModCustomer(void);
 void SetCustomerFieldsOn(void);
 void LoadCustomer(unsigned cuClient);
 
+
+void htmlProductDeployWizard(unsigned uStep); //product.c
+
+
 void ProcessCustomerVars(pentry entries[], int x)
 {
 	register int i;
@@ -322,6 +326,9 @@ void CustomerCommands(pentry entries[], int x)
 			uSetupRB=1;
 			htmlInvoice();
 		}
+		else if(!strcmp(gcFunction,"Purchase New Product"))
+			htmlProductDeployWizard(1);
+
 		htmlCustomer();
 	}
 
