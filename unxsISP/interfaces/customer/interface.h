@@ -12,10 +12,7 @@ AUTHOR
 #include "../../local.h"
 #include <ctype.h>
 #include <errno.h>
-#include <openisp/template.h>
-/*#include <uradius.h> //Our uRadiusLib
-#include <openisp/servermonitor.h>
-*/
+#include <openisp/template-branch.h>
 //libtemplate required
 #define MAXPOSTVARS 128
 #define MAXGETVARS 8
@@ -111,6 +108,7 @@ extern char gcName[];
 extern char gcOrgName[];
 extern char gcHost[];
 extern unsigned guBrowserFirefox;
+extern unsigned guTemplateSet;
 
 //Cgi form commands and major area function
 extern char gcFunction[];

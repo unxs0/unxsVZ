@@ -20,6 +20,7 @@ char gcQuery[4096]={""};
 
 //
 //Template vars
+unsigned guTemplateSet=0;
 char *gcMessage="&nbsp;";
 char gcInputStatus[32]={"disabled"};
 char gcPermInputStatus[32]={"disabled"};
@@ -194,8 +195,10 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 	{
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
-
-		TemplateSelect(cTemplateName);
+		//Default template set for login page, always
+		//since we don't know customer language until
+		//he or she gets logged in
+		TemplateSelect(cTemplateName,1);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -254,7 +257,8 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 		MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		//Header is common for all languages
+		TemplateSelect(cTemplateName,1);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -288,8 +292,9 @@ void htmlFooter(char *cTemplateName)
 	{
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
-
-		TemplateSelect(cTemplateName);
+		
+		//Footer is common for all languages
+		TemplateSelect(cTemplateName,1);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -333,7 +338,7 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelect(cTemplateName,guTemplateSet);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
