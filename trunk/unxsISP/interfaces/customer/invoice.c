@@ -28,8 +28,6 @@ static char *gcPrintAll="";
 void fileDirectTemplate(FILE *fp,char *cTemplateName);
 unsigned GetPaymentValue(unsigned uInvoice,const char *cName,char *cValue);
 MYSQL_RES *sqlresultClientInfo(void);
-void ReStockItems(unsigned uInvoice);
-char *cGetInvoiceLanguage(unsigned uInvoice);
 char *cGetCustomerEmail(unsigned uInvoice);
 void EmailLoadedInvoice(void);
 void EmailAllInvoices(void);
@@ -641,7 +639,7 @@ void EmailLoadedInvoice(void)
 	GetConfiguration("cFromEmailAddr",cFrom);
 	GetConfiguration("cInvoiceBccEmailAddr",cBcc);
 	
-	sprintf(gcQuery,"cSubjectLang%s",cGetInvoiceLanguage(uInvoice));
+	//sprintf(gcQuery,"cSubjectLang%s",cGetInvoiceLanguage(uInvoice));
 	GetConfiguration(gcQuery,cSubjectLang);
 	if(!cSubjectLang[0])
 		sprintf(cSubjectLang,"Invoice #");
@@ -689,13 +687,13 @@ void EmailAllInvoices(void)
 }//void EmailAllInvoices(void)
 
 
-char *cGetInvoiceLanguage(unsigned uInvoice)
+char *cGetClientLanguage(void)
 {
 	static char cLanguage[32]={""};
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cLanguage FROM tClient,tInvoice WHERE tClient.uClient=tInvoice.uClient AND tInvoice.uInvoice=%u",uInvoice);
+	sprintf(gcQuery,"SELECT cLanguage FROM tCliente WHERE tClient.uClient=%u",guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -707,7 +705,7 @@ char *cGetInvoiceLanguage(unsigned uInvoice)
 	
 	return(cLanguage);
 
-}//char *cGetInvoiceLanguage(unsigned uInvoice)
+}//char *cGetClientLanguage(void)
 
 
 char *cGetCustomerEmail(unsigned uInvoice)
