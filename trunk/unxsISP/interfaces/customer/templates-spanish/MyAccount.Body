@@ -18,17 +18,17 @@
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>	
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='My account management' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">My Account</b></a>
+						<a title='Manejo de mi cuenta' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">Mi Cuenta</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='My invoices management' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">My Invoices</b></a>
+						<a title='Manejo de mis facturas' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">Mis Facturas</b></a>
 						</td>
 					</tr>
 				</table>
 			</td>
 		</tr>
 		<tr><td valign=top align=right class=notice>
-{{gcName}} ({{gcOrgName}}) logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout
+{{gcName}} ({{gcOrgName}}) conectado desde {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Desconectarse
 </a></td></tr>
 							<tr>
 								<td class="mastbg2">
@@ -60,12 +60,12 @@
 <table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-    <td class="hdrtout padlt8" width="33%"><h6 class="modhdr">My Account Operations</h6></td>
+    <td class="hdrtout padlt8" width="33%"><h6 class="modhdr">Operaciones de Mi Cuenta</h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td width="10"> </td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
-                <h6 class="modhdr">My Personal Data</h6></td>
+                <h6 class="modhdr">Mi Informaci&oacute;n Personal</h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
   <tr>
@@ -79,10 +79,10 @@
                   <td> </td>
                   <td> </td>
                 </tr>
-		<tr><td><input type=submit name=gcFunction value='{{gcModStep}}Update My Info' class=largestButton></td></tr>
-		<tr><td><input type=submit name=gcFunction value='Purchase New Product' class=largestButton></td></tr>
-		<tr><td><input type=submit name=gcFunction value='View My Invoices' class=largestButton></td></tr>
-		<tr><td><input type=submit name=gcFunction value='Subscribe to Recurring Billing' class=largestButton></td></tr>
+		<tr><td><input type=submit name=gcFunction value='{{gcModStep}}Actualizar Mis Datos' class=largestButton></td></tr>
+		<tr><td><input type=submit name=gcFunction value='Comprar un Nuevo Producto' class=largestButton></td></tr>
+		<tr><td><input type=submit name=gcFunction value='Ver Mis Facturas' class=largestButton></td></tr>
+		<tr><td><input type=submit name=gcFunction value='Subscribirse al Pago Recurrente' class=largestButton></td></tr>
 
 		</td>
         </table>
