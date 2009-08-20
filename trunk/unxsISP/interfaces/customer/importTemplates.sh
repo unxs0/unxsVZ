@@ -10,6 +10,19 @@
 #	Hugo Urquiza for Unixservice (C) 2007-2009
 #
 #
-for i in `find ./templates/* -type f`; do 
+
+for i in `find ./templates-common/* -type f`; do 
 	/var/www/unxs/cgi-bin/unxsISP.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i plain;
+done
+
+for i in `find ./templates-english/* -type f`; do 
+	/var/www/unxs/cgi-bin/unxsISP.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i english;
+done
+
+for i in `find ./templates-spanish/* -type f`; do 
+	/var/www/unxs/cgi-bin/unxsISP.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i spanish;
+done
+
+for i in `find ./templates-french/* -type f`; do 
+	/var/www/unxs/cgi-bin/unxsISP.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i french;
 done
