@@ -61,6 +61,9 @@ void htmlLoginPage(char *cTitle, char *cTemplateName);
 void htmlDashBoard(void);
 void htmlDashBoardPage(char *cTitle, char *cTemplateName);
 void EncryptPasswd(char *pw);
+void SetLanguage(void);
+
+char *cGetClientLanguage(void);
 
 
 int main(int argc, char *argv[])
@@ -524,6 +527,8 @@ void GetPLAndClient(char *cUser)
 		sprintf(gcOrgName,"%.100s",mysqlField[0]);
 	mysql_free_result(mysqlRes);
 	
+	SetLanguage();
+
 }//void GetPLAndClient()
 
 
@@ -1079,4 +1084,22 @@ void EncryptPasswd(char *pw)
 	strcpy(pw,cpw);
 
 }//void EncryptPasswd(char *pw)
+
+
+void SetLanguage(void)
+{
+	char cLang[10]={""};
+
+	sprintf(cLang,"%.9s",cGetClientLanguage());
+
+	if(!strcmp(cLang,"Eng"))
+		guTemplateSet=2;
+	else if(!strcmp(cLang,"Spa"))
+		guTemplateSet=3;
+	else if(!strcmp(cLang,"Fre"))
+		guTemplateSet=4;
+	else if(1)
+		guTemplateSet=2; //English safe default
+
+}//void SetLanguage(void)
 
