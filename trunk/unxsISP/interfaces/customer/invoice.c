@@ -693,7 +693,7 @@ char *cGetClientLanguage(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cLanguage FROM tCliente WHERE tClient.uClient=%u",guLoginClient);
+	sprintf(gcQuery,"SELECT cLanguage FROM tClient WHERE tClient.uClient=%u",guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

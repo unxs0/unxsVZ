@@ -1,7 +1,7 @@
 Summary: Manage ISP customers, resellers and their resources. Centralize resource and product usage.
 Name: unxsisp
 Version: 1.1
-Release: 1
+Release: 2
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsisp-1.1.tar.gz
@@ -66,7 +66,7 @@ fi
 #let installer now what was done.
 if [ "$cMySQLStart" == "1" ] && [ "$cInitialize" == "1" ];then
 	echo "unxsISP has been installed, intialized and httpd have been started.";	
-	echo "You can proceed to login to your unxsBind interfaces with your browser.";	
+	echo "You can proceed to login to your unxsISP interfaces with your browser.";	
 else 
 	echo "It appears that one or more manual operations may be needed to finish";
 	echo "your unxsISP installation.";
@@ -86,11 +86,11 @@ else
 	fi
 	if [ "$cInitialize" != "1" ]; then
 		echo "";
-		echo "WARNING: Your unxsBind database was not initialized, run:";
+		echo "WARNING: Your unxsISP database was not initialized, run:";
 		echo "export ISMROOT=/usr/local/share";
-		echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
+		echo "/var/www/unxs/cgi-bin/unxsISP.cgi Initialize <mysql-root-passwd>";	
 		echo "Debug any problems, check via the mysql CLI, then if needed try again:";
-		echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
+		echo "/var/www/unxs/cgi-bin/unxsISP.cgi Initialize <mysql-root-passwd>";	
 	fi
 fi
 
@@ -103,6 +103,8 @@ fi
 /usr/local/share/unxsISP/
 
 %changelog
+* Mon Aug 17 2009 - Hugo Urquiza <support2@unixservice.com>
+- Minor spec updates
 * Sat Aug 14 2009 - Hugo Urquiza <support2@unixservice.com>
 - Major .spec update and lots of code and template updates.
 * Tue May 26 2009 - Hugo Urquiza <support2@unixservice.com>
