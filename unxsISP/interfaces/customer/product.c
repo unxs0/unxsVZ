@@ -123,7 +123,7 @@ void ProductCommands(pentry entries[], int x)
 			htmlProductDeployWizard(uStep);
 		}
 		else if(!strcmp(gcFunction,"Back")
-		|| !strcmp(gcFunction,"Atrás"))
+		|| !strcmp(gcFunction,"Volver"))
 		{
 			uStep--;
 			if(uStep==0) uStep=1; //little sanity check
