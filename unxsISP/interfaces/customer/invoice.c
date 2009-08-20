@@ -191,7 +191,6 @@ void funcInvoice(FILE *fp)
 	char cCardExp[42]={""};
 	char cInvoice[32]={""};
 	char cLanguage[32]={""};
-	char cTemplateName[100]={""};
 
 	char cPaymentName[31]={"Unknown"};
 	unsigned uRequireCreditCard=0;
@@ -326,8 +325,7 @@ void funcInvoice(FILE *fp)
 			}
 			else
 			{
-				sprintf(cTemplateName,"cInvoiceTopMail%s",cLanguage);
-				fpTemplate(fp,cTemplateName,&template);
+				fpTemplate(fp,"cInvoiceTopMail",&template);
 			}
 		}
 	}
@@ -375,8 +373,7 @@ void funcInvoice(FILE *fp)
 		char *cp;
 		char cProduct[100]={""};
 		
-		sprintf(cTemplateName,"cInvoiceItemHeaderMail%s",cLanguage);
-		fileDirectTemplate(fp,cTemplateName);
+		fileDirectTemplate(fp,"cInvoiceItemHeaderMail");
 		
 		while((field=mysql_fetch_row(res)))
 		{
@@ -437,8 +434,7 @@ void funcInvoice(FILE *fp)
 		template.cpValue[2]=cmInvoiceSH;
 
 		template.cpName[3]="";
-		sprintf(cTemplateName,"cInvoiceItemFooterMail%s",cLanguage);
-		fpTemplate(fp,cTemplateName,&template);
+		fpTemplate(fp,"cInvoiceItemFooterMail",&template);
 	}
 	else
 	{
