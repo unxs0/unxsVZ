@@ -1288,7 +1288,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 	}
 
 	//uTemplate
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s'",cTemplate);
+	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s' AND uTemplateSet=%u",cTemplate,uTemplateSet);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1304,7 +1304,8 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 	if(uTemplate)
 	{
 		printf("Updating tTemplate for %s\n",cTemplate);
-		sprintf(cBuffer,"UPDATE tTemplate SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),cTemplate='',uTemplateSet=%u WHERE uTemplate=%u",uTemplateSet,uTemplate);
+		sprintf(cBuffer,"UPDATE tTemplate SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),"
+				"cTemplate='' WHERE uTemplate=%u",uTemplateSet,uTemplate);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{
@@ -1316,7 +1317,9 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 	else
 	{
 		printf("Inserting new tTemplate for %s\n",cTemplate);
-		sprintf(cBuffer,"INSERT INTO tTemplate SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cLabel='%s',uTemplateSet=%u",cTemplate,uTemplateSet);
+		sprintf(cBuffer,"INSERT INTO tTemplate SET uOwner=1,uCreatedBy=1,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),cLabel='%s',uTemplateSet=%u",
+				cTemplate,uTemplateSet);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{
