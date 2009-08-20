@@ -394,6 +394,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcSelectLanguage(fp);
 	else if(!strcmp(cFunction,"funcSelectProduct"))
 		funcSelectProduct(fp);
+	else if(!strcmp(cFunction,"funcProductParameterInput"))
+		funcProductParameterInput(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
