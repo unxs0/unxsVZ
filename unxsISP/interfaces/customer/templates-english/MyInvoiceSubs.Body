@@ -95,7 +95,7 @@
 		<tr>
 		<td colspan=2>
 		<u><b>My Invoices</b></u><br><br>
-		{{funcInvoiceNavList}}
+		{{funcProductList}}
 		</td>
         </table>
 

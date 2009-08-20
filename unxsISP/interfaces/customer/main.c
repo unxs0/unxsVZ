@@ -400,6 +400,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcDateSelectTable(fp);
 	else if(!strcmp(cFunction,"funcEnteredParameters"))
 		funcEnteredParameters(fp);
+	else if(!strcmp(cFunction,"funcProductList"))
+		funcProductList(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
