@@ -27,6 +27,9 @@ static unsigned uContainer=0;
 static char cLabel[33]={""};
 //cHostname: FQDN Hostname
 static char cHostname[65]={""};
+//uVeth default is no which meand VENET not VETH networked container
+static unsigned uVeth=0;
+static char cYesNouVeth[32]={""};
 //uIPv4: First IPv4 Number
 static unsigned uIPv4=0;
 static char cuIPv4PullDown[256]={""};
@@ -63,7 +66,7 @@ static time_t uModDate=0;
 
 
 
-#define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate"
+#define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate"
 
  //Local only
 void Insert_tContainer(void);
@@ -98,6 +101,13 @@ void ProcesstContainerVars(pentry entries[], int x)
 			sprintf(cLabel,"%.32s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cHostname"))
 			sprintf(cHostname,"%.64s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uVeth"))
+			sscanf(entries[i].val,"%u",&uVeth);
+		else if(!strcmp(entries[i].name,"cYesNouVeth"))
+		{
+			sprintf(cYesNouVeth,"%.31s",entries[i].val);
+			uVeth=ReadYesNoPullDown(cYesNouVeth);
+		}
 		else if(!strcmp(entries[i].name,"uIPv4"))
 			sscanf(entries[i].val,"%u",&uIPv4);
 		else if(!strcmp(entries[i].name,"cuIPv4PullDown"))
@@ -260,19 +270,20 @@ void tContainer(const char *cResult)
 		sscanf(field[0],"%u",&uContainer);
 		sprintf(cLabel,"%.32s",field[1]);
 		sprintf(cHostname,"%.64s",field[2]);
-		sscanf(field[3],"%u",&uIPv4);
-		sscanf(field[4],"%u",&uOSTemplate);
-		sscanf(field[5],"%u",&uConfig);
-		sscanf(field[6],"%u",&uNameserver);
-		sscanf(field[7],"%u",&uSearchdomain);
-		sscanf(field[8],"%u",&uDatacenter);
-		sscanf(field[9],"%u",&uNode);
-		sscanf(field[10],"%u",&uStatus);
-		sscanf(field[11],"%u",&uOwner);
-		sscanf(field[12],"%u",&uCreatedBy);
-		sscanf(field[13],"%lu",&uCreatedDate);
-		sscanf(field[14],"%u",&uModBy);
-		sscanf(field[15],"%lu",&uModDate);
+		sscanf(field[3],"%u",&uVeth);
+		sscanf(field[4],"%u",&uIPv4);
+		sscanf(field[5],"%u",&uOSTemplate);
+		sscanf(field[6],"%u",&uConfig);
+		sscanf(field[7],"%u",&uNameserver);
+		sscanf(field[8],"%u",&uSearchdomain);
+		sscanf(field[9],"%u",&uDatacenter);
+		sscanf(field[10],"%u",&uNode);
+		sscanf(field[11],"%u",&uStatus);
+		sscanf(field[12],"%u",&uOwner);
+		sscanf(field[13],"%u",&uCreatedBy);
+		sscanf(field[14],"%lu",&uCreatedDate);
+		sscanf(field[15],"%u",&uModBy);
+		sscanf(field[16],"%lu",&uModDate);
 
 		}
 
@@ -388,6 +399,12 @@ void tContainerInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cHostname value=\"%s\">\n",EncodeDoubleQuotes(cHostname));
 	}
+//uVeth
+	OpenRow(LANG_FL_tContainer_uVeth,"black");
+	if(guPermLevel>=10 && uMode)
+		YesNoPullDown("uVeth",uVeth,1);
+	else
+		YesNoPullDown("uVeth",uVeth,0);
 //uIPv4
 	OpenRow(LANG_FL_tContainer_uIPv4,"black");
 	if(guPermLevel>=7 && uMode)
@@ -545,12 +562,14 @@ void DeletetContainer(void)
 
 void Insert_tContainer(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tContainer SET uContainer=%u,cLabel='%s',cHostname='%s',uIPv4=%u,uOSTemplate=%u,uConfig=%u,uNameserver=%u,uSearchdomain=%u,uDatacenter=%u,uNode=%u,uStatus=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tContainer SET uContainer=%u,cLabel='%s',cHostname='%s',uVeth=%u,"
+				"uIPv4=%u,uOSTemplate=%u,uConfig=%u,uNameserver=%u,uSearchdomain=%u,"
+				"uDatacenter=%u,uNode=%u,uStatus=%u,uOwner=%u,uCreatedBy=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uContainer
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cHostname)
+			,uVeth
 			,uIPv4
 			,uOSTemplate
 			,uConfig
@@ -564,18 +583,18 @@ void Insert_tContainer(void)
 			);
 
 	MYSQL_RUN;
-
 }//void Insert_tContainer(void)
 
 
 void Update_tContainer(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tContainer SET uContainer=%u,cLabel='%s',cHostname='%s',uIPv4=%u,uOSTemplate=%u,uConfig=%u,uNameserver=%u,uSearchdomain=%u,uDatacenter=%u,uNode=%u,uStatus=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tContainer SET uContainer=%u,cLabel='%s',cHostname='%s',uIPv4=%u,uVeth=%u,"
+				"uOSTemplate=%u,uConfig=%u,uNameserver=%u,uSearchdomain=%u,uDatacenter=%u,"
+				"uNode=%u,uStatus=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uContainer
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cHostname)
+			,uVeth
 			,uIPv4
 			,uOSTemplate
 			,uConfig
@@ -586,9 +605,7 @@ void Update_tContainer(char *cRowid)
 			,uStatus
 			,uModBy
 			,cRowid);
-
 	MYSQL_RUN;
-
 }//void Update_tContainer(void)
 
 
@@ -655,7 +672,7 @@ void tContainerList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uContainer<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>cHostname<td><font face=arial,helvetica color=white>uIPv4<td><font face=arial,helvetica color=white>uOSTemplate<td><font face=arial,helvetica color=white>uConfig<td><font face=arial,helvetica color=white>uNameserver<td><font face=arial,helvetica color=white>uSearchdomain<td><font face=arial,helvetica color=white>uDatacenter<td><font face=arial,helvetica color=white>uNode<td><font face=arial,helvetica color=white>uStatus<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uContainer<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>cHostname<td><font face=arial,helvetica color=white>uVeth<td><font face=arial,helvetica color=white>uIPv4<td><font face=arial,helvetica color=white>uOSTemplate<td><font face=arial,helvetica color=white>uConfig<td><font face=arial,helvetica color=white>uNameserver<td><font face=arial,helvetica color=white>uSearchdomain<td><font face=arial,helvetica color=white>uDatacenter<td><font face=arial,helvetica color=white>uNode<td><font face=arial,helvetica color=white>uStatus<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 
 
@@ -673,36 +690,37 @@ void tContainerList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		time_t luTime13=strtoul(field[13],NULL,10);
-		char cBuf13[32];
-		if(luTime13)
-			ctime_r(&luTime13,cBuf13);
+		time_t luTime14=strtoul(field[14],NULL,10);
+		char cBuf14[32];
+		if(luTime14)
+			ctime_r(&luTime14,cBuf14);
 		else
-			sprintf(cBuf13,"---");
-		time_t luTime15=strtoul(field[15],NULL,10);
-		char cBuf15[32];
-		if(luTime15)
-			ctime_r(&luTime15,cBuf15);
+			sprintf(cBuf14,"---");
+		time_t luTime16=strtoul(field[16],NULL,10);
+		char cBuf16[32];
+		if(luTime16)
+			ctime_r(&luTime16,cBuf16);
 		else
-			sprintf(cBuf15,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf16,"---");
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
 			,field[2]
-			,ForeignKey("tIP","cLabel",strtoul(field[3],NULL,10))
-			,ForeignKey("tOSTemplate","cLabel",strtoul(field[4],NULL,10))
-			,ForeignKey("tConfig","cLabel",strtoul(field[5],NULL,10))
-			,ForeignKey("tNameserver","cLabel",strtoul(field[6],NULL,10))
-			,ForeignKey("tSearchdomain","cLabel",strtoul(field[7],NULL,10))
-			,ForeignKey("tDatacenter","cLabel",strtoul(field[8],NULL,10))
-			,ForeignKey("tNode","cLabel",strtoul(field[9],NULL,10))
-			,ForeignKey("tStatus","cLabel",strtoul(field[10],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[11],NULL,10))
+			,field[3]
+			,ForeignKey("tIP","cLabel",strtoul(field[4],NULL,10))
+			,ForeignKey("tOSTemplate","cLabel",strtoul(field[5],NULL,10))
+			,ForeignKey("tConfig","cLabel",strtoul(field[6],NULL,10))
+			,ForeignKey("tNameserver","cLabel",strtoul(field[7],NULL,10))
+			,ForeignKey("tSearchdomain","cLabel",strtoul(field[8],NULL,10))
+			,ForeignKey("tDatacenter","cLabel",strtoul(field[9],NULL,10))
+			,ForeignKey("tNode","cLabel",strtoul(field[10],NULL,10))
+			,ForeignKey("tStatus","cLabel",strtoul(field[11],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[12],NULL,10))
-			,cBuf13
-			,ForeignKey("tClient","cLabel",strtoul(field[14],NULL,10))
-			,cBuf15
+			,ForeignKey("tClient","cLabel",strtoul(field[13],NULL,10))
+			,cBuf14
+			,ForeignKey("tClient","cLabel",strtoul(field[15],NULL,10))
+			,cBuf16
 				);
 
 	}
@@ -715,7 +733,7 @@ void tContainerList(void)
 
 void CreatetContainer(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tContainer ( uContainer INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, UNIQUE (cLabel,uDatacenter), uNode INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uNode), uStatus INT UNSIGNED NOT NULL DEFAULT 0, uOSTemplate INT UNSIGNED NOT NULL DEFAULT 0, cHostname VARCHAR(64) NOT NULL DEFAULT '', uIPv4 INT UNSIGNED NOT NULL DEFAULT 0, uNameserver INT UNSIGNED NOT NULL DEFAULT 0, uSearchdomain INT UNSIGNED NOT NULL DEFAULT 0, uConfig INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tContainer ( uContainer INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, UNIQUE (cLabel,uDatacenter), uNode INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uNode), uStatus INT UNSIGNED NOT NULL DEFAULT 0, uOSTemplate INT UNSIGNED NOT NULL DEFAULT 0, cHostname VARCHAR(64) NOT NULL DEFAULT '', uIPv4 INT UNSIGNED NOT NULL DEFAULT 0, uNameserver INT UNSIGNED NOT NULL DEFAULT 0, uSearchdomain INT UNSIGNED NOT NULL DEFAULT 0, uConfig INT UNSIGNED NOT NULL DEFAULT 0, uVeth INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
