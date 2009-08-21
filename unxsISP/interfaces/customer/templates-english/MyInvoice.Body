@@ -97,6 +97,8 @@
 		<u><b>My Invoices</b></u><br><br>
 		{{funcInvoiceNavList}}
 		</td>
+		<tr><td colspan=2><input type=submit name=gcFunction value='Pay Loaded Invoice' class=largestButton><td></tr>
+		<tr><td colspan=2><input type=submit name=gcFunction value='Show Invoice for Printing' class=largestButton><td></tr>
         </table>
 
 

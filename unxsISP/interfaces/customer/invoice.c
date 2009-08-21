@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2007-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	ispAdmin  Interface
+	ispClient  Interface
 	program file.
 */
 
@@ -74,6 +74,8 @@ void InvoiceCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"Invoice"))
 	{
 		ProcessInvoiceVars(entries,x);
+		if(!strcmp(gcFunction,"Show Invoice for Printing"))
+			PrintInvoice();
 
 		htmlInvoice();
 	}
@@ -116,7 +118,7 @@ void htmlInvoicePage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="ispAdmin.cgi";
+			template.cpValue[1]="ispClient.cgi";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcLogin;
@@ -475,10 +477,13 @@ unsigned GetPaymentValue(unsigned uInvoice,const char *cName,char *cValue)
 	unsigned uRequireCreditCard=0;
 
 	if(cName[0])
-	sprintf(gcQuery,"SELECT tPayment.uRequireCreditCard,tPayment.%s FROM tInvoice,tPayment WHERE tInvoice.uPayment=tPayment.uPayment AND tInvoice.uInvoice=%u",
-					cName,uInvoice);
+		sprintf(gcQuery,"SELECT tPayment.uRequireCreditCard,tPayment.%s FROM tInvoice,tPayment "
+				"WHERE tInvoice.uPayment=tPayment.uPayment AND tInvoice.uInvoice=%u",
+				cName,uInvoice);
 	else
-	sprintf(gcQuery,"SELECT tPayment.uRequireCreditCard FROM tInvoice,tPayment WHERE tInvoice.uPayment=tPayment.uPayment AND tInvoice.uInvoice=%u",uInvoice);
+		sprintf(gcQuery,"SELECT tPayment.uRequireCreditCard FROM tInvoice,tPayment WHERE "
+				"tInvoice.uPayment=tPayment.uPayment AND tInvoice.uInvoice=%u",
+				uInvoice);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -550,30 +555,12 @@ void funcInvoiceNavList(FILE *fp)
 	unsigned uFound=0;
 	char cTopMessage[100]={""};
 	char cExtra[100]={""};
-	/*if(cSearch[0])
-	{
-	//Valid formats are:
-	//2. uInvoice
-		sscanf(cSearch,"%u",&uInvoice);
-		if(uInvoice)
-		{
-			sprintf(cExtra,"tInvoice.uInvoice=%u",uInvoice);
-			ExtSelectSearch("tInvoice","tInvoice.uInvoice,FROM_UNIXTIME(GREATEST(tInvoice.uCreatedDate,tInvoice.uModDate)),"
-				"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tInvoice.uClient),tInvoice.uClient",
-				"1","1",cExtra,0);
-		}
-		else
-			ExtSelectSearch("tInvoice","tInvoice.uInvoice,FROM_UNIXTIME(GREATEST(tInvoice.uCreatedDate,tInvoice.uModDate)),"
-				"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tInvoice.uClient),tInvoice.uClient",
-				"tInvoice.cLastName",cSearch,NULL,0);
-		}
-	}
-	else
-	{*/
-		sprintf(cExtra,"tInvoice.uClient=%u",guLoginClient);
-		ExtSelectSearch("tInvoice","tInvoice.uInvoice,FROM_UNIXTIME(GREATEST(tInvoice.uCreatedDate,tInvoice.uModDate)),"
-				"(SELECT tInvoiceStatus.cLabel FROM tInvoiceStatus WHERE tInvoiceStatus.uInvoiceStatus=tInvoice.uInvoiceStatus)",
-				"1","1",cExtra,0);
+	
+	sprintf(cExtra,"tInvoice.uClient=%u",guLoginClient);
+	
+	ExtSelectSearch("tInvoice","tInvoice.uInvoice,FROM_UNIXTIME(GREATEST(tInvoice.uCreatedDate,tInvoice.uModDate)),"
+			"(SELECT tInvoiceStatus.cLabel FROM tInvoiceStatus WHERE tInvoiceStatus.uInvoiceStatus=tInvoice.uInvoiceStatus)",
+			"1","1",cExtra,0);
 	//}
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -599,7 +586,7 @@ void funcInvoiceNavList(FILE *fp)
 			sscanf(field[0],"%u",&uInvoice);
 			sscanf(field[3],"%u",&uClient);
 			
-			fprintf(fp,"<a href=ispAdmin.cgi?gcPage=Invoice&uInvoice=%s>Invoice #%s (%s) [%s]</a><br>\n"
+			fprintf(fp,"<a href=ispClient.cgi?gcPage=Invoice&uInvoice=%s>Invoice #%s (%s) [%s]</a><br>\n"
 			,field[0],field[0],field[1],field[2]);
 			mysql_free_result(res);
 			return;
@@ -615,75 +602,13 @@ void funcInvoiceNavList(FILE *fp)
 			break;
 		}
 		FromMySQLDate(field[1]);
-		fprintf(fp,"<a href=ispAdmin.cgi?gcPage=Invoice&uInvoice=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
+		fprintf(fp,"<a href=ispClient.cgi?gcPage=Invoice&uInvoice=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
 		uDisplayed++;
 	}
 
 	mysql_free_result(res);
 
 }//void funcInvoiceNavList(FILE *fp)
-
-
-void EmailLoadedInvoice(void)
-{
-	FILE *fp;
-	char cFrom[256]={"root"};
-	char cSubject[256]={""};
-	char cSubjectLang[100]={""};
-	char cBcc[256]={""};
-	char cEmail[100]={""};
-
-	cSubject[255]=0;
-	
-	GetConfiguration("cFromEmailAddr",cFrom);
-	GetConfiguration("cInvoiceBccEmailAddr",cBcc);
-	
-	//sprintf(gcQuery,"cSubjectLang%s",cGetInvoiceLanguage(uInvoice));
-	GetConfiguration(gcQuery,cSubjectLang);
-	if(!cSubjectLang[0])
-		sprintf(cSubjectLang,"Invoice #");
-	
-	sprintf(cSubject,"%s %u-%u",cSubjectLang,uClient,uInvoice);
-	sprintf(cEmail,"%s",cGetCustomerEmail(uInvoice));
-
-	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
-	//debug only
-	//if((fp=fopen("/tmp/eMailInvoice","w")))
-	{
-		fprintf(fp,"To: %s\n",cEmail);
-		fprintf(fp,"From: %s\n",cFrom);
-		fprintf(fp, "Reply-to: %s\n",cFrom);
-		if(cBcc[0]) fprintf(fp, "Bcc: %s\n",cBcc);
-		fprintf(fp,"Subject: %s\n",cSubject);
-		fprintf(fp,"MIME-Version: 1.0\n");
-		fprintf(fp,"Content-type: text/html\n\n");
-		funcInvoice(fp);
-	}
-	pclose(fp);
-
-}//void EmailLoadedInvoice(void)
-
-
-void EmailAllInvoices(void)
-{
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-	
-	sprintf(gcQuery,"SELECT uInvoice,uClient FROM tInvoice WHERE uInvoiceStatus!=2");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u",&uInvoice);
-		sscanf(field[1],"%u",&uClient);
-		EmailLoadedInvoice();
-	}
-	uInvoice=0;
-	uClient=0;
-
-}//void EmailAllInvoices(void)
 
 
 char *cGetClientLanguage(void)
@@ -724,41 +649,6 @@ char *cGetCustomerEmail(unsigned uInvoice)
 	return(cEmail);
 
 }//char cGetCustomerEmail(unsigned uInvoice)
-
-
-void PrintInvoices(void)
-{
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-	
-	printf("Content-type: text/html\n\n");
-	printf("<html>\n"
-		"<head>\n"
-		"<style>\n"
-		"@page { size 8.5in 11in; margin: 2cm }\n"
-		"div.page { page-break-after: always }\n"
-		"</style>\n"
-		"</head>\n"
-		"<body>\n");
-
-	sprintf(gcQuery,"SELECT uInvoice,uClient FROM tInvoice WHERE uInvoiceStatus!=2");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u",&uInvoice);
-		sscanf(field[1],"%u",&uClient);
-		printf("<div class=page>\n");
-		funcInvoice(stdout);	
-		printf("</div>\n");
-	}
-	uInvoice=0;
-	uClient=0;
-	exit(0);
-
-}//void PrintInvoices(void)
 
 
 void PrintInvoice(void)
