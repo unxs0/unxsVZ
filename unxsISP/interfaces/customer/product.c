@@ -190,7 +190,10 @@ void htmlProductPage(char *cTitle, char *cTemplateName)
 			template.cpName[9]="uProduct";
 			template.cpValue[9]=cuProduct;
 
-			template.cpName[10]="";
+			template.cpName[10]="cProductLabel";
+			template.cpValue[10]=cGetProductLabel(uProduct);
+
+			template.cpName[11]="";
 
 			printf("\n<!-- Start htmlProductPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
