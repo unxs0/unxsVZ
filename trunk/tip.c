@@ -381,9 +381,8 @@ void DeletetIP(void)
 
 void Insert_tIP(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tIP SET uIP=%u,cLabel='%s',uAvailable=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tIP SET uIP=%u,cLabel='%s',uAvailable=%u,uOwner=%u,uCreatedBy=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uIP
 			,TextAreaSave(cLabel)
 			,uAvailable
@@ -398,9 +397,8 @@ void Insert_tIP(void)
 
 void Update_tIP(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tIP SET uIP=%u,cLabel='%s',uAvailable=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tIP SET uIP=%u,cLabel='%s',uAvailable=%u,uModBy=%u,"
+				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uIP
 			,TextAreaSave(cLabel)
 			,uAvailable

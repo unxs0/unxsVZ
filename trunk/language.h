@@ -402,6 +402,8 @@
 #define LANG_FT_tContainer_cHostname "FQDN Hostname"
 #define LANG_FL_tContainer_uIPv4 "uIPv4"
 #define LANG_FT_tContainer_uIPv4 "First IPv4 Number"
+#define LANG_FL_tContainer_uVeth "uVeth"
+#define LANG_FT_tContainer_uVeth "Default VENET, yes VETH networking"
 #define LANG_FL_tContainer_uOSTemplate "uOSTemplate"
 #define LANG_FT_tContainer_uOSTemplate "Container OS Template"
 #define LANG_FL_tContainer_uConfig "uConfig"

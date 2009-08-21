@@ -55,6 +55,7 @@ void GetConfiguration(const char *cName,char *cValue,
 		unsigned uNode,
 		unsigned uContainer,
 		unsigned uHtml);
+void UpdateSchema(void);
 
 //jobqueue.c
 void ProcessJobQueue(void);
@@ -363,6 +364,8 @@ void ExtMainShell(int argc, char *argv[])
 
         if(argc==2 && !strcmp(argv[1],"ProcessJobQueue"))
                 ProcessJobQueue();
+        else if(argc==2 && !strcmp(argv[1],"UpdateSchema"))
+                UpdateSchema();
 	else if(argc==5 && !strcmp(argv[1],"ImportTemplateFile"))
                 ImportTemplateFile(argv[2],argv[3],argv[4]);
 	else if(argc==3 && !strcmp(argv[1],"Initialize"))
@@ -384,6 +387,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tProcessJobQueue\n");
 		//printf("\tProcessExtJobQueue <cServer>\n");
 		printf("\nSpecial Admin Ops:\n");
+		printf("\tUpdateSchema\n");
 		printf("\tImportTemplateFile <mysql root passwd> <tTemplate.cLabel>"
 				" <filespec> <tTemplateSet.cLabel>\n");
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
@@ -677,6 +681,25 @@ void mySQLRootConnect(char *cPasswd)
                 exit(1);
         }
 }//void mySQLRootConnect(void)
+
+
+void UpdateSchema(void)
+{
+	printf("\nUpdateSchema(): Start\n");
+
+	TextConnectDb();
+
+	sprintf(gcQuery,"ALTER TABLE tContainer ADD uVeth INT UNSIGNED DEFAULT 0");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+
+	printf("\nUpdateSchema(): End\n");
+
+}//void UpdateSchema(void)
 
 
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
