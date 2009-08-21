@@ -79,10 +79,10 @@
                   <td> </td>
                   <td> </td>
                 </tr>
-		<tr><td><input type=submit name=gcFunction value='{{gcModStep}}Mettre &aagrave; our mes informations' class=largestButton></td></tr>
+		<tr><td><input type=submit name=gcFunction value='{{gcModStep}}Mettre a our mes informations' class=largestButton></td></tr>
 		<tr><td><input type=submit name=gcFunction value='Acheter un nouveau produit' class=largestButton></td></tr>
 		<tr><td><input type=submit name=gcFunction value='Voir Mes Factures' class=largestButton></td></tr>
-		<tr><td><input type=submit name=gcFunction value="M'Abonner &aagrave; des Paiements Automatiques" class=largestButton></td></tr>
+		<tr><td><input type=submit name=gcFunction value="M'Abonner a des Paiements Automatiques" class=largestButton></td></tr>
 
 		</td>
         </table>
