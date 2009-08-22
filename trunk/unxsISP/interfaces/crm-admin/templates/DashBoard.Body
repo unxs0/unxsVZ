@@ -25,10 +25,13 @@
 						<a title='Customer management' class="wpsUnSelectedPlaceLink" href='ispCRM.cgi?gcPage=Customer'><b class ="font10pt">Customers</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Invoice management' class="wpsUnSelectedPlaceLink" href='ispCRM.cgi?gcPage=Invoice'><b class ="font10pt">Invoices</b></a>
+						<a title='Invoice management' class="wpsUnSelectedPlaceLink" href='ispCRM.cgi?gcPage=Admin'><b class ="font10pt">Admins</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Product management' class="wpsUnSelectedPlaceLink" href='ispCRM.cgi?gcPage=Product'><b class ="font10pt">Products</b></a>
+						<a title='Product management' class="wpsUnSelectedPlaceLink" href='ispCRM.cgi?gcPage=Ticket'><b class ="font10pt">Tickets</b></a>
+						</td>
+						<td class="wpsUnSelectedPlace" nowrap height="100%">
+						<a title='Product management' class="wpsUnSelectedPlaceLink" href='ispCRM.cgi?gcPage=KnowBase'><b class ="font10pt">Knowlegde Base</b></a>
 						</td>
 						</td>
 					</tr>
