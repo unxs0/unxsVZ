@@ -32,6 +32,7 @@ char gcLogin[100]={""};
 char cLogKey[16]={"Ksdj458jssdUjf79"};
 char gcPasswd[100]={""};
 unsigned guSSLCookieLogin=0;
+unsigned guTemplateSet=5; //Default crm-english, will later add multi-lingual support!
 
 int guPermLevel=0;
 char gcuPermLevel[4]={""};
@@ -203,7 +204,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelect(cTemplateName,guTemplateSet);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -262,7 +263,7 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 		MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelect(cTemplateName,guTemplateSet);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -297,7 +298,7 @@ void htmlFooter(char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelect(cTemplateName,guTemplateSet);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -341,7 +342,7 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelect(cTemplateName,guTemplateSet);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
