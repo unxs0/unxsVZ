@@ -9,7 +9,7 @@
 #	Must customize CGINAME 
 #
 
-CGINAME= ispAdmin.cgi
+CGINAME= ispCRM.cgi
 
 CFLAGS= -DLinux -Wall
 LIBS= -L/usr/lib/mysql -lmysqlclient /usr/lib/openisp/libtemplate.a /usr/lib/openisp/libucidr.a -lz -lcrypt -lm -lssl
