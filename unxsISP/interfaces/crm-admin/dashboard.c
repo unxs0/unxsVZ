@@ -86,9 +86,11 @@ void funcDisplayDashBoard(FILE *fp)
 	time_t luClock2;
 	unsigned uCreatedBy=0;
 	unsigned uScheduleDate=0;
-
+	char cScheduleDate[100]={""};
 	//customer tickets
 	OpenRow("Assigned To You Tickets (Last 10)","black");
+	fprintf(fp,"</tr><tr bgcolor=#e9e9e9><td bgcolor=ffffff></td><td><b>Created Date</b></td><td><b>Request/Issue</b></td>"
+		"<td><b>Customer</b></td><td><b>Schedule Date</b></td></tr>\n");
 	sprintf(gcQuery,"SELECT uCreatedBy,uScheduleDate,cText,uCreatedDate FROM tTicket "
 			"WHERE uOwner=%u AND uTicketOwner=%u ORDER BY uCreatedDate DESC LIMIT 10",
 			guOrg
@@ -106,11 +108,16 @@ void funcDisplayDashBoard(FILE *fp)
 		sscanf(mysqlField[3],"%lu",&luClock);
 		sscanf(mysqlField[0],"%u",&uCreatedBy);
 		sscanf(mysqlField[1],"%u",&uScheduleDate);
+		if(uScheduleDate)
+			sprintf(cScheduleDate,"%.99s",ctime(&luClock2));
+		else
+			sprintf(cScheduleDate,"---");
+
 		fprintf(fp,"<td></td><td>%s</td><td>%s ...<a href=# class=darkLink>(More)</td><td>%s</td><td>%s</td></tr>\n",
 			ctime(&luClock)
 			,cShortenText(mysqlField[2],5)
 			,ForeignKey("tClient","cLabel",uCreatedBy)
-			,ctime(&luClock2));
+			,cScheduleDate);
 	}
 	mysql_free_result(mysqlRes);
 
@@ -131,11 +138,15 @@ void funcDisplayDashBoard(FILE *fp)
 		sscanf(mysqlField[3],"%lu",&luClock);
 		sscanf(mysqlField[0],"%u",&uCreatedBy);
 		sscanf(mysqlField[1],"%u",&uScheduleDate);
+		if(uScheduleDate)
+			sprintf(cScheduleDate,"%.99s",ctime(&luClock2));
+		else
+			sprintf(cScheduleDate,"---");
 		fprintf(fp,"<td></td><td>%s</td><td>%s ...<a href=# class=darkLink>(More)</a></td><td>%s</td><td>%s</td></tr>\n",
 			ctime(&luClock)
 			,cShortenText(mysqlField[2],5)
 			,ForeignKey("tClient","cLabel",uCreatedBy)
-			,ctime(&luClock2));
+			,cScheduleDate);
 	}
 	mysql_free_result(mysqlRes);
 
