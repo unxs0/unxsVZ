@@ -4,7 +4,7 @@ FILE
 	$Id$
 PURPOSE
 	Provide the Dashboard tab functions
-	of the ispAdmin interface.
+	of the ispCRM interface.
 AUTHOR
 	(C) 2007-2009 Hugo Urquiza for Unixservice.
 */
@@ -41,7 +41,7 @@ void htmlDashBoardPage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="ispAdmin.cgi";
+			template.cpValue[1]="ispCRM.cgi";
 			
 			template.cpName[2]="cMessage";
 			template.cpValue[2]=gcMessage;
@@ -83,54 +83,13 @@ void funcDisplayDashBoard(FILE *fp)
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 	time_t luClock;
-	unsigned uCount=0;
 
-	OpenRow("System Messages (Last 20)","black");
-	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog "
-			"WHERE uLogType=4 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 20");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(fp,"%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-        mysqlRes=mysql_store_result(&gMysql);
-	fprintf(fp,"</td></tr>\n");
-        while((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		sscanf(mysqlField[1],"%lu",&luClock);
-		fprintf(fp,"<td></td><td>%s</td><td colspan=2>%s...<a href=# title='%s' class=darkLink>(More)</a></td><td>%s</td></tr>\n",
-			ctime(&luClock),cShortenText(mysqlField[0],10),mysqlField[0],mysqlField[2]);
-	}
-	mysql_free_result(mysqlRes);
-
-	//1-3 backend org admin interfaces
-	OpenRow("General Usage (Last 20)","black");
-	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,"
-			"tLog.cTableName,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE "
-			"tLog.uLogType=tLogType.uLogType AND tLog.uLogType<=3 ORDER BY "
-			"GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 20");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(fp,"%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-        mysqlRes=mysql_store_result(&gMysql);
-	fprintf(fp,"</td></tr>\n");
-        while((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		sscanf(mysqlField[1],"%lu",&luClock);
-		fprintf(fp,"<td></td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td></tr>\n",
-			ctime(&luClock),mysqlField[0],mysqlField[3],mysqlField[2],mysqlField[5],mysqlField[4]);
-	}
-	mysql_free_result(mysqlRes);
-	
-	//Deployed products top-ten
-	OpenRow("Top 10 Deployed Products","black");
-	sprintf(gcQuery,"SELECT (SELECT cLabel FROM tProduct WHERE tProduct.uProduct=tInstance.uProduct),"
-			"COUNT(uProduct) AS uHowMany FROM tInstance WHERE uStatus=4 GROUP BY uProduct "
-			"ORDER BY uHowMany DESC LIMIT 10");
+	//customer tickets
+	OpenRow("Customer Tickets Assigned To You (Last 10)","black");
+	sprintf(gcQuery,"SELECT uCreatedBy,uScheduleDate,cText,uCreatedDate FROM tTicket "
+			"WHERE uOwner=%u AND uTicketOwner=%u ORDER BY uCreatedDate DESC LIMIT 10",
+			guOrg
+			,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -141,18 +100,22 @@ void funcDisplayDashBoard(FILE *fp)
 	fprintf(fp,"</td></tr>\n");
 	while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
-		uCount++;
-		fprintf(fp,"<td></td><td>%u</td><td>%s</td><td>%s</td></tr>\n",
-			uCount,mysqlField[0],mysqlField[1]);
+		sscanf(mysqlField[1],"%lu",&luClock);
+		fprintf(fp,"<td></td><td>%s</td><td>%s %s</td><td>%s</td><td>%s</td></tr>\n",
+			ctime(&luClock),mysqlField[0],mysqlField[4],mysqlField[2],mysqlField[3]);
 	}
 	mysql_free_result(mysqlRes);
 
-	//Invoice stats
-	OpenRow("Month Invoice Statistics","black");
-	fprintf(fp,"</tr><tr bgcolor=#e9e9e9><td bgcolor=ffffff></td><td><b>Total Pending Invoices</b></td><td><b>Total Due Amount</b></td>"
-		"<td><b>Total Paid Invoices</b></td><td><b>Total Paid Amount</b></td></tr>\n");
-	ShowInvoiceStats();
-
+	OpenRow("Customer Tickets Not Assigned (Last 10)","black");
+	sprintf(gcQuery,"SELECT uCreatedBy,uScheduleDate,cText,uCreatedDate FROM tTicket "
+			"WHERE uOwner=%u AND uTicketOwner=0 ORDER BY uCreatedDate DESC LIMIT 10",
+			guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
 	//login/logout activity
 	OpenRow("Login Activity (Last 20)","black");
 	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cServer,"
@@ -174,25 +137,6 @@ void funcDisplayDashBoard(FILE *fp)
 	}
 	mysql_free_result(mysqlRes);
 
-	OpenRow("Pending Jobs (Last 20)","black");
-	sprintf(gcQuery,"SELECT tJob.cJobName,GREATEST(tJob.uCreatedDate,tJob.uModDate),tClient.cLabel,"
-			"cServer FROM tJob,tClient WHERE tJob.uJobClient=tClient.uClient AND tJob.uJobStatus=%u "
-			"ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 20",mysqlISP_Waiting);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(fp,"%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-        mysqlRes=mysql_store_result(&gMysql);
-	fprintf(fp,"</td></tr>\n");
-        while((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		sscanf(mysqlField[1],"%lu",&luClock);
-		fprintf(fp,"<td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
-			ctime(&luClock),mysqlField[0],mysqlField[2],mysqlField[3]);
-	}
-	mysql_free_result(mysqlRes);
 
 }//void funcDisplayDashBoard(FILE *fp)
 
