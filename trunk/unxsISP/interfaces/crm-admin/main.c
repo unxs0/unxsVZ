@@ -372,15 +372,7 @@ void ConnectDb(void)
 //libtemplate.a required
 void AppFunctions(FILE *fp,char *cFunction)
 {
-	if(!strcmp(cFunction,"funcSelectProduct"))
-		funcSelectProduct(fp);
-	else if(!strcmp(cFunction,"funcProductParameterInput"))
-		funcProductParameterInput(fp);
-	else if(!strcmp(cFunction,"funcEnteredParameters"))
-		funcEnteredParameters(fp);
-	else if(!strcmp(cFunction,"funcCustomerProducts"))
-		funcCustomerProducts(fp);
-	else if(!strcmp(cFunction,"funcSelectExpYear"))
+	if(!strcmp(cFunction,"funcSelectExpYear"))
 		funcSelectExpYear(fp);
 	else if(!strcmp(cFunction,"funcSelectCardType"))
 		funcSelectCardType(fp);
@@ -388,8 +380,6 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcSelectPayment(fp);
 	else if(!strcmp(cFunction,"funcInvoice"))
 		funcInvoice(fp);
-	else if(!strcmp(cFunction,"funcDateSelectTable"))
-		funcDateSelectTable(fp);
 	else if(!strcmp(cFunction,"funcSelectAccountType"))
 		funcSelectAccountType(fp);
 	else if(!strcmp(cFunction,"funcDisplayDashBoard"))
@@ -591,7 +581,7 @@ int iValidLogin(int mode)
 	}
 	if(!mode)
 	{
-		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=7,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
 		mysql_query(&gMysql,gcQuery);
 	}
 	return(0);
@@ -609,7 +599,7 @@ void SetLogin(void)
 		guSSLCookieLogin=1;
 		GetPLAndClient(gcUser);	
 		//tLogType.cLabel='admin login'->uLogType=7
-		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=7,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 		mysql_query(&gMysql,gcQuery);
 	}
 	else
