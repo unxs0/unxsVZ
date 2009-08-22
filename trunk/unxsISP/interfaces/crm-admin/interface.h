@@ -135,7 +135,7 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName);
 void funcSelectProduct(FILE *fp);
 void funcProductParameterInput(FILE *fp);
 void funcEnteredParameters(FILE *fp);
-void funcCustomerProducts(FILE *fp);
+void funcCustomerTickets(FILE *fp);
 void funcSelectAccountType(FILE *fp);
 void funcSelectLanguage(FILE *fp);
 
