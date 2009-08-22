@@ -1,2 +1,0 @@
-<tr><td><input type=submit class=largestButton title='Call off cancel job for the instance and update status'  name=gcFunction value='{{gcNewStep}}Call Off Cancel Job'></td></tr>
-

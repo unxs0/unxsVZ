@@ -1,3 +1,0 @@
-<tr><td><input type=submit title='Cancel product'  name=gcFunction value='{{gcNewStep}}Cancel Instance' {{cCancelStyle}}></td></tr>
-<tr><td><input type=submit title='Put the prodct instance on hold'  name=gcFunction value='{{gcNewStep}}Hold Instance' {{cHoldStyle}}></td></tr>
-

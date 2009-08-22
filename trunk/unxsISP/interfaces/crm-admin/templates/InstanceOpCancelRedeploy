@@ -1,2 +1,0 @@
-<tr><td><input type=submit class=largestButton title='Cancel redeployment of the instance'  name=gcFunction value='{{gcNewStep}}Cancel Redeployment'></td></tr>
-

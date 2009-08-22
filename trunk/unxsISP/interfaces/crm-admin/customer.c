@@ -701,7 +701,7 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
 			char cuModDate[16]={""};
 			char cCustomerName[255]={""};
 			
-			sprintf(cCustomerName,"for %.251s",cGetcCustomerName(uCustomer));
+			sprintf(cCustomerName,"for %.251s",ForeignKey("tClient","cLabel",uCustomer));
 			sprintf(cuCustomer,"%u",uCustomer);
 			sprintf(cuExpMonth,"%u",uExpMonth);
 			sprintf(cuExpYear,"%u",uExpYear);
