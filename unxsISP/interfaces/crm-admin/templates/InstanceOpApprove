@@ -1,2 +1,0 @@
-<tr><td><input type=submit class=largestButton title='Approve instance'  name=gcFunction value='{{gcNewStep}}Approve Instance'></td></tr>
-

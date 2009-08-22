@@ -1,1 +1,0 @@
-<tr><td><input type=submit class=largestButton title='Release hold'  name=gcFunction value='{{gcNewStep}}Release Hold'></td></tr>

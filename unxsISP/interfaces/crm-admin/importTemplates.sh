@@ -11,5 +11,5 @@
 #
 #
 for i in `find ./templates/* -type f`; do 
-	/var/www/unxs/cgi-bin/unxsISP.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i plain;
+	/var/www/unxs/cgi-bin/unxsISP.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i crm-english;
 done

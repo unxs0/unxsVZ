@@ -1,4 +1,0 @@
-<input type=hidden name={{cParamName}} value="{{cParamValue}}">
-<input type=hidden name=cParamName.{{uParamCount}} value="{{cParameter}}">
-<input type=hidden name=cParamLabel.{{uParamCount}} value="{{cParamLabel}}">
-

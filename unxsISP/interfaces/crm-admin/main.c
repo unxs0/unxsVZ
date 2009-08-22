@@ -117,11 +117,6 @@ int main(int argc, char *argv[])
 				GlossaryGetHook(gentries,i);
 			else if(!strcmp(gcPage,"Invoice"))
 				InvoiceGetHook(gentries,i);
-			else if(!strcmp(gcPage,"Product"))
-				ProductGetHook(gentries,i);
-			else if(!strcmp(gcPage,"Instance"))
-				InstanceGetHook(gentries,i);
-
 		}
 	}
 	else
@@ -177,9 +172,7 @@ int main(int argc, char *argv[])
 
 	//Per page command tree
 	CustomerCommands(entries,i);
-	ProductCommands(entries,i);
 	InvoiceCommands(entries,i);
-	InstanceCommands(entries,i);
 
 	//default logged in page
 	htmlCustomer();
@@ -387,42 +380,24 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcEnteredParameters(fp);
 	else if(!strcmp(cFunction,"funcCustomerProducts"))
 		funcCustomerProducts(fp);
-	else if(!strcmp(cFunction,"funcSelectPeriod"))
-		funcSelectPeriod(fp);
-	else if(!strcmp(cFunction,"funcSelectAvailable"))
-		funcSelectAvailable(fp);
-	else if(!strcmp(cFunction,"funcProductServices"))
-		funcProductServices(fp);
-	else if(!strcmp(cFunction,"funcServicesToAdd"))
-		funcServicesToAdd(fp);
-	else if(!strcmp(cFunction,"funcSelectExpMonth"))
-		funcSelectExpMonth(fp);
 	else if(!strcmp(cFunction,"funcSelectExpYear"))
 		funcSelectExpYear(fp);
 	else if(!strcmp(cFunction,"funcSelectCardType"))
 		funcSelectCardType(fp);
 	else if(!strcmp(cFunction,"funcSelectPayment"))
 		funcSelectPayment(fp);
-	else if(!strcmp(cFunction,"funcEditProductParams"))
-		funcEditProductParams(fp);
 	else if(!strcmp(cFunction,"funcInvoice"))
 		funcInvoice(fp);
 	else if(!strcmp(cFunction,"funcDateSelectTable"))
 		funcDateSelectTable(fp);
-	else if(!strcmp(cFunction,"funcInstanceOperations"))
-		funcInstanceOperations(fp);
 	else if(!strcmp(cFunction,"funcSelectAccountType"))
 		funcSelectAccountType(fp);
 	else if(!strcmp(cFunction,"funcDisplayDashBoard"))
 		funcDisplayDashBoard(fp);
 	else if(!strcmp(cFunction,"funcCustomerNavList"))
 		funcCustomerNavList(fp);
-	else if(!strcmp(cFunction,"funcProductNavList"))
-		funcProductNavList(fp);
 	else if(!strcmp(cFunction,"funcCustomerNavBar"))
 		funcCustomerNavBar(fp);
-	else if(!strcmp(cFunction,"funcProductNavBar"))
-		funcProductNavBar(fp);
 	else if(!strcmp(cFunction,"funcInvoiceNavList"))
 		funcInvoiceNavList(fp);
 	else if(!strcmp(cFunction,"funcSelectLanguage"))
