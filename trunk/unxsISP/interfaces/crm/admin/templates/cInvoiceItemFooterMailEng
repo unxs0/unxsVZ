@@ -1,0 +1,8 @@
+</table>
+<br>
+<br>
+Tax Total: {{mInvoiceTax}}<br>
+Shipping & Handling: {{mInvoiceSH}}<br>
+Total: {{mInvoiceTotal}}<br>
+<br>
+

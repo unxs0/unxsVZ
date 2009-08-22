@@ -1,0 +1,2 @@
+<tr><td><input type=submit class=largestButton title='Cancel hold operation and update instance status'  name=gcFunction value='{{gcNewStep}}Cancel Hold'></td></tr>
+

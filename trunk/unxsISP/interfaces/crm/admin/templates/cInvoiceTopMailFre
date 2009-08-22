@@ -1,0 +1,8 @@
+<strong>Facture #{{cInvoice}}</strong><br>
+Exp&eacute;diere &agrave;:<br>
+{{cLabel}}<br>
+({{cEmail}})<br>
+{{cAddr1}} {{cAddr2}}<br>
+{{cCity}}, {{cState}} {{cZip}}<br>
+{{cCountry}}<br>
+<br>
