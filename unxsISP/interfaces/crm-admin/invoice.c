@@ -184,7 +184,7 @@ void htmlInvoicePage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelect(cTemplateName,guTemplateSet);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -543,7 +543,7 @@ void fileDirectTemplate(FILE *fp,char *cTemplateName)
 	
 	if(!fp) return;
 
-	TemplateSelect(cTemplateName);
+	TemplateSelect(cTemplateName,guTemplateSet);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 		fprintf(fp,"%s",field[0]);
