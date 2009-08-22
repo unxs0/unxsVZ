@@ -83,9 +83,12 @@ void funcDisplayDashBoard(FILE *fp)
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 	time_t luClock;
+	time_t luClock2;
+	unsigned uCreatedBy=0;
+	unsigned uScheduleDate=0;
 
 	//customer tickets
-	OpenRow("Customer Tickets Assigned To You (Last 10)","black");
+	OpenRow("Assigned To You Tickets (Last 10)","black");
 	sprintf(gcQuery,"SELECT uCreatedBy,uScheduleDate,cText,uCreatedDate FROM tTicket "
 			"WHERE uOwner=%u AND uTicketOwner=%u ORDER BY uCreatedDate DESC LIMIT 10",
 			guOrg
@@ -100,13 +103,18 @@ void funcDisplayDashBoard(FILE *fp)
 	fprintf(fp,"</td></tr>\n");
 	while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
-		sscanf(mysqlField[1],"%lu",&luClock);
-		fprintf(fp,"<td></td><td>%s</td><td>%s %s</td><td>%s</td><td>%s</td></tr>\n",
-			ctime(&luClock),mysqlField[0],mysqlField[4],mysqlField[2],mysqlField[3]);
+		sscanf(mysqlField[3],"%lu",&luClock);
+		sscanf(mysqlField[0],"%u",&uCreatedBy);
+		sscanf(mysqlField[1],"%u",&uScheduleDate);
+		fprintf(fp,"<td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+			ctime(&luClock)
+			,cShortenText(mysqlField[2],5)
+			,ForeignKey("tClient","cLabel",uCreatedBy)
+			,ctime(&luClock2));
 	}
 	mysql_free_result(mysqlRes);
 
-	OpenRow("Customer Tickets Not Assigned (Last 10)","black");
+	OpenRow("Not Assigned Tickets (Last 10)","black");
 	sprintf(gcQuery,"SELECT uCreatedBy,uScheduleDate,cText,uCreatedDate FROM tTicket "
 			"WHERE uOwner=%u AND uTicketOwner=0 ORDER BY uCreatedDate DESC LIMIT 10",
 			guOrg);
@@ -116,6 +124,21 @@ void funcDisplayDashBoard(FILE *fp)
 		fprintf(fp,"%s\n",mysql_error(&gMysql));
 		exit(1);
 	}
+	mysqlRes=mysql_store_result(&gMysql);
+	fprintf(fp,"</td></tr>\n");
+	while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		sscanf(mysqlField[3],"%lu",&luClock);
+		sscanf(mysqlField[0],"%u",&uCreatedBy);
+		sscanf(mysqlField[1],"%u",&uScheduleDate);
+		fprintf(fp,"<td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+			ctime(&luClock)
+			,cShortenText(mysqlField[2],5)
+			,ForeignKey("tClient","cLabel",uCreatedBy)
+			,ctime(&luClock2));
+	}
+	mysql_free_result(mysqlRes);
+
 	//login/logout activity
 	OpenRow("Login Activity (Last 20)","black");
 	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cServer,"
@@ -144,8 +167,8 @@ void funcDisplayDashBoard(FILE *fp)
 void OpenRow(const char *cFieldLabel, const char *cColor)
 {
 	printf("<tr><td width=20%% valign=top><a class=inputLink href=\"#\" onClick=\"javascript:window.open"
-		"('?gcPage=Glossary&cLabel=%.32s','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,"
-		"location=no,scrollbars=1')\"><strong>%.32s</strong></a></td><td>",cFieldLabel,cFieldLabel);
+		"('?gcPage=Glossary&cLabel=%s','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,"
+		"location=no,scrollbars=1')\"><strong>%s</strong></a></td><td>",cFieldLabel,cFieldLabel);
 }
 
 
