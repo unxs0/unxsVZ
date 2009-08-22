@@ -106,7 +106,7 @@ void funcDisplayDashBoard(FILE *fp)
 		sscanf(mysqlField[3],"%lu",&luClock);
 		sscanf(mysqlField[0],"%u",&uCreatedBy);
 		sscanf(mysqlField[1],"%u",&uScheduleDate);
-		fprintf(fp,"<td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+		fprintf(fp,"<td></td><td>%s</td><td>%s ...<a href=# class=darkLink>(More)</td><td>%s</td><td>%s</td></tr>\n",
 			ctime(&luClock)
 			,cShortenText(mysqlField[2],5)
 			,ForeignKey("tClient","cLabel",uCreatedBy)
@@ -131,7 +131,7 @@ void funcDisplayDashBoard(FILE *fp)
 		sscanf(mysqlField[3],"%lu",&luClock);
 		sscanf(mysqlField[0],"%u",&uCreatedBy);
 		sscanf(mysqlField[1],"%u",&uScheduleDate);
-		fprintf(fp,"<td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+		fprintf(fp,"<td></td><td>%s</td><td>%s ...<a href=# class=darkLink>(More)</a></td><td>%s</td><td>%s</td></tr>\n",
 			ctime(&luClock)
 			,cShortenText(mysqlField[2],5)
 			,ForeignKey("tClient","cLabel",uCreatedBy)
