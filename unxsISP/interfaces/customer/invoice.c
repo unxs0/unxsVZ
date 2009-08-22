@@ -90,7 +90,15 @@ void htmlInvoice(void)
 	if(uSetupRB)
 		htmlInvoicePage("","MyInvoiceSubs.Body");
 	else
+	{
+		FILE *fp;
+		if((fp=fopen("/dev/null","w")))
+		{
+			funcInvoiceNavList(fp);
+			fclose(fp);
+		}
 		htmlInvoicePage("","MyInvoice.Body");
+	}
 	htmlFooter("Footer");
 
 }//void htmlInvoice(void)
@@ -553,7 +561,7 @@ void funcInvoiceNavList(FILE *fp)
 	MYSQL_ROW field;
 	unsigned uDisplayed=0;
 	unsigned uFound=0;
-	char cTopMessage[100]={""};
+	static char cTopMessage[100]={""};
 	char cExtra[100]={""};
 	
 	sprintf(cExtra,"tInvoice.uClient=%u",guLoginClient);
