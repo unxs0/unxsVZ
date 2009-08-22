@@ -392,6 +392,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcInvoiceNavList(fp);
 	else if(!strcmp(cFunction,"funcSelectLanguage"))
 		funcSelectLanguage(fp);
+	else if(!strcmp(cFunction,"funcCustomerTickets"))
+		funcCustomerTickets(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 

@@ -1297,17 +1297,19 @@ void SetCustomerFieldsOn(void)
 }//void SetCustomerFieldsOn(void)
 
 
-void funcCustomerProducts(FILE *fp)
+void funcCustomerTickets(FILE *fp)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
 	if(!uCustomer) return;
 
-	fprintf(fp,"<!-- funcCustomerProducts(fp) start -->\n");
+	fprintf(fp,"<!-- funcCustomerTickets(fp) start -->\n");
 
-	sprintf(gcQuery,"SELECT tInstance.uInstance,tInstance.cLabel,FROM_UNIXTIME(GREATEST(tInstance.uCreatedDate,tInstance.uModDate)),tStatus.cLabel FROM tInstance,tStatus WHERE tInstance.uClient='%u' AND tInstance.uStatus=tStatus.uStatus ORDER BY GREATEST(tInstance.uCreatedDate,tInstance.uModDate)",
-		uCustomer);
+	sprintf(gcQuery,"SELECT uTicket,uScheduleDate,cText,uCreatedDate FROM tTicket "
+			"WHERE uOwner=%u AND uTicketOwner=%u ORDER BY uCreatedDate DESC LIMIT 10",
+			guOrg
+			,uCustomer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1316,19 +1318,19 @@ void funcCustomerProducts(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		FromMySQLDate(field[2]);
-		fprintf(fp,"<tr><td><a href=ispCRM.cgi?gcPage=Instance&uInstance=%s&uCustomer=%u>%s (Instance %s)</a></td><td>%s</td><td>%s</td></tr>\n",
+		fprintf(fp,"<tr><td><a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s)</a></td><td>%s ...</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
 				field[0]
-				,uCustomer
-				,field[1]
+				,cShortenText(field[2],5)
 				,field[0]
 				,field[3]
-				,field[2]
+				,field[1]
+				,"due"
 		       );
 	}
 
-	fprintf(fp,"<!-- funcCustomerProducts(fp) end -->\n");
+	fprintf(fp,"<!-- funcCustomerTickets(fp) end -->\n");
 
-}//void funcCustomerProducts(FILE *fp)
+}//void funcCustomerTickets(FILE *fp)
 
 
 void funcSelectPayment(FILE *fp)

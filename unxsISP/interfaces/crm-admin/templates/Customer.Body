@@ -17,17 +17,20 @@
 			<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>	
-						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Overall system information' class="wpsUnSelectedPlaceLink" href='ispAdmin.cgi?gcPage=Dashboard'><b class ="font10pt">Dashboard</b></a>
-						</td>
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='Customer management' class="wpsSelectedPlaceLink" href='ispAdmin.cgi?gcPage=Customer'><b class ="font10pt">Customers</b></a>
+						<a title='Overall system information' class="wpsSelectedPlaceLink" href='ispCRM.cgi?gcPage=Dashboard'><b class ="font10pt">Dashboard</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Invoice management' class="wpsUnSelectedPlaceLink" href='ispAdmin.cgi?gcPage=Invoice'><b class ="font10pt">Invoices</b></a>
+						<a title='Customer management' class="wpsUnSelectedPlaceLink" href='ispCRM.cgi?gcPage=Customer'><b class ="font10pt">Customers</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Product management' class="wpsUnSelectedPlaceLink" href='ispAdmin.cgi?gcPage=Product'><b class ="font10pt">Products</b></a>
+						<a title='Admin users management' class="wpsUnSelectedPlaceLink" href='ispCRM.cgi?gcPage=Admin'><b class ="font10pt">Admins</b></a>
+						</td>
+						<td class="wpsUnSelectedPlace" nowrap height="100%">
+						<a title='Ticket management' class="wpsUnSelectedPlaceLink" href='ispCRM.cgi?gcPage=Ticket'><b class ="font10pt">Tickets</b></a>
+						</td>
+						<td class="wpsUnSelectedPlace" nowrap height="100%">
+						<a title='Kowmledge Base management' class="wpsUnSelectedPlaceLink" href='ispCRM.cgi?gcPage=KnowBase'><b class ="font10pt">Knowlegde Base</b></a>
 						</td>
 					</tr>
 				</table>
@@ -43,7 +46,7 @@
 									<tr valign="top">
 										
 										<td align="right" class="padt10">																				
-											<form action=ispAdmin.cgi method="post">
+											<form action=ispCRM.cgi method="post">
 												<table cellspacing="0" cellpadding="0" border="0">
 													<tr>
 													<td><input value=1 type=checkbox name=uSearchInstance title="Check to search within instance data"></td>
@@ -100,10 +103,6 @@
                         <td colspan=2>
                                 <input type=hidden name=gcPage value=Customer>
                                 {{funcCustomerNavList}}
-<br>
-<br>
-<br>
-<input {{cBtnStatus}} title='Add a product to the loaded customer' name="gcFunction" type="submit" class="largeButton" id="gcFunction" value="Add Product Wizard" />
 </td>
                 </tr>
 		<tr>
@@ -112,7 +111,17 @@
 		</tr>
 		<tr>
 		<td colspan=2>
-ISP customers are managed here. At the bottom of this screen a table that has the current loaded customer's products will appear. By clicking on the product name below you will access another screen that will allow you to modify the product parameters. To search for a customer, enter part of her last name in the above 'Search Customers' box and press &lt;Enter&gt; or the [>] button. The search results will be displayed in this panel. By clicking one item of the search results list you will load the selected customer. Search is case insensitive, you can use % and _ SQL LIKE matching chars. (E.g.: 'd%ar')
+		ISP customers are managed here. At the bottom of this screen there's 
+		a table that has the current loaded customer's tickets. 
+		By clicking on the ticket number below you will access another screen 
+		that will allow you to see perform operations on the ticket, 
+		such as re-assign to an employee or scheduling.
+		To search for a customer, enter part of her last name in the above 
+		'Search Customers' box and press &lt;Enter&gt; or the [&gt;] button. 
+		The search results will be displayed in this panel. 
+		By clicking one item of the search results list you will load the 
+		selected customer. Search is case insensitive, you can use 
+		% and _ SQL LIKE matching chars. (E.g.: 'd%ar')
 		</td>
 		</tr>
         </table>
@@ -454,7 +463,7 @@ d>
   <t>
 
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-    <td class="hdrtout padlt8"><h6 class="modhdr">Customer Products {{cCustomerName}}</h6></td>
+    <td class="hdrtout padlt8"><h6 class="modhdr">Customer Tickets {{cCustomerName}}</h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
   <tr>
@@ -476,7 +485,7 @@ d>
 
 	</tr>
 
-	{{funcCustomerProducts}}
+	{{funcCustomerTickets}}
 </table>
 
 	
