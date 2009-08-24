@@ -138,7 +138,7 @@ if [ -x /usr/bin/mysql ];then
 		fi
 	fi
 fi
-#let installer now what was done.
+#let installer know what was done.
 if [ "$cUnxsBindStart" == "1" ] && [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
 			&& [ "$cInitialize" == "1" ];then
 	echo "unxsBind has been installed, intialized and httpd and named have been started.";	
@@ -310,7 +310,6 @@ fi
 /var/www/unxs/html/css/styles.css
 %dir /var/log/named
 /usr/share/fonts/DejaVuSansMono-Roman.ttf
-
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog

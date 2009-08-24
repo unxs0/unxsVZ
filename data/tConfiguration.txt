@@ -1,0 +1,4 @@
+0	1245437192	1	cTrafficDirURL	1	Optional rrdtool datacenter wide system must be installed.	1	0	/traffic	1	0	0
+0	1245926204	1	cNodeTrafficDirURL	11	Optional rrdtool datacenter wide system must be installed.	1	0	/traffic	1	0	0
+0	1245926928	1	cDatacenterTrafficDirURL	21	Optional rrdtool datacenter wide system must be installed.	1	0	/traffic/vmware-test-cluster.png	1	0	0
+0	1249938765	1	cCryptMethod	31	MD5 or DES can be specified for web authorization password used in tAuthorize.	1	0	MD5	0	0	0
