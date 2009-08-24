@@ -1,4 +1,4 @@
-1	dnsVE.mount	1	1	1240231455	1	1240238716	DNS container /etc/vz/conf/VEID.mount template for DNS container\
+1	dnsVE.mount	1	1	1240231455	1	1249304999	DNS container /etc/vz/conf/VEID.mount template for DNS container\
 \
 Variables with sample values:\
 \
@@ -11,7 +11,12 @@ Additional usage info:\
 \
 cVEID.mount=dnsVE.mount\
 \
-Must be in container property list	#!/bin/bash\
+Must be in container property list\
+\
+#Wizard lines do not remove\
+WizardInput:0:cExtraNodeIP:IPv4\
+WizardInput:1:cNetmask:IPv4Netmask\
+WizardInput:2:cPrivateIPs:IPv4/Mask	#!/bin/bash\
 #\
 #On vzctl start we may need to configure things on the hardware node.\
 #\
@@ -697,7 +702,7 @@ fi\
 echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 and iptables entries removed";\
 exit 0;\
 	1	1
-121	openPubVE.mount	1	1	1240690495	1	1241008767	Open all service/ports container /etc/vz/conf/VEID.mount template for public IP\
+121	openPub.mount	1	1	1240690495	1	1249591518	Open all service/ports container /etc/vz/conf/VEID.mount template for public IP\
 that will run\
 datacenter wide.\
 \
@@ -707,7 +712,7 @@ cVeID=201. Comes directly from jobqueue.c\
 \
 Additional use information:\
 \
-cVEID.mount=openPubVE.mount must be in container properties	#!/bin/bash\
+cVEID.mount=openPub.mount must be in container properties	#!/bin/bash\
 #\
 #On vzctl start we may need to configure things on the hardware node.\
 #\
@@ -735,7 +740,7 @@ done\
 \
 echo "ct0 $VEID $CTIP iptables entries inserted for all ports";\
 exit 0;	1	1
-131	openPubVE.umount	1	1	1240690568	1	1241008882	Open all service/ports container /etc/vz/conf/VEID.umount template for public IP\
+131	openPub.umount	1	1	1240690568	1	1249591542	Open all service/ports container /etc/vz/conf/VEID.umount template for public IP\
 that will run datacenter wide.\
 \
 Variables with sample values:\
@@ -744,7 +749,7 @@ cVeID=201. Comes directly from jobqueue.c\
 \
 Additional use information:\
 \
-cVEID.umount=openPubVE.umount must be in container properties	#!/bin/bash\
+cVEID.umount=openPub.umount must be in container properties	#!/bin/bash\
 #\
 #On vzctl stop we may need to configure things on the hardware node.\
 #\
