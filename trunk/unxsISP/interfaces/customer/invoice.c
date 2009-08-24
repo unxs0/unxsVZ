@@ -17,7 +17,6 @@ PURPOSE
 #include "interface.h"
 
 static unsigned uInvoice=0;
-static unsigned uClient=0;
 static char cSearch[100]={""};
 static char cNavList[16384]={""};
 static char cApprovedStep[32]={""};
@@ -44,8 +43,6 @@ void ProcessInvoiceVars(pentry entries[], int x)
 	{
 		if(!strcmp(entries[i].name,"uInvoice"))
 			sscanf(entries[i].val,"%u",&uInvoice);
-		else if(!strcmp(entries[i].name,"uClient"))
-			sscanf(entries[i].val,"%u",&uClient);
 		else if(!strcmp(entries[i].name,"cSearch"))
 			sprintf(cSearch,"%.99s",entries[i].val);
 					
@@ -63,7 +60,6 @@ void InvoiceGetHook(entry gentries[],int x)
 		if(!strcmp(gentries[i].name,"uInvoice"))
 			sscanf(gentries[i].val,"%u",&uInvoice);
 	}
-	uClient=guLoginClient;
 	htmlInvoice();
 
 }//void InvoiceGetHook(entry gentries[],int x)
@@ -85,7 +81,6 @@ void InvoiceCommands(pentry entries[], int x)
 
 void htmlInvoice(void)
 {
-	uClient=guLoginClient;
 	htmlHeader("unxsISP Customer Interface","Header");
 	if(uSetupRB)
 		htmlInvoicePage("","MyInvoiceSubs.Body");
@@ -119,7 +114,7 @@ void htmlInvoicePage(char *cTitle, char *cTemplateName)
 			char cuInvoice[16]={""};
 			char cuClient[16]={""};
 			
-			sprintf(cuClient,"%u",uClient);
+			sprintf(cuClient,"%u",guLoginClient);
 			sprintf(cuInvoice,"%u",uInvoice);
 
 			template.cpName[0]="cTitle";
@@ -156,7 +151,7 @@ void htmlInvoicePage(char *cTitle, char *cTemplateName)
 			template.cpValue[10]=cNavList;
 
 			template.cpName[11]="gcInputStatus";
-			if(uInvoice && uClient)
+			if(uInvoice && guLoginClient)
 				template.cpValue[11]="";
 			else
 				template.cpValue[11]="disabled";
@@ -210,14 +205,14 @@ void funcInvoice(FILE *fp)
 
 	template.cpName[0]="";
 
-	if(!uInvoice || !uClient)
+	if(!uInvoice)
 	{
 		fprintf(fp,"No invoice loaded.");
 		return;
 	}
 
 	uRequireCreditCard=GetPaymentValue(uInvoice,"","");
-	sprintf(cInvoice,"%u-%u",uClient,uInvoice);
+	sprintf(cInvoice,"%u-%u",guLoginClient,uInvoice);
 
 	res=sqlresultClientInfo();
 
@@ -355,7 +350,7 @@ void funcInvoice(FILE *fp)
 				"tInvoiceItems.mPrice,tInvoiceItems.mTax,tInvoiceItems.mSH,tInvoiceItems.mTotal,"
 				"tInvoice.mTotal,tInvoice.mSH FROM tInvoiceItems,tProduct,tInvoice WHERE "
 				"tInvoiceItems.uProduct=tProduct.uProduct AND tInvoiceItems.uInvoice=%u AND "
-				"tInvoiceItems.uClient=%u AND tInvoice.uInvoice=%u", uInvoice,uClient,uInvoice);
+				"tInvoiceItems.uClient=%u AND tInvoice.uInvoice=%u", uInvoice,guLoginClient,uInvoice);
 	else
 		sprintf(gcQuery,"SELECT tInvoiceItems.uProduct,tProduct.cLabel,tInvoiceItems.uQuantity,"
 				"tInvoiceItems.mPrice,tInvoiceItems.mTax,tInvoiceItems.mSH,tInvoiceItems.mTotal,"
@@ -363,7 +358,7 @@ void funcInvoice(FILE *fp)
 				"tInvoiceItems.uProduct=tProduct.uProduct AND tInvoiceItems.uInvoice=%1$u AND "
 				"tInvoiceItems.uClient=%2$u AND tInvoice.uInvoice=%1$u AND "
 				"tInvoice.uOwner=tClient.uClient AND (tClient.uClient=%3$u OR tClient.uOwner IN "
-				"(SELECT uClient FROM tClient WHERE uOwner=%3$u OR uClient=%3$u))", uInvoice,uClient,guOrg);
+				"(SELECT uClient FROM tClient WHERE uOwner=%3$u OR uClient=%3$u))", uInvoice,guLoginClient,guOrg);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -515,14 +510,14 @@ MYSQL_RES *sqlresultClientInfo(void)
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT cLabel,cLastName,cEmail,cAddr1,cAddr2,cCity,cState,cZip,cCountry,cCardType,cCardNumber,"
 				"cCardName,cShipName,cShipAddr1,cShipAddr2,cShipCity,cShipState,cShipZip,cShipCountry,cTelephone,"
-				"cFax,uExpMonth,uExpYear,cLanguage FROM tClient WHERE uClient=%u",uClient);
+				"cFax,uExpMonth,uExpYear,cLanguage FROM tClient WHERE uClient=%u",guLoginClient);
 	else
 		sprintf(gcQuery,"SELECT cLabel,cLastName,cEmail,cAddr1,cAddr2,cCity,cState,cZip,cCountry,cCardType,"
 				"cCardNumber,cCardName,cShipName,cShipAddr1,cShipAddr2,cShipCity,cShipState,cShipZip,"
 				"cShipCountry,cTelephone,cFax,uExpMonth,uExpYear,cLanguage FROM tClient "
 				" WHERE uClient=%2$u AND (uClient=%1$u OR uOwner"
 				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-				" ORDER BY uClient",guOrg,uClient);
+				" ORDER BY uClient",guOrg,guLoginClient);
 	
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -592,7 +587,6 @@ void funcInvoiceNavList(FILE *fp)
 		{
 			//This 'loads' the invoice, via funcInvoice() ;)
 			sscanf(field[0],"%u",&uInvoice);
-			sscanf(field[3],"%u",&uClient);
 			
 			fprintf(fp,"<a href=ispClient.cgi?gcPage=Invoice&uInvoice=%s>Invoice #%s (%s) [%s]</a><br>\n"
 			,field[0],field[0],field[1],field[2]);

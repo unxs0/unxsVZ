@@ -19,11 +19,11 @@
 			<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>	
-						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='Manejo de mi cuenta' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">Mi Cuenta</b></a>
-						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Manejo de mis facturas' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">Mis Facturas</b></a>
+						<a title='Manejo de mi cuenta' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">Mi Cuenta</b></a>
+						</td>
+						<td class="wpsSelectedPlace" nowrap height="100%">
+						<a title='Manejo de mis facturas' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">Mis Facturas</b></a>
 						</td>
 					</tr>
 				</table>
