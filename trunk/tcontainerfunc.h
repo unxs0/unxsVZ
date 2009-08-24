@@ -136,6 +136,11 @@ void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
 
 unsigned uCheckFirewallSettings(unsigned uFirewallTemplate)
 {
+
+	//No firewall option
+	if(!uFirewallTemplate)
+		return(0);
+
 	if(!cuTemplateDropDown[0] && uFirewallTemplate)
 	{
 		MYSQL_RES *res;
@@ -269,10 +274,9 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it!");
 
                         	guMode=200;
-				if(!uFirewallTemplate)
-					tContainer("<blink>Error</blink>: uFirewallTemplate==0!");
+				//Check here
 
-                        	guMode=201;
+	                       	guMode=201;
 				tContainer("New container step 3/3");
 			}
 			else
@@ -291,8 +295,6 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it!");
 
                         	guMode=200;
-				if(!uFirewallTemplate)
-					tContainer("<blink>Unexpected Error</blink>: uFirewallTemplate==0!");
 				if(uStatus!=11)
 					tContainer("<blink>Unexpected Error</blink>: uStatus not 'Initial Setup'");
                         	guMode=201;
@@ -1186,7 +1188,7 @@ void ExttContainerButtons(void)
 
                 case 200:
 			printf("<p><u>New container step 2/3</u><br>");
-			printf("Select node firewall template for new container.<p>");
+			printf("Select node firewall template for new container. Or '---' for no firewall required.<p>");
 			htmlFirewallTemplateSelect(uFirewallTemplate);
 			printf("<p><input title='Continue to step 3 of new container creation'"
 					" type=submit class=largeButton"
@@ -1196,9 +1198,17 @@ void ExttContainerButtons(void)
 
                 case 201:
 			printf("<p><u>New container step 3/3</u><br>");
-			printf("Complete required firewall settings for <i>%s</i> template.<p>",cuTemplateDropDown);
-			htmlGenFirewallInputs(uFirewallTemplate);
-			printf("<input type=hidden name=uFirewallTemplate value='%u'>\n",uFirewallTemplate);
+			if(uFirewallTemplate)
+			{
+				printf("Complete required firewall settings for <i>%s</i> template.<p>",cuTemplateDropDown);
+				htmlGenFirewallInputs(uFirewallTemplate);
+				printf("<input type=hidden name=uFirewallTemplate value='%u'>\n",uFirewallTemplate);
+			}
+			else
+			{
+				printf("You have chosen to not create a firewall template."
+					" If correct confirm below, else go back and select a template.<p>");
+			}
 			printf("<p><input title='Finish container creation'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Firewall Settings'>\n");

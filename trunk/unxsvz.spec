@@ -1,6 +1,6 @@
 Summary: unxsVZ (CentOS5 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: unxsvz
-Version: 2.0
+Version: 3.0
 Release: 3
 License: GPL
 Group: System Environment/Applications
@@ -9,7 +9,7 @@ URL: http://openisp.net/openisp/unxsVZ
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: mysql >= 5.0.45, httpd, mod_ssl, ovzkernel, vzctl, vzdump, cstream, unxsadmin
+Requires: mysql >= 5.0.45, mysql-server >= 5.0.45, httpd, mod_ssl, ovzkernel, vzctl, vzdump, cstream, unxsadmin
 
 %description
 unxsVZ is a multiple datacenter, multiple hardware node, OpenVZ
@@ -61,6 +61,8 @@ cd $RPM_BUILD_DIR
 /usr/local/share/unxsVZ/data/
 
 %changelog
+* Mon Aug 24 2009 Gary Wallis <supportgrp@unixservice.com>
+- Updated spec file for mysql server dependency
 * Fri Jul 24 2009 Hugo Urquiza <support2@unixservice.com>
 - Updated spec file for correct rpm package building
 * Fri Jul 24 2009 Hugo Urquiza <support2@unixservice.com>
