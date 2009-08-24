@@ -1301,12 +1301,12 @@ void funcCustomerTickets(FILE *fp)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-
+	
 	if(!uCustomer) return;
 
 	fprintf(fp,"<!-- funcCustomerTickets(fp) start -->\n");
 
-	sprintf(gcQuery,"SELECT uTicket,uScheduleDate,cText,uCreatedDate FROM tTicket "
+	sprintf(gcQuery,"SELECT uTicket,FROM_UNIXTIME(uScheduleDate),cText,FROM_UNIXTIME(uCreatedDate) FROM tTicket "
 			"WHERE uOwner=%u AND uTicketOwner=%u ORDER BY uCreatedDate DESC LIMIT 10",
 			guOrg
 			,uCustomer);
@@ -1317,11 +1317,11 @@ void funcCustomerTickets(FILE *fp)
 
 	while((field=mysql_fetch_row(res)))
 	{
-		FromMySQLDate(field[2]);
-		fprintf(fp,"<tr><td><a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s)</a></td><td>%s ...</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+	//	FromMySQLDate(field[1]);
+		fprintf(fp,"<tr><td><a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a></td><td>%s ...</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
 				field[0]
-				,cShortenText(field[2],5)
 				,field[0]
+				,cShortenText(field[2],5)
 				,field[3]
 				,field[1]
 				,"due"
