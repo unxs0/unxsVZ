@@ -97,6 +97,8 @@
 		<u><b>Mis Facturas</b></u><br><br>
 		{{funcInvoiceNavList}}
 		</td>
+		<tr><td colspan=2><input type=submit name=gcFunction value='Pagar la Factura Actual' class=largestButton><td></tr>
+		<tr><td colspan=2><input type=submit name=gcFunction value='Mostrar Factura Para Imprimir' class=largestButton><td></tr>
         </table>
 
 
