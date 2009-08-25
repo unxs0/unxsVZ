@@ -56,6 +56,8 @@ cd ../datacenter/
 install -m 500 allnodescp.sh /usr/sbin/allnodescp.sh
 cd ../cron/
 cp root-crontab /usr/local/share/unxsVZ/setup/root-crontab
+cd ../openvz/
+install vzdump-1.1-2.noarch.rpm /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm
 cd $RPM_BUILD_DIR
 
 %post
@@ -75,6 +77,8 @@ if [ -x /sbin/chkconfig ];then
 		fi
 	fi
 fi
+#todo rpm -i /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm
+#todo /var/www/unxs/cgi-bin/unxsVZ.cgi UpdateSchema on upgrade only
 #if mysqld has no root passwd and we started it then we will set it and finish the data initialize
 if [ -x /usr/bin/mysql ];then
 	if [ "$cMySQLStart" == "1" ];then
@@ -167,6 +171,7 @@ fi
 /usr/local/share/unxsVZ/data/tType.txt
 %dir /usr/local/share/unxsVZ/setup/
 /usr/local/share/unxsVZ/setup/root-crontab
+/usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm
 /usr/share/fonts/DejaVuSansMono-Roman.ttf
 
 %changelog
