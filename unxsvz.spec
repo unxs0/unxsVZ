@@ -66,7 +66,9 @@ cd $RPM_BUILD_DIR
 cUpdate="0";
 grep "unxsVZ" /var/spool/cron/root > /dev/null 2>&1
 if [ $? == 0 ];then
-	cUpdate="1";
+	if [ -x /var/www/unxs/cgi-bin/unxsVZ.cgi ]; then
+		cUpdate="1";
+	fi
 fi
 
 if [ -x /sbin/chkconfig ] && [ "$cUpdate" == "0" ];then
