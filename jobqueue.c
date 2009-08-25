@@ -60,6 +60,11 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite);
 void TextConnectDb(void); //main.c
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
+void GetConfiguration(const char *cName,char *cValue,
+		unsigned uDatacenter,
+		unsigned uNode,
+		unsigned uContainer,
+		unsigned uHtml);
 
 
 //Using the local server hostname get max 100 jobs for this node from the tJob queue.
@@ -752,15 +757,30 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//vzmigrate --online -v <destination_address> <veid>
-	sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin;"
-				"/usr/sbin/vzmigrate --keep-dst --online -v %s %u",cTargetNodeIPv4,uContainer);
+	char cSSLOptions[256]={""};
+	GetConfiguration("cSSLOptions",cSSLOptions,0,0,0,0);//For now global
+
+	if(cSSLOptions[0])
+		sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
+				"/usr/sbin/vzmigrate --ssh=%s --keep-dst --online -v %s %u",
+					cSSLOptions,cTargetNodeIPv4,uContainer);
+	else
+		sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin;"
+				"/usr/sbin/vzmigrate --keep-dst --online -v %s %u",
+					cTargetNodeIPv4,uContainer);
 	if(system(gcQuery))
 	{
 		printf("MigrateContainer() error: %s.\nTrying offline migration (check kernel compat)...\n",gcQuery);
 		tJobErrorUpdate(uJob,"Live failed trying offline");
 
-		sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate -v %s %u",cTargetNodeIPv4,uContainer);
+		if(cSSLOptions[0])
+			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
+				"/usr/sbin/vzmigrate --ssh=%s -v %s %u",
+					cSSLOptions,cTargetNodeIPv4,uContainer);
+		else
+			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
+				"/usr/sbin/vzmigrate -v %s %u",
+					cTargetNodeIPv4,uContainer);
 		if(system(gcQuery))
 		{
 			printf("MigrateContainer() error: %s.\nGiving up!\n",gcQuery);
