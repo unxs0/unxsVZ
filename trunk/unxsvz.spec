@@ -85,14 +85,25 @@ if [ -x /sbin/chkconfig ] && [ "$cUpdate" == "0" ];then
 		fi
 	fi
 fi
-if [ -x /bin/rpm ] && [ -f /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm ];then
-	/bin/rpm -i /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm > /dev/null 2>&1
-	if [ $? != 0 ];then
-		echo "vzdump-1.1-2.noarch.rpm install failed"
+#
+#This section is problematic: An rpm installing an rpm?
+#Added rpm -qlp /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm
+# to the files section to help a little with this problem.
+#I guess we could just yum provide it ourselves and not do this
+# wierd rpm installs an rpm mess. But we would need the source and tar.gz
+# made to be totally kosher.
+if [  -x /bin/rpm ];then
+	/bin/rpm -q vzdump > /dev/null 2>&1
+	if [ $? == 1 ];then
+		if [ -f /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm ];then
+			/bin/rpm -i /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm > /dev/null 2>&1
+			if [ $? != 0 ];then
+				echo "vzdump-1.1-2.noarch.rpm install failed"
+			fi
+		fi
 	fi
-else
-	echo "Could not find /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm.";
 fi
+#
 if [ -x /var/www/unxs/cgi-bin/unxsVZ.cgi ] && [  -x /bin/rpm ] && [ "$cUpdate" == "1" ];then
 	/var/www/unxs/cgi-bin/unxsVZ.cgi UpdateSchema > /dev/null 2>&1
 fi
@@ -192,6 +203,14 @@ fi
 /usr/local/share/unxsVZ/setup/root-crontab
 /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm
 /usr/share/fonts/DejaVuSansMono-Roman.ttf
+#vzdump rpm provides
+/usr/sbin/vzdump
+/usr/share/doc/vzdump-1.1
+#/usr/share/doc/vzdump-1.1/ChangeLog
+#/usr/share/doc/vzdump-1.1/changelog.Debian
+#/usr/share/doc/vzdump-1.1/copyright
+/usr/share/man/man1/vzdump.1.gz
+
 
 %changelog
 * Tue Aug 26 2009 Hugo Urquiza <support2@unixservice.com>
