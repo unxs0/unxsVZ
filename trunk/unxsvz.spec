@@ -63,14 +63,15 @@ cd $RPM_BUILD_DIR
 %post
 #todo this can be improved upon for version comparison. Also mainfunc.h UpdateSchema
 #	can be made smarter.
+cUpdate="0";
 if [  -x /bin/rpm ];then
 	/bin/rpm -q unxsvz > /dev/null 2>&1
 	if [ $? == 0 ];then
 		cUpdate="1";
-	else
-		cUpdate="0";
 	fi
 fi
+echo "cUpdate=$cUpdate";
+
 if [ -x /sbin/chkconfig ] && [ "$cUpdate" == "0" ];then
 	if [ -x /etc/init.d/httpd ];then
 		/sbin/chkconfig --level 3 httpd on
@@ -98,7 +99,7 @@ if [  -x /bin/rpm ];then
 	/bin/rpm -q vzdump > /dev/null 2>&1
 	if [ $? == 1 ];then
 		if [ -f /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm ];then
-			/bin/rpm -i /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm > /dev/null 2>&1
+			/bin/rpm -i --nodeps /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm > /dev/null 2>&1
 			if [ $? != 0 ];then
 				echo "vzdump-1.1-2.noarch.rpm install failed"
 			fi
@@ -106,6 +107,7 @@ if [  -x /bin/rpm ];then
 	fi
 fi
 #
+echo "cUpdate=$cUpdate";
 if [ -x /var/www/unxs/cgi-bin/unxsVZ.cgi ] && [  -x /bin/rpm ] && [ "$cUpdate" == "1" ];then
 	/var/www/unxs/cgi-bin/unxsVZ.cgi UpdateSchema > /dev/null 2>&1
 fi
@@ -126,6 +128,7 @@ if [ -x /usr/bin/mysql ];then
 		fi
 	fi
 fi
+echo "cUpdate=$cUpdate";
 #let installer know what was done.
 if [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
 			&& [ "$cInitialize" == "1" ] && [ "$cUpdate" == "0" ];then
