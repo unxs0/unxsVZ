@@ -58,7 +58,7 @@ unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
 char *gcBuildInfo="$Id$";
-char *gcRADStatus="Forked";
+char *gcRADStatus="Forked rpm-2.1";
 
 //Local
 void Footer_ism3(void);
