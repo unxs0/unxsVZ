@@ -145,16 +145,16 @@ else
 fi
 #cat unxsVZ crontab into root crontab
 if [ -f /usr/local/share/unxsVZ/setup/root-crontab ] && [ -d /var/spool/cron ];then
-	#new version of rrdtool needs fontconfig ttf font, it was installed
-	#but we need to load into cache
-	if [ -x /usr/bin/fc-cache ];then
-		/usr/bin/fc-cache > /dev/null 2>&1
-	fi
 	#do not add again
 	grep "unxsVZ" /var/spool/cron/root > /dev/null 2>&1
-	if [ $? != 0 ];then
+	if [ $? != 0 ] && [ "$cUpdate" == "0" ];then
 		cat /usr/local/share/unxsVZ/setup/root-crontab >> /var/spool/cron/root;
 	fi
+fi
+#new version of rrdtool needs fontconfig ttf font, it was installed
+#but we need to load into cache
+if [ -x /usr/bin/fc-cache ];then
+	/usr/bin/fc-cache > /dev/null 2>&1
 fi
 
 %clean

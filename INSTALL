@@ -21,9 +21,19 @@ http://unixservice.com/rpm
 ---
 Post Install
 
-1-. Configuring or starting other services provided or required and already installed on your server.
+1-. Setting up MySQL replication cluster.
 
-2-. Installing initial data for unxsVZ
+2-. Setting up rrdtool datacenter, node and container graphics.
+
+3-. Customizing allnodescp.sh
+
+4-. Making sure your LVM2 disk setup is correct.
+
+5-. Installing /vz/template/cache, /etc/vz/conf/ contents. And adding them to tConfig and tOSTemplate.
+
+6-. Configuring unxsVZ via the web interface.
+
+7-. Creating test containers and exercizing them for automonics, live migration etc.
 
 ---
 If you repackage an rpm for FreeBSD, OpenSolaris, OpenBSD etc...please let us know and we will add it to the 
