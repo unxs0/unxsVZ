@@ -64,11 +64,11 @@ cd $RPM_BUILD_DIR
 #todo this can be improved upon for version comparison. Also mainfunc.h UpdateSchema
 #	can be made smarter.
 cUpdate="0";
-grep "unxsVZ" /var/spool/cron/root > /dev/null 2>&1
+grep "unxsVZ" /var/spool/cron/root > /dev/null 2>&1;
 if [ $? == 0 ];then
-	if [ -x /var/www/unxs/cgi-bin/unxsVZ.cgi ]; then
+#	if [ -x /var/www/unxs/cgi-bin/unxsVZ.cgi ]; then
 		cUpdate="1";
-	fi
+#	fi
 fi
 
 if [ -x /sbin/chkconfig ] && [ "$cUpdate" == "0" ];then
@@ -100,6 +100,7 @@ if [  -x /bin/rpm ];then
 		if [ -f /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm ];then
 			/bin/rpm -i --nodeps /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm > /dev/null 2>&1
 			if [ $? != 0 ];then
+				echo "vzdump-1.1-2.noarch.rpm install failed"; 
 			fi
 		fi
 	fi
@@ -125,7 +126,6 @@ if [ -x /usr/bin/mysql ];then
 		fi
 	fi
 fi
-echo "cUpdate=$cUpdate";
 #let installer know what was done.
 if [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
 			&& [ "$cInitialize" == "1" ] && [ "$cUpdate" == "0" ];then
