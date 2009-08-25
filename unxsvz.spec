@@ -1,10 +1,10 @@
 Summary: unxsVZ (CentOS5 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: unxsvz
-Version: 1.0
-Release: 3
+Version: 2.0
+Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsvz-3.0.tar.gz
+Source: http://unixservice.com/source/unxsvz-2.0.tar.gz
 URL: http://openisp.net/openisp/unxsVZ
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -77,8 +77,20 @@ if [ -x /sbin/chkconfig ];then
 		fi
 	fi
 fi
-#todo rpm -i /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm
-#todo /var/www/unxs/cgi-bin/unxsVZ.cgi UpdateSchema on upgrade only
+if [ -x /bin/rpm ] && [ -f /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm ];then
+	/bin/rpm -i /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm > /dev/null 2>&1
+	if [ $? != 0 ];then
+		echo "vzdump-1.1-2.noarch.rpm install failed"
+	fi
+fi
+if [ -x /var/www/unxs/cgi-bin/unxsVZ.cgi ] && [  -x /bin/rpm ];then
+	#todo this can be improved upon for version comparison. Also mainfunc.h UpdateSchema
+	#	can be made smarter.
+	/bin/rpm -q unxsvz
+	if [ $? == 0 ];then
+		/var/www/unxs/cgi-bin/unxsVZ.cgi UpdateSchema
+	fi
+fi
 #if mysqld has no root passwd and we started it then we will set it and finish the data initialize
 if [ -x /usr/bin/mysql ];then
 	if [ "$cMySQLStart" == "1" ];then
