@@ -61,7 +61,15 @@ install vzdump-1.1-2.noarch.rpm /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarc
 cd $RPM_BUILD_DIR
 
 %post
-if [ -x /sbin/chkconfig ];then
+#todo this can be improved upon for version comparison. Also mainfunc.h UpdateSchema
+#	can be made smarter.
+if [  -x /bin/rpm ];then
+	/bin/rpm -q unxsvz > /dev/null 2>&1
+	if [ $? == 0 ];then
+		cUpdate="1"
+	fi
+fi
+if [ -x /sbin/chkconfig ] && [ "$cUpdate" == "0" ];then
 	if [ -x /etc/init.d/httpd ];then
 		/sbin/chkconfig --level 3 httpd on
 		/etc/init.d/httpd restart > /dev/null 2>&1
@@ -83,17 +91,12 @@ if [ -x /bin/rpm ] && [ -f /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm
 		echo "vzdump-1.1-2.noarch.rpm install failed"
 	fi
 fi
-if [ -x /var/www/unxs/cgi-bin/unxsVZ.cgi ] && [  -x /bin/rpm ];then
-	#todo this can be improved upon for version comparison. Also mainfunc.h UpdateSchema
-	#	can be made smarter.
-	/bin/rpm -q unxsvz
-	if [ $? == 0 ];then
-		/var/www/unxs/cgi-bin/unxsVZ.cgi UpdateSchema
-	fi
+if [ -x /var/www/unxs/cgi-bin/unxsVZ.cgi ] && [  -x /bin/rpm ] && [ "$cUpdate" == "1" ];then
+	/var/www/unxs/cgi-bin/unxsVZ.cgi UpdateSchema > /dev/null 2>&1
 fi
 #if mysqld has no root passwd and we started it then we will set it and finish the data initialize
 if [ -x /usr/bin/mysql ];then
-	if [ "$cMySQLStart" == "1" ];then
+	if [ "$cMySQLStart" == "1" ] && [ "$cUpdate" == "0" ];then
 		echo "quit" | /usr/bin/mysql  > /dev/null 2>&1
 		if [ $? == 0 ];then
 			/usr/bin/mysqladmin -u root password 'ultrasecret' > /dev/null 2>&1
@@ -110,12 +113,14 @@ if [ -x /usr/bin/mysql ];then
 fi
 #let installer know what was done.
 if [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
-			&& [ "$cInitialize" == "1" ];then
+			&& [ "$cInitialize" == "1" ] && [ "$cUpdate" == "0" ];then
 	echo "unxsVZ has been installed, initialized and, httpd and mysqld have been started.";	
 	echo "You can proceed to login to your unxsVZ interfaces with your browser.";	
+elif [ "$cUpdate" == "1" ]; then
+	echo "unxsVZ has been upgraded.";	
 else 
-		echo "It appears that one or more manual operations may be needed to finish";
-		echo "your unxsVZ installation.";
+	echo "It appears that one or more manual operations may be needed to finish";
+	echo "your unxsVZ installation.";
 	if [ "$cHttpdStart" != "1" ]; then
 		echo "";
 		echo "WARNING: Your httpd server was not started, run:";

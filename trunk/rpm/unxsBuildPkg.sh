@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 #Simple automation of the building of unxsVZ normal packages
-#Note that the spec file info has to reflect the version and release provided.
+#Note1 that the spec file info has to reflect the version and release provided.
+#Note2 for unxsVZ build just place unxsVZ inside a dir also called unxsVZ
 #
 
 if [ "$1" == "" ];then
@@ -23,7 +24,7 @@ if [ "$UNXSVZ" == "" ];then
 fi
 if [ ! -d $UNXSVZ ];then
 	echo "This simple script requires that the unxsVZ source tree be set via UNXSVZ env var";
-	echo "export UNXSVZ=/home/joe/unxsVZ for example";
+	echo "export UNXSVZ=/home/joe/unxsVZ for example. If creating unxsVZ rpm see this scripts header.";
 	exit 0;
 fi
 if [ ! -d $UNXSVZ/../rpm-staging ];then
