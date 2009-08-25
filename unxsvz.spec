@@ -1,7 +1,7 @@
 Summary: unxsVZ (CentOS5 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: unxsvz
 Version: 2.0
-Release: 4
+Release: 5
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsvz-2.0.tar.gz
@@ -66,7 +66,9 @@ cd $RPM_BUILD_DIR
 if [  -x /bin/rpm ];then
 	/bin/rpm -q unxsvz > /dev/null 2>&1
 	if [ $? == 0 ];then
-		cUpdate="1"
+		cUpdate="1";
+	else
+		cUpdate="0";
 	fi
 fi
 if [ -x /sbin/chkconfig ] && [ "$cUpdate" == "0" ];then
