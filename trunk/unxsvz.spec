@@ -1,7 +1,7 @@
 Summary: unxsVZ (CentOS5 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: unxsvz
 Version: 2.0
-Release: 5
+Release: 6
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsvz-2.0.tar.gz
@@ -9,7 +9,7 @@ URL: http://openisp.net/openisp/unxsVZ
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: mysql >= 5.0.45, mysql-server >= 5.0.45, httpd, mod_ssl, ovzkernel, vzctl, cstream, unxsadmin, rrdtool
+Requires: mysql >= 5.0.45, mysql-server >= 5.0.45, httpd, mod_ssl, ovzkernel, vzctl, cstream, unxsadmin, rrdtool, vzdump
 
 %description
 unxsVZ is a multiple datacenter, multiple hardware node, OpenVZ
@@ -57,7 +57,6 @@ install -m 500 allnodescp.sh /usr/sbin/allnodescp.sh
 cd ../cron/
 cp root-crontab /usr/local/share/unxsVZ/setup/root-crontab
 cd ../openvz/
-install vzdump-1.1-2.noarch.rpm /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm
 cd $RPM_BUILD_DIR
 
 %post
@@ -84,24 +83,6 @@ if [ -x /sbin/chkconfig ] && [ "$cUpdate" == "0" ];then
 		/etc/init.d/mysqld restart > /dev/null 2>&1
 		if [ $? == 0 ];then
 			cMySQLStart="1"
-		fi
-	fi
-fi
-#
-#This section is problematic: An rpm installing an rpm?
-#Added rpm -qlp /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm
-# to the files section to help a little with this problem.
-#I guess we could just yum provide it ourselves and not do this
-# wierd rpm installs an rpm mess. But we would need the source and tar.gz
-# made to be totally kosher.
-if [  -x /bin/rpm ];then
-	/bin/rpm -q vzdump > /dev/null 2>&1
-	if [ $? == 1 ];then
-		if [ -f /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm ];then
-			/bin/rpm -i --nodeps /usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm > /dev/null 2>&1
-			if [ $? != 0 ];then
-				echo "vzdump-1.1-2.noarch.rpm install failed"; 
-			fi
 		fi
 	fi
 fi
@@ -203,15 +184,7 @@ fi
 /usr/local/share/unxsVZ/data/tType.txt
 %dir /usr/local/share/unxsVZ/setup/
 /usr/local/share/unxsVZ/setup/root-crontab
-/usr/local/share/unxsVZ/setup/vzdump-1.1-2.noarch.rpm
 /usr/share/fonts/DejaVuSansMono-Roman.ttf
-#vzdump rpm provides
-/usr/sbin/vzdump
-/usr/share/doc/vzdump-1.1
-#/usr/share/doc/vzdump-1.1/ChangeLog
-#/usr/share/doc/vzdump-1.1/changelog.Debian
-#/usr/share/doc/vzdump-1.1/copyright
-/usr/share/man/man1/vzdump.1.gz
 
 
 %changelog
