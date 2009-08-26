@@ -111,6 +111,16 @@
 		</tr>
 		<tr>
 		<td colspan=2>
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Add Ticket Comment)"><strong>Add Ticket Comment</strong></a></td>
+		</tr>
+		<tr>
+		<td colspan=2>
+		<textarea {{cCommentStatus}} class={{cTicketCommentStyle}} name=cTicketComment cols=40 rows=15">{{cTicketComment}}</textarea>
+		</td>
+		</tr>
+		<tr>
+		<td colspan=2>
+		<input {{cCommentStatus}} type=submit name=gcFunction value='{{cCommentConfirm}}Submit Comment' class=largeButton>
 		</td>
 		</tr>
         </table>
@@ -152,7 +162,7 @@
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Description')"><strong>Request</strong></a></td>
                 </td>
 		<td>
-		<textarea class={{cTextStyle}} name=cText cols=40 rows=15">{{cText}}</textarea>
+		<textarea {{gcInputStatus}} class={{cTextStyle}} name=cText cols=40 rows=15">{{cText}}</textarea>
 		</td>
 	</tr>
         <tr>
