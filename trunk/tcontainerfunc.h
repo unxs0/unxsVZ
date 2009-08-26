@@ -447,6 +447,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
+				//Cancel any outstanding jobs. TODO review this further
+				CancelContainerJob(uDatacenter,uNode,uContainer);
 				DeletetContainer();
 			}
 			else
@@ -1233,6 +1235,7 @@ void ExttContainerButtons(void)
 
                 case 2002:
 			printf("<p><u>Review changes</u><br>");
+			printf("If you change uIPv4 you will need to modify tIP<br>");
                         printf(LANG_NBB_CONFIRMMOD);
                 break;
 
