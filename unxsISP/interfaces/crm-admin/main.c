@@ -392,6 +392,10 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcSelectLanguage(fp);
 	else if(!strcmp(cFunction,"funcCustomerTickets"))
 		funcCustomerTickets(fp);
+	else if(!strcmp(cFunction,"funcAssignedTo"))
+		funcAssignedTo(fp);
+	else if(!strcmp(cFunction,"funcTicketStatus"))
+		funcTicketStatus(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 

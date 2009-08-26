@@ -173,6 +173,9 @@ void TicketCommands(pentry entries[], int x);
 void htmlTicket(void);
 void htmlTicketPage(char *cTitle, char *cTemplateName);
 void funcTicketNavList(FILE *fp);
+void funcAssignedTo(FILE *fp);
+void funcTicketStatus(FILE *fp);
+
 
 //product.c
 void ProcessProductVars(pentry entries[], int x);
