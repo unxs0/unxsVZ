@@ -1302,12 +1302,18 @@ void funcCustomerTickets(FILE *fp)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	
+	time_t uScheduleDate=0;
+	time_t luClock;
+	char cDue[30]={""};
+
 	if(!uCustomer) return;
+	
+	time(&luClock);
 
 	fprintf(fp,"<!-- funcCustomerTickets(fp) start -->\n");
 
-	sprintf(gcQuery,"SELECT uTicket,FROM_UNIXTIME(uScheduleDate),cText,FROM_UNIXTIME(tTicket.uCreatedDate),"
-			"tTicketStatus.cLabel "
+	sprintf(gcQuery,"SELECT uTicket,IF(uScheduleDate!=0,FROM_UNIXTIME(uScheduleDate),'Not scheduled yet'),cText,FROM_UNIXTIME(tTicket.uCreatedDate),"
+			"tTicketStatus.cLabel,uScheduleDate,tTicket.uCreatedDate "
 			"FROM tTicket,tTicketStatus WHERE tTicket.uOwner=%u AND uTicketOwner=%u "
 			"AND tTicketStatus.uTicketStatus=tTicket.uTicketStatus "
 			"ORDER BY tTicket.uCreatedDate DESC LIMIT 10",
@@ -1320,7 +1326,17 @@ void funcCustomerTickets(FILE *fp)
 
 	while((field=mysql_fetch_row(res)))
 	{
-	//	FromMySQLDate(field[1]);
+		sscanf(field[5],"%lu",&uScheduleDate);
+		if(uScheduleDate)
+		{
+			if(uScheduleDate>luClock)
+				sprintf(cDue,"Due in %lu hours",((uScheduleDate-luClock)/3600));
+			else
+				sprintf(cDue,"Overdue by %lu hours",((luClock-uScheduleDate)/3600));
+		}
+		else
+			sprintf(cDue,"Not scheduled yet");
+
 		fprintf(fp,"<tr><td><a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a></td>"
 				"<td>%s ...</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
 				field[0]
@@ -1329,7 +1345,7 @@ void funcCustomerTickets(FILE *fp)
 				,field[3]
 				,field[1]
 				,field[4]
-				,"due"
+				,cDue
 		       );
 	}
 
