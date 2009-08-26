@@ -38,7 +38,7 @@ static char cSearch[32]={""};
 
 
 void htmlTicketPage(char *cTitle, char *cTemplateName);
-
+void LoadTicket(void);
 
 void ProcessTicketVars(pentry entries[], int x)
 {
@@ -64,6 +64,7 @@ void TicketGetHook(entry gentries[],int x)
 		if(!strcmp(gentries[i].name,"uTicket"))
 			sscanf(gentries[i].val,"%u",&uTicket);
 	}
+	if(uTicket) LoadTicket();
 
 	htmlTicket();
 
@@ -178,6 +179,37 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 	}
 
 }//void htmlTicketPage()
+
+
+void LoadTicket(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cSubject,cText,uTicketOwner,uTicketStatus,uScheduleDate,"
+			"cKeywords,uCreatedBy,uCreatedDate FROM tTicket WHERE uTicket=%u AND uOwner=%u",
+			uTicket,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cSubject,"%.255s",field[0]);
+		cText=field[2];
+		sscanf(field[3],"%u",&uTicketOwner);
+		sscanf(field[4],"%u",&uTicketStatus);
+		sscanf(field[5],"%u",&uScheduleDate);
+		sprintf(cKeywords,"%.255s",field[6]);
+		sscanf(field[7],"%u",&uCreatedBy);
+		sscanf(field[8],"%u",&uCreatedDate);
+	}
+	else
+		gcMessage="<blink>Error: </blink>Could not load ticket record";
+
+}//void LoadTicket(void)
 
 
 void funcTicketNavList(FILE *fp)
