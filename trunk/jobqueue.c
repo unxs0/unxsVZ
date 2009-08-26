@@ -16,6 +16,8 @@ TODO
 	many simple, fast but redundant code blocks.
 	Get rid of any goto statements that do not add too many layers of nested
 	logic that makes the code hard to maintain by non-authors.
+	Use uNotValidSystemCallArg() before all system() calls where any args
+	come from db and are not format (sprintf) as numbers.
 */
 
 #include "mysqlrad.h"
@@ -55,6 +57,7 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
 int CreateMountFiles(unsigned uContainer, unsigned uOverwrite);
+unsigned uNotValidSystemCallArg(char *cSSHOptions);
 
 //extern protos
 void TextConnectDb(void); //main.c
@@ -65,6 +68,10 @@ void GetConfiguration(const char *cName,char *cValue,
 		unsigned uNode,
 		unsigned uContainer,
 		unsigned uHtml);
+
+//file scoped 
+static unsigned guNode=0;
+static unsigned guDatacenter=0;
 
 
 //Using the local server hostname get max 100 jobs for this node from the tJob queue.
@@ -151,6 +158,8 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		unsigned uContainer,char *cJobName,char *cJobData)
 {
 	static unsigned uCount=0;
+	guNode=uNode;
+	guDatacenter=uDatacenter;
 
 	//Some jobs may take quite some time, we need to make sure we don't run again!
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=2,cRemoteMsg='Running',uModBy=1,"
@@ -449,7 +458,21 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		//vzctl [flags] create veid --ostemplate name] [--config name] [--private path] 
 		//[--root path] [--ipadd addr] [--hostname name]
 		//1-.
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose create %u --ostemplate %.32s --hostname %.32s --ipadd %.15s --name %.32s --config %.32s",
+		
+		if(	uNotValidSystemCallArg(field[0]) ||
+			uNotValidSystemCallArg(field[1]) ||
+			uNotValidSystemCallArg(field[2]) ||
+			uNotValidSystemCallArg(field[3]) ||
+			uNotValidSystemCallArg(field[4]) ||
+			uNotValidSystemCallArg(field[5]) ||
+			uNotValidSystemCallArg(field[6])	)
+		{
+			tJobErrorUpdate(uJob,"failed sec alert!");
+			goto CommonExit;
+		}
+		
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose create %u --ostemplate %.32s --hostname %.32s"
+				" --ipadd %.15s --name %.32s --config %.32s",
 				uContainer,field[3],field[1],field[2],field[0],field[6]);
 		if(system(gcQuery))
 		{
@@ -577,6 +600,12 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		goto CommonExit;
 	}
 
+	if(uNotValidSystemCallArg(cIPNew)||uNotValidSystemCallArg(cIPOld))
+	{
+		tJobErrorUpdate(uJob,"failed sec alert!");
+		goto CommonExit;
+	}
+
 	//0-.
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
 	if(system(gcQuery))
@@ -662,6 +691,12 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 	{
 		printf("ChangeHostnameContainer() error: %s\n",gcQuery);
 		tJobErrorUpdate(uJob,"Get cHostname failed");
+		goto CommonExit;
+	}
+
+	if(uNotValidSystemCallArg(cHostname)||uNotValidSystemCallArg(cName))
+	{
+		tJobErrorUpdate(uJob,"failed sec alert!");
 		goto CommonExit;
 	}
 
@@ -757,8 +792,20 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//vzmigrate --online -v <destination_address> <veid>
+	//Most specific tConfiguration is used. This allows for some nodes to be set global
+	//and others specific. But is slower than the other option with what maybe
+	//very large numbers of per node tConfiguration entries.
 	char cSSHOptions[256]={""};
-	GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//For now global
+	GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,guNode,0,0);//First try node specific
+	if(!cSSHOptions[0])
+	{
+		GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSSHOptions[0])
+			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
+	}
+	if(uNotValidSystemCallArg(cSSHOptions))
+		cSSHOptions[0]=0;
+		
 
 	if(cSSHOptions[0])
 		sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
@@ -920,6 +967,12 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 	luBar = luBar + luBar * 0.1;
 	luLimit = luLimit + luLimit * 0.1;
 
+	if(uNotValidSystemCallArg(cResource))
+	{
+		tJobErrorUpdate(uJob,"failed sec alert!");
+		goto CommonExit;
+	}
+
 	//1-.
 	sprintf(gcQuery,"/usr/sbin/vzctl set %u --%s %.0f:%.0f --save",
 		uContainer,cResource,luBar,luLimit);
@@ -1029,6 +1082,12 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 	{
 		printf("SetContainerUBC() error: Could not determine luBar||luLimit\n");
 		tJobErrorUpdate(uJob,"!luBar||!luLimit");
+		goto CommonExit;
+	}
+
+	if(uNotValidSystemCallArg(cResource))
+	{
+		tJobErrorUpdate(uJob,"failed sec alert!");
 		goto CommonExit;
 	}
 
@@ -1171,6 +1230,12 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//debug only
 	//printf("cConfigLabel=%s; cOSTemplateBase=%s;\n",cConfigLabel,cOSTemplateBase);
 	//exit(0);
+
+	if(uNotValidSystemCallArg(cOSTemplateBase) || uNotValidSystemCallArg(cConfigLabel))
+	{
+		tJobErrorUpdate(uJob,"failed sec alert!");
+		goto CommonExit;
+	}
 
 	//1-. Stop container
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
@@ -1410,7 +1475,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 */
 
-	//1-. vzdump w/suspend on source node
+	//1-. vzdump w/suspend on source node or if cSnapshotDir is not empty we try to use LVM2
 	//2-. scp dump to target node
 	//3-. restore on target node to new veid
 	//4-. change ip, name and hostname
@@ -1420,18 +1485,50 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//8-. update target container status
 	//9-. remove /vz/dump files
 
+	//Most specific tConfiguration is used. This allows for some nodes to be set global
+	//and others specific. But is slower than the other option with what maybe
+	//very large numbers of per node tConfiguration entries.
 	char cSSHOptions[256]={""};
-	GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//For now global
+	GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,guNode,0,0);//First try node specific
 	if(!cSSHOptions[0])
+	{
+		GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSSHOptions[0])
+			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
+	}
+	//Default for less conditions below
+	if(!cSSHOptions[0] || uNotValidSystemCallArg(cSSHOptions))
 		sprintf(cSSHOptions,"-p 22");
 
 	char cSCPOptions[256]={""};
-	GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//For now global
+	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,guNode,0,0);//First try node specific
 	if(!cSCPOptions[0])
+	{
+		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSCPOptions[0])
+			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
+	}
+	//Default for less conditions below
+	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22");
 
+	char cSnapshotDir[256]={""};
+	GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,guNode,0,0);//First try node specific
+	if(!cSnapshotDir[0])
+	{
+		GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSnapshotDir[0])
+			GetConfiguration("cSnapshotDir",cSnapshotDir,0,0,0,0);//Last try global
+	}
+	if(uNotValidSystemCallArg(cSnapshotDir))
+		cSnapshotDir[0]=0;
+
 	//1-.
-	sprintf(gcQuery,"vzdump --suspend %u > /dev/null 2>&1",uContainer);
+	if(!cSnapshotDir[0])
+		sprintf(gcQuery,"vzdump --suspend %u > /dev/null 2>&1",uContainer);
+	else
+		sprintf(gcQuery,"vzdump --dumpdir %s --snapshot %u > /dev/null 2>&1",
+									cSnapshotDir,uContainer);
 	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
@@ -1444,8 +1541,17 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//2-.
-	sprintf(gcQuery,"nice scp %s /vz/dump/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar > /dev/null 2>&1",
+	if(uNotValidSystemCallArg(cTargetNodeIPv4))
+	{
+		tJobErrorUpdate(uJob,"fail sec alert!");
+		goto CommonExit;
+	}
+	if(!cSnapshotDir[0])
+		sprintf(gcQuery,"nice scp %s /vz/dump/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar > /dev/null 2>&1",
 				cSCPOptions,uContainer,cTargetNodeIPv4,uContainer);
+	else
+		sprintf(gcQuery,"nice scp %s %s/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar > /dev/null 2>&1",
+				cSCPOptions,cSnapshotDir,uContainer,cTargetNodeIPv4,uContainer);
 	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
@@ -1472,6 +1578,11 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4a-.
+	if(uNotValidSystemCallArg(cHostname))
+	{
+		tJobErrorUpdate(uJob,"fail sec alert!");
+		goto CommonExit;
+	}
 	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --hostname %s --save' > /dev/null 2>&1",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cHostname);
 	if(uDebug==0 && system(gcQuery))
@@ -1500,6 +1611,11 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4c-.
+	if(uNotValidSystemCallArg(cSourceContainerIP))
+	{
+		tJobErrorUpdate(uJob,"fail sec alert!");
+		goto CommonExit;
+	}
 	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipdel %s --save' > /dev/null 2>&1",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cSourceContainerIP);
 	if(uDebug==0 && system(gcQuery))
@@ -1567,7 +1683,10 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	tJobDoneUpdate(uJob);
 
 	//9a-. local
-	sprintf(gcQuery,"rm -f /vz/dump/vzdump-%u.tar",uNewVeid);
+	if(!cSnapshotDir[0])
+		sprintf(gcQuery,"rm -f /vz/dump/vzdump-%u.tar",uNewVeid);
+	else
+		sprintf(gcQuery,"rm -f %s/vzdump-%u.tar",cSnapshotDir,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
 		printf("CloneContainer() non critical error: %s.\n",gcQuery);
 	else if(uDebug)
@@ -1729,3 +1848,41 @@ CommonExit:
 	return(1);
 
 }//int CreateMountFiles()
+
+
+//Make sure internal sabotage or db compromise does not allow exploit via system call injection
+unsigned uNotValidSystemCallArg(char *cSSHOptions)
+{
+	int register i;
+
+	for(i=0;cSSHOptions[i];i++)
+	{
+		if(
+			cSSHOptions[i]==';' ||
+			cSSHOptions[i]=='&' ||
+			cSSHOptions[i]=='`' ||
+			cSSHOptions[i]=='\'' ||
+			cSSHOptions[i]=='"' ||
+			cSSHOptions[i]=='|' ||
+			cSSHOptions[i]=='*' ||
+			cSSHOptions[i]=='?' ||
+			cSSHOptions[i]=='~' ||
+			cSSHOptions[i]=='<' ||
+			cSSHOptions[i]=='>' ||
+			cSSHOptions[i]=='^' ||
+			cSSHOptions[i]=='(' ||
+			cSSHOptions[i]==')' ||
+			cSSHOptions[i]=='[' ||
+			cSSHOptions[i]==']' ||
+			cSSHOptions[i]=='{' ||
+			cSSHOptions[i]=='}' ||
+			cSSHOptions[i]=='$' ||
+			cSSHOptions[i]=='\\'
+						)
+			{
+				printf("SECURITY ALERT uNotValidSystemCallArg\n");
+				return(1);
+			}
+	}
+	return(0);
+}//unsigned uNotValidSystemCallArg(char *cSSHOptions)
