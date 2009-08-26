@@ -152,7 +152,7 @@
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Description')"><strong>Request</strong></a></td>
                 </td>
 		<td>
-		<textarea class=cRequestStyle}} name=cRequest cols=40 rows=15">{{cRequest}}</textarea>
+		<textarea class=cTextStyle}} name=cText cols=40 rows=15">{{cText}}</textarea>
 		</td>
 	</tr>
         <tr>
