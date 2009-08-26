@@ -23,8 +23,9 @@ static unsigned uTicketOwner=0;
 static char *uTicketOwnerStyle="type_fields_off";
 
 static unsigned uScheduleDate=0;
+static char *cScheduleDateStyle="type_fields_off";
 
-static char *cText;
+static char *cText="";
 static char *cTextStyle="type_fields_off";
 
 static char cKeywords[256]={""};
@@ -138,31 +139,31 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			template.cpName[8]="uTicket";
 			template.cpValue[8]=cuTicket;
 
-			template.cpName[9]="gcNewStep";
-			template.cpValue[10]=gcNewStep;
+			template.cpName[9]="cSubject";
+			template.cpValue[9]=cSubject;
 
-			template.cpName[11]="gcModStep";
-			template.cpValue[12]=gcModStep;
+			template.cpName[10]="cScheduleDate";
+			template.cpValue[10]=cScheduleDate;
 
-			template.cpName[13]="cSubject";
-			template.cpValue[13]=cSubject;
-
-			template.cpName[14]="cText";
-			template.cpValue[14]=cText;
-
-			template.cpName[15]="cScheduleDate";
-			template.cpValue[15]=cScheduleDate;
-
-			template.cpName[16]="cCreatedBy";
-			template.cpValue[16]=cCreatedBy;
+			template.cpName[12]="cCreatedBy";
+			template.cpValue[12]=cCreatedBy;
 			
-			template.cpName[17]="cSubjectStyle";
-			template.cpValue[17]=cSubjectStyle;
+			template.cpName[13]="cSubjectStyle";
+			template.cpValue[13]=cSubjectStyle;
 			
-			template.cpName[18]="cTextStyle";
-			template.cpValue[18]=cTextStyle;
+			template.cpName[14]="cTextStyle";
+			template.cpValue[14]=cTextStyle;
+			
+			template.cpName[17]="cKeywordsStyle";
+			template.cpValue[17]=cKeywordsStyle;
 
-			template.cpName[19]="";
+			template.cpName[18]="cScheduleDateStyle";
+			template.cpValue[18]=cScheduleDateStyle;
+
+			template.cpValue[19]="cText";
+			template.cpValue[19]=cText;
+
+			template.cpName[20]="";
 
 			printf("\n<!-- Start htmlTicketPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -274,11 +275,80 @@ void funcTicketNavList(FILE *fp)
 
 void funcAssignedTo(FILE *fp)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	fprintf(fp,"<!-- funcSelectAccountType(fp) start -->\n");
+	
+	sprintf(gcQuery,"SELECT uClient,tClient.cLabel FROM tClient,tAuthorize WHERE tAuthorize.uCertClient=tClient.uClient AND uPerm>=9");
+
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+		
+	fprintf(fp,"<select class=%s %s title='Select the employee to re-assign this ticket to' name=uTicketOwner>\n",uTicketOwnerStyle,gcInputStatus);
+
+	sprintf(gcQuery,"%u",uTicketOwner);
+
+	fprintf(fp,"<option value=0 ");
+	if(!uTicketOwner)
+		fprintf(fp,"selected");
+	fprintf(fp,">---</option>\n");
+	
+	sprintf(gcQuery,"%u",uTicketOwner);
+
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"<option value=%s ",field[0]);
+		if(!strcmp(field[0],gcQuery))
+				fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",field[1]);
+	}
+	
+	fprintf(fp,"<!-- funcSelectAccountType(fp) end -->\n");
+	
+
 }//void funcAssignedTo(FILE *fp)
 
 
 void funcTicketStatus(FILE *fp)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	fprintf(fp,"<!-- funcSelectAccountType(fp) start -->\n");
+	
+	sprintf(gcQuery,"SELECT uTicketStatus,cLabel FROM tTicketStatus");
+
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+		
+	fprintf(fp,"<select class=%s %s title='Select current ticket status' name=uTicketOwner>\n",uTicketStatusStyle,gcInputStatus);
+
+	sprintf(gcQuery,"%u",uTicketOwner);
+
+	fprintf(fp,"<option value=0 ");
+	if(!uTicketOwner)
+		fprintf(fp,"selected");
+	fprintf(fp,">---</option>\n");
+	
+	sprintf(gcQuery,"%u",uTicketStatus);
+
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"<option value=%s ",field[0]);
+		if(!strcmp(field[0],gcQuery))
+				fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",field[1]);
+	}
+	
+	fprintf(fp,"<!-- funcSelectAccountType(fp) end -->\n");
+	
+
+
 }//void funcTicketStatus(FILE *fp)
 
 
