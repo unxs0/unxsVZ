@@ -1832,4 +1832,25 @@ unsigned uHasWaitingForApproval(char *uClient)
 }//unsigned uHasWaitingForApproval(char *uClient)
 
 
+char *cShortenText(char *cText,unsigned uWords)
+{
+	//Return the first n word from cText
+	//will use the spaces for word counting.
+	unsigned uCount=0;
+	register int i=0;
+	static char cResult[100];
+	
+	for(i=0;i<strlen(cText);i++)
+	{
+		cResult[i]=cText[i];
+		if(cText[i]==' ')
+			uCount++;
+		if(uCount>=uWords) break;
+	}
+
+	cResult[i]='\0';
+	return(cResult);
+		
+}//char *cShortenText(char *cText)
+
 

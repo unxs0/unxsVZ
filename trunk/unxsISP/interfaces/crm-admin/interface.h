@@ -46,23 +46,23 @@ AUTHOR
 #define mysqlISP_BillingStorage 9
 #define mysqlISP_BillingTraffic 10
 
-//These values must match tInvoiceStatus.uInvoiceStatus
-//Invoice related
+//These values must match tTicketStatus.uInvoiceStatus
+//Ticket related
 //Open invoices start at 1
-#define mysqlISP_NewInvoice 1
-#define mysqlISP_SentInvoice 2
-#define mysqlISP_PartialInvoice 4
-#define mysqlISP_PastDueInvoice 6
-#define mysqlISP_BadDebtInvoice 7
-#define mysqlISP_CollectionInvoice 8
+#define mysqlISP_NewTicket 1
+#define mysqlISP_SentTicket 2
+#define mysqlISP_PartialTicket 4
+#define mysqlISP_PastDueTicket 6
+#define mysqlISP_BadDebtTicket 7
+#define mysqlISP_CollectionTicket 8
 //Closed invoices start at 100
-#define mysqlISP_PaidInvoice 110
-#define mysqlISP_VoidInvoice 210
-#define mysqlISP_ReceiptSentInvoice 211
+#define mysqlISP_PaidTicket 110
+#define mysqlISP_VoidTicket 210
+#define mysqlISP_ReceiptSentTicket 211
 
-//Invoice job queue related
-#define mysqlISP_MailQueuedInvoice 10
-#define mysqlISP_PrintQueuedInvoice 11
+//Ticket job queue related
+#define mysqlISP_MailQueuedTicket 10
+#define mysqlISP_PrintQueuedTicket 11
 
 
 //In main.c
@@ -167,13 +167,12 @@ void htmlGlossary(void);
 void htmlGlossaryPage(char *cTitle, char *cTemplateName);
 
 //invoice.c
-void ProcessInvoiceVars(pentry entries[], int x);
-void InvoiceGetHook(entry gentries[],int x);
-void InvoiceCommands(pentry entries[], int x);
-void htmlInvoice(void);
-void htmlInvoicePage(char *cTitle, char *cTemplateName);
-void funcInvoice(FILE *fp);
-void funcInvoiceNavList(FILE *fp);
+void ProcessTicketVars(pentry entries[], int x);
+void TicketGetHook(entry gentries[],int x);
+void TicketCommands(pentry entries[], int x);
+void htmlTicket(void);
+void htmlTicketPage(char *cTitle, char *cTemplateName);
+void funcTicketNavList(FILE *fp);
 
 //product.c
 void ProcessProductVars(pentry entries[], int x);
