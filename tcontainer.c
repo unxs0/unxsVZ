@@ -588,7 +588,7 @@ void Insert_tContainer(void)
 
 void Update_tContainer(char *cRowid)
 {
-	sprintf(gcQuery,"UPDATE tContainer SET uContainer=%u,cLabel='%s',cHostname='%s',uIPv4=%u,uVeth=%u,"
+	sprintf(gcQuery,"UPDATE tContainer SET uContainer=%u,cLabel='%s',cHostname='%s',uVeth=%u,uIPv4=%u,"
 				"uOSTemplate=%u,uConfig=%u,uNameserver=%u,uSearchdomain=%u,uDatacenter=%u,"
 				"uNode=%u,uStatus=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uContainer
