@@ -115,8 +115,8 @@ int main(int argc, char *argv[])
 				htmlDashBoard();
 			else if(!strcmp(gcPage,"Glossary"))
 				GlossaryGetHook(gentries,i);
-			else if(!strcmp(gcPage,"Invoice"))
-				InvoiceGetHook(gentries,i);
+			else if(!strcmp(gcPage,"Ticket"))
+				TicketGetHook(gentries,i);
 		}
 	}
 	else
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 
 	//Per page command tree
 	CustomerCommands(entries,i);
-	InvoiceCommands(entries,i);
+	TicketCommands(entries,i);
 
 	//default logged in page
 	htmlCustomer();
@@ -378,8 +378,6 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcSelectCardType(fp);
 	else if(!strcmp(cFunction,"funcSelectPayment"))
 		funcSelectPayment(fp);
-	else if(!strcmp(cFunction,"funcInvoice"))
-		funcInvoice(fp);
 	else if(!strcmp(cFunction,"funcSelectAccountType"))
 		funcSelectAccountType(fp);
 	else if(!strcmp(cFunction,"funcDisplayDashBoard"))
@@ -388,8 +386,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcCustomerNavList(fp);
 	else if(!strcmp(cFunction,"funcCustomerNavBar"))
 		funcCustomerNavBar(fp);
-	else if(!strcmp(cFunction,"funcInvoiceNavList"))
-		funcInvoiceNavList(fp);
+	else if(!strcmp(cFunction,"funcTicketNavList"))
+		funcTicketNavList(fp);
 	else if(!strcmp(cFunction,"funcSelectLanguage"))
 		funcSelectLanguage(fp);
 	else if(!strcmp(cFunction,"funcCustomerTickets"))
