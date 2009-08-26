@@ -14,7 +14,7 @@ PURPOSE
 
 static unsigned uTicket=0;
 static unsigned uCreatedBy=0; 
-static unsigned uCreatedDate=0;
+static char cCreatedDate[64]={""};
 
 static unsigned uTicketStatus=0;
 static char *uTicketStatusStyle="type_fields_off";
@@ -26,7 +26,7 @@ static unsigned uScheduleDate=0;
 static char *cScheduleDateStyle="type_fields_off";
 
 static char *cText="";
-static char *cTextStyle="type_fields_off";
+static char *cTextStyle="type_textarea_off";
 
 static char cKeywords[256]={""};
 static char *cKeywordsStyle="type_fields_off";
@@ -161,10 +161,14 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			template.cpName[18]="cScheduleDateStyle";
 			template.cpValue[18]=cScheduleDateStyle;
 
-			template.cpValue[19]="cText";
+			template.cpName[19]="cText";
 			template.cpValue[19]=cText;
 
-			template.cpName[20]="";
+			template.cpName[20]="cCreatedDate";
+			template.cpValue[20]=cCreatedDate;
+
+			template.cpName[21]="";
+
 
 			printf("\n<!-- Start htmlTicketPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -187,7 +191,7 @@ void LoadTicket(void)
 	MYSQL_ROW field;
 
 	sprintf(gcQuery,"SELECT cSubject,cText,uTicketOwner,uTicketStatus,uScheduleDate,"
-			"cKeywords,uCreatedBy,uCreatedDate FROM tTicket WHERE uTicket=%u AND uOwner=%u",
+			"cKeywords,uCreatedBy,FROM_UNIXTIME(uCreatedDate) FROM tTicket WHERE uTicket=%u AND uOwner=%u",
 			uTicket,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -198,13 +202,13 @@ void LoadTicket(void)
 	if((field=mysql_fetch_row(res)))
 	{
 		sprintf(cSubject,"%.255s",field[0]);
-		cText=field[2];
-		sscanf(field[3],"%u",&uTicketOwner);
-		sscanf(field[4],"%u",&uTicketStatus);
-		sscanf(field[5],"%u",&uScheduleDate);
-		sprintf(cKeywords,"%.255s",field[6]);
-		sscanf(field[7],"%u",&uCreatedBy);
-		sscanf(field[8],"%u",&uCreatedDate);
+		cText=field[1];
+		sscanf(field[2],"%u",&uTicketOwner);
+		sscanf(field[3],"%u",&uTicketStatus);
+		sscanf(field[4],"%u",&uScheduleDate);
+		sprintf(cKeywords,"%.255s",field[5]);
+		sscanf(field[6],"%u",&uCreatedBy);
+		sprintf(cCreatedDate,"%.63s",field[7]);
 	}
 	else
 		gcMessage="<blink>Error: </blink>Could not load ticket record";
@@ -312,7 +316,7 @@ void funcAssignedTo(FILE *fp)
 
 	fprintf(fp,"<!-- funcSelectAccountType(fp) start -->\n");
 	
-	sprintf(gcQuery,"SELECT uClient,tClient.cLabel FROM tClient,tAuthorize WHERE tAuthorize.uCertClient=tClient.uClient AND uPerm>=9");
+	sprintf(gcQuery,"SELECT uClient,tClient.cLabel FROM tClient,tAuthorize WHERE tAuthorize.uCertClient=tClient.uClient AND tClient.uOwner=%u",guOrg);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -337,7 +341,7 @@ void funcAssignedTo(FILE *fp)
 				fprintf(fp,"selected");
 		fprintf(fp,">%s</option>\n",field[1]);
 	}
-	
+	fprintf(fp,"</select>\n");
 	fprintf(fp,"<!-- funcSelectAccountType(fp) end -->\n");
 	
 
