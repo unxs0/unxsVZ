@@ -14,8 +14,8 @@ CGINAME= ispCRM.cgi
 CFLAGS= -DLinux -Wall
 LIBS= -L/usr/lib/mysql -lmysqlclient /usr/lib/openisp/libtemplate-branch.a /usr/lib/openisp/libucidr.a -lz -lcrypt -lm -lssl
 
-interface.cgi: main.o customer.o glossary.o invoice.o   dashboard.o ../../cgi.o
-	cc main.o customer.o glossary.o invoice.o   dashboard.o ../../cgi.o -o interface.cgi $(LIBS)
+interface.cgi: main.o customer.o glossary.o ticket.o   dashboard.o ../../cgi.o
+	cc main.o customer.o glossary.o ticket.o   dashboard.o ../../cgi.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
@@ -26,8 +26,8 @@ customer.o: customer.c interface.h ../../local.h ../../mysqlrad.h
 glossary.o : glossary.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c glossary.c -o glossary.o $(CFLAGS)
 
-invoice.o: invoice.c interface.h ../../local.h ../../mysqlrad.h
-	cc -c invoice.c -o invoice.o $(CFLAGS)
+ticket.o: ticket.c interface.h ../../local.h ../../mysqlrad.h
+	cc -c ticket.c -o ticket.o $(CFLAGS)
 
 dashboard.o : dashboard.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c dashboard.c -o dashboard.o $(CFLAGS)
