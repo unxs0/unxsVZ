@@ -5,12 +5,26 @@ FILE
 AUTHOR
 	(C) 2007-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	ispAdmin  Interface
+	ispCRM  Interface
 	program file.
 */
 
 
 #include "interface.h"
+
+static unsigned uTicket=0;
+static unsigned uCreatedBy=0; 
+static unsigned uCreatedDate=0;
+static unsigned uTicketStatus=0;
+static unsigned uTicketOwner=0;
+static unsigned uScheduleDate=0;
+static char *cText;
+static char cKeywords[256]={""};
+static char cSubject[256]={""};
+
+static char cSearch[32]={""};
+
+
 void htmlTicketPage(char *cTitle, char *cTemplateName);
 
 
@@ -20,13 +34,10 @@ void ProcessTicketVars(pentry entries[], int x)
 	
 	for(i=0;i<x;i++)
 	{
-/*		if(!strcmp(entries[i].name,"uTicket"))
+		if(!strcmp(entries[i].name,"uTicket"))
 			sscanf(entries[i].val,"%u",&uTicket);
-		else if(!strcmp(entries[i].name,"uClient"))
-			sscanf(entries[i].val,"%u",&uClient);
 		else if(!strcmp(entries[i].name,"cSearch"))
 			sprintf(cSearch,"%.99s",entries[i].val);
-*/					
 	}
 
 }//void ProcessUserVars(pentry entries[], int x)
@@ -38,10 +49,8 @@ void TicketGetHook(entry gentries[],int x)
 	
 	for(i=0;i<x;i++)
 	{
-/*		if(!strcmp(gentries[i].name,"uTicket"))
+		if(!strcmp(gentries[i].name,"uTicket"))
 			sscanf(gentries[i].val,"%u",&uTicket);
-		else if(!strcmp(gentries[i].name,"uClient"))
-			sscanf(gentries[i].val,"%u",&uClient);*/
 	}
 
 	htmlTicket();
@@ -54,91 +63,9 @@ void TicketCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"Ticket"))
 	{
 		ProcessTicketVars(entries,x);
-/*
 		if(!strcmp(gcFunction,"Approved and Shipped"))
 		{
-			sprintf(cApprovedStep,"Confirm ");
 		}
-		else if(!strcmp(gcFunction,"Confirm Approved and Shipped"))
-		{
-			sprintf(gcQuery,"UPDATE tTicket SET uTicketStatus=%u WHERE uTicket=%u AND uClient=%u",
-					APPROVED_AND_SHIPPED
-					,uTicket
-					,uClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			if(mysql_affected_rows(&gMysql))
-			{
-				unxsISPLog(uTicket,"tTicket","Mod");
-				gcMessage="Ticket status updated.";
-			}
-			else
-			{
-				unxsISPLog(uTicket,"tTicket","Mod Error");
-				gcMessage="<blink>Ticket status not updated. Contact support.</blink>";
-			}
-		}
-		 else if(!strcmp(gcFunction,"Void"))
-		 {
-			 sprintf(cVoidStep,"Confirm ");
-		 }
-		else if(!strcmp(gcFunction,"Confirm Void"))
-		{
-			sprintf(gcQuery,"UPDATE tTicket SET uTicketStatus=%u WHERE uTicket=%u AND uClient=%u",
-					VOID
-					,uTicket
-					,uClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			if(mysql_affected_rows(&gMysql))
-			{
-				unxsISPLog(uTicket,"tTicket","Mod");
-				gcMessage="Ticket voided.";
-			}
-			else
-			{
-				unxsISPLog(uTicket,"tTicket","Mod Error");
-				gcMessage="<blink>Ticket status not updated. Contact support.</blink>";
-			}
-			ReStockItems(uTicket);
-			
-		}
-		else if(!strcmp(gcFunction,"Email Loaded Ticket"))
-		{
-			sprintf(gcNewStep,"Confirm ");
-		}
-		else if(!strcmp(gcFunction,"Confirm Email Loaded Ticket"))
-		{
-			EmailLoadedTicket();
-			gcMessage="Ticket emailed OK";
-		}
-		else if(!strcmp(gcFunction,"Email All Tickets"))
-		{
-			sprintf(gcModStep,"Confirm ");
-		}
-		else if(!strcmp(gcFunction,"Confirm Email All Tickets"))
-		{
-			EmailAllTickets();
-			gcMessage="All invoices emailed  OK";
-		}
-		else if(!strcmp(gcFunction,"Print Loaded Ticket"))
-		{
-			gcPrintCurr="Confirm ";
-		}
-		else if(!strcmp(gcFunction,"Confirm Print Loaded Ticket"))
-		{
-			PrintTicket();
-		}
-		else if(!strcmp(gcFunction,"Print All Tickets"))
-		{
-			gcPrintAll="Confirm ";
-		}
-		else if(!strcmp(gcFunction,"Confirm Print All Tickets"))
-		{
-			PrintTickets();
-		}*/
 		htmlTicket();
 	}
 
@@ -167,14 +94,17 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 		{
 			struct t_template template;
 			char cuTicket[16]={""};
-			
-			//sprintf(cuTicket,"%u",uTicket);
+			char cScheduleDate[32]={""};			
+			char cCreatedBy[100]={""};
+
+			sprintf(cCreatedBy,"%.99s",ForeignKey("tClient","cLabel",uCreatedBy));
+			sprintf(cuTicket,"%u",uTicket);
 
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="ispAdmin.cgi";
+			template.cpValue[1]="ispCRM.cgi";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcLogin;
@@ -193,41 +123,27 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 
 			template.cpName[7]="gcMessage";
 			template.cpValue[7]=gcMessage;
-/*
+
 			template.cpName[8]="uTicket";
 			template.cpValue[8]=cuTicket;
 
-			template.cpName[9]="uClient";
-			template.cpValue[9]=cuClient;
+			template.cpName[9]="gcNewStep";
+			template.cpValue[10]=gcNewStep;
 
-			template.cpName[10]="cNavList";
-			template.cpValue[10]=cNavList;
+			template.cpName[11]="gcModStep";
+			template.cpValue[12]=gcModStep;
 
-			template.cpName[11]="gcInputStatus";
-			if(uTicket && uClient)
-				template.cpValue[11]="";
-			else
-				template.cpValue[11]="disabled";
+			template.cpName[13]="cSubject";
+			template.cpValue[13]=cSubject;
 
-			template.cpName[12]="cApprovedStep";
-			template.cpValue[12]=cApprovedStep;
+			template.cpName[14]="cRequest";
+			template.cpValue[14]=cText;
 
-			template.cpName[13]="cVoidStep";
-			template.cpValue[13]=cVoidStep;
+			template.cpName[15]="cScheduleDate";
+			template.cpValue[15]=cScheduleDate;
 
-			template.cpName[14]="gcNewStep";
-			template.cpValue[14]=gcNewStep;
-
-			template.cpName[15]="gcModStep";
-			template.cpValue[15]=gcModStep;
-
-			template.cpName[16]="gcPrintCurr";
-			template.cpValue[16]=gcPrintCurr;
-
-			template.cpName[17]="gcPrintAll";
-			template.cpValue[17]=gcPrintAll;
-*/
-			template.cpName[8]="";
+			template.cpName[16]="cCreatedBy";
+			template.cpValue[16]=cCreatedBy;
 			
 			printf("\n<!-- Start htmlTicketPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -313,7 +229,7 @@ void funcTicketNavList(FILE *fp)
 			sscanf(field[0],"%u",&uTicket);
 			sscanf(field[3],"%u",&uClient);
 			
-			fprintf(fp,"<a href=ispAdmin.cgi?gcPage=Ticket&uTicket=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
+			fprintf(fp,"<a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
 			mysql_free_result(res);
 			return;
 		}
@@ -328,7 +244,7 @@ void funcTicketNavList(FILE *fp)
 			break;
 		}
 		FromMySQLDate(field[1]);
-		fprintf(fp,"<a href=ispAdmin.cgi?gcPage=Ticket&uTicket=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
+		fprintf(fp,"<a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
 		uDisplayed++;
 	}
 
