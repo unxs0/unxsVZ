@@ -197,7 +197,7 @@
 	</tr>
         <tr>
                 <td valign="top">
-		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Created Date')"><strong>Ticket Created</strong></a></td>
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Created Date')"><strong>Ticket Created Date</strong></a></td>
                 </td>
 		<td>
 			{{cCreatedDate}}
