@@ -155,6 +155,54 @@
 		<textarea class=cRequestStyle}} name=cRequest cols=40 rows=15">{{cRequest}}</textarea>
 		</td>
 	</tr>
+        <tr>
+                <td valign="top">
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Assigned To')"><strong>Assigned To</strong></a></td>
+                </td>
+		<td>
+		{{funcAssignedTo}}
+		</td>
+	</tr>
+        <tr>
+                <td valign="top">
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Status')"><strong>Status</strong></a></td>
+                </td>
+		<td>
+		{{funcTicketStatus}}
+		</td>
+	</tr>
+        <tr>
+                <td valign="top">
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Scheduled Date')"><strong>Scheduled Date</strong></a></td>
+                </td>
+		<td>
+                <input  title='Ticket schedule date (Optional); Format: YYYY-MM-DD' type=text name=cScheduleDate value="{{cScheduleDate}}" size=40 maxlength=99 {{gcInputStatus}} class={{cScheduleDateStyle}}></td>
+		</td>
+	</tr>
+        <tr>
+                <td valign="top">
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Keywords')"><strong>Keywords</strong></a></td>
+                </td>
+		<td>
+                <input  title='Ticket keywords (Recommended) for easiear ticket search. E.g.: wifi router 802.11' type=text name=cKeywords value="{{cKeywords}}" size=40 maxlength=99 {{gcInputStatus}} class={{cKeywordsStyle}}></td>
+		</td>
+	</tr>
+        <tr>
+                <td valign="top">
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Created By')"><strong>Ticket Created By</strong></a></td>
+                </td>
+		<td>
+			{{cCreatedBy}}
+		</td>
+	</tr>
+        <tr>
+                <td valign="top">
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Created Date')"><strong>Ticket Created</strong></a></td>
+                </td>
+		<td>
+			{{cCreatedDate}}
+		</td>
+	</tr>
                 <td colspan=2>
 <br>
 <br>
