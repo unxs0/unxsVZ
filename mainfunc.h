@@ -697,6 +697,14 @@ void UpdateSchema(void)
 		exit(1);
 	}
 
+	sprintf(gcQuery,"UPDATE tConfiguration SET cLabel='cSSHOptions' WHERE cLabel='cSSLOptions'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+
 	printf("\nUpdateSchema(): End\n");
 
 }//void UpdateSchema(void)
