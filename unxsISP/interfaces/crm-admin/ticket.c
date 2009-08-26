@@ -15,12 +15,23 @@ PURPOSE
 static unsigned uTicket=0;
 static unsigned uCreatedBy=0; 
 static unsigned uCreatedDate=0;
+
 static unsigned uTicketStatus=0;
+static char *uTicketStatusStyle="type_fields_off";
+
 static unsigned uTicketOwner=0;
+static char *uTicketOwnerStyle="type_fields_off";
+
 static unsigned uScheduleDate=0;
+
 static char *cText;
+static char *cTextStyle="type_fields_off";
+
 static char cKeywords[256]={""};
+static char *cKeywordsStyle="type_fields_off";
+
 static char cSubject[256]={""};
+static char *cSubjectStyle="type_fields_off";
 
 static char cSearch[32]={""};
 
@@ -136,7 +147,7 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			template.cpName[13]="cSubject";
 			template.cpValue[13]=cSubject;
 
-			template.cpName[14]="cRequest";
+			template.cpName[14]="cText";
 			template.cpValue[14]=cText;
 
 			template.cpName[15]="cScheduleDate";
@@ -145,6 +156,14 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			template.cpName[16]="cCreatedBy";
 			template.cpValue[16]=cCreatedBy;
 			
+			template.cpName[17]="cSubjectStyle";
+			template.cpValue[17]=cSubjectStyle;
+			
+			template.cpName[18]="cTextStyle";
+			template.cpValue[18]=cTextStyle;
+
+			template.cpName[19]="";
+
 			printf("\n<!-- Start htmlTicketPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
 			printf("\n<!-- End htmlTicketPage(%s) -->\n",cTemplateName); 
@@ -162,12 +181,12 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 
 void funcTicketNavList(FILE *fp)
 {
-	MYSQL_RES *res;
+/*	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uDisplayed=0;
 	unsigned uFound=0;
 	char cTopMessage[100]={""};
-/*
+
 	if(cSearch[0])
 	{
 	//Valid formats are:
@@ -251,4 +270,15 @@ void funcTicketNavList(FILE *fp)
 	mysql_free_result(res);
 */
 }//void funcTicketNavList(FILE *fp)
+
+
+void funcAssignedTo(FILE *fp)
+{
+}//void funcAssignedTo(FILE *fp)
+
+
+void funcTicketStatus(FILE *fp)
+{
+}//void funcTicketStatus(FILE *fp)
+
 
