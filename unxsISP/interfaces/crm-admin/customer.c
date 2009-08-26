@@ -1306,8 +1306,11 @@ void funcCustomerTickets(FILE *fp)
 
 	fprintf(fp,"<!-- funcCustomerTickets(fp) start -->\n");
 
-	sprintf(gcQuery,"SELECT uTicket,FROM_UNIXTIME(uScheduleDate),cText,FROM_UNIXTIME(uCreatedDate) FROM tTicket "
-			"WHERE uOwner=%u AND uTicketOwner=%u ORDER BY uCreatedDate DESC LIMIT 10",
+	sprintf(gcQuery,"SELECT uTicket,FROM_UNIXTIME(uScheduleDate),cText,FROM_UNIXTIME(tTicket.uCreatedDate),"
+			"tTicketStatus.cLabel "
+			"FROM tTicket,tTicketStatus WHERE tTicket.uOwner=%u AND uTicketOwner=%u "
+			"AND tTicketStatus.uTicketStatus=tTicket.uTicketStatus "
+			"ORDER BY tTicket.uCreatedDate DESC LIMIT 10",
 			guOrg
 			,uCustomer);
 	mysql_query(&gMysql,gcQuery);
@@ -1318,12 +1321,14 @@ void funcCustomerTickets(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 	//	FromMySQLDate(field[1]);
-		fprintf(fp,"<tr><td><a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a></td><td>%s ...</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+		fprintf(fp,"<tr><td><a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a></td>"
+				"<td>%s ...</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
 				field[0]
 				,field[0]
 				,cShortenText(field[2],5)
 				,field[3]
 				,field[1]
+				,field[4]
 				,"due"
 		       );
 	}
