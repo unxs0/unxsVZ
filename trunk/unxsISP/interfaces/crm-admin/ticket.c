@@ -34,6 +34,9 @@ static char *cKeywordsStyle="type_fields_off";
 static char cSubject[256]={""};
 static char *cSubjectStyle="type_fields_off";
 
+static char *cTicketComment="";
+static char *cCommentConfirm="";
+
 static char cSearch[32]={""};
 
 
@@ -167,8 +170,25 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			template.cpName[20]="cCreatedDate";
 			template.cpValue[20]=cCreatedDate;
 
-			template.cpName[21]="";
+			template.cpName[21]="cCommentStatus";
+			if(uTicket)
+				template.cpValue[21]="";
+			else
+				template.cpValue[21]="disabled";
 
+			template.cpName[22]="cTicketCommentStyle";
+			if(uTicket)
+				template.cpValue[22]="type_textarea";
+			else
+				template.cpValue[22]="type_textarea_off";
+
+			template.cpName[23]="cTicketComment";
+			template.cpValue[23]=cTicketComment;
+
+			template.cpName[24]="cCommentConfirm";
+			template.cpValue[24]=cCommentConfirm;
+
+			template.cpName[25]="";
 
 			printf("\n<!-- Start htmlTicketPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
