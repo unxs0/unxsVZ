@@ -1,7 +1,6 @@
 /*
 FILE 
 	unxsVZ/main.c
-	$Id$
 PURPOSE
 	Main cgi interface and common functions used for all the other
 	table tx.c files and their schema independent txfunc.h files -until
