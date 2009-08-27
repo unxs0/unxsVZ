@@ -809,7 +809,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 	if(cSSHOptions[0])
 		sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate --ssh=%s --keep-dst --online -v %s %u",
+				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst --online -v %s %u",
 					cSSHOptions,cTargetNodeIPv4,uContainer);
 	else
 		sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin;"
@@ -822,7 +822,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 		if(cSSHOptions[0])
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate --ssh=%s -v %s %u",
+				"/usr/sbin/vzmigrate --ssh=\"%s\" -v %s %u",
 					cSSHOptions,cTargetNodeIPv4,uContainer);
 		else
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
