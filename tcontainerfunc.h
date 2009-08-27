@@ -284,7 +284,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
 		}
-                else if(!strcmp(gcCommand,"Confirm Firewall Settings"))
+                else if(!strcmp(gcCommand,"Confirm Firewall Settings") ||
+			!strcmp(gcCommand,"Confirm Container Settings"))
                 {
                         ProcesstContainerVars(entries,x);
 			if(guPermLevel>=9)
@@ -1190,7 +1191,8 @@ void ExttContainerButtons(void)
 
                 case 200:
 			printf("<p><u>New container step 2/3</u><br>");
-			printf("Select node firewall template for new container. Or '---' for no firewall required.<p>");
+			printf("Optionally select node firewall template for new container."
+					" Or '---' for none.<p>");
 			htmlFirewallTemplateSelect(uFirewallTemplate);
 			printf("<p><input title='Continue to step 3 of new container creation'"
 					" type=submit class=largeButton"
@@ -1205,15 +1207,18 @@ void ExttContainerButtons(void)
 				printf("Complete required firewall settings for <i>%s</i> template.<p>",cuTemplateDropDown);
 				htmlGenFirewallInputs(uFirewallTemplate);
 				printf("<input type=hidden name=uFirewallTemplate value='%u'>\n",uFirewallTemplate);
+				printf("<p><input title='Finish container creation'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Firewall Settings'>\n");
 			}
 			else
 			{
 				printf("You have chosen to not create a firewall template."
 					" If correct confirm below, else go back and select a template.<p>");
-			}
-			printf("<p><input title='Finish container creation'"
+				printf("<p><input title='Finish container creation'"
 					" type=submit class=largeButton"
-					" name=gcCommand value='Confirm Firewall Settings'>\n");
+					" name=gcCommand value='Confirm Container Settings'>\n");
+			}
                         //printf(LANG_NBB_CONFIRMNEW);
                 break;
 
