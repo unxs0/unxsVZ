@@ -54,6 +54,7 @@ install -m 500 datacenter_traffic_log.sh /usr/local/sbin/datacenter_traffic_log.
 cp -u DejaVuSansMono-Roman.ttf /usr/share/fonts/
 cd ../datacenter/
 install -m 500 allnodescp.sh /usr/sbin/allnodescp.sh
+install -m 500 allnodecmd.sh /usr/sbin/allnodecmd.sh
 cd ../cron/
 cp root-crontab /usr/local/share/unxsVZ/setup/root-crontab
 cd ../openvz/
@@ -158,12 +159,13 @@ fi
 %files
 %doc INSTALL LICENSE
 /usr/sbin/unxsUBC
-/usr/sbin/allnodescp.sh
 /var/www/unxs/cgi-bin/unxsVZ.cgi
 %dir /usr/local/share/unxsVZ
 %config(noreplace) /usr/local/sbin/vz_traffic_log.sh
 %config(noreplace) /usr/local/sbin/node_traffic_log.sh
 %config(noreplace) /usr/local/sbin/datacenter_traffic_log.sh
+%config(noreplace) /usr/sbin/allnodescp.sh
+%config(noreplace) /usr/sbin/allnodecmd.sh
 %dir /var/www/unxs/html/traffic/
 %dir /usr/local/share/unxsVZ/data/
 /usr/local/share/unxsVZ/data/tAuthorize.txt
@@ -188,6 +190,8 @@ fi
 
 
 %changelog
+* Thu Aug 27 2009 Gary Wallis <supportgrp@unixservice.com>
+- Bug fix and vzdump vzmigrate enhancements
 * Tue Aug 26 2009 Hugo Urquiza <support2@unixservice.com>
 - Minor spec file updates.
 * Mon Aug 24 2009 Gary Wallis <supportgrp@unixservice.com>
