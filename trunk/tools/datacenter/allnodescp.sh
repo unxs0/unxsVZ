@@ -16,7 +16,6 @@
 #Set these to match your setup
 cNamePrefix="node";
 cNameSuffix="lax-f2";
-#please note that non standard ssh port may require other OpenVZ script changes
 #uPort="2322";
 uPort="22";
 #
