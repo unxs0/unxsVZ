@@ -98,9 +98,9 @@ void ProcesstContainerVars(pentry entries[], int x)
 		if(!strcmp(entries[i].name,"uContainer"))
 			sscanf(entries[i].val,"%u",&uContainer);
 		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.32s",entries[i].val);
+			sprintf(cLabel,"%.32s",FQDomainName(entries[i].val));
 		else if(!strcmp(entries[i].name,"cHostname"))
-			sprintf(cHostname,"%.64s",entries[i].val);
+			sprintf(cHostname,"%.64s",FQDomainName(entries[i].val));
 		else if(!strcmp(entries[i].name,"uVeth"))
 			sscanf(entries[i].val,"%u",&uVeth);
 		else if(!strcmp(entries[i].name,"cYesNouVeth"))
