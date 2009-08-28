@@ -137,7 +137,7 @@ void TicketCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Confirm New"))
 		{
-			if(!ValidateTicketInput(0))
+			if(ValidateTicketInput(0))
 			{
 				SetTicketFieldsOn();
 				sprintf(gcNewStep,"Confirm ");
@@ -152,10 +152,10 @@ void TicketCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Confirm Modify"))
 		{
-			if(!ValidateTicketInput(1))
+			if(ValidateTicketInput(1))
 			{
 				SetTicketFieldsOn();
-				sprintf(gcNewStep,"Confirm ");
+				sprintf(gcModStep,"Confirm ");
 			}
 			else
 			{
@@ -618,9 +618,9 @@ void EmailTicketChanges(void)
 	cSubject[255]=0;
 	LoadRecordIntoStruct(&RecordData);
 
-	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
-	//if((fp=fopen("/tmp/eMailInvoice","w")))
+	if((fp=fopen("/tmp/eMailInvoice","w")))
 	{
 		fprintf(fp,"To: %s\n",cEmail);
 		fprintf(fp,"From: %s\n",cFrom);
@@ -672,6 +672,7 @@ void EmailTicketChanges(void)
 		}
 
 		fileDirectTemplate(fp,"TicketChangeMailFooter");
+		fclose(fp);
 	}	
 
 }//void EmailTicketChanges(void)
