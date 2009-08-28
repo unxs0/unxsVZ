@@ -12,6 +12,23 @@ PURPOSE
 
 #include "interface.h"
 
+typedef struct
+{
+	unsigned uTicket;
+	unsigned uOwner;
+	unsigned uCreatedBy;
+	time_t uCreatedDate;
+	unsigned uModBy;
+	time_t uModDate;
+	unsigned uTicketStatus;
+	unsigned uTicketOwner;
+	unsigned uScheduleDate;
+	char *cText;
+	char cKeywords[256];
+	char cSubject[256];
+
+} structTicket;
+
 static unsigned uTicket=0;
 static unsigned uCreatedBy=0; 
 static char cCreatedDate[64]={""};
@@ -47,6 +64,7 @@ void NewTicket(void);
 void ModTicket(void);
 void SetTicketFieldsOn(void);
 void SubmitComment();
+void LoadRecordIntoStruct(structTicket *Target);
 
 void ProcessTicketVars(pentry entries[], int x)
 {
@@ -578,21 +596,6 @@ void SetTicketFieldsOn(void)
 
 }//void SetTicketFieldsOn(void)
 
-typedef struct
-{
-	unsigned uTicket;
-	unsigned uOwner;
-	unsigned uCreatedBy;
-	time_t uCreatedDate;
-	unsigned uModBy;
-	unsigned uTicketStatus;
-	unsigned uTicketOwner;
-	unsigned uScheduleDate;
-	char cText[1024];
-	char cKeywords[256];
-	char cSubject[256];
-
-} structTicket;
 
 void EmailTicketChanges(void)
 {
@@ -600,7 +603,30 @@ void EmailTicketChanges(void)
 	//This function will be run before ModTicket() call, and it will compare database values against 
 	//the values we are commiting to the database.
 	//Based on this comparisson will inform of the diferences via email.
-	
+	structTicket RecordData;
+
+	LoadRecordIntoStruct(&RecordData);
+
+	if(uTicketStatus!=RecordData.uTicketStatus)
+	{
+		//uTicketStatus changed
+	}
+	if(uTicketOwner!=RecordData.uTicketOwner)
+	{
+		//uTicketOwner changed
+	}
+	if(uScheduleDate!=RecordData.uScheduleDate)
+	{
+		//uScheduleDate changed
+	}
+	if(strcmp(cText,RecordData.cText))
+	{
+		//cText changed
+	}
+	if(strcmp(cSubject,RecordData.cSubject))
+	{
+		//cSubject changed
+	}
 	
 }//void EmailTicketChanges(void)
 
@@ -610,7 +636,7 @@ void LoadRecordIntoStruct(structTicket *Target)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uOwner,uCreatedBy,uCreatedDate,uModBy,uTicketStatus,uTicketOwner,uScheduleDate,"
+	sprintf(gcQuery,"SELECT uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTicketStatus,uTicketOwner,uScheduleDate,"
 			"cText,cKeywords,cSubject FROM tTicket WHERE uTicket=%u AND uOwner=%u",
 			uTicket,guOrg);
 	mysql_query(&gMysql,gcQuery);
@@ -621,17 +647,21 @@ void LoadRecordIntoStruct(structTicket *Target)
 
 	if((field=mysql_fetch_row(res)))
 	{
-		sprintf(cSubject,"%.255s",field[0]);
-		cText=field[1];
-		sscanf(field[2],"%u",&uTicketOwner);
-		sscanf(field[3],"%u",&uTicketStatus);
-		sscanf(field[4],"%u",&uScheduleDate);
-		sprintf(cKeywords,"%.255s",field[5]);
-		sscanf(field[6],"%u",&uCreatedBy);
-		sprintf(cCreatedDate,"%.63s",field[7]);
+		Target->uTicket=uTicket;
+		sscanf(field[0],"%u",&Target->uOwner);
+		sscanf(field[1],"%u",&Target->uCreatedBy);
+		sscanf(field[2],"%lu",&Target->uCreatedDate);
+		sscanf(field[3],"%u",&Target->uModBy);
+		sscanf(field[4],"%lu",&Target->uModDate);
+		sscanf(field[5],"%u",&Target->uTicketStatus);
+		sscanf(field[6],"%u",&Target->uTicketOwner);
+		sscanf(field[7],"%u",&Target->uScheduleDate);
+		Target->cText=field[8];
+		sprintf(Target->cKeywords,"%.255s",field[9]);
+		sprintf(Target->cSubject,"%.255s",field[10]);
 	}
 	else
-		gcMessage="<blink>Error: </blink>Could not load ticket record";
+		htmlPlainTextError("LoadRecordIntoStruct() failed");
 
 }//void LoadRecordIntoStruct(char *structTicket Target)
 
