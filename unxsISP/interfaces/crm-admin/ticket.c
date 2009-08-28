@@ -79,8 +79,9 @@ void TicketCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"Ticket"))
 	{
 		ProcessTicketVars(entries,x);
-		if(!strcmp(gcFunction,"Approved and Shipped"))
+		if(!strcmp(gcFunction,"Submit Comment"))
 		{
+			cCommentConfirm="Confirm ";
 		}
 		htmlTicket();
 	}
@@ -342,7 +343,9 @@ void funcAssignedTo(FILE *fp)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
-		
+
+	fprintf(fp,"<input type=hidden name=uTicketOwner value=%u>\n",uTicketOwner);
+
 	fprintf(fp,"<select class=%s %s title='Select the employee to re-assign this ticket to' name=uTicketOwner>\n",uTicketOwnerStyle,gcInputStatus);
 
 	sprintf(gcQuery,"%u",uTicketOwner);
@@ -381,10 +384,12 @@ void funcTicketStatus(FILE *fp)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
-		
+	
+	fprintf(fp,"<input type=hidden name=uTicketStatus value=%u>\n",uTicketStatus>
+
 	fprintf(fp,"<select class=%s %s title='Select current ticket status' name=uTicketOwner>\n",uTicketStatusStyle,gcInputStatus);
 
-	sprintf(gcQuery,"%u",uTicketOwner);
+	sprintf(gcQuery,"%u",uTicketStatus);
 
 	fprintf(fp,"<option value=0 ");
 	if(!uTicketOwner)
