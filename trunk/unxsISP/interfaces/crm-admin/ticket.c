@@ -63,8 +63,11 @@ unsigned ValidateTicketInput(unsigned uMode);
 void NewTicket(void);
 void ModTicket(void);
 void SetTicketFieldsOn(void);
-void SubmitComment();
+void SubmitComment(void);
+void EmailTicketChanges(void);
 void LoadRecordIntoStruct(structTicket *Target);
+void fileDirectTemplate(FILE *fp,char *cTemplateName);
+
 
 void ProcessTicketVars(pentry entries[], int x)
 {
@@ -72,7 +75,6 @@ void ProcessTicketVars(pentry entries[], int x)
 	
 	for(i=0;i<x;i++)
 	{
-	//gcPage=Customer&cTicketComment=&cTicketComment=&uTicket=1&cSubject=lorem+ipsum&cSubject=lorem+ipsum&cText=No+me+anda+el+router%2C+se+prendio+fuego+la+antena+por+un+rayo&cText=No+me+anda+el+router%2C+se+prendio+fuego+la+antena+por+un+rayo&uTicketOwner=3&uTicketStatus=5&cScheduleDate=&cScheduleDate=&cKeywords=&cKeywords=&gcFunction=New&uOwner=&uCreatedBy=&uCreatedDate=&uModBy=&uModDate=&gcPage=Ticket
 		if(!strcmp(entries[i].name,"uTicket"))
 			sscanf(entries[i].val,"%u",&uTicket);
 		else if(!strcmp(entries[i].name,"cSearch"))
@@ -156,7 +158,10 @@ void TicketCommands(pentry entries[], int x)
 				sprintf(gcNewStep,"Confirm ");
 			}
 			else
+			{
+				EmailTicketChanges();
 				ModTicket();
+			}
 		}
 
 		htmlTicket();
@@ -604,7 +609,7 @@ void EmailTicketChanges(void)
 	//the values we are commiting to the database.
 	//Based on this comparisson will inform of the diferences via email.
 	structTicket RecordData;
-	struct t_template template;
+	//struct t_template template;
 	FILE *fp;
 	char cFrom[256]={"root"};
 	char cSubject[256]={""};
@@ -623,28 +628,52 @@ void EmailTicketChanges(void)
 		fprintf(fp,"Subject: %s\n",cSubject);
 		fprintf(fp,"MIME-Version: 1.0\n");
 		fprintf(fp,"Content-type: text/html\n\n");
-	
+
+		fileDirectTemplate(fp,"TicketChangeMailTop");
+			
 		if(uTicketStatus!=RecordData.uTicketStatus)
 		{
 			//uTicketStatus changed
+			fprintf(fp,"Ticket status changed:\n%s->%s\n",
+				ForeignKey("tTicketStatus","cLabel",RecordData.uTicketStatus)
+				,ForeignKey("tTicketStatus","cLabel",uTicketStatus)
+				);
 		}
 		if(uTicketOwner!=RecordData.uTicketOwner)
 		{
 			//uTicketOwner changed
+			fprintf(fp,"Ticket reassigned:\n%s->%s\n",
+				ForeignKey("tClient","cLabel",RecordData.uTicketOwner)
+				,ForeignKey("tClient","cLabel",uTicketOwner)
+				);
 		}
 		if(uScheduleDate!=RecordData.uScheduleDate)
 		{
 			//uScheduleDate changed
+			fprintf(fp,"Ticket rescheduled:\n%u->%u\n",
+				RecordData.uScheduleDate
+				,uScheduleDate
+				);
 		}
 		if(strcmp(cText,RecordData.cText))
 		{
 			//cText changed
+			fprintf(fp,"Ticket description updated\n");
+			fprintf(fp,"Old description:\n%s\n",RecordData.cText);
+			fprintf(fp,"New description:\n%s\n",cText);
+			
 		}
 		if(strcmp(cSubject,RecordData.cSubject))
 		{
-		//cSubject changed
+			//cSubject changed
+			fprintf(fp,"Ticket subject changed\n");
+			fprintf(fp,"Old subject: %s\n",RecordData.cSubject);
+			fprintf(fp,"New subject: %s\n",cSubject);
 		}
+
+		fileDirectTemplate(fp,"TicketChangeMailFooter");
 	}	
+
 }//void EmailTicketChanges(void)
 	
 
@@ -681,4 +710,23 @@ void LoadRecordIntoStruct(structTicket *Target)
 		htmlPlainTextError("LoadRecordIntoStruct() failed");
 
 }//void LoadRecordIntoStruct(char *structTicket Target)
+
+
+void fileDirectTemplate(FILE *fp,char *cTemplateName)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	
+	if(!fp) return;
+
+	TemplateSelect(cTemplateName,guTemplateSet);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		fprintf(fp,"%s",field[0]);
+	else
+		fprintf(fp,"Template %s not found\n",cTemplateName);
+	mysql_free_result(res);
+
+}//void fileDirectTemplate(FILE *fp,char *cTemplateName)
+
 
