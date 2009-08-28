@@ -115,6 +115,7 @@
 		</tr>
 		<tr>
 		<td colspan=2>
+		<input type=hidden name=cTicketComment value="{{cTicketComment}}">
 		<textarea {{cCommentStatus}} class={{cTicketCommentStyle}} name=cTicketComment cols=40 rows=15">{{cTicketComment}}</textarea>
 		</td>
 		</tr>
@@ -146,6 +147,7 @@
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Number')"><strong>Ticket #</strong></a></td>
                 </td>
 		<td>
+		<input type=hidden name=uTicket value="{{uTicket}}">
 		{{uTicket}}
 		</td>
 	</tr>
@@ -154,6 +156,7 @@
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Subject')"><strong>Subject</strong></a></td>
                 </td>
 		<td>
+		<input type=hidden name=cSubject value="{{cSubject}}" >
                 <input  title='Non empty string with a short ticket description (Required)' type=text name=cSubject value="{{cSubject}}" size=40 maxlength=99 {{gcInputStatus}} class={{cSubjectStyle}}></td>
 		</td>
 	</tr>
@@ -162,6 +165,7 @@
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Description')"><strong>Request</strong></a></td>
                 </td>
 		<td>
+		<input type=hidden name=cText value="{{cText}}">
 		<textarea {{gcInputStatus}} class={{cTextStyle}} name=cText cols=40 rows=15">{{cText}}</textarea>
 		</td>
 	</tr>
@@ -186,6 +190,7 @@
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Scheduled Date')"><strong>Scheduled Date</strong></a></td>
                 </td>
 		<td>
+		<input type=hidden name=cScheduleDate value="{{cScheduleDate}}">
                 <input  title='Ticket schedule date (Optional); Format: YYYY-MM-DD' type=text name=cScheduleDate value="{{cScheduleDate}}" size=40 maxlength=99 {{gcInputStatus}} class={{cScheduleDateStyle}}></td>
 		</td>
 	</tr>
@@ -194,6 +199,7 @@
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Keywords')"><strong>Keywords</strong></a></td>
                 </td>
 		<td>
+		<input type=hidden name=cKeywords value="{{cKeywords}}">
                 <input  title='Ticket keywords (Recommended) for easiear ticket search. E.g.: wifi router 802.11' type=text name=cKeywords value="{{cKeywords}}" size=40 maxlength=99 {{gcInputStatus}} class={{cKeywordsStyle}}></td>
 		</td>
 	</tr>
@@ -267,7 +273,7 @@
 <input type=hidden name=uCreatedDate value="{{uCreatedDate}}">
 <input type=hidden name=uModBy value="{{uModBy}}">
 <input type=hidden name=uModDate value="{{uModDate}}">
-
+<input type=hidden name=gcPage value=Ticket>
 </form>
 
 
