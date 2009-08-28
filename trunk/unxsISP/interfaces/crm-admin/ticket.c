@@ -259,6 +259,23 @@ void LoadTicket(void)
 }//void LoadTicket(void)
 
 
+void SubmitComment()
+{
+	sprintf(gcQuery,"INSERT INTO tTicketComment SET uTicket=%u,cComment='%s',uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uTicket
+			,TextAreaSave(cTicketComment)
+			,guOrg
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+
+}//void SubmitComment()
+
+
 void funcTicketNavList(FILE *fp)
 {
 /*	MYSQL_RES *res;

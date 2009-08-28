@@ -121,7 +121,7 @@
 		</tr>
 		<tr>
 		<td colspan=2>
-		<input {{cCommentStatus}} type=submit name=gcFunction value='{{cCommentConfirm}}Submit Comment' class=largeButton>
+		<input {{cCommentStatus}} type=submit name=gcFunction value='{{cCommentConfirm}}Submit Comment' class=largestButton>
 		</td>
 		</tr>
         </table>
