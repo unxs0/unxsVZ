@@ -396,6 +396,9 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcAssignedTo(fp);
 	else if(!strcmp(cFunction,"funcTicketStatus"))
 		funcTicketStatus(fp);
+	else if(!strcmp(cFunction,"funcTicketNavBar"))
+		funcTicketNavBar(fp);
+
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 

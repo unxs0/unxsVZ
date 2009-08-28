@@ -175,6 +175,7 @@ void htmlTicketPage(char *cTitle, char *cTemplateName);
 void funcTicketNavList(FILE *fp);
 void funcAssignedTo(FILE *fp);
 void funcTicketStatus(FILE *fp);
+void funcTicketNavBar(FILE *fp);
 
 
 //product.c
