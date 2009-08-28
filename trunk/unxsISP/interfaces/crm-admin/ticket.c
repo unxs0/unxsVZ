@@ -520,41 +520,49 @@ unsigned ValidateTicketInput(unsigned uMode)
 		return(1);
 	}
 
+	return(0);
+
 }//unsigned ValidateTicketInput(unsigned uMode)
 
 
 void NewTicket(void)
 {
-/*
-+---------------+------------------+------+-----+---------+----------------+
-| Field         | Type             | Null | Key | Default | Extra          |
-+---------------+------------------+------+-----+---------+----------------+
-| uTicket       | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
-| uOwner        | int(10) unsigned | NO   | MUL | 0       |                |
-| uCreatedBy    | int(10) unsigned | NO   |     | 0       |                |
-| uCreatedDate  | int(10) unsigned | NO   |     | 0       |                |
-| uModBy        | int(10) unsigned | NO   |     | 0       |                |
-| uModDate      | int(10) unsigned | NO   |     | 0       |                |
-| uTicketStatus | int(10) unsigned | NO   |     | 0       |                |
-| uTicketOwner  | int(10) unsigned | NO   |     | 0       |                |
-| uScheduleDate | int(10) unsigned | NO   |     | 0       |                |
-| cText         | text             | NO   |     |         |                |
-| cKeywords     | varchar(128)     | NO   |     |         |                |
-| cSubject      | varchar(255)     | NO   |     |         |                |
-+---------------+------------------+------+-----+---------+----------------+
-12 rows in set (0.02 sec)
-*/
 	//uTicketStatus=5 is new
-/*	sprintf(gcQuery,"INSERT INTO tTicket SET uOwner=%u,uCreatedBy=%u,"
-			"uCreatedDate=UNIX_TIMESTAMP(NOW()),uTicketStatus=%u,"
+	sprintf(gcQuery,"INSERT INTO tTicket SET uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW()),uTicketStatus=5,"
 			"uTicketOwner=%u,uScheduleDate=%u,cText='%s',"
 			"cKeywords='%s',cSubject='%s'",
-			*/
+			guOrg
+			,guLoginClient
+			,uTicketOwner
+			,uScheduleDate
+			,TextAreaSave(cText)
+			,TextAreaSave(cKeywords)
+			,TextAreaSave(cSubject)
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
 }//void NewTicket(void)
 
 
 void ModTicket(void)
 {
+	sprintf(gcQuery,"UPDATE tTicket SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()),"
+			"uTicketStatus=%u,uTicketOwner=%u,uScheduleDate=%u,cText='%s',"
+			"cKeywords='%s',cSubject='%s'",
+			guLoginClient
+			,uTicketStatus
+			,uTicketOwner
+			,uScheduleDate
+			,TextAreaSave(cText)
+			,TextAreaSave(cKeywords)
+			,TextAreaSave(cSubject)
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 
 }//void ModTicket(void)
 
@@ -570,4 +578,60 @@ void SetTicketFieldsOn(void)
 
 }//void SetTicketFieldsOn(void)
 
+typedef struct
+{
+	unsigned uTicket;
+	unsigned uOwner;
+	unsigned uCreatedBy;
+	time_t uCreatedDate;
+	unsigned uModBy;
+	unsigned uTicketStatus;
+	unsigned uTicketOwner;
+	unsigned uScheduleDate;
+	char cText[1024];
+	char cKeywords[256];
+	char cSubject[256];
+
+} structTicket;
+
+void EmailTicketChanges(void)
+{
+	//
+	//This function will be run before ModTicket() call, and it will compare database values against 
+	//the values we are commiting to the database.
+	//Based on this comparisson will inform of the diferences via email.
+	
+	
+}//void EmailTicketChanges(void)
+
+
+void LoadRecordIntoStruct(structTicket *Target)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uOwner,uCreatedBy,uCreatedDate,uModBy,uTicketStatus,uTicketOwner,uScheduleDate,"
+			"cText,cKeywords,cSubject FROM tTicket WHERE uTicket=%u AND uOwner=%u",
+			uTicket,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cSubject,"%.255s",field[0]);
+		cText=field[1];
+		sscanf(field[2],"%u",&uTicketOwner);
+		sscanf(field[3],"%u",&uTicketStatus);
+		sscanf(field[4],"%u",&uScheduleDate);
+		sprintf(cKeywords,"%.255s",field[5]);
+		sscanf(field[6],"%u",&uCreatedBy);
+		sprintf(cCreatedDate,"%.63s",field[7]);
+	}
+	else
+		gcMessage="<blink>Error: </blink>Could not load ticket record";
+
+}//void LoadRecordIntoStruct(char *structTicket Target)
 
