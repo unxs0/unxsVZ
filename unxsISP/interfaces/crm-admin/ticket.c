@@ -408,3 +408,20 @@ void funcTicketStatus(FILE *fp)
 }//void funcTicketStatus(FILE *fp)
 
 
+void funcTicketNavBar(FILE *fp)
+{
+	if(guPermLevel>=10)
+		fprintf(fp,"<input type=submit title='Customer modification with a two step procedure'"
+				" class=largeButton name=gcFunction value='%sNew' />",gcNewStep);
+
+	if(uTicket)
+	{
+		fprintf(fp,"<input type=submit title='Customer modification with a two step procedure'"
+				" class=largeButton name=gcFunction value='%sModify' />",gcModStep);
+		
+		fprintf(fp,"<input type=submit title='Delete a customer with a two step procedure'"
+				" class=largeButton name=gcFunction value='%sDelete' />",gcDelStep);
+	}
+
+}//void funcTicketNavBar(FILE *fp)
+
