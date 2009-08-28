@@ -208,6 +208,7 @@
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Created By')"><strong>Ticket Created By</strong></a></td>
                 </td>
 		<td>
+		<input type=hidden name=uCreatedBy value={{uCreatedBy}}>
 			{{cCreatedBy}}
 		</td>
 	</tr>
@@ -216,6 +217,7 @@
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Created Date')"><strong>Ticket Created Date</strong></a></td>
                 </td>
 		<td>
+		<input type=hidden name=uCreatedDate value={{uCreatedDate}}>
 			{{cCreatedDate}}
 		</td>
 	</tr>

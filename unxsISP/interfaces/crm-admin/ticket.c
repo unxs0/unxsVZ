@@ -49,10 +49,32 @@ void ProcessTicketVars(pentry entries[], int x)
 	
 	for(i=0;i<x;i++)
 	{
+	//gcPage=Customer&cTicketComment=&cTicketComment=&uTicket=1&cSubject=lorem+ipsum&cSubject=lorem+ipsum&cText=No+me+anda+el+router%2C+se+prendio+fuego+la+antena+por+un+rayo&cText=No+me+anda+el+router%2C+se+prendio+fuego+la+antena+por+un+rayo&uTicketOwner=3&uTicketStatus=5&cScheduleDate=&cScheduleDate=&cKeywords=&cKeywords=&gcFunction=New&uOwner=&uCreatedBy=&uCreatedDate=&uModBy=&uModDate=&gcPage=Ticket
 		if(!strcmp(entries[i].name,"uTicket"))
 			sscanf(entries[i].val,"%u",&uTicket);
 		else if(!strcmp(entries[i].name,"cSearch"))
 			sprintf(cSearch,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cTicketComment"))
+			cTicketComment=entries[i].val;
+		else if(!strcmp(entries[i].name,"cSubject"))
+			sprintf(cSubject,"%.255s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cText"))
+			cText=entries[i].val;
+		else if(!strcmp(entries[i].name,"uTicketOwner"))
+			sscanf(entries[i].val,"%u",&uTicketOwner);
+		else if(!strcmp(entries[i].name,"uTicketStatus"))
+			sscanf(entries[i].val,"%u",&uTicketStatus);
+		else if(!strcmp(entries[i].name,"cScheduleDate"))
+		{
+			//Convert to unix time and store at uScheduleDate
+		}
+		else if(!strcmp(entries[i].name,"cKeywords"))
+			sprintf(cKeywords,"%.255s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uCreatedBy"))
+			sscanf(entries[i].val,"%u",&uCreatedBy);
+		//else if(!strcmp(entries[i].name,"uCreatedDate"))
+		//	sscanf(entries[i].val,"%u",&uCreatedDate);
+
 	}
 
 }//void ProcessUserVars(pentry entries[], int x)
@@ -385,7 +407,7 @@ void funcTicketStatus(FILE *fp)
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	
-	fprintf(fp,"<input type=hidden name=uTicketStatus value=%u>\n",uTicketStatus>
+	fprintf(fp,"<input type=hidden name=uTicketStatus value=%u>\n",uTicketStatus);
 
 	fprintf(fp,"<select class=%s %s title='Select current ticket status' name=uTicketOwner>\n",uTicketStatusStyle,gcInputStatus);
 
