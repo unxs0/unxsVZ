@@ -604,32 +604,49 @@ void EmailTicketChanges(void)
 	//the values we are commiting to the database.
 	//Based on this comparisson will inform of the diferences via email.
 	structTicket RecordData;
+	struct t_template template;
+	FILE *fp;
+	char cFrom[256]={"root"};
+	char cSubject[256]={""};
+	char cEmail[100]={""};
 
+	cSubject[255]=0;
 	LoadRecordIntoStruct(&RecordData);
 
-	if(uTicketStatus!=RecordData.uTicketStatus)
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	//debug only
+	//if((fp=fopen("/tmp/eMailInvoice","w")))
 	{
-		//uTicketStatus changed
-	}
-	if(uTicketOwner!=RecordData.uTicketOwner)
-	{
-		//uTicketOwner changed
-	}
-	if(uScheduleDate!=RecordData.uScheduleDate)
-	{
-		//uScheduleDate changed
-	}
-	if(strcmp(cText,RecordData.cText))
-	{
-		//cText changed
-	}
-	if(strcmp(cSubject,RecordData.cSubject))
-	{
-		//cSubject changed
-	}
+		fprintf(fp,"To: %s\n",cEmail);
+		fprintf(fp,"From: %s\n",cFrom);
+		fprintf(fp, "Reply-to: %s\n",cFrom);
+		fprintf(fp,"Subject: %s\n",cSubject);
+		fprintf(fp,"MIME-Version: 1.0\n");
+		fprintf(fp,"Content-type: text/html\n\n");
 	
+		if(uTicketStatus!=RecordData.uTicketStatus)
+		{
+			//uTicketStatus changed
+		}
+		if(uTicketOwner!=RecordData.uTicketOwner)
+		{
+			//uTicketOwner changed
+		}
+		if(uScheduleDate!=RecordData.uScheduleDate)
+		{
+			//uScheduleDate changed
+		}
+		if(strcmp(cText,RecordData.cText))
+		{
+			//cText changed
+		}
+		if(strcmp(cSubject,RecordData.cSubject))
+		{
+		//cSubject changed
+		}
+	}	
 }//void EmailTicketChanges(void)
-
+	
 
 void LoadRecordIntoStruct(structTicket *Target)
 {
