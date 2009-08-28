@@ -42,6 +42,11 @@ static char cSearch[32]={""};
 
 void htmlTicketPage(char *cTitle, char *cTemplateName);
 void LoadTicket(void);
+unsigned ValidateTicketInput(unsigned uMode);
+void NewTicket(void);
+void ModTicket(void);
+void SetTicketFieldsOn(void);
+void SubmitComment();
 
 void ProcessTicketVars(pentry entries[], int x)
 {
@@ -102,9 +107,40 @@ void TicketCommands(pentry entries[], int x)
 	{
 		ProcessTicketVars(entries,x);
 		if(!strcmp(gcFunction,"Submit Comment"))
-		{
 			cCommentConfirm="Confirm ";
+		else if(!strcmp(gcFunction,"Confirm Submit Comment"))
+			SubmitComment();
+		else if(!strcmp(gcFunction,"New"))
+		{
+			SetTicketFieldsOn();
+			sprintf(gcNewStep,"Confirm ");
 		}
+		else if(!strcmp(gcFunction,"Confirm New"))
+		{
+			if(!ValidateTicketInput(0))
+			{
+				SetTicketFieldsOn();
+				sprintf(gcNewStep,"Confirm ");
+			}
+			else
+				NewTicket();
+		}
+		else if(!strcmp(gcFunction,"Modify"))
+		{
+			SetTicketFieldsOn();
+			sprintf(gcModStep,"Confirm ");
+		}
+		else if(!strcmp(gcFunction,"Confirm Modify"))
+		{
+			if(!ValidateTicketInput(1))
+			{
+				SetTicketFieldsOn();
+				sprintf(gcNewStep,"Confirm ");
+			}
+			else
+				ModTicket();
+		}
+
 		htmlTicket();
 	}
 
@@ -462,10 +498,76 @@ void funcTicketNavBar(FILE *fp)
 	{
 		fprintf(fp,"<input type=submit title='Customer modification with a two step procedure'"
 				" class=largeButton name=gcFunction value='%sModify' />",gcModStep);
-		
-		fprintf(fp,"<input type=submit title='Delete a customer with a two step procedure'"
-				" class=largeButton name=gcFunction value='%sDelete' />",gcDelStep);
 	}
 
 }//void funcTicketNavBar(FILE *fp)
+
+
+unsigned ValidateTicketInput(unsigned uMode)
+{
+	if(!cSubject[0])
+	{
+		SetTicketFieldsOn();
+		cSubjectStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink> Must specify ticket subject";
+		return(1);
+	}
+	if(!cText[0])
+	{
+		SetTicketFieldsOn();
+		cTextStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink> Must specify ticket text";
+		return(1);
+	}
+
+}//unsigned ValidateTicketInput(unsigned uMode)
+
+
+void NewTicket(void)
+{
+/*
++---------------+------------------+------+-----+---------+----------------+
+| Field         | Type             | Null | Key | Default | Extra          |
++---------------+------------------+------+-----+---------+----------------+
+| uTicket       | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| uOwner        | int(10) unsigned | NO   | MUL | 0       |                |
+| uCreatedBy    | int(10) unsigned | NO   |     | 0       |                |
+| uCreatedDate  | int(10) unsigned | NO   |     | 0       |                |
+| uModBy        | int(10) unsigned | NO   |     | 0       |                |
+| uModDate      | int(10) unsigned | NO   |     | 0       |                |
+| uTicketStatus | int(10) unsigned | NO   |     | 0       |                |
+| uTicketOwner  | int(10) unsigned | NO   |     | 0       |                |
+| uScheduleDate | int(10) unsigned | NO   |     | 0       |                |
+| cText         | text             | NO   |     |         |                |
+| cKeywords     | varchar(128)     | NO   |     |         |                |
+| cSubject      | varchar(255)     | NO   |     |         |                |
++---------------+------------------+------+-----+---------+----------------+
+12 rows in set (0.02 sec)
+*/
+	//uTicketStatus=5 is new
+/*	sprintf(gcQuery,"INSERT INTO tTicket SET uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW()),uTicketStatus=%u,"
+			"uTicketOwner=%u,uScheduleDate=%u,cText='%s',"
+			"cKeywords='%s',cSubject='%s'",
+			*/
+}//void NewTicket(void)
+
+
+void ModTicket(void)
+{
+
+}//void ModTicket(void)
+
+
+void SetTicketFieldsOn(void)
+{
+	uTicketStatusStyle="type_fields";
+	uTicketOwnerStyle="type_fields";
+	cScheduleDateStyle="type_fields";
+	cTextStyle="type_textarea";
+	cKeywordsStyle="type_fields";
+	cSubjectStyle="type_fields";
+
+}//void SetTicketFieldsOn(void)
+
 
