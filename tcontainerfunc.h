@@ -757,6 +757,10 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
 				unsigned uNewVeid=0;
 				char cTargetNodeIPv4[32]={""};
+				unsigned uWizLabelSuffix=0;
+				unsigned uWizLabelLoop=1;
+
+				MYSQL_RES *res;
 
                         	guMode=0;
 
@@ -776,9 +780,21 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: Your target node is"
 							" missing it's cIPv4 property!");
                         	guMode=0;
+				
+				while(uWizLabelLoop)
+				{
+					sprintf(cWizLabel,"%.25s-clone%u",cLabel,uWizLabelSuffix);
+					sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cWizLabel);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					uWizLabelLoop=mysql_num_rows(res);
+					mysql_free_result(res);
+					uWizLabelSuffix++;
+				}
+				sprintf(cWizHostname,"%.93s.clone%u",cHostname,uWizLabelSuffix);
 
-				sprintf(cWizLabel,"%.25s-clone",cLabel);
-				sprintf(cWizHostname,"%.93s.clone",cHostname);
 				sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%s',"
 							"cHostname='%s',"
 							"uIPv4=%u,"
