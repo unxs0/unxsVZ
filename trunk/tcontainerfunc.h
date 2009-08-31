@@ -1009,7 +1009,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				//TODO must be fixed to allow only label or only hostname changes
 				//this involves ignoring existing label or hostname for this container.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
-						" AND uDatacenter=%u",cHostname,cLabel,uDatacenter);
+						" AND uDatacenter=%u",cWizHostname,cWizLabel,uDatacenter);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
