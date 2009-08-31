@@ -694,6 +694,11 @@ void UpdateSchema(void)
 	if(mysql_errno(&gMysql))
 		printf("%s\n",mysql_error(&gMysql));
 
+	sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=81,cLabel='Awaiting Clone',uCreatedBy=1,uOwner=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+
 	sprintf(gcQuery,"UPDATE tConfiguration SET cLabel='cSSHOptions' WHERE cLabel='cSSLOptions'");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
