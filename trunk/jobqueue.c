@@ -1563,7 +1563,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//3-.
-	sprintf(gcQuery,"ssh %s %s 'vzdump --restore /vz/dump/vzdump-%u.tar %u' > /dev/null 2>&1",
+	sprintf(gcQuery,"ssh %s %s '/usr/sbin/vzdump --restore /vz/dump/vzdump-%u.tar %u' > /dev/null 2>&1",
 				cSSHOptions,cTargetNodeIPv4,uContainer,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
 	{
