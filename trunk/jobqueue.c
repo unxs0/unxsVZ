@@ -1522,12 +1522,11 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 	if(uNotValidSystemCallArg(cSnapshotDir))
 		cSnapshotDir[0]=0;
-
 	//1-.
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"vzdump --suspend %u > /dev/null 2>&1",uContainer);
+		sprintf(gcQuery,"/usr/sbin/vzdump --suspend %u > /dev/null 2>&1",uContainer);
 	else
-		sprintf(gcQuery,"vzdump --dumpdir %s --snapshot %u > /dev/null 2>&1",
+		sprintf(gcQuery,"/usr/sbin/vzdump --dumpdir %s --snapshot %u > /dev/null 2>&1",
 									cSnapshotDir,uContainer);
 	if(uDebug==0 && system(gcQuery))
 	{
