@@ -574,7 +574,7 @@ void ModTicket(void)
 {
 	sprintf(gcQuery,"UPDATE tTicket SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()),"
 			"uTicketStatus=%u,uTicketOwner=%u,uScheduleDate=%u,cText='%s',"
-			"cKeywords='%s',cSubject='%s'",
+			"cKeywords='%s',cSubject='%s' WHERE uTicket=%u",
 			guLoginClient
 			,uTicketStatus
 			,uTicketOwner
@@ -582,6 +582,7 @@ void ModTicket(void)
 			,TextAreaSave(cText)
 			,TextAreaSave(cKeywords)
 			,TextAreaSave(cSubject)
+			,uTicket
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
