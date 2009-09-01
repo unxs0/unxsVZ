@@ -161,6 +161,14 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	guNode=uNode;
 	guDatacenter=uDatacenter;
 
+	//This check here is to don't allow running more than one CloneContainer job
+	//per HN
+	if(!strcmp(cJobName,"CloneContainer"))
+	{
+		if(access("/var/run/vzdump.lock",R_OK)==0)
+			return;
+	}
+
 	//Some jobs may take quite some time, we need to make sure we don't run again!
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=2,cRemoteMsg='Running',uModBy=1,"
 				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uJob);
@@ -1690,7 +1698,9 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		printf("CloneContainer() non critical error: %s.\n",gcQuery);
 	else if(uDebug)
 		printf("%s\n",gcQuery);
-
+	
+	//Remove lock file
+	unlink("/var/run/vzdump.lock");
 	//9b-. remote
 	sprintf(gcQuery,"ssh %s %s 'rm -f /vz/dump/vzdump-%u.tar'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
