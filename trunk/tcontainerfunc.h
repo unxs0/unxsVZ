@@ -2053,7 +2053,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 	while((field=mysql_fetch_row(res)))
 	{
 		//Don't clone already cloned container on target node.
-		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u AND cLabel LIKE '%.25s-clone%'",
+		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u AND cLabel LIKE '%.25s-clone%%'",
 					uTargetNode,field[0]);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
