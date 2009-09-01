@@ -134,6 +134,7 @@ void TicketCommands(pentry entries[], int x)
 		{
 			SetTicketFieldsOn();
 			sprintf(gcNewStep,"Confirm ");
+			gcInputStatus[0]=0;
 		}
 		else if(!strcmp(gcFunction,"Confirm New"))
 		{
@@ -141,6 +142,7 @@ void TicketCommands(pentry entries[], int x)
 			{
 				SetTicketFieldsOn();
 				sprintf(gcNewStep,"Confirm ");
+				gcInputStatus[0]=0;
 			}
 			else
 				NewTicket();
@@ -149,6 +151,7 @@ void TicketCommands(pentry entries[], int x)
 		{
 			SetTicketFieldsOn();
 			sprintf(gcModStep,"Confirm ");
+			gcInputStatus[0]=0;
 		}
 		else if(!strcmp(gcFunction,"Confirm Modify"))
 		{
@@ -156,6 +159,7 @@ void TicketCommands(pentry entries[], int x)
 			{
 				SetTicketFieldsOn();
 				sprintf(gcModStep,"Confirm ");
+				gcInputStatus[0]=0;
 			}
 			else
 			{
@@ -270,7 +274,10 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			template.cpName[24]="cCommentConfirm";
 			template.cpValue[24]=cCommentConfirm;
 
-			template.cpName[25]="";
+			template.cpName[25]="gcInputStatus";
+			template.cpValue[25]=gcInputStatus;
+
+			template.cpName[26]="";
 
 			printf("\n<!-- Start htmlTicketPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -485,7 +492,7 @@ void funcTicketStatus(FILE *fp)
 	
 	fprintf(fp,"<input type=hidden name=uTicketStatus value=%u>\n",uTicketStatus);
 
-	fprintf(fp,"<select class=%s %s title='Select current ticket status' name=uTicketOwner>\n",uTicketStatusStyle,gcInputStatus);
+	fprintf(fp,"<select class=%s %s title='Select current ticket status' name=uTicketStatus>\n",uTicketStatusStyle,gcInputStatus);
 
 	sprintf(gcQuery,"%u",uTicketStatus);
 
@@ -613,12 +620,17 @@ void EmailTicketChanges(void)
 	struct t_template template;
 	FILE *fp;
 	char cFrom[256]={"root"};
-	char cSubject[256]={""};
+	char cEmailSubject[256]={""};
 	char cEmail[100]={""};
 	char cuTicket[16]={""};
 
 	cSubject[255]=0;
 	LoadRecordIntoStruct(&RecordData);
+
+	GetConfiguration(cEmail,"cReportTicketEmail");
+	GetConfiguration(cFrom,"cReportTicketFrom");
+
+	sprintf(cEmailSubject,"#%u %s",uTicket,RecordData.cSubject);
 
 	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
@@ -627,16 +639,16 @@ void EmailTicketChanges(void)
 		fprintf(fp,"To: %s\n",cEmail);
 		fprintf(fp,"From: %s\n",cFrom);
 		fprintf(fp, "Reply-to: %s\n",cFrom);
-		fprintf(fp,"Subject: %s\n",cSubject);
+		fprintf(fp,"Subject: %s\n",cEmailSubject);
 		fprintf(fp,"MIME-Version: 1.0\n");
-		fprintf(fp,"Content-type: text/html\n\n");
+		fprintf(fp,"Content-type: text/plain\n\n");
 	
 		sprintf(cuTicket,"%u",uTicket);
 		template.cpName[0]="uTicket";
 		template.cpValue[0]=cuTicket;
 
 		template.cpName[1]="cSubject";
-		template.cpValue[1]=cSubject;
+		template.cpValue[1]=cEmailSubject;
 
 		char cCreatedBy[100]={""};
 		template.cpName[2]="cCreatedBy";

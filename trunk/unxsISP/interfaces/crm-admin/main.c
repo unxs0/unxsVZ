@@ -340,7 +340,6 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			fprintf(fp,"<!-- start %s -->\n",cTemplateName);
 			Template(field[0], template, fp);
 		}
 		else
