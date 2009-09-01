@@ -11,7 +11,7 @@
 #
 
 CFLAGS=-Wall
-LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate
+LIBS=-L/usr/lib64/mysql -L/usr/lib/openisp -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate
 
 all: unxsVZ.cgi
 

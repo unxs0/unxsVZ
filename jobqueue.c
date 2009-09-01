@@ -1245,31 +1245,38 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		goto CommonExit;
 	}
 
-	//1-. Stop container
-	sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
+	char cSnapshotDir[256]={""};
+	GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,guNode,0,0);//First try node specific
+	if(!cSnapshotDir[0])
+	{
+		GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSnapshotDir[0])
+			GetConfiguration("cSnapshotDir",cSnapshotDir,0,0,0,0);//Last try global
+	}
+	if(uNotValidSystemCallArg(cSnapshotDir))
+		cSnapshotDir[0]=0;
+	//1-.
+	if(!cSnapshotDir[0])
+		sprintf(gcQuery,"/usr/sbin/vzdump --suspend %u > /dev/null 2>&1",uContainer);
+	else
+		sprintf(gcQuery,"/usr/sbin/vzdump --dumpdir %s --snapshot %u > /dev/null 2>&1",
+									cSnapshotDir,uContainer);
 	if(system(gcQuery))
 	{
-		printf("TemplateContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"vzctl stop failed");
+		printf("TemplateContainer() error: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"error 1");
 		goto CommonExit;
 	}
-
-	//2-. Make template cache tar. No gzip for less down time
-	sprintf(gcQuery,"cd /vz/private/%u; /bin/tar cf /vz/template/cache/%s-%s.tar --numeric-owner ./",
-		uContainer,cOSTemplateBase,cConfigLabel);
+	
+	if(!cSnapshotDir[0])
+		sprintf(gcQuery,"mv /vz/dump/vzdump-%u.tar /vz/template/cache/%s-%s.tar",uContainer,cOSTemplateBase,cConfigLabel);
+	else
+		sprintf(gcQuery,"mv %s/vzdump-%u.tar /vz/template/cache/%s-%s.tar",cSnapshotDir,uContainer,cOSTemplateBase,cConfigLabel);
+	
 	if(system(gcQuery))
 	{
 		printf("TemplateContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"tar container failed");
-		goto CommonExit;
-	}
-
-	//3-. Start container
-	sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-	if(system(gcQuery))
-	{
-		printf("TemplateContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"vzctl start failed");
+		tJobErrorUpdate(uJob,"gzip container failed");
 		goto CommonExit;
 	}
 
