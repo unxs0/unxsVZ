@@ -610,11 +610,12 @@ void EmailTicketChanges(void)
 	//the values we are commiting to the database.
 	//Based on this comparisson will inform of the diferences via email.
 	structTicket RecordData;
-	//struct t_template template;
+	struct t_template template;
 	FILE *fp;
 	char cFrom[256]={"root"};
 	char cSubject[256]={""};
 	char cEmail[100]={""};
+	char cuTicket[16]={""};
 
 	cSubject[255]=0;
 	LoadRecordIntoStruct(&RecordData);
@@ -629,8 +630,41 @@ void EmailTicketChanges(void)
 		fprintf(fp,"Subject: %s\n",cSubject);
 		fprintf(fp,"MIME-Version: 1.0\n");
 		fprintf(fp,"Content-type: text/html\n\n");
+	
+		sprintf(cuTicket,"%u",uTicket);
+		template.cpName[0]="uTicket";
+		template.cpValue[0]=cuTicket;
 
-		fileDirectTemplate(fp,"TicketChangeMailTop");
+		template.cpName[1]="cSubject";
+		template.cpValue[1]=cSubject;
+
+		char cCreatedBy[100]={""};
+		template.cpName[2]="cCreatedBy";
+		sprintf(cCreatedBy,"%.99s",ForeignKey("tClient","cLabel",uCreatedBy));
+		template.cpValue[2]=cCreatedBy;
+
+		char cAssignedTo[100]={""};
+		template.cpName[3]="cAssignedTo";
+		sprintf(cAssignedTo,"%.99s",ForeignKey("tClient","cLabel",uTicketOwner));
+		template.cpValue[3]=cAssignedTo;
+
+		char cStatus[33]={""};
+		template.cpName[4]="cStatus";
+		sprintf(cStatus,"%.32s",ForeignKey("tTicketStatus","cLabel",uTicketStatus));
+		template.cpValue[4]=cStatus;
+
+		template.cpName[5]="cKeywords";
+		template.cpValue[5]=cKeywords;
+
+		template.cpName[6]="cScheduleDate";
+		template.cpValue[6]="---";
+
+		template.cpName[7]="cCreatedDate";
+		template.cpValue[7]="---";
+
+		template.cpName[8]="";
+
+		fpTemplate(fp,"TicketChangeMailTop",&template);
 			
 		if(uTicketStatus!=RecordData.uTicketStatus)
 		{
