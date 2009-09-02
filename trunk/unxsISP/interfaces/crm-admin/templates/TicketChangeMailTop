@@ -1,4 +1,4 @@
-#{{uTicket}}: {{cSubject}}
+{{cSubject}}
 ----------------------------------------------------------------------------
  Reporter: {{cCreatedBy}}
  Owner:  {{cAssignedTo}}                             
