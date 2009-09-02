@@ -68,9 +68,12 @@ void NewTicket(void);
 void ModTicket(void);
 void SetTicketFieldsOn(void);
 void SubmitComment(void);
-void EmailTicketChanges(void);
 void LoadRecordIntoStruct(structTicket *Target);
 void fileDirectTemplate(FILE *fp,char *cTemplateName);
+
+void EmailTicketChanges(void);
+void EmailTicketComment(void);
+void EmailNewTicket(void);
 
 
 void ProcessTicketVars(pentry entries[], int x)
@@ -176,7 +179,11 @@ void TicketCommands(pentry entries[], int x)
 		if(!strcmp(gcFunction,"Submit Comment"))
 			cCommentConfirm="Confirm ";
 		else if(!strcmp(gcFunction,"Confirm Submit Comment"))
+		{
 			SubmitComment();
+			EmailTicketComment();
+			cTicketComment="";
+		}
 		else if(!strcmp(gcFunction,"New"))
 		{
 			SetTicketFieldsOn();
@@ -192,7 +199,10 @@ void TicketCommands(pentry entries[], int x)
 				gcInputStatus[0]=0;
 			}
 			else
+			{
 				NewTicket();
+				EmailNewTicket();
+			}
 		}
 		else if(!strcmp(gcFunction,"Modify"))
 		{
@@ -800,6 +810,7 @@ void EmailTicketChanges(void)
 
 		fileDirectTemplate(fp,"TicketChangeMailFooter");
 		fclose(fp);
+		//pclose(fp);
 	}	
 
 }//void EmailTicketChanges(void)
@@ -953,3 +964,87 @@ void htmlTicketCommentPage(char *cTitle, char *cTemplateName)
 
 }//void htmlTicketComment()
 
+
+void EmailTicketComment(void)
+{
+	struct t_template template;
+	structTicket RecordData;
+	FILE *fp;
+	char cFrom[256]={"root"};
+	char cEmailSubject[256]={""};
+	char cEmail[100]={""};
+	char cuTicket[16]={""};
+
+	cSubject[255]=0;
+	LoadRecordIntoStruct(&RecordData);
+
+	GetConfiguration(cEmail,"cReportTicketEmail");
+	GetConfiguration(cFrom,"cReportTicketFrom");
+
+	sprintf(cEmailSubject,"#%u %s",uTicket,RecordData.cSubject);
+
+	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	//debug only
+	if((fp=fopen("/tmp/eMailInvoice","w")))
+	{
+		fprintf(fp,"To: %s\n",cEmail);
+		fprintf(fp,"From: %s\n",cFrom);
+		fprintf(fp, "Reply-to: %s\n",cFrom);
+		fprintf(fp,"Subject: %s\n",cEmailSubject);
+		fprintf(fp,"MIME-Version: 1.0\n");
+		fprintf(fp,"Content-type: text/plain\n\n");
+	
+		sprintf(cuTicket,"%u",uTicket);
+		template.cpName[0]="uTicket";
+		template.cpValue[0]=cuTicket;
+
+		template.cpName[1]="cSubject";
+		template.cpValue[1]=cEmailSubject;
+
+		char cCreatedBy[100]={""};
+		template.cpName[2]="cCreatedBy";
+		sprintf(cCreatedBy,"%.99s",ForeignKey("tClient","cLabel",uCreatedBy));
+		template.cpValue[2]=cCreatedBy;
+
+		char cAssignedTo[100]={""};
+		template.cpName[3]="cAssignedTo";
+		sprintf(cAssignedTo,"%.99s",ForeignKey("tClient","cLabel",uTicketOwner));
+		template.cpValue[3]=cAssignedTo;
+
+		char cStatus[33]={""};
+		template.cpName[4]="cStatus";
+		sprintf(cStatus,"%.32s",ForeignKey("tTicketStatus","cLabel",uTicketStatus));
+		template.cpValue[4]=cStatus;
+
+		template.cpName[5]="cKeywords";
+		template.cpValue[5]=cKeywords;
+
+		template.cpName[6]="cScheduleDate";
+		template.cpValue[6]="---";
+
+		template.cpName[7]="cCreatedDate";
+		template.cpValue[7]="---";
+
+		template.cpName[8]="";
+
+		fpTemplate(fp,"TicketChangeMailTop",&template);
+
+		fprintf(fp,"New comment from %s:\n",ForeignKey("tClient","cLabel",guLoginClient));
+		fprintf(fp,"%s\n",TextAreaSave(cTicketComment));
+		
+		fclose(fp);
+		//pclose(fp);
+	}	
+
+}//void EmailTicketComment(void)
+
+
+
+void EmailNewTicket(void)
+{
+}//void EmailNewTicket(void)
+
+
+void fpTicketHeader(FILE *fp)
+{
+}//void fpTicketHeader(FILE *fp)
