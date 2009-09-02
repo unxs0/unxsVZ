@@ -40,7 +40,7 @@ static char *uTicketStatusStyle="type_fields_off";
 static unsigned uTicketOwner=0;
 static char *uTicketOwnerStyle="type_fields_off";
 
-static unsigned uScheduleDate=0;
+static time_t uScheduleDate=0;
 static char *cScheduleDateStyle="type_fields_off";
 
 static char *cText="";
@@ -58,6 +58,7 @@ static char *cCommentConfirm="";
 static char cSearch[32]={""};
 
 time_t ToUnixTime(char *cMySQLDate);
+char *cFromUnixTime(time_t luDate);
 void htmlTicketPage(char *cTitle, char *cTemplateName);
 void LoadTicket(void);
 unsigned ValidateTicketInput(unsigned uMode);
@@ -128,6 +129,26 @@ time_t ToUnixTime(char *cMySQLDate)
 	
 	return(tRet);
 }//time_t ToUnixTime(char *cMySQLDate)
+
+
+char *cFromUnixTime(time_t luDate)
+{
+	static char cRet[16]={""};
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT FROM_UNIXTIME('%lu')",luDate);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cRet,"%.10s",field[0]);
+	
+	return(cRet);
+}//char *cFromUnixTime(time_t luDate)
+
 
 void TicketGetHook(entry gentries[],int x)
 {
@@ -225,6 +246,8 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 
 			sprintf(cCreatedBy,"%.99s",ForeignKey("tClient","cLabel",uCreatedBy));
 			sprintf(cuTicket,"%u",uTicket);
+			if(uScheduleDate)
+				sprintf(cScheduleDate,"%s",cFromUnixTime(uScheduleDate));
 
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
@@ -338,7 +361,7 @@ void LoadTicket(void)
 		cText=field[1];
 		sscanf(field[2],"%u",&uTicketOwner);
 		sscanf(field[3],"%u",&uTicketStatus);
-		sscanf(field[4],"%u",&uScheduleDate);
+		sscanf(field[4],"%lu",&uScheduleDate);
 		sprintf(cKeywords,"%.255s",field[5]);
 		sscanf(field[6],"%u",&uCreatedBy);
 		sprintf(cCreatedDate,"%.63s",field[7]);
@@ -584,7 +607,7 @@ void NewTicket(void)
 	//uTicketStatus=5 is new
 	sprintf(gcQuery,"INSERT INTO tTicket SET uOwner=%u,uCreatedBy=%u,"
 			"uCreatedDate=UNIX_TIMESTAMP(NOW()),uTicketStatus=5,"
-			"uTicketOwner=%u,uScheduleDate=%u,cText='%s',"
+			"uTicketOwner=%u,uScheduleDate=%lu,cText='%s',"
 			"cKeywords='%s',cSubject='%s'",
 			guOrg
 			,guLoginClient
@@ -604,7 +627,7 @@ void NewTicket(void)
 void ModTicket(void)
 {
 	sprintf(gcQuery,"UPDATE tTicket SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()),"
-			"uTicketStatus=%u,uTicketOwner=%u,uScheduleDate=%u,cText='%s',"
+			"uTicketStatus=%u,uTicketOwner=%u,uScheduleDate=%lu,cText='%s',"
 			"cKeywords='%s',cSubject='%s' WHERE uTicket=%u",
 			guLoginClient
 			,uTicketStatus
@@ -721,9 +744,9 @@ void EmailTicketChanges(void)
 		if(uScheduleDate!=RecordData.uScheduleDate)
 		{
 			//uScheduleDate changed
-			fprintf(fp,"Ticket rescheduled:\n%u->%u\n",
-				RecordData.uScheduleDate
-				,uScheduleDate
+			fprintf(fp,"Ticket rescheduled:\n%s->%s\n",
+				cFromUnixTime(RecordData.uScheduleDate)
+				,cFromUnixTime(uScheduleDate)
 				);
 		}
 		if(strcmp(cText,RecordData.cText))
