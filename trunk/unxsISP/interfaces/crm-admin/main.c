@@ -117,6 +117,8 @@ int main(int argc, char *argv[])
 				GlossaryGetHook(gentries,i);
 			else if(!strcmp(gcPage,"Ticket"))
 				TicketGetHook(gentries,i);
+			else if(!strcmp(gcPage,"TicketComment"))
+				TicketCommentGetHook(gentries,i);
 		}
 	}
 	else

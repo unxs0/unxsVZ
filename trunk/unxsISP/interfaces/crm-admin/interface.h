@@ -177,7 +177,7 @@ void funcAssignedTo(FILE *fp);
 void funcTicketStatus(FILE *fp);
 void funcTicketNavBar(FILE *fp);
 void funcTicketComments(FILE *fp);
-
+void TicketCommentGetHook(entry gentries[],int x);
 
 //product.c
 void ProcessProductVars(pentry entries[], int x);
