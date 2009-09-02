@@ -324,7 +324,10 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			template.cpName[25]="gcInputStatus";
 			template.cpValue[25]=gcInputStatus;
 
-			template.cpName[26]="";
+			template.cpName[26]="cKeywords";
+			template.cpValue[26]=cKeywords;
+
+			template.cpName[27]="";
 
 			printf("\n<!-- Start htmlTicketPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -578,6 +581,14 @@ void funcTicketNavBar(FILE *fp)
 	}
 
 }//void funcTicketNavBar(FILE *fp)
+
+
+void funcTicketComments(FILE *fp)
+{
+	sprintf(gcQuery,"SELECT uTicketComment,cComment,FROM_UNIXTIME(uCreatedDate),uCreatedBy "
+			"FROM tTicketComment ORDER BY uCreatedDate DESC");
+	mysql_query(&gMysql,gcQuery);
+}
 
 
 unsigned ValidateTicketInput(unsigned uMode)
