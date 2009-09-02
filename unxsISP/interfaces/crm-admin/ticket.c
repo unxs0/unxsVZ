@@ -32,6 +32,7 @@ typedef struct
 static unsigned uTicket=0;
 static unsigned uCreatedBy=0; 
 static char cCreatedDate[64]={""};
+static unsigned uCreatedDate=0;
 
 static unsigned uTicketStatus=0;
 static char *uTicketStatusStyle="type_fields_off";
@@ -56,7 +57,7 @@ static char *cCommentConfirm="";
 
 static char cSearch[32]={""};
 
-
+time_t ToUnixTime(char *cMySQLDate);
 void htmlTicketPage(char *cTitle, char *cTemplateName);
 void LoadTicket(void);
 unsigned ValidateTicketInput(unsigned uMode);
@@ -92,18 +93,41 @@ void ProcessTicketVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"cScheduleDate"))
 		{
 			//Convert to unix time and store at uScheduleDate
+			unsigned uYear,uMonth,uDay;
+			char cDate[100]={""};
+			sscanf(entries[i].val,"%u-%u-%u",&uYear,&uMonth,&uDay);
+			sprintf(cDate,"%u-%u-%u 0:00:00",uYear,uMonth,uDay);
+			uScheduleDate=ToUnixTime(cDate);
 		}
 		else if(!strcmp(entries[i].name,"cKeywords"))
 			sprintf(cKeywords,"%.255s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
 			sscanf(entries[i].val,"%u",&uCreatedBy);
-		//else if(!strcmp(entries[i].name,"uCreatedDate"))
-		//	sscanf(entries[i].val,"%u",&uCreatedDate);
+		else if(!strcmp(entries[i].name,"uCreatedDate"))
+			sscanf(entries[i].val,"%u",&uCreatedDate);
 
 	}
 
 }//void ProcessUserVars(pentry entries[], int x)
 
+
+time_t ToUnixTime(char *cMySQLDate)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	time_t tRet;
+
+	sprintf(gcQuery,"SELECT UNIX_TIMESTAMP('%s')",cMySQLDate);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%lu",&tRet);
+	
+	return(tRet);
+}//time_t ToUnixTime(char *cMySQLDate)
 
 void TicketGetHook(entry gentries[],int x)
 {
