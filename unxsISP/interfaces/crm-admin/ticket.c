@@ -59,6 +59,12 @@ static char *cCommentConfirm="";
 
 static char cSearch[32]={""};
 
+static char cuTicket[16]={""};
+static char cScheduleDate[32]={""};
+static char cCreatedBy[100]={""};									                        
+static char cuCreatedBy[16]={""};
+static char cuCreatedDate[32]={""};
+
 time_t ToUnixTime(char *cMySQLDate);
 char *cFromUnixTime(time_t luDate);
 void htmlTicketPage(char *cTitle, char *cTemplateName);
@@ -131,7 +137,8 @@ time_t ToUnixTime(char *cMySQLDate)
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%lu",&tRet);
-	
+	mysql_free_result(res);
+
 	return(tRet);
 }//time_t ToUnixTime(char *cMySQLDate)
 
@@ -150,7 +157,8 @@ char *cFromUnixTime(time_t luDate)
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 		sprintf(cRet,"%.10s",field[0]);
-	
+	mysql_free_result(res);
+
 	return(cRet);
 }//char *cFromUnixTime(time_t luDate)
 
@@ -252,11 +260,10 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 		if((field=mysql_fetch_row(res)))
 		{
 			struct t_template template;
-			char cuTicket[16]={""};
-			char cScheduleDate[32]={""};			
-			char cCreatedBy[100]={""};
-
 			sprintf(cCreatedBy,"%.99s",ForeignKey("tClient","cLabel",uCreatedBy));
+			sprintf(cuCreatedBy,"%u",uCreatedBy);
+			sprintf(cuCreatedDate,"%u",uCreatedDate);
+
 			sprintf(cuTicket,"%u",uTicket);
 			if(uScheduleDate)
 				sprintf(cScheduleDate,"%s",cFromUnixTime(uScheduleDate));
@@ -339,7 +346,13 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			template.cpName[26]="cKeywords";
 			template.cpValue[26]=cKeywords;
 
-			template.cpName[27]="";
+			template.cpName[27]="uCreatedBy";
+			template.cpValue[27]=cuCreatedBy;
+
+			template.cpName[28]="uCreatedDate";
+			template.cpValue[28]=cuCreatedDate;
+
+			template.cpName[29]="";
 
 			printf("\n<!-- Start htmlTicketPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -715,6 +728,7 @@ void EmailTicketChanges(void)
 	{
 		fpEmailTicketHeader(fp);
 
+		LoadRecordIntoStruct(&RecordData);
 		if(uTicketStatus!=RecordData.uTicketStatus)
 		{
 			//uTicketStatus changed
