@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	unxsISP Admin (Owner) Interface
+	unxsISP CRM (Owner) Interface
 	program file.
 */
 
@@ -521,7 +521,7 @@ void CustomerCommands(pentry entries[], int x)
 
 void htmlProductDeployWizard(unsigned uStep)
 {
-	htmlHeader("unxsISP Admin Interface","Header");
+	htmlHeader("unxsISP CRM Interface","Header");
 	sprintf(gcQuery,"ProductDeploy.%u",uStep);
 	htmlCustomerPage("",gcQuery);
 	
@@ -539,7 +539,7 @@ void htmlCustomer(void)
 		}
 	}
 
-	htmlHeader("unxsISP Admin Interface","Header");
+	htmlHeader("unxsISP CRM Interface","Header");
 	htmlCustomerPage("","Customer.Body");
 	htmlFooter("Footer");
 
