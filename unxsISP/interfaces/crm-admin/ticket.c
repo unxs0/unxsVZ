@@ -30,6 +30,8 @@ typedef struct
 } structTicket;
 
 static unsigned uTicket=0;
+static unsigned uTicketComment=0;
+
 static unsigned uCreatedBy=0; 
 static char cCreatedDate[64]={""};
 static unsigned uCreatedDate=0;
@@ -855,4 +857,55 @@ void fileDirectTemplate(FILE *fp,char *cTemplateName)
 
 }//void fileDirectTemplate(FILE *fp,char *cTemplateName)
 
+
+static char *cComment="";
+static char cCommentCreatedBy[100]={""};
+static char cCommentDate[33]={""};
+
+void LoadTicketComment(void);
+void htmlTicketComment();
+
+void TicketCommentGetHook(entry gentries[],int x)
+{
+	register int i;
+	
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"uTicketComment"))
+			sscanf(gentries[i].val,"%u",&uTicketComment);
+	}
+	
+	if(uTicketComment)
+	{
+		LoadTicketComment();
+		htmlTicketComment();
+	}
+}//void TicketCommentGetHook(entry gentries[],int x)
+
+
+void LoadTicketComment(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cComment,uCreatedBy,FROM_UNIXTIME(uCreatedDate) "
+			"FROM tTicketComment WHERE uTicketComment=%u",uTicketComment);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if((field=mysql_fetch_row(res)))
+	{
+		cComment=field[0];
+		sprintf(cCommentCreatedBy,"%.99s",ForeignKey("tClient","cLabel",strtoul(field[1],NULL,10)));
+		sprintf(cCommentDate,"%.32s",field[2]);
+	}
+
+}//void LoadTicketComment(void)
+
+
+void htmlTicketComment()
+{
+}//void htmlTicketComment()
 
