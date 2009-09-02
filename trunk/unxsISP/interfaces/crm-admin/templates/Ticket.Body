@@ -230,7 +230,7 @@
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ticket Created Date')"><strong>Ticket Created Date</strong></a></td>
                 </td>
 		<td>
-		<input type=hidden name=uCreatedDate value={{uCreatedDate}}>
+		<input type=hidden name=cCreatedDate value={{cCreatedDate}}>
 			{{cCreatedDate}}
 		</td>
 	</tr>

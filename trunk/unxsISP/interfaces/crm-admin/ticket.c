@@ -34,7 +34,6 @@ static unsigned uTicketComment=0;
 
 static unsigned uCreatedBy=0; 
 static char cCreatedDate[64]={""};
-static unsigned uCreatedDate=0;
 
 static unsigned uTicketStatus=0;
 static char *uTicketStatusStyle="type_fields_off";
@@ -58,12 +57,6 @@ static char *cTicketComment="";
 static char *cCommentConfirm="";
 
 static char cSearch[32]={""};
-
-static char cuTicket[16]={""};
-static char cScheduleDate[32]={""};
-static char cCreatedBy[100]={""};									                        
-static char cuCreatedBy[16]={""};
-static char cuCreatedDate[32]={""};
 
 time_t ToUnixTime(char *cMySQLDate);
 char *cFromUnixTime(time_t luDate);
@@ -115,9 +108,8 @@ void ProcessTicketVars(pentry entries[], int x)
 			sprintf(cKeywords,"%.255s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
 			sscanf(entries[i].val,"%u",&uCreatedBy);
-		else if(!strcmp(entries[i].name,"uCreatedDate"))
-			sscanf(entries[i].val,"%u",&uCreatedDate);
-
+		else if(!strcmp(entries[i].name,"cCreatedDate"))
+			sprintf(cCreatedDate,"%.63s",entries[i].val);
 	}
 
 }//void ProcessUserVars(pentry entries[], int x)
@@ -254,15 +246,19 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 	{
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
-
+		
 		TemplateSelect(cTemplateName,guTemplateSet);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
+			char cuTicket[16]={""};
+			char cCreatedBy[100]={""};
+			char cuCreatedBy[16]={""};
+			char cScheduleDate[32]={""};
+
 			struct t_template template;
 			sprintf(cCreatedBy,"%.99s",ForeignKey("tClient","cLabel",uCreatedBy));
 			sprintf(cuCreatedBy,"%u",uCreatedBy);
-			sprintf(cuCreatedDate,"%u",uCreatedDate);
 
 			sprintf(cuTicket,"%u",uTicket);
 			if(uScheduleDate)
@@ -349,10 +345,7 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			template.cpName[27]="uCreatedBy";
 			template.cpValue[27]=cuCreatedBy;
 
-			template.cpName[28]="uCreatedDate";
-			template.cpValue[28]=cuCreatedDate;
-
-			template.cpName[29]="";
+			template.cpName[28]="";
 
 			printf("\n<!-- Start htmlTicketPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
