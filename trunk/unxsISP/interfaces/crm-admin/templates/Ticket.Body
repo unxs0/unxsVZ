@@ -124,6 +124,19 @@
 		<input {{cCommentStatus}} type=submit name=gcFunction value='{{cCommentConfirm}}Submit Comment' class=largestButton>
 		</td>
 		</tr>
+		<tr>
+		<td colspan=2>
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Add Ticket Comment)"><strong>Ticket Comments</strong></a></td>
+		</td>
+		</tr>
+		<tr>
+		<td colspan=2>
+		<table cellspacing="5" cellpadding="0">
+		<tr bgcolor="#e9e9e9"><th>Date</th><th>Comment</th><th>Author</th></tr>
+		{{funcTicketComments}}
+		</table>
+		</td>
+		</tr>
         </table>
 
 

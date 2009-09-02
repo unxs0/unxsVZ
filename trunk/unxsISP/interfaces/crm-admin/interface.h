@@ -166,7 +166,7 @@ void GlossaryGetHook(entry gentries[],int x);
 void htmlGlossary(void);
 void htmlGlossaryPage(char *cTitle, char *cTemplateName);
 
-//invoice.c
+//ticket.c
 void ProcessTicketVars(pentry entries[], int x);
 void TicketGetHook(entry gentries[],int x);
 void TicketCommands(pentry entries[], int x);
@@ -176,6 +176,7 @@ void funcTicketNavList(FILE *fp);
 void funcAssignedTo(FILE *fp);
 void funcTicketStatus(FILE *fp);
 void funcTicketNavBar(FILE *fp);
+void funcTicketComments(FILE *fp);
 
 
 //product.c

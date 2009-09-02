@@ -585,9 +585,29 @@ void funcTicketNavBar(FILE *fp)
 
 void funcTicketComments(FILE *fp)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
 	sprintf(gcQuery,"SELECT uTicketComment,cComment,FROM_UNIXTIME(uCreatedDate),uCreatedBy "
 			"FROM tTicketComment ORDER BY uCreatedDate DESC");
 	mysql_query(&gMysql,gcQuery);
+
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"<tr>"
+			"<td><a class=darkLink href=\"#\" onClick=\"open_popup('ispCRM.cgi?gcPage=TicketComment&uTicketComment=%s')\">%s</a>"
+			"</td><td>%s</td><td>%s</td>"
+			"</tr>\n"
+			,field[0]
+			,field[2]
+			,cShortenText(field[1],5)
+			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10)));
+	}
+	mysql_free_result(res);
+
 }
 
 
