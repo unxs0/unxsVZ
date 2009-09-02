@@ -398,6 +398,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcTicketStatus(fp);
 	else if(!strcmp(cFunction,"funcTicketNavBar"))
 		funcTicketNavBar(fp);
+	else if(!strcmp(cFunction,"funcTicketComments"))
+		funcTicketComments(fp);
 
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
