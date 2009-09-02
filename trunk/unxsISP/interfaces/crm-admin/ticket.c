@@ -601,11 +601,11 @@ void funcTicketComments(FILE *fp)
 	{
 		fprintf(fp,"<tr>"
 			"<td><a class=darkLink href=\"#\" onClick=\"open_popup('ispCRM.cgi?gcPage=TicketComment&uTicketComment=%s')\">%s</a>"
-			"</td><td>%s</td><td>%s</td>"
+			"</td><td>%s...</td><td>%s</td>"
 			"</tr>\n"
 			,field[0]
 			,field[2]
-			,cShortenText(field[1],5)
+			,cShortenText(field[1],3)
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10)));
 	}
 	mysql_free_result(res);
@@ -863,7 +863,8 @@ static char cCommentCreatedBy[100]={""};
 static char cCommentDate[33]={""};
 
 void LoadTicketComment(void);
-void htmlTicketComment();
+void htmlTicketComment(void);
+void htmlTicketCommentPage(char *cTitle, char *cTemplateName);
 
 void TicketCommentGetHook(entry gentries[],int x)
 {
@@ -907,5 +908,48 @@ void LoadTicketComment(void)
 
 void htmlTicketComment()
 {
+	htmlHeader("unxsISP CRM","Header");
+	htmlTicketCommentPage("","TicketComment.Body");
+	htmlFooter("Footer");
+
+}//void htmlTicket(void)
+
+
+void htmlTicketCommentPage(char *cTitle, char *cTemplateName)
+{
+	if(cTemplateName[0])
+	{
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+
+		TemplateSelect(cTemplateName,guTemplateSet);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			struct t_template template;
+
+			template.cpName[0]="cComment";
+			template.cpValue[0]=cComment;
+
+			template.cpName[1]="cCommentCreatedBy";
+			template.cpValue[1]=cCommentCreatedBy;
+
+			template.cpName[2]="cCommentDate";
+			template.cpValue[2]=cCommentDate;
+
+			template.cpName[3]="";
+			
+			printf("\n<!-- Start htmlTicketCommentPage(%s) -->\n",cTemplateName); 
+			Template(field[0], &template, stdout);
+			printf("\n<!-- End htmlTicketCommentPage(%s) -->\n",cTemplateName); 
+		}
+		else
+		{
+			printf("<hr>");
+			printf("<center><font size=1>%s</font>\n",cTemplateName);
+		}
+		mysql_free_result(res);
+	}
+
 }//void htmlTicketComment()
 
