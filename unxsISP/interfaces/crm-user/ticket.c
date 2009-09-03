@@ -400,19 +400,23 @@ void funcTicketNavList(FILE *fp)
 	unsigned uFound=0;
 	static char cTopMessage[100]={""};
 
+#define SEARCH_FIELDS "uTicket,cSubject,FROM_UNIXTIME(uCreatedDate)"
+
 	if(cSearch[0])
 	{
 		sscanf(cSearch,"%u",&uTicket);
 		if(uTicket)
-			sprintf(gcQuery,"SELECT uTicket FROM tTicket "
-					"WHERE uCreatedBy=%u AND uOwner=%u AND uTicket=%u",
+			sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
+					"WHERE uCreatedBy=%u AND uOwner=%u AND uTicket=%u "
+					"ORDER BY uCreatedDate DESC",
 					guLoginClient
 					,guOrg
 					,uTicket);
 		else
-			sprintf(gcQuery,"SELECT uTicket FROM tTicket "
+			sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
 					"WHERE uCreatedBy=%u AND uOwner=%u AND "
-					"(cSubject LIKE '%%%s%%' OR cText LIKE '%%%s%%'",
+					"(cSubject LIKE '%%%s%%' OR cText LIKE '%%%s%%' "
+					"ORDER BY uCreatedDate DESC",
 					guLoginClient
 					,guOrg
 					,cSearch
@@ -420,6 +424,13 @@ void funcTicketNavList(FILE *fp)
 					);
 		
 	}
+	else
+		sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
+				"WHERE uCreatedBy=%u AND uOwner=%u "
+				"ORDER BY uCreatedDate DESC LIMIT 20",
+				guLoginClient
+				,guOrg
+				);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -440,11 +451,9 @@ void funcTicketNavList(FILE *fp)
 	{
 		if((field=mysql_fetch_row(res)))
 		{
-			//This 'loads' the invoice, via funcTicket() ;)
 			sscanf(field[0],"%u",&uTicket);
-			sscanf(field[3],"%u",&uClient);
-			
-			fprintf(fp,"<a href=ispHelp.cgi?gcPage=Ticket&uTicket=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
+			LoadTicket();
+			//fprintf(fp,"<a href=ispHelp.cgi?gcPage=Ticket&uTicket=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
 			mysql_free_result(res);
 			return;
 		}
@@ -458,13 +467,16 @@ void funcTicketNavList(FILE *fp)
 			"further refine your search.<br>\n");
 			break;
 		}
-		FromMySQLDate(field[1]);
-		fprintf(fp,"<a href=ispHelp.cgi?gcPage=Ticket&uTicket=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
+		fprintf(fp,"<a href=ispHelp.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a> %s (%s)<br>\n",
+			field[0]
+			,field[0]
+			,field[1]
+			,field[2]);
 		uDisplayed++;
 	}
 
 	mysql_free_result(res);
-*/
+
 }//void funcTicketNavList(FILE *fp)
 
 
