@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 
 	//First page after valid login
 	if(!strcmp(gcFunction,"Login"))
-		htmlDashBoard();
+		htmlTicket();	
 
 	//Per page command tree
 
@@ -1064,4 +1064,45 @@ void EncryptPasswd(char *pw)
 	strcpy(pw,cpw);
 
 }//void EncryptPasswd(char *pw)
+
+
+void GetConfiguration(const char *cName, char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	char cQuery[512]={""};
+
+        sprintf(cQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='%s'",cName);
+        mysql_query(&gMysql,cQuery);
+        if(mysql_errno(&gMysql))
+    	      htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+                sprintf(cValue,"%s",field[0]);
+        mysql_free_result(res);
+
+}//void GetConfiguration(char *cName, char *cValue)
+
+
+char *cShortenText(char *cText,unsigned uWords)
+{
+	//Return the first n word from cText
+	//will use the spaces for word counting.
+	unsigned uCount=0;
+	register int i=0;
+	static char cResult[100];
+	
+	for(i=0;i<strlen(cText);i++)
+	{
+		cResult[i]=cText[i];
+		if(cText[i]==' ')
+			uCount++;
+		if(uCount>=uWords) break;
+	}
+
+	cResult[i]='\0';
+	return(cResult);
+		
+}//char *cShortenText(char *cText)
+
 
