@@ -69,6 +69,7 @@ void SetTicketFieldsOn(void);
 void SubmitComment(void);
 void LoadRecordIntoStruct(structTicket *Target);
 void fileDirectTemplate(FILE *fp,char *cTemplateName);
+unsigned uTicketChanged(void);
 
 void EmailTicketChanges(void);
 void EmailTicketComment(void);
@@ -202,6 +203,7 @@ void TicketCommands(pentry entries[], int x)
 			{
 				NewTicket();
 				EmailNewTicket();
+				gcMessage="Ticket was created and notification email was sent";
 			}
 		}
 		else if(!strcmp(gcFunction,"Modify"))
@@ -220,8 +222,19 @@ void TicketCommands(pentry entries[], int x)
 			}
 			else
 			{
-				EmailTicketChanges();
-				ModTicket();
+				if(uTicketChanged())
+				{
+					EmailTicketChanges();
+					ModTicket();
+					gcMessage="Ticket was modified and changes notification email was sent";
+				}
+				else
+				{
+					SetTicketFieldsOn();
+					sprintf(gcModStep,"Confirm ");
+					gcInputStatus[0]=0;
+					gcMessage="<blink>Error: </blink>Nothing was modified";
+				}
 			}
 		}
 
@@ -746,12 +759,12 @@ void EmailTicketChanges(void)
 				,cFromUnixTime(uScheduleDate)
 				);
 		}
-		if(strcmp(cText,RecordData.cText))
+		if(strcmp(TextAreaSave(cText),RecordData.cText))
 		{
 			//cText changed
 			fprintf(fp,"Ticket description updated\n");
-			fprintf(fp,"Old description:\n%s\n",RecordData.cText);
-			fprintf(fp,"New description:\n%s\n",cText);
+			fprintf(fp,"Old description:\n'%s'\n",RecordData.cText);
+			fprintf(fp,"New description:\n'%s'\n",cText);
 			
 		}
 		if(strcmp(cSubject,RecordData.cSubject))
@@ -769,6 +782,23 @@ void EmailTicketChanges(void)
 
 }//void EmailTicketChanges(void)
 	
+
+unsigned uTicketChanged(void)
+{
+	structTicket RecordData;
+
+	LoadRecordIntoStruct(&RecordData);
+
+	if(uTicketStatus!=RecordData.uTicketStatus) return(1);
+	if(uTicketOwner!=RecordData.uTicketOwner) return(1);
+	if(uScheduleDate!=RecordData.uScheduleDate) return(1);
+	if(strcmp(TextAreaSave(cText),RecordData.cText)) return(1);
+	if(strcmp(cSubject,RecordData.cSubject)) return(1);
+	
+	return(0);
+
+}//unsigned uTicketChanged(void)
+
 
 void LoadRecordIntoStruct(structTicket *Target)
 {
@@ -796,6 +826,7 @@ void LoadRecordIntoStruct(structTicket *Target)
 		sscanf(field[6],"%u",&Target->uTicketOwner);
 		sscanf(field[7],"%u",&Target->uScheduleDate);
 		Target->cText=field[8];
+		Target->cText[strlen(field[8])+1]=0;
 		sprintf(Target->cKeywords,"%.255s",field[9]);
 		sprintf(Target->cSubject,"%.255s",field[10]);
 	}
@@ -942,6 +973,18 @@ void EmailTicketComment(void)
 
 void EmailNewTicket(void)
 {
+	FILE *fp;
+	struct t_template template;
+
+	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	//debug only
+	if((fp=fopen("/tmp/eMailInvoice","w")))
+	{
+		fpEmailTicketHeader(fp);
+		fclose(fp);
+		//pclose(fp);
+	}
+
 }//void EmailNewTicket(void)
 
 
