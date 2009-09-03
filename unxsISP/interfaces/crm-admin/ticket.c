@@ -685,6 +685,9 @@ void NewTicket(void)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 
+	uTicket=mysql_insert_id(&gMysql);
+	LoadTicket();
+
 }//void NewTicket(void)
 
 
