@@ -32,7 +32,7 @@ char gcLogin[100]={""};
 char cLogKey[16]={"Ksdj458jssdUjf79"};
 char gcPasswd[100]={""};
 unsigned guSSLCookieLogin=0;
-unsigned guTemplateSet=5; //Default crm-english, will later add multi-lingual support!
+unsigned guTemplateSet=6; //Default help-english, will later add multi-lingual support!
 
 int guPermLevel=0;
 char gcuPermLevel[4]={""};
