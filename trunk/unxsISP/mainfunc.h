@@ -680,8 +680,6 @@ void mySQLRootConnect(char *cPasswd)
 
 void UpgradeSchema(char *cPasswd)
 {
-	unsigned utParameterError=0;
-
 	printf("Upgrading/updating older version database schema...\n\n");
 
 	mySQLRootConnect(cPasswd);
@@ -695,263 +693,41 @@ void UpgradeSchema(char *cPasswd)
 	}
 
 	printf("\nUpgradeSchema() if needed\n");
-
-	printf("\ttInvoice\n");
-
-	sprintf(gcQuery,"ALTER TABLE tInvoice ADD COLUMN (uQueueStatus INTEGER UNSIGNED NOT NULL DEFAULT 0)");
+	sprintf(gcQuery,"CREATE TABLE `tTicket` ("
+			"`uTicket` int(10) unsigned NOT NULL auto_increment,"
+			" `uOwner` int(10) unsigned NOT NULL default '0',"
+			"  `uCreatedBy` int(10) unsigned NOT NULL default '0',"
+			"  `uCreatedDate` int(10) unsigned NOT NULL default '0',"
+			"  `uModBy` int(10) unsigned NOT NULL default '0',"
+			"  `uModDate` int(10) unsigned NOT NULL default '0',"
+			"  `uTicketStatus` int(10) unsigned NOT NULL default '0',"
+			"  `uTicketOwner` int(10) unsigned NOT NULL default '0',"
+			"  `uScheduleDate` int(10) unsigned NOT NULL default '0',"
+			"  `cText` text NOT NULL,"
+			"  `cKeywords` varchar(128) NOT NULL default '',"
+			"  `cSubject` varchar(255) NOT NULL default '',"
+			" PRIMARY KEY  (`uTicket`),"
+			"  KEY `uOwner` (`uOwner`)"
+			")");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		fprintf(stderr,"%s\n",mysql_error(&gMysql));
 
-	sprintf(gcQuery,"ALTER TABLE tInvoice ADD COLUMN (mPaid DECIMAL(10,2) NOT NULL DEFAULT 0)");
+	sprintf(gcQuery,"CREATE TABLE `tTicketComment` ("
+			"  `uTicketComment` int(10) unsigned NOT NULL auto_increment,"
+			"  `uTicket` int(10) unsigned NOT NULL default '0',"
+			"  `cComment` text NOT NULL,"
+			"  `uOwner` int(10) unsigned NOT NULL default '0',"
+			"  `uCreatedBy` int(10) unsigned NOT NULL default '0',"
+			"  `uCreatedDate` int(10) unsigned NOT NULL default '0',"
+			"  `uModBy` int(10) unsigned NOT NULL default '0',"
+			"  `uModDate` int(10) unsigned NOT NULL default '0',"
+			"  PRIMARY KEY  (`uTicketComment`),"
+			"  KEY `uOwner` (`uOwner`)"
+			")");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-
-	sprintf(gcQuery,"ALTER TABLE tInvoice ADD INDEX uQueueStatus (uQueueStatus)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-
-	sprintf(gcQuery,"ALTER TABLE tInvoice ADD INDEX uInvoiceStatus (uInvoiceStatus);");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-
-
-	printf("\ttInvoiceItems\n");
-
-	sprintf(gcQuery,"ALTER TABLE tInvoiceItems ADD COLUMN (cLabel VARCHAR(255) NOT NULL DEFAULT '')");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tInvoiceItems ADD COLUMN (uInstance INTEGER UNSIGNED NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tInvoiceItems ADD INDEX uInstance (uInstance)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-
-
-
-	printf("\ttService\n");
-
-	sprintf(gcQuery,"ALTER TABLE tService ADD UNIQUE cLabel (cLabel)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-
-
-	printf("\ttProduct\n");
-
-	sprintf(gcQuery,"ALTER TABLE tProduct ADD column (uProductType INTEGER UNSIGNED NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	//Index
-	sprintf(gcQuery,"ALTER TABLE tProduct ADD INDEX uProductType (uProductType)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tProduct ADD INDEX uAvailable (uAvailable)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tProduct ADD UNIQUE cLabel (cLabel)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tProduct ADD COLUMN (cTitle VARCHAR(32) NOT NULL DEFAULT '')");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tProduct ADD COLUMN (mReleaseFee DECIMAL(10,2) NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-
-
-	printf("\ttProductType\n");
-
-
-	printf("\ttParameter\n");
-
-	sprintf(gcQuery,"ALTER TABLE tParameter ADD column (uISMHide INTEGER UNSIGNED NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		utParameterError++;
-	}
-
-	sprintf(gcQuery,"ALTER TABLE tParameter ADD COLUMN (cISMName VARCHAR(64) NOT NULL DEFAULT '')");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		utParameterError++;
-	}
-
-	sprintf(gcQuery,"ALTER TABLE tParameter ADD COLUMN (cISMHelp VARCHAR(64) NOT NULL DEFAULT '')");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		utParameterError++;
-	}
-
-	sprintf(gcQuery,"ALTER TABLE tParameter ADD column (uProductType INTEGER UNSIGNED NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		utParameterError++;
-	}
-
-
-	//Index
-	sprintf(gcQuery,"ALTER TABLE tParameter ADD INDEX uISMHide (uISMHide)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		utParameterError++;
-	}
-
-	sprintf(gcQuery,"ALTER TABLE tParameter ADD INDEX uProductType (uProductType)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		utParameterError++;
-	}
-
-	sprintf(gcQuery,"ALTER TABLE tParameter ADD INDEX uAllowMod (uAllowMod)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		utParameterError++;
-	}
-
-	sprintf(gcQuery,"ALTER TABLE tParameter ADD INDEX uModPostDeploy (uModPostDeploy)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		utParameterError++;
-	}
-
-	printf("\ttClient\n");
-
-	sprintf(gcQuery,"ALTER TABLE tClient ADD COLUMN (uPayment INTEGER UNSIGNED NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tClient ADD COLUMN (mBalance decimal(10,2) NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tClient ADD COLUMN (mTotal decimal(10,2) NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tClient ADD COLUMN (mPermCredit decimal(10,2) NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tClient ADD COLUMN (mTempCredit decimal(10,2) NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tClient ADD COLUMN (uLastPayment int unsigned NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tClient ADD UNIQUE cLabel (cLabel)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tClient ADD COLUMN (cCode varchar(32) NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-
-	printf("\ttInstance\n");
-
-	//This is friggin' joke...first add...release...then delete...
-	sprintf(gcQuery,"ALTER TABLE tInstance DROP COLUMN uPayment");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tInstance ADD COLUMN (uShipping INTEGER UNSIGNED NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tInstance CHANGE COLUMN cLabel cLabel VARCHAR(255) NOT NULL DEFAULT ''");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tInstance ADD COLUMN (uLastPaid INT UNSIGNED NOT NULL DEFAULT 0)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-
-	sprintf(gcQuery,"ALTER TABLE tInstance ADD INDEX uStatus (uStatus)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	sprintf(gcQuery,"ALTER TABLE tInstance ADD INDEX uBilled (uBilled)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	printf("\ttPaid\n");
-
-	sprintf(gcQuery,"ALTER TABLE tPaid ADD COLUMN (cComment text NOT NULL DEFAULT '')");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-
-	//Better provide instructions
-	printf("\ttMonth\n");
-
-        //CreatetMonth();
-	printf("\tPlease create this table via gcFunction=tMonth get URL (hidden table.)\n");
-
-	printf("\ttInvoiceMonth\n");
-
-        //CreatetInvoiceMonth();
-	printf("\tPlease create this table via gcFunction=tInvoiceMonth link.\n");
-
 
 }//void UpgradeSchema()
 
