@@ -618,9 +618,11 @@ void funcTicketComments(FILE *fp)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	
+	if(!uTicket) return;
 
 	sprintf(gcQuery,"SELECT uTicketComment,cComment,FROM_UNIXTIME(uCreatedDate),uCreatedBy "
-			"FROM tTicketComment ORDER BY uCreatedDate DESC");
+			"FROM tTicketComment WHERE uTicket=%u ORDER BY uCreatedDate DESC",uTicket);
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
@@ -974,13 +976,15 @@ void EmailTicketComment(void)
 void EmailNewTicket(void)
 {
 	FILE *fp;
-	struct t_template template;
 
 	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
 	if((fp=fopen("/tmp/eMailInvoice","w")))
 	{
 		fpEmailTicketHeader(fp);
+
+		fprintf(fp,"%s\n",TextAreaSave(cText));
+
 		fclose(fp);
 		//pclose(fp);
 	}
