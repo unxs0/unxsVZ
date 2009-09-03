@@ -206,37 +206,6 @@ void TicketCommands(pentry entries[], int x)
 				gcMessage="Ticket was created and notification email was sent";
 			}
 		}
-		else if(!strcmp(gcFunction,"Modify"))
-		{
-			SetTicketFieldsOn();
-			sprintf(gcModStep,"Confirm ");
-			gcInputStatus[0]=0;
-		}
-		else if(!strcmp(gcFunction,"Confirm Modify"))
-		{
-			if(ValidateTicketInput(1))
-			{
-				SetTicketFieldsOn();
-				sprintf(gcModStep,"Confirm ");
-				gcInputStatus[0]=0;
-			}
-			else
-			{
-				if(uTicketChanged())
-				{
-					EmailTicketChanges();
-					ModTicket();
-					gcMessage="Ticket was modified and changes notification email was sent";
-				}
-				else
-				{
-					SetTicketFieldsOn();
-					sprintf(gcModStep,"Confirm ");
-					gcInputStatus[0]=0;
-					gcMessage="<blink>Error: </blink>Nothing was modified";
-				}
-			}
-		}
 
 		htmlTicket();
 	}
@@ -425,49 +394,32 @@ void SubmitComment()
 
 void funcTicketNavList(FILE *fp)
 {
-/*	MYSQL_RES *res;
+	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uDisplayed=0;
 	unsigned uFound=0;
-	char cTopMessage[100]={""};
+	static char cTopMessage[100]={""};
 
 	if(cSearch[0])
 	{
-	//Valid formats are:
-	//1. uTicket-uClient
-	//2. uTicket
-	//3. Part of last name
-		char cExtra[100]={""};
-		if(strstr(cSearch,"-"))
-		{
-			unsigned uClient=0;
-
-			sscanf(cSearch,"%u-%u",&uClient,&uTicket);
-			sprintf(cExtra,"tTicket.uTicket=%u AND tTicket.uClient=%u",uTicket,uClient);
-
-			ExtSelectSearch("tTicket","tTicket.uTicket,FROM_UNIXTIME(GREATEST(tTicket.uCreatedDate,tTicket.uModDate)),"
-				"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tTicket.uClient),tTicket.uClient","1","1",
-				cExtra,0);
-		}
+		sscanf(cSearch,"%u",&uTicket);
+		if(uTicket)
+			sprintf(gcQuery,"SELECT uTicket FROM tTicket "
+					"WHERE uCreatedBy=%u AND uOwner=%u AND uTicket=%u",
+					guLoginClient
+					,guOrg
+					,uTicket);
 		else
-		{
-			sscanf(cSearch,"%u",&uTicket);
-			if(uTicket)
-			{
-				sprintf(cExtra,"tTicket.uTicket=%u",uTicket);
-				ExtSelectSearch("tTicket","tTicket.uTicket,FROM_UNIXTIME(GREATEST(tTicket.uCreatedDate,tTicket.uModDate)),"
-					"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tTicket.uClient),tTicket.uClient",
-					"1","1",cExtra,0);
-			}
-			else
-				ExtSelectSearch("tTicket","tTicket.uTicket,FROM_UNIXTIME(GREATEST(tTicket.uCreatedDate,tTicket.uModDate)),"
-					"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tTicket.uClient),tTicket.uClient",
-					"tTicket.cLastName",cSearch,NULL,0);
-		}
+			sprintf(gcQuery,"SELECT uTicket FROM tTicket "
+					"WHERE uCreatedBy=%u AND uOwner=%u AND "
+					"(cSubject LIKE '%%%s%%' OR cText LIKE '%%%s%%'",
+					guLoginClient
+					,guOrg
+					,cSearch
+					,cSearch
+					);
+		
 	}
-	else
-		ExtSelect("tTicket","tTicket.uTicket,FROM_UNIXTIME(GREATEST(tTicket.uCreatedDate,tTicket.uModDate)),"
-				"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tTicket.uClient),tTicket.uClient",0);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -516,100 +468,10 @@ void funcTicketNavList(FILE *fp)
 }//void funcTicketNavList(FILE *fp)
 
 
-void funcAssignedTo(FILE *fp)
-{
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-
-	fprintf(fp,"<!-- funcSelectAccountType(fp) start -->\n");
-	
-	sprintf(gcQuery,"SELECT uClient,tClient.cLabel FROM tClient,tAuthorize WHERE tAuthorize.uCertClient=tClient.uClient AND tClient.uOwner=%u",guOrg);
-
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-
-	fprintf(fp,"<input type=hidden name=uTicketOwner value=%u>\n",uTicketOwner);
-
-	fprintf(fp,"<select class=%s %s title='Select the employee to re-assign this ticket to' name=uTicketOwner>\n",uTicketOwnerStyle,gcInputStatus);
-
-	sprintf(gcQuery,"%u",uTicketOwner);
-
-	fprintf(fp,"<option value=0 ");
-	if(!uTicketOwner)
-		fprintf(fp,"selected");
-	fprintf(fp,">---</option>\n");
-	
-	sprintf(gcQuery,"%u",uTicketOwner);
-
-	while((field=mysql_fetch_row(res)))
-	{
-		fprintf(fp,"<option value=%s ",field[0]);
-		if(!strcmp(field[0],gcQuery))
-				fprintf(fp,"selected");
-		fprintf(fp,">%s</option>\n",field[1]);
-	}
-	fprintf(fp,"</select>\n");
-	fprintf(fp,"<!-- funcSelectAccountType(fp) end -->\n");
-	
-
-}//void funcAssignedTo(FILE *fp)
-
-
-void funcTicketStatus(FILE *fp)
-{
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-
-	fprintf(fp,"<!-- funcSelectAccountType(fp) start -->\n");
-	
-	sprintf(gcQuery,"SELECT uTicketStatus,cLabel FROM tTicketStatus");
-
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	
-	fprintf(fp,"<input type=hidden name=uTicketStatus value=%u>\n",uTicketStatus);
-
-	fprintf(fp,"<select class=%s %s title='Select current ticket status' name=uTicketStatus>\n",uTicketStatusStyle,gcInputStatus);
-
-	sprintf(gcQuery,"%u",uTicketStatus);
-
-	fprintf(fp,"<option value=0 ");
-	if(!uTicketOwner)
-		fprintf(fp,"selected");
-	fprintf(fp,">---</option>\n");
-	
-	sprintf(gcQuery,"%u",uTicketStatus);
-
-	while((field=mysql_fetch_row(res)))
-	{
-		fprintf(fp,"<option value=%s ",field[0]);
-		if(!strcmp(field[0],gcQuery))
-				fprintf(fp,"selected");
-		fprintf(fp,">%s</option>\n",field[1]);
-	}
-	
-	fprintf(fp,"<!-- funcSelectAccountType(fp) end -->\n");
-	
-
-
-}//void funcTicketStatus(FILE *fp)
-
-
 void funcTicketNavBar(FILE *fp)
 {
-	if(guPermLevel>=10)
-		fprintf(fp,"<input type=submit title='Customer modification with a two step procedure'"
-				" class=largeButton name=gcFunction value='%sNew' />",gcNewStep);
-
-	if(uTicket)
-	{
-		fprintf(fp,"<input type=submit title='Customer modification with a two step procedure'"
-				" class=largeButton name=gcFunction value='%sModify' />",gcModStep);
-	}
+	fprintf(fp,"<input type=submit title='Customer modification with a two step procedure'"
+			" class=largeButton name=gcFunction value='%sNew' />",gcNewStep);
 
 }//void funcTicketNavBar(FILE *fp)
 
@@ -691,27 +553,6 @@ void NewTicket(void)
 }//void NewTicket(void)
 
 
-void ModTicket(void)
-{
-	sprintf(gcQuery,"UPDATE tTicket SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()),"
-			"uTicketStatus=%u,uTicketOwner=%u,uScheduleDate=%lu,cText='%s',"
-			"cKeywords='%s',cSubject='%s' WHERE uTicket=%u",
-			guLoginClient
-			,uTicketStatus
-			,uTicketOwner
-			,uScheduleDate
-			,TextAreaSave(cText)
-			,TextAreaSave(cKeywords)
-			,TextAreaSave(cSubject)
-			,uTicket
-			);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-}//void ModTicket(void)
-
-
 void SetTicketFieldsOn(void)
 {
 	uTicketStatusStyle="type_fields";
@@ -722,87 +563,6 @@ void SetTicketFieldsOn(void)
 	cSubjectStyle="type_fields";
 
 }//void SetTicketFieldsOn(void)
-
-
-void EmailTicketChanges(void)
-{
-	//
-	//This function will be run before ModTicket() call, and it will compare database values against 
-	//the values we are commiting to the database.
-	//Based on this comparisson will inform of the diferences via email.
-	structTicket RecordData;
-	FILE *fp;
-
-	//debug only
-	//if((fp=fopen("/tmp/eMailInvoice","w")))
-	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
-	{
-		fpEmailTicketHeader(fp);
-
-		LoadRecordIntoStruct(&RecordData);
-		if(uTicketStatus!=RecordData.uTicketStatus)
-		{
-			//uTicketStatus changed
-			fprintf(fp,"Ticket status changed:\n%s->%s\n",
-				ForeignKey("tTicketStatus","cLabel",RecordData.uTicketStatus)
-				,ForeignKey("tTicketStatus","cLabel",uTicketStatus)
-				);
-		}
-		if(uTicketOwner!=RecordData.uTicketOwner)
-		{
-			//uTicketOwner changed
-			fprintf(fp,"Ticket reassigned:\n%s->%s\n",
-				ForeignKey("tClient","cLabel",RecordData.uTicketOwner)
-				,ForeignKey("tClient","cLabel",uTicketOwner)
-				);
-		}
-		if(uScheduleDate!=RecordData.uScheduleDate)
-		{
-			//uScheduleDate changed
-			fprintf(fp,"Ticket rescheduled:\n%s->%s\n",
-				cFromUnixTime(RecordData.uScheduleDate)
-				,cFromUnixTime(uScheduleDate)
-				);
-		}
-		if(strcmp(TextAreaSave(cText),RecordData.cText))
-		{
-			//cText changed
-			fprintf(fp,"Ticket description updated\n");
-			fprintf(fp,"Old description:\n'%s'\n",RecordData.cText);
-			fprintf(fp,"New description:\n'%s'\n",cText);
-			
-		}
-		if(strcmp(cSubject,RecordData.cSubject))
-		{
-			//cSubject changed
-			fprintf(fp,"Ticket subject changed\n");
-			fprintf(fp,"Old subject: %s\n",RecordData.cSubject);
-			fprintf(fp,"New subject: %s\n",cSubject);
-		}
-
-		fileDirectTemplate(fp,"TicketChangeMailFooter");
-		//fclose(fp);
-		pclose(fp);
-	}	
-
-}//void EmailTicketChanges(void)
-	
-
-unsigned uTicketChanged(void)
-{
-	structTicket RecordData;
-
-	LoadRecordIntoStruct(&RecordData);
-
-	if(uTicketStatus!=RecordData.uTicketStatus) return(1);
-	if(uTicketOwner!=RecordData.uTicketOwner) return(1);
-	if(uScheduleDate!=RecordData.uScheduleDate) return(1);
-	if(strcmp(TextAreaSave(cText),RecordData.cText)) return(1);
-	if(strcmp(cSubject,RecordData.cSubject)) return(1);
-	
-	return(0);
-
-}//unsigned uTicketChanged(void)
 
 
 void LoadRecordIntoStruct(structTicket *Target)
