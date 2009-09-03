@@ -733,9 +733,9 @@ void EmailTicketChanges(void)
 	structTicket RecordData;
 	FILE *fp;
 
-	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
-	if((fp=fopen("/tmp/eMailInvoice","w")))
+	//if((fp=fopen("/tmp/eMailInvoice","w")))
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	{
 		fpEmailTicketHeader(fp);
 
@@ -781,8 +781,8 @@ void EmailTicketChanges(void)
 		}
 
 		fileDirectTemplate(fp,"TicketChangeMailFooter");
-		fclose(fp);
-		//pclose(fp);
+		//fclose(fp);
+		pclose(fp);
 	}	
 
 }//void EmailTicketChanges(void)
@@ -959,17 +959,17 @@ void EmailTicketComment(void)
 {
 	FILE *fp;
 
-	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
-	if((fp=fopen("/tmp/eMailInvoice","w")))
+	//if((fp=fopen("/tmp/eMailInvoice","w")))
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	{
 		fpEmailTicketHeader(fp);
 
 		fprintf(fp,"New comment from %s:\n",ForeignKey("tClient","cLabel",guLoginClient));
 		fprintf(fp,"%s\n",TextAreaSave(cTicketComment));
 		
-		fclose(fp);
-		//pclose(fp);
+		//fclose(fp);
+		pclose(fp);
 	}	
 
 }//void EmailTicketComment(void)
@@ -980,16 +980,16 @@ void EmailNewTicket(void)
 {
 	FILE *fp;
 
-	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
-	if((fp=fopen("/tmp/eMailInvoice","w")))
+	//if((fp=fopen("/tmp/eMailInvoice","w")))
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	{
 		fpEmailTicketHeader(fp);
 
 		fprintf(fp,"%s\n",TextAreaSave(cText));
 
-		fclose(fp);
-		//pclose(fp);
+		//fclose(fp);
+		pclose(fp);
 	}
 
 }//void EmailNewTicket(void)
