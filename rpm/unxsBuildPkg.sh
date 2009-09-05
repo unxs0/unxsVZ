@@ -86,7 +86,7 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-tar czvf $1.tar.gz $1/ --exclude .svn
+tar czvf $1.tar.gz $1/ --exclude .svn --exclude *.o
 if [ $? != 0 ];then
 	echo error 2;
 	exit 1;

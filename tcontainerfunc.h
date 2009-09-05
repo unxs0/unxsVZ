@@ -1321,7 +1321,10 @@ void ExttContainerButtons(void)
 					printf("<p><input title='Creates a job for starting a stopped container.'"
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Start %.25s'>\n",cLabel);
-				if( (uStatus==31 || uStatus==11) && !strstr(cLabel,"-clone"))
+
+				char cVEIDMount[256]={""};
+				GetContainerProp(uContainer,"cVEID.mount",cVEIDMount);
+				if( cVEIDMount[0] && (uStatus==31 || uStatus==11) && !strstr(cLabel,"-clone"))
 					printf("<br><input title='If container mount or umount files do not"
 					" exist they will be created from tProperty data items: cVEID.mount"
 					" and cVEID.umount'"

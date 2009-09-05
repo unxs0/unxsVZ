@@ -528,6 +528,28 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		goto CommonExit;
 	}
 
+	//4-. Optional container password set
+	//This option requires MySQL SSL replication and
+	//much more security measures in place to avoid a db penetration leading
+	//to multiple container breaches.
+	char cPasswd[256]={""};
+	GetContainerProp(uContainer,"cPasswd",cPasswd);
+	if(cPasswd[0] && !uNotValidSystemCallArg(cPasswd) )
+	{
+		FILE *pp;
+
+		sprintf(gcQuery,"/usr/sbin/vzctl exec %u -",uContainer);
+		if((pp=popen(gcQuery,"w"))!=NULL)
+		{
+			fprintf(pp,"passwd\n");
+			fprintf(pp,"%s\n",cPasswd);
+			fprintf(pp,"%s\n",cPasswd);
+			pclose(pp);
+
+			printf("Container root passwd changed\n");
+		}
+	}
+
 	//Everything went ok;
 	SetContainerStatus(uContainer,1);//Active
 	tJobDoneUpdate(uJob);
