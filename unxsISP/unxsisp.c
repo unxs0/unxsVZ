@@ -24,9 +24,6 @@ void ApplicationFunctions(FILE *fp,char const *cVarName);
 void TextConnectDb(void);
 void AnalyzeTables(void);
 
-//File global
-static unsigned guDebug=0;
-
 
 void UpdateJobStatus(unsigned uJob,unsigned uJobStatus,char *cRemoteMsg)
 {
