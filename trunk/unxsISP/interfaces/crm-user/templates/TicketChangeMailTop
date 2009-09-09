@@ -1,0 +1,10 @@
+{{cSubject}}
+----------------------------------------------------------------------------
+ Reporter: {{cCreatedBy}}
+ Owner:  {{cAssignedTo}}                             
+ Status: {{cStatus}}
+ Keywords: {{cKeywords}}
+ Scheduled Date: {{cScheduleDate}}
+ Creation Date: {{cCreatedDate}}
+----------------------------------------------------------------------------
+

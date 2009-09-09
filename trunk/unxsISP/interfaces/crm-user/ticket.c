@@ -276,58 +276,43 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			template.cpName[9]="cSubject";
 			template.cpValue[9]=cSubject;
 
-			template.cpName[10]="cScheduleDate";
-			template.cpValue[10]=cScheduleDate;
-
-			template.cpName[12]="cCreatedBy";
-			template.cpValue[12]=cCreatedBy;
+			template.cpName[10]="cSubjectStyle";
+			template.cpValue[10]=cSubjectStyle;
 			
-			template.cpName[13]="cSubjectStyle";
-			template.cpValue[13]=cSubjectStyle;
+			template.cpName[11]="cTextStyle";
+			template.cpValue[11]=cTextStyle;
 			
-			template.cpName[14]="cTextStyle";
-			template.cpValue[14]=cTextStyle;
-			
-			template.cpName[17]="cKeywordsStyle";
-			template.cpValue[17]=cKeywordsStyle;
+			template.cpName[12]="cScheduleDateStyle";
+			template.cpValue[12]=cScheduleDateStyle;
 
-			template.cpName[18]="cScheduleDateStyle";
-			template.cpValue[18]=cScheduleDateStyle;
+			template.cpName[13]="cText";
+			template.cpValue[13]=cText;
 
-			template.cpName[19]="cText";
-			template.cpValue[19]=cText;
+			template.cpName[14]="cCreatedDate";
+			template.cpValue[14]=cCreatedDate;
 
-			template.cpName[20]="cCreatedDate";
-			template.cpValue[20]=cCreatedDate;
-
-			template.cpName[21]="cCommentStatus";
+			template.cpName[15]="cCommentStatus";
 			if(uTicket)
-				template.cpValue[21]="";
+				template.cpValue[15]="";
 			else
-				template.cpValue[21]="disabled";
+				template.cpValue[15]="disabled";
 
-			template.cpName[22]="cTicketCommentStyle";
+			template.cpName[16]="cTicketCommentStyle";
 			if(uTicket)
-				template.cpValue[22]="type_textarea";
+				template.cpValue[16]="type_textarea";
 			else
-				template.cpValue[22]="type_textarea_off";
+				template.cpValue[16]="type_textarea_off";
 
-			template.cpName[23]="cTicketComment";
-			template.cpValue[23]=cTicketComment;
+			template.cpName[17]="cTicketComment";
+			template.cpValue[17]=cTicketComment;
 
-			template.cpName[24]="cCommentConfirm";
-			template.cpValue[24]=cCommentConfirm;
+			template.cpName[18]="cCommentConfirm";
+			template.cpValue[18]=cCommentConfirm;
 
-			template.cpName[25]="gcInputStatus";
-			template.cpValue[25]=gcInputStatus;
+			template.cpName[19]="gcInputStatus";
+			template.cpValue[19]=gcInputStatus;
 
-			template.cpName[26]="cKeywords";
-			template.cpValue[26]=cKeywords;
-
-			template.cpName[27]="uCreatedBy";
-			template.cpValue[27]=cuCreatedBy;
-
-			template.cpName[28]="";
+			template.cpName[20]="";
 
 			printf("\n<!-- Start htmlTicketPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -757,7 +742,7 @@ void EmailNewTicket(void)
 	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	{
 		fpEmailTicketHeader(fp);
-
+		
 		fprintf(fp,"%s\n",TextAreaSave(cText));
 
 		//fclose(fp);
@@ -779,8 +764,8 @@ void fpEmailTicketHeader(FILE *fp)
 	cSubject[255]=0;
 	LoadRecordIntoStruct(&RecordData);
 
-	GetConfiguration(cEmail,"cReportTicketEmail");
-	GetConfiguration(cFrom,"cReportTicketFrom");
+	GetConfiguration("cReportTicketEmail",cEmail);
+	GetConfiguration("cReportTicketFrom",cFrom);
 
 	sprintf(cEmailSubject,"#%u %s",uTicket,RecordData.cSubject);
 
