@@ -62,7 +62,6 @@ void CreatetInvoiceMonthTable(char *cTableName);//tinvoicemonthfunc.h
 void CreatetInvoiceItemsMonthTable(char *cTableName);
 void CreatetPaidMonthTable(char *cTableName);
 time_t cDateToUnixTime(char *cDate);//tinstancefunc.h
-void ProcessJobQueue(unsigned const uDebug, char const *cServer);//mysqlisp.c
 void GetConfiguration(char const *cName, char *cValue, unsigned uHtml);
 
 void EncodeMD5tClientConfig(void); //One time use only!
@@ -134,11 +133,7 @@ void ExtMainShell(int argc, char *argv[])
 		exit(1);
 	}
 
-	if(argc==3 && !strcmp(argv[1],"ProcessJobQueue"))
-                ProcessJobQueue(0,argv[2]);
-	else if(argc==3 && !strcmp(argv[1],"ProcessJobQueueDebug"))
-                ProcessJobQueue(1,argv[2]);
-	else if(argc==3 && !strcmp(argv[1],"Initialize"))
+	if(argc==3 && !strcmp(argv[1],"Initialize"))
                 Initialize(argv[2]);
         else if(argc==3 && !strcmp(argv[1],"Backup"))
                 Backup(argv[2]);
@@ -649,7 +644,7 @@ void Initialize(char *cPasswd)
 
         for(i=0;cInitTableList[i][0];i++)
         {
-                sprintf(gcQuery,"load data infile '%s/unxsISP/data/%s.txt' replace into table %s",cISMROOT,cInitTableList[i],cInitTableList[i]);
+                sprintf(gcQuery,"load data local infile '%s/unxsISP/data/%s.txt' replace into table %s",cISMROOT,cInitTableList[i],cInitTableList[i]);
                 mysql_query(&gMysql,gcQuery);
                 if(mysql_errno(&gMysql))
                 {
