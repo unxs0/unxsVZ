@@ -1007,8 +1007,8 @@ void fpEmailTicketHeader(FILE *fp)
 	cSubject[255]=0;
 	LoadRecordIntoStruct(&RecordData);
 
-	GetConfiguration(cEmail,"cReportTicketEmail");
-	GetConfiguration(cFrom,"cReportTicketFrom");
+	GetConfiguration("cReportTicketEmail",cEmail);
+	GetConfiguration("cReportTicketFrom",cFrom);
 
 	sprintf(cEmailSubject,"#%u %s",uTicket,RecordData.cSubject);
 
