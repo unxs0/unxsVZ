@@ -425,49 +425,40 @@ void SubmitComment()
 
 void funcTicketNavList(FILE *fp)
 {
-/*	MYSQL_RES *res;
+	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uDisplayed=0;
 	unsigned uFound=0;
-	char cTopMessage[100]={""};
+	static char cTopMessage[100]={""};
+
+#define SEARCH_FIELDS "uTicket,cSubject,FROM_UNIXTIME(uCreatedDate)"
 
 	if(cSearch[0])
 	{
-	//Valid formats are:
-	//1. uTicket-uClient
-	//2. uTicket
-	//3. Part of last name
-		char cExtra[100]={""};
-		if(strstr(cSearch,"-"))
-		{
-			unsigned uClient=0;
-
-			sscanf(cSearch,"%u-%u",&uClient,&uTicket);
-			sprintf(cExtra,"tTicket.uTicket=%u AND tTicket.uClient=%u",uTicket,uClient);
-
-			ExtSelectSearch("tTicket","tTicket.uTicket,FROM_UNIXTIME(GREATEST(tTicket.uCreatedDate,tTicket.uModDate)),"
-				"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tTicket.uClient),tTicket.uClient","1","1",
-				cExtra,0);
-		}
+		sscanf(cSearch,"%u",&uTicket);
+		if(uTicket)
+			sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
+					"WHERE uOwner=%u AND uTicket=%u "
+					"ORDER BY uCreatedDate DESC",
+					guOrg
+					,uTicket);
 		else
-		{
-			sscanf(cSearch,"%u",&uTicket);
-			if(uTicket)
-			{
-				sprintf(cExtra,"tTicket.uTicket=%u",uTicket);
-				ExtSelectSearch("tTicket","tTicket.uTicket,FROM_UNIXTIME(GREATEST(tTicket.uCreatedDate,tTicket.uModDate)),"
-					"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tTicket.uClient),tTicket.uClient",
-					"1","1",cExtra,0);
-			}
-			else
-				ExtSelectSearch("tTicket","tTicket.uTicket,FROM_UNIXTIME(GREATEST(tTicket.uCreatedDate,tTicket.uModDate)),"
-					"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tTicket.uClient),tTicket.uClient",
-					"tTicket.cLastName",cSearch,NULL,0);
-		}
+			sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
+					"WHERE uOwner=%u AND "
+					"(cSubject LIKE '%%%s%%' OR cText LIKE '%%%s%%' "
+					"ORDER BY uCreatedDate DESC",
+					guOrg
+					,cSearch
+					,cSearch
+					);
+		
 	}
 	else
-		ExtSelect("tTicket","tTicket.uTicket,FROM_UNIXTIME(GREATEST(tTicket.uCreatedDate,tTicket.uModDate)),"
-				"(SELECT CONCAT(cFirstName,' ',cLastName) FROM tClient WHERE tClient.uClient=tTicket.uClient),tTicket.uClient",0);
+		sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
+				"WHERE uOwner=%u "
+				"ORDER BY uCreatedDate DESC LIMIT 20",
+				guOrg
+				);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -488,11 +479,13 @@ void funcTicketNavList(FILE *fp)
 	{
 		if((field=mysql_fetch_row(res)))
 		{
-			//This 'loads' the invoice, via funcTicket() ;)
 			sscanf(field[0],"%u",&uTicket);
-			sscanf(field[3],"%u",&uClient);
-			
-			fprintf(fp,"<a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
+			LoadTicket();
+			fprintf(fp,"<a href=ispHelp.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a> %s (%s)<br>\n",
+				field[0]
+				,field[0]
+				,field[1]
+				,field[2]);
 			mysql_free_result(res);
 			return;
 		}
@@ -506,13 +499,17 @@ void funcTicketNavList(FILE *fp)
 			"further refine your search.<br>\n");
 			break;
 		}
-		FromMySQLDate(field[1]);
-		fprintf(fp,"<a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
+		fprintf(fp,"<a href=ispHelp.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a> %s (%s)<br>\n",
+			field[0]
+			,field[0]
+			,field[1]
+			,field[2]);
 		uDisplayed++;
 	}
 
 	mysql_free_result(res);
-*/
+
+
 }//void funcTicketNavList(FILE *fp)
 
 
