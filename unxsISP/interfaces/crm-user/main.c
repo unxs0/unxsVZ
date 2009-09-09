@@ -463,9 +463,6 @@ void SSLCookieLogin(void)
 	if(!guPermLevel || !guLoginClient)
 		htmlPlainTextError("Unexpected guPermLevel or guLoginClient value");
 	
-	if(guPermLevel<9)
-		htmlLogin();
-
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
 

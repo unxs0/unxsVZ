@@ -438,7 +438,11 @@ void funcTicketNavList(FILE *fp)
 		{
 			sscanf(field[0],"%u",&uTicket);
 			LoadTicket();
-			//fprintf(fp,"<a href=ispHelp.cgi?gcPage=Ticket&uTicket=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
+			fprintf(fp,"<a href=ispHelp.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a> %s (%s)<br>\n",
+				field[0]
+				,field[0]
+				,field[1]
+				,field[2]);
 			mysql_free_result(res);
 			return;
 		}
