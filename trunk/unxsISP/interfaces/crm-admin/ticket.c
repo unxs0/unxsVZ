@@ -276,7 +276,7 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			sprintf(cuTicket,"%u",uTicket);
 			if(uScheduleDate)
 				sprintf(cScheduleDate,"%s",cFromUnixTime(uScheduleDate));
-
+		
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
 			
@@ -300,7 +300,7 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 
 			template.cpName[7]="gcMessage";
 			template.cpValue[7]=gcMessage;
-
+			
 			template.cpName[8]="uTicket";
 			template.cpValue[8]=cuTicket;
 
@@ -319,47 +319,47 @@ void htmlTicketPage(char *cTitle, char *cTemplateName)
 			template.cpName[14]="cTextStyle";
 			template.cpValue[14]=cTextStyle;
 			
-			template.cpName[17]="cKeywordsStyle";
-			template.cpValue[17]=cKeywordsStyle;
+			template.cpName[15]="cKeywordsStyle";
+			template.cpValue[15]=cKeywordsStyle;
 
-			template.cpName[18]="cScheduleDateStyle";
-			template.cpValue[18]=cScheduleDateStyle;
+			template.cpName[16]="cScheduleDateStyle";
+			template.cpValue[16]=cScheduleDateStyle;
 
-			template.cpName[19]="cText";
-			template.cpValue[19]=cText;
+			template.cpName[17]="cText";
+			template.cpValue[17]=cText;
 
-			template.cpName[20]="cCreatedDate";
-			template.cpValue[20]=cCreatedDate;
+			template.cpName[18]="cCreatedDate";
+			template.cpValue[18]=cCreatedDate;
 
-			template.cpName[21]="cCommentStatus";
+			template.cpName[19]="cCommentStatus";
 			if(uTicket)
-				template.cpValue[21]="";
+				template.cpValue[19]="";
 			else
-				template.cpValue[21]="disabled";
+				template.cpValue[19]="disabled";
 
-			template.cpName[22]="cTicketCommentStyle";
+			template.cpName[20]="cTicketCommentStyle";
 			if(uTicket)
-				template.cpValue[22]="type_textarea";
+				template.cpValue[20]="type_textarea";
 			else
-				template.cpValue[22]="type_textarea_off";
+				template.cpValue[20]="type_textarea_off";
 
-			template.cpName[23]="cTicketComment";
-			template.cpValue[23]=cTicketComment;
+			template.cpName[21]="cTicketComment";
+			template.cpValue[21]=cTicketComment;
 
-			template.cpName[24]="cCommentConfirm";
-			template.cpValue[24]=cCommentConfirm;
+			template.cpName[22]="cCommentConfirm";
+			template.cpValue[22]=cCommentConfirm;
 
-			template.cpName[25]="gcInputStatus";
-			template.cpValue[25]=gcInputStatus;
+			template.cpName[23]="gcInputStatus";
+			template.cpValue[23]=gcInputStatus;
 
-			template.cpName[26]="cKeywords";
-			template.cpValue[26]=cKeywords;
+			template.cpName[24]="cKeywords";
+			template.cpValue[24]=cKeywords;
 
-			template.cpName[27]="uCreatedBy";
-			template.cpValue[27]=cuCreatedBy;
+			template.cpName[25]="uCreatedBy";
+			template.cpValue[25]=cuCreatedBy;
 
-			template.cpName[28]="";
-
+			template.cpName[26]="";
+			
 			printf("\n<!-- Start htmlTicketPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
 			printf("\n<!-- End htmlTicketPage(%s) -->\n",cTemplateName); 
