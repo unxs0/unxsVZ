@@ -1,9 +1,21 @@
 #!/bin/sh
+#
+#FILE
+#	/usr/local/sbin/node_traffic_log.sh
+#PURPOSE
+#	Graph all node container (or node see DEV) traffic
+#NOTES
+#	Requires root ssh via public key, rrdtool and allnodescp.sh setup 
+#	correctly.
+#	Graphs are for OPenVZ venet containers not for veth bridged containers.
+#
 
 HOSTNAME=`hostname`; 
 RRDFILE="/var/lib/rrd/$HOSTNAME.rrd";
-#DEV="venet0";
-DEV="eth0";
+#Prefer to graph only container traffic. 
+#ISP should have node traffic graphics available via switch etc.
+#DEV="eth0";
+DEV="venet0";
  
 if ! test -e $RRDFILE; then
 	/usr/bin/rrdtool create $RRDFILE --start N --step 300 \
@@ -48,4 +60,5 @@ nice /usr/bin/rrdtool graph $PNGFILE \
 		"GPRINT:in:LAST:Last in\:%0.0lf" \
 		"GPRINT:out:LAST:Last out\:%0.0lf" > /dev/null 2>&1;
 
-nice scp $PNGFILE node2vm:$PNGFILE > /dev/null 2>&1;
+#copy images to all nodes that may run unxsVZ GUI
+nice /usr/sbin/allnodescp.sh $PNGFILE > /dev/null 2>&1;

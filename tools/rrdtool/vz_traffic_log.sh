@@ -51,7 +51,6 @@ for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
 			"GPRINT:out:LAST:Last out\:%0.0lf" > /dev/null 2>&1;
 
 	#Here you need to copy all graphics to all nodes that provide possible unxsVZ admin interfaces.
-	#This could be done via a scp for root via key exchange like in a /usr/sbin/allnodescp.sh
-	nice scp $PNGFILE servername-in-etc-hosts:$PNGFILE > /dev/null 2>&1;
+	nice /usr/sbin/allnodescp.sh $PNGFILE > /dev/null 2>&1;
 
 done

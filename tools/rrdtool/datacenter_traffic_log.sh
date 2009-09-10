@@ -1,10 +1,20 @@
 #!/bin/sh
 #
-#This script varies from the others only runs on a single node or external node server.
+#FILE
+#	/usr/local/sbin/datacenter_traffic_log.sh
+#PURPOSE
+#	Graph all node container (or node see DEV) traffic
+#NOTES
+#	Requires root ssh via public key, rrdtool and allnodescp.sh setup 
+#	correctly.
+#	Graphs are for OPenVZ venet containers not for veth bridged containers.
+#	This script varies from the others only runs on a single node or 
+#	external node server.
 
 #DATACENTER must not have spaces
-DATACENTER="MarketStreet"; 
+DATACENTER="Wilshire1"; 
 RRDFILE="/var/lib/rrd/$DATACENTER.rrd"
+DEV="venet0";
  
 if ! test -e $RRDFILE; then
 	/usr/bin/rrdtool create $RRDFILE --start N --step 300 \
@@ -20,14 +30,22 @@ if ! test -e $RRDFILE; then
 	RRA:MAX:0.5:288:797
 fi
 
-#for each datacenter node then add them
-eval `grep venet0 /proc/net/dev  | awk -F: '{print $2}' | awk '{printf"CTIN0=%-15d\nCTOUT0=%-15d\n", $1, $9}'`
-eval `ssh moon grep venet0 /proc/net/dev  | awk -F: '{print $2}' | awk '{printf"CTIN1=%-15d\nCTOUT1=%-15d\n", $1, $9}'`
-CTIN=$(( $CTIN0 + $CTIN1 ));
-CTOUT=$(( $CTOUT0 + $CTOUT1 ));
+#for each datacenter node then add them , set this same as allnodecmd.sh
+#cNameSuffix="lax-f2";
+cNameSuffix="";
+cNamePrefix="fs";
+uPort="22";
+#Set the seq range for your datacenter
+for N in $(seq 1 2 ); do
+	eval `nice /usr/bin/ssh -p $uPort $cNamePrefix$N$cNameSuffix grep $DEV /proc/net/dev \
+			 | awk -F: '{print $2}' | awk '{printf"CtIn=%-15d\nCtOut=%-15d\n", $1, $9}'`;
+	CtInTotal=$[$CtInTotal+$CtIn];
+	CtOutTotal=$[$CtOutTotal+$CtOut];
+done
+
 
 #note reversal 
-nice /usr/bin/rrdtool update $RRDFILE N:$CTOUT:$CTIN
+nice /usr/bin/rrdtool update $RRDFILE N:$CtOutTotal:$CtInTotal
 
 PNGFILE="/var/www/unxs/html/traffic/$DATACENTER.png"
 
@@ -51,4 +69,4 @@ nice /usr/bin/rrdtool graph $PNGFILE \
 		"GPRINT:in:LAST:Last in\:%0.0lf" \
 		"GPRINT:out:LAST:Last out\:%0.0lf" > /dev/null 2>&1;
 
-nice scp $PNGFILE moon:$PNGFILE > /dev/null 2>&1;
+nice /usr/sbin/allnodescp.sh $PNGFILE > /dev/null 2>&1;
