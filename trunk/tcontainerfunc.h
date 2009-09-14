@@ -27,7 +27,7 @@ static char cConfigLabel[32]={""};
 static char cWizHostname[100]={""};
 static char cWizLabel[32]={""};
 static char cIPOld[32]={""};
-static char cService1[32]={""};
+static char cService1[32]={""};//Also used for optional container password
 static char cService2[32]={""};
 static char cService3[32]={""};
 static char cService4[32]={""};
@@ -262,7 +262,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
                 }
-                else if(!strcmp(gcCommand,"Confirm Firewall Template"))
+                else if(!strcmp(gcCommand,"Confirm Mount Template"))
                 {
                         ProcesstContainerVars(entries,x);
 			if(guPermLevel>=9)
@@ -329,6 +329,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uDatacenter!=uNodeDatacenter)
 					tContainer("<blink>Error</blink>: The specified uNode does not "
 							"belong to the specified uDatacenter.");
+
 				if(uConfig==0)
 					tContainer("<blink>Error</blink>: uConfig==0!");
 				if(uNameserver==0)
@@ -393,6 +394,16 @@ void ExttContainerCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
+				if(cService1[0])
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cPasswd',cValue='%s'",
+							uContainer,guCompany,guLoginClient,cService1);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
 				tContainer("New container created and default property created");
 			}
 			else
@@ -1212,7 +1223,7 @@ void ExttContainerButtons(void)
 			htmlFirewallTemplateSelect(uFirewallTemplate);
 			printf("<p><input title='Continue to step 3 of new container creation'"
 					" type=submit class=largeButton"
-					" name=gcCommand value='Confirm Firewall Template'>\n");
+					" name=gcCommand value='Confirm Mount Template'>\n");
                         //printf(LANG_NBB_CONFIRMNEW);
                 break;
 
@@ -1241,6 +1252,8 @@ void ExttContainerButtons(void)
                 case 2000:
 			printf("<p><u>New container step 1/3</u><br>");
 			printf("Complete required container fields in the record data panel to your right.<p>");
+			printf("<input title='Optional container password set on deployment and saved in"
+				" container property table' type=text name=cService1> Optional Password<br>");
 			printf("<p><input title='Enter/Mod tContainer record data, then continue"
 					" to step 2 of new container creation'"
 					" type=submit class=largeButton"
@@ -1268,7 +1281,8 @@ void ExttContainerButtons(void)
 				", others like <i>Notes</i> are user created and maintained.<p>"
 				"Special properties cVEID.mount and cVEID.umount are used via"
 				" their tTemplate matching values (see tTemplate for more info)"
-				" to create /etc/vz/conf/VEID.(u)mount files.");
+				" to create /etc/vz/conf/VEID.(u)mount files (on new container creation you will"
+				" be able to optionally select a mount template for this feature.)");
 			printf("<p><u>Record Context Info</u>");
 			if(uContainer && uNode)
 			{

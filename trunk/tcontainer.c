@@ -401,7 +401,7 @@ void tContainerInput(unsigned uMode)
 	}
 //uVeth
 	OpenRow(LANG_FL_tContainer_uVeth,"black");
-	if(guPermLevel>=10 && uMode)
+	if(guPermLevel>=20 && uMode)
 		YesNoPullDown("uVeth",uVeth,1);
 	else
 		YesNoPullDown("uVeth",uVeth,0);
