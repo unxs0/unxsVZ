@@ -260,6 +260,9 @@ void tContent(const char *cResult)
 	}//Internal Skip
 
 	Header_ism3(":: tContent",1);
+	printf("<script type='text/javascript' src='/js/ckeditor.js'></script>\n");
+
+
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -432,17 +435,21 @@ void tContentInput(unsigned uMode)
 	}
 //cText
 	OpenRow(LANG_FL_tContent_cText,"black");
-	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cText "
+
+
+	printf("<textarea title='%s' cols=80 id='cText' wrap=hard rows=16 name=cText "
 ,LANG_FT_tContent_cText);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cText);
+		printf("<script type='text/javascript'>CKEDITOR.replace( 'cText' );</script>\n");
 	}
 	else
 	{
 		printf("disabled>%s</textarea></td></tr>\n",cText);
 		printf("<input type=hidden name=cText value=\"%s\" >\n",EncodeDoubleQuotes(cText));
 	}
+
 //uOwner
 	OpenRow(LANG_FL_tContent_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
