@@ -219,7 +219,7 @@ void htmlContent(void)
 		MYSQL_RES *res;
 		MYSQL_ROW field;
 
-		sprintf(gcQuery,"SELECT uContent FROM tContent WHERE uContentType=7");
+		sprintf(gcQuery,"SELECT uContent FROM tContent WHERE uContentType=1");
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
