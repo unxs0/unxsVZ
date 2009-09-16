@@ -26,11 +26,11 @@ static unsigned uOwner=0;
 static unsigned uCreatedBy=0;
 #define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
-static long unsigned uCreatedDate=0;
+static time_t uCreatedDate=0;
 //uModBy: uClient for last update
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
-static long unsigned uModDate=0;
+static time_t uModDate=0;
 
 
 
@@ -532,13 +532,13 @@ void tGlossaryList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		long unsigned luTime5=strtoul(field[5],NULL,10);
+		time_t luTime5=strtoul(field[5],NULL,10);
 		char cBuf5[32];
 		if(luTime5)
 			ctime_r(&luTime5,cBuf5);
 		else
 			sprintf(cBuf5,"---");
-		long unsigned luTime7=strtoul(field[7],NULL,10);
+		time_t luTime7=strtoul(field[7],NULL,10);
 		char cBuf7[32];
 		if(luTime7)
 			ctime_r(&luTime7,cBuf7);

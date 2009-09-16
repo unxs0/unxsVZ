@@ -34,11 +34,11 @@ static unsigned uOwner=0;
 static unsigned uCreatedBy=0;
 #define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
-static long unsigned uCreatedDate=0;
+static time_t uCreatedDate=0;
 //uModBy: uClient for last update
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
-static long unsigned uModDate=0;
+static time_t uModDate=0;
 
 
 
@@ -612,13 +612,13 @@ void tAuthorizeList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		long unsigned luTime9=strtoul(field[9],NULL,10);
+		time_t luTime9=strtoul(field[9],NULL,10);
 		char cBuf9[32];
 		if(luTime9)
 			ctime_r(&luTime9,cBuf9);
 		else
 			sprintf(cBuf9,"---");
-		long unsigned luTime11=strtoul(field[11],NULL,10);
+		time_t luTime11=strtoul(field[11],NULL,10);
 		char cBuf11[32];
 		if(luTime11)
 			ctime_r(&luTime11,cBuf11);

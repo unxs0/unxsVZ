@@ -41,11 +41,11 @@ static unsigned uOwner=0;
 static unsigned uCreatedBy=0;
 #define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
-static long unsigned uCreatedDate=0;
+static time_t uCreatedDate=0;
 //uModBy: uClient for last update
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
-static long unsigned uModDate=0;
+static time_t uModDate=0;
 
 
 
@@ -501,13 +501,13 @@ void tLogMonthList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		long unsigned luTime12=strtoul(field[12],NULL,10);
+		time_t luTime12=strtoul(field[12],NULL,10);
 		char cBuf12[32];
 		if(luTime12)
 			ctime_r(&luTime12,cBuf12);
 		else
 			sprintf(cBuf12,"---");
-		long unsigned luTime14=strtoul(field[14],NULL,10);
+		time_t luTime14=strtoul(field[14],NULL,10);
 		char cBuf14[32];
 		if(luTime14)
 			ctime_r(&luTime14,cBuf14);
