@@ -29,7 +29,7 @@ char gcHostname[100]={""};
 char gcFunction[100]={""};
 char gcPage[100]={""};
 unsigned guBrowserFirefox=0;
-unsigned guContentType=7;
+unsigned guContentType=1;
 
 //
 //Local only
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 				ContentGetHook(gentries,i);
 			if(!strcmp(gcPage,"Home"))
 			{
-				guContentType=7;
+				guContentType=1;
 				htmlContent();
 			}
 			else
