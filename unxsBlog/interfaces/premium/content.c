@@ -256,7 +256,7 @@ void htmlContentPage(char *cPageTitle, char *cTemplateName)
 			template.cpValue[0]=cPageTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="magazine2.cgi";
+			template.cpValue[1]="PremiumContent.cgi";
 			
 			template.cpName[2]="gcHost";
 			template.cpValue[2]=gcHost;
