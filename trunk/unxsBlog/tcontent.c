@@ -48,11 +48,11 @@ static unsigned uOwner=0;
 static unsigned uCreatedBy=0;
 #define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
-static long unsigned uCreatedDate=0;
+static time_t uCreatedDate=0;
 //uModBy: uClient for last update
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
-static long unsigned uModDate=0;
+static time_t uModDate=0;
 
 
 
@@ -708,31 +708,31 @@ void tContentList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		long unsigned luYesNo3=strtoul(field[3],NULL,10);
+		time_t luYesNo3=strtoul(field[3],NULL,10);
 		char cBuf3[4];
 		if(luYesNo3)
 			sprintf(cBuf3,"Yes");
 		else
 			sprintf(cBuf3,"No");
-		long unsigned luYesNo4=strtoul(field[4],NULL,10);
+		time_t luYesNo4=strtoul(field[4],NULL,10);
 		char cBuf4[4];
 		if(luYesNo4)
 			sprintf(cBuf4,"Yes");
 		else
 			sprintf(cBuf4,"No");
-		long unsigned luYesNo6=strtoul(field[6],NULL,10);
+		time_t luYesNo6=strtoul(field[6],NULL,10);
 		char cBuf6[4];
 		if(luYesNo6)
 			sprintf(cBuf6,"Yes");
 		else
 			sprintf(cBuf6,"No");
-		long unsigned luTime14=strtoul(field[14],NULL,10);
+		time_t luTime14=strtoul(field[14],NULL,10);
 		char cBuf14[32];
 		if(luTime14)
 			ctime_r(&luTime14,cBuf14);
 		else
 			sprintf(cBuf14,"---");
-		long unsigned luTime16=strtoul(field[16],NULL,10);
+		time_t luTime16=strtoul(field[16],NULL,10);
 		char cBuf16[32];
 		if(luTime16)
 			ctime_r(&luTime16,cBuf16);

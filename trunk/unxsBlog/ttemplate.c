@@ -34,11 +34,11 @@ static unsigned uOwner=0;
 static unsigned uCreatedBy=0;
 #define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
-static long unsigned uCreatedDate=0;
+static time_t uCreatedDate=0;
 //uModBy: uClient for last update
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
-static long unsigned uModDate=0;
+static time_t uModDate=0;
 
 
 
@@ -590,13 +590,13 @@ void tTemplateList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		long unsigned luTime8=strtoul(field[8],NULL,10);
+		time_t luTime8=strtoul(field[8],NULL,10);
 		char cBuf8[32];
 		if(luTime8)
 			ctime_r(&luTime8,cBuf8);
 		else
 			sprintf(cBuf8,"---");
-		long unsigned luTime10=strtoul(field[10],NULL,10);
+		time_t luTime10=strtoul(field[10],NULL,10);
 		char cBuf10[32];
 		if(luTime10)
 			ctime_r(&luTime10,cBuf10);
