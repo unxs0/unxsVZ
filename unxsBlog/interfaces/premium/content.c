@@ -214,7 +214,7 @@ void htmlShowContent(unsigned uPlain)
 
 void htmlContent(void)
 {
-	if(guContentType==7)
+	if(guContentType==1)
 	{
 		MYSQL_RES *res;
 		MYSQL_ROW field;
@@ -411,7 +411,7 @@ void funcSectionArticles(FILE *fp)
 	res=mysql_store_result(&gMysql);
 
 	if(!mysql_num_rows(res))
-		fprintf(fp,"No articles in this section yet.<br>\n");
+		fprintf(fp,"No articles in this section yet (guContentType=%u).<br>\n",guContentType);
 	
 	while((field=mysql_fetch_row(res)))
 		fprintf(fp,"<a href=?gcPage=Content&uContentType=%u&uContent=%s>%s</a><br>\n",

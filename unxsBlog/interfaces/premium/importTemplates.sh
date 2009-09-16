@@ -14,5 +14,5 @@
 #	command line arg $1 for example
 #
 for i in `find ./templates/* -type f`; do 
-	/u/web/unixservice.com/cgi-bin/unxsBlog.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i plain;
+	/var/www/unxs/cgi-bin/unxsBlog.cgi ImportTemplateFile  `echo $i | cut -f 3 -d /`  ./$i plain;
 done
