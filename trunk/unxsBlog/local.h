@@ -9,6 +9,8 @@ LEGAL
 
 //Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
 #define DBIP NULL
+#define DBIP0 NULL
+#define DBIP1 NULL
 #define DBNAME "mysqlblog2"
 #define DBLOGIN "mysqlblog2"
 #define DBPASSWD "wsxedc"
@@ -35,6 +37,8 @@ LEGAL
 #define EXTISPNAME "openisp"
 #define EXTISPURL "openisp.net"
 
+#define TCLIENT "tClient"
+#define TAUTHORIZE "tAuthorize"
 
 //End-users: Do not change these!
 //Developers: See makefile also when changing these
