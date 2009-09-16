@@ -32,15 +32,19 @@ fi
 
 #for each datacenter node then add them , set this same as allnodecmd.sh
 #cNameSuffix="lax-f2";
-cNameSuffix="";
-cNamePrefix="fs";
+cNameSuffix="vm";
+cNamePrefix="node";
 uPort="22";
 #Set the seq range for your datacenter
 for N in $(seq 1 2 ); do
 	eval `nice /usr/bin/ssh -p $uPort $cNamePrefix$N$cNameSuffix grep $DEV /proc/net/dev \
 			 | awk -F: '{print $2}' | awk '{printf"CtIn=%-15d\nCtOut=%-15d\n", $1, $9}'`;
-	CtInTotal=$[$CtInTotal+$CtIn];
-	CtOutTotal=$[$CtOutTotal+$CtOut];
+	if [ $? == 0 ];then
+		CtInTotal=$[$CtInTotal+$CtIn];
+		CtOutTotal=$[$CtOutTotal+$CtOut];
+	else
+		echo "datacenter_traffic_log.sh eval error";
+	fi
 done
 
 

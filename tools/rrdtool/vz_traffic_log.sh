@@ -3,7 +3,11 @@
 # Example crontab bash script for providing per container mrtg style traffic
 # graphs.
 #
- 
+
+/usr/sbin/vzlist > /dev/null 2>&1; 
+if [ $? != 0 ];then
+	exit 0;
+fi
 for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
  
 	RRDFILE="/var/lib/rrd/$veid.rrd"
@@ -25,6 +29,10 @@ for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
  
 	eval `/usr/sbin/vzctl exec $veid "grep venet0 /proc/net/dev"  |  \
 		awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
+	if [ $? != 0 ];then
+		echo "vz_traffic_log.sh eval error";
+		continue;
+	fi
  
 	nice /usr/bin/rrdtool update $RRDFILE N:$CTIN:$CTOUT
 

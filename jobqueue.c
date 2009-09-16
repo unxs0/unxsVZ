@@ -86,7 +86,6 @@ void ProcessJobQueue(void)
 	unsigned uNode=0;
 	unsigned uContainer=0;
 	unsigned uJob=0;
-	time_t luClock;
 
 	if(gethostname(cHostname,99)!=0)
 	{
@@ -112,7 +111,6 @@ void ProcessJobQueue(void)
 	}
 	mysql_free_result(res);
 
-
 	if(!uNode)
 	{
 		printf("could not determine uNode: aborted\n");
@@ -124,11 +122,10 @@ void ProcessJobQueue(void)
 	//		cHostname,uNode,uDatacenter);
 
 	//Main loop
-	time(&luClock);
 	sprintf(gcQuery,"SELECT uJob,uContainer,cJobName,cJobData FROM tJob WHERE uJobStatus=1"
 				" AND uDatacenter=%u AND uNode=%u"
-				" AND uJobDate<=%lu LIMIT 100",
-						uDatacenter,uNode,luClock);
+				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) LIMIT 100",
+						uDatacenter,uNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -145,7 +142,6 @@ void ProcessJobQueue(void)
 	}
 	mysql_free_result(res);
 
-
 	//debug only
 	//printf("ProcessJobQueue() End\n");
 	exit(0);
@@ -160,14 +156,6 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	static unsigned uCount=0;
 	guNode=uNode;
 	guDatacenter=uDatacenter;
-
-	//This check here is to don't allow running more than one CloneContainer job
-	//per HN
-	if(!strcmp(cJobName,"CloneContainer"))
-	{
-		if(access("/var/run/vzdump.lock",R_OK)==0)
-			return;
-	}
 
 	//Some jobs may take quite some time, we need to make sure we don't run again!
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=2,cRemoteMsg='Running',uModBy=1,"
@@ -835,6 +823,18 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 	if(uNotValidSystemCallArg(cSSHOptions))
 		cSSHOptions[0]=0;
+	char cSCPOptions[256]={""};
+	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,guNode,0,0);//First try node specific
+	if(!cSCPOptions[0])
+	{
+		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSCPOptions[0])
+			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
+	}
+	//Default for less conditions below
+	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
+		sprintf(cSCPOptions,"-P 22");
+
 		
 
 	if(cSSHOptions[0])
@@ -864,6 +864,17 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			tJobErrorUpdate(uJob,"vzmigrate on/off-line failed");
 			goto CommonExit;
 		}
+	}
+
+	//If container rrd files exists in our standard fixed dir cp to new node
+	//Note that cleanup maybe required in the future
+	sprintf(gcQuery,"/var/lib/rrd/%u.rrd",uContainer);
+	if(!access(gcQuery,R_OK))
+	{
+		sprintf(gcQuery,"scp %s /var/lib/rrd/%u.rrd %s:/var/lib/rrd/",
+			cSCPOptions,uContainer,cTargetNodeIPv4);
+		if(system(gcQuery))
+			printf("MigrateContainer() non-fatal error: %s.\n",gcQuery);
 	}
 
 	//Everything ok
@@ -1406,6 +1417,14 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//target nodes.
 	//vzdump script must be installed on all datacenter nodes.
 
+	//Only run one CloneContainer job per HN. Wait for lock release.
+	//Log this rare condition
+	if(access("/var/run/vzdump.lock",R_OK)==0)
+	{
+		printf("/var/run/vzdump.lock exists\n");
+		return;
+	}
+
 	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
 	if(!uTargetNode)
 	{
@@ -1728,9 +1747,10 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	else if(uDebug)
 		printf("%s\n",gcQuery);
 	
-	//Remove lock file
+	//9b-. remove lock file
 	unlink("/var/run/vzdump.lock");
-	//9b-. remote
+
+	//9c-. remote
 	sprintf(gcQuery,"ssh %s %s 'rm -f /vz/dump/vzdump-%u.tar'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
 		printf("CloneContainer() non critical error: %s.\n",gcQuery);
