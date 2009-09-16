@@ -72,7 +72,8 @@ fi
 SPECTAR=`grep "$LCNAME-.....tar.gz" ./$1/$LCNAME.spec`;
 grep "$LCNAME-$2.tar.gz" ./$1/$LCNAME.spec > /dev/null 2>&1;
 if [ $? != 0 ];then
-	echo "Your spec file seems to have the wrong $SPECTAR, you should use $LCNAME-$2.tar.gz";
+	echo "Your spec file seems to have the wrong Source line, it should be something"
+	echo " like Source: http://unixservice.com/source/$LCNAME-$2.tar.gz";
 	exit 1;
 fi
 

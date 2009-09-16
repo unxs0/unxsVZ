@@ -21,7 +21,7 @@ NOTES
 
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
-static unsigned uFirewallTemplate=0;
+static unsigned uMountTemplate=0;
 static char cuTemplateDropDown[256]={""};
 static char cConfigLabel[32]={""};
 static char cWizHostname[100]={""};
@@ -59,13 +59,14 @@ unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContaine
 unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4);
 char *cRatioColor(float *fRatio);
-void htmlGenFirewallInputs(unsigned const uFirewallTemplate);
-unsigned uCheckFirewallSettings(unsigned uFirewallTemplate);
-void htmlFirewallTemplateSelect(unsigned uSelector);
-void AddFirewallProps(unsigned uContainer);
+void htmlGenMountInputs(unsigned const uMountTemplate);
+unsigned uCheckMountSettings(unsigned uMountTemplate);
+void htmlMountTemplateSelect(unsigned uSelector);
+void AddMountProps(unsigned uContainer);
+void CopyContainerProps(unsigned uSource, unsigned uTarget);
 
 
-void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
+void htmlGenMountInputs(unsigned const uMountTemplate)
 {
 	char *cService1;
 	char *cService2;
@@ -123,7 +124,7 @@ void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
 	}
 	if(strstr(cuTemplateDropDown,"VE"))
 	{
-		printf("<p>DNAT/SNAT Firewall Settings<p>Public or datacenter private IP<br>");
+		printf("<p>DNAT/SNAT Mount Settings<p>Public or datacenter private IP<br>");
 		tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
 		printf("<br>Netmask for IP above<br>\n");
 		printf("<input type=text name=cNetmask value='255.255.255.0'>");
@@ -131,22 +132,22 @@ void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
 		printf("<input type=text name=cPrivateIPs value='10.0.0.0/24'>\n");
 	}
 
-}//void htmlGenFirewallInputs(unsigned const uFirewallTemplate)
+}//void htmlGenMountInputs(unsigned const uMountTemplate)
 
 
-unsigned uCheckFirewallSettings(unsigned uFirewallTemplate)
+unsigned uCheckMountSettings(unsigned uMountTemplate)
 {
 
-	//No firewall option
-	if(!uFirewallTemplate)
+	//No mount/firewall option
+	if(!uMountTemplate)
 		return(0);
 
-	if(!cuTemplateDropDown[0] && uFirewallTemplate)
+	if(!cuTemplateDropDown[0] && uMountTemplate)
 	{
 		MYSQL_RES *res;
 		MYSQL_ROW field;
 
-		sprintf(gcQuery,"SELECT cLabel FROM tTemplate WHERE uTemplate=%u",uFirewallTemplate);
+		sprintf(gcQuery,"SELECT cLabel FROM tTemplate WHERE uTemplate=%u",uMountTemplate);
 	        mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -164,7 +165,7 @@ unsigned uCheckFirewallSettings(unsigned uFirewallTemplate)
 	else
 		return(1);
 
-}//unsigned uCheckFirewallSettings(unsigned uFirewallTemplate)
+}//unsigned uCheckMountSettings(unsigned uMountTemplate)
 
 //tnodefunc.h
 void DelProperties(unsigned uNode,unsigned uType);
@@ -185,14 +186,14 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 			sprintf(cuTargetNodePullDown,"%.255s",entries[i].val);
 			uTargetNode=ReadPullDown("tNode","cLabel",cuTargetNodePullDown);
 		}
-		else if(!strcmp(entries[i].name,"FirewallTemplateSelect"))
+		else if(!strcmp(entries[i].name,"MountTemplateSelect"))
 		{
 			sprintf(cuTemplateDropDown,"%.255s",entries[i].val);
-			uFirewallTemplate=ReadPullDown("tTemplate","cLabel",cuTemplateDropDown);
+			uMountTemplate=ReadPullDown("tTemplate","cLabel",cuTemplateDropDown);
 		}
-		else if(!strcmp(entries[i].name,"uFirewallTemplate"))
+		else if(!strcmp(entries[i].name,"uMountTemplate"))
 		{
-			sscanf(entries[i].val,"%u",&uFirewallTemplate);
+			sscanf(entries[i].val,"%u",&uMountTemplate);
 		}
 		else if(!strcmp(entries[i].name,"cConfigLabel"))
 		{
@@ -284,7 +285,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
 		}
-                else if(!strcmp(gcCommand,"Confirm Firewall Settings") ||
+                else if(!strcmp(gcCommand,"Confirm Mount Settings") ||
 			!strcmp(gcCommand,"Confirm Container Settings"))
                 {
                         ProcesstContainerVars(entries,x);
@@ -299,10 +300,10 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uStatus!=11)
 					tContainer("<blink>Unexpected Error</blink>: uStatus not 'Initial Setup'");
                         	guMode=201;
-				if(uCheckFirewallSettings(uFirewallTemplate))
-					tContainer("<blink>Error</blink>: Incorrect firewall settings!");
+				if(uCheckMountSettings(uMountTemplate))
+					tContainer("<blink>Error</blink>: Incorrect mount settings!");
 
-				AddFirewallProps(uContainer);
+				AddMountProps(uContainer);
 			
                         	guMode=0;
 				tContainer("New container setup completed");
@@ -852,6 +853,12 @@ void ExttContainerCommands(pentry entries[], int x)
 						tContainer("<blink>Error</blink>: Someone grabbed your IP"
 								", No jobs created!");
 					}
+					CopyContainerProps(uContainer,uNewVeid);
+					sprintf(gcQuery,"DELETE FROM tProperty WHERE"
+							" cName='Name' AND uKey=%u AND uType=3",uNewVeid);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
 					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
 							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 							",cName='Name',cValue='%s'",
@@ -1218,9 +1225,9 @@ void ExttContainerButtons(void)
 
                 case 200:
 			printf("<p><u>New container step 2/3</u><br>");
-			printf("Optionally select node firewall template for new container."
+			printf("Optionally select node mount template for new container."
 					" Or '---' for none.<p>");
-			htmlFirewallTemplateSelect(uFirewallTemplate);
+			htmlMountTemplateSelect(uMountTemplate);
 			printf("<p><input title='Continue to step 3 of new container creation'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Mount Template'>\n");
@@ -1229,18 +1236,18 @@ void ExttContainerButtons(void)
 
                 case 201:
 			printf("<p><u>New container step 3/3</u><br>");
-			if(uFirewallTemplate)
+			if(uMountTemplate)
 			{
-				printf("Complete required firewall settings for <i>%s</i> template.<p>",cuTemplateDropDown);
-				htmlGenFirewallInputs(uFirewallTemplate);
-				printf("<input type=hidden name=uFirewallTemplate value='%u'>\n",uFirewallTemplate);
+				printf("Complete required mount settings for <i>%s</i> template.<p>",cuTemplateDropDown);
+				htmlGenMountInputs(uMountTemplate);
+				printf("<input type=hidden name=uMountTemplate value='%u'>\n",uMountTemplate);
 				printf("<p><input title='Finish container creation'"
 					" type=submit class=largeButton"
-					" name=gcCommand value='Confirm Firewall Settings'>\n");
+					" name=gcCommand value='Confirm Mount Settings'>\n");
 			}
 			else
 			{
-				printf("You have chosen to not create a firewall template."
+				printf("You have chosen to not create a mount template."
 					" If correct confirm below, else go back and select a template.<p>");
 				printf("<p><input title='Finish container creation'"
 					" type=submit class=largeButton"
@@ -1349,6 +1356,8 @@ void ExttContainerButtons(void)
 	CloseFieldSet();
 
 }//void ExttContainerButtons(void)
+
+
 
 
 void ExttContainerAuxTable(void)
@@ -2090,7 +2099,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 			mysql_free_result(res);
 			return(4);//no containers added, unexpected error.
 		}
-		sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%.25s-clone',"
+		sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%.25s-clone0',"
 					"cHostname='%.93s.clone',"
 					"uIPv4=%u,"
 					"uOSTemplate=%s,"
@@ -2143,9 +2152,15 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 			}
 			uWizIPv4++;//Now we can increment safely
 			
+			CopyContainerProps(uContainer,uNewVeid);
+			sprintf(gcQuery,"DELETE FROM tProperty WHERE"
+					" cName='Name' AND uKey=%u AND uType=3",uNewVeid);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
 			sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-					",cName='Name',cValue='%.25s-clone'",
+					",cName='Name',cValue='%.25s-clone0'",
 							uNewVeid,guCompany,guLoginClient,field[0]);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -2191,7 +2206,7 @@ char *cRatioColor(float *fRatio)
 }//char *cRatioColor(float *fRatio)
 
 
-void htmlFirewallTemplateSelect(unsigned uSelector)
+void htmlMountTemplateSelect(unsigned uSelector)
 {
         register int i,n;
         MYSQL_RES *mysqlRes;         
@@ -2202,7 +2217,7 @@ void htmlFirewallTemplateSelect(unsigned uSelector)
 	i=mysql_num_rows(mysqlRes);
         if(i>0)
         {
-                printf("<select name=FirewallTemplateSelect>\n");
+                printf("<select name=MountTemplateSelect>\n");
                 //Default no selection
                 printf("<option title='No selection'>---</option>\n");
                 for(n=0;n<i;n++)
@@ -2220,15 +2235,15 @@ void htmlFirewallTemplateSelect(unsigned uSelector)
         }
         else
         {
-		printf("<select name=FirewallTemplateSelect>"
+		printf("<select name=MountTemplateSelect>"
 				"<option title='No selection'>---</option></select>\n");
         }
         printf("</select>\n");
 
-}//void htmlFirewallTemplateSelect(unsigned uSelector)
+}//void htmlMountTemplateSelect(unsigned uSelector)
 
 
-void AddFirewallProps(unsigned uContainer)
+void AddMountProps(unsigned uContainer)
 {
 	if(cService1[0])
 	{
@@ -2386,4 +2401,32 @@ void AddFirewallProps(unsigned uContainer)
 	}
 
 
-}//void AddFirewallProps(unsigned uContainer)
+}//void AddMountProps(unsigned uContainer)
+
+
+void CopyContainerProps(unsigned uSource, unsigned uTarget)
+{
+	if(!uSource || !uTarget) return;
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cName,cValue FROM tProperty WHERE uKey=%u AND uType=3",uSource);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET cName='%s',cValue='%s',uKey=%u,uType=3,uOwner=%u,"
+				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					field[0],
+					field[1],
+					uTarget,guCompany,guLoginClient);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+	mysql_free_result(res);
+
+}//void CopyContainerProps(unsigned uSource, unsigned uTarget)

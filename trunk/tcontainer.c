@@ -513,9 +513,7 @@ void NewtContainer(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uContainer FROM tContainer\
-				WHERE uContainer=%u"
-							,uContainer);
+	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u",uContainer);
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -530,11 +528,10 @@ void NewtContainer(unsigned uMode)
 	uContainer=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tContainer",uContainer);
 	unxsVZLog(uContainer,"tContainer","New");
-
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uContainer);
-	tContainer(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uContainer);
+		tContainer(gcQuery);
 	}
 
 }//NewtContainer(unsigned uMode)
@@ -581,8 +578,8 @@ void Insert_tContainer(void)
 			,uOwner
 			,uCreatedBy
 			);
-
 	MYSQL_RUN;
+
 }//void Insert_tContainer(void)
 
 
