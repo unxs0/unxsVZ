@@ -669,8 +669,8 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 	char cNextYear[8]={""};
 	char cThisYear[8]={""};
 	char cThisMonth[4]={""};
-	unsigned long uStart=0;
-	unsigned long uEnd=0;
+	time_t uStart=0;
+	time_t uEnd=0;
 	unsigned uRows=0;
 	time_t clock;
 	struct tm *structTime;
