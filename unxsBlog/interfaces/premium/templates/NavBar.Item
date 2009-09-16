@@ -1,0 +1,4 @@
+<td class={{cTDClass}} nowrap height="100%">
+<a title='' class={{cAClass}} href='?gcPage={{cLabel}}'><b class ="font10pt">{{cLabel}}</b></a>
+</td>
+<td><img src="/images/nav_pipe_on.gif" alt="" width="1" height="27" border="0" /></td>
