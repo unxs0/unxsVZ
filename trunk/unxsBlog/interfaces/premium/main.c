@@ -1,11 +1,11 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 212 2006-12-14 16:11:14Z ggw $
+	$Id: main.c 747 2009-04-01 16:00:49Z hus $
 AUTHOR
-	(C) 2007 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	unxsBlog public interface main module
+	unxsBlog PremiumContent Interface
 REQUIRES
 	OpenISP libtemplates.a and templates.h
 */
@@ -21,20 +21,45 @@ char gcQuery[4096]={""};
 //
 //Template vars
 char *gcMessage="&nbsp;";
+char gcInputStatus[32]={"disabled"};
+char gcPermInputStatus[32]={"disabled"};
+char gcModStep[32]={""};
+char gcNewStep[32]={""};
+char gcDelStep[32]={""};
+char gcZone[256]={""};
+char gcCustomer[256]={""};
 //SSLLoginCookie()
+char gcCookie[1024]={""};
+char gcLogin[100]={""};
 char cLogKey[16]={"Ksdj458jssdUjf79"};
+char gcPasswd[100]={""};
+unsigned guSSLCookieLogin=0;
+unsigned guContentType=1;
+
+int guPermLevel=0;
+char gcuPermLevel[4]={""};
+unsigned guLoginClient=0;
+unsigned guOrg=0;
+char gcUser[100]={""};
+char gcName[100]={""};
+char gcOrgName[100]={""};
 char gcHost[100]={""};
 char gcHostname[100]={""};
 
 char gcFunction[100]={""};
 char gcPage[100]={""};
 unsigned guBrowserFirefox=0;
-unsigned guContentType=1;
 
 //
 //Local only
 int main(int argc, char *argv[]);
-	
+int iValidLogin(int mode);
+void SSLCookieLogin(void);
+void SetLogin(void);
+void GetPLAndClient(char *cUser);
+void htmlLogin(void);
+void htmlLoginPage(char *cTitle, char *cTemplateName);
+char *cShortenText(char *cText);
 
 int main(int argc, char *argv[])
 {
@@ -55,17 +80,12 @@ int main(int argc, char *argv[])
 		if(strstr(getenv("HTTP_USER_AGENT"),"Firefox"))
 			guBrowserFirefox=1;
 	}
-#if defined(Linux)
+
 	gethostname(gcHostname, 98);
-#else
-	//Solaris
-	sysinfo(SI_HOSTNAME, gcHostname, 98);
-#endif
 
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{
 		//Get	
-	
 		gcl = getenv("QUERY_STRING");
 		for(i=0;gcl[0] != '\0' && i<MAXGETVARS;i++)
 		{
@@ -78,9 +98,9 @@ int main(int argc, char *argv[])
 				sprintf(gcFunction,"%.99s",gentries[i].val);
 			else if(!strcmp(gentries[i].name,"gcPage"))
 				sprintf(gcPage,"%.99s",gentries[i].val);
-			else if(!strcmp(gentries[i].name,"guContentType"))
-				sscanf(gentries[i].val,"%u",&guContentType);
 		}
+		SSLCookieLogin();
+		//Required to be logged in GET section
 		if(gcPage[0])
 		{
 			if(!strcmp(gcPage,"Content"))
@@ -97,7 +117,6 @@ int main(int argc, char *argv[])
 	else
 	{
 		//Post
-		
 		cl = atoi(getenv("CONTENT_LENGTH"));
 		for(i=0;cl && (!feof(stdin)) && i<MAXPOSTVARS ;i++)
 		{
@@ -110,12 +129,57 @@ int main(int argc, char *argv[])
 				sprintf(gcFunction,"%.99s",entries[i].val);
 			else if(!strcmp(entries[i].name,"gcPage"))
 				sprintf(gcPage,"%.99s",entries[i].val);
-			else if(!strcmp(entries[i].name,"guContentType"))
-				sscanf(entries[i].val,"%u",&guContentType);
+			else if(!strcmp(entries[i].name,"gcLogin"))
+				sprintf(gcLogin,"%.99s",entries[i].val);
+			else if(!strcmp(entries[i].name,"gcPasswd"))
+				sprintf(gcPasswd,"%.99s",entries[i].val);
 		}
 	}
 
 	//Not required to be logged in gcFunction section
+	if(gcFunction[0])
+	{
+		if(!strncmp(gcFunction,"Logout",5))
+		{
+			printf("Set-Cookie: PremiumContentLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: PremiumContentPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: iDNSSessionCookie=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=7,uPermLevel=%u,"
+				"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+			mysql_query(&gMysql,gcQuery);
+        		guPermLevel=0;
+			gcUser[0]=0;
+			guLoginClient=0;
+			htmlLogin();
+		}
+	}
+
+        if(!strcmp(gcFunction,"Login")) SetLogin();
+	
+        if(!guPermLevel || !gcUser[0] || !guLoginClient)
+                SSLCookieLogin();
+
+	//First page after valid login
+	if(!strcmp(gcFunction,"Logout"))
+	{
+		//This should not be needed but can't find the error. And this works for now.
+		printf("Set-Cookie: PremiumContentLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+		printf("Set-Cookie: PremiumContentPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='perm logout %.99s',uLogType=7,uPermLevel=%u,"
+				"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+		mysql_query(&gMysql,gcQuery);
+       		guPermLevel=0;
+		gcUser[0]=0;
+		guLoginClient=0;
+		htmlLogin();
+
+	}
+
+	//Per page command tree
 	ContentCommands(entries,i);
 	htmlContent();
 	return(0);
@@ -123,15 +187,65 @@ int main(int argc, char *argv[])
 }//end of main()
 
 
+void htmlLogin(void)
+{
+	htmlHeader("DNS System","Header");
+	htmlLoginPage("DNS System","Login.Body");
+	htmlFooter("Footer");
+
+}//void htmlLogin(void)
+
+
+void htmlLoginPage(char *cTitle, char *cTemplateName)
+{
+	if(cTemplateName[0])
+	{
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+
+		TemplateSelect(cTemplateName);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			struct t_template template;
+			
+			template.cpName[0]="cTitle";
+			template.cpValue[0]=cTitle;
+			
+			template.cpName[1]="cCGI";
+			template.cpValue[1]="PremiumContent.cgi";
+			
+			template.cpName[2]="cMessage";
+			template.cpValue[2]=gcMessage;
+
+			template.cpName[3]="";
+
+			printf("\n<!-- Start htmlLoginPage(%s) -->\n",cTemplateName); 
+			Template(field[0], &template, stdout);
+			printf("\n<!-- End htmlLoginPage(%s) -->\n",cTemplateName); 
+		}
+		else
+		{
+			printf("<hr>");
+			printf("<center><font size=1>%s</font>\n",cTemplateName);
+		}
+		mysql_free_result(res);
+	}
+
+}//void htmlLoginPage()
+
+
 void htmlPlainTextError(const char *cError)
 {
 	char cQuery[1024];
 
 	printf("Content-type: text/plain\n\n");
-	printf("Please report this idnsAdmin fatal error ASAP:\n%s\n",cError);
-
+	printf("Please report this PremiumContent fatal error ASAP:\n%s\n",cError);
 	//Attempt to report error in tLog
-        sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",0,0,"No login",gcHost,cError,gcHostname,0);
+        sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,"
+			"cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				guPermLevel,guLoginClient,gcLogin,gcHost,cError,gcHostname,guOrg,guLoginClient);
         mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
 		printf("Another error occurred while attempting to log: %s\n",
@@ -156,7 +270,7 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 		{
 			struct t_template template;
 			template.cpName[0]="cTitle";
-			template.cpValue[0]=cTitle;
+			template.cpValue[0]="Unixservice iDNS System";
 		
 			template.cpName[1]="";
 
@@ -172,7 +286,8 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 	}
 	else
 	{
-	printf("<html><head><title>%s</title></head><body bgcolor=white><font face=Arial,Helvetica",cTitle);
+		printf("<html><head><title>%s</title></head><body bgcolor=white><font face=Arial,Helvetica",
+					cTitle);
 	}
 
 }//void htmlHeader()
@@ -195,8 +310,7 @@ void htmlFooter(char *cTemplateName)
 			template.cpName[1]="cIspUrl";
 			template.cpValue[1]=ISPURL;
 			template.cpName[2]="cCopyright";
-			sprintf(gcQuery,"&copy; 2007 %s. All Rights Reserved.",SITE_NAME);
-			template.cpValue[2]=gcQuery;
+			template.cpValue[2]="&copy; 2006-2009 Unixservice. All Rights Reserved.";
 			template.cpName[3]="";
 
 			printf("\n<!-- Start htmlFooter(%s) -->\n",cTemplateName); 
@@ -245,17 +359,21 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
 		}
 		mysql_free_result(res);
 	}
+
 }//void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
 
 
 void ConnectDb(void)
 {
         mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP,DBLOGIN,DBPASSWD,DBNAME,0,NULL,0))
+        if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,0,NULL,0))
         {
-		htmlHeader("idnsAdmin.cgi Error","Header");
-                printf("Database server <u>unavailable</u>\n");
-		htmlFooter("Footer");
+		if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
+		{
+			htmlHeader("PremiumContent.cgi Error","Header");
+        	        printf("Database server <u>unavailable</u>\n");
+			htmlFooter("Footer");
+		}
         }
 
 }//end of ConnectDb()
@@ -274,6 +392,294 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcSearchResults(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
+
+//
+//Login functions section
+char *cGetPasswd(char *gcLogin)
+{
+	static char cPasswd[100]={""};
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+	char *cp;
+
+	//SQL injection code
+	if((cp=strchr(gcLogin,'\''))) *cp=0;
+
+	sprintf(gcQuery,"SELECT cPasswd FROM tAuthorize WHERE cLabel='%s'",
+			gcLogin);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		htmlPlainTextError(mysql_error(&gMysql));
+	}
+	mysqlRes=mysql_store_result(&gMysql);
+	cPasswd[0]=0;
+	if((mysqlField=mysql_fetch_row(mysqlRes)))
+		sprintf(cPasswd,"%.99s",mysqlField[0]);
+	mysql_free_result(mysqlRes);
+
+	
+	return(cPasswd);
+
+}//char *cGetPasswd(char *gcLogin)
+
+
+void SSLCookieLogin(void)
+{
+	char *ptr,*ptr2;
+
+	//Parse out login and passwd from cookies
+#ifdef SSLONLY
+	if(getenv("HTTPS")==NULL) 
+		htmlPlainTextError("Non SSL access denied");
+#endif
+
+	if(getenv("HTTP_COOKIE")!=NULL)
+		sprintf(gcCookie,"%.1022s",getenv("HTTP_COOKIE"));
+	
+	if(gcCookie[0])
+	{
+
+	if((ptr=strstr(gcCookie,"PremiumContentLogin=")))
+	{
+		ptr+=strlen("PremiumContentLogin=");
+		if((ptr2=strchr(ptr,';')))
+		{
+			*ptr2=0;
+			sprintf(gcLogin,"%.99s",ptr);
+			*ptr2=';';
+		}
+		else
+		{
+			sprintf(gcLogin,"%.99s",ptr);
+		}
+	}
+	if((ptr=strstr(gcCookie,"PremiumContentPasswd=")))
+	{
+		ptr+=strlen("PremiumContentPasswd=");
+		if((ptr2=strchr(ptr,';')))
+		{
+			*ptr2=0;
+			sprintf(gcPasswd,"%.99s",ptr);
+			*ptr2=';';
+		}
+		else
+		{
+			sprintf(gcPasswd,"%.99s",ptr);
+		}
+	}
+	
+	}//if gcCookie[0] time saver
+
+	if(!iValidLogin(1))
+		htmlLogin();
+
+	sprintf(gcUser,"%.41s",gcLogin);
+	GetPLAndClient(gcUser);
+	if(!guPermLevel || !guLoginClient)
+		htmlPlainTextError("Unexpected guPermLevel or guLoginClient value");
+	
+	if(guPermLevel<10)
+		htmlLogin();
+
+	gcPasswd[0]=0;
+	guSSLCookieLogin=1;
+
+}//SSLCookieLogin()
+
+
+void GetPLAndClient(char *cUser)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+
+	sprintf(gcQuery,"SELECT tAuthorize.uPerm,tAuthorize.uCertClient,tAuthorize.uOwner FROM"
+				" tAuthorize,tClient WHERE tAuthorize.cLabel='%s'",
+		cUser);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	mysqlRes=mysql_store_result(&gMysql);
+	if((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		sscanf(mysqlField[0],"%d",&guPermLevel);
+		sscanf(mysqlField[1],"%u",&guLoginClient);
+		sscanf(mysqlField[2],"%u",&guOrg);
+	}
+	mysql_free_result(mysqlRes);
+	
+	sprintf(gcQuery,"SELECT tClient.cLabel FROM tClient WHERE tClient.uClient=%u",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	mysqlRes=mysql_store_result(&gMysql);
+	if((mysqlField=mysql_fetch_row(mysqlRes)))
+		sprintf(gcName,"%s",mysqlField[0]);
+	mysql_free_result(mysqlRes);
+
+	sprintf(gcQuery,"SELECT cLabel FROM tClient WHERE uClient=%u",guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	mysqlRes=mysql_store_result(&gMysql);
+	if((mysqlField=mysql_fetch_row(mysqlRes)))
+		sprintf(gcOrgName,"%.100s",mysqlField[0]);
+	mysql_free_result(mysqlRes);
+	
+}//void GetPLAndClient()
+
+
+void EncryptPasswdWithSalt(char *pw, char *salt)
+{
+	char passwd[102]={""};
+	char *cpw;
+			
+	sprintf(passwd,"%.101s",pw);
+				
+	cpw=crypt(passwd,salt);
+
+	sprintf(pw,"%s",cpw);
+
+}//void EncryptPasswdWithSalt(char *pw, char *salt)
+
+
+int iValidLogin(int mode)
+{
+	char cSalt[16]={""};
+	char cPassword[100]={""};
+
+	//Notes:
+	//Mode=1 means we have encrypted passwd from cookie
+
+	sprintf(cPassword,"%.99s",cGetPasswd(gcLogin));
+	if(cPassword[0])
+	{
+		if(!mode)
+		{
+			//MD5 vs DES salt determination
+			if(cPassword[0]=='$' && cPassword[2]=='$')
+				sprintf(cSalt,"%.12s",cPassword);
+			else
+				sprintf(cSalt,"%.2s",cPassword);
+			EncryptPasswdWithSalt(gcPasswd,cSalt);
+			if(!strcmp(gcPasswd,cPassword))
+					return 1;
+		}
+		else
+		{
+			if(!strcmp(gcPasswd,cPassword))
+					return 1;
+		}
+	}
+	if(!mode)
+	{
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=7,uPermLevel=%u,uLoginClient=%u,"
+		"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+		gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+		mysql_query(&gMysql,gcQuery);
+	}
+	return 0;
+
+}//iValidLogin()
+
+
+void SetLogin(void)
+{
+	if( iValidLogin(0) )
+	{
+		printf("Set-Cookie: PremiumContentLogin=%s;\n",gcLogin);
+		printf("Set-Cookie: PremiumContentPasswd=%s;\n",gcPasswd);
+		sprintf(gcUser,"%.41s",gcLogin);
+		GetPLAndClient(gcUser);
+		guSSLCookieLogin=1;
+		//tLogType.cLabel='admin login'->uLogType=7
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=7,uPermLevel=%u,uLoginClient=%u,"
+				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+		mysql_query(&gMysql,gcQuery);
+	}
+	else
+	{
+		guSSLCookieLogin=0;
+		SSLCookieLogin();
+	}
+				
+}//void SetLogin(void)
+
+//
+//End login fuctions section
+//
+//RAD / mysqlBind functions
+
+char *IPNumber(char *cInput)
+{
+	unsigned a=0,b=0,c=0,d=0;
+
+	sscanf(cInput,"%u.%u.%u.%u",&a,&b,&c,&d);
+
+	if(a>255) a=0;
+	if(b>255) b=0;
+	if(c>255) c=0;
+	if(d>255) d=0;
+
+	sprintf(cInput,"%u.%u.%u.%u",a,b,c,d);
+
+	return(cInput);
+	
+}//char *IPNumber(char *cInput)
+
+#define BO_CUSTOMER	"Backend Customer"
+#define BO_RESELLER	"Backend Reseller"
+#define BO_ADMIN 	"Backend Admin"
+#define BO_ROOT 	"Backend Root"
+
+#define ORG_CUSTOMER	"Organization Customer"
+#define ORG_WEBMASTER	"Organization Webmaster"
+#define ORG_SALES	"Organization Sales Force"
+#define ORG_SERVICE	"Organization Customer Service"
+#define ORG_ACCT	"Organization Bookkeeper"
+#define ORG_ADMIN	"Organization Admin"
+const char *cUserLevel(unsigned uPermLevel)
+{
+	switch(uPermLevel)
+	{
+		case 12:
+			return(BO_ROOT);
+		break;
+		case 10:
+			return(BO_ADMIN);
+		break;
+		case 8:
+			return(BO_RESELLER);
+		break;
+		case 7:
+			return(BO_CUSTOMER);
+		break;
+		case 6:
+			return(ORG_ADMIN);
+		break;
+		case 5:
+			return(ORG_ACCT);
+		break;
+		case 4:
+			return(ORG_SERVICE);
+		break;
+		case 3:
+			return(ORG_SALES);
+		break;
+		case 2:
+			return(ORG_WEBMASTER);
+		break;
+		case 1:
+			return(ORG_CUSTOMER);
+		break;
+		default:
+			return("---");
+		break;
+	}
+
+}//const char *cUserLevel(unsigned uPermLevel)
 
 
 char *TextAreaSave(char *cField)
@@ -323,6 +729,54 @@ char *TextAreaSave(char *cField)
 }//char *TextAreaSave(char *cField)
 
 
+char *FQDomainName(char *cInput)
+{
+	register int i;
+
+	for(i=0;cInput[i];i++)
+	{
+//		if(!isalnum(cInput[i]) && cInput[i]!='.'  && cInput[i]!='-' )
+//			break;
+		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
+	}
+	cInput[i]=0;
+
+	return(cInput);
+
+}//char *FQDomainName(char *cInput)
+
+
+void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
+{
+        char cQuery[512];
+
+	//uLogType==2 is this org interface
+        sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.63s',uLogType=3,uPermLevel=%u,uLoginClient=%u,"
+			"cLogin='%.99s',cHost='%.99s',uTablePK='%u',cTableName='%.31s',"
+			"cHash=MD5(CONCAT('%s','%u','%u','%s','%s','%u','%s','%s')),uOwner=%u,"
+			"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cLogEntry,
+			guPermLevel,
+			guLoginClient,
+			gcLogin,
+			gcHost,
+			uTablePK,
+			cTableName,
+			cLogEntry,
+			guPermLevel,
+			guLoginClient,
+			gcLogin,
+			gcHost,
+			uTablePK,
+			cTableName,
+			cLogKey,
+			guOrg);
+
+        mysql_query(&gMysql,cQuery);
+
+}//void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
+
+
 int ReadPullDown(const char *cTableName,const char *cFieldName,const char *cLabel)
 {
         MYSQL_RES *mysqlRes;
@@ -363,3 +817,130 @@ char *cShortenText(char *cText)
 	return(cResult);
 	
 }//char *cShortenText(char *cText)
+
+
+const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+	char cQuery[512]={""};
+
+        sprintf(cQuery,"SELECT %s FROM %s WHERE _rowid=%u",
+                        cFieldName,cTableName,uKey);
+        mysql_query(&gMysql,cQuery);
+        if(mysql_errno(&gMysql)) return(mysql_error(&gMysql));
+
+        mysqlRes=mysql_store_result(&gMysql);
+        if(mysql_num_rows(mysqlRes)==1)
+        {
+                mysqlField=mysql_fetch_row(mysqlRes);
+                return(mysqlField[0]);
+        }
+
+	if(!uKey)
+	{
+        	return("---");
+	}
+	else
+	{
+		sprintf(gcQuery,"%u",uKey);
+        	return(gcQuery);
+	}
+
+}//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+
+
+void funcTopInfo(FILE *fp)
+{
+	//<font size=+1>{{cZone}} :: {{cLabel}} :: iDNS Admin Interface</font>
+	
+	char cOutput[512]={"<font size=+1> iDNS Admin Interface</font>"};
+
+	fprintf(fp,"<br><br>");
+	if(gcCustomer[0])
+	{
+		sprintf(cOutput,"<font size=+1>%s :: iDNS Admin Interface</font>",gcCustomer);
+		if(gcZone[0])
+			sprintf(cOutput,"<font size=+1>%s :: %s :: iDNS Admin Interface</font>",gcZone,gcCustomer);
+	}
+
+	fprintf(fp,"%s",cOutput);
+
+}//void funcTopInfo(FILE *fp)
+
+
+void ConvertToEnglishDate(char *cDate)
+{
+	//This function parses the cDate argument, which is a date time string
+	//as returned by the MySQL FROM_UNIXTIME() function
+	unsigned uDay=0;
+	unsigned uMonth=0;
+	unsigned uYear=0;
+	char cTime[65]={""};
+
+	sscanf(cDate,"%u-%u-%u %s",&uYear,&uMonth,&uDay,cTime);
+
+#ifdef ARG_DATE
+	sprintf(cDate,"%02u/%02u/%u %s",uDay,uMonth,uYear,cTime);
+#else
+	sprintf(cDate,"%02u/%02u/%u %s",uMonth,uDay,uYear,cTime);
+#endif
+
+}//void ConvertToEnglishDate(char *cDate)
+
+
+char *cURLEncode(char *cURL)
+{
+        register int x,y;
+        unsigned char *cp;
+        int len=strlen(cURL);
+
+        static unsigned char hexchars[] = "0123456789ABCDEF";
+
+        cp=(unsigned char *)malloc(3*strlen(cURL)+1);
+        for(x=0,y=0;len--;x++,y++)
+        {
+                cp[y]=(unsigned char)cURL[x];
+                if(cp[y]==' ')
+                {
+                        cp[y]='+';
+                }
+                else if( (cp[y]<'0' && cp[y]!='-' && cp[y]!='.') ||
+                                (cp[y]<'A' && cp[y]>'9') ||
+                                (cp[y]>'Z' && cp[y]<'a' && cp[y]!='_') ||
+                                (cp[y]>'z') )
+                {
+                        cp[y++]='%';
+                        cp[y++]=hexchars[(unsigned char) cURL[x] >> 4];
+                        cp[y]=hexchars[(unsigned char) cURL[x] & 15];
+                }
+        }
+
+        cp[y]='\0';
+        return((char *)cp);
+
+}//char *cURLEncode(char *cURL)
+
+
+void ExtSelect(const char *cTable,const char *cVarList,unsigned uMaxResults)
+{
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %1$s FROM %2$s ORDER BY %2$s._rowid",
+					cVarList,cTable);
+	else 
+		sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
+				" WHERE %3$s.uOwner=" TCLIENT ".uClient"
+				" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
+				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
+				" ORDER BY %3$s._rowid",
+					cVarList,guOrg,
+					cTable);
+	if(uMaxResults)
+	{
+		char cLimit[33]={""};
+		sprintf(cLimit," LIMIT %u",uMaxResults);
+		strcat(gcQuery,cLimit);
+	}
+
+}//void ExtSelect(...)
+
