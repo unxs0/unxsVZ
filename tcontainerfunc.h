@@ -1178,7 +1178,7 @@ void ExttContainerButtons(void)
                         printf("<p><u>Template Wizard</u><br>");
 			printf("Here you will select the tConfig.cLabel. This label will be"
 				" used for the OS template and the initial VZ conf file."
-				" !Warning container will be stopped for several minutes!"
+				" If you are not using LVM: !The container will be stopped for several minutes!"
 				" When job is finished the OSTemplate and it's associated base conf file"
 				" will be available on every hardware node for immediate use,"
 				" if /usr/sbin/allnodescp.sh has been installed."

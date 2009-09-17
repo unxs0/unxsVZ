@@ -871,7 +871,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	sprintf(gcQuery,"/var/lib/rrd/%u.rrd",uContainer);
 	if(!access(gcQuery,R_OK))
 	{
-		sprintf(gcQuery,"scp %s /var/lib/rrd/%u.rrd %s:/var/lib/rrd/",
+		sprintf(gcQuery,"/usr/bin/scp %s /var/lib/rrd/%u.rrd %s:/var/lib/rrd/",
 			cSCPOptions,uContainer,cTargetNodeIPv4);
 		if(system(gcQuery))
 			printf("MigrateContainer() non-fatal error: %s.\n",gcQuery);
@@ -1220,6 +1220,14 @@ CommonExit:
 
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 {
+	//Only run one vzdump job per HN. Wait for lock release.
+	//Log this rare condition
+	if(access("/var/run/vzdump.lock",R_OK)==0)
+	{
+		printf("/var/run/vzdump.lock exists\n");
+		return;
+	}
+
         MYSQL_RES *res;
         MYSQL_ROW field;
 
@@ -1290,14 +1298,14 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		cSnapshotDir[0]=0;
 	//1-.
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"/usr/sbin/vzdump --suspend %u > /dev/null 2>&1",uContainer);
+		sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u > /dev/null 2>&1",uContainer);
 	else
-		sprintf(gcQuery,"/usr/sbin/vzdump --dumpdir %s --snapshot %u > /dev/null 2>&1",
+		sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir %s --snapshot %u > /dev/null 2>&1",
 									cSnapshotDir,uContainer);
 	if(system(gcQuery))
 	{
 		printf("TemplateContainer() error: %s.\n",gcQuery);
-		tJobErrorUpdate(uJob,"error 1");
+		tJobErrorUpdate(uJob,"vzdump error1");
 		goto CommonExit;
 	}
 	
@@ -1313,15 +1321,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		goto CommonExit;
 	}
 
-	//4-. gzip then scp template to all nodes
-	//Note dependency on custom per datacenter script!
-	sprintf(gcQuery,"/bin/gzip -f /vz/template/cache/%s-%s.tar",cOSTemplateBase,cConfigLabel);
-	if(system(gcQuery))
-	{
-		printf("TemplateContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"gzip container failed");
-		goto CommonExit;
-	}
+	//4-. scp template to all nodes depends on /usr/sbin/allnodescp.sh installed and configured correctly
 	if(!stat("/usr/sbin/allnodescp.sh",&statInfo))
 	{
 		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /vz/template/cache/%s-%s.tar.gz",cOSTemplateBase,cConfigLabel);
@@ -1378,6 +1378,8 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	tJobDoneUpdate(uJob);
 
 CommonExit:
+	//6-. remove lock file
+	unlink("/var/run/vzdump.lock");
 	return;
 
 }//void TemplateContainer(...)
@@ -1602,10 +1604,10 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		goto CommonExit;
 	}
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"nice scp %s /vz/dump/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar > /dev/null 2>&1",
+		sprintf(gcQuery,"/usr/bin/scp %s /vz/dump/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar > /dev/null 2>&1",
 				cSCPOptions,uContainer,cTargetNodeIPv4,uContainer);
 	else
-		sprintf(gcQuery,"nice scp %s %s/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar > /dev/null 2>&1",
+		sprintf(gcQuery,"/usr/bin/scp %s %s/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar > /dev/null 2>&1",
 				cSCPOptions,cSnapshotDir,uContainer,cTargetNodeIPv4,uContainer);
 	if(uDebug==0 && system(gcQuery))
 	{
