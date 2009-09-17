@@ -143,7 +143,6 @@ int main(int argc, char *argv[])
 		{
 			printf("Set-Cookie: PremiumContentLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: PremiumContentPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			printf("Set-Cookie: iDNSSessionCookie=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=7,uPermLevel=%u,"
 				"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -270,7 +269,7 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 		{
 			struct t_template template;
 			template.cpName[0]="cTitle";
-			template.cpValue[0]="Unixservice iDNS System";
+			template.cpValue[0]="Living Free and Clear";
 		
 			template.cpName[1]="";
 
@@ -310,7 +309,7 @@ void htmlFooter(char *cTemplateName)
 			template.cpName[1]="cIspUrl";
 			template.cpValue[1]=ISPURL;
 			template.cpName[2]="cCopyright";
-			template.cpValue[2]="&copy; 2006-2009 Unixservice. All Rights Reserved.";
+			template.cpValue[2]="&copy; 2009 Asset Solutions. All Rights Reserved.";
 			template.cpName[3]="";
 
 			printf("\n<!-- Start htmlFooter(%s) -->\n",cTemplateName); 
@@ -479,9 +478,6 @@ void SSLCookieLogin(void)
 	if(!guPermLevel || !guLoginClient)
 		htmlPlainTextError("Unexpected guPermLevel or guLoginClient value");
 	
-	if(guPermLevel<10)
-		htmlLogin();
-
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
 
