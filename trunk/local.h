@@ -45,7 +45,7 @@ LEGAL
 
 
 //End-users: Do not change these!
-//Developers: See makefile also when changing these
+//Also edit main.c header RAD status line if you change the following
 #define RELEASE "1.29/rpm-2.9"
 #define REV "1.29/rpm-2.9"
 

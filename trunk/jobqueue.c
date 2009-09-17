@@ -40,6 +40,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		unsigned uContainer,char *cJobName,char *cJobData);
 void tJobErrorUpdate(unsigned uJob, char *cErrorMsg);
 void tJobDoneUpdate(unsigned uJob);
+void tJobWaitingUpdate(unsigned uJob);
 void InstallConfigFile(unsigned uJob,unsigned uContainer,char *cJobData);
 void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void ChangeHostnameContainer(unsigned uJob,unsigned uContainer);
@@ -274,6 +275,20 @@ void tJobDoneUpdate(unsigned uJob)
 	}
 
 }//void tJobDoneUpdate(unsigned uJob, char *cErrorMsg)
+
+
+void tJobWaitingUpdate(unsigned uJob)
+{
+	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=1,uModBy=1,cRemoteMsg='tJobWaitingUpdate()',"
+				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(2);
+	}
+
+}//void tJobWaitingUpdate(unsigned uJob, char *cErrorMsg)
 
 
 //Specific job handlers
@@ -1225,6 +1240,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	if(access("/var/run/vzdump.lock",R_OK)==0)
 	{
 		printf("/var/run/vzdump.lock exists\n");
+		tJobWaitingUpdate(uJob);
 		return;
 	}
 
@@ -1298,9 +1314,9 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		cSnapshotDir[0]=0;
 	//1-.
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u > /dev/null 2>&1",uContainer);
+		sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u",uContainer);
 	else
-		sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir %s --snapshot %u > /dev/null 2>&1",
+		sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir %s --snapshot %u",
 									cSnapshotDir,uContainer);
 	if(system(gcQuery))
 	{
@@ -1308,23 +1324,26 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		tJobErrorUpdate(uJob,"vzdump error1");
 		goto CommonExit;
 	}
-	
+
+	//2-.	
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"mv /vz/dump/vzdump-%u.tar /vz/template/cache/%s-%s.tar",uContainer,cOSTemplateBase,cConfigLabel);
+		sprintf(gcQuery,"mv /vz/dump/vzdump-%u.tgz /vz/template/cache/%s-%s.tar.gz",
+				uContainer,cOSTemplateBase,cConfigLabel);
 	else
-		sprintf(gcQuery,"mv %s/vzdump-%u.tar /vz/template/cache/%s-%s.tar",cSnapshotDir,uContainer,cOSTemplateBase,cConfigLabel);
-	
+		sprintf(gcQuery,"mv %s/vzdump-%u.tgz /vz/template/cache/%s-%s.tar.gz",
+				cSnapshotDir,uContainer,cOSTemplateBase,cConfigLabel);
 	if(system(gcQuery))
 	{
 		printf("TemplateContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"gzip container failed");
+		tJobErrorUpdate(uJob,"mv tgz to cache tar.gz failed");
 		goto CommonExit;
 	}
 
-	//4-. scp template to all nodes depends on /usr/sbin/allnodescp.sh installed and configured correctly
+	//3-. scp template to all nodes depends on /usr/sbin/allnodescp.sh installed and configured correctly
 	if(!stat("/usr/sbin/allnodescp.sh",&statInfo))
 	{
-		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /vz/template/cache/%s-%s.tar.gz",cOSTemplateBase,cConfigLabel);
+		sprintf(gcQuery,"nice /usr/sbin/allnodescp.sh /vz/template/cache/%s-%s.tar.gz",
+			cOSTemplateBase,cConfigLabel);
 		if(system(gcQuery))
 		{
 			printf("TemplateContainer() error: %s\n",gcQuery);
@@ -1333,7 +1352,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		}
 	}
 
-	//4b-. Make /etc/vz/conf tConfig file and scp to all nodes. ve-proxpop.conf-sample
+	//4-. Make /etc/vz/conf tConfig file and scp to all nodes. ve-proxpop.conf-sample
 	sprintf(gcQuery,"/bin/cp /etc/vz/conf/%u.conf /etc/vz/conf/ve-%s.conf-sample",
 		uContainer,cConfigLabel);
 	if(system(gcQuery))
@@ -1344,7 +1363,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 	if(!stat("/usr/sbin/allnodescp.sh",&statInfo))
 	{
-		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /etc/vz/conf/ve-%s.conf-sample",cConfigLabel);
+		sprintf(gcQuery,"nice /usr/sbin/allnodescp.sh /etc/vz/conf/ve-%s.conf-sample",cConfigLabel);
 		if(system(gcQuery))
 		{
 			printf("TemplateContainer() error: %s\n",gcQuery);
@@ -1353,25 +1372,54 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		}
 	}
 
-	//5-. Add tOSTemplate and tConfig entries
-	sprintf(gcQuery,"INSERT tOSTemplate SET cLabel='%s-%s',uOwner=1,uCreatedBy=1,"
+	//5a-. Add tOSTemplate and tConfig entries if not already there tContainer wizard
+	//should help prevent this.
+	sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s-%s'"
+							,cOSTemplateBase,cConfigLabel);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"SELECT tOSTemplate");
+		goto CommonExit;
+	}
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)<1)
+	{
+		sprintf(gcQuery,"INSERT tOSTemplate SET cLabel='%s-%s',uOwner=1,uCreatedBy=1,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",cOSTemplateBase,cConfigLabel);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			tJobErrorUpdate(uJob,"INSERT tOSTemplate");
+			goto CommonExit;
+		}
+	}
+	mysql_free_result(res);
+	//5b-.
+	sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",cConfigLabel);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
-		tJobErrorUpdate(uJob,"INSERT tOSTemplate");
+		tJobErrorUpdate(uJob,"SELECT tConfig");
 		goto CommonExit;
 	}
-	sprintf(gcQuery,"INSERT tConfig SET cLabel='%s',uOwner=1,uCreatedBy=1,"
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)<1)
+	{
+		sprintf(gcQuery,"INSERT tConfig SET cLabel='%s',uOwner=1,uCreatedBy=1,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",cConfigLabel);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		tJobErrorUpdate(uJob,"INSERT tConfig");
-		goto CommonExit;
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			tJobErrorUpdate(uJob,"INSERT tConfig");
+			goto CommonExit;
+		}
 	}
+	mysql_free_result(res);
 
 	//Everything ok
 	SetContainerStatus(uContainer,1);//Active
@@ -1424,6 +1472,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(access("/var/run/vzdump.lock",R_OK)==0)
 	{
 		printf("/var/run/vzdump.lock exists\n");
+		tJobWaitingUpdate(uJob);
 		return;
 	}
 
@@ -1582,9 +1631,9 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		cSnapshotDir[0]=0;
 	//1-.
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"/usr/sbin/vzdump --suspend %u > /dev/null 2>&1",uContainer);
+		sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u",uContainer);
 	else
-		sprintf(gcQuery,"/usr/sbin/vzdump --dumpdir %s --snapshot %u > /dev/null 2>&1",
+		sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir %s --snapshot %u",
 									cSnapshotDir,uContainer);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1604,10 +1653,10 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		goto CommonExit;
 	}
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"/usr/bin/scp %s /vz/dump/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar > /dev/null 2>&1",
+		sprintf(gcQuery,"/usr/bin/scp %s /vz/dump/vzdump-%u.tgz %s:/vz/dump/vzdump-%u.tgz",
 				cSCPOptions,uContainer,cTargetNodeIPv4,uContainer);
 	else
-		sprintf(gcQuery,"/usr/bin/scp %s %s/vzdump-%u.tar %s:/vz/dump/vzdump-%u.tar > /dev/null 2>&1",
+		sprintf(gcQuery,"/usr/bin/scp %s %s/vzdump-%u.tgz %s:/vz/dump/vzdump-%u.tgz",
 				cSCPOptions,cSnapshotDir,uContainer,cTargetNodeIPv4,uContainer);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1621,7 +1670,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//3-.
-	sprintf(gcQuery,"ssh %s %s '/usr/sbin/vzdump --restore /vz/dump/vzdump-%u.tar %u' > /dev/null 2>&1",
+	sprintf(gcQuery,"ssh %s %s '/usr/sbin/vzdump --compress --restore /vz/dump/vzdump-%u.tgz %u'",
 				cSSHOptions,cTargetNodeIPv4,uContainer,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1640,7 +1689,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		tJobErrorUpdate(uJob,"fail sec alert!");
 		goto CommonExit;
 	}
-	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --hostname %s --save' > /dev/null 2>&1",
+	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --hostname %s --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cHostname);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1654,7 +1703,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4b-.
-	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --name %s --save' > /dev/null 2>&1",
+	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --name %s --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cName);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1673,7 +1722,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		tJobErrorUpdate(uJob,"fail sec alert!");
 		goto CommonExit;
 	}
-	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipdel %s --save' > /dev/null 2>&1",
+	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipdel %s --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cSourceContainerIP);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1687,7 +1736,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4d-.
-	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipadd %s --save' > /dev/null 2>&1",
+	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipadd %s --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cNewIP);
 	if(uDebug==0 && system(gcQuery))
 	{
@@ -1719,7 +1768,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//6-.
-	sprintf(gcQuery,"ssh %s %s 'vzctl start %u' > /dev/null 2>&1",cSSHOptions,cTargetNodeIPv4,uNewVeid);
+	sprintf(gcQuery,"ssh %s %s 'vzctl start %u'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
@@ -1741,9 +1790,9 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 	//9a-. local
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"rm -f /vz/dump/vzdump-%u.tar",uNewVeid);
+		sprintf(gcQuery,"rm -f /vz/dump/vzdump-%u.tgz",uNewVeid);
 	else
-		sprintf(gcQuery,"rm -f %s/vzdump-%u.tar",cSnapshotDir,uNewVeid);
+		sprintf(gcQuery,"rm -f %s/vzdump-%u.tgz",cSnapshotDir,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
 		printf("CloneContainer() non critical error: %s.\n",gcQuery);
 	else if(uDebug)
@@ -1753,7 +1802,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	unlink("/var/run/vzdump.lock");
 
 	//9c-. remote
-	sprintf(gcQuery,"ssh %s %s 'rm -f /vz/dump/vzdump-%u.tar'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
+	sprintf(gcQuery,"ssh %s %s 'rm -f /vz/dump/vzdump-%u.tgz'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
 		printf("CloneContainer() non critical error: %s.\n",gcQuery);
 	else if(uDebug)
