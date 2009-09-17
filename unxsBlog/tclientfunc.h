@@ -73,6 +73,9 @@ void ExtProcesstClientVars(pentry entries[], int x)
 				uPerm=7;
 			else if(!strcmp(cuPerm,BO_RESELLER))
 				uPerm=8;
+			else if(!strcmp(cuPerm,ORG_CUSTOMER))
+				uPerm=1;
+
 		}
 		else if(!strcmp(entries[i].name,"cForClientPullDown"))
 		{
@@ -695,6 +698,13 @@ void PermLevelDropDown(char *cuPerm)
 		else
 			printf(">");
 		printf("%s</option>\n",BO_ROOT);
+		
+		printf("<option ");
+		if(!strcmp(cuPerm,ORG_CUSTOMER))
+			printf("selected>");
+		else
+			printf(">");
+		 printf("%s</option>\n",ORG_CUSTOMER);	
 	}
 
 	printf("</select>\n");

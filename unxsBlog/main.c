@@ -303,7 +303,7 @@ void StyleSheet(void)
 	printf("textarea {font-family: Arial,Helvetica; font-size: 11px;}\n");
 	printf("pre {font-family: Arial,Helvetica; font-size: 11px;}\n");
 	printf("input {font-family: Arial,Helvetica; font-size: 11px;}\n");
-	printf("select {font-family: Arial,Helvetica;}\n");
+	printf("select {font-family: Arial,Helvetica; font-size: 11px;}\n");
 
 	printf("body\n");
 	printf("{\n");
