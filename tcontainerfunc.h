@@ -242,11 +242,11 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 
 void ExttContainerCommands(pentry entries[], int x)
 {
+	MYSQL_RES *res;
 
 	if(!strcmp(gcFunction,"tContainerTools"))
 	{
 		unsigned uNodeDatacenter=0;
-        	MYSQL_RES *res;
 		time_t uActualModDate= -1;
 
 
@@ -772,7 +772,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				unsigned uWizLabelSuffix=0;
 				unsigned uWizLabelLoop=1;
 
-				MYSQL_RES *res;
 
                         	guMode=0;
 
@@ -971,6 +970,14 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: Must provide valid tConfig.cLabel!");
 				if(strchr(cConfigLabel,'-'))
 					tContainer("<blink>Error</blink>: tConfig.cLabel can't contain '-' chars!");
+				sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",cConfigLabel);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+					tContainer("<blink>Error</blink>: tConfig.cLabel already exists create another!");
+				mysql_free_result(res);
                         	guMode=0;
 				if(TemplateContainerJob(uDatacenter,uNode,uContainer))
 				{
@@ -1179,8 +1186,8 @@ void ExttContainerButtons(void)
 			printf("Here you will select the tConfig.cLabel. This label will be"
 				" used for the OS template and the initial VZ conf file."
 				" If you are not using LVM: !The container will be stopped for several minutes!"
-				" When job is finished the OSTemplate and it's associated base conf file"
-				" will be available on every hardware node for immediate use,"
+				" When job is finished the tOSTemplate.cLabel and it's associated base conf file"
+				" (tConfig.cLabel) will be available on every hardware node for immediate use,"
 				" if /usr/sbin/allnodescp.sh has been installed."
 				" The all node /vz/template/cache/ file that is created can also be likened"
 				" to a snapshot backup of the running container.<p>\n");
