@@ -1,0 +1,14 @@
+README for removespikes.pl
+
+This version of removespikes.pl is based on Vins Vilaplana original code
+I've added some error checking, made the cutoff point variable (through a
+command line option), eliminated system specific lines and translated all 
+the program and messages to english.
+
+	Thanks Vins
+
+	And of course thanks Tobias.
+
+	Humberto Rossetti Baptista
+	humberto AT baptista DOT name
+	31 - Mar - 2004

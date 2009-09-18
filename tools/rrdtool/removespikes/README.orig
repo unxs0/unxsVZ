@@ -1,0 +1,39 @@
+From: Vins Vilaplana <vins@terra.es>
+Date: Thu, 15 Jan 2004 18:03:44 +0100
+Subject: script to remove spikes
+
+I was looking contributors' scripts to remove spikes in rendered graphs
+and all they were very simple and, often, ineffective. So, I had no
+choice but to build my own "killspike" script. It's finished and fully
+operational and I think it could be useful to more people.
+
+Script is written in perl and, despite comments are in spanish (my
+natural language), script is relatively understandable. This is the way
+the script works:
+
+this script takes rrd values and dumps them in xml format, scans peaks 
+(checking for increments/decrements in exponential indexes) and creates
+an internal hash with those deltas and another hash to store frequency
+of those delta and percentages.
+
+For example, if we're talking about a FastEthernet traffic graph, delta
+between values will never reach 100mbps, so a peak will be giga or tera
+deltas. Normal traffic means 99% graph, and peaks are very very rare
+(less than 0.6%). Thus, script kills all deltas that appears less than 0.6%.
+
+Thanks a lot and receive my most humble congratulations for rrdtool :)
+
+Regards,
+
+-------------------------------------------------- 
+Vincent 'Vins' Vilaplana
+Networking area
+Production department
+-------------------------------------------------- 
+Terra Networks España S.A.
+Via de las Dos Castillas 7
+28223 Pozuelo de Alarcón
+Madrid (Spain)
+Tel. +34.91.452.34.18
+Fax: +34.91.452.36.42
+vins@corp.terra.es 
