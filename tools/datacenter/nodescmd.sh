@@ -21,7 +21,7 @@ cPrefix="node";
 cSuffix="vm";
 for N in $(seq $1 $2); do
         echo $cPrefix$N$cSuffix;
-        ssh -p $uPort $cPrefix$N$cSuffix "$3";
+        ssh -C -c blowfish -p $uPort $cPrefix$N$cSuffix "$3";
 
         if [ $? != 0 ]; then
                 echo "node$N:$3 failed!";

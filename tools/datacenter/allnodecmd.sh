@@ -24,5 +24,5 @@ fi
 #Set the seq range for your datacenter. See man seq for more info.
 for N in $(seq 1 2 ); do
 	echo $cNamePrefix$N$cNameSuffix;
-	/usr/bin/ssh -p $uPort $cNamePrefix$N$cNameSuffix "$1";
+	/usr/bin/ssh -C -c blowfish -p $uPort $cNamePrefix$N$cNameSuffix "$1";
 done
