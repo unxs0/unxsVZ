@@ -32,15 +32,16 @@ if ! test -e $RRDFILE; then
 fi
  
 eval `grep $DEV /proc/net/dev  | awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
+if [ $? == 0 ] && [ "$CTIN" != "" ] && [ "$CTOUT" != "" ];then
 
-#debug only
-#echo "$RRDFILE N:$CTOUT:$CTIN"
-#note reversal 
-nice /usr/bin/rrdtool update $RRDFILE N:$CTOUT:$CTIN
+	#debug only
+	#echo "$RRDFILE N:$CTOUT:$CTIN"
+	#note reversal 
+	nice /usr/bin/rrdtool update $RRDFILE N:$CTOUT:$CTIN
 
-PNGFILE="/var/www/unxs/html/traffic/$HOSTNAME.png"
+	PNGFILE="/var/www/unxs/html/traffic/$HOSTNAME.png"
 
-nice /usr/bin/rrdtool graph $PNGFILE \
+	nice /usr/bin/rrdtool graph $PNGFILE \
 		--title="$HOSTNAME node traffic" \
 		--vertical-label="bytes per second" \
 		--base=1000 \
@@ -60,5 +61,6 @@ nice /usr/bin/rrdtool graph $PNGFILE \
 		"GPRINT:in:LAST:Last in\:%0.0lf" \
 		"GPRINT:out:LAST:Last out\:%0.0lf" > /dev/null 2>&1;
 
-#copy images to all nodes that may run unxsVZ GUI
-nice /usr/sbin/allnodescp.sh $PNGFILE > /dev/null 2>&1;
+	#copy images to all nodes that may run unxsVZ GUI
+	nice /usr/sbin/allnodescp.sh $PNGFILE > /dev/null 2>&1;
+fi

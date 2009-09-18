@@ -29,7 +29,7 @@ for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
  
 	eval `/usr/sbin/vzctl exec $veid "grep venet0 /proc/net/dev"  |  \
 		awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
-	if [ $? != 0 ];then
+	if [ $? != 0 ] || [ "$CTIN" == "" ] || [ "$CTOUT" == "" ];then
 		echo "vz_traffic_log.sh eval error";
 		continue;
 	fi
