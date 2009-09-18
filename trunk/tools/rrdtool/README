@@ -41,3 +41,13 @@ recovery. Following our basic idea of allowing for any hardware node to be a unx
 and that if any hardware node is down the rest still work together fine.
 
 The other two refer to dirs. These dirs must exist in the context of the unxsVZ URL.
+
+
+Other
+-----
+
+The great removespikes.pl (by Vins Vilaplana and Humberto Rossetti Baptista) is included
+to help distribute and for easy access. We will sooner or later make an rpm/yum release for CentOS.
+
+You should run this perl script once in awhile to eliminate nasty transient spikes from reboots.
+We will try to improve the included bash scripts to avoid adding crazy numbers to the rrd's.
