@@ -33,6 +33,6 @@ fi
 for N in $(seq 1 7 ); do
         if [ "$cNamePrefix$N$cNameSuffix" != "$cThisHost" ];then
                 echo $cNamePrefix$N$cNameSuffix;
-                /usr/bin/scp -P $uPort "$1" $cNamePrefix$N$cNameSuffix:"$1";
+                /usr/bin/scp -C -c blowfish -P $uPort "$1" $cNamePrefix$N$cNameSuffix:"$1";
         fi
 done
