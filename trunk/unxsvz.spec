@@ -1,7 +1,7 @@
 Summary: unxsVZ (CentOS5 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: unxsvz
 Version: 2.9
-Release: 1
+Release: 2
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsvz-2.9.tar.gz
@@ -55,6 +55,9 @@ cp -u DejaVuSansMono-Roman.ttf /usr/share/fonts/
 cd ../datacenter/
 install -m 500 allnodescp.sh /usr/sbin/allnodescp.sh
 install -m 500 allnodecmd.sh /usr/sbin/allnodecmd.sh
+install -m 500 nodescmd.sh /usr/sbin/nodescmd.sh
+install -m 500 repclusterchk.sh /usr/sbin/repclusterchk.sh
+install -m 500 reppurge.sh /usr/sbin/reppurge.sh
 cd ../cron/
 cp root-crontab /usr/local/share/unxsVZ/setup/root-crontab
 cd ../openvz/
@@ -166,6 +169,9 @@ fi
 %config(noreplace) /usr/local/sbin/datacenter_traffic_log.sh
 %config(noreplace) /usr/sbin/allnodescp.sh
 %config(noreplace) /usr/sbin/allnodecmd.sh
+%config(noreplace) /usr/sbin/repclusterchk.sh
+%config(noreplace) /usr/sbin/reppurge.sh
+%config(noreplace) /usr/sbin/nodescmd.sh
 %dir /var/www/unxs/html/traffic/
 %dir /usr/local/share/unxsVZ/data/
 /usr/local/share/unxsVZ/data/tAuthorize.txt
@@ -190,6 +196,8 @@ fi
 
 
 %changelog
+* Fri Sep 18 2009 Hugo Urquiza <support2@unixservice.com>
+- Updated file list to include more datacenter scripts
 * Thu Aug 27 2009 Gary Wallis <supportgrp@unixservice.com>
 - Bug fix and vzdump vzmigrate enhancements
 * Tue Aug 26 2009 Hugo Urquiza <support2@unixservice.com>
