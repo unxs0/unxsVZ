@@ -39,11 +39,12 @@ uPort="22";
 for N in $(seq 1 2 ); do
 	eval `nice /usr/bin/ssh -p $uPort $cNamePrefix$N$cNameSuffix grep $DEV /proc/net/dev \
 			 | awk -F: '{print $2}' | awk '{printf"CtIn=%-15d\nCtOut=%-15d\n", $1, $9}'`;
-	if [ $? == 0 ];then
+	if [ $? == 0 ] && [ "$CtIn" != "" ] && [ "$CtOut" != "" ];then
 		CtInTotal=$[$CtInTotal+$CtIn];
 		CtOutTotal=$[$CtOutTotal+$CtOut];
 	else
 		echo "datacenter_traffic_log.sh eval error";
+		exit 1;
 	fi
 done
 
