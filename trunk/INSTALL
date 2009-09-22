@@ -35,7 +35,7 @@ Post Install
 
 7-. Creating test containers and exercizing them for automonics, live migration etc.
 
-8-. Optionally change /var/www/unxs/html/traffic/logo.png.
+8-. Optionally change /var/www/unxs/html/traffic/unxslogo.png to your own logo.
 
 9-. Optionally setup tools/removespikes or learn how to use.
 

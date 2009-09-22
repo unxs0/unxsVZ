@@ -485,7 +485,7 @@ void Header_ism3(char *title, int js)
                 jsCalendarHeader();
 
 	printf("</head><body><form action=unxsVZ.cgi method=post><blockquote>\n");
-	printf("<img src=/images/logo.png>&nbsp;&nbsp;\n");
+	printf("<img src=/images/unxslogo.gif>&nbsp;&nbsp;\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tDatacenter") || !strcmp(gcFunction,"tDatacenterTools") ||
