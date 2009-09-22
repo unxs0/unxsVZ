@@ -5,12 +5,9 @@ FILE
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Unixservice, LLC.
  
 */
-
-//ModuleFunctionProtos()
-
 
 void tNameserverNavList(void);
 
@@ -30,7 +27,7 @@ void ExttNameserverCommands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"tNameserverTools"))
 	{
-		//ModuleFunctionProcess()
+        	MYSQL_RES *res;
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -49,6 +46,19 @@ void ExttNameserverCommands(pentry entries[], int x)
 
                         	guMode=2000;
 				//Check entries here
+				if(strlen(cLabel)<3)
+					tNameserver("<blink>Error</blink>: cLabel too short!");
+				sprintf(gcQuery,"SELECT uNameserver FROM tNameserver WHERE cLabel='%s'",
+						cLabel);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tNameserver("<blink>Error</blink>: Nameserver cLabel in use!");
+				}
                         	guMode=0;
 
 				uNameserver=0;
@@ -62,11 +72,20 @@ void ExttNameserverCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstNameserverVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
+	                        guMode=0;
+				sprintf(gcQuery,"SELECT uNameserver FROM tContainer WHERE uNameserver=%u",
+									uNameserver);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tNameserver("<blink>Error</blink>: Can't delete a nameserver used by a container!");
+				}
 	                        guMode=2001;
 				tNameserver(LANG_NB_CONFIRMDEL);
 			}
@@ -74,22 +93,27 @@ void ExttNameserverCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstNameserverVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
+				sprintf(gcQuery,"SELECT uNameserver FROM tContainer WHERE uNameserver=%u",
+									uNameserver);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tNameserver("<blink>Error</blink>: Can't delete a nameserver used by a container!");
+				}
 				DeletetNameserver();
 			}
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstNameserverVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tNameserver(LANG_NB_CONFIRMMOD);
@@ -98,13 +122,12 @@ void ExttNameserverCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstNameserverVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
 				//Check entries here
+				if(strlen(cLabel)<3)
+					tNameserver("<blink>Error</blink>: cLabel too short!");
                         	guMode=0;
 
 				uModBy=guLoginClient;
@@ -197,9 +220,7 @@ void ExttNameserverListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tNameserver.uNameserver=%u \
-						ORDER BY uNameserver",
-						uNameserver);
+		sprintf(cCat,"tNameserver.uNameserver=%u ORDER BY uNameserver",uNameserver);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -241,14 +262,10 @@ void ExttNameserverNavBar(void)
 	if(guPermLevel>=10 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowDel(uOwner,uCreatedBy))
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -281,10 +298,8 @@ void tNameserverNavList(void)
         	printf("<p><u>tNameserverNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNameserver\
-&uNameserver=%s>%s</a><br>\n",field[0],field[1]);
-	        }
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNameserver&"
+				"uNameserver=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 

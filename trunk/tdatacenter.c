@@ -251,8 +251,9 @@ void tDatacenterInput(unsigned uMode)
 	if(uDatacenter)
 	{
 		char cConfigBuffer[256]={""};
-
 		GetConfiguration("cDatacenterTrafficDirURL",cConfigBuffer,uDatacenter,0,0,0);
+		if(!cConfigBuffer[0])
+			GetConfiguration("cDatacenterTrafficDirURL",cConfigBuffer,0,0,0,0);
 		if(cConfigBuffer[0])
 		{
 	
