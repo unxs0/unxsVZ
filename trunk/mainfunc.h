@@ -250,7 +250,7 @@ void DashBoard(const char *cOptionalMsg)
 	if(guPermLevel>11)
 	{
 	OpenRow("System Messages (Last 10)","black");
-	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog WHERE uLogType=4 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 10");
+	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog WHERE uLogType=4 AND uOwner=%u ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 10",guCompany);
 	macro_mySQLQueryErrorText
 	printf("</td></tr>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
@@ -263,7 +263,7 @@ void DashBoard(const char *cOptionalMsg)
 
 
 	OpenRow("tLog (Last 10)","black");
-	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,tLog.cTableName,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType AND tLog.uLogType!=4 AND tLog.uLogType!=6 ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 10");
+	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,tLog.cTableName,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType AND tLog.uLogType!=4 AND tLog.uLogType!=6 AND uOwner=%u ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 10",guCompany);
 	macro_mySQLQueryErrorText
 	printf("</td></tr>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
@@ -275,7 +275,7 @@ void DashBoard(const char *cOptionalMsg)
 	mysql_free_result(mysqlRes);
 
 	OpenRow("Login Activity (Last 10)","black");
-	sprintf(gcQuery,"SELECT cLabel,GREATEST(uCreatedDate,uModDate),cServer,cHost FROM tLog WHERE uLogType=6 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 10");
+	sprintf(gcQuery,"SELECT cLabel,GREATEST(uCreatedDate,uModDate),cServer,cHost FROM tLog WHERE uLogType=6 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 10",guCompany);
 	macro_mySQLQueryErrorText
 	printf("</td></tr>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
@@ -288,7 +288,7 @@ void DashBoard(const char *cOptionalMsg)
 	}//end of if(guPermLevel>11)
 
 	OpenRow("Pending or Stuck Jobs (Last 10)","black");
-	if(guPermLevel>11)
+	if(guPermLevel>11 && guLoginClient==1)
 		sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tNode.cLabel,tJobStatus.cLabel"
 			" FROM tJob,tJobStatus,tNode WHERE tJob.uNode=tNode.uNode AND"
 			" tJob.uJobStatus=tJobStatus.uJobStatus AND tJob.uJobStatus!=3"
