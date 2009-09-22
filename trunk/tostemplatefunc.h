@@ -5,11 +5,9 @@ FILE
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Unixservice, LLC.
  
 */
-
-//ModuleFunctionProtos()
 
 
 void tOSTemplateNavList(void);
@@ -30,7 +28,7 @@ void ExttOSTemplateCommands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"tOSTemplateTools"))
 	{
-		//ModuleFunctionProcess()
+        	MYSQL_RES *res;
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -49,6 +47,19 @@ void ExttOSTemplateCommands(pentry entries[], int x)
 
                         	guMode=2000;
 				//Check entries here
+				if(strlen(cLabel)<3)
+					tOSTemplate("<blink>Error</blink>: cLabel too short!");
+				sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s'",
+						cLabel);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tOSTemplate("<blink>Error</blink>: Template cLabel in use!");
+				}
                         	guMode=0;
 
 				uOSTemplate=0;
@@ -62,34 +73,48 @@ void ExttOSTemplateCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstOSTemplateVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
+	                        guMode=0;
+				sprintf(gcQuery,"SELECT uOSTemplate FROM tContainer WHERE uOSTemplate=%u",
+						uOSTemplate);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tOSTemplate("<blink>Error</blink>: Can't delete a template used by a container!");
+				}
 	                        guMode=2001;
-				tOSTemplate(LANG_NB_CONFIRMDEL);
+				tOSTemplate(LANG_NB_CONFIRMMOD);
 			}
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstOSTemplateVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
+				sprintf(gcQuery,"SELECT uOSTemplate FROM tContainer WHERE uOSTemplate=%u",
+						uOSTemplate);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tOSTemplate("<blink>Error</blink>: Can't delete a template used by a container!");
+				}
 				DeletetOSTemplate();
 			}
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstOSTemplateVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tOSTemplate(LANG_NB_CONFIRMMOD);
@@ -98,13 +123,12 @@ void ExttOSTemplateCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstOSTemplateVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
 				//Check entries here
+				if(strlen(cLabel)<3)
+					tOSTemplate("<blink>Error</blink>: cLabel too short!");
                         	guMode=0;
 
 				uModBy=guLoginClient;
@@ -197,9 +221,7 @@ void ExttOSTemplateListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tOSTemplate.uOSTemplate=%u \
-						ORDER BY uOSTemplate",
-						uOSTemplate);
+		sprintf(cCat,"tOSTemplate.uOSTemplate=%u ORDER BY uOSTemplate",uOSTemplate);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -232,8 +254,6 @@ void ExttOSTemplateListFilter(void)
 
 void ExttOSTemplateNavBar(void)
 {
-	if(uOwner) GetClientOwner(uOwner,&guReseller);
-
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
@@ -241,14 +261,10 @@ void ExttOSTemplateNavBar(void)
 	if(guPermLevel>=10 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowMod(uOwner,uCreatedBy) && uOSTemplate)
 		printf(LANG_NBB_MODIFY);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowDel(uOwner,uCreatedBy) && uOSTemplate)
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -282,10 +298,8 @@ void tOSTemplateNavList(void)
         	printf("<p><u>tOSTemplateNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tOSTemplate\
-&uOSTemplate=%s>%s</a><br>\n",field[0],field[1]);
-	        }
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tOSTemplate"
+					"&uOSTemplate=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 

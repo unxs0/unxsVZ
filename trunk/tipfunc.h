@@ -34,7 +34,7 @@ void ExttIPCommands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"tIPTools"))
 	{
-		//ModuleFunctionProcess()
+        	MYSQL_RES *res;
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -68,10 +68,8 @@ void ExttIPCommands(pentry entries[], int x)
                         ProcesstIPVars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy) && uAvailable)
 			{
-        			MYSQL_RES *res;
 	                        guMode=0;
-				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=0 AND uIP=%u ORDER BY cLabel",
-						uIP);
+				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=0 AND uIP=%u",uIP);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -92,8 +90,24 @@ void ExttIPCommands(pentry entries[], int x)
 			{
 				guMode=5;
 				if(cIPRange[0])
+				{
 					DelIPRange(cIPRange);
-				DeletetIP();
+				}
+				else
+				{
+					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=0 AND uIP=%u",uIP);
+        				mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        				res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res))
+					{
+						mysql_free_result(res);
+	                        		guMode=2001;
+						tIP("Can't delete an IP in use");
+					}
+					DeletetIP();
+				}
 			}
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
@@ -101,7 +115,6 @@ void ExttIPCommands(pentry entries[], int x)
                         ProcesstIPVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
-        			MYSQL_RES *res;
 	                        guMode=0;
 				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=0 AND uIP=%u ORDER BY cLabel",
 						uIP);
@@ -124,7 +137,17 @@ void ExttIPCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
-				//Check entries here
+				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=0 AND uIP=%u ORDER BY cLabel",
+						uIP);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tIP("Can't modify an IP in use");
+				}
                         	guMode=0;
 
 				if(cIPRange[0])
