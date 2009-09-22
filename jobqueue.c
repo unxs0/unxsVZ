@@ -1798,10 +1798,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	else if(uDebug)
 		printf("%s\n",gcQuery);
 	
-	//9b-. remove lock file
-	unlink("/var/run/vzdump.lock");
-
-	//9c-. remote
+	//9b-. remote
 	sprintf(gcQuery,"ssh %s %s 'rm -f /vz/dump/vzdump-%u.tgz'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
 		printf("CloneContainer() non critical error: %s.\n",gcQuery);
@@ -1810,6 +1807,9 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 
 CommonExit:
+	//9c-. remove lock file
+	unlink("/var/run/vzdump.lock");
+
 	return;
 
 }//void CloneContainer(...)
