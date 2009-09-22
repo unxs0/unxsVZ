@@ -1,10 +1,10 @@
 Summary: unxsVZ (CentOS5 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: unxsvz
-Version: 2.9
-Release: 2
+Version: 2.10
+Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsvz-2.9.tar.gz
+Source: http://unixservice.com/source/unxsvz-2.10.tar.gz
 URL: http://openisp.net/openisp/unxsVZ
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -196,6 +196,8 @@ fi
 
 
 %changelog
+* Tue Sep 22 2009 Gary Wallis <supportgrp@unixservice.com>
+- Several updates
 * Fri Sep 18 2009 Hugo Urquiza <support2@unixservice.com>
 - Updated file list to include more datacenter scripts
 * Thu Aug 27 2009 Gary Wallis <supportgrp@unixservice.com>
