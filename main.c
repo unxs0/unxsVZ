@@ -2245,7 +2245,7 @@ void ExtSelect(const char *cTable,const char *cVarList)
 
 void ExtSelect2(const char *cTable,const char *cVarList,unsigned uMaxResults)
 {
-	if(guPermLevel>11)//Root can read access all
+	if(guPermLevel>11 && guLoginClient==1)//Root can read access all
 		sprintf(gcQuery,"SELECT %1$s FROM %2$s ORDER BY %2$s._rowid",
 					cVarList,cTable);
 	else 
