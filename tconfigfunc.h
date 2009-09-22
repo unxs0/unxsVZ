@@ -5,12 +5,9 @@ FILE
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Unixservice, LLC.
  
 */
-
-//ModuleFunctionProtos()
-
 
 void tConfigNavList(void);
 
@@ -30,7 +27,7 @@ void ExttConfigCommands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"tConfigTools"))
 	{
-		//ModuleFunctionProcess()
+        	MYSQL_RES *res;
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -49,6 +46,19 @@ void ExttConfigCommands(pentry entries[], int x)
 
                         	guMode=2000;
 				//Check entries here
+				if(strlen(cLabel)<3)
+					tConfig("<blink>Error</blink>: cLabel too short!");
+				sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",
+						cLabel);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tConfig("<blink>Error</blink>: Config cLabel in use!");
+				}
                         	guMode=0;
 
 				uConfig=0;
@@ -62,11 +72,19 @@ void ExttConfigCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstConfigVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
+	                        guMode=0;
+				sprintf(gcQuery,"SELECT uConfig FROM tContainer WHERE uConfig=%u",uConfig);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tConfig("<blink>Error</blink>: Can't delete a config used by a container!");
+				}
 	                        guMode=2001;
 				tConfig(LANG_NB_CONFIRMDEL);
 			}
@@ -74,11 +92,19 @@ void ExttConfigCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstConfigVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
+	                        guMode=2001;
+				sprintf(gcQuery,"SELECT uConfig FROM tContainer WHERE uConfig=%u",uConfig);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tConfig("<blink>Error</blink>: Can't delete a config used by a container!");
+				}
 				guMode=5;
 				DeletetConfig();
 			}
@@ -86,10 +112,7 @@ void ExttConfigCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstConfigVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tConfig(LANG_NB_CONFIRMMOD);
@@ -98,13 +121,12 @@ void ExttConfigCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstConfigVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
 				//Check entries here
+				if(strlen(cLabel)<3)
+					tConfig("<blink>Error</blink>: cLabel too short!");
                         	guMode=0;
 
 				uModBy=guLoginClient;
@@ -197,9 +219,7 @@ void ExttConfigListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tConfig.uConfig=%u \
-						ORDER BY uConfig",
-						uConfig);
+		sprintf(cCat,"tConfig.uConfig=%u ORDER BY uConfig",uConfig);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -232,8 +252,6 @@ void ExttConfigListFilter(void)
 
 void ExttConfigNavBar(void)
 {
-	if(uOwner) GetClientOwner(uOwner,&guReseller);
-
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
@@ -241,14 +259,10 @@ void ExttConfigNavBar(void)
 	if(guPermLevel>=10 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowDel(uOwner,uCreatedBy))
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -282,10 +296,8 @@ void tConfigNavList(void)
         	printf("<p><u>tConfigNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tConfig\
-&uConfig=%s>%s</a><br>\n",field[0],field[1]);
-	        }
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tConfig&"
+					"uConfig=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 

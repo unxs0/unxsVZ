@@ -2,7 +2,7 @@
 FILE 
 	unxsVZ/main.c
 	$Id$
-	RAD status 1.29/2.9 update this line before every release for make sure Id is updated.
+	RAD status 1.30/rpm3.0 update this line before every release for make sure Id is updated.
 PURPOSE
 	Main cgi interface and common functions used for all the other
 	table tx.c files and their schema independent txfunc.h files -until
