@@ -5,8 +5,7 @@ FILE
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2007 Gary Wallis.
- 
+	(C) 2001-2009 Unixservice, LLC.
 */
 
 static unsigned uClone=0;
@@ -42,7 +41,8 @@ void ExttDatacenterCommands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"tDatacenterTools"))
 	{
-		//ModuleFunctionProcess()
+        	MYSQL_RES *res;
+		time_t uActualModDate= -1;
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -65,6 +65,17 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				//Check entries here
 				if(strlen(cLabel)<3)
 					tDatacenter("<blink>Error</blink>: Must supply valid cLabel. Min 3 chars.");
+				sprintf(gcQuery,"SELECT uDatacenter FROM tDatacenter WHERE cLabel='%s'",
+						cLabel);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tDatacenter("<blink>Error</blink>: Datacenter cLabel is used!");
+				}
                         	guMode=0;
 
 				uDatacenter=0;
@@ -95,10 +106,22 @@ void ExttDatacenterCommands(pentry entries[], int x)
                         ProcesstDatacenterVars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
+	                        guMode=0;
 				sscanf(ForeignKey("tDatacenter","uModDate",uDatacenter),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
 					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
+				sprintf(gcQuery,"SELECT uDatacenter FROM tContainer WHERE uDatacenter=%u",
+									uDatacenter);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tDatacenter("<blink>Error</blink>: Can't delete a datacenter"
+							" used by a container!");
+				}
 	                        guMode=2001;
 				tDatacenter(LANG_NB_CONFIRMDEL);
 			}
@@ -110,11 +133,23 @@ void ExttDatacenterCommands(pentry entries[], int x)
                         ProcesstDatacenterVars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
+				guMode=5;
 				sscanf(ForeignKey("tDatacenter","uModDate",uDatacenter),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
 					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
-				guMode=5;
+				sprintf(gcQuery,"SELECT uDatacenter FROM tContainer WHERE uDatacenter=%u",
+									uDatacenter);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tDatacenter("<blink>Error</blink>: Can't delete a datacenter"
+							" used by a container!");
+				}
+	                        guMode=0;
 				DelProperties(uDatacenter,2);
 				DeletetDatacenter();
 			}
@@ -140,6 +175,8 @@ void ExttDatacenterCommands(pentry entries[], int x)
 			{
                         	guMode=2002;
 				//Check entries here
+				if(strlen(cLabel)<3)
+					tDatacenter("<blink>Error</blink>: Must supply valid cLabel. Min 3 chars.");
                         	guMode=0;
 
 				uModBy=guLoginClient;
@@ -273,9 +310,7 @@ void ExttDatacenterListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tDatacenter.uDatacenter=%u \
-						ORDER BY uDatacenter",
-						uDatacenter);
+		sprintf(cCat,"tDatacenter.uDatacenter=%u ORDER BY uDatacenter",uDatacenter);
 		strcat(gcQuery,cCat);
         }
         else if(1)

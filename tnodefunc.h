@@ -4,7 +4,7 @@ FILE
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR/LEGAL
-	(C) 2001-2009 Gary Wallis for Unixservice. GPLv2 license applies.
+	(C) 2001-2009 Unixservice, LLC. GPLv2 license applies.
  
 */
 
@@ -61,7 +61,8 @@ void ExttNodeCommands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"tNodeTools"))
 	{
-		//ModuleFunctionProcess()
+        	MYSQL_RES *res;
+		time_t uActualModDate= -1;
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -85,6 +86,17 @@ void ExttNodeCommands(pentry entries[], int x)
 					tNode("<blink>Error</blink>: Must supply valid cLabel. Min 3 chars!");
 				if(!uDatacenter)
 					tNode("<blink>Error</blink>: Must supply valid uDatacenter!");
+				sprintf(gcQuery,"SELECT uNode FROM tNode WHERE cLabel='%s'",
+						cLabel);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tNode("<blink>Error</blink>: Node cLabel is used!");
+				}
                         	guMode=0;
 
 				uNode=0;
@@ -118,6 +130,19 @@ void ExttNodeCommands(pentry entries[], int x)
                         ProcesstNodeVars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
+	                        guMode=0;
+				sprintf(gcQuery,"SELECT uNode FROM tContainer WHERE uNode=%u",
+									uNode);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tNode("<blink>Error</blink>: Can't delete a node"
+							" used by a container!");
+				}
 	                        guMode=2001;
 				tNode(LANG_NB_CONFIRMDEL);
 			}
@@ -130,6 +155,23 @@ void ExttNodeCommands(pentry entries[], int x)
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
+				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+
+				sprintf(gcQuery,"SELECT uNode FROM tContainer WHERE uNode=%u",
+									uNode);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tNode("<blink>Error</blink>: Can't delete a node"
+							" used by a container!");
+				}
+	                        guMode=0;
 				DelProperties(uNode,2);
 				DeletetNode();
 			}
@@ -153,6 +195,9 @@ void ExttNodeCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
+				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tNode("<blink>Error</blink>: This record was modified. Reload it.");
 				if(strlen(cLabel)<3)
 					tNode("<blink>Error</blink>: Must supply valid cLabel. Min 3 chars!");
 				if(!uDatacenter)
@@ -170,8 +215,6 @@ void ExttNodeCommands(pentry entries[], int x)
                         ProcesstNodeVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
-
                         	guMode=0;
 
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
@@ -191,7 +234,6 @@ void ExttNodeCommands(pentry entries[], int x)
                         ProcesstNodeVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				time_t uActualModDate= -1;
 				char cTargetNodeIPv4[32]={""};
 				unsigned uRetVal=0;
 

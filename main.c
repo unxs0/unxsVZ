@@ -485,6 +485,7 @@ void Header_ism3(char *title, int js)
                 jsCalendarHeader();
 
 	printf("</head><body><form action=unxsVZ.cgi method=post><blockquote>\n");
+	printf("<img src=/images/logo.png>&nbsp;&nbsp;\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tDatacenter") || !strcmp(gcFunction,"tDatacenterTools") ||
@@ -571,7 +572,7 @@ void Header_ism3(char *title, int js)
 
 
 	//Login info
-	printf("<font size=3><b>unxsVZ</b></font> \n ");
+	//printf("<font size=3><b>unxsVZ</b></font> \n ");
 	if(!guPermLevel)
 	{
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>Your IP address %s has been logged</font>",gcHost);

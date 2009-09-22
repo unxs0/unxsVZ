@@ -1247,8 +1247,17 @@ void GetConfiguration(const char *cName,char *cValue,
 		sprintf(cExtra," AND uDatacenter=%u",uDatacenter);
 		strcat(cQuery,cExtra);
 	}
+	if(uNode)
+	{
+		sprintf(cExtra," AND uNode=%u",uNode);
+		strcat(cQuery,cExtra);
+	}
+	if(uContainer)
+	{
+		sprintf(cExtra," AND uContainer=%u",uContainer);
+		strcat(cQuery,cExtra);
+	}
         mysql_query(&gMysql,cQuery);
-	
         if(mysql_errno(&gMysql))
 	{
 		if(uHtml)
