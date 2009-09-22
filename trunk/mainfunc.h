@@ -1231,11 +1231,18 @@ void GetConfiguration(const char *cName,char *cValue,
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-        char cQuery[512];
+        char cQuery[1024];
+	char cExtra[100]={""};
 
         sprintf(cQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='%s'",
 			cName);
+	if(uDatacenter)
+	{
+		sprintf(cExtra," AND uDatacenter=%u",uDatacenter);
+		strcat(cQuery,cExtra);
+	}
         mysql_query(&gMysql,cQuery);
+	
         if(mysql_errno(&gMysql))
 	{
 		if(uHtml)
