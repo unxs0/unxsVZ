@@ -109,6 +109,9 @@ cgi.o: cgi.h cgi.c
 jobqueue.o: jobqueue.c mysqlrad.h local.h
 	cc -c jobqueue.c -o jobqueue.o $(CFLAGS)
 
+local.h: local.h.default
+	cp -i local.h.default local.h
+
 clean:
 	rm -f *.o
 
