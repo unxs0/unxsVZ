@@ -1,10 +1,10 @@
 Summary: unxsadmin provides the http shared content and httpd conf.d file for all unxsVZ web admins
 Name: unxsadmin
-Version: 1.4
-Release: 3
+Version: 1.5
+Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsadmin-1.4.tar.gz
+Source: http://unixservice.com/source/unxsadmin-1.5.tar.gz
 URL: http://openisp.net/openisp/unxsAdmin
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -46,11 +46,34 @@ cd $RPM_BUILD_DIR
 
 %files
 %doc README
-/var/www/unxs
+%dir /var/www/unxs/logs/
+%dir /var/www/unxs/cgi-bin/
+%dir /var/www/unxs/html/images/
+%dir /var/www/unxs/html/js/
+%dir /var/www/unxs/html/css/
 /etc/httpd/conf.d/unxs.conf
 /usr/bin/lastmonth
+/var/www/unxs/html/images/calendar.gif
+/var/www/unxs/html/images/calendar_mo.gif*
+/var/www/unxs/html/images/hairline.gif
+/var/www/unxs/html/images/left.gif
+/var/www/unxs/html/images/left_on.gif
+/var/www/unxs/html/images/right.gif
+/var/www/unxs/html/images/right_last.gif
+/var/www/unxs/html/images/right_on.gif
+/var/www/unxs/html/images/topleft.gif
+/var/www/unxs/html/images/topright.gif
+/var/www/unxs/html/images/unxslogo.gif
+/var/www/unxs/html/css/calendar-blue.css
+/var/www/unxs/html/js/calendar-en.js
+/var/www/unxs/html/js/calendar-setup.js
+/var/www/unxs/html/js/calendar.js
+
+
 
 %changelog
+* Fri Sep 22 2009 Gary Wallis <support@unixservice.com>
+- Clean up and modernization, added an img for unxsVZ.
 * Fri May 15 2009 Hugo Urquiza <support2@unixservice.com>
 - RPM rebuild removing extra files
 * Wed Apr 11 2009 Gary Wallis <support@unixservice.com> 
