@@ -23,9 +23,9 @@ Post Install
 
 1-. Setting up MySQL replication cluster.
 
-2-. Setting up rrdtool datacenter, node and container graphics.
+2-. Setting up rrdtool datacenter, node and container graphics. Customize the gfx crontab scripts.
 
-3-. Customizing allnodescp.sh
+3-. Customizing allnodescp.sh.
 
 4-. Making sure your LVM2 disk setup is correct.
 
@@ -34,6 +34,10 @@ Post Install
 6-. Configuring unxsVZ via the web interface.
 
 7-. Creating test containers and exercizing them for automonics, live migration etc.
+
+8-. Optionally change /var/www/unxs/html/traffic/logo.png.
+
+9-. Optionally setup tools/removespikes or learn how to use.
 
 ---
 If you repackage an rpm for FreeBSD, OpenSolaris, OpenBSD etc...please let us know and we will add it to the 
