@@ -68,6 +68,19 @@ void ExttIPCommands(pentry entries[], int x)
                         ProcesstIPVars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy) && uAvailable)
 			{
+        			MYSQL_RES *res;
+	                        guMode=0;
+				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=0 AND uIP=%u ORDER BY cLabel",
+						uIP);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tIP("Can't delete an IP in use");
+				}
 	                        guMode=2001;
 				tIP(LANG_NB_CONFIRMDEL);
 			}
@@ -88,7 +101,20 @@ void ExttIPCommands(pentry entries[], int x)
                         ProcesstIPVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
-				guMode=2002;
+        			MYSQL_RES *res;
+	                        guMode=0;
+				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=0 AND uIP=%u ORDER BY cLabel",
+						uIP);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tIP("Can't modify an IP in use");
+				}
+	                        guMode=2002;
 				tIP(LANG_NB_CONFIRMMOD);
 			}
                 }
@@ -248,7 +274,7 @@ void ExttIPNavBar(void)
 	if(guPermLevel>=10 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(uAllowMod(uOwner,uCreatedBy))
+	if(uAllowMod(uOwner,uCreatedBy) && uAvailable)
 		printf(LANG_NBB_MODIFY);
 
 	if(uAllowDel(uOwner,uCreatedBy) && uAvailable)
