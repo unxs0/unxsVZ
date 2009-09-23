@@ -1344,7 +1344,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//3-. scp template to all nodes depends on /usr/sbin/allnodescp.sh installed and configured correctly
 	if(!stat("/usr/sbin/allnodescp.sh",&statInfo))
 	{
-		sprintf(gcQuery,"nice /usr/sbin/allnodescp.sh /vz/template/cache/%.67s-%.32s.tar.gz",
+		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /vz/template/cache/%.67s-%.32s.tar.gz",
 			cOSTemplateBase,cConfigLabel);
 		if(system(gcQuery))
 		{
@@ -1365,7 +1365,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 	if(!stat("/usr/sbin/allnodescp.sh",&statInfo))
 	{
-		sprintf(gcQuery,"nice /usr/sbin/allnodescp.sh /etc/vz/conf/ve-%.32s.conf-sample",cConfigLabel);
+		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /etc/vz/conf/ve-%.32s.conf-sample",cConfigLabel);
 		if(system(gcQuery))
 		{
 			printf("TemplateContainer() error: %s\n",gcQuery);
