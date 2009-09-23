@@ -1252,6 +1252,8 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	char *cp;
 	register int i;
 	struct stat statInfo;
+	unsigned uOwner=1;
+	unsigned uCreatedBy=1;
 
 	//Parse data and basic sanity checks
 	sscanf(cJobData,"tConfig.Label=%31s;",cConfigLabel);
@@ -1376,6 +1378,24 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 	//5a-. Add tOSTemplate and tConfig entries if not already there tContainer wizard
 	//should help prevent this.
+	sprintf(gcQuery,"SELECT uOwner,uCreatedBy FROM tJob WHERE uJob=%u",uJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		printf("No such uJob? Using uOwner=1 and uCreatedBy=1\n");
+	}
+	else
+	{
+        	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uOwner);
+			sscanf(field[1],"%u",&uCreatedBy);
+		}
+		mysql_free_result(res);
+	}
+
 	sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%.67s-%.32s'"
 							,cOSTemplateBase,cConfigLabel);
 	mysql_query(&gMysql,gcQuery);
@@ -1388,8 +1408,9 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)<1)
 	{
-		sprintf(gcQuery,"INSERT tOSTemplate SET cLabel='%.67s-%.32s',uOwner=1,uCreatedBy=1,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW())",cOSTemplateBase,cConfigLabel);
+		sprintf(gcQuery,"INSERT tOSTemplate SET cLabel='%.67s-%.32s',uOwner=%u,uCreatedBy=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",cOSTemplateBase,cConfigLabel,
+									uOwner,uCreatedBy);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -1411,8 +1432,8 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)<1)
 	{
-		sprintf(gcQuery,"INSERT tConfig SET cLabel='%.32s',uOwner=1,uCreatedBy=1,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW())",cConfigLabel);
+		sprintf(gcQuery,"INSERT tConfig SET cLabel='%.32s',uOwner=%u,uCreatedBy=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",cConfigLabel,uOwner,uCreatedBy);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
