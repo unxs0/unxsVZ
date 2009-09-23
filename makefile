@@ -110,11 +110,11 @@ jobqueue.o: jobqueue.c mysqlrad.h local.h
 	cc -c jobqueue.c -o jobqueue.o $(CFLAGS)
 
 local.h: local.h.default
-	cp -i local.h.default local.h
+	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
 
 clean:
 	rm -f *.o
 
 install: unxsVZ.cgi
 	install -s unxsVZ.cgi /var/www/unxs/cgi-bin/unxsVZ.cgi
-	rm unxsVZ.cgi
+	@ rm unxsVZ.cgi
