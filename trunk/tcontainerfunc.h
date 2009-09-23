@@ -1184,11 +1184,13 @@ void ExttContainerButtons(void)
                 case 4001:
                         printf("<p><u>Template Wizard</u><br>");
 			printf("Here you will select the tConfig.cLabel. This label will be"
-				" used for the OS template and the initial VZ conf file."
-				" If you are not using LVM: !The container will be stopped for several minutes!"
-				" When job is finished the tOSTemplate.cLabel and it's associated base conf file"
-				" (tConfig.cLabel) will be available on every hardware node for immediate use,"
-				" if /usr/sbin/allnodescp.sh has been installed."
+				" be used to create a new OS template based on the source container's OS template"
+				" and the tConfig.cLabel as a dash suffix. This label will also be used for new"
+				" VZ conf file.<p>If you are not using LVM: <font color=red>!The container"
+				" will be stopped for several minutes!</font>"
+				"<p>When the job is finished the tOSTemplate.cLabel and it's associated base conf file"
+				" (tConfig.cLabel) will be available on every hardware node for immediate use"
+				" (the /usr/sbin/allnodescp.sh has to be installed and configured correctly.)"
 				" The all node /vz/template/cache/ file that is created can also be likened"
 				" to a snapshot backup of the running container.<p>\n");
 			printf("<p>tConfig.cLabel <input title='tOSTemplate tail and tConfig label will be set to"

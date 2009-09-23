@@ -196,6 +196,8 @@ fi
 
 
 %changelog
+* Wed Sep 23 2009 Gary Wallis <supportgrp@unixservice.com>
+- tOSTemplate schema update for cLabel to 100 chars.
 * Tue Sep 22 2009 Gary Wallis <supportgrp@unixservice.com>
 - Several updates
 * Fri Sep 18 2009 Hugo Urquiza <support2@unixservice.com>
