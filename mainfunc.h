@@ -710,6 +710,11 @@ void UpdateSchema(void)
 	if(mysql_errno(&gMysql))
 		printf("%s\n",mysql_error(&gMysql));
 
+	sprintf(gcQuery,"ALTER TABLE tOSTemplate MODIFY cLabel VARCHAR(100) NOT NULL DEFAULT ''");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+
 	printf("\nUpdateSchema(): End\n");
 
 }//void UpdateSchema(void)

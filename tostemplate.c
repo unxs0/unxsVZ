@@ -17,12 +17,11 @@ PURPOSE
 //uOSTemplate: Primary Key
 static unsigned uOSTemplate=0;
 //cLabel: Short label
-static char cLabel[33]={""};
+static char cLabel[101]={""};
 //uOwner: Record owner
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -64,7 +63,7 @@ void ProcesstOSTemplateVars(pentry entries[], int x)
 		if(!strcmp(entries[i].name,"uOSTemplate"))
 			sscanf(entries[i].val,"%u",&uOSTemplate);
 		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.32s",entries[i].val);
+			sprintf(cLabel,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -173,7 +172,7 @@ void tOSTemplate(const char *cResult)
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
 		sscanf(field[0],"%u",&uOSTemplate);
-		sprintf(cLabel,"%.32s",field[1]);
+		sprintf(cLabel,"%.100s",field[1]);
 		sscanf(field[2],"%u",&uOwner);
 		sscanf(field[3],"%u",&uCreatedBy);
 		sscanf(field[4],"%lu",&uCreatedDate);
@@ -255,7 +254,7 @@ void tOSTemplateInput(unsigned uMode)
 	}
 //cLabel
 	OpenRow(LANG_FL_tOSTemplate_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=100 maxlength=100 "
 ,LANG_FT_tOSTemplate_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -322,9 +321,7 @@ void NewtOSTemplate(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate\
-				WHERE uOSTemplate=%u"
-							,uOSTemplate);
+	sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE uOSTemplate=%u",uOSTemplate);
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -337,15 +334,12 @@ void NewtOSTemplate(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uOSTemplate=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tOSTemplate",uOSTemplate);
 	unxsVZLog(uOSTemplate,"tOSTemplate","New");
-#endif
-
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uOSTemplate);
-	tOSTemplate(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uOSTemplate);
+		tOSTemplate(gcQuery);
 	}
 
 }//NewtOSTemplate(unsigned uMode)
@@ -353,27 +347,18 @@ void NewtOSTemplate(unsigned uMode)
 
 void DeletetOSTemplate(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tOSTemplate WHERE uOSTemplate=%u AND ( uOwner=%u OR %u>9 )"
 					,uOSTemplate,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tOSTemplate WHERE uOSTemplate=%u"
-					,uOSTemplate);
-#endif
 	MYSQL_RUN;
 	//tOSTemplate("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uOSTemplate,"tOSTemplate","Del");
-#endif
 		tOSTemplate(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uOSTemplate,"tOSTemplate","DelError");
-#endif
 		tOSTemplate(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -382,15 +367,13 @@ void DeletetOSTemplate(void)
 
 void Insert_tOSTemplate(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tOSTemplate SET uOSTemplate=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tOSTemplate SET uOSTemplate=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uOSTemplate
 			,TextAreaSave(cLabel)
 			,uOwner
 			,uCreatedBy
 			);
-
 	MYSQL_RUN;
 
 }//void Insert_tOSTemplate(void)
@@ -398,14 +381,12 @@ void Insert_tOSTemplate(void)
 
 void Update_tOSTemplate(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tOSTemplate SET uOSTemplate=%u,cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tOSTemplate SET uOSTemplate=%u,cLabel='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uOSTemplate
 			,TextAreaSave(cLabel)
 			,uModBy
 			,cRowid);
-
 	MYSQL_RUN;
 
 }//void Update_tOSTemplate(void)
@@ -416,7 +397,6 @@ void ModtOSTemplate(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -432,12 +412,6 @@ void ModtOSTemplate(void)
 	sprintf(gcQuery,"SELECT uOSTemplate,uModDate FROM tOSTemplate\
 				WHERE uOSTemplate=%u"
 						,uOSTemplate);
-#else
-	sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate\
-				WHERE uOSTemplate=%u"
-						,uOSTemplate);
-#endif
-
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -447,19 +421,15 @@ void ModtOSTemplate(void)
 	if(i>1) tOSTemplate(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tOSTemplate(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tOSTemplate(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tOSTemplate",uOSTemplate);
 	unxsVZLog(uOSTemplate,"tOSTemplate","Mod");
-#endif
 	tOSTemplate(gcQuery);
 
 }//ModtOSTemplate(void)
@@ -536,7 +506,7 @@ void tOSTemplateList(void)
 
 void CreatetOSTemplate(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tOSTemplate ( uOSTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tOSTemplate ( uOSTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(100) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
