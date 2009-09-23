@@ -51,7 +51,7 @@ cd $RPM_BUILD_DIR
 %dir /var/www/unxs/html/images/
 %dir /var/www/unxs/html/js/
 %dir /var/www/unxs/html/css/
-/etc/httpd/conf.d/unxs.conf
+%config(noreplace) /etc/httpd/conf.d/unxs.conf
 /usr/bin/lastmonth
 /var/www/unxs/html/images/calendar.gif
 /var/www/unxs/html/images/calendar_mo.gif*
