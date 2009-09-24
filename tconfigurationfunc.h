@@ -28,6 +28,8 @@ void ExttConfigurationCommands(pentry entries[], int x)
 {
 	if(!strcmp(gcFunction,"tConfigurationTools"))
 	{
+		time_t uActualModDate;
+
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
 			if(guPermLevel>=10)
@@ -58,10 +60,7 @@ void ExttConfigurationCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstConfigurationVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>11 && uOwner!=1)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
 				tConfiguration("Make sure this is the record you would like to delete");
@@ -70,10 +69,7 @@ void ExttConfigurationCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstConfigurationVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>11 && uOwner!=1)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
 				DeletetConfiguration();
@@ -82,10 +78,7 @@ void ExttConfigurationCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstConfigurationVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>11)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tConfiguration(LANG_NB_CONFIRMMOD);
@@ -94,10 +87,7 @@ void ExttConfigurationCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstConfigurationVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>11)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
 				//Check entries here
@@ -110,12 +100,8 @@ void ExttConfigurationCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Create File Job"))
                 {
                         ProcesstConfigurationVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>11)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy) && guPermLevel>11 && guLoginClient==1)
 			{
-				time_t uActualModDate;
 				unsigned uCount=0;
 
 				if(uConfiguration==0)
@@ -279,17 +265,14 @@ void ExttConfigurationNavBar(void)
 	if(guPermLevel>=10)
 		printf(LANG_NBB_NEW);
 
-	if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>11)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>11 && uOwner!=1)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowDel(uOwner,uCreatedBy))
 		printf(LANG_NBB_DELETE);
 
-	printf(LANG_NBB_LIST);
+	if(uOwner)
+		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
 	printf(LANG_NBB_SKIPLAST);
@@ -302,15 +285,7 @@ void tConfigurationNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	if(guPermLevel<10)
-		sprintf(gcQuery,"SELECT tConfiguration.uConfiguration"
-				",CONCAT_WS(':',tConfiguration.cLabel,tConfiguration.cValue)"
-				" FROM tConfiguration,tClient"
-                                " WHERE tConfiguration.uOwner=tClient.uClient"
-                                " AND (tClient.uOwner=%u OR tClient.uClient=%u)",
-					guLoginClient,guLoginClient);
-	else
-	        sprintf(gcQuery,"SELECT uConfiguration,CONCAT_WS(':',cLabel,cValue) FROM tConfiguration");
+	ExtSelect("tConfiguration","tConfiguration.uConfiguration,tConfiguration.cLabel");
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -326,9 +301,8 @@ void tConfigurationNavList(void)
         	printf("<p><u>tConfigurationNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tConfiguration&uConfiguration=%s>%s</a><br>\n",field[0],field[1]);
-	        }
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tConfiguration&"
+				"uConfiguration=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 
@@ -395,7 +369,3 @@ unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter
 	return(uCount);
 
 }//unsigned CreateConfigurationFileJob()
-
-
-// vim:tw=78
-//perlSAR patch1
