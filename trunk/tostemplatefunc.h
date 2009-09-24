@@ -262,10 +262,10 @@ void ExttOSTemplateNavBar(void)
 	if(guPermLevel>=10 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(uAllowMod(uOwner,uCreatedBy) && uOSTemplate)
+	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy) && uOSTemplate)
+	if(uAllowDel(uOwner,uCreatedBy))
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
