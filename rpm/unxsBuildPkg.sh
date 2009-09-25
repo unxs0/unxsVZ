@@ -78,10 +78,10 @@ if [ $? != 0 ];then
 fi
 
 #rpm-1.19
-LOCALVER=`grep "rpm-...." ./$1/local.h`;
-grep "rpm-$2" ./$1/local.h > /dev/null 2>&1;
+LOCALVER=`grep "rpm-...." ./$1/local.h.default`;
+grep "rpm-$2" ./$1/local.h.default > /dev/null 2>&1;
 if [ $? != 0 ];then
-	echo "Your local.h file seems to have the wrong line(s):"
+	echo "Your local.h.default file seems to have the wrong line(s):"
 	echo "$LOCALVER"
 	echo "You should change the last part to rpm-$2";
 	exit 1;
