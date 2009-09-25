@@ -2,7 +2,7 @@
 FILE 
 	unxsVZ/main.c
 	$Id$
-	RAD status 1.30/rpm-3.0 update this line before every release for make sure Id is updated.
+	RAD status 1.31/rpm-3.1 update this line before every release for make sure Id is updated.
 PURPOSE
 	Main cgi interface and common functions used for all the other
 	table tx.c files and their schema independent txfunc.h files -until
@@ -478,8 +478,9 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 void Header_ism3(char *title, int js)
 {
 	printf("Content-type: text/html\n\n");
-	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-        printf("<html><head><title>unxsVZ %s </title>",title);
+	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\""
+			" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
+        printf("<html><head><title>"HEADER_TITLE" %s </title>",title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
         if(js)
