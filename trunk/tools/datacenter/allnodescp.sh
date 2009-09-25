@@ -30,9 +30,31 @@ if [ ! $1 ]; then
 fi
 
 #Set the seq range for your datacenter. See man seq for more options.
-for N in $(seq 1 7 ); do
+for N in $(seq 1 3 ); do
         if [ "$cNamePrefix$N$cNameSuffix" != "$cThisHost" ];then
                 echo $cNamePrefix$N$cNameSuffix;
                 /usr/bin/scp -C -c blowfish -P $uPort "$1" $cNamePrefix$N$cNameSuffix:"$1";
         fi
 done
+
+#
+#Below there are optional lines that you can use to copy stuff
+#to other datacenter
+
+#echo "$1" | grep "/vz/template/cache";
+#if [ "$?" == "0" ]; then exit; fi
+
+#echo "$1" | grep "/etc/vz/conf";
+#if [ "$?" == "0" ]; then exit; fi
+
+#cNamePrefix="node";
+#cNameSuffix="lax-f45";
+#uPort="22";
+
+#for N in $(seq 101 104 ); do
+#	if [ "$cNamePrefix$N$cNameSuffix" != "$cThisHost" ];then
+#		echo $cNamePrefix$N$cNameSuffix;
+#		/usr/bin/scp -C -c blowfish -P $uPort "$1" $cNamePrefix$N$cNameSuffix:"$1";
+#	fi
+#done
+
