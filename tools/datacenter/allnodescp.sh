@@ -25,7 +25,7 @@ cThisHost=`/bin/hostname | cut -f 1 -d "."`;
 #cThisHost=`/bin/hostname`;
 
 if [ ! $1 ]; then
-        echo "Must specify fully qualified path of file to replace";
+        echo "usage $0: <fully qualified path of file to copy> [--remotedatacenteroff]";
         exit;
 fi
 
@@ -40,6 +40,9 @@ done
 #
 #Below there are optional lines that you can use to copy stuff
 #to other datacenter
+
+#this is for the second arg to turn off remote transfers for any file. Very useful for cluster sysadmin.
+#if [ "$2" != "" ];then exit; fi
 
 #echo "$1" | grep "/vz/template/cache";
 #if [ "$?" == "0" ]; then exit; fi
