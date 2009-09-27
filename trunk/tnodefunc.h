@@ -669,7 +669,7 @@ NextSection:
 		fRatio= (fAllContainerCPUUnits/fNodeCPUUnits) * 100.00 ;
 		cColor=cRatioColor(&fRatio);
 		printf("Container/Node power %2.2f%%:"
-			" <font color=%s>%2.2f/%2.2f</font><br>\n",
+			" <font color=%s>%2.0f/%2.0f</font><br>\n",
 				fRatio,cColor,fAllContainerCPUUnits,fNodeCPUUnits);
 	}
 NextSection2:
