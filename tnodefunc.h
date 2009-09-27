@@ -580,6 +580,8 @@ void htmlNodeHealth(unsigned uNode)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	char *cColor;
+	float fRatio;
 
 	//printf("<u>Critical Node Usage Data</u><br>\n");
 	//Check fundamental memory constraints of containers per node:
@@ -603,11 +605,9 @@ void htmlNodeHealth(unsigned uNode)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		char *cColor;
 		char cluPrivvmpagesHeld[256];
 		long unsigned luContainerPrivvmpagesMaxHeld=0;
 		long unsigned luInstalledRam=0;
-		float fRatio;
 
 		if(field[0]==NULL)
 		{
@@ -628,6 +628,48 @@ void htmlNodeHealth(unsigned uNode)
 				fRatio,luContainerPrivvmpagesMaxHeld,luInstalledRam,cColor);
 	}
 NextSection:
+	mysql_free_result(res);
+
+
+	//Inform if hardware node is overcommitted: 1-. cpu power
+	sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
+				" tProperty.cName='vzcpucheck.fCPUUnits'"
+				" AND tProperty.uType=3"
+				" AND tProperty.uKey=tContainer.uContainer"
+				" AND tContainer.uStatus!=11"//Probably active not initial setup
+				" AND tContainer.uStatus!=31"// and not stopped
+				" AND tContainer.uNode=%u",uNode);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		printf("%s",mysql_error(&gMysql));
+		mysql_free_result(res);
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char cfNodeCPUUnits[256];
+		float fAllContainerCPUUnits=0.0;
+		float fNodeCPUUnits=1.0;
+
+		if(field[0]==NULL)
+		{
+			printf("No power data available<br>\n");
+			goto NextSection2;
+		}
+
+		GetNodeProp(uNode,"vzcpucheck-nodepwr.fCPUUnits",cfNodeCPUUnits);
+		sscanf(cfNodeCPUUnits,"%f",&fNodeCPUUnits);
+		sscanf(field[0],"%f",&fAllContainerCPUUnits);
+
+		fRatio= (fAllContainerCPUUnits/fNodeCPUUnits) * 100.00 ;
+		cColor=cRatioColor(&fRatio);
+		printf("Container/Node power %2.2f%%:"
+			" %2.2f/%2.2f <font color=%s>[#######]</font><br>\n",
+				fRatio,fAllContainerCPUUnits,fNodeCPUUnits,cColor);
+	}
+NextSection2:
 	mysql_free_result(res);
 
 	//Check all node activity via tProperty
