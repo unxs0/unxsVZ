@@ -1958,8 +1958,8 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 	cColor=cRatioColor(&fRatio);
 
 	printf("Container usage ratio %2.2f%%:"
-		" %lu/%lu <font color=%s>[#######]</font><br>\n",
-		fRatio,luTotalUsage,luTotalSoftLimit,cColor);
+		" <font color=%s>%lu/%lu</font><br>\n",
+		fRatio,cColor,luTotalUsage,luTotalSoftLimit);
 
 }//void htmlHealth(...)
 

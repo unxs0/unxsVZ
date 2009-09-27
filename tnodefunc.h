@@ -628,8 +628,8 @@ void htmlNodeHealth(unsigned uNode)
 		fRatio= ((float) luContainerPrivvmpagesMaxHeld/ (float) luInstalledRam) * 100.00 ;
 		cColor=cRatioColor(&fRatio);
 		printf("Max held privvmpages ratio %2.2f%%:"
-			" %lu/%lu <font color=%s>[#######]</font><br>\n",
-				fRatio,luContainerPrivvmpagesMaxHeld,luInstalledRam,cColor);
+			" <font color=%s>%lu/%lu<font><br>\n",
+				fRatio,cColor,luContainerPrivvmpagesMaxHeld,luInstalledRam);
 	}
 NextSection:
 	mysql_free_result(res);
@@ -669,8 +669,8 @@ NextSection:
 		fRatio= (fAllContainerCPUUnits/fNodeCPUUnits) * 100.00 ;
 		cColor=cRatioColor(&fRatio);
 		printf("Container/Node power %2.2f%%:"
-			" %2.2f/%2.2f <font color=%s>[#######]</font><br>\n",
-				fRatio,fAllContainerCPUUnits,fNodeCPUUnits,cColor);
+			" <font color=%s>%2.2f/%2.2f</font><br>\n",
+				fRatio,cColor,fAllContainerCPUUnits,fNodeCPUUnits);
 	}
 NextSection2:
 	mysql_free_result(res);
@@ -722,8 +722,8 @@ NextSection2:
 	fRatio= ((float)luTotalRAM/(float)luInstalledRam) * 100.00;
 		cColor=cRatioColor(&fRatio);
 		printf("RAM Util %2.2f%%:"
-			" %lu/%lu <font color=%s>[#######]</font><br>\n",
-				fRatio,luTotalRAM,luInstalledRam,cColor);
+			" <font color=%s>%lu/%lu</font><br>\n",
+				fRatio,cColor,luTotalRAM,luInstalledRam);
 
 	//4-.
 	//Check all node activity via tProperty
