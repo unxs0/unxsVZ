@@ -582,8 +582,20 @@ void htmlNodeHealth(unsigned uNode)
         MYSQL_ROW field;
 	char *cColor;
 	float fRatio;
+	long unsigned luAllContainerPhyspages=0;
+	long unsigned luAllContainer=0;
+	long unsigned luTotalRAM=0;
+	long unsigned luInstalledRam=0;
+	char cluInstalledRam[256];
+
+	GetNodeProp(uNode,"luInstalledRam",cluInstalledRam);
+	sscanf(cluInstalledRam,"%lu",&luInstalledRam);
+	if(luInstalledRam==0) luInstalledRam=1;
+
 
 	//printf("<u>Critical Node Usage Data</u><br>\n");
+
+	//1-. (privvmpages exceeds RAM )
 	//Check fundamental memory constraints of containers per node:
 	//The memory gap between privvmpages and the two resource guarantees (vmguarpages and
 	// oomguarpages) is not safe to use in an ongoing basis if the sum of all container
@@ -599,15 +611,12 @@ void htmlNodeHealth(unsigned uNode)
         if(mysql_errno(&gMysql))
 	{
 		printf("%s",mysql_error(&gMysql));
-		mysql_free_result(res);
 		return;
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		char cluPrivvmpagesHeld[256];
 		long unsigned luContainerPrivvmpagesMaxHeld=0;
-		long unsigned luInstalledRam=0;
 
 		if(field[0]==NULL)
 		{
@@ -615,12 +624,7 @@ void htmlNodeHealth(unsigned uNode)
 			goto NextSection;
 		}
 
-		GetNodeProp(uNode,"luInstalledRam",cluPrivvmpagesHeld);
 		sscanf(field[0],"%lu",&luContainerPrivvmpagesMaxHeld);
-		sscanf(cluPrivvmpagesHeld,"%lu",&luInstalledRam);
-		if(luInstalledRam==0)
-			luInstalledRam=1;
-
 		fRatio= ((float) luContainerPrivvmpagesMaxHeld/ (float) luInstalledRam) * 100.00 ;
 		cColor=cRatioColor(&fRatio);
 		printf("Max held privvmpages ratio %2.2f%%:"
@@ -631,6 +635,7 @@ NextSection:
 	mysql_free_result(res);
 
 
+	//2-.
 	//Inform if hardware node is overcommitted: 1-. cpu power
 	sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
 				" tProperty.cName='vzcpucheck.fCPUUnits'"
@@ -643,15 +648,14 @@ NextSection:
         if(mysql_errno(&gMysql))
 	{
 		printf("%s",mysql_error(&gMysql));
-		mysql_free_result(res);
 		return;
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
+		float fNodeCPUUnits=1.0;
 		char cfNodeCPUUnits[256];
 		float fAllContainerCPUUnits=0.0;
-		float fNodeCPUUnits=1.0;
 
 		if(field[0]==NULL)
 		{
@@ -662,7 +666,6 @@ NextSection:
 		GetNodeProp(uNode,"vzcpucheck-nodepwr.fCPUUnits",cfNodeCPUUnits);
 		sscanf(cfNodeCPUUnits,"%f",&fNodeCPUUnits);
 		sscanf(field[0],"%f",&fAllContainerCPUUnits);
-
 		fRatio= (fAllContainerCPUUnits/fNodeCPUUnits) * 100.00 ;
 		cColor=cRatioColor(&fRatio);
 		printf("Container/Node power %2.2f%%:"
@@ -672,6 +675,57 @@ NextSection:
 NextSection2:
 	mysql_free_result(res);
 
+	//3-.
+	//Total RAM utilization http://wiki.openvz.org/UBC_systemwide_configuration
+	//3a-. All container pages times 4096
+	sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)*4096) FROM tProperty,tContainer WHERE"
+				" tProperty.cName='physpages.luMaxheld'"
+				" AND tProperty.uType=3"
+				" AND tProperty.uKey=tContainer.uContainer"
+				" AND tContainer.uStatus!=11"//Probably active not initial setup
+				" AND tContainer.uStatus!=31"// and not stopped
+				" AND tContainer.uNode=%u",uNode);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		printf("%s",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%lu",&luAllContainerPhyspages);
+	mysql_free_result(res);
+	//3b-. All container kmemsize + othersockbuf.luMaxheld + tcpsndbuf.luMaxheld + tcprcvbuf.luMaxheld +
+	// dgramrcvbuf.luMaxheld
+	sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
+				" ( tProperty.cName='kmemsize.luMaxheld' OR"
+				" tProperty.cName='othersockbuf.luMaxheld' OR "
+				" tProperty.cName='tcpsndbuf.luMaxheld' OR "
+				" tProperty.cName='tcprcvbuf.luMaxheld' OR "
+				" tProperty.cName='dgramrcvbuf.luMaxheld' )"
+				" AND tProperty.uType=3"
+				" AND tProperty.uKey=tContainer.uContainer"
+				" AND tContainer.uStatus!=11"//Probably active not initial setup
+				" AND tContainer.uStatus!=31"// and not stopped
+				" AND tContainer.uNode=%u",uNode);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		printf("%s",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%lu",&luAllContainer);
+	mysql_free_result(res);
+	luTotalRAM=(luAllContainerPhyspages+luAllContainer)/1000;
+	fRatio= ((float)luTotalRAM/(float)luInstalledRam) * 100.00;
+		cColor=cRatioColor(&fRatio);
+		printf("RAM Util %2.2f%%:"
+			" %lu/%lu <font color=%s>[#######]</font><br>\n",
+				fRatio,luTotalRAM,luInstalledRam,cColor);
+
+	//4-.
 	//Check all node activity via tProperty
 	sprintf(gcQuery,"SELECT tNode.cLabel,FROM_UNIXTIME(MAX(tProperty.uModDate)),"
 			"(UNIX_TIMESTAMP(NOW()) - MAX(tProperty.uModDate) > 300 ) FROM"
