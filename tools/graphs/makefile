@@ -41,9 +41,9 @@ clean:
 	rm -f *.o *.cgi
 
 install: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi
-	install -s unxsCpuCheck.cgi /usr/sbin/unxsCpuCheck.cgi
+	install -s unxsCpuCheck.cgi /var/www/unxs/cgi-bin/unxsCpuCheck.cgi
 	@ rm unxsCpuCheck.cgi
-	install -s unxsPrivmem.cgi /usr/sbin/unxsPrivmem.cgi
+	install -s unxsPrivmem.cgi /var/www/unxs/cgi-bin/unxsPrivmem.cgi
 	@ rm unxsPrivmem.cgi
-	install -s unxsRamUtil.cgi /usr/sbin/unxsRamUtil.cgi
+	install -s unxsRamUtil.cgi /var/www/unxs/cgi-bin/unxsRamUtil.cgi
 	@ rm unxsRamUtil.cgi

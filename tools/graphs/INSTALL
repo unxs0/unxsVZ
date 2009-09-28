@@ -1,0 +1,11 @@
+For the impatient like me
+-------------------------
+
+# yum install gd
+# yum install gd-devel
+# cd gdchart0.11.5dev
+# make
+# make install
+
+This will place cgi binaries in the usual unxsVZ cgi-bin.
+You can use them via crontab or on the fly.
