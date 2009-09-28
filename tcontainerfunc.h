@@ -364,6 +364,9 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(uIPv4==0)
 					tContainer("<blink>Error</blink>: uIPv4==0!");
+				
+				if(uOSTemplate==0)
+					tContainer("<blink>Error</blink>: uOSTemplate==0!");
 
                         	guMode=200;
 
@@ -519,6 +522,8 @@ void ExttContainerCommands(pentry entries[], int x)
 							"belong to the specified uDatacenter.");
 				if(uIPv4==0)
 					tContainer("<blink>Error</blink>: uIPv4==0!");
+				if(uOSTemplate==0)
+					tContainer("<blink>Error</blink>: uOSTemplate==0!");
 				if(uConfig==0)
 					tContainer("<blink>Error</blink>: uConfig==0!");
 				if(uNameserver==0)
