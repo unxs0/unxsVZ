@@ -1,6 +1,6 @@
 #
 #FILE
-#       makefile
+#       unxsVZ/tools/graphs/makefile
 #PURPOSE
 #       Very simple gmake file to:
 #       Compile aux data analysis programs that for the most part provide
@@ -15,19 +15,35 @@
 #
 
 CFLAGS= -Wall -DHAVE_LIBFREETYPE -DHAVE_JPEG
-
 LIBS= -L/usr/lib/mysql -lmysqlclient -lz -lm -lgdc -lgd -lpng -lfreetype -ljpeg
 
+all: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi
 
-unxsNodeGraphs: node.o
-	gcc node.o -o unxsNodeGraphs $(LIBS)
+unxsCpuCheck.cgi: cpucheck.o
+	gcc cpucheck.o -o unxsCpuCheck.cgi $(LIBS)
 
-node.o: node.c ../../local.h
-	gcc -c node.c -o node.o $(CFLAGS)
+cpucheck.o: cpucheck.c ../../local.h
+	gcc -c cpucheck.c -o cpucheck.o $(CFLAGS)
+
+unxsPrivmem.cgi: privmem.o
+	gcc privmem.o -o unxsPrivmem.cgi $(LIBS)
+
+privmem.o: privmem.c ../../local.h
+	gcc -c privmem.c -o privmem.o $(CFLAGS)
+
+unxsRamUtil.cgi: ramutil.o
+	gcc ramutil.o -o unxsRamUtil.cgi $(LIBS)
+
+ramutil.o: ramutil.c ../../local.h
+	gcc -c ramutil.c -o ramutil.o $(CFLAGS)
 
 clean:
-	rm -f *.o unxsNodeGraphs
+	rm -f *.o *.cgi
 
-install: unxsNodeGraphs
-	install -s unxsNodeGraphs /usr/sbin/unxsNodeGraphs
-	@ rm unxsNodeGraphs
+install: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi
+	install -s unxsCpuCheck.cgi /usr/sbin/unxsCpuCheck.cgi
+	@ rm unxsCpuCheck.cgi
+	install -s unxsPrivmem.cgi /usr/sbin/unxsPrivmem.cgi
+	@ rm unxsPrivmem.cgi
+	install -s unxsRamUtil.cgi /usr/sbin/unxsRamUtil.cgi
+	@ rm unxsRamUtil.cgi
