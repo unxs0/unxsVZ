@@ -799,6 +799,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				
 				while(uWizLabelLoop)
 				{
+					uWizLabelSuffix++;
 					sprintf(cWizLabel,"%.25s-clone%u",cLabel,uWizLabelSuffix);
 					sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cWizLabel);
 					mysql_query(&gMysql,gcQuery);
@@ -807,7 +808,6 @@ void ExttContainerCommands(pentry entries[], int x)
 					res=mysql_store_result(&gMysql);
 					uWizLabelLoop=mysql_num_rows(res);
 					mysql_free_result(res);
-					uWizLabelSuffix++;
 				}
 				sprintf(cWizHostname,"%.93s.clone%u",cHostname,uWizLabelSuffix);
 
