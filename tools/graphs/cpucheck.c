@@ -29,13 +29,13 @@ REQUIRES
 void ErrorMsg(const char *cErrorMsg);
 void ConnectDb(void);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
-unsigned GetDatacenterHealthData(unsigned uDatacenter, float *a,char *t[]);
+unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[]);
 
 static MYSQL gMysql;
 static char gcQuery[1024];
 
 
-unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,char *t[])
+unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[])
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -59,12 +59,10 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,char *t[])
 		t[uCount]=malloc(16);
 		sprintf(t[uCount],"%.15s",field[1]);
 
-		if(luInstalledRam==0) luInstalledRam=1;
 		GetNodeProp(uNode,"vzcpucheck-nodepwr.fCPUUnits",cfNodeCPUUnits);
 		sscanf(cfNodeCPUUnits,"%f",&fNodeCPUUnits);
 
-		//1-. Current cpu power only thing we have.
-		//Inform if hardware node is overcommitted: 1-. cpu power
+		//1-. Current absolute container cpu power
 		sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
 					" tProperty.cName='vzcpucheck.fCPUUnits'"
 					" AND tProperty.uType=3"
@@ -81,7 +79,8 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,char *t[])
 			float fAllContainerCPUUnits=0.0;
 
 			sscanf(field2[0],"%f",&fAllContainerCPUUnits);
-			a[uCount]=(fAllContainerCPUUnits/fNodeCPUUnits) * 100.00 ;
+			a[uCount]=fAllContainerCPUUnits;
+			b[uCount]=fNodeCPUUnits;
 		}
 		mysql_free_result(res2);
 
@@ -98,6 +97,7 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,char *t[])
 int main(int iArgc, char *cArgv[])
 {
         float   a[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        float   b[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         char    *t[24]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
@@ -126,22 +126,22 @@ int main(int iArgc, char *cArgv[])
 	if(!cDatacenter[0])
 		ErrorMsg("No such datacenter");
 
-	uNumNodes=GetDatacenterHealthData(uDatacenter,a,t);
+	uNumNodes=GetDatacenterHealthData(uDatacenter,a,b,t);
 
 	if(uNumNodes>24) uNumNodes=24;
 
         GDC_BGColor= 0xFFFFFFL;/* backgound color (white) */
         GDC_SetColor= sc;/* assign set colors */
         GDC_title=cDatacenter;
-        GDC_ytitle="Percent";
-        GDC_xtitle="Hardware Nodes (first bar cpu-power, second bar privmem-ram, third bar ram-util)";
+        GDC_ytitle="cpu power units";
+        GDC_xtitle="Hardware nodes: Current cpu utilization versus power of the node.";
         GDC_bar_width = 10;
 
         if(getenv("REQUEST_METHOD")!=NULL)
                 printf( "Content-Type: image/gif\n\n" );
         //x,y image, file, type, num of data points, array of x labels, number of data sets
         //data set 1..n float
-        out_graph(1000,500,stdout,GDC_3DBAR,uNumNodes,t,1,a);
+        out_graph(1000,500,stdout,GDC_3DBAR,uNumNodes,t,2,a,b);
 	for(i=0;i<24 && t[i]!=NULL;i++)
 		free(t[i]);
 
