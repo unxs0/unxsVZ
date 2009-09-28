@@ -1,10 +1,10 @@
 /*
 FILE
-        node.c
+        cpucheck.c
         $Id$
 
 PURPOSE
-        Create file or on the fly graphs for unxsVZ node related data.
+        Create file or on the fly graphs for unxsVZ node container cpu power related data.
 
 AUTHOR
         (C) 2005-2009, Gary Wallis for Unixservice, LLC. GPL2 Licensed
@@ -29,28 +29,104 @@ REQUIRES
 void ErrorMsg(const char *cErrorMsg);
 void ConnectDb(void);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
-unsigned GetDatacenterHealthData(unsigned uDatacenter, float *a, float *b, float *c, char *t[]);
+unsigned GetDatacenterHealthData(unsigned uDatacenter, float *a,char *t[]);
 
 static MYSQL gMysql;
 static char gcQuery[1024];
 
 
+unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,char *t[])
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uCount=0;
+	unsigned uNode=0;
+
+	sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u",uDatacenter);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		ErrorMsg(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+
+        	MYSQL_RES *res2;
+	        MYSQL_ROW field2;
+		float fNodeCPUUnits=1.0;
+		char cfNodeCPUUnits[256];
+
+		sscanf(field[0],"%u",&uNode);
+		t[uCount]=malloc(16);
+		sprintf(t[uCount],"%.15s",field[1]);
+
+		if(luInstalledRam==0) luInstalledRam=1;
+		GetNodeProp(uNode,"vzcpucheck-nodepwr.fCPUUnits",cfNodeCPUUnits);
+		sscanf(cfNodeCPUUnits,"%f",&fNodeCPUUnits);
+
+		//1-. Current cpu power only thing we have.
+		//Inform if hardware node is overcommitted: 1-. cpu power
+		sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
+					" tProperty.cName='vzcpucheck.fCPUUnits'"
+					" AND tProperty.uType=3"
+					" AND tProperty.uKey=tContainer.uContainer"
+					" AND tContainer.uStatus!=11"//Probably active not initial setup
+					" AND tContainer.uStatus!=31"// and not stopped
+					" AND tContainer.uNode=%u",uNode);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		ErrorMsg(mysql_error(&gMysql));
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			float fAllContainerCPUUnits=0.0;
+
+			sscanf(field2[0],"%f",&fAllContainerCPUUnits);
+			a[uCount]=(fAllContainerCPUUnits/fNodeCPUUnits) * 100.00 ;
+		}
+		mysql_free_result(res2);
+
+		uCount++;
+	}
+	mysql_free_result(res);
+
+	return(uCount);
+
+}//unsigned GetDatacenterHealthData()
+
+
+
 int main(int iArgc, char *cArgv[])
 {
         float   a[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        float   b[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        float   c[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         char    *t[24]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
         unsigned long sc[2]={0xFF8080,0x8080FF};
-        char cDatacenter[100]={"Wilshire1"};
+        char cDatacenter[100]={""};
         unsigned uNumNodes=24;
+	unsigned uDatacenter=1;
 	register unsigned i;
+        MYSQL_RES *res;
+        MYSQL_ROW field;
 
         ConnectDb();
 
-	uNumNodes=GetDatacenterHealthData(1,a,b,c,t);
+	if(iArgc>1)
+		sscanf(cArgv[1],"%u",&uDatacenter);
+
+	sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE uDatacenter=%u",uDatacenter);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		ErrorMsg(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cDatacenter,"%.99s",field[0]);
+	mysql_free_result(res);
+
+	if(!cDatacenter[0])
+		ErrorMsg("No such datacenter");
+
+	uNumNodes=GetDatacenterHealthData(uDatacenter,a,t);
 
 	if(uNumNodes>24) uNumNodes=24;
 
@@ -58,19 +134,20 @@ int main(int iArgc, char *cArgv[])
         GDC_SetColor= sc;/* assign set colors */
         GDC_title=cDatacenter;
         GDC_ytitle="Percent";
-        GDC_xtitle="Hardware Nodes";
-        GDC_bar_width = 40;
+        GDC_xtitle="Hardware Nodes (first bar cpu-power, second bar privmem-ram, third bar ram-util)";
+        GDC_bar_width = 10;
 
         if(getenv("REQUEST_METHOD")!=NULL)
                 printf( "Content-Type: image/gif\n\n" );
         //x,y image, file, type, num of data points, array of x labels, number of data sets
         //data set 1..n float
-        out_graph(1000,500,stdout,GDC_3DBAR,uNumNodes,t,2,a,b,c);
+        out_graph(1000,500,stdout,GDC_3DBAR,uNumNodes,t,1,a);
 	for(i=0;i<24 && t[i]!=NULL;i++)
 		free(t[i]);
 
         return(0);
-}
+
+}//main()
 
 
 void ConnectDb(void)
@@ -93,92 +170,6 @@ void ErrorMsg(const char *cErrorMsg)
         	printf( "%s\n",cErrorMsg);
         exit(0);
 }
-
-
-unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c,char *t[])
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-	unsigned uCount=0;
-	unsigned uNode=0;
-
-	sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u",uDatacenter);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		ErrorMsg(mysql_error(&gMysql));
-        res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-
-        	MYSQL_RES *res2;
-	        MYSQL_ROW field2;
-		//long unsigned luAllContainerPhyspages=0;
-		//long unsigned luAllContainer=0;
-		//long unsigned luTotalRAM=0;
-		long unsigned luInstalledRam=0;
-		char cluInstalledRam[256];
-		float fNodeCPUUnits=1.0;
-		char cfNodeCPUUnits[256];
-		sscanf(field[0],"%u",&uNode);
-		t[uCount]=malloc(16);
-		sprintf(t[uCount],"%.15s",field[1]);
-
-		GetNodeProp(uNode,"luInstalledRam",cluInstalledRam);
-		sscanf(cluInstalledRam,"%lu",&luInstalledRam);
-		if(luInstalledRam==0) luInstalledRam=1;
-		GetNodeProp(uNode,"vzcpucheck-nodepwr.fCPUUnits",cfNodeCPUUnits);
-		sscanf(cfNodeCPUUnits,"%f",&fNodeCPUUnits);
-
-		//1-. (privvmpages exceeds RAM )
-		sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
-				" tProperty.cName='privvmpages.luMaxheld'"
-				" AND tProperty.uType=3"
-				" AND tProperty.uKey=tContainer.uContainer"
-				" AND tContainer.uStatus!=11"//Probably active not initial setup
-				" AND tContainer.uStatus!=31"// and not stopped
-				" AND tContainer.uNode=%u",uNode);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			ErrorMsg(mysql_error(&gMysql));
-		res2=mysql_store_result(&gMysql);
-		if((field2=mysql_fetch_row(res2)))
-		{
-			long unsigned luContainerPrivvmpagesMaxHeld=0;
-
-			sscanf(field2[0],"%lu",&luContainerPrivvmpagesMaxHeld);
-			a[uCount]=((float)luContainerPrivvmpagesMaxHeld/ (float) luInstalledRam) * 100.00 ;
-		}
-		mysql_free_result(res2);
-
-		//2-.
-		//Inform if hardware node is overcommitted: 1-. cpu power
-		sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
-					" tProperty.cName='vzcpucheck.fCPUUnits'"
-					" AND tProperty.uType=3"
-					" AND tProperty.uKey=tContainer.uContainer"
-					" AND tContainer.uStatus!=11"//Probably active not initial setup
-					" AND tContainer.uStatus!=31"// and not stopped
-					" AND tContainer.uNode=%u",uNode);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		ErrorMsg(mysql_error(&gMysql));
-		res2=mysql_store_result(&gMysql);
-		if((field2=mysql_fetch_row(res2)))
-		{
-			float fAllContainerCPUUnits=0.0;
-
-			sscanf(field2[0],"%f",&fAllContainerCPUUnits);
-			b[uCount]=(fAllContainerCPUUnits/fNodeCPUUnits) * 100.00 ;
-		}
-		mysql_free_result(res2);
-
-		uCount++;
-	}
-	mysql_free_result(res);
-
-	return(uCount);
-
-}//unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c,char *t[])
 
 
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
@@ -205,46 +196,3 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 
 }//void GetNodeProp(...)
 
-/*
-
-	//3-.
-	//Total RAM utilization http://wiki.openvz.org/UBC_systemwide_configuration
-	//3a-. All container pages times 4096
-	sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)*4096) FROM tProperty,tContainer WHERE"
-				" tProperty.cName='physpages.luMaxheld'"
-				" AND tProperty.uType=3"
-				" AND tProperty.uKey=tContainer.uContainer"
-				" AND tContainer.uStatus!=11"//Probably active not initial setup
-				" AND tContainer.uStatus!=31"// and not stopped
-				" AND tContainer.uNode=%u",uNode);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		ErrorMsg(mysql_error(&gMysql));
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%lu",&luAllContainerPhyspages);
-	mysql_free_result(res);
-	//3b-. All container kmemsize + othersockbuf.luMaxheld + tcpsndbuf.luMaxheld + tcprcvbuf.luMaxheld +
-	// dgramrcvbuf.luMaxheld
-	sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
-				" ( tProperty.cName='kmemsize.luMaxheld' OR"
-				" tProperty.cName='othersockbuf.luMaxheld' OR "
-				" tProperty.cName='tcpsndbuf.luMaxheld' OR "
-				" tProperty.cName='tcprcvbuf.luMaxheld' OR "
-				" tProperty.cName='dgramrcvbuf.luMaxheld' )"
-				" AND tProperty.uType=3"
-				" AND tProperty.uKey=tContainer.uContainer"
-				" AND tContainer.uStatus!=11"//Probably active not initial setup
-				" AND tContainer.uStatus!=31"// and not stopped
-				" AND tContainer.uNode=%u",uNode);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		ErrorMsg(mysql_error(&gMysql));
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%lu",&luAllContainer);
-	mysql_free_result(res);
-	luTotalRAM=(luAllContainerPhyspages+luAllContainer)/1000;
-	fRatio= ((float)luTotalRAM/(float)luInstalledRam) * 100.00;
-	mysql_free_result(res);
-*/
