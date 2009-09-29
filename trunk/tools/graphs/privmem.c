@@ -53,9 +53,12 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 	        MYSQL_ROW field2;
 		long unsigned luInstalledRam=0;
 		char cluInstalledRam[256];
+		char *cp;
 
 		sscanf(field[0],"%u",&uNode);
 		t[uCount]=malloc(16);
+		if((cp=strchr(field[1],'.')))
+			*cp=0;
 		sprintf(t[uCount],"%.15s",field[1]);
 
 		GetNodeProp(uNode,"luInstalledRam",cluInstalledRam);
@@ -79,10 +82,11 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 		res2=mysql_store_result(&gMysql);
 		if((field2=mysql_fetch_row(res2)))
 		{
-			long unsigned luContainerPrivvmpagesMaxHeld=0;
+			float fContainerPrivvmpagesHeld=0;
 
-			sscanf(field2[0],"%lu",&luContainerPrivvmpagesMaxHeld);
-			a[uCount]=(float)luContainerPrivvmpagesMaxHeld;
+			if(field2[0]!=NULL)
+				sscanf(field2[0],"%f",&fContainerPrivvmpagesHeld);
+			a[uCount]=fContainerPrivvmpagesHeld;
 		}
 		mysql_free_result(res2);
 
@@ -100,10 +104,11 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 		res2=mysql_store_result(&gMysql);
 		if((field2=mysql_fetch_row(res2)))
 		{
-			long unsigned luContainerPrivvmpagesMaxHeld=0;
+			float fContainerPrivvmpagesMaxHeld=0;
 
-			sscanf(field2[0],"%lu",&luContainerPrivvmpagesMaxHeld);
-			b[uCount]=(float)luContainerPrivvmpagesMaxHeld;
+			if(field2[0]!=NULL)
+				sscanf(field2[0],"%f",&fContainerPrivvmpagesMaxHeld);
+			b[uCount]=fContainerPrivvmpagesMaxHeld;
 		}
 		mysql_free_result(res2);
 
@@ -121,10 +126,11 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 		res2=mysql_store_result(&gMysql);
 		if((field2=mysql_fetch_row(res2)))
 		{
-			long unsigned luContainerPrivvmpagesMaxHeld=0;
+			float fContainerPrivvmpagesLimit=0;
 
-			sscanf(field2[0],"%lu",&luContainerPrivvmpagesMaxHeld);
-			c[uCount]=(float)luContainerPrivvmpagesMaxHeld;
+			if(field2[0]!=NULL)
+				sscanf(field2[0],"%f",&fContainerPrivvmpagesLimit);
+			c[uCount]=fContainerPrivvmpagesLimit;
 			d[uCount]=(float)luInstalledRam;
 		}
 		mysql_free_result(res2);
@@ -188,7 +194,7 @@ int main(int iArgc, char *cArgv[])
                 printf( "Content-Type: image/gif\n\n" );
         //x,y image, file, type, num of data points, array of x labels, number of data sets
         //data set 1..n float
-        out_graph(1000,500,stdout,GDC_3DBAR,uNumNodes,t,4,a,b,c,d);
+        out_graph(1000,600,stdout,GDC_3DBAR,uNumNodes,t,4,a,b,c,d);
 	for(i=0;i<24 && t[i]!=NULL;i++)
 		free(t[i]);
 
