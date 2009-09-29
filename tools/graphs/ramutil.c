@@ -58,9 +58,12 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 		long unsigned luTotalRAM=0;
 		long unsigned luInstalledRam=0;
 		char cluInstalledRam[256];
+		char *cp;
 
 		sscanf(field[0],"%u",&uNode);
 		t[uCount]=malloc(16);
+		if((cp=strchr(field[1],'.')))
+			*cp=0;
 		sprintf(t[uCount],"%.15s",field[1]);
 
 		GetNodeProp(uNode,"luInstalledRam",cluInstalledRam);
@@ -102,7 +105,10 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 			ErrorMsg(mysql_error(&gMysql));
 		res2=mysql_store_result(&gMysql);
 		if((field2=mysql_fetch_row(res2)))
-			sscanf(field2[0],"%lu",&luAllContainer);
+		{
+			if(field2[0]!=NULL)
+				sscanf(field2[0],"%lu",&luAllContainer);
+		}
 		mysql_free_result(res2);
 		luTotalRAM=(luAllContainerPhyspages+luAllContainer)/1000;
 		a[uCount]=((float)luTotalRAM/(float)luInstalledRam) * 100.00;
@@ -142,7 +148,10 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 			ErrorMsg(mysql_error(&gMysql));
 		res2=mysql_store_result(&gMysql);
 		if((field2=mysql_fetch_row(res2)))
-			sscanf(field2[0],"%lu",&luAllContainer);
+		{
+			if(field2[0]!=NULL)
+				sscanf(field2[0],"%lu",&luAllContainer);
+		}
 		mysql_free_result(res2);
 		luTotalRAM=(luAllContainerPhyspages+luAllContainer)/1000;
 		b[uCount]=((float)luTotalRAM/(float)luInstalledRam) * 100.00;
@@ -197,13 +206,13 @@ int main(int iArgc, char *cArgv[])
         GDC_title=cDatacenter;
         GDC_ytitle="Percent";
         GDC_xtitle="Hardware nodes: Current ram vs max held ram/installed-ram ratio.";
-        GDC_bar_width = 10;
+        GDC_bar_width = 5;
 
         if(getenv("REQUEST_METHOD")!=NULL)
                 printf( "Content-Type: image/gif\n\n" );
         //x,y image, file, type, num of data points, array of x labels, number of data sets
         //data set 1..n float
-        out_graph(1000,500,stdout,GDC_3DBAR,uNumNodes,t,2,a,b);
+        out_graph(1000,600,stdout,GDC_3DBAR,uNumNodes,t,2,a,b);
 	for(i=0;i<24 && t[i]!=NULL;i++)
 		free(t[i]);
 
