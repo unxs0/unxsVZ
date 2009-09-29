@@ -6,6 +6,9 @@ For the impatient like me
 # cd gdchart0.11.5dev
 # make
 # make install
+# cd ..
+# make
+# make install
 
 This will place cgi binaries in the usual unxsVZ cgi-bin.
 You can use them via crontab or on the fly.
