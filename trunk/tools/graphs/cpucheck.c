@@ -105,7 +105,7 @@ int main(int iArgc, char *cArgv[])
         char    *t[24]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-        unsigned long sc[2]={0xFF8080,0x8080FF};
+        unsigned long sc[4]={0xFF8080,0x8080FF,0x33CC66,0x999933};
         char cDatacenter[100]={""};
         unsigned uNumNodes=24;
 	unsigned uDatacenter=1;
