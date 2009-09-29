@@ -86,7 +86,7 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 
 			if(field2[0]!=NULL)
 				sscanf(field2[0],"%f",&fContainerPrivvmpagesHeld);
-			a[uCount]=fContainerPrivvmpagesHeld;
+			a[uCount]=fContainerPrivvmpagesHeld/1000.0;
 		}
 		mysql_free_result(res2);
 
@@ -108,7 +108,7 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 
 			if(field2[0]!=NULL)
 				sscanf(field2[0],"%f",&fContainerPrivvmpagesMaxHeld);
-			b[uCount]=fContainerPrivvmpagesMaxHeld;
+			b[uCount]=fContainerPrivvmpagesMaxHeld/1000.0;
 		}
 		mysql_free_result(res2);
 
@@ -130,8 +130,8 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 
 			if(field2[0]!=NULL)
 				sscanf(field2[0],"%f",&fContainerPrivvmpagesLimit);
-			c[uCount]=fContainerPrivvmpagesLimit;
-			d[uCount]=(float)luInstalledRam;
+			c[uCount]=fContainerPrivvmpagesLimit/1000.0;
+			d[uCount]=(float)luInstalledRam/1000.0;
 		}
 		mysql_free_result(res2);
 
@@ -186,7 +186,7 @@ int main(int iArgc, char *cArgv[])
         GDC_BGColor= 0xFFFFFFL;/* backgound color (white) */
         GDC_SetColor= sc;/* assign set colors */
         GDC_title=cDatacenter;
-        GDC_ytitle="Bytes";
+        GDC_ytitle="KBytes";
         GDC_xtitle="Hardware nodes: privvmpages held, max-held, limit and ram";
         GDC_bar_width = 5;
 
