@@ -52,11 +52,14 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 
         	MYSQL_RES *res2;
 	        MYSQL_ROW field2;
-		float fNodeCPUUnits=1.0;
+		float fNodeCPUUnits=0.0;
 		char cfNodeCPUUnits[256];
+		char *cp;
 
 		sscanf(field[0],"%u",&uNode);
 		t[uCount]=malloc(16);
+		if((cp=strchr(field[1],'.')))
+			*cp=0;
 		sprintf(t[uCount],"%.15s",field[1]);
 
 		GetNodeProp(uNode,"vzcpucheck-nodepwr.fCPUUnits",cfNodeCPUUnits);
@@ -78,7 +81,8 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 		{
 			float fAllContainerCPUUnits=0.0;
 
-			sscanf(field2[0],"%f",&fAllContainerCPUUnits);
+			if(field2[0]!=NULL)
+				sscanf(field2[0],"%f",&fAllContainerCPUUnits);
 			a[uCount]=fAllContainerCPUUnits;
 			b[uCount]=fNodeCPUUnits;
 		}
@@ -134,14 +138,14 @@ int main(int iArgc, char *cArgv[])
         GDC_SetColor= sc;/* assign set colors */
         GDC_title=cDatacenter;
         GDC_ytitle="cpu power units";
-        GDC_xtitle="Hardware nodes: Current cpu utilization versus power of the node.";
-        GDC_bar_width = 10;
+        GDC_xtitle="Hardware nodes: total cpu units versus power of the node.";
+        GDC_bar_width = 5;
 
         if(getenv("REQUEST_METHOD")!=NULL)
                 printf( "Content-Type: image/gif\n\n" );
         //x,y image, file, type, num of data points, array of x labels, number of data sets
         //data set 1..n float
-        out_graph(1000,500,stdout,GDC_3DBAR,uNumNodes,t,2,a,b);
+        out_graph(1000,600,stdout,GDC_3DBAR,uNumNodes,t,2,a,b);
 	for(i=0;i<24 && t[i]!=NULL;i++)
 		free(t[i]);
 
