@@ -26,16 +26,15 @@ REQUIRES
 
 #include "../../local.h"
 
-void ErrorMsg(const char *cErrorMsg);
-void ConnectDb(void);
-void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
-unsigned GetDatacenterHealthData(unsigned uDatacenter, float *a, float *b, char *t[]);
-
 static MYSQL gMysql;
 static char gcQuery[1024];
 
+void ErrorMsg(const char *cErrorMsg);
+void ConnectDb(void);
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 
-unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[])
+
+unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c,float *d,char *t[])
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -63,7 +62,10 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 		sscanf(cluInstalledRam,"%lu",&luInstalledRam);
 		if(luInstalledRam==0) luInstalledRam=1;
 
-		//1a-. (current privvmpages vs RAM )
+		//Report based on http://wiki.openvz.org/UBC_systemwide_configuration
+		//If a system has multiple containers, it is important to make sure that for each container 
+		//privvmpages-lim * 4096 <= 0.6 RAM size
+		//1-. (Currently held privvmpages abs)
 		sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
 				" tProperty.cName='privvmpages.luHeld'"
 				" AND tProperty.uType=3"
@@ -80,11 +82,11 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 			long unsigned luContainerPrivvmpagesMaxHeld=0;
 
 			sscanf(field2[0],"%lu",&luContainerPrivvmpagesMaxHeld);
-			a[uCount]=((float)luContainerPrivvmpagesMaxHeld/ (float) luInstalledRam) * 100.00 ;
+			a[uCount]=(float)luContainerPrivvmpagesMaxHeld;
 		}
 		mysql_free_result(res2);
 
-		//1b-. (Max privvmpages vs RAM )
+		//2-. (Max privvmpages abs)
 		sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
 				" tProperty.cName='privvmpages.luMaxheld'"
 				" AND tProperty.uType=3"
@@ -101,7 +103,29 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 			long unsigned luContainerPrivvmpagesMaxHeld=0;
 
 			sscanf(field2[0],"%lu",&luContainerPrivvmpagesMaxHeld);
-			b[uCount]=((float)luContainerPrivvmpagesMaxHeld/ (float) luInstalledRam) * 100.00 ;
+			b[uCount]=(float)luContainerPrivvmpagesMaxHeld;
+		}
+		mysql_free_result(res2);
+
+		//3-. (limit privvmpages and RAM abs)
+		sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
+				" tProperty.cName='privvmpages.luLimit'"
+				" AND tProperty.uType=3"
+				" AND tProperty.uKey=tContainer.uContainer"
+				" AND tContainer.uStatus!=11"//Probably active not initial setup
+				" AND tContainer.uStatus!=31"// and not stopped
+				" AND tContainer.uNode=%u",uNode);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			ErrorMsg(mysql_error(&gMysql));
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			long unsigned luContainerPrivvmpagesMaxHeld=0;
+
+			sscanf(field2[0],"%lu",&luContainerPrivvmpagesMaxHeld);
+			c[uCount]=(float)luContainerPrivvmpagesMaxHeld;
+			d[uCount]=(float)luInstalledRam;
 		}
 		mysql_free_result(res2);
 
@@ -119,6 +143,8 @@ int main(int iArgc, char *cArgv[])
 {
         float   a[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         float   b[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        float   c[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        float   d[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         char    *t[24]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
@@ -147,22 +173,22 @@ int main(int iArgc, char *cArgv[])
 	if(!cDatacenter[0])
 		ErrorMsg("No such datacenter");
 
-	uNumNodes=GetDatacenterHealthData(uDatacenter,a,b,t);
+	uNumNodes=GetDatacenterHealthData(uDatacenter,a,b,c,d,t);
 
 	if(uNumNodes>24) uNumNodes=24;
 
         GDC_BGColor= 0xFFFFFFL;/* backgound color (white) */
         GDC_SetColor= sc;/* assign set colors */
         GDC_title=cDatacenter;
-        GDC_ytitle="Percent";
-        GDC_xtitle="Hardware nodes: Current vs max held privmem-pages/installed-ram ratio.";
-        GDC_bar_width = 10;
+        GDC_ytitle="Bytes";
+        GDC_xtitle="Hardware nodes: privvmpages held, max-held, limit and ram";
+        GDC_bar_width = 5;
 
         if(getenv("REQUEST_METHOD")!=NULL)
                 printf( "Content-Type: image/gif\n\n" );
         //x,y image, file, type, num of data points, array of x labels, number of data sets
         //data set 1..n float
-        out_graph(1000,500,stdout,GDC_3DBAR,uNumNodes,t,2,a,b);
+        out_graph(1000,500,stdout,GDC_3DBAR,uNumNodes,t,4,a,b,c,d);
 	for(i=0;i<24 && t[i]!=NULL;i++)
 		free(t[i]);
 
