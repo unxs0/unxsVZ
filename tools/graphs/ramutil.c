@@ -85,7 +85,10 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 			ErrorMsg(mysql_error(&gMysql));
 		res2=mysql_store_result(&gMysql);
 		if((field2=mysql_fetch_row(res2)))
-			sscanf(field2[0],"%lu",&luAllContainerPhyspages);
+		{
+			if(field2[0]!=NULL)
+				sscanf(field2[0],"%lu",&luAllContainerPhyspages);
+		}
 		mysql_free_result(res2);
 		//3b-. All container kmemsize + othersockbuf.luHeld + tcpsndbuf.luHeld + tcprcvbuf.luHeld +
 		// dgramrcvbuf.luHeld
@@ -128,7 +131,10 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 			ErrorMsg(mysql_error(&gMysql));
 		res2=mysql_store_result(&gMysql);
 		if((field2=mysql_fetch_row(res2)))
-			sscanf(field2[0],"%lu",&luAllContainerPhyspages);
+		{
+			if(field2[0]!=NULL)
+				sscanf(field2[0],"%lu",&luAllContainerPhyspages);
+		}
 		mysql_free_result(res2);
 		//3b-. All container kmemsize + othersockbuf.luHeld + tcpsndbuf.luHeld + tcprcvbuf.luHeld +
 		// dgramrcvbuf.luHeld
