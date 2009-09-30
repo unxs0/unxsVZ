@@ -942,10 +942,15 @@ void funcCompanyNavList(FILE *fp,unsigned uSetCookie)
 	unsigned uResults=0;
 	
 	if(!cSearch[0]) return;
+	
+	if(!guASPContact)
+	        sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE uClient!=1 AND "
+				"cLabel LIKE '%s%%' AND (uClient=%u OR uOwner=%u) AND cCode='Organization' ORDER BY cLabel",
+					cSearch,guOrg,guOrg);
+	else
+		sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE uClient!=1 AND "
+				"cLabel LIKE '%s%%' AND cCode='Organization' ORDER BY cLabel",cSearch);
 
-        sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE uClient!=1 AND "
-			"cLabel LIKE '%s%%' AND (uClient=%u OR uOwner=%u) AND cCode='Organization' ORDER BY cLabel",
-				cSearch,guOrg,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -999,4 +1004,5 @@ void funcCompanyNavList(FILE *fp,unsigned uSetCookie)
 	}
 
 	mysql_free_result(res);
+
 }//void funcCompanyNavList(FILE *fp)
