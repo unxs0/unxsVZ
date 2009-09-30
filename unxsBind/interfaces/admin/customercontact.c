@@ -1135,7 +1135,8 @@ void LoadCustomerContact(void)
 	sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tClient.cInfo,tClient.cEmail,tClient.uOwner,"
 			"tAuthorize.cLabel,tAuthorize.uPerm,tAuthorize.cPasswd,tAuthorize.cClrPasswd, "
 			"tClient.uCreatedBy,tClient.uCreatedDate,tClient.uModBy,tClient.uModDate FROM "
-			"tClient,tAuthorize WHERE tClient.uClient=%u AND tAuthorize.uCertClient=tClient.uClient",guContact);
+			"tClient,tAuthorize WHERE tClient.uClient=%u AND tAuthorize.uCertClient=tClient.uClient "
+			"AND tAuthorize.uPerm<=6",guContact);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1202,7 +1203,7 @@ void funcContactNavList(FILE *fp,unsigned uSetCookie)
 	if(!cSearch[0]) return;
 
 	sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tAuthorize.cLabel FROM tClient,tAuthorize WHERE tClient.uClient=tAuthorize.uCertClient AND "
-			"(tClient.cLabel LIKE '%1$s%%' OR tAuthorize.cLabel LIKE '%1$s%%') AND tAuthorize.uCertClient!=1 "
+			"(tClient.cLabel LIKE '%1$s%%' OR tAuthorize.cLabel LIKE '%1$s%%') AND tAuthorize.uCertClient!=1 AND tAuthorize.uPerm<=6"
 			"ORDER BY tClient.cLabel",cSearch);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
