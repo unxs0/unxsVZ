@@ -1931,6 +1931,8 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 	macro_mySQLQueryExitText
         if((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
+		if(mysqlField[0]==NULL) return;
+
 		if(mysqlField[0]==0 || sscanf(mysqlField[0],"%lu",&luTotalUsage)!=1)
 			return;
 	}
@@ -1952,6 +1954,8 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 	macro_mySQLQueryExitText
         if((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
+		if(mysqlField[0]==NULL) return;
+
 		if(sscanf(mysqlField[0],"%lu",&luTotalSoftLimit)==0)
 			return;	
 	}

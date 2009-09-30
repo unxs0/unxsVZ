@@ -693,7 +693,12 @@ NextSection2:
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%lu",&luAllContainerPhyspages);
+	{
+		if(field[0]!=NULL)
+			sscanf(field[0],"%lu",&luAllContainerPhyspages);
+		else
+			luAllContainerPhyspages=1;
+	}
 	mysql_free_result(res);
 	//3b-. All container kmemsize + othersockbuf.luMaxheld + tcpsndbuf.luMaxheld + tcprcvbuf.luMaxheld +
 	// dgramrcvbuf.luMaxheld
@@ -716,7 +721,12 @@ NextSection2:
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%lu",&luAllContainer);
+	{
+		if(field[0]!=NULL)
+			sscanf(field[0],"%lu",&luAllContainer);
+		else
+			luAllContainer=1;
+	}
 	mysql_free_result(res);
 	luTotalRAM=(luAllContainerPhyspages+luAllContainer)/1000;
 	fRatio= ((float)luTotalRAM/(float)luInstalledRam) * 100.00;
