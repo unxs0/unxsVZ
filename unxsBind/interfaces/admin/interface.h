@@ -63,6 +63,7 @@ extern int guPermLevel;
 extern char gcuPermLevel[];
 extern unsigned guLoginUser;
 extern unsigned guOrg;
+extern unsigned guASPContact;
 extern char gcUser[];
 extern char gcName[];
 extern char gcOrgName[];

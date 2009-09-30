@@ -39,6 +39,7 @@ int guPermLevel=0;
 char gcuPermLevel[4]={""};
 unsigned guLoginClient=0;
 unsigned guOrg=0;
+unsigned guASPContact=0;
 char gcUser[100]={""};
 char gcName[100]={""};
 char gcOrgName[100]={""};
@@ -630,6 +631,7 @@ void GetPLAndClient(char *cUser)
 {
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
+	char cASP[100]={""};
 
 	sprintf(gcQuery,"SELECT tAuthorize.uPerm,tAuthorize.uCertClient,tAuthorize.uOwner FROM"
 				" tAuthorize,tClient WHERE tAuthorize.cLabel='%s'",
@@ -668,6 +670,10 @@ void GetPLAndClient(char *cUser)
 			sprintf(gcOrgName,"%.100s",mysqlField[0]);
 		mysql_free_result(mysqlRes);
 	}
+
+	//Ticket #80
+	GetConfiguration("cASP",cASP,1);
+	if(!strcmp(gcOrgName,cASP)) guASPContact=1;
 
 }//void GetPLAndClient()
 
