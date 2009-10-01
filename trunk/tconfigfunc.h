@@ -10,6 +10,8 @@ AUTHOR
 */
 
 void tConfigNavList(void);
+unsigned htmlConfigContext(void);
+unsigned LocalImportConfigJob(unsigned uConfig);
 
 void ExtProcesstConfigVars(pentry entries[], int x)
 {
@@ -28,6 +30,7 @@ void ExttConfigCommands(pentry entries[], int x)
 	if(!strcmp(gcFunction,"tConfigTools"))
 	{
         	MYSQL_RES *res;
+		time_t uActualModDate= -1;
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -95,6 +98,9 @@ void ExttConfigCommands(pentry entries[], int x)
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
+				sscanf(ForeignKey("tConfig","uModDate",uConfig),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tConfig("<blink>Error</blink>: This record was modified. Reload it.");
 				sprintf(gcQuery,"SELECT uConfig FROM tContainer WHERE uConfig=%u",uConfig);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
@@ -125,6 +131,9 @@ void ExttConfigCommands(pentry entries[], int x)
 			{
                         	guMode=2002;
 				//Check entries here
+				sscanf(ForeignKey("tConfig","uModDate",uConfig),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tConfig("<blink>Error</blink>: This record was modified. Reload it.");
 				if(strlen(cLabel)<3)
 					tConfig("<blink>Error</blink>: cLabel too short!");
                         	guMode=0;
@@ -133,6 +142,37 @@ void ExttConfigCommands(pentry entries[], int x)
 				ModtConfig();
 			}
                 }
+		else if(!strcmp(gcCommand,"Local Import"))
+                {
+			if(guPermLevel>=10)
+			{
+                        	ProcesstConfigVars(entries,x);
+				guMode=6;
+				if(uConfig<1)
+					tConfig("<blink>Error</blink>: Unexpected uConfig&lt;1 error!");
+				sscanf(ForeignKey("tConfig","uModDate",uConfig),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tConfig("<blink>Error</blink>: This record was modified. Reload it.");
+				sprintf(gcQuery,"SELECT uConfig FROM tContainer WHERE uConfig=%u",
+						uConfig);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tConfig("<blink>Error</blink>: Can't import a config already in use!");
+				}
+				if(strlen(cLabel)<3)
+					tConfig("<blink>Error</blink>: cLabel too short!");
+				
+				if(LocalImportConfigJob(uConfig))
+					tConfig("Local Import job created");
+				else
+					tConfig("<blink>Error</blink>: LocalImportTemplateJob() failed!");
+			}
+		}
 	}
 
 }//void ExttConfigCommands(pentry entries[], int x)
@@ -140,6 +180,8 @@ void ExttConfigCommands(pentry entries[], int x)
 
 void ExttConfigButtons(void)
 {
+	unsigned uNum=0;
+
 	OpenFieldSet("tConfig Aux Panel",100);
 	switch(guMode)
         {
@@ -159,9 +201,25 @@ void ExttConfigButtons(void)
                 break;
 
 		default:
+			//ve-dns2.conf-sample
 			printf("<u>Table Tips</u><br>");
+			printf("Make sure that the cLabel entries (new or modified) have a corresponding "
+				"/etc/vz/conf//ve-&lt;cLabel&gt;.conf-sample file on all unxsVZ controlled "
+				"nodes. Please note the 32 character limitation."
+				"<p><u>Automated way to install an external config file</u><br>"
+				"1-. Transfer ve-&lt;unused tConfig.cLabel&gt;.conf-sample to a node with a local "
+				"unxsVZ webmin and place in /etc/vz/conf/.<br>"
+				"2-. Run a [Local Import] job, after adding the new tConfig.cLabel.<br>");
 			printf("<p><u>Record Context Info</u><br>");
+			uNum=htmlConfigContext();
 			tConfigNavList();
+
+			if(uConfig>0 && uNum==0)
+			{
+				printf("<p><u>Extended table actions</u><br>");
+                        	printf("<input title='Submit a job for the local import of the currently selected "
+					"config' type=submit name=gcCommand value='Local Import'>");
+			}
 	}
 	CloseFieldSet();
 
@@ -304,3 +362,66 @@ void tConfigNavList(void)
 }//void tConfigNavList(void)
 
 
+unsigned htmlConfigContext(void)
+{
+	unsigned uRows=0;
+        MYSQL_RES *res;
+
+	sprintf(gcQuery,"SELECT uConfig FROM tContainer WHERE uConfig=%u",uConfig);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	uRows=mysql_num_rows(res);
+	printf("Used by %u containers.",uRows);
+	mysql_free_result(res);
+
+	return(uRows);
+
+}//unsigned htmlConfigContext(void)
+
+
+unsigned LocalImportConfigJob(unsigned uConfig)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uCount=0;
+	unsigned uNode=0;
+	unsigned uDatacenter=0;
+	char cHostname[100];
+
+	if(gethostname(cHostname,99)!=0)
+		return(0);
+
+	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
+	}
+	mysql_free_result(res);
+
+	if(!uNode || !uDatacenter || !uConfig)
+		return(0);
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LocalImportConfigJob(%u)',cJobName='LocalImportConfigJob'"
+			",uDatacenter=%u,uNode=%u,uContainer=0"
+			",uJobDate=UNIX_TIMESTAMP(NOW())"
+			",uJobStatus=1"
+			",cJobData='uConfig=%u;'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uConfig,
+				uDatacenter,uNode,uConfig,
+				uOwner,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uConfig,"tConfig","LocalConfigImport");
+	return(uCount);
+
+}//unsigned LocalImportConfigJob(...)
