@@ -2129,13 +2129,20 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 	while((field=mysql_fetch_row(res)))
 	{
 		sprintf(gcQuery,"nice /usr/bin/scp %s %s %s:%s\n",cSCPOptions,cOSTemplateFile,field[0],cOSTemplateFile);
-		//debug only
-		//printf("%s\n",gcQuery);
 		if(system(gcQuery))
 		{
 			mysql_free_result(res);
 			printf("%s failed!\n",gcQuery);
-			tJobErrorUpdate(uJob,"scp failed!");
+			tJobErrorUpdate(uJob,"scp-1 failed!");
+			goto CommonExit;
+		}
+		sprintf(gcQuery,"nice /usr/bin/scp %s %s %s:%s\n",cSCPOptions,cOSTemplateFileMd5sum,field[0],
+						cOSTemplateFileMd5sum);
+		if(system(gcQuery))
+		{
+			mysql_free_result(res);
+			printf("%s failed!\n",gcQuery);
+			tJobErrorUpdate(uJob,"scp-1 failed!");
 			goto CommonExit;
 		}
 	}

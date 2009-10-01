@@ -12,6 +12,7 @@ AUTHOR
 
 void tConfigurationNavList(void);
 unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uNode,unsigned uContainer);
+void htmlGlossaryLink(char *cLabel);
 
 void ExtProcesstConfigurationVars(pentry entries[], int x)
 {
@@ -155,12 +156,14 @@ void ExttConfigurationButtons(void)
                 break;
 
 		default:
-			if(uConfiguration && !strncmp(cLabel,"file;",5))
-				printf("<input title='Creates a job for configuring one or more nodes."
-					" If the file replaced is critical you may break your cluster!'"
-					" type=submit class=lwarnButton"
-					" name=gcCommand value='Create File Job'>\n");
+			printf("<u>Table Tips</u><br>");
+			printf("This table is used for configuration settings used by the "
+				"system that are of a more general nature than tProperty values. "
+				"Like tProperty if a tConfiguration.cLabel has an entry in tGlossary "
+				"then a link will be provided.<p>\n");
 			tConfigurationNavList();
+			printf("<p>");
+			htmlGlossaryLink(cLabel);
 
 	}
 	CloseFieldSet();
