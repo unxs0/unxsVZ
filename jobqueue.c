@@ -58,6 +58,7 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
 void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData);
+void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData);
 int CreateMountFiles(unsigned uContainer, unsigned uOverwrite);
 unsigned uNotValidSystemCallArg(char *cSSHOptions);
 
@@ -222,6 +223,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"LocalImportTemplateJob"))
 	{
 		LocalImportTemplate(uJob,uDatacenter,cJobData);
+	}
+	else if(!strcmp(cJobName,"LocalImportConfigJob"))
+	{
+		LocalImportConfig(uJob,uDatacenter,cJobData);
 	}
 	else if(!strcmp(cJobName,"InstallConfigFile"))
 	{
@@ -2143,3 +2148,103 @@ CommonExit:
 	return;
 
 }//void LocalImportTemplate(unsigned uJob,unsigned uContainer,const char *cJobData)
+
+
+void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	char cConfigFilePath[55]={"/etc/vz/conf/"};
+	char cConfigFile[200]={""};
+	struct stat statInfo;
+	unsigned uConfig=0;
+
+	//1-. Parse data and basic sanity checks
+	sscanf(cJobData,"uConfig=%u;",&uConfig);
+	if(!uConfig)
+	{
+		printf("LocalImportConfig() error: Could not determine uConfig\n");
+		tJobErrorUpdate(uJob,"uConfig=0");
+		goto CommonExit;
+	}
+
+	sprintf(gcQuery,"SELECT cLabel FROM tConfig"
+			" WHERE uConfig=%u",uConfig);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"SELECT tConfig.cLabel");
+		goto CommonExit;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cConfigFile,"%.54sve-%.100s.conf-sample",cConfigFilePath,field[0]);
+	}
+	else
+	{
+		mysql_free_result(res);
+		printf("LocalImportConfig() error: Could not determine tConfig.cLabel\n");
+		tJobErrorUpdate(uJob,"tConfig.cLabel");
+		goto CommonExit;
+	}
+	mysql_free_result(res);
+	if(uNotValidSystemCallArg(cConfigFile))
+	{
+		tJobErrorUpdate(uJob,"failed sec alert!");
+		goto CommonExit;
+	}
+
+	//2-. stat file
+	if(stat(cConfigFile,&statInfo)!=0)
+	{
+		printf("Could not find %s\n",cConfigFile);
+		tJobErrorUpdate(uJob,"cConfigFile stat");
+		goto CommonExit;
+	}
+
+	//3-. copy to all same datacenter nodes nicely (hopefully on GB 2nd NIC internal lan.)
+	char cSCPOptions[256]={""};
+	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,guNode,0,0);//First try node specific
+	if(!cSCPOptions[0])
+	{
+		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSCPOptions[0])
+			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
+	}
+	//Default for less conditions below
+	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
+		sprintf(cSCPOptions,"-P 22 -c blowfish");
+	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",guDatacenter,guNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"SELECT tNode.cLabel");
+		goto CommonExit;
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"nice /usr/bin/scp %s %s %s:%s\n",cSCPOptions,cConfigFile,field[0],cConfigFile);
+		//debug only
+		//printf("%s\n",gcQuery);
+		if(system(gcQuery))
+		{
+			mysql_free_result(res);
+			printf("%s failed!\n",gcQuery);
+			tJobErrorUpdate(uJob,"scp failed!");
+			goto CommonExit;
+		}
+	}
+	mysql_free_result(res);
+
+	//Everything ok
+	tJobDoneUpdate(uJob);
+
+CommonExit:
+	return;
+
+}//void LocalImportConfig(unsigned uJob,unsigned uContainer,const char *cJobData)
