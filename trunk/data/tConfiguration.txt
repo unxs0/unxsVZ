@@ -1,4 +1,22 @@
 0	1245437192	1	cTrafficDirURL	1	Optional rrdtool datacenter wide system must be installed.	1	0	/traffic	1	0	0
 0	1245926204	1	cNodeTrafficDirURL	11	Optional rrdtool datacenter wide system must be installed.	1	0	/traffic	1	0	0
-0	1245926928	1	cDatacenterTrafficDirURL	21	Optional rrdtool datacenter wide system must be installed.	1	0	/traffic/vmware-test-cluster.png	1	0	0
+1	1245926928	1	cDatacenterTrafficDirURL	21	Optional rrdtool datacenter wide system must be installed.\
+\
+If you rename the datacenter you will need to update this record and the /usr/local/sbin/datacenter_traffic_log.sh script.	1	1253651380	/traffic/Wilshire1.png	0	0	0
 0	1249938765	1	cCryptMethod	31	MD5 or DES can be specified for web authorization password used in tAuthorize.	1	0	MD5	0	0	0
+1	1251316583	1	cSSHOptions	41	Job queue ssh options for ssh and vzmigrate system calls.	1	1251316884	-p 22	0	0	0
+1	1251316870	1	cSCPOptions	51	Job queue scp options for system calls.	1	1254412902	-P 22 -c blowfish	0	0	0
+1	1251320448	1	cSnapshotDir	61	--dumpdir as used below: \
+(Extension: you can include --compress in cValue or other vzdump args compatible with --snapshot if you like)\
+\
+# vzdump --dumpdir /var/vzdump --compress --snapshot 211\
+\
+Must on diff LVM2 logical volume\
+\
+If this configuration entry exists globally or for specific node. It will trigger snapshot whenever vzdump is used by unxsVZ system.	1	1253194119	/var/vzdump	1	0	0
+0	1253653487	1	cDatacenterTrafficDirURL	71	Optional rrdtool datacenter wide system must be installed.\
+\
+If you rename the datacenter you will need to update this record and the /usr/local/sbin/datacenter_traffic_log.sh script.	1	0	/traffic/Wilshire1.png	1	0	0
+0	1253653499	1	cDatacenterTrafficDirURL	81	Optional rrdtool datacenter wide system must be installed.\
+\
+If you rename the datacenter you will need to update this record and the /usr/local/sbin/datacenter_traffic_log.sh script.	1	0	/traffic/Wilshire2.png	11	0	0
