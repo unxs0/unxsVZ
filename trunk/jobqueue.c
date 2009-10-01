@@ -57,6 +57,7 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
+void LocalImportTemplate(unsigned uJob,unsigned uContainer,const char *cJobData);
 int CreateMountFiles(unsigned uContainer, unsigned uOverwrite);
 unsigned uNotValidSystemCallArg(char *cSSHOptions);
 
@@ -217,6 +218,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"TemplateContainer"))
 	{
 		TemplateContainer(uJob,uContainer,cJobData);
+	}
+	else if(!strcmp(cJobName,"LocalImportTemplateJob"))
+	{
+		LocalImportTemplate(uJob,uContainer,cJobData);
 	}
 	else if(!strcmp(cJobName,"InstallConfigFile"))
 	{
@@ -2018,3 +2023,67 @@ unsigned uNotValidSystemCallArg(char *cSSHOptions)
 	}
 	return(0);
 }//unsigned uNotValidSystemCallArg(char *cSSHOptions)
+
+
+void LocalImportTemplate(unsigned uJob,unsigned uContainer,const char *cJobData)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	char cOSTemplateFilePath[55]={"/vz/template/cache/"};
+	char cOSTemplateFile[156]={""};
+	//struct stat statInfo;
+	unsigned uOSTemplate=0;
+
+	//1-. Parse data and basic sanity checks
+	sscanf(cJobData,"uOSTemplate=%u;",&uOSTemplate);
+	if(!uOSTemplate)
+	{
+		printf("LocalImportTemplate() error: Could not determine uOSTemplate\n");
+		tJobErrorUpdate(uJob,"uOSTemplate=0");
+		goto CommonExit;
+	}
+
+	sprintf(gcQuery,"SELECT cLabel FROM tOSTemplate"
+			" WHERE uOSTemplate=%u",uOSTemplate);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"SELECT tOSTemplate.cLabel");
+		goto CommonExit;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cOSTemplateFile,"%.54s%.100s",cOSTemplateFilePath,field[0]);
+	}
+	else
+	{
+		mysql_free_result(res);
+		printf("LocalImportTemplate() error: Could not determine tOSTemplate.cLabel\n");
+		tJobErrorUpdate(uJob,"tOSTemplate.cLabel");
+		goto CommonExit;
+	}
+	mysql_free_result(res);
+	if(uNotValidSystemCallArg(cOSTemplateFilePath))
+	{
+		tJobErrorUpdate(uJob,"failed sec alert!");
+		goto CommonExit;
+	}
+
+	//2-. stat file
+
+	//3-. stat file.md5sum
+
+	//4-. check md5sum
+
+	//5-. copy to all same datacenter nodes nicely (hopefully on GB 2nd NIC internal lan.)
+
+	//Everything ok
+	tJobDoneUpdate(uJob);
+
+CommonExit:
+	return;
+
+}//void LocalImportTemplate(unsigned uJob,unsigned uContainer,const char *cJobData)
