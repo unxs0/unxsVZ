@@ -11,7 +11,7 @@ AUTHOR
 
 
 void tOSTemplateNavList(void);
-void htmlOSTemplateContext(void);
+unsigned htmlOSTemplateContext(void);
 unsigned LocalImportTemplateJob(unsigned uOSTemplate);
 
 void ExtProcesstOSTemplateVars(pentry entries[], int x)
@@ -228,7 +228,7 @@ unsigned LocalImportTemplateJob(unsigned uOSTemplate)
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LocalImportTemplateJob(%u)',cJobName='LocalImportTemplateJob'"
 			",uDatacenter=%u,uNode=%u,uContainer=0"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=UNIX_TIMESTAMP(NOW())"
 			",uJobStatus=1"
 			",cJobData='uOSTemplate=%u;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -245,7 +245,7 @@ unsigned LocalImportTemplateJob(unsigned uOSTemplate)
 }//unsigned LocalImportTemplateJob(...)
 
 
-void htmlOSTemplateContext(void)
+unsigned htmlOSTemplateContext(void)
 {
 	unsigned uRows=0;
         MYSQL_RES *res;
@@ -259,11 +259,15 @@ void htmlOSTemplateContext(void)
 	printf("Used by %u containers.",uRows);
 	mysql_free_result(res);
 
-}//void htmlOSTemplateContext(void)
+	return(uRows);
+
+}//unsigned htmlOSTemplateContext(void)
 
 
 void ExttOSTemplateButtons(void)
 {
+	unsigned uNum=0;
+
 	OpenFieldSet("tOSTemplate Aux Panel",100);
 	switch(guMode)
         {
@@ -283,6 +287,7 @@ void ExttOSTemplateButtons(void)
                 break;
 
 		default:
+
 			printf("<u>Table Tips</u><br>");
 			printf("Make sure that the cLabel entries (new or modified) have a corresponding "
 				"/vz/template/cache/&lt;cLabel&gt;.tar.gz file on all unxsVZ controlled "
@@ -294,13 +299,14 @@ void ExttOSTemplateButtons(void)
 				"2-. Transfer &lt;unused tOSTemplate.cLabel&gt;.tar.gz.md5sum to a node with a local "
 				"unxsVZ webmin and place in /vz/template/cache. This .md5sum file must correspond "
 				"to to the file transferred in step 1-. This file must also have the expected md5sum "
-				" command format (see man md5sum.)<br>"
+				" command format with a fully qualified path to the tar.gz template file "
+				"(see man md5sum for more info.)<br>"
 				"3-. Run a [Local Import] job, after adding the new tOSTemplate.cLabel.<br>");
 			printf("<p><u>Record Context Info</u><br>");
-			htmlOSTemplateContext();
+			uNum=htmlOSTemplateContext();
 			tOSTemplateNavList();
 
-			if(uOSTemplate>0)
+			if(uOSTemplate>0 && uNum==0)
 			{
 				printf("<p><u>Extended table actions</u><br>");
                         	printf("<input title='Submit a job for the local import of the currently selected "

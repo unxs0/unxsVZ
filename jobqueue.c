@@ -57,7 +57,7 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
-void LocalImportTemplate(unsigned uJob,unsigned uContainer,const char *cJobData);
+void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData);
 int CreateMountFiles(unsigned uContainer, unsigned uOverwrite);
 unsigned uNotValidSystemCallArg(char *cSSHOptions);
 
@@ -221,7 +221,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	}
 	else if(!strcmp(cJobName,"LocalImportTemplateJob"))
 	{
-		LocalImportTemplate(uJob,uContainer,cJobData);
+		LocalImportTemplate(uJob,uDatacenter,cJobData);
 	}
 	else if(!strcmp(cJobName,"InstallConfigFile"))
 	{
@@ -2025,14 +2025,15 @@ unsigned uNotValidSystemCallArg(char *cSSHOptions)
 }//unsigned uNotValidSystemCallArg(char *cSSHOptions)
 
 
-void LocalImportTemplate(unsigned uJob,unsigned uContainer,const char *cJobData)
+void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 
 	char cOSTemplateFilePath[55]={"/vz/template/cache/"};
-	char cOSTemplateFile[156]={""};
-	//struct stat statInfo;
+	char cOSTemplateFile[200]={""};
+	char cOSTemplateFileMd5sum[200]={""};
+	struct stat statInfo;
 	unsigned uOSTemplate=0;
 
 	//1-. Parse data and basic sanity checks
@@ -2056,7 +2057,7 @@ void LocalImportTemplate(unsigned uJob,unsigned uContainer,const char *cJobData)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		sprintf(cOSTemplateFile,"%.54s%.100s",cOSTemplateFilePath,field[0]);
+		sprintf(cOSTemplateFile,"%.54s%.100s.tar.gz",cOSTemplateFilePath,field[0]);
 	}
 	else
 	{
@@ -2066,19 +2067,74 @@ void LocalImportTemplate(unsigned uJob,unsigned uContainer,const char *cJobData)
 		goto CommonExit;
 	}
 	mysql_free_result(res);
-	if(uNotValidSystemCallArg(cOSTemplateFilePath))
+	if(uNotValidSystemCallArg(cOSTemplateFile))
 	{
 		tJobErrorUpdate(uJob,"failed sec alert!");
 		goto CommonExit;
 	}
 
 	//2-. stat file
+	if(stat(cOSTemplateFile,&statInfo)!=0)
+	{
+		printf("Could not find %s\n",cOSTemplateFile);
+		tJobErrorUpdate(uJob,"cOSTemplateFile stat");
+		goto CommonExit;
+	}
 
 	//3-. stat file.md5sum
+	sprintf(cOSTemplateFileMd5sum,"%.154s.md5sum",cOSTemplateFile);
+	if(stat(cOSTemplateFileMd5sum,&statInfo)!=0)
+	{
+		printf("Could not find %s\n",cOSTemplateFileMd5sum);
+		tJobErrorUpdate(uJob,"cOSTemplateFilemd5sum stat");
+		goto CommonExit;
+	}
 
 	//4-. check md5sum
+	sprintf(gcQuery,"/usr/bin/md5sum -c %s > /dev/null 2>&1",cOSTemplateFileMd5sum);
+	if(system(gcQuery))
+	{
+		printf("md5sum -c %s failed!\n",cOSTemplateFileMd5sum);
+		tJobErrorUpdate(uJob,"md5sum -c failed!");
+		goto CommonExit;
+	}
+
 
 	//5-. copy to all same datacenter nodes nicely (hopefully on GB 2nd NIC internal lan.)
+	char cSCPOptions[256]={""};
+	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,guNode,0,0);//First try node specific
+	if(!cSCPOptions[0])
+	{
+		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSCPOptions[0])
+			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
+	}
+	//Default for less conditions below
+	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
+		sprintf(cSCPOptions,"-P 22 -c blowfish");
+	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",guDatacenter,guNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"SELECT tNode.cLabel");
+		goto CommonExit;
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"nice /usr/bin/scp %s %s %s:%s\n",cSCPOptions,cOSTemplateFile,field[0],cOSTemplateFile);
+		//debug only
+		//printf("%s\n",gcQuery);
+		if(system(gcQuery))
+		{
+			mysql_free_result(res);
+			printf("%s failed!\n",gcQuery);
+			tJobErrorUpdate(uJob,"scp failed!");
+			goto CommonExit;
+		}
+	}
+	mysql_free_result(res);
 
 	//Everything ok
 	tJobDoneUpdate(uJob);
