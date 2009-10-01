@@ -97,3 +97,29 @@ email addresses.\
 <p>\
 Related terms: Autonomics, Autonomics-Type, Autonomics-PrivPagesActRatio and \
 WarningEmail
+51	cCryptMethod	1	1	1254436501	0	0	cCryptMethod refers to the method used to store the encrypted tAuthorize.cPasswd.\
+\
+<p>\
+The values can be DES or MD5. MD5 should be used since it has a much stronger\
+salt. The stronger salt protects against automated dictionary attacks of\
+compromised login cookies. \
+\
+<p>\
+This password is used by the unxsVZ backend and other interfaces as part of the\
+login credentials. It is stored on the client browser as a cookie but also\
+encrypted with a strong salt. Since web interfaces should be be SSL only this\
+provides a relatively secure cgi login control scheme. The obvious attacks are\
+O(n) dictionary based, running all possible salt values. This is of course very\
+slow for the large MD5 salts.\
+\
+<p>\
+Related terms: None
+61	cSnapshotDir	1	1	1254436834	0	0	cSnapshotDir is used on LVM2 enabled systems. It sepecifies a partition\
+different from the /vz LVM partition.\
+\
+<p>\
+It is used by vzdump related job queue processing (see jobqueue.c) At this time\
+cloning and OS template creation jobs.\
+\
+<p>\
+Related terms: None
