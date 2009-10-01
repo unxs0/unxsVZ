@@ -628,7 +628,7 @@ void htmlNodeHealth(unsigned uNode)
 		fRatio= ((float) luContainerPrivvmpagesMaxHeld/ (float) luInstalledRam) * 100.00 ;
 		cColor=cRatioColor(&fRatio);
 		printf("Max held privvmpages ratio %2.2f%%:"
-			" <font color=%s>%lu/%lu<font><br>\n",
+			" <font color=%s>%lu/%lu</font><br>\n",
 				fRatio,cColor,luContainerPrivvmpagesMaxHeld,luInstalledRam);
 	}
 NextSection:
