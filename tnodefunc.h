@@ -696,8 +696,6 @@ NextSection2:
 	{
 		if(field[0]!=NULL)
 			sscanf(field[0],"%lu",&luAllContainerPhyspages);
-		else
-			luAllContainerPhyspages=1;
 	}
 	mysql_free_result(res);
 	//3b-. All container kmemsize + othersockbuf.luMaxheld + tcpsndbuf.luMaxheld + tcprcvbuf.luMaxheld +
@@ -724,8 +722,6 @@ NextSection2:
 	{
 		if(field[0]!=NULL)
 			sscanf(field[0],"%lu",&luAllContainer);
-		else
-			luAllContainer=1;
 	}
 	mysql_free_result(res);
 	luTotalRAM=(luAllContainerPhyspages+luAllContainer)/1000;
