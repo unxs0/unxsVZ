@@ -394,8 +394,8 @@ void tIPReport(void)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNode"
-					"&uNode=%s>%s used by %s</a><br>\n",field[0],cLabel,field[1]);
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
+					"&uContainer=%s>%s used by %s</a><br>\n",field[0],cLabel,field[1]);
 	        }
 	}
         mysql_free_result(res);
