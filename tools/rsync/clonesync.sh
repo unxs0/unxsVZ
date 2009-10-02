@@ -12,14 +12,13 @@
 #	to see what actually changes over a long period and then
 #	have this script modified just for the service important items.
 
-cSSHAndOptions="'ssh -ax -C -c blowfish -p 22'";
+cSSHPort="-p 12337";
+cSSHOptions="'/usr/bin/ssh -ax -c blowfish -p 12337'";
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	echo "usage: $0 <source VEID> <target VEID> <target node host>";
+	exit 0;
 fi
-
-#under construction
-exit;
 
 #flush as much as possible to disk.
 #special services could have hotcopy type commands here.
@@ -34,19 +33,17 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-/usr/bin/ssh $3 "ls /vz/private/$2";
+/usr/bin/ssh $cSSHPort $3 "ls /vz/private/$2 > /dev/null 2>&1";
 if [ $? != 0 ];then
 	echo "/usr/bin/ssh $3 ls /vz/private/$2 failed";
 	exit 2;
 fi
 
-exit;
-
 echo ""
-echo "rsync container private..."
-/usr/bin/rsync -e $cSSHOptions-e $cSSHOptions -n -avxlH --delete --exclude "/proc/" --exclude "/root/.ccache/" \
+echo "rsync container $1 to $3:$2"
+/usr/bin/rsync -e $cSSHOptions -avxzlH --delete --exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
-			/vz/private/$1/* $3:/vz/private/$2
+			/vz/private/$1/ $3:/vz/private/$2
 
 echo ""
 echo "done"
