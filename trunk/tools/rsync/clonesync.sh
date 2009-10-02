@@ -12,7 +12,7 @@
 #	to see what actually changes over a long period and then
 #	have this script modified just for the service important items.
 
-cSSHOptions="-C -c blowfish -p 22";
+cSSHAndOptions="'ssh -ax -C -c blowfish -p 22'";
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	echo "usage: $0 <source VEID> <target VEID> <target node host>";
@@ -34,12 +34,19 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-#need to add ssh tunnel stuff here...
+/usr/bin/ssh $3 "ls /vz/private/$2";
+if [ $? != 0 ];then
+	echo "/usr/bin/ssh $3 ls /vz/private/$2 failed";
+	exit 2;
+fi
+
+exit;
+
 echo ""
 echo "rsync container private..."
-/usr/bin/rsync -avxlH --delete --exclude "/proc/" --exclude "/root/.ccache/" \
+/usr/bin/rsync -e $cSSHOptions-e $cSSHOptions -n -avxlH --delete --exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
-			/vz/private/$1/* /vz/private/$2
+			/vz/private/$1/* $3:/vz/private/$2
 
 echo ""
 echo "done"
