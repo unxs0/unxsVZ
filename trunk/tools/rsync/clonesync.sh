@@ -41,7 +41,7 @@ fi
 
 echo ""
 echo "rsync container $1 to $3:$2"
-/usr/bin/rsync -e $cSSHOptions -avxzlH --delete --exclude "/proc/" --exclude "/root/.ccache/" \
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 12337' -avxzlH --delete --exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
 			/vz/private/$1/ $3:/vz/private/$2
 
