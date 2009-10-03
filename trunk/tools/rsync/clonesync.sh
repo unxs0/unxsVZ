@@ -12,8 +12,8 @@
 #	to see what actually changes over a long period and then
 #	have this script modified just for the service important items.
 
-cSSHPort="-p 12337";
-cSSHOptions="'/usr/bin/ssh -ax -c blowfish -p 12337'";
+cSSHPort="-p 22";
+cSSHOptions="'/usr/bin/ssh -ax -c blowfish -p 22'";
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	echo "usage: $0 <source VEID> <target VEID> <target node host>";
@@ -39,10 +39,16 @@ if [ $? != 0 ];then
 	exit 2;
 fi
 
+
 echo ""
 echo "rsync container $1 to $3:$2"
-/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 12337' -avxzlH --delete --exclude "/proc/" --exclude "/root/.ccache/" \
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxzlH --delete \
+			--exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
+			--exclude /etc/sysconfig/network \
+			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:0 \
+			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:1 \
+			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:2 \
 			/vz/private/$1/ $3:/vz/private/$2
 
 echo ""

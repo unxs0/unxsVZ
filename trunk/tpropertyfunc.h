@@ -5,7 +5,7 @@ FILE
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Gary Wallis for Unixservice, LLC.
  
 */
 
@@ -377,9 +377,46 @@ void ExttPropertyListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tProperty.uProperty=%u \
-						ORDER BY uProperty",
-						uProperty);
+		sprintf(cCat,"tProperty.uProperty=%u ORDER BY uProperty",uProperty);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"cName"))
+        {
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tProperty.cName='%s' ORDER BY cName,uProperty",gcCommand);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uType"))
+        {
+                sscanf(gcCommand,"%u",&uType);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tProperty.uType=%u ORDER BY uType,uProperty",uType);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uKey"))
+        {
+                sscanf(gcCommand,"%u",&uKey);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tProperty.uKey=%u ORDER BY uKey,uProperty",uKey);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uOwner"))
+        {
+                sscanf(gcCommand,"%u",&uOwner);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tProperty.uOwner=%u ORDER BY uOwner,uProperty",uOwner);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -401,6 +438,22 @@ void ExttPropertyListFilter(void)
                 printf("<option>uProperty</option>");
         else
                 printf("<option selected>uProperty</option>");
+        if(strcmp(gcFilter,"cName"))
+                printf("<option>cName</option>");
+        else
+                printf("<option selected>cName</option>");
+        if(strcmp(gcFilter,"uType"))
+                printf("<option>uType</option>");
+        else
+                printf("<option selected>uType</option>");
+        if(strcmp(gcFilter,"uKey"))
+                printf("<option>uKey</option>");
+        else
+                printf("<option selected>uKey</option>");
+        if(strcmp(gcFilter,"uOwner"))
+                printf("<option>uOwner</option>");
+        else
+                printf("<option selected>uOwner</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
