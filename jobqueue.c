@@ -1750,6 +1750,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4c-.
+	//Some containers have more than one IP must fix this via a loop
 	if(uNotValidSystemCallArg(cSourceContainerIP))
 	{
 		tJobErrorUpdate(uJob,"fail sec alert!");
@@ -1801,6 +1802,10 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//6-.
+	//This should be optional since clones can be in stopped state and still be
+	//kept in sync with source container. Also the failover can start (a fast operation)
+	//with the extra advantage of being able to keep original IPs. ONly needing an arping
+	//to move the VIPs around the datacenter.
 	sprintf(gcQuery,"ssh %s %s 'vzctl start %u'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
 	if(uDebug==0 && system(gcQuery))
 	{

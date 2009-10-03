@@ -36,6 +36,7 @@ static char cNetmask[64]={""};
 static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
 static unsigned uAllPortsOpen=0;
+static unsigned uCloneStop=1;
 
 //ModuleFunctionProtos()
 void tContainerNavList(unsigned uNode);
@@ -194,6 +195,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"uMountTemplate"))
 		{
 			sscanf(entries[i].val,"%u",&uMountTemplate);
+		}
+		else if(!strcmp(entries[i].name,"uCloneStop"))
+		{
+			sscanf(entries[i].val,"%u",&uCloneStop);
 		}
 		else if(!strcmp(entries[i].name,"cConfigLabel"))
 		{
@@ -870,6 +875,30 @@ void ExttContainerCommands(pentry entries[], int x)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
+					sprintf(gcQuery,"DELETE FROM tProperty WHERE"
+							" cName='cuCloneSourceVEID' AND uKey=%u AND uType=3",uNewVeid);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							",cName='cuCloneSourceVEID',cValue='%u'",
+								uNewVeid,guCompany,guLoginClient,uContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					sprintf(gcQuery,"DELETE FROM tProperty WHERE"
+							" cName='cuSyncPeriod' AND uKey=%u AND uType=3",uNewVeid);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							",cName='cuSyncPeriod',cValue='0'",
+								uNewVeid,guCompany,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
 					uModBy=guLoginClient;
 					uStatus=81;
 					SetContainerStatus(uContainer,81);//Awaiting Clone
@@ -1250,11 +1279,14 @@ void ExttContainerButtons(void)
 				" by the new cloned container. This issue will be left for manual"
 				" or automated failover to the cloned container. If you wish to"
 				" keep the source and clone container sync'ed you must specify that"
-				" in the clone container via a 'cSyncSchedule' entry in it's properties table.<p>");
+				" in the cloned container via the 'cSyncPeriod' entry in it's properties table.<p>"
+				"Usually clones should be kept stopped to conserve resources until required"
+				" for failover. Use the checkbox to change this default behavior.<p>");
 			printf("Select target node ");
 			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
 			printf("<br>Select new IPv4 ");
 			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
+			printf("<br>Keep clone stopped <input type=checkbox name=uCloneStop checked>");
 			printf("<p><input title='Create a clone job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Clone'>\n");
@@ -2081,12 +2113,14 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 			",uJobStatus=1"
 			",cJobData='"
 			"uTargetNode=%u;\n"
-			"uNewVeid=%u;\n'"
+			"uNewVeid=%u;\n"
+			"uCloneStop=%u;\n'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
 				uTargetNode,
 				uNewVeid,
+				uCloneStop,
 				guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
