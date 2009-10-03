@@ -1768,7 +1768,26 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	{
 		printf("%s\n",gcQuery);
 	}
-
+	//Ticket #83
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uType=3 AND cName LIKE 'cIPv4-%%' AND uKey=%u",
+			uContainer);
+	mysqlrad_Query_TextErr_Exit;
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipdel %s --save'",
+					cSSHOptions,cTargetNodeIPv4,uNewVeid,field[0]);
+		if(uDebug==0 && system(gcQuery))
+		{
+			printf("CloneContainer() error: %s.\n",gcQuery);
+			tJobErrorUpdate(uJob,"error 4c.2");
+			goto CommonExit;
+		}
+		else if(uDebug)
+		{
+			printf("%s\n",gcQuery);
+		}
+	}
 	//4d-.
 	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipadd %s --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cNewIP);
