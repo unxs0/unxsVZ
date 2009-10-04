@@ -700,7 +700,8 @@ void UpdateSchema(void)
 	if(mysql_errno(&gMysql))
 		printf("%s\n",mysql_error(&gMysql));
 
-	sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=81,cLabel='Awaiting Clone',uCreatedBy=1,uOwner=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
+	sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=81,cLabel='Awaiting Clone',"
+				"uCreatedBy=1,uOwner=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		printf("%s\n",mysql_error(&gMysql));
@@ -711,6 +712,16 @@ void UpdateSchema(void)
 		printf("%s\n",mysql_error(&gMysql));
 
 	sprintf(gcQuery,"ALTER TABLE tOSTemplate MODIFY cLabel VARCHAR(100) NOT NULL DEFAULT ''");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+
+	sprintf(gcQuery,"ALTER TABLE tContainer ADD uSource INT UNSIGNED DEFAULT 0");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+
+	sprintf(gcQuery,"ALTER TABLE tContainer ADD INDEX (uSource)");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		printf("%s\n",mysql_error(&gMysql));

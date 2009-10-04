@@ -828,6 +828,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							"uStatus=81,"
 							"uOwner=%u,"
 							"uCreatedBy=%u,"
+							"uSource=%u,"
 							"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 							cWizLabel,
 							cWizHostname,
@@ -839,7 +840,8 @@ void ExttContainerCommands(pentry entries[], int x)
 							uDatacenter,
 							uTargetNode,
 							guCompany,
-							guLoginClient);
+							guLoginClient,
+							uContainer);
         			mysql_query(&gMysql,gcQuery);
 			        if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -875,18 +877,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
-					sprintf(gcQuery,"DELETE FROM tProperty WHERE"
-							" cName='cuCloneSourceVEID' AND uKey=%u AND uType=3",uNewVeid);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='cuCloneSourceVEID',cValue='%u'",
-								uNewVeid,guCompany,guLoginClient,uContainer);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
+					//default no sync period set
 					sprintf(gcQuery,"DELETE FROM tProperty WHERE"
 							" cName='cuSyncPeriod' AND uKey=%u AND uType=3",uNewVeid);
 					mysql_query(&gMysql,gcQuery);
@@ -1279,7 +1270,7 @@ void ExttContainerButtons(void)
 				" by the new cloned container. This issue will be left for manual"
 				" or automated failover to the cloned container. If you wish to"
 				" keep the source and clone container sync'ed you must specify that"
-				" in the cloned container via the 'cSyncPeriod' entry in it's properties table.<p>"
+				" in the cloned container via the 'cuSyncPeriod' entry in it's properties table.<p>"
 				"Usually clones should be kept stopped to conserve resources until required"
 				" for failover. Use the checkbox to change this default behavior.<p>");
 			printf("Select target node ");
@@ -1359,14 +1350,14 @@ void ExttContainerButtons(void)
 				" their tTemplate matching values (see tTemplate for more info)"
 				" to create /etc/vz/conf/VEID.(u)mount files (on new container creation you will"
 				" be able to optionally select a mount template for this feature.)");
-			printf("<p><u>Record Context Info</u>");
 			if(uContainer && uNode)
 			{
-				if(uStatus==1)
+				printf("<p><u>Record Context Info</u>");
+				if(uSource)
 				{
-					printf("<br>Container is running on ");
-					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNode&uNode=%u>%s</a>",
-						uNode,ForeignKey("tNode","cLabel",uNode));
+					printf("<br>Container is a clone of ");
+					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>"
+						"%s</a>",uSource,ForeignKey("tContainer","cLabel",uSource));
 				}
 				htmlContainerNotes(uContainer);
 				htmlContainerMount(uContainer);
@@ -1537,6 +1528,34 @@ void ExttContainerListSelect(void)
 		sprintf(cCat,"tContainer.uContainer=%u ORDER BY uContainer",uContainer);
 		strcat(gcQuery,cCat);
         }
+        else if(!strcmp(gcFilter,"cLabel"))
+        {
+		if(guLoginClient==1 && guPermLevel>11)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
+		sprintf(cCat,"tContainer.cLabel LIKE '%s' ORDER BY cLabel,uContainer",gcCommand);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"cHostname"))
+        {
+		if(guLoginClient==1 && guPermLevel>11)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
+		sprintf(cCat,"tContainer.cHostname LIKE '%s' ORDER BY cHostname,uContainer",gcCommand);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uDatacenter"))
+        {
+                sscanf(gcCommand,"%u",&uDatacenter);
+		if(guLoginClient==1 && guPermLevel>11)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
+		sprintf(cCat,"tContainer.uDatacenter=%u ORDER BY uDatacenter,uContainer",uDatacenter);
+		strcat(gcQuery,cCat);
+        }
         else if(!strcmp(gcFilter,"uNode"))
         {
                 sscanf(gcCommand,"%u",&uNode);
@@ -1545,6 +1564,26 @@ void ExttContainerListSelect(void)
 		else
 			strcat(gcQuery," AND ");
 		sprintf(cCat,"tContainer.uNode=%u ORDER BY uContainer",uNode);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uStatus"))
+        {
+                sscanf(gcCommand,"%u",&uStatus);
+		if(guLoginClient==1 && guPermLevel>11)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
+		sprintf(cCat,"tContainer.uStatus=%u ORDER BY uStatus,uContainer",uStatus);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uOwner"))
+        {
+                sscanf(gcCommand,"%u",&uOwner);
+		if(guLoginClient==1 && guPermLevel>11)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
+		sprintf(cCat,"tContainer.uOwner=%u ORDER BY uOwner,uContainer",uOwner);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -1566,10 +1605,30 @@ void ExttContainerListFilter(void)
                 printf("<option>uContainer</option>");
         else
                 printf("<option selected>uContainer</option>");
+        if(strcmp(gcFilter,"cLabel"))
+                printf("<option>cLabel</option>");
+        else
+                printf("<option selected>cLabel</option>");
+        if(strcmp(gcFilter,"cHostname"))
+                printf("<option>cHostname</option>");
+        else
+                printf("<option selected>cHostname</option>");
+        if(strcmp(gcFilter,"uDatacenter"))
+                printf("<option>uDatacenter</option>");
+        else
+                printf("<option selected>uDatacenter</option>");
         if(strcmp(gcFilter,"uNode"))
                 printf("<option>uNode</option>");
         else
                 printf("<option selected>uNode</option>");
+        if(strcmp(gcFilter,"uStatus"))
+                printf("<option>uStatus</option>");
+        else
+                printf("<option selected>uStatus</option>");
+        if(strcmp(gcFilter,"uOwner"))
+                printf("<option>uOwner</option>");
+        else
+                printf("<option selected>uOwner</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else

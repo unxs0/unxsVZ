@@ -386,7 +386,7 @@ void ExttPropertyListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tProperty.cName='%s' ORDER BY cName,uProperty",gcCommand);
+		sprintf(cCat,"tProperty.cName LIKE '%s' ORDER BY cName,uProperty",gcCommand);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uType"))

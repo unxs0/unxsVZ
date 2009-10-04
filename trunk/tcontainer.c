@@ -63,10 +63,12 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//uSource HIDDEN for now
+static unsigned uSource=0;
 
 
 
-#define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate"
+#define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource"
 
  //Local only
 void Insert_tContainer(void);
@@ -284,6 +286,7 @@ void tContainer(const char *cResult)
 		sscanf(field[14],"%lu",&uCreatedDate);
 		sscanf(field[15],"%u",&uModBy);
 		sscanf(field[16],"%lu",&uModDate);
+		sscanf(field[17],"%u",&uSource);
 
 		}
 
@@ -502,6 +505,8 @@ void tContainerInput(unsigned uMode)
 		printf("---\n\n");
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
+//uSource
+	printf("<input type=hidden name=uSource value=%u >\n",uSource);
 
 
 
@@ -730,7 +735,7 @@ void tContainerList(void)
 
 void CreatetContainer(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tContainer ( uContainer INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, UNIQUE (cLabel,uDatacenter), uNode INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uNode), uStatus INT UNSIGNED NOT NULL DEFAULT 0, uOSTemplate INT UNSIGNED NOT NULL DEFAULT 0, cHostname VARCHAR(64) NOT NULL DEFAULT '', uIPv4 INT UNSIGNED NOT NULL DEFAULT 0, uNameserver INT UNSIGNED NOT NULL DEFAULT 0, uSearchdomain INT UNSIGNED NOT NULL DEFAULT 0, uConfig INT UNSIGNED NOT NULL DEFAULT 0, uVeth INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tContainer ( uContainer INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 INDEX(uDatacenter), UNIQUE (cLabel,uDatacenter), uNode INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uNode), uStatus INT UNSIGNED NOT NULL DEFAULT 0, uOSTemplate INT UNSIGNED NOT NULL DEFAULT 0, cHostname VARCHAR(64) NOT NULL DEFAULT '', uIPv4 INT UNSIGNED NOT NULL DEFAULT 0, uNameserver INT UNSIGNED NOT NULL DEFAULT 0, uSearchdomain INT UNSIGNED NOT NULL DEFAULT 0, uConfig INT UNSIGNED NOT NULL DEFAULT 0, uVeth INT UNSIGNED NOT NULL DEFAULT 0, uSource INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uSource) )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
