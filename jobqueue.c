@@ -81,13 +81,108 @@ static unsigned guDatacenter=0;
 //Then dispatch jobs via ProcessJob() this function in turn calls specific functions for
 //each known cJobName.
 static char cHostname[100]={""};//file scope
+
+unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteNode, unsigned uRemoteContainer);
+unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteNode, unsigned uRemoteContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uPeriod=0;
+
+	//debug only
+	//printf("ProcessCloneSyncJob() for %s (uNode=%u,uContainer=%u,uRemoteNode=%u,uRemoteContainer=%u)\n",
+	//		cHostname,uNode,uContainer,uRemoteNode,uRemoteContainer);
+
+	//Make sure source uContainer is on this node if not return no error.
+	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND uNode=%u",
+					uContainer,uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		return(1);
+	}
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)<1)
+	{
+		mysql_free_result(res);
+		return(0);
+	}
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cuSyncPeriod'",
+					uRemoteContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		return(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uPeriod);
+	mysql_free_result(res);
+
+	if(uPeriod!=0)
+	{
+
+		sprintf(gcQuery,"SELECT tNode.cLabel FROM tContainer,tNode WHERE"
+				" tContainer.uNode=tNode.uNode AND"
+				" tContainer.uContainer=%u AND"
+				" tContainer.uModDate+%u<=UNIX_TIMESTAMP(NOW())",uRemoteContainer,uPeriod);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			return(3);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			//debug only
+			//printf("ProcessCloneSyncJob() uPeriod=%u\n",uPeriod);
+			if(uNotValidSystemCallArg(field[0]))
+			{
+				mysql_free_result(res);
+				printf("ProcessCloneSyncJob() sec alert!\n");
+				return(4);
+			}
+			sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s",uContainer,uRemoteContainer,field[0]);
+			//debug only
+			//printf("ProcessCloneSyncJob() '%s'\n",gcQuery);
+			if(system(gcQuery))
+			{
+				mysql_free_result(res);
+				printf("ProcessCloneSyncJob() '%s' failed!\n",gcQuery);
+				return(5);
+			}
+		}
+		mysql_free_result(res);
+		//After running a recurring job we must update the cloned containers uModDate!
+		sprintf(gcQuery,"UPDATE tContainer SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1 WHERE uContainer=%u",
+				uRemoteContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			return(6);
+		}
+		
+	}
+	return(0);
+
+}//void ProcessCloneSyncJob()
+
+
 void ProcessJobQueue(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uDatacenter=0;
 	unsigned uNode=0;
+	unsigned uRemoteNode=0;
 	unsigned uContainer=0;
+	unsigned uRemoteContainer=0;
 	unsigned uJob=0;
 
 	if(gethostname(cHostname,99)!=0)
@@ -120,11 +215,38 @@ void ProcessJobQueue(void)
 		exit(1);
 	}
 
+	//Special recurring jobs based on special containers
+	//Main loop normal jobs
+	//1-. Maintain clone containers
+	//We need to rsync from running container to clone container
+	//where the source container is running on this node
+	//and the target node is a remote node.
+	sprintf(gcQuery,"SELECT uSource,uContainer,uNode FROM tContainer WHERE uSource>0 AND"
+			" uDatacenter=%u",uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		//uSource==uContainer has to be on this node. We defer that determination
+		//to ProcessCloneSyncJob()
+		sscanf(field[0],"%u",&uContainer);
+		sscanf(field[1],"%u",&uRemoteContainer);
+		sscanf(field[2],"%u",&uRemoteNode);
+		ProcessCloneSyncJob(uNode,uContainer,uRemoteNode,uRemoteContainer);
+	}
+	mysql_free_result(res);
+
 	//debug only
 	//printf("ProcessJobQueue() for %s (uNode=%u,uDatacenter=%u)\n",
 	//		cHostname,uNode,uDatacenter);
+	exit(0);
 
-	//Main loop
+	//Main loop normal jobs
 	sprintf(gcQuery,"SELECT uJob,uContainer,cJobName,cJobData FROM tJob WHERE uJobStatus=1"
 				" AND uDatacenter=%u AND uNode=%u"
 				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) LIMIT 100",
@@ -1487,6 +1609,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
         MYSQL_ROW field;
 	char cTargetNodeIPv4[256]={""};
 	unsigned uNewVeid=0;
+	unsigned uCloneStop=0;
 	unsigned uTargetNode=0;
 	unsigned uDebug=0;
 	char cSourceContainerIP[32]={""};
@@ -1509,6 +1632,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		return;
 	}
 
+	//Set job data based vars
 	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
 	if(!uTargetNode)
 	{
@@ -1519,7 +1643,6 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			goto CommonExit;
 		}
 	}
-
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%u;",&uNewVeid);
 	if(!uNewVeid)
 	{
@@ -1530,6 +1653,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			goto CommonExit;
 		}
 	}
+	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%u;",&uCloneStop);
 
 	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.cHostname,tContainer.cLabel FROM tIP,tContainer"
 				" WHERE tIP.uIP=tContainer.uIPv4"
@@ -1606,21 +1730,21 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 	}
 
-/*	
 	if(uDebug)
 	{
-		printf("uNewVeid=%u uTargetNode=%u cNewIP=%s cHostname=%s cTargetNodeIPv4=%s cSourceContainerIP=%s\n",
-				uNewVeid,uTargetNode,cNewIP,cHostname,cTargetNodeIPv4,cSourceContainerIP);
+		printf("uNewVeid=%u uTargetNode=%u cNewIP=%s cHostname=%s cTargetNodeIPv4=%s"
+			"cSourceContainerIP=%s uCloneStop=%u\n",
+				uNewVeid,uTargetNode,cNewIP,cHostname,
+				cTargetNodeIPv4,cSourceContainerIP,uCloneStop);
 		return;
 	}
-*/
 
 	//1-. vzdump w/suspend on source node or if cSnapshotDir is not empty we try to use LVM2
 	//2-. scp dump to target node
 	//3-. restore on target node to new veid
 	//4-. change ip, name and hostname
 	//5-. remove any other /etc/vz/conf/veid.x files
-	//6-. start new veid
+	//6-. conditionally start new veid
 	//7-. update source container status
 	//8-. update target container status
 	//9-. remove /vz/dump files
@@ -1750,7 +1874,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4c-.
-	//Some containers have more than one IP must fix this via a loop
+	//Some containers have more than one IP must fix this via a loop see #83 fixed below.
 	if(uNotValidSystemCallArg(cSourceContainerIP))
 	{
 		tJobErrorUpdate(uJob,"fail sec alert!");
@@ -1821,28 +1945,35 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//6-.
-	//This should be optional since clones can be in stopped state and still be
+	//This is optional since clones can be in stopped state and still be
 	//kept in sync with source container. Also the failover can start (a fast operation)
-	//with the extra advantage of being able to keep original IPs. ONly needing an arping
+	//with the extra advantage of being able to keep original IPs. Only needing an arping
 	//to move the VIPs around the datacenter.
-	sprintf(gcQuery,"ssh %s %s 'vzctl start %u'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
-	if(uDebug==0 && system(gcQuery))
+	if(uCloneStop==0)
 	{
-		printf("CloneContainer() error: %s.\n",gcQuery);
-		tJobErrorUpdate(uJob,"error 6");
-		goto CommonExit;
+		sprintf(gcQuery,"ssh %s %s 'vzctl start %u'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
+		if(uDebug==0 && system(gcQuery))
+		{
+			printf("CloneContainer() error: %s.\n",gcQuery);
+			tJobErrorUpdate(uJob,"error 6");
+			goto CommonExit;
+		}
+		else if(uDebug)
+		{
+			printf("%s\n",gcQuery);
+		}
+		SetContainerStatus(uNewVeid,1);//Active
 	}
-	else if(uDebug)
+	else
 	{
-		printf("%s\n",gcQuery);
+		SetContainerStatus(uNewVeid,31);//Stopped
 	}
 
-	if(uDebug)
-		return;
+	//if(uDebug)
+	//	return;
 
 	//7-. 8-. Everything ok
 	SetContainerStatus(uContainer,1);//Active
-	SetContainerStatus(uNewVeid,1);//Active
 	tJobDoneUpdate(uJob);
 
 	//9a-. local
