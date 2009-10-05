@@ -269,7 +269,7 @@ void ProcessJobQueue(void)
 	//debug only
 	//printf("ProcessJobQueue() for %s (uNode=%u,uDatacenter=%u)\n",
 	//		cHostname,uNode,uDatacenter);
-	exit(0);
+	//exit(0);
 
 	//Main loop normal jobs
 	sprintf(gcQuery,"SELECT uJob,uContainer,cJobName,cJobData FROM tJob WHERE uJobStatus=1"
