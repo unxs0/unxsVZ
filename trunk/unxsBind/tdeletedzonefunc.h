@@ -140,10 +140,6 @@ void ExttDeletedZoneCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcCommand,"Confirm Zone Restore"))
 		{
-			MYSQL_RES *res;
-			MYSQL_ROW field;
-			unsigned uResource=0;
-
 			ProcesstDeletedZoneVars(entries,x);
 
 			if(!uAllowMod(uOwner,uCreatedBy))
