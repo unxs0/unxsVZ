@@ -138,7 +138,6 @@ void ExttBlockCommands(pentry entries[], int x)
 				if(uForClient)
 				{
 					char cZone[100]={""};
-					printf("Content-type: text/plain\n\n");
 					sprintf(gcQuery,"UPDATE tBlock SET uOwner=%u WHERE uBlock=%u",uForClient,uBlock);
 					mysql_query(&gMysql,gcQuery);
         				if(mysql_errno(&gMysql))
@@ -152,6 +151,7 @@ void ExttBlockCommands(pentry entries[], int x)
 					unsigned uD=0;
 					unsigned uE=0;
 					unsigned uNumIPs=0;
+					unsigned uBlockEnd=0;
 					unsigned uI=0;
 					MYSQL_RES *res;
 					
@@ -173,7 +173,6 @@ void ExttBlockCommands(pentry entries[], int x)
 
 					sprintf(cZone,"%u.%u.%u.in-addr.arpa",uC,uB,uA);
 					sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s'",cZone);
-					printf("%s\n",gcQuery);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -182,10 +181,13 @@ void ExttBlockCommands(pentry entries[], int x)
 					{
 						MYSQL_ROW field;
 						uNumIPs=uGetNumIPs(cLabel);
+						uNumIPs+=2; //Add broadcast and router
+						uBlockEnd=uD+uNumIPs;
+
 						//Loop is for handling all zone views
 						while((field=mysql_fetch_row(res)))
 						{
-							for(uI=uD;uI<uNumIPs;uI++)
+							for(uI=uD;uI<uBlockEnd;uI++)
 							{
 								sprintf(gcQuery,"UPDATE tResource SET uOwner=%u "
 										"WHERE cName='%i' AND uZone='%s' "
@@ -197,12 +199,10 @@ void ExttBlockCommands(pentry entries[], int x)
 								mysql_query(&gMysql,gcQuery);
 								if(mysql_errno(&gMysql))
 									htmlPlainTextError(mysql_error(&gMysql));
-								printf("%s\n",gcQuery);
 							}
 						}
 					}
 				}//if(uForClient)	
-				exit(0);
 				uModBy=guLoginClient;
 				ModtBlock();
 			}
