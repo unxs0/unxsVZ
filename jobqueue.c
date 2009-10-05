@@ -1948,7 +1948,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		printf("CloneContainer() Warning error: %s.\n",gcQuery);
 	
 	//9b-. remote
-	sprintf(gcQuery,"ssh %s %s 'rm /vz/dump/vzdump-%u.tgz'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
+	sprintf(gcQuery,"ssh %s %s 'rm /vz/dump/vzdump-%u.tgz'",cSSHOptions,cTargetNodeIPv4,uContainer);
 	if(system(gcQuery))
 		printf("CloneContainer() Warning error: %s.\n",gcQuery);
 
