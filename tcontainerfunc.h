@@ -2245,6 +2245,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 					"uStatus=81,"
 					"uOwner=%u,"
 					"uCreatedBy=%u,"
+					"uSource=%u,"
 					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 							field[0],
 							field[1],
@@ -2256,6 +2257,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 							uDatacenter,
 							uTargetNode,
 							guCompany,
+							uContainer,
 							guLoginClient);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -2299,7 +2301,20 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
-			sscanf(field[7],"%u",&uContainer);
+			//default no sync period set
+			sprintf(gcQuery,"DELETE FROM tProperty WHERE"
+					" cName='cuSyncPeriod' AND uKey=%u AND uType=3",uNewVeid);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+					",cName='cuSyncPeriod',cValue='0'",
+						uNewVeid,guCompany,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			//sscanf(field[7],"%u",&uContainer);
 			SetContainerStatus(uContainer,81);//Awaiting Clone
 			uCount++;
 		}
