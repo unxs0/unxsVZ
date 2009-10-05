@@ -260,7 +260,28 @@ void ProcessUBC(void)
 		sscanf(field[1],"%u",&uDatacenter);
 	}
 	mysql_free_result(res);
+	if(!uNode)
+	{
+		char *cp;
 
+		//FQDN vs short name of 2nd NIC mess
+		if((cp=strchr(cHostname,'.')))
+			*cp=0;
+		sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uNode);
+			sscanf(field[1],"%u",&uDatacenter);
+		}
+		mysql_free_result(res);
+	}
 
 	if(!uNode)
 	{
