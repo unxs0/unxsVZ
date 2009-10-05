@@ -269,7 +269,7 @@ void ProcessJobQueue(void)
 	//where the source container is running on this node
 	//and the target node is a remote node.
 	sprintf(gcQuery,"SELECT uSource,uContainer,uNode FROM tContainer WHERE uSource>0 AND"
-			" uDatacenter=%u",uDatacenter);
+			" uDatacenter=%u AND (uStatus=1 OR uStatus=31)",uDatacenter);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
