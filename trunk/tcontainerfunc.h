@@ -37,6 +37,7 @@ static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
 static unsigned uAllPortsOpen=0;
 static unsigned uCloneStop=0;
+static unsigned uSyncPeriod=0;
 
 //ModuleFunctionProtos()
 void tContainerNavList(unsigned uNode);
@@ -199,6 +200,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"uCloneStop"))
 		{
 			uCloneStop=1;
+		}
+		else if(!strcmp(entries[i].name,"uSyncPeriod"))
+		{
+			sscanf(entries[i].val,"%u",&uSyncPeriod);
 		}
 		else if(!strcmp(entries[i].name,"cConfigLabel"))
 		{
@@ -800,6 +805,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(!cTargetNodeIPv4[0])
 					tContainer("<blink>Error</blink>: Your target node is"
 							" missing it's cIPv4 property!");
+				if(uSyncPeriod>86400*30)
+					tContainer("<blink>Error</blink>: uSyncPeriod out of range, max 30 days!");
                         	guMode=0;
 				
 				while(uWizLabelLoop)
@@ -885,8 +892,8 @@ void ExttContainerCommands(pentry entries[], int x)
 						htmlPlainTextError(mysql_error(&gMysql));
 					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
 							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='cuSyncPeriod',cValue='0'",
-								uNewVeid,guCompany,guLoginClient);
+							",cName='cuSyncPeriod',cValue='%u'",
+								uNewVeid,guCompany,guLoginClient,uSyncPeriod);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -1278,6 +1285,11 @@ void ExttContainerButtons(void)
 			printf("<br>Select new IPv4 ");
 			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
 			printf("<br>Keep clone stopped <input type=checkbox name=uCloneStop checked>");
+			printf("<br>cuSyncPeriod <input title='Keep clone in sync every cuSyncPeriod seconds"
+					". You can change this at any time via the property panel.'"
+					" type=text size=10 maxlength=7"
+					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
+			
 			printf("<p><input title='Create a clone job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Clone'>\n");
