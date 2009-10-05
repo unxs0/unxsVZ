@@ -1355,7 +1355,7 @@ void ExttContainerButtons(void)
 				printf("<p><u>Record Context Info</u>");
 				if(uSource)
 				{
-					printf("<br>Container is a clone of ");
+					printf("<br>%s is a clone of ",cLabel);
 					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>"
 						"%s</a>",uSource,ForeignKey("tContainer","cLabel",uSource));
 				}
