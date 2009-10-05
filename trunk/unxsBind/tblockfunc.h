@@ -137,12 +137,72 @@ void ExttBlockCommands(pentry entries[], int x)
 
 				if(uForClient)
 				{
+					char cZone[100]={""};
+					printf("Content-type: text/plain\n\n");
 					sprintf(gcQuery,"UPDATE tBlock SET uOwner=%u WHERE uBlock=%u",uForClient,uBlock);
 					mysql_query(&gMysql,gcQuery);
         				if(mysql_errno(&gMysql))
                 				tBlock(mysql_error(&gMysql));
 					uOwner=uForClient;
-				}
+
+					//Ticket #81
+					unsigned uA=0;
+					unsigned uB=0;
+					unsigned uC=0;
+					unsigned uD=0;
+					unsigned uE=0;
+					unsigned uNumIPs=0;
+					unsigned uI=0;
+					MYSQL_RES *res;
+					
+					//remove extra spaces or any other junk in CIDR
+					sscanf(cLabel,"%s",gcQuery);
+					sprintf(cLabel,"%.99s",gcQuery);
+					sscanf(cLabel,"%u.%u.%u.%u/%u",&uA,&uB,&uC,&uD,&uE);
+			
+					if(!uA)
+					{
+						guMode=4001;
+						tBlock("<blink>IP Block incorrect format</blink>");
+					}
+					if((uA>255)||(uB>255)||(uC>255)||(uD>255))
+					{
+						guMode=4001;
+						tBlock("<blink>IP Block incorrect format</blink>");
+					}
+
+					sprintf(cZone,"%u.%u.%u.in-addr.arpa",uC,uB,uA);
+					sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s'",cZone);
+					printf("%s\n",gcQuery);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res))
+					{
+						MYSQL_ROW field;
+						uNumIPs=uGetNumIPs(cLabel);
+						//Loop is for handling all zone views
+						while((field=mysql_fetch_row(res)))
+						{
+							for(uI=uD;uI<uNumIPs;uI++)
+							{
+								sprintf(gcQuery,"UPDATE tResource SET uOwner=%u "
+										"WHERE cName='%i' AND uZone='%s' "
+										"AND uRRType=7",
+										uForClient
+										,uI
+										,field[0]
+										);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+									htmlPlainTextError(mysql_error(&gMysql));
+								printf("%s\n",gcQuery);
+							}
+						}
+					}
+				}//if(uForClient)	
+				exit(0);
 				uModBy=guLoginClient;
 				ModtBlock();
 			}
