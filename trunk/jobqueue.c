@@ -156,22 +156,45 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 				printf("ProcessCloneSyncJob() '%s' failed!\n",gcQuery);
 				return(5);
 			}
+			else
+			{
+				//After running a recurring job we must update the cloned containers uModDate!
+				sprintf(gcQuery,"UPDATE tContainer SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1"
+							" WHERE uContainer=%u",uRemoteContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					mysql_free_result(res);
+					printf("%s\n",mysql_error(&gMysql));
+					return(6);
+				}
+			}
 		}
 		mysql_free_result(res);
-		//After running a recurring job we must update the cloned containers uModDate!
-		sprintf(gcQuery,"UPDATE tContainer SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1 WHERE uContainer=%u",
-				uRemoteContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			printf("%s\n",mysql_error(&gMysql));
-			return(6);
-		}
-		
 	}
 	return(0);
 
 }//void ProcessCloneSyncJob()
+
+
+void LogError(char *cErrorMsg,unsigned uKey);
+void LogError(char *cErrorMsg,unsigned uKey)
+{
+	sprintf(gcQuery,"INSERT INTO tLog SET"
+		" cLabel='unxsVZ CLI Error',"
+		"uLogType=4,uLoginClient=1,"
+		"cLogin='unxsVZ.cgi',cMessage=\"%s uKey=%u\","
+		"cServer='%s',uOwner=1,uCreatedBy=1,"
+		"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cErrorMsg,uKey,cHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(2);
+	}
+
+}//void LogError(char *cErrorMsg)
 
 
 void ProcessJobQueue(void)
@@ -184,6 +207,7 @@ void ProcessJobQueue(void)
 	unsigned uContainer=0;
 	unsigned uRemoteContainer=0;
 	unsigned uJob=0;
+	unsigned uError=0;
 
 	if(gethostname(cHostname,99)!=0)
 	{
@@ -237,7 +261,8 @@ void ProcessJobQueue(void)
 		sscanf(field[0],"%u",&uContainer);
 		sscanf(field[1],"%u",&uRemoteContainer);
 		sscanf(field[2],"%u",&uRemoteNode);
-		ProcessCloneSyncJob(uNode,uContainer,uRemoteNode,uRemoteContainer);
+		if((uError=ProcessCloneSyncJob(uNode,uContainer,uRemoteNode,uRemoteContainer)))
+			LogError("ProcessCloneSyncJob()",uError);
 	}
 	mysql_free_result(res);
 
