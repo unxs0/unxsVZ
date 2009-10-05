@@ -36,7 +36,7 @@ static char cNetmask[64]={""};
 static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
 static unsigned uAllPortsOpen=0;
-static unsigned uCloneStop=1;
+static unsigned uCloneStop=0;
 
 //ModuleFunctionProtos()
 void tContainerNavList(unsigned uNode);
@@ -198,7 +198,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		}
 		else if(!strcmp(entries[i].name,"uCloneStop"))
 		{
-			sscanf(entries[i].val,"%u",&uCloneStop);
+			uCloneStop=1;
 		}
 		else if(!strcmp(entries[i].name,"cConfigLabel"))
 		{
