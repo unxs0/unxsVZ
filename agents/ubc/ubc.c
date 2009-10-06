@@ -180,10 +180,10 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 								" cLabel='UBC Agent: luFailcnt++',"
 								"uLogType=4,uLoginClient=1,"
 								"cLogin='UBC Agent',cMessage=\"%s %lu>%lu %u:%u\","
-								"cServer='%s',uOwner=1,uCreatedBy=1,"
+								"cServer='%s',uOwner=%u,uCreatedBy=1,"
 								"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 									cResource,luFailcnt,luPrevFailcnt,
-									uNode,uContainer,cHostname);
+									uNode,uContainer,cHostname,guContainerOwner);
 								mysqlrad_Query_TextErr_Exit;
 								//First autonomic foray
 								UpdateContainerUBCJob(uContainer,cResource);
@@ -817,8 +817,8 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 			",uJobDate=UNIX_TIMESTAMP(NOW())+10"
 			",uJobStatus=1"
 			",cJobData='cResource=%s;'"
-			",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				uDatacenter,uNode,uContainer,cResource);
+			",uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uDatacenter,uNode,uContainer,cResource,guContainerOwner);
 	mysqlrad_Query_TextErr_Exit;
 
 }//void UpdateContainerUBCJob(...)
