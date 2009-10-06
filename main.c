@@ -151,7 +151,11 @@ int main(int iArgc, char *cArgv[])
 			{
 				printf("Set-Cookie: unxsVZLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				printf("Set-Cookie: unxsVZPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
+				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+				" uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					gcLogin,guPermLevel,guLoginClient,
+					gcLogin,gcHost,gcHostname,guCompany);
 				MYSQL_RUN;
 				gcCookie[0]=0;
                                 guPermLevel=0;
@@ -1839,7 +1843,10 @@ int iValidLogin(int mode)
 			if(!strcmp(gcPasswd,cPassword)) 
 			{
 				//tLogType.cLabel='backend login'->uLogType=6
-				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
+					" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+					" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 				MYSQL_RUN;
 				return(1);
 			}
@@ -1851,7 +1858,10 @@ int iValidLogin(int mode)
 	}
 	if(!mode)
 	{
-		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,"
+				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+				" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 		MYSQL_RUN;
 	}
 	return 0;
@@ -2028,7 +2038,9 @@ void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 	char cQuery[512]={""};
 
 	//uLogType==1 is this back-office cgi by default tLogType install
-        sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.63s',uLogType=1,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',uTablePK=%u,cTableName='%.31s',cHash=MD5(CONCAT('%s','%u','%u','%s','%s','%u','%s','%s',UNIX_TIMESTAMP(NOW()))),uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+        sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.63s',uLogType=1,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',"
+			" cHost='%.99s',uTablePK=%u,cTableName='%.31s',cHash=MD5(CONCAT('%s','%u','%u','%s','%s',"
+			" '%u','%s','%s',UNIX_TIMESTAMP(NOW()))),uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 		cLogEntry,
 		guPermLevel,
 		guLoginClient,
@@ -2043,7 +2055,8 @@ void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 		gcHost,
 		uTablePK,
 		cTableName,
-		cLogKey);
+		cLogKey,
+		guCompany);
 
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -2104,7 +2117,10 @@ void htmlPlainTextError(const char *cError)
 	printf("Please report this unxsVZ fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
-        sprintf(gcQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s (%.24s)\",cServer='%s',cHash=MD5(CONCAT('%u','%u','%s','%s',\"%s (%.24s)\",'%s',UNIX_TIMESTAMP(NOW()),'%s')),uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uTablePK=%u,cTableName='errno'",
+        sprintf(gcQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,"
+			" uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s (%.24s)\",cServer='%s',"
+			" cHash=MD5(CONCAT('%u','%u','%s','%s',\"%s (%.24s)\",'%s',UNIX_TIMESTAMP(NOW()),"
+			" '%s')),uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uTablePK=%u,cTableName='errno'",
 			guPermLevel,
 			guLoginClient,
 			gcLogin,
@@ -2120,6 +2136,7 @@ void htmlPlainTextError(const char *cError)
 			gcQuery,
 			gcHostname,
 			cLogKey,
+			guCompany,
 			guLoginClient,
 			mysql_errno(&gMysql));
         mysql_query(&gMysql,gcQuery);
