@@ -13,13 +13,14 @@ static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
 static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
+static char cSearch[32]={""};
 
 
 //ModuleFunctionProtos()
 void CopyProperties(unsigned uOldNode,unsigned uNewNode,unsigned uType);
 void DelProperties(unsigned uNode,unsigned uType);
 void tNodeNavList(unsigned uDataCenter);
-void tContainerNavList(unsigned uNode);//tcontainerfunc.h
+void tContainerNavList(unsigned uNode, char *cSearch);//tcontainerfunc.h
 void htmlGroups(unsigned uNode, unsigned uContainer);
 
 //external
@@ -39,8 +40,14 @@ void ExtProcesstNodeVars(pentry entries[], int x)
 	register int i;
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(entries[i].name,"uClone")) 
+		if(!strcmp(entries[i].name,"cSearch"))
+		{
+			sprintf(cSearch,"%.31s",entries[i].val);
+		}
+		else if(!strcmp(entries[i].name,"uClone")) 
+		{
 			uClone=1;
+		}
 		else if(!strcmp(entries[i].name,"cuTargetNodePullDown"))
 		{
 			sprintf(cuTargetNodePullDown,"%.255s",entries[i].val);
@@ -341,7 +348,10 @@ void ExttNodeButtons(void)
 						uDatacenter,ForeignKey("tDatacenter","cLabel",uDatacenter));
 				htmlGroups(uNode,0);
 			}
-			tContainerNavList(uNode);
+			printf("<p><u>Container Search</u><br>");
+			printf("<input title='Enter exact tContainer.cLabel or MySQL LIKE pattern (%% or _ allowed)'"
+					" type=text name=cSearch value='%s'",cSearch);
+			tContainerNavList(uNode,cSearch);
 			tNodeNavList(0);
 			if(uNode)
 			{
