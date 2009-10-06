@@ -38,9 +38,10 @@ static char cuWizIPv4PullDown[32]={""};
 static unsigned uAllPortsOpen=0;
 static unsigned uCloneStop=0;
 static unsigned uSyncPeriod=0;
+static char cSearch[32]={""};
 
 //ModuleFunctionProtos()
-void tContainerNavList(unsigned uNode);
+void tContainerNavList(unsigned uNode, char *cSearch);
 unsigned CreateNewContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned CreateStartContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
@@ -183,7 +184,11 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 	register int i;
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(entries[i].name,"cuTargetNodePullDown"))
+		if(!strcmp(entries[i].name,"cSearch"))
+		{
+			sprintf(cSearch,"%.31s",entries[i].val);
+		}
+		else if(!strcmp(entries[i].name,"cuTargetNodePullDown"))
 		{
 			sprintf(cuTargetNodePullDown,"%.255s",entries[i].val);
 			uTargetNode=ReadPullDown("tNode","cLabel",cuTargetNodePullDown);
@@ -1362,6 +1367,7 @@ void ExttContainerButtons(void)
 				" their tTemplate matching values (see tTemplate for more info)"
 				" to create /etc/vz/conf/VEID.(u)mount files (on new container creation you will"
 				" be able to optionally select a mount template for this feature.)");
+			
 			if(uContainer && uNode)
 			{
 				printf("<p><u>Record Context Info</u>");
@@ -1375,7 +1381,10 @@ void ExttContainerButtons(void)
 				htmlContainerMount(uContainer);
 				htmlGroups(0,uContainer);
 			}
-			tContainerNavList(0);
+			printf("<p><u>Container Search</u><br>");
+			printf("<input title='Enter exact cLabel or MySQL LIKE pattern (%% or _ allowed)' type=text"
+					" name=cSearch value='%s'",cSearch);
+			tContainerNavList(0,cSearch);
 			if(uContainer)
 			{
 				if( uStatus==1)
@@ -1676,49 +1685,103 @@ void ExttContainerNavBar(void)
 }//void ExttContainerNavBar(void)
 
 
-void tContainerNavList(unsigned uNode)
+void tContainerNavList(unsigned uNode, char *cSearch)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uNumRows=0;
+#define LIMIT " LIMIT 25"
+#define uLIMIT 24
 
 	if(!uNode)
 	{
-		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+		if(cSearch[0])
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
 					"tNode.cLabel,tStatus.cLabel,tIP.cLabel FROM tContainer,tNode,tStatus,tIP"
 					" WHERE tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP ORDER BY tContainer.cLabel");
+					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.cLabel LIKE '%s'"
+					" ORDER BY tContainer.cLabel" LIMIT,cSearch);
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel,tIP.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus,tIP"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.cLabel LIKE '%2$s'"
+					" ORDER BY tContainer.cLabel" LIMIT,guCompany,cSearch);
+		}
 		else
-			sprintf(gcQuery,"SELECT tContainer.uContainer"
-				",tContainer.cLabel,tNode.cLabel,tStatus.cLabel,tIP.cLabel"
-				" FROM tContainer," TCLIENT ",tNode,tStatus,tIP"
-				" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-				" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-				" AND tContainer.uNode=tNode.uNode"
-				" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
-				" ORDER BY tContainer.cLabel",guCompany);
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+					"tNode.cLabel,tStatus.cLabel,tIP.cLabel FROM tContainer,tNode,tStatus,tIP"
+					" WHERE tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" ORDER BY tContainer.cLabel" LIMIT);
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel,tIP.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus,tIP"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" ORDER BY tContainer.cLabel" LIMIT,guCompany);
+		}
 	}
 	else
 	{
-		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+		if(cSearch[0])
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
 					"tNode.cLabel,tStatus.cLabel,tIP.cLabel"
 					" FROM tContainer,tNode,tStatus,tIP"
 					" WHERE tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
-						" AND tContainer.uNode=%u ORDER BY tContainer.cLabel",uNode);
+					" AND tContainer.cLabel LIKE '%s'"
+					" AND tContainer.uNode=%u ORDER BY tContainer.cLabel" LIMIT,cSearch,uNode);
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel,tIP.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus,tIP"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND tContainer.uNode=%1$u"
+					" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.cLabel LIKE '%3$s'"
+					" ORDER BY tContainer.cLabel" LIMIT,uNode,guCompany,cSearch);
+		}
 		else
-			sprintf(gcQuery,"SELECT tContainer.uContainer"
-				",tContainer.cLabel,tNode.cLabel,tStatus.cLabel,tIP.cLabel"
-				" FROM tContainer," TCLIENT ",tNode,tStatus,tIP"
-				" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-				" AND tContainer.uNode=%1$u"
-				" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
-				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
-				" AND tContainer.uNode=tNode.uNode"
-				" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
-				" ORDER BY tContainer.cLabel",uNode,guCompany);
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+					"tNode.cLabel,tStatus.cLabel,tIP.cLabel"
+					" FROM tContainer,tNode,tStatus,tIP"
+					" WHERE tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+						" AND tContainer.uNode=%u ORDER BY tContainer.cLabel" LIMIT,uNode);
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel,tIP.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus,tIP"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND tContainer.uNode=%1$u"
+					" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" ORDER BY tContainer.cLabel" LIMIT,uNode,guCompany);
+		}
 	}
 
         mysql_query(&gMysql,gcQuery);
@@ -1735,9 +1798,16 @@ void tContainerNavList(unsigned uNode)
         	printf("<p><u>tContainerNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
+		{
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
 					"&uContainer=%s>%s/%s/%s(%s)</a><br>\n",
 						field[0],field[1],field[2],field[3],field[4]);
+			if(++uNumRows>uLIMIT)
+			{
+				printf("Only 24 containers shown use cSearch to narrow.<br>\n");
+				break;
+			}
+		}
 	}
         mysql_free_result(res);
 
