@@ -291,6 +291,53 @@ void DashBoard(const char *cOptionalMsg)
 				ctime(&luClock),mysqlField[0],mysqlField[2],mysqlField[3]);
 		}
 		mysql_free_result(mysqlRes);
+	}
+	else
+	{
+		OpenRow("System Messages (Last 10)","black");
+		sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog"
+				" WHERE uLogType=4 AND uOwner=%u ORDER BY GREATEST(uCreatedDate,uModDate)"
+				" DESC LIMIT 10",guCompany);
+		macro_mySQLQueryErrorText
+		printf("</td></tr>\n");
+		while((mysqlField=mysql_fetch_row(mysqlRes)))
+		{
+			sscanf(mysqlField[1],"%lu",&luClock);
+			printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+					ctime(&luClock),mysqlField[0],mysqlField[2]);
+		}
+		mysql_free_result(mysqlRes);
+
+
+		OpenRow("tLog (Last 10)","black");
+		sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,"
+				"tLog.cTableName,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE "
+				"tLog.uLogType=tLogType.uLogType AND tLog.uLogType!=4 AND tLog.uLogType!=6 AND"
+				" tLog.uOwner=%u ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 10",
+						guCompany);
+		macro_mySQLQueryErrorText
+		printf("</td></tr>\n");
+	        while((mysqlField=mysql_fetch_row(mysqlRes)))
+		{
+			sscanf(mysqlField[1],"%lu",&luClock);
+			printf("<tr><td></td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td></tr>\n",
+				ctime(&luClock),mysqlField[0],mysqlField[3],mysqlField[5],mysqlField[2],mysqlField[4]);
+		}
+		mysql_free_result(mysqlRes);
+
+		OpenRow("Login Activity (Last 10)","black");
+		sprintf(gcQuery,"SELECT cLabel,GREATEST(uCreatedDate,uModDate),cServer,cHost FROM"
+				" tLog WHERE uLogType=6 AND uOwner=%u ORDER BY GREATEST(uCreatedDate,uModDate)"
+				" DESC LIMIT 10",guCompany);
+		macro_mySQLQueryErrorText
+		printf("</td></tr>\n");
+	        while((mysqlField=mysql_fetch_row(mysqlRes)))
+		{
+			sscanf(mysqlField[1],"%lu",&luClock);
+			printf("<td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+				ctime(&luClock),mysqlField[0],mysqlField[2],mysqlField[3]);
+		}
+		mysql_free_result(mysqlRes);
 	}//end of if(guPermLevel>11 ...)
 
 	OpenRow("Pending or Stuck Jobs (Last 10)","black");
