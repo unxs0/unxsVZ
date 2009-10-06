@@ -1842,6 +1842,7 @@ int iValidLogin(int mode)
 			EncryptPasswdWithSalt(gcPasswd,cSalt);
 			if(!strcmp(gcPasswd,cPassword)) 
 			{
+				guCompany=1;//for now until we add code here to get guCompany for valid gcLogin.
 				//tLogType.cLabel='backend login'->uLogType=6
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
 					" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
@@ -1858,6 +1859,7 @@ int iValidLogin(int mode)
 	}
 	if(!mode)
 	{
+		guCompany=1;//for now until we add code to try to get guCompany for failed gcLogin.
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,"
 				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 				" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
