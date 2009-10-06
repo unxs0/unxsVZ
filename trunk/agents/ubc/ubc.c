@@ -26,6 +26,8 @@ MYSQL gMysql;
 char gcQuery[8192]={""};
 unsigned guLoginClient=1;//Root user
 char cHostname[100]={""};
+unsigned guNodeOwner=1;
+unsigned guContainerOwner=1;
 
 //local protos
 void TextConnectDb(void);
@@ -76,6 +78,7 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 	{
 		printf("\tProcessSingleUBC(Node=%u)\n",uNode);
 		uContainer=uNode;
+		guContainerOwner=guNodeOwner;
 		uType=2;
 	}
 	else if(1)
@@ -191,9 +194,10 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 							}
 						}
 						sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
-								"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1 WHERE"
+								"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
 								" cName='%.63s.%.32s' AND uProperty=%s"
 									,luKnownUBCVals[i]
+									,guContainerOwner
 									,cResource
 									,cKnownUBCVals[i]
 									,field[0]);
@@ -205,14 +209,14 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 								",cName='%.63s.%.32s'"
 								",uType=%u"
 								",uKey=%u"
-								",uOwner=1"
+								",uOwner=%u"
 								",uCreatedBy=1"
 								",uCreatedDate=UNIX_TIMESTAMP(NOW())"
 									,luKnownUBCVals[i]
 									,cResource
 									,cKnownUBCVals[i]
 									,uType
-									,uContainer);
+									,uContainer,guContainerOwner);
 						mysqlrad_Query_TextErr_Exit;
 					}
 					mysql_free_result(res);
@@ -246,7 +250,7 @@ void ProcessUBC(void)
 	TextConnectDb();//Uses login data from local.h
 	guLoginClient=1;//Root user
 
-	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+	sprintf(gcQuery,"SELECT uNode,uDatacenter,uOwner FROM tNode WHERE cLabel='%.99s'",cHostname);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -258,6 +262,7 @@ void ProcessUBC(void)
 	{
 		sscanf(field[0],"%u",&uNode);
 		sscanf(field[1],"%u",&uDatacenter);
+		sscanf(field[2],"%u",&guNodeOwner);
 	}
 	mysql_free_result(res);
 	if(!uNode)
@@ -267,7 +272,7 @@ void ProcessUBC(void)
 		//FQDN vs short name of 2nd NIC mess
 		if((cp=strchr(cHostname,'.')))
 			*cp=0;
-		sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+		sprintf(gcQuery,"SELECT uNode,uDatacenter,uOwner FROM tNode WHERE cLabel='%.99s'",cHostname);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -279,6 +284,7 @@ void ProcessUBC(void)
 		{
 			sscanf(field[0],"%u",&uNode);
 			sscanf(field[1],"%u",&uDatacenter);
+			sscanf(field[2],"%u",&guNodeOwner);
 		}
 		mysql_free_result(res);
 	}
@@ -293,7 +299,7 @@ void ProcessUBC(void)
 			cHostname,uNode,uDatacenter);
 
 	//Main loop. TODO use defines for tStatus.uStatus values.
-	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u"
+	sprintf(gcQuery,"SELECT uContainer,uOwner FROM tContainer WHERE uNode=%u"
 				" AND uDatacenter=%u"
 				" AND uStatus!=11"//Initial Setup
 				" AND uStatus!=6"//Awating Activation
@@ -309,6 +315,7 @@ void ProcessUBC(void)
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uContainer);
+		sscanf(field[1],"%u",&guContainerOwner);
 		//Job dispatcher based on cJobName
 		ProcessSingleUBC(uContainer,0);
 		ProcessSingleQuota(uContainer);
@@ -423,9 +430,10 @@ void ProcessSingleQuota(unsigned uContainer)
 				if((field=mysql_fetch_row(res)))
 				{
 					sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
-							"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1 WHERE"
+							"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
 							" uProperty=%s"
 								,luKnownQuotaVals[i]
+								,guContainerOwner
 								,field[0]);
 					mysqlrad_Query_TextErr_Exit;
 				}
@@ -435,14 +443,15 @@ void ProcessSingleQuota(unsigned uContainer)
 							",cName='%.63s.%.32s'"
 							",uType=%u"
 							",uKey=%u"
-							",uOwner=1"
+							",uOwner=%u"
 							",uCreatedBy=1"
 							",uCreatedDate=UNIX_TIMESTAMP(NOW())"
 								,luKnownQuotaVals[i]
 								,cResource
 								,cKnownQuotaVals[i]
 								,uType
-								,uContainer);
+								,uContainer
+								,guContainerOwner);
 					mysqlrad_Query_TextErr_Exit;
 
 				}
@@ -467,9 +476,10 @@ void ProcessSingleQuota(unsigned uContainer)
 				{
 					//Average
 					sprintf(gcQuery,"UPDATE tProperty SET cValue=CONVERT((%lu+cValue)/2,UNSIGNED)"
-							",uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1 WHERE"
+							",uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
 							" uProperty=%s"
 								,luKnownQuotaVals[i]
+								,guContainerOwner
 								,field[0]);
 					mysqlrad_Query_TextErr_Exit;
 				}
@@ -479,14 +489,15 @@ void ProcessSingleQuota(unsigned uContainer)
 							",cName=CONCAT('%.63s.%.32s.',DAYOFWEEK(NOW()))"
 							",uType=%u"
 							",uKey=%u"
-							",uOwner=1"
+							",uOwner=%u"
 							",uCreatedBy=1"
 							",uCreatedDate=UNIX_TIMESTAMP(NOW())"
 								,luKnownQuotaVals[i]
 								,cResource
 								,cKnownQuotaVals[i]
 								,uType
-								,uContainer);
+								,uContainer
+								,guContainerOwner);
 					mysqlrad_Query_TextErr_Exit;
 
 				}
@@ -536,6 +547,7 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 		sprintf(cContainerTag,"Summary:");
 		uType=2;
 		uKey=uNode;
+		guContainerOwner=guNodeOwner;
 	}
 	else
 	{
@@ -595,9 +607,10 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 				if((field=mysql_fetch_row(res)))
 				{
 					sprintf(gcQuery,"UPDATE tProperty SET cValue=%2.2f,"
-							"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1 WHERE"
+							"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
 							" cName='%.63s.%.32s' AND uProperty=%s"
 								,fKnownVZVals[i]
+								,guContainerOwner
 								,cResource
 								,cKnownVZVals[i]
 								,field[0]);
@@ -609,14 +622,15 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 							",cName='%.63s.%.32s'"
 							",uType=%u"
 							",uKey=%u"
-							",uOwner=1"
+							",uOwner=%u"
 							",uCreatedBy=1"
 							",uCreatedDate=UNIX_TIMESTAMP(NOW())"
 								,fKnownVZVals[i]
 								,cResource
 								,cKnownVZVals[i]
 								,uType
-								,uKey);
+								,uKey
+								,guContainerOwner);
 					mysqlrad_Query_TextErr_Exit;
 				}
 				mysql_free_result(res);
@@ -664,6 +678,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 		sprintf(cContainerTag,"0");
 		uType=2;
 		uKey=uNode;
+		guContainerOwner=guNodeOwner;
 	}
 	else
 	{
@@ -709,9 +724,10 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 				if((field=mysql_fetch_row(res)))
 				{
 					sprintf(gcQuery,"UPDATE tProperty SET cValue=%2.2f,"
-							"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1 WHERE"
+							"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
 							" cName='%.63s.%.32s' AND uProperty=%s"
 								,fKnownVZVals[i]
+								,guContainerOwner
 								,cResource
 								,cKnownVZVals[i]
 								,field[0]);
@@ -723,14 +739,15 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 							",cName='%.63s.%.32s'"
 							",uType=%u"
 							",uKey=%u"
-							",uOwner=1"
+							",uOwner=%u"
 							",uCreatedBy=1"
 							",uCreatedDate=UNIX_TIMESTAMP(NOW())"
 								,fKnownVZVals[i]
 								,cResource
 								,cKnownVZVals[i]
 								,uType
-								,uKey);
+								,uKey
+								,guContainerOwner);
 					mysqlrad_Query_TextErr_Exit;
 				}
 				mysql_free_result(res);
