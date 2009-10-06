@@ -1003,10 +1003,11 @@ char *cZoneLink(unsigned uZone,unsigned uOwner)
 	macro_mySQLRunAndStore(res);
 	if((field=mysql_fetch_row(res)))
 	{
-		sprintf(cRet,"<a href=\"idnsAdmin.cgi?gcPage=Zone&cZone=%s&uView=%s&cCustomer=%s\" class=darkLink>%s[%s]</a><br>",
+		//sprintf(cRet,"<a href=\"idnsAdmin.cgi?gcPage=Zone&cZone=%s&uView=%s&cCustomer=%s\" class=darkLink>%s[%s]</a><br>",
+		sprintf(cRet,"<a href=\"idnsAdmin.cgi?gcPage=Zone&cZone=%s&uView=%s\" class=darkLink>%s[%s]</a><br>",
 			field[0]
 			,field[1]
-			,ForeignKey("tClient","cLabel",uOwner)
+//			,ForeignKey("tClient","cLabel",uOwner)
 			,field[0]
 			,cGetViewLabel(field[1]));
 	}

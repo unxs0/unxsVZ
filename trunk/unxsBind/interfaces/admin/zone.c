@@ -209,6 +209,9 @@ void ZoneGetHook(entry gentries[],int x)
 			uForClient=uGetClient(gcCustomer);
 		}
 	}
+	//If no gcCustomer provided as GET arg, try to get it from session cookie
+	if(gcCustomer[0]) uForClient=uGetClient(gcCustomer);
+
 	if(gcZone[0] && cuView[0])
 	{
 		SelectZone(1);
@@ -808,11 +811,22 @@ void funcRRs(FILE *fp)
 	char cParam1[65]={""};
 
 	fprintf(fp,"<!-- funcRRs(fp) Start -->\n");
-	sprintf(gcQuery,"SELECT tResource.uResource,tZone.cZone,IF(STRCMP(tResource.cName,''),"
-			"tResource.cName,'(default)'),tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
-			"tResource.cParam2,tResource.cComment FROM tResource,tRRType,tZone WHERE "
-			"tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType AND "
-			"tZone.uView='%s' AND tZone.cZone='%s' ORDER BY tResource.uRRType,ABS(tResource.cName)",cuView,gcZone);
+	if(uOwner==uForClient)
+		sprintf(gcQuery,"SELECT tResource.uResource,tZone.cZone,IF(STRCMP(tResource.cName,''),"
+				"tResource.cName,'(default)'),tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
+				"tResource.cParam2,tResource.cComment FROM tResource,tRRType,tZone WHERE "
+				"tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType AND "
+				"tZone.uView='%s' AND tZone.cZone='%s' ORDER BY tResource.uRRType,ABS(tResource.cName)",
+				cuView,gcZone);
+	else
+		sprintf(gcQuery,"SELECT tResource.uResource,tZone.cZone,IF(STRCMP(tResource.cName,''),"
+				"tResource.cName,'(default)'),tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
+				"tResource.cParam2,tResource.cComment FROM tResource,tRRType,tZone WHERE "
+				"tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType AND "
+				"tZone.uView='%s' AND tZone.cZone='%s' AND tResource.uOwner=%u ORDER BY "
+				"tResource.uRRType,ABS(tResource.cName)",
+				cuView,gcZone,uForClient);
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -908,8 +922,8 @@ void SelectZone(unsigned uSetCookie)
 		sprintf(cuZoneTTL,"%.15s",field[10]);
 		sprintf(cSelectView,"%s",cGetViewLabel(field[11]));
 		sprintf(cuNameServer,"%.15s",field[12]);
-		sscanf(field[13],"%u",&uForClient);
-		sprintf(gcCustomer,"%.99s",cClientLabel(uForClient));
+		//sscanf(field[13],"%u",&uForClient);
+		//sprintf(gcCustomer,"%.99s",cClientLabel(uForClient));
 		sscanf(field[14],"%u",&uSecondaryOnly);
 		sprintf(cMasterIPs,"%.255s",field[15]);
 		sprintf(cuMailServers,"%.15s",field[16]);
