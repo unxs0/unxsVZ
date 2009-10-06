@@ -1383,7 +1383,7 @@ void ExttContainerButtons(void)
 			}
 			printf("<p><u>Container Search</u><br>");
 			printf("<input title='Enter exact cLabel or MySQL LIKE pattern (%% or _ allowed)' type=text"
-					" name=cSearch value='%s'",cSearch);
+					" name=cSearch value='%s'>",cSearch);
 			tContainerNavList(0,cSearch);
 			if(uContainer)
 			{
@@ -1702,7 +1702,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					"tNode.cLabel,tStatus.cLabel,tIP.cLabel FROM tContainer,tNode,tStatus,tIP"
 					" WHERE tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
-					" AND tContainer.cLabel LIKE '%s'"
+					" AND tContainer.cLabel LIKE '%s%%'"
 					" ORDER BY tContainer.cLabel" LIMIT,cSearch);
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
@@ -1713,7 +1713,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
 					" AND tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
-					" AND tContainer.cLabel LIKE '%2$s'"
+					" AND tContainer.cLabel LIKE '%2$s%%'"
 					" ORDER BY tContainer.cLabel" LIMIT,guCompany,cSearch);
 		}
 		else
@@ -1746,7 +1746,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" FROM tContainer,tNode,tStatus,tIP"
 					" WHERE tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
-					" AND tContainer.cLabel LIKE '%s'"
+					" AND tContainer.cLabel LIKE '%s%%'"
 					" AND tContainer.uNode=%u ORDER BY tContainer.cLabel" LIMIT,cSearch,uNode);
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
@@ -1758,7 +1758,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
 					" AND tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
-					" AND tContainer.cLabel LIKE '%3$s'"
+					" AND tContainer.cLabel LIKE '%3$s%%'"
 					" ORDER BY tContainer.cLabel" LIMIT,uNode,guCompany,cSearch);
 		}
 		else
