@@ -1802,7 +1802,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
 					"&uContainer=%s>%s/%s/%s(%s)</a><br>\n",
 						field[0],field[1],field[2],field[3],field[4]);
-			if(++uNumRows>uLIMIT)
+			if(++uNumRows>=uLIMIT)
 			{
 				printf("Only 24 containers shown use cSearch to narrow.<br>\n");
 				break;
