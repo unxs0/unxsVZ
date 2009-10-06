@@ -344,7 +344,7 @@ void ExttNodeButtons(void)
 			if(uDatacenter && uNode)
 			{
 				printf("Node belongs to ");
-				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tDatacenter&uDatacenter=%u>%s<a>",
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tDatacenter&uDatacenter=%u>%s</a>",
 						uDatacenter,ForeignKey("tDatacenter","cLabel",uDatacenter));
 				htmlGroups(uNode,0);
 			}
