@@ -373,49 +373,49 @@ void ExttPropertyListSelect(void)
         if(!strcmp(gcFilter,"uProperty"))
         {
                 sscanf(gcCommand,"%u",&uProperty);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tProperty.uProperty=%u ORDER BY uProperty",uProperty);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cName"))
         {
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tProperty.cName LIKE '%s' ORDER BY cName,uProperty",gcCommand);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uType"))
         {
                 sscanf(gcCommand,"%u",&uType);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tProperty.uType=%u ORDER BY uType,uProperty",uType);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uKey"))
         {
                 sscanf(gcCommand,"%u",&uKey);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tProperty.uKey=%u ORDER BY uKey,uProperty",uKey);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uOwner"))
         {
                 sscanf(gcCommand,"%u",&uOwner);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tProperty.uOwner=%u ORDER BY uOwner,uProperty",uOwner);
 		strcat(gcQuery,cCat);
         }
