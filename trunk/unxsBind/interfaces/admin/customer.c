@@ -882,6 +882,8 @@ void SetCustomerFieldsOn(void)
 
 }//void SetCustomerFieldsOn(void)
 
+char *cZoneLink(unsigned uZone,unsigned uOwner);
+char *cGetViewLabel(char *cuView);
 
 void funcZoneList(FILE *fp)
 {
@@ -889,7 +891,13 @@ void funcZoneList(FILE *fp)
 	MYSQL_ROW field;
 	unsigned uCount=0;
 	unsigned uTotal=0;
-
+	unsigned uHeader=0;
+	char cZone[100]={""};
+	char cPrevZone[100]={"ERROR"};
+	unsigned uZone=0;
+	unsigned a=0,b=0,c=0,d=0,e=0;
+	register int i;         
+	
 	if(!uClient) return;
 	
 
@@ -907,10 +915,11 @@ void funcZoneList(FILE *fp)
 	if(!uTotal)
 	{
 		mysql_free_result(res);
-		return;
+		goto NextList;
 	}
 	fprintf(fp,"<a title='List of zones owned by the loaded company' class=inputLink href=\"#\" "
 			"onClick=\"open_popup('?gcPage=Glossary&cLabel=Zone List')\"><strong>Zone List</strong></a><br>\n");
+	uHeader=1;
 
 	while((field=mysql_fetch_row(res)))
 	{
@@ -930,9 +939,84 @@ void funcZoneList(FILE *fp)
 	}
 	
 	mysql_free_result(res);
+
+NextList:	
+	sprintf(gcQuery,"SELECT DISTINCT tBlock.cLabel FROM tBlock WHERE tBlock.uOwner=%u ORDER BY cLabel LIMIT 301",uClient);
 	
-	
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if(mysql_num_rows(res) && !uHeader)
+		fprintf(fp,"<a title='List of zones owned by the loaded company' class=inputLink href=\"#\" "
+				"onClick=\"open_popup('?gcPage=Glossary&cLabel=Zone List')\"><strong>Zone List</strong></a><br>\n");
+
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
+		sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+		if(strcmp(cZone,cPrevZone))
+		{
+			sprintf(cPrevZone,"%.99s",cZone);
+
+			if(a==0 || e==0 || b>254 || c>254 || d>254 
+					|| a>254 || b>254 || e<21) continue;
+			switch(e)
+			{
+				case 23:
+				case 22:
+				case 21:
+				//Expand these three cases with basic CIDR math
+				for(i=0;i<((2^(24-e))-1);i++)
+				{
+					sprintf(cZone,"%u.%u.%u.in-addr.arpa",c+i,b,a);
+					uZone=uGetuZone(cZone,"2");
+					if(!uZone)
+						continue;
+					fprintf(fp,"%s",cZoneLink(uZone,uClient));
+				}
+				break;
+				default:
+				//24 or smaller see if continue above
+				//Single class C rev zone
+				sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+				uZone=uGetuZone(cZone,"2");
+				if(!uZone)
+						break;
+				fprintf(fp,"%s",cZoneLink(uZone,uClient));
+			}
+		}//if distinct
+	}
+	mysql_free_result(res);
+
 }//void funcZoneList(FILE *fp)
+
+
+char *cZoneLink(unsigned uZone,unsigned uOwner)
+{
+	static char cRet[256]={""};
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cZone,uView FROM tZone WHERE uZone=%u",uZone);
+	macro_mySQLRunAndStore(res);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cRet,"<a href=\"idnsAdmin.cgi?gcPage=Zone&cZone=%s&uView=%s&cCustomer=%s\" class=darkLink>%s[%s]</a><br>",
+			field[0]
+			,field[1]
+			,ForeignKey("tClient","cLabel",uOwner)
+			,field[0]
+			,cGetViewLabel(field[1]));
+	}
+	else
+		cRet[0]=0;
+	
+	mysql_free_result(res);
+	return(cRet);
+
+}//char *cZoneLink(unsigned uZone,unsigned uOwner)
 
 
 void funcCompanyNavList(FILE *fp,unsigned uSetCookie)
