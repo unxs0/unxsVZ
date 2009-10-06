@@ -1213,10 +1213,11 @@ unsigned RRCheck(void)
 
 		if(cParam1[strlen(cParam1)-1]!='.') strcat(cParam1,".");
 		
-		if(strcmp(gcZone+strlen(gcZone)-5,".arpa"))
-		{
-			sprintf(cName,"%.99s.",gcZone);
-		}
+		//This breaks subdomain delegation
+		//if(strcmp(gcZone+strlen(gcZone)-5,".arpa"))
+		//{
+		//	sprintf(cName,"%.99s.",gcZone);
+		//}
 		//else no other rules for arpa zone for now TODO
 	}
 	else if(!strcmp(cRRType,"HINFO"))
