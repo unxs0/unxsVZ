@@ -211,7 +211,6 @@ void ZoneGetHook(entry gentries[],int x)
 	}
 	//If no gcCustomer provided as GET arg, try to get it from session cookie
 	if(gcCustomer[0]) uForClient=uGetClient(gcCustomer);
-
 	if(gcZone[0] && cuView[0])
 	{
 		SelectZone(1);
@@ -287,6 +286,7 @@ void ZoneCommands(pentry entries[], int x)
 			gcMessage="Modify data, review, then confirm. Any other action to cancel.";
 			gcInputStatus[0]=0;
 			SetZoneFieldsOn();
+			if(uOwner!=uForClient) uForClient=uOwner; //Don't mess zone ownership by mistake if loaded via another company
 			htmlZone();
 		}
 		else if(!strcmp(gcFunction,"Confirm Modify"))

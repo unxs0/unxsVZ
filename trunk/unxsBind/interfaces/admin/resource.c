@@ -12,6 +12,8 @@ PURPOSE
 #include <openisp/ucidr.h>
 
 extern char gcZone[];
+extern unsigned uForClient;
+
 unsigned uResource=0;
 static unsigned uZone=0;
 
@@ -242,6 +244,8 @@ void ResourceGetHook(entry gentries[],int x)
 		else if(!strcmp(gentries[i].name,"uStep"))
 			sscanf(gentries[i].val,"%u",&uStep);
 	}
+
+	if(gcCustomer[0]) uForClient=uGetClient(gcCustomer);
 
 	if(cRRType[0] && gcFunction[0] && gcZone[0])
 	{
@@ -586,21 +590,31 @@ void SelectResource(void)
 	MYSQL_ROW field;
 	
 	if(uResource)
-		sprintf(gcQuery,"SELECT tResource.cName,tResource.uTTL,tRRType.cLabel,tResource.cParam1,tResource.cParam2,tResource.cComment,"
-				"tZone.uNSSet,tResource.uResource,tResource.uZone,tRRType.cParam1Label,tRRType.cParam1Tip,tRRType.cParam2Label,"
-				"tRRType.cParam2Tip,tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
-				"tRRType.cNameTip,tResource.cParam3,tResource.cParam4,tResource.uOwner,tResource.uCreatedBy,tResource.uCreatedDate,"
-				"tResource.uModBy,tResource.uModDate FROM tResource,tRRType,tZone WHERE tZone.uZone=tResource.uZone AND "
-				"tResource.uRRType=tRRType.uRRType AND tZone.cZone='%s' AND tZone.uView='%s' AND tResource.uResource=%u",
+		sprintf(gcQuery,"SELECT tResource.cName,tResource.uTTL,tRRType.cLabel,"
+				"tResource.cParam1,tResource.cParam2,tResource.cComment,"
+				"tZone.uNSSet,tResource.uResource,tResource.uZone,"
+				"tRRType.cParam1Label,tRRType.cParam1Tip,tRRType.cParam2Label,"
+				"tRRType.cParam2Tip,tRRType.cParam3Label,tRRType.cParam3Tip,"
+				"tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
+				"tRRType.cNameTip,tResource.cParam3,tResource.cParam4,"
+				"tResource.uOwner,tResource.uCreatedBy,tResource.uCreatedDate,"
+				"tResource.uModBy,tResource.uModDate FROM tResource,tRRType,tZone "
+				"WHERE tZone.uZone=tResource.uZone AND "
+				"tResource.uRRType=tRRType.uRRType AND "
+				"tZone.cZone='%s' AND tZone.uView='%s' AND tResource.uResource=%u",
 				gcZone,cuView,uResource);
 	else
-		sprintf(gcQuery,"SELECT tResource.cName,tResource.uTTL,tRRType.cLabel,tResource.cParam1,tResource.cParam2,tResource.cComment,"
-				"tZone.uNSSet,tResource.uResource,tResource.uZone,tRRType.cParam1Label,tRRType.cParam1Tip,tRRType.cParam2Label,"
-				"tRRType.cParam2Tip,tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
-				"tRRType.cNameTip,tResource.cParam3,tResource.cParam4,tResource.uOwner,tResource.uCreatedBy,tResource.uCreatedDate,"
-				"tResource.uModBy,tResource.uModDate FROM tResource,tRRType,tZone WHERE tZone.uZone=tResource.uZone AND "
-				"tResource.uRRType=tRRType.uRRType AND tZone.cZone='%s' AND tZone.uView='%s' ORDER BY "
-				"tRRType.uRRType,tResource.cName LIMIT 1",gcZone,cuView);
+		sprintf(gcQuery,"SELECT tResource.cName,tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
+				"tResource.cParam2,tResource.cComment,tZone.uNSSet,tResource.uResource,"
+				"tResource.uZone,tRRType.cParam1Label,tRRType.cParam1Tip,tRRType.cParam2Label,"
+				"tRRType.cParam2Tip,tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,"
+				"tRRType.cParam4Tip,tRRType.cNameLabel,tRRType.cNameTip,tResource.cParam3,"
+				"tResource.cParam4,tResource.uOwner,tResource.uCreatedBy,tResource.uCreatedDate,"
+				"tResource.uModBy,tResource.uModDate FROM tResource,tRRType,tZone WHERE "
+				"tZone.uZone=tResource.uZone AND "
+				"tResource.uRRType=tRRType.uRRType AND "
+				"tZone.cZone='%s' AND tZone.uView='%s' AND tResource.uOwner=%u ORDER BY "
+				"tRRType.uRRType,tResource.cName LIMIT 1",gcZone,cuView,uForClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -765,7 +779,7 @@ void NewResource(void)
 			cParam3,
 			cParam4,
 			TextAreaSave(cComment),
-			uGetZoneOwner(uZone),
+			uForClient,
 			guLoginClient,
 			uZone);
 	mysql_query(&gMysql,gcQuery);
@@ -1665,6 +1679,9 @@ void LoadRRNoType(void)
 
 void MasterFunctionSelect(void)
 {
+	
+	if(gcCustomer[0]) uForClient=uGetClient(gcCustomer);
+
 	if(!strcmp(gcFunction,"Modify"))
 	{
 		SelectResource();
