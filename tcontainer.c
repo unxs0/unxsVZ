@@ -63,7 +63,7 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
-//uSource HIDDEN for now
+//uSource semi HIDDEN for now
 static unsigned uSource=0;
 
 
@@ -171,6 +171,8 @@ void ProcesstContainerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uSource"))
+			sscanf(entries[i].val,"%u",&uSource);
 
 	}
 
@@ -408,6 +410,13 @@ void tContainerInput(unsigned uMode)
 		YesNoPullDown("uVeth",uVeth,1);
 	else
 		YesNoPullDown("uVeth",uVeth,0);
+//uSource
+	if(uSource)
+	{
+		OpenRow(LANG_FL_tContainer_uSource,"black");
+		printf("<input disabled type=text name=uSource value='%u' size=10>\n",uSource);
+		printf("<input type=hidden name=uSource value='%u'>\n",uSource);
+	}
 //uIPv4
 	OpenRow(LANG_FL_tContainer_uIPv4,"black");
 	if(guPermLevel>=7 && uMode)

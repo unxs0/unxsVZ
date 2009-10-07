@@ -46,6 +46,6 @@ LEGAL
 
 //End-users: Do not change these!
 //Also edit main.c header RAD status line if you change the following
-#define RELEASE "1.31/rpm-3.1"
-#define REV "1.31/rpm-3.1"
+#define RELEASE "1.32/rpm-3.2"
+#define REV "1.32/rpm-3.2"
 

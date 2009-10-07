@@ -240,7 +240,13 @@ void DashBoard(const char *cOptionalMsg)
 		cColor="fuchsia";
 	else if(fRatio>=50.00)
 		cColor="red";
-	printf("<tr><td></td><td>All Container Usage Ratio %2.2f%%</td>"
+
+	if(luTotalSoftLimit==1)
+		printf("<tr><td></td><td>No Container Usage Ratio</td>"
+		"<td>%luG/%luG</td><td bgcolor=green colspan=2></td></tr>\n",
+		luTotalUsage/1048576,luTotalSoftLimit/1048576);
+	else
+		printf("<tr><td></td><td>All Container Usage Ratio %2.2f%%</td>"
 		"<td>%luG/%luG</td><td bgcolor=%s colspan=2></td></tr>\n",
 		fRatio,luTotalUsage/1048576,luTotalSoftLimit/1048576,cColor);
 	//
