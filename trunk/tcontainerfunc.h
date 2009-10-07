@@ -490,7 +490,7 @@ void ExttContainerCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstContainerVars(entries,x);
-			if( (uStatus==11  || uStatus==31) && uAllowMod(uOwner,uCreatedBy))
+			if( (uStatus==11) && uAllowMod(uOwner,uCreatedBy))
 			{
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -517,7 +517,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstContainerVars(entries,x);
-			if( (uStatus==11  || uStatus==31) && uAllowMod(uOwner,uCreatedBy))
+			if( (uStatus==11) && uAllowMod(uOwner,uCreatedBy))
 			{
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -1428,9 +1428,10 @@ void ExttContainerButtons(void)
 					printf("<input title='Change current container name and hostname'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Hostname Change Wizard'><br>\n");
-					printf("<input title='Creates a job for failover.'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Failover Wizard %.25s'>\n",cLabel);
+					if(uSource)
+						printf("<input title='Creates a job for failover.'"
+						" type=submit class=largeButton"
+						" name=gcCommand value='Failover Wizard %.25s'>\n",cLabel);
 				}
 				else if( uStatus==6 || uStatus==5 || uStatus==41 )
 				{
@@ -1450,9 +1451,10 @@ void ExttContainerButtons(void)
 					printf("<p><input title='Creates a job for starting a stopped container.'"
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Start %.25s'><br>\n",cLabel);
-					printf("<input title='Creates a job for failover.'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Failover Wizard %.25s'>\n",cLabel);
+					if(uSource)
+						printf("<input title='Creates a job for failover.'"
+						" type=submit class=largeButton"
+						" name=gcCommand value='Failover Wizard %.25s'>\n",cLabel);
 				}
 
 				char cVEIDMount[256]={""};
@@ -1704,7 +1706,7 @@ void ExttContainerNavBar(void)
 		printf(LANG_NBB_NEW);
 
 	//11 Initial setup 31 Stopped
-	if( (uStatus==11 || uStatus==31) && uAllowMod(uOwner,uCreatedBy) )
+	if( (uStatus==11) && uAllowMod(uOwner,uCreatedBy) )
 		printf(LANG_NBB_MODIFY);
 
 	if( uStatus==11 && uAllowDel(uOwner,uCreatedBy) ) 

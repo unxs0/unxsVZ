@@ -428,6 +428,8 @@
 #define LANG_FT_tContainer_uModBy "uClient for last update"
 #define LANG_FL_tContainer_uModDate "uModDate"
 #define LANG_FT_tContainer_uModDate "Unix seconds date last update"
+#define LANG_FL_tContainer_uSource "uSource"
+#define LANG_FT_tContainer_uSource "Source of a cloned container"
 //tProperty
 #define LANG_FL_tProperty_uProperty "uProperty"
 #define LANG_FT_tProperty_uProperty "Primary Key"
