@@ -902,7 +902,8 @@ void funcZoneList(FILE *fp)
 	
 
 	sprintf(gcQuery,"SELECT tZone.cZone,tView.cLabel,tView.uView FROM tZone,tView WHERE "
-			"tZone.uView=tView.uView AND tZone.uOwner='%u' ORDER BY tZone.cZone",uClient);
+			"tZone.uView=tView.uView AND tZone.uOwner='%u' AND cZone NOT LIKE '%%in-addr.arpa' "
+			"ORDER BY tZone.cZone",uClient);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -950,7 +951,7 @@ NextList:
 
 	if(mysql_num_rows(res) && !uHeader)
 		fprintf(fp,"<a title='List of zones owned by the loaded company' class=inputLink href=\"#\" "
-				"onClick=\"open_popup('?gcPage=Glossary&cLabel=Zone List')\"><strong>Zone List</strong></a><br>\n");
+				"onClick=\"open_popup('?gcPage=Glossary&cLabel=Block Zone List')\"><strong>Block Assigned Zone List</strong></a><br>\n");
 
 	while((field=mysql_fetch_row(res)))
 	{
