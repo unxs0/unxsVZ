@@ -97,6 +97,7 @@ void ExtListSelect(const char *cTable,const char *cVarList);
 void ExtSelect(const char *cTable,const char *cVarList);
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
 
+char *cURLEncode(char *cURL);
 void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 
  //Standard tInputFunc functions

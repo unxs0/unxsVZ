@@ -18,7 +18,7 @@ all: unxsUBC
 unxsUBC: ubc.o 
 	cc ubc.o -o unxsUBC $(LIBS) 
 
-ubc.o: ubc.c ../../mysqlrad.h
+ubc.o: ubc.c ../../mysqlrad.h ../../local.h
 	cc -c ubc.c -o ubc.o $(CFLAGS)
 
 clean:
