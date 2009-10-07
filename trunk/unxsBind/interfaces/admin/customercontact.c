@@ -942,8 +942,11 @@ void funcTablePullDownResellers(FILE *fp,unsigned uUseStatus)
 
 	if(!strcmp(gcPage,"CustomerUser"))
 		cTitle="Select the Company you want to create the Company Contact for";
-	else
+	else if(!strcmp(gcPage,"Zone"))
+		cTitle="Select the Company you want to own the zone record";
+	else 
 		cTitle="Select the Company you want to create the Administrator for";
+
 	sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel FROM tClient WHERE"
 			" (uOwner=1 OR uOwner=%u) AND cCode='Organization' ORDER BY cLabel",guOrg);
 

@@ -286,7 +286,11 @@ void ZoneCommands(pentry entries[], int x)
 			gcMessage="Modify data, review, then confirm. Any other action to cancel.";
 			gcInputStatus[0]=0;
 			SetZoneFieldsOn();
-			if(uOwner!=uForClient) uForClient=uOwner; //Don't mess zone ownership by mistake if loaded via another company
+			if(uOwner!=uForClient)
+			{
+				uForClient=uOwner; //Don't mess zone ownership by mistake if loaded via another company
+				sprintf(gcCustomer,"%s",ForeignKey("tClient","cLabel",uOwner));
+			}
 			htmlZone();
 		}
 		else if(!strcmp(gcFunction,"Confirm Modify"))
