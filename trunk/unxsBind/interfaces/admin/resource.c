@@ -2416,6 +2416,15 @@ void SaveResource(void)
 
 unsigned OnLineZoneCheck(void)
 {
+//This define determines how to parse named-checkzone ouput.
+////If set, BIND version will be taken as >= 9.6.1, otherwise
+//BIND 9.3.4 behavior it's assumed as default, unless until CentOS 5 updates 
+//its rpm package for BIND, yuck!
+//Also note that the parsing named here has only impact in the way the error
+//messages are displayed, if incorrecty set, probably you will miss part of the error 
+//text, or worst make idnsAdmin to crash!
+#define BIND_9_6
+
 	//This function will create a zonefile online and run named-checkzone
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -2561,19 +2570,26 @@ unsigned OnLineZoneCheck(void)
 				htmlPlainTextError("popen() failed");
 			
 			//zone clonetest.com/IN: loading master file /tmp/clonetest.com: CNAME and other data
+			//as BIND 9.6.1-P1, this message goes as below:
+			//zone unixservice.com/IN: loading from master file /tmp/unixservice.com failed: label too long
+			//
 			while(fgets(cLine,sizeof cLine,zfp)!=NULL)
 			{
 				if(strstr(cLine,"zone"))
 				{
 					char *cp;
 					cp=strstr(cLine,cZoneFile);
-					cp=cp+strlen(cZoneFile)+2; //2 more chars ': '
+#ifdef BIND_9_6
+					cp=cp+strlen(cZoneFile)+9; //9 more chars(see above)
+#else
+					cp=cp+strlen(cZoneFile)+2; //2 more chars
+#endif
 					gcMessage=malloc(256);
 					sprintf(gcMessage,"<blink>Error: </blink> The RR has an error: %s",cp);
 				}
 			}
 			pclose(zfp);
-			unlink(cZoneFile);
+	//		unlink(cZoneFile);
 			return(1);
 		}
 	}
