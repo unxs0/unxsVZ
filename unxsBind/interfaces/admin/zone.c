@@ -1856,7 +1856,7 @@ void funcZoneNavList(FILE *fp,unsigned uSetCookie)
 	
 	if(!cSearch[0]) return;
 
-	sprintf(gcQuery,"SELECT tZone.cZone,tZone.uView,tView.cLabel,tClient.cLabel FROM tZone,tView,tClient "
+	sprintf(gcQuery,"SELECT tZone.cZone,tZone.uView,tView.cLabel,tClient.cLabel,tZone.uOwner FROM tZone,tView,tClient "
 			"WHERE tZone.uView=tView.uView AND tZone.uOwner=tClient.uClient AND tZone.cZone LIKE '%s%%'",cSearch);
 	//fprintf(fp,"%s",gcQuery);return;
 	mysql_query(&gMysql,gcQuery);
@@ -1874,6 +1874,8 @@ void funcZoneNavList(FILE *fp,unsigned uSetCookie)
 		{
 			sprintf(gcZone,"%s",field[0]);
 			sprintf(cuView,"%s",field[1]);
+			sscanf(field[4],"%u",&uForClient);
+			sprintf(gcCustomer,"%s",field[3]);
 			SelectZone(uSetCookie);
 			if(uSetCookie)
 				sys_SetSessionCookie();
