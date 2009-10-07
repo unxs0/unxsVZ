@@ -1387,7 +1387,26 @@ void ExttContainerButtons(void)
 			tContainerNavList(0,cSearch);
 			if(uContainer)
 			{
-				if( uStatus==1)
+
+#define uACTIVE		1
+#define uONHOLD		2
+#define uOFFLINE	3
+#define uAWAITMOD	4
+#define uAWAITDEL	5
+#define uAWAITACT	6
+#define uCANCELED	7
+#define uMODIFIED	8
+#define uMODPROB	9
+#define uINITSETUP	11
+#define uAWAITMIG	21
+#define uSTOPPED	31
+#define uAWAITSTOP	41
+#define uAWAITTML	51
+#define uAWAITHOST	61
+#define uAWAITIP	71
+#define uAWAITCLONE	81
+#define uAWAITFAIL	91
+				if(uStatus==uACTIVE)
 				{
 					htmlHealth(uContainer,3);
 					printf("<p><input title='Migrate container to another hardware node'"
@@ -1409,20 +1428,32 @@ void ExttContainerButtons(void)
 					printf("<input title='Change current container name and hostname'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Hostname Change Wizard'><br>\n");
+					printf("<input title='Creates a job for failover.'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Failover Wizard %.25s'>\n",cLabel);
 				}
 				else if( uStatus==6 || uStatus==5 || uStatus==41 )
+				{
 					printf("<p><input title='Cancel all waiting jobs for this container.'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Cancel Job'>\n");
+				}
 				else if( uStatus==11)
+				{
 					printf("<p><input title='Creates a job for deploying a new container."
 					" Make sure you configure the properties you want beforehand!'"
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Deploy %.25s'>\n",cLabel);
+				}
 				else if( uStatus==31 )
+				{
 					printf("<p><input title='Creates a job for starting a stopped container.'"
 					" type=submit class=lalertButton"
-					" name=gcCommand value='Start %.25s'>\n",cLabel);
+					" name=gcCommand value='Start %.25s'><br>\n",cLabel);
+					printf("<input title='Creates a job for failover.'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Failover Wizard %.25s'>\n",cLabel);
+				}
 
 				char cVEIDMount[256]={""};
 				GetContainerProp(uContainer,"cVEID.mount",cVEIDMount);
@@ -1503,6 +1534,10 @@ void ExttContainerGetHook(entry gentries[], int x)
 		{
 			sscanf(gentries[i].val,"%u",&uContainer);
 			guMode=6;
+		}
+		else if(!strcmp(gentries[i].name,"cSearch"))
+		{
+			sprintf(cSearch,"%.31s",gentries[i].val);
 		}
 	}
 	tContainer("");
@@ -1799,7 +1834,12 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
+			if(cSearch[0])
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
+					"&uContainer=%s&cSearch=%s>%s/%s/%s(%s)</a><br>\n",
+						field[0],cURLEncode(cSearch),field[1],field[2],field[3],field[4]);
+			else
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
 					"&uContainer=%s>%s/%s/%s(%s)</a><br>\n",
 						field[0],field[1],field[2],field[3],field[4]);
 			if(++uNumRows>=uLIMIT)
