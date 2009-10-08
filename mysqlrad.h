@@ -31,6 +31,26 @@ AUTHOR
 #include "language.h"
 #include "local.h"
 
+//tStatus constants
+#define uACTIVE		1
+#define uONHOLD		2
+#define uOFFLINE	3
+#define uAWAITMOD	4
+#define uAWAITDEL	5
+#define uAWAITACT	6
+#define uCANCELED	7
+#define uMODIFIED	8
+#define uMODPROB	9
+#define uINITSETUP	11
+#define uAWAITMIG	21
+#define uSTOPPED	31
+#define uAWAITSTOP	41
+#define uAWAITTML	51
+#define uAWAITHOST	61
+#define uAWAITIP	71
+#define uAWAITCLONE	81
+#define uAWAITFAIL	91
+
 extern char gcHost[];
 extern char gcHostname[];
 extern char gcUser[];

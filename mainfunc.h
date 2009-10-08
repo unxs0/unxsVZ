@@ -744,42 +744,164 @@ void mySQLRootConnect(char *cPasswd)
 
 void UpdateSchema(void)
 {
-	printf("\nUpdateSchema(): Start\n");
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uVeth=0;
+	unsigned uSource=0;
+	unsigned uIncorrectSource=0;
+	unsigned uIncorrectVeth=0;
+	unsigned uSourceIndex=0;
+
+	printf("UpdateSchema(): Start\n");
 
 	TextConnectDb();
 
-	sprintf(gcQuery,"ALTER TABLE tContainer ADD uVeth INT UNSIGNED DEFAULT 0");
+	//Take note if what we need to change/add
+	//This is based on expanded and incorrect schema of previous releases. Yes this sucks.
+	sprintf(gcQuery,"SHOW COLUMNS IN tContainer");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uVeth"))
+		{
+			uVeth=1;
+			if(!strcmp(field[2],"YES"))
+				uIncorrectVeth=1;
+		}
+		if(!strcmp(field[0],"uSource"))
+		{
+			uSource=1;
+			if(!strcmp(field[2],"YES"))
+				uIncorrectSource=1;
+		}
+	}
+       	mysql_free_result(res);
+	sprintf(gcQuery,"SHOW INDEX IN tContainer");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[2],"uSource")) uSourceIndex=1;
+	}
+       	mysql_free_result(res);
 
-	sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=81,cLabel='Awaiting Clone',"
+	if(uIncorrectVeth)
+	{
+		sprintf(gcQuery,"ALTER TABLE tContainer MODIFY uVeth INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Corrected uVeth of tContainer\n");
+	}
+	if(!uVeth)
+	{
+		sprintf(gcQuery,"ALTER TABLE tContainer ADD uVeth INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uVeth to tContainer\n");
+	}
+
+	sprintf(gcQuery,"SELECT uStatus FROM tStatus WHERE uStatus=81");	
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)==0)
+	{
+		sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=81,cLabel='Awaiting Clone',"
 				"uCreatedBy=1,uOwner=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Inserted uStatus=81 into tStatus\n");
+	}
+       	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uStatus FROM tStatus WHERE uStatus=91");	
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)==0)
+	{
+		sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=91,cLabel='Awaiting Failover',"
+				"uCreatedBy=1,uOwner=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Inserted uStatus=91 into tStatus\n");
+	}
+       	mysql_free_result(res);
 
+	//Not important if repeated
 	sprintf(gcQuery,"UPDATE tConfiguration SET cLabel='cSSHOptions' WHERE cLabel='cSSLOptions'");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		printf("%s\n",mysql_error(&gMysql));
 
+	//Not important if repeated
 	sprintf(gcQuery,"ALTER TABLE tOSTemplate MODIFY cLabel VARCHAR(100) NOT NULL DEFAULT ''");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		printf("%s\n",mysql_error(&gMysql));
 
-	sprintf(gcQuery,"ALTER TABLE tContainer ADD uSource INT UNSIGNED DEFAULT 0");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
+	if(uIncorrectSource)
+	{
+		sprintf(gcQuery,"ALTER TABLE tContainer MODIFY uSource INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Corrected uSource of tContainer\n");
 
-	sprintf(gcQuery,"ALTER TABLE tContainer ADD INDEX (uSource)");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
+		sprintf(gcQuery,"ALTER TABLE tContainer DROP INDEX uSource");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+		}
+		else
+		{
+			printf("Dropped uSource index of tContainer\n");
+			uSourceIndex=0;
+		}
+	}
 
-	printf("\nUpdateSchema(): End\n");
+	if(!uSource)
+	{
+		sprintf(gcQuery,"ALTER TABLE tContainer ADD uSource INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uSource to tContainer\n");
+	}
+
+	if(!uSourceIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tContainer ADD INDEX (uSource)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uSource tContainer\n");
+	}
+
+	printf("UpdateSchema(): End\n");
 
 }//void UpdateSchema(void)
 

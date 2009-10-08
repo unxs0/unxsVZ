@@ -67,6 +67,7 @@ unsigned uCheckMountSettings(unsigned uMountTemplate);
 void htmlMountTemplateSelect(unsigned uSelector);
 void AddMountProps(unsigned uContainer);
 void CopyContainerProps(unsigned uSource, unsigned uTarget);
+unsigned FailoverJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 
 
 void htmlGenMountInputs(unsigned const uMountTemplate)
@@ -1203,6 +1204,53 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
 		}
+                else if(!strncmp(gcCommand,"Failover",8))
+                {
+                        ProcesstContainerVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+				guMode=8001;
+				tContainer("Review and confirm");
+			}
+			else
+			{
+				tContainer("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Confirm Failover"))
+                {
+                        ProcesstContainerVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+                        	guMode=8001;
+                        	guMode=0;
+
+				if(FailoverJob(uDatacenter,uNode,uContainer))
+				{
+					uStatus=uAWAITFAIL;
+					SetContainerStatus(uContainer,uAWAITFAIL);
+					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+					tContainer("FailoverJob() Done");
+				}
+				else
+				{
+					tContainer("<blink>Error</blink>: No jobs created!");
+				}
+			}
+			else
+			{
+				tContainer("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
 	}
 
 }//void ExttContainerCommands(pentry entries[], int x)
@@ -1300,6 +1348,15 @@ void ExttContainerButtons(void)
 					" name=gcCommand value='Confirm Clone'>\n");
                 break;
 
+                case 8001:
+                        printf("<p><u>Failover</u><br>");
+			printf("Confirm all the information presented for a manual failover to take place");
+                        printf("<p><u>Failover Data</u>");
+			printf("<p><input title='Create a clone job for the current container'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Failover'>\n");
+                break;
+
                 case 200:
 			printf("<p><u>New container step 2/3</u><br>");
 			printf("Optionally select node mount template for new container."
@@ -1387,25 +1444,6 @@ void ExttContainerButtons(void)
 			tContainerNavList(0,cSearch);
 			if(uContainer)
 			{
-
-#define uACTIVE		1
-#define uONHOLD		2
-#define uOFFLINE	3
-#define uAWAITMOD	4
-#define uAWAITDEL	5
-#define uAWAITACT	6
-#define uCANCELED	7
-#define uMODIFIED	8
-#define uMODPROB	9
-#define uINITSETUP	11
-#define uAWAITMIG	21
-#define uSTOPPED	31
-#define uAWAITSTOP	41
-#define uAWAITTML	51
-#define uAWAITHOST	61
-#define uAWAITIP	71
-#define uAWAITCLONE	81
-#define uAWAITFAIL	91
 				if(uStatus==uACTIVE)
 				{
 					htmlHealth(uContainer,3);
@@ -1431,7 +1469,7 @@ void ExttContainerButtons(void)
 					if(uSource)
 						printf("<input title='Creates a job for failover.'"
 						" type=submit class=largeButton"
-						" name=gcCommand value='Failover Wizard %.25s'>\n",cLabel);
+						" name=gcCommand value='Failover %.25s'>\n",cLabel);
 				}
 				else if( uStatus==6 || uStatus==5 || uStatus==41 )
 				{
@@ -1454,7 +1492,7 @@ void ExttContainerButtons(void)
 					if(uSource)
 						printf("<input title='Creates a job for failover.'"
 						" type=submit class=largeButton"
-						" name=gcCommand value='Failover Wizard %.25s'>\n",cLabel);
+						" name=gcCommand value='Failover %.25s'>\n",cLabel);
 				}
 
 				char cVEIDMount[256]={""};
@@ -2703,3 +2741,26 @@ void CopyContainerProps(unsigned uSource, unsigned uTarget)
 	mysql_free_result(res);
 
 }//void CopyContainerProps(unsigned uSource, unsigned uTarget)
+
+
+unsigned FailoverJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+{
+	unsigned uCount=0;
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverJob(%u)',cJobName='Failover'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())"
+			",uJobStatus=1"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				uOwner,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	return(uCount);
+
+}//unsigned FailoverJob()
+
+
