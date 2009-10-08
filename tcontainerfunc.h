@@ -67,7 +67,8 @@ unsigned uCheckMountSettings(unsigned uMountTemplate);
 void htmlMountTemplateSelect(unsigned uSelector);
 void AddMountProps(unsigned uContainer);
 void CopyContainerProps(unsigned uSource, unsigned uTarget);
-unsigned FailoverJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned FailoverFromJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 
 
 void htmlGenMountInputs(unsigned const uMountTemplate)
@@ -1207,13 +1208,27 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strncmp(gcCommand,"Failover",8))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if((uStatus==1 || uStatus==31) && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+				if(!uDatacenter)
+					tContainer("<blink>Error</blink>: Unexpected lack of uDatacenter.");
+				if(!uNode)
+					tContainer("<blink>Error</blink>: Unexpected lack of uNode.");
+				if(!uSource)
+					tContainer("<blink>Error</blink>: Unexpected lack of uSource.");
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND"
+						" (uStatus=1 OR uStatus=31 OR uStatus=41)",uSource);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)==0)
+					tContainer("<blink>Error</blink>: Unexpected source container status!");
 				guMode=8001;
 				tContainer("Review and confirm");
 			}
@@ -1225,25 +1240,53 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm Failover"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if((uStatus==1 || uStatus==31) && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
                         	guMode=8001;
+				if(!uSource)
+					tContainer("<blink>Error</blink>: Unexpected lack of uSource!");
+				if(!uDatacenter)
+					tContainer("<blink>Error</blink>: Unexpected lack of uDatacenter.");
+				if(!uNode)
+					tContainer("<blink>Error</blink>: Unexpected lack of uNode.");
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND"
+						" (uStatus=1 OR uStatus=31 OR uStatus=41)",uSource);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)==0)
+					tContainer("<blink>Error</blink>: Unexpected source container status!");
                         	guMode=0;
 
-				if(FailoverJob(uDatacenter,uNode,uContainer))
+				if(FailoverToJob(uDatacenter,uNode,uContainer))
 				{
-					uStatus=uAWAITFAIL;
-					SetContainerStatus(uContainer,uAWAITFAIL);
-					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
-					tContainer("FailoverJob() Done");
+					unsigned uSourceDatacenter=0;
+					unsigned uSourceNode=0;
+
+					sscanf(ForeignKey("tContainer","uDatacenter",uSource),"%u",&uSourceDatacenter);
+					sscanf(ForeignKey("tContainer","uNode",uSource),"%u",&uSourceNode);
+
+					if(FailoverFromJob(uSourceDatacenter,uSourceNode,uSource))
+					{
+						uStatus=uAWAITFAIL;
+						SetContainerStatus(uContainer,uAWAITFAIL);
+						SetContainerStatus(uSource,uAWAITFAIL);
+						sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+						tContainer("FailoverJob() Done");
+					}
+					else
+					{
+						tContainer("<blink>Error</blink>: No FailoverFromJob() created!");
+					}
 				}
 				else
 				{
-					tContainer("<blink>Error</blink>: No jobs created!");
+					tContainer("<blink>Error</blink>: No FailoverToJob created!");
 				}
 			}
 			else
@@ -1352,6 +1395,12 @@ void ExttContainerButtons(void)
                         printf("<p><u>Failover</u><br>");
 			printf("Confirm all the information presented for a manual failover to take place");
                         printf("<p><u>Failover Data</u>");
+			if(uSource)
+			{
+				printf("<br>%s will replace ",cLabel);
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>"
+					"%s</a>",uSource,ForeignKey("tContainer","cLabel",uSource));
+			}
 			printf("<p><input title='Create a clone job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Failover'>\n");
@@ -1467,7 +1516,7 @@ void ExttContainerButtons(void)
 					" type=submit class=largeButton"
 					" name=gcCommand value='Hostname Change Wizard'><br>\n");
 					if(uSource)
-						printf("<input title='Creates a job for failover.'"
+						printf("<input title='Creates jobs for failover.'"
 						" type=submit class=largeButton"
 						" name=gcCommand value='Failover %.25s'>\n",cLabel);
 				}
@@ -1490,7 +1539,7 @@ void ExttContainerButtons(void)
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Start %.25s'><br>\n",cLabel);
 					if(uSource)
-						printf("<input title='Creates a job for failover.'"
+						printf("<input title='Creates jobs for failover.'"
 						" type=submit class=largeButton"
 						" name=gcCommand value='Failover %.25s'>\n",cLabel);
 				}
@@ -2743,11 +2792,19 @@ void CopyContainerProps(unsigned uSource, unsigned uTarget)
 }//void CopyContainerProps(unsigned uSource, unsigned uTarget)
 
 
-unsigned FailoverJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+//Both these failover jobs must in some sense check each other's status it seems at first blush.
+unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
 {
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverJob(%u)',cJobName='Failover'"
+	if(!uDatacenter || !uNode || !uContainer) return(0);
+
+	//This job should try to stop the uSource container if possible. Or at least
+	//make sure it's IP is down. There are many failover scenarios it seems at first glance
+	//we will try to handle all of them.
+	//Remote datacenter failover seems to involve DNS changes. Since we can't use the VIP
+	//method that should be available in a correctly configured unxsVZ datacenter.
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverToJob(%u)',cJobName='FailoverTo'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())"
 			",uJobStatus=1"
@@ -2761,6 +2818,32 @@ unsigned FailoverJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
 	uCount=mysql_insert_id(&gMysql);
 	return(uCount);
 
-}//unsigned FailoverJob()
+}//unsigned FailoverToJob()
+
+
+unsigned FailoverFromJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+{
+	unsigned uCount=0;
+
+	if(!uDatacenter || !uNode || !uContainer) return(0);
+
+	//If the source node is down this job will be stuck
+	//When node is fixed and boots we must avoid the source continater coming up with same IP
+	//as the new production container (the FailoverToJob container.)
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverFromJob(%u)',cJobName='FailoverFrom'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())"
+			",uJobStatus=1"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				uOwner,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	return(uCount);
+
+}//unsigned FailoverFromJob()
 
 
