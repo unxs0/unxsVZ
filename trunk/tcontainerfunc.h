@@ -68,7 +68,7 @@ void htmlMountTemplateSelect(unsigned uSelector);
 void AddMountProps(unsigned uContainer);
 void CopyContainerProps(unsigned uSource, unsigned uTarget);
 unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
-unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uCloneContainer);
+unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uIPv4);
 
 
 void htmlGenMountInputs(unsigned const uMountTemplate)
@@ -1271,7 +1271,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					sscanf(ForeignKey("tContainer","uDatacenter",uSource),"%u",&uSourceDatacenter);
 					sscanf(ForeignKey("tContainer","uNode",uSource),"%u",&uSourceNode);
 
-					if(FailoverFromJob(uSourceDatacenter,uSourceNode,uSource,uContainer))
+					if(FailoverFromJob(uSourceDatacenter,uSourceNode,uSource,uIPv4))
 					{
 						uStatus=uAWAITFAIL;
 						SetContainerStatus(uContainer,uAWAITFAIL);
@@ -2821,7 +2821,7 @@ unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 }//unsigned FailoverToJob()
 
 
-unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uCloneContainer)
+unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uIPv4)
 {
 	unsigned uCount=0;
 
@@ -2834,11 +2834,11 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())"
 			",uJobStatus=1"
-			",cJobData='uCloneContainer=%u;'"
+			",cJobData='uIPv4=%u;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
-				uCloneContainer,
+				uIPv4,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
