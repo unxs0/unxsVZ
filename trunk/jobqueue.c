@@ -7,17 +7,17 @@ PURPOSE
 AUTHOR
 	Gary Wallis for Unxiservice (C) 2008-2009. GPLv2 License applies.
 NOTES
-	We still use KISS code, var naming conventions, and UK style C indentation 
-	to make our software readable and writable by any programmer. At the same
-	time this approach (although with redundant code) has kept these programs
-	lean and faster than anything available in any other language.
+	We still use KISS code, var naming conventions, and Allman (ANSI) style C 
+	indentation to make our software readable and writable by any programmer. 
+	At the same time this approach (although with redundant code) has kept these
+	programs lean and faster than anything available in any other language.
 TODO
 	Create more #define based "macros," to help the compiler optimize the
 	many simple, fast but redundant code blocks.
 	Get rid of any goto statements that do not add too many layers of nested
 	logic that makes the code hard to maintain by non-authors.
 	Use uNotValidSystemCallArg() before all system() calls where any args
-	come from db and are not format (sprintf) as numbers.
+	come from db and are not formatted (sprintf) as numbers.
 */
 
 #include "mysqlrad.h"
@@ -61,6 +61,10 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData);
 int CreateMountFiles(unsigned uContainer, unsigned uOverwrite);
 unsigned uNotValidSystemCallArg(char *cSSHOptions);
+void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData);
+void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData);
+unsigned GetContainerStatus(const unsigned uContainer,unsigned *uStatus);
+unsigned GetContainerMainIP(const unsigned uContainer,char *cIP);
 
 //extern protos
 void TextConnectDb(void); //main.c
@@ -72,7 +76,7 @@ void GetConfiguration(const char *cName,char *cValue,
 		unsigned uContainer,
 		unsigned uHtml);
 
-//file scoped 
+//file scoped. fix this someday
 static unsigned guNode=0;
 static unsigned guDatacenter=0;
 
@@ -342,7 +346,16 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	printf("%3.3u uJob=%u uContainer=%u cJobName=%s; cJobData=%s;\n",
 			uCount++,uJob,uContainer,cJobName,cJobData);
 
-	if(!strcmp(cJobName,"MigrateContainer"))
+	//Is priority order needed in some cases?
+	if(!strcmp(cJobName,"FailoverFrom"))
+	{
+		FailoverFrom(uJob,uContainer,cJobData);
+	}
+	else if(!strcmp(cJobName,"FailoverTo"))
+	{
+		FailoverTo(uJob,uContainer,cJobData);
+	}
+	else if(!strcmp(cJobName,"MigrateContainer"))
 	{
 		MigrateContainer(uJob,uContainer,cJobData);
 	}
@@ -658,12 +671,13 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 			uNotValidSystemCallArg(field[5]) ||
 			uNotValidSystemCallArg(field[6])	)
 		{
+			printf("NewContainer() error: uNotValidSystemCallArg()\n");
 			tJobErrorUpdate(uJob,"failed sec alert!");
 			goto CommonExit;
 		}
 		
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose create %u --ostemplate %.100s --hostname %.32s"
-				" --ipadd %.15s --name %.32s --config %.32s",
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose create %u --ostemplate %s --hostname %s"
+				" --ipadd %s --name %s --config %s",
 				uContainer,field[3],field[1],field[2],field[0],field[6]);
 		if(system(gcQuery))
 		{
@@ -948,7 +962,7 @@ void StopContainer(unsigned uJob,unsigned uContainer)
 	}
 
 	//Everything ok
-	SetContainerStatus(uContainer,31);//Stopped
+	SetContainerStatus(uContainer,uSTOPPED);
 	tJobDoneUpdate(uJob);
 
 CommonExit:
@@ -974,7 +988,7 @@ void StartContainer(unsigned uJob,unsigned uContainer)
 	}
 
 	//Everything ok
-	SetContainerStatus(uContainer,1);//Active
+	SetContainerStatus(uContainer,uACTIVE);
 	tJobDoneUpdate(uJob);
 
 CommonExit:
@@ -1880,35 +1894,21 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//4c-.
-	//Some containers have more than one IP must fix this via a loop see #83 fixed below.
+	//Some containers have more than one IP when how? Not via jobqueue.c
+	//Only via mount/umount scripts other IPs are used.
+	//Any way we can use --ipdel all instead of ticket #83
 	if(uNotValidSystemCallArg(cSourceContainerIP))
 	{
 		tJobErrorUpdate(uJob,"fail sec alert!");
 		goto CommonExit;
 	}
-	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipdel %s --save'",
-				cSSHOptions,cTargetNodeIPv4,uNewVeid,cSourceContainerIP);
+	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipdel all --save'",
+				cSSHOptions,cTargetNodeIPv4,uNewVeid);
 	if(system(gcQuery))
 	{
 		printf("CloneContainer() error: %s.\n",gcQuery);
 		tJobErrorUpdate(uJob,"error 4c");
 		goto CommonExit;
-	}
-	//Ticket #83
-	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uType=3 AND cName LIKE 'cIPv4-%%' AND uKey=%u",
-			uContainer);
-	mysqlrad_Query_TextErr_Exit;
-        res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipdel %s --save'",
-					cSSHOptions,cTargetNodeIPv4,uNewVeid,field[0]);
-		if(system(gcQuery))
-		{
-			printf("CloneContainer() error: %s.\n",gcQuery);
-			tJobErrorUpdate(uJob,"error 4c.2");
-			goto CommonExit;
-		}
 	}
 	//4d-.
 	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipadd %s --save'",
@@ -1922,7 +1922,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 	//5-. Remove umount and mount files if found
 	//Business logic: Target container may have these files, but we need them only if we
-	//failover to this cloned VE. Also we defer to that action the setup of the
+	//'Failover' to this cloned VE. Also we defer to that action the setup of the
 	//containers tProperty values needed for processing the umount/mount templates:
 	//cNetmask, cExtraNodeIP, cPrivateIPs, cService1, cService2, cVEID.mount and cVEID.umount.
 	sprintf(gcQuery,"ssh %3$s %1$s 'rm -f /etc/vz/conf/%2$u.umount /etc/vz/conf/%2$u.mount'",
@@ -2392,3 +2392,189 @@ CommonExit:
 	return;
 
 }//void LocalImportConfig(unsigned uJob,unsigned uContainer,const char *cJobData)
+
+
+void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
+{
+	unsigned uStatus=0;
+	unsigned uSourceContainer=0;
+	char cIP[32]={""};
+
+	//0-.
+	//We require that the job be correctly setup.
+	//We need the source container IPs
+	sscanf(cJobData,"uSourceContainer=%u;",&uSourceContainer);
+	if(!uSourceContainer)
+	{
+		printf("FailoverTo() error0: No uSourceContainer in cJobData\n");
+		tJobErrorUpdate(uJob,"No uSourceContainer");
+		goto CommonExit;
+	}
+
+	//1-. Get data about container
+	if(GetContainerStatus(uContainer,&uStatus))
+	{
+		printf("FailoverTo() error1: GetContainerStatus()\n");
+		tJobErrorUpdate(uJob,"No uStatus");
+		goto CommonExit;
+	}
+
+	//1-.
+	//If container is stopped must start. Since for unknown reasons
+	//the container may already be running (vzctl returns 32 in the version we have at this time) 
+	//we do not consider that start error to be fatal for now.
+	if(uStatus==uSTOPPED)	
+	{
+		unsigned uReturn=0;
+
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u ",uContainer);
+		if((uReturn=system(gcQuery)))
+		{
+			if(uReturn==32)
+			{
+				printf("FailoverTo() error3a: %s\n",gcQuery);
+			}
+			else
+			{
+				printf("FailoverTo() error3b: %s\n",gcQuery);
+				tJobErrorUpdate(uJob,"start error");
+				goto CommonExit;
+			}
+		}
+	}
+
+	//2-.
+	//We remove all the previous IPs.
+	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+	if(system(gcQuery))
+	{
+		printf("FailoverTo() error4: %s\n",gcQuery);
+		tJobErrorUpdate(uJob,"ipdel all");
+		goto CommonExit;
+	}
+
+	//3-.
+	//We add all the IPs first the main IP
+	if(GetContainerMainIP(uContainer,cIP))
+	{
+		printf("FailoverTo() error5: %s\n",cIP);
+		tJobErrorUpdate(uJob,"GetContainerMainIP");
+		goto CommonExit;
+	}
+	if(uNotValidSystemCallArg(cIP))
+	{
+		printf("FailoverTo() error6: security error for %s\n",cIP);
+		tJobErrorUpdate(uJob,"cIP security");
+		goto CommonExit;
+	}
+	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cIP);
+	if(system(gcQuery))
+	{
+		printf("FailoverTo() error7: %s\n",gcQuery);
+		tJobErrorUpdate(uJob,"ipadd cIP");
+		goto CommonExit;
+	}
+
+	//4-.
+	//When we clone we purposefully remove any mount/umount scripts
+	//Here we must add them.
+	//Trouble is that these scripts must allow for failover.
+	//for example if strange firewall rules or IP ranges are used
+	//these scripts will not be portable --even in the same datacenter!
+	if(CreateMountFiles(uContainer,1))
+	{
+		printf("FailoverTo() error8: CreateMountFiles(x,1)\n");
+		tJobErrorUpdate(uJob,"CreateMountFiles(x,1)");
+		goto CommonExit;
+	}
+
+
+	//Everything ok
+	SetContainerStatus(uContainer,uACTIVE);
+	tJobDoneUpdate(uJob);
+
+CommonExit:
+	return;
+}//void FailoverTo()
+
+
+void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
+{
+
+	//1-.
+	sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
+	if(system(gcQuery))
+	{
+		printf("StopContainer() error: %s\n",gcQuery);
+		tJobErrorUpdate(uJob,"vzctl stop failed");
+		goto CommonExit;
+	}
+
+	//Everything ok
+	SetContainerStatus(uContainer,uSTOPPED);
+	tJobDoneUpdate(uJob);
+
+CommonExit:
+	return;
+}//void FailoverFrom()
+
+
+unsigned GetContainerStatus(const unsigned uContainer, unsigned *uStatus)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0) return(1);
+
+	sprintf(gcQuery,"SELECT uStatus FROM tContainer WHERE uContainer=%u",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		return(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",uStatus);
+	}
+	else
+	{
+		mysql_free_result(res);
+		return(3);
+	}
+	mysql_free_result(res);
+	return(0);
+
+}//void GetContainerStatus()
+
+
+unsigned GetContainerMainIP(const unsigned uContainer,char *cIP)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0) return(1);
+
+	sprintf(gcQuery,"SELECT tIP.cLabel FROM tContainer,tIP WHERE tIP.uIP=tContainer.uIPv4 AND"
+				" tContainer.uContainer=%u",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		return(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cIP,"%.31s",field[0]);
+	}
+	else
+	{
+		mysql_free_result(res);
+		return(3);
+	}
+	mysql_free_result(res);
+	return(0);
+
+}//void GetContainerMainIP()
