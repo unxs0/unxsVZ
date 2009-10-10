@@ -65,6 +65,8 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData);
 void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData);
 unsigned GetContainerStatus(const unsigned uContainer,unsigned *uStatus);
 unsigned GetContainerMainIP(const unsigned uContainer,char *cIP);
+unsigned GetContainerSource(const unsigned uContainer, unsigned *uSource);
+unsigned SetContainerIP(const unsigned uContainer,char *cIP);
 
 //extern protos
 void TextConnectDb(void); //main.c
@@ -2399,19 +2401,16 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	unsigned uStatus=0;
 	unsigned uSourceContainer=0;
 	char cIP[32]={""};
-
-	//0-.
-	//We require that the job be correctly setup.
-	//We need the source container IPs
-	sscanf(cJobData,"uSourceContainer=%u;",&uSourceContainer);
-	if(!uSourceContainer)
+	
+	//Get this cloned container source
+	if(GetContainerSource(uContainer,&uSourceContainer))
 	{
-		printf("FailoverTo() error0: No uSourceContainer in cJobData\n");
+		printf("FailoverTo() error1: GetContainerSource()\n");
 		tJobErrorUpdate(uJob,"No uSourceContainer");
 		goto CommonExit;
 	}
 
-	//1-. Get data about container
+	//Get data about container
 	if(GetContainerStatus(uContainer,&uStatus))
 	{
 		printf("FailoverTo() error1: GetContainerStatus()\n");
@@ -2454,8 +2453,8 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 
 	//3-.
-	//We add all the IPs first the main IP
-	if(GetContainerMainIP(uContainer,cIP))
+	//We add (from the source container!) (any other IPs?) first the main IP
+	if(GetContainerMainIP(uSourceContainer,cIP))
 	{
 		printf("FailoverTo() error5: %s\n",cIP);
 		tJobErrorUpdate(uJob,"GetContainerMainIP");
@@ -2474,6 +2473,11 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 		tJobErrorUpdate(uJob,"ipadd cIP");
 		goto CommonExit;
 	}
+	//3b-.
+	//No we can update the db for the new production container
+	//Non fatal so we can get this failover done.
+	if(SetContainerIP(uContainer,cIP))
+		printf("FailoverTo() error7b: SetContainerIP(%u,%s)\n",uContainer,cIP);
 
 	//4-.
 	//When we clone we purposefully remove any mount/umount scripts
@@ -2500,18 +2504,60 @@ CommonExit:
 
 void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 {
+	unsigned uCloneContainer=0;
+	char cIP[32]={""};
+
+	//0-.
+	sscanf(cJobData,"uCloneContainer=%u;",&uCloneContainer);
+	if(!uCloneContainer)
+	{
+		printf("FailoverFrom() error0: no uCloneContainer\n");
+		tJobErrorUpdate(uJob,"no uCloneContainer");
+		goto CommonExit;
+	}
 
 	//1-.
+	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+	if(system(gcQuery))
+	{
+		printf("FailoverFrom() error1: %s\n",gcQuery);
+		tJobErrorUpdate(uJob,"ipdel all");
+		goto CommonExit;
+	}
+
+
+	//2-.
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
 	if(system(gcQuery))
 	{
-		printf("StopContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"vzctl stop failed");
+		printf("FailoverFrom() error2: %s\n",gcQuery);
+		tJobErrorUpdate(uJob,"vzctl stop");
+		goto CommonExit;
+	}
+	SetContainerStatus(uContainer,uSTOPPED);
+
+	//3-.
+	//Change IP over to the one the clone used to have
+	if(GetContainerMainIP(uCloneContainer,cIP))
+	{
+		printf("FailoverFrom() error3: GetContainerMainIP(%u,%s)\n",uCloneContainer,cIP);
+	}
+	else
+	{
+		if(SetContainerIP(uContainer,cIP))
+			printf("FailoverFrom() error3a: SetContainerIP(%u,%s)\n",uContainer,cIP);
+	}
+
+	//4-. Remove any mount/umount files.
+	sprintf(gcQuery,"rm -f /etc/vz/conf/%1$u.umount /etc/vz/conf/%1$u.mount'",uContainer);
+	if(system(gcQuery))
+	{
+		printf("FailoverFrom() error4: %s.\n",gcQuery);
+		tJobErrorUpdate(uJob,"rm mount files");
 		goto CommonExit;
 	}
 
 	//Everything ok
-	SetContainerStatus(uContainer,uSTOPPED);
 	tJobDoneUpdate(uJob);
 
 CommonExit:
@@ -2578,3 +2624,51 @@ unsigned GetContainerMainIP(const unsigned uContainer,char *cIP)
 	return(0);
 
 }//void GetContainerMainIP()
+
+
+unsigned GetContainerSource(const unsigned uContainer, unsigned *uSource)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0) return(1);
+
+	sprintf(gcQuery,"SELECT uSource FROM tContainer WHERE uContainer=%u",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		return(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",uSource);
+	}
+	else
+	{
+		mysql_free_result(res);
+		return(3);
+	}
+	mysql_free_result(res);
+	return(0);
+
+}//void GetContainerSource()
+
+
+unsigned SetContainerIP(const unsigned uContainer,char *cIP)
+{
+	if(uContainer==0) return(1);
+
+	sprintf(gcQuery,"UPDATE tContainer SET uIPv4=(SELECT uIP FROM tIP WHERE cLabel='%s' LIMIT 1) WHERE"
+				" uContainer=%u",cIP,uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		return(2);
+	}
+	return(0);
+
+}//void SetContainerIP()
+
