@@ -1,146 +1,69 @@
-<?php
-require_once('unxsapi.php');
-
-if(!count($_POST))
-{
-	$cMessage="&nbsp;";
-	UI();
-	return;
-}
-$gcFunction=$_POST['gcFunction'];
-$cZone=$_POST['cZone'];
-$cIP=$_POST['cIP'];
-
-ConnectDb();
-
-//Common vars for tJob record
-$uNSSet=1;
-$uMasterJob=0;
-$cTargetServer="unxsbind.unixservice.com MASTER";
-$uPriority=0;
-$cJobData="unxsbind.unixservice.com";
-$uOwner=5;
-$uCreatedBy=6;
-$uTime=time();
-
-if($gcFunction=='Add Zone')
-{
-	NewZone($cZone,$cIP);
-	SubmitJob("New",1,$cZone,$uTime,$uOwner,$uCreatedBy);
-	$cMessage="Zone added OK";
-}
-else if($gcFunction=='Modify Zone')
-{
-	UpdateZone($cZone,$cIP);
-	SubmitJob("Modify",1,$cZone,$uTime,$uOwner,$uCreatedBy);
-	$cMessage="Zone modified OK";
-}
-else if($gcFunction=='Delete Zone')
-{
-	DelZone($cZone);
-	SubmitJob("Delete",1,$cZone,$uTime,$uOwner,$uCreatedBy);
-	$cMessage="Zone deleted OK";
-}
-
-UI();
-//
-//Functions section
-//
-
-
-function NewZone($cZone,$cIP)
-{
-	//This function creates a new zone
-	//And a couple of RRs for it
-	//E.g:
-	//Zone: test.com
-	//@ IN A 192.168.0.123
-	//www IN CNAME test.com.
-	//
-	//Default uNSSet=1. See tNSSet
-	//Default uView=2 (external) See tView
-	$uSerial=SerialNum();
-	//Both uOwner and uCreatedBy refer to the tClient row id. See tClient
-	$uOwner=5;
-	$uCreatedBy=6;
-
-	$gcQuery="INSERT INTO tZone SET cZone='$cZone',uNSSet=1,cHostmaster='support.unixservice.com',"
-		."uSerial='$uSerial',uExpire=604800,uRefresh=28800,uTTL=86400,"
-		."uRetry=7200,uZoneTTL=86400,uMailServers=0,uView=2,uOwner=$uOwner,"
-		."uCreatedBy=$uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
-	mysql_query($gcQuery) or die(mysql_error());
-
-	$uZone=mysql_insert_id();
-	
-	$gcQuery="INSERT INTO tResource SET uZone=$uZone,cName='@',uRRType=1,cParam1='$cIP',".
-		"uOwner=$uOwner,uCreatedBy=$uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
-	mysql_query($gcQuery) or die(mysql_error());
-	
-	$gcQuery="INSERT INTO tResource SET uZone=$uZone,cName='www',uRRType=5,cParam1='$cZone.'".
-		"uOwner=$uOwner,uCreatedBy=$uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
-
-}//function NewZone()
-
-
-function UpdateZone($cZone,$cIP)
-{
-	//This function won't change zone name, but update the zone A record
-	//And increase zone serial number
-	$uModBy=6;
-
-	//Update zone serial number with a very simple mechanism.
-	//Please note that only 9 changes per day allowed
-	$gcQuery="UPDATE tZone SET uSerial=uSerial+1,uModBy=$uModBy,"
-		."uModDate=UNIX_TIMESTAMP(NOW()) WHERE cZone='$cZone' AND uView=2";
-	mysql_query($gcQuery) or die(mysql_error());
-
-	//Update zone A record; uRRType=1. See tRRType
-	$gcQuery="UPDATE tResource SET cParam1='$cIP',uModBy=$uModBy,"
-		."uModDate=UNIX_TIMESTAMP(NOW()) WHERE "
-		."uZone IN (SELECT uZone FROM tZone WHERE cZone='$cZone' AND uView=2) "
-		."AND uRRType=1";
-	mysql_query($gcQuery) or die(mysql_error());
-
-}//function UpdateZone($cZone)
-
-
-function DelZone($cZone)
-{
-	//This function deletes the zone RRs and then the zone record
-	$gcQuery="DELETE FROM tResource WHERE uZone IN "
-		."(SELECT uZone FROM tZone WHERE cZone='$cZone' AND uView=2)";
-	mysql_query($gcQuery) or die(mysql_error());
-
-	$gcQuery="DELETE FROM tZone WHERE cZone='$cZone' AND uView=2";
-	mysql_query($gcQuery) or die(mysql_error());
-
-}//function DelZone($cZone)
-
-
-function ConnectDb()
-{
-        mysql_connect('localhost','idns','wsxedc') or die ('Could not connect:'. mysql_error());
-        mysql_select_db('idns') or die ('Could not select iDNS database:'. mysql_error());
-}//function ConnectDb()
-
-
-function UI()
-{
-	global $cMessage;
-?>
-<html>
-<body>
-<form method=post>
-<? echo $cMessage ?>
-<table>
-<tr><td>Zone name</td></td><td><input type text name=cZone></td></tr>
-<tr><td>IP address</td></td><td><input type text name=cIP></td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td colspan=2><input type=submit name=gcFunction value='Add Zone'> <input type=submit name=gcFunction value='Modify Zone'> <input type=submit name=gcFunction value='Delete Zone'></td></tr>
-</table>
-</form>
-</html>
 <?
-}//function UI()
+/*
+FILE
+	unxsapi.php
+PURPOSE
+	Provide the required PHP functions
+	to interact with the iDNS database
+AUTHOR
+	(C) 2009 Hugo Urquiza for Unixservice
+*/
+
+function SubmitJob($cCommand,$uNSSet,$cZone,$uTime,$uOwner,$uCreatedBy)
+{
+	//This function inserts a new tJob entry per each NS Set member
+	$gcQuery="SELECT tNS.cFQDN,tNSType.cLabel,tServer.cLabel FROM "
+		."tNS,tNSType,tServer WHERE tNSType.uNSType=tNS.uNSType "
+		."AND tServer.uServer=tNS.uServer AND tNS.uNSSet=$uNSSet "
+		."ORDER BY tNS.uNSType";
+	$res=mysql_query($gcQuery) or die(mysql_error());
+
+	while(($field=mysql_fetch_row($res)))
+	{
+		$gcQuery="INSERT INTO tJob SET cJob='$cCommand',cZone='$cZone',"
+			."uNSSet=$uNSSet,cTargetServer='$field[0] $field[1]',"
+			."uTime=$uTime,cJobData='$field[2]',uCreatedBy=$uCreatedBy,"
+			."uOwner=$uOwner,uCreatedDate=UNIX_TIMESTAMP(NOW())";
+		mysql_query($gcQuery) or die(mysql_error());
+
+		$uJob=mysql_insert_id();
+		if($field[1]='MASTER')
+			$uMasterJob=$uJob;
+		if($uMasterJob)
+		{
+			$gcQuery="UPDATE tJob SET uMasterJob=$uMasterJob WHERE uJob=$uJob";
+			mysql_query($gcQuery) or die(mysql_error());
+		}
+	}
+
+}//function SubmitJob($cCommand,$uNSSet,$cZone,$uTime)
+
+function UpdateSerial($uZone)
+{
+	$gcQuery="SELECT uSerial FROM tZone WHERE uZone=$uZone";
+	$res=mysql_query($gcQuery) or die(mysql_error());
+	
+	if(($field=mysql_fetch_row($res)))
+		$uSerial=$field[0];
+	
+	$luYearMonDay=SerialNum();
+
+	//Typical year month day and 99 changes per day max
+	//to stay in correct date format. Will still increment even if>99 changes in one day
+	//but will be stuck until 1 day goes by with no changes.
+	if($uSerial<$luYearMonDay)
+		$gcQuery="UPDATE tZone SET uSerial=$luYearMonDay WHERE uZone=$uZone";
+	else
+		$gcQuery="UPDATE tZone SET uSerial=uSerial+1 WHERE uZone=$uZone";
+
+	mysql_query($gcQuery) or die(mysql_error());
+
+}//function UpdateSerial($uZone)
+
+function SerialNum()
+{
+	return(strftime("%Y%m%d00"));
+
+}//function SerialNum()
 
 ?>
