@@ -68,7 +68,8 @@ void htmlMountTemplateSelect(unsigned uSelector);
 void AddMountProps(unsigned uContainer);
 void CopyContainerProps(unsigned uSource, unsigned uTarget);
 unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
-unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uIPv4);
+unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
+				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource);
 
 
 void htmlGenMountInputs(unsigned const uMountTemplate)
@@ -1253,6 +1254,10 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: Unexpected lack of uDatacenter.");
 				if(!uNode)
 					tContainer("<blink>Error</blink>: Unexpected lack of uNode.");
+				if(!cLabel[0])
+					tContainer("<blink>Error</blink>: Unexpected lack of cLabel.");
+				if(!cHostname[0])
+					tContainer("<blink>Error</blink>: Unexpected lack of cHostname.");
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND"
 						" (uStatus=1 OR uStatus=31 OR uStatus=41)",uSource);
 				mysql_query(&gMysql,gcQuery);
@@ -1271,7 +1276,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					sscanf(ForeignKey("tContainer","uDatacenter",uSource),"%u",&uSourceDatacenter);
 					sscanf(ForeignKey("tContainer","uNode",uSource),"%u",&uSourceNode);
 
-					if(FailoverFromJob(uSourceDatacenter,uSourceNode,uSource,uIPv4))
+					if(FailoverFromJob(uSourceDatacenter,uSourceNode,uSource,uIPv4,
+							cLabel,cHostname,uContainer))
 					{
 						uStatus=uAWAITFAIL;
 						SetContainerStatus(uContainer,uAWAITFAIL);
@@ -1393,7 +1399,11 @@ void ExttContainerButtons(void)
 
                 case 8001:
                         printf("<p><u>Failover</u><br>");
-			printf("Confirm all the information presented for a manual failover to take place");
+			printf("Confirm all the information presented for a manual failover (switchover) to take place."
+				"<p>Jobs will be created for the source and this container. If jobs run successfully,"
+				" everything but the container VEIDs will be switched.<p>This clone (renamed to the"
+				" source names) will be the new production container and the source container will"
+				" be the clone container and kept in sync if possible.");
                         printf("<p><u>Failover Data</u>");
 			if(uSource)
 			{
@@ -1401,8 +1411,8 @@ void ExttContainerButtons(void)
 				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>"
 					"%s</a>",uSource,ForeignKey("tContainer","cLabel",uSource));
 			}
-			printf("<p><input title='Create a clone job for the current container'"
-					" type=submit class=largeButton"
+			printf("<p><input title='Creates manual failover (switchover) jobs for the current container'"
+					" type=submit class=lwarnButton"
 					" name=gcCommand value='Confirm Failover'>\n");
                 break;
 
@@ -1516,8 +1526,8 @@ void ExttContainerButtons(void)
 					" type=submit class=largeButton"
 					" name=gcCommand value='Hostname Change Wizard'><br>\n");
 					if(uSource)
-						printf("<input title='Creates jobs for failover.'"
-						" type=submit class=largeButton"
+						printf("<input title='Creates jobs for manual failover (switchover.)'"
+						" type=submit class=lwarnButton"
 						" name=gcCommand value='Failover %.25s'>\n",cLabel);
 				}
 				else if( uStatus==6 || uStatus==5 || uStatus==41 )
@@ -1539,8 +1549,8 @@ void ExttContainerButtons(void)
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Start %.25s'><br>\n",cLabel);
 					if(uSource)
-						printf("<input title='Creates jobs for failover.'"
-						" type=submit class=largeButton"
+						printf("<input title='Creates jobs for manual failover (switchover.)'"
+						" type=submit class=lwarnButton"
 						" name=gcCommand value='Failover %.25s'>\n",cLabel);
 				}
 
@@ -2821,7 +2831,8 @@ unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 }//unsigned FailoverToJob()
 
 
-unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uIPv4)
+unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
+				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource)
 {
 	unsigned uCount=0;
 
@@ -2834,11 +2845,11 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())"
 			",uJobStatus=1"
-			",cJobData='uIPv4=%u;'"
+			",cJobData='uIPv4=%u;\ncLabel=%s;\ncHostname=%s;\nuSource=%u;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
-				uIPv4,
+				uIPv4,cLabel,cHostname,uSource,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

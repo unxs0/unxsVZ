@@ -35,6 +35,8 @@ TODO
 
 
 //local protos
+unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteNode, unsigned uRemoteContainer);
+void LogError(char *cErrorMsg,unsigned uKey);
 void ProcessJobQueue(void);
 void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		unsigned uContainer,char *cJobName,char *cJobData);
@@ -69,6 +71,10 @@ unsigned GetContainerSource(const unsigned uContainer, unsigned *uSource);
 unsigned SetContainerIP(const unsigned uContainer,char *cIP);
 unsigned SetContainerSource(const unsigned uContainer,const unsigned uSource);
 void GetIPFromtIP(const unsigned uIPv4,char *cIP);
+unsigned SetContainerHostname(const unsigned uContainer,
+			const char *cHostname,const char *cLabel);
+unsigned GetContainerNames(const unsigned uContainer,char *cHostname,char *cLabel);
+unsigned GetContainerNodeStatus(const unsigned uContainer, unsigned *uStatus);
 
 //extern protos
 void TextConnectDb(void); //main.c
@@ -90,7 +96,6 @@ static unsigned guDatacenter=0;
 //each known cJobName.
 static char cHostname[100]={""};//file scope
 
-unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteNode, unsigned uRemoteContainer);
 unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteNode, unsigned uRemoteContainer)
 {
         MYSQL_RES *res;
@@ -185,7 +190,6 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 }//void ProcessCloneSyncJob()
 
 
-void LogError(char *cErrorMsg,unsigned uKey);
 void LogError(char *cErrorMsg,unsigned uKey)
 {
 	sprintf(gcQuery,"INSERT INTO tLog SET"
@@ -305,7 +309,7 @@ void ProcessJobQueue(void)
 	//Main loop normal jobs
 	sprintf(gcQuery,"SELECT uJob,uContainer,cJobName,cJobData FROM tJob WHERE uJobStatus=1"
 				" AND uDatacenter=%u AND uNode=%u"
-				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) LIMIT 100",
+				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) ORDER BY uJob LIMIT 100",
 						uDatacenter,uNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -2400,27 +2404,45 @@ CommonExit:
 
 void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 {
-	unsigned uStatus=0;
+	//Notes
+	//Initial rollback has no error checking, just best effort.
+
+	unsigned uRetVal=0;
+	unsigned uStatus=0;//Real vzlist status
 	unsigned uSourceContainer=0;
 	char cIP[32]={""};
+	char cLabel[32]={""};
+	char cHostname[64]={""};
+	//For rollback
+	char cOrigIP[32]={""};
+	char cOrigLabel[32]={""};
+	char cOrigHostname[64]={""};
 	
 	//Get this cloned container source
 	if(GetContainerSource(uContainer,&uSourceContainer))
 	{
-		printf("FailoverTo() error1: GetContainerSource()\n");
+		printf("FailoverTo() error: GetContainerSource()\n");
 		tJobErrorUpdate(uJob,"No uSourceContainer");
-		goto CommonExit;
+		return;
 	}
 	//Now we quickly unset to avoid failed clon sync jobs
 	if(SetContainerSource(uContainer,0))
-		printf("FailoverTo() error: SetContainerSource(%u,0)\n",uContainer);
-
-	//Get data about container
-	if(GetContainerStatus(uContainer,&uStatus))
 	{
-		printf("FailoverTo() error1: GetContainerStatus()\n");
-		tJobErrorUpdate(uJob,"No uStatus");
-		goto CommonExit;
+		printf("FailoverTo() error: SetContainerSource(%u,0)\n",uContainer);
+		tJobErrorUpdate(uJob,"SetContainerSource");
+		return;
+	}
+	//Get data about container
+	if(GetContainerNodeStatus(uContainer,&uStatus))
+	{
+		printf("FailoverTo() error: GetContainerStatus(%u,&uStatus) returned %u\n",
+				uContainer,uStatus);
+		tJobErrorUpdate(uJob,"GetContainerNodeStatus");
+
+		//rollback
+		SetContainerSource(uContainer,uSourceContainer);
+		//level 1
+		return;
 	}
 
 	//1-.
@@ -2429,24 +2451,26 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//we do not consider that start error to be fatal for now.
 	if(uStatus==uSTOPPED)	
 	{
-		unsigned uReturn=0;
-
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u ",uContainer);
-		if((uReturn=system(gcQuery)))
+		if((uRetVal=system(gcQuery)))
 		{
-			if(uReturn==32)
+			if(uRetVal==32)//32 is vzctl already running
 			{
-				printf("FailoverTo() error3a: %s\n",gcQuery);
+				printf("FailoverTo() error: %s\n",gcQuery);
 			}
 			else
 			{
-				printf("FailoverTo() error3b: %s\n",gcQuery);
+				printf("FailoverTo() error: %s\n",gcQuery);
 				tJobErrorUpdate(uJob,"start error");
-				goto CommonExit;
+
+				//rollback
+				SetContainerSource(uContainer,uSourceContainer);
+				//level 1
+				return;
 			}
 		}
-		SetContainerStatus(uContainer,uACTIVE);
 	}
+	SetContainerStatus(uContainer,uACTIVE);//rollback item
 
 	//2-.
 	//We remove all the previous IPs.
@@ -2455,36 +2479,198 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	{
 		printf("FailoverTo() error4: %s\n",gcQuery);
 		tJobErrorUpdate(uJob,"ipdel all");
-		goto CommonExit;
+
+		//rollback
+		SetContainerSource(uContainer,uSourceContainer);
+		//level 1
+		if(uStatus==uSTOPPED)	
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
+			system(gcQuery);
+		}
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		//level 2
+		return;
 	}
 
 	//3-.
 	//We add (from the source container!) (any other IPs?) first the main IP
-	if(GetContainerMainIP(uSourceContainer,cIP))
+	GetContainerMainIP(uContainer,cOrigIP);//rollback required
+	if((uRetVal=GetContainerMainIP(uSourceContainer,cIP)))
 	{
-		printf("FailoverTo() error5: %s\n",cIP);
+		printf("FailoverTo() GetContainerMainIP(%u,%s) %u\n",
+			uSourceContainer,cIP,uRetVal);
 		tJobErrorUpdate(uJob,"GetContainerMainIP");
-		goto CommonExit;
+
+		//rollback
+		SetContainerSource(uContainer,uSourceContainer);
+		//level 1
+		if(uStatus==uSTOPPED)	
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
+			system(gcQuery);
+		}
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		//level 2
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+		system(gcQuery);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 3
+		return;
 	}
 	if(uNotValidSystemCallArg(cIP))
 	{
 		printf("FailoverTo() error6: security error for %s\n",cIP);
 		tJobErrorUpdate(uJob,"cIP security");
-		goto CommonExit;
+
+		//rollback
+		SetContainerSource(uContainer,uSourceContainer);
+		//level 1
+		if(uStatus==uSTOPPED)	
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
+			system(gcQuery);
+		}
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		//level 2
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+		system(gcQuery);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 3
 	}
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cIP);
 	if(system(gcQuery))
 	{
 		printf("FailoverTo() error7: %s\n",gcQuery);
 		tJobErrorUpdate(uJob,"ipadd cIP");
-		goto CommonExit;
+
+		//rollback
+		SetContainerSource(uContainer,uSourceContainer);
+		//level 1
+		if(uStatus==uSTOPPED)	
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
+			system(gcQuery);
+		}
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		//level 2
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+		system(gcQuery);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 3
 	}
 	//3b-.
 	//No we can update the db for the new production container
-	//Non fatal so we can get this failover done.
 	if(SetContainerIP(uContainer,cIP))
-		printf("FailoverTo() error7b: SetContainerIP(%u,%s)\n",uContainer,cIP);
+	{
+		printf("FailoverTo() error: SetContainerIP(%u,%s)\n",uContainer,cIP);
+		tJobErrorUpdate(uJob,"SetContainerIP");
 
+		//rollback
+		SetContainerSource(uContainer,uSourceContainer);
+		//level 1
+		if(uStatus==uSTOPPED)	
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
+			system(gcQuery);
+			SetContainerStatus(uContainer,uAWAITFAIL);
+		}
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		//level 2
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+		system(gcQuery);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 3
+	}
+	//3c-.
+	//Change the names to the source ones
+	if(GetContainerNames(uSourceContainer,cHostname,cLabel))
+	{
+		printf("FailoverTo() error: GetContainerNames(%u,%s,%s)\n",
+				uSourceContainer,cHostname,cLabel);
+		tJobErrorUpdate(uJob,"GetContainerNames");
+
+		//rollback
+		SetContainerSource(uContainer,uSourceContainer);
+		//level 1
+		if(uStatus==uSTOPPED)	
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
+			system(gcQuery);
+		}
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		//level 2
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+		system(gcQuery);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 3
+		SetContainerIP(uContainer,cOrigIP);
+		//level 4
+		return;
+	}
+	//This is needed until the sister job runs, due to unique index on cLabel,uDatacenter
+	char cVEIDLabel[32];
+	sprintf(cVEIDLabel,"%.28s.fo",cLabel);
+	if(SetContainerHostname(uSourceContainer,cHostname,cVEIDLabel) || 
+		SetContainerHostname(uContainer,cHostname,cLabel))
+	{
+		printf("FailoverTo() error: SetContainerHostname(%u,%s,%s)\n",
+							uContainer,cHostname,cLabel);
+		tJobErrorUpdate(uJob,"SetContainerHostname");
+
+		//rollback
+		SetContainerSource(uContainer,uSourceContainer);
+		//level 1
+		if(uStatus==uSTOPPED)	
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
+			system(gcQuery);
+		}
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		//level 2
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+		system(gcQuery);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 3
+		SetContainerIP(uContainer,cOrigIP);
+		//level 4
+		return;
+	}
+	else
+	{
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --hostname %s --name %s --save",
+				uContainer,cHostname,cLabel);
+		if(system(gcQuery))
+		{
+			printf("FailoverTo() error: %s\n",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl set hostname");
+
+			//rollback
+			SetContainerSource(uContainer,uSourceContainer);
+			//level 1
+			if(uStatus==uSTOPPED)	
+			{
+				sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
+				system(gcQuery);
+			}
+			SetContainerStatus(uContainer,uAWAITFAIL);
+			//level 2
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+			system(gcQuery);
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+			system(gcQuery);
+			//level 3
+			SetContainerIP(uContainer,cOrigIP);
+			//level 4
+			return;
+		}
+	}
 
 	//4-.
 	//When we clone we purposefully remove any mount/umount scripts
@@ -2496,41 +2682,122 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	{
 		printf("FailoverTo() error8: CreateMountFiles(x,1)\n");
 		tJobErrorUpdate(uJob,"CreateMountFiles(x,1)");
-		goto CommonExit;
+
+		//rollback
+		SetContainerSource(uContainer,uSourceContainer);
+		//level 1
+		if(uStatus==uSTOPPED)	
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
+			system(gcQuery);
+		}
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		//level 2
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+		system(gcQuery);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 3
+		SetContainerIP(uContainer,cOrigIP);
+		//level 4
+		GetContainerNames(uContainer,cOrigHostname,cOrigLabel);
+		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
+		//level 5
+		return;
 	}
 
 
 	//Everything ok
 	tJobDoneUpdate(uJob);
 
-CommonExit:
-	return;
 }//void FailoverTo()
 
 
 void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 {
+	//These are the clone container's
+	unsigned uSource=0;
 	unsigned uIPv4=0;
 	char cIP[32]={""};
+	char cLabel[32]={""};
+	char cHostname[64]={""};
+	char *cp,*cp2;
+	//For rollback
+	char cOrigIP[32]={""};
+	char cOrigLabel[32]={""};
+	char cOrigHostname[64]={""};
 
-	//Does this job must have to run AFTER FailoverTo()?
+	//Does this job must run AFTER FailoverTo()?
 
 	//0-. uCloneContainer not used yet.
-	sscanf(cJobData,"uIPv4=%u;",&uIPv4);
+	if((cp=strstr(cJobData,"uIPv4=")))
+	{
+		sscanf(cp+6,"%u",&uIPv4);
+	}
 	if(!uIPv4)
 	{
-		printf("FailoverFrom() error0: no uIPv4\n");
+		printf("FailoverFrom() error: no uIPv4\n");
 		tJobErrorUpdate(uJob,"no uIPv4");
-		goto CommonExit;
+		return;
 	}
 
+	if((cp=strstr(cJobData,"cLabel=")))
+	{
+		if((cp2=strchr(cp+7,';')))
+		{
+			*cp2=0;
+			sprintf(cLabel,"%.31s",cp+7);
+			*cp2=';';
+		}
+		
+	}
+	if(!cLabel[0])
+	{
+		printf("FailoverFrom() error: no cLabel\n");
+		tJobErrorUpdate(uJob,"no cLabel");
+		return;
+	}
+
+	if((cp=strstr(cJobData,"cHostname=")))
+	{
+		if((cp2=strchr(cp+10,';')))
+		{
+			*cp2=0;
+			sprintf(cHostname,"%.63s",cp+10);
+			*cp2=';';
+		}
+		
+	}
+	if(!cHostname[0])
+	{
+		printf("FailoverFrom() error: no cHostname\n");
+		tJobErrorUpdate(uJob,"no cHostname");
+		return;
+	}
+
+	if((cp=strstr(cJobData,"uSource=")))
+	{
+		sscanf(cp+8,"%u",&uSource);
+	}
+	if(!uSource)
+	{
+		printf("FailoverFrom() error: no uSource\n");
+		tJobErrorUpdate(uJob,"no uSource");
+		return;
+	}
+
+	//debug only
+	//printf("FailoverFrom() cJobData: uIPv4=%u cLabel=%s cHostname=%s uSource=%u\n",
+	//			uIPv4,cLabel,cHostname,uSource);
+
 	//1-.
+	GetContainerMainIP(uContainer,cOrigIP);//rollback required
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
 	if(system(gcQuery))
 	{
 		printf("FailoverFrom() error1: %s\n",gcQuery);
 		tJobErrorUpdate(uJob,"ipdel all");
-		goto CommonExit;
+		return;
 	}
 
 
@@ -2540,46 +2807,160 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	{
 		printf("FailoverFrom() error2: %s\n",gcQuery);
 		tJobErrorUpdate(uJob,"vzctl stop");
-		goto CommonExit;
+
+		//rollback
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 1
+		return;
 	}
 	SetContainerStatus(uContainer,uSTOPPED);
 
+	//Everything ok as far as failover goes, now we do housekeeping.
+
 	//3-.
+	//Change the names to the cloned ones
+	GetContainerNames(uContainer,cOrigHostname,cOrigLabel);
+	if(SetContainerHostname(uContainer,cHostname,cLabel))
+	{
+		printf("FailoverFrom() error: SetContainerHostname(%u,%s,%s)\n",
+							uContainer,cHostname,cLabel);
+		tJobErrorUpdate(uJob,"SetContainerHostname");
+
+		//rollback
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 1
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+		system(gcQuery);
+		//level 2
+		return;
+	}
+	else
+	{
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --hostname %s --name %s --save",
+				uContainer,cHostname,cLabel);
+		if(system(gcQuery))
+		{
+			printf("FailoverFrom() error: %s\n",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl set hostname");
+
+			//rollback
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+			system(gcQuery);
+			//level 1
+			SetContainerStatus(uContainer,uAWAITFAIL);
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+			system(gcQuery);
+			//level 2
+			SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
+			//level 3
+			return;
+		}
+	}
+
+
+	//4-.
 	//Change IP over to the one the clone used to have
 	GetIPFromtIP(uIPv4,cIP);
 	if(SetContainerIP(uContainer,cIP))
 	{
-		printf("FailoverFrom() error3a: SetContainerIP(%u,%s)\n",uContainer,cIP);
+		printf("FailoverFrom() error: SetContainerIP(%u,%s)\n",uContainer,cIP);
+		tJobErrorUpdate(uJob,"SetContainerIP");
+
+		//rollback
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 1
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+		system(gcQuery);
+		//level 2
+		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
+		//level 3
+		return;
 	}
 	else
 	{
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cIP);
 		if(system(gcQuery))
 		{
-			printf("FailoverFrom() error3b: %s\n",gcQuery);
+			printf("FailoverFrom() error: %s\n",gcQuery);
 			tJobErrorUpdate(uJob,"ipadd");
-			goto CommonExit;
+
+			//rollback
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+			system(gcQuery);
+			//level 1
+			SetContainerStatus(uContainer,uAWAITFAIL);
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+			system(gcQuery);
+			//level 2
+			SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
+			//level 3
+			SetContainerIP(uContainer,cOrigIP);
+			//level 4
+			return;
+
 		}
 	}
 
 
-	//4-. Remove any mount/umount files.
+	//5-. Remove any mount/umount files.
 	sprintf(gcQuery,"rm -f /etc/vz/conf/%1$u.umount /etc/vz/conf/%1$u.mount",uContainer);
 	if(system(gcQuery))
 	{
-		printf("FailoverFrom() error4: %s.\n",gcQuery);
+		printf("FailoverFrom() error: %s.\n",gcQuery);
 		tJobErrorUpdate(uJob,"rm mount files");
-		goto CommonExit;
+
+		//rollback
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+		system(gcQuery);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 1
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+		system(gcQuery);
+		//level 2
+		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
+		//level 3
+		SetContainerIP(uContainer,cOrigIP);
+		//level 4
+		//level 5 see expanded level 1
+		return;
 	}
 
-	//We do not make this container a clone of the failover'ed container
-	//at least not until we have more options in place.
+	//We do not make this container a clone of the failover'ed container yet
+	//We need to insure that the new production container is working correctly first.
+	//We will do it anyway for testing purposes only.
+	if(SetContainerSource(uContainer,uSource))
+	{
+		printf("FailoverTo() error: SetContainerSource(%u,%u)\n",uContainer,uSource);
+		tJobErrorUpdate(uJob,"SetContainerSource");
+
+		//rollback
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
+		system(gcQuery);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+		system(gcQuery);
+		//level 1
+		SetContainerStatus(uContainer,uAWAITFAIL);
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+		system(gcQuery);
+		//level 2
+		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
+		//level 3
+		SetContainerIP(uContainer,cOrigIP);
+		//level 4
+		//level 5 see expanded level 1
+		return;
+	}
 
 	//Everything ok
 	tJobDoneUpdate(uJob);
 
-CommonExit:
-	return;
 }//void FailoverFrom()
 
 
@@ -2601,11 +2982,12 @@ unsigned GetContainerStatus(const unsigned uContainer, unsigned *uStatus)
 	if((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",uStatus);
+		if(!uStatus) return(3);
 	}
 	else
 	{
 		mysql_free_result(res);
-		return(3);
+		return(4);
 	}
 	mysql_free_result(res);
 	return(0);
@@ -2632,11 +3014,12 @@ unsigned GetContainerMainIP(const unsigned uContainer,char *cIP)
 	if((field=mysql_fetch_row(res)))
 	{
 		sprintf(cIP,"%.31s",field[0]);
+		if(!cIP[0]) return(3);
 	}
 	else
 	{
 		mysql_free_result(res);
-		return(3);
+		return(4);
 	}
 	mysql_free_result(res);
 	return(0);
@@ -2662,11 +3045,12 @@ unsigned GetContainerSource(const unsigned uContainer, unsigned *uSource)
 	if((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",uSource);
+		if(!uSource) return(3);
 	}
 	else
 	{
 		mysql_free_result(res);
-		return(3);
+		return(4);
 	}
 	mysql_free_result(res);
 	return(0);
@@ -2730,3 +3114,79 @@ void GetIPFromtIP(const unsigned uIPv4,char *cIP)
 	mysql_free_result(res);
 
 }//void GetIPFromtIP(const unsigned uIPv4,char *cIP)
+
+
+unsigned SetContainerHostname(const unsigned uContainer,
+			const char *cHostname,const char *cLabel)
+{
+	if(uContainer==0) return(1);
+
+	sprintf(gcQuery,"UPDATE tContainer SET cHostname='%s',cLabel='%s' WHERE uContainer=%u",
+		cHostname,cLabel,uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		return(2);
+	}
+	return(0);
+
+}//void SetContainerHostname()
+
+
+unsigned GetContainerNames(const unsigned uContainer,char *cHostname,char *cLabel)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0) return(1);
+
+	sprintf(gcQuery,"SELECT cLabel,cHostname FROM tContainer WHERE uContainer=%u",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cLabel,"%.31s",field[0]);
+		sprintf(cHostname,"%.63s",field[1]);
+		if(!cLabel[0]) return(2);
+		if(!cHostname[0]) return(3);
+	}
+	else
+	{
+		mysql_free_result(res);
+		return(4);
+	}
+	mysql_free_result(res);
+
+	return(0);
+
+}//unsigned GetContainerNames()
+
+
+unsigned GetContainerNodeStatus(const unsigned uContainer, unsigned *uStatus)
+{
+	//Notes
+	//This is the real running or stopped status on the node this runs on
+	//for the given container.
+
+	//first check
+	sprintf(gcQuery,"/usr/sbin/vzlist --no-header %u > /dev/null 2>&1",uContainer);
+	if(system(gcQuery))
+		return(1);
+
+	//now get status
+	sprintf(gcQuery,"/usr/sbin/vzlist --no-header %u | /bin/grep running > /dev/null 2>&1",
+										uContainer);
+	if(system(gcQuery))
+		*uStatus=uSTOPPED;
+	else
+		*uStatus=uACTIVE;
+
+	return(0);
+
+}//void GetContainerNodeStatus()
+
