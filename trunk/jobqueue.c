@@ -2442,7 +2442,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 		//rollback
 		SetContainerSource(uContainer,uSourceContainer);
-		//level 1
+		//level 1 done
 		return;
 	}
 
@@ -2466,7 +2466,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 				//rollback
 				SetContainerSource(uContainer,uSourceContainer);
-				//level 1
+				//level 1 done
 				return;
 			}
 		}
@@ -2483,14 +2483,14 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 		//rollback
 		SetContainerSource(uContainer,uSourceContainer);
-		//level 1
+		//level 1 done
 		if(uStatus==uSTOPPED)	
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
 			system(gcQuery);
 		}
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		//level 2
+		//level 2 done
 		return;
 	}
 
@@ -2505,19 +2505,19 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 		//rollback
 		SetContainerSource(uContainer,uSourceContainer);
-		//level 1
+		//level 1 done
 		if(uStatus==uSTOPPED)	
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
 			system(gcQuery);
 		}
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		//level 2
+		//level 2 done
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
 		system(gcQuery);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 3
+		//level 3 done
 		return;
 	}
 	if(uNotValidSystemCallArg(cIP))
@@ -2527,19 +2527,19 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 		//rollback
 		SetContainerSource(uContainer,uSourceContainer);
-		//level 1
+		//level 1 done
 		if(uStatus==uSTOPPED)	
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
 			system(gcQuery);
 		}
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		//level 2
+		//level 2 done
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
 		system(gcQuery);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 3
+		//level 3 done
 	}
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cIP);
 	if(system(gcQuery))
@@ -2549,19 +2549,19 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 		//rollback
 		SetContainerSource(uContainer,uSourceContainer);
-		//level 1
+		//level 1 done
 		if(uStatus==uSTOPPED)	
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
 			system(gcQuery);
 		}
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		//level 2
+		//level 2 done
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
 		system(gcQuery);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 3
+		//level 3 done
 	}
 	//3b-.
 	//No we can update the db for the new production container
@@ -2572,7 +2572,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 		//rollback
 		SetContainerSource(uContainer,uSourceContainer);
-		//level 1
+		//level 1 done
 		if(uStatus==uSTOPPED)	
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
@@ -2580,12 +2580,12 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 			SetContainerStatus(uContainer,uAWAITFAIL);
 		}
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		//level 2
+		//level 2 done
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
 		system(gcQuery);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 3
+		//level 3 done
 	}
 	//3c-.
 	//Change the names to the source ones
@@ -2597,21 +2597,21 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 		//rollback
 		SetContainerSource(uContainer,uSourceContainer);
-		//level 1
+		//level 1 done
 		if(uStatus==uSTOPPED)	
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
 			system(gcQuery);
 		}
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		//level 2
+		//level 2 done
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
 		system(gcQuery);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 3
+		//level 3 done
 		SetContainerIP(uContainer,cOrigIP);
-		//level 4
+		//level 4 done
 		return;
 	}
 	//This is needed until the sister job runs, due to unique index on cLabel,uDatacenter
@@ -2626,21 +2626,21 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 		//rollback
 		SetContainerSource(uContainer,uSourceContainer);
-		//level 1
+		//level 1 done
 		if(uStatus==uSTOPPED)	
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
 			system(gcQuery);
 		}
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		//level 2
+		//level 2 done
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
 		system(gcQuery);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 3
+		//level 3 done
 		SetContainerIP(uContainer,cOrigIP);
-		//level 4
+		//level 4 done
 		return;
 	}
 	else
@@ -2654,21 +2654,21 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 			//rollback
 			SetContainerSource(uContainer,uSourceContainer);
-			//level 1
+			//level 1 done
 			if(uStatus==uSTOPPED)	
 			{
 				sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
 				system(gcQuery);
 			}
 			SetContainerStatus(uContainer,uAWAITFAIL);
-			//level 2
+			//level 2 done
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
 			system(gcQuery);
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 			system(gcQuery);
-			//level 3
+			//level 3 done
 			SetContainerIP(uContainer,cOrigIP);
-			//level 4
+			//level 4 done
 			return;
 		}
 	}
@@ -2686,24 +2686,24 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 		//rollback
 		SetContainerSource(uContainer,uSourceContainer);
-		//level 1
+		//level 1 done
 		if(uStatus==uSTOPPED)	
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u ",uContainer);
 			system(gcQuery);
 		}
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		//level 2
+		//level 2 done
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
 		system(gcQuery);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 3
+		//level 3 done
 		SetContainerIP(uContainer,cOrigIP);
-		//level 4
+		//level 4 done
 		GetContainerNames(uContainer,cOrigHostname,cOrigLabel);
 		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
-		//level 5
+		//level 5 done
 		return;
 	}
 
@@ -2812,7 +2812,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		//rollback
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 1
+		//level 1 done
 		return;
 	}
 	SetContainerStatus(uContainer,uSTOPPED);
@@ -2831,11 +2831,11 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		//rollback
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 1
+		//level 1 done
 		SetContainerStatus(uContainer,uAWAITFAIL);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 		system(gcQuery);
-		//level 2
+		//level 2 done
 		return;
 	}
 	else
@@ -2850,13 +2850,13 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 			//rollback
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 			system(gcQuery);
-			//level 1
+			//level 1 done
 			SetContainerStatus(uContainer,uAWAITFAIL);
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 			system(gcQuery);
-			//level 2
+			//level 2 done
 			SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
-			//level 3
+			//level 3 done
 			return;
 		}
 	}
@@ -2873,13 +2873,13 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		//rollback
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 1
+		//level 1 done
 		SetContainerStatus(uContainer,uAWAITFAIL);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 		system(gcQuery);
-		//level 2
+		//level 2 done
 		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
-		//level 3
+		//level 3 done
 		return;
 	}
 	else
@@ -2893,15 +2893,15 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 			//rollback
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 			system(gcQuery);
-			//level 1
+			//level 1 done
 			SetContainerStatus(uContainer,uAWAITFAIL);
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 			system(gcQuery);
-			//level 2
+			//level 2 done
 			SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
-			//level 3
+			//level 3 done
 			SetContainerIP(uContainer,cOrigIP);
-			//level 4
+			//level 4 done
 			return;
 
 		}
@@ -2920,16 +2920,16 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		system(gcQuery);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 1
+		//level 1 done
 		SetContainerStatus(uContainer,uAWAITFAIL);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 		system(gcQuery);
-		//level 2
+		//level 2 done
 		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
-		//level 3
+		//level 3 done
 		SetContainerIP(uContainer,cOrigIP);
-		//level 4
-		//level 5 see expanded level 1
+		//level 4 done
+		//level 5 done see expanded level 1 done
 		return;
 	}
 
@@ -2947,16 +2947,16 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		system(gcQuery);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
 		system(gcQuery);
-		//level 1
+		//level 1 done
 		SetContainerStatus(uContainer,uAWAITFAIL);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 		system(gcQuery);
-		//level 2
+		//level 2 done
 		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
-		//level 3
+		//level 3 done
 		SetContainerIP(uContainer,cOrigIP);
-		//level 4
-		//level 5 see expanded level 1
+		//level 4 done
+		//level 5 done see expanded level 1
 		return;
 	}
 	//To play it safe for now we remove any cuSyncPeriod property.
@@ -3219,6 +3219,7 @@ unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyNam
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
+			mysql_free_result(res);
 			printf("3: %s\n",mysql_error(&gMysql));
 			return(3);
 		}
@@ -3232,6 +3233,7 @@ unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyNam
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
+			mysql_free_result(res);
 			printf("4: %s\n",mysql_error(&gMysql));
 			return(4);
 		}
