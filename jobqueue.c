@@ -75,6 +75,7 @@ unsigned SetContainerHostname(const unsigned uContainer,
 			const char *cHostname,const char *cLabel);
 unsigned GetContainerNames(const unsigned uContainer,char *cHostname,char *cLabel);
 unsigned GetContainerNodeStatus(const unsigned uContainer, unsigned *uStatus);
+unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 
 //extern protos
 void TextConnectDb(void); //main.c
@@ -2932,9 +2933,10 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		return;
 	}
 
-	//We do not make this container a clone of the failover'ed container yet
-	//We need to insure that the new production container is working correctly first.
-	//We will do it anyway for testing purposes only.
+	//This is relatively safe since a cuSyncPeriod non 0 has to exist for this container.
+	//The issues identified so far are:
+	//A-. What if the new production container does not work and the old source has
+	//	important data that could fix this problem quickly?
 	if(SetContainerSource(uContainer,uSource))
 	{
 		printf("FailoverTo() error: SetContainerSource(%u,%u)\n",uContainer,uSource);
@@ -2957,6 +2959,8 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		//level 5 see expanded level 1
 		return;
 	}
+	//To play it safe for now we remove any cuSyncPeriod property.
+	SetContainerProperty(uContainer,"cuSyncPeriod","0");
 
 	//Everything ok
 	tJobDoneUpdate(uJob);
@@ -3189,4 +3193,53 @@ unsigned GetContainerNodeStatus(const unsigned uContainer, unsigned *uStatus)
 	return(0);
 
 }//void GetContainerNodeStatus()
+
+
+unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0 || cPropertyName[0]==0 || cPropertyValue[0]==0)
+		return(1);
+
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND cName='%s'",
+					uContainer,cPropertyName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("2: %s\n",mysql_error(&gMysql));
+		return(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%s",
+					cPropertyValue,field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("3: %s\n",mysql_error(&gMysql));
+			return(3);
+		}
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET cName='%s',cValue='%s',uType=3,uKey=%u,"
+				"uOwner=(SELECT uOwner FROM tContainer WHERE uContainer=%u),"
+				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cPropertyName,cPropertyValue,uContainer,uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("4: %s\n",mysql_error(&gMysql));
+			return(4);
+		}
+	}
+	mysql_free_result(res);
+
+	return(0);
+
+}//void SetContainerProperty()
+
 
