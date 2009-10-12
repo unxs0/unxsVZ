@@ -40,7 +40,30 @@ function SubmitJob($cCommand,$uNSSet,$cZone,$uTime,$uOwner,$uCreatedBy)
 
 function UpdateSerial($uZone)
 {
+	$gcQuery="SELECT uSerial FROM tZone WHERE uZone=$uZone";
+	$res=mysql_query($gcQuery) or die(mysql_error());
+	
+	if(($field=mysql_fetch_row($res)))
+		$uSerial=$field[0];
+	
+	$luYearMonDay=SerialNum();
+
+	//Typical year month day and 99 changes per day max
+	//to stay in correct date format. Will still increment even if>99 changes in one day
+	//but will be stuck until 1 day goes by with no changes.
+	if($uSerial<$luYearMonDay)
+		$gcQuery="UPDATE tZone SET uSerial=$luYearMonDay WHERE uZone=$uZone";
+	else
+		$gcQuery="UPDATE tZone SET uSerial=uSerial+1 WHERE uZone=$uZone";
+
+	mysql_query($gcQuery) or die(mysql_error());
+
 }//function UpdateSerial($uZone)
 
+function SerialNum()
+{
+	return(strftime("%Y%m%d00"));
+
+}//function SerialNum()
 
 ?>
