@@ -26,19 +26,19 @@ $uTime=time();
 if($gcFunction=='Add Zone')
 {
 	NewZone($cZone,$cIP);
-	SubmitJob("New",1,$cZone,$uTime,$uOwner,$uCreatedBy)
+	SubmitJob("New",1,$cZone,$uTime,$uOwner,$uCreatedBy);
 	$cMessage="Zone added OK";
 }
 else if($gcFunction=='Modify Zone')
 {
 	UpdateZone($cZone,$cIP);
-	SubmitJob("Modify",1,$cZone,$uTime,$uOwner,$uCreatedBy)
+	SubmitJob("Modify",1,$cZone,$uTime,$uOwner,$uCreatedBy);
 	$cMessage="Zone modified OK";
 }
 else if($gcFunction=='Delete Zone')
 {
 	DelZone($cZone);
-	SubmitJob("Delete",1,$cZone,$uTime,$uOwner,$uCreatedBy)
+	SubmitJob("Delete",1,$cZone,$uTime,$uOwner,$uCreatedBy);
 	$cMessage="Zone deleted OK";
 }
 
@@ -47,10 +47,6 @@ UI();
 //Functions section
 //
 
-function SerialNum()
-{
-	return(strftime("%Y%m%d00"));
-}
 
 function NewZone($cZone,$cIP)
 {
@@ -127,32 +123,6 @@ function ConnectDb()
         mysql_select_db('idns') or die ('Could not select iDNS database:'. mysql_error());
 }//function ConnectDb()
 
-function Insert_tJob()
-{
-        global $uMasterJob;
-        global $cJob;
-        global $cZone;
-        global $uNSSet;
-        global $cTargetServer;
-        global $uPriority;
-        global $uTime;
-        global $cJobData;
-        global $uOwner;
-        global $uCreatedBy;
-
-        //insert query
-
-        $gcQuery="INSERT INTO tJob SET uMasterJob=$uMasterJob,cJob='$cJob',".
-		"cZone='$cZone',uNSSet=$uNSSet,cTargetServer='$cTargetServer',".
-		"uPriority=$uPriority,uTime=$uTime,cJobData='$cJobData',uOwner=$uOwner,"
-		."uCreatedBy=$uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
-        mysql_query($gcQuery) or die(mysql_error()."<br>".$gcQuery);
-
-	$uJob=mysql_insert_id();
-	$gcQuery="UPDATE tJob SET uMasterJob=$uJob WHERE uJob=$uJob";
-	mysql_query($gcQuery) or die(mysql_error());
-
-}//function Insert_tJob()
 
 function UI()
 {
