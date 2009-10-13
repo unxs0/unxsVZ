@@ -1403,7 +1403,8 @@ void ExttContainerButtons(void)
 				"<p>Jobs will be created for the source and this container. If jobs run successfully,"
 				" everything but the container VEIDs will be switched.<p>This clone (renamed to the"
 				" source names) will be the new production container and the source container will"
-				" be the clone container and kept in sync if possible.");
+				" be the clone container and kept in sync if cuSyncPeriod is changed to a non 0 value."
+				" This should only be done after confirmation that switchover container works fine.");
                         printf("<p><u>Failover Data</u>");
 			if(uSource)
 			{
