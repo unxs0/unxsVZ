@@ -13,33 +13,30 @@ $cIP=$_POST['cIP'];
 
 ConnectDb();
 
-//Common vars for tJob record
-$uNSSet=1;
-$uMasterJob=0;
-$cTargetServer="unxsbind.unixservice.com MASTER";
-$uPriority=0;
-$cJobData="unxsbind.unixservice.com";
-$uOwner=5;
-$uCreatedBy=6;
-$uTime=time();
-
+$Zone=new unxsBindZone();
+$Zone->uOwner=5;
+$Zone->uCreatedBy=6;
+$Zone->cZone=$cZone;
 if($gcFunction=='Add Zone')
 {
-	NewZone($cZone,$cIP);
-	SubmitJob("New",1,$cZone,$uTime,$uOwner,$uCreatedBy);
-	$cMessage="Zone added OK";
+	$Zone->Create();
+	$cMessage=$Zone->cErrMsg;
+	if($cMesage=='')
+		$cMessage="Zone added OK";
 }
-else if($gcFunction=='Modify Zone')
+/*else if($gcFunction=='Modify Zone')
 {
 	UpdateZone($cZone,$cIP);
 	SubmitJob("Modify",1,$cZone,$uTime,$uOwner,$uCreatedBy);
 	$cMessage="Zone modified OK";
 }
+*/
 else if($gcFunction=='Delete Zone')
 {
-	DelZone($cZone);
-	SubmitJob("Delete",1,$cZone,$uTime,$uOwner,$uCreatedBy);
-	$cMessage="Zone deleted OK";
+	$Zone->Delete();
+	$cMessage=$Zone->cErrMsg;
+	if($cMessage=='')
+		$cMessage="Zone deleted OK";
 }
 
 UI();
