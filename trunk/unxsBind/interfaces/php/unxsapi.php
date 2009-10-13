@@ -124,8 +124,27 @@ class unxsBindZone
 
 	}//public function Delete()
 
-	public function AddRR($cName,$uTTL,$cParam1,$cParam2,$cParam3,$cParam4,$cRRtype)
+	public function AddRR($cName,$uTTL,$cParam1,$cParam2,$cParam3,$cParam4,$cRRtype,$uOwner)
 	{
+		//This function creates a RR and returns a new unxsBindResourceRecord class
+		//to handle it
+
+		$RR=new unxsBindResourceRecord();
+		$RR->SetProperty("Name",$cName);
+		$RR->SetProperty("TTL",$uTTL);
+		$RR->SetProperty("Param 1",$cParam1);
+		$RR->SetProperty("Name",$cParam2);
+		$RR->SetProperty("Name",$cParam3);
+		$RR->SetProperty("Name",$cParam4);
+		$RR->SetProperty("RRType RID",$RR->GetRRTypeRID($cRRType));
+		if($uOwner)
+			$RR->SetProperty("Owner RID",$uOwner);
+		else
+			$RR->SetProperty("Owner RID",$this->$uOwner);
+
+		$RR->CommitChanges();
+		return($RR);
+
 	}//public function AddRR($cName,$uTTL,$cParam1,$cParam2,$cParam3,$cParam4,$cRRtype)
 
 	public function GetRRs()
@@ -143,14 +162,15 @@ class unxsBindZone
 			$this->cErrMsg=mysql_error();
 			return(NULL);
 		}
-		
+	
+		$i=0;
 		while(($field=mysql_fetch_row($res)))
 		{
 			$retArray[$i]=new unxsBindResourceRecord();
-			$retArray[$i]->LoadRR($uResource);
+			$retArray[$i]->LoadRR($field[0]);
 			$i++;
 		}
-
+		return($retArray);
 	
 	}//public function GetRRs()
 
@@ -381,33 +401,27 @@ class unxsBindZone
 
 class unxsBindResourceRecord
 {
-	private $uResource=0;
-	private $uZone;
-	private $cName;
-	private $uTTL;
-	private $uRRType;
-	private $cParam1;
-	private $cParam2;
-	private $cParam3;
-	private $cParam4;
-	private $cComment;
-	private $uOwner=1;
-	private $uCreatedBy=1;
-	private $uCreatedDate;
-	private $uModBy=1;
-	private $uModDate;
+	var $uResource=0;
+	var $uZone;
+	var $cName;
+	var $uTTL;
+	var $uRRType;
+	var $cParam1;
+	var $cParam2;
+	var $cParam3;
+	var $cParam4;
+	var $cComment;
+	var $uOwner=1;
+	var $uCreatedBy=1;
+	var $uCreatedDate;
+	var $uModBy=1;
+	var $uModDate;
 	
-	public $uErrCode=0;
-	public $cErrMsg='';
+	var $uErrCode=0;
+	var $cErrMsg='';
 
 	public function GetProperty($cPropName)
 	{
-		if($this->$uResource==0)
-		{
-			$this->uErrCode=7;
-			$this->cErrMsg="Can't get property if RR not loaded";
-			return(NULL);
-		}
 		if($cPropName=="RID")
 			return($this->uResource);
 		if($cPropName=="Name")
@@ -436,7 +450,11 @@ class unxsBindResourceRecord
 			return($this->uModBy);
 		if($cPropName=="Modification Date")
 			return($this->uModDate);
-	
+		if($cPropName=="Type")
+			return($this->GetRRTypeLabel($this->uRRType));
+		
+		return(NULL);	
+
 	}//public function GetProperty($cPropName)
 
 
@@ -513,7 +531,7 @@ class unxsBindResourceRecord
 		if(mysql_errno())
 		{
 			$this->uErrCode=5;
-			$this->cErrMsg=mysql_error();
+			$this->cErrMsg=mysql_error()."uResource=$uResource";
 			return(NULL);
 		}
 		if($field=mysql_fetch_row($res))
@@ -530,7 +548,7 @@ class unxsBindResourceRecord
 			$this->cComment=$field[8];
 			$this->uOwner=$field[9];
 			$this->uCreatedBy=$field[10];
-			$this->uCreatedDate=$field[10];
+			$this->uCreatedDate=$field[11];
 			$this->uModBy=$field[12];
 			$this->uModDate=$field[13];
 		}
@@ -538,6 +556,38 @@ class unxsBindResourceRecord
 
 	}//public function LoadRR($uResource)
 
+	public function GetRRTypeRID($cRRType)
+	{
+		$res=mysql_query("SELECT uRRType FROM tRRType WHERE cLabel='$cRRType'");
+		if(mysql_errno())
+		{
+			$this->uErrCode=5;
+			$this->cErrMsg=mysql_error();
+			return(NULL);
+		}
+		if($field=mysql_fetch_row($res))
+			$return($field[0]);
+
+		return(0);
+
+	}//public function GetRRTypeRID($cRRType)
+	
+
+	public function GetRRTypeLabel($uRRType)
+	{
+		$res=mysql_query("SELECT cLabel FROM tRRType WHERE uRRType='$uRRType'");
+		if(mysql_errno())
+		{
+			$this->uErrCode=5;
+			$this->cErrMsg=mysql_error();
+			return(NULL);
+		}
+		if($field=mysql_fetch_row($res))
+			return($field[0]);
+
+		return('');
+
+	}//private function GetRRTypeLabel($uRRType)
 
 }//class unxsBindResourceRecord
 ?>
