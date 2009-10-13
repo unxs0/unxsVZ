@@ -70,6 +70,7 @@ void CopyContainerProps(unsigned uSource, unsigned uTarget);
 unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource);
+void htmlCloneInfo(unsigned uContainer);
 
 
 void htmlGenMountInputs(unsigned const uMountTemplate)
@@ -1494,6 +1495,7 @@ void ExttContainerButtons(void)
 					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>"
 						"%s</a>",uSource,ForeignKey("tContainer","cLabel",uSource));
 				}
+				htmlCloneInfo(uContainer);
 				htmlContainerNotes(uContainer);
 				htmlContainerMount(uContainer);
 				htmlGroups(0,uContainer);
@@ -2860,4 +2862,26 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 
 }//unsigned FailoverFromJob()
 
+
+void htmlCloneInfo(unsigned uContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel,uContainer FROM tContainer WHERE uSource=%u",uContainer);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+		printf("<br>Clone(s) of current container:\n");
+
+	if((field=mysql_fetch_row(res)))
+		printf("<br> &nbsp; <a class=darkLink href=unxsVZ.cgi?"
+				"gcFunction=tContainer&uContainer=%s>"
+				"%s</a>\n",field[1],field[0]);
+
+	mysql_free_result(res);
+
+}//void htmlCloneInfo(unsigned uContainer)
 
