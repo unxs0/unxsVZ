@@ -102,6 +102,8 @@ class unxsBindZone
 			return($this->uErrCode);
 		}
 
+		$uSerial=$this->SerialNum();
+
 		$gcQuery="INSERT INTO tZone SET cZone='$this->cZone',uNSSet=1,cHostmaster='support.unixservice.com',"
 			."uSerial='$uSerial',uExpire=604800,uRefresh=28800,uTTL=86400,"
 			."uRetry=7200,uZoneTTL=86400,uMailServers=0,uView=2,uOwner=$this->uOwner,"
@@ -115,10 +117,9 @@ class unxsBindZone
 			return($this->uErrCode);
 		}
 		
-		if(SubmitJob("New"))
+		if($this->SubmitJob("New"))
 		{
-			$this->uErrCode=6;
-			$this->cErrMsg="Could not submit iDNS job";
+			$this->cErrMsg="Could not submit job: ".$this->cErrMsg;
 			return($this->uErrCode);
 		}
 
@@ -171,7 +172,7 @@ class unxsBindZone
 			return($this->uErrCode);
 		}
 
-		if(SubmitJob("Delete"))
+		if($this->SubmitJob("Delete"))
 		{
 			$this->uErrCode=6;
 			$this->cErrMsg="Could not submit iDNS job";
@@ -235,7 +236,7 @@ class unxsBindZone
 		while(($field=mysql_fetch_row($res)))
 		{
 			$gcQuery="INSERT INTO tJob SET cJob='$cCommand',cZone='$this->cZone',"
-				."uNSSet=$uNSSet,cTargetServer='$field[0] $field[1]',"
+				."uNSSet=$this->uNSSet,cTargetServer='$field[0] $field[1]',"
 				."uTime=$uTime,cJobData='$field[2]',uCreatedBy=$this->uCreatedBy,"
 				."uOwner=$this->uOwner,uCreatedDate=UNIX_TIMESTAMP(NOW())";
 			mysql_query($gcQuery);
@@ -266,5 +267,34 @@ class unxsBindZone
 
 	}//private function SubmitJob($cCommand)
 	
+	public function UpdateSerial()
+	{
+	/*
+		$gcQuery="SELECT uSerial FROM tZone WHERE uZone=$uZone";
+		$res=mysql_query($gcQuery) or die(mysql_error());
+		
+		if(($field=mysql_fetch_row($res)))
+			$uSerial=$field[0];
+	
+		$luYearMonDay=SerialNum();
+
+		//Typical year month day and 99 changes per day max
+		//to stay in correct date format. Will still increment even if>99 changes in one day
+		//but will be stuck until 1 day goes by with no changes.
+		if($uSerial<$luYearMonDay)
+			$gcQuery="UPDATE tZone SET uSerial=$luYearMonDay WHERE uZone=$uZone";
+		else
+			$gcQuery="UPDATE tZone SET uSerial=uSerial+1 WHERE uZone=$uZone";
+
+		mysql_query($gcQuery) or die(mysql_error());
+	*/
+	}//function UpdateSerial($uZone)
+
+	private function SerialNum()
+	{
+		return(strftime("%Y%m%d00"));
+
+	}//function SerialNum()
+
 }//class unxsBindZone
 ?>
