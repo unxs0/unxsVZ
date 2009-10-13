@@ -71,6 +71,9 @@ class unxsBindZone
 {
 	public $cZone='';
 	public $uNSSet=1; //Default to first tNSSet record
+	public $uOwner=1; //Default Root
+	public $uCreatedBy=1; //Default Root
+	public $uModBy=1; //Default Root
 	public $cErrMsg='';
 	public $uERrCode=0;
 
@@ -83,7 +86,39 @@ class unxsBindZone
 			return($this->uErrCode);
 		}
 		
+		if($uNSSet==0)
+		{
+			$this->uErrCode=2;
+			$this->cErrMsg="Can't create a zone without defining the uNSSet property";
+			return($this->uErrCode);
+		}
+
+		//Check if zone exists
+
+		if($this->ZoneExists())
+		{
+			$this->uErrCode=3;
+			$this->cErrMsg="Zone with name $this->cZone already exists";
+			return($this->uErrCode);
+		}
+
+		$gcQuery="INSERT INTO tZone SET cZone='$this->cZone',uNSSet=1,cHostmaster='support.unixservice.com',"
+			."uSerial='$uSerial',uExpire=604800,uRefresh=28800,uTTL=86400,"
+			."uRetry=7200,uZoneTTL=86400,uMailServers=0,uView=2,uOwner=$this->uOwner,"
+			."uCreatedBy=$this->uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
+		mysql_query($gcQuery);
+		
+		if(mysql_errno())
+		{
+			$this->uErrCode=5; 
+			$this->cErrMsg=mysql_error();
+			return($this->uErrCode);
+		}
+
+		return(0);
+
 	}//public function Create()
+
 
 	public function Delete()
 	{
@@ -91,6 +126,41 @@ class unxsBindZone
 		{
 			$this->uErrCode=1;
 			$this->cErrMsg="Can't delete a zone without defining the cZone property";
+			return($this->uErrCode);
+		}
+
+		if($uNSSet==0)
+		{
+			$this->uErrCode=2;
+			$this->cErrMsg="Can't delete a zone without defining the uNSSet property";
+			return($this->uErrCode);
+		}
+		
+		if(!$this->ZoneExists())
+		{
+			$this->uErrCode=4;
+			$this->cErrMsg="Zone with name $this->cZone doesn't exist";
+			return($this->uErrCode);
+		}
+		
+		$gcQuery="DELETE FROM tResource WHERE uZone IN "
+			."(SELECT uZone FROM tZone WHERE cZone='$this->cZone' AND uView=2)";
+		mysql_query($gcQuery);
+		
+		if(mysql_errno())
+		{
+			$this->uErrCode=5; 
+			$this->cErrMsg=mysql_error();
+			return($this->uErrCode);
+		}
+		
+		$gcQuery="DELETE FROM tZone WHERE cZone='$this->cZone' AND uView=2";
+		mysql_query($gcQuery);
+		
+		if(mysql_errno())
+		{
+			$this->uErrCode=5; 
+			$this->cErrMsg=mysql_error();
 			return($this->uErrCode);
 		}
 
@@ -111,10 +181,25 @@ class unxsBindZone
 		if($cZone=='')
 		{
 			$this->uErrCode=1;
-			$this->cErrMsg="Can't delete a zone without defining the cZone property";
+			$this->cErrMsg="Can't set a zone property without defining the cZone property";
+			return($this->uErrCode);
+		}
+		
+		if($uNSSet==0)
+		{
+			$this->uErrCode=2;
+			$this->cErrMsg="Can't set a zone property without defining the uNSSet property";
 			return($this->uErrCode);
 		}
 	}
+	
+	private function ZoneExists()
+	{
+		$res=mysql_query("SELECT uZone FROM tZone WHERE cZone='$this->cZone' "
+				."AND uView=2") or die(mysql_error());
+		return(mysql_num_rows($res));
+
+	}//private function ZoneExists()
 
 }//class unxsBindZone
 ?>
