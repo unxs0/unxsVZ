@@ -9,67 +9,10 @@ AUTHOR
 	(C) 2009 Hugo Urquiza for Unixservice
 */
 
-function SubmitJob($cCommand,$uNSSet,$cZone,$uTime,$uOwner,$uCreatedBy)
-{
-	//This function inserts a new tJob entry per each NS Set member
-	$gcQuery="SELECT tNS.cFQDN,tNSType.cLabel,tServer.cLabel FROM "
-		."tNS,tNSType,tServer WHERE tNSType.uNSType=tNS.uNSType "
-		."AND tServer.uServer=tNS.uServer AND tNS.uNSSet=$uNSSet "
-		."ORDER BY tNS.uNSType";
-	$res=mysql_query($gcQuery) or die(mysql_error());
-
-	while(($field=mysql_fetch_row($res)))
-	{
-		$gcQuery="INSERT INTO tJob SET cJob='$cCommand',cZone='$cZone',"
-			."uNSSet=$uNSSet,cTargetServer='$field[0] $field[1]',"
-			."uTime=$uTime,cJobData='$field[2]',uCreatedBy=$uCreatedBy,"
-			."uOwner=$uOwner,uCreatedDate=UNIX_TIMESTAMP(NOW())";
-		mysql_query($gcQuery) or die(mysql_error());
-
-		$uJob=mysql_insert_id();
-		if($field[1]='MASTER')
-			$uMasterJob=$uJob;
-		if($uMasterJob)
-		{
-			$gcQuery="UPDATE tJob SET uMasterJob=$uMasterJob WHERE uJob=$uJob";
-			mysql_query($gcQuery) or die(mysql_error());
-		}
-	}
-
-}//function SubmitJob($cCommand,$uNSSet,$cZone,$uTime)
-
-function UpdateSerial($uZone)
-{
-	$gcQuery="SELECT uSerial FROM tZone WHERE uZone=$uZone";
-	$res=mysql_query($gcQuery) or die(mysql_error());
-	
-	if(($field=mysql_fetch_row($res)))
-		$uSerial=$field[0];
-	
-	$luYearMonDay=SerialNum();
-
-	//Typical year month day and 99 changes per day max
-	//to stay in correct date format. Will still increment even if>99 changes in one day
-	//but will be stuck until 1 day goes by with no changes.
-	if($uSerial<$luYearMonDay)
-		$gcQuery="UPDATE tZone SET uSerial=$luYearMonDay WHERE uZone=$uZone";
-	else
-		$gcQuery="UPDATE tZone SET uSerial=uSerial+1 WHERE uZone=$uZone";
-
-	mysql_query($gcQuery) or die(mysql_error());
-
-}//function UpdateSerial($uZone)
-
-function SerialNum()
-{
-	return(strftime("%Y%m%d00"));
-
-}//function SerialNum()
-
 
 class unxsBindZone
 {
-	public $cZone='Yousuck';
+	public $cZone='';
 	public $uNSSet=1; //Default to first tNSSet record
 	public $uOwner=1; //Default Root
 	public $uCreatedBy=1; //Default Root
@@ -189,7 +132,58 @@ class unxsBindZone
 			$this->cErrMsg="Can't delete a zone without defining the cZone property";
 			return($this->uErrCode);
 		}
+		if($cPropName=='Hostmaster')
+			return($this->Get_tZoneField("cHostmaster"));
+		else if($cPropName=='NS Set')
+			return($this->Get_tZoneField("uNSSet"));
+		else if($cPropName=='Serial')
+			return($this->Get_tZoneField("uSerial"));
+		else if($cPropName=='Expire TTL')
+			return($this->Get_tZoneField("uExpire"));
+		else if($cPropName=='Refresh TTL')
+			return($this->Get_tZoneField("uRefresh"));
+		else if($cPropName=='Default TTL')
+			return($this->Get_tZoneField("uTTL"));
+		else if($cPropName=='Retry TTL')
+			return($this->Get_tZoneField("uRetry"));
+		else if($cPropName=='Zone TTL')
+			return($this->Get_tZoneField("uZoneTTL"));
+		else if($cPropName=='View RID')
+			return($this->Get_tZoneField("uView"));
+		else if($cPropName=='Registrar RID')
+			return($this->Get_tZoneField("uRegistrar"));
+		else if($cPropName=='Is Secondary Only')
+			return($this->Get_tZoneField("uSecondaryOnly"));
+		else if($cPropName=='Options')
+			return($this->Get_tZoneField("cOptions"));
+		else if($cPropName=='Owner RID')
+			return($this->Get_tZoneField("uOwner"));
+		else if($cPropName=='Created By RID')
+			return($this->Get_tZoneField("uCreatedBy"));
+		else if($cPropName=='Creation Date')
+			return($this->Get_tZoneField("uCreatedDate"));
+		else if($cPropName=='Modified By RID')
+			return($this->Get_tZoneField("uModBy"));
+		else if($cPropName=='Modification Date')
+			return($this->Get_tZoneField("uModDate"));
 	}
+
+
+	private function Get_tZoneField($cFieldname)
+	{
+		$res=mysql_query("SELECT $cFieldname FROM tZone WHERE cZone='$this->cZone' AND uView=2");
+		if(mysql_errno())
+		{
+			$this->uErrCode=5;
+			return(NULL);
+		}
+		if($field=mysql_fetch_row($res))
+			return($field[0]);
+		else
+			return(NULL);
+
+	}//private function Get_tZoneField($cFieldname)
+
 
 	public function SetProperty($cPropName,$cValue)
 	{
@@ -267,16 +261,19 @@ class unxsBindZone
 
 	}//private function SubmitJob($cCommand)
 	
-	public function UpdateSerial()
+	private function UpdateSerial()
 	{
-	/*
-		$gcQuery="SELECT uSerial FROM tZone WHERE uZone=$uZone";
+	
+		$gcQuery="SELECT uSerial,uZone FROM tZone WHERE cZone='$this->cZone' AND uView=2";
 		$res=mysql_query($gcQuery) or die(mysql_error());
 		
 		if(($field=mysql_fetch_row($res)))
+		{
 			$uSerial=$field[0];
+			$uZone=$field[1];
+		}
 	
-		$luYearMonDay=SerialNum();
+		$luYearMonDay=$this->SerialNum();
 
 		//Typical year month day and 99 changes per day max
 		//to stay in correct date format. Will still increment even if>99 changes in one day
@@ -287,14 +284,14 @@ class unxsBindZone
 			$gcQuery="UPDATE tZone SET uSerial=uSerial+1 WHERE uZone=$uZone";
 
 		mysql_query($gcQuery) or die(mysql_error());
-	*/
-	}//function UpdateSerial($uZone)
+	
+	}//private function UpdateSerial()
 
 	private function SerialNum()
 	{
 		return(strftime("%Y%m%d00"));
 
-	}//function SerialNum()
+	}//private function SerialNum()
 
 }//class unxsBindZone
 ?>
