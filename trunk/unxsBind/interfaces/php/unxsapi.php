@@ -69,24 +69,24 @@ function SerialNum()
 
 class unxsBindZone
 {
-	public $cZone='';
+	public $cZone='Yousuck';
 	public $uNSSet=1; //Default to first tNSSet record
 	public $uOwner=1; //Default Root
 	public $uCreatedBy=1; //Default Root
 	public $uModBy=1; //Default Root
 	public $cErrMsg='';
 	public $uERrCode=0;
-
+	
 	public function Create()
 	{
-		if($cZone=='')
+		if($this->cZone=='')
 		{
 			$this->uErrCode=1;
 			$this->cErrMsg="Can't create a zone without defining the cZone property";
 			return($this->uErrCode);
 		}
 		
-		if($uNSSet==0)
+		if($this->uNSSet==0)
 		{
 			$this->uErrCode=2;
 			$this->cErrMsg="Can't create a zone without defining the uNSSet property";
@@ -114,6 +114,13 @@ class unxsBindZone
 			$this->cErrMsg=mysql_error();
 			return($this->uErrCode);
 		}
+		
+		if(SubmitJob("New"))
+		{
+			$this->uErrCode=6;
+			$this->cErrMsg="Could not submit iDNS job";
+			return($this->uErrCode);
+		}
 
 		return(0);
 
@@ -122,14 +129,14 @@ class unxsBindZone
 
 	public function Delete()
 	{
-		if($cZone=='')
+		if($this->cZone=='')
 		{
 			$this->uErrCode=1;
 			$this->cErrMsg="Can't delete a zone without defining the cZone property";
 			return($this->uErrCode);
 		}
 
-		if($uNSSet==0)
+		if($this->uNSSet==0)
 		{
 			$this->uErrCode=2;
 			$this->cErrMsg="Can't delete a zone without defining the uNSSet property";
@@ -164,11 +171,18 @@ class unxsBindZone
 			return($this->uErrCode);
 		}
 
+		if(SubmitJob("Delete"))
+		{
+			$this->uErrCode=6;
+			$this->cErrMsg="Could not submit iDNS job";
+			return($this->uErrCode);
+		}
+
 	}//public function Delete()
 
 	public function GetProperty($cPropName)
 	{
-		if($cZone=='')
+		if($this->cZone=='')
 		{
 			$this->uErrCode=1;
 			$this->cErrMsg="Can't delete a zone without defining the cZone property";
@@ -178,14 +192,14 @@ class unxsBindZone
 
 	public function SetProperty($cPropName,$cValue)
 	{
-		if($cZone=='')
+		if($this->cZone=='')
 		{
 			$this->uErrCode=1;
 			$this->cErrMsg="Can't set a zone property without defining the cZone property";
 			return($this->uErrCode);
 		}
 		
-		if($uNSSet==0)
+		if($this->uNSSet==0)
 		{
 			$this->uErrCode=2;
 			$this->cErrMsg="Can't set a zone property without defining the uNSSet property";
@@ -201,5 +215,56 @@ class unxsBindZone
 
 	}//private function ZoneExists()
 
+	private function SubmitJob($cCommand)
+	{
+		//This function inserts a new tJob entry per each NS Set member
+		$gcQuery="SELECT tNS.cFQDN,tNSType.cLabel,tServer.cLabel FROM "
+			."tNS,tNSType,tServer WHERE tNSType.uNSType=tNS.uNSType "
+			."AND tServer.uServer=tNS.uServer AND tNS.uNSSet=$this->uNSSet "
+			."ORDER BY tNS.uNSType";
+		$res=mysql_query($gcQuery);
+	
+		if(mysql_errno())
+		{
+			$this->uErrCode=5; 
+			$this->cErrMsg=mysql_error();
+			return($this->uErrCode);
+		}
+
+		$uTime=time();
+		while(($field=mysql_fetch_row($res)))
+		{
+			$gcQuery="INSERT INTO tJob SET cJob='$cCommand',cZone='$this->cZone',"
+				."uNSSet=$uNSSet,cTargetServer='$field[0] $field[1]',"
+				."uTime=$uTime,cJobData='$field[2]',uCreatedBy=$this->uCreatedBy,"
+				."uOwner=$this->uOwner,uCreatedDate=UNIX_TIMESTAMP(NOW())";
+			mysql_query($gcQuery);
+			if(mysql_errno())
+			{
+				$this->uErrCode=5; 
+				$this->cErrMsg=mysql_error();
+				return($this->uErrCode);
+			}
+	
+			$uJob=mysql_insert_id();
+			if($field[1]='MASTER')
+				$uMasterJob=$uJob;
+			if($uMasterJob)
+			{
+				$gcQuery="UPDATE tJob SET uMasterJob=$uMasterJob WHERE uJob=$uJob";
+				mysql_query($gcQuery);
+				if(mysql_errno())
+				{
+					$this->uErrCode=5; 
+					$this->cErrMsg=mysql_error();
+					return($this->uErrCode);
+				}
+			}
+		}
+		
+		return(0);
+
+	}//private function SubmitJob($cCommand)
+	
 }//class unxsBindZone
 ?>
