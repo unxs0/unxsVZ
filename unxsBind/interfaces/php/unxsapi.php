@@ -66,4 +66,55 @@ function SerialNum()
 
 }//function SerialNum()
 
+
+class unxsBindZone
+{
+	public $cZone='';
+	public $uNSSet=1; //Default to first tNSSet record
+	public $cErrMsg='';
+	public $uERrCode=0;
+
+	public function Create()
+	{
+		if($cZone=='')
+		{
+			$this->uErrCode=1;
+			$this->cErrMsg="Can't create a zone without defining the cZone property";
+			return($this->uErrCode);
+		}
+		
+	}//public function Create()
+
+	public function Delete()
+	{
+		if($cZone=='')
+		{
+			$this->uErrCode=1;
+			$this->cErrMsg="Can't delete a zone without defining the cZone property";
+			return($this->uErrCode);
+		}
+
+	}//public function Delete()
+
+	public function GetProperty($cPropName)
+	{
+		if($cZone=='')
+		{
+			$this->uErrCode=1;
+			$this->cErrMsg="Can't delete a zone without defining the cZone property";
+			return($this->uErrCode);
+		}
+	}
+
+	public function SetProperty($cPropName,$cValue)
+	{
+		if($cZone=='')
+		{
+			$this->uErrCode=1;
+			$this->cErrMsg="Can't delete a zone without defining the cZone property";
+			return($this->uErrCode);
+		}
+	}
+
+}//class unxsBindZone
 ?>
