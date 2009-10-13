@@ -124,6 +124,37 @@ class unxsBindZone
 
 	}//public function Delete()
 
+	public function AddRR($cName,$uTTL,$cParam1,$cParam2,$cParam3,$cParam4,$cRRtype)
+	{
+	}//public function AddRR($cName,$uTTL,$cParam1,$cParam2,$cParam3,$cParam4,$cRRtype)
+
+	public function GetRRs()
+	{
+		//
+		//This function returns an array, containing a RR per each element.
+		//For doing so we use a unxsBindResourceRecord class array
+		//Each of this array elements can be then manipulated
+		//using the unxsBindResourceRecord methods and properties
+		$res=mysql_query("SELECT uResource FROM tResource WHERE uZone IN (SELECT uZone "
+				."FROM tZone WHERE cZone='$this->cZone' AND uView=2)");
+		if(mysql_errno())
+		{
+			$this->uErrCode=5;
+			$this->cErrMsg=mysql_error();
+			return(NULL);
+		}
+		
+		while(($field=mysql_fetch_row($res)))
+		{
+			$retArray[$i]=new unxsBindResourceRecord();
+			$retArray[$i]->LoadRR($uResource);
+			$i++;
+		}
+
+	
+	}//public function GetRRs()
+
+
 	public function GetProperty($cPropName)
 	{
 		if($this->cZone=='')
@@ -175,6 +206,7 @@ class unxsBindZone
 		if(mysql_errno())
 		{
 			$this->uErrCode=5;
+			$this->cErrMsg=mysql_error();
 			return(NULL);
 		}
 		if($field=mysql_fetch_row($res))
@@ -183,6 +215,19 @@ class unxsBindZone
 			return(NULL);
 
 	}//private function Get_tZoneField($cFieldname)
+
+
+	private function Set_tZoneField($cFieldname,$cValue)
+	{
+		mysql_query("UPDATE tZone SET $cFieldname='$cValue' WHERE cZone='$this->cZone' AND uView=2");
+		if(mysql_errno())
+		{
+			$this->uErrCode=5;
+			$this->cErrMsg=mysql_error();
+		}
+		return(0);
+
+	}//private function Set_tZoneField($cFieldname,$cValue)
 
 
 	public function SetProperty($cPropName,$cValue)
@@ -200,8 +245,44 @@ class unxsBindZone
 			$this->cErrMsg="Can't set a zone property without defining the uNSSet property";
 			return($this->uErrCode);
 		}
+		
+		if($cPropName=='Hostmaster')
+			return($this->Set_tZoneField("cHostmaster",$cValue));
+		else if($cPropName=='NS Set')
+			return($this->Set_tZoneField("uNSSet",$cValue));
+		else if($cPropName=='Serial')
+			return($this->Set_tZoneField("uSerial",$cValue));
+		else if($cPropName=='Expire TTL')
+			return($this->Set_tZoneField("uExpire",$cValue));
+		else if($cPropName=='Refresh TTL')
+			return($this->Set_tZoneField("uRefresh",$cValue));
+		else if($cPropName=='Default TTL')
+			return($this->Set_tZoneField("uTTL",$cValue));
+		else if($cPropName=='Retry TTL')
+			return($this->Set_tZoneField("uRetry",$cValue));
+		else if($cPropName=='Zone TTL')
+			return($this->Set_tZoneField("uZoneTTL",$cValue));
+		else if($cPropName=='View RID')
+			return($this->Set_tZoneField("uView",$cValue));
+		else if($cPropName=='Registrar RID')
+			return($this->Set_tZoneField("uRegistrar",$cValue));
+		else if($cPropName=='Is Secondary Only')
+			return($this->Set_tZoneField("uSecondaryOnly",$cValue));
+		else if($cPropName=='Options')
+			return($this->Set_tZoneField("cOptions",$cValue));
+		else if($cPropName=='Owner RID')
+			return($this->Set_tZoneField("uOwner",$cValue));
+		else if($cPropName=='Created By RID')
+			return($this->Set_tZoneField("uCreatedBy",$cValue));
+		else if($cPropName=='Creation Date')
+			return($this->Set_tZoneField("uCreatedDate",$cValue));
+		else if($cPropName=='Modified By RID')
+			return($this->Set_tZoneField("uModBy",$cValue));
+		else if($cPropName=='Modification Date')
+			return($this->Set_tZoneField("uModDate",$cValue));
 	}
-	
+
+
 	private function ZoneExists()
 	{
 		$res=mysql_query("SELECT uZone FROM tZone WHERE cZone='$this->cZone' "
@@ -209,6 +290,7 @@ class unxsBindZone
 		return(mysql_num_rows($res));
 
 	}//private function ZoneExists()
+
 
 	private function SubmitJob($cCommand)
 	{
@@ -261,6 +343,7 @@ class unxsBindZone
 
 	}//private function SubmitJob($cCommand)
 	
+
 	private function UpdateSerial()
 	{
 	
@@ -287,6 +370,7 @@ class unxsBindZone
 	
 	}//private function UpdateSerial()
 
+
 	private function SerialNum()
 	{
 		return(strftime("%Y%m%d00"));
@@ -294,4 +378,166 @@ class unxsBindZone
 	}//private function SerialNum()
 
 }//class unxsBindZone
+
+class unxsBindResourceRecord
+{
+	private $uResource=0;
+	private $uZone;
+	private $cName;
+	private $uTTL;
+	private $uRRType;
+	private $cParam1;
+	private $cParam2;
+	private $cParam3;
+	private $cParam4;
+	private $cComment;
+	private $uOwner=1;
+	private $uCreatedBy=1;
+	private $uCreatedDate;
+	private $uModBy=1;
+	private $uModDate;
+	
+	public $uErrCode=0;
+	public $cErrMsg='';
+
+	public function GetProperty($cPropName)
+	{
+		if($this->$uResource==0)
+		{
+			$this->uErrCode=7;
+			$this->cErrMsg="Can't get property if RR not loaded";
+			return(NULL);
+		}
+		if($cPropName=="RID")
+			return($this->uResource);
+		if($cPropName=="Name")
+			return($this->cName);
+		if($cPropName=="Zone RID")
+			return($this->uZone);
+		if($cPropName=="TTL")
+			return($this->uTTL);
+		if($cPropName=="Type RID")
+			return($this->uRRtype);
+		if($cPropName=="Param 1")
+			return($this->cParam1);
+		if($cPropName=="Param 2")
+			return($this->cParam2);
+		if($cPropName=="Param 3")
+			return($this->cParam3);
+		if($cPropName=="Param 4")
+			return($this->cParam4);
+		if($cPropName=="Owner RID")
+			return($this->uOwner);
+		if($cPropName=="Creation Date")
+			return($this->uCreatedDate);
+		if($cPropName=="Created By RID")
+			return($this->uCreatedBy);
+		if($cPropName=="Modified By RID")
+			return($this->uModBy);
+		if($cPropName=="Modification Date")
+			return($this->uModDate);
+	
+	}//public function GetProperty($cPropName)
+
+
+	public function SetProperty($cPropName,$cValue)
+	{
+		if($cPropName=="Name")
+			$this->cName=$cValue;
+		if($cPropName=="Zone RID")
+			$this->uZone=$cValue;
+		if($cPropName=="TTL")
+			$this->uTTL=$cValue;
+		if($cPropName=="Type RID")
+			$this->uRRtype=$cValue;
+		if($cPropName=="Param 1")
+			$this->cParam1=$cValue;
+		if($cPropName=="Param 2")
+			$this->cParam2=$cValue;
+		if($cPropName=="Param 3")
+			$this->cParam3=$cValue;
+		if($cPropName=="Param 4")
+			$this->cParam4=$cValue;
+		if($cPropName=="Owner RID")
+			$this->uOwner=$cValue;
+		if($cPropName=="Created By RID")
+			$this->uCreatedBy=$cValue;
+		if($cPropName=="Modified By RID")
+			$this->uModBy=$cValue;
+	
+	}//public function SetProperty($cPropName,$cValue)
+
+
+	public function CommitChanges()
+	{
+		//This function will commit the class data to the database
+		//To know if we are adding a new record or updating one
+		//we check $uResource. if(==0) new record
+
+		if($this->uResource)
+		{
+			$gcQuery="UPDATE tResource SET uZone='$this->uZone',"
+				."cName='$this->cName',uTTL='$this->uTTL',"
+				."uRRType='$this->uRRtype',cParam1='$this->cParam1,"
+				."cParam2='$this->cParam2',cParam3='$this->cParam3',"
+				."cParam4='$this->cParam4',cComment='$this->cComment',"
+				."uOwner='$this->uOwner',uModBy='$this->uModBy',uModDate=UNIX_TIMESTAMP(NOW())";
+		}
+		else
+		{
+			$gcQuery="INSERT INTO tResource SET uZone='$this->uZone',"
+				."cName='$this->cName',uTTL='$this->uTTL',"
+				."uRRType='$this->uRRtype',cParam1='$this->cParam1,"
+				."cParam2='$this->cParam2',cParam3='$this->cParam3',"
+				."cParam4='$this->cParam4',cComment='$this->cComment',"
+				."uOwner='$this->uOwner',uCreatedBy='$this->uCreatedBy',uModDate=UNIX_TIMESTAMP(NOW())";
+		}
+		mysql_query($gcQuery);
+		if(mysql_errno())
+		{
+			$this->uErrCode=5;
+			$this->cErrMsg=mysql_error();
+			return($this->uErrCode);
+		}
+		return(0);
+
+	}//public function CommitChanges()
+
+
+	public function LoadRR($uResource)
+	{
+		$res=mysql_query("SELECT uZone,cName,uTTL,uRRType,cParam1,"
+				."cParam2,cParam3,cParam4,cComment,uOwner,"
+				."uCreatedBy,uCreatedDate,uModBy,uModDate "
+				."FROM tResource WHERE uResource=$uResource");
+		if(mysql_errno())
+		{
+			$this->uErrCode=5;
+			$this->cErrMsg=mysql_error();
+			return(NULL);
+		}
+		if($field=mysql_fetch_row($res))
+		{
+			$this->uResource=$uResource;
+			$this->uZone=$field[0];
+			$this->cName=$field[1];
+			$this->uTTL=$field[2];
+			$this->uRRType=$field[3];
+			$this->cParam1=$field[4];
+			$this->cParam2=$field[5];
+			$this->cParam3=$field[6];
+			$this->cParam4=$field[7];
+			$this->cComment=$field[8];
+			$this->uOwner=$field[9];
+			$this->uCreatedBy=$field[10];
+			$this->uCreatedDate=$field[10];
+			$this->uModBy=$field[12];
+			$this->uModDate=$field[13];
+		}
+		return(0);
+
+	}//public function LoadRR($uResource)
+
+
+}//class unxsBindResourceRecord
 ?>
