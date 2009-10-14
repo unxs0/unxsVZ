@@ -19,7 +19,8 @@ class unxsBindZone
 	public $uModBy=1; //Default Root
 	public $cErrMsg='';
 	public $uERrCode=0;
-	
+
+
 	public function Create()
 	{
 		if($this->cZone=='')
@@ -124,12 +125,14 @@ class unxsBindZone
 
 	}//public function Delete()
 
+
 	public function AddRR($cName,$uTTL,$cParam1,$cParam2,$cParam3,$cParam4,$cRRtype,$uOwner)
 	{
 		//This function creates a RR and returns a new unxsBindResourceRecord class
 		//to handle it
 
 		$RR=new unxsBindResourceRecord();
+		$RR->SetProperty("Zone RID",$this->GetuZone());
 		$RR->SetProperty("Name",$cName);
 		$RR->SetProperty("TTL",$uTTL);
 		$RR->SetProperty("Param 1",$cParam1);
@@ -143,10 +146,31 @@ class unxsBindZone
 			$RR->SetProperty("Owner RID",$this->$uOwner);
 
 		$RR->CommitChanges();
+
+		$this->UpdateSerial();
+		$this->SubmitJob("Modify");
+
 		return($RR);
 
 	}//public function AddRR($cName,$uTTL,$cParam1,$cParam2,$cParam3,$cParam4,$cRRtype)
 
+	
+	private function GetuZone()
+	{
+		$res=mysql_query("SELECT uZone FROM tZone WHERE cZone='$this->cZone' AND uView=2)");
+		if(mysql_errno())
+		{
+			$this->uErrCode=5;
+			$this->cErrMsg=mysql_error();
+			return(NULL);
+		}
+		if(($field=mysql_fetch_row($res)))
+			return($field[0]);
+
+		return(0);
+	}//private function GetuZone()
+
+		
 	public function GetRRs()
 	{
 		//
@@ -399,6 +423,7 @@ class unxsBindZone
 
 }//class unxsBindZone
 
+
 class unxsBindResourceRecord
 {
 	var $uResource=0;
@@ -419,6 +444,7 @@ class unxsBindResourceRecord
 	
 	var $uErrCode=0;
 	var $cErrMsg='';
+
 
 	public function GetProperty($cPropName)
 	{
@@ -556,6 +582,7 @@ class unxsBindResourceRecord
 
 	}//public function LoadRR($uResource)
 
+
 	public function GetRRTypeRID($cRRType)
 	{
 		$res=mysql_query("SELECT uRRType FROM tRRType WHERE cLabel='$cRRType'");
@@ -588,6 +615,7 @@ class unxsBindResourceRecord
 		return('');
 
 	}//private function GetRRTypeLabel($uRRType)
+
 
 }//class unxsBindResourceRecord
 ?>
