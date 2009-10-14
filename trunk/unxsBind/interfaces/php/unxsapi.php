@@ -139,12 +139,17 @@ class unxsBindZone
 		$RR->SetProperty("Name",$cParam2);
 		$RR->SetProperty("Name",$cParam3);
 		$RR->SetProperty("Name",$cParam4);
-		$RR->SetProperty("RRType RID",$RR->GetRRTypeRID($cRRType));
-		if($uOwner)
+		$uRRType=$RR->GetRRTypeRID($cRRType);
+		$RR->SetProperty("Type RID",$uRRType);
+		if($uOwner!=0)
 			$RR->SetProperty("Owner RID",$uOwner);
 		else
-			$RR->SetProperty("Owner RID",$this->$uOwner);
+			$RR->SetProperty("Owner RID",$this->uOwner);
+		$RR->SetProperty("Created By RID",$this->uCreatedBy);
+
 		$RR->CommitChanges();
+		if($RR->uErrCode!=0)
+			return(NULL);
 
 		$this->UpdateSerial();
 		$this->SubmitJob("Modify");
@@ -521,21 +526,22 @@ class unxsBindResourceRecord
 		{
 			$gcQuery="UPDATE tResource SET uZone='$this->uZone',"
 				."cName='$this->cName',uTTL='$this->uTTL',"
-				."uRRType='$this->uRRtype',cParam1='$this->cParam1,"
+				."uRRType='$this->uRRtype',cParam1='$this->cParam1',"
 				."cParam2='$this->cParam2',cParam3='$this->cParam3',"
 				."cParam4='$this->cParam4',cComment='$this->cComment',"
-				."uOwner='$this->uOwner',uModBy='$this->uModBy',uModDate=UNIX_TIMESTAMP(NOW())";
+				."uOwner='$this->uOwner',uModBy='$this->uModBy',"
+				."uModDate=UNIX_TIMESTAMP(NOW())";
 		}
 		else
 		{
 			$gcQuery="INSERT INTO tResource SET uZone='$this->uZone',"
 				."cName='$this->cName',uTTL='$this->uTTL',"
-				."uRRType='$this->uRRtype',cParam1='$this->cParam1,"
+				."uRRType='$this->uRRtype',cParam1='$this->cParam1',"
 				."cParam2='$this->cParam2',cParam3='$this->cParam3',"
 				."cParam4='$this->cParam4',cComment='$this->cComment',"
-				."uOwner='$this->uOwner',uCreatedBy='$this->uCreatedBy',uModDate=UNIX_TIMESTAMP(NOW())";
+				."uOwner='$this->uOwner',uCreatedBy='$this->uCreatedBy',"
+				."uCreatedDate=UNIX_TIMESTAMP(NOW())";
 		}
-		die($gcQuery);
 		mysql_query($gcQuery);
 		if(mysql_errno())
 		{
@@ -592,7 +598,7 @@ class unxsBindResourceRecord
 			$this->cErrMsg=mysql_error();
 			return(NULL);
 		}
-		if($field=mysql_fetch_row($res))
+		if(($field=mysql_fetch_row($res)))
 			return($field[0]);
 
 		return(0);
@@ -609,7 +615,7 @@ class unxsBindResourceRecord
 			$this->cErrMsg=mysql_error();
 			return(NULL);
 		}
-		if($field=mysql_fetch_row($res))
+		if(($field=mysql_fetch_row($res)))
 			return($field[0]);
 
 		return('');
