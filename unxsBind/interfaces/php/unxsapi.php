@@ -126,7 +126,7 @@ class unxsBindZone
 	}//public function Delete()
 
 
-	public function AddRR($cName,$uTTL,$cParam1,$cParam2,$cParam3,$cParam4,$cRRtype,$uOwner)
+	public function AddRR($cName,$uTTL,$cParam1,$cParam2,$cParam3,$cParam4,$cRRType,$uOwner)
 	{
 		//This function creates a RR and returns a new unxsBindResourceRecord class
 		//to handle it
@@ -144,7 +144,6 @@ class unxsBindZone
 			$RR->SetProperty("Owner RID",$uOwner);
 		else
 			$RR->SetProperty("Owner RID",$this->$uOwner);
-
 		$RR->CommitChanges();
 
 		$this->UpdateSerial();
@@ -157,7 +156,7 @@ class unxsBindZone
 	
 	private function GetuZone()
 	{
-		$res=mysql_query("SELECT uZone FROM tZone WHERE cZone='$this->cZone' AND uView=2)");
+		$res=mysql_query("SELECT uZone FROM tZone WHERE cZone='$this->cZone' AND uView=2");
 		if(mysql_errno())
 		{
 			$this->uErrCode=5;
@@ -536,6 +535,7 @@ class unxsBindResourceRecord
 				."cParam4='$this->cParam4',cComment='$this->cComment',"
 				."uOwner='$this->uOwner',uCreatedBy='$this->uCreatedBy',uModDate=UNIX_TIMESTAMP(NOW())";
 		}
+		die($gcQuery);
 		mysql_query($gcQuery);
 		if(mysql_errno())
 		{
@@ -593,7 +593,7 @@ class unxsBindResourceRecord
 			return(NULL);
 		}
 		if($field=mysql_fetch_row($res))
-			$return($field[0]);
+			return($field[0]);
 
 		return(0);
 
