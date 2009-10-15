@@ -200,7 +200,7 @@ void funcIPAuthReport(FILE *fp)
 #define NEW_BLOCK 1
 #define MOD_BLOCK 2
 #define NA_BLOCK 3
-#define DEFAULT_CLIENT 2;
+#define DEFAULT_CLIENT 2
 
 void CreateTransactionTable();
 unsigned uGetBlockStatus(char *cBlock,unsigned uClient);
@@ -446,6 +446,44 @@ unsigned uGetOwnerStatus(unsigned uClient)
 void CleanUPBlock(char *cIPBlock);
 void CleanUPCompanies(void);
 
+
+void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
+{
+	if(strcmp(cAction,"New"))
+	{
+		//
+		//Create tBlock entry owned by uClient
+		//Check for .arpa zone if it doesn't exist, create it
+		//owned by DEFAULT_CLIENT
+		//Create block default RRs uOwner=uClient
+		//
+	}
+	else if(strcmp(cAction,"Modify"))
+	{
+		//
+		//Update tBlock uOwner
+		//Update zone(s) (/25 and bigger) RRs
+		//to be owned by uClient
+		//
+	}
+
+}//void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
+
+
+void ProcessCompanies(unsigned uClient,char *cAction)
+{
+	if(!strcmp(cAction,"None")) return;
+
+	//Default 'New'
+	
+	//Open CSV file at fixed location
+	//Search for uClient at CSV file
+	//Create tClient record
+	//Create default contact with same cLabel
+	//Password should be 8 characters random text
+
+}//void ProcessCompanies(unsigned uClient)
+
 void CleanUPCompanies(void)
 {
 	//If a company doesn't exist in the tTransaction table:
@@ -469,7 +507,7 @@ void CleanUPCompanies(void)
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u",2);
+		"uClient!=1 AND uClient!=%u",DEFAULT_CLIENT);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -492,6 +530,7 @@ void CleanUPCompanies(void)
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 		
+		//Delete blocks
 		sprintf(gcQuery,"SELECT cLabel FROM tBlock WHERE uOwner=%s",field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -499,6 +538,17 @@ void CleanUPCompanies(void)
 		res2=mysql_store_result(&gMysql);
 		while((field2=mysql_fetch_row(res2)))
 			CleanUPBlock(field2[0]);
+
+		//Delete contacts
+		sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient IN "
+				"(SELECT uClient FROM tClient WHERE uOwner=%s)",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		sprintf(gcQuery,"DELETE FROM tClient WHERE uOwner=%s",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
 	}
 	
 }//void CleanUPCompanies(void)
