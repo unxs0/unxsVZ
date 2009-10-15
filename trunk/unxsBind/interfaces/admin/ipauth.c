@@ -507,6 +507,40 @@ void CleanUPCompanies(void)
 void CleanUPBlock(char *cIPBlock)
 {
 	unsigned uNumIPs=0;
+	unsigned a,b,c,d,e,f;
+	char cZone[100]={""};
+	char cUpdateHost[100]={"packetexchange.net"}; //This will come from tConfiguration, later
 
-}//void CleanUPBlocks(void)
+	//This initial version is for /24 and smaller blocks only!!
+	
+	uNumIPs=uGetNumIPs(cIPBlock);
+
+	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
+	sprintf(cZone,"%u.%u.%u.in-adrr.arpa",c,b,a);
+
+	//Update RRs
+	for(f=d;f<uNumIPs;f++)
+	{
+		sprintf(gcQuery,"UPDATE tResource SET cParam1='%u-%u-%u-%u.%s' WHERE cName='%u' "
+				"AND uZone IN (SELECT uZone FROM tZone WHERE cZone='%s')",
+				c
+				,b
+				,a
+				,f
+				,cUpdateHost
+				,f
+				,cZone
+				);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		//Submit Mod job for zone
+	}
+	
+	sprintf(gcQuery,"DELETE FROM tBlock WHERE cLabel='%s'",cIPBlock);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void CleanUPBlock(char *cIPBlock)
 
