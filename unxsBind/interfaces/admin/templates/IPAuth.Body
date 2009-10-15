@@ -225,5 +225,5 @@ lorem ipsum
 </table>
 
 
-<input type=hidden name=gcPage value='Ripe'>
+<input type=hidden name=gcPage value='IPAuth'>
 </form>
