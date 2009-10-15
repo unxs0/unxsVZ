@@ -197,7 +197,13 @@ void RIPEImport(void)
 				,&uDate
 				,&uClient
 				,&uOther);
-
+			printf("cIPBlockStart='%s' cIPBlockEnd='%s' uSize=%u uDate=%u uClient=%u uOther=%u\n",
+				cIPBlockStart
+				,cIPBlockEnd
+				,uSize
+				,uDate
+				,uClient
+				,uOther);
 		}
 		else if(strstr(cLine,"MRP"))
 		{
