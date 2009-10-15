@@ -200,6 +200,7 @@ void funcIPAuthReport(FILE *fp)
 #define NEW_BLOCK 1
 #define MOD_BLOCK 2
 #define NA_BLOCK 3
+#define DEFAULT_CLIENT 2;
 
 void CreateTransactionTable();
 unsigned uGetBlockStatus(char *cBlock,unsigned uClient);
@@ -239,8 +240,6 @@ void RIPEImport(void)
 	unsigned uOwnerStatus=0;
 	char *cBlockAction="";
 	char *cOwnerAction="";
-
-#define	DEFAULT_CLIENT 2;
 
 	CreateTransactionTable();
 
@@ -435,3 +434,79 @@ unsigned uGetOwnerStatus(unsigned uClient)
 	return(0);
 
 }//unsigned uGetOwnerStatus(unsigned uClient)
+
+//
+//End data processing functions
+//
+
+//
+//Begin data commit functions
+//
+
+void CleanUPBlock(char *cIPBlock);
+void CleanUPCompanies(void);
+
+void CleanUPCompanies(void)
+{
+	//If a company doesn't exist in the tTransaction table:
+	//* Company removed
+	//* Associated contacts removed
+	//* Associated tBlocks (IP Blocks) removed
+	//* Associated Forward zones only removed (Reverse zones always left)
+	//* Associated Resource Records removed. For reverse zones only ; the IP Address(es)
+	// removed need to be replaced with standard reverse record(s) having the following
+	// example format (hopefully the .packetexchange.net will not be hardcoded and just a
+	//variable etc). Obviously this will differ for different IP Blocks!:
+	//4            PTR 4-71-245-83.packetexchange.net.
+	//5            PTR 5-71-245-83.packetexchange.net.
+	//6            PTR 6-71-245-83.packetexchange.net.
+	//7            PTR 7-71-245-83.packetexchange.net.
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	MYSQL_RES *res2;
+	MYSQL_ROW field2;
+
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient NOT IN "
+		"(SELECT DISTINCT uClient FROM tTransaction) AND "
+		"uClient!=1 AND uClient!=%u",2);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		//Delete forward zones and their RRs
+		//The query below ensures that the reverse
+		//zones RRs are not touched, those will be handled
+		//by the CleanUPBlock() function call below
+		sprintf(gcQuery,"DELETE FROM tResource WHERE uZone IN "
+				"(SELECT uZone FROM tZone WHERE uOwner=%s)",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		sprintf(gcQuery,"DELETE FROM tZone WHERE uOwner=%s",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		
+		sprintf(gcQuery,"SELECT cLabel FROM tBlock WHERE uOwner=%s",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res2=mysql_store_result(&gMysql);
+		while((field2=mysql_fetch_row(res2)))
+			CleanUPBlock(field2[0]);
+	}
+	
+}//void CleanUPCompanies(void)
+
+
+void CleanUPBlock(char *cIPBlock)
+{
+	unsigned uNumIPs=0;
+
+}//void CleanUPBlocks(void)
+
