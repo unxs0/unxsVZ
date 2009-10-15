@@ -158,8 +158,30 @@ void htmlIPAuthPage(char *cTitle, char *cTemplateName)
 //Import functions code begins here
 //Will extend in the future for ARIN and LACNIC
 //
+#define NEW_BLOCK 1
+#define MOD_BLOCK 2
+#define NA_BLOCK 3
 
 unsigned uCIDR(unsigned uSize);
+void CreateTransactionTable();
+unsigned uGetBlockStatus(char *cBlock,unsigned uClient);
+unsigned uGetOwnerStatus(unsigned uClient);
+
+
+void CreateTransactionTable()
+{
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tTransaction ( uTransaction INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, "
+			"cBlock VARCHAR(100) NOT NULL DEFAULT '',unique (cBlock,uOwner), uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
+			"index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, "
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, "
+			"cBlockAction VARCHAR(100) NOT NULL DEFAULT '', cOwnerAction VARCHAR(100) NOT NULL DEFAULT '',"
+			"uClient INT UNSIGNED NOT NULL DEFAULT 0 )");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void CreateTransactionTable()
+
 
 void RIPEImport(void)
 {
@@ -167,6 +189,7 @@ void RIPEImport(void)
 	unsigned uLineNumber=0;
 	unsigned uProcessed=0;
 	unsigned uIgnored=0;
+	char cIPBlock[100]={""};
 	char cIPBlockStart[64]={""};
 	char cIPBlockEnd[64]={""};
 	unsigned uCidr=0;
@@ -174,8 +197,13 @@ void RIPEImport(void)
 	unsigned uClient=0;
 	unsigned uOther=0;
 	unsigned uDate=0;
+	unsigned uBlockStatus=0;
+	unsigned uOwnerStatus=0;
+	char *cBlockAction="";
+	char *cOwnerAction="";
 
 	printf("Content-type: text/plain\n\n");
+	CreateTransactionTable();
 
 	while(1)
 	{
@@ -198,13 +226,8 @@ void RIPEImport(void)
 				,&uDate
 				,&uClient
 				,&uOther);
-			//unsigned uInCIDR4Format(const char *cCIDR4,unsigned *uIPv4,unsigned *uCIDR4Mask)
-			//uInCIDR4Format(cIPBlockStart,&uSize,&uCidr);
-			//pow(2,n)=32-n
-			//32-n=cidr
-			//2'n=
 			uCidr=uCIDR(uSize);
-			printf("cIPBlockStart='%s' cIPBlockEnd='%s' uSize=%u uDate=%u uClient=%u uOther=%u uCidr=%u\n",
+			/*printf("cIPBlockStart='%s' cIPBlockEnd='%s' uSize=%u uDate=%u uClient=%u uOther=%u uCidr=%u\n",
 				cIPBlockStart
 				,cIPBlockEnd
 				,uSize
@@ -212,6 +235,42 @@ void RIPEImport(void)
 				,uClient
 				,uOther
 				,uCidr);
+			*/
+			sprintf(cIPBlock,"%s/%u",cIPBlockStart,uCidr);
+			uBlockStatus=uGetBlockStatus(cIPBlock,uClient);
+			uOwnerStatus=uGetOwnerStatus(uClient);
+
+			switch(uBlockStatus)
+			{
+				case NEW_BLOCK:
+					cBlockAction="New";
+				break;
+
+				case MOD_BLOCK:
+					cBlockAction="Modify";
+				break;
+
+				case NA_BLOCK:
+					cBlockAction="None";
+				break;
+			}
+			switch(uOwnerStatus)
+			{
+				case NEW_BLOCK:
+					cOwnerAction="New";
+				break;
+
+				case MOD_BLOCK:
+					cOwnerAction="Modify";
+				break;
+
+				case NA_BLOCK:
+					cOwnerAction="None";
+				break;
+			}
+			printf("IP Block Label=%s uClient=%u cBlockAction=%s cOwnerAction=%s\n"
+				,cIPBlock,uClient,cBlockAction,cOwnerAction);
+
 		}
 		else if(strstr(cLine,"MRP"))
 		{
@@ -233,6 +292,67 @@ void RIPEImport(void)
 	exit(0);
 
 }//void RIPEImport(void)
+
+
+unsigned uGetBlockStatus(char *cBlock,unsigned uClient)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uOwner=0;
+
+	sprintf(gcQuery,"SELECT uBlock,uOwner FROM tBlock WHERE cLabel='%s'",cBlock);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if(!mysql_num_rows(res))
+	{
+		mysql_free_result(res);
+		return(NEW_BLOCK);
+	}
+	else
+	{
+		field=mysql_fetch_row(res);
+		sscanf(field[1],"%u",&uOwner);
+
+		mysql_free_result(res);
+
+		if(uOwner==uClient)
+			return(NA_BLOCK);
+		else
+			return(MOD_BLOCK);
+	}
+
+	return(0);
+
+}//unsigned uGetBlockStatus(char *cBlock)
+
+
+unsigned uGetOwnerStatus(unsigned uClient)
+{
+	MYSQL_RES *res;
+
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient='%u'",uClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if(!mysql_num_rows(res))
+	{
+		mysql_free_result(res);
+		return(NEW_BLOCK);
+	}
+	else
+	{
+		mysql_free_result(res);
+		return(NA_BLOCK);
+	}
+
+	return(0);
+
+}//unsigned uGetOwnerStatus(unsigned uClient)
 
 
 unsigned uCIDR(unsigned uSize)
