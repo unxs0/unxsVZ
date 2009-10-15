@@ -62,7 +62,9 @@ void RipeCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"Ripe"))
 	{
 		ProcessRipeVars(entries,x);
-		
+		if(!strcmp(gcFunction,"RIPE Import"))
+		{
+		}
 		htmlRipe();
 	}
 }//void RipeCommands(pentry entries[], int x)
@@ -71,7 +73,7 @@ void RipeCommands(pentry entries[], int x)
 void htmlRipe(void)
 {
 	htmlHeader("DNS System","Header");
-	htmlRipePage("DNS System","AdminRipe.Body");
+	htmlRipePage("DNS System","Ripe.Body");
 	htmlFooter("Footer");
 
 }//void htmlRipe(void)
