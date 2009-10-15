@@ -200,6 +200,13 @@ void htmlRestoreResourcePage(char *cTitle, char *cTemplateName);
 void RestoreResourceCommands(pentry entries[], int x);
 void funcRRMetaParam(FILE *fp);
 
+//ripe.c
+void htmlRipe(void);
+void ProcessRipeVars(pentry entries[], int x);
+void htmlRipePage(char *cTitle, char *cTemplateName);
+void RipeGetHook(entry gentries[],int x);
+void RipeCommands(pentry entries[], int x);
+
 //dashboard.c
 void htmlDashBoard(void);
 void htmlDashBoardPage(char *cTitle, char *cTemplateName);
