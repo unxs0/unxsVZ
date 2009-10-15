@@ -531,6 +531,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcNSSetMembers(fp);
 	else if(!strcmp(cFunction,"funcRRMetaParam"))
 		funcRRMetaParam(fp);
+	else if(!strcmp(cFunction,"funcIPAuthReport"))
+		funcIPAuthReport(fp);
 
 
 }//void AppFunctions(FILE *fp,char *cFunction)

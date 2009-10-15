@@ -18,6 +18,8 @@ static unsigned uFormat=0;
 char *ParseTextAreaLines(char *cTextArea);//bulkop.c
 void RIPEImport(void);
 
+void htmlIPAuthReport(void);
+
 void ProcessIPAuthVars(pentry entries[], int x)
 {
 	register int i;
@@ -61,12 +63,15 @@ void IPAuthCommands(pentry entries[], int x)
 			{
 				case 1:
 					RIPEImport();
+					htmlIPAuthReport();
+					break;
 				default:
 					gcMessage="<blink>Error:</blink> I don't know how to handle that format";
 			}
 		}
 		htmlIPAuth();
 	}
+
 }//void IPAuthCommands(pentry entries[], int x)
 
 
@@ -77,6 +82,14 @@ void htmlIPAuth(void)
 	htmlFooter("Footer");
 
 }//void htmlIPAuth(void)
+
+
+void htmlIPAuthReport(void)
+{
+	htmlHeader("DNS System","Header");
+	htmlIPAuthPage("DNS System","IPAuthReport.Body");
+	htmlFooter("Footer");
+}//void htmlIPAuthReport(void)
 
 
 void htmlIPAuthPage(char *cTitle, char *cTemplateName)
@@ -153,6 +166,11 @@ void htmlIPAuthPage(char *cTitle, char *cTemplateName)
 
 }//void htmlIPAuthPage()
 
+
+void funcIPAuthReport(FILE *fp)
+{
+
+}//void funcIPAuthReport(FILE *fp)
 
 
 //Import functions code begins here
@@ -304,12 +322,25 @@ void RIPEImport(void)
 				cOwnerAction="None";
 			break;
 		}
-		printf("IP Block Label=%s uClient=%u cBlockAction=%s cOwnerAction=%s\n"
-			,cIPBlock,uClient,cBlockAction,cOwnerAction);
+		//printf("IP Block Label=%s uClient=%u cBlockAction=%s cOwnerAction=%s\n"
+		//	,cIPBlock,uClient,cBlockAction,cOwnerAction);
+
+		if(!strcmp(cOwnerAction,"None")&&!strcmp(cBlockAction,"None")) continue; //No record if nothing to do
+
+		sprintf(gcQuery,"INSERT INTO tTransaction SET cBlock='%s',cBlockAction='%s',cOwnerAction='%s',"
+				"uClient=%u,uCreatedBy=%u,,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				cIPBlock
+				,cBlockAction
+				,cOwnerAction
+				,uClient
+				,guLoginClient
+				,guOrg
+				);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
 
 	}
-
-	exit(0);
 
 }//void RIPEImport(void)
 

@@ -206,6 +206,7 @@ void ProcessIPAuthVars(pentry entries[], int x);
 void htmlIPAuthPage(char *cTitle, char *cTemplateName);
 void IPAuthGetHook(entry gentries[],int x);
 void IPAuthCommands(pentry entries[], int x);
+void funcIPAuthReport(FILE *fp);
 
 //dashboard.c
 void htmlDashBoard(void);
