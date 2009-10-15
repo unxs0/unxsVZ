@@ -162,7 +162,6 @@ void htmlIPAuthPage(char *cTitle, char *cTemplateName)
 #define MOD_BLOCK 2
 #define NA_BLOCK 3
 
-unsigned uCIDR(unsigned uSize);
 void CreateTransactionTable();
 unsigned uGetBlockStatus(char *cBlock,unsigned uClient);
 unsigned uGetOwnerStatus(unsigned uClient);
@@ -202,6 +201,8 @@ void RIPEImport(void)
 	char *cBlockAction="";
 	char *cOwnerAction="";
 
+#define	DEFAULT_CLIENT 2;
+
 	printf("Content-type: text/plain\n\n");
 	CreateTransactionTable();
 
@@ -226,59 +227,31 @@ void RIPEImport(void)
 				,&uDate
 				,&uClient
 				,&uOther);
-			uCidr=uCIDR(uSize);
-			/*printf("cIPBlockStart='%s' cIPBlockEnd='%s' uSize=%u uDate=%u uClient=%u uOther=%u uCidr=%u\n",
-				cIPBlockStart
-				,cIPBlockEnd
-				,uSize
-				,uDate
-				,uClient
-				,uOther
-				,uCidr);
-			*/
-			sprintf(cIPBlock,"%s/%u",cIPBlockStart,uCidr);
-			uBlockStatus=uGetBlockStatus(cIPBlock,uClient);
-			uOwnerStatus=uGetOwnerStatus(uClient);
-
-			switch(uBlockStatus)
-			{
-				case NEW_BLOCK:
-					cBlockAction="New";
-				break;
-
-				case MOD_BLOCK:
-					cBlockAction="Modify";
-				break;
-
-				case NA_BLOCK:
-					cBlockAction="None";
-				break;
-			}
-			switch(uOwnerStatus)
-			{
-				case NEW_BLOCK:
-					cOwnerAction="New";
-				break;
-
-				case MOD_BLOCK:
-					cOwnerAction="Modify";
-				break;
-
-				case NA_BLOCK:
-					cOwnerAction="None";
-				break;
-			}
-			printf("IP Block Label=%s uClient=%u cBlockAction=%s cOwnerAction=%s\n"
-				,cIPBlock,uClient,cBlockAction,cOwnerAction);
-
 		}
 		else if(strstr(cLine,"MRP"))
 		{
 			uProcessed++;
+			//89.167.255.0 - 89.167.255.255 256 20090805 PKXG-MRP-1234-01
+			sscanf(cLine,"%s - %s %u %u PKXG-MRP-%u-%u",
+				cIPBlockStart
+				,cIPBlockEnd
+				,&uSize
+				,&uDate
+				,&uClient
+				,&uOther);
+
 		}
 		else if(strstr(cLine,"INFRA"))
 		{
+			char cUnused[100]={""};
 			uProcessed++;
+			sscanf(cLine,"%s - %s %u %u PKXG-INFRA-%s",
+				cIPBlockStart
+				,cIPBlockEnd
+				,&uSize
+				,&uDate
+				,cUnused);
+			uClient=DEFAULT_CLIENT;
 		}
 		else if(1)
 		{
@@ -286,6 +259,53 @@ void RIPEImport(void)
 			uIgnored++;
 			continue;
 		}
+
+		//Common processing
+		uCidr=(unsigned)(32-log2(uSize));
+
+		/*printf("cIPBlockStart='%s' cIPBlockEnd='%s' uSize=%u uDate=%u uClient=%u uOther=%u uCidr=%u\n",
+			cIPBlockStart
+			,cIPBlockEnd
+			,uSize
+			,uDate
+			,uClient
+			,uOther
+			,uCidr);
+		*/
+		sprintf(cIPBlock,"%s/%u",cIPBlockStart,uCidr);
+		uBlockStatus=uGetBlockStatus(cIPBlock,uClient);
+		uOwnerStatus=uGetOwnerStatus(uClient);
+
+		switch(uBlockStatus)
+		{
+			case NEW_BLOCK:
+				cBlockAction="New";
+			break;
+
+			case MOD_BLOCK:
+				cBlockAction="Modify";
+			break;
+
+			case NA_BLOCK:
+				cBlockAction="None";
+			break;
+		}
+		switch(uOwnerStatus)
+		{
+			case NEW_BLOCK:
+				cOwnerAction="New";
+			break;
+
+			case MOD_BLOCK:
+				cOwnerAction="Modify";
+			break;
+
+			case NA_BLOCK:
+				cOwnerAction="None";
+			break;
+		}
+		printf("IP Block Label=%s uClient=%u cBlockAction=%s cOwnerAction=%s\n"
+			,cIPBlock,uClient,cBlockAction,cOwnerAction);
 
 	}
 
@@ -353,16 +373,3 @@ unsigned uGetOwnerStatus(unsigned uClient)
 	return(0);
 
 }//unsigned uGetOwnerStatus(unsigned uClient)
-
-
-unsigned uCIDR(unsigned uSize)
-{
-	register unsigned x;
-
-	for(x=0;x<32;x++)
-	{
-		if((pow(2,x))==uSize)
-			return(32-x);
-	}
-	return(0);
-}
