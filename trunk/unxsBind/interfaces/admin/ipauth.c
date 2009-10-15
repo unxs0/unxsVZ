@@ -159,10 +159,11 @@ void htmlIPAuthPage(char *cTitle, char *cTemplateName)
 //Will extend in the future for ARIN and LACNIC
 //
 
+unsigned uCIDR(unsigned uSize);
+
 void RIPEImport(void)
 {
 	char cLine[512]={"ERROR"};
-	char *cp;
 	unsigned uLineNumber=0;
 	unsigned uProcessed=0;
 	unsigned uIgnored=0;
@@ -197,13 +198,20 @@ void RIPEImport(void)
 				,&uDate
 				,&uClient
 				,&uOther);
-			printf("cIPBlockStart='%s' cIPBlockEnd='%s' uSize=%u uDate=%u uClient=%u uOther=%u\n",
+			//unsigned uInCIDR4Format(const char *cCIDR4,unsigned *uIPv4,unsigned *uCIDR4Mask)
+			//uInCIDR4Format(cIPBlockStart,&uSize,&uCidr);
+			//pow(2,n)=32-n
+			//32-n=cidr
+			//2'n=
+			uCidr=uCIDR(uSize);
+			printf("cIPBlockStart='%s' cIPBlockEnd='%s' uSize=%u uDate=%u uClient=%u uOther=%u uCidr=%u\n",
 				cIPBlockStart
 				,cIPBlockEnd
 				,uSize
 				,uDate
 				,uClient
-				,uOther);
+				,uOther
+				,uCidr);
 		}
 		else if(strstr(cLine,"MRP"))
 		{
@@ -226,3 +234,15 @@ void RIPEImport(void)
 
 }//void RIPEImport(void)
 
+
+unsigned uCIDR(unsigned uSize)
+{
+	register unsigned x;
+
+	for(x=0;x<32;x++)
+	{
+		if((pow(2,x))==uSize)
+			return(32-x);
+	}
+	return(0);
+}
