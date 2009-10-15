@@ -89,6 +89,7 @@ void htmlIPAuthReport(void)
 	htmlHeader("DNS System","Header");
 	htmlIPAuthPage("DNS System","IPAuthReport.Body");
 	htmlFooter("Footer");
+
 }//void htmlIPAuthReport(void)
 
 
@@ -169,6 +170,26 @@ void htmlIPAuthPage(char *cTitle, char *cTemplateName)
 
 void funcIPAuthReport(FILE *fp)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cBlock,uClient,cBlockAction,cOwnerAction FROM tTransaction ORDER BY uTransaction");
+	mysql_query(&gMysql,gcQuery);
+
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	res=mysql_store_result(&gMysql);
+
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"<tr><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td></tr>\n",
+			field[0]
+			,field[1]
+			,field[2]
+			,field[3]
+			);
+	}
 
 }//void funcIPAuthReport(FILE *fp)
 
@@ -221,7 +242,6 @@ void RIPEImport(void)
 
 #define	DEFAULT_CLIENT 2;
 
-	printf("Content-type: text/plain\n\n");
 	CreateTransactionTable();
 
 	while(1)
@@ -270,6 +290,12 @@ void RIPEImport(void)
 				,&uDate
 				,cUnused);
 			uClient=DEFAULT_CLIENT;
+		}
+		else if(strstr(cLine,"-DELE"))
+		{
+			//Managed outside iDNS, skip
+			uIgnored++;
+			continue;
 		}
 		else if(1)
 		{
@@ -326,9 +352,14 @@ void RIPEImport(void)
 		//	,cIPBlock,uClient,cBlockAction,cOwnerAction);
 
 		if(!strcmp(cOwnerAction,"None")&&!strcmp(cBlockAction,"None")) continue; //No record if nothing to do
+		
+		sprintf(gcQuery,"DELETE FROM tTransaction WHERE cBlock='%s'",cIPBlock);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
 
 		sprintf(gcQuery,"INSERT INTO tTransaction SET cBlock='%s',cBlockAction='%s',cOwnerAction='%s',"
-				"uClient=%u,uCreatedBy=%u,,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				"uClient=%u,uCreatedBy=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				cIPBlock
 				,cBlockAction
 				,cOwnerAction
