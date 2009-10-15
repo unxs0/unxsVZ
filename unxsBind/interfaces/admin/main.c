@@ -135,8 +135,8 @@ int main(int argc, char *argv[])
 				RestoreZoneGetHook(gentries,i);
 			else if(!strcmp(gcPage,"RestoreResource"))
 				RestoreResourceGetHook(gentries,i);
-			else if(!strcmp(gcPage,"Ripe"))
-				RipeGetHook(gentries,i);
+			else if(!strcmp(gcPage,"IPAuth"))
+				IPAuthGetHook(gentries,i);
 			else if(!strcmp(gcPage,"Dashboard"))
 				htmlDashBoard();
 			else if(1)
@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
 	ReportCommands(entries,i);
 	RestoreZoneCommands(entries,i);
 	RestoreResourceCommands(entries,i);
-	RipeCommands(entries,i);
+	IPAuthCommands(entries,i);
 
 	//default logged in page
 	htmlCustomer();
