@@ -40,7 +40,7 @@
 						<a title='Restore deleted zones' class="wpsUnSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=RestoreZone"><b class ="font10pt">Restore Zones</b></a>
 						</td>
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='Import RIPE data into the system' class="wpsSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=Ripe"><b class ="font10pt">RIPE</b></a>
+						<a title='Import IP Auth data into the system' class="wpsSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=Ripe"><b class ="font10pt">RIPE</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
 						<a title='Zone and customer use report' class="wpsUnSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=Report"><b class ="font10pt">Report</b></a>
@@ -102,13 +102,13 @@
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
     <td class="hdrtout padlt8" width="33%">
-		<h6 class="modhdr">Bulk OPs Panel</h6>
+		<h6 class="modhdr">IP Auth Panel</h6>
 	</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td width="10">&nbsp;</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
-		<h6 class="modhdr">Bulk Data Entry Panel</h6>
+		<h6 class="modhdr">IP Auth Data Entry Panel</h6>
 	</td>
    <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
@@ -133,25 +133,14 @@
 		</tr>
 		<tr>
 			<td colspan=2>
-			<input type=submit class=largeButton name=gcFunction value='Bulk Resource Import' title='Imports the RR in the right panel'>
+			<input type=submit class=largeButton name=gcFunction value='IP Auth Import' title='Imports the RIPE data in the right panel'>
 			</td>
 		</tr>
 		<tr>
 			<td colspan=2>
 				<p>
-				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Bulk Operations Tab Details')"><strong>Bulk Operations Tab Details</strong></a><br>
-<strong>Warning this panel is not a two step system. No undo available. Operations take place immediately</strong><br>
-At the Bulk Data Entry Panel you have to enter the resource(s) record(s) you want to import.<br>
-The format of this input is:<br>
-RRName RRType RRParam1 [RRParam2]<br>
-<br>
-RRName is the Name of the Resource Record, use '@' for $ORIGIN.<br>
-RRType is the Resource Record Type. It may be one of the following:<br><br>
-<strong>A</strong> RRParam1 required. E.g: host A 216.32.45.78<br>
-<strong>MX</strong> RRParam1 and RRParam2 required. E.g: @ MX 10 mail.isp.net<br>
-<strong>HINFO</strong> RRParam1 and RRParam2 required. E.g. gateway i686 Linux 2.6<br>
-<strong>CNAME</strong> RRParam1 required. E.g: www CNAME domain.com.<br> 
-<strong>TXT</strong> RRParam1 required E.g: domain.com TXT "v=spf1 ptr ~all"
+				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=IP Auth Tab Details')"><strong>RIPE Tab Details</strong></a><br>
+lorem ipsum
 </td>
 		</tr>
 	</table>
@@ -174,7 +163,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>
 	</tr>
 	<tr>
 		<td valign="top">
-			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Bulk Operations Data')"><strong>Bulk Operations Data</strong></a></td>
+			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=IP Auth Data')"><strong>RIPE Data</strong></a></td>
 			
 		</td>
 		<td>
@@ -206,7 +195,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>
 <table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-    <td class="hdrtout padlt8"><h6 class="modhdr">Bulk Importing Messages</h6></td>
+    <td class="hdrtout padlt8"><h6 class="modhdr">IP Auth Importing Messages</h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
   <tr>
@@ -237,9 +226,6 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>
   </tr>
 </table>
 
-<input type=hidden name=cZone value='{{cZone}}'>
-<input type=hidden name=uView value='{{uView}}'>
 
-<input type=hidden name=gcPage value='BulkOp'>
-<input type=hidden name=uNameServer value='{{uNameServer}}'>
+<input type=hidden name=gcPage value='Ripe'>
 </form>
