@@ -52,8 +52,8 @@ restorezone.o : restorezone.c interface.h ../../local.h ../../mysqlrad.h
 restoreresource.o : restoreresource.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c restoreresource.c -o restoreresource.o $(CFLAGS)
 
-ripe.o : ripe.c interface.h ../../local.h ../../mysqlrad.h
-	cc -c ripe.c -o ripe.o $(CFLAGS)
+ripe.o : ipauth.c interface.h ../../local.h ../../mysqlrad.h
+	cc -c ipauth.c -o ripe.o $(CFLAGS)
 
 dashboard.o : dashboard.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c dashboard.c -o dashboard.o $(CFLAGS)

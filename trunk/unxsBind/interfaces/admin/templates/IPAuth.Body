@@ -40,7 +40,7 @@
 						<a title='Restore deleted zones' class="wpsUnSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=RestoreZone"><b class ="font10pt">Restore Zones</b></a>
 						</td>
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='Import IP Auth data into the system' class="wpsSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=Ripe"><b class ="font10pt">RIPE</b></a>
+						<a title='Import IP Auth data into the system' class="wpsSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=Ripe"><b class ="font10pt">IP Auth</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
 						<a title='Zone and customer use report' class="wpsUnSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=Report"><b class ="font10pt">Report</b></a>
@@ -123,23 +123,21 @@
           <td valign="top">&nbsp;</td>
 	            <td>&nbsp;</td>
 	</tr>
-			    
 		<tr>
-			<td colspan=2>
-			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Do not create Jobs')"><strong>Do not create the Modify Job for the Zone(s)</strong></a></td>
+			<td><a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=IP Format')"><strong>IP Format</strong></a></td>
 			<td>
-			<input type=checkbox name=uDebug value=1>
-			</td>
-		</tr>
+			<select class=type_fields name=uFormat>
+			<option value=1>RIPE</option>
+			</select>
 		<tr>
-			<td colspan=2>
-			<input type=submit class=largeButton name=gcFunction value='IP Auth Import' title='Imports the RIPE data in the right panel'>
+			<td colspan=2 align=center>
+			<input type=submit class=largeButton name=gcFunction value='IP Auth Import' title='Imports the IP Auth data in the right panel'>
 			</td>
 		</tr>
 		<tr>
 			<td colspan=2>
 				<p>
-				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=IP Auth Tab Details')"><strong>RIPE Tab Details</strong></a><br>
+				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=IP Auth Tab Details')"><strong>IP Auth Tab Details</strong></a><br>
 lorem ipsum
 </td>
 		</tr>
@@ -163,7 +161,7 @@ lorem ipsum
 	</tr>
 	<tr>
 		<td valign="top">
-			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=IP Auth Data')"><strong>RIPE Data</strong></a></td>
+			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=IP Auth Data')"><strong>IP Auth Data</strong></a></td>
 			
 		</td>
 		<td>

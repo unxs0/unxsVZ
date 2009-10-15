@@ -201,11 +201,11 @@ void RestoreResourceCommands(pentry entries[], int x);
 void funcRRMetaParam(FILE *fp);
 
 //ripe.c
-void htmlRipe(void);
-void ProcessRipeVars(pentry entries[], int x);
-void htmlRipePage(char *cTitle, char *cTemplateName);
-void RipeGetHook(entry gentries[],int x);
-void RipeCommands(pentry entries[], int x);
+void htmlIPAuth(void);
+void ProcessIPAuthVars(pentry entries[], int x);
+void htmlIPAuthPage(char *cTitle, char *cTemplateName);
+void IPAuthGetHook(entry gentries[],int x);
+void IPAuthCommands(pentry entries[], int x);
 
 //dashboard.c
 void htmlDashBoard(void);
