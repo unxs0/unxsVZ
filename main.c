@@ -220,6 +220,8 @@ int main(int iArgc, char *cArgv[])
 				ExttStatusGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tConfiguration"))
 				ExttConfigurationGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"Dashboard"))
+				unxsVZ("DashBoard");
 
 
 		}
@@ -592,7 +594,10 @@ void Header_ism3(char *title, int js)
 
 	//Logout link
 	if(guSSLCookieLogin)
+	{
 		printf(" <a title='Erase login cookies' href=unxsVZ.cgi?gcFunction=Logout>Logout</a> ");
+		printf(" <a title='Quick dashboard link' href=unxsVZ.cgi?gcFunction=Dashboard>Dashboard</a> ");
+	}
 
 	//Generate Menu Items
 	printf("\n<!-- tab menu -->\n");

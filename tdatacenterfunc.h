@@ -231,7 +231,8 @@ void ExttDatacenterButtons(void)
 
 void ExttDatacenterAuxTable(void)
 {
-	if(!uDatacenter) return;
+	if(!uDatacenter || guMode==2000 )//uMODE_NEW
+		return;
 
         MYSQL_RES *res;
         MYSQL_ROW field;
