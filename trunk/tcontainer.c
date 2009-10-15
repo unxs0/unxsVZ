@@ -191,8 +191,8 @@ void ProcesstContainerListVars(pentry entries[], int x)
                 if(!strncmp(entries[i].name,"ED",2))
                 {
                         sscanf(entries[i].name+2,"%u",&uContainer);
-                        //guMode=2002;
-                        guMode=6;
+                        //guMode=2002;//uMODE_MOD
+                        guMode=6;//uMODE_EDIT
                         tContainer("");
                 }
         }

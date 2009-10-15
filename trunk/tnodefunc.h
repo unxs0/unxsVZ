@@ -320,8 +320,8 @@ void ExttNodeButtons(void)
 			printf("<p><u>Enter/mod data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
 			if(uNode)
-				printf("<p>Copy properties <input title='Copies all properties'"
-					" type=checkbox name=uClone checked>\n");
+				printf("<p><input title='Copies all properties'"
+					" type=checkbox name=uClone checked> Copy properties from property panel below.\n");
                 break;
 
                 case 2001:

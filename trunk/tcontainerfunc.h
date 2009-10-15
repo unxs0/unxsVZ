@@ -282,7 +282,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
                 }
-                else if(!strcmp(gcCommand,"Confirm Mount Template"))
+                else if(!strcmp(gcCommand,"Continue"))
                 {
                         ProcesstContainerVars(entries,x);
 			if(guPermLevel>=9)
@@ -1425,7 +1425,7 @@ void ExttContainerButtons(void)
 			htmlMountTemplateSelect(uMountTemplate);
 			printf("<p><input title='Continue to step 3 of new container creation'"
 					" type=submit class=largeButton"
-					" name=gcCommand value='Confirm Mount Template'>\n");
+					" name=gcCommand value='Continue'>\n");
                         //printf(LANG_NBB_CONFIRMNEW);
                 break;
 
@@ -1577,7 +1577,7 @@ void ExttContainerButtons(void)
 void ExttContainerAuxTable(void)
 {
 
-	if(!uContainer || !uStatus) return;
+	if(!uContainer || (guMode!=0 && guMode!=6)) return;
 
         MYSQL_RES *res;
         MYSQL_ROW field;
