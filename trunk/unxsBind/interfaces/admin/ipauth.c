@@ -463,6 +463,8 @@ void CommitTransaction(void)
 	MYSQL_ROW field;
 	unsigned uClient=0;
 
+	printf("Content-type: text/plain\n\n");
+
 	sprintf(gcQuery,"SELECT DISTINCT uClient FROM tTransaction WHERE cOwnerAction='New' ORDER BY uTransaction");
 	mysql_query(&gMysql,gcQuery);
 
@@ -472,9 +474,10 @@ void CommitTransaction(void)
 	res=mysql_store_result(&gMysql);
 
 	while((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[1],"%u",&uClient);
+	{		
+		sscanf(field[0],"%u",&uClient);
 		ProcessCompanyTransaction(uClient,"New");
+		printf("ProcessCompanyTransaction(%u,'New')\n",uClient);
 	}
 
 	mysql_free_result(res);	
@@ -491,7 +494,9 @@ void CommitTransaction(void)
 	{
 		sscanf(field[1],"%u",&uClient);
 		ProcessTransaction(field[0],uClient,field[2]);
+		printf("ProcessTransaction(%s,%u,%s)\n",field[0],uClient,field[2]);
 	}
+	exit(0);
 	
 }//void CommitTransaction(void)
 
@@ -514,7 +519,7 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 	uNumIPs=uGetNumIPs(cIPBlock);
 	sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 
-	if(strcmp(cAction,"New"))
+	if(!strcmp(cAction,"New"))
 	{
 		//
 		//Create tBlock entry owned by uClient
@@ -659,13 +664,13 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 	while(fgets(gcQuery,2048,fp)!=NULL)
 	{
 		sscanf(gcQuery,"%u,%s",&uFileClient,cLabel);
-		if(uClient==uFileClient)
+		if((uClient==uFileClient)&&!uMatch)
 		{
 			uMatch=1;
 			unsigned uContact=0;
 			char cPasswd[100]={""};
 			char cSavePasswd[16]={""};
-
+			
 			//Create tClient record
 			sprintf(gcQuery,"INSERT INTO tClient SET uClient=%u,cLabel='%s',"
 					"cCode='Organization',uOwner=1,uCreatedBy=%u,"
