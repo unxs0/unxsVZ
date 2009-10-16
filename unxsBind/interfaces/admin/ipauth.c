@@ -459,6 +459,7 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 
 	char cZone[100]={""};
 	char cSerial[100]={""};
+	char cUpdateHost[100]={"packetexchange.net"}; //This will come from tConfiguration, later
 
 	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
 	uNumIPs=uGetNumIPs(cIPBlock);
@@ -486,6 +487,7 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 		res=mysql_store_result(&gMysql);
 		if(!mysql_num_rows(res))
 		{
+CreateZone:		
 			sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=1,cHostmaster='%s',"
 				"uSerial='%s',uExpire=604800,uRefresh=28800,uTTL=86400,"
 				"uRetry=7200,uZoneTTL=86400,uMailServers=0,uView=2,uOwner=%u,"
@@ -507,21 +509,81 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 		}
 		mysql_free_result(res);
 
+		//Submit new job
+
 		//Create block default RRs uOwner=uClient
 		//
 		for(f=d;f<uNumIPs;f++)
 		{
-			//sprintf(gcQuery,"INSERT INTO tResource SET "
-			//		"cName=%u,uRRType=7,cParam1='%u-%u-%u-%u.%s'
+			sprintf(gcQuery,"INSERT INTO tResource SET "
+					"cName=%u,uRRType=7,cParam1='%u-%u-%u-%u.%s',uZone=%u,"
+					"uCreatedBy=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+					,
+					f
+					,f
+					,c
+					,b
+					,a
+					,cUpdateHost
+					,uZone
+					,guLoginClient
+					,uClient
+					);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
 		}
+		//Update zone serial
+		//Submit mod job
 	}
 	else if(strcmp(cAction,"Modify"))
 	{
 		//
 		//Update tBlock uOwner
-		//Update zone(s) (/25 and bigger) RRs
+		sprintf(gcQuery,"UPDATE tBlock SET uOwner=%u,uModBy=%u,"
+				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel='%s'",
+				uClient
+				,guLoginClient
+				,cIPBlock);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
+		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uZone);
+		}
+		else
+			goto CreateZone;
+
+		//Update zone RRs
 		//to be owned by uClient
 		//
+		for(f=d;f<uNumIPs;f++)
+		{
+			//Update to default cParam1 or just uOwner update?
+			sprintf(gcQuery,"UPDATE tResource SET cParam1='%u-%u-%u-%u.%s',uOwner=%u WHERE cName='%u' "
+					"AND uZone=%u",
+					c
+					,b
+					,a
+					,f
+					,cUpdateHost
+					,uClient
+					,f
+					,uZone
+					);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		}
+		//Update zone serial
+		//Submit Mod job for zone
 	}
 
 }//void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
@@ -529,12 +591,30 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 
 void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 {
+	FILE *fp;
+	char cCompanyCSVLocation[100]={"/usr/local/idns/csv/companycode.csv"};
+	char cuClient[16]={""};
+	unsigned uFileClient=0;
+	char cLabel[100]={""};
+
 	if(!strcmp(cAction,"None")) return;
 
 	//Default 'New'
 	
 	//Open CSV file at fixed location
+	fp=fopen(cCompanyCSVLocation,"r");
+	if(fp==NULL)
+		htmlPlainTextError("Could not open CSV file for companies");
+	
 	//Search for uClient at CSV file
+	while(fgets(gcQuery,2048,fp)!=NULL)
+	{
+	//	sprintf(cuClient,"%s",cReturnCSVField(gcQuery,0);
+	//	sprintf(cLabel,"%s",cReturnCSVField(gcQuery,1);
+		
+//		sscanf(cuClient,"%u"
+	}
+
 	//Create tClient record
 	//Create default contact with same cLabel
 	//Password should be 8 characters random text
@@ -641,8 +721,9 @@ void CleanUPBlock(char *cIPBlock)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
-		//Submit Mod job for zone
 	}
+	//Update zone serial
+	//Submit Mod job for zone
 	
 	sprintf(gcQuery,"DELETE FROM tBlock WHERE cLabel='%s'",cIPBlock);
 	mysql_query(&gMysql,gcQuery);
