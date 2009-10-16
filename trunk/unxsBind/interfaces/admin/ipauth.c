@@ -449,10 +449,26 @@ void CleanUPCompanies(void);
 
 void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 {
+	unsigned a,b,c,d,e;
+	unsigned uNumIPs=0;
+	char cZone[100]={""};
+	
+	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
+	uNumIPs=uGetNumIPs(cIPBlock);
+
 	if(strcmp(cAction,"New"))
 	{
 		//
 		//Create tBlock entry owned by uClient
+		sprintf(gcQuery,"INSERT INTO tBlock SET cLabel='%s',uOwner=%u,"
+				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				cIPBlock
+				,uClient
+				,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
 		//Check for .arpa zone if it doesn't exist, create it
 		//owned by DEFAULT_CLIENT
 		//Create block default RRs uOwner=uClient
@@ -470,7 +486,7 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 }//void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 
 
-void ProcessCompanies(unsigned uClient,char *cAction)
+void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 {
 	if(!strcmp(cAction,"None")) return;
 
@@ -482,7 +498,7 @@ void ProcessCompanies(unsigned uClient,char *cAction)
 	//Create default contact with same cLabel
 	//Password should be 8 characters random text
 
-}//void ProcessCompanies(unsigned uClient)
+}//void ProcessCompanyTransaction(unsigned uClient)
 
 void CleanUPCompanies(void)
 {
