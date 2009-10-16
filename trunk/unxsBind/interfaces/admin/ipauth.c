@@ -449,8 +449,8 @@ unsigned uGetOwnerStatus(unsigned uClient)
 //Begin data commit functions
 //
 
-void CleanUPBlock(char *cIPBlock);
-void CleanUPCompanies(void);
+void CleanUpBlock(char *cIPBlock);
+void CleanUpCompanies(void);
 void EncryptPasswd(char *cPasswd);
 char *cGetRandomPassword(void);
 void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction);
@@ -496,6 +496,9 @@ void CommitTransaction(void)
 		ProcessTransaction(field[0],uClient,field[2]);
 		printf("ProcessTransaction(%s,%u,%s)\n",field[0],uClient,field[2]);
 	}
+	
+	CleanUpCompanies();
+
 	exit(0);
 	
 }//void CommitTransaction(void)
@@ -508,6 +511,7 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 
 	register unsigned f;
 	unsigned a,b,c,d,e;
+	unsigned uNumNets=0;
 	unsigned uNumIPs=0;
 	unsigned uZone=0;
 
@@ -731,9 +735,6 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 }//void ProcessCompanyTransaction(unsigned uClient)
 
 
-void to64(register char *s, register long v, register int n);
-
-
 char *cGetRandomPassword(void)
 {
 	static char cPasswd[10]={""};
@@ -766,7 +767,7 @@ char *cGetRandomPassword(void)
 }//char *cGetRandomPassword(void)
 
 
-void CleanUPCompanies(void)
+void CleanUpCompanies(void)
 {
 	//If a company doesn't exist in the tTransaction table:
 	//* Company removed
@@ -800,7 +801,7 @@ void CleanUPCompanies(void)
 		//Delete forward zones and their RRs
 		//The query below ensures that the reverse
 		//zones RRs are not touched, those will be handled
-		//by the CleanUPBlock() function call below
+		//by the CleanUpBlock() function call below
 		sprintf(gcQuery,"DELETE FROM tResource WHERE uZone IN "
 				"(SELECT uZone FROM tZone WHERE uOwner=%s)",field[0]);
 		mysql_query(&gMysql,gcQuery);
@@ -819,7 +820,7 @@ void CleanUPCompanies(void)
 			htmlPlainTextError(mysql_error(&gMysql));
 		res2=mysql_store_result(&gMysql);
 		while((field2=mysql_fetch_row(res2)))
-			CleanUPBlock(field2[0]);
+			CleanUpBlock(field2[0]);
 
 		//Delete contacts
 		sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient IN "
@@ -831,12 +832,17 @@ void CleanUPCompanies(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
+		sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%s",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
 	}
 	
-}//void CleanUPCompanies(void)
+}//void CleanUpCompanies(void)
 
 
-void CleanUPBlock(char *cIPBlock)
+void CleanUpBlock(char *cIPBlock)
 {
 	unsigned uNumIPs=0;
 	unsigned a,b,c,d,e,f;
@@ -876,6 +882,6 @@ void CleanUPBlock(char *cIPBlock)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 
-}//void CleanUPBlock(char *cIPBlock)
+}//void CleanUpBlock(char *cIPBlock)
 
 
