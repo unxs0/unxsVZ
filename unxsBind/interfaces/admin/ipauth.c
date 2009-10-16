@@ -449,12 +449,20 @@ void CleanUPCompanies(void);
 
 void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	register unsigned f;
 	unsigned a,b,c,d,e;
 	unsigned uNumIPs=0;
+	unsigned uZone=0;
+
 	char cZone[100]={""};
-	
+	char cSerial[100]={""};
+
 	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
 	uNumIPs=uGetNumIPs(cIPBlock);
+	sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 
 	if(strcmp(cAction,"New"))
 	{
@@ -471,8 +479,41 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 
 		//Check for .arpa zone if it doesn't exist, create it
 		//owned by DEFAULT_CLIENT
+		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if(!mysql_num_rows(res))
+		{
+			sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=1,cHostmaster='%s',"
+				"uSerial='%s',uExpire=604800,uRefresh=28800,uTTL=86400,"
+				"uRetry=7200,uZoneTTL=86400,uMailServers=0,uView=2,uOwner=%u,"
+				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				cZone
+				,HOSTMASTER
+				,cSerial
+				,DEFAULT_CLIENT
+				,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			uZone=mysql_insert_id(&gMysql);
+		}
+		else
+		{
+			field=mysql_fetch_row(res);
+			sscanf(field[0],"%u",&uZone);
+		}
+		mysql_free_result(res);
+
 		//Create block default RRs uOwner=uClient
 		//
+		for(f=d;f<uNumIPs;f++)
+		{
+			//sprintf(gcQuery,"INSERT INTO tResource SET "
+			//		"cName=%u,uRRType=7,cParam1='%u-%u-%u-%u.%s'
+		}
 	}
 	else if(strcmp(cAction,"Modify"))
 	{
