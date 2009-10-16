@@ -572,6 +572,7 @@ MYSQL_RES *ZoneQuery(char *cZone)
 
 }//MYSQL_RES *ZoneQuery(void)
 
+
 void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 {
 	MYSQL_RES *res;
@@ -588,12 +589,14 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 	char cUpdateHost[100]={"packetexchange.net"}; //This will come from tConfiguration, later
 	
 	time_t luClock;
-
+	
 	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
 	uNumIPs=uGetNumIPs(cIPBlock);
 	uNumNets=uGetNumNets(cIPBlock);
 	sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 	time(&luClock);
+	printf("uNumIPs=%u\n",uNumIPs);
+	printf("uNumNets=%u\n",uNumNets);
 
 	if(!strcmp(cAction,"New"))
 	{
@@ -604,6 +607,7 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 				cIPBlock
 				,uClient
 				,guLoginClient);
+		printf("%s\n",gcQuery);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -629,7 +633,7 @@ CreateZone:
 			//Create block default RRs uOwner=uClient
 			//
 			if(d==0)d++;
-			for(f=d;f<uNumIPs;f++)
+			for(f=d;f<(uNumIPs+1);f++)
 			{
 				sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
 				CreateDefaultRR(f,cParam1,uZone,uClient);
@@ -643,12 +647,42 @@ CreateZone:
 		}//if(uNumNets==1)
 		else
 		{
+			register int x;
+			printf("Larger than /24 blocks\n");
 			//Larger than /24 blocks
-			for(f=c;f<((c+uNumNets));f++)
+			for(x=c;x<(c+uNumNets);x++)
 			{
 				//
-				sprintf(cZone,"%u.%u.%u.in-addr.arpa",f,b,a);
-			}
+				sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
+				printf("cZone=%s\n",cZone);
+
+				res=ZoneQuery(cZone);
+				if(!mysql_num_rows(res))
+				{
+					uZone=uCreateZone(cZone,DEFAULT_CLIENT);
+				}
+				else
+				{
+					field=mysql_fetch_row(res);
+					sscanf(field[0],"%u",&uZone);
+				}
+				mysql_free_result(res);
+			
+				//Create block default RRs uOwner=uClient
+				//
+				if(d==0)d++;
+				for(f=d;f<255;f++)
+				{
+					sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+					CreateDefaultRR(f,cParam1,uZone,uClient);
+				}
+				//Update zone serial
+				UpdateSerialNum(cZone,"2");
+				//Submit mod job
+				//Default uNSSet=1 ONLY
+				if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
+					htmlPlainTextError(mysql_error(&gMysql));
+			}//for(f=c;f<((c+uNumNets));f++)
 		}
 	}
 	else if(strcmp(cAction,"Modify"))
@@ -680,7 +714,7 @@ CreateZone:
 		//to be owned by uClient
 		//
 		if(d==0)d++;
-		for(f=d;f<uNumIPs;f++)
+		for(f=d;f<(uNumIPs+1);f++)
 		{
 			//Update to default cParam1 or just uOwner update?
 			sprintf(gcQuery,"UPDATE tResource SET cParam1='%u-%u-%u-%u.%s',uOwner=%u WHERE cName='%u' "
@@ -906,7 +940,7 @@ void CleanUpBlock(char *cIPBlock)
 
 	//Update RRs
 	if(d==0)d++;
-	for(f=d;f<uNumIPs;f++)
+	for(f=d;f<(uNumIPs+1);f++)
 	{
 		sprintf(gcQuery,"UPDATE tResource SET cParam1='%u-%u-%u-%u.%s' WHERE cName='%u' "
 				"AND uZone IN (SELECT uZone FROM tZone WHERE cZone='%s')",
