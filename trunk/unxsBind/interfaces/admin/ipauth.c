@@ -455,7 +455,7 @@ void EncryptPasswd(char *cPasswd);
 char *cGetRandomPassword(void);
 void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction);
 void ProcessCompanyTransaction(unsigned uClient,char *cAction);
-
+void UpdateSerialNum(char *cZone,char *cuView);
 
 void CommitTransaction(void)
 {
@@ -514,10 +514,13 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 	char cZone[100]={""};
 	char cSerial[100]={""};
 	char cUpdateHost[100]={"packetexchange.net"}; //This will come from tConfiguration, later
+	
+	time_t luClock;
 
 	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
 	uNumIPs=uGetNumIPs(cIPBlock);
 	sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+	time(&luClock);
 
 	if(!strcmp(cAction,"New"))
 	{
@@ -562,11 +565,13 @@ CreateZone:
 			sscanf(field[0],"%u",&uZone);
 		}
 		mysql_free_result(res);
-
+		UpdateSerialNum(cZone,"2");
 		//Submit new job
-
+		if(AdminSubmitJob("New",1,cZone,0,luClock))
+				htmlPlainTextError(mysql_error(&gMysql));
 		//Create block default RRs uOwner=uClient
 		//
+		if(d==0)d++;
 		for(f=d;f<uNumIPs;f++)
 		{
 			sprintf(gcQuery,"INSERT INTO tResource SET "
@@ -588,7 +593,11 @@ CreateZone:
 				htmlPlainTextError(mysql_error(&gMysql));
 		}
 		//Update zone serial
+		UpdateSerialNum(cZone,"2");
 		//Submit mod job
+		//Default uNSSet=1 ONLY
+		if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
+				htmlPlainTextError(mysql_error(&gMysql));
 	}
 	else if(strcmp(cAction,"Modify"))
 	{
@@ -618,6 +627,7 @@ CreateZone:
 		//Update zone RRs
 		//to be owned by uClient
 		//
+		if(d==0)d++;
 		for(f=d;f<uNumIPs;f++)
 		{
 			//Update to default cParam1 or just uOwner update?
@@ -637,7 +647,10 @@ CreateZone:
 				htmlPlainTextError(mysql_error(&gMysql));
 		}
 		//Update zone serial
+		UpdateSerialNum(cZone,"2");
 		//Submit Mod job for zone
+		if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
+				htmlPlainTextError(mysql_error(&gMysql));
 	}
 
 }//void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
@@ -670,7 +683,6 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 			unsigned uContact=0;
 			char cPasswd[100]={""};
 			char cSavePasswd[16]={""};
-			
 			//Create tClient record
 			sprintf(gcQuery,"INSERT INTO tClient SET uClient=%u,cLabel='%s',"
 					"cCode='Organization',uOwner=1,uCreatedBy=%u,"
@@ -719,20 +731,36 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 }//void ProcessCompanyTransaction(unsigned uClient)
 
 
+void to64(register char *s, register long v, register int n);
+
+
 char *cGetRandomPassword(void)
 {
 	static char cPasswd[10]={""};
+	MYSQL_RES *res;
+	MYSQL_ROW field;
 
-	unsigned uLength=8;
-	unsigned i,f;
+	mysql_query(&gMysql,"DROP function if exists generate_alpha");
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	mysql_query(&gMysql,"CREATE FUNCTION generate_alpha () RETURNS CHAR(1) "
+			"RETURN ELT(FLOOR(1 + (RAND() * (50-1))), 'a','b','c','d'"
+			",'e','f','g','h','i','j','k','l','m  ','n','o','p','q','r'"
+			",'s','t','u','v','w','x','y',  'z','A','B','C','D','E','F',"
+			"'G','H','I','J','K','L','M  ','N','O','P','Q','R','S','T','U'"
+			",'V','W','X','Y',  'Z' )");
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	mysql_query(&gMysql,"SELECT CONCAT(generate_alpha (),generate_alpha (),generate_alpha (),"
+			"generate_alpha (),generate_alpha (),generate_alpha (),generate_alpha (),"
+			"generate_alpha ())");
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	field=mysql_fetch_row(res); //We will always have a row if the above queries didn't fail
+	
+	sprintf(cPasswd,"%s",field[0]);
 
-	srand((unsigned int)time(0));
-	for(i=0;i<uLength;i++)
-	{
-		f=rand()%93+33;
-		cPasswd[i]=f;
-	}
-	cPasswd[9]=0;
 	return(cPasswd);
 
 }//char *cGetRandomPassword(void)
@@ -761,7 +789,7 @@ void CleanUPCompanies(void)
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u",DEFAULT_CLIENT);
+		"uClient!=1 AND uClient!=%u AND cCode='Organization'",DEFAULT_CLIENT);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -823,6 +851,7 @@ void CleanUPBlock(char *cIPBlock)
 	sprintf(cZone,"%u.%u.%u.in-adrr.arpa",c,b,a);
 
 	//Update RRs
+	if(d==0)d++;
 	for(f=d;f<uNumIPs;f++)
 	{
 		sprintf(gcQuery,"UPDATE tResource SET cParam1='%u-%u-%u-%u.%s' WHERE cName='%u' "
