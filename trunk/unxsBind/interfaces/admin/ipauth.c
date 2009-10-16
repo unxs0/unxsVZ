@@ -593,10 +593,10 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
 	uNumIPs=uGetNumIPs(cIPBlock);
 	uNumNets=uGetNumNets(cIPBlock);
-	sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+	
 	time(&luClock);
-	printf("uNumIPs=%u\n",uNumIPs);
-	printf("uNumNets=%u\n",uNumNets);
+	//printf("uNumIPs=%u\n",uNumIPs);
+	//printf("uNumNets=%u\n",uNumNets);
 
 	if(!strcmp(cAction,"New"))
 	{
@@ -648,13 +648,13 @@ CreateZone:
 		else
 		{
 			register int x;
-			printf("Larger than /24 blocks\n");
 			//Larger than /24 blocks
+			
 			for(x=c;x<(c+uNumNets);x++)
 			{
 				//
 				sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
-				printf("cZone=%s\n",cZone);
+				//printf("cZone=%s\n",cZone);
 
 				res=ZoneQuery(cZone);
 				if(!mysql_num_rows(res))
@@ -736,7 +736,7 @@ CreateZone:
 		UpdateSerialNum(cZone,"2");
 		//Submit Mod job for zone
 		if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
-				htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(mysql_error(&gMysql));
 	}
 
 }//void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
@@ -923,47 +923,87 @@ void CleanUpCompanies(void)
 	
 }//void CleanUpCompanies(void)
 
+void ResetRR(char *cZone,unsigned uName,char *cParam1);
 
 void CleanUpBlock(char *cIPBlock)
 {
 	unsigned uNumIPs=0;
+	unsigned uNumNets=0;
+
 	unsigned a,b,c,d,e,f;
 	char cZone[100]={""};
+	char cParam1[200]={""};
 	char cUpdateHost[100]={"packetexchange.net"}; //This will come from tConfiguration, later
+	time_t luClock;
 
-	//This initial version is for /24 and smaller blocks only!!
+	time(&luClock);
 	
 	uNumIPs=uGetNumIPs(cIPBlock);
+	uNumNets=uGetNumNets(cIPBlock);
 
 	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
-	sprintf(cZone,"%u.%u.%u.in-adrr.arpa",c,b,a);
 
-	//Update RRs
-	if(d==0)d++;
-	for(f=d;f<(uNumIPs+1);f++)
-	{
-		sprintf(gcQuery,"UPDATE tResource SET cParam1='%u-%u-%u-%u.%s' WHERE cName='%u' "
-				"AND uZone IN (SELECT uZone FROM tZone WHERE cZone='%s')",
-				c
-				,b
-				,a
-				,f
-				,cUpdateHost
-				,f
-				,cZone
-				);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-	}
-	//Update zone serial
-	//Submit Mod job for zone
-	
 	sprintf(gcQuery,"DELETE FROM tBlock WHERE cLabel='%s'",cIPBlock);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 
+	if(uNumNets==1)
+	{
+		//Update RRs
+		if(d==0)d++;
+		sprintf(cZone,"%u.%u.%u.in-adrr.arpa",c,b,a);
+
+		for(f=d;f<(uNumIPs+1);f++)
+		{
+			sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+			ResetRR(cZone,f,cParam1);
+		}
+		//Update zone serial
+		UpdateSerialNum(cZone,"2");
+		//Submit Mod job for zone
+		if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+	else
+	{
+		register int x;
+		//Larger than /24 blocks
+			
+		for(x=c;x<(c+uNumNets);x++)
+		{
+			//
+			sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
+			//printf("cZone=%s\n",cZone);
+			for(f=d;f<254;f++)
+			{
+				sprintf(cParam1,"%u-%u-%u-%u.%s",f,x,b,a,cUpdateHost);
+				ResetRR(cZone,f,cParam1);
+			}
+			//Update zone serial
+			UpdateSerialNum(cZone,"2");
+			//Submit Mod job for zone
+			if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
+				htmlPlainTextError(mysql_error(&gMysql));
+		}
+		
+
+	}
+
 }//void CleanUpBlock(char *cIPBlock)
 
 
+void ResetRR(char *cZone,unsigned uName,char *cParam1)
+{
+	sprintf(gcQuery,"UPDATE tResource SET cParam1='%s',uOwner=%u WHERE cName='%u' "
+			"AND uZone IN (SELECT uZone FROM tZone WHERE cZone='%s')",
+			cParam1
+			,DEFAULT_CLIENT
+			,uName
+			,cZone
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void ResetRR(char *cZone,char *cParam1)
