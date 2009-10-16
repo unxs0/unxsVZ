@@ -39,6 +39,9 @@
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
 						<a title='Restore deleted zones' class="wpsUnSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=RestoreZone"><b class ="font10pt">Restore Zones</b></a>
 						</td>
+						<td class="wpsUnSelectedPlace" nowrap height="100%">
+						<a title='Import IP Auth data into the system' class="wpsUnSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=IPAuth"><b class ="font10pt">IP Auth</b></a>
+						</td>
 						<td class="wpsSelectedPlace" nowrap height="100%">
 						<a title='Zone a customer use report' class="wpsSelectedPlaceLink" href='idnsAdmin.cgi?&gcPage=Report'><b class ="font10pt">Report</b></a>
 						</td>
