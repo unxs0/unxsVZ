@@ -445,6 +445,7 @@ unsigned uGetOwnerStatus(unsigned uClient)
 
 void CleanUPBlock(char *cIPBlock);
 void CleanUPCompanies(void);
+char *cGetRandomPassword(void);
 
 
 void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
@@ -593,7 +594,6 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 {
 	FILE *fp;
 	char cCompanyCSVLocation[100]={"/usr/local/idns/csv/companycode.csv"};
-	char cuClient[16]={""};
 	unsigned uFileClient=0;
 	char cLabel[100]={""};
 
@@ -609,10 +609,37 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 	//Search for uClient at CSV file
 	while(fgets(gcQuery,2048,fp)!=NULL)
 	{
-	//	sprintf(cuClient,"%s",cReturnCSVField(gcQuery,0);
-	//	sprintf(cLabel,"%s",cReturnCSVField(gcQuery,1);
-		
-//		sscanf(cuClient,"%u"
+		sscanf(gcQuery,"%u,%s",&uFileClient,cLabel);
+		if(uClient==uFileClient)
+		{
+			unsigned uContact=0;
+
+			//Create tClient record
+			sprintf(gcQuery,"INSERT INTO tClient SET uClient=%u,cLabel='%s',"
+					"cCode='Organization',uOwner=1,uCreatedBy=%u,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uClient
+					,cLabel
+					,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			//Create default contact with same cLabel
+			sprintf(gcQuery,"INSERT INTO tClient SET uOwner=%u,cLabel='%s',"
+					"cCode='Contact',uCreatedBy=%u,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uClient
+					,cLabel
+					,guLoginClient
+					);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+
+			uContact=mysql_insert_id(&gMysql);
+			//Password should be 8 characters random text
+		}
+
 	}
 
 	//Create tClient record
@@ -620,6 +647,26 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 	//Password should be 8 characters random text
 
 }//void ProcessCompanyTransaction(unsigned uClient)
+
+
+char *cGetRandomPassword(void)
+{
+	static char cPasswd[10]={""};
+
+	unsigned uLength=8;
+	unsigned i,f;
+
+	srand((unsigned int)time(0));
+	for(i=0;i<uLength;i++)
+	{
+		f=rand()%93+33;
+		cPasswd[i]=f;
+	}
+	cPasswd[9]=0;
+	return(cPasswd);
+
+}//char *cGetRandomPassword(void)
+
 
 void CleanUPCompanies(void)
 {
@@ -731,4 +778,5 @@ void CleanUPBlock(char *cIPBlock)
 		htmlPlainTextError(mysql_error(&gMysql));
 
 }//void CleanUPBlock(char *cIPBlock)
+
 
