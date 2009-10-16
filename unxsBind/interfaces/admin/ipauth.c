@@ -456,6 +456,10 @@ char *cGetRandomPassword(void);
 void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction);
 void ProcessCompanyTransaction(unsigned uClient,char *cAction);
 void UpdateSerialNum(char *cZone,char *cuView);
+unsigned uCreateZone(char *cZone,unsigned uOwner);
+void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner);
+MYSQL_RES *ZoneQuery(char *cZone);
+
 
 void CommitTransaction(void)
 {
@@ -504,6 +508,70 @@ void CommitTransaction(void)
 }//void CommitTransaction(void)
 
 
+unsigned uCreateZone(char *cZone,unsigned uOwner)
+{
+	//This function creates a new zone
+	//sets it serial number
+	//and submits a new job
+	//
+	unsigned uZone=0;
+	time_t luClock;
+
+	time(&luClock);
+
+	sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=1,cHostmaster='%s',"
+			"uSerial=0,uExpire=604800,uRefresh=28800,uTTL=86400,"
+			"uRetry=7200,uZoneTTL=86400,uMailServers=0,uView=2,uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cZone
+			,HOSTMASTER
+			,uOwner
+			,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uZone=mysql_insert_id(&gMysql);
+	UpdateSerialNum(cZone,"2");
+	//Submit new job
+	if(AdminSubmitJob("New",1,cZone,0,luClock))
+			htmlPlainTextError(mysql_error(&gMysql));
+	
+	return(uZone);
+
+}//unsigned uCreateZone(char *cZone,unsigned uOwner)
+
+
+void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner)
+{
+	sprintf(gcQuery,"INSERT INTO tResource SET "
+			"cName=%u,uRRType=7,cParam1='%s',uZone=%u,"
+			"uCreatedBy=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uName
+			,cParam1
+			,uZone
+			,guLoginClient
+			,uOwner
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner)
+
+
+MYSQL_RES *ZoneQuery(char *cZone)
+{
+	static MYSQL_RES *res;
+
+	sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	return(res);
+
+}//MYSQL_RES *ZoneQuery(void)
+
 void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 {
 	MYSQL_RES *res;
@@ -516,13 +584,14 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 	unsigned uZone=0;
 
 	char cZone[100]={""};
-	char cSerial[100]={""};
+	char cParam1[200]={""};
 	char cUpdateHost[100]={"packetexchange.net"}; //This will come from tConfiguration, later
 	
 	time_t luClock;
 
 	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
 	uNumIPs=uGetNumIPs(cIPBlock);
+	uNumNets=uGetNumNets(cIPBlock);
 	sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 	time(&luClock);
 
@@ -538,70 +607,49 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
-
-		//Check for .arpa zone if it doesn't exist, create it
-		//owned by DEFAULT_CLIENT
-		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		if(!mysql_num_rows(res))
+		if(uNumNets==1)
 		{
-CreateZone:		
-			sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=1,cHostmaster='%s',"
-				"uSerial='%s',uExpire=604800,uRefresh=28800,uTTL=86400,"
-				"uRetry=7200,uZoneTTL=86400,uMailServers=0,uView=2,uOwner=%u,"
-				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				cZone
-				,HOSTMASTER
-				,cSerial
-				,DEFAULT_CLIENT
-				,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			uZone=mysql_insert_id(&gMysql);
-		}
+			//24 and smaller blocks
+			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+			//Check for .arpa zone if it doesn't exist, create it
+			//owned by DEFAULT_CLIENT
+			res=ZoneQuery(cZone);
+			if(!mysql_num_rows(res))
+			{
+CreateZone:			
+				uZone=uCreateZone(cZone,DEFAULT_CLIENT);
+			}
+			else
+			{
+				field=mysql_fetch_row(res);
+				sscanf(field[0],"%u",&uZone);
+			}
+			mysql_free_result(res);
+			
+			//Create block default RRs uOwner=uClient
+			//
+			if(d==0)d++;
+			for(f=d;f<uNumIPs;f++)
+			{
+				sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+				CreateDefaultRR(f,cParam1,uZone,uClient);
+			}
+			//Update zone serial
+			UpdateSerialNum(cZone,"2");
+			//Submit mod job
+			//Default uNSSet=1 ONLY
+			if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
+					htmlPlainTextError(mysql_error(&gMysql));
+		}//if(uNumNets==1)
 		else
 		{
-			field=mysql_fetch_row(res);
-			sscanf(field[0],"%u",&uZone);
+			//Larger than /24 blocks
+			for(f=c;f<((c+uNumNets));f++)
+			{
+				//
+				sprintf(cZone,"%u.%u.%u.in-addr.arpa",f,b,a);
+			}
 		}
-		mysql_free_result(res);
-		UpdateSerialNum(cZone,"2");
-		//Submit new job
-		if(AdminSubmitJob("New",1,cZone,0,luClock))
-				htmlPlainTextError(mysql_error(&gMysql));
-		//Create block default RRs uOwner=uClient
-		//
-		if(d==0)d++;
-		for(f=d;f<uNumIPs;f++)
-		{
-			sprintf(gcQuery,"INSERT INTO tResource SET "
-					"cName=%u,uRRType=7,cParam1='%u-%u-%u-%u.%s',uZone=%u,"
-					"uCreatedBy=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-					,
-					f
-					,f
-					,c
-					,b
-					,a
-					,cUpdateHost
-					,uZone
-					,guLoginClient
-					,uClient
-					);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-		}
-		//Update zone serial
-		UpdateSerialNum(cZone,"2");
-		//Submit mod job
-		//Default uNSSet=1 ONLY
-		if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
-				htmlPlainTextError(mysql_error(&gMysql));
 	}
 	else if(strcmp(cAction,"Modify"))
 	{
