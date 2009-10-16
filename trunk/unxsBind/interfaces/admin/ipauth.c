@@ -18,6 +18,8 @@ static unsigned uFormat=0;
 char *ParseTextAreaLines(char *cTextArea);//bulkop.c
 void RIPEImport(void);
 
+void CommitTransaction(void);
+
 void htmlIPAuthReport(void);
 
 void ProcessIPAuthVars(pentry entries[], int x)
@@ -68,6 +70,10 @@ void IPAuthCommands(pentry entries[], int x)
 				default:
 					gcMessage="<blink>Error:</blink> I don't know how to handle that format";
 			}
+		}
+		else if(!strcmp(gcFunction,"Commit IP Auth Import"))
+		{
+			CommitTransaction();		
 		}
 		htmlIPAuth();
 	}
@@ -243,6 +249,10 @@ void RIPEImport(void)
 
 	CreateTransactionTable();
 
+	sprintf(gcQuery,"TRUNCATE tTransaction");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 	while(1)
 	{
 
@@ -352,11 +362,6 @@ void RIPEImport(void)
 
 		if(!strcmp(cOwnerAction,"None")&&!strcmp(cBlockAction,"None")) continue; //No record if nothing to do
 		
-		sprintf(gcQuery,"DELETE FROM tTransaction WHERE cBlock='%s'",cIPBlock);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-
 		sprintf(gcQuery,"INSERT INTO tTransaction SET cBlock='%s',cBlockAction='%s',cOwnerAction='%s',"
 				"uClient=%u,uCreatedBy=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				cIPBlock
@@ -371,7 +376,8 @@ void RIPEImport(void)
 			htmlPlainTextError(mysql_error(&gMysql));
 
 	}
-
+	//Lock tTransaction for writing?
+	
 }//void RIPEImport(void)
 
 
@@ -445,7 +451,49 @@ unsigned uGetOwnerStatus(unsigned uClient)
 
 void CleanUPBlock(char *cIPBlock);
 void CleanUPCompanies(void);
+void EncryptPasswd(char *cPasswd);
 char *cGetRandomPassword(void);
+void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction);
+void ProcessCompanyTransaction(unsigned uClient,char *cAction);
+
+
+void CommitTransaction(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uClient=0;
+
+	sprintf(gcQuery,"SELECT DISTINCT uClient FROM tTransaction WHERE cOwnerAction='New' ORDER BY uTransaction");
+	mysql_query(&gMysql,gcQuery);
+
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	res=mysql_store_result(&gMysql);
+
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uClient);
+		ProcessCompanyTransaction(uClient,"New");
+	}
+
+	mysql_free_result(res);	
+
+	sprintf(gcQuery,"SELECT cBlock,uClient,cBlockAction FROM tTransaction ORDER BY uTransaction");
+	mysql_query(&gMysql,gcQuery);
+
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	res=mysql_store_result(&gMysql);
+
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uClient);
+		ProcessTransaction(field[0],uClient,field[2]);
+	}
+	
+}//void CommitTransaction(void)
 
 
 void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
@@ -595,6 +643,7 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 	FILE *fp;
 	char cCompanyCSVLocation[100]={"/usr/local/idns/csv/companycode.csv"};
 	unsigned uFileClient=0;
+	unsigned uMatch=0;
 	char cLabel[100]={""};
 
 	if(!strcmp(cAction,"None")) return;
@@ -612,7 +661,10 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 		sscanf(gcQuery,"%u,%s",&uFileClient,cLabel);
 		if(uClient==uFileClient)
 		{
+			uMatch=1;
 			unsigned uContact=0;
+			char cPasswd[100]={""};
+			char cSavePasswd[16]={""};
 
 			//Create tClient record
 			sprintf(gcQuery,"INSERT INTO tClient SET uClient=%u,cLabel='%s',"
@@ -638,13 +690,26 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 
 			uContact=mysql_insert_id(&gMysql);
 			//Password should be 8 characters random text
+			sprintf(cPasswd,"%s",cGetRandomPassword());
+			sprintf(cSavePasswd,"%s",cPasswd);
+			EncryptPasswd(cPasswd);
+			sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',uCertClient=%u,"
+					"uOwner=%u,cPasswd='%s',cClrPasswd='%s',cIpMask='0.0.0.0',"
+					"uPerm=6,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cLabel
+					,uContact
+					,uClient
+					,cPasswd
+					,cSavePasswd
+					,guLoginClient
+					);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
 		}
-
 	}
-
-	//Create tClient record
-	//Create default contact with same cLabel
-	//Password should be 8 characters random text
+	
+	//Do something based on uMatch?
 
 }//void ProcessCompanyTransaction(unsigned uClient)
 
