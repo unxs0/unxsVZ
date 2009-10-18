@@ -2996,7 +2996,7 @@ unsigned GetContainerStatus(const unsigned uContainer, unsigned *uStatus)
 	mysql_free_result(res);
 	return(0);
 
-}//void GetContainerStatus()
+}//unsigned GetContainerStatus()
 
 
 unsigned GetContainerMainIP(const unsigned uContainer,char *cIP)
