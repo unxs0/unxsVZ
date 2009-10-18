@@ -19,6 +19,29 @@ NOTES
 					}\
 					mysqlRes=mysql_store_result(&gMysql);
 
+struct structContainer
+{
+	char cLabel[32];
+	char cHostname[64];
+	unsigned uVeth;
+	unsigned uSource;
+	unsigned uIPv4;
+	unsigned uOSTemplate;
+	unsigned uConfig;
+	unsigned uNameserver;
+	unsigned uSearchdomain;
+	unsigned uDatacenter;
+	unsigned uNode;
+	unsigned uStatus;
+	unsigned uOwner;
+	unsigned uCreatedBy;
+	unsigned long uCreatedDate;
+	unsigned uModBy;
+	unsigned long uModDate;
+};
+void GetContainerProps(unsigned uContainer,struct structContainer *sContainer);
+void InitContainerProps(struct structContainer *sContainer);
+
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
 static unsigned uMountTemplate=0;
@@ -46,7 +69,7 @@ unsigned CreateNewContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uC
 unsigned CreateStartContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
-void CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 void htmlContainerNotes(unsigned uContainer);
@@ -186,11 +209,96 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 void ExtProcesstContainerVars(pentry entries[], int x)
 {
 	register int i;
+	unsigned uOnlyOnce=1;
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(entries[i].name,"cSearch"))
 		{
 			sprintf(cSearch,"%.31s",entries[i].val);
+		}
+		else if(!strncmp(entries[i].name,"Ct",2))
+		{
+			//insider xss protection
+			if(guPermLevel<12)
+				continue;
+
+			sscanf(entries[i].name,"Ct%u",&uContainer);
+			if(uContainer)
+			{
+				if(!strcmp(gcFunction,"tContainerTools"))
+				{
+					if(uOnlyOnce)
+					{
+						printf("Content-type: text/plain\n\n");
+						uOnlyOnce=0;
+					}
+					if(!strcmp(gcCommand,"Group Stop"))
+					{
+						struct structContainer sContainer;
+
+						InitContainerProps(&sContainer);
+						GetContainerProps(uContainer,&sContainer);
+						if(sContainer.uStatus==uACTIVE)
+						{
+							if(StopContainerJob(sContainer.uDatacenter,
+									sContainer.uNode,uContainer))
+							{
+								SetContainerStatus(uContainer,uAWAITSTOP);
+								printf("Group Stop uContainer=%u\n",uContainer);
+							}
+						}
+					}
+					else if(!strcmp(gcCommand,"Group Start"))
+					{
+						struct structContainer sContainer;
+
+						InitContainerProps(&sContainer);
+						GetContainerProps(uContainer,&sContainer);
+						if(sContainer.uStatus==uSTOPPED)
+						{
+							if(CreateStartContainerJob(sContainer.uDatacenter,
+									sContainer.uNode,uContainer))
+							{
+								SetContainerStatus(uContainer,uAWAITACT);
+								printf("Group Start uContainer=%u\n",uContainer);
+							}
+						}
+					}
+					else if(!strcmp(gcCommand,"Group Switchover"))
+					{
+						struct structContainer sContainer;
+
+						InitContainerProps(&sContainer);
+						GetContainerProps(uContainer,&sContainer);
+						if(sContainer.uStatus==uSTOPPED ||
+							sContainer.uStatus==uACTIVE)
+						{
+							if(FailoverToJob(sContainer.uDatacenter,sContainer.uNode,
+								uContainer))
+							{
+								unsigned uSourceDatacenter=0;
+								unsigned uSourceNode=0;
+								sscanf(ForeignKey("tContainer","uDatacenter",
+									sContainer.uSource),
+									"%u",&uSourceDatacenter);
+								sscanf(ForeignKey("tContainer","uNode",
+									sContainer.uSource),
+									"%u",&uSourceNode);
+
+								if(FailoverFromJob(uSourceDatacenter,uSourceNode,
+									sContainer.uSource,sContainer.uIPv4,
+									sContainer.cLabel,sContainer.cHostname,
+										uContainer))
+								{
+									SetContainerStatus(uContainer,uAWAITFAIL);
+									SetContainerStatus(sContainer.uSource,uAWAITFAIL);
+									printf("Group Switchover uContainer=%u\n",uContainer);
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 		else if(!strcmp(entries[i].name,"cuTargetNodePullDown"))
 		{
@@ -256,6 +364,9 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 			uWizIPv4=ReadPullDown("tIP","cLabel",cuWizIPv4PullDown);
 		}
 	}
+
+	if(!uOnlyOnce) exit(0);
+
 }//void ExtProcesstContainerVars(pentry entries[], int x)
 
 
@@ -316,7 +427,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it!");
 
                         	guMode=200;
-				if(uStatus!=11)
+				if(uStatus!=uINITSETUP)
 					tContainer("<blink>Unexpected Error</blink>: uStatus not 'Initial Setup'");
                         	guMode=201;
 				if(uCheckMountSettings(uMountTemplate))
@@ -389,7 +500,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
                         	guMode=200;
 
-				uStatus=11;//Initial setup
+				uStatus=uINITSETUP;//Initial setup
 				uContainer=0;
 				uCreatedBy=guLoginClient;
 				uOwner=guCompany;
@@ -494,7 +605,7 @@ void ExttContainerCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstContainerVars(entries,x);
-			if( (uStatus==11) && uAllowMod(uOwner,uCreatedBy))
+			if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy))
 			{
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -521,7 +632,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstContainerVars(entries,x);
-			if( (uStatus==11) && uAllowMod(uOwner,uCreatedBy))
+			if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy))
 			{
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -593,7 +704,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strncmp(gcCommand,"Start ",6))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==31 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uSTOPPED && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -603,7 +714,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(CreateStartContainerJob(uDatacenter,uNode,uContainer))
 				{
-					uStatus=6;
+					uStatus=uAWAITACT;
 					SetContainerStatus(uContainer,6);//Awaiting Activation
 					//Since the above function changes the mod date
 					//and we want to avoid frivoulous reload error msgs:
@@ -623,7 +734,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strncmp(gcCommand,"Deploy ",7))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==11 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uINITSETUP && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -633,7 +744,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(CreateNewContainerJob(uDatacenter,uNode,uContainer))
 				{
-					uStatus=6;
+					uStatus=uAWAITACT;
 					SetContainerStatus(uContainer,6);//Awaiting Activation
 					//Since the above function changes the mod date
 					//and we want to avoid frivoulous reload error msgs:
@@ -654,7 +765,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strncmp(gcCommand,"Destroy ",8))
                 {
                         ProcesstContainerVars(entries,x);
-			if((uStatus==1 || uStatus==31) && uAllowDel(uOwner,uCreatedBy))
+			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowDel(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 					
@@ -664,7 +775,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(DestroyContainerJob(uDatacenter,uNode,uContainer))
 				{
-					uStatus=5;
+					uStatus=uAWAITDEL;
 					SetContainerStatus(uContainer,5);//Awaiting Deletion
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("DestroyContainerJob() Done");
@@ -682,7 +793,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strncmp(gcCommand,"Stop ",5))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowDel(uOwner,uCreatedBy))
+			if(uStatus==uACTIVE && uAllowDel(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 					
@@ -692,7 +803,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(StopContainerJob(uDatacenter,uNode,uContainer))
 				{
-					uStatus=41;
+					uStatus=uAWAITSTOP;
 					SetContainerStatus(uContainer,41);//Awaiting Stop
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("StopContainerJob() Done");
@@ -713,27 +824,32 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
-				if(uStatus!=5 && uStatus!=6 && uStatus!=41)
+				if(uStatus!=uAWAITDEL && uStatus!=uAWAITACT && uStatus!=uAWAITSTOP)
 					tContainer("<blink>Error</blink>: Unexpected uStatus!");
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+					tContainer("<blink>Error</blink>: This record was modified. Job may have run!");
 
-				CancelContainerJob(uDatacenter,uNode,uContainer);
-				if(uStatus==5 || uStatus==41)
+				if(CancelContainerJob(uDatacenter,uNode,uContainer))
 				{
-					uStatus=1;
-					SetContainerStatus(uContainer,1);//Awaiting Deletion/Stop to Active
+					tContainer("<blink>Error</blink>: Unexpected no jobs canceled! Late?");
 				}
-				else if(uStatus==6)
+				else
 				{
-					uStatus=11;
-					SetContainerStatus(uContainer,11);//Awaiting Activation to Initial
+					if(uStatus==uAWAITDEL || uStatus==uAWAITSTOP)
+					{
+						uStatus=uACTIVE;
+						SetContainerStatus(uContainer,1);//Awaiting Deletion/Stop to Active
+					}
+					else if(uStatus==uAWAITACT)
+					{
+						uStatus=uINITSETUP;
+						SetContainerStatus(uContainer,uINITSETUP);//Awaiting Activation to Initial
+					}
+					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+					tContainer("CancelContainerJob() Done");
 				}
-				
-				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
-				tContainer("CancelContainerJob() Done");
 			}
 			else
 			{
@@ -743,7 +859,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Create Mount Files"))
                 {
                         ProcesstContainerVars(entries,x);
-			if( (uStatus==31 || uStatus==11 ) && uAllowMod(uOwner,uCreatedBy))
+			if( (uStatus==uSTOPPED || uStatus==uINITSETUP ) && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -770,7 +886,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Clone Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -789,7 +905,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm Clone"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
 				unsigned uNewVeid=0;
 				char cTargetNodeIPv4[32]={""};
@@ -841,7 +957,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							"uSearchdomain=%u,"
 							"uDatacenter=%u,"
 							"uNode=%u,"
-							"uStatus=81,"
+							"uStatus=81,"//uAWAITCLONE
 							"uOwner=%u,"
 							"uCreatedBy=%u,"
 							"uSource=%u,"
@@ -907,7 +1023,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
 					uModBy=guLoginClient;
-					uStatus=81;
+					uStatus=uAWAITCLONE;
 					SetContainerStatus(uContainer,81);//Awaiting Clone
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("CloneContainerJob() Done");
@@ -929,7 +1045,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Migration Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -947,7 +1063,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm Migration"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -964,7 +1080,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode))
 				{
-					uStatus=21;
+					uStatus=uAWAITMIG;
 					SetContainerStatus(uContainer,21);//Awaiting Migration
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("MigrateContainerJob() Done");
@@ -982,7 +1098,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Template Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -1000,7 +1116,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm Template"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
         			MYSQL_ROW field;
 				char cOSTLabel[101]={""};
@@ -1045,7 +1161,7 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=0;
 				if(TemplateContainerJob(uDatacenter,uNode,uContainer))
 				{
-					uStatus=51;
+					uStatus=uAWAITTML;
 					SetContainerStatus(uContainer,51);
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("TemplateContainerJob() Done");
@@ -1063,7 +1179,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Hostname Change Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -1081,7 +1197,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm Hostname Change"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -1121,7 +1237,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				sprintf(cHostname,"%.99s",cWizHostname);
 				if(HostnameContainerJob(uDatacenter,uNode,uContainer))
 				{
-					uStatus=61;
+					uStatus=uAWAITHOST;
 					SetContainerStatus(uContainer,61);
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("HostnameContainerJob() Done");
@@ -1139,7 +1255,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"IP Change Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -1157,7 +1273,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm IP Change"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
 				unsigned uOldIPv4;
 
@@ -1192,7 +1308,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				uIPv4=uWizIPv4;
 				if(IPContainerJob(uDatacenter,uNode,uContainer))
 				{
-					uStatus=71;
+					uStatus=uAWAITIP;
 					SetContainerStatus(uContainer,71);
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("IPContainerJob() Done");
@@ -1210,7 +1326,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strncmp(gcCommand,"Failover",8))
                 {
                         ProcesstContainerVars(entries,x);
-			if((uStatus==1 || uStatus==31) && uAllowMod(uOwner,uCreatedBy))
+			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -1242,7 +1358,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm Failover"))
                 {
                         ProcesstContainerVars(entries,x);
-			if((uStatus==1 || uStatus==31) && uAllowMod(uOwner,uCreatedBy))
+			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -1343,7 +1459,7 @@ void ExttContainerButtons(void)
                         printf("<p><u>Template Wizard</u><br>");
 			printf("Here you will select the tConfig.cLabel. This label will be"
 				" be used to create a new OS template based on the source container's OS template"
-				" and the tConfig.cLabel as a dash suffix. This label will also be used for new"
+				" and the tConfig.cLabel as a dash suffix. This label will also be used for a new"
 				" VZ conf file.<p>If you are not using LVM: <font color=red>!The container"
 				" will be stopped for several minutes!</font>"
 				"<p>When the job is finished the tOSTemplate.cLabel and it's associated base conf file"
@@ -1528,25 +1644,29 @@ void ExttContainerButtons(void)
 					printf("<input title='Change current container name and hostname'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Hostname Change Wizard'><br>\n");
+					printf("<input title='Creates a job for stopping an active container.'"
+						" type=submit class=lwarnButton"
+						" name=gcCommand value='Stop %.24s'><br>\n",cLabel);
 					if(uSource)
 						printf("<input title='Creates jobs for manual failover (switchover.)'"
 						" type=submit class=lwarnButton"
 						" name=gcCommand value='Failover %.25s'>\n",cLabel);
 				}
-				else if( uStatus==6 || uStatus==5 || uStatus==41 )
+				else if( uStatus==uAWAITACT || uStatus==uAWAITDEL || uStatus==uAWAITSTOP 
+											|| uStatus==uAWAITFAIL)
 				{
 					printf("<p><input title='Cancel all waiting jobs for this container.'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Cancel Job'>\n");
 				}
-				else if( uStatus==11)
+				else if( uStatus==uINITSETUP)
 				{
 					printf("<p><input title='Creates a job for deploying a new container."
 					" Make sure you configure the properties you want beforehand!'"
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Deploy %.25s'>\n",cLabel);
 				}
-				else if( uStatus==31 )
+				else if( uStatus==uSTOPPED)
 				{
 					printf("<p><input title='Creates a job for starting a stopped container.'"
 					" type=submit class=lalertButton"
@@ -1559,7 +1679,7 @@ void ExttContainerButtons(void)
 
 				char cVEIDMount[256]={""};
 				GetContainerProp(uContainer,"cVEID.mount",cVEIDMount);
-				if( cVEIDMount[0] && (uStatus==31 || uStatus==11) && !strstr(cLabel,"-clone"))
+				if( cVEIDMount[0] && (uStatus==uSTOPPED || uStatus==uINITSETUP) && !strstr(cLabel,"-clone"))
 					printf("<br><input title='If container mount or umount files do not"
 					" exist they will be created from tProperty data items: cVEID.mount"
 					" and cVEID.umount'"
@@ -1609,17 +1729,11 @@ void ExttContainerAuxTable(void)
 	mysql_free_result(res);
 
 	//Special per container buttons
-	if((uStatus==1 || uStatus==31) && uAllowDel(uOwner,uCreatedBy))
+	if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowDel(uOwner,uCreatedBy))
 		printf("<p><input title='Creates a job for stopping and destroying an active container."
 			" No backups may be available, the container is gone for good!'"
 			" type=submit class=lwarnButton"
 			" name=gcCommand value='Destroy %.24s'>\n",cLabel);
-
-	if(uStatus==1 && uAllowDel(uOwner,uCreatedBy))
-		printf("<p><input title='Creates a job for stopping an active container."
-			" For special administration operations.'"
-			" type=submit class=lwarnButton"
-			" name=gcCommand value='Stop %.24s'>\n",cLabel);
 
 	CloseFieldSet();
 
@@ -1806,10 +1920,10 @@ void ExttContainerNavBar(void)
 		printf(LANG_NBB_NEW);
 
 	//11 Initial setup 31 Stopped
-	if( (uStatus==11) && uAllowMod(uOwner,uCreatedBy) )
+	if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy) )
 		printf(LANG_NBB_MODIFY);
 
-	if( uStatus==11 && uAllowDel(uOwner,uCreatedBy) ) 
+	if( uStatus==uINITSETUP && uAllowDel(uOwner,uCreatedBy) ) 
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -1933,23 +2047,55 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 	if(mysql_num_rows(res))
 	{	
         	printf("<p><u>tContainerNavList</u><br>\n");
+		if(guPermLevel>11 && uNode==0)
+		{
+        		printf("You may select containers and then appply a group"
+				" function. !No confirmation step is provided!<br>\n");
+		}
 
 	        while((field=mysql_fetch_row(res)))
 		{
-			if(cSearch[0])
+			if(guPermLevel>11 && uNode==0)
+			{
+				if(cSearch[0])
+				printf("<input type=checkbox name=Ct%s><a class=darkLink href=unxsVZ.cgi?gcFunction="
+					"tContainer&uContainer=%s&cSearch=%s>%s/%s/%s(%s)</a><br>\n",
+						field[0],field[0],cURLEncode(cSearch),field[1],field[2],field[3],field[4]);
+				else
+				printf("<input type=checkbox name=Ct%s><a class=darkLink href=unxsVZ.cgi?gcFunction="
+					"tContainer&uContainer=%s>%s/%s/%s(%s)</a><br>\n",
+						field[0],field[0],field[1],field[2],field[3],field[4]);
+			}
+			else
+			{
+				if(cSearch[0])
 				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
 					"&uContainer=%s&cSearch=%s>%s/%s/%s(%s)</a><br>\n",
 						field[0],cURLEncode(cSearch),field[1],field[2],field[3],field[4]);
-			else
+				else
 				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
 					"&uContainer=%s>%s/%s/%s(%s)</a><br>\n",
 						field[0],field[1],field[2],field[3],field[4]);
+			}
 			if(++uNumRows>=uLIMIT)
 			{
 				printf("Only 24 containers shown use cSearch to narrow.<br>\n");
 				break;
 			}
 		}
+		if(guPermLevel>11 && uNode==0)
+		{
+			printf("<input title='Creates job(s) for stopping active container(s).'"
+			" type=submit class=lalertButton"
+			" name=gcCommand value='Group Stop'>\n");
+			printf("<br><input title='Creates job(s) for starting stopped container(s).'"
+			" type=submit class=largeButton"
+			" name=gcCommand value='Group Start'>\n");
+			printf("<br><input title='Creates job(s) for switching over cloned container(s).'"
+			" type=submit class=lwarnButton"
+			" name=gcCommand value='Group Switchover'>\n");
+		}
+
 	}
         mysql_free_result(res);
 
@@ -2043,7 +2189,7 @@ unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContai
 }//unsigned StopContainerJob(...)
 
 
-void CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+unsigned CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
 {
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE "
 			"uDatacenter=%u AND uNode=%u AND uContainer=%u AND uJobStatus=1"
@@ -2051,9 +2197,15 @@ void CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContaine
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-	unxsVZLog(uContainer,"tContainer","CancelJob");
+	if(mysql_affected_rows(&gMysql)>0)
+	{
+		unxsVZLog(uContainer,"tContainer","CancelJob");
+		return(0);
+	}
+	unxsVZLog(uContainer,"tContainer","CancelJobLate");
+	return(1);
 
-}//void CancelContainerJob(...)
+}//unsigned CancelContainerJob(...)
 
 
 void SetContainerStatus(unsigned uContainer,unsigned uStatus)
@@ -2466,7 +2618,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 					"uSearchdomain=%s,"
 					"uDatacenter=%u,"
 					"uNode=%u,"
-					"uStatus=81,"
+					"uStatus=81,"//uAWAITCLONE
 					"uOwner=%u,"
 					"uCreatedBy=%u,"
 					"uSource=%u,"
@@ -2885,3 +3037,65 @@ void htmlCloneInfo(unsigned uContainer)
 
 }//void htmlCloneInfo(unsigned uContainer)
 
+
+void GetContainerProps(unsigned uContainer,struct structContainer *sContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0)
+		return;
+
+	sprintf(gcQuery,"SELECT cLabel,cHostname,uVeth,uSource,uIPv4,uOSTemplate,uConfig,uNameserver,"
+			"uSearchdomain,uDatacenter,uNode,uStatus,uOwner,uCreatedBy,uCreatedDate,uModBy,"
+			"uModDate FROM tContainer WHERE uContainer=%u",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(sContainer->cLabel,"%.31s",field[0]);
+		sprintf(sContainer->cHostname,"%.63s",field[1]);
+		sscanf(field[2],"%u",&sContainer->uVeth);
+		sscanf(field[3],"%u",&sContainer->uSource);
+		sscanf(field[4],"%u",&sContainer->uIPv4);
+		sscanf(field[5],"%u",&sContainer->uOSTemplate);
+		sscanf(field[6],"%u",&sContainer->uConfig);
+		sscanf(field[7],"%u",&sContainer->uNameserver);
+		sscanf(field[8],"%u",&sContainer->uSearchdomain);
+		sscanf(field[9],"%u",&sContainer->uDatacenter);
+		sscanf(field[10],"%u",&sContainer->uNode);
+		sscanf(field[11],"%u",&sContainer->uStatus);
+		sscanf(field[12],"%u",&sContainer->uOwner);
+		sscanf(field[13],"%u",&sContainer->uCreatedBy);
+		sscanf(field[14],"%lu",&sContainer->uCreatedDate);
+		sscanf(field[15],"%u",&sContainer->uModBy);
+		sscanf(field[16],"%lu",&sContainer->uModDate);
+	}
+	mysql_free_result(res);
+
+}//void GetContainerProps()
+
+
+void InitContainerProps(struct structContainer *sContainer)
+{
+	sContainer->cLabel[0]=0;
+	sContainer->cHostname[0]=0;
+	sContainer->uVeth=0;
+	sContainer->uSource=0;
+	sContainer->uIPv4=0;
+	sContainer->uOSTemplate=0;
+	sContainer->uConfig=0;
+	sContainer->uNameserver=0;
+	sContainer->uSearchdomain=0;
+	sContainer->uDatacenter=0;
+	sContainer->uNode=0;
+	sContainer->uStatus=0;
+	sContainer->uOwner=0;
+	sContainer->uCreatedBy=0;
+	sContainer->uCreatedDate=0;
+	sContainer->uModBy=0;
+	sContainer->uModDate=0;
+
+}//void InitContainerProps(struct structContainer *sContainer)
