@@ -76,6 +76,7 @@ unsigned SetContainerHostname(const unsigned uContainer,
 unsigned GetContainerNames(const unsigned uContainer,char *cHostname,char *cLabel);
 unsigned GetContainerNodeStatus(const unsigned uContainer, unsigned *uStatus);
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
+unsigned FailToJobDone(unsigned uJob);
 
 //extern protos
 void TextConnectDb(void); //main.c
@@ -2718,6 +2719,8 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 {
 	//These are the clone container's
 	unsigned uSource=0;
+	unsigned uFailToJob=0;
+	unsigned uStatus=0;
 	unsigned uIPv4=0;
 	char cIP[32]={""};
 	char cLabel[32]={""};
@@ -2727,8 +2730,6 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	char cOrigIP[32]={""};
 	char cOrigLabel[32]={""};
 	char cOrigHostname[64]={""};
-
-	//Does this job must run AFTER FailoverTo()?
 
 	//0-. uCloneContainer not used yet.
 	if((cp=strstr(cJobData,"uIPv4=")))
@@ -2787,6 +2788,37 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		return;
 	}
 
+	if((cp=strstr(cJobData,"uStatus=")))
+	{
+		sscanf(cp+8,"%u",&uStatus);
+	}
+	if(!uStatus)
+	{
+		printf("FailoverFrom() error: no uStatus\n");
+		tJobErrorUpdate(uJob,"no uStatus");
+		return;
+	}
+
+	if((cp=strstr(cJobData,"uFailToJob=")))
+	{
+		sscanf(cp+11,"%u",&uFailToJob);
+	}
+	if(!uFailToJob)
+	{
+		printf("FailoverFrom() error: no uFailToJob\n");
+		tJobErrorUpdate(uJob,"no uFailToJob");
+		return;
+	}
+
+	//Does this job have to run AFTER FailoverTo()? yes!
+	//So if it hasn't we contine to wait.
+	if(!FailToJobDone(uFailToJob))
+	{
+		tJobWaitingUpdate(uJob);
+		return;
+	}
+
+
 	//debug only
 	//printf("FailoverFrom() cJobData: uIPv4=%u cLabel=%s cHostname=%s uSource=%u\n",
 	//			uIPv4,cLabel,cHostname,uSource);
@@ -2803,19 +2835,29 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 
 	//2-.
-	sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
-	if(system(gcQuery))
+	//If the clone was running we should also keep the new clone running also
+	//If not we keep in some state that is assumed to be uACTIVE from the way the
+	//backend creates these jobs.
+	if(uStatus==uSTOPPED)
 	{
-		printf("FailoverFrom() error2: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"vzctl stop");
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
+		if(system(gcQuery))
+		{
+			printf("FailoverFrom() error2: %s\n",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl stop");
 
-		//rollback
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
-		system(gcQuery);
-		//level 1 done
-		return;
+			//rollback
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+			system(gcQuery);
+			//level 1 done
+			return;
+		}
+		SetContainerStatus(uContainer,uSTOPPED);
 	}
-	SetContainerStatus(uContainer,uSTOPPED);
+	else
+	{
+		SetContainerStatus(uContainer,uACTIVE);
+	}
 
 	//Everything ok as far as failover goes, now we do housekeeping.
 
@@ -2833,8 +2875,11 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		system(gcQuery);
 		//level 1 done
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-		system(gcQuery);
+		if(uStatus==uSTOPPED)
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+			system(gcQuery);
+		}
 		//level 2 done
 		return;
 	}
@@ -2852,8 +2897,11 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 			system(gcQuery);
 			//level 1 done
 			SetContainerStatus(uContainer,uAWAITFAIL);
-			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-			system(gcQuery);
+			if(uStatus==uSTOPPED)
+			{
+				sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+				system(gcQuery);
+			}
 			//level 2 done
 			SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
 			//level 3 done
@@ -2875,8 +2923,11 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		system(gcQuery);
 		//level 1 done
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-		system(gcQuery);
+		if(uStatus==uSTOPPED)
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+			system(gcQuery);
+		}
 		//level 2 done
 		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
 		//level 3 done
@@ -2895,8 +2946,11 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 			system(gcQuery);
 			//level 1 done
 			SetContainerStatus(uContainer,uAWAITFAIL);
-			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-			system(gcQuery);
+			if(uStatus==uSTOPPED)
+			{
+				sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+				system(gcQuery);
+			}
 			//level 2 done
 			SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
 			//level 3 done
@@ -2922,8 +2976,11 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		system(gcQuery);
 		//level 1 done
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-		system(gcQuery);
+		if(uStatus==uSTOPPED)
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+			system(gcQuery);
+		}
 		//level 2 done
 		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
 		//level 3 done
@@ -2949,8 +3006,11 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		system(gcQuery);
 		//level 1 done
 		SetContainerStatus(uContainer,uAWAITFAIL);
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-		system(gcQuery);
+		if(uStatus==uSTOPPED)
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+			system(gcQuery);
+		}
 		//level 2 done
 		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
 		//level 3 done
@@ -3245,3 +3305,26 @@ unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyNam
 }//void SetContainerProperty()
 
 
+unsigned FailToJobDone(unsigned uJob)
+{
+        MYSQL_RES *res;
+
+	if(uJob==0) return(0);
+
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uJob=%u AND uJobStatus=3",uJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("FailToJobDone() %s\n",mysql_error(&gMysql));
+		return(0);
+	}
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{
+		mysql_free_result(res);
+		return(1);
+	}
+	mysql_free_result(res);
+	return(0);
+
+}//unsigned FailToJobDone(unsigned uContainer)

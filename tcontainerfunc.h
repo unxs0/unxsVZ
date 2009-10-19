@@ -90,9 +90,12 @@ unsigned uCheckMountSettings(unsigned uMountTemplate);
 void htmlMountTemplateSelect(unsigned uSelector);
 void AddMountProps(unsigned uContainer);
 void CopyContainerProps(unsigned uSource, unsigned uTarget);
+//These two jobs are always done in pairs. Even though the second may run much later
+//for example after hardware failure has been fixed.
 unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
-				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource);
+				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
+				unsigned uStatus,unsigned uFailToJob);
 void htmlCloneInfo(unsigned uContainer);
 
 
@@ -204,12 +207,12 @@ void DelProperties(unsigned uNode,unsigned uType);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 
 
+static unsigned uGroupJobs=0;
 
 
 void ExtProcesstContainerVars(pentry entries[], int x)
 {
 	register int i;
-	unsigned uOnlyOnce=1;
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(entries[i].name,"cSearch"))
@@ -227,11 +230,6 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 			{
 				if(!strcmp(gcFunction,"tContainerTools"))
 				{
-					if(uOnlyOnce)
-					{
-						printf("Content-type: text/plain\n\n");
-						uOnlyOnce=0;
-					}
 					if(!strcmp(gcCommand,"Group Stop"))
 					{
 						struct structContainer sContainer;
@@ -244,7 +242,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 									sContainer.uNode,uContainer))
 							{
 								SetContainerStatus(uContainer,uAWAITSTOP);
-								printf("Group Stop uContainer=%u\n",uContainer);
+								uGroupJobs++;
 							}
 						}
 					}
@@ -260,7 +258,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 									sContainer.uNode,uContainer))
 							{
 								SetContainerStatus(uContainer,uAWAITACT);
-								printf("Group Start uContainer=%u\n",uContainer);
+								uGroupJobs++;
 							}
 						}
 					}
@@ -270,12 +268,13 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 
 						InitContainerProps(&sContainer);
 						GetContainerProps(uContainer,&sContainer);
-						if(sContainer.uStatus==uSTOPPED ||
-							sContainer.uStatus==uACTIVE)
+						if( sContainer.uSource!=0 &&
+							 (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE))
 						{
 							if(FailoverToJob(sContainer.uDatacenter,sContainer.uNode,
 								uContainer))
 							{
+								unsigned uFailToJob=mysql_insert_id(&gMysql);
 								unsigned uSourceDatacenter=0;
 								unsigned uSourceNode=0;
 								sscanf(ForeignKey("tContainer","uDatacenter",
@@ -285,14 +284,17 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 									sContainer.uSource),
 									"%u",&uSourceNode);
 
+//These two jobs are always done in pairs. Even though the second may run much later
+//for example after hardware failure has been fixed.
 								if(FailoverFromJob(uSourceDatacenter,uSourceNode,
 									sContainer.uSource,sContainer.uIPv4,
 									sContainer.cLabel,sContainer.cHostname,
-										uContainer))
+										uContainer,sContainer.uStatus,
+										uFailToJob))
 								{
 									SetContainerStatus(uContainer,uAWAITFAIL);
 									SetContainerStatus(sContainer.uSource,uAWAITFAIL);
-									printf("Group Switchover uContainer=%u\n",uContainer);
+									uGroupJobs++;
 								}
 							}
 						}
@@ -364,8 +366,6 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 			uWizIPv4=ReadPullDown("tIP","cLabel",cuWizIPv4PullDown);
 		}
 	}
-
-	if(!uOnlyOnce) exit(0);
 
 }//void ExtProcesstContainerVars(pentry entries[], int x)
 
@@ -1387,14 +1387,17 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(FailoverToJob(uDatacenter,uNode,uContainer))
 				{
+					unsigned uFailToJob=mysql_insert_id(&gMysql);
 					unsigned uSourceDatacenter=0;
 					unsigned uSourceNode=0;
 
 					sscanf(ForeignKey("tContainer","uDatacenter",uSource),"%u",&uSourceDatacenter);
 					sscanf(ForeignKey("tContainer","uNode",uSource),"%u",&uSourceNode);
 
+//These two jobs are always done in pairs. Even though the second may run much later
+//for example after hardware failure has been fixed.
 					if(FailoverFromJob(uSourceDatacenter,uSourceNode,uSource,uIPv4,
-							cLabel,cHostname,uContainer))
+							cLabel,cHostname,uContainer,uStatus,uFailToJob))
 					{
 						uStatus=uAWAITFAIL;
 						SetContainerStatus(uContainer,uAWAITFAIL);
@@ -1416,6 +1419,14 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
+		}
+                else if(!strncmp(gcCommand,"Group",5))
+                {
+			ExtProcesstContainerVars(entries,x);
+			if(uGroupJobs)
+				tContainer("'Group' jobs created");
+			else
+				tContainer("No 'Group' jobs created");
 		}
 	}
 
@@ -2964,6 +2975,9 @@ unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 
 	if(!uDatacenter || !uNode || !uContainer) return(0);
 
+	if(!uOwner) uOwner=1;
+	if(!guLoginClient) guLoginClient=1;
+
 	//This job should try to stop the uSource container if possible. Or at least
 	//make sure it's IP is down. There are many failover scenarios it seems at first glance
 	//we will try to handle all of them.
@@ -2987,11 +3001,15 @@ unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 
 
 unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
-				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource)
+				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
+				unsigned uStatus,unsigned uFailToJob)
 {
 	unsigned uCount=0;
 
 	if(!uDatacenter || !uNode || !uContainer) return(0);
+
+	if(!uOwner) uOwner=1;
+	if(!guLoginClient) guLoginClient=1;
 
 	//If the source node is down this job will be stuck
 	//When node is fixed and boots we must avoid the source continater coming up with same IP
@@ -3000,11 +3018,12 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())"
 			",uJobStatus=1"
-			",cJobData='uIPv4=%u;\ncLabel=%s;\ncHostname=%s;\nuSource=%u;'"
+			",cJobData='uIPv4=%u;\ncLabel=%s;\ncHostname=%s;\nuSource=%u;\nuStatus=%u;\n"
+			"uFailToJob=%u;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
-				uIPv4,cLabel,cHostname,uSource,
+				uIPv4,cLabel,cHostname,uSource,uStatus,uFailToJob,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
