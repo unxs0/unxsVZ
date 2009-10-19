@@ -222,4 +222,5 @@ void funcRequestGraphBtn(FILE *fp);
 void funcUsageGraph(FILE *fp);
 void funcRemovedCompanies(FILE *fp);
 void funcRemovedBlocks(FILE *fp);
+void htmlIPAuthDetail(void);
 

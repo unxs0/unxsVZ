@@ -137,6 +137,8 @@ int main(int argc, char *argv[])
 				RestoreResourceGetHook(gentries,i);
 			else if(!strcmp(gcPage,"IPAuth"))
 				IPAuthGetHook(gentries,i);
+			else if(!strcmp(gcPage,"IPAuthDetail"))
+				htmlIPAuthDetail();
 			else if(!strcmp(gcPage,"Dashboard"))
 				htmlDashBoard();
 			else if(1)
