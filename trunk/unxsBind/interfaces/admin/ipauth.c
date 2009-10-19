@@ -73,7 +73,8 @@ void IPAuthCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Commit IP Auth Import"))
 		{
-			CommitTransaction();		
+			CommitTransaction();
+			htmlIPAuthReport();
 		}
 		htmlIPAuth();
 	}
@@ -473,8 +474,7 @@ void CommitTransaction(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uClient=0;
-
-	printf("Content-type: text/plain\n\n");
+	char cMsg[100]={""};
 
 	sprintf(gcQuery,"SELECT DISTINCT uClient FROM tTransaction WHERE cOwnerAction='New' ORDER BY uTransaction");
 	mysql_query(&gMysql,gcQuery);
@@ -509,8 +509,20 @@ void CommitTransaction(void)
 	
 	CleanUpCompanies();
 
-	exit(0);
+	sprintf(cImportMsg,"Added %u block(s)\n",uBlockAdd);
+
+	sprintf(cMsg,"Modified %u block(s)\n",uBlockMod);
+	strcat(cImportMsg,cMsg);
+
+	sprintf(cMsg,"Deleted %u block(s)\n",uBlockDel);
+	strcat(cImportMsg,cMsg);
 	
+	sprintf(cMsg,"Added %u companies\n",uCompanyAdd);
+	strcat(cImportMsg,cMsg);
+	
+	sprintf(cMsg,"Deleted %u companies and their contacts\n",uCompanyDel);
+	strcat(cImportMsg,cMsg);
+
 }//void CommitTransaction(void)
 
 
@@ -617,6 +629,9 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
+
+		uBlockAdd++;
+
 		if(uNumNets==1)
 		{
 			//24 and smaller blocks
@@ -701,6 +716,8 @@ CreateZoneLargeBlock:
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
+		
+		uBlockMod++;
 
 		if(uNumNets==1)
 		{
@@ -944,8 +961,10 @@ void CleanUpCompanies(void)
 			htmlPlainTextError(mysql_error(&gMysql));
 		res2=mysql_store_result(&gMysql);
 		while((field2=mysql_fetch_row(res2)))
+		{
+			uBlockDel++;
 			CleanUpBlock(field2[0]);
-
+		}
 		//Delete contacts
 		sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient IN "
 				"(SELECT uClient FROM tClient WHERE uOwner=%s)",field[0]);
@@ -961,6 +980,7 @@ void CleanUpCompanies(void)
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 
+		uCompanyDel++;
 	}
 	
 }//void CleanUpCompanies(void)
