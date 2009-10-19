@@ -17,7 +17,7 @@
 CFLAGS= -Wall -DHAVE_LIBFREETYPE -DHAVE_JPEG
 LIBS= -L/usr/lib/mysql -lmysqlclient -lz -lm -lgdc -lgd -lpng -lfreetype -ljpeg
 
-all: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi
+all: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi unxsDiskUtil.cgi
 
 unxsCpuCheck.cgi: cpucheck.o
 	gcc cpucheck.o -o unxsCpuCheck.cgi $(LIBS)
@@ -37,13 +37,21 @@ unxsRamUtil.cgi: ramutil.o
 ramutil.o: ramutil.c ../../local.h
 	gcc -c ramutil.c -o ramutil.o $(CFLAGS)
 
+unxsDiskUtil.cgi: diskutil.o
+	gcc diskutil.o -o unxsDiskUtil.cgi $(LIBS)
+
+diskutil.o: diskutil.c ../../local.h
+	gcc -c diskutil.c -o diskutil.o $(CFLAGS)
+
 clean:
 	rm -f *.o *.cgi
 
-install: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi
+install: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi unxsDiskUtil.cgi
 	install -s unxsCpuCheck.cgi /var/www/unxs/cgi-bin/unxsCpuCheck.cgi
 	@ rm unxsCpuCheck.cgi
 	install -s unxsPrivmem.cgi /var/www/unxs/cgi-bin/unxsPrivmem.cgi
 	@ rm unxsPrivmem.cgi
 	install -s unxsRamUtil.cgi /var/www/unxs/cgi-bin/unxsRamUtil.cgi
 	@ rm unxsRamUtil.cgi
+	install -s unxsDiskUtil.cgi /var/www/unxs/cgi-bin/unxsDiskUtil.cgi
+	@ rm unxsDiskUtil.cgi
