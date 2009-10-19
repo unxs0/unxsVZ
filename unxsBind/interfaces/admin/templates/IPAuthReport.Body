@@ -140,6 +140,8 @@ lorem ipsum
 				<p>
 				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Action Detail')"><strong>Action Detail</strong></a><br>
 				{{funcReportActions}}
+				<br>
+				<a class=darkLink href=# onClick="open_popup('{{cCGI}}?gcPage=IPAuthDetail')">See the complete details</a>
 		</td>
 		</tr>
 		

@@ -506,6 +506,16 @@ void funcReportActions(FILE *fp)
 }//void funcReportActions(FILE *fp)
 
 
+void funcRemovedCompanies(FILE *fp)
+{
+}//void funcRemovedCompanies(FILE *fp)
+
+
+void funcRemovedBlocks(FILE *fp)
+{
+}//void funcRemovedBlocks(FILE *fp)
+
+
 void CommitTransaction(void)
 {
 	MYSQL_RES *res;

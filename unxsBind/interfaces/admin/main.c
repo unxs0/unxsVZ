@@ -535,6 +535,10 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcIPAuthReport(fp);
 	else if(!strcmp(cFunction,"funcReportActions"))
 		funcReportActions(fp);
+	else if(!strcmp(cFunction,"funcRemovedCompanies"))
+		funcRemovedCompanies(fp);
+	else if(!strcmp(cFunction,"funcRemovedBlocks"))
+		funcRemovedBlocks(fp);
 
 }//void AppFunctions(FILE *fp,char *cFunction)
 
