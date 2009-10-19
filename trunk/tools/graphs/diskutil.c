@@ -56,7 +56,7 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 		long unsigned luContainerDiskSpace=0;
 		long unsigned luContainerHardLimit=0;
 		long unsigned luInstalledDiskSpace=0;
-		char cluInstalledDiskSpace[256];
+		char cluInstalledDiskSpace[256]={""};
 		char *cp;
 
 		sscanf(field[0],"%u",&uNode);
