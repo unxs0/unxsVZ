@@ -458,8 +458,15 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction);
 void UpdateSerialNum(char *cZone,char *cuView);
 unsigned uCreateZone(char *cZone,unsigned uOwner);
 void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner);
+void ResetRR(char *cZone,unsigned uName,char *cParam1,unsigned uOwner);
 MYSQL_RES *ZoneQuery(char *cZone);
 
+//Action counters
+unsigned uBlockAdd=0;
+unsigned uBlockMod=0;
+unsigned uBlockDel=0;
+unsigned uCompanyAdd=0;
+unsigned uCompanyDel=0;
 
 void CommitTransaction(void)
 {
@@ -481,7 +488,7 @@ void CommitTransaction(void)
 	{		
 		sscanf(field[0],"%u",&uClient);
 		ProcessCompanyTransaction(uClient,"New");
-		printf("ProcessCompanyTransaction(%u,'New')\n",uClient);
+		uCompanyAdd++;
 	}
 
 	mysql_free_result(res);	
@@ -498,7 +505,6 @@ void CommitTransaction(void)
 	{
 		sscanf(field[1],"%u",&uClient);
 		ProcessTransaction(field[0],uClient,field[2]);
-		printf("ProcessTransaction(%s,%u,%s)\n",field[0],uClient,field[2]);
 	}
 	
 	CleanUpCompanies();
@@ -619,10 +625,8 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 			//owned by DEFAULT_CLIENT
 			res=ZoneQuery(cZone);
 			if(!mysql_num_rows(res))
-			{
 CreateZone:			
 				uZone=uCreateZone(cZone,DEFAULT_CLIENT);
-			}
 			else
 			{
 				field=mysql_fetch_row(res);
@@ -649,7 +653,7 @@ CreateZone:
 		{
 			register int x;
 			//Larger than /24 blocks
-			
+CreateZoneLargeBlock:			
 			for(x=c;x<(c+uNumNets);x++)
 			{
 				//
@@ -698,45 +702,83 @@ CreateZone:
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 
-		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
+		if(uNumNets==1)
 		{
-			sscanf(field[0],"%u",&uZone);
-		}
-		else
-			goto CreateZone;
+			//24 and smaller blocks
+			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+			//Check for .arpa zone if it doesn't exist, create it
+			//owned by DEFAULT_CLIENT
+			res=ZoneQuery(cZone);
+			if(!mysql_num_rows(res))
+				goto CreateZone;
+			else
+			{
+				field=mysql_fetch_row(res);
+				sscanf(field[0],"%u",&uZone);
+			}
 
-		//Update zone RRs
-		//to be owned by uClient
-		//
-		if(d==0)d++;
-		for(f=d;f<(uNumIPs+1);f++)
-		{
-			//Update to default cParam1 or just uOwner update?
-			sprintf(gcQuery,"UPDATE tResource SET cParam1='%u-%u-%u-%u.%s',uOwner=%u WHERE cName='%u' "
-					"AND uZone=%u",
-					c
-					,b
-					,a
-					,f
-					,cUpdateHost
-					,uClient
-					,f
-					,uZone
-					);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			//Update zone RRs
+			//to be owned by uClient
+			//
+			if(d==0)d++;
+			for(f=d;f<(uNumIPs+1);f++)
+			{
+				//Update to default cParam1 or just uOwner update?
+				sprintf(gcQuery,"UPDATE tResource SET cParam1='%u-%u-%u-%u.%s',uOwner=%u WHERE cName='%u' "
+						"AND uZone=%u",
+						c
+						,b
+						,a
+						,f
+						,cUpdateHost
+						,uClient
+						,f
+						,uZone
+						);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+			}
+			//Update zone serial
+			UpdateSerialNum(cZone,"2");
+			//Submit Mod job for zone
+			if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
 				htmlPlainTextError(mysql_error(&gMysql));
+		}//if(uNumNets==1)
+		else
+		{
+			register int x;
+			//Larger than /24 blocks
+			
+			for(x=c;x<(c+uNumNets);x++)
+			{
+				//
+				sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
+				//printf("cZone=%s\n",cZone);
+
+				res=ZoneQuery(cZone);
+				if(!mysql_num_rows(res))
+				{
+					goto CreateZoneLargeBlock;
+				}
+				else
+				{
+					field=mysql_fetch_row(res);
+					sscanf(field[0],"%u",&uZone);
+				}
+				mysql_free_result(res);
+				for(f=d;f<254;f++)
+				{
+					sprintf(cParam1,"%u-%u-%u-%u.%s",f,x,b,a,cUpdateHost);
+					ResetRR(cZone,f,cParam1,uClient);
+				}
+				//Update zone serial
+				UpdateSerialNum(cZone,"2");
+				//Submit Mod job for zone
+				if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
+					htmlPlainTextError(mysql_error(&gMysql));
+			}
 		}
-		//Update zone serial
-		UpdateSerialNum(cZone,"2");
-		//Submit Mod job for zone
-		if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
-			htmlPlainTextError(mysql_error(&gMysql));
 	}
 
 }//void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
@@ -923,7 +965,6 @@ void CleanUpCompanies(void)
 	
 }//void CleanUpCompanies(void)
 
-void ResetRR(char *cZone,unsigned uName,char *cParam1);
 
 void CleanUpBlock(char *cIPBlock)
 {
@@ -957,7 +998,7 @@ void CleanUpBlock(char *cIPBlock)
 		for(f=d;f<(uNumIPs+1);f++)
 		{
 			sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
-			ResetRR(cZone,f,cParam1);
+			ResetRR(cZone,f,cParam1,DEFAULT_CLIENT);
 		}
 		//Update zone serial
 		UpdateSerialNum(cZone,"2");
@@ -978,7 +1019,7 @@ void CleanUpBlock(char *cIPBlock)
 			for(f=d;f<254;f++)
 			{
 				sprintf(cParam1,"%u-%u-%u-%u.%s",f,x,b,a,cUpdateHost);
-				ResetRR(cZone,f,cParam1);
+				ResetRR(cZone,f,cParam1,DEFAULT_CLIENT);
 			}
 			//Update zone serial
 			UpdateSerialNum(cZone,"2");
@@ -993,12 +1034,12 @@ void CleanUpBlock(char *cIPBlock)
 }//void CleanUpBlock(char *cIPBlock)
 
 
-void ResetRR(char *cZone,unsigned uName,char *cParam1)
+void ResetRR(char *cZone,unsigned uName,char *cParam1,unsigned uOwner)
 {
 	sprintf(gcQuery,"UPDATE tResource SET cParam1='%s',uOwner=%u WHERE cName='%u' "
 			"AND uZone IN (SELECT uZone FROM tZone WHERE cZone='%s')",
 			cParam1
-			,DEFAULT_CLIENT
+			,uOwner
 			,uName
 			,cZone
 			);
