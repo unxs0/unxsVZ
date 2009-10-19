@@ -135,6 +135,14 @@
 lorem ipsum
 </td>
 		</tr>
+		<tr>
+			<td colspan=2>
+				<p>
+				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Action Detail')"><strong>Action Detail</strong></a><br>
+				{{funcReportActions}}
+		</td>
+		</tr>
+		
 	</table>
 	
 	

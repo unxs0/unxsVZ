@@ -200,13 +200,14 @@ void htmlRestoreResourcePage(char *cTitle, char *cTemplateName);
 void RestoreResourceCommands(pentry entries[], int x);
 void funcRRMetaParam(FILE *fp);
 
-//ripe.c
+//ipauth.c
 void htmlIPAuth(void);
 void ProcessIPAuthVars(pentry entries[], int x);
 void htmlIPAuthPage(char *cTitle, char *cTemplateName);
 void IPAuthGetHook(entry gentries[],int x);
 void IPAuthCommands(pentry entries[], int x);
 void funcIPAuthReport(FILE *fp);
+void funcReportActions(FILE *fp);
 
 //dashboard.c
 void htmlDashBoard(void);
