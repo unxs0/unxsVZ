@@ -100,6 +100,15 @@ void htmlIPAuthReport(void)
 }//void htmlIPAuthReport(void)
 
 
+void htmlIPAuthDetail(void)
+{
+	htmlHeader("DNS System","Header");
+	htmlIPAuthPage("DNS System","IPAuthDetails.Body");
+	htmlFooter("Footer");
+
+}//void htmlIPAuthDetail(void)
+
+
 void htmlIPAuthPage(char *cTitle, char *cTemplateName)
 {
 	if(cTemplateName[0])
@@ -508,11 +517,45 @@ void funcReportActions(FILE *fp)
 
 void funcRemovedCompanies(FILE *fp)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE uClient NOT IN "
+		"(SELECT DISTINCT uClient FROM tTransaction) AND "
+		"uClient!=1 AND uClient!=%u AND cCode='Organization'",DEFAULT_CLIENT);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+	}
+	
+	mysql_free_result(res);
+
 }//void funcRemovedCompanies(FILE *fp)
 
 
 void funcRemovedBlocks(FILE *fp)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uBlock FROM tBlock WHERE uOwner IN (SELECT uClient FROM tClient WHERE uClient NOT IN "
+		"(SELECT DISTINCT uClient FROM tTransaction) AND "
+		"uClient!=1 AND uClient!=%u AND cCode='Organization')",DEFAULT_CLIENT);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+	}
+
+	mysql_free_result(res);
+
 }//void funcRemovedBlocks(FILE *fp)
 
 
