@@ -188,6 +188,23 @@ lorem ipsum
 </table>
 
 <br />
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
+  <tr>
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+    <td class="hdrtout padlt8"><h6 class="modhdr">IP Auth Importing Messages</h6></td>
+    <td valign="top" width="9" class="hdrtout padlt8"></td>
+  </tr>
+  <tr>
+    <td ><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td>
+
+<table border="0" cellspacing="0" cellpadding="7" width="100%" class="table_content" style="margin-top:5px;">
+        <tr>
+                <td>
+                <{{textarea}} name=cMsg cols=190 rows=10 class="type_textarea" disabled>{{cImportMsg}}</{{textarea}}>
+                </td>
+        </tr>
+</table>
 
 
 	

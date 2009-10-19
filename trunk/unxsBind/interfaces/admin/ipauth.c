@@ -79,7 +79,6 @@ void IPAuthCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Commit IP Auth Import"))
 		{
 			CommitTransaction();
-			htmlIPAuthReport();
 		}
 		htmlIPAuth();
 	}
@@ -623,10 +622,20 @@ void CommitTransaction(void)
 	sprintf(cMsg,"Deleted %u block(s)\n",uBlockDel);
 	strcat(cImportMsg,cMsg);
 	
-	sprintf(cMsg,"Added %u companies\n",uCompanyAdd);
+	if(uCompanyAdd>1)
+		sprintf(cMsg,"Added %u companies\n",uCompanyAdd);
+	else if(uCompanyAdd==1)
+		sprintf(cMsg,"Added %u company\n",uCompanyAdd);
+	else if(uCompanyAdd==0)
+		sprintf(cMsg,"Didn't add any company\n");
 	strcat(cImportMsg,cMsg);
-	
-	sprintf(cMsg,"Deleted %u companies and their contacts\n",uCompanyDel);
+
+	if(uCompanyDel>1)
+		sprintf(cMsg,"Deleted %u companies and their contacts\n",uCompanyDel);
+	else if(uCompanyDel==1)
+		sprintf(cMsg,"Deleted %u company and their contacts\n",uCompanyDel);
+	else if(uCompanyDel==0)
+		sprintf(cMsg,"Didn't delete any company\n");
 	strcat(cImportMsg,cMsg);
 
 }//void CommitTransaction(void)
@@ -731,7 +740,6 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 				cIPBlock
 				,uClient
 				,guLoginClient);
-		printf("%s\n",gcQuery);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
