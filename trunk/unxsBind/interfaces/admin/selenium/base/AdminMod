@@ -13,7 +13,7 @@
 </thead><tbody>
 <tr>
 	<td>clickAndWait</td>
-	<td>//td[9]/a/b</td>
+	<td>//td[10]/a/b</td>
 	<td></td>
 </tr>
 <tr>
