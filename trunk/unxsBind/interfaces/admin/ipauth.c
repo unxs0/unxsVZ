@@ -61,6 +61,11 @@ void IPAuthCommands(pentry entries[], int x)
 		ProcessIPAuthVars(entries,x);
 		if(!strcmp(gcFunction,"IP Auth Import"))
 		{
+			if(!cMassList[0])
+			{
+				gcMessage="<blink>Error: </blink>You must enter data at the import panel";
+				htmlIPAuth();
+			}
 			switch(uFormat)
 			{
 				case 1:
@@ -528,9 +533,15 @@ void funcRemovedCompanies(FILE *fp)
 		htmlPlainTextError(mysql_error(&gMysql));
 
 	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
+	if(!mysql_num_rows(res))
 	{
+		fprintf(fp,"<tr><td colspan=2>None</td>\n");
+		mysql_free_result(res);
+		return;
 	}
+
+	while((field=mysql_fetch_row(res)))
+		fprintf(fp,"<tr><td>%s</td><td>%s</td>\n",field[0],field[1]);
 	
 	mysql_free_result(res);
 
@@ -550,9 +561,14 @@ void funcRemovedBlocks(FILE *fp)
 		htmlPlainTextError(mysql_error(&gMysql));
 
 	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
+	if(!mysql_num_rows(res))
 	{
+		fprintf(fp,"<tr><td colspan=2>None</td>\n");
+		mysql_free_result(res);
+		return;
 	}
+	while((field=mysql_fetch_row(res)))
+		fprintf(fp,"<tr><td>%s</td><td>%s</td>\n",field[0],field[1]);
 
 	mysql_free_result(res);
 
