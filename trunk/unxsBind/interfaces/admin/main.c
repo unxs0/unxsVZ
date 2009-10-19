@@ -533,7 +533,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcRRMetaParam(fp);
 	else if(!strcmp(cFunction,"funcIPAuthReport"))
 		funcIPAuthReport(fp);
-
+	else if(!strcmp(cFunction,"funcReportActions"))
+		funcReportActions(fp);
 
 }//void AppFunctions(FILE *fp,char *cFunction)
 

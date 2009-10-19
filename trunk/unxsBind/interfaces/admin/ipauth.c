@@ -469,6 +469,43 @@ unsigned uBlockDel=0;
 unsigned uCompanyAdd=0;
 unsigned uCompanyDel=0;
 
+
+void funcReportActions(FILE *fp)
+{
+	MYSQL_RES *res;
+	unsigned uWillDeleteCompanies=0;
+	unsigned uWillDeleteBlocks=0;
+
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient NOT IN "
+		"(SELECT DISTINCT uClient FROM tTransaction) AND "
+		"uClient!=1 AND uClient!=%u AND cCode='Organization'",DEFAULT_CLIENT);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	uWillDeleteCompanies=mysql_num_rows(res);
+	
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uBlock FROM tBlock WHERE uOwner IN (SELECT uClient FROM tClient WHERE uClient NOT IN "
+		"(SELECT DISTINCT uClient FROM tTransaction) AND "
+		"uClient!=1 AND uClient!=%u AND cCode='Organization')",DEFAULT_CLIENT);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	uWillDeleteBlocks=mysql_num_rows(res);
+	
+	mysql_free_result(res);
+	
+	fprintf(fp,"After import, %u companies and their contacts will be removed from the database.<br>\n",uWillDeleteCompanies);
+	fprintf(fp,"These companies own %u blocks that will also be removed.<br>\n",uWillDeleteBlocks);
+
+}//void funcReportActions(FILE *fp)
+
+
 void CommitTransaction(void)
 {
 	MYSQL_RES *res;
