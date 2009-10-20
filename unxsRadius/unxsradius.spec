@@ -30,7 +30,10 @@ make install
 cd ../
 mkdir -p /usr/local/share/unxsRadius
 cp -R ./data /usr/local/share/unxsRadius
+mkdir -p /usr/local/share/unxsRadacct
+cp -R ./unxsRadacct/data /usr/local/share/unxsRadacct
 cp setupradius/unxsradius /etc/init.d/
+cp init.d/unxsradius.sysconfig /etc/sysconfig/unxsradius
 
 %post
 if [ -x /sbin/chkconfig ];then
