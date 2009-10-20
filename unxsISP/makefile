@@ -154,6 +154,8 @@ cgi.o: cgi.h cgi.c
 unxsisp.o: unxsisp.c mysqlrad.h
 	cc -c unxsisp.c -o unxsisp.o $(CFLAGS)
 
+local.h: local.h.default
+	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
 
 clean:
 	rm -f *.o
