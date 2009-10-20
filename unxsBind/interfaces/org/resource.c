@@ -926,7 +926,7 @@ unsigned RRCheck(void)
 		sscanf(cParam1,"%u.%u.%u.%u",&a,&b,&c,&d);
 		if(a>254) a=0;
 		if(b>254) b=0;
-		if(c>254) c=0;  
+		if(c>255) c=0;  
 		if(d>254) d=0;  
 
 		sprintf(cParam1,"%u.%u.%u.%u",a,b,c,d);
@@ -1781,7 +1781,7 @@ void MasterFunctionSelect(void)
 					sscanf(cParam1,"%u.%u.%u.%u",&a,&b,&c,&d);
 					if(a>254) a=0;
 					if(b>254) b=0;
-					if(c>254) c=0;  
+					if(c>255) c=0;  
 					if(d>254) d=0;  
 
 					sprintf(cParam1,"%u.%u.%u.%u",a,b,c,d);
