@@ -19,6 +19,9 @@ unsigned SetUBCJob(unsigned uContainer,char *cSet);
 void htmlReturnLink(void);
 void htmlGlossaryLink(char *cLabel);
 
+//jobqueue.c
+unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
+
 
 void ExtProcesstPropertyVars(pentry entries[], int x)
 {
@@ -139,7 +142,111 @@ void ExttPropertyCommands(pentry entries[], int x)
 				{
 
 					sprintf(cMessage,"Set UBC --%s %lu:%lu job created ok",
-					cUBCName,luBarrier,luLimit);
+							cUBCName,luBarrier,luLimit);
+					tProperty(cMessage);
+				}
+				else
+				{
+					tProperty("<blink>Error</blink>: No job created!");
+				}
+			}
+			else
+				tProperty("<blink>Error</blink>: Insufficient permision to mod");
+                }
+                else if(!strcmp(gcCommand,"Set UBC/Diskspace +20%"))
+                {
+                        ProcesstPropertyVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+				char cMessage[256];
+				char cluBarrier[32];
+				char cluLimit[32];
+
+                        	guMode=0;
+				if(!uKey)
+					tProperty("<blink>Error</blink>: uKey==0");
+				if(uType!=3)
+					tProperty("<blink>Error</blink>: uType!=VZContainer");
+				if(luBarrier==0 || luLimit==0)
+					tProperty("<blink>Error</blink>: luBarrier==0 || luLimit==0");
+
+				luBarrier=(long unsigned)luBarrier*1.2;
+				luLimit=(long unsigned)luLimit*1.2;
+				sprintf(cluBarrier,"%lu",luBarrier);
+				sprintf(cluLimit,"%lu",luLimit);
+				sprintf(cMessage,"--%.99s %.31s:%.31s",cUBCName,cluBarrier,cluLimit);
+				if(SetUBCJob(uKey,cMessage))
+				{
+
+					if(!strcmp(cUBCName,"diskspace"))
+						sprintf(cMessage,"1k-blocks.luSoftlimit");
+					else
+						sprintf(cMessage,"%.99s.luLimit",cUBCName);
+					if(SetContainerProperty(uKey,cMessage,cluBarrier))
+						tProperty(cMessage);
+						
+
+					if(!strcmp(cUBCName,"diskspace"))
+						sprintf(cMessage,"1k-blocks.luHardlimit");
+					else
+						sprintf(cMessage,"%.99s.luBarrier",cUBCName);
+					if(SetContainerProperty(uKey,cMessage,cluLimit))
+						tProperty(cMessage);
+
+					sprintf(cMessage,"Set UBC --%s %s:%s job created ok",
+							cUBCName,cluBarrier,cluLimit);
+					tProperty(cMessage);
+				}
+				else
+				{
+					tProperty("<blink>Error</blink>: No job created!");
+				}
+			}
+			else
+				tProperty("<blink>Error</blink>: Insufficient permision to mod");
+                }
+                else if(!strcmp(gcCommand,"Set UBC/Diskspace -20%"))
+                {
+                        ProcesstPropertyVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+				char cMessage[256];
+				char cluBarrier[32];
+				char cluLimit[32];
+
+                        	guMode=0;
+				if(!uKey)
+					tProperty("<blink>Error</blink>: uKey==0");
+				if(uType!=3)
+					tProperty("<blink>Error</blink>: uType!=VZContainer");
+				if(luBarrier==0 || luLimit==0)
+					tProperty("<blink>Error</blink>: luBarrier==0 || luLimit==0");
+
+				luBarrier=(long unsigned)luBarrier*0.8;
+				luLimit=(long unsigned)luLimit*0.8;
+				sprintf(cluBarrier,"%lu",luBarrier);
+				sprintf(cluLimit,"%lu",luLimit);
+				sprintf(cMessage,"--%.99s %.31s:%.31s",cUBCName,cluBarrier,cluLimit);
+				if(SetUBCJob(uKey,cMessage))
+				{
+
+					if(!strcmp(cUBCName,"diskspace"))
+						sprintf(cMessage,"1k-blocks.luSoftlimit");
+					else
+						sprintf(cMessage,"%.99s.luLimit",cUBCName);
+					if(SetContainerProperty(uKey,cMessage,cluBarrier))
+						tProperty(cMessage);
+						
+
+					if(!strcmp(cUBCName,"diskspace"))
+						sprintf(cMessage,"1k-blocks.luHardlimit");
+					else
+						sprintf(cMessage,"%.99s.luBarrier",cUBCName);
+					if(SetContainerProperty(uKey,cMessage,cluLimit))
+						tProperty(cMessage);
+
+					sprintf(cMessage,"Set UBC --%s %s:%s job created ok",
+							cUBCName,cluBarrier,cluLimit);
 					tProperty(cMessage);
 				}
 				else
@@ -235,8 +342,14 @@ void htmlUBCEdit(void)
 			if(!strcmp(cUBCName,"1k-blocks"))
 				sprintf(cUBCName,"diskspace");
 			printf("<p><input type=submit class=largeButton name=gcCommand"
-				" title='Create job for setting container UBC/Disk --%s %s:%s'"
-				" value='Set UBC/Diskspace'>\n",cUBCName,cBarrier,cLimit);
+				" title='Create job for setting container UBC/Disk at current settings'"
+				" value='Set UBC/Diskspace'>\n");
+			printf("<p><input type=submit class=lalertButton name=gcCommand"
+				" title='Create job for setting container UBC/Disk at current settings +20%%'"
+				" value='Set UBC/Diskspace +20%%'>\n");
+			printf("<p><input type=submit class=lwarnButton name=gcCommand"
+				" title='Create job for setting container UBC/Disk at current settings -20%%'"
+				" value='Set UBC/Diskspace -20%%'>\n");
 			printf("<input type=hidden name=luBarrier value=%s>",cBarrier);
 			printf("<input type=hidden name=luLimit value=%s>\n",cLimit);
 			printf("<input type=hidden name=cUBCName value=%s>\n",cUBCName);
