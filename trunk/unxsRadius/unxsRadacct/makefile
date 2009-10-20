@@ -86,6 +86,8 @@ main.o: main.c mysqlrad.h mainfunc.h language.h local.h
 cgi.o: cgi.h cgi.c
 	cc -c cgi.c -o cgi.o $(CFLAGS)
 
+local.h: local.h.default
+	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
 
 
 clean:
