@@ -100,6 +100,9 @@ cgi.o: cgi.h cgi.c
 radius.o: radius.c mysqlrad.h
 	cc -c radius.c -o radius.o $(CFLAGS)
 
+local.h: local.h.default
+	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
+
 clean:
 	rm -f *.o
 
