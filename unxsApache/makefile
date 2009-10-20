@@ -117,6 +117,9 @@ cgi.o: cgi.h cgi.c
 apache.o: apache.c mysqlrad.h local.h
 	cc -c apache.c -o apache.o $(CFLAGS)
 
+local.h: local.h.default
+	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
+
 clean:
 	rm -f *.o
 
@@ -124,7 +127,7 @@ cleandist:
 	rm -f *.o *.gz
 
 install: unxsApache.cgi
-	install -s unxsApache.cgi $(CGIDIR)unxsApache.cgi
+	install -s unxsApache.cgi /var/www/unxs/cgi-bin/unxsApache.cgi
 	rm unxsApache.cgi
 
 distribution:
