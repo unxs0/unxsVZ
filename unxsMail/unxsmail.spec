@@ -25,7 +25,7 @@ cd $RPM_BUILD_DIR
 
 %install
 install -s unxsMail.cgi /var/www/unxs/cgi-bin/unxsMail.cgi
-install -s interfaces/user/interface.cgi /var/www/unxs/cgi-bin/unxsMaiUser.cgi
+install -s interfaces/user/interface.cgi /var/www/unxs/cgi-bin/unxsMailUser.cgi
 mkdir -p /usr/local/share/unxsMail/data
 cp data/*.txt /usr/local/share/unxsMail/data/
 
