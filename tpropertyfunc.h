@@ -119,7 +119,7 @@ void ExttPropertyCommands(pentry entries[], int x)
 			else
 				tProperty("<blink>Error</blink>: Insufficient permision to mod");
                 }
-                else if(!strcmp(gcCommand,"Set UBC"))
+                else if(!strcmp(gcCommand,"Set UBC/Diskspace"))
                 {
                         ProcesstPropertyVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy))
@@ -190,8 +190,11 @@ void htmlUBCEdit(void)
 	sprintf(cUBCName,"%.99s",cName);
 
 	//Provide entrance to container conf file ubc editing
+	//Expanded to allow setting of --diskspace
 
-	if((cp=strstr(cUBCName,".luBarrier")) || (cp=strstr(cUBCName,".luLimit")))
+	if((cp=strstr(cUBCName,".luBarrier")) || (cp=strstr(cUBCName,".luLimit"))
+			|| (cp=strstr(cUBCName,".luHardlimit")) 
+			|| (cp=strstr(cUBCName,".luSoftlimit")) )
 	{
         	MYSQL_RES *res;
         	MYSQL_ROW field;
@@ -200,9 +203,10 @@ void htmlUBCEdit(void)
 		*cp=0;
 		sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE"
 				" uType=3"
-				" AND uKey=%u"
-				" AND (cName='%s.luLimit' OR cName='%s.luBarrier')"
-				" ORDER BY cName DESC",uKey,cUBCName,cUBCName);
+				" AND uKey=%1$u"
+				" AND (cName='%2$s.luLimit' OR cName='%2$s.luBarrier' OR"
+				" cName='%2$s.luHardlimit' OR cName='%2$s.luSoftlimit')"
+				" ORDER BY cName DESC",uKey,cUBCName);
 	        mysql_query(&gMysql,gcQuery);
        		 if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -214,7 +218,7 @@ void htmlUBCEdit(void)
 			char cLimit[32]={""};
 			char cBarrier[32]={""};
 
-			printf("<p><u>OpenVZ UBC Modifiable Properties</u><br>");
+			printf("<p><u>OpenVZ UBC/Disk Modifiable Properties</u><br>");
 
 			while((field=mysql_fetch_row(res)))
 			{	
@@ -228,9 +232,11 @@ void htmlUBCEdit(void)
 				uFirst++;
 					
 			}
+			if(!strcmp(cUBCName,"1k-blocks"))
+				sprintf(cUBCName,"diskspace");
 			printf("<p><input type=submit class=largeButton name=gcCommand"
-				" title='Create job for setting container UBC --%s %s:%s'"
-				" value='Set UBC'>\n",cUBCName,cBarrier,cLimit);
+				" title='Create job for setting container UBC/Disk --%s %s:%s'"
+				" value='Set UBC/Diskspace'>\n",cUBCName,cBarrier,cLimit);
 			printf("<input type=hidden name=luBarrier value=%s>",cBarrier);
 			printf("<input type=hidden name=luLimit value=%s>\n",cLimit);
 			printf("<input type=hidden name=cUBCName value=%s>\n",cUBCName);
@@ -312,7 +318,7 @@ void ExttPropertyButtons(void)
 			printf("In general the only properties that make sense to edit"
 				" are those that are not VZ UBC properties. The exception being"
 				" editing barrier:limit pairs for container modification"
-				" via [Set UBC] button. In this last case you must edit the barrier"
+				" via [Set UBC/Diskspace] button. In this last case you must edit the barrier"
 				" and limit items before the system loads them again.\n");
 			htmlUBCInfo();
 			htmlUBCEdit();
