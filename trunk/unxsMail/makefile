@@ -144,7 +144,9 @@ cgi.o: cgi.h cgi.c
 
 mail.o : mail.c  mysqlrad.h mainfunc.h language.h local.h
 	cc -c mail.c -o mail.o $(CFLAGS)
-	
+
+local.h: local.h.default	
+	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
 
 clean:
 	rm -f *.o
