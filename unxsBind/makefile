@@ -121,6 +121,9 @@ cgi.o: cgi.h cgi.c
 bind.o: bind.c mysqlrad.h extjobqueue.c
 	cc -c bind.c -o bind.o $(CFLAGS)
 
+local.h: local.h.default
+	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
+
 clean:
 	rm -f *.o iDNS.cgi
 
