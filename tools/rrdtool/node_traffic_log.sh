@@ -9,8 +9,11 @@
 #	correctly.
 #	Graphs are for OPenVZ venet containers not for veth bridged containers.
 #
+#	We changed to use hostname -a (the short hostname) it should be in the
+#	/etc/hosts file for jobqueue.c use in some cases?
+#
 
-HOSTNAME=`hostname`; 
+HOSTNAME=`hostname -a`; 
 RRDFILE="/var/lib/rrd/$HOSTNAME.rrd";
 #Prefer to graph only container traffic. 
 #ISP should have node traffic graphics available via switch etc.

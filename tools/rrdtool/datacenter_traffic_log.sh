@@ -11,7 +11,7 @@
 #	This script varies from the others only runs on a single node or 
 #	external node server.
 
-#DATACENTER must not have spaces
+#DATACENTER must not have spaces and must be set in tConfiguration with .png
 DATACENTER="Wilshire1"; 
 RRDFILE="/var/lib/rrd/$DATACENTER.rrd"
 DEV="venet0";
