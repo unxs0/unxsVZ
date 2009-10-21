@@ -2276,6 +2276,21 @@ void ExtSelect(const char *cTable,const char *cVarList)
 }//void ExtSelect(...)
 
 
+void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch)
+{
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM %s WHERE %s LIKE '%s%%' ORDER BY %s",
+					cVarList,cTable,cSearchField,cSearch,cSearchField);
+	else 
+		sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
+				" WHERE %3$s.uOwner=tClient.uClient"
+				" AND (tClient.uClient=%2$u OR tClient.uOwner"
+				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
+				"AND %3$s.%4$s LIKE '%5$s%%' ORDER BY %4$s",
+					cVarList,guCompany,cTable,cSearchField,cSearch);
+}//void ExtSelectSearch(...)
+
+
 void ExtSelect2(const char *cTable,const char *cVarList,unsigned uMaxResults)
 {
 	if(guPermLevel>11 && guLoginClient==1)//Root can read access all

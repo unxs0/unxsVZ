@@ -42,6 +42,7 @@ struct structContainer
 void GetContainerProps(unsigned uContainer,struct structContainer *sContainer);
 void InitContainerProps(struct structContainer *sContainer);
 
+static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
 static unsigned uMountTemplate=0;
@@ -379,6 +380,7 @@ void ExttContainerCommands(pentry entries[], int x)
 		unsigned uNodeDatacenter=0;
 		time_t uActualModDate= -1;
 
+		uHideProps=1;
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -1628,8 +1630,9 @@ void ExttContainerButtons(void)
 				htmlGroups(0,uContainer);
 			}
 			printf("<p><u>Container Search</u><br>");
-			printf("<input title='Enter exact cLabel or MySQL LIKE pattern (%% or _ allowed)' type=text"
+			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
 					" name=cSearch value='%s'>",cSearch);
+
 			tContainerNavList(0,cSearch);
 			if(uContainer)
 			{
@@ -1708,7 +1711,7 @@ void ExttContainerButtons(void)
 void ExttContainerAuxTable(void)
 {
 
-	if(!uContainer || (guMode!=0 && guMode!=6)) return;
+	if(uHideProps || !uContainer || (guMode!=0 && guMode!=6)) return;
 
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -1774,7 +1777,10 @@ void ExttContainerGetHook(entry gentries[], int x)
 
 void ExttContainerSelect(void)
 {
-	ExtSelect("tContainer",VAR_LIST_tContainer);
+	if(cSearch[0])
+		ExtSelectSearch("tContainer",VAR_LIST_tContainer,"cLabel",cSearch);
+	else
+		ExtSelect("tContainer",VAR_LIST_tContainer);
 
 }//void ExttContainerSelect(void)
 
@@ -1961,20 +1967,20 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 		{
 			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-					"tNode.cLabel,tStatus.cLabel,tIP.cLabel FROM tContainer,tNode,tStatus,tIP"
+					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
 					" WHERE tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.cLabel LIKE '%s%%'"
 					" ORDER BY tContainer.cLabel" LIMIT,cSearch);
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
-					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel,tIP.cLabel"
-					" FROM tContainer," TCLIENT ",tNode,tStatus,tIP"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus"
 					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
 					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
 					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
 					" AND tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.cLabel LIKE '%2$s%%'"
 					" ORDER BY tContainer.cLabel" LIMIT,guCompany,cSearch);
 		}
@@ -1982,19 +1988,19 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 		{
 			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-					"tNode.cLabel,tStatus.cLabel,tIP.cLabel FROM tContainer,tNode,tStatus,tIP"
+					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
 					" WHERE tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.uStatus=tStatus.uStatus"
 					" ORDER BY tContainer.cLabel" LIMIT);
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
-					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel,tIP.cLabel"
-					" FROM tContainer," TCLIENT ",tNode,tStatus,tIP"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus"
 					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
 					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
 					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
 					" AND tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.uStatus=tStatus.uStatus"
 					" ORDER BY tContainer.cLabel" LIMIT,guCompany);
 		}
 	}
@@ -2004,22 +2010,22 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 		{
 			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-					"tNode.cLabel,tStatus.cLabel,tIP.cLabel"
-					" FROM tContainer,tNode,tStatus,tIP"
+					"tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer,tNode,tStatus"
 					" WHERE tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.cLabel LIKE '%s%%'"
 					" AND tContainer.uNode=%u ORDER BY tContainer.cLabel" LIMIT,cSearch,uNode);
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
-					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel,tIP.cLabel"
-					" FROM tContainer," TCLIENT ",tNode,tStatus,tIP"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus"
 					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
 					" AND tContainer.uNode=%1$u"
 					" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
 					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
 					" AND tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.cLabel LIKE '%3$s%%'"
 					" ORDER BY tContainer.cLabel" LIMIT,uNode,guCompany,cSearch);
 		}
@@ -2027,21 +2033,21 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 		{
 			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-					"tNode.cLabel,tStatus.cLabel,tIP.cLabel"
-					" FROM tContainer,tNode,tStatus,tIP"
+					"tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer,tNode,tStatus"
 					" WHERE tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.uStatus=tStatus.uStatus"
 						" AND tContainer.uNode=%u ORDER BY tContainer.cLabel" LIMIT,uNode);
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
-					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel,tIP.cLabel"
-					" FROM tContainer," TCLIENT ",tNode,tStatus,tIP"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus"
 					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
 					" AND tContainer.uNode=%1$u"
 					" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
 					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
 					" AND tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.uStatus=tStatus.uStatus"
 					" ORDER BY tContainer.cLabel" LIMIT,uNode,guCompany);
 		}
 	}
@@ -2070,27 +2076,27 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 			{
 				if(cSearch[0])
 				printf("<input type=checkbox name=Ct%s><a class=darkLink href=unxsVZ.cgi?gcFunction="
-					"tContainer&uContainer=%s&cSearch=%s>%s/%s/%s(%s)</a><br>\n",
-						field[0],field[0],cURLEncode(cSearch),field[1],field[2],field[3],field[4]);
+					"tContainer&uContainer=%s&cSearch=%s>%s/%s/%s</a><br>\n",
+						field[0],field[0],cURLEncode(cSearch),field[1],field[2],field[3]);
 				else
 				printf("<input type=checkbox name=Ct%s><a class=darkLink href=unxsVZ.cgi?gcFunction="
-					"tContainer&uContainer=%s>%s/%s/%s(%s)</a><br>\n",
-						field[0],field[0],field[1],field[2],field[3],field[4]);
+					"tContainer&uContainer=%s>%s/%s/%s</a><br>\n",
+						field[0],field[0],field[1],field[2],field[3]);
 			}
 			else
 			{
 				if(cSearch[0])
 				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
-					"&uContainer=%s&cSearch=%s>%s/%s/%s(%s)</a><br>\n",
-						field[0],cURLEncode(cSearch),field[1],field[2],field[3],field[4]);
+					"&uContainer=%s&cSearch=%s>%s/%s/%s</a><br>\n",
+						field[0],cURLEncode(cSearch),field[1],field[2],field[3]);
 				else
 				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
-					"&uContainer=%s>%s/%s/%s(%s)</a><br>\n",
-						field[0],field[1],field[2],field[3],field[4]);
+					"&uContainer=%s>%s/%s/%s</a><br>\n",
+						field[0],field[1],field[2],field[3]);
 			}
 			if(++uNumRows>=uLIMIT)
 			{
-				printf("Only 24 containers shown use cSearch to narrow.<br>\n");
+				printf("Only 24 containers shown use filter to narrow.<br>\n");
 				break;
 			}
 		}
