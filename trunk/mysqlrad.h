@@ -115,6 +115,7 @@ unsigned uAllowMod(const unsigned uOwner, const unsigned uCreatedBy);
 unsigned uAllowDel(const unsigned uOwner, const unsigned uCreatedBy);
 void ExtListSelect(const char *cTable,const char *cVarList);
 void ExtSelect(const char *cTable,const char *cVarList);
+void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch);
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
 
 char *cURLEncode(char *cURL);
