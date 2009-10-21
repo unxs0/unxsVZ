@@ -212,7 +212,7 @@ void InitializeParams(structExtJobParameters *structExtParam)
 		if(!uNSSet)
 		{
 			//TODO
-			sprintf(gcQuery,"SELECT uNSSet FROM tNameServer LIMIT 1");
+			sprintf(gcQuery,"SELECT uNSSet FROM tNSSet LIMIT 1");
  
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
