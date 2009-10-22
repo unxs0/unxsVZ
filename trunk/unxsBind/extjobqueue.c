@@ -1604,7 +1604,19 @@ unsigned NewSimpleWebZone(structExtJobParameters *structExtParam,unsigned uJob,
 		fprintf(stderr,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
+	
+	//Add @ record
 
+	sprintf(gcQuery,"INSERT INTO tResource SET uRRType=1,uZone=%u,cParam1='%s.',cName='@',uOwner=%u,"
+			"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='NewSimpleWebZone()'",
+					uZone, structExtParam->cMainAddress, uOwner);
+       	mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		return(1);
+	}
+	
 	if(SubmitExtJob("ExtNew",structExtParam->uNSSet,structExtParam->cZone,0,0,uJob,uOwner))
 		return(1);
 
