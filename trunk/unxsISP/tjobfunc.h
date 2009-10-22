@@ -317,6 +317,7 @@ void RecentJobList(void)
         MYSQL_ROW field;
 	time_t u24HrsAgo;
 	register unsigned uCount=0;
+	unsigned uMyJobStatus=0;
 	
 	time(&u24HrsAgo);
 	u24HrsAgo-= (24*3600);
@@ -358,9 +359,9 @@ void RecentJobList(void)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-			sscanf(field[3],"%u",&uJobStatus);
+			sscanf(field[3],"%u",&uMyJobStatus);
 			//if(uJobStatus==unxsISP_FatalError)
-			if(uJobStatus==4)
+			if(uMyJobStatus!=4)
 				cColor="red";
 			else
 				cColor="black";
