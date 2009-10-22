@@ -400,9 +400,9 @@ void ExtConnectDb(unsigned uHtml)
 	//Provide some fall back if nothing in tConfiguration
 	char cDbIp[256]={""};
 	char *cEffectiveDbIp=DBIP0;
-	char cDbName[256]={DBNAME};
-	char cDbPwd[256]={DBPASSWD};
-	char cDbLogin[256]={DBLOGIN};
+	char cDbName[256]={"unxsisp"};
+	char cDbPwd[256]={"wsxedc"};
+	char cDbLogin[256]={"unxsisp"};
 	char cDbPort[256]={""};
 	unsigned ucDbPort=DBPORT;
 	char cDbSocket[256]={""};
