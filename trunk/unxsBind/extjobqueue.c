@@ -282,7 +282,7 @@ int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsign
 	sprintf(gcQuery,"UPDATE tJob SET cServer='%s',cRemoteMsg='%.32s',uModBy=1,"
 			"uModDate=UNIX_TIMESTAMP(NOW()),uJobStatus=%u WHERE uJob=%u",
 				cServer,cRemoteMsg,uJobStatus,uJob);
-
+	printf("%s\n",gcQuery);
 	mysql_query(&gMysql2,gcQuery);
 	if(mysql_errno(&gMysql2))
 	{
@@ -346,6 +346,7 @@ int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsign
 
 				sprintf(gcQuery,"UPDATE tInstance SET uStatus=%u,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
 						" WHERE uInstance=%u",uInstanceStatus,uInstance);
+				printf("%s\n",gcQuery);
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
 					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
@@ -1634,11 +1635,13 @@ int SubmitExtJob(const char *cCommand, unsigned uNSSetArg, const char *cZoneArg,
 	MYSQL_ROW field;
 	char cTargetServer[256];
 	static unsigned uMasterJob=0;
+	unsigned uNSType=0;
+	unsigned uJob=0;
 
 	//Submit one job per EACH NS in the list, group with
 	//uMasterJob
-	//TODO
-	sprintf(gcQuery,"SELECT cList FROM tNameServer WHERE uNSSet=%u",
+	sprintf(gcQuery,"SELECT tNS.cFQDN,tNS.uNSType,tNSType.cLabel FROM tNS,tNSSet,tNSType "
+			"WHERE tNS.uNSType=tNSType.uNSType AND tNS.uNSSet=tNS.uNSSet AND tNS.uNSSet=%u",
 			uNSSetArg);
 
 	mysql_query(&gMysql,gcQuery);
@@ -1649,24 +1652,25 @@ int SubmitExtJob(const char *cCommand, unsigned uNSSetArg, const char *cZoneArg,
 	}
 	res2=mysql_store_result(&gMysql);
 	
-	if((field=mysql_fetch_row(res2)))
+	while((field=mysql_fetch_row(res2)))
 	{
-		register int i,j=0;
+		sscanf(field[0],"%u",&uNSType);
+		sprintf(cTargetServer,"%s %s",field[0],field[2]);
+		if(SubmitSingleExtJob(cCommand,cZoneArg,uNSSetArg,
+				cTargetServer,uPriorityArg,uTimeArg,
+				&uMasterJob,uExtJob,uOwner))
+			return(1);
+		uJob=mysql_insert_id(&gMysql);
+		if(uNSType==1) uMasterJob=uJob;
 
-		for(i=0;i<strlen(field[0]);i++)
+		if(uMasterJob)
 		{
-			if(field[0][i]!='\n' && field[0][i])
+			sprintf(gcQuery,"UPDATE tJob SET uMasterJob=%u WHERE uJob=%u",uMasterJob,uJob);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
 			{
-				cTargetServer[j++]=field[0][i];
-			}
-			else
-			{
-				cTargetServer[j]=0;
-				j=0;
-				if(SubmitSingleExtJob(cCommand,cZoneArg,uNSSetArg,
-						cTargetServer,uPriorityArg,uTimeArg,
-						&uMasterJob,uExtJob,uOwner))
-					return(1);
+				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				return(1);
 			}
 		}
 	}
