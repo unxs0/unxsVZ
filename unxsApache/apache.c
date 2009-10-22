@@ -1946,9 +1946,9 @@ void ExtConnectDb(unsigned uHtml)
 {
 	char cDbIp[256]={""};
 	char *cEffectiveDbIp=NULL;
-	char cDbName[256]={"mysqlisp2"};
+	char cDbName[256]={"unxsisp"};
 	char cDbPwd[256]={"wsxedc"};
-	char cDbLogin[256]={"mysqlisp2"};
+	char cDbLogin[256]={"unxsisp"};
 
 	GetConfiguration("cExtJobQueueDbIp",cDbIp,0,1);
 	GetConfiguration("cExtJobQueueDbName",cDbName,0,1);
