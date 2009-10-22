@@ -12,12 +12,28 @@
 #	to see what actually changes over a long period and then
 #	have this script modified just for the service important items.
 
+
+fLog()
+{
+	echo "`date +%b' '%d' '%T` clonesync.sh $@";
+}
+
+
 cSSHPort="-p 22";
-cSSHOptions="'/usr/bin/ssh -ax -c blowfish -p 22'";
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	echo "usage: $0 <source VEID> <target VEID> <target node host>";
 	exit 0;
+fi
+
+fLog "start $1 to $3:$2";
+
+#do not run if another (same source and target VEIDs) clone job is also running
+if [ -e /tmp/clonesync.sh.lock.$1.$2 ]; then
+	fLog "waiting for lock release";
+	exit 0;
+else
+	touch /tmp/clonesync.sh.lock.$1.$2;
 fi
 
 #flush as much as possible to disk.
@@ -29,20 +45,21 @@ fi
 #container approach
 /usr/sbin/vzctl exec $1 /bin/sync;
 if [ $? != 0 ];then
-	echo "/usr/sbin/vzctl exec $1 /bin/sync failed";
+	fLog  "/usr/sbin/vzctl exec $1 /bin/sync failed";
 	exit 1;
 fi
 
 /usr/bin/ssh $cSSHPort $3 "ls /vz/private/$2 > /dev/null 2>&1";
 if [ $? != 0 ];then
-	echo "/usr/bin/ssh $3 ls /vz/private/$2 failed";
+	fLog "/usr/bin/ssh $3 ls /vz/private/$2 failed";
 	exit 2;
 fi
 
-
-echo ""
-echo "rsync container $1 to $3:$2"
-/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxzlH --delete \
+#/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxzlH --delete \
+#no compression
+#/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxlH --delete \
+#no verbose and no encryption
+/usr/bin/rsync -e '/usr/bin/ssh -ax -e none -p 22' -axlH --delete \
 			--exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
 			--exclude /etc/sysconfig/network \
@@ -51,6 +68,9 @@ echo "rsync container $1 to $3:$2"
 			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:2 \
 			/vz/private/$1/ $3:/vz/private/$2
 
-echo ""
-echo "done"
+#remove lock file
+rm -f /tmp/clonesync.sh.lock.$1.$2;
+
+fLog "end $1 to $3:$2";
+exit 0;
 
