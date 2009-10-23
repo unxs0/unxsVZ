@@ -3018,6 +3018,41 @@ unsigned uHasWaitingForApproval(char *uClient)
 
 void funcCustomerReport(FILE *fp)
 {
+	//
+	//Very simple report for start
+	//Customer ID, customer name, products deployed
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	MYSQL_RES *res2;
+	MYSQL_ROW field2;
+
+	sprintf(gcQuery,"SELECT uClient,cFirstName,cLastName FROM tClient WHERE uClient!=1 AND uOwner=%u",guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"<tr><td>%s</td><td>%s %s</td>",field[0],field[1],field[2]);
+
+		sprintf(gcQuery,"SELECT cLabel FROM tInstance WHERE uClient=%s AND uStatus=4",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res2=mysql_store_result(&gMysql);
+		
+		if((field2=mysql_fetch_row(res2)))
+			fprintf(fp,"<td>%s</td></tr>\n",field2[0]);
+		else
+			fprintf(fp,"<td>None</td></tr>\n");
+
+		while((field2=mysql_fetch_row(res2)))
+			fprintf(fp,"<tr><td>&nbsp;</td><td>&nbsp;</td><td>%s</td></tr>\n",field2[0]);
+	}
+
+
 }//void funcCustomerReport(FILE *fp)
 
 
