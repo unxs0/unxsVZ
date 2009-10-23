@@ -15,7 +15,7 @@
 
 fLog()
 {
-	echo "`date +%b' '%d' '%T` clonesync.sh $@";
+	echo "`date +%b' '%d' '%T` clonesync.sh.$$ $@";
 }
 
 
@@ -26,7 +26,7 @@ if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	exit 0;
 fi
 
-fLog "$$ start $1 to $3:$2";
+fLog "start $1 to $3:$2";
 
 cLockfile="/tmp/clonesync.sh.lock.$$";
 
@@ -73,6 +73,6 @@ fi
 #remove lock file
 rm -f $cLockfile;
 
-fLog "$$ end";
+fLog "end";
 exit 0;
 
