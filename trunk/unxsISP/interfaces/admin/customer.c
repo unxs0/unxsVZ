@@ -184,6 +184,8 @@ void LoadCustomer(unsigned cuClient);
 void SearchCustomer(char *cSearchTerm);
 unsigned uCustomerExists(char *cFirstName,char *cLastName);
 
+void CustomerReport(void);
+
 //Product deployment wizard functions
 void htmlProductDeployWizard(unsigned uStep);
 char *cGetServiceLabel(unsigned uService);
@@ -643,6 +645,9 @@ void CustomerCommands(pentry entries[], int x)
 			gcMessage="Product deployed and waiting for activation.";
 			LoadCustomer(uCustomer);
 		}
+		else if(!strcmp(gcFunction,"Customer Report"))
+			CustomerReport();
+
 		htmlCustomer();
 	}
 
@@ -674,6 +679,15 @@ void htmlCustomer(void)
 	htmlFooter("Footer");
 
 }//void htmlCustomer(void)
+
+
+void CustomerReport(void)
+{
+	htmlHeader("unxsISP Admin Interface","Header");
+	htmlCustomerPage("","CustomerReport.Body");
+	htmlFooter("Footer");
+
+}//void CustomerReport(void)
 
 
 void htmlCustomerPage(char *cTitle, char *cTemplateName)
@@ -3001,5 +3015,9 @@ unsigned uHasWaitingForApproval(char *uClient)
 
 }//unsigned uHasWaitingForApproval(char *uClient)
 
+
+void funcCustomerReport(FILE *fp)
+{
+}//void funcCustomerReport(FILE *fp)
 
 

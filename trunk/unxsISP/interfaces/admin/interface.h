@@ -137,6 +137,7 @@ void funcEnteredParameters(FILE *fp);
 void funcCustomerProducts(FILE *fp);
 void funcSelectAccountType(FILE *fp);
 void funcSelectLanguage(FILE *fp);
+void funcCustomerReport(FILE *fp);
 
 typedef struct {
        char cParameter[65];

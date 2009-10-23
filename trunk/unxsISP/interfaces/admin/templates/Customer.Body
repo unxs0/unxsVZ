@@ -115,6 +115,11 @@
 ISP customers are managed here. At the bottom of this screen a table that has the current loaded customer's products will appear. By clicking on the product name below you will access another screen that will allow you to modify the product parameters. To search for a customer, enter part of her last name in the above 'Search Customers' box and press &lt;Enter&gt; or the [>] button. The search results will be displayed in this panel. By clicking one item of the search results list you will load the selected customer. Search is case insensitive, you can use % and _ SQL LIKE matching chars. (E.g.: 'd%ar')
 		</td>
 		</tr>
+		<tr>
+		<td colspan=2>
+		<input type=submit class=largeButton name=gcFunction value='Customer Report'>
+		</td>
+		</tr>
         </table>
 
 
