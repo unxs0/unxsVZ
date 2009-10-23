@@ -50,6 +50,7 @@ void GenerateInvoices(void);
 unsigned uClientHasInvoice(char *cuClient);
 unsigned uHasInvoiceItem(unsigned uInvoice,char *cuProduct);
 unsigned uGetClientOwner(unsigned uClient);
+void EmailAllInvoices(void);//tinvoicefunc.h
 
 void CalledByAlias(int iArgc,char *cArgv[]);
 void TextConnectDb(void);
@@ -149,6 +150,8 @@ void ExtMainShell(int argc, char *argv[])
                 ImportTemplateFile(argv[2],argv[3],argv[4]);
 	else if(argc==2 && !strcmp(argv[1],"GenerateInvoices"))
 		GenerateInvoices();
+	else if(argc==2 && !strcmp(argv[1],"EmailAllInvoices"))
+		EmailAllInvoices();
 	else if(argc==2 && !strcmp(argv[1],"EncodeMD5tClientConfig"))
 		EncodeMD5tClientConfig();
 	else if(argc==2 && !strcmp(argv[1],"InserttClientConfig"))
@@ -177,6 +180,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tUpgradeSchema <mysql root passwd>\n");
                 printf("\tArchiveInvoice <Mon> <Year> <path to mysql table> <mysql root passwd>\n");
                 printf("\tGenerateInvoices\n");
+		printf("\tEmailAllInvoices\n");
 
 		printf("\n");
 
