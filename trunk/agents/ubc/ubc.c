@@ -28,11 +28,13 @@ unsigned guLoginClient=1;//Root user
 char cHostname[100]={""};
 unsigned guNodeOwner=1;
 unsigned guContainerOwner=1;
+unsigned guStatus=0;//not a valid status
 
 //local protos
 void TextConnectDb(void);
 void ProcessSingleUBC(unsigned uContainer, unsigned uNode);
 void ProcessUBC(void);
+void ProcessSingleHDUsage(unsigned uContainer);
 void ProcessSingleQuota(unsigned uContainer);
 void ProcessVZMemCheck(unsigned uContainer, unsigned uNode);
 void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
@@ -299,11 +301,10 @@ void ProcessUBC(void)
 			cHostname,uNode,uDatacenter);
 
 	//Main loop. TODO use defines for tStatus.uStatus values.
-	sprintf(gcQuery,"SELECT uContainer,uOwner FROM tContainer WHERE uNode=%u"
+	sprintf(gcQuery,"SELECT uContainer,uOwner,uStatus FROM tContainer WHERE uNode=%u"
 				" AND uDatacenter=%u"
 				" AND uStatus!=11"//Initial Setup
 				" AND uStatus!=6"//Awating Activation
-				" AND uStatus!=31"//Stopped
 						,uNode,uDatacenter);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -316,11 +317,19 @@ void ProcessUBC(void)
 	{
 		sscanf(field[0],"%u",&uContainer);
 		sscanf(field[1],"%u",&guContainerOwner);
+		sscanf(field[2],"%u",&guStatus);
 		//Job dispatcher based on cJobName
-		ProcessSingleUBC(uContainer,0);
-		ProcessSingleQuota(uContainer);
-		ProcessVZMemCheck(uContainer,0);
-		ProcessVZCPUCheck(uContainer,0);
+		if(guStatus==uSTOPPED)
+		{
+			ProcessSingleHDUsage(uContainer);
+		}
+		else
+		{
+			ProcessSingleUBC(uContainer,0);
+			ProcessSingleQuota(uContainer);
+			ProcessVZMemCheck(uContainer,0);
+			ProcessVZCPUCheck(uContainer,0);
+		}
 	}
 	mysql_free_result(res);
 
@@ -333,6 +342,91 @@ void ProcessUBC(void)
 	exit(0);
 
 }//void ProcessUBC(void)
+
+
+void ProcessSingleHDUsage(unsigned uContainer)
+{
+	char cCommand[64];
+	char cLine[256];
+	unsigned long luUsage=0;
+	FILE *fp;
+
+	if(uContainer)
+	{
+		printf("\tProcessSingleHDQuota(Container=%u)\n",uContainer);
+	}
+	else
+	{
+		printf("\tProcessSingleHDQuota() Error: No container specified.\n");
+		exit(1);
+	}
+		
+	sprintf(cCommand,"/usr/bin/du -ks /vz/private/%u/",uContainer);
+
+	if((fp=popen(cCommand,"r")))
+	{
+        	MYSQL_RES *res;
+        	MYSQL_ROW field;
+
+		if(fgets(cLine,255,fp)!=NULL)
+		{
+			sscanf(cLine,"%lu ",&luUsage);
+		}
+		else
+		{
+			printf("\tProcessSingleHDQuota() Error: No lines from popen, aborting!\n");
+			exit(1);
+		}
+
+		if(luUsage==0)
+		{
+			printf("\tProcessSingleHDQuota() Error: Unexpected luUsage==0, aborting!\n");
+			exit(1);
+		}
+
+		sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='1k-hdblocks.luUsage'"
+							" AND uKey=%u AND uType=3",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(2);
+		}
+	       	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
+					"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+					" uProperty=%s"
+							,luUsage
+							,guContainerOwner
+							,field[0]);
+			mysqlrad_Query_TextErr_Exit;
+		}
+		else
+		{
+			sprintf(gcQuery,"INSERT INTO tProperty SET cValue=%lu"
+					",cName='1k-hdblocks.luUsage'"
+					",uType=3"
+					",uKey=%u"
+					",uOwner=%u"
+					",uCreatedBy=1"
+					",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						,luUsage
+						,uContainer
+						,guContainerOwner);
+			mysqlrad_Query_TextErr_Exit;
+
+		}
+		mysql_free_result(res);
+		pclose(fp);
+	}
+	else
+	{
+		printf("\tpopen() failed: aborted\n");
+	}
+
+}//void ProcessSingleHDUsage(unsigned uContainer)
 
 
 void ProcessSingleQuota(unsigned uContainer)
