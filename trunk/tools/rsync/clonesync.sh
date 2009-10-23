@@ -26,14 +26,16 @@ if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	exit 0;
 fi
 
-fLog "start $1 to $3:$2";
+fLog "$$ start $1 to $3:$2";
+
+cLockfile="/tmp/clonesync.sh.lock.$$";
 
 #do not run if another (same source and target VEIDs) clone job is also running
-if [ -e /tmp/clonesync.sh.lock.$1.$2 ]; then
+if [ -e $cLockfile ]; then
 	fLog "waiting for lock release";
 	exit 0;
 else
-	touch /tmp/clonesync.sh.lock.$1.$2;
+	touch $cLockfile; 
 fi
 
 #flush as much as possible to disk.
@@ -69,8 +71,8 @@ fi
 			/vz/private/$1/ $3:/vz/private/$2
 
 #remove lock file
-rm -f /tmp/clonesync.sh.lock.$1.$2;
+rm -f $cLockfile;
 
-fLog "end $1 to $3:$2";
+fLog "$$ end";
 exit 0;
 
