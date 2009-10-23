@@ -30,13 +30,13 @@ REQUIRES
 void ErrorMsg(const char *cErrorMsg);
 void ConnectDb(void);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
-unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c,char *t[]);
+unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c,float *d,char *t[]);
 
 static MYSQL gMysql;
 static char gcQuery[1024];
 
 
-unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c,char *t[])
+unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c,float *d,char *t[])
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -54,6 +54,7 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
         	MYSQL_RES *res2;
 	        MYSQL_ROW field2;
 		long unsigned luContainerDiskSpace=0;
+		long unsigned luHDDiskSpace=0;
 		long unsigned luContainerHardLimit=0;
 		long unsigned luInstalledDiskSpace=0;
 		char cluInstalledDiskSpace[256]={""};
@@ -104,9 +105,29 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 		}
 		mysql_free_result(res2);
 
+		//3-.
+		//Sum all node actual disk usage
+		sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
+				" tProperty.cName='1k-hdblocks.luUsage'"
+				" AND tProperty.uType=3"
+				" AND tProperty.uKey=tContainer.uContainer"
+				" AND tContainer.uNode=%u",uNode);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			ErrorMsg(mysql_error(&gMysql));
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			if(field2[0]!=NULL)
+				sscanf(field2[0],"%lu",&luHDDiskSpace);
+		}
+		mysql_free_result(res2);
+
+
 		a[uCount]=(float)luContainerDiskSpace/(float)(1024*1024);
-		b[uCount]=(float)luContainerHardLimit/(float)(1024*1024);
-		c[uCount]=(float)luInstalledDiskSpace/(float)(1024*1024);
+		b[uCount]=(float)luHDDiskSpace/(float)(1024*1024);
+		c[uCount]=(float)luContainerHardLimit/(float)(1024*1024);
+		d[uCount]=(float)luInstalledDiskSpace/(float)(1024*1024);
 
 		uCount++;
 	}
@@ -122,6 +143,7 @@ int main(int iArgc, char *cArgv[])
         float   a[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         float   b[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         float   c[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        float   d[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         char    *t[24]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
@@ -150,7 +172,7 @@ int main(int iArgc, char *cArgv[])
 	if(!cDatacenter[0])
 		ErrorMsg("No such datacenter");
 
-	uNumNodes=GetDatacenterHealthData(uDatacenter,a,b,c,t);
+	uNumNodes=GetDatacenterHealthData(uDatacenter,a,b,c,d,t);
 
 	if(uNumNodes>24) uNumNodes=24;
 
@@ -158,14 +180,14 @@ int main(int iArgc, char *cArgv[])
         GDC_SetColor= sc;/* assign set colors */
         GDC_title=cDatacenter;
         GDC_ytitle="GigaBytes";
-        GDC_xtitle="Current container disk space, hard limit and installed disk space.";
+        GDC_xtitle="Current container usage, hd usage, hard limit and installed disk space.";
         GDC_bar_width = 5;
 
         if(getenv("REQUEST_METHOD")!=NULL)
                 printf( "Content-Type: image/gif\n\n" );
         //x,y image, file, type, num of data points, array of x labels, number of data sets
         //data set 1..n float
-        out_graph(1000,600,stdout,GDC_3DBAR,uNumNodes,t,3,a,b,c);
+        out_graph(1000,600,stdout,GDC_3DBAR,uNumNodes,t,4,a,b,c,d);
 	for(i=0;i<24 && t[i]!=NULL;i++)
 		free(t[i]);
 
