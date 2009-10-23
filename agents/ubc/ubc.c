@@ -327,6 +327,7 @@ void ProcessUBC(void)
 		{
 			ProcessSingleUBC(uContainer,0);
 			ProcessSingleQuota(uContainer);
+			ProcessSingleHDUsage(uContainer);
 			ProcessVZMemCheck(uContainer,0);
 			ProcessVZCPUCheck(uContainer,0);
 		}
