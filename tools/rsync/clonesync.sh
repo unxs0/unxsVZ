@@ -28,7 +28,7 @@ fi
 
 fLog "start $1 to $3:$2";
 
-cLockfile="/tmp/clonesync.sh.lock.$$";
+cLockfile="/tmp/clonesync.sh.lock.$1.$2";
 
 #do not run if another (same source and target VEIDs) clone job is also running
 if [ -e $cLockfile ]; then
