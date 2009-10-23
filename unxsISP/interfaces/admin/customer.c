@@ -3027,7 +3027,7 @@ void funcCustomerReport(FILE *fp)
 	MYSQL_RES *res2;
 	MYSQL_ROW field2;
 
-	sprintf(gcQuery,"SELECT uClient,cFirstName,cLastName FROM tClient WHERE uClient!=1 AND uOwner=%u",guOrg);
+	sprintf(gcQuery,"SELECT uClient,cFirstName,cLastName FROM tClient WHERE uClient!=1 AND uOwner=%u ORDER BY cLabel",guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -3035,7 +3035,7 @@ void funcCustomerReport(FILE *fp)
 
 	while((field=mysql_fetch_row(res)))
 	{
-		fprintf(fp,"<tr><td>%s</td><td>%s %s</td>",field[0],field[1],field[2]);
+		fprintf(fp,"<tr><td align=center>%s</td><td align=center>%s %s</td>",field[0],field[1],field[2]);
 
 		sprintf(gcQuery,"SELECT cLabel FROM tInstance WHERE uClient=%s AND uStatus=4",field[0]);
 		mysql_query(&gMysql,gcQuery);
@@ -3044,12 +3044,12 @@ void funcCustomerReport(FILE *fp)
 		res2=mysql_store_result(&gMysql);
 		
 		if((field2=mysql_fetch_row(res2)))
-			fprintf(fp,"<td>%s</td></tr>\n",field2[0]);
+			fprintf(fp,"<td align=center>%s</td></tr>\n",field2[0]);
 		else
-			fprintf(fp,"<td>None</td></tr>\n");
+			fprintf(fp,"<td align=center>None</td></tr>\n");
 
 		while((field2=mysql_fetch_row(res2)))
-			fprintf(fp,"<tr><td>&nbsp;</td><td>&nbsp;</td><td>%s</td></tr>\n",field2[0]);
+			fprintf(fp,"<tr><td align=center>&nbsp;</td><td align=center>&nbsp;</td><td align=center>%s</td></tr>\n",field2[0]);
 	}
 
 
