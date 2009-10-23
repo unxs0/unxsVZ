@@ -82,7 +82,7 @@
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
     <td class="hdrtout padlt8" width="100%">
-		<h6 class="modhdr">ispAdmin Dashboard</h6>
+		<h6 class="modhdr">Customer Report</h6>
 	</td>
 	<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
   </tr>
@@ -94,7 +94,12 @@
 	
 	
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
+<table border="0" cellspacing="0" cellpadding="7" width="100%" class="table_content" style="margin-top:5px;">
+<tr bgcolor="#e9e9e9">
+<th>Customer ID</th><th>Customer Name</th><th>Deployed Products</th>
+</tr>
 {{funcCustomerReport}}
+</table>
 	</table>
 	
 	
