@@ -1634,24 +1634,24 @@ tClient.uOwner 19
 						"cShipState='%s',cShipZip='%s',cShipCountry='%s',cTelephone='%s',cFax='%s',uModBy=1,"
 						"uModDate=UNIX_TIMESTAMP(NOW()) WHERE tInvoice.uClient=%s "
 						"AND tInvoice.uInvoice=%u",
-						field[1]
-						,field[2]
-						,field[3]
-						,field[4]
-						,field[5]
-						,field[6]
-						,field[7]
-						,field[8]
-						,field[9]
-						,field[10]
-						,field[11]
-						,field[12]
-						,field[13]
-						,field[14]
-						,field[15]
-						,field[16]
-						,field[17]
-						,field[18]
+						TextAreaSave(field[1])
+						,TextAreaSave(field[2])
+						,TextAreaSave(field[3])
+						,TextAreaSave(field[4])
+						,TextAreaSave(field[5])
+						,TextAreaSave(field[6])
+						,TextAreaSave(field[7])
+						,TextAreaSave(field[8])
+						,TextAreaSave(field[9])
+						,TextAreaSave(field[10])
+						,TextAreaSave(field[11])
+						,TextAreaSave(field[12])
+						,TextAreaSave(field[13])
+						,TextAreaSave(field[14])
+						,TextAreaSave(field[15])
+						,TextAreaSave(field[16])
+						,TextAreaSave(field[17])
+						,TextAreaSave(field[18])
 						,field[0]
 						,uInvoice
 						);
@@ -1729,24 +1729,24 @@ tClient.uOwner 19
 					"cState='%s',cZip='%s',cCountry='%s',cShipName='%s',cShipAddr1='%s',cShipAddr2='%s',cShipCity='%s',"
 					"cShipState='%s',cShipZip='%s',cShipCountry='%s',cTelephone='%s',cFax='%s',uOwner=%u,uCreatedBy=1,"
 					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uClient='%s',uInvoiceStatus=1",
-					field[1]
-					,field[2]
-					,field[3]
-					,field[4]
-					,field[5]
-					,field[6]
-					,field[7]
-					,field[8]
-					,field[9]
-					,field[10]
-					,field[11]
-					,field[12]
-					,field[13]
-					,field[14]
-					,field[15]
-					,field[16]
-					,field[17]
-					,field[18]
+					TextAreaSave(field[1])
+					,TextAreaSave(field[2])
+					,TextAreaSave(field[3])
+					,TextAreaSave(field[4])
+					,TextAreaSave(field[5])
+					,TextAreaSave(field[6])
+					,TextAreaSave(field[7])
+					,TextAreaSave(field[8])
+					,TextAreaSave(field[9])
+					,TextAreaSave(field[10])
+					,TextAreaSave(field[11])
+					,TextAreaSave(field[12])
+					,TextAreaSave(field[13])
+					,TextAreaSave(field[14])
+					,TextAreaSave(field[15])
+					,TextAreaSave(field[16])
+					,TextAreaSave(field[17])
+					,TextAreaSave(field[18])
 					,uOwner
 					,field[0]
 					);
