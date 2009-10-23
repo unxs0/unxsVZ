@@ -1281,6 +1281,7 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 			uChange++;
 		}
 		fclose(fp);
+		unlink("/tmp/UpdateContainerUBC.vzcfgcheck.output");
 	}
 
 	if(uChange)
@@ -1399,6 +1400,7 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 			uChange++;
 		}
 		fclose(fp);
+		unlink("/tmp/SetContainerUBC.vzcfgcheck.output");
 	}
 
 	if(uChange)
