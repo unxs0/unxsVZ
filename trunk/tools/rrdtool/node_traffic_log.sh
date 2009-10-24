@@ -1,19 +1,34 @@
-#!/bin/sh
-#
+#!/bin/bash
+
 #FILE
-#	/usr/local/sbin/node_traffic_log.sh
+#	unxsVZ/tools/rrdtool/node_traffic_log.sh
 #PURPOSE
 #	Graph all node container (or node see DEV) traffic
-#NOTES
-#	Requires root ssh via public key, rrdtool and allnodescp.sh setup 
-#	correctly.
-#	Graphs are for OPenVZ venet containers not for veth bridged containers.
-#
+#	Updated for clean unxsVZ standard bash logging to stdout.
 #	We changed to use hostname -a (the short hostname) it should be in the
-#	/etc/hosts file for jobqueue.c use in some cases?
+#	/etc/hosts file (for jobqueue.c use in some cases?)
+#REQUIRES
+#	hostname (/etc/hosts should be configured correctly if using -a)
+#	/bin/bash
+#	/usr/sbin/vzlist
+#	/usr/sbin/vzctl
+#	/bin/awk
+#	/usr/bin/rrdtool
+#	unxsVZ localized /usr/sbin/allnodescp.sh
+#OS
+#	Only tested on CentOS 5+ with OpenVZ
+#LEGAL
+#	Copyright (C) Unixservice, LLC. 2009.
+#	GPLv2 license applies.
 #
 
+fLog() { echo "`date +%b' '%d' '%T` $0 $@"; }
+
 HOSTNAME=`hostname -a`; 
+if [ "$HOSTNAME" == "" ];then
+	fLog "hostname error";
+	exit 0;
+fi
 RRDFILE="/var/lib/rrd/$HOSTNAME.rrd";
 #Prefer to graph only container traffic. 
 #ISP should have node traffic graphics available via switch etc.
@@ -32,6 +47,10 @@ if ! test -e $RRDFILE; then
 	RRA:MAX:0.5:6:700 \
 	RRA:MAX:0.5:24:775 \
 	RRA:MAX:0.5:288:797
+	if [ $? != 0 ];then
+		fLog "rrdtool create $RRDFILE error";
+		exit 0;
+	fi
 fi
  
 eval `grep $DEV /proc/net/dev  | awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
@@ -41,6 +60,10 @@ if [ $? == 0 ] && [ "$CTIN" != "" ] && [ "$CTOUT" != "" ];then
 	#echo "$RRDFILE N:$CTOUT:$CTIN"
 	#note reversal 
 	nice /usr/bin/rrdtool update $RRDFILE N:$CTOUT:$CTIN
+	if [ $? != 0 ];then
+		fLog "rrdtool update $RRDFILE error";
+		exit 0;
+	fi
 
 	PNGFILE="/var/www/unxs/html/traffic/$HOSTNAME.png"
 
@@ -63,7 +86,15 @@ if [ $? == 0 ] && [ "$CTIN" != "" ] && [ "$CTOUT" != "" ];then
 		"GPRINT:out:MAX:Max out\:%0.0lf" \
 		"GPRINT:in:LAST:Last in\:%0.0lf" \
 		"GPRINT:out:LAST:Last out\:%0.0lf" > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		fLog "rrdtool graph $PNGFILE error";
+		exit 0;
+	fi
 
 	#copy images to all nodes that may run unxsVZ GUI
 	nice /usr/sbin/allnodescp.sh $PNGFILE > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		fLog "allnodescp.sh $PNGFILE error";
+		exit 0;
+	fi
 fi
