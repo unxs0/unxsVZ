@@ -1,11 +1,30 @@
-#!/bin/sh
+#!/bin/bash
+
+#FILE
+#	unxsVZ/tools/rrdtool/vz_traffic_log.sh
+#PURPOSE
+#	Example crontab bash script for providing per container mrtg style traffic
+#	graphs.
+#	Updated for clean unxsVZ standard bash logging to stdout.
+#REQUIRES
+#	/bin/bash
+#	/usr/sbin/vzlist
+#	/usr/sbin/vzctl
+#	/bin/awk
+#	/usr/bin/rrdtool
+#	unxsVZ localized /usr/sbin/allnodescp.sh
+#OS
+#	Only tested on CentOS 5+ with OpenVZ
+#LEGAL
+#	Copyright (C) Unixservice, LLC. 2009.
+#	GPLv2 license applies.
 #
-# Example crontab bash script for providing per container mrtg style traffic
-# graphs.
-#
+
+fLog() { echo "`date +%b' '%d' '%T` $0 $@"; }
 
 /usr/sbin/vzlist > /dev/null 2>&1; 
 if [ $? != 0 ];then
+	fLog "vzlist error";
 	exit 0;
 fi
 for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
@@ -25,16 +44,24 @@ for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
 		RRA:MAX:0.5:6:700 \
 		RRA:MAX:0.5:24:775 \
 		RRA:MAX:0.5:288:797
+		if [ $? != 0 ];then
+			fLog "rrdtool create $veid error";
+			continue;
+		fi
 	fi
  
 	eval `/usr/sbin/vzctl exec $veid "grep venet0 /proc/net/dev"  |  \
 		awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
 	if [ $? != 0 ] || [ "$CTIN" == "" ] || [ "$CTOUT" == "" ];then
-		echo "vz_traffic_log.sh eval error";
+		fLog "eval $veid error";
 		continue;
 	fi
  
 	nice /usr/bin/rrdtool update $RRDFILE N:$CTIN:$CTOUT
+	if [ $? != 0 ];then
+		fLog "rrdtool update $veid error";
+		continue;
+	fi
 
 	PNGFILE="/var/www/unxs/html/traffic/$veid.png"
 
@@ -57,8 +84,16 @@ for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
 			"GPRINT:out:MAX:Max out\:%0.0lf" \
 			"GPRINT:in:LAST:Last in\:%0.0lf" \
 			"GPRINT:out:LAST:Last out\:%0.0lf" > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		fLog "rrdtool graph $PNGFILE error";
+		continue;
+	fi
 
 	#Here you need to copy all graphics to all nodes that provide possible unxsVZ admin interfaces.
 	nice /usr/sbin/allnodescp.sh $PNGFILE > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		fLog "allnodescp.sh $PNGFILE error";
+		continue;
+	fi
 
 done
