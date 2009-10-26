@@ -96,3 +96,11 @@ void funcTicketNavBar(FILE *fp);
 void funcTicketComments(FILE *fp);
 void TicketCommentGetHook(entry gentries[],int x);
 
+
+//register.c
+void ProcessRegisterVars(pentry entries[], int x);
+void RegisterGetHook(entry gentries[],int x);
+void RegisterCommands(pentry entries[], int x);
+void htmlRegister(void);
+void htmlRegisterPage(char *cTitle, char *cTemplateName);
+
