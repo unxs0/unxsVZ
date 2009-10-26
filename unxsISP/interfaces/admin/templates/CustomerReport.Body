@@ -123,6 +123,8 @@
 	</td>
   </tr>
 </table>
+<input type=hidden name=gcPage value='CustomerReport'>
+
 </form>
 
 
