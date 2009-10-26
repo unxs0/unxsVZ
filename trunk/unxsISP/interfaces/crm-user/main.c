@@ -90,8 +90,6 @@ int main(int argc, char *argv[])
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{
 		//Get	
-		SSLCookieLogin();
-		
 		gcl = getenv("QUERY_STRING");
 		for(i=0;gcl[0] != '\0' && i<MAXGETVARS;i++)
 		{
@@ -105,6 +103,16 @@ int main(int argc, char *argv[])
 			else if(!strcmp(gentries[i].name,"gcPage"))
 				sprintf(gcPage,"%.99s",gentries[i].val);
 		}
+		
+		//Not login required gcPage section
+		if(gcPage[0])
+		{
+			if(!strcmp(gcPage,"Register"))
+				RegisterGetHook(gentries,i);
+		}
+
+		SSLCookieLogin();
+
 		if(gcPage[0])
 		{
 			if(!strcmp(gcPage,"Glossary"))
@@ -158,6 +166,8 @@ int main(int argc, char *argv[])
 	}
 
         if(!strcmp(gcFunction,"Login")) SetLogin();
+	
+	RegisterCommands(entries,i);
 
         if(!guPermLevel || !gcUser[0] || !guLoginClient)
                 SSLCookieLogin();
