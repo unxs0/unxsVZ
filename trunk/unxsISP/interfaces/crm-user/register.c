@@ -31,13 +31,31 @@ static char *cMobileStyle="type_fields";
 static char cFax[33]={""};
 static char *cFaxStyle="type_fields";
 
+
+unsigned ValidRegisterInput(void);
+void CommitRegister(void);
+void EmailConfirmation(void);
+void ShowSuccessPage(void);
+
+
 void ProcessRegisterVars(pentry entries[], int x)
 {
 	register int i;
 	
 	for(i=0;i<x;i++)
 	{
-	//	if(!strcmp(entries[i].name,"uRegister"))
+		if(!strcmp(entries[i].name,"cFirstName"))
+			sprintf(cFirstName,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cLastName"))
+			sprintf(cLastName,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cEmail"))
+			sprintf(cEmail,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cTelephone"))
+			sprintf(cTelephone,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cMobile"))
+			sprintf(cMobile,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cFax"))
+			sprintf(cFax,"%.32s",entries[i].val);
 	}
 
 }//void ProcessUserVars(pentry entries[], int x)
@@ -62,7 +80,15 @@ void RegisterCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"Register"))
 	{
 		ProcessRegisterVars(entries,x);
-		//if(!strcmp(gcFunction,"Submit Comment"))
+		if(!strcmp(gcFunction,"Register"))
+		{
+			if(ValidRegisterInput())
+				htmlRegister();
+
+			CommitRegister();
+			EmailConfirmation();
+			ShowSuccessPage();
+		}
 
 		htmlRegister();
 	}
@@ -167,4 +193,97 @@ void htmlRegisterPage(char *cTitle, char *cTemplateName)
 	}
 
 }//void htmlRegisterPage()
+
+
+unsigned ValidRegisterInput(void)
+{
+	MYSQL_RES *res;
+
+	if(!cFirstName[0])
+	{
+		cFirstNameStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink>Must enter first name";
+		return(1);
+	}
+	if(!cLastName[0])
+	{
+		cLastNameStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink>Must enter last name";
+		return(1);
+	}
+
+	if(!cEmail[0])
+	{
+		cEmailStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink>Must enter email address";
+		return(1);
+	}
+	else
+	{
+		if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
+		{
+			cEmailStyle="type_fields_req";
+			gcMessage="<blink>Error: </blink>Email has to be a valid email address";
+			return(1);
+		}
+	}
+
+	if(!cTelephone[0])
+	{
+		cTelephoneStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink>Must enter telephone number";
+		return(1);
+	}
+
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cFirstName='%s' AND cLastName='%s'",
+			TextAreaSave(cFirstName)
+			,TextAreaSave(cLastName)
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if(mysql_num_rows(res))
+	{
+		cFirstNameStyle="type_fields_req";
+		cLastNameStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink>Name already registered in the database";
+		return(1);
+	}
+
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cEmail='%s'",TextAreaSave(cEmail));
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if(mysql_num_rows(res))
+	{
+		cEmailStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink>Email already registered in the database";
+		return(1);
+	}
+
+	mysql_free_result(res);
+
+	return(0);
+
+}//unsigned ValidRegisterInput(void)
+
+
+void CommitRegister(void)
+{
+}//void CommitRegister(void)
+
+
+void EmailConfirmation(void)
+{
+}//void EmailConfirmation(void)
+
+void ShowSuccessPage(void)
+{
+}//void ShowSuccessPage(void)
 
