@@ -13,6 +13,24 @@ PURPOSE
 #include "interface.h"
 
 
+static char cFirstName[33]={""};
+static char *cFirstNameStyle="type_fields";
+
+static char cLastName[33]={""};
+static char *cLastNameStyle="type_fields";
+
+static char cEmail[101]={""};
+static char *cEmailStyle="type_fields";
+
+static char cTelephone[33]={""};
+static char *cTelephoneStyle="type_fields";
+
+static char cMobile[33]={""};
+static char *cMobileStyle="type_fields";
+
+static char cFax[33]={""};
+static char *cFaxStyle="type_fields";
+
 void ProcessRegisterVars(pentry entries[], int x)
 {
 	register int i;
@@ -55,7 +73,7 @@ void RegisterCommands(pentry entries[], int x)
 void htmlRegister(void)
 {
 	htmlHeader("unxsISP CRM","Header");
-	htmlRegisterPage("","Ticket.Body");
+	htmlRegisterPage("","Register.Body");
 	htmlFooter("Footer");
 
 }//void htmlRegister(void)
@@ -97,8 +115,44 @@ void htmlRegisterPage(char *cTitle, char *cTemplateName)
 
 			template.cpName[7]="gcMessage";
 			template.cpValue[7]=gcMessage;
+			
+			template.cpName[8]="cFirstName";
+			template.cpValue[8]=cFirstName;
 
-			template.cpName[8]="";
+			template.cpName[9]="cFirstNameStyle";
+			template.cpValue[9]=cFirstNameStyle;
+
+			template.cpName[10]="cLastName";
+			template.cpValue[10]=cLastName;
+
+			template.cpName[11]="cLastNameStyle";
+			template.cpValue[11]=cLastNameStyle;
+
+			template.cpName[12]="cEmail";
+			template.cpValue[12]=cEmail;
+
+			template.cpName[13]="cEmailStyle";
+			template.cpValue[13]=cEmailStyle;
+
+			template.cpName[14]="cTelephone";
+			template.cpValue[14]=cTelephone;
+
+			template.cpName[15]="cMobile";
+			template.cpValue[15]=cMobile;
+
+			template.cpName[16]="cMobileStyle";
+			template.cpValue[16]=cMobileStyle;
+
+			template.cpName[17]="cFax";
+			template.cpValue[17]=cFax;
+
+			template.cpName[18]="cFaxStyle";
+			template.cpValue[18]=cFaxStyle;
+
+			template.cpName[19]="cTelephoneStyle";
+			template.cpValue[19]=cTelephoneStyle;
+
+			template.cpName[20]="";
 
 			printf("\n<!-- Start htmlRegisterPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
