@@ -650,6 +650,10 @@ void CustomerCommands(pentry entries[], int x)
 
 		htmlCustomer();
 	}
+	else if(!strcmp(gcPage,"CustomerReport"))
+	{
+		CustomerReport();
+	}
 
 }//void CustomerCommands(pentry entries[], int x)
 
