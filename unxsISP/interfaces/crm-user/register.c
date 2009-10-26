@@ -276,11 +276,76 @@ unsigned ValidRegisterInput(void)
 
 void CommitRegister(void)
 {
+	unsigned uClient=0;
+#define DEFAULT_OWNER 1 //Later from tConfiguration!
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tRegister "
+			"(uRegister INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, "
+			"uClient INT UNSIGNED NOT NULL DEFAULT 0,"
+			"cHash VARCHAR(32) NOT NULL DEFAULT '')");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s %s',cFirstName='%s',"
+			" cLastName='%s',cEmail='%s',cTelephone='%s',"
+			" cMobile='%s',cFax='%s',uOwner=%u,uCreatedBy=1,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			,
+			TextAreaSave(cFirstName)
+			,TextAreaSave(cLastName)
+			,TextAreaSave(cFirstName)
+			,TextAreaSave(cLastName)
+			,TextAreaSave(cEmail)
+			,TextAreaSave(cTelephone)
+			,TextAreaSave(cMobile)
+			,TextAreaSave(cFax)
+			,DEFAULT_OWNER
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uClient=mysql_insert_id(&gMysql);
+
+	sprintf(gcQuery,"INSERT INTO tRegister SET uClient=%u,cHash=MD5(CONCAT('%s','%s','%s','%u'))",
+			uClient
+			,TextAreaSave(cFirstName)
+			,TextAreaSave(cLastName)
+			,TextAreaSave(cEmail)
+			,uClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
 }//void CommitRegister(void)
 
 
 void EmailConfirmation(void)
 {
+	FILE *fp;
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	//debug only
+	//if((fp=fopen("/tmp/eMailInvoice","w")))
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	{
+		fprintf(fp,"To: %s\n",cEmail);
+		fprintf(fp,"From: %s\n",cFrom);
+		fprintf(fp, "Reply-to: %s\n",cFrom);
+		fprintf(fp,"Subject: %s\n",cEmailSubject);
+		fprintf(fp,"MIME-Version: 1.0\n");
+		fprintf(fp,"Content-type: text/plain\n\n");
+		
+		//fclose(fp);
+		pclose(fp);
+	}	
+
+}//void EmailTicketComment(void)
+
+
+
+void EmailNewTicket(void)
 }//void EmailConfirmation(void)
 
 void ShowSuccessPage(void)
