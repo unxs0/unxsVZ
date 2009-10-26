@@ -1,0 +1,124 @@
+
+<body marginwidth="0" marginheight="0">
+
+<div align="center" class="standard2colnee">
+
+<table cellspacing="0" cellpadding="0" border="0" width=1200>
+	<tr valign="top">
+	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>
+
+		<td align="right">
+
+
+	<!-- one row, one cell table to span the page-->
+	&nbsp;
+		</td>
+	</tr>
+</table>
+
+
+
+<form method=post action=ispCRM.cgi style="margin:0px;">
+<table width=1200  border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td>
+
+&nbsp;
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
+  <tr>
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+    <td class="hdrtout padlt8" width="100%">
+		<h6 class="modhdr">ispCRM Registration</h6>
+	</td>
+	<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+  </tr>
+  <tr>
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>
+
+    <td valign="top">
+	
+	
+	
+<table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
+<tr><td align=center>
+<table>
+        <tr>
+                <td valign="top">
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=First Name')"><strong>First Name </strong></a></td>
+                <td>
+		<input type=hidden name="cFirstName" value='{{cFirstName}}'>
+		<input  title='Non empty string with the first name of the customer,e.g.: Joe (Required)' type="text" name="cFirstName" value="{{cFirstName}}" size="40" maxlength="99" {{gcInputStatus}}  class={{cFirstNameStyle}} /></t
+d>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Last Name')"><strong>Last Name</strong></a>          </td>
+                <td>
+			<input type=hidden name=cLastName value="{{cLastName}}">
+                        <input  title='Non empty string with the last name of the customer,e.g.: Doe (Required)' type=text name=cLastName value="{{cLastName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cLastNameStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Email Address')"><strong>Email Address</strong></a>          </td>
+                <td>
+			<input type=hidden name=cEmail value="{{cEmail}}">
+                        <input  title='A valid email address for the customer,e.g.: johndoe@bigisp.net (Optional)' type=text name=cEmail value="{{cEmail}}" size=40 maxlength=99 {{gcInputStatus}} class={{cEmailStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Telephone')"><strong>Telephone</strong></a>          </td>
+                <td>
+			<input type=hidden name=cTelephone value="{{cTelephone}}">
+                        <input  title='Customer telephone number. E.g +1 555-5555 (Required)' type=text name=cTelephone value="{{cTelephone}}" size=40 maxlength=99 {{gcInputStatus}} class={{cTelephoneStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Fax')"><strong>Fax</strong></a>          </td>
+                <td>
+			<input type=hidden name=cFax value="{{cFax}}">
+                        <input  title='Customer fax number.  E.g +1 555-5555 (Optional)' type=text name=cFax value="{{cFax}}" size=40 maxlength=99 {{gcInputStatus}} class={{cFaxStyle}}></td>
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Mobile')"><strong>Mobile</strong></a>          </td>
+                <td>
+                        <input type=hidden name=cMobile value="{{cMobile}}">
+                        <input  title='Customer mobile number.  E.g +1 555-5555 (Optional)' type=text name=cMobile value="{{cMobile}}" size=40 maxlength=99 {{gcInputStatus}} class={{cMobileStyle}}></td>
+        </tr>
+	<tr><td>&nbsp;</td></tr>
+	<tr>
+	<td colspan=2 align=center>
+	<input class=largeButton type=submit name=gcFunction value='Register' title='Press to register'>
+	</td>
+	</tr>
+</table>
+</td>
+</tr>
+
+	</table>
+	
+	
+	
+	
+	</td>
+<td><img src="/images/clear.gif" width="9" height="9" /></td>
+		 
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td></td>
+
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+  </tr>
+</table>
+
+<br />
+
+	</td>
+  </tr>
+</table>
+</form>
+
+
