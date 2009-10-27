@@ -15,17 +15,11 @@ NOTES
 
 #include "../../mysqlrad.h"
 
-#define mysqlrad_Query_TextErr_Exit	mysql_query(&gMysql,gcQuery);\
-					if(mysql_errno(&gMysql))\
-					{\
-						printf("%s\n",mysql_error(&gMysql));\
-						exit(2);\
-					}
-
 MYSQL gMysql;
 char gcQuery[8192]={""};
 unsigned guLoginClient=1;//Root user
 char cHostname[100]={""};
+char gcProgram[32]={""};
 unsigned guNodeOwner=1;
 unsigned guContainerOwner=1;
 unsigned guStatus=0;//not a valid status
@@ -40,8 +34,32 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode);
 void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
 void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
 
-int main()
+static FILE *gLfp;
+void logfileLine(const char *cFunction,const char *cLogline)
 {
+	time_t luClock;
+	char cTime[32];
+	pid_t pidThis;
+	const struct tm *tmTime;
+
+	pidThis=getpid();
+
+	time(&luClock);
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
+
+        fprintf(gLfp,"%s %s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
+	fflush(gLfp);
+
+}//void logfileLine(char *cLogline)
+
+
+
+int main(int iArgc, char *cArgv[])
+{
+
+	sprintf(gcProgram,"%.31s",cArgv[0]);
+
 	ProcessUBC();//does vzquota and vzmemcheck also via other subsytems
 	return(0);
 }//main()
@@ -55,6 +73,7 @@ void TextConnectDb(void)
         	if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
 		{
 			fprintf(stderr,"Database server unavailable.\n");
+			logfileLine("TextConnectDb","Database server unavailable");
 			exit(1);
 		}
         }
@@ -74,18 +93,21 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 	sprintf(cContainerTag,"%u:  kmemsize",uContainer);
 	if(uContainer)
 	{
-		printf("\tProcessSingleUBC(Container=%u)\n",uContainer);
+		//debug only
+		//printf("\tProcessSingleUBC(Container=%u)\n",uContainer);
+		;
 	}
 	else if(uNode)
 	{
-		printf("\tProcessSingleUBC(Node=%u)\n",uNode);
+		//debug only
+		//printf("\tProcessSingleUBC(Node=%u)\n",uNode);
 		uContainer=uNode;
 		guContainerOwner=guNodeOwner;
 		uType=2;
 	}
 	else if(1)
 	{
-		printf("\tProcessSingleUBC() Error: No container or node specified.\n");
+		logfileLine("ProcessSingleUBC","No container or node specified");
 		exit(1);
 	}
 		
@@ -157,7 +179,7 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						printf("%s\n",mysql_error(&gMysql));
+						logfileLine("ProcessSingleUBC",mysql_error(&gMysql));
 						exit(2);
 					}
 			        	res=mysql_store_result(&gMysql);
@@ -186,7 +208,12 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 								"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 									cResource,luFailcnt,luPrevFailcnt,
 									uNode,uContainer,cHostname,guContainerOwner);
-								mysqlrad_Query_TextErr_Exit;
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+								{
+									logfileLine("ProcessSingleUBC",mysql_error(&gMysql));
+									exit(2);
+								}
 								//First autonomic foray
 								UpdateContainerUBCJob(uContainer,cResource);
 							}
@@ -203,7 +230,12 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 									,cResource
 									,cKnownUBCVals[i]
 									,field[0]);
-						mysqlrad_Query_TextErr_Exit;
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+								{
+									logfileLine("ProcessSingleUBC",mysql_error(&gMysql));
+									exit(2);
+								}
 					}
 					else
 					{
@@ -219,7 +251,12 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 									,cKnownUBCVals[i]
 									,uType
 									,uContainer,guContainerOwner);
-						mysqlrad_Query_TextErr_Exit;
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							logfileLine("ProcessSingleUBC",mysql_error(&gMysql));
+							exit(2);
+						}
 					}
 					mysql_free_result(res);
 				}
@@ -229,7 +266,7 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 	}
 	else
 	{
-		printf("\tfopen() failed: aborted\n");
+		logfileLine("ProcessSingleUBC","fopen() failed");
 	}
 
 }//void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
@@ -245,7 +282,7 @@ void ProcessUBC(void)
 
 	if(gethostname(cHostname,99)!=0)
 	{
-		printf("gethostname() failed: aborted\n");
+		logfileLine("ProcessUBC","gethostname() failed");
 		exit(1);
 	}
 
@@ -256,7 +293,7 @@ void ProcessUBC(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("ProcessUBC",mysql_error(&gMysql));
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -278,7 +315,7 @@ void ProcessUBC(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			printf("%s\n",mysql_error(&gMysql));
+			logfileLine("ProcessUBC",mysql_error(&gMysql));
 			exit(2);
 		}
 		res=mysql_store_result(&gMysql);
@@ -293,12 +330,13 @@ void ProcessUBC(void)
 
 	if(!uNode)
 	{
-		printf("Could not determine uNode: aborted\n");
+		logfileLine("ProcessUBC","Could not determine uNode");
 		exit(1);
 	}
 
-	printf("ProcessUBC() for %s (uNode=%u,uDatacenter=%u)\n",
-			cHostname,uNode,uDatacenter);
+	//debug only
+	//printf("ProcessUBC() for %s (uNode=%u,uDatacenter=%u)\n",
+	//		cHostname,uNode,uDatacenter);
 
 	//Main loop. TODO use defines for tStatus.uStatus values.
 	sprintf(gcQuery,"SELECT uContainer,uOwner,uStatus FROM tContainer WHERE uNode=%u"
@@ -309,7 +347,7 @@ void ProcessUBC(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("ProcessUBC",mysql_error(&gMysql));
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -339,7 +377,8 @@ void ProcessUBC(void)
 	ProcessVZMemCheck(0,uNode);
 	ProcessVZCPUCheck(0,uNode);
 
-	printf("ProcessUBC() End\n");
+	//debug only
+	//printf("ProcessUBC() End\n");
 	exit(0);
 
 }//void ProcessUBC(void)
@@ -354,15 +393,17 @@ void ProcessSingleHDUsage(unsigned uContainer)
 
 	if(uContainer)
 	{
-		printf("\tProcessSingleHDQuota(Container=%u)\n",uContainer);
+		//debug only
+		//printf("\tProcessSingleHDQuota(Container=%u)\n",uContainer);
+		;
 	}
 	else
 	{
-		printf("\tProcessSingleHDQuota() Error: No container specified.\n");
+		logfileLine("ProcessSingleHDUsage","No container specified");
 		exit(1);
 	}
 		
-	sprintf(cCommand,"/usr/bin/du -ks /vz/private/%u/",uContainer);
+	sprintf(cCommand,"/usr/bin/du -ks /vz/private/%u/ 2> /dev/null",uContainer);
 
 	if((fp=popen(cCommand,"r")))
 	{
@@ -375,13 +416,13 @@ void ProcessSingleHDUsage(unsigned uContainer)
 		}
 		else
 		{
-			printf("\tProcessSingleHDQuota() Error: No lines from popen, aborting!\n");
+			logfileLine("ProcessSingleHDUsage","No lines from popen");
 			exit(1);
 		}
 
 		if(luUsage==0)
 		{
-			printf("\tProcessSingleHDQuota() Error: Unexpected luUsage==0, aborting!\n");
+			logfileLine("ProcessSingleHDUsage","Unexpected luUsage==0");
 			exit(1);
 		}
 
@@ -390,7 +431,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			printf("%s\n",mysql_error(&gMysql));
+			logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql));
 			exit(2);
 		}
 	       	res=mysql_store_result(&gMysql);
@@ -402,7 +443,12 @@ void ProcessSingleHDUsage(unsigned uContainer)
 							,luUsage
 							,guContainerOwner
 							,field[0]);
-			mysqlrad_Query_TextErr_Exit;
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql));
+				exit(2);
+			}
 		}
 		else
 		{
@@ -416,15 +462,19 @@ void ProcessSingleHDUsage(unsigned uContainer)
 						,luUsage
 						,uContainer
 						,guContainerOwner);
-			mysqlrad_Query_TextErr_Exit;
-
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql));
+				exit(2);
+			}
 		}
 		mysql_free_result(res);
 		pclose(fp);
 	}
 	else
 	{
-		printf("\tpopen() failed: aborted\n");
+		logfileLine("ProcessSingleHDUsage","popen() failed");
 	}
 
 }//void ProcessSingleHDUsage(unsigned uContainer)
@@ -449,11 +499,11 @@ void ProcessSingleQuota(unsigned uContainer)
 	sprintf(cContainerTag,"%u: /vz/private/%u",uContainer,uContainer);
 	if(uContainer)
 	{
-		printf("\tProcessSingleQuota(Container=%u)\n",uContainer);
+		;
 	}
 	else
 	{
-		printf("\tProcessSingleQuota() Error: No container specified.\n");
+		logfileLine("ProcessSingleQuota","No container specified");
 		exit(1);
 	}
 		
@@ -518,7 +568,7 @@ void ProcessSingleQuota(unsigned uContainer)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					printf("%s\n",mysql_error(&gMysql));
+					logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
 					exit(2);
 				}
 			       	res=mysql_store_result(&gMysql);
@@ -530,7 +580,12 @@ void ProcessSingleQuota(unsigned uContainer)
 								,luKnownQuotaVals[i]
 								,guContainerOwner
 								,field[0]);
-					mysqlrad_Query_TextErr_Exit;
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
+						exit(2);
+					}
 				}
 				else
 				{
@@ -547,8 +602,12 @@ void ProcessSingleQuota(unsigned uContainer)
 								,uType
 								,uContainer
 								,guContainerOwner);
-					mysqlrad_Query_TextErr_Exit;
-
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
+						exit(2);
+					}
 				}
 				mysql_free_result(res);
 			}
@@ -563,7 +622,7 @@ void ProcessSingleQuota(unsigned uContainer)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					printf("%s\n",mysql_error(&gMysql));
+					logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
 					exit(2);
 				}
 			       	res=mysql_store_result(&gMysql);
@@ -576,7 +635,12 @@ void ProcessSingleQuota(unsigned uContainer)
 								,luKnownQuotaVals[i]
 								,guContainerOwner
 								,field[0]);
-					mysqlrad_Query_TextErr_Exit;
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
+						exit(2);
+					}
 				}
 				else
 				{
@@ -593,8 +657,12 @@ void ProcessSingleQuota(unsigned uContainer)
 								,uType
 								,uContainer
 								,guContainerOwner);
-					mysqlrad_Query_TextErr_Exit;
-
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
+						exit(2);
+					}
 				}
 				mysql_free_result(res);
 			}
@@ -603,7 +671,7 @@ void ProcessSingleQuota(unsigned uContainer)
 	}
 	else
 	{
-		printf("\tfopen() failed: aborted\n");
+		logfileLine("ProcessSingleQuota","fopen() failed");
 	}
 
 }//void ProcessSingleQuota(unsigned uContainer)
@@ -631,14 +699,16 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 
 	if(uContainer)
 	{
-		printf("\tProcessVZMemCheck(Container=%u)\n",uContainer);
+		//debug only
+		//printf("\tProcessVZMemCheck(Container=%u)\n",uContainer);
 		sprintf(cContainerTag,"%u",uContainer);
 		uType=3;
 		uKey=uContainer;
 	}
 	else if(uNode)
 	{
-		printf("\tProcessVZMemCheck(uNode=%u)\n",uNode);
+		//debug only
+		//printf("\tProcessVZMemCheck(uNode=%u)\n",uNode);
 		sprintf(cContainerTag,"Summary:");
 		uType=2;
 		uKey=uNode;
@@ -646,7 +716,7 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 	}
 	else
 	{
-		printf("\tProcessVZMemCheck() Error: No container or node specified.\n");
+		logfileLine("ProcessVZMemCheck","No container or node specified");
 		exit(1);
 	}
 		
@@ -695,7 +765,7 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					printf("%s\n",mysql_error(&gMysql));
+					logfileLine("ProcessVZMemCheck",mysql_error(&gMysql));
 					exit(2);
 				}
 			       	res=mysql_store_result(&gMysql);
@@ -709,7 +779,12 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 								,cResource
 								,cKnownVZVals[i]
 								,field[0]);
-					mysqlrad_Query_TextErr_Exit;
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						logfileLine("ProcessVZMemCheck",mysql_error(&gMysql));
+						exit(2);
+					}
 				}
 				else
 				{
@@ -726,7 +801,12 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 								,uType
 								,uKey
 								,guContainerOwner);
-					mysqlrad_Query_TextErr_Exit;
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						logfileLine("ProcessVZMemCheck",mysql_error(&gMysql));
+						exit(2);
+					}
 				}
 				mysql_free_result(res);
 			}
@@ -735,7 +815,7 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 	}
 	else
 	{
-		printf("\tpopen() failed: aborted\n");
+		logfileLine("ProcessVZMemCheck","popen() failed");
 	}
 
 }//void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
@@ -762,14 +842,16 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 
 	if(uContainer)
 	{
-		printf("\tProcessVZCPUCheck(Container=%u)\n",uContainer);
+		//debug only
+		//printf("\tProcessVZCPUCheck(Container=%u)\n",uContainer);
 		sprintf(cContainerTag,"%u",uContainer);
 		uType=3;
 		uKey=uContainer;
 	}
 	else if(uNode)
 	{
-		printf("\tProcessVZCPUCheck(uNode=%u)\n",uNode);
+		//debug only
+		//printf("\tProcessVZCPUCheck(uNode=%u)\n",uNode);
 		sprintf(cContainerTag,"0");
 		uType=2;
 		uKey=uNode;
@@ -777,7 +859,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 	}
 	else
 	{
-		printf("\tProcessVZCPUCheck() Error: No container or node specified.\n");
+		logfileLine("ProcessVZCPUCheck","No container or node specified");
 		exit(1);
 	}
 		
@@ -812,7 +894,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					printf("%s\n",mysql_error(&gMysql));
+					logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql));
 					exit(2);
 				}
 			       	res=mysql_store_result(&gMysql);
@@ -826,7 +908,12 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 								,cResource
 								,cKnownVZVals[i]
 								,field[0]);
-					mysqlrad_Query_TextErr_Exit;
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql));
+						exit(2);
+					}
 				}
 				else
 				{
@@ -843,7 +930,12 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 								,uType
 								,uKey
 								,guContainerOwner);
-					mysqlrad_Query_TextErr_Exit;
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql));
+						exit(2);
+					}
 				}
 				mysql_free_result(res);
 			}
@@ -859,9 +951,8 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 	}
 	else
 	{
-		printf("\tpopen() failed: aborted\n");
+		logfileLine("ProcessVZCPUCheck","popen() failed");
 	}
-
 }//void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 
 
@@ -876,7 +967,12 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 		return;
 
 	sprintf(gcQuery,"SELECT uDatacenter,uNode FROM tContainer WHERE uContainer=%u",uContainer);
-	mysqlrad_Query_TextErr_Exit;
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("UpdateContainerUBCJob",mysql_error(&gMysql));
+		exit(2);
+	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
@@ -887,7 +983,7 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 
 	if(!uDatacenter || !uNode)
 	{
-		printf("(!uDatacenter || !uNode) error in UpdateContainerUBCJob()\n");
+		logfileLine("UpdateContainerUBCJob","!uDatacenter || !uNode");
 		return;
 	}
 
@@ -898,7 +994,12 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 				" AND cLabel='UpdateContainerUBCJob()'"
 				" AND cJobData='cResource=%s;'"
 					,uContainer,uNode,uDatacenter,cResource);
-	mysqlrad_Query_TextErr_Exit;
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("UpdateContainerUBCJob",mysql_error(&gMysql));
+		exit(2);
+	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
@@ -914,6 +1015,11 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 			",cJobData='cResource=%s;'"
 			",uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uDatacenter,uNode,uContainer,cResource,guContainerOwner);
-	mysqlrad_Query_TextErr_Exit;
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("UpdateContainerUBCJob",mysql_error(&gMysql));
+		exit(2);
+	}
 
 }//void UpdateContainerUBCJob(...)

@@ -1,8 +1,10 @@
 #
-#unxsVZ entries
-* * * * * sleep 10; nice /usr/sbin/unxsUBC > /dev/null 2>&1;
-* * * * * nice /var/www/unxs/cgi-bin/unxsVZ.cgi ProcessJobQueue >> /var/log/unxsVZ.ProcessJobQueue.log 2>&1;
+#node0
+#unxsVZ entries (new unxsvzlog)
+* * * * * sleep 10; nice /usr/sbin/unxsUBC >> /var/log/unxsvzlog 2>&1;
+* * * * * nice /var/www/unxs/cgi-bin/unxsVZ.cgi ProcessJobQueue >> /var/log/unxsvzlog 2>&1;
 #unxsVZ per container graphs
-*/5 * * * * sleep 20; nice /usr/local/sbin/vz_traffic_log.sh >> /var/log/unxsVZ.ProcessJobQueue.log 2>&1;
-*/5 * * * * sleep 30; nice /usr/local/sbin/node_traffic_log.sh  >> /var/log/unxsVZ.ProcessJobQueue.log 2>&1;
-*/5 * * * * sleep 40; nice /usr/local/sbin/datacenter_traffic_log.sh  >> /var/log/unxsVZ.ProcessJobQueue.log 2>&1;
+*/5 * * * * sleep 20; nice /usr/local/sbin/vz_traffic_log.sh >> /var/log/unxsvzlog 2>&1;
+*/5 * * * * sleep 30; nice /usr/local/sbin/node_traffic_log.sh  >> /var/log/unxsvzlog 2>&1;
+#this should run on only one node at a time.
+#*/5 * * * * sleep 40; nice /usr/local/sbin/datacenter_traffic_log.sh  >> /var/log/unxsvzlog 2>&1;

@@ -16,17 +16,16 @@ char *strsignal(int sig);
 
 
 
-#define ERRLOG "/var/log/unxsvz-autonomics.log"
 #define mysqlQuery_Err_Exit	mysql_query(&gMysql,gcQuery);\
 				if(mysql_errno(&gMysql))\
 				{\
-					logfileLine((char *)mysql_error(&gMysql));\
+					logfileLine("mysqlQuery_Err_Exit",mysql_error(&gMysql));\
 					sighandlerLeave(400);\
 				}
 
 
 //global data
-extern FILE *gEfp;
+extern FILE *gLfp;
 extern MYSQL gMysql;
 extern char gcLine[];
 extern unsigned guDryrun;
@@ -50,7 +49,7 @@ extern char gcLogKey[];
 void daemonize(void);
 void sighandlerLeave(int iSig);
 void sighandlerReload(int iSig);
-void logfileLine(char *cLogline);
+void logfileLine(const char *cFunction,const char *cLogline);
 
 //datacenter.c
 int DatacenterAutonomics(void);

@@ -37,7 +37,7 @@ int NodeAutonomics(void)
 		{
 			sprintf(gcNodeWarnEmail,"%.99s",field[0]);
 			sprintf(gcQuery,"gcNodeWarnEmail=%s",field[0]);
-			logfileLine(gcQuery);
+			logfileLine("NodeAutonomics",gcQuery);
 		}
 		mysql_free_result(res);
 	}
@@ -53,7 +53,7 @@ int NodeAutonomics(void)
 		{
 			sprintf(gcNodeInstalledRam,"%.99s",field[0]);
 			sprintf(gcQuery,"gcNodeInstalledRam=%s",field[0]);
-			logfileLine(gcQuery);
+			logfileLine("NodeAutonomics",gcQuery);
 		}
 		mysql_free_result(res);
 	}
@@ -69,7 +69,7 @@ int NodeAutonomics(void)
 		{
 			sprintf(gcNodeAutonomics,"%.99s",field[0]);
 			sprintf(gcQuery,"gcNodeAutonomics=%s",field[0]);
-			logfileLine(gcQuery);
+			logfileLine("NodeAutonomics",gcQuery);
 		}
 		mysql_free_result(res);
 	}
@@ -85,7 +85,7 @@ int NodeAutonomics(void)
 		{
 			sscanf(field[0],"%d",&giAutonomicsPrivPagesWarnRatio);
 			sprintf(gcQuery,"giAutonomicsPrivPagesWarnRatio=%d",giAutonomicsPrivPagesWarnRatio);
-			logfileLine(gcQuery);
+			logfileLine("NodeAutonomics",gcQuery);
 		}
 		mysql_free_result(res);
 	}
@@ -101,7 +101,7 @@ int NodeAutonomics(void)
 		{
 			sscanf(field[0],"%d",&giAutonomicsPrivPagesActRatio);
 			sprintf(gcQuery,"giAutonomicsPrivPagesActRatio=%d",giAutonomicsPrivPagesActRatio);
-			logfileLine(gcQuery);
+			logfileLine("NodeAutonomics",gcQuery);
 		}
 		mysql_free_result(res);
 	}
@@ -110,7 +110,7 @@ int NodeAutonomics(void)
 	{
 		if(iNodeMemConstraints())
 		{
-			logfileLine("iNodeMemConstraints() error");
+			logfileLine("NodeAutonomics","iNodeMemConstraints() error");
 			//We locally turn off autonomics for this node until
 			//the error is fixed. Or the daemon is reloaded via SIGHUP
 			gcNodeAutonomics[0]='N';
@@ -204,7 +204,7 @@ unsigned iNodeMemConstraints(void)
 					//debug only
 					//sprintf(gcQuery,"uContainer=%u fAllNodeContainerMaxheld=%2.2f",
 					//				uContainer,fAllNodeContainerMaxheld);
-					//logfileLine(gcQuery);
+					//logfileLine("NodeAutonomics",gcQuery);
 
 					break;//move on to next container
 				}
@@ -226,7 +226,7 @@ unsigned iNodeMemConstraints(void)
 		if(!guActedOn)
 		{
 			sprintf(gcQuery,"act-ratio=%2.2f",fPrivPagesRatio);
-			logfileLine(gcQuery);
+			logfileLine("NodeAutonomics",gcQuery);
 
 			//Send warning email via a forked process
 			if(gcNodeWarnEmail[0])
@@ -251,7 +251,7 @@ unsigned iNodeMemConstraints(void)
 		if(!guWarned)
 		{
 			sprintf(gcQuery,"warn-ratio=%2.2f",fPrivPagesRatio);
-			logfileLine(gcQuery);
+			logfileLine("NodeAutonomics",gcQuery);
 
 			//Send warning email via a forked process
 			if(gcNodeWarnEmail[0])
@@ -302,7 +302,7 @@ void SendPrivPagesEmail(char *cEmail, char *cSubjectPrefix)
 			return;
 
 		case -1:
-			logfileLine("SendPrivPagesEmail() fork failed");
+			logfileLine("SendPrivPagesEmail","SendPrivPagesEmail() fork failed");
 			_exit(0);
 
 		case 0:

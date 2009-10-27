@@ -640,3 +640,5 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 #define PROP_CONTAINER "3"
 #define PROP_GROUP "4"
 #define PROP_GROUPTYPE "5"
+
+#define cLOGFILE "/var/log/unxsvzlog"

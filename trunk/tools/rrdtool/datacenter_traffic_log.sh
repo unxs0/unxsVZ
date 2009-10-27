@@ -22,7 +22,7 @@
 #	GPLv2 license applies.
 #
 
-fLog() { echo "`date +%b' '%d' '%T` $0 $@"; }
+fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
 
 #DATACENTER must not have spaces and must be set in tConfiguration with .png

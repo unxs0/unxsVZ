@@ -20,7 +20,7 @@
 #	GPLv2 license applies.
 #
 
-fLog() { echo "`date +%b' '%d' '%T` $0 $@"; }
+fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
 /usr/sbin/vzlist > /dev/null 2>&1; 
 if [ $? != 0 ];then
