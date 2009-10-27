@@ -1,0 +1,12 @@
+{{cFirstName}},
+
+Thank you for confirming your registration.
+
+Your login information for accessing the Help Desk portal is:
+
+Username: {{cFirstName}} {{cLastName}}
+Password: {{cPasswd}}
+
+Best Regards,
+ISP Staff
+

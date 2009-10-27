@@ -387,7 +387,7 @@ void ShowSuccessPage(void)
 
 char *cGetRandomPassword(void);
 void EncryptPasswd(char *cPasswd);
-
+void EmailLogin(void);
 
 void AuthorizeRegister(char *cConfirmHash)
 {
@@ -395,7 +395,7 @@ void AuthorizeRegister(char *cConfirmHash)
 	MYSQL_ROW field;
 	char cPasswd[10]={""};
 
-	sprintf(gcQuery,"SELECT uClient,cFirstName,cLastName FROM tClient WHERE uClient IN "
+	sprintf(gcQuery,"SELECT uClient,cFirstName,cLastName,cEmail FROM tClient WHERE uClient IN "
 			"(SELECT uClient FROM tRegister WHERE cHash='%s')",cConfirmHash);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -405,8 +405,9 @@ void AuthorizeRegister(char *cConfirmHash)
 	if((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uClient);
-		sprintf(cFirstName,"%s",field[0]);
-		sprintf(cLastName,"%s",field[1]);
+		sprintf(cFirstName,"%s",field[1]);
+		sprintf(cLastName,"%s",field[2]);
+		sprintf(cEmail,"%s",field[3]);
 	}
 	else
 	{
@@ -430,12 +431,23 @@ void AuthorizeRegister(char *cConfirmHash)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
+	
+	EmailLogin();
+
+	sprintf(gcQuery,"DELETE FROM tRegister WHERE cHash='%s'",cConfirmHash);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 
 }//void AuthorizeRegister(char *cConfirmHash)
 
 
 void ShowConfirmedRegistration(void)
 {
+	htmlHeader("unxsISP CRM","Header");
+	htmlRegisterPage("","RegisterConf.Body");
+	htmlFooter("Footer");
+
 }//void ShowConfirmedRegistration(void)
 
 
@@ -474,8 +486,6 @@ char *cGetRandomPassword(void)
 void EmailLogin(void)
 {
 	FILE *fp;
-	MYSQL_RES *res;
-	MYSQL_ROW field;
 	struct t_template template;
 	char cFrom[256]={"root"};
 	
@@ -499,7 +509,7 @@ void EmailLogin(void)
 		fprintf(fp,"To: %s\n",cEmail);
 		fprintf(fp,"From: %s\n",cFrom);
 		fprintf(fp, "Reply-to: %s\n",cFrom);
-		fprintf(fp,"Subject: Please confirm your registration\n");
+		fprintf(fp,"Subject: Registration confirmed\n");
 		fprintf(fp,"MIME-Version: 1.0\n");
 		fprintf(fp,"Content-type: text/plain\n\n");
 		fpTemplate(fp,"LoginEmail",&template);	
@@ -507,4 +517,4 @@ void EmailLogin(void)
 		pclose(fp);
 	}	
 
-}//void EmailConfirmation(void)
+}//void EmailLogin(void)

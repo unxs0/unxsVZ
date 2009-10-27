@@ -1,0 +1,80 @@
+
+<body marginwidth="0" marginheight="0">
+
+<div align="center" class="standard2colnee">
+
+<table cellspacing="0" cellpadding="0" border="0" width=1200>
+	<tr valign="top">
+	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>
+
+		<td align="right">
+
+
+	<!-- one row, one cell table to span the page-->
+	&nbsp;
+		</td>
+	</tr>
+</table>
+
+
+
+<form method=post action=ispCRM.cgi style="margin:0px;">
+<table width=1200  border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td>
+
+&nbsp;
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
+  <tr>
+    <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+    <td class="hdrtout padlt8" width="100%">
+		<h6 class="modhdr">ispCRM Registration</h6>
+	</td>
+	<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+  </tr>
+  <tr>
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>
+
+    <td valign="top">
+	
+	
+	
+<table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
+<tr><td align=center>
+<table>
+        <tr>
+               <td valign="top">
+	       Your registration was confirmed. You'll receive an email with your login details.<br>
+	       When you receive it, please login <a href={{cCGI}} class=darklink>here</a>
+	</td>
+	</tr>
+</table>
+</td>
+</tr>
+
+	</table>
+	
+	
+	
+	
+	</td>
+<td><img src="/images/clear.gif" width="9" height="9" /></td>
+		 
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td></td>
+
+    <td><img src="/images/clear.gif" width="9" height="9" /></td>
+    <td></td>
+  </tr>
+</table>
+
+<br />
+
+	</td>
+  </tr>
+</table>
+</form>
+
+
