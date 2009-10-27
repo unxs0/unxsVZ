@@ -5,11 +5,11 @@ FILE
 PURPOSE
 	Command line processing of jobs in the tJob queue.
 AUTHOR
-	Gary Wallis for Unxiservice (C) 2008-2009. GPLv2 License applies.
+	(C) 2008-2009 Gary Wallis for Unxiservice, LLC. GPLv2 License applies.
 NOTES
 	We still use KISS code, var naming conventions, and Allman (ANSI) style C 
 	indentation to make our software readable and writable by any programmer. 
-	At the same time this approach (although with redundant code) has kept these
+	At the same time this approach (although with some redundant code) has kept these
 	programs lean and faster than anything available in any other language.
 TODO
 	Create more #define based "macros," to help the compiler optimize the
@@ -23,14 +23,8 @@ TODO
 #include "mysqlrad.h"
 #include <openisp/template.h>
 
-#define mysqlrad_Query_TextErr_Exit	mysql_query(&gMysql,gcQuery);\
-					if(mysql_errno(&gMysql))\
-					{\
-						printf("%s\n",mysql_error(&gMysql));\
-						exit(2);\
-					}
-
-//the following prototype declarations should provide a 
+//
+//The following prototype declarations should provide a 
 //	table of contents
 
 
@@ -43,7 +37,6 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 void tJobErrorUpdate(unsigned uJob, char *cErrorMsg);
 void tJobDoneUpdate(unsigned uJob);
 void tJobWaitingUpdate(unsigned uJob);
-void InstallConfigFile(unsigned uJob,unsigned uContainer,char *cJobData);
 void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void ChangeHostnameContainer(unsigned uJob,unsigned uContainer);
 void MountFilesContainer(unsigned uJob,unsigned uContainer);
@@ -98,6 +91,28 @@ static unsigned guDatacenter=0;
 //each known cJobName.
 static char cHostname[100]={""};//file scope
 
+
+static FILE *gLfp;
+void logfileLine(const char *cFunction,const char *cLogline)
+{
+	time_t luClock;
+	char cTime[32];
+	pid_t pidThis;
+	const struct tm *tmTime;
+
+	pidThis=getpid();
+
+	time(&luClock);
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
+
+        fprintf(gLfp,"%s jobqueue.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
+	fflush(gLfp);
+
+}//void logfileLine(char *cLogline)
+
+
+
 unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteNode, unsigned uRemoteContainer)
 {
         MYSQL_RES *res;
@@ -114,7 +129,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
 		return(1);
 	}
         res=mysql_store_result(&gMysql);
@@ -130,7 +145,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
 		return(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -143,12 +158,13 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 
 		sprintf(gcQuery,"SELECT tNode.cLabel FROM tContainer,tNode WHERE"
 				" tContainer.uNode=tNode.uNode AND"
+				" tNode.uStatus=1 AND"//Active
 				" tContainer.uContainer=%u AND"
 				" tContainer.uModDate+%u<=UNIX_TIMESTAMP(NOW())",uRemoteContainer,uPeriod);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			printf("%s\n",mysql_error(&gMysql));
+			logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
 			return(3);
 		}
 		res=mysql_store_result(&gMysql);
@@ -159,7 +175,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 			if(uNotValidSystemCallArg(field[0]))
 			{
 				mysql_free_result(res);
-				printf("ProcessCloneSyncJob() sec alert!\n");
+				logfileLine("ProcessCloneSyncJob","security alert");
 				return(4);
 			}
 			//Before running a recurring job we must update the cloned containers 
@@ -171,7 +187,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 			if(mysql_errno(&gMysql))
 			{
 				mysql_free_result(res);
-				printf("%s\n",mysql_error(&gMysql));
+				logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
 				return(5);
 			}
 			sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s",uContainer,uRemoteContainer,field[0]);
@@ -180,7 +196,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 			if(system(gcQuery))
 			{
 				mysql_free_result(res);
-				printf("ProcessCloneSyncJob() '%s' failed!\n",gcQuery);
+				logfileLine("ProcessCloneSyncJob",gcQuery);
 				return(6);
 			}
 			else
@@ -193,7 +209,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 				if(mysql_errno(&gMysql))
 				{
 					mysql_free_result(res);
-					printf("%s\n",mysql_error(&gMysql));
+					logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
 					return(7);
 				}
 			}
@@ -217,7 +233,7 @@ void LogError(char *cErrorMsg,unsigned uKey)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("LogError",mysql_error(&gMysql));
 		exit(2);
 	}
 
@@ -236,9 +252,15 @@ void ProcessJobQueue(void)
 	unsigned uJob=0;
 	unsigned uError=0;
 
+	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
+	{
+		fprintf(stderr,"Could not open logfile: %s\n",cLOGFILE);
+		exit(300);
+       	}
+
 	if(gethostname(cHostname,99)!=0)
 	{
-		printf("gethostname() failed: aborted\n");
+		logfileLine("ProcessJobQueue","gethostname() failed");
 		exit(1);
 	}
 
@@ -249,7 +271,7 @@ void ProcessJobQueue(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -271,7 +293,7 @@ void ProcessJobQueue(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			printf("%s\n",mysql_error(&gMysql));
+			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
 			exit(2);
 		}
 		res=mysql_store_result(&gMysql);
@@ -285,7 +307,7 @@ void ProcessJobQueue(void)
 
 	if(!uNode)
 	{
-		printf("could not determine uNode: aborted\n");
+		logfileLine("ProcessJobQueue","could not determine uNode: aborted");
 		exit(1);
 	}
 
@@ -295,12 +317,14 @@ void ProcessJobQueue(void)
 	//We need to rsync from running container to clone container
 	//where the source container is running on this node
 	//and the target node is a remote node.
+	//1 uACTIVE
+	//31 uSTOPPED
 	sprintf(gcQuery,"SELECT uSource,uContainer,uNode FROM tContainer WHERE uSource>0 AND"
 			" uDatacenter=%u AND (uStatus=1 OR uStatus=31)",uDatacenter);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -319,6 +343,8 @@ void ProcessJobQueue(void)
 	//debug only
 	//printf("ProcessJobQueue() for %s (uNode=%u,uDatacenter=%u)\n",
 	//		cHostname,uNode,uDatacenter);
+	//sprintf(gcQuery,"Start %s(uNode=%u,uDatacenter=%u)",cHostname,uNode,uDatacenter);
+	//logfileLine("ProcessJobQueue",gcQuery);
 	//exit(0);
 
 	//Main loop normal jobs
@@ -329,7 +355,7 @@ void ProcessJobQueue(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -338,12 +364,18 @@ void ProcessJobQueue(void)
 		sscanf(field[0],"%u",&uJob);
 		sscanf(field[1],"%u",&uContainer);
 		//Job dispatcher based on cJobName
+		//These log entries combined with the output of system calls will provide framing
+		sprintf(gcQuery,"Start %s",field[2]);
+		logfileLine("ProcessJobQueue",gcQuery);
 		ProcessJob(uJob,uDatacenter,uNode,uContainer,field[2],field[3]);
+		logfileLine("ProcessJobQueue","End");
 	}
 	mysql_free_result(res);
 
 	//debug only
 	//printf("ProcessJobQueue() End\n");
+	//logfileLine("ProcessJobQueue","End");
+	fclose(gLfp);
 	exit(0);
 
 }//void ProcessJobQueue(void)
@@ -353,7 +385,7 @@ void ProcessJobQueue(void)
 void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		unsigned uContainer,char *cJobName,char *cJobData)
 {
-	static unsigned uCount=0;
+	//static unsigned uCount=0;
 	guNode=uNode;
 	guDatacenter=uDatacenter;
 
@@ -362,12 +394,12 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		printf("(%s) but we continue...\n",mysql_error(&gMysql));
+		logfileLine("ProcessJob()",mysql_error(&gMysql));
 
 
 	//if debug
-	printf("%3.3u uJob=%u uContainer=%u cJobName=%s; cJobData=%s;\n",
-			uCount++,uJob,uContainer,cJobName,cJobData);
+	//printf("%3.3u uJob=%u uContainer=%u cJobName=%s; cJobData=%s;\n",
+	//		uCount++,uJob,uContainer,cJobName,cJobData);
 
 	//Is priority order needed in some cases?
 	if(!strcmp(cJobName,"FailoverTo"))
@@ -434,13 +466,9 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	{
 		LocalImportConfig(uJob,uDatacenter,cJobData);
 	}
-	else if(!strcmp(cJobName,"InstallConfigFile"))
-	{
-		InstallConfigFile(uJob,uContainer,cJobData);
-	}
 	else if(1)
 	{
-		printf("Not-implemented cJobName=%s skipping...\n",cJobName);
+		logfileLine("ProcessJob()",cJobName);
 		tJobErrorUpdate(uJob,cJobName);
 	}
 
@@ -458,7 +486,7 @@ void tJobErrorUpdate(unsigned uJob, char *cErrorMsg)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("tJobErrorUpdate",mysql_error(&gMysql));
 		exit(2);
 	}
 
@@ -472,7 +500,7 @@ void tJobErrorUpdate(unsigned uJob, char *cErrorMsg)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("tJobErrorUpdate",mysql_error(&gMysql));
 		exit(2);
 	}
 
@@ -486,7 +514,7 @@ void tJobDoneUpdate(unsigned uJob)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("tJobDoneUpdate",mysql_error(&gMysql));
 		exit(2);
 	}
 
@@ -500,7 +528,7 @@ void tJobWaitingUpdate(unsigned uJob)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("tJobWaitingUpdate",mysql_error(&gMysql));
 		exit(2);
 	}
 
@@ -508,147 +536,6 @@ void tJobWaitingUpdate(unsigned uJob)
 
 
 //Specific job handlers
-
-
-void InstallConfigFile(unsigned uJob,unsigned uContainer,char *cJobData)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-	unsigned uConfiguration=0;
-	char cDir[32]={""};
-	char *cp;
-
-	if((cp=strstr(cJobData,"uConfiguration=")))
-		sscanf(cp+15,"%u",&uConfiguration);
-
-	if(!uConfiguration)
-	{
-		printf("InstallConfigFile() error: No uConfiguration. Skipping...\n");
-		tJobErrorUpdate(uJob,"uConfiguration=0");
-	}
-
-	//debug only
-	printf("InstallConfigFile() uConfiguration=%u\n",uConfiguration);
-
-	if(uContainer)
-	{
-		struct stat statInfo;
-
-		if(uContainer>100 && uContainer<99999)
-		{
-			sprintf(cDir,"/vz/private/%u",uContainer);
-		}
-		else
-		{
-			printf("InstallConfigFile() error: Out of range uContainer=%u.\n",uContainer);
-			tJobErrorUpdate(uJob,"Outofrange uContainer");
-			return;
-		}
-
-		if(stat(cDir,&statInfo)!=0)
-		{
-			printf("InstallConfigFile() error: No %s.\n",cDir);
-			tJobErrorUpdate(uJob,cDir);
-			return;
-		}
-	}
-
-
-	sprintf(gcQuery,"SELECT cLabel,cValue,cComment FROM tConfiguration WHERE uConfiguration=%u",
-				uConfiguration);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(2);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		char *cp2;
-		char cSystem[256]={""};
-		char cOwnerGroup[100]={""};
-		char cPostOp[100]={""};
-		unsigned uFilePerms=0;
-		unsigned uError=0;
-		char cFilename[256]={""};
-		FILE *fp;
-
-		//Parse cLabel file;root:root;400;none;
-		if((cp=strstr(field[0],"file;")))
-		{
-			//find end of cOwnerGroup
-			if((cp2=strchr(cp+6,';')))
-			{
-				*cp2=0;
-				sprintf(cOwnerGroup,"%.99s",cp+5);
-				//find end of uFilePerms
-				if((cp=strchr(cp2+1,';')))
-					sscanf(cp2+1,"%u",&uFilePerms);
-				//find end of cPostOp
-				if((cp2=strchr(cp+1,';')))
-				{
-					*cp2=0;
-					sprintf(cPostOp,"%.99s",cp+1);
-				}
-			}
-		}
-		//debug only
-		printf("InstallConfigFile() cOwnerGroup=%s; uFilePerms=%u cPostOp=%s; cFilename=%s;\n",
-			cOwnerGroup,uFilePerms,cPostOp,cFilename);
-
-		//Install file
-		if((fp=fopen(cFilename,"w"))==NULL)
-		{
-			printf("InstallConfigFile() error: Can't install %s.\n",cFilename);
-			tJobErrorUpdate(uJob,cFilename);
-			return;//Do not continue if we can't even open file
-		}
-		//we may need to filter out PC cr-lf's
-		fprintf(fp,"%s\n",field[2]);
-		if(fclose(fp))
-		{
-			printf("InstallConfigFile() error: fclose() %s.\n",cFilename);
-			tJobErrorUpdate(uJob,cFilename);
-			return;//Do not continue if we can't close the file.
-		}
-
-		sprintf(cSystem,"/bin/chown %s %s",cOwnerGroup,cFilename);
-		if(system(cSystem))
-		{
-			printf("InstallConfigFile() error: %s.\n",cSystem);
-			tJobErrorUpdate(uJob,cSystem);
-			uError++;
-		}
-
-		sprintf(cSystem,"/bin/chmod %u %s",uFilePerms,cFilename);
-		if(system(cSystem))
-		{
-			printf("InstallConfigFile() error: %s.\n",cSystem);
-			tJobErrorUpdate(uJob,cSystem);
-			uError++;
-		}
-
-		//Do not run post file install command if none or if chown and/or chmod failed
-		if(strcmp(cPostOp,"none") && !uError)
-		{
-			//Limits on cPostOP:
-			//The post install command must return 0 if everything went ok;
-			if(system(cPostOp))
-			{
-				printf("InstallConfigFile() error: %s.\n",cPostOp);
-				tJobErrorUpdate(uJob,cPostOp);
-				return;
-			}
-		}
-
-		if(!uError)
-			tJobDoneUpdate(uJob);
-	}
-	mysql_free_result(res);
-
-
-}//void InstallConfigFile(...)
 
 
 void NewContainer(unsigned uJob,unsigned uContainer)
@@ -667,7 +554,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("NewContainer",mysql_error(&gMysql));
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -678,6 +565,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		//0-. vz conf mount umount files if applicable. 1 is for overwrite existing files
 		if(CreateMountFiles(uContainer,1))
 		{
+			logfileLine("NewContainer","CreateMountFiles(x,1) failed");
 			tJobErrorUpdate(uJob,"CreateMountFiles(x,1) failed");
 			goto CommonExit;
 		}
@@ -694,7 +582,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 			uNotValidSystemCallArg(field[5]) ||
 			uNotValidSystemCallArg(field[6])	)
 		{
-			printf("NewContainer() error: uNotValidSystemCallArg()\n");
+			logfileLine("NewContainer","security alert");
 			tJobErrorUpdate(uJob,"failed sec alert!");
 			goto CommonExit;
 		}
@@ -704,7 +592,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 				uContainer,field[3],field[1],field[2],field[0],field[6]);
 		if(system(gcQuery))
 		{
-			printf("NewContainer() error: %s\n",gcQuery);
+			logfileLine("NewContainer",gcQuery);
 			tJobErrorUpdate(uJob,"vzctl create failed");
 		}
 
@@ -713,13 +601,13 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 				uContainer,field[4],field[5]);
 		if(system(gcQuery))
 		{
-			printf("NewContainer() error: %s\n",gcQuery);
+			logfileLine("NewContainer",gcQuery);
 			tJobErrorUpdate(uJob,"vzctl set failed");
 			//Roll back step 1-.
 			sprintf(gcQuery,"/usr/sbin/vzctl destroy %u",uContainer);
 			if(system(gcQuery))
 			{
-				printf("NewContainer() error: %s\n",gcQuery);
+				logfileLine("NewContainer",gcQuery);
 				tJobErrorUpdate(uJob,"rb: vzctl destroy failed");
 			}
 			goto CommonExit;
@@ -729,13 +617,13 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 		if(system(gcQuery))
 		{
-			printf("NewContainer() error: %s\n",gcQuery);
+			logfileLine("NewContainer",gcQuery);
 			tJobErrorUpdate(uJob,"vzctl start failed");
 			//Roll back step 1-.
 			sprintf(gcQuery,"/usr/sbin/vzctl destroy %u",uContainer);
 			if(system(gcQuery))
 			{
-				printf("NewContainer() error: %s\n",gcQuery);
+				logfileLine("NewContainer",gcQuery);
 				tJobErrorUpdate(uJob,"rb: vzctl destroy failed");
 			}
 			goto CommonExit;
@@ -743,7 +631,8 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	}
 	else
 	{
-		printf("NewContainer() error: Select for %u failed.\n",uContainer);
+		sprintf(gcQuery,"Select for %u failed",uContainer);
+		logfileLine("NewContainer",gcQuery);
 		tJobErrorUpdate(uJob,"Select failed");
 		goto CommonExit;
 	}
@@ -765,8 +654,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 			fprintf(pp,"%s\n",cPasswd);
 			fprintf(pp,"%s\n",cPasswd);
 			pclose(pp);
-
-			printf("Container root passwd changed\n");
+			logfileLine("NewContainer","Container passwd changed");
 		}
 	}
 
@@ -774,6 +662,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	SetContainerStatus(uContainer,1);//Active
 	tJobDoneUpdate(uJob);
 
+//In this case the goto MIGHT be justified
 CommonExit:
 	mysql_free_result(res);
 
@@ -788,26 +677,31 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
 	if(system(gcQuery))
 	{
-		printf("DestroyContainer() error: %s\n",gcQuery);
+		logfileLine("DestroyContainer",gcQuery);
 		tJobErrorUpdate(uJob,"vzctl stop failed");
-		goto CommonExit;
+		return;
 	}
 
 	//2-.
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose destroy %u",uContainer);
 	if(system(gcQuery))
 	{
-		printf("DestroyContainer() error: %s\n",gcQuery);
+		logfileLine("DestroyContainer",gcQuery);
 		tJobErrorUpdate(uJob,"vzctl destroy failed");
-		goto CommonExit;
+		//Attempt roll back
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("DestroyContainer",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl start rollback failed");
+		}
+		return;
 	}
 
 	//Everything ok
 	SetContainerStatus(uContainer,11);//Initial
 	tJobDoneUpdate(uJob);
 
-CommonExit:
-	return;
 
 }//void DestroyContainer(...)
 
@@ -828,91 +722,100 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("ChangeIPContainer",mysql_error(&gMysql));
 		exit(2);
 	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
+	{
 		sprintf(cIPNew,"%.31s",field[0]);
-	if(!cIPNew[0])	
-	{
-		printf("ChangeIPContainer() error 1\n");
-		tJobErrorUpdate(uJob,"Get cIPNew failed");
-		goto CommonExit;
+		if(!cIPNew[0])	
+		{
+			logfileLine("ChangeIPContainer cIPNew",gcQuery);
+			tJobErrorUpdate(uJob,"Get cIPNew failed");
+			goto CommonExit;
+		}
+		sscanf(cJobData,"cIPOld=%31s;",cIPOld);
+		if((cp=strchr(cIPOld,';')))
+			*cp=0;
+		if(!cIPOld[0])	
+		{
+			logfileLine("ChangeIPContainer cIPOld from cJobData=",cJobData);
+			tJobErrorUpdate(uJob,"Get cIPOld failed");
+			goto CommonExit;
+		}
+
+		if(uNotValidSystemCallArg(cIPNew)||uNotValidSystemCallArg(cIPOld))
+		{
+			logfileLine("ChangeIPContainer","security alert");
+			tJobErrorUpdate(uJob,"failed sec alert!");
+			goto CommonExit;
+		}
+
+		//0-.
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("ChangeIPContainer",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl stop failed");
+			goto CommonExit;
+		}
+
+		//1-.
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cIPNew);
+		if(system(gcQuery))
+		{
+			logfileLine("ChangeIPContainer",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl set ipadd failed");
+			goto CommonExit;
+		}
+	
+	
+		//2-.
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel %s --save",uContainer,cIPOld);
+		if(system(gcQuery))
+		{
+			logfileLine("ChangeIPContainer",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl set ipdel failed");
+			goto CommonExit;
+		}
+
+		//3-.
+		sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel='%.31s'",cIPOld);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ChangeIPContainer",mysql_error(&gMysql));
+			tJobErrorUpdate(uJob,"Release old IP from tIP failed");
+			goto CommonExit;
+		}
+
+		//4-.
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("ChangeIPContainer",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl start failed");
+			goto CommonExit;
+		}
+
+		//Everything ok
+		SetContainerStatus(uContainer,1);//Active
+		tJobDoneUpdate(uJob);
+
 	}
-	sscanf(cJobData,"cIPOld=%31s;",cIPOld);
-	if((cp=strchr(cIPOld,';')))
-		*cp=0;
-	if(!cIPOld[0])	
+	else
 	{
-		printf("ChangeIPContainer() error 2\n");
-		tJobErrorUpdate(uJob,"Get cIPOld failed");
-		goto CommonExit;
+		logfileLine("ChangeIPContainer",gcQuery);
+		tJobErrorUpdate(uJob,"No line from query");
 	}
 
-	if(uNotValidSystemCallArg(cIPNew)||uNotValidSystemCallArg(cIPOld))
-	{
-		tJobErrorUpdate(uJob,"failed sec alert!");
-		goto CommonExit;
-	}
-
-	//0-.
-	sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
-	if(system(gcQuery))
-	{
-		printf("ChangeIPContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"vzctl stop failed");
-		goto CommonExit;
-	}
-
-	//1-.
-	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cIPNew);
-	if(system(gcQuery))
-	{
-		printf("ChangeIPContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"vzctl set ipadd failed");
-		goto CommonExit;
-	}
-
-
-	//2-.
-	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel %s --save",uContainer,cIPOld);
-	if(system(gcQuery))
-	{
-		printf("ChangeIPContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"vzctl set ipdel failed");
-		goto CommonExit;
-	}
-
-	//3-.
-	sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel='%.31s'",cIPOld);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		tJobErrorUpdate(uJob,"Release old IP from tIP failed");
-		goto CommonExit;
-	}
-
-	//4-.
-	sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-	if(system(gcQuery))
-	{
-		printf("ChangeIPContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"vzctl start failed");
-		goto CommonExit;
-	}
-
-
-	//Everything ok
-	SetContainerStatus(uContainer,1);//Active
-	tJobDoneUpdate(uJob);
-
+//This goto MIGHT be ok
 CommonExit:
 	mysql_free_result(res);
 	return;
 
-}//void ChangeIPContainer(...)
+}//void ChangeIPContainer()
 
 
 void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
@@ -927,7 +830,7 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("ChangeHostnameContainer",mysql_error(&gMysql));
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -935,41 +838,46 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 	{
 		sprintf(cName,"%.99s",field[0]);
 		sprintf(cHostname,"%.99s",field[1]);
-	}
 
-	if(!cHostname[0] || !cName[0])	
+		if(!cHostname[0] || !cName[0])	
+		{
+			logfileLine("ChangeHostnameContainer",gcQuery);
+			tJobErrorUpdate(uJob,"Get cHostname failed");
+			goto CommonExit;
+		}
+
+		if(uNotValidSystemCallArg(cHostname)||uNotValidSystemCallArg(cName))
+		{
+			logfileLine("ChangeHostnameContainer","security alert");
+			tJobErrorUpdate(uJob,"failed sec alert!");
+			goto CommonExit;
+		}
+
+		//1-.
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --hostname %s --name %s --save",
+					uContainer,cHostname,cName);
+		if(system(gcQuery))
+		{
+			logfileLine("ChangeHostnameContainer",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl set hostname failed");
+			goto CommonExit;
+		}
+
+		//Everything ok
+		SetContainerStatus(uContainer,1);//Active
+		tJobDoneUpdate(uJob);
+	}
+	else
 	{
-		printf("ChangeHostnameContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"Get cHostname failed");
-		goto CommonExit;
+		logfileLine("ChangeHostnameContainer",gcQuery);
+		tJobErrorUpdate(uJob,"No line from query");
 	}
-
-	if(uNotValidSystemCallArg(cHostname)||uNotValidSystemCallArg(cName))
-	{
-		tJobErrorUpdate(uJob,"failed sec alert!");
-		goto CommonExit;
-	}
-
-	//1-.
-	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --hostname %s --name %s --save",
-				uContainer,cHostname,cName);
-	if(system(gcQuery))
-	{
-		printf("ChangeHostnameContainer() error: %s\n",gcQuery);
-		tJobErrorUpdate(uJob,"vzctl set hostname failed");
-		goto CommonExit;
-	}
-
-
-	//Everything ok
-	SetContainerStatus(uContainer,1);//Active
-	tJobDoneUpdate(uJob);
 
 CommonExit:
 	mysql_free_result(res);
 	return;
 
-}//void ChangeHostnameContainer(...)
+}//void ChangeHostnameContainer()
 
 
 void StopContainer(unsigned uJob,unsigned uContainer)
@@ -979,43 +887,37 @@ void StopContainer(unsigned uJob,unsigned uContainer)
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
 	if(system(gcQuery))
 	{
-		printf("StopContainer() error: %s\n",gcQuery);
+		logfileLine("StopContainer",gcQuery);
 		tJobErrorUpdate(uJob,"vzctl stop failed");
-		goto CommonExit;
+		return;
 	}
 
 	//Everything ok
 	SetContainerStatus(uContainer,uSTOPPED);
 	tJobDoneUpdate(uJob);
 
-CommonExit:
-	return;
-
-}//void StopContainer(...)
+}//void StopContainer()
 
 
 void StartContainer(unsigned uJob,unsigned uContainer)
 {
-
 	//1-.
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 	if(system(gcQuery))
 	{
+		logfileLine("StartContainer",gcQuery);
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose restart %u",uContainer);
 		if(system(gcQuery))
 		{
-			printf("StartContainer() error: %s\n",gcQuery);
+			logfileLine("StartContainer",gcQuery);
 			tJobErrorUpdate(uJob,"vzctl start/restart failed");
-			goto CommonExit;
+			return;
 		}
 	}
 
 	//Everything ok
 	SetContainerStatus(uContainer,uACTIVE);
 	tJobDoneUpdate(uJob);
-
-CommonExit:
-	return;
 
 }//void StartContainer(...)
 
@@ -1028,17 +930,17 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
 	if(!uTargetNode)
 	{
-		printf("MigrateContainer() error: Could not determine uTargetNode\n");
+		logfileLine("MigrateContainer","Could not determine uTargetNode");
 		tJobErrorUpdate(uJob,"uTargetNode==0");
-		goto CommonExit;
+		return;
 	}
 
 	GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
 	if(!cTargetNodeIPv4[0])
 	{
-		printf("MigrateContainer() error: Could not determine cTargetNodeIPv4. uTargetNode=%u;\n",uTargetNode);
-		tJobErrorUpdate(uJob,"cTargetNodeIPv4");
-		goto CommonExit;
+		logfileLine("MigrateContainer","Could not determine tProperty.cTargetNodeIPv4");
+		tJobErrorUpdate(uJob,"tProperty.cTargetNodeIPv4");
+		return;
 	}
 
 	//vzmigrate --online -v <destination_address> <veid>
@@ -1054,7 +956,10 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 	}
 	if(uNotValidSystemCallArg(cSSHOptions))
+	{
+		logfileLine("MigrateContainer","security alert");
 		cSSHOptions[0]=0;
+	}
 	char cSCPOptions[256]={""};
 	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,guNode,0,0);//First try node specific
 	if(!cSCPOptions[0])
@@ -1067,8 +972,6 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22");
 
-		
-
 	if(cSSHOptions[0])
 		sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
 				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst --online -v %s %u",
@@ -1079,7 +982,8 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 					cTargetNodeIPv4,uContainer);
 	if(system(gcQuery))
 	{
-		printf("MigrateContainer() error: %s.\nTrying offline migration (check kernel compat)...\n",gcQuery);
+		//We may not want this optional behavior may violate QoS for given migration
+		logfileLine("MigrateContainer","Trying offline migration (check kernel compat)");
 		tJobErrorUpdate(uJob,"Live failed trying offline");
 
 		if(cSSHOptions[0])
@@ -1092,9 +996,9 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 					cTargetNodeIPv4,uContainer);
 		if(system(gcQuery))
 		{
-			printf("MigrateContainer() error: %s.\nGiving up!\n",gcQuery);
+			logfileLine("MigrateContainer","Giving up!");
 			tJobErrorUpdate(uJob,"vzmigrate on/off-line failed");
-			goto CommonExit;
+			return;
 		}
 	}
 
@@ -1106,16 +1010,13 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		sprintf(gcQuery,"/usr/bin/scp %s /var/lib/rrd/%u.rrd %s:/var/lib/rrd/",
 			cSCPOptions,uContainer,cTargetNodeIPv4);
 		if(system(gcQuery))
-			printf("MigrateContainer() non-fatal error: %s.\n",gcQuery);
+			logfileLine("MigrateContainer",gcQuery);
 	}
 
 	//Everything ok
 	SetContainerStatus(uContainer,1);//Active
 	SetContainerNode(uContainer,uTargetNode);//Migrated!
 	tJobDoneUpdate(uJob);
-
-CommonExit:
-	return;
 
 }//void MigrateContainer(...)
 
@@ -1132,7 +1033,7 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("GetNodeProp",mysql_error(&gMysql));
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -1160,7 +1061,7 @@ void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("GetGroupProp",mysql_error(&gMysql));
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -1188,7 +1089,7 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("GetContainerProp",mysql_error(&gMysql));
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -1220,7 +1121,7 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 		*cp=0;
 	if(!cResource[0])
 	{
-		printf("UpdateContainerUBC() error: Could not determine cResource\n");
+		logfileLine("UpdateContainerUBC","Could not determine cResource");
 		tJobErrorUpdate(uJob,"cResource[0]==0");
 		goto CommonExit;
 	}
@@ -1242,6 +1143,7 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 	if(uNotValidSystemCallArg(cResource))
 	{
+		logfileLine("UpdateContainerUBC","security alert");
 		tJobErrorUpdate(uJob,"failed sec alert!");
 		goto CommonExit;
 	}
@@ -1251,7 +1153,7 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 		uContainer,cResource,luBar,luLimit);
 	if(system(gcQuery))
 	{
-		printf("UpdateContainerUBC() error: %s\n",gcQuery);
+		logfileLine("UpdateContainerUBC",gcQuery);
 		tJobErrorUpdate(uJob,"vzctl set failed");
 		goto CommonExit;
 	}
@@ -1261,7 +1163,7 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 			" /tmp/UpdateContainerUBC.vzcfgcheck.output 2>&1",uContainer);
 	if(system(gcQuery))
 	{
-		printf("UpdateContainerUBC() error: %s\n",gcQuery);
+		logfileLine("UpdateContainerUBC",gcQuery);
 		tJobErrorUpdate(uJob,"vzcfgvalidate failed");
 		goto CommonExit;
 	}
@@ -1291,7 +1193,7 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 		sprintf(cApplyConfigPath,"/etc/vz/conf/ve-%u.conf-sample",uContainer);
 		if(symlink(cContainerPath,cApplyConfigPath))
 		{
-			printf("UpdateContainerUBC() error: 3-. symlink failed\n");
+			logfileLine("UpdateContainerUBC","symlink failed");
 			tJobErrorUpdate(uJob,"symlink failed");
 			goto CommonExit;
 		}
@@ -1301,7 +1203,7 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 			uContainer,uContainer);
 		if(system(gcQuery))
 		{
-			printf("UpdateContainerUBC() error: %s\n",gcQuery);
+			logfileLine("UpdateContainerUBC",gcQuery);
 			tJobErrorUpdate(uJob,"vzctl set 4 failed");
 			goto CommonExit;
 		}
@@ -1319,7 +1221,7 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("UpdateContainerUBC() error: %s\n",mysql_error(&gMysql));
+		logfileLine("UpdateContainerUBC",gcQuery);
 		tJobErrorUpdate(uJob,"INSERT INTO tLog failed");
 		goto CommonExit;
 	}
@@ -1348,21 +1250,22 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 		*cp=0;
 	if(!cResource[0])
 	{
-		printf("SetContainerUBC() error: Could not determine cResource\n");
+		logfileLine("SetContainerUBC","Could not determine cResource");
 		tJobErrorUpdate(uJob,"cResource[0]==0");
-		goto CommonExit;
+		return;
 	}
 	if(!luBar || !luLimit)
 	{
-		printf("SetContainerUBC() error: Could not determine luBar||luLimit\n");
+		logfileLine("SetContainerUBC","Could not determine luBar||luLimit");
 		tJobErrorUpdate(uJob,"!luBar||!luLimit");
-		goto CommonExit;
+		return;
 	}
 
 	if(uNotValidSystemCallArg(cResource))
 	{
+		logfileLine("SetContainerUBC","security alert");
 		tJobErrorUpdate(uJob,"failed sec alert!");
-		goto CommonExit;
+		return;
 	}
 
 	//1-.
@@ -1370,9 +1273,9 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 		uContainer,cResource,luBar,luLimit);
 	if(system(gcQuery))
 	{
-		printf("SetContainerUBC() error: %s\n",gcQuery);
+		logfileLine("SetContainerUBC",gcQuery);
 		tJobErrorUpdate(uJob,"vzctl set failed");
-		goto CommonExit;
+		return;
 	}
 
 	//2-. validate and/or repair conf file
@@ -1380,9 +1283,10 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 			" /tmp/SetContainerUBC.vzcfgcheck.output 2>&1",uContainer);
 	if(system(gcQuery))
 	{
-		printf("SetContainerUBC() error: %s\n",gcQuery);
+		logfileLine("SetContainerUBC",gcQuery);
 		tJobErrorUpdate(uJob,"vzcfgvalidate failed");
-		goto CommonExit;
+		//No need to roll back above set
+		return;
 	}
 
 	//2a-. See if vzcfgvalidate -r changed anything if so report in log and then use
@@ -1410,9 +1314,10 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 		sprintf(cApplyConfigPath,"/etc/vz/conf/ve-%u.conf-sample",uContainer);
 		if(symlink(cContainerPath,cApplyConfigPath))
 		{
-			printf("SetContainerUBC() error: 3-. symlink failed\n");
+			logfileLine("SetContainerUBC",cContainerPath);
 			tJobErrorUpdate(uJob,"symlink failed");
-			goto CommonExit;
+			//no rollback needed
+			return;
 		}
 
 		//4-. Apply any changes produced by vzcfgvalidate -r
@@ -1420,9 +1325,10 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 			uContainer,uContainer);
 		if(system(gcQuery))
 		{
-			printf("SetContainerUBC() error: %s\n",gcQuery);
+			logfileLine("SetContainerUBC",gcQuery);
 			tJobErrorUpdate(uJob,"vzctl set 4 failed");
-			goto CommonExit;
+			//no rollback needed
+			return;
 		}
 		unlink(cApplyConfigPath);
 	}
@@ -1438,16 +1344,13 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("SetContainerUBC() error: %s\n",mysql_error(&gMysql));
+		logfileLine("SetContainerUBC",mysql_error(&gMysql));
 		tJobErrorUpdate(uJob,"INSERT INTO tLog failed");
-		goto CommonExit;
+		return;
 	}
 
 	//Everything ok
 	tJobDoneUpdate(uJob);
-
-CommonExit:
-	return;
 
 }//void SetContainerUBC(...)
 
@@ -1458,7 +1361,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//Log this rare condition
 	if(access("/var/run/vzdump.lock",R_OK)==0)
 	{
-		printf("/var/run/vzdump.lock exists\n");
+		logfileLine("TemplateContainer","/var/run/vzdump.lock exists");
 		tJobWaitingUpdate(uJob);
 		return;
 	}
@@ -1480,7 +1383,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		*cp=0;
 	if(!cConfigLabel[0])
 	{
-		printf("TemplateContainer() error: Could not determine cConfigLabel\n");
+		logfileLine("TemplateContainer","Could not determine cConfigLabel");
 		tJobErrorUpdate(uJob,"cConfigLabel[0]==0");
 		goto CommonExit;
 	}
@@ -1491,7 +1394,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("TemplateContainer",mysql_error(&gMysql));
 		tJobErrorUpdate(uJob,"SELECT tOSTemplate.cLabel");
 		goto CommonExit;
 	}
@@ -1501,7 +1404,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	mysql_free_result(res);
 	if(!cOSTemplateBase[0])
 	{
-		printf("TemplateContainer() error: Could not determine cOSTemplateBase\n");
+		logfileLine("TemplateContainer","Could not determine cOSTemplateBase");
 		tJobErrorUpdate(uJob,"cOSTemplateBase[0]==0");
 		goto CommonExit;
 	}
@@ -1521,6 +1424,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 	if(uNotValidSystemCallArg(cOSTemplateBase) || uNotValidSystemCallArg(cConfigLabel))
 	{
+		logfileLine("TemplateContainer","security alert");
 		tJobErrorUpdate(uJob,"failed sec alert!");
 		goto CommonExit;
 	}
@@ -1543,7 +1447,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 									cSnapshotDir,uContainer);
 	if(system(gcQuery))
 	{
-		printf("TemplateContainer() error: %s.\n",gcQuery);
+		logfileLine("TemplateContainer",gcQuery);
 		tJobErrorUpdate(uJob,"vzdump error1");
 		goto CommonExit;
 	}
@@ -1557,7 +1461,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 				cSnapshotDir,uContainer,cOSTemplateBase,cConfigLabel);
 	if(system(gcQuery))
 	{
-		printf("TemplateContainer() error: %s\n",gcQuery);
+		logfileLine("TemplateContainer",gcQuery);
 		tJobErrorUpdate(uJob,"mv tgz to cache tar.gz failed");
 		goto CommonExit;
 	}
@@ -1569,7 +1473,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 			cOSTemplateBase,cConfigLabel);
 		if(system(gcQuery))
 		{
-			printf("TemplateContainer() error: %s\n",gcQuery);
+			logfileLine("TemplateContainer",gcQuery);
 			tJobErrorUpdate(uJob,"allnodescp.sh .tar.gz failed");
 			goto CommonExit;
 		}
@@ -1580,7 +1484,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		uContainer,cConfigLabel);
 	if(system(gcQuery))
 	{
-		printf("TemplateContainer() error: %s\n",gcQuery);
+		logfileLine("TemplateContainer",gcQuery);
 		tJobErrorUpdate(uJob,"cp conf container failed");
 		goto CommonExit;
 	}
@@ -1589,7 +1493,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /etc/vz/conf/ve-%.32s.conf-sample",cConfigLabel);
 		if(system(gcQuery))
 		{
-			printf("TemplateContainer() error: %s\n",gcQuery);
+			logfileLine("TemplateContainer",gcQuery);
 			tJobErrorUpdate(uJob,"allnodescp.sh .conf failed");
 			goto CommonExit;
 		}
@@ -1601,8 +1505,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
-		printf("No such uJob? Using uOwner=1 and uCreatedBy=1\n");
+		logfileLine("TemplateContainer",mysql_error(&gMysql));
 	}
 	else
 	{
@@ -1620,7 +1523,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("TemplateContainer",mysql_error(&gMysql));
 		tJobErrorUpdate(uJob,"SELECT tOSTemplate");
 		goto CommonExit;
 	}
@@ -1633,7 +1536,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			printf("%s\n",mysql_error(&gMysql));
+			logfileLine("TemplateContainer",mysql_error(&gMysql));
 			tJobErrorUpdate(uJob,"INSERT tOSTemplate");
 			goto CommonExit;
 		}
@@ -1644,7 +1547,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("TemplateContainer",mysql_error(&gMysql));
 		tJobErrorUpdate(uJob,"SELECT tConfig");
 		goto CommonExit;
 	}
@@ -1656,7 +1559,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			printf("%s\n",mysql_error(&gMysql));
+			logfileLine("TemplateContainer",mysql_error(&gMysql));
 			tJobErrorUpdate(uJob,"INSERT tConfig");
 			goto CommonExit;
 		}
@@ -1667,6 +1570,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	SetContainerStatus(uContainer,1);//Active
 	tJobDoneUpdate(uJob);
 
+//This goto MAYBE ok
 CommonExit:
 	//6-. remove lock file
 	unlink("/var/run/vzdump.lock");
@@ -1680,6 +1584,7 @@ void MountFilesContainer(unsigned uJob,unsigned uContainer)
 	//0 means do not overwrite existing files.
 	if(CreateMountFiles(uContainer,0))
 	{
+		logfileLine("MountFilesContainer","CreateMountFiles(x,0) failed");
 		tJobErrorUpdate(uJob,"CreateMountFiles(x,0) failed");
 		return;
 	}
@@ -1713,7 +1618,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//Log this rare condition
 	if(access("/var/run/vzdump.lock",R_OK)==0)
 	{
-		printf("/var/run/vzdump.lock exists\n");
+		logfileLine("CloneContainer","/var/run/vzdump.lock exists");
 		tJobWaitingUpdate(uJob);
 		return;
 	}
@@ -1722,14 +1627,14 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
 	if(!uTargetNode)
 	{
-		printf("CloneContainer() error: Could not determine uTargetNode\n");
+		logfileLine("CloneContainer","Could not determine uTargetNode");
 		tJobErrorUpdate(uJob,"uTargetNode==0");
 		goto CommonExit;
 	}
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%u;",&uNewVeid);
 	if(!uNewVeid)
 	{
-		printf("CloneContainer() error: Could not determine uNewVeid\n");
+		logfileLine("CloneContainer","Could not determine uNewVeid");
 		tJobErrorUpdate(uJob,"uNewVeid==0");
 		goto CommonExit;
 	}
@@ -1738,7 +1643,13 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.cHostname,tContainer.cLabel FROM tIP,tContainer"
 				" WHERE tIP.uIP=tContainer.uIPv4"
 				" AND tContainer.uContainer=%u",uNewVeid);
-	mysqlrad_Query_TextErr_Exit;
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("CloneContainer",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"SELECT tIP.cLabel");
+		goto CommonExit;
+	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
@@ -1750,36 +1661,41 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 	if(!cNewIP[0])
 	{
-		printf("CloneContainer() error: Could not determine cNewIP\n");
+		logfileLine("CloneContainer","Could not determine cNewIP");
 		tJobErrorUpdate(uJob,"No cNewIP");
 		goto CommonExit;
 	}
 
 	if(!cHostname[0])
 	{
-		printf("CloneContainer() error: Could not determine cHostname\n");
+		logfileLine("CloneContainer","Could not determine cHostname");
 		tJobErrorUpdate(uJob,"No cHostname");
 		goto CommonExit;
 	}
 
 	if(!cName[0])
 	{
-		printf("CloneContainer() error: Could not determine cName\n");
+		logfileLine("CloneContainer","Could not determine cName");
 		tJobErrorUpdate(uJob,"No cName");
 		goto CommonExit;
 	}
 
 	sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer WHERE tIP.uIP=tContainer.uIPv4"
 			" AND tContainer.uContainer=%u",uContainer);
-	mysqlrad_Query_TextErr_Exit;
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("CloneContainer",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"SELECT tOSTemplate.cLabel");
+		goto CommonExit;
+	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 		sprintf(cSourceContainerIP,"%.31s",field[0]);
 	mysql_free_result(res);
-
 	if(!cSourceContainerIP[0])
 	{
-		printf("CloneContainer() error: Could not determine cSourceContainerIP\n");
+		logfileLine("CloneContainer","Could not determine cSourceContainerIP");
 		tJobErrorUpdate(uJob,"No cSourceContainerIP");
 		goto CommonExit;
 	}
@@ -1790,7 +1706,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
 	if(!cTargetNodeIPv4[0])
 	{
-		printf("CloneContainer() error: Could not determine cTargetNodeIPv4. uTargetNode=%u;\n",uTargetNode);
+		logfileLine("CloneContainer","Could not determine cTargetNodeIPv4");
 		tJobErrorUpdate(uJob,"cTargetNodeIPv4");
 		goto CommonExit;
 	}
@@ -1859,7 +1775,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 									cSnapshotDir,uContainer);
 	if(system(gcQuery))
 	{
-		printf("CloneContainer() error: %s.\n",gcQuery);
+		logfileLine("CloneContainer",gcQuery);
 		tJobErrorUpdate(uJob,"error 1");
 		goto CommonExit;
 	}
@@ -1878,7 +1794,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 				cSCPOptions,cSnapshotDir,uContainer,cTargetNodeIPv4,uContainer);
 	if(system(gcQuery))
 	{
-		printf("CloneContainer() error: %s.\n",gcQuery);
+		logfileLine("CloneContainer",gcQuery);
 		tJobErrorUpdate(uJob,"error 2");
 		goto CommonExit;
 	}
@@ -1888,7 +1804,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 				cSSHOptions,cTargetNodeIPv4,uContainer,uNewVeid);
 	if(system(gcQuery))
 	{
-		printf("CloneContainer() error: %s.\n",gcQuery);
+		logfileLine("CloneContainer",gcQuery);
 		tJobErrorUpdate(uJob,"error 3");
 		goto CommonExit;
 	}
@@ -1903,7 +1819,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cHostname);
 	if(system(gcQuery))
 	{
-		printf("CloneContainer() error: %s.\n",gcQuery);
+		logfileLine("CloneContainer",gcQuery);
 		tJobErrorUpdate(uJob,"error 4a");
 		goto CommonExit;
 	}
@@ -1913,7 +1829,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cName);
 	if(system(gcQuery))
 	{
-		printf("CloneContainer() error: %s.\n",gcQuery);
+		logfileLine("CloneContainer",gcQuery);
 		tJobErrorUpdate(uJob,"error 4b");
 		goto CommonExit;
 	}
@@ -1931,7 +1847,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 				cSSHOptions,cTargetNodeIPv4,uNewVeid);
 	if(system(gcQuery))
 	{
-		printf("CloneContainer() error: %s.\n",gcQuery);
+		logfileLine("CloneContainer",gcQuery);
 		tJobErrorUpdate(uJob,"error 4c");
 		goto CommonExit;
 	}
@@ -1940,7 +1856,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cNewIP);
 	if(system(gcQuery))
 	{
-		printf("CloneContainer() error: %s.\n",gcQuery);
+		logfileLine("CloneContainer",gcQuery);
 		tJobErrorUpdate(uJob,"error 4d");
 		goto CommonExit;
 	}
@@ -1954,7 +1870,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 				cTargetNodeIPv4,uNewVeid,cSSHOptions);
 	if(system(gcQuery))
 	{
-		printf("CloneContainer() error: %s.\n",gcQuery);
+		logfileLine("CloneContainer",gcQuery);
 		tJobErrorUpdate(uJob,"error 5");
 		goto CommonExit;
 	}
@@ -1969,7 +1885,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		sprintf(gcQuery,"ssh %s %s 'vzctl start %u'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
 		if(system(gcQuery))
 		{
-			printf("CloneContainer() error: %s.\n",gcQuery);
+			logfileLine("CloneContainer",gcQuery);
 			tJobErrorUpdate(uJob,"error 6");
 			goto CommonExit;
 		}
@@ -1993,14 +1909,14 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	else
 		sprintf(gcQuery,"rm %s/vzdump-%u.tgz",cSnapshotDir,uContainer);
 	if(system(gcQuery))
-		printf("CloneContainer() Warning error: %s.\n",gcQuery);
+		logfileLine("CloneContainer",gcQuery);
 	
 	//9b-. remote
 	sprintf(gcQuery,"ssh %s %s 'rm /vz/dump/vzdump-%u.tgz'",cSSHOptions,cTargetNodeIPv4,uContainer);
 	if(system(gcQuery))
-		printf("CloneContainer() Warning error: %s.\n",gcQuery);
+		logfileLine("CloneContainer",gcQuery);
 
-
+//This goto MIGHT be ok.
 CommonExit:
 	//9c-. remove lock file
 	unlink("/var/run/vzdump.lock");
@@ -2062,8 +1978,8 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 
 		if((fp=fopen(cFile,"w"))==NULL)
 		{
-			printf("CreateMountFiles() error: %s\n",cFile);
-			goto CommonExit;
+			logfileLine("CreateMountFiles",cFile);
+			return(1);
 		}
 
 		TemplateSelect(cTemplateName);
@@ -2104,8 +2020,8 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 		{
 			if((fp=fopen(cFile,"w"))==NULL)
 			{
-				printf("CreateMountFiles() error: %s\n",cFile);
-				goto CommonExit;
+				logfileLine("CreateMountFiles",cFile);
+				return(1);
 			}
 
 			TemplateSelect(cTemplateName);
@@ -2141,15 +2057,12 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 		}
 		else
 		{
-			printf("CreateMountFiles() error: %s missing\n",cTemplateName);
-			goto CommonExit;
+			logfileLine("CreateMountFiles",cTemplateName);
+			return(1);
 		}
 	}
 
 	return(0);
-
-CommonExit:
-	return(1);
 
 }//int CreateMountFiles()
 
@@ -2184,11 +2097,12 @@ unsigned uNotValidSystemCallArg(char *cSSHOptions)
 			cSSHOptions[i]=='\\'
 						)
 			{
-				printf("SECURITY ALERT uNotValidSystemCallArg\n");
 				return(1);
 			}
 	}
+
 	return(0);
+
 }//unsigned uNotValidSystemCallArg(char *cSSHOptions)
 
 
@@ -2207,9 +2121,9 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 	sscanf(cJobData,"uOSTemplate=%u;",&uOSTemplate);
 	if(!uOSTemplate)
 	{
-		printf("LocalImportTemplate() error: Could not determine uOSTemplate\n");
+		logfileLine("LocalImportTemplate","Could not determine uOSTemplate");
 		tJobErrorUpdate(uJob,"uOSTemplate=0");
-		goto CommonExit;
+		return;
 	}
 
 	sprintf(gcQuery,"SELECT cLabel FROM tOSTemplate"
@@ -2217,9 +2131,9 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("LocalImportTemplate",mysql_error(&gMysql));
 		tJobErrorUpdate(uJob,"SELECT tOSTemplate.cLabel");
-		goto CommonExit;
+		return;
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -2229,41 +2143,42 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 	else
 	{
 		mysql_free_result(res);
-		printf("LocalImportTemplate() error: Could not determine tOSTemplate.cLabel\n");
+		logfileLine("LocalImportTemplate","Could not determine tOSTemplate.cLabel\n");
 		tJobErrorUpdate(uJob,"tOSTemplate.cLabel");
-		goto CommonExit;
+		return;
 	}
 	mysql_free_result(res);
 	if(uNotValidSystemCallArg(cOSTemplateFile))
 	{
+		logfileLine("LocalImportTemplate","security alert");
 		tJobErrorUpdate(uJob,"failed sec alert!");
-		goto CommonExit;
+		return;
 	}
 
 	//2-. stat file
 	if(stat(cOSTemplateFile,&statInfo)!=0)
 	{
-		printf("Could not find %s\n",cOSTemplateFile);
+		logfileLine("LocalImportTemplate",cOSTemplateFile);
 		tJobErrorUpdate(uJob,"cOSTemplateFile stat");
-		goto CommonExit;
+		return;
 	}
 
 	//3-. stat file.md5sum
 	sprintf(cOSTemplateFileMd5sum,"%.154s.md5sum",cOSTemplateFile);
 	if(stat(cOSTemplateFileMd5sum,&statInfo)!=0)
 	{
-		printf("Could not find %s\n",cOSTemplateFileMd5sum);
+		logfileLine("LocalImportTemplate",cOSTemplateFileMd5sum);
 		tJobErrorUpdate(uJob,"cOSTemplateFilemd5sum stat");
-		goto CommonExit;
+		return;
 	}
 
 	//4-. check md5sum
 	sprintf(gcQuery,"/usr/bin/md5sum -c %s > /dev/null 2>&1",cOSTemplateFileMd5sum);
 	if(system(gcQuery))
 	{
-		printf("md5sum -c %s failed!\n",cOSTemplateFileMd5sum);
+		logfileLine("LocalImportTemplate","md5sum -c failed");
 		tJobErrorUpdate(uJob,"md5sum -c failed!");
-		goto CommonExit;
+		return;
 	}
 
 
@@ -2283,9 +2198,9 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("LocalImportTemplate",mysql_error(&gMysql));
 		tJobErrorUpdate(uJob,"SELECT tNode.cLabel");
-		goto CommonExit;
+		return;
 	}
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
@@ -2294,27 +2209,24 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 		if(system(gcQuery))
 		{
 			mysql_free_result(res);
-			printf("%s failed!\n",gcQuery);
+			logfileLine("LocalImportTemplate",gcQuery);
 			tJobErrorUpdate(uJob,"scp-1 failed!");
-			goto CommonExit;
+			return;
 		}
 		sprintf(gcQuery,"nice /usr/bin/scp %s %s %s:%s\n",cSCPOptions,cOSTemplateFileMd5sum,field[0],
 						cOSTemplateFileMd5sum);
 		if(system(gcQuery))
 		{
 			mysql_free_result(res);
-			printf("%s failed!\n",gcQuery);
+			logfileLine("LocalImportTemplate",gcQuery);
 			tJobErrorUpdate(uJob,"scp-1 failed!");
-			goto CommonExit;
+			return;
 		}
 	}
 	mysql_free_result(res);
 
 	//Everything ok
 	tJobDoneUpdate(uJob);
-
-CommonExit:
-	return;
 
 }//void LocalImportTemplate(unsigned uJob,unsigned uContainer,const char *cJobData)
 
@@ -2333,9 +2245,9 @@ void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData)
 	sscanf(cJobData,"uConfig=%u;",&uConfig);
 	if(!uConfig)
 	{
-		printf("LocalImportConfig() error: Could not determine uConfig\n");
+		logfileLine("LocalImportConfig","Could not determine uConfig");
 		tJobErrorUpdate(uJob,"uConfig=0");
-		goto CommonExit;
+		return;
 	}
 
 	sprintf(gcQuery,"SELECT cLabel FROM tConfig"
@@ -2343,9 +2255,9 @@ void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("LocalImportConfig",mysql_error(&gMysql));
 		tJobErrorUpdate(uJob,"SELECT tConfig.cLabel");
-		goto CommonExit;
+		return;
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -2355,23 +2267,24 @@ void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData)
 	else
 	{
 		mysql_free_result(res);
-		printf("LocalImportConfig() error: Could not determine tConfig.cLabel\n");
+		logfileLine("LocalImportConfig","Could not determine tConfig.cLabel");
 		tJobErrorUpdate(uJob,"tConfig.cLabel");
-		goto CommonExit;
+		return;
 	}
 	mysql_free_result(res);
 	if(uNotValidSystemCallArg(cConfigFile))
 	{
+		logfileLine("LocalImportConfig","security alert");
 		tJobErrorUpdate(uJob,"failed sec alert!");
-		goto CommonExit;
+		return;
 	}
 
 	//2-. stat file
 	if(stat(cConfigFile,&statInfo)!=0)
 	{
-		printf("Could not find %s\n",cConfigFile);
+		logfileLine("LocalImportConfig",cConfigFile);
 		tJobErrorUpdate(uJob,"cConfigFile stat");
-		goto CommonExit;
+		return;
 	}
 
 	//3-. copy to all same datacenter nodes nicely (hopefully on GB 2nd NIC internal lan.)
@@ -2390,9 +2303,9 @@ void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("LocalImportConfig",mysql_error(&gMysql));
 		tJobErrorUpdate(uJob,"SELECT tNode.cLabel");
-		goto CommonExit;
+		return;
 	}
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
@@ -2403,18 +2316,15 @@ void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData)
 		if(system(gcQuery))
 		{
 			mysql_free_result(res);
-			printf("%s failed!\n",gcQuery);
+			logfileLine("LocalImportConfig",gcQuery);
 			tJobErrorUpdate(uJob,"scp failed!");
-			goto CommonExit;
+			return;
 		}
 	}
 	mysql_free_result(res);
 
 	//Everything ok
 	tJobDoneUpdate(uJob);
-
-CommonExit:
-	return;
 
 }//void LocalImportConfig(unsigned uJob,unsigned uContainer,const char *cJobData)
 
@@ -2438,22 +2348,21 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//Get this cloned container source
 	if(GetContainerSource(uContainer,&uSourceContainer))
 	{
-		printf("FailoverTo() error: GetContainerSource()\n");
+		logfileLine("FailoverTo","GetContainerSource()");
 		tJobErrorUpdate(uJob,"No uSourceContainer");
 		return;
 	}
 	//Now we quickly unset to avoid failed clon sync jobs
 	if(SetContainerSource(uContainer,0))
 	{
-		printf("FailoverTo() error: SetContainerSource(%u,0)\n",uContainer);
+		logfileLine("FailoverTo","SetContainerSource()");
 		tJobErrorUpdate(uJob,"SetContainerSource");
 		return;
 	}
 	//Get data about container
 	if(GetContainerNodeStatus(uContainer,&uStatus))
 	{
-		printf("FailoverTo() error: GetContainerStatus(%u,&uStatus) returned %u\n",
-				uContainer,uStatus);
+		logfileLine("FailoverTo","GetContainerStatus()");
 		tJobErrorUpdate(uJob,"GetContainerNodeStatus");
 
 		//rollback
@@ -2473,11 +2382,11 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 		{
 			if(uRetVal==32)//32 is vzctl already running
 			{
-				printf("FailoverTo() error: %s\n",gcQuery);
+				logfileLine("FailoverTo",gcQuery);
 			}
 			else
 			{
-				printf("FailoverTo() error: %s\n",gcQuery);
+				logfileLine("FailoverTo",gcQuery);
 				tJobErrorUpdate(uJob,"start error");
 
 				//rollback
@@ -2494,7 +2403,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
 	if(system(gcQuery))
 	{
-		printf("FailoverTo() error4: %s\n",gcQuery);
+		logfileLine("FailoverTo",gcQuery);
 		tJobErrorUpdate(uJob,"ipdel all");
 
 		//rollback
@@ -2515,8 +2424,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	GetContainerMainIP(uContainer,cOrigIP);//rollback required
 	if((uRetVal=GetContainerMainIP(uSourceContainer,cIP)))
 	{
-		printf("FailoverTo() GetContainerMainIP(%u,%s) %u\n",
-			uSourceContainer,cIP,uRetVal);
+		logfileLine("FailoverTo","GetContainerMainIP()");
 		tJobErrorUpdate(uJob,"GetContainerMainIP");
 
 		//rollback
@@ -2538,7 +2446,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 	if(uNotValidSystemCallArg(cIP))
 	{
-		printf("FailoverTo() error6: security error for %s\n",cIP);
+		logfileLine("FailoverTo","security alert cIP");
 		tJobErrorUpdate(uJob,"cIP security");
 
 		//rollback
@@ -2560,7 +2468,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cIP);
 	if(system(gcQuery))
 	{
-		printf("FailoverTo() error7: %s\n",gcQuery);
+		logfileLine("FailoverTo",gcQuery);
 		tJobErrorUpdate(uJob,"ipadd cIP");
 
 		//rollback
@@ -2583,7 +2491,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//No we can update the db for the new production container
 	if(SetContainerIP(uContainer,cIP))
 	{
-		printf("FailoverTo() error: SetContainerIP(%u,%s)\n",uContainer,cIP);
+		logfileLine("FailoverTo","SetContainerIP()");
 		tJobErrorUpdate(uJob,"SetContainerIP");
 
 		//rollback
@@ -2607,8 +2515,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//Change the names to the source ones
 	if(GetContainerNames(uSourceContainer,cHostname,cLabel))
 	{
-		printf("FailoverTo() error: GetContainerNames(%u,%s,%s)\n",
-				uSourceContainer,cHostname,cLabel);
+		logfileLine("FailoverTo","GetContainerNames()");
 		tJobErrorUpdate(uJob,"GetContainerNames");
 
 		//rollback
@@ -2636,8 +2543,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	if(SetContainerHostname(uSourceContainer,cHostname,cVEIDLabel) || 
 		SetContainerHostname(uContainer,cHostname,cLabel))
 	{
-		printf("FailoverTo() error: SetContainerHostname(%u,%s,%s)\n",
-							uContainer,cHostname,cLabel);
+		logfileLine("FailoverTo","SetContainerHostname()");
 		tJobErrorUpdate(uJob,"SetContainerHostname");
 
 		//rollback
@@ -2665,7 +2571,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 				uContainer,cHostname,cLabel);
 		if(system(gcQuery))
 		{
-			printf("FailoverTo() error: %s\n",gcQuery);
+			logfileLine("FailoverTo",gcQuery);
 			tJobErrorUpdate(uJob,"vzctl set hostname");
 
 			//rollback
@@ -2697,7 +2603,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//these scripts will not be portable --even in the same datacenter!
 	if(CreateMountFiles(uContainer,1))
 	{
-		printf("FailoverTo() error8: CreateMountFiles(x,1)\n");
+		logfileLine("FailoverTo","CreateMountFiles(x,1)");
 		tJobErrorUpdate(uJob,"CreateMountFiles(x,1)");
 
 		//rollback
@@ -2753,7 +2659,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 	if(!uIPv4)
 	{
-		printf("FailoverFrom() error: no uIPv4\n");
+		logfileLine("FailoverFrom","no uIPv4");
 		tJobErrorUpdate(uJob,"no uIPv4");
 		return;
 	}
@@ -2770,7 +2676,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 	if(!cLabel[0])
 	{
-		printf("FailoverFrom() error: no cLabel\n");
+		logfileLine("FailoverFrom","no cLabel");
 		tJobErrorUpdate(uJob,"no cLabel");
 		return;
 	}
@@ -2787,7 +2693,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 	if(!cHostname[0])
 	{
-		printf("FailoverFrom() error: no cHostname\n");
+		logfileLine("FailoverFrom","no cHostname");
 		tJobErrorUpdate(uJob,"no cHostname");
 		return;
 	}
@@ -2798,7 +2704,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 	if(!uSource)
 	{
-		printf("FailoverFrom() error: no uSource\n");
+		logfileLine("FailoverFrom","no uSource");
 		tJobErrorUpdate(uJob,"no uSource");
 		return;
 	}
@@ -2809,7 +2715,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 	if(!uStatus)
 	{
-		printf("FailoverFrom() error: no uStatus\n");
+		logfileLine("FailoverFrom","no uStatus");
 		tJobErrorUpdate(uJob,"no uStatus");
 		return;
 	}
@@ -2820,7 +2726,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 	if(!uFailToJob)
 	{
-		printf("FailoverFrom() error: no uFailToJob\n");
+		logfileLine("FailoverFrom","no uFailToJob");
 		tJobErrorUpdate(uJob,"no uFailToJob");
 		return;
 	}
@@ -2843,7 +2749,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
 	if(system(gcQuery))
 	{
-		printf("FailoverFrom() error1: %s\n",gcQuery);
+		logfileLine("FailoverFrom",gcQuery);
 		tJobErrorUpdate(uJob,"ipdel all");
 		return;
 	}
@@ -2858,7 +2764,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
 		if(system(gcQuery))
 		{
-			printf("FailoverFrom() error2: %s\n",gcQuery);
+			logfileLine("FailoverFrom",gcQuery);
 			tJobErrorUpdate(uJob,"vzctl stop");
 
 			//rollback
@@ -2881,8 +2787,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	GetContainerNames(uContainer,cOrigHostname,cOrigLabel);
 	if(SetContainerHostname(uContainer,cHostname,cLabel))
 	{
-		printf("FailoverFrom() error: SetContainerHostname(%u,%s,%s)\n",
-							uContainer,cHostname,cLabel);
+		logfileLine("FailoverFrom","SetContainerHostname()");
 		tJobErrorUpdate(uJob,"SetContainerHostname");
 
 		//rollback
@@ -2904,7 +2809,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 				uContainer,cHostname,cLabel);
 		if(system(gcQuery))
 		{
-			printf("FailoverFrom() error: %s\n",gcQuery);
+			logfileLine("FailoverFrom",gcQuery);
 			tJobErrorUpdate(uJob,"vzctl set hostname");
 
 			//rollback
@@ -2930,7 +2835,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	GetIPFromtIP(uIPv4,cIP);
 	if(SetContainerIP(uContainer,cIP))
 	{
-		printf("FailoverFrom() error: SetContainerIP(%u,%s)\n",uContainer,cIP);
+		logfileLine("FailoverFrom","SetContainerIP()");
 		tJobErrorUpdate(uJob,"SetContainerIP");
 
 		//rollback
@@ -2953,7 +2858,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cIP);
 		if(system(gcQuery))
 		{
-			printf("FailoverFrom() error: %s\n",gcQuery);
+			logfileLine("FailoverFrom",gcQuery);
 			tJobErrorUpdate(uJob,"ipadd");
 
 			//rollback
@@ -2981,7 +2886,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	sprintf(gcQuery,"rm -f /etc/vz/conf/%1$u.umount /etc/vz/conf/%1$u.mount",uContainer);
 	if(system(gcQuery))
 	{
-		printf("FailoverFrom() error: %s.\n",gcQuery);
+		logfileLine("FailoverFrom",gcQuery);
 		tJobErrorUpdate(uJob,"rm mount files");
 
 		//rollback
@@ -3011,7 +2916,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//	important data that could fix this problem quickly?
 	if(SetContainerSource(uContainer,uSource))
 	{
-		printf("FailoverTo() error: SetContainerSource(%u,%u)\n",uContainer,uSource);
+		logfileLine("FailoverFrom","SetContainerSource()");
 		tJobErrorUpdate(uJob,"SetContainerSource");
 
 		//rollback
@@ -3054,7 +2959,7 @@ unsigned GetContainerStatus(const unsigned uContainer, unsigned *uStatus)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("GetContainerStatus",mysql_error(&gMysql));
 		return(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -3086,7 +2991,7 @@ unsigned GetContainerMainIP(const unsigned uContainer,char *cIP)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("GetContainerMainIP",mysql_error(&gMysql));
 		return(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -3117,7 +3022,7 @@ unsigned GetContainerSource(const unsigned uContainer, unsigned *uSource)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("GetContainerSource",mysql_error(&gMysql));
 		return(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -3147,7 +3052,7 @@ unsigned SetContainerIP(const unsigned uContainer,char *cIP)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("SetContainerIP",mysql_error(&gMysql));
 		return(2);
 	}
 	return(0);
@@ -3163,7 +3068,7 @@ unsigned SetContainerSource(const unsigned uContainer,const unsigned uSource)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("SetContainerSource",mysql_error(&gMysql));
 		return(2);
 	}
 	return(0);
@@ -3183,7 +3088,7 @@ void GetIPFromtIP(const unsigned uIPv4,char *cIP)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("GetIPFromtIP",mysql_error(&gMysql));
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -3205,7 +3110,7 @@ unsigned SetContainerHostname(const unsigned uContainer,
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("SetContainerHostname",mysql_error(&gMysql));
 		return(2);
 	}
 	return(0);
@@ -3224,7 +3129,7 @@ unsigned GetContainerNames(const unsigned uContainer,char *cHostname,char *cLabe
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
+		logfileLine("GetContainerNames",mysql_error(&gMysql));
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -3283,7 +3188,7 @@ unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyNam
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("2: %s\n",mysql_error(&gMysql));
+		logfileLine("SetContainerProperty",mysql_error(&gMysql));
 		return(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -3295,7 +3200,7 @@ unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyNam
 		if(mysql_errno(&gMysql))
 		{
 			mysql_free_result(res);
-			printf("3: %s\n",mysql_error(&gMysql));
+			logfileLine("SetContainerProperty",mysql_error(&gMysql));
 			return(3);
 		}
 	}
@@ -3309,7 +3214,7 @@ unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyNam
 		if(mysql_errno(&gMysql))
 		{
 			mysql_free_result(res);
-			printf("4: %s\n",mysql_error(&gMysql));
+			logfileLine("SetContainerProperty",mysql_error(&gMysql));
 			return(4);
 		}
 	}
@@ -3330,7 +3235,7 @@ unsigned FailToJobDone(unsigned uJob)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("FailToJobDone() %s\n",mysql_error(&gMysql));
+		logfileLine("FailToJobDone",mysql_error(&gMysql));
 		return(0);
 	}
         res=mysql_store_result(&gMysql);

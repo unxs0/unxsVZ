@@ -16,7 +16,7 @@ NOTES
 #include <sys/wait.h>
 
 //global data storage
-FILE *gEfp;
+FILE *gLfp;
 MYSQL gMysql;
 char gcLine[256];
 unsigned guDryrun=0;
@@ -43,7 +43,7 @@ int main(int iArgc, char *cArgv[])
 	if(iArgc==2 && !strncmp(cArgv[1],"--fg",4))
 	{
 		printf("Running %s in foreground\n",cArgv[0]);
-		gEfp=stderr;
+		gLfp=stderr;
 	}
 	else if(iArgc==2 && !strncmp(cArgv[1],"--help",6))
 	{
@@ -62,7 +62,7 @@ int main(int iArgc, char *cArgv[])
 		if(iArgc==2 && !strncmp(cArgv[1],"--dryrun",8))
 			guDryrun=1;
 		daemonize();
-		if((gEfp=fopen(ERRLOG,"a"))==NULL)
+		if((gLfp=fopen(cLOGFILE,"a"))==NULL)
 		{
 			fprintf(stderr,"Could not open error log!\n");
 			return(300);
@@ -83,8 +83,8 @@ int main(int iArgc, char *cArgv[])
         {
 		if(!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,0,NULL,0))
 		{
-               		logfileLine("database server unavailable\n");
-			fclose(gEfp);
+               		logfileLine("main","database server unavailable\n");
+			fclose(gLfp);
 			mysql_close(&gMysql);
 			return(100);
 		}
@@ -94,7 +94,7 @@ int main(int iArgc, char *cArgv[])
 	gethostname(gcHostname,99);
 	sprintf(gcLine,"%s started. gcHostname=%s, guDryrun=%u, pid=%u",
 			cArgv[0],gcHostname,guDryrun,gpidMain);
-	logfileLine(gcLine);
+	logfileLine("main",gcLine);
 
 	while(1)
 	{
@@ -107,8 +107,8 @@ int main(int iArgc, char *cArgv[])
 			break;
 	}//while(1)
 
-	logfileLine("abnormal ending");
-	fclose(gEfp);
+	logfileLine("main","abnormal ending");
+	fclose(gLfp);
 	mysql_close(&gMysql);
 	return(0);
 
@@ -118,9 +118,9 @@ int main(int iArgc, char *cArgv[])
 void sighandlerLeave(int iSig)
 {
 	sprintf(gcLine,"interrupted by signal:%d",iSig);
-	logfileLine(gcLine);
+	logfileLine("sighandlerLeave",gcLine);
 
-	fclose(gEfp);
+	fclose(gLfp);
 	mysql_close(&gMysql);
 
         exit(iSig);
@@ -137,7 +137,7 @@ void sighandlerChild(int iSig)
 	if(pid==gpidMain)
 	{
 		sprintf(gcLine,"interrupted by child signal:%d",iSig);
-		logfileLine(gcLine);
+		logfileLine("sighandlerChild",gcLine);
 
 		wait(&iStatus);
 	}
@@ -152,7 +152,7 @@ void sighandlerReload(int iSig)
 	extern int giAutonomicsPrivPagesActRatio;
 
 	sprintf(gcLine,"interrupted by signal:%d %s",iSig,strsignal(iSig));
-	logfileLine(gcLine);
+	logfileLine("sighandlerReload",gcLine);
 	guDryrun=0;
 	gcNodeInstalledRam[0]=0;
 	gcNodeAutonomics[0]=0;
@@ -169,17 +169,21 @@ void sighandlerReload(int iSig)
 }//void sighandlerReload(int iSig)
 
 
-void logfileLine(char *cLogline)
+void logfileLine(const char *cFunction,const char *cLogline)
 {
 	time_t luClock;
 	char cTime[32];
+	pid_t pidThis;
+	const struct tm *tmTime;
+
+	pidThis=getpid();
 
 	time(&luClock);
-	ctime_r(&luClock,cTime);
-	cTime[strlen(cTime)-1]=0;
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
 
-        fprintf(gEfp,"%s:%s\n",cTime,cLogline);
-	fflush(gEfp);
+        fprintf(gLfp,"%s autonomics.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
+	fflush(gLfp);
 
 }//void logfileLine(char *cLogline)
 

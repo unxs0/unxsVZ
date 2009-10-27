@@ -1647,7 +1647,7 @@ void ExttContainerButtons(void)
 					" type=submit class=largeButton"
 					" name=gcCommand value='Template Wizard'><br>\n");
 					if(!strstr(cLabel,"-clone"))
-					printf("<input title='Clone a container to current or another hardware node."
+					printf("<input title='Clone a container to this or another hardware node."
 					" The clone will be an online container with another IP and hostname."
 					" It will be kept updated via rsync on a configurable basis.'"
 					" type=submit class=largeButton"

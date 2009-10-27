@@ -28,7 +28,7 @@ int ContainerAutonomics(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine((char *)mysql_error(&gMysql));
+			logfileLine("ContainerAutonomics",mysql_error(&gMysql));
 			sighandlerLeave(400);
 		}
 		res=mysql_store_result(&gMysql);
@@ -36,7 +36,7 @@ int ContainerAutonomics(void)
 		{
 			sprintf(cContainerWarnEmail,"%.99s",field[0]);
 			sprintf(gcQuery,"cContainerWarnEmail=%s",field[0]);
-			logfileLine(gcQuery);
+			logfileLine("ContainerAutonomics",gcQuery);
 		}
 		mysql_free_result(res);
 	}

@@ -24,7 +24,7 @@ int DatacenterAutonomics(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine((char *)mysql_error(&gMysql));
+			logfileLine("DatacenterAutonomics",mysql_error(&gMysql));
 			sighandlerLeave(400);
 		}
 		res=mysql_store_result(&gMysql);
@@ -33,7 +33,7 @@ int DatacenterAutonomics(void)
 			sscanf(field[0],"%u",&guDatacenter);
 			sscanf(field[1],"%u",&guNode);
 			sprintf(gcQuery,"guDatacenter=%u guNode=%u",guDatacenter,guNode);
-			logfileLine(gcQuery);
+			logfileLine("DatacenterAutonomics",gcQuery);
 		}
 		mysql_free_result(res);
 	}
@@ -46,7 +46,7 @@ int DatacenterAutonomics(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine((char *)mysql_error(&gMysql));
+			logfileLine("DatacenterAutonomics",mysql_error(&gMysql));
 			sighandlerLeave(400);
 		}
 		res=mysql_store_result(&gMysql);
@@ -54,7 +54,7 @@ int DatacenterAutonomics(void)
 		{
 			sprintf(gcDatacenterWarnEmail,"%.99s",field[0]);
 			sprintf(gcQuery,"gcDatacenterWarnEmail=%s",field[0]);
-			logfileLine(gcQuery);
+			logfileLine("DatacenterAutonomics",gcQuery);
 		}
 		mysql_free_result(res);
 	}
@@ -70,7 +70,7 @@ int DatacenterAutonomics(void)
 		{
 			sprintf(gcDatacenterAutonomics,"%.99s",field[0]);
 			sprintf(gcQuery,"gcDatacenterAutonomics=%s",field[0]);
-			logfileLine(gcQuery);
+			logfileLine("DatacenterAutonomics",gcQuery);
 		}
 		mysql_free_result(res);
 	}
