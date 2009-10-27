@@ -13,6 +13,8 @@ PURPOSE
 #include "interface.h"
 
 
+static unsigned uClient=0;
+
 static char cFirstName[33]={""};
 static char *cFirstNameStyle="type_fields";
 
@@ -276,7 +278,6 @@ unsigned ValidRegisterInput(void)
 
 void CommitRegister(void)
 {
-	unsigned uClient=0;
 #define DEFAULT_OWNER 1 //Later from tConfiguration!
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tRegister "
 			"(uRegister INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, "
@@ -325,6 +326,25 @@ void EmailConfirmation(void)
 	FILE *fp;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	struct t_template template;
+	char cFrom[256]={"root"};
+	
+	GetConfiguration("cRegisterMailFrom",cFrom);
+
+	sprintf(gcQuery,"SELECT cHash FROM tRegister WHERE uClient=%u",uClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	field=mysql_fetch_row(res); //Will always have data
+
+	template.cpName[0]="cFirstName";
+	template.cpValue[0]=cFirstName;
+
+	template.cpName[1]="cHash";
+	template.cpValue[1]=field[0];
+
+	template.cpName[0]="";
 
 	//debug only
 	//if((fp=fopen("/tmp/eMailInvoice","w")))
@@ -333,19 +353,14 @@ void EmailConfirmation(void)
 		fprintf(fp,"To: %s\n",cEmail);
 		fprintf(fp,"From: %s\n",cFrom);
 		fprintf(fp, "Reply-to: %s\n",cFrom);
-		fprintf(fp,"Subject: %s\n",cEmailSubject);
+		fprintf(fp,"Subject: Please confirm your registration\n");
 		fprintf(fp,"MIME-Version: 1.0\n");
 		fprintf(fp,"Content-type: text/plain\n\n");
-		
+		fpTemplate(fp,"RegisterEmail",&template);	
 		//fclose(fp);
 		pclose(fp);
 	}	
 
-}//void EmailTicketComment(void)
-
-
-
-void EmailNewTicket(void)
 }//void EmailConfirmation(void)
 
 void ShowSuccessPage(void)
