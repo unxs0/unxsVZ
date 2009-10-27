@@ -18,7 +18,7 @@
 
 
 
-<form method=post action=ispCRM.cgi style="margin:0px;">
+<form method=post action=ispHelp.cgi style="margin:0px;">
 <table width=1200  border="0" cellspacing="0" cellpadding="0">
   <tr>
     <td>
@@ -28,7 +28,7 @@
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
     <td class="hdrtout padlt8" width="100%">
-		<h6 class="modhdr">ispCRM Registration</h6>
+		<h6 class="modhdr">ispHelp Registration</h6>
 	</td>
 	<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
   </tr>
@@ -42,6 +42,8 @@
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
 <tr><td align=center>
 <table>
+<tr>
+<td align=right colspan=2>{{gcMessage}}</td></tr>
         <tr>
                 <td valign="top">
 		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=First Name')"><strong>First Name </strong></a></td>
@@ -119,6 +121,7 @@ d>
 	</td>
   </tr>
 </table>
+<input type=hidden name=gcPage value=Register>
 </form>
 
 
