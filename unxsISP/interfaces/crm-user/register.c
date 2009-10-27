@@ -33,11 +33,15 @@ static char *cMobileStyle="type_fields";
 static char cFax[33]={""};
 static char *cFaxStyle="type_fields";
 
+static char cSavePasswd[10]={""};
+
 
 unsigned ValidRegisterInput(void);
 void CommitRegister(void);
 void EmailConfirmation(void);
 void ShowSuccessPage(void);
+void AuthorizeRegister(char *cConfirmHash);
+void ShowConfirmedRegistration(void);
 
 
 void ProcessRegisterVars(pentry entries[], int x)
@@ -66,12 +70,19 @@ void ProcessRegisterVars(pentry entries[], int x)
 void RegisterGetHook(entry gentries[],int x)
 {
 	register int i;
-	
+	char cConfirmHash[65]={""};
+
 	for(i=0;i<x;i++)
 	{
-	//	if(!strcmp(gentries[i].name,"uRegister"))
+		if(!strcmp(gentries[i].name,"cConfirmHash"))
+			sprintf(cConfirmHash,"%.64s",gentries[i].val);
 	}
-
+	
+	if(cConfirmHash[0])
+	{
+		AuthorizeRegister(cConfirmHash);
+		ShowConfirmedRegistration();
+	}
 	htmlRegister();
 
 }//void RegisterGetHook(entry gentries[],int x)
@@ -365,6 +376,7 @@ void EmailConfirmation(void)
 
 }//void EmailConfirmation(void)
 
+
 void ShowSuccessPage(void)
 {
 	htmlHeader("unxsISP CRM","Header");
@@ -373,3 +385,126 @@ void ShowSuccessPage(void)
 
 }//void ShowSuccessPage(void)
 
+char *cGetRandomPassword(void);
+void EncryptPasswd(char *cPasswd);
+
+
+void AuthorizeRegister(char *cConfirmHash)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cPasswd[10]={""};
+
+	sprintf(gcQuery,"SELECT uClient,cFirstName,cLastName FROM tClient WHERE uClient IN "
+			"(SELECT uClient FROM tRegister WHERE cHash='%s')",cConfirmHash);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uClient);
+		sprintf(cFirstName,"%s",field[0]);
+		sprintf(cLastName,"%s",field[1]);
+	}
+	else
+	{
+		printf("Content-type: text/plain\n\n");
+		printf("Invalid registration hash\n");
+		exit(0);
+	}
+
+	sprintf(cPasswd,"%s",cGetRandomPassword());
+	sprintf(cSavePasswd,"%s",cPasswd);
+	EncryptPasswd(cPasswd);
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s %s',uCertClient=%u,"
+			"uOwner=%u,cPasswd='%s',cIpMask='0.0.0.0',"
+			"uPerm=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cFirstName
+			,cLastName
+			,uClient
+			,DEFAULT_OWNER
+			,cPasswd
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void AuthorizeRegister(char *cConfirmHash)
+
+
+void ShowConfirmedRegistration(void)
+{
+}//void ShowConfirmedRegistration(void)
+
+
+char *cGetRandomPassword(void)
+{
+	static char cPasswd[10]={""};
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	mysql_query(&gMysql,"DROP function if exists generate_alpha");
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	mysql_query(&gMysql,"CREATE FUNCTION generate_alpha () RETURNS CHAR(1) "
+			"RETURN ELT(FLOOR(1 + (RAND() * (50-1))), 'a','b','c','d'"
+			",'e','f','g','h','i','j','k','l','m  ','n','o','p','q','r'"
+			",'s','t','u','v','w','x','y',  'z','A','B','C','D','E','F',"
+			"'G','H','I','J','K','L','M  ','N','O','P','Q','R','S','T','U'"
+			",'V','W','X','Y',  'Z' )");
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	mysql_query(&gMysql,"SELECT CONCAT(generate_alpha (),generate_alpha (),generate_alpha (),"
+			"generate_alpha (),generate_alpha (),generate_alpha (),generate_alpha (),"
+			"generate_alpha ())");
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	field=mysql_fetch_row(res); //We will always have a row if the above queries didn't fail
+	
+	sprintf(cPasswd,"%s",field[0]);
+
+	return(cPasswd);
+
+}//char *cGetRandomPassword(void)
+
+
+void EmailLogin(void)
+{
+	FILE *fp;
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	struct t_template template;
+	char cFrom[256]={"root"};
+	
+	GetConfiguration("cRegisterMailFrom",cFrom);
+
+	template.cpName[0]="cFirstName";
+	template.cpValue[0]=cFirstName;
+
+	template.cpName[1]="cLastName";
+	template.cpValue[1]=cLastName;
+
+	template.cpName[2]="cPasswd";
+	template.cpValue[2]=cSavePasswd;
+
+	template.cpName[3]="";
+
+	//debug only
+	//if((fp=fopen("/tmp/eMailInvoice","w")))
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	{
+		fprintf(fp,"To: %s\n",cEmail);
+		fprintf(fp,"From: %s\n",cFrom);
+		fprintf(fp, "Reply-to: %s\n",cFrom);
+		fprintf(fp,"Subject: Please confirm your registration\n");
+		fprintf(fp,"MIME-Version: 1.0\n");
+		fprintf(fp,"Content-type: text/plain\n\n");
+		fpTemplate(fp,"LoginEmail",&template);	
+		//fclose(fp);
+		pclose(fp);
+	}	
+
+}//void EmailConfirmation(void)

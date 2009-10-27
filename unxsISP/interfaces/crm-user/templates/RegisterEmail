@@ -1,0 +1,11 @@
+{{cFirstName}},
+
+Thank you for registering.
+
+Please confirm your registration at the link below:
+
+https://cp0.airnetworks.com.pr:9333/cgi-bin/ispHelp.cgi?gcPage=Register&cConfirmHash={{cHash}}
+
+Best Regards,
+ISP Staff
+
