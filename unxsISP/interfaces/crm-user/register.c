@@ -282,7 +282,8 @@ void CommitRegister(void)
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tRegister "
 			"(uRegister INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, "
 			"uClient INT UNSIGNED NOT NULL DEFAULT 0,"
-			"cHash VARCHAR(32) NOT NULL DEFAULT '')");
+			"cHash VARCHAR(32) NOT NULL DEFAULT '',"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0)");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -307,7 +308,8 @@ void CommitRegister(void)
 		htmlPlainTextError(mysql_error(&gMysql));
 	uClient=mysql_insert_id(&gMysql);
 
-	sprintf(gcQuery,"INSERT INTO tRegister SET uClient=%u,cHash=MD5(CONCAT('%s','%s','%s','%u'))",
+	sprintf(gcQuery,"INSERT INTO tRegister SET uClient=%u,cHash=MD5(CONCAT('%s','%s','%s','%u')),"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uClient
 			,TextAreaSave(cFirstName)
 			,TextAreaSave(cLastName)
@@ -344,7 +346,7 @@ void EmailConfirmation(void)
 	template.cpName[1]="cHash";
 	template.cpValue[1]=field[0];
 
-	template.cpName[0]="";
+	template.cpName[2]="";
 
 	//debug only
 	//if((fp=fopen("/tmp/eMailInvoice","w")))
@@ -365,5 +367,9 @@ void EmailConfirmation(void)
 
 void ShowSuccessPage(void)
 {
+	htmlHeader("unxsISP CRM","Header");
+	htmlRegisterPage("","RegisterOK.Body");
+	htmlFooter("Footer");
+
 }//void ShowSuccessPage(void)
 

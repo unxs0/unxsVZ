@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
 
 	ConnectDb();
-
+	
 	if(getenv("REMOTE_ADDR")!=NULL)
 		sprintf(gcHost,"%.99s",getenv("REMOTE_ADDR"));
 
