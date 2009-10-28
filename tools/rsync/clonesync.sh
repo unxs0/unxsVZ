@@ -48,14 +48,12 @@ fi
 /usr/sbin/vzctl exec $1 /bin/sync;
 if [ $? != 0 ];then
 	fLog  "/usr/sbin/vzctl exec $1 /bin/sync failed";
-	rm -f $cLockfile;
 	exit 1;
 fi
 
 /usr/bin/ssh $cSSHPort $3 "ls /vz/private/$2 > /dev/null 2>&1";
 if [ $? != 0 ];then
 	fLog "/usr/bin/ssh $3 ls /vz/private/$2 failed";
-	rm -f $cLockfile;
 	exit 2;
 fi
 
