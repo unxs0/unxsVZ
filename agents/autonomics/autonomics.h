@@ -29,21 +29,39 @@ extern FILE *gLfp;
 extern MYSQL gMysql;
 extern char gcLine[];
 extern unsigned guDryrun;
-extern char gcNodeInstalledRam[];
-extern char gcNodeAutonomics[];
-extern char gcDatacenterAutonomics[];
-extern char gcNodeWarnEmail[];
-extern char gcDatacenterWarnEmail[];
 extern char gcHostname[];
 extern char gcQuery[];
 extern unsigned guDatacenter;
 extern unsigned guNode;
-extern int giAutonomicsPrivPagesWarnRatio;
-extern int giAutonomicsPrivPagesActRatio;
-extern unsigned guWarned;
-extern unsigned guActedOn;
+extern unsigned guContainer;
 extern char gcLogKey[];
 
+struct structAutonomicsState
+{
+	char cNodeInstalledRam[100];
+	char cNodeAutonomics[100];
+	char cDatacenterAutonomics[100];
+	char cDatacenterWarnEmail[100];
+	char cNodeWarnEmail[100];
+	char cContainerWarnEmail[100];
+	unsigned uNodePrivPagesWarnRatio;
+	unsigned uNodePrivPagesActRatio;
+	unsigned uNodeRamUtilActRatio;
+	unsigned uNodeRamUtilWarnRatio;
+	unsigned uNodeHDUtilActRatio;
+	unsigned uNodeHDUtilWarnRatio;
+	unsigned uNodePrivPagesWarned;
+	unsigned uNodePrivPagesActedOn;
+	unsigned uNodeRamUtilWarned;
+	unsigned uNodeRamUtilActedOn;
+	unsigned uNodeHDUtilWarned;
+	unsigned uNodeHDUtilActedOn;
+
+	long unsigned luNodeInstalledRam;
+	long unsigned luNodeInstalledDiskSpace;
+};
+
+extern struct structAutonomicsState gsAutoState;
 
 //main.c
 void daemonize(void);
@@ -57,6 +75,6 @@ int DatacenterAutonomics(void);
 int NodeAutonomics(void);
 unsigned iNodeMemConstraints(void);
 void Log(char *cMessage);
-void SendPrivPagesEmail(char *cEmail, char *cSubjectPrefix);
+void SendEmail(char *cEmail, char *cSubjectPrefix);
 //container.c
 int ContainerAutonomics(void);

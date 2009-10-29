@@ -15,6 +15,12 @@ NOTES
 
 #include "autonomics.h"
 
+//toc
+int NodeAutonomics(void);
+unsigned uNodeMemConstraints(void);
+unsigned uRamUtilConstraints(void);
+unsigned uHDUtilConstraints(void);
+
 int NodeAutonomics(void)
 {
 	MYSQL_RES *res;
@@ -26,39 +32,9 @@ int NodeAutonomics(void)
 
 	//Load pertinent system settings but only every so often
 	//If these change a SIGHUP must be issued to this daemon
-	if(!gcNodeWarnEmail[0])
-	{
-		//TODO define 2 type node
-		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
-			" cName='WarningEmail' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
-		mysqlQuery_Err_Exit;
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			sprintf(gcNodeWarnEmail,"%.99s",field[0]);
-			sprintf(gcQuery,"gcNodeWarnEmail=%s",field[0]);
-			logfileLine("NodeAutonomics",gcQuery);
-		}
-		mysql_free_result(res);
-	}
 
-	if(!gcNodeInstalledRam[0])
-	{
-		//TODO define 2 type node
-		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
-			" cName='luInstalledRam' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
-		mysqlQuery_Err_Exit;
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			sprintf(gcNodeInstalledRam,"%.99s",field[0]);
-			sprintf(gcQuery,"gcNodeInstalledRam=%s",field[0]);
-			logfileLine("NodeAutonomics",gcQuery);
-		}
-		mysql_free_result(res);
-	}
-
-	if(!gcNodeAutonomics[0])
+	//Global section
+	if(!gsAutoState.cNodeAutonomics[0])
 	{
 		//TODO define 2 type node
 		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
@@ -67,62 +43,363 @@ int NodeAutonomics(void)
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			sprintf(gcNodeAutonomics,"%.99s",field[0]);
-			sprintf(gcQuery,"gcNodeAutonomics=%s",field[0]);
+			sprintf(gsAutoState.cNodeAutonomics,"%.99s",field[0]);
+			sprintf(gcQuery,"cNodeAutonomics=%s",field[0]);
 			logfileLine("NodeAutonomics",gcQuery);
 		}
 		mysql_free_result(res);
 	}
 
-	if(!giAutonomicsPrivPagesWarnRatio)
+	if(gsAutoState.cNodeAutonomics[0]=='Y')
 	{
-		//TODO define 2 type node
-		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
-			" cName='Autonomics-PrivPagesWarnRatio' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
-		mysqlQuery_Err_Exit;
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			sscanf(field[0],"%d",&giAutonomicsPrivPagesWarnRatio);
-			sprintf(gcQuery,"giAutonomicsPrivPagesWarnRatio=%d",giAutonomicsPrivPagesWarnRatio);
-			logfileLine("NodeAutonomics",gcQuery);
-		}
-		mysql_free_result(res);
-	}
 
-	if(!giAutonomicsPrivPagesActRatio)
-	{
-		//TODO define 2 type node
-		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
-			" cName='Autonomics-PrivPagesActRatio' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
-		mysqlQuery_Err_Exit;
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
+		//Common section
+		if(!gsAutoState.cNodeWarnEmail[0])
 		{
-			sscanf(field[0],"%d",&giAutonomicsPrivPagesActRatio);
-			sprintf(gcQuery,"giAutonomicsPrivPagesActRatio=%d",giAutonomicsPrivPagesActRatio);
-			logfileLine("NodeAutonomics",gcQuery);
+			//TODO define 2 type node
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+				" cName='WarningEmail' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+			mysqlQuery_Err_Exit;
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(gsAutoState.cNodeWarnEmail,"%.99s",field[0]);
+				sprintf(gcQuery,"cNodeWarnEmail=%s",gsAutoState.cNodeWarnEmail);
+				logfileLine("NodeAutonomics",gcQuery);
+			}
+			mysql_free_result(res);
 		}
-		mysql_free_result(res);
-	}
 
-	if(gcNodeInstalledRam[0] && gcNodeAutonomics[0]=='Y')
-	{
-		if(iNodeMemConstraints())
+		if(!gsAutoState.luNodeInstalledRam)
 		{
-			logfileLine("NodeAutonomics","iNodeMemConstraints() error");
-			//We locally turn off autonomics for this node until
-			//the error is fixed. Or the daemon is reloaded via SIGHUP
-			gcNodeAutonomics[0]='N';
+			//TODO define 2 type node
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+				" cName='luInstalledRam' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+			mysqlQuery_Err_Exit;
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%lu",&gsAutoState.luNodeInstalledRam);
+				sprintf(gcQuery,"luNodeInstalledRam=%lu",gsAutoState.luNodeInstalledRam);
+				logfileLine("NodeAutonomics",gcQuery);
+			}
+			mysql_free_result(res);
 		}
-	}
+
+		if(!gsAutoState.luNodeInstalledDiskSpace)
+		{
+			//TODO define 2 type node
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+				" cName='luInstalledDiskSpace' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+			mysqlQuery_Err_Exit;
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%lu",&gsAutoState.luNodeInstalledDiskSpace);
+				sprintf(gcQuery,"luNodeInstalledDiskSpace=%lu",gsAutoState.luNodeInstalledDiskSpace);
+				logfileLine("NodeAutonomics",gcQuery);
+			}
+			mysql_free_result(res);
+		}
+	
+	
+	
+		//PrivMem section
+		if(!gsAutoState.uNodePrivPagesWarnRatio)
+		{
+			//TODO define 2 type node
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+				" cName='Autonomics-PrivPagesWarnRatio' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+			mysqlQuery_Err_Exit;
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&gsAutoState.uNodePrivPagesWarnRatio);
+				sprintf(gcQuery,"uNodePrivPagesWarnRatio=%u",gsAutoState.uNodePrivPagesWarnRatio);
+				logfileLine("NodeAutonomics",gcQuery);
+			}
+			mysql_free_result(res);
+		}
+	
+		if(!gsAutoState.uNodePrivPagesActRatio)
+		{
+			//TODO define 2 type node
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+				" cName='Autonomics-PrivPagesActRatio' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+			mysqlQuery_Err_Exit;
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&gsAutoState.uNodePrivPagesActRatio);
+				sprintf(gcQuery,"uNodePrivPagesActRatio=%u",gsAutoState.uNodePrivPagesActRatio);
+				logfileLine("NodeAutonomics",gcQuery);
+			}
+			mysql_free_result(res);
+		}
+	
+		if(gsAutoState.luNodeInstalledRam && gsAutoState.cNodeAutonomics[0]=='Y')
+		{
+			if(uNodeMemConstraints())
+			{
+				Log("uNodeMemConstraints() error");
+				logfileLine("NodeAutonomics","uNodeMemConstraints() error");
+				//We locally turn off autonomics for this node until
+				//the error is fixed. Or the daemon is reloaded via SIGHUP
+				gsAutoState.cNodeAutonomics[0]='N';
+			}
+		}
+	
+		//RamUtil section
+		if(!gsAutoState.uNodeRamUtilWarnRatio)
+		{
+			//TODO define 2 type node
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+				" cName='Autonomics-RamUtilWarnRatio' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+			mysqlQuery_Err_Exit;
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&gsAutoState.uNodeRamUtilWarnRatio);
+				sprintf(gcQuery,"uNodeRamUtilWarnRatio=%u",gsAutoState.uNodeRamUtilWarnRatio);
+				logfileLine("NodeAutonomics",gcQuery);
+			}
+			mysql_free_result(res);
+		}
+	
+		if(!gsAutoState.uNodeRamUtilActRatio)
+		{
+			//TODO define 2 type node
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+				" cName='Autonomics-RamUtilActRatio' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+			mysqlQuery_Err_Exit;
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&gsAutoState.uNodeRamUtilActRatio);
+				sprintf(gcQuery,"uNodeRamUtilActRatio=%u",gsAutoState.uNodeRamUtilActRatio);
+				logfileLine("NodeAutonomics",gcQuery);
+			}
+			mysql_free_result(res);
+		}
+
+		if(gsAutoState.luNodeInstalledRam)
+		{
+			if(uRamUtilConstraints())
+			{
+				Log("uRamUtilConstraints() error");
+				logfileLine("NodeAutonomics","uRamUtilConstraints() error");
+				//We locally turn off autonomics for this node until
+				//the error is fixed. Or the daemon is reloaded via SIGHUP
+				gsAutoState.cNodeAutonomics[0]='N';
+			}
+		}
+
+		//HDUtil section
+		if(!gsAutoState.uNodeHDUtilWarnRatio)
+		{
+			//TODO define 2 type node
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+				" cName='Autonomics-HDUtilWarnRatio' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+			mysqlQuery_Err_Exit;
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&gsAutoState.uNodeHDUtilWarnRatio);
+				sprintf(gcQuery,"uNodeHDUtilWarnRatio=%u",gsAutoState.uNodeHDUtilWarnRatio);
+				logfileLine("NodeAutonomics",gcQuery);
+			}
+			mysql_free_result(res);
+		}
+	
+		if(!gsAutoState.uNodeHDUtilActRatio)
+		{
+			//TODO define 2 type node
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+				" cName='Autonomics-HDUtilActRatio' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+			mysqlQuery_Err_Exit;
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&gsAutoState.uNodeHDUtilActRatio);
+				sprintf(gcQuery,"uNodeHDUtilActRatio=%u",gsAutoState.uNodeHDUtilActRatio);
+				logfileLine("NodeAutonomics",gcQuery);
+			}
+			mysql_free_result(res);
+		}
+
+		if(gsAutoState.luNodeInstalledDiskSpace)
+		{
+			if(uHDUtilConstraints())
+			{
+				Log("uHDUtilConstraints() error");
+				logfileLine("NodeAutonomics","uHDUtilConstraints() error");
+				//We locally turn off autonomics for this node until
+				//the error is fixed. Or the daemon is reloaded via SIGHUP
+				gsAutoState.cNodeAutonomics[0]='N';
+			}
+		}
+
+	}//If autonomics on
 
 	return(0);
 
 }//int NodeAutonomics(void)
 
 
-unsigned iNodeMemConstraints(void)
+unsigned uRamUtilConstraints(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	float fNodeRAMUtil=0.0;
+	char cMessage[100];
+
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+			" uType=2 AND uKey=%u AND tProperty.cName='vzmemcheck.fRAMUtil'",guNode);
+	mysqlQuery_Err_Exit;
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%f",&fNodeRAMUtil);
+	mysql_free_result(res);
+
+	//Act 
+	if(gsAutoState.uNodeRamUtilActRatio &&
+		fNodeRAMUtil>=(float)gsAutoState.uNodeRamUtilActRatio)
+	{
+		if(!gsAutoState.uNodeRamUtilActedOn)
+		{
+			sprintf(gcQuery,"fNodeRamUtilActRatio=%2.2f",fNodeRAMUtil);
+			logfileLine("uNodeMemConstraints",gcQuery);
+
+			//Send warning email via a forked process
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodeRamUtilAct");
+			//Create a system message log entry
+			sprintf(cMessage,"fNodeRamUtilActRatio=%2.2f node=%u datacenter=%u",
+					fNodeRAMUtil,guNode,guDatacenter);
+			Log(cMessage);
+
+			gsAutoState.uNodeRamUtilActedOn=1;
+		}
+	}
+	else if(gsAutoState.uNodeRamUtilActRatio)
+	{
+		gsAutoState.uNodeRamUtilActedOn=0;
+	}
+	//Warn if not acted on already
+	if(!gsAutoState.uNodeRamUtilActedOn && gsAutoState.uNodeRamUtilWarnRatio &&
+		fNodeRAMUtil>=(float)gsAutoState.uNodeRamUtilWarnRatio)
+	{
+
+		if(!gsAutoState.uNodeRamUtilWarned)
+		{
+			sprintf(gcQuery,"NodeRamUtilWarnRatio=%2.2f",fNodeRAMUtil);
+			logfileLine("uNodeMemConstraints",gcQuery);
+
+			//Send warning email via a forked process
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodeRamUtilWarn");
+			//Create a system message log entry
+			sprintf(cMessage,"fNodeRamUtilWarnRatio=%2.2f node=%u datacenter=%u",
+					fNodeRAMUtil,guNode,guDatacenter);
+			Log(cMessage);
+			gsAutoState.uNodeRamUtilWarned=1;
+		}
+	}
+	else if(!gsAutoState.uNodeRamUtilActedOn && gsAutoState.uNodeRamUtilWarnRatio)
+	{
+		gsAutoState.uNodeRamUtilWarned=0;
+	}
+
+	return(0);
+
+}//unsigned uRamUtilConstraints(void)
+
+
+unsigned uHDUtilConstraints(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	float fHDUtilRatio;
+	float fAllNodeContainerHDBlocks=0.0;
+	char cMessage[100];
+	long unsigned luUsage;
+
+	sprintf(gcQuery,"SELECT tProperty.cValue FROM tContainer,tProperty WHERE tProperty.uKey=tContainer.uContainer AND"
+			" tProperty.uType=3 AND tContainer.uNode=%u AND tProperty.cName='1k-hdblocks.luUsage'"
+				" AND tContainer.uDatacenter=%u"
+				" AND tContainer.uStatus!=11"//Initial Setup
+				" AND tContainer.uStatus!=6"//Awating Activation
+						,guNode,guDatacenter);
+	mysqlQuery_Err_Exit;
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%lu",&luUsage);
+		fAllNodeContainerHDBlocks+=(float)luUsage;
+	}
+	mysql_free_result(res);
+
+	fHDUtilRatio=fAllNodeContainerHDBlocks/(float)gsAutoState.luNodeInstalledDiskSpace* 100.0;
+		
+	//Act 
+	if(gsAutoState.uNodeHDUtilActRatio &&
+		fHDUtilRatio>=(float)gsAutoState.uNodeHDUtilActRatio)
+	{
+		if(!gsAutoState.uNodeHDUtilActedOn)
+		{
+			sprintf(gcQuery,"fNodeHDUtilActRatio=%2.2f",fHDUtilRatio);
+			logfileLine("uNodeMemConstraints",gcQuery);
+
+			//Send warning email via a forked process
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodeHDUtilAct");
+			//Create a system message log entry
+			sprintf(cMessage,"fNodeHDUtilActRatio=%2.2f node=%u datacenter=%u",
+					fHDUtilRatio,guNode,guDatacenter);
+			Log(cMessage);
+
+			gsAutoState.uNodeHDUtilActedOn=1;
+		}
+	}
+	else if(gsAutoState.uNodeHDUtilActRatio)
+	{
+		gsAutoState.uNodeHDUtilActedOn=0;
+	}
+	//Warn if not acted on already
+	if(!gsAutoState.uNodeHDUtilActedOn && gsAutoState.uNodeHDUtilWarnRatio &&
+		fHDUtilRatio>=(float)gsAutoState.uNodeHDUtilWarnRatio)
+	{
+
+		if(!gsAutoState.uNodeHDUtilWarned)
+		{
+			sprintf(gcQuery,"NodeHDUtilWarnRatio=%2.2f",fHDUtilRatio);
+			logfileLine("uNodeMemConstraints",gcQuery);
+
+			//Send warning email via a forked process
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodeHDUtilWarn");
+			//Create a system message log entry
+			sprintf(cMessage,"fNodeHDUtilWarnRatio=%2.2f node=%u datacenter=%u",
+					fHDUtilRatio,guNode,guDatacenter);
+			Log(cMessage);
+			gsAutoState.uNodeHDUtilWarned=1;
+		}
+	}
+	else if(!gsAutoState.uNodeHDUtilActedOn && gsAutoState.uNodeHDUtilWarnRatio)
+	{
+		gsAutoState.uNodeHDUtilWarned=0;
+	}
+	//End use privvmpages ratio action section
+
+	//End use data take node based action section
+	//
+
+	return(0);
+
+}//unsigned uHDUtilConstraints(void)
+
+
+unsigned uNodeMemConstraints(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -134,13 +411,8 @@ unsigned iNodeMemConstraints(void)
 	unsigned long luHeld,luMaxheld,luBarrier,luLimit,luFailcnt;
 	char cResource[64];
 	unsigned uContainer=0;
-	long unsigned luInstalledRam=0;
 	float fPrivPagesRatio;
 	float fAllNodeContainerMaxheld=0.0;
-
-	sscanf(gcNodeInstalledRam,"%lu",&luInstalledRam);
-	if(!luInstalledRam)
-		return(7);
 
 	if((fp=fopen("/proc/user_beancounters","r"))==NULL)
 		return(8);
@@ -204,7 +476,7 @@ unsigned iNodeMemConstraints(void)
 					//debug only
 					//sprintf(gcQuery,"uContainer=%u fAllNodeContainerMaxheld=%2.2f",
 					//				uContainer,fAllNodeContainerMaxheld);
-					//logfileLine("NodeAutonomics",gcQuery);
+					//logfileLine("uNodeMemConstraints",gcQuery);
 
 					break;//move on to next container
 				}
@@ -214,58 +486,70 @@ unsigned iNodeMemConstraints(void)
 	mysql_free_result(res);
 	fclose(fp);
 
+
+
 	//
 	//Start use data obtained to take node based action section
 
 	//Start max held privvmpages vs. installed node ram ratio action section
-	fPrivPagesRatio=fAllNodeContainerMaxheld/(float)luInstalledRam * 100.0;
+	fPrivPagesRatio=fAllNodeContainerMaxheld/(float)gsAutoState.luNodeInstalledRam* 100.0;
+	//if(guDryrun)
+	//{
+	//	sprintf(gcQuery,"fPrivPagesRatio=%2.2f fAllNodeContainerMaxheld=%2.2f",
+	//			fPrivPagesRatio,fAllNodeContainerMaxheld);
+	//	logfileLine("uNodeMemConstraints",gcQuery);
+	//	sprintf(gcQuery,"uPrivPagesActedOn=%u uPrivPagesWarned=%u",
+	//			gsAutoState.uPrivPagesActedOn,gsAutoState.uPrivPagesWarned);
+	//	logfileLine("uNodeMemConstraints",gcQuery);
+	//}
+		
 	//Act 
-	if(giAutonomicsPrivPagesActRatio &&
-		fPrivPagesRatio>=(float)giAutonomicsPrivPagesActRatio)
+	if(gsAutoState.uNodePrivPagesActRatio &&
+		fPrivPagesRatio>=(float)gsAutoState.uNodePrivPagesActRatio)
 	{
-		if(!guActedOn)
+		if(!gsAutoState.uNodePrivPagesActedOn)
 		{
-			sprintf(gcQuery,"act-ratio=%2.2f",fPrivPagesRatio);
-			logfileLine("NodeAutonomics",gcQuery);
+			sprintf(gcQuery,"fNodePrivPagesActRatio=%2.2f",fPrivPagesRatio);
+			logfileLine("uNodeMemConstraints",gcQuery);
 
 			//Send warning email via a forked process
-			if(gcNodeWarnEmail[0])
-				SendPrivPagesEmail(gcNodeWarnEmail,"Act");
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodePrivPagesAct");
 			//Create a system message log entry
-			sprintf(cMessage,"act-ratio=%2.2f node=%u datacenter=%u",
+			sprintf(cMessage,"fNodePrivPagesActRatio=%2.2f node=%u datacenter=%u",
 					fPrivPagesRatio,guNode,guDatacenter);
 			Log(cMessage);
 
-			guActedOn=1;
+			gsAutoState.uNodePrivPagesActedOn=1;
 		}
 	}
-	else if(giAutonomicsPrivPagesActRatio)
+	else if(gsAutoState.uNodePrivPagesActRatio)
 	{
-		guActedOn=0;
+		gsAutoState.uNodePrivPagesActedOn=0;
 	}
 	//Warn if not acted on already
-	if(!guActedOn && giAutonomicsPrivPagesWarnRatio &&
-		fPrivPagesRatio>=(float)giAutonomicsPrivPagesWarnRatio)
+	if(!gsAutoState.uNodePrivPagesActedOn && gsAutoState.uNodePrivPagesWarnRatio &&
+		fPrivPagesRatio>=(float)gsAutoState.uNodePrivPagesWarnRatio)
 	{
 
-		if(!guWarned)
+		if(!gsAutoState.uNodePrivPagesWarned)
 		{
-			sprintf(gcQuery,"warn-ratio=%2.2f",fPrivPagesRatio);
-			logfileLine("NodeAutonomics",gcQuery);
+			sprintf(gcQuery,"NodePrivPagesWarnRatio=%2.2f",fPrivPagesRatio);
+			logfileLine("uNodeMemConstraints",gcQuery);
 
 			//Send warning email via a forked process
-			if(gcNodeWarnEmail[0])
-				SendPrivPagesEmail(gcNodeWarnEmail,"Warn");
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodePrivPagesWarn");
 			//Create a system message log entry
-			sprintf(cMessage,"warn-ratio=%2.2f node=%u datacenter=%u",
+			sprintf(cMessage,"fNodePrivPagesWarnRatio=%2.2f node=%u datacenter=%u",
 					fPrivPagesRatio,guNode,guDatacenter);
 			Log(cMessage);
-			guWarned=1;
+			gsAutoState.uNodePrivPagesWarned=1;
 		}
 	}
-	else if(!guActedOn && giAutonomicsPrivPagesWarnRatio)
+	else if(!gsAutoState.uNodePrivPagesActedOn && gsAutoState.uNodePrivPagesWarnRatio)
 	{
-		guWarned=0;
+		gsAutoState.uNodePrivPagesWarned=0;
 	}
 	//End use privvmpages ratio action section
 
@@ -274,7 +558,7 @@ unsigned iNodeMemConstraints(void)
 
 	return(0);
 
-}//unsigned iNodeMemConstraints(void)
+}//unsigned uNodeMemConstraints(void)
 
 
 void Log(char *cMessage)
@@ -290,11 +574,16 @@ void Log(char *cMessage)
 }//void Log(char *cMessage)
 
 
-void SendPrivPagesEmail(char *cEmail, char *cSubjectPrefix)
+//fork the sending
+void SendEmail(char *cEmail, char *cSubjectPrefix)
 {
 	char cSystemCall[256]={""};
+	char cLine[256];
 
-	sprintf(cSystemCall,"sleep 300;touch /tmp/delme.SendPrivPagesEmail.%s.%s",cEmail,cSubjectPrefix);
+	sprintf(cSystemCall,"/bin/true");
+	sprintf(cLine,"cEmail:%s SubjectPrefix:%s",cEmail,cSubjectPrefix);
+	if(guDryrun)
+		logfileLine("SendEmail Attempt",cLine);
 
 	switch(fork())
 	{
@@ -302,13 +591,14 @@ void SendPrivPagesEmail(char *cEmail, char *cSubjectPrefix)
 			return;
 
 		case -1:
-			logfileLine("SendPrivPagesEmail","SendPrivPagesEmail() fork failed");
+			logfileLine("SendEmail","SendEmail() fork failed");
 			_exit(0);
 
 		case 0:
-			system(cSystemCall);
+			if(!system(cSystemCall))
+				logfileLine("SendEmail",cLine);
 			_exit(0);
 		break;
 	}
 
-}//void SendPrivPagesEmail(char *cEmail, char *cSubjectPrefix)
+}//void SendEmail(char *cEmail, char *cSubjectPrefix)
