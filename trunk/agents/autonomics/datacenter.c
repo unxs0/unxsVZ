@@ -38,7 +38,7 @@ int DatacenterAutonomics(void)
 		mysql_free_result(res);
 	}
 
-	if(!gcDatacenterWarnEmail[0] && guDatacenter)
+	if(!gsAutoState.cDatacenterWarnEmail[0] && guDatacenter)
 	{
 		//TODO define 1 type datacenter
 		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
@@ -52,14 +52,14 @@ int DatacenterAutonomics(void)
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			sprintf(gcDatacenterWarnEmail,"%.99s",field[0]);
-			sprintf(gcQuery,"gcDatacenterWarnEmail=%s",field[0]);
+			sprintf(gsAutoState.cDatacenterWarnEmail,"%.99s",field[0]);
+			sprintf(gcQuery,"cDatacenterWarnEmail=%s",field[0]);
 			logfileLine("DatacenterAutonomics",gcQuery);
 		}
 		mysql_free_result(res);
 	}
 
-	if(!gcDatacenterAutonomics[0])
+	if(!gsAutoState.cDatacenterAutonomics[0])
 	{
 		//TODO define 1 type datacenter
 		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
@@ -68,8 +68,8 @@ int DatacenterAutonomics(void)
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			sprintf(gcDatacenterAutonomics,"%.99s",field[0]);
-			sprintf(gcQuery,"gcDatacenterAutonomics=%s",field[0]);
+			sprintf(gsAutoState.cDatacenterAutonomics,"%.99s",field[0]);
+			sprintf(gcQuery,"cDatacenterAutonomics=%s",field[0]);
 			logfileLine("DatacenterAutonomics",gcQuery);
 		}
 		mysql_free_result(res);

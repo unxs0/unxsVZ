@@ -20,30 +20,33 @@ FILE *gLfp;
 MYSQL gMysql;
 char gcLine[256];
 unsigned guDryrun=0;
-char gcNodeInstalledRam[100]={""};
-char gcNodeAutonomics[100]={""};
-char gcDatacenterAutonomics[100]={""};
+
+struct structAutonomicsState gsAutoState;
+
 char gcHostname[100];
-char gcNodeWarnEmail[100]={""};
-char gcDatacenterWarnEmail[100]={""};
 char gcQuery[2048];
 char gcLogKey[100]={"Kjhsdfjkui9345kijhsdfiuh43908khjlkjh"};
 unsigned guDatacenter=0;
 unsigned guNode=0;
-int giAutonomicsPrivPagesWarnRatio=0;//default never
-int giAutonomicsPrivPagesActRatio=0;//default never
-unsigned guWarned=0;
-unsigned guActedOn=0;
+unsigned guContainer=0;
 pid_t gpidMain;
 
+//toc in .h also
+void sighandlerLeave(int iSig);
 void sighandlerChild(int iSig);
+void sighandlerReload(int iSig);
+void logfileLine(const char *cFunction,const char *cLogline);
+void daemonize(void);
+void InitAutonomicsState(struct structAutonomicsState *gsAutoState);
+
 
 int main(int iArgc, char *cArgv[])
 {
 	if(iArgc==2 && !strncmp(cArgv[1],"--fg",4))
 	{
-		printf("Running %s in foreground\n",cArgv[0]);
+		printf("Running %s in foreground and with --dryrun set\n",cArgv[0]);
 		gLfp=stderr;
+		guDryrun=1;
 	}
 	else if(iArgc==2 && !strncmp(cArgv[1],"--help",6))
 	{
@@ -96,6 +99,7 @@ int main(int iArgc, char *cArgv[])
 			cArgv[0],gcHostname,guDryrun,gpidMain);
 	logfileLine("main",gcLine);
 
+	InitAutonomicsState(&gsAutoState);
 	while(1)
 	{
 		sleep(7);
@@ -115,6 +119,7 @@ int main(int iArgc, char *cArgv[])
 }//main()
 
 
+//kill
 void sighandlerLeave(int iSig)
 {
 	sprintf(gcLine,"interrupted by signal:%d",iSig);
@@ -123,6 +128,7 @@ void sighandlerLeave(int iSig)
 	fclose(gLfp);
 	mysql_close(&gMysql);
 
+	logfileLine("sighandlerLeave","exit");
         exit(iSig);
 
 }//void sighandlerLeave(int iSig)
@@ -145,26 +151,14 @@ void sighandlerChild(int iSig)
 }//void sighandlerLeave(int iSig)
 
 
+//kill -HUP
 void sighandlerReload(int iSig)
 {
-	//node.c scoped
-	extern int giAutonomicsPrivPagesWarnRatio;
-	extern int giAutonomicsPrivPagesActRatio;
-
 	sprintf(gcLine,"interrupted by signal:%d %s",iSig,strsignal(iSig));
+
+	InitAutonomicsState(&gsAutoState);
+
 	logfileLine("sighandlerReload",gcLine);
-	guDryrun=0;
-	gcNodeInstalledRam[0]=0;
-	gcNodeAutonomics[0]=0;
-	gcDatacenterAutonomics[0]=0;
-	gcNodeWarnEmail[0]=0;
-	gcDatacenterWarnEmail[0]=0;
-	giAutonomicsPrivPagesWarnRatio=0;
-	giAutonomicsPrivPagesActRatio=0;
-	guDatacenter=0;
-	guNode=0;
-	guWarned=0;
-	guActedOn=0;
 
 }//void sighandlerReload(int iSig)
 
@@ -210,4 +204,31 @@ void daemonize(void)
 	}
 
 }//void daemonize(void)
+
+
+void InitAutonomicsState(struct structAutonomicsState *gsAutoState)
+{
+	gsAutoState->cNodeInstalledRam[0]=0;
+	gsAutoState->cNodeInstalledRam[0]=0;
+	gsAutoState->cNodeAutonomics[0]=0;
+	gsAutoState->cDatacenterAutonomics[0]=0;
+	gsAutoState->cNodeWarnEmail[0]=0;
+	gsAutoState->cDatacenterWarnEmail[0]=0;
+	gsAutoState->cContainerWarnEmail[0]=0;
+	gsAutoState->uNodePrivPagesWarnRatio=0;
+	gsAutoState->uNodePrivPagesActRatio=0;
+	gsAutoState->uNodeRamUtilActRatio=0;
+	gsAutoState->uNodeRamUtilWarnRatio=0;
+	gsAutoState->uNodeHDUtilActRatio=0;
+	gsAutoState->uNodeHDUtilWarnRatio=0;
+	gsAutoState->uNodePrivPagesWarned=0;
+	gsAutoState->uNodePrivPagesActedOn=0;
+	gsAutoState->uNodeRamUtilWarned=0;
+	gsAutoState->uNodeRamUtilActedOn=0;
+	gsAutoState->uNodeHDUtilWarned=0;
+	gsAutoState->uNodeHDUtilActedOn=0;
+	gsAutoState->luNodeInstalledRam=0;
+	gsAutoState->luNodeInstalledDiskSpace=0;
+
+}//void InitAutonomicsState()
 
