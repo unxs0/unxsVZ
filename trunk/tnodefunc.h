@@ -349,7 +349,7 @@ void ExttNodeButtons(void)
 				htmlGroups(uNode,0);
 			}
 			printf("<p><u>Container Search</u><br>");
-			printf("<input title='Enter exact tContainer.cLabel or MySQL LIKE pattern (%% or _ allowed)'"
+			printf("<input title='Use [Search], enter cLabel start or MySQL LIKE pattern (%% or _ allowed)'"
 					" type=text name=cSearch value='%s'>",cSearch);
 			tContainerNavList(uNode,cSearch);
 			tNodeNavList(0);
@@ -483,9 +483,9 @@ void ExttNodeListFilter(void)
 
 void ExttNodeNavBar(void)
 {
+	printf(LANG_NBB_SEARCH);
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
-	printf(LANG_NBB_SEARCH);
 
 	if(guPermLevel>=9 && !guListMode)
 		printf(LANG_NBB_NEW);
