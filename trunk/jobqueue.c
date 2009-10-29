@@ -892,6 +892,15 @@ void StopContainer(unsigned uJob,unsigned uContainer)
 		return;
 	}
 
+	//2-.
+	sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot no --save",uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("StopContainer",gcQuery);
+		tJobErrorUpdate(uJob,"vzctl set failed");
+		return;
+	}
+
 	//Everything ok
 	SetContainerStatus(uContainer,uSTOPPED);
 	tJobDoneUpdate(uJob);
@@ -914,6 +923,16 @@ void StartContainer(unsigned uJob,unsigned uContainer)
 			return;
 		}
 	}
+
+	//2-.
+	sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot yes --save",uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("StartContainer",gcQuery);
+		tJobErrorUpdate(uJob,"vzctl set failed");
+		return;
+	}
+
 
 	//Everything ok
 	SetContainerStatus(uContainer,uACTIVE);
@@ -1889,6 +1908,14 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			tJobErrorUpdate(uJob,"error 6");
 			goto CommonExit;
 		}
+		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --onboot yes --save'",
+								cSSHOptions,cTargetNodeIPv4,uNewVeid);
+		if(system(gcQuery))
+		{
+			logfileLine("CloneContainer",gcQuery);
+			tJobErrorUpdate(uJob,"error 6b");
+			goto CommonExit;
+		}
 		SetContainerStatus(uNewVeid,1);//Active
 	}
 	else
@@ -2395,6 +2422,18 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 				return;
 			}
 		}
+
+		sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot yes --save",uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("FailoverTo",gcQuery);
+			tJobErrorUpdate(uJob,"set onboot failed");
+
+			//rollback
+			SetContainerSource(uContainer,uSourceContainer);
+			//level 1 done
+			return;
+		}
 	}
 	SetContainerStatus(uContainer,uACTIVE);//rollback item
 
@@ -2799,6 +2838,8 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 			system(gcQuery);
+			sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot yes --save",uContainer);
+			system(gcQuery);
 		}
 		//level 2 done
 		return;
@@ -2820,6 +2861,8 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 			if(uStatus==uSTOPPED)
 			{
 				sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+				system(gcQuery);
+				sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot yes --save",uContainer);
 				system(gcQuery);
 			}
 			//level 2 done
@@ -2847,6 +2890,8 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 			system(gcQuery);
+			sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot yes --save",uContainer);
+			system(gcQuery);
 		}
 		//level 2 done
 		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
@@ -2869,6 +2914,8 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 			if(uStatus==uSTOPPED)
 			{
 				sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+				system(gcQuery);
+				sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot yes --save",uContainer);
 				system(gcQuery);
 			}
 			//level 2 done
@@ -2900,6 +2947,8 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 			system(gcQuery);
+			sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot yes --save",uContainer);
+			system(gcQuery);
 		}
 		//level 2 done
 		SetContainerHostname(uContainer,cOrigHostname,cOrigLabel);
@@ -2929,6 +2978,8 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		if(uStatus==uSTOPPED)
 		{
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+			system(gcQuery);
+			sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot yes --save",uContainer);
 			system(gcQuery);
 		}
 		//level 2 done
