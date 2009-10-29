@@ -2006,6 +2006,10 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 	}
 	else
 	{
+
+		//debug only
+		//printf("<p>(uNode=%u cSearch=%s)",uNode,cSearch);
+
 		if(cSearch[0])
 		{
 			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
