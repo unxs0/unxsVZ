@@ -12,27 +12,23 @@
 #	to see what actually changes over a long period and then
 #	have this script modified just for the service important items.
 
+fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
-fLog()
-{
-	echo "`date +%b' '%d' '%T` clonesync.sh.$$ $@";
-}
-
-
-cSSHPort="-p 12337";
+cSSHPort="-p 22";
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	echo "usage: $0 <source VEID> <target VEID> <target node host>";
 	exit 0;
 fi
 
-fLog "start $1 to $3:$2";
+#debug only
+#fLog "start $1 to $3:$2";
 
 cLockfile="/tmp/clonesync.sh.lock.$1.$2";
 
 #do not run if another (same source and target VEIDs) clone job is also running
 if [ -e $cLockfile ]; then
-	fLog "waiting for lock release";
+	fLog "waiting for lock release $cLockfile";
 	exit 0;
 else
 	touch $cLockfile; 
@@ -45,23 +41,34 @@ fi
 #this is very slow and HD space consuming.
 #so we test as herein a quick and dirty or a targeted single service type
 #container approach
-/usr/sbin/vzctl exec $1 /bin/sync;
+/usr/sbin/vzctl exec $1 /bin/sync > /dev/null 2>&1;
 if [ $? != 0 ];then
-	fLog  "/usr/sbin/vzctl exec $1 /bin/sync failed";
-	exit 1;
+	#fLog  "warn sync failed -source is probably stopped";
+	#container is now allowed to be in stopped state
+	#but must be on disk
+	if [ ! -d "/vz/private/$1" ]; then
+		fLog "dir /vz/private/$1 does not exist";
+		#rollback
+		rm -r $cLockfile;
+		exit 1;
+	fi
+
 fi
 
+#make sure ssh is working
 /usr/bin/ssh $cSSHPort $3 "ls /vz/private/$2 > /dev/null 2>&1";
 if [ $? != 0 ];then
 	fLog "/usr/bin/ssh $3 ls /vz/private/$2 failed";
+	#rollback
+	rm -r $cLockfile;
 	exit 2;
 fi
 
-#/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 12337' -avxzlH --delete \
+#/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxzlH --delete \
 #no compression
-#/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 12337' -avxlH --delete \
+#/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxlH --delete \
 #no verbose and no encryption
-/usr/bin/rsync -e '/usr/bin/ssh -ax -e none -p 12337' -axlH --delete \
+/usr/bin/rsync -e '/usr/bin/ssh -ax -e none -p 22' -axlH --delete \
 			--exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
 			--exclude /etc/sysconfig/network \
@@ -69,10 +76,17 @@ fi
 			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:1 \
 			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:2 \
 			/vz/private/$1/ $3:/vz/private/$2
+if [ $? != 0 ];then
+	fLog "rsync failed";
+	#rollback
+	rm -r $cLockfile;
+	exit 3;
+else
+	#remove lock file
+	rm -f $cLockfile;
 
-#remove lock file
-rm -f $cLockfile;
-
-fLog "end";
-exit 0;
+	#debug only
+	#fLog "end";
+	exit 0;
+fi
 
