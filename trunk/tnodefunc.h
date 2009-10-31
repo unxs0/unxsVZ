@@ -414,6 +414,10 @@ void ExttNodeGetHook(entry gentries[], int x)
 			sscanf(gentries[i].val,"%u",&uNode);
 			guMode=6;
 		}
+		else if(!strcmp(gentries[i].name,"cSearch"))
+		{
+			sprintf(cSearch,"%.31s",gentries[i].val);
+		}
 	}
 	tNode("");
 
@@ -510,17 +514,21 @@ void tNodeNavList(unsigned uDatacenter)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uMysqlNumRows;
+	unsigned uNumRows=0;
+#define LIMIT " LIMIT 25"
+#define uLIMIT 24
 
 	if(uDatacenter)
 		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u AND (uOwner=%u OR"
 				" uOwner IN (SELECT uClient FROM " TCLIENT
-				" WHERE uOwner=%u)) ORDER BY cLabel",
-					uDatacenter,guCompany,guCompany);
+				" WHERE uOwner=%u)) ORDER BY cLabel" 
+					LIMIT,uDatacenter,guCompany,guCompany);
 	else
 		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE (uOwner=%u OR"
 				" uOwner IN (SELECT uClient FROM " TCLIENT
-				" WHERE uOwner=%u)) ORDER BY cLabel",
-					guCompany,guCompany);
+				" WHERE uOwner=%u)) ORDER BY cLabel"
+					LIMIT,guCompany,guCompany);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -530,13 +538,30 @@ void tNodeNavList(unsigned uDatacenter)
         }
 
         res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	if((uMysqlNumRows=mysql_num_rows(res)))
 	{	
-        	printf("<p><u>tNodeNavList</u><br>\n");
+        	printf("<p><u>tNodeNavList(%u)</u><br>\n",uMysqlNumRows);
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNode"
-				"&uNode=%s>%s</a><br>\n",field[0],field[1]);
+		{
+
+			
+			if(cSearch[0])
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNode"
+					"&uNode=%s&cSearch=%s>%s</a><br>\n",
+							field[0],cURLEncode(cSearch),field[1]);
+			else
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNode"
+					"&uNode=%s>%s</a><br>\n",
+							field[0],field[1]);
+
+			if(++uNumRows>=uLIMIT)
+			{
+				printf("Only %u of %u nodes shown use [List] to view all.<br>\n",
+						uLIMIT,uMysqlNumRows);
+				break;
+			}
+		}
 	}
         mysql_free_result(res);
 
@@ -690,10 +715,10 @@ NextSection2:
 	//3a-. All container pages times 4096
 	sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)*4096) FROM tProperty,tContainer WHERE"
 				" tProperty.cName='physpages.luMaxheld'"
-				" AND tProperty.uType=3"
+				" AND tProperty.uType=3"//Container type
 				" AND tProperty.uKey=tContainer.uContainer"
-				" AND tContainer.uStatus!=11"//Probably active not initial setup
-				" AND tContainer.uStatus!=31"// and not stopped
+				" AND tContainer.uStatus!=11"//uINITSETUP==11
+				" AND tContainer.uStatus!=31"//uSTOPPED==31
 				" AND tContainer.uNode=%u",uNode);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -710,12 +735,18 @@ NextSection2:
 	mysql_free_result(res);
 	//3b-. All container kmemsize + othersockbuf.luMaxheld + tcpsndbuf.luMaxheld + tcprcvbuf.luMaxheld +
 	// dgramrcvbuf.luMaxheld
+	//physpages.luHeld * 4096 needs to also be added from above
 	sprintf(gcQuery,"SELECT SUM(CONVERT(tProperty.cValue,UNSIGNED)) FROM tProperty,tContainer WHERE"
 				" ( tProperty.cName='kmemsize.luMaxheld' OR"
 				" tProperty.cName='othersockbuf.luMaxheld' OR "
 				" tProperty.cName='tcpsndbuf.luMaxheld' OR "
 				" tProperty.cName='tcprcvbuf.luMaxheld' OR "
 				" tProperty.cName='dgramrcvbuf.luMaxheld' )"
+				//" ( tProperty.cName='kmemsize.luHeld' OR"
+				//" tProperty.cName='othersockbuf.luHeld' OR "
+				//" tProperty.cName='tcpsndbuf.luHeld' OR "
+				//" tProperty.cName='tcprcvbuf.luHeld' OR "
+				//" tProperty.cName='dgramrcvbuf.luHeld' )"
 				" AND tProperty.uType=3"
 				" AND tProperty.uKey=tContainer.uContainer"
 				" AND tContainer.uStatus!=11"//Probably active not initial setup
@@ -737,7 +768,7 @@ NextSection2:
 	luTotalRAM=(luAllContainerPhyspages+luAllContainer)/1000;
 	fRatio= ((float)luTotalRAM/(float)luInstalledRam) * 100.00;
 		cColor=cRatioColor(&fRatio);
-		printf("RAM Util %2.2f%%:"
+		printf("Max RAM Util %2.2f%%:"
 			" <font color=%s>%lu/%lu</font><br>\n",
 				fRatio,cColor,luTotalRAM,luInstalledRam);
 

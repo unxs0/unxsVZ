@@ -2107,7 +2107,8 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 			}
 			if(++uNumRows>=uLIMIT)
 			{
-				printf("Only 24 of %u containers shown use filter to narrow.<br>\n",uMySQLNumRows);
+				printf("Only %u of %u containers shown use 'Container Search' to narrow.<br>\n",
+						uLIMIT,uMySQLNumRows);
 				break;
 			}
 		}
