@@ -77,7 +77,7 @@ void htmlContainerNotes(unsigned uContainer);
 void htmlContainerMount(unsigned uContainer);
 unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
-				unsigned uTargetNode, unsigned uNewVeid);
+				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus);
 void htmlHealth(unsigned uContainer,unsigned uType);
 void htmlGroups(unsigned uNode, unsigned uContainer);
 unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
@@ -888,7 +888,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Clone Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
+			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -907,7 +907,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm Clone"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
+			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
 				unsigned uNewVeid=0;
 				char cTargetNodeIPv4[32]={""};
@@ -982,7 +982,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				uNewVeid=mysql_insert_id(&gMysql);
 
 
-				if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid))
+				if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus))
 				{
 					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 							" WHERE uIP=%u AND uAvailable=1",uWizIPv4);
@@ -1026,7 +1026,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						htmlPlainTextError(mysql_error(&gMysql));
 					uModBy=guLoginClient;
 					uStatus=uAWAITCLONE;
-					SetContainerStatus(uContainer,81);//Awaiting Clone
+					SetContainerStatus(uContainer,uAWAITCLONE);
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("CloneContainerJob() Done");
 				}
@@ -1685,6 +1685,12 @@ void ExttContainerButtons(void)
 					printf("<p><input title='Creates a job for starting a stopped container.'"
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Start %.25s'><br>\n",cLabel);
+					if(!strstr(cLabel,"-clone"))
+					printf("<input title='Clone a container to this or another hardware node."
+					" The clone will be an online container with another IP and hostname."
+					" It will be kept updated via rsync on a configurable basis.'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Clone Wizard'><br>\n");
 					if(uSource)
 						printf("<input title='Creates jobs for manual failover (switchover.)'"
 						" type=submit class=lwarnButton"
@@ -1958,6 +1964,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uNumRows=0;
+	unsigned uMySQLNumRows=0;
 #define LIMIT " LIMIT 25"
 #define uLIMIT 24
 
@@ -2065,9 +2072,9 @@ void tContainerNavList(unsigned uNode, char *cSearch)
         }
 
         res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	if((uMySQLNumRows=mysql_num_rows(res)))
 	{	
-        	printf("<p><u>tContainerNavList</u><br>\n");
+        	printf("<p><u>tContainerNavList(%d)</u><br>\n",uMySQLNumRows);
 		if(guPermLevel>11 && uNode==0)
 		{
         		printf("You may select containers and then appply a group"
@@ -2100,7 +2107,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 			}
 			if(++uNumRows>=uLIMIT)
 			{
-				printf("Only 24 containers shown use filter to narrow.<br>\n");
+				printf("Only 24 of %u containers shown use filter to narrow.<br>\n",uMySQLNumRows);
 				break;
 			}
 		}
@@ -2559,7 +2566,7 @@ unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 
 
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
-				unsigned uTargetNode, unsigned uNewVeid)
+				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus)
 {
 	unsigned uCount=0;
 
@@ -2570,13 +2577,15 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 			",cJobData='"
 			"uTargetNode=%u;\n"
 			"uNewVeid=%u;\n"
-			"uCloneStop=%u;\n'"
+			"uCloneStop=%u;\n"
+			"uPrevStatus=%u;\n'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
 				uTargetNode,
 				uNewVeid,
 				uCloneStop,
+				uPrevStatus,
 				guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -2585,7 +2594,7 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 	unxsVZLog(uContainer,"tContainer","CloneContainer");
 	return(uCount);
 
-}//unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+}//unsigned CloneContainerJob()
 
 
 unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4)
@@ -2600,9 +2609,10 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 	unsigned uDatacenter=0;
 	unsigned uNewVeid=0;
 	unsigned uCount=0;
+	unsigned uStatus=0;
 
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uOSTemplate,uConfig,uNameserver,uSearchdomain,uDatacenter"
-			",uContainer FROM tContainer WHERE uNode=%u",uSourceNode);
+			",uContainer,uStatus FROM tContainer WHERE uNode=%u",uSourceNode);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2625,6 +2635,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 
 		sscanf(field[6],"%u",&uDatacenter);
 		sscanf(field[7],"%u",&uContainer);
+		sscanf(field[8],"%u",&uStatus);
 		if(!uDatacenter || !uContainer || !field[0][0] || !field[1][0])
 		{
 			mysql_free_result(res);
@@ -2661,7 +2672,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 			htmlPlainTextError(mysql_error(&gMysql));
 		uNewVeid=mysql_insert_id(&gMysql);
 
-		if(CloneContainerJob(uDatacenter,uSourceNode,uContainer,uTargetNode,uNewVeid))
+		if(CloneContainerJob(uDatacenter,uSourceNode,uContainer,uTargetNode,uNewVeid,uStatus))
 		{
 			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 					" WHERE uIP=%u AND uAvailable=1",uWizIPv4);

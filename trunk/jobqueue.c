@@ -1621,6 +1621,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	char cTargetNodeIPv4[256]={""};
 	unsigned uNewVeid=0;
 	unsigned uCloneStop=0;
+	unsigned uPrevStatus=uACTIVE;
 	unsigned uTargetNode=0;
 	char cSourceContainerIP[32]={""};
 	char cNewIP[32]={""};
@@ -1658,6 +1659,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		goto CommonExit;
 	}
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%u;",&uCloneStop);
+	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%*u;\nuPrevStatus=%u;",&uPrevStatus);
 
 	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.cHostname,tContainer.cLabel FROM tIP,tContainer"
 				" WHERE tIP.uIP=tContainer.uIPv4"
@@ -1916,18 +1918,18 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			tJobErrorUpdate(uJob,"error 6b");
 			goto CommonExit;
 		}
-		SetContainerStatus(uNewVeid,1);//Active
+		SetContainerStatus(uNewVeid,uACTIVE);
 	}
 	else
 	{
-		SetContainerStatus(uNewVeid,31);//Stopped
+		SetContainerStatus(uNewVeid,uSTOPPED);
 	}
 
 	//if(uDebug)
 	//	return;
 
 	//7-. 8-. Everything ok
-	SetContainerStatus(uContainer,1);//Active
+	SetContainerStatus(uContainer,uPrevStatus);
 	tJobDoneUpdate(uJob);
 
 	//9a-. local
@@ -2389,7 +2391,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//Get data about container
 	if(GetContainerNodeStatus(uContainer,&uStatus))
 	{
-		logfileLine("FailoverTo","GetContainerStatus()");
+		logfileLine("FailoverTo","GetContainerNodeStatus()");
 		tJobErrorUpdate(uJob,"GetContainerNodeStatus");
 
 		//rollback
