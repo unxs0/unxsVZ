@@ -502,12 +502,13 @@ void CleanUpCompanies(void);
 void EncryptPasswd(char *cPasswd);
 char *cGetRandomPassword(void);
 void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction);
-void ProcessCompanyTransaction(unsigned uClient,char *cAction);
+unsigned ProcessCompanyTransaction(unsigned uClient,char *cAction);
 void UpdateSerialNum(char *cZone,char *cuView);
 unsigned uCreateZone(char *cZone,unsigned uOwner);
 void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner);
 void ResetRR(char *cZone,unsigned uName,char *cParam1,unsigned uOwner);
 MYSQL_RES *ZoneQuery(char *cZone);
+void idnsAdminLog(char *cMsg);
 
 //Action counters
 unsigned uBlockAdd=0;
@@ -647,6 +648,26 @@ void funcRemovedBlocks(FILE *fp)
 }//void funcRemovedBlocks(FILE *fp)
 
 
+void idnsAdminLog(char *cMsg)
+{
+	char cQuery[1024]={""};
+	sprintf(cQuery,"INSERT INTO tLog SET cLabel='CommitTransaction()',uLogType=3,uPermLevel=%u"
+			"uLoginClient=%u,cLogin='%s',cHost='%s',cMessage='%s,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			"uCreatedBy=%u,uOwner=%u"
+			,guPermLevel
+			,guLoginClient
+			,gcLogin
+			,gcHost
+			,cMsg
+			,guLoginClient
+			,guOrg);
+	mysql_query(&gMysql,cQuery);
+
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+}//void idnsAdminLog(char *cMsg)
+
+
 void CommitTransaction(void)
 {
 	MYSQL_RES *res;
@@ -665,8 +686,13 @@ void CommitTransaction(void)
 	while((field=mysql_fetch_row(res)))
 	{		
 		sscanf(field[0],"%u",&uClient);
-		ProcessCompanyTransaction(uClient,"New");
-		uCompanyAdd++;
+		if(ProcessCompanyTransaction(uClient,"New"))
+			uCompanyAdd++;
+		else
+		{
+			sprintf(gcQuery,"Company %u not found in CSV file",uClient);
+			idnsAdminLog(gcQuery);
+		}
 	}
 
 	mysql_free_result(res);	
@@ -988,7 +1014,7 @@ CreateZoneLargeBlock:
 }//void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 
 
-void ProcessCompanyTransaction(unsigned uClient,char *cAction)
+unsigned ProcessCompanyTransaction(unsigned uClient,char *cAction)
 {
 	FILE *fp;
 	char cCompanyCSVLocation[100]={"/usr/local/idns/csv/companycode.csv"};
@@ -996,7 +1022,7 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 	unsigned uMatch=0;
 	char cLabel[100]={""};
 
-	if(!strcmp(cAction,"None")) return;
+	if(!strcmp(cAction,"None")) return(1);
 
 	//Default 'New'
 	
@@ -1059,8 +1085,9 @@ void ProcessCompanyTransaction(unsigned uClient,char *cAction)
 	}
 	
 	//Do something based on uMatch?
+	return(uMatch);
 
-}//void ProcessCompanyTransaction(unsigned uClient)
+}//unsigned ProcessCompanyTransaction(unsigned uClient)
 
 
 char *cGetRandomPassword(void)
