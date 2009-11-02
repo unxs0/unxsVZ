@@ -655,7 +655,7 @@ void htmlNodeHealth(unsigned uNode)
 
 		if(field[0]==NULL)
 		{
-			printf("No data available, no containers?<br>\n");
+			printf("No data available, no active containers?<br>\n");
 			goto NextSection;
 		}
 
