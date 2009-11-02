@@ -228,7 +228,7 @@ void funcIPAuthReport(FILE *fp)
 void CreateTransactionTable();
 unsigned uGetBlockStatus(char *cBlock,unsigned uClient);
 unsigned uGetOwnerStatus(unsigned uClient);
-
+unsigned uClientCSVCheck(unsigned uClient);
 
 void CreateTransactionTable()
 {
@@ -329,6 +329,11 @@ void RIPEImport(void)
 		}
 
 		//Common processing
+		if(!uClientCSVCheck(uClient))
+		{
+			//Add record to rejects table
+			continue;
+		}
 		uCidr=(unsigned)(32-log2(uSize));
 
 		/*printf("cIPBlockStart='%s' cIPBlockEnd='%s' uSize=%u uDate=%u uClient=%u uOther=%u uCidr=%u\n",
@@ -455,6 +460,34 @@ unsigned uGetOwnerStatus(unsigned uClient)
 	return(0);
 
 }//unsigned uGetOwnerStatus(unsigned uClient)
+
+
+unsigned uClientCSVCheck(unsigned uClient)
+{
+	FILE *fp;
+	char cCompanyCSVLocation[100]={"/usr/local/idns/csv/companycode.csv"};
+	unsigned uFileClient=0;
+	char cLabel[100]={""};
+
+	//Open CSV file at fixed location
+	fp=fopen(cCompanyCSVLocation,"r");
+	if(fp==NULL)
+		htmlPlainTextError("Could not open CSV file for companies");
+	
+	//Search for uClient at CSV file
+	while(fgets(gcQuery,2048,fp)!=NULL)
+	{
+		sscanf(gcQuery,"%u,%s",&uFileClient,cLabel);
+		if(uClient==uFileClient)
+		{
+			fclose(fp);
+			return(1);
+		}
+	}
+	fclose(fp);
+	return(0);
+
+}//unsigned uClientCSVCheck(unsigned uClient)
 
 //
 //End data processing functions
