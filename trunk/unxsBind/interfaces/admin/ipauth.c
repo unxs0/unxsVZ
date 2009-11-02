@@ -15,6 +15,9 @@ static char *cMassList={""};
 static char cImportMsg[32762]={""}; //A 32k buffer will be enough, if not, truncate the data.
 static unsigned uFormat=0;
 
+static unsigned uProcessed=0;
+static unsigned uIgnored=0;
+
 char *ParseTextAreaLines(char *cTextArea);//bulkop.c
 void RIPEImport(void);
 
@@ -246,8 +249,6 @@ void RIPEImport(void)
 {
 	char cLine[512]={"ERROR"};
 	unsigned uLineNumber=0;
-	unsigned uProcessed=0;
-	unsigned uIgnored=0;
 	char cIPBlock[100]={""};
 	char cIPBlockStart[64]={""};
 	char cIPBlockEnd[64]={""};
@@ -488,6 +489,9 @@ void funcReportActions(FILE *fp)
 	MYSQL_RES *res;
 	unsigned uWillDeleteCompanies=0;
 	unsigned uWillDeleteBlocks=0;
+	unsigned uWillCreateBlocks=0;
+	unsigned uWillModBlocks=0;
+	unsigned uWillCreateCompanies=0;
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
@@ -513,8 +517,44 @@ void funcReportActions(FILE *fp)
 	
 	mysql_free_result(res);
 	
+	sprintf(gcQuery,"SELECT uTransaction FROM tTransaction WHERE cBlockAction='New'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	uWillCreateBlocks=mysql_num_rows(res);
+	
+	mysql_free_result(res);
+	
+	sprintf(gcQuery,"SELECT uTransaction FROM tTransaction WHERE cBlockAction='Modify'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	uWillModBlocks=mysql_num_rows(res);
+	
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uTransaction FROM tTransaction WHERE cOwnerAction='New'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	uWillCreateCompanies=mysql_num_rows(res);
+	
+	mysql_free_result(res);
 	fprintf(fp,"After import, %u companies and their contacts will be removed from the database.<br>\n",uWillDeleteCompanies);
 	fprintf(fp,"These companies own %u blocks that will also be removed.<br>\n",uWillDeleteBlocks);
+	fprintf(fp,"Also, %u companies and a default contact will be added to the database. %u blocks will be created "
+			"and %u blocks ownership will be updated.<br>\n",
+			uWillCreateCompanies
+			,uWillCreateBlocks
+			,uWillModBlocks
+			);
+	fprintf(fp,"%u lines were processed and %u ignored.<br>\n",uProcessed,uIgnored);
 
 }//void funcReportActions(FILE *fp)
 
