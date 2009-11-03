@@ -58,7 +58,7 @@ int NodeAutonomics(void)
 		{
 			//TODO define 2 type node
 			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
-				" cName='WarningEmail' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+				" cName='cWarningEmail' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
 			mysqlQuery_Err_Exit;
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -401,92 +401,43 @@ unsigned uHDUtilConstraints(void)
 
 unsigned uNodeMemConstraints(void)
 {
-        MYSQL_RES *res;
-        MYSQL_ROW field;
 	FILE *fp;
-	char cLine[256];
-	char cContainerTag[64];
+	char cLine[1024];
 	char cMessage[100];
-	register unsigned uStart=0;
-	unsigned long luHeld,luMaxheld,luBarrier,luLimit,luFailcnt;
+	unsigned long luMaxheld;
 	char cResource[64];
-	unsigned uContainer=0;
+	//unsigned uCount=1;
 	float fPrivPagesRatio;
 	float fAllNodeContainerMaxheld=0.0;
 
 	if((fp=fopen("/proc/user_beancounters","r"))==NULL)
 		return(8);
+	//skip first line
+	fgets(cLine,1024,fp);
 
-	//For each node container
-	//Main loop. TODO use defines for tStatus.uStatus values.
-	//For efficiency do not search file and parse for containers that should not
-	//be running (according to unxsVZ that is ;)).
-	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u"
-				" AND uDatacenter=%u"
-				" AND uStatus!=11"//Initial Setup
-				" AND uStatus!=6"//Awating Activation
-				" AND uStatus!=31"//Stopped
-						,guNode,guDatacenter);
-	mysqlQuery_Err_Exit;
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
+	while(fgets(cLine,1024,fp)!=NULL)
 	{
+		cResource[0]=0;
+		luMaxheld=0;
 
-		sscanf(field[0],"%u",&uContainer);
-		sprintf(cContainerTag,"%u:  kmemsize",uContainer);
-
-		rewind(fp);//for each container start from beginning this seems like
-			//it can be optimized.
-		while(fgets(cLine,1024,fp)!=NULL)
+		sscanf(cLine,"%s %*u %lu %*u %*u %*u",cResource,&luMaxheld);
+		if(!strcmp("dummy",cResource))
+			continue;
+		if(!strcmp("0:",cResource))
+			break;//node entry is always last (we hope so ;)
+		if(!strcmp(cResource,"privvmpages"))
 		{
-			cResource[0]=0;
-			luHeld=0;
-			luMaxheld=0;
-			luBarrier=0;
-			luLimit=0;
-			luFailcnt=0;
+			//Summation of all container privvmpages max held
+			//for this node
+			fAllNodeContainerMaxheld+=luMaxheld;
 
-			//The first line of a container section has a diff format
-			if(!uStart)
-			{
-				if(strstr(cLine,cContainerTag))
-					uStart=1;
-			}
-			else
-			{
-				if(strchr(cLine,':')) break;
-			}
-	
-			if(uStart==1)
-			{
-				uStart++;
-			}
-			else if(uStart)
-			{
-				sscanf(cLine,"%s %*u %lu %*u %*u %*u",
-							cResource,&luMaxheld);
-				if(!strcmp("dummy",cResource))
-					continue;
-				if(!strcmp(cResource,"privvmpages"))
-				{
-					//Summation of all container privvmpages max held
-					//for this node
-					fAllNodeContainerMaxheld=+luMaxheld;
-
-					//debug only
-					//sprintf(gcQuery,"uContainer=%u fAllNodeContainerMaxheld=%2.2f",
-					//				uContainer,fAllNodeContainerMaxheld);
-					//logfileLine("uNodeMemConstraints",gcQuery);
-
-					break;//move on to next container
-				}
-			}
-		}//file line while
-	}//SQL while
-	mysql_free_result(res);
+			//debug only
+			//sprintf(gcQuery,"uCount=%u luMaxheld=%lu fAllNodeContainerMaxheld=%2.2f",
+			//				uCount++,luMaxheld,fAllNodeContainerMaxheld);
+			//logfileLine("uNodeMemConstraints",gcQuery);
+		}
+	}//file line while
 	fclose(fp);
-
-
 
 	//
 	//Start use data obtained to take node based action section

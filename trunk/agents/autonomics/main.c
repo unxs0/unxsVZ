@@ -95,6 +95,10 @@ int main(int iArgc, char *cArgv[])
 
 	gpidMain=getpid();
 	gethostname(gcHostname,99);
+	//FQDN vs short name of 2nd NIC mess
+	char *cp;
+	if((cp=strchr(gcHostname,'.')))
+		*cp=0;
 	sprintf(gcLine,"%s started. gcHostname=%s, guDryrun=%u, pid=%u",
 			cArgv[0],gcHostname,guDryrun,gpidMain);
 	logfileLine("main",gcLine);
