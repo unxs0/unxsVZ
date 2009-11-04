@@ -15,6 +15,11 @@ NOTES
 
 #include "autonomics.h"
 
+//file scoped data
+static unsigned guRecentNodeRamUtilActedOn=0;
+static unsigned guRecentNodeHDUtilActedOn=0;
+static unsigned guRecentNodePrivPagesActedOn=0;
+
 //toc
 int NodeAutonomics(void);
 unsigned uNodeMemConstraints(void);
@@ -52,6 +57,9 @@ int NodeAutonomics(void)
 
 	if(gsAutoState.cNodeAutonomics[0]=='Y')
 	{
+		static unsigned uWarnCounter=0;
+		static unsigned uNodeWarnEmailRepeat=0;
+
 
 		//Common section
 		if(!gsAutoState.cNodeWarnEmail[0])
@@ -65,6 +73,23 @@ int NodeAutonomics(void)
 			{
 				sprintf(gsAutoState.cNodeWarnEmail,"%.99s",field[0]);
 				sprintf(gcQuery,"cNodeWarnEmail=%s",gsAutoState.cNodeWarnEmail);
+				logfileLine("NodeAutonomics",gcQuery);
+			}
+			mysql_free_result(res);
+		}
+
+		if(!gsAutoState.cuNodeWarnEmailRepeat[0])
+		{
+			//TODO define 2 type node
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE"
+				" cName='cuWarningEmailRepeat' AND tProperty.uKey=%u AND tProperty.uType=2",guNode);
+			mysqlQuery_Err_Exit;
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(gsAutoState.cuNodeWarnEmailRepeat,"%.15s",field[0]);
+				sscanf(gsAutoState.cuNodeWarnEmailRepeat,"%u",&uNodeWarnEmailRepeat);
+				sprintf(gcQuery,"cuNodeWarnEmailRepeat=%s",gsAutoState.cuNodeWarnEmailRepeat);
 				logfileLine("NodeAutonomics",gcQuery);
 			}
 			mysql_free_result(res);
@@ -101,8 +126,22 @@ int NodeAutonomics(void)
 			}
 			mysql_free_result(res);
 		}
-	
-	
+
+		//Reset warn email counter
+		if(uNodeWarnEmailRepeat)
+		{
+			//7 magic test constant ;) See main.c sleep(7)
+			if(uWarnCounter++>(uNodeWarnEmailRepeat/7))
+			{
+				gsAutoState.uNodePrivPagesWarned=0;			
+				gsAutoState.uNodeRamUtilWarned=0;			
+				gsAutoState.uNodeHDUtilWarned=0;
+				guRecentNodeRamUtilActedOn=0;
+				guRecentNodeHDUtilActedOn=0;
+				guRecentNodePrivPagesActedOn=0;
+				uWarnCounter=0;
+			}
+		}
 	
 		//PrivMem section
 		if(!gsAutoState.uNodePrivPagesWarnRatio)
@@ -270,23 +309,25 @@ unsigned uRamUtilConstraints(void)
 			sprintf(gcQuery,"fNodeRamUtilActRatio=%2.2f",fNodeRAMUtil);
 			logfileLine("uNodeMemConstraints",gcQuery);
 
-			//Send warning email via a forked process
-			if(gsAutoState.cNodeWarnEmail[0])
-				SendEmail(gsAutoState.cNodeWarnEmail,"NodeRamUtilAct");
 			//Create a system message log entry
 			sprintf(cMessage,"fNodeRamUtilActRatio=%2.2f node=%u datacenter=%u",
 					fNodeRAMUtil,guNode,guDatacenter);
+			//Send warning email via a forked process
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodeRamUtilAct",cMessage);
 			Log(cMessage);
 
 			gsAutoState.uNodeRamUtilActedOn=1;
+			guRecentNodeRamUtilActedOn=1;
 		}
 	}
 	else if(gsAutoState.uNodeRamUtilActRatio)
 	{
+		//Conditions back to normal reset
 		gsAutoState.uNodeRamUtilActedOn=0;
 	}
 	//Warn if not acted on already
-	if(!gsAutoState.uNodeRamUtilActedOn && gsAutoState.uNodeRamUtilWarnRatio &&
+	if(!guRecentNodeRamUtilActedOn && gsAutoState.uNodeRamUtilWarnRatio &&
 		fNodeRAMUtil>=(float)gsAutoState.uNodeRamUtilWarnRatio)
 	{
 
@@ -295,20 +336,22 @@ unsigned uRamUtilConstraints(void)
 			sprintf(gcQuery,"NodeRamUtilWarnRatio=%2.2f",fNodeRAMUtil);
 			logfileLine("uNodeMemConstraints",gcQuery);
 
-			//Send warning email via a forked process
-			if(gsAutoState.cNodeWarnEmail[0])
-				SendEmail(gsAutoState.cNodeWarnEmail,"NodeRamUtilWarn");
 			//Create a system message log entry
 			sprintf(cMessage,"fNodeRamUtilWarnRatio=%2.2f node=%u datacenter=%u",
 					fNodeRAMUtil,guNode,guDatacenter);
+			//Send warning email via a forked process
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodeRamUtilWarn",cMessage);
 			Log(cMessage);
 			gsAutoState.uNodeRamUtilWarned=1;
 		}
 	}
-	else if(!gsAutoState.uNodeRamUtilActedOn && gsAutoState.uNodeRamUtilWarnRatio)
+	else if(!guRecentNodeRamUtilActedOn && gsAutoState.uNodeRamUtilWarnRatio)
 	{
+		//Conditions back to normal reset
 		gsAutoState.uNodeRamUtilWarned=0;
 	}
+
 
 	return(0);
 
@@ -348,48 +391,50 @@ unsigned uHDUtilConstraints(void)
 		if(!gsAutoState.uNodeHDUtilActedOn)
 		{
 			sprintf(gcQuery,"fNodeHDUtilActRatio=%2.2f",fHDUtilRatio);
-			logfileLine("uNodeMemConstraints",gcQuery);
+			logfileLine("uHDUtilConstraints",gcQuery);
 
-			//Send warning email via a forked process
-			if(gsAutoState.cNodeWarnEmail[0])
-				SendEmail(gsAutoState.cNodeWarnEmail,"NodeHDUtilAct");
 			//Create a system message log entry
 			sprintf(cMessage,"fNodeHDUtilActRatio=%2.2f node=%u datacenter=%u",
 					fHDUtilRatio,guNode,guDatacenter);
+			//Send warning email via a forked process
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodeHDUtilAct",cMessage);
 			Log(cMessage);
 
 			gsAutoState.uNodeHDUtilActedOn=1;
+			guRecentNodeHDUtilActedOn=1;
 		}
 	}
 	else if(gsAutoState.uNodeHDUtilActRatio)
 	{
+		//Conditions back to normal reset
 		gsAutoState.uNodeHDUtilActedOn=0;
 	}
 	//Warn if not acted on already
-	if(!gsAutoState.uNodeHDUtilActedOn && gsAutoState.uNodeHDUtilWarnRatio &&
+	if(!guRecentNodeHDUtilActedOn && gsAutoState.uNodeHDUtilWarnRatio &&
 		fHDUtilRatio>=(float)gsAutoState.uNodeHDUtilWarnRatio)
 	{
 
 		if(!gsAutoState.uNodeHDUtilWarned)
 		{
 			sprintf(gcQuery,"NodeHDUtilWarnRatio=%2.2f",fHDUtilRatio);
-			logfileLine("uNodeMemConstraints",gcQuery);
+			logfileLine("uHDUtilConstraints",gcQuery);
 
-			//Send warning email via a forked process
-			if(gsAutoState.cNodeWarnEmail[0])
-				SendEmail(gsAutoState.cNodeWarnEmail,"NodeHDUtilWarn");
 			//Create a system message log entry
 			sprintf(cMessage,"fNodeHDUtilWarnRatio=%2.2f node=%u datacenter=%u",
 					fHDUtilRatio,guNode,guDatacenter);
+			//Send warning email via a forked process
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodeHDUtilWarn",cMessage);
 			Log(cMessage);
 			gsAutoState.uNodeHDUtilWarned=1;
 		}
 	}
-	else if(!gsAutoState.uNodeHDUtilActedOn && gsAutoState.uNodeHDUtilWarnRatio)
+	else if(!guRecentNodeHDUtilActedOn && gsAutoState.uNodeHDUtilWarnRatio)
 	{
+		//Conditions back to normal reset
 		gsAutoState.uNodeHDUtilWarned=0;
 	}
-	//End use privvmpages ratio action section
 
 	//End use data take node based action section
 	//
@@ -463,23 +508,25 @@ unsigned uNodeMemConstraints(void)
 			sprintf(gcQuery,"fNodePrivPagesActRatio=%2.2f",fPrivPagesRatio);
 			logfileLine("uNodeMemConstraints",gcQuery);
 
-			//Send warning email via a forked process
-			if(gsAutoState.cNodeWarnEmail[0])
-				SendEmail(gsAutoState.cNodeWarnEmail,"NodePrivPagesAct");
 			//Create a system message log entry
 			sprintf(cMessage,"fNodePrivPagesActRatio=%2.2f node=%u datacenter=%u",
 					fPrivPagesRatio,guNode,guDatacenter);
+			//Send warning email via a forked process
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodePrivPagesAct",cMessage);
 			Log(cMessage);
 
 			gsAutoState.uNodePrivPagesActedOn=1;
+			guRecentNodePrivPagesActedOn=1;
 		}
 	}
 	else if(gsAutoState.uNodePrivPagesActRatio)
 	{
+		//Conditions changed reset
 		gsAutoState.uNodePrivPagesActedOn=0;
 	}
 	//Warn if not acted on already
-	if(!gsAutoState.uNodePrivPagesActedOn && gsAutoState.uNodePrivPagesWarnRatio &&
+	if(!guRecentNodePrivPagesActedOn && gsAutoState.uNodePrivPagesWarnRatio &&
 		fPrivPagesRatio>=(float)gsAutoState.uNodePrivPagesWarnRatio)
 	{
 
@@ -488,21 +535,21 @@ unsigned uNodeMemConstraints(void)
 			sprintf(gcQuery,"NodePrivPagesWarnRatio=%2.2f",fPrivPagesRatio);
 			logfileLine("uNodeMemConstraints",gcQuery);
 
-			//Send warning email via a forked process
-			if(gsAutoState.cNodeWarnEmail[0])
-				SendEmail(gsAutoState.cNodeWarnEmail,"NodePrivPagesWarn");
 			//Create a system message log entry
 			sprintf(cMessage,"fNodePrivPagesWarnRatio=%2.2f node=%u datacenter=%u",
 					fPrivPagesRatio,guNode,guDatacenter);
+			//Send warning email via a forked process
+			if(gsAutoState.cNodeWarnEmail[0])
+				SendEmail(gsAutoState.cNodeWarnEmail,"NodePrivPagesWarn",cMessage);
 			Log(cMessage);
 			gsAutoState.uNodePrivPagesWarned=1;
 		}
 	}
-	else if(!gsAutoState.uNodePrivPagesActedOn && gsAutoState.uNodePrivPagesWarnRatio)
+	else if(!guRecentNodePrivPagesActedOn && gsAutoState.uNodePrivPagesWarnRatio)
 	{
+		//Conditions changed reset
 		gsAutoState.uNodePrivPagesWarned=0;
 	}
-	//End use privvmpages ratio action section
 
 	//End use data take node based action section
 	//
@@ -526,13 +573,13 @@ void Log(char *cMessage)
 
 
 //fork the sending
-void SendEmail(char *cEmail, char *cSubjectPrefix)
+void SendEmail(char *cEmail, char *cSubjectPrefix, char *cMessage)
 {
 	char cSystemCall[256]={""};
 	char cLine[256];
 
-	sprintf(cSystemCall,"/bin/true");
-	sprintf(cLine,"cEmail:%s SubjectPrefix:%s",cEmail,cSubjectPrefix);
+	sprintf(cSystemCall,"echo \"%.64s\" | /bin/mail -s \"%.64s\" %.99s",cMessage,cSubjectPrefix,cEmail);
+	sprintf(cLine,"cEmail:%s cSubjectPrefix:%s",cEmail,cSubjectPrefix);
 	if(guDryrun)
 		logfileLine("SendEmail Attempt",cLine);
 

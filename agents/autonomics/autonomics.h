@@ -59,6 +59,8 @@ struct structAutonomicsState
 
 	long unsigned luNodeInstalledRam;
 	long unsigned luNodeInstalledDiskSpace;
+
+	char cuNodeWarnEmailRepeat[16];
 };
 
 extern struct structAutonomicsState gsAutoState;
@@ -75,6 +77,6 @@ int DatacenterAutonomics(void);
 int NodeAutonomics(void);
 unsigned iNodeMemConstraints(void);
 void Log(char *cMessage);
-void SendEmail(char *cEmail, char *cSubjectPrefix);
+void SendEmail(char *cEmail, char *cSubjectPrefix, char *cMessage);
 //container.c
 int ContainerAutonomics(void);
