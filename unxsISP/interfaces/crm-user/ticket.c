@@ -763,6 +763,7 @@ void fpEmailTicketHeader(FILE *fp)
 	char cFrom[256]={"root"};
 	char cEmailSubject[256]={""};
 	char cEmail[100]={""};
+	char cReporterEmail[256]={""};
 	char cuTicket[16]={""};
 
 	cSubject[255]=0;
@@ -773,7 +774,10 @@ void fpEmailTicketHeader(FILE *fp)
 
 	sprintf(cEmailSubject,"#%u %s",uTicket,RecordData.cSubject);
 
+	sprintf(cReporterEmail,"%.255s",ForeignKey("tClient","cEmail",uCreatedBy));
+
 	fprintf(fp,"To: %s\n",cEmail);
+	fprintf(fp,"Cc: %s\n",cReporterEmail);
 	fprintf(fp,"From: %s\n",cFrom);
 	fprintf(fp, "Reply-to: %s\n",cFrom);
 	fprintf(fp,"Subject: %s\n",cEmailSubject);
