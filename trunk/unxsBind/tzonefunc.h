@@ -3650,6 +3650,9 @@ unsigned OnLineZoneCheck(unsigned uCalledFrom)
 	char cZoneFile[100]={""};
 
 	//PrepareTestData(uResource,cName,cParam1,cParam2,cParam3,cParam4,cRRType,cComment,uRRTTL,uCalledFrom);
+	
+	//Test if named-checkzone can be run, otherwise return 0
+	if(access("/usr/sbin/named-checkzone",X_OK)==-1) return(0); //Ticket #100
 
 	sprintf(cZoneFile,"/tmp/%s",cZone);
 
