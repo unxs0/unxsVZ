@@ -481,7 +481,7 @@ void funcTicketNavList(FILE *fp)
 		{
 			sscanf(field[0],"%u",&uTicket);
 			LoadTicket();
-			fprintf(fp,"<a href=ispHelp.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a> %s (%s)<br>\n",
+			fprintf(fp,"<a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a> %s (%s)<br>\n",
 				field[0]
 				,field[0]
 				,field[1]
@@ -499,7 +499,7 @@ void funcTicketNavList(FILE *fp)
 			"further refine your search.<br>\n");
 			break;
 		}
-		fprintf(fp,"<a href=ispHelp.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a> %s (%s)<br>\n",
+		fprintf(fp,"<a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a> %s (%s)<br>\n",
 			field[0]
 			,field[0]
 			,field[1]
@@ -765,8 +765,8 @@ void EmailTicketChanges(void)
 		{
 			//cText changed
 			fprintf(fp,"Ticket description updated\n");
-			fprintf(fp,"Old description:\n'%s'\n",RecordData.cText);
-			fprintf(fp,"New description:\n'%s'\n",cText);
+			fprintf(fp,"Old description:\n%s\n\n",RecordData.cText);
+			fprintf(fp,"New description:\n%s\n",cText);
 			
 		}
 		if(strcmp(cSubject,RecordData.cSubject))
@@ -998,6 +998,7 @@ void fpEmailTicketHeader(FILE *fp)
 	structTicket RecordData;
 	char cFrom[256]={"root"};
 	char cEmailSubject[256]={""};
+	char cReporterEmail[256]={""};
 	char cEmail[100]={""};
 	char cuTicket[16]={""};
 
@@ -1008,8 +1009,11 @@ void fpEmailTicketHeader(FILE *fp)
 	GetConfiguration("cReportTicketFrom",cFrom);
 
 	sprintf(cEmailSubject,"#%u %s",uTicket,RecordData.cSubject);
+	
+	sprintf(cReporterEmail,"%.255s",ForeignKey("tClient","cEmail",uCreatedBy));
 
 	fprintf(fp,"To: %s\n",cEmail);
+	fprintf(fp,"Cc: %s\n",cReporterEmail);
 	fprintf(fp,"From: %s\n",cFrom);
 	fprintf(fp, "Reply-to: %s\n",cFrom);
 	fprintf(fp,"Subject: %s\n",cEmailSubject);
