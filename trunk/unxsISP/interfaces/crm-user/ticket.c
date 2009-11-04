@@ -774,7 +774,7 @@ void fpEmailTicketHeader(FILE *fp)
 
 	sprintf(cEmailSubject,"#%u %s",uTicket,RecordData.cSubject);
 
-	sprintf(cReporterEmail,"%.255s",ForeignKey("tClient","cEmail",uCreatedBy));
+	sprintf(cReporterEmail,"%.255s",ForeignKey("tClient","cEmail",RecordData.uCreatedBy));
 
 	fprintf(fp,"To: %s\n",cEmail);
 	fprintf(fp,"Cc: %s\n",cReporterEmail);
@@ -793,17 +793,17 @@ void fpEmailTicketHeader(FILE *fp)
 
 	char cCreatedBy[100]={""};
 	template.cpName[2]="cCreatedBy";
-	sprintf(cCreatedBy,"%.99s",ForeignKey("tClient","cLabel",uCreatedBy));
+	sprintf(cCreatedBy,"%.99s",ForeignKey("tClient","cLabel",RecordData.uCreatedBy));
 	template.cpValue[2]=cCreatedBy;
 
 	char cAssignedTo[100]={""};
 	template.cpName[3]="cAssignedTo";
-	sprintf(cAssignedTo,"%.99s",ForeignKey("tClient","cLabel",uTicketOwner));
+	sprintf(cAssignedTo,"%.99s",ForeignKey("tClient","cLabel",RecordData.uTicketOwner));
 	template.cpValue[3]=cAssignedTo;
 
 	char cStatus[33]={""};
 	template.cpName[4]="cStatus";
-	sprintf(cStatus,"%.32s",ForeignKey("tTicketStatus","cLabel",uTicketStatus));
+	sprintf(cStatus,"%.32s",ForeignKey("tTicketStatus","cLabel",RecordData.uTicketStatus));
 	template.cpValue[4]=cStatus;
 
 	template.cpName[5]="cKeywords";
@@ -811,7 +811,7 @@ void fpEmailTicketHeader(FILE *fp)
 
 	template.cpName[6]="cScheduleDate";
 	if(uScheduleDate)
-		template.cpValue[6]=cFromUnixTime(uScheduleDate);
+		template.cpValue[6]=cFromUnixTime(RecordData.uScheduleDate);
 	else
 		template.cpValue[6]="---";
 
