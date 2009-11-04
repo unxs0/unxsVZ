@@ -128,6 +128,8 @@ void sighandlerLeave(int iSig)
 {
 	sprintf(gcLine,"interrupted by signal:%d",iSig);
 	logfileLine("sighandlerLeave",gcLine);
+	if(gsAutoState.cNodeWarnEmail[0])
+		SendEmail(gsAutoState.cNodeWarnEmail,"Fatal Error sighandlerLeave()",gcLine);
 
 	fclose(gLfp);
 	mysql_close(&gMysql);
@@ -233,6 +235,8 @@ void InitAutonomicsState(struct structAutonomicsState *gsAutoState)
 	gsAutoState->uNodeHDUtilActedOn=0;
 	gsAutoState->luNodeInstalledRam=0;
 	gsAutoState->luNodeInstalledDiskSpace=0;
+
+	gsAutoState->cuNodeWarnEmailRepeat[0]=0;
 
 }//void InitAutonomicsState()
 
