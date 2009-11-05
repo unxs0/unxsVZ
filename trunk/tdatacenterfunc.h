@@ -529,7 +529,7 @@ void tDatacenterHealth(void)
         mysql_free_result(res);
 
 	//3-. Last 5 min Top talkers
-	sprintf(gcQuery,"SELECT SUM(cValue),uKey,'InOutBytes',cHostname FROM tProperty,tContainer WHERE"
+	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/300000),2),uKey,cHostname FROM tProperty,tContainer WHERE"
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
 			" (cName='Venet0.luInDelta' OR cName='Venet0.luOutDelta')"
 			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
@@ -548,12 +548,13 @@ void tDatacenterHealth(void)
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
-				"%s %s=%s</a><br>\n",field[1],field[3],field[2],field[0]);
+				"%s %sKB/s</a><br>\n",field[1],field[2],field[0]);
 	}
         mysql_free_result(res);
 
 	//4-. Top talkers
-	sprintf(gcQuery,"SELECT SUM(cValue),uKey,'InOutBytes',cHostname FROM tProperty,tContainer WHERE"
+	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000000000),2),uKey,cHostname FROM"
+			" tProperty,tContainer WHERE"
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
 			" (cName='Venet0.luIn' OR cName='Venet0.luOut')"
 			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
@@ -572,11 +573,9 @@ void tDatacenterHealth(void)
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
-				"%s %s=%s</a><br>\n",field[1],field[3],field[2],field[0]);
+				"%s %sGB</a><br>\n",field[1],field[2],field[0]);
 	}
         mysql_free_result(res);
-
-
 
 }//void tDatacenterHealth(void)
 
