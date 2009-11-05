@@ -1039,8 +1039,8 @@ void ProcessSingleTraffic(unsigned uContainer)
 {
 	char cCommand[128];
 	char cLine[512];
-	unsigned long luIn= -1;
-	unsigned long luOut= -1;
+	unsigned long luIn=0;
+	unsigned long luOut=0;
 	FILE *fp;
 
 	if(!uContainer)
@@ -1061,31 +1061,25 @@ void ProcessSingleTraffic(unsigned uContainer)
 //Current format
 //        1          2       3    4    5     6          7         8  9          10      11   12   13    14      15         16
 //venet0: 1053860    5317    0    0    0     0          0         0  9780415    7987    0    0    0     0       0          0
-			sscanf(cLine,
+			if(sscanf(cLine,
 				"venet0: %lu %*u %*u %*u %*u %*u %*u %*u %lu %*u %*u %*u %*u %*u %*u %*u",
-					&luIn,&luOut);
+					&luIn,&luOut)!=2)
+			{
+				logfileLine("ProcessSingleTraffic","sscanf failed");
+				//debug only
+				printf("sscanf failed\n");
+				return;
+			}
 
-			//debug only
-			//printf("luIn=%lu luOut=%lu\n",luIn,luOut);
 		}
 		else
 		{
 			logfileLine("ProcessSingleTraffic","No lines from popen");
-			exit(1);
+			return;
 		}
 
-		if(luIn== -1)
-		{
-			logfileLine("ProcessSingleTraffic","Unexpected luIn== -1");
-			exit(1);
-		}
 
-		if(luOut== -1)
-		{
-			logfileLine("ProcessSingleTraffic","Unexpected luOut== -1");
-			exit(1);
-		}
-
+		//1-. IN Bytes
 		sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='Venet0.luInDelta'"
 							" AND uKey=%u AND uType=3",uContainer);
 		mysql_query(&gMysql,gcQuery);
@@ -1097,12 +1091,57 @@ void ProcessSingleTraffic(unsigned uContainer)
 	       	res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			sprintf(gcQuery,"UPDATE tProperty SET cValue=CONVERT((%lu-cValue),UNSIGNED),"
+			long unsigned luNewInDelta=0;
+			long unsigned luPrevIn=0;
+			unsigned uProperty=0;
+        		MYSQL_RES *res2;
+        		MYSQL_ROW field2;
+
+			//New delta is based on current traffic counter and previous Venet0.luOut counter
+			sprintf(gcQuery,"SELECT cValue,uProperty FROM tProperty WHERE cName='Venet0.luIn'"
+							" AND uKey=%u AND uType=3",uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				exit(2);
+			}
+			res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+			{
+				sscanf(field2[0],"%lu",&luPrevIn);
+				sscanf(field2[1],"%u",&uProperty);
+			}
+			mysql_free_result(res2);
+
+			if(luIn>luPrevIn)
+				luNewInDelta=luIn-luPrevIn;
+			else
+				luNewInDelta=0;
+
+			//debug only
+			printf("luNewInDelta=%lu = luIn=%lu - luPrevIn=%lu\n",luNewInDelta,luIn,luPrevIn);
+
+			//Update delta
+			sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
 					"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
 					" uProperty=%s"
-							,luIn
+							,luNewInDelta
 							,guContainerOwner
 							,field[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				exit(2);
+			}
+			//Update traffic counter
+			sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
+					"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+					" uProperty=%u"
+							,luIn
+							,guContainerOwner
+							,uProperty);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -1128,8 +1167,136 @@ void ProcessSingleTraffic(unsigned uContainer)
 				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
 				exit(2);
 			}
+
+			//First sample
+			sprintf(gcQuery,"INSERT INTO tProperty SET cValue=%lu"
+					",cName='Venet0.luIn'"
+					",uType=3"
+					",uKey=%u"
+					",uOwner=%u"
+					",uCreatedBy=1"
+					",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						,luIn
+						,uContainer
+						,guContainerOwner);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				exit(2);
+			}
 		}
 		mysql_free_result(res);
+
+		//2-. OUT Bytes
+		sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='Venet0.luOutDelta'"
+							" AND uKey=%u AND uType=3",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+			exit(2);
+		}
+	       	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			long unsigned luNewOutDelta=0;
+			long unsigned luPrevOut=0;
+			unsigned uProperty=0;
+        		MYSQL_RES *res2;
+        		MYSQL_ROW field2;
+
+			//New delta is based on current traffic counter and previous Venet0.luOut counter
+			sprintf(gcQuery,"SELECT cValue,uProperty FROM tProperty WHERE cName='Venet0.luOut'"
+							" AND uKey=%u AND uType=3",uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				exit(2);
+			}
+			res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+			{
+				sscanf(field2[0],"%lu",&luPrevOut);
+				sscanf(field2[1],"%u",&uProperty);
+			}
+			mysql_free_result(res2);
+
+			if(luOut>luPrevOut)
+				luNewOutDelta=luOut-luPrevOut;
+			else
+				luNewOutDelta=0;
+
+			//debug only
+			printf("luNewOutDelta=%lu = luOut=%lu  - luPrevOut=%lu\n",luNewOutDelta,luOut,luPrevOut);
+
+			//Update delta
+			sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
+					"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+					" uProperty=%s"
+							,luNewOutDelta
+							,guContainerOwner
+							,field[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				exit(2);
+			}
+			//Update traffic counter
+			sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
+					"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+					" uProperty=%u"
+							,luOut
+							,guContainerOwner
+							,uProperty);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				exit(2);
+			}
+		}
+		else
+		{
+			//First sample delta is 0
+			sprintf(gcQuery,"INSERT INTO tProperty SET cValue=0"
+					",cName='Venet0.luOutDelta'"
+					",uType=3"
+					",uKey=%u"
+					",uOwner=%u"
+					",uCreatedBy=1"
+					",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						,uContainer
+						,guContainerOwner);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				exit(2);
+			}
+
+			//First sample
+			sprintf(gcQuery,"INSERT INTO tProperty SET cValue=%lu"
+					",cName='Venet0.luOut'"
+					",uType=3"
+					",uKey=%u"
+					",uOwner=%u"
+					",uCreatedBy=1"
+					",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						,luOut
+						,uContainer
+						,guContainerOwner);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				exit(2);
+			}
+		}
+		mysql_free_result(res);
+
 		pclose(fp);
 	}
 	else
