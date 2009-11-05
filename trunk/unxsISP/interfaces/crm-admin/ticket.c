@@ -438,16 +438,18 @@ void funcTicketNavList(FILE *fp)
 		sscanf(cSearch,"%u",&uTicket);
 		if(uTicket)
 			sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
-					"WHERE uOwner=%u AND uTicket=%u "
-					"ORDER BY uCreatedDate DESC",
+					"WHERE (uOwner=%u OR uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)) "
+					"AND uTicket=%u ORDER BY uCreatedDate DESC",
 					guOrg
+					,guOrg
 					,uTicket);
 		else
 			sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
-					"WHERE uOwner=%u AND "
+					"WHERE (uOwner=%u OR uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)) AND "
 					"(cSubject LIKE '%%%s%%' OR cText LIKE '%%%s%%' "
 					"ORDER BY uCreatedDate DESC",
 					guOrg
+					,guOrg
 					,cSearch
 					,cSearch
 					);
@@ -455,9 +457,10 @@ void funcTicketNavList(FILE *fp)
 	}
 	else
 		sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
-				"WHERE uOwner=%u "
+				"WHERE uOwner=%u OR uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)"
 				"ORDER BY uCreatedDate DESC LIMIT 20",
 				guOrg
+				,guOrg
 				);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

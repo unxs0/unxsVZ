@@ -123,8 +123,9 @@ void funcDisplayDashBoard(FILE *fp)
 
 	OpenRow("Not Assigned Tickets (Last 10)","black");
 	sprintf(gcQuery,"SELECT uCreatedBy,uScheduleDate,cText,uCreatedDate FROM tTicket "
-			"WHERE uOwner=%u AND uTicketOwner=0 ORDER BY uCreatedDate DESC LIMIT 10",
-			guOrg);
+			"WHERE (uOwner=%u OR uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)) AND uTicketOwner=0 ORDER BY uCreatedDate DESC LIMIT 10",
+			guOrg
+			,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
