@@ -30,9 +30,11 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode);
 void ProcessUBC(void);
 void ProcessSingleHDUsage(unsigned uContainer);
 void ProcessSingleQuota(unsigned uContainer);
+void ProcessSingleTraffic(unsigned uContainer);
 void ProcessVZMemCheck(unsigned uContainer, unsigned uNode);
 void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
 void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
+void ProcessSingleTraffic(unsigned uContainer);
 
 static FILE *gLfp;
 void logfileLine(const char *cFunction,const char *cLogline)
@@ -285,6 +287,12 @@ void ProcessUBC(void)
 		logfileLine("ProcessUBC","gethostname() failed");
 		exit(1);
 	}
+	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
+	{
+		logfileLine("ProcessUBC","fopen logfile failed");
+		exit(1);
+	}
+		
 
 	TextConnectDb();//Uses login data from local.h
 	guLoginClient=1;//Root user
@@ -368,6 +376,7 @@ void ProcessUBC(void)
 			ProcessSingleHDUsage(uContainer);
 			ProcessVZMemCheck(uContainer,0);
 			ProcessVZCPUCheck(uContainer,0);
+			ProcessSingleTraffic(uContainer);
 		}
 	}
 	mysql_free_result(res);
@@ -1023,3 +1032,113 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 	}
 
 }//void UpdateContainerUBCJob(...)
+
+
+//Not uVETH=1 compatible function
+void ProcessSingleTraffic(unsigned uContainer)
+{
+	char cCommand[128];
+	char cLine[512];
+	unsigned long luIn= -1;
+	unsigned long luOut= -1;
+	FILE *fp;
+
+	if(!uContainer)
+	{
+		logfileLine("ProcessSingleTraffic","No container specified");
+		return;
+	}
+		
+	sprintf(cCommand,"/usr/sbin/vzctl exec %u \"grep venet0 /proc/net/dev\" 2> /dev/null",uContainer);
+
+	if((fp=popen(cCommand,"r")))
+	{
+        	MYSQL_RES *res;
+        	MYSQL_ROW field;
+
+		if(fgets(cLine,512,fp)!=NULL)
+		{
+//Current format
+//        1          2       3    4    5     6          7         8  9          10      11   12   13    14      15         16
+//venet0: 1053860    5317    0    0    0     0          0         0  9780415    7987    0    0    0     0       0          0
+			sscanf(cLine,
+				"venet0: %lu %*u %*u %*u %*u %*u %*u %*u %lu %*u %*u %*u %*u %*u %*u %*u",
+					&luIn,&luOut);
+
+			//debug only
+			//printf("luIn=%lu luOut=%lu\n",luIn,luOut);
+		}
+		else
+		{
+			logfileLine("ProcessSingleTraffic","No lines from popen");
+			exit(1);
+		}
+
+		if(luIn== -1)
+		{
+			logfileLine("ProcessSingleTraffic","Unexpected luIn== -1");
+			exit(1);
+		}
+
+		if(luOut== -1)
+		{
+			logfileLine("ProcessSingleTraffic","Unexpected luOut== -1");
+			exit(1);
+		}
+
+		sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='Venet0.luInDelta'"
+							" AND uKey=%u AND uType=3",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+			exit(2);
+		}
+	       	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(gcQuery,"UPDATE tProperty SET cValue=CONVERT((%lu-cValue),UNSIGNED),"
+					"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+					" uProperty=%s"
+							,luIn
+							,guContainerOwner
+							,field[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				exit(2);
+			}
+		}
+		else
+		{
+			//First sample delta is 0
+			sprintf(gcQuery,"INSERT INTO tProperty SET cValue=0"
+					",cName='Venet0.luInDelta'"
+					",uType=3"
+					",uKey=%u"
+					",uOwner=%u"
+					",uCreatedBy=1"
+					",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						,uContainer
+						,guContainerOwner);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				exit(2);
+			}
+		}
+		mysql_free_result(res);
+		pclose(fp);
+	}
+	else
+	{
+		logfileLine("ProcessSingleTraffic","popen() failed");
+	}
+
+	//debug only
+	//logfileLine("ProcessSingleTraffic","End");
+
+}//void ProcessSingleTraffic(unsigned uContainer)
+
