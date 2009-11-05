@@ -528,11 +528,11 @@ void tDatacenterHealth(void)
 	}
         mysql_free_result(res);
 
-	//3-. Top talkers
-	sprintf(gcQuery,"SELECT cValue,uKey,cLabel,cName FROM tProperty,tContainer WHERE"
+	//3-. Last 5 min Top talkers
+	sprintf(gcQuery,"SELECT SUM(cValue),uKey,'InOutBytes',cHostname FROM tProperty,tContainer WHERE"
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
 			" (cName='Venet0.luInDelta' OR cName='Venet0.luOutDelta')"
-			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -544,11 +544,35 @@ void tDatacenterHealth(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>Top Talkers</u><br>\n");
+        	printf("<p><u>Last 5 min top talkers</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
-				"%s %s=%s</a><br>\n",field[1],field[2],field[3],field[0]);
+				"%s %s=%s</a><br>\n",field[1],field[3],field[2],field[0]);
+	}
+        mysql_free_result(res);
+
+	//4-. Top talkers
+	sprintf(gcQuery,"SELECT SUM(cValue),uKey,'InOutBytes',cHostname FROM tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
+			" (cName='Venet0.luIn' OR cName='Venet0.luOut')"
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tDatacenterHealth</u><br>\n");
+                printf("5-. %s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Historic top talkers</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s %s=%s</a><br>\n",field[1],field[3],field[2],field[0]);
 	}
         mysql_free_result(res);
 
