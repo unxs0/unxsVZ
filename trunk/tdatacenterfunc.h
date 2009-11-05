@@ -528,6 +528,32 @@ void tDatacenterHealth(void)
 	}
         mysql_free_result(res);
 
+	//3-. Top talkers
+	sprintf(gcQuery,"SELECT cValue,uKey,cLabel,cName FROM tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
+			" (cName='Venet0.luInDelta' OR cName='Venet0.luOutDelta')"
+			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tDatacenterHealth</u><br>\n");
+                printf("5-. %s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Top Talkers</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s %s=%s</a><br>\n",field[1],field[2],field[3],field[0]);
+	}
+        mysql_free_result(res);
+
+
+
 }//void tDatacenterHealth(void)
 
 
