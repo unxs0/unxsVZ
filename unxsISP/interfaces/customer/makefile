@@ -14,7 +14,7 @@ CGINAME= ispClient.cgi
 CFLAGS= -DLinux -Wall
 LIBS= -L/usr/lib/mysql -lmysqlclient /usr/lib/openisp/libtemplate-branch.a /usr/lib/openisp/libucidr.a -lz -lcrypt -lm -lssl
 
-interface.cgi: main.o customer.o glossary.o invoice.o product.o ../../cgi.o
+interface.cgi: main.o customer.o glossary.o invoice.o product.o https.o payment.o ../../cgi.o
 	cc main.o customer.o glossary.o invoice.o product.o ../../cgi.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h ../../local.h ../../mysqlrad.h
@@ -31,6 +31,12 @@ invoice.o: invoice.c interface.h ../../local.h ../../mysqlrad.h
 
 product.o : product.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c product.c -o product.o $(CFLAGS)
+
+https.o : https.c interface.h ../../local.h ../../mysqlrad.h
+	cc -c https.c -o https.o $(CFLAGS)
+
+payment.o: payment.c interface.h ../../local.h ../../mysqlrad.h
+	cc  -c payment.c -o payment.o $(CFLAGS)
 
 clean:
 	rm -f *.o *.cgi
