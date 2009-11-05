@@ -381,8 +381,9 @@ void LoadTicket(void)
 	MYSQL_ROW field;
 
 	sprintf(gcQuery,"SELECT cSubject,cText,uTicketOwner,uTicketStatus,uScheduleDate,"
-			"cKeywords,uCreatedBy,FROM_UNIXTIME(uCreatedDate) FROM tTicket WHERE uTicket=%u AND uOwner=%u",
-			uTicket,guOrg);
+			"cKeywords,uCreatedBy,FROM_UNIXTIME(uCreatedDate) FROM tTicket "
+			"WHERE uTicket=%u AND (uOwner=%u OR uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u))",
+			uTicket,guOrg,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -439,7 +440,7 @@ void funcTicketNavList(FILE *fp)
 		if(uTicket)
 			sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
 					"WHERE (uOwner=%u OR uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)) "
-					"AND uTicket=%u ORDER BY uCreatedDate DESC",
+					"AND uTicket=%u",
 					guOrg
 					,guOrg
 					,uTicket);
@@ -811,8 +812,8 @@ void LoadRecordIntoStruct(structTicket *Target)
 	MYSQL_ROW field;
 
 	sprintf(gcQuery,"SELECT uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTicketStatus,uTicketOwner,uScheduleDate,"
-			"cText,cKeywords,cSubject FROM tTicket WHERE uTicket=%u AND uOwner=%u",
-			uTicket,guOrg);
+			"cText,cKeywords,cSubject FROM tTicket WHERE uTicket=%u AND (uOwner=%u OR uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u))",
+			uTicket,guOrg,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
