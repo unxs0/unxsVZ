@@ -1,3 +1,18 @@
+/*
+FILE
+	payment.c
+PURPOSE
+	Provide the payment gateway support functions
+	to the unxsISP interfaces
+AUTHOR
+	(C) 2009 Hugo Urquiza for Unixservice
+*/
+
+#include "interface.h"
+
+unsigned https(char const *cHost,unsigned uPort,char const *cURL,char const *cPost,char *cResult);
+
+
 char *SubmitRequest(unsigned uInvoice)
 {
 	MYSQL_RES *res;
@@ -13,7 +28,7 @@ char *SubmitRequest(unsigned uInvoice)
 			"FROM tInvoice WHERE uInvoice=%u",uInvoice);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlFatalError(mysql_error(&gMysql));
+		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 
 	if((field=mysql_fetch_row(res)))
@@ -33,22 +48,6 @@ char *SubmitRequest(unsigned uInvoice)
 			//{
 			//	fprintf(fp,"%.1023s\n\n********************%.10239s\n",cPost,cResult);
 			//}
-			char *cp, *cp1;
-			if((cp=strstr(cResult,"<string xmlns=\"http://tempuri.org/WebMerchant/MerchantService\">")))
-			{
-				//Error message case
-				//Note, errors can also come in the form <string>Errcode</string>
-				//Sample of correct response:
-				/*
-				<string>
-				https://Chk.bancopopular.com/Checkout/payment?token=330AC6EC12E28642024E52CA76E80D12198DB61134426BF428CBD406240D17B693113D46&lang=en
-				</string>
-				*/
-				cp+=strlen("<string xmlns=\"http://tempuri.org/WebMerchant/MerchantService\">");
-				if((cp1=strstr(cp,"</string>"))) *cp1=0;
-				sprintf(cRet,"%.255s",cp);
-				//fprintf(fp,"cp=%s\n",cp);
-			}
 			//fclose(fp);
 			return(cRet);
 		}
