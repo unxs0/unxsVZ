@@ -1057,12 +1057,12 @@ void funcPermLevelDropDown(FILE *fp,unsigned uUseStatus)
 	}
 	else
 	{
-	fprintf(fp,"<option value=12 ");
+	fprintf(fp,"<option value=10 ");
 		if(guContactPerm==10)
 			fprintf(fp,"selected");
 		fprintf(fp,">%s</option>\n",BO_ADMIN);
 
-		fprintf(fp,"<option value=10 ");
+		fprintf(fp,"<option value=12 ");
 		if(guContactPerm==12)
 			fprintf(fp,"selected");
 		fprintf(fp,">%s</option>\n",BO_ROOT);
