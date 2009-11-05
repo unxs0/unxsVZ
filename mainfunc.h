@@ -751,6 +751,7 @@ void UpdateSchema(void)
 	unsigned uIncorrectSource=0;
 	unsigned uIncorrectVeth=0;
 	unsigned uSourceIndex=0;
+	unsigned uPropertyNameIndex=0;
 
 	printf("UpdateSchema(): Start\n");
 
@@ -780,6 +781,7 @@ void UpdateSchema(void)
 		}
 	}
        	mysql_free_result(res);
+
 	sprintf(gcQuery,"SHOW INDEX IN tContainer");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -791,6 +793,19 @@ void UpdateSchema(void)
 		if(!strcmp(field[2],"uSource")) uSourceIndex=1;
 	}
        	mysql_free_result(res);
+
+	sprintf(gcQuery,"SHOW INDEX IN tProperty");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[2],"cName")) uPropertyNameIndex=1;
+	}
+       	mysql_free_result(res);
+
 
 	if(uIncorrectVeth)
 	{
@@ -900,6 +915,19 @@ void UpdateSchema(void)
 		else
 			printf("Added INDEX uSource tContainer\n");
 	}
+
+	//alter table tProperty add index (cName)
+	if(!uPropertyNameIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tProperty ADD INDEX (cName)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX cName tProperty\n");
+	}
+
+	//alter table tProperty add index (cName)
 
 	printf("UpdateSchema(): End\n");
 
