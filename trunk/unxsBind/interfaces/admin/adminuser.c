@@ -779,22 +779,24 @@ unsigned ValidateAdminUserInput(void)
 				return(0);
 			}
 		}
-
-		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND uOwner=%u",
-				TextAreaSave(cClientName)
-				,uForClient
-				);
-		macro_mySQLRunAndStore(res);
-		if(mysql_num_rows(res))
+		
+		if(!strcmp(gcFunction,"Confirm New"))
 		{
-			SetAdminUserFieldsOn();
-			cClientNameStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>'Contact Name' already exists for selected company,"
-				" perhaps you wanted to create it for another company.";
-			return(0);
+			sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND uOwner=%u",
+					TextAreaSave(cClientName)
+					,uForClient
+					);
+			macro_mySQLRunAndStore(res);
+			if(mysql_num_rows(res))
+			{
+				SetAdminUserFieldsOn();
+				cClientNameStyle="type_fields_req";
+				gcMessage="<blink>Error: </blink>'Contact Name' already exists for selected company,"
+					" perhaps you wanted to create it for another company.";
+				return(0);
+			}
 		}
 	}
-
 	if(cEmail[0])
 	{
 		if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
@@ -841,16 +843,19 @@ unsigned ValidateAdminUserInput(void)
 				return(0);
 			}
 		}
-		sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s'",
-				TextAreaSave(cUserName)
-				);
-		macro_mySQLRunAndStore(res);
-		if(mysql_num_rows(res))
+		if(!strcmp(gcFunction,"Confirm New"))
 		{
-			SetAdminUserFieldsOn();
-			cUserNameStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Login already in use";
-			return(0);
+			sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s'",
+					TextAreaSave(cUserName)
+					);
+			macro_mySQLRunAndStore(res);
+			if(mysql_num_rows(res))
+			{
+				SetAdminUserFieldsOn();
+				cUserNameStyle="type_fields_req";
+				gcMessage="<blink>Error: </blink>Login already in use";
+				return(0);
+			}
 		}
 	}
 	if(!cPassword[0])
