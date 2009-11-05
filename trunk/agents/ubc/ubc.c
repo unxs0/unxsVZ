@@ -1120,7 +1120,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 				luNewInDelta=0;
 
 			//debug only
-			printf("luNewInDelta=%lu = luIn=%lu - luPrevIn=%lu\n",luNewInDelta,luIn,luPrevIn);
+			//printf("luNewInDelta=%lu = luIn=%lu - luPrevIn=%lu\n",luNewInDelta,luIn,luPrevIn);
 
 			//Update delta
 			sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
@@ -1229,7 +1229,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 				luNewOutDelta=0;
 
 			//debug only
-			printf("luNewOutDelta=%lu = luOut=%lu  - luPrevOut=%lu\n",luNewOutDelta,luOut,luPrevOut);
+			//printf("luNewOutDelta=%lu = luOut=%lu  - luPrevOut=%lu\n",luNewOutDelta,luOut,luPrevOut);
 
 			//Update delta
 			sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
