@@ -452,6 +452,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 		printf("\n");
 	}
+	mysql_close(&gMysql);
         exit(0);
 
 
