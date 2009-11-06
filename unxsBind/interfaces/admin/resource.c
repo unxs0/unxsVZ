@@ -751,6 +751,7 @@ void UpdateResource(void)
 
 }//void UpdateResource(void)
 
+unsigned uGetBlockOwner(char *cPTR);
 
 void NewResource(void)
 {
@@ -770,7 +771,18 @@ void NewResource(void)
 
 	uZone=uGetuZone(gcZone,cuView);
 	
-	sprintf(gcQuery,"INSERT INTO tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
+	//
+	//uForClient special case for .arpa zones
+	//Check via tBlock uOwner and set RR automatically based on that
+	//if not found, default to zone owner
+	//
+	
+	if(strstr(gcZone,"in-addr.arpa"))
+		uForClient=uGetBlockOwner(cName);
+
+	sprintf(gcQuery,"INSERT INTO tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',"
+			"cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
 			cName,
 			uTTL,
 			uRRType,
@@ -803,6 +815,40 @@ void NewResource(void)
 	sys_SetSessionCookie();
 
 }//void NewResource(void)
+
+
+unsigned uGetBlockOwner(char *cPTR)
+{
+	unsigned a,b,c,d;
+	char cIP[64]={""};
+	unsigned uOwner=0;
+
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sscanf(gcZone,"%u.%u.%u.in-addr.arpa",&c,&b,&a);
+	sscanf(cPTR,"%u",&d);
+	sprintf(cIP,"%u.%u.%u.%u",a,b,c,d);
+
+	sprintf(gcQuery,"SELECT cLabel,uOwner FROM tBlock WHERE cLabel LIKE '%u.%u.%u.%%'",a,b,c);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uIpv4InCIDR4(cIP,field[0]))
+		{
+			sscanf(field[1],"%u",&uOwner);
+			return(uOwner);
+		}
+	}
+
+	if(uOwner==0) uOwner=uForClient; //Default to zone owner if no match in tBlock
+
+	return(uOwner);
+
+}//unsigned uGetBlockOwner(char *cPTR)
 
 
 void DelResource(void)
