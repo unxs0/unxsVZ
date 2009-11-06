@@ -66,7 +66,6 @@ extern char *gcQstr;
 extern char *gcBuildInfo;
 extern char *gcRADStatus;
 extern MYSQL gMysql; 
-extern MYSQL gMysql2; 
 extern unsigned long gluRowid;
 extern unsigned guStart;
 extern unsigned guEnd;
