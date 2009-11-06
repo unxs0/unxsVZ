@@ -815,21 +815,13 @@ void funcRRs(FILE *fp)
 	char cParam1[65]={""};
 
 	fprintf(fp,"<!-- funcRRs(fp) Start -->\n");
-	if(uOwner==uForClient)
-		sprintf(gcQuery,"SELECT tResource.uResource,tZone.cZone,IF(STRCMP(tResource.cName,''),"
-				"tResource.cName,'(default)'),tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
-				"tResource.cParam2,tResource.cComment FROM tResource,tRRType,tZone WHERE "
-				"tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType AND "
-				"tZone.uView='%s' AND tZone.cZone='%s' ORDER BY tResource.uRRType,ABS(tResource.cName)",
-				cuView,gcZone);
-	else
-		sprintf(gcQuery,"SELECT tResource.uResource,tZone.cZone,IF(STRCMP(tResource.cName,''),"
-				"tResource.cName,'(default)'),tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
-				"tResource.cParam2,tResource.cComment FROM tResource,tRRType,tZone WHERE "
-				"tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType AND "
-				"tZone.uView='%s' AND tZone.cZone='%s' AND tResource.uOwner=%u ORDER BY "
-				"tResource.uRRType,ABS(tResource.cName)",
-				cuView,gcZone,uForClient);
+
+	sprintf(gcQuery,"SELECT tResource.uResource,tZone.cZone,IF(STRCMP(tResource.cName,''),"
+			"tResource.cName,'(default)'),tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
+			"tResource.cParam2,tResource.cComment FROM tResource,tRRType,tZone WHERE "
+			"tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType AND "
+			"tZone.uView='%s' AND tZone.cZone='%s' ORDER BY tResource.uRRType,ABS(tResource.cName)",
+			cuView,gcZone);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
