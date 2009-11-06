@@ -29,7 +29,6 @@ HELP
 
 #define SHOWPAGE 30
 MYSQL gMysql;
-MYSQL gMysql2;
 unsigned long gluRowid;
 unsigned guStart;
 unsigned guEnd;
@@ -930,6 +929,7 @@ void Footer_ism3(void)
 {
 	printf("</blockquote>");
 
+	mysql_close(&gMysql);
 	exit(0);
 
 }//Footer_ism3(void)
