@@ -302,6 +302,7 @@ void ProcessUBC(void)
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ProcessUBC",mysql_error(&gMysql));
+		mysql_close(&gMysql);
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -324,6 +325,7 @@ void ProcessUBC(void)
 		if(mysql_errno(&gMysql))
 		{
 			logfileLine("ProcessUBC",mysql_error(&gMysql));
+			mysql_close(&gMysql);
 			exit(2);
 		}
 		res=mysql_store_result(&gMysql);
@@ -339,6 +341,7 @@ void ProcessUBC(void)
 	if(!uNode)
 	{
 		logfileLine("ProcessUBC","Could not determine uNode");
+		mysql_close(&gMysql);
 		exit(1);
 	}
 
@@ -356,6 +359,7 @@ void ProcessUBC(void)
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ProcessUBC",mysql_error(&gMysql));
+		mysql_close(&gMysql);
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -388,6 +392,7 @@ void ProcessUBC(void)
 
 	//debug only
 	//printf("ProcessUBC() End\n");
+	mysql_close(&gMysql);
 	exit(0);
 
 }//void ProcessUBC(void)

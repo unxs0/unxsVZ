@@ -272,6 +272,7 @@ void ProcessJobQueue(void)
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+		mysql_close(&gMysql);
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -294,6 +295,7 @@ void ProcessJobQueue(void)
 		if(mysql_errno(&gMysql))
 		{
 			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+			mysql_close(&gMysql);
 			exit(2);
 		}
 		res=mysql_store_result(&gMysql);
@@ -308,6 +310,7 @@ void ProcessJobQueue(void)
 	if(!uNode)
 	{
 		logfileLine("ProcessJobQueue","could not determine uNode: aborted");
+		mysql_close(&gMysql);
 		exit(1);
 	}
 
@@ -325,6 +328,7 @@ void ProcessJobQueue(void)
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+		mysql_close(&gMysql);
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -356,6 +360,7 @@ void ProcessJobQueue(void)
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+		mysql_close(&gMysql);
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -376,6 +381,7 @@ void ProcessJobQueue(void)
 	//printf("ProcessJobQueue() End\n");
 	//logfileLine("ProcessJobQueue","End");
 	fclose(gLfp);
+	mysql_close(&gMysql);
 	exit(0);
 
 }//void ProcessJobQueue(void)
