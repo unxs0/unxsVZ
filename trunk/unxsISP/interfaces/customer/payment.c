@@ -23,8 +23,14 @@ char *SubmitRequest(unsigned uInvoice)
 	unsigned uPort=443;
 	char cResult[2048]={""};
 	static char cRet[256]={""};
+	unsigned uMerchantID=0;
+	char cMerchantID[100]={""};
 
-	sprintf(gcQuery,"SELECT uOwner,cFirstName,cLastName,cEmail,cAddr1,cAddr2,cCity,cZip,cTelephone,cFax,mTotal "
+	GetConfiguration("cMerchantID",cMerchantID);
+	sscanf(cMerchantID,"%u",&uMerchantID);
+
+	sprintf(gcQuery,"SELECT uOwner,cFirstName,cLastName,cEmail,cAddr1,cAddr2,cCity,cZip,cTelephone,cFax,mTotal,"
+			"cCardNumber,uExpMonth,uExpYear,cCardName,cState  "
 			"FROM tInvoice WHERE uInvoice=%u",uInvoice);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -33,10 +39,26 @@ char *SubmitRequest(unsigned uInvoice)
 
 	if((field=mysql_fetch_row(res)))
 	{
-		 sprintf(cPost,"requestType=BACKEND&merchant_id=109040000&trnCardOwner=%s&trnCardNumber=%s"
+		 sprintf(cPost,"requestType=BACKEND&merchant_id=%u&trnCardOwner=%s&trnCardNumber=%s"
 				"&trnExpMonth=%s&trnExpYear=%s&trnOrderNumber=%u&trnAmount=%s&ordEmailAddress=%s"
-				"&ordName=%s&ordPhoneNumber=%s&ordAddress1=%s&ordAddress2=%s&ordCity=%s"
-				"&ordProvince=%s&ordPostalCode=%s&ordCountry=CA"
+				"&ordName=%s %s&ordPhoneNumber=%s&ordAddress1=%s&ordAddress2=%s&ordCity=%s"
+				"&ordProvince=%s&ordPostalCode=%s&ordCountry=CA",
+				uMerchantID
+				,field[14]
+				,field[11]
+				,field[12]
+				,field[13]
+				,uInvoice
+				,field[10]
+				,field[3]
+				,field[1]
+				,field[2]
+				,field[8]
+				,field[4]
+				,field[5]
+				,field[6]
+				,field[15]
+				,field[7]
 			);
 
 		if(!https(cHost,uPort,cURL,cPost,cResult))
