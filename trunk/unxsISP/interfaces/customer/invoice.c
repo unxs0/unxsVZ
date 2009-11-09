@@ -35,6 +35,9 @@ void PrintInvoice(void);
 void htmlPayInvoice(void);
 
 unsigned uSetupRB=0;
+extern char *cCardNameStyle;
+extern char *cCardNumberStyle;
+
 
 void ProcessInvoiceVars(pentry entries[], int x)
 {
@@ -185,7 +188,13 @@ void htmlInvoicePage(char *cTitle, char *cTemplateName)
 			template.cpName[17]="gcPrintAll";
 			template.cpValue[17]=gcPrintAll;
 
-			template.cpName[18]="";
+			template.cpName[18]="cCardNameStyle";
+			template.cpValue[18]=cCardNameStyle;
+
+			template.cpName[19]="cCardNumberStyle";
+			template.cpValue[19]=cCardNumberStyle;
+
+			template.cpName[20]="";
 			
 			printf("\n<!-- Start htmlInvoicePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);

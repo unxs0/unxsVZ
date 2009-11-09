@@ -44,19 +44,19 @@ static char cCountry[65]={""};
 static char *cCountryStyle="type_fields_off";
 
 static char cCardType[33]={""};
-static char *cCardTypeStyle="type_fields_off";
+char *cCardTypeStyle="type_fields_off";
 
 static char cCardNumber[33]={""};
-static char *cCardNumberStyle="type_fields_off";
+char *cCardNumberStyle="type_fields_off";
 
 static unsigned uExpMonth=0;
-static char *cuExpMonthStyle="type_fields_off";
+char *cuExpMonthStyle="type_fields_off";
 
 static unsigned uExpYear=0;
-static char *cuExpYearStyle="type_fields_off";
+char *cuExpYearStyle="type_fields_off";
 
 static char cCardName[65]={""};
-static char *cCardNameStyle="type_fields_off";
+char *cCardNameStyle="type_fields_off";
 
 static char cShipName[101]={""};
 static char *cShipNameStyle="type_fields_off";
