@@ -39,7 +39,6 @@ static char cRemoteMsg[33]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -452,9 +451,7 @@ void NewtJob(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uJob FROM tJob\
-				WHERE uJob=%u"
-							,uJob);
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uJob=%u",uJob);
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -467,10 +464,8 @@ void NewtJob(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uJob=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tJob",uJob);
 	unxsVZLog(uJob,"tJob","New");
-#endif
 
 	if(!uMode)
 	{
@@ -483,27 +478,18 @@ void NewtJob(unsigned uMode)
 
 void DeletetJob(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tJob WHERE uJob=%u AND ( uOwner=%u OR %u>9 )"
 					,uJob,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tJob WHERE uJob=%u"
-					,uJob);
-#endif
 	MYSQL_RUN;
 	//tJob("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uJob,"tJob","Del");
-#endif
 		tJob(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uJob,"tJob","DelError");
-#endif
 		tJob(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -562,7 +548,6 @@ void ModtJob(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -575,14 +560,7 @@ void ModtJob(void)
 				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
 			,uJob,guLoginClient,guLoginClient);
 	else
-	sprintf(gcQuery,"SELECT uJob,uModDate FROM tJob\
-				WHERE uJob=%u"
-						,uJob);
-#else
-	sprintf(gcQuery,"SELECT uJob FROM tJob\
-				WHERE uJob=%u"
-						,uJob);
-#endif
+	sprintf(gcQuery,"SELECT uJob,uModDate FROM tJob WHERE uJob=%u",uJob);
 
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
@@ -593,19 +571,15 @@ void ModtJob(void)
 	if(i>1) tJob(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tJob(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tJob(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tJob",uJob);
 	unxsVZLog(uJob,"tJob","Mod");
-#endif
 	tJob(gcQuery);
 
 }//ModtJob(void)
@@ -696,7 +670,7 @@ void tJobList(void)
 
 void CreatetJob(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJob ( cJobName VARCHAR(64) NOT NULL DEFAULT '', uModDate INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, cJobData TEXT NOT NULL DEFAULT '', uJob INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(100) NOT NULL DEFAULT '', uJobStatus INT UNSIGNED NOT NULL DEFAULT 0, uJobDate INT UNSIGNED NOT NULL DEFAULT 0, cRemoteMsg VARCHAR(32) NOT NULL DEFAULT '', uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, uNode INT UNSIGNED NOT NULL DEFAULT 0, uContainer INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJob ( cJobName VARCHAR(64) NOT NULL DEFAULT '', uModDate INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, cJobData TEXT NOT NULL DEFAULT '', uJob INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(100) NOT NULL DEFAULT '', uJobStatus INT UNSIGNED NOT NULL DEFAULT 0, uJobDate INT UNSIGNED NOT NULL DEFAULT 0, cRemoteMsg VARCHAR(32) NOT NULL DEFAULT '', uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, uNode INT UNSIGNED NOT NULL DEFAULT 0, uContainer INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uJobStatus), INDEX (uNode), INDEX (uContainer), INDEX (uDatacenter) )");
 	MYSQL_RUN;
 }//CreatetJob()
 

@@ -753,6 +753,10 @@ void UpdateSchema(void)
 	unsigned uIncorrectVeth=0;
 	unsigned uSourceIndex=0;
 	unsigned uPropertyNameIndex=0;
+	unsigned uJobStatusIndex=0;
+	unsigned uJobNodeIndex=0;
+	unsigned uJobDatacenterIndex=0;
+	unsigned uJobContainerIndex=0;
 
 	printf("UpdateSchema(): Start\n");
 
@@ -804,6 +808,21 @@ void UpdateSchema(void)
 	while((field=mysql_fetch_row(res)))
 	{
 		if(!strcmp(field[2],"cName")) uPropertyNameIndex=1;
+	}
+       	mysql_free_result(res);
+
+	sprintf(gcQuery,"SHOW INDEX IN tJob");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[2],"uJobStatus")) uJobStatusIndex=1;
+		else if(!strcmp(field[2],"uContainer")) uJobContainerIndex=1;
+		else if(!strcmp(field[2],"uNode")) uJobNodeIndex=1;
+		else if(!strcmp(field[2],"uDatacenter")) uJobDatacenterIndex=1;
 	}
        	mysql_free_result(res);
 
@@ -928,7 +947,48 @@ void UpdateSchema(void)
 			printf("Added INDEX cName tProperty\n");
 	}
 
-	//alter table tProperty add index (cName)
+
+	//alter table tJob add index
+	if(!uJobStatusIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uJobStatus)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uJobStatus tJob\n");
+	}
+
+	if(!uJobNodeIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uNode)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uNode tJob\n");
+	}
+
+	if(!uJobDatacenterIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uDatacenter)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uDatacenter tJob\n");
+	}
+
+	if(!uJobContainerIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uContainer)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uContainer tJob\n");
+	}
+
 
 	printf("UpdateSchema(): End\n");
 
