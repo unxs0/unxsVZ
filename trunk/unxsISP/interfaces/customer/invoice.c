@@ -32,6 +32,7 @@ void EmailLoadedInvoice(void);
 void EmailAllInvoices(void);
 void PrintInvoices(void);
 void PrintInvoice(void);
+void htmlPayInvoice(void);
 
 unsigned uSetupRB=0;
 
@@ -72,6 +73,8 @@ void InvoiceCommands(pentry entries[], int x)
 		ProcessInvoiceVars(entries,x);
 		if(!strcmp(gcFunction,"Show Invoice for Printing"))
 			PrintInvoice();
+		else if(!strcmp(gcFunction,"Pay Loaded Invoice"))
+			htmlPayInvoice();
 
 		htmlInvoice();
 	}
@@ -97,6 +100,14 @@ void htmlInvoice(void)
 	htmlFooter("Footer");
 
 }//void htmlInvoice(void)
+
+
+void htmlPayInvoice(void)
+{
+	htmlHeader("unxsISP Customer Interface","Header");
+	htmlInvoicePage("","PayInvoice.Body");
+	htmlFooter("Footer");
+}//void htmlPayInvoice(void)
 
 
 void htmlInvoicePage(char *cTitle, char *cTemplateName)
