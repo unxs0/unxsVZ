@@ -123,13 +123,13 @@
 		</td>
 	</tr>
         <tr>
-                <td>
-		We are sorry, but could not process your paymentn. Here are the error messages. Use the 'Back' button in your browser to correct any data and retry.
+                <td colspan=2>
+		We are sorry, but could not process your payment. Here are the error messages. Use the 'Back' button in your browser to correct any data and retry.
 	</td>
 	</tr>
 	<tr>
-	<td>
-	{{cResponse}}
+	<td colspan=2>
+	{{cResult}}
 	</td>
 	</tr>
 </table>
