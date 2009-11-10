@@ -15,6 +15,7 @@ AUTHOR
 
 #include "https.h"
 #include <openssl/err.h>
+#include "interface.h"
 
 BIO *bio_err=0;
 
@@ -38,7 +39,7 @@ void error_exit(void)
 	//exit(0);
 
 	//for example
-	htmlFatalError("https() connection error");
+	htmlPlainTextError("https() connection error");
 }
 
 /*

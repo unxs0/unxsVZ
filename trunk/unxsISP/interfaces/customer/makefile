@@ -15,7 +15,7 @@ CFLAGS= -DLinux -Wall
 LIBS= -L/usr/lib/mysql -lmysqlclient /usr/lib/openisp/libtemplate-branch.a /usr/lib/openisp/libucidr.a -lz -lcrypt -lm -lssl
 
 interface.cgi: main.o customer.o glossary.o invoice.o product.o https.o payment.o ../../cgi.o
-	cc main.o customer.o glossary.o invoice.o product.o ../../cgi.o -o interface.cgi $(LIBS)
+	cc main.o customer.o glossary.o invoice.o product.o https.o payment.o ../../cgi.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
