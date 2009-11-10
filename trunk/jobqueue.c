@@ -158,7 +158,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 
 		sprintf(gcQuery,"SELECT tNode.cLabel FROM tContainer,tNode WHERE"
 				" tContainer.uNode=tNode.uNode AND"
-				" tNode.uStatus=1 AND"//Active
+				" (tNode.uStatus=1 OR tNode.uStatus=31) AND"//Active or Stopped
 				" tContainer.uContainer=%u AND"
 				" tContainer.uModDate+%u<=UNIX_TIMESTAMP(NOW())",uRemoteContainer,uPeriod);
 		mysql_query(&gMysql,gcQuery);
