@@ -24,7 +24,8 @@
 
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
-HOSTNAME=`hostname -a`; 
+#This may need to be adjusted here on at your cluster /etc/hosts files for example
+HOSTNAME=`hostname -s`; 
 if [ "$HOSTNAME" == "" ];then
 	fLog "hostname error";
 	exit 0;
