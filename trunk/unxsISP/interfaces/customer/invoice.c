@@ -35,6 +35,9 @@ void PrintInvoice(void);
 void htmlPayInvoice(void);
 void PaymentFieldsOn(void);
 unsigned ValidatePaymentInput(void);
+void LoadPaymentData(void);
+void UpdatePaymentData(void);
+
 
 unsigned uSetupRB=0;
 extern char *cCardNameStyle;
@@ -58,6 +61,16 @@ void ProcessInvoiceVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uInvoice);
 		else if(!strcmp(entries[i].name,"cSearch"))
 			sprintf(cSearch,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cCardType"))
+			sprintf(cCardType,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cCardNumber"))
+			sprintf(cCardNumber,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uExpMonth"))
+			sscanf(entries[i].val,"%u",&uExpMonth);
+		else if(!strcmp(entries[i].name,"uExpYear"))
+			sscanf(entries[i].val,"%u",&uExpYear);
+		else if(!strcmp(entries[i].name,"cCardName"))
+			sprintf(cCardName,"%.64s",entries[i].val);
 					
 	}
 
@@ -89,9 +102,18 @@ void InvoiceCommands(pentry entries[], int x)
 		{
 			gcInputStatus[0]=0;
 			PaymentFieldsOn();
+			LoadPaymentData();
 			htmlPayInvoice();
 		}
-
+		else if(!strcmp(gcFunction,"Complete Payment"))
+		{
+			if(!ValidatePaymentInput())			
+			{
+				gcInputStatus[0]=0;
+				htmlPayInvoice();
+			}
+			UpdatePaymentData();
+		}
 		htmlInvoice();
 	}
 
@@ -737,13 +759,60 @@ void PaymentFieldsOn(void)
 }//void PaymentFieldsOn(void)
 
 
+void LoadPaymentData(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cCardType,cCardName,cCardNumber,uExpMonth,uExpYear FROM tInvoice WHERE uInvoice=%u",uInvoice);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cCardType,"%s",field[0]);
+		sprintf(cCardName,"%s",field[1]);
+		sprintf(cCardNumber,"%s",field[2]);
+		sscanf(field[3],"%u",&uExpMonth);
+		sscanf(field[4],"%u",&uExpYear);
+	}
+	mysql_free_result(res);
+
+}//void LoadPaymentData(void)
+
+
+void UpdatePaymentData(void)
+{
+	sprintf(gcQuery,"UPDATE tInvoice SET cCardType='%s',cCardName='%s',cCardNumber='%s',uExpMonth='%u',uExpYear='%u' WHERE uInvoice=%u",
+			cCardType
+			,cCardName
+			,cCardNumber
+			,uExpMonth
+			,uExpYear
+			,uInvoice);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void UpdatePaymentData(void)
+
+
 unsigned ValidatePaymentInput(void)
 {
-	if(strcmp(cCardType,"---"))
+	if(!strcmp(cCardType,"---"))
 	{
 		PaymentFieldsOn();
 		cCardTypeStyle="type_fields_req";
 		gcMessage="<blink>Error: </blink>Must select credit card type";
+		return(0);
+	}
+	if(!cCardName[0])
+	{
+		PaymentFieldsOn();
+		cCardNameStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink>Must enter credit card name";
 		return(0);
 	}
 	if(!cCardNumber[0])
