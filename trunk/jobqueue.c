@@ -27,11 +27,12 @@ TODO
 //The following prototype declarations should provide a 
 //	table of contents
 
+static unsigned guDebug=0;
 
 //local protos
-unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteNode, unsigned uRemoteContainer);
+unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteContainer);
 void LogError(char *cErrorMsg,unsigned uKey);
-void ProcessJobQueue(void);
+void ProcessJobQueue(unsigned uDebug);
 void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		unsigned uContainer,char *cJobName,char *cJobData);
 void tJobErrorUpdate(unsigned uJob, char *cErrorMsg);
@@ -113,15 +114,17 @@ void logfileLine(const char *cFunction,const char *cLogline)
 
 
 
-unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteNode, unsigned uRemoteContainer)
+unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteContainer)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uPeriod=0;
 
-	//debug only
-	//printf("ProcessCloneSyncJob() for %s (uNode=%u,uContainer=%u,uRemoteNode=%u,uRemoteContainer=%u)\n",
-	//		cHostname,uNode,uContainer,uRemoteNode,uRemoteContainer);
+	if(guDebug)
+	{
+		sprintf(gcQuery,"Start uContainer=%u,uRemoteContainer=%u",uContainer,uRemoteContainer);
+		logfileLine("ProcessCloneSyncJob",gcQuery);
+	}
 
 	//Make sure source uContainer is on this node if not return no error.
 	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND uNode=%u",
@@ -136,6 +139,8 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 	if(mysql_num_rows(res)<1)
 	{
 		mysql_free_result(res);
+		if(guDebug)
+			logfileLine("ProcessCloneSyncJob","source container not on this node");
 		return(0);
 	}
 	mysql_free_result(res);
@@ -155,10 +160,15 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 
 	if(uPeriod!=0)
 	{
+		if(guDebug)
+		{
+			sprintf(gcQuery,"uPeriod=%u",uPeriod);
+			logfileLine("ProcessCloneSyncJob",gcQuery);
+		}
 
 		sprintf(gcQuery,"SELECT tNode.cLabel FROM tContainer,tNode WHERE"
 				" tContainer.uNode=tNode.uNode AND"
-				" (tNode.uStatus=1 OR tNode.uStatus=31) AND"//Active or Stopped
+				" tNode.uStatus=1 AND"//Active NODE
 				" tContainer.uContainer=%u AND"
 				" tContainer.uModDate+%u<=UNIX_TIMESTAMP(NOW())",uRemoteContainer,uPeriod);
 		mysql_query(&gMysql,gcQuery);
@@ -167,11 +177,13 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 			logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
 			return(3);
 		}
+		//debug only
+		//if(guDebug)
+		//	logfileLine("ProcessCloneSyncJob",gcQuery);
+
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			//debug only
-			//printf("ProcessCloneSyncJob() uPeriod=%u\n",uPeriod);
 			if(uNotValidSystemCallArg(field[0]))
 			{
 				mysql_free_result(res);
@@ -191,8 +203,9 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 				return(5);
 			}
 			sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s",uContainer,uRemoteContainer,field[0]);
-			//debug only
-			//printf("ProcessCloneSyncJob() '%s'\n",gcQuery);
+			if(guDebug)
+				logfileLine("ProcessCloneSyncJob",gcQuery);
+
 			if(system(gcQuery))
 			{
 				mysql_free_result(res);
@@ -216,6 +229,8 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 		}
 		mysql_free_result(res);
 	}
+	if(guDebug)
+		logfileLine("ProcessCloneSyncJob","End");
 	return(0);
 
 }//void ProcessCloneSyncJob()
@@ -240,17 +255,18 @@ void LogError(char *cErrorMsg,unsigned uKey)
 }//void LogError(char *cErrorMsg)
 
 
-void ProcessJobQueue(void)
+void ProcessJobQueue(unsigned uDebug)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uDatacenter=0;
 	unsigned uNode=0;
-	unsigned uRemoteNode=0;
 	unsigned uContainer=0;
 	unsigned uRemoteContainer=0;
 	unsigned uJob=0;
 	unsigned uError=0;
+
+	if(uDebug) guDebug=1;
 
 	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
 	{
@@ -322,7 +338,7 @@ void ProcessJobQueue(void)
 	//and the target node is a remote node.
 	//1 uACTIVE
 	//31 uSTOPPED
-	sprintf(gcQuery,"SELECT uSource,uContainer,uNode FROM tContainer WHERE uSource>0 AND"
+	sprintf(gcQuery,"SELECT uSource,uContainer FROM tContainer WHERE uSource>0 AND"
 			" uDatacenter=%u AND (uStatus=1 OR uStatus=31)",uDatacenter);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -338,18 +354,16 @@ void ProcessJobQueue(void)
 		//to ProcessCloneSyncJob()
 		sscanf(field[0],"%u",&uContainer);
 		sscanf(field[1],"%u",&uRemoteContainer);
-		sscanf(field[2],"%u",&uRemoteNode);
-		if((uError=ProcessCloneSyncJob(uNode,uContainer,uRemoteNode,uRemoteContainer)))
+		if((uError=ProcessCloneSyncJob(uNode,uContainer,uRemoteContainer)))
 			LogError("ProcessCloneSyncJob()",uError);
 	}
 	mysql_free_result(res);
 
-	//debug only
-	//printf("ProcessJobQueue() for %s (uNode=%u,uDatacenter=%u)\n",
-	//		cHostname,uNode,uDatacenter);
-	//sprintf(gcQuery,"Start %s(uNode=%u,uDatacenter=%u)",cHostname,uNode,uDatacenter);
-	//logfileLine("ProcessJobQueue",gcQuery);
-	//exit(0);
+	if(guDebug)
+	{
+		sprintf(gcQuery,"Start %s(uNode=%u,uDatacenter=%u)",cHostname,uNode,uDatacenter);
+		logfileLine("ProcessJobQueue",gcQuery);
+	}
 
 	//Main loop normal jobs
 	sprintf(gcQuery,"SELECT uJob,uContainer,cJobName,cJobData FROM tJob WHERE uJobStatus=1"
@@ -377,14 +391,12 @@ void ProcessJobQueue(void)
 	}
 	mysql_free_result(res);
 
-	//debug only
-	//printf("ProcessJobQueue() End\n");
-	//logfileLine("ProcessJobQueue","End");
+	if(guDebug) logfileLine("ProcessJobQueue","End");
 	fclose(gLfp);
 	mysql_close(&gMysql);
 	exit(0);
 
-}//void ProcessJobQueue(void)
+}//void ProcessJobQueue()
 
 
 
