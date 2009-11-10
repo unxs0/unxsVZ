@@ -229,7 +229,13 @@ void htmlInvoicePage(char *cTitle, char *cTemplateName)
 			template.cpName[19]="cCardNumberStyle";
 			template.cpValue[19]=cCardNumberStyle;
 
-			template.cpName[20]="";
+			template.cpName[20]="cCardName";
+			template.cpValue[20]=cCardName;
+
+			template.cpName[21]="cCardNumber";
+			template.cpValue[21]=cCardNumber;
+
+			template.cpName[22]="";
 			
 			printf("\n<!-- Start htmlInvoicePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
