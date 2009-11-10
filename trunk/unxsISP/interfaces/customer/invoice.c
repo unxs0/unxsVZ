@@ -39,6 +39,7 @@ void LoadPaymentData(void);
 void UpdatePaymentData(void);
 unsigned SubmitRequest(unsigned uInvoice); //payment.c
 void htmlPostPayment(unsigned uMode);
+void UpdateInvoice(void);
 
 unsigned uSetupRB=0;
 extern char *cCardNameStyle;
@@ -116,7 +117,10 @@ void InvoiceCommands(pentry entries[], int x)
 			}
 			UpdatePaymentData();
 			if(SubmitRequest(uInvoice))
+			{
+				UpdateInvoice(); //Set paid status
 				htmlPostPayment(1);
+			}
 			else
 				htmlPostPayment(0);
 		}
@@ -868,4 +872,13 @@ unsigned ValidatePaymentInput(void)
 	return(1);
 
 }//unsigned ValidatePaymentInput(void)
+
+
+void UpdateInvoice(void)
+{
+	sprintf(gcQuery,"UPDATE tInvoice SET uInvoiceStatus=2 WHERE uInvoice=%u",uInvoice);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+}//void UpdateInvoice(void)
 
