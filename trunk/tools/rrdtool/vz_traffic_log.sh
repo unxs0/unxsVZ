@@ -22,9 +22,14 @@
 
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
-/usr/sbin/vzlist > /dev/null 2>&1; 
+/usr/sbin/vzlist -a > /dev/null 2>&1; 
 if [ $? != 0 ];then
 	fLog "vzlist error";
+	exit 0;
+fi
+/usr/sbin/vzlist > /dev/null 2>&1; 
+if [ $? != 0 ];then
+	#no active containers
 	exit 0;
 fi
 for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
