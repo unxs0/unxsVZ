@@ -33,10 +33,15 @@ void EmailAllInvoices(void);
 void PrintInvoices(void);
 void PrintInvoice(void);
 void htmlPayInvoice(void);
+void PaymentFieldsOn(void);
+unsigned ValidatePaymentInput(void);
 
 unsigned uSetupRB=0;
 extern char *cCardNameStyle;
 extern char *cCardNumberStyle;
+extern char *cuExpMonthStyle;
+extern char *cuExpYearStyle;
+extern char *cCardTypeStyle;
 
 
 void ProcessInvoiceVars(pentry entries[], int x)
@@ -77,7 +82,11 @@ void InvoiceCommands(pentry entries[], int x)
 		if(!strcmp(gcFunction,"Show Invoice for Printing"))
 			PrintInvoice();
 		else if(!strcmp(gcFunction,"Pay Loaded Invoice"))
+		{
+			gcInputStatus[0]=0;
+			PaymentFieldsOn();
 			htmlPayInvoice();
+		}
 
 		htmlInvoice();
 	}
@@ -711,4 +720,51 @@ void funcProductList(FILE *fp)
 	}
 
 }//void funcProductList(FILE *fp)
+
+
+void PaymentFieldsOn(void)
+{
+	cCardNameStyle="type_fields";
+	cCardNumberStyle="type_fields";
+	cuExpMonthStyle="type_fields";
+	cuExpYearStyle="type_fields";
+	cCardTypeStyle="type_fields";
+
+}//void PaymentFieldsOn(void)
+
+
+unsigned ValidatePaymentInput(void)
+{
+	if(strcmp(cCardType,"---"))
+	{
+		PaymentFieldsOn();
+		cCardTypeStyle=="type_fields_req";
+		gcMessage="<blink>Error: </blink>Must select credit card type";
+		return(0);
+	}
+	if(!cCardNumber[0])
+	{
+		PaymentFieldsOn();
+		cCardNumberStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink>Must enter credit card number";
+		return(0);
+	}
+	if(!uExpMonth)
+	{
+		PaymentFieldsOn();
+		cuExpMonthStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink>Must select expiration month";
+		return(0);
+	}
+	if(!uExpYear)
+	{
+		PaymentFieldsOn();
+		cuExpYearStyle="type_fields_req";
+		gcMessage="<blink>Error: </blink>Must select expiration year";
+		return(0);
+	}
+	
+	return(1);
+
+}//unsigned ValidatePaymentInput(void)
 
