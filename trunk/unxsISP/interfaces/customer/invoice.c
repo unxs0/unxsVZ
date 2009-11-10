@@ -254,7 +254,10 @@ void htmlInvoicePage(char *cTitle, char *cTemplateName)
 			template.cpName[21]="cCardNumber";
 			template.cpValue[21]=cCardNumber;
 
-			template.cpName[22]="";
+			template.cpName[22]="cResult";
+			template.cpValue[22]=cResult;
+
+			template.cpName[23]="";
 			
 			printf("\n<!-- Start htmlInvoicePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
