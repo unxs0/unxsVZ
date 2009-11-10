@@ -42,7 +42,11 @@ extern char *cCardNumberStyle;
 extern char *cuExpMonthStyle;
 extern char *cuExpYearStyle;
 extern char *cCardTypeStyle;
-
+extern char cCardName[];
+extern char cCardNumber[];
+extern unsigned uExpMonth;
+extern unsigned uExpYear;
+extern char cCardType[];
 
 void ProcessInvoiceVars(pentry entries[], int x)
 {
@@ -738,7 +742,7 @@ unsigned ValidatePaymentInput(void)
 	if(strcmp(cCardType,"---"))
 	{
 		PaymentFieldsOn();
-		cCardTypeStyle=="type_fields_req";
+		cCardTypeStyle="type_fields_req";
 		gcMessage="<blink>Error: </blink>Must select credit card type";
 		return(0);
 	}
