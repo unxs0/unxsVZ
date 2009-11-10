@@ -58,7 +58,7 @@ void GetConfiguration(const char *cName,char *cValue,
 void UpdateSchema(void);
 
 //jobqueue.c
-void ProcessJobQueue(void);
+void ProcessJobQueue(unsigned uDebug);
 
 
 int iExtMainCommands(pentry entries[], int x)
@@ -422,7 +422,9 @@ void ExtMainShell(int argc, char *argv[])
 	}
 
         if(argc==2 && !strcmp(argv[1],"ProcessJobQueue"))
-                ProcessJobQueue();
+                ProcessJobQueue(0);
+        if(argc==2 && !strcmp(argv[1],"ProcessJobQueueDebug"))
+                ProcessJobQueue(1);
         else if(argc==2 && !strcmp(argv[1],"UpdateSchema"))
                 UpdateSchema();
 	else if(argc==5 && !strcmp(argv[1],"ImportTemplateFile"))
@@ -444,6 +446,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tRestore <mysql root passwd> <Restore table name>\n");
 		printf("\nCrontab Ops:\n");
 		printf("\tProcessJobQueue\n");
+		printf("\tProcessJobQueueDebug\n");
 		//printf("\tProcessExtJobQueue <cServer>\n");
 		printf("\nSpecial Admin Ops:\n");
 		printf("\tUpdateSchema\n");
