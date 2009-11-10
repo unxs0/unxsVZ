@@ -1185,16 +1185,6 @@ void funcSelectExpYear(FILE *fp)
 		fprintf(fp,"selected");
 	fprintf(fp,">---</option>\n");
 
-	fprintf(fp,"<option value=2007 ");
-	if(uExpYear==2007)
-		fprintf(fp,"selected");
-	fprintf(fp,">2007</option>\n");
-
-	fprintf(fp,"<option value=2008 ");
-	if(uExpYear==2008)
-		fprintf(fp,"selected");
-	fprintf(fp,">2008</option>\n");
-
 	fprintf(fp,"<option value=2009 ");
 	if(uExpYear==2009)
 		fprintf(fp,"selected");
