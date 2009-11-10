@@ -12,6 +12,8 @@ AUTHOR
 
 unsigned https(char const *cHost,unsigned uPort,char const *cURL,char const *cPost,char *cResult);
 
+char cResult[2048]={""}; //Contains html code with error info ;)
+
 
 unsigned SubmitRequest(unsigned uInvoice)
 {
@@ -25,8 +27,9 @@ unsigned SubmitRequest(unsigned uInvoice)
 	char *cHost="www.beanstream.com";
 	char *cURL="/scripts/process_transaction.asp";
 	unsigned uPort=443;
-	char cResult[2048]={""};
 	unsigned uMerchantID=0;
+	unsigned uApproved=0;
+
 	char cMerchantID[100]={""};
 
 	GetConfiguration("cMerchantID",cMerchantID);
@@ -91,13 +94,24 @@ unsigned SubmitRequest(unsigned uInvoice)
 		4=&ref5=
 		*/
 			if(strstr(cResult,"trnApproved=1"))
-				return(1);
+				uApproved=1;
 			else
-				return(0);
+				uApproved=0;
+			char *cp;
+			char *cp2;
+			if((cp=strstr(cResult,"messageText=")))
+			{
+				cp2=strchr(cp,'&');
+				*cp2=0;
+				plustospace(cp);
+				unescape_url(cp);
+				sprintf(cResult,"%s",cp+12);
+			}
+			return(uApproved);
 		}
 	}
 	
-	return(0);
+	return(0); //should be never reached
 
 }//unsigned SubmitRequest(unsigned uInvoice)
 

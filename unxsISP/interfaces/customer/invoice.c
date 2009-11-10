@@ -37,6 +37,7 @@ void PaymentFieldsOn(void);
 unsigned ValidatePaymentInput(void);
 void LoadPaymentData(void);
 void UpdatePaymentData(void);
+unsigned SubmitRequest(unsigned uInvoice); //payment.c
 
 
 unsigned uSetupRB=0;
@@ -113,6 +114,7 @@ void InvoiceCommands(pentry entries[], int x)
 				htmlPayInvoice();
 			}
 			UpdatePaymentData();
+			SubmitRequest(uInvoice);
 		}
 		htmlInvoice();
 	}
