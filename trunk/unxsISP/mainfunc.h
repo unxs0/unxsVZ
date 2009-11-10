@@ -1537,7 +1537,6 @@ void GenerateInvoices(void)
 {
 	//This function will run everyday. Products are billed monthly.
 	//We need to query tInvoice and check if the customer was already invoiced.
-	//Please note than the monthly archiving of tInvoice MUST run before so it truncates tInvoice.
 	//The invoices are generated every 1st day of the month and stored in tInvoice.
 	//The admin user reviews the invoices with the ispAdmin interface and sends them
 	//via a command in the 'Invoice' tab left panel.
@@ -1835,8 +1834,8 @@ unsigned uClientHasInvoice(char *cuClient)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uInvoice=0;
-
-	sprintf(gcQuery,"SELECT uInvoice FROM tInvoice WHERE uClient=%s",cuClient);
+	//Updated query as per ticket #101, added AND MONTH(NOW())=MONTH(FROM_UNIXTIME(uCreatedDate))
+	sprintf(gcQuery,"SELECT uInvoice FROM tInvoice WHERE uClient=%s AND MONTH(NOW())=MONTH(FROM_UNIXTIME(uCreatedDate))",cuClient);
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
