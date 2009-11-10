@@ -38,7 +38,7 @@ unsigned ValidatePaymentInput(void);
 void LoadPaymentData(void);
 void UpdatePaymentData(void);
 unsigned SubmitRequest(unsigned uInvoice); //payment.c
-
+void htmlPostPayment(unsigned uMode);
 
 unsigned uSetupRB=0;
 extern char *cCardNameStyle;
@@ -51,6 +51,7 @@ extern char cCardNumber[];
 extern unsigned uExpMonth;
 extern unsigned uExpYear;
 extern char cCardType[];
+extern char cResult[]; //payment.c global w/transaction message
 
 void ProcessInvoiceVars(pentry entries[], int x)
 {
@@ -114,7 +115,10 @@ void InvoiceCommands(pentry entries[], int x)
 				htmlPayInvoice();
 			}
 			UpdatePaymentData();
-			SubmitRequest(uInvoice);
+			if(SubmitRequest(uInvoice))
+				htmlPostPayment(1);
+			else
+				htmlPostPayment(0);
 		}
 		htmlInvoice();
 	}
@@ -147,7 +151,20 @@ void htmlPayInvoice(void)
 	htmlHeader("unxsISP Customer Interface","Header");
 	htmlInvoicePage("","PayInvoice.Body");
 	htmlFooter("Footer");
+
 }//void htmlPayInvoice(void)
+
+
+void htmlPostPayment(unsigned uMode)
+{
+	htmlHeader("unxsISP Customer Interface","Header");
+	if(uMode)
+		htmlInvoicePage("","PayInvoiceAp.Body");
+	else
+		htmlInvoicePage("","PayInvoiceDe.Body");
+	htmlFooter("Footer");
+
+}//void htmlPostPayment(unsigned uMode)
 
 
 void htmlInvoicePage(char *cTitle, char *cTemplateName)
