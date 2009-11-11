@@ -135,14 +135,14 @@
                         <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Name')"><strong>Card Name</strong></a>          </td>
                 <td>
 			<input type=hidden name=cCardName value="{{cCardName}}">
-                        <input  title='Credit card name. E.g.: John Doe (Required if entered card number)' type=text name=cCardName value="{{cCardName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCardNameStyle}}></td>
+                        <input  title='Credit card name. E.g.: John Doe (Required)' type=text name=cCardName value="{{cCardName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCardNameStyle}}></td>
         </tr>
         <tr>
                 <td>
                         <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Number')"><strong>Card Number</strong></a>          </td>
                 <td>
 			<input type=hidden name=cCardNumber value="{{cCardNumber}}">
-                        <input  title='Credit card number. E.g. 411111111111111 (Optional)' type=text name=cCardNumber value="{{cCardNumber}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCardNumberStyle}}></td>
+                        <input  title='Credit card number. E.g. 411111111111111 (Required)' type=text name=cCardNumber value="{{cCardNumber}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCardNumberStyle}}></td>
         </tr>
 
         <tr>
