@@ -820,7 +820,7 @@ void UpdatePaymentData(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cEmail,cAddr1,cAddr2,cCity,cState,cZiP FROM tClient WHERE uClient=%u",guLoginClient);
+	sprintf(gcQuery,"SELECT cEmail,cAddr1,cAddr2,cCity,cState,cZip,cTelephone FROM tClient WHERE uClient=%u",guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -829,7 +829,7 @@ void UpdatePaymentData(void)
 	field=mysql_fetch_row(res);//will always return a row
 
 	sprintf(gcQuery,"UPDATE tInvoice SET cCardType='%s',cCardName='%s',cCardNumber='%s',uExpMonth='%u',uExpYear='%u',"
-			"cEmail='%s',cAddr1='%s',cAddr2='%s',cCity='%s',cState='%s',cZip='%s' WHERE uInvoice=%u",
+			"cEmail='%s',cAddr1='%s',cAddr2='%s',cCity='%s',cState='%s',cZip='%s',cTelephone='%s' WHERE uInvoice=%u",
 			cCardType
 			,cCardName
 			,cCardNumber
@@ -841,6 +841,7 @@ void UpdatePaymentData(void)
 			,field[3]
 			,field[4]
 			,field[5]
+			,field[6]
 			,uInvoice);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
