@@ -31,6 +31,7 @@ unsigned SubmitRequest(unsigned uInvoice)
 	unsigned uApproved=0;
 	unsigned uExpYear=0;
 	unsigned uExpMonth=0;
+	char cResponse[2048]={""};
 
 	char cMerchantID[100]={""};
 
@@ -79,7 +80,7 @@ unsigned SubmitRequest(unsigned uInvoice)
 				,field[7]
 			);
 
-		if(!https(cHost,uPort,cURL,cPost,cResult))
+		if(!https(cHost,uPort,cURL,cPost,cResponse))
 		{
 		/*
 		Sample aproved response:
@@ -102,19 +103,33 @@ unsigned SubmitRequest(unsigned uInvoice)
 		deAddr4=0&rspCodeDob=0&rspCustomerDec=&trnType=P&paymentMethod=CC&ref1=&ref2=&ref3=&ref
 		4=&ref5=
 		*/
-			if(strstr(cResult,"trnApproved=1"))
+			if(strstr(cResponse,"trnApproved=1"))
 				uApproved=1;
 			else
 				uApproved=0;
 			char *cp;
 			char *cp2;
-			if((cp=strstr(cResult,"messageText=")))
+			char cSaveResponse[2048]={""};
+			sprintf(cSaveResponse,"%s",cResponse);
+			if((cp=strstr(cResponse,"messageText=")))
 			{
 				cp2=strchr(cp,'&');
 				*cp2=0;
 				plustospace(cp);
 				unescape_url(cp);
 				sprintf(cResult,"%s",cp+12);
+			}
+			if((cp=strstr(cSaveResponse,"authCode=")))
+			{
+				cp2=strchr(cp,'&');
+				*cp2=0;
+				plustospace(cp);
+				unescape_url(cp);
+				//Update tInvoice record
+				sprintf(gcQuery,"UPDATE tInvoice SET cAuthCode='%s' WHERE uInvoice=%u",cp+9,uInvoice);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
 			}
 			return(uApproved);
 		}
