@@ -144,6 +144,13 @@
 			<input type=hidden name=cCardNumber value="{{cCardNumber}}">
                         <input  title='Credit card number. E.g. 411111111111111 (Required)' type=text name=cCardNumber value="{{cCardNumber}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCardNumberStyle}}></td>
         </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card CCV')"><strong>Card CCV</strong></a>          </td>
+                <td>
+			<input type=hidden name=cCardNumber value="{{cCardNumber}}">
+                        <input  title='Credit card CCV number (see back of the card) (Optional)' type=text name=cCCV size=40 maxlength=4 {{gcInputStatus}} class=type_fields></td>
+        </tr>
 
         <tr>
                 <td>

@@ -54,6 +54,8 @@ extern unsigned uExpYear;
 extern char cCardType[];
 extern char cResult[]; //payment.c global w/transaction message
 
+static char cAuthCode[100]={""};
+
 void ProcessInvoiceVars(pentry entries[], int x)
 {
 	register int i;
@@ -163,6 +165,17 @@ void htmlPostPayment(unsigned uMode)
 {
 	htmlHeader("unxsISP Customer Interface","Header");
 	if(uMode)
+	{
+		MYSQL_RES *res;
+		MYSQL_ROW field;
+
+		sprintf(gcQuery,"SELECT cAuthCode FROM tInvoice WHERE uInvoice=%u",uInvoice);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_strore_result(&gMysql);
+		field=mysql_fetch_row(res);
+		sprintf(cAuthCode,"%.99s",field[0]);
 		htmlInvoicePage("","PayInvoiceAp.Body");
 	else
 		htmlInvoicePage("","PayInvoiceDe.Body");
@@ -261,7 +274,10 @@ void htmlInvoicePage(char *cTitle, char *cTemplateName)
 			template.cpName[22]="cResult";
 			template.cpValue[22]=cResult;
 
-			template.cpName[23]="";
+			template.cpName[23]="cAuthCode";
+			template.cpValue[23]=cAuthCode;
+
+			template.cpName[24]="";
 			
 			printf("\n<!-- Start htmlInvoicePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);

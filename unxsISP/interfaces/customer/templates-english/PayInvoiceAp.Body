@@ -124,7 +124,8 @@
 	</tr>
         <tr>
                 <td colspan=2>
-		Thank you very much, your invoice has been updated and payment was processed OK.
+		Thank you very much, your invoice has been updated and payment was processed OK.<br>
+		Your transaction authorization code is: {{cAuthCode}}
 	</td>
 	</tr>
 </table>
