@@ -29,6 +29,8 @@ unsigned SubmitRequest(unsigned uInvoice)
 	unsigned uPort=443;
 	unsigned uMerchantID=0;
 	unsigned uApproved=0;
+	unsigned uExpYear=0;
+	unsigned uExpMonth=0;
 
 	char cMerchantID[100]={""};
 
@@ -48,15 +50,22 @@ unsigned SubmitRequest(unsigned uInvoice)
 
 	if((field=mysql_fetch_row(res)))
 	{
-		 sprintf(cPost,"requestType=BACKEND&merchant_id=%u&trnCardOwner=%s&trnCardNumber=%s"
-				"&trnExpMonth=%s&trnExpYear=%s&trnOrderNumber=%u&trnAmount=%s&ordEmailAddress=%s"
+		sscanf(field[12],"%u",&uExpMonth);
+		sscanf(field[13],"%u",&uExpYear);
+		
+		//Customer credit card expiry year. The year must be
+		//entered as a number less than 50
+		if(uExpYear>2000) uExpYear=uExpYear-2000;
+
+		sprintf(cPost,"requestType=BACKEND&merchant_id=%u&trnCardOwner=%s&trnCardNumber=%s"
+				"&trnExpMonth=%02u&trnExpYear=%u&trnOrderNumber=%u&trnAmount=%s&ordEmailAddress=%s"
 				"&ordName=%s %s&ordPhoneNumber=%s&ordAddress1=%s&ordAddress2=%s&ordCity=%s"
 				"&ordProvince=%s&ordPostalCode=%s&ordCountry=CA",
 				uMerchantID
 				,field[14]
 				,field[11]
-				,field[12]
-				,field[13]
+				,uExpMonth
+				,uExpYear
 				,uInvoice
 				,field[10]
 				,field[3]
