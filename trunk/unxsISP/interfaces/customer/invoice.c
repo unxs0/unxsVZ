@@ -817,16 +817,36 @@ void LoadPaymentData(void)
 
 void UpdatePaymentData(void)
 {
-	sprintf(gcQuery,"UPDATE tInvoice SET cCardType='%s',cCardName='%s',cCardNumber='%s',uExpMonth='%u',uExpYear='%u' WHERE uInvoice=%u",
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cEmail,cAddr1,cAddr2,cCity,cState,cZiP FROM tClient WHERE uClient=%u",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	res=mysql_store_result(&gMysql);
+	field=mysql_fetch_row(res);//will always return a row
+
+	sprintf(gcQuery,"UPDATE tInvoice SET cCardType='%s',cCardName='%s',cCardNumber='%s',uExpMonth='%u',uExpYear='%u',"
+			"cEmail='%s',cAddr1='%s',cAddr2='%s',cCity='%s',cState='%s',cZip='%s' WHERE uInvoice=%u",
 			cCardType
 			,cCardName
 			,cCardNumber
 			,uExpMonth
 			,uExpYear
+			,field[0]
+			,field[1]
+			,field[2]
+			,field[3]
+			,field[4]
+			,field[5]
 			,uInvoice);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
+	
+	mysql_free_result(res);
 
 }//void UpdatePaymentData(void)
 
