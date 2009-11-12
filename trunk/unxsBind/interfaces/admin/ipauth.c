@@ -678,6 +678,39 @@ void funcRemovedBlocks(FILE *fp)
 }//void funcRemovedBlocks(FILE *fp)
 
 
+void funcIgnoredLines(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char *cColor="";
+
+	sprintf(gcQuery,"SELECT cLine FROM tIgnoredTransaction");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	if(!mysql_num_rows(res))
+	{
+		fprintf(fp,"None\n");
+		mysql_free_result(res);
+		return;
+	}
+	while((field=mysql_fetch_row(res)))
+	{
+		if(strstr(field[0],"COMPANY NOT FOUND")) 
+			cColor="color=red";
+		else
+			cColor="";
+
+		fprintf(fp,"<font %s>%s</font><br>\n",cColor,field[0]);
+	}
+	
+	mysql_free_result(res);
+
+}//void funcIgnoredLines(FILE *fp)
+
+
 void idnsAdminLog(char *cMsg)
 {
 	char cQuery[1024]={""};

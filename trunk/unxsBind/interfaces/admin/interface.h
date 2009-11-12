@@ -208,6 +208,7 @@ void IPAuthGetHook(entry gentries[],int x);
 void IPAuthCommands(pentry entries[], int x);
 void funcIPAuthReport(FILE *fp);
 void funcReportActions(FILE *fp);
+void funcIgnoredLines(FILE *fp);
 
 //dashboard.c
 void htmlDashBoard(void);
