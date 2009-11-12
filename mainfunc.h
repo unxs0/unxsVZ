@@ -92,11 +92,7 @@ void CloneReport(const char *cOptionalMsg)
         MYSQL_RES *mysqlRes2;
         MYSQL_ROW mysqlField2;
 
-	char cCloneLabel[32];
-	char cCloneHostname[100];
 	char cuContainer[16];
-	char cuNode[16];
-	char cuDatacenter[16];
 	char *cColor;
 
 	//To handle error messages etc.
@@ -108,40 +104,30 @@ void CloneReport(const char *cOptionalMsg)
 
 	OpenFieldSet("CloneReport",100);
 
-	OpenRow("All Containers","black");
+	OpenRow("No Clone Containers","black");
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
 				" uSource=0 AND (uStatus=1 OR uStatus=31) ORDER BY cLabel,uDatacenter,uNode");
 	macro_mySQLQueryErrorText
-	printf("</td></tr>\n");
+	printf("</td></tr><tr><td></td><td>cLabel</td><td>cHostname</td><td>uContainer</td><td>uNode</td>"
+			"<td>uDatacenter</td>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
-		cCloneLabel[0]=0;
-		cCloneHostname[0]=0;
 		cuContainer[0]=0;
-		cuNode[0]=0;
-		cuDatacenter[0]=0;
 		cColor="";
 
 		sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
 					" uSource=%s",mysqlField[2]);
 		macro_mySQLQueryErrorText2
         	if((mysqlField2=mysql_fetch_row(mysqlRes2)))
-		{
-			sprintf(cCloneLabel,"%.31s",mysqlField2[0]);
-			sprintf(cCloneHostname,"%.99s",mysqlField2[1]);
 			sprintf(cuContainer,"%.15s",mysqlField2[2]);
-			sprintf(cuNode,"%.15s",mysqlField2[3]);
-			sprintf(cuDatacenter,"%.15s",mysqlField2[4]);
-		}
 		mysql_free_result(mysqlRes2);
 
 		if(!cuContainer[0])
-			cColor="bgcolor=#f6cece";
+		{
 
-		printf("<tr %s><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>"
-			"<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",cColor,
-			mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField[4],
-			cCloneLabel,cCloneHostname,cuContainer,cuNode,cuDatacenter);
+			printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
+					mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField[4]);
+		}
 	}
 	mysql_free_result(mysqlRes);
 
