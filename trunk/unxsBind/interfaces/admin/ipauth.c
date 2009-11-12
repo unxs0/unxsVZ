@@ -630,7 +630,8 @@ void funcRemovedBlocks(FILE *fp)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uBlock FROM tBlock WHERE uOwner IN (SELECT uClient FROM tClient WHERE uClient NOT IN "
+	sprintf(gcQuery,"SELECT cLabel,(SELECT cLabel FROM tClient WHERE tClient.uClient=tBlock.uOwner) " 
+		"FROM tBlock WHERE uOwner IN (SELECT uClient FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
 		"uClient!=1 AND uClient!=%u AND cCode='Organization')",DEFAULT_CLIENT);
 	mysql_query(&gMysql,gcQuery);
