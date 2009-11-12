@@ -97,6 +97,7 @@ void CloneReport(const char *cOptionalMsg)
 	char cuContainer[16];
 	char cuNode[16];
 	char cuDatacenter[16];
+	char *cColor;
 
 	//To handle error messages etc.
 	if(cOptionalMsg[0] && strcmp(cOptionalMsg,"CloneReport"))
@@ -109,7 +110,7 @@ void CloneReport(const char *cOptionalMsg)
 
 	OpenRow("All Containers","black");
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
-				" uSource=0 AND (uStatus=1 OR uStatus=31)");
+				" uSource=0 AND (uStatus=1 OR uStatus=31) ORDER BY cLabel,uDatacenter,uNode");
 	macro_mySQLQueryErrorText
 	printf("</td></tr>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
@@ -119,6 +120,7 @@ void CloneReport(const char *cOptionalMsg)
 		cuContainer[0]=0;
 		cuNode[0]=0;
 		cuDatacenter[0]=0;
+		cColor="";
 
 		sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
 					" uSource=%s",mysqlField[2]);
@@ -133,8 +135,11 @@ void CloneReport(const char *cOptionalMsg)
 		}
 		mysql_free_result(mysqlRes2);
 
-		printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>"
-			"<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+		if(!cuContainer[0])
+			cColor="bgcolor=#f6cece";
+
+		printf("<tr %s><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>"
+			"<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",cColor,
 			mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField[4],
 			cCloneLabel,cCloneHostname,cuContainer,cuNode,cuDatacenter);
 	}
