@@ -116,6 +116,7 @@ void ExtListSelect(const char *cTable,const char *cVarList);
 void ExtSelect(const char *cTable,const char *cVarList);
 void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch);
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
+void CloneReport(const char *cOptionalMsg);
 
 char *cURLEncode(char *cURL);
 void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry);

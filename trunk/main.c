@@ -303,9 +303,16 @@ void unxsVZ(const char *cResult)
 	Header_ism3("Main",0);
 
         if(cResult[0])
-		DashBoard(cResult);
+	{
+		if(!strcmp(cResult,"CloneReport"))
+			CloneReport(cResult);
+		else
+			DashBoard(cResult);
+	}
         else
+	{
                 ExtMainContent();
+	}
 
 	Footer_ism3();
 

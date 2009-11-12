@@ -21,6 +21,16 @@ AUTHOR/LEGAL
 					}\
 					mysqlRes=mysql_store_result(&gMysql);
 
+#define macro_mySQLQueryErrorText2	mysql_query(&gMysql,gcQuery);\
+					if(mysql_errno(&gMysql))\
+					{\
+						printf("%s\n",mysql_error(&gMysql));\
+						printf("</td></tr>\n");\
+						CloseFieldSet();\
+						return;\
+					}\
+					mysqlRes2=mysql_store_result(&gMysql);
+
 #include "local.h"
 char *strptime(const char *s, const char *format, struct tm *tm);
 
@@ -49,6 +59,7 @@ void NextMonthYear(char *cMonth,char *cYear,char *cNextMonth,char *cNextYear);
 void CalledByAlias(int iArgc,char *cArgv[]);
 void TextConnectDb(void);
 void DashBoard(const char *cOptionalMsg);
+void CloneReport(const char *cOptionalMsg);
 void EncryptPasswdMD5(char *pw);
 void GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
@@ -65,13 +76,74 @@ int iExtMainCommands(pentry entries[], int x)
 {
 	if(!strcmp(gcFunction,"MainTools"))
 	{
-		if(!strcmp(gcCommand,"Dashboard"))
+		if(!strcmp(gcCommand,"CloneReport"))
 		{
-			unxsVZ("DashBoard");
+			unxsVZ("CloneReport");
 		}
 	}
 	return(0);
 }
+
+
+void CloneReport(const char *cOptionalMsg)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+        MYSQL_RES *mysqlRes2;
+        MYSQL_ROW mysqlField2;
+
+	char cCloneLabel[32];
+	char cCloneHostname[100];
+	char cuContainer[16];
+	char cuNode[16];
+	char cuDatacenter[16];
+
+	//To handle error messages etc.
+	if(cOptionalMsg[0] && strcmp(cOptionalMsg,"CloneReport"))
+	{
+		printf("%s\n",cOptionalMsg);
+		return;
+	}
+
+	OpenFieldSet("CloneReport",100);
+
+	OpenRow("All Containers","black");
+	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
+				" uSource=0 AND (uStatus=1 OR uStatus=31)");
+	macro_mySQLQueryErrorText
+	printf("</td></tr>\n");
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		cCloneLabel[0]=0;
+		cCloneHostname[0]=0;
+		cuContainer[0]=0;
+		cuNode[0]=0;
+		cuDatacenter[0]=0;
+
+		sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
+					" uSource=%s",mysqlField[2]);
+		macro_mySQLQueryErrorText2
+        	if((mysqlField2=mysql_fetch_row(mysqlRes2)))
+		{
+			sprintf(cCloneLabel,"%.31s",mysqlField2[0]);
+			sprintf(cCloneHostname,"%.99s",mysqlField2[1]);
+			sprintf(cuContainer,"%.15s",mysqlField2[2]);
+			sprintf(cuNode,"%.15s",mysqlField2[3]);
+			sprintf(cuDatacenter,"%.15s",mysqlField2[4]);
+		}
+		mysql_free_result(mysqlRes2);
+
+		printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>"
+			"<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+			mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField[4],
+			cCloneLabel,cCloneHostname,cuContainer,cuNode,cuDatacenter);
+	}
+	mysql_free_result(mysqlRes);
+
+
+	CloseFieldSet();
+
+}//void CloneReport(const char *cOptionalMsg)
 
 
 void DashBoard(const char *cOptionalMsg)
@@ -404,7 +476,7 @@ void ExtMainContent(void)
 		printf("</td></tr>\n");
         	OpenRow("Admin Functions","black");
 		printf("<td><input type=hidden name=gcFunction value=MainTools>\n");
-		printf(" <input class=largeButton type=submit name=gcCommand value=Dashboard></td></tr>\n");
+		printf(" <input class=largeButton type=submit name=gcCommand value=CloneReport ></td></tr>\n");
 	}
 
 	CloseFieldSet();
