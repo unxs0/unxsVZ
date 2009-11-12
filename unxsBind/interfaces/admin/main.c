@@ -541,6 +541,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcRemovedCompanies(fp);
 	else if(!strcmp(cFunction,"funcRemovedBlocks"))
 		funcRemovedBlocks(fp);
+	else if(!strcmp(cFunction,"funcIgnoredLines"))
+		funcIgnoredLines(fp);
 
 }//void AppFunctions(FILE *fp,char *cFunction)
 
