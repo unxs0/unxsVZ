@@ -226,7 +226,8 @@ void funcIPAuthReport(FILE *fp)
 #define NEW_BLOCK 1
 #define MOD_BLOCK 2
 #define NA_BLOCK 3
-#define DEFAULT_CLIENT 2
+//#define uDefaultClient 2
+unsigned uDefaultClient=0;
 
 void CreateTransactionTable();
 unsigned uGetBlockStatus(char *cBlock,unsigned uClient);
@@ -271,8 +272,12 @@ void RIPEImport(void)
 	unsigned uOwnerStatus=0;
 	char *cBlockAction="";
 	char *cOwnerAction="";
+	char cuDefaultClient[16]={""};
 
 	CreateTransactionTable();
+	
+	GetConfiguration("uDefaultClient",cuDefaultClient,1);
+	sscanf(cuDefaultClient,"%u",&uDefaultClient);
 
 	sprintf(gcQuery,"TRUNCATE tTransaction");
 	mysql_query(&gMysql,gcQuery);
@@ -327,7 +332,7 @@ void RIPEImport(void)
 				,&uSize
 				,&uDate
 				,cUnused);
-			uClient=DEFAULT_CLIENT;
+			uClient=uDefaultClient;
 		}
 		else if(strstr(cLine,"-DELE"))
 		{
@@ -498,6 +503,8 @@ unsigned uClientCSVCheck(unsigned uClient)
 	unsigned uFileClient=0;
 	char cLabel[100]={""};
 
+	if(uClient==uDefaultClient) return(1); //exception ;)
+
 	//Open CSV file at fixed location
 	fp=fopen(cCompanyCSVLocation,"r");
 	if(fp==NULL)
@@ -558,7 +565,7 @@ void funcReportActions(FILE *fp)
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization'",DEFAULT_CLIENT);
+		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -570,7 +577,7 @@ void funcReportActions(FILE *fp)
 
 	sprintf(gcQuery,"SELECT uBlock FROM tBlock WHERE uOwner IN (SELECT uClient FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization')",DEFAULT_CLIENT);
+		"uClient!=1 AND uClient!=%u AND cCode='Organization')",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -629,7 +636,7 @@ void funcRemovedCompanies(FILE *fp)
 
 	sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization'",DEFAULT_CLIENT);
+		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -658,7 +665,7 @@ void funcRemovedBlocks(FILE *fp)
 	sprintf(gcQuery,"SELECT cLabel,(SELECT cLabel FROM tClient WHERE tClient.uClient=tBlock.uOwner) " 
 		"FROM tBlock WHERE uOwner IN (SELECT uClient FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization')",DEFAULT_CLIENT);
+		"uClient!=1 AND uClient!=%u AND cCode='Organization')",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -913,11 +920,11 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 			//24 and smaller blocks
 			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 			//Check for .arpa zone if it doesn't exist, create it
-			//owned by DEFAULT_CLIENT
+			//owned by uDefaultClient
 			res=ZoneQuery(cZone);
 			if(!mysql_num_rows(res))
 CreateZone:			
-				uZone=uCreateZone(cZone,DEFAULT_CLIENT);
+				uZone=uCreateZone(cZone,uDefaultClient);
 			else
 			{
 				field=mysql_fetch_row(res);
@@ -954,7 +961,7 @@ CreateZoneLargeBlock:
 				res=ZoneQuery(cZone);
 				if(!mysql_num_rows(res))
 				{
-					uZone=uCreateZone(cZone,DEFAULT_CLIENT);
+					uZone=uCreateZone(cZone,uDefaultClient);
 				}
 				else
 				{
@@ -1000,7 +1007,7 @@ CreateZoneLargeBlock:
 			//24 and smaller blocks
 			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 			//Check for .arpa zone if it doesn't exist, create it
-			//owned by DEFAULT_CLIENT
+			//owned by uDefaultClient
 			res=ZoneQuery(cZone);
 			if(!mysql_num_rows(res))
 				goto CreateZone;
@@ -1208,7 +1215,7 @@ void CleanUpCompanies(void)
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization'",DEFAULT_CLIENT);
+		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1295,7 +1302,7 @@ void CleanUpBlock(char *cIPBlock)
 		for(f=d;f<(uNumIPs+1);f++)
 		{
 			sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
-			ResetRR(cZone,f,cParam1,DEFAULT_CLIENT);
+			ResetRR(cZone,f,cParam1,uDefaultClient);
 		}
 		//Update zone serial
 		UpdateSerialNum(cZone,"2");
@@ -1316,7 +1323,7 @@ void CleanUpBlock(char *cIPBlock)
 			for(f=d;f<254;f++)
 			{
 				sprintf(cParam1,"%u-%u-%u-%u.%s",f,x,b,a,cUpdateHost);
-				ResetRR(cZone,f,cParam1,DEFAULT_CLIENT);
+				ResetRR(cZone,f,cParam1,uDefaultClient);
 			}
 			//Update zone serial
 			UpdateSerialNum(cZone,"2");
