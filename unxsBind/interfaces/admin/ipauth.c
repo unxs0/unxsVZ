@@ -232,6 +232,8 @@ void CreateTransactionTable();
 unsigned uGetBlockStatus(char *cBlock,unsigned uClient);
 unsigned uGetOwnerStatus(unsigned uClient);
 unsigned uClientCSVCheck(unsigned uClient);
+void AddToRejectsTable(char *cLine);
+
 
 void CreateTransactionTable()
 {
@@ -241,6 +243,11 @@ void CreateTransactionTable()
 			"uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, "
 			"cBlockAction VARCHAR(100) NOT NULL DEFAULT '', cOwnerAction VARCHAR(100) NOT NULL DEFAULT '',"
 			"uClient INT UNSIGNED NOT NULL DEFAULT 0 )");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tIgnoredTransaction (uIgnoredTransaction INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, "
+			"cLine VARCHAR(255) NOT NULL DEFAULT '')");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -268,6 +275,10 @@ void RIPEImport(void)
 	CreateTransactionTable();
 
 	sprintf(gcQuery,"TRUNCATE tTransaction");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	sprintf(gcQuery,"TRUNCATE tIgnoredTransaction");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -328,6 +339,9 @@ void RIPEImport(void)
 		{
 			//Invalid, skip
 			uIgnored++;
+			AddToRejectsTable(cLine);
+			mysql_query(&gMysql,gcQuery);
+
 			continue;
 		}
 
@@ -335,6 +349,8 @@ void RIPEImport(void)
 		if(!uClientCSVCheck(uClient))
 		{
 			//Add record to rejects table
+			strcat(cLine," *** COMPANY NOT FOUND ***");
+			AddToRejectsTable(cLine);
 			continue;
 		}
 		//uCidr=(unsigned)(32-log2(uSize));
@@ -404,6 +420,15 @@ void RIPEImport(void)
 	
 }//void RIPEImport(void)
 
+
+void AddToRejectsTable(char *cLine)
+{
+	sprintf(gcQuery,"INSERT INTO tIgnoredTransaction SET cLine='%s'",cLine);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void AddToRejectsTable(char *cLine)
 
 unsigned uGetBlockStatus(char *cBlock,unsigned uClient)
 {
