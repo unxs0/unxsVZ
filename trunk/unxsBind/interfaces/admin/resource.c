@@ -825,12 +825,14 @@ unsigned uGetBlockOwner(char *cPTR)
 
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-
+	
 	sscanf(gcZone,"%u.%u.%u.in-addr.arpa",&c,&b,&a);
 	sscanf(cPTR,"%u",&d);
 	sprintf(cIP,"%u.%u.%u.%u",a,b,c,d);
 
+
 	sprintf(gcQuery,"SELECT cLabel,uOwner FROM tBlock WHERE cLabel LIKE '%u.%u.%u.%%'",a,b,c);
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -845,7 +847,7 @@ unsigned uGetBlockOwner(char *cPTR)
 	}
 
 	if(uOwner==0) uOwner=uForClient; //Default to zone owner if no match in tBlock
-
+	
 	return(uOwner);
 
 }//unsigned uGetBlockOwner(char *cPTR)
@@ -2483,6 +2485,9 @@ unsigned OnLineZoneCheck(void)
 	char cTTL[50]={""};
 	char cZoneFile[100]={""};
 
+	//Test if named-checkzone can be run, otherwise return 0
+	if(access("/usr/sbin/named-checkzone",X_OK)==-1) return(0); //Ticket #100
+	
 	PrepareTestData();
 
 	sprintf(cZoneFile,"/tmp/%s",gcZone);

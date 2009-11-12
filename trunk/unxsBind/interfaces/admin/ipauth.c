@@ -25,6 +25,9 @@ void CommitTransaction(void);
 
 void htmlIPAuthReport(void);
 
+int floorLog2(unsigned int n);
+
+
 void ProcessIPAuthVars(pentry entries[], int x)
 {
 	register int i;
@@ -334,7 +337,8 @@ void RIPEImport(void)
 			//Add record to rejects table
 			continue;
 		}
-		uCidr=(unsigned)(32-log2(uSize));
+		//uCidr=(unsigned)(32-log2(uSize));
+		uCidr=(unsigned)(32-floorLog2(uSize));
 
 		/*printf("cIPBlockStart='%s' cIPBlockEnd='%s' uSize=%u uDate=%u uClient=%u uOther=%u uCidr=%u\n",
 			cIPBlockStart
@@ -1282,3 +1286,16 @@ void ResetRR(char *cZone,unsigned uName,char *cParam1,unsigned uOwner)
 		htmlPlainTextError(mysql_error(&gMysql));
 
 }//void ResetRR(char *cZone,char *cParam1)
+
+
+int floorLog2(unsigned int n)
+{
+	int pos = 0;
+	if (n >= 1<<16) { n >>= 16; pos += 16; }
+	if (n >= 1<< 8) { n >>=  8; pos +=  8; }
+	if (n >= 1<< 4) { n >>=  4; pos +=  4; }
+	if (n >= 1<< 2) { n >>=  2; pos +=  2; }
+	if (n >= 1<< 1) {           pos +=  1; }
+	return ((n == 0) ? (-1) : pos);
+}
+
