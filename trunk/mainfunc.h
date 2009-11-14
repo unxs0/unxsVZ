@@ -108,8 +108,8 @@ void CloneReport(const char *cOptionalMsg)
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
 				" uSource=0 AND (uStatus=1 OR uStatus=31) ORDER BY cLabel,uDatacenter,uNode");
 	macro_mySQLQueryErrorText
-	printf("</td></tr><tr><td></td><td>cLabel</td><td>cHostname</td><td>uContainer</td><td>uNode</td>"
-			"<td>uDatacenter</td>\n");
+	printf("</td></tr><tr><td></td><td><u>cLabel</u></td><td><u>cHostname</u></td><td><u>uContainer</u></td>"
+			"<td><u>uNode</td><td><u>uDatacenter</u></td>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		cuContainer[0]=0;
