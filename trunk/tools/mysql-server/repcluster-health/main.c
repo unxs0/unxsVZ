@@ -2,7 +2,13 @@
 #include <mysql/mysql.h>
 #include <stdlib.h>
 
+char gcQuery[1024]={""};
+
 void ConnectMySQL(MYSQL *aMySQL,char *cIP,char *cLogin,char *cPwd,char *cDb);
+void CreateTestTable(MYSQL *MySQLVector,int iIndex);
+void RemoveTestTable(MYSQL *MySQLVector,int iIndex);
+void CheckTestTable(MYSQL *MySQLVector,int iServerIndex,int iTableIndex);
+
 
 int main(void)
 {
@@ -10,7 +16,6 @@ int main(void)
 	char *cDbLogin="test";
 	char *cDbPwd="wsxedc";
 	char *cDbName="test";
-	char cQuery[1024]={""};
 
 	MYSQL MySQLVectors[5]; //Up to 6 MySQL servers can be defined in the cServerIps array
 	int i=0;
@@ -26,34 +31,19 @@ int main(void)
 	printf("Connected to %i MySQL servers OK\n",i);
 	
 	for(j=0;j<i;j++)
-	{
-		sprintf(cQuery,"CREATE TABLE delme%i (cData VARCHAR(16) NOT NULL DEFAULT '')",j);
-		mysql_query(&MySQLVectors[j],cQuery);
-		if(mysql_errno(&MySQLVectors[j]))
-		{
-			printf("Fatal: CREATE TABLE failed for server #%i\n",j);
-			printf("Error was: %s\n",mysql_error(&MySQLVectors[j]));
-			exit(EXIT_FAILURE);
-		}
-	}
+		CreateTestTable(&MySQLVectors[j],j);
 
 	for(j=0;j<i;j++)
 	{
-		for(x;<i;x++)
+		for(x=0;x<i;x++)
 		{
-			MYSQL_RES *res;
-			MYSQL_ROW field;
-
-			sprintf(gcQuery,"CHECKSUM TABLE delme%i",x);
-			mysql_query(&MySQLVectors[j],cQuery);
-			if(mysql_errno(&MySQLVectors[j]))
-			{
-				printf("Fatal: CHECKSUM TABLE failed for server #%i\n",j);
-				printf("Error was: %s\n",mysql_error(&MySQLVectors[j]));
-				exit(EXIT_FAILURE);
-			}
+			CheckTestTable(&MySQLVectors[j],j,x);
 		}
 	}
+	
+	for(j=0;j<i;j++)
+		RemoveTestTable(&MySQLVectors[j],j);
+
 
 	for(j=0;j<i;j++)
 		mysql_close(&MySQLVectors[j]);
@@ -77,4 +67,57 @@ void ConnectMySQL(MYSQL *aMySQL,char *cIP,char *cLogin,char *cPwd,char *cDb)
 	}
 	
 }//void ConnectMySQL(MYSQL *aMySQL[],char *cIPs[],char *cLogin,char *cPwd,char *cDb)
+
+
+void CreateTestTable(MYSQL *MySQLVector,int iIndex)
+{
+	sprintf(gcQuery,"CREATE TABLE delme%i (cData VARCHAR(16) NOT NULL DEFAULT '')",iIndex);
+	mysql_query(MySQLVector,gcQuery);
+	if(mysql_errno(MySQLVector))
+	{
+		printf("Fatal: CREATE TABLE failed for server #%i\n",iIndex);
+		printf("Error was: %s\n",mysql_error(MySQLVector));
+		exit(EXIT_FAILURE);
+	}
+
+}//void CreateTestTable(MYSQL MySQLVector,int iIndex)
+
+
+void RemoveTestTable(MYSQL *MySQLVector,int iIndex)
+{
+	sprintf(gcQuery,"DROP TABLE delme%i",iIndex);
+	mysql_query(MySQLVector,gcQuery);
+	if(mysql_errno(MySQLVector))
+	{
+		printf("Fatal: DROP TABLE failed for server #%i\n",iIndex);
+		printf("Error was: %s\n",mysql_error(MySQLVector));
+		exit(EXIT_FAILURE);
+	}
+}//void RemoveTestTable(MYSQL *MySQLVector,int iIndex)
+
+
+void CheckTestTable(MYSQL *MySQLVector,int iServerIndex,int iTableIndex)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"CHECKSUM TABLE delme%i",iTableIndex);
+	mysql_query(MySQLVector,gcQuery);
+	if(mysql_errno(MySQLVector))
+	{
+		printf("Fatal: CHECKSUM TABLE failed for server #%i\n",iServerIndex);
+		printf("Error was: %s\n",mysql_error(MySQLVector));
+		exit(EXIT_FAILURE);
+	}
+	res=mysql_store_result(MySQLVector);
+	field=mysql_fetch_row(res);
+	if(field[1]==NULL)
+	{
+		printf("Replication error: table delme%i was not found at server #%i\n",iTableIndex,iServerIndex);
+		printf("field[0]='%s'\n",field[0]);
+		exit(EXIT_FAILURE);
+	}
+	mysql_free_result(res);
+
+}//void CheckTestTable(MYSQL *MySQLVector,int iServerIndex,int iTableIndex)
 
