@@ -32,7 +32,6 @@ static char *cTemplate={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -316,11 +315,11 @@ void tTemplateInput(unsigned uMode)
 ,LANG_FT_tTemplate_cComment);
 	if(guPermLevel>=7 && uMode)
 	{
-		printf(">%s</textarea></td></tr>\n",cComment);
+		printf(">%s</textarea></td></tr>\n",TransformAngleBrackets(cComment));
 	}
 	else
 	{
-		printf("disabled>%s</textarea></td></tr>\n",cComment);
+		printf("disabled>%s</textarea></td></tr>\n",TransformAngleBrackets(cComment));
 		printf("<input type=hidden name=cComment value=\"%s\" >\n",EncodeDoubleQuotes(cComment));
 	}
 //cTemplate
@@ -329,11 +328,11 @@ void tTemplateInput(unsigned uMode)
 ,LANG_FT_tTemplate_cTemplate);
 	if(guPermLevel>=7 && uMode)
 	{
-		printf(">%s</textarea></td></tr>\n",cTemplate);
+		printf(">%s</textarea></td></tr>\n",TransformAngleBrackets(cTemplate));
 	}
 	else
 	{
-		printf("disabled>%s</textarea></td></tr>\n",cTemplate);
+		printf("disabled>%s</textarea></td></tr>\n",TransformAngleBrackets(cTemplate));
 		printf("<input type=hidden name=cTemplate value=\"%s\" >\n",EncodeDoubleQuotes(cTemplate));
 	}
 //uOwner
@@ -392,9 +391,7 @@ void NewtTemplate(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate\
-				WHERE uTemplate=%u"
-							,uTemplate);
+	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE uTemplate=%u",uTemplate);
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -407,15 +404,12 @@ void NewtTemplate(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uTemplate=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tTemplate",uTemplate);
 	unxsVZLog(uTemplate,"tTemplate","New");
-#endif
-
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uTemplate);
-	tTemplate(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uTemplate);
+		tTemplate(gcQuery);
 	}
 
 }//NewtTemplate(unsigned uMode)
@@ -423,27 +417,18 @@ void NewtTemplate(unsigned uMode)
 
 void DeletetTemplate(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tTemplate WHERE uTemplate=%u AND ( uOwner=%u OR %u>9 )"
 					,uTemplate,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tTemplate WHERE uTemplate=%u"
-					,uTemplate);
-#endif
 	MYSQL_RUN;
 	//tTemplate("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uTemplate,"tTemplate","Del");
-#endif
 		tTemplate(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uTemplate,"tTemplate","DelError");
-#endif
 		tTemplate(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -494,7 +479,6 @@ void ModtTemplate(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -507,14 +491,7 @@ void ModtTemplate(void)
 				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
 			,uTemplate,guLoginClient,guLoginClient);
 	else
-	sprintf(gcQuery,"SELECT uTemplate,uModDate FROM tTemplate\
-				WHERE uTemplate=%u"
-						,uTemplate);
-#else
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate\
-				WHERE uTemplate=%u"
-						,uTemplate);
-#endif
+	sprintf(gcQuery,"SELECT uTemplate,uModDate FROM tTemplate WHERE uTemplate=%u",uTemplate);
 
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
@@ -525,19 +502,15 @@ void ModtTemplate(void)
 	if(i>1) tTemplate(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tTemplate(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tTemplate(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tTemplate",uTemplate);
 	unxsVZLog(uTemplate,"tTemplate","Mod");
-#endif
 	tTemplate(gcQuery);
 
 }//ModtTemplate(void)
@@ -565,8 +538,6 @@ void tTemplateList(void)
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
 	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uTemplate<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uTemplateSet<td><font face=arial,helvetica color=white>uTemplateType<td><font face=arial,helvetica color=white>cComment<td><font face=arial,helvetica color=white>cTemplate<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
 
-
-
 	mysql_data_seek(res,guStart-1);
 
 	for(guN=0;guN<(guEnd-guStart+1);guN++)
@@ -593,14 +564,17 @@ void tTemplateList(void)
 			ctime_r(&luTime10,cBuf10);
 		else
 			sprintf(cBuf10,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s"
+				"<td><textarea disabled>%s</textarea>"
+				"<td><textarea disabled>%s</textarea>"
+				"<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
 			,ForeignKey("tTemplateSet","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tTemplateType","cLabel",strtoul(field[3],NULL,10))
-			,field[4]
-			,field[5]
+			,TransformAngleBrackets(field[4])
+			,TransformAngleBrackets(field[5])
 			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[7],NULL,10))
 			,cBuf8
@@ -618,7 +592,7 @@ void tTemplateList(void)
 
 void CreatetTemplate(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tTemplate ( uTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cComment TEXT NOT NULL DEFAULT '', cTemplate TEXT NOT NULL DEFAULT '', uTemplateSet INT UNSIGNED NOT NULL DEFAULT 0, uTemplateType INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tTemplate ( uTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', INDEX (cLabel), uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cComment TEXT NOT NULL DEFAULT '', cTemplate TEXT NOT NULL DEFAULT '', uTemplateSet INT UNSIGNED NOT NULL DEFAULT 0, uTemplateType INT UNSIGNED NOT NULL DEFAULT 0 )");
 	MYSQL_RUN;
 
 }//CreatetTemplate()
