@@ -171,7 +171,7 @@ lorem ipsum
 		<td>
 		<table border="0" cellspacing="0" cellpadding="7" width="100%" class="table_content" style="margin-top:5px;">
 		<tr bgcolor="#e9e9e9">
-		<th>IP Block</th><th>Company</th><th>Block Action</th><th>Company Action</th></tr>
+		<th>IP Block</th><th>External Company #</th><th>Company Name</th><th>Block Action</th><th>Company Action</th></tr>
 		{{funcIPAuthReport}}
 		</table>
 		</td>
