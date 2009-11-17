@@ -103,14 +103,16 @@ void InvoiceCommands(pentry entries[], int x)
 		ProcessInvoiceVars(entries,x);
 		if(!strcmp(gcFunction,"Show Invoice for Printing"))
 			PrintInvoice();
-		else if(!strcmp(gcFunction,"Pay Loaded Invoice"))
+		else if(!strcmp(gcFunction,"Pay Loaded Invoice") ||
+			!strcmp(gcFunction,"Pagar la Factura Actual"))
 		{
 			gcInputStatus[0]=0;
 			PaymentFieldsOn();
 			LoadPaymentData();
 			htmlPayInvoice();
 		}
-		else if(!strcmp(gcFunction,"Complete Payment"))
+		else if(!strcmp(gcFunction,"Complete Payment") ||
+			!strcmp(gcFunction,"Completar Pago"))
 		{
 			if(!ValidatePaymentInput())			
 			{
@@ -173,10 +175,11 @@ void htmlPostPayment(unsigned uMode)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_strore_result(&gMysql);
+		res=mysql_store_result(&gMysql);
 		field=mysql_fetch_row(res);
 		sprintf(cAuthCode,"%.99s",field[0]);
 		htmlInvoicePage("","PayInvoiceAp.Body");
+	}
 	else
 		htmlInvoicePage("","PayInvoiceDe.Body");
 	htmlFooter("Footer");
