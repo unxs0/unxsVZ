@@ -328,16 +328,17 @@ void tTemplateInput(unsigned uMode)
 	}
 //cTemplate
 	OpenRow(LANG_FL_tTemplate_cTemplate,"black");
-	printf("<textarea title='%s' cols=80 wrap=off rows=16 name=cTemplate "
-,LANG_FT_tTemplate_cTemplate);
+//	printf("<textarea title='%s' cols=80 wrap=off rows=16 name=cTemplate "
+//,LANG_FT_tTemplate_cTemplate);
 	if(guPermLevel>=7 && uMode)
 	{
+		printf("<textarea title='%s' cols=80 wrap=off rows=16 name=cTemplate ",LANG_FT_tTemplate_cTemplate);
 		printf(">%s</textarea></td></tr>\n",cTemplate);
 		printf("<script type='text/javascript'>CKEDITOR.replace( 'cTemplate' );</script>\n");
 	}
 	else
 	{
-		printf("disabled>%s</textarea></td></tr>\n",cTemplate);
+//		printf("disabled>%s</textarea></td></tr>\n",cTemplate);
 		printf("<input type=hidden name=cTemplate value=\"%s\" >\n",EncodeDoubleQuotes(cTemplate));
 	}
 //uOwner
