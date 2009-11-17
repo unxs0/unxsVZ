@@ -15,9 +15,9 @@ Uncompress the .tar.gz:
 
 # tar zxf ckeditor_3.0.1.tar.gz
 
-And then copy the contest of it to the /var/www/unxs/html/js folder
+And then copy the contents of the extracted dir to the /var/www/unxs/html/js folder
 
-# cp -R ckeditor/* /var/www/unxs/html/js
+# cp -iR ckeditor/* /var/www/unxs/html/js
 
 And voila!
 
