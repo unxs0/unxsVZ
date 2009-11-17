@@ -1,10 +1,10 @@
 Summary: A small static library for unxsVZ templates
 Name: unxstemplate
-Version: 1.0
+Version: 1.1
 Release: 1
 License: LGPL
 Group: System Environment/Libraries
-Source: http://unixservice.com/source/libs/unxstemplate-1.0.tar.gz
+Source: http://unixservice.com/source/libs/unxstemplate-1.1.tar.gz
 URL: http://unixservice.com/unxstemplate
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -35,5 +35,7 @@ make install
 /usr/include/openisp/template.h
 
 %changelog
+* Tue Nov 17 2009 Dilva Garmendia <support@unixservice.com> 
+- New version with improved docs, makefile. Removed textarea hack.
 * Sat Apr 09 2009 Dilva Garmendia <support@unixservice.com> 
 - Initial RPM release

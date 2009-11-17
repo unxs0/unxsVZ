@@ -1,25 +1,35 @@
-unxstemplate-1.0
+unxstemplate-1.1
 
 Note: server1> as used below is an example command line prompt.
 
 
 1-. How to install this LGPL library:
 
-server1> make install 
+	If you have the mysql-devel pkg installed then
 
-should do the trick ;)
+	server1> make install 
 
+	should be enough.
 
 2-. How to use it in your programs:
 
-Place an include in your program file or header file where needed
+	Place an include in your program file or header file where needed
 
-#include <openisp/template.h>
+	#include <openisp/template.h>
 
-Link to this small static library, for example:
+	Link to this small static library, for example:
 
-server1> cc example.o -o example /usr/lib/openisp/template.a
+	server1> cc example.o -o example /usr/lib/openisp/template.a
+
+	You must also have the following global MySQL structure defined
+	and correctly initialized (connected to MySQL server etc.):
+
+	MYSQL gMysql;
+
+	And finall you must provide at least a stub version of this function:
+
+	void AppFunctions(FILE *fp,char *cFunction);
 
 
-3-. For more information see the included makefile and the template.h
+3-. For more information see the included KISS makefile and the template.h
 	and template.c files herein.

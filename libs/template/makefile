@@ -3,21 +3,17 @@
 #	makefile
 #	$Id: makefile 1397 2007-08-09 14:32:57Z Gary $
 #AUTHOR/LEGAL
-#	(C) 2006-2007 Gary Wallis for Unixservice.
+#	(C) 2006-2009 Gary Wallis for Unixservice, LLC.
 # 	LGPL License applies
 #PURPOSE
-#	Create and install openisp RAD3 .a template library
+#	Create and install openisp static template library
+#	This library allows for very fast {{cVarName}} to cVarValue pair
+#	substitution including special multiline nested (recursive) function cVarName's.
 #
 
-CFLAGS= -Wall -DLinux
+CFLAGS=-Wall
 
-ifdef FreeBSD
-	LIBS= /usr/local/lib/mysql/libmysqlclient.a -lz -lssl
-else
-	LIBS= /usr/lib/mysql/libmysqlclient.a -lz -lssl
-endif
-
-
+LIBS=-L/usr/lib/mysql -lmysqlclient -lz -lssl
 
 all: libtemplate.a
 
