@@ -200,6 +200,8 @@ void funcIPAuthReport(FILE *fp)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	char cCompanyName[100]={""};
+	unsigned uCompanyId=0;
 
 	sprintf(gcQuery,"SELECT cBlock,uClient,cBlockAction,cOwnerAction FROM tTransaction ORDER BY uTransaction");
 	mysql_query(&gMysql,gcQuery);
@@ -211,9 +213,12 @@ void funcIPAuthReport(FILE *fp)
 
 	while((field=mysql_fetch_row(res)))
 	{
-		fprintf(fp,"<tr><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td></tr>\n",
+		sscanf(field[1],"%u",&uCompanyId);
+		CSVFileData(uCompanyId,cCompanyName);
+		fprintf(fp,"<tr><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td></tr>\n",
 			field[0]
 			,field[1]
+			,cCompanyName
 			,field[2]
 			,field[3]
 			);
@@ -280,6 +285,8 @@ void RIPEImport(void)
 	
 	GetConfiguration("uDefaultClient",cuDefaultClient,1);
 	sscanf(cuDefaultClient,"%u",&uDefaultClient);
+	if(!uDefaultClient)
+		htmlPlainTextError("Create a tConfiguration entry for uDefaultClient, it must contain the tClient.uClient value for your company");
 
 	sprintf(gcQuery,"TRUNCATE tTransaction");
 	mysql_query(&gMysql,gcQuery);
@@ -501,6 +508,7 @@ unsigned uGetOwnerStatus(unsigned uClient)
 unsigned uClientCSVCheck(unsigned uClient)
 {
 	return(CSVFileData(uClient,NULL));
+
 }
 
 unsigned CSVFileData(unsigned uClient,char *cName)
@@ -521,7 +529,7 @@ unsigned CSVFileData(unsigned uClient,char *cName)
 	while(fgets(gcQuery,2048,fp)!=NULL)
 	{
 		sscanf(gcQuery,"%u,%s",&uFileClient,cLabel);
-		sprintf(cName,"%s",cLabel);
+		if(cName!=NULL) sprintf(cName,"%.65s",cLabel);
 		if(uClient==uFileClient)
 		{
 			fclose(fp);
