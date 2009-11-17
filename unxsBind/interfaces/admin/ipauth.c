@@ -193,6 +193,7 @@ void htmlIPAuthPage(char *cTitle, char *cTemplateName)
 
 }//void htmlIPAuthPage()
 
+void CSVFileGetData(unsigned uClient,unsigned *uMatch,char *cName);
 
 void funcIPAuthReport(FILE *fp)
 {
@@ -498,12 +499,24 @@ unsigned uGetOwnerStatus(unsigned uClient)
 
 unsigned uClientCSVCheck(unsigned uClient)
 {
+	unsigned uRet=0;
+	CSVFileGetData(uClient,&uRet,NULL);
+	return(uRet);
+
+}//unsigned uClientCSVCheck(unsigned uClient)
+
+
+void CSVFileGetData(unsigned uClient,unsigned *uMatch,char *cName)
+{
 	FILE *fp;
 	char cCompanyCSVLocation[100]={"/usr/local/idns/csv/companycode.csv"};
 	unsigned uFileClient=0;
 	char cLabel[100]={""};
 
-	if(uClient==uDefaultClient) return(1); //exception ;)
+	if(uClient==uDefaultClient)
+	{
+		&uMatch=1;
+		return; //exception ;)
 
 	//Open CSV file at fixed location
 	fp=fopen(cCompanyCSVLocation,"r");
@@ -516,14 +529,19 @@ unsigned uClientCSVCheck(unsigned uClient)
 		sscanf(gcQuery,"%u,%s",&uFileClient,cLabel);
 		if(uClient==uFileClient)
 		{
+			sprintf(cName,"%s",cLabel);
 			fclose(fp);
-			return(1);
+			&uMatch=1;
+			return;
 		}
 	}
 	fclose(fp);
-	return(0);
 
-}//unsigned uClientCSVCheck(unsigned uClient)
+}//void CSVFileGetData(unsigned uClient,unsigned *uMatch,char *cName)
+
+
+
+void CSVFileGetData(unsigned uClient,unsigned uMatch,char *cName);
 
 //
 //End data processing functions
@@ -1086,73 +1104,59 @@ CreateZoneLargeBlock:
 
 unsigned ProcessCompanyTransaction(unsigned uClient,char *cAction)
 {
-	FILE *fp;
-	char cCompanyCSVLocation[100]={"/usr/local/idns/csv/companycode.csv"};
 	unsigned uFileClient=0;
-	unsigned uMatch=0;
 	char cLabel[100]={""};
+	unsigned uMatch=0;
+	unsigned uContact=0;
+	char cPasswd[100]={""};
+	char cSavePasswd[16]={""};
 
 	if(!strcmp(cAction,"None")) return(1);
 
 	//Default 'New'
 	
-	//Open CSV file at fixed location
-	fp=fopen(cCompanyCSVLocation,"r");
-	if(fp==NULL)
-		htmlPlainTextError("Could not open CSV file for companies");
-	
 	//Search for uClient at CSV file
-	while(fgets(gcQuery,2048,fp)!=NULL)
-	{
-		sscanf(gcQuery,"%u,%s",&uFileClient,cLabel);
-		if((uClient==uFileClient)&&!uMatch)
-		{
-			uMatch=1;
-			unsigned uContact=0;
-			char cPasswd[100]={""};
-			char cSavePasswd[16]={""};
-			//Create tClient record
-			sprintf(gcQuery,"INSERT INTO tClient SET uClient=%u,cLabel='%s',"
-					"cCode='Organization',uOwner=1,uCreatedBy=%u,"
-					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					uClient
-					,cLabel
-					,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			//Create default contact with same cLabel
-			sprintf(gcQuery,"INSERT INTO tClient SET uOwner=%u,cLabel='%s',"
-					"cCode='Contact',uCreatedBy=%u,"
-					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					uClient
-					,cLabel
-					,guLoginClient
-					);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
+	CSVFileGetData(uClient,&uMatch,cLabel);
+	//Create tClient record
+	sprintf(gcQuery,"INSERT INTO tClient SET uClient=%u,cLabel='%s',"
+			"cCode='Organization',uOwner=1,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uClient
+			,cLabel
+			,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	//Create default contact with same cLabel
+	sprintf(gcQuery,"INSERT INTO tClient SET uOwner=%u,cLabel='%s',"
+			"cCode='Contact',uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uClient
+			,cLabel
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 
-			uContact=mysql_insert_id(&gMysql);
-			//Password should be 8 characters random text
-			sprintf(cPasswd,"%s",cGetRandomPassword());
-			sprintf(cSavePasswd,"%s",cPasswd);
-			EncryptPasswd(cPasswd);
-			sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',uCertClient=%u,"
-					"uOwner=%u,cPasswd='%s',cClrPasswd='%s',cIpMask='0.0.0.0',"
-					"uPerm=6,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					cLabel
-					,uContact
-					,uClient
-					,cPasswd
-					,cSavePasswd
-					,guLoginClient
-					);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-		}
-	}
+	uContact=mysql_insert_id(&gMysql);
+	//Password should be 8 characters random text
+	sprintf(cPasswd,"%s",cGetRandomPassword());
+	sprintf(cSavePasswd,"%s",cPasswd);
+	EncryptPasswd(cPasswd);
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',uCertClient=%u,"
+			"uOwner=%u,cPasswd='%s',cClrPasswd='%s',cIpMask='0.0.0.0',"
+			"uPerm=6,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cLabel
+			,uContact
+			,uClient
+			,cPasswd
+			,cSavePasswd
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 	
 	//Do something based on uMatch?
 	return(uMatch);
