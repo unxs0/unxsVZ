@@ -1,0 +1,24 @@
+*** Optional if you want to edit templates from the iDNS backend ***
+
+Since unxsBind latest version, we have replaced the tContent tab cText textarea for a WYSIWYG editor.
+Please note that this is an optional but recommend feature, if you don't install CKEDITOR you'll see
+the plain textarea as always.
+
+Our choice was CKEDITOR (Not shipped with the unxsBind source.)
+To install it, do:
+
+# wget http://download.cksource.com/CKEditor/CKEditor/CKEditor%203.0.1/ckeditor_3.0.1.tar.gz
+
+(Note that version may vary!)
+
+Uncompress the .tar.gz:
+
+# tar zxf ckeditor_3.0.1.tar.gz
+
+And then copy the contest of it to the /var/www/unxs/html/js folder
+
+# cp -R ckeditor/* /var/www/unxs/html/js
+
+And voila!
+
+
