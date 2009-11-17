@@ -1,4 +1,3 @@
-
 <body marginwidth="0" marginheight="0">
 
 <div align="center" class="standard2colnee">
@@ -20,17 +19,17 @@
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>	
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='My account management' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">My Account</b></a>
+						<a title='Manejo de mi cuenta' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">Mi Cuenta</b></a>
 						</td>
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='My invoices management' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">My Invoices</b></a>
+						<a title='Manejo de mis facturas' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">Mis Facturas</b></a>
 						</td>
 					</tr>
 				</table>
 			</td>
 		</tr>
 		<tr><td valign=top align=right class=notice>
-{{gcName}} ({{gcLogin}}) of {{gcOrgName}} is logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout
+{{gcName}} ({{gcOrgName}}) conectado desde {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Desconectarse
 </a></td></tr>
 							<tr>
 								<td class="mastbg2">
@@ -42,9 +41,9 @@
 											<form action=ispClient.cgi method="post">
 												<table cellspacing="0" cellpadding="0" border="0">
 													<tr>
-														<td><input type="text" value="Search Invoices" class="searchinp" name=cSearch onfocus="this.select();" title="Search for companies with a keyword" /></td>
+														<td><input type="text" value="Buscar Facturas" class="searchinp" name=cSearch onfocus="this.select();" title="Ingresar n&uacute;mero de factura para b&uacute;squeda" /></td>
 
-														<td valign="middle" style="padding: 0px 4px 0px 4px;"></td><td class="padlt6rt10"><input type="image" src="/images/btn_mast_search.gif" alt="Search" width="17" height="17" border="0" title="Find one or more companies based on input search pattern" /></td>
+														<td valign="middle" style="padding: 0px 4px 0px 4px;"></td><td class="padlt6rt10"><input type="image" src="/images/btn_mast_search.gif" alt="Search" width="17" height="17" border="0" title="Buscar facturas introduciendo su n&uacute;mero" /></td>
 													</tr>
 												</table>
 												<input type=hidden name=gcFunction value=Search>
@@ -63,7 +62,6 @@
 	</tr>
 </table>
 
-
 <form method=post action={{cCGI}} style="margin:0px;">
 <table width=1200  border="0" cellspacing="0" cellpadding="0">
   <tr>
@@ -73,12 +71,12 @@
 <table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-    <td class="hdrtout padlt8" width="33%"><h6 class="modhdr">My Invoice Management</h6></td>
+    <td class="hdrtout padlt8" width="33%"><h6 class="modhdr">Pago de Factura</h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td width="10"> </td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
-                <h6 class="modhdr">My Invoice Data </h6></td>
+                <h6 class="modhdr">Informaci&oacute;n de Factura</h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
   <tr>
@@ -97,8 +95,6 @@
 		<u><b>My Invoices</b></u><br><br>
 		{{funcInvoiceNavList}}
 		</td>
-		<tr><td colspan=2><input type=submit name=gcFunction value='Pay Loaded Invoice' class=largestButton><td></tr>
-		<tr><td colspan=2><input type=submit name=gcFunction value='Show Invoice for Printing' class=largestButton><td></tr>
         </table>
 
 
@@ -124,7 +120,7 @@
 	</tr>
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Type')"><strong>Card Type</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Type')"><strong>Tipo de Tarjeta</strong></a>          </td>
                 <td>
 			<input type=hidden name=cCardType value="{{cCardType}}">
 			{{funcSelectCardType}}
@@ -132,28 +128,28 @@
 
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Name')"><strong>Card Name</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Name')"><strong>Nombre en la Tarjeta</strong></a>          </td>
                 <td>
 			<input type=hidden name=cCardName value="{{cCardName}}">
                         <input  title='Credit card name. E.g.: John Doe (Required)' type=text name=cCardName value="{{cCardName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCardNameStyle}}></td>
         </tr>
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Number')"><strong>Card Number</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Number')"><strong>N&uacute;mero de Tarjeta</strong></a>          </td>
                 <td>
 			<input type=hidden name=cCardNumber value="{{cCardNumber}}">
                         <input  title='Credit card number. E.g. 411111111111111 (Required)' type=text name=cCardNumber value="{{cCardNumber}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCardNumberStyle}}></td>
         </tr>
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card CCV')"><strong>Card CCV</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card CCV')"><strong>CCV de la Tarjeta</strong></a>          </td>
                 <td>
                         <input  title='Credit card CCV number (see back of the card) (Optional)' type=text name=cCCV size=40 maxlength=4 {{gcInputStatus}} class=type_fields></td>
         </tr>
 
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Expiration Month')"><strong>Expiration Month</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Expiration Month')"><strong>Mes de Expiraci&oacute;n</strong></a>          </td>
                 <td>
 			<input type=hidden name=uExpMonth value="{{uExpMonth}}">
 			{{funcSelectExpMonth}}
@@ -161,7 +157,7 @@
 
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Expiration Year')"><strong>Expiration Year</strong></a>          </td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Expiration Year')"><strong>A&ntilde;o de Expiraci&oacute;n</strong></a>          </td>
                 <td>
 			<input type=hidden name=uExpYear value="{{uExpYear}}">
 			{{funcSelectExpYear}}
@@ -170,7 +166,7 @@
 	<tr>
 	<td colspan=2>
 	<br>
-	<input type=submit name=gcFunction value='Complete Payment' title='Press to process your payment>
+	<input type=submit name=gcFunction value='Completar Pago' title='Presione para procesar su pago'>
 	</td>
 	</tr>
 </table>
