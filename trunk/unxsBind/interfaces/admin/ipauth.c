@@ -195,6 +195,7 @@ void htmlIPAuthPage(char *cTitle, char *cTemplateName)
 
 
 unsigned CSVFileData(unsigned uClient,char *cName);
+unsigned uDefaultClient=0;
 
 void funcIPAuthReport(FILE *fp)
 {
@@ -214,7 +215,11 @@ void funcIPAuthReport(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[1],"%u",&uCompanyId);
-		CSVFileData(uCompanyId,cCompanyName);
+		if(uCompanyId!=uDefaultClient)
+			CSVFileData(uCompanyId,cCompanyName);
+		else
+			sprintf(cCompanyName,"%s",ForeignKey("tClient","cLabel",uDefaultClient));
+
 		fprintf(fp,"<tr><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td></tr>\n",
 			field[0]
 			,field[1]
@@ -234,7 +239,6 @@ void funcIPAuthReport(FILE *fp)
 #define MOD_BLOCK 2
 #define NA_BLOCK 3
 //#define uDefaultClient 2
-unsigned uDefaultClient=0;
 
 void CreateTransactionTable();
 unsigned uGetBlockStatus(char *cBlock,unsigned uClient);
@@ -317,6 +321,13 @@ void RIPEImport(void)
 				,&uDate
 				,&uClient
 				,&uOther);
+			if(!uClient)
+			{
+				uIgnored++;
+				strcat(cLine," *** COMPANY NOT FOUND ***");
+				AddToRejectsTable(cLine);
+				continue;
+			}
 		}
 		else if(strstr(cLine,"MRP"))
 		{
@@ -354,8 +365,6 @@ void RIPEImport(void)
 			//Invalid, skip
 			uIgnored++;
 			AddToRejectsTable(cLine);
-			mysql_query(&gMysql,gcQuery);
-
 			continue;
 		}
 
@@ -581,7 +590,7 @@ void funcReportActions(FILE *fp)
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
+		"uClient!=1 AND uClient!=%u AND cCode='Organization' ORDER BY cLabel",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
