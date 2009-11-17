@@ -23,28 +23,13 @@ AUTHOR
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-//This is an example tune for your system
-#ifndef Linux
-        #include <sys/systeminfo.h>
-#else
-        #ifndef FreeBSD
-                #include <crypt.h>
-        #endif
-#endif
+#include <crypt.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <string.h>
 #include <sys/file.h>
-
-//This is an example tune for your system
-#ifdef FreeBSD
-	#include "/usr/local/include/mysql/mysql.h"
-#else
-	#include <mysql/mysql.h>
-#endif
-
-
+#include <mysql/mysql.h>
 #include <unistd.h>
 
 #include "template.h"
@@ -152,14 +137,7 @@ void Template(char *cTemplate, struct t_template *template, FILE *fp)
 			}
 			if(!uMatch)
 			{
-				//if(cVarName[0]=='f' || cVarName[0]=='t')
-				if(cVarName[0]=='t')
-				{
-					//Special reserved var cpNames
-					if(!strcmp("textarea",cVarName))
-						fprintf(fp,"textarea");
-				}
-				else if(cVarName[0]=='f')
+				if(cVarName[0]=='f')
 				{
 					//Every application that links to this lib
 					//needs to supply this function
