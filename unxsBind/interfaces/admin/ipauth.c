@@ -310,6 +310,8 @@ void RIPEImport(void)
 		//Comments ignore
 		if(cLine[0]=='#') continue;
 		if(cLine[0]==';') continue;
+		uClient=0;
+
 		if(strstr(cLine,"CUST"))
 		{
 			//80.253.98.0 - 80.253.98.255 256 20060404 PKXG-CUST-1234-01
@@ -590,7 +592,7 @@ void funcReportActions(FILE *fp)
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization' ORDER BY cLabel",uDefaultClient);
+		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -661,7 +663,7 @@ void funcRemovedCompanies(FILE *fp)
 
 	sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
+		"uClient!=1 AND uClient!=%u AND cCode='Organization' ORDER BY cLabel",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -687,10 +689,10 @@ void funcRemovedBlocks(FILE *fp)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cLabel,(SELECT cLabel FROM tClient WHERE tClient.uClient=tBlock.uOwner) " 
-		"FROM tBlock WHERE uOwner IN (SELECT uClient FROM tClient WHERE uClient NOT IN "
+	sprintf(gcQuery,"SELECT tBlock.cLabel,tClient.cLabel " 
+		"FROM tBlock,tClient WHERE tBlock.uOwner IN (SELECT uClient FROM tClient WHERE uClient NOT IN "
 		"(SELECT DISTINCT uClient FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization')",uDefaultClient);
+		"uClient!=1 AND uClient!=%u AND cCode='Organization') AND tClient.uClient=tBlock.uOwner ORDER BY tClient.cLabel",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
