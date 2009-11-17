@@ -218,6 +218,8 @@ void tTemplate(const char *cResult)
 	}//Internal Skip
 
 	Header_ism3(":: tTemplate",1);
+	printf("<script type='text/javascript' src='/js/ckeditor.js'></script>\n");
+
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -331,6 +333,7 @@ void tTemplateInput(unsigned uMode)
 	if(guPermLevel>=7 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cTemplate);
+		printf("<script type='text/javascript'>CKEDITOR.replace( 'cTemplate' );</script>\n");
 	}
 	else
 	{
