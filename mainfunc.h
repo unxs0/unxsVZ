@@ -823,6 +823,7 @@ void UpdateSchema(void)
 	unsigned uJobNodeIndex=0;
 	unsigned uJobDatacenterIndex=0;
 	unsigned uJobContainerIndex=0;
+	unsigned uTemplateLabelIndex=0;
 
 	printf("UpdateSchema(): Start\n");
 
@@ -892,6 +893,17 @@ void UpdateSchema(void)
 	}
        	mysql_free_result(res);
 
+	sprintf(gcQuery,"SHOW INDEX IN tTemplate");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[2],"cLabel")) uTemplateLabelIndex=1;
+	}
+       	mysql_free_result(res);
 
 	if(uIncorrectVeth)
 	{
@@ -1055,6 +1067,15 @@ void UpdateSchema(void)
 			printf("Added INDEX uContainer tJob\n");
 	}
 
+	if(!uTemplateLabelIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tTemplate ADD INDEX (cLabel)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX cLabel tTemplate\n");
+	}
 
 	printf("UpdateSchema(): End\n");
 
