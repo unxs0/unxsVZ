@@ -32,7 +32,6 @@ static char *cTemplate={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static long uCreatedDate=0;
 //uModBy: uClient for last update
@@ -500,15 +499,10 @@ void ModtTemplate(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	sprintf(gcQuery,"SELECT uTemplate,uModDate FROM tTemplate WHERE uTemplate=%u"
 			,uTemplate);
-#else
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE uTemplate=%u"
-			,uTemplate);
-#endif
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -521,19 +515,15 @@ void ModtTemplate(void)
 	if(i>1) tTemplate(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tTemplate(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tTemplate(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tTemplate",uTemplate);
 	iDNSLog(uTemplate,"tTemplate","Mod");
-#endif
 	tTemplate(gcQuery);
 
 }//ModtTemplate(void)
@@ -597,8 +587,8 @@ void tTemplateList(void)
 			,field[1]
 			,ForeignKey("tTemplateSet","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tTemplateType","cLabel",strtoul(field[3],NULL,10))
-			,field[4]
-			,field[5]
+			,TransformAngleBrackets(field[4])
+			,TransformAngleBrackets(field[5])
 			,ForeignKey(TCLIENT,"cLabel",strtoul(field[6],NULL,10))
 			,ForeignKey(TCLIENT,"cLabel",strtoul(field[7],NULL,10))
 			,cBuf8
