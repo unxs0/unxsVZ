@@ -319,26 +319,24 @@ void tTemplateInput(unsigned uMode)
 ,LANG_FT_tTemplate_cComment);
 	if(guPermLevel>=7 && uMode)
 	{
-		printf(">%s</textarea></td></tr>\n",cComment);
+		printf(">%s</textarea></td></tr>\n",TransformAngleBrackets(cComment));
 	}
 	else
 	{
-		printf("disabled>%s</textarea></td></tr>\n",cComment);
+		printf("disabled>%s</textarea></td></tr>\n",TransformAngleBrackets(cComment));
 		printf("<input type=hidden name=cComment value=\"%s\" >\n",EncodeDoubleQuotes(cComment));
 	}
 //cTemplate
 	OpenRow(LANG_FL_tTemplate_cTemplate,"black");
-//	printf("<textarea title='%s' cols=80 wrap=off rows=16 name=cTemplate "
-//,LANG_FT_tTemplate_cTemplate);
+	printf("<textarea title='%s' cols=80 wrap=off rows=16 name=cTemplate "
+	,LANG_FT_tTemplate_cTemplate);
 	if(guPermLevel>=7 && uMode)
 	{
-		printf("<textarea title='%s' cols=80 wrap=off rows=16 name=cTemplate ",LANG_FT_tTemplate_cTemplate);
-		printf(">%s</textarea></td></tr>\n",cTemplate);
-		printf("<script type='text/javascript'>CKEDITOR.replace( 'cTemplate' );</script>\n");
+		printf(">%s</textarea></td></tr>\n",TransformAngleBrackets(cTemplate));
 	}
 	else
 	{
-//		printf("disabled>%s</textarea></td></tr>\n",cTemplate);
+		printf("disabled>%s</textarea></td></tr>\n",TransformAngleBrackets(cTemplate));
 		printf("<input type=hidden name=cTemplate value=\"%s\" >\n",EncodeDoubleQuotes(cTemplate));
 	}
 //uOwner
@@ -619,7 +617,7 @@ void tTemplateList(void)
 
 void CreatetTemplate(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tTemplate ( uTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cComment TEXT NOT NULL DEFAULT '', cTemplate TEXT NOT NULL DEFAULT '', uTemplateSet INT UNSIGNED NOT NULL DEFAULT 0, uTemplateType INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tTemplate ( uTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', INDEX (cLabel), uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cComment TEXT NOT NULL DEFAULT '', cTemplate TEXT NOT NULL DEFAULT '', uTemplateSet INT UNSIGNED NOT NULL DEFAULT 0, uTemplateType INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
