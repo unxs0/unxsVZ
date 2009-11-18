@@ -254,7 +254,7 @@ void CreateTransactionTable()
 			"index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, "
 			"uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, "
 			"cBlockAction VARCHAR(100) NOT NULL DEFAULT '', cOwnerAction VARCHAR(100) NOT NULL DEFAULT '',"
-			"uClient INT UNSIGNED NOT NULL DEFAULT 0 )");
+			"uClient INT UNSIGNED NOT NULL DEFAULT 0, cCompany VARCHAR(255) NOT NULL DEFAULT '' )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -392,8 +392,11 @@ void RIPEImport(void)
 			,uCidr);
 		*/
 		sprintf(cIPBlock,"%s/%u",cIPBlockStart,uCidr);
-
-		CSVFileData(uClient,cCompany);
+		
+		if(uClient!=uDefaultClient)
+			CSVFileData(uClient,cCompany);
+		else
+			sprintf(cCompany,"%.99s",ForeignKey("tClient","cLabel",uClient));
 
 		uBlockStatus=uGetBlockStatus(cIPBlock,cCompany);
 		uOwnerStatus=uGetOwnerStatus(cCompany);
@@ -432,11 +435,12 @@ void RIPEImport(void)
 		if(!strcmp(cOwnerAction,"None")&&!strcmp(cBlockAction,"None")) continue; //No record if nothing to do
 		
 		sprintf(gcQuery,"INSERT INTO tTransaction SET cBlock='%s',cBlockAction='%s',cOwnerAction='%s',"
-				"uClient=%u,uCreatedBy=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				"uClient=%u,cCompany='%s',uCreatedBy=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				cIPBlock
 				,cBlockAction
 				,cOwnerAction
 				,uClient
+				,cCompany
 				,guLoginClient
 				,guOrg
 				);
@@ -595,8 +599,8 @@ void funcReportActions(FILE *fp)
 	unsigned uWillModBlocks=0;
 	unsigned uWillCreateCompanies=0;
 
-	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient NOT IN "
-		"(SELECT DISTINCT uClient FROM tTransaction) AND "
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel NOT IN "
+		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
 		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -607,8 +611,8 @@ void funcReportActions(FILE *fp)
 	
 	mysql_free_result(res);
 
-	sprintf(gcQuery,"SELECT uBlock FROM tBlock WHERE uOwner IN (SELECT uClient FROM tClient WHERE uClient NOT IN "
-		"(SELECT DISTINCT uClient FROM tTransaction) AND "
+	sprintf(gcQuery,"SELECT uBlock FROM tBlock WHERE uOwner IN (SELECT uClient FROM tClient WHERE cLabel NOT IN "
+		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
 		"uClient!=1 AND uClient!=%u AND cCode='Organization')",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -666,9 +670,10 @@ void funcRemovedCompanies(FILE *fp)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE uClient NOT IN "
-		"(SELECT DISTINCT uClient FROM tTransaction) AND "
+	sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE cLabel NOT IN "
+		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
 		"uClient!=1 AND uClient!=%u AND cCode='Organization' ORDER BY cLabel",uDefaultClient);
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -696,7 +701,7 @@ void funcRemovedBlocks(FILE *fp)
 
 	sprintf(gcQuery,"SELECT tBlock.cLabel,tClient.cLabel " 
 		"FROM tBlock,tClient WHERE tBlock.uOwner IN (SELECT uClient FROM tClient WHERE uClient NOT IN "
-		"(SELECT DISTINCT uClient FROM tTransaction) AND "
+		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
 		"uClient!=1 AND uClient!=%u AND cCode='Organization') AND tClient.uClient=tBlock.uOwner ORDER BY tClient.cLabel",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
