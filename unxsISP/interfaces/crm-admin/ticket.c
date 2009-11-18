@@ -524,7 +524,9 @@ void funcAssignedTo(FILE *fp)
 
 	fprintf(fp,"<!-- funcSelectAccountType(fp) start -->\n");
 	
-	sprintf(gcQuery,"SELECT uClient,tClient.cLabel FROM tClient,tAuthorize WHERE tAuthorize.uCertClient=tClient.uClient AND tClient.uOwner=%u",guOrg);
+	sprintf(gcQuery,"SELECT uClient,tClient.cLabel FROM tClient,tAuthorize WHERE "
+			"tAuthorize.uCertClient=tClient.uClient AND tClient.uOwner=%u "
+			"ORDER BY tClient.cLabel",guOrg);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
