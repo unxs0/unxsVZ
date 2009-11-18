@@ -316,7 +316,6 @@ void RIPEImport(void)
 		if(strstr(cLine,"CUST"))
 		{
 			//80.253.98.0 - 80.253.98.255 256 20060404 PKXG-CUST-1234-01
-			uProcessed++;
 			sscanf(cLine,"%s - %s %u %u PKXG-CUST-%u-%u",
 				cIPBlockStart
 				,cIPBlockEnd
@@ -334,7 +333,6 @@ void RIPEImport(void)
 		}
 		else if(strstr(cLine,"MRP"))
 		{
-			uProcessed++;
 			//89.167.255.0 - 89.167.255.255 256 20090805 PKXG-MRP-1234-01
 			sscanf(cLine,"%s - %s %u %u PKXG-MRP-%u-%u",
 				cIPBlockStart
@@ -348,7 +346,6 @@ void RIPEImport(void)
 		else if(strstr(cLine,"INFRA"))
 		{
 			char cUnused[100]={""};
-			uProcessed++;
 			sscanf(cLine,"%s - %s %u %u PKXG-INFRA-%s",
 				cIPBlockStart
 				,cIPBlockEnd
@@ -377,6 +374,7 @@ void RIPEImport(void)
 			//Add record to rejects table
 			strcat(cLine," *** COMPANY NOT FOUND ***");
 			AddToRejectsTable(cLine);
+			uIgnored++;
 			continue;
 		}
 		//uCidr=(unsigned)(32-log2(uSize));
@@ -447,7 +445,7 @@ void RIPEImport(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
-
+		uProcessed++;
 	}
 	//Lock tTransaction for writing?
 	
@@ -660,7 +658,7 @@ void funcReportActions(FILE *fp)
 			,uWillCreateBlocks
 			,uWillModBlocks
 			);
-	fprintf(fp,"%u lines were processed and %u ignored.<br>\n",uProcessed,uIgnored);
+	fprintf(fp,"%u lines were correctly processed and %u ignored.<br>\n",uProcessed,uIgnored);
 
 }//void funcReportActions(FILE *fp)
 
