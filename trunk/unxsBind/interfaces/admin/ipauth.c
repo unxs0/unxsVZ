@@ -15,6 +15,7 @@ static char *cMassList={""};
 static char cImportMsg[32762]={""}; //A 32k buffer will be enough, if not, truncate the data.
 static unsigned uFormat=0;
 
+static unsigned uTotalLines=0;
 static unsigned uProcessed=0;
 static unsigned uIgnored=0;
 
@@ -312,9 +313,10 @@ void RIPEImport(void)
 		if(cLine[0]=='#') continue;
 		if(cLine[0]==';') continue;
 		uClient=0;
-
+		uTotalLines++;
 		if(strstr(cLine,"CUST"))
 		{
+			uProcessed++;
 			//80.253.98.0 - 80.253.98.255 256 20060404 PKXG-CUST-1234-01
 			sscanf(cLine,"%s - %s %u %u PKXG-CUST-%u-%u",
 				cIPBlockStart
@@ -333,6 +335,7 @@ void RIPEImport(void)
 		}
 		else if(strstr(cLine,"MRP"))
 		{
+			uProcessed++;
 			//89.167.255.0 - 89.167.255.255 256 20090805 PKXG-MRP-1234-01
 			sscanf(cLine,"%s - %s %u %u PKXG-MRP-%u-%u",
 				cIPBlockStart
@@ -345,6 +348,7 @@ void RIPEImport(void)
 		}
 		else if(strstr(cLine,"INFRA"))
 		{
+			uProcessed++;
 			char cUnused[100]={""};
 			sscanf(cLine,"%s - %s %u %u PKXG-INFRA-%s",
 				cIPBlockStart
@@ -445,7 +449,6 @@ void RIPEImport(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
-		uProcessed++;
 	}
 	//Lock tTransaction for writing?
 	
@@ -571,8 +574,8 @@ void CleanUpBlock(char *cIPBlock);
 void CleanUpCompanies(void);
 void EncryptPasswd(char *cPasswd);
 char *cGetRandomPassword(void);
-void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction);
-unsigned ProcessCompanyTransaction(unsigned uClient,char *cAction);
+unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction);
+unsigned ProcessCompanyTransaction(char *cCompany,char *cAction);
 void UpdateSerialNum(char *cZone,char *cuView);
 unsigned uCreateZone(char *cZone,unsigned uOwner);
 void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner);
@@ -596,6 +599,7 @@ void funcReportActions(FILE *fp)
 	unsigned uWillCreateBlocks=0;
 	unsigned uWillModBlocks=0;
 	unsigned uWillCreateCompanies=0;
+	unsigned uImportCompanies=0;
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel NOT IN "
 		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
@@ -650,6 +654,17 @@ void funcReportActions(FILE *fp)
 	uWillCreateCompanies=mysql_num_rows(res);
 	
 	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT DISTINCT cCompany FROM tTransaction");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	uImportCompanies=mysql_num_rows(res);
+	
+	mysql_free_result(res);
+
 	fprintf(fp,"After import, %u companies and their contacts will be removed from the database.<br>\n",uWillDeleteCompanies);
 	fprintf(fp,"These companies own %u blocks that will also be removed.<br>\n",uWillDeleteBlocks);
 	fprintf(fp,"Also, %u companies and a default contact will be added to the database. %u blocks will be created "
@@ -658,7 +673,8 @@ void funcReportActions(FILE *fp)
 			,uWillCreateBlocks
 			,uWillModBlocks
 			);
-	fprintf(fp,"%u lines were correctly processed and %u ignored.<br>\n",uProcessed,uIgnored);
+	fprintf(fp,"%u companies were found in the import data.<br>\n",uImportCompanies);
+	//fprintf(fp,"From a total of %u lines, %u lines were correctly processed and %u ignored.<br>\n",uTotalLines,uProcessed,uIgnored);
 
 }//void funcReportActions(FILE *fp)
 
@@ -698,7 +714,7 @@ void funcRemovedBlocks(FILE *fp)
 	MYSQL_ROW field;
 
 	sprintf(gcQuery,"SELECT tBlock.cLabel,tClient.cLabel " 
-		"FROM tBlock,tClient WHERE tBlock.uOwner IN (SELECT uClient FROM tClient WHERE uClient NOT IN "
+		"FROM tBlock,tClient WHERE tBlock.uOwner IN (SELECT uClient FROM tClient WHERE cLabel NOT IN "
 		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
 		"uClient!=1 AND uClient!=%u AND cCode='Organization') AND tClient.uClient=tBlock.uOwner ORDER BY tClient.cLabel",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
@@ -777,10 +793,9 @@ void CommitTransaction(void)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uClient=0;
 	char cMsg[100]={""};
 
-	sprintf(gcQuery,"SELECT DISTINCT uClient FROM tTransaction WHERE cOwnerAction='New' ORDER BY uTransaction");
+	sprintf(gcQuery,"SELECT DISTINCT cLabel FROM tTransaction WHERE cOwnerAction='New' ORDER BY uTransaction");
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
@@ -790,19 +805,18 @@ void CommitTransaction(void)
 
 	while((field=mysql_fetch_row(res)))
 	{		
-		sscanf(field[0],"%u",&uClient);
-		if(ProcessCompanyTransaction(uClient,"New"))
+		if(ProcessCompanyTransaction(field[0],"New"))
 			uCompanyAdd++;
 		else
 		{
-			sprintf(gcQuery,"Company %u not found in CSV file",uClient);
+			sprintf(gcQuery,"Failed ProcessCompanyTransaction() for %s",field[0]);
 			idnsAdminLog(gcQuery);
 		}
 	}
 
 	mysql_free_result(res);	
 
-	sprintf(gcQuery,"SELECT cBlock,uClient,cBlockAction FROM tTransaction ORDER BY uTransaction");
+	sprintf(gcQuery,"SELECT cBlock,cCompany,cBlockAction FROM tTransaction ORDER BY uTransaction");
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
@@ -812,8 +826,7 @@ void CommitTransaction(void)
 
 	while((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[1],"%u",&uClient);
-		ProcessTransaction(field[0],uClient,field[2]);
+		ProcessTransaction(field[0],field[1],field[2]);
 	}
 	
 	CleanUpCompanies();
@@ -910,7 +923,7 @@ MYSQL_RES *ZoneQuery(char *cZone)
 }//MYSQL_RES *ZoneQuery(void)
 
 
-void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
+unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -920,6 +933,7 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 	unsigned uNumNets=0;
 	unsigned uNumIPs=0;
 	unsigned uZone=0;
+	unsigned uClient=0;
 
 	char cZone[100]={""};
 	char cParam1[200]={""};
@@ -934,7 +948,19 @@ void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 	time(&luClock);
 	//printf("uNumIPs=%u\n",uNumIPs);
 	//printf("uNumNets=%u\n",uNumNets);
-
+	
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND cCode='Organization'",cCompany);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uClient);
+	else
+	{
+		mysql_free_result(res);
+		return(1);
+	}
 	if(!strcmp(cAction,"New"))
 	{
 		//
@@ -1115,68 +1141,67 @@ CreateZoneLargeBlock:
 			}
 		}
 	}
+	return(0);
 
 }//void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
 
 
-unsigned ProcessCompanyTransaction(unsigned uClient,char *cAction)
+unsigned ProcessCompanyTransaction(char *cCompany,char *cAction)
 {
-	unsigned uMatch=0;
+	unsigned uClient=0;
 	char cLabel[100]={""};
 
 	if(!strcmp(cAction,"None")) return(1);
 
 	//Default 'New'
 	
-	uMatch=CSVFileData(uClient,cLabel);
-	if(uMatch)
-	{
-			unsigned uContact=0;
-			char cPasswd[100]={""};
-			char cSavePasswd[16]={""};
-			//Create tClient record
-			sprintf(gcQuery,"INSERT INTO tClient SET uClient=%u,cLabel='%s',"
-					"cCode='Organization',uOwner=1,uCreatedBy=%u,"
-					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					uClient
-					,cLabel
-					,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			//Create default contact with same cLabel
-			sprintf(gcQuery,"INSERT INTO tClient SET uOwner=%u,cLabel='%s',"
-					"cCode='Contact',uCreatedBy=%u,"
-					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					uClient
-					,cLabel
-					,guLoginClient
-					);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
+	unsigned uContact=0;
+	char cPasswd[100]={""};
+	char cSavePasswd[16]={""};
+	//Create tClient record
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',"
+			"cCode='Organization',uOwner=1,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cLabel
+			,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uClient=mysql_insert_id(&gMysql);
+	if(!uClient) return(1);
 
-			uContact=mysql_insert_id(&gMysql);
-			//Password should be 8 characters random text
-			sprintf(cPasswd,"%s",cGetRandomPassword());
-			sprintf(cSavePasswd,"%s",cPasswd);
-			EncryptPasswd(cPasswd);
-			sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',uCertClient=%u,"
-					"uOwner=%u,cPasswd='%s',cClrPasswd='%s',cIpMask='0.0.0.0',"
-					"uPerm=6,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					cLabel
-					,uContact
-					,uClient
-					,cPasswd
-					,cSavePasswd
-					,guLoginClient
-					);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-	}
+	//Create default contact with same cLabel
+	sprintf(gcQuery,"INSERT INTO tClient SET uOwner=%u,cLabel='%s',"
+			"cCode='Contact',uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uClient
+			,cLabel
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	uContact=mysql_insert_id(&gMysql);
+	//Password should be 8 characters random text
+	sprintf(cPasswd,"%s",cGetRandomPassword());
+	sprintf(cSavePasswd,"%s",cPasswd);
+	EncryptPasswd(cPasswd);
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',uCertClient=%u,"
+			"uOwner=%u,cPasswd='%s',cClrPasswd='%s',cIpMask='0.0.0.0',"
+			"uPerm=6,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cLabel
+			,uContact
+			,uClient
+			,cPasswd
+			,cSavePasswd
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 	
-	return(uMatch);
+	return(0);
 
 }//unsigned ProcessCompanyTransaction(unsigned uClient)
 
@@ -1234,8 +1259,8 @@ void CleanUpCompanies(void)
 	MYSQL_RES *res2;
 	MYSQL_ROW field2;
 
-	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient NOT IN "
-		"(SELECT DISTINCT uClient FROM tTransaction) AND "
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel NOT IN "
+		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
 		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
