@@ -210,7 +210,7 @@ void funcIPAuthReport(FILE *fp)
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	
 	res=mysql_store_result(&gMysql);
 
@@ -260,12 +260,12 @@ void CreateTransactionTable()
 			"uClient INT UNSIGNED NOT NULL DEFAULT 0, cCompany VARCHAR(255) NOT NULL DEFAULT '' )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tIgnoredTransaction (uIgnoredTransaction INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, "
 			"cLine VARCHAR(255) NOT NULL DEFAULT '')");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 }//void CreateTransactionTable()
 
@@ -299,11 +299,11 @@ void RIPEImport(void)
 	sprintf(gcQuery,"TRUNCATE tTransaction");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	sprintf(gcQuery,"TRUNCATE tIgnoredTransaction");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	
 	while(1)
 	{
@@ -451,7 +451,7 @@ void RIPEImport(void)
 				);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(gcQuery);
 	}
 	//Lock tTransaction for writing?
 
@@ -463,7 +463,7 @@ void AddToRejectsTable(char *cLine)
 	sprintf(gcQuery,"INSERT INTO tIgnoredTransaction SET cLine='%s'",cLine);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 }//void AddToRejectsTable(char *cLine)
 
@@ -477,7 +477,7 @@ unsigned uGetBlockStatus(char *cBlock,char *cCompany)
 	sprintf(gcQuery,"SELECT uBlock,uOwner FROM tBlock WHERE cLabel='%s'",cBlock);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	res=mysql_store_result(&gMysql);
 
 	if(!mysql_num_rows(res))
@@ -510,7 +510,7 @@ unsigned uGetOwnerStatus(char *cCompany)
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cCompany);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	res=mysql_store_result(&gMysql);
 
 	if(!mysql_num_rows(res))
@@ -609,7 +609,7 @@ void funcReportActions(FILE *fp)
 		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	res=mysql_store_result(&gMysql);
 	uWillDeleteCompanies=mysql_num_rows(res);
@@ -621,7 +621,7 @@ void funcReportActions(FILE *fp)
 		"uClient!=1 AND uClient!=%u AND cCode='Organization')",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	res=mysql_store_result(&gMysql);
 	uWillDeleteBlocks=mysql_num_rows(res);
@@ -631,7 +631,7 @@ void funcReportActions(FILE *fp)
 	sprintf(gcQuery,"SELECT uTransaction FROM tTransaction WHERE cBlockAction='New'");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	res=mysql_store_result(&gMysql);
 	uWillCreateBlocks=mysql_num_rows(res);
@@ -641,7 +641,7 @@ void funcReportActions(FILE *fp)
 	sprintf(gcQuery,"SELECT uTransaction FROM tTransaction WHERE cBlockAction='Modify'");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	res=mysql_store_result(&gMysql);
 	uWillModBlocks=mysql_num_rows(res);
@@ -651,7 +651,7 @@ void funcReportActions(FILE *fp)
 	sprintf(gcQuery,"SELECT uTransaction FROM tTransaction WHERE cOwnerAction='New'");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	res=mysql_store_result(&gMysql);
 	uWillCreateCompanies=mysql_num_rows(res);
@@ -661,7 +661,7 @@ void funcReportActions(FILE *fp)
 	sprintf(gcQuery,"SELECT DISTINCT cCompany FROM tTransaction");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	res=mysql_store_result(&gMysql);
 	uImportCompanies=mysql_num_rows(res);
@@ -693,7 +693,7 @@ void funcRemovedCompanies(FILE *fp)
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	res=mysql_store_result(&gMysql);
 	if(!mysql_num_rows(res))
@@ -722,7 +722,7 @@ void funcRemovedBlocks(FILE *fp)
 		"uClient!=1 AND uClient!=%u AND cCode='Organization') AND tClient.uClient=tBlock.uOwner ORDER BY tClient.cLabel",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	res=mysql_store_result(&gMysql);
 	if(!mysql_num_rows(res))
@@ -748,7 +748,7 @@ void funcIgnoredLines(FILE *fp)
 	sprintf(gcQuery,"SELECT cLine FROM tIgnoredTransaction");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	res=mysql_store_result(&gMysql);
 	if(!mysql_num_rows(res))
@@ -788,7 +788,7 @@ void idnsAdminLog(char *cMsg)
 	mysql_query(&gMysql,cQuery);
 
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 }//void idnsAdminLog(char *cMsg)
 
 
@@ -798,11 +798,11 @@ void CommitTransaction(void)
 	MYSQL_ROW field;
 	char cMsg[100]={""};
 
-	sprintf(gcQuery,"SELECT DISTINCT cLabel FROM tTransaction WHERE cOwnerAction='New' ORDER BY uTransaction");
+	sprintf(gcQuery,"SELECT DISTINCT cCompany FROM tTransaction WHERE cOwnerAction='New' ORDER BY uTransaction");
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	
 	res=mysql_store_result(&gMysql);
 
@@ -823,7 +823,7 @@ void CommitTransaction(void)
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	
 	res=mysql_store_result(&gMysql);
 
@@ -882,12 +882,12 @@ unsigned uCreateZone(char *cZone,unsigned uOwner)
 			,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	uZone=mysql_insert_id(&gMysql);
 	UpdateSerialNum(cZone,"2");
 	//Submit new job
 	if(AdminSubmitJob("New",1,cZone,0,luClock))
-			htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(gcQuery);
 	
 	return(uZone);
 
@@ -907,7 +907,7 @@ void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 }//void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner)
 
@@ -919,7 +919,7 @@ MYSQL_RES *ZoneQuery(char *cZone)
 	sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	res=mysql_store_result(&gMysql);
 	return(res);
 
@@ -955,7 +955,7 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND cCode='Organization'",cCompany);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&uClient);
@@ -975,7 +975,7 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 				,guLoginClient);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(gcQuery);
 
 		uBlockAdd++;
 
@@ -1009,7 +1009,7 @@ CreateZone:
 			//Submit mod job
 			//Default uNSSet=1 ONLY
 			if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
-					htmlPlainTextError(mysql_error(&gMysql));
+					htmlPlainTextError(gcQuery);
 		}//if(uNumNets==1)
 		else
 		{
@@ -1047,7 +1047,7 @@ CreateZoneLargeBlock:
 				//Submit mod job
 				//Default uNSSet=1 ONLY
 				if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
-					htmlPlainTextError(mysql_error(&gMysql));
+					htmlPlainTextError(gcQuery);
 			}//for(f=c;f<((c+uNumNets));f++)
 		}
 	}
@@ -1062,7 +1062,7 @@ CreateZoneLargeBlock:
 				,cIPBlock);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(gcQuery);
 		
 		uBlockMod++;
 
@@ -1101,13 +1101,13 @@ CreateZoneLargeBlock:
 						);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
+					htmlPlainTextError(gcQuery);
 			}
 			//Update zone serial
 			UpdateSerialNum(cZone,"2");
 			//Submit Mod job for zone
 			if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
-				htmlPlainTextError(mysql_error(&gMysql));
+				htmlPlainTextError(gcQuery);
 		}//if(uNumNets==1)
 		else
 		{
@@ -1140,7 +1140,7 @@ CreateZoneLargeBlock:
 				UpdateSerialNum(cZone,"2");
 				//Submit Mod job for zone
 				if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
-					htmlPlainTextError(mysql_error(&gMysql));
+					htmlPlainTextError(gcQuery);
 			}
 		}
 	}
@@ -1152,7 +1152,6 @@ CreateZoneLargeBlock:
 unsigned ProcessCompanyTransaction(char *cCompany,char *cAction)
 {
 	unsigned uClient=0;
-	char cLabel[100]={""};
 
 	if(!strcmp(cAction,"None")) return(1);
 
@@ -1165,25 +1164,25 @@ unsigned ProcessCompanyTransaction(char *cCompany,char *cAction)
 	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',"
 			"cCode='Organization',uOwner=1,uCreatedBy=%u,"
 			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			cLabel
+			cCompany
 			,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	uClient=mysql_insert_id(&gMysql);
-	if(!uClient) return(1);
+	if(!uClient) return(0);
 
 	//Create default contact with same cLabel
 	sprintf(gcQuery,"INSERT INTO tClient SET uOwner=%u,cLabel='%s',"
 			"cCode='Contact',uCreatedBy=%u,"
 			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uClient
-			,cLabel
+			,cCompany
 			,guLoginClient
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	uContact=mysql_insert_id(&gMysql);
 	//Password should be 8 characters random text
@@ -1193,7 +1192,7 @@ unsigned ProcessCompanyTransaction(char *cCompany,char *cAction)
 	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',uCertClient=%u,"
 			"uOwner=%u,cPasswd='%s',cClrPasswd='%s',cIpMask='0.0.0.0',"
 			"uPerm=6,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			cLabel
+			cCompany
 			,uContact
 			,uClient
 			,cPasswd
@@ -1202,9 +1201,9 @@ unsigned ProcessCompanyTransaction(char *cCompany,char *cAction)
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	
-	return(0);
+	return(1);
 
 }//unsigned ProcessCompanyTransaction(unsigned uClient)
 
@@ -1217,7 +1216,7 @@ char *cGetRandomPassword(void)
 
 	mysql_query(&gMysql,"DROP function if exists generate_alpha");
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	mysql_query(&gMysql,"CREATE FUNCTION generate_alpha () RETURNS CHAR(1) "
 			"RETURN ELT(FLOOR(1 + (RAND() * (50-1))), 'a','b','c','d'"
 			",'e','f','g','h','i','j','k','l','m  ','n','o','p','q','r'"
@@ -1225,12 +1224,12 @@ char *cGetRandomPassword(void)
 			"'G','H','I','J','K','L','M  ','N','O','P','Q','R','S','T','U'"
 			",'V','W','X','Y',  'Z' )");
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	mysql_query(&gMysql,"SELECT CONCAT(generate_alpha (),generate_alpha (),generate_alpha (),"
 			"generate_alpha (),generate_alpha (),generate_alpha (),generate_alpha (),"
 			"generate_alpha ())");
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 	res=mysql_store_result(&gMysql);
 	field=mysql_fetch_row(res); //We will always have a row if the above queries didn't fail
 	
@@ -1267,7 +1266,7 @@ void CleanUpCompanies(void)
 		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
@@ -1280,18 +1279,18 @@ void CleanUpCompanies(void)
 				"(SELECT uZone FROM tZone WHERE uOwner=%s)",field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(gcQuery);
 
 		sprintf(gcQuery,"DELETE FROM tZone WHERE uOwner=%s",field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(gcQuery);
 		
 		//Delete blocks
 		sprintf(gcQuery,"SELECT cLabel FROM tBlock WHERE uOwner=%s",field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(gcQuery);
 		res2=mysql_store_result(&gMysql);
 		while((field2=mysql_fetch_row(res2)))
 		{
@@ -1303,15 +1302,15 @@ void CleanUpCompanies(void)
 				"(SELECT uClient FROM tClient WHERE uOwner=%s)",field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(gcQuery);
 		sprintf(gcQuery,"DELETE FROM tClient WHERE uOwner=%s",field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(gcQuery);
 		sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%s",field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(gcQuery);
 
 		uCompanyDel++;
 	}
@@ -1340,7 +1339,7 @@ void CleanUpBlock(char *cIPBlock)
 	sprintf(gcQuery,"DELETE FROM tBlock WHERE cLabel='%s'",cIPBlock);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 	if(uNumNets==1)
 	{
@@ -1357,7 +1356,7 @@ void CleanUpBlock(char *cIPBlock)
 		UpdateSerialNum(cZone,"2");
 		//Submit Mod job for zone
 		if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
-			htmlPlainTextError(mysql_error(&gMysql));
+			htmlPlainTextError(gcQuery);
 	}
 	else
 	{
@@ -1378,7 +1377,7 @@ void CleanUpBlock(char *cIPBlock)
 			UpdateSerialNum(cZone,"2");
 			//Submit Mod job for zone
 			if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
-				htmlPlainTextError(mysql_error(&gMysql));
+				htmlPlainTextError(gcQuery);
 		}
 		
 
@@ -1398,7 +1397,7 @@ void ResetRR(char *cZone,unsigned uName,char *cParam1,unsigned uOwner)
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
 
 }//void ResetRR(char *cZone,char *cParam1)
 
