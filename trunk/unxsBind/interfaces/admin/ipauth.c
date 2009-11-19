@@ -302,6 +302,7 @@ void RIPEImport(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
+	
 	while(1)
 	{
 
@@ -314,7 +315,7 @@ void RIPEImport(void)
 		if(cLine[0]==';') continue;
 		uClient=0;
 		uTotalLines++;
-		if(strstr(cLine,"CUST"))
+		if(strstr(cLine,"PKXG-CUST"))
 		{
 			uProcessed++;
 			//80.253.98.0 - 80.253.98.255 256 20060404 PKXG-CUST-1234-01
@@ -333,7 +334,7 @@ void RIPEImport(void)
 				continue;
 			}
 		}
-		else if(strstr(cLine,"MRP"))
+		else if(strstr(cLine,"PKXG-MRP"))
 		{
 			uProcessed++;
 			//89.167.255.0 - 89.167.255.255 256 20090805 PKXG-MRP-1234-01
@@ -346,7 +347,7 @@ void RIPEImport(void)
 				,&uOther);
 
 		}
-		else if(strstr(cLine,"INFRA"))
+		else if(strstr(cLine,"PKXG-INFRA"))
 		{
 			uProcessed++;
 			char cUnused[100]={""};
@@ -434,7 +435,7 @@ void RIPEImport(void)
 		//printf("IP Block Label=%s uClient=%u cBlockAction=%s cOwnerAction=%s\n"
 		//	,cIPBlock,uClient,cBlockAction,cOwnerAction);
 
-		if(!strcmp(cOwnerAction,"None")&&!strcmp(cBlockAction,"None")) continue; //No record if nothing to do
+		//if(!strcmp(cOwnerAction,"None")&&!strcmp(cBlockAction,"None")) continue; //No record if nothing to do
 		
 		sprintf(gcQuery,"INSERT INTO tTransaction SET cBlock='%s',cBlockAction='%s',cOwnerAction='%s',"
 				"uClient=%u,cCompany='%s',uCreatedBy=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -451,7 +452,7 @@ void RIPEImport(void)
 			htmlPlainTextError(mysql_error(&gMysql));
 	}
 	//Lock tTransaction for writing?
-	
+
 }//void RIPEImport(void)
 
 
