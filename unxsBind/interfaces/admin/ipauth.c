@@ -205,7 +205,8 @@ void funcIPAuthReport(FILE *fp)
 	char cCompanyName[100]={""};
 	unsigned uCompanyId=0;
 
-	sprintf(gcQuery,"SELECT cBlock,uClient,cBlockAction,cOwnerAction FROM tTransaction ORDER BY uTransaction");
+	sprintf(gcQuery,"SELECT cBlock,uClient,cBlockAction,cOwnerAction FROM tTransaction "
+			"WHERE (cBlockAction!='None' OR cOwnerAction!='None') ORDER BY uTransaction");
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
@@ -221,7 +222,8 @@ void funcIPAuthReport(FILE *fp)
 		else
 			sprintf(cCompanyName,"%s",ForeignKey("tClient","cLabel",uDefaultClient));
 
-		fprintf(fp,"<tr><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td><td align=center>%s</td></tr>\n",
+		fprintf(fp,"<tr><td align=center>%s</td><td align=center>%s</td>"
+			"<td align=center>%s</td><td align=center>%s</td><td align=center>%s</td></tr>\n",
 			field[0]
 			,field[1]
 			,cCompanyName
