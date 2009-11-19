@@ -1,8 +1,7 @@
 For the impatient like me
 -------------------------
 
-# yum install gd
-# yum install gd-devel
+# yum install gd gd-devel libpng-devel freetype-devel libjpeg-devel
 # cd gdchart0.11.5dev
 # make
 # make install
