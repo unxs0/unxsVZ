@@ -15,7 +15,7 @@
 #
 
 CFLAGS= -Wall -DHAVE_LIBFREETYPE -DHAVE_JPEG
-LIBS= -L/usr/lib/mysql -lmysqlclient -lz -lm -lgdc -lgd -lpng -lfreetype -ljpeg
+LIBS= -L/usr/lib/mysql -lmysqlclient -lz -lm -lgdc -lgd -lpng -lfreetype -ljpeg -lssl
 
 all: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi unxsDiskUtil.cgi
 
