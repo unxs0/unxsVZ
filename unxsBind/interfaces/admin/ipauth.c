@@ -473,6 +473,13 @@ unsigned uGetBlockStatus(char *cBlock,char *cCompany)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uOwner=0;
+	
+	//This function should check if:
+	//Are we creating a brand new block?
+	//Are we expanding an existent block and keeping ownership intact?
+	//Are we expanding an existent block and updating ownership?
+	//Are we reducing an existent block and keeping ownership intact?
+	//Are we reducing an existent block and updating ownership?
 
 	sprintf(gcQuery,"SELECT uBlock,uOwner FROM tBlock WHERE cLabel='%s'",cBlock);
 	mysql_query(&gMysql,gcQuery);
