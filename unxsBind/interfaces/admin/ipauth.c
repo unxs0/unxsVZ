@@ -1140,25 +1140,7 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		{
 			//24 and smaller blocks
 			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
-
-			//Check for .arpa zone if it doesn't exist, create it
-			//owned by uDefaultClient
-			//printf("cZone is %s\n",cZone);
-			res=ZoneQuery(cZone);
-			if(!mysql_num_rows(res))
-			{
-				//printf("Zone needs to be created\n");
-CreateZone:			
-				uZone=uCreateZone(cZone,uDefaultClient);
-				//printf("Zone created (%u)\n",(unsigned)mysql_insert_id(&gMysql));
-			}
-			else
-			{
-				field=mysql_fetch_row(res);
-				sscanf(field[0],"%u",&uZone);
-				//printf("uZone is %u\n",uZone);
-			}
-			mysql_free_result(res);
+			uZone=uZoneSetup(cZone);
 			
 			//Create block default RRs uOwner=uClient
 			//
@@ -1183,24 +1165,12 @@ CreateZone:
 		{
 			register int x;
 			//Larger than /24 blocks
-CreateZoneLargeBlock:			
 			for(x=c;x<(c+uNumNets);x++)
 			{
 				//
 				sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
 				//printf("cZone=%s\n",cZone);
-
-				res=ZoneQuery(cZone);
-				if(!mysql_num_rows(res))
-				{
-					uZone=uCreateZone(cZone,uDefaultClient);
-				}
-				else
-				{
-					field=mysql_fetch_row(res);
-					sscanf(field[0],"%u",&uZone);
-				}
-				mysql_free_result(res);
+				uZone=uZoneSetup(cZone);
 			
 				//Create block default RRs uOwner=uClient
 				//
@@ -1233,14 +1203,7 @@ CreateZoneLargeBlock:
 			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 			//Check for .arpa zone if it doesn't exist, create it
 			//owned by uDefaultClient
-			res=ZoneQuery(cZone);
-			if(!mysql_num_rows(res))
-				goto CreateZone;
-			else
-			{
-				field=mysql_fetch_row(res);
-				sscanf(field[0],"%u",&uZone);
-			}
+			uZone=uZoneSetup(cZone);
 
 			//Update zone RRs
 			//to be owned by uClient
@@ -1249,20 +1212,8 @@ CreateZoneLargeBlock:
 			for(f=d;f<(uNumIPs+d);f++)
 			{
 				//Update to default cParam1 or just uOwner update?
-				sprintf(gcQuery,"UPDATE tResource SET cParam1='%u-%u-%u-%u.%s',uOwner=%u WHERE cName='%u' "
-						"AND uZone=%u",
-						c
-						,b
-						,a
-						,f
-						,cUpdateHost
-						,uClient
-						,f
-						,uZone
-						);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					htmlPlainTextError(gcQuery);
+				sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+				ResetRR(cZone,f,cParam1,uClient);
 			}
 			//Update zone serial
 			RestoreUpdateSerialNum(uZone);
@@ -1280,18 +1231,8 @@ CreateZoneLargeBlock:
 				//
 				sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
 				//printf("cZone=%s\n",cZone);
-
-				res=ZoneQuery(cZone);
-				if(!mysql_num_rows(res))
-				{
-					goto CreateZoneLargeBlock;
-				}
-				else
-				{
-					field=mysql_fetch_row(res);
-					sscanf(field[0],"%u",&uZone);
-				}
-				mysql_free_result(res);
+				uZone=uZoneSetup(cZone);
+				
 				for(f=d;f<254;f++)
 				{
 					sprintf(cParam1,"%u-%u-%u-%u.%s",f,x,b,a,cUpdateHost);
@@ -1313,6 +1254,26 @@ CreateZoneLargeBlock:
 		if(uNumNets==1)
 		{
 			uRRToAddCount=uNumIPs-uDbIPs;
+
+			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+			uZone=uZoneSetup(cZone);
+			
+			//Create block default RRs uOwner=uClient
+			//
+			//printf("d=%u uNumIPs=%u\n",d,uNumIPs);
+			for(f=(d+uDbIPs);f<(uNumIPs+d);f++)
+			{
+				sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+				CreateDefaultRR(f,cParam1,uZone,uClient);
+				//printf("Creating RR cName=%i\n",f);
+			}
+			//Update zone serial
+			RestoreUpdateSerialNum(uZone);
+			//printf("Called RestoreUpdateSerialNum()\n");
+			//Submit mod job
+			//Default uNSSet=1 ONLY
+			if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
+					htmlPlainTextError(gcQuery);
 		}
 		else
 		{
