@@ -1277,11 +1277,34 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		}
 		else
 		{
+			register int x;
+
 			uNetsToAdd=uNumNets-uDBNets;
+			//Larger than /24 blocks
+			for(x=c;x<(c+uNetsToAdd);x++)
+			{
+				//
+				sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
+				//printf("cZone=%s\n",cZone);
+				uZone=uZoneSetup(cZone);
+			
+				//Create block default RRs uOwner=uClient
+				//
+				if(d==0)d++;
+				for(f=d;f<255;f++)
+				{
+					sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+					CreateDefaultRR(f,cParam1,uZone,uClient);
+				}
+				//Update zone serial
+				RestoreUpdateSerialNum(uZone);
+				//Submit mod job
+				//Default uNSSet=1 ONLY
+				if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
+					htmlPlainTextError(gcQuery);
+			}//for(f=c;f<((c+uNumNets));f++)
 		}
 
-		//Add the RRs based on uRRToAddCount with same ownership as block
-		//If updating owner new RRs will be created with uClient=cCompany from function args
 		//Check if we are keeping owner or not and update as required (the old RRs only)
 	}
 	else if(strstr(cAction,"Reduce"))
