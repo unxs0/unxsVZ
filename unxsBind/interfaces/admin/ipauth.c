@@ -757,17 +757,30 @@ void CommitTransaction(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cFQDN,tServer.cLabel FROM tNS,tNSSet "
-			"WHERE tNS.uNSType=1 AND tNS.uServer=tServer.uServer "
-			"AND tNS.uNSSet=tNSSet.uNSSet AND tNSSEt.uNSSet=1 LIMIT 1");
+	sprintf(gcQuery,"SELECT cFQDN,tServer.cLabel,tNSType.cLabel FROM tNS,tNSSet,tServer,tNSType "
+			"WHERE (tNS.uNSType=1 OR tNS.uNSType=2) AND tNS.uServer=tServer.uServer "
+			"AND tNS.uNSType=tNSType.uNSType "
+			"AND tNS.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=1 LIMIT 1");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-//		sprintf(gcQuery,"INSERT INTO tJob SET cJob='IPAuthCommit',uNSSet=1,cTargetServer=%s %s",
+		sprintf(gcQuery,"INSERT INTO tJob SET cJob='IPAuthCommit',uNSSet=1,cTargetServer='%s %s',"
+				"uTime=UNIX_TIMESTAMP(NOW()),uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				field[0]
+				,field[2]
+				,guOrg
+				,guLoginClient
+				);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+
 	}
+	else
+		htmlPlainTextError("Couldn't find master or hidden master for uNSSet=1");
 
 }//void CommitTransaction(void)
 
