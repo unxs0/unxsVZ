@@ -3915,7 +3915,7 @@ void CommitTransaction(void)
 	mysql_free_result(res);	
 
 	sprintf(gcQuery,"SELECT cBlock,cCompany,cBlockAction FROM tTransaction WHERE cBlockAction='New' "
-			"OR cBlockAction='Mod' cORDER BY uTransaction");
+			"OR cBlockAction='Mod' ORDER BY uTransaction");
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
@@ -4077,38 +4077,48 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 			htmlPlainTextError(gcQuery);
 
 		uBlockAdd++;
-
+		printf("Created block: %s (%u)\n",cIPBlock,(unsigned)mysql_insert_id(&gMysql));
 		if(uNumNets==1)
 		{
 			//24 and smaller blocks
 			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 			//Check for .arpa zone if it doesn't exist, create it
 			//owned by uDefaultClient
+			printf("cZone is %s\n",cZone);
 			res=ZoneQuery(cZone);
 			if(!mysql_num_rows(res))
+			{
+				printf("Zone needs to be created\n");
 CreateZone:			
 				uZone=uCreateZone(cZone,uDefaultClient);
+				printf("Zone created (%u)\n",(unsigned)mysql_insert_id(&gMysql));
+			}
 			else
 			{
 				field=mysql_fetch_row(res);
 				sscanf(field[0],"%u",&uZone);
+				printf("uZone is %u\n",uZone);
 			}
 			mysql_free_result(res);
 			
 			//Create block default RRs uOwner=uClient
 			//
+			printf("d=%u uNumIPs=%u\n",d,uNumIPs);
 			if(d==0)d++;
-			for(f=d;f<(uNumIPs+1);f++)
+			for(f=d;f<(uNumIPs+d);f++)
 			{
 				sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
 				CreateDefaultRR(f,cParam1,uZone,uClient);
+				printf("Creating RR cName=%i\n",f);
 			}
 			//Update zone serial
 			UpdateSerialNum(uZone);
+			printf("Called UpdateSerialNum()\n");
 			//Submit mod job
 			//Default uNSSet=1 ONLY
 			if(SubmitJob("Mod",1,cZone,0,luClock+300))
 					htmlPlainTextError(gcQuery);
+			printf("Submitted job\n");
 		}//if(uNumNets==1)
 		else
 		{
@@ -4119,7 +4129,7 @@ CreateZoneLargeBlock:
 			{
 				//
 				sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
-				//printf("cZone=%s\n",cZone);
+				printf("cZone=%s\n",cZone);
 
 				res=ZoneQuery(cZone);
 				if(!mysql_num_rows(res))
