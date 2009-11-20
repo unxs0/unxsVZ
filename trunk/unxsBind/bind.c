@@ -140,6 +140,25 @@ void UpdateSerialNum(unsigned uZone);//local used in tblockfunc.h, tresourcefunc
 //tclientfunc.h
 unsigned uGetOrganization(char *cLabel);
 
+static FILE *gLfp;
+void logfileLine(const char *cFunction,const char *cLogline)
+{
+	time_t luClock;
+	char cTime[32];
+	pid_t pidThis;
+	const struct tm *tmTime;
+
+	pidThis=getpid();
+
+	time(&luClock);
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
+
+        fprintf(gLfp,"%s jobqueue.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
+	fflush(gLfp);
+
+}//void logfileLine(char *cLogline)
+
 //
 // Major file section
 //	Importing DNS data functions
@@ -2190,6 +2209,12 @@ void MasterJobQueue(char *cNameServer)
 	char *cp;
 	char cuControlPort[8]={""};
 	char cCmd[100]={""};
+
+	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
+	{
+		fprintf(stderr,"Could not open logfile: %s\n",cLOGFILE);
+		exit(300);
+       	}
 	
 	ConnectDb();
 
@@ -3826,4 +3851,649 @@ void ExportRRCSV(char *cCompany, char *cOutFile)
 
 
 }//void ExportRRCSV(char *cCompany)
+
+
+//
+//IP Auth transaction commit code starts
+//
+
+void CleanUpBlock(char *cIPBlock);
+void CleanUpCompanies(void);
+void EncryptPasswd(char *cPasswd);
+char *cGetRandomPassword(void);
+unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction);
+unsigned ProcessCompanyTransaction(char *cCompany,char *cAction);
+unsigned uCreateZone(char *cZone,unsigned uOwner);
+void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner);
+void ResetRR(char *cZone,unsigned uName,char *cParam1,unsigned uOwner);
+MYSQL_RES *ZoneQuery(char *cZone);
+
+//Action counters
+unsigned uBlockAdd=0;
+unsigned uBlockMod=0;
+unsigned uBlockDel=0;
+unsigned uCompanyAdd=0;
+unsigned uCompanyDel=0;
+
+unsigned uDefaultClient=0;
+
+
+void CommitTransaction(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	//char cMsg[100]={""};
+	char cuDefaultClient[16]={""};
+
+	GetConfiguration("uDefaultClient",cuDefaultClient,1);
+	sscanf(cuDefaultClient,"%u",&uDefaultClient);
+
+	sprintf(gcQuery,"SELECT DISTINCT cCompany FROM tTransaction WHERE cOwnerAction='New' ORDER BY uTransaction");
+	mysql_query(&gMysql,gcQuery);
+
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+	
+	res=mysql_store_result(&gMysql);
+
+	while((field=mysql_fetch_row(res)))
+	{		
+		if(ProcessCompanyTransaction(field[0],"New"))
+			uCompanyAdd++;
+		else
+		{
+			sprintf(gcQuery,"Failed ProcessCompanyTransaction() for %s",field[0]);
+			logfileLine("CommitTransaction()",gcQuery);
+		}
+		printf("ProcessCompanyTransaction(%s,New)\n",field[0]);
+	}
+
+	mysql_free_result(res);	
+
+	sprintf(gcQuery,"SELECT cBlock,cCompany,cBlockAction FROM tTransaction ORDER BY uTransaction");
+	mysql_query(&gMysql,gcQuery);
+
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+	
+	res=mysql_store_result(&gMysql);
+
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("ProcessTransaction(%s,%s,%s)",field[0],field[1],field[2]);
+		ProcessTransaction(field[0],field[1],field[2]);
+		printf("...OK\n");
+	}
+	printf("CleanUpCompanies()");
+	CleanUpCompanies();
+	printf("...OK");
+	exit(0);
+/*	sprintf(cImportMsg,"Added %u block(s)\n",uBlockAdd);
+
+	sprintf(cMsg,"Modified %u block(s)\n",uBlockMod);
+	strcat(cImportMsg,cMsg);
+
+	sprintf(cMsg,"Deleted %u block(s)\n",uBlockDel);
+	strcat(cImportMsg,cMsg);
+	
+	if(uCompanyAdd>1)
+		sprintf(cMsg,"Added %u companies\n",uCompanyAdd);
+	else if(uCompanyAdd==1)
+		sprintf(cMsg,"Added %u company\n",uCompanyAdd);
+	else if(uCompanyAdd==0)
+		sprintf(cMsg,"Didn't add any company\n");
+	strcat(cImportMsg,cMsg);
+
+	if(uCompanyDel>1)
+		sprintf(cMsg,"Deleted %u companies and their contacts\n",uCompanyDel);
+	else if(uCompanyDel==1)
+		sprintf(cMsg,"Deleted %u company and their contacts\n",uCompanyDel);
+	else if(uCompanyDel==0)
+		sprintf(cMsg,"Didn't delete any company\n");
+	strcat(cImportMsg,cMsg);
+*/
+
+}//void CommitTransaction(void)
+
+
+unsigned uCreateZone(char *cZone,unsigned uOwner)
+{
+	//This function creates a new zone
+	//sets it serial number
+	//and submits a new job
+	//
+	unsigned uZone=0;
+	time_t luClock;
+
+	time(&luClock);
+
+	sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=1,cHostmaster='%s',"
+			"uSerial=0,uExpire=604800,uRefresh=28800,uTTL=86400,"
+			"uRetry=7200,uZoneTTL=86400,uMailServers=0,uView=2,uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cZone
+			,HOSTMASTER
+			,uOwner
+			,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+	uZone=mysql_insert_id(&gMysql);
+	UpdateSerialNum(uZone);
+	//Submit new job
+	if(SubmitJob("New",1,cZone,0,luClock))
+			htmlPlainTextError(gcQuery);
+	
+	return(uZone);
+
+}//unsigned uCreateZone(char *cZone,unsigned uOwner)
+
+
+void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner)
+{
+	sprintf(gcQuery,"INSERT INTO tResource SET "
+			"cName=%u,uRRType=7,cParam1='%s',uZone=%u,"
+			"uCreatedBy=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uName
+			,cParam1
+			,uZone
+			,guLoginClient
+			,uOwner
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+
+}//void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner)
+
+
+MYSQL_RES *ZoneQuery(char *cZone)
+{
+	static MYSQL_RES *res;
+
+	sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+	res=mysql_store_result(&gMysql);
+	return(res);
+
+}//MYSQL_RES *ZoneQuery(void)
+
+
+unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	register unsigned f;
+	unsigned a,b,c,d,e;
+	unsigned uNumNets=0;
+	unsigned uNumIPs=0;
+	unsigned uZone=0;
+	unsigned uClient=0;
+
+	char cZone[100]={""};
+	char cParam1[200]={""};
+	char cUpdateHost[100]={"packetexchange.net"}; //This will come from tConfiguration, later
+	
+	time_t luClock;
+	
+	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
+	uNumIPs=uGetNumIPs(cIPBlock);
+	uNumNets=uGetNumNets(cIPBlock);
+	
+	time(&luClock);
+	//printf("uNumIPs=%u\n",uNumIPs);
+	//printf("uNumNets=%u\n",uNumNets);
+	
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND cCode='Organization'",cCompany);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uClient);
+	else
+	{
+		mysql_free_result(res);
+		return(1);
+	}
+	if(!strcmp(cAction,"New"))
+	{
+		//
+		//Create tBlock entry owned by uClient
+		sprintf(gcQuery,"INSERT INTO tBlock SET cLabel='%s',uOwner=%u,"
+				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				cIPBlock
+				,uClient
+				,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(gcQuery);
+
+		uBlockAdd++;
+
+		if(uNumNets==1)
+		{
+			//24 and smaller blocks
+			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+			//Check for .arpa zone if it doesn't exist, create it
+			//owned by uDefaultClient
+			res=ZoneQuery(cZone);
+			if(!mysql_num_rows(res))
+CreateZone:			
+				uZone=uCreateZone(cZone,uDefaultClient);
+			else
+			{
+				field=mysql_fetch_row(res);
+				sscanf(field[0],"%u",&uZone);
+			}
+			mysql_free_result(res);
+			
+			//Create block default RRs uOwner=uClient
+			//
+			if(d==0)d++;
+			for(f=d;f<(uNumIPs+1);f++)
+			{
+				sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+				CreateDefaultRR(f,cParam1,uZone,uClient);
+			}
+			//Update zone serial
+			UpdateSerialNum(uZone);
+			//Submit mod job
+			//Default uNSSet=1 ONLY
+			if(SubmitJob("Mod",1,cZone,0,luClock+300))
+					htmlPlainTextError(gcQuery);
+		}//if(uNumNets==1)
+		else
+		{
+			register int x;
+			//Larger than /24 blocks
+CreateZoneLargeBlock:			
+			for(x=c;x<(c+uNumNets);x++)
+			{
+				//
+				sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
+				//printf("cZone=%s\n",cZone);
+
+				res=ZoneQuery(cZone);
+				if(!mysql_num_rows(res))
+				{
+					uZone=uCreateZone(cZone,uDefaultClient);
+				}
+				else
+				{
+					field=mysql_fetch_row(res);
+					sscanf(field[0],"%u",&uZone);
+				}
+				mysql_free_result(res);
+			
+				//Create block default RRs uOwner=uClient
+				//
+				if(d==0)d++;
+				for(f=d;f<255;f++)
+				{
+					sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+					CreateDefaultRR(f,cParam1,uZone,uClient);
+				}
+				//Update zone serial
+				UpdateSerialNum(uZone);
+				//Submit mod job
+				//Default uNSSet=1 ONLY
+				if(SubmitJob("Mod",1,cZone,0,luClock+300))
+					htmlPlainTextError(gcQuery);
+			}//for(f=c;f<((c+uNumNets));f++)
+		}
+	}
+	else if(strcmp(cAction,"Modify"))
+	{
+		//
+		//Update tBlock uOwner
+		sprintf(gcQuery,"UPDATE tBlock SET uOwner=%u,uModBy=%u,"
+				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel='%s'",
+				uClient
+				,guLoginClient
+				,cIPBlock);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(gcQuery);
+		
+		uBlockMod++;
+
+		if(uNumNets==1)
+		{
+			//24 and smaller blocks
+			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+			//Check for .arpa zone if it doesn't exist, create it
+			//owned by uDefaultClient
+			res=ZoneQuery(cZone);
+			if(!mysql_num_rows(res))
+				goto CreateZone;
+			else
+			{
+				field=mysql_fetch_row(res);
+				sscanf(field[0],"%u",&uZone);
+			}
+
+			//Update zone RRs
+			//to be owned by uClient
+			//
+			if(d==0)d++;
+			for(f=d;f<(uNumIPs+1);f++)
+			{
+				//Update to default cParam1 or just uOwner update?
+				sprintf(gcQuery,"UPDATE tResource SET cParam1='%u-%u-%u-%u.%s',uOwner=%u WHERE cName='%u' "
+						"AND uZone=%u",
+						c
+						,b
+						,a
+						,f
+						,cUpdateHost
+						,uClient
+						,f
+						,uZone
+						);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(gcQuery);
+			}
+			//Update zone serial
+			UpdateSerialNum(uZone);
+			//Submit Mod job for zone
+			if(SubmitJob("Mod",1,cZone,0,luClock+300))
+				htmlPlainTextError(gcQuery);
+		}//if(uNumNets==1)
+		else
+		{
+			register int x;
+			//Larger than /24 blocks
+			
+			for(x=c;x<(c+uNumNets);x++)
+			{
+				//
+				sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
+				//printf("cZone=%s\n",cZone);
+
+				res=ZoneQuery(cZone);
+				if(!mysql_num_rows(res))
+				{
+					goto CreateZoneLargeBlock;
+				}
+				else
+				{
+					field=mysql_fetch_row(res);
+					sscanf(field[0],"%u",&uZone);
+				}
+				mysql_free_result(res);
+				for(f=d;f<254;f++)
+				{
+					sprintf(cParam1,"%u-%u-%u-%u.%s",f,x,b,a,cUpdateHost);
+					ResetRR(cZone,f,cParam1,uClient);
+				}
+				//Update zone serial
+				UpdateSerialNum(uZone);
+				//Submit Mod job for zone
+				if(SubmitJob("Mod",1,cZone,0,luClock+300))
+					htmlPlainTextError(gcQuery);
+			}
+		}
+	}
+	return(0);
+
+}//void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
+
+
+unsigned ProcessCompanyTransaction(char *cCompany,char *cAction)
+{
+	unsigned uClient=0;
+
+	if(!strcmp(cAction,"None")) return(1);
+
+	//Default 'New'
+	
+	unsigned uContact=0;
+	char cPasswd[100]={""};
+	char cSavePasswd[16]={""};
+	//Create tClient record
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',"
+			"cCode='Organization',uOwner=1,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cCompany
+			,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+	uClient=mysql_insert_id(&gMysql);
+	if(!uClient) return(0);
+
+	//Create default contact with same cLabel
+	sprintf(gcQuery,"INSERT INTO tClient SET uOwner=%u,cLabel='%s',"
+			"cCode='Contact',uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uClient
+			,cCompany
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+
+	uContact=mysql_insert_id(&gMysql);
+	//Password should be 8 characters random text
+	sprintf(cPasswd,"%s",cGetRandomPassword());
+	sprintf(cSavePasswd,"%s",cPasswd);
+	EncryptPasswd(cPasswd);
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',uCertClient=%u,"
+			"uOwner=%u,cPasswd='%s',cClrPasswd='%s',cIpMask='0.0.0.0',"
+			"uPerm=6,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cCompany
+			,uContact
+			,uClient
+			,cPasswd
+			,cSavePasswd
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+	
+	return(1);
+
+}//unsigned ProcessCompanyTransaction(unsigned uClient)
+
+
+char *cGetRandomPassword(void)
+{
+	static char cPasswd[10]={""};
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	mysql_query(&gMysql,"DROP function if exists generate_alpha");
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+	mysql_query(&gMysql,"CREATE FUNCTION generate_alpha () RETURNS CHAR(1) "
+			"RETURN ELT(FLOOR(1 + (RAND() * (50-1))), 'a','b','c','d'"
+			",'e','f','g','h','i','j','k','l','m  ','n','o','p','q','r'"
+			",'s','t','u','v','w','x','y',  'z','A','B','C','D','E','F',"
+			"'G','H','I','J','K','L','M  ','N','O','P','Q','R','S','T','U'"
+			",'V','W','X','Y',  'Z' )");
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+	mysql_query(&gMysql,"SELECT CONCAT(generate_alpha (),generate_alpha (),generate_alpha (),"
+			"generate_alpha (),generate_alpha (),generate_alpha (),generate_alpha (),"
+			"generate_alpha ())");
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+	res=mysql_store_result(&gMysql);
+	field=mysql_fetch_row(res); //We will always have a row if the above queries didn't fail
+	
+	sprintf(cPasswd,"%s",field[0]);
+
+	return(cPasswd);
+
+}//char *cGetRandomPassword(void)
+
+
+void CleanUpCompanies(void)
+{
+	//If a company doesn't exist in the tTransaction table:
+	//* Company removed
+	//* Associated contacts removed
+	//* Associated tBlocks (IP Blocks) removed
+	//* Associated Forward zones only removed (Reverse zones always left)
+	//* Associated Resource Records removed. For reverse zones only ; the IP Address(es)
+	// removed need to be replaced with standard reverse record(s) having the following
+	// example format (hopefully the .packetexchange.net will not be hardcoded and just a
+	//variable etc). Obviously this will differ for different IP Blocks!:
+	//4            PTR 4-71-245-83.packetexchange.net.
+	//5            PTR 5-71-245-83.packetexchange.net.
+	//6            PTR 6-71-245-83.packetexchange.net.
+	//7            PTR 7-71-245-83.packetexchange.net.
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	MYSQL_RES *res2;
+	MYSQL_ROW field2;
+
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel NOT IN "
+		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
+		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		//Delete forward zones and their RRs
+		//The query below ensures that the reverse
+		//zones RRs are not touched, those will be handled
+		//by the CleanUpBlock() function call below
+		sprintf(gcQuery,"DELETE FROM tResource WHERE uZone IN "
+				"(SELECT uZone FROM tZone WHERE uOwner=%s)",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(gcQuery);
+
+		sprintf(gcQuery,"DELETE FROM tZone WHERE uOwner=%s",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(gcQuery);
+		
+		//Delete blocks
+		sprintf(gcQuery,"SELECT cLabel FROM tBlock WHERE uOwner=%s",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(gcQuery);
+		res2=mysql_store_result(&gMysql);
+		while((field2=mysql_fetch_row(res2)))
+		{
+			uBlockDel++;
+			CleanUpBlock(field2[0]);
+		}
+		//Delete contacts
+		sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient IN "
+				"(SELECT uClient FROM tClient WHERE uOwner=%s)",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(gcQuery);
+		sprintf(gcQuery,"DELETE FROM tClient WHERE uOwner=%s",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(gcQuery);
+		sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%s",field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(gcQuery);
+
+		uCompanyDel++;
+	}
+	
+}//void CleanUpCompanies(void)
+
+
+void CleanUpBlock(char *cIPBlock)
+{
+	unsigned uNumIPs=0;
+	unsigned uNumNets=0;
+
+	unsigned a,b,c,d,e,f;
+	char cZone[100]={""};
+	char cParam1[200]={""};
+	char cUpdateHost[100]={"packetexchange.net"}; //This will come from tConfiguration, later
+	time_t luClock;
+
+	time(&luClock);
+	
+	uNumIPs=uGetNumIPs(cIPBlock);
+	uNumNets=uGetNumNets(cIPBlock);
+
+	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
+
+	sprintf(gcQuery,"DELETE FROM tBlock WHERE cLabel='%s'",cIPBlock);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+
+	if(uNumNets==1)
+	{
+		//Update RRs
+		if(d==0)d++;
+		sprintf(cZone,"%u.%u.%u.in-adrr.arpa",c,b,a);
+
+		for(f=d;f<(uNumIPs+1);f++)
+		{
+			sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+			ResetRR(cZone,f,cParam1,uDefaultClient);
+		}
+		//Update zone serial
+		//UpdateSerialNum(cZone,"2");
+		//Submit Mod job for zone
+		if(SubmitJob("Mod",1,cZone,0,luClock+300))
+			htmlPlainTextError(gcQuery);
+	}
+	else
+	{
+		register int x;
+		//Larger than /24 blocks
+			
+		for(x=c;x<(c+uNumNets);x++)
+		{
+			//
+			sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
+			//printf("cZone=%s\n",cZone);
+			for(f=d;f<254;f++)
+			{
+				sprintf(cParam1,"%u-%u-%u-%u.%s",f,x,b,a,cUpdateHost);
+				ResetRR(cZone,f,cParam1,uDefaultClient);
+			}
+			//Update zone serial
+			//UpdateSerialNum(cZone,"2");
+			//Submit Mod job for zone
+			if(SubmitJob("Mod",1,cZone,0,luClock+300))
+				htmlPlainTextError(gcQuery);
+		}
+		
+
+	}
+
+}//void CleanUpBlock(char *cIPBlock)
+
+
+void ResetRR(char *cZone,unsigned uName,char *cParam1,unsigned uOwner)
+{
+	sprintf(gcQuery,"UPDATE tResource SET cParam1='%s',uOwner=%u WHERE cName='%u' "
+			"AND uZone IN (SELECT uZone FROM tZone WHERE cZone='%s')",
+			cParam1
+			,uOwner
+			,uName
+			,cZone
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+
+}//void ResetRR(char *cZone,char *cParam1)
+
 
