@@ -671,4 +671,4 @@ void ExttAuthorizeNavBar(void);
 //return; if MySQL error
 #define macro_mySQLRunAndStoreTextVoidRet(res) macro_mySQLRunReturnVoid;\
 						res=mysql_store_result(&gMysql)
-
+#define cLOGFILE "/var/log/unxsbindlog"

@@ -797,7 +797,7 @@ void CommitTransaction(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	char cMsg[100]={""};
-
+	printf("Content-type: text/plain\n\n");
 	sprintf(gcQuery,"SELECT DISTINCT cCompany FROM tTransaction WHERE cOwnerAction='New' ORDER BY uTransaction");
 	mysql_query(&gMysql,gcQuery);
 
@@ -815,6 +815,7 @@ void CommitTransaction(void)
 			sprintf(gcQuery,"Failed ProcessCompanyTransaction() for %s",field[0]);
 			idnsAdminLog(gcQuery);
 		}
+		printf("ProcessCompanyTransaction(%s,New)\n",field[0]);
 	}
 
 	mysql_free_result(res);	
@@ -829,11 +830,14 @@ void CommitTransaction(void)
 
 	while((field=mysql_fetch_row(res)))
 	{
+		printf("ProcessTransaction(%s,%s,%s)",field[0],field[1],field[2]);
 		ProcessTransaction(field[0],field[1],field[2]);
+		printf("...OK\n");
 	}
-	
+	printf("CleanUpCompanies()");
 	CleanUpCompanies();
-
+	printf("...OK");
+	exit(0);
 	sprintf(cImportMsg,"Added %u block(s)\n",uBlockAdd);
 
 	sprintf(cMsg,"Modified %u block(s)\n",uBlockMod);
