@@ -1045,6 +1045,29 @@ unsigned uGetDbCIDR(char *cIPBlock)
 }//unsigned uGetDbCIDR(char *cIPBlock)
 
 
+unsigned uZoneSetup(char *cZone)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uZone=0;
+
+	res=ZoneQuery(cZone);
+	if(!mysql_num_rows(res))
+	{
+		uZone=uCreateZone(cZone,uDefaultClient);
+	}
+	else
+	{
+		field=mysql_fetch_row(res);
+		sscanf(field[0],"%u",&uZone);
+	}
+	mysql_free_result(res);
+
+	return(uZone);
+
+}//unsigned uZoneSetup(char *cZone)
+
+
 unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 {
 	MYSQL_RES *res;
@@ -1056,7 +1079,13 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	unsigned uNumIPs=0;
 	unsigned uZone=0;
 	unsigned uClient=0;
-
+	unsigned uDbCIDR=0;
+	unsigned uCIDR=0;
+	unsigned uDbIPs=0;
+	unsigned uDBNets=0;
+	
+	char cBlock[64]={""};
+	char cDbBlock[64]={""};
 	char cZone[100]={""};
 	char cParam1[200]={""};
 	char cUpdateHost[100]={"packetexchange.net"}; //This will come from tConfiguration, later
@@ -1066,7 +1095,15 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
 	uNumIPs=uGetNumIPs(cIPBlock);
 	uNumNets=uGetNumNets(cIPBlock);
-	
+	if(strcmp(cAction,"New")) //MySQL time saver ;)
+	{
+		sscanf(cIPBlock,"%s/%u",cBlock,&uCIDR);
+		uDbCIDR=uGetDbCIDR(cBlock);
+		sprintf(cDbBlock,"%s/%u",cBlock,uDbCIDR);
+		uDbIPs=uGetNumIPs(cDbBlock);
+		uDBNets=uGetNumNets(cDbBlock);
+	}
+
 	time(&luClock);
 	//printf("uNumIPs=%u\n",uNumIPs);
 	//printf("uNumNets=%u\n",uNumNets);
@@ -1103,6 +1140,7 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		{
 			//24 and smaller blocks
 			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+
 			//Check for .arpa zone if it doesn't exist, create it
 			//owned by uDefaultClient
 			//printf("cZone is %s\n",cZone);
@@ -1269,18 +1307,17 @@ CreateZoneLargeBlock:
 	}
 	else if(strstr(cAction,"Expand "))
 	{
-		unsigned uDbCIDR=0;
-		unsigned uCIDR=0;
-		unsigned uDbIPs=0;
+		unsigned uNetsToAdd=0;
 		unsigned uRRToAddCount=0;
-		char cBlock[64]={""};
-		char cDbBlock[64]={"};
 
-		sscanf(cIPBlock,"%s/%u",cBlock,&uCIDR);
-		uDbCIDR=uGetDbCIDR(cBlock);
-		sprintf(cDbBlock,"%s/%u",cBlock,uDbCIDR);
-		uDbIPs=uGetNumIPs(cDbBlock);
-		uRRToAddCount=uNumIPs-uDbIPs;
+		if(uNumNets==1)
+		{
+			uRRToAddCount=uNumIPs-uDbIPs;
+		}
+		else
+		{
+			uNetsToAdd=uNumNets-uDBNets;
+		}
 
 		//Add the RRs based on uRRToAddCount with same ownership as block
 		//If updating owner new RRs will be created with uClient=cCompany from function args
