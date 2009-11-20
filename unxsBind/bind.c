@@ -127,6 +127,7 @@ char *cPrintNSList(FILE *zfp,char *cuNSSet);//local
 void PrintMXList(FILE *zfp,char *cuMailServers);//local
 unsigned ViewReloadZone(char *cZone);//local
 void CommitTransaction(void);//local
+void CleanUpCompanies(void);//local
 
 //External. Used here but located in other files.
 int AddNewArpaZone(char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);//tzonefunc.h
@@ -2242,6 +2243,8 @@ void MasterJobQueue(char *cNameServer)
 			//IP Auth commit transaction meta job
 			if(!strcmp(field[1],"IPAuthCommit"))
 				CommitTransaction();
+			else if(!strcmp(field[1],"CleanUpCompanies"))
+				CleanUpCompanies();
 
 			if(strcmp(field[2],cCurrentZone))
 			{
@@ -3929,10 +3932,14 @@ void CommitTransaction(void)
 		ProcessTransaction(field[0],field[1],field[2]);
 		printf("...OK\n");
 	}
+	mysql_free_result(res);
+
+}//void CommitTransaction()
+/*
 	printf("CleanUpCompanies()");
 	CleanUpCompanies();
 	printf("...OK");
-/*	sprintf(cImportMsg,"Added %u block(s)\n",uBlockAdd);
+	sprintf(cImportMsg,"Added %u block(s)\n",uBlockAdd);
 
 	sprintf(cMsg,"Modified %u block(s)\n",uBlockMod);
 	strcat(cImportMsg,cMsg);
@@ -3955,10 +3962,10 @@ void CommitTransaction(void)
 	else if(uCompanyDel==0)
 		sprintf(cMsg,"Didn't delete any company\n");
 	strcat(cImportMsg,cMsg);
-*/
+
 
 }//void CommitTransaction(void)
-
+*/
 
 unsigned uCreateZone(char *cZone,unsigned uOwner)
 {
@@ -4063,6 +4070,7 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		mysql_free_result(res);
 		return(1);
 	}
+	mysql_free_result(res);
 	if(!strcmp(cAction,"New"))
 	{
 		//
@@ -4194,7 +4202,7 @@ CreateZoneLargeBlock:
 			//to be owned by uClient
 			//
 			if(d==0)d++;
-			for(f=d;f<(uNumIPs+1);f++)
+			for(f=d;f<(uNumIPs+d);f++)
 			{
 				//Update to default cParam1 or just uOwner update?
 				sprintf(gcQuery,"UPDATE tResource SET cParam1='%u-%u-%u-%u.%s',uOwner=%u WHERE cName='%u' "
@@ -4369,6 +4377,10 @@ void CleanUpCompanies(void)
 
 	MYSQL_RES *res2;
 	MYSQL_ROW field2;
+	char cuDefaultClient[16]={""};
+
+	GetConfiguration("uDefaultClient",cuDefaultClient,1);
+	sscanf(cuDefaultClient,"%u",&uDefaultClient);
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel NOT IN "
 		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
@@ -4384,11 +4396,22 @@ void CleanUpCompanies(void)
 		//The query below ensures that the reverse
 		//zones RRs are not touched, those will be handled
 		//by the CleanUpBlock() function call below
-		sprintf(gcQuery,"DELETE FROM tResource WHERE uZone IN "
-				"(SELECT uZone FROM tZone WHERE uOwner=%s)",field[0]);
+		printf("Removing tClient.uClient=%s\n",field[0]);
+
+		//Remove forward zones and their RRs
+		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE uOwner=%s",field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(gcQuery);
+		res2=mysql_store_result(&gMysql);
+		printf("Company owns %u fwd zones\n",(unsigned)mysql_num_rows(res2));
+		while((field2=mysql_fetch_row(res2)))
+		{
+			sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%s",field2[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(gcQuery);
+		}
 
 		sprintf(gcQuery,"DELETE FROM tZone WHERE uOwner=%s",field[0]);
 		mysql_query(&gMysql,gcQuery);
@@ -4401,17 +4424,28 @@ void CleanUpCompanies(void)
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(gcQuery);
 		res2=mysql_store_result(&gMysql);
+		printf("Company owns %u blocks\n",(unsigned)mysql_num_rows(res2));
 		while((field2=mysql_fetch_row(res2)))
 		{
 			uBlockDel++;
+			printf("Removing block %s\n",field2[0]);
 			CleanUpBlock(field2[0]);
 		}
 		//Delete contacts
-		sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient IN "
-				"(SELECT uClient FROM tClient WHERE uOwner=%s)",field[0]);
+		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uOwner=%s",field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(gcQuery);
+		res2=mysql_store_result(&gMysql);
+		printf("Company has %u contacts\n",(unsigned)mysql_num_rows(res2));
+		while((field2=mysql_fetch_row(res2)))
+		{
+
+			sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient=%s",field2[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(gcQuery);
+		}
 		sprintf(gcQuery,"DELETE FROM tClient WHERE uOwner=%s",field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -4455,10 +4489,12 @@ void CleanUpBlock(char *cIPBlock)
 		//Update RRs
 		if(d==0)d++;
 		sprintf(cZone,"%u.%u.%u.in-adrr.arpa",c,b,a);
+		printf("cZone=%s\n",cZone);
 
-		for(f=d;f<(uNumIPs+1);f++)
+		for(f=d;f<(uNumIPs+d);f++)
 		{
 			sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+			printf("Reset RR cName=%u\n",f);
 			ResetRR(cZone,f,cParam1,uDefaultClient);
 		}
 		//Update zone serial
@@ -4476,11 +4512,13 @@ void CleanUpBlock(char *cIPBlock)
 		{
 			//
 			sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
-			//printf("cZone=%s\n",cZone);
+			printf("cZone=%s\n",cZone);
 			for(f=d;f<254;f++)
 			{
 				sprintf(cParam1,"%u-%u-%u-%u.%s",f,x,b,a,cUpdateHost);
 				ResetRR(cZone,f,cParam1,uDefaultClient);
+				printf("Reset RR cName=%u\n",f);
+
 			}
 			//Update zone serial
 			//UpdateSerialNum(cZone,"2");
@@ -4497,12 +4535,15 @@ void CleanUpBlock(char *cIPBlock)
 
 void ResetRR(char *cZone,unsigned uName,char *cParam1,unsigned uOwner)
 {
+	unsigned uZone=0;
+	uZone=GetuZone(cZone,"tZone");
+
 	sprintf(gcQuery,"UPDATE tResource SET cParam1='%s',uOwner=%u WHERE cName='%u' "
-			"AND uZone IN (SELECT uZone FROM tZone WHERE cZone='%s')",
+			"AND uZone=%u",
 			cParam1
 			,uOwner
 			,uName
-			,cZone
+			,uZone
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
