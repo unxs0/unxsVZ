@@ -126,7 +126,7 @@ int ProcessSlaveJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew,
 char *cPrintNSList(FILE *zfp,char *cuNSSet);//local
 void PrintMXList(FILE *zfp,char *cuMailServers);//local
 unsigned ViewReloadZone(char *cZone);//local
-
+void CommitTransaction(void);//local
 
 //External. Used here but located in other files.
 int AddNewArpaZone(char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);//tzonefunc.h
@@ -2239,6 +2239,10 @@ void MasterJobQueue(char *cNameServer)
 	{
 		while((field=mysql_fetch_row(res)))
 		{
+			//IP Auth commit transaction meta job
+			if(!strcmp(field[1],"IPAuthCommit"))
+				CommitTransaction();
+
 			if(strcmp(field[2],cCurrentZone))
 			{
 				if(!first)
@@ -3910,7 +3914,8 @@ void CommitTransaction(void)
 
 	mysql_free_result(res);	
 
-	sprintf(gcQuery,"SELECT cBlock,cCompany,cBlockAction FROM tTransaction ORDER BY uTransaction");
+	sprintf(gcQuery,"SELECT cBlock,cCompany,cBlockAction FROM tTransaction WHERE cBlockAction='New' "
+			"OR cBlockAction='Mod' cORDER BY uTransaction");
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
@@ -3927,7 +3932,6 @@ void CommitTransaction(void)
 	printf("CleanUpCompanies()");
 	CleanUpCompanies();
 	printf("...OK");
-	exit(0);
 /*	sprintf(cImportMsg,"Added %u block(s)\n",uBlockAdd);
 
 	sprintf(cMsg,"Modified %u block(s)\n",uBlockMod);
