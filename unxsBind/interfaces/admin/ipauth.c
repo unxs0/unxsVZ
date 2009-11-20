@@ -238,10 +238,13 @@ void funcIPAuthReport(FILE *fp)
 //Import functions code begins here
 //Will extend in the future for ARIN and LACNIC
 //
-#define NEW_BLOCK 1
-#define MOD_BLOCK 2
-#define NA_BLOCK 3
-//#define uDefaultClient 2
+#define NEW_BLOCK 1 //new block from scratch
+#define MOD_BLOCK 2 //update block ownership
+#define NA_BLOCK 3 //nothing to do
+#define EXPAND_NOMOD 4 //expand block, keep ownership
+#define EXPAND_MOD 5 //expand block, update ownership
+#define REDUCE_NOMOD 6 //reduce block, keep ownership
+#define REDUCE_MOD 7 //reduce block, update ownership
 
 void CreateTransactionTable();
 unsigned uGetBlockStatus(char *cBlock,char *cCompany);
@@ -473,39 +476,68 @@ unsigned uGetBlockStatus(char *cBlock,char *cCompany)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uOwner=0;
-	
+	char cIPBlock[64]={""};
+	unsigned uCIDR=0;
+	unsigned uDbCIDR=0;
+	unsigned uUpdateOwner=0;
+	unsigned uAction=0;
+
+#define BLOCK_EXPAND 1
+#define BLOCK_REDUCE 2
+#define BLOCK_NONE 3
+
 	//This function should check if:
 	//Are we creating a brand new block?
 	//Are we expanding an existent block and keeping ownership intact?
 	//Are we expanding an existent block and updating ownership?
 	//Are we reducing an existent block and keeping ownership intact?
 	//Are we reducing an existent block and updating ownership?
+	
+	sscanf(cBlock,"%s/%u",cIPBlock,&uCIDR);
 
-	sprintf(gcQuery,"SELECT uBlock,uOwner FROM tBlock WHERE cLabel='%s'",cBlock);
+	sprintf(gcQuery,"SELECT cLabel,uOwner FROM tBlock WHERE cLabel LIKE '%s/%%'",cIPBlock);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(gcQuery);
 	res=mysql_store_result(&gMysql);
-
-	if(!mysql_num_rows(res))
+	if((field=mysql_fetch_row(res)))
 	{
-		mysql_free_result(res);
-		return(NEW_BLOCK);
-	}
-	else
-	{
-		field=mysql_fetch_row(res);
+		sscanf(field[0],"%s/%u",cIPBlock,&uDbCIDR);
 		sscanf(field[1],"%u",&uOwner);
 
 		mysql_free_result(res);
 
-		if(!strcmp(ForeignKey("tClient","cLabel",uOwner),cCompany))
+		//Does ownership change?
+		if(strcmp(ForeignKey("tClient","cLabel",uOwner),cCompany)) uUpdateOwner=1;
+		
+		if(uCIDR<uDbCIDR)
+			//Block is being expanded
+			uAction=BLOCK_EXPAND;
+		else if(uCIDR<uDbCIDR)
+			uAction=BLOCK_REDUCE;
+		else if(uCIDR==uDbCIDR)
+			uAction=BLOCK_NONE;
+		
+		if((uAction==BLOCK_NONE)&&!uUpdateOwner)
 			return(NA_BLOCK);
-		else
+		else if((uAction==BLOCK_NONE)&&uUpdateOwner)
 			return(MOD_BLOCK);
+		else if((uAction==BLOCK_EXPAND)&&!uUpdateOwner)
+			return(EXPAND_NOMOD);
+		else if((uAction==BLOCK_EXPAND)&&uUpdateOwner)
+			return(EXPAND_MOD);
+		else if((uAction==BLOCK_REDUCE)&&!uUpdateOwner)
+			return(REDUCE_NOMOD);
+		else if((uAction==BLOCK_REDUCE)&&uUpdateOwner)
+			return(REDUCE_MOD);
+	}
+	else
+	{
+		mysql_free_result(res);
+		return(NEW_BLOCK);
 	}
 
-	return(0);
+	return(0); 
 
 }//unsigned uGetBlockStatus(char *cBlock)
 
