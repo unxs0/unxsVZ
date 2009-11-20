@@ -416,7 +416,23 @@ void RIPEImport(void)
 			break;
 
 			case MOD_BLOCK:
-				cBlockAction="Modify";
+				cBlockAction="Update Ownership";
+			break;
+
+			case EXPAND_NOMOD:
+				cBlockAction="Expand Keep Owner";
+			break;
+
+			case EXPAND_MOD:
+				cBlockAction="Expand Update Owner";
+			break;
+
+			case REDUCE_NOMOD:
+				cBlockAction="Reduce Keep Owner";
+			break;
+
+			case REDUCE_MOD:
+				cBlockAction="Reduce Update Owner";
 			break;
 
 			case NA_BLOCK:
@@ -427,10 +443,6 @@ void RIPEImport(void)
 		{
 			case NEW_BLOCK:
 				cOwnerAction="New";
-			break;
-
-			case MOD_BLOCK:
-				cOwnerAction="Modify";
 			break;
 
 			case NA_BLOCK:
@@ -1000,6 +1012,39 @@ MYSQL_RES *ZoneQuery(char *cZone)
 }//MYSQL_RES *ZoneQuery(void)
 
 
+void UpdateBlockOwnership(char *cIPBlock,unsigned uOwner)
+{
+	sprintf(gcQuery,"UPDATE tBlock SET uOwner=%u,uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel='%s'",
+			uOwner
+			,guLoginClient
+			,cIPBlock);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+
+}//void UpdateBlockOwnership(char *cIPBlock,unsigned uOwner)
+
+
+unsigned uGetDbCIDR(char *cIPBlock)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uDbCIDR=0;
+
+	sprintf(gcQuery,"SELECT cLabel,uOwner FROM tBlock WHERE cLabel LIKE '%s/%%'",cIPBlock);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%s/%u",cIPBlock,&uDbCIDR);
+
+	return(uDbCIDR);
+	
+}//unsigned uGetDbCIDR(char *cIPBlock)
+
+
 unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 {
 	MYSQL_RES *res;
@@ -1136,18 +1181,11 @@ CreateZoneLargeBlock:
 			}//for(f=c;f<((c+uNumNets));f++)
 		}
 	}
-	else if(strcmp(cAction,"Modify"))
+	else if(strcmp(cAction,"Update Ownership"))
 	{
 		//
 		//Update tBlock uOwner
-		sprintf(gcQuery,"UPDATE tBlock SET uOwner=%u,uModBy=%u,"
-				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel='%s'",
-				uClient
-				,guLoginClient
-				,cIPBlock);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(gcQuery);
+		UpdateBlockOwnership(cIPBlock,uClient);
 		
 		uBlockMod++;
 
@@ -1229,6 +1267,31 @@ CreateZoneLargeBlock:
 			}
 		}
 	}
+	else if(strstr(cAction,"Expand "))
+	{
+		unsigned uDbCIDR=0;
+		unsigned uCIDR=0;
+		unsigned uDbIPs=0;
+		unsigned uRRToAddCount=0;
+		char cBlock[64]={""};
+		char cDbBlock[64]={"};
+
+		sscanf(cIPBlock,"%s/%u",cBlock,&uCIDR);
+		uDbCIDR=uGetDbCIDR(cBlock);
+		sprintf(cDbBlock,"%s/%u",cBlock,uDbCIDR);
+		uDbIPs=uGetNumIPs(cDbBlock);
+		uRRToAddCount=uNumIPs-uDbIPs;
+
+		//Add the RRs based on uRRToAddCount with same ownership as block
+		//If updating owner new RRs will be created with uClient=cCompany from function args
+		//Check if we are keeping owner or not and update as required (the old RRs only)
+	}
+	else if(strstr(cAction,"Reduce"))
+	{
+	}
+
+
+
 	return(0);
 
 }//void ProcessTransaction(char *cIPBlock,unsigned uClient,char *cAction)
