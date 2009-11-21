@@ -710,7 +710,7 @@ void funcInvoiceNavList(FILE *fp)
 			break;
 		}
 		FromMySQLDate(field[1]);
-		fprintf(fp,"<a href=ispClient.cgi?gcPage=Invoice&uInvoice=%s&uClient=%s>%s - %s</a><br>\n",field[0],field[3],field[2],field[1]);
+		fprintf(fp,"<a href=ispClient.cgi?gcPage=Invoice&uInvoice=%s>%s - %s</a><br>\n",field[0],field[2],field[1]);
 		uDisplayed++;
 	}
 
