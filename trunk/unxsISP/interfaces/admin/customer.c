@@ -1814,7 +1814,7 @@ void UpdateAuthorization(void)
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 
-	if(!mysql_fetch_row(res))
+	if(!mysql_num_rows(res))
 	{
 		sprintf(gcQuery,"INSERT INTO tAuthorize SET uCertClient=%u,"
 				"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
@@ -1832,11 +1832,11 @@ void UpdateAuthorization(void)
 		sscanf(field[0],"%u",&uAuthorize);
 	}
 
-	if(strncmp(cPasswd,"..",2) && strncmp(cPasswd,"$1$",3))
-		EncryptPasswdMD5(cPasswd);
+	if(strncmp(cPasswd,"..",2))
+		EncryptPasswdWithSalt(cPasswd,"..");
 
-	sprintf(gcQuery,"UPDATE tAuthorize SET cLabel='%s %s,uPerm=%u,cPasswd='%s',uModBy=%u,"
-			"uModDate=UNIX_TIMESTAMP(NOW() WHERE uAuthorize=%u"
+	sprintf(gcQuery,"UPDATE tAuthorize SET cLabel='%s %s',uPerm=%u,cPasswd='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uAuthorize=%u"
 			,cFirstName
 			,cLastName
 			,uPerm
