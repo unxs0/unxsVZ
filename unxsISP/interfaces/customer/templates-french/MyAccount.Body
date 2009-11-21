@@ -80,9 +80,9 @@
                   <td> </td>
                 </tr>
 		<tr><td><input type=submit name=gcFunction value='{{gcModStep}}Mettre a our mes informations' class=largestButton></td></tr>
-		<tr><td><input type=submit name=gcFunction value='Acheter un nouveau produit' class=largestButton></td></tr>
+		<tr><td><input type=submit name=gcFunction value='Acheter un nouveau produit' class=largestButton disabled></td></tr>
 		<tr><td><input type=submit name=gcFunction value='Voir Mes Factures' class=largestButton></td></tr>
-		<tr><td><input type=submit name=gcFunction value="M'Abonner a des Paiements Automatiques" class=largestButton></td></tr>
+		<tr><td><input type=submit name=gcFunction value="M'Abonner a des Paiements Automatiques" class=largestButton disabled></td></tr>
 
 		</td>
         </table>
@@ -240,14 +240,6 @@ d>
 
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=ACH Debits')"><strong>Transfert par d&eacute;bit direct</strong></a>          </td>
-                <td>
-			<input type=hidden name=cACHDebits value="{{cACHDebits}}">
-                        <input  title='ABA routing number + account number' type=text name=cACHDebits value="{{cACHDebits}}" size=40 maxlength=99 {{gcInputStatus}} class={{cACHDebitsStyle}}></td>
-        </tr>
-
-        <tr>
-                <td>
                         <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Ship Name')"><strong>Nom de Livraison</strong></a>          </td>
                 <td>
 			<input type=hidden name=cShipName value="{{cShipName}}">
@@ -334,55 +326,20 @@ d>
         </tr>
         <tr>
                 <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Bank Name')"><strong>Nom de la Banque</strong></a>          </td>
-                <td>
-                        <input type=hidden name=cBankName value="{{cBankName}}">
-                        <input  title='Name of the bank where the customer has her account (Optional)' type=text name=cBankName value="{{cBankName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cBankNameStyle}}></td>
-        </tr>	
-        <tr>
-                <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Branch Name')"><strong>Nom de la Succursale</strong></a>          </td>
-                <td>
-			<input type=hidden name=cBranchName value="{{cBranchName}}">
-                        <input  title='Bank branch name (Required)' type=text name=cBranchName value="{{cBranchName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cBranchNameStyle}}></td>
-        </tr>
-        <tr>
-                <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Branch Code')"><strong>Code de la Succursale</strong></a>          </td>
-                <td>
-			<input type=hidden name=cBranchCode value="{{cBranchCode}}">
-                        <input  title='Bank branch code (Required)' type=text name=cBranchCode value="{{cBranchCode}}" size=40 maxlength=6 {{gcInputStatus}} class={{cBranchCodeStyle}}></td>
-        </tr>
-        <tr>
-                <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Account Holder')"><strong>Titulaire du compte</strong></a>          </td>
-                <td>
-			<input type=hidden name=cAccountHolder value="{{cAccountHolder}}">
-                        <input  title='Customer bank account holder, E.g.: John Doe (Required)' type=text name=cAccountHolder value="{{cAccountHolder}}" size=40 maxlength=99 {{gcInputStatus}} class={{cAccountHolderStyle}}></td>
-        </tr>
-        <tr>
-                <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Account Number')"><strong>Num&eacute;ro du compte</strong></a>          </td>
-                <td>
-			<input type=hidden name=cAccountNumber value="{{cAccountNumber}}">
-                        <input  title='Customer account number(Required)' type=text name=cAccountNumber value="{{cAccountNumber}}" size=40 maxlength=99 {{gcInputStatus}} class={{cAccountNumberStyle}}></td>
-        </tr>
-        <tr>
-                <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Account Type')"><strong>Type de compte</strong></a>          </td>
-                <td>
-			<input type=hidden name=uAccountType value="{{uAccountType}}">
-			{{funcSelectAccountType}}
-			</td>
-        </tr>
-        <tr>
-                <td>
                         <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Language')"><strong>Langue</strong></a>          </td>
                 <td>
 			<input type=hidden name=cLanguage value="{{cLanguage}}">
 			{{funcSelectLanguage}}
 			</td>
         </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Password</strong></a>          </td>
+                <td>
+			<input type=hidden name=cPasswd value="{{cPasswd}}">
+                        <input  title='Password for accessing the interfaces; E.g.: Hy4Gte (Will be shown encrypted) (Optional)' type=text name=cPasswd value="{{cPasswd}}" size=40 maxlength=99 {{gcInputStatus}} class={{cPasswdStyle}}></td>
+        </tr>
+	<tr>
         <tr>
                 <td>
 

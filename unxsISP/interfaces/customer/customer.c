@@ -272,7 +272,7 @@ void LoadCustomer(unsigned uClient)
 		sprintf(cShipCountry,"%.64s",field[22]);
 		sprintf(cTelephone,"%.32s",field[23]);
 		sprintf(cFax,"%.32s",field[24]);
-		sprintf(cPasswd,"%.20s",field[25]);
+		//sprintf(cPasswd,"%.20s",field[25]);
 		sprintf(cMobile,"%.32s",field[26]);
 		sprintf(cBankName,"%.32s",field[27]);
 		sprintf(cBranchName,"%.32s",field[28]);
@@ -284,6 +284,15 @@ void LoadCustomer(unsigned uClient)
 		sprintf(cAddr3,"%.100s",field[34]);
 		sprintf(cShipAddr3,"%.100s",field[35]);
 		sprintf(cLanguage,"%.32s",field[36]);
+		
+		mysql_free_result(res);
+		sprintf(gcQuery,"SELECT cPasswd FROM tAuthorize WHERE uCertClient=%u",uClient);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cPasswd,"%s",field[0]);
+		}
 	}
 	else
 		gcMessage="No records found.";
@@ -687,6 +696,7 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
 
 }//void htmlCustomerPage()
 
+void UpdateAuthorization(void);
 
 void ModCustomer(void)
 {
@@ -756,8 +766,56 @@ void ModCustomer(void)
 		gcMessage="Customer NOT modified";
 		unxsISPLog(guLoginClient,"tClient","Mod Fail");
 	}
+	UpdateAuthorization();
 
 }//void ModCustomer(void)
+
+
+void UpdateAuthorization(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uAuthorize=0;
+
+	sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE uCertClient=%u",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if(!mysql_num_rows(res))
+	{
+		sprintf(gcQuery,"INSERT INTO tAuthorize SET uCertClient=%u,"
+				"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				,guLoginClient
+				,guOrg
+				,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		uAuthorize=mysql_insert_id(&gMysql);
+	}
+	else
+	{
+		field=mysql_fetch_row(res);
+		sscanf(field[0],"%u",&uAuthorize);
+	}
+
+	if(strncmp(cPasswd,"..",2))
+		EncryptPasswdWithSalt(cPasswd,"..");
+
+	sprintf(gcQuery,"UPDATE tAuthorize SET cLabel='%s %s',uPerm=1,cPasswd='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uAuthorize=%u"
+			,cFirstName
+			,cLastName
+			,cPasswd
+			,guLoginClient
+			,uAuthorize);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void UpdateAuthorization(void)
 
 
 unsigned ValidateCustomerInput(void)
