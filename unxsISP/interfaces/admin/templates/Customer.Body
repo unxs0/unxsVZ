@@ -420,6 +420,14 @@ d>
         </tr>
         <tr>
                 <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Password</strong></a>          </td>
+                <td>
+			<input type=hidden name=cEmail value="{{cEmail}}">
+                        <input  title='Password for accessing the interfaces; E.g.: Hy4Gte (Will be shown encrypted) (Optional)' type=text name=cPasswd value="{{cPasswd}}" size=40 maxlength=99 {{gcInputStatus}} class={{cPasswdStyle}}></td>
+        </tr>
+        <tr>
+        <tr>
+                <td>
 
                 </td>
                 <td colspan=2>

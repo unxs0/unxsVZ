@@ -419,7 +419,7 @@ void LoadCustomer(unsigned uClient)
 		sprintf(cShipCountry,"%.64s",field[22]);
 		sprintf(cTelephone,"%.32s",field[23]);
 		sprintf(cFax,"%.32s",field[24]);
-		sprintf(cPasswd,"%.20s",field[25]);
+		//sprintf(cPasswd,"%.20s",field[25]);
 		sprintf(cMobile,"%.32s",field[26]);
 		sprintf(cBankName,"%.32s",field[27]);
 		sprintf(cBranchName,"%.32s",field[28]);
@@ -439,6 +439,13 @@ void LoadCustomer(unsigned uClient)
 		sprintf(cLabel,"%.32s",field[42]);
 
 		if(!cFirstName[0]) sprintf(cFirstName,"%s",cLabel);
+
+		mysql_free_result(res);
+		sprintf(gcQuery,"SELECT cPasswd FROM tAuthorize WHERE uCertClient=%u",uClient);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sprintf(cPasswd,"%s",field[0]);
 	}
 	else
 		gcMessage="No records found.";
