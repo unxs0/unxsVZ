@@ -159,7 +159,7 @@ void funcCustomerNavList(FILE *fp);
 char *strptime(const char *s, const char *format, struct tm *tm);
 int CheckParameterValue(char *cValue, char *cParamType, char *cRange, unsigned uUnique, char *cExtVerify, char *cParameter, unsigned uDeployed);
 void funcCustomerNavBar(FILE *fp);
-
+void funcTypeOfAccess(FILE *fp);
 
 //glossary.c
 void GlossaryGetHook(entry gentries[],int x);

@@ -106,6 +106,9 @@ static char *cFaxStyle="type_fields_off";
 static char cACHDebits[65]={""};
 static char *cACHDebitsStyle="type_fields_off";
 
+static unsigned uPerm=0;
+static char *cuPermStyle="type_fields_off";
+
 static char cPasswd[65]={""};
 static char *cPasswdStyle="type_fields_off";
 
@@ -178,6 +181,7 @@ void NewCustomer(void);
 void DelCustomer(void);
 void ModCustomer(void);
 unsigned CustomerHasProducts(void);
+void UpdateAuthorization(void);
 
 void SetCustomerFieldsOn(void);
 void LoadCustomer(unsigned cuClient);
@@ -311,6 +315,8 @@ void ProcessCustomerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uSearchInstance);
 		else if(!strcmp(entries[i].name,"cLanguage"))
 			sprintf(cLanguage,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uPerm"))
+			sscanf(entries[i].val,"%u",&uPerm);
 	}
 
 }//void ProcessUserVars(pentry entries[], int x)
@@ -441,11 +447,14 @@ void LoadCustomer(unsigned uClient)
 		if(!cFirstName[0]) sprintf(cFirstName,"%s",cLabel);
 
 		mysql_free_result(res);
-		sprintf(gcQuery,"SELECT cPasswd FROM tAuthorize WHERE uCertClient=%u",uClient);
+		sprintf(gcQuery,"SELECT cPasswd,uPerm FROM tAuthorize WHERE uCertClient=%u",uClient);
 		mysql_query(&gMysql,gcQuery);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
+		{
 			sprintf(cPasswd,"%s",field[0]);
+			sscanf(field[1],"%u",&uPerm);
+		}
 	}
 	else
 		gcMessage="No records found.";
@@ -1109,7 +1118,7 @@ void NewCustomer(void)
 	uOwner=guOrg;
 	uCreatedBy=guLoginClient;
 	time(&uCreatedDate);
-
+	UpdateAuthorization();
 
 }//void NewCustomer(void)
 
@@ -1188,6 +1197,7 @@ void ModCustomer(void)
 	}
 	uModBy=guLoginClient;
 	time(&uModDate);
+	UpdateAuthorization();
 
 }//void ModCustomer(void)
 
@@ -1747,6 +1757,26 @@ void funcSelectLanguage(FILE *fp)
 
 }//void funcSelectLanguage(FILE *fp)
 
+
+void funcTypeOfAccess(FILE *fp)
+{
+	fprintf(fp,"<select name=uPerm title='Select type of access to the interfaces' class=%s %s>\n",cuPermStyle,gcInputStatus);
+
+	fprintf(fp,"<option value=1 ");
+	if(uPerm==1)
+		fprintf(fp,"selected ");
+	fprintf(fp,">End-User</option>\n");
+
+	fprintf(fp,"<option value=10 ");
+	if(uPerm>=10)
+		fprintf(fp,"selected ");
+	fprintf(fp,">Admin</option>\n");
+
+	fprintf(fp,"</select>\n");
+
+}//void funcTypeOfAccess(FILE *fp)
+
+
 unsigned CustomerHasProducts(void)
 {
 	MYSQL_RES *res;
@@ -1770,6 +1800,54 @@ unsigned CustomerHasProducts(void)
 	return((unsigned)mysql_num_rows(res));
 	
 }//unsigned CustomerHasProducts(void)
+
+
+void UpdateAuthorization(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uAuthorize=0;
+
+	sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE uCertClient=%u",uCustomer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if(!mysql_fetch_row(res))
+	{
+		sprintf(gcQuery,"INSERT INTO tAuthorize SET uCertClient=%u,"
+				"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				,uCustomer
+				,guOrg
+				,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		uAuthorize=mysql_insert_id(&gMysql);
+	}
+	else
+	{
+		field=mysql_fetch_row(res);
+		sscanf(field[0],"%u",&uAuthorize);
+	}
+
+	if(strncmp(cPasswd,"..",2) && strncmp(cPasswd,"$1$",3))
+		EncryptPasswdMD5(cPasswd);
+
+	sprintf(gcQuery,"UPDATE tAuthorize SET cLabel='%s %s,uPerm=%u,cPasswd='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW() WHERE uAuthorize=%u"
+			,cFirstName
+			,cLastName
+			,uPerm
+			,cPasswd
+			,guLoginClient
+			,uAuthorize);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void UpdateAuthorization(void)
 
 
 //Product deployment wizard functions start.

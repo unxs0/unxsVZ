@@ -428,6 +428,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcSelectLanguage(fp);
 	else if(!strcmp(cFunction,"funcCustomerReport"))
 		funcCustomerReport(fp);
+	else if(!strcmp(cFunction,"funcTypeOfAccess"))
+		funcTypeOfAccess(fp);
 
 }//void AppFunctions(FILE *fp,char *cFunction)
 
