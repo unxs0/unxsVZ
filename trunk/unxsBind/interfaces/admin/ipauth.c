@@ -1309,6 +1309,30 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	}
 	else if(strstr(cAction,"Reduce"))
 	{
+		unsigned uNetsToReduce=0;
+		unsigned uRRToReduceCount=0;
+
+		if(uNumNets==1)
+		{
+			uRRToReduceCount=uDbIPs-uNumIPs;
+
+			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+			for(f=uDbIPs;f<(uDbIPs-d);f--)
+			{
+				sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+				ResetRR(cZone,f,cParam1,uDefaultClient);
+			}
+			//Update zone serial
+			RestoreUpdateSerialNum(uZone);
+			//Submit mod job
+			//Default uNSSet=1 ONLY
+			if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
+					htmlPlainTextError(gcQuery);
+		}
+		else
+		{
+			uNetsToReduce=uDBNets-uNumNets;
+		}
 	}
 
 
