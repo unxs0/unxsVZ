@@ -1331,10 +1331,34 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		}
 		else
 		{
+			register int x;
 			uNetsToReduce=uDBNets-uNumNets;
+			for(x=c+uDBNets;x<(c+uNetsToReduce);x--)
+			{
+				//
+				sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
+				//printf("cZone=%s\n",cZone);
+				uZone=uZoneSetup(cZone);
+			
+				//Create block default RRs uOwner=uClient
+				//
+				if(d==0)d++;
+				for(f=d;f<255;f++)
+				{
+					sprintf(cParam1,"%u-%u-%u-%u.%s",f,c,b,a,cUpdateHost);
+					ResetRR(cZone,f,cParam1,uDefaultClient);
+				}
+				//Update zone serial
+				RestoreUpdateSerialNum(uZone);
+				//Submit mod job
+				//Default uNSSet=1 ONLY
+				if(AdminSubmitJob("Mod",1,cZone,0,luClock+300))
+					htmlPlainTextError(gcQuery);
+			}//for(f=c;f<((c+uNumNets));f++)
 		}
-	}
 
+		//Check if we are keeping owner or not and update as required (the old RRs only)
+	}
 
 
 	return(0);
