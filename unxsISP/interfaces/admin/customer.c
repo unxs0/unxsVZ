@@ -1459,6 +1459,7 @@ void SetCustomerFieldsOn(void)
 	cuAccountTypeStyle="type_fields";
 	cMobileStyle="type_fields";
 	cLanguageStyle="type_fields";
+	cuPermStyle="type_fields";
 
 }//void SetCustomerFieldsOn(void)
 
