@@ -493,6 +493,7 @@ unsigned uGetBlockStatus(char *cBlock,char *cCompany)
 	unsigned uDbCIDR=0;
 	unsigned uUpdateOwner=0;
 	unsigned uAction=0;
+	char *cp;
 
 #define BLOCK_EXPAND 1
 #define BLOCK_REDUCE 2
@@ -504,9 +505,15 @@ unsigned uGetBlockStatus(char *cBlock,char *cCompany)
 	//Are we expanding an existent block and updating ownership?
 	//Are we reducing an existent block and keeping ownership intact?
 	//Are we reducing an existent block and updating ownership?
-	
-	sscanf(cBlock,"%s/%u",cIPBlock,&uCIDR);
 
+	sprintf(cIPBlock,"%s",cBlock);
+
+	if((cp=strchr(cBlock,'/')))
+	{
+		*cp++;
+		sscanf(cp,"%u",&uCIDR);
+	}
+	if((cp=strchr(cIPBlock,'/'))) *cp=0;
 	sprintf(gcQuery,"SELECT cLabel,uOwner FROM tBlock WHERE cLabel LIKE '%s/%%'",cIPBlock);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -514,14 +521,17 @@ unsigned uGetBlockStatus(char *cBlock,char *cCompany)
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[0],"%s/%u",cIPBlock,&uDbCIDR);
+		if((cp=strchr(field[0],'/')))
+		{
+			*cp++;
+			sscanf(cp,"%u",&uDbCIDR);
+		}
 		sscanf(field[1],"%u",&uOwner);
 
 		mysql_free_result(res);
 
 		//Does ownership change?
 		if(strcmp(ForeignKey("tClient","cLabel",uOwner),cCompany)) uUpdateOwner=1;
-		
 		if(uCIDR<uDbCIDR)
 			//Block is being expanded
 			uAction=BLOCK_EXPAND;
@@ -631,6 +641,8 @@ void funcReportActions(FILE *fp)
 	unsigned uWillDeleteBlocks=0;
 	unsigned uWillCreateBlocks=0;
 	unsigned uWillModBlocks=0;
+	unsigned uWillExpandBlocks=0;
+	unsigned uWillReduceBlocks=0;
 	unsigned uWillCreateCompanies=0;
 	unsigned uImportCompanies=0;
 
@@ -668,13 +680,33 @@ void funcReportActions(FILE *fp)
 	
 	mysql_free_result(res);
 	
-	sprintf(gcQuery,"SELECT uTransaction FROM tTransaction WHERE cBlockAction='Modify'");
+	sprintf(gcQuery,"SELECT uTransaction FROM tTransaction WHERE cBlockAction='Update Ownership'");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(gcQuery);
 
 	res=mysql_store_result(&gMysql);
 	uWillModBlocks=mysql_num_rows(res);
+	
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uTransaction FROM tTransaction WHERE cBlockAction LIKE 'Expand%%'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+
+	res=mysql_store_result(&gMysql);
+	uWillExpandBlocks=mysql_num_rows(res);
+	
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uTransaction FROM tTransaction WHERE cBlockAction LIKE 'Reduce%%'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+
+	res=mysql_store_result(&gMysql);
+	uWillReduceBlocks=mysql_num_rows(res);
 	
 	mysql_free_result(res);
 
@@ -700,11 +732,13 @@ void funcReportActions(FILE *fp)
 
 	fprintf(fp,"After import, %u companies and their contacts will be removed from the database.<br>\n",uWillDeleteCompanies);
 	fprintf(fp,"These companies own %u blocks that will also be removed.<br>\n",uWillDeleteBlocks);
-	fprintf(fp,"Also, %u companies and a default contact will be added to the database. %u blocks will be created "
-			"and %u blocks ownership will be updated.<br>\n",
+	fprintf(fp,"%u companies and a default contact will be added to the database. %u blocks will be created "
+			"%u blocks ownership will be updated, %u blocks will be expanded and %u blocks will be reduced.<br>\n",
 			uWillCreateCompanies
 			,uWillCreateBlocks
 			,uWillModBlocks
+			,uWillExpandBlocks
+			,uWillReduceBlocks
 			);
 	fprintf(fp,"%u companies were found in the import data.<br>\n",uImportCompanies);
 	//fprintf(fp,"From a total of %u lines, %u lines were correctly processed and %u ignored.<br>\n",uTotalLines,uProcessed,uIgnored);
@@ -1044,6 +1078,33 @@ unsigned uGetDbCIDR(char *cIPBlock)
 	
 }//unsigned uGetDbCIDR(char *cIPBlock)
 
+void CreateBlock(char *cIPBlock,unsigned uClient)
+{
+	sprintf(gcQuery,"INSERT INTO tBlock SET cLabel='%s',uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cIPBlock
+			,uClient
+			,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+
+}//void CreateBlock(char *cIPBlock,unsigned uClient)
+
+
+void RemoveOldBlock(char *cIPBlock)
+{
+	char cLocalIPBlock[100]={""};
+	char *cp;
+	sprintf(cLocalIPBlock,"%.99s",cIPBlock);
+	
+	if((cp=strchr(cLocalIPBlock,'/'))) *cp=0;
+	sprintf(gcQuery,"DELETE FROM tBlock WHERE cLabel LIKE '%s/%%'",cIPBlock);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(gcQuery);
+
+}//void RemoveOldBlock(char *cIPBlock)
 
 unsigned uZoneSetup(char *cZone)
 {
@@ -1125,14 +1186,7 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	{
 		//
 		//Create tBlock entry owned by uClient
-		sprintf(gcQuery,"INSERT INTO tBlock SET cLabel='%s',uOwner=%u,"
-				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				cIPBlock
-				,uClient
-				,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(gcQuery);
+		CreateBlock(cIPBlock,uClient);
 
 		uBlockAdd++;
 		//printf("Created block: %s (%u)\n",cIPBlock,(unsigned)mysql_insert_id(&gMysql));
@@ -1250,6 +1304,9 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	{
 		unsigned uNetsToAdd=0;
 		unsigned uRRToAddCount=0;
+		
+		RemoveOldBlock(cIPBlock);
+		CreateBlock(cIPBlock,uClient);
 
 		if(uNumNets==1)
 		{
@@ -1311,6 +1368,9 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	{
 		unsigned uNetsToReduce=0;
 		unsigned uRRToReduceCount=0;
+		
+		RemoveOldBlock(cIPBlock);
+		CreateBlock(cIPBlock,uClient);
 
 		if(uNumNets==1)
 		{
