@@ -1761,7 +1761,7 @@ void funcSelectLanguage(FILE *fp)
 
 void funcTypeOfAccess(FILE *fp)
 {
-	fprintf(fp,"<select name=uPerm title='Select type of access to the interfaces' class=%s %s>\n",cuPermStyle,gcInputStatus);
+	fprintf(fp,"<select name=uPerm title='Select type of access to the interfaces' class='%s' %s>\n",cuPermStyle,gcInputStatus);
 
 	fprintf(fp,"<option value=1 ");
 	if(uPerm==1)
