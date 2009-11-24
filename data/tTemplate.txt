@@ -777,3 +777,58 @@ done\
 \
 echo "ct0 $VEID $CTIP iptables entries deleted for all ports";\
 exit 0;	1	1
+171	defaultVETH.mount	1	1	1259071062	1	1259075871	Default VETH device mount script.\
+\
+Waits for for special ifconfig device to be available then configures some\
+related dev settings. It ends by adding a route for the new VETH OPenVZ container.\
+\
+IMPORTANT\
+\
+Make sure that CT0 cHostDEV is set correctly before using.\
+\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cIPv4=209.177.154.68	#!/bin/bash\
+\
+#CT0 host device name cluster wide for now.\
+cHostDEV="eth0";\
+\
+cIPv4="{{cIPv4}}";\
+cDEV="veth{{cVeID}}.0";\
+\
+\
+\
+echo 1 > /proc/sys/net/ipv4/conf/$cHostDEV/proxy_arp;\
+\
+# Configure veth with cIPv4 after VPS has started\
+{\
+        while sleep 1; do\
+        /sbin/ifconfig $cDEV 0 >/dev/null 2>&1;\
+        if [ $? -eq 0 ]; then\
+                echo 1 > /proc/sys/net/ipv4/conf/$cDEV/forwarding;\
+                echo 1 > /proc/sys/net/ipv4/conf/$cDEV/proxy_arp;\
+                /sbin/ip route add $cIPv4 dev $cDEV;\
+                break;\
+        fi\
+        done\
+} &\
+	1	1
+181	defaultVETH.start	1	1	1259071633	1	1259071677	Default VETH device start script.\
+\
+IMPORTANT\
+\
+Make sure that CT OS Template allows for eth0 implict hardcoded device.\
+\
+\
+Variables with sample values:\
+\
+cIPv4=209.177.154.68	#!/bin/bash\
+\
+cIPv4="{{cIPv4}}";\
+\
+/sbin/ifconfig eth0 0\
+/sbin/ip addr add $cIPv4 dev eth0\
+/sbin/ip route add default dev eth0\
+	1	11

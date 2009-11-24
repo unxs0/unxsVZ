@@ -563,9 +563,10 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uVeth=0;
 
 	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tIP.cLabel"
-			",tOSTemplate.cLabel,tNameserver.cLabel,tSearchdomain.cLabel,tConfig.cLabel"
+			",tOSTemplate.cLabel,tNameserver.cLabel,tSearchdomain.cLabel,tConfig.cLabel,tContainer.uVeth"
 			" FROM tContainer,tOSTemplate,tNameserver,tSearchdomain,tConfig,tIP WHERE uContainer=%u"
 			" AND tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
 			" AND tContainer.uNameserver=tNameserver.uNameserver"
@@ -582,6 +583,8 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	if((field=mysql_fetch_row(res)))
 	{
 
+
+		sscanf(field[7],"%u",&uVeth);
 
 		//0-. vz conf mount umount files if applicable. 1 is for overwrite existing files
 		//OpenVZ action scripts
@@ -608,9 +611,15 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 			tJobErrorUpdate(uJob,"failed sec alert!");
 			goto CommonExit;
 		}
-		
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose create %u --ostemplate %s --hostname %s"
-				" --ipadd %s --name %s --config %s",
+
+
+		if(uVeth)		
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose create %u --ostemplate %s --hostname %s"
+				" --netif_add eth0 --name %s --config %s --save",
+				uContainer,field[3],field[1],field[0],field[6]);
+		else
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose create %u --ostemplate %s --hostname %s"
+				" --ipadd %s --name %s --config %s --save",
 				uContainer,field[3],field[1],field[2],field[0],field[6]);
 		if(system(gcQuery))
 		{
