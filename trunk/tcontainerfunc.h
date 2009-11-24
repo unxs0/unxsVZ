@@ -83,7 +83,7 @@ void htmlGroups(unsigned uNode, unsigned uContainer);
 unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
-unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4);
 char *cRatioColor(float *fRatio);
 void htmlGenMountInputs(unsigned const uMountTemplate);
@@ -431,11 +431,14 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=200;
 				if(uStatus!=uINITSETUP)
 					tContainer("<blink>Unexpected Error</blink>: uStatus not 'Initial Setup'");
-                        	guMode=201;
-				if(uCheckMountSettings(uMountTemplate))
-					tContainer("<blink>Error</blink>: Incorrect mount settings!");
 
-				AddMountProps(uContainer);
+                        	guMode=201;
+				if(!uVeth)
+				{
+					if(uCheckMountSettings(uMountTemplate))
+						tContainer("<blink>Error</blink>: Incorrect mount settings!");
+					AddMountProps(uContainer);
+				}
 			
                         	guMode=0;
 				tContainer("New container setup completed");
@@ -540,7 +543,28 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
 				}
-				tContainer("New container created and default property created");
+
+				//Add property template entries for VETH device based container
+				if(uVeth)
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cVEID.mount',cValue='defaultVETH.mount'",
+							uContainer,guCompany,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cVEID.start',cValue='defaultVETH.start'",
+							uContainer,guCompany,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
+
+				tContainer("New container created and default properties created");
 			}
 			else
 			{
@@ -858,7 +882,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
 		}
-                else if(!strcmp(gcCommand,"Create Mount Files"))
+                else if(!strcmp(gcCommand,"Create Action Scripts"))
                 {
                         ProcesstContainerVars(entries,x);
 			if( (uStatus==uSTOPPED || uStatus==uINITSETUP ) && uAllowMod(uOwner,uCreatedBy))
@@ -869,10 +893,10 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
 
-				if(MountFilesJob(uDatacenter,uNode,uContainer))
+				if(ActionScriptsJob(uDatacenter,uNode,uContainer))
 				{
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
-					tContainer("MountFilesJob() Done");
+					tContainer("ActionScriptsJob() Done");
 				}
 				else
 				{
@@ -1549,13 +1573,25 @@ void ExttContainerButtons(void)
 
                 case 200:
 			printf("<p><u>New container step 2/3</u><br>");
-			printf("Optionally select node mount template for new container."
+			if(!uVeth)
+			{
+				printf("Optionally select node mount template for new container.");
+				printf("Please select node mount template for new container."
 					" Or '---' for none.<p>");
-			htmlMountTemplateSelect(uMountTemplate);
+				htmlMountTemplateSelect(uMountTemplate);
+			}
+			else
+			{
+				printf("You have selected a VETH device based container. Default"
+					" mount and start /etc/vz/conf/ action scripts will be configured."
+					" These can be changed later for other script templates if the need"
+					" arises.");
+				
+			}
 			printf("<p><input title='Continue to step 3 of new container creation'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Continue'>\n");
-                        //printf(LANG_NBB_CONFIRMNEW);
+			printf("<p>If you wish to abort this container creation use the [Delete] button above.");
                 break;
 
                 case 201:
@@ -1569,7 +1605,14 @@ void ExttContainerButtons(void)
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Mount Settings'>\n");
 			}
-			else
+			else if(uVeth)
+			{
+				printf("Default VETH device container mount and start scripts will be created.");
+				printf("<p><input title='Finish container creation'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Container Settings'>\n");
+			}
+			else if(1)
 			{
 				printf("You have chosen to not create a mount template."
 					" If correct confirm below, else go back and select a template.<p>");
@@ -1577,12 +1620,17 @@ void ExttContainerButtons(void)
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Container Settings'>\n");
 			}
-                        //printf(LANG_NBB_CONFIRMNEW);
+			printf("<p>If you wish to abort this container creation use the [Delete] button above.");
                 break;
 
                 case 2000:
 			printf("<p><u>New container step 1/3</u><br>");
-			printf("Complete required container fields in the record data panel to your right.<p>");
+			
+			printf("Complete required container fields in the record data panel to your right.");
+			if(uVeth)
+				printf(" Make sure you understand the implications of using uVeth='Yes' containers"
+				" before proceeding. Alternatively change uVeth to 'No' now.");
+			printf("<p>\n");
 			printf("<input title='Optional container password set on deployment and saved in"
 				" container property table' type=text name=cService1> Optional Password<br>");
 			printf("<p><input title='Enter/Mod tContainer record data, then continue"
@@ -1610,10 +1658,11 @@ void ExttContainerButtons(void)
 				" a correct datacenter and hardware node. You usually should start with"
 				" a similar container. Most properties are created by data collection agents"
 				", others like <i>Notes</i> are user created and maintained.<p>"
-				"Special properties cVEID.mount and cVEID.umount are used via"
+				"Special properties cVEID.mount, cVEID.umount, cVEID.start and cVEID.stop  are used via"
 				" their tTemplate matching values (see tTemplate for more info)"
-				" to create /etc/vz/conf/VEID.(u)mount files (on new container creation you will"
-				" be able to optionally select a mount template for this feature.)");
+				" to create /etc/vz/conf/VEID.x OpenVZ action files (on new container creation you will"
+				" be able to optionally select a mount/umount template set for this feature, or VETH"
+				" device based containers will have default action scripts installed for you.)");
 			
 			if(uContainer && uNode)
 			{
@@ -1700,11 +1749,11 @@ void ExttContainerButtons(void)
 				char cVEIDMount[256]={""};
 				GetContainerProp(uContainer,"cVEID.mount",cVEIDMount);
 				if( cVEIDMount[0] && (uStatus==uSTOPPED || uStatus==uINITSETUP) && !strstr(cLabel,"-clone"))
-					printf("<br><input title='If container mount or umount files do not"
+					printf("<br><input title='If container mount,umount,start or stop files do not"
 					" exist they will be created from tProperty data items: cVEID.mount"
-					" and cVEID.umount'"
+					" ,cVEID.umount, cVEID.start and cVEID.stop'"
 					" type=submit class=largeButton"
-					" name=gcCommand value='Create Mount Files'>\n");
+					" name=gcCommand value='Create Action Scripts'>\n");
 			}
 	}
 	CloseFieldSet();
@@ -2538,7 +2587,7 @@ unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContaine
 }//unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
 
 
-unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
 {
 	unsigned uCount=0;
 	char cTemplateName[256]={""};
@@ -2548,7 +2597,7 @@ unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 	GetContainerProp(uContainer,"cVEID.umount",cTemplateName);
 	if(!cTemplateName[0]) return(0);
 
-	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='MountFilesJob(%u)',cJobName='MountFilesContainer'"
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ActionScripts(%u)',cJobName='ActionScripts'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"
@@ -2563,7 +2612,7 @@ unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 	unxsVZLog(uContainer,"tContainer","MountFiles");
 	return(uCount);
 
-}//unsigned MountFilesJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+}//unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
 
 
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,

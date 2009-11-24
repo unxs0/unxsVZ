@@ -40,7 +40,8 @@ void tJobDoneUpdate(unsigned uJob);
 void tJobWaitingUpdate(unsigned uJob);
 void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void ChangeHostnameContainer(unsigned uJob,unsigned uContainer);
-void MountFilesContainer(unsigned uJob,unsigned uContainer);
+//OpenVZ action scripts
+void ActionScripts(unsigned uJob,unsigned uContainer);
 void NewContainer(unsigned uJob,unsigned uContainer);
 void DestroyContainer(unsigned uJob,unsigned uContainer);
 void StopContainer(unsigned uJob,unsigned uContainer);
@@ -55,7 +56,8 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
 void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData);
 void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData);
-int CreateMountFiles(unsigned uContainer, unsigned uOverwrite);
+//OpenVZ action scripts
+int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
 unsigned uNotValidSystemCallArg(char *cSSHOptions);
 void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData);
 void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData);
@@ -440,9 +442,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	{
 		NewContainer(uJob,uContainer);
 	}
-	else if(!strcmp(cJobName,"MountFilesContainer"))
+	else if(!strcmp(cJobName,"ActionScripts"))
 	{
-		MountFilesContainer(uJob,uContainer);
+		//OpenVZ action scripts
+		ActionScripts(uJob,uContainer);
 	}
 	else if(!strcmp(cJobName,"StartContainer"))
 	{
@@ -581,10 +584,11 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 
 
 		//0-. vz conf mount umount files if applicable. 1 is for overwrite existing files
-		if(CreateMountFiles(uContainer,1))
+		//OpenVZ action scripts
+		if(CreateActionScripts(uContainer,1))
 		{
-			logfileLine("NewContainer","CreateMountFiles(x,1) failed");
-			tJobErrorUpdate(uJob,"CreateMountFiles(x,1) failed");
+			logfileLine("NewContainer","CreateActionScripts(x,1) failed");
+			tJobErrorUpdate(uJob,"CreateActionScripts(x,1) failed");
 			goto CommonExit;
 		}
 
@@ -1616,20 +1620,21 @@ CommonExit:
 }//void TemplateContainer(...)
 
 
-void MountFilesContainer(unsigned uJob,unsigned uContainer)
+//OpenVZ action scripts
+void ActionScripts(unsigned uJob,unsigned uContainer)
 {
 	//0 means do not overwrite existing files.
-	if(CreateMountFiles(uContainer,0))
+	if(CreateActionScripts(uContainer,0))
 	{
-		logfileLine("MountFilesContainer","CreateMountFiles(x,0) failed");
-		tJobErrorUpdate(uJob,"CreateMountFiles(x,0) failed");
+		logfileLine("ActionScripts","CreateActionScripts(x,0) failed");
+		tJobErrorUpdate(uJob,"CreateActionScripts(x,0) failed");
 		return;
 	}
 
 	tJobDoneUpdate(uJob);
 	return;
 
-}//void MountFilesContainer(unsigned uJob,unsigned uContainer);
+}//void ActionScripts(unsigned uJob,unsigned uContainer);
 
 
 void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
@@ -1979,7 +1984,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 }//void AppFunctions(FILE *fp,char *cFunction)
 
 
-int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
+//OpenVZ action scripts: Actually creates all OpenVZ action scripts will rename when time permits.
+int CreateActionScripts(unsigned uContainer, unsigned uOverwrite)
 {
 	//Create VEID.mount and VEID.umount files if container so specifies via tProperty
 	//	and everything needed is available: template and template vars from tProperty.
@@ -1994,30 +2000,29 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 	char cExtraNodeIP[256]={""};//required by some templates not all TODO fix this mess
 	char cNetmask[256]={"255.255.255.0"};//default
 	char cPrivateIPs[256]={"10.0.0.0/24"};//default
+	char cIPv4[32]={""};
 	struct stat statInfo;
 
-
-
 	sprintf(cVeID,"%u",uContainer);	
+	if(GetContainerMainIP(uContainer,cIPv4))
+	{
+		logfileLine("CreateActionScripts-cIPv4",cFile);
+		return(1);
+	}
 
+	GetContainerProp(uContainer,"cExtraNodeIP",cExtraNodeIP);
+	if(!cExtraNodeIP[0])
+		//Allow backwards compatability
+		GetContainerProp(uContainer,"cNodeIP",cExtraNodeIP);
+
+
+	//First action script set
 	GetContainerProp(uContainer,"cVEID.mount",cTemplateName);
 	sprintf(cFile,"/etc/vz/conf/%u.mount",uContainer);
 	//Do not overwrite existing mount files! Do that before if you really want to.
 	//stat returns 0 if file exists
 	if(cTemplateName[0] && (stat(cFile,&statInfo) || uOverwrite))
 	{
-		GetContainerProp(uContainer,"cExtraNodeIP",cExtraNodeIP);
-		if(!cExtraNodeIP[0])
-		{
-			//Allow backwards compatability
-			GetContainerProp(uContainer,"cNodeIP",cExtraNodeIP);
-			//if(!cExtraNodeIP[0])
-			//{
-			//	printf("CreateMountFiles() error: required cExtraNodeIP container property not found\n");
-			//	goto CommonExit;
-			//}
-		}
-
 		GetContainerProp(uContainer,"cNetmask",cNetmask);
 		GetContainerProp(uContainer,"cPrivateIPs",cPrivateIPs);
 		GetContainerProp(uContainer,"cService1",cService1);
@@ -2025,7 +2030,7 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 
 		if((fp=fopen(cFile,"w"))==NULL)
 		{
-			logfileLine("CreateMountFiles",cFile);
+			logfileLine("CreateActionScripts-1",cFile);
 			return(1);
 		}
 
@@ -2053,65 +2058,125 @@ int CreateMountFiles(unsigned uContainer, unsigned uOverwrite)
 			template.cpName[5]="cService2";
 			template.cpValue[5]=cService2;
 					
-			template.cpName[6]="";
+			template.cpName[6]="cIPv4";
+			template.cpValue[6]=cIPv4;
+					
+			template.cpName[7]="";
 			Template(field2[0],&template,fp);
 		}
 		mysql_free_result(res2);
 		fclose(fp);
 		chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
+	}
 
-		cTemplateName[0]=0;
-		GetContainerProp(uContainer,"cVEID.umount",cTemplateName);
-		sprintf(cFile,"/etc/vz/conf/%u.umount",uContainer);
-		if(cTemplateName[0] && (stat(cFile,&statInfo) || uOverwrite) )
+	cTemplateName[0]=0;
+	GetContainerProp(uContainer,"cVEID.umount",cTemplateName);
+	sprintf(cFile,"/etc/vz/conf/%u.umount",uContainer);
+	if(cTemplateName[0] && (stat(cFile,&statInfo) || uOverwrite) )
+	{
+		if((fp=fopen(cFile,"w"))==NULL)
 		{
-			if((fp=fopen(cFile,"w"))==NULL)
-			{
-				logfileLine("CreateMountFiles",cFile);
-				return(1);
-			}
-
-			TemplateSelect(cTemplateName);
-			res2=mysql_store_result(&gMysql);
-			if((field2=mysql_fetch_row(res2)))
-			{
-				struct t_template template;
-
-				template.cpName[0]="cExtraNodeIP";
-				template.cpValue[0]=cExtraNodeIP;
-						
-				template.cpName[1]="cNetmask";
-				template.cpValue[1]=cNetmask;
-						
-				template.cpName[2]="cPrivateIPs";
-				template.cpValue[2]=cPrivateIPs;
-						
-				template.cpName[3]="cVeID";
-				template.cpValue[3]=cVeID;
-
-				template.cpName[4]="cService1";
-				template.cpValue[4]=cService1;
-						
-				template.cpName[5]="cService2";
-				template.cpValue[5]=cService2;
-						
-				template.cpName[6]="";
-				Template(field2[0],&template,fp);
-			}
-			mysql_free_result(res2);
-			fclose(fp);
-			chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
-		}
-		else
-		{
-			logfileLine("CreateMountFiles",cTemplateName);
+			logfileLine("CreateActionScripts-2",cFile);
 			return(1);
 		}
+
+		TemplateSelect(cTemplateName);
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			struct t_template template;
+
+			template.cpName[0]="cExtraNodeIP";
+			template.cpValue[0]=cExtraNodeIP;
+						
+			template.cpName[1]="cNetmask";
+			template.cpValue[1]=cNetmask;
+					
+			template.cpName[2]="cPrivateIPs";
+			template.cpValue[2]=cPrivateIPs;
+					
+			template.cpName[3]="cVeID";
+			template.cpValue[3]=cVeID;
+
+			template.cpName[4]="cService1";
+			template.cpValue[4]=cService1;
+					
+			template.cpName[5]="cService2";
+			template.cpValue[5]=cService2;
+					
+			template.cpName[6]="cIPv4";
+			template.cpValue[6]=cIPv4;
+				
+			template.cpName[7]="";
+			Template(field2[0],&template,fp);
+		}
+		mysql_free_result(res2);
+		fclose(fp);
+		chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
+	}
+
+	//Second action script set: Always a set of both mount and umount? No!
+	GetContainerProp(uContainer,"cVEID.start",cTemplateName);
+	sprintf(cFile,"/etc/vz/conf/%u.start",uContainer);
+	//Do not overwrite existing mount files! Do that before if you really want to.
+	//stat returns 0 if file exists
+	if(cTemplateName[0] && (stat(cFile,&statInfo) || uOverwrite))
+	{
+		if((fp=fopen(cFile,"w"))==NULL)
+		{
+			logfileLine("CreateActionScripts-3",cFile);
+			return(1);
+		}
+
+		TemplateSelect(cTemplateName);
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			struct t_template template;
+
+			template.cpName[0]="cIPv4";
+			template.cpValue[0]=cIPv4;
+					
+			template.cpName[1]="";
+			Template(field2[0],&template,fp);
+		}
+		mysql_free_result(res2);
+		fclose(fp);
+		chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
+	}
+
+	cTemplateName[0]=0;
+	GetContainerProp(uContainer,"cVEID.stop",cTemplateName);
+	sprintf(cFile,"/etc/vz/conf/%u.stop",uContainer);
+	if(cTemplateName[0] && (stat(cFile,&statInfo) || uOverwrite) )
+	{
+		if((fp=fopen(cFile,"w"))==NULL)
+		{
+			logfileLine("CreateActionScripts-4",cFile);
+			return(1);
+		}
+
+		TemplateSelect(cTemplateName);
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			struct t_template template;
+
+			template.cpName[0]="cIPv4";
+			template.cpValue[0]=cIPv4;
+					
+			template.cpName[1]="";
+			Template(field2[0],&template,fp);
+
+		}
+		mysql_free_result(res2);
+		fclose(fp);
+		chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
 	}
 
 	return(0);
 
-}//int CreateMountFiles()
+}//int CreateActionScripts()
 
 
 //Make sure internal sabotage or db compromise does not allow exploit via system call injection
@@ -2660,10 +2725,10 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//Trouble is that these scripts must allow for failover.
 	//for example if strange firewall rules or IP ranges are used
 	//these scripts will not be portable --even in the same datacenter!
-	if(CreateMountFiles(uContainer,1))
+	if(CreateActionScripts(uContainer,1))
 	{
-		logfileLine("FailoverTo","CreateMountFiles(x,1)");
-		tJobErrorUpdate(uJob,"CreateMountFiles(x,1)");
+		logfileLine("FailoverTo","CreateActionScripts(x,1)");
+		tJobErrorUpdate(uJob,"CreateActionScripts(x,1)");
 
 		//rollback
 		SetContainerSource(uContainer,uSourceContainer);

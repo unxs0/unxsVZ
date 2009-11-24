@@ -29,7 +29,7 @@ static unsigned uContainer=0;
 static char cLabel[33]={""};
 //cHostname: FQDN Hostname
 static char cHostname[65]={""};
-//uVeth default is no which meand VENET not VETH networked container
+//uVeth default is no which means VENET not VETH networked container
 static unsigned uVeth=0;
 static char cYesNouVeth[32]={""};
 //uIPv4: First IPv4 Number
@@ -408,7 +408,7 @@ void tContainerInput(unsigned uMode)
 	}
 //uVeth
 	OpenRow(LANG_FL_tContainer_uVeth,"black");
-	if(guPermLevel>=20 && uMode)
+	if(guPermLevel>=7 && uMode)
 		YesNoPullDown("uVeth",uVeth,1);
 	else
 		YesNoPullDown("uVeth",uVeth,0);
