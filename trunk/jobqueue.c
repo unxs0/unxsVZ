@@ -613,13 +613,13 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		}
 
 
-		if(uVeth)		
+		if(uVeth)
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose create %u --ostemplate %s --hostname %s"
-				" --netif_add eth0 --name %s --config %s --save",
+				" --name %s --config %s",
 				uContainer,field[3],field[1],field[0],field[6]);
 		else
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose create %u --ostemplate %s --hostname %s"
-				" --ipadd %s --name %s --config %s --save",
+				" --ipadd %s --name %s --config %s",
 				uContainer,field[3],field[1],field[2],field[0],field[6]);
 		if(system(gcQuery))
 		{
@@ -645,19 +645,74 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		}
 
 		//3-.
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-		if(system(gcQuery))
+		//TODO hardcoded eth0 problem. Solution is easy get from node properties.
+		//problem remains if datacenter nodes have diff eth device!
+		if(uVeth)
 		{
-			logfileLine("NewContainer",gcQuery);
-			tJobErrorUpdate(uJob,"vzctl start failed");
-			//Roll back step 1-.
-			sprintf(gcQuery,"/usr/sbin/vzctl destroy %u",uContainer);
+			char cIPv4[32]={""};
+
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 			if(system(gcQuery))
 			{
 				logfileLine("NewContainer",gcQuery);
-				tJobErrorUpdate(uJob,"rb: vzctl destroy failed");
+				tJobErrorUpdate(uJob,"vzctl start1 failed");
+				//Roll back step 1-.
+				sprintf(gcQuery,"/usr/sbin/vzctl destroy %u",uContainer);
+				if(system(gcQuery))
+				{
+					logfileLine("NewContainer",gcQuery);
+					tJobErrorUpdate(uJob,"rb: vzctl destroy failed");
+				}
+				goto CommonExit;
 			}
-			goto CommonExit;
+
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --netif_add eth0 --save",uContainer);
+			if(system(gcQuery))
+			{
+				logfileLine("NewContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl --netif_add failed");
+				//Roll back step 1-.
+				sprintf(gcQuery,"/usr/sbin/vzctl destroy %u",uContainer);
+				if(system(gcQuery))
+				{
+					logfileLine("NewContainer",gcQuery);
+					tJobErrorUpdate(uJob,"rb: vzctl destroy failed");
+				}
+				goto CommonExit;
+			}
+
+			if(GetContainerMainIP(uContainer,cIPv4))
+				logfileLine("NewContainer","Empty cIPv4");
+
+			sprintf(gcQuery,"/usr/sbin/vzctl exec %u \"/sbin/ifconfig eth0 0\"",uContainer);
+			if(system(gcQuery))
+				logfileLine("NewContainer",gcQuery);
+
+			sprintf(gcQuery,"/usr/sbin/vzctl exec %u \"/sbin/ip addr add %s dev eth0\"",
+						uContainer,cIPv4);
+			if(system(gcQuery))
+				logfileLine("NewContainer",gcQuery);
+
+			sprintf(gcQuery,"/usr/sbin/vzctl exec %u \"/sbin/ip route add default dev eth0\"",uContainer);
+			if(system(gcQuery))
+				logfileLine("NewContainer",gcQuery);
+		}
+		else
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+			if(system(gcQuery))
+			{
+				logfileLine("NewContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl start failed");
+				//Roll back step 1-.
+				sprintf(gcQuery,"/usr/sbin/vzctl destroy %u",uContainer);
+				if(system(gcQuery))
+				{
+					logfileLine("NewContainer",gcQuery);
+					tJobErrorUpdate(uJob,"rb: vzctl destroy failed");
+				}
+				goto CommonExit;
+			}
 		}
 	}
 	else
@@ -2015,7 +2070,7 @@ int CreateActionScripts(unsigned uContainer, unsigned uOverwrite)
 	sprintf(cVeID,"%u",uContainer);	
 	if(GetContainerMainIP(uContainer,cIPv4))
 	{
-		logfileLine("CreateActionScripts-cIPv4",cFile);
+		logfileLine("CreateActionScripts","Empty cIPv4");
 		return(1);
 	}
 
