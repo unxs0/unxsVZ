@@ -339,7 +339,8 @@ void ExttNodeButtons(void)
 			printf("Hardware nodes are defined here. Hardware nodes host containers, and allow"
 				" for the autonomic migration to other nodes that may be better suited"
 				" at specific points in time to accomplish QoS or other system admin"
-				" created policies herein.");
+				" created policies herein. uVeth='Yes' container traffic is not included"
+				"in the node graphs at this time.");
 			printf("<p><u>Record Context Info</u><br>");
 			if(uDatacenter && uNode)
 			{

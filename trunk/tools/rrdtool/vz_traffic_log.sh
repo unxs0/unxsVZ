@@ -54,14 +54,25 @@ for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
 			continue;
 		fi
 	fi
- 
-	eval `/usr/sbin/vzctl exec $veid "grep venet0 /proc/net/dev"  |  \
-		awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
-	if [ $? != 0 ] || [ "$CTIN" == "" ] || [ "$CTOUT" == "" ];then
-		fLog "eval $veid error";
-		continue;
+
+	#Allow for VETH based containers also 
+	/usr/sbin/vzctl exec $veid "/sbin/ifconfig venet0" | grep UP > /dev/null 2>&1;
+	if [ $? == 0 ];then
+		eval `/usr/sbin/vzctl exec $veid "grep venet0 /proc/net/dev"  |  \
+			awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
+		if [ $? != 0 ] || [ "$CTIN" == "" ] || [ "$CTOUT" == "" ];then
+			fLog "eval $veid error1";
+			continue;
+		fi
+	else
+		eval `/usr/sbin/vzctl exec $veid "grep eth0 /proc/net/dev"  |  \
+			awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
+		if [ $? != 0 ] || [ "$CTIN" == "" ] || [ "$CTOUT" == "" ];then
+			fLog "eval $veid error2";
+			continue;
+		fi
 	fi
- 
+
 	nice /usr/bin/rrdtool update $RRDFILE N:$CTIN:$CTOUT
 	if [ $? != 0 ];then
 		fLog "rrdtool update $veid error";
