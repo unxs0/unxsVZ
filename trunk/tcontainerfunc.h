@@ -1582,8 +1582,9 @@ void ExttContainerButtons(void)
 			}
 			else
 			{
-				printf("You have selected a VETH device based container. Default"
-					" mount and start /etc/vz/conf/ action scripts will be configured."
+				printf("You have selected a VETH device based container."
+					" make sure you understand the template, network and host security implications."
+					"<p>Default mount and start /etc/vz/conf/ action scripts will be configured."
 					" These can be changed later for other script templates if the need"
 					" arises.");
 				
@@ -1626,9 +1627,12 @@ void ExttContainerButtons(void)
                 case 2000:
 			printf("<p><u>New container step 1/3</u><br>");
 			
-			printf("Complete required container fields in the record data panel to your right.");
+			printf("Complete required container fields in the record data panel to your right.<p>uVeth='Yes'"
+				" containers should only be used when layer 2 connectivity is absolutely required."
+				" uVeth='Yes' container tOSTemplate should be reviewed to make sure it's"
+				" network settings will not interfere with standard OpenVZ VETH device usage.");
 			if(uVeth)
-				printf(" Make sure you understand the implications of using uVeth='Yes' containers"
+				printf("<p>Make sure you understand the implications of using uVeth='Yes' containers"
 				" before proceeding. Alternatively change uVeth to 'No' now.");
 			printf("<p>\n");
 			printf("<input title='Optional container password set on deployment and saved in"
@@ -1658,9 +1662,9 @@ void ExttContainerButtons(void)
 				" a correct datacenter and hardware node. You usually should start with"
 				" a similar container. Most properties are created by data collection agents"
 				", others like <i>Notes</i> are user created and maintained.<p>"
-				"Special properties cVEID.mount, cVEID.umount, cVEID.start and cVEID.stop  are used via"
+				"Special properties cVEID.mount, cVEID.umount, cVEID.start and cVEID.stop are used via"
 				" their tTemplate matching values (see tTemplate for more info)"
-				" to create /etc/vz/conf/VEID.x OpenVZ action files (on new container creation you will"
+				" to create /etc/vz/conf/VEID.x OpenVZ action scripts (on new container creation you will"
 				" be able to optionally select a mount/umount template set for this feature, or VETH"
 				" device based containers will have default action scripts installed for you.)");
 			
