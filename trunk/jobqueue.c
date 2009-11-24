@@ -800,9 +800,10 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	char *cp;
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uVeth=0;
 
 	//0-. Get required data
-	sprintf(gcQuery,"SELECT tIP.cLabel"
+	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uVeth"
 			" FROM tContainer,tIP WHERE uContainer=%u"
 			" AND tContainer.uIPv4=tIP.uIP",uContainer);
 	mysql_query(&gMysql,gcQuery);
@@ -814,6 +815,8 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
+		sscanf(field[1],"%u",&uVeth);
+
 		sprintf(cIPNew,"%.31s",field[0]);
 		if(!cIPNew[0])	
 		{
@@ -838,32 +841,80 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			goto CommonExit;
 		}
 
-		//0-.
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
-		if(system(gcQuery))
-		{
-			logfileLine("ChangeIPContainer",gcQuery);
-			tJobErrorUpdate(uJob,"vzctl stop failed");
-			goto CommonExit;
-		}
 
-		//1-.
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cIPNew);
-		if(system(gcQuery))
+		if(!uVeth)
 		{
-			logfileLine("ChangeIPContainer",gcQuery);
-			tJobErrorUpdate(uJob,"vzctl set ipadd failed");
-			goto CommonExit;
+			//0-.
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
+			if(system(gcQuery))
+			{
+				logfileLine("ChangeIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl stop failed");
+				goto CommonExit;
+			}
+
+			//1-.
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cIPNew);
+			if(system(gcQuery))
+			{
+				logfileLine("ChangeIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl set ipadd failed");
+				goto CommonExit;
+			}
+	
+	
+			//2-.
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel %s --save",uContainer,cIPOld);
+			if(system(gcQuery))
+			{
+				logfileLine("ChangeIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl set ipdel failed");
+				goto CommonExit;
+			}
 		}
-	
-	
-		//2-.
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel %s --save",uContainer,cIPOld);
-		if(system(gcQuery))
+		else
 		{
-			logfileLine("ChangeIPContainer",gcQuery);
-			tJobErrorUpdate(uJob,"vzctl set ipdel failed");
-			goto CommonExit;
+			//VETH based container
+			sprintf(gcQuery,"/usr/sbin/vzctl exec %u \"/sbin/ifconfig eth0 0\"",uContainer);
+			if(system(gcQuery))
+			{
+				logfileLine("ChangeIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl exec 1");
+				goto CommonExit;
+			}
+
+			sprintf(gcQuery,"/usr/sbin/vzctl exec %u \"/sbin/ip addr add %s dev eth0\"",
+						uContainer,cIPNew);
+			if(system(gcQuery))
+			{
+				logfileLine("ChangeIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl exec 2");
+				goto CommonExit;
+			}
+
+			sprintf(gcQuery,"/usr/sbin/vzctl exec %u \"/sbin/ip route add default dev eth0\"",uContainer);
+			if(system(gcQuery))
+			{
+				logfileLine("ChangeIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl exec 3");
+				goto CommonExit;
+			}
+
+			sprintf(gcQuery,"/sbin/ip route del %.31s dev veth%u.0",cIPOld,uContainer);
+			if(system(gcQuery))
+			{
+				logfileLine("ChangeIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl exec 4");
+				goto CommonExit;
+			}
+
+			sprintf(gcQuery,"/sbin/ip route add %.31s dev veth%u.0",cIPNew,uContainer);
+			if(system(gcQuery))
+			{
+				logfileLine("ChangeIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl exec 4");
+				goto CommonExit;
+			}
 		}
 
 		//3-.
@@ -876,13 +927,16 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			goto CommonExit;
 		}
 
-		//4-.
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-		if(system(gcQuery))
+		if(!uVeth)
 		{
-			logfileLine("ChangeIPContainer",gcQuery);
-			tJobErrorUpdate(uJob,"vzctl start failed");
-			goto CommonExit;
+			//4-.
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
+			if(system(gcQuery))
+			{
+				logfileLine("ChangeIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl start failed");
+				goto CommonExit;
+			}
 		}
 
 		//Everything ok
