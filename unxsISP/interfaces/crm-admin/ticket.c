@@ -57,6 +57,7 @@ static char *cTicketComment="";
 static char *cCommentConfirm="";
 
 static char cSearch[32]={""};
+static unsigned uPage=1;
 
 time_t ToUnixTime(char *cMySQLDate);
 char *cFromUnixTime(time_t luDate);
@@ -164,6 +165,8 @@ void TicketGetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"uTicket"))
 			sscanf(gentries[i].val,"%u",&uTicket);
+		else if(!strcmp(gentries[i].name,"uPage"))
+			sscanf(gentries[i].val,"%u",&uPage);
 	}
 	if(uTicket) LoadTicket();
 
@@ -423,6 +426,7 @@ void SubmitComment()
 
 }//void SubmitComment()
 
+double ceil(double x);
 
 void funcTicketNavList(FILE *fp)
 {
@@ -430,7 +434,13 @@ void funcTicketNavList(FILE *fp)
 	MYSQL_ROW field;
 	unsigned uDisplayed=0;
 	unsigned uFound=0;
+	unsigned uResultsPerPage=10;
+	unsigned uOffSet=0;
+	unsigned uMaxPage=0;
+	
 	static char cTopMessage[100]={""};
+	char cExtra[33]={""};
+
 
 #define SEARCH_FIELDS "uTicket,cSubject,FROM_UNIXTIME(uCreatedDate)"
 
@@ -459,7 +469,7 @@ void funcTicketNavList(FILE *fp)
 	else
 		sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
 				"WHERE uOwner=%u OR uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)"
-				"ORDER BY uCreatedDate DESC LIMIT 20",
+				"ORDER BY uCreatedDate DESC",
 				guOrg
 				,guOrg
 				);
@@ -494,15 +504,22 @@ void funcTicketNavList(FILE *fp)
 			return;
 		}
 	}
-
+	else
+	{
+		uOffSet=(uPage-1)*uResultsPerPage;
+		uMaxPage=ceil((double)((double)uFound/(double)uResultsPerPage));
+		sprintf(cExtra," LIMIT %u,%u",uOffSet,uResultsPerPage);
+		
+		mysql_free_result(res);
+		
+		strcat(gcQuery,cExtra);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+	}
 	while((field=mysql_fetch_row(res)))
 	{
-		if(uDisplayed==20)
-		{
-			fprintf(fp,"Only the first 20 records found. If the invoice you are looking for is not in the list above please "
-			"further refine your search.<br>\n");
-			break;
-		}
 		fprintf(fp,"<a href=ispCRM.cgi?gcPage=Ticket&uTicket=%s>Ticket #%s</a> %s (%s)<br>\n",
 			field[0]
 			,field[0]
@@ -510,6 +527,10 @@ void funcTicketNavList(FILE *fp)
 			,field[2]);
 		uDisplayed++;
 	}
+	
+	register int x;
+	for(x=1;x<(uMaxPage+1);x++)
+		fprintf(fp,"<a href=ispCRM.cgi?gcPage=Ticket&uPage=%i>%i</a>&nbsp;",x,x);
 
 	mysql_free_result(res);
 
