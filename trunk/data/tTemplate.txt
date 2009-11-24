@@ -815,7 +815,7 @@ echo 1 > /proc/sys/net/ipv4/conf/$cHostDEV/proxy_arp;\
         done\
 } &\
 	1	1
-181	defaultVETH.start	1	1	1259071633	1	1259071677	Default VETH device start script.\
+181	defaultVETH.start	1	1	1259071633	1	1259078935	Default VETH device start script.\
 \
 IMPORTANT\
 \
@@ -828,7 +828,11 @@ cIPv4=209.177.154.68	#!/bin/bash\
 \
 cIPv4="{{cIPv4}}";\
 \
-/sbin/ifconfig eth0 0\
-/sbin/ip addr add $cIPv4 dev eth0\
-/sbin/ip route add default dev eth0\
-	1	11
+/sbin/ifconfig eth0 0;\
+if [ $? -eq 0 ]; then\
+   sleep 1;\
+   /sbin/ip addr add $cIPv4 dev eth0;\
+   /sbin/ip route add default dev eth0;\
+fi\
+\
+exit 0;	1	11
