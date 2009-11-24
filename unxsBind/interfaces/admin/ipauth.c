@@ -1060,11 +1060,10 @@ void UpdateBlockOwnership(char *cIPBlock,unsigned uOwner)
 }//void UpdateBlockOwnership(char *cIPBlock,unsigned uOwner)
 
 
-unsigned uGetDbCIDR(char *cIPBlock)
+unsigned uGetDbBlock(char *cIPBlock)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uDbCIDR=0;
 
 	sprintf(gcQuery,"SELECT cLabel,uOwner FROM tBlock WHERE cLabel LIKE '%s/%%'",cIPBlock);
 	mysql_query(&gMysql,gcQuery);
@@ -1072,11 +1071,11 @@ unsigned uGetDbCIDR(char *cIPBlock)
 		htmlPlainTextError(gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%s/%u",cIPBlock,&uDbCIDR);
-
-	return(uDbCIDR);
+		sprintf(cIPBlock,"%s",field[0]);
 	
-}//unsigned uGetDbCIDR(char *cIPBlock)
+	return(0);
+	
+}//unsigned uGetDbBlock(char *cIPBlock)
 
 void CreateBlock(char *cIPBlock,unsigned uClient)
 {
@@ -1140,8 +1139,6 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	unsigned uNumIPs=0;
 	unsigned uZone=0;
 	unsigned uClient=0;
-	unsigned uDbCIDR=0;
-	unsigned uCIDR=0;
 	unsigned uDbIPs=0;
 	unsigned uDBNets=0;
 	
@@ -1150,15 +1147,16 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	char cZone[100]={""};
 	char cParam1[200]={""};
 	char cUpdateHost[100]={"packetexchange.net"}; //This will come from tConfiguration, later
-	
+
 	time_t luClock;
 
 	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
 	uNumIPs=uGetNumIPs(cIPBlock);
 	uNumNets=uGetNumNets(cIPBlock);
-	sscanf(cIPBlock,"%s/%u",cBlock,&uCIDR);
-	uDbCIDR=uGetDbCIDR(cBlock);
-	sprintf(cDbBlock,"%s/%u",cBlock,uDbCIDR);
+	sprintf(cDbBlock,"%u.%u.%u.%u",a,b,c,d);
+	uGetDbBlock(cDbBlock);
+	printf("Alleged db block is %s\n",cDbBlock);
+
 	uDbIPs=uGetNumIPs(cDbBlock);
 	uDBNets=uGetNumNets(cDbBlock);
 	
