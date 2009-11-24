@@ -39,8 +39,8 @@ for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
 	if ! test -e $RRDFILE; then
 		#1 day every sample and one day of 15 min avgs
 		/usr/bin/rrdtool create $RRDFILE --start N --step 300 \
-		DS:in:COUNTER:600:U:U \
-		DS:out:COUNTER:600:U:U \
+		DS:in:DERIVE:600:0:10000000 \
+		DS:out:DERIVE:600:0:10000000 \
 		RRA:AVERAGE:0.5:1:600 \
 		RRA:AVERAGE:0.5:6:700 \
 		RRA:AVERAGE:0.5:24:775 \
