@@ -933,8 +933,7 @@ void CommitTransaction(void)
 
 	mysql_free_result(res);	
 
-	sprintf(gcQuery,"SELECT cBlock,cCompany,cBlockAction FROM tTransaction WHERE cBlockAction='New' "
-			"OR cBlockAction='Mod' ORDER BY uTransaction");
+	sprintf(gcQuery,"SELECT cBlock,cCompany,cBlockAction FROM tTransaction WHERE cBlockAction!='None' ORDER BY uTransaction");
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
@@ -1307,7 +1306,7 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		
 		RemoveOldBlock(cIPBlock);
 		CreateBlock(cIPBlock,uClient);
-
+		
 		if(uNumNets==1)
 		{
 			uRRToAddCount=uNumIPs-uDbIPs;
