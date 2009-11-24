@@ -1099,7 +1099,7 @@ void RemoveOldBlock(char *cIPBlock)
 	sprintf(cLocalIPBlock,"%.99s",cIPBlock);
 	
 	if((cp=strchr(cLocalIPBlock,'/'))) *cp=0;
-	sprintf(gcQuery,"DELETE FROM tBlock WHERE cLabel LIKE '%s/%%'",cIPBlock);
+	sprintf(gcQuery,"DELETE FROM tBlock WHERE cLabel LIKE '%s/%%'",cLocalIPBlock);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(gcQuery);
@@ -1339,6 +1339,9 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 
 			uNetsToAdd=uNumNets-uDBNets;
 			printf("uNetsToAdd=%u\n",uNetsToAdd);
+			printf("uNumNets=%u\n",uNumNets);
+			printf("uDBNets=%u\n",uDBNets);
+
 			//Larger than /24 blocks
 			for(x=c;x<(c+uNetsToAdd);x++)
 			{
