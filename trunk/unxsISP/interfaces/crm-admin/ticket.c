@@ -167,6 +167,8 @@ void TicketGetHook(entry gentries[],int x)
 			sscanf(gentries[i].val,"%u",&uTicket);
 		else if(!strcmp(gentries[i].name,"uPage"))
 			sscanf(gentries[i].val,"%u",&uPage);
+		else if(!strcmp(gentries[i].name,"cSearch"))
+			sprintf(cSearch,"%.99s",gentries[i].val);
 	}
 	if(uTicket) LoadTicket();
 
@@ -457,7 +459,7 @@ void funcTicketNavList(FILE *fp)
 		else
 			sprintf(gcQuery,"SELECT "SEARCH_FIELDS" FROM tTicket "
 					"WHERE (uOwner=%u OR uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)) AND "
-					"(cSubject LIKE '%%%s%%' OR cText LIKE '%%%s%%' "
+					"(cSubject LIKE '%%%s%%' OR cText LIKE '%%%s%%') "
 					"ORDER BY uCreatedDate DESC",
 					guOrg
 					,guOrg
@@ -530,7 +532,7 @@ void funcTicketNavList(FILE *fp)
 	
 	register int x;
 	for(x=1;x<(uMaxPage+1);x++)
-		fprintf(fp,"<a href=ispCRM.cgi?gcPage=Ticket&uPage=%i>%i</a>&nbsp;",x,x);
+		fprintf(fp,"<a href=ispCRM.cgi?gcPage=Ticket&uPage=%i&cSearch=%s>%i</a>&nbsp;",x,cSearch,x);
 
 	mysql_free_result(res);
 
