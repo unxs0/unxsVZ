@@ -1016,18 +1016,34 @@ unsigned uCreateZone(char *cZone,unsigned uOwner)
 
 void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner)
 {
-	sprintf(gcQuery,"INSERT INTO tResource SET "
-			"cName=%u,uRRType=7,cParam1='%s',uZone=%u,"
-			"uCreatedBy=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	//Avoid dup records
+	MYSQL_RES *res;
+
+	sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName=%u AND uRRType=7 AND uZone=%u",
 			uName
-			,cParam1
 			,uZone
-			,guLoginClient
-			,uOwner
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(gcQuery);
+	res=mysql_store_result(&gMysql);
+
+	if(!mysql_num_rows(res))
+	{
+		sprintf(gcQuery,"INSERT INTO tResource SET "
+				"cName=%u,uRRType=7,cParam1='%s',uZone=%u,"
+				"uCreatedBy=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uName
+				,cParam1
+				,uZone
+				,guLoginClient
+				,uOwner
+				);
+		mysql_query(&gMysql,gcQuery);
+	
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(gcQuery);
+	}
 
 }//void CreateDefaultRR(unsigned uName,char *cParam1,unsigned uZone,unsigned uOwner)
 
@@ -1142,7 +1158,6 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	unsigned uDbIPs=0;
 	unsigned uDBNets=0;
 	
-	char cBlock[64]={""};
 	char cDbBlock[64]={""};
 	char cZone[100]={""};
 	char cParam1[200]={""};
