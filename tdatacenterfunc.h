@@ -218,7 +218,9 @@ void ExttDatacenterButtons(void)
 			printf("A datacenter is a collection of hardware nodes."
 					" These hardware nodes need not be located in the same"
 					" physical datacenter. Hardware nodes host VZ containers."
-					" It is in these containers that actual public services run.");
+					" It is in these containers that actual public services run."
+					" uVeth='Yes' container traffic is not included"
+					"in the datacenter graphs at this time.");
 			tGroupNavList();
 			tNodeNavList(uDatacenter);
 			tDatacenterNavList();
