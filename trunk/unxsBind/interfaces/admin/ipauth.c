@@ -389,7 +389,7 @@ void RIPEImport(void)
 		}
 		//uCidr=(unsigned)(32-log2(uSize));
 		uCidr=(unsigned)(32-floorLog2(uSize));
-
+		
 		/*printf("cIPBlockStart='%s' cIPBlockEnd='%s' uSize=%u uDate=%u uClient=%u uOther=%u uCidr=%u\n",
 			cIPBlockStart
 			,cIPBlockEnd
@@ -505,7 +505,7 @@ unsigned uGetBlockStatus(char *cBlock,char *cCompany)
 	//Are we expanding an existent block and updating ownership?
 	//Are we reducing an existent block and keeping ownership intact?
 	//Are we reducing an existent block and updating ownership?
-
+	
 	sprintf(cIPBlock,"%s",cBlock);
 
 	if((cp=strchr(cBlock,'/')))
@@ -529,13 +529,12 @@ unsigned uGetBlockStatus(char *cBlock,char *cCompany)
 		sscanf(field[1],"%u",&uOwner);
 
 		mysql_free_result(res);
-
 		//Does ownership change?
 		if(strcmp(ForeignKey("tClient","cLabel",uOwner),cCompany)) uUpdateOwner=1;
 		if(uCIDR<uDbCIDR)
 			//Block is being expanded
 			uAction=BLOCK_EXPAND;
-		else if(uCIDR<uDbCIDR)
+		else if(uCIDR>uDbCIDR)
 			uAction=BLOCK_REDUCE;
 		else if(uCIDR==uDbCIDR)
 			uAction=BLOCK_NONE;
@@ -897,6 +896,8 @@ void RestoreUpdateSerialNum(unsigned uZone); //UpdateSerialNum like in backend, 
 unsigned uBlockAdd=0;
 unsigned uBlockMod=0;
 unsigned uBlockDel=0;
+unsigned uBlockReduce=0;
+unsigned uBlockExpand=0;
 unsigned uCompanyAdd=0;
 unsigned uCompanyDel=0;
 
