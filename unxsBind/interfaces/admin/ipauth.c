@@ -1094,6 +1094,7 @@ unsigned uGetDbBlock(char *cIPBlock)
 	
 }//unsigned uGetDbBlock(char *cIPBlock)
 
+
 void CreateBlock(char *cIPBlock,unsigned uClient)
 {
 	sprintf(gcQuery,"INSERT INTO tBlock SET cLabel='%s',uOwner=%u,"
@@ -1143,6 +1144,54 @@ unsigned uZoneSetup(char *cZone)
 	return(uZone);
 
 }//unsigned uZoneSetup(char *cZone)
+
+
+void UpdateBlockOwner(char *cIPBlock,unsigned uClient)
+{
+	unsigned a,b,c,d,e;
+	unsigned uNumNets=0;
+	unsigned uNumIPs=0;
+	unsigned uZone=0;
+	char cZone[100]={""};
+
+	sscanf(cIPBlock,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
+	uNumIPs=uGetNumIPs(cIPBlock);
+	uNumNets=uGetNumNets(cIPBlock);
+	
+	if(uNumNets==1)
+	{
+		sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+		uZone=uZoneSetup(cZone);
+		sprintf(gcQuery,"UPDATE tResource SET uOwner=%u WHERE uZone=%u AND uOwner!=%u",
+				uClient
+				,uZone
+				,uClient
+			);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+	else
+	{
+		register int x;
+		for(x=c;x<(c+uNumNets);x++)
+		{
+			//
+			sprintf(cZone,"%u.%u.%u.in-addr.arpa",x,b,a);
+			//printf("cZone=%s\n",cZone);
+			uZone=uZoneSetup(cZone);
+			sprintf(gcQuery,"UPDATE tResource SET uOwner=%u WHERE uZone=%u AND uOwner!=%u",
+					uClient
+					,uZone
+					,uClient
+				);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		}
+	}
+
+}//void UpdateBlockOwner(char *cIPBlock,unsigned uClient)
 
 
 unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
@@ -1383,6 +1432,9 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		}
 
 		//Check if we are keeping owner or not and update as required (the old RRs only)
+		if(!strstr(cAction,"Keep Owner"))
+			UpdateBlockOwner(cIPBlock,uClient);
+
 	}
 	else if(strstr(cAction,"Reduce"))
 	{
@@ -1442,6 +1494,8 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 			}//for(f=c;f<((c+uNumNets));f++)
 		}
 		//Check if we are keeping owner or not and update as required (the old RRs only)
+		if(!strstr(cAction,"Keep Owner"))
+			UpdateBlockOwner(cIPBlock,uClient);
 	}
 
 
