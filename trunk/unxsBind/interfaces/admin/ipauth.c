@@ -940,16 +940,16 @@ void CommitTransaction(void)
 		htmlPlainTextError(gcQuery);
 	
 	res=mysql_store_result(&gMysql);
-printf("Content-type: text/plain\n\n");
+//printf("Content-type: text/plain\n\n");
 
 	while((field=mysql_fetch_row(res)))
 	{
-		printf("ProcessTransaction(%s,%s,%s)",field[0],field[1],field[2]);
+//		printf("ProcessTransaction(%s,%s,%s)",field[0],field[1],field[2]);
 		ProcessTransaction(field[0],field[1],field[2]);
-		printf("...OK\n");
+//		printf("...OK\n");
 	}
 	mysql_free_result(res);
-	exit(0);
+//	exit(0);
 //	printf("CleanUpCompanies()");
 	CleanUpCompanies();
 //	printf("...OK");
@@ -1170,7 +1170,7 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	uNumNets=uGetNumNets(cIPBlock);
 	sprintf(cDbBlock,"%u.%u.%u.%u",a,b,c,d);
 	uGetDbBlock(cDbBlock);
-	printf("Alleged db block is %s\n",cDbBlock);
+	//printf("Alleged db block is %s\n",cDbBlock);
 
 	uDbIPs=uGetNumIPs(cDbBlock);
 	uDBNets=uGetNumNets(cDbBlock);
@@ -1193,7 +1193,7 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		return(1);
 	}
 	mysql_free_result(res);
-	printf("\ncAction=%s cIPBlock=%s\n",cAction,cIPBlock);
+	//printf("\ncAction=%s cIPBlock=%s\n",cAction,cIPBlock);
 
 	if(!strcmp(cAction,"New"))
 	{
@@ -1313,13 +1313,14 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 			}
 		}
 	}
-	else if(!strcmp(cAction,"Expand Keep Owner"))
+	
+	if(strstr(cAction,"Expand "))
 	{
 		unsigned uNetsToAdd=0;
 		unsigned uRRToAddCount=0;
-		printf("RemoveOldBlock(%s)\n",cIPBlock);
+		//printf("RemoveOldBlock(%s)\n",cIPBlock);
 		RemoveOldBlock(cIPBlock);
-		printf("CreateBlock(%s,%u)\n",cIPBlock,uClient);
+		//printf("CreateBlock(%s,%u)\n",cIPBlock,uClient);
 		CreateBlock(cIPBlock,uClient);
 		
 		if(uNumNets==1)
@@ -1351,10 +1352,10 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 			register int x;
 
 			uNetsToAdd=uNumNets-uDBNets;
-			printf("uNetsToAdd=%u\n",uNetsToAdd);
+			/*printf("uNetsToAdd=%u\n",uNetsToAdd);
 			printf("uNumNets=%u\n",uNumNets);
 			printf("uDBNets=%u\n",uDBNets);
-
+			*/
 			//Larger than /24 blocks
 			for(x=c;x<(c+uNetsToAdd);x++)
 			{
@@ -1381,7 +1382,6 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		}
 
 		//Check if we are keeping owner or not and update as required (the old RRs only)
-		exit(0);
 	}
 	else if(strstr(cAction,"Reduce"))
 	{
