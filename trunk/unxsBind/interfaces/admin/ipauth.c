@@ -1388,14 +1388,17 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	{
 		unsigned uNetsToReduce=0;
 		unsigned uRRToReduceCount=0;
-		
+		//printf("Content-type: text/plain\n\n");
+		//printf("RemoveOldBlock(%s)\n",cIPBlock);
 		RemoveOldBlock(cIPBlock);
 		CreateBlock(cIPBlock,uClient);
+		//printf("CreateBlock(%s,%u)\n",cIPBlock,uClient);
+		//printf("uNumNets=%u\n",uNumNets);
 
-		if(uNumNets==1)
+		if(uDBNets==1)
 		{
 			uRRToReduceCount=uDbIPs-uNumIPs;
-
+			printf("uRRToReduceCount=%u\n",uRRToReduceCount);
 			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 			for(f=uDbIPs;f<(uDbIPs-d);f--)
 			{
@@ -1413,6 +1416,8 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		{
 			register int x;
 			uNetsToReduce=uDBNets-uNumNets;
+			//printf("uDBNets=%u\nuNumNets=%u\n",uDBNets,uNumNets);
+			//printf("uNetsToReduce=%u\n",uNetsToReduce);
 			for(x=c+uDBNets;x<(c+uNetsToReduce);x--)
 			{
 				//
@@ -1436,7 +1441,6 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 					htmlPlainTextError(gcQuery);
 			}//for(f=c;f<((c+uNumNets));f++)
 		}
-
 		//Check if we are keeping owner or not and update as required (the old RRs only)
 	}
 
