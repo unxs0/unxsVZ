@@ -962,6 +962,12 @@ void CommitTransaction(void)
 	sprintf(cMsg,"Deleted %u block(s)\n",uBlockDel);
 	strcat(cImportMsg,cMsg);
 	
+	sprintf(cMsg,"Expanded %u block(s)\n",uBlockExpand);
+	strcat(cImportMsg,cMsg);
+
+	sprintf(cMsg,"Reduced %u block(s)\n",uBlockReduce);
+	strcat(cImportMsg,cMsg);
+
 	if(uCompanyAdd>1)
 		sprintf(cMsg,"Added %u companies\n",uCompanyAdd);
 	else if(uCompanyAdd==1)
@@ -1122,6 +1128,7 @@ void RemoveOldBlock(char *cIPBlock)
 		htmlPlainTextError(gcQuery);
 
 }//void RemoveOldBlock(char *cIPBlock)
+
 
 unsigned uZoneSetup(char *cZone)
 {
@@ -1435,6 +1442,7 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		if(!strstr(cAction,"Keep Owner"))
 			UpdateBlockOwner(cIPBlock,uClient);
 
+		uBlockExpand++;
 	}
 	else if(strstr(cAction,"Reduce"))
 	{
@@ -1496,6 +1504,8 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 		//Check if we are keeping owner or not and update as required (the old RRs only)
 		if(!strstr(cAction,"Keep Owner"))
 			UpdateBlockOwner(cIPBlock,uClient);
+
+		uBlockReduce++;
 	}
 
 
