@@ -1786,10 +1786,11 @@ void ResetRR(char *cZone,unsigned uName,char *cParam1,unsigned uOwner)
 	unsigned uZone=0;
 	uZone=GetuZone(cZone,"tZone");
 
-	sprintf(gcQuery,"UPDATE tResource SET cParam1='%s',uOwner=%u WHERE cName='%u' "
+	sprintf(gcQuery,"UPDATE tResource SET cParam1='%s',uOwner=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cName='%u' "
 			"AND uZone=%u",
 			cParam1
 			,uOwner
+			,guLoginClient
 			,uName
 			,uZone
 			);
