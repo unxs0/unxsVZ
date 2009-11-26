@@ -639,7 +639,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 			if(system(gcQuery))
 			{
 				logfileLine("NewContainer",gcQuery);
-				tJobErrorUpdate(uJob,"rb: vzctl destroy failed");
+				tJobErrorUpdate(uJob,"rb0: vzctl destroy failed");
 			}
 			goto CommonExit;
 		}
@@ -661,22 +661,29 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 				if(system(gcQuery))
 				{
 					logfileLine("NewContainer",gcQuery);
-					tJobErrorUpdate(uJob,"rb: vzctl destroy failed");
+					tJobErrorUpdate(uJob,"rb1: vzctl destroy failed");
 				}
 				goto CommonExit;
 			}
 
-			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --netif_add eth0 --save",uContainer);
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --netif_add eth0,,,,vmbr0 --save",uContainer);
 			if(system(gcQuery))
 			{
 				logfileLine("NewContainer",gcQuery);
 				tJobErrorUpdate(uJob,"vzctl --netif_add failed");
+				//Roll back step 2-.
+				sprintf(gcQuery,"/usr/sbin/vzctl stop %u",uContainer);
+				if(system(gcQuery))
+				{
+					logfileLine("NewContainer",gcQuery);
+					tJobErrorUpdate(uJob,"rb2: vzctl stop failed");
+				}
 				//Roll back step 1-.
 				sprintf(gcQuery,"/usr/sbin/vzctl destroy %u",uContainer);
 				if(system(gcQuery))
 				{
 					logfileLine("NewContainer",gcQuery);
-					tJobErrorUpdate(uJob,"rb: vzctl destroy failed");
+					tJobErrorUpdate(uJob,"rb2: vzctl destroy failed");
 				}
 				goto CommonExit;
 			}
@@ -709,7 +716,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 				if(system(gcQuery))
 				{
 					logfileLine("NewContainer",gcQuery);
-					tJobErrorUpdate(uJob,"rb: vzctl destroy failed");
+					tJobErrorUpdate(uJob,"rb3: vzctl destroy failed");
 				}
 				goto CommonExit;
 			}
