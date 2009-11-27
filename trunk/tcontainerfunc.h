@@ -63,6 +63,7 @@ static unsigned uAllPortsOpen=0;
 static unsigned uCloneStop=0;
 static unsigned uSyncPeriod=0;
 static char cSearch[32]={""};
+static unsigned uGroupJobs=0;
 
 //ModuleFunctionProtos()
 void tContainerNavList(unsigned uNode, char *cSearch);
@@ -98,6 +99,12 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
 				unsigned uStatus,unsigned uFailToJob);
 void htmlCloneInfo(unsigned uContainer);
+
+//extern
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
+void DelProperties(unsigned uNode,unsigned uType);//tnodefunc.h
+
+
 
 
 void htmlGenMountInputs(unsigned const uMountTemplate)
@@ -200,15 +207,6 @@ unsigned uCheckMountSettings(unsigned uMountTemplate)
 		return(1);
 
 }//unsigned uCheckMountSettings(unsigned uMountTemplate)
-
-//tnodefunc.h
-void DelProperties(unsigned uNode,unsigned uType);
-
-//jobqueue.c
-void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
-
-
-static unsigned uGroupJobs=0;
 
 
 void ExtProcesstContainerVars(pentry entries[], int x)
@@ -482,6 +480,15 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: cLabel can't have '-clone'!");
 				if(strstr(cHostname,".clone"))
 					tContainer("<blink>Error</blink>: cHostname can't have '.clone'!");
+				if(uVeth)
+				{
+					char cContainerType[256]={""};
+
+					GetNodeProp(uNode,"Container-Type",cContainerType);
+					if(!strstr(cContainerType,"VETH"))
+						tContainer("<blink>Error</blink>: uNode selected does not support VETH!");
+						
+				}
 				//No same names or hostnames for same datacenter allowed.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
 						" AND uDatacenter=%u",cHostname,cLabel,uDatacenter);
@@ -1628,7 +1635,8 @@ void ExttContainerButtons(void)
 			printf("<p><u>New container step 1/3</u><br>");
 			
 			printf("Complete required container fields in the record data panel to your right.<p>uVeth='Yes'"
-				" containers should only be used when layer 2 connectivity is absolutely required."
+				" containers should only be used when layer 2 connectivity is absolutely required"
+				" (The uNode selected must support VETH containers -See tNode Property.)"
 				" uVeth='Yes' container tOSTemplate should be reviewed to make sure it's"
 				" network settings will not interfere with standard OpenVZ VETH device usage.");
 			if(uVeth)
