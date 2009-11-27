@@ -1229,8 +1229,15 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("GetContainerProp",mysql_error(&gMysql));
-		exit(2);
+		if(gLfp!=NULL)
+		{
+			logfileLine("GetContainerProp",mysql_error(&gMysql));
+			exit(2);
+		}
+		else
+		{
+			htmlPlainTextError(mysql_error(&gMysql));
+		}
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
