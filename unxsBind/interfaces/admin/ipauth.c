@@ -1736,7 +1736,7 @@ void CleanUpBlock(char *cIPBlock)
 	{
 		//Update RRs
 		if(d==0)d++;
-		sprintf(cZone,"%u.%u.%u.in-adrr.arpa",c,b,a);
+		sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 		//printf("cZone=%s\n",cZone);
 
 		for(f=d;f<(uNumIPs+d);f++)
@@ -1785,7 +1785,7 @@ void ResetRR(char *cZone,unsigned uName,char *cParam1,unsigned uOwner)
 {
 	unsigned uZone=0;
 	uZone=GetuZone(cZone,"tZone");
-
+	
 	sprintf(gcQuery,"UPDATE tResource SET cParam1='%s',uOwner=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cName='%u' "
 			"AND uZone=%u",
 			cParam1
