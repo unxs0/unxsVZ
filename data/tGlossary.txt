@@ -123,3 +123,23 @@ cloning and OS template creation jobs.\
 \
 <p>\
 Related terms: None
+91	Container-Type	1	1	1259359016	1	1259359054	Container-Type is usually a hardware node exclusive restriction for the hosting\
+of VENET device based containers or bridged layer-2 VETH device based\
+containers. Currently hardware nodes are exclusively VENET or VETH. In the vast\
+majority of the cases VENET containers should be preferred.\
+\
+<p>\
+Acceptable values are:<br>\
+VENET Only\
+VETH Only\
+\
+<p>\
+Related terms: VETH VENET uVeth
+81	cuSyncPeriod	1	1	1254575155	1	1254696207	cuSyncPeriod is the period in seconds for keeping cloned containers in sync with\
+their source container counterpart.\
+\
+<p>\
+This value is used by the job queue for automated clone sync operations.\
+\
+<p>\
+Related terms: none
