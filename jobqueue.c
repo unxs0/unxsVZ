@@ -95,7 +95,7 @@ static unsigned guDatacenter=0;
 static char cHostname[100]={""};//file scope
 
 
-static FILE *gLfp;
+static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline)
 {
 	time_t luClock;
@@ -1187,32 +1187,6 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 }//void MigrateContainer(...)
 
 
-void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(uNode==0) return;
-
-	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",
-				uNode,cName);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("GetNodeProp",mysql_error(&gMysql));
-		exit(2);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		char *cp;
-		if((cp=strchr(field[0],'\n')))
-			*cp=0;
-		sprintf(cValue,"%.255s",field[0]);
-	}
-	mysql_free_result(res);
-
-}//void GetNodeProp(...)
 
 
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue)
@@ -3509,3 +3483,38 @@ unsigned FailToJobDone(unsigned uJob)
 	return(0);
 
 }//unsigned FailToJobDone(unsigned uContainer)
+
+
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uNode==0) return;
+
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",
+				uNode,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		if(gLfp!=NULL)
+		{
+			logfileLine("GetNodeProp",mysql_error(&gMysql));
+			exit(2);
+		}
+		else
+		{
+			htmlPlainTextError(mysql_error(&gMysql));
+		}
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetNodeProp()
