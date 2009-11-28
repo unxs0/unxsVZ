@@ -225,6 +225,8 @@ int main(int iArgc, char *cArgv[])
 				MonthUsageData(2);
 				exit(0);
 			}
+			else if(!strcmp(gcFunction,"Dashboard"))
+				iDNS("DashBoard");
 
 		}
 
@@ -623,7 +625,10 @@ void Header_ism3(char *title, int js)
 
 	//Logout link
 	if(guSSLCookieLogin)
+	{
 		printf(" <a title='Erase login cookies' href=iDNS.cgi?gcFunction=Logout>Logout</a> ");
+		printf(" <a title='Quick dashboard link' href=iDNS.cgi?gcFunction=Dashboard>Dashboard</a> ");
+	}
 
 	//Generate Menu Items
 	printf("\n<!-- tab menu -->\n");
