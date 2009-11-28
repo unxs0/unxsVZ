@@ -507,12 +507,14 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 void Header_ism3(char *title, int js)
 {
 	printf("Content-type: text/html\n\n");
-	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
+	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\""
+			" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
         printf("<html><head><title>iDNS %s </title>",title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
 
 	printf("</head><body><form action=iDNS.cgi method=post><blockquote>\n");
+	printf("<img src=/images/unxslogo.jpg>&nbsp;&nbsp;\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tZone") || !strcmp(gcFunction,"tZoneTools") ||
