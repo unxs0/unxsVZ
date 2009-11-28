@@ -109,14 +109,6 @@ int iExtMainCommands(pentry entries[], int x)
 		{
 			Admin();
 		}
-		else if(!strcmp(gcCommand,"Dashboard"))
-		{
-			char cuDashboardType[256]={""};
-
-			GetConfiguration("uDashboardType",cuDashboardType,0);
-			if(cuDashboardType[0]) sscanf(cuDashboardType,"%u",&guJS);
-			iDNS("DashBoard");
-		}
 		else if(!strcmp(gcCommand,"NamedConf"))
 		{
 			NamedConf();
@@ -297,8 +289,7 @@ void ExtMainContent(void)
 
         	OpenRow("Admin Functions","black");
 		printf("<td><input type=hidden name=gcFunction value=MainTools>\n");
-		printf("<input class=largeButton type=submit name=gcCommand value=Admin>\n");
-		printf(" <input class=largeButton type=submit name=gcCommand value=Dashboard></td></tr>\n");
+		printf("<input class=largeButton type=submit name=gcCommand value=Admin></td></tr>\n");
 	}
 
 	CloseFieldSet();
@@ -2265,12 +2256,6 @@ void ZeroSystem(void)
 			htmlPlainTextError(mysql_error(&gMysql));
 	}
 	
-	//tResourceTest not in cTableList, is not supposed to be accesed
-	sprintf(gcQuery,"TRUNCATE tResourceTest");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
 	//Only valid for new rpm layout
 	for(i=0;cInitTableList[i][0];i++)
 	{
@@ -2280,5 +2265,10 @@ void ZeroSystem(void)
         	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 	}
+
+	//tResourceTest not in cTableList, is not supposed to be accesed
+	sprintf(gcQuery,"TRUNCATE tResourceTest");
+	mysql_query(&gMysql,gcQuery);
+	//Removed error handling since this is obviously wrong.
 
 }//void ZeroSystem(void)

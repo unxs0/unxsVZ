@@ -1071,8 +1071,9 @@ void ExttZoneButtons(void)
 				"and the specialized uSecondaryOnly, cMasterIPs and cOptions. cMainAddress is a "
 				"backwords compatible optional field (mysqlBind) for simple A record only zones.\n");
 			printf("<p><u>Search Tools</u><br>");
-			printf("<input type=text title='cZone, cMainAddr and uOwner=2000 search. Use %% . and _ "
-				"for pattern matching when applicable.' name=cSearch value=\"%s\" maxlength=99 size=20> cSearch ",cSearch);
+			printf("<input type=text title='cZone search. Use %% . and _"
+				" for pattern matching when applicable.' name=cSearch value=\"%s\" maxlength=99"
+				" size=20> cSearch ",cSearch);
 			printf("<input type=checkbox title='Limit to uSecondaryOnly=Yes if checked' name=uSearchSecOnly");
 			if(uSearchSecOnly)  printf(" checked");
 			printf(" > uSecondaryOnly");
