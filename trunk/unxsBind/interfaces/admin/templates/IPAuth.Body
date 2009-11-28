@@ -165,7 +165,7 @@ lorem ipsum
 			
 		</td>
 		<td>
-			<{{textarea}} name=cMassList cols=80 rows=20 class="type_textarea">{{cMassList}}</{{textarea}}>
+			<textarea name=cMassList cols=80 rows=20 class="type_textarea">{{cMassList}}</textarea>
 		</td>
 	</tr>
 		
@@ -201,7 +201,7 @@ lorem ipsum
 <table border="0" cellspacing="0" cellpadding="7" width="100%" class="table_content" style="margin-top:5px;">
         <tr>
                 <td>
-                <{{textarea}} name=cMsg cols=190 rows=10 class="type_textarea" disabled>{{cImportMsg}}</{{textarea}}>
+                <textarea name=cMsg cols=190 rows=10 class="type_textarea" disabled>{{cImportMsg}}</textarea>
                 </td>
         </tr>
 </table>

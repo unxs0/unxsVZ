@@ -170,7 +170,7 @@
 		</td>
 		<td>
 			<input type=hidden name=cNSList value='{{cNSList}}'>
-			<{{textarea}} title='List of NSs to which you are going to delegate the IP block' name=cNSList cols=50 rows=4 class="type_textarea">{{cNSList}}</{{textarea}}>
+			<textarea title='List of NSs to which you are going to delegate the IP block' name=cNSList cols=50 rows=4 class="type_textarea">{{cNSList}}</textarea>
 		</td>
 	</tr>
 
