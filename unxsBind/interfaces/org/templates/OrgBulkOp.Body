@@ -124,7 +124,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>
 			
 		</td>
 		<td>
-			<{{textarea}} name=cMassList cols=80 rows=20 class="type_textarea">{{cMassList}}</{{textarea}}>
+			<textarea name=cMassList cols=80 rows=20 class="type_textarea">{{cMassList}}</textarea>
 		</td>
 	</tr>
 		

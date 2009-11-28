@@ -152,7 +152,7 @@
 		</td>
 		<td>
 			<input type=hidden name=cNSs value='{{cNSs}}'>
-			<{{textarea}} cols=50 rows=4 disabled class="type_textarea_off">{{funcNSSetMembers}}</{{textarea}}>
+			<textarea cols=50 rows=4 disabled class="type_textarea_off">{{funcNSSetMembers}}</textarea>
 		</td>
 	</tr>
 	
