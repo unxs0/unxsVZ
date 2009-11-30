@@ -377,6 +377,8 @@ void ExttContainerCommands(pentry entries[], int x)
 	{
 		unsigned uNodeDatacenter=0;
 		time_t uActualModDate= -1;
+		char cContainerType[256]={""};
+
 
 		uHideProps=1;
 
@@ -482,8 +484,6 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: cHostname can't have '.clone'!");
 				if(uVeth)
 				{
-					char cContainerType[256]={""};
-
 					GetNodeProp(uNode,"Container-Type",cContainerType);
 					if(!strstr(cContainerType,"VETH"))
 						tContainer("<blink>Error</blink>: uNode selected does not support VETH!");
@@ -965,6 +965,13 @@ void ExttContainerCommands(pentry entries[], int x)
 							" missing it's cIPv4 property!");
 				if(uSyncPeriod>86400*30)
 					tContainer("<blink>Error</blink>: uSyncPeriod out of range, max 30 days!");
+				if(uVeth)
+				{
+					GetNodeProp(uNode,"Container-Type",cContainerType);
+					if(!strstr(cContainerType,"VETH"))
+						tContainer("<blink>Error</blink>: uNode selected does not support VETH!");
+						
+				}
                         	guMode=0;
 				
 				while(uWizLabelLoop)
@@ -1109,6 +1116,13 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: Can't migrate to same node. Try 'Template Wizard'");
 				if(uTargetNode==0)
 					tContainer("<blink>Error</blink>: Please select a valid target node");
+				if(uVeth)
+				{
+					GetNodeProp(uNode,"Container-Type",cContainerType);
+					if(!strstr(cContainerType,"VETH"))
+						tContainer("<blink>Error</blink>: uNode selected does not support VETH!");
+						
+				}
                         	guMode=0;
 
 				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode))
