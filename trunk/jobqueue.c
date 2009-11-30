@@ -586,7 +586,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 
 		sscanf(field[7],"%u",&uVeth);
 
-		//0-. vz conf mount umount files if applicable. 1 is for overwrite existing files
+		//0-. Create vz conf action script files if applicable. 1 is for overwriting existing files
 		//OpenVZ action scripts
 		if(CreateActionScripts(uContainer,1))
 		{
@@ -1986,7 +1986,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 	//4c-.
 	//Some containers have more than one IP when how? Not via jobqueue.c
-	//Only via mount/umount scripts other IPs are used.
+	//Only via action scripts other IPs are used.
 	//Any way we can use --ipdel all instead of ticket #83
 	if(uNotValidSystemCallArg(cSourceContainerIP))
 	{
@@ -2011,13 +2011,14 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		goto CommonExit;
 	}
 
-	//5-. Remove umount and mount files if found
+	//5-. Remove action script files if found
 	//Business logic: Target container may have these files, but we need them only if we
 	//'Failover' to this cloned VE. Also we defer to that action the setup of the
-	//containers tProperty values needed for processing the umount/mount templates:
-	//cNetmask, cExtraNodeIP, cPrivateIPs, cService1, cService2, cVEID.mount and cVEID.umount.
-	sprintf(gcQuery,"ssh %3$s %1$s 'rm -f /etc/vz/conf/%2$u.umount /etc/vz/conf/%2$u.mount'",
-				cTargetNodeIPv4,uNewVeid,cSSHOptions);
+	//containers tProperty values needed for processing the action script templates:
+	//cNetmask, cExtraNodeIP, cPrivateIPs, cService1, cService2, cVEID.mount and cVEID.umount, etc.
+	sprintf(gcQuery,"ssh %3$s %1$s 'rm -f /etc/vz/conf/%2$u.umount /etc/vz/conf/%2$u.mount"
+					" /etc/vz/conf/%2$u.start /etc/vz/conf/%2$u.stop'",
+						cTargetNodeIPv4,uNewVeid,cSSHOptions);
 	if(system(gcQuery))
 	{
 		logfileLine("CloneContainer",gcQuery);
@@ -2090,7 +2091,7 @@ void AppFunctions(FILE *fp,char *cFunction)
 }//void AppFunctions(FILE *fp,char *cFunction)
 
 
-//OpenVZ action scripts: Actually creates all OpenVZ action scripts will rename when time permits.
+//OpenVZ action scripts: Creates all OpenVZ action scripts will rename when time permits.
 int CreateActionScripts(unsigned uContainer, unsigned uOverwrite)
 {
 	//Create VEID.mount and VEID.umount files if container so specifies via tProperty
@@ -2221,10 +2222,10 @@ int CreateActionScripts(unsigned uContainer, unsigned uOverwrite)
 		chmod(cFile,S_IRUSR|S_IWUSR|S_IXUSR);
 	}
 
-	//Second action script set: Always a set of both mount and umount? No!
+	//Second action script set: Always a set of both start and stop? No!
 	GetContainerProp(uContainer,"cVEID.start",cTemplateName);
 	sprintf(cFile,"/etc/vz/conf/%u.start",uContainer);
-	//Do not overwrite existing mount files! Do that before if you really want to.
+	//Do not overwrite existing files! Do that before if you really want to.
 	//stat returns 0 if file exists
 	if(cTemplateName[0] && (stat(cFile,&statInfo) || uOverwrite))
 	{
@@ -2826,11 +2827,14 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 
 	//4-.
-	//When we clone we purposefully remove any mount/umount scripts
+	//When we clone we purposefully remove any action scripts
 	//Here we must add them.
 	//Trouble is that these scripts must allow for failover.
 	//for example if strange firewall rules or IP ranges are used
 	//these scripts will not be portable --even in the same datacenter!
+	//It follows that all hardware nodes of the same type (VENET xor VETH)
+	//must have the same basic firewall and device settings. HN device differences
+	//can be added later via tNode properties.
 	if(CreateActionScripts(uContainer,1))
 	{
 		logfileLine("FailoverTo","CreateActionScripts(x,1)");
@@ -3120,12 +3124,14 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 
 
-	//5-. Remove any mount/umount files.
-	sprintf(gcQuery,"rm -f /etc/vz/conf/%1$u.umount /etc/vz/conf/%1$u.mount",uContainer);
+	//5-. Remove any action script files.
+	sprintf(gcQuery,"rm -f /etc/vz/conf/%1$u.umount /etc/vz/conf/%1$u.mount"
+				" /etc/vz/conf/%1$u.start /etc/vz/conf/%1$u.stop"
+					,uContainer);
 	if(system(gcQuery))
 	{
 		logfileLine("FailoverFrom",gcQuery);
-		tJobErrorUpdate(uJob,"rm mount files");
+		tJobErrorUpdate(uJob,"rm action scripts");
 
 		//rollback
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel all --save",uContainer);
