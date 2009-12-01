@@ -1152,6 +1152,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
+				if(!uOSTemplate)
+					tContainer("<blink>Error</blink>: No tOSTemplate.cLabel!");
 				guMode=4001;
 				tContainer("Select Template Name");
 			}
