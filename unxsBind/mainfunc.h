@@ -1355,49 +1355,114 @@ void CompareZones(char *cDNSServer1IP, char *cDNSServer2IP, char *cuOwner)
 
 void UpdateSchema(void)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned ucClrPasswd=1;
+	unsigned ucMessage=1;
+	unsigned ucServer=1;
+	unsigned uNSSet=1;
+	unsigned uClient=1;
+
 	printf("UpdateSchema() start\n");
+
+	//Gather current schema info for new columns and new or complex index mods/changes
+	//Modifies do nothing bad but in the future for the sake of efficiency we should
+	//	also not repeat them.
+	sprintf(gcQuery,"SHOW COLUMNS IN tAuthorize");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+		if(!strcmp(field[0],"cClrPasswd")) ucClrPasswd=0;
+       	mysql_free_result(res);
+
+
+	sprintf(gcQuery,"SHOW COLUMNS IN tLog");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"cMessage")) ucMessage=0;
+		else if(!strcmp(field[0],"cServer")) ucServer=0;
+	}
+       	mysql_free_result(res);
+
+
+	sprintf(gcQuery,"SHOW COLUMNS IN tZone");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uNSSet")) uNSSet=0;
+		else if(!strcmp(field[0],"uClient")) uClient=0;
+	}
+       	mysql_free_result(res);
+
 
 	//Update changes to tAuthorize
 	//
-	sprintf(gcQuery,"ALTER TABLE tAuthorize ADD cClrPasswd VARCHAR(32) NOT NULL DEFAULT ''");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) 
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+	if(ucClrPasswd)
+	{
+		sprintf(gcQuery,"ALTER TABLE tAuthorize ADD cClrPasswd VARCHAR(32) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
 
 	sprintf(gcQuery,"ALTER TABLE tAuthorize MODIFY cPasswd VARCHAR(35) NOT NULL DEFAULT ''");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		printf("%s\n",mysql_error(&gMysql));
 
 	//tView
 
 	//tLog
-	sprintf(gcQuery,"ALTER TABLE tLog ADD cMessage VARCHAR(255) NOT NULL DEFAULT ''");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) 
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+	if(ucMessage)
+	{
+		sprintf(gcQuery,"ALTER TABLE tLog ADD cMessage VARCHAR(255) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
 
-	sprintf(gcQuery,"ALTER TABLE tLog ADD cServer VARCHAR(64) NOT NULL DEFAULT ''");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) 
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+	if(ucServer)
+	{
+		sprintf(gcQuery,"ALTER TABLE tLog ADD cServer VARCHAR(64) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
 
 	//tHit
 	sprintf(gcQuery,"ALTER TABLE tHit MODIFY cZone VARCHAR(255) NOT NULL DEFAULT ''");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		printf("%s\n",mysql_error(&gMysql));
 
 	//tZone
-	sprintf(gcQuery,"ALTER TABLE tZone ADD uNSSet INT UNSIGNED NOT NULL DEFAULT 0");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) 
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+	if(uNSSet)
+	{
+		sprintf(gcQuery,"ALTER TABLE tZone ADD uNSSet INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
 
-	sprintf(gcQuery,"ALTER TABLE tZone ADD uClient INT UNSIGNED NOT NULL DEFAULT 0");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) 
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+	if(uClient)
+	{
+		sprintf(gcQuery,"ALTER TABLE tZone ADD uClient INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
 
 
 	printf("UpdateSchema() end\n");

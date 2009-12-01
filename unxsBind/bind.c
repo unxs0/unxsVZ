@@ -1515,7 +1515,7 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 		{
 			sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
 			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
-			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel FROM tZone,tNSSet,tNS,tView"
+			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel,tZone.cOptions FROM tZone,tNSSet,tNS,tView"
 			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
 			" tZone.uView=tView.uView AND tZone.cZone='%s'"
 							,cZone);
@@ -1524,7 +1524,7 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 		{
 			sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
 			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
-			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel FROM tZone,tNSSet,tNS,tView"
+			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel,tZone.cOptions FROM tZone,tNSSet,tNS,tView"
 			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
 			" tZone.uView=tView.uView ORDER BY tZone.cZone");
 		}
@@ -1618,8 +1618,7 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 			//10 uMailServers
 			//11 cMainAddress
 			//12 tView.cLabel
-			//13 tView.cMaster
-			//14 tView.uOrder
+			//13 tZone.cOptions
 			sscanf(field[1],"%u",&uZone);
 	
 			if((cp=strchr(field[3],' '))) *cp=0;
@@ -1643,7 +1642,10 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 				field[9]);
 
 			//ns
-			cPrintNSList(zfp,field[2]);
+			if(field[13][0] && strstr(field[13],"//NoNonRRNS")!=NULL)
+				;
+			else
+				cPrintNSList(zfp,field[2]);
 
 			//mx1
 			PrintMXList(zfp,field[10]);
