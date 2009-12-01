@@ -1151,11 +1151,11 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode)
 {
         register int i,n;
-        char cLabel[128];
+        char cLabel[256];
         MYSQL_RES *mysqlRes;         
         MYSQL_ROW mysqlField;
 
-        char cSelectName[34]={""};
+        char cSelectName[100]={""};
 	char cHidden[100]={""};
         char cLocalTableName[256]={""};
         char *cp;
@@ -1174,8 +1174,8 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
         strncpy(cLocalTableName,cTableName,255);
         if((cp=strchr(cLocalTableName,';')))
         {
-                strncpy(cSelectName,cp+1,32);
-                cSelectName[32]=0;
+                strncpy(cSelectName,cp+1,99);
+                cSelectName[99]=0;
                 *cp=0;
         }
 
@@ -1218,7 +1218,7 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
                         {
                              printf("<option selected>%s</option>\n",mysqlField[1]);
 			     if(!uMode)
-			     sprintf(cHidden,"<input type=hidden name=%.32s value='%.32s'>\n",
+			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
 			     		cLabel,mysqlField[1]);
                         }
                 }
@@ -1228,7 +1228,7 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
 		printf("<select name=%s %s><option title='No selection'>---</option></select>\n"
                         ,cLabel,cMode);
 		if(!uMode)
-		sprintf(cHidden,"<input type=hidden name=%.32s value='0'>\n",cLabel);
+		sprintf(cHidden,"<input type=hidden name=%99s value='0'>\n",cLabel);
         }
         printf("</select>\n");
 	if(cHidden[0])
@@ -1241,11 +1241,11 @@ void tTablePullDown(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode)
 {
         register int i,n;
-        char cLabel[128];
+        char cLabel[256];
         MYSQL_RES *mysqlRes;         
         MYSQL_ROW mysqlField;
 
-        char cSelectName[34]={""};
+        char cSelectName[100]={""};
 	char cHidden[100]={""};
         char cLocalTableName[256]={""};
         char *cp;
@@ -1264,8 +1264,8 @@ void tTablePullDown(const char *cTableName, const char *cFieldName,
         strncpy(cLocalTableName,cTableName,255);
         if((cp=strchr(cLocalTableName,';')))
         {
-                strncpy(cSelectName,cp+1,32);
-                cSelectName[32]=0;
+                strncpy(cSelectName,cp+1,99);
+                cSelectName[99]=0;
                 *cp=0;
         }
 
@@ -1304,7 +1304,7 @@ void tTablePullDown(const char *cTableName, const char *cFieldName,
                         {
                              printf("<option selected>%s</option>\n",mysqlField[1]);
 			     if(!uMode)
-			     sprintf(cHidden,"<input type=hidden name=%.32s value='%.32s'>\n",
+			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
 			     		cLabel,mysqlField[1]);
                         }
                 }
@@ -1314,7 +1314,7 @@ void tTablePullDown(const char *cTableName, const char *cFieldName,
 		printf("<select name=%s %s><option title='No selection'>---</option></select>\n"
                         ,cLabel,cMode);
 		if(!uMode)
-		sprintf(cHidden,"<input type=hidden name=%.32s value='0'>\n",cLabel);
+		sprintf(cHidden,"<input type=hidden name=%.99s value='0'>\n",cLabel);
         }
         printf("</select>\n");
 	if(cHidden[0])
