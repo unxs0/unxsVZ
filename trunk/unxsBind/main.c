@@ -516,7 +516,7 @@ void Header_ism3(char *title, int js)
 	StyleSheet();
 
 	printf("</head><body><form action=iDNS.cgi method=post><blockquote>\n");
-	printf("<img src=/images/unxsbind.jpg>&nbsp;&nbsp;\n");
+	printf("<img src=/images/unxslogo.jpg>&nbsp;&nbsp;\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tZone") || !strcmp(gcFunction,"tZoneTools") ||
