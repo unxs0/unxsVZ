@@ -511,12 +511,12 @@ void Header_ism3(char *title, int js)
 	printf("Content-type: text/html\n\n");
 	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\""
 			" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-        printf("<html><head><title>iDNS %s </title>",title);
+        printf("<html><head><title>unxsBind %s </title>",title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
 
 	printf("</head><body><form action=iDNS.cgi method=post><blockquote>\n");
-	printf("<img src=/images/unxslogo.jpg>&nbsp;&nbsp;\n");
+	printf("<img src=/images/unxsbind.jpg>&nbsp;&nbsp;\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tZone") || !strcmp(gcFunction,"tZoneTools") ||
@@ -611,7 +611,7 @@ void Header_ism3(char *title, int js)
 		ExttAuthorizeNavBar();
 
 	//Login info
-	printf("<font size=3><b>iDNS</b></font> \n ");
+	printf(" \n ");
 	if(!guPermLevel)
 	{
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>Your IP address %s has been logged</font>",gcHost);
