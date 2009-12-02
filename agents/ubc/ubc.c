@@ -1361,8 +1361,8 @@ void ProcessSingleStatus(unsigned uContainer)
 			//printf("uContainer=%u uVEID=%u uProcesses=%u cIP=%s\n",
 			//		uContainer,uVEID,uProcesses,cIP);
 
-			//1-. vzinfo.uProcesses
-			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='vzinfo.uProcesses'"
+			//1-. veinfo.uProcesses
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='veinfo.uProcesses'"
 							" AND uKey=%u AND uType=3",uContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -1389,7 +1389,7 @@ void ProcessSingleStatus(unsigned uContainer)
 			else
 			{
 				sprintf(gcQuery,"INSERT INTO tProperty SET cValue=%u"
-						",cName='vzinfo.uProcesses'"
+						",cName='veinfo.uProcesses'"
 						",uType=3"
 						",uKey=%u"
 						",uOwner=%u"
@@ -1407,8 +1407,8 @@ void ProcessSingleStatus(unsigned uContainer)
 			}
 			mysql_free_result(res);
 
-			//1-. vzinfo.cIP
-			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='vzinfo.cIP'"
+			//1-. veinfo.cIP
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='veinfo.cIP'"
 							" AND uKey=%u AND uType=3",uContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -1435,7 +1435,7 @@ void ProcessSingleStatus(unsigned uContainer)
 			else
 			{
 				sprintf(gcQuery,"INSERT INTO tProperty SET cValue='%s'"
-						",cName='vzinfo.cIP'"
+						",cName='veinfo.cIP'"
 						",uType=3"
 						",uKey=%u"
 						",uOwner=%u"
