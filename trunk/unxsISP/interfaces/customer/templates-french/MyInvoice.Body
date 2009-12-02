@@ -20,17 +20,17 @@
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>	
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='My account management' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">My Account</b></a>
+						<a title='My account management' class="wpsUnSelectedPlaceLink" href='ispClient.cgi?gcPage=Customer'><b class ="font10pt">Mon Compte</b></a>
 						</td>
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='My invoices management' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">My Invoices</b></a>
+						<a title='My invoices management' class="wpsSelectedPlaceLink" href='ispClient.cgi?gcPage=Invoice'><b class ="font10pt">Mes Factures</b></a>
 						</td>
 					</tr>
 				</table>
 			</td>
 		</tr>
 		<tr><td valign=top align=right class=notice>
-{{gcName}} ({{gcLogin}}) of {{gcOrgName}} is logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout
+{{gcName}} ({{gcLogin}}) of {{gcOrgName}} is logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Se d&eacute;connecter
 </a></td></tr>
 							<tr>
 								<td class="mastbg2">
@@ -42,7 +42,7 @@
 											<form action=ispAdmin.cgi method="post">
 												<table cellspacing="0" cellpadding="0" border="0">
 													<tr>
-														<td><input type="text" value="Search Invoices" class="searchinp" name=cSearch onfocus="this.select();" title="Search for companies with a keyword" /></td>
+														<td><input type="text" value="Recherche de Facture" class="searchinp" name=cSearch onfocus="this.select();" title="Search for companies with a keyword" /></td>
 
 														<td valign="middle" style="padding: 0px 4px 0px 4px;"></td><td class="padlt6rt10"><input type="image" src="/images/btn_mast_search.gif" alt="Search" width="17" height="17" border="0" title="Find one or more companies based on input search pattern" /></td>
 													</tr>
@@ -73,12 +73,12 @@
 <table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-    <td class="hdrtout padlt8" width="33%"><h6 class="modhdr">My Invoice Management</h6></td>
+    <td class="hdrtout padlt8" width="33%"><h6 class="modhdr">Ma gestion de Facture</h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td width="10"> </td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
-                <h6 class="modhdr">My Invoice Data </h6></td>
+                <h6 class="modhdr">D&eacute;tails de ma facture</h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
   <tr>
@@ -94,7 +94,7 @@
                 </tr>
 		<tr>
 		<td colspan=2>
-		<u><b>My Invoices</b></u><br><br>
+		<u><b>Mes Facture</b></u><br><br>
 		{{funcInvoiceNavList}}
 		</td>
         </table>
