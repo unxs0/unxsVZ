@@ -1278,12 +1278,12 @@ void funcSelectLanguage(FILE *fp)
 	if(!strcmp(cLanguage,"English"))
 		fprintf(fp,"selected ");
 	fprintf(fp,">English</option>\n");
-/*
+
 	fprintf(fp,"<option ");
 	if(!strcmp(cLanguage,"French"))
 		fprintf(fp,"selected ");
 	fprintf(fp,">French</option>\n");
-*/	
+	
 	fprintf(fp,"<option ");
 	if(!strcmp(cLanguage,"Spanish"))
 		fprintf(fp,"selected ");

@@ -28,7 +28,7 @@
 			</td>
 		</tr>
 		<tr><td valign=top align=right class=notice>
-{{gcName}} ({{gcOrgName}}) logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout
+{{gcName}} ({{gcOrgName}}) session en cours {{gcHost}} <a title='Effacer les cookies de l'overture de session' href={{cCGI}}?gcFunction=Logout>Terminer
 </a></td></tr>
 							<tr>
 								<td class="mastbg2">
