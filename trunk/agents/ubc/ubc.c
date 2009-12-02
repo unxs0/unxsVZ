@@ -30,6 +30,7 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode);
 void ProcessUBC(void);
 void ProcessSingleHDUsage(unsigned uContainer);
 void ProcessSingleQuota(unsigned uContainer);
+void ProcessSingleStatus(unsigned uContainer);
 void ProcessSingleTraffic(unsigned uContainer);
 void ProcessVZMemCheck(unsigned uContainer, unsigned uNode);
 void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
@@ -377,6 +378,7 @@ void ProcessUBC(void)
 		{
 			ProcessSingleUBC(uContainer,0);
 			ProcessSingleQuota(uContainer);
+			ProcessSingleStatus(uContainer);
 			ProcessSingleHDUsage(uContainer);
 			ProcessVZMemCheck(uContainer,0);
 			ProcessVZCPUCheck(uContainer,0);
@@ -497,7 +499,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 void ProcessSingleQuota(unsigned uContainer)
 {
 	FILE *fp;
-	char cLine[256];
+	char cLine[1024];
 	char cContainerTag[64];
 	register unsigned uStart=0;
 	unsigned long luUsage,luSoftlimit,luHardlimit,luTime,luExpire;
@@ -1314,3 +1316,147 @@ void ProcessSingleTraffic(unsigned uContainer)
 
 }//void ProcessSingleTraffic(unsigned uContainer)
 
+
+void ProcessSingleStatus(unsigned uContainer)
+{
+	FILE *fp;
+
+	if(uContainer)
+	{
+		;
+	}
+	else
+	{
+		logfileLine("ProcessSingleStatus","No container specified");
+		exit(1);
+	}
+		
+
+	//[root@node2vm ~]# cat /proc/vz/veinfo
+	// uVEID uNotKnown uProcesses cIP
+	//	391     0     6   192.168.22.22
+	//	0     0    66
+
+	if((fp=fopen("/proc/vz/veinfo","r")))
+	{
+        	MYSQL_RES *res;
+        	MYSQL_ROW field;
+		char cLine[1024];
+		char cIP[32];
+		unsigned uProcesses;
+		unsigned uVEID;
+
+		while(fgets(cLine,1024,fp)!=NULL)
+		{
+			cIP[0]=0;
+			uProcesses=0;
+			uVEID=0;
+
+			sscanf(cLine,"%u %*u %u %s",&uVEID,&uProcesses,cIP);
+
+			if(uVEID!=uContainer)
+				continue;
+
+			//debug only
+			//printf("uContainer=%u uVEID=%u uProcesses=%u cIP=%s\n",
+			//		uContainer,uVEID,uProcesses,cIP);
+
+			//1-. vzinfo.uProcesses
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='vzinfo.uProcesses'"
+							" AND uKey=%u AND uType=3",uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+				exit(2);
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue=%u,"
+						"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+						" uProperty=%s"
+							,uProcesses
+							,guContainerOwner
+							,field[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cValue=%u"
+						",cName='vzinfo.uProcesses'"
+						",uType=3"
+						",uKey=%u"
+						",uOwner=%u"
+						",uCreatedBy=1"
+						",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							,uProcesses
+							,uContainer
+							,guContainerOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+					exit(2);
+				}
+			}
+			mysql_free_result(res);
+
+			//1-. vzinfo.cIP
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='vzinfo.cIP'"
+							" AND uKey=%u AND uType=3",uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+				exit(2);
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue='%s',"
+						"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+						" uProperty=%s"
+							,cIP
+							,guContainerOwner
+							,field[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cValue='%s'"
+						",cName='vzinfo.cIP'"
+						",uType=3"
+						",uKey=%u"
+						",uOwner=%u"
+						",uCreatedBy=1"
+						",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							,cIP
+							,uContainer
+							,guContainerOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+					exit(2);
+				}
+			}
+			mysql_free_result(res);
+		}
+	}
+	else
+	{
+		logfileLine("ProcessSingleStatus","fopen() failed");
+	}
+
+}//void ProcessSingleStatus(unsigned uContainer)
