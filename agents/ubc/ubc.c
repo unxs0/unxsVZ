@@ -372,6 +372,7 @@ void ProcessUBC(void)
 		//Job dispatcher based on cJobName
 		if(guStatus==uSTOPPED)
 		{
+			ProcessSingleStatus(uContainer);
 			ProcessSingleHDUsage(uContainer);
 		}
 		else
@@ -379,11 +380,12 @@ void ProcessUBC(void)
 			ProcessSingleUBC(uContainer,0);
 			ProcessSingleQuota(uContainer);
 			ProcessSingleStatus(uContainer);
-			ProcessSingleHDUsage(uContainer);
 			ProcessVZMemCheck(uContainer,0);
 			ProcessVZCPUCheck(uContainer,0);
 			ProcessSingleTraffic(uContainer);
+			ProcessSingleHDUsage(uContainer);
 		}
+
 	}
 	mysql_free_result(res);
 
