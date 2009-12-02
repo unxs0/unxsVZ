@@ -18,6 +18,7 @@ AUTHOR
 #include <netdb.h>
 #include <string.h>
 #include <sys/file.h>
+#include <ctype.h>
 
 #include "cgi.h"
 

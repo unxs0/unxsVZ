@@ -286,6 +286,79 @@ void RRCheck(int uMode)
 		}
 
 	}
+	else if(!strcmp(cRRType,"SRV"))
+	{
+		unsigned uI=0;
+		if(!cName[0])
+		{
+			guMode=uMode;
+			tResource("Service protocol and domain required");
+		}
+		else
+		{
+			register int x=0;
+			
+			//All lowercase
+			for(x=0;x<strlen(cName);x++)
+				cName[x]=tolower(cName[x]);
+			if((strstr(cName,"_tcp")==NULL)&&(strstr(cName,"_udp")==NULL))
+			{
+				guMode=uMode;
+				tResource("Service protocol required");
+			}
+		}	
+			
+		if(!cParam1[0])
+		{
+			guMode=uMode;
+			tResource("Priority required");
+		}
+		if(!cParam2[0])
+		{
+			guMode=uMode;
+			tResource("Weight required");
+		}
+		if(!cParam3[0])
+		{
+			guMode=uMode;
+			tResource("Port required");
+		}
+		if(!cParam4[0])
+		{
+			guMode=uMode;
+			tResource("Target host required");
+		}
+
+		if((strstr(cName,ForeignKey("tZone","cZone",uZone))==NULL))
+		{
+			guMode=uMode;
+			tResource("Must include zone name in service parameter. E.g.: _sip._tcp.example.com.");
+		}
+		sscanf(cParam1,"%u",&uI);
+		if(!uI && !(isdigit(cParam1[0])))
+		{
+			guMode=uMode;
+			tResource("Must specify numerical priority");
+		}
+		uI=0;
+		sscanf(cParam2,"%u",&uI);
+		if(!uI && (!isdigit(cParam2[0])))
+		{
+			guMode=uMode;
+			tResource("Must specify numerical weight");
+		}
+		uI=0;
+		sscanf(cParam3,"%u",&uI);
+		if((!uI) || (uI>65535))
+		{
+			guMode=uMode;
+			tResource("Invalid port number");
+		}
+		FQDomainName(cParam4);
+		if(cParam4[strlen(cParam4)-1]!='.') strcat(cParam4,".");
+		if(cName[strlen(cName)-1]!='.') strcat(cName,".");
+
+	}
 	else if(1)
 	{
 		guMode=uMode;
