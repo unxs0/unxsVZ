@@ -122,6 +122,59 @@
 	{{funcInvoice}}	
 		</td>
         
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Type')"><strong>Type de Carte</strong></a>          </td>
+                <td>
+			<input type=hidden name=cCardType value="{{cCardType}}">
+			{{funcSelectCardType}}
+        </tr>
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Name')"><strong>Nom sur la Carte</strong></a>          </td>
+                <td>
+			<input type=hidden name=cCardName value="{{cCardName}}">
+                        <input  title='Credit card name. E.g.: John Doe (Required if entered card number)' type=text name=cCardName value="{{cCardName}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCardNameStyle}}></td>
+        </tr>
+
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card Number')"><strong>Num&eacute;ero de Carte</strong></a>          </td>
+                <td>
+			<input type=hidden name=cCardNumber value="{{cCardNumber}}">
+                        <input  title='Credit card number. E.g. 411111111111111 (Optional)' type=text name=cCardNumber value="{{cCardNumber}}" size=40 maxlength=99 {{gcInputStatus}} class={{cCardNumberStyle}}></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Card CCV')"><strong>Card CCV</strong></a>          </td>
+                <td>
+                        <input  title='Credit card CCV number (see back of the card) (Optional)' type=text name=cCCV size=40 maxlength=4 {{gcInputStatus}} class=type_fields></td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Expiration Month')"><strong>Mois d'Expiration</strong></a>          </td>
+                <td>
+			<input type=hidden name=uExpMonth value="{{uExpMonth}}">
+			{{funcSelectExpMonth}}
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Expiration Year')"><strong>Ann&eacute;e d'Expiration</strong></a>          </td>
+                <td>
+			<input type=hidden name=uExpYear value="{{uExpYear}}">
+			{{funcSelectExpYear}}
+        </tr>
+	<tr>
+	<td colspan=2>
+	<br>
+	<input type=submit name=gcFunction value='Payer Complet' title='Appuyez sur pour traiter votre paiement'>
+	</td>
+	</tr>
+
 </table>
 
 

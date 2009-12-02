@@ -170,7 +170,7 @@
 	<tr>
 	<td colspan=2>
 	<br>
-	<input type=submit name=gcFunction value='Complete Payment' title='Press to process your payment>
+	<input type=submit name=gcFunction value='Complete Payment' title='Press to process your payment'>
 	</td>
 	</tr>
 </table>

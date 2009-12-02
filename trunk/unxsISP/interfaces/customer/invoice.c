@@ -101,10 +101,13 @@ void InvoiceCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"Invoice"))
 	{
 		ProcessInvoiceVars(entries,x);
-		if(!strcmp(gcFunction,"Show Invoice for Printing"))
+		if(!strcmp(gcFunction,"Show Invoice for Printing") ||
+			!strcmp(gcFunction,"Voir le Facture pour Impression") ||
+			!strcmp(gcFunction,"Mostrar Factura para Imprimir"))
 			PrintInvoice();
 		else if(!strcmp(gcFunction,"Pay Loaded Invoice") ||
-			!strcmp(gcFunction,"Pagar la Factura Actual"))
+			!strcmp(gcFunction,"Pagar la Factura Actual") ||
+			!strcmp(gcFunction,"Payer le Facture Chargee"))
 		{
 			gcInputStatus[0]=0;
 			PaymentFieldsOn();
