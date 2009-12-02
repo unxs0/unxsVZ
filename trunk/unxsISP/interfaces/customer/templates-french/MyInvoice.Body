@@ -30,7 +30,7 @@
 			</td>
 		</tr>
 		<tr><td valign=top align=right class=notice>
-{{gcName}} ({{gcLogin}}) of {{gcOrgName}} is logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Se d&eacute;connecter
+{{gcName}} ({{gcOrgName}}) session en cours {{gcHost}} <a title='Effacer les cookies de l'overture de session' href={{cCGI}}?gcFunction=Logout>Terminer
 </a></td></tr>
 							<tr>
 								<td class="mastbg2">
@@ -44,7 +44,7 @@
 													<tr>
 														<td><input type="text" value="Recherche de Facture" class="searchinp" name=cSearch onfocus="this.select();" title="Search for companies with a keyword" /></td>
 
-														<td valign="middle" style="padding: 0px 4px 0px 4px;"></td><td class="padlt6rt10"><input type="image" src="/images/btn_mast_search.gif" alt="Search" width="17" height="17" border="0" title="Find one or more companies based on input search pattern" /></td>
+														<td valign="middle" style="padding: 0px 4px 0px 4px;"></td><td class="padlt6rt10"><input type="image" src="/images/btn_mast_search.gif" alt="Search" width="17" height="17" border="0" title="" /></td>
 													</tr>
 												</table>
 												<input type=hidden name=gcFunction value=Search>
