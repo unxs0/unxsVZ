@@ -1,8 +1,8 @@
 </table>
 <br>
 <br>
-Total d'imp&ocirc;ts: {{mInvoiceTax}}<br>
-Exp&eacute;dition et manipulationn: {{mInvoiceSH}}<br>
+Total des taxes: {{mInvoiceTax}}<br>
+Frais de port et manutention: {{mInvoiceSH}}<br>
 Total: {{mInvoiceTotal}}<br>
 <br>
 
