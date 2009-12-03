@@ -306,6 +306,8 @@ void unxsVZ(const char *cResult)
 	{
 		if(!strcmp(cResult,"CloneReport"))
 			CloneReport(cResult);
+		else if(!strcmp(cResult,"ContainerReport"))
+			ContainerReport(cResult);
 		else
 			DashBoard(cResult);
 	}
