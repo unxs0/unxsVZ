@@ -1114,21 +1114,39 @@ unsigned ValidateCustomerInput(void)
 		{
 			SetCustomerFieldsOn();
 			cAccountHolderStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must enter account holder name";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must enter account holder name";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe ingresar el nombre del titular de la cuenta";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must enter account holder name (french)";
+
 			return(0);
 		}	
 		if(!cAccountNumber[0])
 		{
 			SetCustomerFieldsOn();
 			cAccountNumberStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must enter account number";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must enter account number";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe ingresar n&uacute;mero de cuenta";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must enter account number (french)";
+
 			return(0);
 		}
 		if(!uAccountType)
 		{
 			SetCustomerFieldsOn();
 			cuAccountTypeStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must select account type";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must select account type";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe seleccionart tipo de cuenta";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must select account type (french)";
+
 			return(0);
 		}
 	}	
