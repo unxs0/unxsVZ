@@ -667,7 +667,8 @@ void funcInvoiceNavList(FILE *fp)
 	unsigned uFound=0;
 	static char cTopMessage[100]={""};
 	char cExtra[100]={""};
-	
+	char *cLabel="";
+
 	sprintf(cExtra,"tInvoice.uClient=%u",guLoginClient);
 	
 	ExtSelectSearch("tInvoice","tInvoice.uInvoice,FROM_UNIXTIME(GREATEST(tInvoice.uCreatedDate,tInvoice.uModDate)),"
@@ -682,12 +683,33 @@ void funcInvoiceNavList(FILE *fp)
 	
 	if(!(uFound=mysql_num_rows(res)))
 	{
-		fprintf(fp,"No records found.<br>\n");
+		if(guTemplateSet==2)
+			fprintf(fp,"No records found.<br>\n");
+		else if(guTemplateSet==3)
+			fprintf(fp,"No se encontraron registros.<br>\n");
+		else if(guTemplateSet==4)
+			fprintf(fp,"No records found (french).<br>\n");
+
 		mysql_free_result(res);
 		return;
 	}
 
-	sprintf(cTopMessage,"%u record(s) found.",uFound);
+	if(guTemplateSet==2)
+	{
+		cLabel="Invoice";
+		sprintf(cTopMessage,"%u record(s) found.",uFound);
+	}
+	else if(guTemplateSet==3)
+	{
+		cLabel="Factura"
+		sprintf(cTopMessage,"%u registro(s) encontrados.",uFound);
+	}
+	else if(guTemplateSet==4)
+	{
+		cLabel="Facture";
+		sprintf(cTopMessage,"%u record(s) found. (french)",uFound);
+	}
+
 	gcMessage=cTopMessage;
 
 	if(uFound==1)
@@ -697,8 +719,8 @@ void funcInvoiceNavList(FILE *fp)
 			//This 'loads' the invoice, via funcInvoice() ;)
 			sscanf(field[0],"%u",&uInvoice);
 			
-			fprintf(fp,"<a href=ispClient.cgi?gcPage=Invoice&uInvoice=%s>Invoice #%s (%s) [%s]</a><br>\n"
-			,field[0],field[0],field[1],field[2]);
+			fprintf(fp,"<a href=ispClient.cgi?gcPage=Invoice&uInvoice=%s>%s #%s (%s) [%s]</a><br>\n"
+			,field[0],cLabel,field[0],field[1],field[2]);
 			mysql_free_result(res);
 			return;
 		}
@@ -708,8 +730,15 @@ void funcInvoiceNavList(FILE *fp)
 	{
 		if(uDisplayed==20)
 		{
-			fprintf(fp,"Only the first 20 records found. If the invoice you are looking for is not in the list above please "
-			"further refine your search.<br>\n");
+			if(guTemplateSet==2)
+					fprintf(fp,"Only the first 20 records shown. If the invoice you are looking for is not in the list above please "
+						"further refine your search.<br>\n");
+			else if(guTemplateSet==3)
+					fprintf(fp,"Solamente se muestran los primeros 20 registros. Si la factura que est&aacute; buscando no se aparece "
+						"en la lista de arriba por favor refine su b&uacute;squeda.<br>\n");
+			else if(guTemplateSet==4)
+					fprintf(fp,"Only the first 20 records found. If the invoice you are looking for is not in the list above please "
+						"further refine your search. (french)<br>\n");
 			break;
 		}
 		FromMySQLDate(field[1]);
@@ -880,35 +909,64 @@ unsigned ValidatePaymentInput(void)
 	{
 		PaymentFieldsOn();
 		cCardTypeStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must select credit card type";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must select credit card type";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe seleccionar tipo de tarjeta de cr&eacute;dito";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must select credit card type (french)";
+
 		return(0);
 	}
 	if(!cCardName[0])
 	{
 		PaymentFieldsOn();
 		cCardNameStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter credit card name";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must enter credit card name";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe ingresar el nombre en la tarjeta de cr&eacute;dito";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must enter credit card name (french)";
+
 		return(0);
 	}
 	if(!cCardNumber[0])
 	{
 		PaymentFieldsOn();
 		cCardNumberStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter credit card number";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must enter credit card number";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe ingresar el n&uacute;mero de la tarjeta de cr&eacute;dito";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must enter credit card number (french)";
 		return(0);
 	}
 	if(!uExpMonth)
 	{
 		PaymentFieldsOn();
 		cuExpMonthStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must select expiration month";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must select expiration month";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe seleccionar el mes de expiraci&oacute;n";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must select expiration month (french)";
+
 		return(0);
 	}
 	if(!uExpYear)
 	{
 		PaymentFieldsOn();
 		cuExpYearStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must select expiration year";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must select expiration year";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe seleccionar el a&ntilde;o de expiraci&oacute;n";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must select expiration year (french)";
+
 		return(0);
 	}
 	
