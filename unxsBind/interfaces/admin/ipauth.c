@@ -297,7 +297,10 @@ void RIPEImport(void)
 	GetConfiguration("uDefaultClient",cuDefaultClient,1);
 	sscanf(cuDefaultClient,"%u",&uDefaultClient);
 	if(!uDefaultClient)
-		htmlPlainTextError("Create a tConfiguration entry for uDefaultClient, it must contain the tClient.uClient value for your company");
+	{
+		gcMessage="<blink>Error: </blink>Create a tConfiguration entry for uDefaultClient, it must contain the tClient.uClient value for your company";
+		htmlIPAuth();
+	}
 
 	sprintf(gcQuery,"TRUNCATE tTransaction");
 	mysql_query(&gMysql,gcQuery);
