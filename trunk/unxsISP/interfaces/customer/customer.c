@@ -1087,14 +1087,27 @@ unsigned ValidateCustomerInput(void)
 		{
 			SetCustomerFieldsOn();
 			cBranchNameStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must enter branch name";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must enter branch name";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe ingresar nombre de sucursal";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must enter branch name (french)";
+
+
 			return(0);
 		}
 		if(!cBranchCode[0])
 		{
 			SetCustomerFieldsOn();
 			cBranchCodeStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must enter branch code";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must enter branch code";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe ingresar c&oacute;digo de sucursal";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must enter branch code (french)";
+
 			return(0);
 		}
 	        if(!cAccountHolder[0])
