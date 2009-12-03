@@ -295,7 +295,14 @@ void LoadCustomer(unsigned uClient)
 		}
 	}
 	else
-		gcMessage="No records found.";
+	{
+		if(guTemplateSet==2)
+			gcMessage="No records found.";
+		else if(guTemplateSet==3)
+			gcMessage="No se encontraron registros.";
+		else if(guTemplateSet==4)
+			gcMessage="No records found.(french)";
+	}
 
 	mysql_free_result(res);
 
@@ -758,12 +765,24 @@ void ModCustomer(void)
 
 	if(mysql_affected_rows(&gMysql))
 	{
-		gcMessage="Customer modified OK";
+		if(guTemplateSet==2)
+			gcMessage="Customer modified OK";
+		else if (guTemplateSet==3)
+			gcMessage="Cliente modificado OK";
+		else if (guTemplateSet==4)
+			gcMessage="Customer modified OK (french)";
+			
 		unxsISPLog(guLoginClient,"tClient","Mod");
 	}
 	else
 	{
-		gcMessage="Customer NOT modified";
+		if(guTemplateSet==2)
+			gcMessage="Customer NOT modified";
+		else if (guTemplateSet==3)
+			gcMessage="El cliente no pudo ser modificado";
+		else if (guTemplateSet==4)
+			gcMessage="Customer NOT modified (french)";
+
 		unxsISPLog(guLoginClient,"tClient","Mod Fail");
 	}
 	UpdateAuthorization();
@@ -824,14 +843,26 @@ unsigned ValidateCustomerInput(void)
 	{
 		SetCustomerFieldsOn();
 		cFirstNameStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter first name";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must enter first name";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe ingresar su nombre";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must enter first name (french)";
+
 		return(0);
 	}
 	if(!cLastName[0])
 	{
 		SetCustomerFieldsOn();
 		cLastNameStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter last name";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must enter last name";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe ingresar su apellido";
+		else if(guTemplateSet==4)
+		 	gcMessage="<blink>Error: </blink>Must enter last name (french)";
+
 		return(0);
 	}
 
@@ -839,7 +870,13 @@ unsigned ValidateCustomerInput(void)
 	{
 		SetCustomerFieldsOn();
 		cEmailStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter email address";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must enter email address";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe ingresar su direcci&oacute;n de email";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must enter email address (french)";
+
 		return(0);
 	}
 	else
@@ -848,7 +885,13 @@ unsigned ValidateCustomerInput(void)
 		{
 			SetCustomerFieldsOn();
 			cEmailStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Email has to be a valid email address";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Email has to be a valid email address";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Su direcci&oacute;n de email parece inv&aacute;lida";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Email has to be a valid email address (french)";
+
 			return(0);
 		}
 	}
@@ -856,28 +899,52 @@ unsigned ValidateCustomerInput(void)
 	{
 		SetCustomerFieldsOn();
 		cAddr1Style="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter address information";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must enter address information";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe ingresar su direcci&oacute;n postal";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must enter address information (french)";
+
 		return(0);
 	}
 	if(!cCity[0])
 	{
 		SetCustomerFieldsOn();
 		cCityStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter city information";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must enter city information";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe ingresar su ciudad";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must enter city information (french)";
+
 		return(0);
 	}
 	if(!cState[0])
 	{
 		SetCustomerFieldsOn();
 		cStateStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter state information";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must enter state information";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe ingresar su estado o provincia";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must enter state information (french)";
+
 		return(0);
 	}
 	if(!cZip[0])
 	{
 		SetCustomerFieldsOn();
 		cZipStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter zip code";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must enter zip code";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe ingresar su c&oacute;digo postal";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must enter zip code (french)";
+
 		return(0);
 	}
 	if(!cCountry[0])
