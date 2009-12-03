@@ -543,6 +543,8 @@ void funcCustomerContacts(FILE *fp)
 {
 	MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uPerm=0;
+	char *cPage="";
 
 	fprintf(fp,"<!-- funcCustomerContacts(fp) Start -->\n");
 
@@ -562,9 +564,17 @@ void funcCustomerContacts(FILE *fp)
 
 	res=mysql_store_result(&gMysql);
        	while((field=mysql_fetch_row(res)))
-		fprintf(fp,"<tr><td><a class=darkLink href=\"idnsAdmin.cgi?gcPage=CustomerUser"
+	{
+		sscanf(field[4],"%u",&uPerm);
+		if(uPerm>7)
+			cPage="Administrator";
+		else
+			cPage="Customer";
+
+		fprintf(fp,"<tr><td><a class=darkLink href=\"idnsAdmin.cgi?gcPage=%s"
 			"&uClient=%s&cCustomer=%s&cZone=%s&uView=%s&uResource=%u\">%s</a></td><td>%s</td><td>%s</td></tr>",
-			field[0],cCompanyName,gcZone,cuView,uResource,field[1],field[2],field[3]);
+			cPage,field[0],cCompanyName,gcZone,cuView,uResource,field[1],field[2],field[3]);
+	}
 	mysql_free_result(res);
 
 	fprintf(fp,"<!-- funcCustomerContacts(fp)End -->\n");
