@@ -138,7 +138,11 @@
 			<td colspan=2>
 				<p>
 				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=IP Auth Tab Details')"><strong>IP Auth Tab Details</strong></a><br>
-lorem ipsum
+				At this tab you can import IP authority data into your iDNS database. 
+				With the IP authority data you'll setup blocks and companies. If a block and/or company is not mentioned in the data you enter
+				at the right panel <font color=red>they will be removed from the database</font> and the operation has no undo.
+				If a block changes ownership,  the RRs belonging to it will be reset to default RRs.
+
 </td>
 		</tr>
 	</table>
