@@ -142,6 +142,10 @@
 				With the IP authority data you'll setup blocks and companies. If a block and/or company is not mentioned in the data you enter
 				at the right panel <font color=red>they will be removed from the database</font> and the operation has no undo.
 				If a block changes ownership,  the RRs belonging to it will be reset to default RRs.
+				If a block is expanded new RRs will be created as required (with default PTR.)
+				When a new company is created, a default contact with the name of the company and a a random password will be also created.
+				Don't forget to place a CSV file with company names and ids at /usr/local/idns/csv/companies.csv
+
 
 </td>
 		</tr>
