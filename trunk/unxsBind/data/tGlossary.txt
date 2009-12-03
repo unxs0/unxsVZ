@@ -611,3 +611,91 @@ Minimum password length is 5 chars, that length check also applies to the userna
 188	Mass Resource Import	1	1	1239030947	1	1239031101	# Mass Update Help: Mass Resource Import
 189	Mass Delete	1	1	1239031022	0	0	# Mass Update Help: Mass Delete
 190	Copy to Views	1	1	1239031041	0	0	# Mass Update Help: Copy to Views
+191	Service	1	1	1259874631	4	1259875260	This field indicates the service, the protocol and the name. E.g.:\
+_http._tcp.example.com.<br>\
+<br>\
+We can divide this field in three parts:<br>\
+<li>Service</li>\
+<li>Protocol</li>\
+<li>Name</li>\
+<br>\
+\
+<b>Service:</b><br>\
+\
+Defines the symbolic service name (see  <a\
+href=http://www.iana.org/assignments/port-numbers target=_blank\
+class=darkLink>IANA port-numbers</a>) prepended with a '_' (underscore). Case\
+insensitive. Common values are:\
+\
+<li> _http - web service</li>\
+<li> _ftp - file transfer service</li>\
+<li> _ldap - LDAP service</li>\
+<li> _imap - IMAP mail service</li>\
+<li> _PKIXREP - PKIX Repository (X.509 certificates)</li>\
+\
+<b>Protocol:</b><br>\
+\
+Defines the protocol name (see IANA service-names) prepended with a '_'\
+(underscore). Case insensitive. Supported values are\
+\
+<li>_tcp - TCP protocol</li>\
+<li>_udp - UDP protocol</li>\
+\
+<b>Name:</b><br>\
+\
+Must be the zone FQDN ending with a dot.\
+\
+
+201	Priority	1	1	1259875422	0	0	The relative priority of this service (range 0 - 65535). Lowest is highest\
+priority, usage is the same as the MX preference field.\
+\
+
+211	Weight	1	1	1259875469	0	0	Used when more than one service has the same priority. An integer in the range 0\
+- 65535. The value 0 indicates no weighting should be applied. If the weight is\
+1 or greater it is a relative number in which the highest is most frequently\
+delivered, that is, given two SRV records both with Priority = 0, one with\
+weight = 1 the other weight = 6, the one with weight 6 will have its RR\
+delivered first 6 times out of 7 by the name server.
+221	Port	1	1	1259875525	0	0	Normally the port number assigned to the symbolic service but this is not a\
+requirement, for instance, it is permissible to define a _http service with a\
+port number of 8100 rather than the more normal port 80.\
+
+231	Target	1	1	1259875556	0	0	The name of the host that will provide this service. Does not have to be in the\
+same zone (domain). May be just a host name or a FQDN.
+241	IP Block	1	1	1259877668	0	0	Enter the IP block in either CIDR (192.168.0.1/24) or dash (192.168.0.1-255)\
+format that you want to delegate.\
+
+251	NS List	1	1	1259878081	0	0	Enter the FQDN of the nameservers to which you are going to delegate the IP\
+block one below the other. E.g:<br>\
+<br>\
+ns1.unixservice.com.<br>\
+ns2.unixservice.com.<br>\
+<br>\
+Don't forget the final dot.
+261	TTL	1	1	1259878227	0	0	Use this field if you want to specify a different TTL for the delegation RRs, if\
+not specified or 0, the zone default TTL will be used.\
+
+271	IP Format	1	1	1259878397	0	0	Select the format of the data that you will enter at the right panel. Currently\
+the only supported format is RIPE. ARIN and LACNIC format support is coming soon.\
+
+281	IP Auth Tab Details	1	1	1259878499	4	1259878511	At this tab you can import IP authority data into your iDNS database.<br>\
+With the IP authority data you'll setup blocks and companies. If a block and/or\
+company is not mentioned in the data you enter at the right panel <font\
+color=red>they will be removed from the database</font> and the operation has no\
+undo.<br>\
+If a block changes ownership,  the RRs belonging to it will be reset to default\
+RRs.<br>\
+If a block is expanded new RRs will be created as required (with default PTR.)<br>\
+When a new company is created, a default contact with the name of the company\
+and a a random password will be also created.<br>\
+Don't forget to place a CSV file with company names and ids at\
+/usr/local/idns/csv/companies.csv<br>\
+Also you must make sure that there's a tConfiguration entry uDefaultClient with\
+your ASP tClient row id.\
+\
+
+291	IP Auth Data	1	1	1259878579	0	0	At this textarea you enter the data to import into the iDNS database. Lines\
+starting with '#' or ';' are treated as comments, thus ignored. Don't put any\
+space between the lines. \
+\
+
