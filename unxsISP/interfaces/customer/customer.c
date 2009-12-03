@@ -951,14 +951,26 @@ unsigned ValidateCustomerInput(void)
 	{
 		SetCustomerFieldsOn();
 		cCountryStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter country information";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must enter country information";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe ingresar su pa&iacute;s";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must enter country information (french)";
+
 		return(0);
 	}
 	if(!cTelephone[0])
 	{
 		SetCustomerFieldsOn();
 		cTelephoneStyle="type_fields_req";
-		gcMessage="<blink>Error: </blink>Must enter telephone information";
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>Must enter telephone information";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>Debe ingresar su tel&eacute;fono";
+		else if(guTemplateSet==4)
+			gcMessage="<blink>Error: </blink>Must enter telephone information (french)";
+
 		return(0);
 	}
 	if(strcmp(cCardType,"---"))
@@ -967,21 +979,38 @@ unsigned ValidateCustomerInput(void)
 		{
 			SetCustomerFieldsOn();
 			cCardNumberStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must enter credit card number";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must enter credit card number";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Deve ingresar su n&uacute;mero de tarjeta de cr&eacute;dito";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must enter credit card number (french)";
+
 			return(0);
 		}
 		if(!uExpMonth)
 		{
 			SetCustomerFieldsOn();
 			cuExpMonthStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must select expiration month";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must select expiration month";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe seleccionar el mes de expiraci&oacute;n";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must select expiration month (french)";
+
 			return(0);
 		}
 		if(!uExpYear)
 		{
 			SetCustomerFieldsOn();
 			cuExpYearStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must select expiration year";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must select expiration year";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe seleccionar el a&ntilde;o de expiraci&oacute;n";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must select expiration year (french)";
 			return(0);
 		}
 	}
@@ -991,35 +1020,63 @@ unsigned ValidateCustomerInput(void)
 		{
 			SetCustomerFieldsOn();
 			cShipAddr1Style="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must enter shipping address information";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must enter shipping address information";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe ingresar la direcci&oacute;n de env&iacute;o";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must enter shipping address information (french)";
+
 			return(0);
 		}
 		if(!cShipCity[0])
 		{
 			SetCustomerFieldsOn();
 			cShipCityStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must enter shipping city information";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must enter shipping city information";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe ingresar la ciudad de env&iacute;o";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must enter shipping city information (french)";
+
 			return(0);
 		}
 		if(!cShipState[0])
 		{
 			SetCustomerFieldsOn();
 			cShipStateStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must enter shipping state information";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must enter shipping state information";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe ingresar el estado o provincia de env&iacute;o";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must enter shipping state information (french)";
 			return(0);
 		}
 		if(!cShipZip[0])
 		{
 			SetCustomerFieldsOn();
 			cShipZipStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must enter shipping zip code";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must enter shipping zip code";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe ingresar el c&oacute;digo postal de env&iacute;o";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must enter shipping zip code (french)";
 			return(0);
 		}
 		if(!cShipCountry[0])
 		{
 			SetCustomerFieldsOn();
 			cShipCountryStyle="type_fields_req";
-			gcMessage="<blink>Error: </blink>Must enter shipping country information";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>Must enter shipping country information";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Debe ingresar el pa&iacute;s de env&iacute;o";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Must enter shipping country information (french)";
+
 			return(0);
 		}
 		
