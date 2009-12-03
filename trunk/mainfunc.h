@@ -60,6 +60,7 @@ void CalledByAlias(int iArgc,char *cArgv[]);
 void TextConnectDb(void);
 void DashBoard(const char *cOptionalMsg);
 void CloneReport(const char *cOptionalMsg);
+void ContainerReport(const char *cOptionalMsg);
 void EncryptPasswdMD5(char *pw);
 void GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
@@ -79,6 +80,10 @@ int iExtMainCommands(pentry entries[], int x)
 		if(!strcmp(gcCommand,"CloneReport"))
 		{
 			unxsVZ("CloneReport");
+		}
+		else if(!strcmp(gcCommand,"ContainerReport"))
+		{
+			unxsVZ("ContainerReport");
 		}
 	}
 	return(0);
@@ -135,6 +140,77 @@ void CloneReport(const char *cOptionalMsg)
 	CloseFieldSet();
 
 }//void CloneReport(const char *cOptionalMsg)
+
+
+void ContainerReport(const char *cOptionalMsg)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+
+	char cStatus[128]="Unknown";
+	char cuProcesses[64]="";
+	unsigned uContainer=0;
+	unsigned uProcesses=0;
+	unsigned uStatus=0;
+
+	//To handle error messages etc.
+	if(cOptionalMsg[0] && strcmp(cOptionalMsg,"ContainerReport"))
+	{
+		printf("%s\n",cOptionalMsg);
+		return;
+	}
+
+	OpenFieldSet("ContainerReport",100);
+
+	OpenRow("Container Comparison Report","black");
+	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter,uStatus FROM tContainer "
+				" ORDER BY cLabel,uDatacenter,uNode");
+	macro_mySQLQueryErrorText
+	printf("</td></tr><tr><td></td><td><u>uContainer</u></td><td><u>cLabel</u></td><td><u>cHostname</u>"
+		"</td><td><u>Status</u><td><u>Processes</u><td><u>uStatus</u></td></td><td><u>uNode</td>"
+		"<td><u>uDatacenter</u></td>\n");
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		cuProcesses[0]=0;
+
+		uContainer=0;
+		sscanf(mysqlField[2],"%u",&uContainer);
+		uStatus=0;
+		sscanf(mysqlField[5],"%u",&uStatus);
+
+		if(!uContainer) continue;
+
+		GetContainerProp(uContainer,"veinfo.uProcesses",cuProcesses);
+		uProcesses=0;
+		sscanf(cuProcesses,"%u",&uProcesses);
+
+		if(uProcesses && uStatus==1)
+			sprintf(cStatus,"Running");
+		else if(uProcesses==0 && uStatus==31)
+			sprintf(cStatus,"Stopped");
+		else if(uProcesses && uStatus==31)
+			sprintf(cStatus,"<font color=red>Inconsistency: Running but should not be!</font>");
+		else if(uProcesses==0 && uStatus==1)
+			sprintf(cStatus,"<font color=red>Inconsistency: Stopped but should not be!</font>");
+		else if(uProcesses && uStatus!=1)
+			sprintf(cStatus,"Transitional state");
+		else if(1)
+			sprintf(cStatus,"Unexpected status");
+
+		printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%u</td><td>%u</td><td>%s</td>"
+					"<td>%s</td>\n",
+					mysqlField[2],mysqlField[0],mysqlField[1],
+					cStatus,
+					uProcesses,
+					uStatus,
+					mysqlField[3],mysqlField[4]);
+	}
+	mysql_free_result(mysqlRes);
+
+
+	CloseFieldSet();
+
+}//void ContainerReport(const char *cOptionalMsg)
 
 
 void DashBoard(const char *cOptionalMsg)
@@ -467,7 +543,10 @@ void ExtMainContent(void)
 		printf("</td></tr>\n");
         	OpenRow("Admin Functions","black");
 		printf("<td><input type=hidden name=gcFunction value=MainTools>\n");
-		printf(" <input class=largeButton type=submit name=gcCommand value=CloneReport ></td></tr>\n");
+		printf(" <input title='Find containers not being cloned' class=largeButton type=submit name=gcCommand"
+			" value=CloneReport > \n");
+		printf(" <input title='Find inconsistencies between actual node vz containers and unxsVZ status'"
+			" class=largeButton type=submit name=gcCommand value=ContainerReport ></td></tr>\n");
 	}
 
 	CloseFieldSet();

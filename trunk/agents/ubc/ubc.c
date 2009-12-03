@@ -1348,6 +1348,16 @@ void ProcessSingleStatus(unsigned uContainer)
 		unsigned uProcesses;
 		unsigned uVEID;
 
+		//0-. Zero process vals
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='0' WHERE cName='veinfo.uProcesses'"
+							" AND uKey=%u AND uType=3",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+			exit(2);
+		}
+
 		while(fgets(cLine,1024,fp)!=NULL)
 		{
 			cIP[0]=0;
@@ -1409,7 +1419,8 @@ void ProcessSingleStatus(unsigned uContainer)
 			}
 			mysql_free_result(res);
 
-			//1-. veinfo.cIP
+	
+			//2-. veinfo.cIP
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='veinfo.cIP'"
 							" AND uKey=%u AND uType=3",uContainer);
 			mysql_query(&gMysql,gcQuery);
