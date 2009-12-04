@@ -278,16 +278,16 @@ void ExttClientCommands(pentry entries[], int x)
 
 			        time(&clock);
 				
-				if(strlen(cLogin)<6)
+				if(strlen(cLogin)<4)
 				{
 					guMode=3000;
-					tClient("Login must be at least 6 chars!");
+					tClient("Login must be at least 4 chars!");
 				}
 
-				if(strlen(cPasswd)<4)
+				if(strlen(cPasswd)<6)
 				{
 					guMode=3000;
-					tClient("Passwd must be at least 4 chars!");
+					tClient("Passwd must be at least 6 chars!");
 				}
 
 				if(uPerm<1 || uPerm>12)
