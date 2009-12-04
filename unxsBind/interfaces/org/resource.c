@@ -545,16 +545,7 @@ void SelectResource(void)
 		}
 		else
 		{
-			cName[0]=0;
-			cuTTL[0]=0;
-			cRRType[0]=0;
-			cParam1[0]=0;
-			cParam2[0]=0;
-			cComment[0]=0;
-			cuNameServer[0]=0;
-			uResource=0;
-			uZone=0;
-			gcMessage="<blink>Error: No resource selected. Contact admin!</blink>";
+			LoadRRTypeLabels();
 		}
 	}
 	mysql_free_result(res);
