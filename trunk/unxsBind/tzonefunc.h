@@ -1000,6 +1000,7 @@ void ExttZoneButtons(void)
 			if(guPermLevel>9)
 			{
 				printf("<p><u>Create for customer</u><br>");
+				if(uOwner) uDDClient=uOwner;
 				CustomerDropDown(uDDClient);
 			}
                         printf("<br>");
