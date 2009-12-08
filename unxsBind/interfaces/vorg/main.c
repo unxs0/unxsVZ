@@ -468,7 +468,7 @@ void SSLCookieLogin(void)
 		guLoginClient=0;
 		htmlLogin();
 	}
-
+	
         if(!strcmp(gcFunction,"Login")) SetLogin();
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
@@ -781,3 +781,36 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
 
 }//void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
 
+
+const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+
+	static char cQuery[512];
+	static char cKey[16];
+
+        sprintf(cQuery,"SELECT %s FROM %s WHERE _rowid=%u",
+                        cFieldName,cTableName,uKey);
+        mysql_query(&gMysql,cQuery);
+        if(mysql_errno(&gMysql))
+		return(mysql_error(&gMysql));
+
+        mysqlRes=mysql_store_result(&gMysql);
+        if(mysql_num_rows(mysqlRes)==1)
+        {
+                mysqlField=mysql_fetch_row(mysqlRes);
+                return(mysqlField[0]);
+        }
+	
+	if(!uKey)
+	{
+        	return("---");
+	}
+	else
+	{
+		sprintf(cKey,"%u",uKey);
+        	return(cKey);
+	}
+
+}//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)

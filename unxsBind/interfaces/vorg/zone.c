@@ -525,12 +525,15 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			struct t_template template;
 			char cuDelegationTTL[10]={""};
 			char cuView[10]={""};
+			char cZoneView[32]={""};
 
 			if(uDelegationTTL)
 				sprintf(cuDelegationTTL,"%u",uDelegationTTL);
 
 			sprintf(cuView,"%u",guView);
-			
+			if(guView)
+				sprintf(cZoneView,"[%s]",ForeignKey("tView","cLabel",guView));
+
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
 			
@@ -660,7 +663,10 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpName[37]="uView";
 			template.cpValue[37]=cuView;
 
-			template.cpName[38]="";
+			template.cpName[38]="cZoneView";
+			template.cpValue[38]=cZoneView;
+
+			template.cpName[39]="";
 
 			printf("\n<!-- Start htmlZonePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
