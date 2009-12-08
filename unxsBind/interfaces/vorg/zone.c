@@ -668,6 +668,9 @@ void funcSelectZone(FILE *fp)
 	register int i;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	MYSQL_RES *res2;
+	MYSQL_ROW field2;
+
 	unsigned uCount=1;
 	unsigned uView;
 	unsigned a=0,b=0,c=0,d=0,e=0;
@@ -686,20 +689,23 @@ void funcSelectZone(FILE *fp)
 	if(mysql_errno(&gMysql))
 	//	htmlPlainTextError(mysql_error(&gMysql));
 		htmlPlainTextError(gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
+	res2=mysql_store_result(&gMysql);
+	while((field2=mysql_fetch_row(res2)))
 	{
+		field2[0][0]=toupper(field2[0][0]);
+		sscanf(field2[1],"%u",&uView);
+
 		template.cpName[0]="cViewLabel";
-		template.cpValue[0]=field[0];
+		template.cpValue[0]=field2[0];
 
 		template.cpName[1]="";
 
 		fpTemplate(fp,"SelectZoneHeader",&template);
-	}
+	
 	//Normal zones
 	sprintf(gcQuery,"SELECT DISTINCT cZone FROM tZone WHERE cZone NOT LIKE '%%.arpa' AND "
-			"(uOwner=%u OR uOwner=%u) AND uView=2 AND uSecondaryOnly=0 "
-			"ORDER BY cZone LIMIT 301",guLoginClient,guOrg);
+			"(uOwner=%u OR uOwner=%u) AND uView=%u AND uSecondaryOnly=0 "
+			"ORDER BY cZone LIMIT 301",guLoginClient,guOrg,uView);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -756,28 +762,29 @@ void funcSelectZone(FILE *fp)
 				{
 					sprintf(cZone,"%u.%u.%u.in-addr.arpa",c+i,b,a);
 					if(!uGetuZone(cZone))
-						continue;
+							continue;
+						fprintf(fp,"<option ");
+						if(!strcmp(gcZone,cZone)) fprintf(fp,"selected");
+						fprintf(fp,">%s</option>",cZone);
+					}
+					break;
+					default:
+					//24 or smaller see if continue above
+					//Single class C rev zone
+					sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+					if(!uGetuZone(cZone))
+							break;
 					fprintf(fp,"<option ");
 					if(!strcmp(gcZone,cZone)) fprintf(fp,"selected");
 					fprintf(fp,">%s</option>",cZone);
 				}
-				break;
-				default:
-				//24 or smaller see if continue above
-				//Single class C rev zone
-				sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
-				if(!uGetuZone(cZone))
-						break;
-				fprintf(fp,"<option ");
-				if(!strcmp(gcZone,cZone)) fprintf(fp,"selected");
-				fprintf(fp,">%s</option>",cZone);
-			}
-		}//if distinct
+			}//if distinct
+		}
+		mysql_free_result(res);
+
+		fprintf(fp,"</select>\n");
+		fpTemplate(fp,"SelectZoneFooter",&template);
 	}
-	mysql_free_result(res);
-
-	fprintf(fp,"</select>\n");
-
 	fprintf(fp,"<!-- funcSelectZone(fp) End -->\n");
 
 }//void funcSelectZone(FILE *fp)
