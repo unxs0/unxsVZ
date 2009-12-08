@@ -41,6 +41,8 @@
 
 
 <form method=post action={{cCGI}} style="margin:0px;">
+<input type=hidden name=uView value={{uView}}>
+
 <table width=1200  border="0" cellspacing="0" cellpadding="0">
   <tr>
     <td>
