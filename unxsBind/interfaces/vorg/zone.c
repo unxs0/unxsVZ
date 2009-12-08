@@ -100,7 +100,7 @@ void ProcessZoneVars(pentry entries[], int x)
 	{
 		if(!strcmp(entries[i].name,"uView"))
 			sscanf(entries[i].val,"%u",&uLoadedView);
-		if( strstr(entries[i].name,"cZone") && strcmp(entries[i].val,"---") )
+		if( strstr(entries[i].name,"cZone.") && strcmp(entries[i].val,"---") )
 		{
 			sscanf(entries[i].name,"cZone.%u",&guView);
 			if(uLoadedView!=guView)
@@ -108,6 +108,10 @@ void ProcessZoneVars(pentry entries[], int x)
 			else
 				guView=uLoadedView;
 		}
+		/*if(!strcmp(entries[i].name,"cZone"))
+		{
+			if(!gcZone[0]) sprintf(gcZone,"%.99s",entries[i].val);
+		}*/
 		if(!strcmp(entries[i].name,"cMainAddress"))
 			sprintf(cMainAddress,"%.16s",IPNumber(entries[i].val));
 		else if(!strcmp(entries[i].name,"cHostmaster"))
@@ -149,6 +153,8 @@ void ZoneGetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"cZone"))
 			sprintf(gcZone,"%.99s",gentries[i].val);
+		else if(!strcmp(gentries[i].name,"uView"))
+			sscanf(gentries[i].val,"%u",&guView);
 	}
 
 	if(gcZone[0])
@@ -959,7 +965,8 @@ void SelectZone(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT tZone.uZone,tZone.cMainAddress,tZone.cHostmaster,'list goes here',tNSSet.cLabel,tZone.uSerial,tZone.uExpire,tZone.uRefresh,tZone.uTTL,tZone.uRetry,tZone.uZoneTTL,tNSSet.uNSSet FROM tZone,tNSSet WHERE tZone.uNSSet=tNSSet.uNSSet AND tZone.cZone='%s' AND tZone.uView=2 AND tZone.uSecondaryOnly=0 AND (tZone.uOwner=%u OR tZone.uOwner=%u OR tZone.cZone LIKE '%%in-addr.arpa')",gcZone,guLoginClient,guOrg);
+	sprintf(gcQuery,"SELECT tZone.uZone,tZone.cMainAddress,tZone.cHostmaster,'list goes here',tNSSet.cLabel,tZone.uSerial,tZone.uExpire,tZone.uRefresh,tZone.uTTL,tZone.uRetry,tZone.uZoneTTL,tNSSet.uNSSet FROM tZone,tNSSet WHERE tZone.uNSSet=tNSSet.uNSSet AND tZone.cZone='%s' AND tZone.uView=%u AND tZone.uSecondaryOnly=0 AND (tZone.uOwner=%u OR tZone.uOwner=%u OR tZone.cZone LIKE '%%in-addr.arpa')",gcZone,guView,guLoginClient,guOrg);
+//	htmlPlainTextError(gcQuery);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1141,7 +1148,7 @@ void UpdateZone(void)
 		return;
 	}
 
-	sprintf(gcQuery,"UPDATE tZone SET uSerial=%u,uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,uView=2,cMainAddress='%s',cHostmaster='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cZone='%s' AND uSecondaryOnly=0 AND uView=2",
+	sprintf(gcQuery,"UPDATE tZone SET uSerial=%u,uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,cMainAddress='%s',cHostmaster='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cZone='%s' AND uSecondaryOnly=0 AND uView=%u",
 			uSerial,
 			uExpire,
 			uRefresh,
@@ -1151,7 +1158,8 @@ void UpdateZone(void)
 			cMainAddress,
 			cHostmaster,
 			guLoginClient,
-			gcZone);
+			gcZone,
+			guView);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1334,7 +1342,7 @@ unsigned uGetuZone(char *cZone)
 	unsigned uZone=0;
 	char cQuery[512];
 
-	sprintf(cQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
+	sprintf(cQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u",cZone,guView);
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1355,7 +1363,7 @@ unsigned uGetuNameServer(char *cZone)
 	unsigned uNameServer=0;
 	char cQuery[512];
 
-	sprintf(cQuery,"SELECT uNSSet FROM tZone WHERE cZone='%s' AND uView=2",cZone);
+	sprintf(cQuery,"SELECT uNSSet FROM tZone WHERE cZone='%s' AND uView=%u",cZone,guView);
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

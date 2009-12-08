@@ -87,6 +87,8 @@ void ProcessResourceVars(pentry entries[], int x)
 	{
 		if(!strcmp(entries[i].name,"cZone"))
 			sprintf(gcZone,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uView"))
+			sscanf(entries[i].val,"%u",&guView);
 		else if(!strcmp(entries[i].name,"uResource"))
 			sscanf(entries[i].val,"%u",&uResource);
 		else if(!strcmp(entries[i].name,"cName"))
@@ -456,8 +458,8 @@ void SelectResource(void)
 				"tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
 				"tRRType.cNameTip,tResource.cParam3,tResource.cParam4 FROM tResource,tRRType,"
 				"tZone WHERE tZone.uZone=tResource.uZone AND tResource.uRRType=tRRType.uRRType "
-				"AND tZone.cZone='%s' AND tZone.uView=2 AND tResource.uResource=%u",
-				gcZone,uResource);
+				"AND tZone.cZone='%s' AND tZone.uView=%u AND tResource.uResource=%u",
+				gcZone,guView,uResource);
 	else
 		sprintf(gcQuery,"SELECT tResource.cName,tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
 				"tResource.cParam2,tResource.cComment,tZone.uNSSet,tResource.uResource,"
@@ -465,9 +467,9 @@ void SelectResource(void)
 				"tRRType.cParam2Tip,tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,"
 				"tRRType.cParam4Tip,tRRType.cNameLabel,tRRType.cNameTip,tResource.cParam3,"
 				"tResource.cParam4 FROM tResource,tRRType,tZone WHERE tZone.uZone=tResource.uZone "
-				"AND tResource.uRRType=tRRType.uRRType AND tZone.cZone='%s' AND tZone.uView=2 AND "
+				"AND tResource.uRRType=tRRType.uRRType AND tZone.cZone='%s' AND tZone.uView=%u AND "
 				"(tResource.uOwner=%u OR tResource.uOwner=%u) ORDER BY tRRType.uRRType,"
-				"tResource.cName LIMIT 1",gcZone,guLoginClient,guOrg);
+				"tResource.cName LIMIT 1",gcZone,guView,guLoginClient,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -505,16 +507,16 @@ void SelectResource(void)
 					"tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cParam3Label,"
 					"tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
 					"tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=1 AND tZone.cZone='%s' "
-					"AND tZone.uView=2 AND (tZone.uOwner=%u OR tZone.uOwner=%u)",
-					gcZone,guLoginClient,guOrg);
+					"AND tZone.uView=%u AND (tZone.uOwner=%u OR tZone.uOwner=%u)",
+					gcZone,guView,guLoginClient,guOrg);
 		else	//PTR RR and has rights via zone.c 
 			//(low grade cross-site scrpting security issue for registered login)
 			sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,"
 					"tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cParam3Label,"
 					"tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
 					"tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=7 AND tZone.cZone='%s' "
-					"AND tZone.uView=2 AND (tZone.uOwner=1 OR tZone.uOwner=%u)",
-					gcZone,guOrg);
+					"AND tZone.uView=%u AND (tZone.uOwner=1 OR tZone.uOwner=%u)",
+					gcZone,guView,guOrg);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -1268,7 +1270,7 @@ void UpdateSerialNum(char *cZone)
 	char cSerial[16]={""};
 
 
-	sprintf(gcQuery,"SELECT uSerial,uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
+	sprintf(gcQuery,"SELECT uSerial,uZone FROM tZone WHERE cZone='%s' AND uView=%u",cZone,guView);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2126,7 +2128,7 @@ unsigned OnLineZoneCheck(void)
 			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
 			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel FROM tZone,tNSSet,tNS,tView"
 			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
-			" tZone.uView=tView.uView AND tZone.cZone='%s' AND tZone.uView=2",gcZone);
+			" tZone.uView=tView.uView AND tZone.cZone='%s' AND tZone.uView=%u",gcZone,guView);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
