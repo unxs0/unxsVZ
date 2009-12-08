@@ -151,10 +151,8 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 void BulkResourceImport(void)
 {
 	char cLine[512]={"ERROR"};
-	char *cp;
 	unsigned uDebug=0;
 	unsigned uZone;
-	unsigned uView=2;//external
 	unsigned uZoneOwner;
 	unsigned uNameServer;
 	unsigned uResourceCount=0,uImportCount=0;
@@ -186,16 +184,6 @@ void BulkResourceImport(void)
 			continue;
 		}
 
-		if(!strncmp(cLine,"uView=",6))
-		{
-			if((cp=strchr(cLine,';')))
-				*cp=0;
-			sscanf(cLine+6,"%u",&uView);
-			if(uView>2 || uView<1)
-				uView=2;
-			//printf("uView=%u\n",uView);
-			continue;
-		}
 		if(strncmp(cLine,"cZone=",6))
 		{
 			//A resource candidate line
