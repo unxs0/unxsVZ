@@ -94,18 +94,21 @@ unsigned OnLineZoneCheck(void);
 void ProcessZoneVars(pentry entries[], int x)
 {
 	register int i;
-	
+	unsigned uLoadedView=0;
+
 	for(i=0;i<x;i++)
 	{
+		if(!strcmp(entries[i].name,"uView"))
+			sscanf(entries[i].val,"%u",&uLoadedView);
 		if( strstr(entries[i].name,"cZone") && strcmp(entries[i].val,"---") )
 		{
-			if(!gcZone[0])
-			{
-				sscanf(entries[i].name,"cZone.%u",&guView);
+			sscanf(entries[i].name,"cZone.%u",&guView);
+			if(uLoadedView!=guView)
 				sprintf(gcZone,"%.99s",entries[i].val);
-			}
+			else
+				guView=uLoadedView;
 		}
-		else if(!strcmp(entries[i].name,"cMainAddress"))
+		if(!strcmp(entries[i].name,"cMainAddress"))
 			sprintf(cMainAddress,"%.16s",IPNumber(entries[i].val));
 		else if(!strcmp(entries[i].name,"cHostmaster"))
 			sprintf(cHostmaster,"%.99s",FQDomainName(entries[i].val));
@@ -521,9 +524,12 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 		{
 			struct t_template template;
 			char cuDelegationTTL[10]={""};
+			char cuView[10]={""};
 
 			if(uDelegationTTL)
 				sprintf(cuDelegationTTL,"%u",uDelegationTTL);
+
+			sprintf(cuView,"%u",guView);
 			
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
@@ -651,7 +657,10 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			else
 				template.cpValue[36]="disabled";
 
-			template.cpName[37]="";
+			template.cpName[37]="uView";
+			template.cpValue[37]=cuView;
+
+			template.cpName[38]="";
 
 			printf("\n<!-- Start htmlZonePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -725,7 +734,7 @@ void funcSelectZone(FILE *fp)
 		while((field=mysql_fetch_row(res)))
 		{
 			fprintf(fp,"<option ");
-			if(!strcmp(gcZone,field[0]))
+			if(!strcmp(gcZone,field[0]) && uView==guView)
 				fprintf(fp,"selected");
 			if((uCount++)<=300)
 				fprintf(fp,">%s</option>",field[0]);
