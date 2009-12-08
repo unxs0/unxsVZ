@@ -97,8 +97,14 @@ void ProcessZoneVars(pentry entries[], int x)
 	
 	for(i=0;i<x;i++)
 	{
-		if( !strcmp(entries[i].name,"cZone") && strcmp(entries[i].val,"---") )
-			sprintf(gcZone,"%.99s",entries[i].val);
+		if( strstr(entries[i].name,"cZone") && strcmp(entries[i].val,"---") )
+		{
+			if(!gcZone[0])
+			{
+				sscanf(entries[i].name,"cZone.%u",&guView);
+				sprintf(gcZone,"%.99s",entries[i].val);
+			}
+		}
 		else if(!strcmp(entries[i].name,"cMainAddress"))
 			sprintf(cMainAddress,"%.16s",IPNumber(entries[i].val));
 		else if(!strcmp(entries[i].name,"cHostmaster"))
@@ -710,10 +716,10 @@ void funcSelectZone(FILE *fp)
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 		res=mysql_store_result(&gMysql);
-		fprintf(fp,"<select title='Select the zone you want to load with this dropdown' name=cZone class=type_textarea onChange=");
-		if(guBrowserFirefox)
+		fprintf(fp,"<select title='Select the zone you want to load with this dropdown' name=cZone.%u class=type_textarea onChange=",uView);
+		/*if(guBrowserFirefox)
 			fprintf(fp,"'changePage(this.form.cZone)'>\n");
-		else
+		else*/
 			fprintf(fp,"'submit()'>\n");
 		fprintf(fp,"<option>---</option>");
 		while((field=mysql_fetch_row(res)))
