@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	idnsOrg
+	vdnsOrg
 	program file.
 */
 
@@ -429,6 +429,7 @@ void ZoneCommands(pentry entries[], int x)
 				htmlPlainTextError(mysql_error(&gMysql));
 
 			UpdateSerialNum(gcZone);	
+			time(&luClock);
 			if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
 				htmlPlainTextError(mysql_error(&gMysql));
 			
@@ -522,7 +523,7 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="idnsOrg.cgi";
+			template.cpValue[1]="vdnsOrg.cgi";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcUser;
@@ -872,7 +873,7 @@ void funcRRs(FILE *fp)
 			sprintf(cLocalParam1,"%.255s",field[5]);
 		
 		fprintf(fp,"<tr>\n");
-		fprintf(fp,"<td valign=top><a class=darkLink href=idnsOrg.cgi?gcPage=Resource&uResource=%s"
+		fprintf(fp,"<td valign=top><a class=darkLink href=vdnsOrg.cgi?gcPage=Resource&uResource=%s"
 			"&cZone=%s>%s</a></td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td>"
 			"<td valign=top>%s</td><td valign=top>%s</td>\n",
 				field[0],
@@ -1740,7 +1741,7 @@ void funcZoneStatus(FILE *fp)
 	{
 		fprintf(fp,"<b><u>Zones with errors</u></b><br><br>\n");
 		while((field=mysql_fetch_row(res)))
-			fprintf(fp,"<a href=idnsOrg.cgi?gcPage=Zone&cZone=%s>%s</a><br>\n",field[0],field[0]);
+			fprintf(fp,"<a href=vdnsOrg.cgi?gcPage=Zone&cZone=%s>%s</a><br>\n",field[0],field[0]);
 	}
 }//void funcZoneStatus(FILE *fp)
 

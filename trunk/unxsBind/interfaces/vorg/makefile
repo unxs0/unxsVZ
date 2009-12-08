@@ -9,7 +9,7 @@
 #	Must customize CGINAME 
 #
 
-CGINAME= idnsOrg.cgi
+CGINAME= vdnsOrg.cgi
 
 CFLAGS=-Wall
 LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl
