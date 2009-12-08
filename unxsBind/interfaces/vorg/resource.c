@@ -197,6 +197,8 @@ void ResourceGetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"cZone"))
 			sprintf(gcZone,"%.99s",gentries[i].val);
+		else if(!strcmp(gentries[i].name,"uView"))
+			sscanf(gentries[i].val,"%u",&guView);
 		else if(!strcmp(gentries[i].name,"uResource"))
 			sscanf(gentries[i].val,"%u",&uResource);
 		else if(!strcmp(gentries[i].name,"cRRType"))
@@ -275,7 +277,10 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 		{
 			struct t_template template;
 			char cuResource[16];
-			
+			char cuView[16];
+
+			sprintf(cuView,"%u",guView);
+
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
 			
@@ -374,7 +379,10 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			template.cpName[31]="cParam1Style";
 			template.cpValue[31]=cParam1Style;			 						 
 			
-			template.cpName[32]="";
+			template.cpName[32]="uView";
+			template.cpValue[32]=cuView;
+
+			template.cpName[33]="";
 
 			printf("\n<!-- Start htmlResourcePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
