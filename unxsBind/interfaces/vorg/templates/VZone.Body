@@ -73,6 +73,9 @@
 		  <td>&nbsp;</td>
 		  <td>&nbsp;</td>
 		</tr>
+		<tr>
+		<td valign=top>
+		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Your Zones By View')"><strong>Your Zones By View</a></td></tr>
 		{{funcSelectZone}}
 		<tr>
 			<td valign=top>				
@@ -93,7 +96,6 @@
 		<tr>
 			<td colspan=2>
 				<input type=hidden name=gcPage value=Zone>
-				<input type=submit title='Select a zone to edit. Not needed if you have javascript enabled in your browser' class=largeButton name=gcFunction value='Select Zone'><br><br>
 				<input type=submit title='Delegate this zone with an easy to follow wizard' class=largeButton  name=gcFunction value='Delegation Tool' {{cDelToolStatus}}>
 				<p>
 				<strong><u>Editing Hints</u></strong><br>
