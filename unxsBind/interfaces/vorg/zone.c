@@ -702,66 +702,68 @@ void funcSelectZone(FILE *fp)
 
 		fpTemplate(fp,"SelectZoneHeader",&template);
 	
-	//Normal zones
-	sprintf(gcQuery,"SELECT DISTINCT cZone FROM tZone WHERE cZone NOT LIKE '%%.arpa' AND "
-			"(uOwner=%u OR uOwner=%u) AND uView=%u AND uSecondaryOnly=0 "
-			"ORDER BY cZone LIMIT 301",guLoginClient,guOrg,uView);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	fprintf(fp,"<select title='Select the zone you want to load with this dropdown' name=cZone class=type_textarea onChange=");
-	if(guBrowserFirefox)
-		fprintf(fp,"'changePage(this.form.cZone)'>\n");
-	else
-		fprintf(fp,"'submit()'>\n");
-	fprintf(fp,"<option>---</option>");
-	while((field=mysql_fetch_row(res)))
-	{
-		fprintf(fp,"<option ");
-		if(!strcmp(gcZone,field[0]))
-			fprintf(fp,"selected");
-		if((uCount++)<=300)
-			fprintf(fp,">%s</option>",field[0]);
+		//Normal zones
+		sprintf(gcQuery,"SELECT DISTINCT cZone FROM tZone WHERE cZone NOT LIKE '%%.arpa' AND "
+				"(uOwner=%u OR uOwner=%u) AND uView=%u AND uSecondaryOnly=0 "
+				"ORDER BY cZone LIMIT 301",guLoginClient,guOrg,uView);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		fprintf(fp,"<select title='Select the zone you want to load with this dropdown' name=cZone class=type_textarea onChange=");
+		if(guBrowserFirefox)
+			fprintf(fp,"'changePage(this.form.cZone)'>\n");
 		else
-			fprintf(fp,">LIMIT REACHED CONTACT sysadmin</option>");
-	}
-	mysql_free_result(res);
-
-	//Empty arpa zones with class C that falls into customer block
-	//Example Customer block 212.111.47.12/30 should add (if it exists)
-	//47.111.212.in-addr.arpa tZone.cZone
-	//Plan get a block expand into possible class Cs. Ex.
-	//213.52.164.0/24 would expand into 
-	//231.52.164.0
-	//192.168.0.0/21 would expand into
-	//192.168.0.0/24 through 192.168.7.0/24
-	//uCount=1;
-	sprintf(gcQuery,"SELECT DISTINCT tBlock.cLabel FROM tBlock WHERE (tBlock.uOwner=%u OR tBlock.uOwner=%u) ORDER BY cLabel LIMIT 301",guLoginClient,guOrg);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
-		sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
-		if(strcmp(cZone,cPrevZone))
+			fprintf(fp,"'submit()'>\n");
+		fprintf(fp,"<option>---</option>");
+		while((field=mysql_fetch_row(res)))
 		{
-			sprintf(cPrevZone,"%.99s",cZone);
+			fprintf(fp,"<option ");
+			if(!strcmp(gcZone,field[0]))
+				fprintf(fp,"selected");
+			if((uCount++)<=300)
+				fprintf(fp,">%s</option>",field[0]);
+			else
+				fprintf(fp,">LIMIT REACHED CONTACT sysadmin</option>");
+		}
+		mysql_free_result(res);
 
-			if(a==0 || e==0 || b>254 || c>254 || d>254 
-					|| a>254 || b>254 || e<21) continue;
-			switch(e)
+		//Empty arpa zones with class C that falls into customer block
+		//Example Customer block 212.111.47.12/30 should add (if it exists)
+		//47.111.212.in-addr.arpa tZone.cZone
+		//Plan get a block expand into possible class Cs. Ex.
+		//213.52.164.0/24 would expand into 
+		//231.52.164.0
+		//192.168.0.0/21 would expand into
+		//192.168.0.0/24 through 192.168.7.0/24
+		//uCount=1;
+		sprintf(gcQuery,"SELECT DISTINCT tBlock.cLabel FROM tBlock WHERE "
+				"(tBlock.uOwner=%u OR tBlock.uOwner=%u) ORDER BY "
+				"cLabel LIMIT 301",guLoginClient,guOrg);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
+			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+			if(strcmp(cZone,cPrevZone))
 			{
-				case 23:
-				case 22:
-				case 21:
-				//Expand these three cases with basic CIDR math
-				for(i=0;i<((2^(24-e))-1);i++)
+				sprintf(cPrevZone,"%.99s",cZone);
+
+				if(a==0 || e==0 || b>254 || c>254 || d>254 
+						|| a>254 || b>254 || e<21) continue;
+				switch(e)
 				{
-					sprintf(cZone,"%u.%u.%u.in-addr.arpa",c+i,b,a);
-					if(!uGetuZone(cZone))
+					case 23:
+					case 22:
+					case 21:
+					//Expand these three cases with basic CIDR math
+					for(i=0;i<((2^(24-e))-1);i++)
+					{
+						sprintf(cZone,"%u.%u.%u.in-addr.arpa",c+i,b,a);
+						if(!uGetuZone(cZone))
 							continue;
 						fprintf(fp,"<option ");
 						if(!strcmp(gcZone,cZone)) fprintf(fp,"selected");
