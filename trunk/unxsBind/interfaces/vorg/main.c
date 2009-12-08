@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
 void htmlLogin(void)
 {
 	htmlHeader("DNS System","Header");
-	htmlLoginPage("DNS System","Login.Body");
+	htmlLoginPage("DNS System","ZLogin.Body");
 	htmlFooter("Footer");
 
 }//void htmlLogin(void)
@@ -300,7 +300,7 @@ void htmlFooter(char *cTemplateName)
 			template.cpName[1]="cIspUrl";
 			template.cpValue[1]=ISPURL;
 			template.cpName[2]="cCopyright";
-			template.cpValue[2]="&copy; 2006-2009 Unixservice. All Rights Reserved.";
+			template.cpValue[2]="&copy; 2006-2010 CEnet. All Rights Reserved.";
 			template.cpName[3]="";
 
 			printf("\n<!-- Start htmlFooter(%s) -->\n",cTemplateName); 
@@ -461,6 +461,7 @@ void SSLCookieLogin(void)
 		htmlPlainTextError("Unexpected guPermLevel or guLoginClient value");
 
 	//Don't allow Root login at this interface (Ticket #81
+	if(guPermLevel>=10) htmlLogin();
 	if(guLoginClient==1)
 	{
         	guPermLevel=0;

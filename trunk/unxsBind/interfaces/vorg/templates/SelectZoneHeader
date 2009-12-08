@@ -9,7 +9,7 @@
 		nextPage = newLoc.options[newLoc.selectedIndex].value
 				
 		if (nextPage != "---")
-			document.location.href = "idnsOrg.cgi?gcPage=Zone&cZone="+nextPage
+			document.location.href = "{{cCGI}}?gcPage=Zone&cZone="+nextPage
 	}
 </script>
 
