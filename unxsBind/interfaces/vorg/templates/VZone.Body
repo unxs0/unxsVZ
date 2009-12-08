@@ -1,5 +1,15 @@
 <body marginwidth="0" marginheight="0">
 
+<script language="JavaScript" type="text/JavaScript">
+	function changePage(newLoc)
+	{
+		nextPage = newLoc.options[newLoc.selectedIndex].value
+				
+		if (nextPage != "---")
+			document.location.href = "idnsOrg.cgi?gcPage=Zone&cZone="+nextPage
+	}
+</script>
+
 <div align="center" class="standard2colnee">
 
 <table cellspacing="0" cellpadding="0" border="0" width=1200>
@@ -70,23 +80,7 @@
 		  <td>&nbsp;</td>
 		  <td>&nbsp;</td>
 		</tr>
-		<tr>
-			<td width=33%>
-				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Your Zones')"><strong>Your Zones</strong></a></td>
-			</td>
-			<td>
-				<script language="JavaScript" type="text/JavaScript">
-				function changePage(newLoc)
-				{
-					nextPage = newLoc.options[newLoc.selectedIndex].value
-				
-					if (nextPage != "---")
-						document.location.href = "idnsOrg.cgi?gcPage=Zone&cZone="+nextPage
-				}
-				</script>
-				{{funcSelectZone}}
-			</td>
-		</tr>
+		{{funcSelectZone}}
 		<tr>
 			<td valign=top>				
 				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Your IP Blocks')"><strong>Your IP Blocks</strong></a></td>

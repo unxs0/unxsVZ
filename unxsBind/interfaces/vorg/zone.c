@@ -496,7 +496,7 @@ void ZoneCommands(pentry entries[], int x)
 void htmlZone(void)
 {
 	htmlHeader("DNS System","Header");
-	htmlZonePage("DNS System","Zone.Body");
+	htmlZonePage("DNS System","VZone.Body");
 	htmlFooter("Footer");
 
 }//void htmlZone(void)
@@ -661,6 +661,7 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 
 }//void htmlZonePage()
 
+void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template);
 
 void funcSelectZone(FILE *fp)
 {
@@ -668,14 +669,37 @@ void funcSelectZone(FILE *fp)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uCount=1;
+	unsigned uView;
 	unsigned a=0,b=0,c=0,d=0,e=0;
 	char cZone[100];
 	char cPrevZone[100]="ERROR";
+	struct t_template template;
 
 	fprintf(fp,"<!-- funcSelectZone(fp) Start -->\n");
 
+	//Get available views for company
+	sprintf(gcQuery,"SELECT DISTINCT tView.cLabel,tView.uView FROM tZone,tView WHERE "
+			"(tZone.uOwner=%u OR tZone.uOwner=%u) "
+			"AND uSecondaryOnly=0 AND tView.uView=tZone.uView "
+			"ORDER BY tView.cLabel LIMIT 301",guLoginClient,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	//	htmlPlainTextError(mysql_error(&gMysql));
+		htmlPlainTextError(gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		template.cpName[0]="cViewLabel";
+		template.cpValue[0]=field[0];
+
+		template.cpName[1]="";
+
+		fpTemplate(fp,"SelectZoneHeader",&template);
+	}
 	//Normal zones
-	sprintf(gcQuery,"SELECT DISTINCT cZone FROM tZone WHERE cZone NOT LIKE '%%.arpa' AND (uOwner=%u OR uOwner=%u) AND uView=2 AND uSecondaryOnly=0 ORDER BY cZone LIMIT 301",guLoginClient,guOrg);
+	sprintf(gcQuery,"SELECT DISTINCT cZone FROM tZone WHERE cZone NOT LIKE '%%.arpa' AND "
+			"(uOwner=%u OR uOwner=%u) AND uView=2 AND uSecondaryOnly=0 "
+			"ORDER BY cZone LIMIT 301",guLoginClient,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
