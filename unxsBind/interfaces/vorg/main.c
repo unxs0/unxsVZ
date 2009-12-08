@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	idnsOrg Interface
+	vdnsOrg Interface
 	program file
 REQUIRES
 	OpenISP libtemplates.a and templates.h
@@ -146,8 +146,8 @@ int main(int argc, char *argv[])
 	{
 		if(!strncmp(gcFunction,"Logout",5))
 		{
-			printf("Set-Cookie: idnsOrgLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			printf("Set-Cookie: idnsOrgPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: vdnsOrgLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: vdnsOrgPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=7,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 			mysql_query(&gMysql,gcQuery);
         		guPermLevel=0;
@@ -204,7 +204,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="idnsOrg.cgi";
+			template.cpValue[1]="vdnsOrg.cgi";
 			
 			template.cpName[2]="cMessage";
 			template.cpValue[2]=gcMessage;
@@ -231,7 +231,7 @@ void htmlPlainTextError(const char *cError)
 	char cQuery[1024];
 
 	printf("Content-type: text/plain\n\n");
-	printf("Please report this idnsOrg fatal error ASAP:\n%s\n",cError);
+	printf("Please report this vdnsOrg fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
         sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",guPermLevel,guLoginClient,gcLogin,gcHost,cError,gcHostname,guLoginClient);
@@ -419,9 +419,9 @@ void SSLCookieLogin(void)
 	if(gcCookie[0])
 	{
 
-	if((ptr=strstr(gcCookie,"idnsOrgLogin=")))
+	if((ptr=strstr(gcCookie,"vdnsOrgLogin=")))
 	{
-		ptr+=strlen("idnsOrgLogin=");
+		ptr+=strlen("vdnsOrgLogin=");
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
@@ -433,9 +433,9 @@ void SSLCookieLogin(void)
 			sprintf(gcLogin,"%.99s",ptr);
 		}
 	}
-	if((ptr=strstr(gcCookie,"idnsOrgPasswd=")))
+	if((ptr=strstr(gcCookie,"vdnsOrgPasswd=")))
 	{
-		ptr+=strlen("idnsOrgPasswd=");
+		ptr+=strlen("vdnsOrgPasswd=");
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
@@ -568,8 +568,8 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: idnsOrgLogin=%s;\n",gcLogin);
-		printf("Set-Cookie: idnsOrgPasswd=%s;\n",gcPasswd);
+		printf("Set-Cookie: vdnsOrgLogin=%s;\n",gcLogin);
+		printf("Set-Cookie: vdnsOrgPasswd=%s;\n",gcPasswd);
 		sprintf(gcUser,"%.41s",gcLogin);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
