@@ -213,6 +213,14 @@
 			<input title='eMail address of responsible person. First dot is the @ symbol' type=text name=cHostmaster value='{{cHostmaster}}' size=40 maxlength=100 {{gcInputStatus}} class={{cHostmasterStyle}}>
 		</td>
 	</tr>
+	<tr>
+		<td>
+			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=View')"><strong>View</strong></a></td>
+		</td>
+		<td>
+			{{cZoneView}}
+		</td>
+	</tr>
 
 	<tr>
 		<td>&nbsp;
