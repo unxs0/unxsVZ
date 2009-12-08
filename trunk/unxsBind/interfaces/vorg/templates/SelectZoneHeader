@@ -1,6 +1,6 @@
 <tr>
 <td width=43%>
-	<a class=inputLink href="#" onClick="open_popup('?gcPage=Glossary&cLabel=Your Zones By View')"><strong>Your {{cViewLabel}} Zones</strong></a></td>
+	<a class=inputLink href="#" onClick="open_popup('?gcPage=Glossary&cLabel={{cViewLabel}}')"><strong>{{cViewLabel}}</strong></a></td>
 </td>
 <td>
 <script language="JavaScript" type="text/JavaScript">

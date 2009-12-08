@@ -902,10 +902,11 @@ void funcRRs(FILE *fp)
 			"tResource.cName,'@'),tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
 			"tResource.cParam2,tResource.cComment FROM tResource,tRRType,tZone "
 			"WHERE tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType "
-			"AND (tResource.uOwner=%u OR tResource.uOwner=%u) AND tZone.uView=2 AND "
+			"AND (tResource.uOwner=%u OR tResource.uOwner=%u) AND tZone.uView=%u AND "
 			"tZone.cZone='%s' ORDER BY tResource.uRRType,ABS(tResource.cName)",
 			guLoginClient
 			,guOrg
+			,guView
 			,gcZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
