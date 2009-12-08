@@ -1,14 +1,5 @@
 <body marginwidth="0" marginheight="0">
 
-<script language="JavaScript" type="text/JavaScript">
-	function changePage(newLoc)
-	{
-		nextPage = newLoc.options[newLoc.selectedIndex].value
-				
-		if (nextPage != "---")
-			document.location.href = "idnsOrg.cgi?gcPage=Zone&cZone="+nextPage
-	}
-</script>
 
 <div align="center" class="standard2colnee">
 

@@ -3,3 +3,13 @@
 	<a class=inputLink href="#" onClick="open_popup('?gcPage=Glossary&cLabel=Your Zones By View')"><strong>Your {{cViewLabel}} Zones</strong></a></td>
 </td>
 <td>
+<script language="JavaScript" type="text/JavaScript">
+	function changePage(newLoc)
+	{
+		nextPage = newLoc.options[newLoc.selectedIndex].value
+				
+		if (nextPage != "---")
+			document.location.href = "idnsOrg.cgi?gcPage=Zone&cZone="+nextPage
+	}
+</script>
+

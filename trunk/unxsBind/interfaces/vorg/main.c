@@ -33,6 +33,8 @@ char gcModStep[32]={""};
 char gcNewStep[32]={""};
 char gcDelStep[32]={""};
 char gcZone[256]={""};
+unsigned guView=0;
+
 //SSLLoginCookie()
 char gcCookie[1024]={""};
 char gcLogin[100]={""};
