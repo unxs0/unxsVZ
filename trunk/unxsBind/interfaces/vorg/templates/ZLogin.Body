@@ -25,7 +25,7 @@
 
 <table border="0" cellspacing="5" cellpadding="0" width="80%" class="table_content" align="center">
 <tr>
-<td>&nbsp;</td>
+<td> </td>
 </tr>
 <tr>
 <td><strong>User Name </strong></td>
@@ -48,10 +48,12 @@
 <u>Important Notice</u>
 <p style='font-size: 9px;'>Use this tool at your own risk.
 Improper use of this tool may result in interruption of your DNS service.
-CEnet assumes no liability and client agrees not to hold Unixservice
+CEnet assumes no liability and client agrees not to hold CEnet 
 responsible for any damage resulting from improper use.<br>
-You must have Javascript enabled in order to use this software correctly</font><br>
-<b>THIS SOFTWARE IS UNDER DEVELOPMENT. NOT READY FOR PRODUCTION USE</b>
+You must have Javascript enabled in order to use this software correctly.</font><br>
+
+<p>
+<b>THIS WEB APPLICATION IS UNDERGOING CHANGES. MAY NOT BE READY FOR PRODUCTION USE.</b>
 </td>
 </tr>
       
@@ -75,3 +77,4 @@ You must have Javascript enabled in order to use this software correctly</font><
 
 </table>
 </div>
+
