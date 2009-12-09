@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006-2009 Gary Wallis  and Hugo Urquiza for Unixservice
 PURPOSE
-	idnsOrg	
+	vdnsOrg	
 	program file.
 */
 
@@ -108,7 +108,7 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="idnsOrg.cgi";
+			template.cpValue[1]="vdnsOrg.cgi";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcUser;
