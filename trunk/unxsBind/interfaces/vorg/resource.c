@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	idnsOrg
+	vdnsOrg
 	program file.
 */
 
@@ -279,7 +279,7 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="idnsOrg.cgi";
+			template.cpValue[1]="vdnsOrg.cgi";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcUser;
@@ -1557,6 +1557,9 @@ void MasterFunctionSelect(void)
 	{
 		register int i=0;
 		unsigned a=0,b=0,c=0,d=0;
+		char cZone[256]={""};
+
+		sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
 
 		LoadRRTypeLabels();
 		ResourceSetFieldsOn();
@@ -1591,13 +1594,13 @@ void MasterFunctionSelect(void)
 				//2-. If it has a period must be full qually time
 				if(strchr(cName,'.'))
 				{
-					sprintf(gcQuery,"%s.",gcZone);
+					sprintf(gcQuery,"%s.",cZone);
 					if(strcmp(gcQuery,cName))
 					{
-						sprintf(gcQuery,".%s.",gcZone);
+						sprintf(gcQuery,".%s.",cZone);
 						if(!strstr(cName+(strlen(cName)-strlen(gcQuery)),gcQuery))
 						{
-							if(strstr(cName+strlen(cName)-strlen(gcZone),gcZone))
+							if(strstr(cName+strlen(cName)-strlen(cZone),cZone))
 							{
 								strcat(cName,".");
 								gcMessage="<blink>We have added a final period. If this correct confirm</blink>";
@@ -1647,7 +1650,7 @@ void MasterFunctionSelect(void)
 
 				if(!cParam1[0])
 				{
-					sprintf(cParam1,"%s.",gcZone);
+					sprintf(cParam1,"%s.",cZone);
 					sprintf(gcQuery,"<blink>%s is required. Common CNAME default entry made for you, check/change if needed</blink>",cParam1Label);
 					gcMessage=gcQuery;
 					cParam1Style="type_fields_req";
@@ -1664,7 +1667,7 @@ void MasterFunctionSelect(void)
 					FQDomainName(cParam1);
 
 					//Ticket #323 CNAME record pointing to itself
-					if(!strcmp(cName,cParam1) || !strcmp(gcZone,cParam1))
+					if(!strcmp(cName,cParam1) || !strcmp(cZone,cParam1))
 					{
 						gcMessage="<blink>Can't create a CNAME record pointing to itself</blink>";
 						cParam1Style="type_fields_req";
@@ -1701,7 +1704,7 @@ void MasterFunctionSelect(void)
 
 						if(cParam1[strlen(cParam1)-1]!='.')
 						{
-							sprintf(cParam1Temp,"%.49s.%.49s.",cParam1,gcZone);
+							sprintf(cParam1Temp,"%.49s.%.49s.",cParam1,cZone);
 							sprintf(cParam1,"%.99s",cParam1Temp);
 						}
 						if(strcmp(cParam1,cParam1Save))
@@ -1720,7 +1723,7 @@ void MasterFunctionSelect(void)
 				else if(!strcmp(cRRType,"A"))
 				{
 
-					if(!strcmp(gcZone+strlen(gcZone)-5,".arpa"))
+					if(!strcmp(cZone+strlen(cZone)-5,".arpa"))
 					{
 						gcMessage="<blink>Can not add A records to arpa zones</blink>";
 						
@@ -1744,7 +1747,7 @@ void MasterFunctionSelect(void)
 						cParam1Style="type_fields_req";
 						htmlResourceWizard(uStep);
 					}
-					if(uRRExists(gcZone,cRRType,cName,cParam1))
+					if(uRRExists(cZone,cRRType,cName,cParam1))
 					{
 						gcMessage="<blink>Resource record already exists</blink>";
 						cParam1Style="type_fields_req";
@@ -1756,7 +1759,7 @@ void MasterFunctionSelect(void)
 					unsigned uPtr=0;
 					unsigned uPtrLen=strlen(cName);
 					//We only allow simple classC in-addr PTR
-					if(strstr(gcZone,"in-addr.arpa"))
+					if(strstr(cZone,"in-addr.arpa"))
 					{
 						sscanf(cName,"%u",&uPtr);
 						sprintf(cName,"%u",uPtr);
@@ -1785,7 +1788,7 @@ void MasterFunctionSelect(void)
 							htmlResourceWizard(uStep);
 						}
 
-						sscanf(gcZone,"%u.%u.%u.in-adddr.arpa",&c,&b,&a);
+						sscanf(cZone,"%u.%u.%u.in-adddr.arpa",&c,&b,&a);
 						if(!a)
 						{
 							sprintf(gcQuery,
@@ -1795,7 +1798,7 @@ void MasterFunctionSelect(void)
 							htmlResourceWizard(uStep);
 						}
 
-						if(uRRExists(gcZone,cRRType,cName,cParam1))
+						if(uRRExists(cZone,cRRType,cName,cParam1))
 						{
 							gcMessage="<blink>Resource record already exists</blink>";
 							cNameStyle="type_fields_req";
@@ -1826,7 +1829,7 @@ void MasterFunctionSelect(void)
 				}
 				else if(!strcmp(cRRType,"MX"))
 				{
-					if(!strcmp(gcZone+strlen(gcZone)-5,".arpa"))
+					if(!strcmp(cZone+strlen(cZone)-5,".arpa"))
 					{
 						gcMessage="<blink>Can not add MX records to arpa zones</blink>";
 						cRRTypeStyle="type_fields_req";
@@ -1866,9 +1869,9 @@ void MasterFunctionSelect(void)
 					FQDomainName(cParam1);
 					if(cParam1[strlen(cParam1)-1]!='.') strcat(cParam1,".");
 
-					if(strcmp(gcZone+strlen(gcZone)-5,".arpa"))
+					if(strcmp(cZone+strlen(cZone)-5,".arpa"))
 					{
-						sprintf(cName,"%.255s.",gcZone);
+						sprintf(cName,"%.255s.",cZone);
 					}
 					//else no other rules for arpa zone for now TODO
 				}
@@ -1963,32 +1966,7 @@ void MasterFunctionSelect(void)
 		LoadRRTypeLabels();//Get labels and tips directly from cRRType
 		NewResource();	
 		if(!strcmp(gcMessage,"Zone Resource Created"))
-		{
-			time_t luClock;
-			unsigned uNameServer=0;
-
-			time(&luClock);
-
-			sprintf(gcInputStatus,"disabled");
-			if(cuNameServer[0])
-			{
-				sscanf(cuNameServer,"%u",&uNameServer);
-			}
-			else if(gcZone[0])
-			{
-				uNameServer=uGetuNameServer(gcZone);
-			}
-			if(uNameServer)
-			{
-				UpdateSerialNum(gcZone);
-				if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
-					htmlPlainTextError(mysql_error(&gMysql));
-			}
-			else
-			{
-				gcMessage="<blink>Contact admin: uNameServer error (new)</blink>";
-			}
-		}
+			SubmitModifyJob();
 		htmlResource();
 	}
 	else if(!strcmp(gcFunction,"Bulk Resource Record Entry"))
@@ -2034,22 +2012,22 @@ void ResourceSetFieldsOn(void)
 void SaveResource(void)
 {
 	//This function will sabe the deleted RRs into tDeletedResource
-	unsigned uZone=0;
 	unsigned uRRType=0;
 	
-	uZone=uGetuZone(gcZone);
 	uRRType=SelectRRType(cRRType);
-
-sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%u',uZone='%u',cName='%s',uTTL='%s',uRRType='%u',cParam1='%s',cParam2='%s',cComment='%s',uOwner='%u',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-		uResource,
-		uZone,
-		cName,
-		cuTTL,
-		uRRType,
-		cParam1,
-		cParam2,
-		cComment,
-		guOrg);
+	//TODO: extend for SRV record support
+	sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%u',uZone='%u',"
+			"cName='%s',uTTL='%s',uRRType='%u',cParam1='%s',cParam2='%s',cComment='%s',"
+			"uOwner='%u',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uResource,
+			guZone,
+			cName,
+			cuTTL,
+			uRRType,
+			cParam1,
+			cParam2,
+			cComment,
+			guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2070,8 +2048,11 @@ unsigned OnLineZoneCheck(void)
 	unsigned uRRType=0;
 	char cTTL[50]={""};
 	char cZoneFile[100]={""};
+	char cZone[256]={""};
 
-	sprintf(cZoneFile,"/tmp/%s",gcZone);
+	sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
+
+	sprintf(cZoneFile,"/tmp/%s",cZone);
 
 	if((zfp=fopen(cZoneFile,"w"))==NULL)
 		htmlPlainTextError("fopen() failed for temp zonefile");
@@ -2083,7 +2064,7 @@ unsigned OnLineZoneCheck(void)
 			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
 			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel FROM tZone,tNSSet,tNS,tView"
 			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
-			" tZone.uView=tView.uView AND tZone.cZone='%s' AND tZone.uView=2",gcZone);
+			" tZone.uView=tView.uView AND tZone.uZone='%u'",guZone);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -2365,11 +2346,10 @@ void CreatetResourceTest(void)
 
 void PrepareTestData(void)
 {
-	unsigned uZone=uGetuZone(gcZone);
 	unsigned uRRType=SelectRRType(cRRType);
 
 	CreatetResourceTest();
-	sprintf(gcQuery,"DELETE FROM tResourceTest WHERE uZone=%u",uZone);
+	sprintf(gcQuery,"DELETE FROM tResourceTest WHERE uZone=%u",guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2378,7 +2358,7 @@ void PrepareTestData(void)
 			"uModDate,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,cComment,uZone) "
 			"SELECT uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
 			"cParam1,cParam2,cParam3,cParam4,cComment,uZone FROM tResource WHERE "
-			"uZone=%u",uZone);
+			"uZone=%u",guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2397,7 +2377,7 @@ void PrepareTestData(void)
 				TextAreaSave(cComment),
 				guOrg,
 				guLoginClient,
-				uZone);
+				guZone);
 	else if(!strcmp(gcFunction,"Modify Confirm"))
 		sprintf(gcQuery,"UPDATE tResourceTest SET cName='%s',uTTL=%s,uRRType=%u,cParam1='%s',cParam2='%s',"
 				"cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) "
