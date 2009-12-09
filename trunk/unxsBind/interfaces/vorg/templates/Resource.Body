@@ -56,7 +56,7 @@
     <td width="10">&nbsp;</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
-		<h6 class="modhdr">{{cZone}} Resource Record Data</h6>
+		<h6 class="modhdr">{{cZone}} {{cZoneView}} Resource Record Data</h6>
 	</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>

@@ -882,7 +882,7 @@ void funcRRs(FILE *fp)
 	
 	fprintf(fp,"<!-- funcRRs(fp) Start -->\n");
 
-	sprintf(gcQuery,"SELECT tResource.uResource,tZone.cZone,IF(STRCMP(tResource.cName,''),"
+	sprintf(gcQuery,"SELECT tResource.uResource,tZone.uZone,IF(STRCMP(tResource.cName,''),"
 			"tResource.cName,'@'),tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
 			"tResource.cParam2,tResource.cComment FROM tResource,tRRType,tZone "
 			"WHERE tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType "
@@ -912,7 +912,7 @@ void funcRRs(FILE *fp)
 		
 		fprintf(fp,"<tr>\n");
 		fprintf(fp,"<td valign=top><a class=darkLink href=vdnsOrg.cgi?gcPage=Resource&uResource=%s"
-			"&cZone=%s>%s</a></td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td>"
+			"&uZone=%s>%s</a></td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td>"
 			"<td valign=top>%s</td><td valign=top>%s</td>\n",
 				field[0],
 				field[1],
