@@ -18,10 +18,10 @@
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Zone management' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=Zone&cZone={{cZone}}'><b class ="font10pt">Zone</b></a>
+						<a title='Zone management' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=Zone&uZone={{uZone}}'><b class ="font10pt">Zone</b></a>
 						</td>
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='Zone resource record management' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=Resource&cZone={{cZone}}'><b class ="font10pt">Resources</b></a>
+						<a title='Zone resource record management' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=Resource&uZone={{uZone}}'><b class ="font10pt">Resources</b></a>
 						</td>
 					</tr>
 				</table>
@@ -81,7 +81,7 @@
 	<tr>
 		<td colspan="2">
 			<input type=hidden name=gcPage value=Resource>
-			<input type=hidden name=cZone value={{cZone}}>
+			<input type=hidden name=uZone value={{uZone}}>
 			<input type=hidden name=uResource value={{uResource}}>
 			<input type=hidden name=uNameServer value={{uNameServer}}>
 			<br>

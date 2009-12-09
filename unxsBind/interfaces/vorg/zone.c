@@ -88,7 +88,7 @@ void UpdateSerialNum(char *cZone);
 char *ParseTextAreaLines(char *cTextArea);
 void PrepDelToolsTestData(unsigned uNumIPs);
 unsigned OnLineZoneCheck(void);
-
+char *cGetViewLabel(void);
 
 
 void ProcessZoneVars(pentry entries[], int x)
@@ -649,7 +649,10 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			else
 				template.cpValue[36]="disabled";
 
-			template.cpName[37]="";
+			template.cpName[37]="cZoneView";
+			template.cpValue[37]=cGetViewLabel();
+
+			template.cpName[38]="";
 
 			printf("\n<!-- Start htmlZonePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -700,7 +703,7 @@ void funcSelectZone(FILE *fp)
 		sscanf(field[0],"%u",&uZone);
 		fprintf(fp,"<option value=%s",field[0]);
 		if(guZone==uZone)
-			fprintf(fp,"selected");
+			fprintf(fp," selected");
 		if((uCount++)<=300)
 			fprintf(fp,">%s [%s]</option>",field[1],field[2]);
 		else
@@ -756,7 +759,7 @@ void funcSelectZone(FILE *fp)
 						sscanf(field2[0],"%u",&uZone);
 						fprintf(fp,"<option value=%s",field2[0]);
 						if(guZone==uZone)
-							fprintf(fp,"selected");
+							fprintf(fp," selected");
 						fprintf(fp,">%s [%s]</option>",field2[1],field2[2]);
 					}
 				}
@@ -778,7 +781,7 @@ void funcSelectZone(FILE *fp)
 					sscanf(field2[0],"%u",&uZone);
 					fprintf(fp,"<option value=%s",field2[0]);
 					if(guZone==uZone)
-						fprintf(fp,"selected");
+						fprintf(fp," selected");
 					fprintf(fp,">%s [%s]</option>",field2[1],field2[2]);
 				}
 				break;
@@ -1980,4 +1983,26 @@ char *ParseTextAreaLines2(char *cTextArea)
 	uStart=uEnd=0;
 	return("");
 }
+
+
+char *cGetViewLabel(void)
+{
+	static char cView[100]={""};
+	unsigned uView=0;
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uView FROM tZone WHERE uZone=%u",guZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uView);
+		sprintf(cView,"[%s]",ForeignKey("tView","cLabel",uView));
+	}
+	return(cView);
+
+}//char *cGetViewLabel(void)
 
