@@ -251,5 +251,5 @@
 	</td>
   </tr>
 </table>
-
+<input type=hidden name=uView value={{uView}}>
 </form>
