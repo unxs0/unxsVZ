@@ -5,16 +5,14 @@ FILE
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	vdnsOrg
+	idnsOrg
 	program file.
 */
 
 #include "interface.h"
 #include <openisp/ucidr.h>
 
-extern char gcZone[];
 static unsigned uResource=0;
-static unsigned uZone=0;
 
 static char cName[256]={""};
 static char *cNameStyle="type_fields_off";
@@ -85,10 +83,8 @@ void ProcessResourceVars(pentry entries[], int x)
 	
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(entries[i].name,"cZone"))
-			sprintf(gcZone,"%.99s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uView"))
-			sscanf(entries[i].val,"%u",&guView);
+		if(!strcmp(entries[i].name,"uZone"))
+			sscanf(entries[i].val,"%u",&guZone);
 		else if(!strcmp(entries[i].name,"uResource"))
 			sscanf(entries[i].val,"%u",&uResource);
 		else if(!strcmp(entries[i].name,"cName"))
@@ -130,8 +126,6 @@ void ProcessResourceVars(pentry entries[], int x)
 			sprintf(cuNameServer,"%.15s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uStep"))
 			sscanf(entries[i].val,"%u",&uStep);
-		else if(!strcmp(entries[i].name,"uView"))
-			sscanf(entries[i].val,"%u",&guView);
 	}
 
 	if(!guBrowserFirefox && cRRType[0])
@@ -144,11 +138,11 @@ void ProcessResourceVars(pentry entries[], int x)
 				*cp2=0;
 			sprintf(cRRType,"%.32s",cp+8);
 		}
-		if((cp=strstr(cp2+1,"cZone=")))
+		if((cp=strstr(cp2+1,"uZone=")))
 		{
 			if((cp2=strchr(cp+6,'&')))
 				*cp2=0;
-			sprintf(gcZone,"%.255s",cp+6);
+			sscanf(cp+6,"%u",&guZone);
 		}
 		if((cp=strstr(cp2+1,"gcFunction=")))
 		{
@@ -176,7 +170,7 @@ void ResourceCommands(pentry entries[], int x)
 
 		MasterFunctionSelect();
 
-		if(gcZone[0])
+		if(guZone)
 		{
 			SelectResource();
 			htmlResource();
@@ -197,10 +191,8 @@ void ResourceGetHook(entry gentries[],int x)
 	
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(gentries[i].name,"cZone"))
-			sprintf(gcZone,"%.99s",gentries[i].val);
-		else if(!strcmp(gentries[i].name,"uView"))
-			sscanf(gentries[i].val,"%u",&guView);
+		if(!strcmp(gentries[i].name,"uZone"))
+			sscanf(gentries[i].val,"%u",&guZone);
 		else if(!strcmp(gentries[i].name,"uResource"))
 			sscanf(gentries[i].val,"%u",&uResource);
 		else if(!strcmp(gentries[i].name,"cRRType"))
@@ -211,7 +203,7 @@ void ResourceGetHook(entry gentries[],int x)
 			sscanf(gentries[i].val,"%u",&uStep);
 	}
 
-	if(cRRType[0] && gcFunction[0] && gcZone[0])
+	if(cRRType[0] && gcFunction[0] && guZone)
 	{
 		if(!strcmp(gcFunction,"Modify") || !strcmp(gcFunction,"Modify Confirm"))
 		{
@@ -243,7 +235,7 @@ void ResourceGetHook(entry gentries[],int x)
 		}
 
 	}
-	else if(gcZone[0])
+	else if(guZone)
 	{
 		SelectResource();
 		htmlResource();
@@ -279,15 +271,15 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 		{
 			struct t_template template;
 			char cuResource[16];
-			char cuView[16];
+			char cuZone[16]={""};
 
-			sprintf(cuView,"%u",guView);
+			sprintf(cuZone,"%u",guZone);
 
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="vdnsOrg.cgi";
+			template.cpValue[1]="idnsOrg.cgi";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcUser;
@@ -332,8 +324,8 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			template.cpName[15]="cComment";
 			template.cpValue[15]=cComment;
 
-			template.cpName[16]="cZone";
-			template.cpValue[16]=gcZone;
+			template.cpName[16]="uZone";
+			template.cpValue[16]=cuZone;
 
 			template.cpName[17]="uResource";
 			sprintf(cuResource,"%u",uResource);
@@ -381,10 +373,7 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			template.cpName[31]="cParam1Style";
 			template.cpValue[31]=cParam1Style;			 						 
 			
-			template.cpName[32]="uView";
-			template.cpValue[32]=cuView;
-
-			template.cpName[33]="";
+			template.cpName[32]="";
 
 			printf("\n<!-- Start htmlResourcePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -468,8 +457,8 @@ void SelectResource(void)
 				"tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
 				"tRRType.cNameTip,tResource.cParam3,tResource.cParam4 FROM tResource,tRRType,"
 				"tZone WHERE tZone.uZone=tResource.uZone AND tResource.uRRType=tRRType.uRRType "
-				"AND tZone.cZone='%s' AND tZone.uView=%u AND tResource.uResource=%u",
-				gcZone,guView,uResource);
+				"AND tZone.uZone='%u' AND tResource.uResource=%u",
+				guZone,uResource);
 	else
 		sprintf(gcQuery,"SELECT tResource.cName,tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
 				"tResource.cParam2,tResource.cComment,tZone.uNSSet,tResource.uResource,"
@@ -477,9 +466,9 @@ void SelectResource(void)
 				"tRRType.cParam2Tip,tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,"
 				"tRRType.cParam4Tip,tRRType.cNameLabel,tRRType.cNameTip,tResource.cParam3,"
 				"tResource.cParam4 FROM tResource,tRRType,tZone WHERE tZone.uZone=tResource.uZone "
-				"AND tResource.uRRType=tRRType.uRRType AND tZone.cZone='%s' AND tZone.uView=%u AND "
+				"AND tResource.uRRType=tRRType.uRRType AND tZone.cZone='%u' AND "
 				"(tResource.uOwner=%u OR tResource.uOwner=%u) ORDER BY tRRType.uRRType,"
-				"tResource.cName LIMIT 1",gcZone,guView,guLoginClient,guOrg);
+				"tResource.cName LIMIT 1",guZone,guLoginClient,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -516,17 +505,17 @@ void SelectResource(void)
 			sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,"
 					"tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cParam3Label,"
 					"tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
-					"tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=1 AND tZone.cZone='%s' "
-					"AND tZone.uView=%u AND (tZone.uOwner=%u OR tZone.uOwner=%u)",
-					gcZone,guView,guLoginClient,guOrg);
+					"tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=1 AND tZone.uZone='%u' "
+					"AND (tZone.uOwner=%u OR tZone.uOwner=%u)",
+					guZone,guLoginClient,guOrg);
 		else	//PTR RR and has rights via zone.c 
 			//(low grade cross-site scrpting security issue for registered login)
 			sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,"
 					"tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cParam3Label,"
 					"tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
-					"tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=7 AND tZone.cZone='%s' "
-					"AND tZone.uView=%u AND (tZone.uOwner=1 OR tZone.uOwner=%u)",
-					gcZone,guView,guOrg);
+					"tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=7 AND tZone.uZone='%u' "
+					"AND (tZone.uOwner=1 OR tZone.uOwner=%u)",
+					guZone,guOrg);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -626,8 +615,6 @@ void NewResource(void)
 		return;
 	}
 
-	uZone=uGetuZone(gcZone);
-	
 	sprintf(gcQuery,"INSERT INTO tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',"
 			"cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
@@ -641,7 +628,7 @@ void NewResource(void)
 			TextAreaSave(cComment),
 			guOrg,
 			guLoginClient,
-			uZone);
+			guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1280,7 +1267,7 @@ void UpdateSerialNum(char *cZone)
 	char cSerial[16]={""};
 
 
-	sprintf(gcQuery,"SELECT uSerial,uZone FROM tZone WHERE cZone='%s' AND uView=%u",cZone,guView);
+	sprintf(gcQuery,"SELECT uSerial,uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2138,7 +2125,7 @@ unsigned OnLineZoneCheck(void)
 			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
 			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel FROM tZone,tNSSet,tNS,tView"
 			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
-			" tZone.uView=tView.uView AND tZone.cZone='%s' AND tZone.uView=%u",gcZone,guView);
+			" tZone.uView=tView.uView AND tZone.cZone='%s' AND tZone.uView=2",gcZone);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

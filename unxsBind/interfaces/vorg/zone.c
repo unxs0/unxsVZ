@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
-	vdnsOrg
+	idnsOrg
 	program file.
 */
 
@@ -94,25 +94,12 @@ unsigned OnLineZoneCheck(void);
 void ProcessZoneVars(pentry entries[], int x)
 {
 	register int i;
-	unsigned uLoadedView=0;
-
+	
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(entries[i].name,"uView"))
-			sscanf(entries[i].val,"%u",&uLoadedView);
-		if( strstr(entries[i].name,"cZone.") && strcmp(entries[i].val,"---") )
-		{
-			sscanf(entries[i].name,"cZone.%u",&guView);
-			if(uLoadedView!=guView)
-				sprintf(gcZone,"%.99s",entries[i].val);
-			else
-				guView=uLoadedView;
-		}
-		/*if(!strcmp(entries[i].name,"cZone"))
-		{
-			if(!gcZone[0]) sprintf(gcZone,"%.99s",entries[i].val);
-		}*/
-		if(!strcmp(entries[i].name,"cMainAddress"))
+		if(!strcmp(entries[i].name,"uZone"))
+			sscanf(entries[i].val,"%u",&guZone);
+		else if(!strcmp(entries[i].name,"cMainAddress"))
 			sprintf(cMainAddress,"%.16s",IPNumber(entries[i].val));
 		else if(!strcmp(entries[i].name,"cHostmaster"))
 			sprintf(cHostmaster,"%.99s",FQDomainName(entries[i].val));
@@ -151,13 +138,11 @@ void ZoneGetHook(entry gentries[],int x)
 	
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(gentries[i].name,"cZone"))
-			sprintf(gcZone,"%.99s",gentries[i].val);
-		else if(!strcmp(gentries[i].name,"uView"))
-			sscanf(gentries[i].val,"%u",&guView);
+		if(!strcmp(gentries[i].name,"uZone"))
+			sscanf(gentries[i].val,"%u",&guZone);
 	}
 
-	if(gcZone[0])
+	if(guZone)
 	{
 		SelectZone();
 		htmlZone();
@@ -202,14 +187,15 @@ void ZoneCommands(pentry entries[], int x)
 			{
 				time_t luClock;
 				unsigned uNameServer=0;
-
+				char cZone[256]={""};
 				time(&luClock);
 
 				sprintf(gcInputStatus,"disabled");
 				sscanf(cuNameServer,"%u",&uNameServer);
+				sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
 				if(uNameServer)
 				{
-					if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
+					if(OrgSubmitJob("Modify",uNameServer,cZone,0,luClock))
 						htmlPlainTextError(mysql_error(&gMysql));
 				}
 				else
@@ -268,8 +254,8 @@ void ZoneCommands(pentry entries[], int x)
 			//remove extra spaces or any other junk in CIDR
 			sscanf(cIPBlock,"%s",gcQuery);
 			sprintf(cIPBlock,"%.99s",gcQuery);
-			
-			sscanf(gcZone,"%u.%u.%u.in-addr.arpa",&uMc,&uMb,&uMa);
+			//TODO	
+			sscanf(cZone,"%u.%u.%u.in-addr.arpa",&uMc,&uMb,&uMa);
 
 			if(strchr(cIPBlock,'/'))
 			{
@@ -442,12 +428,11 @@ void ZoneCommands(pentry entries[], int x)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
-
-			UpdateSerialNum(gcZone);	
-			time(&luClock);
+			//TODO
+			/*UpdateSerialNum(gcZone);	
 			if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
 				htmlPlainTextError(mysql_error(&gMysql));
-			
+			*/
 
 			sprintf(cLogEntry,"%s Delegation",cIPBlock);
 			iDNSLog(uZone,"tZone",cLogEntry);
@@ -488,16 +473,18 @@ void ZoneCommands(pentry entries[], int x)
 			
 			if(mysql_errno(&gMysql))
 				 htmlPlainTextError(mysql_error(&gMysql));
+			//TODO
+			/*
 			UpdateSerialNum(gcZone);
 			if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
 				htmlPlainTextError(mysql_error(&gMysql));
-			
+			*/
 			sprintf(cLogEntry,"%s Delegation Removal",cIPBlock);
 			iDNSLog(uZone,"tZone",cLogEntry);
 			gcMessage="IP block delegation removed";
 			htmlDelegationTool();	
 		}
-		else if(gcZone[0])
+		else if(guZone)
 		{
 			SelectZone();
 			htmlZone();
@@ -511,7 +498,7 @@ void ZoneCommands(pentry entries[], int x)
 void htmlZone(void)
 {
 	htmlHeader("DNS System","Header");
-	htmlZonePage("DNS System","VZone.Body");
+	htmlZonePage("DNS System","Zone.Body");
 	htmlFooter("Footer");
 
 }//void htmlZone(void)
@@ -530,21 +517,18 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 		{
 			struct t_template template;
 			char cuDelegationTTL[10]={""};
-			char cuView[10]={""};
-			char cZoneView[32]={""};
+			char cZone[256]={""};
+
+			sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
 
 			if(uDelegationTTL)
 				sprintf(cuDelegationTTL,"%u",uDelegationTTL);
-
-			sprintf(cuView,"%u",guView);
-			if(guView)
-				sprintf(cZoneView,"[%s]",ForeignKey("tView","cLabel",guView));
-
+			
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="vdnsOrg.cgi";
+			template.cpValue[1]="idnsOrg.cgi";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcUser;
@@ -586,7 +570,7 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[13]=cMainAddress;
 
 			template.cpName[14]="cZone";
-			template.cpValue[14]=gcZone;
+			template.cpValue[14]=cZone;
 
 			template.cpName[15]="cHostmaster";
 			template.cpValue[15]=cHostmaster;
@@ -610,13 +594,13 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[21]=cuZoneTTL;
 
 			template.cpName[22]="cAddRRStatus";
-			if(gcZone[0])
+			if(guZone)
 				template.cpValue[22]="";
 			else
 				template.cpValue[22]="disabled";
 
 			template.cpName[23]="cModSOAStatus";
-			if(!gcZone[0] || strstr(gcZone,"in-addr.arpa"))
+			if(!guZone || strstr(cZone,"in-addr.arpa"))
 				template.cpValue[23]="disabled";
 			else
 				template.cpValue[23]="";
@@ -643,7 +627,7 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[30]=cuZoneTTLStyle;
 			
 			template.cpName[31]="cPendingJobs";
-			if(gcZone[0])
+			if(guZone)
 				template.cpValue[31]=cGetPendingJobs();
 			else
 				template.cpValue[31]="No zone selected";
@@ -661,18 +645,12 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[35]=gcNewStep;
 
 			template.cpName[36]="cDelToolStatus";
-			if(strstr(gcZone,"in-addr.arpa"))
+			if(strstr(cZone,"in-addr.arpa"))
 				template.cpValue[36]="";
 			else
 				template.cpValue[36]="disabled";
 
-			template.cpName[37]="uView";
-			template.cpValue[37]=cuView;
-
-			template.cpName[38]="cZoneView";
-			template.cpValue[38]=cZoneView;
-
-			template.cpName[39]="";
+			template.cpName[37]="";
 
 			printf("\n<!-- Start htmlZonePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -688,7 +666,6 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 
 }//void htmlZonePage()
 
-void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template);
 
 void funcSelectZone(FILE *fp)
 {
@@ -697,123 +674,122 @@ void funcSelectZone(FILE *fp)
 	MYSQL_ROW field;
 	MYSQL_RES *res2;
 	MYSQL_ROW field2;
-
 	unsigned uCount=1;
-	unsigned uView;
 	unsigned a=0,b=0,c=0,d=0,e=0;
+	unsigned uZone=0;
 	char cZone[100];
 	char cPrevZone[100]="ERROR";
-	struct t_template template;
 
 	fprintf(fp,"<!-- funcSelectZone(fp) Start -->\n");
 
-	//Get available views for company
-	sprintf(gcQuery,"SELECT DISTINCT tView.cLabel,tView.uView FROM tZone,tView WHERE "
-			"(tZone.uOwner=%u OR tZone.uOwner=%u) "
-			"AND uSecondaryOnly=0 AND tView.uView=tZone.uView "
-			"ORDER BY tView.cLabel LIMIT 301",guLoginClient,guOrg);
+	//Normal zones
+	sprintf(gcQuery,"SELECT uZone,cZone,tView.cLabel FROM tZone,tView WHERE tZone.uView=tView.uView AND "
+			"cZone NOT LIKE '%%.arpa' AND (tZone.uOwner=%u OR tZone.uOwner=%u) AND uSecondaryOnly=0 "
+			"ORDER BY cZone LIMIT 301",guLoginClient,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-	//	htmlPlainTextError(mysql_error(&gMysql));
-		htmlPlainTextError(gcQuery);
-	res2=mysql_store_result(&gMysql);
-	while((field2=mysql_fetch_row(res2)))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	fprintf(fp,"<select title='Select the zone you want to load with this dropdown' name=cZone class=type_textarea onChange=");
+	if(guBrowserFirefox)
+		fprintf(fp,"'changePage(this.form.cZone)'>\n");
+	else
+		fprintf(fp,"'submit()'>\n");
+	fprintf(fp,"<option>---</option>");
+	while((field=mysql_fetch_row(res)))
 	{
-		field2[0][0]=toupper(field2[0][0]);
-		sscanf(field2[1],"%u",&uView);
-
-		template.cpName[0]="cViewLabel";
-		template.cpValue[0]=field2[0];
-
-		template.cpName[1]="";
-
-		fpTemplate(fp,"SelectZoneHeader",&template);
-	
-		//Normal zones
-		sprintf(gcQuery,"SELECT DISTINCT cZone FROM tZone WHERE cZone NOT LIKE '%%.arpa' AND "
-				"(uOwner=%u OR uOwner=%u) AND uView=%u AND uSecondaryOnly=0 "
-				"ORDER BY cZone LIMIT 301",guLoginClient,guOrg,uView);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		fprintf(fp,"<select title='Select the zone you want to load with this dropdown' name=cZone.%u class=type_textarea onChange=",uView);
-		/*if(guBrowserFirefox)
-			fprintf(fp,"'changePage(this.form.cZone)'>\n");
-		else*/
-			fprintf(fp,"'submit()'>\n");
-		fprintf(fp,"<option>---</option>");
-		while((field=mysql_fetch_row(res)))
-		{
-			fprintf(fp,"<option ");
-			if(!strcmp(gcZone,field[0]) && uView==guView)
-				fprintf(fp,"selected");
-			if((uCount++)<=300)
-				fprintf(fp,">%s</option>",field[0]);
-			else
-				fprintf(fp,">LIMIT REACHED CONTACT sysadmin</option>");
-		}
-		mysql_free_result(res);
-
-		//Empty arpa zones with class C that falls into customer block
-		//Example Customer block 212.111.47.12/30 should add (if it exists)
-		//47.111.212.in-addr.arpa tZone.cZone
-		//Plan get a block expand into possible class Cs. Ex.
-		//213.52.164.0/24 would expand into 
-		//231.52.164.0
-		//192.168.0.0/21 would expand into
-		//192.168.0.0/24 through 192.168.7.0/24
-		//uCount=1;
-		sprintf(gcQuery,"SELECT DISTINCT tBlock.cLabel FROM tBlock WHERE "
-				"(tBlock.uOwner=%u OR tBlock.uOwner=%u) ORDER BY "
-				"cLabel LIMIT 301",guLoginClient,guOrg);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		while((field=mysql_fetch_row(res)))
-		{
-			sscanf(field[0],"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
-			sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
-			if(strcmp(cZone,cPrevZone))
-			{
-				sprintf(cPrevZone,"%.99s",cZone);
-
-				if(a==0 || e==0 || b>254 || c>254 || d>254 
-						|| a>254 || b>254 || e<21) continue;
-				switch(e)
-				{
-					case 23:
-					case 22:
-					case 21:
-					//Expand these three cases with basic CIDR math
-					for(i=0;i<((2^(24-e))-1);i++)
-					{
-						sprintf(cZone,"%u.%u.%u.in-addr.arpa",c+i,b,a);
-						if(!uGetuZone(cZone))
-							continue;
-						fprintf(fp,"<option ");
-						if(!strcmp(gcZone,cZone) && uView==guView) fprintf(fp,"selected");
-						fprintf(fp,">%s</option>",cZone);
-					}
-					break;
-					default:
-					//24 or smaller see if continue above
-					//Single class C rev zone
-					sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
-					if(!uGetuZone(cZone))
-							break;
-					fprintf(fp,"<option ");
-					if(!strcmp(gcZone,cZone)) fprintf(fp,"selected");
-					fprintf(fp,">%s</option>",cZone);
-				}
-			}//if distinct
-		}
-		mysql_free_result(res);
-
-		fprintf(fp,"</select>\n");
-		fpTemplate(fp,"SelectZoneFooter",&template);
+		sscanf(field[0],"%u",&uZone);
+		fprintf(fp,"<option value=%s",field[0]);
+		if(guZone==uZone)
+			fprintf(fp,"selected");
+		if((uCount++)<=300)
+			fprintf(fp,">%s [%s]</option>",field[1],field[2]);
+		else
+			fprintf(fp,">LIMIT REACHED CONTACT sysadmin</option>");
 	}
+	mysql_free_result(res);
+
+	//Empty arpa zones with class C that falls into customer block
+	//Example Customer block 212.111.47.12/30 should add (if it exists)
+	//47.111.212.in-addr.arpa tZone.cZone
+	//Plan get a block expand into possible class Cs. Ex.
+	//213.52.164.0/24 would expand into 
+	//231.52.164.0
+	//192.168.0.0/21 would expand into
+	//192.168.0.0/24 through 192.168.7.0/24
+	//uCount=1;
+	sprintf(gcQuery,"SELECT DISTINCT tBlock.cLabel FROM tBlock WHERE "
+			"(tBlock.uOwner=%u OR tBlock.uOwner=%u) ORDER BY cLabel LIMIT 301",guLoginClient,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
+		sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+		if(strcmp(cZone,cPrevZone))
+		{
+			sprintf(cPrevZone,"%.99s",cZone);
+
+			if(a==0 || e==0 || b>254 || c>254 || d>254 
+					|| a>254 || b>254 || e<21) continue;
+			switch(e)
+			{
+				case 23:
+				case 22:
+				case 21:
+				//Expand these three cases with basic CIDR math
+				for(i=0;i<((2^(24-e))-1);i++)
+				{
+					sprintf(cZone,"%u.%u.%u.in-addr.arpa",c+i,b,a);
+					if(!uGetuZone(cZone))
+						continue;
+					
+					sprintf(gcQuery,"SELECT uZone,cZone,tView.cLabel FROM tZone,tView WHERE "
+							"tZone.uView=tView.uView AND cZone='%s'",cZone);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res2=mysql_store_result(&gMysql);
+					while((field2=mysql_fetch_row(res2)))
+					{
+						sscanf(field2[0],"%u",&uZone);
+						fprintf(fp,"<option value=%s",field2[0]);
+						if(guZone==uZone)
+							fprintf(fp,"selected");
+						fprintf(fp,">%s [%s]</option>",field2[1],field2[2]);
+					}
+				}
+				break;
+				default:
+				//24 or smaller see if continue above
+				//Single class C rev zone
+				sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
+				if(!uGetuZone(cZone))
+						break;
+				sprintf(gcQuery,"SELECT uZone,cZone,tView.cLabel FROM tZone,tView WHERE "
+						"tZone.uView=tView.uView AND cZone='%s'",cZone);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				res2=mysql_store_result(&gMysql);
+				while((field2=mysql_fetch_row(res2)))
+				{
+					sscanf(field2[0],"%u",&uZone);
+					fprintf(fp,"<option value=%s",field2[0]);
+					if(guZone==uZone)
+						fprintf(fp,"selected");
+					fprintf(fp,">%s [%s]</option>",field2[1],field2[2]);
+				}
+				break;
+			}
+		}//if distinct
+	}
+	mysql_free_result(res);
+
+	fprintf(fp,"</select>\n");
+
 	fprintf(fp,"<!-- funcSelectZone(fp) End -->\n");
 
 }//void funcSelectZone(FILE *fp)
@@ -908,12 +884,11 @@ void funcRRs(FILE *fp)
 			"tResource.cName,'@'),tResource.uTTL,tRRType.cLabel,tResource.cParam1,"
 			"tResource.cParam2,tResource.cComment FROM tResource,tRRType,tZone "
 			"WHERE tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType "
-			"AND (tResource.uOwner=%u OR tResource.uOwner=%u) AND tZone.uView=%u AND "
-			"tZone.cZone='%s' ORDER BY tResource.uRRType,ABS(tResource.cName)",
+			"AND (tResource.uOwner=%u OR tResource.uOwner=%u) AND "
+			"tZone.uZone='%u' ORDER BY tResource.uRRType,ABS(tResource.cName)",
 			guLoginClient
 			,guOrg
-			,guView
-			,gcZone);
+			,guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -934,7 +909,7 @@ void funcRRs(FILE *fp)
 			sprintf(cLocalParam1,"%.255s",field[5]);
 		
 		fprintf(fp,"<tr>\n");
-		fprintf(fp,"<td valign=top><a class=darkLink href=vdnsOrg.cgi?gcPage=Resource&uResource=%s"
+		fprintf(fp,"<td valign=top><a class=darkLink href=idnsOrg.cgi?gcPage=Resource&uResource=%s"
 			"&cZone=%s>%s</a></td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td>"
 			"<td valign=top>%s</td><td valign=top>%s</td>\n",
 				field[0],
@@ -965,8 +940,11 @@ void SelectZone(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT tZone.uZone,tZone.cMainAddress,tZone.cHostmaster,'list goes here',tNSSet.cLabel,tZone.uSerial,tZone.uExpire,tZone.uRefresh,tZone.uTTL,tZone.uRetry,tZone.uZoneTTL,tNSSet.uNSSet FROM tZone,tNSSet WHERE tZone.uNSSet=tNSSet.uNSSet AND tZone.cZone='%s' AND tZone.uView=%u AND tZone.uSecondaryOnly=0 AND (tZone.uOwner=%u OR tZone.uOwner=%u OR tZone.cZone LIKE '%%in-addr.arpa')",gcZone,guView,guLoginClient,guOrg);
-//	htmlPlainTextError(gcQuery);
+	sprintf(gcQuery,"SELECT tZone.uZone,tZone.cMainAddress,tZone.cHostmaster,'list goes here',"
+			"tNSSet.cLabel,tZone.uSerial,tZone.uExpire,tZone.uRefresh,tZone.uTTL,"
+			"tZone.uRetry,tZone.uZoneTTL,tNSSet.uNSSet FROM tZone,tNSSet WHERE "
+			"tZone.uNSSet=tNSSet.uNSSet AND tZone.cZone='%u' AND tZone.uSecondaryOnly=0 "
+			,guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1019,7 +997,7 @@ void UpdateZone(void)
 	unsigned uZoneTTL=0;
 	long unsigned luYearMonDay=0;
 
-	if(!gcZone[0] || gcZone[0]=='-')
+	if(!guZone)
 	{
 		gcMessage="<blink>Unknown/empty zone was not modified</blink>";
 		return;
@@ -1148,7 +1126,9 @@ void UpdateZone(void)
 		return;
 	}
 
-	sprintf(gcQuery,"UPDATE tZone SET uSerial=%u,uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,cMainAddress='%s',cHostmaster='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cZone='%s' AND uSecondaryOnly=0 AND uView=%u",
+	sprintf(gcQuery,"UPDATE tZone SET uSerial=%u,uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,"
+			"uZoneTTL=%u,uView=2,cMainAddress='%s',cHostmaster='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uZone='%u' AND uSecondaryOnly=0",
 			uSerial,
 			uExpire,
 			uRefresh,
@@ -1158,15 +1138,14 @@ void UpdateZone(void)
 			cMainAddress,
 			cHostmaster,
 			guLoginClient,
-			gcZone,
-			guView);
+			guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	if(mysql_affected_rows(&gMysql)==1)
 	{
 		gcMessage="Zone Modified";
-		iDNSLog(uGetuZone(gcZone),"tZone","Mod");
+		iDNSLog(guZone,"tZone","Mod");
 	}
 	else
 	{
@@ -1191,15 +1170,17 @@ char *cGetPendingJobs(void)
 {
 	//
 	//This zone returns the number of jobs pending for the selected zone
-	//We get the selected zone from the global variable gcZone
+	//We get the selected zone from the global variable guZone
 	//A nice idea for this function would be to somehow add an ETA
 	//calculation for all the pending jobs 
 	
 	static char cPendingJobs[20]={""};
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	char cZone[256]={""};
 
-	sprintf(gcQuery,"SELECT COUNT(uJob) FROM tJob WHERE cZone='%s'",gcZone);
+	sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
+	sprintf(gcQuery,"SELECT COUNT(uJob) FROM tJob WHERE cZone='%s'",cZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -1342,7 +1323,7 @@ unsigned uGetuZone(char *cZone)
 	unsigned uZone=0;
 	char cQuery[512];
 
-	sprintf(cQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u",cZone,guView);
+	sprintf(cQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1363,7 +1344,7 @@ unsigned uGetuNameServer(char *cZone)
 	unsigned uNameServer=0;
 	char cQuery[512];
 
-	sprintf(cQuery,"SELECT uNSSet FROM tZone WHERE cZone='%s' AND uView=%u",cZone,guView);
+	sprintf(cQuery,"SELECT uNSSet FROM tZone WHERE cZone='%s' AND uView=2",cZone);
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1781,94 +1762,6 @@ void GetConfiguration(const char *cName, char *cValue, unsigned uHtml)
 }//void GetConfiguration(const char *cName, char *cValue)
 
 
-#ifdef EXPERIMENTAL
-void funcZoneStatus(FILE *fp)
-{
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-
-	sprintf(gcQuery,
-	"SELECT tZone.cZone FROM tZone WHERE uZone IN (SELECT uTablePK FROM tLog WHERE cMessage='Zone with errors' AND uOwner='%u')\
-		ORDER BY tZone.cZone",guOrg);
-
-	mysql_query(&gMysql,gcQuery);
-
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(fp,"%s",mysql_error(&gMysql));
-		return;
-	}
-	res=mysql_store_result(&gMysql);
-
-	if(mysql_num_rows(res))
-	{
-		fprintf(fp,"<b><u>Zones with errors</u></b><br><br>\n");
-		while((field=mysql_fetch_row(res)))
-			fprintf(fp,"<a href=vdnsOrg.cgi?gcPage=Zone&cZone=%s>%s</a><br>\n",field[0],field[0]);
-	}
-}//void funcZoneStatus(FILE *fp)
-
-
-void ZoneDiagnostics(void)
-{
-	char cNamedCheckZone[100]={"/usr/local/sbin/named-checkzone"}; //will get from tConfiguration
-	char cDig[100]={"/usr/local/bin/dig"}; //will get from tConfiguration
-	char cView[100]={"external"};
-	char cZoneFile[256]={""};
-	
-	FILE *fp;
-	
-	printf("Content-type: text/plain\n\n");
-	
-	sprintf(cZoneFile,"/usr/local/idns/named.d/master/%s/%c/%s",cView,gcZone[0],gcZone);
-
-	sprintf(gcQuery,"%s %s %s",cNamedCheckZone,gcZone,cZoneFile);
-	printf("Testing with:%s\n\n",gcQuery);
-	
-	if((fp=popen(gcQuery,"r")))
-	{
-		while(fgets(gcQuery,512,fp))
-			printf("%s",gcQuery);
-		pclose(fp);
-	}
-	else
-		perror("popen");
-
-	printf("\n\n");	
-	sprintf(gcQuery,"%s @ns2.unixservice.com soa %s",cDig,gcZone);
-	printf("Testing with dig:%s\n",gcQuery);
-	if((fp=popen(gcQuery,"r")))
-	{
-		while(!feof(fp))
-		{
-			fgets(gcQuery,512,fp);
-			printf("%s",gcQuery);
-		}
-		pclose(fp);
-	}
-	else
-		perror("popen");
-	
-	printf("\n\n");
-
-	sprintf(gcQuery,"%s soa %s",cDig,gcZone);
-	printf("Testing with :%s\n",gcQuery);
-	if((fp=popen(gcQuery,"r")))
-	{
-		while(fgets(gcQuery,512,fp))
-			printf("%s",gcQuery);
-		pclose(fp);
-	}
-	else
-		perror("popen");
-	exit(0);	
-}//void ZoneDiagnostic(void)
-
-
-#endif
-
-
-
 void funcNSSetMembers(FILE *fp)
 {
 	MYSQL_RES *res;
@@ -1905,8 +1798,10 @@ unsigned uPTRInCIDR(unsigned uZone,char *cIPBlock)
 	MYSQL_ROW field;
 	unsigned uA,uB,uC;
 	char cIP[100]={""};
+	char cZone[256]={""};
 
-	sscanf(gcZone,"%u.%u.%u.",&uC,&uB,&uA);
+	sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
+	sscanf(cZone,"%u.%u.%u.",&uC,&uB,&uA);
 	
 	//uRRType=7: PTR
 	sprintf(gcQuery,"SELECT cName FROM tResource WHERE uRRType=7 AND uZone=%u",uZone);
@@ -1955,10 +1850,9 @@ void PrepDelToolsTestData(unsigned uNumIPs)
 	unsigned uA,uB,uC,uD,uE;
 	unsigned uIPBlockFormat=0;
 	char cNServers[4096]={""};
-	unsigned uZone=uGetuZone(gcZone);
 
 	CreatetResourceTest();
-	sprintf(gcQuery,"DELETE FROM tResourceTest WHERE uZone=%u",uZone);
+	sprintf(gcQuery,"DELETE FROM tResourceTest WHERE uZone=%u",guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1967,7 +1861,7 @@ void PrepDelToolsTestData(unsigned uNumIPs)
 			"uModDate,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,cComment,uZone) "
 			"SELECT uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
 			"cParam1,cParam2,cParam3,cParam4,cComment,uZone FROM tResource WHERE "
-			"uZone=%u",uZone);
+			"uZone=%u",guZone);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1998,7 +1892,7 @@ void PrepDelToolsTestData(unsigned uNumIPs)
 		sprintf(gcQuery,"INSERT INTO tResourceTest SET uZone=%u,cName='%s',uTTL=%u,"
 					"uRRType=2,cParam1='%s',cComment='Delegation (%s)',"
 					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					uZone
+					guZone
 					,cName
 					,uDelegationTTL
 					,cNS
@@ -2032,7 +1926,7 @@ void PrepDelToolsTestData(unsigned uNumIPs)
 	sprintf(gcQuery,"INSERT INTO tResourceTest SET uZone=%u,cName='$GENERATE %u-%u $',"
 			"uRRType=5,cParam1='%s',cComment='Delegation (%s)',uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uZone
+			guZone
 			,uD
 			,(uD+uNumIPs)
 			,cParam1

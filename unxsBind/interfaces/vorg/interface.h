@@ -63,8 +63,7 @@ extern char gcModStep[];
 extern char gcNewStep[];
 extern char gcDelStep[];
 extern char gcInputStatus[];
-extern char gcZone[];
-extern unsigned guView;
+extern unsigned guZone;
 
 //Menu
 //

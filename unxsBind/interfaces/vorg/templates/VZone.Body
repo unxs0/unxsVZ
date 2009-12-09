@@ -1,6 +1,5 @@
 <body marginwidth="0" marginheight="0">
 
-
 <div align="center" class="standard2colnee">
 
 <table cellspacing="0" cellpadding="0" border="0" width=1200>
@@ -19,10 +18,10 @@
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='Zone management' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=Zone&cZone={{cZone}}&uView={{uView}}'><b class ="font10pt">Zone</b></a>
+						<a title='Zone management' class="wpsSelectedPlaceLink" href='idnsOrg.cgi?gcPage=Zone&cZone={{cZone}}'><b class ="font10pt">Zone</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Zone resource record management' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=Resource&cZone={{cZone}}&uView={{uView}}'><b class ="font10pt">Resources</b></a>
+						<a title='Zone resource record management' class="wpsUnSelectedPlaceLink" href='idnsOrg.cgi?gcPage=Resource&cZone={{cZone}}'><b class ="font10pt">Resources</b></a>
 						</td>
 					</tr>
 				</table>
@@ -41,8 +40,6 @@
 
 
 <form method=post action={{cCGI}} style="margin:0px;">
-<input type=hidden name=uView value={{uView}}>
-
 <table width=1200  border="0" cellspacing="0" cellpadding="0">
   <tr>
     <td>
@@ -58,7 +55,7 @@
     <td width="10">&nbsp;</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
-		<h6 class="modhdr">{{cZone}} {{cZoneView}} NS Set, SOA Data</h6>
+		<h6 class="modhdr">{{cZone}} NS Set, SOA Data</h6>
 	</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
@@ -74,9 +71,22 @@
 		  <td>&nbsp;</td>
 		</tr>
 		<tr>
-		<td valign=top>
-		<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Your Zones By View')"><strong>Your Zones By View</a></td></tr>
-		{{funcSelectZone}}
+			<td width=33%>
+				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Your Zones')"><strong>Your Zones</strong></a></td>
+			</td>
+			<td>
+				<script language="JavaScript" type="text/JavaScript">
+				function changePage(newLoc)
+				{
+					nextPage = newLoc.options[newLoc.selectedIndex].value
+				
+					if (nextPage != "---")
+						document.location.href = "idnsOrg.cgi?gcPage=Zone&cZone="+nextPage
+				}
+				</script>
+				{{funcSelectZone}}
+			</td>
+		</tr>
 		<tr>
 			<td valign=top>				
 				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Your IP Blocks')"><strong>Your IP Blocks</strong></a></td>
@@ -96,6 +106,7 @@
 		<tr>
 			<td colspan=2>
 				<input type=hidden name=gcPage value=Zone>
+				<input type=submit title='Select a zone to edit. Not needed if you have javascript enabled in your browser' class=largeButton name=gcFunction value='Select Zone'><br><br>
 				<input type=submit title='Delegate this zone with an easy to follow wizard' class=largeButton  name=gcFunction value='Delegation Tool' {{cDelToolStatus}}>
 				<p>
 				<strong><u>Editing Hints</u></strong><br>
@@ -208,6 +219,7 @@
 			<input title='eMail address of responsible person. First dot is the @ symbol' type=text name=cHostmaster value='{{cHostmaster}}' size=40 maxlength=100 {{gcInputStatus}} class={{cHostmasterStyle}}>
 		</td>
 	</tr>
+
 	<tr>
 		<td>&nbsp;
 		
