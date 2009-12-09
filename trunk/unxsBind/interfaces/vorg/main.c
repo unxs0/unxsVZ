@@ -386,7 +386,7 @@ char *cGetPasswd(char *gcLogin)
 	//SQL injection code
 	if((cp=strchr(gcLogin,'\''))) *cp=0;
 
-	sprintf(gcQuery,"SELECT cPasswd FROM tAuthorize WHERE cLabel='%s'",
+	sprintf(gcQuery,"SELECT cPasswd,uPerm FROM tAuthorize WHERE cLabel='%s'",
 			gcLogin);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -396,7 +396,11 @@ char *cGetPasswd(char *gcLogin)
 	mysqlRes=mysql_store_result(&gMysql);
 	cPasswd[0]=0;
 	if((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
 		sprintf(cPasswd,"%.99s",mysqlField[0]);
+		sscanf(mysqlField[1],"%u",&guPermLevel);
+		if(guPermLevel>7) htmlLogin();
+	}
 	mysql_free_result(mysqlRes);
 
 	

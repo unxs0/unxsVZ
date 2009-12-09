@@ -793,7 +793,7 @@ void funcSelectZone(FILE *fp)
 						if(!uGetuZone(cZone))
 							continue;
 						fprintf(fp,"<option ");
-						if(!strcmp(gcZone,cZone)) fprintf(fp,"selected");
+						if(!strcmp(gcZone,cZone) && uView==guView) fprintf(fp,"selected");
 						fprintf(fp,">%s</option>",cZone);
 					}
 					break;
