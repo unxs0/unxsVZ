@@ -5,7 +5,7 @@ FILE
 AUTHOR
 	(C) 2006-2009 Gary Wallis  and Hugo Urquiza for Unixservice
 PURPOSE
-	vdnsOrg	
+	idnsOrg	
 	program file.
 */
 
@@ -33,8 +33,8 @@ void ProcessBulkOpVars(pentry entries[], int x)
 	{
 		if(!strcmp(entries[i].name,"cMassList"))
 			cMassList=entries[i].val;
-		else if(!strcmp(entries[i].name,"cZone"))
-			sprintf(gcZone,entries[i].val);
+		else if(!strcmp(entries[i].name,"uZone"))
+			sscanf(entries[i].val,"%u",&guZone);
 	}
 
 }//void ProcessBulkOpVars(pentry entries[], int x)
@@ -100,12 +100,15 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 		if((field=mysql_fetch_row(res)))
 		{
 			struct t_template template;
-			
+			char cuZone[16]={""};
+
+			sprintf(cuZone,"%u",guZone);
+
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="vdnsOrg.cgi";
+			template.cpValue[1]="idnsOrg.cgi";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcUser;
@@ -125,8 +128,8 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 			template.cpName[7]="gcModStep";
 			template.cpValue[7]=gcModStep;
 
-			template.cpName[8]="cZone";
-			template.cpValue[8]=gcZone;
+			template.cpName[8]="uZone";
+			template.cpValue[8]=cuZone;
 
 			template.cpName[9]="gcMessage";
 			template.cpValue[9]=gcMessage;
@@ -150,19 +153,20 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 
 void BulkResourceImport(void)
 {
-	char cLine[512]={"ERROR"};
+/*	char cLine[512]={"ERROR"};
+	char *cp;
 	unsigned uDebug=0;
-	unsigned uZone;
 	unsigned uZoneOwner;
 	unsigned uNameServer;
 	unsigned uResourceCount=0,uImportCount=0;
 	unsigned uOnlyOncePerZone=1;
 	static char cMsg[128];
-	
-	uZone=uGetuZone(gcZone);
+	char cZone[256]={""};
+
+	sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
 	//htmlPlainTextError(gcQuery);
 	////printf("htmlMassResourceImport() start (uClient=%u)\n",uClient);
-	while(gcZone[0])
+	while(1)
 	{
 
 		sprintf(cLine,"%.255s",ParseTextAreaLines(cMassList));
@@ -189,9 +193,9 @@ void BulkResourceImport(void)
 			//A resource candidate line
 			uResourceCount++;
 			//If we have no defined zone keep on going.
-			if(!uZone) continue;
+			if(!guZone) continue;
 			uZoneOwner=guOrg;
-			ProcessRRLine(cLine,gcZone,uZone,uZoneOwner,uNameServer,guLoginClient,
+			ProcessRRLine(cLine,cZone,uZone,uZoneOwner,uNameServer,guLoginClient,
 				"BulkResourceImport()");
 			if(gcMessage[0])
 				htmlBulkOp();
@@ -221,7 +225,7 @@ void BulkResourceImport(void)
 	//exit(0);
 	gcMessage=cMsg;
 	htmlBulkOp();
-
+*/
 }//void BulkResourceImport(void)
 
 
