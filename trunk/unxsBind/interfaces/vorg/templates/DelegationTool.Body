@@ -18,10 +18,10 @@
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='Zone management' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=Zone&cZone={{cZone}}&uView={{uView}}'><b class ="font10pt">Zone</b></a>
+						<a title='Zone management' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=Zone&uZone={{uZone}}&uView={{uView}}'><b class ="font10pt">Zone</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Zone resource record management' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=Resource&cZone={{cZone}}&uView={{uView}}'><b class ="font10pt">Resources</b></a>
+						<a title='Zone resource record management' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=Resource&uZone={{uZone}}&uView={{uView}}'><b class ="font10pt">Resources</b></a>
 						</td>
 					</tr>
 				</table>

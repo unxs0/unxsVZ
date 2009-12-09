@@ -466,7 +466,7 @@ void SelectResource(void)
 				"tRRType.cParam2Tip,tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,"
 				"tRRType.cParam4Tip,tRRType.cNameLabel,tRRType.cNameTip,tResource.cParam3,"
 				"tResource.cParam4 FROM tResource,tRRType,tZone WHERE tZone.uZone=tResource.uZone "
-				"AND tResource.uRRType=tRRType.uRRType AND tZone.cZone='%u' AND "
+				"AND tResource.uRRType=tRRType.uRRType AND tZone.uZone='%u' AND "
 				"(tResource.uOwner=%u OR tResource.uOwner=%u) ORDER BY tRRType.uRRType,"
 				"tResource.cName LIMIT 1",guZone,guLoginClient,guOrg);
 	mysql_query(&gMysql,gcQuery);
