@@ -18,10 +18,10 @@
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Zone management' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=Zone&uZone={{uZone}}&uView={{uView}}'><b class ="font10pt">Zone</b></a>
+						<a title='Zone management' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=Zone&uZone={{uZone}}'><b class ="font10pt">Zone</b></a>
 						</td>
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='Zone resource record management' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=Resource&uZone={{uZone}}&uView={{uView}}'><b class ="font10pt">Resources</b></a>
+						<a title='Zone resource record management' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=Resource&uZone={{uZone}}'><b class ="font10pt">Resources</b></a>
 						</td>
 					</tr>
 				</table>
@@ -201,7 +201,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>
 	</td>
   </tr>
 </table>
-<input type=hidden name=cZone value='{{cZone}}'>
+<input type=hidden name=uZone value='{{uZone}}'>
 <input type=hidden name=gcPage value='BulkOp'>
 <input type=hidden name=uNameServer value='{{uNameServer}}'>
 </form>
