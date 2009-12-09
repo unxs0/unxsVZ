@@ -153,8 +153,7 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 
 void BulkResourceImport(void)
 {
-/*	char cLine[512]={"ERROR"};
-	char *cp;
+	char cLine[512]={"ERROR"};
 	unsigned uDebug=0;
 	unsigned uZoneOwner;
 	unsigned uNameServer;
@@ -195,7 +194,7 @@ void BulkResourceImport(void)
 			//If we have no defined zone keep on going.
 			if(!guZone) continue;
 			uZoneOwner=guOrg;
-			ProcessRRLine(cLine,cZone,uZone,uZoneOwner,uNameServer,guLoginClient,
+			ProcessRRLine(cLine,cZone,guZone,uZoneOwner,uNameServer,guLoginClient,
 				"BulkResourceImport()");
 			if(gcMessage[0])
 				htmlBulkOp();
@@ -206,14 +205,14 @@ void BulkResourceImport(void)
 				if(uOnlyOncePerZone && !uDebug)
 				{
 					time_t luClock;
-					uNameServer=uGetuNameServer(gcZone);
+					uNameServer=uGetuNameServer(cZone);
 					//Submit job for first RR. Time for now + 5 minutes
 					//This should allow for many more RRs to be added
 					//here without complicating the code. A KISS hack?
-					UpdateSerialNum(gcZone);
+					UpdateSerialNum(cZone);
 					time(&luClock);
 					luClock+=300;
-					OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock);
+					OrgSubmitJob("Modify",uNameServer,cZone,0,luClock);
 					uOnlyOncePerZone=0;
 				}
 
@@ -225,7 +224,7 @@ void BulkResourceImport(void)
 	//exit(0);
 	gcMessage=cMsg;
 	htmlBulkOp();
-*/
+
 }//void BulkResourceImport(void)
 
 

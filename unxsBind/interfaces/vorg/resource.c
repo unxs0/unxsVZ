@@ -74,6 +74,8 @@ unsigned OnLineZoneCheck(void);
 void CreatetResourceTest(void);
 void PrepareTestData(void);
 
+char *cGetViewLabel(void); //zone.c
+
 
 void ProcessResourceVars(pentry entries[], int x)
 {
@@ -272,8 +274,10 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			struct t_template template;
 			char cuResource[16];
 			char cuZone[16]={""};
+			char cZone[256]={""};
 
 			sprintf(cuZone,"%u",guZone);
+			sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
 
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
@@ -373,7 +377,13 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			template.cpName[31]="cParam1Style";
 			template.cpValue[31]=cParam1Style;			 						 
 			
-			template.cpName[32]="";
+			template.cpName[32]="cZone";
+			template.cpValue[32]=cZone;
+
+			template.cpName[33]="cZoneView";
+			template.cpValue[33]=cGetViewLabel();
+
+			template.cpName[34]="";
 
 			printf("\n<!-- Start htmlResourcePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
