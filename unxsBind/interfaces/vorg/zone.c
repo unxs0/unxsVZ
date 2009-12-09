@@ -84,7 +84,7 @@ char *cGetPendingJobs(void);
 unsigned uPTRInCIDR(unsigned uZone,char *cIPBlock);
 unsigned uPTRInBlock(unsigned uZone,unsigned uStart,unsigned uEnd);
 void htmlDelegationTool(void);
-void UpdateSerialNum(char *cZone);
+void UpdateSerialNum(void);
 char *ParseTextAreaLines(char *cTextArea);
 void PrepDelToolsTestData(unsigned uNumIPs);
 unsigned OnLineZoneCheck(void);
@@ -226,13 +226,15 @@ void ZoneCommands(pentry entries[], int x)
 			char cName[100]={""};
 			char cParam1[100]={""};
 			char cLogEntry[100]={""};
-			unsigned uZone=0;
 			unsigned uTTL=0;
 			unsigned uNameServer=0;
-			
+			time_t luClock;
+			char cZone[255]={""};
+
+			sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
+
 			SelectZone();
 
-			sscanf(cuZone,"%u",&uZone);
 			sscanf(cuTTL,"%u",&uTTL);
 			sscanf(cuNameServer,"%u",&uNameServer);
 
@@ -253,7 +255,7 @@ void ZoneCommands(pentry entries[], int x)
 			//remove extra spaces or any other junk in CIDR
 			sscanf(cIPBlock,"%s",gcQuery);
 			sprintf(cIPBlock,"%.99s",gcQuery);
-			//TODO	
+			
 			sscanf(cZone,"%u.%u.%u.in-addr.arpa",&uMc,&uMb,&uMa);
 
 			if(strchr(cIPBlock,'/'))
@@ -382,7 +384,7 @@ void ZoneCommands(pentry entries[], int x)
 				sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%s',uTTL=%u,uRRType=2,"
 						"cParam1='%s',cComment='Delegation (%s)',uOwner=%u,uCreatedBy=%u,"
 						"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						uZone
+						guZone
 						,cName
 						,uDelegationTTL
 						,cNS
@@ -417,7 +419,7 @@ void ZoneCommands(pentry entries[], int x)
 			sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,"
 					"cName='$GENERATE %u-%u $',uRRType=5,cParam1='%s',"
 					"cComment='Delegation (%s)',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					uZone
+					guZone
 					,uD
 					,(uD+uNumIPs)
 					,cParam1
@@ -427,14 +429,13 @@ void ZoneCommands(pentry entries[], int x)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
-			//TODO
-			/*UpdateSerialNum(gcZone);	
-			if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
+			UpdateSerialNum();	
+			if(OrgSubmitJob("Modify",uNameServer,cZone,0,luClock))
 				htmlPlainTextError(mysql_error(&gMysql));
-			*/
+			
 
 			sprintf(cLogEntry,"%s Delegation",cIPBlock);
-			iDNSLog(uZone,"tZone",cLogEntry);
+			iDNSLog(guZone,"tZone",cLogEntry);
 			gcMessage="IP block delegation done";
 			htmlDelegationTool();
 			
@@ -446,14 +447,15 @@ void ZoneCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Remove Del. Confirm"))
 		{
-			unsigned uZone=0;
 			unsigned uNameServer=0;
 			time_t luClock;
 			char cLogEntry[100]={""};
+			char cZone[255]={""};
 
 			time(&luClock);
+			sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
+
 			SelectZone();	
-			sscanf(cuZone,"%u",&uZone);
 			sscanf(cuNameServer,"%u",&uNameServer);
 			
 			if(!cIPBlock[0])
@@ -462,7 +464,7 @@ void ZoneCommands(pentry entries[], int x)
 				sprintf(gcNewStep," Confirm");
 				htmlDelegationTool();
 			}
-			sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%u AND cComment='Delegation (%s)'",uZone,cIPBlock);
+			sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%u AND cComment='Delegation (%s)'",guZone,cIPBlock);
 			mysql_query(&gMysql,gcQuery);
 			if(!mysql_affected_rows(&gMysql))
 			{
@@ -472,14 +474,13 @@ void ZoneCommands(pentry entries[], int x)
 			
 			if(mysql_errno(&gMysql))
 				 htmlPlainTextError(mysql_error(&gMysql));
-			//TODO
-			/*
-			UpdateSerialNum(gcZone);
-			if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
+
+			UpdateSerialNum();
+			if(OrgSubmitJob("Modify",uNameServer,cZone,0,luClock))
 				htmlPlainTextError(mysql_error(&gMysql));
-			*/
+			
 			sprintf(cLogEntry,"%s Delegation Removal",cIPBlock);
-			iDNSLog(uZone,"tZone",cLogEntry);
+			iDNSLog(guZone,"tZone",cLogEntry);
 			gcMessage="IP block delegation removed";
 			htmlDelegationTool();	
 		}
