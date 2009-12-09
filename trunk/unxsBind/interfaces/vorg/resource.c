@@ -61,7 +61,7 @@ unsigned SelectRRType(char *cRRType);
 void LoadRRTypeLabels(void);
 unsigned RRCheck(void);
 unsigned InMyBlocks(char *cIP);
-void UpdateSerialNum(char *cZone);
+void UpdateSerialNum(void);
 void LoadRRNoType(void);
 void MasterFunctionSelect(void);
 unsigned uRRExists(char *cZone,char *cRRType,char *cValue,char *cParam);
@@ -1270,17 +1270,16 @@ unsigned InMyBlocks(char *cIP)
 }//unsigned InMyBlocks(char *cIP)
 
 
-void UpdateSerialNum(char *cZone)
+void UpdateSerialNum(void)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	long unsigned luYearMonDay=0;
 	unsigned uSerial=0;
-	unsigned uZone=0;
 	char cSerial[16]={""};
 
 
-	sprintf(gcQuery,"SELECT uSerial,uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
+	sprintf(gcQuery,"SELECT uSerial FROM tZone WHERE uZone=%u",guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1288,7 +1287,6 @@ void UpdateSerialNum(char *cZone)
 	if((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uSerial);
-		sscanf(field[1],"%u",&uZone);
 	}
 	mysql_free_result(res);
 	
@@ -1300,9 +1298,9 @@ void UpdateSerialNum(char *cZone)
 	//to stay in correct date format. Will still increment even if>99 changes in one day
 	//but will be stuck until 1 day goes by with no changes.
 	if(uSerial<luYearMonDay)
-		sprintf(gcQuery,"UPDATE tZone SET uSerial=%s WHERE uZone=%u",cSerial,uZone);
+		sprintf(gcQuery,"UPDATE tZone SET uSerial=%s WHERE uZone=%u",cSerial,guZone);
 	else
-		sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1 WHERE uZone=%u",uZone);
+		sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1 WHERE uZone=%u",guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
