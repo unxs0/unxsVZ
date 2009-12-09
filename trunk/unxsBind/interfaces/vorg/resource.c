@@ -483,7 +483,7 @@ void SelectResource(void)
 		sprintf(cComment,"%.255s",field[5]);
 		sprintf(cuNameServer,"%.15s",field[6]);
 		sscanf(field[7],"%u",&uResource);
-		sscanf(field[8],"%u",&uZone);
+		sscanf(field[8],"%u",&guZone);
 		sprintf(cParam1Label,"%.32s",field[9]);
 		sprintf(cParam1Tip,"%.99s",field[10]);
 		sprintf(cParam2Label,"%.32s",field[11]);
@@ -501,7 +501,7 @@ void SelectResource(void)
 	else
 	{
 		mysql_free_result(res);
-		if(!strstr(gcZone,"in-addr.arpa"))//A RR and has rights via uOwner
+		if(!strstr(ForeignKey("tZone","cZone",guZone),"in-addr.arpa"))//A RR and has rights via uOwner
 			sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,"
 					"tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cParam3Label,"
 					"tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,"
@@ -524,7 +524,7 @@ void SelectResource(void)
 		{
 			sprintf(cRRType,"%.32s",field[0]);
 			sprintf(cuNameServer,"%.15s",field[1]);
-			sscanf(field[2],"%u",&uZone);
+			sscanf(field[2],"%u",&guZone);
 			sprintf(cParam1Label,"%.32s",field[3]);
 			sprintf(cParam1Tip,"%.99s",field[4]);
 			sprintf(cParam2Label,"%.32s",field[5]);
@@ -721,7 +721,10 @@ unsigned RRCheck(void)
 {
 	register int i;
 	unsigned a=0,b=0,c=0,d=0;	
-	
+	char cZone[256]={""};
+
+	sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
+
 	//For all types check here
 	//
 
@@ -764,13 +767,13 @@ unsigned RRCheck(void)
 	//2-. If it has a period must be full qually time
 	if(strchr(cName,'.'))
 	{
-		sprintf(gcQuery,"%.4095s.",gcZone);
+		sprintf(gcQuery,"%.4095s.",cZone);
 		if(strcmp(gcQuery,cName))
 		{
-			sprintf(gcQuery,".%.4095s.",gcZone);
+			sprintf(gcQuery,".%.4095s.",cZone);
 			if(!strstr(cName+(strlen(cName)-strlen(gcQuery)),gcQuery))
 			{
-				if(strstr(cName+strlen(cName)-strlen(gcZone),gcZone))
+				if(strstr(cName+strlen(cName)-strlen(cZone),cZone))
 				{
 					strcat(cName,".");
 					gcMessage="<blink>We have added a final period. If this correct confirm</blink>";
@@ -807,7 +810,7 @@ unsigned RRCheck(void)
 		cParam2[0]=0;
 
 		////Ticket #323 CNAME record pointing to itself
-		if(!cName[0] && !strcmp(gcZone,cParam1))
+		if(!cName[0] && !strcmp(cZone,cParam1))
 		{
 			gcMessage="<blink>Can't create a CNAME record pointing to itself</blink>";
 			cParam1Style="type_fields_req";
@@ -818,7 +821,7 @@ unsigned RRCheck(void)
 		//don't allow same name CNAME records
 		if(strcmp(gcFunction,"Modify Confirm")) 
 		{
-			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u AND uRRType=5",cName,uGetuZone(gcZone));
+			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u AND uRRType=5",cName,uGetuZone(cZone));
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -834,7 +837,7 @@ unsigned RRCheck(void)
 		
 		if(!cParam1[0])
 		{
-			sprintf(cParam1,"%.99s.",gcZone);
+			sprintf(cParam1,"%.99s.",cZone);
 			sprintf(gcQuery,"<blink>%s is required. Common CNAME default entry made for you, check/change if needed</blink>",cParam1Label);
 			gcMessage=gcQuery;
 			cParam1Style="type_fields_req";
@@ -851,7 +854,7 @@ unsigned RRCheck(void)
 			FQDomainName(cParam1);
 
 			//Ticket #323 CNAME record pointing to itself
-			if(!strcmp(cName,cParam1) || !strcmp(gcZone,cParam1))
+			if(!strcmp(cName,cParam1) || !strcmp(cZone,cParam1))
 			{
 				gcMessage="<blink>Can't create a CNAME record pointing to itself</blink>";
 				cParam1Style="type_fields_req";
@@ -889,7 +892,7 @@ unsigned RRCheck(void)
 
 				if(cParam1[strlen(cParam1)-1]!='.')
 				{
-					sprintf(cParam1Temp,"%.49s.%.49s.",cParam1,gcZone);
+					sprintf(cParam1Temp,"%.49s.%.49s.",cParam1,cZone);
 					sprintf(cParam1,"%.99s",cParam1Temp);
 				}
 				if(strcmp(cParam1,cParam1Save))
@@ -908,7 +911,7 @@ unsigned RRCheck(void)
 	else if(!strcmp(cRRType,"A"))
 	{
 
-		if(!strcmp(gcZone+strlen(gcZone)-5,".arpa"))
+		if(!strcmp(cZone+strlen(cZone)-5,".arpa"))
 		{
 			gcMessage="<blink>Can not add A records to arpa zones</blink>";
 			return(6);
@@ -932,7 +935,7 @@ unsigned RRCheck(void)
 			return(7);
 		}
 
-		if(uRRExists(gcZone,cRRType,cName,cParam1))
+		if(uRRExists(cZone,cRRType,cName,cParam1))
 		{
 			gcMessage="<blink>Resource record already exists</blink>";
 			cParam1Style="type_fields_req";
@@ -947,7 +950,7 @@ unsigned RRCheck(void)
 		unsigned uPtr=0;
 		unsigned uPtrLen=strlen(cName);
 		//We only allow simple classC in-addr PTR
-		if(strstr(gcZone,"in-addr.arpa"))
+		if(strstr(cZone,"in-addr.arpa"))
 		{
 			sscanf(cName,"%u",&uPtr);
 			sprintf(cName,"%u",uPtr);
@@ -976,7 +979,7 @@ unsigned RRCheck(void)
 			return(8);
 			}
 
-			sscanf(gcZone,"%u.%u.%u.in-adddr.arpa",&c,&b,&a);
+			sscanf(cZone,"%u.%u.%u.in-adddr.arpa",&c,&b,&a);
 			if(!a)
 			{
 			sprintf(gcQuery,
@@ -986,7 +989,7 @@ unsigned RRCheck(void)
 			return(8);
 			}
 
-			if(uRRExists(gcZone,cRRType,cName,cParam1))
+			if(uRRExists(cZone,cRRType,cName,cParam1))
 			{
 			gcMessage="<blink>Resource record already exists</blink>";
 			cNameStyle="type_fields_req";
@@ -1019,7 +1022,7 @@ unsigned RRCheck(void)
 	}
 	else if(!strcmp(cRRType,"MX"))
 	{
-		if(!strcmp(gcZone+strlen(gcZone)-5,".arpa"))
+		if(!strcmp(cZone+strlen(cZone)-5,".arpa"))
 		{
 			gcMessage="<blink>Can not add MX records to arpa zones</blink>";
 			return(9);
@@ -1059,9 +1062,9 @@ unsigned RRCheck(void)
 		FQDomainName(cParam1);
 		if(cParam1[strlen(cParam1)-1]!='.') strcat(cParam1,".");
 
-		if(strcmp(gcZone+strlen(gcZone)-5,".arpa"))
+		if(strcmp(cZone+strlen(cZone)-5,".arpa"))
 		{
-			sprintf(cName,"%.255s.",gcZone);
+			sprintf(cName,"%.255s.",cZone);
 		}
 		//else no other rules for arpa zone for now TODO
 	}
@@ -1181,7 +1184,7 @@ unsigned RRCheck(void)
 			return(16);                          
 		}
 
-		if((strstr(cName,gcZone)==NULL))
+		if((strstr(cName,cZone)==NULL))
 		{
 			gcMessage="Must include zone name in service parameter. E.g.: _sip._tcp.example.com.</blink>";
 			cNameStyle="type_fields_req";
@@ -1313,14 +1316,14 @@ void funcSelectRRType(FILE *fp, unsigned uUseStatus)
 		fprintf(fp,"onChange='submit()'>\n");
 
 	//Only allow PTR RRs
-	if(strstr(gcZone,"in-addr.arpa"))
+	if(strstr(ForeignKey("tZone","cZone",guZone),"in-addr.arpa"))
 	{
 		if(guBrowserFirefox)
 		{
 	if(uStep)
-		fprintf(fp,"<option value='&cRRType=PTR&cZone=%s&gcFunction=%s&uResource=%u&uStep=%u'",gcZone,gcFunction,uResource,uStep);
+		fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",guZone,gcFunction,uResource,uStep);
 	else
-		fprintf(fp,"<option value='&cRRType=PTR&cZone=%s&gcFunction=%s&uResource=%u'",gcZone,gcFunction,uResource);
+		fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u'",guZone,gcFunction,uResource);
 		}
 		else
 		{
@@ -1329,9 +1332,9 @@ void funcSelectRRType(FILE *fp, unsigned uUseStatus)
 			else if(!strcmp(gcFunction,"Modify"))
 				sprintf(gcFunction,"Modify Confirm");
 	if(uStep)
-		fprintf(fp,"<option value='&cRRType=PTR&cZone=%s&gcFunction=%s&uResource=%u&uStep=%u'",gcZone,gcFunction,uResource,uStep);
+		fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",guZone,gcFunction,uResource,uStep);
 	else
-		fprintf(fp,"<option value='&cRRType=PTR&cZone=%s&gcFunction=%s&uResource=%u'",gcZone,gcFunction,uResource);
+		fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u'",guZone,gcFunction,uResource);
 }
 		if(!strcmp(cRRType,"PTR"))
 			fprintf(fp,"selected");
@@ -1355,9 +1358,9 @@ void funcSelectRRType(FILE *fp, unsigned uUseStatus)
 			if(guBrowserFirefox)			
 			{
 	if(uStep)
-		fprintf(fp,"<option value='&cRRType=%s&cZone=%s&gcFunction=%s&uResource=%u&uStep=%u'",field[0],gcZone,gcFunction,uResource,uStep);
+		fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",field[0],guZone,gcFunction,uResource,uStep);
 	else
-		fprintf(fp,"<option value='&cRRType=%s&cZone=%s&gcFunction=%s&uResource=%u'",field[0],gcZone,gcFunction,uResource);
+		fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u'",field[0],guZone,gcFunction,uResource);
 			}
 			else
 			{
@@ -1366,9 +1369,9 @@ void funcSelectRRType(FILE *fp, unsigned uUseStatus)
 				else if(!strcmp(gcFunction,"Modify"))
 					sprintf(gcFunction,"Modify Confirm");
 	if(uStep)				
-		fprintf(fp,"<option value='&cRRType=%s&cZone=%s&gcFunction=%s&uResource=%u&uStep=%u'",field[0],gcZone,gcFunction,uResource,uStep);
+		fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",field[0],guZone,gcFunction,uResource,uStep);
 	else
-		fprintf(fp,"<option value='&cRRType=%s&cZone=%s&gcFunction=%s&uResource=%u'",field[0],gcZone,gcFunction,uResource);
+		fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u'",field[0],guZone,gcFunction,uResource);
 			}
 			if(!strcmp(cRRType,field[0]))
 				fprintf(fp,"selected");
@@ -1441,6 +1444,33 @@ void LoadRRNoType(void)
 }//void LoadRRNoType(void)
 
 
+void SubmitModifyJob(void)
+{
+	time_t luClock;
+	unsigned uNameServer=0;
+	char cZone[256]={""};
+
+	sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
+	time(&luClock);
+
+	sprintf(gcInputStatus,"disabled");
+	if(cuNameServer[0])
+		sscanf(cuNameServer,"%u",&uNameServer);
+	else if(guZone)
+		uNameServer=uGetuNameServer(cZone);
+	
+	if(uNameServer)
+	{
+		//TODO
+	//	UpdateSerialNum(gcZone);
+		if(OrgSubmitJob("Modify",uNameServer,cZone,0,luClock))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+	else
+		gcMessage="<blink>Contact admin: uNameServer error (mod)</blink>";
+}//void SubmitModifyJob(void)
+
+
 void MasterFunctionSelect(void)
 {
 	if(!strcmp(gcFunction,"Modify"))
@@ -1484,32 +1514,8 @@ void MasterFunctionSelect(void)
 			ResourceSetFieldsOn();
 		}
 		else
-		{
-			time_t luClock;
-			unsigned uNameServer=0;
-
-			time(&luClock);
-
-			sprintf(gcInputStatus,"disabled");
-			if(cuNameServer[0])
-			{
-				sscanf(cuNameServer,"%u",&uNameServer);
-			}
-			else if(gcZone[0])
-			{
-				uNameServer=uGetuNameServer(gcZone);
-			}
-			if(uNameServer)
-			{
-				UpdateSerialNum(gcZone);
-				if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
-					htmlPlainTextError(mysql_error(&gMysql));
-			}
-			else
-			{
-				gcMessage="<blink>Contact admin: uNameServer error (mod)</blink>";
-			}
-		}
+			SubmitModifyJob();
+		
 		htmlResource();
 	}
 	else if(!strcmp(gcFunction,"New Confirm"))
@@ -1523,32 +1529,8 @@ void MasterFunctionSelect(void)
 			ResourceSetFieldsOn();
 		}
 		else
-		{
-			time_t luClock;
-			unsigned uNameServer=0;
+			SubmitModifyJob();
 
-			time(&luClock);
-
-			sprintf(gcInputStatus,"disabled");
-			if(cuNameServer[0])
-			{
-				sscanf(cuNameServer,"%u",&uNameServer);
-			}
-			else if(gcZone[0])
-			{
-				uNameServer=uGetuNameServer(gcZone);
-			}
-			if(uNameServer)
-			{
-				UpdateSerialNum(gcZone);
-				if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
-					htmlPlainTextError(mysql_error(&gMysql));
-			}
-			else
-			{
-				gcMessage="<blink>Contact admin: uNameServer error (new)</blink>";
-			}
-		}
 		htmlResource();
 	}
 	else if(!strcmp(gcFunction,"Delete Confirm"))
@@ -1561,32 +1543,8 @@ void MasterFunctionSelect(void)
 			gcInputStatus[0]=0;
 		}
 		else
-		{
-			time_t luClock;
-			unsigned uNameServer=0;
+			SubmitModifyJob();
 
-			time(&luClock);
-
-			sprintf(gcInputStatus,"disabled");
-			if(cuNameServer[0])
-			{
-				sscanf(cuNameServer,"%u",&uNameServer);
-			}
-			else if(gcZone[0])
-			{
-				uNameServer=uGetuNameServer(gcZone);
-			}
-			if(uNameServer)
-			{
-				UpdateSerialNum(gcZone);
-				if(OrgSubmitJob("Modify",uNameServer,gcZone,0,luClock))
-					htmlPlainTextError(mysql_error(&gMysql));
-			}
-			else
-			{
-				gcMessage="<blink>Contact admin: uNameServer error (del)</blink>";
-			}
-		}
 		LoadRRTypeLabels();
 		htmlResource();
 	}
