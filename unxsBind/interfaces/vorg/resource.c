@@ -130,6 +130,8 @@ void ProcessResourceVars(pentry entries[], int x)
 			sprintf(cuNameServer,"%.15s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uStep"))
 			sscanf(entries[i].val,"%u",&uStep);
+		else if(!strcmp(entries[i].name,"uView"))
+			sscanf(entries[i].val,"%u",&guView);
 	}
 
 	if(!guBrowserFirefox && cRRType[0])
