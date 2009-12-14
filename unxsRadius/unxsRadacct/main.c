@@ -681,7 +681,8 @@ void ConnectDb(void)
         if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT0,DBSOCKET,0))
         {
 		if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT1,DBSOCKET,0))
-	                unxsRadacct("Database server unavailable. Did you run unxsRadacct.cgi Initialize &lt;mysqlpwd&gt;?");
+			printf("Content-type: text/plain\n\n%s",mysql_error(&gMysql)); exit(0);
+	                //unxsRadacct("Database server unavailable. Did you run unxsRadacct.cgi Initialize &lt;mysqlpwd&gt;?");
         }
 
 }//end of ConnectDb()

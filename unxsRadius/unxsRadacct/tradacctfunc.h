@@ -166,6 +166,13 @@ void ExttRadacctListSelect(void)
                                                 gcCommand);
                 strcat(gcQuery,cCat);
         }
+	else if(!strcmp(gcFilter,"cIP"))
+	{
+		strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tRadacct.cIP LIKE '%s%%' ORDER BY cCallerID",
+						gcCommand);
+		strcat(gcQuery,cCat);
+	}
         else if(1)
         {
                 //None NO FILTER
@@ -191,6 +198,11 @@ void ExttRadacctListFilter(void)
                 printf("<option>cCallerID</option>");
         else
                 printf("<option selected>cCallerID</option>");
+	
+	if(strcmp(gcFilter,"cIP"))
+		printf("<option>cIP</option>");
+	else
+		printf("<option selected></option>");
 
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
