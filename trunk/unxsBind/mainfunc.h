@@ -65,6 +65,7 @@ void AssociateRegistrarsZones(void);
 void MassZoneUpdate(void);
 void MassZoneNSUpdate(char *cLabel);
 
+void FixBlockOwnership(void);
 void ImportSORRs(void);
 void CheckAllZones(void);
 
@@ -820,6 +821,7 @@ void PrintUsage(char *arg0)
 	printf("\tCompareZones <DNS server1 IP> <DNS server2 IP> [<uOwner>]\n");
 	printf("\tImportSORRs\n");
 	printf("\tExportRRCSV <company> [out file] <mysql root passwd>\n");
+	printf("\tFixBlockOwnership\n");
 	printf("\n");
 	exit(0);
 
@@ -986,6 +988,12 @@ void ExtMainShell(int argc, char *argv[])
 		{
 			TextConnectDb();
 			CheckAllZones();
+			exit(0);
+		}
+		else if(!strcmp(argv[1],"FixBlockOwnership"))
+		{
+			TextConnectDb();
+			FixBlockOwnership();
 			exit(0);
 		}
 	}

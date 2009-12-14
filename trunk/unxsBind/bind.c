@@ -3853,4 +3853,88 @@ void ExportRRCSV(char *cCompany, char *cOutFile)
 
 }//void ExportRRCSV(char *cCompany)
 
+void FixBlockOwnership(void)
+{
+	//This function will go through tBlock and fix all PTR record ownership issues if any.
+	unsigned uA=0;
+	unsigned uB=0;
+	unsigned uC=0;
+	unsigned uD=0;
+	unsigned uE=0;
+	unsigned uNumIPs=0;
+	unsigned uBlockEnd=0;
+	unsigned uI=0;
+	char cZone[256]={""};
+	unsigned uCounter=0;
+	
+	MYSQL_RES *res;
+	MYSQL_RES *res2;
+	MYSQL_ROW field2;
+
+	sprintf(gcQuery,"SELECT uOwner,cLabel FROM tBlock");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		exit(0);
+	}
+
+	res2=mysql_store_result(&gMysql);
+
+	while((field2=mysql_fetch_row(res2)))
+	{
+		uCounter=0;
+		printf("Block %s\n",field2[1]);
+		sscanf(field2[1],"%u.%u.%u.%u/%u",&uA,&uB,&uC,&uD,&uE);
+			
+		if(!uA)
+		{
+			printf("IP Block incorrect format\n");
+			continue;
+		}
+		if((uA>255)||(uB>255)||(uC>255)||(uD>255))
+		{
+			printf("IP Block incorrect format\n");
+			continue;
+		}
+
+		sprintf(cZone,"%u.%u.%u.in-addr.arpa",uC,uB,uA);
+		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s'",cZone);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			fprintf(stderr,"%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res))
+		{
+			MYSQL_ROW field;
+			uNumIPs=uGetNumIPs(field2[1]);
+			uNumIPs+=2; //Add broadcast and router
+			uBlockEnd=uD+uNumIPs;
+
+			//Loop is for handling all zone views
+			while((field=mysql_fetch_row(res)))
+			{
+				for(uI=uD;uI<uBlockEnd;uI++)
+				{
+					sprintf(gcQuery,"UPDATE tResource SET uOwner=%s "
+							"WHERE cName='%i' AND uZone='%s' "
+							"AND uRRType=7",
+							field2[0]
+							,uI
+							,field[0]
+							);
+					//printf("%s\n",gcQuery);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					uCounter+=mysql_affected_rows(&gMysql);
+				}
+			}
+		}	
+		printf("%u RRs updated\n",uCounter);
+	}
+}//void FixBlockOwnership(void)
 
