@@ -98,6 +98,8 @@ void CloneReport(const char *cOptionalMsg)
         MYSQL_ROW mysqlField2;
 
 	char cuContainer[16];
+	unsigned uContainer;
+	char cuSyncPeriod[16];
 	char *cColor;
 
 	//To handle error messages etc.
@@ -109,7 +111,7 @@ void CloneReport(const char *cOptionalMsg)
 
 	OpenFieldSet("CloneReport",100);
 
-	OpenRow("No Clone Containers","black");
+	OpenRow("<u>Not Being Cloned Containers</u>","black");
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
 				" uSource=0 AND (uStatus=1 OR uStatus=31) ORDER BY cLabel,uDatacenter,uNode");
 	macro_mySQLQueryErrorText
@@ -130,12 +132,23 @@ void CloneReport(const char *cOptionalMsg)
 		if(!cuContainer[0])
 		{
 
-			printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
+			printf("<tr><td></td><td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
+				"<td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",mysqlField[2],
 					mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField[4]);
+		}
+		else
+		{
+			cuSyncPeriod[0]=0;
+			sscanf(mysqlField2[2],"%u",&uContainer);
+			GetContainerProp(uContainer,"cuSyncPeriod",cuSyncPeriod);
+			if(cuSyncPeriod[0] && cuSyncPeriod[0]=='0')
+				printf("<tr><td>Clone w/cuSyncPeriod=0</td><td>"
+					"<a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>%s<a></td>"
+					"<td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",uContainer,
+						mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField[4]);
 		}
 	}
 	mysql_free_result(mysqlRes);
-
 
 	CloseFieldSet();
 
@@ -162,11 +175,12 @@ void ContainerReport(const char *cOptionalMsg)
 
 	OpenFieldSet("ContainerReport",100);
 
-	OpenRow("Container Comparison Report","black");
+	OpenRow("<u>Container Comparison Report</u>","black");
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter,uStatus FROM tContainer "
 				" ORDER BY cLabel,uDatacenter,uNode");
 	macro_mySQLQueryErrorText
-	printf("</td></tr><tr><td></td><td><u>uContainer</u></td><td><u>cLabel</u></td><td><u>cHostname</u>"
+	printf("</td></tr><tr><td>(requires new veinfo.uProcesses)</td><td><u>uContainer</u></td><td><u>cLabel</u></td>"
+		"<td><u>cHostname</u>"
 		"</td><td><u>Status</u><td><u>Processes</u><td><u>uStatus</u></td></td><td><u>uNode</td>"
 		"<td><u>uDatacenter</u></td>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
@@ -181,29 +195,32 @@ void ContainerReport(const char *cOptionalMsg)
 		if(!uContainer) continue;
 
 		GetContainerProp(uContainer,"veinfo.uProcesses",cuProcesses);
-		uProcesses=0;
-		sscanf(cuProcesses,"%u",&uProcesses);
+		if(cuProcesses[0])
+		{
+			uProcesses=0;
+			sscanf(cuProcesses,"%u",&uProcesses);
 
-		if(uProcesses && uStatus==1)
-			sprintf(cStatus,"Running");
-		else if(uProcesses==0 && uStatus==31)
-			sprintf(cStatus,"Stopped");
-		else if(uProcesses && uStatus==31)
-			sprintf(cStatus,"<font color=red>Inconsistency: Running but should not be!</font>");
-		else if(uProcesses==0 && uStatus==1)
-			sprintf(cStatus,"<font color=red>Inconsistency: Stopped but should not be!</font>");
-		else if(uProcesses && uStatus!=1)
-			sprintf(cStatus,"Transitional state");
-		else if(1)
-			sprintf(cStatus,"Unexpected status");
-
-		printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%u</td><td>%u</td><td>%s</td>"
-					"<td>%s</td>\n",
-					mysqlField[2],mysqlField[0],mysqlField[1],
-					cStatus,
-					uProcesses,
-					uStatus,
-					mysqlField[3],mysqlField[4]);
+			if(uProcesses && uStatus==1)
+				sprintf(cStatus,"Running");
+			else if(uProcesses==0 && uStatus==31)
+				sprintf(cStatus,"Stopped");
+			else if(uProcesses && uStatus==31)
+				sprintf(cStatus,"<font color=red>Inconsistency: Running but should not be!</font>");
+			else if(uProcesses==0 && uStatus==1)
+				sprintf(cStatus,"<font color=red>Inconsistency: Stopped but should not be!</font>");
+			else if(uProcesses && uStatus!=1)
+				sprintf(cStatus,"Transitional state");
+			else if(1)
+				sprintf(cStatus,"Unexpected status");
+	
+			printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%u</td><td>%u</td><td>%s</td>"
+						"<td>%s</td>\n",
+						mysqlField[2],mysqlField[0],mysqlField[1],
+						cStatus,
+						uProcesses,
+						uStatus,
+						mysqlField[3],mysqlField[4]);
+		}
 	}
 	mysql_free_result(mysqlRes);
 
