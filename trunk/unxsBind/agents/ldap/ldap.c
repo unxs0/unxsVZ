@@ -30,9 +30,12 @@ int main(int iArgc, char *cArgv[])
 	char *cURI="ldap://localhost";
 	int iDesiredVersion=LDAP_VERSION3;
 	struct berval structBervalCredentials;
-	//char *root_dn="cn=Manager,dc=unixservice,dc=com";
-	char *root_dn="dc=unixservice,dc=com";
-	char *root_pw="{SSHA}Yw7PUbOuRfnT3wP/F8YsurZVLKQRhgHG";
+
+	if(iArgc!=3)
+	{
+		printf("usage %s: <dn> <userPassword>\n",cArgv[0]);
+		exit(0);
+	}
 /*
 	int  result;
 	int  auth_method = LDAP_AUTH_SIMPLE;
@@ -70,9 +73,10 @@ int main(int iArgc, char *cArgv[])
 	//Connect/bind to LDAP server
 	//if(ldap_bind_s(ld,root_dn,root_pw,auth_method)!=LDAP_SUCCESS)
 
-	structBervalCredentials.bv_val=root_pw;
-	structBervalCredentials.bv_len=strlen(root_pw);
-	if(ldap_sasl_bind_s(ld,root_dn,LDAP_SASL_SIMPLE,&structBervalCredentials,NULL,NULL,NULL)!=LDAP_SUCCESS)
+	structBervalCredentials.bv_val=cArgv[2];
+	structBervalCredentials.bv_len=strlen(cArgv[2]);
+	//if(ldap_sasl_bind_s(ld,root_dn,LDAP_SASL_SIMPLE,&structBervalCredentials,NULL,NULL,NULL)!=LDAP_SUCCESS)
+	if(ldap_sasl_bind_s(ld,cArgv[1],NULL,&structBervalCredentials,NULL,NULL,NULL)!=LDAP_SUCCESS)
 		ldapErrorExit("ldap_sasl_bind_s()",ld);
 	//debug only
 	printf("ldap_sasl_bind_s() ok\n");
