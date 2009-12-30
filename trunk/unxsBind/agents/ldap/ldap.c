@@ -29,11 +29,13 @@ int main(int iArgc, char *cArgv[])
 	LDAP *ld;
 	char *cURI="ldap://localhost";
 	int iDesiredVersion=LDAP_VERSION3;
+	struct berval structBervalCredentials;
+	//char *root_dn="cn=Manager,dc=unixservice,dc=com";
+	char *root_dn="dc=unixservice,dc=com";
+	char *root_pw="{SSHA}Yw7PUbOuRfnT3wP/F8YsurZVLKQRhgHG";
 /*
 	int  result;
 	int  auth_method = LDAP_AUTH_SIMPLE;
-	char *root_dn = "dc=unixservice,dc=com";
-	char *root_pw = "secret";
 
 	BerElement* ber;
 	LDAPMessage* msg;
@@ -48,31 +50,34 @@ int main(int iArgc, char *cArgv[])
 	int i;
 */
 
-	//Connect to LDAP server
+	//Initialize LDAP data structure
 	ldap_initialize(&ld,cURI);
 	if(ld==NULL)
 	{
 		perror("ldap_initialize() failed");
 		exit(EXIT_FAILURE);
 	}
-
 	//debug only
 	printf("ldap_initialize() ok\n");
 
 	//set the LDAP version to be 3
 	if(ldap_set_option(ld,LDAP_OPT_PROTOCOL_VERSION,&iDesiredVersion)!=LDAP_OPT_SUCCESS)
 		ldapErrorExit("ldap_set_option()",ld);
-
 	//debug only
 	printf("ldap_set_option() for LDAP v%d ok\n",iDesiredVersion);
 
 
-#ifdef CODESEGOFF
-   if (ldap_bind_s(ld, root_dn, root_pw, auth_method) != LDAP_SUCCESS ) {
-      ldap_perror( ld, "ldap_bind" );
-      exit( EXIT_FAILURE );
-   }
+	//Connect/bind to LDAP server
+	//if(ldap_bind_s(ld,root_dn,root_pw,auth_method)!=LDAP_SUCCESS)
 
+	structBervalCredentials.bv_val=root_pw;
+	structBervalCredentials.bv_len=strlen(root_pw);
+	if(ldap_sasl_bind_s(ld,root_dn,LDAP_SASL_SIMPLE,&structBervalCredentials,NULL,NULL,NULL)!=LDAP_SUCCESS)
+		ldapErrorExit("ldap_sasl_bind_s()",ld);
+	//debug only
+	printf("ldap_sasl_bind_s() ok\n");
+
+#ifdef CODESEGOFF
    if (ldap_search_s(ld, base, LDAP_SCOPE_SUBTREE, filter, NULL, 0, &msg) != LDAP_SUCCESS) {
       ldap_perror( ld, "ldap_search_s" );
       exit(EXIT_FAILURE);
@@ -130,7 +135,7 @@ void ldapErrorExit(char *cMessage,LDAP *ld)
 	int iResultCode;
 
 	ldap_get_option(ld,LDAP_OPT_RESULT_CODE,&iResultCode);
-	fprintf(stderr,"%s: %s",cMessage,ldap_err2string(iResultCode));
+	fprintf(stderr,"%s: %s\n",cMessage,ldap_err2string(iResultCode));
 	
 	exit(EXIT_FAILURE);
 
