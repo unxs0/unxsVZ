@@ -368,8 +368,9 @@ void ExttZoneCommands(pentry entries[], int x)
 				res=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res))
 				{
-					tZone("cZone/uView already used!");
+					guMode=2000;
 					mysql_free_result(res);
+					tZone("<blink>Error: </blink>cZone/uView already used!");
 				}
                                 mysql_free_result(res);
 
