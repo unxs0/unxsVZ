@@ -13,6 +13,11 @@ AUTHOR
 
 NOTES
 	Starting out very simple.
+
+EXAMPLE USAGE
+	/usr/sbin/unxsLDAP 'cn=Dylan Wallis,dc=unixservice,dc=com' 'secret' \
+				'(objectClass=inetOrgPerson)' 'dc=unixservice,dc=com'
+
 */
 
 #include <stdio.h>
@@ -31,24 +36,26 @@ int main(int iArgc, char *cArgv[])
 	int iDesiredVersion=LDAP_VERSION3;
 	struct berval structBervalCredentials;
 	char *cFilter="(objectClass=*)";
+	char *cSearchDN="dc=unixservice,dc=com";
 	LDAPMessage *ldapMsg;
+	LDAPMessage *ldapEntry;
 	struct berval **structBervals;
+	BerElement *berElement;
+	int  iRes,i;
+	char *cpDN=NULL;
+	char *cpAttr;
 
-	int  result;
-	BerElement* ber;
-	LDAPMessage* entry;
-	char* dn = NULL;
-	char* attr;
-	int i;
-
-	if(iArgc<3 || iArgc>4)
+	if(iArgc<3 || iArgc>5)
 	{
-		printf("usage %s: <dn> <userPassword> [<cFilter>]\n",cArgv[0]);
+		printf("usage %s: <cLoginDN> <cLoginPassword> [<cFilter>] [<cSearchDN>]\n",cArgv[0]);
 		exit(0);
 	}
 
-	if(iArgc==4)
+	if(iArgc>=4)
 		cFilter=cArgv[3];
+
+	if(iArgc==5)
+		cSearchDN=cArgv[4];
 
 	//Initialize LDAP data structure
 	ldap_initialize(&ld,cURI);
@@ -70,49 +77,49 @@ int main(int iArgc, char *cArgv[])
 	//Connect/bind to LDAP server
 	structBervalCredentials.bv_val=cArgv[2];
 	structBervalCredentials.bv_len=strlen(cArgv[2]);
-	//if(ldap_sasl_bind_s(ld,root_dn,LDAP_SASL_SIMPLE,&structBervalCredentials,NULL,NULL,NULL)!=LDAP_SUCCESS)
 	if(ldap_sasl_bind_s(ld,cArgv[1],NULL,&structBervalCredentials,NULL,NULL,NULL)!=LDAP_SUCCESS)
 		ldapErrorExit("ldap_sasl_bind_s()",ld);
 	//debug only
 	printf("ldap_sasl_bind_s() ok\n");
 
-	//ldap_search_ext_s(ldap, base, scope, filter, attrs, attrsonly, NULL, NULL, NULL, 0, res);
-	if(ldap_search_ext_s(ld,cArgv[1],LDAP_SCOPE_SUBTREE,cFilter,NULL,0,NULL,NULL,NULL,0,&ldapMsg)!=LDAP_SUCCESS)
+	//Initiate sync search
+	if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_SUBTREE,cFilter,NULL,0,NULL,NULL,NULL,0,&ldapMsg)!=LDAP_SUCCESS)
 		ldapErrorExit("ldap_search_ext_s()",ld);
 	//debug only
-	printf("ldap_search_ext_s() ok\n");
-	printf("The number of entries returned was %d\n\n",ldap_count_entries(ld,ldapMsg));
+	printf("ldap_search_ext_s() ok. Returned %d entries\n\n",ldap_count_entries(ld,ldapMsg));
 
 	//Iterate through the returned entries
-	for(entry=ldap_first_entry(ld,ldapMsg);entry!=NULL;entry=ldap_next_entry(ld,entry))
+	for(ldapEntry=ldap_first_entry(ld,ldapMsg);ldapEntry!=NULL;ldapEntry=ldap_next_entry(ld,ldapEntry))
 	{
 
-		if((dn=ldap_get_dn(ld,entry))!= NULL)
+		if((cpDN=ldap_get_dn(ld,ldapEntry))!= NULL)
 		{
-			printf("Returned dn: %s\n", dn);
-			ldap_memfree(dn);
+			printf("Returned dn: %s\n",cpDN);
+			ldap_memfree(cpDN);
 		}
 
-		for(attr=ldap_first_attribute(ld,entry,&ber);attr!=NULL;attr=ldap_next_attribute(ld,entry,ber))
+		for(cpAttr=ldap_first_attribute(ld,ldapEntry,&berElement);cpAttr!=NULL;
+					cpAttr=ldap_next_attribute(ld,ldapEntry,berElement))
 		{
-			if((structBervals=ldap_get_values_len(ld,entry,attr))!=NULL)
+			if((structBervals=ldap_get_values_len(ld,ldapEntry,cpAttr))!=NULL)
 			{
 				for(i=0;structBervals[i]!=NULL;i++)
-					printf("%s: %s\n",attr,structBervals[i]->bv_val);
+					printf("%s: %s\n",cpAttr,structBervals[i]->bv_val);
 				ldap_value_free_len(structBervals);
 			}
-			ldap_memfree(attr);
+			ldap_memfree(cpAttr);
 		}
 
-		if(ber!=NULL)
-			ber_free(ber,0);
+		if(berElement!=NULL)
+			ber_free(berElement,0);
 
 		printf("\n");
 	}
 
+	//Cleanup (TODO is ldapEntry mem cleaned above? Check)
 	ldap_msgfree(ldapMsg);
-	result=ldap_unbind_ext_s(ld,NULL,NULL);
-	if(result!=0)
+	iRes=ldap_unbind_ext_s(ld,NULL,NULL);
+	if(iRes!=0)
 		ldapErrorExit("ldap_unbind_s()",ld);
 
 	return(EXIT_SUCCESS);
