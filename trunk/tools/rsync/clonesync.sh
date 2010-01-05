@@ -49,7 +49,7 @@ if [ $? != 0 ];then
 	if [ ! -d "/vz/private/$1" ]; then
 		fLog "dir /vz/private/$1 does not exist";
 		#rollback
-		rm -r $cLockfile;
+		rm -f $cLockfile;
 		exit 1;
 	fi
 
@@ -60,7 +60,7 @@ fi
 if [ $? != 0 ];then
 	fLog "/usr/bin/ssh $3 ls /vz/private/$2 failed";
 	#rollback
-	rm -r $cLockfile;
+	rm -f $cLockfile;
 	exit 2;
 fi
 
@@ -76,10 +76,12 @@ fi
 			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:1 \
 			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:2 \
 			/vz/private/$1/ $3:/vz/private/$2
-if [ $? != 0 ];then
+#we can ignore return value 24:
+#rsync warning: some files vanished before they could be transferred (code 24) at main.c(892) [sender=2.6.8]
+if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync failed";
 	#rollback
-	rm -r $cLockfile;
+	rm -f $cLockfile;
 	exit 3;
 else
 	#remove lock file
