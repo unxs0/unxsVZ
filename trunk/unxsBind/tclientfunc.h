@@ -6,7 +6,7 @@ PURPOSE
 AUTHOR
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
+	(C) 2001-20010 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 */
 
 #define BO_CUSTOMER	"Back-Office Customer"
@@ -55,7 +55,7 @@ unsigned uMaxClientsReached(unsigned uClient);
 void tTablePullDownResellers(unsigned uSelector);
 void ContactsNavList(void);
 void htmlRecordContext(void);
-
+void tClientNavList(void);
 
 void ExtProcesstClientVars(pentry entries[], int x)
 {
@@ -398,7 +398,7 @@ void ExttClientButtons(void)
 					printf("checked><br>");
 				else
 					printf("><br>");
-
+				tClientNavList();
 				htmlRecordContext();
 			}
 
@@ -881,3 +881,39 @@ void htmlRecordContext(void)
 				" create ASP level companies. Make sure the passwd is changed"
 				" regularly via the tAuthorize table.");
 }//void htmlRecordContext(void)
+
+
+void tClientNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+        printf("<p><u>tClientNavList</u><br>\n");
+
+        if(!cSearch[0] && !uOnlyASPs)
+        {
+                printf("Must restrict with cSearch or uOnlyASPs");
+                return;
+        }
+
+        ExttClientSelect();
+        strcat(gcQuery," LIMIT 20");
+
+        macro_mySQLRunAndStore(res);
+
+        if(mysql_num_rows(res))
+        {
+                while((field=mysql_fetch_row(res)))
+                        printf("<a class=darkLink href=iDNS.cgi?gcFunction=tClient&uClient=%s&cSearch=%s>%s</a><br>\n",
+                                field[0]
+                                ,cURLEncode(cSearch)
+                                ,field[1]
+                                );
+        }
+        else
+                printf("No records found.\n");
+
+        mysql_free_result(res);
+
+}//void tClientNavList(void)
+
