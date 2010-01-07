@@ -458,13 +458,55 @@ void ExttClientGetHook(entry gentries[], int x)
 
 void ExttClientSelect(void)
 {
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT " ORDER BY uClient");
-	else 
-		sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT
-				" WHERE (uClient=%1$u OR uOwner"
-				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-				" ORDER BY uClient",guCompany);
+        if(cSearch[0])
+        {
+                if(uOnlyASPs)
+                {
+                        if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                                sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT " WHERE tClient.cLabel LIKE '%s%%'"
+                                                " AND tClient.uOwner=1 ORDER BY cLabel",cSearch);
+                        else
+                                sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT
+                                        " WHERE (uClient=%1$u OR uOwner"
+                                        " IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+                                        " AND tClient.cLabel LIKE '%2$s%%' AND tClient.uOwner=1"
+                                        " ORDER BY cLabel",guCompany,cSearch);
+                }
+                else
+                {
+                        if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                                sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT " WHERE tClient.cLabel LIKE '%s%%'"
+                                                " ORDER BY cLabel",cSearch);
+                        else
+                                sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT
+                                        " WHERE (uClient=%1$u OR uOwner"
+                                        " IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+                                        " AND tClient.cLabel LIKE '%2$s%%'"
+                                        " ORDER BY cLabel",guCompany,cSearch);
+                }
+        }
+        else if(!cSearch[0] && uOnlyASPs)
+        {
+                if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                        sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT " WHERE"
+                                        " tClient.uOwner=1 ORDER BY cLabeñ");
+                        else
+                                sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT
+                                        " WHERE (uClient=%1$u OR uOwner"
+                                        " IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+                                        " AND tClient.uOwner=1"
+                                        " ORDER BY cLabel",guCompany);
+        }
+        else if(1)
+        {
+                if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                        sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT " ORDER BY uClient");
+                else
+                        sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT
+                                        " WHERE (uClient=%1$u OR uOwner"
+                                        " IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+                                        " ORDER BY uClient",guCompany);
+        }
 
 }//void ExttClientSelect(void)
 
