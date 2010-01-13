@@ -6,15 +6,22 @@
 #	Using snmpget connect to UPS snmpd (card) and if battery is below
 #	uBatteryCapacity initiate shutdown sequence.
 #AUTHOR
-#	Gary Wallis for Unixservice, LLC. (C) 2009
+#	Gary Wallis and Hugo Urquiza for Unixservice, LLC. (C) 2009-2010
 
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
 #Set these for your SNMP enabled UPS
-cSnmpGet="/usr/bin/snmpget -v 1 -c publiccommstr ups0.yourisp.com";
+cHost="ups0.servicoopsa.com.ar";
+cSnmpGet="/usr/bin/snmpget -v 1 -c pkabu $cHost";
 cBatCapMIB="mib-2.33.1.2.4.0";
 cACInMIB="mib-2.33.1.3.3.1.3.1";
 
+#ping test to ups
+ping -c 3 $cHost > /dev/null 2>&1;
+if [ "$?" != "0" ]; then
+	fLog "$cHost seems down";
+	exit 1;
+fi
 
 uBatteryCapacity=`$cSnmpGet $cBatCapMIB | cut -f 4 -d : | cut -f 2 -d " "`;
 if [ $? != 0 ];then
