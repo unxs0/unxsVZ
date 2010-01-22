@@ -11,13 +11,14 @@
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
 #Set these for your SNMP enabled UPS
-cHost="ups0.servicoopsa.com.ar";
-cSnmpGet="/usr/bin/snmpget -v 1 -c pkabu $cHost";
+cHost="ups0.yourisp.com";
+cSnmpGet="/usr/bin/snmpget -v 1 -c publiccommstr ups0.yourisp.com";
+
 cBatCapMIB="mib-2.33.1.2.4.0";
 cACInMIB="mib-2.33.1.3.3.1.3.1";
 
 #ping test to ups
-ping -c 3 $cHost > /dev/null 2>&1;
+/bin/ping -c 3 $cHost > /dev/null 2>&1;
 if [ "$?" != "0" ]; then
 	fLog "$cHost seems down";
 	exit 1;
@@ -35,7 +36,7 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-#set this sections hardcoded values to suit your needs
+#set this section's hardcoded values to suit your needs
 uACLineVoltage=$(( $uACLineVoltage / 10 ));
 if (( $uACLineVoltage > 180 ));then
 	uBattCapThreshold="5";
