@@ -496,9 +496,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
         			res=mysql_store_result(&gMysql);
-
-				
-
 				if(mysql_num_rows(res)>0)
 				{
 					mysql_free_result(res);
@@ -1264,7 +1261,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: cLabel has at least one '.'!");
 				//No same names or hostnames for same datacenter allowed.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
-						" AND uDatacenter=%u AND uContainer!=%u",cWizHostname,cWizLabel,uDatacenter,uContainer);
+						" AND uDatacenter=%u AND uContainer!=%u",
+							cWizHostname,cWizLabel,uDatacenter,uContainer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
