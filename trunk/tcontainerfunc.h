@@ -492,7 +492,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				//No same names or hostnames for same datacenter allowed.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
 						" AND uDatacenter=%u",cHostname,cLabel,uDatacenter);
-				tContainer(gcQuery);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
