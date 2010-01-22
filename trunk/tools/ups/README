@@ -1,3 +1,6 @@
-Requires 
+Requires net-snmp-utils
 
 # yum install net-snmp-utils
+
+SECURITY WARNING:
+Also always install all scripts run by root crontab as chmod 500
