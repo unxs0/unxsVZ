@@ -492,10 +492,14 @@ void ExttContainerCommands(pentry entries[], int x)
 				//No same names or hostnames for same datacenter allowed.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
 						" AND uDatacenter=%u",cHostname,cLabel,uDatacenter);
+				tContainer(gcQuery);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
         			res=mysql_store_result(&gMysql);
+
+				
+
 				if(mysql_num_rows(res)>0)
 				{
 					mysql_free_result(res);
@@ -1260,10 +1264,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(strchr(cWizLabel,'.'))
 					tContainer("<blink>Error</blink>: cLabel has at least one '.'!");
 				//No same names or hostnames for same datacenter allowed.
-				//TODO must be fixed to allow only label or only hostname changes
-				//this involves ignoring existing label or hostname for this container.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
-						" AND uDatacenter=%u",cWizHostname,cWizLabel,uDatacenter);
+						" AND uDatacenter=%u AND uContainer!=%u",cWizHostname,cWizLabel,uDatacenter,uContainer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
