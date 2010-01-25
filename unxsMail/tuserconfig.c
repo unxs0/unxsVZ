@@ -29,7 +29,7 @@ static char *cConfig={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
+
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -390,10 +390,10 @@ void NewtUserConfig(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uUserConfig=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
+
 	uCreatedDate=luGetCreatedDate("tUserConfig",uUserConfig);
 	unxsMailLog(uUserConfig,"tUserConfig","New");
-#endif
+
 
 	if(!uMode)
 	{
@@ -406,29 +406,29 @@ void NewtUserConfig(unsigned uMode)
 
 void DeletetUserConfig(void)
 {
-#ifdef ISM3FIELDS
+
 	sprintf(gcQuery,"DELETE FROM tUserConfig WHERE uUserConfig=%u AND ( uOwner=%u OR %u>9 )"
 					,uUserConfig,guLoginClient,guPermLevel);
-#else
+
 	sprintf(gcQuery,"DELETE FROM tUserConfig WHERE uUserConfig=%u"
 					,uUserConfig);
-#endif
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 	//tUserConfig("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uUserConfig,"tUserConfig","Del");
-#endif
+
 		tUserConfig(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uUserConfig,"tUserConfig","DelError");
-#endif
+
 		tUserConfig(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -477,17 +477,17 @@ void ModtUserConfig(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
+
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uUserConfig,uModDate FROM tUserConfig WHERE uUserConfig=%u"
 						,uUserConfig);
-#else
+
 	sprintf(gcQuery,"SELECT uUserConfig FROM tUserConfig\
 				WHERE uUserConfig=%u"
 						,uUserConfig);
-#endif
+
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -500,19 +500,19 @@ void ModtUserConfig(void)
 	if(i>1) tUserConfig(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
+
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tUserConfig(LANG_NBR_EXTMOD);
-#endif
+
 
 	Update_tUserConfig(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
+
 	uModDate=luGetModDate("tUserConfig",uUserConfig);
 	unxsMailLog(uUserConfig,"tUserConfig","Mod");
-#endif
+
 	tUserConfig(gcQuery);
 
 }//ModtUserConfig(void)

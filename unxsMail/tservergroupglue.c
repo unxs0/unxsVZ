@@ -286,10 +286,9 @@ void NewtServerGroupGlue(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uServerGroupGlue=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
-	uCreatedDate=luGetCreatedDate("tServerGroupGlue",uServerGroupGlue);
+
 	unxsMailLog(uServerGroupGlue,"tServerGroupGlue","New");
-#endif
+
 
 	if(!uMode)
 	{
@@ -302,29 +301,29 @@ void NewtServerGroupGlue(unsigned uMode)
 
 void DeletetServerGroupGlue(void)
 {
-#ifdef ISM3FIELDS
+
 	sprintf(gcQuery,"DELETE FROM tServerGroupGlue WHERE uServerGroupGlue=%u AND ( uOwner=%u OR %u>9 )"
 					,uServerGroupGlue,guLoginClient,guPermLevel);
-#else
+
 	sprintf(gcQuery,"DELETE FROM tServerGroupGlue WHERE uServerGroupGlue=%u"
 					,uServerGroupGlue);
-#endif
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 	//tServerGroupGlue("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uServerGroupGlue,"tServerGroupGlue","Del");
-#endif
+
 		tServerGroupGlue(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uServerGroupGlue,"tServerGroupGlue","DelError");
-#endif
+
 		tServerGroupGlue(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -366,16 +365,11 @@ void ModtServerGroupGlue(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
-	unsigned uPreModDate=0;
 
-	sprintf(gcQuery,"SELECT uServerGroupGlue,uModDate FROM tServerGroupGlue WHERE uServerGroupGlue=%u"
-						,uServerGroupGlue);
-#else
 	sprintf(gcQuery,"SELECT uServerGroupGlue FROM tServerGroupGlue\
 				WHERE uServerGroupGlue=%u"
 						,uServerGroupGlue);
-#endif
+
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -388,19 +382,14 @@ void ModtServerGroupGlue(void)
 	if(i>1) tServerGroupGlue(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
-	sscanf(field[1],"%u",&uPreModDate);
-	if(uPreModDate!=uModDate) tServerGroupGlue(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tServerGroupGlue(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
-	uModDate=luGetModDate("tServerGroupGlue",uServerGroupGlue);
+
 	unxsMailLog(uServerGroupGlue,"tServerGroupGlue","Mod");
-#endif
+
 	tServerGroupGlue(gcQuery);
 
 }//ModtServerGroupGlue(void)

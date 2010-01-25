@@ -42,7 +42,7 @@ static unsigned uClient=0;
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
+
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -477,10 +477,10 @@ void NewtUser(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uUser=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
+
 	uCreatedDate=luGetCreatedDate("tUser",uUser);
 	unxsMailLog(uUser,"tUser","New");
-#endif
+
 
 	if(!uMode)
 	{
@@ -493,29 +493,29 @@ void NewtUser(unsigned uMode)
 
 void DeletetUser(void)
 {
-#ifdef ISM3FIELDS
+
 	sprintf(gcQuery,"DELETE FROM tUser WHERE uUser=%u AND ( uOwner=%u OR %u>9 )"
 					,uUser,guLoginClient,guPermLevel);
-#else
+
 	sprintf(gcQuery,"DELETE FROM tUser WHERE uUser=%u"
 					,uUser);
-#endif
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 	//tUser("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uUser,"tUser","Del");
-#endif
+
 		tUser(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uUser,"tUser","DelError");
-#endif
+
 		tUser(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -572,16 +572,16 @@ void ModtUser(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
+
 	unsigned uPreModDate=0;
 
 	sprintf(gcQuery,"SELECT uUser,uModDate FROM tUser WHERE uUser=%u"
 						,uUser);
-#else
+
 	sprintf(gcQuery,"SELECT uUser FROM tUser\
 				WHERE uUser=%u"
 						,uUser);
-#endif
+
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -594,19 +594,19 @@ void ModtUser(void)
 	if(i>1) tUser(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
+
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tUser(LANG_NBR_EXTMOD);
-#endif
+
 
 	Update_tUser(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
+
 	uModDate=luGetModDate("tUser",uUser);
 	unxsMailLog(uUser,"tUser","Mod");
-#endif
+
 	tUser(gcQuery);
 
 }//ModtUser(void)

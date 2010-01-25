@@ -25,7 +25,7 @@ static char cuServerGroupPullDown[256]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
+
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -357,10 +357,10 @@ void NewtLocal(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uLocal=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
+
 	uCreatedDate=luGetCreatedDate("tLocal",uLocal);
 	unxsMailLog(uLocal,"tLocal","New");
-#endif
+
 
 	if(!uMode)
 	{
@@ -373,29 +373,29 @@ void NewtLocal(unsigned uMode)
 
 void DeletetLocal(void)
 {
-#ifdef ISM3FIELDS
+
 	sprintf(gcQuery,"DELETE FROM tLocal WHERE uLocal=%u AND ( uOwner=%u OR %u>9 )"
 					,uLocal,guLoginClient,guPermLevel);
-#else
+
 	sprintf(gcQuery,"DELETE FROM tLocal WHERE uLocal=%u"
 					,uLocal);
-#endif
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 	//tLocal("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uLocal,"tLocal","Del");
-#endif
+
 		tLocal(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uLocal,"tLocal","DelError");
-#endif
+
 		tLocal(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -440,17 +440,17 @@ void ModtLocal(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
+
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uLocal,uModDate FROM tLocal WHERE uLocal=%u"
 						,uLocal);
-#else
+
 	sprintf(gcQuery,"SELECT uLocal FROM tLocal\
 				WHERE uLocal=%u"
 						,uLocal);
-#endif
+
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -463,19 +463,19 @@ void ModtLocal(void)
 	if(i>1) tLocal(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
+
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tLocal(LANG_NBR_EXTMOD);
-#endif
+
 
 	Update_tLocal(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
+
 	uModDate=luGetModDate("tLocal",uLocal);
 	unxsMailLog(uLocal,"tLocal","Mod");
-#endif
+
 	tLocal(gcQuery);
 
 }//ModtLocal(void)
