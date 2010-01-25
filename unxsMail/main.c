@@ -2367,7 +2367,8 @@ void ExtSelect(const char *cTable,const char *cVarList,unsigned uMaxResults)
 }//void ExtSelect(...)
 
 
-void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch,const char *cExtraCond,unsigned uMaxResults)
+void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField,
+	const char *cSearch,const char *cExtraCond,unsigned uMaxResults)
 {
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 	{

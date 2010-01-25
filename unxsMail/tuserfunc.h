@@ -301,11 +301,14 @@ void ExttUserButtons(void)
 				tUserNavList();
 
 				printf("<p><a class=darkLink title='Add a tBlackList record for the loaded user' "
-					"href=unxsMail.cgi?gcFunction=tBlackList&uUser=%u>Edit user blacklist settings</a></p>\n",uUser);
+					"href=unxsMail.cgi?gcFunction=tBlackList&uUser=%u>Edit user blacklist settings</a>"
+					"</p>\n",uUser);
 				printf("<p><a class=darkLink title='Add a tWhiteList record for the loaded user' "
-					"href=unxsMail.cgi?gcFunction=tWhiteList&uUser=%u>Edit user whitelist settings</a></p>\n",uUser);
+					"href=unxsMail.cgi?gcFunction=tWhiteList&uUser=%u>Edit user whitelist settings</a>"
+					"</p>\n",uUser);
 				printf("<p><a class=darkLink title='Manage user vacation mode' "
-				"href=unxsMail.cgi?gcFunction=tVacation&uUser=%u>Edit user vacation settings</a></p>\n",uUser);
+					"href=unxsMail.cgi?gcFunction=tVacation&uUser=%u>Edit user vacation settings</a>"
+					"</p>\n",uUser);
 
 				
 			}
@@ -520,7 +523,7 @@ void tUserContextInfo(void)
 		printf("<u>Configs</u><br>\n");
 		while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tUserConfig&"
-				"uUserConfig=%s&cSearch=%u>%s</a><br>\n",field[0],uUser,field[1]);
+				"uUserConfig=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 
@@ -537,7 +540,8 @@ void tUserContextInfo(void)
 	{	
 		printf("<u>Jobs</u><br>\n");
 		while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",
+				field[0],field[1],field[2]);
 	}
         mysql_free_result(res);
 
