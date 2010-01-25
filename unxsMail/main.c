@@ -519,7 +519,7 @@ void Header_ism3(char *title, int js)
         if(js)
                 jsCalendarHeader();
 
-	printf("</head><body><form action=unxsVZ.cgi method=post><blockquote>\n");
+	printf("</head><body><form action=unxsMail.cgi method=post><blockquote>\n");
 	printf("<img src=/images/unxslogo.gif>&nbsp;&nbsp;\n");
 
 
