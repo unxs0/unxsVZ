@@ -27,7 +27,7 @@ static char cuServerGroupPullDown[256]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
+
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -375,10 +375,10 @@ void NewtAlias(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uAlias=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
+
 	uCreatedDate=luGetCreatedDate("tAlias",uAlias);
 	unxsMailLog(uAlias,"tAlias","New");
-#endif
+
 
 	if(!uMode)
 	{
@@ -391,29 +391,29 @@ void NewtAlias(unsigned uMode)
 
 void DeletetAlias(void)
 {
-#ifdef ISM3FIELDS
+
 	sprintf(gcQuery,"DELETE FROM tAlias WHERE uAlias=%u AND ( uOwner=%u OR %u>9 )"
 					,uAlias,guLoginClient,guPermLevel);
-#else
+
 	sprintf(gcQuery,"DELETE FROM tAlias WHERE uAlias=%u"
 					,uAlias);
-#endif
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 	//tAlias("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uAlias,"tAlias","Del");
-#endif
+
 		tAlias(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uAlias,"tAlias","DelError");
-#endif
+
 		tAlias(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -460,15 +460,15 @@ void ModtAlias(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
+
 	unsigned uPreModDate=0;
 	sprintf(gcQuery,"SELECT uAlias,uModDate FROM tAlias WHERE uAlias=%u"
 						,uAlias);
-#else
+
 	sprintf(gcQuery,"SELECT uAlias FROM tAlias\
 				WHERE uAlias=%u"
 						,uAlias);
-#endif
+
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -481,19 +481,19 @@ void ModtAlias(void)
 	if(i>1) tAlias(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
+
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tAlias(LANG_NBR_EXTMOD);
-#endif
+
 
 	Update_tAlias(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
+
 	uModDate=luGetModDate("tAlias",uAlias);
 	unxsMailLog(uAlias,"tAlias","Mod");
-#endif
+
 	tAlias(gcQuery);
 
 }//ModtAlias(void)

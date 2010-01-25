@@ -22,7 +22,7 @@ static char cLabel[33]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
+
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -340,10 +340,10 @@ void NewtServerGroup(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uServerGroup=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
+
 	uCreatedDate=luGetCreatedDate("tServerGroup",uServerGroup);
 	unxsMailLog(uServerGroup,"tServerGroup","New");
-#endif
+
 
 	if(!uMode)
 	{
@@ -356,29 +356,29 @@ void NewtServerGroup(unsigned uMode)
 
 void DeletetServerGroup(void)
 {
-#ifdef ISM3FIELDS
+
 	sprintf(gcQuery,"DELETE FROM tServerGroup WHERE uServerGroup=%u AND ( uOwner=%u OR %u>9 )"
 					,uServerGroup,guLoginClient,guPermLevel);
-#else
+
 	sprintf(gcQuery,"DELETE FROM tServerGroup WHERE uServerGroup=%u"
 					,uServerGroup);
-#endif
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 	//tServerGroup("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uServerGroup,"tServerGroup","Del");
-#endif
+
 		tServerGroup(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uServerGroup,"tServerGroup","DelError");
-#endif
+
 		tServerGroup(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -421,17 +421,17 @@ void ModtServerGroup(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
+
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uServerGroup,uModDate FROM tServerGroup WHERE uServerGroup=%u"
 						,uServerGroup);
-#else
+
 	sprintf(gcQuery,"SELECT uServerGroup FROM tServerGroup\
 				WHERE uServerGroup=%u"
 						,uServerGroup);
-#endif
+
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -444,19 +444,19 @@ void ModtServerGroup(void)
 	if(i>1) tServerGroup(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
+
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tServerGroup(LANG_NBR_EXTMOD);
-#endif
+
 
 	Update_tServerGroup(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
+
 	uModDate=luGetModDate("tServerGroup",uServerGroup);
 	unxsMailLog(uServerGroup,"tServerGroup","Mod");
-#endif
+
 	tServerGroup(gcQuery);
 
 }//ModtServerGroup(void)

@@ -29,7 +29,7 @@ static char *cComment={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
+
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -393,10 +393,10 @@ void NewtConfiguration(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uConfiguration=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
+
 	uCreatedDate=luGetCreatedDate("tConfiguration",uConfiguration);
 	unxsMailLog(uConfiguration,"tConfiguration","New");
-#endif
+
 
 	if(!uMode)
 	{
@@ -409,29 +409,29 @@ void NewtConfiguration(unsigned uMode)
 
 void DeletetConfiguration(void)
 {
-#ifdef ISM3FIELDS
+
 	sprintf(gcQuery,"DELETE FROM tConfiguration WHERE uConfiguration=%u AND ( uOwner=%u OR %u>9 )"
 					,uConfiguration,guLoginClient,guPermLevel);
-#else
+
 	sprintf(gcQuery,"DELETE FROM tConfiguration WHERE uConfiguration=%u"
 					,uConfiguration);
-#endif
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 	//tConfiguration("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uConfiguration,"tConfiguration","Del");
-#endif
+
 		tConfiguration(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uConfiguration,"tConfiguration","DelError");
-#endif
+
 		tConfiguration(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -480,17 +480,17 @@ void ModtConfiguration(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
+
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uConfiguration,uModDate FROM tConfiguration WHERE uConfiguration=%u"
 						,uConfiguration);
-#else
+
 	sprintf(gcQuery,"SELECT uConfiguration FROM tConfiguration\
 				WHERE uConfiguration=%u"
 						,uConfiguration);
-#endif
+
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -503,19 +503,19 @@ void ModtConfiguration(void)
 	if(i>1) tConfiguration(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
+
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tConfiguration(LANG_NBR_EXTMOD);
-#endif
+
 
 	Update_tConfiguration(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
+
 	uModDate=luGetModDate("tConfiguration",uConfiguration);
 	unxsMailLog(uConfiguration,"tConfiguration","Mod");
-#endif
+
 	tConfiguration(gcQuery);
 
 }//ModtConfiguration(void)

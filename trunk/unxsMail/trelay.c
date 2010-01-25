@@ -27,7 +27,7 @@ static char cuServerGroupPullDown[256]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
+
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -375,10 +375,10 @@ void NewtRelay(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uRelay=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
+
 	uCreatedDate=luGetCreatedDate("tRelay",uRelay);
 	unxsMailLog(uRelay,"tRelay","New");
-#endif
+
 
 	if(!uMode)
 	{
@@ -391,29 +391,29 @@ void NewtRelay(unsigned uMode)
 
 void DeletetRelay(void)
 {
-#ifdef ISM3FIELDS
+
 	sprintf(gcQuery,"DELETE FROM tRelay WHERE uRelay=%u AND ( uOwner=%u OR %u>9 )"
 					,uRelay,guLoginClient,guPermLevel);
-#else
+
 	sprintf(gcQuery,"DELETE FROM tRelay WHERE uRelay=%u"
 					,uRelay);
-#endif
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 	//tRelay("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uRelay,"tRelay","Del");
-#endif
+
 		tRelay(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
+
 		unxsMailLog(uRelay,"tRelay","DelError");
-#endif
+
 		tRelay(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -460,17 +460,17 @@ void ModtRelay(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
+
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uRelay,uModDate FROM tRelay WHERE uRelay=%u"
 						,uRelay);
-#else
+
 	sprintf(gcQuery,"SELECT uRelay FROM tRelay\
 				WHERE uRelay=%u"
 						,uRelay);
-#endif
+
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -483,19 +483,19 @@ void ModtRelay(void)
 	if(i>1) tRelay(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
+
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tRelay(LANG_NBR_EXTMOD);
-#endif
+
 
 	Update_tRelay(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
+
 	uModDate=luGetModDate("tRelay",uRelay);
 	unxsMailLog(uRelay,"tRelay","Mod");
-#endif
+
 	tRelay(gcQuery);
 
 }//ModtRelay(void)
