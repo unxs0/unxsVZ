@@ -172,6 +172,12 @@ void ExttVUTButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
+			printf("At this table you manage sendmail virtual user table (VUT). Here you can see the per domain records. "
+				"If you load a domain it will list the VUT entries at the left panel. You can use the [Add Virtual Email] button "
+				"for adding new VUT entries.<br>"
+				"Virtual emails give you the possibility to match any email address to an arbitrary mailbox existent at the system. E.g.:<br>"
+				"<i>sales@unixservice.com</i> emails are sent to the qwerty mailbox.");
+
 			if(uVUT)
 			{
 				printf("<p><u>Record Context Info</u><br>");
