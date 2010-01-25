@@ -228,17 +228,20 @@ void ExttUserButtons(void)
                 case 2000:
 			printf("<u>New Step 1/2</u><br>");
 			printf("Enter or modify the open input fields in the right panel (don't worry "
-				"if previous info is in the open fields -this is for faster addition of "
+				"if previous info is in the open fields, this is for faster addition of "
 				"similar accounts). To finish confirm with the button below. Your inputs "
 				"will be checked. If any errors are found you will return to this entry step."
 				"<p>After you create a new user the new user may have had user configuration "
 				"files or (file sections) created (configs for short.) These will be listed "
 				"in the record context area in this panel. You may want to customize these "
-				"configs further and you can start to do so by just clicking on them.<p>\n");
+				"configs further and you can start to do so by just clicking on them."
+				"<p>A virtual users table (VUT <i>tVUTEntries</i>) record may also be optionally"
+				" created below.<p>\n");
                         printf(LANG_NBB_CONFIRMNEW);
-			printf("<br><br><u>Optional but recommended VUT Entry</u><br>\n");
-			printf("cVirtualEmail <input type=text name=cVirtualEmail size=20 title='Enter virtual email address without "
-				"FQDN' value='%s'><br>",cVirtualEmail);
+			printf("<br><br><u>Optional virtual user table (VUT) Entry</u><br>\n");
+			printf("cVirtualEmail <input type=text name=cVirtualEmail size=20"
+				" title='Enter virtual email address without"
+				" @FQDN' value='%s'><br>",cVirtualEmail);
                 break;
 
                 case 2001:
@@ -259,9 +262,30 @@ void ExttUserButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("The tUser table is the basis for all email accounts. It is where you "
-				"configure and deploy your mailfarm users among many other management "
-				"and report activities (<a href=unxsMail.cgi?gcFunction=tGlossary&uGlossary=1>tUser help</a>.)\n");
+			printf("The tUser table is the basis for all email accounts. It is where you"
+				" configure and deploy your mailfarm users among other management"
+				" and report activities."
+				"<p><i>cLogin</i> is the system mailbox user name. For example the pop3 or imap login name."
+				" to access the mailbox."
+				"<p><i>uDomain</i> is the domain"
+				" as configured in <i>tDomain</i> that the mailbox user is associated with."
+				"<p>A simple example for <i>tUser.cLogin=johnd</i> and <i>tDomain.cDomain=johnsdomain.com</i>"
+				" would be used for an email address like: <i>johnd@johnsdomain.com</i>."
+				"<p>A more advanced example would be to use a random mailbox user name like"
+				" <i>tUser.cLogin=qazwsx</i> using the same domain as above "
+				" in conjuntion with a <i>tVUTEntries</i> record. That record would map"
+				" <i>johnd@johnsdomain.com</i> to the mailbox <i>qazwsx</i>."
+				"<p><i>cPasswd</i> is entered in plaintext but it is encrypted/hashed and stored that way."
+				" All you can do is change or reset the password. Not know what it is later."
+				" This is very important for compliance with privacy/security regulations."
+				"<p><i>uUserType</i> is system type that is used for specific server configuration."
+				" Ask your system administrator about which one to use."
+				"<p><i>uServerGroup</i> is the cluster of servers that this account will be deployed for."
+				" Ask your system administrator about which one to use."
+				"<p><i>cSecretQuestion</i> and <i>cSecretAnswer</i> might be used for end user interfaces"
+				" for self service. A common example would be the pair <i>Name of Pet/Pluto<i>."
+
+						);
 
 			printf("<p><u>Record Context Info</u><br>");
 			if(!uUser)
