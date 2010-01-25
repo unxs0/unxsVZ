@@ -49,3 +49,4 @@ LEGAL
 //#define TAUTHORIZE "mysqlisp2.tAuthorize"
 //
 
+#define HEADER_TITLE "unxsMail"

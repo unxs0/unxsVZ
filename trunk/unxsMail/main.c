@@ -161,7 +161,10 @@ int main(int iArgc, char *cArgv[])
 			{
 				printf("Set-Cookie: unxsMailLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				printf("Set-Cookie: unxsMailPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
+				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
+						"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+						"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 				mysql_query(&gMysql,gcQuery);
 				gcCookie[0]=0;
                                 guPermLevel=0;
@@ -239,6 +242,8 @@ int main(int iArgc, char *cArgv[])
 				ExttBlackListGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tVacation"))
 				ExttVacationGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"Dashboard"))
+				unxsMail("DashBoard");
 
 
 		}
@@ -506,12 +511,17 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 void Header_ism3(char *title, int js)
 {
 	printf("Content-type: text/html\n\n");
-	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-        printf("<html><head><title>unxsMail %s </title>",title);
+	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\""
+			" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
+        printf("<html><head><title>"HEADER_TITLE" %s </title>",title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
+        if(js)
+                jsCalendarHeader();
 
-	printf("</head><body><form action=unxsMail.cgi method=post><blockquote>\n");
+	printf("</head><body><form action=unxsVZ.cgi method=post><blockquote>\n");
+	printf("<img src=/images/unxslogo.gif>&nbsp;&nbsp;\n");
+
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tUser") || !strcmp(gcFunction,"tUserTools") ||
@@ -633,7 +643,10 @@ void Header_ism3(char *title, int js)
 
 	//Logout link
 	if(guSSLCookieLogin)
+	{
 		printf(" <a title='Erase login cookies' href=unxsMail.cgi?gcFunction=Logout>Logout</a> ");
+		printf(" <a title='Quick dashboard link' href=unxsMail.cgi?gcFunction=Dashboard>Dashboard</a> ");
+	}
 
 	//Generate Menu Items
 	printf("\n<!-- tab menu -->\n");
@@ -687,7 +700,7 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<a title='Domains' href=unxsMail.cgi?gcFunction=tDomain>tDomain</a>\n");
 	}
 	//tVUT
-	if(guPermLevel>=20)
+	if(guPermLevel>=10)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tVUT") && strcmp(gcFunction,"tVUTTools") &&
@@ -918,7 +931,7 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<a title='tGlossary' href=unxsMail.cgi?gcFunction=tGlossary>tGlossary</a>\n");
 	}
 	//tJob
-	if(guPermLevel>=20)
+	if(guPermLevel>=10)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tJob") && strcmp(gcFunction,"tJobTools") &&
