@@ -397,7 +397,7 @@ void BasicVUTEntriesCheck(void)
 	if(strchr(cTargetEmail,','))
 		tVUTEntries("cTargetEmail must not have ','");
 	
-	sprintf(gcQuery,"SELECT uVUTEntries FROM tVUTEntries WHERE cVirtualEmail='%s' AND uVUT=%u",cVirtualEmail,uVUT);
+	sprintf(gcQuery,"SELECT uVUTEntries FROM tVUTEntries WHERE cVirtualEmail='%s' AND uVUT=%u AND uVUTEntries!=%u",cVirtualEmail,uVUT,uVUTEntries);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
