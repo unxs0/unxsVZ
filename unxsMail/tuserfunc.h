@@ -705,7 +705,7 @@ void CreateVUTEntry(char *cDomain)
 		sscanf(field[0],"%u",&uVUT);
 	
 	mysql_free_result(res);
-
+	
 	if(!uVUT)
 	{
 		sprintf(gcQuery,"INSERT INTO tVUT SET cDomain='%s',uServerGroup=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -721,9 +721,9 @@ void CreateVUTEntry(char *cDomain)
 
 		uVUT=mysql_insert_id(&gMysql);
 	}
-	
-	sprintf(gcQuery,"INSERT INTO tVUTEntries SET cTargetEmail='%s',cVirtualEmail='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			TextAreaSave(cLogin)
+	sprintf(gcQuery,"INSERT INTO tVUTEntries SET uVUT=%u,cTargetEmail='%s',cVirtualEmail='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uVUT
+			,TextAreaSave(cLogin)
 			,TextAreaSave(cVirtualEmail)
 			,guCompany
 			,guLoginClient
