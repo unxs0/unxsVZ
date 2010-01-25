@@ -545,6 +545,24 @@ void tUserContextInfo(void)
 	}
         mysql_free_result(res);
 
+	sprintf(gcQuery,"SELECT uVUTEntries,cVirtualEmail,(SELECT tVUT.cDomain FROM tVUT WHERE tVUT.uVUT=tVUTEntries.uVUT) "
+			"FROM tVUTEntries WHERE cTargetEmail='%s'",cLogin);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+		printf("<u>VUT Entries</u><br>\n");
+		while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tVUTEntries&uVUTEntries=%s>%s@%s</a><br>\n",
+				field[0],field[1],field[2]);
+	}
+	mysql_free_result(res);
+
 }//void tUserContextInfo(void)
 
 
