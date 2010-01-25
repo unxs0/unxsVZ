@@ -283,7 +283,7 @@ void ExttUserButtons(void)
 				"<p><i>uServerGroup</i> is the cluster of servers that this account will be deployed for."
 				" Ask your system administrator about which one to use."
 				"<p><i>cSecretQuestion</i> and <i>cSecretAnswer</i> might be used for end user interfaces"
-				" for self service. A common example would be the pair <i>Name of Pet/Pluto<i>."
+				" for self service. A common example would be the pair <i>Name of Pet/Pluto</i>."
 
 						);
 
