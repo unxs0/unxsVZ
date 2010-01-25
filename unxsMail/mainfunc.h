@@ -214,9 +214,10 @@ void ExtMainContent(void)
 			printf("<a href=unxsMail.cgi?gcFunction=%.32s>%.32s</a><br>\n",
 				cTableList[i],cTableList[i]);
 		printf("</td></tr>\n");
-        	OpenRow("Admin Functions","black");
-		printf("<td><input type=hidden name=gcFunction value=MainTools>\n");
-		printf(" <input class=largeButton type=submit name=gcCommand value=Dashboard></td></tr>\n");
+	
+        	//OpenRow("Admin Functions","black");
+		//printf("<td><input type=hidden name=gcFunction value=MainTools>\n");
+		//printf(" <input class=largeButton type=submit name=gcCommand value=Dashboard></td></tr>\n");
 	}
 
 	CloseFieldSet();
