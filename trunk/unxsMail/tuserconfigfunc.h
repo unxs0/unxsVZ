@@ -38,6 +38,7 @@ void ExtProcesstUserConfigVars(pentry entries[], int x)
 		if(!strcmp(entries[i].name,"cSearch"))
 			sprintf(cSearch,"%.63s",entries[i].val);
 	}
+
 }//void ExtProcesstUserConfigVars(pentry entries[], int x)
 
 
@@ -261,8 +262,10 @@ void ExttUserConfigButtons(void)
 			printf("Here you can regenerate a cConfig from the same uConfigSpec and for the "
 				"same uUser or actually edit the cConfig itself. Delete and new operations "
 				"should be used for other changes. Confirm the selected operation below.");
-                        printf("<p><input title='Replace current config' type=submit class=lwarnButton name=gcCommand value='Regenerate cConfig'>");
-                        printf("<p><input title='Start an actual cConfig edit mod' type=submit class=largeButton name=gcCommand value='Modify cConfig'>");
+                        printf("<p><input title='Replace current config' type=submit class=lwarnButton"
+				" name=gcCommand value='Regenerate cConfig'>");
+                        printf("<p><input title='Start an actual cConfig edit mod' type=submit class=largeButton"
+				" name=gcCommand value='Modify cConfig'>");
                 break;
 
 		default:
@@ -278,7 +281,8 @@ void ExttUserConfigButtons(void)
 			if(uUser)
 			{
 				printf("<p><input title='Enter a mySQL search pattern for cLogin "
-					"or a uUser code' type=text name=cSearch value='%s' maxlength=63 size=20> cSearch<br>\n",cSearch);
+					"or a uUser code' type=text name=cSearch value='%s' maxlength=63"
+					" size=20> cSearch<br>\n",cSearch);
 				tUserConfigNavList();
 			}
 	}
@@ -430,15 +434,15 @@ void tUserConfigNavList(void)
 		sprintf(cExtra,"tUser.uUser=%u",ucSearch);
 		
 		ExtSelectSearch("tUserConfig","tUserConfig.uUserConfig,tUserConfig.cLabel,"
-				"(SELECT tUser.cLogin FROM tUser WHERE tUserConfig.uUser=tUser.uUser)",
+				"(SELECT tUser.cLogin FROM tUser,tUserConfig WHERE tUserConfig.uUser=tUser.uUser)",
 				"tUserConfig.cLabel","",cExtra,101);
 	}
 	else
 		ExtSelectSearch("tUserConfig","tUserConfig.uUserConfig,tUserConfig.cLabel,"
-				"(SELECT tUser.cLogin FROM tUser WHERE tUserConfig.uUser=tUser.uUser)",
+				"(SELECT tUser.cLogin FROM tUser,tUserConfig WHERE tUserConfig.uUser=tUser.uUser)",
 				"tUserConfig.cLabel",cSearch,NULL,101);
 
-//	printf("%s",gcQuery);
+	printf("Debug:\n%s\n",gcQuery);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -456,13 +460,14 @@ void tUserConfigNavList(void)
 			if(field[2]==NULL) continue; // Skip records like: (null)/standard procmail file, 
 							//can be done using MySQL IF, but it might slow dwn the query.
 
-			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tUserConfig&uUserConfig=%s&cSearch=%s>%s/%s</a><br>\n",
-					field[0],cURLEncode(cSearch),field[2],field[1]);
+			printf("<a class=darkLink href=unxsMail.cgi?gcFunction=tUserConfig&uUserConfig=%s&cSearch=%s>"
+				"%s/%s</a><br>\n",field[0],cURLEncode(cSearch),field[2],field[1]);
 			if( (uCount++) >= 100)
 				printf("Restrict cSearch further, only 100 items listed\n");
 	        }
 		if(uUser)
-		printf("<br><a class=darkLink href=unxsMail.cgi?gcFunction=tUser&uUser=%u>Quick link to tUser</a><br>\n",uUser);
+			printf("<br><a class=darkLink href=unxsMail.cgi?gcFunction=tUser&uUser=%u>Quick link to tUser"
+				"</a><br>\n",uUser);
 	}
 	else
 		printf("No records found");
