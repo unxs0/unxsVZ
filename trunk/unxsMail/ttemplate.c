@@ -502,13 +502,7 @@ void ModtTemplate(void)
 
 	unsigned uPreModDate=0;
 
-	sprintf(gcQuery,"SELECT uTemplate,uModDate FROM tTemplate WHERE uTemplate=%u"
-						,uTemplate);
-
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate\
-				WHERE uTemplate=%u"
-						,uTemplate);
-
+	sprintf(gcQuery,"SELECT uTemplate,uModDate FROM tTemplate WHERE uTemplate=%u",uTemplate);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -524,7 +518,6 @@ void ModtTemplate(void)
 
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tTemplate(LANG_NBR_EXTMOD);
-
 
 	Update_tTemplate(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

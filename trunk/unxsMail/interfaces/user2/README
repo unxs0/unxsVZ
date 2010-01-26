@@ -1,0 +1,15 @@
+This folder contains a cgi interface for the unxsVZ unxsMail system.
+
+mailUser.cgi
+
+This interface is for end users to change their password and eventually
+to allow them to edit more user specific settings like their white/black lists
+and vacation messages.
+
+Finally if the user forgot his password, and the system has been so configured
+a new password can be created via an external email account and a correct 
+question/answer response from tUser.
+
+Since this interface is meant for end user use a standard port 443 httpd server
+should be used and must have it's own html dir (with exec cgi perms) for the index.cgi
+created by make install.

@@ -2,7 +2,7 @@
 FILE
 	$Id$
 AUTHOR
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza. 
+	(C) 2001-2010 Gary Wallis and Hugo Urquiza for Unixservice, LLC. 
 */
 
 #include <stdio.h>
@@ -13,29 +13,15 @@ AUTHOR
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-//This is an example tune for your system
-#ifndef Linux
-        #include <sys/systeminfo.h>
-#else
-        #ifndef FreeBSD
-                #include <crypt.h>
-        #endif
-#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <string.h>
 #include <sys/file.h>
+#include <crypt.h>
 
 #include "cgi.h"
-
-//This is an example tune for your system
-#ifdef FreeBSD
-	#include "/usr/local/include/mysql/mysql.h"
-#else
-	#include <mysql/mysql.h>
-#endif
-
+#include <mysql/mysql.h>
 
 #include <unistd.h>
 #include <locale.h>

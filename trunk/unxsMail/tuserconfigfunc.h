@@ -442,7 +442,7 @@ void tUserConfigNavList(void)
 				"(SELECT tUser.cLogin FROM tUser,tUserConfig WHERE tUserConfig.uUser=tUser.uUser)",
 				"tUserConfig.cLabel",cSearch,NULL,101);
 
-	printf("Debug:\n%s\n",gcQuery);
+	//printf("Debug:\n%s\n",gcQuery);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
