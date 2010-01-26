@@ -377,9 +377,6 @@ void DeletetVUT(void)
 	sprintf(gcQuery,"DELETE FROM tVUT WHERE uVUT=%u AND ( uOwner=%u OR %u>9 )"
 					,uVUT,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tVUT WHERE uVUT=%u"
-					,uVUT);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -446,11 +443,6 @@ void ModtVUT(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uVUT,uModDate FROM tVUT WHERE uVUT=%u"
 						,uVUT);
-
-	sprintf(gcQuery,"SELECT uVUT FROM tVUT\
-				WHERE uVUT=%u"
-						,uVUT);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

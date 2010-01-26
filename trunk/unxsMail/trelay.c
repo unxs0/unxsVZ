@@ -395,9 +395,6 @@ void DeletetRelay(void)
 	sprintf(gcQuery,"DELETE FROM tRelay WHERE uRelay=%u AND ( uOwner=%u OR %u>9 )"
 					,uRelay,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tRelay WHERE uRelay=%u"
-					,uRelay);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -464,13 +461,7 @@ void ModtRelay(void)
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
-	sprintf(gcQuery,"SELECT uRelay,uModDate FROM tRelay WHERE uRelay=%u"
-						,uRelay);
-
-	sprintf(gcQuery,"SELECT uRelay FROM tRelay\
-				WHERE uRelay=%u"
-						,uRelay);
-
+	sprintf(gcQuery,"SELECT uRelay,uModDate FROM tRelay WHERE uRelay=%u",uRelay);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

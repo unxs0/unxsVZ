@@ -360,9 +360,6 @@ void DeletetMonth(void)
 	sprintf(gcQuery,"DELETE FROM tMonth WHERE uMonth=%u AND ( uOwner=%u OR %u>9 )"
 					,uMonth,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tMonth WHERE uMonth=%u"
-					,uMonth);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -424,13 +421,7 @@ void ModtMonth(void)
 
 	unsigned uPreModDate=0;
 
-	sprintf(gcQuery,"SELECT uMonth,uModDate FROM tMonth WHERE uMonth=%u"
-						,uMonth);
-
-	sprintf(gcQuery,"SELECT uMonth FROM tMonth\
-				WHERE uMonth=%u"
-						,uMonth);
-
+	sprintf(gcQuery,"SELECT uMonth,uModDate FROM tMonth WHERE uMonth=%u",uMonth);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

@@ -413,9 +413,6 @@ void DeletetConfiguration(void)
 	sprintf(gcQuery,"DELETE FROM tConfiguration WHERE uConfiguration=%u AND ( uOwner=%u OR %u>9 )"
 					,uConfiguration,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tConfiguration WHERE uConfiguration=%u"
-					,uConfiguration);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -486,12 +483,6 @@ void ModtConfiguration(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uConfiguration,uModDate FROM tConfiguration WHERE uConfiguration=%u"
 						,uConfiguration);
-
-	sprintf(gcQuery,"SELECT uConfiguration FROM tConfiguration\
-				WHERE uConfiguration=%u"
-						,uConfiguration);
-
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);

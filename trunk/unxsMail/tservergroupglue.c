@@ -301,10 +301,6 @@ void NewtServerGroupGlue(unsigned uMode)
 
 void DeletetServerGroupGlue(void)
 {
-
-	sprintf(gcQuery,"DELETE FROM tServerGroupGlue WHERE uServerGroupGlue=%u AND ( uOwner=%u OR %u>9 )"
-					,uServerGroupGlue,guLoginClient,guPermLevel);
-
 	sprintf(gcQuery,"DELETE FROM tServerGroupGlue WHERE uServerGroupGlue=%u"
 					,uServerGroupGlue);
 

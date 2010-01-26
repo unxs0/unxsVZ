@@ -444,9 +444,7 @@ void ModtWhiteList(void)
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
-	sprintf(gcQuery,"SELECT uWhiteList,uModDate FROM tWhiteList\
-				WHERE uWhiteList=%u"
-						,uWhiteList);
+	sprintf(gcQuery,"SELECT uWhiteList,uModDate FROM tWhiteList WHERE uWhiteList=%u",uWhiteList);
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 

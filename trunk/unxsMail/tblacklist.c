@@ -444,9 +444,7 @@ void ModtBlackList(void)
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
-	sprintf(gcQuery,"SELECT uBlackList,uModDate FROM tBlackList\
-				WHERE uBlackList=%u"
-						,uBlackList);
+	sprintf(gcQuery,"SELECT uBlackList,uModDate FROM tBlackList WHERE uBlackList=%u",uBlackList);
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 

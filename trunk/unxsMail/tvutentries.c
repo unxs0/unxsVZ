@@ -412,9 +412,6 @@ void DeletetVUTEntries(void)
 	sprintf(gcQuery,"DELETE FROM tVUTEntries WHERE uVUTEntries=%u AND ( uOwner=%u OR %u>9 )"
 					,uVUTEntries,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tVUTEntries WHERE uVUTEntries=%u"
-					,uVUTEntries);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -483,11 +480,6 @@ void ModtVUTEntries(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uVUTEntries,uModDate FROM tVUTEntries WHERE uVUTEntries=%u"
 						,uVUTEntries);
-
-	sprintf(gcQuery,"SELECT uVUTEntries FROM tVUTEntries\
-				WHERE uVUTEntries=%u"
-						,uVUTEntries);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

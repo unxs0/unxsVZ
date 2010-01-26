@@ -360,9 +360,6 @@ void DeletetJobStatus(void)
 	sprintf(gcQuery,"DELETE FROM tJobStatus WHERE uJobStatus=%u AND ( uOwner=%u OR %u>9 )"
 					,uJobStatus,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tJobStatus WHERE uJobStatus=%u"
-					,uJobStatus);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -425,13 +422,7 @@ void ModtJobStatus(void)
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
-	sprintf(gcQuery,"SELECT uJobStatus,uModDate FROM tJobStatus WHERE uJobStatus=%u"
-						,uJobStatus);
-
-	sprintf(gcQuery,"SELECT uJobStatus FROM tJobStatus\
-				WHERE uJobStatus=%u"
-						,uJobStatus);
-
+	sprintf(gcQuery,"SELECT uJobStatus,uModDate FROM tJobStatus WHERE uJobStatus=%u",uJobStatus);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

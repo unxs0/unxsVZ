@@ -360,9 +360,6 @@ void DeletetDomain(void)
 	sprintf(gcQuery,"DELETE FROM tDomain WHERE uDomain=%u AND ( uOwner=%u OR %u>9 )"
 					,uDomain,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tDomain WHERE uDomain=%u"
-					,uDomain);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -427,11 +424,6 @@ void ModtDomain(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uDomain,uModDate FROM tDomain WHERE uDomain=%u"
 						,uDomain);
-
-	sprintf(gcQuery,"SELECT uDomain FROM tDomain\
-				WHERE uDomain=%u"
-						,uDomain);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

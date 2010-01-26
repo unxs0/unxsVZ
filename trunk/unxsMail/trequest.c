@@ -378,9 +378,6 @@ void DeletetRequest(void)
 	sprintf(gcQuery,"DELETE FROM tRequest WHERE uRequest=%u AND ( uOwner=%u OR %u>9 )"
 					,uRequest,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tRequest WHERE uRequest=%u"
-					,uRequest);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -447,12 +444,6 @@ void ModtRequest(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uRequest,uModDate FROM tRequest WHERE uRequest=%u"
 						,uRequest);
-
-	sprintf(gcQuery,"SELECT uRequest FROM tRequest\
-				WHERE uRequest=%u"
-						,uRequest);
-
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);

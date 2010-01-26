@@ -503,9 +503,6 @@ void DeletetConfigSpec(void)
 	sprintf(gcQuery,"DELETE FROM tConfigSpec WHERE uConfigSpec=%u AND ( uOwner=%u OR %u>9 )"
 					,uConfigSpec,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tConfigSpec WHERE uConfigSpec=%u"
-					,uConfigSpec);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -586,11 +583,6 @@ void ModtConfigSpec(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uConfigSpec,uModDate FROM tConfigSpec WHERE uConfigSpec=%u"
 						,uConfigSpec);
-
-	sprintf(gcQuery,"SELECT uConfigSpec FROM tConfigSpec\
-				WHERE uConfigSpec=%u"
-						,uConfigSpec);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
