@@ -378,9 +378,6 @@ void DeletetGlossary(void)
 	sprintf(gcQuery,"DELETE FROM tGlossary WHERE uGlossary=%u AND ( uOwner=%u OR %u>9 )"
 					,uGlossary,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tGlossary WHERE uGlossary=%u"
-					,uGlossary);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -447,11 +444,6 @@ void ModtGlossary(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uGlossary,uModDate FROM tGlossary WHERE uGlossary=%u"
 						,uGlossary);
-
-	sprintf(gcQuery,"SELECT uGlossary FROM tGlossary\
-				WHERE uGlossary=%u"
-						,uGlossary);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

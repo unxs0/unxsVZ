@@ -360,9 +360,6 @@ void DeletetServer(void)
 	sprintf(gcQuery,"DELETE FROM tServer WHERE uServer=%u AND ( uOwner=%u OR %u>9 )"
 					,uServer,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tServer WHERE uServer=%u"
-					,uServer);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -426,12 +423,6 @@ void ModtServer(void)
 
 	sprintf(gcQuery,"SELECT uServer,uModDate FROM tServer WHERE uServer=%u"
 						,uServer);
-
-	sprintf(gcQuery,"SELECT uServer FROM tServer\
-				WHERE uServer=%u"
-						,uServer);
-
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);

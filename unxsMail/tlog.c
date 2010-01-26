@@ -539,9 +539,6 @@ void DeletetLog(void)
 	sprintf(gcQuery,"DELETE FROM tLog WHERE uLog=%u AND ( uOwner=%u OR %u>9 )"
 					,uLog,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tLog WHERE uLog=%u"
-					,uLog);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -626,12 +623,6 @@ void ModtLog(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uLog,uModDate FROM tLog WHERE uLog=%u"
 						,uLog);
-
-	sprintf(gcQuery,"SELECT uLog FROM tLog\
-				WHERE uLog=%u"
-						,uLog);
-
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);

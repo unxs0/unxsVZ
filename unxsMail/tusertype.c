@@ -360,9 +360,6 @@ void DeletetUserType(void)
 	sprintf(gcQuery,"DELETE FROM tUserType WHERE uUserType=%u AND ( uOwner=%u OR %u>9 )"
 					,uUserType,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tUserType WHERE uUserType=%u"
-					,uUserType);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -427,11 +424,6 @@ void ModtUserType(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uUserType,uModDate FROM tUserType WHERE uUserType=%u"
 						,uUserType);
-
-	sprintf(gcQuery,"SELECT uUserType FROM tUserType\
-				WHERE uUserType=%u"
-						,uUserType);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

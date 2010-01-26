@@ -395,9 +395,6 @@ void DeletetAlias(void)
 	sprintf(gcQuery,"DELETE FROM tAlias WHERE uAlias=%u AND ( uOwner=%u OR %u>9 )"
 					,uAlias,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tAlias WHERE uAlias=%u"
-					,uAlias);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -464,11 +461,6 @@ void ModtAlias(void)
 	unsigned uPreModDate=0;
 	sprintf(gcQuery,"SELECT uAlias,uModDate FROM tAlias WHERE uAlias=%u"
 						,uAlias);
-
-	sprintf(gcQuery,"SELECT uAlias FROM tAlias\
-				WHERE uAlias=%u"
-						,uAlias);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

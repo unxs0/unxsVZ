@@ -497,9 +497,6 @@ void DeletetUser(void)
 	sprintf(gcQuery,"DELETE FROM tUser WHERE uUser=%u AND ( uOwner=%u OR %u>9 )"
 					,uUser,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tUser WHERE uUser=%u"
-					,uUser);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -577,11 +574,6 @@ void ModtUser(void)
 
 	sprintf(gcQuery,"SELECT uUser,uModDate FROM tUser WHERE uUser=%u"
 						,uUser);
-
-	sprintf(gcQuery,"SELECT uUser FROM tUser\
-				WHERE uUser=%u"
-						,uUser);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

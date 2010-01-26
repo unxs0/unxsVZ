@@ -430,9 +430,6 @@ void DeletetTemplate(void)
 	sprintf(gcQuery,"DELETE FROM tTemplate WHERE uTemplate=%u AND ( uOwner=%u OR %u>9 )"
 					,uTemplate,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tTemplate WHERE uTemplate=%u"
-					,uTemplate);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 

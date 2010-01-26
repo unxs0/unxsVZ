@@ -444,9 +444,7 @@ void ModtVacation(void)
 	MYSQL_ROW field;
 	unsigned uPreModDate=0;
 
-	sprintf(gcQuery,"SELECT uVacation,uModDate FROM tVacation\
-				WHERE uVacation=%u"
-						,uVacation);
+	sprintf(gcQuery,"SELECT uVacation,uModDate FROM tVacation WHERE uVacation=%u",uVacation);
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 

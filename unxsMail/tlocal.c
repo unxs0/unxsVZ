@@ -377,9 +377,6 @@ void DeletetLocal(void)
 	sprintf(gcQuery,"DELETE FROM tLocal WHERE uLocal=%u AND ( uOwner=%u OR %u>9 )"
 					,uLocal,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tLocal WHERE uLocal=%u"
-					,uLocal);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -444,14 +441,7 @@ void ModtLocal(void)
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
-	sprintf(gcQuery,"SELECT uLocal,uModDate FROM tLocal WHERE uLocal=%u"
-						,uLocal);
-
-	sprintf(gcQuery,"SELECT uLocal FROM tLocal\
-				WHERE uLocal=%u"
-						,uLocal);
-
-
+	sprintf(gcQuery,"SELECT uLocal,uModDate FROM tLocal WHERE uLocal=%u",uLocal);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);

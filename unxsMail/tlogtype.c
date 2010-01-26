@@ -360,9 +360,6 @@ void DeletetLogType(void)
 	sprintf(gcQuery,"DELETE FROM tLogType WHERE uLogType=%u AND ( uOwner=%u OR %u>9 )"
 					,uLogType,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tLogType WHERE uLogType=%u"
-					,uLogType);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -425,14 +422,7 @@ void ModtLogType(void)
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
-	sprintf(gcQuery,"SELECT uLogType,uModDate FROM tLogType WHERE uLogType=%u"
-						,uLogType);
-
-	sprintf(gcQuery,"SELECT uLogType FROM tLogType\
-				WHERE uLogType=%u"
-						,uLogType);
-
-
+	sprintf(gcQuery,"SELECT uLogType,uModDate FROM tLogType WHERE uLogType=%u",uLogType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);

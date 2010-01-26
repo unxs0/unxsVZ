@@ -425,9 +425,6 @@ void DeletetAccess(void)
 	sprintf(gcQuery,"DELETE FROM tAccess WHERE uAccess=%u AND ( uOwner=%u OR %u>9 )"
 					,uAccess,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tAccess WHERE uAccess=%u"
-					,uAccess);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -498,12 +495,6 @@ void ModtAccess(void)
 	unsigned uPreModDate=0;
 	sprintf(gcQuery,"SELECT uAccess,uModDate FROM tAccess WHERE uAccess=%u"
 						,uAccess);
-
-	sprintf(gcQuery,"SELECT uAccess FROM tAccess\
-				WHERE uAccess=%u"
-						,uAccess);
-
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);

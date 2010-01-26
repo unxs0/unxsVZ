@@ -360,9 +360,6 @@ void DeletetStatus(void)
 	sprintf(gcQuery,"DELETE FROM tStatus WHERE uStatus=%u AND ( uOwner=%u OR %u>9 )"
 					,uStatus,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tStatus WHERE uStatus=%u"
-					,uStatus);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -427,12 +424,6 @@ void ModtStatus(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uStatus,uModDate FROM tStatus WHERE uStatus=%u"
 						,uStatus);
-
-	sprintf(gcQuery,"SELECT uStatus FROM tStatus\
-				WHERE uStatus=%u"
-						,uStatus);
-
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);

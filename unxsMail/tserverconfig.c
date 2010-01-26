@@ -412,9 +412,6 @@ void DeletetServerConfig(void)
 	sprintf(gcQuery,"DELETE FROM tServerConfig WHERE uServerConfig=%u AND ( uOwner=%u OR %u>9 )"
 					,uServerConfig,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tServerConfig WHERE uServerConfig=%u"
-					,uServerConfig);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -485,11 +482,6 @@ void ModtServerConfig(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uServerConfig,uModDate FROM tServerConfig WHERE uServerConfig=%u"
 						,uServerConfig);
-
-	sprintf(gcQuery,"SELECT uServerConfig FROM tServerConfig\
-				WHERE uServerConfig=%u"
-						,uServerConfig);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

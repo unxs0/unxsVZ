@@ -360,9 +360,6 @@ void DeletetServerGroup(void)
 	sprintf(gcQuery,"DELETE FROM tServerGroup WHERE uServerGroup=%u AND ( uOwner=%u OR %u>9 )"
 					,uServerGroup,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tServerGroup WHERE uServerGroup=%u"
-					,uServerGroup);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -427,11 +424,6 @@ void ModtServerGroup(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uServerGroup,uModDate FROM tServerGroup WHERE uServerGroup=%u"
 						,uServerGroup);
-
-	sprintf(gcQuery,"SELECT uServerGroup FROM tServerGroup\
-				WHERE uServerGroup=%u"
-						,uServerGroup);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

@@ -360,9 +360,6 @@ void DeletetTemplateType(void)
 	sprintf(gcQuery,"DELETE FROM tTemplateType WHERE uTemplateType=%u AND ( uOwner=%u OR %u>9 )"
 					,uTemplateType,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tTemplateType WHERE uTemplateType=%u"
-					,uTemplateType);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -427,11 +424,6 @@ void ModtTemplateType(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uTemplateType,uModDate FROM tTemplateType WHERE uTemplateType=%u"
 						,uTemplateType);
-
-	sprintf(gcQuery,"SELECT uTemplateType FROM tTemplateType\
-				WHERE uTemplateType=%u"
-						,uTemplateType);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));

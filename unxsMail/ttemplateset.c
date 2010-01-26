@@ -360,9 +360,6 @@ void DeletetTemplateSet(void)
 	sprintf(gcQuery,"DELETE FROM tTemplateSet WHERE uTemplateSet=%u AND ( uOwner=%u OR %u>9 )"
 					,uTemplateSet,guLoginClient,guPermLevel);
 
-	sprintf(gcQuery,"DELETE FROM tTemplateSet WHERE uTemplateSet=%u"
-					,uTemplateSet);
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
@@ -427,11 +424,6 @@ void ModtTemplateSet(void)
 	//Mod select gcQuery
 	sprintf(gcQuery,"SELECT uTemplateSet,uModDate FROM tTemplateSet WHERE uTemplateSet=%u"
 						,uTemplateSet);
-
-	sprintf(gcQuery,"SELECT uTemplateSet FROM tTemplateSet\
-				WHERE uTemplateSet=%u"
-						,uTemplateSet);
-
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
