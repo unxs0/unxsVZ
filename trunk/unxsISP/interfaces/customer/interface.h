@@ -205,3 +205,7 @@ typedef struct structtClientConfig {
 //dasboard.c
 void htmlDashBoard(void);
 
+
+//registration.c
+void ProcessRegistrationVars(pentry entries[], int x);
+
