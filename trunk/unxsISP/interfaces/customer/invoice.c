@@ -701,7 +701,7 @@ void funcInvoiceNavList(FILE *fp)
 	}
 	else if(guTemplateSet==3)
 	{
-		cLabel="Factura"
+		cLabel="Factura";
 		sprintf(cTopMessage,"%u registro(s) encontrados.",uFound);
 	}
 	else if(guTemplateSet==4)

@@ -96,7 +96,7 @@ void RegistrationCommands(pentry entries[], int x)
 void htmlRegistration(void)
 {
 	htmlHeader("unxsISP Registration Interface","Header");
-	htmlRegistrationPage("","MyAccount.Body");
+	htmlRegistrationPage("","Registration.Body");
 	htmlFooter("Footer");
 
 }//void htmlRegistration(void)
@@ -108,9 +108,76 @@ void htmlRegistrationPage(char *cTitle, char *cTemplateName)
 	{
 		TemplateSelect(cTemplateName,guTemplateSet);
 
+		template.cpName[0]="cTitle";
+		template.cpValue[0]=cTitle;
 		
+		template.cpName[1]="cCGI";
+		template.cpValue[1]="ispClient.cgi";
+		
+		template.cpName[2]="gcLogin";
+		template.cpValue[2]=gcLogin;
 
-		template.cpName[]="";
+		template.cpName[3]="gcName";
+		template.cpValue[3]=gcName;
+
+		template.cpName[4]="gcOrgName";
+		template.cpValue[4]=gcOrgName;
+
+		template.cpName[5]="cUserLevel";
+		template.cpValue[5]=(char *)cUserLevel(guPermLevel);
+
+		template.cpName[6]="gcHost";
+		template.cpValue[6]=gcHost;
+
+		template.cpName[7]="gcMessage";
+		template.cpValue[7]=gcMessage;
+
+		template.cpName[8]="cFirstName";
+		template.cpValue[8]=cFirstName;
+		
+		template.cpName[9]="cFirstNameStyle";
+		template.cpValue[9]=cFirstNameStyle;
+		
+		template.cpName[10]="cLastName";
+		template.cpValue[10]=cLastName;
+		
+		template.cpName[11]="cLastNameStyle";
+		template.cpValue[11]=cLastNameStyle;
+		
+		template.cpName[12]="cEmail";
+		template.cpValue[12]=cEmail;
+		
+		template.cpName[13]="cEmailStyle";
+		template.cpValue[13]=cEmailStyle;
+		
+		template.cpName[14]="cPhone";
+		template.cpValue[14]=cPhone;
+		
+		template.cpName[15]="cPhoneStyle";
+		template.cpValue[15]=cPhoneStyle;
+		
+		template.cpName[16]="uOwner";
+		template.cpValue[16]=cuOwner;
+
+		template.cpName[17]="uCreatedBy";
+		template.cpValue[17]=cuCreatedBy;
+
+		template.cpName[18]="uCreatedDate";
+		template.cpValue[18]=cuCreatedDate;
+
+		template.cpName[19]="uModBy";
+		template.cpValue[19]=cuModBy;
+
+		template.cpName[20]="uModDate";
+		template.cpValue[20]=cuModDate;
+
+		template.cpName[21]="cCustomerName";
+		template.cpValue[21]=cCustomerName;
+
+		template.cpName[22]="cLanguage";
+		template.cpValue[22]=cLanguage;
+
+		template.cpName[23]="";
 
 		printf("\n<!-- Start htmlRegistrationPage(%s) -->\n",cTemplateName); 
 		Template(field[0], &template, stdout);
