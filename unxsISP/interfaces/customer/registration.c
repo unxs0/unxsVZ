@@ -104,14 +104,30 @@ void htmlRegistration(void)
 
 void htmlRegistrationPage(char *cTitle, char *cTemplateName)
 {
+	if(cTemplateName[0])
+	{
+		TemplateSelect(cTemplateName,guTemplateSet);
+
+		
+
+		template.cpName[]="";
+
+		printf("\n<!-- Start htmlRegistrationPage(%s) -->\n",cTemplateName); 
+		Template(field[0], &template, stdout);
+		printf("\n<!-- End htmlRegistrationPage(%s) -->\n",cTemplateName); 
+	}
+	else
+	{
+		printf("<hr>");
+		printf("<center><font size=1>%s</font>\n",cTemplateName);
+	}
 }//void htmlRegistrationPage()
 
 
-unsigned ValidateCustomerInput(void)
+unsigned ValidateRegistrationInput(void)
 {
 	if(!cFirstName[0])
 	{
-		SetCustomerFieldsOn();
 		cFirstNameStyle="type_fields_req";
 		if(guTemplateSet==2)
 			gcMessage="<blink>Error: </blink>Must enter first name";
@@ -124,7 +140,6 @@ unsigned ValidateCustomerInput(void)
 	}
 	if(!cLastName[0])
 	{
-		SetCustomerFieldsOn();
 		cLastNameStyle="type_fields_req";
 		if(guTemplateSet==2)
 			gcMessage="<blink>Error: </blink>Must enter last name";
@@ -138,7 +153,6 @@ unsigned ValidateCustomerInput(void)
 
 	if(!cEmail[0])
 	{
-		SetCustomerFieldsOn();
 		cEmailStyle="type_fields_req";
 		if(guTemplateSet==2)
 			gcMessage="<blink>Error: </blink>Must enter email address";
@@ -153,7 +167,6 @@ unsigned ValidateCustomerInput(void)
 	{
 		if(strstr(cEmail,"@")==NULL || strstr(cEmail,".")==NULL)
 		{
-			SetCustomerFieldsOn();
 			cEmailStyle="type_fields_req";
 			if(guTemplateSet==2)
 				gcMessage="<blink>Error: </blink>Email has to be a valid email address";
@@ -165,9 +178,8 @@ unsigned ValidateCustomerInput(void)
 			return(0);
 		}
 	}
-	if(!cAddr1[0])//Phone
+	if(!cPhone[0])//Phone
 	{
-		SetCustomerFieldsOn();
 		cAddr1Style="type_fields_req";
 		if(guTemplateSet==2)
 			gcMessage="<blink>Error: </blink>Must enter address information";
@@ -180,7 +192,7 @@ unsigned ValidateCustomerInput(void)
 	}
 	return(1);
 		
-}//unsigned ValidateInput(void)
+}//unsigned ValidateRegistrationInput(void)
 
 
 void SetRegistrationFieldsOn(void)
