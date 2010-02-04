@@ -36,6 +36,8 @@ void ModRegistration(void);
 
 void SetRegistrationFieldsOn(void);
 void LoadRegistration(unsigned cuClient);
+void EmailRegistration(char *cTemplateName);
+
 
 
 void ProcessRegistrationVars(pentry entries[], int x)
@@ -69,6 +71,7 @@ void RegistrationGetHook(entry gentries[],int x)
 		else if (!strcmp(gcPage,"ConfirmRegistration"))
 			;//Something (in the way she moves)
 	}
+
 }//void RegistrationGetHook(entry gentries[],int x)
 
 
@@ -267,4 +270,30 @@ void SetRegistrationFieldsOn(void)
 }//void SetRegistrationFieldsOn(void)
 
 
+void EmailRegistration(char *cTemplateName)
+{
+	FILE *fp;
+	char cFrom[256]={"root"};
+	char cSubject[256]={""};
+	struct t_template *template;
+	cSubject[255]=0;
+	
+	GetConfiguration("cFromEmailAddr",cFrom);
+
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	//debug only
+	//if((fp=fopen("/tmp/eMailInvoice","w")))
+	{
+		fprintf(fp,"To: %s\n",cEmail);
+		fprintf(fp,"From: %s\n",cFrom);
+		fprintf(fp, "Reply-to: %s\n",cFrom);
+		fprintf(fp,"Subject: %s\n",cSubject);
+		
+		fpTemplate(fp,cTemplateName,template);
+		pclose(fp);
+		//debug only
+		//fclose(fp);
+	}
+
+}//void eMailInvoice()
 
