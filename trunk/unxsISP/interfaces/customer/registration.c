@@ -83,7 +83,13 @@ void RegistrationCommands(pentry entries[], int x)
 		   !strcmp(gcFunction,"Enviar") ||
 		   !strcmp(gcFunction,"Envoyer"))
 		{
-			//Envoyerearla
+			if(ValidateRegistrationInput())
+			{
+				CreateTempRegistration();
+				htmlHeader("unxsISP Customer Interface","Header");
+				htmlRegistrationPage("","RegistrationDone.Body");
+				htmlFooter("Footer");
+			}
 		}
 
 		htmlRegistration();
@@ -94,7 +100,7 @@ void RegistrationCommands(pentry entries[], int x)
 
 void htmlRegistration(void)
 {
-	htmlHeader("unxsISP Registration Interface","Header");
+	htmlHeader("unxsISP Customer Interface","Header");
 	htmlRegistrationPage("","Registration.Body");
 	htmlFooter("Footer");
 
@@ -253,11 +259,11 @@ void EmailRegistration(char *cTemplateName)
 	FILE *fp;
 	char cFrom[256]={"root"};
 	char cSubject[256]={""};
-	struct t_template *template;
+	struct t_template template;
 	cSubject[255]=0;
 	
 	GetConfiguration("cFromEmailAddr",cFrom);
-
+	
 	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
 	//if((fp=fopen("/tmp/eMailInvoice","w")))
@@ -267,7 +273,21 @@ void EmailRegistration(char *cTemplateName)
 		fprintf(fp, "Reply-to: %s\n",cFrom);
 		fprintf(fp,"Subject: %s\n",cSubject);
 		
-		fpTemplate(fp,cTemplateName,template);
+		template.cpName[0]="cFirstName";
+		template.cpValue[0]=cFirstName;
+
+		template.cpName[1]="cUser";
+		template.cpValue[1]=cUser;
+
+		template.cpName[2]="cPassword";
+		template.cpValue[2]=cPassword;
+
+		template.cpName[3]="cId";
+		template.cpValue[3]=cId;
+
+		template.cpName[4]="";
+
+		fpTemplate(fp,cTemplateName,&template);
 		pclose(fp);
 		//debug only
 		//fclose(fp);
@@ -276,9 +296,56 @@ void EmailRegistration(char *cTemplateName)
 }//void eMailInvoice()
 
 
+void LoadRegistration(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cFirstName,cLastName,cEmail,cPhone FROM tTempClient WHERE cHash='%s'",TextAreaSave(cId));
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cFirstName,"%s",field[0]);
+		sprintf(cLastName,"%s",field[1]);
+		sprintf(cEmail,"%s",field[2]);
+		sprintf(cPhone,"%s",field[3]);
+	}
+	else
+	{
+		htmlHeader("unxsISP Customer Interface","Header");
+		htmlRegistrationPage("","RegistrationNotFound.Body");
+		htmlFooter("Footer");
+	}
+}//void LoadRegistration(void)
+
+
 void CommitRegistration(void)
 {
 	//This function actually creates a tClient record from the tTempClient record
+	char cuCompany[16]={""};
+	
+	LoadRegistration();
+
+	GetConfiguration("uRegistrationCompany",cuCompany);
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s %s'cFirstName='%s',cLastName='%s',cEmail='%s',cPhone='%s'"
+			"uCreatedBy=%s,uOwner=%s,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			TextAreaSave(cFirstName)
+			,TextAreaSave(cLastName)
+			,TextAreaSave(cFirstName)
+			,TextAreaSave(cLastName)
+			,TextAreaSave(cEmail)
+			,TextAreaSave(cPhone)
+			,cuCompany
+			,cuCompany
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
 }//void CommitRegistration(void)
 
 
@@ -329,7 +396,7 @@ void CreateTempRegistration(void)
 	CreatetTempClient();
 
 	sprintf(gcQuery,"INSERT INTO tTempClient SET cFirstName='%s',cLastName='%s',cEmail='%s',cPhone='%s'"
-			"cHash=MD5(CONCAT(cFirstName,cLastName,NOW())),uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			"cHash=MD5(CONCAT(cFirstName,cLastName,NOW())),uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			TextAreaSave(cFirstName)
 			,TextAreaSave(cLastName)
 			,TextAreaSave(cEmail)
