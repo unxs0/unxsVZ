@@ -208,4 +208,5 @@ void htmlDashBoard(void);
 
 //registration.c
 void ProcessRegistrationVars(pentry entries[], int x);
-
+void htmlRegistration(void);
+void htmlRegistrationPage(char *cTitle, char *cTemplateName);
