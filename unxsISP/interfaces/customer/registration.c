@@ -3,41 +3,39 @@ FILE
 	registration.c
 	$Id$
 AUTHOR
-	(C) 2010 Franco Victorio for Unixservice
+	(C) 2010 Hugo Urquiza for Unixservice LLC.
 PURPOSE
 	unxsISP Customer Interface
 	program file.
 */
 
 
-#define VAR_LIST_tClient "cFirstName,cLastName,cEmail,cPhone,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate"
 #include "interface.h"
 
 static char cFirstName[33]={""};
-static char *cFirstNameStyle="type_fields_off";
+static char *cFirstNameStyle="type_fields";
 
 static char cLastName[33]={""};
-static char *cLastNameStyle="type_fields_off";
+static char *cLastNameStyle="type_fields";
 
 static char cEmail[101]={""};
-static char *cEmailStyle="type_fields_off";
+static char *cEmailStyle="type_fields";
 
 static char cPhone[101]={""};
-static char *cPhoneStyle="type_fields_off";
+static char *cPhoneStyle="type_fields";
 
 static char cUser[101]={""};
+static char cPassword[101]={""};
 
-extern unsigned uSetupRB;
+static char cId[65]={""};
 
 //
 //Local only
 unsigned ValidateRegistrationInput(void);
-void ModRegistration(void);
-
-void SetRegistrationFieldsOn(void);
-void LoadRegistration(unsigned cuClient);
 void EmailRegistration(char *cTemplateName);
-
+void CommitRegistration(void);
+void CreateTempRegistration(void);
+void GenerateLoginInfo(void);
 
 
 void ProcessRegistrationVars(pentry entries[], int x)
@@ -55,29 +53,25 @@ void ProcessRegistrationVars(pentry entries[], int x)
 			sprintf(cEmail,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cPhone"))
 			sprintf(cPhone,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uLanguge"))
+			sscanf(entries[i].val,"%u",&guTemplateSet);
 	}
-
-	sprintf(cUser,"%s.%s",cFirstName,cLastName);
 
 }//void ProcessRegistrationVars(pentry entries[], int x)
 
 
 void RegistrationGetHook(entry gentries[],int x)
 {
-	if(gcPage[0])
+	register int i;
+	
+	for(i=0;i<x;i++)
 	{
-		if(!strcmp(gcPage,"Registration"))
-			htmlRegistration();
-		else if (!strcmp(gcPage,"ConfirmRegistration"))
-			;//Something (in the way she moves)
+
+		if(!strcmp(gentries[i].name,"cId"))
+			sprintf(cId,"%.32s",gentries[i].val);
 	}
 
 }//void RegistrationGetHook(entry gentries[],int x)
-
-
-void LoadRegistration(unsigned uClient)
-{
-}//void LoadRegistration(char *uClient)
 
 
 void RegistrationCommands(pentry entries[], int x)
@@ -111,75 +105,69 @@ void htmlRegistrationPage(char *cTitle, char *cTemplateName)
 {
 	if(cTemplateName[0])
 	{
-		struct t_template template;
-		char cuOwner[16]={""};
-		char cuCreatedBy[16]={""};
-		char cuCreatedDate[16]={""};
-
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+		
 		TemplateSelect(cTemplateName,guTemplateSet);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			struct t_template template;
 
-		template.cpName[0]="cTitle";
-		template.cpValue[0]=cTitle;
+			template.cpName[0]="cTitle";
+			template.cpValue[0]=cTitle;
 		
-		template.cpName[1]="cCGI";
-		template.cpValue[1]="ispClient.cgi";
+			template.cpName[1]="cCGI";
+			template.cpValue[1]="ispClient.cgi";
 		
-		template.cpName[2]="gcLogin";
-		template.cpValue[2]=gcLogin;
+			template.cpName[2]="gcLogin";
+			template.cpValue[2]=gcLogin;
 
-		template.cpName[3]="gcName";
-		template.cpValue[3]=gcName;
+			template.cpName[3]="gcName";
+			template.cpValue[3]=gcName;
 
-		template.cpName[4]="gcOrgName";
-		template.cpValue[4]=gcOrgName;
+			template.cpName[4]="gcOrgName";
+			template.cpValue[4]=gcOrgName;
 
-		template.cpName[5]="cUserLevel";
-		template.cpValue[5]=(char *)cUserLevel(guPermLevel);
+			template.cpName[5]="cUserLevel";
+			template.cpValue[5]=(char *)cUserLevel(guPermLevel);
 
-		template.cpName[6]="gcHost";
-		template.cpValue[6]=gcHost;
+			template.cpName[6]="gcHost";
+			template.cpValue[6]=gcHost;
 
-		template.cpName[7]="gcMessage";
-		template.cpValue[7]=gcMessage;
+			template.cpName[7]="gcMessage";
+			template.cpValue[7]=gcMessage;
 
-		template.cpName[8]="cFirstName";
-		template.cpValue[8]=cFirstName;
+			template.cpName[8]="cFirstName";
+			template.cpValue[8]=cFirstName;
 		
-		template.cpName[9]="cFirstNameStyle";
-		template.cpValue[9]=cFirstNameStyle;
+			template.cpName[9]="cFirstNameStyle";
+			template.cpValue[9]=cFirstNameStyle;
 		
-		template.cpName[10]="cLastName";
-		template.cpValue[10]=cLastName;
+			template.cpName[10]="cLastName";
+			template.cpValue[10]=cLastName;
 		
-		template.cpName[11]="cLastNameStyle";
-		template.cpValue[11]=cLastNameStyle;
+			template.cpName[11]="cLastNameStyle";
+			template.cpValue[11]=cLastNameStyle;
 		
-		template.cpName[12]="cEmail";
-		template.cpValue[12]=cEmail;
+			template.cpName[12]="cEmail";
+			template.cpValue[12]=cEmail;
 		
-		template.cpName[13]="cEmailStyle";
-		template.cpValue[13]=cEmailStyle;
+			template.cpName[13]="cEmailStyle";
+			template.cpValue[13]=cEmailStyle;
 		
-		template.cpName[14]="cPhone";
-		template.cpValue[14]=cPhone;
+			template.cpName[14]="cPhone";
+			template.cpValue[14]=cPhone;
 		
-		template.cpName[15]="cPhoneStyle";
-		template.cpValue[15]=cPhoneStyle;
+			template.cpName[15]="cPhoneStyle";
+			template.cpValue[15]=cPhoneStyle;
 		
-		template.cpName[16]="uOwner";
-		template.cpValue[16]=cuOwner;
+			template.cpName[16]="";
 
-		template.cpName[17]="uCreatedBy";
-		template.cpValue[17]=cuCreatedBy;
-
-		template.cpName[18]="uCreatedDate";
-		template.cpValue[18]=cuCreatedDate;
-
-		template.cpName[19]="";
-
-		printf("\n<!-- Start htmlRegistrationPage(%s) -->\n",cTemplateName); 
-		//Template(field[0], &template, stdout);
-		printf("\n<!-- End htmlRegistrationPage(%s) -->\n",cTemplateName); 
+			printf("\n<!-- Start htmlRegistrationPage(%s) -->\n",cTemplateName); 
+			Template(field[0], &template, stdout);
+			printf("\n<!-- End htmlRegistrationPage(%s) -->\n",cTemplateName); 
+		}
 	}
 	else
 	{
@@ -260,16 +248,6 @@ unsigned ValidateRegistrationInput(void)
 }//unsigned ValidateRegistrationInput(void)
 
 
-void SetRegistrationFieldsOn(void)
-{
-	cFirstNameStyle="type_fields";
-	cLastNameStyle="type_fields";
-	cEmailStyle="type_fields";
-	cPhoneStyle="type_fields";
-
-}//void SetRegistrationFieldsOn(void)
-
-
 void EmailRegistration(char *cTemplateName)
 {
 	FILE *fp;
@@ -296,4 +274,79 @@ void EmailRegistration(char *cTemplateName)
 	}
 
 }//void eMailInvoice()
+
+
+void CommitRegistration(void)
+{
+	//This function actually creates a tClient record from the tTempClient record
+}//void CommitRegistration(void)
+
+
+void CreatetTempClient(void)
+{
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tTempClient ( uTempClient INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, "
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT "
+			"UNSIGNED NOT NULL DEFAULT 0, cFirstName VARCHAR(32) NOT NULL DEFAULT '', cLastName VARCHAR(32) NOT "
+			"NULL DEFAULT '', cEmail VARCHAR(100) NOT NULL DEFAULT '',index (cEmail), cAddr1 VARCHAR(100) NOT NULL "
+			"DEFAULT '', cAddr2 VARCHAR(100) NOT NULL DEFAULT '', cCity VARCHAR(100) NOT NULL DEFAULT '', "
+			"cState VARCHAR(100) NOT NULL DEFAULT '', cZip VARCHAR(32) NOT NULL DEFAULT '', cPhone VARCHAR(100) NOT "
+			"NULL DEFAULT '', cHash VARCHAR(65) NOT NULL DEFAULT='')");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void CreatetTempClient(void)
+
+unsigned uTempClient=0;
+
+void EmailAfterRegistration(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cHash FROM tTemplClient WHERE uTempClient=%u",uTempClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	field=mysql_fetch_row(res);
+	sprintf(cId,"%s",field[0]);
+	
+	EmailRegistration("RegistrationMail0");
+
+}//void EmailAfterRegistration(void)
+
+
+void CreateTempRegistration(void)
+{
+	//This function inserts a new tTempClient record
+	//Is the first step for registration, if it gets confirmed
+	//the tTempClient record is removed and tClient/tAuthorize records
+	//are created
+
+	CreatetTempClient();
+
+	sprintf(gcQuery,"INSERT INTO tTempClient SET cFirstName='%s',cLastName='%s',cEmail='%s',cPhone='%s'"
+			"cHash=MD5(CONCAT(cFirstName,cLastName,NOW())),uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			TextAreaSave(cFirstName)
+			,TextAreaSave(cLastName)
+			,TextAreaSave(cEmail)
+			,TextAreaSave(cPhone)
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uTempClient=mysql_insert_id(&gMysql);
+
+}//void CreateTempRegistration(void)
+
+
+void GenerateLoginInfo(void)
+{
+	//This function creates the tAuthorize record
+	//with a random password
+}//void GenerateLoginInfo(void)
+
 
