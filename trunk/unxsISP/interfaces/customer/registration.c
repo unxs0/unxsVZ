@@ -52,8 +52,10 @@ void ProcessRegistrationVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"cEmail"))
 			sprintf(cEmail,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cPhone"))
-			sprintf(cAddr1,"%.100s",entries[i].val);
+			sprintf(cPhone,"%.100s",entries[i].val);
 	}
+
+	sprintf(cUser,"%s.%s",cFirstName,cLastName);
 
 }//void ProcessRegistrationVars(pentry entries[], int x)
 
@@ -62,9 +64,9 @@ void RegistrationGetHook(entry gentries[],int x)
 {
 	if(gcPage[0])
 	{
-		if(!strcmp(gcPage,"Registration")
+		if(!strcmp(gcPage,"Registration"))
 			htmlRegistration();
-		else if (!strcmp(gcPage,"ConfirmRegistration")
+		else if (!strcmp(gcPage,"ConfirmRegistration"))
 			;//Something (in the way she moves)
 	}
 }//void RegistrationGetHook(entry gentries[],int x)
@@ -106,6 +108,11 @@ void htmlRegistrationPage(char *cTitle, char *cTemplateName)
 {
 	if(cTemplateName[0])
 	{
+		struct t_template template;
+		char cuOwner[16]={""};
+		char cuCreatedBy[16]={""};
+		char cuCreatedDate[16]={""};
+
 		TemplateSelect(cTemplateName,guTemplateSet);
 
 		template.cpName[0]="cTitle";
@@ -165,22 +172,10 @@ void htmlRegistrationPage(char *cTitle, char *cTemplateName)
 		template.cpName[18]="uCreatedDate";
 		template.cpValue[18]=cuCreatedDate;
 
-		template.cpName[19]="uModBy";
-		template.cpValue[19]=cuModBy;
-
-		template.cpName[20]="uModDate";
-		template.cpValue[20]=cuModDate;
-
-		template.cpName[21]="cCustomerName";
-		template.cpValue[21]=cCustomerName;
-
-		template.cpName[22]="cLanguage";
-		template.cpValue[22]=cLanguage;
-
-		template.cpName[23]="";
+		template.cpName[19]="";
 
 		printf("\n<!-- Start htmlRegistrationPage(%s) -->\n",cTemplateName); 
-		Template(field[0], &template, stdout);
+		//Template(field[0], &template, stdout);
 		printf("\n<!-- End htmlRegistrationPage(%s) -->\n",cTemplateName); 
 	}
 	else
@@ -247,13 +242,13 @@ unsigned ValidateRegistrationInput(void)
 	}
 	if(!cPhone[0])//Phone
 	{
-		cAddr1Style="type_fields_req";
+		cPhoneStyle="type_fields_req";
 		if(guTemplateSet==2)
-			gcMessage="<blink>Error: </blink>Must enter address information";
+			gcMessage="<blink>Error: </blink>Must enter phone number";
 		else if(guTemplateSet==3)
-			gcMessage="<blink>Error: </blink>Debe ingresar su direcci&oacute;n postal";
+			gcMessage="<blink>Error: </blink>Debe ingresar su n&uacute;mero de tel&eacutefono";
 		else if(guTemplateSet==4)
-			gcMessage="<blink>Error: </blink>Must enter address information (french)";
+			gcMessage="<blink>Error: </blink>Must enter phone number (french)";
 
 		return(0);
 	}
