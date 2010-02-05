@@ -210,3 +210,7 @@ void htmlDashBoard(void);
 void ProcessRegistrationVars(pentry entries[], int x);
 void htmlRegistration(void);
 void htmlRegistrationPage(char *cTitle, char *cTemplateName);
+void RegistrationGetHook(entry gentries[],int x);
+void funcSelectRegLang(FILE *fp);
+void RegistrationCommands(pentry entries[], int x);
+

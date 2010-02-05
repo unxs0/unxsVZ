@@ -43,7 +43,7 @@
 <td height="40"><input title='Login with your unxsISP System login and password' class=largeButton type=submit name=gcFunction value='Login'></td>
 </tr>
 <tr>
-<td>To login please enter your username and password and click login.</td>
+<td>To login please enter your username and password and click login.<br>If you don't have an account, <a class=darkLink href={{cCGI}}?gcPage=Registration>get one here</a></td>
 </tr>
       
 </table>
