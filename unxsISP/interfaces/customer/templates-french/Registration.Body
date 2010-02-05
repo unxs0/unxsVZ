@@ -1,0 +1,47 @@
+<table align=center>
+<tr>
+<td colspan=2 align=center><img src=/images/unxslogo.jpg></td>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<tr>
+<td colspan=2><h3>Register for free for accessing the customer interface (French)</h3></td>
+</tr>
+
+<form method=post>
+<input type=hidden name=gcPage value=Registration>
+<tr>
+<td><b>First Name</b></td>
+<td><input type=text name=cFirstName class={{cFirstNameStyle}} value="{{cFirstName}}"></td>
+</tr>
+
+<tr>
+<td><b>Last Name</b></td>
+<td><input type=text name=cLastName class={{cLastNameStyle}} value="{{cLastName}}"></td>
+</tr>
+
+<tr>
+<td><b>Email</b></td>
+<td><input type=text name=cEmail class={{cEmailStyle}} value="{{cEmail}}"></td>
+</tr>
+
+<tr>
+<td><b>Phone</b></td>
+<td><input type=text name=cPhone class={{cPhoneStyle}} value="{{cPhone}}"></td>
+</tr>
+
+<tr>
+<td><b>Language</b></td>
+<td>{{funcSelectRegLang}}
+<input type=hidden name=gcFunction value=void>
+</td>
+</tr>
+<tr><td>&nbsp;</td></tr>
+
+<tr>
+<td colspan=2 align=center>
+<input type=submit class=largeButton name=gcFunction value='Send'>
+</td>
+</tr>
+</form>
+</table>
