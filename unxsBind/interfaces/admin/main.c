@@ -447,9 +447,10 @@ void ConnectDb(void)
         {
 		if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
 		{
-			htmlHeader("idnsAdmin.cgi Error","Header");
-        	        printf("Database server <u>unavailable</u>\n");
-			htmlFooter("Footer");
+			printf("Content-type: text/plain\n\n");
+        	        printf("Database server unavailable\n");
+			printf("%s\n",mysql_error(&gMysql));
+			exit(0);
 		}
         }
 
