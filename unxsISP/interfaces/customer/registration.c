@@ -71,6 +71,8 @@ void RegistrationGetHook(entry gentries[],int x)
 			sprintf(cId,"%.32s",gentries[i].val);
 	}
 
+	htmlRegistration();
+
 }//void RegistrationGetHook(entry gentries[],int x)
 
 
@@ -101,6 +103,9 @@ void RegistrationCommands(pentry entries[], int x)
 void htmlRegistration(void)
 {
 	htmlHeader("unxsISP Customer Interface","Header");
+
+	if(!guTemplateSet) guTemplateSet=2;
+
 	htmlRegistrationPage("","Registration.Body");
 	htmlFooter("Footer");
 
@@ -113,7 +118,6 @@ void htmlRegistrationPage(char *cTitle, char *cTemplateName)
 	{
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
-		
 		TemplateSelect(cTemplateName,guTemplateSet);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
@@ -174,11 +178,11 @@ void htmlRegistrationPage(char *cTitle, char *cTemplateName)
 			Template(field[0], &template, stdout);
 			printf("\n<!-- End htmlRegistrationPage(%s) -->\n",cTemplateName); 
 		}
-	}
-	else
-	{
-		printf("<hr>");
-		printf("<center><font size=1>%s</font>\n",cTemplateName);
+		else
+		{
+			printf("<hr>");
+			printf("<center><font size=1>%s (%u)</font>\n",cTemplateName,guTemplateSet);
+		}
 	}
 }//void htmlRegistrationPage()
 
@@ -415,5 +419,26 @@ void GenerateLoginInfo(void)
 	//This function creates the tAuthorize record
 	//with a random password
 }//void GenerateLoginInfo(void)
+
+
+void funcSelectRegLang(FILE *fp)
+{
+	fprintf(fp,"<select name=uLanguage class=type_fields onChange=submit()>\n");
+	
+	fprintf(fp,"<option value=2 ");
+	if(guTemplateSet==2) fprintf(fp,"selected");
+	fprintf(fp,">English</option>\n");
+	
+	fprintf(fp,"<option value=3 ");
+	if(guTemplateSet==3) fprintf(fp,"selected");
+	fprintf(fp,">Espa&ntilde;ol</option>\n");
+	
+	fprintf(fp,"<option value=4 ");
+	if(guTemplateSet==4) fprintf(fp,"selected");
+	fprintf(fp,">Francais</option>\n");
+
+	fprintf(fp,"</select>\n");
+
+}//void funcSelectRegLang(FILE *fp)
 
 

@@ -3,7 +3,7 @@ FILE
 	main.c
 	$Id: main.c 482 2009-08-12 20:08:48Z Hugo $
 AUTHOR
-	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2006-2010 Gary Wallis and Hugo Urquiza for Unixservice LLC.
 PURPOSE
 	ispClient main module.
 REQUIRES
@@ -95,7 +95,6 @@ int main(int argc, char *argv[])
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{
 		//Get	
-		SSLCookieLogin();
 		
 		gcl = getenv("QUERY_STRING");
 		for(i=0;gcl[0] != '\0' && i<MAXGETVARS;i++)
@@ -110,6 +109,10 @@ int main(int argc, char *argv[])
 			else if(!strcmp(gentries[i].name,"gcPage"))
 				sprintf(gcPage,"%.99s",gentries[i].val);
 		}
+		
+		if(!strcmp(gcPage,"Registration")) RegistrationGetHook(gentries,i);
+
+		SSLCookieLogin();
 		if(gcPage[0])
 		{
 			if(!strcmp(gcPage,"Customer"))
@@ -161,6 +164,7 @@ int main(int argc, char *argv[])
 			htmlLogin();
 		}
 	}
+	RegistrationCommands(entries,i);
 
         if(!strcmp(gcFunction,"Login")) SetLogin();
 
@@ -402,6 +406,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcEnteredParameters(fp);
 	else if(!strcmp(cFunction,"funcProductList"))
 		funcProductList(fp);
+	else if(!strcmp(cFunction,"funcSelectRegLang"))
+		funcSelectRegLang(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
