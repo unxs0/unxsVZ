@@ -1,0 +1,47 @@
+<table align=center>
+<tr>
+<td colspan=2 align=center><img src=/images/unxslogo.jpg></td>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<tr>
+<td colspan=2><h3>Reg&iacute;strese sin cargo para acceder la interfase de clientes</h3></td>
+</tr>
+
+<form method=post>
+<input type=hidden name=gcPage value=Registration>
+<tr>
+<td><b>Nombre</b></td>
+<td><input type=text name=cFirstName class={{cFirstNameStyle}} value="{{cFirstName}}"></td>
+</tr>
+
+<tr>
+<td><b>Apellido</b></td>
+<td><input type=text name=cLastName class={{cLastNameStyle}} value="{{cLastName}}"></td>
+</tr>
+
+<tr>
+<td><b>Email</b></td>
+<td><input type=text name=cEmail class={{cEmailStyle}} value="{{cEmail}}"></td>
+</tr>
+
+<tr>
+<td><b>Tel&eacute;efono</b></td>
+<td><input type=text name=cPhone class={{cPhoneStyle}} value="{{cPhone}}"></td>
+</tr>
+
+<tr>
+<td><b>Idioma</b></td>
+<td>{{funcSelectRegLang}}
+<input type=hidden name=gcFunction value=void>
+</td>
+</tr>
+<tr><td>&nbsp;</td></tr>
+
+<tr>
+<td colspan=2 align=center>
+<input type=submit class=largeButton name=gcFunction value='Enviar'>
+</td>
+</tr>
+</form>
+</table>

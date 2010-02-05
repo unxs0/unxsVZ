@@ -53,7 +53,7 @@ void ProcessRegistrationVars(pentry entries[], int x)
 			sprintf(cEmail,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cPhone"))
 			sprintf(cPhone,"%.100s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uLanguge"))
+		else if(!strcmp(entries[i].name,"uLanguage"))
 			sscanf(entries[i].val,"%u",&guTemplateSet);
 	}
 
@@ -105,7 +105,6 @@ void htmlRegistration(void)
 	htmlHeader("unxsISP Customer Interface","Header");
 
 	if(!guTemplateSet) guTemplateSet=2;
-
 	htmlRegistrationPage("","Registration.Body");
 	htmlFooter("Footer");
 
