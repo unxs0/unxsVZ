@@ -26,7 +26,7 @@
 </tr>
 
 <tr>
-<td><b>Tel&eacute;efono</b></td>
+<td><b>Tel&eacute;fono</b></td>
 <td><input type=text name=cPhone class={{cPhoneStyle}} value="{{cPhone}}"></td>
 </tr>
 
