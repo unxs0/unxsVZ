@@ -361,7 +361,7 @@ void CreatetTempClient(void)
 			"NULL DEFAULT '', cEmail VARCHAR(100) NOT NULL DEFAULT '',index (cEmail), cAddr1 VARCHAR(100) NOT NULL "
 			"DEFAULT '', cAddr2 VARCHAR(100) NOT NULL DEFAULT '', cCity VARCHAR(100) NOT NULL DEFAULT '', "
 			"cState VARCHAR(100) NOT NULL DEFAULT '', cZip VARCHAR(32) NOT NULL DEFAULT '', cPhone VARCHAR(100) NOT "
-			"NULL DEFAULT '', cHash VARCHAR(65) NOT NULL DEFAULT='')");
+			"NULL DEFAULT '', cHash VARCHAR(65) NOT NULL DEFAULT '', cLanguage VARCHAR(32) NOT NULL DEFAULT 'English')");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -398,7 +398,7 @@ void CreateTempRegistration(void)
 
 	CreatetTempClient();
 
-	sprintf(gcQuery,"INSERT INTO tTempClient SET cFirstName='%s',cLastName='%s',cEmail='%s',cPhone='%s'"
+	sprintf(gcQuery,"INSERT INTO tTempClient SET cFirstName='%s',cLastName='%s',cEmail='%s',cPhone='%s',"
 			"cHash=MD5(CONCAT(cFirstName,cLastName,NOW())),uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			TextAreaSave(cFirstName)
 			,TextAreaSave(cLastName)
