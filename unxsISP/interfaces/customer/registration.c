@@ -29,6 +29,8 @@ static char cPassword[101]={""};
 
 static char cId[65]={""};
 
+static char cLanguage[65]={""};
+
 //
 //Local only
 unsigned ValidateRegistrationInput(void);
@@ -36,6 +38,9 @@ void EmailRegistration(char *cTemplateName);
 void CommitRegistration(void);
 void CreateTempRegistration(void);
 void GenerateLoginInfo(void);
+
+//main.c
+void SetLanguage(void);
 
 
 void ProcessRegistrationVars(pentry entries[], int x)
@@ -70,6 +75,8 @@ void RegistrationGetHook(entry gentries[],int x)
 		if(!strcmp(gentries[i].name,"cId"))
 			sprintf(cId,"%.32s",gentries[i].val);
 	}
+	
+	if(cId[0]) CommitRegistration();
 
 	htmlRegistration();
 
@@ -340,9 +347,9 @@ void EmailRegistration(char *cTemplateName)
 	
 	GetConfiguration("cFromEmailAddr",cFrom);
 	
-	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
-	//if((fp=fopen("/tmp/eMailInvoice","w")))
+	if((fp=fopen("/tmp/eMailInvoice","w")))
 	{
 		fprintf(fp,"To: %s\n",cEmail);
 		fprintf(fp,"From: %s\n",cFrom);
@@ -377,7 +384,7 @@ void LoadRegistration(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cFirstName,cLastName,cEmail,cPhone FROM tTempClient WHERE cHash='%s'",TextAreaSave(cId));
+	sprintf(gcQuery,"SELECT cFirstName,cLastName,cEmail,cPhone,cLanguage FROM tTempClient WHERE cHash='%s'",TextAreaSave(cId));
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -389,6 +396,7 @@ void LoadRegistration(void)
 		sprintf(cLastName,"%s",field[1]);
 		sprintf(cEmail,"%s",field[2]);
 		sprintf(cPhone,"%s",field[3]);
+		sprintf(cLanguage,"%s",field[4]);
 	}
 	else
 	{
@@ -399,11 +407,14 @@ void LoadRegistration(void)
 }//void LoadRegistration(void)
 
 
+static char cuCompany[16]={"1"}; //Default Root
+
 void CommitRegistration(void)
 {
 	//This function actually creates a tClient record from the tTempClient record
-	char cuCompany[16]={""};
 	
+	if(!guTemplateSet) guTemplateSet=2;
+
 	LoadRegistration();
 
 	GetConfiguration("uRegistrationCompany",cuCompany);
@@ -421,7 +432,13 @@ void CommitRegistration(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
+	guLoginClient=mysql_insert_id(&gMysql);
+	SetLanguage();
+
+	GenerateLoginInfo();	
 	
+	EmailRegistration("RegistrationMail1");
+
 }//void CommitRegistration(void)
 
 
@@ -448,7 +465,7 @@ void EmailAfterRegistration(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cHash FROM tTemplClient WHERE uTempClient=%u",uTempClient);
+	sprintf(gcQuery,"SELECT cHash FROM tTempClient WHERE uTempClient=%u",uTempClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -468,28 +485,66 @@ void CreateTempRegistration(void)
 	//Is the first step for registration, if it gets confirmed
 	//the tTempClient record is removed and tClient/tAuthorize records
 	//are created
+	char *cLanguage="";
 
 	CreatetTempClient();
+	
+	if(guTemplateSet==2)
+		cLanguage="English";
+	else if(guTemplateSet==3)
+		cLanguage="Spanish";
+	else if(guTemplateSet==4)
+		cLanguage="French";
 
 	sprintf(gcQuery,"INSERT INTO tTempClient SET cFirstName='%s',cLastName='%s',cEmail='%s',cPhone='%s',"
-			"cHash=MD5(CONCAT(cFirstName,cLastName,NOW())),uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			"cHash=MD5(CONCAT(cFirstName,cLastName,NOW())),cLanguage='%s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			TextAreaSave(cFirstName)
 			,TextAreaSave(cLastName)
 			,TextAreaSave(cEmail)
 			,TextAreaSave(cPhone)
+			,cLanguage
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uTempClient=mysql_insert_id(&gMysql);
+	
+	EmailAfterRegistration();
 
 }//void CreateTempRegistration(void)
 
+void LowerCase(char *cString)
+{
+	register int iX;
+
+	for(iX=0;iX<strlen(cString);iX++)
+		cString[iX]=tolower(cString[iX]);	
+
+}//void LowerCase(char *cString)
 
 void GenerateLoginInfo(void)
 {
 	//This function creates the tAuthorize record
 	//with a random password
+	char cGenPasswd[10]={""};
+
+	to64(&cGenPasswd[0],rand(),6);
+	cGenPasswd[6]=0;
+	sprintf(cPassword,"%s",cGenPassword); //Save plain text copy for email ;)
+	EncryptPasswd(cGenPassword);
+	LowerCase(cFirstName);
+	LowerCase(cLastName);
+
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s.%s',cPasswd='%s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cFirstName
+			,cLastName
+			,cGenPassword
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
 }//void GenerateLoginInfo(void)
 
 
