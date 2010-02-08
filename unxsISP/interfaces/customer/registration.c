@@ -418,8 +418,8 @@ void CommitRegistration(void)
 	LoadRegistration();
 
 	GetConfiguration("uRegistrationCompany",cuCompany);
-	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s %s'cFirstName='%s',cLastName='%s',cEmail='%s',cPhone='%s'"
-			"uCreatedBy=%s,uOwner=%s,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s %s',cFirstName='%s',cLastName='%s',cEmail='%s',cTelephone='%s',"
+			"uCreatedBy=1,uOwner=%s,uCreatedDate=UNIX_TIMESTAMP(NOW()),cLanguage='%s'",
 			TextAreaSave(cFirstName)
 			,TextAreaSave(cLastName)
 			,TextAreaSave(cFirstName)
@@ -427,7 +427,7 @@ void CommitRegistration(void)
 			,TextAreaSave(cEmail)
 			,TextAreaSave(cPhone)
 			,cuCompany
-			,cuCompany
+			,cLanguage
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -522,14 +522,19 @@ void LowerCase(char *cString)
 
 }//void LowerCase(char *cString)
 
+
+void EncryptPasswd(char *pw);
+void to64(register char *s, register long v, register int n);
+
+
 void GenerateLoginInfo(void)
 {
 	//This function creates the tAuthorize record
 	//with a random password
-	char cGenPasswd[10]={""};
+	char cGenPassword[10]={""};
 
-	to64(&cGenPasswd[0],rand(),6);
-	cGenPasswd[6]=0;
+	to64(&cGenPassword[0],rand(),6);
+	cGenPassword[6]=0;
 	sprintf(cPassword,"%s",cGenPassword); //Save plain text copy for email ;)
 	EncryptPasswd(cGenPassword);
 	LowerCase(cFirstName);
@@ -544,6 +549,8 @@ void GenerateLoginInfo(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
+
+	cFirstName[0]=toupper(cFirstName[0]);
 
 }//void GenerateLoginInfo(void)
 
