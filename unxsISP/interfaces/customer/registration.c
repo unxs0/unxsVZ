@@ -438,6 +438,10 @@ void CommitRegistration(void)
 	GenerateLoginInfo();	
 	
 	EmailRegistration("RegistrationMail1");
+	
+	htmlHeader("unxsISP Customer Interface","Header");
+	htmlRegistrationPage("","RegistrationCompleted.Body");
+	htmlFooter("Footer");
 
 }//void CommitRegistration(void)
 
