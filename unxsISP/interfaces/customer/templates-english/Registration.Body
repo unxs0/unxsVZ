@@ -7,7 +7,7 @@
 <tr>
 <td colspan=2><h3>Register for free for accessing the customer interface</h3></td>
 </tr>
-
+<tr><td colspan=2 align=right>{{cMessage}}</td></tr>
 <form method=post>
 <input type=hidden name=gcPage value=Registration>
 <tr>

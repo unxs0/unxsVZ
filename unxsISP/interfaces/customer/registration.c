@@ -144,7 +144,7 @@ void htmlRegistrationPage(char *cTitle, char *cTemplateName)
 			template.cpName[6]="gcHost";
 			template.cpValue[6]=gcHost;
 
-			template.cpName[7]="gcMessage";
+			template.cpName[7]="cMessage";
 			template.cpValue[7]=gcMessage;
 
 			template.cpName[8]="cFirstName";
@@ -229,7 +229,7 @@ unsigned ValidateRegistrationInput(void)
 	FixCase(cLastName);
 	FixCase(cFirstName);
 
-	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='% %s'",TextAreaSave(cFirstName),TextAreaSave(cLastName));
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s %s'",TextAreaSave(cFirstName),TextAreaSave(cLastName));
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
