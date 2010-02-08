@@ -186,8 +186,22 @@ void htmlRegistrationPage(char *cTitle, char *cTemplateName)
 }//void htmlRegistrationPage()
 
 
+void FixCase(char *cString)
+{
+	register int x;
+
+	for(x=0;x<strlen(cString);x++)
+		cString[x]=tolower(cString[x]);
+	
+	cString[0]=toupper(cString[0]);
+
+}//void FixCase(char *cString)
+
+
 unsigned ValidateRegistrationInput(void)
 {
+	MYSQL_RES *res;
+
 	if(!cFirstName[0])
 	{
 		cFirstNameStyle="type_fields_req";
@@ -209,6 +223,28 @@ unsigned ValidateRegistrationInput(void)
 			gcMessage="<blink>Error: </blink>Debe ingresar su apellido";
 		else if(guTemplateSet==4)
 		 	gcMessage="<blink>Error: </blink>Must enter last name (french)";
+
+		return(0);
+	}
+	FixCase(cLastName);
+	FixCase(cFirstName);
+
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='% %s'",TextAreaSave(cFirstName),TextAreaSave(cLastName));
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+		cFirstNameStyle="type_fields_req";
+		cLastNameStyle="type_fields_req";
+
+		if(guTemplateSet==2)
+			gcMessage="<blink>Error: </blink>The entered name is in use";
+		else if(guTemplateSet==3)
+			gcMessage="<blink>Error: </blink>El nombre ingresado ya est&aacute; en uso";
+		else if(guTemplateSet==4)
+		 	gcMessage="<blink>Error: </blink>The entered name is in use (french)";
 
 		return(0);
 	}
@@ -239,6 +275,43 @@ unsigned ValidateRegistrationInput(void)
 
 			return(0);
 		}
+		sprintf(gcQuery,"SELECT uTempClient FROM tTempClient WHERE cEmail='%s'",TextAreaSave(cEmail));
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res))
+		{
+			cEmailStyle="type_fields_req";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>The email address entered is already in use";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Su direcci&oacute;n de email parece ya esta en uso";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Email has to be a valid email address (french)";
+
+			return(0);
+		}
+		mysql_free_result(res);
+
+		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cEmail='%s'",TextAreaSave(cEmail));
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res))
+		{
+			cEmailStyle="type_fields_req";
+			if(guTemplateSet==2)
+				gcMessage="<blink>Error: </blink>The email address entered is already in use";
+			else if(guTemplateSet==3)
+				gcMessage="<blink>Error: </blink>Su direcci&oacute;n de email parece ya esta en uso";
+			else if(guTemplateSet==4)
+				gcMessage="<blink>Error: </blink>Email has to be a valid email address (french)";
+
+			return(0);
+		}
+		mysql_free_result(res);
 	}
 	if(!cPhone[0])//Phone
 	{
