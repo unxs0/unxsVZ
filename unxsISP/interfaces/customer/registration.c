@@ -586,3 +586,70 @@ void funcSelectRegLang(FILE *fp)
 }//void funcSelectRegLang(FILE *fp)
 
 
+//unxsISP radius integration code
+
+void CreateProductInstace(void)
+{
+	unsigned uInstance=0;
+	
+	//Insert tInstance record
+	sprintf(gcQuery,"INSERT INTO tInstance SET uClient=%u,uProduct=1,cLabel='AstraTurbo',uCreatedBy=1,uOwner='%s',uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			guLoginClient
+			,cuCompany
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	uInstance=mysql_insert_id(&gMysql);	
+
+	//Insert tClientConfig records
+	//radius login
+	sprintf(gcQuery,"INSERT INTO tClientConfig SET uGroup=%u,uService=1,uParameter=1,"
+			"cValue='%s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uInstance
+			,cUser
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	//radius password
+	sprintf(gcQuery,"INSERT INTO tClientConfig SET uGroup=%u,uService=1,uParameter=2,"
+			"cValue='%s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uInstance
+			,cPassword
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	//radius profile
+	sprintf(gcQuery,"INSERT INTO tClientConfig SET uGroup=%u,uService=1,uParameter=3,"
+			"cValue='Unlimited',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uInstance
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	//radius cleartext yes/no
+	sprintf(gcQuery,"INSERT INTO tClientConfig SET uGroup=%u,uService=1,uParameter=41,"
+			"cValue='Yes',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uInstance
+			,guLoginClient
+			);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void CreateProductInstace(void)
+
+
+void SubmitunxsISPJob(void)
+{
+}//void SubmitunxsISPJob(void)
+
