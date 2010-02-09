@@ -1,0 +1,9 @@
+{{cFirstName}},
+
+Thank you for registering. To confirm your registration please access the link below:
+
+http://astraqom.com/cgi-bin/ispClient.cgi?gcPage=Registration&cId={{cId}}
+
+Best Regards,
+Astraqom ISP
+

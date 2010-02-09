@@ -535,7 +535,7 @@ void GenerateLoginInfo(void)
 {
 	//This function creates the tAuthorize record
 	//with a random password
-	char cGenPassword[10]={""};
+	char cGenPassword[100]={""};
 
 	to64(&cGenPassword[0],rand(),6);
 	cGenPassword[6]=0;
@@ -543,8 +543,9 @@ void GenerateLoginInfo(void)
 	EncryptPasswd(cGenPassword);
 	LowerCase(cFirstName);
 	LowerCase(cLastName);
+	sprintf(cUser,"%s.%s",cFirstName,cLastName);
 
-	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s.%s',cPasswd='%s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s.%s',cPasswd='%s',uPerm=1,uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cFirstName
 			,cLastName
 			,cGenPassword
@@ -555,7 +556,7 @@ void GenerateLoginInfo(void)
 		htmlPlainTextError(mysql_error(&gMysql));
 
 	cFirstName[0]=toupper(cFirstName[0]);
-
+	
 }//void GenerateLoginInfo(void)
 
 
