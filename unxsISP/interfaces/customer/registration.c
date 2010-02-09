@@ -347,9 +347,9 @@ void EmailRegistration(char *cTemplateName)
 	
 	GetConfiguration("cFromEmailAddr",cFrom);
 	
-	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
-	if((fp=fopen("/tmp/eMailInvoice","w")))
+	//if((fp=fopen("/tmp/eMailInvoice","w")))
 	{
 		fprintf(fp,"To: %s\n",cEmail);
 		fprintf(fp,"From: %s\n",cFrom);
@@ -439,6 +439,11 @@ void CommitRegistration(void)
 	
 	EmailRegistration("RegistrationMail1");
 	
+	sprintf(gcQuery,"DELETE FROM tTempClient WHERE cHash='%s'",TextAreaSave(cId));
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
 	htmlHeader("unxsISP Customer Interface","Header");
 	htmlRegistrationPage("","RegistrationCompleted.Body");
 	htmlFooter("Footer");
