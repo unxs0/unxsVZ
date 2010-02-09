@@ -1,0 +1,10 @@
+{{cFirstName}},
+
+Thank you for confirming your registration. Here's your login information::
+
+Login: {{cUser}}
+Password: {{cPassword}}
+
+Best Regards,
+Astraqom ISP
+
