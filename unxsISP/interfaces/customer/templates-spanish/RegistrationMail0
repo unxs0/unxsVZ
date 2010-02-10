@@ -2,7 +2,7 @@
 
 Gracias por registrarse. Para confirmar su registro acceda al link que se muestra a continuaci&oacute;n
 
-http://astraqom.com/cgi-bin/ispClient.cgi?gcPage=Registration&cId={{cId}}
+https://admin.astraqom.ca:9333/cgi-bin/ispClient.cgi?gcPage=Registration&cId={{cId}}
 
 Saludos,
 Astraqom ISP
