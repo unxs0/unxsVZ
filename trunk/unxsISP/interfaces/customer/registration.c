@@ -344,7 +344,6 @@ void EmailRegistration(char *cSubject,char *cTemplateName)
 	FILE *fp;
 	char cFrom[256]={"root"};
 	struct t_template template;
-	cSubject[255]=0;
 	
 	GetConfiguration("cFromEmailAddr",cFrom);
 	
@@ -417,7 +416,6 @@ void CommitRegistration(void)
 	if(!guTemplateSet) guTemplateSet=2;
 
 	LoadRegistration();
-	printf("Content-type: text/plain\n\n");
 
 	GetConfiguration("uRegistrationCompany",cuCompany);
 	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s %s',cFirstName='%s',cLastName='%s',cEmail='%s',cTelephone='%s',"
@@ -432,22 +430,19 @@ void CommitRegistration(void)
 			,cLanguage
 			);
 	mysql_query(&gMysql,gcQuery);
-	printf("%s\n",gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	guLoginClient=mysql_insert_id(&gMysql);
 	SetLanguage();
-	printf("guLoginClient=%u\n",guLoginClient);
 
 	GenerateLoginInfo();	
 	
 	EmailRegistration("Your Login Information","RegistrationMail1");
-	printf("%s\n",gcQuery);
 	sprintf(gcQuery,"DELETE FROM tTempClient WHERE cHash='%s'",TextAreaSave(cId));
 	mysql_query(&gMysql,gcQuery);
-	printf("%s\n",gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
+	
 	htmlHeader("unxsISP Customer Interface","Header");
 	htmlRegistrationPage("","RegistrationCompleted.Body");
 	htmlFooter("Footer");
