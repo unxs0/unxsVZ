@@ -34,10 +34,11 @@ static char cLanguage[65]={""};
 //
 //Local only
 unsigned ValidateRegistrationInput(void);
-void EmailRegistration(char *cTemplateName);
+void EmailRegistration(char *cSubject,char *cTemplateName);
 void CommitRegistration(void);
 void CreateTempRegistration(void);
 void GenerateLoginInfo(void);
+void CreatetTempClient(void);
 
 //main.c
 void SetLanguage(void);
@@ -92,6 +93,7 @@ void RegistrationCommands(pentry entries[], int x)
 		   !strcmp(gcFunction,"Enviar") ||
 		   !strcmp(gcFunction,"Envoyer"))
 		{
+			CreatetTempClient();
 			if(ValidateRegistrationInput())
 			{
 				CreateTempRegistration();
@@ -337,11 +339,10 @@ unsigned ValidateRegistrationInput(void)
 }//unsigned ValidateRegistrationInput(void)
 
 
-void EmailRegistration(char *cTemplateName)
+void EmailRegistration(char *cSubject,char *cTemplateName)
 {
 	FILE *fp;
 	char cFrom[256]={"root"};
-	char cSubject[256]={""};
 	struct t_template template;
 	cSubject[255]=0;
 	
@@ -416,6 +417,7 @@ void CommitRegistration(void)
 	if(!guTemplateSet) guTemplateSet=2;
 
 	LoadRegistration();
+	printf("Content-type: text/plain\n\n");
 
 	GetConfiguration("uRegistrationCompany",cuCompany);
 	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s %s',cFirstName='%s',cLastName='%s',cEmail='%s',cTelephone='%s',"
@@ -430,20 +432,22 @@ void CommitRegistration(void)
 			,cLanguage
 			);
 	mysql_query(&gMysql,gcQuery);
+	printf("%s\n",gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	guLoginClient=mysql_insert_id(&gMysql);
 	SetLanguage();
+	printf("guLoginClient=%u\n",guLoginClient);
 
 	GenerateLoginInfo();	
 	
-	EmailRegistration("RegistrationMail1");
-	
+	EmailRegistration("Your Login Information","RegistrationMail1");
+	printf("%s\n",gcQuery);
 	sprintf(gcQuery,"DELETE FROM tTempClient WHERE cHash='%s'",TextAreaSave(cId));
 	mysql_query(&gMysql,gcQuery);
+	printf("%s\n",gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-
 	htmlHeader("unxsISP Customer Interface","Header");
 	htmlRegistrationPage("","RegistrationCompleted.Body");
 	htmlFooter("Footer");
@@ -483,7 +487,7 @@ void EmailAfterRegistration(void)
 	field=mysql_fetch_row(res);
 	sprintf(cId,"%s",field[0]);
 	
-	EmailRegistration("RegistrationMail0");
+	EmailRegistration("Please Confirm Your Registration","RegistrationMail0");
 
 }//void EmailAfterRegistration(void)
 
@@ -496,8 +500,6 @@ void CreateTempRegistration(void)
 	//are created
 	char *cLanguage="";
 
-	CreatetTempClient();
-	
 	if(guTemplateSet==2)
 		cLanguage="English";
 	else if(guTemplateSet==3)
@@ -542,6 +544,7 @@ void GenerateLoginInfo(void)
 	//with a random password
 	char cGenPassword[100]={""};
 
+	(void)srand((int)time((time_t *)NULL));
 	to64(&cGenPassword[0],rand(),6);
 	cGenPassword[6]=0;
 	sprintf(cPassword,"%s",cGenPassword); //Save plain text copy for email ;)
@@ -550,11 +553,12 @@ void GenerateLoginInfo(void)
 	LowerCase(cLastName);
 	sprintf(cUser,"%s.%s",cFirstName,cLastName);
 
-	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s.%s',cPasswd='%s',uPerm=1,uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s.%s',cPasswd='%s',uPerm=1,uCertClient=%u,uOwner=%s,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cFirstName
 			,cLastName
 			,cGenPassword
 			,guLoginClient
+			,cuCompany
 			);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -585,71 +589,4 @@ void funcSelectRegLang(FILE *fp)
 
 }//void funcSelectRegLang(FILE *fp)
 
-
-//unxsISP radius integration code
-
-void CreateProductInstace(void)
-{
-	unsigned uInstance=0;
-	
-	//Insert tInstance record
-	sprintf(gcQuery,"INSERT INTO tInstance SET uClient=%u,uProduct=1,cLabel='AstraTurbo',uCreatedBy=1,uOwner='%s',uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			guLoginClient
-			,cuCompany
-			);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-	uInstance=mysql_insert_id(&gMysql);	
-
-	//Insert tClientConfig records
-	//radius login
-	sprintf(gcQuery,"INSERT INTO tClientConfig SET uGroup=%u,uService=1,uParameter=1,"
-			"cValue='%s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uInstance
-			,cUser
-			,guLoginClient
-			);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-	//radius password
-	sprintf(gcQuery,"INSERT INTO tClientConfig SET uGroup=%u,uService=1,uParameter=2,"
-			"cValue='%s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uInstance
-			,cPassword
-			,guLoginClient
-			);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	
-	//radius profile
-	sprintf(gcQuery,"INSERT INTO tClientConfig SET uGroup=%u,uService=1,uParameter=3,"
-			"cValue='Unlimited',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uInstance
-			,guLoginClient
-			);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	
-	//radius cleartext yes/no
-	sprintf(gcQuery,"INSERT INTO tClientConfig SET uGroup=%u,uService=1,uParameter=41,"
-			"cValue='Yes',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uInstance
-			,guLoginClient
-			);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-}//void CreateProductInstace(void)
-
-
-void SubmitunxsISPJob(void)
-{
-}//void SubmitunxsISPJob(void)
 
