@@ -615,7 +615,7 @@ void CustomerCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Add Product Wizard"))
 		{
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uOwner==guOrg)
 				htmlProductDeployWizard(1);
 			else
 			{
