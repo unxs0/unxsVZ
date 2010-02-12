@@ -181,6 +181,7 @@ int main(int argc, char *argv[])
 	InvoiceCommands(entries,i);
 
 	//default logged in page
+	if(IsFirstTimeLogin()) ShowPurchaseRadiusPage();
 	htmlCustomer();
 	return(0);
 
