@@ -347,9 +347,9 @@ void EmailRegistration(char *cSubject,char *cTemplateName)
 	
 	GetConfiguration("cFromEmailAddr",cFrom);
 	
-	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
-	//if((fp=fopen("/tmp/eMailInvoice","w")))
+	if((fp=fopen("/tmp/eMailInvoice","w")))
 	{
 		fprintf(fp,"To: %s\n",cEmail);
 		fprintf(fp,"From: %s\n",cFrom);
@@ -419,7 +419,7 @@ void CommitRegistration(void)
 
 	GetConfiguration("uRegistrationCompany",cuCompany);
 	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s %s',cFirstName='%s',cLastName='%s',cEmail='%s',cTelephone='%s',"
-			"uCreatedBy=1,uOwner=%s,uCreatedDate=UNIX_TIMESTAMP(NOW()),cLanguage='%s'",
+			"uCreatedBy=1,uOwner=%s,uCreatedDate=UNIX_TIMESTAMP(NOW()),cLanguage='%s',cCode='NeverLogin'",
 			TextAreaSave(cFirstName)
 			,TextAreaSave(cLastName)
 			,TextAreaSave(cFirstName)

@@ -1487,5 +1487,29 @@ time_t cDateToUnixTime(char *cDate)
 }
 
 
+void ShowPurchaseRadiusPage(void)
+{
+	htmlHeader("unxsISP Client Interface","Header");
+	printf("This is the first time you login");
+	htmlFooter("Footer");
+}//void ShowPurchaseRadiusPage(void)
 
+
+unsigned IsFirstTimeLogin(void)
+{
+	MYSQL_RES *res;
+	unsigned uRet=0;
+
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cCode='NeverLogin' AND uClient=%u",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+
+	uRet=mysql_num_rows(res);
+
+	mysql_free_result(res);
+	return(uRet);
+
+}//unsigned IsFirstTimeLogin(void)
 
