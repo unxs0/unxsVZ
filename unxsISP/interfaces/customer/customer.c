@@ -1490,7 +1490,7 @@ time_t cDateToUnixTime(char *cDate)
 void ShowPurchaseRadiusPage(void)
 {
 	htmlHeader("unxsISP Client Interface","Header");
-	printf("This is the first time you login");
+	htmlCustomerPage("","FirstTime.Body");
 	htmlFooter("Footer");
 }//void ShowPurchaseRadiusPage(void)
 

@@ -173,7 +173,10 @@ int main(int argc, char *argv[])
 
 	//First page after valid login
 	if(!strcmp(gcFunction,"Login"))
+	{
+		if(IsFirstTimeLogin()) ShowPurchaseRadiusPage();
 		htmlCustomer();
+	}
 
 	//Per page command tree
 	CustomerCommands(entries,i);
