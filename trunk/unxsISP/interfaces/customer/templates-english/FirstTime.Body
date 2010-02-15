@@ -51,6 +51,7 @@
 </table>
 
 <form method=post action=ispClient.cgi style="margin:0px;">
+<input type=hidden name=gcPage value="Purchase">
 <table width=1200  border="0" cellspacing="0" cellpadding="0">
   <tr>
     <td>
