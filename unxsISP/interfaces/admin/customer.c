@@ -2550,7 +2550,7 @@ int CheckParameterValue(char *cValue, char *cParamType, char *cRange, unsigned u
 		{
 			if(!isalnum(cValue[i]) && 
 				(!i || ( cValue[i]!='.' && 
-				cValue[i]!='-' && cValue[i]!='_' && cValue[i]!=':'))  ) uErr=1;
+				cValue[i]!='/' && cValue[i]!='-' && cValue[i]!='_' && cValue[i]!=':'))  ) uErr=1;
 			if(isupper(cValue[i])) cValue[i]=tolower(cValue[i]);
 		}
 	}
