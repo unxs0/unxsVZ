@@ -88,6 +88,7 @@ void funcDisplayDashBoard(FILE *fp);
 void EncryptPasswdMD5(char *pw);
 unsigned uGetAdminCompany(void);
 void GetClientOwner(unsigned uClient, unsigned *uOwner);
+void Logout(void);
 
 //Global vars all declared in main.c
 //libtemplate.a required
@@ -137,6 +138,8 @@ void funcSelectAccountType(FILE *fp);
 void funcSelectLanguage(FILE *fp);
 void ShowPurchaseRadiusPage(void);
 unsigned IsFirstTimeLogin(void);
+void sysfuncSelectExpMonth(FILE *fp,char *cStyle,unsigned uSelector,unsigned uUseStatus);
+void sysfuncSelectExpYear(FILE *fp,char *cStyle,unsigned uSelector,unsigned uUseStatus);
 
 typedef struct {
        char cParameter[65];
@@ -215,4 +218,7 @@ void htmlRegistrationPage(char *cTitle, char *cTemplateName);
 void RegistrationGetHook(entry gentries[],int x);
 void funcSelectRegLang(FILE *fp);
 void RegistrationCommands(pentry entries[], int x);
+
+//purchase.c
+void PurchaseCommands(pentry entries[], int x);
 
