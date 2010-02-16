@@ -91,7 +91,7 @@ If you don't want to setup a dialup account yet, you may skip this step. Your ac
 <tr><td>&nbsp;</td></tr>
 <tr>
 <td align=center><input class=largeButton type=submit name=gcFunction value="{{gcNewStep}}Skip"></td>
-<td align=center><input class=largeButton type=submit name=gcFunction value="{{gcModStep}}Confirm"></td>
+<td align=center><input class=largeButton type=submit name=gcFunction value="{{gcModStep}}Proceed"></td>
 </tr>
 </table>
 	

@@ -689,7 +689,6 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
 			template.cpName[93]="";
 
 			printf("\n<!-- Start htmlCustomerPage(%s) -->\n",cTemplateName); 
-//			fpTemplate(stdout,cTemplateName,&template);
 			Template(field[0], &template, stdout);
 			printf("\n<!-- End htmlCustomerPage(%s) -->\n",cTemplateName); 
 		}
@@ -1308,75 +1307,82 @@ void funcSelectCardType(FILE *fp)
 	
 }//void funcSelectCardType(FILE *fp)
 
-
 void funcSelectExpMonth(FILE *fp)
 {
-	fprintf(fp,"<!-- funcSelectExpMonth(fp) start -->\n");
+	sysfuncSelectExpMonth(fp,cuExpMonthStyle,uExpMonth,1);
+}
 
-	fprintf(fp,"<select class=%s name=uExpMonth %s>\n",cuExpMonthStyle,gcInputStatus);
+void sysfuncSelectExpMonth(FILE *fp,char *cStyle,unsigned uSelector,unsigned uUseStatus)
+{
+	fprintf(fp,"<!-- funcSelectExpMonth(fp) start -->\n");
+	
+	if(uUseStatus)
+		fprintf(fp,"<select class=%s name=uExpMonth %s>\n",cStyle,gcInputStatus);
+	else
+		fprintf(fp,"<select class=%s name=uExpMonth>\n",cStyle);
 	
 	fprintf(fp,"<option value=0 ");
-	if(uExpMonth==0)
+	if(uSelector==0)
 		fprintf(fp,"selected");
 	fprintf(fp,">---</option>\n");
 
 	fprintf(fp,"<option value=1 ");
-	if(uExpMonth==1)
+	if(uSelector==1)
 		fprintf(fp,"selected");
 	fprintf(fp,">January</option>\n");
 
 	fprintf(fp,"<option value=2 ");
-	if(uExpMonth==2)
+	if(uSelector==2)
 		fprintf(fp,"selected");
 	fprintf(fp,">February</option>\n");
 
 	fprintf(fp,"<option value=3 ");
-	if(uExpMonth==3)
+	if(uSelector==3)
 		fprintf(fp,"selected");
 	fprintf(fp,">March</option>\n");
 
 	fprintf(fp,"<option value=4 ");
-	if(uExpMonth==4)
+	if(uSelector==4)
 		fprintf(fp,"selected");
 	fprintf(fp,">April</option>\n");
 
 	fprintf(fp,"<option value=5 ");
-	if(uExpMonth==5)
+	if(uSelector==5)
 		fprintf(fp,"selected");
 	fprintf(fp,">May</option>\n");
 
 	fprintf(fp,"<option value=6 ");
-	if(uExpMonth==6)
+	if(uSelector==6)
 		fprintf(fp,"selected");
 	fprintf(fp,">June</option>\n");
 
 	fprintf(fp,"<option value=7 ");
-	if(uExpMonth==7)
+	if(uSelector==7)
 		fprintf(fp,"selected");
 	fprintf(fp,">July</option>\n");
 
 	fprintf(fp,"<option value=8 ");
-	if(uExpMonth==8)
+	if(uSelector==8)
 		fprintf(fp,"selected");
 	fprintf(fp,">August</option>\n");
 
 	fprintf(fp,"<option value=9 ");
-	if(uExpMonth==9)
+	if(uSelector==9)
 		fprintf(fp,"selected");
 	fprintf(fp,">September</option>\n");
 
 	fprintf(fp,"<option value=10 ");
-	if(uExpMonth==10)
+	if(uSelector==10)
 		fprintf(fp,"selected");
 	fprintf(fp,">October</option>\n");
 
 	fprintf(fp,"<option value=11 ");
-	if(uExpMonth==11)
+	if(uSelector==11)
 		fprintf(fp,"selected");
 	fprintf(fp,">November</option>\n");
 
 	fprintf(fp,"<option value=12 ");
-	if(uExpMonth==12)
+	if(uSelector==12)
 		fprintf(fp,"selected");
 	fprintf(fp,">December</option>\n");
 
@@ -1389,32 +1395,37 @@ void funcSelectExpMonth(FILE *fp)
 
 void funcSelectExpYear(FILE *fp)
 {
+	sysfuncSelectExpYear(fp,cuExpYearStyle,uExpYear,1);
+
+}//void funcSelectExpYear(FILE *fp)
+
+
+void sysfuncSelectExpYear(FILE *fp,char *cStyle,unsigned uSelector,unsigned uUseStatus)
+{
 	fprintf(fp,"<!-- funcSelectExpYear(fp) start -->\n");
 	
-	fprintf(fp,"<select class=%s name=uExpYear %s>\n",cuExpYearStyle,gcInputStatus);
+	if(uUseStatus)
+		fprintf(fp,"<select class=%s name=uExpYear %s>\n",cStyle,gcInputStatus);
+	else
+		fprintf(fp,"<select class=%s name=uExpYear %s>\n",cStyle);
 	
 	fprintf(fp,"<option value=0 ");
 	if(uExpYear==0)
 		fprintf(fp,"selected");
 	fprintf(fp,">---</option>\n");
 
-	fprintf(fp,"<option value=2009 ");
-	if(uExpYear==2009)
-		fprintf(fp,"selected");
-	fprintf(fp,">2009</option>\n");
-
 	fprintf(fp,"<option value=2010 ");
-	if(uExpYear==2010)
+	if(uSelector==2010)
 		fprintf(fp,"selected");
 	fprintf(fp,">2010</option>\n");
 
 	fprintf(fp,"<option value=2011 ");
-	if(uExpYear==2011)
+	if(uSelector==2011)
 		fprintf(fp,"selected");
 	fprintf(fp,">2011</option>\n");
 
 	fprintf(fp,"<option value=2012 ");
-	if(uExpYear==2012)
+	if(uSelector==2012)
 		fprintf(fp,"selected");
 	fprintf(fp,">2012</option>\n");
 

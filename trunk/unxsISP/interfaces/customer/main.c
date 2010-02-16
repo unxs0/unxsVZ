@@ -113,8 +113,11 @@ int main(int argc, char *argv[])
 		if(!strcmp(gcPage,"Registration")) RegistrationGetHook(gentries,i);
 
 		SSLCookieLogin();
+		
 		if(gcPage[0])
 		{
+			if(IsFirstTimeLogin()) ShowPurchaseRadiusPage();
+			
 			if(!strcmp(gcPage,"Customer"))
 				CustomerGetHook(gentries,i);
 			else if(!strcmp(gcPage,"Glossary"))
@@ -152,17 +155,7 @@ int main(int argc, char *argv[])
 	//Not required to be logged in gcFunction section
 	if(gcFunction[0])
 	{
-		if(!strncmp(gcFunction,"Logout",5))
-		{
-		printf("Set-Cookie: ispClientLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-		printf("Set-Cookie: ispClientPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=7,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
-			mysql_query(&gMysql,gcQuery);
-        		guPermLevel=0;
-			gcUser[0]=0;
-			guLoginClient=0;
-			htmlLogin();
-		}
+		if(!strncmp(gcFunction,"Logout",5)) Logout();
 	}
 	RegistrationCommands(entries,i);
 
@@ -179,16 +172,33 @@ int main(int argc, char *argv[])
 	}
 
 	//Per page command tree
+	PurchaseCommands(entries,i);
 	CustomerCommands(entries,i);
 	ProductCommands(entries,i);
 	InvoiceCommands(entries,i);
-
+	
 	//default logged in page
 	if(IsFirstTimeLogin()) ShowPurchaseRadiusPage();
 	htmlCustomer();
 	return(0);
 
 }//end of main()
+
+void Logout(void)
+{
+	printf("Set-Cookie: ispClientLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+	printf("Set-Cookie: ispClientPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+	sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=7,uPermLevel=%u,"
+			"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+			"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			,gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	guPermLevel=0;
+	gcUser[0]=0;
+	guLoginClient=0;
+	htmlLogin();
+
+}//void Logout(void)
 
 
 void htmlLogin(void)

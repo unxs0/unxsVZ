@@ -9,6 +9,10 @@ AUTHOR
 */
 #include "interface.h"
 
+void ShowConfirmPurchasePage(void);
+void htmlPurchasePage(char *cTitle,char *cTemplateName);
+
+
 void ProcessPurchaseVars(pentry entries[], int x)
 {
 	register int i;
@@ -28,6 +32,24 @@ void PurchaseCommands(pentry entries[], int x)
 	{
 		ProcessPurchaseVars(entries,x);
 
+		if(!strcmp(gcFunction,"Skip"))
+		{
+			sprintf(gcNewStep,"Confirm ");
+		}
+		else if(!strcmp(gcFunction,"Confirm Skip"))
+		{
+			Logout();
+		}
+		else if(!strcmp(gcFunction,"Proceed"))
+		{
+			sprintf(gcModStep,"Confirm ");
+		}
+		else if(!strcmp(gcFunction,"Confirm Proceed"))
+		{
+			ShowConfirmPurchasePage();
+		}
+
+
 	}
 }//void PurchaseCommands(pentry entries[], int x)
 
@@ -35,9 +57,88 @@ void PurchaseCommands(pentry entries[], int x)
 void ShowPurchaseRadiusPage(void)
 {
 	htmlHeader("unxsISP Client Interface","Header");
-	htmlCustomerPage("","FirstTime.Body");
+	htmlPurchasePage("","FirstTime.Body");
 	htmlFooter("Footer");
+
 }//void ShowPurchaseRadiusPage(void)
+
+
+void ShowConfirmPurchasePage(void)
+{
+	htmlHeader("unxsISP Client Interface","Header");
+	htmlPurchasePage("","Purchase.Body");
+	htmlFooter("Footer");
+
+}//void ShowConfirmPurchasePage(void)
+
+
+void htmlPurchasePage(char *cTitle,char *cTemplateName)
+{
+	if(cTemplateName[0])
+	{
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+
+		TemplateSelect(cTemplateName,guTemplateSet);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			struct t_template template;
+			
+			template.cpName[0]="cTitle";
+			template.cpValue[0]=cTitle;
+			
+			template.cpName[1]="cCGI";
+			template.cpValue[1]="ispClient.cgi";
+			
+			template.cpName[2]="gcLogin";
+			template.cpValue[2]=gcLogin;
+
+			template.cpName[3]="gcName";
+			template.cpValue[3]=gcName;
+
+			template.cpName[4]="gcOrgName";
+			template.cpValue[4]=gcOrgName;
+
+			template.cpName[5]="cUserLevel";
+			template.cpValue[5]=(char *)cUserLevel(guPermLevel);
+
+			template.cpName[6]="gcHost";
+			template.cpValue[6]=gcHost;
+
+			template.cpName[7]="gcMessage";
+			template.cpValue[7]=gcMessage;
+
+			template.cpName[8]="gcInputStatus";
+			template.cpValue[8]=gcInputStatus;
+				
+			template.cpName[9]="gcNewStep";
+			template.cpValue[9]=gcNewStep;
+			
+			template.cpName[10]="gcModStep";
+			template.cpValue[10]=gcModStep;
+
+			template.cpName[11]="cISPName";
+			template.cpValue[11]="AstraQom";
+
+			template.cpName[12]="mProductPrice";
+			template.cpValue[12]="15.95";
+
+			template.cpName[13]="";
+			
+			printf("\n<!-- Start htmlPurchasePage(%s) -->\n",cTemplateName); 
+			Template(field[0], &template, stdout);
+			printf("\n<!-- End htmlPurchasePage(%s) -->\n",cTemplateName); 
+		}
+		else
+		{
+			printf("<hr>");
+			printf("<center><font size=1>%s</font>\n",cTemplateName);
+		}
+		mysql_free_result(res);
+	}
+
+}//void htmlPurchasePage(char *cTemplateName)
 
 
 unsigned IsFirstTimeLogin(void)
