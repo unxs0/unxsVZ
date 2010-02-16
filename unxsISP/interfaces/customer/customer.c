@@ -1407,7 +1407,7 @@ void sysfuncSelectExpYear(FILE *fp,char *cStyle,unsigned uSelector,unsigned uUse
 	if(uUseStatus)
 		fprintf(fp,"<select class=%s name=uExpYear %s>\n",cStyle,gcInputStatus);
 	else
-		fprintf(fp,"<select class=%s name=uExpYear %s>\n",cStyle);
+		fprintf(fp,"<select class=%s name=uExpYear>\n",cStyle);
 	
 	fprintf(fp,"<option value=0 ");
 	if(uExpYear==0)

@@ -421,6 +421,11 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcProductList(fp);
 	else if(!strcmp(cFunction,"funcSelectRegLang"))
 		funcSelectRegLang(fp);
+	else if(!strcmp(cFunction,"funcPurchaseExpMonth"))
+		funcPurchaseExpMonth(fp);
+	else if(!strcmp(cFunction,"funcPurchaseExpYear"))
+		funcPurchaseExpYear(fp);
+
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 

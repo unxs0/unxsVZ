@@ -221,4 +221,5 @@ void RegistrationCommands(pentry entries[], int x);
 
 //purchase.c
 void PurchaseCommands(pentry entries[], int x);
-
+void funcPurchaseExpMonth(FILE *fp);
+void funcPurchaseExpYear(FILE *fp);

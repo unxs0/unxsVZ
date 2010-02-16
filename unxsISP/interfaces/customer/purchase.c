@@ -9,6 +9,27 @@ AUTHOR
 */
 #include "interface.h"
 
+static char *cuExpMonthStyle="type_fields";
+static char *cuExpYearStyle="type_fields";
+
+static unsigned uExpMonth=0;
+static unsigned uExpYear=0;
+
+static char cAddr1[101]={""};
+static char *cAddr1Style="type_fields";
+
+static char cAddr2[101]={""};
+static char *cAddr2Style="type_fields";
+
+static char cCity[101]={""};
+static char *cCityStyle="type_fields";
+
+static char cState[101]={""};
+static char *cStateStyle="type_fields";
+
+static char cZip[33]={""};
+static char *cZipStyle="type_fields";
+
 void ShowConfirmPurchasePage(void);
 void htmlPurchasePage(char *cTitle,char *cTemplateName);
 
@@ -123,8 +144,38 @@ void htmlPurchasePage(char *cTitle,char *cTemplateName)
 
 			template.cpName[12]="mProductPrice";
 			template.cpValue[12]="15.95";
+			
+			template.cpName[13]="cAddr1";
+			template.cpValue[13]=cAddr1;
+			
+			template.cpName[14]="cAddr1Style";
+			template.cpValue[14]=cAddr1Style;
+			
+			template.cpName[15]="cAddr2";
+			template.cpValue[15]=cAddr2;
+			
+			template.cpName[16]="cAddr2Style";
+			template.cpValue[16]=cAddr2Style;
 
-			template.cpName[13]="";
+			template.cpName[17]="cCity";
+			template.cpValue[17]=cCity;
+
+			template.cpName[18]="cCityStyle";
+			template.cpValue[18]=cCityStyle;
+
+			template.cpName[19]="cState";
+			template.cpValue[19]=cState;
+
+			template.cpName[20]="cStateStyle";
+			template.cpValue[20]=cStateStyle;
+
+			template.cpName[21]="cZip";
+			template.cpValue[21]=cZip;
+
+			template.cpName[22]="cZipStyle";
+			template.cpValue[22]=cZipStyle;
+
+			template.cpName[23]="";
 			
 			printf("\n<!-- Start htmlPurchasePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -158,4 +209,20 @@ unsigned IsFirstTimeLogin(void)
 	return(uRet);
 
 }//unsigned IsFirstTimeLogin(void)
+
+
+void funcPurchaseExpMonth(FILE *fp)
+{
+	sysfuncSelectExpMonth(fp,cuExpMonthStyle,uExpMonth,0);
+
+}//void funcPurchaseExpMonth(FILE *fp)
+
+
+void funcPurchaseExpYear(FILE *fp)
+{
+	sysfuncSelectExpYear(fp,cuExpYearStyle,uExpYear,0);
+
+}//void funcPurchaseExpMonth(FILE *fp)
+
+
 
