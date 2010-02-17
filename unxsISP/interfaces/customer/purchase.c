@@ -9,6 +9,8 @@ AUTHOR
 */
 #include "interface.h"
 
+static unsigned uInvoice=0;
+
 static char *cuExpMonthStyle="type_fields";
 static char *cuExpYearStyle="type_fields";
 
@@ -30,8 +32,17 @@ static char *cStateStyle="type_fields";
 static char cZip[33]={""};
 static char *cZipStyle="type_fields";
 
+static char cCardNumber[101]={""};
+static char *cCardNumberStyle="type_fields";
+
+static char cCardName[101]={""};
+static char *cCardNameStyle="type_fields";
+
+void GeneratePurchaseInvoice(void);
 void ShowConfirmPurchasePage(void);
 void htmlPurchasePage(char *cTitle,char *cTemplateName);
+unsigned ValidPurchaseInput(void);
+unsigned SubmitRequest(unsigned uInvoice); //payment.c
 
 
 void ProcessPurchaseVars(pentry entries[], int x)
@@ -40,9 +51,25 @@ void ProcessPurchaseVars(pentry entries[], int x)
 	
 	for(i=0;i<x;i++)
 	{
+		if(!strcmp(entries[i].name,"cAddr1"))
+			sprintf(cAddr1,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cAddr2"))
+			sprintf(cAddr2,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cCity"))
+			sprintf(cCity,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cState"))
+			sprintf(cState,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cZip"))
+			sprintf(cZip,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cCardNumber"))
+			sprintf(cCardNumber,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uExpMonth"))
+			sscanf(entries[i].val,"%u",&uExpMonth);
+		else if(!strcmp(entries[i].name,"uExpYear"))
+			sscanf(entries[i].val,"%u",&uExpYear);
+		else if(!strcmp(entries[i].name,"cCardName"))
+			sprintf(cCardName,"%.100s",entries[i].val);
 
-//		if(!strcmp(entries[i].name,"cFirstName"))
-//			sprintf(cFirstName,"%.32s",entries[i].val);
 	}
 }//void ProcessPurchaseVars(pentry entries[], int x)
 
@@ -69,7 +96,21 @@ void PurchaseCommands(pentry entries[], int x)
 		{
 			ShowConfirmPurchasePage();
 		}
+		else if(!strcmp(gcFunction,"Complete Payment"))
+		{
+			//Validate input
+			if(!ValidPurchaseInput())
+				ShowConfirmPurchasePage();
 
+			//Generate invoice
+			GeneratePurchaseInvoice();
+			//Proccess invoice
+			if(SubmitRequest(uInvoice))
+			{
+				//If goes OK, create unxsISP data for radius account deployment
+				//and submit job
+			}
+		}
 
 	}
 }//void PurchaseCommands(pentry entries[], int x)
@@ -175,7 +216,19 @@ void htmlPurchasePage(char *cTitle,char *cTemplateName)
 			template.cpName[22]="cZipStyle";
 			template.cpValue[22]=cZipStyle;
 
-			template.cpName[23]="";
+			template.cpName[23]="cCardNumberStyle";
+			template.cpValue[23]=cCardNumberStyle;
+
+			template.cpName[24]="cCardNameStyle";
+			template.cpValue[24]=cCardNameStyle;
+			
+			template.cpName[25]="cCardNumber";
+			template.cpValue[25]=cCardNumber;
+
+			template.cpName[26]="cCardName";
+			template.cpValue[26]=cCardName;
+
+			template.cpName[27]="";
 			
 			printf("\n<!-- Start htmlPurchasePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -224,5 +277,41 @@ void funcPurchaseExpYear(FILE *fp)
 
 }//void funcPurchaseExpMonth(FILE *fp)
 
+
+void GeneratePurchaseInvoice(void)
+{
+	//Pretty much hard-coded function to generate an invoice for the new customer
+	sprintf(gcQuery,"INSERT INTO tInvoice (cFirstName,cLastName,cEmail,cAddr1,cAddr2,"
+			"cCity,cState,cZip,cCountry,cCardType,cCardNumber,uExpMonth,uExpYear,"
+			"cCardName,uOwner,uCreatedBy,uCreatedDate) "
+			"VALUES (SELECT cFirstName,cLastName,cEmail,cAddr1,cAddr2,"
+			"cCity,cState,cZip,cCountry,cCardType,cCardNumber,uExpMonth,uExpYear,"
+			"cCardName,uOwner,1,UNIX_TIMESTAMP(NOW())");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	uInvoice=mysql_insert_id(&gMysql);
+	
+	sprintf(gcQuery,"INSERT INTO tInvoiceItems SET uInvoice=%u,uClient=%u,uProduct=1,"
+			"uQuantity=1,mPrice='15.95',mTotal='15.95',uOwner=%u,uCreatedBy=1,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			,uInvoice
+			,guLoginClient
+			,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void GeneratePurchaseInvoice(void)
+
+
+unsigned ValidPurchaseInput(void)
+{
+	//All form fields required
+
+	return(1);
+
+}//unsigned ValidPurchaseInput(void)
 
 
