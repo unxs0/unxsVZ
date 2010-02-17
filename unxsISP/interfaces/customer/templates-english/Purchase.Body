@@ -75,6 +75,7 @@
 <table align=center border="0" cellspacing="8" cellpadding="0" width="50%" class="table_content">
 <tr><td colspan=2>Please take a moment to complete the information below.</td>
 </tr>
+<tr><td align=right>{{gcMessage}}</td></tr>
         <tr>
 	<td>
 	<fieldset><legend>Personal Information</legend>
