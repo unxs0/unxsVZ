@@ -166,7 +166,11 @@
 	</fieldset>
 	</td>
 	</tr>
-
+	<tr>
+	<td align=center>
+	<input type=submit class=largeButton name=gcFunction value='Complete Payment'>
+	</td>
+	</tr>
 </table>
 	
 	
