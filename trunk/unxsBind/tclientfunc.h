@@ -56,6 +56,8 @@ void tTablePullDownResellers(unsigned uSelector);
 void ContactsNavList(void);
 void htmlRecordContext(void);
 void tClientNavList(void);
+void BasictClientCheck(void);
+
 
 void ExtProcesstClientVars(pentry entries[], int x)
 {
@@ -134,6 +136,7 @@ void ExttClientCommands(pentry entries[], int x)
 
 				//Validate
 				guMode=2000;
+				BasictClientCheck();
 				if(guLoginClient!=1 && uMaxClientsReached(guCompany))
 				{
 					guMode=0;
@@ -958,4 +961,24 @@ void tClientNavList(void)
         mysql_free_result(res);
 
 }//void tClientNavList(void)
+
+
+void BasictClientCheck(void)
+{
+	if(guMode==2000)
+	{
+		if(uOwner==1)
+		{
+			MYSQL_RES *res;
+			sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND uOwner=1",TextAreaSave(cLabel));
+			macro_mySQLRunAndStore(res);
+
+			if(mysql_num_rows(res))
+			{
+				guMode=2000;
+				tClient("<blink>Error: </blink>ASP company with that cLabel already exists.");
+			}
+		}
+	}
+}//void BasictClientCheck(void)
 

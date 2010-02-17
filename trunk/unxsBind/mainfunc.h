@@ -2235,7 +2235,7 @@ void CheckAllZones(void)
 		//named-checkzone e-s.co.uk /usr/local/idns/named.d/master/external/e/e-s.co.uk
 		
 		sprintf(cZoneFile,"/usr/local/idns/named.d/master/%s/%c/%s",field[1],field[0][0],field[0]);
-		sprintf(gcQuery,"named-checkzone %s %s > /dev/null  2>&1",field[0],cZoneFile);
+		sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s > /dev/null  2>&1",field[0],cZoneFile);
 		
 		if(system(gcQuery))
 		{
