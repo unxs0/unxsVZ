@@ -309,7 +309,62 @@ void GeneratePurchaseInvoice(void)
 unsigned ValidPurchaseInput(void)
 {
 	//All form fields required
+	
+	if(!cAddr1[0])
+	{
+		gcMessage="<blink>Error:</blink> Address is a required field";
+		cAddr1Style="type_fields_req";
+		return(0);
+	}
+	
+	if(!cCity[0])
+	{
+		gcMessage="<blink>Error:</blink> City is a required field";
+		cCityStyle="type_fields_req";
+		return(0);
+	}
+	
+	if(!cState[0])
+	{
+		gcMessage="<blink>Error:</blink> State is a required field";
+		cStateStyle="type_fields_req";
+		return(0);
+	}
+	
+	if(!cZip[0])
+	{
+		gcMessage="<blink>Error:</blink> Zip is a required field";
+		cZipStyle="type_fields_req";
+		return(0);
+	}
 
+	if(!cCardName[0])
+	{
+		gcMessage="<blink>Error:</blink> Card name is a required field";
+		cCardNameStyle="type_fields_req";
+		return(0);
+	}
+
+	if(!cCardNumber[0])
+	{
+		gcMessage="<blink>Error:</blink> Card number is a required field";
+		cCardNumberStyle="type_fields_req";
+		return(0);
+	}
+
+	if(!uExpMonth)
+	{
+		gcMessage="<blink>Error:</blink> Expiration month is a required field";
+		cuExpMonthStyle="type_fields_req";
+		return(0);
+	}
+
+	if(!uExpYear)
+	{
+		gcMessage="<blink>Error:</blink> Expiration year is a required field";
+		cuExpYearStyle="type_fields_req";
+		return(0);
+	}
 	return(1);
 
 }//unsigned ValidPurchaseInput(void)
