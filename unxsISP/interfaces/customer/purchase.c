@@ -284,7 +284,7 @@ void UpdateCustomerInfo(void)
 {
 	sprintf(gcQuery,"UPDATE tClient SET cAddr1='%s',cAddr2='%s',cCity='%s',cState='%s',"
 			"cZip='%s',cCountry='CA',cCardNumber='%s',uExpMonth=%u,uExpYear=%u,"
-			"cCardName='%s',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uClient=%u"
+			"cCardName='%s',cCode='',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uClient=%u"
 			,TextAreaSave(cAddr1)
 			,TextAreaSave(cAddr2)
 			,TextAreaSave(cCity)
@@ -308,9 +308,9 @@ void GeneratePurchaseInvoice(void)
 	sprintf(gcQuery,"INSERT INTO tInvoice (cFirstName,cLastName,cEmail,cAddr1,cAddr2,"
 			"cCity,cState,cZip,cCountry,cCardType,cCardNumber,uExpMonth,uExpYear,"
 			"cCardName,uOwner,uCreatedBy,uCreatedDate) "
-			"VALUES (SELECT cFirstName,cLastName,cEmail,cAddr1,cAddr2,"
+			"SELECT cFirstName,cLastName,cEmail,cAddr1,cAddr2,"
 			"cCity,cState,cZip,cCountry,cCardType,cCardNumber,uExpMonth,uExpYear,"
-			"cCardName,uOwner,1,UNIX_TIMESTAMP(NOW())");
+			"cCardName,uOwner,1,UNIX_TIMESTAMP(NOW()) FROM tClient WHERE uClient=%u",guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
