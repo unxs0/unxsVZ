@@ -41,6 +41,7 @@ static char *cCardNameStyle="type_fields";
 void GeneratePurchaseInvoice(void);
 void ShowConfirmPurchasePage(void);
 void htmlPurchasePage(char *cTitle,char *cTemplateName);
+void UpdateCustomerInfo(void);
 unsigned ValidPurchaseInput(void);
 unsigned SubmitRequest(unsigned uInvoice); //payment.c
 
@@ -101,6 +102,7 @@ void PurchaseCommands(pentry entries[], int x)
 			//Validate input
 			if(!ValidPurchaseInput())
 				ShowConfirmPurchasePage();
+			UpdateCustomerInfo();
 
 			//Generate invoice
 			GeneratePurchaseInvoice();
@@ -276,6 +278,28 @@ void funcPurchaseExpYear(FILE *fp)
 	sysfuncSelectExpYear(fp,cuExpYearStyle,uExpYear,0);
 
 }//void funcPurchaseExpMonth(FILE *fp)
+
+
+void UpdateCustomerInfo(void)
+{
+	sprintf(gcQuery,"UPDATE tClient SET cAddr1='%s',cAddr2='%s',cCity='%s',cState='%s',"
+			"cZip='%s',cCountry='CA',cCardNumber='%s',uExpMonth=%u,uExpYear=%u,"
+			"cCardName='%s',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uClient=%u"
+			,TextAreaSave(cAddr1)
+			,TextAreaSave(cAddr2)
+			,TextAreaSave(cCity)
+			,TextAreaSave(cState)
+			,TextAreaSave(cZip)
+			,TextAreaSave(cCardNumber)
+			,uExpMonth
+			,uExpYear
+			,TextAreaSave(cCardName)
+			,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void UpdateCustomerInfo(void)
 
 
 void GeneratePurchaseInvoice(void)
