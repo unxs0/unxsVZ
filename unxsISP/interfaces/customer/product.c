@@ -11,19 +11,19 @@ PURPOSE
 
 
 #include "interface.h"
-static unsigned uProduct=0;
+unsigned uProduct=0;
 static unsigned uStep=0;
 
-static unsigned uServices[100]={0};
-static unsigned uServiceStartPoint[100]={0};
-static unsigned uServiceEndPoint[100]={0};
-static char cParameterInput[100][100]={""}; //tClientConfig.cValue
+unsigned uServices[100]={0};
+unsigned uServiceStartPoint[100]={0};
+unsigned uServiceEndPoint[100]={0};
+char cParameterInput[100][100]={""}; //tClientConfig.cValue
 static char cParameterLabel[100][100]={""}; //tParameter.cISMName
-static char cParameterName[100][100]={""};  //tParameter.cParameter
+char cParameterName[100][100]={""};  //tParameter.cParameter
 static char *cParameterStyle[100];
 
-static unsigned uParameterCount=0;
-static unsigned uServicesCount=0;
+unsigned uParameterCount=0;
+unsigned uServicesCount=0;
 static unsigned uPrevStatus=0;
 MYSQL MysqlExt;
 static char cDay[10]={""};

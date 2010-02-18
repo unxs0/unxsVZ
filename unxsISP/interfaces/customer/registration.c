@@ -548,10 +548,11 @@ void GenerateLoginInfo(void)
 	LowerCase(cLastName);
 	sprintf(cUser,"%s.%s",cFirstName,cLastName);
 
-	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s.%s',cPasswd='%s',uPerm=1,uCertClient=%u,uOwner=%s,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s.%s',cPasswd='%s',cClrPasswd='%s',uPerm=1,uCertClient=%u,uOwner=%s,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cFirstName
 			,cLastName
 			,cGenPassword
+			,cPassword
 			,guLoginClient
 			,cuCompany
 			);

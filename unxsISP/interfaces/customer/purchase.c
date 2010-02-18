@@ -42,9 +42,20 @@ void GeneratePurchaseInvoice(void);
 void ShowConfirmPurchasePage(void);
 void htmlPurchasePage(char *cTitle,char *cTemplateName);
 void UpdateCustomerInfo(void);
+void DeployRadius(void);
 unsigned ValidPurchaseInput(void);
 unsigned SubmitRequest(unsigned uInvoice); //payment.c
 
+//product.c module vars for deployment
+extern unsigned uProduct;
+extern unsigned uServices[];
+extern char cParameterInput[][100]; //tClientConfig.cValue
+extern char cParameterName[][100];  //tParameter.cParameter
+extern unsigned uParameterCount;
+extern unsigned uServicesCount;
+extern unsigned uServiceStartPoint[];
+extern unsigned uServiceEndPoint[];
+void DeployProduct(void);
 
 void ProcessPurchaseVars(pentry entries[], int x)
 {
@@ -111,10 +122,12 @@ void PurchaseCommands(pentry entries[], int x)
 			{
 				//If goes OK, create unxsISP data for radius account deployment
 				//and submit job
+				DeployRadius();
 			}
 		}
 
 	}
+
 }//void PurchaseCommands(pentry entries[], int x)
 
 
@@ -393,4 +406,43 @@ unsigned ValidPurchaseInput(void)
 
 }//unsigned ValidPurchaseInput(void)
 
+
+void DeployRadius(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	//Initialize known values
+	uProduct=1;
+	uServices[0]=1;
+	uServiceStartPoint[0]=0;
+	uServiceEndPoint[0]=4;
+	sprintf(cParameterName[0],"unxsRadius.Login");
+	sprintf(cParameterName[1],"unxsRadius.ClearText");
+	sprintf(cParameterName[2],"unxsRadius.Passwd");
+	sprintf(cParameterName[3],"unxsRadius.Profile");
+
+	//Set radius account parameters
+	sprintf(gcQuery,"SELECT cLabel,cClrPasswd FROM tAuthorize WHERE uCertClient=%u",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cParameterInput[0],"%s",field[0]);
+		sprintf(cParameterInput[1],"Yes");
+		sprintf(cParameterInput[2],"%s",field[1]);
+		sprintf(cParameterInput[3],"Unlimited");
+	}
+	else
+		htmlPlainTextError("Unexpected condition. Contact support. DeployRadius() error");
+
+	uParameterCount=4;
+	uServicesCount=1;
+	
+	//Commit
+	DeployProduct();
+
+}//void DeployRadius(void)
 
