@@ -347,9 +347,9 @@ void EmailRegistration(char *cSubject,char *cTemplateName)
 	
 	GetConfiguration("cFromEmailAddr",cFrom);
 	
-	//if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	//debug only
-	if((fp=fopen("/tmp/eMailInvoice","w")))
+	//if((fp=fopen("/tmp/eMailInvoice","w")))
 	{
 		fprintf(fp,"To: %s\n",cEmail);
 		fprintf(fp,"From: %s\n",cFrom);
