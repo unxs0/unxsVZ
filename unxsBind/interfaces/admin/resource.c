@@ -2781,11 +2781,11 @@ void PrepareTestData(void)
 	uZone=uGetuZone(gcZone,cuView);
 
 	CreatetResourceTest();
-	sprintf(gcQuery,"DELETE FROM tResourceTest WHERE uZone=%u",uZone);
+	sprintf(gcQuery,"TRUNCATE tResourceTest");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-
+	
 	sprintf(gcQuery,"INSERT INTO tResourceTest (uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,"
 			"uModDate,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,cComment,uZone) "
 			"SELECT uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
