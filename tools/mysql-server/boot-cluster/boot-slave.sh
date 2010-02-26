@@ -61,6 +61,7 @@ if [ $? == 0 ]  && [ "$cBinLog" != "" ] && [ "$cPosition" != "" ];then
 	fi
 
 	#SQL "change master to" parsed data on local slave MySQL server.
+	fLog "cBinLog=$cBinLog cPosition=$cPosition";
 	echo "CHANGE MASTER TO MASTER_LOG_FILE='$cBinLog',MASTER_LOG_POS=$cPosition" | mysql -p$1 > /dev/null 2>&1;
 	if [ $? != 0 ];then
 		fLog "local change master failed";
@@ -73,6 +74,7 @@ if [ $? == 0 ]  && [ "$cBinLog" != "" ] && [ "$cPosition" != "" ];then
 		fLog "local slave stop failed";
 		exit 6;
 	fi
+	sleep 2;
 
 	#check status. if slave did not catch up in max iTimeoutSecs send warning email, exit error.
 	eval `echo "SHOW SLAVE STATUS\G" | mysql -p$1 | grep Seconds_Behind_Master | awk '{printf"iSecondsBehindMaster=%s\n",$2}'`;
@@ -80,21 +82,29 @@ if [ $? == 0 ]  && [ "$cBinLog" != "" ] && [ "$cPosition" != "" ];then
 		fLog "show local slave status failed";
 		exit 7;
 	fi
-	#echo $iSecondsBehindMaster;
+	if [ "$iSecondsBehindMaster" == "NULL" ];then
+		fLog "local slave status NULL";
+		exit 7;
+	fi
+	fLog "iSecondsBehindMaster=$iSecondsBehindMaster";
 	iCounter=0;
-	while [ $iCounter -lt $iTimeoutSecs ] && [ $iSecondsBehindMaster -gt "0" ];do
+	while [ $iCounter -lt "$iTimeoutSecs" ] && [ $iSecondsBehindMaster -gt "0" ];do
 		let iCounter=iCounter+1;
 		eval `echo "SHOW SLAVE STATUS\G" | mysql -p$1 | grep Seconds_Behind_Master | awk '{printf"iSecondsBehindMaster=%s\n",$2}'`;
 		if [ $? != 0 ];then
 			fLog "show local slave status failed";
 			exit 8;
 		fi
+		if [ "$iSecondsBehindMaster" == "NULL" ];then
+			fLog "local slave status NULL";
+			exit 9;
+		fi
 		#double the timeout for long catch-up
 		sleep 2;
 	done
 	if [ $iCounter -eq "$iTimeoutSecs" ];then
 		fLog "local slave catch-up timeout";
-		exit 9;
+		exit 10;
 	fi
 
 
