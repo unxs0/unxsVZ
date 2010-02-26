@@ -11,7 +11,8 @@
 #	Warning mail not implemented yet.
 
 #Configuration section
-iTimeoutSecs="300";
+#2 hours
+iTimeoutSecs="7200";
 cWarnEmail="supportgrp@unixservice.com";
 cSSHPort="22"
 #end
@@ -29,27 +30,64 @@ iCounter=0;
 ping -c 1 $2 > /dev/null 2>&1;
 while [ $? != 0 ] && [ $iCounter -lt $iTimeoutSecs ];do
 	let iCounter=iCounter+1;
+	#fLog "retrying ping $iCounter/$iTimeoutSecs";
 	ping -c 1 $2 > /dev/null 2>&1;
 done
 if [ $iCounter -eq "$iTimeoutSecs" ];then
-	fLog "ping master timeout $iCounter";
-	exit 1;
+	fLog "ping master timeout";
+	#exit 1;
+fi
+
+iCounter=0;
+/usr/bin/ssh -p $cSSHPort $2 exit > /dev/null 2>&1;
+while [ $? != 0 ] && [ $iCounter -lt $iTimeoutSecs ];do
+	let iCounter=iCounter+1;
+	sleep 1;
+	#fLog "retrying check for ssh $iCounter/$iTimeoutSecs";
+	/usr/bin/ssh -p $cSSHPort $2 exit > /dev/null 2>&1;
+done
+if [ $iCounter -eq "$iTimeoutSecs" ];then
+	fLog "remote ssh timeout";
+	#exit 2;
 fi
 
 iCounter=0;
 /usr/bin/ssh -p $cSSHPort $2 ps -ef | grep mysqld  > /dev/null 2>&1;
 while [ $? != 0 ] && [ $iCounter -lt $iTimeoutSecs ];do
 	let iCounter=iCounter+1;
-	/usr/bin/ssh -p $cSSHPort $2 ps -ef | grep mysqld  > /dev/null 2>&1;
 	sleep 1;
+	#fLog "retrying check for mysqld $iCounter/$iTimeoutSecs";
+	/usr/bin/ssh -p $cSSHPort $2 ps -ef | grep mysqld  > /dev/null 2>&1;
 done
 if [ $iCounter -eq "$iTimeoutSecs" ];then
 	fLog "remote mysqld timeout";
-	exit 2;
+	#exit 2;
 fi
 
 
+iCounter=0;
+cBinLog="";
+cPosition="";
+eval `/usr/bin/ssh -p $cSSHPort $2 "echo 'SHOW MASTER STATUS' | mysql -p$1 | grep mysql_binary_log" | awk '{printf"cBinLog=%s\ncPosition=%s\n",$1,$2}'`;
+while ( [ "$cBinLog" == "" ] || [ "$cPosition" == "" ] ) && [ $iCounter -lt $iTimeoutSecs ];do
+	let iCounter=iCounter+1;
+	cBinLog="";
+	cPosition="";
+	sleep 1;
+	#fLog "retrying get master data $iCounter/$iTimeoutSecs";
+	eval `/usr/bin/ssh -p $cSSHPort $2 "echo 'SHOW MASTER STATUS' | mysql -p$1 | grep mysql_binary_log" | awk '{printf"cBinLog=%s\ncPosition=%s\n",$1,$2}'`;
+done
+if [ $iCounter -eq "$iTimeoutSecs" ];then
+	fLog "remote get master data timeout $iCounter/$iTimeoutSecs";
+	#exit 2;
+fi
+
+#fLog "debug exit $iCounter/$iTimeoutSecs cBinLog=$cBinLog cPosition=$cPosition";
+#exit 0;
+
 #master is up, get master status and parse master status.
+cBinLog="";
+cPosition="";
 eval `/usr/bin/ssh -p $cSSHPort $2 "echo 'SHOW MASTER STATUS' | mysql -p$1 | grep mysql_binary_log" | awk '{printf"cBinLog=%s\ncPosition=%s\n",$1,$2}'`;
 if [ $? == 0 ]  && [ "$cBinLog" != "" ] && [ "$cPosition" != "" ];then
 
@@ -61,12 +99,12 @@ if [ $? == 0 ]  && [ "$cBinLog" != "" ] && [ "$cPosition" != "" ];then
 	fi
 
 	#SQL "change master to" parsed data on local slave MySQL server.
-	fLog "cBinLog=$cBinLog cPosition=$cPosition";
 	echo "CHANGE MASTER TO MASTER_LOG_FILE='$cBinLog',MASTER_LOG_POS=$cPosition" | mysql -p$1 > /dev/null 2>&1;
 	if [ $? != 0 ];then
 		fLog "local change master failed";
 		exit 5;
 	fi
+	fLog "change master ok cBinLog=$cBinLog cPosition=$cPosition";
 
 	#start slave
 	echo "START SLAVE" | mysql -p$1 > /dev/null 2>&1;
@@ -86,7 +124,7 @@ if [ $? == 0 ]  && [ "$cBinLog" != "" ] && [ "$cPosition" != "" ];then
 		fLog "local slave status NULL";
 		exit 7;
 	fi
-	fLog "iSecondsBehindMaster=$iSecondsBehindMaster";
+	#fLog "iSecondsBehindMaster=$iSecondsBehindMaster";
 	iCounter=0;
 	while [ $iCounter -lt "$iTimeoutSecs" ] && [ $iSecondsBehindMaster -gt "0" ];do
 		let iCounter=iCounter+1;
@@ -99,8 +137,7 @@ if [ $? == 0 ]  && [ "$cBinLog" != "" ] && [ "$cPosition" != "" ];then
 			fLog "local slave status NULL";
 			exit 9;
 		fi
-		#double the timeout for long catch-up
-		sleep 2;
+		sleep 1;
 	done
 	if [ $iCounter -eq "$iTimeoutSecs" ];then
 		fLog "local slave catch-up timeout";
