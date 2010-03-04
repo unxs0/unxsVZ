@@ -218,6 +218,12 @@ void RRCheck(int uMode)
 		if(!strcmp(cZone+strlen(cZone)-5,".arpa"))
 			tResource("Can not add AAAA records to arpa zones");
 
+		if(strlen(cParam1)<4)
+		{
+			guMode=uMode;
+			tResource("<blink>IPv6 number must be at least 4 chars long (e.g. 1::a)</blink>");
+		}
+
 		//if cParam1 has no consecutive colons we can simply:
 		if((cp=strstr(cParam1,"::")))
 		{
@@ -253,7 +259,7 @@ void RRCheck(int uMode)
 				if(uRead!=2)
 				{
 					guMode=uMode;
-					tResource("<blink>IPv6 sscanf case 2 error!</blink>");
+					tResource("<blink>IPv6 format-2 error!</blink>");
 				}
 			break;
 
@@ -265,7 +271,7 @@ void RRCheck(int uMode)
 					if(uRead!=3)
 					{
 						guMode=uMode;
-						tResource("<blink>IPv6 sscanf case 3 error!</blink>");
+						tResource("<blink>IPv6 format-3 error!</blink>");
 					}
 				}
 			break;
@@ -281,7 +287,7 @@ void RRCheck(int uMode)
 						if(uRead!=4)
 						{
 							guMode=uMode;
-							tResource("<blink>IPv6 sscanf case 4 error!</blink>");
+							tResource("<blink>IPv6 format-4 error!</blink>");
 						}
 					}
 				}
@@ -301,7 +307,7 @@ void RRCheck(int uMode)
 							if(uRead!=5)
 							{
 								guMode=uMode;
-								tResource("<blink>IPv6 sscanf case 5 error!</blink>");
+								tResource("<blink>IPv6 format-5 error!</blink>");
 							}
 						}
 					}
@@ -326,7 +332,7 @@ void RRCheck(int uMode)
 								if(uRead!=6)
 								{
 									guMode=uMode;
-									tResource("<blink>IPv6 sscanf case 6 error!</blink>");
+									tResource("<blink>IPv6 format-6 error!</blink>");
 								}
 							}
 						}
@@ -336,11 +342,12 @@ void RRCheck(int uMode)
 
 			case 7:
 				uRead=sscanf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
-				if(uRead!=7)
+				if(uRead!=8)
 				{
 					guMode=uMode;
-					tResource("<blink>IPv6 sscanf case 7 error!</blink>");
+					tResource("<blink>IPv6 format-7 error!</blink>");
 				}
+			break;
 
 			default:
 				guMode=uMode;
@@ -418,6 +425,17 @@ void RRCheck(int uMode)
 			tResource("cParam1 is required");
 		}
 		if(cParam1[strlen(cParam1)-1]!='.') strcat(cParam1,".");
+
+		//Initial support for only one ip6.arpa zone per view
+		if(!strcmp(cZone+strlen(cZone)-8,"ip6.arpa"))
+		{
+			if(strlen(cName)!= (32+31+10))
+			{
+				guMode=uMode;
+				tResource("<blink>IPv6 PTR cName format must be 32 nibbles seperated"
+						" by periods and end with '.ip6.arpa.'!</blink>");
+			}
+		}
 	}
 	else if(!strcmp(cRRType,"MX"))
 	{
