@@ -207,13 +207,40 @@ void RRCheck(int uMode)
 		unsigned h6=0;
 		unsigned h7=0;
 		unsigned h8=0;
+		char *cp;
 
 		//Insure these are empty
 		cParam2[0]=0;
 
 		if(!strcmp(cZone+strlen(cZone)-5,".arpa"))
 			tResource("Can not add AAAA records to arpa zones");
-		sscanf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
+
+		//This is not going to work for all cases.
+		//if cParam1 has no consecutive colons
+		if(!(cp=strstr(cParam1,"::")))
+		{
+			sscanf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
+		}
+		else
+		{
+			unsigned uPos=0;
+
+			if(strstr(cp+2,"::"))
+			{
+				guMode=uMode;
+				tResource("IPv6 number can not have more than one double colons.");
+			}
+
+			uPos=sscanf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
+			//All first position cases, i.e. 2,3,4,5 and 6 word cases
+			if(uPos==1)
+			{
+				uPos=sscanf(cParam1,"%x::%x:%x:%x:%x:%x:%x",&h1, &h3,&h4,&h5,&h6,&h7,&h8);
+				if(uPos==2)
+					uPos=sscanf(cParam1,"%x:%x::%x:%x:%x:%x:%x",&h1,&h2, &h4,&h5,&h6,&h7,&h8);
+			}
+				
+		}
 
 		//Leading 0's. Done via sprintf below.
 
@@ -227,7 +254,9 @@ void RRCheck(int uMode)
 		if(!h8)
 		{
 			guMode=uMode;
-			tResource("IPv6 number can not have a 0 in last 16 bit hex word.");
+			sprintf(gcQuery," IPv6 number can not have a 0 in last 16 bit hex word:"
+					" %x:%x:%x:%x:%x:%x:%x:%x",h1,h2,h3,h4,h5,h6,h7,h8);
+			tResource(gcQuery);
 		}
 
 		//Compress empty words: Double colon. Can only be used once.
