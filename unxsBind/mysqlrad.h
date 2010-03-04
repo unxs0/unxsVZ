@@ -25,6 +25,17 @@ AUTHOR
 #include <mysql/mysql.h>
 char *crypt(const char *key, const char *salt);
 
+//This creates a dependency on provided tRRType.txt table fie
+#define RRTYPE_A 1
+#define RRTYPE_NS 2
+#define RRTYPE_MX 3 
+#define RRTYPE_HINFO 4
+#define RRTYPE_CNAME 5
+#define RRTYPE_TXT 6
+#define RRTYPE_PTR 7
+#define RRTYPE_SRV 8
+#define RRTYPE_AAAA 9
+
 
 #include <unistd.h>
 #include <locale.h>

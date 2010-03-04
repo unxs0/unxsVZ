@@ -197,6 +197,82 @@ void RRCheck(int uMode)
 			tResource("Invalid IP Number for cParam1");
 		}
 	}
+	else if(!strcmp(cRRType,"AAAA"))
+	{
+		unsigned h1=0;
+		unsigned h2=0;
+		unsigned h3=0;
+		unsigned h4=0;
+		unsigned h5=0;
+		unsigned h6=0;
+		unsigned h7=0;
+		unsigned h8=0;
+
+		//Insure these are empty
+		cParam2[0]=0;
+
+		if(!strcmp(cZone+strlen(cZone)-5,".arpa"))
+			tResource("Can not add AAAA records to arpa zones");
+		sscanf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
+
+		//Leading 0's. Done via sprintf below.
+
+		//First checks
+		if(!h1)
+		{
+			guMode=uMode;
+			tResource("IPv6 number can not have a 0 in first 16 bit hex word.");
+		}
+
+		if(!h8)
+		{
+			guMode=uMode;
+			tResource("IPv6 number can not have a 0 in last 16 bit hex word.");
+		}
+
+		//Compress empty words: Double colon. Can only be used once.
+		//Trying KISS method here
+		//6 consecutive 0 case
+		if(!h2 && !h3 && !h4 && !h5 && !h6 && !h7)
+			sprintf(cParam1,"%x::%x",h1,h8);
+		//5 consecutive 0 cases
+		else if(!h3 && !h4 && !h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x::%x",h1,h2,h8);
+		else if(!h2 && !h3 && !h4 && !h5 && !h6)
+			sprintf(cParam1,"%x::%x:%x",h1,h7,h8);
+		//4 consecutive 0 cases
+		else if(!h4 && !h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x::%x",h1,h2,h3, h8);
+		else if(!h3 && !h4 && !h5 && !h6)
+			sprintf(cParam1,"%x:%x::%x:%x",h1,h2, h7,h8);
+		else if(!h2 && !h3 && !h4 && !h5)
+			sprintf(cParam1,"%x::%x:%x:%x",h1, h6,h7,h8);
+		//3 consecutive 0 cases
+		else if(!h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x:%x::%x",h1,h2,h3,h4, h8);
+		else if(!h4 && !h5 && !h6)
+			sprintf(cParam1,"%x:%x:%x::%x:%x",h1,h2,h3, h7,h8);
+		else if(!h3 && !h4 && !h5)
+			sprintf(cParam1,"%x:%x::%x:%x:%x",h1,h2, h6,h7,h8);
+		else if(!h2 && !h3 && !h4)
+			sprintf(cParam1,"%x::%x:%x:%x:%x",h1, h5,h6,h7,h8);
+		//2 consecutive 0 cases
+		else if(!h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x:%x:%x::%x",h1,h2,h3,h4,h5, h8);
+		else if(!h5 && !h6)
+			sprintf(cParam1,"%x:%x:%x:%x::%x:%x",h1,h2,h3,h4, h7,h8);
+		else if(!h4 && !h5)
+			sprintf(cParam1,"%x:%x:%x::%x:%x:%x",h1,h2,h3, h6,h7,h8);
+		else if(!h3 && !h4)
+			sprintf(cParam1,"%x:%x::%x:%x:%x:%x",h1,h2, h5,h6,h7,h8);
+		else if(!h2 && !h3)
+			sprintf(cParam1,"%x::%x:%x:%x:%x:%x",h1, h4,h5,h6,h7,h8);
+		//0 consecutive 0 case, i.e. no double colon case
+		else if(1)
+			sprintf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",h1,h2,h3,h4,h5,h6,h7,h8);
+		
+
+	}
 	else if(!strcmp(cRRType,"PTR"))
 	{
 		cParam2[0]=0;
@@ -428,7 +504,7 @@ void ExttResourceCommands(pentry entries[], int x)
 
 				//New PTR record in automated arpa zones
 				//exception allowed
-				if(!uZoneOwner && uRRType!=7)
+				if(!uZoneOwner && uRRType!=RRTYPE_PTR)
 				{
 					guMode=0;
 					tResource("uZoneOwner==0 contact admin asap");
@@ -439,7 +515,7 @@ void ExttResourceCommands(pentry entries[], int x)
 				uOwner=uZoneOwner;
 				uModBy=0;//Never modified
 				
-				if(uAddArpaPTR && uRRType==1)
+				if(uAddArpaPTR && uRRType==RRTYPE_A)
 				{
 					char cFQDN[512];
 					char cNameSave[256];
@@ -507,7 +583,8 @@ void ExttResourceCommands(pentry entries[], int x)
 				tResource(mysql_error(&gMysql));
 				UpdateSerialNum(uZone);                      	
 				sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%u',uZone='%u',"
-						"cName='%s',uTTL='%u',uRRType='%u',cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',"
+						"cName='%s',uTTL='%u',uRRType='%u',cParam1='%s',cParam2='%s',"
+						"cParam3='%s',cParam4='%s',"
 						"cComment='%s',uOwner='%u',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						uResource,
 						uZone,
@@ -549,7 +626,7 @@ void ExttResourceCommands(pentry entries[], int x)
 				//Check entries here
 				RRCheck(2002);
 				uModBy=guLoginClient;
-				if(uAddArpaPTR && uRRType==1)
+				if(uAddArpaPTR && uRRType==RRTYPE_A)
 				{
 					char cFQDN[512];
 					char cParam1Save[256];
@@ -655,11 +732,12 @@ void ExttResourceCommands(pentry entries[], int x)
 					for(i=0;i<uNumNSSets;i++)
 					{
 						sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%.99s',"
-								"uRRType=2,cParam1='%.99s.',"
+								"uRRType=%u,cParam1='%.99s.',"
 								"cComment='DelegationWizard created',uOwner=%u,"
 								"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 								uZone
 								,cZone
+								,RRTYPE_NS
 								,cNSSet[i]
 								,guLoginClient);
 						mysql_query(&gMysql,gcQuery);
@@ -679,11 +757,12 @@ void ExttResourceCommands(pentry entries[], int x)
 				{
 					sprintf(cParam1,"%u-%u",uStartBlock,uNumIPs-1);
 					sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%.15s',"
-							"uRRType=2,cParam1='%.99s.'"
+							"uRRType=%u,cParam1='%.99s.'"
 							",cComment='DelegationWizard created',uOwner=%u,"
 							"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 							uZone
 							,cParam1
+							,RRTYPE_NS
 							,cNSSet[i]
 							,guLoginClient);
 					mysql_query(&gMysql,gcQuery);
@@ -802,7 +881,7 @@ void ExttResourceButtons(void)
                 case 2000:
 			printf("<p><u>Enter required data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
-			if(strcmp(cZone+strlen(cZone)-5,".arpa"))
+			if(uRRType==RRTYPE_A && strcmp(cZone+strlen(cZone)-5,".arpa"))
 			{
 				printf("<br><input title='For some RR types this will add a PTR entry to"
 					" the correct .arpa zone' type=checkbox name=uAddArpaPTR> RevDNS");
@@ -828,7 +907,7 @@ void ExttResourceButtons(void)
                 case 2002:
 			printf("<p><u>Review record data</u><br>");
                         printf(LANG_NBB_CONFIRMMOD);
-			if(uRRType==1 && strcmp(cZone+strlen(cZone)-5,".arpa"))
+			if(uRRType==RRTYPE_A && strcmp(cZone+strlen(cZone)-5,".arpa"))
 			{
 				printf("<br><input title='For some RR types this will add a PTR entry to"
 					" the correct .arpa zone' type=checkbox name=uAddArpaPTR> RevDNS");
@@ -1113,8 +1192,8 @@ int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZo
 
 	//Only allow one PTR entry per FQDN for same uOwner
 
-	sprintf(gcQuery,"DELETE FROM tResource WHERE uRRType=7 AND cParam1='%s' AND uOwner=%u",
-			cParam1,uSourceZoneOwner);
+	sprintf(gcQuery,"DELETE FROM tResource WHERE uRRType=%u AND cParam1='%s' AND uOwner=%u",
+				RRTYPE_PTR,cParam1,uSourceZoneOwner);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
 		return(2);
@@ -1124,10 +1203,11 @@ int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZo
 	//notify admin to resolve dispute for rev dns
 
 	sprintf(cName,"%u",d);
-	sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%.16s',uRRType=7,cParam1='%.511s',cComment='%.99s',"
+	sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%.16s',uRRType=%u,cParam1='%.511s',cComment='%.99s',"
 			"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uInZone
 				,cName
+				,RRTYPE_PTR
 				,cParam1
 				,cComment
 				,uSourceZoneOwner

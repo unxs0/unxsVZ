@@ -386,7 +386,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cLabel
 	OpenRow(LANG_FL_tRRType_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=60 maxlength=32 "
 ,LANG_FT_tRRType_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -411,7 +411,7 @@ void tRRTypeInput(unsigned uMode)
 		YesNoPullDown("uParam2",uParam2,0);
 //cParam1Func
 	OpenRow(LANG_FL_tRRType_cParam1Func,"black");
-	printf("<input title='%s' type=text name=cParam1Func value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cParam1Func value=\"%s\" size=60 maxlength=32 "
 ,LANG_FT_tRRType_cParam1Func,EncodeDoubleQuotes(cParam1Func));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -424,7 +424,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cParam2Func
 	OpenRow(LANG_FL_tRRType_cParam2Func,"black");
-	printf("<input title='%s' type=text name=cParam2Func value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cParam2Func value=\"%s\" size=60 maxlength=32 "
 ,LANG_FT_tRRType_cParam2Func,EncodeDoubleQuotes(cParam2Func));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -437,7 +437,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cParam3Func
 	OpenRow(LANG_FL_tRRType_cParam3Func,"black");
-	printf("<input title='%s' type=text name=cParam3Func value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cParam3Func value=\"%s\" size=60 maxlength=32 "
 ,LANG_FT_tRRType_cParam3Func,EncodeDoubleQuotes(cParam3Func));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -450,7 +450,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cParam4Func
 	OpenRow(LANG_FL_tRRType_cParam4Func,"black");
-	printf("<input title='%s' type=text name=cParam4Func value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cParam4Func value=\"%s\" size=60 maxlength=32 "
 ,LANG_FT_tRRType_cParam4Func,EncodeDoubleQuotes(cParam4Func));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -463,7 +463,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cParam1Label
 	OpenRow(LANG_FL_tRRType_cParam1Label,"black");
-	printf("<input title='%s' type=text name=cParam1Label value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cParam1Label value=\"%s\" size=60 maxlength=32 "
 ,LANG_FT_tRRType_cParam1Label,EncodeDoubleQuotes(cParam1Label));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -476,7 +476,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cParam2Label
 	OpenRow(LANG_FL_tRRType_cParam2Label,"black");
-	printf("<input title='%s' type=text name=cParam2Label value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cParam2Label value=\"%s\" size=60 maxlength=32 "
 ,LANG_FT_tRRType_cParam2Label,EncodeDoubleQuotes(cParam2Label));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -489,7 +489,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cParam3Label
 	OpenRow(LANG_FL_tRRType_cParam3Label,"black");
-	printf("<input title='%s' type=text name=cParam3Label value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cParam3Label value=\"%s\" size=60 maxlength=32 "
 ,LANG_FT_tRRType_cParam3Label,EncodeDoubleQuotes(cParam3Label));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -502,7 +502,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cParam4Label
 	OpenRow(LANG_FL_tRRType_cParam4Label,"black");
-	printf("<input title='%s' type=text name=cParam4Label value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cParam4Label value=\"%s\" size=60 maxlength=32 "
 ,LANG_FT_tRRType_cParam4Label,EncodeDoubleQuotes(cParam4Label));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -515,7 +515,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cParam1Tip
 	OpenRow(LANG_FL_tRRType_cParam1Tip,"black");
-	printf("<input title='%s' type=text name=cParam1Tip value=\"%s\" size=40 maxlength=100 "
+	printf("<input title='%s' type=text name=cParam1Tip value=\"%s\" size=60 maxlength=100 "
 ,LANG_FT_tRRType_cParam1Tip,EncodeDoubleQuotes(cParam1Tip));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -528,7 +528,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cParam2Tip
 	OpenRow(LANG_FL_tRRType_cParam2Tip,"black");
-	printf("<input title='%s' type=text name=cParam2Tip value=\"%s\" size=40 maxlength=100 "
+	printf("<input title='%s' type=text name=cParam2Tip value=\"%s\" size=60 maxlength=100 "
 ,LANG_FT_tRRType_cParam2Tip,EncodeDoubleQuotes(cParam2Tip));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -541,7 +541,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cParam3Tip
 	OpenRow(LANG_FL_tRRType_cParam3Tip,"black");
-	printf("<input title='%s' type=text name=cParam3Tip value=\"%s\" size=40 maxlength=100 "
+	printf("<input title='%s' type=text name=cParam3Tip value=\"%s\" size=60 maxlength=100 "
 ,LANG_FT_tRRType_cParam3Tip,EncodeDoubleQuotes(cParam3Tip));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -554,7 +554,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cParam4Tip
 	OpenRow(LANG_FL_tRRType_cParam4Tip,"black");
-	printf("<input title='%s' type=text name=cParam4Tip value=\"%s\" size=40 maxlength=100 "
+	printf("<input title='%s' type=text name=cParam4Tip value=\"%s\" size=60 maxlength=100 "
 ,LANG_FT_tRRType_cParam4Tip,EncodeDoubleQuotes(cParam4Tip));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -585,7 +585,7 @@ void tRRTypeInput(unsigned uMode)
 		YesNoPullDown("uName",uName,0);
 //cNameFunc
 	OpenRow(LANG_FL_tRRType_cNameFunc,"black");
-	printf("<input title='%s' type=text name=cNameFunc value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cNameFunc value=\"%s\" size=60 maxlength=32 "
 ,LANG_FT_tRRType_cNameFunc,EncodeDoubleQuotes(cNameFunc));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -598,7 +598,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cNameLabel
 	OpenRow(LANG_FL_tRRType_cNameLabel,"black");
-	printf("<input title='%s' type=text name=cNameLabel value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cNameLabel value=\"%s\" size=60 maxlength=32 "
 ,LANG_FT_tRRType_cNameLabel,EncodeDoubleQuotes(cNameLabel));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -611,7 +611,7 @@ void tRRTypeInput(unsigned uMode)
 	}
 //cNameTip
 	OpenRow(LANG_FL_tRRType_cNameTip,"black");
-	printf("<input title='%s' type=text name=cNameTip value=\"%s\" size=40 maxlength=100 "
+	printf("<input title='%s' type=text name=cNameTip value=\"%s\" size=60 maxlength=100 "
 ,LANG_FT_tRRType_cNameTip,EncodeDoubleQuotes(cNameTip));
 	if(guPermLevel>=0 && uMode)
 	{
