@@ -199,6 +199,7 @@ void RRCheck(int uMode)
 	}
 	else if(!strcmp(cRRType,"AAAA"))
 	{
+		register int i;
 		unsigned h1=0;
 		unsigned h2=0;
 		unsigned h3=0;
@@ -208,6 +209,8 @@ void RRCheck(int uMode)
 		unsigned h7=0;
 		unsigned h8=0;
 		char *cp;
+		unsigned uColonCount=0;
+		unsigned uRead=0;
 
 		//Insure these are empty
 		cParam2[0]=0;
@@ -215,36 +218,137 @@ void RRCheck(int uMode)
 		if(!strcmp(cZone+strlen(cZone)-5,".arpa"))
 			tResource("Can not add AAAA records to arpa zones");
 
-		//This is not going to work for all cases.
-		//if cParam1 has no consecutive colons
-		if(!(cp=strstr(cParam1,"::")))
+		//if cParam1 has no consecutive colons we can simply:
+		if((cp=strstr(cParam1,"::")))
 		{
-			sscanf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
-		}
-		else
-		{
-			unsigned uPos=0;
-
 			if(strstr(cp+2,"::"))
 			{
 				guMode=uMode;
-				tResource("IPv6 number can not have more than one double colons.");
+				tResource("<blink>IPv6 number can not have more than one double colon!</blink>");
 			}
-
-			uPos=sscanf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
-			//All first position cases, i.e. 2,3,4,5 and 6 word cases
-			if(uPos==1)
-			{
-				uPos=sscanf(cParam1,"%x::%x:%x:%x:%x:%x:%x",&h1, &h3,&h4,&h5,&h6,&h7,&h8);
-				if(uPos==2)
-					uPos=sscanf(cParam1,"%x:%x::%x:%x:%x:%x:%x",&h1,&h2, &h4,&h5,&h6,&h7,&h8);
-			}
-				
 		}
 
-		//Leading 0's. Done via sprintf below.
+		//Now for the hard work
+		for(i=0;cParam1[i];i++)
+		{
+			if(cParam1[i]==':')
+				uColonCount++;
+			if(cParam1[i]!=':' && !isxdigit(cParam1[i]))
+			{
+				guMode=uMode;
+				tResource("<blink>IPv6 number can only have hexadecimal digits and colons!</blink>");
+			}
+		}
 
-		//First checks
+		switch(uColonCount)
+		{
+			case 0:
+			case 1:
+				guMode=uMode;
+				tResource("<blink>IPv6 too few colons: Min is 2!</blink>");
+			break;
+
+			case 2:
+				uRead=sscanf(cParam1,"%x::%x",&h1,&h8);
+				if(uRead!=2)
+				{
+					guMode=uMode;
+					tResource("<blink>IPv6 sscanf case 2 error!</blink>");
+				}
+			break;
+
+			case 3:
+				uRead=sscanf(cParam1,"%x::%x:%x",&h1,&h7,&h8);
+				if(uRead!=3)
+				{
+					uRead=sscanf(cParam1,"%x:%x::%x",&h1,&h2,&h8);
+					if(uRead!=3)
+					{
+						guMode=uMode;
+						tResource("<blink>IPv6 sscanf case 3 error!</blink>");
+					}
+				}
+			break;
+
+			case 4:
+				uRead=sscanf(cParam1,"%x::%x:%x:%x",&h1,&h6,&h7,&h8);
+				if(uRead!=4)
+				{
+					uRead=sscanf(cParam1,"%x:%x::%x:%x",&h1,&h2,&h7,&h8);
+					if(uRead!=4)
+					{
+						uRead=sscanf(cParam1,"%x:%x:%x::%x",&h1,&h2,&h3,&h8);
+						if(uRead!=4)
+						{
+							guMode=uMode;
+							tResource("<blink>IPv6 sscanf case 4 error!</blink>");
+						}
+					}
+				}
+			break;
+
+			case 5:
+				uRead=sscanf(cParam1,"%x::%x:%x:%x:%x",&h1,&h5,&h6,&h7,&h8);
+				if(uRead!=5)
+				{
+					uRead=sscanf(cParam1,"%x:%x::%x:%x:%x",&h1,&h2,&h6,&h7,&h8);
+					if(uRead!=5)
+					{
+						uRead=sscanf(cParam1,"%x:%x:%x::%x:%x",&h1,&h2,&h3,&h7,&h8);
+						if(uRead!=5)
+						{
+							uRead=sscanf(cParam1,"%x:%x:%x:%x::%x",&h1,&h2,&h3,&h4,&h8);
+							if(uRead!=5)
+							{
+								guMode=uMode;
+								tResource("<blink>IPv6 sscanf case 5 error!</blink>");
+							}
+						}
+					}
+				}
+			break;
+
+			case 6:
+				uRead=sscanf(cParam1,"%x::%x:%x:%x:%x:%x",&h1,&h4,&h5,&h6,&h7,&h8);
+				if(uRead!=6)
+				{
+					uRead=sscanf(cParam1,"%x:%x::%x:%x:%x:%x",&h1,&h2,&h5,&h6,&h7,&h8);
+					if(uRead!=6)
+					{
+						uRead=sscanf(cParam1,"%x:%x:%x::%x:%x:%x",&h1,&h2,&h3,&h6,&h7,&h8);
+						if(uRead!=6)
+						{
+							uRead=sscanf(cParam1,"%x:%x:%x:%x::%x:%x",&h1,&h2,&h3,&h4,&h7,&h8);
+							if(uRead!=6)
+							{
+								uRead=sscanf(cParam1,"%x:%x:%x:%x:%x::%x",
+											&h1,&h2,&h3,&h4,&h5,&h8);
+								if(uRead!=6)
+								{
+									guMode=uMode;
+									tResource("<blink>IPv6 sscanf case 6 error!</blink>");
+								}
+							}
+						}
+					}
+				}
+			break;
+
+			case 7:
+				uRead=sscanf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
+				if(uRead!=7)
+				{
+					guMode=uMode;
+					tResource("<blink>IPv6 sscanf case 7 error!</blink>");
+				}
+
+			default:
+				guMode=uMode;
+				tResource("<blink>IPv6 too many colons: Max is 7!</blink>");
+			
+		}
+
+		//First basic checks for AAAA hosts
 		if(!h1)
 		{
 			guMode=uMode;
@@ -259,8 +363,12 @@ void RRCheck(int uMode)
 			tResource(gcQuery);
 		}
 
+		//Mandatory rewrite in shortest possible IPv6 format.
+		//This is needed to speed up DNSSEC and reduce BIND zone file size.
+		//This may not be a good idea. Need to research further: If someone wants to
+		//write a bunch of 0's why not?
 		//Compress empty words: Double colon. Can only be used once.
-		//Trying KISS method here
+		//Trying KISS method here. sprintf does the leading 0 removal for us.
 		//6 consecutive 0 case
 		if(!h2 && !h3 && !h4 && !h5 && !h6 && !h7)
 			sprintf(cParam1,"%x::%x",h1,h8);
@@ -299,8 +407,6 @@ void RRCheck(int uMode)
 		//0 consecutive 0 case, i.e. no double colon case
 		else if(1)
 			sprintf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",h1,h2,h3,h4,h5,h6,h7,h8);
-		
-
 	}
 	else if(!strcmp(cRRType,"PTR"))
 	{
