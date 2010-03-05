@@ -530,10 +530,11 @@ void RRCheck(int uMode)
 			//All lowercase
 			for(x=0;x<strlen(cName);x++)
 				cName[x]=tolower(cName[x]);
-			if((strstr(cName,"_tcp")==NULL)&&(strstr(cName,"_udp")==NULL))
+			if((strstr(cName,"_tcp")==NULL)&&(strstr(cName,"_udp")==NULL)&&
+				(strstr(cName,"_tls")==NULL)&&(strstr(cName,"_sctp")==NULL))
 			{
 				guMode=uMode;
-				tResource("Service protocol required");
+				tResource("Service protocol required: _tcp, _udp, _tls and _sctp allowed");
 			}
 		}	
 			
