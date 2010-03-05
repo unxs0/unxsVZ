@@ -1657,9 +1657,11 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 
 			//TODO
 			if(!strcmp(field[0]+strlen(field[0])-5,".arpa"))
-sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2 FROM tResource WHERE uZone=%u ORDER BY uResource",uZone);
+				sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2 FROM"
+						" tResource WHERE uZone=%u ORDER BY uResource",uZone);
 			else
-sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4 FROM tResource WHERE uZone=%u ORDER BY cName",uZone);
+				sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4 FROM"
+					" tResource WHERE uZone=%u ORDER BY cName",uZone);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql)) 
 			{
@@ -1669,34 +1671,50 @@ sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4 FROM 
 			res2=mysql_store_result(&gMysql);
 			while((field2=mysql_fetch_row(res2)))
 			{
+				char cRRType[9]="";
+
 				sscanf(field2[2],"%u",&uRRType);
+				sprintf(cRRType,"%.8s",GetRRType(uRRType));
+
 				if(field2[1][0]!='0') strcpy(cTTL,field2[1]);
+
 				//Do not write TTL if cName is a $GENERATE line
 				if(strstr(field2[0],"$GENERATE")==NULL)
 				{
-					if(strcmp(GetRRType(uRRType),"SRV"))
-						fprintf(zfp,"%s\t%s\t%s\t%s\t%s\n",
-								field2[0],
-								cTTL,
-								GetRRType(uRRType),
-								field2[3],
-								field2[4]);
-					else
+					if(!strcmp(cRRType,"SRV"))
 						fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 								field2[0],
 								cTTL,
-								GetRRType(uRRType),
+								cRRType,
 								field2[3],
 								field2[4],
 								field2[5],
 								field2[6]);
+					else if(!strcmp(cRRType,"NAPTR"))
+						fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+								field2[0],
+								cTTL,
+								cRRType,
+								field2[3],
+								field2[4],
+								field2[5],
+								field2[6]);
+					else if(1)
+						fprintf(zfp,"%s\t%s\t%s\t%s\t%s\n",
+								field2[0],
+								cTTL,
+								cRRType,
+								field2[3],
+								field2[4]);
 				}
 				else
+				{
 					fprintf(zfp,"%s\t%s\t%s\t%s\n",
 							field2[0],
-							GetRRType(uRRType),
+							cRRType,
 							field2[3],
 							field2[4]);
+				}
 			}
 			mysql_free_result(res2);
 #ifdef EXPERIMENTAL
