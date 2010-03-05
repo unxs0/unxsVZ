@@ -588,6 +588,83 @@ void RRCheck(int uMode)
 		if(cName[strlen(cName)-1]!='.') strcat(cName,".");
 
 	}
+	//Very initial NAPTR validation. Needs much more work to follow RFC2915 and RFC3403.
+	else if(!strcmp(cRRType,"NAPTR"))
+	{
+		register int i;
+		unsigned uI=0;
+
+		if(!cName[0])
+		{
+			guMode=uMode;
+			tResource("cName: Resource name required");
+		}
+		else
+		{
+			register int x=0;
+			
+			//All lowercase
+			for(x=0;x<strlen(cName);x++)
+				cName[x]=tolower(cName[x]);
+		}	
+		if(!cParam1[0])
+		{
+			guMode=uMode;
+			tResource("cParam1: Order value required");
+		}
+		if(!cParam2[0])
+		{
+			guMode=uMode;
+			tResource("cParam2: Preference value required");
+		}
+		if(!cParam3[0])
+		{
+			guMode=uMode;
+			tResource("cParam3: Flags and ENUM double quoted strings required");
+		}
+		if(!cParam4[0])
+		{
+			guMode=uMode;
+			tResource("cParam4: Double quoted regex string and optional SRV target required.");
+		}
+
+		sscanf(cParam1,"%u",&uI);
+		if(!uI && !(isdigit(cParam1[0])))
+		{
+			guMode=uMode;
+			tResource("cParam1: Must specify numerical order");
+		}
+
+		uI=0;
+		sscanf(cParam2,"%u",&uI);
+		if(!uI && (!isdigit(cParam2[0])))
+		{
+			guMode=uMode;
+			tResource("cParam2: Must specify numerical preference");
+		}
+
+		//Check for double quotes
+		uI=0;
+		for(i=0;cParam3[i];i++)
+			if(cParam3[i]=='\"') uI++;
+		if(uI!=4 || cParam3[0]!='\"' || cParam3[strlen(cParam3)-1]!='\"')
+		{
+			guMode=uMode;
+			tResource("cParam3: Must double quote both flags and ENUM string."
+					" First and last char must be \". Ex: \"U\" \"E2U+sip\"");
+		}
+
+		uI=0;
+		for(i=0;cParam4[i];i++)
+			if(cParam4[i]=='\"') uI++;
+		if(uI<2 || cParam4[0]!='\"')
+		{
+			guMode=uMode;
+			tResource("Must double quote REGEX. First char must be \"."
+					" Ex: \"!^.*$!sip:customer-service@example.com!\" _sip._udp.example.com");
+		}
+
+	}
 	else if(1)
 	{
 		guMode=uMode;

@@ -39,7 +39,6 @@ static char *cComment={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static long uCreatedDate=0;
 //uModBy: uClient for last update
@@ -289,7 +288,7 @@ void tResourceInput(unsigned uMode)
 //uResource
 	OpenRow(LANG_FL_tResource_uResource,"black");
 	printf("<input title='%s' type=text name=uResource value=%u size=16 maxlength=10 "
-,LANG_FT_tResource_uResource,uResource);
+		,LANG_FT_tResource_uResource,uResource);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -311,8 +310,8 @@ void tResourceInput(unsigned uMode)
 	}
 //cName
 	OpenRow(LANG_FL_tResource_cName,"black");
-	printf("<input title='%s' type=text name=cName value=\"%s\" size=40 maxlength=100 "
-,LANG_FT_tResource_cName,EncodeDoubleQuotes(cName));
+	printf("<input title='%s' type=text name=cName value=\"%s\" size=40 maxlength=100 ",
+			LANG_FT_tResource_cName,EncodeDoubleQuotes(cName));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -325,7 +324,7 @@ void tResourceInput(unsigned uMode)
 //uTTL
 	OpenRow(LANG_FL_tResource_uTTL,"black");
 	printf("<input title='%s' type=text name=uTTL value=%u size=16 maxlength=10 "
-,LANG_FT_tResource_uTTL,uTTL);
+			,LANG_FT_tResource_uTTL,uTTL);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -344,7 +343,7 @@ void tResourceInput(unsigned uMode)
 //cParam1
 	OpenRow(LANG_FL_tResource_cParam1,EmptyString(cParam1));
 	printf("<input title='%s' type=text name=cParam1 value=\"%s\" size=80 maxlength=255 "
-,LANG_FT_tResource_cParam1,EncodeDoubleQuotes(cParam1));
+		,LANG_FT_tResource_cParam1,EncodeDoubleQuotes(cParam1));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -357,7 +356,7 @@ void tResourceInput(unsigned uMode)
 //cParam2
 	OpenRow(LANG_FL_tResource_cParam2,"black");
 	printf("<input title='%s' type=text name=cParam2 value=\"%s\" size=80 maxlength=255 "
-,LANG_FT_tResource_cParam2,EncodeDoubleQuotes(cParam2));
+		,LANG_FT_tResource_cParam2,EncodeDoubleQuotes(cParam2));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -370,7 +369,7 @@ void tResourceInput(unsigned uMode)
 //cParam3
 	OpenRow(LANG_FL_tResource_cParam3,"black");
 	printf("<input title='%s' type=text name=cParam3 value=\"%s\" size=80 maxlength=255 "
-,LANG_FT_tResource_cParam3,EncodeDoubleQuotes(cParam3));
+		,LANG_FT_tResource_cParam3,EncodeDoubleQuotes(cParam3));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -383,7 +382,7 @@ void tResourceInput(unsigned uMode)
 //cParam4
 	OpenRow(LANG_FL_tResource_cParam4,"black");
 	printf("<input title='%s' type=text name=cParam4 value=\"%s\" size=80 maxlength=255 "
-,LANG_FT_tResource_cParam4,EncodeDoubleQuotes(cParam4));
+		,LANG_FT_tResource_cParam4,EncodeDoubleQuotes(cParam4));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -396,7 +395,7 @@ void tResourceInput(unsigned uMode)
 //cComment
 	OpenRow(LANG_FL_tResource_cComment,"black");
 	printf("<textarea title='%s' cols=40 wrap=hard rows=3 name=cComment "
-,LANG_FT_tResource_cComment);
+		,LANG_FT_tResource_cComment);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cComment);
@@ -409,23 +408,17 @@ void tResourceInput(unsigned uMode)
 //uOwner
 	OpenRow(LANG_FL_tResource_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
-	}
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
 	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
-	}
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
 //uCreatedBy
 	OpenRow(LANG_FL_tResource_uCreatedBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
-	}
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",
+				ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
 	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
-	}
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",
+				ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
 //uCreatedDate
 	OpenRow(LANG_FL_tResource_uCreatedDate,"black");
 	if(uCreatedDate)
@@ -436,13 +429,9 @@ void tResourceInput(unsigned uMode)
 //uModBy
 	OpenRow(LANG_FL_tResource_uModBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
-	}
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
 	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
-	}
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
 //uModDate
 	OpenRow(LANG_FL_tResource_uModDate,"black");
 	if(uModDate)
@@ -462,9 +451,7 @@ void NewtResource(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uResource FROM tResource\
-				WHERE uResource=%u"
-							,uResource);
+	sprintf(gcQuery,"SELECT uResource FROM tResource WHERE uResource=%u",uResource);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
@@ -479,15 +466,13 @@ void NewtResource(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uResource=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tResource",uResource);
 	iDNSLog(uResource,"tResource","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uResource);
-	tResource(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uResource);
+		tResource(gcQuery);
 	}
 
 }//NewtResource(unsigned uMode)
@@ -495,29 +480,20 @@ void NewtResource(unsigned uMode)
 
 void DeletetResource(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tResource WHERE uResource=%u AND ( uOwner=%u OR %u>9 )"
 					,uResource,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tResource WHERE uResource=%u"
-					,uResource);
-#endif
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 	//tResource("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		iDNSLog(uResource,"tResource","Del");
-#endif
 		tResource(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		iDNSLog(uResource,"tResource","DelError");
-#endif
 		tResource(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -576,16 +552,9 @@ void ModtResource(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
-	sprintf(gcQuery,"SELECT uResource,uModDate FROM tResource WHERE uResource=%u"
-			,uResource);
-#else
-	sprintf(gcQuery,"SELECT uResource FROM tResource WHERE uResource=%u"
-			,uResource);
-#endif
-
+	sprintf(gcQuery,"SELECT uResource,uModDate FROM tResource WHERE uResource=%u",uResource);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
@@ -597,19 +566,14 @@ void ModtResource(void)
 	if(i>1) tResource(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tResource(LANG_NBR_EXTMOD);
-#endif
-
 	Update_tResource(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tResource",uResource);
 	iDNSLog(uResource,"tResource","Mod");
-#endif
 	tResource(gcQuery);
 
 }//ModtResource(void)
@@ -667,7 +631,8 @@ void tResourceList(void)
 			ctime_r(&luTime14,cBuf14);
 		else
 			sprintf(cBuf14,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>"
+				"<textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,ForeignKey("tZone","cZone",strtoul(field[1],NULL,10))
