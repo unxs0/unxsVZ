@@ -2,7 +2,7 @@
 FILE
 	$Id$
 AUTHOR
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice.
+	(C) 2001-2010 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 PURPOSE
 	GUI independent code:
 	Creates named configuration and zone data files
@@ -49,7 +49,7 @@ WORKINPROGRESS
 void EncryptPasswdWithSalt(char *cPasswd,char *cSalt);//main.c
 unsigned uGetZoneOwner(unsigned uZone);//local
 
-//#define EXPERIMENTAL
+#define EXPERIMENTAL
 #ifdef EXPERIMENTAL
 	unsigned uNamedCheckConf(char *cNSSet);
 	#warning "You are compiling with the EXPERIMENTAL define on. You may be including code:"
@@ -1717,6 +1717,7 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 				}
 			}
 			mysql_free_result(res2);
+			if(zfp && !uDebug) fclose(zfp);
 #ifdef EXPERIMENTAL
 			//Here's when this EXPERIMENTAL code starts to make sense.
 			//Does it?
@@ -1729,23 +1730,25 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 			//tLog.cMessage="Zone with errors"
 			//tLog.uOwner will match the tClient.uClient value of the company that owns the zone
 
+			int iRetVal;
+			char cQuery[512];
+
 			uZoneOwner=uGetZoneOwner(uZone);
-			sprintf(gcQuery,"%s/named-checkzone %s %s > /dev/null 2>&1",gcBinDir,field[0],cZoneFile);
-			printf("Running:%s\n",gcQuery);
-			if(system(gcQuery))
+			sprintf(cQuery,"%s/named-checkzone -q %s %s",gcBinDir,field[0],cZoneFile);
+			if((iRetVal=system(cQuery))>0)
 			{
 				//Command failed, create tLog entry
-				sprintf(gcQuery,"INSERT INTO tLog SET uLogType=1,uPermLevel=12,uLoginClient=1,"
+				sprintf(gcQuery,"INSERT INTO tLog SET uLogType=4,uPermLevel=12,uLoginClient=1,"
 					"cLogin='JobQueue',cHost ='127.0.0.1',uTablePK='%u',cTableName='tZone',"
-					"cMessage='Zone with errors',cServer='%s',uOwner=%u,uCreatedBy=1,"
-					"uCreatedDate=UNIX_TIMESTAMP(NOW()),cLabel='named-checkzone %.32s'",
-						uZone,cMasterNS,uZoneOwner,field[0]);
+					"cMessage='Zone %.99s with errors',cServer='%s',uOwner=%u,uCreatedBy=1,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW()),cLabel='named-checkzone'",
+						uZone,field[0],cMasterNS,uZoneOwner);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
+				printf("%s returned %d\n",cQuery,iRetVal);
 			}
 #endif
-			if(zfp && !uDebug) fclose(zfp);
 		}
 		mysql_free_result(res);
 
@@ -2330,11 +2333,11 @@ void MasterJobQueue(char *cNameServer)
 	}
 //	mysql_free_result(res);
 
-#ifdef EXPERIMENTAL
-	if((uNamedCheckConf(cNameServer))) exit(1); //Will exit without server reload or reconfig
-#endif
 	if(uReload)
 	{
+#ifdef EXPERIMENTAL
+		if((uNamedCheckConf(cNameServer))) exit(1); //Will exit without server reload or reconfig
+#endif
 		if(cuControlPort[0])
 			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload",gcBinDir,cuControlPort);
 		else
@@ -2345,6 +2348,9 @@ void MasterJobQueue(char *cNameServer)
 	}
 	else if(uReconfig)
 	{
+#ifdef EXPERIMENTAL
+		if((uNamedCheckConf(cNameServer))) exit(1); //Will exit without server reload or reconfig
+#endif
 		if(cuControlPort[0])
 			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reconfig",gcBinDir,cuControlPort);
 		else
@@ -3688,7 +3694,7 @@ unsigned uGetZoneOwner(unsigned uZone)
 #ifdef EXPERIMENTAL
 unsigned uNamedCheckConf(char *cNameServer)
 {
-	//This function runs a named-checkzone for the iDNS controlled named daemon
+	//This function runs a named-checkconf for the iDNS controlled named daemon
 	//Returns 0 if OK, 1 if failure. Also it will create a tLog entry in case of error for informing
 	//the admin users via the iDNS backennd dashboard.
 	//
@@ -3698,11 +3704,11 @@ unsigned uNamedCheckConf(char *cNameServer)
 
 	//We will check named configuration file to see if there are any issues there
 	sprintf(gcQuery,"%s/named-checkconf /usr/local/idns/named.conf",gcBinDir);
-	
-	if(system(gcQuery))
+	printf("%s\n",gcQuery);	
+	if(system(gcQuery)>0)
 	{
 		//Insert tLog record and skip server reload or reconfig
-		sprintf(gcQuery,"INSERT INTO tLog SET uLogType=1,uPermLevel=12,uLoginClient=1,"
+		sprintf(gcQuery,"INSERT INTO tLog SET uLogType=4,uPermLevel=12,uLoginClient=1,"
 				"cLogin='MasterJobQueue()',cHost ='127.0.0.1',uTablePK=0,cTableName='(None)',"
 				"cMessage='Server named.conf with errors',cServer='%s',uOwner=1,uCreatedBy=1,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())" ,cNameServer);
