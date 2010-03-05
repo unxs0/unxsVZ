@@ -49,13 +49,7 @@ WORKINPROGRESS
 void EncryptPasswdWithSalt(char *cPasswd,char *cSalt);//main.c
 unsigned uGetZoneOwner(unsigned uZone);//local
 
-#define EXPERIMENTAL
-#ifdef EXPERIMENTAL
-	unsigned uNamedCheckConf(char *cNSSet);
-	#warning "You are compiling with the EXPERIMENTAL define on. You may be including code:"
-	#warning "That is in progress, not properly tested, possibly buggy or that does not compile."
-	#warning "You have been warned!"
-#endif
+unsigned uNamedCheckConf(char *cNSSet);
 
 
 //aux section
@@ -1502,10 +1496,8 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 		char cuGID[256]={""};
 		unsigned uGID=25;
 		unsigned uUID=25;
-#ifdef EXPERIMENTAL
 		char cZoneFile[512]={""};
 		unsigned uZoneOwner=0;
-#endif
 		GetConfiguration("cuUID",cuUID,0);
 		if(cuUID[0]) sscanf(cuUID,"%u",&uUID);
 		GetConfiguration("cuGID",cuGID,0);
@@ -1576,9 +1568,7 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 
 			sprintf(gcQuery,"/usr/local/idns/named.d/master/%s/%c/%s",
 					field[12],field[0][0],field[0]);
-#ifdef EXPERIMENTAL
 			sprintf(cZoneFile,"%.511s",gcQuery);
-#endif
 			if(!uDebug)
 			{
 				if(!(zfp=fopen(gcQuery,"w")))
@@ -1718,20 +1708,10 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 			}
 			mysql_free_result(res2);
 			if(zfp && !uDebug) fclose(zfp);
-#ifdef EXPERIMENTAL
-			//Here's when this EXPERIMENTAL code starts to make sense.
-			//Does it?
-			//If defined, the software will run a named-checkzone for the zone
-			//In case an issue is found, a tLog record will be created in order
-			//to report to the user via interface func() procedure.
-			//The format of the tLog entry will be:
-			//tLog.uTablePK=tZone.uZone
-			//tLog.cTableName="tZone"
-			//tLog.cMessage="Zone with errors"
-			//tLog.uOwner will match the tClient.uClient value of the company that owns the zone
 
+			//Check with ISC tools and report to dashboard
 			int iRetVal;
-			char cQuery[512];
+			char cQuery[256];
 
 			uZoneOwner=uGetZoneOwner(uZone);
 			sprintf(cQuery,"%s/named-checkzone -q %s %s",gcBinDir,field[0],cZoneFile);
@@ -1748,7 +1728,7 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 					htmlPlainTextError(mysql_error(&gMysql));
 				printf("%s returned %d\n",cQuery,iRetVal);
 			}
-#endif
+
 		}
 		mysql_free_result(res);
 
@@ -2198,9 +2178,7 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 		//Check to see if reconfigure is ok for slaves
 		//debug only
 		//printf("Reconfiguring slave server...");
-#ifdef EXPERIMENTAL		
 		if((uNamedCheckConf(cNameServer))) exit(1); //Exit without reloading the server
-#endif
 		if(cuControlPort[0])
 			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reconfig",gcBinDir,cuControlPort);
 		else
@@ -2335,9 +2313,7 @@ void MasterJobQueue(char *cNameServer)
 
 	if(uReload)
 	{
-#ifdef EXPERIMENTAL
 		if((uNamedCheckConf(cNameServer))) exit(1); //Will exit without server reload or reconfig
-#endif
 		if(cuControlPort[0])
 			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload",gcBinDir,cuControlPort);
 		else
@@ -2348,9 +2324,7 @@ void MasterJobQueue(char *cNameServer)
 	}
 	else if(uReconfig)
 	{
-#ifdef EXPERIMENTAL
 		if((uNamedCheckConf(cNameServer))) exit(1); //Will exit without server reload or reconfig
-#endif
 		if(cuControlPort[0])
 			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reconfig",gcBinDir,cuControlPort);
 		else
@@ -3314,9 +3288,7 @@ unsigned ViewReloadZone(char *cZone)
 	char cCmd[100]={""};
 
 	GetConfiguration("cuControlPort",cuControlPort,0);
-#ifdef EXPERIMENTAL
 	if((uNamedCheckConf("ViewReloadZone() call"))) return(1);
-#endif
 	//Multiple view rndc reload
 	//Do we need to reload all views, when we might have only modified the internal view for example?
 	sprintf(gcQuery,"SELECT tView.cLabel,tZone.uSecondaryOnly FROM tZone,tView WHERE"
@@ -3691,7 +3663,6 @@ unsigned uGetZoneOwner(unsigned uZone)
 }//unsigned uGetZoneOwner(unsigned uZone)
 
 
-#ifdef EXPERIMENTAL
 unsigned uNamedCheckConf(char *cNameServer)
 {
 	//This function runs a named-checkconf for the iDNS controlled named daemon
@@ -3722,7 +3693,7 @@ unsigned uNamedCheckConf(char *cNameServer)
 	return(uRet);
 
 }//unsigned uNamedCheckConf(void)
-#endif
+
 
 unsigned uGetOrganization(char *cLabel)
 {
