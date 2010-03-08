@@ -85,7 +85,7 @@ void logfileLine(const char *cFunction,const char *cLogline)
 	tmTime=localtime(&luClock);
 	strftime(cTime,31,"%b %d %T",tmTime);
 
-        fprintf(gLfp,"%s jobqueue.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
+        fprintf(gLfp,"%s unxsBind.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
 	fflush(gLfp);
 
 }//void logfileLine(char *cLogline)
@@ -968,8 +968,8 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 				if(!first)
 				{
 					//debug only
-					fprintf(stdout,"uDelete=%u uModify=%u uNew=%u uDeleteFirst=%u\n",
-						uDelete,uModify,uNew,uDeleteFirst); 
+					//fprintf(stdout,"uDelete=%u uModify=%u uNew=%u uDeleteFirst=%u\n",
+					//	uDelete,uModify,uNew,uDeleteFirst); 
 					uChanged+=ProcessSlaveJob(cCurrentZone,uDelete,uModify,
 							uNew,uDeleteFirst,cNameServer,cMasterIP);
 					uModify=0;
@@ -1007,8 +1007,8 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 	if(!first)
 	{
 		//debug only
-		fprintf(stdout,"uDelete=%u uModify=%u uNew=%u uDeleteFirst=%u\n",
-						uDelete,uModify,uNew,uDeleteFirst); 
+		//fprintf(stdout,"uDelete=%u uModify=%u uNew=%u uDeleteFirst=%u\n",
+		//				uDelete,uModify,uNew,uDeleteFirst); 
 		uChanged+=ProcessSlaveJob(cCurrentZone,uDelete,uModify,
 				uNew,uDeleteFirst,cNameServer,cMasterIP);
 	}
@@ -1026,9 +1026,10 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 		//fprintf(stdout,"Reconfiguring slave server...");
 		if((uNamedCheckConf(cNameServer))) exit(1); //Exit without reloading the server
 		if(cuControlPort[0])
-			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reconfig",gcBinDir,cuControlPort);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reconfig > /dev/null 2>&1",
+				gcBinDir,cuControlPort);
 		else
-			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reconfig",gcBinDir);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reconfig > /dev/null 2>&1",gcBinDir);
 		
 		if(system(cCmd))
 			exit(1);
@@ -1056,11 +1057,15 @@ void MasterJobQueue(char *cNameServer)
 	char cuControlPort[8]={""};
 	char cCmd[100]={""};
 
+#ifdef cLOGFILE
 	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
 	{
 		fprintf(stderr,"Could not open logfile: %s\n",cLOGFILE);
 		exit(300);
        	}
+#else
+	gLfp=stdout;
+#endif
 	
 	ConnectDb();
 
@@ -1090,8 +1095,8 @@ void MasterJobQueue(char *cNameServer)
 				if(!first)
 				{
 					//debug only
-					fprintf(stdout,"uDelete=%u uModify=%u uNew=%u uDeleteFirst=%u\n",
-						uDelete,uModify,uNew,uDeleteFirst); 
+					//fprintf(stdout,"uDelete=%u uModify=%u uNew=%u uDeleteFirst=%u\n",
+					//	uDelete,uModify,uNew,uDeleteFirst); 
 					uChanged+=ProcessMasterJob(cCurrentZone,uDelete,uModify,
 						uNew,uDeleteFirst,cNameServer);
 
@@ -1106,7 +1111,8 @@ void MasterJobQueue(char *cNameServer)
 				}
 				strcpy(cCurrentZone,field[2]);
 			}
-			fprintf(stdout,"%s\t%s\t%s\n",field[0],field[2],field[1]);
+					//debug only
+			//fprintf(stdout,"%s\t%s\t%s\n",field[0],field[2],field[1]);
 			//Allow for combinations: Modify New, Delete New. Modify overrides a Delete.
 			if(strstr(field[1],"New")) uNew++;
 			if(strstr(field[1],"Modify")) 
@@ -1140,12 +1146,13 @@ void MasterJobQueue(char *cNameServer)
 
 		}
 	}
+	mysql_free_result(res);
 
 	if(!first)
 	{
 		//debug only
-		fprintf(stdout,"uDelete=%u uModify=%u uNew=%u uDeleteFirst=%u\n",
-						uDelete,uModify,uNew,uDeleteFirst); 
+		//fprintf(stdout,"uDelete=%u uModify=%u uNew=%u uDeleteFirst=%u\n",
+		//				uDelete,uModify,uNew,uDeleteFirst); 
 		if((uChanged=ProcessMasterJob(cCurrentZone,uDelete,uModify,
 				uNew,uDeleteFirst,cNameServer)))
 		{
@@ -1155,15 +1162,15 @@ void MasterJobQueue(char *cNameServer)
 				uReload=1;
 		}
 	}
-//	mysql_free_result(res);
 
 	if(uReload)
 	{
 		if((uNamedCheckConf(cNameServer))) exit(1); //Will exit without server reload or reconfig
 		if(cuControlPort[0])
-			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload",gcBinDir,cuControlPort);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload > /dev/null 2>&1",
+				gcBinDir,cuControlPort);
 		else
-			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload",gcBinDir);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload > /dev/null 2>&1",gcBinDir);
 		
 		if(system(cCmd))
 			exit(1);
@@ -1172,9 +1179,10 @@ void MasterJobQueue(char *cNameServer)
 	{
 		if((uNamedCheckConf(cNameServer))) exit(1); //Will exit without server reload or reconfig
 		if(cuControlPort[0])
-			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reconfig",gcBinDir,cuControlPort);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reconfig > /dev/null 2>&1",
+				gcBinDir,cuControlPort);
 		else
-			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reconfig",gcBinDir);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reconfig > /dev/null 2>&1",gcBinDir);
 		
 		if(system(cCmd))
 			exit(1);
@@ -1187,18 +1195,18 @@ void MasterJobQueue(char *cNameServer)
 }//void MasterJobQueue(char *cNameServer)
 
 
-int ProcessMasterJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew, unsigned uDeleteFirst, char *cMasterNS)
+int ProcessMasterJob(char *cZone,unsigned uDelete,unsigned uModify,
+			unsigned uNew,unsigned uDeleteFirst,char *cMasterNS)
 {
 	//return 0 if nothing needs to be done
 	//return 1 if zone info has changed
 	//return 2 if zone is added or deleted
 	//return 3 if zone is modified but we need a reload anyway
 	//debug only
-	fprintf(stdout,"Queue Policy for %s: ",cZone);
+	//fprintf(stdout,"Queue Policy for %s: ",cZone);
 	if(uDelete && !uNew)
 	{
-		//debug only
-		fprintf(stdout,"Delete for NS %s\n\n",cMasterNS);
+		logfileLine("ProcessMasterJob","Delete");
 		//Replace master.zones named.conf include file
 		//All Zones replace, DBFiles No, Stubs Yes
 		CreateMasterFiles(cMasterNS,"",0,1,0);
@@ -1206,17 +1214,16 @@ int ProcessMasterJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew
 	}
 	else if(uDelete && uNew && !uDeleteFirst)
 	{
-		//debug only
-		fprintf(stdout,"New then Delete\n\n");
+		logfileLine("ProcessMasterJob","New then Delete");
 		return(0);
 	}
 	else if(uNew)
 	{
 		//debug only
 		if(uModify)
-			fprintf(stdout,"New Modify for NS %s\n\n",cMasterNS);
+			logfileLine("ProcessMasterJob","New+Modify");
 		else
-			fprintf(stdout,"New for NS %s\n\n",cMasterNS);
+			logfileLine("ProcessMasterJob","New");
 		//Append to master.zones named.conf include file
 		//Single zone append, DBFiles yes, Stubs yes
 		CreateMasterFiles(cMasterNS,cZone,1,1,0);
@@ -1225,7 +1232,7 @@ int ProcessMasterJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew
 	else if(uModify)
 	{
 		//debug only
-		fprintf(stdout,"Modify for NS %s\n\n",cMasterNS);
+		logfileLine("ProcessMasterJob","Modify");
 		//Single zone, DBFiles yes, Stubs yes
 		//We will always build stubs when modyfing a zone
 		//This was learned by running 2nd NS set support test case #4
@@ -1251,7 +1258,7 @@ int ProcessSlaveJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew,
 	GetConfiguration("cuControlPort",cuControlPort,0);
 	
 	//debug only
-	fprintf(stdout,"Queue Policy for %s: ",cZone);
+	//fprintf(stdout,"Queue Policy for %s: ",cZone);
 	if(uDelete && !uNew)
 	{
 		//debug only
@@ -1276,9 +1283,10 @@ int ProcessSlaveJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew,
 			fprintf(stdout,"Modify for NS %s\n\n",cMasterNS);
 		CreateSlaveFiles(cMasterNS,"",cMasterIP,0);
 		if(cuControlPort[0])
-			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload",gcBinDir,cuControlPort);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload > /dev/null 2>&1",
+				gcBinDir,cuControlPort);
 		else
-			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload",gcBinDir);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload > /dev/null 2>&1",gcBinDir);
 		system(cCmd);
 		
 		ViewReloadZone(cZone);
@@ -1293,9 +1301,10 @@ int ProcessSlaveJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew,
 		CreateSlaveFiles(cMasterNS,cZone,cMasterIP,0);
 		//This is a hack has to be optimized further
 		if(cuControlPort[0])
-			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload",gcBinDir,cuControlPort);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload > /dev/null 2>&1",
+				gcBinDir,cuControlPort);
 		else
-			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload",gcBinDir);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload > /dev/null 2>&1",gcBinDir);
 		system(cCmd);
 		ViewReloadZone(cZone);
 		return(1);//reconfigure: new item in slave.zones
@@ -1582,23 +1591,23 @@ unsigned ViewReloadZone(char *cZone)
 		if(field[1][0]=='1')
 		{
 			if(cuControlPort[0])
-				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s retransfer %s in %s",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s retransfer %s in %s > /dev/null 2>&1",
 						gcBinDir,cuControlPort,cZone,field[0]);
 			else
-				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf retransfer %s in %s",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf retransfer %s in %s > /dev/null 2>&1",
 						gcBinDir,cZone,field[0]);
 		}
 		else
 		{
 			if(cuControlPort[0])
-				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload %s in %s",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload %s in %s > /dev/null 2>&1",
 						gcBinDir,cuControlPort,cZone,field[0]);
 			else
-				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload %s in %s",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload %s in %s > /dev/null 2>&1",
 						gcBinDir,cZone,field[0]);
 		}
 		//debug only
-		fprintf(stdout,"ViewReloadZone():%s\n",cCmd);
+		//fprintf(stdout,"ViewReloadZone():%s\n",cCmd);
 		uRetVal=system(cCmd);
 	}
 	mysql_free_result(res);
