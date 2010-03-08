@@ -19,7 +19,7 @@ WORK-IN-PROGRESS
 //
 //Local data
 //
-static FILE *gLfp;
+static FILE *gLfp=NULL;
 static unsigned uReconfig=0;
 static unsigned uReload=0;
 
@@ -78,6 +78,8 @@ void logfileLine(const char *cFunction,const char *cLogline)
 	char cTime[32];
 	pid_t pidThis;
 	const struct tm *tmTime;
+
+	if(gLfp==NULL) return;
 
 	pidThis=getpid();
 
@@ -603,7 +605,8 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 	GetConfiguration("cuGID",cuGID,0);
 	if(cuGID[0]) sscanf(cuGID,"%u",&uGID);
 
-	fprintf(stdout,"CreateSlaveFiles(%s)\n",cSlaveNS);
+	//debug only
+	//fprintf(stdout,"CreateSlaveFiles(%s)\n",cSlaveNS);
 
 	sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tView.cLabel,tView.cSlave,tView.uView,tNSSet.cMasterIPs,"
 			"tZone.cOptions,tZone.uSecondaryOnly FROM tZone,tNSSet,tNS,tView WHERE"
@@ -622,7 +625,7 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 	
 	if(mysql_num_rows(res)<1) 
 	{
-		fprintf(stdout,"No zones found for slave NS %s\n",cSlaveNS);
+		logfileLine("CreateSlaveFiles","No zones found for slave");
 		return;
 	}
 
@@ -630,7 +633,7 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 	{
 		if(!(fp=fopen("/usr/local/idns/named.d/slave.zones","w")))
 		{
-			fprintf(stderr,"Could not open slave.zones\n");
+			logfileLine("CreateSlaveFiles","Could not open slave.zones");
 			exit(1);
 		}
 	}
@@ -896,6 +899,19 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 	unsigned uDeleteFirst=0;
 	unsigned uChanged=0;
 
+#ifdef cLOGFILE
+	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
+	{
+		fprintf(stderr,"Could not open logfile: %s\n",cLOGFILE);
+		exit(300);
+       	}
+#else
+	gLfp=stdout;
+#endif
+	
+	ConnectDb();
+
+
 	ConnectDb();
 	
 	sprintf(gcQuery,"SELECT uJob,cJob,cZone,uMasterJob FROM tJob WHERE cTargetServer='%s SLAVE'"
@@ -919,6 +935,7 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 			sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uMasterJob=%s AND"
 					" cTargetServer LIKE '%% MASTER EXTERNAL'",field[3]);
 			mysql_query(&gMysql,gcQuery);
+			//debug only
 			//fprintf(stdout,"%s\n",gcQuery);
 			if(mysql_errno(&gMysql)) 
 			{
@@ -936,7 +953,7 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					exit(1);
 				}
-				fprintf(stdout,"Deleted MASTER EXTERNAL job, and continuing ahead\n");
+				logfileLine("SlaveJobQueue","Deleted MASTER EXTERNAL job");
 			}
 			mysql_free_result(res2);
 			
@@ -944,6 +961,7 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 			sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uMasterJob=%s AND"
 					" cTargetServer LIKE '%% MASTER%%'",field[3]);//3-uMasterJob
 			mysql_query(&gMysql,gcQuery);
+			//debug only
 			//fprintf(stdout,"%s\n",gcQuery);
 			if(mysql_errno(&gMysql)) 
 			{
@@ -951,14 +969,18 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 				exit(1);
 			}
 			res2=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res2)) 
+			if(mysql_num_rows(res2)>0) 
 			{
 				mysql_free_result(res2);
 				//Ignore this job until 'REAL' MASTER
 				//handles it.
-				fprintf(stdout,"Skipping job not yet handled by MASTER\n");
+				logfileLine("SlaveJobQueue","Skipping job not yet handled by MASTER");
+				//debug only
+				//fprintf(stdout,"d1 %s\n",field[2]);
 				continue;
 			}
+			//debug only
+			//fprintf(stdout,"d2 %s\n",field[2]);
 			mysql_free_result(res2);
 			
 			//Start processing SLAVE jobs
@@ -983,7 +1005,8 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 				}
 				strcpy(cCurrentZone,field[2]);
 			}
-			fprintf(stdout,"%s\t%s\t%s\n",field[0],field[2],field[1]);
+			//debug only
+			//fprintf(stdout,"%s\t%s\t%s\n",field[0],field[2],field[1]);
 			//Allow for combinations: Modify New, Delete New. Modify overrides a Delete.
 			if(strstr(field[1],"New")) uNew++;
 			if(strstr(field[1],"Modify")) 
@@ -1003,6 +1026,7 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 
 		}
 	}
+	mysql_free_result(res);
 
 	if(!first)
 	{
@@ -1012,7 +1036,6 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 		uChanged+=ProcessSlaveJob(cCurrentZone,uDelete,uModify,
 				uNew,uDeleteFirst,cNameServer,cMasterIP);
 	}
-	mysql_free_result(res);
 	
 	if(uChanged)
 	{
@@ -1198,6 +1221,9 @@ void MasterJobQueue(char *cNameServer)
 int ProcessMasterJob(char *cZone,unsigned uDelete,unsigned uModify,
 			unsigned uNew,unsigned uDeleteFirst,char *cMasterNS)
 {
+
+	sprintf(gcQuery,"cZone=%.99s;cMasterNS=%.99s;",cZone,cMasterNS);
+	logfileLine("ProcessMasterJob",gcQuery);
 	//return 0 if nothing needs to be done
 	//return 1 if zone info has changed
 	//return 2 if zone is added or deleted
@@ -1259,10 +1285,13 @@ int ProcessSlaveJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew,
 	
 	//debug only
 	//fprintf(stdout,"Queue Policy for %s: ",cZone);
+	sprintf(gcQuery,"cZone=%.99s;cNS=%.99s;cIP=%.32s;",cZone,cMasterNS,cMasterIP);
+	logfileLine("ProcessSlaveJob",gcQuery);
 	if(uDelete && !uNew)
 	{
 		//debug only
-		fprintf(stdout,"Delete for NS %s\n\n",cMasterNS);
+		//fprintf(stdout,"Delete for NS %s\n\n",cMasterNS);
+		logfileLine("ProcessSlaveJob","Delete");
 		//Replace slave.zones named.conf include file
 		//All Zones replace
 		CreateSlaveFiles(cMasterNS,"",cMasterIP,0);
@@ -1271,16 +1300,17 @@ int ProcessSlaveJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew,
 	else if(uDelete && uNew && !uDeleteFirst)
 	{
 		//debug only
-		fprintf(stdout,"New then Delete\n\n");
+		//fprintf(stdout,"New then Delete\n\n");
+		logfileLine("ProcessSlaveJob","New+Delete Ignored");
 		return(0);
 	}
 	else if(uModify)
 	{
 		//debug only
 		if(uNew)
-			fprintf(stdout,"Modify New for NS %s\n\n",cMasterNS);
+			logfileLine("ProcessSlaveJob","New+Modify");
 		else
-			fprintf(stdout,"Modify for NS %s\n\n",cMasterNS);
+			logfileLine("ProcessSlaveJob","Modify");
 		CreateSlaveFiles(cMasterNS,"",cMasterIP,0);
 		if(cuControlPort[0])
 			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload > /dev/null 2>&1",
@@ -1295,7 +1325,7 @@ int ProcessSlaveJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew,
 	else if(uNew)
 	{
 		//debug only
-		fprintf(stdout,"New for NS %s\n\n",cMasterNS);
+		logfileLine("ProcessSlaveJob","New");
 		//Append to slave.zones named.conf include file
 		//Single zone append
 		CreateSlaveFiles(cMasterNS,cZone,cMasterIP,0);
