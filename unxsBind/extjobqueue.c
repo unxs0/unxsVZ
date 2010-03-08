@@ -3,7 +3,7 @@ FILE
 	extjobqueue.c
 	$Id$
 AUTHOR
-	(C) Gary Wallis and Hugo Urquiza 2001-2009.
+	(C) Gary Wallis and Hugo Urquiza 2001-2010 for Unixservice, LLC.
 	GPL License applies. See LICENSE file.
 PURPOSE
 	GUI independent code:
@@ -16,8 +16,49 @@ TODO
 	See TODO
 */
 
-//Not needed since we include this via bind.c for now
-//#include "extjobqueue.h"
+#include "mysqlrad.h"
+#include "extjobqueue.h"
+
+//
+//TOC protos
+///
+void ParseExtParams(structExtJobParameters *structExtParam, char *cJobData);
+unsigned GetuServer(char *cLabel, char *cTable);
+unsigned GetuZone(char *cLabel, char *cTable);
+void InitializeParams(structExtJobParameters *structExtParam);
+int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus);
+int SubmitISPJob(const char *cJobName,const char *cJobData,const char *cServer,unsigned uJobDate);
+void ExtConnectDb(unsigned uHtml);
+unsigned uGetClientOwner(unsigned uClient);
+void ProcessExtJobQueue(char *cServer);
+unsigned WebMod(structExtJobParameters *structExtParam,
+				unsigned uZone,unsigned uExtJob, char *cServer,unsigned uOwner);
+unsigned ModZone(structExtJobParameters *structExtParam,
+				unsigned uZone,unsigned uExtJob, char *cServer,unsigned uOwner);
+unsigned CancelZone(structExtJobParameters *structExtParam,
+				unsigned uZone,unsigned uExtJob, char *cServer,unsigned uOwner);
+void ApacheConnectDb(MYSQL *mysqlext);
+int GetApacheIPNumber(MYSQL *mysql,char *cDomain,char *cMainAddress);
+unsigned WebNew(structExtJobParameters *structExtParam,unsigned uJob, char *cServer,unsigned uClient,unsigned uOwner);
+unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, char *cServer,unsigned uClient,unsigned uOwner);
+void CreateWebZone(char *cDomain, char *cIP, char *cNameServer, char *cMailServer,unsigned uClient,unsigned uOwner);
+void DropZone(char *cDomain, char *cNameServer);
+unsigned NewSimpleWebZone(structExtJobParameters *structExtParam,unsigned uJob,
+					char *cServer,unsigned uClient,unsigned uOwner);
+int SubmitExtJob(const char *cCommand, unsigned uNSSetArg, const char *cZoneArg,
+			unsigned uPriorityArg, unsigned uTimeArg, unsigned uExtJob,unsigned uOwner);
+int SubmitSingleExtJob(const char *cCommand,const char *cZoneArg, unsigned uNSSetArg,
+		const char *cTargetServer, unsigned uPriorityArg, unsigned uTimeArg
+	       			,unsigned *uMasterJob,unsigned uExtJob,unsigned uOwner);
+void CreateNewClient(structExtJobParameters *structExtParam);
+
+//
+//Ext protos
+//
+void SerialNum(char *cSerialNum);//bind.c
+int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtmlMode, 
+					const unsigned uFromZone, const unsigned uZoneOwner);
+
 
 void ParseExtParams(structExtJobParameters *structExtParam, char *cJobData)
 {
@@ -837,8 +878,9 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 		        res=mysql_store_result(&gMysql);
 			if(!mysql_num_rows(res))
 			{
-				sprintf(gcQuery,"INSERT INTO tResource SET uRRType=3,uZone=%u,cParam2='%s.',cParam1='1',cName='%s.',"
-						"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='ModZone()'",
+				sprintf(gcQuery,"INSERT INTO tResource SET uRRType=3,uZone=%u,cParam2='%s.',cParam1='1',"
+						"cName='%s.',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cComment='ModZone()'",
 						uZone
 						,structExtParam->cMX1
 						,structExtParam->cZone
@@ -854,7 +896,8 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 			{
         			if((field=mysql_fetch_row(res)))
 				{
-					sprintf(gcQuery,"UPDATE tResource SET cParam2='%s.',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uResource=%s",
+					sprintf(gcQuery,"UPDATE tResource SET cParam2='%s.',uModBy=1,"
+							"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uResource=%s",
 							structExtParam->cMX1,
 							field[0]);
 
@@ -881,8 +924,9 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 		        res=mysql_store_result(&gMysql);
 			if(!mysql_num_rows(res))
 			{
-				sprintf(gcQuery,"INSERT INTO tResource SET uRRType=3,uZone=%u,cParam2='%s.',cParam1='2',cName='%s.',"
-						"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='ModZone()'",
+				sprintf(gcQuery,"INSERT INTO tResource SET uRRType=3,uZone=%u,cParam2='%s.',cParam1='2',"
+						"cName='%s.',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+						"cComment='ModZone()'",
 						uZone,
 						structExtParam->cMX2,
 						structExtParam->cZone,
@@ -898,7 +942,8 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 			{
         			if((field=mysql_fetch_row(res)))
 				{
-					sprintf(gcQuery,"UPDATE tResource SET cParam2='%s.',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uResource=%s",
+					sprintf(gcQuery,"UPDATE tResource SET cParam2='%s.',uModBy=1,"
+							"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uResource=%s",
 							structExtParam->cMX2,
 							field[0]);
 
@@ -915,7 +960,8 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 
 	}//End of MX business
 
-	sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1,uMailServers=%u,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uZone=%u"
+	sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1,uMailServers=%u,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+			" WHERE uZone=%u"
 			,structExtParam->uMailServer
 			//,structExtParam->cMainAddress
 			,uZone);
@@ -930,7 +976,8 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 	//Should a new RR be added if the cMainAddress RR doesn't exist? Perhaps, but it might
 	//conflict with other record added after zone creation, we will just print a warning at the logfile.
 
-	sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='@' AND cComment='Zone cMainAddress' AND uRRType=1 AND uZone=%u",uZone);
+	sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='@' AND cComment='Zone cMainAddress'"
+				" AND uRRType=1 AND uZone=%u",uZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -946,7 +993,8 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 	{
 		if((field=mysql_fetch_row(res)))
 		{
-			sprintf(gcQuery,"UPDATE tResource SET cParam1='%s',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uResource=%s",
+			sprintf(gcQuery,"UPDATE tResource SET cParam1='%s',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+					" WHERE uResource=%s",
 					structExtParam->cMainAddress
 					,field[0]);
 			mysql_query(&gMysql,gcQuery);
@@ -1209,8 +1257,10 @@ unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, cha
 		//Note non @ format
 		sprintf(structExtParam->cHostmaster,"dns.%.94s",structExtParam->cZone);
 
-	sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=%u,cHostmaster='%s',uSerial=%u,uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,"
-			"uZoneTTL=%u,uMailServers=%u,uClient=%u,uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uView=%.2s"
+	sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=%u,cHostmaster='%s',uSerial=%u,uExpire=%u,"
+			"uRefresh=%u,uTTL=%u,uRetry=%u,"
+			"uZoneTTL=%u,uMailServers=%u,uClient=%u,uOwner=%u,uCreatedBy=1,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW()),uView=%.2s"
 			,structExtParam->cZone
 			,structExtParam->uNSSet
 			,structExtParam->cHostmaster
@@ -1259,7 +1309,8 @@ unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, cha
 		//uRRType=3 = MX record TODO
 		if(structExtParam->cMX1[0])
 		{
-			sprintf(gcQuery,"INSERT INTO tResource SET uRRType=3,uZone=%u,cParam2='%s.',cParam1='1',cName='%s.',uOwner=%u,uCreatedBy=1,"
+			sprintf(gcQuery,"INSERT INTO tResource SET uRRType=3,uZone=%u,cParam2='%s.',cParam1='1',"
+					"cName='%s.',uOwner=%u,uCreatedBy=1,"
 					"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='NewSimpleZone()'",
 					uZone
 					,structExtParam->cMX1
@@ -1275,7 +1326,8 @@ unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, cha
 
 		if(structExtParam->cMX2[0])
 		{
-			sprintf(gcQuery,"INSERT INTO tResource SET uRRType=3,uZone=%u,cParam2='%s.',cParam1='2',cName='%s.',uOwner=%u,uCreatedBy=1,"
+			sprintf(gcQuery,"INSERT INTO tResource SET uRRType=3,uZone=%u,cParam2='%s.',cParam1='2',"
+					"cName='%s.',uOwner=%u,uCreatedBy=1,"
 					"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='NewSimpleZone()'",
 					uZone
 					,structExtParam->cMX2
@@ -1380,8 +1432,10 @@ void CreateWebZone(char *cDomain, char *cIP, char *cNameServer, char *cMailServe
 	
 	SerialNum(cSerial);
 
-	sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=%u,cHostmaster='%s',uSerial='%s',uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,"
-			"uZoneTTL=%u,uMailServers=%u,uClient=%u,uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uView=%.2s"
+	sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=%u,cHostmaster='%s',uSerial='%s',uExpire=%u,"
+			"uRefresh=%u,uTTL=%u,uRetry=%u,"
+			"uZoneTTL=%u,uMailServers=%u,uClient=%u,uOwner=%u,uCreatedBy=1,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW()),uView=%.2s"
 			,structExtParam.cZone
 			,structExtParam.uNSSet
 			,structExtParam.cHostmaster
@@ -1445,6 +1499,7 @@ void CreateWebZone(char *cDomain, char *cIP, char *cNameServer, char *cMailServe
 	}
 
 }//void CreateWebZone()
+
 
 
 void DropZone(char *cDomain, char *cNameServer)
@@ -1624,7 +1679,6 @@ unsigned NewSimpleWebZone(structExtJobParameters *structExtParam,unsigned uJob,
 	return(0);
 
 }//unsigned NewSimpleWebZone()
-
 
 
 

@@ -4,11 +4,11 @@
 #	$Id$
 #
 #Author/Legal
-#	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+#	(C) 2001-2010 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 #	This software is distributed under the GPLv3 license.
 #
 #Notes:
-#	This is a CentOS5 rpm release version only.
+#	This is a CentOS5 rpm release version only (use CFLAG -pedantic to cleanup.)
 #	
 #	For help contact support @ openisp . net
 #
@@ -18,8 +18,8 @@ LIBS= -L/usr/lib/mysql -L/usr/lib/openisp -lz -lcrypt -lm -lssl -lucidr -lmysqlc
 
 all: iDNS.cgi
 
-iDNS.cgi: tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o cgi.o
-	cc tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o cgi.o -o iDNS.cgi $(LIBS)
+iDNS.cgi: tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o import.o extjobqueue.o cgi.o
+	cc tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o import.o extjobqueue.o cgi.o -o iDNS.cgi $(LIBS)
 
 tzone.o: tzone.c mysqlrad.h language.h tzonefunc.h local.h 
 	cc -c tzone.c -o tzone.o $(CFLAGS)
@@ -118,8 +118,15 @@ main.o: main.c mysqlrad.h mainfunc.h language.h local.h
 cgi.o: cgi.h cgi.c
 	cc -c cgi.c -o cgi.o $(CFLAGS)
 
-bind.o: bind.c mysqlrad.h extjobqueue.c
+bind.o: bind.c mysqlrad.h
 	cc -c bind.c -o bind.o $(CFLAGS)
+
+import.o: import.c mysqlrad.h
+	cc -c import.c -o import.o $(CFLAGS)
+
+extjobqueue.o: mysqlrad.h extjobqueue.c
+	cc -c extjobqueue.c -o extjobqueue.o $(CFLAGS)
+
 
 local.h: local.h.default
 	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi

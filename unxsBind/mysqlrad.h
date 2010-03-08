@@ -35,6 +35,17 @@ char *crypt(const char *key, const char *salt);
 #define RRTYPE_PTR 7
 #define RRTYPE_SRV 8
 #define RRTYPE_AAAA 9
+#define RRTYPE_NAPTR 10
+
+//mysqlISP constants
+//tJob.uJobStatus
+#define mysqlISP_RemotelyQueued 7
+#define mysqlISP_Waiting 10
+//tInstance.uStatus:
+#define mysqlISP_Deployed 4
+#define mysqlISP_Canceled 5
+#define mysqlISP_OnHold 6
+//
 
 
 #include <unistd.h>

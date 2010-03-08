@@ -87,13 +87,3 @@ void CreateWebZone(char *cDomain, char *cIP, char *cNameServer,
 void DropZone(char *cDomain, char *cNameServer);
 unsigned GetuZone(char *cLabel, char *cTable);
 
-//mysqlISP constants
-//tJob.uJobStatus
-#define mysqlISP_RemotelyQueued 7
-#define mysqlISP_Waiting 10
-//tInstance.uStatus:
-#define mysqlISP_Deployed 4
-#define mysqlISP_Canceled 5
-#define mysqlISP_OnHold 6
-//
-
