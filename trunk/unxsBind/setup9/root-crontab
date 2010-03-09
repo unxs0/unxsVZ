@@ -4,10 +4,10 @@
 #Sample default configuration file. Change for your real NS after initial testing and setup.
 #
 #Dual master configuration
-* * * * * /var/www/unxs/cgi-bin/iDNS.cgi ProcessJobQueue ns1.yourdomain.com >> /var/log/idns-cron.log 2>&1
+* * * * * /var/www/unxs/cgi-bin/iDNS.cgi ProcessJobQueue ns1.yourdomain.com >> /var/log/unxsbindlog 2>&1
 
 #iDNS tHit subsystem
-*/5 * * * * /usr/sbin/bind9-genstats.sh >> /var/log/idns-cron.log 2>&1
+*/5 * * * * /usr/sbin/bind9-genstats.sh >> /var/log/unxsbindlog 2>&1
 #
 #iDNS graphs
 #default cZone allzone.stats
