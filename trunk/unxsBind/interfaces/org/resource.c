@@ -392,54 +392,77 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 void funcMetaParam(FILE *fp)
 {
 	//This function will display the extra parameter inputs based on RRType
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	struct t_template template;
+	unsigned uParam2=0;
+	unsigned uParam3=0;
+	unsigned uParam4=0;
+
+	sprintf(gcQuery,"SELECT uParam2,uParam3,uParam4 FROM tRRType WHERE cLabel='%s'",TextAreaSave(cRRType));
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uParam2);
+		sscanf(field[1],"%u",&uParam3);
+		sscanf(field[2],"%u",&uParam4);
+	}
+	mysql_free_result(res);
+
+	template.cpName[0]="cParam2Label";
+	template.cpValue[0]=cParam2Label;
+
+	template.cpName[1]="cParam2Tip";
+	template.cpValue[1]=cParam2Tip;
+
+	template.cpName[2]="cParam2";
+	template.cpValue[2]=cParam2;
 	
-	if(!strcmp(cRRType,"SRV"))
-	{
-		fprintf(fp,"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('"
-			"?gcPage=Glossary&cLabel=%s','Glossary','height=600,width=500,status=yes,toolbar=no,"
-			"menubar=no,location=no,scrollbars=1')\"><strong>%s</strong></a>\n</td>"
-			"<td><input title='%s' type=text name=cParam2 value='%s' size=40 maxlength=255 class=%s></td>"
-			"</tr>\n"
-			"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s',"
-			"'Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\">"
-			"<strong>%s</strong></a>\n</td>"
-			"<td><input title='%s' type=text name=cParam3 value='%s' size=40 maxlength=255 class=%s></td>"
-			"</tr>\n"
-			"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s',"
-			"'Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\">"
-			"<strong>%s</strong></a>\n</td>"
-			"<td><input title='%s' type=text name=cParam4 value='%s' size=40 maxlength=255 class=%s></td>"
-			"</tr>\n",
-				cParam2Label
-				,cParam2Label
-				,cParam2Tip
-				,cParam2
-				,cParam2Style
-				,cParam3Label
-				,cParam3Label
-				,cParam3Tip
-				,cParam3
-				,cParam3Style
-				,cParam4Label
-				,cParam4Label
-				,cParam4Tip
-				,cParam4
-				,cParam4Style
-			);
-	}
-	else if(strcmp(cRRType,"SRV") && strcmp(cParam2Label,"Not Used"))
-	{
-		fprintf(fp,"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s',"
-			"'Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\">"
-			"<strong>%s</strong></a>\n</td><td><input title='%s' type=text name=cParam2 value='%s' size=40 maxlength=255 "
-			"class=%s></td></tr>\n",
-			cParam2Label
-			,cParam2Label
-			,cParam2Tip
-			,cParam2
-			,cParam2Style
-       			);
-	}
+	template.cpName[3]="cParam2Style";
+	template.cpValue[3]=cParam2Style;
+
+	template.cpName[4]="cParam3Label";
+	template.cpValue[4]=cParam3Label;
+
+	template.cpName[5]="cParam3Tip";
+	template.cpValue[5]=cParam3Tip;
+
+	template.cpName[6]="cParam3";
+	template.cpValue[6]=cParam3;
+	
+	template.cpName[7]="cParam3Style";
+	template.cpValue[7]=cParam3Style;
+	
+	template.cpName[8]="cParam4Label";
+	template.cpValue[8]=cParam4Label;
+
+	template.cpName[9]="cParam4Tip";
+	template.cpValue[9]=cParam4Tip;
+
+	template.cpName[10]="cParam4";
+	template.cpValue[10]=cParam4;
+	
+	template.cpName[11]="cParam4Style";
+	template.cpValue[11]=cParam4Style;
+	
+	template.cpName[12]="gcInputStatus";
+	template.cpValue[12]=gcInputStatus;
+	
+	template.cpName[13]="";
+
+	if(uParam2)
+		fpTemplate(fp,"InputParam2",&template);
+	
+	if(uParam3)
+		fpTemplate(fp,"InputParam3",&template);
+	
+	if(uParam4)
+		fpTemplate(fp,"InputParam4",&template);
+
 }//void funcMetaParam(FILE *fp)
 
 
