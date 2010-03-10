@@ -754,3 +754,29 @@ void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 }//void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 
 
+void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
+{
+	if(cTemplateName[0])
+	{	
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+
+		TemplateSelect(cTemplateName);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			fprintf(fp,"\n<!-- Start fpTemplate(%s) -->\n",cTemplateName); 
+			Template(field[0], template, fp);
+			fprintf(fp,"\n<!-- End fpTemplate(%s) -->\n",cTemplateName); 
+		}
+		else
+		{
+			fprintf(fp,"<hr>");
+			fprintf(fp,"<center><font size=1>%s</font>\n",cTemplateName);
+		}
+		mysql_free_result(res);
+	}
+
+}//void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
+
+

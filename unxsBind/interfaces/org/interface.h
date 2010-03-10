@@ -32,7 +32,7 @@ const char *cUserLevel(unsigned uPermLevel);
 char *TextAreaSave(char *cField);
 char *FQDomainName(char *cInput);
 void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
-
+void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template);
 
 
 //Global vars all declared in main.c
