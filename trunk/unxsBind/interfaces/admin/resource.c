@@ -575,7 +575,9 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 
 void SearchResource(char *cLabel)
 {
-	sprintf(gcQuery,"SELECT tResource.uResource,tZone.cZone,tZone.uView,tResource.cName FROM tResource,tZone WHERE tResource.cName LIKE '%s%%' AND tResource.uZone=tZone.uZone AND tZone.uView=%s AND tZone.cZone='%s' ORDER BY tResource.cName",cLabel,cuView,gcZone);
+	sprintf(gcQuery,"SELECT tResource.uResource,tZone.cZone,tZone.uView,tResource.cName FROM "
+			"tResource,tZone WHERE tResource.cName LIKE '%s%%' AND tResource.uZone=tZone.uZone "
+			"AND tZone.uView=%s AND tZone.cZone='%s' ORDER BY tResource.cName",cLabel,cuView,gcZone);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -656,10 +658,19 @@ void SelectResource(void)
 	{
 		mysql_free_result(res);
 		if(!strstr(gcZone,"in-addr.arpa"))//A RR and has rights via uOwner
-		sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cNameLabel,tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=1 AND tZone.cZone='%s' AND tZone.uView=%s",gcZone,cuView);
+			sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,"
+					"tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,"
+					"tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,"
+					"tRRType.cNameLabel,tRRType.cNameTip FROM tRRType,tZone WHERE "
+					"tRRType.uRRType=1 AND tZone.cZone='%s' AND tZone.uView=%s",gcZone,cuView);
 		else	//PTR RR and has rights via zone.c 
 			//(low grade cross-site scrpting security issue for registered login)
-		sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,tRRType.cParam4Tip,tRRType.cNameLabel,tRRType.cNameTip FROM tRRType,tZone WHERE tRRType.uRRType=7 AND tZone.cZone='%s' AND tZone.uView=%s",gcZone,cuView);
+			sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,"
+					"tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,"
+					"tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,"
+					"tRRType.cParam4Tip,tRRType.cNameLabel,tRRType.cNameTip FROM "
+					"tRRType,tZone WHERE tRRType.uRRType=7 AND tZone.cZone='%s' "
+					"AND tZone.uView=%s",gcZone,cuView);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -723,7 +734,9 @@ void UpdateResource(void)
 		return;
 	}
 	
-	sprintf(gcQuery,"UPDATE tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uResource=%u",
+	sprintf(gcQuery,"UPDATE tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',"
+			"cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uResource=%u",
 			cName,
 			uTTL,
 			uRRType,
@@ -1434,6 +1447,12 @@ unsigned RRCheck(void)
 		if(cName[strlen(cName)-1]!='.') strcat(cName,".");
 
 	}
+	else if(!strcmp(cRRType,"AAAA"))
+	{
+	}
+	else if(!strcmp(cRRType,"NAPTR"))
+	{
+	}
 	else if(1)
 	{
 		gcMessage="<blink>Error: </blink>Must select valid Resource Type (A,MX,PTR,TXT,NS,CNAME,HINFO,SRV)";
@@ -1540,46 +1559,76 @@ unsigned uGetZoneOwner(unsigned uZone)
 void funcMetaParam(FILE *fp)
 {
 	//This function will display the extra parameter inputs based on RRType
+	MYSQL_RES *res;
+	MYSQL_ROW field;
 
-	if(!strcmp(cRRType,"SRV"))
+	struct t_template template;
+	unsigned uParam2=0;
+	unsigned uParam3=0;
+	unsigned uParam4=0;
+
+	sprintf(gcQuery,"SELECT uParam2,uParam3,uParam4 FROM tRRType WHERE cLabel='%s'",TextAreaSave(cRRType));
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
 	{
-fprintf(fp,
-		"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\"><strong>%s</strong></a>\n</td>\
-		<td><input title='%s' type=text name=cParam2 value='%s' size=40 maxlength=255 class=%s></td>\
-		</tr>\n\
-		<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\"><strong>%s</strong></a>\n</td>\
-		<td><input title='%s' type=text name=cParam3 value='%s' size=40 maxlength=255 class=%s></td>\
-		</tr>\n\
-		<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\"><strong>%s</strong></a>\n</td>\
-		<td><input title='%s' type=text name=cParam4 value='%s' size=40 maxlength=255 class=%s></td>\
-		</tr>\n",
-			cParam2Label
-			,cParam2Label
-			,cParam2Tip
-			,cParam2
-			,cParam2Style
-			,cParam3Label
-			,cParam3Label
-			,cParam3Tip
-			,cParam3
-			,cParam3Style
-			,cParam4Label
-			,cParam4Label
-			,cParam4Tip
-			,cParam4
-			,cParam4Style
-			);
+		sscanf(field[0],"%u",&uParam2);
+		sscanf(field[1],"%u",&uParam3);
+		sscanf(field[2],"%u",&uParam4);
 	}
-	else if(strcmp(cRRType,"SRV") && strcmp(cParam2Label,"Not Used"))
-	{
-fprintf(fp,"<tr><td><a class=inputLink href=\"#\" onClick=\"javascript:window.open('?gcPage=Glossary&cLabel=%s','Glossary','height=600,width=500,status=yes,toolbar=no,menubar=no,location=no,scrollbars=1')\"><strong>%s</strong></a>\n</td><td><input title='%s' type=text name=cParam2 value='%s' size=40 maxlength=255 class=%s></td></tr>\n",
-		cParam2Label
-		,cParam2Label
-		,cParam2Tip
-		,cParam2
-		,cParam2Style
-       		);
-	}
+	mysql_free_result(res);
+
+	template.cpName[0]="cParam2Label";
+	template.cpValue[0]=cParam2Label;
+
+	template.cpName[1]="cParam2Tip";
+	template.cpValue[1]=cParam2Tip;
+
+	template.cpName[2]="cParam2";
+	template.cpValue[2]=cParam2;
+	
+	template.cpName[3]="cParam2Style";
+	template.cpValue[3]=cParam2Style;
+
+	template.cpName[4]="cParam3Label";
+	template.cpValue[4]=cParam3Label;
+
+	template.cpName[5]="cParam3Tip";
+	template.cpValue[5]=cParam3Tip;
+
+	template.cpName[6]="cParam3";
+	template.cpValue[6]=cParam3;
+	
+	template.cpName[7]="cParam3Style";
+	template.cpValue[7]=cParam3Style;
+	
+	template.cpName[8]="cParam4Label";
+	template.cpValue[8]=cParam4Label;
+
+	template.cpName[9]="cParam4Tip";
+	template.cpValue[9]=cParam4Tip;
+
+	template.cpName[10]="cParam4";
+	template.cpValue[10]=cParam4;
+	
+	template.cpName[11]="cParam4Style";
+	template.cpValue[11]=cParam4Style;
+	
+	template.cpName[12]="gcInputStatus";
+	template.cpValue[12]=gcInputStatus;
+	
+	template.cpName[13]="";
+
+	if(uParam2)
+		fpTemplate(fp,"InputParam2",&template);
+	
+	if(uParam3)
+		fpTemplate(fp,"InputParam3",&template);
+	
+	if(uParam4)
+		fpTemplate(fp,"InputParam4",&template);
 
 }//void funcMetaParam(FILE *fp)
 
