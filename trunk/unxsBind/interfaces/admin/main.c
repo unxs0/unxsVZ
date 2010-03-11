@@ -3,7 +3,7 @@ FILE
 	main.c
 	$Id: main.c 747 2009-04-01 16:00:49Z hus $
 AUTHOR
-	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2006-2010 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 PURPOSE
 	iDNS Admin (Owner) Interface
 REQUIRES
@@ -387,7 +387,7 @@ void htmlFooter(char *cTemplateName)
 			template.cpName[1]="cIspUrl";
 			template.cpValue[1]=ISPURL;
 			template.cpName[2]="cCopyright";
-			template.cpValue[2]="&copy; 2006-2009 Unixservice. All Rights Reserved.";
+			template.cpValue[2]="&copy; 2006-2010 Unixservice, LLC. All Rights Reserved.";
 			template.cpName[3]="";
 
 			printf("\n<!-- Start htmlFooter(%s) -->\n",cTemplateName); 
