@@ -1238,6 +1238,239 @@ unsigned RRCheck(void)
 		if(cParam4[strlen(cParam4)-1]!='.') strcat(cParam4,".");
 		if(cName[strlen(cName)-1]!='.') strcat(cName,".");
 	}
+	else if(!strcmp(cRRType,"AAAA"))
+	{
+		register int i;
+		unsigned h1=0;
+		unsigned h2=0;
+		unsigned h3=0;
+		unsigned h4=0;
+		unsigned h5=0;
+		unsigned h6=0;
+		unsigned h7=0;
+		unsigned h8=0;
+		char *cp;
+		unsigned uColonCount=0;
+		unsigned uRead=0;
+
+		//Insure these are empty
+		cParam2[0]=0;
+
+		if(strlen(cParam1)<4)
+		{
+			cParam1Style="type_fields_req";
+			gcMessage="<blink>Error: </blink>IPv6 number must be at least 4 chars long (e.g. 1::a)";
+			return(18);
+		}
+
+		//if cParam1 has no consecutive colons we can simply:
+		if((cp=strstr(cParam1,"::")))
+		{
+			if(strstr(cp+2,"::"))
+			{
+				cParam1Style="type_fields_req";				
+				gcMessage="<blink>Error: </blink>IPv6 number can not have more than one double colon!";
+				return(18);
+			}
+		}
+
+		//Now for the hard work
+		for(i=0;cParam1[i];i++)
+		{
+			if(cParam1[i]==':')
+				uColonCount++;
+			if(cParam1[i]!=':' && !isxdigit(cParam1[i]))
+			{
+				cParam1Style="type_fields_req";
+				gcMessage="<blink>Error: </blink>IPv6 number can only have hexadecimal digits and colons!";
+				return(18);
+			}
+		}
+
+		switch(uColonCount)
+		{
+			case 0:
+			case 1:
+				cParam1Style="type_fields_req";
+				gcMessage="<blink>Error: </blink>IPv6 too few colons: Min is 2!";
+				return(18);
+			break;
+
+			case 2:
+				uRead=sscanf(cParam1,"%x::%x",&h1,&h8);
+				if(uRead!=2)
+				{
+					cParam1Style="type_fields_req";
+					gcMessage="<blink>Error: </blink>IPv6 format-2 error!";
+					return(18);
+				}
+			break;
+
+			case 3:
+				uRead=sscanf(cParam1,"%x::%x:%x",&h1,&h7,&h8);
+				if(uRead!=3)
+				{
+					uRead=sscanf(cParam1,"%x:%x::%x",&h1,&h2,&h8);
+					if(uRead!=3)
+					{
+						cParam1Style="type_fields_req";
+						gcMessage="<blink>Error: </blink>IPv6 format-3 error!";
+						return(18);
+					}
+				}
+			break;
+
+			case 4:
+				uRead=sscanf(cParam1,"%x::%x:%x:%x",&h1,&h6,&h7,&h8);
+				if(uRead!=4)
+				{
+					uRead=sscanf(cParam1,"%x:%x::%x:%x",&h1,&h2,&h7,&h8);
+					if(uRead!=4)
+					{
+						uRead=sscanf(cParam1,"%x:%x:%x::%x",&h1,&h2,&h3,&h8);
+						if(uRead!=4)
+						{
+							cParam1Style="type_fields_req";
+							gcMessage="<blink>Error: </blink>IPv6 format-4 error!";
+							return(18);
+						}
+					}
+				}
+			break;
+
+			case 5:
+				uRead=sscanf(cParam1,"%x::%x:%x:%x:%x",&h1,&h5,&h6,&h7,&h8);
+				if(uRead!=5)
+				{
+					uRead=sscanf(cParam1,"%x:%x::%x:%x:%x",&h1,&h2,&h6,&h7,&h8);
+					if(uRead!=5)
+					{
+						uRead=sscanf(cParam1,"%x:%x:%x::%x:%x",&h1,&h2,&h3,&h7,&h8);
+						if(uRead!=5)
+						{
+							uRead=sscanf(cParam1,"%x:%x:%x:%x::%x",&h1,&h2,&h3,&h4,&h8);
+							if(uRead!=5)
+							{
+								cParam1Style="type_fields_req";
+								gcMessage="<blink>Error: </blink>IPv6 format-5 error!";
+								return(18);
+							}
+						}
+					}
+				}
+			break;
+
+			case 6:
+				uRead=sscanf(cParam1,"%x::%x:%x:%x:%x:%x",&h1,&h4,&h5,&h6,&h7,&h8);
+				if(uRead!=6)
+				{
+					uRead=sscanf(cParam1,"%x:%x::%x:%x:%x:%x",&h1,&h2,&h5,&h6,&h7,&h8);
+					if(uRead!=6)
+					{
+						uRead=sscanf(cParam1,"%x:%x:%x::%x:%x:%x",&h1,&h2,&h3,&h6,&h7,&h8);
+						if(uRead!=6)
+						{
+							uRead=sscanf(cParam1,"%x:%x:%x:%x::%x:%x",&h1,&h2,&h3,&h4,&h7,&h8);
+							if(uRead!=6)
+							{
+								uRead=sscanf(cParam1,"%x:%x:%x:%x:%x::%x",
+											&h1,&h2,&h3,&h4,&h5,&h8);
+								if(uRead!=6)
+								{
+									cParam1Style="type_fields_req";
+									gcMessage="<blink>Error: </blink>IPv6 format-6 error!";
+									return(18);
+								}
+							}
+						}
+					}
+				}
+			break;
+
+			case 7:
+				uRead=sscanf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
+				if(uRead!=8)
+				{
+					cParam1Style="type_fields_req";
+					gcMessage="<blink>Error: </blink>IPv6 format-7 error!";
+					return(18);
+				}
+			break;
+
+			default:
+				cParam1Style="type_fields_req";
+				gcMessage="<blink>Error: </blink>IPv6 too many colons: Max is 7!";
+				return(18);
+			
+		}
+
+		//First basic checks for AAAA hosts
+		if(!h1)
+		{
+			cParam1Style="type_fields_req";
+			gcMessage="<blink>Error: </blink>IPv6 number can not have a 0 in first 16 bit hex word.";
+			return(18);
+		}
+
+		if(!h8)
+		{
+			cParam1Style="type_fields_req";
+			gcMessage=malloc(256);
+			sprintf(gcMessage,"<blink>Error: </blink>IPv6 number can not have a 0 in last 16 bit hex word:"
+					" %x:%x:%x:%x:%x:%x:%x:%x",h1,h2,h3,h4,h5,h6,h7,h8);
+			return(18);
+		}
+
+		//Mandatory rewrite in shortest possible IPv6 format.
+		//This is needed to speed up DNSSEC and reduce BIND zone file size.
+		//This may not be a good idea. Need to research further: If someone wants to
+		//write a bunch of 0's why not?
+		//Compress empty words: Double colon. Can only be used once.
+		//Trying KISS method here. sprintf does the leading 0 removal for us.
+		//6 consecutive 0 case
+		if(!h2 && !h3 && !h4 && !h5 && !h6 && !h7)
+			sprintf(cParam1,"%x::%x",h1,h8);
+		//5 consecutive 0 cases
+		else if(!h3 && !h4 && !h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x::%x",h1,h2,h8);
+		else if(!h2 && !h3 && !h4 && !h5 && !h6)
+			sprintf(cParam1,"%x::%x:%x",h1,h7,h8);
+		//4 consecutive 0 cases
+		else if(!h4 && !h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x::%x",h1,h2,h3, h8);
+		else if(!h3 && !h4 && !h5 && !h6)
+			sprintf(cParam1,"%x:%x::%x:%x",h1,h2, h7,h8);
+		else if(!h2 && !h3 && !h4 && !h5)
+			sprintf(cParam1,"%x::%x:%x:%x",h1, h6,h7,h8);
+		//3 consecutive 0 cases
+		else if(!h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x:%x::%x",h1,h2,h3,h4, h8);
+		else if(!h4 && !h5 && !h6)
+			sprintf(cParam1,"%x:%x:%x::%x:%x",h1,h2,h3, h7,h8);
+		else if(!h3 && !h4 && !h5)
+			sprintf(cParam1,"%x:%x::%x:%x:%x",h1,h2, h6,h7,h8);
+		else if(!h2 && !h3 && !h4)
+			sprintf(cParam1,"%x::%x:%x:%x:%x",h1, h5,h6,h7,h8);
+		//2 consecutive 0 cases
+		else if(!h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x:%x:%x::%x",h1,h2,h3,h4,h5, h8);
+		else if(!h5 && !h6)
+			sprintf(cParam1,"%x:%x:%x:%x::%x:%x",h1,h2,h3,h4, h7,h8);
+		else if(!h4 && !h5)
+			sprintf(cParam1,"%x:%x:%x::%x:%x:%x",h1,h2,h3, h6,h7,h8);
+		else if(!h3 && !h4)
+			sprintf(cParam1,"%x:%x::%x:%x:%x:%x",h1,h2, h5,h6,h7,h8);
+		else if(!h2 && !h3)
+			sprintf(cParam1,"%x::%x:%x:%x:%x:%x",h1, h4,h5,h6,h7,h8);
+		//0 consecutive 0 case, i.e. no double colon case
+		else if(1)
+			sprintf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",h1,h2,h3,h4,h5,h6,h7,h8);
+
+	}
+	else if(!strcmp(cRRType,"NAPTR"))
+	{
+	}
+	
 	else if(1)
 	{
 		gcMessage="<blink>Must select valid Resource Type (A,MX,PTR,TXT,NS,CNAME,HINFO)</blink>";
