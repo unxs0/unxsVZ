@@ -1678,6 +1678,83 @@ unsigned RRCheck(void)
 	}
 	else if(!strcmp(cRRType,"NAPTR"))
 	{
+		unsigned long uResult=0;
+		char cAux1[100]={""};
+		char cAux2[100]={""};
+		
+		if(!cName[0])
+		{
+			gcMessage="<blink>Error: </blink>Must specify e164.arpa Origin or FQDN";
+			cNameStyle="type_fields_req";
+			return(16);
+		}
+
+		uResult=strtoul(cParam1,NULL,10);
+		if(errno==EINVAL)
+		{
+			gcMessage="<blink>Error: </blink>Order must be a numerical value";
+			cParam1Style="type_fields_req";
+			return(16);
+		}
+		uResult=strtoul(cParam2,NULL,10);
+		if(errno==EINVAL)
+		{
+			gcMessage="<blink>Error: </blink>Preference must be a numerical value";
+			cParam2Style="type_fields_req";
+			return(16);
+		}
+
+		sscanf(cParam3,"%s %s",cAux1,cAux2);
+		if(!cAux1[0] || !cAux2[0])
+		{
+			gcMessage="<blink>Error: </blink>Must specify Flags+ENUM, e.g: \"U\" \"E2U+sip\"";
+			cParam3Style="type_fields_req";
+			return(16);
+		}
+		if((strstr(cAux1,"S")!=NULL))
+		{
+			if((strstr(cAux1,"A")!=NULL) 
+				|| (strstr(cAux1,"U")!=NULL)
+				|| (strstr(cAux1,"P")!=NULL))
+			{
+				gcMessage="<blink>Error: </blink>The S, A, U and P flags are all mutually exclusive";
+				cParam3Style="type_fields_req";
+				return(16);
+			}
+		}
+		if((strstr(cAux1,"A")!=NULL))
+		{
+			if((strstr(cAux1,"S")!=NULL) 
+				|| (strstr(cAux1,"U")!=NULL)
+				|| (strstr(cAux1,"P")!=NULL))
+			{
+				gcMessage="<blink>Error: </blink>The S, A, U and P flags are all mutually exclusive";
+				cParam3Style="type_fields_req";
+				return(16);
+			}
+		}
+		if((strstr(cAux1,"U")!=NULL))
+		{
+			if((strstr(cAux1,"A")!=NULL) 
+				|| (strstr(cAux1,"S")!=NULL)
+				|| (strstr(cAux1,"P")!=NULL))
+			{
+				gcMessage="<blink>Error: </blink>The S, A, U and P flags are all mutually exclusive";
+				cParam3Style="type_fields_req";
+				return(16);
+			}
+		}
+		if((strstr(cAux1,"P")!=NULL))
+		{
+			if((strstr(cAux1,"A")!=NULL) 
+				|| (strstr(cAux1,"U")!=NULL)
+				|| (strstr(cAux1,"S")!=NULL))
+			{
+				gcMessage="<blink>Error: </blink>The S, A, U and P flags are all mutually exclusive";
+				cParam3Style="type_fields_req";
+				return(16);
+			}
+		}
 	}
 	else if(1)
 	{
