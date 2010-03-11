@@ -512,10 +512,7 @@ unsigned uGetBlockStatus(char *cBlock,char *cCompany)
 	sprintf(cIPBlock,"%s",cBlock);
 
 	if((cp=strchr(cBlock,'/')))
-	{
-		*cp++;
-		sscanf(cp,"%u",&uCIDR);
-	}
+		sscanf(cp+1,"%u",&uCIDR);
 	if((cp=strchr(cIPBlock,'/'))) *cp=0;
 	sprintf(gcQuery,"SELECT cLabel,uOwner FROM tBlock WHERE cLabel LIKE '%s/%%'",cIPBlock);
 	mysql_query(&gMysql,gcQuery);
@@ -525,10 +522,7 @@ unsigned uGetBlockStatus(char *cBlock,char *cCompany)
 	if((field=mysql_fetch_row(res)))
 	{
 		if((cp=strchr(field[0],'/')))
-		{
-			*cp++;
-			sscanf(cp,"%u",&uDbCIDR);
-		}
+			sscanf(cp+1,"%u",&uDbCIDR);
 		sscanf(field[1],"%u",&uOwner);
 
 		mysql_free_result(res);
