@@ -2747,7 +2747,7 @@ unsigned OnLineZoneCheck(void)
 //Also note that the parsing named here has only impact in the way the error
 //messages are displayed, if incorrecty set, probably you will miss part of the error 
 //text, or worst make idnsAdmin to crash!
-#define BIND_9_6
+//#define BIND_9_6
 
 	//This function will create a zonefile online and run named-checkzone
 	MYSQL_RES *res;
@@ -2855,34 +2855,50 @@ unsigned OnLineZoneCheck(void)
 		res2=mysql_store_result(&gMysql);
 		while((field2=mysql_fetch_row(res2)))
 		{
+			char cRRType[9]="";
+
 			sscanf(field2[2],"%u",&uRRType);
+			sprintf(cRRType,"%.8s",GetRRType(uRRType));
+
 			if(field2[1][0]!='0') strcpy(cTTL,field2[1]);
+
 			//Do not write TTL if cName is a $GENERATE line
 			if(strstr(field2[0],"$GENERATE")==NULL)
 			{
-				if(strcmp(GetRRType(uRRType),"SRV"))
-					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\n",
-							field2[0],
-							cTTL,
-							GetRRType(uRRType),
-							field2[3],
-							field2[4]);
-				else
+				if(!strcmp(cRRType,"SRV"))
 					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 							field2[0],
 							cTTL,
-							GetRRType(uRRType),
+							cRRType,
 							field2[3],
 							field2[4],
 							field2[5],
 							field2[6]);
+				else if(!strcmp(cRRType,"NAPTR"))
+					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+							field2[0],
+							cTTL,
+							cRRType,
+							field2[3],
+							field2[4],
+							field2[5],
+							field2[6]);
+				else if(1)
+					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\n",
+							field2[0],
+							cTTL,
+							cRRType,
+							field2[3],
+							field2[4]);
 			}
 			else
+			{
 				fprintf(zfp,"%s\t%s\t%s\t%s\n",
 						field2[0],
-						GetRRType(uRRType),
+						cRRType,
 						field2[3],
 						field2[4]);
+			}
 		}
 		mysql_free_result(res2);
 		fclose(zfp);
