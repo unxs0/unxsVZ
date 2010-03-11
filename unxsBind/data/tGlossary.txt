@@ -730,8 +730,10 @@ preferences. Therefore the whole system can 'translate' E.164 addresses to SIP\
 addresses.<br>\
 \
 
-294	Order	1	1	1268299458	1	1268299531	This value indicates the priority of multiple NAPTR records used. The lower the\
-value, the higher the priority.<br>\
+294	Order	1	1	1268299458	1	1268301510	An unsigned integer specifying the order in which the NAPTR records MUST be\
+processed to ensure the correct ordering of rules.  Low numbers are processed\
+before high numbers, and once a NAPTR is found whose rule "matches" the target,\
+the client MUST NOT consider any NAPTRs with a higher value for order.\
 <br>\
 E.g.:<br>\
 <br>\
@@ -744,17 +746,33 @@ The first record has an order value of 100, which is lower than 102, so it is\
 picked first.\
 \
 
-295	Preference	1	1	1268299886	0	0	This value indicates the priority of multiple NAPTR records with the same\
-preference value. The lower the\
-value, the higher the priority.<br>\
+295	Preference	1	1	1268299886	1	1268301600	An integer that specifies the order in which NAPTR records with equal "order"\
+values SHOULD be processed, low numbers being processed before high numbers. \
+This is similar to the preference field in an MX record, and is used so domain\
+administrators can direct clients towards more capable hosts or  lighter weight\
+protocols.  A client MAY look at records with higher preference values if it has\
+a good reason to do so such as not understanding the preferred protocol or\
+service.<br>\
 <br>\
-E.g.:<br>\
+The important difference between Order and Preference is that once a match is\
+found the client MUST NOT consider records with a different Order but they MAY\
+process records with the same Order but different Preferences.  I.e., Preference\
+is used to give weight to rules that are considered the same from an authority\
+standpoint but not from a simple load balancing standpoint.\
+\
+
+296	Flags+ENUM	1	1	1268301768	0	0	Flags:<be>\
 <br>\
-$ORIGIN 4.3.2.1.5.5.5.0.0.8.1.e164.arpa.<br>\
-IN NAPTR 100 10 "U" "E2U+sip" "!^.*$!sip:customer-service@example.com!i" .<br>\
-IN NAPTR 100 9 "U" "E2U+email" "!^.*$!mailto:information@example.com!i" .<br>\
-<br>\
-<br>\
-The records above have the same order value (100) yet preference differs.\
+A <character-string> containing flags to control aspects of the rewriting and\
+interpretation of the fields in the record.  Flags are single characters from\
+the set [A-Z0-9].  The case of the alphabetic characters is not significant. <br>\
+ At this time only four flags, "S", "A", "U", and "P", are defined.  The "S",\
+"A" and "U" flags denote a terminal lookup. This means that this NAPTR record is\
+the last one and that the flag determines what the next stage should be.  The\
+"S" flag means that the next lookup should be for SRV records.  "A" means that\
+the next lookup should be for either an A, AAAA, or A6 record.  The "U" flag\
+means that the next step is not a DNS lookup but that the output of the Regexp\
+field is an URI that adheres to the 'absoluteURI' production found in the ABNF\
+of RFC 2396. <br>\
 \
 
