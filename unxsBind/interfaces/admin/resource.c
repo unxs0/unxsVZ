@@ -1688,7 +1688,15 @@ unsigned RRCheck(void)
 			cNameStyle="type_fields_req";
 			return(16);
 		}
-
+		else
+		{
+			if(!strstr(cName,"e164.arpa.") && !strstr(cName,gcZone) && !strstr(cName,"@"))
+			{
+				gcMessage="<blink>Error: </blink>Must specify e164.arpa Origin or FQDN";
+				cNameStyle="type_fields_req";
+				return(16);
+			}
+		}
 		uResult=strtoul(cParam1,NULL,10);
 		if(errno==EINVAL)
 		{
@@ -1755,6 +1763,7 @@ unsigned RRCheck(void)
 				return(16);
 			}
 		}
+
 	}
 	else if(1)
 	{
