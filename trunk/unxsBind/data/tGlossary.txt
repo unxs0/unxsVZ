@@ -761,7 +761,7 @@ is used to give weight to rules that are considered the same from an authority\
 standpoint but not from a simple load balancing standpoint.\
 \
 
-296	Flags+ENUM	1	1	1268301768	0	0	Flags:<be>\
+296	Flags+ENUM	1	1	1268301768	1	1268306974	Flags:<br>\
 <br>\
 A <character-string> containing flags to control aspects of the rewriting and\
 interpretation of the fields in the record.  Flags are single characters from\
@@ -774,5 +774,14 @@ the next lookup should be for either an A, AAAA, or A6 record.  The "U" flag\
 means that the next step is not a DNS lookup but that the output of the Regexp\
 field is an URI that adheres to the 'absoluteURI' production found in the ABNF\
 of RFC 2396. <br>\
+\
+
+297	Regex (+optional SRV)	1	1	1268307314	0	0	Regex:<br>\
+A STRING containing a substitution expression that is applied to the original\
+string held by the client in order to construct the next domain name to lookup.<br>\
+<br>\
+Optional SRV:<br>\
+The next NAME to query for NAPTR, SRV, or address records depending on the value\
+of the flags field.  This MUST be a fully qualified domain-name. \
 \
 
