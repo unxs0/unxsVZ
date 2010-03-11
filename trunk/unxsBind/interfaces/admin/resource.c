@@ -1763,6 +1763,13 @@ unsigned RRCheck(void)
 				return(16);
 			}
 		}
+		if(strstr(cAux2,"E2U")==NULL)
+		{
+			gcMessage="<blink>Error: </blink>Malformed ENUM data";
+			cParam3Style="type_fields_req";
+			return(16);
+		}
+		
 
 	}
 	else if(1)
