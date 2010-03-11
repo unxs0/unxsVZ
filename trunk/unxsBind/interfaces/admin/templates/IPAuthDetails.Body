@@ -2,7 +2,7 @@
 <form method=post>
 <table width="100%" border="0" cellspacing="0" cellpadding="0" class="table_header2">
   <tr>
-    <td><img src="/images/unxslogo.jpg"  style="margin:10px; "></td>
+    <td><img src="/images/unxsbind.jpg"  style="margin:10px; "></td>
     <td align="right">
         <input type="submit" onClick="javascript:window.close()" value="X Close" style="margin:0 20px 0 0;" class="close_button"/>
     </td>
