@@ -699,3 +699,62 @@ starting with '#' or ';' are treated as comments, thus ignored. Don't put any\
 space between the lines. \
 \
 
+292	IPv6 Number	1	1	1268297008	1	1268297091	This next generation of the Internet Protocol, aimed to replace IPv4 on the\
+Internet, was eventually named Internet Protocol Version 6 (IPv6) in 1995[3][4]\
+The address size was increased from 32 to 128 bits or 16 octets, which, even\
+with a generous assignment of network blocks, is deemed sufficient for the\
+foreseeable future. <br>\
+<br>\
+<img alt=""\
+src="http://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Ipv6_address.svg/300px-Ipv6_address.svg.png"\
+width="300" height="180">\
+<br>\
+<br>\
+Example of an IPv6 address:<br>\
+<br>\
+2001:0db8:85a3:08d3:1319:8a2e:0370:7334\
+\
+
+293	e164.arpa Origin or FQDN	1	1	1268297337	1	1268297361	The ITU ENUM allocates a specific zone, namely "e164.arpa" for use with ENUM\
+E.164 numbers on the IP side of the network. <a\
+href=http://tools.ietf.org/html/rfc3761 class=darkLink target=_blank>RFC\
+3761</a> define how any ENUM number, such as +1 555 42 42 can be transformed\
+into a Uniform Resource Identifier (URI), by reversing the numbers, separating\
+them with dots and adding the e164.arpa suffix thus:<br>\
+2.4.2.4.5.5.5.1.e164.arpa<br>\
+<br>\
+The URI can then be used to obtain the Internet Protocol addresses for services\
+such as the Session Initiation Protocol (SIP) VoIP telephony. In the Domain Name\
+System, NAPTR records are used to set the subscriber call forwarding/termination\
+preferences. Therefore the whole system can 'translate' E.164 addresses to SIP\
+addresses.<br>\
+\
+
+294	Order	1	1	1268299458	1	1268299531	This value indicates the priority of multiple NAPTR records used. The lower the\
+value, the higher the priority.<br>\
+<br>\
+E.g.:<br>\
+<br>\
+$ORIGIN 4.3.2.1.5.5.5.0.0.8.1.e164.arpa.<br>\
+IN NAPTR 100 10 "U" "E2U+sip" "!^.*$!sip:customer-service@example.com!i" .<br>\
+IN NAPTR 102 10 "U" "E2U+email" "!^.*$!mailto:information@example.com!i" .<br>\
+<br>\
+<br>\
+The first record has an order value of 100, which is lower than 102, so it is\
+picked first.\
+\
+
+295	Preference	1	1	1268299886	0	0	This value indicates the priority of multiple NAPTR records with the same\
+preference value. The lower the\
+value, the higher the priority.<br>\
+<br>\
+E.g.:<br>\
+<br>\
+$ORIGIN 4.3.2.1.5.5.5.0.0.8.1.e164.arpa.<br>\
+IN NAPTR 100 10 "U" "E2U+sip" "!^.*$!sip:customer-service@example.com!i" .<br>\
+IN NAPTR 100 9 "U" "E2U+email" "!^.*$!mailto:information@example.com!i" .<br>\
+<br>\
+<br>\
+The records above have the same order value (100) yet preference differs.\
+\
+
