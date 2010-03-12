@@ -1012,7 +1012,8 @@ unsigned RRCheck(void)
 		if(!isalnum(cName[i]) && cName[i]!='-' && cName[i]!='.' && cName[i]!='@' && cName[i]!='_'
 				&& cName[i]!='*' )
 		{
-			gcMessage="<blink>Error: </blink>Name can be empty or have only letters, numbers, the default origin @ symbol. Or dashes (-) and periods (.)";
+			gcMessage="<blink>Error: </blink>Name can be empty or have only letters, "
+				"numbers, the default origin @ symbol. Or dashes (-) and periods (.)";
 			cNameStyle="type_fields_req";
 			return(2);
 		}
@@ -1678,98 +1679,79 @@ unsigned RRCheck(void)
 	}
 	else if(!strcmp(cRRType,"NAPTR"))
 	{
-		unsigned long uResult=0;
-		char cAux1[100]={""};
-		char cAux2[100]={""};
-		
+		register int i;
+		unsigned uI=0;
+
 		if(!cName[0])
 		{
-			gcMessage="<blink>Error: </blink>Must specify e164.arpa Origin or FQDN";
 			cNameStyle="type_fields_req";
-			return(16);
+			gcMessage="<blink>Error: </blink>cName: Resource name required";
 		}
 		else
 		{
-			if(!strstr(cName,"e164.arpa.") && !strstr(cName,gcZone) && !strstr(cName,"@"))
-			{
-				gcMessage="<blink>Error: </blink>Must specify e164.arpa Origin or FQDN";
-				cNameStyle="type_fields_req";
-				return(16);
-			}
-		}
-		uResult=strtoul(cParam1,NULL,10);
-		if(errno==EINVAL)
+			register int x=0;
+			
+			//All lowercase
+			for(x=0;x<strlen(cName);x++)
+				cName[x]=tolower(cName[x]);
+		}	
+		if(!cParam1[0])
 		{
-			gcMessage="<blink>Error: </blink>Order must be a numerical value";
 			cParam1Style="type_fields_req";
-			return(16);
+			gcMessage="<blink>Error: </blink>cParam1: Order value required";
 		}
-		uResult=strtoul(cParam2,NULL,10);
-		if(errno==EINVAL)
+		if(!cParam2[0])
 		{
-			gcMessage="<blink>Error: </blink>Preference must be a numerical value";
 			cParam2Style="type_fields_req";
-			return(16);
+			gcMessage="<blink>Error: </blink>cParam2: Preference value required";
+		}
+		if(!cParam3[0])
+		{
+			cParam3Style="type_fields_req";
+			gcMessage="<blink>Error: </blink>cParam3: Flags and ENUM double quoted strings required";
+		}
+		if(!cParam4[0])
+		{
+			cParam4Style="type_fields_req";
+			gcMessage="<blink>Error: </blink>cParam4: Double quoted regex string and optional SRV target required.";
 		}
 
-		sscanf(cParam3,"%s %s",cAux1,cAux2);
-		if(!cAux1[0] || !cAux2[0])
+		sscanf(cParam1,"%u",&uI);
+		if(!uI && !(isdigit(cParam1[0])))
 		{
-			gcMessage="<blink>Error: </blink>Must specify Flags+ENUM, e.g: \"U\" \"E2U+sip\"";
+			cParam1Style="type_fields_req";
+			gcMessage="<blink>Error: </blink>cParam1: Must specify numerical order";
+		}
+
+		uI=0;
+		sscanf(cParam2,"%u",&uI);
+		if(!uI && (!isdigit(cParam2[0])))
+		{
+			cParam2Style="type_fields_req";
+			gcMessage="<blink>Error: </blink>cParam2: Must specify numerical preference";
+		}
+
+		//Check for double quotes
+		uI=0;
+		for(i=0;cParam3[i];i++)
+			if(cParam3[i]=='\"') uI++;
+		if(uI!=4)
+		{
 			cParam3Style="type_fields_req";
-			return(16);
+			gcMessage="<blink>Error: </blink>cParam3: Must double quote both flags and ENUM string."
+					" Ex: \"U\" \"E2U+sip\"";
 		}
-		if((strstr(cAux1,"S")!=NULL))
+
+		uI=0;
+		for(i=0;cParam4[i];i++)
+			if(cParam4[i]=='\"') uI++;
+		if(uI<2)
 		{
-			if((strstr(cAux1,"A")!=NULL) 
-				|| (strstr(cAux1,"U")!=NULL)
-				|| (strstr(cAux1,"P")!=NULL))
-			{
-				gcMessage="<blink>Error: </blink>The S, A, U and P flags are all mutually exclusive";
-				cParam3Style="type_fields_req";
-				return(16);
-			}
+			cParam4Style="type_fields_req";
+				gcMessage="<blink>Error: </blink>Must double quote REGEX."
+					" Ex: \"!^.*$!sip:customer-service@example.com!\" _sip._udp.example.com";
 		}
-		if((strstr(cAux1,"A")!=NULL))
-		{
-			if((strstr(cAux1,"S")!=NULL) 
-				|| (strstr(cAux1,"U")!=NULL)
-				|| (strstr(cAux1,"P")!=NULL))
-			{
-				gcMessage="<blink>Error: </blink>The S, A, U and P flags are all mutually exclusive";
-				cParam3Style="type_fields_req";
-				return(16);
-			}
-		}
-		if((strstr(cAux1,"U")!=NULL))
-		{
-			if((strstr(cAux1,"A")!=NULL) 
-				|| (strstr(cAux1,"S")!=NULL)
-				|| (strstr(cAux1,"P")!=NULL))
-			{
-				gcMessage="<blink>Error: </blink>The S, A, U and P flags are all mutually exclusive";
-				cParam3Style="type_fields_req";
-				return(16);
-			}
-		}
-		if((strstr(cAux1,"P")!=NULL))
-		{
-			if((strstr(cAux1,"A")!=NULL) 
-				|| (strstr(cAux1,"U")!=NULL)
-				|| (strstr(cAux1,"S")!=NULL))
-			{
-				gcMessage="<blink>Error: </blink>The S, A, U and P flags are all mutually exclusive";
-				cParam3Style="type_fields_req";
-				return(16);
-			}
-		}
-		if(strstr(cAux2,"E2U")==NULL)
-		{
-			gcMessage="<blink>Error: </blink>Malformed ENUM data";
-			cParam3Style="type_fields_req";
-			return(16);
-		}
-		
+
 
 	}
 	else if(1)
