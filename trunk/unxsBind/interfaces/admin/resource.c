@@ -737,13 +737,13 @@ void UpdateResource(void)
 	sprintf(gcQuery,"UPDATE tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',"
 			"cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,"
 			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uResource=%u",
-			cName,
+			TextAreaSave(cName),
 			uTTL,
 			uRRType,
-			cParam1,
-			cParam2,
-			cParam3,
-			cParam4,
+			TextAreaSave(cParam1),
+			TextAreaSave(cParam2),
+			TextAreaSave(cParam3),
+			TextAreaSave(cParam4),
 			TextAreaSave(cComment),
 			guLoginClient,uResource);
 	mysql_query(&gMysql,gcQuery);
@@ -796,13 +796,13 @@ void NewResource(void)
 	sprintf(gcQuery,"INSERT INTO tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',"
 			"cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
 			"uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
-			cName,
+			TextAreaSave(cName),
 			uTTL,
 			uRRType,
-			cParam1,
-			cParam2,
-			cParam3,
-			cParam4,
+			TextAreaSave(cParam1),
+			TextAreaSave(cParam2),
+			TextAreaSave(cParam3),
+			TextAreaSave(cParam4),
 			TextAreaSave(cComment),
 			uForClient,
 			guLoginClient,
