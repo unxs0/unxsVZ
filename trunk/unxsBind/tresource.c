@@ -368,29 +368,29 @@ void tResourceInput(unsigned uMode)
 	}
 //cParam3
 	OpenRow(LANG_FL_tResource_cParam3,"black");
-	printf("<input title='%s' type=text name=cParam3 value=\"%s\" size=80 maxlength=255 "
-		,LANG_FT_tResource_cParam3,EncodeDoubleQuotes(cParam3));
+	printf("<textarea title='%s' cols=77 wrap=soft rows=3 name=cParam3 "
+		,LANG_FT_tResource_cParam3);
 	if(guPermLevel>=0 && uMode)
 	{
-		printf("></td></tr>\n");
+		printf(">%s</textarea></td></tr>\n",cParam3);
 	}
 	else
 	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cParam3 value=\"%s\">\n",EncodeDoubleQuotes(cParam3));
+		printf("disabled>%s</textarea></td></tr>\n",cParam3);
+		printf("<input type=hidden name=cParam3 value=\"%s\" >\n",EncodeDoubleQuotes(cParam3));
 	}
 //cParam4
 	OpenRow(LANG_FL_tResource_cParam4,"black");
-	printf("<input title='%s' type=text name=cParam4 value=\"%s\" size=80 maxlength=255 "
-		,LANG_FT_tResource_cParam4,EncodeDoubleQuotes(cParam4));
+	printf("<textarea title='%s' cols=77 wrap=soft rows=3 name=cParam4 "
+		,LANG_FT_tResource_cParam4);
 	if(guPermLevel>=0 && uMode)
 	{
-		printf("></td></tr>\n");
+		printf(">%s</textarea></td></tr>\n",cParam4);
 	}
 	else
 	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cParam4 value=\"%s\">\n",EncodeDoubleQuotes(cParam4));
+		printf("disabled>%s</textarea></td></tr>\n",cParam4);
+		printf("<input type=hidden name=cParam4 value=\"%s\" >\n",EncodeDoubleQuotes(cParam4));
 	}
 //cComment
 	OpenRow(LANG_FL_tResource_cComment,"black");

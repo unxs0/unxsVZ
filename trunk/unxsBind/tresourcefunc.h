@@ -648,20 +648,20 @@ void RRCheck(int uMode)
 		uI=0;
 		for(i=0;cParam3[i];i++)
 			if(cParam3[i]=='\"') uI++;
-		if(uI!=4 || cParam3[0]!='\"' || cParam3[strlen(cParam3)-1]!='\"')
+		if(uI!=4)
 		{
 			guMode=uMode;
 			tResource("cParam3: Must double quote both flags and ENUM string."
-					" First and last char must be \". Ex: \"U\" \"E2U+sip\"");
+					" Ex: \"U\" \"E2U+sip\"");
 		}
 
 		uI=0;
 		for(i=0;cParam4[i];i++)
 			if(cParam4[i]=='\"') uI++;
-		if(uI<2 || cParam4[0]!='\"')
+		if(uI<2)
 		{
 			guMode=uMode;
-			tResource("Must double quote REGEX. First char must be \"."
+			tResource("Must double quote REGEX."
 					" Ex: \"!^.*$!sip:customer-service@example.com!\" _sip._udp.example.com");
 		}
 
