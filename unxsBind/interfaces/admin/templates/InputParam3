@@ -3,7 +3,9 @@
 		<a class=inputLink href="#" onClick="open_popup('?gcPage=Glossary&cLabel={{cParam3Label}}')"><strong>{{cParam3Label}}</strong></a>
 	</td>
 	<td>
-		<input title='{{cParam3Title}}' type=text name=cParam3 value='{{cParam3}}' size=40 maxlength=255  class={{cParam3Style}} {{gcInputStatus}}>
+		<textarea cols=77 wrap=soft rows=3 title='{{cParam3Title}}' name=cParam3 size=40 maxlength=255  class={{cParam3Style}} {{gcInputStatus}}>
+			{{cParam3}}
+		</textarea>
 	</td>
 </tr>
 

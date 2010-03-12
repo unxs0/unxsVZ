@@ -33,10 +33,10 @@ static char cParam2[256]={""};
 static char *cParam2Style="type_fields_off";
 
 static char cParam3[256]={""};
-static char *cParam3Style="type_fields_off";
+static char *cParam3Style="type_textarea_off";
 
 static char cParam4[256]={""};
-static char *cParam4Style="type_fields_off";
+static char *cParam4Style="type_textarea_off";
 
 static char cComment[256]={""};
 static char *cCommentStyle="type_fields_off";
@@ -1404,13 +1404,13 @@ unsigned RRCheck(void)
 		if(!cParam3[0])
 		{
 			gcMessage="<blink>Error: </blink>Port required";
-			cParam3Style="type_fields_req";
+			cParam3Style="type_textarea_req";
 			return(16);
 		}
 		if(!cParam4[0])
 		{
 			gcMessage="<blink>Error: </blink>Target host required";
-			cParam4Style="type_fields_req";
+			cParam4Style="type_textarea_req";
 			return(16);                          
 		}
 
@@ -1440,7 +1440,7 @@ unsigned RRCheck(void)
 		if((!uI) || (uI>65535))
 		{
 			gcMessage="<blink>Error: </blink>Invalid port number";
-			cParam3Style="type_fields_req";
+			cParam3Style="type_textarea_req";
 			return(17);
 		}
 		FQDomainName(cParam4);
@@ -1707,12 +1707,12 @@ unsigned RRCheck(void)
 		}
 		if(!cParam3[0])
 		{
-			cParam3Style="type_fields_req";
+			cParam3Style="type_textarea_req";
 			gcMessage="<blink>Error: </blink>cParam3: Flags and ENUM double quoted strings required";
 		}
 		if(!cParam4[0])
 		{
-			cParam4Style="type_fields_req";
+			cParam4Style="type_textarea_req";
 			gcMessage="<blink>Error: </blink>cParam4: Double quoted regex string and optional SRV target required.";
 		}
 
@@ -1737,7 +1737,7 @@ unsigned RRCheck(void)
 			if(cParam3[i]=='\"') uI++;
 		if(uI!=4)
 		{
-			cParam3Style="type_fields_req";
+			cParam3Style="type_textarea_req";
 			gcMessage="<blink>Error: </blink>cParam3: Must double quote both flags and ENUM string."
 					" Ex: \"U\" \"E2U+sip\"";
 		}
@@ -1747,7 +1747,7 @@ unsigned RRCheck(void)
 			if(cParam4[i]=='\"') uI++;
 		if(uI<2)
 		{
-			cParam4Style="type_fields_req";
+			cParam4Style="type_textarea_req";
 				gcMessage="<blink>Error: </blink>Must double quote REGEX."
 					" Ex: \"!^.*$!sip:customer-service@example.com!\" _sip._udp.example.com";
 		}
@@ -2773,9 +2773,9 @@ void ResourceSetFieldsOn(void)
 	if(strcmp(cParam2Style,"type_fields_req"))
 		cParam2Style="type_fields";
 	if(strcmp(cParam3Style,"type_fields_req"))
-		cParam3Style="type_fields";
+		cParam3Style="type_textarea";
 	if(strcmp(cParam4Style,"type_fields_req"))
-		cParam4Style="type_fields";
+		cParam4Style="type_textarea";
 	if(strcmp(cCommentStyle,"type_fields_req"))
 		cCommentStyle="type_fields";
 
@@ -2950,7 +2950,7 @@ unsigned OnLineZoneCheck(void)
 							field2[5],
 							field2[6]);
 				else if(!strcmp(cRRType,"NAPTR"))
-					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t(%s\t%s)\n",
 							field2[0],
 							cTTL,
 							cRRType,
@@ -3007,11 +3007,11 @@ unsigned OnLineZoneCheck(void)
 				}
 			}
 			pclose(zfp);
-	//		unlink(cZoneFile);
+	//		//unlink(cZoneFile);
 			return(1);
 		}
 	}
-	unlink(cZoneFile);
+	//unlink(cZoneFile);
 
 	return(0);
 
