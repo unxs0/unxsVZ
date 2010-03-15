@@ -103,7 +103,6 @@ void PassDirectHtml(char *file);//bind.c aux section
 
 void PrepareTestData(unsigned uResource,char *cName,char *cParam1,char *cParam2,char *cParam3,
 			char *cParam4,char *cRRType,char *cComment,unsigned uRRTTL,unsigned uCalledFrom);
-unsigned OnLineZoneCheck(unsigned uCalledFrom);
 void PrepDelToolsTestData(unsigned uNumIPs);
 
 void ExtProcesstZoneVars(pentry entries[], int x)
@@ -841,7 +840,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			
 			//named-checkzone online check
 			PrepDelToolsTestData(uNumIPs);
-			OnLineZoneCheck(1);
+			OnLineZoneCheck(uZone,4001,1);
 			fprintf(stderr,"cNSList=%s\n",cNSList);
 			while(1)
 			{
@@ -3638,7 +3637,7 @@ char *cPrintNSList(FILE *zfp,char *cuNSSet);
 void PrintMXList(FILE *zfp,char *cuMailServers);
 
 
-unsigned OnLineZoneCheck(unsigned uCalledFrom)
+unsigned OnLineZoneCheck(unsigned uZone,unsigned uCalledMode,unsigned uCalledFrom)
 {
 	//This function will create a zonefile online and run named-checkzone
 	MYSQL_RES *res;
@@ -3647,16 +3646,16 @@ unsigned OnLineZoneCheck(unsigned uCalledFrom)
 	MYSQL_ROW field2;
 	FILE *zfp;
 	FILE *dnfp;
-	unsigned uZone=0;
 	unsigned uRRType=0;
 	char cTTL[50]={""};
 	char cZoneFile[100]={""};
+	char cZone[256]={""};
+	static char cMessage[512]={""};
 
-	//PrepareTestData(uResource,cName,cParam1,cParam2,cParam3,cParam4,cRRType,cComment,uRRTTL,uCalledFrom);
-	
 	//Test if named-checkzone can be run, otherwise return 0
 	if(access("/usr/sbin/named-checkzone",X_OK)==-1) return(0); //Ticket #100
 
+	sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",uZone));
 	sprintf(cZoneFile,"/tmp/%s",cZone);
 
 	if((zfp=fopen(cZoneFile,"w"))==NULL)
@@ -3669,7 +3668,7 @@ unsigned OnLineZoneCheck(unsigned uCalledFrom)
 			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
 			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel FROM tZone,tNSSet,tNS,tView"
 			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
-			" tZone.uView=tView.uView AND tZone.cZone='%s' AND tZone.uView='%u'",cZone,uView);
+			" tZone.uView=tView.uView AND tZone.uZone=%u'",uZone);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -3701,8 +3700,6 @@ unsigned OnLineZoneCheck(unsigned uCalledFrom)
 		//12 tView.cLabel
 		//13 tView.cMaster
 		//14 tView.uOrder
-		sscanf(field[1],"%u",&uZone);
-	
 		if((cp=strchr(field[3],' '))) *cp=0;
 
 		fprintf(zfp,"; %s\n",field[0]);
@@ -3747,35 +3744,52 @@ unsigned OnLineZoneCheck(unsigned uCalledFrom)
 		res2=mysql_store_result(&gMysql);
 		while((field2=mysql_fetch_row(res2)))
 		{
+			char cRRType[9]="";
+
 			sscanf(field2[2],"%u",&uRRType);
+			sprintf(cRRType,"%.8s",GetRRType(uRRType));
+
 			if(field2[1][0]!='0') strcpy(cTTL,field2[1]);
+
 			//Do not write TTL if cName is a $GENERATE line
 			if(strstr(field2[0],"$GENERATE")==NULL)
 			{
-				if(strcmp(GetRRType(uRRType),"SRV"))
-					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\n",
-							field2[0],
-							cTTL,
-							GetRRType(uRRType),
-							field2[3],
-							field2[4]);
-				else
+				if(!strcmp(cRRType,"SRV"))
 					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 							field2[0],
 							cTTL,
-							GetRRType(uRRType),
+							cRRType,
 							field2[3],
 							field2[4],
 							field2[5],
 							field2[6]);
+				else if(!strcmp(cRRType,"NAPTR"))
+					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t(%s\t%s)\n",
+							field2[0],
+							cTTL,
+							cRRType,
+							field2[3],
+							field2[4],
+							field2[5],
+							field2[6]);
+				else if(1)
+					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\n",
+							field2[0],
+							cTTL,
+							cRRType,
+							field2[3],
+							field2[4]);
 			}
 			else
+			{
 				fprintf(zfp,"%s\t%s\t%s\t%s\n",
 						field2[0],
-						GetRRType(uRRType),
+						cRRType,
 						field2[3],
 						field2[4]);
+			}
 		}
+		
 		mysql_free_result(res2);
 		fclose(zfp);
 
@@ -3796,14 +3810,17 @@ unsigned OnLineZoneCheck(unsigned uCalledFrom)
 					char *cp;
 					cp=strstr(cLine,cZoneFile);
 					cp=cp+strlen(cZoneFile)+2; //2 more chars ': '
-					sprintf(gcQuery,"<blink>Error: </blink> The RR has an error: %s",cp);
+					sprintf(cMessage,"<blink>Error: </blink> The RR has an error: %s",cp);
 					if(uCalledFrom)
 					{
-						guMode=4001;
-						tZone(gcQuery);
+						guMode=uCalledMode;
+						tZone(cMessage);
 					}
 					else
-						tResource(gcQuery);
+					{
+						guMode=uCalledMode;
+						tResource(cMessage);
+					}
 				}
 			}
 			pclose(zfp);

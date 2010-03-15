@@ -167,6 +167,7 @@ void CreatetZone(void);
 void DeletetZone(void);
 void ExttZoneGetHook(entry gentries[], int x);
 void ExttZoneNavBar(void);
+unsigned OnLineZoneCheck(unsigned uZone,unsigned uCalledMode,unsigned uCalledFrom);
 
 //tResource
 int tResourceCommands(pentry entries[], int x);

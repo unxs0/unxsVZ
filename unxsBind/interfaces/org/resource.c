@@ -1569,7 +1569,7 @@ unsigned uPerRRTypeCheck(void)
 	
 	else if(1)
 	{
-		gcMessage="<blink>Must select valid Resource Type (A,MX,PTR,TXT,NS,CNAME,HINFO)</blink>";
+		gcMessage="<blink>Must select valid Resource Type (A,MX,PTR,TXT,NS,CNAME,HINFO,NAPTR,AAAA)</blink>";
 		cRRTypeStyle="type_fields_req";
 		return(16);
 	}
