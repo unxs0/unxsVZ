@@ -1209,13 +1209,13 @@ void funcContactNavList(FILE *fp,unsigned uSetCookie)
 		sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tAuthorize.cLabel FROM "
 				"tClient,tAuthorize WHERE tClient.uClient=tAuthorize.uCertClient AND "
 				"(tClient.cLabel LIKE '%1$s%%' OR tAuthorize.cLabel LIKE '%1$s%%') AND "
-				"tAuthorize.uCertClient!=1 AND tAuthorize.uPerm<=6 "
+				"tAuthorize.uCertClient!=1 "
 				"ORDER BY tClient.cLabel",cSearch);
 	else
 		sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tAuthorize.cLabel FROM "
 				"tClient,tAuthorize WHERE tClient.uClient=tAuthorize.uCertClient AND "
 				"(tClient.cLabel LIKE '%1$s%%' OR tAuthorize.cLabel LIKE '%1$s%%') AND "
-				"tAuthorize.uCertClient!=1 AND tAuthorize.uPerm<=6 AND tClient.uOwner=%2$u "
+				"tAuthorize.uCertClient!=1 AND tClient.uOwner=%2$u "
 				"ORDER BY tClient.cLabel",cSearch,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
