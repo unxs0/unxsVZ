@@ -569,7 +569,7 @@ void funcCustomerContacts(FILE *fp)
 		if(uPerm>7)
 			cPage="Administrator";
 		else
-			cPage="Customer";
+			cPage="CustomerUser";
 
 		fprintf(fp,"<tr><td><a class=darkLink href=\"idnsAdmin.cgi?gcPage=%s"
 			"&uClient=%s&cCustomer=%s&cZone=%s&uView=%s&uResource=%u\">%s</a></td><td>%s</td><td>%s</td></tr>",
