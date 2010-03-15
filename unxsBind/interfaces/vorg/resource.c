@@ -30,10 +30,10 @@ static char cParam2[256]={""};
 static char *cParam2Style="type_fields_off";
 
 static char cParam3[256]={""};
-static char *cParam3Style="type_fields_off";
+static char *cParam3Style="type_textarea_off";
 
 static char cParam4[256]={""};
-static char *cParam4Style="type_fields_off";
+static char *cParam4Style="type_textarea_off";
 
 static char cComment[256]={""};
 static char *cCommentStyle="type_fields_off";
@@ -606,13 +606,13 @@ void UpdateResource(void)
 	sprintf(gcQuery,"UPDATE tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',"
 			"cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) "
 			"WHERE uResource=%u",
-			cName,
+			TextAreaSave(cName),
 			uTTL,
 			uRRType,
-			cParam1,
-			cParam2,
-			cParam3,
-			cParam4,
+			TextAreaSave(cParam1),
+			TextAreaSave(cParam2),
+			TextAreaSave(cParam3),
+			TextAreaSave(cParam4),
 			TextAreaSave(cComment),
 			guLoginClient,uResource);
 	mysql_query(&gMysql,gcQuery);
@@ -651,13 +651,13 @@ void NewResource(void)
 	sprintf(gcQuery,"INSERT INTO tResource SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',"
 			"cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
-			cName,
+			TextAreaSave(cName),
 			uTTL,
 			uRRType,
-			cParam1,
-			cParam2,
-			cParam3,
-			cParam4,
+			TextAreaSave(cParam1),
+			TextAreaSave(cParam2),
+			TextAreaSave(cParam3),
+			TextAreaSave(cParam4),
 			TextAreaSave(cComment),
 			guOrg,
 			guLoginClient,
@@ -1207,13 +1207,13 @@ unsigned RRCheck(void)
 		if(!cParam3[0])
 		{
 			gcMessage="<blink>Port required</blink>";
-			cParam3Style="type_fields_req";
+			cParam3Style="type_textarea_req";
 			return(16);
 		}
 		if(!cParam4[0])
 		{
 			gcMessage="<blink>Target host required</blink>";
-			cParam4Style="type_fields_req";
+			cParam4Style="type_textarea_req";
 			return(16);                          
 		}
 
@@ -1243,7 +1243,7 @@ unsigned RRCheck(void)
 		if((!uI) || (uI>65535))
 		{
 			gcMessage="<blink>Invalid port number</blink>";
-			cParam3Style="type_fields_req";
+			cParam3Style="type_textarea_req";
 			return(17);
 		}
 		FQDomainName(cParam4);
@@ -1481,6 +1481,80 @@ unsigned RRCheck(void)
 	}
 	else if(!strcmp(cRRType,"NAPTR"))
 	{
+		register int i;
+		unsigned uI=0;
+
+		if(!cName[0])
+		{
+			cNameStyle="type_fields_req";
+			gcMessage="<blink>Error: </blink>cName: Resource name required";
+		}
+		else
+		{
+			register int x=0;
+			
+			//All lowercase
+			for(x=0;x<strlen(cName);x++)
+				cName[x]=tolower(cName[x]);
+		}	
+		if(!cParam1[0])
+		{
+			cParam1Style="type_fields_req";
+			gcMessage="<blink>Error: </blink>cParam1: Order value required";
+		}
+		if(!cParam2[0])
+		{
+			cParam2Style="type_fields_req";
+			gcMessage="<blink>Error: </blink>cParam2: Preference value required";
+		}
+		if(!cParam3[0])
+		{
+			cParam3Style="type_textarea_req";
+			gcMessage="<blink>Error: </blink>cParam3: Flags and ENUM double quoted strings required";
+		}
+		if(!cParam4[0])
+		{
+			cParam4Style="type_textarea_req";
+			gcMessage="<blink>Error: </blink>cParam4: Double quoted regex string and optional SRV target required.";
+		}
+
+		sscanf(cParam1,"%u",&uI);
+		if(!uI && !(isdigit(cParam1[0])))
+		{
+			cParam1Style="type_fields_req";
+			gcMessage="<blink>Error: </blink>cParam1: Must specify numerical order";
+		}
+
+		uI=0;
+		sscanf(cParam2,"%u",&uI);
+		if(!uI && (!isdigit(cParam2[0])))
+		{
+			cParam2Style="type_fields_req";
+			gcMessage="<blink>Error: </blink>cParam2: Must specify numerical preference";
+		}
+
+		//Check for double quotes
+		uI=0;
+		for(i=0;cParam3[i];i++)
+			if(cParam3[i]=='\"') uI++;
+		if(uI!=4)
+		{
+			cParam3Style="type_textarea_req";
+			gcMessage="<blink>Error: </blink>cParam3: Must double quote both flags and ENUM string."
+					" Ex: \"U\" \"E2U+sip\"";
+		}
+
+		uI=0;
+		for(i=0;cParam4[i];i++)
+			if(cParam4[i]=='\"') uI++;
+		if(uI<2)
+		{
+			cParam4Style="type_textarea_req";
+				gcMessage="<blink>Error: </blink>Must double quote REGEX."
+					" Ex: \"!^.*$!sip:customer-service@example.com!\" _sip._udp.example.com";
+		}
+
+
 	}
 
 	else if(1)
@@ -2266,9 +2340,9 @@ void ResourceSetFieldsOn(void)
 	if(strcmp(cCommentStyle,"type_fields_req"))
 		cCommentStyle="type_fields";
 	if(strcmp(cParam3Style,"type_fields_req"))
-		cParam3Style="type_fields";
+		cParam3Style="type_textarea";
 	if(strcmp(cParam4Style,"type_fields_req"))
-		cParam4Style="type_fields";
+		cParam4Style="type_textarea";
 
 }//void ResourceSetFieldsOn(void)
 
@@ -2279,17 +2353,18 @@ void SaveResource(void)
 	unsigned uRRType=0;
 	
 	uRRType=SelectRRType(cRRType);
-	//TODO: extend for SRV record support
 	sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%u',uZone='%u',"
-			"cName='%s',uTTL='%s',uRRType='%u',cParam1='%s',cParam2='%s',cComment='%s',"
-			"uOwner='%u',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			"cName='%s',uTTL='%s',uRRType='%u',cParam1='%s',cParam2='%s',cParam3='%s',"
+			"cParam4='%s',cComment='%s',uOwner='%u',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uResource,
 			guZone,
-			cName,
+			TextAreaSave(cName),
 			cuTTL,
 			uRRType,
-			cParam1,
-			cParam2,
+			TextAreaSave(cParam1),
+			TextAreaSave(cParam2),
+			TextAreaSave(cParam3),
+			TextAreaSave(cParam4),
 			cComment,
 			guOrg);
 	mysql_query(&gMysql,gcQuery);
