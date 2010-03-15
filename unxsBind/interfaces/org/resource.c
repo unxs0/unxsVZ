@@ -75,6 +75,7 @@ char *GetRRType(unsigned uRRType);
 unsigned OnLineZoneCheck(void);
 void CreatetResourceTest(void);
 void PrepareTestData(void);
+unsigned uPerRRTypeCheck(void);
 
 
 void ProcessResourceVars(pentry entries[], int x)
@@ -714,6 +715,7 @@ unsigned SelectRRType(char *cRRType)
 	
 }//unsigned SelectRRType(char *cRRType)
 
+
 unsigned uRRExists(char *cZone,char *cRRType,char *cValue,char *cParam)
 {
 	MYSQL_RES *res;
@@ -746,7 +748,6 @@ unsigned uRRExists(char *cZone,char *cRRType,char *cValue,char *cParam)
 unsigned RRCheck(void)
 {
 	register int i;
-	unsigned a=0,b=0,c=0,d=0;	
 	
 	//For all types check here
 	//
@@ -826,6 +827,25 @@ unsigned RRCheck(void)
 	FQDomainName(cName);
 	
 	//Per Type checks
+	if(uPerRRTypeCheck())
+		return(3);
+
+	PrepareTestData();
+
+	if(OnLineZoneCheck())
+	{
+		return(18);
+	}
+
+	return(0);
+
+}//void RRCheck(int uMode)
+
+
+unsigned uPerRRTypeCheck(void)
+{
+	unsigned a=0,b=0,c=0,d=0;	
+	
 	if(!strcmp(cRRType,"CNAME"))
 	{
 		MYSQL_RES *res;
@@ -1553,17 +1573,10 @@ unsigned RRCheck(void)
 		cRRTypeStyle="type_fields_req";
 		return(16);
 	}
-
-	PrepareTestData();
-
-	if(OnLineZoneCheck())
-	{
-		return(18);
-	}
-
+	
 	return(0);
 
-}//void RRCheck(int uMode)
+}//unsigned uPerRRTypeCheck(void)
 
 
 unsigned InMyBlocks(char *cIP)
@@ -1931,7 +1944,6 @@ void MasterFunctionSelect(void)
 	else if(!strcmp(gcFunction,"Next"))
 	{
 		register int i=0;
-		unsigned a=0,b=0,c=0,d=0;
 
 		LoadRRTypeLabels();
 		ResourceSetFieldsOn();
@@ -2014,312 +2026,9 @@ void MasterFunctionSelect(void)
 					sscanf(cParam2,"%s",gcQuery);
 					sprintf(cParam2,"%.99s",gcQuery);
 				}
-
-				if(!strcmp(cRRType,"CNAME"))
-				{
-					//cParam2 not used. Erased.
-					cParam2[0]=0;
-
-				if(!cParam1[0])
-				{
-					sprintf(cParam1,"%s.",gcZone);
-					sprintf(gcQuery,"<blink>%s is required. Common CNAME default entry made for you, check/change if needed</blink>",cParam1Label);
-					gcMessage=gcQuery;
-					cParam1Style="type_fields_req";
+				
+				if(uPerRRTypeCheck())
 					htmlResourceWizard(uStep);
-				}
-				else
-				{
-					char cParam1Save[101]={""};
-					char cParam1Temp[101]={""};
-
-					sprintf(cParam1Save,"%.100s",cParam1);
-					//converts, eliminates illegal chars.
-					//helpers try to format for you...lol
-					FQDomainName(cParam1);
-
-					//Ticket #323 CNAME record pointing to itself
-					if(!strcmp(cName,cParam1) || !strcmp(gcZone,cParam1))
-					{
-						gcMessage="<blink>Can't create a CNAME record pointing to itself</blink>";
-						cParam1Style="type_fields_req";
-						cNameStyle="type_fields_req";
-						htmlResourceWizard(uStep);
-					}
-					if(strchr(cParam1,'.'))
-					{
-						//FQDN
-						//Missing trailing dot
-						if(cParam1[strlen(cParam1)-1]!='.')
-						{
-							sprintf(cParam1Temp,"%.100s.",cParam1);
-							sprintf(cParam1,"%.99s",cParam1Temp);
-						}
-						if(strcmp(cParam1,cParam1Save))
-						{
-							sprintf(gcQuery,
-								"<blink>%s was changed check/fix</blink>",
-								cParam1Label);
-							gcMessage=gcQuery;
-							cParam1Style="type_fields_req";
-							htmlResourceWizard(uStep);
-						}
-					}
-					else
-					{
-						//Not FQDN, but internal zone member or another zone?
-
-						//TODO
-						//Advanced help not implemented yet.
-						//Check in this zone for A record. Should not be another CNAME.
-						//Check in tZone
-
-						if(cParam1[strlen(cParam1)-1]!='.')
-						{
-							sprintf(cParam1Temp,"%.49s.%.49s.",cParam1,gcZone);
-							sprintf(cParam1,"%.99s",cParam1Temp);
-						}
-						if(strcmp(cParam1,cParam1Save))
-						{
-							sprintf(gcQuery,
-								"<blink>%s was changed check/fix</blink>",
-								cParam1Label);
-							gcMessage=gcQuery;
-							cParam1Style="type_fields_req";
-							htmlResourceWizard(uStep);
-						}
-					}
-
-				}
-				}
-				else if(!strcmp(cRRType,"A"))
-				{
-
-					if(!strcmp(gcZone+strlen(gcZone)-5,".arpa"))
-					{
-						gcMessage="<blink>Can not add A records to arpa zones</blink>";
-						
-						htmlResourceWizard(uStep);
-					}
-					sscanf(cParam1,"%u.%u.%u.%u",&a,&b,&c,&d);
-					if(a>254) a=0;
-					if(b>254) b=0;
-					if(c>255) c=0;  
-					if(d>254) d=0;  
-
-					sprintf(cParam1,"%u.%u.%u.%u",a,b,c,d);
-
-					cParam2[0]=0;
-					if(!a || !d)
-					{
-						sprintf(gcQuery,
-							"<blink>Invalid IP Number for %s</blink>",
-							cParam1Label);
-						gcMessage=gcQuery;
-						cParam1Style="type_fields_req";
-						htmlResourceWizard(uStep);
-					}
-					if(uRRExists(gcZone,cRRType,cName,cParam1))
-					{
-						gcMessage="<blink>Resource record already exists</blink>";
-						cParam1Style="type_fields_req";
-						htmlResourceWizard(uStep);
-					}
-				}
-				else if(!strcmp(cRRType,"PTR"))
-				{
-					unsigned uPtr=0;
-					unsigned uPtrLen=strlen(cName);
-					//We only allow simple classC in-addr PTR
-					if(strstr(gcZone,"in-addr.arpa"))
-					{
-						sscanf(cName,"%u",&uPtr);
-						sprintf(cName,"%u",uPtr);
-
-						if(!uPtr)
-						{
-							sprintf(gcQuery,"<blink>Class-C in-addr.arpa zone PTR must be the last octet of rev dns IP</blink>");
-							gcMessage=gcQuery;
-							cNameStyle="type_fields_req";
-							htmlResourceWizard(uStep);
-						}
-
-						if(uPtr>254)
-						{
-							sprintf(gcQuery,"<blink>PTR value out of range (1-254 allowed only)</blink>");
-							gcMessage=gcQuery;
-							cNameStyle="type_fields_req";
-							htmlResourceWizard(uStep);
-						}
-
-						if(uPtrLen!=strlen(cName))
-						{
-							sprintf(gcQuery,"<blink>PTR was changed check</blink>");
-							gcMessage=gcQuery;
-							cNameStyle="type_fields_req";
-							htmlResourceWizard(uStep);
-						}
-
-						sscanf(gcZone,"%u.%u.%u.in-adddr.arpa",&c,&b,&a);
-						if(!a)
-						{
-							sprintf(gcQuery,
-								"<blink>Unexpected in-addr.arpa zone name format</blink>");
-							gcMessage=gcQuery;
-							cNameStyle="type_fields_req";
-							htmlResourceWizard(uStep);
-						}
-
-						if(uRRExists(gcZone,cRRType,cName,cParam1))
-						{
-							gcMessage="<blink>Resource record already exists</blink>";
-							cNameStyle="type_fields_req";
-							htmlResourceWizard(uStep);
-						}
-
-						sprintf(cParam2,"%u.%u.%u.%u",a,b,c,uPtr);
-						if(!InMyBlocks(cParam2))
-						{
-							gcMessage="<blink>IP Number not in any of your IP blocks</blink>";
-							cNameStyle="type_fields_req";
-							htmlResourceWizard(1);
-						}
-						cParam2[0]=0;//Was just a temp place holder
-					}
-
-					//Non arpa PTR records. Should we allow?
-					cParam2[0]=0;
-					FQDomainName(cParam1);
-					if(!cParam1[0])
-					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
-						gcMessage=gcQuery;
-						cParam1Style="type_fields_req";
-						htmlResourceWizard(uStep);
-					}
-					if(cParam1[strlen(cParam1)-1]!='.') strcat(cParam1,".");
-				}
-				else if(!strcmp(cRRType,"MX"))
-				{
-					if(!strcmp(gcZone+strlen(gcZone)-5,".arpa"))
-					{
-						gcMessage="<blink>Can not add MX records to arpa zones</blink>";
-						cRRTypeStyle="type_fields_req";
-						htmlResourceWizard(uStep);
-					}
-					sscanf(cParam1,"%u",&a);
-					sprintf(cParam1,"%u",a);
-					if(!a || a>1000)
-					{
-						sprintf(gcQuery,"<blink>Invalid MX Priority Number for %s</blink>",
-							cParam1Label);
-						gcMessage=gcQuery;
-						cParam1Style="type_fields_req";
-						htmlResourceWizard(uStep);
-					}
-					FQDomainName(cParam2);
-					if(!cParam2[0])
-					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam2Label);
-						gcMessage=gcQuery;
-						cParam2Style="type_fields_req";
-						htmlResourceWizard(uStep);
-					}
-					if(cParam2[strlen(cParam2)-1]!='.') strcat(cParam2,".");		
-				}
-				else if(!strcmp(cRRType,"NS"))
-				{
-					//All cases
-					cParam2[0]=0;
-					if(!cParam1[0])
-					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
-						gcMessage=gcQuery;
-						cParam1Style="type_fields_req";
-						htmlResourceWizard(uStep);
-					}
-					FQDomainName(cParam1);
-					if(cParam1[strlen(cParam1)-1]!='.') strcat(cParam1,".");
-
-					if(strcmp(gcZone+strlen(gcZone)-5,".arpa"))
-					{
-						sprintf(cName,"%.255s.",gcZone);
-					}
-					//else no other rules for arpa zone for now TODO
-				}
-				else if(!strcmp(cRRType,"HINFO"))
-				{
-					if(!cParam1[0])
-					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
-						gcMessage=gcQuery;
-						cParam1Style="type_fields_req";
-						htmlResourceWizard(uStep);
-					}
-					if(cParam1[0]!='"' && cParam1[strlen(cParam1)-1]!='"')
-					{
-						sprintf(gcQuery,"\"%.4095s\"",cParam1);
-						sprintf(cParam1,"%.99s",gcQuery);
-					}
-
-					if(!cParam2[0])
-					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam2Label);
-						gcMessage=gcQuery;
-						cParam2Style="type_fields_req";
-						htmlResourceWizard(uStep);
-					}
-					if(cParam2[0]!='"' && cParam1[strlen(cParam2)-1]!='"')
-					{
-						sprintf(gcQuery,"\"%.4095s\"",cParam2);
-						sprintf(cParam2,"%.99s",gcQuery);
-					}
-				}
-				else if(!strcmp(cRRType,"TXT"))
-				{
-					char *cp;
-
-					cParam2[0]=0;
-					if(!cParam1[0])
-					{
-						sprintf(gcQuery,"<blink>%s is required</blink>",cParam1Label);
-						gcMessage=gcQuery;
-						cParam1Style="type_fields_req";
-						htmlResourceWizard(uStep);
-					}
-					if(cParam1[0]!='"' && cParam1[strlen(cParam1)-1]!='"')
-					{
-						sprintf(gcQuery,"\"%.4095s\"",cParam1);
-						sprintf(cParam1,"%.99s",gcQuery);
-					}
-					else if(cParam1[0]!='"' && cParam1[strlen(cParam1)-1]=='"')
-					{
-						sprintf(gcQuery,"\"%.4095s",cParam1);
-						sprintf(cParam1,"%.99s",gcQuery);
-					}
-					else if(cParam1[0]=='"' && cParam1[strlen(cParam1)-1]!='"')
-					{
-						sprintf(gcQuery,"%.4095s\"",cParam1);
-						sprintf(cParam1,"%.99s",gcQuery);
-					}
-					else if((cp=strchr(cParam1+1,'"')))
-					{
-						if(cp!=cParam1+strlen(cParam1)-1)
-						{
-							sprintf(gcQuery,"<blink>Stray \" in TXT value</blink>");
-							gcMessage=gcQuery;
-							cParam1Style="type_fields_req";
-							htmlResourceWizard(uStep);
-						}
-					}
-
-				}
-				else if(1)
-				{
-					gcMessage="<blink>Must select valid Resource Type (A,MX,PTR,TXT,NS,CNAME,HINFO)</blink>";
-					cRRTypeStyle="type_fields_req";
-					htmlResourceWizard(uStep);
-				}
 
 				break;
 		}//switch(uStep)
