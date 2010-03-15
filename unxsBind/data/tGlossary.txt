@@ -715,7 +715,11 @@ Example of an IPv6 address:<br>\
 2001:0db8:85a3:08d3:1319:8a2e:0370:7334\
 \
 
-293	e164.arpa Origin or FQDN	1	1	1268297337	1	1268297361	The ITU ENUM allocates a specific zone, namely "e164.arpa" for use with ENUM\
+293	e164.arpa Origin or FQDN	1	1	1268297337	1	1268654839	@ or FQDN zone name.\
+<p>\
+If the zone is a e164.arpa then the following may apply:\
+<p>\
+The ITU ENUM allocates a specific zone, namely "e164.arpa" for use with ENUM\
 E.164 numbers on the IP side of the network. <a\
 href=http://tools.ietf.org/html/rfc3761 class=darkLink target=_blank>RFC\
 3761</a> define how any ENUM number, such as +1 555 42 42 can be transformed\
@@ -761,9 +765,9 @@ is used to give weight to rules that are considered the same from an authority\
 standpoint but not from a simple load balancing standpoint.\
 \
 
-296	Flags+ENUM	1	1	1268301768	1	1268306974	Flags:<br>\
+296	Flags ENUM	1	1	1268301768	1	1268654292	Flags:<br>\
 <br>\
-A <character-string> containing flags to control aspects of the rewriting and\
+A character string containing flags to control aspects of the rewriting and\
 interpretation of the fields in the record.  Flags are single characters from\
 the set [A-Z0-9].  The case of the alphabetic characters is not significant. <br>\
  At this time only four flags, "S", "A", "U", and "P", are defined.  The "S",\
@@ -776,7 +780,7 @@ field is an URI that adheres to the 'absoluteURI' production found in the ABNF\
 of RFC 2396. <br>\
 \
 
-297	Regex (+optional SRV)	1	1	1268307314	0	0	Regex:<br>\
+297	Regex (optional SRV)	1	1	1268307314	1	1268654259	Regex:<br>\
 A STRING containing a substitution expression that is applied to the original\
 string held by the client in order to construct the next domain name to lookup.<br>\
 <br>\
