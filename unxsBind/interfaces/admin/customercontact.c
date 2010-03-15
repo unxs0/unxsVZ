@@ -1139,7 +1139,7 @@ void LoadCustomerContact(void)
 			"tAuthorize.cLabel,tAuthorize.uPerm,tAuthorize.cPasswd,tAuthorize.cClrPasswd, "
 			"tClient.uCreatedBy,tClient.uCreatedDate,tClient.uModBy,tClient.uModDate FROM "
 			"tClient,tAuthorize WHERE tClient.uClient=%u AND tAuthorize.uCertClient=tClient.uClient "
-			"AND tAuthorize.uPerm<=6",guContact);
+			,guContact);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
