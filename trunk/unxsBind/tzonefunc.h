@@ -3668,13 +3668,12 @@ unsigned OnLineZoneCheck(unsigned uZone,unsigned uCalledMode,unsigned uCalledFro
 			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
 			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel FROM tZone,tNSSet,tNS,tView"
 			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
-			" tZone.uView=tView.uView AND tZone.uZone=%u'",uZone);
+			" tZone.uView=tView.uView AND tZone.uZone=%u",uZone);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
-
 	if((field=mysql_fetch_row(res)))
 	{
 		char *cp;
