@@ -798,8 +798,12 @@ unsigned ValidateAdminUserInput(void)
 		}
 		else if(!strcmp(gcFunction,"Confirm Modify"))
 		{
+			unsigned uRowId=0;
+
+			sscanf(cuClient,"%u",&uRowId);
+
 			if(strcmp(TextAreaSave(cClientName),
-				ForeignKey("tClient","cLabel",guContact)))
+				ForeignKey("tClient","cLabel",uRowId)))
 			{
 				sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND uOwner=%u",
 						TextAreaSave(cClientName)
@@ -808,7 +812,7 @@ unsigned ValidateAdminUserInput(void)
 				macro_mySQLRunAndStore(res);
 				if(mysql_num_rows(res))
 				{
-					SetCustomerContactFieldsOn();
+					SetAdminUserFieldsOn();
 					cClientNameStyle="type_fields_req";
 					gcMessage="<blink>Error: </blink>'Contact Name' already exists for selected company,"
 						" perhaps you wanted to create it for another company.";
