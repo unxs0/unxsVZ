@@ -52,6 +52,8 @@
 <tr><td><a href="AdminNew">AdminNew</a></td></tr>
 <tr><td><a href="AdminMod">AdminMod</a></td></tr>
 <tr><td><a href="AdminDel">AdminDel</a></td></tr>
+<tr><td><a href="RR-AAAA">RR-AAAA</a></td></tr>
+<tr><td><a href="RR-NAPTR">RR-NAPTR</a></td></tr>
 </tbody></table>
 </body>
 </html>
