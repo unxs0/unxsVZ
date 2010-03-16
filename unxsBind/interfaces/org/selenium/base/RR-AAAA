@@ -3,13 +3,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head profile="http://selenium-ide.openqa.org/profiles/test-case">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<link rel="selenium.base" href="https://node1vm:9333/" />
-<title>RR-NAPTR</title>
+<link rel="selenium.base" href="" />
+<title>RR-AAAA</title>
 </head>
 <body>
 <table cellpadding="1" cellspacing="1" border="1">
 <thead>
-<tr><td rowspan="1" colspan="3">RR-NAPTR</td></tr>
+<tr><td rowspan="1" colspan="3">RR-AAAA</td></tr>
 </thead><tbody>
 <tr>
 	<td>clickAndWait</td>
@@ -24,37 +24,22 @@
 <tr>
 	<td>selectAndWait</td>
 	<td>cRRType</td>
-	<td>label=NAPTR</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>cParam1</td>
-	<td>10</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>cParam2</td>
-	<td>5</td>
+	<td>label=AAAA</td>
 </tr>
 <tr>
 	<td>type</td>
 	<td>cName</td>
-	<td>testnap</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>cParam3</td>
-	<td>&quot;S&quot;<br />&quot;SIP+D2U&quot;</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>cParam4</td>
-	<td>&quot;!^.*$!sip:customer-service@example2.com!&quot;</td>
+	<td>ipv6host</td>
 </tr>
 <tr>
 	<td>type</td>
 	<td>cComment</td>
-	<td>testing naptr</td>
+	<td>testing ipv6 A</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>cParam1</td>
+	<td>2001:0db8:85a3:08d3:1319:8a2e:0370</td>
 </tr>
 <tr>
 	<td>clickAndWait</td>
@@ -63,13 +48,13 @@
 </tr>
 <tr>
 	<td>assertBodyText</td>
-	<td>glob:*The RR has an error: unexpected end of input*</td>
+	<td>glob:*IPv6 format-6 error!*</td>
 	<td></td>
 </tr>
 <tr>
 	<td>type</td>
-	<td>cParam4</td>
-	<td>&quot;!^.*$!sip:customer-service@example2.com!&quot; _sip._udp.example2.com.</td>
+	<td>cParam1</td>
+	<td>2001:0db8:85a3:08d3:1319:8a2e:0370:7334</td>
 </tr>
 <tr>
 	<td>clickAndWait</td>
@@ -88,8 +73,8 @@
 </tr>
 <tr>
 	<td>type</td>
-	<td>cParam3</td>
-	<td></td>
+	<td>cParam1</td>
+	<td>999punk:db8:85a3:8d3:1319:8a2e:370:7334</td>
 </tr>
 <tr>
 	<td>clickAndWait</td>
@@ -98,13 +83,13 @@
 </tr>
 <tr>
 	<td>assertBodyText</td>
-	<td>glob:*The RR has an error: unexpected end of input*</td>
+	<td>glob:*IPv6 number can only have hexadecimal digits and colons*</td>
 	<td></td>
 </tr>
 <tr>
 	<td>type</td>
-	<td>cParam3</td>
-	<td>&quot;S&quot;<br />&quot;SIP+D2U&quot;</td>
+	<td>cParam1</td>
+	<td>456:db8:85a3:8d3:1319:8a2e:370:7334</td>
 </tr>
 <tr>
 	<td>clickAndWait</td>
@@ -122,7 +107,7 @@
 	<td></td>
 </tr>
 <tr>
-		<td>clickAndWait</td>
+	<td>clickAndWait</td>
 	<td>//input[@name='gcFunction' and @value='Delete Confirm']</td>
 	<td></td>
 </tr>
