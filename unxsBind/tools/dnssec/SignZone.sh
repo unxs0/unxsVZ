@@ -49,9 +49,13 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-#This will keep signing the zone over and over with more keys.
-#As long as the system has not generated another zone db file on us.
-cat $cKSKKey.key $cZSKKey.key >> $2;
+cp $2 $2.tmp;
+if [ $? != 0 ];then
+	echo "cp $2.tmp error";
+	exit 1;
+fi
+
+cat $cKSKKey.key $cZSKKey.key >> $2.tmp;
 if [ $? != 0 ];then
 	echo "cat $cKSKKey $cZSKKey error";
 	rm -f K$1*.key;
@@ -77,15 +81,22 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-/usr/sbin/dnssec-signzone -o $1 -k /usr/local/idns/keys/$cKSKKey.key $2 /usr/local/idns/keys/$cZSKKey.key;
+/usr/sbin/dnssec-signzone -o $1 -k /usr/local/idns/keys/$cKSKKey.key $2.tmp /usr/local/idns/keys/$cZSKKey.key;
 if [ $? != 0 ];then
-	echo "/usr/sbin/dnssec-signzone -D /usr/local/idns/keys/ -o $1 -k /usr/local/idns/keys/$cKSKKey $2 /usr/local/idns/keys/$cZSKKey (error)";
+	echo "/usr/sbin/dnssec-signzone -D /usr/local/idns/keys/ -o $1 -k /usr/local/idns/keys/$cKSKKey $2.tmp /usr/local/idns/keys/$cZSKKey (error)";
+	rm -f /usr/local/idns/keys/K$1*.key;
+	rm -f /usr/local/idns/keys/K$1*.private;
 	exit 1;
 fi
+#unexpected error leave keys for now
 if [ ! -f $2.signed ];then
 	echo "/usr/sbin/dnssec-signzone error2";
+	#rm -f /usr/local/idns/keys/K$1*.key;
+	#rm -f /usr/local/idns/keys/K$1*.private;
 	exit 1;
 fi
+
+rm -f $2.tmp;
 
 mv dsset-$1* /usr/local/idns/keys/;
 if [ $? != 0 ];then
@@ -99,10 +110,6 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-
-#We can remove the keys since they are in the .signed and the zone db files.
-#We keep the private keys however for resigning with same KSK (ZSK rollover).
-rm -f /usr/local/idns/keys/K$1*.key;
 
 #Note we assume that the default rndc key is setup correctly here.
 /usr/sbin/rndc reload > /dev/null 2>&1;
