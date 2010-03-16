@@ -70,7 +70,7 @@ void SaveResource(void);
 char *cPrintNSList(FILE *zfp,char *cuNameServer);
 void PrintMXList(FILE *zfp,char *cuMailServers);
 char *GetRRType(unsigned uRRType);
-unsigned OnLineZoneCheck(void);
+unsigned idnsOnLineZoneCheck(void);
 void CreatetResourceTest(void);
 void PrepareTestData(void);
 unsigned uPerRRTypeCheck(void);
@@ -841,7 +841,7 @@ unsigned RRCheck(void)
 
 	PrepareTestData();
 
-	if(OnLineZoneCheck())
+	if(idnsOnLineZoneCheck())
 	{
 		return(18);
 	}
@@ -2078,7 +2078,7 @@ void SaveResource(void)
 }//void SaveResource(void)
 
 
-unsigned OnLineZoneCheck(void)
+unsigned idnsOnLineZoneCheck(void)
 {
 	//This function will create a zonefile online and run named-checkzone
 	MYSQL_RES *res;
@@ -2277,7 +2277,7 @@ unsigned OnLineZoneCheck(void)
 
 	return(0);
 
-}//unsigned OnLineZoneCheck(void)
+}//unsigned idnsOnLineZoneCheck(void)
 
 
 char *GetRRType(unsigned uRRType)

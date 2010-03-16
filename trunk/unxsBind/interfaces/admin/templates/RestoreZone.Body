@@ -164,7 +164,7 @@ Search for the zone you want to restore with tool above. Zone data will be displ
 		<td>
 		<input type=hidden name=uNameServer value={{uNameServer}}>
 		<input type=hidden name=cNSSet value={{cNSSet}}>
-			<{{textarea}} cols=50 rows=4 disabled class="type_textarea_off">{{funcNSSetMembers}}</{{textarea}}>
+			<textarea cols=50 rows=4 disabled class="type_textarea_off">{{funcNSSetMembers}}</textarea>
 		</td>
 	</tr>
 	
