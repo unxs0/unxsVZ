@@ -1451,3 +1451,60 @@ int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZo
 
 }//int AutoAddPTRResource()
 
+
+void PrepareTestData(void)
+{
+	CreatetResourceTest();
+	sprintf(gcQuery,"TRUNCATE tResourceTest");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	sprintf(gcQuery,"INSERT INTO tResourceTest (uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,"
+			"uModDate,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,cComment,uZone) "
+			"SELECT uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
+			"cParam1,cParam2,cParam3,cParam4,cComment,uZone FROM tResource WHERE "
+			"uZone=%u",uZone);
+
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	
+	if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
+		sprintf(gcQuery,"INSERT INTO tResourceTest SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s'"
+				",cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uZone=%u",
+				cName,
+				uTTL,
+				uRRType,
+				cParam1,
+				cParam2,
+				cParam3,
+				cParam4,
+				TextAreaSave(cComment),
+				guCompany,
+				guLoginClient,
+				uZone);
+		else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
+		sprintf(gcQuery,"UPDATE tResourceTest SET cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',"
+				"cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) "
+				"WHERE uResource=%u",
+				cName,
+				uTTL,
+				uRRType,
+				cParam1,
+				cParam2,
+				cParam3,
+				cParam4,
+				TextAreaSave(cComment),
+				guLoginClient,
+				uResource);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void PrepareTestData(void)
+
+
+
+
