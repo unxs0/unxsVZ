@@ -44,7 +44,7 @@
 <tr>
 	<td>type</td>
 	<td>cParam1</td>
-	<td>192.168.45.4</td>
+	<td>192.168.45.43</td>
 </tr>
 <tr>
 	<td>type</td>
@@ -90,16 +90,6 @@
 	<td>type</td>
 	<td>cParam1</td>
 	<td>10</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>cParam1</td>
-	<td>10</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>cComment</td>
-	<td>wizard RR</td>
 </tr>
 <tr>
 	<td>type</td>
