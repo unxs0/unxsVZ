@@ -450,6 +450,8 @@ void funcMetaParam(FILE *fp)
 	template.cpName[11]="cParam4Style";
 	template.cpValue[11]=cParam4Style;
 	
+	//RR wizard fix
+	if(uStep) gcInputStatus[0]=0;
 	template.cpName[12]="gcInputStatus";
 	template.cpValue[12]=gcInputStatus;
 	
