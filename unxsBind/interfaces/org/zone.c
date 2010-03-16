@@ -87,7 +87,7 @@ void htmlDelegationTool(void);
 void UpdateSerialNum(char *cZone);
 char *ParseTextAreaLines(char *cTextArea);
 void PrepDelToolsTestData(unsigned uNumIPs);
-unsigned OnLineZoneCheck(void);
+unsigned idnsOnLineZoneCheck(void);
 
 
 
@@ -361,7 +361,7 @@ void ZoneCommands(pentry entries[], int x)
 				uDelegationTTL=uTTL;
 			
 			PrepDelToolsTestData(uNumIPs);
-			if(OnLineZoneCheck())
+			if(idnsOnLineZoneCheck())
 			{
 				sprintf(gcModStep," Confirm");
 				htmlDelegationTool();
