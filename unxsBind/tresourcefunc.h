@@ -38,6 +38,7 @@ unsigned IsSecondaryOnlyZone(unsigned uZone);
 int PopulateArpaZone(char *cZone, char *cIPNum, unsigned uHtmlMode,
 					unsigned uFromZone, unsigned uZoneOwner);
 void UpdateSerialNum(unsigned uZone);//tzonefunc.h
+void PrepareTestData(void);
 
 /*
 void DebugOnly(const char *cLabel1, const char *cValue1, const char *cLabel2, const char *cValue2)
@@ -671,6 +672,9 @@ void RRCheck(int uMode)
 		guMode=uMode;
 		tResource("Must select valid uRRType");
 	}
+	
+	PrepareTestData();
+	OnLineZoneCheck(uZone,uMode,0);
 
 }//void RRCheck(int uMode)
 
@@ -771,7 +775,6 @@ void ExttResourceCommands(pentry entries[], int x)
 
 				if(strstr(cZone,"in-addr.arpa") && uClient)
 					uOwner=uClient;
-
 				//tZone needs to be updated
 				sscanf(ForeignKey("tZone","uNSSet",uZone),"%u",
 					&uNSSet);
