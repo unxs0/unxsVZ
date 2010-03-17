@@ -713,7 +713,7 @@ void Initialize(char *cPasswd)
 	}
 
 	//Grant localaccess privileges.
-	mysql_query(&gMysql,"GRANT ALL ON unxsradacct.* TO mysqlradacct2@localhost IDENTIFIED BY 'wsxedc'");
+	mysql_query(&gMysql,"GRANT ALL ON unxsradacct.* TO unxsradacct@localhost IDENTIFIED BY 'wsxedc'");
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
