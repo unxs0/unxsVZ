@@ -91,6 +91,9 @@ chown -R named:named /usr/local/idns
 cd $RPM_BUILD_DIR
 
 %post
+chmod -R og+x /usr/local/idns
+chmod 644 /usr/local/idns/named.conf
+chown -R named:named /usr/local/idns
 if [ -x /sbin/chkconfig ];then
 	if [ -x /etc/init.d/named ];then
 		/sbin/chkconfig --level 3 named off
