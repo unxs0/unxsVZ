@@ -1,20 +1,32 @@
 #
 #FILE
-#	unxsVZ/unxsBind/interfaces/org/INSTALL
+#	unxsVZ/unxsBind/interfaces/vorg/INSTALL
 #	$Id$
 #AUTHOR-LEGAL
-#	(C) 2006-2009 Hugo Urquiza, Gary Wallis for Unixservice.
+#	(C) 2006-2010 Hugo Urquiza, Gary Wallis for Unixservice LLC.
 #NOTES
 #	Based on using BASH shell on a CentOS 5 GNU/Linux server (or VE/VM.)
 #	Examples commands may have to be changed. They are based on the CentOS5 
 #	rpm distribution.
 #
 
-idnsOrg Quick Install Instructions
+vdnsOrg Quick Install Instructions
+
+Brief Introduction:
+
+vdnsOrg provides the same functionality as idnsOrg. The only difference they have (at least on the
+end user point of view) is that vdnsOrg can handle zones deployed for all the BIND views
+deployed in the system. On the other hand, vdnsOrg only allows editing the resource records
+of zones in the external view.
 
 Prerequisites:
 
 You must have your iDNS backend system installed (iDNS.cgi) and tested.
+
+Important:
+
+If you install vdnsOrg you ****won't be able to use idnsOrg*** since the templates used by both 
+applications are mutually exclusive.
 
 
 Instructions:
@@ -54,7 +66,7 @@ Instructions:
 	# cp -i ./templates/images/*.jpg /var/www/unxs/html/images
 	# cp -i ./templates/images/*.png /var/www/unxs/html/images
 
-5-. Then login and test your new idnsOrg interface, via your Firefox browser.
+5-. Then login and test your new vdnsOrg interface, via your Firefox browser.
 
 	Example browser location URL:
 
