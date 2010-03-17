@@ -480,7 +480,7 @@ void Initialize(char *cPasswd)
 	}
 
 	//Grant access privileges.
-	sprintf(gcQuery,"GRANT ALL ON %s.* to %s IDENTIFIED BY '%s'",
+	sprintf(gcQuery,"GRANT ALL ON %s.* to %s@localhost IDENTIFIED BY '%s'",
 							DBNAME,DBLOGIN,DBPASSWD);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
