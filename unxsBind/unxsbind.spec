@@ -1,10 +1,10 @@
 Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
 Name: unxsbind
-Version: 1.31
+Version: 2.0
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-1.31.tar.gz
+Source: http://unixservice.com/source/unxsbind-2.0.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -313,6 +313,8 @@ fi
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
+* Wed Mar 17 2010 Hugo Urquiza <support2@unixservice.com>
+- New rpm release, added support for AAAA and NAPTR RRs, major version number change.
 * Mon Aug 02 2009 Hugo Urquiza <support2@unixservice.com>
 - Fixed directories permission and ownership, and init.d script minor update.
 * Mon Jul 13 2009 Gary Wallis <support@unixservice.com>
