@@ -2271,7 +2271,7 @@ unsigned idnsOnLineZoneCheck(void)
 							field2[5],
 							field2[6]);
 				else if(!strcmp(cRRType,"NAPTR"))
-					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t(%s\t%s)\n",
 							field2[0],
 							cTTL,
 							cRRType,
@@ -2477,7 +2477,7 @@ void PrepareTestData(void)
 	unsigned uRRType=SelectRRType(cRRType);
 
 	CreatetResourceTest();
-	sprintf(gcQuery,"DELETE FROM tResourceTest WHERE uZone=%u",uZone);
+	sprintf(gcQuery,"TRUNCATE tResourceTest");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

@@ -2206,7 +2206,7 @@ unsigned idnsOnLineZoneCheck(void)
 							field2[5],
 							field2[6]);
 				else if(!strcmp(cRRType,"NAPTR"))
-					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+					fprintf(zfp,"%s\t%s\t%s\t%s\t%s\t(%s\t%s)\n",
 							field2[0],
 							cTTL,
 							cRRType,
