@@ -667,8 +667,9 @@ void htmlGlossaryLink(char *cLabel)
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		printf("Glossary entry for <a class=darkLink href=unxsVZ.cgi?gcFunction=tGlossary"
-				"&uGlossary=%s>%s</a><p>\n",field[0],cLabel);
+		printf("Glossary entry for <a class=darkLink href=#"
+			" onClick=\"open_popup('?gcFunction=Glossary&cLabel=%1$s')\">%1$s</a><p>",cLabel);
+
 	}
 	mysql_free_result(res);
 
