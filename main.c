@@ -499,7 +499,8 @@ void Header_ism3(char *title, int js)
 	StyleSheet();
         if(js)
                 jsCalendarHeader();
-
+	
+	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
 	printf("</head><body><form action=unxsVZ.cgi method=post><blockquote>\n");
 	printf("<img src=/images/unxslogo.gif>&nbsp;&nbsp;\n");
 
@@ -1143,7 +1144,9 @@ void CloseFieldSet(void)
 
 void OpenRow(const char *cFieldLabel, const char *cColor)
 {
-	printf("<tr><td width=20%% valign=top><font color=%.32s>%.32s</td><td>",cColor,cFieldLabel);
+	printf("<tr><td width=20%% valign=top><a class=darkLink "
+		"href=# onClick=\"open_popup('?gcFunction=Glossary&cLabel=%2$s')\">"
+		"<font color=%1$s>%2$s</font></td><td>",cColor,cFieldLabel);
 
 }//void OpenRow()
 

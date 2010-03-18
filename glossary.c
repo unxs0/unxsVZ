@@ -52,19 +52,19 @@ void GlossaryGetHook(entry gentries[],int x)
 
 void htmlGlossary(void)
 {
-	Header_ism3(":: Glossary",0);
+	printf("Content-type: text/html\n\n");
+	StyleSheet();
+	printf("<title>%s Glossary Entry</title>\n",cLabel);
 	htmlGlossaryPage();
-	Footer_ism3();
+	exit(0);
 
 }//void htmlGlossary(void)
 
 
 void htmlGlossaryPage(void)
 {
-	printf("<fieldset><legend><b>%s Glossary Entry</b>\n"
-		"<table>\n"
-		"<tr><td>%s</td></tr>\n"
-		"</table>\n",
+	printf("<b>%s Glossary Entry</b><br><br>\n"
+		"%s",
 		cLabel
 		,cText
 		);
