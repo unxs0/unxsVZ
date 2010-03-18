@@ -61,6 +61,13 @@ void htmlGlossary(void)
 
 void htmlGlossaryPage(void)
 {
+	printf("<fieldset><legend><b>%s Glossary Entry</b>\n"
+		"<table>\n"
+		"<tr><td>%s</td></tr>\n"
+		"</table>\n",
+		cLabel
+		,cText
+		);
 
 }//void htmlGlossaryPage()
 
