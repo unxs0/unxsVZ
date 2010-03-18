@@ -221,8 +221,8 @@ int main(int iArgc, char *cArgv[])
 				ExttConfigurationGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"Dashboard"))
 				unxsVZ("DashBoard");
-
-
+			else if(!strcmp(gcFunction,"Glossary"))
+				GlossaryGetHook(gentries,x);
 		}
 
 		unxsVZ(ISPNAME);

@@ -550,6 +550,8 @@ void DeletetConfiguration(void);
 void ExttConfigurationGetHook(entry gentries[], int x);
 void ExttConfigurationNavBar(void);
 
+//glossary.c
+void GlossaryGetHook(entry gentries[],int x);
 
 
 //In-line code macros

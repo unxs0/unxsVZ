@@ -15,8 +15,15 @@ LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -lz -lcrypt -lm -lssl -lu
 
 all: unxsVZ.cgi
 
-unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o  jobqueue.o main.o cgi.o
-	cc tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o  jobqueue.o main.o cgi.o -o unxsVZ.cgi $(LIBS) 
+unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o \
+	tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
+	ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o \
+	tjob.o tjobstatus.o tstatus.o tconfiguration.o  jobqueue.o glossary.o main.o cgi.o
+	cc tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o \
+		tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
+		tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o \
+		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o \
+		jobqueue.o glossary.o main.o cgi.o -o unxsVZ.cgi $(LIBS) 
 
 tdatacenter.o: tdatacenter.c mysqlrad.h language.h tdatacenterfunc.h local.h
 	cc -c tdatacenter.c -o tdatacenter.o $(CFLAGS)
@@ -99,6 +106,8 @@ tstatus.o: tstatus.c mysqlrad.h language.h tstatusfunc.h local.h
 tconfiguration.o: tconfiguration.c mysqlrad.h language.h tconfigurationfunc.h local.h
 	cc -c tconfiguration.c -o tconfiguration.o $(CFLAGS)
 
+glossary.o : glossary.c mysqlrad.h local.h
+	cc -c glossary.c -o glossary.o $(CFLAGS)
 
 main.o: main.c mysqlrad.h mainfunc.h language.h local.h
 	cc -c main.c -o main.o $(CFLAGS)
