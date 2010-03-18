@@ -197,8 +197,8 @@ void ExttIPButtons(void)
 				" stage.");
 			if(uIP)
 				tIPReport();
-			tIPNavList(1);
 			tIPNavList(0);
+			tIPNavList(1);
 	}
 	CloseFieldSet();
 
