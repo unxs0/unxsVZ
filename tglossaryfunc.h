@@ -282,8 +282,10 @@ void tGlossaryNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tGlossary\
-&uGlossary=%s>%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tGlossary&uGlossary=%s>%s</a>",
+					field[0],field[1]);
+			printf(" <a class=darkLink href=# onClick=\"open_popup('?gcFunction=Glossary&cLabel=%s')\">"
+					"Popup</a><br>",field[1]);
 	        }
 	}
         mysql_free_result(res);

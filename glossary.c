@@ -3,16 +3,19 @@ FILE
 	glossary.c
 	$Id: glossary.c 660 2008-12-18 18:48:48Z hus $
 AUTHOR
-	(C) 2006-2010 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2006-2010 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	GPLv2 license applies see LICENSE file included.
 PURPOSE
-	iDNS Admin (Owner) Interface, modified for backend usage
-	program file.
+	For tGlossary content html popups.
 */
 
 #include "mysqlrad.h"
 
 static char cLabel[33]={""};
 static char *cText="";
+
+//Protos
+void StyleSheet(void);//main.c
 
 //
 //Local only
