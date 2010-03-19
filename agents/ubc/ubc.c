@@ -5,12 +5,15 @@ FILE
 PURPOSE
 	Collection of diverse VZ operating parameters and other system vars.
 AUTHOR
-	Gary Wallis for Unxiservice (C) 2008-2009. GPL2 License applies.
+	Gary Wallis for Unxiservice, LLC. (C) 2008-2010.
+	GPLv2 License applies. See LICENSE file.
 NOTES
 	For latest autonomic functions we need to collect one week of data.
 	This weekly data wil be limited to only a few UBC values, and disk usage
 	quota data. The basic idea is to provide trend information for better
 	informed elastic autonomics.
+
+	Starting to work on ticket unxsVZ Trac ticket #120
 */
 
 #include "../../mysqlrad.h"
@@ -420,7 +423,9 @@ void ProcessSingleHDUsage(unsigned uContainer)
 		logfileLine("ProcessSingleHDUsage","No container specified");
 		exit(1);
 	}
-		
+	
+	//We need to replace this du command with somehting else much faster
+	//like reading from some system file directly du data.	
 	sprintf(cCommand,"/usr/bin/du -ks /vz/private/%u/ 2> /dev/null",uContainer);
 
 	if((fp=popen(cCommand,"r")))
