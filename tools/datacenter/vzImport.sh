@@ -10,6 +10,9 @@
 #NOTES
 #	This is a very basic script, written to perform
 #	a specific migration task.
+#	The migration is from another unxsVZ system to a new one.
+#	The first step was faking the new node on the source system
+#	and running clone wizard after setting up the ssh stuff.
 #	
 
 #Set these constants, make sure any tables they refer to have the correct data.
@@ -43,7 +46,7 @@ do
 	echo cHostname=$cHostname;
 	#uVeth=0; default is 0 so we can even omit this from insert query.
 	#uIPv4= from select Must preload tIP with the clone range from source unxsVZ db.
-	echo $cIP;
+	echo cIP=$cIP;
 	#uOSTemplate from select. Must preload tOSTemplate from mysqldump of source unxsVZ db.
 	echo cOSTemplate=$cOSTemplate;
 	#uConfig from select. Must preload tConfig from mysqldump of source unxsVZ db.
@@ -61,7 +64,7 @@ do
 	echo uCreatedBy=$uCreatedBy;
 	echo "";
 	
-#cQuery="INSERT INTO tContainer SET uContainer=$uContainer,cLabel='$cLabel',uIPv4=(SELECT uIP FROM tIP WHERE cLabel='$cIP' AND uAvailable=1),uOSTemplate=(SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='$cOSTemplate'),uConfig=(SELECT uConfig FROM tConfig WHERE cLabel='$cConfig',uNameserver=$uNameserver,uSearchdomain=$uSearchdomain,uDatacenter=$uDatacenter,uNode=$uNode,uStatus=$uStatus,uOwner=$uOwner,uCreatedBy=$uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
-#	echo $cQuery;
+	#cQuery="INSERT INTO tContainer SET uContainer=$uContainer,cLabel='$cLabel',uIPv4=(SELECT uIP FROM tIP WHERE cLabel='$cIP' AND uAvailable=1),uOSTemplate=(SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='$cOSTemplate'),uConfig=(SELECT uConfig FROM tConfig WHERE cLabel='$cConfig',uNameserver=$uNameserver,uSearchdomain=$uSearchdomain,uDatacenter=$uDatacenter,uNode=$uNode,uStatus=$uStatus,uOwner=$uOwner,uCreatedBy=$uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
+	#echo $cQuery;
 done
 
