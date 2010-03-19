@@ -920,6 +920,7 @@ void UpdateSchema(void)
 	unsigned uJobDatacenterIndex=0;
 	unsigned uJobContainerIndex=0;
 	unsigned uTemplateLabelIndex=0;
+	unsigned uGlossaryLabelIndex=0;
 
 	printf("UpdateSchema(): Start\n");
 
@@ -998,6 +999,18 @@ void UpdateSchema(void)
 	while((field=mysql_fetch_row(res)))
 	{
 		if(!strcmp(field[2],"cLabel")) uTemplateLabelIndex=1;
+	}
+       	mysql_free_result(res);
+
+	sprintf(gcQuery,"SHOW INDEX IN tGlossary");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[2],"cLabel")) uGlossaryLabelIndex=1;
 	}
        	mysql_free_result(res);
 
@@ -1171,6 +1184,16 @@ void UpdateSchema(void)
 			printf("%s\n",mysql_error(&gMysql));
 		else
 			printf("Added INDEX cLabel tTemplate\n");
+	}
+
+	if(!uGlossaryLabelIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tGlossary ADD INDEX (cLabel)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX cLabel tGlossary\n");
 	}
 
 	printf("UpdateSchema(): End\n");

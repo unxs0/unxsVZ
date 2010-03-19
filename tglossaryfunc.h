@@ -284,8 +284,8 @@ void tGlossaryNavList(void)
 		{
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tGlossary&uGlossary=%s>%s</a>",
 					field[0],field[1]);
-			printf(" <a class=darkLink href=# onClick=\"open_popup('?gcFunction=Glossary&cLabel=%s')\">"
-					"Popup</a><br>",field[1]);
+			printf(" (<a class=darkLink href=# onClick=\"open_popup('?gcFunction=Glossary&cLabel=%s')\">"
+					"preview</a>)<br>",field[1]);
 	        }
 	}
         mysql_free_result(res);
