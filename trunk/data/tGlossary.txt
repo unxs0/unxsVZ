@@ -143,3 +143,71 @@ This value is used by the job queue for automated clone sync operations.\
 \
 <p>\
 Related terms: none
+101	DashGraph0	1	1	1269005107	0	0	DashGraph0
+111	DashGraph1	1	1	1269005119	0	0	DashGraph1
+121	DashGraph2	1	1	1269005128	0	0	DashGraph2
+131	DashGraph0URL	1	1	1269005143	0	0	DashGraph0URL
+141	DashGraph1URL	1	1	1269005153	0	0	DashGraph1URL
+151	DashGraph2URL	1	1	1269005165	0	0	DashGraph2URL
+161	cSSHOptions	1	1	1269005212	0	0	cSSHOptions
+171	cSCPOptions	1	1	1269005228	0	0	cSCPOptions
+201	cNodeTrafficDirURL	1	1	1269005396	0	0	cNodeTrafficDirURL
+191	cTrafficDirURL	1	1	1269005327	0	0	cTrafficDirURL
+211	cDatacenterTrafficDirURL	1	1	1269005432	0	0	cDatacenterTrafficDirURL
+221	Contact	1	1	1269005839	0	0	Contact
+231	Bandwidth	1	1	1269005859	0	0	Bandwidth
+241	CostPerMonth	1	1	1269005888	0	0	CostPerMonth
+251	MaxNodes	1	1	1269006026	0	0	MaxNodes
+261	luInstalledDiskSpace	1	1	1269006271	0	0	luInstalledDiskSpace
+271	luInstalledRam	1	1	1269006290	0	0	luInstalledRam
+281	cWarningEmail	1	1	1269006318	0	0	Used by autonomics subsystem to warn by set email of approaching limitations and\
+other\
+error or warning conditions that may be configured or use system defaults.\
+\
+<p>\
+Accepted values: Single email or comma delimited list of email addresses.<br>\
+Ex. supportgrp@unixservice.com,joe@hosting.co.uk\
+\
+<p>\
+Scope: Can be set at the Datacenter, node or container level. \
+\
+\
+<p>\
+Related terms: Autonomics-PrivPagesWarnRatio and similar.
+291	vzcpucheck-nodepwr.fCPUUnits	1	1	1269006463	0	0	vzcpucheck-nodepwr.fCPUUnits
+301	cPasswd	1	1	1269007100	0	0	cPasswd
+311	cUBC	1	1	1269007310	0	0	jobqueue.c:\	GetContainerProp(uContainer,cUBC,cBuf);
+321	cExtraNodeIP	1	1	1269007381	0	0	jobqueue.c:\	GetContainerProp(uContainer,"cExtraNodeIP",cExtraNodeIP);
+331	cNodeIP	1	1	1269007462	0	0	jobqueue.c:\	GetContainerProp(uContainer,"cNodeIP",cExtraNodeIP);
+341	cVEID.mount	1	1	1269007499	0	0	jobqueue.c:\	GetContainerProp(uContainer,"cVEID.mount",cTemplateName);
+351	cNetmask	1	1	1269007548	0	0	jobqueue.c: GetContainerProp(uContainer,"cNetmask",cNetmask);
+361	cPrivateIPs	1	1	1269007587	0	0	jobqueue.c: GetContainerProp(uContainer,"cPrivateIPs",cPrivateIPs);
+371	cService1	1	1	1269007625	0	0	jobqueue.c: GetContainerProp(uContainer,"cService1",cService1);
+381	cService2	1	1	1269007636	0	0	jobqueue.c: GetContainerProp(uContainer,"cService2",cService1);
+391	cVEID.umount	1	1	1269007665	0	0	jobqueue.c: GetContainerProp(uContainer,"cVEID.umount",cTemplateName);
+401	cVEID.start	1	1	1269007686	0	0	jobqueue.c: GetContainerProp(uContainer,"cVEID.start",cTemplateName);
+411	cVEID.stop	1	1	1269007724	0	0	jobqueue.c: GetContainerProp(uContainer,"cVEID.stop",cTemplateName);
+421	veinfo.uProcesses	1	1	1269007839	0	0	mainfunc.h: GetContainerProp(uContainer,"veinfo.uProcesses",cuProcesses);
+431	Graph0	1	1	1269008044	0	0	tgroup.c:\	GetGroupProp(uGroup,"Graph0",cGraph0);\
+tnode.c:\	GetNodeProp(uNode,"Graph0",cGraph0);
+441	uDatacenter	1	1	1269008150	0	0	Unique datacenter ID number.
+451	cLabel	1	1	1269008202	0	0	Used by many tables. The generic name or label of a given table record.
+461	uStatus	1	1	1269008368	0	0	The status of the record or the item referenced y the record.\
+\
+<p>\
+Usually an index into tStatus to show the tStatus.cLabel.
+471	uOwner	1	1	1269008532	0	0	The owner of the record. \
+\
+<p>\
+An index into tClient via tClient.uClient to show the tClient.cLabel.
+481	uCreatedBy	1	1	1269008728	0	0	The tClient organization contact (or other type of user) that created the record.\
+\
+<p>\
+An index into tClient via tClient.uClient to show the tClient.cLabel.
+491	uCreatedDate	1	1	1269008779	0	0	The date the record was created.
+501	uModBy	1	1	1269008834	0	0	The last tClient organization contact (or other type of user) that modified the\
+record.\
+\
+<p>\
+An index into tClient via tClient.uClient to show the tClient.cLabel.
+511	uModDate	1	1	1269008858	0	0	The date the record was modified.
