@@ -22,7 +22,7 @@ uSearchdomain=1;
 uOwner=1;
 uCreatedBy=1;
 #      CTID      NPROC STATUS  IP_ADDR         HOSTNAME                        
-#       181         48 running 174.121.136.100 ns1.ringcarrier.com  
+#       181         48 running 174.34.136.100 ns1.singtone.com  
 vzlist -a  | \
 while read cvzlist
 do
@@ -41,8 +41,9 @@ do
 	echo uContainer=$uContainer;
 	echo cLabel=$cLabel;
 	echo cHostname=$cHostname;
-	#uVeth=0;
-	#uIPv4= from select of first available tIP.uIP then we need to mark unavailble in 2nd query.
+	#uVeth=0; default is 0 so we can even omit this from insert query.
+	#uIPv4= from select Must preload tIP with the clone range from source unxsVZ db.
+	echo $cIP;
 	#uOSTemplate from select. Must preload tOSTemplate from mysqldump of source unxsVZ db.
 	echo cOSTemplate=$cOSTemplate;
 	#uConfig from select. Must preload tConfig from mysqldump of source unxsVZ db.
@@ -60,7 +61,7 @@ do
 	echo uCreatedBy=$uCreatedBy;
 	echo "";
 	
-#cQuery="INSERT INTO tContainer SET uContainer=$uContainer,cLabel='$cLabel',uIPv4=(SELECT uIP FROM tIP WHERE cLabel='$cIP'),uOSTemplate=(SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='$cOSTemplate'),uConfig=(SELECT uConfig FROM tConfig WHERE cLabel='$cConfig',uNameserver=$uNameserver,uSearchdomain=(SELECT uSearchdomain FROM tSearchdomain WHERE cLabel='$cSearchdomain',uDatacenter=$uDatacenter,uNode=$uNode,uStatus=$uStatus,uOwner=$uOwner,uCreatedBy=$uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
+#cQuery="INSERT INTO tContainer SET uContainer=$uContainer,cLabel='$cLabel',uIPv4=(SELECT uIP FROM tIP WHERE cLabel='$cIP' AND uAvailable=1),uOSTemplate=(SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='$cOSTemplate'),uConfig=(SELECT uConfig FROM tConfig WHERE cLabel='$cConfig',uNameserver=$uNameserver,uSearchdomain=$uSearchdomain,uDatacenter=$uDatacenter,uNode=$uNode,uStatus=$uStatus,uOwner=$uOwner,uCreatedBy=$uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
 #	echo $cQuery;
 done
 
