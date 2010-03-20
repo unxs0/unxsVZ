@@ -26,7 +26,7 @@ uOwner=1;
 uCreatedBy=1;
 #      CTID      NPROC STATUS  IP_ADDR         HOSTNAME                        
 #       181         48 running 174.34.136.100 ns1.singtone.com  
-vzlist -a  | \
+/usr/sbin/vzlist -a  | \
 while read cvzlist
 do
 	cVZStatus=`echo $cvzlist | awk -F' ' '{print $3}'`;
@@ -63,8 +63,84 @@ do
 	echo uOwner=$uOwner;
 	echo uCreatedBy=$uCreatedBy;
 	echo "";
-	
-	#cQuery="INSERT INTO tContainer SET uContainer=$uContainer,cLabel='$cLabel',uIPv4=(SELECT uIP FROM tIP WHERE cLabel='$cIP' AND uAvailable=1),uOSTemplate=(SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='$cOSTemplate'),uConfig=(SELECT uConfig FROM tConfig WHERE cLabel='$cConfig',uNameserver=$uNameserver,uSearchdomain=$uSearchdomain,uDatacenter=$uDatacenter,uNode=$uNode,uStatus=$uStatus,uOwner=$uOwner,uCreatedBy=$uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
-	#echo $cQuery;
+
+	#this is a nested read see do above
+	read -e -p "Commit $cHostname [y/n/s/q]?: " cReply < /dev/tty;
+	if [ "$cReply" == "n" ];then
+		echo "Aborting commit and exiting $0";
+		exit 0;
+	fi	
+	if [ "$cReply" == "s" ];then
+		echo "Skipping $cHostname";
+		echo "";
+		continue;
+	fi	
+	if [ "$cReply" != "y" ];then
+		echo "Aborting commit and exiting $0";
+		exit 0;
+	fi	
+
+	echo "Commiting to tContainer";
+
+	cQuery="SELECT uIP FROM tIP WHERE cLabel='$cIP' AND uAvailable=1";
+	uIPv4=`echo $cQuery | /usr/bin/mysql -pwsxedc -u unxsvz unxsvz | tail -n 1 | awk -F' ' '{print $1}'`;
+	if [ $? != 0 ];then
+		echo "$cQuery failed";
+		exit 1;
+	fi
+	echo uIPv4=$uIPv4;
+
+	cQuery="SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='$cOSTemplate'";
+	uOSTemplate=`echo $cQuery | /usr/bin/mysql -pwsxedc -u unxsvz unxsvz | tail -n 1 | awk -F' ' '{print $1}'`;
+	if [ $? != 0 ];then
+		echo "$cQuery failed";
+		exit 1;
+	fi
+	echo uOSTemplate=$uOSTemplate;
+
+	cQuery="SELECT uConfig FROM tConfig WHERE cLabel='$cConfig'";
+	uConfig=`echo $cQuery | /usr/bin/mysql -pwsxedc -u unxsvz unxsvz | tail -n 1 | awk -F' ' '{print $1}'`;
+	if [ $? != 0 ];then
+		echo "$cQuery failed";
+		exit 1;
+	fi
+	echo uConfig=$uConfig;
+
+	cQuery="SELECT uContainer FROM tContainer WHERE cLabel='$cLabel' AND uDatacenter=$uDatacenter AND uNode=$uNode";
+	uContainer=`echo $cQuery | /usr/bin/mysql -pwsxedc -u unxsvz unxsvz | tail -n 1 | awk -F' ' '{print $1}'`;
+	if [ $? != 0 ];then
+		echo "$cQuery failed";
+		exit 1;
+	fi
+	echo uContainer=$uContainer;
+
+	if [ "$uContainer" != "" ];then
+		echo "Skipping container cLabel=$cLabel cHostname=$cHostname already in tContainer";
+		echo "";
+		continue;
+	fi
+
+	#debug only
+	#echo "";
+	#continue;
+
+	cQuery="INSERT INTO tContainer SET uContainer=$uContainer,cLabel='$cLabel',cHostname='$cHostname',uIPv4=$uIPv4,uOSTemplate=$uOSTemplate,uConfig=$uConfig,uNameserver=$uNameserver,uSearchdomain=$uSearchdomain,uDatacenter=$uDatacenter,uNode=$uNode,uStatus=$uStatus,uOwner=$uOwner,uCreatedBy=$uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
+	cResult=`echo $cQuery | /usr/bin/mysql -pwsxedc -u unxsvz unxsvz | tail -n 1`;
+	if [ $? != 0 ];then
+		echo "$cQuery failed";
+		continue;
+	fi
+	echo $cResult;
+
+	cQuery="UPDATE tIP SET uAvailable=0 WHERE uIPv4=$uIPv4";
+	cResult=`echo $cQuery | /usr/bin/mysql -pwsxedc -u unxsvz unxsvz | tail -n 1`;
+	if [ $? != 0 ];then
+		echo "$cQuery failed";
+		exit 1;
+	fi
+	echo $cResult;
+	echo "Commited";
+	echo "";
 done
 
+exit 0;
