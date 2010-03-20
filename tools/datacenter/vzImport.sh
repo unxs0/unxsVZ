@@ -13,6 +13,10 @@
 #	The migration is from another unxsVZ system to a new one.
 #	The first step was faking the new node on the source system
 #	and running clone wizard after setting up the ssh stuff.
+#
+#TODO
+#	We need to get the actual MySQL query results to determine
+#	if something wrong or unexpected happened.
 #	
 
 #Set these constants, make sure any tables they refer to have the correct data.
@@ -64,24 +68,6 @@ do
 	echo uCreatedBy=$uCreatedBy;
 	echo "";
 
-	#this is a nested read see do above
-	read -e -p "Commit $cHostname [y/n/s/q]?: " cReply < /dev/tty;
-	if [ "$cReply" == "n" ];then
-		echo "Aborting commit and exiting $0";
-		exit 0;
-	fi	
-	if [ "$cReply" == "s" ];then
-		echo "Skipping $cHostname";
-		echo "";
-		continue;
-	fi	
-	if [ "$cReply" != "y" ];then
-		echo "Aborting commit and exiting $0";
-		exit 0;
-	fi	
-
-	echo "Commiting to tContainer";
-
 	cQuery="SELECT uIP FROM tIP WHERE cLabel='$cIP' AND uAvailable=1";
 	uIPv4=`echo $cQuery | /usr/bin/mysql -pwsxedc -u unxsvz unxsvz | tail -n 1 | awk -F' ' '{print $1}'`;
 	if [ $? != 0 ];then
@@ -107,22 +93,36 @@ do
 	echo uConfig=$uConfig;
 
 	cQuery="SELECT uContainer FROM tContainer WHERE cLabel='$cLabel' AND uDatacenter=$uDatacenter AND uNode=$uNode";
-	uContainer=`echo $cQuery | /usr/bin/mysql -pwsxedc -u unxsvz unxsvz | tail -n 1 | awk -F' ' '{print $1}'`;
+	uCheckContainer=`echo $cQuery | /usr/bin/mysql -pwsxedc -u unxsvz unxsvz | tail -n 1 | awk -F' ' '{print $1}'`;
 	if [ $? != 0 ];then
 		echo "$cQuery failed";
 		exit 1;
 	fi
-	echo uContainer=$uContainer;
+	echo uCheckContainer=$uCheckContainer;
 
-	if [ "$uContainer" != "" ];then
+	if [ "$uCheckContainer" != "" ];then
 		echo "Skipping container cLabel=$cLabel cHostname=$cHostname already in tContainer";
 		echo "";
 		continue;
 	fi
 
-	#debug only
-	#echo "";
-	#continue;
+	#this is a nested read see do above
+	read -e -p "Commit $cHostname [y/n/s/q]?: " cReply < /dev/tty;
+	if [ "$cReply" == "n" ];then
+		echo "Aborting commit and exiting $0";
+		exit 0;
+	fi	
+	if [ "$cReply" == "s" ];then
+		echo "Skipping $cHostname";
+		echo "";
+		continue;
+	fi	
+	if [ "$cReply" != "y" ];then
+		echo "Aborting commit and exiting $0";
+		exit 0;
+	fi	
+
+	echo "Commiting to tContainer";
 
 	cQuery="INSERT INTO tContainer SET uContainer=$uContainer,cLabel='$cLabel',cHostname='$cHostname',uIPv4=$uIPv4,uOSTemplate=$uOSTemplate,uConfig=$uConfig,uNameserver=$uNameserver,uSearchdomain=$uSearchdomain,uDatacenter=$uDatacenter,uNode=$uNode,uStatus=$uStatus,uOwner=$uOwner,uCreatedBy=$uCreatedBy,uCreatedDate=UNIX_TIMESTAMP(NOW())";
 	cResult=`echo $cQuery | /usr/bin/mysql -pwsxedc -u unxsvz unxsvz | tail -n 1`;
@@ -132,14 +132,14 @@ do
 	fi
 	echo $cResult;
 
-	cQuery="UPDATE tIP SET uAvailable=0 WHERE uIPv4=$uIPv4";
+	cQuery="UPDATE tIP SET uAvailable=0 WHERE uIP=$uIPv4";
 	cResult=`echo $cQuery | /usr/bin/mysql -pwsxedc -u unxsvz unxsvz | tail -n 1`;
 	if [ $? != 0 ];then
 		echo "$cQuery failed";
 		exit 1;
 	fi
 	echo $cResult;
-	echo "Commited";
+	echo "Commit attempted";
 	echo "";
 done
 
