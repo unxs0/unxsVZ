@@ -216,7 +216,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 	{
 		if(!strcmp(entries[i].name,"cSearch"))
 		{
-			sprintf(cSearch,"%.31s",entries[i].val);
+			sprintf(cSearch,"%.31s",TextAreaSave(entries[i].val));
 		}
 		else if(!strncmp(entries[i].name,"Ct",2))
 		{
