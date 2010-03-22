@@ -42,7 +42,7 @@ void ExtProcesstNodeVars(pentry entries[], int x)
 	{
 		if(!strcmp(entries[i].name,"cSearch"))
 		{
-			sprintf(cSearch,"%.31s",entries[i].val);
+			sprintf(cSearch,"%.31s",TextAreaSave(entries[i].val));
 		}
 		else if(!strcmp(entries[i].name,"uClone")) 
 		{

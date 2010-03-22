@@ -92,7 +92,7 @@ void ExtProcesstClientVars(pentry entries[], int x)
 					cForClientPullDown);
 		}
 		else if(!strcmp(entries[i].name,"cSearch"))
-			sprintf(cSearch,"%.99s",entries[i].val);
+			sprintf(cSearch,"%.99s",TextAreaSave(entries[i].val));
 		else if(!strcmp(entries[i].name,"uOnlyASPs"))
 			uOnlyASPs=1;
 	}
@@ -181,15 +181,43 @@ void ExttClientCommands(pentry entries[], int x)
 			{
                         	guMode=2001;
 				//This must be customized
-				sprintf(gcQuery,"SELECT uZone FROM tZone WHERE uOwner=%u OR uCreatedBy=%u",uClient,uClient);
+				sprintf(gcQuery,"SELECT uDatacenter FROM tDatacenter WHERE uOwner=%u OR uCreatedBy=%u",
+						uClient,uClient);
 				mysql_query(&gMysql,gcQuery);
         			if(mysql_errno(&gMysql))
                 			tClient(mysql_error(&gMysql));
         			res=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res))
-					tClient("Can't delete client with resources");
+					tClient("Can't delete client with datacenters");
 				mysql_free_result(res);
-				
+				sprintf(gcQuery,"SELECT uNode FROM tNode WHERE uOwner=%u OR uCreatedBy=%u",
+						uClient,uClient);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+                			tClient(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+					tClient("Can't delete client with nodes");
+				mysql_free_result(res);
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uOwner=%u OR uCreatedBy=%u",
+						uClient,uClient);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+                			tClient(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+					tClient("Can't delete client with containers");
+				mysql_free_result(res);
+				sprintf(gcQuery,"SELECT uLog FROM tLog WHERE uOwner=%u OR uCreatedBy=%u",
+						uClient,uClient);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+                			tClient(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+					tClient("Can't delete client with log entries");
+				mysql_free_result(res);
+
 				if(!strcmp(cCode,"Contact"))
 				{
 					sprintf(gcQuery,"DELETE FROM " TAUTHORIZE 
@@ -212,6 +240,7 @@ void ExttClientCommands(pentry entries[], int x)
 					if(mysql_errno(&gMysql))
 						tClient(mysql_error(&gMysql));
 				}
+				
                         	guMode=5;
                         	DeletetClient();
 			}
@@ -391,13 +420,20 @@ void ExttClientButtons(void)
 					" their contacts. Finally the contacts are assigned a role that limits the"
 					" operations they can perform for their company and the interfaces they can use.");
 				printf("<p><u>Search Tools</u><br>");
-				printf("Enter the complete or the first part of a company or contact name below. Not case sensitive. You can use %% and _ SQL LIKE matching chars. The check box further limits your search.<br>");
-				printf("<input type=text title='cLabel search. Use %% . and _ for pattern matching.' name=cSearch value=\"%s\" maxlength=99 size=20><br>",cSearch);
-				printf("Only ASPs <input title='Limit search to Root owned tClient records that in this model are the controlling ASP companies' type=checkbox name=uOnlyASPs ");
+				printf("Enter the complete or the first part of a company or contact name below."
+					" Not case sensitive. You can use %% and _ SQL LIKE matching chars.<br>");
+					//" The check box further limits your search.<br>");
+				printf("<input type=text title='cLabel search. Use %% . and _ for pattern matching.'"
+					" name=cSearch value=\"%s\" maxlength=99 size=20><br>",cSearch);
+/*
+				//This is broken will fix later ;) TODO
+				printf("Only ASPs <input title='Limit search to Root owned tClient records that in"
+					" this model are the controlling ASP companies' type=checkbox name=uOnlyASPs ");
 				if(uOnlyASPs)
 					printf("checked><br>");
 				else
 					printf("><br>");
+*/
 
 				htmlRecordContext();
 			}
@@ -405,11 +441,11 @@ void ExttClientButtons(void)
 			if( strcmp(cCode,"Organization") && uClient && guPermLevel>9 && uClient!=guLoginClient 
 				&& !IsAuthUser(cLabel,uOwner,uClient) &&guMode!=5 && uOwner!=1)
 			{
-				printf("<p><input class=largeButton title='Authorize %s to manage his company resources' type=submit name=gcCommand value='Authorize'>",cLabel);
+				printf("<p><input class=largeButton title='Authorize %s to manage his company resources'"
+					"type=submit name=gcCommand value='Authorize'>",cLabel);
 			}
 
 			ContactsNavList();
-
 	}
 
 	if(!uDefault)
@@ -458,6 +494,7 @@ void ExttClientGetHook(entry gentries[], int x)
 
 void ExttClientSelect(void)
 {
+	/*
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT " ORDER BY uClient");
 	else 
@@ -465,6 +502,11 @@ void ExttClientSelect(void)
 				" WHERE (uClient=%1$u OR uOwner"
 				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
 				" ORDER BY uClient",guCompany);
+	*/
+	if(cSearch[0])
+		ExtSelectSearch("tClient",VAR_LIST_tClient,"cLabel",cSearch);
+	else
+		ExtSelect("tClient",VAR_LIST_tClient);
 
 }//void ExttClientSelect(void)
 
@@ -873,7 +915,9 @@ void htmlRecordContext(void)
 	if(uOwner>1 && strcmp(cCode,"Contact"))
 		printf("'%s' appears to be a reseller or ASP owned company or organization",cLabel);
 	else if(uOwner>1 && strcmp(cCode,"Organization"))
-		printf("'%s' appears to be a contact of <a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
+		printf("'%s' appears to be a contact of <a class=darkLink"
+			" href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",
+					cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
 	else if(uOwner==1 && strcmp(cLabel,"Root"))
 		printf("'%s' appears to be an ASP root company",cLabel);
 	else if(uOwner==1 && !strcmp(cLabel,"Root"))

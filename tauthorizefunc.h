@@ -314,8 +314,12 @@ void tAuthorizeNavList(void)
 	{
         	printf("<p><u>tAuthorizeNavList</u><br>\n");
         	while((field=mysql_fetch_row(res)))
+		{
+			//Root can find it self. This keeps the tClient tab cleaner.
+			if(strcmp(field[1],"Root"))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
 				"%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
+		}
 	}
         mysql_free_result(res);
 
