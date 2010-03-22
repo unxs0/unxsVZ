@@ -296,16 +296,17 @@ E.g. centos-5-x86-minimal would refer to the\
 \
 <p>\
 Related terms: uConfig.
-591	uConfig	1	1	1269274622	1	1269274752	An index into tConfig  showing tConfig.cLabel.\
+591	uConfig	1	1	1269274622	1	1269280519	An index into tConfig  showing tConfig.cLabel.\
 \
 <p>\
 The OpenVZ vzctl --config argument value. It is the short form of the config\
 template file that resides on the hardware node in the  /etc/vz/conf\
 directory. The actual file has a .conf-sample suffix and a ve- prefix added to\
-the tConfig.cLabel.\
+the tConfig.cLabel. After container creation the config template is the basis\
+for the per container /etc/vz/conf/VIED.conf file.\
 \
 <p>\
-E.g. freepbx26_v2 would refer to the /etc/vz.conf/ve-freepbx26_v2.conf-sample file.\
+E.g. freepbx26_v2 would refer to the /etc/vz/conf/ve-freepbx26_v2.conf-sample file.\
 \
 <p>\
 Related terms: uConfig.
@@ -354,3 +355,85 @@ Related terms: uGroup
 \
 <p>\
 Related terms: uGroupType.
+661	Container Comparison Report	1	1	1269297686	0	0	A main tab report that uses veinfo.uProcesses to provide information on\
+container unxsVZ status versus actual status.\
+\
+<p>\
+Covers the following issues:\
+<p>\
+-running<br>\
+-stopped<br>\
+-running but should be stopped<br>\
+-stopped but should be running<br>\
+-transitional state<br>\
+-unexpected status<br>\
+\
+
+671	cInfo	1	1	1269297928	1	1269297936	Miscellaneous information about a company, organization or contact of the later.\
+\
+<p>\
+The format and actual information depend on the organization's policy. Usually\
+it would be phone numbers, office numbers, addresses and such.
+681	cEmail	1	1	1269298018	0	0	Organization's or their contacts email address.\
+\
+<p>\
+E.g. jsmith@company.org
+691	cCode	1	1	1269298169	0	0	Used internally for distinguishing organizations from their contacts. May be\
+extended in the near future for organization specific external user IDs or similar.
+701	uJob	1	1	1269298279	0	0	The unique primary key index of tJob.
+711	cJobName	1	1	1269298824	0	0	The jobqueue.c job name. The task to be queued in the job queue.\
+\
+<p>\
+The following job names are currently in use (3/2010):\
+\
+<p>\
+ActionScripts<br>\
+ChangeHostnameContainer<br>\
+ChangeIPContainer<br>\
+CloneContainer<br>\
+DestroyContainer<br>\
+FailoverFrom<br>\
+FailoverTo<br>\
+LocalImportConfigJob<br>\
+LocalImportTemplateJob<br>\
+MigrateContainer<br>\
+NewContainer<br>\
+SetUBCJob<br>\
+StartContainer<br>\
+StopContainer<br>\
+TemplateContainer<br>\
+UpdateContainerUBCJob<br>\
+
+721	cJobData	1	1	1269299037	0	0	Optional job data passed to job queue task functions. \
+\
+<p>\
+Usually formatted in the following manner:\
+\
+<p>\
+cSomeString=stringvalue;\
+cAnotherParameter=1200;
+731	uJobDate	1	1	1269299192	0	0	The date and time the job should run. Internally stored as a standard UNIX time\
+stamp (time in seconds since UNIX epoch time 0.)\
+\
+E,.g: Mon Mar 22 18:03:57 2010 
+741	uJobStatus	1	1	1269299381	0	0	An index into tJobStatus showing the tJobStatus.cLabel.\
+\
+<p>\
+The following job statuses are currently in use (3/2010):\
+\
+<p>\
+Waiting<br>\
+Running<br>\
+Done OK<br>\
+Done Error(s)<br>\
+Suspended<br>\
+Redundant<br>\
+Cancelled<br>\
+RemoteWaiting<br>\
+Error<br>
+751	cRemoteMsg	1	1	1269299610	0	0	Usually an error message that is set by the job queue handler function when a\
+job does not finish correctly. It also maybe some extended job "done ok" message.\
+\
+<p>\
+When debugging you should take note of this message as well as any other logfile\
+lines of interest and send them to your unxsVZ systems admin.
