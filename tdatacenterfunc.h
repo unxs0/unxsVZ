@@ -25,6 +25,11 @@ void tGroupNavList(void);
 //tcontainerfunc.h
 char *cRatioColor(float *fRatio);
 
+//tclientfunc.h
+static unsigned uForClient=0;
+static char cForClientPullDown[256]={"---"};
+void tTablePullDownResellers(unsigned uSelector);
+
 void ExtProcesstDatacenterVars(pentry entries[], int x)
 {
 	register int i;
@@ -32,6 +37,11 @@ void ExtProcesstDatacenterVars(pentry entries[], int x)
 	{
 		if(!strcmp(entries[i].name,"uClone")) 
 			uClone=1;
+		else if(!strcmp(entries[i].name,"cForClientPullDown"))
+		{
+			strcpy(cForClientPullDown,entries[i].val);
+			uForClient=ReadPullDown(TCLIENT,"cLabel",cForClientPullDown);
+		}
 	}
 }//void ExtProcesstDatacenterVars(pentry entries[], int x)
 
@@ -78,10 +88,14 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				}
                         	guMode=0;
 
+				if(!uForClient)
+					uOwner=guCompany;
+				else
+					uOwner=uForClient;
 				uDatacenter=0;
 				uCreatedBy=guLoginClient;
-				GetClientOwner(guLoginClient,&guReseller);
-				uOwner=guReseller;
+				//GetClientOwner(guLoginClient,&guReseller);
+				//uOwner=guReseller;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				uStatus=1;//Active
@@ -180,6 +194,15 @@ void ExttDatacenterCommands(pentry entries[], int x)
                         	guMode=0;
 
 				uModBy=guLoginClient;
+				if(uForClient)
+				{
+					sprintf(gcQuery,"UPDATE tDatacenter SET uOwner=%u WHERE uDatacenter=%u",
+						uForClient,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				htmlPlainTextError(mysql_error(&gMysql));
+					uOwner=uForClient;
+				}
 				ModtDatacenter();
 			}
 			else
@@ -201,6 +224,8 @@ void ExttDatacenterButtons(void)
 			if(uOldDatacenter)
 				printf("<p>Copy properties <input title='Copies all properties'"
 					" type=checkbox name=uClone checked>\n");
+			if(guPermLevel>11)
+				tTablePullDownResellers(uForClient);
                 break;
 
                 case 2001:
@@ -211,6 +236,11 @@ void ExttDatacenterButtons(void)
                 case 2002:
 			printf("<p><u>Review changes</u><br>");
                         printf(LANG_NBB_CONFIRMMOD);
+			if(guPermLevel>11)
+			{
+				printf("<p>You change the record owner, just...");
+				tTablePullDownResellers(guCompany);
+			}
                 break;
 
 		default:
