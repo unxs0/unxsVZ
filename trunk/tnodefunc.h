@@ -34,6 +34,10 @@ char *cRatioColor(float *fRatio);
 //tcontainer.c
 void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
+//tclientfunc.h
+static unsigned uForClient=0;
+static char cForClientPullDown[256]={"---"};
+void tTablePullDownResellers(unsigned uSelector);
 
 void ExtProcesstNodeVars(pentry entries[], int x)
 {
@@ -43,6 +47,11 @@ void ExtProcesstNodeVars(pentry entries[], int x)
 		if(!strcmp(entries[i].name,"cSearch"))
 		{
 			sprintf(cSearch,"%.31s",TextAreaSave(entries[i].val));
+		}
+		else if(!strcmp(entries[i].name,"cForClientPullDown"))
+		{
+			strcpy(cForClientPullDown,entries[i].val);
+			uForClient=ReadPullDown(TCLIENT,"cLabel",cForClientPullDown);
 		}
 		else if(!strcmp(entries[i].name,"uClone")) 
 		{
@@ -106,9 +115,12 @@ void ExttNodeCommands(pentry entries[], int x)
 				}
                         	guMode=0;
 
+				if(!uForClient)
+					uOwner=guCompany;
+				else
+					uOwner=uForClient;
 				uNode=0;
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
 				uStatus=1;//Initially active
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
@@ -211,6 +223,15 @@ void ExttNodeCommands(pentry entries[], int x)
 					tNode("<blink>Error</blink>: Must supply valid uDatacenter!");
                         	guMode=0;
 
+				if(uForClient)
+				{
+					sprintf(gcQuery,"UPDATE tNode SET uOwner=%u WHERE uNode=%u",
+						uForClient,uNode);
+					mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				htmlPlainTextError(mysql_error(&gMysql));
+					uOwner=uForClient;
+				}
 				uModBy=guLoginClient;
 				ModtNode();
 			}
@@ -322,6 +343,8 @@ void ExttNodeButtons(void)
 			if(uNode)
 				printf("<p><input title='Copies all properties'"
 					" type=checkbox name=uClone checked> Copy properties from property panel below.\n");
+			if(guPermLevel>11)
+				tTablePullDownResellers(uForClient);
                 break;
 
                 case 2001:
@@ -332,6 +355,11 @@ void ExttNodeButtons(void)
                 case 2002:
 			printf("<p><u>Review changes</u><br>");
                         printf(LANG_NBB_CONFIRMMOD);
+			if(guPermLevel>11)
+			{
+				printf("<p>You change the record owner, just...");
+				tTablePullDownResellers(guCompany);
+			}
                 break;
 
 		default:
