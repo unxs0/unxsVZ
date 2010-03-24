@@ -1,2 +1,7 @@
 This directory contains code for the collection of diverse VZ operating parameters and other 
 hardware node system vars.
+
+The included public domain bash program is being tested with the du command in ubc.c since
+in some large mail store containers (on older slow hardware) it takes too long. 
+Also investigating alternatives to system(), that may allow timeout control like execl() 
+and fork().
