@@ -4,8 +4,9 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2007 Gary Wallis.
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file.
  
 */
 
@@ -62,10 +63,7 @@ void ExttJobCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstJobVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
 				tJob(LANG_NB_CONFIRMDEL);
@@ -74,10 +72,7 @@ void ExttJobCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstJobVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
 				DeletetJob();
@@ -86,9 +81,7 @@ void ExttJobCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstJobVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tJob(LANG_NB_CONFIRMMOD);
@@ -97,9 +90,7 @@ void ExttJobCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstJobVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
 				//Check entries here
@@ -196,11 +187,18 @@ void ExttJobListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tJob.uJob=%u \
-						ORDER BY uJob",
-						uJob);
+		sprintf(cCat,"tJob.uJob=%u ORDER BY uJob",uJob);
 		strcat(gcQuery,cCat);
         }
+        else if(!strcmp(gcFilter,"cLabel"))
+        {
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tJob.cLabel LIKE '%s' ORDER BY uJob",gcCommand);
+		strcat(gcQuery,cCat);
+	}
         else if(1)
         {
                 //None NO FILTER
@@ -220,6 +218,10 @@ void ExttJobListFilter(void)
                 printf("<option>uJob</option>");
         else
                 printf("<option selected>uJob</option>");
+        if(strcmp(gcFilter,"cLabel"))
+                printf("<option>cLabel</option>");
+        else
+                printf("<option selected>cLabel</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
@@ -240,13 +242,10 @@ void ExttJobNavBar(void)
 	if(guPermLevel>=12 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if( (guPermLevel>=10)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowMod(uOwner,uCreatedBy) && !guListMode)
 		printf(LANG_NBB_MODIFY);
 
-	if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowDel(uOwner,uCreatedBy) && !guListMode)
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)

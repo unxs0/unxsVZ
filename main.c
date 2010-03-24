@@ -1552,6 +1552,8 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 
+	static char scKey[16];
+
         sprintf(gcQuery,"SELECT %s FROM %s WHERE _rowid=%u",
                         cFieldName,cTableName,uKey);
         mysql_query(&gMysql,gcQuery);
@@ -1570,8 +1572,8 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
 	}
 	else
 	{
-		sprintf(gcQuery,"%u",uKey);
-        	return(gcQuery);
+		sprintf(scKey,"%u",uKey);
+        	return(scKey);
 	}
 
 }//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)

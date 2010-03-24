@@ -7,6 +7,9 @@ PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tjobfunc.h while 
 	RAD is still to be used.
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file.	
 */
 
 
@@ -199,7 +202,7 @@ void tJob(const char *cResult)
 		{
 			if(guMode==6)
 			{
-			sprintf(gcQuery,"SELECT _rowid FROM tJob WHERE uJob=%u"
+				sprintf(gcQuery,"SELECT _rowid FROM tJob WHERE uJob=%u"
 						,uJob);
 				MYSQL_RUN_STORE(res2);
 				field=mysql_fetch_row(res2);
@@ -209,21 +212,21 @@ void tJob(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
-		sscanf(field[0],"%u",&uJob);
-		sprintf(cLabel,"%.100s",field[1]);
-		sprintf(cJobName,"%.64s",field[2]);
-		sscanf(field[3],"%u",&uDatacenter);
-		sscanf(field[4],"%u",&uNode);
-		sscanf(field[5],"%u",&uContainer);
-		cJobData=field[6];
-		sscanf(field[7],"%lu",&uJobDate);
-		sscanf(field[8],"%u",&uJobStatus);
-		sprintf(cRemoteMsg,"%.32s",field[9]);
-		sscanf(field[10],"%u",&uOwner);
-		sscanf(field[11],"%u",&uCreatedBy);
-		sscanf(field[12],"%lu",&uCreatedDate);
-		sscanf(field[13],"%u",&uModBy);
-		sscanf(field[14],"%lu",&uModDate);
+			sscanf(field[0],"%u",&uJob);
+			sprintf(cLabel,"%.100s",field[1]);
+			sprintf(cJobName,"%.64s",field[2]);
+			sscanf(field[3],"%u",&uDatacenter);
+			sscanf(field[4],"%u",&uNode);
+			sscanf(field[5],"%u",&uContainer);
+			cJobData=field[6];
+			sscanf(field[7],"%lu",&uJobDate);
+			sscanf(field[8],"%u",&uJobStatus);
+			sprintf(cRemoteMsg,"%.32s",field[9]);
+			sscanf(field[10],"%u",&uOwner);
+			sscanf(field[11],"%u",&uCreatedBy);
+			sscanf(field[12],"%lu",&uCreatedDate);
+			sscanf(field[13],"%u",&uModBy);
+			sscanf(field[14],"%lu",&uModDate);
 
 		}
 
@@ -641,7 +644,8 @@ void tJobList(void)
 			ctime_r(&luTime14,cBuf14);
 		else
 			sprintf(cBuf14,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>"
+				"<textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
