@@ -40,6 +40,8 @@ void ExttStatusCommands(pentry entries[], int x)
                         	guMode=2000;
 	                        tStatus(LANG_NB_CONFIRMNEW);
 			}
+			else
+				tStatus("Operation denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
@@ -58,50 +60,46 @@ void ExttStatusCommands(pentry entries[], int x)
 				uModDate=0;//Never modified
 				NewtStatus(0);
 			}
+			else
+				tStatus("Operation denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstStatusVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
 				tStatus(LANG_NB_CONFIRMDEL);
 			}
+			else
+				tStatus("Operation denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstStatusVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
 				DeletetStatus();
 			}
+			else
+				tStatus("Operation denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstStatusVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tStatus(LANG_NB_CONFIRMMOD);
 			}
+			else
+				tStatus("Operation denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstStatusVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
 				//Check entries here
@@ -110,6 +108,8 @@ void ExttStatusCommands(pentry entries[], int x)
 				uModBy=guLoginClient;
 				ModtStatus();
 			}
+			else
+				tStatus("Operation denied by permissions settings");
                 }
 	}
 
@@ -239,7 +239,7 @@ void ExttStatusNavBar(void)
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=7 && !guListMode)
+	if(guPermLevel>=12 && !guListMode)
 		printf(LANG_NBB_NEW);
 
 	if(uAllowMod(uOwner,uCreatedBy))
