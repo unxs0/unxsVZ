@@ -172,14 +172,14 @@ void ExttStatusGetHook(entry gentries[], int x)
 void ExttStatusSelect(void)
 {
         //Set non search gcQuery here for tTableName()
-	ExtSelect("tStatus",VAR_LIST_tStatus);
+	ExtSelectPublic("tStatus",VAR_LIST_tStatus);
 
 }//void ExttStatusSelect(void)
 
 
 void ExttStatusSelectRow(void)
 {
-	ExtSelectRow("tStatus",VAR_LIST_tStatus,uStatus);
+	ExtSelectRowPublic("tStatus",VAR_LIST_tStatus,uStatus);
 
 }//void ExttStatusSelectRow(void)
 
@@ -188,7 +188,7 @@ void ExttStatusListSelect(void)
 {
 	char cCat[512];
 
-	ExtListSelect("tStatus",VAR_LIST_tStatus);
+	ExtListSelectPublic("tStatus",VAR_LIST_tStatus);
 	
 	//Changes here must be reflected below in ExttStatusListFilter()
         if(!strcmp(gcFilter,"uStatus"))
@@ -239,17 +239,13 @@ void ExttStatusNavBar(void)
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=12 && !guListMode)
+	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowDel(uOwner,uCreatedBy))
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -267,7 +263,7 @@ void tStatusNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	ExtSelect("tStatus","tStatus.uStatus,tStatus.cLabel");
+	ExtSelectPublic("tStatus","tStatus.uStatus,tStatus.cLabel");
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -283,10 +279,8 @@ void tStatusNavList(void)
         	printf("<p><u>tStatusNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tStatus\
-&uStatus=%s>%s</a><br>\n",field[0],field[1]);
-	        }
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tStatus&uStatus=%s>"
+				"%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 
