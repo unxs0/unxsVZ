@@ -359,8 +359,8 @@ void ProcessUBC(void)
 	//Main loop. TODO use defines for tStatus.uStatus values.
 	sprintf(gcQuery,"SELECT uContainer,uOwner,uStatus FROM tContainer WHERE uNode=%u"
 				" AND uDatacenter=%u"
-				" AND uStatus!=11"//Initial Setup
-				" AND uStatus!=6"//Awating Activation
+				" AND (uStatus=1"//Active
+				" OR uStatus=31)"//Stopped
 						,uNode,uDatacenter);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
