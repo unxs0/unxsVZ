@@ -2744,7 +2744,6 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 							guCompany,
 							uContainer,
 							guLoginClient);
-		printf("%s\n",gcQuery);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
