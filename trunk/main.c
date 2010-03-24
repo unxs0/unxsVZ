@@ -2269,6 +2269,12 @@ void ExtListSelect(const char *cTable,const char *cVarList)
 }//void ExtListSelect(...)
 
 
+void ExtListSelectPublic(const char *cTable,const char *cVarList)
+{
+		sprintf(gcQuery,"SELECT %s FROM %s",cVarList,cTable);
+}//void ExtListSelectPublic(...)
+
+
 void ExtSelect(const char *cTable,const char *cVarList)
 {
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
@@ -2286,6 +2292,14 @@ void ExtSelect(const char *cTable,const char *cVarList)
 					cTable);
 					//cTable,cTable+1);
 }//void ExtSelect(...)
+
+
+//For those tables you anybody to be able to read. Like tStatus.
+void ExtSelectPublic(const char *cTable,const char *cVarList)
+{
+		sprintf(gcQuery,"SELECT %s FROM %s",cVarList,cTable);
+
+}//void ExtSelectPublic(...)
 
 
 void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch)
@@ -2342,6 +2356,13 @@ void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow)
 					cVarList,guCompany,
 					cTable,cTable+1,uRow);
 }//void ExtSelectRow(...)
+
+
+void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow)
+{
+		sprintf(gcQuery,"SELECT %s FROM %s WHERE u%s=%u",
+					cVarList,cTable,cTable+1,uRow);
+}//void ExtSelectRowPublic(...)
 
 
 //Passwd stuff

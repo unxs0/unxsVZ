@@ -16,8 +16,8 @@ use DBI;
 my $Dbh=DBI->connect("DBI:mysql:unxsvz:localhost","unxsvz","wsxedc") or die DBI->errstr;
 
 my $cQuery="SELECT uContainer,cHostname,uNode,uDatacenter FROM tContainer WHERE cHostname LIKE '%clone%'";
-	#debug only
-	#print("$cQuery\n");
+#debug only
+#print("$cQuery\n");
 my $res=$Dbh->prepare($cQuery);
 $res->execute();
 

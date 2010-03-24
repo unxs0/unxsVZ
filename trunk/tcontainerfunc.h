@@ -2687,10 +2687,10 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 	unsigned uNewVeid=0;
 	unsigned uCount=0;
 	unsigned uStatus=0;
-
+	
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uOSTemplate,uConfig,uNameserver,uSearchdomain,uDatacenter"
 			",uContainer,uStatus FROM tContainer WHERE uNode=%u",uSourceNode);
-        mysql_query(&gMysql,gcQuery);
+	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
         res=mysql_store_result(&gMysql);
@@ -2744,6 +2744,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 							guCompany,
 							uContainer,
 							guLoginClient);
+		printf("%s\n",gcQuery);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -2813,7 +2814,6 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 
 	}
 	mysql_free_result(res);
-
 	if(uNewVeid)
 		return(0);//all possible containers added as expected.
 	else
