@@ -41,7 +41,7 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
 void ProcessSingleTraffic(unsigned uContainer);
 
 static FILE *gLfp;
-void logfileLine(const char *cFunction,const char *cLogline)
+void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
 {
 	time_t luClock;
 	char cTime[32];
@@ -54,10 +54,10 @@ void logfileLine(const char *cFunction,const char *cLogline)
 	tmTime=localtime(&luClock);
 	strftime(cTime,31,"%b %d %T",tmTime);
 
-        fprintf(gLfp,"%s %s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
+        fprintf(gLfp,"%s %s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
 	fflush(gLfp);
 
-}//void logfileLine(char *cLogline)
+}//void logfileLine()
 
 
 
@@ -79,7 +79,7 @@ void TextConnectDb(void)
         	if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
 		{
 			fprintf(stderr,"Database server unavailable.\n");
-			logfileLine("TextConnectDb","Database server unavailable");
+			logfileLine("TextConnectDb","Database server unavailable",0);
 			exit(1);
 		}
         }
@@ -113,7 +113,7 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 	}
 	else if(1)
 	{
-		logfileLine("ProcessSingleUBC","No container or node specified");
+		logfileLine("ProcessSingleUBC","No container or node specified",uContainer);
 		exit(1);
 	}
 		
@@ -185,7 +185,7 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						logfileLine("ProcessSingleUBC",mysql_error(&gMysql));
+						logfileLine("ProcessSingleUBC",mysql_error(&gMysql),uContainer);
 						exit(2);
 					}
 			        	res=mysql_store_result(&gMysql);
@@ -217,7 +217,8 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 								mysql_query(&gMysql,gcQuery);
 								if(mysql_errno(&gMysql))
 								{
-									logfileLine("ProcessSingleUBC",mysql_error(&gMysql));
+									logfileLine("ProcessSingleUBC",
+										mysql_error(&gMysql),uContainer);
 									exit(2);
 								}
 								//First autonomic foray
@@ -239,7 +240,8 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 								mysql_query(&gMysql,gcQuery);
 								if(mysql_errno(&gMysql))
 								{
-									logfileLine("ProcessSingleUBC",mysql_error(&gMysql));
+									logfileLine("ProcessSingleUBC",
+										mysql_error(&gMysql),uContainer);
 									exit(2);
 								}
 					}
@@ -260,7 +262,8 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 						{
-							logfileLine("ProcessSingleUBC",mysql_error(&gMysql));
+							logfileLine("ProcessSingleUBC",mysql_error(&gMysql),
+									uContainer);
 							exit(2);
 						}
 					}
@@ -272,7 +275,7 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 	}
 	else
 	{
-		logfileLine("ProcessSingleUBC","fopen() failed");
+		logfileLine("ProcessSingleUBC","fopen() failed",uContainer);
 	}
 
 }//void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
@@ -288,12 +291,12 @@ void ProcessUBC(void)
 
 	if(gethostname(cHostname,99)!=0)
 	{
-		logfileLine("ProcessUBC","gethostname() failed");
+		logfileLine("ProcessUBC","gethostname() failed",uContainer);
 		exit(1);
 	}
 	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
 	{
-		logfileLine("ProcessUBC","fopen logfile failed");
+		logfileLine("ProcessUBC","fopen logfile failed",uContainer);
 		exit(1);
 	}
 		
@@ -305,7 +308,7 @@ void ProcessUBC(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("ProcessUBC",mysql_error(&gMysql));
+		logfileLine("ProcessUBC",mysql_error(&gMysql),uContainer);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -328,7 +331,7 @@ void ProcessUBC(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine("ProcessUBC",mysql_error(&gMysql));
+			logfileLine("ProcessUBC",mysql_error(&gMysql),uContainer);
 			mysql_close(&gMysql);
 			exit(2);
 		}
@@ -344,7 +347,7 @@ void ProcessUBC(void)
 
 	if(!uNode)
 	{
-		logfileLine("ProcessUBC","Could not determine uNode");
+		logfileLine("ProcessUBC","Could not determine uNode",uContainer);
 		mysql_close(&gMysql);
 		exit(1);
 	}
@@ -362,7 +365,7 @@ void ProcessUBC(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("ProcessUBC",mysql_error(&gMysql));
+		logfileLine("ProcessUBC",mysql_error(&gMysql),uContainer);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -420,7 +423,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 	}
 	else
 	{
-		logfileLine("ProcessSingleHDUsage","No container specified");
+		logfileLine("ProcessSingleHDUsage","No container specified",uContainer);
 		exit(1);
 	}
 	
@@ -439,13 +442,13 @@ void ProcessSingleHDUsage(unsigned uContainer)
 		}
 		else
 		{
-			logfileLine("ProcessSingleHDUsage","No lines from popen");
-			exit(1);
+			logfileLine("ProcessSingleHDUsage","No lines from popen",uContainer);
+			return;
 		}
 
 		if(luUsage==0)
 		{
-			logfileLine("ProcessSingleHDUsage","Unexpected luUsage==0");
+			logfileLine("ProcessSingleHDUsage","Unexpected luUsage==0",uContainer);
 			exit(1);
 		}
 
@@ -454,7 +457,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql));
+			logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql),uContainer);
 			exit(2);
 		}
 	       	res=mysql_store_result(&gMysql);
@@ -469,7 +472,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql));
+				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 		}
@@ -488,7 +491,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql));
+				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 		}
@@ -497,7 +500,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 	}
 	else
 	{
-		logfileLine("ProcessSingleHDUsage","popen() failed");
+		logfileLine("ProcessSingleHDUsage","popen() failed",uContainer);
 	}
 
 }//void ProcessSingleHDUsage(unsigned uContainer)
@@ -526,7 +529,7 @@ void ProcessSingleQuota(unsigned uContainer)
 	}
 	else
 	{
-		logfileLine("ProcessSingleQuota","No container specified");
+		logfileLine("ProcessSingleQuota","No container specified",uContainer);
 		exit(1);
 	}
 		
@@ -591,7 +594,7 @@ void ProcessSingleQuota(unsigned uContainer)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
+					logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
 					exit(2);
 				}
 			       	res=mysql_store_result(&gMysql);
@@ -606,7 +609,7 @@ void ProcessSingleQuota(unsigned uContainer)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
 						exit(2);
 					}
 				}
@@ -628,7 +631,7 @@ void ProcessSingleQuota(unsigned uContainer)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
 						exit(2);
 					}
 				}
@@ -645,7 +648,7 @@ void ProcessSingleQuota(unsigned uContainer)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
+					logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
 					exit(2);
 				}
 			       	res=mysql_store_result(&gMysql);
@@ -661,7 +664,7 @@ void ProcessSingleQuota(unsigned uContainer)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
 						exit(2);
 					}
 				}
@@ -683,7 +686,7 @@ void ProcessSingleQuota(unsigned uContainer)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						logfileLine("ProcessSingleQuota",mysql_error(&gMysql));
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
 						exit(2);
 					}
 				}
@@ -694,7 +697,7 @@ void ProcessSingleQuota(unsigned uContainer)
 	}
 	else
 	{
-		logfileLine("ProcessSingleQuota","fopen() failed");
+		logfileLine("ProcessSingleQuota","fopen() failed",uContainer);
 	}
 
 }//void ProcessSingleQuota(unsigned uContainer)
@@ -739,7 +742,7 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 	}
 	else
 	{
-		logfileLine("ProcessVZMemCheck","No container or node specified");
+		logfileLine("ProcessVZMemCheck","No container or node specified",uContainer);
 		exit(1);
 	}
 		
@@ -788,7 +791,7 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					logfileLine("ProcessVZMemCheck",mysql_error(&gMysql));
+					logfileLine("ProcessVZMemCheck",mysql_error(&gMysql),uContainer);
 					exit(2);
 				}
 			       	res=mysql_store_result(&gMysql);
@@ -805,7 +808,7 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						logfileLine("ProcessVZMemCheck",mysql_error(&gMysql));
+						logfileLine("ProcessVZMemCheck",mysql_error(&gMysql),uContainer);
 						exit(2);
 					}
 				}
@@ -827,7 +830,7 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						logfileLine("ProcessVZMemCheck",mysql_error(&gMysql));
+						logfileLine("ProcessVZMemCheck",mysql_error(&gMysql),uContainer);
 						exit(2);
 					}
 				}
@@ -838,7 +841,7 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 	}
 	else
 	{
-		logfileLine("ProcessVZMemCheck","popen() failed");
+		logfileLine("ProcessVZMemCheck","popen() failed",uContainer);
 	}
 
 }//void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
@@ -882,7 +885,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 	}
 	else
 	{
-		logfileLine("ProcessVZCPUCheck","No container or node specified");
+		logfileLine("ProcessVZCPUCheck","No container or node specified",uContainer);
 		exit(1);
 	}
 		
@@ -917,7 +920,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql));
+					logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql),uContainer);
 					exit(2);
 				}
 			       	res=mysql_store_result(&gMysql);
@@ -934,7 +937,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql));
+						logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql),uContainer);
 						exit(2);
 					}
 				}
@@ -956,7 +959,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql));
+						logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql),uContainer);
 						exit(2);
 					}
 				}
@@ -974,7 +977,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 	}
 	else
 	{
-		logfileLine("ProcessVZCPUCheck","popen() failed");
+		logfileLine("ProcessVZCPUCheck","popen() failed",uContainer);
 	}
 }//void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 
@@ -993,7 +996,7 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("UpdateContainerUBCJob",mysql_error(&gMysql));
+		logfileLine("UpdateContainerUBCJob",mysql_error(&gMysql),uContainer);
 		exit(2);
 	}
 	res=mysql_store_result(&gMysql);
@@ -1006,7 +1009,7 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 
 	if(!uDatacenter || !uNode)
 	{
-		logfileLine("UpdateContainerUBCJob","!uDatacenter || !uNode");
+		logfileLine("UpdateContainerUBCJob","!uDatacenter || !uNode",uContainer);
 		return;
 	}
 
@@ -1020,7 +1023,7 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("UpdateContainerUBCJob",mysql_error(&gMysql));
+		logfileLine("UpdateContainerUBCJob",mysql_error(&gMysql),uContainer);
 		exit(2);
 	}
 	res=mysql_store_result(&gMysql);
@@ -1041,7 +1044,7 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("UpdateContainerUBCJob",mysql_error(&gMysql));
+		logfileLine("UpdateContainerUBCJob",mysql_error(&gMysql),uContainer);
 		exit(2);
 	}
 
@@ -1059,7 +1062,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 
 	if(!uContainer)
 	{
-		logfileLine("ProcessSingleTraffic","No container specified");
+		logfileLine("ProcessSingleTraffic","No container specified",uContainer);
 		return;
 	}
 		
@@ -1079,7 +1082,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 				"venet0: %lu %*u %*u %*u %*u %*u %*u %*u %lu %*u %*u %*u %*u %*u %*u %*u",
 					&luIn,&luOut)!=2)
 			{
-				logfileLine("ProcessSingleTraffic","sscanf failed");
+				logfileLine("ProcessSingleTraffic","sscanf failed",uContainer);
 				//debug only
 				printf("sscanf failed\n");
 				return;
@@ -1088,7 +1091,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 		}
 		else
 		{
-			logfileLine("ProcessSingleTraffic","No lines from popen");
+			logfileLine("ProcessSingleTraffic","No lines from popen",uContainer);
 			return;
 		}
 
@@ -1099,7 +1102,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+			logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 			exit(2);
 		}
 	       	res=mysql_store_result(&gMysql);
@@ -1117,7 +1120,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 			res2=mysql_store_result(&gMysql);
@@ -1146,7 +1149,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 			//Update traffic counter
@@ -1159,7 +1162,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 		}
@@ -1178,7 +1181,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 
@@ -1196,7 +1199,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 		}
@@ -1208,7 +1211,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+			logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 			exit(2);
 		}
 	       	res=mysql_store_result(&gMysql);
@@ -1226,7 +1229,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 			res2=mysql_store_result(&gMysql);
@@ -1255,7 +1258,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 			//Update traffic counter
@@ -1268,7 +1271,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 		}
@@ -1287,7 +1290,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 
@@ -1305,7 +1308,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql));
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 		}
@@ -1315,11 +1318,11 @@ void ProcessSingleTraffic(unsigned uContainer)
 	}
 	else
 	{
-		logfileLine("ProcessSingleTraffic","popen() failed");
+		logfileLine("ProcessSingleTraffic","popen() failed",uContainer);
 	}
 
 	//debug only
-	//logfileLine("ProcessSingleTraffic","End");
+	//logfileLine("ProcessSingleTraffic","End",uContainer);
 
 }//void ProcessSingleTraffic(unsigned uContainer)
 
@@ -1334,7 +1337,7 @@ void ProcessSingleStatus(unsigned uContainer)
 	}
 	else
 	{
-		logfileLine("ProcessSingleStatus","No container specified");
+		logfileLine("ProcessSingleStatus","No container specified",uContainer);
 		exit(1);
 	}
 		
@@ -1359,7 +1362,7 @@ void ProcessSingleStatus(unsigned uContainer)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+			logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
 			exit(2);
 		}
 
@@ -1384,7 +1387,7 @@ void ProcessSingleStatus(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+				logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 			res=mysql_store_result(&gMysql);
@@ -1399,7 +1402,7 @@ void ProcessSingleStatus(unsigned uContainer)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
 					exit(2);
 				}
 			}
@@ -1418,7 +1421,7 @@ void ProcessSingleStatus(unsigned uContainer)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
 					exit(2);
 				}
 			}
@@ -1431,7 +1434,7 @@ void ProcessSingleStatus(unsigned uContainer)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+				logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
 				exit(2);
 			}
 			res=mysql_store_result(&gMysql);
@@ -1446,7 +1449,7 @@ void ProcessSingleStatus(unsigned uContainer)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
 					exit(2);
 				}
 			}
@@ -1465,7 +1468,7 @@ void ProcessSingleStatus(unsigned uContainer)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					logfileLine("ProcessSingleStatus",mysql_error(&gMysql));
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
 					exit(2);
 				}
 			}
@@ -1474,7 +1477,7 @@ void ProcessSingleStatus(unsigned uContainer)
 	}
 	else
 	{
-		logfileLine("ProcessSingleStatus","fopen() failed");
+		logfileLine("ProcessSingleStatus","fopen() failed",uContainer);
 	}
 
 }//void ProcessSingleStatus(unsigned uContainer)

@@ -92,7 +92,9 @@ void ExttAuthorizeCommands(pentry entries[], int x)
                         ProcesstAuthorizeVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
+				//Place limits on what non root users can change.
 				if(uPerm>guPermLevel) uPerm=guPermLevel;
+				if(guPermLevel<12 && uCertClient!=guLoginClient) uCertClient=guLoginClient;
 				if(uPerm<6 || uPerm>12)
 				{
 					guMode=2002;
