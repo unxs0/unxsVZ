@@ -1144,12 +1144,12 @@ void CloseFieldSet(void)
 
 void OpenRow(const char *cFieldLabel, const char *cColor)
 {
-	register int j;
-	char cGlossary[33]="";
-
 	//Skip underlined cFieldLabel for tGlossary.cLabel use.
 	if(cFieldLabel[0]=='<')
 	{
+		register int j;
+		char cGlossary[33]="";
+
 		for(j=3;cFieldLabel[j]&&j<32;j++)
 		{
 			if(!isalnum(cFieldLabel[j]) && cFieldLabel[j]!=' ')
