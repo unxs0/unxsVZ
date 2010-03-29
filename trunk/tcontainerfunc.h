@@ -2677,6 +2677,11 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4)
 {
 
+	//debug only
+	printf("Content-type: text/plain\n\n");
+	printf("d1");
+	exit(0);
+
 	//Loop for all containers that belong to source node and do not have clones on the uTargetNode.
 	//For every loop iteration we must get a new available IP from tIP starting at uWizIPv4
         MYSQL_RES *res;
@@ -2744,6 +2749,10 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 							guCompany,
 							uContainer,
 							guLoginClient);
+		//Debug only
+		printf(gcQuery);
+		continue;
+
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
