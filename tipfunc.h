@@ -319,7 +319,11 @@ void tIPNavList(unsigned uAvailable)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND uOwner=%u ORDER BY cLabel",
+	if(guCompany==1)
+		sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u ORDER BY cLabel",
+				uAvailable);
+	else
+		sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND uOwner=%u ORDER BY cLabel",
 				uAvailable,guCompany);
 
         mysql_query(&gMysql,gcQuery);
