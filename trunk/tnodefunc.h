@@ -29,7 +29,7 @@ void htmlHealth(unsigned uContainer,unsigned uType);
 void htmlNodeHealth(unsigned uNode);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 				unsigned uTargetNode, unsigned uNewVeid);
-unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4);
+unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown);
 char *cRatioColor(float *fRatio);
 //tcontainer.c
 void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
@@ -285,7 +285,7 @@ void ExttNodeCommands(pentry entries[], int x)
                         	guMode=0;
 
 				
-				uRetVal=CloneNode(uNode,uTargetNode,uWizIPv4);
+				uRetVal=CloneNode(uNode,uTargetNode,uWizIPv4,cuWizIPv4PullDown);
 				if(uRetVal==1)
 					tNode("<blink>Error</blink>: You did not select a valid start IP"
 						" no containers for cloning created!");
