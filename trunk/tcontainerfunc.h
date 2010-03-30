@@ -60,7 +60,7 @@ static char cNetmask[64]={""};
 static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
 static unsigned uAllPortsOpen=0;
-static unsigned uCloneStop=0;
+static unsigned uCloneStop=1;//default stopped
 static unsigned uSyncPeriod=0;
 static char cSearch[32]={""};
 static unsigned uGroupJobs=0;
@@ -997,7 +997,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							"uSearchdomain=%u,"
 							"uDatacenter=%u,"
 							"uNode=%u,"
-							"uStatus=81,"//uAWAITCLONE
+							"uStatus=%u,"//uAWAITCLONE
 							"uOwner=%u,"
 							"uCreatedBy=%u,"
 							"uSource=%u,"
@@ -1011,6 +1011,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							uSearchdomain,
 							uDatacenter,
 							uTargetNode,
+							uAWAITCLONE,
 							guCompany,
 							guLoginClient,
 							uContainer);
@@ -1037,6 +1038,7 @@ void ExttContainerCommands(pentry entries[], int x)
 								", No jobs created!");
 					}
 					CopyContainerProps(uContainer,uNewVeid);
+					//Update NAME
 					sprintf(gcQuery,"DELETE FROM tProperty WHERE"
 							" cName='Name' AND uKey=%u AND uType=3",uNewVeid);
 					mysql_query(&gMysql,gcQuery);
@@ -2661,7 +2663,7 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 				uDatacenter,uNode,uContainer,
 				uTargetNode,
 				uNewVeid,
-				uCloneStop,
+				uCloneStop,//file global
 				uPrevStatus,
 				guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
@@ -2674,11 +2676,14 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 }//unsigned CloneContainerJob()
 
 
+//Can return 0,1,2,3 or 4
 unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4)
 {
-
+//#define DEBUG_CLONENODE
+#ifdef DEBUG_CLONENODE
 	//debug only
 	printf("Content-type: text/plain\n\n");
+#endif
 
 	//Loop for all containers that belong to source node and do not have clones on the uTargetNode.
 	//For every loop iteration we must get a new available IP from tIP starting at uWizIPv4
@@ -2691,9 +2696,10 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 	unsigned uCount=0;
 	unsigned uStatus=0;
 	unsigned uOwner=0;
+	unsigned uVeth=0;
 	
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uOSTemplate,uConfig,uNameserver,uSearchdomain,uDatacenter"
-			",uContainer,uStatus,uOwner FROM tContainer WHERE uNode=%u",uSourceNode);
+			",uContainer,uStatus,uOwner,uVeth FROM tContainer WHERE uNode=%u",uSourceNode);
 	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2718,10 +2724,32 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 		sscanf(field[7],"%u",&uContainer);
 		sscanf(field[8],"%u",&uStatus);
 		sscanf(field[9],"%u",&uOwner);
+		sscanf(field[10],"%u",&uVeth);
 		if(!uDatacenter || !uContainer || !field[0][0] || !field[1][0])
 		{
 			mysql_free_result(res);
+#ifdef DEBUG_CLONENODE
+			//Debug only
+			printf("No containers added, unexpected error.\n");
+			exit(0);
+#endif
 			return(4);//no containers added, unexpected error.
+		}
+
+		//If container is uVeth=1 but the target node does not allow skip.
+		if(uVeth)
+		{
+			char cContainerType[256]={""};
+
+			GetNodeProp(uTargetNode,"Container-Type",cContainerType);
+			if(!strstr(cContainerType,"VETH"))
+			{
+#ifdef DEBUG_CLONENODE
+				//Debug only
+				printf("Target node does not allow uVeth=1 containers.\n");
+#endif
+				continue;
+			}
 		}
 		sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%.25s-clone0',"
 					"cHostname='%.93s.clone',"
@@ -2732,10 +2760,11 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 					"uSearchdomain=%s,"
 					"uDatacenter=%u,"
 					"uNode=%u,"
-					"uStatus=81,"//uAWAITCLONE
+					"uStatus=%u,"
 					"uOwner=%u,"
 					"uCreatedBy=%u,"
 					"uSource=%u,"
+					"uVeth=%u,"
 					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 							field[0],
 							field[1],
@@ -2746,28 +2775,58 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 							field[5],
 							uDatacenter,
 							uTargetNode,
+							uAWAITCLONE,
 							uOwner,
 							guLoginClient,
-							uContainer);
+							uContainer,
+							uVeth);
+#ifdef DEBUG_CLONENODE
 		//Debug only
-		printf("%.255s\n",gcQuery);
-		continue;
-
+		printf("%s\n",gcQuery);
+#endif
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 		uNewVeid=mysql_insert_id(&gMysql);
+#ifdef DEBUG_CLONENODE
+		//Debug only
+		printf("uNewVeid=%u\n",uNewVeid);
+#endif
 
 		if(CloneContainerJob(uDatacenter,uSourceNode,uContainer,uTargetNode,uNewVeid,uStatus))
 		{
+#ifdef DEBUG_CLONENODE
+			//Debug only
+			printf("CloneContainerJob(%u,%u,%u,%u,%u,%u).\n",
+					uDatacenter,uSourceNode,uContainer,uTargetNode,uNewVeid,uStatus);
+#endif
 			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 					" WHERE uIP=%u AND uAvailable=1",uWizIPv4);
+#ifdef DEBUG_CLONENODE
+			//Debug only
+			printf("%s\n",gcQuery);
+#endif
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
 			if(mysql_affected_rows(&gMysql)!=1)
 			{
+				//Undo tJob
+				sprintf(gcQuery,"DELETE FROM tJob WHERE cLabel='CloneContainer(%u)'",uContainer);
+#ifdef DEBUG_CLONENODE
+				//Debug only
+				printf("%s\n",gcQuery);
+#endif
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+
+				//Undo tContainer
 				sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uNewVeid);
+#ifdef DEBUG_CLONENODE
+				//Debug only
+				printf("%s\n",gcQuery);
+#endif
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -2776,15 +2835,34 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 				//at uWizIPv4. This is a temp hack. But allows operator to run 
 				//operation again.
 				if(uCount)
+				{
+#ifdef DEBUG_CLONENODE
+					//Debug only
+					printf("Some containers added, ips not enough. 1\n");
+					exit(0);
+#endif
 					return(1);//some containers added, ips not enough.
+				}
 				else
+				{
+#ifdef DEBUG_CLONENODE
+					//Debug only
+					printf("No containers added, ips not enough. 3\n");
+					exit(0);
+#endif
 					return(3);//no containers added, ips not enough.
+				}
 			}
 			uWizIPv4++;//Now we can increment safely
 			
 			CopyContainerProps(uContainer,uNewVeid);
+			//replace Name in property uType=3 is container property type.
 			sprintf(gcQuery,"DELETE FROM tProperty WHERE"
 					" cName='Name' AND uKey=%u AND uType=3",uNewVeid);
+#ifdef DEBUG_CLONENODE
+			//Debug only
+			printf("%s\n",gcQuery);
+#endif
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -2792,12 +2870,20 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 					",cName='Name',cValue='%.25s-clone0'",
 							uNewVeid,guCompany,guLoginClient,field[0]);
+#ifdef DEBUG_CLONENODE
+			//Debug only
+			printf("%s\n",gcQuery);
+#endif
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 			//default no sync period set
 			sprintf(gcQuery,"DELETE FROM tProperty WHERE"
 					" cName='cuSyncPeriod' AND uKey=%u AND uType=3",uNewVeid);
+#ifdef DEBUG_CLONENODE
+			//Debug only
+			printf("%s\n",gcQuery);
+#endif
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -2805,16 +2891,29 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 					",cName='cuSyncPeriod',cValue='0'",
 						uNewVeid,guCompany,guLoginClient);
+#ifdef DEBUG_CLONENODE
+			//Debug only
+			printf("%s\n",gcQuery);
+#endif
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
-			//sscanf(field[7],"%u",&uContainer);
-			SetContainerStatus(uContainer,81);//Awaiting Clone
+			//from uContainer field[7] above, the source container VEID.
+#ifdef DEBUG_CLONENODE
+			//Debug only
+			printf("SetContainerStatus(%u,%u)\n",uContainer,uAWAITCLONE);
+#endif
+			SetContainerStatus(uContainer,uAWAITCLONE);//Awaiting Clone
 			uCount++;
 		}
 		else
 		{
 			sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uNewVeid);
+#ifdef DEBUG_CLONENODE
+			//Debug only
+			printf("CloneContainerJob() failed\n");
+			printf("%s\n",gcQuery);
+#endif
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -2823,13 +2922,25 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 	}
 	mysql_free_result(res);
 
-	//debug only
-	exit(0);
 
 	if(uNewVeid)
+	{
+#ifdef DEBUG_CLONENODE
+		//Debug only
+		printf("All possible containers added as expected. 0\n");
+		exit(0);
+#endif
 		return(0);//all possible containers added as expected.
+	}
 	else
+	{
+#ifdef DEBUG_CLONENODE
+		//Debug only
+		printf("No containers added. 2\n");
+		exit(0);
+#endif
 		return(2);//no containers added
+	}
 
 }//unsigned CloneNode()
 

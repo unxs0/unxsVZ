@@ -328,9 +328,14 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 				fprintf(sfp,"\t\tallow-update { key %.99s.;};\n",
 						cTSIGKeyName);
 			}
-			fprintf(sfp,"\t\tfile \"master/%s/%c/%s\";\n\t};\n",
-					field[12],field[0][0],field[0]);
 
+			//cOptions DotSignedExtension
+			fprintf(sfp,"\t\tfile \"master/%s/%c/",field[12],field[0][0]);
+			if(field[15][0] && strstr(field[15],"//DotSignedExtension")!=NULL)
+				fprintf(sfp,"%s.signed",field[0]);
+			else
+				fprintf(sfp,"%s",field[0]);
+			fprintf(sfp,"\";\n\t};\n");
 		}
 		fprintf(sfp,"};\n");
 	}

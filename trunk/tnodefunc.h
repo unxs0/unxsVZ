@@ -290,14 +290,15 @@ void ExttNodeCommands(pentry entries[], int x)
 					tNode("<blink>Error</blink>: You did not select a valid start IP"
 						" no containers for cloning created!");
 				else if(uRetVal==2)
-					tNode("<blink>Error</blink>: No clone jobs created. Already cloned!");
+					tNode("<blink>Error</blink>: No clone jobs created."
+						" Already cloned or target node does not allow the containers to be cloned");
 				else if(uRetVal==3)
 					tNode("<blink>Error</blink>: You did not select a valid start IP"
 						" only some containers for cloning created!");
 				else if(uRetVal)
 					tNode("<blink>Error</blink>: Unexpected CloneNode() error!");
 				else if(!uRetVal)
-					tNode("All clone node jobs created ok");
+					tNode("All clone node container jobs created ok");
 					
 
 			}
