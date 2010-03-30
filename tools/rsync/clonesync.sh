@@ -14,6 +14,7 @@
 
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
+#Note that you must change the rsync line also. Since we have not had time to fix this.
 cSSHPort="-p 22";
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then

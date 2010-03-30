@@ -1024,7 +1024,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus))
 				{
 					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-							" WHERE uIP=%u AND uAvailable=1",uWizIPv4);
+							" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",
+								uWizIPv4,uOwner);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -1034,6 +1035,13 @@ void ExttContainerCommands(pentry entries[], int x)
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
+
+						sprintf(gcQuery,"DELETE FROM tJob WHERE cLabel='CloneContainer(%u)'"
+								,uNewVeid);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+
 						tContainer("<blink>Error</blink>: Someone grabbed your IP"
 								", No jobs created!");
 					}
@@ -1051,7 +1059,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
-					//default no sync period set
+					//Default no sync period set
 					sprintf(gcQuery,"DELETE FROM tProperty WHERE"
 							" cName='cuSyncPeriod' AND uKey=%u AND uType=3",uNewVeid);
 					mysql_query(&gMysql,gcQuery);
@@ -2679,7 +2687,7 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 //Can return 0,1,2,3 or 4
 unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4)
 {
-//#define DEBUG_CLONENODE
+#define DEBUG_CLONENODE
 #ifdef DEBUG_CLONENODE
 	//debug only
 	printf("Content-type: text/plain\n\n");
@@ -2690,6 +2698,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
         MYSQL_RES *res;
         MYSQL_RES *res2;
         MYSQL_ROW field;
+        MYSQL_ROW field2;
 	unsigned uContainer=0;
 	unsigned uDatacenter=0;
 	unsigned uNewVeid=0;
@@ -2699,7 +2708,8 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 	unsigned uVeth=0;
 	
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uOSTemplate,uConfig,uNameserver,uSearchdomain,uDatacenter"
-			",uContainer,uStatus,uOwner,uVeth FROM tContainer WHERE uNode=%u",uSourceNode);
+			",uContainer,uStatus,uOwner,uVeth FROM tContainer WHERE uNode=%u AND"
+			" (uStatus=%u OR uStatus=%u)",uSourceNode,uSTOPPED,uACTIVE);
 	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2801,7 +2811,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 					uDatacenter,uSourceNode,uContainer,uTargetNode,uNewVeid,uStatus);
 #endif
 			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-					" WHERE uIP=%u AND uAvailable=1",uWizIPv4);
+					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",uWizIPv4,uOwner);
 #ifdef DEBUG_CLONENODE
 			//Debug only
 			printf("%s\n",gcQuery);
@@ -2811,6 +2821,9 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 					htmlPlainTextError(mysql_error(&gMysql));
 			if(mysql_affected_rows(&gMysql)!=1)
 			{
+//This is just a quick fix for a complicated if/then/else situation.
+//This will be resolved by providing a common function.
+IPExhaustionExit:
 				//Undo tJob
 				sprintf(gcQuery,"DELETE FROM tJob WHERE cLabel='CloneContainer(%u)'",uContainer);
 #ifdef DEBUG_CLONENODE
@@ -2838,7 +2851,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 				{
 #ifdef DEBUG_CLONENODE
 					//Debug only
-					printf("Some containers added, ips not enough. 1\n");
+					printf("Some containers added, owned ips not enough. 1\n");
 					exit(0);
 #endif
 					return(1);//some containers added, ips not enough.
@@ -2847,13 +2860,26 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 				{
 #ifdef DEBUG_CLONENODE
 					//Debug only
-					printf("No containers added, ips not enough. 3\n");
+					printf("No containers added, owned ips not enough. 3\n");
 					exit(0);
 #endif
 					return(3);//no containers added, ips not enough.
 				}
 			}
-			uWizIPv4++;//Now we can increment safely
+
+			//We need to search for next available uIP
+			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uIP>%u AND uOwner=%u",
+				uWizIPv4,uOwner);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+				sscanf(field2[0],"%u",&uWizIPv4);
+			else
+				//This is just a quick fix for a complicated if/then/else situation.
+				//This will be resolved by providing a common function.
+				goto IPExhaustionExit;
 			
 			CopyContainerProps(uContainer,uNewVeid);
 			//replace Name in property uType=3 is container property type.
