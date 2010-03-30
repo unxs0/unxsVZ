@@ -85,7 +85,7 @@ unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCo
 unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
-unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4);
+unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown);
 char *cRatioColor(float *fRatio);
 void htmlGenMountInputs(unsigned const uMountTemplate);
 unsigned uCheckMountSettings(unsigned uMountTemplate);
@@ -2685,9 +2685,9 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 
 
 //Can return 0,1,2,3 or 4
-unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4)
+unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown)
 {
-#define DEBUG_CLONENODE
+//#define DEBUG_CLONENODE
 #ifdef DEBUG_CLONENODE
 	//debug only
 	printf("Content-type: text/plain\n\n");
@@ -2706,6 +2706,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 	unsigned uStatus=0;
 	unsigned uOwner=0;
 	unsigned uVeth=0;
+	char cWizIPv4[32];
 	
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uOSTemplate,uConfig,uNameserver,uSearchdomain,uDatacenter"
 			",uContainer,uStatus,uOwner,uVeth FROM tContainer WHERE uNode=%u AND"
@@ -2867,9 +2868,15 @@ IPExhaustionExit:
 				}
 			}
 
-			//We need to search for next available uIP
-			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uIP>%u AND uOwner=%u",
-				uWizIPv4,uOwner);
+			//We need to search for next available uIP from same class if IPs
+			//for now we will just use the first 6 chars 192.16x 10.0.0x
+			sprintf(cWizIPv4,"%.6s",cuWizIPv4PullDown);
+			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uIP>%u AND uOwner=%u"
+					" AND cLabel LIKE '%s%%'",uWizIPv4,uOwner,cWizIPv4);
+#ifdef DEBUG_CLONENODE
+			//Debug only
+			printf("%s\n",gcQuery);
+#endif
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
