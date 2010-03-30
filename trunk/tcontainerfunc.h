@@ -2690,9 +2690,10 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 	unsigned uNewVeid=0;
 	unsigned uCount=0;
 	unsigned uStatus=0;
+	unsigned uOwner=0;
 	
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uOSTemplate,uConfig,uNameserver,uSearchdomain,uDatacenter"
-			",uContainer,uStatus FROM tContainer WHERE uNode=%u",uSourceNode);
+			",uContainer,uStatus,uOwner FROM tContainer WHERE uNode=%u",uSourceNode);
 	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2716,6 +2717,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 		sscanf(field[6],"%u",&uDatacenter);
 		sscanf(field[7],"%u",&uContainer);
 		sscanf(field[8],"%u",&uStatus);
+		sscanf(field[9],"%u",&uOwner);
 		if(!uDatacenter || !uContainer || !field[0][0] || !field[1][0])
 		{
 			mysql_free_result(res);
@@ -2744,7 +2746,7 @@ unsigned CloneNode(unsigned uSourceNode, unsigned uTargetNode, unsigned uWizIPv4
 							field[5],
 							uDatacenter,
 							uTargetNode,
-							guCompany,
+							uOwner,
 							guLoginClient,
 							uContainer);
 		//Debug only
