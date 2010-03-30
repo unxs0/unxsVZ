@@ -1506,6 +1506,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 {
 	//Only run one vzdump job per HN. Wait for lock release.
 	//Log this rare condition
+	//This lock file is created by the external proxmox script vzdump
 	if(access("/var/run/vzdump.lock",R_OK)==0)
 	{
 		logfileLine("TemplateContainer","/var/run/vzdump.lock exists");
@@ -1765,6 +1766,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 	//Only run one CloneContainer job per HN. Wait for lock release.
 	//Log this rare condition
+	//This lock file is created by the external proxmox script vzdump
 	if(access("/var/run/vzdump.lock",R_OK)==0)
 	{
 		logfileLine("CloneContainer","/var/run/vzdump.lock exists");

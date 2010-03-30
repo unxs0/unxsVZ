@@ -66,6 +66,11 @@ int main(int iArgc, char *cArgv[])
 
 	sprintf(gcProgram,"%.31s",cArgv[0]);
 
+	//Check to see if this program is still running. If it is exit.
+	//This may mean losing data gathering data points. But it
+	//will avoid runaway du and other unexpected high load
+	//situations. See #120.
+
 	ProcessUBC();//does vzquota and vzmemcheck also via other subsytems
 	return(0);
 }//main()
@@ -426,9 +431,12 @@ void ProcessSingleHDUsage(unsigned uContainer)
 		logfileLine("ProcessSingleHDUsage","No container specified",uContainer);
 		exit(1);
 	}
-	
-	//We need to replace this du command with somehting else much faster
-	//like reading from some system file directly du data.	
+
+	//It seems like we are stuck using du. But we can limit it's use, or not
+	//run it if another one is already running. This will help with #120
+	//resolution. This probably should be done globally for this whole
+	//data collection agent. See main() for more on this.
+
 	sprintf(cCommand,"/usr/bin/du -ks /vz/private/%u/ 2> /dev/null",uContainer);
 
 	if((fp=popen(cCommand,"r")))
