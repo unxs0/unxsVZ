@@ -1856,7 +1856,7 @@ void ExttContainerButtons(void)
 				" uVeth='Yes' container tOSTemplate should be reviewed to make sure it's"
 				" network settings will not interfere with standard OpenVZ VETH device usage.");
 			printf("<p><u>Advanced operations</u>");
-			printf("<p>Creating multiple containers: Specify the number, specify a special cLabel"
+			printf("<br>Creating multiple containers: Specify the number, specify a special cLabel"
 				" and cHostname that will be used to generate the multiple containers (see example below),"
 				" specify a start uIPv4 -the system will use the given uIPv4's class C to try to allocate"
 				" IPs from tIP. Only 2 steps, you can't currently specify mount/umount files."
