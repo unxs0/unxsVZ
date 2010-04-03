@@ -32,15 +32,16 @@ void ldapErrorExit(char *cMessage,LDAP *ld);
 int main(int iArgc, char *cArgv[])
 {
 	LDAP *ld;
-	char *cURI="ldap://localhost";
+	char *cURI="ldap://10.0.4.36";
 	int iDesiredVersion=LDAP_VERSION3;
 	struct berval structBervalCredentials;
 	char *cFilter="(objectClass=*)";
-	char *cSearchDN="dc=unixservice,dc=com";
+	char *cSearchDN="dc=ad,dc=cenet,dc=catholic,dc=edu,dc=au";
 	LDAPMessage *ldapMsg;
 	LDAPMessage *ldapEntry;
 	struct berval **structBervals;
 	BerElement *berElement;
+	char *caAttrs[8]={"memberOf",NULL};
 	int  iRes,i;
 	char *cpDN=NULL;
 	char *cpAttr;
@@ -83,7 +84,8 @@ int main(int iArgc, char *cArgv[])
 	printf("ldap_sasl_bind_s() ok\n");
 
 	//Initiate sync search
-	if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_SUBTREE,cFilter,NULL,0,NULL,NULL,NULL,0,&ldapMsg)!=LDAP_SUCCESS)
+	//if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_BASE,cFilter,NULL,0,NULL,NULL,NULL,0,&ldapMsg)!=LDAP_SUCCESS)
+	if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_SUBTREE,cFilter,caAttrs,0,NULL,NULL,NULL,0,&ldapMsg)!=LDAP_SUCCESS)
 		ldapErrorExit("ldap_search_ext_s()",ld);
 	//debug only
 	printf("ldap_search_ext_s() ok. Returned %d entries\n\n",ldap_count_entries(ld,ldapMsg));
