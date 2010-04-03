@@ -13,6 +13,13 @@ AUTHOR
 
 NOTES
 	Starting out very simple.
+	This is now a proof of concept OpenLDAP client for AD/LDAP server for
+	a quasi SSO login alternative to unxsBind tClient/tAuthorize. We will use
+	some of this code in vdnsOrg interface in conjuntion with tConfiguration
+	setup and tClient setup of OU=X company values.
+
+	This way with AD setup correctly joeuser of tClient organization Acme, INC.
+	will be able to login and manage Acme, INC. owned zones.
 
 EXAMPLE USAGE
 	/usr/sbin/unxsLDAP 'cn=Dylan Wallis,dc=unixservice,dc=com' 'secret' \
@@ -36,15 +43,17 @@ int main(int iArgc, char *cArgv[])
 	int iDesiredVersion=LDAP_VERSION3;
 	struct berval structBervalCredentials;
 	char *cFilter="(objectClass=*)";
-	char *cSearchDN="dc=ad,dc=cenet,dc=catholic,dc=edu,dc=au";
+	char *cSearchDN="ou=members,dc=ad,dc=net,dc=cat,dc=edu,dc=za";
 	LDAPMessage *ldapMsg;
 	LDAPMessage *ldapEntry;
 	struct berval **structBervals;
 	BerElement *berElement;
 	char *caAttrs[8]={"memberOf",NULL};
 	int  iRes,i;
-	char *cpDN=NULL;
+	//char *cpDN=NULL;
 	char *cpAttr;
+	char *cp;
+	char *cp2;
 
 	if(iArgc<3 || iArgc>5)
 	{
@@ -66,13 +75,13 @@ int main(int iArgc, char *cArgv[])
 		exit(EXIT_FAILURE);
 	}
 	//debug only
-	printf("ldap_initialize() ok\n");
+	//printf("ldap_initialize() ok\n");
 
 	//set the LDAP version to be 3
 	if(ldap_set_option(ld,LDAP_OPT_PROTOCOL_VERSION,&iDesiredVersion)!=LDAP_OPT_SUCCESS)
 		ldapErrorExit("ldap_set_option()",ld);
 	//debug only
-	printf("ldap_set_option() for LDAP v%d ok\n",iDesiredVersion);
+	//printf("ldap_set_option() for LDAP v%d ok\n",iDesiredVersion);
 
 
 	//Connect/bind to LDAP server
@@ -81,24 +90,24 @@ int main(int iArgc, char *cArgv[])
 	if(ldap_sasl_bind_s(ld,cArgv[1],NULL,&structBervalCredentials,NULL,NULL,NULL)!=LDAP_SUCCESS)
 		ldapErrorExit("ldap_sasl_bind_s()",ld);
 	//debug only
-	printf("ldap_sasl_bind_s() ok\n");
+	//printf("ldap_sasl_bind_s() ok\n");
 
 	//Initiate sync search
 	//if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_BASE,cFilter,NULL,0,NULL,NULL,NULL,0,&ldapMsg)!=LDAP_SUCCESS)
 	if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_SUBTREE,cFilter,caAttrs,0,NULL,NULL,NULL,0,&ldapMsg)!=LDAP_SUCCESS)
 		ldapErrorExit("ldap_search_ext_s()",ld);
 	//debug only
-	printf("ldap_search_ext_s() ok. Returned %d entries\n\n",ldap_count_entries(ld,ldapMsg));
+	//printf("ldap_search_ext_s() ok. Returned %d entries\n\n",ldap_count_entries(ld,ldapMsg));
 
 	//Iterate through the returned entries
 	for(ldapEntry=ldap_first_entry(ld,ldapMsg);ldapEntry!=NULL;ldapEntry=ldap_next_entry(ld,ldapEntry))
 	{
 
-		if((cpDN=ldap_get_dn(ld,ldapEntry))!= NULL)
-		{
-			printf("Returned dn: %s\n",cpDN);
-			ldap_memfree(cpDN);
-		}
+		//if((cpDN=ldap_get_dn(ld,ldapEntry))!= NULL)
+		//{
+		//	printf("Returned dn: %s\n",cpDN);
+		//	ldap_memfree(cpDN);
+		//}
 
 		for(cpAttr=ldap_first_attribute(ld,ldapEntry,&berElement);cpAttr!=NULL;
 					cpAttr=ldap_next_attribute(ld,ldapEntry,berElement))
@@ -106,7 +115,17 @@ int main(int iArgc, char *cArgv[])
 			if((structBervals=ldap_get_values_len(ld,ldapEntry,cpAttr))!=NULL)
 			{
 				for(i=0;structBervals[i]!=NULL;i++)
-					printf("%s: %s\n",cpAttr,structBervals[i]->bv_val);
+				{
+					if(strstr(structBervals[i]->bv_val,"_admins"))
+					{
+						if((cp=strstr(structBervals[i]->bv_val,"OU=")))
+						{
+							if((cp2=strchr(cp+3,',')))
+								*cp2=0;
+							printf("%s\n",cp+3);
+						}
+					}
+				}
 				ldap_value_free_len(structBervals);
 			}
 			ldap_memfree(cpAttr);
@@ -115,7 +134,7 @@ int main(int iArgc, char *cArgv[])
 		if(berElement!=NULL)
 			ber_free(berElement,0);
 
-		printf("\n");
+		//printf("\n");
 	}
 
 	//Cleanup (TODO is ldapEntry mem cleaned above? Check)
