@@ -14,19 +14,17 @@ NOTES
 	cFilter, cSearchDN, caAttrs, cOULinePattern and cOUPattern.
 */
 
-#include <lber.h>
-#include <ldap.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "interface.h"
 #include <lber.h>
 #include <ldap.h>
 
 //local protos
 void ldapErrorLog(char *cMessage,LDAP *ld);
+void logfileLine(const char *cFunction,const char *cLogline);
 
 //extern protos
-void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry);//main.c
+//void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry);//main.c
+//void htmlPlainTextError(const char *cError);
 
 //Must provide on call to at least a 32 char cOrganization buffer.
 //Depending on whether an OpenLDAP or an AD LDAP server is used
@@ -141,3 +139,34 @@ void ldapErrorLog(char *cMessage,LDAP *ld)
 	iDNSLog(0,"ldapErrorLog",cLogEntry);
 	
 }//void ldapErrorLog(char *cMessage,LDAP *ld)
+
+
+void logfileLine(const char *cFunction,const char *cLogline)
+{
+	time_t luClock;
+	char cTime[32];
+	pid_t pidThis;
+	const struct tm *tmTime;
+	static FILE *gLfp=NULL;
+
+	if(gLfp==NULL)
+	{
+		if((gLfp=fopen(cLOGFILE,"a"))==NULL)
+		{
+			sprintf(gcQuery,"Could not open logfile: %s\n",cLOGFILE);
+			htmlPlainTextError(gcQuery);
+       		}
+	}
+
+	pidThis=getpid();
+
+	time(&luClock);
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
+
+        fprintf(gLfp,"%s vdnsOrg.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
+	fflush(gLfp);
+
+}//void logfileLine(char *cLogline)
+
+
