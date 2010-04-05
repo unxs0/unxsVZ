@@ -17,6 +17,24 @@ AUTHOR
 #define MAXPOSTVARS 64
 #define MAXGETVARS 8
 
+#define BO_CUSTOMER      "Backend Customer"
+#define BO_RESELLER      "Backend Reseller"
+#define BO_ADMIN         "Backend Admin"
+#define BO_ROOT  "Backend Root"
+#define BO_CUSTOMER      "Backend Customer"
+#define BO_RESELLER      "Backend Reseller"
+#define BO_ADMIN         "Backend Admin"
+#define BO_ROOT  "Backend Root"
+#define ORG_CUSTOMER     "Organization Customer"
+#define ORG_WEBMASTER    "Organization Webmaster"
+#define ORG_SALES        "Organization Sales Force"
+#define ORG_SERVICE      "Organization Customer Service"
+#define ORG_ACCT "Organization Bookkeeper"
+#define ORG_ADMIN        "Organization Admin"
+#define IP_BLOCK_CIDR 1
+#define IP_BLOCK_DASH 2
+
+
 
 //In main.c
 const char *cUserLevel(unsigned uPermLevel);
