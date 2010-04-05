@@ -34,6 +34,7 @@ AUTHOR
 #define IP_BLOCK_CIDR 1
 #define IP_BLOCK_DASH 2
 
+#define cLOGFILE "/var/log/unxsbindlog"
 
 
 //In main.c
