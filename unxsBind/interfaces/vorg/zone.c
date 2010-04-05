@@ -2,11 +2,13 @@
 FILE 
 	zone.c
 	$Id$
-AUTHOR
-	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See included LICENSE file.
 PURPOSE
-	vdnsOrg
-	program file.
+	vdnsOrg program file.
+	Zone tab functions.
 */
 
 static char cBlock[100]={""};
@@ -217,8 +219,6 @@ void ZoneCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Delegate Block Confirm"))
 		{
-#define IP_BLOCK_CIDR 1
-#define IP_BLOCK_DASH 2
 			unsigned uA,uB,uC,uD,uE,uNumIPs;
 			unsigned uMa,uMb,uMc;
 			unsigned uIPBlockFormat;
@@ -418,7 +418,8 @@ void ZoneCommands(pentry entries[], int x)
 			
 			sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,"
 					"cName='$GENERATE %u-%u $',uRRType=5,cParam1='%s',"
-					"cComment='Delegation (%s)',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					"cComment='Delegation (%s)',uOwner=%u,uCreatedBy=%u,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 					guZone
 					,uD
 					,(uD+uNumIPs)
@@ -464,7 +465,8 @@ void ZoneCommands(pentry entries[], int x)
 				sprintf(gcNewStep," Confirm");
 				htmlDelegationTool();
 			}
-			sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%u AND cComment='Delegation (%s)'",guZone,cIPBlock);
+			sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%u AND cComment='Delegation (%s)'",
+				guZone,cIPBlock);
 			mysql_query(&gMysql,gcQuery);
 			if(!mysql_affected_rows(&gMysql))
 			{
@@ -497,8 +499,8 @@ void ZoneCommands(pentry entries[], int x)
 
 void htmlZone(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlZonePage("DNS System","VZone.Body");
+	htmlHeader("vdnsOrg","Header");
+	htmlZonePage("vndOrg","VZone.Body");
 	htmlFooter("Footer");
 
 }//void htmlZone(void)
@@ -693,10 +695,11 @@ void funcSelectZone(FILE *fp)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
-	fprintf(fp,"<select title='Select the zone you want to load with this dropdown' name=uZone class=type_textarea onChange=");
+	fprintf(fp,"<select title='Select the zone you want to load with this dropdown'"
+			" name=uZone class=type_textarea onChange=");
 	//if(guBrowserFirefox)
 	//	fprintf(fp,"'changePage(this.form.cZone)'>\n");
-//	else
+	//else
 		fprintf(fp,"'submit()'>\n");
 	fprintf(fp,"<option>---</option>");
 	while((field=mysql_fetch_row(res)))
@@ -805,7 +808,8 @@ void funcSelectBlock(FILE *fp)
 	unsigned uCount=1;
 
 	fprintf(fp,"<!-- funcSelectBlock(fp) Start -->\n");
-	sprintf(gcQuery,"SELECT DISTINCT cLabel FROM tBlock WHERE (uOwner=%u OR uOwner=%u) ORDER BY cLabel LIMIT 301",guLoginClient,guOrg);
+	sprintf(gcQuery,"SELECT DISTINCT cLabel FROM tBlock WHERE (uOwner=%u OR uOwner=%u) ORDER BY cLabel LIMIT 301",
+		guLoginClient,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -840,7 +844,8 @@ void funcSelectSecondary(FILE *fp)
 	unsigned uRows=0;
 
 	fprintf(fp,"<!-- funcSelectSecondary(fp) Start -->\n");
-	sprintf(gcQuery,"SELECT DISTINCT cZone FROM tZone WHERE (uOwner=%u OR uOwner=%u) AND uSecondaryOnly=1 ORDER BY cZone LIMIT 301",guLoginClient,guOrg);
+	sprintf(gcQuery,"SELECT DISTINCT cZone FROM tZone WHERE (uOwner=%u OR uOwner=%u) AND uSecondaryOnly=1"
+			" ORDER BY cZone LIMIT 301",guLoginClient,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1300,7 +1305,8 @@ void Insert_tJob(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tJob SET uJob=%u,uMasterJob=%u,cJob='%s',cZone='%s',uNSSet=%u,cTargetServer='%s',uPriority=%u,uTime=%lu,cJobData='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tJob SET uJob=%u,uMasterJob=%u,cJob='%s',cZone='%s',uNSSet=%u,cTargetServer='%s',"
+			"uPriority=%u,uTime=%lu,cJobData='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uJob
 			,uMasterJob
 			,TextAreaSave(cJob)
@@ -1381,7 +1387,8 @@ void SetZoneFieldsOn(void)
 }
 
 
-void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,const unsigned uCustId,const unsigned uNameServer,const unsigned uCreatedBy,const char *cComment)
+void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
+		const unsigned uCustId,const unsigned uNameServer,const unsigned uCreatedBy,const char *cComment)
 {
 	char cName[100]={""};
 	char cNamePlus[200]={""};
@@ -1559,7 +1566,9 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,const 
 		//Get rid of last period for check
 		strcpy(cNS,cParam1);
 		cNS[strlen(cNS)-1]=0;
-		sprintf(gcQuery,"SELECT uNameServer FROM tNameServer WHERE uNameServer=%u AND ( (cList LIKE '%s MASTER%%') OR (cList LIKE '%%%s SLAVE%%'))",uNameServer,cNS,cNS);
+		sprintf(gcQuery,"SELECT uNameServer FROM tNameServer WHERE uNameServer=%u AND"
+				" ( (cList LIKE '%s MASTER%%') OR (cList LIKE '%%%s SLAVE%%'))",
+					uNameServer,cNS,cNS);
 
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
@@ -1633,7 +1642,8 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,const 
 		if(!uFirstDigit)
 		{
 			//Check this rule again
-			sprintf(cMsg,"<blink>Error %s: Incorrect PTR LHS should start with a non zero digit: %s</blink>",cZoneName,cLine);
+			sprintf(cMsg,"<blink>Error</blink> %s: Incorrect PTR LHS should start with a non zero digit: %s",
+				cZoneName,cLine);
 			gcMessage=cMsg;
 			return;
 		}
@@ -1700,7 +1710,8 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,const 
 	else
 		sprintf(cNamePlus,"%.99s",cName);
 	if(uRRType==6)//TXT special case
-	sprintf(gcQuery,"INSERT INTO %s SET  uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+		sprintf(gcQuery,"INSERT INTO %s SET  uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',"
+				"cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 					,cResourceImportTable
 					,uZone
 					,FQDomainName(cNamePlus)
@@ -1711,7 +1722,8 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,const 
 					,uCustId
 					,uCreatedBy);
 	else
-	sprintf(gcQuery,"INSERT INTO %s SET uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+		sprintf(gcQuery,"INSERT INTO %s SET uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',"
+				"cParam2='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 					,cResourceImportTable
 					,uZone
 					,FQDomainName(cNamePlus)
@@ -1788,8 +1800,8 @@ void funcNSSetMembers(FILE *fp)
 
 void htmlDelegationTool(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlZonePage("DNS System","DelegationTool.Body");
+	htmlHeader("vndsOrg","Header");
+	htmlZonePage("vdnsOrg","DelegationTool.Body");
 	htmlFooter("Footer");
 	
 }//void htmlDelegationTool(void)

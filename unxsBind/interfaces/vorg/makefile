@@ -2,8 +2,10 @@
 #FILE
 #	makefile
 #	$Id: makefile 663 2008-12-18 19:00:37Z hus $
-#AUTHOR
-#	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+#AUTHOR/LEGAL
+#	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+#	(C) 2010 Gary Wallis for Unixservice, LLC.
+#	GPLv2 license applies. See included LICENSE file.
 #PURPOSE
 #	General purpose RAD3 interface makefile
 #	Must customize CGINAME 
@@ -12,9 +14,9 @@
 CGINAME= vdnsOrg.cgi
 
 CFLAGS=-Wall
-LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl
+LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
 
-interface.cgi: main.o zone.o resource.o glossary.o bulkop.o ../../cgi.o 
+interface.cgi: main.o zone.o resource.o glossary.o bulkop.o ldap.o ../../cgi.o 
 	cc main.o zone.o resource.o glossary.o bulkop.o ../../cgi.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h ../../local.h ../../mysqlrad.h
@@ -31,6 +33,9 @@ glossary.o : glossary.c interface.h ../../local.h ../../mysqlrad.h
 
 bulkop.o : bulkop.c interface.h ../../local.h ../../mysqlrad.h
 	cc -o bulkop.o -c bulkop.c $(CFLAGS)
+
+ldap.o : ldap.c 
+	cc -o ldap.o -c ldap.c $(CFLAGS)
 
 clean:
 	rm -f *.o *.cgi

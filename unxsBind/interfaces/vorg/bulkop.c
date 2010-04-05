@@ -1,12 +1,14 @@
 /*
 FILE 
-	zone.c
+	blukop.c
 	$Id: bulkop.c 663 2008-12-18 19:00:37Z hus $
-AUTHOR
-	(C) 2006-2009 Gary Wallis  and Hugo Urquiza for Unixservice
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See included LICENSE file.
 PURPOSE
-	vdnsOrg	
-	program file.
+	vdnsOrg	program file.
+	Bulk operations, i.e. multiple zone or other mass change functions.
 */
 
 static char *cMassList={""};
@@ -19,11 +21,12 @@ char *ParseTextAreaLines(char *cTextArea);
 void BulkResourceImport(void);
 unsigned uGetZoneNameServer(char *cZone);
 
-
 //zone.c
-void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,const unsigned uCustId,const unsigned uNameServer,const unsigned uCreatedBy,const char *cComment);
+void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
+	const unsigned uCustId,const unsigned uNameServer,const unsigned uCreatedBy,const char *cComment);
 //resource.c
 void UpdateSerialNum(char *cZone);
+
 
 void ProcessBulkOpVars(pentry entries[], int x)
 {
@@ -81,8 +84,8 @@ void BulkOpCommands(pentry entries[], int x)
 
 void htmlBulkOp(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlBulkOpPage("DNS System","OrgBulkOp.Body");
+	htmlHeader("vndsOrg","Header");
+	htmlBulkOpPage("vndsOrg","OrgBulkOp.Body");
 	htmlFooter("Footer");
 
 }//void htmlBulkOp(void)

@@ -3,7 +3,8 @@ FILE
 	main.c
 	$Id: main.c 773 2009-04-06 22:00:23Z hus $
 AUTHOR/LEGAL
-	(C) 2006-2010 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.
 PURPOSE
 	vdnsOrg Interface
@@ -172,7 +173,10 @@ int main(int argc, char *argv[])
 		{
 			printf("Set-Cookie: vdnsOrgLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: vdnsOrgPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=7,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=7,uPermLevel=%u,"
+					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 			mysql_query(&gMysql,gcQuery);
         		guPermLevel=0;
 			gcUser[0]=0;
@@ -204,8 +208,8 @@ int main(int argc, char *argv[])
 
 void htmlLogin(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlLoginPage("DNS System","ZLogin.Body");
+	htmlHeader("vdnsOrg","Header");
+	htmlLoginPage("vdnsOrg","ZLogin.Body");
 	htmlFooter("Footer");
 
 }//void htmlLogin(void)
@@ -258,7 +262,10 @@ void htmlPlainTextError(const char *cError)
 	printf("Please report this vdnsOrg fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
-        sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",guPermLevel,guLoginClient,gcLogin,gcHost,cError,gcHostname,guLoginClient);
+        sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,"
+			"cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				guPermLevel,guLoginClient,gcLogin,gcHost,cError,gcHostname,guLoginClient);
         mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
 		printf("Another error occurred while attempting to log: %s\n",
@@ -299,7 +306,7 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 	}
 	else
 	{
-	printf("<html><head><title>%s</title></head><body bgcolor=white><font face=Arial,Helvetica",cTitle);
+		printf("<html><head><title>%s</title></head><body bgcolor=white><font face=Arial,Helvetica",cTitle);
 	}
 
 }//void htmlHeader()
@@ -508,7 +515,9 @@ void GetPLAndClient(char *cUser)
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 
-	sprintf(gcQuery,"SELECT tAuthorize.uPerm,tAuthorize.uCertClient,tClient.cLabel,tClient.uOwner FROM tAuthorize,tClient WHERE tAuthorize.uCertClient=tClient.uClient AND tAuthorize.cLabel='%s'",cUser);
+	sprintf(gcQuery,"SELECT tAuthorize.uPerm,tAuthorize.uCertClient,tClient.cLabel,tClient.uOwner FROM"
+			" tAuthorize,tClient WHERE tAuthorize.uCertClient=tClient.uClient AND tAuthorize.cLabel='%s'",
+				cUser);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -604,7 +613,8 @@ void SetLogin(void)
 		guSSLCookieLogin=1;
 		//tLogType.cLabel='org login'->uLogType=8
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"
-				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 		mysql_query(&gMysql,gcQuery);
 	}
@@ -638,17 +648,7 @@ char *IPNumber(char *cInput)
 	
 }//char *IPNumber(char *cInput)
 
-#define BO_CUSTOMER	"Backend Customer"
-#define BO_RESELLER	"Backend Reseller"
-#define BO_ADMIN 	"Backend Admin"
-#define BO_ROOT 	"Backend Root"
 
-#define ORG_CUSTOMER	"Organization Customer"
-#define ORG_WEBMASTER	"Organization Webmaster"
-#define ORG_SALES	"Organization Sales Force"
-#define ORG_SERVICE	"Organization Customer Service"
-#define ORG_ACCT	"Organization Bookkeeper"
-#define ORG_ADMIN	"Organization Admin"
 const char *cUserLevel(unsigned uPermLevel)
 {
 	switch(uPermLevel)
@@ -761,7 +761,10 @@ void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
         char cQuery[512];
 
 	//uLogType==2 is this org interface
-        sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.63s',uLogType=2,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',uTablePK=%u,cTableName='%.31s',cHash=MD5(CONCAT('%s','%u','%u','%s','%s','%u','%s','%s')),uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+        sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.63s',uLogType=2,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',"
+			"cHost='%.99s',uTablePK=%u,cTableName='%.31s',"
+			"cHash=MD5(CONCAT('%s','%u','%u','%s','%s','%u','%s','%s')),uOwner=1,uCreatedBy=1,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cLogEntry,
 			guPermLevel,
 			guLoginClient,

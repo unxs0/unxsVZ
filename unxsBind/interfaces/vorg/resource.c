@@ -2,8 +2,10 @@
 FILE 
 	resource.c
 	$Id: resource.c 776 2009-04-08 00:29:55Z hus-admin $
-AUTHOR
-	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See included LICENSE file.
 PURPOSE
 	vdnsOrg
 	program file.
@@ -214,7 +216,8 @@ void ResourceGetHook(entry gentries[],int x)
 			LoadRRNoType();//Get data again except RRType
 			ResourceSetFieldsOn();
 			sprintf(gcModStep," Confirm");
-			gcMessage="You changed the resource type! Modify data, review, then confirm. Any other action to cancel.";
+			gcMessage="You changed the resource type! Modify data, review, then confirm."
+				" Any other action to cancel.";
 			gcInputStatus[0]=0;
 			htmlResource();
 		}
@@ -224,7 +227,8 @@ void ResourceGetHook(entry gentries[],int x)
 			LoadRRNoType();//Get data again except RRType
 			ResourceSetFieldsOn();
 			sprintf(gcNewStep," Confirm");
-			gcMessage="You changed the resource type! Modify data, review, then confirm. Any other action to cancel.";
+			gcMessage="You changed the resource type! Modify data, review, then confirm."
+					" Any other action to cancel.";
 			gcInputStatus[0]=0;
 			htmlResource();
 		}
@@ -232,7 +236,8 @@ void ResourceGetHook(entry gentries[],int x)
 		{
 			LoadRRTypeLabels();//Get labels and tips directly from cRRType
 			LoadRRNoType();//Get data again except RRType
-			gcMessage="You changed the resource type! Modify data, review, then confirm. Any other action to cancel.";
+			gcMessage="You changed the resource type! Modify data, review, then confirm."
+					" Any other action to cancel.";
 			ResourceSetFieldsOn();
 			htmlResourceWizard(uStep);
 		}
@@ -254,8 +259,8 @@ void ResourceGetHook(entry gentries[],int x)
 
 void htmlResource(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlResourcePage("DNS System","Resource.Body");
+	htmlHeader("vdnsOrg","Header");
+	htmlResourcePage("vdnsOrg","Resource.Body");
 	htmlFooter("Footer");
 
 }//void htmlResource(void)
@@ -2023,9 +2028,9 @@ void MasterFunctionSelect(void)
 void htmlResourceWizard(unsigned uStep)
 {
 	char cTmp[16]={""};
-	htmlHeader("DNS System","Header");
+	htmlHeader("vdnsOrg","Header");
 	sprintf(cTmp,"ResourceWizard.%.1u",uStep);
-	htmlResourcePage("DNS System",cTmp);
+	htmlResourcePage("vdnsOrg",cTmp);
 	htmlFooter("Footer");
 	
 }//void htmlResourceWizard(unsigned uStep)
@@ -2398,7 +2403,14 @@ void PrintMXList(FILE *zfp,char *cuMailServers)
 
 void CreatetResourceTest(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tResourceTest ( uResource INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cName VARCHAR(100) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uTTL INT UNSIGNED NOT NULL DEFAULT 0, uRRType INT UNSIGNED NOT NULL DEFAULT 0, cParam1 VARCHAR(255) NOT NULL DEFAULT '', cParam2 VARCHAR(255) NOT NULL DEFAULT '', cComment TEXT NOT NULL DEFAULT '', uZone INT UNSIGNED NOT NULL DEFAULT 0,index (uZone), cParam3 VARCHAR(255) NOT NULL DEFAULT '', cParam4 VARCHAR(255) NOT NULL DEFAULT '' )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tResourceTest ( uResource INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cName VARCHAR(100) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uTTL INT UNSIGNED NOT NULL DEFAULT 0, uRRType INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cParam1 VARCHAR(255) NOT NULL DEFAULT '', cParam2 VARCHAR(255) NOT NULL DEFAULT '',"
+			" cComment TEXT NOT NULL DEFAULT '', uZone INT UNSIGNED NOT NULL DEFAULT 0,index (uZone),"
+			" cParam3 VARCHAR(255) NOT NULL DEFAULT '', cParam4 VARCHAR(255) NOT NULL DEFAULT '' )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

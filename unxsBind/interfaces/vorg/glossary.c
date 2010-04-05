@@ -2,11 +2,13 @@
 FILE 
 	glossary.c
 	$Id: glossary.c 663 2008-12-18 19:00:37Z hus $
-AUTHOR
-	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See included LICENSE file.
 PURPOSE
-	vdnsOrg Interface
-	program file.
+	vdnsOrg Interface program file.
+	Glossary related functions.
 */
 
 #include "interface.h"
@@ -17,6 +19,7 @@ static char cText[16384]={""};
 //
 //Local only
 void SelectGlossary(char *cLabel);
+
 
 void GlossaryGetHook(entry gentries[],int x)
 {
@@ -52,8 +55,8 @@ void GlossaryGetHook(entry gentries[],int x)
 
 void htmlGlossary(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlGlossaryPage("DNS System","OrgGlossary.Body");
+	htmlHeader("vdnsOrg","Header");
+	htmlGlossaryPage("vdnsOrg","OrgGlossary.Body");
 	htmlFooter("Footer");
 
 }//void htmlGlossary(void)
