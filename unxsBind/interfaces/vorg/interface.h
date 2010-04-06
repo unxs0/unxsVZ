@@ -12,6 +12,8 @@ AUTHOR
 #include "../../local.h"
 #include <ctype.h>
 #include <openisp/template.h>
+#include <lber.h>
+#include <ldap.h>
 
 //libtemplate required
 #define MAXPOSTVARS 64
@@ -34,7 +36,8 @@ AUTHOR
 #define IP_BLOCK_CIDR 1
 #define IP_BLOCK_DASH 2
 
-#define cLOGFILE "/var/log/unxsbindlog"
+//Must be created with apache write perms
+#define cVDNSORGLOGFILE "/var/log/vdnsOrg.log"
 
 
 //In main.c
@@ -131,3 +134,7 @@ void htmlBulkOp(void);
 void htmlBulkOpPage(char *cTitle, char *cTemplateName);
 void BulkOpCommands(pentry entries[], int x);
 
+//ldap.c
+int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization);
+void ldapErrorLog(char *cMessage,LDAP *ld);
+void logfileLine(const char *cFunction,const char *cLogline);

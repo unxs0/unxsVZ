@@ -86,6 +86,7 @@ int iValidLogin(int mode);
 void SSLCookieLogin(void);
 void SetLogin(void);
 void GetPLAndClient(char *cUser);
+void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization);
 void htmlLogin(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
 
@@ -428,10 +429,10 @@ char *cGetPasswd(char *gcLogin)
 	{
 		sprintf(cPasswd,"%.99s",mysqlField[0]);
 		sscanf(mysqlField[1],"%u",&guPermLevel);
-		if(guPermLevel>7) htmlLogin();
+		//Do not allow admin users to use this end user interface
+		if(guPermLevel>=10) htmlLogin();
 	}
 	mysql_free_result(mysqlRes);
-
 	
 	return(cPasswd);
 
@@ -440,7 +441,7 @@ char *cGetPasswd(char *gcLogin)
 
 void SSLCookieLogin(void)
 {
-	char *ptr,*ptr2;
+	char *cP,*cP2;
 
 	//Parse out login and passwd from cookies
 #ifdef SSLONLY
@@ -454,48 +455,59 @@ void SSLCookieLogin(void)
 	if(gcCookie[0])
 	{
 
-	if((ptr=strstr(gcCookie,"vdnsOrgLogin=")))
-	{
-		ptr+=strlen("vdnsOrgLogin=");
-		if((ptr2=strchr(ptr,';')))
+		if((cP=strstr(gcCookie,"vdnsOrgLogin=")))
 		{
-			*ptr2=0;
-			sprintf(gcLogin,"%.99s",ptr);
-			*ptr2=';';
+			cP+=strlen("vdnsOrgLogin=");
+			if((cP2=strchr(cP,';')))
+			{
+				*cP2=0;
+				sprintf(gcLogin,"%.99s",cP);
+				*cP2=';';
+			}
+			else
+			{
+				sprintf(gcLogin,"%.99s",cP);
+			}
 		}
-		else
+		if((cP=strstr(gcCookie,"vdnsOrgPasswd=")))
 		{
-			sprintf(gcLogin,"%.99s",ptr);
+			cP+=strlen("vdnsOrgPasswd=");
+			if((cP2=strchr(cP,';')))
+			{
+				*cP2=0;
+				sprintf(gcPasswd,"%.99s",cP);
+				*cP2=';';
+			}
+			else
+			{
+				sprintf(gcPasswd,"%.99s",cP);
+			}
 		}
-	}
-	if((ptr=strstr(gcCookie,"vdnsOrgPasswd=")))
-	{
-		ptr+=strlen("vdnsOrgPasswd=");
-		if((ptr2=strchr(ptr,';')))
-		{
-			*ptr2=0;
-			sprintf(gcPasswd,"%.99s",ptr);
-			*ptr2=';';
-		}
-		else
-		{
-			sprintf(gcPasswd,"%.99s",ptr);
-		}
-	}
 	
 	}//if gcCookie[0] time saver
 
+	//First try tClient/tAuthorize system
 	if(!iValidLogin(1))
-		htmlLogin();
+	{
+		//Then LDAP system
+		if(!iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
+		{
+			htmlLogin();
+		}
+		else
+		{
+			sprintf(gcUser,"%.41s",gcLogin);
+			GetPLAndClientLDAP(gcUser,gcOrgName);
+		}
+	}
+	else
+	{
+		sprintf(gcUser,"%.41s",gcLogin);
+		GetPLAndClient(gcUser);
+	}
 
-	sprintf(gcUser,"%.41s",gcLogin);
-	GetPLAndClient(gcUser);
-	if(!guPermLevel || !guLoginClient)
-		htmlPlainTextError("Unexpected guPermLevel or guLoginClient value");
-
-	//Don't allow Root login at this interface (Ticket #81
-	if(guPermLevel>=10) htmlLogin();
-	if(guLoginClient==1)
+	//Don't allow Root login at this interface (Ticket #81)
+	if(!guPermLevel || !guLoginClient || guPermLevel>=10 || guLoginClient==1)
 	{
         	guPermLevel=0;
 		gcUser[0]=0;
@@ -503,7 +515,8 @@ void SSLCookieLogin(void)
 		htmlLogin();
 	}
 	
-        if(!strcmp(gcFunction,"Login")) SetLogin();
+        if(!strcmp(gcFunction,"Login"))
+		SetLogin();
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
 
@@ -548,6 +561,54 @@ void GetPLAndClient(char *cUser)
 }//void GetPLAndClient()
 
 
+void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_RES *mysqlRes2;
+        MYSQL_ROW mysqlField;
+        MYSQL_ROW mysqlField2;
+
+	sprintf(gcQuery,"SELECT uOwner FROM tClient WHERE cLabel='%s'",cOrganization);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	mysqlRes=mysql_store_result(&gMysql);
+	if((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		sscanf(mysqlField[0],"%u",&guOrg);
+		guLoginClient=guOrg;
+		sprintf(gcName,"%.100s",cLogin);
+		//Fixed LDAP perm level. Could be extended via optional LDAP attr
+		guPermLevel=1;
+
+		//Also add this LDAP cLogin to cOriganization if does already exist
+		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cLogin);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		mysqlRes2=mysql_store_result(&gMysql);
+		if((mysqlField2=mysql_fetch_row(mysqlRes2)))
+		{
+			sscanf(mysqlField2[0],"%u",&guLoginClient);
+		}
+		else
+		{
+			//Could extend this to add cInfo from optional LDAP attr. Same for cEmail
+			sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cInfo='LDAP',cCode='Contact',"
+				"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cLogin,guOrg);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			guLoginClient=mysql_insert_id(&gMysql);
+		}
+		mysql_free_result(mysqlRes2);
+	}
+	mysql_free_result(mysqlRes);
+
+}//void GetPLAndClientLDAP()
+
+
 void EncryptPasswdWithSalt(char *pw, char *salt)
 {
 	char passwd[102]={""};
@@ -561,6 +622,7 @@ void EncryptPasswdWithSalt(char *pw, char *salt)
 
 }//void EncryptPasswdWithSalt(char *pw, char *salt)
 
+
 int iValidLogin(int mode)
 {
 	char cSalt[16]={""};
@@ -568,6 +630,7 @@ int iValidLogin(int mode)
 
 	//Notes:
 	//Mode=1 means we have encrypted passwd from cookie
+
 
 	sprintf(cPassword,"%.99s",cGetPasswd(gcLogin));
 	if(cPassword[0])
@@ -594,7 +657,7 @@ int iValidLogin(int mode)
 	{
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"
 		"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-		gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+			gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
 		mysql_query(&gMysql,gcQuery);
 	}
 	return 0;
@@ -604,12 +667,26 @@ int iValidLogin(int mode)
 
 void SetLogin(void)
 {
-	if( iValidLogin(0) )
+	if(iValidLogin(0))
 	{
 		printf("Set-Cookie: vdnsOrgLogin=%s;\n",gcLogin);
 		printf("Set-Cookie: vdnsOrgPasswd=%s;\n",gcPasswd);
 		sprintf(gcUser,"%.41s",gcLogin);
 		GetPLAndClient(gcUser);
+		guSSLCookieLogin=1;
+		//tLogType.cLabel='org login'->uLogType=8
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"
+				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+		mysql_query(&gMysql,gcQuery);
+	}
+	else if(iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
+	{
+		printf("Set-Cookie: vdnsOrgLogin=%s;\n",gcLogin);
+		printf("Set-Cookie: vdnsOrgPasswd=%s;\n",gcPasswd);
+		sprintf(gcUser,"%.41s",gcLogin);
+		GetPLAndClientLDAP(gcUser,gcOrgName);
 		guSSLCookieLogin=1;
 		//tLogType.cLabel='org login'->uLogType=8
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"

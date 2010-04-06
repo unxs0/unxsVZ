@@ -17,7 +17,7 @@ CFLAGS=-Wall
 LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
 
 interface.cgi: main.o zone.o resource.o glossary.o bulkop.o ldap.o ../../cgi.o 
-	cc main.o zone.o resource.o glossary.o bulkop.o ../../cgi.o -o interface.cgi $(LIBS)
+	cc main.o zone.o resource.o glossary.o bulkop.o ldap.o ../../cgi.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
