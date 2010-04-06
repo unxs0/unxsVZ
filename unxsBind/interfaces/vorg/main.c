@@ -568,7 +568,7 @@ void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization)
         MYSQL_ROW mysqlField;
         MYSQL_ROW mysqlField2;
 
-	sprintf(gcQuery,"SELECT uOwner FROM tClient WHERE cLabel='%s'",cOrganization);
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cOrganization);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -579,7 +579,7 @@ void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization)
 		guLoginClient=guOrg;
 		sprintf(gcName,"%.100s",cLogin);
 		//Fixed LDAP perm level. Could be extended via optional LDAP attr
-		guPermLevel=1;
+		guPermLevel=8;
 
 		//Also add this LDAP cLogin to cOriganization if does already exist
 		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cLogin);
