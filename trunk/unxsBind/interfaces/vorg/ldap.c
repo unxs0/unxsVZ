@@ -15,22 +15,19 @@ NOTES
 */
 
 #include "interface.h"
-#include <lber.h>
-#include <ldap.h>
 
 //local protos
 void ldapErrorLog(char *cMessage,LDAP *ld);
 void logfileLine(const char *cFunction,const char *cLogline);
-
-//extern protos
-//void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry);//main.c
-//void htmlPlainTextError(const char *cError);
 
 //Must provide on call to at least a 32 char cOrganization buffer.
 //Depending on whether an OpenLDAP or an AD LDAP server is used
 //cLogin must be passed with domain information in different formats
 //Ex1 AD: jonhdoe@unixservice.com
 //Ex2 OpenLDAP: CN=johndoe,OU=members,DC=unixservice,DC=com
+//Returns 1 on valid bind and non zero length cOrganization was set.
+//cOrganizaton can be passed preset for simple cases where we only have one Org
+//or for testing broken LDAP schemas.
 int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization)
 {
 	LDAP *ld;
@@ -40,6 +37,7 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 	int iDesiredVersion=LDAP_VERSION3;
 	struct berval structBervalCredentials;
 	struct berval **structBervals;
+	struct timeval structTimeval;
 	int  iRes,i;
 	char *cpAttr;
 	char *cp;
@@ -48,11 +46,14 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 	//Most of these should probably be set via tConfiguration
 	//for utmost flexibilty.
 	char *cFilter="(objectClass=*)";
-	char *cSearchDN="ou=members,dc=unixservice,dc=com";
+	char *cSearchDN="ou=people,dc=example,dc=com";
 	char *cURI="ldap://127.0.0.1";
-	char *caAttrs[8]={"memberOf",NULL};
-	char cOULinePattern[32]={"_admins"};
-	char cOUPattern[32]={"OU="};
+	char *caAttrs[8]={"sn",NULL};
+	char cLinePattern[32]={"memberOf"};
+	char cPrefixPattern[32]={"memberOf="};
+	char cLoginPrefix[32]={"cn="};
+	char cLoginSuffix[100]={",ou=people,dc=example,dc=com"};
+	char cFQLogin[256];
 
 	//Initialize LDAP data structure
 	ldap_initialize(&ld,cURI);
@@ -72,20 +73,26 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 	//Connect/bind to LDAP server
 	structBervalCredentials.bv_val=(char *)cPasswd;
 	structBervalCredentials.bv_len=strlen(cPasswd);
-	if(ldap_sasl_bind_s(ld,cLogin,NULL,&structBervalCredentials,NULL,NULL,NULL)!=LDAP_SUCCESS)
+	sprintf(cFQLogin,"%s%s%s",cLoginPrefix,cLogin,cLoginSuffix);
+	if(ldap_sasl_bind_s(ld,cFQLogin,NULL,&structBervalCredentials,NULL,NULL,NULL)!=LDAP_SUCCESS)
 	{
 		ldapErrorLog("ldap_sasl_bind_s()",ld);
 		return(0);
 	}
 
 	//Initiate sync search
-	if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_SUBTREE,cFilter,caAttrs,0,NULL,NULL,NULL,0,&ldapMsg)!=LDAP_SUCCESS)
+	structTimeval.tv_sec=5;
+	structTimeval.tv_usec=0;
+	if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_SUBTREE,cFilter,caAttrs,0,NULL,NULL,
+							&structTimeval,0,&ldapMsg)!=LDAP_SUCCESS)
 	{
 		ldapErrorLog("ldap_search_ext_s()",ld);
 		return(0);
 	}
 
+
 	//Iterate through the returned entries
+	unsigned ucPrefixPatternLen=strlen(cPrefixPattern);
 	for(ldapEntry=ldap_first_entry(ld,ldapMsg);ldapEntry!=NULL;ldapEntry=ldap_next_entry(ld,ldapEntry))
 	{
 
@@ -96,13 +103,13 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 			{
 				for(i=0;structBervals[i]!=NULL;i++)
 				{
-					if(strstr(structBervals[i]->bv_val,cOULinePattern))
+					if(strstr(structBervals[i]->bv_val,cLinePattern))
 					{
-						if((cp=strstr(structBervals[i]->bv_val,cOUPattern)))
+						if((cp=strstr(structBervals[i]->bv_val,cPrefixPattern)))
 						{
-							if((cp2=strchr(cp+3,',')))
+							if((cp2=strchr(cp+ucPrefixPatternLen,',')))
 								*cp2=0;
-							sprintf(cOrganization,"%.31s",cp+3);
+							sprintf(cOrganization,"%.31s",cp+ucPrefixPatternLen);
 						}
 					}
 				}
@@ -119,6 +126,11 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 	ldap_msgfree(ldapMsg);
 	//Ignore errors
 	iRes=ldap_unbind_ext_s(ld,NULL,NULL);
+
+	//debug only
+	char cLogEntry[256];
+	sprintf(cLogEntry,"%.99s/%.32s/%.99s",cFQLogin,cPasswd,cOrganization);
+	logfileLine("iValidLDAPLogin",cLogEntry);
 
 	if(cOrganization[0])
 		return(1);
@@ -137,6 +149,7 @@ void ldapErrorLog(char *cMessage,LDAP *ld)
 	//Attempt to log to tLog
 	sprintf(cLogEntry,"%s:%s",cMessage,ldap_err2string(iResultCode));
 	iDNSLog(0,"ldapErrorLog",cLogEntry);
+	logfileLine("ldapErrorLog",cLogEntry);
 	
 }//void ldapErrorLog(char *cMessage,LDAP *ld)
 
@@ -151,9 +164,9 @@ void logfileLine(const char *cFunction,const char *cLogline)
 
 	if(gLfp==NULL)
 	{
-		if((gLfp=fopen(cLOGFILE,"a"))==NULL)
+		if((gLfp=fopen(cVDNSORGLOGFILE,"a"))==NULL)
 		{
-			sprintf(gcQuery,"Could not open logfile: %s\n",cLOGFILE);
+			sprintf(gcQuery,"Could not open logfile: %s\n",cVDNSORGLOGFILE);
 			htmlPlainTextError(gcQuery);
        		}
 	}
