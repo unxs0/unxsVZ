@@ -186,7 +186,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-        if(!strcmp(gcFunction,"Login")) SetLogin();
+        if(!strcmp(gcFunction,"Login")) 
+		SetLogin();
 
         if(!guPermLevel || !gcUser[0] || !guLoginClient)
                 SSLCookieLogin();
@@ -515,8 +516,8 @@ void SSLCookieLogin(void)
 		htmlLogin();
 	}
 	
-        if(!strcmp(gcFunction,"Login"))
-		SetLogin();
+        //if(!strcmp(gcFunction,"Login"))
+	//	SetLogin();
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
 
