@@ -4,6 +4,7 @@
 #	$Id$
 #AUTHOR-LEGAL
 #	(C) 2006-2010 Hugo Urquiza, Gary Wallis for Unixservice LLC.
+#	GPLv2 license applies. See included LICENSE file.
 #NOTES
 #	Based on using BASH shell on a CentOS 5 GNU/Linux server (or VE/VM.)
 #	Examples commands may have to be changed. They are based on the CentOS5 
@@ -27,6 +28,12 @@ Important:
 
 If you install vdnsOrg you ****won't be able to use idnsOrg*** since the templates used by both 
 applications are mutually exclusive.
+
+New LDAP debug log is on by default, so you need to first create it with some valid perms.
+
+# touch /var/log/vdnsOrg.log
+# chown apache /var/log/vdnsOrg.log
+# chmod 600 /var/log/vdnsOrg.log
 
 
 Instructions:
