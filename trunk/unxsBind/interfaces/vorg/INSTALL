@@ -13,6 +13,7 @@
 
 vdnsOrg Quick Install Instructions
 
+---
 Brief Introduction:
 
 vdnsOrg provides the same functionality as idnsOrg. The only difference they have (at least on the
@@ -20,16 +21,28 @@ end user point of view) is that vdnsOrg can handle zones deployed for all the BI
 deployed in the system. On the other hand, vdnsOrg only allows editing the resource records
 of zones in the external view.
 
+---
 Prerequisites:
 
 You must have your iDNS backend system installed (iDNS.cgi) and tested.
 
-Important:
+---
+Important notes about upgrading and other post install issues:
 
-If you install vdnsOrg you ****won't be able to use idnsOrg*** since the templates used by both 
-applications are mutually exclusive.
+1-. If you install vdnsOrg ****you won't be able to use idnsOrg***, since the templates used by both 
+applications are mutually exclusive.  (See 2-. below for more confusion on template issue.)
 
-New LDAP debug log is on by default, so you need to first create it with some valid perms.
+2-. You need to restore with the backend tTemplate (for some unknown reason that we are trying to figure out.)
+
+Assuming unxsBind/data is located /home/someuser/unxsBind/data and that MySQL is setup to allow
+root access from the server you have your source on. Then...
+
+# ln -s /home/someuser/unxsBind /home/someuser/iDNS
+# export ISMROOT=/home/someuser
+# /var/www/unxs/cgi-bin/iDNS.cgi Restore tTemplate MySQLRootPasswd
+
+
+3-. New LDAP debug log issues, so you need to first create it with some valid perms.
 
 # touch /var/log/unxsBindLDAP.log
 # chown apache:root /var/log/unxsBindLDAP.log
@@ -38,21 +51,15 @@ New LDAP debug log is on by default, so you need to first create it with some va
 You must also set new local.h.default LDAP section defines in your ../../local.h
 
 
+---
 Instructions:
 
-1-. Set your CGIDIR environment variable (if not set) to the directory where you wish to install the 
-	idnsOrg.cgi binary and also where you have the iDNS.cgi already installed. 
-
-	Example:
-
-	# export CGIDIR=/var/www/unxs/cgi-bin/
-
-2-. Compile and install with a single command the binary file. Run the following command in this
+1-. Compile and install with a single command the binary file. Run the following command in this
 	directory:
 
 	# make install
 	
-3-. (If you already installed idnsAdmin skip this setp)
+2-. (If you already installed idnsAdmin skip this setp)
     Then install the CSS stylesheet file and the interface templates.
 
 	Example for installing the CSS stylesheet:
@@ -65,7 +72,7 @@ Instructions:
 
 	# ./importTemplates.sh
 
-4-. (If you already installed idnsAdmin skip this setp) 
+3-. (If you already installed idnsAdmin skip this setp) 
     Finally you have to install the interface images.
 
 	Example:
@@ -75,10 +82,10 @@ Instructions:
 	# cp -i ./templates/images/*.jpg /var/www/unxs/html/images
 	# cp -i ./templates/images/*.png /var/www/unxs/html/images
 
-5-. Then login and test your new vdnsOrg interface, via your Firefox browser.
+4-. Then login and test your new vdnsOrg interface, via your Firefox browser.
 
 	Example browser location URL:
 
-	https://192.168.22.128:9333/cgi-bin/idnsOrg.cgi
+	https://192.168.22.128:9333/cgi-bin/vdnsOrg.cgi
 
 
