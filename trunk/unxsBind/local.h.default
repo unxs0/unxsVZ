@@ -49,6 +49,19 @@ LEGAL
 
 	//Use OPenLDAP client "ldapsearch" to determine the following settings:
 
+	//Here is a hacked example where memberOf was set in a SN attr.
+	//ex. ldapsearch -LLL -x -h 127.0.0.1  -D "cn=johndoe,ou=people,dc=example,dc=com" -w "123123" 
+	//	-b "ou=people,dc=example,dc=com" "cn=johndoe" sn
+	//returns:
+	//dn: cn=johndoe,ou=people,dc=example,dc=com
+	//sn: Doe
+	//sn: Doe-Jones
+	//sn: memberOf=DNS ASP Company
+	//
+	//The cLDAPLINEPATTERN would be memberOf
+	//The cLDAPPREFIXPATTERN would be memberOf=
+
+
 	//This is the filter as specified in man ldapsearch
 	#define cLDAPFILTER "(objectClass=*)"
 
@@ -83,6 +96,12 @@ LEGAL
 	#define	cLDAPORGPREFIX "The City of "
 	#define	cLDAPORGSUFFIX ", California"
 	//ex. For "...memberOf=Los Angeles,..." would translate into "The City of Los Angeles, California"
+
+	//Search filter is composed with the login presented along with:
+	#define cLDAPFILTERPREFIX "cn="
+	#define cLDAPFILTERSUFFIX ""
+	//ex. cn=johndoe
+	//See man ldapsearch for more information
 #endif
 
 //If you have Apache/mod_ssl uncomment below much better unless intranet

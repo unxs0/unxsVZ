@@ -47,18 +47,20 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 
 	//Most of these should probably be set via tConfiguration
 	//for utmost flexibilty.
-	char *cFilter=cLDAPFILTER;
+	char *cFilterPrefix=cLDAPFILTERPREFIX;
+	char *cFilterSuffix=cLDAPFILTERSUFFIX;
+	char cFilter[256];
 	char *cSearchDN=cLDAPSEARCHDN;
 	char *cURI=cLDAPURI;
 	char *caAttrs[8]={cLDAPATTR0,NULL};
-	char cLinePattern[32]={cLDAPLINEPATTERN};
-	char cPrefixPattern[32]={cLDAPPREFIXPATTERN};
-	char cLoginPrefix[32]={cLDAPLOGINPREFIX};
-	char cLoginSuffix[100]={cLDAPLOGINSUFFIX};
+	char *cLinePattern=cLDAPLINEPATTERN;
+	char *cPrefixPattern=cLDAPPREFIXPATTERN;
+	char *cLoginPrefix=cLDAPLOGINPREFIX;
+	char *cLoginSuffix=cLDAPLOGINSUFFIX;
 	char cFQLogin[256];
 	char cFQOrg[256];
-	char cOrgPrefix[32]={cLDAPORGPREFIX};
-	char cOrgSuffix[32]={cLDAPORGSUFFIX};
+	char *cOrgPrefix=cLDAPORGPREFIX;
+	char *cOrgSuffix=cLDAPORGSUFFIX;
 
 	//Initialize LDAP data structure
 	ldap_initialize(&ld,cURI);
@@ -78,7 +80,7 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 	//Connect/bind to LDAP server
 	structBervalCredentials.bv_val=(char *)cPasswd;
 	structBervalCredentials.bv_len=strlen(cPasswd);
-	sprintf(cFQLogin,"%s%s%s",cLoginPrefix,cLogin,cLoginSuffix);
+	sprintf(cFQLogin,"%.99s%.32s%.99s",cLoginPrefix,cLogin,cLoginSuffix);
 	if(ldap_sasl_bind_s(ld,cFQLogin,NULL,&structBervalCredentials,NULL,NULL,NULL)!=LDAP_SUCCESS)
 	{
 		ldapErrorLog("ldap_sasl_bind_s()",ld);
@@ -88,6 +90,7 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 	//Initiate sync search
 	structTimeval.tv_sec=5;
 	structTimeval.tv_usec=0;
+	sprintf(cFilter,"%.99s%.32s%.99s",cFilterPrefix,cLogin,cFilterSuffix);
 	if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_SUBTREE,cFilter,caAttrs,0,NULL,NULL,
 							&structTimeval,0,&ldapMsg)!=LDAP_SUCCESS)
 	{
