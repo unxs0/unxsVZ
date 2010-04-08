@@ -31,9 +31,11 @@ applications are mutually exclusive.
 
 New LDAP debug log is on by default, so you need to first create it with some valid perms.
 
-# touch /var/log/vdnsOrg.log
-# chown apache /var/log/vdnsOrg.log
-# chmod 600 /var/log/vdnsOrg.log
+# touch /var/log/unxsBindLDAP.log
+# chown apache:root /var/log/unxsBindLDAP.log
+# chmod 240 /var/log/unxsBindLDAP.log
+
+You must also set new local.h.default LDAP section defines in your ../../local.h
 
 
 Instructions:
