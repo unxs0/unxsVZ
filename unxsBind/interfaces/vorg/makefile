@@ -34,7 +34,7 @@ glossary.o : glossary.c interface.h ../../local.h ../../mysqlrad.h
 bulkop.o : bulkop.c interface.h ../../local.h ../../mysqlrad.h
 	cc -o bulkop.o -c bulkop.c $(CFLAGS)
 
-ldap.o : ldap.c 
+ldap.o : ldap.c  interface.h ../../local.h ../../mysqlrad.h
 	cc -o ldap.o -c ldap.c $(CFLAGS)
 
 clean:

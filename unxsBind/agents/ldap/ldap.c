@@ -39,22 +39,30 @@ void ldapErrorExit(char *cMessage,LDAP *ld);
 int main(int iArgc, char *cArgv[])
 {
 	LDAP *ld;
-	char *cURI="ldap://10.0.4.36";
 	int iDesiredVersion=LDAP_VERSION3;
 	struct berval structBervalCredentials;
-	char *cFilter="(objectClass=*)";
-	char *cSearchDN="ou=members,dc=ad,dc=net,dc=cat,dc=edu,dc=za";
 	LDAPMessage *ldapMsg;
 	LDAPMessage *ldapEntry;
 	struct berval **structBervals;
 	BerElement *berElement;
-	char *caAttrs[8]={"memberOf",NULL};
 	int  iRes,i;
 	//char *cpDN=NULL;
 	char *cpAttr;
 	char *cp;
 	char *cp2;
 
+	char *cFilter="(objectClass=*)";
+	char *cSearchDN="ou=people,dc=example,dc=com";
+	char *cURI="ldap://127.0.0.1";
+	char *caAttrs[8]={"sn",NULL};
+	char cLinePattern[32]={"memberOf"};
+	char cPrefixPattern[32]={"memberOf="};
+
+	struct timeval structTimeval;
+
+	structTimeval.tv_sec=5;
+	structTimeval.tv_usec=0;
+	
 	if(iArgc<3 || iArgc>5)
 	{
 		printf("usage %s: <cLoginDN> <cLoginPassword> [<cFilter>] [<cSearchDN>]\n",cArgv[0]);
@@ -94,10 +102,13 @@ int main(int iArgc, char *cArgv[])
 
 	//Initiate sync search
 	//if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_BASE,cFilter,NULL,0,NULL,NULL,NULL,0,&ldapMsg)!=LDAP_SUCCESS)
-	if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_SUBTREE,cFilter,caAttrs,0,NULL,NULL,NULL,0,&ldapMsg)!=LDAP_SUCCESS)
+	if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_SUBTREE,cFilter,caAttrs,0,NULL,NULL,
+							&structTimeval,0,&ldapMsg)!=LDAP_SUCCESS)
 		ldapErrorExit("ldap_search_ext_s()",ld);
 	//debug only
 	//printf("ldap_search_ext_s() ok. Returned %d entries\n\n",ldap_count_entries(ld,ldapMsg));
+
+	unsigned ucPrefixPatternLen=strlen(cPrefixPattern);
 
 	//Iterate through the returned entries
 	for(ldapEntry=ldap_first_entry(ld,ldapMsg);ldapEntry!=NULL;ldapEntry=ldap_next_entry(ld,ldapEntry))
@@ -116,13 +127,13 @@ int main(int iArgc, char *cArgv[])
 			{
 				for(i=0;structBervals[i]!=NULL;i++)
 				{
-					if(strstr(structBervals[i]->bv_val,"_admins"))
+					if(strstr(structBervals[i]->bv_val,cLinePattern))
 					{
-						if((cp=strstr(structBervals[i]->bv_val,"OU=")))
+						if((cp=strstr(structBervals[i]->bv_val,cPrefixPattern)))
 						{
-							if((cp2=strchr(cp+3,',')))
+							if((cp2=strchr(cp+ucPrefixPatternLen,',')))
 								*cp2=0;
-							printf("%s\n",cp+3);
+							printf("%s\n",cp+ucPrefixPatternLen);
 						}
 					}
 				}
@@ -134,7 +145,6 @@ int main(int iArgc, char *cArgv[])
 		if(berElement!=NULL)
 			ber_free(berElement,0);
 
-		//printf("\n");
 	}
 
 	//Cleanup (TODO is ldapEntry mem cleaned above? Check)

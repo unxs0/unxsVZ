@@ -86,7 +86,9 @@ int iValidLogin(int mode);
 void SSLCookieLogin(void);
 void SetLogin(void);
 void GetPLAndClient(char *cUser);
+#ifdef cLDAPURI
 void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization);
+#endif
 void htmlLogin(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
 
@@ -490,6 +492,7 @@ void SSLCookieLogin(void)
 	//First try tClient/tAuthorize system
 	if(!iValidLogin(1))
 	{
+#ifdef cLDAPURI
 		//Then LDAP system
 		if(!iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
 		{
@@ -500,6 +503,9 @@ void SSLCookieLogin(void)
 			sprintf(gcUser,"%.41s",gcLogin);
 			GetPLAndClientLDAP(gcUser,gcOrgName);
 		}
+#else
+		htmlLogin();
+#endif
 	}
 	else
 	{
@@ -562,6 +568,7 @@ void GetPLAndClient(char *cUser)
 }//void GetPLAndClient()
 
 
+#ifdef cLDAPURI
 void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization)
 {
         MYSQL_RES *mysqlRes;
@@ -608,7 +615,7 @@ void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization)
 	mysql_free_result(mysqlRes);
 
 }//void GetPLAndClientLDAP()
-
+#endif
 
 void EncryptPasswdWithSalt(char *pw, char *salt)
 {
@@ -682,6 +689,7 @@ void SetLogin(void)
 				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 		mysql_query(&gMysql,gcQuery);
 	}
+#ifdef cLDAPURI
 	else if(iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
 	{
 		printf("Set-Cookie: vdnsOrgLogin=%s;\n",gcLogin);
@@ -696,6 +704,7 @@ void SetLogin(void)
 				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 		mysql_query(&gMysql,gcQuery);
 	}
+#endif
 	else
 	{
 		guSSLCookieLogin=0;

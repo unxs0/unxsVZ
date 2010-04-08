@@ -36,8 +36,6 @@ AUTHOR
 #define IP_BLOCK_CIDR 1
 #define IP_BLOCK_DASH 2
 
-//Must be created with apache write perms
-#define cVDNSORGLOGFILE "/var/log/vdnsOrg.log"
 
 
 //In main.c
