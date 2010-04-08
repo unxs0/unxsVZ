@@ -32,6 +32,9 @@ void logfileLine(const char *cFunction,const char *cLogline);
 //or for testing broken LDAP schemas.
 int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization)
 {
+	if(cLogin[0]==0 || cPasswd[0]==0)
+		return(0);
+
 	LDAP *ld;
 	LDAPMessage *ldapMsg;
 	LDAPMessage *ldapEntry;
