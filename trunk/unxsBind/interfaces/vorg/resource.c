@@ -1821,8 +1821,7 @@ void SubmitModifyJob(void)
 	
 	if(uNameServer)
 	{
-		//TODO
-	//	UpdateSerialNum(gcZone);
+		UpdateSerialNum();
 		if(OrgSubmitJob("Modify",uNameServer,cZone,0,luClock))
 			htmlPlainTextError(mysql_error(&gMysql));
 	}
