@@ -3,7 +3,8 @@
 #	unxsVZ/unxsBind/interfaces/org/INSTALL
 #	$Id$
 #AUTHOR-LEGAL
-#	(C) 2006-2009 Hugo Urquiza, Gary Wallis for Unixservice.
+#       (C) 2006-2010 Hugo Urquiza, Gary Wallis for Unixservice, LLC.
+#       GPLv2 license applies. See included source base dir LICENSE file.
 #NOTES
 #	Based on using BASH shell on a CentOS 5 GNU/Linux server (or VE/VM.)
 #	Examples commands may have to be changed. They are based on the CentOS5 
