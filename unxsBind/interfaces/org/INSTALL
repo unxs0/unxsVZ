@@ -19,19 +19,12 @@ You must have your iDNS backend system installed (iDNS.cgi) and tested.
 
 Instructions:
 
-1-. Set your CGIDIR environment variable (if not set) to the directory where you wish to install the 
-	idnsOrg.cgi binary and also where you have the iDNS.cgi already installed. 
-
-	Example:
-
-	# export CGIDIR=/var/www/unxs/cgi-bin/
-
-2-. Compile and install with a single command the binary file. Run the following command in this
+1-. Compile and install with a single command the binary file. Run the following command in this
 	directory:
 
 	# make install
 	
-3-. (If you already installed idnsAdmin skip this setp)
+2-. (If you already installed idnsAdmin skip this setp)
     Then install the CSS stylesheet file and the interface templates.
 
 	Example for installing the CSS stylesheet:
@@ -44,7 +37,7 @@ Instructions:
 
 	# ./importTemplates.sh
 
-4-. (If you already installed idnsAdmin skip this setp) 
+3-. (If you already installed idnsAdmin skip this setp) 
     Finally you have to install the interface images.
 
 	Example:
@@ -54,7 +47,7 @@ Instructions:
 	# cp -i ./templates/images/*.jpg /var/www/unxs/html/images
 	# cp -i ./templates/images/*.png /var/www/unxs/html/images
 
-5-. Then login and test your new idnsOrg interface, via your Firefox browser.
+4-. Then login and test your new idnsOrg interface, via your Firefox browser.
 
 	Example browser location URL:
 
