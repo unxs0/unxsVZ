@@ -29,6 +29,62 @@ LEGAL
 //#define TCLIENT "mysqlisp2.tClient"
 //#define TAUTHORIZE "mysqlisp2.tAuthorize"
 
+//LDAP Login Configuration 
+//tClient must contain the Organization returned by
+//LDAP as configured below. If not the login even if
+//correct as far as LDAP BIND goes will not work.
+//Use the log file defined below to debug your configuration.
+//Undefine the following line to not compile in LDAP support
+//#define cLDAPURI "ldap://127.0.0.1"
+//
+#ifdef cLDAPURI
+	//Log LDAP login data
+	#define DEBUG_LDAP
+	#ifdef DEBUG_LDAP
+		//Must be created with apache write perms
+		//and should not be readable by anyone except root.
+		//touch, chmod 240 and chown apache:root, for example.
+		#define cVDNSORGLOGFILE "/var/log/unxsBindLDAP.log"
+	#endif
+
+	//Use OPenLDAP client "ldapsearch" to determine the following settings:
+
+	//This is the filter as specified in man ldapsearch
+	#define cLDAPFILTER "(objectClass=*)"
+
+	//This is the search base DN
+	#define cLDAPSEARCHDN "ou=people,dc=example,dc=com";
+
+	//LDAP search attribute (single attr only) as specified in man ldapsearch
+	#define cLDAPATTR0 "memberOf"
+
+	//This is used to refine the search result set
+	#define cLDAPLINEPATTERN "_admins"
+
+	//This is the prefix of the tClient.cLabel organization base label
+	//as returned by ldapsearch. Must end with a "," or be the last value.
+	#define cLDAPPREFIXPATTERN "memberOf="
+
+	//Since the login usually is not LDAP BIND ready then
+	//cLDAPLOGINPREFIX and cLDAPLOGINSUFFIX can be used.
+	//Login format examples: 
+	#define cLDAPLOGINPREFIX "cn="
+	#define cLDAPLOGINSUFFIX ",ou=people,dc=example,dc=com"
+	//ex1: cn=johndoe,ou=people,dc=example,dc=com (DN)
+	//#define cLDAPLOGINPREFIX ""
+	//#define cLDAPLOGINSUFFIX "@example.com"
+	//ex2: johndoe@example.com (UPN)
+	//#define cLDAPLOGINPREFIX "example.com\"
+	//#define cLDAPLOGINSUFFIX ""
+	//ex3: example.com\johndoe (Windows)
+
+	//Org format: In case your LDAP data does not match what is configured in tClient.cLabel
+	//then cLDAPORGPREFIX and cLDAPORGSUFFIX can be used. If not leave as empty strings "".
+	#define	cLDAPORGPREFIX "The City of "
+	#define	cLDAPORGSUFFIX ", California"
+	//ex. For "...memberOf=Los Angeles,..." would translate into "The City of Los Angeles, California"
+#endif
+
 //If you have Apache/mod_ssl uncomment below much better unless intranet
 //ultra firewalled and secured.
 #define SSLONLY

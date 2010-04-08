@@ -16,11 +16,13 @@ NOTES
 
 #include "interface.h"
 
+#ifdef cLDAPURI
+
 //local protos
 void ldapErrorLog(char *cMessage,LDAP *ld);
 void logfileLine(const char *cFunction,const char *cLogline);
 
-//Must provide on call to at least a 32 char cOrganization buffer.
+//Must provide on call to at least a strlen(tClient.cLabel)-1 char cOrganization buffer.
 //Depending on whether an OpenLDAP or an AD LDAP server is used
 //cLogin must be passed with domain information in different formats
 //Ex1 AD: jonhdoe@unixservice.com
@@ -45,15 +47,18 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 
 	//Most of these should probably be set via tConfiguration
 	//for utmost flexibilty.
-	char *cFilter="(objectClass=*)";
-	char *cSearchDN="ou=people,dc=example,dc=com";
-	char *cURI="ldap://127.0.0.1";
-	char *caAttrs[8]={"sn",NULL};
-	char cLinePattern[32]={"memberOf"};
-	char cPrefixPattern[32]={"memberOf="};
-	char cLoginPrefix[32]={"cn="};
-	char cLoginSuffix[100]={",ou=people,dc=example,dc=com"};
+	char *cFilter=cLDAPFILTER;
+	char *cSearchDN=cLDAPSEARCHDN;
+	char *cURI=cLDAPURI;
+	char *caAttrs[8]={cLDAPATTR0,NULL};
+	char cLinePattern[32]={cLDAPLINEPATTERN};
+	char cPrefixPattern[32]={cLDAPPREFIXPATTERN};
+	char cLoginPrefix[32]={cLDAPLOGINPREFIX};
+	char cLoginSuffix[100]={cLDAPLOGINSUFFIX};
 	char cFQLogin[256];
+	char cFQOrg[256];
+	char cOrgPrefix[32]={cLDAPORGPREFIX};
+	char cOrgSuffix[32]={cLDAPORGSUFFIX};
 
 	//Initialize LDAP data structure
 	ldap_initialize(&ld,cURI);
@@ -109,7 +114,7 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 						{
 							if((cp2=strchr(cp+ucPrefixPatternLen,',')))
 								*cp2=0;
-							sprintf(cOrganization,"%.31s",cp+ucPrefixPatternLen);
+							sprintf(cOrganization,"%.99s",cp+ucPrefixPatternLen);
 						}
 					}
 				}
@@ -127,15 +132,32 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 	//Ignore errors
 	iRes=ldap_unbind_ext_s(ld,NULL,NULL);
 
+#ifdef DEBUG_LDAP
 	//debug only
 	char cLogEntry[256];
-	sprintf(cLogEntry,"%.99s/%.32s/%.99s",cFQLogin,cPasswd,cOrganization);
-	logfileLine("iValidLDAPLogin",cLogEntry);
+#endif
 
 	if(cOrganization[0])
+	{
+		sprintf(cFQOrg,"%s%s%s",cOrgPrefix,cOrganization,cOrgSuffix);
+		sprintf(cOrganization,"%.99s",cFQOrg);
+
+#ifdef DEBUG_LDAP
+		//debug only
+		sprintf(cLogEntry,"%.99s/%.32s/%.99s",cFQLogin,cPasswd,cOrganization);
+		logfileLine("iValidLDAPLogin",cLogEntry);
+#endif
 		return(1);
+	}
 	else
+	{
+#ifdef DEBUG_LDAP
+		//debug only
+		sprintf(cLogEntry,"%.99s/%.32s",cFQLogin,cPasswd);
+		logfileLine("iValidLDAPLogin",cLogEntry);
+#endif
 		return(0);
+	}
 
 }//int iValidLDAPLogin()
 
@@ -149,11 +171,14 @@ void ldapErrorLog(char *cMessage,LDAP *ld)
 	//Attempt to log to tLog
 	sprintf(cLogEntry,"%s:%s",cMessage,ldap_err2string(iResultCode));
 	iDNSLog(0,"ldapErrorLog",cLogEntry);
+#ifdef DEBUG_LDAP
 	logfileLine("ldapErrorLog",cLogEntry);
+#endif
 	
 }//void ldapErrorLog(char *cMessage,LDAP *ld)
 
 
+#ifdef DEBUG_LDAP
 void logfileLine(const char *cFunction,const char *cLogline)
 {
 	time_t luClock;
@@ -181,5 +206,6 @@ void logfileLine(const char *cFunction,const char *cLogline)
 	fflush(gLfp);
 
 }//void logfileLine(char *cLogline)
+#endif
 
-
+#endif
