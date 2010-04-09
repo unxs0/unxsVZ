@@ -1,9 +1,11 @@
 /*
 FILE 
 	resource.c
-	$Id: resource.c 747 2009-04-01 16:00:49Z hus $
-AUTHOR
-	(C) 2006-2009 Gary Wallis for Unixservice
+	$Id$
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	idnsAdmin program file.
 */
@@ -347,8 +349,8 @@ unsigned uZoneExists(char *cZone,char *cView)
 
 void htmlResource(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlResourcePage("DNS System","Admin.Resource.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlResourcePage("idnsAdmin","Admin.Resource.Body");
 	htmlFooter("Footer");
 
 }//void htmlResource(void)
@@ -361,7 +363,7 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -2503,9 +2505,9 @@ void MasterFunctionSelect(void)
 void htmlResourceWizard(unsigned uStep)
 {
 	char cTmp[16]={""};
-	htmlHeader("DNS System","Header");
+	htmlHeader("idnsAdmin","Header");
 	sprintf(cTmp,"Admin.ResourceWizard.%u",uStep);
-	htmlResourcePage("DNS System",cTmp);
+	htmlResourcePage("idnsAdmin",cTmp);
 	htmlFooter("Footer");
 	
 }//void htmlResourceWizard(unsigned uStep)

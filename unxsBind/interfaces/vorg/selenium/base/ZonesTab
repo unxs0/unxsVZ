@@ -13,7 +13,7 @@
 </thead><tbody>
 <tr>
 	<td>open</td>
-	<td>/cgi-bin/idnsOrg.cgi?gcFunction=Logout</td>
+	<td>/cgi-bin/vdnsOrg.cgi?gcFunction=Logout</td>
 	<td></td>
 </tr>
 <tr>

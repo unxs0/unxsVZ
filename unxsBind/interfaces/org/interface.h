@@ -1,7 +1,7 @@
 /*
 FILE
 	interface.h
-	$Id: interface.h 772 2009-04-06 21:46:41Z hus $
+	$Id$
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 
@@ -16,6 +16,13 @@ AUTHOR
 //libtemplate required
 #define MAXPOSTVARS 64
 #define MAXGETVARS 8
+
+//Depend on correctly preconfigured tTemplateSet and tTemplateType:
+#define uPLAINSET 1
+#define uHOLIDAYSET 2
+#define uIDNSORGTYPE 1
+#define uIDNSADMINTYPE 2
+#define uVDNSORGTYPE 3
 
 
 //In main.c

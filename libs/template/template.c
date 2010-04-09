@@ -48,6 +48,20 @@ void TemplateSelectWithQuery(char *cTemplateName)
 }//void TemplateSelectWithQuery(char *cTemplateName)
 
 
+//Returns rows via &gMysql
+void TemplateSelectInterfaceWithQuery(char *cTemplateName,unsigned uTemplateSet, unsigned uTemplateType)
+{
+	char cQuery[1024];
+
+		sprintf(cQuery,"SELECT cTemplate,cQuery FROM tTemplate WHERE cLabel='%s' AND uTemplateSet=%u AND"
+				" uTemplateType=%u",cTemplateName,uTemplateSet,uTemplateType);
+	mysql_query(&gMysql,cQuery);
+	if(mysql_errno(&gMysql))
+                fprintf(stderr,"%s\n",mysql_error(&gMysql));
+
+}//void TemplateSelectInterfaceWithQuery()
+
+
 
 //Output to FILE fp the template with name/value pair substitution done via
 //t_template 
@@ -83,6 +97,41 @@ int fileStructTemplateWithQuery(FILE *fp, char *cTemplateName,struct t_template 
 	return(0);
 
 }//int fileStructTemplateWithQuery()
+
+
+int fileStructTemplateInterfaceWithQuery(FILE *fp, char *cTemplateName,struct t_template *ptrTemplate,
+		unsigned uTemplateSet, unsigned uTemplateType)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	
+	if(!fp) return(1);
+	if(!ptrTemplate) return(1);
+	if(!cTemplateName[0]) return(1);
+
+	TemplateSelectInterfaceWithQuery(cTemplateName,uTemplateSet,uTemplateType);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+			if(field[1][0] && TemplatePairsQuery(field[1],ptrTemplate))
+			{
+				fprintf(stderr,"TemplatePairsQuery() non SQL error\n");
+        			if(mysql_errno(&gMysql))
+                			fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				return(0);
+			}
+			
+			Template(field[0],ptrTemplate,fp);
+	}
+	else
+	{
+			fprintf(fp,"Template %s not found\n",cTemplateName);
+	}
+	mysql_free_result(res);
+	
+	return(0);
+
+}//int fileStructTemplateInterfaceWithQuery()
 
 
 //Pass the template contents in one buffer: cTemplate
@@ -215,6 +264,19 @@ void TemplateSelect(char *cTemplateName)
 }//void TemplateSelect(char *cTemplateName)
 
 
+//Returns rows via &gMysql
+void TemplateSelectInterface(char *cTemplateName,unsigned uTemplateSet,unsigned uTemplateType)
+{
+	char cQuery[1024];
+
+	sprintf(cQuery,"SELECT cTemplate FROM tTemplate WHERE cLabel='%s' AND"
+				" uTemplateSet=%u AND uTemplateType=%u",cTemplateName,uTemplateSet,uTemplateType);
+	mysql_query(&gMysql,cQuery);
+	if(mysql_errno(&gMysql))
+                fprintf(stderr,"%s\n",mysql_error(&gMysql));
+
+}//void TemplateSelectInterface()
+
 
 //Output to FILE fp the template with name/value pair substitution done via
 //t_template 
@@ -250,6 +312,43 @@ int fileStructTemplate(FILE *fp,char *cTemplateName,struct t_template *ptrTempla
 	return(0);
 
 }//int fileStructTemplate()
+
+
+//Output to FILE fp the template with name/value pair substitution done via
+//t_template 
+int fileStructTemplateInterface(FILE *fp,char *cTemplateName,struct t_template *ptrTemplate,char *cQuery,
+			unsigned uTemplateSet,unsigned uTemplateType)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	
+	if(!fp) return(1);
+	if(!ptrTemplate) return(1);
+	if(!cTemplateName[0]) return(1);
+
+	TemplateSelectInterface(cTemplateName,uTemplateSet,uTemplateType);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+			if(TemplatePairsQuery(cQuery,ptrTemplate))
+			{
+				fprintf(stderr,"TemplatePairsQuery() non SQL error\n");
+        			if(mysql_errno(&gMysql))
+                			fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				return(0);
+			}
+			
+			Template(field[0],ptrTemplate,fp);
+	}
+	else
+	{
+			fprintf(fp,"Template %s not found\n",cTemplateName);
+	}
+	mysql_free_result(res);
+	
+	return(0);
+
+}//int fileStructTemplateInterface()
 
 
 //Extreme danger with this alpha test code

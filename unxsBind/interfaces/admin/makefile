@@ -1,7 +1,7 @@
 #
 #FILE
 #	makefile
-#	$Id: makefile 660 2008-12-18 18:48:48Z hus $
+#	$Id$
 #AUTHOR
 #	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 #PURPOSE

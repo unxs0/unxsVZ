@@ -1,7 +1,7 @@
 /*
 FILE
 	ldap.c
-	$Id: ldap.c 1134 2010-01-04 22:50:11Z Gary $
+	$Id$
 PURPOSE
 	Provide for LDAP based login for mysqlRAD2/3
 	based software.
@@ -11,7 +11,7 @@ AUTHOR/LEGAL
 NOTES
 	tClient must have the LDAP provided OU.
 	LDAP schema must be setup in accordance with:
-	cFilter, cSearchDN, caAttrs, cOULinePattern and cOUPattern.
+	cFilter, cSearchDN, caAttrs, cLinePattern, cPrefixPattern and others.
 */
 
 #include "interface.h"

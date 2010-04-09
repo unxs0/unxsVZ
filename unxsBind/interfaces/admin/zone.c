@@ -2,8 +2,10 @@
 FILE 
 	zone.c
 	$Id$
-AUTHOR
-	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	idnsAdmin program file.
 */
@@ -403,8 +405,8 @@ void htmlZone(void)
 		}
 	}
 
-	htmlHeader("DNS System","Header");
-	htmlZonePage("DNS System","Admin.Zone.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlZonePage("idnsAdmin","Admin.Zone.Body");
 	htmlFooter("Footer");
 
 }//void htmlZone(void)
@@ -417,7 +419,7 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

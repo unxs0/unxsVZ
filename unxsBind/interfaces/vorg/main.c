@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 773 2009-04-06 22:00:23Z hus $
+	$Id$
 AUTHOR/LEGAL
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 	(C) 2010 Gary Wallis for Unixservice, LLC.
@@ -13,35 +13,12 @@ REQUIRES
 	OpenISP libtemplates.a and templates.h
 	See makefile for more information.
 CURRENT WORK
-	Adding LDAP bind login alternative to current
-	tClient/tAuthorize based authentication.
-	Initial plan:
-	1-. If login not in tClient then will attempt LDAP bind. Will bind
-	with suffix provided by tConfiguration cLDAPBindSuffix. E.g.
-	for cLogin=johndoe and cLDAPBindSuffix=@ad.dnsgroup.company.com
-	the LDAP bind would be performed with "johndoe@ad.dnsgroup.company.com" (MS AD/LDAP example)
-	and the provided login password. A general solution for OpenLDAP is provided by both
-	cLDAPBindPrefix and cLDAPBindSuffix. E.g. "cn=johndoe,ou=dnsadmins,dc=company,dc=com", where 
-	the prefix is "cn=".
-	2-. The LDAP login function also does an LDAP search for a specific OU. The specifics
-	are setup via tConfiguration cLDAPUri, cLDAPBaseDN, cLDAPOrgFilter, cLDAPOrgPatter and cLDAPOrgAttr.	
-	Returning a string that must be in tClient.
-	3-. If the conditions in 1-. and 2-. are met then login cookies with MD5 encrypted password are
-	created as in default model, but the cookies expire in e.g. 1 hour instead of per session. This
-	is done to allow LDAP changes such as removing authorized users or changing user passwords to
-	be effective.
-	4-. The guPermLevel is set to a single value for all LDAP logins.
-	5-. The guLoginClient is set to guOrg (equivalent to the iDNS guCompany.) This is
-	the tClient.uClient of the LDAP search returned tClient.cLabel as per 2-.
+	Changing template system to require set and type.
+	Set is for skin changes.
+	Type identifies templates by interface or other function.
 */
 
 #include "interface.h"
-
-#ifdef EXPERIMENTAL
-#warning "You are compiling with the EXPERIMENTAL flag on. You may include in "
-		"progress code, not tested and possibly not working!" 
-#warning "You have been warned." 
-#endif
 
 //Global vars
 //libtemplate.a required
@@ -226,7 +203,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uVDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -288,7 +265,7 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 		MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uVDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -323,7 +300,7 @@ void htmlFooter(char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uVDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -333,7 +310,7 @@ void htmlFooter(char *cTemplateName)
 			template.cpName[1]="cIspUrl";
 			template.cpValue[1]=ISPURL;
 			template.cpName[2]="cCopyright";
-			template.cpValue[2]="&copy; 2009-2010 CEnet. All Rights Reserved.";
+			template.cpValue[2]="&copy; 2009-2010 Unixservice, LLC. All Rights Reserved.";
 			template.cpName[3]="";
 
 			printf("\n<!-- Start htmlFooter(%s) -->\n",cTemplateName); 
@@ -398,10 +375,9 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcNSSetMembers(fp);
 	else if(!strcmp(cFunction,"funcMetaParam"))
 		funcMetaParam(fp);
-#ifdef EXPERIMENTAL
-	else if(!strcmp(cFunction,"funcZoneStatus"))
-		funcZoneStatus(fp);
-#endif
+	//Not implemented yet
+	//else if(!strcmp(cFunction,"funcZoneStatus"))
+	//funcZoneStatus(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
@@ -880,7 +856,7 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uVDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

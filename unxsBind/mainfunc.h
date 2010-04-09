@@ -25,7 +25,7 @@ void Backup(char *cPasswd);
 void Restore(char *cPasswd, char *cTableName);
 void RestoreAll(char *cPasswd);
 void mySQLRootConnect(char *cPasswd);
-void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet);
+void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType);
 
 void CalledByAlias(int iArgc,char *cArgv[]);
 unsigned TextConnectDb(void);
@@ -563,11 +563,13 @@ void mySQLRootConnect(char *cPasswd)
 }//void mySQLRootConnect(void)
 
 
-void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
+//Import from local file into tTemplate a single record
+void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType)
 {
 	FILE *fp;
 	unsigned uTemplate=0;
 	unsigned uTemplateSet=0;
+	unsigned uTemplateType=0;
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 	char cBuffer[2048]={""};
@@ -609,8 +611,28 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 		exit(1);
 	}
 
+	//uTemplateType
+	sprintf(gcQuery,"SELECT uTemplateType FROM tTemplateType  WHERE cLabel='%s'",cTemplateType);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+        mysqlRes=mysql_store_result(&gMysql);
+        if((mysqlField=mysql_fetch_row(mysqlRes)))
+        	sscanf(mysqlField[0],"%u",&uTemplateType);
+	mysql_free_result(mysqlRes);
+
+	if(!uTemplateType)
+	{
+		printf("Could not find tTemplateType.clabel=%s\n",cTemplateSet);
+		exit(1);
+	}
+
 	//uTemplate
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s'",cTemplate);
+	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s' AND uTemplateSet=%u AND uTemplateType=%u",
+						cTemplate,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -625,41 +647,41 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 
 	if(uTemplate)
 	{
-		printf("Updating tTemplate for %s\n",cTemplate);
-		sprintf(cBuffer,"UPDATE tTemplate SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),cTemplate='',uTemplateSet=%u WHERE uTemplate=%u",uTemplateSet,uTemplate);
+		printf("Updating tTemplate for %s %s %s\n",cTemplate,cTemplateSet,cTemplateType);
+		sprintf(cBuffer,"UPDATE tTemplate SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),cTemplate='',"
+				"uTemplateSet=%u,uTemplateType=%u,uModBy=1 WHERE uTemplate=%u",
+								uTemplateSet,uTemplateType,uTemplate);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{
 			printf("%s\n%.254s\n",mysql_error(&gMysql),cBuffer);
 			exit(1);
 		}
-
 	}
 	else
 	{
 		printf("Inserting new tTemplate for %s\n",cTemplate);
-		sprintf(cBuffer,"INSERT INTO tTemplate SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cLabel='%s',uTemplateSet=%u",cTemplate,uTemplateSet);
+		sprintf(cBuffer,"INSERT INTO tTemplate SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+				"cLabel='%s',uTemplateSet=%u,uTemplateType=%u",cTemplate,uTemplateSet,uTemplateType);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{
 			printf("%s\n%.254s\n",mysql_error(&gMysql),cBuffer);
 			exit(1);
 		}
-
 		uTemplate=mysql_insert_id(&gMysql);
-
 	}
 
 	while(fgets(gcQuery,1024,fp)!=NULL)
 	{
-		sprintf(cBuffer,"UPDATE tTemplate SET cTemplate=CONCAT(cTemplate,'%s') WHERE uTemplate=%u",TextAreaSave(gcQuery),uTemplate);
+		sprintf(cBuffer,"UPDATE tTemplate SET cTemplate=CONCAT(cTemplate,'%s') WHERE uTemplate=%u",
+				TextAreaSave(gcQuery),uTemplate);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{
 			printf("%s\n%.254s\n",mysql_error(&gMysql),cBuffer);
 			exit(1);
 		}
-			
 	}
 	fclose(fp);
 
@@ -711,7 +733,8 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		//Loop for each tJob error
 		//Connect to local mySQL
 		TextConnectDb();
-		sprintf(gcQuery,"SELECT uJob,cServer,cJobName,uUser,cJobData FROM tJob WHERE uJobStatus=4");//4 is tJobStatus Done Error(s)
+		sprintf(gcQuery,"SELECT uJob,cServer,cJobName,uUser,cJobData FROM tJob WHERE uJobStatus=4");
+		//4 is tJobStatus Done Error(s)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -725,7 +748,8 @@ void CalledByAlias(int iArgc,char *cArgv[])
 			printf("<title>iDNS.tJob.uJob=%s</title>\n",field[0]);
 			printf("<link>%s?gcFunction=tJob&amp;uJob=%s</link>\n",cLinkStart,
 							field[0]);
-			printf("<description>cJobName=%s Server=%s uUser=%s\ncJobData=(%s)</description>\n",field[2],field[1],field[3],field[4]);
+			printf("<description>cJobName=%s Server=%s uUser=%s\ncJobData=(%s)</description>\n",
+				field[2],field[1],field[3],field[4]);
 			printf("<guid isPermaLink='false'>%s-%lu</guid>\n",field[0],luClock);
 			printf("<pubDate>%.199s</pubDate>\n",cRSSDate);
 			printf("</item>\n");
@@ -805,7 +829,7 @@ void PrintUsage(char *arg0)
 	printf("\tExtracttHit <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 	printf("\tExample args for Extracts: Apr 2007 passwd /var/lib/mysql/idns\n");
 	printf("\nSpecial Import/Export Ops (Caution):\n");
-	printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel>\n");
+	printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 	printf("\tImportZones\n");
 	printf("\tDropImportedZones\n");
 	printf("\tImportCompanies\n");
@@ -1173,11 +1197,6 @@ void ExtMainShell(int argc, char *argv[])
 			CreateSlaveFiles(argv[2],argv[3],argv[4],1);
 			exit(0);
 		}
-		else if(!strcmp(argv[1],"ImportTemplateFile"))
-		{
-                	ImportTemplateFile(argv[2],argv[3],argv[4]);
-			exit(0);
-		}
 		else if(!strcmp(argv[1],"CompareZones"))
 		{
 			TextConnectDb();
@@ -1214,6 +1233,11 @@ void ExtMainShell(int argc, char *argv[])
 		else if(!strcmp(argv[1],"ExtracttHit"))
 		{
                 	ExtracttHit(argv[2],argv[3],argv[4],argv[5]);
+			exit(0);
+		}
+		else if(!strcmp(argv[1],"ImportTemplateFile"))
+		{
+                	ImportTemplateFile(argv[2],argv[3],argv[4],argv[5]);
 			exit(0);
 		}
 		PrintUsage(argv[0]);

@@ -494,8 +494,8 @@ void ZoneCommands(pentry entries[], int x)
 
 void htmlZone(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlZonePage("DNS System","Zone.Body");
+	htmlHeader("idnsOrg","Header");
+	htmlZonePage("idnsOrg","Zone.Body");
 	htmlFooter("Footer");
 
 }//void htmlZone(void)
@@ -508,7 +508,7 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -1828,8 +1828,8 @@ void funcNSSetMembers(FILE *fp)
 
 void htmlDelegationTool(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlZonePage("DNS System","DelegationTool.Body");
+	htmlHeader("idnsOrg","Header");
+	htmlZonePage("idnsOrg","DelegationTool.Body");
 	htmlFooter("Footer");
 	
 }//void htmlDelegationTool(void)

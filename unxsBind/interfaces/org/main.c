@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 773 2009-04-06 22:00:23Z hus $
+	$Id$
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
@@ -180,8 +180,8 @@ int main(int argc, char *argv[])
 
 void htmlLogin(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlLoginPage("DNS System","Login.Body");
+	htmlHeader("idnsOrg","Header");
+	htmlLoginPage("idnsOrg","Login.Body");
 	htmlFooter("Footer");
 
 }//void htmlLogin(void)
@@ -194,7 +194,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -253,7 +253,7 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 		MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -288,7 +288,7 @@ void htmlFooter(char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -761,7 +761,7 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

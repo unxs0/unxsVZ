@@ -1,9 +1,11 @@
 /*
 FILE 
 	glossary.c
-	$Id: glossary.c 660 2008-12-18 18:48:48Z hus $
-AUTHOR
-	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+	$Id$
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	iDNS Admin (Owner) Interface
 	program file.
@@ -52,8 +54,8 @@ void GlossaryGetHook(entry gentries[],int x)
 
 void htmlGlossary(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlGlossaryPage("DNS System","Glossary.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlGlossaryPage("idnsAdmin","Glossary.Body");
 	htmlFooter("Footer");
 
 }//void htmlGlossary(void)
@@ -66,7 +68,7 @@ void htmlGlossaryPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

@@ -1,9 +1,11 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 747 2009-04-01 16:00:49Z hus $
-AUTHOR
-	(C) 2006-2010 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	$Id$
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	iDNS Admin (Owner) Interface
 REQUIRES
@@ -266,8 +268,8 @@ int main(int argc, char *argv[])
 
 void htmlLogin(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlLoginPage("DNS System","AdminLogin.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlLoginPage("idnsAdmin","AdminLogin.Body");
 	htmlFooter("Footer");
 
 }//void htmlLogin(void)
@@ -280,7 +282,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -341,13 +343,13 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 		MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
 			struct t_template template;
 			template.cpName[0]="cTitle";
-			template.cpValue[0]="Unixservice iDNS System";
+			template.cpValue[0]="idnsAdmin";
 		
 			template.cpName[1]="";
 
@@ -377,7 +379,7 @@ void htmlFooter(char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -421,7 +423,7 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

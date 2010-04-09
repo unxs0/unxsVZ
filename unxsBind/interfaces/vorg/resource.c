@@ -1,7 +1,7 @@
 /*
 FILE 
 	resource.c
-	$Id: resource.c 776 2009-04-08 00:29:55Z hus-admin $
+	$Id$
 AUTHOR/LEGAL
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 	(C) 2010 Gary Wallis for Unixservice, LLC.
@@ -273,7 +273,7 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uVDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -820,7 +820,8 @@ unsigned RRCheck(void)
 					cNameStyle="type_fields_req";
 					return(2);
 				}
-				gcMessage="<blink>If Name is fully qualified it must end with the zone and final period</blink>";
+				gcMessage="<blink>If Name is fully qualified it must end with the zone"
+						" and final period</blink>";
 				cNameStyle="type_fields_req";
 				return(2);
 			}
@@ -834,7 +835,8 @@ unsigned RRCheck(void)
 		if(!isalnum(cName[i]) && cName[i]!='-' && cName[i]!='.' && cName[i]!='@'
 				&& cName[i]!='*' && cName[i]!='_')
 		{
-			gcMessage="<blink>Name can be empty or have only letters, numbers, the default origin @ symbol. Or dashes (-) and periods (.)</blink>";
+			gcMessage="<blink>Name can be empty or have only letters, numbers, the default origin @ symbol."
+					" Or dashes (-) and periods (.)</blink>";
 			cNameStyle="type_fields_req";
 			return(2);
 		}
@@ -883,7 +885,8 @@ unsigned uPerRRTypeCheck(void)
 		//don't allow same name CNAME records
 		if(strcmp(gcFunction,"Modify Confirm")) 
 		{
-			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u AND uRRType=5",cName,uGetuZone(cZone));
+			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u AND uRRType=5",
+							cName,uGetuZone(cZone));
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -900,7 +903,8 @@ unsigned uPerRRTypeCheck(void)
 		if(!cParam1[0])
 		{
 			sprintf(cParam1,"%.99s.",cZone);
-			sprintf(gcQuery,"<blink>%s is required. Common CNAME default entry made for you, check/change if needed</blink>",cParam1Label);
+			sprintf(gcQuery,"<blink>%s is required. Common CNAME default entry made for you,"
+						" check/change if needed</blink>",cParam1Label);
 			gcMessage=gcQuery;
 			cParam1Style="type_fields_req";
 			return(3);
@@ -1544,7 +1548,8 @@ unsigned uPerRRTypeCheck(void)
 		if(!cParam4[0])
 		{
 			cParam4Style="type_textarea_req";
-			gcMessage="<blink>Error: </blink>cParam4: Double quoted regex string and optional SRV target required.";
+			gcMessage="<blink>Error: </blink>cParam4: Double quoted regex string and optional"
+					" SRV target required.";
 		}
 
 		sscanf(cParam1,"%u",&uI);
@@ -1680,10 +1685,12 @@ void funcSelectRRType(FILE *fp, unsigned uUseStatus)
 	{
 		if(guBrowserFirefox)
 		{
-	if(uStep)
-		fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",guZone,gcFunction,uResource,uStep);
-	else
-		fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u'",guZone,gcFunction,uResource);
+			if(uStep)
+				fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",
+							guZone,gcFunction,uResource,uStep);
+			else
+				fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u'",
+							guZone,gcFunction,uResource);
 		}
 		else
 		{
@@ -1691,11 +1698,13 @@ void funcSelectRRType(FILE *fp, unsigned uUseStatus)
 				sprintf(gcFunction,"New Confirm");
 			else if(!strcmp(gcFunction,"Modify"))
 				sprintf(gcFunction,"Modify Confirm");
-	if(uStep)
-		fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",guZone,gcFunction,uResource,uStep);
-	else
-		fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u'",guZone,gcFunction,uResource);
-}
+			if(uStep)
+				fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",
+					guZone,gcFunction,uResource,uStep);
+			else
+				fprintf(fp,"<option value='&cRRType=PTR&uZone=%u&gcFunction=%s&uResource=%u'",
+					guZone,gcFunction,uResource);
+		}
 		if(!strcmp(cRRType,"PTR"))
 			fprintf(fp,"selected");
 		fprintf(fp,">PTR</option>");
@@ -1717,10 +1726,11 @@ void funcSelectRRType(FILE *fp, unsigned uUseStatus)
 
 			if(guBrowserFirefox)			
 			{
-	if(uStep)
-		fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",field[0],guZone,gcFunction,uResource,uStep);
-	else
-		fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u'",field[0],guZone,gcFunction,uResource);
+				if(uStep)
+					fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",							field[0],guZone,gcFunction,uResource,uStep);
+				else
+					fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u'",
+						field[0],guZone,gcFunction,uResource);
 			}
 			else
 			{
@@ -1728,10 +1738,11 @@ void funcSelectRRType(FILE *fp, unsigned uUseStatus)
 					sprintf(gcFunction,"New Confirm");
 				else if(!strcmp(gcFunction,"Modify"))
 					sprintf(gcFunction,"Modify Confirm");
-	if(uStep)				
-		fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",field[0],guZone,gcFunction,uResource,uStep);
-	else
-		fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u'",field[0],guZone,gcFunction,uResource);
+				if(uStep)				
+					fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u&uStep=%u'",							field[0],guZone,gcFunction,uResource,uStep);
+				else
+					fprintf(fp,"<option value='&cRRType=%s&uZone=%u&gcFunction=%s&uResource=%u'",
+						field[0],guZone,gcFunction,uResource);
 			}
 			if(!strcmp(cRRType,field[0]))
 				fprintf(fp,"selected");
@@ -1739,7 +1750,6 @@ void funcSelectRRType(FILE *fp, unsigned uUseStatus)
 		}
 		mysql_free_result(res);
 	}
-
 	fprintf(fp,"</select>\n");
 	fprintf(fp,"<!-- funcSelectRRType(fp) End -->\n");
 
@@ -1784,7 +1794,8 @@ void LoadRRNoType(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cName,uTTL,cParam1,cParam2,cParam3,cParam4,cComment FROM tResource WHERE uResource=%u",uResource);
+	sprintf(gcQuery,"SELECT cName,uTTL,cParam1,cParam2,cParam3,cParam4,cComment FROM tResource WHERE uResource=%u",
+						uResource);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1827,6 +1838,7 @@ void SubmitModifyJob(void)
 	}
 	else
 		gcMessage="<blink>Contact admin: uNameServer error (mod)</blink>";
+
 }//void SubmitModifyJob(void)
 
 
@@ -1859,7 +1871,8 @@ void MasterFunctionSelect(void)
 	{
 		SelectResource();
 		sprintf(gcDelStep," Confirm");
-		gcMessage="Double check you have selected the correct record to delete. Then confirm. Any other action to cancel.";
+		gcMessage="Double check you have selected the correct record to delete. Then confirm."
+				" Any other action to cancel.";
 		htmlResource();
 	}
 	else if(!strcmp(gcFunction,"Modify Confirm"))
@@ -1956,11 +1969,13 @@ void MasterFunctionSelect(void)
 							if(strstr(cName+strlen(cName)-strlen(cZone),cZone))
 							{
 								strcat(cName,".");
-								gcMessage="<blink>We have added a final period. If this correct confirm</blink>";
+								gcMessage="<blink>We have added a final period."
+										" If this correct confirm</blink>";
 								cNameStyle="type_fields_req";
 								htmlResourceWizard(uStep);
 							}
-							gcMessage="<blink>If Name is fully qualified it must end with the zone and final period</blink>";
+							gcMessage="<blink>If Name is fully qualified it must end with"
+									" the zone and final period</blink>";
 							htmlResourceWizard(uStep);
 						}
 					}
@@ -1970,10 +1985,12 @@ void MasterFunctionSelect(void)
 				//This is mostly for the (default) problem we have experienced after deployment :(
 				for(i=0;cName[i];i++)
 				{
-					if(!isalnum(cName[i]) && cName[i]!='-' && cName[i]!='.' && cName[i]!='@'&& cName[i]!='*' &&
-						cName[i]!='_')
+					if(!isalnum(cName[i]) && cName[i]!='-' && cName[i]!='.' &&
+							 cName[i]!='@'&& cName[i]!='*' && cName[i]!='_')
 					{
-						gcMessage="<blink>Name can be empty or have only letters, numbers, the default origin @ symbol. Or dashes (-) and periods (.)</blink>";
+						gcMessage="<blink>Name can be empty or have only letters, numbers,"
+							" the default origin @ symbol. Or dashes (-) and periods"
+							" (.)</blink>";
 						cNameStyle="type_fields_req";
 						htmlResourceWizard(uStep);
 					}
@@ -1981,8 +1998,8 @@ void MasterFunctionSelect(void)
 
 				FQDomainName(cName);
 				break;
+
 			case 2:
-				
 				//remove extra chars
 				if(cParam1[0] && strcmp(cRRType,"TXT") && strcmp(cRRType,"HINFO"))
 				{
@@ -2021,7 +2038,8 @@ void MasterFunctionSelect(void)
 	{
 		htmlBulkOp();
 	}
-}//
+
+}//void MasterFunctionSelect(void)
 
 
 void htmlResourceWizard(unsigned uStep)
@@ -2156,9 +2174,13 @@ unsigned idnsOnLineZoneCheck(void)
 		if(cFirstNS[0])
 			fprintf(zfp,
 			"@ IN SOA %s. %s. (\n",cFirstNS,field[3]);
-/*		else
+
+//WTF is this TODO
+/*
+		else
 			fprintf(zfp,
-			"@ IN SOA %s. %s. (\n",cMasterNS,field[3]);*/
+			"@ IN SOA %s. %s. (\n",cMasterNS,field[3]);
+*/
 		fprintf(zfp,"\t\t\t%s\t;serial\n",field[4]);
 		fprintf(zfp,"\t\t\t%s\t\t;slave refresh\n",field[7]);
 		fprintf(zfp,"\t\t\t%s\t\t;slave retry\n",field[8]);
@@ -2178,9 +2200,11 @@ unsigned idnsOnLineZoneCheck(void)
 
 		//TODO
 		if(!strcmp(field[0]+strlen(field[0])-5,".arpa"))
-			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2 FROM tResourceTest WHERE uZone=%u ORDER BY uResource",uZone);
+			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2 FROM tResourceTest WHERE uZone=%u"
+						" ORDER BY uResource",uZone);
 		else
-			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4 FROM tResourceTest WHERE uZone=%u ORDER BY cName",uZone);
+			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4 FROM tResourceTest"
+						" WHERE uZone=%u ORDER BY cName",uZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 		{
@@ -2238,9 +2262,8 @@ unsigned idnsOnLineZoneCheck(void)
 		mysql_free_result(res2);
 		fclose(zfp);
 
-		//**** IMPORTANT NOTE *****
 		//Check the named-checkzone binary location for your setup
-		//
+		//We only support CentOS 5
 		sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1 > /dev/null",field[0],cZoneFile);
 		if(system(gcQuery))
 		{
@@ -2266,7 +2289,8 @@ unsigned idnsOnLineZoneCheck(void)
 				}
 				else if(strstr(cLine,"sh: /usr/sbin/named-checkzone: Permission denied"))
 				{
-					gcMessage="<blink>Error: </blink> Can't execute named-checkzone. Fix your permissions";
+					gcMessage="<blink>Error: </blink> Can't execute named-checkzone."
+						" Fix your permissions";
 					uMessageSet=1;
 				}
 			}

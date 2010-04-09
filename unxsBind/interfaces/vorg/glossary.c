@@ -1,7 +1,7 @@
 /*
 FILE 
 	glossary.c
-	$Id: glossary.c 663 2008-12-18 19:00:37Z hus $
+	$Id$
 AUTHOR/LEGAL
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 	(C) 2010 Gary Wallis for Unixservice, LLC.
@@ -69,7 +69,7 @@ void htmlGlossaryPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uVDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

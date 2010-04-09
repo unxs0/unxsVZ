@@ -1,11 +1,13 @@
 /*
 FILE
 	dashboard.c
-	$Id: dashboard.c 660 2008-12-18 18:48:48Z hus $
+	$Id$
 PURPOSE
 	Provide the functions for the idnsAdmin Dashboard.
-AUTHOR
-	(C) Hugo Urquiza 2006-2009 for Unixservice.
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file in main source dir.
 */
 
 #include "interface.h"
@@ -59,7 +61,7 @@ void htmlDashBoard(void)
 	guContact=0;
 	sys_SetSessionCookie();
 	
-	htmlHeader("iDNS System","Header");
+	htmlHeader("iidnsAdmin","Header");
 	htmlDashBoardPage("","DashBoard.Body");
 	htmlFooter("Footer");
 
@@ -73,7 +75,7 @@ void htmlDashBoardPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
