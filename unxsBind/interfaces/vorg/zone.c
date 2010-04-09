@@ -2007,7 +2007,7 @@ char *cGetViewLabel(void)
 
 	if(!guZone)
 	{
-		sprintf(cView,"[Unknow view]");
+		sprintf(cView,"[Unknown view]");
 		return(cView);
 	}
 
