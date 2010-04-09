@@ -1,9 +1,11 @@
 /*
 FILE 
 	customercontact.c
-	$Id: customercontact.c 668 2008-12-18 21:11:42Z hus $
-AUTHOR
-	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+	$Id$
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	Contacts TAB.
 	idnsAdmin interface program file.
@@ -422,9 +424,9 @@ void CustomerContactCommands(pentry entries[], int x)
 
 void htmlCustomerContactWizard(unsigned uStep)
 {
-	htmlHeader("DNS System","Header");
+	htmlHeader("idnsAdmin","Header");
 	sprintf(gcQuery,"CustomerUserWizard.%u",uStep);
-	htmlCustomerContactPage("DNS System",gcQuery);
+	htmlCustomerContactPage("idnsAdmin",gcQuery);
 	htmlFooter("Footer");
 
 }//void htmlCustomerContactWizard(unsigned uStep)
@@ -445,8 +447,8 @@ void htmlCustomerContact(void)
 		}
 	}
 
-	htmlHeader("DNS System","Header");
-	htmlCustomerContactPage("DNS System","CustomerUser.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlCustomerContactPage("idnsAdmin","CustomerUser.Body");
 	htmlFooter("Footer");
 
 }//void htmlCustomerContact(void)
@@ -459,7 +461,7 @@ void htmlCustomerContactPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

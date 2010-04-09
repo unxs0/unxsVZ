@@ -1,9 +1,11 @@
 /*
 FILE 
 	customer.c
-	$Id: customer.c 729 2009-03-12 19:50:23Z hus-admin $
-AUTHOR
-	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+	$Id$
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	Companies TAB.
 	idnsAdmin interface program file.
@@ -320,9 +322,9 @@ void CustomerCommands(pentry entries[], int x)
 
 void htmlCustomerWizard(unsigned uStep)
 {
-	htmlHeader("DNS System","Header");
+	htmlHeader("idnsAdmin","Header");
 	sprintf(gcQuery,"CustomerWizard.%u",uStep);
-	htmlCustomerPage("DNS System",gcQuery);
+	htmlCustomerPage("idnsAdmin",gcQuery);
 	htmlFooter("Footer");
 	
 }//void htmlCustomerWizard(unsigned uStep)
@@ -341,8 +343,8 @@ void htmlCustomer(void)
 		}
 	}
 
-	htmlHeader("DNS System","Header");
-	htmlCustomerPage("DNS System","Customer.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlCustomerPage("idnsAdmin","Customer.Body");
 	htmlFooter("Footer");
 
 }//void htmlCustomer(void)
@@ -355,7 +357,7 @@ void htmlCustomerPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

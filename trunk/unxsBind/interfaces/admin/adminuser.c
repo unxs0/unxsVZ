@@ -1,9 +1,11 @@
 /*
 FILE 
 	adminuser.c
-	$Id: adminuser.c 673 2008-12-19 14:00:08Z hus-admin $
-AUTHOR
-	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+	$Id$
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	iDNS Admin (Owner) Interface
 	program file.
@@ -354,9 +356,9 @@ void AdminUserCommands(pentry entries[], int x)
 
 void htmlAdminUserWizard(unsigned uStep)
 {
-	htmlHeader("DNS System","Header");
+	htmlHeader("idnsAdmin","Header");
 	sprintf(gcQuery,"AdminUserWizard.%u",uStep);
-	htmlAdminUserPage("DNS System",gcQuery);
+	htmlAdminUserPage("idnsAdmin",gcQuery);
 	htmlFooter("Footer");
 
 }//void htmlAdminUserWizard(unsigned uStep)
@@ -365,8 +367,8 @@ void htmlAdminUserWizard(unsigned uStep)
 
 void htmlAdminUser(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlAdminUserPage("DNS System","AdminUser.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlAdminUserPage("idnsAdmin","AdminUser.Body");
 	htmlFooter("Footer");
 
 }//void htmlAdminUser(void)
@@ -379,7 +381,7 @@ void htmlAdminUserPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -1017,11 +1019,14 @@ void funcAdmLast7DaysAct(FILE *fp, unsigned uArgClient)
 			"AND tResource.uResource=uTablePK),''),IF(cTableName='tResource',(SELECT tClient.cLabel FROM "
 			"tClient,tResource WHERE tClient.uClient=tResource.uOwner AND tResource.uResource=uTablePK),''), "
 			"IF(cTableName='tResource',(SELECT uView FROM tZone,tResource WHERE tZone.uZone=tResource.uZone "
-			"AND tResource.uResource=uTablePK),''),IF(cTableName='tZone',(SELECT cZone FROM tZone WHERE uZone=uTablePK),''),"
-			"IF(cTableName='tZone',(SELECT tClient.cLabel FROM tClient,tZone WHERE tZone.uOwner=tClient.uClient AND uZone=uTablePK),''),"
+			"AND tResource.uResource=uTablePK),''),IF(cTableName='tZone',"
+			"(SELECT cZone FROM tZone WHERE uZone=uTablePK),''),"
+			"IF(cTableName='tZone',(SELECT tClient.cLabel FROM"
+			" tClient,tZone WHERE tZone.uOwner=tClient.uClient AND uZone=uTablePK),''),"
 			"IF(cTableName='tZone',(SELECT uView FROM tZone WHERE uZone=uTablePK),'') "
 			"FROM tLog WHERE (uLogType=1 OR uLogType=2 OR uLogType=3) AND "
-			"uLoginClient=%u AND tLog.uCreatedDate>(UNIX_TIMESTAMP(NOW())-604800) ORDER BY tLog.uCreatedDate DESC LIMIT 100",uClient);
+			"uLoginClient=%u AND tLog.uCreatedDate>(UNIX_TIMESTAMP(NOW())-604800)"
+			" ORDER BY tLog.uCreatedDate DESC LIMIT 100",uClient);
 //	fprintf(fp,"%s",gcQuery);return;
 	/*
 	0: tLog.cLabel
@@ -1059,15 +1064,17 @@ void funcAdmLast7DaysAct(FILE *fp, unsigned uArgClient)
 			//Check if the RR was deleted.
 			if(field[4]!=NULL)
 				sprintf(cLink,"<a title='Load this RR' class=darkLink "
-					"href=\"idnsAdmin.cgi?gcPage=Resource&uResource=%s&cCustomer=%s&cZone=%s&uView=%s\">%s</a>",
-					field[1]
-					,field[5]
-					,field[4]
-					,field[6]
-					,field[1]);
+					"href=\"idnsAdmin.cgi?gcPage=Resource&uResource=%s&cCustomer=%s"
+					"&cZone=%s&uView=%s\">%s</a>",
+						field[1]
+						,field[5]
+						,field[4]
+						,field[6]
+						,field[1]);
 			else
-				sprintf(cLink,"<a href=idnsAdmin.cgi?gcPage=RestoreResource&uDeletedResource=%s>%s</a> (<font color=red>Deleted</font>)",
-					field[1],field[1]);
+				sprintf(cLink,"<a href=idnsAdmin.cgi?gcPage=RestoreResource&uDeletedResource=%s>%s</a>"
+						" (<font color=red>Deleted</font>)",
+							field[1],field[1]);
 		}
 		else if(!strcmp(field[2],"tZone"))
 		{
@@ -1081,12 +1088,14 @@ void funcAdmLast7DaysAct(FILE *fp, unsigned uArgClient)
 					,field[7]
 					);
 			else
-				sprintf(cLink,"<a href=idnsAdmin.cgi?gcPage=RestoreZone&uDeletedZone=%s>%s</a> (<font color=red>Deleted</font>)",
-						field[1],field[1]);
+				sprintf(cLink,"<a href=idnsAdmin.cgi?gcPage=RestoreZone&uDeletedZone=%s>%s</a>"
+						" (<font color=red>Deleted</font>)",
+							field[1],field[1]);
 		}
 		else if(1)
 			sprintf(cLink,"<a class=darkLink title='Load record into the iDNS backend' "
-					"href=iDNS.cgi?gcFunction=%s&u%s=%s target=_blank>%s</a>",field[2],field[2]+1,field[1],field[1]);
+					"href=iDNS.cgi?gcFunction=%s&u%s=%s target=_blank>%s</a>",
+						field[2],field[2]+1,field[1],field[1]);
 		
 		template.cpName[0]="cAction";
 		template.cpValue[0]=field[0];

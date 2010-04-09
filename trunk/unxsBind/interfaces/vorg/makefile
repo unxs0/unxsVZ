@@ -1,7 +1,7 @@
 #
 #FILE
 #	makefile
-#	$Id: makefile 663 2008-12-18 19:00:37Z hus $
+#	$Id$
 #AUTHOR/LEGAL
 #	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 #	(C) 2010 Gary Wallis for Unixservice, LLC.

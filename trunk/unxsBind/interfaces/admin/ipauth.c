@@ -1,9 +1,11 @@
 /*
 FILE 
 	bulkop.c
-	$Id: bulkop.c 660 2008-12-18 18:48:48Z hus $
-AUTHOR
-	(C) 2006-2009 Gary Wallis  and Hugo Urquiza for Unixservice
+	$Id$
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	iDNS Administration (ASP) Interface
 	program file.
@@ -95,8 +97,8 @@ void IPAuthCommands(pentry entries[], int x)
 
 void htmlIPAuth(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlIPAuthPage("DNS System","IPAuth.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlIPAuthPage("idnsAdmin","IPAuth.Body");
 	htmlFooter("Footer");
 
 }//void htmlIPAuth(void)
@@ -104,8 +106,8 @@ void htmlIPAuth(void)
 
 void htmlIPAuthReport(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlIPAuthPage("DNS System","IPAuthReport.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlIPAuthPage("idnsAdmin","IPAuthReport.Body");
 	htmlFooter("Footer");
 
 }//void htmlIPAuthReport(void)
@@ -113,8 +115,8 @@ void htmlIPAuthReport(void)
 
 void htmlIPAuthDetail(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlIPAuthPage("DNS System","IPAuthDetails.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlIPAuthPage("idnsAdmin","IPAuthDetails.Body");
 	htmlFooter("Footer");
 
 }//void htmlIPAuthDetail(void)
@@ -127,7 +129,7 @@ void htmlIPAuthPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

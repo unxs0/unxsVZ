@@ -1,7 +1,7 @@
 /*
 FILE
 	interface.h
-	$Id: interface.h 772 2009-04-06 21:46:41Z hus $
+	$Id$
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 
@@ -35,6 +35,10 @@ AUTHOR
 #define ORG_ADMIN        "Organization Admin"
 #define IP_BLOCK_CIDR 1
 #define IP_BLOCK_DASH 2
+
+//Depend on correctly preconfigured tTemplateSet and tTemplateType:
+#define uPLAINSET 1
+#define uVDNSORGTYPE 3
 
 
 

@@ -11,17 +11,29 @@ AUTHOR
 
 //ModuleFunctionProtos()
 
+static unsigned uTemplateSetFilter=1;
+static char cuTemplateSetPullDownFilter[256]={""};
+static unsigned uTemplateTypeFilter=1;
+static char cuTemplateTypePullDownFilter[256]={""};
 
 void tTemplateNavList(void);
 
 void ExtProcesstTemplateVars(pentry entries[], int x)
 {
-	/*
 	register int i;
 	for(i=0;i<x;i++)
 	{
+		if(!strcmp(entries[i].name,"cuTemplateSetPullDownFilter"))
+		{
+			sprintf(cuTemplateSetPullDownFilter,"%.255s",entries[i].val);
+			uTemplateSetFilter=ReadPullDown("tTemplateSet","cLabel",cuTemplateSetPullDownFilter);
+		}
+		else if(!strcmp(entries[i].name,"cuTemplateTypePullDownFilter"))
+		{
+			sprintf(cuTemplateTypePullDownFilter,"%.255s",entries[i].val);
+			uTemplateTypeFilter=ReadPullDown("tTemplateType","cLabel",cuTemplateTypePullDownFilter);
+		}
 	}
-	*/
 }//void ExtProcesstTemplateVars(pentry entries[], int x)
 
 
@@ -141,7 +153,6 @@ void ExttTemplateButtons(void)
                 break;
 
 		default:
-
 			tTemplateNavList();
 	}
 	CloseFieldSet();
@@ -165,6 +176,14 @@ void ExttTemplateGetHook(entry gentries[], int x)
 		{
 			sscanf(gentries[i].val,"%u",&uTemplate);
 			guMode=6;
+		}
+		else if(!strcmp(gentries[i].name,"uTemplateSetFilter"))
+		{
+			sscanf(gentries[i].val,"%u",&uTemplateSetFilter);
+		}
+		else if(!strcmp(gentries[i].name,"uTemplateTypeFilter"))
+		{
+			sscanf(gentries[i].val,"%u",&uTemplateTypeFilter);
 		}
 	}
 	tTemplate("");
@@ -258,7 +277,9 @@ void tTemplateNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	ExtSelect("tTemplate","tTemplate.uTemplate,tTemplate.cLabel",0);
+	sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE uTemplateType=%u AND uTemplateSet=%u"
+				" ORDER BY uTemplateType,uTemplateSet,cLabel",
+						uTemplateTypeFilter,uTemplateSetFilter);
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -272,10 +293,23 @@ void tTemplateNavList(void)
 	if(mysql_num_rows(res))
 	{	
         	printf("<p><u>tTemplateNavList</u><br>\n");
+        	printf("<u>Filters</u><br>\n");
+		tTablePullDown("tTemplateSet;cuTemplateSetPullDownFilter","cLabel","cLabel",uTemplateSetFilter,1);
+		tTablePullDown("tTemplateType;cuTemplateTypePullDownFilter","cLabel","cLabel",uTemplateTypeFilter,1);
+        	printf("<p>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tTemplate&uTemplate=%s>%s</a><br>\n",
-				field[0],field[1]);
+			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tTemplate&uTemplate=%s&"
+				"uTemplateTypeFilter=%u&uTemplateSetFilter=%u>%s</a><br>\n",
+				field[0],uTemplateTypeFilter,uTemplateSetFilter,field[1]);
+	}
+	else
+	{
+        	printf("<p><u>tTemplateNavList</u><br>\n");
+        	printf("<u>Filters</u><br>\n");
+		tTablePullDown("tTemplateSet;cuTemplateSetPullDownFilter","cLabel","cLabel",uTemplateSetFilter,1);
+		tTablePullDown("tTemplateType;cuTemplateTypePullDownFilter","cLabel","cLabel",uTemplateTypeFilter,1);
+        	printf("<p>\n");
 	}
         mysql_free_result(res);
 

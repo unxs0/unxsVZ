@@ -1,7 +1,7 @@
 /*
 FILE
 	interface.h
-	$Id: interface.h 737 2009-03-18 23:17:28Z hus-admin $
+	$Id$
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 
@@ -18,6 +18,14 @@ AUTHOR
 #define MAXPOSTVARS 64
 #define MAXGETVARS 8
 #define MAX_RESULTS 100
+
+//Depend on correctly preconfigured tTemplateSet and tTemplateType:
+#define uPLAINSET 1
+#define uHOLIDAYSET 2
+#define uIDNSORGTYPE 1
+#define uIDNSADMINTYPE 2
+#define uVDNSORGTYPE 3
+
 
 //#define MYSQL_HAS_SUBQUERIES
 

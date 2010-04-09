@@ -1,7 +1,7 @@
 /*
 FILE 
 	zone.c
-	$Id: bulkop.c 663 2008-12-18 19:00:37Z hus $
+	$Id$
 AUTHOR
 	(C) 2006-2009 Gary Wallis  and Hugo Urquiza for Unixservice
 PURPOSE
@@ -81,8 +81,8 @@ void BulkOpCommands(pentry entries[], int x)
 
 void htmlBulkOp(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlBulkOpPage("DNS System","OrgBulkOp.Body");
+	htmlHeader("idnsOrg","Header");
+	htmlBulkOpPage("idnsOrg","OrgBulkOp.Body");
 	htmlFooter("Footer");
 
 }//void htmlBulkOp(void)
@@ -95,7 +95,7 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

@@ -17,33 +17,20 @@ vdnsOrg Quick Install Instructions
 ---
 Brief Introduction:
 
-vdnsOrg provides the same functionality as idnsOrg. The only difference they have (at least on the
+vdnsOrg provides the same functionality as idnsOrg. The only difference they have (at least from the
 end user point of view) is that vdnsOrg can handle zones deployed for all the BIND views
-deployed in the system. On the other hand, vdnsOrg only allows editing the resource records
-of zones in the external view.
+deployed in the system.  Also vdsnOrg is the first interface to support LDAP login.
 
 ---
 Prerequisites:
 
 You must have your iDNS backend system installed (iDNS.cgi) and tested.
+You need to install the NEW libtemplate from the unxsVZ/libs dir.
 
 ---
 Important notes about upgrading and other post install issues:
 
-1-. If you install vdnsOrg ****you won't be able to use idnsOrg***, since the templates used by both 
-applications are mutually exclusive.  (See 2-. below for more confusion on template issue.)
-
-2-. You need to restore with the backend tTemplate (for some unknown reason that we are trying to figure out.)
-
-Assuming unxsBind/data is located /home/someuser/unxsBind/data and that MySQL is setup to allow
-root access from the server you have your source on. Then...
-
-# ln -s /home/someuser/unxsBind /home/someuser/iDNS
-# export ISMROOT=/home/someuser
-# /var/www/unxs/cgi-bin/iDNS.cgi Restore tTemplate MySQLRootPasswd
-
-
-3-. New LDAP debug log issues, so you need to first create it with some valid perms.
+1-. New LDAP debug log issues, so you need to first create it with some valid perms.
 
 # touch /var/log/unxsBindLDAP.log
 # chown apache:root /var/log/unxsBindLDAP.log

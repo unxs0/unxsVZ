@@ -1,9 +1,11 @@
 /*
 FILE 
 	report.c
-	$Id: report.c 660 2008-12-18 18:48:48Z hus $
-AUTHOR
-	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+	$Id$
+AUTHOR/LEGAL
+	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	iDNSAdmin.cgi interface program file.
 */
@@ -70,8 +72,8 @@ void ReportGetHook(entry gentries[],int x)
 
 void htmlReport(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlReportPage("DNS System","Report.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlReportPage("idnsAdmin","Report.Body");
 	htmlFooter("Footer");
 
 }//void htmlReport(void)
@@ -79,8 +81,8 @@ void htmlReport(void)
 
 void htmlReportFocus(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlReportPage("DNS System","ReportFocus.Body");
+	htmlHeader("idnsAdmin","Header");
+	htmlReportPage("idnsAdmin","ReportFocus.Body");
 	htmlFooter("Footer");
 }//void htmlReportFocus(void)
 
@@ -92,7 +94,7 @@ void htmlReportPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSADMINTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

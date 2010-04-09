@@ -1,7 +1,7 @@
 /*
 FILE 
 	resource.c
-	$Id: resource.c 776 2009-04-08 00:29:55Z hus-admin $
+	$Id$
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE
@@ -254,8 +254,8 @@ void ResourceGetHook(entry gentries[],int x)
 
 void htmlResource(void)
 {
-	htmlHeader("DNS System","Header");
-	htmlResourcePage("DNS System","Resource.Body");
+	htmlHeader("idnsOrg","Header");
+	htmlResourcePage("idnsOrg","Resource.Body");
 	htmlFooter("Footer");
 
 }//void htmlResource(void)
@@ -268,7 +268,7 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelect(cTemplateName);
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uIDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -2087,9 +2087,9 @@ void MasterFunctionSelect(void)
 void htmlResourceWizard(unsigned uStep)
 {
 	char cTmp[16]={""};
-	htmlHeader("DNS System","Header");
+	htmlHeader("idnsOrg","Header");
 	sprintf(cTmp,"ResourceWizard.%.1u",uStep);
-	htmlResourcePage("DNS System",cTmp);
+	htmlResourcePage("idnsOrg",cTmp);
 	htmlFooter("Footer");
 	
 }//void htmlResourceWizard(unsigned uStep)
