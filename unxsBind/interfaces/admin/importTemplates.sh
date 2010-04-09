@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #FILE
-# $Id: importTemplates.sh 660 2008-12-18 18:48:48Z hus $
+# $Id$
 #PURPOSE
 #	Import idnsAdmin.cgi templates in one fell swoop.
 #	Very useful when moving application to new server.
