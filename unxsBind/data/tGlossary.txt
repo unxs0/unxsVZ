@@ -53,45 +53,252 @@ IP Address: 217.32.45.123<br>\
 <br>\
 Please note that is also possible to leave Resource Name blank for A records, in\
 that case it takes the value of the $ORIGIN (The zone name)
-11	Resource Type	1	1	1175625855	1	1175626050	Indicates the type of the RR.<br>\
-RR type may be one of the following:<br>\
-<br>\
-<strong>A:</strong> maps a hostname to a 32-bit IPv4 address.<br>\
+11	Resource Type	1	1	1175625855	1	1270850765	Indicates the type of the resource record (RR).<br>\
+<p>\
+RR type may be one of the following:\
+\
+<dl>\
+<dt>\
+<strong>A</strong>\
+</dt> \
+<dd>\
+This RR maps a hostname to a 32-bit IPv4 address.<br>\
 E.g.:<br>\
-<br>\
-www A 217.136.12.45<br>\
-<br>\
-<strong>MX:</strong> is a type of resource record specifying how Internet e-mail\
+<pre>\
+www\	A\	217.136.12.45<br>\
+</pre>\
+</dd>\
+\
+\
+<dt>\
+<strong>MX</strong>\
+</dt>\
+<dd>\
+ Is a RR type that specifys how Internet e-mail\
 should be routed. MX records point to the servers that should receive an e-mail,\
 and their priority relative to each other.<br>\
 E.g.:<br>\
-<br>\
-mydomain.com MX 10 mailserver.mydomain.com.<br>\
-<br>\
-<strong>HINFO:</strong> Host Information (HINFO) record can be set up to give\
+<pre>\
+mydomain.com\	MX\	10\	mailserver.mydomain.com.\
+</pre>\
+</dd>\
+\
+<dt>\
+<strong>HINFO</strong>\
+</dt>\
+<dd>\
+ A host Information RR can be set up to give\
 hardware operating system (OS) information about each host. Its presence is\
 optional, but having the information available can be useful.<br>\
 E.g.:<br>\
-<br>\
-myserver HINFO   "Pentium III" "Linux"<br>\
-<br>\
-<strong>CNAME:</strong> this record type is used to define an alias host name.<br>\
-E.g.:<br>\
-www CNAME mydomain.com.<br>\
-<br>\
-<strong>TXT:</strong>this record type allows you to associate any arbitrary text\
+<pre>\
+myserver\	HINFO\	"Pentium III"\	"Linux"\
+</pre>\
+</dd>\
+\
+<dt>\
+<strong>CNAME</strong>\
+</dt>\
+<dd>\
+This record type is used to define an alias host name. More from wikipedia:\
+<p>\
+CNAME records are specified in RFC 1034. CNAMEs are handled specially in the\
+domain name system, and have several restrictions on their use. When a DNS\
+resolver encounters a CNAME record while looking for a regular resource record,\
+it will restart the query using the canonical name instead of the original name.\
+When the resolver is told to look for CNAME records, the CNAME is returned,\
+rather than restarting the query. The canonical name that a CNAME points to can\
+be anywhere in the DNS, whether local or on a remote server in a different DNS zone.\
+\
+<p>\
+For example, if there is a DNS zone as follows:\
+\
+<p>\
+<pre>\
+foo.example.com.        CNAME  bar.example.com.\
+bar.example.com.        A      192.0.2.23\
+</pre>\
+<p>\
+When an A record lookup for foo.example.com is done, the resolver will see a\
+CNAME record and restart the checking at bar.example.com and will then return\
+192.0.2.23.\
+<p>\
+Terminology of CNAME vs "canonical name"\
+<p>\
+It has been traditional to refer to the label of a CNAME record as "a CNAME".\
+This is unfortunate, as "CNAME" is an abbreviation of "canonical name", and the\
+label of a CNAME record is most certainly not a canonical name. It is, however,\
+an entrenched usage. Care must therefore be taken to be very clear whether the\
+label, or the value (the canonical name) of a CNAME resource record is intended.\
+(Quoting from RFC 2181 section 10.1.1)\
+<p>\
+So, technically, a canonical name in the DNS is the primary name of a host (RFC\
+1034 section 3.6.2.) created by something other than a CNAME, or DNAME record. A\
+CNAME record creates an alias with a name on the left which points to a\
+canonical name specified on the right (the RDATA portion of the record).\
+<p>\
+Restrictions\
+<p>\
+1-. A CNAME must have no other resource records of other types (MX, A, etc.). (RFC\
+1034 section 3.6.2, RFC 1912 section 2.4) The exception is when DNSSEC is being\
+used, in which case there can be a DNSSEC related records such as RRSIG, NSEC,\
+etc. (RFC 2181 section 10.1)\
+<p>\
+2-. A CNAME records that point to other CNAME records should be avoided (RFC 1034\
+section 5.2.2). In particular, it is possible to create infinite loops with\
+CNAME records, and other error conditions, as:\
+<pre>\
+foo.example.com.\	CNAME\	bar.example.com.\
+bar.example.com.\	CNAME\	foo.example.com.\
+</pre>\
+<p>\
+3-. Other DNS record types, such as NS, MX, PTR, SRV, etc. that point to other names\
+should never point to a CNAME. (RFC 1034 section 3.6.2, RFC 1912 section 2.4)\
+So, for example, a zone should not contain constructs such as:\
+<pre>\
+foo.example.com.\	CNAME  host.example.com.\
+host.example.com.\	A \	192.0.2.1\
+example.com.\	MX\	0\	foo.example.com.\
+</pre>\
+<p>\
+(In short CNAME RRs are complicated. Use only if you know what you are doing.)\
+</dd>\
+\
+<dt>\
+<strong>TXT</strong>\
+</dt>\
+<dd>\
+This record type allows you to associate any arbitrary text\
 with a host name. This may be used to define Domain Keys or SPF records.<br>\
 E.g.:<br>\
-mydomain.com TXT  "v=spf1 ptr ~all"<br>\
-<br>\
-<strong>PTR:</strong> this resource type is only used when a reverse\
+<pre>\
+mydomain.com.\	TXT\	"v=spf1 ptr ~all"\
+</pre>\
+</dd>\
+\
+<dt>\
+<strong>PTR</strong>\
+</dt>\
+<dd>This resource type is only used when a reverse\
 (in-addr.arpa) zone is selected. This record map a IPv4 address to a domain\
 name.<br>\
 E.g:<br>\
-<br>\
-Zone is in-addr.arpa.35.22.217<br>\
-<br>\
-32 PTR www.mydomain.com.\
+<pre>\
+32\	PTR\	www.mydomain.com.<br>\
+</pre>\
+</dd>\
+\
+<dt>\
+<strong>SRV</strong>\
+</dt>\
+<dd>\
+The RR is composed of:\
+<p>\
+A codified NAME with several components seperated by periods.\
+<p>\
+<strong>Service</strong>: The symbolic name of the desired service, that starts\
+with an underscore char (_).<br>\
+<strong>Proto</strong>: The transport protocol of the desired service; this is\
+usually either TCP\
+or UDP, and as with the service starts with an underscore char (_).<br>\
+<strong>Name</strong>: The domain name for which this record is valid.<br>\
+<p>\
+Four distinct paramters:\
+<p>\
+<strong>Priority</strong>: The priority of the target host, lower value means\
+more preferred.<br>\
+<strong>Weight</strong>: A relative weight for records with the same priority.<br>\
+<strong>Port</strong>: The TCP or UDP port on which the service is to be found.<br>\
+<strong>Target</strong>: The canonical hostname of the machine providing the\
+service.<br>\
+<p>\
+An example SRV record might look like this:\
+<pre>\
+_sip._tcp.example.com.\	SRV\	0\	5\	5060\	sipserver.example.com.\
+</pre>\
+</dd>\
+\
+<dt>\
+<strong>AAAA</strong>\
+</dt>\
+<dd>\
+Is a RR similar to the A RR. But with an IPv6 seven colon, with eight separated\
+hex words\
+formatted number.\
+<p>\
+Leading 0 suppression is automated in unxsBind, as well as\
+consecutive 0 hex segment compression. This keeps things readable and much\
+smaller, especially useful for improving DNSSEC encryption speed.\
+<p>\
+Compressed IPv6 example:\
+<pre>\
+2001:0db8:0234:0000:0000:0000:0000:0001\
+Can be compressed to:\
+2001:db8:234::1\
+</pre>\
+<p>\
+For now we do not permit trailing :0000 since that is usually a network address.\
+This policy as well as the similar IPv4 one is being reviewed.\
+</dd>\
+\
+<dt>\
+<strong>NAPTR</strong>\
+</dt>\
+<dd>\
+Is a special RR record mostly used for VOIP. More from wikipedia:\
+<p>\
+Universal Resource Names (URNs) are a subset of Universal Resource Identifiers\
+(URIs) used for abstract identitiers, such as a person's name or their telephone\
+number. For URNs to be meaningful, they must be mapped to a concrete resource of\
+some sort. Universal Resource Locators (URLs) are often used to describe such\
+resources, such as a computer hostname, or a local file.\
+<p>\
+As part of the standardization of URNs, NAPTR records were introduced to do just\
+this. NAPTR records map between sets of URNs, URLs and plain domain names and\
+suggest to clients what protocol should be used to talk to the mapped resource.\
+Each NAPTR record contains a service name, a set of flags, a regexp rule, an\
+order value, a preference and a replacement. Multiple records can be chained\
+together in a cascade to rewrite URIs in fairly sophisticated, but deterministic\
+ways. These cascading rules have been standardized in RFC2915 and RFC3403.\
+<p>\
+A common use for NAPTR records is in SIP, where it is used to route phone calls\
+over the Internet. For example, the SIP URN for the US telephone number\
+1-800-555-1234 would be tel:+1-800-555-1234 and its domain name\
+4.3.2.1.5.5.5.0.0.8.1.e164.arpa. A SIP client doing a lookup on that name might\
+receive:\
+<p>\
+<pre>\
+$ORIGIN 4.3.2.1.5.5.5.0.0.8.1.e164.arpa.\
+IN NAPTR 100 10 "U" "E2U+sip" "!^.*$!sip:service@x.com!i" .\
+IN NAPTR 102 10 "U" "E2U+email" "!^.*$!mailto:information@x.com!i" .\
+</pre>\
+<p>\
+The first record has an order value of 100, which is lower than 102, so it is\
+picked first. Its preference of 10 is unimportant as there are no other rules\
+with order 100. The service name E2U+sip is an ENUM string indicating that the\
+record can be used in phone number-to-SIP lookups. The client then goes on to\
+apply the regexp rule !^.*$!sip:service@x.com!, which replaces\
+its entire lookup URN tel:+1-800-555-1234 with sip:service@x.com.\
+The "U" flag indicates that the replacement string is a SIP URN, and that no\
+further rules should be applied.\
+<p>\
+To resolve SIP URN, the client then performs a second NAPTR lookup—on\
+x.com, yielding:\
+<p>\
+<pre>\
+$ORIGIN x.com.\
+NAPTR 100 10 "S" "SIP+D2U" "!^.*$!sip:service@x.com!" _sip._udp.x.com\
+NAPTR 102 10 "S" "SIP+D2T" "!^.*$!sip:service@x.com!" _sip._tcp.x.com\
+</pre>\
+As before, the client picks the first record because it has the lowest order\
+value. The regexp rule replaces the lookup URN, this time with the domain name\
+_sip._udp.x.com. The "S" flag indicates that resulting domain name points\
+to a SRV record. The client thus finishes with _sip._udp.x.com, for which\
+it can then fetch a SRV record to initiate a VOIP call.\
+</dd>\
+\
+</dl>\
+\
 \
 \
 \
@@ -780,7 +987,7 @@ field is an URI that adheres to the 'absoluteURI' production found in the ABNF\
 of RFC 2396. <br>\
 \
 
-297	Regex (optional SRV)	1	1	1268307314	1	1268654259	Regex:<br>\
+297	Regex ( optional SRV)	1	1	1268307314	1	1270760713	Regex:<br>\
 A STRING containing a substitution expression that is applied to the original\
 string held by the client in order to construct the next domain name to lookup.<br>\
 <br>\
