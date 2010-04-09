@@ -2005,6 +2005,12 @@ char *cGetViewLabel(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
+	if(!guZone)
+	{
+		sprintf(cView,"[Unknow view]");
+		return(cView);
+	}
+
 	sprintf(gcQuery,"SELECT uView FROM tZone WHERE uZone=%u",guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

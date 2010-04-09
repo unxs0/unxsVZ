@@ -864,6 +864,8 @@ unsigned uPerRRTypeCheck(void)
 {
 	unsigned a=0,b=0,c=0,d=0;	
 	char cZone[256]={""};
+	static char gcQuery[256]={""};//Override global buffer corruption debug
+
 
 	sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
 
@@ -2000,6 +2002,7 @@ void MasterFunctionSelect(void)
 				break;
 
 			case 2:
+
 				//remove extra chars
 				if(cParam1[0] && strcmp(cRRType,"TXT") && strcmp(cRRType,"HINFO"))
 				{
