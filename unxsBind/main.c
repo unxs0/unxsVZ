@@ -58,7 +58,7 @@ unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
 char *gcBuildInfo="$Id$";
-char *gcRADStatus="Forked";
+char *gcRADStatus="Forked from RAD2/3";
 
 //Local
 void Footer_ism3(void);
