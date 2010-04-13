@@ -8,6 +8,9 @@ AUTHOR
 NOTES
 	mysql_real_connect() handles the local PF_UNIX just fine, so we can ignore pre 
 	testing in those cases.
+
+	Once this code is tested it can replace all current unxsVZ ConnectDB() type functions.
+	It was not needed before for mysqlproxy w/lua failover based installs.
 */
 
 #include "mysqlrad.h"
@@ -23,7 +26,7 @@ int main()
 {
 
 	char *cPort="3306";//(*1)
-	int sock;
+	int iSock;
 	struct sockaddr_in sockaddr_inMySQLServer;
 
 	//Default port should really be gathered from a different source
@@ -57,7 +60,7 @@ int main()
 
 	//This goes first. Since if it doesn't work we can't really use
 	//anything that follows
-	if((sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
+	if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 	{
 		printf("Could not create socket\n");
 		exit(1);
@@ -72,9 +75,9 @@ int main()
 		sockaddr_inMySQLServer.sin_family=AF_INET;
 		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(DBIP0);
 		sockaddr_inMySQLServer.sin_port=htons(atoi(cPort));
-		if(connect(sock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer))>=0)
+		if(connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer))>=0)
 		{
-			close(sock);//Don't need anymore.
+			close(iSock);//Don't need anymore.
 			mysql_init(&gMysql);
 			if(mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
 			{
@@ -92,9 +95,9 @@ int main()
 		sockaddr_inMySQLServer.sin_family=AF_INET;
 		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(DBIP1);
 		sockaddr_inMySQLServer.sin_port=htons(atoi(cPort));
-		if(connect(sock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer))>=0)
+		if(connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer))>=0)
 		{
-			close(sock);//Don't need anymore.
+			close(iSock);//Don't need anymore.
 			mysql_init(&gMysql);
 			if(mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
 			{
