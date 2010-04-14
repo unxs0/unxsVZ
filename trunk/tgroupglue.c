@@ -285,9 +285,7 @@ void NewtGroupGlue(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uGroupGlue FROM tGroupGlue\
-				WHERE uGroupGlue=%u"
-							,uGroupGlue);
+	sprintf(gcQuery,"SELECT uGroupGlue FROM tGroupGlue WHERE uGroupGlue=%u",uGroupGlue);
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -300,15 +298,11 @@ void NewtGroupGlue(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uGroupGlue=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
-	uCreatedDate=luGetCreatedDate("tGroupGlue",uGroupGlue);
-	unxsVZLog(uGroupGlue,"tGroupGlue","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uGroupGlue);
-	tGroupGlue(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uGroupGlue);
+		tGroupGlue(gcQuery);
 	}
 
 }//NewtGroupGlue(unsigned uMode)
@@ -316,30 +310,13 @@ void NewtGroupGlue(unsigned uMode)
 
 void DeletetGroupGlue(void)
 {
-#ifdef ISM3FIELDS
-	sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroupGlue=%u AND ( uOwner=%u OR %u>9 )"
-					,uGroupGlue,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroupGlue=%u"
-					,uGroupGlue);
-#endif
+	sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroupGlue=%u",uGroupGlue);
 	MYSQL_RUN;
 	//tGroupGlue("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
-	{
-#ifdef ISM3FIELDS
-		unxsVZLog(uGroupGlue,"tGroupGlue","Del");
-#endif
 		tGroupGlue(LANG_NBR_RECDELETED);
-	}
 	else
-	{
-#ifdef ISM3FIELDS
-		unxsVZLog(uGroupGlue,"tGroupGlue","DelError");
-#endif
 		tGroupGlue(LANG_NBR_RECNOTDELETED);
-	}
-
 }//void DeletetGroupGlue(void)
 
 
@@ -380,27 +357,7 @@ void ModtGroupGlue(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
-	unsigned uPreModDate=0;
-
-	//Mod select gcQuery
-	if(guPermLevel<10)
-	sprintf(gcQuery,"SELECT tGroupGlue.uGroupGlue,\
-				tGroupGlue.uModDate\
-				FROM tGroupGlue,tClient\
-				WHERE tGroupGlue.uGroupGlue=%u\
-				AND tGroupGlue.uOwner=tClient.uClient\
-				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
-			,uGroupGlue,guLoginClient,guLoginClient);
-	else
-	sprintf(gcQuery,"SELECT uGroupGlue,uModDate FROM tGroupGlue\
-				WHERE uGroupGlue=%u"
-						,uGroupGlue);
-#else
-	sprintf(gcQuery,"SELECT uGroupGlue FROM tGroupGlue\
-				WHERE uGroupGlue=%u"
-						,uGroupGlue);
-#endif
+	sprintf(gcQuery,"SELECT uGroupGlue FROM tGroupGlue WHERE uGroupGlue=%u",uGroupGlue);
 
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
@@ -411,19 +368,10 @@ void ModtGroupGlue(void)
 	if(i>1) tGroupGlue(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
-	sscanf(field[1],"%u",&uPreModDate);
-	if(uPreModDate!=uModDate) tGroupGlue(LANG_NBR_EXTMOD);
-#endif
-
 	Update_tGroupGlue(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
-	uModDate=luGetModDate("tGroupGlue",uGroupGlue);
-	unxsVZLog(uGroupGlue,"tGroupGlue","Mod");
-#endif
 	tGroupGlue(gcQuery);
 
 }//ModtGroupGlue(void)
