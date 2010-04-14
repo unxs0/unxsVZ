@@ -21,9 +21,17 @@ for example
 Notes
 -----
 
+You need to run the provided script from .
+
 We will use /usr/src/redhat/SOURCES so be careful. Make sure you cleanup correctly
 so as not to add items to your RPM that you did not intend.
 
 We will try to provide correct and as simple as possible .spec files for all unxsVZ
 component software.
 
+After
+-----
+
+You will need to scp files to the yum/rpm repository server.
+On that server you will need to run a special script that does all the yum stuff
+and also installs the rpm files in the correct place.
