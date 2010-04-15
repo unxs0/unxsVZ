@@ -18,16 +18,27 @@ NOTES
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <sys/types.h>
+#include <sys/select.h>
+#include <errno.h>
+
 
 MYSQL gMysql;
 
+//This is an important setting that depends on your network setup
+#define SELECT_TIMEOUT_USEC 100
 
 int main()
 {
-
 	char *cPort="3306";//(*1)
-	int iSock;
+	int iSock,iConRes;
+	long lFcntlArg;
 	struct sockaddr_in sockaddr_inMySQLServer;
+	fd_set myset; 
+	struct timeval tv; 
+	int valopt;
+	socklen_t lon; 
+
 
 	//Default port should really be gathered from a different source
 	//but for now we use the known MySQL server CentOS default port (*1).
@@ -58,54 +69,128 @@ int main()
 
 	//Now we can use AF_INET/IPPROTO_TCP cases (TCP connections via IP number)
 
-	//This goes first. Since if it doesn't work we can't really use
-	//anything that follows
-	if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
-	{
-		printf("Could not create socket\n");
-		exit(1);
-	}
-
 
 	if(DBIP0!=NULL)
 	{
+		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
+		{
+			printf("Could not create socket\n");
+			exit(1);
+		}
+		// Set non-blocking 
+		lFcntlArg=fcntl(iSock,F_GETFL,NULL); 
+		lFcntlArg|=O_NONBLOCK; 
+		fcntl(iSock,F_SETFL,lFcntlArg); 
+
 		//DBIP0 has priority if we can create a connection we
 		//move forward immediately.
 		memset(&sockaddr_inMySQLServer,0,sizeof(sockaddr_inMySQLServer));
 		sockaddr_inMySQLServer.sin_family=AF_INET;
 		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(DBIP0);
 		sockaddr_inMySQLServer.sin_port=htons(atoi(cPort));
-		if(connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer))>=0)
+		iConRes=connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer));
+		if(iConRes<0)
 		{
-			close(iSock);//Don't need anymore.
-			mysql_init(&gMysql);
-			if(mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
+			if(errno==EINPROGRESS)
 			{
-				printf("Connected to %s:%s\n",(char *)DBIP0,cPort);
-				mysql_close(&gMysql);
-				exit(0);
+				tv.tv_sec=0; 
+				tv.tv_usec=SELECT_TIMEOUT_USEC; 
+				FD_ZERO(&myset); 
+				FD_SET(iSock,&myset); 
+				if(select(iSock+1,NULL,&myset,NULL,&tv)>0)
+				{ 
+					lon=sizeof(int); 
+					getsockopt(iSock,SOL_SOCKET,SO_ERROR,(void*)(&valopt),&lon); 
+					if(valopt)
+					{ 
+						fprintf(stderr, "Error in connection() %d - %s\n",valopt,strerror(valopt)); 
+					} 
+					else
+					{
+						//Valid fast connection
+						close(iSock);//Don't need anymore.
+						mysql_init(&gMysql);
+						if(mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,
+											DBNAME,DBPORT,DBSOCKET,0))
+						{
+							printf("Connected to %s:%s\n",(char *)DBIP0,cPort);
+							mysql_close(&gMysql);
+							exit(0);
+						}
+					}
+				} 
+				else
+				{
+					printf("DBIP0 else if select()\n");
+				}
+			} 
+			else
+			{
+				printf("DBIP0 else if errno==EINPROGRESS\n");
 			}
 		}
+		close(iSock);//Don't need anymore.
 	}
 
 	if(DBIP1!=NULL)
 	{
+		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
+		{
+			printf("Could not create socket\n");
+			exit(1);
+		}
+		// Set non-blocking 
+		lFcntlArg=fcntl(iSock,F_GETFL,NULL); 
+		lFcntlArg|=O_NONBLOCK; 
+		fcntl(iSock,F_SETFL,lFcntlArg); 
+
 		//Fallback to DBIP1
 		memset(&sockaddr_inMySQLServer,0,sizeof(sockaddr_inMySQLServer));
 		sockaddr_inMySQLServer.sin_family=AF_INET;
 		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(DBIP1);
 		sockaddr_inMySQLServer.sin_port=htons(atoi(cPort));
-		if(connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer))>=0)
+		iConRes=connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer));
+		if(iConRes<0)
 		{
-			close(iSock);//Don't need anymore.
-			mysql_init(&gMysql);
-			if(mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
+			if(errno==EINPROGRESS)
 			{
-				printf("Connected to %s:%s\n",(char *)DBIP1,cPort);
-				mysql_close(&gMysql);
-				exit(0);
+				tv.tv_sec=0; 
+				tv.tv_usec=SELECT_TIMEOUT_USEC; 
+				FD_ZERO(&myset); 
+				FD_SET(iSock,&myset); 
+				if(select(iSock+1,NULL,&myset,NULL,&tv)>0)
+				{ 
+					lon=sizeof(int); 
+					getsockopt(iSock,SOL_SOCKET,SO_ERROR,(void*)(&valopt),&lon); 
+					if(valopt)
+					{ 
+						printf("Error in connection() %d - %s\n",valopt,strerror(valopt)); 
+					} 
+					else
+					{
+						//Valid fast connection
+						close(iSock);//Don't need anymore.
+						mysql_init(&gMysql);
+						if(mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,
+											DBNAME,DBPORT,DBSOCKET,0))
+						{
+							printf("Connected to %s:%s\n",(char *)DBIP1,cPort);
+							mysql_close(&gMysql);
+							exit(0);
+						}
+					}
+				} 
+				else
+				{
+					printf("DBIP1 else if select()\n");
+				}
+			} 
+			else
+			{
+				printf("DBIP1 else if errno==EINPROGRESS\n");
 			}
 		}
+		close(iSock);//Don't need anymore.
 	}
 
 	//Failure exit 4 cases
