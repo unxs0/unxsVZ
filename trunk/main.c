@@ -945,18 +945,6 @@ void Footer_ism3(void)
 }//Footer_ism3(void)
 
 
-void ConnectDb(void)
-{
-        mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-        {
-        	if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-                	unxsVZ("Database server unavailable. Did you run unxsVZ.cgi Initialize &lt;mysqlpwd&gt;?");
-        }
-
-}//end of ConnectDb()
-
-
 void NoSuchFunction(void)
 {
 	 
