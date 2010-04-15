@@ -11,6 +11,8 @@ NOTES
 
 	Once this code is tested it can replace all current unxsVZ ConnectDB() type functions.
 	It was not needed before for mysqlproxy w/lua failover based installs.
+
+	Note that local scoket via NULL DBIP1 overrides remote DBIP0 IP.
 */
 
 #include "mysqlrad.h"
@@ -30,21 +32,6 @@ MYSQL gMysql;
 
 int main()
 {
-	char *cPort="3306";//(*1)
-	int iSock,iConRes;
-	long lFcntlArg;
-	struct sockaddr_in sockaddr_inMySQLServer;
-	fd_set myset; 
-	struct timeval tv; 
-	int valopt;
-	socklen_t lon; 
-
-
-	//Default port should really be gathered from a different source
-	//but for now we use the known MySQL server CentOS default port (*1).
-	if(DBPORT!=0)
-		sprintf(cPort,"%u",DBPORT);
-
 	//Handle quick cases first
 	//Port is irrelevant here. Make it clear.
 	mysql_init(&gMysql);
@@ -68,6 +55,19 @@ int main()
 	}
 
 	//Now we can use AF_INET/IPPROTO_TCP cases (TCP connections via IP number)
+	char *cPort="3306";//(*1)
+	int iSock,iConRes;
+	long lFcntlArg;
+	struct sockaddr_in sockaddr_inMySQLServer;
+	fd_set myset; 
+	struct timeval tv; 
+	int valopt;
+	socklen_t lon; 
+
+	//Default port should really be gathered from a different source
+	//but for now we use the known MySQL server CentOS default port (*1).
+	if(DBPORT!=0)
+		sprintf(cPort,"%u",DBPORT);
 
 
 	if(DBIP0!=NULL)
