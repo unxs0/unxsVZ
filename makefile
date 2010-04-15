@@ -18,12 +18,15 @@ all: unxsVZ.cgi
 unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o \
 	tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
 	ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o \
-	tjob.o tjobstatus.o tstatus.o tconfiguration.o  jobqueue.o glossary.o main.o cgi.o
+	tjob.o tjobstatus.o tstatus.o tconfiguration.o  jobqueue.o glossary.o main.o cgi.o mysqlconnect.o
 	cc tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o \
 		tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
 		tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o \
 		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o \
-		jobqueue.o glossary.o main.o cgi.o -o unxsVZ.cgi $(LIBS) 
+		jobqueue.o glossary.o main.o cgi.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) 
+
+mysqlconnect.o: mysqlconnect.c mysqlrad.h local.h
+	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)
 
 tdatacenter.o: tdatacenter.c mysqlrad.h language.h tdatacenterfunc.h local.h
 	cc -c tdatacenter.c -o tdatacenter.o $(CFLAGS)

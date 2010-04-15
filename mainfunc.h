@@ -894,6 +894,7 @@ void Initialize(char *cPasswd)
 }//void Initialize(void)
 
 
+//No need to redundancy here like TextConnectDb()
 void mySQLRootConnect(char *cPasswd)
 {
         mysql_init(&gMysql);
@@ -1385,21 +1386,6 @@ void CalledByAlias(int iArgc,char *cArgv[])
 	}
 
 }//void CalledByAlias(int iArgc,char *cArgv[])
-
-
-void TextConnectDb(void)
-{
-        mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-        {
-        	if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-		{
-			fprintf(stderr,"Database server unavailable.\n");
-			exit(1);
-		}
-        }
-
-}//end of TextConnectDb()
 
 
 void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
