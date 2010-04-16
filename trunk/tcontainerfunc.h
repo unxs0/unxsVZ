@@ -2316,13 +2316,13 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
 					" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
 					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
 					" AND tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.cLabel LIKE '%2$s%%'"
 					" AND tContainer.uContainer=tGroupGlue.uContainer"
 					" AND tGroupGlue.uGroup=%3$u"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
 					" ORDER BY tContainer.cLabel" LIMIT,guCompany,cSearch,uGroup);
 		}
 		else if(!cSearch[0] && uGroup)
@@ -2338,13 +2338,14 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
 					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-					" FROM tContainer," TCLIENT ",tNode,tStatus"
+					" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
 					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
 					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.uContainer=tGroupGlue.uContainer"
 					" AND tGroupGlue.uGroup=%2$u"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
 					" ORDER BY tContainer.cLabel" LIMIT,guCompany,uGroup);
 		}
 		else if(1)
