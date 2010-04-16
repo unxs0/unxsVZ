@@ -601,6 +601,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				uStatus=uINITSETUP;//Initial setup
 				uContainer=0;
 				uCreatedBy=guLoginClient;
+				if(uClient) guCompany=uClient;
 				uOwner=guCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
@@ -617,7 +618,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					sprintf(cOrgLabel,"%.31s",cLabel);
 					sprintf(cOrgHostname,"%.64s",cHostname);
 
-					if(guCompany==1)
+					if(guLoginClient==1)
 						sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1",
 							uIPv4);
 					else
@@ -665,9 +666,9 @@ void ExttContainerCommands(pentry entries[], int x)
 						NewtContainer(1);
 
 						//tIP
-						if(guCompany==1)
-							sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-							" WHERE uIP=%u AND uAvailable=1",uIPv4);
+						if(guLoginClient==1)
+							sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,"
+							"uOwner=%u WHERE uIP=%u AND uAvailable=1",guCompany,uIPv4);
 						else
 							sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 							" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",uIPv4,guCompany);
@@ -736,7 +737,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						}
 
 						//Get next available IP, set uIPv4
-						if(guCompany==1)
+						if(guLoginClient==1)
 							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
 							" AND cLabel LIKE '%s%%' LIMIT 1",cIPv4ClassC);
 						else
@@ -1918,7 +1919,9 @@ void ExttContainerButtons(void)
                 case 2000:
 			printf("<p><u>New container step 1/3</u><br>");
 			
-			printf("Complete required container fields in the record data panel to your right.<p>uVeth='Yes'"
+			printf("Complete required container fields in the record data panel to your right."
+				" You can also select other options (like create for another company you control) below."
+				"<p>uVeth='Yes'"
 				" containers should only be used when layer 2 connectivity is absolutely required"
 				" (The uNode selected must support VETH containers -See tNode Property.)"
 				" uVeth='Yes' container tOSTemplate should be reviewed to make sure it's"
@@ -1933,18 +1936,18 @@ void ExttContainerButtons(void)
 				" cHostname=ctN.yourdomain.tld, where N is the number of containers specfied minus 1.");
 			printf("<p>\n");
 			if(cService2[0]==0) sprintf(cService2,"1");
+			printf("<p><u>Select the number of containers to create</u><br>");
 			printf("<input title='Number of containers to be created. See \"Advanced operations\" above'"
-				" type=text name=cService2 value='%s' > Number of containers<br>",cService2);
+				" type=text name=cService2 value='%s'><br>",cService2);
+			printf("<p><u>Optionally select a password</u><br>");
+			printf("<input title='Optional container password set on deployment and saved in"
+				" container property table' type=text name=cService1 value='%s'><br>",cService1);
+			printf("<p><u>Optionally select a group to assign the new container(s) to</u><br>");
+			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			tTablePullDownResellers(uClient);
 			if(uVeth)
 				printf("<p>Make sure you understand the implications of using uVeth='Yes' containers"
 				" before proceeding. Alternatively change uVeth to 'No' now.");
-			printf("<p>\n");
-			printf("<input title='Optional container password set on deployment and saved in"
-				" container property table' type=text name=cService1 value='%s' > Optional Password<br>",
-						cService1);
-			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
-			printf(" Optional Group<br>");
-			tTablePullDownResellers(uClient);
 			printf("<p><input title='Enter/Mod tContainer record data, then continue"
 					" to step 2 of new container creation'"
 					" type=submit class=largeButton"
