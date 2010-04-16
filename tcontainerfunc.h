@@ -110,6 +110,7 @@ void htmlCloneInfo(unsigned uContainer);
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 void DelProperties(unsigned uNode,unsigned uType);//tnodefunc.h
+void tTablePullDownResellers(unsigned uSelector);//tclientfunc.h
 
 
 
@@ -1943,8 +1944,7 @@ void ExttContainerButtons(void)
 						cService1);
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 			printf(" Optional Group<br>");
-			tTablePullDown("tClient;cuClientPullDown","cLabel","cLabel",uClient,1);
-			printf(" Optional Group<br>");
+			tTablePullDownResellers(uClient);
 			printf("<p><input title='Enter/Mod tContainer record data, then continue"
 					" to step 2 of new container creation'"
 					" type=submit class=largeButton"
