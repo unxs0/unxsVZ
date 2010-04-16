@@ -551,13 +551,10 @@ void Initialize(char *cPasswd)
 void mySQLRootConnect(char *cPasswd)
 {
         mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP0,"root",cPasswd,"mysql",0,NULL,0))
+        if (!mysql_real_connect(&gMysql,NULL,"root",cPasswd,"mysql",0,NULL,0))
         {
-        	if (!mysql_real_connect(&gMysql,DBIP1,"root",cPasswd,"mysql",0,NULL,0))
-        	{
-			printf("Database server unavailable\n");
-			exit(1);
-		}
+		printf("Database server unavailable\n");
+		exit(1);
         }
 
 }//void mySQLRootConnect(void)
@@ -771,27 +768,6 @@ void CalledByAlias(int iArgc,char *cArgv[])
 	}
 
 }//void CalledByAlias(int iArgc,char *cArgv[])
-
-
-unsigned TextConnectDb(void)
-{
-        mysql_init(&gMysql);
-	if(!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-	{
-		if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-			return(0);
-	}
-	
-	//Get BIND binaries location; for rndc calls
-	GetConfiguration("cBinDir",gcBinDir,0);
-	return(1);
-			
-
-}//end of TextConnectDb()
-
-
-
-
 
 
 void PrintUsage(char *arg0)

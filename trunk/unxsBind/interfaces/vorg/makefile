@@ -16,10 +16,10 @@ CGINAME= vdnsOrg.cgi
 CFLAGS=-Wall
 LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
 
-interface.cgi: main.o zone.o resource.o glossary.o bulkop.o ldap.o ../../cgi.o 
-	cc main.o zone.o resource.o glossary.o bulkop.o ldap.o ../../cgi.o -o interface.cgi $(LIBS)
+interface.cgi: main.o zone.o resource.o glossary.o bulkop.o ldap.o ../../cgi.o mysqlconnect.o
+	cc main.o zone.o resource.o glossary.o bulkop.o ldap.o ../../cgi.o mysqlconnect.o -o interface.cgi $(LIBS)
 
-main.o: main.c interface.h ../../local.h ../../mysqlrad.h
+main.o: main.c interface.h ../../local.h ../../mysqlrad.h ../../mysqlconnect.o
 	cc -c main.c -o main.o $(CFLAGS) 
 
 zone.o: zone.c interface.h ../../local.h ../../mysqlrad.h
@@ -36,6 +36,12 @@ bulkop.o : bulkop.c interface.h ../../local.h ../../mysqlrad.h
 
 ldap.o : ldap.c  interface.h ../../local.h ../../mysqlrad.h
 	cc -o ldap.o -c ldap.c $(CFLAGS)
+
+mysqlconnect.o : mysqlconnect.c  ../../local.h interface.h
+	cc -o mysqlconnect.o -c mysqlconnect.c $(CFLAGS)
+
+cgi.o : ../../cgi.c  ../../cgi.h
+	cc -o ../../cgi.o -c ../../cgi.c $(CFLAGS)
 
 clean:
 	rm -f *.o *.cgi

@@ -14,8 +14,8 @@ CGINAME= idnsOrg.cgi
 CFLAGS=-Wall
 LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl
 
-interface.cgi: main.o zone.o resource.o glossary.o bulkop.o ../../cgi.o 
-	cc main.o zone.o resource.o glossary.o bulkop.o ../../cgi.o -o interface.cgi $(LIBS)
+interface.cgi: main.o zone.o resource.o glossary.o bulkop.o mysqlconnect.o ../../cgi.o 
+	cc main.o zone.o resource.o glossary.o bulkop.o mysqlconnect.o ../../cgi.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
@@ -31,6 +31,9 @@ glossary.o : glossary.c interface.h ../../local.h ../../mysqlrad.h
 
 bulkop.o : bulkop.c interface.h ../../local.h ../../mysqlrad.h
 	cc -o bulkop.o -c bulkop.c $(CFLAGS)
+
+mysqlconnect.o : mysqlconnect.c  ../../local.h interface.h
+	cc -o mysqlconnect.o -c mysqlconnect.c $(CFLAGS)
 
 clean:
 	rm -f *.o *.cgi
