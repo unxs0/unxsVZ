@@ -68,6 +68,9 @@ static unsigned uGroupJobs=0;
 //uGroup: Group type association
 static unsigned uGroup=0;
 static char cuGroupPullDown[256]={""};
+//uClient: Create for, on 'New;
+static unsigned uClient=0;
+static char cuClientPullDown[256]={""};
 
 //ModuleFunctionProtos()
 void tContainerNavList(unsigned uNode, char *cSearch);
@@ -393,6 +396,11 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cuGroupPullDown,"%.255s",entries[i].val);
 			uGroup=ReadPullDown("tGroup","cLabel",cuGroupPullDown);
+		}
+		else if(!strcmp(entries[i].name,"cuClientPullDown"))
+		{
+			sprintf(cuClientPullDown,"%.255s",entries[i].val);
+			uClient=ReadPullDown("tClient","cLabel",cuClientPullDown);
 		}
 	}
 
@@ -1935,6 +1943,8 @@ void ExttContainerButtons(void)
 						cService1);
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 			printf(" Optional Group<br>");
+			tTablePullDown("tClient;cuClientPullDown","cLabel","cLabel",uClient,1);
+			printf(" Optional Group<br>");
 			printf("<p><input title='Enter/Mod tContainer record data, then continue"
 					" to step 2 of new container creation'"
 					" type=submit class=largeButton"
@@ -2319,7 +2329,6 @@ void tContainerNavList(unsigned uNode, char *cSearch)
         MYSQL_ROW field;
 	unsigned uNumRows=0;
 	unsigned uMySQLNumRows=0;
-#define LIMIT " LIMIT 33"
 #define uLIMIT 32
 
 	if(!uNode)
@@ -2332,7 +2341,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" WHERE tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.cLabel LIKE '%s%%'"
-					" ORDER BY tContainer.cLabel" LIMIT,cSearch);
+					" ORDER BY tContainer.cLabel",cSearch);
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
 					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
@@ -2343,7 +2352,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" AND tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.cLabel LIKE '%2$s%%'"
-					" ORDER BY tContainer.cLabel" LIMIT,guCompany,cSearch);
+					" ORDER BY tContainer.cLabel",guCompany,cSearch);
 		}
 		else if(cSearch[0] && uGroup)
 		{
@@ -2355,7 +2364,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" AND tContainer.cLabel LIKE '%s%%'"
 					" AND tContainer.uContainer=tGroupGlue.uContainer"
 					" AND tGroupGlue.uGroup=%u"
-					" ORDER BY tContainer.cLabel" LIMIT,cSearch,uGroup);
+					" ORDER BY tContainer.cLabel",cSearch,uGroup);
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
 					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
@@ -2368,7 +2377,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" AND tGroupGlue.uGroup=%3$u"
 					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
 					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-					" ORDER BY tContainer.cLabel" LIMIT,guCompany,cSearch,uGroup);
+					" ORDER BY tContainer.cLabel",guCompany,cSearch,uGroup);
 		}
 		else if(!cSearch[0] && uGroup)
 		{
@@ -2379,7 +2388,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.uContainer=tGroupGlue.uContainer"
 					" AND tGroupGlue.uGroup=%u"
-					" ORDER BY tContainer.cLabel" LIMIT,uGroup);
+					" ORDER BY tContainer.cLabel",uGroup);
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
 					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
@@ -2391,7 +2400,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" AND tGroupGlue.uGroup=%2$u"
 					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
 					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-					" ORDER BY tContainer.cLabel" LIMIT,guCompany,uGroup);
+					" ORDER BY tContainer.cLabel",guCompany,uGroup);
 		}
 		else if(1)
 		{
@@ -2400,7 +2409,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
 					" WHERE tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus"
-					" ORDER BY tContainer.cLabel" LIMIT);
+					" ORDER BY tContainer.cLabel");
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
 					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
@@ -2410,7 +2419,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
 					" AND tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus"
-					" ORDER BY tContainer.cLabel" LIMIT,guCompany);
+					" ORDER BY tContainer.cLabel",guCompany);
 		}
 	}
 	else
@@ -2428,7 +2437,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" WHERE tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.cLabel LIKE '%s%%'"
-					" AND tContainer.uNode=%u ORDER BY tContainer.cLabel" LIMIT,cSearch,uNode);
+					" AND tContainer.uNode=%u ORDER BY tContainer.cLabel",cSearch,uNode);
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
 					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
@@ -2440,7 +2449,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" AND tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.cLabel LIKE '%3$s%%'"
-					" ORDER BY tContainer.cLabel" LIMIT,uNode,guCompany,cSearch);
+					" ORDER BY tContainer.cLabel",uNode,guCompany,cSearch);
 		}
 		else
 		{
@@ -2450,7 +2459,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" FROM tContainer,tNode,tStatus"
 					" WHERE tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uNode=%u ORDER BY tContainer.cLabel" LIMIT,uNode);
+						" AND tContainer.uNode=%u ORDER BY tContainer.cLabel",uNode);
 			else
 				sprintf(gcQuery,"SELECT tContainer.uContainer"
 					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
@@ -2461,7 +2470,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
 					" AND tContainer.uNode=tNode.uNode"
 					" AND tContainer.uStatus=tStatus.uStatus"
-					" ORDER BY tContainer.cLabel" LIMIT,uNode,guCompany);
+					" ORDER BY tContainer.cLabel",uNode,guCompany);
 		}
 	}
 
@@ -2507,9 +2516,9 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					"&uContainer=%s>%s/%s/%s</a><br>\n",
 						field[0],field[1],field[2],field[3]);
 			}
-			if(++uNumRows>uLIMIT)
+			if(++uNumRows>=uLIMIT)
 			{
-				printf("Only %u containers shown use 'Container Search' to narrow.<br>\n",
+				printf("(Only %u containers shown use search/filters to shorten list.)<br>\n",
 						uLIMIT);
 				break;
 			}
