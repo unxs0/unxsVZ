@@ -240,6 +240,24 @@ void ExttGroupGlueListSelect(void)
 		sprintf(cCat," WHERE tGroupGlue.uGroupGlue=%u ORDER BY uGroupGlue",uGroupGlue);
 		strcat(gcQuery,cCat);
         }
+        else if(!strcmp(gcFilter,"uGroup"))
+        {
+                sscanf(gcCommand,"%u",&uGroup);
+		sprintf(cCat," WHERE tGroupGlue.uGroup=%u ORDER BY uGroup",uGroup);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uNode"))
+        {
+                sscanf(gcCommand,"%u",&uNode);
+		sprintf(cCat," WHERE tGroupGlue.uNode=%u ORDER BY uNode",uNode);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uContainer"))
+        {
+                sscanf(gcCommand,"%u",&uContainer);
+		sprintf(cCat," WHERE tGroupGlue.uContainer=%u ORDER BY uContainer",uContainer);
+		strcat(gcQuery,cCat);
+        }
         else if(1)
         {
                 //None NO FILTER
@@ -259,6 +277,18 @@ void ExttGroupGlueListFilter(void)
                 printf("<option>uGroupGlue</option>");
         else
                 printf("<option selected>uGroupGlue</option>");
+        if(strcmp(gcFilter,"uGroup"))
+                printf("<option>uGroup</option>");
+        else
+                printf("<option selected>uGroup</option>");
+        if(strcmp(gcFilter,"uNode"))
+                printf("<option>uNode</option>");
+        else
+                printf("<option selected>uNode</option>");
+        if(strcmp(gcFilter,"uContainer"))
+                printf("<option>uContainer</option>");
+        else
+                printf("<option selected>uContainer</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
