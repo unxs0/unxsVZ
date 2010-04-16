@@ -18,14 +18,17 @@ LIBS= -L/usr/lib/mysql -L/usr/lib/openisp -lz -lcrypt -lm -lssl -lucidr -lmysqlc
 
 all: iDNS.cgi
 
-iDNS.cgi: tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o import.o extjobqueue.o cgi.o
-	cc tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o import.o extjobqueue.o cgi.o -o iDNS.cgi $(LIBS)
+iDNS.cgi: tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o import.o extjobqueue.o cgi.o mysqlconnect.o
+	cc tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o import.o extjobqueue.o cgi.o mysqlconnect.o -o iDNS.cgi $(LIBS)
 
 mysqlping: mysqlping.o
 	cc mysqlping.c -o mysqlping $(LIBS)
 
 mysqlping.o: mysqlping.c local.h
 	cc -c mysqlping.c -o mysqlping.o $(CFLAGS)
+
+mysqlconnect.o: mysqlconnect.c mysqlrad.h local.h
+	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)
 
 tzone.o: tzone.c mysqlrad.h language.h tzonefunc.h local.h 
 	cc -c tzone.c -o tzone.o $(CFLAGS)

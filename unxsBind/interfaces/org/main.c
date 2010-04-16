@@ -325,25 +325,6 @@ void htmlFooter(char *cTemplateName)
 }//void htmlFooter()
 
 
-
-
-void ConnectDb(void)
-{
-        mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,0,NULL,0))
-        {
-		if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-		{
-			printf("Content-type: text/plain\n\n");
-        	        printf("Database server unavailable\n");
-			printf("%s\n",mysql_error(&gMysql));
-			exit(0);
-		}
-        }
-
-}//end of ConnectDb()
-
-
 //libtemplate.a required
 void AppFunctions(FILE *fp,char *cFunction)
 {

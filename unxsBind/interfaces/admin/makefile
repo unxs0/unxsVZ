@@ -15,9 +15,9 @@ CFLAGS=-Wall
 LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl
 
 interface.cgi: main.o adminuser.o customer.o customercontact.o glossary.o zone.o resource.o bulkop.o report.o \
-		restorezone.o restoreresource.o ipauth.o dashboard.o ../../cgi.o 
+		restorezone.o restoreresource.o ipauth.o dashboard.o mysqlconnect.o ../../cgi.o 
 	cc main.o adminuser.o customer.o customercontact.o glossary.o zone.o resource.o bulkop.o report.o \
-	restorezone.o restoreresource.o ipauth.o dashboard.o ../../cgi.o -o interface.cgi $(LIBS)
+	restorezone.o restoreresource.o ipauth.o dashboard.o mysqlconnect.o ../../cgi.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
@@ -57,6 +57,9 @@ ipauth.o : ipauth.c interface.h ../../local.h ../../mysqlrad.h
 
 dashboard.o : dashboard.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c dashboard.c -o dashboard.o $(CFLAGS)
+
+mysqlconnect.o : mysqlconnect.c  ../../local.h interface.h
+	cc -o mysqlconnect.o -c mysqlconnect.c $(CFLAGS)
 
 clean:
 	rm -f *.o *.cgi
