@@ -225,7 +225,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		else if(!strncmp(entries[i].name,"Ct",2))
 		{
 			//insider xss protection
-			if(guPermLevel<12)
+			if(guPermLevel<10)
 				continue;
 
 			sscanf(entries[i].name,"Ct%u",&uContainer);
@@ -239,7 +239,8 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 
 						InitContainerProps(&sContainer);
 						GetContainerProps(uContainer,&sContainer);
-						if(sContainer.uStatus==uACTIVE)
+						if( (sContainer.uStatus==uACTIVE)
+							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							if(StopContainerJob(sContainer.uDatacenter,
 									sContainer.uNode,uContainer))
@@ -255,7 +256,9 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 
 						InitContainerProps(&sContainer);
 						GetContainerProps(uContainer,&sContainer);
-						if(sContainer.uStatus==uSTOPPED)
+
+						if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uINITSETUP)
+							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							if(CreateStartContainerJob(sContainer.uDatacenter,
 									sContainer.uNode,uContainer))
@@ -272,7 +275,8 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 						InitContainerProps(&sContainer);
 						GetContainerProps(uContainer,&sContainer);
 						if( sContainer.uSource!=0 &&
-							 (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE))
+							 (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
+							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							if(FailoverToJob(sContainer.uDatacenter,sContainer.uNode,
 								uContainer))
@@ -2270,8 +2274,8 @@ void tContainerNavList(unsigned uNode, char *cSearch)
         MYSQL_ROW field;
 	unsigned uNumRows=0;
 	unsigned uMySQLNumRows=0;
-#define LIMIT " LIMIT 25"
-#define uLIMIT 24
+#define LIMIT " LIMIT 33"
+#define uLIMIT 32
 
 	if(!uNode)
 	{
@@ -2435,7 +2439,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-			if(guPermLevel>11 && uNode==0)
+			if(guPermLevel>9 && uNode==0)
 			{
 				if(cSearch[0])
 				printf("<input type=checkbox name=Ct%s><a class=darkLink href=unxsVZ.cgi?gcFunction="
@@ -2464,12 +2468,12 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 				break;
 			}
 		}
-		if(guPermLevel>11 && uNode==0)
+		if(guPermLevel>9 && uNode==0)
 		{
 			printf("<input title='Creates job(s) for stopping active container(s).'"
 			" type=submit class=lalertButton"
 			" name=gcCommand value='Group Stop'>\n");
-			printf("<br><input title='Creates job(s) for starting stopped container(s).'"
+			printf("<br><input title='Creates job(s) for starting stopped or initial setup container(s).'"
 			" type=submit class=largeButton"
 			" name=gcCommand value='Group Start'>\n");
 			printf("<br><input title='Creates job(s) for switching over cloned container(s).'"
