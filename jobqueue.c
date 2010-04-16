@@ -1956,6 +1956,13 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 				cSSHOptions,cTargetNodeIPv4,uContainer,uNewVeid);
 	if(system(gcQuery))
 	{
+		//We need to check the error number and if like this error (that maybe be related to cascading cloning
+		//operations):
+		//INFO: extracting configuration to '/etc/vz/conf/3281.conf'
+		//command 'sed -e 's/VE_ROOT=.*/VE_ROOT=\"\/vz\/root\/$VEID\"/' -e 's/VE_PRIVATE=.*/VE_PRIVATE=\"\/vz\/private\/$VEID\"/'  <'/vz/private/3281/etc/vzdump/vps.conf' >'/etc/vz/conf/3281.conf'' failed with exit code 1
+		//INFO: sh: /vz/private/3281/etc/vzdump/vps.conf: No such file or directory
+		//Apr 01 17:24:19 jobqueue.CloneContainer[16404]: ssh -p 12337 -c blowfish -C 10.0.10.2 '/usr/sbin/vzdump --compress --restore /vz/dump/vzdump-2704.tgz 3281'
+		//then we "resubmit" the job for 30 mins in the future. 30 mins tConfiguration configurable.
 		logfileLine("CloneContainer",gcQuery);
 		tJobErrorUpdate(uJob,"error 3");
 		goto CommonExit;
