@@ -250,6 +250,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							}
 						}
 					}
+					//Start or Create
 					else if(!strcmp(gcCommand,"Group Start"))
 					{
 						struct structContainer sContainer;
@@ -260,11 +261,23 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 						if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uINITSETUP)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
-							if(CreateStartContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uContainer))
+							if(sContainer.uStatus==uINITSETUP)
 							{
-								SetContainerStatus(uContainer,uAWAITACT);
-								uGroupJobs++;
+								if(CreateNewContainerJob(sContainer.uDatacenter,
+									sContainer.uNode,uContainer))
+								{
+									SetContainerStatus(uContainer,uAWAITACT);
+									uGroupJobs++;
+								}
+							}
+							else
+							{
+								if(CreateStartContainerJob(sContainer.uDatacenter,
+									sContainer.uNode,uContainer))
+								{
+									SetContainerStatus(uContainer,uAWAITACT);
+									uGroupJobs++;
+								}
 							}
 						}
 					}
@@ -595,7 +608,11 @@ void ExttContainerCommands(pentry entries[], int x)
 					sprintf(cOrgLabel,"%.31s",cLabel);
 					sprintf(cOrgHostname,"%.64s",cHostname);
 
-					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
+					if(guCompany==1)
+						sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1",
+							uIPv4);
+					else
+						sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
 							" AND uOwner=%u",uIPv4,guCompany);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
@@ -639,7 +656,11 @@ void ExttContainerCommands(pentry entries[], int x)
 						NewtContainer(1);
 
 						//tIP
-						sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+						if(guCompany==1)
+							sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+							" WHERE uIP=%u AND uAvailable=1",uIPv4);
+						else
+							sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 							" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",uIPv4,guCompany);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
@@ -696,8 +717,21 @@ void ExttContainerCommands(pentry entries[], int x)
 								htmlPlainTextError(mysql_error(&gMysql));
 						}
 
+						if(uGroup)
+						{
+							sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
+								uContainer,uGroup);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+						}
+
 						//Get next available IP, set uIPv4
-						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+						if(guCompany==1)
+							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
+							" AND cLabel LIKE '%s%%' LIMIT 1",cIPv4ClassC);
+						else
+							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
 							" AND cLabel LIKE '%s%%' LIMIT 1",uOwner,cIPv4ClassC);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
@@ -770,6 +804,15 @@ void ExttContainerCommands(pentry entries[], int x)
 							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 							",cName='cVEID.start',cValue='defaultVETH.start'",
 								uContainer,guCompany,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
+
+					if(uGroup)
+					{
+						sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
+								uContainer,uGroup);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -1890,6 +1933,8 @@ void ExttContainerButtons(void)
 			printf("<input title='Optional container password set on deployment and saved in"
 				" container property table' type=text name=cService1 value='%s' > Optional Password<br>",
 						cService1);
+			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			printf(" Optional Group<br>");
 			printf("<p><input title='Enter/Mod tContainer record data, then continue"
 					" to step 2 of new container creation'"
 					" type=submit class=largeButton"
