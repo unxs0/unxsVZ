@@ -68,9 +68,9 @@ static unsigned uGroupJobs=0;
 //uGroup: Group type association
 static unsigned uGroup=0;
 static char cuGroupPullDown[256]={""};
-//uClient: Create for, on 'New;
-static unsigned uClient=0;
-static char cuClientPullDown[256]={""};
+//uForClient: Create for, on 'New;
+static unsigned uForClient=0;
+static char cForClientPullDown[256]={""};
 
 //ModuleFunctionProtos()
 void tContainerNavList(unsigned uNode, char *cSearch);
@@ -398,10 +398,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 			sprintf(cuGroupPullDown,"%.255s",entries[i].val);
 			uGroup=ReadPullDown("tGroup","cLabel",cuGroupPullDown);
 		}
-		else if(!strcmp(entries[i].name,"cuClientPullDown"))
+		else if(!strcmp(entries[i].name,"cForClientPullDown"))
 		{
-			sprintf(cuClientPullDown,"%.255s",entries[i].val);
-			uClient=ReadPullDown("tClient","cLabel",cuClientPullDown);
+			sprintf(cForClientPullDown,"%.255s",entries[i].val);
+			uForClient=ReadPullDown("tClient","cLabel",cForClientPullDown);
 		}
 	}
 
@@ -588,7 +588,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							" datacenter!");
 					}
 					mysql_free_result(res);
-                        		guMode=200;
+                        		guMode=200;//Step 2
 				}
 
 				if(uIPv4==0)
@@ -601,7 +601,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				uStatus=uINITSETUP;//Initial setup
 				uContainer=0;
 				uCreatedBy=guLoginClient;
-				if(uClient) guCompany=uClient;
+				if(uForClient) guCompany=uForClient;
 				uOwner=guCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
@@ -618,21 +618,23 @@ void ExttContainerCommands(pentry entries[], int x)
 					sprintf(cOrgLabel,"%.31s",cLabel);
 					sprintf(cOrgHostname,"%.64s",cHostname);
 
-					if(guLoginClient==1)
-						sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1",
-							uIPv4);
-					else
-						sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
+					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
 							" AND uOwner=%u",uIPv4,guCompany);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
 					res=mysql_store_result(&gMysql);
 					if((field=mysql_fetch_row(res)))
+					{
 						sprintf(cIPv4ClassC,"%.31s",field[0]);
+					}
 					else
+					{
+                        			guMode=2000;
 						tContainer("<blink>Error</blink>: Someone grabbed your IP"
-							", multiple container creation aborted when getting cIPv4ClassC!");
+							", multiple container creation aborted -if Root select"
+							" a company with IPs!");
+					}
 					mysql_free_result(res);
 					for(i=strlen(cIPv4ClassC);i>0;i--)
 					{
@@ -666,11 +668,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						NewtContainer(1);
 
 						//tIP
-						if(guLoginClient==1)
-							sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,"
-							"uOwner=%u WHERE uIP=%u AND uAvailable=1",guCompany,uIPv4);
-						else
-							sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+						sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 							" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",uIPv4,guCompany);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
@@ -737,11 +735,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						}
 
 						//Get next available IP, set uIPv4
-						if(guLoginClient==1)
-							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
-							" AND cLabel LIKE '%s%%' LIMIT 1",cIPv4ClassC);
-						else
-							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
 							" AND cLabel LIKE '%s%%' LIMIT 1",uOwner,cIPv4ClassC);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
@@ -764,7 +758,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 					//tIP
 					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-						" WHERE uIP=%u AND uAvailable=1",uIPv4);
+						" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",uIPv4,guCompany);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -774,8 +768,9 @@ void ExttContainerCommands(pentry entries[], int x)
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
+                        			guMode=2000;
 						tContainer("<blink>Error</blink>: Someone grabbed your IP"
-								", No container created!");
+								", No container created -if Root select a company with IPs!");
 					}
 
 					//Name property
@@ -1917,7 +1912,7 @@ void ExttContainerButtons(void)
                 break;
 
                 case 2000:
-			printf("<p><u>New container step 1/3</u><br>");
+			printf("<p><u>New container step 1/3*</u><br>");
 			
 			printf("Complete required container fields in the record data panel to your right."
 				" You can also select other options (like create for another company you control) below."
@@ -1930,7 +1925,7 @@ void ExttContainerButtons(void)
 			printf("<br>Creating multiple containers: Specify the number, specify a special cLabel"
 				" and cHostname that will be used to generate the multiple containers (see example below),"
 				" specify a start uIPv4 -the system will use the given uIPv4's class C to try to allocate"
-				" IPs from tIP. Only 2 steps, you can't currently specify mount/umount files."
+				" IPs from tIP. *Only 2 steps, you can't currently specify mount/umount files."
 				" <p>cLabel, cHostname example: For cLabel=ct and cHostname=.yourdomain.tld, your containers"
 				" will be cLabel=ct0 and cHostname=ct0.yourdomain.tld through cLabel=ctN and"
 				" cHostname=ctN.yourdomain.tld, where N is the number of containers specfied minus 1.");
@@ -1944,7 +1939,7 @@ void ExttContainerButtons(void)
 				" container property table' type=text name=cService1 value='%s'><br>",cService1);
 			printf("<p><u>Optionally select a group to assign the new container(s) to</u><br>");
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
-			tTablePullDownResellers(uClient);
+			tTablePullDownResellers(uForClient);
 			if(uVeth)
 				printf("<p>Make sure you understand the implications of using uVeth='Yes' containers"
 				" before proceeding. Alternatively change uVeth to 'No' now.");

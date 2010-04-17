@@ -14,9 +14,16 @@ AUTHOR
 void tIPReport(void);
 void tIPNavList(unsigned uAvailable);
 
+//uForClient: Create for, on 'New;
+static unsigned uForClient=0;
+static char cForClientPullDown[256]={""};
 static char cIPRange[32]={""};
+
 void AddIPRange(char *cIPRange);
 void DelIPRange(char *cIPRange);
+
+void tTablePullDownResellers(unsigned uSelector);//tclientfunc.h
+
 
 void ExtProcesstIPVars(pentry entries[], int x)
 {
@@ -25,6 +32,11 @@ void ExtProcesstIPVars(pentry entries[], int x)
 	{
 		if(!strcmp(entries[i].name,"cIPRange"))
 			sprintf(cIPRange,"%.31s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cForClientPullDown"))
+		{
+			sprintf(cForClientPullDown,"%.255s",entries[i].val);
+			uForClient=ReadPullDown("tClient","cLabel",cForClientPullDown);
+		}
 	}
 }//void ExtProcesstIPVars(pentry entries[], int x)
 
@@ -57,6 +69,7 @@ void ExttIPCommands(pentry entries[], int x)
 
 				uIP=0;
 				uCreatedBy=guLoginClient;
+				if(uForClient) guCompany=uForClient;
 				uOwner=guCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
@@ -91,6 +104,7 @@ void ExttIPCommands(pentry entries[], int x)
 				guMode=5;
 				if(cIPRange[0])
 				{
+					if(uForClient) guCompany=uForClient;
 					DelIPRange(cIPRange);
 				}
 				else
@@ -150,9 +164,21 @@ void ExttIPCommands(pentry entries[], int x)
 				}
                         	guMode=0;
 
+				if(uForClient)
+				{
+					guCompany=uForClient;
+					if(!cIPRange[0])
+					{
+						uOwner=guCompany;
+						sprintf(gcQuery,"UPDATE tIP SET uOwner=%u WHERE uAvailable=1 AND uIP=%u",
+								guCompany,uIP);
+        					mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
+				}
 				if(cIPRange[0])
 					AddIPRange(cIPRange);
-
 				uModBy=guLoginClient;
 				ModtIP();
 			}
@@ -169,6 +195,7 @@ void ExttIPButtons(void)
         {
                 case 2000:
 			printf("<p><u>Enter/mod data</u><br>");
+			tTablePullDownResellers(uForClient);
                         printf(LANG_NBB_CONFIRMNEW);
                 break;
 
@@ -176,6 +203,7 @@ void ExttIPButtons(void)
                         printf("<p><u>Think twice</u><br>");
 			printf("<input title='Optionally enter CIDR IP Range (ex. 10.0.0.1/27) for available mass deletion'"
 				" type=text name=cIPRange> cIPRange<p>\n");
+			tTablePullDownResellers(uForClient);
                         printf(LANG_NBB_CONFIRMDEL);
                 break;
 
@@ -183,6 +211,7 @@ void ExttIPButtons(void)
 			printf("<p><u>Review changes</u><br>");
 			printf("<input title='Optionally enter CIDR IP Range (ex. 10.0.0.1/27) for available mass addition'"
 				" type=text name=cIPRange> cIPRange<p>\n");
+			tTablePullDownResellers(uForClient);
                         printf(LANG_NBB_CONFIRMMOD);
                 break;
 
@@ -492,7 +521,8 @@ void DelIPRange(char *cIPRange)
 	uCIDR4IP=ExpandCIDR4(cIPRange,&cIPs[0]);
 	for(i=0;i<uCIDR4IP;i++)
 	{
-		sprintf(gcQuery,"DELETE FROM tIP WHERE cLabel='%s' AND uAvailable=1",cIPs[i]);
+		sprintf(gcQuery,"DELETE FROM tIP WHERE cLabel='%s' AND uAvailable=1 AND uOwner=%u",
+											cIPs[i],guCompany);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -502,10 +532,10 @@ void DelIPRange(char *cIPRange)
 	}
 	unxsVZLog(uIP,"tIP","DelRange");
 	if(!uSkip)
-		tIP("<blink>Warning:</blink> cIPRange of available IPs did not exist!");
+		tIP("<blink>Warning:</blink> cIPRange of available IPs controlled by you did not exist!");
 	else if(uSkip==i)
 		tIP("Complete cIPRange deleted");
 	else if(1)
-		tIP("<blink>Note:</blink> Partial cIPRange deleted. At least one available IP did not exist");
+		tIP("<blink>Note:</blink> Partial cIPRange deleted. At least one available IP controlled by you did not exist");
 
 }//void DelIPRange(char *cIPRange)
