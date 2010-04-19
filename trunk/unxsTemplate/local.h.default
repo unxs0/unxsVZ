@@ -1,0 +1,3 @@
+#This file is only used for rpm creation.
+#See rpm/unxsBuildPkg.sh and the spec file herein.
+rpm-1.2

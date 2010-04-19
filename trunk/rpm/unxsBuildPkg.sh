@@ -3,6 +3,7 @@
 #Simple automation of the building of unxsVZ normal packages
 #Note1 that the spec file info has to reflect the version and release provided.
 #Note2 for unxsVZ build just place unxsVZ inside a dir also called unxsVZ
+#Note3 everything has to be in the format required herein.
 #
 
 if [ "$1" == "" ];then
@@ -19,7 +20,7 @@ if [ "$3" == "" ];then
 fi
 if [ "$UNXSVZ" == "" ];then
 	echo "This simple script requires that the unxsVZ source tree be set via UNXSVZ env var";
-	echo "export UNXSVZ=/home/joe/unxsVZ for example";
+	echo "export UNXSVZ=/home/joe/unxsVZ/unxsVZ for example";
 	exit 0;
 fi
 if [ ! -d $UNXSVZ ];then
@@ -86,6 +87,15 @@ if [ $? != 0 ];then
 	echo "You should change the last part to rpm-$2";
 	exit 1;
 fi
+
+#Checks are done at this stage.
+#debug only
+#echo "Basic checks done: $1 $2 $3 $LCNAME $SPECVER $SPECREL $SPECTAR $LOCALVER";
+#exit 0;
+
+#Saw some *.o files appear at some rpm stage. Check this out.
+make clean;
+
 
 tar czvf $1.tar.gz $1/ --exclude .svn --exclude *.o
 if [ $? != 0 ];then
