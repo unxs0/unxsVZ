@@ -5441,7 +5441,7 @@ d>\
 \
 \
 	1	2
-27	Footer	2	1	1242405590	1	1270821368		<div align=center class=footer>{{cCopyright}}</div>\
+27	Footer	2	1	1242405590	1	1271744075		<div align=center class=footer>{{cCopyright}}</div>\
 \
 </body>\
 </html>\
@@ -5482,7 +5482,7 @@ d>\
 <br>\
 \
 	1	2
-29	Header	2	1	1242405590	1	1270821334		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\
+29	Header	2	1	1242405590	1	1271744075		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\
 <html>\
 <head>\
 <title>{{cTitle}}</title>\
@@ -9237,7 +9237,7 @@ lorem ipsum\
 \
 \	\	\
 	1	2
-181	ResourceWizard.2	1	1	1270823611	0	0		<body marginwidth="0" marginheight="0">\
+181	ResourceWizard.2	1	1	1270823611	1	1271744075		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -9292,7 +9292,7 @@ lorem ipsum\
 \	\	<h6 class="modhdr">Wizard Help</h6>\
 \	</td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
-    <td width="10"> </td>\
+    <td width="10"> </td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
     <td class="hdrtout padlt8">\
 \	\	<h6 class="modhdr">Step 2/3 - Enter Resource Record Parameters</h6>\
@@ -9305,8 +9305,8 @@ lorem ipsum\
 \	\
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-\	  <td> </td>\
-\	  <td> </td>\
+\	  <td> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	<tr>\
 \	\	<td colspan="2">\
@@ -9329,15 +9329,15 @@ lorem ipsum\
 \	\
 \	</td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
-    <td> </td>\
+    <td> </td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
     <td valign="top">\
 \
 \
 <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-\	  <td valign="top"> </td>\
-\	  <td> </td>\
+\	  <td valign="top"> </td>\
+\	  <td> </td>\
 \	</tr>\	\
 \	<tr>\
 \	\	<td>\
@@ -9361,8 +9361,8 @@ lorem ipsum\
 \	\
 \	\
 \	<tr>\
-\	  <td valign="top"> </td>\
-\	  <td> </td>\
+\	  <td valign="top"> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	\
 \	<tr>\
@@ -9440,7 +9440,7 @@ lorem ipsum\
 </table>\
 \
 \	</td>\
-    <td width="45"> </td>\
+    <td width="45"> </td>\
   </tr>\
 </table>\
 <input type=hidden name=uStep value=2>\
@@ -9450,7 +9450,7 @@ lorem ipsum\
 \
 </form>\
 	1	3
-191	ResourceWizard.3	1	1	1270823638	0	0		<body marginwidth="0" marginheight="0">\
+191	ResourceWizard.3	1	1	1270823638	1	1271744075		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -9504,7 +9504,7 @@ lorem ipsum\
 \	\	<h6 class="modhdr">Wizard Help</h6>\
 \	</td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
-    <td width="10"> </td>\
+    <td width="10"> </td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
     <td class="hdrtout padlt8">\
 \	\	<h6 class="modhdr">Step 3/3 - Review Your Entered Data and Finish</strong>\
@@ -9517,8 +9517,8 @@ lorem ipsum\
 \	\
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-\	  <td> </td>\
-\	  <td> </td>\
+\	  <td> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	<tr>\
 \	\	<td colspan="2">\
@@ -9544,15 +9544,15 @@ lorem ipsum\
 \	\
 \	</td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
-    <td> </td>\
+    <td> </td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
     <td valign="top">\
 \
 \
 <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-\	  <td valign="top"> </td>\
-\	  <td> </td>\
+\	  <td valign="top"> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	<tr>\
 \	\	<td valign="top">\
@@ -9603,8 +9603,8 @@ lorem ipsum\
 \	</tr>\
 \	\
 \	<tr>\
-\	  <td valign="top"> </td>\
-\	  <td> </td>\
+\	  <td valign="top"> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	\
 \	<tr>\
@@ -9682,7 +9682,7 @@ lorem ipsum\
 </table>\
 \
 \	</td>\
-    <td width="45"> </td>\
+    <td width="45"> </td>\
   </tr>\
 </table>\
 <input type=hidden name=uTTL value=0>\
@@ -9698,7 +9698,7 @@ lorem ipsum\
 <script language="JavaScript" src="/css/popups.js"></script>\
 </head>\
 	1	1
-121	ZLogin.Body	1	1	1268655057	1	1270821265	Login page	<body marginwidth="0" marginheight="0">\
+121	ZLogin.Body	1	1	1268655057	1	1271744075	Login page	<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -9777,7 +9777,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 </div>\
 \
 	1	3
-161	Resource.Body	1	1	1270823172	0	0		<body marginwidth="0" marginheight="0">\
+161	Resource.Body	1	1	1270823172	1	1271744076		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -9832,7 +9832,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	\	<h6 class="modhdr">Editing Resource Help</h6>\
 \	</td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
-    <td width="10"> </td>\
+    <td width="10"> </td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
     <td class="hdrtout padlt8">\
 \	\	<h6 class="modhdr">{{cZone}} {{cZoneView}} Resource Record Data</h6>\
@@ -9845,8 +9845,8 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	\
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-\	  <td> </td>\
-\	  <td> </td>\
+\	  <td> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	<tr>\
 \	\	<td width=33% valign=top>\	\	\	\
@@ -9886,15 +9886,15 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	\
 \	</td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
-    <td> </td>\
+    <td> </td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
     <td valign="top">\
 \
 \
 <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-\	  <td valign="top"> </td>\
-\	  <td> </td>\
+\	  <td valign="top"> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	<tr>\
 \	\	<td valign="top">\
@@ -10033,7 +10033,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \
 </form>\
 	1	3
-171	ResourceWizard.1	1	1	1270823268	0	0		<body marginwidth="0" marginheight="0">\
+171	ResourceWizard.1	1	1	1270823268	1	1271744074		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -10088,7 +10088,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	\	<h6 class="modhdr">Wizard Help</h6>\
 \	</td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
-    <td width="10"> </td>\
+    <td width="10"> </td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
     <td class="hdrtout padlt8">\
 \	\	<h6 class="modhdr">Step 1/3 - Enter Resource Name and Select Resource Type</h6>\
@@ -10101,8 +10101,8 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	\
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-\	  <td> </td>\
-\	  <td> </td>\
+\	  <td> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	<tr>\
 \	\	<td colspan="2">\
@@ -10126,15 +10126,15 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	\
 \	</td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
-    <td> </td>\
+    <td> </td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
     <td valign="top">\
 \
 \
 <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-\	  <td valign="top"> </td>\
-\	  <td> </td>\
+\	  <td valign="top"> </td>\
+\	  <td> </td>\
 \	</tr>\	\
 \	\
 \	<tr>\
@@ -10156,17 +10156,15 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	</tr>\
 \	\
 \	<tr>\
-\	  <td valign="top"> </td>\
-\	  <td> </td>\
+\	  <td valign="top"> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	\
 \	<tr>\
 \	\	<td colspan="2">\
 \	\	\	<input class=smallButton type=submit title='Advance to next step' name=gcFunction value='Next'>\
 \	\	</td>\
-\	\	<td>\
-\	\	 \
-\	\	</td>\
+\	\	<td> </td>\
 \	</tr>\
 \
 </table>\
@@ -10246,7 +10244,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 <input type=hidden name=cComment value="{{cComment}}"> \
 </form>\
 	1	3
-111	VZone.Body	1	1	1268655057	1	1270823016		<body marginwidth="0" marginheight="0">\
+111	VZone.Body	1	1	1268655057	1	1271744076		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -10300,7 +10298,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	\	<h6 class="modhdr">Customer Resource Panel</h6>\
 \	</td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
-    <td width="10"> </td>\
+    <td width="10"> </td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
     <td class="hdrtout padlt8">\
 \	\	<h6 class="modhdr">{{cZone}} {{cZoneView}} NS Set, SOA Data</h6>\
@@ -10315,8 +10313,8 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	\
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">\
 \	\	<tr>\
-\	\	  <td> </td>\
-\	\	  <td> </td>\
+\	\	  <td> </td>\
+\	\	  <td> </td>\
 \	\	</tr>\
 \	\	<tr>\
 \	\	\	<td width=33%>\
@@ -10382,15 +10380,15 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	\
 \	</td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
-    <td> </td>\
+    <td> </td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
     <td valign="top">\
 \	\
 \	\
 <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-\	  <td valign="top"> </td>\
-\	  <td> </td>\
+\	  <td valign="top"> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	<tr>\
 \	\	<td valign="top">\
@@ -10469,9 +10467,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	</tr>\
 \
 \	<tr>\
-\	\	<td> \
-\	\	\
-\	\	</td>\
+\	\	<td> </td>\
 \	\	<td colspan=2>\
 \	\	\	<input type=submit title='Zone SOA and extras modification two step procedure' class=largeButton name=gcFunction value='Modify SOA{{gcModStep}}' {{cModSOAStatus}}>\
 \	\	</td>\
@@ -10556,7 +10552,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 </body>\
 </html>\
 	1	1
-151	OrgGlossary.Body	1	1	1270823085	0	0		<body>\
+151	OrgGlossary.Body	1	1	1270823085	1	1271744075		<body>\
 <form method=post>\
 <table width="100%" border="0" cellspacing="0" cellpadding="0" class="table_header2">\
   <tr>\
@@ -10576,7 +10572,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \
                 <table border="0" cellspacing="0" cellpadding="4" style="margin:25px 0px 0 0px;">\
             <tr>\
-                                <td> </td>\
+                                <td> </td>\
 \
                                 <td class="table_center">\
                                 <br>\
@@ -10584,15 +10580,15 @@ You must have Javascript enabled in order to use this software correctly.</font>
                                         {{cText}}\
                                         </span>\
                                 </td>\
-                                <td> </td>\
-                                <td> </td>\
+                                <td> </td>\
+                                <td> </td>\
             </tr>\
 \
           </table>\
 <br>\
 \
 	1	3
-201	OrgBulkOp.Body	1	1	1270823757	0	0		<body marginwidth="0" marginheight="0">\
+201	OrgBulkOp.Body	1	1	1270823757	1	1271744074		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -10646,7 +10642,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	\	<h6 class="modhdr">Bulk OPs Panel</h6>\
 \	</td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
-    <td width="10"> </td>\
+    <td width="10"> </td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
     <td class="hdrtout padlt8">\
 \	\	<h6 class="modhdr">{{cZone}} Bulk Data Entry Panel</h6>\
@@ -10661,14 +10657,14 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \	\
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-          <td valign="top"> </td>\
-\	            <td> </td>\
+          <td valign="top"> </td>\
+\	            <td> </td>\
 \	</tr>\
 \	\	\	    \
 \	\	<tr>\
 \	\	  <td>\
 \	\	\	<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Bulk Commands')"><strong>Bulk Commands</strong></a></td>\
-\	\	  <td> </td>\
+\	\	  <td> </td>\
 \	\	</tr>\
 \	\	<tr>\
 \	\	\	<td width=33%>\
@@ -10702,15 +10698,15 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 \	\
 \	</td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
-    <td> </td>\
+    <td> </td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
     <td valign="top">\
 \	\
 \	\
 <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-\	  <td valign="top"> </td>\
-\	  <td> </td>\
+\	  <td valign="top"> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	<tr>\
 \	\	<td valign="top">\
@@ -10800,7 +10796,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 <input type=hidden name=uNameServer value='{{uNameServer}}'>\
 </form>\
 	1	3
-231	DelegationTool.Body	1	1	1270825558	0	0		<body marginwidth="0" marginheight="0">\
+231	DelegationTool.Body	1	1	1270825558	1	1271744075		<body marginwidth="0" marginheight="0">\
 \
 <div align="center" class="standard2colnee">\
 \
@@ -10854,7 +10850,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 \	\	<h6 class="modhdr">Customer Resource Panel</h6>\
 \	</td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
-    <td width="10"> </td>\
+    <td width="10"> </td>\
     <td valign="top" width="9" class="hdrtout padlt8"></td>\
     <td class="hdrtout padlt8">\
 \	\	<h6 class="modhdr">{{cZone}} Delegation Tool </h6>\
@@ -10869,8 +10865,8 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 \	\
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">\
 \	\	<tr>\
-\	\	  <td> </td>\
-\	\	  <td> </td>\
+\	\	  <td> </td>\
+\	\	  <td> </td>\
 \	\	</tr>\
 \	\	<tr>\
 \	\	\	<td width=33%>\
@@ -10935,15 +10931,15 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 \	\
 \	</td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
-    <td> </td>\
+    <td> </td>\
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>\
     <td valign="top">\
 \	\
 \	\
 <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">\
 \	<tr>\
-\	  <td valign="top"> </td>\
-\	  <td> </td>\
+\	  <td valign="top"> </td>\
+\	  <td> </td>\
 \	</tr>\
 \	<tr>\
 \	\	<td>\
@@ -10977,7 +10973,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 \	</tr>\
 \
 \	<tr>\
-\	\	<td> \
+\	\	<td>\
 \	\	\
 \	\	</td>\
 \	\	<td colspan=2>\
@@ -11074,7 +11070,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 <script language="JavaScript" src="/css/popups.js"></script>\
 </head>\
 	1	2
-341	InputParam4	1	1	1270844463	0	0		<tr>\
+341	InputParam4	1	1	1270844463	1	1271744074		<tr>\
 \	<td>\
 \	\	<a class=inputLink href="#" onClick="open_popup('?gcPage=Glossary&cLabel={{cParam4Label}}')"><strong>{{cParam4Label}}</strong></a>\
 \	</td>\
@@ -11110,7 +11106,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 \
 \	\	\
 	1	1
-301	InputParam3	1	1	1270844419	0	0		<tr>\
+301	InputParam3	1	1	1270844419	1	1271744074		<tr>\
 \	<td>\
 \	\	<a class=inputLink href="#" onClick="open_popup('?gcPage=Glossary&cLabel={{cParam3Label}}')"><strong>{{cParam3Label}}</strong></a>\
 \	</td>\
@@ -11122,7 +11118,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 \
 \	\	\
 	1	3
-291	InputParam2	1	1	1270844393	0	0		<tr>\
+291	InputParam2	1	1	1270844393	1	1271744075		<tr>\
 \	<td>\
 \	\	<a class=inputLink href="#" onClick="open_popup('?gcPage=Glossary&cLabel={{cParam2Label}}')"><strong>{{cParam2Label}}</strong></a>\
 \	</td>\
