@@ -52,7 +52,7 @@
 		<h6 class="modhdr">Customer Resource Panel</h6>
 	</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
-    <td width="10"> </td>
+    <td width="10"> </td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
 		<h6 class="modhdr">{{cZone}} {{cZoneView}} NS Set, SOA Data</h6>
@@ -67,8 +67,8 @@
 	
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
 		<tr>
-		  <td> </td>
-		  <td> </td>
+		  <td> </td>
+		  <td> </td>
 		</tr>
 		<tr>
 			<td width=33%>
@@ -134,15 +134,15 @@
 	
 	</td>
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>
-    <td> </td>
+    <td> </td>
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>
     <td valign="top">
 	
 	
 <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
 	<tr>
-	  <td valign="top"> </td>
-	  <td> </td>
+	  <td valign="top"> </td>
+	  <td> </td>
 	</tr>
 	<tr>
 		<td valign="top">
@@ -221,9 +221,7 @@
 	</tr>
 
 	<tr>
-		<td> 
-		
-		</td>
+		<td> </td>
 		<td colspan=2>
 			<input type=submit title='Zone SOA and extras modification two step procedure' class=largeButton name=gcFunction value='Modify SOA{{gcModStep}}' {{cModSOAStatus}}>
 		</td>

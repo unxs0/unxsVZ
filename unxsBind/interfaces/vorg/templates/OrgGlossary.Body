@@ -18,7 +18,7 @@
 
                 <table border="0" cellspacing="0" cellpadding="4" style="margin:25px 0px 0 0px;">
             <tr>
-                                <td> </td>
+                                <td> </td>
 
                                 <td class="table_center">
                                 <br>
@@ -26,8 +26,8 @@
                                         {{cText}}
                                         </span>
                                 </td>
-                                <td> </td>
-                                <td> </td>
+                                <td> </td>
+                                <td> </td>
             </tr>
 
           </table>
