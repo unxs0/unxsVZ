@@ -1,20 +1,21 @@
 Summary: A small static RADIUS C API library and dictionary
-Name: uradius
+Name: unxsradiuslib
 Version: 1.0
 Release: 1
 License: LGPL
 Group: System Environment/Libraries
-Source: http://unixservice.com/source/libs/uradius-1.0.tar.gz
-URL: http://unixservice.com/uradius
+Source: http://unixservice.com/source/libs/unxsradiuslib-1.0.tar.gz
+URL: http://unixservice.com
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
 
 %description
-uradius is a small static library and a dictionary file.
-uradius provides a simple but reliable C RADIUS API for both
+unxsradiuslib is a small static library and a dictionary file.
+unxsradiuslib provides a simple but reliable C RADIUS API for both
 authorization and accounting operations. The authorization
 function allows for reading returned extra authorization data.
+This package deprecates uradius.
 
 %prep
 %setup
@@ -28,10 +29,10 @@ make install
 %clean
 
 %files
-/usr/lib/liburadius.a 
+/usr/lib/openisp/liburadius.a 
 /usr/local/etc/raddb/dictionary 
-/usr/include/uradius.h 
+/usr/include/openisp/uradius.h 
 
 %changelog
-* Sat Apr 09 2009 Dilva Garmendia <support@unixservice.com> 
-- Initial RPM release
+* Tue Apr 20 2010 Gary Wallis <support@unixservice.com> 
+- Initial RPM release (of renamed package, used to be uradius)

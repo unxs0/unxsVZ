@@ -120,7 +120,6 @@ tclient.o: tclient.c mysqlrad.h language.h tclientfunc.h local.h
 tauthorize.o: tauthorize.c mysqlrad.h language.h tauthorizefunc.h local.h
 	cc -c tauthorize.c -o tauthorize.o $(CFLAGS)
 
-
 main.o: main.c mysqlrad.h mainfunc.h language.h local.h
 	cc -c main.c -o main.o $(CFLAGS)
 
@@ -135,7 +134,6 @@ import.o: import.c mysqlrad.h
 
 extjobqueue.o: mysqlrad.h extjobqueue.c
 	cc -c extjobqueue.c -o extjobqueue.o $(CFLAGS)
-
 
 local.h: local.h.default
 	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi

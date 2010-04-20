@@ -15,7 +15,7 @@ NOTES
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <uradius.h> //Our uRadiusLib
+#include <openisp/uradius.h> //Our unxsRadiusLib liburadius
 
 int main()
 {

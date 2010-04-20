@@ -9,7 +9,7 @@ URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils >= 9.3.4-10 , rrdtool , chkconfig
+Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils >= 9.3.4-10 , rrdtool , chkconfig, unxstemplate, unxscidrlib
 
 %description
 unxsBind iDNS provides a professional DNS BIND 9 manager. For 1 to 1000's of NSs.
@@ -316,6 +316,8 @@ fi
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
+* Tue Apr 20 2010 Gary Wallis <support@unixservice.com>
+- Fixed upgrade and requirements. Using new unxstemplate lib for interfaces. Corrected multiple DB server support. Corrected version number change.
 * Wed Mar 17 2010 Hugo Urquiza <support2@unixservice.com>
 - New rpm release, added support for AAAA and NAPTR RRs, major version number change.
 * Mon Aug 02 2009 Hugo Urquiza <support2@unixservice.com>
