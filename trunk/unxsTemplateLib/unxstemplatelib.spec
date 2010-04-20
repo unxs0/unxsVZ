@@ -1,11 +1,11 @@
 Summary: A small static library for unxsVZ templates
-Name: unxstemplate
+Name: unxstemplatelib
 Version: 1.0
 Release: 1
 License: LGPL
 Group: System Environment/Libraries
-Source: http://unixservice.com/source/libs/unxstemplate-1.0.tar.gz
-URL: http://unixservice.com/unxstemplate
+Source: http://unixservice.com/source/libs/unxstemplatelib-1.0.tar.gz
+URL: http://unixservice.com
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
