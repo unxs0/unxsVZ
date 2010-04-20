@@ -276,6 +276,7 @@ void tTemplateNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uCount=0;
 
 	sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE uTemplateType=%u AND uTemplateSet=%u"
 				" ORDER BY uTemplateType,uTemplateSet,cLabel",
@@ -290,7 +291,7 @@ void tTemplateNavList(void)
         }
 
         res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	if((uCount=mysql_num_rows(res)))
 	{	
         	printf("<p><u>tTemplateNavList</u><br>\n");
         	printf("<u>Filters</u><br>\n");
@@ -312,6 +313,7 @@ void tTemplateNavList(void)
         	printf("<p>\n");
 	}
         mysql_free_result(res);
+	printf("(uCount=%u)",uCount);
 
 }//void tTemplateNavList(void)
 
