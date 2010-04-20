@@ -26,6 +26,7 @@ void Restore(char *cPasswd, char *cTableName);
 void RestoreAll(char *cPasswd);
 void mySQLRootConnect(char *cPasswd);
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType);
+void ExportTemplateFiles(char *cDir, char *cTemplateSet, char *cTemplateType);
 
 void CalledByAlias(int iArgc,char *cArgv[]);
 unsigned TextConnectDb(void);
@@ -561,6 +562,89 @@ void mySQLRootConnect(char *cPasswd)
 
 
 //Import from local file into tTemplate a single record
+void ExportTemplateFiles(char *cDir, char *cTemplateSet, char *cTemplateType)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+	FILE *fp;
+	char cFile[256];
+	unsigned uTemplateSet=0;
+	unsigned uTemplateType=0;
+
+	printf("\nExportTemplateFiles(): Start\n");
+
+	TextConnectDb();
+
+	//uTemplateSet
+	sprintf(gcQuery,"SELECT uTemplateSet FROM tTemplateSet WHERE cLabel='%s'",cTemplateSet);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+        mysqlRes=mysql_store_result(&gMysql);
+        if((mysqlField=mysql_fetch_row(mysqlRes)))
+        	sscanf(mysqlField[0],"%u",&uTemplateSet);
+	mysql_free_result(mysqlRes);
+
+	if(!uTemplateSet)
+	{
+		printf("Could not find tTemplateSet.clabel=%s\n",cTemplateSet);
+		exit(1);
+	}
+
+	//uTemplateType
+	sprintf(gcQuery,"SELECT uTemplateType FROM tTemplateType  WHERE cLabel='%s'",cTemplateType);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+        mysqlRes=mysql_store_result(&gMysql);
+        if((mysqlField=mysql_fetch_row(mysqlRes)))
+        	sscanf(mysqlField[0],"%u",&uTemplateType);
+	mysql_free_result(mysqlRes);
+
+	if(!uTemplateType)
+	{
+		printf("Could not find tTemplateType.clabel=%s\n",cTemplateSet);
+		exit(1);
+	}
+
+	//Get cTemplate
+	sprintf(gcQuery,"SELECT cLabel,cTemplate FROM tTemplate WHERE uTemplateSet=%u AND uTemplateType=%u",
+						uTemplateSet,uTemplateType);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+        mysqlRes=mysql_store_result(&gMysql);
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		sprintf(cFile,"%.220s/%.32s",cDir,mysqlField[0]);
+		if((fp=fopen(cFile,"w"))!=NULL)
+		{
+			printf("Writing %s\n",cFile);
+			fprintf(fp,"%s",mysqlField[1]);
+			fclose(fp);
+		}
+		else
+		{
+			printf("Could not open: %s\n",cFile);
+			exit(1);
+		}
+	}
+	mysql_free_result(mysqlRes);
+
+	printf("\nExportTemplateFiles(): End\n");
+
+}//ExportTemplateFiles()
+
+
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType)
 {
 	FILE *fp;
@@ -806,6 +890,7 @@ void PrintUsage(char *arg0)
 	printf("\tExample args for Extracts: Apr 2007 passwd /var/lib/mysql/idns\n");
 	printf("\nSpecial Import/Export Ops (Caution):\n");
 	printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
+	printf("\tExportTemplateFiles <dir> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 	printf("\tImportZones\n");
 	printf("\tDropImportedZones\n");
 	printf("\tImportCompanies\n");
@@ -1189,6 +1274,11 @@ void ExtMainShell(int argc, char *argv[])
 		{
 			mySQLRootConnect(argv[4]);
 			ExportRRCSV(argv[2],argv[3]);
+			exit(0);
+		}
+		else if(!strcmp(argv[1],"ExportTemplateFiles"))
+		{
+                	ExportTemplateFiles(argv[2],argv[3],argv[4]);
 			exit(0);
 		}
 		PrintUsage(argv[0]);
