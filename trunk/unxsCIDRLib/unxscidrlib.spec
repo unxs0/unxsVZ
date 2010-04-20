@@ -1,11 +1,11 @@
 Summary: A small static library for IPv4 CIDR operations.
-Name: ucidr
+Name: unxscidrlib
 Version: 1.0
 Release: 1
 License: LGPL
 Group: System Environment/Libraries
-Source: http://unixservice.com/source/libs/ucidr-1.0.tar.gz
-URL: http://unixservice.com/ucidr
+Source: http://unixservice.com/source/libs/unxscidrlib-1.0.tar.gz
+URL: http://unixservice.com
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
@@ -14,6 +14,7 @@ Packager: Unixservice Support Group <supportgrp@unixservice.com>
 The ucidr program provides functions for determining
 if a given IPv4 is in a given IPv4 CIDR specified block
 among other basic CIDR operations.
+This package deprecates ucidr.
 
 Current version provides these functions:
 
@@ -39,5 +40,5 @@ make install
 /usr/include/openisp/ucidr.h
 
 %changelog
-* Fri Apr 08 2009 Gary Wallis <support@unixservice.com> 
-- Initial RPM release
+* Tue Apr 20 2010 Gary Wallis <support@unixservice.com> 
+- Initial RPM release (of renamed package, was ucidr.)

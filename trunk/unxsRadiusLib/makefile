@@ -60,11 +60,14 @@ pair.o: pair.c $(INCLUDES)
 encrattr.o: encrattr.c $(INCLUDES)
 	$(CC) $(CFLAGS) -c encrattr.c
 
-install:
-	cp -i liburadius.a /usr/lib
+install: liburadius.a uradius.h dictionary
+	mkdir -p /usr/lib/openisp
+	mkdir -p /usr/include/openisp
 	mkdir -p /usr/local/etc/raddb
-	cp -i dictionary /usr/local/etc/raddb
-	cp -i uradius.h /usr/include
+	install liburadius.a /usr/lib/openisp/liburadius.a
+	install uradius.h /usr/include/openisp/uradius.h
+	install dictionary /usr/local/etc/raddb/dictionary
+	rm liburadius.a
 
 clean:
 	rm -f *.o liburadius.a
