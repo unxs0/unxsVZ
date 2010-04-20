@@ -52,7 +52,7 @@
 		<h6 class="modhdr">Bulk OPs Panel</h6>
 	</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
-    <td width="10"> </td>
+    <td width="10"> </td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
 		<h6 class="modhdr">{{cZone}} Bulk Data Entry Panel</h6>
@@ -67,14 +67,14 @@
 	
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
 	<tr>
-          <td valign="top"> </td>
-	            <td> </td>
+          <td valign="top"> </td>
+	            <td> </td>
 	</tr>
 			    
 		<tr>
 		  <td>
 			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Bulk Commands')"><strong>Bulk Commands</strong></a></td>
-		  <td> </td>
+		  <td> </td>
 		</tr>
 		<tr>
 			<td width=33%>
@@ -108,15 +108,15 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>
 	
 	</td>
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>
-    <td> </td>
+    <td> </td>
     <td ><img src="/images/clear.gif" width="9" height="9" /></td>
     <td valign="top">
 	
 	
 <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
 	<tr>
-	  <td valign="top"> </td>
-	  <td> </td>
+	  <td valign="top"> </td>
+	  <td> </td>
 	</tr>
 	<tr>
 		<td valign="top">
