@@ -15,11 +15,14 @@ LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lm
 
 all: unxsUBC
 
-unxsUBC: ubc.o 
-	cc ubc.o -o unxsUBC $(LIBS) 
+unxsUBC: ubc.o mysqlconnect.o
+	cc ubc.o mysqlconnect.o -o unxsUBC $(LIBS) 
 
 ubc.o: ubc.c ../../mysqlrad.h ../../local.h
 	cc -c ubc.c -o ubc.o $(CFLAGS)
+
+mysqlconnect.o: mysqlconnect.c ../../mysqlrad.h ../../local.h
+	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)
 
 clean:
 	rm -f *.o unxsUBC

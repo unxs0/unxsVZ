@@ -40,25 +40,27 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
 void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
 void ProcessSingleTraffic(unsigned uContainer);
 
-static FILE *gLfp;
+static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
 {
-	time_t luClock;
-	char cTime[32];
-	pid_t pidThis;
-	const struct tm *tmTime;
+	if(gLfp!=NULL)
+	{
+		time_t luClock;
+		char cTime[32];
+		pid_t pidThis;
+		const struct tm *tmTime;
 
-	pidThis=getpid();
+		pidThis=getpid();
 
-	time(&luClock);
-	tmTime=localtime(&luClock);
-	strftime(cTime,31,"%b %d %T",tmTime);
+		time(&luClock);
+		tmTime=localtime(&luClock);
+		strftime(cTime,31,"%b %d %T",tmTime);
 
-        fprintf(gLfp,"%s %s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
-	fflush(gLfp);
+		fprintf(gLfp,"%s %s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
+		fflush(gLfp);
+	}
 
 }//void logfileLine()
-
 
 
 int main(int iArgc, char *cArgv[])
@@ -74,21 +76,6 @@ int main(int iArgc, char *cArgv[])
 	ProcessUBC();//does vzquota and vzmemcheck also via other subsytems
 	return(0);
 }//main()
-
-
-void TextConnectDb(void)
-{
-        mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-        {
-        	if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-		{
-			fprintf(stderr,"Database server unavailable.\n");
-			logfileLine("TextConnectDb","Database server unavailable",0);
-			exit(1);
-		}
-        }
-}//void TextConnectDb(void)
 
 
 void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
