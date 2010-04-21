@@ -541,8 +541,7 @@ void tZoneInput(unsigned uMode)
 	}
 //cOptions
 	OpenRow(LANG_FL_tZone_cOptions,"black");
-	printf("<textarea title='%s' cols=40 wrap=hard rows=3 name=cOptions "
-,LANG_FT_tZone_cOptions);
+	printf("<textarea title='%s' cols=80 rows=3 name=cOptions ",LANG_FT_tZone_cOptions);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cOptions);
