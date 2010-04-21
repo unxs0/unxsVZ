@@ -47,20 +47,7 @@ SAMPLE-INPUT
 
 MYSQL gMysql;
 
-void Connect(void)
-{
-        mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,0,NULL,0))
-        {
-        	if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,0,NULL,0))
-        	{
-			printf("Database server unavailable!\n");
-			exit(3);
-		}
-        }
-
-}//void Connect(void)
-
+void TextConnectDb(void);
 
 int main(int iArgc, char *cArgv[])
 {
@@ -119,7 +106,7 @@ int main(int iArgc, char *cArgv[])
 		if(iArgc==4 && !strcmp(cArgv[2],"--cZone"))
 			sprintf(cZone,"%.100s",cArgv[3]);
 
-		Connect();
+		TextConnectDb();
 
 		sprintf(cQuery,"SELECT SUM(uHitCount),SUM(uSuccess),SUM(uReferral),SUM(uNxrrset),"
 				"SUM(uNxdomain),SUM(uRecursion),SUM(uFailure)"
@@ -223,7 +210,7 @@ int main(int iArgc, char *cArgv[])
 	}
 
 
-	Connect();
+	TextConnectDb();
 
 	//printf("%s started and mysql_init() and connect() ran ok.\n",cArgv[0]);
 
