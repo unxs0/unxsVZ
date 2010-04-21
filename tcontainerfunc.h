@@ -74,8 +74,8 @@ static char cForClientPullDown[256]={""};
 
 //ModuleFunctionProtos()
 void tContainerNavList(unsigned uNode, char *cSearch);
-unsigned CreateNewContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
-unsigned CreateStartContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned CreateNewContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
+unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
@@ -268,7 +268,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							if(sContainer.uStatus==uINITSETUP)
 							{
 								if(CreateNewContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uContainer))
+									sContainer.uNode,uContainer,sContainer.uOwner))
 								{
 									SetContainerStatus(uContainer,uAWAITACT);
 									uGroupJobs++;
@@ -276,8 +276,9 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							}
 							else
 							{
+								uOwner=guCompany;
 								if(CreateStartContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uContainer))
+									sContainer.uNode,uContainer,sContainer.uOwner))
 								{
 									SetContainerStatus(uContainer,uAWAITACT);
 									uGroupJobs++;
@@ -1000,7 +1001,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
 
-				if(CreateStartContainerJob(uDatacenter,uNode,uContainer))
+				if(CreateStartContainerJob(uDatacenter,uNode,uContainer,uOwner))
 				{
 					uStatus=uAWAITACT;
 					SetContainerStatus(uContainer,6);//Awaiting Activation
@@ -1030,7 +1031,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
 
-				if(CreateNewContainerJob(uDatacenter,uNode,uContainer))
+				if(CreateNewContainerJob(uDatacenter,uNode,uContainer,uOwner))
 				{
 					uStatus=uAWAITACT;
 					SetContainerStatus(uContainer,6);//Awaiting Activation
@@ -2540,7 +2541,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 }//void tContainerNavList()
 
 
-unsigned CreateNewContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+unsigned CreateNewContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner)
 {
 	unsigned uCount=0;
 
@@ -2561,7 +2562,7 @@ unsigned CreateNewContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uC
 }//unsigned CreateNewContainerJob(...)
 
 
-unsigned CreateStartContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner)
 {
 	unsigned uCount=0;
 
