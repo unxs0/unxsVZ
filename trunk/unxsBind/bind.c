@@ -318,7 +318,41 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 
 			//write stub into include file		
 			fprintf(sfp,"\n\tzone \"%s\" {\n",field[0]);
-			fprintf(sfp,"\t\ttype master;\n");
+
+			//Special types set via cOptions
+			//tZone.cOptions=//TypeForward ForwardOnly Forwarders={10.240.0.1;10.240.0.2;};
+			if(field[15][0] && strstr(field[15],"//TypeForward")!=NULL)
+			{
+				char *cp1;
+
+				if((cp1=strstr(field[15],"Forwarders="))!=NULL)
+				{
+					//Last part must end correctly. Or we ignore.
+					if(*(field[15]+strlen(field[15])-1)==';')
+					{
+						fprintf(sfp,"\t\ttype forward;\n");
+						if(strstr(field[15],"ForwardOnly")!=NULL)
+							fprintf(sfp,"\t\tforward only;\n");
+						else if(strstr(field[15],"ForwardFirst")!=NULL)
+							fprintf(sfp,"\t\tforward first;\n");
+		
+						fprintf(sfp,"\t\tforwarders %s\n",cp1+11);
+						fprintf(sfp,"\t};\n");
+						continue;//Done with this zone
+					}
+					else
+					{
+						fprintf(sfp,"\t\ttype master;\n");
+						fprintf(sfp,"//\t\tforwarders %s %c\n",cp1+11,
+							*(field[15]+strlen(field[15])-1));
+						
+					}
+				}
+			}
+			else
+			{
+				fprintf(sfp,"\t\ttype master;\n");
+			}
 			if(field[15][0])
 				fprintf(sfp,"\t\t//tZone.cOptions\n\t\t%s\n",field[15]);
 			if(cTSIGKeyName[0])
