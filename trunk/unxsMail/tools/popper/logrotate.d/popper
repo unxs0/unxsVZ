@@ -1,0 +1,4 @@
+/var/log/popper.log /var/log/popper_ssl.log {
+        copytruncate
+        missingok
+}
