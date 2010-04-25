@@ -59,7 +59,6 @@ static char *cOptions={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static long uCreatedDate=0;
 //uModBy: uClient for last update
@@ -354,7 +353,7 @@ void tDeletedZoneInput(unsigned uMode)
 //uDeletedZone
 	OpenRow(LANG_FL_tDeletedZone_uDeletedZone,"black");
 	printf("<input title='%s' type=text name=uDeletedZone value=%u size=16 maxlength=10 "
-,LANG_FT_tDeletedZone_uDeletedZone,uDeletedZone);
+			,LANG_FT_tDeletedZone_uDeletedZone,uDeletedZone);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -367,7 +366,7 @@ void tDeletedZoneInput(unsigned uMode)
 //cZone
 	OpenRow(LANG_FL_tDeletedZone_cZone,EmptyString(cZone));
 	printf("<input title='%s' type=text name=cZone value=\"%s\" size=40 maxlength=99 "
-,LANG_FT_tDeletedZone_cZone,EncodeDoubleQuotes(cZone));
+			,LANG_FT_tDeletedZone_cZone,EncodeDoubleQuotes(cZone));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -386,7 +385,7 @@ void tDeletedZoneInput(unsigned uMode)
 //cHostmaster
 	OpenRow(LANG_FL_tDeletedZone_cHostmaster,EmptyString(cHostmaster));
 	printf("<input title='%s' type=text name=cHostmaster value=\"%s\" size=40 maxlength=100 "
-,LANG_FT_tDeletedZone_cHostmaster,EncodeDoubleQuotes(cHostmaster));
+			,LANG_FT_tDeletedZone_cHostmaster,EncodeDoubleQuotes(cHostmaster));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -399,7 +398,7 @@ void tDeletedZoneInput(unsigned uMode)
 //uSerial
 	OpenRow(LANG_FL_tDeletedZone_uSerial,IsZero(uSerial));
 	printf("<input title='%s' type=text name=uSerial value=%u size=16 maxlength=10 "
-,LANG_FT_tDeletedZone_uSerial,uSerial);
+			,LANG_FT_tDeletedZone_uSerial,uSerial);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -412,7 +411,7 @@ void tDeletedZoneInput(unsigned uMode)
 //uExpire
 	OpenRow(LANG_FL_tDeletedZone_uExpire,IsZero(uExpire));
 	printf("<input title='%s' type=text name=uExpire value=%u size=16 maxlength=10 "
-,LANG_FT_tDeletedZone_uExpire,uExpire);
+			,LANG_FT_tDeletedZone_uExpire,uExpire);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -425,7 +424,7 @@ void tDeletedZoneInput(unsigned uMode)
 //uRefresh
 	OpenRow(LANG_FL_tDeletedZone_uRefresh,IsZero(uRefresh));
 	printf("<input title='%s' type=text name=uRefresh value=%u size=16 maxlength=10 "
-,LANG_FT_tDeletedZone_uRefresh,uRefresh);
+			,LANG_FT_tDeletedZone_uRefresh,uRefresh);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -438,7 +437,7 @@ void tDeletedZoneInput(unsigned uMode)
 //uTTL
 	OpenRow(LANG_FL_tDeletedZone_uTTL,IsZero(uTTL));
 	printf("<input title='%s' type=text name=uTTL value=%u size=16 maxlength=10 "
-,LANG_FT_tDeletedZone_uTTL,uTTL);
+			,LANG_FT_tDeletedZone_uTTL,uTTL);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -451,7 +450,7 @@ void tDeletedZoneInput(unsigned uMode)
 //uRetry
 	OpenRow(LANG_FL_tDeletedZone_uRetry,IsZero(uRetry));
 	printf("<input title='%s' type=text name=uRetry value=%u size=16 maxlength=10 "
-,LANG_FT_tDeletedZone_uRetry,uRetry);
+			,LANG_FT_tDeletedZone_uRetry,uRetry);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -464,7 +463,7 @@ void tDeletedZoneInput(unsigned uMode)
 //uZoneTTL
 	OpenRow(LANG_FL_tDeletedZone_uZoneTTL,IsZero(uZoneTTL));
 	printf("<input title='%s' type=text name=uZoneTTL value=%u size=16 maxlength=10 "
-,LANG_FT_tDeletedZone_uZoneTTL,uZoneTTL);
+			,LANG_FT_tDeletedZone_uZoneTTL,uZoneTTL);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -489,7 +488,7 @@ void tDeletedZoneInput(unsigned uMode)
 //cMainAddress
 	OpenRow(LANG_FL_tDeletedZone_cMainAddress,"black");
 	printf("<input title='%s' type=text name=cMainAddress value=\"%s\" size=40 maxlength=16 "
-,LANG_FT_tDeletedZone_cMainAddress,EncodeDoubleQuotes(cMainAddress));
+		,LANG_FT_tDeletedZone_cMainAddress,EncodeDoubleQuotes(cMainAddress));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -514,7 +513,7 @@ void tDeletedZoneInput(unsigned uMode)
 //cMasterIPs
 	OpenRow(LANG_FL_tDeletedZone_cMasterIPs,"black");
 	printf("<input title='%s' type=text name=cMasterIPs value=\"%s\" size=40 maxlength=255 "
-,LANG_FT_tDeletedZone_cMasterIPs,EncodeDoubleQuotes(cMasterIPs));
+			,LANG_FT_tDeletedZone_cMasterIPs,EncodeDoubleQuotes(cMasterIPs));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -527,7 +526,7 @@ void tDeletedZoneInput(unsigned uMode)
 //cAllowTransfer
 	OpenRow(LANG_FL_tDeletedZone_cAllowTransfer,"black");
 	printf("<input title='%s' type=text name=cAllowTransfer value=\"%s\" size=40 maxlength=255 "
-,LANG_FT_tDeletedZone_cAllowTransfer,EncodeDoubleQuotes(cAllowTransfer));
+			,LANG_FT_tDeletedZone_cAllowTransfer,EncodeDoubleQuotes(cAllowTransfer));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -540,7 +539,7 @@ void tDeletedZoneInput(unsigned uMode)
 //cOptions
 	OpenRow(LANG_FL_tDeletedZone_cOptions,"black");
 	printf("<textarea title='%s' cols=40 wrap=hard rows=3 name=cOptions "
-,LANG_FT_tDeletedZone_cOptions);
+			,LANG_FT_tDeletedZone_cOptions);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cOptions);
@@ -623,15 +622,13 @@ void NewtDeletedZone(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uDeletedZone=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tDeletedZone",uDeletedZone);
 	iDNSLog(uDeletedZone,"tDeletedZone","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uDeletedZone);
-	tDeletedZone(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uDeletedZone);
+		tDeletedZone(gcQuery);
 	}
 
 }//NewtDeletedZone(unsigned uMode)
@@ -639,29 +636,20 @@ void NewtDeletedZone(unsigned uMode)
 
 void DeletetDeletedZone(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tDeletedZone WHERE uDeletedZone=%u AND ( uOwner=%u OR %u>9 )"
 					,uDeletedZone,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tDeletedZone WHERE uDeletedZone=%u"
-					,uDeletedZone);
-#endif
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 	//tDeletedZone("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		iDNSLog(uDeletedZone,"tDeletedZone","Del");
-#endif
 		tDeletedZone(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		iDNSLog(uDeletedZone,"tDeletedZone","DelError");
-#endif
 		tDeletedZone(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -672,7 +660,10 @@ void Insert_tDeletedZone(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tDeletedZone SET uDeletedZone=%u,cZone='%s',uNSSet=%u,cHostmaster='%s',uSerial=%u,uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,uMailServers=%u,uView=%u,cMainAddress='%s',uRegistrar=%u,uSecondaryOnly=%u,cAllowTransfer='%s',cOptions='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tDeletedZone SET uDeletedZone=%u,cZone='%s',uNSSet=%u,cHostmaster='%s',uSerial=%u,"
+			"uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,uMailServers=%u,uView=%u,cMainAddress='%s',"
+			"uRegistrar=%u,uSecondaryOnly=%u,cAllowTransfer='%s',cOptions='%s',uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uDeletedZone
 			,TextAreaSave(cZone)
 			,uNSSet
@@ -703,7 +694,10 @@ void Update_tDeletedZone(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tDeletedZone SET uDeletedZone=%u,cZone='%s',uNSSet=%u,cHostmaster='%s',uSerial=%u,uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,uMailServers=%u,uView=%u,cMainAddress='%s',uRegistrar=%u,uSecondaryOnly=%u,cAllowTransfer='%s',cOptions='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tDeletedZone SET uDeletedZone=%u,cZone='%s',uNSSet=%u,cHostmaster='%s',uSerial=%u,"
+			"uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,uMailServers=%u,uView=%u,cMainAddress='%s',"
+			"uRegistrar=%u,uSecondaryOnly=%u,cAllowTransfer='%s',cOptions='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uDeletedZone
 			,TextAreaSave(cZone)
 			,uNSSet
@@ -723,7 +717,6 @@ void Update_tDeletedZone(char *cRowid)
 			,TextAreaSave(cOptions)
 			,uModBy
 			,cRowid);
-
 	mysql_query(&gMysql,gcQuery);
 
 }//void Update_tDeletedZone(void)
@@ -734,16 +727,10 @@ void ModtDeletedZone(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	sprintf(gcQuery,"SELECT uDeletedZone,uModDate FROM tDeletedZone WHERE uDeletedZone=%u"
 			,uDeletedZone);
-#else
-	sprintf(gcQuery,"SELECT uDeletedZone FROM tDeletedZone WHERE uDeletedZone=%u"
-			,uDeletedZone);
-#endif
-
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
@@ -755,19 +742,15 @@ void ModtDeletedZone(void)
 	if(i>1) tDeletedZone(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tDeletedZone(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tDeletedZone(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tDeletedZone",uDeletedZone);
 	iDNSLog(uDeletedZone,"tDeletedZone","Mod");
-#endif
 	tDeletedZone(gcQuery);
 
 }//ModtDeletedZone(void)
@@ -794,9 +777,19 @@ void tDeletedZoneList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uZone<td><font face=arial,helvetica color=white>cZone<td><font face=arial,helvetica color=white>uNSSet<td><font face=arial,helvetica color=white>cHostmaster<td><font face=arial,helvetica color=white>uSerial<td><font face=arial,helvetica color=white>uExpire<td><font face=arial,helvetica color=white>uRefresh<td><font face=arial,helvetica color=white>uTTL<td><font face=arial,helvetica color=white>uRetry<td><font face=arial,helvetica color=white>uZoneTTL<td><font face=arial,helvetica color=white>uMailServers<td><font face=arial,helvetica color=white>uView<td><font face=arial,helvetica color=white>cMainAddress<td><font face=arial,helvetica color=white>uRegistrar<td><font face=arial,helvetica color=white>uSecondaryOnly<td><font face=arial,helvetica color=white>cMasterIPs<td><font face=arial,helvetica color=white>cOptions<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uZone<td>"
+		"<font face=arial,helvetica color=white>cZone<td><font face=arial,helvetica color=white>uNSSet"
+		"<td><font face=arial,helvetica color=white>cHostmaster<td><font face=arial,helvetica color=white>uSerial"
+		"<td><font face=arial,helvetica color=white>uExpire<td><font face=arial,helvetica color=white>uRefresh"
+		"<td><font face=arial,helvetica color=white>uTTL<td><font face=arial,helvetica color=white>uRetry"
+		"<td><font face=arial,helvetica color=white>uZoneTTL<td><font face=arial,helvetica color=white>uMailServers"
+		"<td><font face=arial,helvetica color=white>uView<td><font face=arial,helvetica color=white>cMainAddress"
+		"<td><font face=arial,helvetica color=white>uRegistrar"
+		"<td><font face=arial,helvetica color=white>uSecondaryOnly"
+		"<td><font face=arial,helvetica color=white>cMasterIPs<td><font face=arial,helvetica color=white>cOptions"
+		"<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -830,7 +823,9 @@ void tDeletedZoneList(void)
 			ctime_r(&luTime21,cBuf21);
 		else
 			sprintf(cBuf21,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s"
+			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s"
+			"<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
@@ -866,7 +861,30 @@ void tDeletedZoneList(void)
 
 void CreatetDeletedZone(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tDeletedZone ( uDeletedZone INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cZone VARCHAR(100) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uNSSet INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uNSSet), cHostmaster VARCHAR(100) NOT NULL DEFAULT '', uSerial INT UNSIGNED NOT NULL DEFAULT 0, uExpire INT UNSIGNED NOT NULL DEFAULT 0, uRefresh INT UNSIGNED NOT NULL DEFAULT 0, uTTL INT UNSIGNED NOT NULL DEFAULT 0, uRetry INT UNSIGNED NOT NULL DEFAULT 0, uZoneTTL INT UNSIGNED NOT NULL DEFAULT 0, uMailServers INT UNSIGNED NOT NULL DEFAULT 0, cMainAddress VARCHAR(16) NOT NULL DEFAULT '', uView INT UNSIGNED NOT NULL DEFAULT 0, cOptions TEXT NOT NULL DEFAULT '', uSecondaryOnly INT UNSIGNED NOT NULL DEFAULT 0, uRegistrar INT UNSIGNED NOT NULL DEFAULT 0, cAllowTransfer VARCHAR(255) NOT NULL DEFAULT '' )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tDeletedZone ("
+			" uDeletedZone INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cZone VARCHAR(100) NOT NULL DEFAULT '',"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uNSSet INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uNSSet),"
+			" cHostmaster VARCHAR(100) NOT NULL DEFAULT '',"
+			" uSerial INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uExpire INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uRefresh INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uTTL INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uRetry INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uZoneTTL INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uMailServers INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cMainAddress VARCHAR(16) NOT NULL DEFAULT '',"
+			" uView INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cOptions TEXT NOT NULL DEFAULT '',"
+			" uSecondaryOnly INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uRegistrar INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cAllowTransfer VARCHAR(255) NOT NULL DEFAULT '',"
+			" uClient INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

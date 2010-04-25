@@ -437,19 +437,20 @@ void ExttZoneCommands(pentry entries[], int x)
                         ProcesstZoneVars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
+//This neeeds to be reviewed and moved TODO
 #define PRIORITY_LOGERROR 2000
-			
 				guMode=5;
 				//
 				//Copy the zone to tDeletedZone before deleting it.
 				MYSQL_RES *res;
 				MYSQL_ROW field;
 				
-				sprintf(gcQuery,"INSERT INTO tDeletedZone SET uDeletedZone='%u',cZone='%s',"
-						"uNSSet='%u',cHostmaster='%s',uSerial='%u',uExpire='%u',"
-						"uRefresh='%u',uTTL='%u',uRetry='%u',uZoneTTL='%u',uMailServers='%u',"
-						"uView='%u',cMainAddress='%s',uRegistrar='%u',uSecondaryOnly='%u',"
-						"cOptions='%s',uOwner='%u',uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+				sprintf(gcQuery,"INSERT INTO tDeletedZone SET uDeletedZone=%u,cZone='%s',"
+						"uNSSet=%u,cHostmaster='%s',uSerial=%u,uExpire=%u,"
+						"uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,uMailServers=%u,"
+						"uView=%u,cMainAddress='%s',uRegistrar=%u,uSecondaryOnly=%u,"
+						"cOptions='%s',uOwner=%u,uClient=%u,"
+						"uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
 						uZone,
 						cZone,
 						uNSSet,
@@ -466,14 +467,16 @@ void ExttZoneCommands(pentry entries[], int x)
 						uRegistrar,
 						uSecondaryOnly,
 						cOptions,
-						uOwner);
+						uOwner,
+						uClient);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					printf("Content-type: text/html\n\n%s\n",mysql_error(&gMysql));
 				//
 				//Copy the tResource records to tDeletedResource
 				
-				sprintf(gcQuery,"SELECT %s FROM tResource WHERE uZone=%u",VAR_LIST_tResource,uZone);
+				sprintf(gcQuery,"SELECT uResource,uZone,cName,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,"
+						"cComment,uOwner FROM tResource WHERE uZone=%u",uZone);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					printf("Content-type: text/html\n\n%s\n",mysql_error(&gMysql));
@@ -483,19 +486,12 @@ void ExttZoneCommands(pentry entries[], int x)
 				res=mysql_store_result(&gMysql);
 				while((field=mysql_fetch_row(res)))
 				{
-					sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%s',"
-							"uZone='%s',cName='%s',uTTL='%s',uRRType='%s',cParam1='%s',"
-							"cParam2='%s',cComment='%s',uOwner='%s',uCreatedBy=1,"
-							"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-							field[0],
-							field[1],
-							field[2],
-							field[3],
-							field[4],
-							field[5],
-							field[6],
-							field[7],
-							field[8]);
+					sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%s',uZone='%s',"
+							"cName='%s',uTTL='%s',uRRType='%s',cParam1='%s',cParam2='%s',"
+							"cParam3='%s',cParam4='%s',cComment='%s',uOwner='%s',"
+							"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							field[0],field[1],field[2],field[3],field[4],field[5],
+							field[6],field[7],field[8],field[9],field[10]);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));

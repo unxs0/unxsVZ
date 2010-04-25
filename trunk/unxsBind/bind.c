@@ -759,7 +759,7 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 }//void CreateSlaveFiles();
 
 
-//Intial install function
+//Initial install function
 void InstallNamedFiles(char *cIpNum)
 {
 	char cISMROOT[256]={""};
