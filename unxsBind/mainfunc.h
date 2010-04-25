@@ -462,7 +462,7 @@ void Initialize(char *cPasswd)
 
 	if(!cISMROOT[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. (bash) export ISMROOT=/home/ism-3.0\n");
+		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe\n");
 		exit(1);
 	}
 
@@ -1460,6 +1460,9 @@ void UpdateSchema(void)
 	unsigned ucServer=1;
 	unsigned uNSSet=1;
 	unsigned uClient=1;
+	unsigned uClientDel=1;
+	unsigned ucParam3=1;
+	unsigned ucParam4=1;
 
 	printf("UpdateSchema() start\n");
 
@@ -1469,19 +1472,22 @@ void UpdateSchema(void)
 	sprintf(gcQuery,"SHOW COLUMNS IN tAuthorize");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
+	{
 		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
+		exit(1);
+	}
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 		if(!strcmp(field[0],"cClrPasswd")) ucClrPasswd=0;
        	mysql_free_result(res);
 
-
 	sprintf(gcQuery,"SHOW COLUMNS IN tLog");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
+	{
 		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
+		exit(1);
+	}
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
@@ -1490,12 +1496,13 @@ void UpdateSchema(void)
 	}
        	mysql_free_result(res);
 
-
 	sprintf(gcQuery,"SHOW COLUMNS IN tZone");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
+	{
 		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
+		exit(1);
+	}
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
@@ -1504,9 +1511,37 @@ void UpdateSchema(void)
 	}
        	mysql_free_result(res);
 
+	sprintf(gcQuery,"SHOW COLUMNS IN tDeletedZone");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uClientDel")) uClientDel=0;
+	}
+       	mysql_free_result(res);
 
-	//Update changes to tAuthorize
-	//
+	sprintf(gcQuery,"SHOW COLUMNS IN tDeletedResource");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"cParam3")) ucParam3=0;
+		else if(!strcmp(field[0],"cParam4")) ucParam4=0;
+	}
+       	mysql_free_result(res);
+
+
+	//tAuthorize
 	if(ucClrPasswd)
 	{
 		sprintf(gcQuery,"ALTER TABLE tAuthorize ADD cClrPasswd VARCHAR(32) NOT NULL DEFAULT ''");
@@ -1514,7 +1549,6 @@ void UpdateSchema(void)
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
 	}
-
 	sprintf(gcQuery,"ALTER TABLE tAuthorize MODIFY cPasswd VARCHAR(35) NOT NULL DEFAULT ''");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
@@ -1530,7 +1564,6 @@ void UpdateSchema(void)
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
 	}
-
 	if(ucServer)
 	{
 		sprintf(gcQuery,"ALTER TABLE tLog ADD cServer VARCHAR(64) NOT NULL DEFAULT ''");
@@ -1553,7 +1586,6 @@ void UpdateSchema(void)
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
 	}
-
 	if(uClient)
 	{
 		sprintf(gcQuery,"ALTER TABLE tZone ADD uClient INT UNSIGNED NOT NULL DEFAULT 0");
@@ -1562,6 +1594,30 @@ void UpdateSchema(void)
 			printf("%s\n",mysql_error(&gMysql));
 	}
 
+	//tDeletedZone
+	if(uClientDel)
+	{
+		sprintf(gcQuery,"ALTER TABLE tDeletedZone ADD uClient INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
+
+	//tDeletedResource
+	if(ucParam3)
+	{
+		sprintf(gcQuery,"ALTER TABLE tDeletedResource ADD cParam3 VARCHAR(255) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
+	if(ucParam4)
+	{
+		sprintf(gcQuery,"ALTER TABLE tDeletedResource ADD cParam4 VARCHAR(255) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
 
 	printf("UpdateSchema() end\n");
 

@@ -39,7 +39,6 @@ static char *cComment={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static long uCreatedDate=0;
 //uModBy: uClient for last update
@@ -286,7 +285,7 @@ void tDeletedResourceInput(unsigned uMode)
 //uDeletedResource
 	OpenRow(LANG_FL_tDeletedResource_uDeletedResource,"black");
 	printf("<input title='%s' type=text name=uDeletedResource value=%u size=16 maxlength=10 "
-,LANG_FT_tDeletedResource_uDeletedResource,uDeletedResource);
+		,LANG_FT_tDeletedResource_uDeletedResource,uDeletedResource);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -309,7 +308,7 @@ void tDeletedResourceInput(unsigned uMode)
 //cName
 	OpenRow(LANG_FL_tDeletedResource_cName,"black");
 	printf("<input title='%s' type=text name=cName value=\"%s\" size=40 maxlength=100 "
-,LANG_FT_tDeletedResource_cName,EncodeDoubleQuotes(cName));
+		,LANG_FT_tDeletedResource_cName,EncodeDoubleQuotes(cName));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -322,7 +321,7 @@ void tDeletedResourceInput(unsigned uMode)
 //uTTL
 	OpenRow(LANG_FL_tDeletedResource_uTTL,"black");
 	printf("<input title='%s' type=text name=uTTL value=%u size=16 maxlength=10 "
-,LANG_FT_tDeletedResource_uTTL,uTTL);
+		,LANG_FT_tDeletedResource_uTTL,uTTL);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -341,7 +340,7 @@ void tDeletedResourceInput(unsigned uMode)
 //cParam1
 	OpenRow(LANG_FL_tDeletedResource_cParam1,EmptyString(cParam1));
 	printf("<input title='%s' type=text name=cParam1 value=\"%s\" size=80 maxlength=255 "
-,LANG_FT_tDeletedResource_cParam1,EncodeDoubleQuotes(cParam1));
+		,LANG_FT_tDeletedResource_cParam1,EncodeDoubleQuotes(cParam1));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -354,7 +353,7 @@ void tDeletedResourceInput(unsigned uMode)
 //cParam2
 	OpenRow(LANG_FL_tDeletedResource_cParam2,"black");
 	printf("<input title='%s' type=text name=cParam2 value=\"%s\" size=80 maxlength=255 "
-,LANG_FT_tDeletedResource_cParam2,EncodeDoubleQuotes(cParam2));
+		,LANG_FT_tDeletedResource_cParam2,EncodeDoubleQuotes(cParam2));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -367,7 +366,7 @@ void tDeletedResourceInput(unsigned uMode)
 //cParam3
 	OpenRow(LANG_FL_tResource_cParam3,"black");
 	printf("<input title='%s' type=text name=cParam3 value=\"%s\" size=80 maxlength=255 "
-,LANG_FT_tResource_cParam3,EncodeDoubleQuotes(cParam3));
+		,LANG_FT_tResource_cParam3,EncodeDoubleQuotes(cParam3));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -380,7 +379,7 @@ void tDeletedResourceInput(unsigned uMode)
 //cParam4
 	OpenRow(LANG_FL_tResource_cParam4,"black");
 	printf("<input title='%s' type=text name=cParam4 value=\"%s\" size=80 maxlength=255 "
-,LANG_FT_tResource_cParam4,EncodeDoubleQuotes(cParam4));
+		,LANG_FT_tResource_cParam4,EncodeDoubleQuotes(cParam4));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -393,7 +392,7 @@ void tDeletedResourceInput(unsigned uMode)
 //cComment
 	OpenRow(LANG_FL_tDeletedResource_cComment,"black");
 	printf("<textarea title='%s' cols=40 wrap=hard rows=3 name=cComment "
-,LANG_FT_tDeletedResource_cComment);
+		,LANG_FT_tDeletedResource_cComment);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cComment);
@@ -476,15 +475,13 @@ void NewtDeletedResource(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uDeletedResource=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tDeletedResource",uDeletedResource);
 	iDNSLog(uDeletedResource,"tDeletedResource","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uDeletedResource);
-	tDeletedResource(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uDeletedResource);
+		tDeletedResource(gcQuery);
 	}
 
 }//NewtDeletedResource(unsigned uMode)
@@ -492,29 +489,20 @@ void NewtDeletedResource(unsigned uMode)
 
 void DeletetDeletedResource(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tDeletedResource WHERE uDeletedResource=%u AND ( uOwner=%u OR %u>9 )"
 					,uDeletedResource,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tDeletedResource WHERE uDeletedResource=%u"
-					,uDeletedResource);
-#endif
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 	//tDeletedResource("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		iDNSLog(uDeletedResource,"tDeletedResource","Del");
-#endif
 		tDeletedResource(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		iDNSLog(uDeletedResource,"tDeletedResource","DelError");
-#endif
 		tDeletedResource(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -525,7 +513,9 @@ void Insert_tDeletedResource(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,"
+			"cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uDeletedResource
 			,uZone
 			,TextAreaSave(cName)
@@ -549,7 +539,9 @@ void Update_tDeletedResource(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tDeletedResource SET uDeletedResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tDeletedResource SET uDeletedResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,"
+			"cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uDeletedResource
 			,uZone
 			,TextAreaSave(cName)
@@ -573,15 +565,10 @@ void ModtDeletedResource(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	sprintf(gcQuery,"SELECT uDeletedResource,uModDate FROM tDeletedResource WHERE uDeletedResource=%u"
 			,uDeletedResource);
-#else
-	sprintf(gcQuery,"SELECT uDeletedResource FROM tDeletedResource WHERE uDeletedResource=%u"
-			,uDeletedResource);
-#endif
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -594,19 +581,15 @@ void ModtDeletedResource(void)
 	if(i>1) tDeletedResource(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tDeletedResource(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tDeletedResource(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tDeletedResource",uDeletedResource);
 	iDNSLog(uDeletedResource,"tDeletedResource","Mod");
-#endif
 	tDeletedResource(gcQuery);
 
 }//ModtDeletedResource(void)
@@ -634,9 +617,14 @@ void tDeletedResourceList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uDeletedResource<td><font face=arial,helvetica color=white>uZone<td><font face=arial,helvetica color=white>cName<td><font face=arial,helvetica color=white>uTTL<td><font face=arial,helvetica color=white>uRRType<td><font face=arial,helvetica color=white>cParam1<td><font face=arial,helvetica color=white>cParam2<td><font face=arial,helvetica color=white>cComment<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uDeletedResource"
+		"<td><font face=arial,helvetica color=white>uZone<td><font face=arial,helvetica color=white>cName"
+		"<td><font face=arial,helvetica color=white>uTTL<td><font face=arial,helvetica color=white>uRRType"
+		"<td><font face=arial,helvetica color=white>cParam1<td><font face=arial,helvetica color=white>cParam2"
+		"<td><font face=arial,helvetica color=white>cComment<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -664,7 +652,8 @@ void tDeletedResourceList(void)
 			ctime_r(&luTime12,cBuf12);
 		else
 			sprintf(cBuf12,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s"
+			"<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,ForeignKey("tZone","cZone",strtoul(field[1],NULL,10))
@@ -680,7 +669,6 @@ void tDeletedResourceList(void)
 			,ForeignKey(TCLIENT,"cLabel",strtoul(field[11],NULL,10))
 			,cBuf12
 				);
-
 	}
 
 	printf("</table></form>\n");
@@ -691,7 +679,22 @@ void tDeletedResourceList(void)
 
 void CreatetDeletedResource(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tDeletedResource ( uDeletedResource INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cName VARCHAR(100) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uTTL INT UNSIGNED NOT NULL DEFAULT 0, uRRType INT UNSIGNED NOT NULL DEFAULT 0, cParam1 VARCHAR(255) NOT NULL DEFAULT '', cParam2 VARCHAR(255) NOT NULL DEFAULT '', cComment TEXT NOT NULL DEFAULT '', uZone INT UNSIGNED NOT NULL DEFAULT 0,index (uZone), cParam3 VARCHAR(255) NOT NULL DEFAULT '', cParam4 VARCHAR(255) NOT NULL DEFAULT '' )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tDeletedResource ("
+			" uDeletedResource INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cName VARCHAR(100) NOT NULL DEFAULT '',"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uTTL INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uRRType INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cParam1 VARCHAR(255) NOT NULL DEFAULT '',"
+			" cParam2 VARCHAR(255) NOT NULL DEFAULT '',"
+			" cComment TEXT NOT NULL DEFAULT '',"
+			" uZone INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uZone),"
+			" cParam3 VARCHAR(255) NOT NULL DEFAULT '',"
+			" cParam4 VARCHAR(255) NOT NULL DEFAULT '' )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

@@ -22,7 +22,7 @@ RNDC="/usr/sbin/rndc -c /etc/unxsbind-rndc.conf";
 THIT=/usr/sbin/tHitCollector;
 
 #Gen named.stats
-rm $STAT_FILE;
+rm -f $STAT_FILE;
 $RNDC stats;
 RNDC_RET=$?;
 if [ $RNDC_RET -ne 0 ]; then
