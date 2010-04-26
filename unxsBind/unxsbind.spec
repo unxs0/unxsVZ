@@ -16,13 +16,13 @@ unxsBind iDNS provides a professional DNS BIND 9 manager. For 1 to 1000's of NSs
 
 Main features supported:
 
- 1-.  Multiple disjoint NS sets that can share same NS cluster nodes.
- 2-.  Unlimited split horizon views (with no BIND xfer issues.)
+ 1-.  Manages unlimited DNS data for an unlimited number of NS sets for an unlimited number of DNS servers.
+ 2-.  Unlimited BIND views (with option for no BIND master/slave xfer issues.)
  3-.  Bulk zone and resource record operations.
  4-.  Traffic monitoring per zone or per NS set (per NS or aggregated across cluster) 
 	with rrdtool graphics.
  5-.  Wizards for CIDR based downstream delegation of arpa zones.
- 6-.  Hidden masters, external masters, all masters only clusters (no BIND xfer problems.)
+ 6-.  Supports hidden masters, external masters, all masters clusters, forward zones.
  7-.  Secondary only zone management for customers running their own (hidden or public) masters.
  8-.  Engineering and development friendly tech web interface backend.
  9-.  Organization/Company contact web interface. Allows non skilled zone owners to modify RRs.
@@ -35,15 +35,25 @@ Main features supported:
  13-. Support for upstream delegated sub class C delegated rev dns zones.
  14-. Migration and import tools.
  15-. Database can fail and DNS services continue.
- 16-. Support for large DKIM and other txt RRs.
- 17-. DNSSEC and international char (IDNS) support available soon with just one "yum update unxsbind" 
-	command.
+ 16-. Support for large SPF/DK/DKIM and other TXT like RRs.
+ 17-. Support for SRV and NAPTR RRs.
+ 18-. Support for IPv6 AAAA and rev dns for IPv6.
+ 19-. Comprehensive DNSSEC support (including key management) will be available as soon as BIND and
+      at least three TLD deployments prove stable.
 
 %prep
-%setup
+%setup -q
 
 %build
 make
+
+%pre 
+if [ "$1" = "1" ]; then
+	echo "pre: Initial install";
+elif [ "$1" = "2" ]; then
+	echo "pre: Update";
+fi
+
 
 %install
 make install
@@ -77,6 +87,8 @@ cd interfaces/admin
 make install
 cd ../org
 make install
+cd ../vorg
+make install
 cd ../thit
 cp bind9-genstats.sh /usr/sbin/bind9-genstats.sh
 make install
@@ -91,55 +103,63 @@ chown -R named:named /usr/local/idns
 cd $RPM_BUILD_DIR
 
 %post
+if [ "$1" = "1" ]; then
+	echo "post: Initial install";
+elif [ "$1" = "2" ]; then
+	echo "post: Update";
+fi
 chmod -R og+x /usr/local/idns
 chmod 644 /usr/local/idns/named.conf
 chown -R named:named /usr/local/idns
 if [ -x /sbin/chkconfig ];then
 	if [ -x /etc/init.d/named ];then
-		/sbin/chkconfig --level 3 named off
+		/sbin/chkconfig --level 3 named off;
 	fi
 	if [ -x /etc/init.d/unxsbind ];then
 		/sbin/chkconfig --level 3 unxsbind on
 		/etc/init.d/unxsbind restart > /dev/null 2>&1
 		if [ $? == 0 ];then
-			cUnxsBindStart="1"
+			cUnxsBindStart="1";
 		fi
 	fi
 	if [ -x /etc/init.d/httpd ];then
 		/sbin/chkconfig --level 3 httpd on
 		/etc/init.d/httpd restart > /dev/null 2>&1
 		if [ $? == 0 ];then
-			cHttpdStart="1"
+			cHttpdStart="1";
 		fi
 	fi
 	if [ -x /etc/init.d/mysqld ];then
 		/sbin/chkconfig --level 3 mysqld on
 		/etc/init.d/mysqld restart > /dev/null 2>&1
 		if [ $? == 0 ];then
-			cMySQLStart="1"
+			cMySQLStart="1";
 		fi
 	fi
 fi
 #if mysqld has no root passwd and we started it then we will set it and finish the data initialize
 if [ -x /usr/bin/mysql ];then
 	if [ "$cMySQLStart" == "1" ];then
-		echo "quit" | /usr/bin/mysql  > /dev/null 2>&1
+		echo "quit" | /usr/bin/mysql  > /dev/null 2>&1;
 		if [ $? == 0 ];then
-			/usr/bin/mysqladmin -u root password 'ultrasecret' > /dev/null 2>&1
+			/usr/bin/mysqladmin -u root password 'ultrasecret' > /dev/null 2>&1;
 			if [ $? == 0 ];then
-				echo "mysqld root password set to 'ultrasecret' change ASAP!"
-				export ISMROOT=/usr/local/share
-				/var/www/unxs/cgi-bin/iDNS.cgi Initialize ultrasecret > /dev/null 2>&1
+				echo "mysqld root password set to 'ultrasecret' change ASAP!";
+				export ISMROOT=/usr/local/share;
+				/var/www/unxs/cgi-bin/iDNS.cgi Initialize ultrasecret > /dev/null 2>&1;
 				if [ $? == 0 ];then
-					cInitialize="1"
+					cInitialize="1";
 				fi
-				/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 > /dev/null 2>&1
+				/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 > /dev/null 2>&1;
 				if [ $? == 0 ];then
-					cAllfiles="1"
+					cAllfiles="1";
 				fi
 			fi
 		fi
 	fi
+fi
+if [ -x /var/www/unxs/cgi-bin/iDNS.cgi ] && && [ "$1" == "2" ];then
+	/var/www/unxs/cgi-bin/iDNS.cgi UpdateSchema > /dev/null 2>&1;
 fi
 #let installer know what was done.
 if [ "$cUnxsBindStart" == "1" ] && [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
@@ -184,11 +204,11 @@ fi
 #cat unxsbind crontab into root crontab
 if [ -f /usr/local/share/iDNS/setup9/root-crontab ] && [ -d /var/spool/cron ] && [ -x /usr/sbin/tHitCollector ];then
 	#initialize main stats rrd
-	/usr/sbin/tHitCollector Initialize --cZone allzone.stats > /dev/null 2>&1
+	/usr/sbin/tHitCollector Initialize --cZone allzone.stats > /dev/null 2>&1;
 	#new version of rrdtool needs fontconfig font, it was installed
 	#but we need to load into cache
 	if [ -x /usr/bin/fc-cache ];then
-		/usr/bin/fc-cache > /dev/null 2>&1
+		/usr/bin/fc-cache > /dev/null 2>&1;
 	fi
 	#do not add again
 	grep "iDNS" /var/spool/cron/root > /dev/null 2>&1
@@ -197,9 +217,23 @@ if [ -f /usr/local/share/iDNS/setup9/root-crontab ] && [ -d /var/spool/cron ] &&
 	fi
 	#setup main stats graph
 	if [ -f /var/www/unxs/html/images/allzone.stats.png ] && [ -d /var/log/named ];then
-		rm /var/www/unxs/html/images/allzone.stats.png
-		ln -s /var/log/named/allzone.stats.png /var/www/unxs/html/images/allzone.stats.png
+		rm /var/www/unxs/html/images/allzone.stats.png;
+		ln -s /var/log/named/allzone.stats.png /var/www/unxs/html/images/allzone.stats.png;
 	fi
+fi
+
+%preun
+if [ "$1" = "0" ]; then
+	echo "preun: Uninstall";
+elif [ "$1" = "1" ]; then
+	echo "preun: Update";
+fi
+
+%postun
+if [ "$1" = "0" ]; then
+	echo "postun: Uninstall";
+elif [ "$1" = "1" ]; then
+	echo "postun: Update";
 fi
 
 %clean
@@ -294,30 +328,23 @@ fi
 /var/www/unxs/cgi-bin/iDNS.cgi
 /var/www/unxs/cgi-bin/idnsAdmin.cgi
 /var/www/unxs/cgi-bin/idnsOrg.cgi
+/var/www/unxs/cgi-bin/vdnsOrg.cgi
 /usr/sbin/tHitCollector
 %config(noreplace) /usr/sbin/bind9-genstats.sh
 /usr/sbin/idns-logerror
+/var/www/unxs/html/images/allzone.stats.png
+/var/www/unxs/html/images/green.gif
 /var/www/unxs/html/images/null.gif
 /var/www/unxs/html/images/red.gif
+/var/www/unxs/html/images/unxsbind.jpg
 /var/www/unxs/html/images/yellow.gif
-/var/www/unxs/html/images/green.gif
-/var/www/unxs/html/images/allzone.stats.png
-/var/www/unxs/html/images/bgrd_header_engage.gif
-/var/www/unxs/html/images/bgrd_masthead.gif
-/var/www/unxs/html/images/bgrd_topnav.gif
-/var/www/unxs/html/images/bgrd_topnav_systxt.gif
-/var/www/unxs/html/images/btn_mast_search.gif
-/var/www/unxs/html/images/clear.gif
-/var/www/unxs/html/images/unxslogo.jpg
-/var/www/unxs/html/css/popups.js
-/var/www/unxs/html/css/styles.css
 %dir /var/log/named
 /usr/share/fonts/DejaVuSansMono-Roman.ttf
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
-* Tue Apr 20 2010 Gary Wallis <support@unixservice.com>
-- Fixed upgrade and requirements. Using new unxstemplate lib for interfaces. Corrected multiple DB server support. Corrected version number change.
+* Tue Apr 26 2010 Gary Wallis <support@unixservice.com>
+- Fixed upgrade and requirements. Using new unxstemplate lib for interfaces. Corrected multiple DB server support. Corrected version number change. Added support for update and uninstall.
 * Wed Mar 17 2010 Hugo Urquiza <support2@unixservice.com>
 - New rpm release, added support for AAAA and NAPTR RRs, major version number change.
 * Mon Aug 02 2009 Hugo Urquiza <support2@unixservice.com>
