@@ -9,9 +9,10 @@ URL: http://unixservice.com
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
+Obsoletes: ucidr
 
 %description
-The ucidr program provides functions for determining
+The unxscidrlib library provides functions for determining
 if a given IPv4 is in a given IPv4 CIDR specified block
 among other basic CIDR operations.
 This package deprecates ucidr.
@@ -24,7 +25,7 @@ unsigned uInCIDR4Format(const char *cCIDR4,unsigned *uIPv4,unsigned *uCIDR4Mask)
 unsigned uInIpv4Format(const char *cIPv4,unsigned *uIPv4);
 
 %prep
-%setup
+%setup -q
 
 %build
 make

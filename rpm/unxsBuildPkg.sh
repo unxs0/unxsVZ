@@ -1,21 +1,16 @@
 #!/bin/bash
 #
 #Simple automation of the building of unxsVZ normal packages
-#Note1 that the spec file info has to reflect the version and release provided.
-#Note2 for unxsVZ build just place unxsVZ inside a dir also called unxsVZ
-#Note3 everything has to be in the format required herein.
+#Notes 
+#	The spec file info has to reflect the version and release provided.
+#	For unxsVZ build just place unxsVZ inside a dir also called unxsVZ
+#	Everything has to be in the format required herein.
+#	For scp/ssh options remote account must have sudo setup for running
+#	/usr/sbin/unxsrpm-install.sh. The port is required even if 22.
 #
 
-if [ "$1" == "" ];then
-	echo "usage $0 <unxsVZ subsystem name ex. unxsBind> <version ex. 1.0> <rpm release ex. 1>";
-	exit 0;
-fi
-if [ "$2" == "" ];then
-	echo "usage $0 <unxsVZ subsystem name ex. unxsBind> <version ex. 1.0> <rpm release ex. 1>";
-	exit 0;
-fi
-if [ "$3" == "" ];then
-	echo "usage $0 <unxsVZ subsystem name ex. unxsBind> <version ex. 1.0> <rpm release ex. 1>";
+if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
+	echo "usage $0 <unxsVZ subsystem> <version 1.0> <rpm release 1> [<scp/ssh port> <scp/ssh login@server>]";
 	exit 0;
 fi
 if [ "$UNXSVZ" == "" ];then
@@ -175,4 +170,15 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-echo "You should now sftp the tar.gz, the src.rpm and the binary rpm to your release server for install";
+if [ "$4" == "" ];then
+	echo "You should now sftp the tar.gz, the src.rpm and the binary rpm to your release server for install.";
+else 
+	if [ "$5" != "" ];then
+		/usr/bin/scp -P $4 /usr/src/redhat/SOURCES/$LCNAME-$2.tar.gz $5:;
+		/usr/bin/scp -P $4  /usr/src/redhat/SRPMS/$LCNAME-$2-$3.src.rpm $5:;
+		/usr/bin/scp -P $4  /usr/src/redhat/RPMS/i386/$LCNAME-$2-$3.i386.rpm $5:;
+		/usr/bin/ssh -p $4 $5 "sudo /usr/sbin/unxsrpm-install.sh $LCNAME-$2-$3 $LCNAME-$2";
+	else
+		echo "You specified only one of the required scp args.";
+	fi
+fi
