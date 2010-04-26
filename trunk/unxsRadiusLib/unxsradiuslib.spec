@@ -9,6 +9,7 @@ URL: http://unixservice.com
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
+Obsoletes: uradius
 
 %description
 unxsradiuslib is a small static library and a dictionary file.
@@ -18,7 +19,7 @@ function allows for reading returned extra authorization data.
 This package deprecates uradius.
 
 %prep
-%setup
+%setup -q
 
 %build
 make
