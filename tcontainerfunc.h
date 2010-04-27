@@ -2515,7 +2515,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					"&uContainer=%s>%s/%s/%s</a><br>\n",
 						field[0],field[1],field[2],field[3]);
 			}
-			if(++uNumRows>=uLIMIT)
+			if(++uNumRows>uLIMIT)
 			{
 				printf("(Only %u containers shown use search/filters to shorten list.)<br>\n",
 						uLIMIT);
