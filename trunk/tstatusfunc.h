@@ -66,7 +66,7 @@ void ExttStatusCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstStatusVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(guPermLevel>=12 && guLoginClient==1)
 			{
 	                        guMode=2001;
 				tStatus(LANG_NB_CONFIRMDEL);
@@ -77,7 +77,7 @@ void ExttStatusCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstStatusVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(guPermLevel>=12 && guLoginClient==1)
 			{
 				guMode=5;
 				DeletetStatus();
@@ -194,13 +194,7 @@ void ExttStatusListSelect(void)
         if(!strcmp(gcFilter,"uStatus"))
         {
                 sscanf(gcCommand,"%u",&uStatus);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
-			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tStatus.uStatus=%u \
-						ORDER BY uStatus",
-						uStatus);
+		sprintf(cCat," WHERE tStatus.uStatus=%u ORDER BY uStatus",uStatus);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -245,7 +239,7 @@ void ExttStatusNavBar(void)
 	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy))
+	if(guPermLevel>=12 && guLoginClient==1)
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -285,6 +279,3 @@ void tStatusNavList(void)
         mysql_free_result(res);
 
 }//void tStatusNavList(void)
-
-
-//perlSAR patch1

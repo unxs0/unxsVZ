@@ -4,9 +4,9 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2007 Gary Wallis.
- 
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file.
 */
 
 //ModuleFunctionProtos()
@@ -62,10 +62,7 @@ void ExttJobStatusCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstJobStatusVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(guPermLevel>=12 && guLoginClient==1)
 			{
 	                        guMode=2001;
 				tJobStatus(LANG_NB_CONFIRMDEL);
@@ -74,10 +71,7 @@ void ExttJobStatusCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstJobStatusVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(guPermLevel>=12 && guLoginClient==1)
 			{
 				guMode=5;
 				DeletetJobStatus();
@@ -86,10 +80,7 @@ void ExttJobStatusCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstJobStatusVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(guPermLevel>=12)
 			{
 				guMode=2002;
 				tJobStatus(LANG_NB_CONFIRMMOD);
@@ -98,10 +89,7 @@ void ExttJobStatusCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstJobStatusVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(guPermLevel>=12)
 			{
                         	guMode=2002;
 				//Check entries here
@@ -171,14 +159,14 @@ void ExttJobStatusGetHook(entry gentries[], int x)
 
 void ExttJobStatusSelect(void)
 {
-	ExtSelect("tJobStatus",VAR_LIST_tJobStatus);
+	ExtSelectPublic("tJobStatus",VAR_LIST_tJobStatus);
 
 }//void ExttJobStatusSelect(void)
 
 
 void ExttJobStatusSelectRow(void)
 {
-	ExtSelectRow("tJobStatus",VAR_LIST_tJobStatus,uJobStatus);
+	ExtSelectRowPublic("tJobStatus",VAR_LIST_tJobStatus,uJobStatus);
 
 }//void ExttJobStatusSelectRow(void)
 
@@ -187,18 +175,13 @@ void ExttJobStatusListSelect(void)
 {
 	char cCat[512];
 
-	ExtListSelect("tJobStatus",VAR_LIST_tJobStatus);
+	ExtListSelectPublic("tJobStatus",VAR_LIST_tJobStatus);
 	
 	//Changes here must be reflected below in ExttJobStatusListFilter()
         if(!strcmp(gcFilter,"uJobStatus"))
         {
                 sscanf(gcCommand,"%u",&uJobStatus);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
-			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tJobStatus.uJobStatus=%u \
-						ORDER BY uJobStatus",
+		sprintf(cCat," WHERE tJobStatus.uJobStatus=%u ORDER BY uJobStatus",
 						uJobStatus);
 		strcat(gcQuery,cCat);
         }
@@ -241,14 +224,10 @@ void ExttJobStatusNavBar(void)
 	if(guPermLevel>=12 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(guPermLevel>=12)
 		printf(LANG_NBB_MODIFY);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(guPermLevel>=12 && guLoginClient==1)
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -266,7 +245,7 @@ void tJobStatusNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	ExtSelect("tJobStatus","tJobStatus.uJobStatus,tJobStatus.cLabel");
+	ExtSelectPublic("tJobStatus","tJobStatus.uJobStatus,tJobStatus.cLabel");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -281,14 +260,10 @@ void tJobStatusNavList(void)
         	printf("<p><u>tJobStatusNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tJobStatus\
-&uJobStatus=%s>%s</a><br>\n",field[0],field[1]);
-	        }
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tJobStatus&uJobStatus=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
         mysql_free_result(res);
 
 }//void tJobStatusNavList(void)
 
-
-//perlSAR patch1

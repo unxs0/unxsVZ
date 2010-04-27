@@ -197,13 +197,11 @@ void ExttTemplateListSelect(void)
         if(!strcmp(gcFilter,"uTemplate"))
         {
                 sscanf(gcCommand,"%u",&uTemplate);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tTemplate.uTemplate=%u \
-						ORDER BY uTemplate",
-						uTemplate);
+		else
+			strcat(gcQuery," AND ");
+		sprintf(cCat,"tTemplate.uTemplate=%u ORDER BY uTemplate",uTemplate);
 		strcat(gcQuery,cCat);
         }
         else if(1)

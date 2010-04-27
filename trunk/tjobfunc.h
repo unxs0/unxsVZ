@@ -183,19 +183,19 @@ void ExttJobListSelect(void)
         if(!strcmp(gcFilter,"uJob"))
         {
                 sscanf(gcCommand,"%u",&uJob);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tJob.uJob=%u ORDER BY uJob",uJob);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cLabel"))
         {
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tJob.cLabel LIKE '%s' ORDER BY uJob",gcCommand);
 		strcat(gcQuery,cCat);
 	}

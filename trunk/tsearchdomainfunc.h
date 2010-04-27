@@ -217,10 +217,10 @@ void ExttSearchdomainListSelect(void)
         if(!strcmp(gcFilter,"uSearchdomain"))
         {
                 sscanf(gcCommand,"%u",&uSearchdomain);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tSearchdomain.uSearchdomain=%u ORDER BY uSearchdomain",
 						uSearchdomain);
 		strcat(gcQuery,cCat);

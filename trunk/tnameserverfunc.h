@@ -216,10 +216,10 @@ void ExttNameserverListSelect(void)
         if(!strcmp(gcFilter,"uNameserver"))
         {
                 sscanf(gcCommand,"%u",&uNameserver);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tNameserver.uNameserver=%u ORDER BY uNameserver",uNameserver);
 		strcat(gcQuery,cCat);
         }

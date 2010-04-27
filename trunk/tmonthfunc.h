@@ -193,13 +193,11 @@ void ExttMonthListSelect(void)
         if(!strcmp(gcFilter,"uMonth"))
         {
                 sscanf(gcCommand,"%u",&uMonth);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tMonth.uMonth=%u \
-						ORDER BY uMonth",
-						uMonth);
+		else
+			strcat(gcQuery," AND ");
+		sprintf(cCat,"tMonth.uMonth=%u ORDER BY uMonth",uMonth);
 		strcat(gcQuery,cCat);
         }
         else if(1)

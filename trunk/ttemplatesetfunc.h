@@ -186,19 +186,13 @@ void ExttTemplateSetListSelect(void)
 {
 	char cCat[512];
 
-	ExtListSelect("tTemplateSet",VAR_LIST_tTemplateSet);
+	ExtListSelectPublic("tTemplateSet",VAR_LIST_tTemplateSet);
 
 	//Changes here must be reflected below in ExttTemplateSetListFilter()
         if(!strcmp(gcFilter,"uTemplateSet"))
         {
                 sscanf(gcCommand,"%u",&uTemplateSet);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
-			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tTemplateSet.uTemplateSet=%u"
-						" ORDER BY uTemplateSet",
-						uTemplateSet);
+		sprintf(cCat," WHERE tTemplateSet.uTemplateSet=%u ORDER BY uTemplateSet",uTemplateSet);
 		strcat(gcQuery,cCat);
         }
         else if(1)
