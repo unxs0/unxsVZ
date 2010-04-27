@@ -478,13 +478,11 @@ void ExttNodeListSelect(void)
         if(!strcmp(gcFilter,"uNode"))
         {
                 sscanf(gcCommand,"%u",&uNode);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tNode.uNode=%u \
-						ORDER BY uNode",
-						uNode);
+		else
+			strcat(gcQuery," AND ");
+		sprintf(cCat,"tNode.uNode=%u ORDER BY uNode",uNode);
 		strcat(gcQuery,cCat);
         }
         else if(1)

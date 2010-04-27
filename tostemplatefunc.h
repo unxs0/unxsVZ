@@ -365,10 +365,10 @@ void ExttOSTemplateListSelect(void)
         if(!strcmp(gcFilter,"uOSTemplate"))
         {
                 sscanf(gcCommand,"%u",&uOSTemplate);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
+		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tOSTemplate.uOSTemplate=%u ORDER BY uOSTemplate",uOSTemplate);
 		strcat(gcQuery,cCat);
         }

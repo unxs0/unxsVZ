@@ -4,9 +4,9 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2007 Gary Wallis.
- 
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file.
 */
 
 //ModuleFunctionProtos()
@@ -33,7 +33,7 @@ void ExttTemplateTypeCommands(pentry entries[], int x)
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=10)
+			if(guPermLevel>=12)
 			{
 	                        ProcesstTemplateTypeVars(entries,x);
                         	guMode=2000;
@@ -42,7 +42,7 @@ void ExttTemplateTypeCommands(pentry entries[], int x)
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=10)
+			if(guPermLevel>=12)
 			{
                         	ProcesstTemplateTypeVars(entries,x);
 
@@ -61,10 +61,7 @@ void ExttTemplateTypeCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstTemplateTypeVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(guPermLevel>=12 && guLoginClient==1)
 			{
 	                        guMode=2001;
 				tTemplateType(LANG_NB_CONFIRMDEL);
@@ -73,10 +70,7 @@ void ExttTemplateTypeCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstTemplateTypeVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(guPermLevel>=12 && guLoginClient==1)
 			{
 				guMode=5;
 				DeletetTemplateType();
@@ -85,10 +79,7 @@ void ExttTemplateTypeCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstTemplateTypeVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(guPermLevel>=12)
 			{
 				guMode=2002;
 				tTemplateType(LANG_NB_CONFIRMMOD);
@@ -97,10 +88,7 @@ void ExttTemplateTypeCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstTemplateTypeVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(guPermLevel>=12)
 			{
                         	guMode=2002;
 				//Check entries here
@@ -169,14 +157,14 @@ void ExttTemplateTypeGetHook(entry gentries[], int x)
 
 void ExttTemplateTypeSelect(void)
 {
-	ExtSelect("tTemplateType",VAR_LIST_tTemplateType);
+	ExtSelectPublic("tTemplateType",VAR_LIST_tTemplateType);
 
 }//void ExttTemplateTypeSelect(void)
 
 
 void ExttTemplateTypeSelectRow(void)
 {
-	ExtSelectRow("tTemplateType",VAR_LIST_tTemplateType,uTemplateType);
+	ExtSelectRowPublic("tTemplateType",VAR_LIST_tTemplateType,uTemplateType);
 
 }//void ExttTemplateTypeSelectRow(void)
 
@@ -185,18 +173,13 @@ void ExttTemplateTypeListSelect(void)
 {
 	char cCat[512];
 
-	ExtListSelect("tTemplateType",VAR_LIST_tTemplateType);
+	ExtListSelectPublic("tTemplateType",VAR_LIST_tTemplateType);
 	
 	//Changes here must be reflected below in ExttTemplateTypeListFilter()
         if(!strcmp(gcFilter,"uTemplateType"))
         {
                 sscanf(gcCommand,"%u",&uTemplateType);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
-			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tTemplateType.uTemplateType=%u \
-						ORDER BY uTemplateType",
+		sprintf(cCat," WHERE tTemplateType.uTemplateType=%u ORDER BY uTemplateType",
 						uTemplateType);
 		strcat(gcQuery,cCat);
         }
@@ -236,17 +219,13 @@ void ExttTemplateTypeNavBar(void)
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=10 && !guListMode)
+	if(guPermLevel>=12 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(guPermLevel>=12)
 		printf(LANG_NBB_MODIFY);
 
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(guPermLevel>=12 && guLoginClient==1)
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -264,7 +243,7 @@ void tTemplateTypeNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	ExtSelect("tTemplateType","tTemplateType.uTemplateType,tTemplateType.cLabel");
+	ExtSelectPublic("tTemplateType","tTemplateType.uTemplateType,tTemplateType.cLabel");
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -280,14 +259,9 @@ void tTemplateTypeNavList(void)
         	printf("<p><u>tTemplateTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tTemplateType\
-&uTemplateType=%s>%s</a><br>\n",field[0],field[1]);
-	        }
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tTemplateType&uTemplateType=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
         mysql_free_result(res);
 
 }//void tTemplateTypeNavList(void)
-
-
-//perlSAR patch1
