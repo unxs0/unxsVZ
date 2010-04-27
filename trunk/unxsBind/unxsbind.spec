@@ -1,4 +1,4 @@
-Summary: DNS BIND 9 telco quality manager with quality admin and end-user web interfaces. Also rrdtool graphics.
+Summary: DNS BIND 9 telco quality manager with admin and end-user web interfaces. Integrated rrdtool graphics.
 Name: unxsbind
 Version: 3.0
 Release: 1
@@ -91,8 +91,7 @@ cd ../vorg
 make install
 cd ../thit
 cp bind9-genstats.sh /usr/sbin/bind9-genstats.sh
-make install
-cd ../errorlog
+chmod 500 /usr/sbin/bind9-genstats.sh
 make install
 #things we can do with no data loaded
 export ISMROOT=/usr/local/share
@@ -105,120 +104,151 @@ cd $RPM_BUILD_DIR
 %post
 if [ "$1" = "1" ]; then
 	echo "post: Initial install";
-elif [ "$1" = "2" ]; then
-	echo "post: Update";
-fi
-chmod -R og+x /usr/local/idns
-chmod 644 /usr/local/idns/named.conf
-chown -R named:named /usr/local/idns
-if [ -x /sbin/chkconfig ];then
-	if [ -x /etc/init.d/named ];then
-		/sbin/chkconfig --level 3 named off;
-	fi
-	if [ -x /etc/init.d/unxsbind ];then
-		/sbin/chkconfig --level 3 unxsbind on
-		/etc/init.d/unxsbind restart > /dev/null 2>&1
-		if [ $? == 0 ];then
-			cUnxsBindStart="1";
+
+	chmod -R og+x /usr/local/idns
+	chmod 644 /usr/local/idns/named.conf
+	chown -R named:named /usr/local/idns
+	if [ -x /sbin/chkconfig ];then
+		if [ -x /etc/init.d/named ];then
+			/sbin/chkconfig --level 3 named off;
 		fi
-	fi
-	if [ -x /etc/init.d/httpd ];then
-		/sbin/chkconfig --level 3 httpd on
-		/etc/init.d/httpd restart > /dev/null 2>&1
-		if [ $? == 0 ];then
-			cHttpdStart="1";
-		fi
-	fi
-	if [ -x /etc/init.d/mysqld ];then
-		/sbin/chkconfig --level 3 mysqld on
-		/etc/init.d/mysqld restart > /dev/null 2>&1
-		if [ $? == 0 ];then
-			cMySQLStart="1";
-		fi
-	fi
-fi
-#if mysqld has no root passwd and we started it then we will set it and finish the data initialize
-if [ -x /usr/bin/mysql ];then
-	if [ "$cMySQLStart" == "1" ];then
-		echo "quit" | /usr/bin/mysql  > /dev/null 2>&1;
-		if [ $? == 0 ];then
-			/usr/bin/mysqladmin -u root password 'ultrasecret' > /dev/null 2>&1;
+		if [ -x /etc/init.d/unxsbind ];then
+			/sbin/chkconfig --level 3 unxsbind on
+			/etc/init.d/unxsbind restart > /dev/null 2>&1
 			if [ $? == 0 ];then
-				echo "mysqld root password set to 'ultrasecret' change ASAP!";
-				export ISMROOT=/usr/local/share;
-				/var/www/unxs/cgi-bin/iDNS.cgi Initialize ultrasecret > /dev/null 2>&1;
+				cUnxsBindStart="1";
+			fi
+		fi
+		if [ -x /etc/init.d/httpd ];then
+			/sbin/chkconfig --level 3 httpd on
+			/etc/init.d/httpd restart > /dev/null 2>&1
+			if [ $? == 0 ];then
+				cHttpdStart="1";
+			fi
+		fi
+		if [ -x /etc/init.d/mysqld ];then
+			/sbin/chkconfig --level 3 mysqld on
+			/etc/init.d/mysqld restart > /dev/null 2>&1
+			if [ $? == 0 ];then
+				cMySQLStart="1";
+			fi
+		fi
+	fi
+	#if mysqld has no root passwd and we started it then we will set it and finish the data initialize
+	if [ -x /usr/bin/mysql ];then
+		if [ "$cMySQLStart" == "1" ];then
+			echo "quit" | /usr/bin/mysql  > /dev/null 2>&1;
+			if [ $? == 0 ];then
+				/usr/bin/mysqladmin -u root password 'ultrasecret' > /dev/null 2>&1;
 				if [ $? == 0 ];then
-					cInitialize="1";
-				fi
-				/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 > /dev/null 2>&1;
-				if [ $? == 0 ];then
-					cAllfiles="1";
+					echo "mysqld root password set to 'ultrasecret' change ASAP!";
+					export ISMROOT=/usr/local/share;
+					/var/www/unxs/cgi-bin/iDNS.cgi Initialize ultrasecret > /dev/null 2>&1;
+					if [ $? == 0 ];then
+						cInitialize="1";
+					fi
+					/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 \								> /dev/null 2>&1;
+					if [ $? == 0 ];then
+						cAllfiles="1";
+					fi
 				fi
 			fi
 		fi
 	fi
-fi
-if [ -x /var/www/unxs/cgi-bin/iDNS.cgi ] && && [ "$1" == "2" ];then
-	/var/www/unxs/cgi-bin/iDNS.cgi UpdateSchema > /dev/null 2>&1;
-fi
-#let installer know what was done.
-if [ "$cUnxsBindStart" == "1" ] && [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
-			&& [ "$cInitialize" == "1" ];then
-	echo "unxsBind has been installed, intialized and httpd and named have been started.";	
-	echo "You can proceed to login to your unxsBind interfaces with your browser.";	
-else 
-		echo "It appears that one or more manual operations may be needed to finish";
-		echo "your unxsBind installation.";
-	if [ "$cUnxsBindStart" != "1" ]; then
-		echo "";
-		echo "WARNING: Your unxsBind named was not started, run:";	
-		echo "named-checkconf /usr/local/idns/named.conf";
-		echo "And:";
-		echo "rndc -c /etc/unxsbind.conf status";
-		echo "Fix any problems, then run:";
-		echo "/etc/init.d/unxsbind start";
+	#let installer know what was done.
+	if [ "$cUnxsBindStart" == "1" ] && [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
+				&& [ "$cInitialize" == "1" ];then
+		echo "unxsBind has been installed, intialized and httpd and named have been started.";	
+		echo "You can proceed to login to your unxsBind interfaces with your browser.";	
+	else 
+			echo "It appears that one or more manual operations may be needed to finish";
+			echo "your unxsBind installation.";
+		if [ "$cUnxsBindStart" != "1" ]; then
+			echo "";
+			echo "WARNING: Your unxsBind named was not started, run:";	
+			echo "named-checkconf /usr/local/idns/named.conf";
+			echo "And:";
+			echo "rndc -c /etc/unxsbind.conf status";
+			echo "Fix any problems, then run:";
+			echo "/etc/init.d/unxsbind start";
+		fi
+		if [ "$cHttpdStart" != "1" ]; then
+			echo "";
+			echo "WARNING: Your httpd server was not started, run:";
+			echo "/etc/init.d/httpd configtest";
+			echo "Then check your httpd configuration and then:";
+			echo "/etc/init.d/httpd start";
+		fi
+		if [ "$cMySQLStart" != "1" ]; then
+			echo "";
+			echo "WARNING: Your mysqld server was not started, run:";
+			echo "/etc/init.d/mysqld start";
+			echo "Debug any problems, then, if you do not already know your MySQL root password:";
+			echo "/usr/bin/mysqladmin -u root password '<mysql-root-passwd>'";	
+		fi
+		if [ "$cInitialize" != "1" ]; then
+			echo "";
+			echo "WARNING: Your unxsBind database was not initialized, run:";
+			echo "export ISMROOT=/usr/local/share";
+			echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
+			echo "Debug any problems, check via the mysql CLI, then if needed try again:";
+			echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
+		fi
 	fi
-	if [ "$cHttpdStart" != "1" ]; then
-		echo "";
-		echo "WARNING: Your httpd server was not started, run:";
-		echo "/etc/init.d/httpd configtest";
-		echo "Then check your httpd configuration and then:";
-		echo "/etc/init.d/httpd start";
+	#cat unxsbind crontab into root crontab
+	if [ -f /usr/local/share/iDNS/setup9/root-crontab ] && [ -d /var/spool/cron ] && [ -x /usr/sbin/tHitCollector ];then
+		#initialize main stats rrd
+		/usr/sbin/tHitCollector Initialize --cZone allzone.stats > /dev/null 2>&1;
+		#new version of rrdtool needs fontconfig font, it was installed
+		#but we need to load into cache
+		if [ -x /usr/bin/fc-cache ];then
+			/usr/bin/fc-cache > /dev/null 2>&1;
+		fi
+		#do not add again
+		grep "iDNS" /var/spool/cron/root > /dev/null 2>&1
+		if [ $? != 0 ];then
+			cat /usr/local/share/iDNS/setup9/root-crontab >> /var/spool/cron/root;
+		fi
+		#setup main stats graph
+		if [ -f /var/www/unxs/html/images/allzone.stats.png ] && [ -d /var/log/named ];then
+			rm /var/www/unxs/html/images/allzone.stats.png;
+			ln -s /var/log/named/allzone.stats.png /var/www/unxs/html/images/allzone.stats.png;
+		fi
 	fi
-	if [ "$cMySQLStart" != "1" ]; then
-		echo "";
-		echo "WARNING: Your mysqld server was not started, run:";
-		echo "/etc/init.d/mysqld start";
-		echo "Debug any problems, then, if you do not already know your MySQL root password:";
-		echo "/usr/bin/mysqladmin -u root password '<mysql-root-passwd>'";	
+elif [ "$1" = "2" ]; then
+	echo "post: Update";
+
+	#update schema
+	if [ -x /var/www/unxs/cgi-bin/iDNS.cgi ];then
+		/var/www/unxs/cgi-bin/iDNS.cgi UpdateSchema > /dev/null 2>&1;
+		if [ $? == 0 ];then
+			cUpdateSchema="1";
+		fi
 	fi
-	if [ "$cInitialize" != "1" ]; then
-		echo "";
-		echo "WARNING: Your unxsBind database was not initialized, run:";
-		echo "export ISMROOT=/usr/local/share";
-		echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
-		echo "Debug any problems, check via the mysql CLI, then if needed try again:";
-		echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
+
+	#update tables (fixed type and template tables)
+	if [ -x /var/www/unxs/cgi-bin/iDNS.cgi ];then
+		/var/www/unxs/cgi-bin/iDNS.cgi UpdateTables > /dev/null 2>&1;
+		if [ $? == 0 ];then
+			cUpdateTables="1";
+		fi
 	fi
-fi
-#cat unxsbind crontab into root crontab
-if [ -f /usr/local/share/iDNS/setup9/root-crontab ] && [ -d /var/spool/cron ] && [ -x /usr/sbin/tHitCollector ];then
-	#initialize main stats rrd
-	/usr/sbin/tHitCollector Initialize --cZone allzone.stats > /dev/null 2>&1;
-	#new version of rrdtool needs fontconfig font, it was installed
-	#but we need to load into cache
-	if [ -x /usr/bin/fc-cache ];then
-		/usr/bin/fc-cache > /dev/null 2>&1;
-	fi
-	#do not add again
-	grep "iDNS" /var/spool/cron/root > /dev/null 2>&1
-	if [ $? != 0 ];then
-		cat /usr/local/share/iDNS/setup9/root-crontab >> /var/spool/cron/root;
-	fi
-	#setup main stats graph
-	if [ -f /var/www/unxs/html/images/allzone.stats.png ] && [ -d /var/log/named ];then
-		rm /var/www/unxs/html/images/allzone.stats.png;
-		ln -s /var/log/named/allzone.stats.png /var/www/unxs/html/images/allzone.stats.png;
+
+	#let installer know what was done.
+	if [ "$cUpdateSchema" == "1" ] && [ "$cUpdateTables" == "1" ];then
+		echo "unxsBind progams have been updated, your MySQL schema and fixed table contents";	
+		echo " have also been upgraded. Existing templates have been saved.";	
+	else 
+			echo "It appears that one or more manual operations may be needed to finish";
+			echo "your unxsBind upgrade.";
+		if [ "$cUpdateSchema" != "1" ]; then
+			echo "";
+			echo "WARNING: Your unxsBind schema was not updated!";	
+		fi
+		if [ "$cUpdateTables" != "1" ]; then
+			echo "";
+			echo "WARNING: Your unxsBind fixed tables and templates have not been updated!";	
+		fi
 	fi
 fi
 
@@ -331,7 +361,6 @@ fi
 /var/www/unxs/cgi-bin/vdnsOrg.cgi
 /usr/sbin/tHitCollector
 %config(noreplace) /usr/sbin/bind9-genstats.sh
-/usr/sbin/idns-logerror
 /var/www/unxs/html/images/allzone.stats.png
 /var/www/unxs/html/images/green.gif
 /var/www/unxs/html/images/null.gif
