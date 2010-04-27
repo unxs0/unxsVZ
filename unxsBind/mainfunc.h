@@ -36,6 +36,7 @@ void MasterZones(void);
 void Admin(void);
 void ListZones(void);
 void UpdateSchema(void);
+void UpdateTables(void);
 void ImportFromDb(char *cSourceDbName, char *cTargetDbName, char *cPasswd);
 void MonthHitData(void);
 void MonthUsageData(unsigned uSimile);
@@ -305,17 +306,12 @@ void RestoreAll(char *cPasswd)
 	register int i;
 
 	if(getenv("ISMROOT")!=NULL)
-	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
-		gcHost[255]=0;
-	}
-
+		sprintf(cISMROOT,"%.255s",getenv("ISMROOT"));
 	if(!cISMROOT[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. (bash) export ISMROOT=/home/ism-3.0\n");
+		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe/unxsVZ\n");
 		exit(1);
 	}
-
 	printf("Restoring iDNS data from .txt file in %s/iDNS/data...\n\n",cISMROOT);
 
 	//connect as root to master db
@@ -352,17 +348,12 @@ void Restore(char *cPasswd, char *cTableName)
 	char cISMROOT[256]={""};
 
 	if(getenv("ISMROOT")!=NULL)
-	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
-		gcHost[255]=0;
-	}
-
+		sprintf(cISMROOT,"%.255s",getenv("ISMROOT"));
 	if(!cISMROOT[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. (bash) export ISMROOT=/home/ism-3.0\n");
+		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe/unxsVZ\n");
 		exit(1);
 	}
-
 	printf("Restoring iDNS data from .txt file in %s/iDNS/data...\n\n",cISMROOT);
 
 	//connect as root to master db
@@ -395,17 +386,12 @@ void Backup(char *cPasswd)
 	char cISMROOT[256]={""};
 
 	if(getenv("ISMROOT")!=NULL)
-	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
-		gcHost[255]=0;
-	}
-
+		sprintf(cISMROOT,"%.255s",getenv("ISMROOT"));
 	if(!cISMROOT[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. (bash) export ISMROOT=/home/ism-3.0\n");
+		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe/unxsVZ\n");
 		exit(1);
 	}
-
 	printf("Backing up iDNS data to .txt files in %s/iDNS/data...\n\n",cISMROOT);
 
 	//connect as root to master db
@@ -455,17 +441,12 @@ void Initialize(char *cPasswd)
 	}
 
 	if(getenv("ISMROOT")!=NULL)
-	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
-		gcHost[255]=0;
-	}
-
+		sprintf(cISMROOT,"%.255s",getenv("ISMROOT"));
 	if(!cISMROOT[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe\n");
+		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe/unxsVZ\n");
 		exit(1);
 	}
-
 	printf("Creating db and setting permissions, installing data from %s/iDNS...\n\n",cISMROOT);
 
 	//connect as root to master db
@@ -884,6 +865,7 @@ void PrintUsage(char *arg0)
 	printf("\tMassZoneUpdate\n");
 	printf("\tMassZoneNSUpdate <cNSSet group label>\n");
 	printf("\tUpdateSchema\n");
+	printf("\tUpdateTables\n");
 	printf("\tImportFromDb <source mysql db> <target mysql db> <mysql root passwd>\n");
 	printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 	printf("\tExtracttHit <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
@@ -1055,6 +1037,12 @@ void ExtMainShell(int argc, char *argv[])
 		{
 			TextConnectDb();
 			UpdateSchema();
+			exit(0);
+		}
+		else if(!strcmp(argv[1],"UpdateTables"))
+		{
+			TextConnectDb();
+			UpdateTables();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"MonthHitData"))
@@ -1622,6 +1610,113 @@ void UpdateSchema(void)
 	printf("UpdateSchema() end\n");
 
 }//void UpdateSchema(void)
+
+
+void UpdateTables(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uMax=0;
+	char cCommand[256];
+	char *cDBIP="localhost";
+	char cSQLPath[100]={"/usr/local/share/iDNS/data"};
+
+	//1-. We need a way to update fixed tables like tRRType
+	//without disruption. Small tables can be updated directly
+	//via fixed queries, but that seems like bloat to me.
+
+	//2-. We need a way to add new template sets, like for vdnsOrg
+	//for example. This can be done with special data/*.sql files.
+	//These files can be included in source distributions and also
+	//provided by rpm/yum. But how to we make sure we don't update
+	//more than once? We can check here and then do a system call to mysql.
+
+	//3-. This should be a first step to deprecating the data/*.txt
+	//old mess we inherited 10 years ago.
+
+	//ISMROOT should also be changed to unxsVZDataPath or similar.
+
+	//DBIP0 must be up an running OR localhost must be up and running.
+	if(DBIP0!=NULL && DBIP1!=NULL)
+		cDBIP=DBIP0;
+
+	if(getenv("ISMROOT")!=NULL)
+		sprintf(cSQLPath,"%.99s",getenv("ISMROOT"));
+	//Else we use the unxsbind.spec path above
+
+	printf("UpdateTables(%s) start\n",cDBIP);
+
+	//tRRType
+	//see mysqlrad.h defines
+	uMax=RRTYPE_NAPTR;
+	sprintf(gcQuery,"SELECT MAX(uRRType) FROM tRRType");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uMax);
+       	mysql_free_result(res);
+	if(uMax<RRTYPE_NAPTR)
+	{
+		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tRRType.sql",
+					cDBIP,
+					DBLOGIN,
+					DBPASSWD,
+					DBNAME,	
+					cSQLPath);
+		if(system(cCommand))
+		{
+			printf("Error: %s\n",cCommand);
+			exit(1);
+		}
+	}
+
+	//tNSType
+
+	//tLogType
+
+	//tTemplateType
+
+	//tTemplateSet
+
+	//tTemplate-vdnsOrg.sql
+	//mysqldump --compact --no-create-info --where="uTemplateType=3" -psecret idns tTemplate
+	//					 > data/tTemplate-vdnsOrg.sql
+	//see mysqlrad.h defines
+	uMax=3;
+	sprintf(gcQuery,"SELECT MAX(uTemplateType) FROM tTemplate");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uMax);
+       	mysql_free_result(res);
+	if(uMax<RRTYPE_NAPTR)
+	{
+		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tTemplate-vdnsOrg.sql",
+					cDBIP,
+					DBLOGIN,
+					DBPASSWD,
+					DBNAME,	
+					cSQLPath);
+		if(system(cCommand))
+		{
+			printf("Error: %s\n",cCommand);
+			exit(1);
+		}
+	}
+
+	printf("UpdateTables() end\n");
+
+}//void UpdateTables(void)
 
 
 void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
