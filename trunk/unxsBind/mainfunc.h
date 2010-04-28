@@ -3,22 +3,25 @@ FILE
 	$Id$
 PURPOSE
 	Included in main.c. For command line interface and html main link.
-
-AUTHOR
-	Template and mysqlRAD2 authors: 
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice.
- 
+AUTHOR/LEGAL
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 #include "local.h"
+char *strptime(const char *s, const char *format, struct tm *tm);//this is missing from time.h find out why.
 
-char *strptime(const char *s, const char *format, struct tm *tm);
-
-static char cTableList[32][32]={ "tAuthorize", "tBlock", "tClient", "tConfiguration", "tDeletedResource", "tDeletedZone", "tGlossary", "tHit", "tHitMonth", "tJob", "tLog", "tLogMonth", "tLogType", "tMailServer", "tMonth", "tMonthHit", "tNS", "tNSSet", "tNSType", "tRRType", "tRegistrar", "tResource", "tResourceImport", "tServer", "tTemplate", "tTemplateSet", "tTemplateType", "tView", "tZone", "tZoneImport", "" };
-
-
+//data
+extern unsigned guJS;//Global used by bind.c
+//The below default should work for you, if not please 
+//define cBinDir at tConfiguration
+char gcBinDir[100]={"/usr/sbin"};
+static char cTableList[32][32]={"tAuthorize","tBlock","tClient","tConfiguration","tDeletedResource","tDeletedZone","tGlossary","tHit","tHitMonth","tJob","tLog","tLogMonth","tLogType","tMailServer","tMonth","tMonthHit","tNS","tNSSet","tNSType","tRRType","tRegistrar","tResource","tResourceImport","tServer","tTemplate","tTemplateSet","tTemplateType","tView","tZone","tZoneImport",""};
 char cInitTableList[32][32]={ "tAuthorize","tBlock","tClient","tConfiguration","tGlossary","tLogType","tMailServer","tNS","tNSSet","tNSType","tRRType","tRegistrar","tResource","tServer","tTemplate","tTemplateSet","tTemplateType","tView","tZone",""};
 
+
+//Please clean up ths TOC proto section.
 void ExtMainShell(int argc, char *argv[]);
 void Initialize(char *cPasswd);
 void Backup(char *cPasswd);
@@ -27,7 +30,6 @@ void RestoreAll(char *cPasswd);
 void mySQLRootConnect(char *cPasswd);
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType);
 void ExportTemplateFiles(char *cDir, char *cTemplateSet, char *cTemplateType);
-
 void CalledByAlias(int iArgc,char *cArgv[]);
 unsigned TextConnectDb(void);
 void Tutorial(void);
@@ -41,19 +43,14 @@ void ImportFromDb(char *cSourceDbName, char *cTargetDbName, char *cPasswd);
 void MonthHitData(void);
 void MonthUsageData(unsigned uSimile);
 void DayUsageData(unsigned uLogType);
-
 void NextMonthYear(char *cMonth, char *cYear, char *cNextMonth, char *cNextYear);
 void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath);
 void CreatetLogTable(char *cTableName);
-
 void ExtracttHit(char *cMonth, char *cYear, char *cPasswd, char *cTablePath);
 void CreatetHitTable(char *cTableName);
 void ZeroSystem(void);
-
-//bind.c
 void Import(void);
 void DropImportedZones(void);
-
 void ImportCompanies(void);
 void DropCompanies(void);
 void ImportUsers(void);
@@ -66,43 +63,32 @@ void DropRegistrars(void);
 void AssociateRegistrarsZones(void);
 void MassZoneUpdate(void);
 void MassZoneNSUpdate(char *cLabel);
-
 void FixBlockOwnership(void);
 void ImportSORRs(void);
 void CheckAllZones(void);
-
 char *cPrintNSList(FILE *zfp,char *cuNSSet);
 void PrintMXList(FILE *zfp,char *cuMailServer);
 void CreateWebZone(char *cDomain, char *cIP, char *cNSSet, char *cMailServer);
 void DropZone(char *cDomain, char *cNSSet);
 void CompareZones(char *cDNSServer1IP, char *cDNSServer2IP, char *cuOwner);
-
 void ConnectMysqlServer(void);
 void PassDirectHtml(char *file);
-
 void GetConfiguration(const char *cName, char *cValue, unsigned uHtml);
-
-void CreateMasterFiles(char *cMasterNS, char *cZone,unsigned uModDBFiles,
-		unsigned uModStubs,unsigned uDebug);//bind.c
-void CreateSlaveFiles(char *cSlaveNS,char *cZone,char *cMasterIP,unsigned uDebug);//bind.c
-void InstallNamedFiles(char *cIpNum);//bind.c
 void Initialize(char *cPasswd);
 void ExportTable(char *cTable, char *cFile);
-void SlaveJobQueue(char *cNSSet, char *cMasterIP);//bind.c
-void MasterJobQueue(char *cNSSet);//bind.c
-void ServerJobQueue(char *cServer);//bind.c
-void ProcessExtJobQueue(char *cServer);//bind.c
-
-void ExportRRCSV(char *cCompany,char *cOutFile);//bind.c
-
 time_t cDateToUnixTime(char *cDate);
 
-extern unsigned guJS;
+//extern bind.c protos
+void CreateMasterFiles(char *cMasterNS, char *cZone,unsigned uModDBFiles,
+		unsigned uModStubs,unsigned uDebug);
+void CreateSlaveFiles(char *cSlaveNS,char *cZone,char *cMasterIP,unsigned uDebug);
+void InstallNamedFiles(char *cIpNum);
+void SlaveJobQueue(char *cNSSet, char *cMasterIP);
+void MasterJobQueue(char *cNSSet);
+void ServerJobQueue(char *cServer);
+void ProcessExtJobQueue(char *cServer);
+void ExportRRCSV(char *cCompany,char *cOutFile);
 
-//Global used by bind.c
-//The below default should work for you, if not please 
-//define cBinDir at tConfiguration
-char gcBinDir[100]={"/usr/sbin"};
 
 int iExtMainCommands(pentry entries[], int x)
 {
@@ -167,7 +153,8 @@ void DashBoard(const char *cOptionalMsg)
 
 
 	OpenRow("Cluster BIND Errors (Last 10)","black");
-	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer,cLabel,uPermLevel,uTablePK FROM tLog WHERE uLogType=5 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 10");
+	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer,cLabel,uPermLevel,uTablePK FROM"
+			" tLog WHERE uLogType=5 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 10");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -179,12 +166,15 @@ void DashBoard(const char *cOptionalMsg)
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		sscanf(mysqlField[1],"%lu",&luClock);
-		printf("<td></td><td>%s</td><td colspan=2><a href=iDNS.cgi?gcFunction=tZone&uZone=%s>%s</a> %s (%s times)</td><td>%s</td></tr>\n",ctime(&luClock),mysqlField[5],mysqlField[3],mysqlField[0],mysqlField[4],mysqlField[2]);
+		printf("<td></td><td>%s</td><td colspan=2><a href=iDNS.cgi?gcFunction=tZone&uZone=%s>%s</a> %s (%s times)"
+			"</td><td>%s</td></tr>\n",ctime(&luClock),mysqlField[5],mysqlField[3],
+							mysqlField[0],mysqlField[4],mysqlField[2]);
 	}
 	mysql_free_result(mysqlRes);
 
 	OpenRow("System Messages (Last 10)","black");
-	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog WHERE uLogType=4 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 10");
+	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog WHERE uLogType=4"
+			" ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 10");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -203,7 +193,9 @@ void DashBoard(const char *cOptionalMsg)
 
 	//1-3 backend org admin interfaces
 	OpenRow("General Usage (Last 10)","black");
-	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,tLog.cTableName,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType AND tLog.uLogType<=3 ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 10");
+	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,tLog.cTableName,"
+			"tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType AND"
+			" tLog.uLogType<=3 ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 10");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -222,7 +214,9 @@ void DashBoard(const char *cOptionalMsg)
 
 	//login/logout activity
 	OpenRow("Login Activity (Last 10)","black");
-	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cServer,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType AND tLog.uLogType>=6 ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 10");
+	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cServer,tLog.cHost,"
+			"tLogType.cLabel FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType AND"
+			" tLog.uLogType>=6 ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 10");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -240,7 +234,8 @@ void DashBoard(const char *cOptionalMsg)
 	mysql_free_result(mysqlRes);
 
 	OpenRow("Jobs Pending (Last 10)","black");
-	sprintf(gcQuery,"SELECT cJob,GREATEST(uCreatedDate,uModDate),cZone,cTargetServer FROM tJob ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 10");
+	sprintf(gcQuery,"SELECT cJob,GREATEST(uCreatedDate,uModDate),cZone,cTargetServer FROM tJob ORDER BY"
+			" GREATEST(uCreatedDate,uModDate) DESC LIMIT 10");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -837,12 +832,12 @@ void CalledByAlias(int iArgc,char *cArgv[])
 
 void PrintUsage(char *arg0)
 {
-	printf("\n%s %s Menu (C) 2001-2009 Gary Wallis\n\nDatabase Ops:\n"
-					,arg0,RELEASE);
+	printf("iDNS %s CLI Menu (C) 2001-2010 Unixservice, LLC.\n",RELEASE);
+	printf("Database Ops:\n");
 	printf("\tInitialize <mysql root passwd>\n");
 	printf("\tBackup|RestoreAll [<mysql root passwd>]\n");
 	printf("\tRestore <Restore table name> [<mysql root passwd>]\n");
-	printf("\nCrontab Ops:\n");
+	printf("Crontab Ops:\n");
 	printf("\tProcessJobQueue <fqdn master ns>\n");
 	printf("\tProcessServerJobQueue <fqdn server>\n");
 	printf("\tProcessExtJobQueue <fqdn server as in mysqlISP>\n");
@@ -851,7 +846,7 @@ void PrintUsage(char *arg0)
 	printf("\tMonthHitData\n");
 	printf("\tMonthUsageData <uSimile>\n");
 	printf("\tDayUsageData <uLogType>\n");
-	printf("\nSpecial Admin Ops:\n");
+	printf("Special Admin Ops:\n");
 	printf("\tDebugMasterFile <fqdn master ns> <cZone>\n");
 	printf("\tDebugSlaveFile <fqdn slave ns> <cZone> <master ip>\n");
 	printf("\tallfiles master|slave <fqdn ns> <master ip>\n");
@@ -870,7 +865,7 @@ void PrintUsage(char *arg0)
 	printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 	printf("\tExtracttHit <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 	printf("\tExample args for Extracts: Apr 2007 passwd /var/lib/mysql/idns\n");
-	printf("\nSpecial Import/Export Ops (Caution):\n");
+	printf("Special Import/Export Ops (Caution):\n");
 	printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 	printf("\tExportTemplateFiles <dir> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 	printf("\tImportZones\n");
@@ -889,7 +884,6 @@ void PrintUsage(char *arg0)
 	printf("\tImportSORRs\n");
 	printf("\tExportRRCSV <company> [out file] <mysql root passwd>\n");
 	printf("\tFixBlockOwnership\n");
-	printf("\n");
 	exit(0);
 
 }//void PrintUsage(char *arg0)
@@ -1344,11 +1338,13 @@ void Admin(void)
 
 	if(guPermLevel>7)
 	{
-		printf("<input title=\"View this system's named.conf file\" class=largeButton type=submit name=gcCommand value=NamedConf><br>");
-		printf("<input title=\"View this system's master.zones file\" class=largeButton type=submit name=gcCommand value=MasterZones><br>");
+		printf("<input title=\"View this system's named.conf file\" class=largeButton type=submit"
+			" name=gcCommand value=NamedConf><br>");
+		printf("<input title=\"View this system's master.zones file\" class=largeButton type=submit"
+			" name=gcCommand value=MasterZones><br>");
 		printf("<input title='Tutorial' class=largeButton type=submit name=gcCommand value=Tutorial>");
 		if(guPermLevel>11 && guLoginClient==1 )
-		printf("<p><input title='DANGER truncates all tables, then installs distro init data from"
+			printf("<p><input title='DANGER truncates all tables, then installs distro init data from"
 			" /usr/local/share/iDNS/data'"
 			" class=lwarnButton type=submit name=gcCommand value='Zero System'>");
 	}
@@ -1392,9 +1388,13 @@ void CompareZones(char *cDNSServer1IP, char *cDNSServer2IP, char *cuOwner)
 	char cZone[255]={""};
 
 	if(cuOwner[0])
-		sprintf(gcQuery,"SELECT tRRType.cLabel,tResource.cName,tZone.cZone FROM tResource,tRRType,tZone WHERE tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType AND tZone.uOwner=%s ORDER BY tZone.cZone",cuOwner);
+		sprintf(gcQuery,"SELECT tRRType.cLabel,tResource.cName,tZone.cZone FROM tResource,tRRType,tZone"
+				" WHERE tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType AND"
+				" tZone.uOwner=%s ORDER BY tZone.cZone",cuOwner);
 	else
-		sprintf(gcQuery,"SELECT tRRType.cLabel,tResource.cName,tZone.cZone FROM tResource,tRRType,tZone WHERE tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType ORDER BY tZone.cZone");
+		sprintf(gcQuery,"SELECT tRRType.cLabel,tResource.cName,tZone.cZone FROM tResource,tRRType,tZone"
+				" WHERE tResource.uZone=tZone.uZone AND tResource.uRRType=tRRType.uRRType ORDER BY"
+				" tZone.cZone");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
 	{
@@ -1411,19 +1411,23 @@ void CompareZones(char *cDNSServer1IP, char *cDNSServer2IP, char *cuOwner)
 		}
 
 		if(field[1][0])
-			sprintf(gcQuery,"dig @%s %s %s.%s +noall +answer | awk '{print $1,$3,$4,$5,$6,$7,$8}' > /tmp/idns.cz1 2>&1",
+			sprintf(gcQuery,"dig @%s %s %s.%s +noall +answer | awk '{print $1,$3,$4,$5,$6,$7,$8}'"
+					" > /tmp/idns.cz1 2>&1",
 					cDNSServer1IP,field[0],field[1],field[2]);
 		else
-			sprintf(gcQuery,"dig @%s %s %s +noall +answer | awk '{print $1,$3,$4,$5,$6,$7,$8}' > /tmp/idns.cz1 2>&1",
+			sprintf(gcQuery,"dig @%s %s %s +noall +answer | awk '{print $1,$3,$4,$5,$6,$7,$8}'"
+					" > /tmp/idns.cz1 2>&1",
 					cDNSServer1IP,field[0],field[2]);
 		system(gcQuery);
 		//printf("%s\n",gcQuery);
 
 		if(field[1][0])
-			sprintf(gcQuery,"dig @%s %s %s.%s +noall +answer | awk '{print $1,$3,$4,$5,$6,$7,$8}' > /tmp/idns.cz2 2>&1",
+			sprintf(gcQuery,"dig @%s %s %s.%s +noall +answer | awk '{print $1,$3,$4,$5,$6,$7,$8}'"
+					" > /tmp/idns.cz2 2>&1",
 					cDNSServer2IP,field[0],field[1],field[2]);
 		else
-			sprintf(gcQuery,"dig @%s %s %s +noall +answer | awk '{print $1,$3,$4,$5,$6,$7,$8}' > /tmp/idns.cz2 2>&1",
+			sprintf(gcQuery,"dig @%s %s %s +noall +answer | awk '{print $1,$3,$4,$5,$6,$7,$8}'"
+					" > /tmp/idns.cz2 2>&1",
 					cDNSServer2IP,field[0],field[2]);
 		system(gcQuery);
 		//printf("%s\n",gcQuery);
@@ -1676,18 +1680,134 @@ void UpdateTables(void)
 	}
 
 	//tNSType
+#define NSTYPE_MASTER 1
+#define NSTYPE_MHIDDEN 2
+#define NSTYPE_MEXTERN 3
+#define NSTYPE_SLAVE 4
+	uMax=NSTYPE_SLAVE;
+	sprintf(gcQuery,"SELECT MAX(uNSType) FROM tNSType");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uMax);
+       	mysql_free_result(res);
+	if(uMax<NSTYPE_SLAVE)
+	{
+		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tNSType.sql",
+					cDBIP,
+					DBLOGIN,
+					DBPASSWD,
+					DBNAME,	
+					cSQLPath);
+		if(system(cCommand))
+		{
+			printf("Error: %s\n",cCommand);
+			exit(1);
+		}
+	}
 
 	//tLogType
+#define LOGTYPE_IDNSORG_LOGIN 8
+	uMax=LOGTYPE_IDNSORG_LOGIN;
+	sprintf(gcQuery,"SELECT MAX(uLogType) FROM tLogType");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uMax);
+       	mysql_free_result(res);
+	if(uMax<LOGTYPE_IDNSORG_LOGIN)
+	{
+		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tLogType.sql",
+					cDBIP,
+					DBLOGIN,
+					DBPASSWD,
+					DBNAME,	
+					cSQLPath);
+		if(system(cCommand))
+		{
+			printf("Error: %s\n",cCommand);
+			exit(1);
+		}
+	}
+
 
 	//tTemplateType
+#define TEMPLATETYPE_VDNSORG 3
+	uMax=TEMPLATETYPE_VDNSORG;
+	sprintf(gcQuery,"SELECT MAX(uTemplateType) FROM tTemplateType");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uMax);
+       	mysql_free_result(res);
+	if(uMax<TEMPLATETYPE_VDNSORG)
+	{
+		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tTemplateType.sql",
+					cDBIP,
+					DBLOGIN,
+					DBPASSWD,
+					DBNAME,	
+					cSQLPath);
+		if(system(cCommand))
+		{
+			printf("Error: %s\n",cCommand);
+			exit(1);
+		}
+	}
 
 	//tTemplateSet
+#define TEMPLATESET_PLAIN 1
+	uMax=TEMPLATESET_PLAIN;
+	sprintf(gcQuery,"SELECT MAX(uTemplateSet) FROM tTemplateSet");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uMax);
+       	mysql_free_result(res);
+	if(uMax<TEMPLATESET_PLAIN)
+	{
+		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tTemplateSet.sql",
+					cDBIP,
+					DBLOGIN,
+					DBPASSWD,
+					DBNAME,	
+					cSQLPath);
+		if(system(cCommand))
+		{
+			printf("Error: %s\n",cCommand);
+			exit(1);
+		}
+	}
 
-	//tTemplate-vdnsOrg.sql
+	//
+	//tTemplate updates --much harder problem
+	//For initial testing we will keep old no type (and probably no set) templates
+	//The end user will have to deal with his mods post initial install accordingly.
+	//tTemplate-vdnsOrg.sql example dump:
 	//mysqldump --compact --no-create-info --where="uTemplateType=3" -psecret idns tTemplate
 	//					 > data/tTemplate-vdnsOrg.sql
 	//see mysqlrad.h defines
-	uMax=3;
+	uMax=TEMPLATETYPE_VDNSORG;
 	sprintf(gcQuery,"SELECT MAX(uTemplateType) FROM tTemplate");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1699,9 +1819,35 @@ void UpdateTables(void)
 	if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&uMax);
        	mysql_free_result(res);
-	if(uMax<RRTYPE_NAPTR)
+	//We are assuming that rpm update user if she does not vdnsOrg templates that 
+	//means the she also needs all the rest updated.
+	//Any old template will still exist but will not have a type and probably not a set either
+	//unless they modified them themselves.
+	if(uMax<TEMPLATETYPE_VDNSORG)
 	{
 		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tTemplate-vdnsOrg.sql",
+					cDBIP,
+					DBLOGIN,
+					DBPASSWD,
+					DBNAME,	
+					cSQLPath);
+		if(system(cCommand))
+		{
+			printf("Error: %s\n",cCommand);
+			exit(1);
+		}
+		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tTemplate-idnsOrg.sql",
+					cDBIP,
+					DBLOGIN,
+					DBPASSWD,
+					DBNAME,	
+					cSQLPath);
+		if(system(cCommand))
+		{
+			printf("Error: %s\n",cCommand);
+			exit(1);
+		}
+		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tTemplate-idnsAdmin.sql",
 					cDBIP,
 					DBLOGIN,
 					DBPASSWD,
@@ -1766,7 +1912,8 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 		printf("%s\n",mysql_error(&gMysql));
 		exit(1);
 	}
-	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttLog() Start...',cServer='%s',uLogType=4,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
+	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttLog() Start...',cServer='%s',uLogType=4,uOwner=1,"
+				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		fprintf(stderr,"%s\n",mysql_error(&gMysql));
@@ -1815,7 +1962,10 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 	}
 
 	printf("Getting data from tLog...\n");
-	sprintf(gcQuery,"INSERT %s (uLog,cLabel,uLogType,cHash,uPermLevel,uLoginClient,cLogin,cHost,uTablePK,cTableName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate) SELECT uLog,cLabel,uLogType,cHash,uPermLevel,uLoginClient,cLogin,cHost,uTablePK,cTableName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate FROM tLog WHERE uCreatedDate>=%lu AND uCreatedDate<%lu",cTableName,uStart,uEnd);
+	sprintf(gcQuery,"INSERT %s (uLog,cLabel,uLogType,cHash,uPermLevel,uLoginClient,cLogin,cHost,uTablePK,cTableName,"
+			"uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate) SELECT uLog,cLabel,uLogType,cHash,uPermLevel,"
+			"uLoginClient,cLogin,cHost,uTablePK,cTableName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate FROM"
+			" tLog WHERE uCreatedDate>=%lu AND uCreatedDate<%lu",cTableName,uStart,uEnd);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1831,7 +1981,9 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 	if(uRows)
 	{
 
-		sprintf(gcQuery,"REPLACE tMonth SET cLabel='%s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",cTableName);
+		//This looks suspect, please check TODO
+		sprintf(gcQuery,"REPLACE tMonth SET cLabel='%s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cTableName);
         	mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -1897,7 +2049,8 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 
 	printf("Extracted and Archived. Table flushed: %s\n",cTableName);
 	printf("ExtracttLog() End\n");
-	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttLog() End',cServer='%s',uLogType=4,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
+	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttLog() End',cServer='%s',uLogType=4,uOwner=1,uCreatedBy=1,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		fprintf(stderr,"%s\n",mysql_error(&gMysql));
@@ -1986,7 +2139,8 @@ void ExtracttHit(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 		exit(1);
 	}
 
-	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttHit() Start...',cServer='%s',uLogType=4,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
+	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttHit() Start...',cServer='%s',uLogType=4,uOwner=1,"
+			"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		fprintf(stderr,"%s\n",mysql_error(&gMysql));
@@ -2034,7 +2188,10 @@ void ExtracttHit(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 	}
 
 	printf("Getting data from tHit...\n");
-	sprintf(gcQuery,"INSERT %s (uHit,cZone,uHitCount,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uSuccess,uReferral,uNxrrset,uNxdomain,uRecursion,uFailure,cHost) SELECT uHit,cZone,uHitCount,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uSuccess,uReferral,uNxrrset,uNxdomain,uRecursion,uFailure,cHost FROM tHit",cTableName);
+	sprintf(gcQuery,"INSERT %s (uHit,cZone,uHitCount,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uSuccess,"
+			"uReferral,uNxrrset,uNxdomain,uRecursion,uFailure,cHost) SELECT uHit,cZone,uHitCount,uOwner,"
+			"uCreatedBy,uCreatedDate,uModBy,uModDate,uSuccess,uReferral,uNxrrset,uNxdomain,uRecursion,"
+			"uFailure,cHost FROM tHit",cTableName);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2050,7 +2207,9 @@ void ExtracttHit(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 	if(uRows)
 	{
 
-		sprintf(gcQuery,"REPLACE tMonthHit SET cLabel='%s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",cTableName);
+		//TODO check this
+		sprintf(gcQuery,"REPLACE tMonthHit SET cLabel='%s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cTableName);
         	mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -2115,7 +2274,8 @@ void ExtracttHit(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 
 	printf("Extracted and Archived. Table flushed: %s\n",cTableName);
 	printf("ExtracttHit() End\n");
-	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttHit() End',cServer='%s',uLogType=4,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
+	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttHit() End',cServer='%s',uLogType=4,uOwner=1,uCreatedBy=1,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		fprintf(stderr,"%s\n",mysql_error(&gMysql));
@@ -2124,6 +2284,7 @@ void ExtracttHit(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 }//void ExtracttHit(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 
 
+//schema dependency created here
 void CreatetHitTable(char *cTableName)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS %s ( uHit INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cZone VARCHAR(255) NOT NULL DEFAULT '',INDEX (cZone), uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uHitCount BIGINT UNSIGNED NOT NULL DEFAULT 0, uSuccess BIGINT UNSIGNED NOT NULL DEFAULT 0, uReferral BIGINT UNSIGNED NOT NULL DEFAULT 0, uNxrrset BIGINT UNSIGNED NOT NULL DEFAULT 0, uNxdomain BIGINT UNSIGNED NOT NULL DEFAULT 0, uRecursion BIGINT UNSIGNED NOT NULL DEFAULT 0, uFailure BIGINT UNSIGNED NOT NULL DEFAULT 0, cHost VARCHAR(255) NOT NULL DEFAULT '',INDEX (cHost) )",cTableName);
@@ -2395,13 +2556,17 @@ void DayUsageData(unsigned uLogType)
 		printf("Content-type: text/plain\n\n");
 		printf("#DayUsageData designed for use with MIT Simile, uLogType=%u\n",uLogType);
 		printf("#Year-Mon-Day COUNT(uLog)\n");
-	sprintf(gcQuery,"SELECT FROM_UNIXTIME(uCreatedDate,'%%Y-%%m-%%d'),COUNT(uLog) FROM tLog WHERE uLogType=%u AND MONTH(FROM_UNIXTIME(uCreatedDate))=MONTH(NOW()) GROUP BY DAY(FROM_UNIXTIME(uCreatedDate)) ORDER BY uCreatedDate",uLogType-100);
+		sprintf(gcQuery,"SELECT FROM_UNIXTIME(uCreatedDate,'%%Y-%%m-%%d'),COUNT(uLog) FROM tLog"
+				" WHERE uLogType=%u AND MONTH(FROM_UNIXTIME(uCreatedDate))=MONTH(NOW()) GROUP BY"
+				" DAY(FROM_UNIXTIME(uCreatedDate)) ORDER BY uCreatedDate",uLogType-100);
 	}
 	else
 	{
 		printf("#DayUsageData designed for use with gnuplot, uLogType=%u\n",uLogType);
 		printf("#Day-Mon-Yr COUNT(uLog)\n");
-	sprintf(gcQuery,"SELECT FROM_UNIXTIME(uCreatedDate,'%%d-%%m-%%y'),COUNT(uLog) FROM tLog WHERE uLogType=%u AND MONTH(FROM_UNIXTIME(uCreatedDate))=MONTH(NOW()) GROUP BY DAY(FROM_UNIXTIME(uCreatedDate)) ORDER BY uCreatedDate",uLogType);
+		sprintf(gcQuery,"SELECT FROM_UNIXTIME(uCreatedDate,'%%d-%%m-%%y'),COUNT(uLog) FROM tLog"
+				" WHERE uLogType=%u AND MONTH(FROM_UNIXTIME(uCreatedDate))=MONTH(NOW()) GROUP BY"
+				" DAY(FROM_UNIXTIME(uCreatedDate)) ORDER BY uCreatedDate",uLogType);
 	}
 
 	mysql_query(&gMysql,gcQuery);
@@ -2458,8 +2623,8 @@ void CheckAllZones(void)
 	float fSystemHealth=0.00;
 	
 	sprintf(gcQuery,
-		"SELECT tZone.cZone,(SELECT tView.cLabel FROM tView WHERE tView.uView=tZone.uView) FROM tZone\
-		WHERE tZone.uSecondaryOnly=0 ORDER BY tZone.uZone");
+		"SELECT tZone.cZone,(SELECT tView.cLabel FROM tView WHERE tView.uView=tZone.uView) FROM tZone"
+		" WHERE tZone.uSecondaryOnly=0 ORDER BY tZone.uZone");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2485,8 +2650,7 @@ void CheckAllZones(void)
 		}
 		else
 			uZonesOK++;
-		
-	}//while((field=mysql_fetch_row(res)))
+	}
 	
 	fSystemHealth=((float)uZonesOK*100.00)/(float)uTotalZones;
 	
@@ -2570,7 +2734,7 @@ void ZeroSystem(void)
 			htmlPlainTextError(mysql_error(&gMysql));
 	}
 	
-	//Only valid for new rpm layout
+	//Only valid for new rpm based layout
 	for(i=0;cInitTableList[i][0];i++)
 	{
 		sprintf(gcQuery,"LOAD DATA LOCAL INFILE '/usr/local/share/iDNS/data/%s.txt' REPLACE INTO TABLE %s",

@@ -36,6 +36,7 @@ char *crypt(const char *key, const char *salt);
 #define RRTYPE_SRV 8
 #define RRTYPE_AAAA 9
 #define RRTYPE_NAPTR 10
+#define RRTYPE_SPF 11
 
 //mysqlISP constants
 //tJob.uJobStatus

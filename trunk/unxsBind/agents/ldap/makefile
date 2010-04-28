@@ -1,19 +1,16 @@
 #
-#File
+#FILE
 #	makefile
 #	$Id$
-#
-#Author/Legal
+#AUTHOR/LEGAL
 #	(C) 2009-2010 Gary Wallis for Unixservice, LLC.
-#	This software is distributed under the GPLv3 license.
-#
-#Notes
+#	GPLv2 license applies. See included LICENSE file.
+#NOTES
 #	This is a CentOS 5 version only.
 #	For help contact support @ openisp . net
-#Requires
+#REQUIRES
 #	Normal unxs and openssl libs and OpenLDAP libldap
 #	yum install openldap-devel.i386
-#
 CFLAGS= -Wall
 
 LIBS= -L/usr/lib/mysql -L/usr/lib/openisp -lz -lcrypt -lm -lssl -lmysqlclient -lldap

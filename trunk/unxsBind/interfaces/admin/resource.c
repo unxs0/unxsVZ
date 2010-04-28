@@ -963,7 +963,8 @@ unsigned RRCheck(void)
 		sprintf(cName,"%.255s",gcQuery);
 	}
 	
-	if(cParam1[0] && strcmp(cRRType,"TXT") && strcmp(cRRType,"HINFO")) //trim cParam1 but fot TXT records (ticket #386)
+	//trim cParam1 but not TXT records (ticket #386)
+	if(cParam1[0] && strcmp(cRRType,"TXT") && strcmp(cRRType,"SPF") && strcmp(cRRType,"HINFO"))
 	{
 		sscanf(cParam1,"%s",gcQuery);
 		sprintf(cParam1,"%.99s",gcQuery);
@@ -1345,7 +1346,7 @@ unsigned uPerRRTypeCheck(void)
 			sprintf(cParam2,"%.99s",gcQuery);
 		}
 	}
-	else if(!strcmp(cRRType,"TXT"))
+	else if(!strcmp(cRRType,"TXT") || !strcmp(cRRType,"SPF"))
 	{
 		char *cp;
 
@@ -1376,7 +1377,7 @@ unsigned uPerRRTypeCheck(void)
 		{
 			if(cp!=cParam1+strlen(cParam1)-1)
 			{
-				sprintf(gcQuery,"<blink>Error: </blink>Stray \" in TXT value");
+				sprintf(gcQuery,"<blink>Error: </blink>Stray \" in %s value",cRRType);
 				gcMessage=gcQuery;
 				cParam1Style="type_fields_req";
 				return(15);
@@ -1776,7 +1777,8 @@ unsigned uPerRRTypeCheck(void)
 	}
 	else if(1)
 	{
-		gcMessage="<blink>Error: </blink>Must select valid Resource Type (A,MX,PTR,TXT,NS,CNAME,HINFO,SRV,AAAA,NAPTR)";
+		gcMessage="<blink>Error: </blink>Must select valid Resource Type (A,MX,PTR,TXT,SPF,NS,CNAME,HINFO,"
+				"SRV,AAAA,NAPTR)";
 		cRRTypeStyle="type_fields_req";
 		return(16);
 	}
@@ -2348,11 +2350,13 @@ void MasterFunctionSelect(void)
 				//This is mostly for the (default) problem we have experienced after deployment :(
 				for(i=0;cName[i];i++)
 				{
-					if(!isalnum(cName[i]) && cName[i]!='-' && cName[i]!='.' && cName[i]!='@'&& cName[i]!='*' &&
-						cName[i]!='_')
+					if(!isalnum(cName[i]) && cName[i]!='-' && cName[i]!='.' 
+								&& cName[i]!='@'&& cName[i]!='*' &&
+											cName[i]!='_')
 					{
 						gcMessage="<blink>Error: </blink>Name can be empty or have only "
-							"letters, numbers, the default origin @ symbol. Or dashes (-) and periods (.)";
+							"letters, numbers, the default origin @ symbol. Or dashes"
+							" (-) and periods (.)";
 						cNameStyle="type_fields_req";
 						htmlResourceWizard(uStep);
 					}
@@ -2363,7 +2367,7 @@ void MasterFunctionSelect(void)
 			case 2:
 				
 				//Remove any extra characters(E.g.: cParam1=ns.somedns.net ."
-				if(cParam1[0] && strcmp(cRRType,"TXT"))
+				if(cParam1[0] && strcmp(cRRType,"TXT") && strcmp(cRRType,"SPF"))
 				{
 					sscanf(cParam1,"%s",gcQuery);
 					sprintf(cParam1,"%.99s",gcQuery);
@@ -2671,9 +2675,11 @@ unsigned idnsOnLineZoneCheck(void)
 
 		//TODO
 		if(!strcmp(field[0]+strlen(field[0])-5,".arpa"))
-			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2 FROM tResourceTest WHERE uZone=%u ORDER BY uResource",uZone);
+			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2 FROM tResourceTest WHERE"
+					" uZone=%u ORDER BY uResource",uZone);
 		else
-			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4 FROM tResourceTest WHERE uZone=%u ORDER BY cName",uZone);
+			sprintf(gcQuery,"SELECT cName,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4 FROM tResourceTest"
+					" WHERE uZone=%u ORDER BY cName",uZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 		{

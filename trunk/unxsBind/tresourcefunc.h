@@ -516,6 +516,21 @@ void RRCheck(int uMode)
 		}
 
 	}
+	else if(!strcmp(cRRType,"SPF"))
+	{
+		cParam2[0]=0;
+		if(!cParam1[0])
+		{
+			guMode=uMode;
+			tResource("cParam1 is required");
+		}
+		if(cParam1[0]!='"' && cParam1[strlen(cParam1)-1]!='"')
+		{
+			sprintf(gcQuery,"\"%s\"",cParam1);
+			strcpy(cParam1,gcQuery);
+		}
+
+	}
 	else if(!strcmp(cRRType,"SRV"))
 	{
 		unsigned uI=0;

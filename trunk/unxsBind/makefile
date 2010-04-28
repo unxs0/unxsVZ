@@ -1,17 +1,14 @@
 #
-#File
+#FILE
 #	makefile
 #	$Id$
 #
-#Author/Legal
+#AUTHOR/LEGAL
 #	(C) 2001-2010 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
-#	This software is distributed under the GPLv3 license.
-#
-#Notes:
+#	GPLv2 license applies. See LICENSE file included.
+#NOTES
 #	This is a CentOS5 rpm release version only (use CFLAG -pedantic to cleanup.)
-#	
 #	For help contact support @ openisp . net
-#
 CFLAGS= -Wall
 
 LIBS= -L/usr/lib/mysql -L/usr/lib/openisp -lz -lcrypt -lm -lssl -lucidr -lmysqlclient
@@ -142,5 +139,5 @@ clean:
 	rm -f *.o iDNS.cgi
 
 install: iDNS.cgi
-	install -s iDNS.cgi /var/www/unxs/cgi-bin/iDNS.cgi
+	install -m 510 -g apache -s iDNS.cgi /var/www/unxs/cgi-bin/iDNS.cgi
 	rm iDNS.cgi

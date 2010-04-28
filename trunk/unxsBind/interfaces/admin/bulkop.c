@@ -666,7 +666,8 @@ unsigned ProcessRRLine(unsigned uLineNumber,const char *cLine,char *cZoneName,co
 		if(!uFirstDigit)
 		{
 			//Check this rule again
-			sprintf(cMsg,"%u: error %s: Incorrect PTR LHS should start with a non zero digit\n",uLineNumber,cZoneName);
+			sprintf(cMsg,"%u: error %s: Incorrect PTR LHS should start with a non zero digit\n",
+					uLineNumber,cZoneName);
 			strcat(cImportMsg,cMsg);
 			return(0);
 		}
@@ -687,6 +688,23 @@ unsigned ProcessRRLine(unsigned uLineNumber,const char *cLine,char *cZoneName,co
 		}
 		//debug only
 		//printf("TXT: %s\n",cParam1);
+	}
+	else if(!strcasecmp(cType,"SPF"))
+	{
+		uRRType=11;
+		if((cp=strchr(cLine,'"')))
+			sprintf(cParam1,"%.255s",cp);
+		//Adjust for cr/lf also
+		if(!cParam1[0] || cParam1[0]!='\"' || (cParam1[strlen(cParam1)-2]!='\"' &&
+					cParam1[strlen(cParam1)-1]!='\"') )
+		{
+			sprintf(cMsg,"%u: error %s: Incorrect SPF format: %s\n",
+					uLineNumber,cZoneName,cParam1);
+			strcat(cImportMsg,cMsg);
+			return(0);
+		}
+		//debug only
+		//printf("SPF: %s\n",cParam1);
 	}
 
 	//Special cases that should keep a static var for next line
@@ -750,7 +768,7 @@ unsigned ProcessRRLine(unsigned uLineNumber,const char *cLine,char *cZoneName,co
 		//strcat(cImportMsg,cMsg);
 	}	
 	
-	if(uRRType==6)//TXT special case
+	if(uRRType==6 || uRRType==11)//TXT or SPF special case
 	sprintf(gcQuery,"INSERT INTO %s SET  uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 					,cResourceImportTable
 					,uZone

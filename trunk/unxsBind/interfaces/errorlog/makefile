@@ -2,12 +2,13 @@
 #FILE
 #	makefile
 #	$Id: makefile 660 2007-06-28 22:05:36Z Gary $
-#AUTHOR
-#	(C) 2006-2009, Gary Wallis for Unixservice
+#AUTHOR/LEGAL
+#	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+#	(C) 2010 Gary Wallis for Unixservice, LLC.
+#	GPLv2 license applies. See LICENSE file included.
 #PURPOSE
 #	Makefile for special commandline only interface for named (DNS/BIND 9.3.3) error
 #	logging
-#
 
 CFLAGS= -DLinux -Wall
 LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lz
@@ -22,5 +23,5 @@ clean:
 	rm -f *.o idns-logerror
 	
 install: idns-logerror
-	install -m 700 -s idns-logerror /usr/sbin/idns-logerror
+	install -m 500 -s idns-logerror /usr/sbin/idns-logerror
 	rm -f idns-logerror
