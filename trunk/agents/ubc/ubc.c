@@ -406,6 +406,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 	char cLine[256];
 	unsigned long luUsage=0;
 	FILE *fp;
+	struct stat structStat;
 
 	if(uContainer)
 	{
@@ -419,12 +420,24 @@ void ProcessSingleHDUsage(unsigned uContainer)
 		exit(1);
 	}
 
+	//We will use a semaphore file to only run one du at a time.
+	if(!stat("/tmp/ubchd",&structStat))
+	{
+		logfileLine("ProcessSingleHDUsage","waiting for unlink(/tmp/ubchd)",uContainer);
+		return;
+	}
+	if((fp=fopen("/tmp/ubchd","w"))==NULL)
+	{
+		logfileLine("ProcessSingleHDUsage","could not open /tmp/ubchd",uContainer);
+		return;
+	}
+
 	//It seems like we are stuck using du. But we can limit it's use, or not
 	//run it if another one is already running. This will help with #120
 	//resolution. This probably should be done globally for this whole
 	//data collection agent. See main() for more on this.
 
-	sprintf(cCommand,"/usr/bin/du -ks /vz/private/%u/ 2> /dev/null",uContainer);
+	sprintf(cCommand,"nice /usr/bin/du -ks /vz/private/%u/ 2> /dev/null",uContainer);
 
 	if((fp=popen(cCommand,"r")))
 	{
@@ -438,12 +451,14 @@ void ProcessSingleHDUsage(unsigned uContainer)
 		else
 		{
 			logfileLine("ProcessSingleHDUsage","No lines from popen",uContainer);
+			unlink("/tmp/ubchd");
 			return;
 		}
 
 		if(luUsage==0)
 		{
 			logfileLine("ProcessSingleHDUsage","Unexpected luUsage==0",uContainer);
+			unlink("/tmp/ubchd");
 			exit(1);
 		}
 
@@ -453,6 +468,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 		if(mysql_errno(&gMysql))
 		{
 			logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql),uContainer);
+			unlink("/tmp/ubchd");
 			exit(2);
 		}
 	       	res=mysql_store_result(&gMysql);
@@ -468,6 +484,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 			if(mysql_errno(&gMysql))
 			{
 				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql),uContainer);
+				unlink("/tmp/ubchd");
 				exit(2);
 			}
 		}
@@ -487,6 +504,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 			if(mysql_errno(&gMysql))
 			{
 				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql),uContainer);
+				unlink("/tmp/ubchd");
 				exit(2);
 			}
 		}
@@ -497,6 +515,7 @@ void ProcessSingleHDUsage(unsigned uContainer)
 	{
 		logfileLine("ProcessSingleHDUsage","popen() failed",uContainer);
 	}
+	unlink("/tmp/ubchd");
 
 }//void ProcessSingleHDUsage(unsigned uContainer)
 
