@@ -1677,6 +1677,7 @@ void UpdateTables(void)
 			printf("Error: %s\n",cCommand);
 			exit(1);
 		}
+		printf("Updated tRRType.\n");
 	}
 
 	//tNSType
@@ -1709,6 +1710,7 @@ void UpdateTables(void)
 			printf("Error: %s\n",cCommand);
 			exit(1);
 		}
+		printf("Updated tNSType.\n");
 	}
 
 	//tLogType
@@ -1738,6 +1740,7 @@ void UpdateTables(void)
 			printf("Error: %s\n",cCommand);
 			exit(1);
 		}
+		printf("Updated tLogType.\n");
 	}
 
 
@@ -1768,6 +1771,7 @@ void UpdateTables(void)
 			printf("Error: %s\n",cCommand);
 			exit(1);
 		}
+		printf("Updated tTemplateType.\n");
 	}
 
 	//tTemplateSet
@@ -1797,6 +1801,7 @@ void UpdateTables(void)
 			printf("Error: %s\n",cCommand);
 			exit(1);
 		}
+		printf("Updated tTemplateSet.\n");
 	}
 
 	//
@@ -1836,6 +1841,7 @@ void UpdateTables(void)
 			printf("Error: %s\n",cCommand);
 			exit(1);
 		}
+		printf("Updated tTemplate-vdnsOrg.\n");
 		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tTemplate-idnsOrg.sql",
 					cDBIP,
 					DBLOGIN,
@@ -1847,6 +1853,7 @@ void UpdateTables(void)
 			printf("Error: %s\n",cCommand);
 			exit(1);
 		}
+		printf("Updated tTemplate-idnsOrg. Old idnsOrg templates can still be found in tTemplate.\n");
 		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tTemplate-idnsAdmin.sql",
 					cDBIP,
 					DBLOGIN,
@@ -1858,6 +1865,7 @@ void UpdateTables(void)
 			printf("Error: %s\n",cCommand);
 			exit(1);
 		}
+		printf("Updated tTemplate-idnsAdmin. Old idnsAdmin templates can still be found in tTemplate.\n");
 	}
 
 	printf("UpdateTables() end\n");
