@@ -2,12 +2,13 @@
 #FILE
 #	makefile
 #	$Id$
-#AUTHOR
-#	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+#AUTHOR/LEGAL
+#	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+#	(C) 2010 Gary Wallis for Unixservice, LLC.
+#	GPLv2 license applies. See LICENSE file included.
 #PURPOSE
 #	General purpose RAD3 interface makefile
 #	Must customize CGINAME 
-#
 
 CGINAME=idnsAdmin.cgi
 
@@ -65,6 +66,6 @@ clean:
 	rm -f *.o *.cgi
 	
 install: interface.cgi
-	install -s interface.cgi /var/www/unxs/cgi-bin/$(CGINAME)
+	install -m 510 -g apache -s interface.cgi /var/www/unxs/cgi-bin/$(CGINAME)
 	rm -f interface.cgi
 

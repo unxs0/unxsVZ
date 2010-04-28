@@ -12,34 +12,33 @@ Packager: Unixservice Support Group <supportgrp@unixservice.com>
 Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils >= 9.3.4-10 , rrdtool , chkconfig, unxstemplatelib >= 1.0 , unxscidrlib >= 1.0
 
 %description
-unxsBind iDNS provides a professional DNS BIND 9 manager. For 1 to 1000's of NSs.
+unxsBind iDNS provides a SaaS DNS BIND9 manager.
 
 Main features supported:
 
- 1-.  Manages unlimited DNS data for an unlimited number of NS sets for an unlimited number of DNS servers.
- 2-.  Unlimited BIND views (with option for no BIND master/slave xfer issues.)
- 3-.  Bulk zone and resource record operations.
- 4-.  Traffic monitoring per zone or per NS set (per NS or aggregated across cluster) 
+ 1-.	Manages unlimited DNS data, for an unlimited number of NS sets, for an unlimited number of DNS servers.
+ 2-.	Unlimited BIND views (with no BIND master/slave xfer issues or extra IPs required.)
+ 3-.	Database can fail and DNS services continue.
+ 4-.	Supports hidden masters, external masters, all masters clusters, forward zones, secondary only zones.
+ 5-.	Engineering and development friendly web interface backend (visible schema and variables.)
+ 6-.	Organization/Company contact web interfaces included. Allows non skilled zone owners to modify RRs.
+ 7-.	User friendly admin web interface included.
+ 8-.	Bulk zone and resource record operations.
+ 9-.	Traffic monitoring per zone or per NS set (per NS or aggregated across cluster) 
 	with rrdtool graphics.
- 5-.  Wizards for CIDR based downstream delegation of arpa zones.
- 6-.  Supports hidden masters, external masters, all masters clusters, forward zones.
- 7-.  Secondary only zone management for customers running their own (hidden or public) masters.
- 8-.  Engineering and development friendly tech web interface backend.
- 9-.  Organization/Company contact web interface. Allows non skilled zone owners to modify RRs.
- 10-. User friendly admin web interface for zone and customer, contact management authorized users.
- 11-. Uses company-contact-role model for allowing management partitioning perfect for DNS as a
-	service (ASP) deployments. The root ASP manages the infrastructure, clients that are 
+ 10-. 	Wizard for CIDR based downstream delegation of arpa zones.
+ 11-.	Uses company-contact-role model for allowing management partitioning. Perfect for DNS as a
+	service (SaaS/ASP) deployments. The root ASP manages the infrastructure, clients that are 
 	companies, NGOs or other organizations have contacts (staff) that can be of diverse
 	permission levels for operating on their companies zones.
- 12-. Optional automatic creation of rev dns PTR records.
- 13-. Support for upstream delegated sub class C delegated rev dns zones.
- 14-. Migration and import tools.
- 15-. Database can fail and DNS services continue.
- 16-. Support for large SPF/DK/DKIM and other TXT like RRs.
- 17-. Support for SRV and NAPTR RRs.
- 18-. Support for IPv6 AAAA and rev dns for IPv6.
- 19-. Comprehensive DNSSEC support (including key management) will be available as soon as BIND and
-      at least three TLD deployments prove stable.
+ 12-.	Optional automatic creation of rev dns PTR records.
+ 13-.	Support for upstream delegated sub class C delegated rev dns zones.
+ 14-.	Migration and import tools.
+ 15-.	Support for large SPF/DK/DKIM and other TXT like RRs.
+ 16-.	Support for SRV and NAPTR RRs.
+ 17-.	Support for IPv6 AAAA and rev dns for IPv6.
+ 18-.	Comprehensive DNSSEC support (including key management) will be available as soon as BIND and
+	at least three TLD deployments prove stable.
 
 %prep
 %setup -q
@@ -63,6 +62,7 @@ mkdir -p /usr/local/share/iDNS/data
 mkdir -p /usr/local/share/iDNS/setup9
 mkdir -p /usr/local/share/iDNS/admin/templates
 mkdir -p /usr/local/share/iDNS/org/templates
+mkdir -p /usr/local/share/iDNS/vorg/templates
 mkdir -p /var/log/named
 #cp files section
 cp -u images/* /var/www/unxs/html/images/
@@ -70,7 +70,9 @@ cp -u interfaces/admin/templates/images/* /var/www/unxs/html/images/
 cp -u interfaces/admin/templates/css/* /var/www/unxs/html/css/
 cp `find ./interfaces/admin/templates/ -type f -print` /usr/local/share/iDNS/admin/templates/
 cp `find ./interfaces/org/templates/ -type f -print` /usr/local/share/iDNS/org/templates/
+cp `find ./interfaces/vorg/templates/ -type f -print` /usr/local/share/iDNS/vorg/templates/
 cp data/*.txt /usr/local/share/iDNS/data/
+cp data/*.sql /usr/local/share/iDNS/data/
 chown -R mysql:mysql /usr/local/share/iDNS/data
 cp setup9/rndc.key /etc/unxsbind-rndc.key
 cp setup9/rndc.conf /etc/unxsbind-rndc.conf
@@ -104,7 +106,6 @@ cd $RPM_BUILD_DIR
 %post
 if [ "$1" = "1" ]; then
 	echo "post: Initial install";
-
 	chmod -R og+x /usr/local/idns
 	chmod 644 /usr/local/idns/named.conf
 	chown -R named:named /usr/local/idns
@@ -217,7 +218,6 @@ if [ "$1" = "1" ]; then
 	fi
 elif [ "$1" = "2" ]; then
 	echo "post: Update";
-
 	#update schema
 	if [ -x /var/www/unxs/cgi-bin/iDNS.cgi ];then
 		/var/www/unxs/cgi-bin/iDNS.cgi UpdateSchema > /dev/null 2>&1;
@@ -225,7 +225,6 @@ elif [ "$1" = "2" ]; then
 			cUpdateSchema="1";
 		fi
 	fi
-
 	#update tables (fixed type and template tables)
 	if [ -x /var/www/unxs/cgi-bin/iDNS.cgi ];then
 		/var/www/unxs/cgi-bin/iDNS.cgi UpdateTables > /dev/null 2>&1;
@@ -233,7 +232,6 @@ elif [ "$1" = "2" ]; then
 			cUpdateTables="1";
 		fi
 	fi
-
 	#let installer know what was done.
 	if [ "$cUpdateSchema" == "1" ] && [ "$cUpdateTables" == "1" ];then
 		echo "unxsBind progams have been updated, your MySQL schema and fixed table contents";	
@@ -372,7 +370,7 @@ fi
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
-* Tue Apr 26 2010 Gary Wallis <support@unixservice.com>
+* Tue Apr 27 2010 Gary Wallis <support@unixservice.com>
 - Fixed upgrade and requirements. Using new unxstemplate lib for interfaces. Corrected multiple DB server support. Corrected version number change. Added support for update and uninstall.
 * Wed Mar 17 2010 Hugo Urquiza <support2@unixservice.com>
 - New rpm release, added support for AAAA and NAPTR RRs, major version number change.

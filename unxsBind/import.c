@@ -344,6 +344,22 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		//debug only
 		fprintf(stdout,"TXT: %s\n",cParam1);
 	}
+	else if(!strcasecmp(cType,"SPF"))
+	{
+		uRRType=11;
+		if((cp=strchr(cLine,'"')))
+			sprintf(cParam1,"%.255s",cp);
+		//Adjust for cr/lf also
+		if(!cParam1[0] || cParam1[0]!='\"' || (cParam1[strlen(cParam1)-2]!='\"' &&
+					cParam1[strlen(cParam1)-1]!='\"') )
+		{
+			fprintf(stdout,"ProcessRRLine() Error %s: Incorrect SPF format: %s\n",
+					cZoneName,cParam1);
+			return;
+		}
+		//debug only
+		fprintf(stdout,"SPF: %s\n",cParam1);
+	}
 
 	//Special cases that should keep a static var for next line
 	else if(!strcasecmp(cName,"$TTL"))
@@ -386,7 +402,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		sprintf(cNamePlus,"%.99s.%.99s",cName,cPrevOrigin);
 	else
 		sprintf(cNamePlus,"%.99s",cName);
-	if(uRRType==6)//TXT special case
+	if(uRRType==6 || uRRType==11)//TXT and SPF special case
 	sprintf(gcQuery,"INSERT INTO %s SET  uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',"
 			"cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 					,cResourceImportTable
@@ -982,6 +998,22 @@ void ProcessSORRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		//debug only
 		fprintf(stdout,"TXT: %s\n",cParam1);
 	}
+	else if(!strcasecmp(cType,"SPF"))
+	{
+		uRRType=11;
+		if((cp=strchr(cLine,'"')))
+			sprintf(cParam1,"%.255s",cp);
+		//Adjust for cr/lf also
+		if(!cParam1[0] || cParam1[0]!='\"' || (cParam1[strlen(cParam1)-2]!='\"' &&
+					cParam1[strlen(cParam1)-1]!='\"') )
+		{
+			fprintf(stdout,"Error %s: Incorrect SPF format: %s\n",
+					cZoneName,cParam1);
+			return;
+		}
+		//debug only
+		fprintf(stdout,"SPF: %s\n",cParam1);
+	}
 
 	//Special cases that should keep a static var for next line
 	else if(!strcasecmp(cName,"$TTL"))
@@ -1026,7 +1058,7 @@ void ProcessSORRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		sprintf(cNamePlus,"%.99s",cName);
 	
 	if(!uRRType) return; //NOP if not valid RR is found
-	if(uRRType==6)//TXT special case
+	if(uRRType==6 || uRRType==11)//TXT and SPF special case
 		sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%s',uTTL=%u,"
 				"uRRType=%u,cParam1='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",

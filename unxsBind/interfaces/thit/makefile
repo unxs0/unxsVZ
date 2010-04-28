@@ -2,8 +2,10 @@
 #FILE
 #	makefile
 #	$Id: makefile 662 2008-12-18 18:52:33Z hus $
-#AUTHOR
-#	(C) 2006-2009, Gary Wallis for Unixservice
+#AUTHOR/LEGAL
+#	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+#	(C) 2010 Gary Wallis for Unixservice, LLC.
+#	GPLv2 license applies. See LICENSE file included.
 #PURPOSE
 #	Makefile for special commandline only interface for named (DNS/BIND 9.3.3+) 
 #	per zone named.stats logging
@@ -25,5 +27,5 @@ clean:
 	rm -f *.o tHitCollector
 	
 install: tHitCollector
-	install -m 700 -s tHitCollector /usr/sbin/tHitCollector
+	install -m 500 -s tHitCollector /usr/sbin/tHitCollector
 	rm -f tHitCollector
