@@ -807,10 +807,17 @@ void InstallNamedFiles(char *cIpNum)
 		mkdir(gcQuery,0777);
 	}
 
+	//for rpm initial install
 	if(strcmp(cIpNum,"0.0.0.0"))
 	{
 		sprintf(gcQuery,"cat %s/iDNS/%s/named.conf|sed -e \"s/{{cIpNumber}}/%s/g\" > /usr/local/idns/named.conf",
 			cISMROOT,cSetupDir,IPNumber(cIpNum));	
+		if(system(gcQuery))
+			fprintf(stdout,"Error configuring named.conf\n");
+	}
+	else
+	{
+		sprintf(gcQuery,"cat %s/iDNS/%s/named.conf > /usr/local/idns/named.conf",cISMROOT,cSetupDir);	
 		if(system(gcQuery))
 			fprintf(stdout,"Error configuring named.conf\n");
 	}
@@ -831,9 +838,14 @@ void InstallNamedFiles(char *cIpNum)
 	if(system(gcQuery))
 		 fprintf(stdout,"Error configuring 127.0.0\n");
 
-	sprintf(gcQuery,"/usr/bin/dig @e.root-servers.net . ns > /usr/local/idns/named.d/root.cache");	
+	sprintf(gcQuery,"/usr/bin/dig . ns > /usr/local/idns/named.d/root.cache");	
 	if(system(gcQuery))
-		 fprintf(stdout,"Error configuring root.cache\n");
+	{
+		fprintf(stdout,"Error configuring root.cache via dig, falling back to distribution root.cache\n");
+		sprintf(gcQuery,"cat %s/iDNS/%s/root.cache > /usr/local/idns/named.d/root.cache",cISMROOT,cSetupDir);	
+		if(system(gcQuery))
+			fprintf(stdout,"Error configuring root.cache\n");
+	}
 
 	fprintf(stdout,"Done.\n");
 	exit(0);
