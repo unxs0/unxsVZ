@@ -90,9 +90,6 @@ make install
 cd ../thit
 cp bind9-genstats.sh /usr/sbin/bind9-genstats.sh
 make install
-#this automates the creation of some files/dirs for us
-export ISMROOT=/usr/local/share
-/var/www/unxs/cgi-bin/iDNS.cgi installbind 0.0.0.0
 cd $RPM_BUILD_DIR
 
 %post
@@ -110,6 +107,11 @@ chown -R named:named /usr/local/idns
 chown -R mysql:mysql /usr/local/share/iDNS/data
 if [ "$1" = "1" ]; then
 	#echo "post: Initial install";
+	export ISMROOT=/usr/local/share;	
+	/var/www/unxs/cgi-bin/iDNS.cgi installbind 0.0.0.0 > /dev/null 2>&1;
+	if [ $? == 0 ];then
+		echo "iDNS.cgi installbind ok";
+	fi
 	if [ -x /sbin/chkconfig ];then
 		if [ -x /etc/init.d/named ];then
 			/sbin/chkconfig --level 3 named off;
@@ -316,9 +318,6 @@ fi
 %config(noreplace) /usr/sbin/bind9-genstats.sh
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 /etc/init.d/unxsbind
-/usr/local/idns/named.d/root.cache
-/usr/local/idns/named.d/master/localhost
-/usr/local/idns/named.d/master/127.0.0
 /var/www/unxs/cgi-bin/iDNS.cgi
 /var/www/unxs/cgi-bin/idnsAdmin.cgi
 /var/www/unxs/cgi-bin/idnsOrg.cgi
