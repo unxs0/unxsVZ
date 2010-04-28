@@ -82,7 +82,6 @@ cp setup9/* /usr/local/share/iDNS/setup9/
 cp -u setup9/DejaVuSansMono-Roman.ttf /usr/share/fonts/
 cp agents/mysqlcluster/mysqlcluster.sh /usr/sbin/
 chmod 500 /usr/sbin/mysqlcluster.sh
-/usr/bin/dig @e.root-servers.net . ns > /usr/local/share/iDNS/setup9/root.cache
 #permissions section
 chmod 755 /etc/init.d/unxsbind
 #make section
@@ -105,6 +104,11 @@ chown -R named:named /usr/local/idns
 cd $RPM_BUILD_DIR
 
 %post
+#fix cgi group
+chgrp apache /var/www/unxs/cgi-bin/iDNS.cgi;
+chgrp apache /var/www/unxs/cgi-bin/idnsAdmin.cgi;
+chgrp apache /var/www/unxs/cgi-bin/idnsOrg.cgi;
+chgrp apache /var/www/unxs/cgi-bin/vdnsOrg.cgi;
 if [ "$1" = "1" ]; then
 	echo "post: Initial install";
 	chmod -R og+x /usr/local/idns
@@ -273,13 +277,28 @@ fi
 %config(noreplace) /usr/local/idns/named.conf
 %config(noreplace) /etc/unxsbind-rndc.key
 %config(noreplace) /etc/unxsbind-rndc.conf
-/etc/init.d/unxsbind
-#/usr/local/idns/named.d
-#/usr/local/idns/named.d/master
 %config(noreplace) /usr/local/idns/named.d/master.zones
+%config(noreplace) /usr/sbin/bind9-genstats.sh
+%config(noreplace) /usr/sbin/mysqlcluster.sh
+/etc/init.d/unxsbind
+/usr/local/idns/named.d/root.cache
+/usr/local/idns/named.d/slave.zones
+/usr/local/idns/named.d/master/localhost
 /usr/local/idns/named.d/master/0
 /usr/local/idns/named.d/master/1
-%config(noreplace) /usr/local/idns/named.d/master/127.0.0
+/usr/local/idns/named.d/master/127.0.0
+/var/www/unxs/cgi-bin/iDNS.cgi
+/var/www/unxs/cgi-bin/idnsAdmin.cgi
+/var/www/unxs/cgi-bin/idnsOrg.cgi
+/var/www/unxs/cgi-bin/vdnsOrg.cgi
+/usr/sbin/tHitCollector
+/var/www/unxs/html/images/allzone.stats.png
+/var/www/unxs/html/images/green.gif
+/var/www/unxs/html/images/null.gif
+/var/www/unxs/html/images/red.gif
+/var/www/unxs/html/images/unxsbind.jpg
+/var/www/unxs/html/images/yellow.gif
+/usr/share/fonts/DejaVuSansMono-Roman.ttf
 %dir /usr/local/idns/named.d/master/2
 %dir /usr/local/idns/named.d/master/3
 %dir /usr/local/idns/named.d/master/4
@@ -300,7 +319,6 @@ fi
 %dir /usr/local/idns/named.d/master/j
 %dir /usr/local/idns/named.d/master/k
 %dir /usr/local/idns/named.d/master/l
-%config(noreplace) /usr/local/idns/named.d/master/localhost
 %dir /usr/local/idns/named.d/master/m
 %dir /usr/local/idns/named.d/master/n
 %dir /usr/local/idns/named.d/master/o
@@ -315,9 +333,6 @@ fi
 %dir /usr/local/idns/named.d/master/x
 %dir /usr/local/idns/named.d/master/y
 %dir /usr/local/idns/named.d/master/z
-%config(noreplace) /usr/local/idns/named.d/root.cache
-#/usr/local/idns/named.d/slave
-%config(noreplace) /usr/local/idns/named.d/slave.zones
 %dir /usr/local/idns/named.d/slave/0
 %dir /usr/local/idns/named.d/slave/1
 %dir /usr/local/idns/named.d/slave/2
@@ -354,21 +369,7 @@ fi
 %dir /usr/local/idns/named.d/slave/x
 %dir /usr/local/idns/named.d/slave/y
 %dir /usr/local/idns/named.d/slave/z
-/var/www/unxs/cgi-bin/iDNS.cgi
-/var/www/unxs/cgi-bin/idnsAdmin.cgi
-/var/www/unxs/cgi-bin/idnsOrg.cgi
-/var/www/unxs/cgi-bin/vdnsOrg.cgi
-/usr/sbin/tHitCollector
-%config(noreplace) /usr/sbin/bind9-genstats.sh
-/var/www/unxs/html/images/allzone.stats.png
-/var/www/unxs/html/images/green.gif
-/var/www/unxs/html/images/null.gif
-/var/www/unxs/html/images/red.gif
-/var/www/unxs/html/images/unxsbind.jpg
-/var/www/unxs/html/images/yellow.gif
 %dir /var/log/named
-/usr/share/fonts/DejaVuSansMono-Roman.ttf
-%config(noreplace) /usr/sbin/mysqlcluster.sh
 
 %changelog
 * Tue Apr 27 2010 Gary Wallis <support@unixservice.com>
