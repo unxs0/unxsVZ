@@ -73,17 +73,13 @@ cp `find ./interfaces/org/templates/ -type f -print` /usr/local/share/iDNS/org/t
 cp `find ./interfaces/vorg/templates/ -type f -print` /usr/local/share/iDNS/vorg/templates/
 cp data/*.txt /usr/local/share/iDNS/data/
 cp data/*.sql /usr/local/share/iDNS/data/
-chown -R mysql:mysql /usr/local/share/iDNS/data
 cp setup9/rndc.key /etc/unxsbind-rndc.key
 cp setup9/rndc.conf /etc/unxsbind-rndc.conf
 cp setup9/unxsbind.init /etc/init.d/unxsbind
-chmod 755 /etc/init.d/unxsbind
 cp setup9/* /usr/local/share/iDNS/setup9/
 cp -u setup9/DejaVuSansMono-Roman.ttf /usr/share/fonts/
 cp agents/mysqlcluster/mysqlcluster.sh /usr/sbin/
-chmod 500 /usr/sbin/mysqlcluster.sh
 #permissions section
-chmod 755 /etc/init.d/unxsbind
 #make section
 cd interfaces/admin
 make install
@@ -93,14 +89,10 @@ cd ../vorg
 make install
 cd ../thit
 cp bind9-genstats.sh /usr/sbin/bind9-genstats.sh
-chmod 500 /usr/sbin/bind9-genstats.sh
 make install
 #things we can do with no data loaded
 export ISMROOT=/usr/local/share
 /var/www/unxs/cgi-bin/iDNS.cgi installbind 0.0.0.0
-chmod -R og+x /usr/local/idns
-chmod 644 /usr/local/idns/named.conf
-chown -R named:named /usr/local/idns
 cd $RPM_BUILD_DIR
 
 %post
@@ -109,11 +101,15 @@ chgrp apache /var/www/unxs/cgi-bin/iDNS.cgi;
 chgrp apache /var/www/unxs/cgi-bin/idnsAdmin.cgi;
 chgrp apache /var/www/unxs/cgi-bin/idnsOrg.cgi;
 chgrp apache /var/www/unxs/cgi-bin/vdnsOrg.cgi;
+chmod 500 /usr/sbin/bind9-genstats.sh;
+chmod 500 /usr/sbin/mysqlcluster.sh
+chmod 755 /etc/init.d/unxsbind;
+chmod -R og+x /usr/local/idns
+chmod 644 /usr/local/idns/named.conf
+chown -R named:named /usr/local/idns
+chown -R mysql:mysql /usr/local/share/iDNS/data
 if [ "$1" = "1" ]; then
 	echo "post: Initial install";
-	chmod -R og+x /usr/local/idns
-	chmod 644 /usr/local/idns/named.conf
-	chown -R named:named /usr/local/idns
 	if [ -x /sbin/chkconfig ];then
 		if [ -x /etc/init.d/named ];then
 			/sbin/chkconfig --level 3 named off;
@@ -153,17 +149,23 @@ if [ "$1" = "1" ]; then
 					if [ $? == 0 ];then
 						cInitialize="1";
 					fi
-					/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 \								> /dev/null 2>&1;
-					if [ $? == 0 ];then
-						cAllfiles="1";
-					fi
 				fi
 			fi
 		fi
 	fi
+	#create all zone files
+	/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 \								> /dev/null 2>&1;
+	if [ $? == 0 ];then
+		cAllfiles="1";
+		cUnxsBindStart="0";
+		/etc/init.d/unxsbind restart > /dev/null 2>&1
+		if [ $? == 0 ];then
+			cUnxsBindStart="1";
+		fi
+	fi
 	#let installer know what was done.
 	if [ "$cUnxsBindStart" == "1" ] && [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
-				&& [ "$cInitialize" == "1" ];then
+				&& [ "$cInitialize" == "1" ] && [ "$cAllfiles" == "1" ];then
 		echo "unxsBind has been installed, intialized and httpd and named have been started.";	
 		echo "You can proceed to login to your unxsBind interfaces with your browser.";	
 	else 
@@ -194,11 +196,17 @@ if [ "$1" = "1" ]; then
 		fi
 		if [ "$cInitialize" != "1" ]; then
 			echo "";
-			echo "WARNING: Your unxsBind database was not initialized, run:";
+			echo "WARNING (if your MySQL already has valid iDNS data ignore):"
+			echo "Your unxsBind database was not initialized, run:";
 			echo "export ISMROOT=/usr/local/share";
 			echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
 			echo "Debug any problems, check via the mysql CLI, then if needed try again:";
 			echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
+		fi
+		if [ "$cAllfiles" != "1" ]; then
+			echo "";
+			echo "WARNING: Initial zone file creation failed. Try running:"
+			echo "/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1";	
 		fi
 	fi
 	#cat unxsbind crontab into root crontab
@@ -258,6 +266,7 @@ fi
 %preun
 if [ "$1" = "0" ]; then
 	echo "preun: Uninstall";
+	/etc/init.d/unxsbind stop > /dev/null 2>&1;
 elif [ "$1" = "1" ]; then
 	echo "preun: Update";
 fi
@@ -267,6 +276,7 @@ if [ "$1" = "0" ]; then
 	echo "postun: Uninstall";
 elif [ "$1" = "1" ]; then
 	echo "postun: Update";
+	/etc/init.d/unxsbind restart > /dev/null 2>&1;
 fi
 
 %clean
@@ -278,14 +288,12 @@ fi
 %config(noreplace) /etc/unxsbind-rndc.key
 %config(noreplace) /etc/unxsbind-rndc.conf
 %config(noreplace) /usr/local/idns/named.d/master.zones
+%config(noreplace) /usr/local/idns/named.d/slave.zones
 %config(noreplace) /usr/sbin/bind9-genstats.sh
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 /etc/init.d/unxsbind
 /usr/local/idns/named.d/root.cache
-/usr/local/idns/named.d/slave.zones
 /usr/local/idns/named.d/master/localhost
-/usr/local/idns/named.d/master/0
-/usr/local/idns/named.d/master/1
 /usr/local/idns/named.d/master/127.0.0
 /var/www/unxs/cgi-bin/iDNS.cgi
 /var/www/unxs/cgi-bin/idnsAdmin.cgi
@@ -299,76 +307,6 @@ fi
 /var/www/unxs/html/images/unxsbind.jpg
 /var/www/unxs/html/images/yellow.gif
 /usr/share/fonts/DejaVuSansMono-Roman.ttf
-%dir /usr/local/idns/named.d/master/2
-%dir /usr/local/idns/named.d/master/3
-%dir /usr/local/idns/named.d/master/4
-%dir /usr/local/idns/named.d/master/5
-%dir /usr/local/idns/named.d/master/6
-%dir /usr/local/idns/named.d/master/7
-%dir /usr/local/idns/named.d/master/8
-%dir /usr/local/idns/named.d/master/9
-%dir /usr/local/idns/named.d/master/a
-%dir /usr/local/idns/named.d/master/b
-%dir /usr/local/idns/named.d/master/c
-%dir /usr/local/idns/named.d/master/d
-%dir /usr/local/idns/named.d/master/e
-%dir /usr/local/idns/named.d/master/f
-%dir /usr/local/idns/named.d/master/g
-%dir /usr/local/idns/named.d/master/h
-%dir /usr/local/idns/named.d/master/i
-%dir /usr/local/idns/named.d/master/j
-%dir /usr/local/idns/named.d/master/k
-%dir /usr/local/idns/named.d/master/l
-%dir /usr/local/idns/named.d/master/m
-%dir /usr/local/idns/named.d/master/n
-%dir /usr/local/idns/named.d/master/o
-%dir /usr/local/idns/named.d/master/p
-%dir /usr/local/idns/named.d/master/q
-%dir /usr/local/idns/named.d/master/r
-%dir /usr/local/idns/named.d/master/s
-%dir /usr/local/idns/named.d/master/t
-%dir /usr/local/idns/named.d/master/u
-%dir /usr/local/idns/named.d/master/v
-%dir /usr/local/idns/named.d/master/w
-%dir /usr/local/idns/named.d/master/x
-%dir /usr/local/idns/named.d/master/y
-%dir /usr/local/idns/named.d/master/z
-%dir /usr/local/idns/named.d/slave/0
-%dir /usr/local/idns/named.d/slave/1
-%dir /usr/local/idns/named.d/slave/2
-%dir /usr/local/idns/named.d/slave/3
-%dir /usr/local/idns/named.d/slave/4
-%dir /usr/local/idns/named.d/slave/5
-%dir /usr/local/idns/named.d/slave/6
-%dir /usr/local/idns/named.d/slave/7
-%dir /usr/local/idns/named.d/slave/8
-%dir /usr/local/idns/named.d/slave/9
-%dir /usr/local/idns/named.d/slave/a
-%dir /usr/local/idns/named.d/slave/b
-%dir /usr/local/idns/named.d/slave/c
-%dir /usr/local/idns/named.d/slave/d
-%dir /usr/local/idns/named.d/slave/e
-%dir /usr/local/idns/named.d/slave/f
-%dir /usr/local/idns/named.d/slave/g
-%dir /usr/local/idns/named.d/slave/h
-%dir /usr/local/idns/named.d/slave/i
-%dir /usr/local/idns/named.d/slave/j
-%dir /usr/local/idns/named.d/slave/k
-%dir /usr/local/idns/named.d/slave/l
-%dir /usr/local/idns/named.d/slave/m
-%dir /usr/local/idns/named.d/slave/n
-%dir /usr/local/idns/named.d/slave/o
-%dir /usr/local/idns/named.d/slave/p
-%dir /usr/local/idns/named.d/slave/q
-%dir /usr/local/idns/named.d/slave/r
-%dir /usr/local/idns/named.d/slave/s
-%dir /usr/local/idns/named.d/slave/t
-%dir /usr/local/idns/named.d/slave/u
-%dir /usr/local/idns/named.d/slave/v
-%dir /usr/local/idns/named.d/slave/w
-%dir /usr/local/idns/named.d/slave/x
-%dir /usr/local/idns/named.d/slave/y
-%dir /usr/local/idns/named.d/slave/z
 %dir /var/log/named
 
 %changelog

@@ -764,8 +764,6 @@ void InstallNamedFiles(char *cIpNum)
 {
 	char cISMROOT[256]={""};
 	char cSetupDir[16]={"setup9"};
-	register char i;
-
 
 	if(getenv("ISMROOT")!=NULL)
 	{               
@@ -790,22 +788,6 @@ void InstallNamedFiles(char *cIpNum)
 	mkdir("/usr/local/idns/named.d/slave",0777);
 
 	fprintf(stdout,"Configuring and installing files...\n");
-
-	//Create dir hierarchy	
-	for(i='0';i<='9';i++)
-	{
-		sprintf(gcQuery,"/usr/local/idns/named.d/master/%c",i);
-		mkdir(gcQuery,0777);
-		sprintf(gcQuery,"/usr/local/idns/named.d/slave/%c",i);
-		mkdir(gcQuery,0777);
-	}
-	for(i='a';i<='z';i++)
-	{
-		sprintf(gcQuery,"/usr/local/idns/named.d/master/%c",i);
-		mkdir(gcQuery,0777);
-		sprintf(gcQuery,"/usr/local/idns/named.d/slave/%c",i);
-		mkdir(gcQuery,0777);
-	}
 
 	//for rpm initial install
 	if(strcmp(cIpNum,"0.0.0.0"))
