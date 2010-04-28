@@ -81,6 +81,7 @@ chmod 755 /etc/init.d/unxsbind
 cp setup9/* /usr/local/share/iDNS/setup9/
 cp -u setup9/DejaVuSansMono-Roman.ttf /usr/share/fonts/
 cp agents/mysqlcluster/mysqlcluster.sh /usr/sbin/
+chmod 500 /usr/sbin/mysqlcluster.sh
 /usr/bin/dig @e.root-servers.net . ns > /usr/local/share/iDNS/setup9/root.cache
 #permissions section
 chmod 755 /etc/init.d/unxsbind
