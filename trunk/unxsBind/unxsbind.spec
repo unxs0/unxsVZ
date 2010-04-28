@@ -90,7 +90,7 @@ make install
 cd ../thit
 cp bind9-genstats.sh /usr/sbin/bind9-genstats.sh
 make install
-#things we can do with no data loaded
+#this automates the creation of some files/dirs for us
 export ISMROOT=/usr/local/share
 /var/www/unxs/cgi-bin/iDNS.cgi installbind 0.0.0.0
 cd $RPM_BUILD_DIR
@@ -175,6 +175,30 @@ if [ "$1" = "1" ]; then
 			cUnxsBindStart="1";
 		fi
 	fi
+	#rrdtool and tHit collector initializing
+	if [ -x /usr/sbin/tHitCollector ];then
+		#initialize main stats rrd
+		/usr/sbin/tHitCollector Initialize --cZone allzone.stats > /dev/null 2>&1;
+		if [ $? == 0 ];then
+			echo "tHitCollector initialize ok";
+		fi
+		#new version of rrdtool needs fontconfig font, it was installed
+		#but we need to load into cache
+		if [ -x /usr/bin/fc-cache ];then
+			/usr/bin/fc-cache > /dev/null 2>&1;
+			if [ $? == 0 ];then
+				echo "fc-cache ran ok";
+			fi
+		fi
+		#setup main stats graph
+		if [ -f /var/www/unxs/html/images/allzone.stats.png ] && [ -d /var/log/named ];then
+			rm /var/www/unxs/html/images/allzone.stats.png;
+			ln -s /var/log/named/allzone.stats.png /var/www/unxs/html/images/allzone.stats.png;
+			if [ $? == 0 ];then
+				echo "allzone.stats.png install ok";
+			fi
+		fi
+	fi
 	#let installer know what was done.
 	if [ "$cUnxsBindStart" == "1" ] && [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
 				&& [ "$cInitialize" == "1" ] && [ "$cAllfiles" == "1" ];then
@@ -225,30 +249,6 @@ if [ "$1" = "1" ]; then
 	if [ $? == 0 ];then
 		echo "Placing unxsBind cron entries in the root crontab has been deprecated";
 		echo "Please remove them all with 'crontab -e' and restart unxsbind via 'service unxsbind restart'";
-	fi
-	#rrdtool and tHit collector initializing
-	if [ -x /usr/sbin/tHitCollector ];then
-		#initialize main stats rrd
-		/usr/sbin/tHitCollector Initialize --cZone allzone.stats > /dev/null 2>&1;
-		if [ $? == 0 ];then
-			echo "tHitCollector initialize ok";
-		fi
-		#new version of rrdtool needs fontconfig font, it was installed
-		#but we need to load into cache
-		if [ -x /usr/bin/fc-cache ];then
-			/usr/bin/fc-cache > /dev/null 2>&1;
-			if [ $? == 0 ];then
-				echo "fc-cache ran ok";
-			fi
-		fi
-		#setup main stats graph
-		if [ -f /var/www/unxs/html/images/allzone.stats.png ] && [ -d /var/log/named ];then
-			rm /var/www/unxs/html/images/allzone.stats.png;
-			ln -s /var/log/named/allzone.stats.png /var/www/unxs/html/images/allzone.stats.png;
-			if [ $? == 0 ];then
-				echo "allzone.stats.png install ok";
-			fi
-		fi
 	fi
 elif [ "$1" = "2" ]; then
 	#echo "post: Update";
