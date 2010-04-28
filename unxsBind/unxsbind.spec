@@ -47,11 +47,11 @@ Main features supported:
 make
 
 %pre 
-if [ "$1" = "1" ]; then
-	echo "pre: Initial install";
-elif [ "$1" = "2" ]; then
-	echo "pre: Update";
-fi
+#if [ "$1" = "1" ]; then
+#	echo "pre: Initial install";
+#elif [ "$1" = "2" ]; then
+#	echo "pre: Update";
+#fi
 
 
 %install
@@ -109,29 +109,39 @@ chmod 644 /usr/local/idns/named.conf
 chown -R named:named /usr/local/idns
 chown -R mysql:mysql /usr/local/share/iDNS/data
 if [ "$1" = "1" ]; then
-	echo "post: Initial install";
+	#echo "post: Initial install";
 	if [ -x /sbin/chkconfig ];then
 		if [ -x /etc/init.d/named ];then
 			/sbin/chkconfig --level 3 named off;
+			if [ $? == 0 ];then
+				echo "named chkconfig ok";
+			fi
 		fi
 		if [ -x /etc/init.d/unxsbind ];then
-			/sbin/chkconfig --level 3 unxsbind on
-			/etc/init.d/unxsbind restart > /dev/null 2>&1
+			/sbin/chkconfig --level 3 unxsbind on;
 			if [ $? == 0 ];then
-				cUnxsBindStart="1";
+				echo "unxsbind chkconfig ok";
 			fi
 		fi
 		if [ -x /etc/init.d/httpd ];then
 			/sbin/chkconfig --level 3 httpd on
+			if [ $? == 0 ];then
+				echo "httpd chkconfig ok";
+			fi
 			/etc/init.d/httpd restart > /dev/null 2>&1
 			if [ $? == 0 ];then
+				echo "httpd restart ok";
 				cHttpdStart="1";
 			fi
 		fi
 		if [ -x /etc/init.d/mysqld ];then
 			/sbin/chkconfig --level 3 mysqld on
+			if [ $? == 0 ];then
+				echo "mysqld chkconfig ok";
+			fi
 			/etc/init.d/mysqld restart > /dev/null 2>&1
 			if [ $? == 0 ];then
+				echo "mysqld restart ok";
 				cMySQLStart="1";
 			fi
 		fi
@@ -147,6 +157,7 @@ if [ "$1" = "1" ]; then
 					export ISMROOT=/usr/local/share;
 					/var/www/unxs/cgi-bin/iDNS.cgi Initialize ultrasecret > /dev/null 2>&1;
 					if [ $? == 0 ];then
+						echo "initialize ok";
 						cInitialize="1";
 					fi
 				fi
@@ -154,12 +165,13 @@ if [ "$1" = "1" ]; then
 		fi
 	fi
 	#create all zone files
-	/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 \								> /dev/null 2>&1;
+	/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 > /dev/null 2>&1;
 	if [ $? == 0 ];then
+		echo "allfiles ok";
 		cAllfiles="1";
-		cUnxsBindStart="0";
 		/etc/init.d/unxsbind restart > /dev/null 2>&1
 		if [ $? == 0 ];then
+			echo "unxsbind restart ok";
 			cUnxsBindStart="1";
 		fi
 	fi
@@ -191,7 +203,7 @@ if [ "$1" = "1" ]; then
 			echo "";
 			echo "WARNING: Your mysqld server was not started, run:";
 			echo "/etc/init.d/mysqld start";
-			echo "Debug any problems, then, if you do not already know your MySQL root password:";
+			echo "Debug any problems, then, if you have not already set your MySQL root password:";
 			echo "/usr/bin/mysqladmin -u root password '<mysql-root-passwd>'";	
 		fi
 		if [ "$cInitialize" != "1" ]; then
@@ -200,8 +212,7 @@ if [ "$1" = "1" ]; then
 			echo "Your unxsBind database was not initialized, run:";
 			echo "export ISMROOT=/usr/local/share";
 			echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
-			echo "Debug any problems, check via the mysql CLI, then if needed try again:";
-			echo "/var/www/unxs/cgi-bin/iDNS.cgi Initialize <mysql-root-passwd>";	
+			echo "Debug any problems, check via the mysql CLI, then if needed try again.";
 		fi
 		if [ "$cAllfiles" != "1" ]; then
 			echo "";
@@ -209,28 +220,38 @@ if [ "$1" = "1" ]; then
 			echo "/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1";	
 		fi
 	fi
-	#cat unxsbind crontab into root crontab
-	if [ -f /usr/local/share/iDNS/setup9/root-crontab ] && [ -d /var/spool/cron ] && [ -x /usr/sbin/tHitCollector ];then
+	#root crontab deprecated, managed via init.d unxsbind script for /etc/cron.d/unxsbind
+	/bin/grep "iDNS.cgi" /var/spool/cron/root > /dev/null 2>&1;
+	if [ $? == 0 ];then
+		echo "Placing unxsBind cron entries in the root crontab has been deprecated";
+		echo "Please remove them all with 'crontab -e' and restart unxsbind via 'service unxsbind restart'";
+	fi
+	#rrdtool and tHit collector initializing
+	if [ -x /usr/sbin/tHitCollector ];then
 		#initialize main stats rrd
 		/usr/sbin/tHitCollector Initialize --cZone allzone.stats > /dev/null 2>&1;
+		if [ $? == 0 ];then
+			echo "tHitCollector initialize ok";
+		fi
 		#new version of rrdtool needs fontconfig font, it was installed
 		#but we need to load into cache
 		if [ -x /usr/bin/fc-cache ];then
 			/usr/bin/fc-cache > /dev/null 2>&1;
-		fi
-		#do not add again
-		grep "iDNS" /var/spool/cron/root > /dev/null 2>&1
-		if [ $? != 0 ];then
-			cat /usr/local/share/iDNS/setup9/root-crontab >> /var/spool/cron/root;
+			if [ $? == 0 ];then
+				echo "fc-cache ran ok";
+			fi
 		fi
 		#setup main stats graph
 		if [ -f /var/www/unxs/html/images/allzone.stats.png ] && [ -d /var/log/named ];then
 			rm /var/www/unxs/html/images/allzone.stats.png;
 			ln -s /var/log/named/allzone.stats.png /var/www/unxs/html/images/allzone.stats.png;
+			if [ $? == 0 ];then
+				echo "allzone.stats.png install ok";
+			fi
 		fi
 	fi
 elif [ "$1" = "2" ]; then
-	echo "post: Update";
+	#echo "post: Update";
 	#update schema
 	if [ -x /var/www/unxs/cgi-bin/iDNS.cgi ];then
 		/var/www/unxs/cgi-bin/iDNS.cgi UpdateSchema > /dev/null 2>&1;
@@ -267,6 +288,9 @@ fi
 if [ "$1" = "0" ]; then
 	echo "preun: Uninstall";
 	/etc/init.d/unxsbind stop > /dev/null 2>&1;
+	if [ $? == 0 ];then
+		echo "unxsbind stop ok";
+	fi
 elif [ "$1" = "1" ]; then
 	echo "preun: Update";
 fi
@@ -277,6 +301,9 @@ if [ "$1" = "0" ]; then
 elif [ "$1" = "1" ]; then
 	echo "postun: Update";
 	/etc/init.d/unxsbind restart > /dev/null 2>&1;
+	if [ $? == 0 ];then
+		echo "unxsbind restart ok";
+	fi
 fi
 
 %clean
@@ -284,11 +311,8 @@ fi
 %files
 %doc LICENSE INSTALL
 /usr/local/share/iDNS
-%config(noreplace) /usr/local/idns/named.conf
 %config(noreplace) /etc/unxsbind-rndc.key
 %config(noreplace) /etc/unxsbind-rndc.conf
-%config(noreplace) /usr/local/idns/named.d/master.zones
-%config(noreplace) /usr/local/idns/named.d/slave.zones
 %config(noreplace) /usr/sbin/bind9-genstats.sh
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 /etc/init.d/unxsbind
