@@ -2501,10 +2501,18 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 		{
 			if(guPermLevel>9 && uNode==0)
 			{
-				if(cSearch[0])
+				if(cSearch[0] && uGroup)
+				printf("<input type=checkbox name=Ct%s checked><a class=darkLink href=unxsVZ.cgi?gcFunction="
+					"tContainer&uContainer=%s&cSearch=%s&uGroup=%u>%s/%s/%s</a><br>\n",
+						field[0],field[0],cURLEncode(cSearch),uGroup,field[1],field[2],field[3]);
+				else if(cSearch[0])
 				printf("<input type=checkbox name=Ct%s><a class=darkLink href=unxsVZ.cgi?gcFunction="
 					"tContainer&uContainer=%s&cSearch=%s>%s/%s/%s</a><br>\n",
 						field[0],field[0],cURLEncode(cSearch),field[1],field[2],field[3]);
+				else if(uGroup)
+				printf("<input type=checkbox name=Ct%s><a class=darkLink href=unxsVZ.cgi?gcFunction="
+					"tContainer&uContainer=%s&uGroup=%u>%s/%s/%s</a><br>\n",
+						field[0],field[0],uGroup,field[1],field[2],field[3]);
 				else
 				printf("<input type=checkbox name=Ct%s><a class=darkLink href=unxsVZ.cgi?gcFunction="
 					"tContainer&uContainer=%s>%s/%s/%s</a><br>\n",
