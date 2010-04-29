@@ -13,7 +13,7 @@
 #
 
 if [ "$1" == "" ];then
-	echo "usage: $0 command arg0 arg1...argN";
+	echo "usage: $0 'command arg0 arg1...argN' [<hostname prefix>]";
 	exit 0;
 fi
 
@@ -30,13 +30,19 @@ do
         #cConfig=`cat /etc/vz/conf/$uContainer.conf | grep ORIGIN_SAMPLE | awk -F= '{print $2}' | awk -F'"' '{print $2}'`;
 
 
-        echo uContainer=$uContainer cHostname=$cHostname;
         #echo cLabel=$cLabel;
         #echo cHostname=$cHostname;
         #echo cIP=$cIP;
         #echo cOSTemplate=$cOSTemplate;
         #echo cConfig=$cConfig;
 
+	if [ "$2" != "" ];then
+		if [[ ! "$cHostname" =~ $2 ]];then
+			continue;
+		fi
+	fi
+
+        echo $uContainer:$cHostname;
         /usr/sbin/vzctl exec2 $uContainer $1 < /dev/tty;
 
 done
