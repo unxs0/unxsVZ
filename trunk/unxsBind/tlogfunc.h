@@ -4,9 +4,10 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
- 
+AUTHOR/LEGAL
+	(C) 2001-2009 Gary Wallis, Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 //ModuleFunctionProtos()
@@ -42,10 +43,10 @@ void ExttLogButtons(void)
 
 	printf("<u>Table Tips</u><br>");
 	printf("This table holds the non-archived logged and MD5 signed operations that have taken place in the system. "
-		"Usually data is available here only for the current month. When possible context related info is provided below. "
-		"Current iDNS version does not save delete (Del) operation data.<p><a href=iDNS.cgi?gcFunction=tLogMonth>tLogMonth</a> "
-		"allows access to all archived (read-only and compressed) monthly tLog data sets. These archives are created from the "
-		"command line usually by crontab operation.");
+		"Usually data is available here only for the current month. When possible context related info is provided"
+		" below. Current iDNS version does not save delete (Del) operation data.<p><a href=iDNS.cgi?gcFunction="
+		"tLogMonth>tLogMonth</a> allows access to all archived (read-only and compressed) monthly tLog data sets."
+		" These archives are created from the command line usually by crontab operation.");
 
 	LogSummary();
 
@@ -94,6 +95,9 @@ void ExttLogSelectRow(void)
 void ExttLogListSelect(void)
 {
 	char cCat[512];
+
+	if(guLoginClient!=1 || guPermLevel<12)
+		return;
 
 	ExtListSelect("tLog",VAR_LIST_tLog);
 
@@ -218,7 +222,8 @@ void ExttLogNavBar(void)
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	printf(LANG_NBB_LIST);
+	if(guLoginClient==1 && guPermLevel>=12 && uLog)
+		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
 	printf(LANG_NBB_SKIPLAST);
@@ -257,10 +262,12 @@ void LogSummary(void)
 			{
 
 				if(!strcmp(cLabel,"Del"))
-					printf("<a title='Jump to tDeletedResource entry' href=iDNS.cgi?gcFunction=tDeletedResource&uDeletedResource=%u>"
+					printf("<a title='Jump to tDeletedResource entry'"
+						" href=iDNS.cgi?gcFunction=tDeletedResource&uDeletedResource=%u>"
 						"tDeletedResource</a><blockquote>\n",uTPK);
 				else
-					printf("<a title='Jump to tResource entry' href=iDNS.cgi?gcFunction=tResource&uResource=%u>tResource</a>"
+					printf("<a title='Jump to tResource entry' href=iDNS.cgi?gcFunction="
+						"tResource&uResource=%u>tResource</a>"
 						"<blockquote>\n",uTPK);
 
 				printf("cZone=%s<br>\n",ForeignKey("tZone","cZone",uZone));
@@ -276,7 +283,8 @@ void LogSummary(void)
 
 			if(uLoginClient)
 			{
-				printf("Contact=<a title='Jump to tClient entry' href=iDNS.cgi?gcFunction=tClient&uClient=%u>%s</a><br></blockquote>\n",
+				printf("Contact=<a title='Jump to tClient entry' href=iDNS.cgi?gcFunction=tClient&"
+					"uClient=%u>%s</a><br></blockquote>\n",
 					uLoginClient,
 					ForeignKey(TCLIENT,"cLabel",uLoginClient));
 			}
