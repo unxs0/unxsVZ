@@ -2144,6 +2144,10 @@ void ExttContainerGetHook(entry gentries[], int x)
 		{
 			sprintf(cSearch,"%.31s",gentries[i].val);
 		}
+		else if(!strcmp(gentries[i].name,"uGroup"))
+		{
+			sscanf(gentries[i].val,"%u",&uGroup);
+		}
 	}
 	tContainer("");
 
