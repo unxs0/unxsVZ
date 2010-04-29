@@ -648,6 +648,9 @@ void ExttContainerCommands(pentry entries[], int x)
 					//debug only
 					//tContainer(cIPv4ClassC);
 
+					//Convenience
+					sprintf(cSearch,"%.31s",cLabel);
+
 					//Loop creation
 					for(i=0;i<uNumContainer;i++)
 					{
@@ -1940,7 +1943,7 @@ void ExttContainerButtons(void)
 				" container property table' type=text name=cService1 value='%s'><br>",cService1);
 			printf("<p><u>Optionally select a group to assign the new container(s) to</u><br>");
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
-			tTablePullDownResellers(uForClient);
+			tTablePullDownResellers(uOwner);//uForClient after
 			if(uVeth)
 				printf("<p>Make sure you understand the implications of using uVeth='Yes' containers"
 				" before proceeding. Alternatively change uVeth to 'No' now.");
