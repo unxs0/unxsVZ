@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with admin and end-user web interfaces. Integrated rrdtool graphics.
 Name: unxsbind
 Version: 3.0
-Release: 1
+Release: 2
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-3.0.tar.gz
@@ -94,6 +94,15 @@ cd $RPM_BUILD_DIR
 
 %post
 #fix cgi group
+mkdir -p /usr/local/idns/named.d/master
+mkdir -p /usr/local/idns/named.d/slave
+cp /usr/local/share/iDNS/setup9/named.conf /usr/local/idns/named.conf
+cp /usr/local/share/iDNS/setup9/root.cache /usr/local/idns/named.d/root.cache
+cp /usr/local/share/iDNS/setup9/127.0.0 /usr/local/idns/named.d/master/127.0.0
+cp /usr/local/share/iDNS/setup9/localhost /usr/local/idns/named.d/master/localhost
+touch /var/log/named-idns.log
+chgrp named /var/log/named-idns.log
+chmod g+w /var/log/named-idns.log
 chgrp apache /var/www/unxs/cgi-bin/iDNS.cgi;
 chgrp apache /var/www/unxs/cgi-bin/idnsAdmin.cgi;
 chgrp apache /var/www/unxs/cgi-bin/idnsOrg.cgi;
@@ -213,8 +222,6 @@ if [ "$1" = "1" ]; then
 			echo "";
 			echo "WARNING: Your unxsBind named was not started, run:";	
 			echo "named-checkconf /usr/local/idns/named.conf";
-			echo "And:";
-			echo "rndc -c /etc/unxsbind.conf status";
 			echo "Fix any problems, then run:";
 			echo "/etc/init.d/unxsbind start";
 		fi
@@ -318,6 +325,7 @@ fi
 %config(noreplace) /usr/sbin/bind9-genstats.sh
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 /etc/init.d/unxsbind
+/etc/cron.d/unxsbind
 /var/www/unxs/cgi-bin/iDNS.cgi
 /var/www/unxs/cgi-bin/idnsAdmin.cgi
 /var/www/unxs/cgi-bin/idnsOrg.cgi
@@ -333,7 +341,7 @@ fi
 %dir /var/log/named
 
 %changelog
-* Tue Apr 27 2010 Gary Wallis <support@unixservice.com>
+* Thu Apr 29 2010 Gary Wallis <support@unixservice.com>
 - Fixed upgrade and requirements. Using new unxstemplate lib for interfaces. Corrected multiple DB server support. Corrected version number change. Added support for update and uninstall.
 * Wed Mar 17 2010 Hugo Urquiza <support2@unixservice.com>
 - New rpm release, added support for AAAA and NAPTR RRs, major version number change.
