@@ -266,7 +266,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							sContainer.uStatus==uAWAITSTOP)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
-							if(CancelContainerJob(sContainer.uDatacenter,
+							if(!CancelContainerJob(sContainer.uDatacenter,
 									sContainer.uNode,uContainer))
 							{
 								if(sContainer.uStatus==uAWAITDEL || 
