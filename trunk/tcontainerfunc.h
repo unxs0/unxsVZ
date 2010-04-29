@@ -1948,6 +1948,10 @@ void ExttContainerButtons(void)
 					" to step 2 of new container creation'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Container Fields'>\n");
+			if(cSearch[0])
+				printf("<input type=hidden name=cSearch value='%s'>",cSearch);
+			if(uGroup)
+				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
                         //printf(LANG_NBB_CONFIRMNEW);
                 break;
 
@@ -1989,12 +1993,11 @@ void ExttContainerButtons(void)
 				htmlContainerMount(uContainer);
 				htmlGroups(0,uContainer);
 			}
-			printf("<p><u>Container Search</u><br>");
+			printf("<p><u>Container Search by cLabel</u><br>");
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
-					" name=cSearch value='%s'> cLabel",cSearch);
-			printf("<p><u>Container NavList Filters</u><br>");
+					" name=cSearch value='%s'>",cSearch);
+			printf("<p><u>Container NavList Filter by tGroup</u><br>");
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
-			printf(" tGroup<br>");
 
 			tContainerNavList(0,cSearch);
 			if(uContainer)
