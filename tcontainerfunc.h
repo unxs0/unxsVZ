@@ -254,6 +254,30 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							}
 						}
 					}
+					//Cancel
+					else if(!strcmp(gcCommand,"Group Cancel"))
+					{
+						struct structContainer sContainer;
+
+						InitContainerProps(&sContainer);
+						GetContainerProps(uContainer,&sContainer);
+
+						if((sContainer.uStatus==uAWAITDEL || sContainer.uStatus==uAWAITACT ||
+							sContainer.uStatus==uAWAITSTOP)
+							&& (sContainer.uOwner==guCompany || guCompany==1))
+						{
+							if(CancelContainerJob(sContainer.uDatacenter,
+									sContainer.uNode,uContainer))
+							{
+								if(sContainer.uStatus==uAWAITDEL || 
+										sContainer.uStatus==uAWAITSTOP)
+									SetContainerStatus(uContainer,uACTIVE);
+								else if(sContainer.uStatus==uAWAITACT)
+									SetContainerStatus(uContainer,uINITSETUP);
+								uGroupJobs++;
+							}
+						}
+					}
 					//Start or Create
 					else if(!strcmp(gcCommand,"Group Start"))
 					{
@@ -1741,9 +1765,9 @@ void ExttContainerCommands(pentry entries[], int x)
                 {
 			ExtProcesstContainerVars(entries,x);
 			if(uGroupJobs)
-				tContainer("'Group' jobs created");
+				tContainer("'Group' jobs created/canceled");
 			else
-				tContainer("No 'Group' jobs created");
+				tContainer("No 'Group' jobs created/canceled");
 		}
 	}
 
@@ -2542,7 +2566,10 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 		}
 		if(guPermLevel>9 && uNode==0)
 		{
-			printf("<input title='Creates job(s) for stopping active container(s).'"
+			printf("<input title='Cancels job(s) for container(s) waiting for activation, deletion or stop.'"
+			" type=submit class=largeButton"
+			" name=gcCommand value='Group Cancel'>\n");
+			printf("<br><input title='Creates job(s) for stopping active container(s).'"
 			" type=submit class=lalertButton"
 			" name=gcCommand value='Group Stop'>\n");
 			printf("<br><input title='Creates job(s) for starting stopped or initial setup container(s).'"
