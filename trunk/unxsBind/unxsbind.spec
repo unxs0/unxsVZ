@@ -366,6 +366,16 @@ fi
 /var/www/unxs/html/images/red.gif
 /var/www/unxs/html/images/unxsbind.jpg
 /var/www/unxs/html/images/yellow.gif
+/var/www/unxs/html/images/allzone.stats.png
+/var/www/unxs/html/images/bgrd_header_engage.gif
+/var/www/unxs/html/images/bgrd_masthead.gif
+/var/www/unxs/html/images/bgrd_topnav.gif
+/var/www/unxs/html/images/bgrd_topnav_systxt.gif
+/var/www/unxs/html/images/btn_mast_search.gif
+/var/www/unxs/html/images/clear.gif
+/var/www/unxs/html/images/unxslogo.jpg
+/var/www/unxs/html/css/popups.js
+/var/www/unxs/html/css/styles.css
 /usr/share/fonts/DejaVuSansMono-Roman.ttf
 %dir /var/log/named
 
