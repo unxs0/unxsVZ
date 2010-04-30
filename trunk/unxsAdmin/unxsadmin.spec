@@ -1,11 +1,11 @@
 Summary: unxsadmin provides the http shared content and httpd conf.d file for all unxsVZ web admins
 Name: unxsadmin
-Version: 1.5
+Version: 1.6
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsadmin-1.5.tar.gz
-URL: http://openisp.net/openisp/unxsAdmin
+Source: http://unixservice.com/source/unxsadmin-1.6.tar.gz
+URL: http://unixservice.com
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
@@ -25,6 +25,7 @@ It also provides some common binary utilities like lastmonth.
 make
 
 %install
+#lastmonth binary
 make install
 mkdir -p /var/www/unxs/cgi-bin
 mkdir -p /var/www/unxs/logs
@@ -33,12 +34,14 @@ mkdir -p /var/www/unxs/html/js
 mkdir -p /var/www/unxs/html/css
 cd images
 cp *.gif /var/www/unxs/html/images/
+cp favicon.ico /var/www/unxs/html/
 cd ../js
 cp *.js /var/www/unxs/html/js
 cd ../css
 cp *.css /var/www/unxs/html/css
 cd ..
 cp unxs.conf /etc/httpd/conf.d/unxs.conf
+#force local build test of unxs.conf
 /etc/init.d/httpd restart
 cd $RPM_BUILD_DIR
 
@@ -53,6 +56,7 @@ cd $RPM_BUILD_DIR
 %dir /var/www/unxs/html/css/
 %config(noreplace) /etc/httpd/conf.d/unxs.conf
 /usr/bin/lastmonth
+/var/www/unxs/html/favicon.ico
 /var/www/unxs/html/images/calendar.gif
 /var/www/unxs/html/images/calendar_mo.gif*
 /var/www/unxs/html/images/hairline.gif
@@ -72,6 +76,8 @@ cd $RPM_BUILD_DIR
 
 
 %changelog
+* Fri Apr 30 2010 Gary Wallis <support@unixservice.com>
+- Added the Unxs X favicon.ico.
 * Fri Sep 22 2009 Gary Wallis <support@unixservice.com>
 - Clean up and modernization, added an img for unxsVZ.
 * Fri May 15 2009 Hugo Urquiza <support2@unixservice.com>
