@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with admin and end-user web interfaces. Integrated rrdtool graphics.
 Name: unxsbind
 Version: 3.0
-Release: 5
+Release: 7
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-3.0.tar.gz
@@ -97,6 +97,7 @@ cd $RPM_BUILD_DIR
 mkdir -p /usr/local/idns/named.d/master
 mkdir -p /usr/local/idns/named.d/slave
 cp /usr/local/share/iDNS/setup9/named.conf /usr/local/idns/named.conf
+cp /var/www/unxs/html/images/green.gif /var/www/unxs/html/images/mrcstatus.gif
 cp /usr/local/share/iDNS/setup9/root.cache /usr/local/idns/named.d/root.cache
 cp /usr/local/share/iDNS/setup9/127.0.0 /usr/local/idns/named.d/master/127.0.0
 cp /usr/local/share/iDNS/setup9/localhost /usr/local/idns/named.d/master/localhost
@@ -362,6 +363,7 @@ fi
 /usr/sbin/tHitCollector
 /var/www/unxs/html/images/allzone.stats.png
 /var/www/unxs/html/images/green.gif
+/var/www/unxs/html/images/mrcstatus.gif
 /var/www/unxs/html/images/null.gif
 /var/www/unxs/html/images/red.gif
 /var/www/unxs/html/images/unxsbind.jpg
@@ -378,6 +380,7 @@ fi
 /var/www/unxs/html/css/styles.css
 /usr/share/fonts/DejaVuSansMono-Roman.ttf
 %dir /var/log/named
+/var/log/named/allzone.stats.png
 
 %changelog
 * Fri Apr 30 2010 Gary Wallis <support@unixservice.com>
