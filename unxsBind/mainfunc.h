@@ -1513,7 +1513,7 @@ void UpdateSchema(void)
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		if(!strcmp(field[0],"uClientDel")) uClientDel=0;
+		if(!strcmp(field[0],"uClient")) uClientDel=0;
 	}
        	mysql_free_result(res);
 
@@ -1645,7 +1645,7 @@ void UpdateTables(void)
 		cDBIP=DBIP0;
 
 	if(getenv("ISMROOT")!=NULL)
-		sprintf(cSQLPath,"%.99s",getenv("ISMROOT"));
+		sprintf(cSQLPath,"%.99s/iDNS/data",getenv("ISMROOT"));
 	//Else we use the unxsbind.spec path above
 
 	printf("UpdateTables(%s) start\n",cDBIP);
@@ -1830,6 +1830,16 @@ void UpdateTables(void)
 	//unless they modified them themselves.
 	if(uMax<TEMPLATETYPE_VDNSORG)
 	{
+		//Save old templates, this is pretty much a temp hack.
+		//It is needed since the .sql files have uTemplate values.
+		sprintf(gcQuery,"UPDATE tTemplate SET uTemplate=uTemplate+1000");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+
 		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tTemplate-vdnsOrg.sql",
 					cDBIP,
 					DBLOGIN,

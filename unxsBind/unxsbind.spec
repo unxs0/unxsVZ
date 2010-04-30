@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with admin and end-user web interfaces. Integrated rrdtool graphics.
 Name: unxsbind
 Version: 3.0
-Release: 3
+Release: 4
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-3.0.tar.gz
@@ -262,6 +262,7 @@ if [ "$1" = "1" ]; then
 elif [ "$1" = "2" ]; then
 	#echo "post: Update";
 	#update schema
+	export ISMROOT=/usr/local/share;	
 	if [ -x /var/www/unxs/cgi-bin/iDNS.cgi ];then
 		/var/www/unxs/cgi-bin/iDNS.cgi UpdateSchema > /dev/null 2>&1;
 		if [ $? == 0 ];then
@@ -275,6 +276,19 @@ elif [ "$1" = "2" ]; then
 			cUpdateTables="1";
 		fi
 	fi
+	if [ "$cUpdateSchema" == "1" ] && [ "$cUpdateTables" == "1" ];then
+		#create all zone files since we updated the db.
+		/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 > /dev/null 2>&1;
+		if [ $? == 0 ];then
+			echo "allfiles update ok";
+			cAllfiles="1";
+			/etc/init.d/unxsbind restart > /dev/null 2>&1
+			if [ $? == 0 ];then
+				echo "unxsbind update restart ok";
+				cUnxsBindStart="1";
+			fi
+		fi
+	fi
 	#let installer know what was done.
 	if [ "$cUpdateSchema" == "1" ] && [ "$cUpdateTables" == "1" ];then
 		echo "unxsBind progams have been updated, your MySQL schema and fixed table contents";	
@@ -282,6 +296,7 @@ elif [ "$1" = "2" ]; then
 	else 
 			echo "It appears that one or more manual operations may be needed to finish";
 			echo "your unxsBind upgrade.";
+			echo " Visit http://openisp.net/openisp/unxsVZ/wiki/InstallingBindYum for help.";
 		if [ "$cUpdateSchema" != "1" ]; then
 			echo "";
 			echo "WARNING: Your unxsBind schema was not updated!";	
@@ -290,6 +305,12 @@ elif [ "$1" = "2" ]; then
 			echo "";
 			echo "WARNING: Your unxsBind fixed tables and templates have not been updated!";	
 		fi
+	fi
+	#root crontab deprecated, managed via init.d unxsbind script for /etc/cron.d/unxsbind
+	/bin/grep "iDNS.cgi" /var/spool/cron/root > /dev/null 2>&1;
+	if [ $? == 0 ];then
+		echo "Placing unxsBind cron entries in the root crontab has been deprecated!";
+		echo "Please remove them all with 'crontab -e' and restart unxsbind via 'service unxsbind restart'.";
 	fi
 fi
 
@@ -324,6 +345,10 @@ fi
 %config(noreplace) /etc/unxsbind-rndc.conf
 %config(noreplace) /usr/sbin/bind9-genstats.sh
 %config(noreplace) /usr/sbin/mysqlcluster.sh
+%config(noreplace) /usr/local/idns/named.conf
+/usr/local/idns/named.d/root.cache
+/usr/local/idns/named.d/master/127.0.0
+/usr/local/idns/named.d/master/localhost
 /etc/init.d/unxsbind
 /etc/cron.d/unxsbind
 /var/www/unxs/cgi-bin/iDNS.cgi
@@ -341,6 +366,8 @@ fi
 %dir /var/log/named
 
 %changelog
+* Fri Apr 30 2010 Gary Wallis <support@unixservice.com>
+- Fixing upgrade.
 * Thu Apr 29 2010 Gary Wallis <support@unixservice.com>
 - Fixed upgrade and requirements. Using new unxstemplate lib for interfaces. Corrected multiple DB server support. Corrected version number change. Added support for update and uninstall.
 * Wed Mar 17 2010 Hugo Urquiza <support2@unixservice.com>
