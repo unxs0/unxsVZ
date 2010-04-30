@@ -1,7 +1,9 @@
 /*
 FILE	lastmonth.c 
 	$Id: lastmonth.c 668 2007-07-02 13:50:59Z root $
-AUTHOR	(C) 2002-2009, support @ openisp.net. GPL licensed.
+AUTHOR/LEGAL
+	(C) 2002-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 PURPOSE
 	Return last month with correct year and with wraparound
 PROBLEMS
@@ -28,8 +30,6 @@ main()
 	structTime=localtime(&clock);
 	strftime(cThisYear,8,"%Y",structTime);
 	strftime(cThisMonth,4,"%b",structTime);
-
-	//printf("%s %s\n",cThisMonth,cThisYear);
 
 	strcpy(cPrevYear,cThisYear);
 
