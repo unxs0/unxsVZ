@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with admin and end-user web interfaces. Integrated rrdtool graphics.
 Name: unxsbind
 Version: 3.0
-Release: 4
+Release: 5
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-3.0.tar.gz
@@ -346,6 +346,7 @@ fi
 %config(noreplace) /usr/sbin/bind9-genstats.sh
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 %config(noreplace) /usr/local/idns/named.conf
+%config(noreplace) /usr/local/idns/named.d/master.zones
 /usr/local/idns/named.d/root.cache
 /usr/local/idns/named.d/master/127.0.0
 /usr/local/idns/named.d/master/localhost
