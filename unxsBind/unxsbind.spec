@@ -215,8 +215,9 @@ if [ "$1" = "1" ]; then
 				&& [ "$cInitialize" == "1" ] && [ "$cAllfiles" == "1" ];then
 		echo "unxsBind has been installed, intialized and httpd and named have been started.";	
 		echo "You can proceed to login to your unxsBind interfaces with your browser.";	
+		echo "You may need to change your iptables configuration (or run 'iptables -F'.)";	
 	else 
-			echo "It appears that one or more manual operations may be needed to finish";
+			echo "IMPORTANT: It appears that one or more manual operations may be needed to finish";
 			echo "your unxsBind installation.";
 		if [ "$cUnxsBindStart" != "1" ]; then
 			echo "";
@@ -256,7 +257,8 @@ if [ "$1" = "1" ]; then
 	#root crontab deprecated, managed via init.d unxsbind script for /etc/cron.d/unxsbind
 	/bin/grep "iDNS.cgi" /var/spool/cron/root > /dev/null 2>&1;
 	if [ $? == 0 ];then
-		echo "Placing unxsBind cron entries in the root crontab has been deprecated";
+		echo "";
+		echo "WARNING: Placing unxsBind cron entries in the root crontab has been deprecated";
 		echo "Please remove them all with 'crontab -e' and restart unxsbind via 'service unxsbind restart'";
 	fi
 elif [ "$1" = "2" ]; then
@@ -292,9 +294,9 @@ elif [ "$1" = "2" ]; then
 	#let installer know what was done.
 	if [ "$cUpdateSchema" == "1" ] && [ "$cUpdateTables" == "1" ];then
 		echo "unxsBind progams have been updated, your MySQL schema and fixed table contents";	
-		echo " have also been upgraded. Existing templates have been saved.";	
+		echo " have also been upgraded. Existing templates have been saved (see tTemplate.)";	
 	else 
-			echo "It appears that one or more manual operations may be needed to finish";
+			echo "IMPORTANT: It appears that one or more manual operations may be needed to finish";
 			echo "your unxsBind upgrade.";
 			echo " Visit http://openisp.net/openisp/unxsVZ/wiki/InstallingBindYum for help.";
 		if [ "$cUpdateSchema" != "1" ]; then
@@ -309,7 +311,8 @@ elif [ "$1" = "2" ]; then
 	#root crontab deprecated, managed via init.d unxsbind script for /etc/cron.d/unxsbind
 	/bin/grep "iDNS.cgi" /var/spool/cron/root > /dev/null 2>&1;
 	if [ $? == 0 ];then
-		echo "Placing unxsBind cron entries in the root crontab has been deprecated!";
+		echo "";
+		echo "WARNING: Placing unxsBind cron entries in the root crontab has been deprecated!";
 		echo "Please remove them all with 'crontab -e' and restart unxsbind via 'service unxsbind restart'.";
 	fi
 fi
