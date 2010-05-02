@@ -152,9 +152,12 @@ int main(int iArgc, char *cArgv[])
 				printf("Set-Cookie: unxsVZPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
 				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+				" uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE "
+				" cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
+				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
 				" uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					gcLogin,guPermLevel,guLoginClient,
-					gcLogin,gcHost,gcHostname,guCompany);
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 				MYSQL_RUN;
 				gcCookie[0]=0;
                                 guPermLevel=0;
@@ -1879,9 +1882,15 @@ int iValidLogin(int mode)
 				guPermLevel=0;
 				guLoginClient=0;
 				//tLogType.cLabel='backend login'->uLogType=6
+				//Alpha testing ON DUPLICATE KEY UPDATE to avoid some replication problems
+				//that I have seen in logfiles.
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
 					" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+					" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE"
+					" cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
+					" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 					" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 				MYSQL_RUN;
 				return(1);
@@ -1900,7 +1909,11 @@ int iValidLogin(int mode)
 		guLoginClient=0;
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,"
 				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+				" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE"
+				" cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,"
+				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 				" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 		MYSQL_RUN;
 	}
