@@ -789,7 +789,7 @@ void InstallNamedFiles(char *cIpNum)
 
 	fprintf(stdout,"Configuring and installing files...\n");
 
-	//for rpm initial install
+	//for rpm initial install, being deprecated.
 	if(strcmp(cIpNum,"0.0.0.0"))
 	{
 		sprintf(gcQuery,"cat %s/iDNS/%s/named.conf|sed -e \"s/{{cIpNumber}}/%s/g\" > /usr/local/idns/named.conf",

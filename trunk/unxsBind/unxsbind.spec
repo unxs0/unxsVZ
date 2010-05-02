@@ -87,7 +87,7 @@ cd ../org
 make install
 cd ../vorg
 make install
-cd ../thit
+cd ../../agents/thit
 cp bind9-genstats.sh /usr/sbin/bind9-genstats.sh
 make install
 cd $RPM_BUILD_DIR
@@ -96,7 +96,6 @@ cd $RPM_BUILD_DIR
 #fix cgi group
 mkdir -p /usr/local/idns/named.d/master
 mkdir -p /usr/local/idns/named.d/slave
-cp /usr/local/share/iDNS/setup9/named.conf /usr/local/idns/named.conf
 cp /var/www/unxs/html/images/green.gif /var/www/unxs/html/images/mrcstatus.gif
 cp /usr/local/share/iDNS/setup9/root.cache /usr/local/idns/named.d/root.cache
 cp /usr/local/share/iDNS/setup9/127.0.0 /usr/local/idns/named.d/master/127.0.0
@@ -117,8 +116,11 @@ chown -R named:named /usr/local/idns
 chown -R mysql:mysql /usr/local/share/iDNS/data
 if [ "$1" = "1" ]; then
 	#echo "post: Initial install";
+	#get server's main/first IP. End user can change later if this is not correct.
+	cp /usr/local/share/iDNS/setup9/named.conf /usr/local/idns/named.conf
+	cCmd=`/sbin/ifconfig`;cIP=${cCmd#*inet addr:};cIP=${cIP%% *}
 	export ISMROOT=/usr/local/share;	
-	/var/www/unxs/cgi-bin/iDNS.cgi installbind 0.0.0.0 > /dev/null 2>&1;
+	/var/www/unxs/cgi-bin/iDNS.cgi installbind $cIP > /dev/null 2>&1;
 	if [ $? == 0 ];then
 		echo "iDNS.cgi installbind ok";
 	fi
@@ -279,8 +281,15 @@ elif [ "$1" = "2" ]; then
 			cUpdateTables="1";
 		fi
 	fi
+	#if for some reason named.conf is missing use default
+	if [ ! -f /usr/local/idns/named.conf ];then
+		cp /usr/local/share/iDNS/setup9/named.conf.localhost /usr/local/idns/named.conf
+		if [ $? == 0 ];then
+			echo "update missing named.conf file installed ok";
+		fi
+	fi
+	#create all zone files since we updated the db.
 	if [ "$cUpdateSchema" == "1" ] && [ "$cUpdateTables" == "1" ];then
-		#create all zone files since we updated the db.
 		/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 > /dev/null 2>&1;
 		if [ $? == 0 ];then
 			echo "allfiles update ok";
@@ -368,7 +377,6 @@ fi
 /var/www/unxs/html/images/red.gif
 /var/www/unxs/html/images/unxsbind.jpg
 /var/www/unxs/html/images/yellow.gif
-/var/www/unxs/html/images/allzone.stats.png
 /var/www/unxs/html/images/bgrd_header_engage.gif
 /var/www/unxs/html/images/bgrd_masthead.gif
 /var/www/unxs/html/images/bgrd_topnav.gif
@@ -383,6 +391,8 @@ fi
 /var/log/named/allzone.stats.png
 
 %changelog
+* Mon May 3 2010 Gary Wallis <support@unixservice.com>
+- Correcting update path.
 * Fri Apr 30 2010 Gary Wallis <support@unixservice.com>
 - Fixing upgrade.
 * Thu Apr 29 2010 Gary Wallis <support@unixservice.com>
