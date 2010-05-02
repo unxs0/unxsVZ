@@ -1,10 +1,23 @@
+/*
+FILE 
+	unxsVZ/tools/mysql-server/repcluster-health/main.c
+	$Id$
+PURPOSE
+	Testing some alpha code for checking replication.
+AUTHOR/LEGAL
+	(C) 2009 Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 LICENSE file should be included in distribution.
+*/
+
 #include <stdio.h>
 #include <mysql/mysql.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 char gcQuery[1024]={""};
 
-void ConnectMySQL(MYSQL *aMySQL,char *cIP,char *cLogin,char *cPwd,char *cDb);
+void ConnectMySQL(MYSQL *MySQLVector,char *cIP,char *cLogin,char *cPwd,char *cDb);
 void CreateTestTable(MYSQL *MySQLVector,int iIndex);
 void RemoveTestTable(MYSQL *MySQLVector,int iIndex);
 void CheckTestTable(MYSQL *MySQLVector,int iServerIndex,int iTableIndex);
@@ -12,10 +25,10 @@ void CheckTestTable(MYSQL *MySQLVector,int iServerIndex,int iTableIndex);
 
 int main(void)
 {
-	char *cServerIps[5]={"70.38.123.40","70.38.123.41","70.38.123.42",""};
-	char *cDbLogin="test";
+	char *cServerIps[5]={"127.0.0.1","192.168.22.130","",""};
+	char *cDbLogin="unxsvz";
 	char *cDbPwd="wsxedc";
-	char *cDbName="test";
+	char *cDbName="unxsvz";
 
 	MYSQL MySQLVectors[5]; //Up to 6 MySQL servers can be defined in the cServerIps array
 	int i=0;
@@ -24,6 +37,7 @@ int main(void)
 
 	while(1)
 	{
+		//This is a blocking connect. Not good.
 		ConnectMySQL(&MySQLVectors[i],cServerIps[i],cDbLogin,cDbPwd,cDbName);
 		i++;
 		if(!cServerIps[i][0]) break;
@@ -32,6 +46,8 @@ int main(void)
 	
 	for(j=0;j<i;j++)
 		CreateTestTable(&MySQLVectors[j],j);
+
+	usleep(20);//Acceptable replication delay. Must be set for your cluster.
 
 	for(j=0;j<i;j++)
 	{
@@ -44,7 +60,6 @@ int main(void)
 	for(j=0;j<i;j++)
 		RemoveTestTable(&MySQLVectors[j],j);
 
-
 	for(j=0;j<i;j++)
 		mysql_close(&MySQLVectors[j]);
 	
@@ -55,18 +70,18 @@ int main(void)
 }//main
 
 
-void ConnectMySQL(MYSQL *aMySQL,char *cIP,char *cLogin,char *cPwd,char *cDb)
+void ConnectMySQL(MYSQL *MySQLVector,char *cIP,char *cLogin,char *cPwd,char *cDb)
 {
-	mysql_init(aMySQL);
-	if(!mysql_real_connect(aMySQL,cIP,cLogin,cPwd,cDb,0,NULL,0))
+	mysql_init(MySQLVector);
+	if(!mysql_real_connect(MySQLVector,cIP,cLogin,cPwd,cDb,0,NULL,0))
 	{
 		printf("Fatal: failed to connect MySQL vector");
 		printf("IP address    : %s\n",cIP);
-		printf("Error message : %s\n",mysql_error(aMySQL));
+		printf("Error message : %s\n",mysql_error(MySQLVector));
 		exit(EXIT_FAILURE);
 	}
 	
-}//void ConnectMySQL(MYSQL *aMySQL[],char *cIPs[],char *cLogin,char *cPwd,char *cDb)
+}//void ConnectMySQL()
 
 
 void CreateTestTable(MYSQL *MySQLVector,int iIndex)

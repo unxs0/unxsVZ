@@ -5,7 +5,10 @@
 
 options {
 	directory "/usr/local/idns/named.d";
-	listen-on { {{cIpNumber}}; 127.0.0.1; };
+	//Replace the next line with the one below it, replacing {{cIpNumber}} with your
+	//DNS server IP. Remove the comment slashes! Then rndc -c /etc/unxsbind-rndc.conf reload
+	listen-on { 127.0.0.1; };
+	//listen-on { {{cIpNumber}}; 127.0.0.1; };
 	version "No version information available";
 	//query-source address {{cIpNumber}} port 53;
 	pid-file "/usr/local/idns/named.pid";
