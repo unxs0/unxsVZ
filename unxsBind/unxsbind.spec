@@ -341,12 +341,23 @@ elif [ "$1" = "2" ]; then
 	fi
 	#if for some reason named.conf is missing use default
 	if [ ! -f /usr/local/idns/named.conf ];then
-		cp /usr/local/share/iDNS/setup9/named.conf.localhost /usr/local/idns/named.conf
-		if [ $? == 0 ];then
-			echo "update missing named.conf file installed ok";
-			chmod 644 /usr/local/idns/named.conf;
+	cIP=`/sbin/ifconfig|/usr/bin/head -n 2|/usr/bin/tail -n 1|/bin/awk -F'inet addr:' '{print $2}'|/bin/cut -f 1 -d " "`;
+		if [ $? != 0 ] || [ "$cIP" == "" ];then
+			echo "Error geting cIP";
+		else
+			export ISMROOT=/usr/local/share;	
+			/var/www/unxs/cgi-bin/iDNS.cgi installbind $cIP;
+			if [ $? == 0 ];then
+				echo "update iDNS.cgi installbind ok $cIP";
+			else
+				cp /usr/local/share/iDNS/setup9/named.conf.localhost /usr/local/idns/named.conf
+				if [ $? == 0 ];then
+					echo "update missing named.conf localhost file installed ok";
+					chmod 644 /usr/local/idns/named.conf;
+				fi
+				cWarnAboutNamedConf="1";
+			fi
 		fi
-		cWarnAboutNamedConf="1";
 	fi
 	#create all zone files since we updated the db.
 	if [ "$cUpdateSchema" == "1" ] && [ "$cUpdateTables" == "1" ];then
