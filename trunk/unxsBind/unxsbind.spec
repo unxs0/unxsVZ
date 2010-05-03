@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with admin and end-user web interfaces. Integrated rrdtool graphics.
 Name: unxsbind
 Version: 3.0
-Release: 13
+Release: 14
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-3.0.tar.gz
@@ -104,7 +104,7 @@ cd $RPM_BUILD_DIR
 #since if we do are post changes are lost. very annoying.
 #maybe an rpm expert can figure this out and provide a patch?
 #%config(noreplace) /usr/local/idns/named.conf
-%config(noreplace) /usr/local/idns/named.d/master.zones
+#%config(noreplace) /usr/local/idns/named.d/master.zones
 /usr/local/idns/named.d/root.cache
 /usr/local/idns/named.d/master/127.0.0
 /usr/local/idns/named.d/master/localhost
@@ -161,17 +161,18 @@ if [ "$1" = "1" ]; then
 	cIP=`/sbin/ifconfig|/usr/bin/head -n 2|/usr/bin/tail -n 1|/bin/awk -F'inet addr:' '{print $2}'|/bin/cut -f 1 -d " "`;
 	if [ $? != 0 ] || [ "$cIP" == "" ];then
 		echo "Error geting cIP";
-	fi
-	export ISMROOT=/usr/local/share;	
-	/var/www/unxs/cgi-bin/iDNS.cgi installbind $cIP > /dev/null 2>&1;
-	if [ $? == 0 ];then
-		echo "iDNS.cgi installbind ok $cIP";
+	else
+		export ISMROOT=/usr/local/share;	
+		/var/www/unxs/cgi-bin/iDNS.cgi installbind $cIP;
+		if [ $? == 0 ];then
+			echo "iDNS.cgi installbind ok $cIP";
+		fi
 	fi
 	#if for some reason named.conf is missing use default
 	if [ ! -f /usr/local/idns/named.conf ];then
 		cp /usr/local/share/iDNS/setup9/named.conf.localhost /usr/local/idns/named.conf
 		if [ $? == 0 ];then
-			echo "update missing named.conf file installed ok";
+			echo "localhost named.conf file installed ok";
 			chmod 644 /usr/local/idns/named.conf;
 		fi
 	fi
