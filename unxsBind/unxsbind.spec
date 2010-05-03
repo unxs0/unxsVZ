@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with admin and end-user web interfaces. Integrated rrdtool graphics.
 Name: unxsbind
 Version: 3.0
-Release: 8
+Release: 13
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-3.0.tar.gz
@@ -9,7 +9,7 @@ URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.6 , bind-utils >= 9.3.6 , rrdtool , chkconfig, unxstemplatelib >= 1.0 , unxscidrlib >= 1.0
+Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 30:9.3.6 , bind-utils >= 30:9.3.6, rrdtool , chkconfig, unxstemplatelib >= 1.0 , unxscidrlib >= 1.0
 
 %description
 unxsBind iDNS provides a SaaS DNS BIND9 manager.
@@ -92,6 +92,48 @@ cp bind9-genstats.sh /usr/sbin/bind9-genstats.sh
 make install
 cd $RPM_BUILD_DIR
 
+%files
+%doc LICENSE INSTALL
+/usr/local/share/iDNS
+%config(noreplace) /etc/unxsbind-rndc.key
+%config(noreplace) /etc/unxsbind-rndc.conf
+%config(noreplace) /usr/sbin/bind9-genstats.sh
+%config(noreplace) /usr/sbin/mysqlcluster.sh
+#since we modify this file in the post section it seems that
+#rpm inner workings will not allow us to include the file here
+#since if we do are post changes are lost. very annoying.
+#maybe an rpm expert can figure this out and provide a patch?
+#%config(noreplace) /usr/local/idns/named.conf
+%config(noreplace) /usr/local/idns/named.d/master.zones
+/usr/local/idns/named.d/root.cache
+/usr/local/idns/named.d/master/127.0.0
+/usr/local/idns/named.d/master/localhost
+/etc/init.d/unxsbind
+/etc/cron.d/unxsbind
+/var/www/unxs/cgi-bin/iDNS.cgi
+/var/www/unxs/cgi-bin/idnsAdmin.cgi
+/var/www/unxs/cgi-bin/idnsOrg.cgi
+/var/www/unxs/cgi-bin/vdnsOrg.cgi
+/usr/sbin/tHitCollector
+/var/www/unxs/html/images/allzone.stats.png
+/var/www/unxs/html/images/green.gif
+/var/www/unxs/html/images/mrcstatus.gif
+/var/www/unxs/html/images/null.gif
+/var/www/unxs/html/images/red.gif
+/var/www/unxs/html/images/unxsbind.jpg
+/var/www/unxs/html/images/yellow.gif
+/var/www/unxs/html/images/bgrd_header_engage.gif
+/var/www/unxs/html/images/bgrd_masthead.gif
+/var/www/unxs/html/images/bgrd_topnav.gif
+/var/www/unxs/html/images/bgrd_topnav_systxt.gif
+/var/www/unxs/html/images/btn_mast_search.gif
+/var/www/unxs/html/images/clear.gif
+/var/www/unxs/html/css/popups.js
+/var/www/unxs/html/css/styles.css
+/usr/share/fonts/DejaVuSansMono-Roman.ttf
+%dir /var/log/named
+/var/log/named/allzone.stats.png
+
 %post
 #fix cgi group
 mkdir -p /usr/local/idns/named.d/master
@@ -111,19 +153,27 @@ chmod 500 /usr/sbin/bind9-genstats.sh;
 chmod 500 /usr/sbin/mysqlcluster.sh
 chmod 755 /etc/init.d/unxsbind;
 chmod -R og+x /usr/local/idns
-chmod 644 /usr/local/idns/named.conf
 chown -R named:named /usr/local/idns
 chown -R mysql:mysql /usr/local/share/iDNS/data
 if [ "$1" = "1" ]; then
 	#echo "post: Initial install";
 	#get server's main/first IP. End user can change later if this is not correct.
-	cCmd=`/sbin/ifconfig`;cIP=${cCmd#*inet addr:};cIP=${cIP%% *}
+	cIP=`/sbin/ifconfig|/usr/bin/head -n 2|/usr/bin/tail -n 1|/bin/awk -F'inet addr:' '{print $2}'|/bin/cut -f 1 -d " "`;
+	if [ $? != 0 ] || [ "$cIP" == "" ];then
+		echo "Error geting cIP";
+	fi
 	export ISMROOT=/usr/local/share;	
 	/var/www/unxs/cgi-bin/iDNS.cgi installbind $cIP > /dev/null 2>&1;
 	if [ $? == 0 ];then
-		echo "iDNS.cgi installbind ok";
-		#debug only
-		cp /usr/local/idns/named.conf /usr/local/idns/named.conf.installbind;
+		echo "iDNS.cgi installbind ok $cIP";
+	fi
+	#if for some reason named.conf is missing use default
+	if [ ! -f /usr/local/idns/named.conf ];then
+		cp /usr/local/share/iDNS/setup9/named.conf.localhost /usr/local/idns/named.conf
+		if [ $? == 0 ];then
+			echo "update missing named.conf file installed ok";
+			chmod 644 /usr/local/idns/named.conf;
+		fi
 	fi
 	if [ -x /sbin/chkconfig ];then
 		if [ -x /etc/init.d/named ];then
@@ -287,6 +337,7 @@ elif [ "$1" = "2" ]; then
 		cp /usr/local/share/iDNS/setup9/named.conf.localhost /usr/local/idns/named.conf
 		if [ $? == 0 ];then
 			echo "update missing named.conf file installed ok";
+			chmod 644 /usr/local/idns/named.conf;
 		fi
 	fi
 	#create all zone files since we updated the db.
@@ -352,44 +403,6 @@ fi
 
 %clean
 
-%files
-%doc LICENSE INSTALL
-/usr/local/share/iDNS
-%config(noreplace) /etc/unxsbind-rndc.key
-%config(noreplace) /etc/unxsbind-rndc.conf
-%config(noreplace) /usr/sbin/bind9-genstats.sh
-%config(noreplace) /usr/sbin/mysqlcluster.sh
-%config(noreplace) /usr/local/idns/named.conf
-%config(noreplace) /usr/local/idns/named.d/master.zones
-/usr/local/idns/named.d/root.cache
-/usr/local/idns/named.d/master/127.0.0
-/usr/local/idns/named.d/master/localhost
-/etc/init.d/unxsbind
-/etc/cron.d/unxsbind
-/var/www/unxs/cgi-bin/iDNS.cgi
-/var/www/unxs/cgi-bin/idnsAdmin.cgi
-/var/www/unxs/cgi-bin/idnsOrg.cgi
-/var/www/unxs/cgi-bin/vdnsOrg.cgi
-/usr/sbin/tHitCollector
-/var/www/unxs/html/images/allzone.stats.png
-/var/www/unxs/html/images/green.gif
-/var/www/unxs/html/images/mrcstatus.gif
-/var/www/unxs/html/images/null.gif
-/var/www/unxs/html/images/red.gif
-/var/www/unxs/html/images/unxsbind.jpg
-/var/www/unxs/html/images/yellow.gif
-/var/www/unxs/html/images/bgrd_header_engage.gif
-/var/www/unxs/html/images/bgrd_masthead.gif
-/var/www/unxs/html/images/bgrd_topnav.gif
-/var/www/unxs/html/images/bgrd_topnav_systxt.gif
-/var/www/unxs/html/images/btn_mast_search.gif
-/var/www/unxs/html/images/clear.gif
-/var/www/unxs/html/images/unxslogo.jpg
-/var/www/unxs/html/css/popups.js
-/var/www/unxs/html/css/styles.css
-/usr/share/fonts/DejaVuSansMono-Roman.ttf
-%dir /var/log/named
-/var/log/named/allzone.stats.png
 
 %changelog
 * Mon May 3 2010 Gary Wallis <support@unixservice.com>
