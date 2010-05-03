@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with admin and end-user web interfaces. Integrated rrdtool graphics.
 Name: unxsbind
 Version: 3.0
-Release: 7
+Release: 8
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-3.0.tar.gz
