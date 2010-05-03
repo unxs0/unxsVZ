@@ -5497,7 +5497,7 @@ d>\
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -5757,7 +5757,7 @@ d>\
 \
 <table cellspacing="0" cellpadding="0" border="0" width=60%>\
 \	<tr valign="top">\
-\	\	<td class="padb20"><img src=/images/unxslogo.jpg></td>\
+\	\	<td class="padb20"><img src=/images/unxsbind.jpg></td>\
 \	</tr>\
 </table>\
 \
@@ -5833,7 +5833,7 @@ responsible for any damage resulting from improper use.</font>\
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -6039,7 +6039,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 <form method=post>\
 <table width="100%" border="0" cellspacing="0" cellpadding="0" class="table_header2">\
   <tr>\
-    <td><img src="/images/unxslogo.jpg"  style="margin:10px; "></td>\
+    <td><img src="/images/unxsbind.jpg"  style="margin:10px; "></td>\
     <td align="right">\
         <input type="submit" onClick="javascript:window.close()" value="X Close" style="margin:0 20px 0 0;" class="close_button"/>\
     </td>\
@@ -7216,7 +7216,7 @@ Search for the zone you want to restore with tool above. Zone data will be displ
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -7472,7 +7472,7 @@ Search for the zone you want to restore with tool above. Zone data will be displ
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -7686,7 +7686,7 @@ Search for the zone you want to restore with tool above. Zone data will be displ
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -7900,7 +7900,7 @@ Search for the zone you want to restore with tool above. Zone data will be displ
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -8139,7 +8139,7 @@ Search for the zone you want to restore with tool above. Zone data will be displ
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -8444,7 +8444,7 @@ Search for the zone you want to restore with tool above. Zone data will be displ
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -9243,7 +9243,7 @@ lorem ipsum\
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -9456,7 +9456,7 @@ lorem ipsum\
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -9704,7 +9704,7 @@ lorem ipsum\
 \
 <table cellspacing="0" cellpadding="0" border="0" width=60%>\
 \	<tr valign="top">\
-\	\	<td class="padb20"><img src=/images/unxslogo.jpg></td>\
+\	\	<td class="padb20"><img src=/images/unxsbind.jpg></td>\
 \	</tr>\
 </table>\
 \
@@ -9783,7 +9783,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -10039,7 +10039,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -10250,7 +10250,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -10556,7 +10556,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 <form method=post>\
 <table width="100%" border="0" cellspacing="0" cellpadding="0" class="table_header2">\
   <tr>\
-    <td><img src="/images/unxslogo.jpg"  style="margin:10px; "></td>\
+    <td><img src="/images/unxsbind.jpg"  style="margin:10px; "></td>\
     <td align="right">\
         <input type="submit" onClick="javascript:window.close()" value="X Close" style="margin:0 20px 0 0;" class="close_button"/>\
     </td>\
@@ -10594,7 +10594,7 @@ You must have Javascript enabled in order to use this software correctly.</font>
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
@@ -10802,7 +10802,7 @@ RRType is the Resource Record Type. It may be one of the following:<br><br>\
 \
 <table cellspacing="0" cellpadding="0" border="0" width=1200>\
 \	<tr valign="top">\
-\	<td class="padb20"><img border=0 src=/images/unxslogo.jpg></td>\
+\	<td class="padb20"><img border=0 src=/images/unxsbind.jpg></td>\
 \
 \	\	<td align="right">\
 \
