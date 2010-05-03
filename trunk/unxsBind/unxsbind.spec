@@ -9,7 +9,7 @@ URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.4 , bind-utils >= 9.3.6-4 , rrdtool , chkconfig, unxstemplatelib >= 1.0 , unxscidrlib >= 1.0
+Requires: unxsadmin >= 1.2 , mysql-server >= 5.0.45 , bind >= 9.3.6 , bind-utils >= 9.3.6 , rrdtool , chkconfig, unxstemplatelib >= 1.0 , unxscidrlib >= 1.0
 
 %description
 unxsBind iDNS provides a SaaS DNS BIND9 manager.
@@ -117,12 +117,13 @@ chown -R mysql:mysql /usr/local/share/iDNS/data
 if [ "$1" = "1" ]; then
 	#echo "post: Initial install";
 	#get server's main/first IP. End user can change later if this is not correct.
-	cp /usr/local/share/iDNS/setup9/named.conf /usr/local/idns/named.conf
 	cCmd=`/sbin/ifconfig`;cIP=${cCmd#*inet addr:};cIP=${cIP%% *}
 	export ISMROOT=/usr/local/share;	
 	/var/www/unxs/cgi-bin/iDNS.cgi installbind $cIP > /dev/null 2>&1;
 	if [ $? == 0 ];then
 		echo "iDNS.cgi installbind ok";
+		#debug only
+		cp /usr/local/idns/named.conf /usr/local/idns/named.conf.installbind;
 	fi
 	if [ -x /sbin/chkconfig ];then
 		if [ -x /etc/init.d/named ];then
