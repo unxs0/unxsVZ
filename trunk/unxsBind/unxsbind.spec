@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with admin and end-user web interfaces. Integrated rrdtool graphics.
 Name: unxsbind
 Version: 3.0
-Release: 14
+Release: 15
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-3.0.tar.gz
@@ -175,6 +175,7 @@ if [ "$1" = "1" ]; then
 			echo "localhost named.conf file installed ok";
 			chmod 644 /usr/local/idns/named.conf;
 		fi
+		cWarnAboutNamedConf="1";
 	fi
 	if [ -x /sbin/chkconfig ];then
 		if [ -x /etc/init.d/named ];then
@@ -316,6 +317,11 @@ if [ "$1" = "1" ]; then
 		echo "WARNING: Placing unxsBind cron entries in the root crontab has been deprecated";
 		echo "Please remove them all with 'crontab -e' and restart unxsbind via 'service unxsbind restart'";
 	fi
+	if [ "$cWarnAboutNamedConf" == "1" ];then
+		echo "";
+		echo "WARNING: You need to edit or create by hand your /usr/local/idns/named.conf ";
+		echo "You may be able to run '/var/www/unxs/cgi-bin/iDNS.cgi installbind <NSIPv4>' to do this for you.";
+	fi
 elif [ "$1" = "2" ]; then
 	#echo "post: Update";
 	#update schema
@@ -340,6 +346,7 @@ elif [ "$1" = "2" ]; then
 			echo "update missing named.conf file installed ok";
 			chmod 644 /usr/local/idns/named.conf;
 		fi
+		cWarnAboutNamedConf="1";
 	fi
 	#create all zone files since we updated the db.
 	if [ "$cUpdateSchema" == "1" ] && [ "$cUpdateTables" == "1" ];then
@@ -377,6 +384,11 @@ elif [ "$1" = "2" ]; then
 		echo "";
 		echo "WARNING: Placing unxsBind cron entries in the root crontab has been deprecated!";
 		echo "Please remove them all with 'crontab -e' and restart unxsbind via 'service unxsbind restart'.";
+	fi
+	if [ "$cWarnAboutNamedConf" == "1" ];then
+		echo "";
+		echo "WARNING: You need to edit or create by hand your /usr/local/idns/named.conf ";
+		echo "You may be able to run '/var/www/unxs/cgi-bin/iDNS.cgi installbind <NSIPv4>' to do this for you.";
 	fi
 fi
 
