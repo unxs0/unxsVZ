@@ -1,7 +1,7 @@
 Summary: DNS BIND 9 telco quality manager with admin and end-user web interfaces. Integrated rrdtool graphics.
 Name: unxsbind
 Version: 3.0
-Release: 16
+Release: 17
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsbind-3.0.tar.gz
@@ -157,26 +157,6 @@ chown -R named:named /usr/local/idns
 chown -R mysql:mysql /usr/local/share/iDNS/data
 if [ "$1" = "1" ]; then
 	#echo "post: Initial install";
-	#get server's main/first IP. End user can change later if this is not correct.
-	cIP=`/sbin/ifconfig|/usr/bin/head -n 2|/usr/bin/tail -n 1|/bin/awk -F'inet addr:' '{print $2}'|/bin/cut -f 1 -d " "`;
-	if [ $? != 0 ] || [ "$cIP" == "" ];then
-		echo "Error geting cIP";
-	else
-		export ISMROOT=/usr/local/share;	
-		/var/www/unxs/cgi-bin/iDNS.cgi installbind $cIP;
-		if [ $? == 0 ];then
-			echo "iDNS.cgi installbind ok $cIP";
-		fi
-	fi
-	#if for some reason named.conf is missing use default
-	if [ ! -f /usr/local/idns/named.conf ];then
-		cp /usr/local/share/iDNS/setup9/named.conf.localhost /usr/local/idns/named.conf
-		if [ $? == 0 ];then
-			echo "localhost named.conf file installed ok";
-			chmod 644 /usr/local/idns/named.conf;
-		fi
-		cWarnAboutNamedConf="1";
-	fi
 	if [ -x /sbin/chkconfig ];then
 		if [ -x /etc/init.d/named ];then
 			/sbin/chkconfig --level 3 named off;
@@ -229,7 +209,28 @@ if [ "$1" = "1" ]; then
 					fi
 				fi
 			fi
+			#get server's main/first IP. End user can change later if this is not correct.
+	cIP=`/sbin/ifconfig|/usr/bin/head -n 2|/usr/bin/tail -n 1|/bin/awk -F'inet addr:' '{print $2}'|/bin/cut -f 1 -d " "`;
+			if [ $? != 0 ] || [ "$cIP" == "" ];then
+				echo "Error geting cIP";
+			else
+				export ISMROOT=/usr/local/share;	
+				#This must be run after mysqld is started
+				/var/www/unxs/cgi-bin/iDNS.cgi installbind $cIP > /dev/null 2>&1;
+				if [ $? == 0 ];then
+					echo "iDNS.cgi installbind ok $cIP";
+				fi
+			fi
 		fi
+	fi
+	#if for some reason named.conf is missing use default
+	if [ ! -f /usr/local/idns/named.conf ];then
+		cp /usr/local/share/iDNS/setup9/named.conf.localhost /usr/local/idns/named.conf
+		if [ $? == 0 ];then
+			echo "localhost named.conf file installed ok";
+			chmod 644 /usr/local/idns/named.conf;
+		fi
+		cWarnAboutNamedConf="1";
 	fi
 	#create all zone files
 	/var/www/unxs/cgi-bin/iDNS.cgi allfiles master ns1.yourdomain.com 127.0.0.1 > /dev/null 2>&1;
@@ -346,7 +347,8 @@ elif [ "$1" = "2" ]; then
 			echo "Error geting cIP";
 		else
 			export ISMROOT=/usr/local/share;	
-			/var/www/unxs/cgi-bin/iDNS.cgi installbind $cIP;
+			#this will fail if mysql is not running.
+			/var/www/unxs/cgi-bin/iDNS.cgi installbind $cIP > /dev/null 2>&1;
 			if [ $? == 0 ];then
 				echo "update iDNS.cgi installbind ok $cIP";
 			else
