@@ -133,7 +133,7 @@ void ExtProcesstZoneVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"uSubmitJob"))
 			sscanf(entries[i].val,"%u",&uSubmitJob);			
 		else if(!strcmp(entries[i].name,"cTargetZone"))
-			sprintf(cTargetZone,"%.99s",entries[i].val);
+			sprintf(cTargetZone,"%.99s",FQDomainName(entries[i].val));
 	}
 
 }//void ExtProcesstZoneVars(pentry entries[], int x)
