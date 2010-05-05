@@ -2351,6 +2351,25 @@ void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow)
 }//void ExtSelectRow(...)
 
 
+//For those tables you anybody to be able to read. Like tStatus.
+void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow)
+{
+		sprintf(gcQuery,"SELECT %s FROM %s WHERE u%s=%u",cVarList,cTable,cTable+1,uRow);
+}//void ExtSelectRowPublic(...)
+
+
+void ExtListSelectPublic(const char *cTable,const char *cVarList)
+{
+		sprintf(gcQuery,"SELECT %s FROM %s",cVarList,cTable);
+}//void ExtListSelectPublic(...)
+
+
+void ExtSelectPublic(const char *cTable,const char *cVarList)
+{
+		sprintf(gcQuery,"SELECT %s FROM %s",cVarList,cTable);
+
+}//void ExtSelectPublic(...)
+
 
 //Passwd stuff
 static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
