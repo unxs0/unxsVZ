@@ -251,6 +251,7 @@ void tDatacenterInput(unsigned uMode)
 	if(uDatacenter)
 	{
 		char cConfigBuffer[256]={""};
+		char cConfigBuffer2[256]={"/traffic/datacenter.html"};
 		GetConfiguration("cDatacenterTrafficDirURL",cConfigBuffer,uDatacenter,0,0,0);
 		if(!cConfigBuffer[0])
 			GetConfiguration("cDatacenterTrafficDirURL",cConfigBuffer,0,0,0,0);
@@ -258,7 +259,7 @@ void tDatacenterInput(unsigned uMode)
 		{
 	
 			OpenRow("Graph","black");
-			printf("<a href=%s><img src=%s border=0></a>\n",cConfigBuffer,cConfigBuffer);
+			printf("<a href=%s><img src=%s border=0></a>\n",cConfigBuffer2,cConfigBuffer);
 			printf("</td></tr>\n");
 		}
 	}
