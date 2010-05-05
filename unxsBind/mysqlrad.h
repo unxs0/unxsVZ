@@ -128,6 +128,9 @@ void ExtListSelect(const char *cTable,const char *cVarList);
 void ExtSelect(const char *cTable,const char *cVarList,unsigned uMaxResults);
 void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField, const char *cSearch,const char *cExtraCond,unsigned uMaxResults);
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
+void ExtListSelectPublic(const char *cTable,const char *cVarList);
+void ExtSelectPublic(const char *cTable,const char *cVarList);
+void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow);
 
 
  //Standard tInputFunc functions

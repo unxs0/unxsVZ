@@ -4,9 +4,9 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
- 
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file.
 */
 
 //ModuleFunctionProtos()
@@ -40,8 +40,6 @@ void ExttLogTypeCommands(pentry entries[], int x)
                         	guMode=2000;
 	                        tLogType(LANG_NB_CONFIRMNEW);
 			}
-			else
-				tLogType("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
@@ -60,46 +58,38 @@ void ExttLogTypeCommands(pentry entries[], int x)
 				uModDate=0;//Never modified
 				NewtLogType(0);
 			}
-			else
-				tLogType("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstLogTypeVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(guPermLevel>=12 && guLoginClient==1)
 			{
 	                        guMode=2001;
 				tLogType(LANG_NB_CONFIRMDEL);
 			}
-			else
-				tLogType("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstLogTypeVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(guPermLevel>=12 && guLoginClient==1)
 			{
 				guMode=5;
 				DeletetLogType();
 			}
-			else
-				tLogType("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstLogTypeVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(guPermLevel>=12)
 			{
 				guMode=2002;
 				tLogType(LANG_NB_CONFIRMMOD);
 			}
-			else
-				tLogType("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstLogTypeVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(guPermLevel>=12)
 			{
                         	guMode=2002;
 				//Check entries here
@@ -108,8 +98,6 @@ void ExttLogTypeCommands(pentry entries[], int x)
 				uModBy=guLoginClient;
 				ModtLogType();
 			}
-			else
-				tLogType("<blink>Error</blink>: Denied by permissions settings");
                 }
 	}
 
@@ -118,7 +106,7 @@ void ExttLogTypeCommands(pentry entries[], int x)
 
 void ExttLogTypeButtons(void)
 {
-	OpenFieldSet("Aux Panel",100);
+	OpenFieldSet("tLogType Aux Panel",100);
 	switch(guMode)
         {
                 case 2000:
@@ -170,14 +158,14 @@ void ExttLogTypeGetHook(entry gentries[], int x)
 
 void ExttLogTypeSelect(void)
 {
-	ExtSelect("tLogType",VAR_LIST_tLogType,0);
+	ExtSelectPublic("tLogType",VAR_LIST_tLogType);
 
 }//void ExttLogTypeSelect(void)
 
 
 void ExttLogTypeSelectRow(void)
 {
-	ExtSelectRow("tLogType",VAR_LIST_tLogType,uLogType);
+	ExtSelectRowPublic("tLogType",VAR_LIST_tLogType,uLogType);
 
 }//void ExttLogTypeSelectRow(void)
 
@@ -186,18 +174,13 @@ void ExttLogTypeListSelect(void)
 {
 	char cCat[512];
 
-	ExtListSelect("tLogType",VAR_LIST_tLogType);
-
+	ExtListSelectPublic("tLogType",VAR_LIST_tLogType);
+	
 	//Changes here must be reflected below in ExttLogTypeListFilter()
         if(!strcmp(gcFilter,"uLogType"))
         {
                 sscanf(gcCommand,"%u",&uLogType);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
-			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tLogType.uLogType=%u \
-						ORDER BY uLogType",
+		sprintf(cCat," WHERE tLogType.uLogType=%u ORDER BY uLogType",
 						uLogType);
 		strcat(gcQuery,cCat);
         }
@@ -231,17 +214,19 @@ void ExttLogTypeListFilter(void)
 
 void ExttLogTypeNavBar(void)
 {
+	if(uOwner) GetClientOwner(uOwner,&guReseller);
+
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=10 && !guListMode)
+	if(guPermLevel>=12 && !guListMode)
 		printf(LANG_NBB_NEW);
-	
-	if(uAllowMod(uOwner,uCreatedBy))
+
+	if(guPermLevel>=12)
 		printf(LANG_NBB_MODIFY);
-	
-	if(uAllowDel(uOwner,uCreatedBy))
+
+	if(guPermLevel>=12 && guLoginClient==1)
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -259,8 +244,8 @@ void tLogTypeNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	ExtSelect("tLogType","tLogType.uLogType,tLogType.cLabel",20);
-
+	ExtSelectPublic("tLogType","tLogType.uLogType,tLogType.cLabel");
+	
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -275,10 +260,10 @@ void tLogTypeNavList(void)
         	printf("<p><u>tLogTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tLogType&uLogType=%s>%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tLogType&uLogType=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
         mysql_free_result(res);
 
 }//void tLogTypeNavList(void)
-
 
