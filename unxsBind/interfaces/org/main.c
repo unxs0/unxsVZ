@@ -148,9 +148,13 @@ int main(int argc, char *argv[])
 	{
 		if(!strncmp(gcFunction,"Logout",5))
 		{
+			//8 is idnsOrg login.
 			printf("Set-Cookie: idnsOrgLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: idnsOrgPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=7,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=8,uPermLevel=%u,"
+					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 			mysql_query(&gMysql,gcQuery);
         		guPermLevel=0;
 			gcUser[0]=0;
@@ -558,8 +562,9 @@ void SetLogin(void)
 		guSSLCookieLogin=1;
 		//tLogType.cLabel='org login'->uLogType=8
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"
-				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 		mysql_query(&gMysql,gcQuery);
 	}
 	else

@@ -151,9 +151,10 @@ int main(int argc, char *argv[])
 	{
 		if(!strncmp(gcFunction,"Logout",5))
 		{
+			//8 idnsOrg log type, need to globally add 9 for vdnsOrg
 			printf("Set-Cookie: vdnsOrgLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: vdnsOrgPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=7,uPermLevel=%u,"
+			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=8,uPermLevel=%u,"
 					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
