@@ -1650,6 +1650,20 @@ void UpdateTables(void)
 
 	printf("UpdateTables(%s) start\n",cDBIP);
 
+	//tGlossary always updated
+	sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tGlossary.sql",
+					cDBIP,
+					DBLOGIN,
+					DBPASSWD,
+					DBNAME,	
+					cSQLPath);
+	if(system(cCommand))
+	{
+		printf("Error: %s\n",cCommand);
+		exit(1);
+	}
+	printf("Updated tGlossary.\n");
+
 	//tRRType
 	//see mysqlrad.h defines
 	uMax=RRTYPE_NAPTR;
