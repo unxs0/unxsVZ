@@ -2388,8 +2388,7 @@ void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow)
 
 void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow)
 {
-		sprintf(gcQuery,"SELECT %s FROM %s WHERE u%s=%u",
-					cVarList,cTable,cTable+1,uRow);
+		sprintf(gcQuery,"SELECT %s FROM %s WHERE u%s=%u",cVarList,cTable,cTable+1,uRow);
 }//void ExtSelectRowPublic(...)
 
 
