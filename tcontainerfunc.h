@@ -271,6 +271,48 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							}
 						}
 					}
+					else if(!strcmp(gcCommand,"Group Delete"))
+					{
+						struct structContainer sContainer;
+
+						InitContainerProps(&sContainer);
+						GetContainerProps(uContainer,&sContainer);
+						if( (sContainer.uStatus==uINITSETUP)
+							&& (sContainer.uOwner==guCompany || guCompany==1))
+						{
+							//Release IPs
+							sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
+								" WHERE uIP=%u and uAvailable=0",sContainer.uIPv4);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							//Node IP if any MySQL5+
+							sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel IN"
+							" (SELECT cValue FROM tProperty WHERE uKey=%u"
+							" AND uType=3 AND cName='cNodeIP')",uContainer);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							//Now we can remove properties
+							DelProperties(uContainer,3);
+							//Remove from any groups
+							sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",
+								uContainer);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							//Cancel any outstanding jobs. TODO review this further
+							CancelContainerJob(sContainer.uDatacenter,sContainer.uNode,
+								uContainer);
+							sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
+								uContainer);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							if(mysql_affected_rows(&gMysql)>0)
+								uGroupJobs++;
+						}
+					}
 					//Cancel
 					else if(!strcmp(gcCommand,"Group Cancel"))
 					{
@@ -2592,10 +2634,13 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 			printf("<br><input title='Creates job(s) for starting stopped or initial setup container(s).'"
 			" type=submit class=largeButton"
 			" name=gcCommand value='Group Start'>\n");
-			printf("<br><input title='Creates job(s) for switching over cloned container(s).'"
+			printf("<br><input title='Creates job(s) for deleting initial setup container(s).'"
+			" type=submit class=largeButton"
+			" name=gcCommand value='Group Delete'>\n");
+			printf("<p><input title='Creates job(s) for switching over cloned container(s).'"
 			" type=submit class=lwarnButton"
 			" name=gcCommand value='Group Switchover'>\n");
-			printf("<br><input title='Creates job(s) for destroying stopped container(s).'"
+			printf("<p><input title='Creates job(s) for destroying active or stopped container(s).'"
 			" type=submit class=lwarnButton"
 			" name=gcCommand value='Group Destroy'>\n");
 		}
