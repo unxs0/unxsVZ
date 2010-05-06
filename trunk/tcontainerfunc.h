@@ -254,6 +254,23 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							}
 						}
 					}
+					else if(!strcmp(gcCommand,"Group Destroy"))
+					{
+						struct structContainer sContainer;
+
+						InitContainerProps(&sContainer);
+						GetContainerProps(uContainer,&sContainer);
+						if( (sContainer.uStatus==uSTOPPED)
+							&& (sContainer.uOwner==guCompany || guCompany==1))
+						{
+							if(DestroyContainerJob(sContainer.uDatacenter,
+									sContainer.uNode,uContainer))
+							{
+								SetContainerStatus(uContainer,uAWAITDEL);
+								uGroupJobs++;
+							}
+						}
+					}
 					//Cancel
 					else if(!strcmp(gcCommand,"Group Cancel"))
 					{
@@ -2578,6 +2595,9 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 			printf("<br><input title='Creates job(s) for switching over cloned container(s).'"
 			" type=submit class=lwarnButton"
 			" name=gcCommand value='Group Switchover'>\n");
+			printf("<br><input title='Creates job(s) for destroying stopped container(s).'"
+			" type=submit class=lwarnButton"
+			" name=gcCommand value='Group Destroy'>\n");
 		}
 
 	}
