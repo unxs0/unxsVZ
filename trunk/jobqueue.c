@@ -781,6 +781,7 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 	{
 		logfileLine("DestroyContainer",gcQuery);
 		tJobErrorUpdate(uJob,"vzctl destroy failed");
+
 		//Attempt roll back
 		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 		if(system(gcQuery))
@@ -792,7 +793,7 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 	}
 
 	//Everything ok
-	SetContainerStatus(uContainer,11);//Initial
+	SetContainerStatus(uContainer,uINITSETUP);//Initial
 	tJobDoneUpdate(uJob);
 
 

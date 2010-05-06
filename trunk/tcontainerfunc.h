@@ -260,7 +260,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 
 						InitContainerProps(&sContainer);
 						GetContainerProps(uContainer,&sContainer);
-						if( (sContainer.uStatus==uSTOPPED)
+						if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							if(DestroyContainerJob(sContainer.uDatacenter,
