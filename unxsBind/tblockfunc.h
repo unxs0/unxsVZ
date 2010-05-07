@@ -4,8 +4,10 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
+AUTHOR/LEGAL
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
  
 */
 
@@ -732,7 +734,8 @@ void tBlockNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			uCount++;
-printf("<a class=darkLink href=iDNS.cgi?gcFunction=tBlock&uBlock=%s&cSearch=%s>%s</a><br>\n",field[0],cURLEncode(cSearch),field[1]);
+			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tBlock&uBlock=%s&cSearch=%s>%s</a><br>\n",
+				field[0],cURLEncode(cSearch),field[1]);
 			if(uCount>=100)
 			{
 				printf("More than 100 records: You must refine your search further<br>\n");

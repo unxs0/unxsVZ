@@ -3,10 +3,9 @@ FILE
 	$Id$
 PURPOSE
 	Non-schema dependent tzone.c expansion.
-AUTHORS
-	GPL License applies, see www.fsf.org for details
-	See LICENSE file in this distribution
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice.
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 License applies. See included LICENSE file.
 TODO
 	See TODOs in this file.
 	Move them and all this to CHANGES.
@@ -1069,7 +1068,7 @@ void ExttZoneButtons(void)
 				"backwords compatible optional field (mysqlBind) for simple A record only zones.\n");
 			printf("<p><u>Search Tools</u><br>");
 			printf("<input type=text title='cZone search. Use %% . and _"
-				" for pattern matching when applicable.' name=cSearch value=\"%s\" maxlength=99"
+				" for pattern matching when applicable.' name=cSearch value=\"%s\" maxlength=63"
 				" size=20> cSearch ",cSearch);
 			printf("<input type=checkbox title='Limit to uSecondaryOnly=Yes if checked' name=uSearchSecOnly");
 			if(uSearchSecOnly)  printf(" checked");
