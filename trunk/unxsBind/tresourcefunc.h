@@ -7,8 +7,6 @@ AUTHOR
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
 	(C) 2001-2009 Gary Wallis for Unixservice.
-TODO
-
 */
 
 //File scope vars
@@ -1302,9 +1300,7 @@ void ExttResourceListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tResource.uResource=%u \
-						ORDER BY uResource",
-						uResource);
+		sprintf(cCat,"tResource.uResource=%u ORDER BY uResource",uResource);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cName"))

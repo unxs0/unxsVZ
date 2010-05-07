@@ -149,7 +149,10 @@ int main(int iArgc, char *cArgv[])
 			{
 				printf("Set-Cookie: iDNSLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				printf("Set-Cookie: iDNSPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
+						"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,"
+						"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
 				mysql_query(&gMysql,gcQuery);
 				gcCookie[0]=0;
                                 guPermLevel=0;
@@ -2302,6 +2305,14 @@ void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearch
 					" ORDER BY %4$s",
 						cVarList,guCompany,
 						cTable,cSearchField,cSearch,cExtraCond);
+		else if(cExtraCond==NULL && cSearchField!=NULL)
+			sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
+				 	" WHERE %4$s LIKE '%5$s%%' AND %3$s.uOwner=" TCLIENT ".uClient"
+					" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
+					" ORDER BY %4$s",
+						cVarList,guCompany,
+						cTable,cSearchField,cSearch);
 		else if(cExtraCond!=NULL && cSearchField==NULL)
 			sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
 				 	" WHERE %4$s AND %3$s.uOwner=" TCLIENT ".uClient"
@@ -2317,7 +2328,7 @@ void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearch
 					" ORDER BY %4$s",
 						cVarList,guCompany,
 						cTable,cSearchField,cSearch);
-		else if(cExtraCond!=NULL && cSearchField==NULL)
+		else if(cExtraCond==NULL && cSearchField==NULL)
 			sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
 				 	" WHERE %3$s.uOwner=" TCLIENT ".uClient"
 					" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
@@ -2329,8 +2340,10 @@ void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearch
 	{
 		char cLimit[33]={""};
 		sprintf(cLimit," LIMIT %u",uMaxResults);
-		strcat(gcQuery,cLimit);
+		strncat(gcQuery,cLimit,32);
 	}
+	//debug only
+	//iDNS(gcQuery);
 
 }//void ExtSelectSearch(...)
 

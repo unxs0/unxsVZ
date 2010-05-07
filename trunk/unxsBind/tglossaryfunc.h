@@ -4,16 +4,17 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
- 
+AUTHOR/LEGAL
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 //ModuleFunctionProtos()
 static char cSearch[100]={""};
 
-
 void tGlossaryNavList(void);
+
 
 void ExtProcesstGlossaryVars(pentry entries[], int x)
 {
@@ -204,9 +205,7 @@ void ExttGlossaryListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tGlossary.uGlossary=%u \
-						ORDER BY uGlossary",
-						uGlossary);
+		sprintf(cCat,"tGlossary.uGlossary=%u ORDER BY uGlossary",uGlossary);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -283,7 +282,8 @@ void tGlossaryNavList(void)
         	printf("<p><u>tGlossaryNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tGlossary&uGlossary=%s>%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tGlossary&uGlossary=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
         mysql_free_result(res);
 

@@ -4,9 +4,10 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
- 
+AUTHOR/LEGAL
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 //ModuleFunctionProtos()
@@ -382,8 +383,13 @@ void tDeletedZoneNavList(void)
 		printf("Must restrict via cSearch\n");
 		return;
 	}
-	ExtSelectSearch("tDeletedZone","tDeletedZone.uDeletedZone,tDeletedZone.cZone,(SELECT tView.cLabel FROM tView WHERE tView.uView=tDeletedZone.uView)",
-			"cZone",cSearch,NULL,20);
+	ExtSelectSearch("tDeletedZone",
+			"tDeletedZone.uDeletedZone,tDeletedZone.cZone,(SELECT tView.cLabel FROM tView"
+			" WHERE tView.uView=tDeletedZone.uView)",
+			"cZone",
+			cSearch,
+			NULL,
+			20);
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
@@ -395,7 +401,8 @@ void tDeletedZoneNavList(void)
 		printf("No records found<br>\n");
 
 	while((field=mysql_fetch_row(res)))
-		printf("<a class=darkLink href=iDNS.cgi?gcFunction=tDeletedZone&uDeletedZone=%s>%s [%s]</a><br>",field[0],field[1],field[2]);
+		printf("<a class=darkLink href=iDNS.cgi?gcFunction=tDeletedZone&uDeletedZone=%s>%s [%s]</a><br>",
+			field[0],field[1],field[2]);
 	
 	mysql_free_result(res);
 

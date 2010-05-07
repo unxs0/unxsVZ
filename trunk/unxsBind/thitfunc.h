@@ -4,9 +4,10 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
- 
+AUTHOR/LEGAL
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 //ModuleFunctionProtos()
@@ -48,7 +49,8 @@ void ExttHitButtons(void)
 		"monthly tHit data sets. These archives are created from the command line usually by crontab operation.");
 	printf("<p><u>Search Tools</u><br>");
 	printf("Enter the complete or the first part of a <i>cZone</i>. You can use %% and _ SQL LIKE matching chars.<br>");
-	printf("<input type=text title='cZone search. Use %% . and _ for pattern matching.' name=cSearch value=\"%s\" maxlength=99 size=20><br>",cSearch);
+	printf("<input type=text title='cZone search. Use %% . and _ for pattern matching.' name=cSearch value=\"%s\""
+		" maxlength=99 size=20><br>",cSearch);
 
 	if(cZone[0])
 		htmlRecordContext();
@@ -181,7 +183,8 @@ void tHitNavList(void)
         	printf("<p><u>tHitNavList Top 20 by uHitCount</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tHit&uHit=%s>%s/%s</a><br>\n",field[0],field[1],field[2]);
+			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tHit&uHit=%s>%s/%s</a><br>\n",
+				field[0],field[1],field[2]);
 	}
         mysql_free_result(res);
 

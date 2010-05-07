@@ -4,9 +4,10 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
- 
+AUTHOR/LEGAL
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 //ModuleFunctionProtos()
@@ -144,7 +145,8 @@ void ExttDeletedResourceCommands(pentry entries[], int x)
 				tDeletedResource("<blink>Error</blink>: Denied by permissions settings");
 
 			if(!ZoneExists(uZone))
-				tDeletedResource("<blink>The zone associated with the RR does not exist at tZone. Can't restore RR</blink>");
+				tDeletedResource("<blink>The zone associated with the RR does not exist at tZone."
+						" Can't restore RR</blink>");
 			else
 			{
 				//get zone data for job submission
@@ -163,17 +165,17 @@ void ExttDeletedResourceCommands(pentry entries[], int x)
 			}
 				
 			sprintf(gcQuery,"INSERT INTO tResource SET uResource=%u,uZone=%u,cName='%s',uTTL=%u,"
-					"uRRType=%u,cParam1='%s',cParam2='%s',cComment='%s',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				uDeletedResource
-				,uZone
-				,cName
-				,uTTL
-				,uRRType
-				,cParam1
-				,cParam2
-				,cComment
-				,uOwner
-				);
+					"uRRType=%u,cParam1='%s',cParam2='%s',cComment='%s',uOwner=%u,uCreatedBy=1,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						uDeletedResource
+						,uZone
+						,cName
+						,uTTL
+						,uRRType
+						,cParam1
+						,cParam2
+						,cComment
+						,uOwner);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -298,9 +300,7 @@ void ExttDeletedResourceListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tDeletedResource.uDeletedResource=%u \
-						ORDER BY uDeletedResource",
-						uDeletedResource);
+		sprintf(cCat,"tDeletedResource.uDeletedResource=%u ORDER BY uDeletedResource",uDeletedResource);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -366,8 +366,13 @@ void DeletedResourceLinks(unsigned uZone)
 
 	sprintf(cExtra,"tDeletedResource.uZone=%u",uZone);
 
-	ExtSelectSearch("tDeletedResource","tDeletedResource.cName,tDeletedResource.uDeletedResource,(SELECT tRRType.cLabel FROM tRRType WHERE "
-			"tRRType.uRRType=tDeletedResource.uRRType)","cName","",cExtra,0);
+	ExtSelectSearch("tDeletedResource",
+			"tDeletedResource.cName,tDeletedResource.uDeletedResource,"
+			" (SELECT tRRType.cLabel FROM tRRType WHERE"
+			" tRRType.uRRType=tDeletedResource.uRRType)",
+			NULL,
+			NULL,
+			cExtra,0);
 	
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -375,7 +380,8 @@ void DeletedResourceLinks(unsigned uZone)
 	res=mysql_store_result(&gMysql);
 
 	while((field=mysql_fetch_row(res)))
-		printf("<a class=darkLink href=iDNS.cgi?gcFunction=tDeletedResource&uDeletedResource=%s>%s %s</a><br>\n",field[1],field[0],field[2]);
+		printf("<a class=darkLink href=iDNS.cgi?gcFunction=tDeletedResource&uDeletedResource=%s>%s %s</a><br>\n",
+			field[1],field[0],field[2]);
 
 }//void ResourceLinks(unsigned uZone)
 

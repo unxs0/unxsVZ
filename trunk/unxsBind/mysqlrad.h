@@ -1,8 +1,10 @@
 /*
 FILE
 	$Id$
-AUTHOR
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza. 
+AUTHOR/LEGAL
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 #include <stdio.h>
@@ -126,7 +128,12 @@ unsigned uAllowMod(const unsigned uOwner, const unsigned uCreatedBy);
 unsigned uAllowDel(const unsigned uOwner, const unsigned uCreatedBy);
 void ExtListSelect(const char *cTable,const char *cVarList);
 void ExtSelect(const char *cTable,const char *cVarList,unsigned uMaxResults);
-void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField, const char *cSearch,const char *cExtraCond,unsigned uMaxResults);
+void ExtSelectSearch(	const char *cTable,
+			const char *cVarList,
+			const char *cSearchField,
+			const char *cSearch,
+			const char *cExtraCond,
+			unsigned uMaxResults);
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
 void ExtListSelectPublic(const char *cTable,const char *cVarList);
 void ExtSelectPublic(const char *cTable,const char *cVarList);

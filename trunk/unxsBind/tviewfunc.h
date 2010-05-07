@@ -4,9 +4,10 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
- 
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPL License applies, see www.fsf.org for details.
+	See LICENSE file in this distribution.
 */
 
 //ModuleFunctionProtos()
@@ -157,15 +158,16 @@ void ExttViewButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("BIND 9 introduced views. mysqlBind could not cope, thus iDNS (mysqlBind2.) "
-				"Apart from the mundane internal/external view model for firewalled environments. "
-				"iDNS supports n views, for advanced geographically (approximated by IP ranges) "
-				"differentiated DNS query result sets. Start out with internal/external views and "
-				"then if you are a very large world-wide concern you can setup whatever you need, "
-				"and the iDNS automation will reduce critical errors and keep you sane and away from your shell editor.\n");
+			printf("BIND 9 introduced views. mysqlBind could not cope, thus iDNS (mysqlBind2.)"
+				" Apart from the mundane internal/external view model for firewalled environments."
+				" iDNS supports n views, for advanced geographically (approximated by IP ranges)"
+				" differentiated DNS query result sets. Start out with internal/external views and"
+				" then if you are a very large world-wide concern you can setup whatever you need,"
+				" and the iDNS automation will reduce critical errors and keep you sane and away from"
+				" your shell editor.\n");
 			printf("<p><u>Search Tools</u><br>");
-			printf("<input type=text title='cLabel search. Use %% . and _ for pattern matching when applicable.' "
-				"name=cSearch value=\"%s\" maxlength=99 size=20> cSearch",cSearch);
+			printf("<input type=text title='cLabel search. Use %% . and _ for pattern matching when applicable.'"
+				" name=cSearch value=\"%s\" maxlength=99 size=20> cSearch",cSearch);
 			tViewNavList();
 			printf("<br>\n");
 			tViewContextInfo();
@@ -231,9 +233,7 @@ void ExttViewListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tView.uView=%u \
-						ORDER BY uView",
-						uView);
+		sprintf(cCat,"tView.uView=%u ORDER BY uView",uView);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -321,7 +321,8 @@ void tViewNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			uCount++;
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tView&uView=%s&cSearch=%s>%s</a><br>\n",field[0],cURLEncode(cSearch),field[1]);
+			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tView&uView=%s&cSearch=%s>%s</a><br>\n",
+				field[0],cURLEncode(cSearch),field[1]);
 			if(uCount>=100)
 			{
 				printf("More than 100 records: You must refine your search further<br>\n");
