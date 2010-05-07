@@ -43,6 +43,7 @@ struct structContainer
 void GetContainerProps(unsigned uContainer,struct structContainer *sContainer);
 void InitContainerProps(struct structContainer *sContainer);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);
+unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
 
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
@@ -71,6 +72,7 @@ static unsigned uGroup=0;
 static char cuGroupPullDown[256]={""};
 //uForClient: Create for, on 'New;
 static unsigned uForClient=0;
+static unsigned uCreateDNSJob=0;
 static char cForClientPullDown[256]={""};
 
 //ModuleFunctionProtos()
@@ -233,8 +235,9 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 			if(guPermLevel<10)
 				continue;
 
-			sscanf(entries[i].name,"Ct%u",&uContainer);
-			if(uContainer)
+			unsigned uCtContainer=0;
+			sscanf(entries[i].name,"Ct%u",&uCtContainer);
+			if(uCtContainer)
 			{
 				if(!strcmp(gcFunction,"tContainerTools"))
 				{
@@ -243,14 +246,14 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 						struct structContainer sContainer;
 
 						InitContainerProps(&sContainer);
-						GetContainerProps(uContainer,&sContainer);
+						GetContainerProps(uCtContainer,&sContainer);
 						if( (sContainer.uStatus==uACTIVE)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							if(StopContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uContainer))
+									sContainer.uNode,uCtContainer))
 							{
-								SetContainerStatus(uContainer,uAWAITSTOP);
+								SetContainerStatus(uCtContainer,uAWAITSTOP);
 								uGroupJobs++;
 							}
 						}
@@ -260,14 +263,14 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 						struct structContainer sContainer;
 
 						InitContainerProps(&sContainer);
-						GetContainerProps(uContainer,&sContainer);
+						GetContainerProps(uCtContainer,&sContainer);
 						if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							if(DestroyContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uContainer))
+									sContainer.uNode,uCtContainer))
 							{
-								SetContainerStatus(uContainer,uAWAITDEL);
+								SetContainerStatus(uCtContainer,uAWAITDEL);
 								uGroupJobs++;
 							}
 						}
@@ -277,7 +280,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 						struct structContainer sContainer;
 
 						InitContainerProps(&sContainer);
-						GetContainerProps(uContainer,&sContainer);
+						GetContainerProps(uCtContainer,&sContainer);
 						if( (sContainer.uStatus==uINITSETUP)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
@@ -290,23 +293,23 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							//Node IP if any MySQL5+
 							sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel IN"
 							" (SELECT cValue FROM tProperty WHERE uKey=%u"
-							" AND uType=3 AND cName='cNodeIP')",uContainer);
+							" AND uType=3 AND cName='cNodeIP')",uCtContainer);
 							mysql_query(&gMysql,gcQuery);
 							if(mysql_errno(&gMysql))
 								htmlPlainTextError(mysql_error(&gMysql));
 							//Now we can remove properties
-							DelProperties(uContainer,3);
+							DelProperties(uCtContainer,3);
 							//Remove from any groups
 							sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",
-								uContainer);
+								uCtContainer);
 							mysql_query(&gMysql,gcQuery);
 							if(mysql_errno(&gMysql))
 								htmlPlainTextError(mysql_error(&gMysql));
 							//Cancel any outstanding jobs. TODO review this further
 							CancelContainerJob(sContainer.uDatacenter,sContainer.uNode,
-								uContainer);
+								uCtContainer);
 							sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
-								uContainer);
+								uCtContainer);
 							mysql_query(&gMysql,gcQuery);
 							if(mysql_errno(&gMysql))
 								htmlPlainTextError(mysql_error(&gMysql));
@@ -320,20 +323,20 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 						struct structContainer sContainer;
 
 						InitContainerProps(&sContainer);
-						GetContainerProps(uContainer,&sContainer);
+						GetContainerProps(uCtContainer,&sContainer);
 
 						if((sContainer.uStatus==uAWAITDEL || sContainer.uStatus==uAWAITACT ||
 							sContainer.uStatus==uAWAITSTOP)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							if(!CancelContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uContainer))
+									sContainer.uNode,uCtContainer))
 							{
 								if(sContainer.uStatus==uAWAITDEL || 
 										sContainer.uStatus==uAWAITSTOP)
-									SetContainerStatus(uContainer,uACTIVE);
+									SetContainerStatus(uCtContainer,uACTIVE);
 								else if(sContainer.uStatus==uAWAITACT)
-									SetContainerStatus(uContainer,uINITSETUP);
+									SetContainerStatus(uCtContainer,uINITSETUP);
 								uGroupJobs++;
 							}
 						}
@@ -344,7 +347,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 						struct structContainer sContainer;
 
 						InitContainerProps(&sContainer);
-						GetContainerProps(uContainer,&sContainer);
+						GetContainerProps(uCtContainer,&sContainer);
 
 						if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uINITSETUP)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
@@ -352,9 +355,9 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							if(sContainer.uStatus==uINITSETUP)
 							{
 								if(CreateNewContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uContainer,sContainer.uOwner))
+									sContainer.uNode,uCtContainer,sContainer.uOwner))
 								{
-									SetContainerStatus(uContainer,uAWAITACT);
+									SetContainerStatus(uCtContainer,uAWAITACT);
 									uGroupJobs++;
 								}
 							}
@@ -362,9 +365,9 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							{
 								uOwner=guCompany;
 								if(CreateStartContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uContainer,sContainer.uOwner))
+									sContainer.uNode,uCtContainer,sContainer.uOwner))
 								{
-									SetContainerStatus(uContainer,uAWAITACT);
+									SetContainerStatus(uCtContainer,uAWAITACT);
 									uGroupJobs++;
 								}
 							}
@@ -375,13 +378,13 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 						struct structContainer sContainer;
 
 						InitContainerProps(&sContainer);
-						GetContainerProps(uContainer,&sContainer);
+						GetContainerProps(uCtContainer,&sContainer);
 						if( sContainer.uSource!=0 &&
 							 (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							if(FailoverToJob(sContainer.uDatacenter,sContainer.uNode,
-								uContainer))
+								uCtContainer))
 							{
 								unsigned uFailToJob=mysql_insert_id(&gMysql);
 								unsigned uSourceDatacenter=0;
@@ -398,10 +401,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 								if(FailoverFromJob(uSourceDatacenter,uSourceNode,
 									sContainer.uSource,sContainer.uIPv4,
 									sContainer.cLabel,sContainer.cHostname,
-										uContainer,sContainer.uStatus,
+										uCtContainer,sContainer.uStatus,
 										uFailToJob))
 								{
-									SetContainerStatus(uContainer,uAWAITFAIL);
+									SetContainerStatus(uCtContainer,uAWAITFAIL);
 									SetContainerStatus(sContainer.uSource,uAWAITFAIL);
 									uGroupJobs++;
 								}
@@ -424,6 +427,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"uMountTemplate"))
 		{
 			sscanf(entries[i].val,"%u",&uMountTemplate);
+		}
+		else if(!strcmp(entries[i].name,"uCreateDNSJob"))
+		{
+			uCreateDNSJob=1;
 		}
 		else if(!strcmp(entries[i].name,"uCloneStop"))
 		{
@@ -1601,6 +1608,8 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
+				MYSQL_ROW field;
+
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -1632,7 +1641,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup)
 				{
 					unsigned uPrimaryGroup=0;
-					MYSQL_ROW field;
 
 					//Get the PK of the primary group of this container.
 					sprintf(gcQuery,"SELECT uGroupGlue,uGroup FROM tGroupGlue WHERE"
@@ -1667,6 +1675,27 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 
 				//Create job for remote unxsBind to run via ext job queue.
+				char cunxsBindARecordJob[256]={""};
+				GetConfiguration("cunxsBindARecordJob",cunxsBindARecordJob,uDatacenter,0,0,0);
+				if(cunxsBindARecordJob[0] && uCreateDNSJob)
+				{
+					char cIPv4[32]={"127.0.0.1"};
+					char cNSSet[32]={"ns1-2.yourdomain.com"};
+					char cView[32]={"external"};
+					char cJobData[256];
+
+					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+						sprintf(cIPv4,"%.31s",field[0]);
+					mysql_free_result(res);
+					sprintf(cJobData,"cIPv4=%s;\ncHostname=%s;\ncNSSet=%s;\ncView=%s;\n",
+							cIPv4,cHostname,cNSSet,cView);
+					unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData);
+				}
 
                         	guMode=0;
 
@@ -1920,7 +1949,7 @@ void ExttContainerButtons(void)
 			if(cunxsBindARecordJob[0])
 			{
 				printf("<p></u>Create job for unxsBind A record</u><br>");
-				printf("<input type=checkbox name=unxsBindARecord >");
+				printf("<input type=checkbox name=uCreateDNSJob >");
 			}
                 break;
 
@@ -3911,3 +3940,28 @@ unsigned uGetGroup(unsigned uNode, unsigned uContainer)
 	return(uGroup);
 
 }//unsigned uGetGroup(unsigned uNode, unsigned uContainer)
+
+
+//Pull job for unxsBind
+unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData)
+{
+	unsigned uCount=0;
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindARecordJob(%u)',cJobName='StopContainer'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=10"//RemoteWaiting
+			",cJobData='%s'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				cJobData,
+				uOwner,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","unxsBindARecordJob");
+	return(uCount);
+
+}//unsigned unxsBindARecordJob(...)
