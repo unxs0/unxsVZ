@@ -42,6 +42,7 @@ struct structContainer
 };
 void GetContainerProps(unsigned uContainer,struct structContainer *sContainer);
 void InitContainerProps(struct structContainer *sContainer);
+unsigned uGetGroup(unsigned uNode, unsigned uContainer);
 
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
@@ -1626,6 +1627,47 @@ void ExttContainerCommands(pentry entries[], int x)
 							" datacenter!");
 				}
 				mysql_free_result(res);
+
+				//Optional change group.
+				if(uGroup)
+				{
+					unsigned uPrimaryGroup=0;
+					MYSQL_ROW field;
+
+					//Get the PK of the primary group of this container.
+					sprintf(gcQuery,"SELECT uGroupGlue,uGroup FROM tGroupGlue WHERE"
+						" uContainer=%u ORDER BY uGroup LIMIT 1",uContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        				res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)==0)
+					{
+						//If none insert
+						sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
+								uContainer,uGroup);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
+					else if ((field=mysql_fetch_row(res)))
+					{
+						//Conditionally UPDATE save db work.
+						sscanf(field[1],"%u",&uPrimaryGroup);
+						if(uPrimaryGroup!=uGroup)
+						{
+							sprintf(gcQuery,"UPDATE tGroupGlue SET uGroup=%u WHERE"
+									" uGroupGlue=%s",uGroup,field[0]);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+						}
+					}
+					mysql_free_result(res);
+				}
+
+				//Create job for remote unxsBind to run via ext job queue.
+
                         	guMode=0;
 
 				sprintf(gcQuery,"UPDATE tContainer SET cLabel='%s',cHostname='%s'"
@@ -1850,20 +1892,36 @@ void ExttContainerButtons(void)
 			printf("<p><input title='Create an IP change job for the current container'"
 					" type=submit class=lwarnButton"
 					" name=gcCommand value='Confirm IP Change'>\n");
+			printf("<p>Optional primary group change<br>");
+			uGroup=uGetGroup(0,uContainer);//0=not for node
+			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
                 break;
 
                 case 5001:
                         printf("<p><u>Hostname Change Wizard</u><br>");
 			printf("Here you will change the container label (name) and hostname."
 				" The container will not be stopped. Only operations depending on the /etc/hosts file"
-				" and the hostname may be affected.<p>\n");
-			printf("<p>New cLabel <input title='Short container name'"
-					" type=text name=cWizLabel maxlength=31>\n");
-			printf("<p>New cHostname <input title='FQDN container hostname'"
-					" type=text name=cWizHostname maxlength=99>\n");
+				" and the hostname may be affected. It is recommended that cLabel be the first part"
+				" of the cHostname.<p>\n");
+			printf("<p>New cLabel<br>");
+			printf("<input title='Short container name, almost always the first part of cHostname'"
+					" type=text name=cWizLabel maxlength=31 value='%s'>\n",cLabel);
+			printf("<p>New cHostname<br>");
+			printf("<input title='FQDN container hostname, usually a DNS resolvable host.'"
+					" type=text name=cWizHostname maxlength=99 value='%.99s'>\n",cHostname);
 			printf("<p><input title='Create a hostname change job for the current container'"
 					" type=submit class=lwarnButton"
 					" name=gcCommand value='Confirm Hostname Change'>\n");
+			printf("<p>Optional primary group change<br>");
+			uGroup=uGetGroup(0,uContainer);//0=not for node
+			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			char cunxsBindARecordJob[256]={""};
+			GetConfiguration("cunxsBindARecordJob",cunxsBindARecordJob,uDatacenter,0,0,0);
+			if(cunxsBindARecordJob[0])
+			{
+				printf("<p></u>Create job for unxsBind A record</u><br>");
+				printf("<input type=checkbox name=unxsBindARecord >");
+			}
                 break;
 
                 case 4001:
@@ -1894,6 +1952,9 @@ void ExttContainerButtons(void)
 			printf("<p><input title='Create a migration job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Migration'>\n");
+			printf("<p>Optional primary group change<br>");
+			uGroup=uGetGroup(0,uContainer);//0=not for node
+			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
                 break;
 
                 case 7001:
@@ -1923,6 +1984,11 @@ void ExttContainerButtons(void)
 			printf("<p><input title='Create a clone job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Clone'>\n");
+			printf("<p>Optional primary group change<br>");
+			uGroup=uGetGroup(0,uContainer);//0=not for node
+			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			if(uGroup)
+				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
                 break;
 
                 case 8001:
@@ -1967,6 +2033,8 @@ void ExttContainerButtons(void)
 					" type=submit class=largeButton"
 					" name=gcCommand value='Continue'>\n");
 			printf("<p>If you wish to abort this container creation use the [Delete] button above.");
+			if(uGroup)
+				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
                 break;
 
                 case 201:
@@ -1996,6 +2064,8 @@ void ExttContainerButtons(void)
 					" name=gcCommand value='Confirm Container Settings'>\n");
 			}
 			printf("<p>If you wish to abort this container creation use the [Delete] button above.");
+			if(uGroup)
+				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
                 break;
 
                 case 2000:
@@ -2018,13 +2088,13 @@ void ExttContainerButtons(void)
 				" cHostname=ctN.yourdomain.tld, where N is the number of containers specfied minus 1.");
 			printf("<p>\n");
 			if(cService2[0]==0) sprintf(cService2,"1");
-			printf("<p><u>Select the number of containers to create</u><br>");
+			printf("<p>Select the number of containers to create<br>");
 			printf("<input title='Number of containers to be created. See \"Advanced operations\" above'"
 				" type=text name=cService2 value='%s'><br>",cService2);
-			printf("<p><u>Optionally select a password</u><br>");
+			printf("<p>Optionally select a password<br>");
 			printf("<input title='Optional container password set on deployment and saved in"
 				" container property table' type=text name=cService1 value='%s'><br>",cService1);
-			printf("<p><u>Optionally select a group to assign the new container(s) to</u><br>");
+			printf("<p>Optionally select a group to assign the new container(s) to<br>");
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 			tTablePullDownResellers(uOwner);//uForClient after
 			if(uVeth)
@@ -3814,3 +3884,30 @@ void InitContainerProps(struct structContainer *sContainer)
 	sContainer->uModDate=0;
 
 }//void InitContainerProps(struct structContainer *sContainer)
+
+
+//Lowest uGroup. Which we define here as the primary group
+//of a node or container.
+unsigned uGetGroup(unsigned uNode, unsigned uContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uGroup=0;
+
+	if(uNode)
+		sprintf(gcQuery,"SELECT MIN(tGroup.uGroup) FROM tGroupGlue,tGroup WHERE tGroupGlue.uNode=%u"
+				" AND tGroupGlue.uGroup=tGroup.uGroup",uNode);
+	else
+		sprintf(gcQuery,"SELECT MIN(tGroup.uGroup) FROM tGroupGlue,tGroup WHERE tGroupGlue.uContainer=%u"
+				" AND tGroupGlue.uGroup=tGroup.uGroup",uContainer);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uGroup);
+	mysql_free_result(res);
+
+	return(uGroup);
+
+}//unsigned uGetGroup(unsigned uNode, unsigned uContainer)
