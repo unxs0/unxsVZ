@@ -306,6 +306,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							if(mysql_errno(&gMysql))
 								htmlPlainTextError(mysql_error(&gMysql));
 							//Cancel any outstanding jobs. TODO review this further
+							//Keeps job container stays stuck in an awaiting state.
 							CancelContainerJob(sContainer.uDatacenter,sContainer.uNode,
 								uCtContainer);
 							sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
@@ -329,6 +330,8 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							sContainer.uStatus==uAWAITSTOP)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
+							//Cancel any outstanding jobs. TODO review this further
+							//Keeps job container stays stuck in an awaiting state.
 							if(!CancelContainerJob(sContainer.uDatacenter,
 									sContainer.uNode,uCtContainer))
 							{
@@ -977,6 +980,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
 				//Cancel any outstanding jobs. TODO review this further
+				//Keeps job container stays stuck in an awaiting state.
 				CancelContainerJob(uDatacenter,uNode,uContainer);
 				DeletetContainer();
 			}
@@ -1214,6 +1218,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error</blink>: This record was modified. Job may have run!");
 
+				//Cancel any outstanding jobs. TODO review this further
+				//Keeps job container stays stuck in an awaiting state.
 				if(CancelContainerJob(uDatacenter,uNode,uContainer))
 				{
 					tContainer("<blink>Error</blink>: Unexpected no jobs canceled! Late?");
@@ -1615,6 +1621,9 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it.");
                         	guMode=5001;
+				if(!strcmp(cWizHostname,cHostname) && !strcmp(cWizLabel,cLabel))
+					tContainer("<blink>Error</blink>: cHostname and cLabel are the same!"
+							" You must change at least one.");
 				if(strlen(cWizHostname)<5)
 					tContainer("<blink>Error</blink>: cHostname too short!");
 				if(strlen(cWizLabel)<2)
@@ -2837,6 +2846,8 @@ unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContai
 }//unsigned StopContainerJob(...)
 
 
+//Cancel any outstanding jobs. TODO review this further
+//Keeps job container stays stuck in an awaiting state.
 unsigned CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
 {
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE "
