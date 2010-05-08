@@ -368,6 +368,8 @@ void ProcessJobQueue(unsigned uDebug)
 	}
 
 	//Main loop normal jobs
+	//uWAITING==1
+	//TODO can the LIMIT partition related jobs that need to run close together?
 	sprintf(gcQuery,"SELECT uJob,uContainer,cJobName,cJobData FROM tJob WHERE uJobStatus=1"
 				" AND uDatacenter=%u AND uNode=%u"
 				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) ORDER BY uJob LIMIT 100",
@@ -1615,6 +1617,21 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		goto CommonExit;
 	}
 
+	//2b-. md5sum generation
+	if(!stat("/usr/bin/md5sum",&statInfo))
+	{
+		sprintf(gcQuery,"/usr/bin/md5sum /vz/template/cache/%.67s-%.32s.tar.gz >"
+				" /vz/template/cache/%.67s-%.32s.tar.gz.md5sum",
+			cOSTemplateBase,cConfigLabel,cOSTemplateBase,cConfigLabel);
+		if(system(gcQuery))
+		{
+			logfileLine("TemplateContainer",gcQuery);
+			tJobErrorUpdate(uJob,"md5sum tgz failed");
+			goto CommonExit;
+		}
+	}
+
+
 	//3-. scp template to all nodes depends on /usr/sbin/allnodescp.sh installed and configured correctly
 	if(!stat("/usr/sbin/allnodescp.sh",&statInfo))
 	{
@@ -1624,6 +1641,28 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		{
 			logfileLine("TemplateContainer",gcQuery);
 			tJobErrorUpdate(uJob,"allnodescp.sh .tar.gz failed");
+			goto CommonExit;
+		}
+		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /vz/template/cache/%.67s-%.32s.tar.gz.md5sum",
+			cOSTemplateBase,cConfigLabel);
+		if(system(gcQuery))
+		{
+			logfileLine("TemplateContainer",gcQuery);
+			tJobErrorUpdate(uJob,"allnodescp.sh .tar.gz.md5sum failed");
+			goto CommonExit;
+		}
+	}
+
+	//3b-. check transfer via md5sum
+	//Relies on new version of "/usr/sbin/allnodecmd.sh" that adds return values.
+	if(!stat("/usr/sbin/allnodecmd.sh",&statInfo) && !stat("/usr/bin/md5sum",&statInfo))
+	{
+		sprintf(gcQuery,"/usr/sbin/allnodecmd.sh \"/usr/bin/md5sum -c /vz/template/cache/%.67s-%.32s.tar.gz.md5sum\"",
+			cOSTemplateBase,cConfigLabel);
+		if(system(gcQuery))
+		{
+			logfileLine("TemplateContainer",gcQuery);
+			tJobErrorUpdate(uJob,"allnodecmd.sh md5sum -c .tar.gz.md5sum failed");
 			goto CommonExit;
 		}
 	}

@@ -9,12 +9,16 @@
 #
 #Prerequisites
 #       ssh-keygen all node to all node ssh passwordless setup.
+#Notes
+#	This new version returns a non zero value if any of the
+#	node commands returns a non zero value.
 #
 
 #Set this
 cNamePrefix="node";
 cNameSuffix="vm";
 uPort="22";
+uRet=0;
 
 if [ ! "$1" ]; then
 	echo "Must specify a valid command";
@@ -25,4 +29,7 @@ fi
 for N in $(seq 1 2 ); do
 	echo $cNamePrefix$N$cNameSuffix;
 	/usr/bin/ssh -C -c blowfish -p $uPort $cNamePrefix$N$cNameSuffix "$1";
+	uRet=$(($uRet + $?));
 done
+
+exit $uRet;
