@@ -20,9 +20,8 @@ cNameSuffix="vm";
 uPort="22";
 uRet=0;
 cEncAlg="blowfish";
-#for internal private lan connections try:
-#cEncAlg="none";
-#-C the compression option is not useful
+#This one maybe faster. "none" is not available anymore but is in scp
+#cEncAlg="arcfour";
 
 if [ ! "$1" ]; then
 	echo "Must specify a valid command";
