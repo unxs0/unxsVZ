@@ -67,7 +67,7 @@ AUTHOR
 #define uREDUNDANT	6
 #define uCANCELED	7
 #define uREMOTEWAITING	10
-#define ERROR		14
+#define uERROR		14
 
 #define cLOGFILE "/var/log/unxsvzlog"
 
