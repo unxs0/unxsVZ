@@ -1922,10 +1922,10 @@ void ExttContainerButtons(void)
                         printf("<p><u>IP Change Wizard</u><br>");
 			printf("Here you will change the container IPv4 number."
 				" The container will be stopped then started after the IP is changed to"
-				" insure that any mount/umount scripts that reference container IP"
+				" insure that any mount/umount scripts that reference the container IP"
 				" are handled correctly."
-				" <p>Container services may be affected or need reconfiguration for new IP.<p>\n");
-			printf("Select new IPv4 ");
+				" <p>Container services may be affected or need reconfiguration for new IP.\n");
+			printf("<p>Select new IPv4<br>");
 			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
 			printf("<p><input title='Create an IP change job for the current container'"
 					" type=submit class=lwarnButton"
@@ -1974,7 +1974,8 @@ void ExttContainerButtons(void)
 				" (the /usr/sbin/allnodescp.sh has to be installed and configured correctly.)"
 				" The all node /vz/template/cache/ file that is created can also be likened"
 				" to a snapshot backup of the running container.<p>\n");
-			printf("<p>tConfig.cLabel <input title='tOSTemplate tail and tConfig label will be set to"
+			printf("<p>tConfig.cLabel<br>");
+			printf("<input title='tOSTemplate tail and tConfig label will be set to"
 					" the name provided.' type=text name=cConfigLabel maxlength=32>\n");
 			printf("<p><input title='Create a template job for the current container'"
 					" type=submit class=lwarnButton"
@@ -1983,9 +1984,11 @@ void ExttContainerButtons(void)
 
                 case 3001:
                         printf("<p><u>Migration Wizard</u><br>");
-			printf("Here you will select the hardware node target. If the selected node is"
+			printf("Here you will select the hardware node target (must be different from the current one.)"
+				" If the selected node is"
 				" oversubscribed, not available, or scheduled for maintenance. You will"
 				" be informed at the next step\n<p>\n");
+			printf("<p>Target node<br>");
 			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
 			printf("<p><input title='Create a migration job for the current container'"
 					" type=submit class=largeButton"
@@ -2008,13 +2011,15 @@ void ExttContainerButtons(void)
 				" keep the source and clone container sync'ed you must specify that"
 				" in the cloned container via the 'cuSyncPeriod' entry in it's properties table.<p>"
 				"Usually clones should be kept stopped to conserve resources until required"
-				" for failover. Use the checkbox to change this default behavior.<p>");
-			printf("Select target node ");
+				" for failover. Use the checkbox to change this default behavior.");
+			printf("<p>Select target node<br>");
 			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
-			printf("<br>Select new IPv4 ");
+			printf("<p>Select new IPv4<br>");
 			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
-			printf("<br>Keep clone stopped <input type=checkbox name=uCloneStop checked>");
-			printf("<br>cuSyncPeriod <input title='Keep clone in sync every cuSyncPeriod seconds"
+			printf("<p>Keep clone stopped<br>");
+			printf("<input type=checkbox name=uCloneStop checked>");
+			printf("<p>cuSyncPeriod<br>");
+			printf("<input title='Keep clone in sync every cuSyncPeriod seconds"
 					". You can change this at any time via the property panel.'"
 					" type=text size=10 maxlength=7"
 					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
@@ -2218,11 +2223,11 @@ void ExttContainerButtons(void)
 					printf("<input title='Change current container name and hostname'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Hostname Change Wizard'><br>\n");
-					printf("<input title='Creates a job for stopping an active container.'"
+					printf("<p><input title='Creates a job for stopping an active container.'"
 						" type=submit class=lwarnButton"
 						" name=gcCommand value='Stop %.24s'><br>\n",cLabel);
 					if(uSource)
-						printf("<input title='Creates jobs for manual failover (switchover.)'"
+						printf("<p><input title='Creates jobs for manual failover (switchover.)'"
 						" type=submit class=lwarnButton"
 						" name=gcCommand value='Failover %.25s'>\n",cLabel);
 				}
@@ -2252,7 +2257,7 @@ void ExttContainerButtons(void)
 					" type=submit class=largeButton"
 					" name=gcCommand value='Clone Wizard'><br>\n");
 					if(uSource)
-						printf("<input title='Creates jobs for manual failover (switchover.)'"
+						printf("<p><input title='Creates jobs for manual failover (switchover.)'"
 						" type=submit class=lwarnButton"
 						" name=gcCommand value='Failover %.25s'>\n",cLabel);
 				}
@@ -2736,15 +2741,15 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 			printf("<input title='Cancels job(s) for container(s) waiting for activation, deletion or stop.'"
 			" type=submit class=largeButton"
 			" name=gcCommand value='Group Cancel'>\n");
-			printf("<br><input title='Creates job(s) for stopping active container(s).'"
-			" type=submit class=lalertButton"
-			" name=gcCommand value='Group Stop'>\n");
 			printf("<br><input title='Creates job(s) for starting stopped or initial setup container(s).'"
 			" type=submit class=largeButton"
 			" name=gcCommand value='Group Start'>\n");
 			printf("<br><input title='Creates job(s) for deleting initial setup container(s).'"
 			" type=submit class=largeButton"
 			" name=gcCommand value='Group Delete'>\n");
+			printf("<p><input title='Creates job(s) for stopping active container(s).'"
+			" type=submit class=lwarnButton"
+			" name=gcCommand value='Group Stop'>\n");
 			printf("<p><input title='Creates job(s) for switching over cloned container(s).'"
 			" type=submit class=lwarnButton"
 			" name=gcCommand value='Group Switchover'>\n");
