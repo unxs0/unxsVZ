@@ -19,6 +19,10 @@ cNamePrefix="node";
 cNameSuffix="vm";
 uPort="22";
 uRet=0;
+cEncAlg="blowfish";
+#for internal private lan connections try:
+#cEncAlg="none";
+#-C the compression option is not useful
 
 if [ ! "$1" ]; then
 	echo "Must specify a valid command";
@@ -28,7 +32,7 @@ fi
 #Set the seq range for your datacenter. See man seq for more info.
 for N in $(seq 1 2 ); do
 	echo $cNamePrefix$N$cNameSuffix;
-	/usr/bin/ssh -C -c blowfish -p $uPort $cNamePrefix$N$cNameSuffix "$1";
+	/usr/bin/ssh -c $cEncAlg -p $uPort $cNamePrefix$N$cNameSuffix "$1";
 	uRet=$(($uRet + $?));
 done
 
