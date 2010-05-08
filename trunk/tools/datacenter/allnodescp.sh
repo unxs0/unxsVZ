@@ -18,6 +18,10 @@ cNamePrefix="node";
 cNameSuffix="lax-f2";
 #uPort="2322";
 uPort="22";
+cEncAlg="blowfish";
+#this one maybe be faster
+#cEncAlg="arcfour";
+#-C is not a good idea for most cases.
 #
 #you may need to remove higher level domains
 cThisHost=`/bin/hostname | cut -f 1 -d "."`;
@@ -33,7 +37,7 @@ fi
 for N in $(seq 1 3 ); do
         if [ "$cNamePrefix$N$cNameSuffix" != "$cThisHost" ];then
                 echo $cNamePrefix$N$cNameSuffix;
-                /usr/bin/scp -C -c blowfish -P $uPort "$1" $cNamePrefix$N$cNameSuffix:"$1";
+                /usr/bin/scp -c $cEncAlg -P $uPort "$1" $cNamePrefix$N$cNameSuffix:"$1";
         fi
 done
 
@@ -57,7 +61,7 @@ done
 #for N in $(seq 101 104 ); do
 #	if [ "$cNamePrefix$N$cNameSuffix" != "$cThisHost" ];then
 #		echo $cNamePrefix$N$cNameSuffix;
-#		/usr/bin/scp -C -c blowfish -P $uPort "$1" $cNamePrefix$N$cNameSuffix:"$1";
+#		/usr/bin/scp -c $cEncAlg -P $uPort "$1" $cNamePrefix$N$cNameSuffix:"$1";
 #	fi
 #done
 
