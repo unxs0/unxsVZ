@@ -263,28 +263,31 @@ void tJobNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	//More magic numbers ;) from pre made fixed schema and content.
-#define tJobStatus_Waiting	1
-#define tJobStatus_Running	2
-#define tJobStatus_DoneOK	3
-#define tJobStatus_DoneErrors	4
-#define tJobStatus_Suspended	5
-#define tJobStatus_Redundant	6
-#define tJobStatus_Cancelled	7
-#define tJobStatus_RemoteWait	10
-#define tJobStatus_Error 	14
+	//More magic numbers
+/*
+#define uWAITING 	1
+#define uRUNNING 	2
+#define uDONEOK		3
+#define uDONEERROR	4
+#define uSUSPENDED	5
+#define uREDUNDANT	6
+#define uCANCELED	7
+#define uREMOTEWAITING	10
+#define uERROR		14
+*/
 	if(guPermLevel<10)
-		sprintf(gcQuery,"SELECT tJob.uJob\
-				,tJob.cLabel,tNode.cLabel\
-				FROM tJob,tNode,tClient\
-                                WHERE tJob.uOwner=tClient.uClient\
-                                AND tJob.uNode=tNode.uNode\
-                                AND (tClient.uOwner=%u OR tClient.uClient=%u) AND uJobStatus=1",
-					guLoginClient,guLoginClient);
+		sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tNode.cLabel FROM tJob,tNode,tClient WHERE"
+				" tJob.uOwner=tClient.uClient AND tJob.uNode=tNode.uNode AND"
+				" (tClient.uOwner=%u OR tClient.uClient=%u) AND"
+				" (tJob.uJobStatus=1 OR tJob.uJobStatus=14 OR tJob.uJobStatus=2 OR"
+				" tJob.uJobStatus=10 OR tJob.uJobStatus=4)",
+						guLoginClient,guLoginClient);
 	else
 	        sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tNode.cLabel FROM tJob,tNode"
-					" WHERE tJob.uNode=tNode.uNode AND tJob.uJobStatus!=3"
-					" AND (tJob.uJobStatus=1 OR tJob.uJobStatus=14 OR tJob.uJobStatus=2)");
+					" WHERE tJob.uNode=tNode.uNode AND"
+					" (tJob.uJobStatus=1 OR tJob.uJobStatus=14 OR tJob.uJobStatus=2 OR"
+					" tJob.uJobStatus=10 OR tJob.uJobStatus=4)"
+													);
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -307,5 +310,3 @@ void tJobNavList(void)
 
 }//void tJobNavList(void)
 
-
-//perlSAR patch1
