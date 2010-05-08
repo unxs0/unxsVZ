@@ -912,6 +912,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							htmlPlainTextError(mysql_error(&gMysql));
 					}
 
+					//Optional group
 					if(uGroup)
 					{
 						sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
@@ -2177,7 +2178,26 @@ void ExttContainerButtons(void)
 				" to create /etc/vz/conf/VEID.x OpenVZ action scripts (on new container creation you will"
 				" be able to optionally select a mount/umount template set for this feature, or VETH"
 				" device based containers will have default action scripts installed for you.)");
-			
+		
+			//Some buttons should be easier to get to than others.
+			if(uContainer)
+			{
+				if( uStatus==uINITSETUP)
+				{
+					printf("<p><input title='Creates a job for deploying this new container."
+					" Make sure you configure the properties you want beforehand!'"
+					" type=submit class=lalertButton"
+					" name=gcCommand value='Deploy %.25s'>\n",cLabel);
+				}
+				else if( uStatus==uAWAITACT || uStatus==uAWAITDEL ||
+							uStatus==uAWAITSTOP || uStatus==uAWAITFAIL)
+				{
+					printf("<p><input title='Cancel all waiting jobs for this container.'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Cancel Job'>\n");
+				}
+			}
+
 			if(uContainer && uNode)
 			{
 				printf("<p><u>Record Context Info</u>");
@@ -2230,20 +2250,6 @@ void ExttContainerButtons(void)
 						printf("<p><input title='Creates jobs for manual failover (switchover.)'"
 						" type=submit class=lwarnButton"
 						" name=gcCommand value='Failover %.25s'>\n",cLabel);
-				}
-				else if( uStatus==uAWAITACT || uStatus==uAWAITDEL || uStatus==uAWAITSTOP 
-											|| uStatus==uAWAITFAIL)
-				{
-					printf("<p><input title='Cancel all waiting jobs for this container.'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Cancel Job'>\n");
-				}
-				else if( uStatus==uINITSETUP)
-				{
-					printf("<p><input title='Creates a job for deploying a new container."
-					" Make sure you configure the properties you want beforehand!'"
-					" type=submit class=lalertButton"
-					" name=gcCommand value='Deploy %.25s'>\n",cLabel);
 				}
 				else if( uStatus==uSTOPPED)
 				{
@@ -3963,7 +3969,7 @@ unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 {
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindARecordJob(%u)',cJobName='StopContainer'"
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindARecordJob(%u)',cJobName='unxsVZContainerRR'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=10"//RemoteWaiting

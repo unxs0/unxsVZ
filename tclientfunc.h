@@ -736,7 +736,7 @@ void tTablePullDownResellers(unsigned uSelector)
 
         if(i>0)
         {
-		printf("<p><u>Optionally select an existing company</u><br>");
+		printf("<p>Optionally select an existing company<br>");
                 printf("<select name=cForClientPullDown>\n");
 
                 //Default no selection
