@@ -51,6 +51,26 @@ AUTHOR
 #define uAWAITCLONE	81
 #define uAWAITFAIL	91
 
+//tProperty fixed types
+#define PROP_DATACENTER "1"
+#define PROP_NODE "2"
+#define PROP_CONTAINER "3"
+#define PROP_GROUP "4"
+#define PROP_GROUPTYPE "5"
+
+//tJobStatus contants
+#define uWAITING 	1
+#define uRUNNING 	2
+#define uDONEOK		3
+#define uDONEERROR	4
+#define uSUSPENDED	5
+#define uREDUNDANT	6
+#define uCANCELED	7
+#define uREMOTEWAITING	10
+#define ERROR		14
+
+#define cLOGFILE "/var/log/unxsvzlog"
+
 extern char gcHost[];
 extern char gcHostname[];
 extern char gcUser[];
@@ -639,11 +659,3 @@ void GlossaryGetHook(entry gentries[],int x);
 
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 
-//Property fixed types
-#define PROP_DATACENTER "1"
-#define PROP_NODE "2"
-#define PROP_CONTAINER "3"
-#define PROP_GROUP "4"
-#define PROP_GROUPTYPE "5"
-
-#define cLOGFILE "/var/log/unxsvzlog"

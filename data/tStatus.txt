@@ -15,3 +15,4 @@
 61	Awaiting Hostname Changes	1	1	1239317359	0	0
 71	Awaiting IP Changes	1	1	1239317382	0	0
 81	Awaiting Clone	1	1	1251748216	0	0
+91	Awaiting Failover	1	1	1251748216	0	0
