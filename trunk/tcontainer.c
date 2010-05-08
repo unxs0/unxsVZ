@@ -410,13 +410,6 @@ void tContainerInput(unsigned uMode)
 		YesNoPullDown("uVeth",uVeth,1);
 	else
 		YesNoPullDown("uVeth",uVeth,0);
-//uSource
-	if(uSource)
-	{
-		OpenRow(LANG_FL_tContainer_uSource,"black");
-		printf("<input disabled type=text name=uSource value='%u' size=10>\n",uSource);
-		printf("<input type=hidden name=uSource value='%u'>\n",uSource);
-	}
 //uIPv4
 	OpenRow(LANG_FL_tContainer_uIPv4,"black");
 	if(guPermLevel>=7 && uMode)
@@ -461,34 +454,20 @@ void tContainerInput(unsigned uMode)
 		tTablePullDownOwner("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
 //uStatus
 	OpenRow(LANG_FL_tContainer_uStatus,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uStatus value=%u >\n",ForeignKey("tStatus","cLabel",uStatus),uStatus);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uStatus value=%u >\n",ForeignKey("tStatus","cLabel",uStatus),uStatus);
-	}
+	printf("%s<input type=hidden name=uStatus value=%u >\n",
+		ForeignKey("tStatus","cLabel",uStatus),uStatus);
+//uSource
+	OpenRow(LANG_FL_tContainer_uSource,"black");
+	printf("%s<input type=hidden name=uSource value=%u >\n",
+		ForeignKey("tContainer","cHostname",uSource),uSource);
 //uOwner
 	OpenRow(LANG_FL_tContainer_uOwner,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
+	printf("%s<input type=hidden name=uOwner value=%u >\n",
+		ForeignKey("tClient","cLabel",uOwner),uOwner);
 //uCreatedBy
 	OpenRow(LANG_FL_tContainer_uCreatedBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
+	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",
+		ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 //uCreatedDate
 	OpenRow(LANG_FL_tContainer_uCreatedDate,"black");
 	if(uCreatedDate)
@@ -498,14 +477,8 @@ void tContainerInput(unsigned uMode)
 	printf("<input type=hidden name=uCreatedDate value=%lu >\n",uCreatedDate);
 //uModBy
 	OpenRow(LANG_FL_tContainer_uModBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
+	printf("%s<input type=hidden name=uModBy value=%u >\n",
+		ForeignKey("tClient","cLabel",uModBy),uModBy);
 //uModDate
 	OpenRow(LANG_FL_tContainer_uModDate,"black");
 	if(uModDate)
@@ -514,10 +487,6 @@ void tContainerInput(unsigned uMode)
 		printf("---\n\n");
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
-//uSource
-	printf("<input type=hidden name=uSource value=%u >\n",uSource);
-
-
 
 }//void tContainerInput(unsigned uMode)
 
