@@ -22,6 +22,7 @@ TODO
 
 #include "mysqlrad.h"
 #include <openisp/template.h>
+#include <sys/sysinfo.h>
 
 //
 //The following prototype declarations should provide a 
@@ -267,6 +268,7 @@ void ProcessJobQueue(unsigned uDebug)
 	unsigned uRemoteContainer=0;
 	unsigned uJob=0;
 	unsigned uError=0;
+	struct sysinfo structSysinfo;
 
 	if(uDebug) guDebug=1;
 
@@ -281,6 +283,21 @@ void ProcessJobQueue(unsigned uDebug)
 		logfileLine("ProcessJobQueue","gethostname() failed");
 		exit(1);
 	}
+
+	if(sysinfo(&structSysinfo))
+	{
+		logfileLine("ProcessJobQueue","sysinfo() failed");
+		exit(1);
+	}
+
+#define JOBQUEUE_MAXLOAD 40000 //This is equivalent to uptime 40
+	if(structSysinfo.loads[0]>JOBQUEUE_MAXLOAD)
+	{
+		logfileLine("ProcessJobQueue","structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD");
+		exit(1);
+	}
+	//debug only
+	//printf("structSysinfo.loads[0]/10000=%lu\n",structSysinfo.loads[0]/10000);
 
 	TextConnectDb();//Uses login data from local.h
 	guLoginClient=1;//Root user

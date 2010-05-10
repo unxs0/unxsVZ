@@ -1330,7 +1330,8 @@ void ExttContainerCommands(pentry entries[], int x)
 						
 				}
                         	guMode=0;
-				
+			
+				//Get first available <cLabel>-clone<uNum>
 				while(uWizLabelLoop)
 				{
 					uWizLabelSuffix++;
