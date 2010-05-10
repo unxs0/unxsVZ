@@ -2025,7 +2025,6 @@ void ExttContainerButtons(void)
 					". You can change this at any time via the property panel.'"
 					" type=text size=10 maxlength=7"
 					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
-			
 			printf("<p><input title='Create a clone job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Clone'>\n");
@@ -2142,6 +2141,63 @@ void ExttContainerButtons(void)
 			printf("<p>Optionally select a group to assign the new container(s) to<br>");
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 			tTablePullDownResellers(uOwner);//uForClient after
+			//Optionally create clone on new.
+			char cAutoCloneNode[256]={""};
+			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+			if(cAutoCloneNode[0])
+			{
+        			MYSQL_RES *res;
+				MYSQL_ROW field;
+				char cAutoCloneSyncTime[256]={""};
+				char cIPv4ClassC[32]={""};
+				int register i;
+
+				uTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
+				GetConfiguration("cAutoCloneSyncTime",cAutoCloneSyncTime,uDatacenter,0,0,0);
+				if(cAutoCloneSyncTime[0])
+					sscanf(cAutoCloneSyncTime,"%u",&uSyncPeriod);
+				//Get next available IP, set uIPv4
+				sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
+							" AND uOwner=%u",uIPv4,guCompany);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sprintf(cIPv4ClassC,"%.31s",field[0]);
+				mysql_free_result(res);
+				for(i=strlen(cIPv4ClassC);i>0;i--)
+				{
+					if(cIPv4ClassC[i]=='.')
+					{
+						cIPv4ClassC[i]=0;
+						break;
+					}
+				}
+				if(cIPv4ClassC[0])
+				{
+					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+							" AND cLabel LIKE '%s%%' LIMIT 1",guCompany,cIPv4ClassC);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+						sscanf(field[0],"%u",&uWizIPv4);
+					mysql_free_result(res);
+				}
+				printf("<p>System configured for auto clones, select target node<br>");
+				tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
+				printf("<p>Select clone IPv4<br>");
+				tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
+				printf("<p>Keep clone stopped<br>");
+				printf("<input type=checkbox name=uCloneStop checked>");
+				printf("<p>Clone cuSyncPeriod<br>");
+				printf("<input title='Keep clone in sync every cuSyncPeriod seconds"
+					". You can change this at any time via the property panel.'"
+					" type=text size=10 maxlength=7"
+					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
+			}
 			if(uVeth)
 				printf("<p>Make sure you understand the implications of using uVeth='Yes' containers"
 				" before proceeding. Alternatively change uVeth to 'No' now.");

@@ -180,10 +180,6 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 			logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
 			return(3);
 		}
-		//debug only
-		//if(guDebug)
-		//	logfileLine("ProcessCloneSyncJob",gcQuery);
-
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

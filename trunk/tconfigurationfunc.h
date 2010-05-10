@@ -3,11 +3,10 @@ FILE
 	$Id$
 PURPOSE
 	Non-schema dependent tconfiguration.c expansion.
-AUTHOR
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
-	(C) 2001-2007 Gary Wallis.
- 
 */
 
 void tConfigurationNavList(void);
@@ -198,14 +197,20 @@ void ExttConfigurationGetHook(entry gentries[], int x)
 
 void ExttConfigurationSelect(void)
 {
-	ExtSelect("tConfiguration",VAR_LIST_tConfiguration);
+	if(guPermLevel>9)
+		ExtSelectPublic("tConfiguration",VAR_LIST_tConfiguration);
+	else
+		ExtSelect("tConfiguration",VAR_LIST_tConfiguration);
 
 }//void ExttConfigurationSelect(void)
 
 
 void ExttConfigurationSelectRow(void)
 {
-	ExtSelectRow("tConfiguration",VAR_LIST_tConfiguration,uConfiguration);
+	if(guPermLevel>9)
+		ExtSelectRowPublic("tConfiguration",VAR_LIST_tConfiguration,uConfiguration);
+	else
+		ExtSelectRow("tConfiguration",VAR_LIST_tConfiguration,uConfiguration);
 
 }//void ExttConfigurationSelectRow(void)
 
@@ -224,9 +229,7 @@ void ExttConfigurationListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tConfiguration.uConfiguration=%u \
-						ORDER BY uConfiguration",
-						uConfiguration);
+		sprintf(cCat,"tConfiguration.uConfiguration=%u ORDER BY uConfiguration",uConfiguration);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -288,7 +291,7 @@ void tConfigurationNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	ExtSelect("tConfiguration","tConfiguration.uConfiguration,tConfiguration.cLabel");
+	ExtSelectPublic("tConfiguration","tConfiguration.uConfiguration,tConfiguration.cLabel");
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
