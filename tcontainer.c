@@ -757,8 +757,8 @@ void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
         	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 ORDER BY %s",
                                 cFieldName,cLocalTableName,cOrderby);
 	else
-        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uOwner=%u ORDER BY %s",
-                                cFieldName,cLocalTableName,guCompany,cOrderby);
+		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uOwner=%u ORDER BY %s",
+				cFieldName,cLocalTableName,guCompany,cOrderby);
 
 	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
 	
