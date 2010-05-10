@@ -17,6 +17,7 @@ NOTES
 */
 
 #include "../../mysqlrad.h"
+#include <sys/sysinfo.h>
 
 MYSQL gMysql;
 char gcQuery[8192]={""};
@@ -65,9 +66,21 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 
 int main(int iArgc, char *cArgv[])
 {
+	struct sysinfo structSysinfo;
 
 	sprintf(gcProgram,"%.31s",cArgv[0]);
 
+	if(sysinfo(&structSysinfo))
+	{
+		logfileLine("main","sysinfo() failed",0);
+		exit(1);
+	}
+#define JOBQUEUE_MAXLOAD 40000 //This is equivalent to uptime 40
+	if(structSysinfo.loads[0]>JOBQUEUE_MAXLOAD)
+	{
+		logfileLine("main","structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD",0);
+		exit(1);
+	}
 	//Check to see if this program is still running. If it is exit.
 	//This may mean losing data gathering data points. But it
 	//will avoid runaway du and other unexpected high load
