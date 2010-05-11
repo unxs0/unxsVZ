@@ -362,7 +362,9 @@ void SearchDeletedZone(char *cSearchTerm)
 	//
 	//Will search deleted zones only for valid clients. By valid clients we mean those that have a tClient instance.
 	//
-	sprintf(gcQuery,"SELECT tDeletedZone.uDeletedZone,tDeletedZone.cZone,tView.cLabel FROM tDeletedZone,tView,tClient WHERE tView.uView=tDeletedZone.uView AND tDeletedZone.cZone LIKE '%s%%' AND tDeletedZone.uOwner=tClient.uClient",cSearchTerm);
+	sprintf(gcQuery,"SELECT tDeletedZone.uDeletedZone,tDeletedZone.cZone,tView.cLabel FROM tDeletedZone,tView,tClient"
+			" WHERE tView.uView=tDeletedZone.uView AND tDeletedZone.cZone LIKE '%s%%' AND"
+			" tDeletedZone.uOwner=tClient.uClient",cSearchTerm);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -375,7 +377,13 @@ void LoadDeletedZone(unsigned uRowId)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	
-	sprintf(gcQuery,"SELECT uDeletedZone,tDeletedZone.cZone,cHostmaster,tDeletedZone.uSerial,tDeletedZone.uExpire,tDeletedZone.uRefresh,tDeletedZone.uTTL,tDeletedZone.uRetry,tDeletedZone.uZoneTTL,tView.cLabel,tClient.cLabel,tDeletedZone.uNSSet,tNSSet.cLabel,tDeletedZone.uView,tDeletedZone.uRegistrar,tDeletedZone.uOwner,tDeletedZone.uMailServers,tDeletedZone.uSecondaryOnly,tDeletedZone.cOptions,tNSSet.cMasterIPs FROM tDeletedZone,tView,tClient,tNSSet WHERE uDeletedZone=%u AND tView.uView=tDeletedZone.uView AND tClient.uClient=tDeletedZone.uOwner AND tDeletedZone.uNSSet=tNSSet.uNSSet",uRowId);
+	sprintf(gcQuery,"SELECT uDeletedZone,tDeletedZone.cZone,cHostmaster,tDeletedZone.uSerial,tDeletedZone.uExpire,"
+			"tDeletedZone.uRefresh,tDeletedZone.uTTL,tDeletedZone.uRetry,tDeletedZone.uZoneTTL,tView.cLabel,"
+			"tClient.cLabel,tDeletedZone.uNSSet,tNSSet.cLabel,tDeletedZone.uView,tDeletedZone.uRegistrar,"
+			"tDeletedZone.uOwner,tDeletedZone.uMailServers,tDeletedZone.uSecondaryOnly,tDeletedZone.cOptions,"
+			"tNSSet.cMasterIPs FROM tDeletedZone,tView,tClient,tNSSet WHERE uDeletedZone=%u AND"
+			" tView.uView=tDeletedZone.uView AND tClient.uClient=tDeletedZone.uOwner AND"
+			" tDeletedZone.uNSSet=tNSSet.uNSSet",uRowId);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -421,11 +429,23 @@ void funcDeletedRRs(FILE *fp,unsigned uShowLinks)
 	fprintf(fp,"<!-- funcRRs(fp) Start -->\n");
 	if(!uShowLinks)
 	{
-	sprintf(gcQuery,"SELECT tDeletedResource.uDeletedResource,IF(STRCMP(tDeletedResource.cName,''),tDeletedResource.cName,'(default)'),tDeletedResource.uTTL,tRRType.cLabel,tDeletedResource.cParam1,tDeletedResource.cParam2,tDeletedResource.cComment FROM tDeletedResource,tRRType,tDeletedZone WHERE tDeletedResource.uZone=tDeletedZone.uDeletedZone AND tDeletedResource.uRRType=tRRType.uRRType AND tDeletedZone.uDeletedZone='%u' AND tDeletedZone.uSecondaryOnly=0 ORDER BY tDeletedResource.uRRType,tDeletedResource.cName",uDeletedZone);
+		sprintf(gcQuery,"SELECT tDeletedResource.uDeletedResource,IF(STRCMP(tDeletedResource.cName,''),"
+			"tDeletedResource.cName,'(default)'),tDeletedResource.uTTL,tRRType.cLabel,"
+			"tDeletedResource.cParam1,tDeletedResource.cParam2,tDeletedResource.cComment FROM"
+			" tDeletedResource,tRRType,tDeletedZone WHERE tDeletedResource.uZone=tDeletedZone.uDeletedZone AND"
+			" tDeletedResource.uRRType=tRRType.uRRType AND tDeletedZone.uDeletedZone='%u' AND"
+			" tDeletedZone.uSecondaryOnly=0 ORDER BY tDeletedResource.uRRType,tDeletedResource.cName",
+				uDeletedZone);
 	}
 	else
 	{
-	sprintf(gcQuery,"SELECT tDeletedResource.uDeletedResource,IF(STRCMP(tDeletedResource.cName,''),tDeletedResource.cName,'(default)'),tDeletedResource.uTTL,tRRType.cLabel,tDeletedResource.cParam1,tDeletedResource.cParam2,tDeletedResource.cComment FROM tDeletedResource,tRRType,tZone WHERE tDeletedResource.uZone=tZone.uZone AND tDeletedResource.uRRType=tRRType.uRRType AND tZone.uZone='%u' AND tZone.uSecondaryOnly=0 ORDER BY tDeletedResource.uRRType,tDeletedResource.cName",uDeletedZone);
+		sprintf(gcQuery,"SELECT tDeletedResource.uDeletedResource,IF(STRCMP(tDeletedResource.cName,''),"
+				"tDeletedResource.cName,'(default)'),tDeletedResource.uTTL,tRRType.cLabel,"
+				"tDeletedResource.cParam1,tDeletedResource.cParam2,tDeletedResource.cComment FROM"
+				" tDeletedResource,tRRType,tZone WHERE tDeletedResource.uZone=tZone.uZone AND"
+				" tDeletedResource.uRRType=tRRType.uRRType AND tZone.uZone='%u' AND"
+				" tZone.uSecondaryOnly=0 ORDER BY tDeletedResource.uRRType,tDeletedResource.cName",
+					uDeletedZone);
 	}
 	
 	mysql_query(&gMysql,gcQuery);
@@ -440,14 +460,16 @@ void funcDeletedRRs(FILE *fp,unsigned uShowLinks)
 		
 		fprintf(fp,"<tr>\n");
 		if(uShowLinks)
-			fprintf(fp,"<td valign=top><a class=darkLink href=idnsAdmin.cgi?gcPage=RestoreResource&uDeletedResource=%s>%s</a></td>",
+			fprintf(fp,"<td valign=top><a class=darkLink href=idnsAdmin.cgi?gcPage=RestoreResource&"
+					"uDeletedResource=%s>%s</a></td>",
 				field[0],
 				field[1]
 			);
 		else
 			fprintf(fp,"<td valign=top>%s</td>",field[1]);
 		
-		fprintf(fp,"<td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td>\n",
+		fprintf(fp,"<td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td>"
+				"<td valign=top>%s</td>\n",
 				field[2],
 				field[3],
 				field[4],

@@ -2125,11 +2125,23 @@ void SaveResource(void)
 	
 	uZone=uGetuZone(gcZone);
 	uRRType=SelectRRType(cRRType);
-
-	sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%u',"
-			"uZone='%u',cName='%s',uTTL='%s',uRRType='%u',cParam1='%s',"
-			"cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s'"
-			",uOwner='%u',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tDeletedResource SET uDeletedResource='%u',uZone='%u',"
+			"cName='%s',uTTL='%s',uRRType='%u',cParam1='%s',cParam2='%s',cParam3='%s',"
+			"cParam4='%s',cComment='%s',uOwner='%u',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			" ON DUPLICATE KEY UPDATE uDeletedResource='%u',uZone='%u',"
+			"cName='%s',uTTL='%s',uRRType='%u',cParam1='%s',cParam2='%s',cParam3='%s',"
+			"cParam4='%s',cComment='%s',uOwner='%u',uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uResource,
+			uZone,
+			TextAreaSave(cName),
+			cuTTL,
+			uRRType,
+			TextAreaSave(cParam1),
+			TextAreaSave(cParam2),
+			TextAreaSave(cParam3),
+			TextAreaSave(cParam4),
+			cComment,
+			guOrg,
 			uResource,
 			uZone,
 			TextAreaSave(cName),
