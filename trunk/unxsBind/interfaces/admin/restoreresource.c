@@ -118,7 +118,8 @@ void RestoreResourceCommands(pentry entries[], int x)
 
 void SelectDeletedRR(void)
 {
-	sprintf(gcQuery,"SELECT uDeletedResource FROM tDeletedResource WHERE uZone=%u ORDER BY uDeletedResource LIMIT 1",uDeletedZone);
+	sprintf(gcQuery,"SELECT uDeletedResource FROM tDeletedResource WHERE uZone=%u ORDER BY uDeletedResource LIMIT 1",
+				uDeletedZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
