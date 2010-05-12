@@ -1152,7 +1152,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 	//Default for less conditions below
 	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
-		sprintf(cSCPOptions,"-P 22");
+		sprintf(cSCPOptions,"-P 22 -c arcfour");
 
 	if(cSSHOptions[0])
 		sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
@@ -1948,7 +1948,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 	//Default for less conditions below
 	if(!cSSHOptions[0] || uNotValidSystemCallArg(cSSHOptions))
-		sprintf(cSSHOptions,"-p 22");
+		sprintf(cSSHOptions,"-p 22 -c arcfour");
 
 	char cSCPOptions[256]={""};
 	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,guNode,0,0);//First try node specific
@@ -1960,7 +1960,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 	//Default for less conditions below
 	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
-		sprintf(cSCPOptions,"-P 22");
+		sprintf(cSCPOptions,"-P 22 -c arcfour");
 
 	char cSnapshotDir[256]={""};
 	GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,guNode,0,0);//First try node specific
@@ -1985,6 +1985,8 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		goto CommonExit;
 	}
 
+	//1a-. Need an md5sum file created. TODO
+
 	//2-.
 	if(uNotValidSystemCallArg(cTargetNodeIPv4))
 	{
@@ -2003,6 +2005,9 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		tJobErrorUpdate(uJob,"error 2");
 		goto CommonExit;
 	}
+
+	//2a-. Need md5sum file moved to target. TODO
+	//2b-. Need an md5sum check. TODO
 
 	//3-.
 	sprintf(gcQuery,"ssh %s %s '/usr/sbin/vzdump --compress --restore /vz/dump/vzdump-%u.tgz %u'",
@@ -2474,7 +2479,7 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 	}
 	//Default for less conditions below
 	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
-		sprintf(cSCPOptions,"-P 22 -c blowfish");
+		sprintf(cSCPOptions,"-P 22 -c arcfour");
 	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",guDatacenter,guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -2579,7 +2584,7 @@ void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData)
 	}
 	//Default for less conditions below
 	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
-		sprintf(cSCPOptions,"-P 22 -c blowfish");
+		sprintf(cSCPOptions,"-P 22 -c arcfour");
 	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",guDatacenter,guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
