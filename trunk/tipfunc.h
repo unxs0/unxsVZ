@@ -4,9 +4,9 @@ FILE
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR
-	(C) 2001-2009 Gary Wallis.
- 
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 #include <openisp/ucidr.h>
@@ -259,14 +259,14 @@ void ExttIPGetHook(entry gentries[], int x)
 
 void ExttIPSelect(void)
 {
-	ExtSelect("tIP",VAR_LIST_tIP);
+	ExtSelectPublic("tIP",VAR_LIST_tIP);
 
 }//void ExttIPSelect(void)
 
 
 void ExttIPSelectRow(void)
 {
-	ExtSelectRow("tIP",VAR_LIST_tIP,uIP);
+	ExtSelectRowPublic("tIP",VAR_LIST_tIP,uIP);
 
 }//void ExttIPSelectRow(void)
 
@@ -275,19 +275,13 @@ void ExttIPListSelect(void)
 {
 	char cCat[512];
 
-	ExtListSelect("tIP",VAR_LIST_tIP);
+	ExtListSelectPublic("tIP",VAR_LIST_tIP);
 	
 	//Changes here must be reflected below in ExttIPListFilter()
         if(!strcmp(gcFilter,"uIP"))
         {
                 sscanf(gcCommand,"%u",&uIP);
-		if(guPermLevel<10)
-			strcat(gcQuery," AND ");
-		else
-			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tIP.uIP=%u \
-						ORDER BY uIP",
-						uIP);
+		sprintf(cCat," WHERE tIP.uIP=%u ORDER BY uIP",uIP);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -373,10 +367,8 @@ void tIPNavList(unsigned uAvailable)
 
 
 	        while((field=mysql_fetch_row(res)))
-		{
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP"
 					"&uIP=%s>%s</a><br>\n",field[0],field[1]);
-	        }
 	}
         mysql_free_result(res);
 
@@ -521,8 +513,11 @@ void DelIPRange(char *cIPRange)
 	uCIDR4IP=ExpandCIDR4(cIPRange,&cIPs[0]);
 	for(i=0;i<uCIDR4IP;i++)
 	{
-		sprintf(gcQuery,"DELETE FROM tIP WHERE cLabel='%s' AND uAvailable=1 AND uOwner=%u",
-											cIPs[i],guCompany);
+		if(guCompany==1)
+			sprintf(gcQuery,"DELETE FROM tIP WHERE cLabel='%s' AND uAvailable=1",cIPs[i]);
+		else
+			sprintf(gcQuery,"DELETE FROM tIP WHERE cLabel='%s' AND uAvailable=1 AND uOwner=%u",
+										cIPs[i],guCompany);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));

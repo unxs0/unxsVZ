@@ -44,6 +44,7 @@ void GetContainerProps(unsigned uContainer,struct structContainer *sContainer);
 void InitContainerProps(struct structContainer *sContainer);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);
 unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
+void ChangeGroup(unsigned uContainer, unsigned uGroup);
 
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
@@ -1650,40 +1651,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				//Optional change group.
 				if(uGroup)
-				{
-					unsigned uPrimaryGroup=0;
-
-					//Get the PK of the primary group of this container.
-					sprintf(gcQuery,"SELECT uGroupGlue,uGroup FROM tGroupGlue WHERE"
-						" uContainer=%u ORDER BY uGroup LIMIT 1",uContainer);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-        				res=mysql_store_result(&gMysql);
-					if(mysql_num_rows(res)==0)
-					{
-						//If none insert
-						sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
-								uContainer,uGroup);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-					}
-					else if ((field=mysql_fetch_row(res)))
-					{
-						//Conditionally UPDATE save db work.
-						sscanf(field[1],"%u",&uPrimaryGroup);
-						if(uPrimaryGroup!=uGroup)
-						{
-							sprintf(gcQuery,"UPDATE tGroupGlue SET uGroup=%u WHERE"
-									" uGroupGlue=%s",uGroup,field[0]);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-						}
-					}
-					mysql_free_result(res);
-				}
+					ChangeGroup(uContainer,uGroup);
 
 				//Create job for remote unxsBind to run via ext job queue.
 				char cunxsBindARecordJob[256]={""};
@@ -1787,6 +1755,9 @@ void ExttContainerCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
+				//Optional change group.
+				if(uGroup)
+					ChangeGroup(uContainer,uGroup);
 				uIPv4=uWizIPv4;
 				if(IPContainerJob(uDatacenter,uNode,uContainer))
 				{
@@ -2149,46 +2120,27 @@ void ExttContainerButtons(void)
         			MYSQL_RES *res;
 				MYSQL_ROW field;
 				char cAutoCloneSyncTime[256]={""};
-				char cIPv4ClassC[32]={""};
-				int register i;
 
 				uTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
 				GetConfiguration("cAutoCloneSyncTime",cAutoCloneSyncTime,uDatacenter,0,0,0);
 				if(cAutoCloneSyncTime[0])
 					sscanf(cAutoCloneSyncTime,"%u",&uSyncPeriod);
 				//Get next available IP, set uIPv4
-				sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
-							" AND uOwner=%u",uIPv4,guCompany);
+				if(guCompany==1)
+					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 LIMIT 1");
+				else
+					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u LIMIT 1",
+										guCompany);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
+					htmlPlainTextError(mysql_error(&gMysql));
 				res=mysql_store_result(&gMysql);
 				if((field=mysql_fetch_row(res)))
-					sprintf(cIPv4ClassC,"%.31s",field[0]);
+					sscanf(field[0],"%u",&uWizIPv4);
 				mysql_free_result(res);
-				for(i=strlen(cIPv4ClassC);i>0;i--)
-				{
-					if(cIPv4ClassC[i]=='.')
-					{
-						cIPv4ClassC[i]=0;
-						break;
-					}
-				}
-				if(cIPv4ClassC[0])
-				{
-					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-							" AND cLabel LIKE '%s%%' LIMIT 1",guCompany,cIPv4ClassC);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
-						sscanf(field[0],"%u",&uWizIPv4);
-					mysql_free_result(res);
-				}
 				printf("<p>System configured for auto clones, select target node<br>");
 				tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
-				printf("<p>Select clone IPv4<br>");
+				printf("<p>Select clone IPv4 %u %u<br>",uWizIPv4,uIPv4);
 				tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
 				printf("<p>Keep clone stopped<br>");
 				printf("<input type=checkbox name=uCloneStop checked>");
@@ -4013,7 +3965,10 @@ unsigned uGetGroup(unsigned uNode, unsigned uContainer)
 		htmlPlainTextError(mysql_error(&gMysql));
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uGroup);
+	{
+		if(field[0]!=NULL)
+			sscanf(field[0],"%u",&uGroup);
+	}
 	mysql_free_result(res);
 
 	return(uGroup);
@@ -4044,3 +3999,46 @@ unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 	return(uCount);
 
 }//unsigned unxsBindARecordJob(...)
+
+
+void ChangeGroup(unsigned uContainer, unsigned uGroup)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	if(uGroup)
+	{
+		unsigned uPrimaryGroup=0;
+
+		//Get the PK of the primary group of this container.
+		sprintf(gcQuery,"SELECT uGroupGlue,uGroup FROM tGroupGlue WHERE"
+			" uContainer=%u ORDER BY uGroup LIMIT 1",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+       		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)==0)
+		{
+			//If none insert
+			sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
+					uContainer,uGroup);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		}
+		else if ((field=mysql_fetch_row(res)))
+		{
+			//Conditionally UPDATE save db work.
+			sscanf(field[1],"%u",&uPrimaryGroup);
+			if(uPrimaryGroup!=uGroup)
+			{
+				sprintf(gcQuery,"UPDATE tGroupGlue SET uGroup=%u WHERE"
+						" uGroupGlue=%s",uGroup,field[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+			}
+		}
+		mysql_free_result(res);
+	}
+}//void ChangeGroup(unsigned uContainer, unsigned uGroup)
