@@ -42,6 +42,8 @@ fi
 #this is very slow and HD space consuming.
 #so we test as herein a quick and dirty or a targeted single service type
 #container approach
+
+#this sync may be too slow for mail servers
 /usr/sbin/vzctl exec $1 /bin/sync > /dev/null 2>&1;
 if [ $? != 0 ];then
 	#fLog  "warn sync failed -source is probably stopped";
@@ -69,7 +71,7 @@ fi
 #no compression
 #/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxlH --delete \
 #no verbose and no encryption
-/usr/bin/rsync -e '/usr/bin/ssh -ax -e none -p 22' -axlH --delete \
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p 22' -axlH --delete \
 			--exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
 			--exclude /etc/sysconfig/network \
