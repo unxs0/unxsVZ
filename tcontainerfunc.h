@@ -605,7 +605,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uDatacenter!=uNodeDatacenter)
 					tContainer("<blink>Error</blink>: The specified uNode does not "
 							"belong to the specified uDatacenter.");
-
 				if(uIPv4==0)
 					tContainer("<blink>Error</blink>: uIPv4==0!");
 				if(uConfig==0)
@@ -624,6 +623,9 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: cLabel can't have '-clone'!");
 				if(strstr(cHostname,".clone"))
 					tContainer("<blink>Error</blink>: cHostname can't have '.clone'!");
+				if(uGroup==0)
+					tContainer("<blink>Error</blink>: uGroup is now required!");
+
 				if(uNumContainer>1)
 				{
 					if(cHostname[0]!='.')
@@ -913,7 +915,6 @@ void ExttContainerCommands(pentry entries[], int x)
 							htmlPlainTextError(mysql_error(&gMysql));
 					}
 
-					//Optional group
 					if(uGroup)
 					{
 						sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
@@ -1077,6 +1078,10 @@ void ExttContainerCommands(pentry entries[], int x)
 				//Set the selected IP as not available upon modify
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 						" WHERE uIP=%u AND uAvailable=1",uIPv4);
+
+				//Optional change group.
+				if(uGroup)
+					ChangeGroup(uContainer,uGroup);
 						
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
@@ -1331,6 +1336,10 @@ void ExttContainerCommands(pentry entries[], int x)
 						
 				}
                         	guMode=0;
+
+				//Optional change group.
+				if(uGroup)
+					ChangeGroup(uContainer,uGroup);
 			
 				//Get first available <cLabel>-clone<uNum>
 				while(uWizLabelLoop)
@@ -1493,6 +1502,10 @@ void ExttContainerCommands(pentry entries[], int x)
 						
 				}
                         	guMode=0;
+
+				//Optional change group.
+				if(uGroup)
+					ChangeGroup(uContainer,uGroup);
 
 				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode))
 				{
@@ -2174,6 +2187,9 @@ void ExttContainerButtons(void)
 			printf("<p><u>Review changes</u><br>");
 			printf("If you change uIPv4 you will need to modify tIP<br>");
                         printf(LANG_NBB_CONFIRMMOD);
+			printf("<p>Optional primary group change<br>");
+			uGroup=uGetGroup(0,uContainer);//0=not for node
+			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
                 break;
 
 		default:
