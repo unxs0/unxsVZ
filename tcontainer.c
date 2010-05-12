@@ -17,6 +17,8 @@ void GetConfiguration(const char *cName,char *cValue,
 		unsigned uHtml);
 void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
+void tTablePullDownOwnerAvail(const char *cTableName, const char *cFieldName,
+                        const char *cOrderby, unsigned uSelector, unsigned uMode);
 #include "mysqlrad.h"
 
 //Table Variables
@@ -413,7 +415,7 @@ void tContainerInput(unsigned uMode)
 //uIPv4
 	OpenRow(LANG_FL_tContainer_uIPv4,"black");
 	if(guPermLevel>=7 && uMode)
-		tTablePullDownAvail("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1);
+		tTablePullDownOwnerAvail("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1);
 	else
 		tTablePullDownOwner("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,0);
 //uOSTemplate
@@ -811,3 +813,93 @@ void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
 
 
 
+
+void tTablePullDownOwnerAvail(const char *cTableName, const char *cFieldName,
+                        const char *cOrderby, unsigned uSelector, unsigned uMode)
+{
+        register int i,n;
+        char cLabel[256];
+        MYSQL_RES *mysqlRes;         
+        MYSQL_ROW mysqlField;
+
+        char cSelectName[100]={""};
+	char cHidden[100]={""};
+        char cLocalTableName[256]={""};
+        char *cp;
+	char *cMode="";
+
+	if(!uMode)
+		cMode="disabled";
+      
+        if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
+        {
+                printf("Invalid input tTablePullDown()");
+                return;
+        }
+
+        //Extended functionality
+        strncpy(cLocalTableName,cTableName,255);
+        if((cp=strchr(cLocalTableName,';')))
+        {
+                strncpy(cSelectName,cp+1,99);
+                cSelectName[99]=0;
+                *cp=0;
+        }
+
+
+	if(guLoginClient==1)
+        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 ORDER BY %s",
+                                cFieldName,cLocalTableName,cOrderby);
+	else
+        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND ( uOwner=%u OR uOwner IN"
+				" (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u)) ORDER BY %s",
+				cFieldName,cLocalTableName,guCompany,guCompany,cOrderby);
+
+	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
+	i=mysql_num_rows(mysqlRes);
+
+	if(cSelectName[0])
+                sprintf(cLabel,"%s",cSelectName);
+        else
+                sprintf(cLabel,"%s_%sPullDown",cLocalTableName,cFieldName);
+
+        if(i>0)
+        {
+		int unsigned field0;
+                printf("<select name=%s %s>\n",cLabel,cMode);
+
+                //Default no selection
+                printf("<option title='No selection'>---</option>\n");
+
+                for(n=0;n<i;n++)
+                {
+
+			field0=0;
+                        mysqlField=mysql_fetch_row(mysqlRes);
+                        sscanf(mysqlField[0],"%u",&field0);
+
+                        if(uSelector != field0)
+                        {
+                             printf("<option>%s</option>\n",mysqlField[1]);
+                        }
+                        else
+                        {
+                             printf("<option selected>%s</option>\n",mysqlField[1]);
+			     if(!uMode)
+			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
+			     		cLabel,mysqlField[1]);
+                        }
+                }
+        }
+        else
+        {
+		printf("<select name=%s %s><option title='No selection'>---</option></select>\n"
+                        ,cLabel,cMode);
+		if(!uMode)
+		sprintf(cHidden,"<input type=hidden name=%99s value='0'>\n",cLabel);
+        }
+        printf("</select>\n");
+	if(cHidden[0])
+		printf("%s",cHidden);
+
+}//tTablePullDownOwnerAvail()
