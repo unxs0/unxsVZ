@@ -626,8 +626,10 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: cLabel can't have '-clone'!");
 				if(strstr(cHostname,".clone"))
 					tContainer("<blink>Error</blink>: cHostname can't have '.clone'!");
-				if(uGroup==0)
-					tContainer("<blink>Error</blink>: uGroup is now required!");
+				if(uGroup==0 && cService3[0]==0)
+					tContainer("<blink>Error</blink>: Group is now required!");
+				if(uGroup!=0 && cService3[0]!=0)
+					tContainer("<blink>Error</blink>: Or select a group or create a new one!");
 
 				if(uNumContainer>1)
 				{
@@ -649,6 +651,33 @@ void ExttContainerCommands(pentry entries[], int x)
 						
 				}
 
+				//User chooses to create a new group
+				if(cService3[0])
+				{
+					if(strlen(cService3)<3)
+						tContainer("<blink>Error</blink>: New tGroup.cLabel too short!");
+					sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s'",cService3);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)>0)
+					{
+						tContainer("<blink>Error</blink>: New tGroup.cLabel already in use!");
+					}
+					else
+					{
+						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"
+							"uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								cService3,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						uGroup=mysql_insert_id(&gMysql);
+					}
+					mysql_free_result(res);
+				}
+
 				//If auto clone setup check required values
 				char cAutoCloneNode[256]={""};
 				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
@@ -656,9 +685,13 @@ void ExttContainerCommands(pentry entries[], int x)
 				{
 
 					if(!uWizIPv4)
-						tContainer("<blink>Error</blink>: You must select an IP!");
+						tContainer("<blink>Error</blink>: You must select an IP for the clone!");
+					if(uWizIPv4==uIPv4)
+						tContainer("<blink>Error</blink>: You must select a different IP for the"
+										" clone!");
 					if(uTargetNode==0)
-						tContainer("<blink>Error</blink>: Please select a valid target node!");
+						tContainer("<blink>Error</blink>: Please select a valid target node"
+								" for the clone!");
 					if(uTargetNode==uNode)
 						tContainer("<blink>Error</blink>: Can't clone to same node!");
 					GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
@@ -666,8 +699,12 @@ void ExttContainerCommands(pentry entries[], int x)
 						tContainer("<blink>Error</blink>: Your target node is"
 							" missing it's cIPv4 property!");
 					if(uSyncPeriod>86400*30)
-						tContainer("<blink>Error</blink>: uSyncPeriod out of range, max 30 days!");
+						tContainer("<blink>Error</blink>: Clone uSyncPeriod out of range,"
+								" max 30 days!");
 				}
+
+				//For debug only
+				//tContainer("<blink>Debug</blink>: d1");
 
 				//No same names or hostnames for same datacenter allowed.
 				if(uNumContainer>1)
@@ -862,6 +899,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						if(cAutoCloneNode[0])
 						{
 							uNewVeid=CommonCloneContainer();
+							SetContainerStatus(uContainer,uINITSETUP);
 							if(uGroup)
 							{
 								sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,"
@@ -965,6 +1003,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(cAutoCloneNode[0])
 					{
 						uNewVeid=CommonCloneContainer();
+						SetContainerStatus(uContainer,uINITSETUP);
 						if(uGroup)
 						{
 							sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
@@ -2055,12 +2094,15 @@ void ExttContainerButtons(void)
 			if(cService2[0]==0) sprintf(cService2,"1");
 			printf("<p>Select the number of containers to create<br>");
 			printf("<input title='Number of containers to be created. See \"Advanced operations\" above'"
-				" type=text name=cService2 value='%s'><br>",cService2);
+				" type=text name=cService2 value='%s' maxlength=2><br>",cService2);
 			printf("<p>Optionally select a password<br>");
 			printf("<input title='Optional container password set on deployment and saved in"
-				" container property table' type=text name=cService1 value='%s'><br>",cService1);
+				" container property table' type=text name=cService1 value='%s' maxlength=31><br>",cService1);
 			printf("<p>Select a group to assign the new container(s) to<br>");
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			printf("<br>Or create and assign this new group label<br>");
+			printf("<input title='Enter a new tGroup.cLabel' type=text name=cService3 value='%s'"
+				" maxlength=31><br>",cService3);
 			tTablePullDownResellers(uOwner);//uForClient after
 			//Optionally create clone on new.
 			char cAutoCloneNode[256]={""};

@@ -286,7 +286,7 @@ void ProcessJobQueue(unsigned uDebug)
 		exit(1);
 	}
 
-#define JOBQUEUE_MAXLOAD 40000 //This is equivalent to uptime 40
+#define JOBQUEUE_MAXLOAD 400000 //This is equivalent to uptime 40
 	if(structSysinfo.loads[0]>JOBQUEUE_MAXLOAD)
 	{
 		logfileLine("ProcessJobQueue","structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD");
@@ -1804,12 +1804,30 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	char cTargetNodeIPv4[256]={""};
 	unsigned uNewVeid=0;
 	unsigned uCloneStop=0;
+	unsigned uStatus=0;
 	unsigned uPrevStatus=uACTIVE;
 	unsigned uTargetNode=0;
 	char cSourceContainerIP[32]={""};
 	char cNewIP[32]={""};
 	char cHostname[100]={""};
 	char cName[32]={""};
+
+	//We can't clone a container that is not ready
+	if(GetContainerStatus(uContainer,&uStatus))
+	{
+		logfileLine("CloneContainer","GetContainerStatus() failed");
+		//Keep job status running...hopefully someone will notice.
+		return;
+	}
+	if(!(uStatus==uACTIVE || uStatus==uSTOPPED))
+	{
+		sprintf(gcQuery,"UPDATE tJob SET uJobStatus=1,cRemoteMsg='Waiting for source container',uModBy=1,"
+				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uJob);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			logfileLine("ProcessJob()",mysql_error(&gMysql));
+		return;
+	}
 
 	//CloneWizard created a new tContainer with "Awaiting Clone" status.
 	//CloneWizard created a job (this job) that runs on the source container node.
@@ -2126,7 +2144,9 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//	return;
 
 	//7-. 8-. Everything ok
-	SetContainerStatus(uContainer,uPrevStatus);
+	if(uPrevStatus!=uINITSETUP)
+		//Not an auto clone job is only possibility but this maybe a hack. TODO
+		SetContainerStatus(uContainer,uPrevStatus);
 	tJobDoneUpdate(uJob);
 
 	//9a-. local
