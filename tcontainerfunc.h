@@ -2122,7 +2122,7 @@ void ExttContainerButtons(void)
 			printf("<p>Optionally select a password<br>");
 			printf("<input title='Optional container password set on deployment and saved in"
 				" container property table' type=text name=cService1 value='%s'><br>",cService1);
-			printf("<p>Optionally select a group to assign the new container(s) to<br>");
+			printf("<p>Select a group to assign the new container(s) to<br>");
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 			tTablePullDownResellers(uOwner);//uForClient after
 			//Optionally create clone on new.
@@ -2153,7 +2153,7 @@ void ExttContainerButtons(void)
 				mysql_free_result(res);
 				printf("<p>System configured for auto clones, select target node<br>");
 				tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
-				printf("<p>Select clone IPv4 %u %u<br>",uWizIPv4,uIPv4);
+				printf("<p>Select clone IPv4 (%u/%u)<br>",uWizIPv4,uIPv4);
 				tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
 				printf("<p>Keep clone stopped<br>");
 				printf("<input type=checkbox name=uCloneStop checked>");
