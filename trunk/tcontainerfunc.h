@@ -45,6 +45,7 @@ void InitContainerProps(struct structContainer *sContainer);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);
 unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
 void ChangeGroup(unsigned uContainer, unsigned uGroup);
+unsigned CommonCloneContainer(void);
 
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
@@ -589,7 +590,9 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(guPermLevel>=9)
 			{
 				unsigned uNumContainer=0;
+				char cTargetNodeIPv4[32]={""};
 				MYSQL_ROW field;
+				unsigned uNewVeid=0;
 
                         	ProcesstContainerVars(entries,x);
 
@@ -645,6 +648,27 @@ void ExttContainerCommands(pentry entries[], int x)
 						tContainer("<blink>Error</blink>: uNode selected does not support VETH!");
 						
 				}
+
+				//If auto clone setup check required values
+				char cAutoCloneNode[256]={""};
+				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+				if(cAutoCloneNode[0])
+				{
+
+					if(!uWizIPv4)
+						tContainer("<blink>Error</blink>: You must select an IP!");
+					if(uTargetNode==0)
+						tContainer("<blink>Error</blink>: Please select a valid target node!");
+					if(uTargetNode==uNode)
+						tContainer("<blink>Error</blink>: Can't clone to same node!");
+					GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
+					if(!cTargetNodeIPv4[0])
+						tContainer("<blink>Error</blink>: Your target node is"
+							" missing it's cIPv4 property!");
+					if(uSyncPeriod>86400*30)
+						tContainer("<blink>Error</blink>: uSyncPeriod out of range, max 30 days!");
+				}
+
 				//No same names or hostnames for same datacenter allowed.
 				if(uNumContainer>1)
 				{
@@ -835,6 +859,20 @@ void ExttContainerCommands(pentry entries[], int x)
 								htmlPlainTextError(mysql_error(&gMysql));
 						}
 
+						if(cAutoCloneNode[0])
+						{
+							uNewVeid=CommonCloneContainer();
+							if(uGroup)
+							{
+								sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,"
+										"uGroup=%u",uNewVeid,uGroup);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+									htmlPlainTextError(mysql_error(&gMysql));
+							}
+
+						}
+
 						//Get next available IP, set uIPv4
 						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
 							" AND cLabel LIKE '%s%%' LIMIT 1",uOwner,cIPv4ClassC);
@@ -922,6 +960,19 @@ void ExttContainerCommands(pentry entries[], int x)
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
+					}
+
+					if(cAutoCloneNode[0])
+					{
+						uNewVeid=CommonCloneContainer();
+						if(uGroup)
+						{
+							sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
+								uNewVeid,uGroup);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+						}
 					}
 
 					tContainer("New container created and default properties created");
@@ -1303,11 +1354,7 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
-				unsigned uNewVeid=0;
 				char cTargetNodeIPv4[32]={""};
-				unsigned uWizLabelSuffix=0;
-				unsigned uWizLabelLoop=1;
-
 
                         	guMode=0;
 
@@ -1340,120 +1387,10 @@ void ExttContainerCommands(pentry entries[], int x)
 				//Optional change group.
 				if(uGroup)
 					ChangeGroup(uContainer,uGroup);
-			
-				//Get first available <cLabel>-clone<uNum>
-				while(uWizLabelLoop)
-				{
-					uWizLabelSuffix++;
-					sprintf(cWizLabel,"%.25s-clone%u",cLabel,uWizLabelSuffix);
-					sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cWizLabel);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					uWizLabelLoop=mysql_num_rows(res);
-					mysql_free_result(res);
-				}
-				sprintf(cWizHostname,"%.93s.clone%u",cHostname,uWizLabelSuffix);
 
-				sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%s',"
-							"cHostname='%s',"
-							"uIPv4=%u,"
-							"uOSTemplate=%u,"
-							"uConfig=%u,"
-							"uNameserver=%u,"
-							"uSearchdomain=%u,"
-							"uDatacenter=%u,"
-							"uNode=%u,"
-							"uStatus=%u,"//uAWAITCLONE
-							"uOwner=%u,"
-							"uCreatedBy=%u,"
-							"uSource=%u,"
-							"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-							cWizLabel,
-							cWizHostname,
-							uWizIPv4,
-							uOSTemplate,
-							uConfig,
-							uNameserver,
-							uSearchdomain,
-							uDatacenter,
-							uTargetNode,
-							uAWAITCLONE,
-							guCompany,
-							guLoginClient,
-							uContainer);
-        			mysql_query(&gMysql,gcQuery);
-			        if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
-				uNewVeid=mysql_insert_id(&gMysql);
-
-
-				if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus))
-				{
-					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-							" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",
-								uWizIPv4,uOwner);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-					if(mysql_affected_rows(&gMysql)!=1)
-					{
-						sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uNewVeid);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-
-						sprintf(gcQuery,"DELETE FROM tJob WHERE cLabel='CloneContainer(%u)'"
-								,uNewVeid);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-
-						tContainer("<blink>Error</blink>: Someone grabbed your IP"
-								", No jobs created!");
-					}
-					CopyContainerProps(uContainer,uNewVeid);
-					//Update NAME
-					sprintf(gcQuery,"DELETE FROM tProperty WHERE"
-							" cName='Name' AND uKey=%u AND uType=3",uNewVeid);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='Name',cValue='%s'",
-								uNewVeid,guCompany,guLoginClient,cWizLabel);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					//Default no sync period set
-					sprintf(gcQuery,"DELETE FROM tProperty WHERE"
-							" cName='cuSyncPeriod' AND uKey=%u AND uType=3",uNewVeid);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='cuSyncPeriod',cValue='%u'",
-								uNewVeid,guCompany,guLoginClient,uSyncPeriod);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					uModBy=guLoginClient;
-					uStatus=uAWAITCLONE;
-					SetContainerStatus(uContainer,uAWAITCLONE);
-					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
-					tContainer("CloneContainerJob() Done");
-				}
-				else
-				{
-					sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uNewVeid);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-					tContainer("<blink>Error</blink>: No jobs created!");
-				}
+				//Set local global cWizHostname
+				//Insert clone container into tContainer
+				CommonCloneContainer();
 			}
 			else
 			{
@@ -4058,3 +3995,128 @@ void ChangeGroup(unsigned uContainer, unsigned uGroup)
 		mysql_free_result(res);
 	}
 }//void ChangeGroup(unsigned uContainer, unsigned uGroup)
+
+
+unsigned CommonCloneContainer(void)
+{	
+	MYSQL_RES *res;
+	unsigned uNewVeid=0;
+	unsigned uWizLabelSuffix=0;
+	unsigned uWizLabelLoop=1;
+
+	//Get first available <cLabel>-clone<uNum>
+	while(uWizLabelLoop)
+	{
+		uWizLabelSuffix++;
+		sprintf(cWizLabel,"%.25s-clone%u",cLabel,uWizLabelSuffix);
+		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cWizLabel);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		uWizLabelLoop=mysql_num_rows(res);
+		mysql_free_result(res);
+	}
+	sprintf(cWizHostname,"%.93s.clone%u",cHostname,uWizLabelSuffix);
+
+	sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%s',"
+				"cHostname='%s',"
+				"uIPv4=%u,"
+				"uOSTemplate=%u,"
+				"uConfig=%u,"
+				"uNameserver=%u,"
+				"uSearchdomain=%u,"
+				"uDatacenter=%u,"
+				"uNode=%u,"
+				"uStatus=%u,"
+				"uOwner=%u,"
+				"uCreatedBy=%u,"
+				"uSource=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				cWizLabel,
+				cWizHostname,
+				uWizIPv4,
+				uOSTemplate,
+				uConfig,
+				uNameserver,
+				uSearchdomain,
+				uDatacenter,
+				uTargetNode,
+				uAWAITCLONE,
+				guCompany,
+				guLoginClient,
+				uContainer);
+       	mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uNewVeid=mysql_insert_id(&gMysql);
+
+	if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus))
+	{
+		sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+				" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",
+					uWizIPv4,uOwner);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		if(mysql_affected_rows(&gMysql)!=1)
+		{
+			sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uNewVeid);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+
+			sprintf(gcQuery,"DELETE FROM tJob WHERE cLabel='CloneContainer(%u)'"
+					,uNewVeid);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+
+			tContainer("<blink>Error</blink>: Someone grabbed your IP"
+					", No jobs created!");
+		}
+		CopyContainerProps(uContainer,uNewVeid);
+		//Update NAME
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE"
+				" cName='Name' AND uKey=%u AND uType=3",uNewVeid);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				",cName='Name',cValue='%s'",
+					uNewVeid,guCompany,guLoginClient,cWizLabel);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		//Default no sync period set
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE"
+				" cName='cuSyncPeriod' AND uKey=%u AND uType=3",uNewVeid);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				",cName='cuSyncPeriod',cValue='%u'",
+					uNewVeid,guCompany,guLoginClient,uSyncPeriod);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		uModBy=guLoginClient;
+		uStatus=uAWAITCLONE;
+		SetContainerStatus(uContainer,uAWAITCLONE);
+	}
+	else
+	{
+		sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uNewVeid);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		tContainer("<blink>Error</blink>: No jobs created!");
+	}
+
+	return(uNewVeid);
+
+}//unsigned CommonCloneContainer(void)
+
+
