@@ -45,8 +45,14 @@ void InitContainerProps(struct structContainer *sContainer);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);
 unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
 void ChangeGroup(unsigned uContainer, unsigned uGroup);
-unsigned CommonCloneContainer(void);
-
+unsigned CommonCloneContainer(
+		unsigned uContainer,
+		unsigned uOSTemplate,
+		unsigned uConfig,
+		unsigned uNameserver,
+		unsigned uSearchdomain,
+		unsigned uDatacenter,
+		unsigned uTargetNode);
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
@@ -308,7 +314,9 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							if(mysql_errno(&gMysql))
 								htmlPlainTextError(mysql_error(&gMysql));
 							//Cancel any outstanding jobs. TODO review this further
-							//Keeps job container stays stuck in an awaiting state.
+							//Keeps job container from staying stuck in an awaiting state,
+							//but is confusing in logs since the function below should be
+							//extended for this case.
 							CancelContainerJob(sContainer.uDatacenter,sContainer.uNode,
 								uCtContainer);
 							sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
@@ -332,8 +340,9 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							sContainer.uStatus==uAWAITSTOP)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
-							//Cancel any outstanding jobs. TODO review this further
-							//Keeps job container stays stuck in an awaiting state.
+							//Keeps job container from staying stuck in an awaiting state,
+							//but is confusing in logs since the function below should be
+							//extended for this case.
 							if(!CancelContainerJob(sContainer.uDatacenter,
 									sContainer.uNode,uCtContainer))
 							{
@@ -343,6 +352,111 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 								else if(sContainer.uStatus==uAWAITACT)
 									SetContainerStatus(uCtContainer,uINITSETUP);
 								uGroupJobs++;
+							}
+						}
+					}
+					//Clone selected containers
+					else if(!strcmp(gcCommand,"Group Clone"))
+					{
+						struct structContainer sContainer;
+
+						InitContainerProps(&sContainer);
+						GetContainerProps(uCtContainer,&sContainer);
+						if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
+							&& (sContainer.uOwner==guCompany || guCompany==1))
+						{
+							char cConfBuffer[256]={""};
+							
+							//We can only fo this if tConfiguration has been setup
+							//with datacenter wide cAutoCloneNode=node1,cAutoCloneSyncTime=600
+							//for example.
+							GetConfiguration("cAutoCloneNode",cConfBuffer,uDatacenter,0,0,0);
+							if(cConfBuffer[0])
+								uTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
+							//We need the cuSyncPeriod
+							uSyncPeriod=0;//Never rsync
+							GetConfiguration("cAutoCloneSyncTime",cConfBuffer,uDatacenter,0,0,0);
+							if(cConfBuffer[0])
+								sscanf(cConfBuffer,"%u",&uSyncPeriod);
+							//Basic condition
+							if(uTargetNode)
+							{
+								char cTargetNodeIPv4[256]={""};
+								unsigned uNewVeid=0;
+								MYSQL_RES *res;
+								MYSQL_ROW field;
+
+								//Get next available IP, set uIPv4
+								uWizIPv4=0;
+								if(guCompany==1)
+									sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+											" uAvailable=1 LIMIT 1");
+								else
+									sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+										" uAvailable=1 AND uOwner=%u LIMIT 1",
+											guCompany);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+									htmlPlainTextError(mysql_error(&gMysql));
+								res=mysql_store_result(&gMysql);
+								if((field=mysql_fetch_row(res)))
+									sscanf(field[0],"%u",&uWizIPv4);
+								mysql_free_result(res);
+
+								//
+								//We impose further abort conditions
+
+								//Need valid clone IP
+								if(!uWizIPv4)
+									continue;
+								if(uWizIPv4==sContainer.uIPv4)
+									continue;
+
+								//Target node can't match source node.
+								if(uTargetNode==sContainer.uNode)
+									continue;
+
+								//We need the target nodes IP for the clone job data.
+								GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
+								if(!cTargetNodeIPv4[0])
+									continue;
+
+								//Check for sane sync periods
+								if(uSyncPeriod || uSyncPeriod<300)
+									continue;
+								if(uSyncPeriod>86400*30)
+									continue;
+
+								//If the container is VETH then target node must support it.
+								if(sContainer.uVeth)
+								{
+									GetNodeProp(uNode,"Container-Type",cConfBuffer);
+									if(!strstr(cConfBuffer,"VETH"))
+										continue;
+								}
+
+								//We require group now.
+								//Get group from source container
+								uGroup=uGetGroup(0,uCtContainer);
+								if(!uGroup)
+									continue;
+
+								//Finally we can create the clone container
+								//and the clone job
+								uNewVeid=CommonCloneContainer(
+										uCtContainer,
+										sContainer.uOSTemplate,
+										sContainer.uConfig,
+										sContainer.uNameserver,
+										sContainer.uSearchdomain,
+										sContainer.uDatacenter,
+										uTargetNode);
+								//Now that container exists we can assign group.
+								if(!uNewVeid)
+									continue;
+								ChangeGroup(uNewVeid,uGroup);
+								SetContainerStatus(uCtContainer,uAWAITCLONE);
+								SetContainerStatus(uNewVeid,uAWAITCLONE);
 							}
 						}
 					}
@@ -888,27 +1002,21 @@ void ExttContainerCommands(pentry entries[], int x)
 						}
 
 						if(uGroup)
-						{
-							sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
-								uContainer,uGroup);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-						}
+							ChangeGroup(uContainer,uGroup);
 
 						if(cAutoCloneNode[0])
 						{
-							uNewVeid=CommonCloneContainer();
+							uNewVeid=CommonCloneContainer(
+										uContainer,
+										uOSTemplate,
+										uConfig,
+										uNameserver,
+										uSearchdomain,
+										uDatacenter,
+										uTargetNode);
 							SetContainerStatus(uContainer,uINITSETUP);
 							if(uGroup)
-							{
-								sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,"
-										"uGroup=%u",uNewVeid,uGroup);
-								mysql_query(&gMysql,gcQuery);
-								if(mysql_errno(&gMysql))
-									htmlPlainTextError(mysql_error(&gMysql));
-							}
-
+								ChangeGroup(uNewVeid,uGroup);
 						}
 
 						//Get next available IP, set uIPv4
@@ -992,26 +1100,21 @@ void ExttContainerCommands(pentry entries[], int x)
 					}
 
 					if(uGroup)
-					{
-						sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
-								uContainer,uGroup);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-					}
+						ChangeGroup(uContainer,uGroup);
 
 					if(cAutoCloneNode[0])
 					{
-						uNewVeid=CommonCloneContainer();
+						uNewVeid=CommonCloneContainer(
+								uContainer,
+								uOSTemplate,
+								uConfig,
+								uNameserver,
+								uSearchdomain,
+								uDatacenter,
+								uTargetNode);
 						SetContainerStatus(uContainer,uINITSETUP);
 						if(uGroup)
-						{
-							sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
-								uNewVeid,uGroup);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-						}
+							ChangeGroup(uNewVeid,uGroup);
 					}
 
 					tContainer("New container created and default properties created");
@@ -1072,8 +1175,9 @@ void ExttContainerCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
-				//Cancel any outstanding jobs. TODO review this further
-				//Keeps job container stays stuck in an awaiting state.
+				//Keeps job container from staying stuck in an awaiting state,
+				//but is confusing in logs since the function below should be
+				//extended for this case.
 				CancelContainerJob(uDatacenter,uNode,uContainer);
 				DeletetContainer();
 			}
@@ -1315,8 +1419,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error</blink>: This record was modified. Job may have run!");
 
-				//Cancel any outstanding jobs. TODO review this further
-				//Keeps job container stays stuck in an awaiting state.
+				//Cancel any outstanding jobs.
 				if(CancelContainerJob(uDatacenter,uNode,uContainer))
 				{
 					tContainer("<blink>Error</blink>: Unexpected no jobs canceled! Late?");
@@ -1394,6 +1497,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
 				char cTargetNodeIPv4[32]={""};
+				unsigned uNewVeid=0;
 
                         	guMode=0;
 
@@ -1423,13 +1527,24 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
                         	guMode=0;
 
-				//Optional change group.
+				//Optional change group of source container.
 				if(uGroup)
 					ChangeGroup(uContainer,uGroup);
 
 				//Set local global cWizHostname
 				//Insert clone container into tContainer
-				CommonCloneContainer();
+				uNewVeid=CommonCloneContainer(
+					uContainer,
+					uOSTemplate,
+					uConfig,
+					uNameserver,
+					uSearchdomain,
+					uDatacenter,
+					uTargetNode);
+
+				//Change group of clone.
+				if(uGroup)
+					ChangeGroup(uNewVeid,uGroup);
 			}
 			else
 			{
@@ -2861,8 +2976,9 @@ unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContai
 }//unsigned StopContainerJob(...)
 
 
-//Cancel any outstanding jobs. TODO review this further
-//Keeps job container stays stuck in an awaiting state.
+//Keeps job container from staying stuck in an awaiting state,
+//but is confusing in logs since the function below should be
+//extended for this case.
 unsigned CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
 {
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE "
@@ -4039,7 +4155,14 @@ void ChangeGroup(unsigned uContainer, unsigned uGroup)
 }//void ChangeGroup(unsigned uContainer, unsigned uGroup)
 
 
-unsigned CommonCloneContainer(void)
+unsigned CommonCloneContainer(
+		unsigned uContainer,
+		unsigned uOSTemplate,
+		unsigned uConfig,
+		unsigned uNameserver,
+		unsigned uSearchdomain,
+		unsigned uDatacenter,
+		unsigned uTargetNode)
 {	
 	MYSQL_RES *res;
 	unsigned uNewVeid=0;
@@ -4075,9 +4198,9 @@ unsigned CommonCloneContainer(void)
 				"uCreatedBy=%u,"
 				"uSource=%u,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				cWizLabel,
-				cWizHostname,
-				uWizIPv4,
+				cWizLabel,//global TODO
+				cWizHostname,//global TODO
+				uWizIPv4,//global TODO
 				uOSTemplate,
 				uConfig,
 				uNameserver,
@@ -4159,6 +4282,6 @@ unsigned CommonCloneContainer(void)
 
 	return(uNewVeid);
 
-}//unsigned CommonCloneContainer(void)
+}//unsigned CommonCloneContainer()
 
 
