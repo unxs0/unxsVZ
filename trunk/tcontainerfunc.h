@@ -1542,7 +1542,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					uDatacenter,
 					uTargetNode);
 
-				//Change group of clone.
+				//Set group of clone to group of source.
+				uGroup=uGetGroup(0,uContainer);
 				if(uGroup)
 					ChangeGroup(uNewVeid,uGroup);
 			}
