@@ -52,6 +52,8 @@ unsigned CommonCloneContainer(
 		unsigned uNameserver,
 		unsigned uSearchdomain,
 		unsigned uDatacenter,
+		unsigned uOwner,
+		const char *cLabel,
 		unsigned uTargetNode);
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
@@ -366,7 +368,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							char cConfBuffer[256]={""};
-							
+
 							//We can only fo this if tConfiguration has been setup
 							//with datacenter wide cAutoCloneNode=node1,cAutoCloneSyncTime=600
 							//for example.
@@ -378,8 +380,9 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							GetConfiguration("cAutoCloneSyncTime",cConfBuffer,uDatacenter,0,0,0);
 							if(cConfBuffer[0])
 								sscanf(cConfBuffer,"%u",&uSyncPeriod);
-							//Basic condition
-							if(uTargetNode)
+							//Basic conditions
+							//We do not allow clones of clones yet.
+							if(uTargetNode && !sContainer.uSource)
 							{
 								char cTargetNodeIPv4[256]={""};
 								unsigned uNewVeid=0;
@@ -422,9 +425,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 									continue;
 
 								//Check for sane sync periods
-								if(uSyncPeriod || uSyncPeriod<300)
-									continue;
-								if(uSyncPeriod>86400*30)
+								if(!uSyncPeriod && uSyncPeriod<300 && uSyncPeriod>86400*30)
 									continue;
 
 								//If the container is VETH then target node must support it.
@@ -450,6 +451,8 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 										sContainer.uNameserver,
 										sContainer.uSearchdomain,
 										sContainer.uDatacenter,
+										sContainer.uOwner,
+										sContainer.cLabel,
 										uTargetNode);
 								//Now that container exists we can assign group.
 								if(!uNewVeid)
@@ -457,6 +460,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 								ChangeGroup(uNewVeid,uGroup);
 								SetContainerStatus(uCtContainer,uAWAITCLONE);
 								SetContainerStatus(uNewVeid,uAWAITCLONE);
+								uGroupJobs++;
 							}
 						}
 					}
@@ -1013,6 +1017,8 @@ void ExttContainerCommands(pentry entries[], int x)
 										uNameserver,
 										uSearchdomain,
 										uDatacenter,
+										uOwner,
+										cLabel,
 										uTargetNode);
 							SetContainerStatus(uContainer,uINITSETUP);
 							if(uGroup)
@@ -1111,6 +1117,8 @@ void ExttContainerCommands(pentry entries[], int x)
 								uNameserver,
 								uSearchdomain,
 								uDatacenter,
+								uOwner,
+								cLabel,
 								uTargetNode);
 						SetContainerStatus(uContainer,uINITSETUP);
 						if(uGroup)
@@ -1506,8 +1514,12 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: This record was modified. Reload it!");
 
                         	guMode=7001;
+				if(uSource)
+					tContainer("<blink>Error</blink>: No clones of clones yet!");
 				if(!uWizIPv4)
 					tContainer("<blink>Error</blink>: You must select an IP!");
+				if(!uOSTemplate || !uConfig || !uNameserver || !uSearchdomain || !uDatacenter )
+					tContainer("<blink>Error</blink>: Problem with missing source container settings!");
 				if(uTargetNode==0)
 					tContainer("<blink>Error</blink>: Please select a valid target node!");
 				if(uTargetNode==uNode)
@@ -1540,6 +1552,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					uNameserver,
 					uSearchdomain,
 					uDatacenter,
+					uOwner,
+					cLabel,
 					uTargetNode);
 
 				//Set group of clone to group of source.
@@ -2865,23 +2879,27 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 		if(guPermLevel>9 && uNode==0)
 		{
 			printf("<input title='Cancels job(s) for container(s) waiting for activation, deletion or stop.'"
-			" type=submit class=largeButton"
-			" name=gcCommand value='Group Cancel'>\n");
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Cancel'>\n");
 			printf("<br><input title='Creates job(s) for starting stopped or initial setup container(s).'"
-			" type=submit class=largeButton"
-			" name=gcCommand value='Group Start'>\n");
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Start'>\n");
 			printf("<br><input title='Creates job(s) for deleting initial setup container(s).'"
-			" type=submit class=largeButton"
-			" name=gcCommand value='Group Delete'>\n");
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Delete'>\n");
+			printf("<p><input title='Creates job(s) for cloning active or stopped container(s) that"
+				" are not clones themselves.'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Clone'>\n");
 			printf("<p><input title='Creates job(s) for stopping active container(s).'"
-			" type=submit class=lwarnButton"
-			" name=gcCommand value='Group Stop'>\n");
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Stop'>\n");
 			printf("<p><input title='Creates job(s) for switching over cloned container(s).'"
-			" type=submit class=lwarnButton"
-			" name=gcCommand value='Group Switchover'>\n");
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Switchover'>\n");
 			printf("<p><input title='Creates job(s) for destroying active or stopped container(s).'"
-			" type=submit class=lwarnButton"
-			" name=gcCommand value='Group Destroy'>\n");
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Destroy'>\n");
 		}
 
 	}
@@ -4163,6 +4181,8 @@ unsigned CommonCloneContainer(
 		unsigned uNameserver,
 		unsigned uSearchdomain,
 		unsigned uDatacenter,
+		unsigned uOwner,
+		const char *cLabel,
 		unsigned uTargetNode)
 {	
 	MYSQL_RES *res;
@@ -4219,7 +4239,12 @@ unsigned CommonCloneContainer(
 
 	if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus))
 	{
-		sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+		if(guCompany==1)
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+				" WHERE uIP=%u AND uAvailable=1",
+					uWizIPv4);
+		else
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 				" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",
 					uWizIPv4,uOwner);
 		mysql_query(&gMysql,gcQuery);
