@@ -2010,6 +2010,22 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//1a-. Need an md5sum file created. TODO
+	if(!cSnapshotDir[0])
+		sprintf(gcQuery,"/usr/bin/md5sum /vz/dump/vzdump-%u.tgz > /vz/dump/vzdump-%u.tgz.md5sum",
+				uContainer,uContainer);
+	else
+		//Some trickery to get the right file listed in the md5sum file
+		sprintf(gcQuery,"ln -s %s/vzdump-%u.tgz /vz/dump/vzdump-%u.tgz;"
+				" /usr/bin/md5sum /vz/dump/vzdump-%u.tgz > %s/vzdump-%u.tgz.md5sum;"
+				" rm -f /vz/dump/vzdump-%u.tgz",
+				cSnapshotDir,uContainer,uContainer,uContainer,cSnapshotDir,uContainer,uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("CloneContainer",gcQuery);
+		tJobErrorUpdate(uJob,"error 1a");
+		goto CommonExit;
+	}
+
 
 	//2-.
 	if(uNotValidSystemCallArg(cTargetNodeIPv4))
@@ -2031,11 +2047,34 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//2a-. Need md5sum file moved to target. TODO
+	if(!cSnapshotDir[0])
+		sprintf(gcQuery,"/usr/bin/scp %s /vz/dump/vzdump-%u.tgz.md5sum %s:/vz/dump/vzdump-%u.tgz.md5sum",
+				cSCPOptions,uContainer,cTargetNodeIPv4,uContainer);
+	else
+		sprintf(gcQuery,"/usr/bin/scp %s %s/vzdump-%u.tgz.md5sum %s:/vz/dump/vzdump-%u.tgz.md5sum",
+				cSCPOptions,cSnapshotDir,uContainer,cTargetNodeIPv4,uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("CloneContainer",gcQuery);
+		tJobErrorUpdate(uJob,"error 2a");
+		goto CommonExit;
+	}
+
 	//2b-. Need an md5sum check. TODO
+	sprintf(gcQuery,"ssh %s %s '/usr/bin/md5sum -c /vz/dump/vzdump-%u.tgz.md5sum'",
+				cSSHOptions,cTargetNodeIPv4,uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("CloneContainer",gcQuery);
+		tJobErrorUpdate(uJob,"error 2b");
+		goto CommonExit;
+	}
 
 	//3-.
 	sprintf(gcQuery,"ssh %s %s '/usr/sbin/vzdump --compress --restore /vz/dump/vzdump-%u.tgz %u'",
 				cSSHOptions,cTargetNodeIPv4,uContainer,uNewVeid);
+	//debug only
+	//logfileLine("CloneContainer",gcQuery);
 	if(system(gcQuery))
 	{
 		//We need to check the error number and if like this error (that maybe be related to cascading cloning
@@ -2058,6 +2097,8 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --hostname %s --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cHostname);
+	//debug only
+	//logfileLine("CloneContainer",gcQuery);
 	if(system(gcQuery))
 	{
 		logfileLine("CloneContainer",gcQuery);
@@ -2068,6 +2109,8 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//4b-.
 	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --name %s --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cName);
+	//debug only
+	//logfileLine("CloneContainer",gcQuery);
 	if(system(gcQuery))
 	{
 		logfileLine("CloneContainer",gcQuery);
@@ -2095,6 +2138,8 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//4d-.
 	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipadd %s --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cNewIP);
+	//debug only
+	//logfileLine("CloneContainer",gcQuery);
 	if(system(gcQuery))
 	{
 		logfileLine("CloneContainer",gcQuery);
@@ -2155,7 +2200,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		SetContainerStatus(uContainer,uPrevStatus);
 	tJobDoneUpdate(uJob);
 
-	//9a-. local
+	//9a-. local clean up
 	if(!cSnapshotDir[0])
 		sprintf(gcQuery,"rm /vz/dump/vzdump-%u.tgz",uContainer);
 	else
@@ -2163,8 +2208,11 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(system(gcQuery))
 		logfileLine("CloneContainer",gcQuery);
 	
-	//9b-. remote
+	//9b-. remote clean up
 	sprintf(gcQuery,"ssh %s %s 'rm /vz/dump/vzdump-%u.tgz'",cSSHOptions,cTargetNodeIPv4,uContainer);
+	if(system(gcQuery))
+		logfileLine("CloneContainer",gcQuery);
+	sprintf(gcQuery,"ssh %s %s 'rm /vz/dump/vzdump-%u.tgz.md5sum'",cSSHOptions,cTargetNodeIPv4,uContainer);
 	if(system(gcQuery))
 		logfileLine("CloneContainer",gcQuery);
 
