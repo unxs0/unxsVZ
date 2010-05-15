@@ -1805,7 +1805,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	unsigned uNewVeid=0;
 	unsigned uCloneStop=0;
 	unsigned uStatus=0;
-	unsigned uPrevStatus=uACTIVE;
+	unsigned uPrevStatus=0;
 	unsigned uTargetNode=0;
 	char cSourceContainerIP[32]={""};
 	char cNewIP[32]={""};
@@ -1819,7 +1819,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		//Keep job status running...hopefully someone will notice.
 		return;
 	}
-	if(!(uStatus==uACTIVE || uStatus==uSTOPPED))
+	if(!(uStatus==uACTIVE || uStatus==uSTOPPED || uStatus==uAWAITCLONE))
 	{
 		sprintf(gcQuery,"UPDATE tJob SET uJobStatus=1,cRemoteMsg='Waiting for source container',uModBy=1,"
 				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uJob);
@@ -1862,6 +1862,12 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%u;",&uCloneStop);
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%*u;\nuPrevStatus=%u;",&uPrevStatus);
+	if(!uPrevStatus)
+	{
+		logfileLine("CloneContainer","Could not determine uPrevStatus");
+		tJobErrorUpdate(uJob,"uPrevStatus==0");
+		goto CommonExit;
+	}
 
 	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.cHostname,tContainer.cLabel FROM tIP,tContainer"
 				" WHERE tIP.uIP=tContainer.uIPv4"
