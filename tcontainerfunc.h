@@ -56,6 +56,7 @@ unsigned CommonCloneContainer(
 		const char *cLabel,
 		unsigned uNode,
 		unsigned uStatus,
+		const char *cHostname,
 		unsigned uTargetNode);
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
@@ -457,6 +458,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 										sContainer.cLabel,
 										sContainer.uNode,
 										sContainer.uStatus,
+										sContainer.cHostname,
 										uTargetNode);
 								//Now that container exists we can assign group.
 								if(!uNewVeid)
@@ -1025,6 +1027,7 @@ void ExttContainerCommands(pentry entries[], int x)
 										cLabel,
 										uNode,
 										uStatus,
+										cHostname,
 										uTargetNode);
 							SetContainerStatus(uContainer,uINITSETUP);
 							if(uGroup)
@@ -1127,6 +1130,7 @@ void ExttContainerCommands(pentry entries[], int x)
 								cLabel,
 								uNode,
 								uStatus,
+								cHostname,
 								uTargetNode);
 						SetContainerStatus(uContainer,uINITSETUP);
 						if(uGroup)
@@ -1564,6 +1568,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					cLabel,
 					uNode,
 					uStatus,
+					cHostname,
 					uTargetNode);
 
 				//Set group of clone to group of source.
@@ -4195,6 +4200,7 @@ unsigned CommonCloneContainer(
 		const char *cLabel,
 		unsigned uNode,
 		unsigned uStatus,
+		const char *cHostname,
 		unsigned uTargetNode)
 {	
 	MYSQL_RES *res;
