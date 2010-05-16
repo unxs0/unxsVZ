@@ -24,6 +24,7 @@ unsigned uGetZoneNameServer(char *cZone);
 //zone.c
 void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 	const unsigned uCustId,const unsigned uNameServer,const unsigned uCreatedBy,const char *cComment);
+char *cGetViewLabel(void);
 //resource.c
 void UpdateSerialNum(char *cZone);
 
@@ -104,8 +105,10 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 		{
 			struct t_template template;
 			char cuZone[16]={""};
+			char cZone[256]={""};
 
 			sprintf(cuZone,"%u",guZone);
+			sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
 
 			template.cpName[0]="cTitle";
 			template.cpValue[0]=cTitle;
@@ -137,7 +140,13 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 			template.cpName[9]="gcMessage";
 			template.cpValue[9]=gcMessage;
 
-			template.cpName[10]="";
+			template.cpName[10]="cZone";
+			template.cpValue[10]=cZone;
+
+			template.cpName[11]="cZoneView";
+			template.cpValue[11]=cGetViewLabel();
+
+			template.cpName[12]="";
 
 			printf("\n<!-- Start htmlBulkOpPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);

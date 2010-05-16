@@ -141,3 +141,24 @@ clean:
 install: iDNS.cgi
 	install -m 510 -g apache -s iDNS.cgi /var/www/unxs/cgi-bin/iDNS.cgi
 	rm iDNS.cgi
+
+#
+#This is a special section for developers with a local MySQL idns database with valid data only
+#
+
+MakeTemplateData: data/tTemplate-vdnsOrg.sql data/tTemplate-idnsAdmin.sql data/tTemplate-idnsOrg.sql
+
+data/tTemplate-vdnsOrg.sql: interfaces/vorg/templates/DelegationTool.Body interfaces/vorg/templates/Footer interfaces/vorg/templates/Header interfaces/vorg/templates/InputParam2 interfaces/vorg/templates/InputParam3 interfaces/vorg/templates/InputParam4 interfaces/vorg/templates/OrgBulkOp.Body interfaces/vorg/templates/OrgGlossary.Body interfaces/vorg/templates/Resource.Body interfaces/vorg/templates/ResourceWizard.1 interfaces/vorg/templates/ResourceWizard.2 interfaces/vorg/templates/ResourceWizard.3 interfaces/vorg/templates/VZone.Body interfaces/vorg/templates/ZLogin.Body 
+	cd interfaces/vorg; ./importTemplates.sh > /dev/null;
+	cd ../../;
+	mysqldump --compact --no-create-info --where="uTemplateType=3" -p idns tTemplate > data/tTemplate-vdnsOrg.sql
+
+data/tTemplate-idnsAdmin.sql: interfaces/admin/templates/ActTableRowContact interfaces/admin/templates/ActTableRowLabelAdmin interfaces/admin/templates/ActTableRowLabelContact interfaces/admin/templates/Admin.Resource.Body interfaces/admin/templates/Admin.ResourceWizard.1 interfaces/admin/templates/Admin.ResourceWizard.2 interfaces/admin/templates/Admin.ResourceWizard.3 interfaces/admin/templates/Admin.Zone.Body interfaces/admin/templates/AdminBulkOp.Body interfaces/admin/templates/AdminLogin.Body interfaces/admin/templates/AdminUser.Body interfaces/admin/templates/AdminUserWizard.1 interfaces/admin/templates/AdminUserWizard.2 interfaces/admin/templates/AdminUserWizard.3 interfaces/admin/templates/Customer.Body interfaces/admin/templates/CustomerUser.Body interfaces/admin/templates/CustomerUserWizard.1 interfaces/admin/templates/CustomerUserWizard.2 interfaces/admin/templates/CustomerUserWizard.3 interfaces/admin/templates/CustomerUserWizard.4 interfaces/admin/templates/CustomerWizard.1 interfaces/admin/templates/CustomerWizard.2 interfaces/admin/templates/CustomerWizard.3 interfaces/admin/templates/CustomerWizard.4 interfaces/admin/templates/DashBoard.Body interfaces/admin/templates/DelegationTool.Body interfaces/admin/templates/Footer interfaces/admin/templates/Glossary.Body interfaces/admin/templates/Header interfaces/admin/templates/IPAuth.Body interfaces/admin/templates/IPAuthDetails.Body interfaces/admin/templates/IPAuthReport.Body interfaces/admin/templates/InputParam2 interfaces/admin/templates/InputParam3 interfaces/admin/templates/InputParam4 interfaces/admin/templates/LastWWActTableFooter interfaces/admin/templates/LastWWActTableTop interfaces/admin/templates/Report.Body interfaces/admin/templates/ReportFocus.Body interfaces/admin/templates/ReportHitsTop20.Footer interfaces/admin/templates/ReportHitsTop20.Header interfaces/admin/templates/ReportHitsTop20.Row interfaces/admin/templates/ReportOverallChanges interfaces/admin/templates/ReportRightPanel interfaces/admin/templates/RestoreResource.Body interfaces/admin/templates/RestoreZone.Body
+	cd interfaces/admin; ./importTemplates.sh > /dev/null;
+	cd ../../;
+	mysqldump --compact --no-create-info --where="uTemplateType=2" -p idns tTemplate > data/tTemplate-idnsAdmin.sql
+
+data/tTemplate-idnsOrg.sql: interfaces/org/templates/Footer interfaces/org/templates/Header interfaces/org/templates/InputParam2 interfaces/org/templates/InputParam3 interfaces/org/templates/InputParam4 interfaces/org/templates/Login.Body interfaces/org/templates/OrgBulkOp.Body interfaces/org/templates/OrgGlossary.Body interfaces/org/templates/Resource.Body interfaces/org/templates/ResourceWizard.1 interfaces/org/templates/ResourceWizard.2 interfaces/org/templates/ResourceWizard.3 interfaces/org/templates/Zone.Body
+	cd interfaces/org; ./importTemplates.sh > /dev/null;
+	cd ../../;
+	mysqldump --compact --no-create-info --where="uTemplateType=1" -p idns tTemplate > data/tTemplate-idnsOrg.sql
