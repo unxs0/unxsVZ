@@ -28,19 +28,19 @@ zone.o: zone.c interface.h ../../local.h ../../mysqlrad.h
 resource.o: resource.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c resource.c -o resource.o $(CFLAGS) 
 
-glossary.o : glossary.c interface.h ../../local.h ../../mysqlrad.h
+glossary.o: glossary.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c glossary.c -o glossary.o $(CFLAGS)
 
-bulkop.o : bulkop.c interface.h ../../local.h ../../mysqlrad.h
+bulkop.o: bulkop.c interface.h ../../local.h ../../mysqlrad.h
 	cc -o bulkop.o -c bulkop.c $(CFLAGS)
 
-ldap.o : ldap.c  interface.h ../../local.h ../../mysqlrad.h
+ldap.o: ldap.c  interface.h ../../local.h ../../mysqlrad.h
 	cc -o ldap.o -c ldap.c $(CFLAGS)
 
-mysqlconnect.o : mysqlconnect.c  ../../local.h interface.h
+mysqlconnect.o: mysqlconnect.c  ../../local.h interface.h
 	cc -o mysqlconnect.o -c mysqlconnect.c $(CFLAGS)
 
-cgi.o : ../../cgi.c  ../../cgi.h
+cgi.o: ../../cgi.c  ../../cgi.h
 	cc -o ../../cgi.o -c ../../cgi.c $(CFLAGS)
 
 clean:
@@ -49,4 +49,3 @@ clean:
 install: interface.cgi
 	install -m 510 -g apache -s interface.cgi /var/www/unxs/cgi-bin/$(CGINAME)
 	rm -f interface.cgi
-

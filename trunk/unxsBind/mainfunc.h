@@ -1838,8 +1838,8 @@ void UpdateTables(void)
 	if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&uMax);
        	mysql_free_result(res);
-	//We are assuming that rpm update user if she does not vdnsOrg templates that 
-	//means the she also needs all the rest updated.
+	//We are assuming that for an rpm update user, if user does not have vdnsOrg templates, that this 
+	//means the user needs all the other template tables updated also.
 	//Any old template will still exist but will not have a type and probably not a set either
 	//unless they modified them themselves.
 	if(uMax<TEMPLATETYPE_VDNSORG)

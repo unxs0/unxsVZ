@@ -250,7 +250,7 @@
 <table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-    <td class="hdrtout padlt8"><h6 class="modhdr">{{cZone}} Resource Records</td>
+    <td class="hdrtout padlt8"><h6 class="modhdr">{{cZone}} {{cZoneView}} Resource Records</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
   <tr>

@@ -382,7 +382,6 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 
 			template.cpName[31]="cParam1Style";
 			template.cpValue[31]=cParam1Style;			 						 
-			
 			template.cpName[32]="cZone";
 			template.cpValue[32]=cZone;
 
@@ -728,6 +727,7 @@ unsigned SelectRRType(char *cRRType)
 	return(uRRType);
 	
 }//unsigned SelectRRType(char *cRRType)
+
 
 unsigned uRRExists(char *cZone,char *cRRType,char *cValue,char *cParam)
 {
