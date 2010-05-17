@@ -236,6 +236,10 @@ unsigned uCheckMountSettings(unsigned uMountTemplate)
 void ExtProcesstContainerVars(pentry entries[], int x)
 {
 	register int i;
+	unsigned uOnlyOnce=1;
+	char cConfBuffer[256]={""};
+	char cAutoCloneIPClass[256]={""};
+
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(entries[i].name,"cSearch"))
@@ -370,7 +374,9 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 						if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
-							char cConfBuffer[256]={""};
+							//For complete clone run, these stay constant.
+							if(uOnlyOnce)
+							{
 
 							//We can only fo this if tConfiguration has been setup
 							//with datacenter wide cAutoCloneNode=node1,cAutoCloneSyncTime=600
@@ -383,9 +389,15 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							GetConfiguration("cAutoCloneSyncTime",cConfBuffer,uDatacenter,0,0,0);
 							if(cConfBuffer[0])
 								sscanf(cConfBuffer,"%u",&uSyncPeriod);
+							GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,
+								0,0,0);
+
+								uOnlyOnce=0;
+
+							}
 							//Basic conditions
 							//We do not allow clones of clones yet.
-							if(uTargetNode && !sContainer.uSource)
+							if(uTargetNode && !sContainer.uSource && cAutoCloneIPClass[0])
 							{
 								char cTargetNodeIPv4[256]={""};
 								unsigned uNewVeid=0;
@@ -396,11 +408,12 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 								uWizIPv4=0;
 								if(guCompany==1)
 									sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-											" uAvailable=1 LIMIT 1");
+									" uAvailable=1 AND cLabel LIKE '%s.%%' LIMIT 1",
+										cAutoCloneIPClass);
 								else
 									sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-										" uAvailable=1 AND uOwner=%u LIMIT 1",
-											guCompany);
+										" uAvailable=1 AND cLabel LIKE '%s.%%' AND"
+									" uOwner=%u LIMIT 1",cAutoCloneIPClass,guCompany);
 								mysql_query(&gMysql,gcQuery);
 								if(mysql_errno(&gMysql))
 									htmlPlainTextError(mysql_error(&gMysql));
