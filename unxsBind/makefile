@@ -146,7 +146,7 @@ install: iDNS.cgi
 #This is a special section for developers with a local MySQL idns database with valid data only
 #
 
-MakeTemplateData: data/tTemplate-vdnsOrg.sql data/tTemplate-idnsAdmin.sql data/tTemplate-idnsOrg.sql
+TemplateData: data/tTemplate-vdnsOrg.sql data/tTemplate-idnsAdmin.sql data/tTemplate-idnsOrg.sql
 
 data/tTemplate-vdnsOrg.sql: interfaces/vorg/templates/DelegationTool.Body interfaces/vorg/templates/Footer interfaces/vorg/templates/Header interfaces/vorg/templates/InputParam2 interfaces/vorg/templates/InputParam3 interfaces/vorg/templates/InputParam4 interfaces/vorg/templates/OrgBulkOp.Body interfaces/vorg/templates/OrgGlossary.Body interfaces/vorg/templates/Resource.Body interfaces/vorg/templates/ResourceWizard.1 interfaces/vorg/templates/ResourceWizard.2 interfaces/vorg/templates/ResourceWizard.3 interfaces/vorg/templates/VZone.Body interfaces/vorg/templates/ZLogin.Body 
 	cd interfaces/vorg; ./importTemplates.sh > /dev/null;

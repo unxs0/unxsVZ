@@ -18,10 +18,10 @@
 				<table width="100%" border="0" cellpadding="0" cellspacing="0">
 					<tr>
 						<td class="wpsSelectedPlace" nowrap height="100%">
-						<a title='Zone management' class="wpsSelectedPlaceLink" href='vdnsOrg.cgi?gcPage=Zone&cZone={{cZone}}'><b class ="font10pt">Zone</b></a>
+						<a title='Zone management' class="wpsSelectedPlaceLink" href='vdnsOrg.cgi?gcPage=Zone&uZone={{uZone}}'><b class ="font10pt">Zone</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Zone resource record management' class="wpsUnSelectedPlaceLink" href='vdnsOrg.cgi?gcPage=Resource&cZone={{cZone}}'><b class ="font10pt">Resources</b></a>
+						<a title='Zone resource record management' class="wpsUnSelectedPlaceLink" href='vdnsOrg.cgi?gcPage=Resource&uZone={{uZone}}'><b class ="font10pt">Resources</b></a>
 						</td>
 					</tr>
 				</table>
@@ -49,13 +49,13 @@
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
     <td class="hdrtout padlt8" width="33%">
-		<h6 class="modhdr">Customer Resource Panel</h6>
+		<h6 class="modhdr">Rev DNS NS Delegation Tool</h6>
 	</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td width="10"> </td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
-		<h6 class="modhdr">{{cZone}} Delegation Tool </h6>
+		<h6 class="modhdr">{{cZone}} {{cZoneView}} Delegation Tool </h6>
 	</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
@@ -70,62 +70,22 @@
 		  <td> </td>
 		  <td> </td>
 		</tr>
-		<tr>
-			<td width=33%>
-				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Your Zones')"><strong>Your Zones</strong></a></td>
-			</td>
-			<td>
-				<script language="JavaScript" type="text/JavaScript">
-				function changePage(newLoc)
-				{
-					nextPage = newLoc.options[newLoc.selectedIndex].value
-				
-					if (nextPage != "---")
-						document.location.href = "vdnsOrg.cgi?gcPage=Zone&cZone="+nextPage
-				}
-				</script>
-				{{funcSelectZone}}
-			</td>
-		</tr>
-		<tr>
-			<td valign=top>				
-				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Your IP Blocks')"><strong>Your IP Blocks</strong></a></td>
-			</td>
-			<td>
-				{{funcSelectBlock}}
-			</td>
-		</tr>
-		<tr>
-			<td valign=top>			
-				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Your Secondary Zones')"><strong>Your Secondary Zones</strong></a></td>
-			</td>
-			<td>
-				{{funcSelectSecondary}}
-			</td>
-		</tr>
+
 		<tr>
 			<td colspan=2>
-				<input type=hidden name=gcPage value=Zone>
-				<input type=submit title='Select a zone to edit. Not needed if you have javascript enabled in your browser' class=largeButton name=gcFunction value='Select Zone'><br><br>
-				<strong><u>Delegation Tool</u></strong><br>
-				This tool allow you to delegate an IP block to the nameserver(s) specified in the 'NS List' textarea. Please note that no empty lines are allowed between nameservers.<br>
+			<input type=hidden name=gcPage value=Zone>
+			<input type=hidden name=uZone value={{uZone}}>
+			<input type=hidden name=cZone value={{cZone}}>
+			<input type=hidden name=uNameServer value={{uNameServer}}>
+			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Delegation Tool')">
+				<strong>Delegation Tool</strong></a>
+				<p>
+				This tool allows you to delegate an IP block to the nameserver(s) specified in the 'NS List' text area. Please note that no empty lines are allowed between nameservers.<br>
 				In the 'IP Block' parameter you must specify an IPv4 block in CIDR format (E.g.: '192.168.10.0/24') or in dash format IP range (E.g.: '192.168.10.1-255'.)
-				The TTL parameter specifies the TTL value for the delegation records, if not specified, the zone default TTL wil be used.
+				The TTL parameter specifies the TTL value for the delegation records, if not specified, the zone's default TTL wil be used.
 			</td>
 		</tr>
-		<tr>
-			<td colspan=2>
-			{{funcZoneStatus}}
-			</td>
-		</tr>
-		<tr>
-			<td colspan=2>
-			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Zone Pending Jobs')"><strong>Zone Pending Jobs</strong></a><br>
-			{{cPendingJobs}}
-			</td>
-		</tr>
-			
-	</table>
+</table>
 	
 	
 	
@@ -207,7 +167,7 @@
 <table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
   <tr>
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-    <td class="hdrtout padlt8"><h6 class="modhdr">{{cZone}} Resource Records</td>
+    <td class="hdrtout padlt8"><h6 class="modhdr">{{cZone}} {{cZoneView}} Resource Records</td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
   <tr>

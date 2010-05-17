@@ -500,7 +500,7 @@ void ZoneCommands(pentry entries[], int x)
 void htmlZone(void)
 {
 	htmlHeader("vdnsOrg","Header");
-	htmlZonePage("vndOrg","VZone.Body");
+	htmlZonePage("vdnsOrg","VZone.Body");
 	htmlFooter("Footer");
 
 }//void htmlZone(void)
@@ -551,6 +551,9 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[7]=gcModStep;
 
 			template.cpName[8]="uZone";
+			//This is required for hacked on delegation tool.
+			if(guZone && (!cuZone[0] || cuZone[0]=='0'))
+				sprintf(cuZone,"%u",guZone);
 			template.cpValue[8]=cuZone;
 
 			template.cpName[9]="gcMessage";
@@ -1800,7 +1803,7 @@ void funcNSSetMembers(FILE *fp)
 
 void htmlDelegationTool(void)
 {
-	htmlHeader("vndsOrg","Header");
+	htmlHeader("vdnsOrg","Header");
 	htmlZonePage("vdnsOrg","DelegationTool.Body");
 	htmlFooter("Footer");
 	
