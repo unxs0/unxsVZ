@@ -79,10 +79,10 @@ void ExttIPCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstIPVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy) && uAvailable)
+			if((uAllowDel(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
 			{
 	                        guMode=0;
-				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=0 AND uIP=%u",uIP);
+				sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uIP);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -99,7 +99,7 @@ void ExttIPCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstIPVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy) && uAvailable)
+			if((uAllowDel(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
 			{
 				guMode=5;
 				if(cIPRange[0])
@@ -109,7 +109,7 @@ void ExttIPCommands(pentry entries[], int x)
 				}
 				else
 				{
-					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=0 AND uIP=%u",uIP);
+					sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uIP);
         				mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -127,11 +127,10 @@ void ExttIPCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstIPVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if((uAllowMod(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
 			{
 	                        guMode=0;
-				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=0 AND uIP=%u ORDER BY cLabel",
-						uIP);
+				sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uIP);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -148,11 +147,10 @@ void ExttIPCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstIPVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if((uAllowMod(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
 			{
                         	guMode=2002;
-				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=0 AND uIP=%u ORDER BY cLabel",
-						uIP);
+				sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uIP);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -321,10 +319,10 @@ void ExttIPNavBar(void)
 	if(guPermLevel>=10 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(uAllowMod(uOwner,uCreatedBy) && uAvailable)
+	if((uAllowMod(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
 		printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy) && uAvailable)
+	if((uAllowMod(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
