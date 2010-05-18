@@ -285,15 +285,16 @@ void ProcessJobQueue(unsigned uDebug)
 		logfileLine("ProcessJobQueue","sysinfo() failed");
 		exit(1);
 	}
-
-#define JOBQUEUE_MAXLOAD 400000 //This is equivalent to uptime 40
-	if(structSysinfo.loads[0]>JOBQUEUE_MAXLOAD)
+#define LINUX_SYSINFO_LOADS_SCALE 65536
+#define JOBQUEUE_MAXLOAD 20 //This is equivalent to uptime 20.00 last 1 min avg load
+	if(structSysinfo.loads[0]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
 	{
 		logfileLine("ProcessJobQueue","structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD");
 		exit(1);
 	}
 	//debug only
-	//printf("structSysinfo.loads[0]/10000=%lu\n",structSysinfo.loads[0]/10000);
+	//printf("structSysinfo.loads[0]/65536.0=%2.2f\n",(float)structSysinfo.loads[0]/(float)LINUX_SYSINFO_LOADS_SCALE);
+	//exit(0);
 
 	TextConnectDb();//Uses login data from local.h
 	guLoginClient=1;//Root user

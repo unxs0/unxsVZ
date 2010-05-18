@@ -75,8 +75,9 @@ int main(int iArgc, char *cArgv[])
 		logfileLine("main","sysinfo() failed",0);
 		exit(1);
 	}
-#define JOBQUEUE_MAXLOAD 40000 //This is equivalent to uptime 40
-	if(structSysinfo.loads[0]>JOBQUEUE_MAXLOAD)
+#define LINUX_SYSINFO_LOADS_SCALE 65536
+#define JOBQUEUE_MAXLOAD 20 //This is equivalent to uptime 20.00 last 1 min avg load
+	if(structSysinfo.loads[0]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
 	{
 		logfileLine("main","structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD",0);
 		exit(1);
