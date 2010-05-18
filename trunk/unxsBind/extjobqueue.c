@@ -3,7 +3,8 @@ FILE
 	extjobqueue.c
 	$Id$
 AUTHOR
-	(C) Gary Wallis and Hugo Urquiza 2001-2010 for Unixservice, LLC.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010 Gary Wallis for Unixservice, LLC.
 	GPL License applies. See LICENSE file.
 PURPOSE
 	GUI independent code:
@@ -364,7 +365,8 @@ int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsign
 		return(0);
 	}
 
-	sprintf(gcQuery,"select uJobStatus=%u,(max(uJobStatus)=min(uJobStatus)),cJobName FROM tJob WHERE uJobGroup=%u GROUP BY uJobGroup",mysqlISP_Deployed,uJobGroup);
+	sprintf(gcQuery,"SELECT uJobStatus=%u,(MAX(uJobStatus)=MIN(uJobStatus)),cJobName FROM tJob WHERE uJobGroup=%u"
+			" GROUP BY uJobGroup",mysqlISP_Deployed,uJobGroup);
 
 	mysql_query(&gMysql2,gcQuery);
 	if(mysql_errno(&gMysql2))
@@ -489,7 +491,7 @@ unsigned uGetClientOwner(unsigned uClient)
 	MYSQL_ROW field;
 	unsigned uRet=0;
 	
-	sprintf(gcQuery,"SELECT uOwner FROM "TCLIENT"  WHERE uClient=%u",uClient);
+	sprintf(gcQuery,"SELECT uOwner FROM "TCLIENT" WHERE uClient=%u",uClient);
 	printf("uGetClientOwner:%s\n",gcQuery);
 
 	mysql_query(&gMysql,gcQuery);
