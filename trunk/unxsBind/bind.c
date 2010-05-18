@@ -68,7 +68,7 @@ unsigned ViewReloadZone(char *cZone);//local
 int AddNewArpaZone(char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);//tzonefunc.h
 int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);
 void UpdateSerialNum(unsigned uZone);//
-void ExtConnectDb(unsigned uHtml);//extjobqueue.c
+unsigned TextConnectDb(void);//mysqlconnect.c
 int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus);//extjobqueue.c
 
 
@@ -854,72 +854,6 @@ void ExportTable(char *cTable, char *cFile)
 }//void ExportTable(char *cTable, char *cFile)
 
 
-void ConnectMysqlServer(void)
-{
-	static unsigned uOnlyOnce=0;
-#ifdef USECONF
-	unsigned ucDbPort=guDbPort;
-	char *cEffectiveDbIp=gcEffectiveDbIp;
-	char *cEffectiveDbSocket=gcEffectiveDbSocket;
-	char cDbIp[256];
-	char cDbName[256];
-	char cDbPwd[256];
-	char cDbLogin[256];
-	char cDbPort[256];
-	char cDbSocket[256];
-
-	//safe via sprintf in conf reader
-	strcpy(cDbName,gcDbName);
-	strcpy(cDbPwd,gcDbPasswd);
-	strcpy(cDbLogin,gcDbLogin);
-	strcpy(cDbIp,gcDbIp);
-	strcpy(cDbSocket,gcDbSocket);
-#else
-	//Provide some fall back if nothing in tConfiguration
-	char cDbIp[256]={""};
-	char *cEffectiveDbIp=DBIP0;
-	char cDbName[256]={DBNAME};
-	char cDbPwd[256]={DBPASSWD};
-	char cDbLogin[256]={DBLOGIN};
-	char cDbPort[256]={""};
-	unsigned ucDbPort=DBPORT;
-	char cDbSocket[256]={""};
-	char *cEffectiveDbSocket=DBSOCKET;
-#endif
-
-	if(uOnlyOnce) return;
-	uOnlyOnce=1;
-
-	//NOTE difference. Change? TODO
-	//Read dbip,dbname (same as mySQL user name), and sourceip (passwd).	
-	ConnectDb();
-
-	GetConfiguration("cRemoteDbIp",cDbIp,0);
-	GetConfiguration("cRemoteDbName",cDbName,0);
-	GetConfiguration("cRemoteDbPwd",cDbPwd,0);
-	GetConfiguration("cRemoteDbLogin",cDbLogin,0);
-	GetConfiguration("cRemoteDbPort",cDbPort,0);
-	GetConfiguration("cRemoteDbSocket",cDbSocket,0);
-
-	//Debug only	
-	//fprintf(stdout,"%s %s %s %s\n",cDbIp,cDbName,cDbPwd,cDbLogin);
-
-	if(cDbIp[0]) cEffectiveDbIp=cDbIp;
-	if(cDbSocket[0]) cEffectiveDbSocket=cDbSocket;
-	if(cDbPort[0]) sscanf(cDbPort,"%u",&ucDbPort);
-
-        mysql_init(&gMysql2);
-	if (!mysql_real_connect(&gMysql2,cEffectiveDbIp,cDbLogin,cDbPwd
-				,cDbName,ucDbPort,cEffectiveDbSocket,0))
-        {
-		fprintf(stderr,"ConnectMysqlServer failed for %s.%s",
-						cEffectiveDbIp,cDbName);
-		exit(1);
-        }
-
-}//void ConnectMysqlServer(void)
-
-
 void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 {
 	MYSQL_RES *res;
@@ -942,10 +876,8 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 	gLfp=stdout;
 #endif
 	
-	ConnectDb();
-
-
-	ConnectDb();
+	if(TextConnectDb())
+		exit(0);
 	
 	sprintf(gcQuery,"SELECT uJob,cJob,cZone,uMasterJob FROM tJob WHERE cTargetServer='%s SLAVE'"
 			" AND uTime<=UNIX_TIMESTAMP(NOW()) ORDER BY cZone,uJob",cNameServer);
@@ -1123,7 +1055,8 @@ void MasterJobQueue(char *cNameServer)
 	gLfp=stdout;
 #endif
 	
-	ConnectDb();
+	if(TextConnectDb())
+		exit(0);
 
 	GetConfiguration("cuControlPort",cuControlPort,0);
 
@@ -1184,7 +1117,7 @@ void MasterJobQueue(char *cNameServer)
 				char cMsg[33];
 				unsigned uExtJob=0;
 
-				ExtConnectDb(0);
+				TextConnectExtDb(&gMysql2,0);//uMode==0 unxsISP
 				sprintf(cMsg,"iDNS.%.20s",field[1]);
 				sscanf(cp+5,"%u",&uExtJob);
 				InformExtJob(cMsg,cNameServer,
@@ -1741,7 +1674,8 @@ void ServerJobQueue(char *cServer)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	
-	ConnectDb();
+	if(TextConnectDb())
+		exit(0);
 
 	//debug only
 	fprintf(stdout,"ServerJobQueue(%s)\n",cServer);

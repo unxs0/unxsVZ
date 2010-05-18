@@ -47,7 +47,7 @@ SAMPLE-INPUT
 
 MYSQL gMysql;
 
-void TextConnectDb(void);
+unsigned TextConnectDb(void);
 
 int main(int iArgc, char *cArgv[])
 {
@@ -106,7 +106,8 @@ int main(int iArgc, char *cArgv[])
 		if(iArgc==4 && !strcmp(cArgv[2],"--cZone"))
 			sprintf(cZone,"%.100s",cArgv[3]);
 
-		TextConnectDb();
+		if(TextConnectDb())
+			exit(1);
 
 		sprintf(cQuery,"SELECT SUM(uHitCount),SUM(uSuccess),SUM(uReferral),SUM(uNxrrset),"
 				"SUM(uNxdomain),SUM(uRecursion),SUM(uFailure)"
@@ -210,7 +211,8 @@ int main(int iArgc, char *cArgv[])
 	}
 
 
-	TextConnectDb();
+	if(TextConnectDb())
+		exit(1);
 
 	//printf("%s started and mysql_init() and connect() ran ok.\n",cArgv[0]);
 

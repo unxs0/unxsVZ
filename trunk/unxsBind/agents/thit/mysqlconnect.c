@@ -23,10 +23,10 @@ NOTES
 #define SELECT_TIMEOUT_USEC 100
 
 //TOC protos
-void TextConnectDb(void);
+unsigned TextConnectDb(void);
 
 
-void TextConnectDb(void)
+unsigned TextConnectDb(void)
 {
 	//Handle quick cases first
 	//Port is irrelevant here. Make it clear.
@@ -34,12 +34,12 @@ void TextConnectDb(void)
 	if(DBIP0==NULL)
 	{
 		if (mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
-			return;
+			return(0);
 	}
 	if(DBIP1==NULL)
 	{
 		if (mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
-			return;
+			return(0);
 	}
 
 	//Now we can use AF_INET/IPPROTO_TCP cases (TCP connections via IP number)
@@ -62,7 +62,7 @@ void TextConnectDb(void)
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
 			printf("Could not create TextConnectDB() socket DBIP0\n");
-			return;
+			return(1);
 		}
 
 		// Set non-blocking 
@@ -93,10 +93,9 @@ void TextConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						mysql_init(&gMysql);
 						if(mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
-							return;
+							return(0);
 					}
 				} 
 			} 
@@ -109,7 +108,7 @@ void TextConnectDb(void)
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
 			printf("Could not create TextConnectDB() socket DBIP1\n");
-			return;
+			return(1);
 		}
 
 		// Set non-blocking 
@@ -139,10 +138,9 @@ void TextConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						mysql_init(&gMysql);
 						if(mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
-							return;
+							return(0);
 					}
 				} 
 			} 
@@ -164,5 +162,6 @@ void TextConnectDb(void)
 		sprintf(cMessage,"Could not connect unexpected case\n");
 
 	printf(cMessage);
+	return(1);
 
-}//TextConnectDb()
+}//unsigned TextConnectDb()
