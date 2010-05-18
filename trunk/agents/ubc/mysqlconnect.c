@@ -96,7 +96,6 @@ void TextConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						mysql_init(&gMysql);
 						if(mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
 							return;
@@ -142,7 +141,6 @@ void TextConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						mysql_init(&gMysql);
 						if(mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
 							return;
