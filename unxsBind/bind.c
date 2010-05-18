@@ -67,7 +67,7 @@ unsigned ViewReloadZone(char *cZone);//local
 //External. Used here but located in other files.
 int AddNewArpaZone(char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);//tzonefunc.h
 int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);
-void UpdateSerialNum(unsigned uZone);//local used in tblockfunc.h, tresourcefunc.h and tzonefunc.h
+void UpdateSerialNum(unsigned uZone);//
 void ExtConnectDb(unsigned uHtml);//extjobqueue.c
 int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus);//extjobqueue.c
 
