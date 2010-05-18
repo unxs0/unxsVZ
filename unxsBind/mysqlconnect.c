@@ -24,7 +24,8 @@ NOTES
 
 //TOC protos
 void ConnectDb(void);
-void TextConnectDb(void);
+unsigned TextConnectDb(void);
+unsigned TextConnectExtDb(MYSQL *Mysql, unsigned uMode);
 
 
 void ConnectDb(void)
@@ -91,7 +92,6 @@ void ConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						mysql_init(&gMysql);
 						if(mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
 							return;
@@ -134,7 +134,6 @@ void ConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						mysql_init(&gMysql);
 						if(mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
 							return;
@@ -163,7 +162,7 @@ void ConnectDb(void)
 }//ConnectDb()
 
 
-void TextConnectDb(void)
+unsigned TextConnectDb(void)
 {
 	//Handle quick cases first
 	//Port is irrelevant here. Make it clear.
@@ -171,12 +170,12 @@ void TextConnectDb(void)
 	if(DBIP0==NULL)
 	{
 		if (mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
-			return;
+			return(0);
 	}
 	if(DBIP1==NULL)
 	{
 		if (mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
-			return;
+			return(0);
 	}
 
 	//Now we can use AF_INET/IPPROTO_TCP cases (TCP connections via IP number)
@@ -199,7 +198,7 @@ void TextConnectDb(void)
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
 			printf("Could not create TextConnectDB() socket DBIP0\n");
-			return;
+			return(1);
 		}
 
 		// Set non-blocking 
@@ -230,10 +229,9 @@ void TextConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						mysql_init(&gMysql);
 						if(mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
-							return;
+							return(0);
 					}
 				} 
 			} 
@@ -246,7 +244,7 @@ void TextConnectDb(void)
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
 			printf("Could not create TextConnectDB() socket DBIP1\n");
-			return;
+			return(1);
 		}
 
 		// Set non-blocking 
@@ -276,10 +274,9 @@ void TextConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						mysql_init(&gMysql);
 						if(mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
-							return;
+							return(0);
 					}
 				} 
 			} 
@@ -301,5 +298,127 @@ void TextConnectDb(void)
 		sprintf(cMessage,"Could not connect unexpected case\n");
 
 	printf(cMessage);
+	return(1);
 
-}//TextConnectDb()
+}//unsigned TextConnectDb()
+
+
+unsigned TextConnectExtDb(MYSQL *Mysql, unsigned uMode)
+{
+	static unsigned uOnlyOnce=0;
+
+	//Provide some fall back if nothing in tConfiguration
+	char cDbIp[256]={"127.0.0.1"};
+	char cDbName[256]={"unxsisp"};
+	char cDbPwd[256]={"wsxedc"};
+	char cDbLogin[256]={"unxsisp"};
+	char cDbPort[256]={"3306"};
+	unsigned ucDbPort=3306;
+
+	if(uOnlyOnce)
+	{
+		printf("TextConnectExtDB() called more than once\n");
+		return(1);
+	}
+	uOnlyOnce=1;
+
+	if(uMode==1)
+	{
+		GetConfiguration("cExtApacheDbIp",cDbIp,0);
+		GetConfiguration("cExtApacheDbName",cDbName,0);
+		GetConfiguration("cExtApacheDbPwd",cDbPwd,0);
+		GetConfiguration("cExtApacheDbLogin",cDbLogin,0);
+		GetConfiguration("cExtApacheDbPort",cDbPort,0);
+	}
+	else if(uMode==2)
+	{
+		GetConfiguration("cExtBindDbIp",cDbIp,0);
+		GetConfiguration("cExtBindDbName",cDbName,0);
+		GetConfiguration("cExtBindDbPwd",cDbPwd,0);
+		GetConfiguration("cExtBindDbLogin",cDbLogin,0);
+		GetConfiguration("cExtBindDbPort",cDbPort,0);
+	}
+	else if(uMode==0)
+	{
+		GetConfiguration("cExtJobQueueDbIp",cDbIp,0);
+		GetConfiguration("cExtJobQueueDbName",cDbName,0);
+		GetConfiguration("cExtJobQueueDbPwd",cDbPwd,0);
+		GetConfiguration("cExtJobQueueDbLogin",cDbLogin,0);
+		GetConfiguration("cExtJobQueueDbPort",cDbPort,0);
+	}
+
+	mysql_init(Mysql);
+	if(!cDbIp[0])
+	{
+		if(mysql_real_connect(Mysql,NULL,cDbLogin,cDbPwd,cDbName,0,NULL,0))
+			return(0);
+	}
+	else
+	{
+
+		if(cDbPort[0])
+			sscanf(cDbPort,"%u",&ucDbPort);
+
+		//Now we can use AF_INET/IPPROTO_TCP cases (TCP connections via IP number)
+		int iSock,iConRes;
+		long lFcntlArg;
+		struct sockaddr_in sockaddr_inMySQLServer;
+		fd_set myset; 
+		struct timeval tv; 
+		int valopt;
+		socklen_t lon; 
+
+		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
+		{
+			printf("Could not create TextConnectExtDB() socket\n");
+			return(1);
+		}
+
+		// Set non-blocking 
+		lFcntlArg=fcntl(iSock,F_GETFL,NULL); 
+		lFcntlArg|=O_NONBLOCK; 
+		fcntl(iSock,F_SETFL,lFcntlArg); 
+
+		//cDbIp0 has priority if we can create a connection we
+		//move forward immediately.
+		memset(&sockaddr_inMySQLServer,0,sizeof(sockaddr_inMySQLServer));
+		sockaddr_inMySQLServer.sin_family=AF_INET;
+		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(cDbIp);
+		sockaddr_inMySQLServer.sin_port=htons(atoi(cDbPort));
+		iConRes=connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer));
+		if(iConRes<0)
+		{
+			if(errno==EINPROGRESS)
+			{
+				tv.tv_sec=0; 
+				tv.tv_usec=SELECT_TIMEOUT_USEC; 
+				FD_ZERO(&myset); 
+				FD_SET(iSock,&myset); 
+				if(select(iSock+1,NULL,&myset,NULL,&tv)>0)
+				{ 
+					lon=sizeof(int); 
+					getsockopt(iSock,SOL_SOCKET,SO_ERROR,(void*)(&valopt),&lon); 
+					if(!valopt)
+					{
+						//Valid fast connection
+						close(iSock);//Don't need anymore.
+						if(mysql_real_connect(Mysql,cDbIp,cDbLogin,cDbPwd,cDbName,
+								ucDbPort,NULL,0))
+							return(0);
+					}
+				} 
+			} 
+		}
+		close(iSock);//Don't need anymore.
+	}
+
+	//Failure exit 2 cases
+	char cMessage[256];
+	if(cDbIp[0])
+		sprintf(cMessage,"Could not connect to %s:%s %s\n",cDbIp,cDbPort,cDbName);
+	else
+		sprintf(cMessage,"Could not connect to local socket\n");
+	printf(cMessage);
+	return(1);
+
+}//unsigned TextConnectExtDb(MYSQL *Mysql, unsigned uMode)

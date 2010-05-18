@@ -71,7 +71,6 @@ void PrintMXList(FILE *zfp,char *cuMailServer);
 void CreateWebZone(char *cDomain, char *cIP, char *cNSSet, char *cMailServer);
 void DropZone(char *cDomain, char *cNSSet);
 void CompareZones(char *cDNSServer1IP, char *cDNSServer2IP, char *cuOwner);
-void ConnectMysqlServer(void);
 void PassDirectHtml(char *file);
 void GetConfiguration(const char *cName, char *cValue, unsigned uHtml);
 void Initialize(char *cPasswd);

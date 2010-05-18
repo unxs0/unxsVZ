@@ -29,7 +29,6 @@ unsigned GetuZone(char *cLabel, char *cTable);
 void InitializeParams(structExtJobParameters *structExtParam);
 int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus);
 int SubmitISPJob(const char *cJobName,const char *cJobData,const char *cServer,unsigned uJobDate);
-void ExtConnectDb(unsigned uHtml);
 unsigned uGetClientOwner(unsigned uClient);
 void ProcessExtJobQueue(char *cServer);
 unsigned WebMod(structExtJobParameters *structExtParam,
@@ -38,7 +37,6 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 				unsigned uZone,unsigned uExtJob, char *cServer,unsigned uOwner);
 unsigned CancelZone(structExtJobParameters *structExtParam,
 				unsigned uZone,unsigned uExtJob, char *cServer,unsigned uOwner);
-void ApacheConnectDb(MYSQL *mysqlext);
 int GetApacheIPNumber(MYSQL *mysql,char *cDomain,char *cMainAddress);
 unsigned WebNew(structExtJobParameters *structExtParam,unsigned uJob, char *cServer,unsigned uClient,unsigned uOwner);
 unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, char *cServer,unsigned uClient,unsigned uOwner);
@@ -56,6 +54,8 @@ void CreateNewClient(structExtJobParameters *structExtParam);
 //
 //Ext protos
 //
+unsigned TextConnectDb(void);//mysqlconnect.c
+unsigned TextConnectExtDb(MYSQL *Mysql, unsigned uMode);
 void SerialNum(char *cSerialNum);//bind.c
 int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtmlMode, 
 					const unsigned uFromZone, const unsigned uZoneOwner);
@@ -420,71 +420,6 @@ int SubmitISPJob(const char *cJobName,const char *cJobData,const char *cServer,u
 }//int SubmitISPJob()
 
 
-void ExtConnectDb(unsigned uHtml)
-{
-	static unsigned uOnlyOnce=0;
-#ifdef USECONF
-	unsigned ucDbPort=guDbPort;
-	char *cEffectiveDbIp=gcEffectiveDbIp;
-	char *cEffectiveDbSocket=gcEffectiveDbSocket;
-	char cDbIp[256];
-	char cDbName[256];
-	char cDbPwd[256];
-	char cDbLogin[256];
-	char cDbPort[256];
-	char cDbSocket[256];
-
-	//safe via sprintf in conf reader
-	strcpy(cDbName,gcDbName);
-	strcpy(cDbPwd,gcDbPasswd);
-	strcpy(cDbLogin,gcDbLogin);
-	strcpy(cDbIp,gcDbIp);
-	strcpy(cDbSocket,gcDbSocket);
-#else
-	//Provide some fall back if nothing in tConfiguration
-	char cDbIp[256]={""};
-	char *cEffectiveDbIp=DBIP0;
-	char cDbName[256]={"unxsisp"};
-	char cDbPwd[256]={"wsxedc"};
-	char cDbLogin[256]={"unxsisp"};
-	char cDbPort[256]={""};
-	unsigned ucDbPort=DBPORT;
-	char cDbSocket[256]={""};
-	char *cEffectiveDbSocket=DBSOCKET;
-#endif
-
-	if(uOnlyOnce) return;
-	uOnlyOnce=1;
-
-	GetConfiguration("cExtJobQueueDbIp",cDbIp,0);
-	GetConfiguration("cExtJobQueueDbName",cDbName,0);
-	GetConfiguration("cExtJobQueueDbPwd",cDbPwd,0);
-	GetConfiguration("cExtJobQueueDbLogin",cDbLogin,0);
-	GetConfiguration("cExtJobQueueDbPort",cDbPort,0);
-	GetConfiguration("cExtJobQueueDbSocket",cDbSocket,0);
-
-	//Debug only	
-	//printf("%s %s %s %s\n",cDbIp,cDbName,cDbPwd,cDbLogin);
-
-	if(cDbIp[0]) cEffectiveDbIp=cDbIp;
-	if(cDbSocket[0]) cEffectiveDbSocket=cDbSocket;
-	if(cDbPort[0]) sscanf(cDbPort,"%u",&ucDbPort);
-
-        mysql_init(&gMysql2);
-	if (!mysql_real_connect(&gMysql2,cEffectiveDbIp,cDbLogin,cDbPwd
-				,cDbName,ucDbPort,cEffectiveDbSocket,0))
-        {
-		sprintf(gcQuery,"ExtConnectDb failed for %s.%s",cDbIp,cDbName);
-		if(uHtml)
-                	iDNS(gcQuery);
-		else
-			fprintf(stderr,"%s\n",gcQuery);
-		exit(1);
-        }
-
-}//end of ExtConnectDb()
-
-
 unsigned uGetClientOwner(unsigned uClient)
 {
 	MYSQL_RES *res;
@@ -528,8 +463,14 @@ void ProcessExtJobQueue(char *cServer)
 
 	char cQuery[10240];
 		
-	ConnectDb();//Must be first
-	ExtConnectDb(0);
+	//Must be first
+	if(TextConnectDb())
+		return;
+	if(TextConnectExtDb(&gMysql2,0))//uMode==0 unxsISP
+	{
+		mysql_close(&gMysql);
+		return;
+	}
 
 	sprintf(cQuery,"SELECT cJobName,cJobData,uJob,uJobClient FROM tJob WHERE (cServer='Any' OR cServer='%s')"
 			" AND uJobStatus=%u AND uJobDate<=UNIX_TIMESTAMP(NOW())"
@@ -1048,69 +989,6 @@ unsigned CancelZone(structExtJobParameters *structExtParam,
 }//unsigned CancelZone()
 
 
-
-void ApacheConnectDb(MYSQL *mysqlext)
-{
-	static unsigned uOnlyOnce=0;
-#ifdef USECONF
-	unsigned ucDbPort=guDbPort;
-	char *cEffectiveDbIp=gcEffectiveDbIp;
-	char *cEffectiveDbSocket=gcEffectiveDbSocket;
-	char cDbIp[256];
-	char cDbName[256];
-	char cDbPwd[256];
-	char cDbLogin[256];
-	char cDbPort[256];
-	char cDbSocket[256];
-
-	//safe via sprintf in conf reader
-	strcpy(cDbName,gcDbName);
-	strcpy(cDbPwd,gcDbPasswd);
-	strcpy(cDbLogin,gcDbLogin);
-	strcpy(cDbIp,gcDbIp);
-	strcpy(cDbSocket,gcDbSocket);
-#else
-	//Provide some fall back if nothing in tConfiguration
-	char cDbIp[256]={""};
-	char *cEffectiveDbIp=DBIP0;
-	char cDbName[256]={DBNAME};
-	char cDbPwd[256]={DBPASSWD};
-	char cDbLogin[256]={DBLOGIN};
-	char cDbPort[256]={""};
-	unsigned ucDbPort=DBPORT;
-	char cDbSocket[256]={""};
-	char *cEffectiveDbSocket=DBSOCKET;
-#endif
-
-	if(uOnlyOnce) return;
-	uOnlyOnce=1;
-
-
-	GetConfiguration("cExtApacheDbIp",cDbIp,0);
-	GetConfiguration("cExtApacheDbName",cDbName,0);
-	GetConfiguration("cExtApacheDbPwd",cDbPwd,0);
-	GetConfiguration("cExtApacheDbLogin",cDbLogin,0);
-	GetConfiguration("cExtApacheDbPort",cDbPort,0);
-	GetConfiguration("cExtApacheDbSocket",cDbSocket,0);
-
-	//Debug only	
-	//printf("%s %s %s %s\n",cDbIp,cDbName,cDbPwd,cDbLogin);
-
-	if(cDbIp[0]) cEffectiveDbIp=cDbIp;
-	if(cDbSocket[0]) cEffectiveDbSocket=cDbSocket;
-	if(cDbPort[0]) sscanf(cDbPort,"%u",&ucDbPort);
-
-        mysql_init(mysqlext);
-	if (!mysql_real_connect(mysqlext,cEffectiveDbIp,cDbLogin,cDbPwd
-				,cDbName,ucDbPort,cEffectiveDbSocket,0))
-        {
-		fprintf(stderr,"ApacheConnectDb failed for %s.%s",cDbIp,cDbName);
-		return;
-        }
-
-}//end of ApacheConnectDb(MYSQL &gMysql2)
-
-
 int GetApacheIPNumber(MYSQL *mysql,char *cDomain,char *cMainAddress)
 {
         MYSQL_RES *res;
@@ -1157,8 +1035,8 @@ unsigned WebNew(structExtJobParameters *structExtParam,unsigned uJob, char *cSer
 	SerialNum(cSerial);
 	sscanf(cSerial,"%u",&uSerial);
 
-	//Name based or IP based same: Get IP from mysqlApache
-	ApacheConnectDb(&mysqlApache);
+	if(TextConnectExtDb(&mysqlApache,1))//uMode==1 unxsApache
+		return(1);
 	if(GetApacheIPNumber(&mysqlApache,structExtParam->cZone,
 					structExtParam->cMainAddress))
 			return(2);
