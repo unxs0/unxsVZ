@@ -4264,7 +4264,7 @@ unsigned CommonCloneContainer(
 				uDatacenter,
 				uTargetNode,
 				uAWAITCLONE,
-				guCompany,
+				uOwner,
 				guLoginClient,
 				uContainer);
        	mysql_query(&gMysql,gcQuery);
@@ -4311,7 +4311,7 @@ unsigned CommonCloneContainer(
 		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
 				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 				",cName='Name',cValue='%s'",
-					uNewVeid,guCompany,guLoginClient,cWizLabel);
+					uNewVeid,uOwner,guLoginClient,cWizLabel);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -4324,7 +4324,7 @@ unsigned CommonCloneContainer(
 		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
 				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 				",cName='cuSyncPeriod',cValue='%u'",
-					uNewVeid,guCompany,guLoginClient,uSyncPeriod);
+					uNewVeid,uOwner,guLoginClient,uSyncPeriod);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
