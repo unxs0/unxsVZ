@@ -307,7 +307,8 @@ void ProcessUBC(void)
 	}
 		
 
-	TextConnectDb();//Uses login data from local.h
+	//Uses login data from local.h
+	TextConnectDb();
 	guLoginClient=1;//Root user
 
 	sprintf(gcQuery,"SELECT uNode,uDatacenter,uOwner FROM tNode WHERE cLabel='%.99s'",cHostname);
