@@ -9,7 +9,10 @@ AUTHOR/LEGAL
 	GPLv2 license applies. See LICENSE file included.
 NOTES
 	mySQL 5.0+ now required
- 
+USEFUL SQL
+	//Clean up SQL (rules/constraints) that should never be needed once code is stable.
+	DELETE FROM tProperty WHERE uType=3 AND uKey NOT IN (SELECT uContainer FROM tContainer);
+	UPDATE tIP SET uAvailable=1 WHERE uAvailable=0 AND uIP NOT IN (SELECT uIPv4 FROM tContainer); 
 */
 
 #define macro_mySQLQueryExitText	mysql_query(&gMysql,gcQuery);\
@@ -1588,6 +1591,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				uGroup=uGetGroup(0,uContainer);
 				if(uGroup)
 					ChangeGroup(uNewVeid,uGroup);
+				tContainer("CloneContainerJob() Done");
 			}
 			else
 			{
