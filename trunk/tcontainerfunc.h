@@ -46,7 +46,7 @@ struct structContainer
 void GetContainerProps(unsigned uContainer,struct structContainer *sContainer);
 void InitContainerProps(struct structContainer *sContainer);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);
-unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
+unsigned unxsBindRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
 void ChangeGroup(unsigned uContainer, unsigned uGroup);
 unsigned CommonCloneContainer(
 		unsigned uContainer,
@@ -1050,6 +1050,35 @@ void ExttContainerCommands(pentry entries[], int x)
 								ChangeGroup(uNewVeid,uGroup);
 						}
 
+					if(uCreateDNSJob)
+					{
+						char cunxsBindRecordJobNSSet[256]={"ns1-2.yourdomain.com"};
+						char cJobData[512];
+						char cIPv4[32]={"127.0.0.1"};
+						//Get all these from tConfiguration once.
+						char cView[32]={"external"};
+						char cuTTL[16]={"3600"};
+
+						GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,
+												uDatacenter,0,0,0);
+						sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						res=mysql_store_result(&gMysql);
+						if((field=mysql_fetch_row(res)))
+							sprintf(cIPv4,"%.31s",field[0]);
+						mysql_free_result(res);
+						sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
+							"cuTTL=%.15s;\n"
+							"cRRType=A;\n"
+							"cParam1=%.99s;\n"
+							"cNSSet=%.31s;\n"
+							"cView=%.31s;\n",
+							cHostname,cuTTL,cIPv4,cunxsBindRecordJobNSSet,cView);
+						unxsBindRecordJob(uDatacenter,uNode,uContainer,cJobData);
+					}
+
 						//Get next available IP, set uIPv4
 						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
 							" AND cLabel LIKE '%s%%' LIMIT 1",uOwner,cIPv4ClassC);
@@ -1151,6 +1180,35 @@ void ExttContainerCommands(pentry entries[], int x)
 						SetContainerStatus(uContainer,uINITSETUP);
 						if(uGroup)
 							ChangeGroup(uNewVeid,uGroup);
+					}
+
+					if(uCreateDNSJob)
+					{
+						char cunxsBindRecordJobNSSet[256]={"ns1-2.yourdomain.com"};
+						char cJobData[512];
+						char cIPv4[32]={"127.0.0.1"};
+						//Get all these from tConfiguration once.
+						char cView[32]={"external"};
+						char cuTTL[16]={"3600"};
+
+						GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,
+												uDatacenter,0,0,0);
+						sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						res=mysql_store_result(&gMysql);
+						if((field=mysql_fetch_row(res)))
+							sprintf(cIPv4,"%.31s",field[0]);
+						mysql_free_result(res);
+						sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
+							"cuTTL=%.15s;\n"
+							"cRRType=A;\n"
+							"cParam1=%.99s;\n"
+							"cNSSet=%.31s;\n"
+							"cView=%.31s;\n",
+							cHostname,cuTTL,cIPv4,cunxsBindRecordJobNSSet,cView);
+						unxsBindRecordJob(uDatacenter,uNode,uContainer,cJobData);
 					}
 
 					tContainer("New container created and default properties created");
@@ -1804,16 +1862,20 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup)
 					ChangeGroup(uContainer,uGroup);
 
+				//After this is tested we need to add to "Group Start", "Multiple New" etc.
+				//Then we need to extend to remove records also.
 				//Create job for remote unxsBind to run via ext job queue.
-				char cunxsBindARecordJob[256]={""};
-				GetConfiguration("cunxsBindARecordJob",cunxsBindARecordJob,uDatacenter,0,0,0);
-				if(cunxsBindARecordJob[0] && uCreateDNSJob)
+				if(uCreateDNSJob)
 				{
+					char cunxsBindRecordJobNSSet[256]={"ns1-2.yourdomain.com"};
+					char cJobData[512];
 					char cIPv4[32]={"127.0.0.1"};
-					char cNSSet[32]={"ns1-2.yourdomain.com"};
+					//Get all these from tConfiguration once.
 					char cView[32]={"external"};
-					char cJobData[256];
+					char cuTTL[16]={"3600"};
 
+					GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,
+												uDatacenter,0,0,0);
 					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
@@ -1822,9 +1884,14 @@ void ExttContainerCommands(pentry entries[], int x)
 					if((field=mysql_fetch_row(res)))
 						sprintf(cIPv4,"%.31s",field[0]);
 					mysql_free_result(res);
-					sprintf(cJobData,"cIPv4=%s;\ncHostname=%s;\ncNSSet=%s;\ncView=%s;\n",
-							cIPv4,cHostname,cNSSet,cView);
-					unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData);
+					sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
+							"cuTTL=%.15s;\n"
+							"cRRType=A;\n"
+							"cParam1=%.99s;\n"
+							"cNSSet=%.31s;\n"
+							"cView=%.31s;\n",
+							cHostname,cuTTL,cIPv4,cunxsBindRecordJobNSSet,cView);
+					unxsBindRecordJob(uDatacenter,uNode,uContainer,cJobData);
 				}
 
                         	guMode=0;
@@ -1915,6 +1982,26 @@ void ExttContainerCommands(pentry entries[], int x)
 					uStatus=uAWAITIP;
 					SetContainerStatus(uContainer,71);
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+					if(uCreateDNSJob)
+					{
+						char cunxsBindRecordJobNSSet[256]={"ns1-2.yourdomain.com"};
+						char cJobData[512];
+						//Get all these from tConfiguration once.
+						char cView[32]={"external"};
+						char cuTTL[16]={"3600"};
+
+						GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,
+												uDatacenter,0,0,0);
+						mysql_free_result(res);
+						sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
+							"cuTTL=%.15s;\n"
+							"cRRType=A;\n"
+							"cParam1=%.99s;\n"
+							"cNSSet=%.31s;\n"
+							"cView=%.31s;\n",
+							cHostname,cuTTL,cuWizIPv4PullDown,cunxsBindRecordJobNSSet,cView);
+						unxsBindRecordJob(uDatacenter,uNode,uContainer,cJobData);
+					}
 					tContainer("IPContainerJob() Done");
 				}
 				else
@@ -2039,6 +2126,8 @@ void ExttContainerCommands(pentry entries[], int x)
 
 void ExttContainerButtons(void)
 {
+	char cunxsBindRecordJobNSSet[256]={""};
+
 	OpenFieldSet("tContainer Aux Panel",100);
 	switch(guMode)
         {
@@ -2057,6 +2146,12 @@ void ExttContainerButtons(void)
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
+			if(cunxsBindRecordJobNSSet[0])
+			{
+				printf("<p>Create job for unxsBind A record<br>");
+				printf("<input type=checkbox name=uCreateDNSJob >");
+			}
                 break;
 
                 case 5001:
@@ -2077,11 +2172,10 @@ void ExttContainerButtons(void)
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
-			char cunxsBindARecordJob[256]={""};
-			GetConfiguration("cunxsBindARecordJob",cunxsBindARecordJob,uDatacenter,0,0,0);
-			if(cunxsBindARecordJob[0])
+			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
+			if(cunxsBindRecordJobNSSet[0])
 			{
-				printf("<p></u>Create job for unxsBind A record</u><br>");
+				printf("<p>Create job for unxsBind A record<br>");
 				printf("<input type=checkbox name=uCreateDNSJob >");
 			}
                 break;
@@ -2201,6 +2295,8 @@ void ExttContainerButtons(void)
 			printf("<p>If you wish to abort this container creation use the [Delete] button above.");
 			if(uGroup)
 				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
+			if(uCreateDNSJob)
+				printf("<input type=hidden name=uCreateDNSJob >");
                 break;
 
                 case 201:
@@ -2232,6 +2328,8 @@ void ExttContainerButtons(void)
 			printf("<p>If you wish to abort this container creation use the [Delete] button above.");
 			if(uGroup)
 				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
+			if(uCreateDNSJob)
+				printf("<input type=hidden name=uCreateDNSJob >");
                 break;
 
                 case 2000:
@@ -2265,6 +2363,12 @@ void ExttContainerButtons(void)
 			printf("<br>Or create and assign this new group label<br>");
 			printf("<input title='Enter a new tGroup.cLabel' type=text name=cService3 value='%s'"
 				" maxlength=31><br>",cService3);
+			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
+			if(cunxsBindRecordJobNSSet[0])
+			{
+				printf("<p>Create job for unxsBind A record<br>");
+				printf("<input type=checkbox name=uCreateDNSJob >");
+			}
 			tTablePullDownResellers(uOwner);//uForClient after
 			//Optionally create clone on new.
 			char cAutoCloneNode[256]={""};
@@ -4139,28 +4243,38 @@ unsigned uGetGroup(unsigned uNode, unsigned uContainer)
 
 
 //Pull job for unxsBind
-unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData)
+//Sample cJobData
+/*
+cName=delme.zone.net.;
+cuTTL=3600;
+cRRType=A;
+cParam1=174.121.136.102;
+cNSSet=ns1-2.yourdomain.com;
+cView=external;
+*/
+unsigned unxsBindRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData)
 {
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindARecordJob(%u)',cJobName='unxsVZContainerRR'"
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindRecordJob(%u)',cJobName='unxsVZRR-FQName'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
-			",uJobStatus=10"//RemoteWaiting
+			",uJobStatus=%u"
 			",cJobData='%s'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				uREMOTEWAITING,
 				cJobData,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
-	unxsVZLog(uContainer,"tContainer","unxsBindARecordJob");
+	unxsVZLog(uContainer,"tContainer","unxsBindRecordJob");
 	return(uCount);
 
-}//unsigned unxsBindARecordJob(...)
+}//unsigned unxsBindRecordJob(...)
 
 
 void ChangeGroup(unsigned uContainer, unsigned uGroup)
