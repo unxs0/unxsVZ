@@ -86,6 +86,7 @@ void SlaveJobQueue(char *cNSSet, char *cMasterIP);
 void MasterJobQueue(char *cNSSet);
 void ServerJobQueue(char *cServer);
 void ProcessExtJobQueue(char *cServer);
+void ProcessVZJobQueue(void);
 void ExportRRCSV(char *cCompany,char *cOutFile);
 
 
@@ -840,6 +841,7 @@ void PrintUsage(char *arg0)
 	printf("\tProcessJobQueue <fqdn master ns>\n");
 	printf("\tProcessServerJobQueue <fqdn server>\n");
 	printf("\tProcessExtJobQueue <fqdn server as in mysqlISP>\n");
+	printf("\tProcessVZJobQueue\n");
 	printf("\tjobqueue master <fqdn master ns> (equivalent to ProcessJobQueue)\n");
 	printf("\tjobqueue slave <fqdn slave ns> <master ip>\n");
 	printf("\tMonthHitData\n");
@@ -1060,6 +1062,11 @@ void ExtMainShell(int argc, char *argv[])
 		{
 			TextConnectDb();
 			FixBlockOwnership();
+			exit(0);
+		}
+		else if(!strcmp(argv[1],"ProcessVZJobQueue"))
+		{
+			ProcessVZJobQueue();
 			exit(0);
 		}
 	}

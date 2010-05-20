@@ -322,7 +322,7 @@ unsigned TextConnectExtDb(MYSQL *Mysql, unsigned uMode)
 	}
 	uOnlyOnce=1;
 
-	if(uMode==1)
+	if(uMode==TEXT_CONNECT_APACHE)
 	{
 		GetConfiguration("cExtApacheDbIp",cDbIp,0);
 		GetConfiguration("cExtApacheDbName",cDbName,0);
@@ -330,15 +330,15 @@ unsigned TextConnectExtDb(MYSQL *Mysql, unsigned uMode)
 		GetConfiguration("cExtApacheDbLogin",cDbLogin,0);
 		GetConfiguration("cExtApacheDbPort",cDbPort,0);
 	}
-	else if(uMode==2)
+	else if(uMode==TEXT_CONNECT_UNXSVZ)
 	{
-		GetConfiguration("cExtBindDbIp",cDbIp,0);
-		GetConfiguration("cExtBindDbName",cDbName,0);
-		GetConfiguration("cExtBindDbPwd",cDbPwd,0);
-		GetConfiguration("cExtBindDbLogin",cDbLogin,0);
-		GetConfiguration("cExtBindDbPort",cDbPort,0);
+		GetConfiguration("cExtVzDbIp",cDbIp,0);
+		GetConfiguration("cExtVzDbName",cDbName,0);
+		GetConfiguration("cExtVzDbPwd",cDbPwd,0);
+		GetConfiguration("cExtVzDbLogin",cDbLogin,0);
+		GetConfiguration("cExtVzDbPort",cDbPort,0);
 	}
-	else if(uMode==0)
+	else if(uMode==TEXT_CONNECT_ISP)
 	{
 		GetConfiguration("cExtJobQueueDbIp",cDbIp,0);
 		GetConfiguration("cExtJobQueueDbName",cDbName,0);

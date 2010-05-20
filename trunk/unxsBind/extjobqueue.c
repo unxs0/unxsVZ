@@ -27,10 +27,11 @@ void ParseExtParams(structExtJobParameters *structExtParam, char *cJobData);
 unsigned GetuServer(char *cLabel, char *cTable);
 unsigned GetuZone(char *cLabel, char *cTable);
 void InitializeParams(structExtJobParameters *structExtParam);
-int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus);
+int InformExtISPJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus);
 int SubmitISPJob(const char *cJobName,const char *cJobData,const char *cServer,unsigned uJobDate);
 unsigned uGetClientOwner(unsigned uClient);
 void ProcessExtJobQueue(char *cServer);
+void ProcessVZJobQueue(void);
 unsigned WebMod(structExtJobParameters *structExtParam,
 				unsigned uZone,unsigned uExtJob, char *cServer,unsigned uOwner);
 unsigned ModZone(structExtJobParameters *structExtParam,
@@ -65,6 +66,76 @@ void ParseExtParams(structExtJobParameters *structExtParam, char *cJobData)
 {
 	char *cp,*cp2;
 
+	//New universal data elements
+	if((cp=strstr(cJobData,"cName=")))
+	{
+		cp2=NULL;
+		if((cp2=strchr(cp+6,';'))) *cp2=0;
+			sprintf(structExtParam->cName,"%.99s",cp+6);
+		if(cp2) *cp2=';';
+		structExtParam->ucName=1;
+	}
+	if((cp=strstr(cJobData,"cuTTL=")))
+	{
+		cp2=NULL;
+		if((cp2=strchr(cp+6,';'))) *cp2=0;
+			sprintf(structExtParam->cuTTL,"%.15s",cp+6);
+		if(cp2) *cp2=';';
+		structExtParam->ucuTTL=1;
+	}
+	if((cp=strstr(cJobData,"cIPv4=")))
+	{
+		cp2=NULL;
+		if((cp2=strchr(cp+6,';'))) *cp2=0;
+			sprintf(structExtParam->cIPv4,"%.31s",cp+6);
+		if(cp2) *cp2=';';
+		structExtParam->ucIPv4=1;
+	}
+	if((cp=strstr(cJobData,"cZone=")))
+	{
+		cp2=NULL;
+		if((cp2=strchr(cp+6,';'))) *cp2=0;
+			sprintf(structExtParam->cZone,"%.99s",cp+6);
+		if(cp2) *cp2=';';
+		structExtParam->ucZone=1;
+	}
+	if((cp=strstr(cJobData,"cRRType=")))
+	{
+		cp2=NULL;
+		if((cp2=strchr(cp+8,';'))) *cp2=0;
+			sprintf(structExtParam->cRRType,"%.31s",cp+8);
+		if(cp2) *cp2=';';
+		structExtParam->ucRRType=1;
+	}
+	if((cp=strstr(cJobData,"cNSSet=")))
+	{
+		cp2=NULL;
+		if((cp2=strchr(cp+7,';'))) *cp2=0;
+			sprintf(structExtParam->cNSSet,"%.31s",cp+7);
+		if(cp2) *cp2=';';
+		structExtParam->ucNSSet=1;
+	}
+	if((cp=strstr(cJobData,"cParam1=")))
+	{
+		cp2=NULL;
+		if((cp2=strchr(cp+8,';'))) *cp2=0;
+			sprintf(structExtParam->cParam1,"%.254s",cp+8);
+		if(cp2) *cp2=';';
+		structExtParam->ucParam1=1;
+	}
+	if((cp=strstr(cJobData,"cView=")))
+	{
+		cp2=NULL;
+		if((cp2=strchr(cp+6,';'))) *cp2=0;
+			sprintf(structExtParam->cView,"%.31s",cp+6);
+		if(cp2) *cp2=';';
+		structExtParam->ucView=1;
+	}
+
+
+
+	//Keep these old cJobData elements for backwards compatability for a couple more
+	//years while we deprecate via unxsISP
 	if((cp=strstr(cJobData,"Domain=")))
 	{
 		cp2=NULL;
@@ -164,23 +235,6 @@ void ParseExtParams(structExtJobParameters *structExtParam, char *cJobData)
 		structExtParam->uParamClientName=1;
 	}
 	
-
-
-	//Debug only
-	printf("cZone=%s cMainAddress=%s cTarget=%s cNameServer=%s\n cMailServer=%s\ncParkedDomains=%s\nuRevDns=%u\ncMX1=%s cMX2=%s uMailServer=%u\nuISPClient=%u cClientName=%s\n",
-			structExtParam->cZone,
-			structExtParam->cMainAddress,
-			structExtParam->cTarget,
-			structExtParam->cNameServer,
-			structExtParam->cMailServer,
-			structExtParam->cParkedDomains,
-			structExtParam->uRevDns,
-			structExtParam->cMX1,
-			structExtParam->cMX2,
-			structExtParam->uMailServer,
-			structExtParam->uISPClient,
-			structExtParam->cClientName);
-
 }//void ParseExtParams()
 
 
@@ -314,7 +368,7 @@ void InitializeParams(structExtJobParameters *structExtParam)
 }//void InitializeParams(structExtJobParameters *structExtParam)
 
 
-int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus)
+int InformExtISPJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -329,7 +383,7 @@ int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsign
 	if(mysql_errno(&gMysql2))
 	{
 		fprintf(stderr,"%s\n",mysql_error(&gMysql2));
-		SubmitISPJob("iDNS.InformExtJob.Failed",
+		SubmitISPJob("iDNS.InformExtISPJob.Failed",
 				mysql_error(&gMysql2),cServer,0);
 		return(1);
 	}
@@ -400,7 +454,7 @@ int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsign
 
 	return(0);
 
-}//int InformExtJob()
+}//int InformExtISPJob()
 
 
 int SubmitISPJob(const char *cJobName,const char *cJobData,const char *cServer,unsigned uJobDate)
@@ -466,7 +520,7 @@ void ProcessExtJobQueue(char *cServer)
 	//Must be first
 	if(TextConnectDb())
 		return;
-	if(TextConnectExtDb(&gMysql2,0))//uMode==0 unxsISP
+	if(TextConnectExtDb(&gMysql2,TEXT_CONNECT_ISP))
 	{
 		mysql_close(&gMysql);
 		return;
@@ -511,7 +565,7 @@ void ProcessExtJobQueue(char *cServer)
 			if(mysql_errno(&gMysql))
         		{
 				fprintf(stderr,"%s\n",mysql_error(&gMysql));
-				InformExtJob("Select query Web.New failed",
+				InformExtISPJob("Select query Web.New failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
 			else
@@ -526,10 +580,10 @@ void ProcessExtJobQueue(char *cServer)
 					//and other parameters
 					if(!WebMod(&structExtParam,
 							uZone,uJob,cServer,uOwner))
-					InformExtJob("WebMod() Ok",
+					InformExtISPJob("WebMod() Ok",
 						cServer,uJob,mysqlISP_RemotelyQueued);
 					else
-					InformExtJob("WebMod() Error",
+					InformExtISPJob("WebMod() Error",
 						cServer,uJob,mysqlISP_Waiting);
 				}
 				else
@@ -540,18 +594,18 @@ void ProcessExtJobQueue(char *cServer)
 					switch(uRetVal)
 					{
 						case 0:
-						InformExtJob("WebNew() Ok",
+						InformExtISPJob("WebNew() Ok",
 						cServer,uJob,mysqlISP_RemotelyQueued);
 						//CreateNewClient(&structExtParam);
 						break;
 						
 						case 1:
-						InformExtJob("WebNew() Error",
+						InformExtISPJob("WebNew() Error",
 						cServer,uJob,mysqlISP_Waiting);
 						break;
 						
 						case 2:
-						InformExtJob("WebNew() Waiting for IP",
+						InformExtISPJob("WebNew() Waiting for IP",
 						cServer,uJob,mysqlISP_Waiting);
 						break;
 					}
@@ -572,7 +626,7 @@ void ProcessExtJobQueue(char *cServer)
 			if(mysql_errno(&gMysql))
         		{
 				fprintf(stderr,"%s\n",mysql_error(&gMysql));
-				InformExtJob("Select query Mod failed",
+				InformExtISPJob("Select query Mod failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
 			else
@@ -585,15 +639,15 @@ void ProcessExtJobQueue(char *cServer)
 
 					if(!ModZone(&structExtParam,
 							uZone,uJob,cServer,uOwner))
-					InformExtJob("ModZone() Ok",
+					InformExtISPJob("ModZone() Ok",
 						cServer,uJob,mysqlISP_RemotelyQueued);
 					else
-					InformExtJob("ModZone() Error",
+					InformExtISPJob("ModZone() Error",
 						cServer,uJob,mysqlISP_Waiting);
 				}
 				else
 				{
-					InformExtJob("Zone does not exist",
+					InformExtISPJob("Zone does not exist",
 						cServer,uJob,mysqlISP_Waiting);
 				}
 				mysql_free_result(res2);
@@ -613,7 +667,7 @@ void ProcessExtJobQueue(char *cServer)
 			if(mysql_errno(&gMysql))
         		{
 				fprintf(stderr,"%s\n",mysql_error(&gMysql));
-				InformExtJob("Select query Cancel failed",
+				InformExtISPJob("Select query Cancel failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
 			else
@@ -626,15 +680,15 @@ void ProcessExtJobQueue(char *cServer)
 
 					if(!CancelZone(&structExtParam,
 							uZone,uJob,cServer,uOwner))
-					InformExtJob("CancelZone() Ok",
+					InformExtISPJob("CancelZone() Ok",
 						cServer,uJob,mysqlISP_RemotelyQueued);
 					else
-					InformExtJob("CancelZone() Error",
+					InformExtISPJob("CancelZone() Error",
 						cServer,uJob,mysqlISP_Waiting);
 				}
 				else
 				{
-					InformExtJob("No such zone error",
+					InformExtISPJob("No such zone error",
 							cServer,uJob,mysqlISP_Waiting);
 				}
 				mysql_free_result(res2);
@@ -655,7 +709,7 @@ void ProcessExtJobQueue(char *cServer)
 			if(mysql_errno(&gMysql))
         		{
 				fprintf(stderr,"%s\n",mysql_error(&gMysql));
-				InformExtJob("Select query OnHold failed",
+				InformExtISPJob("Select query OnHold failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
 			else
@@ -664,12 +718,12 @@ void ProcessExtJobQueue(char *cServer)
         			if(mysql_num_rows(res2))
 				{
 					//OnHold: Do nothing
-					InformExtJob("OnHold NOP",
+					InformExtISPJob("OnHold NOP",
 						cServer,uJob,mysqlISP_Deployed);
 				}
 				else
 				{
-					InformExtJob("No such cZone",
+					InformExtISPJob("No such cZone",
 							cServer,uJob,mysqlISP_Waiting);
 				}
 				mysql_free_result(res2);
@@ -687,7 +741,7 @@ void ProcessExtJobQueue(char *cServer)
 			if(mysql_errno(&gMysql))
         		{
 				fprintf(stderr,"%s\n",mysql_error(&gMysql));
-				InformExtJob("Select Zone.New failed",
+				InformExtISPJob("Select Zone.New failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
 			else
@@ -695,7 +749,7 @@ void ProcessExtJobQueue(char *cServer)
         			res2=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res2))
 				{
-					InformExtJob("Zone already exists!",
+					InformExtISPJob("Zone already exists!",
 						cServer,uJob,mysqlISP_Waiting);
 				}
 				else
@@ -705,13 +759,13 @@ void ProcessExtJobQueue(char *cServer)
 					switch(uRetVal)
 					{
 						case 0:
-						InformExtJob("NewSimpleZone() Ok",
+						InformExtISPJob("NewSimpleZone() Ok",
 						cServer,uJob,mysqlISP_RemotelyQueued);
 						//CreateNewClient(&structExtParam);
 						break;
 						
 						default:
-						InformExtJob("NewSimpleZone() Error",
+						InformExtISPJob("NewSimpleZone() Error",
 						cServer,uJob,mysqlISP_Waiting);
 						break;
 						
@@ -731,7 +785,7 @@ void ProcessExtJobQueue(char *cServer)
 			if(mysql_errno(&gMysql))
         		{
 				fprintf(stderr,"%s\n",mysql_error(&gMysql));
-				InformExtJob("Select WebZone.New failed",
+				InformExtISPJob("Select WebZone.New failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
 			else
@@ -739,7 +793,7 @@ void ProcessExtJobQueue(char *cServer)
         			res2=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res2))
 				{
-					InformExtJob("Zone already exists!",
+					InformExtISPJob("Zone already exists!",
 						cServer,uJob,mysqlISP_Waiting);
 				}
 				else
@@ -749,13 +803,13 @@ void ProcessExtJobQueue(char *cServer)
 					switch(uRetVal)
 					{
 						case 0:
-						InformExtJob("NewSimpleWebZone() Ok",
+						InformExtISPJob("NewSimpleWebZone() Ok",
 						cServer,uJob,mysqlISP_RemotelyQueued);
 						//CreateNewClient(&structExtParam);
 						break;
 						
 						default:
-						InformExtJob("NewSimpleWebZone() Error",
+						InformExtISPJob("NewSimpleWebZone() Error",
 						cServer,uJob,mysqlISP_Waiting);
 						break;
 						
@@ -1035,7 +1089,7 @@ unsigned WebNew(structExtJobParameters *structExtParam,unsigned uJob, char *cSer
 	SerialNum(cSerial);
 	sscanf(cSerial,"%u",&uSerial);
 
-	if(TextConnectExtDb(&mysqlApache,1))//uMode==1 unxsApache
+	if(TextConnectExtDb(&mysqlApache,TEXT_CONNECT_APACHE))
 		return(1);
 	if(GetApacheIPNumber(&mysqlApache,structExtParam->cZone,
 					structExtParam->cMainAddress))
@@ -1747,3 +1801,166 @@ void CreateNewClient(structExtJobParameters *structExtParam)
 	}
 
 }//void CreateNewClient(structExtJobParameters *structExtParam)
+
+
+void ProcessVZJobQueue(void)
+{
+
+	MYSQL gMysql2;
+
+	printf("ProcessVZJobQueue() start\n");
+	if(!TextConnectDb() && !TextConnectExtDb(&gMysql2,TEXT_CONNECT_UNXSVZ))
+	{
+		MYSQL_RES *res;
+		MYSQL_ROW field;
+		MYSQL_RES *res2;
+		MYSQL_ROW field2;
+		structExtJobParameters structExtParam;
+
+		//debug only
+		printf("ProcessVZJobQueue() connected ok\n");
+	
+		//mysqlISP_Waiting same as unxsVZ.tJobStatus.cLabel "RemoteWaiting" 10
+		sprintf(gcQuery,"SELECT cJobName,cJobData,uJob,uOwner FROM tJob WHERE"
+			" uJobStatus=%u AND uJobDate<=UNIX_TIMESTAMP(NOW())"
+			" AND cJobName LIKE 'unxsVZ%%' LIMIT 10",mysqlISP_Waiting);
+	
+		mysql_query(&gMysql2,gcQuery);
+	       	if(mysql_errno(&gMysql2))
+		{
+			fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+			goto CommonExit;
+		}
+		res=mysql_store_result(&gMysql2);
+	        while((field=mysql_fetch_row(res)))
+		{
+			unsigned uJob=0;
+			unsigned uZone=0;
+			unsigned uOwner=0;
+			unsigned uResource=0;
+			InitializeParams(&structExtParam);
+	
+			sscanf(field[2],"%u",&uJob);
+			sscanf(field[3],"%u",&uOwner);
+	
+			//unxsVZRR-FQName
+			//cName is a fully qualified DNS RR name, i.e. it ends in the zone name.
+			if(!strcmp("unxsVZRR-FQName",field[0]))
+			{	
+				ParseExtParams(&structExtParam,field[1]);
+				//debug only
+				printf("%s(%u) data:\n",field[0],uJob);
+				if(structExtParam.ucName)
+					printf("\tcName=%s;\n",structExtParam.cName);
+				if(structExtParam.ucuTTL)
+					printf("\tcuTTL=%s;\n",structExtParam.cuTTL);
+				if(structExtParam.ucRRType)
+					printf("\tcRRType=%s;\n",structExtParam.cRRType);
+				if(structExtParam.ucParam1)
+					printf("\tcParam1=%s;\n",structExtParam.cParam1);
+				if(structExtParam.ucNSSet)
+					printf("\tcNSSet=%s;\n",structExtParam.cNSSet);
+				if(structExtParam.ucView)
+					printf("\tcView=%s;\n",structExtParam.cView);
+
+				//Create local job mod zone, after checking and inserting new RR data.
+
+				//cName must be FQDN
+				if(structExtParam.cName[strlen(structExtParam.cName)-1]!='.')
+				{
+					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cName);
+					goto CommonExit;
+				}
+
+				//We need to determine the uZone from the FQName
+				sprintf(gcQuery,"SELECT uZone FROM tZone WHERE"
+						" uView=(SELECT uView FROM tView WHERE cLabel='%s' LIMIT 1) AND"
+						" uNSSet=(SELECT uNSSet FROM tNSSet WHERE cLabel='%s' LIMIT 1) AND"
+						" LOCATE(cZone,'%s')>0 LIMIT 1",
+							structExtParam.cView,
+							structExtParam.cNSSet,
+							structExtParam.cName);
+	
+				//debug only
+				//printf("%s\n",gcQuery);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					goto CommonExit;
+				}
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+					sscanf(field2[0],"%u",&uZone);
+				mysql_free_result(res2);
+
+				if(!uZone)
+				{
+					fprintf(stderr,"No tZone.uZone for %s %s %s\n",
+								structExtParam.cView,
+								structExtParam.cNSSet,
+								structExtParam.cName);
+					goto CommonExit;
+				}
+				//debug only
+				printf("uZone=%u\n",uZone);
+
+				//Do not add same record based on type and cName
+				//If zone owner needs multiple records she will have to use an interface to do it.
+				//Note that we will change cParam1 for existing record.
+				sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cNAME='%s' AND uZone=%u"
+						" AND uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='%s' LIMIT 1)",
+							structExtParam.cName,uZone,structExtParam.cRRType);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					goto CommonExit;
+				}
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+					sscanf(field2[0],"%u",&uResource);
+				mysql_free_result(res2);
+
+				if(uResource)
+				{
+					sprintf(gcQuery,"UPDATE tResource SET cName='%s',cParam1='%s',uModBy=1,"
+							"uModDate=UNIX_TIMESTAMP(NOW()),"
+							"uTTL=%s WHERE uResource=%u",
+							structExtParam.cName,structExtParam.cParam1,
+							structExtParam.cuTTL,uResource);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						goto CommonExit;
+					}
+				}
+				else
+				{
+					sprintf(gcQuery,"INSERT tResource SET cName='%s',cParam1='%s',uOwner=1,uCreatedBy=1,"
+							"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='unxsVZRR-FQName',"
+							"uTTL=%s,"
+							"uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='%s' LIMIT 1)",
+							structExtParam.cName,structExtParam.cParam1,structExtParam.cuTTL,
+								structExtParam.cRRType);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						goto CommonExit;
+					}
+				}
+
+			}//unxsVZRR-FQName
+		}//while
+		mysql_free_result(res);
+	
+	}//connected
+
+CommonExit:
+	//debug only
+	printf("ProcessVZJobQueue() done\n");
+	mysql_close(&gMysql);
+
+}//void ProcessVZJobQueue(void)

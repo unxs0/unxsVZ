@@ -50,6 +50,9 @@ char *crypt(const char *key, const char *salt);
 #define mysqlISP_OnHold 6
 //
 
+#define TEXT_CONNECT_ISP 0
+#define TEXT_CONNECT_APACHE 1
+#define TEXT_CONNECT_UNXSVZ 2
 
 #include <unistd.h>
 #include <locale.h>
