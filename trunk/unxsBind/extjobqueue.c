@@ -13,6 +13,7 @@ PURPOSE
 NOTES
 	Some functions herein are mainfunc.h CLI commands
 TODO
+	Most of the old code has to be totally changed it is really an awful mess.
 	uNSSset change from tNameServer
 	See TODO
 */
@@ -60,6 +61,7 @@ unsigned TextConnectExtDb(MYSQL *Mysql, unsigned uMode);
 void SerialNum(char *cSerialNum);//bind.c
 int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtmlMode, 
 					const unsigned uFromZone, const unsigned uZoneOwner);
+void UpdateSerialNum(unsigned uZone);//tzonefunc.h
 
 
 void ParseExtParams(structExtJobParameters *structExtParam, char *cJobData)
@@ -1802,10 +1804,12 @@ void CreateNewClient(structExtJobParameters *structExtParam)
 
 }//void CreateNewClient(structExtJobParameters *structExtParam)
 
-
+//We may want to add remote running, remote error and remotely queued job status to unxsVZ
+//That involves changing dashboard and tjobfunc.h left panel logic.
+//It also involves Update CLI changes and rpm update action.
 void ProcessVZJobQueue(void)
 {
-
+	unsigned uJob=0;
 	MYSQL gMysql2;
 
 	printf("ProcessVZJobQueue() start\n");
@@ -1823,30 +1827,41 @@ void ProcessVZJobQueue(void)
 		//mysqlISP_Waiting same as unxsVZ.tJobStatus.cLabel "RemoteWaiting" 10
 		sprintf(gcQuery,"SELECT cJobName,cJobData,uJob,uOwner FROM tJob WHERE"
 			" uJobStatus=%u AND uJobDate<=UNIX_TIMESTAMP(NOW())"
-			" AND cJobName LIKE 'unxsVZ%%' LIMIT 10",mysqlISP_Waiting);
-	
+			" AND cJobName LIKE 'unxsVZ%%' LIMIT 10",unxsVZ_uREMOTEWAITING);
 		mysql_query(&gMysql2,gcQuery);
 	       	if(mysql_errno(&gMysql2))
 		{
 			fprintf(stderr,"%s\n",mysql_error(&gMysql2));
-			goto CommonExit;
+			return;
 		}
 		res=mysql_store_result(&gMysql2);
 	        while((field=mysql_fetch_row(res)))
 		{
-			unsigned uJob=0;
+			uJob=0;
 			unsigned uZone=0;
 			unsigned uOwner=0;
 			unsigned uResource=0;
+			unsigned uNSSet=0;
+			char cZone[100]={""};
+
 			InitializeParams(&structExtParam);
-	
 			sscanf(field[2],"%u",&uJob);
 			sscanf(field[3],"%u",&uOwner);
-	
+
 			//unxsVZRR-FQName
 			//cName is a fully qualified DNS RR name, i.e. it ends in the zone name.
 			if(!strcmp("unxsVZRR-FQName",field[0]))
 			{	
+				//Update remote job queue running
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZRR-FQName'"
+						" WHERE uJob=%u",unxsVZ_uRUNNING,uJob);
+				mysql_query(&gMysql2,gcQuery);
+				if(mysql_errno(&gMysql2))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					goto ErrorExit;
+				}
+	
 				ParseExtParams(&structExtParam,field[1]);
 				//debug only
 				printf("%s(%u) data:\n",field[0],uJob);
@@ -1869,29 +1884,32 @@ void ProcessVZJobQueue(void)
 				if(structExtParam.cName[strlen(structExtParam.cName)-1]!='.')
 				{
 					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cName);
-					goto CommonExit;
+					goto ErrorExit;
 				}
 
 				//We need to determine the uZone from the FQName
-				sprintf(gcQuery,"SELECT uZone FROM tZone WHERE"
+				sprintf(gcQuery,"SELECT uZone,cZone,uNSSet,uView FROM tZone WHERE"
 						" uView=(SELECT uView FROM tView WHERE cLabel='%s' LIMIT 1) AND"
 						" uNSSet=(SELECT uNSSet FROM tNSSet WHERE cLabel='%s' LIMIT 1) AND"
 						" LOCATE(cZone,'%s')>0 LIMIT 1",
 							structExtParam.cView,
 							structExtParam.cNSSet,
 							structExtParam.cName);
-	
 				//debug only
 				//printf("%s\n",gcQuery);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
 					fprintf(stderr,"%s\n",mysql_error(&gMysql));
-					goto CommonExit;
+					goto ErrorExit;
 				}
 				res2=mysql_store_result(&gMysql);
 				if((field2=mysql_fetch_row(res2)))
+				{
 					sscanf(field2[0],"%u",&uZone);
+					sprintf(cZone,"%.99s",field2[1]);
+					sscanf(field2[2],"%u",&uNSSet);
+				}
 				mysql_free_result(res2);
 
 				if(!uZone)
@@ -1900,7 +1918,7 @@ void ProcessVZJobQueue(void)
 								structExtParam.cView,
 								structExtParam.cNSSet,
 								structExtParam.cName);
-					goto CommonExit;
+					goto ErrorExit;
 				}
 				//debug only
 				printf("uZone=%u\n",uZone);
@@ -1915,7 +1933,7 @@ void ProcessVZJobQueue(void)
 				if(mysql_errno(&gMysql))
 				{
 					fprintf(stderr,"%s\n",mysql_error(&gMysql));
-					goto CommonExit;
+					goto ErrorExit;
 				}
 				res2=mysql_store_result(&gMysql);
 				if((field2=mysql_fetch_row(res2)))
@@ -1933,33 +1951,65 @@ void ProcessVZJobQueue(void)
 					if(mysql_errno(&gMysql))
 					{
 						fprintf(stderr,"%s\n",mysql_error(&gMysql));
-						goto CommonExit;
+						goto ErrorExit;
 					}
+					//debug only
+					printf("Updating uResource=%u\n",uResource);
 				}
 				else
 				{
 					sprintf(gcQuery,"INSERT tResource SET cName='%s',cParam1='%s',uOwner=1,uCreatedBy=1,"
 							"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='unxsVZRR-FQName',"
 							"uTTL=%s,"
+							"uZone=%u,"
 							"uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='%s' LIMIT 1)",
 							structExtParam.cName,structExtParam.cParam1,structExtParam.cuTTL,
+								uZone,
 								structExtParam.cRRType);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
 						fprintf(stderr,"%s\n",mysql_error(&gMysql));
-						goto CommonExit;
+						goto ErrorExit;
 					}
+					uResource=mysql_insert_id(&gMysql);
+					printf("Inserting uResource=%u\n",uResource);
+				}
+				UpdateSerialNum(uZone);
+
+				//Submit zone mod job
+				if(SubmitJob("Modify",uNSSet,cZone,0,0))
+				{
+					fprintf(stderr,"SubmitJob() failed.\n");
+					goto ErrorExit;
 				}
 
+				//Update remote job queue done ok
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZRR-FQName ok'"
+						" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
+				mysql_query(&gMysql2,gcQuery);
+				if(mysql_errno(&gMysql2))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					goto ErrorExit;
+				}
+				goto NormalExit;
 			}//unxsVZRR-FQName
 		}//while
 		mysql_free_result(res);
 	
 	}//connected
 
-CommonExit:
+//Organize this later with another function
+ErrorExit:
 	//debug only
+	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsBind ext jobqueue error'"
+			" WHERE uJob=%u",unxsVZ_uERROR,uJob);
+	mysql_query(&gMysql2,gcQuery);
+	if(mysql_errno(&gMysql2))
+		fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+
+NormalExit:
 	printf("ProcessVZJobQueue() done\n");
 	mysql_close(&gMysql);
 
