@@ -40,6 +40,7 @@ char *crypt(const char *key, const char *salt);
 #define RRTYPE_NAPTR 10
 #define RRTYPE_SPF 11
 
+//Job queue
 //mysqlISP constants
 //tJob.uJobStatus
 #define mysqlISP_RemotelyQueued 7
@@ -49,6 +50,19 @@ char *crypt(const char *key, const char *salt);
 #define mysqlISP_Canceled 5
 #define mysqlISP_OnHold 6
 //
+//unxsVZ universal job status conversion in progress
+//tJobStatus contants
+#define unxsVZ_uWAITING 	1
+#define unxsVZ_uRUNNING 	2
+#define unxsVZ_uDONEOK		3
+#define unxsVZ_uDONEERROR	4
+#define unxsVZ_uSUSPENDED	5
+#define unxsVZ_uREDUNDANT	6
+#define unxsVZ_uCANCELED	7
+#define unxsVZ_uREMOTEWAITING	10
+#define unxsVZ_uERROR		14
+
+
 
 #define TEXT_CONNECT_ISP 0
 #define TEXT_CONNECT_APACHE 1
