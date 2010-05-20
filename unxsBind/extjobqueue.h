@@ -19,6 +19,8 @@ MYSQL mysqlext;
 typedef struct {
 
 	char cZone[100];
+	unsigned ucZone;
+
 	char cMainAddress[16];
 	char cTarget[100];
 	char cParkedDomains[256];
@@ -35,6 +37,37 @@ typedef struct {
 	unsigned uZoneTTL;
 	unsigned uMailServer;
 	unsigned uNSSet;
+
+	//New universal paramters
+	char cIPv4[32];
+	unsigned ucIPv4;
+
+	char cName[100];
+	unsigned ucName;
+
+	char cRRType[32];
+	unsigned ucRRType;
+
+	char cuTTL[16];
+	unsigned ucuTTL;
+
+	char cNSSet[32];
+	unsigned ucNSSet;
+
+	char cParam1[255];
+	unsigned ucParam1;
+
+	char cParam2[255];
+	unsigned ucParam2;
+
+	char cParam3[255];
+	unsigned ucParam3;
+
+	char cParam4[255];
+	unsigned ucParam4;
+
+	char cView[32];
+	unsigned ucView;
 
 	//tClient
 	unsigned uISPClient; 

@@ -69,7 +69,7 @@ int AddNewArpaZone(char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);//
 int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);
 void UpdateSerialNum(unsigned uZone);//
 unsigned TextConnectDb(void);//mysqlconnect.c
-int InformExtJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus);//extjobqueue.c
+int InformExtISPJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus);//extjobqueue.c
 
 
 void logfileLine(const char *cFunction,const char *cLogline)
@@ -1120,7 +1120,7 @@ void MasterJobQueue(char *cNameServer)
 				TextConnectExtDb(&gMysql2,0);//uMode==0 unxsISP
 				sprintf(cMsg,"iDNS.%.20s",field[1]);
 				sscanf(cp+5,"%u",&uExtJob);
-				InformExtJob(cMsg,cNameServer,
+				InformExtISPJob(cMsg,cNameServer,
 						uExtJob,mysqlISP_Deployed);
 			}
 
