@@ -125,6 +125,7 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
 				unsigned uStatus,unsigned uFailToJob);
 void htmlCloneInfo(unsigned uContainer);
+void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -1050,34 +1051,8 @@ void ExttContainerCommands(pentry entries[], int x)
 								ChangeGroup(uNewVeid,uGroup);
 						}
 
-					if(uCreateDNSJob)
-					{
-						char cunxsBindRecordJobNSSet[256]={"ns1-2.yourdomain.com"};
-						char cJobData[512];
-						char cIPv4[32]={"127.0.0.1"};
-						//Get all these from tConfiguration once.
-						char cView[32]={"external"};
-						char cuTTL[16]={"3600"};
-
-						GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,
-												uDatacenter,0,0,0);
-						sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-						res=mysql_store_result(&gMysql);
-						if((field=mysql_fetch_row(res)))
-							sprintf(cIPv4,"%.31s",field[0]);
-						mysql_free_result(res);
-						sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
-							"cuTTL=%.15s;\n"
-							"cRRType=A;\n"
-							"cParam1=%.99s;\n"
-							"cNSSet=%.31s;\n"
-							"cView=%.31s;\n",
-							cHostname,cuTTL,cIPv4,cunxsBindRecordJobNSSet,cView);
-						unxsBindRecordJob(uDatacenter,uNode,uContainer,cJobData);
-					}
+						if(uCreateDNSJob)
+							CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter);
 
 						//Get next available IP, set uIPv4
 						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
@@ -1183,33 +1158,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					}
 
 					if(uCreateDNSJob)
-					{
-						char cunxsBindRecordJobNSSet[256]={"ns1-2.yourdomain.com"};
-						char cJobData[512];
-						char cIPv4[32]={"127.0.0.1"};
-						//Get all these from tConfiguration once.
-						char cView[32]={"external"};
-						char cuTTL[16]={"3600"};
-
-						GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,
-												uDatacenter,0,0,0);
-						sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-						res=mysql_store_result(&gMysql);
-						if((field=mysql_fetch_row(res)))
-							sprintf(cIPv4,"%.31s",field[0]);
-						mysql_free_result(res);
-						sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
-							"cuTTL=%.15s;\n"
-							"cRRType=A;\n"
-							"cParam1=%.99s;\n"
-							"cNSSet=%.31s;\n"
-							"cView=%.31s;\n",
-							cHostname,cuTTL,cIPv4,cunxsBindRecordJobNSSet,cView);
-						unxsBindRecordJob(uDatacenter,uNode,uContainer,cJobData);
-					}
+						CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter);
 
 					tContainer("New container created and default properties created");
 				}//end of single container
@@ -1826,8 +1775,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
-				MYSQL_ROW field;
-
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -1862,40 +1809,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup)
 					ChangeGroup(uContainer,uGroup);
 
-				//After this is tested we need to add to "Group Start", "Multiple New" etc.
-				//Then we need to extend to remove records also.
-				//Create job for remote unxsBind to run via ext job queue.
-				if(uCreateDNSJob)
-				{
-					char cunxsBindRecordJobNSSet[256]={"ns1-2.yourdomain.com"};
-					char cJobData[512];
-					char cIPv4[32]={"127.0.0.1"};
-					//Get all these from tConfiguration once.
-					char cView[32]={"external"};
-					char cuTTL[16]={"3600"};
-
-					GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,
-												uDatacenter,0,0,0);
-					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
-						sprintf(cIPv4,"%.31s",field[0]);
-					mysql_free_result(res);
-					sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
-							"cuTTL=%.15s;\n"
-							"cRRType=A;\n"
-							"cParam1=%.99s;\n"
-							"cNSSet=%.31s;\n"
-							"cView=%.31s;\n",
-							cHostname,cuTTL,cIPv4,cunxsBindRecordJobNSSet,cView);
-					unxsBindRecordJob(uDatacenter,uNode,uContainer,cJobData);
-				}
-
-                        	guMode=0;
-
 				sprintf(gcQuery,"UPDATE tContainer SET cLabel='%s',cHostname='%s'"
 						" WHERE uContainer=%u",cWizLabel,cWizHostname,uContainer);
         			mysql_query(&gMysql,gcQuery);
@@ -1903,6 +1816,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					htmlPlainTextError(mysql_error(&gMysql));
 				sprintf(cLabel,"%.31s",cWizLabel);
 				sprintf(cHostname,"%.99s",cWizHostname);
+				if(uCreateDNSJob)
+					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter);
 				if(HostnameContainerJob(uDatacenter,uNode,uContainer))
 				{
 					uStatus=uAWAITHOST;
@@ -1983,25 +1898,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					SetContainerStatus(uContainer,71);
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					if(uCreateDNSJob)
-					{
-						char cunxsBindRecordJobNSSet[256]={"ns1-2.yourdomain.com"};
-						char cJobData[512];
-						//Get all these from tConfiguration once.
-						char cView[32]={"external"};
-						char cuTTL[16]={"3600"};
-
-						GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,
-												uDatacenter,0,0,0);
-						mysql_free_result(res);
-						sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
-							"cuTTL=%.15s;\n"
-							"cRRType=A;\n"
-							"cParam1=%.99s;\n"
-							"cNSSet=%.31s;\n"
-							"cView=%.31s;\n",
-							cHostname,cuTTL,cuWizIPv4PullDown,cunxsBindRecordJobNSSet,cView);
-						unxsBindRecordJob(uDatacenter,uNode,uContainer,cJobData);
-					}
+						CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter);
 					tContainer("IPContainerJob() Done");
 				}
 				else
@@ -4460,3 +4357,70 @@ unsigned CommonCloneContainer(
 }//unsigned CommonCloneContainer()
 
 
+void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cJobData[512];
+	char cIPv4[32]={"127.0.0.1"};
+	char cOwner[32]={"Root"};
+	//Get all these from tConfiguration once.
+	static char cView[256]={"external"};
+	static char cuTTL[256]={"3600"};
+	static char cNSSet[256]={"ns1-2.yourdomain.com"};
+	static unsigned uOnlyOnce=1;
+
+	//Sanity checks
+	if(!cHostname[0])
+		return;
+	if(!uIPv4 && !cOptionalIPv4[0])
+		return;
+
+	//If called in loop be efficient.
+	if(uOnlyOnce)
+	{
+		GetConfiguration("cunxsBindRecordJobNSSet",cNSSet,uDatacenter,0,0,0);
+		GetConfiguration("cunxsBindRecordJobTTL",cuTTL,uDatacenter,0,0,0);
+		GetConfiguration("cunxsBindRecordJobView",cView,uDatacenter,0,0,0);
+		uOnlyOnce=0;
+	}
+
+	if(cOptionalIPv4!=NULL && cOptionalIPv4[0])
+	{
+		sprintf(cIPv4,"%.31s",cOptionalIPv4);
+	}
+	else if(uIPv4)
+	{
+		sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sprintf(cIPv4,"%.31s",field[0]);
+	}
+
+	if(uOwner)
+	{
+		sprintf(gcQuery,"SELECT cLabel FROM tClient WHERE uClient=%u",uOwner);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sprintf(cOwner,"%.31s",field[0]);
+	}
+
+	mysql_free_result(res);
+	sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
+		"cuTTL=%.15s;\n"
+		"cRRType=A;\n"
+		"cParam1=%.99s;\n"
+		"cNSSet=%.31s;\n"
+		"cView=%.31s;\n"
+		"cOwner=%.31s;\n",
+			cHostname,cuTTL,cIPv4,cNSSet,cView,cOwner);
+
+	unxsBindRecordJob(uDatacenter,uNode,uContainer,cJobData);
+
+}//void CreateDNSJob()
