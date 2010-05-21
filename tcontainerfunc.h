@@ -777,10 +777,10 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: cLabel has at least one '.'!");
 				if(strstr(cLabel,"-clone"))
 					tContainer("<blink>Error</blink>: cLabel can't have '-clone'!");
-				if(strstr(cHostname,".clone"))
-					tContainer("<blink>Error</blink>: cHostname can't have '.clone'!");
 				if(cHostname[strlen(cHostname)-1]=='.')
 					tContainer("<blink>Error</blink>: cHostname can't end with a '.'!");
+				if(strstr(cHostname+(strlen(cHostname)-strlen(".cloneN")-1),".cloneN"))
+					tContainer("<blink>Error</blink>: cHostname can't end with '.clone'!");
 				if(uGroup==0 && cService3[0]==0)
 					tContainer("<blink>Error</blink>: Group is now required!");
 				if(uGroup!=0 && cService3[0]!=0)
