@@ -333,7 +333,8 @@ void BulkResourceImport(void)
 			//If we have no defined zone keep on going.
 			if(!uZone) continue;
 			uZoneOwner=uGetZoneOwner(uZone);
-			uResource=ProcessRRLine(uLineNumber,cLine,gcZone,uZone,uZoneOwner,uNSSet,guLoginClient,"BulkResourceImport()");
+			uResource=ProcessRRLine(uLineNumber,cLine,gcZone,uZone,uZoneOwner,uNSSet,guLoginClient,
+				"idnsAdmin.BulkResourceImport()");
 			if(uResource && (mysql_affected_rows(&gMysql)==1))
 			{
 				uResourceCount++;
