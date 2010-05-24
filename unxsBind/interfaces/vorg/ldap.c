@@ -35,6 +35,11 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 	if(cLogin[0]==0 || cPasswd[0]==0)
 		return(0);
 
+#ifdef DEBUG_LDAP
+	//debug only
+	char cLogEntry[256];
+#endif
+
 	LDAP *ld;
 	LDAPMessage *ldapMsg;
 	LDAPMessage *ldapEntry;
@@ -90,9 +95,9 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 		return(0);
 	}
 
-	//Initiate sync search
-	structTimeval.tv_sec=5;
+	structTimeval.tv_sec=1;
 	structTimeval.tv_usec=0;
+	//Initiate sync search
 	sprintf(cFilter,"%.99s%.32s%.99s",cFilterPrefix,cLogin,cFilterSuffix);
 	if(ldap_search_ext_s(ld,cSearchDN,LDAP_SCOPE_SUBTREE,cFilter,caAttrs,0,NULL,NULL,
 							&structTimeval,0,&ldapMsg)!=LDAP_SUCCESS)
@@ -100,7 +105,6 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 		ldapErrorLog("ldap_search_ext_s()",ld);
 		return(0);
 	}
-
 
 	//Iterate through the returned entries
 	unsigned ucPrefixPatternLen=strlen(cPrefixPattern);
@@ -114,10 +118,20 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 			{
 				for(i=0;structBervals[i]!=NULL;i++)
 				{
+#ifdef DEBUG_LDAP_L0
+	//debug only
+	sprintf(cLogEntry,"%.255s",structBervals[i]->bv_val);
+	logfileLine("structBervals",cLogEntry);
+#endif
 					if(strstr(structBervals[i]->bv_val,cLinePattern))
 					{
 						if((cp=strstr(structBervals[i]->bv_val,cPrefixPattern)))
 						{
+#ifdef DEBUG_LDAP_L0
+	//debug only
+	sprintf(cLogEntry,"%.255s",cLinePattern);
+	logfileLine("cLinePattern match",cLogEntry);
+#endif
 							if((cp2=strchr(cp+ucPrefixPatternLen,',')))
 								*cp2=0;
 							sprintf(cOrganization,"%.99s",cp+ucPrefixPatternLen);
@@ -137,11 +151,6 @@ int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization
 	ldap_msgfree(ldapMsg);
 	//Ignore errors
 	iRes=ldap_unbind_ext_s(ld,NULL,NULL);
-
-#ifdef DEBUG_LDAP
-	//debug only
-	char cLogEntry[256];
-#endif
 
 	if(cOrganization[0])
 	{
