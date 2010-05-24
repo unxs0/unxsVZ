@@ -80,7 +80,7 @@ void SerialNum(char *cSerial);
 int OrgSubmitJob(char *cCommand,unsigned uNameServerArg,char *cZoneArg,
 				unsigned uPriorityArg,long unsigned luTimeArg);
 unsigned uGetuZone(char *cZone);
-unsigned uGetuNameServer(char *cZone);
+unsigned uGetuNameServer(unsigned guZone);
 void SetZoneFieldsOn(void);
 char *cGetPendingJobs(void);
 unsigned uPTRInCIDR(unsigned uZone,char *cIPBlock);
@@ -1334,7 +1334,7 @@ unsigned uGetuZone(char *cZone)
 	unsigned uZone=0;
 	char cQuery[512];
 
-	sprintf(cQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
+	sprintf(cQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u",cZone,guView);
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1348,14 +1348,14 @@ unsigned uGetuZone(char *cZone)
 }//unsigned uGetuZone(char *cZone)
 
 
-unsigned uGetuNameServer(char *cZone)
+unsigned uGetuNameServer(unsigned guZone)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uNameServer=0;
 	char cQuery[512];
 
-	sprintf(cQuery,"SELECT uNSSet FROM tZone WHERE cZone='%s' AND uView=2",cZone);
+	sprintf(cQuery,"SELECT uNSSet FROM tZone WHERE uZone=%u AND uView=%u",guZone,guView);
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1366,7 +1366,7 @@ unsigned uGetuNameServer(char *cZone)
 
 	return(uNameServer);
 
-}//unsigned uGetuNameServer(char *cZone)
+}//unsigned uGetuNameServer(unsigned guZone)
 
 
 void SetZoneFieldsOn(void)
@@ -1503,8 +1503,9 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 	}
 	else if(!strcasecmp(cType,"CNAME"))
 	{
-		char cZone[254];
-		char cName[254];
+		MYSQL_RES *res;
+		//char cZone[256];
+		//char cName[256];
 		uRRType=5;
 		if(!cParam1[0] || cParam2[0])
 		{
@@ -1513,6 +1514,33 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 			gcMessage=cMsg;
 			return;
 		}
+
+		//Do not import non singleton CNAME
+		sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u AND uRRType=5",
+							cName,guZone);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res))
+		{
+			gcMessage="<blink>CNAME records are singleton type. RR w/the same name found.</blink>";
+			return;
+		}
+		mysql_free_result(res);
+		sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s.%s.' AND uZone=%u AND uRRType=5",
+							cName,cZoneName,guZone);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res))
+		{
+			gcMessage="<blink>CNAME records are singleton type. RR w/the same FQ name found.</blink>";
+			return;
+		}
+		mysql_free_result(res);
+
 		if(cParam1[strlen(cParam1)-1]!='.')
 		{
 		//	printf("Warning: Incorrect FQDN missing period: %s\n",cParam1);
@@ -1529,9 +1557,9 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 				//printf("Fixed: CNAME RHS fixed from cZoneName: %s\n",cParam1);
 			}
 		}
-		sprintf(cZone,"%s.",FQDomainName(cZoneName));
-		strcpy(cName,FQDomainName(cParam1));
-		if(strcmp(cName+strlen(cName)-strlen(cZone),cZone));
+		//sprintf(cZone,"%.255s.",FQDomainName(cZoneName));
+		//sprintf(cName,"%.255s",FQDomainName(cParam1));
+		//if(strcmp(cName+strlen(cName)-strlen(cZone),cZone));
 		//	printf("Warning: CNAME RHS should probably end with zone: %s\n",cLine);
 	}
 	else if(!strcasecmp(cType,"NS"))
@@ -2003,7 +2031,6 @@ char *ParseTextAreaLines2(char *cTextArea)
 char *cGetViewLabel(void)
 {
 	static char cView[100]={""};
-	unsigned uView=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
@@ -2020,8 +2047,8 @@ char *cGetViewLabel(void)
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[0],"%u",&uView);
-		sprintf(cView,"[%s]",ForeignKey("tView","cLabel",uView));
+		sscanf(field[0],"%u",&guView);
+		sprintf(cView,"[%s]",ForeignKey("tView","cLabel",guView));
 	}
 	return(cView);
 

@@ -213,11 +213,12 @@ void BulkResourceImport(void)
 			if(mysql_affected_rows(&gMysql)==1)
 			{
 				uImportCount++;
-				
+			
+/*	
 				if(uOnlyOncePerZone && !uDebug)
 				{
 					time_t luClock;
-					uNameServer=uGetuNameServer(cZone);
+					uNameServer=uGetuNameServer(guZone);
 					//Submit job for first RR. Time for now + 5 minutes
 					//This should allow for many more RRs to be added
 					//here without complicating the code. A KISS hack?
@@ -227,6 +228,7 @@ void BulkResourceImport(void)
 					OrgSubmitJob("Modify",uNameServer,cZone,0,luClock);
 					uOnlyOncePerZone=0;
 				}
+*/
 
 			}
 		}

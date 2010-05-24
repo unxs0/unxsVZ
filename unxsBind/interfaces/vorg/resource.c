@@ -739,7 +739,7 @@ unsigned uRRExists(char *cZone,char *cRRType,char *cValue,char *cParam)
 		return(0);
 	
 	sprintf(gcQuery,"SELECT uResource FROM tResource WHERE uZone=%u AND uRRType=%u AND cName='%s' AND cParam1='%s'",
-			uGetuZone(cZone)
+			guZone
 			,SelectRRType(cRRType)
 			,cValue
 			,cParam
@@ -816,7 +816,7 @@ unsigned RRCheck(void)
 				if(strstr(cName+strlen(cName)-strlen(cZone),cZone))
 				{
 					strcat(cName,".");
-					gcMessage="<blink>We have added a final period. If this correct confirm</blink>";
+					gcMessage="<blink>We have added a final period. If this is correct confirm</blink>";
 					cNameStyle="type_fields_req";
 					return(2);
 				}
@@ -884,11 +884,14 @@ unsigned uPerRRTypeCheck(void)
 			return(3);
 		}
 
-		//don't allow same name CNAME records
+		//don't allow NEW same or equivalent name CNAME records
 		if(strcmp(gcFunction,"Modify Confirm")) 
 		{
+			char *cp;
+			char cFQZone[256];
+
 			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u AND uRRType=5",
-							cName,uGetuZone(cZone));
+							cName,guZone);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -900,6 +903,41 @@ unsigned uPerRRTypeCheck(void)
 				return(3);
 			}
 			mysql_free_result(res);
+			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s.%s.' AND uZone=%u AND uRRType=5",
+							cName,cZone,guZone);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				gcMessage="<blink>CNAME records are singleton type. RR w/the FQ name found.</blink>";
+				cNameStyle="type_fields_req";
+				return(3);
+			}
+			mysql_free_result(res);
+			//Do not allow support.domain.com. to be added if support exists, and the
+			//zone is domain.com
+			sprintf(cFQZone,".%s.",cZone);
+			if((cp=strstr(cName,cFQZone)))
+			{
+				*cp=0;
+				sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND"
+						" uZone=%u AND uRRType=5",cName,guZone);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					gcMessage="<blink>CNAME records are singleton type. RR w/the NQ name"
+							" found.</blink>";
+					cNameStyle="type_fields_req";
+					return(3);
+				}
+				mysql_free_result(res);
+				*cp='.';
+			}
 		}
 		
 		if(!cParam1[0])
@@ -1823,23 +1861,46 @@ void SubmitModifyJob(void)
 	unsigned uNameServer=0;
 	char cZone[256]={""};
 
-	sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
 	time(&luClock);
 
 	sprintf(gcInputStatus,"disabled");
+	if(!guView)
+	{
+		cGetViewLabel();
+		if(!guView)
+		{
+			gcMessage="<blink>Contact admin: guView error (SubmitModifyJob-0)</blink>";
+			return;
+		}
+	}
+
 	if(cuNameServer[0])
+	{
 		sscanf(cuNameServer,"%u",&uNameServer);
+		if(!uNameServer)
+			uNameServer=uGetuNameServer(guZone);
+	}
 	else if(guZone)
-		uNameServer=uGetuNameServer(cZone);
+	{
+		uNameServer=uGetuNameServer(guZone);
+	}
+	else if(1)
+	{
+		gcMessage="<blink>Contact admin: uNameServer error (SubmitModifyJob-1)</blink>";
+		return;
+	}
 	
 	if(uNameServer)
 	{
 		UpdateSerialNum();
+		sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
 		if(OrgSubmitJob("Modify",uNameServer,cZone,0,luClock))
 			htmlPlainTextError(mysql_error(&gMysql));
 	}
 	else
-		gcMessage="<blink>Contact admin: uNameServer error (mod)</blink>";
+	{
+		gcMessage="<blink>Contact admin: uNameServer error (SubmitModifyJob-2)</blink>";
+	}
 
 }//void SubmitModifyJob(void)
 
@@ -1972,7 +2033,7 @@ void MasterFunctionSelect(void)
 							{
 								strcat(cName,".");
 								gcMessage="<blink>We have added a final period."
-										" If this correct confirm</blink>";
+										" If this is correct confirm</blink>";
 								cNameStyle="type_fields_req";
 								htmlResourceWizard(uStep);
 							}
@@ -2300,7 +2361,8 @@ unsigned idnsOnLineZoneCheck(void)
 					{
 						cp=cp+strlen(cZoneFile)+2; //2 more chars ': '
 						gcMessage=malloc(256);
-						sprintf(gcMessage,"<blink>Error: </blink> The RR has an error: %s",cp);
+						sprintf(gcMessage,"<blink>Error: </blink> The RR (or zone) has an error: %s",
+							cp);
 						uMessageSet=1;
 					}
 				}

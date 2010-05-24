@@ -88,6 +88,7 @@ extern char gcNewStep[];
 extern char gcDelStep[];
 extern char gcInputStatus[];
 extern unsigned guZone;
+extern unsigned guView;
 
 //Menu
 //
@@ -108,7 +109,7 @@ void SerialNum(char *cSerial);
 int OrgSubmitJob(char *cCommand,unsigned uNameServerArg,char *cZoneArg,
 		                                unsigned uPriorityArg,long unsigned luTimeArg);
 unsigned uGetuZone(char *cZone);
-unsigned uGetuNameServer(char *cZone);
+unsigned uGetuNameServer(unsigned guZone);
 void funcNSSetMembers(FILE *fp);
 #ifdef EXPERIMENTAL
 void funcZoneStatus(FILE *fp);
