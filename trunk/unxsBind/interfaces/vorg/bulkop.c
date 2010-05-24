@@ -163,6 +163,7 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 }//void htmlBulkOpPage()
 
 
+#define BULKIMPORT_JOB
 void BulkResourceImport(void)
 {
 	char cLine[512]={"ERROR"};
@@ -170,9 +171,16 @@ void BulkResourceImport(void)
 	unsigned uZoneOwner;
 	unsigned uNameServer;
 	unsigned uResourceCount=0,uImportCount=0;
-	unsigned uOnlyOncePerZone=1;
 	static char cMsg[128];
 	char cZone[256]={""};
+#ifdef BULKIMPORT_JOB		
+	unsigned uOnlyOncePerZone=1;
+#endif
+	//This also sets guView needed before template is spit out.
+	//When and where is guZone read. Before here of course, but where?
+	//I did not write this crap, but I have to fix it. :/
+	//guZone has is supplied via form element, or get URI
+	cGetViewLabel();
 
 	sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",guZone));
 	//htmlPlainTextError(gcQuery);
@@ -213,12 +221,13 @@ void BulkResourceImport(void)
 			if(mysql_affected_rows(&gMysql)==1)
 			{
 				uImportCount++;
-			
-/*	
+	
+#ifdef BULKIMPORT_JOB		
 				if(uOnlyOncePerZone && !uDebug)
 				{
 					time_t luClock;
 					uNameServer=uGetuNameServer(guZone);
+					//WTF does this mean:
 					//Submit job for first RR. Time for now + 5 minutes
 					//This should allow for many more RRs to be added
 					//here without complicating the code. A KISS hack?
@@ -228,7 +237,7 @@ void BulkResourceImport(void)
 					OrgSubmitJob("Modify",uNameServer,cZone,0,luClock);
 					uOnlyOncePerZone=0;
 				}
-*/
+#endif
 
 			}
 		}

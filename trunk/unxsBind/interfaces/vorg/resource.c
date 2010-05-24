@@ -523,7 +523,7 @@ void SelectResource(void)
 		sprintf(cComment,"%.255s",field[5]);
 		sprintf(cuNameServer,"%.15s",field[6]);
 		sscanf(field[7],"%u",&uResource);
-		sscanf(field[8],"%u",&guZone);
+		sscanf(field[8],"%u",&guZone);//This looks like it is not needed
 		sprintf(cParam1Label,"%.32s",field[9]);
 		sprintf(cParam1Tip,"%.99s",field[10]);
 		sprintf(cParam2Label,"%.32s",field[11]);
@@ -564,7 +564,7 @@ void SelectResource(void)
 		{
 			sprintf(cRRType,"%.32s",field[0]);
 			sprintf(cuNameServer,"%.15s",field[1]);
-			sscanf(field[2],"%u",&guZone);
+			sscanf(field[2],"%u",&guZone);//Another wierd input output. Looks like someone hacked away.
 			sprintf(cParam1Label,"%.32s",field[3]);
 			sprintf(cParam1Tip,"%.99s",field[4]);
 			sprintf(cParam2Label,"%.32s",field[5]);
