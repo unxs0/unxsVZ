@@ -1138,7 +1138,7 @@ void UpdateZone(void)
 	}
 
 	sprintf(gcQuery,"UPDATE tZone SET uSerial=%u,uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,"
-			"uZoneTTL=%u,uView=2,cMainAddress='%s',cHostmaster='%s',uModBy=%u,"
+			"uZoneTTL=%u,cHostmaster='%s',uModBy=%u,"
 			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uZone='%u' AND uSecondaryOnly=0",
 			uSerial,
 			uExpire,
@@ -1146,7 +1146,6 @@ void UpdateZone(void)
 			uTTL,
 			uRetry,
 			uZoneTTL,
-			cMainAddress,
 			cHostmaster,
 			guLoginClient,
 			guZone);

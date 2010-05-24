@@ -207,7 +207,7 @@ void BulkResourceImport(void)
 			if(!guZone) continue;
 			uZoneOwner=guOrg;
 			ProcessRRLine(cLine,cZone,guZone,uZoneOwner,uNameServer,guLoginClient,
-				"BulkResourceImport()");
+				"vdnsOrg.BulkResourceImport()");
 			if(gcMessage[0])
 				htmlBulkOp();
 			if(mysql_affected_rows(&gMysql)==1)
