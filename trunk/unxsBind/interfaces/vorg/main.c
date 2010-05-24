@@ -34,6 +34,7 @@ char gcModStep[32]={""};
 char gcNewStep[32]={""};
 char gcDelStep[32]={""};
 unsigned guZone=0;
+unsigned guView=0;
 
 //SSLLoginCookie()
 char gcCookie[1024]={""};
