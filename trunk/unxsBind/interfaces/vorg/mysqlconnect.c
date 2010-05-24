@@ -21,8 +21,8 @@ NOTES
 #include <errno.h>
 
 //This is an important setting that depends on your network setup
-//10 ms
 #define SELECT_TIMEOUT_USEC 10000
+//10 ms
 
 //TOC protos
 void ConnectDb(void);
