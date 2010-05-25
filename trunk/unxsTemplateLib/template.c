@@ -1,7 +1,7 @@
 /*
 FILE
 	template.c
-	$Id: template.c 1663 2008-06-12 15:27:47Z hus $
+	$Id$
 PURPOSE
 	Template function library to use with RAD3 back-office
 	applications that have tTemplate and tTemplateSet model.
