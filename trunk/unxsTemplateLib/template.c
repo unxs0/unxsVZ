@@ -10,9 +10,9 @@ NOTES
 	1-. A valid MYSQL gMysql structure connected to a mySQL server.
 	2-. A function called AppFunctions() that may provide
 	special {{funcName}} processing to FILE *fp;
-AUTHOR
-	(C) 2006 Gary Wallis.
- 
+AUTHOR/LEGAL
+	(C) 2006-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 #include <stdio.h>
@@ -23,7 +23,6 @@ AUTHOR
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-//#include <crypt.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
