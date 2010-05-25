@@ -1431,6 +1431,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 	//debug only
 	//printf("<u>%s</u>\n",cLine);
 
+	//Prev NAME not the same as ORIGIN RTFM lol.
 	if(cLine[0]=='\t')
 	{
 		sscanf(cLine,"%100s %255s %255s %255s %255s\n",
@@ -1440,14 +1441,12 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		else	
 			strcpy(cName,"\t");
 	}
+	//Origin
 	else if(cLine[0]=='@')
 	{
 		sscanf(cLine,"@ %100s %255s %255s %255s %255s\n",
 			cType,cParam1,cParam2,cParam3,cParam4);
-		if(cPrevcName[0])
-			sprintf(cName,"%.99s",cPrevcName);
-		else	
-			strcpy(cName,"\t");
+		sprintf(cName,"@");
 	}
 	else
 	{
