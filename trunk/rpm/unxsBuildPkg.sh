@@ -222,6 +222,7 @@ else
 		/usr/bin/scp -P $4 /usr/src/redhat/SOURCES/$LCNAME-$2.tar.gz $5:;
 		/usr/bin/scp -P $4  /usr/src/redhat/SRPMS/$LCNAME-$2-$3.src.rpm $5:;
 		/usr/bin/scp -P $4  /usr/src/redhat/RPMS/i386/$LCNAME-$2-$3.i386.rpm $5:;
+		/usr/bin/scp -P $4  /usr/src/redhat/RPMS/x86_64/$LCNAME-$2-$3.x86_64.rpm $5:;
 		/usr/bin/ssh -p $4 $5 "sudo /usr/sbin/unxsrpm-install.sh $LCNAME-$2-$3 $LCNAME-$2";
 	else
 		echo "You specified only one of the required scp args.";
