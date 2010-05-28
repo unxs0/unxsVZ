@@ -215,8 +215,6 @@ if [ $? != 0 ];then
 	ErrorExit $1;
 fi
 
-ErrorExit $1;
-
 if [ "$4" == "" ];then
 	echo "You should now sftp the tar.gz, the src.rpm and the binary rpm to your release server for install.";
 else 
@@ -229,3 +227,5 @@ else
 		echo "You specified only one of the required scp args.";
 	fi
 fi
+
+ErrorExit $1;
