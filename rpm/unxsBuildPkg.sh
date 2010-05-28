@@ -8,6 +8,29 @@
 #	For scp/ssh options remote account must have sudo setup for running
 #	/usr/sbin/unxsrpm-install.sh. The port is required even if 22.
 #
+#	You must export UNXSVZ=/home/joe/unxsVZ or
+#	export UNXSVZ=/home/joe/unxsVZ/unxsVZ for unxsVZ rpm.
+#	For unxsVZ run this script for the first level unxsVZ dir
+#
+#	We will soon fix this rpm beginners mess. And setup a correct build root envirnoment.
+#
+
+function ErrorExit {
+	if [ "$1" == "unxsVZ" ]; then
+		cd $UNXSVZ;
+		mv -i ./unxsAdmin unxsVZ/unxsAdmin;
+		mv -i ./unxsApache unxsVZ/unxsApache;
+		mv -i ./unxsBind unxsVZ/unxsBind;
+		mv -i ./unxsCIDRLib unxsVZ/unxsCIDRLib;
+		mv -i ./unxsBlog unxsVZ/unxsBlog;
+		mv -i ./unxsISP unxsVZ/unxsISP;
+		mv -i ./unxsMail unxsVZ/unxsMail;
+		mv -i ./unxsRadius unxsVZ/unxsRadius;
+		mv -i ./unxsRadiusLib unxsVZ/unxsRadiusLib;
+		mv -i ./unxsTemplateLib unxsVZ/unxsTemplateLib;
+	fi
+	exit 0;
+}
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	echo "usage $0 <unxsVZ subsystem> <version 1.0> <rpm release 1> [<scp/ssh port> <scp/ssh login@server>]";
@@ -35,34 +58,56 @@ LCNAME=`echo $1 | tr "[:upper:]" "[:lower:]"`;
 #echo "$1 $2 $3 $LCNAME";
 #exit 0;
 
-cd $UNXSVZ;
 if [ $? != 0 ];then
 	echo error 1;
 	exit 1;
 fi
 
+cd $UNXSVZ;
+
+#Special case need to move stuff out of our giant unxsVZ dir
+if [ "$1" == "unxsVZ" ]; then
+	ls unxsVZ > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		echo "unxsVZ build must be from a nested unxsVZ dir";
+		exit 1;
+	fi
+
+	mv -i unxsVZ/unxsAdmin ./;
+	mv -i unxsVZ/unxsApache ./;
+	mv -i unxsVZ/unxsBind ./;
+	mv -i unxsVZ/unxsCIDRLib ./;
+	mv -i unxsVZ/unxsBlog ./;
+	mv -i unxsVZ/unxsISP ./;
+	mv -i unxsVZ/unxsMail ./;
+	mv -i unxsVZ/unxsRadius ./;
+	mv -i unxsVZ/unxsRadiusLib ./;
+	mv -i unxsVZ/unxsTemplateLib ./;
+fi
+
+
 if [ ! -d ./$1 ];then
 	echo "No such subsystem $1 !";
-	exit 1;
+	ErrorExit $1;
 fi
 
 if [ ! -f ./$1/$LCNAME.spec ];then
 	echo "Your updated spec file should be here $1/$LCNAME.spec ";
-	exit 1;
+	ErrorExit $1;
 fi
 
 SPECVER=`grep -w "Version: ..." ./$1/$LCNAME.spec`;
 grep -w "Version: $2" ./$1/$LCNAME.spec > /dev/null 2>&1;
 if [ $? != 0 ];then
 	echo "Your spec file seems to have the wrong version number $SPECVER, you specify $2";
-	exit 1;
+	ErrorExit $1;
 fi
 
 SPECREL=`grep -w "Release: ." ./$1/$LCNAME.spec`;
 grep -w "Release: $3" ./$1/$LCNAME.spec > /dev/null 2>&1;
 if [ $? != 0 ];then
 	echo "Your spec file seems to have the wrong release number $SPECREL, you specify $3";
-	exit 1;
+	ErrorExit $1;
 fi
 
 SPECTAR=`grep "$LCNAME-.....tar.gz" ./$1/$LCNAME.spec`;
@@ -70,7 +115,7 @@ grep "$LCNAME-$2.tar.gz" ./$1/$LCNAME.spec > /dev/null 2>&1;
 if [ $? != 0 ];then
 	echo "Your spec file seems to have the wrong Source line, it should be something"
 	echo " like Source: http://unixservice.com/source/$LCNAME-$2.tar.gz";
-	exit 1;
+	ErrorExit $1;
 fi
 
 #rpm-1.19
@@ -80,7 +125,7 @@ if [ $? != 0 ];then
 	echo "Your local.h.default file seems to have the wrong line(s):"
 	echo "$LOCALVER"
 	echo "You should change the last part to rpm-$2";
-	exit 1;
+	ErrorExit $1;
 fi
 
 #Checks are done at this stage.
@@ -95,80 +140,82 @@ make clean;
 tar czvf $1.tar.gz $1/ --exclude .svn --exclude *.o
 if [ $? != 0 ];then
 	echo error 2;
-	exit 1;
+	ErrorExit $1;
 fi
 
 mv $1.tar.gz ../rpm-staging/
 if [ $? != 0 ];then
 	echo error 3;
-	exit 1;
+	ErrorExit $1;
 fi
 
 cd ../rpm-staging
 if [ $? != 0 ];then
 	echo error 4;
-	exit 1;
+	ErrorExit $1;
 fi
 
 tar xzf $1.tar.gz
 if [ $? != 0 ];then
 	echo error 5;
-	exit 1;
+	ErrorExit $1;
 fi
 
 rm $1.tar.gz
 if [ $? != 0 ];then
 	echo error 6;
-	exit 1;
+	ErrorExit $1;
 fi
 
 mv $1 $LCNAME-$2
 if [ $? != 0 ];then
 	echo error 7;
-	exit 1;
+	ErrorExit $1;
 fi
 
 tar czvf $LCNAME-$2.tar.gz $LCNAME-$2/
 if [ $? != 0 ];then
 	echo error 8;
-	exit 1;
+	ErrorExit $1;
 fi
 
 cp $LCNAME-$2.tar.gz /usr/src/redhat/SOURCES
 if [ $? != 0 ];then
 	echo error 9;
-	exit 1;
+	ErrorExit $1;
 fi
 
 cp $LCNAME-$2/$LCNAME.spec /usr/src/redhat/SPECS/$LCNAME-$2-$3.spec
 if [ $? != 0 ];then
 	echo error 10;
-	exit 1;
+	ErrorExit $1;
 fi
 
 rm -r $LCNAME-$2
 if [ $? != 0 ];then
 	echo error 11;
-	exit 1;
+	ErrorExit $1;
 fi
 
 cd /usr/src/redhat/SPECS
 if [ $? != 0 ];then
 	echo error 12;
-	exit 1;
+	ErrorExit $1;
 fi
 
 rpmbuild -ba $LCNAME-$2-$3.spec
 if [ $? != 0 ];then
 	echo error 13;
-	exit 1;
+	ErrorExit $1;
 fi
 
 cd $UNXSVZ/../rpm-staging;
 if [ $? != 0 ];then
 	echo error 14;
-	exit 1;
+	ErrorExit $1;
 fi
+
+ErrorExit $1;
 
 if [ "$4" == "" ];then
 	echo "You should now sftp the tar.gz, the src.rpm and the binary rpm to your release server for install.";

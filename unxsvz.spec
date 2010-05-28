@@ -1,10 +1,10 @@
 Summary: unxsVZ (CentOS5 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: unxsvz
-Version: 3.1
+Version: 3.3
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsvz-3.1.tar.gz
+Source: http://unixservice.com/source/unxsvz-3.3.tar.gz
 URL: http://openisp.net/openisp/unxsVZ
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -13,7 +13,9 @@ Requires: mysql >= 5.0.45, mysql-server >= 5.0.45, httpd, mod_ssl, ovzkernel, vz
 
 %description
 unxsVZ is a multiple datacenter, multiple hardware node, OpenVZ
-container manager with autonomics and advanced migration.
+container manager with autonomics, failover, auto rsync'd clones, and advanced migration.
+
+unxsVZ has internally managed rrdtool traffic graphics per datacenter, node and container.
 
 unxsVZ supports and will support more and more HA and load balancing
 functions across your private internet cloud.
@@ -21,7 +23,7 @@ functions across your private internet cloud.
 unxsVZ is already in commercial production and has proven itself very stable
 and extensible.
 
-unxVZ solves numerous internet infrastructure provisioning problems including
+unxsVZ solves numerous internet infrastructure provisioning problems including
 cost, maintenance and monitoring. 
 
 
@@ -51,6 +53,10 @@ install README /usr/local/share/unxsVZ/README.rrdtool
 install -m 500 vz_traffic_log.sh /usr/local/sbin/vz_traffic_log.sh
 install -m 500 node_traffic_log.sh /usr/local/sbin/node_traffic_log.sh
 install -m 500 datacenter_traffic_log.sh /usr/local/sbin/datacenter_traffic_log.sh
+install -m 500 datacenter_week_graph.sh /usr/local/sbin/datacenter_week_graph.sh
+install -m 500 datacenter_month_graph.sh /usr/local/sbin/datacenter_month_graph.sh
+install -m 500 datacenter_year_graph.sh /usr/local/sbin/datacenter_year_graph.sh
+install datacenter.html /var/www/unxs/html/traffic/datacenter.html
 cp -u DejaVuSansMono-Roman.ttf /usr/share/fonts/
 cd ../datacenter/
 install -m 500 allnodescp.sh /usr/sbin/allnodescp.sh
@@ -58,6 +64,8 @@ install -m 500 allnodecmd.sh /usr/sbin/allnodecmd.sh
 install -m 500 nodescmd.sh /usr/sbin/nodescmd.sh
 install -m 500 repclusterchk.sh /usr/sbin/repclusterchk.sh
 install -m 500 reppurge.sh /usr/sbin/reppurge.sh
+install -m 500 vzAllContainerCmd.sh /usr/sbin/vzAllContainerCmd.sh
+install -m 500 vzAllContainerInstall.sh /usr/sbin/vzAllContainerInstall.sh
 cd ../cron/
 cp root-crontab /usr/local/share/unxsVZ/setup/root-crontab
 cd ../openvz/
@@ -167,11 +175,17 @@ fi
 %config(noreplace) /usr/local/sbin/vz_traffic_log.sh
 %config(noreplace) /usr/local/sbin/node_traffic_log.sh
 %config(noreplace) /usr/local/sbin/datacenter_traffic_log.sh
+%config(noreplace) /usr/local/sbin/datacenter_week_graph.sh
+%config(noreplace) /usr/local/sbin/datacenter_month_graph.sh
+%config(noreplace) /usr/local/sbin/datacenter_year_graph.sh
+%config(noreplace) /var/www/unxs/html/traffic/datacenter.html
 %config(noreplace) /usr/sbin/allnodescp.sh
 %config(noreplace) /usr/sbin/allnodecmd.sh
 %config(noreplace) /usr/sbin/repclusterchk.sh
 %config(noreplace) /usr/sbin/reppurge.sh
 %config(noreplace) /usr/sbin/nodescmd.sh
+%config(noreplace) /usr/sbin/vzAllContainerCmd.sh
+%config(noreplace) /usr/sbin/vzAllContainerInstall.sh
 %dir /var/www/unxs/html/traffic/
 %dir /usr/local/share/unxsVZ/data/
 /usr/local/share/unxsVZ/data/tAuthorize.txt
@@ -196,6 +210,8 @@ fi
 
 
 %changelog
+* Fri May 28 2010 Gary Wallis <supportgrp@unixservice.com>
+- Many small changes for ease of use, especially group operations. Some new scripts.
 * Wed Sep 25 2009 Gary Wallis <supportgrp@unixservice.com>
 - Many small changes for new/mod/del and localization
 * Wed Sep 23 2009 Gary Wallis <supportgrp@unixservice.com>
