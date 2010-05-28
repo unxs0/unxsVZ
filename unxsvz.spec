@@ -41,6 +41,7 @@ cd $RPM_BUILD_DIR
 mkdir -p /var/www/unxs/html/traffic/
 mkdir -p /usr/local/share/unxsVZ/data/
 mkdir -p /usr/local/share/unxsVZ/setup/
+mkdir -p /var/lib/rrd/
 #make section
 make install
 cd agents/ubc
@@ -205,6 +206,7 @@ fi
 /usr/local/share/unxsVZ/data/tTemplateType.txt
 /usr/local/share/unxsVZ/data/tType.txt
 %dir /usr/local/share/unxsVZ/setup/
+%dir /var/lib/rrd
 /usr/local/share/unxsVZ/setup/root-crontab
 /usr/share/fonts/DejaVuSansMono-Roman.ttf
 
