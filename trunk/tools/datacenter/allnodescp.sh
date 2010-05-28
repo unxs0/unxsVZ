@@ -18,9 +18,9 @@ cNamePrefix="node";
 cNameSuffix="lax-f2";
 #uPort="2322";
 uPort="22";
-cEncAlg="blowfish";
-#this one maybe be faster
-#cEncAlg="arcfour";
+cEncAlg="arcfour";
+#this one maybe be more secure if needed and almost as fast
+#cEncAlg="blowfish";
 #-C is not a good idea for most cases.
 #
 #you may need to remove higher level domains

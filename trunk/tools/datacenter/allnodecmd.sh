@@ -19,9 +19,7 @@ cNamePrefix="node";
 cNameSuffix="vm";
 uPort="22";
 uRet=0;
-cEncAlg="blowfish";
-#This one maybe faster. "none" is not available anymore but is in scp
-#cEncAlg="arcfour";
+cEncAlg="arcfour";
 
 if [ ! "$1" ]; then
 	echo "Must specify a valid command";

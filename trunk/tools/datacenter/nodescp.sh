@@ -11,5 +11,5 @@ fi
 
 for N in $(seq $2 $3); do
 	echo node$N:;
-		scp $1 node$N:$1
+		scp -P 22 -c arcfour $1 node$N:$1
 done
