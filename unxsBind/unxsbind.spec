@@ -101,15 +101,15 @@ cd $RPM_BUILD_DIR
 %config(noreplace) /usr/sbin/mysqlcluster.sh
 #since we modify this file in the post section it seems that
 #rpm inner workings will not allow us to include the file here
-#since if we do are post changes are lost. very annoying.
+#since if we do post changes are lost. very annoying.
 #maybe an rpm expert can figure this out and provide a patch?
 #%config(noreplace) /usr/local/idns/named.conf
 #%config(noreplace) /usr/local/idns/named.d/master.zones
-/usr/local/idns/named.d/root.cache
-/usr/local/idns/named.d/master/127.0.0
-/usr/local/idns/named.d/master/localhost
-/etc/init.d/unxsbind
-/etc/cron.d/unxsbind
+#/usr/local/idns/named.d/root.cache
+#/usr/local/idns/named.d/master/127.0.0
+#/usr/local/idns/named.d/master/localhost
+#/etc/init.d/unxsbind
+#/etc/cron.d/unxsbind
 /var/www/unxs/cgi-bin/iDNS.cgi
 /var/www/unxs/cgi-bin/idnsAdmin.cgi
 /var/www/unxs/cgi-bin/idnsOrg.cgi
@@ -117,7 +117,6 @@ cd $RPM_BUILD_DIR
 /usr/sbin/tHitCollector
 /var/www/unxs/html/images/allzone.stats.png
 /var/www/unxs/html/images/green.gif
-/var/www/unxs/html/images/mrcstatus.gif
 /var/www/unxs/html/images/null.gif
 /var/www/unxs/html/images/red.gif
 /var/www/unxs/html/images/unxsbind.jpg
@@ -132,7 +131,6 @@ cd $RPM_BUILD_DIR
 /var/www/unxs/html/css/styles.css
 /usr/share/fonts/DejaVuSansMono-Roman.ttf
 %dir /var/log/named
-/var/log/named/allzone.stats.png
 
 %post
 #fix cgi group
