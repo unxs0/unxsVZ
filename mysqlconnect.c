@@ -20,7 +20,7 @@ NOTES
 #include <errno.h>
 
 //This is an important setting that depends on your network setup
-#define SELECT_TIMEOUT_USEC 100
+#define SELECT_TIMEOUT_USEC 300000
 
 //TOC protos
 void ConnectDb(void);
@@ -44,7 +44,7 @@ void ConnectDb(void)
 	}
 
 	//Now we can use AF_INET/IPPROTO_TCP cases (TCP connections via IP number)
-	char *cPort="3306";//(*1)
+	char cPort[16]={"3306"};//(*1)
 	int iSock,iConRes;
 	long lFcntlArg;
 	struct sockaddr_in sockaddr_inMySQLServer;
@@ -178,7 +178,7 @@ void TextConnectDb(void)
 	}
 
 	//Now we can use AF_INET/IPPROTO_TCP cases (TCP connections via IP number)
-	char *cPort="3306";//(*1)
+	char cPort[16]={"3306"};//(*1)
 	int iSock,iConRes;
 	long lFcntlArg;
 	struct sockaddr_in sockaddr_inMySQLServer;
