@@ -65,6 +65,11 @@ void ExttIPCommands(pentry entries[], int x)
 
                         	guMode=2000;
 				//Check entries here
+				//1.2.3.4 min
+				if(strlen(cLabel)<7)
+					tIP("cLabel too short");
+				if(!uDatacenter)
+					tIP("Must specify a uDatacenter");
                         	guMode=0;
 
 				uIP=0;
@@ -160,6 +165,10 @@ void ExttIPCommands(pentry entries[], int x)
 					mysql_free_result(res);
 					tIP("Can't modify an IP in use");
 				}
+				if(strlen(cLabel)<7)
+					tIP("cLabel too short");
+				if(!uDatacenter)
+					tIP("Must specify a uDatacenter");
                         	guMode=0;
 
 				if(uForClient)
@@ -198,17 +207,24 @@ void ExttIPButtons(void)
                 break;
 
                 case 2001:
-                        printf("<p><u>Think twice</u><br>");
+                        printf("<p><u>Think twice</u>");
+                        printf("<p>Here you can delete a single record or optionally a complete block of IPs."
+				" In the later case you specify a uOwner company to limit the deletion.");
+			printf("<p>cIPRange<br>\n");
 			printf("<input title='Optionally enter CIDR IP Range (ex. 10.0.0.1/27) for available mass deletion'"
-				" type=text name=cIPRange> cIPRange<p>\n");
+				" type=text name=cIPRange><p>\n");
 			tTablePullDownResellers(uForClient);
                         printf(LANG_NBB_CONFIRMDEL);
                 break;
 
                 case 2002:
 			printf("<p><u>Review changes</u><br>");
+			printf("Change a single record or optionally add a block of available IPs. In all cases you must"
+				" specify a uDatacenter and optionally a new company (uOwner) if your"
+				" permissions allow.<br>");
+			printf("<p>cIPRange<br>\n");
 			printf("<input title='Optionally enter CIDR IP Range (ex. 10.0.0.1/27) for available mass addition'"
-				" type=text name=cIPRange> cIPRange<p>\n");
+				" type=text name=cIPRange value='%s'><p>\n",cIPRange);
 			tTablePullDownResellers(uForClient);
                         printf(LANG_NBB_CONFIRMMOD);
                 break;
@@ -480,7 +496,8 @@ void AddIPRange(char *cIPRange)
 		mysql_free_result(res);
 		
 		sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uOwner=%u,uCreatedBy=%u,uAvailable=1"
-				",uCreatedDate=UNIX_TIMESTAMP(NOW())",cIPs[i],guCompany,guLoginClient);
+				",uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u",
+					cIPs[i],guCompany,guLoginClient,uDatacenter);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
