@@ -1,10 +1,10 @@
 Summary: unxsVZ (CentOS5 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: unxsvz
-Version: 3.3
+Version: 3.4
 Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsvz-3.3.tar.gz
+Source: http://unixservice.com/source/unxsvz-3.4.tar.gz
 URL: http://openisp.net/openisp/unxsVZ
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -75,95 +75,95 @@ cd $RPM_BUILD_DIR
 %post
 #todo this can be improved upon for version comparison. Also mainfunc.h UpdateSchema
 #	can be made smarter.
-cUpdate="0";
-grep "unxsVZ" /var/spool/cron/root > /dev/null 2>&1;
-if [ $? == 0 ];then
-#	if [ -x /var/www/unxs/cgi-bin/unxsVZ.cgi ]; then
-		cUpdate="1";
-#	fi
-fi
+if [ "$1" = "1" ]; then
+	#echo "post: Initial install";
 
-if [ -x /sbin/chkconfig ] && [ "$cUpdate" == "0" ];then
-	if [ -x /etc/init.d/httpd ];then
-		/sbin/chkconfig --level 3 httpd on
-		/etc/init.d/httpd restart > /dev/null 2>&1
-		if [ $? == 0 ];then
-			cHttpdStart="1"
-		fi
-	fi
-	if [ -x /etc/init.d/mysqld ];then
-		/sbin/chkconfig --level 3 mysqld on
-		/etc/init.d/mysqld restart > /dev/null 2>&1
-		if [ $? == 0 ];then
-			cMySQLStart="1"
-		fi
-	fi
-fi
-#
-if [ -x /var/www/unxs/cgi-bin/unxsVZ.cgi ] && [  -x /bin/rpm ] && [ "$cUpdate" == "1" ];then
-	/var/www/unxs/cgi-bin/unxsVZ.cgi UpdateSchema > /dev/null 2>&1
-fi
-#if mysqld has no root passwd and we started it then we will set it and finish the data initialize
-if [ -x /usr/bin/mysql ];then
-	if [ "$cMySQLStart" == "1" ] && [ "$cUpdate" == "0" ];then
-		echo "quit" | /usr/bin/mysql  > /dev/null 2>&1
-		if [ $? == 0 ];then
-			/usr/bin/mysqladmin -u root password 'ultrasecret' > /dev/null 2>&1
+	if [ -x /sbin/chkconfig ];then
+		if [ -x /etc/init.d/httpd ];then
+			/sbin/chkconfig --level 3 httpd on
+			/etc/init.d/httpd restart > /dev/null 2>&1
 			if [ $? == 0 ];then
-				echo "mysqld root password set to 'ultrasecret' change ASAP!"
-				export ISMROOT=/usr/local/share
-				/var/www/unxs/cgi-bin/unxsVZ.cgi Initialize ultrasecret > /dev/null 2>&1
+				cHttpdStart="1"
+			fi
+		fi
+		if [ -x /etc/init.d/mysqld ];then
+			/sbin/chkconfig --level 3 mysqld on
+			/etc/init.d/mysqld restart > /dev/null 2>&1
+			if [ $? == 0 ];then
+				cMySQLStart="1"
+			fi
+		fi
+	fi
+	#if mysqld has no root passwd and we started it then we will set it and finish the data initialize
+	if [ -x /usr/bin/mysql ];then
+		if [ "$cMySQLStart" == "1" ];then
+			echo "quit" | /usr/bin/mysql  > /dev/null 2>&1
+			if [ $? == 0 ];then
+				/usr/bin/mysqladmin -u root password 'ultrasecret' > /dev/null 2>&1
 				if [ $? == 0 ];then
-					cInitialize="1"
+					echo "mysqld root password set to 'ultrasecret' change ASAP!"
+					export ISMROOT=/usr/local/share
+					/var/www/unxs/cgi-bin/unxsVZ.cgi Initialize ultrasecret > /dev/null 2>&1
+					if [ $? == 0 ];then
+						cInitialize="1"
+					fi
 				fi
 			fi
 		fi
 	fi
-fi
-#let installer know what was done.
-if [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
-			&& [ "$cInitialize" == "1" ] && [ "$cUpdate" == "0" ];then
-	echo "unxsVZ has been installed, initialized and, httpd and mysqld have been started.";	
-	echo "You can proceed to login to your unxsVZ interfaces with your browser.";	
-elif [ "$cUpdate" == "1" ]; then
+	#let installer know what was done.
+	if [ "$cHttpdStart" == "1" ] && [ "$cMySQLStart" == "1" ] \
+				&& [ "$cInitialize" == "1" ];then
+		echo "unxsVZ has been installed, initialized and, httpd and mysqld have been started.";	
+		echo "You can proceed to login to your unxsVZ interfaces with your browser.";	
+	else 
+		echo "It appears that one or more manual operations may be needed to finish";
+		echo "your unxsVZ installation.";
+		if [ "$cHttpdStart" != "1" ]; then
+			echo "";
+			echo "WARNING: Your httpd server was not started, run:";
+			echo "/etc/init.d/httpd configtest";
+			echo "Then check your httpd configuration and then:";
+			echo "/etc/init.d/httpd start";
+		fi
+		if [ "$cMySQLStart" != "1" ]; then
+			echo "";
+			echo "WARNING: Your mysqld server was not started, run:";
+			echo "/etc/init.d/mysqld start";
+			echo "Debug any problems, then, if you do not already know your MySQL root password:";
+			echo "/usr/bin/mysqladmin -u root password '<mysql-root-passwd>'";	
+		fi
+		if [ "$cInitialize" != "1" ]; then
+			echo "";
+			echo "WARNING: Your unxsVZ database was not initialized, run:";
+			echo "export ISMROOT=/usr/local/share";
+			echo "/var/www/unxs/cgi-bin/unxsVZ.cgi Initialize <mysql-root-passwd>";	
+			echo "Debug any problems, check via the mysql CLI, then if needed try again.";
+		fi
+	fi
+	#cat unxsVZ crontab into root crontab
+	if [ -f /usr/local/share/unxsVZ/setup/root-crontab ] && [ -d /var/spool/cron ];then
+		#do not add again
+		#this section has to be changed as well as the install system
+		#see unxsBind unxsbind.spec and /etc/cron.d/unxsbind
+		grep "unxsVZ" /var/spool/cron/root > /dev/null 2>&1
+		if [ $? != 0 ] ;then
+			cat /usr/local/share/unxsVZ/setup/root-crontab >> /var/spool/cron/root;
+		fi
+	fi
+	#new version of rrdtool needs fontconfig ttf font, it was installed
+	#but we need to load into cache
+	if [ -x /usr/bin/fc-cache ];then
+		/usr/bin/fc-cache > /dev/null 2>&1
+	fi
+
+elif [ "$1" = "2" ]; then
+	#echo "post: Update";
+	#update schema
+	if [ -x /var/www/unxs/cgi-bin/unxsVZ.cgi ];then
+		/var/www/unxs/cgi-bin/unxsVZ.cgi UpdateSchema > /dev/null 2>&1
+	fi
 	echo "unxsVZ has been upgraded.";	
-else 
-	echo "It appears that one or more manual operations may be needed to finish";
-	echo "your unxsVZ installation.";
-	if [ "$cHttpdStart" != "1" ]; then
-		echo "";
-		echo "WARNING: Your httpd server was not started, run:";
-		echo "/etc/init.d/httpd configtest";
-		echo "Then check your httpd configuration and then:";
-		echo "/etc/init.d/httpd start";
-	fi
-	if [ "$cMySQLStart" != "1" ]; then
-		echo "";
-		echo "WARNING: Your mysqld server was not started, run:";
-		echo "/etc/init.d/mysqld start";
-		echo "Debug any problems, then, if you do not already know your MySQL root password:";
-		echo "/usr/bin/mysqladmin -u root password '<mysql-root-passwd>'";	
-	fi
-	if [ "$cInitialize" != "1" ]; then
-		echo "";
-		echo "WARNING: Your unxsVZ database was not initialized, run:";
-		echo "export ISMROOT=/usr/local/share";
-		echo "/var/www/unxs/cgi-bin/unxsVZ.cgi Initialize <mysql-root-passwd>";	
-		echo "Debug any problems, check via the mysql CLI, then if needed try again.";
-	fi
-fi
-#cat unxsVZ crontab into root crontab
-if [ -f /usr/local/share/unxsVZ/setup/root-crontab ] && [ -d /var/spool/cron ];then
-	#do not add again
-	grep "unxsVZ" /var/spool/cron/root > /dev/null 2>&1
-	if [ $? != 0 ] && [ "$cUpdate" == "0" ];then
-		cat /usr/local/share/unxsVZ/setup/root-crontab >> /var/spool/cron/root;
-	fi
-fi
-#new version of rrdtool needs fontconfig ttf font, it was installed
-#but we need to load into cache
-if [ -x /usr/bin/fc-cache ];then
-	/usr/bin/fc-cache > /dev/null 2>&1
 fi
 
 %clean
@@ -212,6 +212,8 @@ fi
 
 
 %changelog
+* Wed Jun 2 2010 Gary Wallis <supportgrp@unixservice.com>
+- Changed post section to use update or install conditions.
 * Fri May 28 2010 Gary Wallis <supportgrp@unixservice.com>
 - Many small changes for ease of use, especially group operations. Some new scripts.
 * Wed Sep 25 2009 Gary Wallis <supportgrp@unixservice.com>

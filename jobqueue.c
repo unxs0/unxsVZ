@@ -86,8 +86,8 @@ void GetConfiguration(const char *cName,char *cValue,
 		unsigned uHtml);
 
 //file scoped. fix this someday
-static unsigned guNode=0;
-static unsigned guDatacenter=0;
+static unsigned gfuNode=0;
+static unsigned gfuDatacenter=0;
 
 
 //Using the local server hostname get max 100 jobs for this node from the tJob queue.
@@ -422,8 +422,8 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		unsigned uContainer,char *cJobName,char *cJobData)
 {
 	//static unsigned uCount=0;
-	guNode=uNode;
-	guDatacenter=uDatacenter;
+	gfuNode=uNode;
+	gfuDatacenter=uDatacenter;
 
 	//Some jobs may take quite some time, we need to make sure we don't run again!
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=2,cRemoteMsg='Running',uModBy=1,"
@@ -1131,10 +1131,10 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//and others specific. But is slower than the other option with what maybe
 	//very large numbers of per node tConfiguration entries.
 	char cSSHOptions[256]={""};
-	GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,guNode,0,0);//First try node specific
+	GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSSHOptions[0])
 	{
-		GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSSHOptions[0])
 			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 	}
@@ -1144,10 +1144,10 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		cSSHOptions[0]=0;
 	}
 	char cSCPOptions[256]={""};
-	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,guNode,0,0);//First try node specific
+	GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSCPOptions[0])
 	{
-		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSCPOptions[0])
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
@@ -1595,10 +1595,10 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 
 	char cSnapshotDir[256]={""};
-	GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,guNode,0,0);//First try node specific
+	GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSnapshotDir[0])
 	{
-		GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSnapshotDir[0])
 			GetConfiguration("cSnapshotDir",cSnapshotDir,0,0,0,0);//Last try global
 	}
@@ -1964,10 +1964,10 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//and others specific. But is slower than the other option with what maybe
 	//very large numbers of per node tConfiguration entries.
 	char cSSHOptions[256]={""};
-	GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,guNode,0,0);//First try node specific
+	GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSSHOptions[0])
 	{
-		GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSSHOptions[0])
 			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 	}
@@ -1976,10 +1976,10 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		sprintf(cSSHOptions,"-p 22 -c arcfour");
 
 	char cSCPOptions[256]={""};
-	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,guNode,0,0);//First try node specific
+	GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSCPOptions[0])
 	{
-		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSCPOptions[0])
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
@@ -1988,10 +1988,10 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
 
 	char cSnapshotDir[256]={""};
-	GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,guNode,0,0);//First try node specific
+	GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSnapshotDir[0])
 	{
-		GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSnapshotDir[0])
 			GetConfiguration("cSnapshotDir",cSnapshotDir,0,0,0,0);//Last try global
 	}
@@ -2545,17 +2545,17 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 
 	//5-. copy to all same datacenter nodes nicely (hopefully on GB 2nd NIC internal lan.)
 	char cSCPOptions[256]={""};
-	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,guNode,0,0);//First try node specific
+	GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSCPOptions[0])
 	{
-		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSCPOptions[0])
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
 	//Default for less conditions below
 	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
-	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",guDatacenter,guNode);
+	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",gfuDatacenter,gfuNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2650,17 +2650,17 @@ void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData)
 
 	//3-. copy to all same datacenter nodes nicely (hopefully on GB 2nd NIC internal lan.)
 	char cSCPOptions[256]={""};
-	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,guNode,0,0);//First try node specific
+	GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSCPOptions[0])
 	{
-		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSCPOptions[0])
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
 	//Default for less conditions below
 	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
-	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",guDatacenter,guNode);
+	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",gfuDatacenter,gfuNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{

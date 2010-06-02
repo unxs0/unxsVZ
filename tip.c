@@ -31,10 +31,13 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//uDatacenter: Belongs to this Datacenter
+static unsigned uDatacenter=0;
+static char cuDatacenterPullDown[256]={""};
 
 
 
-#define VAR_LIST_tIP "tIP.uIP,tIP.cLabel,tIP.uAvailable,tIP.uOwner,tIP.uCreatedBy,tIP.uCreatedDate,tIP.uModBy,tIP.uModDate"
+#define VAR_LIST_tIP "tIP.uIP,tIP.cLabel,tIP.uAvailable,tIP.uOwner,tIP.uCreatedBy,tIP.uCreatedDate,tIP.uModBy,tIP.uModDate,tIP.uDatacenter"
 
  //Local only
 void Insert_tIP(void);
@@ -84,6 +87,13 @@ void ProcesstIPVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uDatacenter"))
+			sscanf(entries[i].val,"%u",&uDatacenter);
+		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
+		{
+			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
+			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
+		}
 
 	}
 
@@ -189,6 +199,7 @@ void tIP(const char *cResult)
 		sscanf(field[5],"%lu",&uCreatedDate);
 		sscanf(field[6],"%u",&uModBy);
 		sscanf(field[7],"%lu",&uModDate);
+		sscanf(field[8],"%u",&uDatacenter);
 
 		}
 
@@ -282,6 +293,12 @@ void tIPInput(unsigned uMode)
 		YesNoPullDown("uAvailable",uAvailable,1);
 	else
 		YesNoPullDown("uAvailable",uAvailable,0);
+//uDatacenter
+	OpenRow(LANG_FL_tContainer_uDatacenter,"black");
+	if(guPermLevel>=7 && uMode)
+		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+	else
+		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
 //uOwner
 	OpenRow(LANG_FL_tIP_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
@@ -382,12 +399,13 @@ void DeletetIP(void)
 void Insert_tIP(void)
 {
 	sprintf(gcQuery,"INSERT INTO tIP SET uIP=%u,cLabel='%s',uAvailable=%u,uOwner=%u,uCreatedBy=%u,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u",
 			uIP
 			,TextAreaSave(cLabel)
 			,uAvailable
 			,uOwner
 			,uCreatedBy
+			,uDatacenter
 			);
 
 	MYSQL_RUN;
@@ -398,11 +416,12 @@ void Insert_tIP(void)
 void Update_tIP(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tIP SET uIP=%u,cLabel='%s',uAvailable=%u,uModBy=%u,"
-				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+				"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u WHERE _rowid=%s",
 			uIP
 			,TextAreaSave(cLabel)
 			,uAvailable
 			,uModBy
+			,uDatacenter
 			,cRowid);
 
 	MYSQL_RUN;
@@ -467,7 +486,16 @@ void tIPList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uIP<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uAvailable<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uIP"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>uAvailable"
+		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 
 
@@ -503,11 +531,12 @@ void tIPList(void)
 			ctime_r(&luTime7,cBuf7);
 		else
 			sprintf(cBuf7,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
 			,cBuf2
+			,ForeignKey("tDatacenter","cLabel",strtoul(field[8],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
 			,cBuf5
@@ -525,7 +554,7 @@ void tIPList(void)
 
 void CreatetIP(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tIP ( uIP INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uAvailable INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tIP ( uIP INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uAvailable INT UNSIGNED NOT NULL DEFAULT 0, uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
