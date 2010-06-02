@@ -8,15 +8,15 @@ PURPOSE
 	table tx.c files and their schema independent txfunc.h files -until
 	you mess with them in non standard ways...lol.
 	
-LEGAL
-	(C) 2001-2009 Unixservice, LLC. All Rights Reserved. 
-	GPLv2 LICENSE file should be included in distribution.
+AUTHOR/LEGAL
+	(C) 2001-2010 Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 OTHER
-	Only tested on CentOS 5 Linux and Firefox browser.
-HELP
+	Only tested on CentOS 5 and Firefox browser (3.0.19).
+FREE HELP
 	support @ openisp . net
 	supportgrp @ unixservice . com
-
+	Join mailing list: https://lists.openisp.net/mailman/listinfo/unxsvz
 */
 
 #include "mysqlrad.h"
@@ -635,10 +635,10 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tDatacenter") && strcmp(gcFunction,"tDatacenterTools") &&
 			strcmp(gcFunction,"tDatacenterList"))
-		  printf(">\n");
+		printf(">\n");
 	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tDatacenter' href=unxsVZ.cgi?gcFunction=tDatacenter>tDatacenter</a>\n");
+		printf(" id=current>\n");
+	  printf("\t\t\t<a title='Datacenter' href=unxsVZ.cgi?gcFunction=tDatacenter>tDatacenter</a>\n");
 	}
 	//tNode
 	if(guPermLevel>=7)
@@ -649,7 +649,7 @@ void Header_ism3(char *title, int js)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Hardware Node' href=unxsVZ.cgi?gcFunction=tNode>tNode</a>\n");
+	  printf("\t\t\t<a title='Hardware node' href=unxsVZ.cgi?gcFunction=tNode>tNode</a>\n");
 	}
 	//tContainer
 	if(guPermLevel>=7)

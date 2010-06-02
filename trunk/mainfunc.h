@@ -912,6 +912,7 @@ void UpdateSchema(void)
 	MYSQL_ROW field;
 	unsigned uVeth=0;
 	unsigned uSource=0;
+	unsigned uIPDatacenter=0;
 	unsigned uIncorrectSource=0;
 	unsigned uIncorrectVeth=0;
 	unsigned uSourceIndex=0;
@@ -949,6 +950,19 @@ void UpdateSchema(void)
 			if(!strcmp(field[2],"YES"))
 				uIncorrectSource=1;
 		}
+	}
+       	mysql_free_result(res);
+
+	sprintf(gcQuery,"SHOW COLUMNS IN tIP");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uDatacenter"))
+			uIPDatacenter=1;
 	}
        	mysql_free_result(res);
 
@@ -1195,6 +1209,16 @@ void UpdateSchema(void)
 			printf("%s\n",mysql_error(&gMysql));
 		else
 			printf("Added INDEX cLabel tGlossary\n");
+	}
+
+	if(!uIPDatacenter)
+	{
+		sprintf(gcQuery,"ALTER TABLE tIP ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uDatacenter to tIP\n");
 	}
 
 	printf("UpdateSchema(): End\n");

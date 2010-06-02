@@ -654,7 +654,24 @@ void tContainerList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uContainer<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>cHostname<td><font face=arial,helvetica color=white>uVeth<td><font face=arial,helvetica color=white>uIPv4<td><font face=arial,helvetica color=white>uOSTemplate<td><font face=arial,helvetica color=white>uConfig<td><font face=arial,helvetica color=white>uNameserver<td><font face=arial,helvetica color=white>uSearchdomain<td><font face=arial,helvetica color=white>uDatacenter<td><font face=arial,helvetica color=white>uNode<td><font face=arial,helvetica color=white>uStatus<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uContainer"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>cHostname"
+		"<td><font face=arial,helvetica color=white>uVeth"
+		"<td><font face=arial,helvetica color=white>uIPv4"
+		"<td><font face=arial,helvetica color=white>uOSTemplate"
+		"<td><font face=arial,helvetica color=white>uConfig"
+		"<td><font face=arial,helvetica color=white>uNameserver"
+		"<td><font face=arial,helvetica color=white>uSearchdomain"
+		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>uNode"
+		"<td><font face=arial,helvetica color=white>uStatus"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 
 
@@ -684,7 +701,8 @@ void tContainerList(void)
 			ctime_r(&luTime16,cBuf16);
 		else
 			sprintf(cBuf16,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s"
+			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
