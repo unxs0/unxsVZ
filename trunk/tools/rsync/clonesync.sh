@@ -70,7 +70,7 @@ fi
 #/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxzlH --delete \
 #no compression
 #/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxlH --delete \
-#no verbose and no encryption
+#no verbose and fastest encryption
 /usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p 22' -axlH --delete \
 			--exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
