@@ -252,11 +252,16 @@ void tDatacenterInput(unsigned uMode)
 	{
 		char cConfigBuffer[256]={""};
 		char cConfigBuffer2[256]={"/traffic/datacenter.html"};
-		GetConfiguration("cDatacenterTrafficDirURL",cConfigBuffer,uDatacenter,0,0,0);
+		char cGetWhat[64];
+
+		sprintf(cGetWhat,"%.32s-cDatacenterTrafficPNG",cLabel);
+		GetConfiguration(cGetWhat,cConfigBuffer,0,0,0,0);
 		if(!cConfigBuffer[0])
 			GetConfiguration("cDatacenterTrafficDirURL",cConfigBuffer,0,0,0,0);
 		if(cConfigBuffer[0])
 		{
+			sprintf(cGetWhat,"%.32s-cDatacenterHtmlURL",cLabel);
+			GetConfiguration(cGetWhat,cConfigBuffer2,0,0,0,0);
 	
 			OpenRow("Graph","black");
 			printf("<a href=%s><img src=%s border=0></a>\n",cConfigBuffer2,cConfigBuffer);
