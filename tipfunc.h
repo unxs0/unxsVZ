@@ -18,6 +18,7 @@ void tIPNavList(unsigned uAvailable);
 static unsigned uForClient=0;
 static char cForClientPullDown[256]={""};
 static char cIPRange[32]={""};
+static char cSearch[32]={""};
 
 void AddIPRange(char *cIPRange);
 void DelIPRange(char *cIPRange);
@@ -36,6 +37,10 @@ void ExtProcesstIPVars(pentry entries[], int x)
 		{
 			sprintf(cForClientPullDown,"%.255s",entries[i].val);
 			uForClient=ReadPullDown("tClient","cLabel",cForClientPullDown);
+		}
+		else if(!strcmp(entries[i].name,"cSearch"))
+		{
+			sprintf(cSearch,"%.31s",TextAreaSave(entries[i].val));
 		}
 	}
 }//void ExtProcesstIPVars(pentry entries[], int x)
@@ -203,6 +208,8 @@ void ExttIPButtons(void)
                 case 2000:
 			printf("<p><u>Enter/mod data</u><br>");
 			tTablePullDownResellers(uForClient);
+			if(cSearch[0])
+				printf("<input type=hidden name=cSearch value='%s'>",cSearch);
                         printf(LANG_NBB_CONFIRMNEW);
                 break;
 
@@ -214,6 +221,8 @@ void ExttIPButtons(void)
 			printf("<input title='Optionally enter CIDR IP Range (ex. 10.0.0.1/27) for available mass deletion'"
 				" type=text name=cIPRange><p>\n");
 			tTablePullDownResellers(uForClient);
+			if(cSearch[0])
+				printf("<input type=hidden name=cSearch value='%s'>",cSearch);
                         printf(LANG_NBB_CONFIRMDEL);
                 break;
 
@@ -226,6 +235,8 @@ void ExttIPButtons(void)
 			printf("<input title='Optionally enter CIDR IP Range (ex. 10.0.0.1/27) for available mass addition'"
 				" type=text name=cIPRange value='%s'><p>\n",cIPRange);
 			tTablePullDownResellers(uForClient);
+			if(cSearch[0])
+				printf("<input type=hidden name=cSearch value='%s'>",cSearch);
                         printf(LANG_NBB_CONFIRMMOD);
                 break;
 
@@ -238,10 +249,13 @@ void ExttIPButtons(void)
 				" To add an initial range use [New], then [Modify], enter new CIDR range."
 				"<p>You can also delete available IPs <i>en masse</i> via the cIPRange at the [Delete]"
 				" stage.");
-			if(uIP)
-				tIPReport();
+			printf("<p><u>Filter by cLabel</u><br>");
+			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
+					" name=cSearch value='%s'>",cSearch);
 			tIPNavList(0);
 			tIPNavList(1);
+			if(uIP)
+				tIPReport();
 	}
 	CloseFieldSet();
 
@@ -265,6 +279,10 @@ void ExttIPGetHook(entry gentries[], int x)
 			sscanf(gentries[i].val,"%u",&uIP);
 			guMode=6;
 		}
+		else if(!strcmp(gentries[i].name,"cSearch"))
+		{
+			sprintf(cSearch,"%.31s",gentries[i].val);
+		}
 	}
 	tIP("");
 
@@ -273,7 +291,10 @@ void ExttIPGetHook(entry gentries[], int x)
 
 void ExttIPSelect(void)
 {
-	ExtSelectPublic("tIP",VAR_LIST_tIP);
+	if(cSearch[0])
+		ExtSelectSearchPublic("tIP",VAR_LIST_tIP,"cLabel",cSearch);
+	else
+		ExtSelectPublic("tIP",VAR_LIST_tIP);
 
 }//void ExttIPSelect(void)
 
@@ -355,13 +376,28 @@ void tIPNavList(unsigned uAvailable)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uNumRows=0;
+	unsigned uMySQLNumRows=0;
+#define uLIMIT 32
 
-	if(guCompany==1)
-		sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u ORDER BY cLabel",
-				uAvailable);
+	if(guPermLevel>11)
+	{
+		if(cSearch[0])
+			sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND cLabel"
+					" LIKE '%s%%' ORDER BY cLabel",uAvailable,cSearch);
+		else
+			sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u ORDER BY cLabel",uAvailable);
+	}
 	else
-		sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND uOwner=%u ORDER BY cLabel",
+	{
+		if(cSearch[0])
+			sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND uOwner=%u"
+					" AND cLabel LIKE '%s%%' ORDER BY cLabel",
+				uAvailable,guCompany,cSearch);
+		else
+			sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND uOwner=%u ORDER BY cLabel",
 				uAvailable,guCompany);
+	}
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -372,17 +408,29 @@ void tIPNavList(unsigned uAvailable)
         }
 
         res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	if((uMySQLNumRows=mysql_num_rows(res)))
 	{	
 		if(uAvailable)
-        		printf("<p><u>Available tIPNavList</u><br>\n");
+        		printf("<p><u>Available tIPNavList(%u)</u><br>\n",uMySQLNumRows);
 		else
-        		printf("<p><u>Used tIPNavList</u><br>\n");
+        		printf("<p><u>Used tIPNavList(%u)</u><br>\n",uMySQLNumRows);
 
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP"
+		{
+			if(cSearch[0])
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP"
+					"&uIP=%s&cSearch=%s>%s</a><br>\n",field[0],
+						cURLEncode(cSearch),field[1]);
+			else
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP"
 					"&uIP=%s>%s</a><br>\n",field[0],field[1]);
+			if(++uNumRows>uLIMIT)
+			{
+				printf("(Only %u IPs shown use search/filters to shorten list.)<br>\n",uLIMIT);
+				break;
+			}
+		}
 	}
         mysql_free_result(res);
 
