@@ -61,6 +61,10 @@ void ExttIPCommands(pentry entries[], int x)
                         	guMode=2000;
 	                        tIP(LANG_NB_CONFIRMNEW);
 			}
+			else
+			{
+				tIP("Not allowed by permissions settings");
+			}
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
@@ -85,6 +89,10 @@ void ExttIPCommands(pentry entries[], int x)
 				uModDate=0;//Never modified
 				NewtIP(0);
 			}
+			else
+			{
+				tIP("Not allowed by permissions settings");
+			}
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
@@ -104,6 +112,10 @@ void ExttIPCommands(pentry entries[], int x)
 				}
 	                        guMode=2001;
 				tIP(LANG_NB_CONFIRMDEL);
+			}
+			else
+			{
+				tIP("Not allowed by permissions settings");
 			}
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
@@ -133,6 +145,10 @@ void ExttIPCommands(pentry entries[], int x)
 					DeletetIP();
 				}
 			}
+			else
+			{
+				tIP("Not allowed by permissions settings");
+			}
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
@@ -153,11 +169,15 @@ void ExttIPCommands(pentry entries[], int x)
 	                        guMode=2002;
 				tIP(LANG_NB_CONFIRMMOD);
 			}
+			else
+			{
+				tIP("Not allowed by permissions settings");
+			}
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstIPVars(entries,x);
-			if((uAllowMod(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
+			if((uAllowMod(uOwner,uCreatedBy)) || guPermLevel>=11)
 			{
                         	guMode=2002;
 				sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uIP);
@@ -193,6 +213,10 @@ void ExttIPCommands(pentry entries[], int x)
 					AddIPRange(cIPRange);
 				uModBy=guLoginClient;
 				ModtIP();
+			}
+			else
+			{
+				tIP("Not allowed by permissions settings");
 			}
                 }
 	}
