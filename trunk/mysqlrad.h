@@ -138,6 +138,7 @@ void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearch
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
 void ExtListSelectPublic(const char *cTable,const char *cVarList);
 void ExtSelectPublic(const char *cTable,const char *cVarList);
+void ExtSelectSearchPublic(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch);
 void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow);
 void CloneReport(const char *cOptionalMsg);
 

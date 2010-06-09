@@ -2325,9 +2325,16 @@ void ExtSelect(const char *cTable,const char *cVarList)
 //For those tables you anybody to be able to read. Like tStatus.
 void ExtSelectPublic(const char *cTable,const char *cVarList)
 {
-		sprintf(gcQuery,"SELECT %s FROM %s",cVarList,cTable);
+	sprintf(gcQuery,"SELECT %s FROM %s",cVarList,cTable);
 
 }//void ExtSelectPublic(...)
+
+
+void ExtSelectSearchPublic(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch)
+{
+	sprintf(gcQuery,"SELECT %s FROM %s WHERE %s LIKE '%s%%' ORDER BY %s",
+					cVarList,cTable,cSearchField,cSearch,cSearchField);
+}//void ExtSelectSearchPublic(...)
 
 
 void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch)
