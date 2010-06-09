@@ -2505,14 +2505,22 @@ void PrintMXList(FILE *zfp,char *cuMailServers)
 
 void CreatetResourceTest(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tResourceTest ( uResource INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-			" cName VARCHAR(100) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner),"
-			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			" uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			" uTTL INT UNSIGNED NOT NULL DEFAULT 0, uRRType INT UNSIGNED NOT NULL DEFAULT 0,"
-			" cParam1 VARCHAR(255) NOT NULL DEFAULT '', cParam2 VARCHAR(255) NOT NULL DEFAULT '',"
-			" cComment TEXT NOT NULL DEFAULT '', uZone INT UNSIGNED NOT NULL DEFAULT 0,index (uZone),"
-			" cParam3 VARCHAR(255) NOT NULL DEFAULT '', cParam4 VARCHAR(255) NOT NULL DEFAULT '' )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tResourceTest ( "
+			"uResource INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cName VARCHAR(100) NOT NULL DEFAULT '',"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uTTL INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uRRType INT UNSIGNED NOT NULL DEFAULT 0,"
+			"cParam1 VARCHAR(255) NOT NULL DEFAULT '',"
+			"cParam2 VARCHAR(255) NOT NULL DEFAULT '',"
+			"cComment TEXT NOT NULL DEFAULT '',"
+			"uZone INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uZone),"
+			"cParam3 VARCHAR(255) NOT NULL DEFAULT '',"
+			"cParam4 VARCHAR(255) NOT NULL DEFAULT '' )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2529,9 +2537,9 @@ void PrepareTestData(void)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 
-	sprintf(gcQuery,"INSERT INTO tResourceTest (uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,"
+	sprintf(gcQuery,"INSERT INTO tResourceTest (cName,uOwner,uCreatedBy,uCreatedDate,uModBy,"
 			"uModDate,uTTL,uRRType,cParam1,cParam2,cParam3,cParam4,cComment,uZone) "
-			"SELECT uResource,cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
+			"SELECT cName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate,uTTL,uRRType,"
 			"cParam1,cParam2,cParam3,cParam4,cComment,uZone FROM tResource WHERE "
 			"uZone=%u",guZone);
 	mysql_query(&gMysql,gcQuery);
