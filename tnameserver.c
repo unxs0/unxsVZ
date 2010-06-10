@@ -7,6 +7,9 @@ PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tnameserverfunc.h while 
 	RAD is still to be used.
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 
@@ -22,17 +25,19 @@ static char cLabel[33]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//uDatacenter: Belongs to this Datacenter
+static unsigned uDatacenter=0;
+static char cuDatacenterPullDown[256]={""};
 
 
 
-#define VAR_LIST_tNameserver "tNameserver.uNameserver,tNameserver.cLabel,tNameserver.uOwner,tNameserver.uCreatedBy,tNameserver.uCreatedDate,tNameserver.uModBy,tNameserver.uModDate"
+#define VAR_LIST_tNameserver "tNameserver.uNameserver,tNameserver.cLabel,tNameserver.uOwner,tNameserver.uCreatedBy,tNameserver.uCreatedDate,tNameserver.uModBy,tNameserver.uModDate,tNameserver.uDatacenter"
 
  //Local only
 void Insert_tNameserver(void);
@@ -75,6 +80,13 @@ void ProcesstNameserverVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uDatacenter"))
+			sscanf(entries[i].val,"%u",&uDatacenter);
+		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
+		{
+			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
+			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
+		}
 
 	}
 
@@ -179,6 +191,7 @@ void tNameserver(const char *cResult)
 		sscanf(field[4],"%lu",&uCreatedDate);
 		sscanf(field[5],"%u",&uModBy);
 		sscanf(field[6],"%lu",&uModDate);
+		sscanf(field[7],"%u",&uDatacenter);
 
 		}
 
@@ -266,6 +279,12 @@ void tNameserverInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
 	}
+//uDatacenter
+	OpenRow(LANG_FL_tContainer_uDatacenter,"black");
+	if(guPermLevel>=7 && uMode)
+		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+	else
+		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
 //uOwner
 	OpenRow(LANG_FL_tNameserver_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
@@ -337,10 +356,8 @@ void NewtNameserver(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uNameserver=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tNameserver",uNameserver);
 	unxsVZLog(uNameserver,"tNameserver","New");
-#endif
 
 	if(!uMode)
 	{
@@ -353,27 +370,18 @@ void NewtNameserver(unsigned uMode)
 
 void DeletetNameserver(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tNameserver WHERE uNameserver=%u AND ( uOwner=%u OR %u>9 )"
 					,uNameserver,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tNameserver WHERE uNameserver=%u"
-					,uNameserver);
-#endif
 	MYSQL_RUN;
 	//tNameserver("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uNameserver,"tNameserver","Del");
-#endif
 		tNameserver(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uNameserver,"tNameserver","DelError");
-#endif
 		tNameserver(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -382,15 +390,13 @@ void DeletetNameserver(void)
 
 void Insert_tNameserver(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tNameserver SET uNameserver=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tNameserver SET uNameserver=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u",
 			uNameserver
 			,TextAreaSave(cLabel)
 			,uOwner
 			,uCreatedBy
-			);
-
+			,uDatacenter);
 	MYSQL_RUN;
 
 }//void Insert_tNameserver(void)
@@ -398,14 +404,13 @@ void Insert_tNameserver(void)
 
 void Update_tNameserver(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tNameserver SET uNameserver=%u,cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tNameserver SET uNameserver=%u,cLabel='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u WHERE _rowid=%s",
 			uNameserver
 			,TextAreaSave(cLabel)
 			,uModBy
+			,uDatacenter
 			,cRowid);
-
 	MYSQL_RUN;
 
 }//void Update_tNameserver(void)
@@ -416,7 +421,6 @@ void ModtNameserver(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -432,12 +436,6 @@ void ModtNameserver(void)
 	sprintf(gcQuery,"SELECT uNameserver,uModDate FROM tNameserver\
 				WHERE uNameserver=%u"
 						,uNameserver);
-#else
-	sprintf(gcQuery,"SELECT uNameserver FROM tNameserver\
-				WHERE uNameserver=%u"
-						,uNameserver);
-#endif
-
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -447,19 +445,15 @@ void ModtNameserver(void)
 	if(i>1) tNameserver(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tNameserver(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tNameserver(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tNameserver",uNameserver);
 	unxsVZLog(uNameserver,"tNameserver","Mod");
-#endif
 	tNameserver(gcQuery);
 
 }//ModtNameserver(void)
@@ -485,7 +479,15 @@ void tNameserverList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uNameserver<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uNameserver"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 
 
@@ -515,16 +517,16 @@ void tNameserverList(void)
 			ctime_r(&luTime6,cBuf6);
 		else
 			sprintf(cBuf6,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
+			,ForeignKey("tDatacenter","cLabel",strtoul(field[7],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
 			,cBuf4
 			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
-			,cBuf6
-				);
+			,cBuf6);
 
 	}
 
@@ -536,7 +538,15 @@ void tNameserverList(void)
 
 void CreatetNameserver(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tNameserver ( uNameserver INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tNameserver ( "
+			"uNameserver INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

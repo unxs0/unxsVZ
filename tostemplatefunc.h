@@ -50,10 +50,12 @@ void ExttOSTemplateCommands(pentry entries[], int x)
 
                         	guMode=2000;
 				//Check entries here
+				if(!uDatacenter)
+					tOSTemplate("<blink>Error</blink>: No uDatacenter!");
 				if(strlen(cLabel)<3)
 					tOSTemplate("<blink>Error</blink>: cLabel too short!");
-				sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s'",
-						cLabel);
+				sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s' AND"
+						" uDatacenter=%u",cLabel,uDatacenter);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -61,7 +63,7 @@ void ExttOSTemplateCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tOSTemplate("<blink>Error</blink>: Template cLabel in use!");
+					tOSTemplate("<blink>Error</blink>: Template cLabel for given uDatacenter in use!");
 				}
                         	guMode=0;
 
