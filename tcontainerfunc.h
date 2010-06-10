@@ -1655,6 +1655,10 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: No clones of clones yet!");
 				if(!uWizIPv4)
 					tContainer("<blink>Error</blink>: You must select an IP!");
+				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
+				if(uDatacenter!=uIPv4Datacenter)
+					tContainer("<blink>Error</blink>: The specified target uIPv4 does not "
+							"belong to the specified uDatacenter.");
 				if(!uOSTemplate || !uConfig || !uNameserver || !uSearchdomain || !uDatacenter )
 					tContainer("<blink>Error</blink>: Problem with missing source container settings!");
 				if(uTargetNode==0)
@@ -1973,6 +1977,10 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=6001;
 				if(!uWizIPv4)
 					tContainer("<blink>Error</blink>: You must select an IP!");
+				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
+				if(uDatacenter!=uIPv4Datacenter)
+					tContainer("<blink>Error</blink>: The specified target uIPv4 does not "
+							"belong to the specified uDatacenter.");
                         	guMode=0;
 
 				//Fatal error section
