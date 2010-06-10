@@ -661,6 +661,7 @@ void ExttContainerCommands(pentry entries[], int x)
 	if(!strcmp(gcFunction,"tContainerTools"))
 	{
 		unsigned uNodeDatacenter=0;
+		unsigned uIPv4Datacenter=0;
 		time_t uActualModDate= -1;
 		char cContainerType[256]={""};
 
@@ -752,6 +753,8 @@ void ExttContainerCommands(pentry entries[], int x)
 
                         	guMode=2000;
 				//Check entries here
+				if(uOSTemplate==0)
+					tContainer("<blink>Error</blink>: uOSTemplate==0!");
 				if(uDatacenter==0)
 					tContainer("<blink>Error</blink>: uDatacenter==0!");
 				if(uNode==0)
@@ -763,6 +766,10 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uIPv4==0)
 					tContainer("<blink>Error</blink>: uIPv4==0!"
 							" (See advanced operations if applicable.)");
+				sscanf(ForeignKey("tIP","uDatacenter",uIPv4),"%u",&uIPv4Datacenter);
+				if(uDatacenter!=uIPv4Datacenter)
+					tContainer("<blink>Error</blink>: The specified uIPv4 does not "
+							"belong to the specified uDatacenter.");
 				if(uConfig==0)
 					tContainer("<blink>Error</blink>: uConfig==0!");
 				if(uNameserver==0)
@@ -849,13 +856,21 @@ void ExttContainerCommands(pentry entries[], int x)
 								" for the clone!");
 					if(uTargetNode==uNode)
 						tContainer("<blink>Error</blink>: Can't clone to same node!");
+					sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uNodeDatacenter);
+					if(uDatacenter!=uNodeDatacenter)
+						tContainer("<blink>Error</blink>: The specified clone uNode does not "
+							"belong to the specified uDatacenter.");
 					GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
 					if(!cTargetNodeIPv4[0])
 						tContainer("<blink>Error</blink>: Your target node is"
 							" missing it's cIPv4 property!");
-					if(uSyncPeriod>86400*30)
-						tContainer("<blink>Error</blink>: Clone uSyncPeriod out of range,"
-								" max 30 days!");
+					sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
+					if(uDatacenter!=uIPv4Datacenter)
+						tContainer("<blink>Error</blink>: The specified uIPv4 does not "
+							"belong to the specified uDatacenter.");
+					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
+						tContainer("<blink>Error</blink>: Clone uSyncPeriod out of range:"
+								" Max 30 days, min 5 minutes or 0 off.");
 				}
 
 				//For debug only
@@ -895,7 +910,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(cAutoCloneNode[0])
 					{
 						sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
-							" AND uOwner=%u",uWizIPv4,guCompany);
+							" AND uOwner=%u AND uDatacenter=%u",uWizIPv4,guCompany,uDatacenter);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -921,7 +936,8 @@ void ExttContainerCommands(pentry entries[], int x)
 							}
 						}
 						sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-							" AND cLabel LIKE '%s%%'",uOwner,cIPv4ClassCClone);
+							" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
+									uOwner,cIPv4ClassCClone,uDatacenter);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -937,7 +953,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 					//Main container
 					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
-							" AND uOwner=%u",uIPv4,guCompany);
+							" AND uOwner=%u AND uDatacenter=%u",uIPv4,guCompany,uDatacenter);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -966,7 +982,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					//tContainer(cIPv4ClassC);
 					uAvailableIPs=0;
 					sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-							" AND cLabel LIKE '%s%%'",uOwner,cIPv4ClassC);
+							" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
+									uOwner,cIPv4ClassC,uDatacenter);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -1002,13 +1019,6 @@ void ExttContainerCommands(pentry entries[], int x)
 					mysql_free_result(res);
                         		guMode=200;//Step 2
 				}
-
-				if(uIPv4==0)
-					tContainer("<blink>Error</blink>: uIPv4==0!");
-				
-				if(uOSTemplate==0)
-					tContainer("<blink>Error</blink>: uOSTemplate==0!");
-
 
 				uStatus=uINITSETUP;//Initial setup
 				uContainer=0;
@@ -1053,7 +1063,8 @@ void ExttContainerCommands(pentry entries[], int x)
 
 						//tIP
 						sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-							" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",uIPv4,guCompany);
+							" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
+										uIPv4,guCompany,uDatacenter);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -1141,7 +1152,8 @@ void ExttContainerCommands(pentry entries[], int x)
 
 						//Get next available IP, set uIPv4
 						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-							" AND cLabel LIKE '%s%%' LIMIT 1",uOwner,cIPv4ClassC);
+							" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
+									uOwner,cIPv4ClassC,uDatacenter);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -1163,7 +1175,8 @@ void ExttContainerCommands(pentry entries[], int x)
 
 					//tIP
 					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-						" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",uIPv4,guCompany);
+						" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
+							uIPv4,guCompany,uDatacenter);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -4392,24 +4405,25 @@ unsigned CommonCloneContainer(
 		{
 			if(guCompany==1)
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-				" WHERE uIP=%u AND uAvailable=1 AND cLabel LIKE '%s%%'",
-					uWizIPv4,cClassC);
+				" WHERE uIP=%u AND uAvailable=1 AND cLabel LIKE '%s%%' AND uDatacenter=%u",
+					uWizIPv4,cClassC,uDatacenter);
 			else
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND cLabel LIKE '%s%%'",
-						uWizIPv4,uOwner,cClassC);
+					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND cLabel LIKE '%s%%'"
+					" AND uDatacenter=%u",
+						uWizIPv4,uOwner,cClassC,uDatacenter);
 		}
 		//Others we have already pre-assigned an available uWizIPv4
 		else
 		{
 			if(guCompany==1)
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-				" WHERE uIP=%u AND uAvailable=1",
-					uWizIPv4);
+				" WHERE uIP=%u AND uAvailable=1 AND uDatacenter=%u",
+					uWizIPv4,uDatacenter);
 			else
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u",
-						uWizIPv4,uOwner);
+					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
+						uWizIPv4,uOwner,uDatacenter);
 		}
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
