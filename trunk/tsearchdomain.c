@@ -7,6 +7,9 @@ PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tsearchdomainfunc.h while 
 	RAD is still to be used.
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 
@@ -22,17 +25,19 @@ static char cLabel[33]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//uDatacenter: Belongs to this Datacenter
+static unsigned uDatacenter=0;
+static char cuDatacenterPullDown[256]={""};
 
 
 
-#define VAR_LIST_tSearchdomain "tSearchdomain.uSearchdomain,tSearchdomain.cLabel,tSearchdomain.uOwner,tSearchdomain.uCreatedBy,tSearchdomain.uCreatedDate,tSearchdomain.uModBy,tSearchdomain.uModDate"
+#define VAR_LIST_tSearchdomain "tSearchdomain.uSearchdomain,tSearchdomain.cLabel,tSearchdomain.uOwner,tSearchdomain.uCreatedBy,tSearchdomain.uCreatedDate,tSearchdomain.uModBy,tSearchdomain.uModDate,tSearchdomain.uDatacenter"
 
  //Local only
 void Insert_tSearchdomain(void);
@@ -75,6 +80,13 @@ void ProcesstSearchdomainVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uDatacenter"))
+			sscanf(entries[i].val,"%u",&uDatacenter);
+		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
+		{
+			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
+			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
+		}
 
 	}
 
@@ -179,6 +191,7 @@ void tSearchdomain(const char *cResult)
 		sscanf(field[4],"%lu",&uCreatedDate);
 		sscanf(field[5],"%u",&uModBy);
 		sscanf(field[6],"%lu",&uModDate);
+		sscanf(field[7],"%u",&uDatacenter);
 
 		}
 
@@ -266,6 +279,12 @@ void tSearchdomainInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
 	}
+//uDatacenter
+	OpenRow(LANG_FL_tContainer_uDatacenter,"black");
+	if(guPermLevel>=7 && uMode)
+		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+	else
+		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
 //uOwner
 	OpenRow(LANG_FL_tSearchdomain_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
@@ -337,10 +356,8 @@ void NewtSearchdomain(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uSearchdomain=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tSearchdomain",uSearchdomain);
 	unxsVZLog(uSearchdomain,"tSearchdomain","New");
-#endif
 
 	if(!uMode)
 	{
@@ -353,27 +370,18 @@ void NewtSearchdomain(unsigned uMode)
 
 void DeletetSearchdomain(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tSearchdomain WHERE uSearchdomain=%u AND ( uOwner=%u OR %u>9 )"
 					,uSearchdomain,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tSearchdomain WHERE uSearchdomain=%u"
-					,uSearchdomain);
-#endif
 	MYSQL_RUN;
 	//tSearchdomain("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uSearchdomain,"tSearchdomain","Del");
-#endif
 		tSearchdomain(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uSearchdomain,"tSearchdomain","DelError");
-#endif
 		tSearchdomain(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -382,15 +390,13 @@ void DeletetSearchdomain(void)
 
 void Insert_tSearchdomain(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tSearchdomain SET uSearchdomain=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tSearchdomain SET uSearchdomain=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u",
 			uSearchdomain
 			,TextAreaSave(cLabel)
 			,uOwner
 			,uCreatedBy
-			);
-
+			,uDatacenter);
 	MYSQL_RUN;
 
 }//void Insert_tSearchdomain(void)
@@ -398,14 +404,13 @@ void Insert_tSearchdomain(void)
 
 void Update_tSearchdomain(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tSearchdomain SET uSearchdomain=%u,cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tSearchdomain SET uSearchdomain=%u,cLabel='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u WHERE _rowid=%s",
 			uSearchdomain
 			,TextAreaSave(cLabel)
 			,uModBy
+			,uDatacenter
 			,cRowid);
-
 	MYSQL_RUN;
 
 }//void Update_tSearchdomain(void)
@@ -416,27 +421,20 @@ void ModtSearchdomain(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
 	if(guPermLevel<10)
-	sprintf(gcQuery,"SELECT tSearchdomain.uSearchdomain,\
-				tSearchdomain.uModDate\
-				FROM tSearchdomain,tClient\
-				WHERE tSearchdomain.uSearchdomain=%u\
-				AND tSearchdomain.uOwner=tClient.uClient\
-				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+	sprintf(gcQuery,"SELECT tSearchdomain.uSearchdomain,"
+				"tSearchdomain.uModDate"
+				"FROM tSearchdomain,tClient"
+				"WHERE tSearchdomain.uSearchdomain=%u"
+				"AND tSearchdomain.uOwner=tClient.uClient"
+				"AND (tClient.uOwner=%u OR tClient.uClient=%u)"
 			,uSearchdomain,guLoginClient,guLoginClient);
 	else
-	sprintf(gcQuery,"SELECT uSearchdomain,uModDate FROM tSearchdomain\
-				WHERE uSearchdomain=%u"
+	sprintf(gcQuery,"SELECT uSearchdomain,uModDate FROM tSearchdomain WHERE uSearchdomain=%u"
 						,uSearchdomain);
-#else
-	sprintf(gcQuery,"SELECT uSearchdomain FROM tSearchdomain\
-				WHERE uSearchdomain=%u"
-						,uSearchdomain);
-#endif
 
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
@@ -447,19 +445,15 @@ void ModtSearchdomain(void)
 	if(i>1) tSearchdomain(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tSearchdomain(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tSearchdomain(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tSearchdomain",uSearchdomain);
 	unxsVZLog(uSearchdomain,"tSearchdomain","Mod");
-#endif
 	tSearchdomain(gcQuery);
 
 }//ModtSearchdomain(void)
@@ -485,9 +479,15 @@ void tSearchdomainList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uSearchdomain<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uSearchdomain"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -515,16 +515,16 @@ void tSearchdomainList(void)
 			ctime_r(&luTime6,cBuf6);
 		else
 			sprintf(cBuf6,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
+			,ForeignKey("tDatacenter","cLabel",strtoul(field[7],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
 			,cBuf4
 			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
-			,cBuf6
-				);
+			,cBuf6);
 
 	}
 
@@ -536,7 +536,15 @@ void tSearchdomainList(void)
 
 void CreatetSearchdomain(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tSearchdomain ( uSearchdomain INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tSearchdomain ( "
+			"uSearchdomain INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

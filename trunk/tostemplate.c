@@ -7,6 +7,9 @@ PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tostemplatefunc.h while 
 	RAD is still to be used.
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 
@@ -28,10 +31,13 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//uDatacenter: Belongs to this Datacenter
+static unsigned uDatacenter=0;
+static char cuDatacenterPullDown[256]={""};
 
 
 
-#define VAR_LIST_tOSTemplate "tOSTemplate.uOSTemplate,tOSTemplate.cLabel,tOSTemplate.uOwner,tOSTemplate.uCreatedBy,tOSTemplate.uCreatedDate,tOSTemplate.uModBy,tOSTemplate.uModDate"
+#define VAR_LIST_tOSTemplate "tOSTemplate.uOSTemplate,tOSTemplate.cLabel,tOSTemplate.uOwner,tOSTemplate.uCreatedBy,tOSTemplate.uCreatedDate,tOSTemplate.uModBy,tOSTemplate.uModDate,tOSTemplate.uDatacenter"
 
  //Local only
 void Insert_tOSTemplate(void);
@@ -74,6 +80,13 @@ void ProcesstOSTemplateVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uDatacenter"))
+			sscanf(entries[i].val,"%u",&uDatacenter);
+		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
+		{
+			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
+			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
+		}
 
 	}
 
@@ -178,6 +191,7 @@ void tOSTemplate(const char *cResult)
 		sscanf(field[4],"%lu",&uCreatedDate);
 		sscanf(field[5],"%u",&uModBy);
 		sscanf(field[6],"%lu",&uModDate);
+		sscanf(field[7],"%u",&uDatacenter);
 
 		}
 
@@ -265,6 +279,12 @@ void tOSTemplateInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
 	}
+//uDatacenter
+	OpenRow(LANG_FL_tContainer_uDatacenter,"black");
+	if(guPermLevel>=7 && uMode)
+		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+	else
+		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
 //uOwner
 	OpenRow(LANG_FL_tOSTemplate_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
@@ -368,12 +388,12 @@ void DeletetOSTemplate(void)
 void Insert_tOSTemplate(void)
 {
 	sprintf(gcQuery,"INSERT INTO tOSTemplate SET uOSTemplate=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,"
-			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u",
 			uOSTemplate
 			,TextAreaSave(cLabel)
 			,uOwner
 			,uCreatedBy
-			);
+			,uDatacenter);
 	MYSQL_RUN;
 
 }//void Insert_tOSTemplate(void)
@@ -382,10 +402,11 @@ void Insert_tOSTemplate(void)
 void Update_tOSTemplate(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tOSTemplate SET uOSTemplate=%u,cLabel='%s',uModBy=%u,"
-			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+			"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u WHERE _rowid=%s",
 			uOSTemplate
 			,TextAreaSave(cLabel)
 			,uModBy
+			,uDatacenter
 			,cRowid);
 	MYSQL_RUN;
 
@@ -455,9 +476,15 @@ void tOSTemplateList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uOSTemplate<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uOSTemplate"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -485,16 +512,16 @@ void tOSTemplateList(void)
 			ctime_r(&luTime6,cBuf6);
 		else
 			sprintf(cBuf6,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
+			,ForeignKey("tDatacenter","cLabel",strtoul(field[7],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
 			,cBuf4
 			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
-			,cBuf6
-				);
+			,cBuf6);
 
 	}
 
@@ -506,7 +533,15 @@ void tOSTemplateList(void)
 
 void CreatetOSTemplate(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tOSTemplate ( uOSTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(100) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tOSTemplate ( "
+			"uOSTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cLabel VARCHAR(100) NOT NULL DEFAULT '',"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

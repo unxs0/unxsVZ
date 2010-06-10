@@ -7,6 +7,9 @@ PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tipfunc.h while 
 	RAD is still to be used.
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 
@@ -405,9 +408,7 @@ void Insert_tIP(void)
 			,uAvailable
 			,uOwner
 			,uCreatedBy
-			,uDatacenter
-			);
-
+			,uDatacenter);
 	MYSQL_RUN;
 
 }//void Insert_tIP(void)
@@ -423,7 +424,6 @@ void Update_tIP(char *cRowid)
 			,uModBy
 			,uDatacenter
 			,cRowid);
-
 	MYSQL_RUN;
 
 }//void Update_tIP(void)
@@ -541,9 +541,7 @@ void tIPList(void)
 			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
 			,cBuf5
 			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
-			,cBuf7
-				);
-
+			,cBuf7);
 	}
 
 	printf("</table></form>\n");
@@ -554,7 +552,16 @@ void tIPList(void)
 
 void CreatetIP(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tIP ( uIP INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uAvailable INT UNSIGNED NOT NULL DEFAULT 0, uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tIP ( "
+			"uIP INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uAvailable INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
