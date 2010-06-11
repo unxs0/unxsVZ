@@ -49,10 +49,12 @@ void ExttConfigCommands(pentry entries[], int x)
 
                         	guMode=2000;
 				//Check entries here
+				if(!uDatacenter)
+					tConfig("<blink>Error</blink>: Must select uDatacenter!");
 				if(strlen(cLabel)<3)
 					tConfig("<blink>Error</blink>: cLabel too short!");
-				sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",
-						cLabel);
+				sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s' AND uDatacenter=%u",
+						cLabel,uDatacenter);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -136,6 +138,16 @@ void ExttConfigCommands(pentry entries[], int x)
 					tConfig("<blink>Error</blink>: This record was modified. Reload it.");
 				if(strlen(cLabel)<3)
 					tConfig("<blink>Error</blink>: cLabel too short!");
+				sprintf(gcQuery,"SELECT uConfig FROM tContainer WHERE uConfig=%u",uConfig);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					tConfig("<blink>Error</blink>: Can't modify a config used by a container!");
+				}
                         	guMode=0;
 
 				uModBy=guLoginClient;

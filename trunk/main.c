@@ -2322,7 +2322,7 @@ void ExtSelect(const char *cTable,const char *cVarList)
 }//void ExtSelect(...)
 
 
-//For those tables you anybody to be able to read. Like tStatus.
+//For those tables you want anybody to be able to read. Like tStatus.
 void ExtSelectPublic(const char *cTable,const char *cVarList)
 {
 	sprintf(gcQuery,"SELECT %s FROM %s",cVarList,cTable);
