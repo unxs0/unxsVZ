@@ -7,6 +7,9 @@ PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tcontainerfunc.h while 
 	RAD is still to be used.
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 
@@ -445,15 +448,15 @@ void tContainerInput(unsigned uMode)
 //uDatacenter
 	OpenRow(LANG_FL_tContainer_uDatacenter,"black");
 	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
 	else
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
 //uNode
 	OpenRow(LANG_FL_tContainer_uNode,"black");
 	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwner("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
+		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
 	else
-		tTablePullDownOwner("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
+		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
 //uStatus
 	OpenRow(LANG_FL_tContainer_uStatus,"black");
 	printf("%s<input type=hidden name=uStatus value=%u >\n",
@@ -673,8 +676,6 @@ void tContainerList(void)
 		"<td><font face=arial,helvetica color=white>uModBy"
 		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
-
-
 	mysql_data_seek(res,guStart-1);
 
 	for(guN=0;guN<(guEnd-guStart+1);guN++)
@@ -733,7 +734,26 @@ void tContainerList(void)
 
 void CreatetContainer(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tContainer ( uContainer INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, INDEX(uDatacenter), UNIQUE (cLabel,uDatacenter), uNode INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uNode), uStatus INT UNSIGNED NOT NULL DEFAULT 0, uOSTemplate INT UNSIGNED NOT NULL DEFAULT 0, cHostname VARCHAR(64) NOT NULL DEFAULT '', uIPv4 INT UNSIGNED NOT NULL DEFAULT 0, uNameserver INT UNSIGNED NOT NULL DEFAULT 0, uSearchdomain INT UNSIGNED NOT NULL DEFAULT 0, uConfig INT UNSIGNED NOT NULL DEFAULT 0, uVeth INT UNSIGNED NOT NULL DEFAULT 0, uSource INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uSource) )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tContainer ( "
+			"uContainer INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, INDEX(uDatacenter),"
+			"UNIQUE (cLabel,uDatacenter),"
+			"uNode INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uNode),"
+			"uStatus INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uOSTemplate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"cHostname VARCHAR(64) NOT NULL DEFAULT '',"
+			"uIPv4 INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uNameserver INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uSearchdomain INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uConfig INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uVeth INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uSource INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uSource) )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

@@ -456,14 +456,14 @@ void ExttNodeGetHook(entry gentries[], int x)
 
 void ExttNodeSelect(void)
 {
-	ExtSelect("tNode",VAR_LIST_tNode);
+	ExtSelectPublic("tNode",VAR_LIST_tNode);
 
 }//void ExttNodeSelect(void)
 
 
 void ExttNodeSelectRow(void)
 {
-	ExtSelectRow("tNode",VAR_LIST_tNode,uNode);
+	ExtSelectRowPublic("tNode",VAR_LIST_tNode,uNode);
 
 }//void ExttNodeSelectRow(void)
 
@@ -472,7 +472,7 @@ void ExttNodeListSelect(void)
 {
 	char cCat[512];
 
-	ExtListSelect("tNode",VAR_LIST_tNode);
+	ExtListSelectPublic("tNode",VAR_LIST_tNode);
 	
 	//Changes here must be reflected below in ExttNodeListFilter()
         if(!strcmp(gcFilter,"uNode"))
@@ -538,6 +538,7 @@ void ExttNodeNavBar(void)
 }//void ExttNodeNavBar(void)
 
 
+//Nodes are shared infrastructure
 void tNodeNavList(unsigned uDatacenter)
 {
         MYSQL_RES *res;
@@ -548,15 +549,12 @@ void tNodeNavList(unsigned uDatacenter)
 #define uLIMIT 24
 
 	if(uDatacenter)
-		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u AND (uOwner=%u OR"
-				" uOwner IN (SELECT uClient FROM " TCLIENT
-				" WHERE uOwner=%u)) ORDER BY cLabel" 
-					LIMIT,uDatacenter,guCompany,guCompany);
+		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u"
+				" ORDER BY cLabel" 
+				LIMIT,uDatacenter);
 	else
-		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE (uOwner=%u OR"
-				" uOwner IN (SELECT uClient FROM " TCLIENT
-				" WHERE uOwner=%u)) ORDER BY cLabel"
-					LIMIT,guCompany,guCompany);
+		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode ORDER BY cLabel" 
+				LIMIT);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
