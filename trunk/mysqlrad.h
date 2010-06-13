@@ -62,6 +62,15 @@ AUTHOR
 #define PROP_NAMESERVER "7"
 #define PROP_OSTEMPLATE "8"
 #define PROP_SEARCHDOMAIN "9"
+#define uPROP_DATACENTER 1
+#define uPROP_NODE 2
+#define uPROP_CONTAINER 3
+#define uPROP_GROUP 4
+#define uPROP_GROUPTYPE 5
+#define uPROP_CONFIG 6
+#define uPROP_NAMESERVER 7
+#define uPROP_OSTEMPLATE 8
+#define uPROP_SEARCHDOMAIN 9
 
 //tJobStatus constants
 #define uWAITING 	1
