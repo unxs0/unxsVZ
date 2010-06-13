@@ -31,13 +31,8 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
-//uDatacenter: Belongs to this Datacenter
-static unsigned uDatacenter=0;
-static char cuDatacenterPullDown[256]={""};
 
-
-
-#define VAR_LIST_tSearchdomain "tSearchdomain.uSearchdomain,tSearchdomain.cLabel,tSearchdomain.uOwner,tSearchdomain.uCreatedBy,tSearchdomain.uCreatedDate,tSearchdomain.uModBy,tSearchdomain.uModDate,tSearchdomain.uDatacenter"
+#define VAR_LIST_tSearchdomain "tSearchdomain.uSearchdomain,tSearchdomain.cLabel,tSearchdomain.uOwner,tSearchdomain.uCreatedBy,tSearchdomain.uCreatedDate,tSearchdomain.uModBy,tSearchdomain.uModDate"
 
  //Local only
 void Insert_tSearchdomain(void);
@@ -80,14 +75,6 @@ void ProcesstSearchdomainVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
-		else if(!strcmp(entries[i].name,"uDatacenter"))
-			sscanf(entries[i].val,"%u",&uDatacenter);
-		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
-		{
-			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
-			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
-		}
-
 	}
 
 	//After so we can overwrite form data if needed.
@@ -184,15 +171,13 @@ void tSearchdomain(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
-		sscanf(field[0],"%u",&uSearchdomain);
-		sprintf(cLabel,"%.32s",field[1]);
-		sscanf(field[2],"%u",&uOwner);
-		sscanf(field[3],"%u",&uCreatedBy);
-		sscanf(field[4],"%lu",&uCreatedDate);
-		sscanf(field[5],"%u",&uModBy);
-		sscanf(field[6],"%lu",&uModDate);
-		sscanf(field[7],"%u",&uDatacenter);
-
+			sscanf(field[0],"%u",&uSearchdomain);
+			sprintf(cLabel,"%.32s",field[1]);
+			sscanf(field[2],"%u",&uOwner);
+			sscanf(field[3],"%u",&uCreatedBy);
+			sscanf(field[4],"%lu",&uCreatedDate);
+			sscanf(field[5],"%u",&uModBy);
+			sscanf(field[6],"%lu",&uModDate);
 		}
 
 	}//Internal Skip
@@ -279,12 +264,6 @@ void tSearchdomainInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
 	}
-//uDatacenter
-	OpenRow(LANG_FL_tContainer_uDatacenter,"black");
-	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
-	else
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
 //uOwner
 	OpenRow(LANG_FL_tSearchdomain_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
@@ -391,12 +370,11 @@ void DeletetSearchdomain(void)
 void Insert_tSearchdomain(void)
 {
 	sprintf(gcQuery,"INSERT INTO tSearchdomain SET uSearchdomain=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u",
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uSearchdomain
 			,TextAreaSave(cLabel)
 			,uOwner
-			,uCreatedBy
-			,uDatacenter);
+			,uCreatedBy);
 	MYSQL_RUN;
 
 }//void Insert_tSearchdomain(void)
@@ -405,11 +383,10 @@ void Insert_tSearchdomain(void)
 void Update_tSearchdomain(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tSearchdomain SET uSearchdomain=%u,cLabel='%s',uModBy=%u,"
-			"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u WHERE _rowid=%s",
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uSearchdomain
 			,TextAreaSave(cLabel)
 			,uModBy
-			,uDatacenter
 			,cRowid);
 	MYSQL_RUN;
 
@@ -482,7 +459,6 @@ void tSearchdomainList(void)
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uSearchdomain"
 		"<td><font face=arial,helvetica color=white>cLabel"
-		"<td><font face=arial,helvetica color=white>uDatacenter"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
 		"<td><font face=arial,helvetica color=white>uCreatedDate"
@@ -519,7 +495,6 @@ void tSearchdomainList(void)
 			,field[0]
 			,field[0]
 			,field[1]
-			,ForeignKey("tDatacenter","cLabel",strtoul(field[7],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
 			,cBuf4
@@ -543,8 +518,7 @@ void CreatetSearchdomain(void)
 			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

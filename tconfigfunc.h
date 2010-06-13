@@ -49,12 +49,10 @@ void ExttConfigCommands(pentry entries[], int x)
 
                         	guMode=2000;
 				//Check entries here
-				if(!uDatacenter)
-					tConfig("<blink>Error</blink>: Must select uDatacenter!");
 				if(strlen(cLabel)<3)
 					tConfig("<blink>Error</blink>: cLabel too short!");
-				sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s' AND uDatacenter=%u",
-						cLabel,uDatacenter);
+				sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",
+						cLabel);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -62,7 +60,7 @@ void ExttConfigCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tConfig("<blink>Error</blink>: Config cLabel in use!");
+					tConfig("<blink>Error</blink>: tConfig.cLabel is already used!");
 				}
                         	guMode=0;
 
@@ -71,7 +69,18 @@ void ExttConfigCommands(pentry entries[], int x)
 				uOwner=guCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
-				NewtConfig(0);
+				NewtConfig(1);
+				if(!uConfig)
+					tConfig("<blink>Error</blink>: New tConfig entry was not created!");
+
+				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType="PROP_CONFIG
+						",cName='cDatacenter',cValue='All Datacenters',uOwner=%u,uCreatedBy=%u"
+						",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							,uConfig,guCompany,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				tConfig("New config created");
 			}
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
@@ -246,7 +255,7 @@ void ExttConfigAuxTable(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"%s Property Panel",cLabel);
+	sprintf(gcQuery,"tConfig %s Property Panel",cLabel);
 	OpenFieldSet(gcQuery,100);
 	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="PROP_CONFIG
 			" ORDER BY cName",uConfig);
@@ -265,14 +274,13 @@ void ExttConfigAuxTable(void)
 			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
 					"gcFunction=tProperty&uProperty=%s&cReturn=tConfig_%u>"
 					"%s</a></td><td>%s</td>\n",
-						field[0],uDatacenter,field[1],field[2]);
+						field[0],uConfig,field[1],field[2]);
 			printf("</tr>\n");
 		}
 		printf("</table>");
 	}
 
 	CloseFieldSet();
-
 
 }//void ExttConfigAuxTable(void)
 
