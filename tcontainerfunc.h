@@ -691,7 +691,9 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(guPermLevel>=9)
 			{
 	                        ProcesstContainerVars(entries,x);
-                        	//guMode=2000;
+                        	guMode=9001;
+				if(!uDatacenter)
+					tContainer("<blink>Error</blink>: Must select a datacenter.");
                         	guMode=9002;
 	                        tContainer("New container step 2");
 			}
@@ -705,7 +707,9 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(guPermLevel>=9)
 			{
 	                        ProcesstContainerVars(entries,x);
-                        	//guMode=2000;
+                        	guMode=9002;
+				if(!uNode)
+					tContainer("<blink>Error</blink>: Must select a node.");
                         	guMode=9003;
 	                        tContainer("New container step 3");
 			}
@@ -714,6 +718,10 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
                 }
+		else if(!strcmp(gcCommand,"Cancel"))
+                {
+			guMode=0;
+		}
                 else if(!strcmp(gcCommand,"Continue"))
                 {
                         ProcesstContainerVars(entries,x);
@@ -2516,11 +2524,15 @@ void ExttContainerButtons(void)
                 case 9001:
 			printf("<input type=submit class=largeButton title='Select datacenter'"
 				" name=gcCommand value='Select Datacenter'>\n");
+			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
+				" name=gcCommand value='Cancel'>\n");
                 break;
 
                 case 9002:
 			printf("<input type=submit class=largeButton title='Select hardware node'"
 				" name=gcCommand value='Select Node'>\n");
+			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
+				" name=gcCommand value='Cancel'>\n");
                 break;
 
                 case 9003:
@@ -2530,6 +2542,8 @@ void ExttContainerButtons(void)
 			printf("<p><input type=submit class=largeButton"
 				" title='Configure base container and continue to create multiple containers'"
 				" name=gcCommand value='Multiple Container Creation'>\n");
+			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
+				" name=gcCommand value='Cancel'>\n");
                 break;
 
 		default:
@@ -2875,25 +2889,31 @@ void ExttContainerListFilter(void)
 
 void ExttContainerNavBar(void)
 {
-	printf(LANG_NBB_SKIPFIRST);
-	printf(LANG_NBB_SKIPBACK);
-	printf(LANG_NBB_SEARCH);
+	if(guMode<9000)
+	{
+		printf(LANG_NBB_SKIPFIRST);
+		printf(LANG_NBB_SKIPBACK);
+		printf(LANG_NBB_SEARCH);
+	}
 
-	if(guPermLevel>=7 && !guListMode)
+	if(guPermLevel>=7 && !guListMode && guMode<9000)
 		printf(LANG_NBB_NEW);
 
 	//11 Initial setup 31 Stopped
-	if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy) )
+	if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy) && guMode<9000)
 		printf(LANG_NBB_MODIFY);
 
-	if( uStatus==uINITSETUP && uAllowDel(uOwner,uCreatedBy) ) 
+	if( uStatus==uINITSETUP && uAllowDel(uOwner,uCreatedBy) && guMode<9000) 
 		printf(LANG_NBB_DELETE);
 
-	if(uOwner)
+	if(uOwner && guMode<9000)
 		printf(LANG_NBB_LIST);
 
-	printf(LANG_NBB_SKIPNEXT);
-	printf(LANG_NBB_SKIPLAST);
+	if(guMode<9000)
+	{
+		printf(LANG_NBB_SKIPNEXT);
+		printf(LANG_NBB_SKIPLAST);
+	}
 	printf("&nbsp;&nbsp;&nbsp;\n");
 
 }//void ExttContainerNavBar(void)
