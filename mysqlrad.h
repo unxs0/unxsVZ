@@ -51,14 +51,19 @@ AUTHOR
 #define uAWAITCLONE	81
 #define uAWAITFAIL	91
 
-//tProperty fixed types
+//tProperty fixed types aka constants
+//Actually tType constants
 #define PROP_DATACENTER "1"
 #define PROP_NODE "2"
 #define PROP_CONTAINER "3"
 #define PROP_GROUP "4"
 #define PROP_GROUPTYPE "5"
+#define PROP_CONFIG "6"
+#define PROP_NAMESERVER "7"
+#define PROP_OSTEMPLATE "8"
+#define PROP_SEARCHDOMAIN "9"
 
-//tJobStatus contants
+//tJobStatus constants
 #define uWAITING 	1
 #define uRUNNING 	2
 #define uDONEOK		3
@@ -68,6 +73,7 @@ AUTHOR
 #define uCANCELED	7
 #define uREMOTEWAITING	10
 #define uERROR		14
+
 
 #define cLOGFILE "/var/log/unxsvzlog"
 

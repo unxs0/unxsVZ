@@ -660,8 +660,12 @@ void ExttContainerCommands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"tContainerTools"))
 	{
-		unsigned uNodeDatacenter=0;
 		unsigned uIPv4Datacenter=0;
+		unsigned uOSTemplateDatacenter=0;
+		unsigned uConfigDatacenter=0;
+		unsigned uNameserverDatacenter=0;
+		unsigned uSearchdomainDatacenter=0;
+		unsigned uNodeDatacenter=0;
 		time_t uActualModDate= -1;
 		char cContainerType[256]={""};
 
@@ -759,17 +763,9 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: uDatacenter==0!");
 				if(uNode==0)
 					tContainer("<blink>Error</blink>: uNode==0!");
-				sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
-				if(uDatacenter!=uNodeDatacenter)
-					tContainer("<blink>Error</blink>: The specified uNode does not "
-							"belong to the specified uDatacenter.");
 				if(uIPv4==0)
 					tContainer("<blink>Error</blink>: uIPv4==0!"
 							" (See advanced operations if applicable.)");
-				sscanf(ForeignKey("tIP","uDatacenter",uIPv4),"%u",&uIPv4Datacenter);
-				if(uDatacenter!=uIPv4Datacenter)
-					tContainer("<blink>Error</blink>: The specified uIPv4 does not "
-							"belong to the specified uDatacenter.");
 				if(uConfig==0)
 					tContainer("<blink>Error</blink>: uConfig==0!");
 				if(uNameserver==0)
@@ -784,6 +780,41 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error</blink>: cLabel has at least one '.'!");
 				if(strstr(cLabel,"-clone"))
 					tContainer("<blink>Error</blink>: cLabel can't have '-clone'!");
+
+				char cBuffer[256];
+				sprintf(cBuffer,"uIPv4=%u uOSTemplate=%u uConfig=%u uNameserver=%u uSearchdomain=%u"
+						" uNode=%u uDatacenter=%u",
+							uIPv4,uOSTemplate,uConfig,uNameserver,uSearchdomain,
+							uNode,uDatacenter);
+				tContainer(cBuffer);
+
+				//datacenter checks
+				sscanf(ForeignKey("tIP","uDatacenter",uIPv4),"%u",&uIPv4Datacenter);
+				if(uDatacenter!=uIPv4Datacenter)
+					tContainer("<blink>Error</blink>: The specified uIPv4 does not "
+							"belong to the specified uDatacenter.");
+				sscanf(ForeignKey("tOSTemplate","uDatacenter",uOSTemplate),"%u",&uOSTemplateDatacenter);
+				if(uDatacenter!=uOSTemplateDatacenter)
+					tContainer("<blink>Error</blink>: The specified uOSTemplate does not "
+							"belong to the specified uDatacenter.");
+				sscanf(ForeignKey("tConfig","uDatacenter",uConfig),"%u",&uConfigDatacenter);
+				if(uDatacenter!=uConfigDatacenter)
+					tContainer("<blink>Error</blink>: The specified uConfig does not "
+							"belong to the specified uDatacenter.");
+				sscanf(ForeignKey("tNameserver","uDatacenter",uNameserver),"%u",&uNameserverDatacenter);
+				if(uDatacenter!=uNameserverDatacenter)
+					tContainer("<blink>Error</blink>: The specified uNameserver does not "
+							"belong to the specified uDatacenter.");
+				sscanf(ForeignKey("tSearchdomain","uDatacenter",uSearchdomain),"%u",&uSearchdomainDatacenter);
+				if(uDatacenter!=uSearchdomainDatacenter)
+					tContainer("<blink>Error</blink>: The specified uSearchdomain does not "
+							"belong to the specified uDatacenter.");
+				sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
+				if(uDatacenter!=uNodeDatacenter)
+					tContainer("<blink>Error</blink>: The specified uNode does not "
+							"belong to the specified uDatacenter.");
+
+
 				if(cHostname[strlen(cHostname)-1]=='.')
 					tContainer("<blink>Error</blink>: cHostname can't end with a '.'!");
 				if(strstr(cHostname+(strlen(cHostname)-strlen(".cloneN")-1),".cloneN"))
