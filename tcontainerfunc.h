@@ -677,8 +677,37 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(guPermLevel>=9)
 			{
 	                        ProcesstContainerVars(entries,x);
-                        	guMode=2000;
-	                        tContainer("New container step 1/3");
+                        	//guMode=2000;
+                        	guMode=9001;
+	                        tContainer("New container step 1");
+			}
+			else
+			{
+				tContainer("<blink>Error</blink>: Denied by permissions settings");
+			}
+                }
+		else if(!strcmp(gcCommand,"Select Datacenter"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstContainerVars(entries,x);
+                        	//guMode=2000;
+                        	guMode=9002;
+	                        tContainer("New container step 2");
+			}
+			else
+			{
+				tContainer("<blink>Error</blink>: Denied by permissions settings");
+			}
+                }
+		else if(!strcmp(gcCommand,"Select Node"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstContainerVars(entries,x);
+                        	//guMode=2000;
+                        	guMode=9003;
+	                        tContainer("New container step 3");
 			}
 			else
 			{
@@ -2482,6 +2511,25 @@ void ExttContainerButtons(void)
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+                break;
+
+                case 9001:
+			printf("<input type=submit class=largeButton title='Select datacenter'"
+				" name=gcCommand value='Select Datacenter'>\n");
+                break;
+
+                case 9002:
+			printf("<input type=submit class=largeButton title='Select hardware node'"
+				" name=gcCommand value='Select Node'>\n");
+                break;
+
+                case 9003:
+			printf("<input type=submit class=largeButton"
+				" title='Configure container and continue to create a single container'"
+				" name=gcCommand value='Single Container Creation'>\n");
+			printf("<p><input type=submit class=largeButton"
+				" title='Configure base container and continue to create multiple containers'"
+				" name=gcCommand value='Multiple Container Creation'>\n");
                 break;
 
 		default:
