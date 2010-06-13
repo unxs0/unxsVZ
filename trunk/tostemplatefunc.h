@@ -50,12 +50,9 @@ void ExttOSTemplateCommands(pentry entries[], int x)
 
                         	guMode=2000;
 				//Check entries here
-				if(!uDatacenter)
-					tOSTemplate("<blink>Error</blink>: No uDatacenter!");
 				if(strlen(cLabel)<3)
 					tOSTemplate("<blink>Error</blink>: cLabel too short!");
-				sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s' AND"
-						" uDatacenter=%u",cLabel,uDatacenter);
+				sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s'",cLabel);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -63,7 +60,7 @@ void ExttOSTemplateCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tOSTemplate("<blink>Error</blink>: Template cLabel for given uDatacenter in use!");
+					tOSTemplate("<blink>Error</blink>: tOSTemplate.cLabel already in use!");
 				}
                         	guMode=0;
 
@@ -72,7 +69,18 @@ void ExttOSTemplateCommands(pentry entries[], int x)
 				uOwner=guCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
-				NewtOSTemplate(0);
+				NewtOSTemplate(1);
+				if(!uOSTemplate)
+					tOSTemplate("<blink>Error</blink>: New tOSTemplate entry was not created!");
+
+				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType="PROP_OSTEMPLATE
+						",cName='cDatacenter',cValue='All Datacenters',uOwner=%u,uCreatedBy=%u"
+						",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							,uOSTemplate,guCompany,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				tOSTemplate("New OS template created");
 			}
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
@@ -322,6 +330,38 @@ void ExttOSTemplateButtons(void)
 
 void ExttOSTemplateAuxTable(void)
 {
+	if(!uOSTemplate || guMode==2000 )//uMODE_NEW
+		return;
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"tOSTemplate %s Property Panel",cLabel);
+	OpenFieldSet(gcQuery,100);
+	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="PROP_OSTEMPLATE
+			" ORDER BY cName",uOSTemplate);
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+		printf("<table cols=2>");
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("<tr>\n");
+			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+					"gcFunction=tProperty&uProperty=%s&cReturn=tOSTemplate_%u>"
+					"%s</a></td><td>%s</td>\n",
+						field[0],uOSTemplate,field[1],field[2]);
+			printf("</tr>\n");
+		}
+		printf("</table>");
+	}
+
+	CloseFieldSet();
 
 }//void ExttOSTemplateAuxTable(void)
 

@@ -914,10 +914,6 @@ void UpdateSchema(void)
 	unsigned uSource=0;
 
 	unsigned uIPDatacenter=0;
-	unsigned uOSTemplateDatacenter=0;
-	unsigned uConfigDatacenter=0;
-	unsigned uNameserverDatacenter=0;
-	unsigned uSearchdomainDatacenter=0;
 
 	unsigned uIncorrectSource=0;
 	unsigned uIncorrectVeth=0;
@@ -969,58 +965,6 @@ void UpdateSchema(void)
 	{
 		if(!strcmp(field[0],"uDatacenter"))
 			uIPDatacenter=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tOSTemplate");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uDatacenter"))
-			uOSTemplateDatacenter=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tConfig");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uDatacenter"))
-			uConfigDatacenter=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tNameserver");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uDatacenter"))
-			uNameserverDatacenter=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tSearchdomain");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uDatacenter"))
-			uSearchdomainDatacenter=1;
 	}
        	mysql_free_result(res);
 
@@ -1278,47 +1222,6 @@ void UpdateSchema(void)
 		else
 			printf("Added uDatacenter to tIP\n");
 	}
-
-	if(!uOSTemplateDatacenter)
-	{
-		sprintf(gcQuery,"ALTER TABLE tOSTemplate ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uDatacenter to tOSTemplate\n");
-	}
-
-	if(!uConfigDatacenter)
-	{
-		sprintf(gcQuery,"ALTER TABLE tConfig ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uDatacenter to tConfig\n");
-	}
-
-	if(!uNameserverDatacenter)
-	{
-		sprintf(gcQuery,"ALTER TABLE tNameserver ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uDatacenter to tNameserver\n");
-	}
-
-	if(!uSearchdomainDatacenter)
-	{
-		sprintf(gcQuery,"ALTER TABLE tSearchdomain ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uDatacenter to tSearchdomain\n");
-	}
-
 
 	printf("UpdateSchema(): End\n");
 

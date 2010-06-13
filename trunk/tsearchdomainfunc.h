@@ -66,7 +66,18 @@ void ExttSearchdomainCommands(pentry entries[], int x)
 				uOwner=guCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
-				NewtSearchdomain(0);
+				NewtSearchdomain(1);
+				if(!uSearchdomain)
+					tSearchdomain("<blink>Error</blink>: New tSearchdomain entry was not created!");
+
+				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType="PROP_SEARCHDOMAIN
+						",cName='cDatacenter',cValue='All Datacenters',uOwner=%u,uCreatedBy=%u"
+						",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							,uSearchdomain,guCompany,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				tSearchdomain("New searchdomain created");
 			}
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
@@ -172,6 +183,38 @@ void ExttSearchdomainButtons(void)
 
 void ExttSearchdomainAuxTable(void)
 {
+	if(!uSearchdomain || guMode==2000 )//uMODE_NEW
+		return;
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"tSearchdomain %s Property Panel",cLabel);
+	OpenFieldSet(gcQuery,100);
+	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="PROP_SEARCHDOMAIN
+			" ORDER BY cName",uSearchdomain);
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+		printf("<table cols=2>");
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("<tr>\n");
+			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+					"gcFunction=tProperty&uProperty=%s&cReturn=tSearchdomain_%u>"
+					"%s</a></td><td>%s</td>\n",
+						field[0],uSearchdomain,field[1],field[2]);
+			printf("</tr>\n");
+		}
+		printf("</table>");
+	}
+
+	CloseFieldSet();
 
 }//void ExttSearchdomainAuxTable(void)
 
