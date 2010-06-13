@@ -271,7 +271,8 @@ void ExttDatacenterAuxTable(void)
 
 	sprintf(gcQuery,"%s Property Panel",cLabel);
 	OpenFieldSet(gcQuery,100);
-	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType=1 ORDER BY cName",uDatacenter);
+	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="PROP_DATACENTER
+			" ORDER BY cName",uDatacenter);
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))

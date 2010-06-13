@@ -240,6 +240,39 @@ void ExttConfigButtons(void)
 
 void ExttConfigAuxTable(void)
 {
+	if(!uConfig || guMode==2000 )//uMODE_NEW
+		return;
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"%s Property Panel",cLabel);
+	OpenFieldSet(gcQuery,100);
+	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="PROP_CONFIG
+			" ORDER BY cName",uConfig);
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+		printf("<table cols=2>");
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("<tr>\n");
+			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+					"gcFunction=tProperty&uProperty=%s&cReturn=tConfig_%u>"
+					"%s</a></td><td>%s</td>\n",
+						field[0],uDatacenter,field[1],field[2]);
+			printf("</tr>\n");
+		}
+		printf("</table>");
+	}
+
+	CloseFieldSet();
+
 
 }//void ExttConfigAuxTable(void)
 
