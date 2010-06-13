@@ -22,6 +22,8 @@ void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
 void tTablePullDownOwnerAvail(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
+void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
+                        const char *cOrderby, unsigned uSelector, unsigned uMode, char *cDatacenter);
 #include "mysqlrad.h"
 
 //Table Variables
@@ -76,6 +78,7 @@ static unsigned uSource=0;
 #define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource"
 
  //Local only
+void tContainerNewStep(unsigned uStep);
 void Insert_tContainer(void);
 void Update_tContainer(char *cRowid);
 void ProcesstContainerListVars(pentry entries[], int x);
@@ -335,7 +338,14 @@ void tContainer(const char *cResult)
 	//
 	OpenFieldSet("tContainer Record Data",100);
 
-	if(guMode==2000 || guMode==2002)
+	//Custom right panel for new containers
+	if(guMode==9001)
+		tContainerNewStep(1);
+	else if(guMode==9002)
+		tContainerNewStep(2);
+	else if(guMode==9003)
+		tContainerNewStep(3);
+	else if(guMode==2002 || guMode==2000)
 		tContainerInput(1);
 	else
 		tContainerInput(0);
@@ -350,6 +360,73 @@ void tContainer(const char *cResult)
 	Footer_ism3();
 
 }//end of tContainer();
+
+
+void tContainerNewStep(unsigned uStep)
+{
+
+	if(uStep==1)
+	{
+		OpenRow("Select an available datacenter","black");
+		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+		//Helper
+		if(uNode)
+			printf("<input type=hidden name=uNode value=%u >\n",uNode);
+	}
+	else if(uStep==2)
+	{
+		OpenRow("Selected datacenter","black");
+		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+
+		OpenRow("Select an available node","black");
+		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
+	}
+	else if(uStep==3)
+	{
+		OpenRow("Selected datacenter","black");
+		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+
+		OpenRow("Selected node","black");
+		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
+
+		//cLabel
+		OpenRow(LANG_FL_tContainer_cLabel,"black");
+		printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 ",
+			LANG_FT_tContainer_cLabel,EncodeDoubleQuotes(cLabel));
+		printf("></td></tr>\n");
+
+		//cHostname
+		OpenRow(LANG_FL_tContainer_cHostname,"black");
+		printf("<input title='%s' type=text name=cHostname value=\"%s\" size=40 maxlength=64 "
+			,LANG_FT_tContainer_cHostname,EncodeDoubleQuotes(cHostname));
+		printf("></td></tr>\n");
+
+		//uIPv4
+		OpenRow(LANG_FL_tContainer_uIPv4,"black");
+		tTablePullDownOwnerAvail("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1);
+
+		//uOSTemplate
+		OpenRow(LANG_FL_tContainer_uOSTemplate,"black");
+		tTablePullDownDatacenter("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1,
+			cuDatacenterPullDown);
+
+		//uConfig
+		OpenRow(LANG_FL_tContainer_uConfig,"black");
+		tTablePullDownDatacenter("tConfig;cuConfigPullDown","cLabel","cLabel",uConfig,1,
+			cuDatacenterPullDown);
+
+		//uNameserver
+		OpenRow(LANG_FL_tContainer_uNameserver,"black");
+		tTablePullDownDatacenter("tNameserver;cuNameserverPullDown","cLabel","cLabel",uNameserver,1,
+			cuDatacenterPullDown);
+
+		//uSearchdomain
+		OpenRow(LANG_FL_tContainer_uSearchdomain,"black");
+		tTablePullDownDatacenter("tSearchdomain;cuSearchdomainPullDown","cLabel","cLabel",uSearchdomain,1,
+			cuDatacenterPullDown);
+	}
+
+}//void tContainerNewStep(unsigned uStep)
 
 
 void tContainerInput(unsigned uMode)
@@ -850,8 +927,6 @@ void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
 }//tTablePullDownAvail()
 
 
-
-
 void tTablePullDownOwnerAvail(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode)
 {
@@ -871,7 +946,7 @@ void tTablePullDownOwnerAvail(const char *cTableName, const char *cFieldName,
       
         if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
         {
-                printf("Invalid input tTablePullDown()");
+                printf("Invalid input tTablePullDownAvail()");
                 return;
         }
 
@@ -941,3 +1016,92 @@ void tTablePullDownOwnerAvail(const char *cTableName, const char *cFieldName,
 		printf("%s",cHidden);
 
 }//tTablePullDownOwnerAvail()
+
+
+void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
+                        const char *cOrderby, unsigned uSelector, unsigned uMode, char *cDatacenter)
+{
+        register int i,n;
+        char cLabel[256];
+        MYSQL_RES *mysqlRes;         
+        MYSQL_ROW mysqlField;
+
+        char cSelectName[100]={""};
+	char cHidden[100]={""};
+        char cLocalTableName[256]={""};
+        char *cp;
+	char *cMode="";
+
+	if(!uMode)
+		cMode="disabled";
+      
+        if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
+        {
+                printf("Invalid input tTablePullDownDatacenter()");
+                return;
+        }
+
+        //Extended functionality
+        sprintf(cLocalTableName,"%.255s",cTableName);
+        if((cp=strchr(cLocalTableName,';')))
+        {
+                sprintf(cSelectName,"%.99s",cp+1);
+                *cp=0;
+        }
+
+
+       	sprintf(gcQuery,"SELECT _rowid AS uRowid,%s FROM %s WHERE"
+			" LOCATE('All Datacenters',"
+			"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=6 AND uKey=uRowid))>0"
+			" OR LOCATE('%s',"
+			"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=6 AND uKey=uRowid))>0"
+			" ORDER BY %s",
+				cFieldName,cLocalTableName,cDatacenter,cOrderby);
+	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
+	i=mysql_num_rows(mysqlRes);
+
+	if(cSelectName[0])
+                sprintf(cLabel,"%s",cSelectName);
+        else
+                sprintf(cLabel,"%s_%sPullDown",cLocalTableName,cFieldName);
+
+        if(i>0)
+        {
+		int unsigned field0;
+                printf("<select name=%s %s>\n",cLabel,cMode);
+
+                //Default no selection
+                printf("<option title='No selection'>---</option>\n");
+
+                for(n=0;n<i;n++)
+                {
+
+			field0=0;
+                        mysqlField=mysql_fetch_row(mysqlRes);
+                        sscanf(mysqlField[0],"%u",&field0);
+
+                        if(uSelector != field0)
+                        {
+                             printf("<option>%s</option>\n",mysqlField[1]);
+                        }
+                        else
+                        {
+                             printf("<option selected>%s</option>\n",mysqlField[1]);
+			     if(!uMode)
+			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
+			     		cLabel,mysqlField[1]);
+                        }
+                }
+        }
+        else
+        {
+		printf("<select name=%s %s><option title='No selection'>---</option></select>\n"
+                        ,cLabel,cMode);
+		if(!uMode)
+		sprintf(cHidden,"<input type=hidden name=%99s value='0'>\n",cLabel);
+        }
+        printf("</select>\n");
+	if(cHidden[0])
+		printf("%s",cHidden);
+
+}//tTablePullDownDatacenter()
