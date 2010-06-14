@@ -2616,11 +2616,12 @@ void ExttContainerButtons(void)
 				" datacenter, node,"
 				" and the organization that the container is being created for. We recommend that the cLabel"
 				" be the short cHostname, in DNS terms.<p>");
-			printf("When you create multiple container you specify a special cLabel"
-				" and cHostname that will be used to generate the multiple containers."
-				" <p>For example, given cLabel=ct and cHostname=.yourdomain.tld, your containers"
-				" will be cLabel=ct0 and cHostname=ct0.yourdomain.tld through cLabel=ctN and"
-				" cHostname=ctN.yourdomain.tld, where N is the number of containers specfied minus 1.<p>");
+			printf("When you create multiple containers you specify a special <i>cLabel</i>"
+				" and <i>cHostname</i> that will be used to generate the multiple containers."
+				" <p>For example, given <i>cLabel=ct</i> and <i>cHostname=.yourdomain.tld</i>,"
+				" your containers will be <i>cLabel=ct0</i> and <i>cHostname=ct0.yourdomain.tld</i>"
+				" through <i>cLabel=ctN</i> and <i>cHostname=ctN.yourdomain.tld</i>,"
+				" where N is the number of containers specfied minus 1.<p>");
 			printf("<input type=submit class=largeButton"
 				" title='Commit to creating multiple containers'"
 				" name=gcCommand value='Create Multiple Containers'>\n");
