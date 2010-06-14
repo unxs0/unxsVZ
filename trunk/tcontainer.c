@@ -356,6 +356,8 @@ void tContainer(const char *cResult)
 		tContainerNewStep(2);
 	else if(guMode==9003)
 		tContainerNewStep(3);
+	else if(guMode==9004)
+		tContainerNewStep(4);
 	else if(guMode==2002 || guMode==2000)
 		tContainerInput(1);
 	else
@@ -399,7 +401,7 @@ void tContainerNewStep(unsigned uStep)
 		tTablePullDownDatacenter("tNode;cuNodePullDown","cLabel","cLabel",uNode,1,
 			cuDatacenterPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
 	}
-	else if(uStep==3)
+	else if(uStep==3 || uStep==4)
 	{
 		OpenRow("Selected datacenter","black");
 		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
@@ -445,6 +447,27 @@ void tContainerNewStep(unsigned uStep)
 		OpenRow(LANG_FL_tContainer_uSearchdomain,"black");
 		tTablePullDownDatacenter("tSearchdomain;cuSearchdomainPullDown","cLabel","cLabel",uSearchdomain,1,
 			cuDatacenterPullDown,uPROP_SEARCHDOMAIN,0);
+
+		//Select group or allow creation of new one.
+		OpenRow("Select group","black");
+
+		//Select group or allow creation of new one.
+		OpenRow("Optional password","black");
+
+		if(uStep==4)
+		{
+			char cAutoCloneNode[256]={""};
+
+			OpenRow("Number of containers","black");
+			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+			if(cAutoCloneNode[0])
+			{
+				OpenRow("Clone target node","black");
+				OpenRow("Clone start uIPv4","black");
+				OpenRow("Keep clone stopped","black");
+				OpenRow("Clone cuSyncPeriod","black");
+			}
+		}
 	}
 
 }//void tContainerNewStep(unsigned uStep)
