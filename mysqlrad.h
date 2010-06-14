@@ -156,6 +156,7 @@ void ExtSelectPublic(const char *cTable,const char *cVarList);
 void ExtSelectSearchPublic(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch);
 void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow);
 void CloneReport(const char *cOptionalMsg);
+void tTablePullDownResellers(unsigned uSelector,unsigned uBanner);
 
 char *cURLEncode(char *cURL);
 void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry);

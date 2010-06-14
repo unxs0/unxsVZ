@@ -28,7 +28,6 @@ char *cRatioColor(float *fRatio);
 //tclientfunc.h
 static unsigned uForClient=0;
 static char cForClientPullDown[256]={"---"};
-void tTablePullDownResellers(unsigned uSelector);
 
 void ExtProcesstDatacenterVars(pentry entries[], int x)
 {
@@ -225,7 +224,7 @@ void ExttDatacenterButtons(void)
 				printf("<p>Copy properties <input title='Copies all properties'"
 					" type=checkbox name=uClone checked>\n");
 			if(guPermLevel>11)
-				tTablePullDownResellers(uForClient);
+				tTablePullDownResellers(uForClient,1);
                 break;
 
                 case 2001:
@@ -239,7 +238,7 @@ void ExttDatacenterButtons(void)
 			if(guPermLevel>11)
 			{
 				printf("<p>You change the record owner, just...");
-				tTablePullDownResellers(guCompany);
+				tTablePullDownResellers(guCompany,1);
 			}
                 break;
 

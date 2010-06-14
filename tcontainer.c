@@ -26,7 +26,7 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 		const char *cOrderby, unsigned uSelector, unsigned uMode, const char *cDatacenter,
 		unsigned uType, unsigned uDatacenter);
 void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFieldName,
-                        const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter);
+	const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter,unsigned uClient);
 #include "mysqlrad.h"
 
 //Table Variables
@@ -77,6 +77,7 @@ static time_t uModDate=0;
 static unsigned uSource=0;
 
 
+static char cuClientPullDown[256]={""};
 
 #define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource"
 
@@ -162,6 +163,13 @@ void ProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
 			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
+		}
+		else if(!strcmp(entries[i].name,"uForClient"))
+			sscanf(entries[i].val,"%u",&uForClient);
+		else if(!strcmp(entries[i].name,"cuClientPullDown"))
+		{
+			sprintf(cuClientPullDown,"%.255s",entries[i].val);
+			uForClient=ReadPullDown("tClient","cLabel",cuClientPullDown);
 		}
 		else if(!strcmp(entries[i].name,"uNode"))
 			sscanf(entries[i].val,"%u",&uNode);
@@ -375,11 +383,17 @@ void tContainerNewStep(unsigned uStep)
 		//Helper
 		if(uNode)
 			printf("<input type=hidden name=uNode value=%u >\n",uNode);
+		OpenRow("Select an organization","black");
+		uForClient=uOwner;
+		tTablePullDownResellers(uForClient,0);
 	}
 	else if(uStep==2)
 	{
 		OpenRow("Selected datacenter","black");
 		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+
+		OpenRow("Selected organization","black");
+		tTablePullDown("tClient;cuClientPullDown","cLabel","cLabel",uForClient,0);
 
 		OpenRow("Select an available node","black");
 		tTablePullDownDatacenter("tNode;cuNodePullDown","cLabel","cLabel",uNode,1,
@@ -389,6 +403,9 @@ void tContainerNewStep(unsigned uStep)
 	{
 		OpenRow("Selected datacenter","black");
 		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+
+		OpenRow("Selected organization","black");
+		tTablePullDown("tClient;cuClientPullDown","cLabel","cLabel",uForClient,0);
 
 		OpenRow("Selected node","black");
 		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
@@ -407,7 +424,7 @@ void tContainerNewStep(unsigned uStep)
 
 		//uIPv4
 		OpenRow(LANG_FL_tContainer_uIPv4,"black");
-		tTablePullDownOwnerAvailDatacenter("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1,uDatacenter);
+		tTablePullDownOwnerAvailDatacenter("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1,uDatacenter,uForClient);
 
 		//uOSTemplate
 		OpenRow(LANG_FL_tContainer_uOSTemplate,"black");
@@ -1117,7 +1134,7 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 
 
 void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFieldName,
-                        const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter)
+	const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter,unsigned uClient)
 {
         register int i,n;
         char cLabel[256];
@@ -1149,13 +1166,9 @@ void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFie
         }
 
 
-	if(guLoginClient==1)
-        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u ORDER BY %s",
-                                cFieldName,cLocalTableName,uDatacenter,cOrderby);
-	else
-        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND ( uOwner=%u OR uOwner IN"
+        sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND ( uOwner=%u OR uOwner IN"
 				" (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u)) ORDER BY %s",
-				cFieldName,cLocalTableName,uDatacenter,guCompany,guCompany,cOrderby);
+				cFieldName,cLocalTableName,uDatacenter,uClient,uClient,cOrderby);
 
 	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
 	i=mysql_num_rows(mysqlRes);

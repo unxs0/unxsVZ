@@ -134,9 +134,6 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 void DelProperties(unsigned uNode,unsigned uType);//tnodefunc.h
-void tTablePullDownResellers(unsigned uSelector);//tclientfunc.h
-
-
 
 
 void htmlGenMountInputs(unsigned const uMountTemplate)
@@ -686,7 +683,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error</blink>: Denied by permissions settings");
 			}
                 }
-		else if(!strcmp(gcCommand,"Select Datacenter"))
+		else if(!strcmp(gcCommand,"Select Datacenter/Org"))
                 {
 			if(guPermLevel>=9)
 			{
@@ -694,6 +691,9 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=9001;
 				if(!uDatacenter)
 					tContainer("<blink>Error</blink>: Must select a datacenter.");
+				if(!uForClient)
+					tContainer("<blink>Error</blink>: Must select an organization"
+							" (company, NGO or similar.)");
                         	guMode=9002;
 	                        tContainer("New container step 2");
 			}
@@ -2453,7 +2453,7 @@ void ExttContainerButtons(void)
 					printf(" >");
 			}
 			if(!uForClient && uOwner) uForClient=uOwner;
-			tTablePullDownResellers(uForClient);//uForClient after
+			tTablePullDownResellers(uForClient,1);//uForClient after
 			//Optionally create clone on new.
 			char cAutoCloneNode[256]={""};
 			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
@@ -2522,13 +2522,23 @@ void ExttContainerButtons(void)
                 break;
 
                 case 9001:
-			printf("<input type=submit class=largeButton title='Select datacenter'"
-				" name=gcCommand value='Select Datacenter'>\n");
+			printf("<u>New Container Datacenter and Organization</u><br>");
+			printf("In conjunction with your master plan; review datacenter location, usage, traffic"
+				" and problem stats, in order to make an optimal datacenter selection."
+				" You must also chose the organization (a company, NGO or similar) that will own this"
+				" resource.<p>");
+			printf("<input type=submit class=largeButton title='Select datacenter and organization'"
+				" name=gcCommand value='Select Datacenter/Org'>\n");
 			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
 				" name=gcCommand value='Cancel'>\n");
                 break;
 
                 case 9002:
+			printf("<u>New Container Node</u><br>");
+			printf("In conjunction with your master plan; review node usage, traffic"
+				" and problem stats, in order to make an optimal node selection. Only nodes that belong"
+				" to the previously chosen datacenter are shown. Other factors may also limit the "
+				"available node list, such as autonomic or configuration imposed restrictions.<p>");
 			printf("<input type=submit class=largeButton title='Select hardware node'"
 				" name=gcCommand value='Select Node'>\n");
 			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
@@ -2536,6 +2546,10 @@ void ExttContainerButtons(void)
                 break;
 
                 case 9003:
+			printf("<u>New Container Setup</u><br>");
+			printf("Set container creation parameters. Choices are limited based on selected datacenter, node,"
+				" and the organization that the container is being created for. We recommend that the cLabel"
+				" be the short cHostname, in DNS terms.<p>");
 			printf("<input type=submit class=largeButton"
 				" title='Configure container and continue to create a single container'"
 				" name=gcCommand value='Single Container Creation'>\n");

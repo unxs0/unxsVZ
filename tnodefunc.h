@@ -37,7 +37,6 @@ void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
 //tclientfunc.h
 static unsigned uForClient=0;
 static char cForClientPullDown[256]={"---"};
-void tTablePullDownResellers(unsigned uSelector);
 
 void ExtProcesstNodeVars(pentry entries[], int x)
 {
@@ -345,7 +344,7 @@ void ExttNodeButtons(void)
 				printf("<p><input title='Copies all properties'"
 					" type=checkbox name=uClone checked> Copy properties from property panel below.\n");
 			if(guPermLevel>11)
-				tTablePullDownResellers(uForClient);
+				tTablePullDownResellers(uForClient,1);
                 break;
 
                 case 2001:
@@ -358,8 +357,8 @@ void ExttNodeButtons(void)
                         printf(LANG_NBB_CONFIRMMOD);
 			if(guPermLevel>11)
 			{
-				printf("<p>You change the record owner, just...");
-				tTablePullDownResellers(guCompany);
+				printf("<p>To change the record owner, just...");
+				tTablePullDownResellers(guCompany,1);
 			}
                 break;
 

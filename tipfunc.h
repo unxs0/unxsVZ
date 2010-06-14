@@ -23,8 +23,6 @@ static char cSearch[32]={""};
 void AddIPRange(char *cIPRange);
 void DelIPRange(char *cIPRange);
 
-void tTablePullDownResellers(unsigned uSelector);//tclientfunc.h
-
 
 void ExtProcesstIPVars(pentry entries[], int x)
 {
@@ -231,7 +229,7 @@ void ExttIPButtons(void)
         {
                 case 2000:
 			printf("<p><u>Enter/mod data</u><br>");
-			tTablePullDownResellers(uForClient);
+			tTablePullDownResellers(uForClient,1);
 			if(cSearch[0])
 				printf("<input type=hidden name=cSearch value='%s'>",cSearch);
                         printf(LANG_NBB_CONFIRMNEW);
@@ -244,7 +242,7 @@ void ExttIPButtons(void)
 			printf("<p>cIPRange<br>\n");
 			printf("<input title='Optionally enter CIDR IP Range (ex. 10.0.0.1/27) for available mass deletion'"
 				" type=text name=cIPRange><p>\n");
-			tTablePullDownResellers(uForClient);
+			tTablePullDownResellers(uForClient,1);
 			if(cSearch[0])
 				printf("<input type=hidden name=cSearch value='%s'>",cSearch);
                         printf(LANG_NBB_CONFIRMDEL);
@@ -258,7 +256,7 @@ void ExttIPButtons(void)
 			printf("<p>cIPRange<br>\n");
 			printf("<input title='Optionally enter CIDR IP Range (ex. 10.0.0.1/27) for available mass addition'"
 				" type=text name=cIPRange value='%s'><p>\n",cIPRange);
-			tTablePullDownResellers(uForClient);
+			tTablePullDownResellers(uForClient,1);
 			if(cSearch[0])
 				printf("<input type=hidden name=cSearch value='%s'>",cSearch);
                         printf(LANG_NBB_CONFIRMMOD);
