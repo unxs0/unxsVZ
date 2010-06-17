@@ -404,21 +404,50 @@ void tIPNavList(unsigned uAvailable)
 
 	if(guPermLevel>11)
 	{
-		if(cSearch[0])
-			sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND cLabel"
+		if(uAvailable)
+		{
+			if(cSearch[0])
+				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND cLabel"
 					" LIKE '%s%%' ORDER BY cLabel",uAvailable,cSearch);
+			else
+				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u ORDER BY cLabel",uAvailable);
+		}
 		else
-			sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u ORDER BY cLabel",uAvailable);
+		{
+			if(cSearch[0])
+				sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+					" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE tIP.uAvailable=%u"
+					" AND tIP.cLabel LIKE '%s%%' ORDER BY tIP.cLabel",uAvailable,cSearch);
+			else
+				sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+						" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE"
+						" tIP.uAvailable=%u ORDER BY tIP.cLabel",uAvailable);
+		}
 	}
 	else
 	{
-		if(cSearch[0])
-			sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND uOwner=%u"
-					" AND cLabel LIKE '%s%%' ORDER BY cLabel",
-				uAvailable,guCompany,cSearch);
+		if(uAvailable)
+		{
+			if(cSearch[0])
+				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND uOwner=%u AND"
+					" cLabel LIKE '%s%%' ORDER BY cLabel", uAvailable,guCompany,cSearch);
+			else
+				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND uOwner=%u"
+					" ORDER BY cLabel",uAvailable,guCompany);
+		}
 		else
-			sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND uOwner=%u ORDER BY cLabel",
-				uAvailable,guCompany);
+		{
+			if(cSearch[0])
+				sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+						" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE"
+						" tIP.uAvailable=%u AND tIP.cLabel LIKE '%s%%' AND"
+						" tIP.uOwner=%u ORDER BY tIP.cLabel",uAvailable,cSearch,guCompany);
+			else
+				sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+						" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE"
+						" tIP.uAvailable=%u AND tIP.uOwner=%u ORDER BY tIP.cLabel",
+							uAvailable,guCompany);
+		}
 	}
 
         mysql_query(&gMysql,gcQuery);
@@ -440,13 +469,37 @@ void tIPNavList(unsigned uAvailable)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-			if(cSearch[0])
-				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP"
+
+			if(uAvailable)
+			{
+				if(cSearch[0])
+					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP"
 					"&uIP=%s&cSearch=%s>%s</a><br>\n",field[0],
 						cURLEncode(cSearch),field[1]);
-			else
-				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP"
+				else
+					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP"
 					"&uIP=%s>%s</a><br>\n",field[0],field[1]);
+			}
+			else
+			{
+				if(cSearch[0])
+					if(field[2]!=NULL)
+					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s&cSearch=%s>%s</a>"
+						" (<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s"
+						"</a>)<br>\n",
+						field[0],cURLEncode(cSearch),field[1],field[3],field[2]);
+					else
+					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s&cSearch=%s>%s"
+						"</a><br>\n",field[0],cURLEncode(cSearch),field[1]);
+				else
+					if(field[2]!=NULL)
+					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>"
+						" (<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s"
+						"</a>)<br>\n",field[0],field[1],field[3],field[2]);
+					else
+					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a><br>\n",
+							field[0],field[1]);
+			}
 			if(++uNumRows>uLIMIT)
 			{
 				printf("(Only %u IPs shown use search/filters to shorten list.)<br>\n",uLIMIT);
