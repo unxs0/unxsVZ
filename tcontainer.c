@@ -78,6 +78,8 @@ static unsigned uSource=0;
 
 
 static char cuClientPullDown[256]={""};
+static char cAutoCloneNode[256]={""};
+static char cunxsBindRecordJobNSSet[256]={""};
 
 #define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource"
 
@@ -403,6 +405,7 @@ void tContainerNewStep(unsigned uStep)
 	}
 	else if(uStep==3 || uStep==4)
 	{
+
 		OpenRow("Selected datacenter","black");
 		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
 
@@ -450,25 +453,62 @@ void tContainerNewStep(unsigned uStep)
 
 		//Select group or allow creation of new one.
 		OpenRow("Select group","black");
+		tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+		printf(" Create new group <input title='Instead of selecting an existing group optionally enter"
+			" a new tGroup.cLabel' type=text name=cService3 value='%s' maxlength=31><br>",cService3);
+
+		if(cunxsBindRecordJobNSSet[0])
+		{
+			OpenRow("Create job for unxsBind","black");
+			printf("<input type=checkbox name=uCreateDNSJob ");
+			if(uCreateDNSJob || uStep==3)
+				printf("checked>");
+			else
+				printf(">");
+		}
 
 		//Select group or allow creation of new one.
 		OpenRow("Optional password","black");
+		printf("<input title='Optional container password set on deployment and saved in"
+			" container property table' type=text name=cService1 value='%s' maxlength=31><br>",cService1);
+
+		if(cAutoCloneNode[0])
+		{
+			char cAutoCloneSyncTime[256]={""};
+
+			OpenRow("Clone target node","black");
+			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
+				cuTargetNodePullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+
+			OpenRow("Clone start uIPv4","black");
+			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
+				uDatacenter,uForClient);
+
+			OpenRow("Keep clone stopped","black");
+			printf("<input type=checkbox name=uCloneStop ");
+			if(uCloneStop || uStep==3)
+				printf("checked>");
+			else
+				printf(">");
+
+			OpenRow("Clone cuSyncPeriod","black");
+			GetConfiguration("cAutoCloneSyncTime",cAutoCloneSyncTime,uDatacenter,0,0,0);
+			if(cAutoCloneSyncTime[0])
+				sscanf(cAutoCloneSyncTime,"%u",&uSyncPeriod);
+			printf("<input title='Keep clone in sync every cuSyncPeriod seconds"
+					". You can change this at any time via the property panel.'"
+					" type=text size=10 maxlength=7"
+					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
+		}
 
 		if(uStep==4)
 		{
-			char cAutoCloneNode[256]={""};
-
 			OpenRow("Number of containers","black");
-			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
-			if(cAutoCloneNode[0])
-			{
-				OpenRow("Clone target node","black");
-				OpenRow("Clone start uIPv4","black");
-				OpenRow("Keep clone stopped","black");
-				OpenRow("Clone cuSyncPeriod","black");
-			}
+			printf("<input title='Number of containers to be created'"
+				" type=text name=cService2 value='%s' maxlength=2><br>",cService2);
 		}
-	}
+
+	}//step 3 or 4
 
 }//void tContainerNewStep(unsigned uStep)
 

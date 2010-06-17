@@ -83,7 +83,7 @@ static char cNetmask[64]={""};
 static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
 static unsigned uAllPortsOpen=0;
-static unsigned uCloneStop=1;//default stopped
+static unsigned uCloneStop=0;
 static unsigned uSyncPeriod=0;
 static char cSearch[32]={""};
 static unsigned uGroupJobs=0;
@@ -411,6 +411,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 
 								//Get next available IP, set uIPv4
 								uWizIPv4=0;
+								//TODO we cant let root just grab anybodys IPs
 								if(guCompany==1)
 									sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
 									" uAvailable=1 AND cLabel LIKE '%s.%%' LIMIT 1",
@@ -658,14 +659,9 @@ void ExttContainerCommands(pentry entries[], int x)
 	if(!strcmp(gcFunction,"tContainerTools"))
 	{
 		unsigned uIPv4Datacenter=0;
-		unsigned uOSTemplateDatacenter=0;
-		unsigned uConfigDatacenter=0;
-		unsigned uNameserverDatacenter=0;
-		unsigned uSearchdomainDatacenter=0;
 		unsigned uNodeDatacenter=0;
 		time_t uActualModDate= -1;
 		char cContainerType[256]={""};
-
 
 		uHideProps=1;
 
@@ -731,16 +727,380 @@ void ExttContainerCommands(pentry entries[], int x)
                 {
 			if(guPermLevel>=9)
 			{
+				char cTargetNodeIPv4[32]={""};
+				MYSQL_ROW field;
+				unsigned uNewVeid=0;
+				register int i;
+				char cIPv4ClassC[32]={""};
+				char cIPv4ClassCClone[32]={""};
+				unsigned uAvailableIPs=0;
+				unsigned uHostnameLen=0;
+				unsigned uLabelLen=0;
+
                         	ProcesstContainerVars(entries,x);
+
                         	guMode=9003;
-				if(!uDatacenter)
-					tContainer("<blink>Error:</blink> Must select a datacenter.");
-				if(!uForClient)
-					tContainer("<blink>Error:</blink> Must select an organization"
-							" (company, NGO or similar.)");
-				if(!uNode)
-					tContainer("<blink>Error:</blink> Must select a node.");
-				guMode=0;
+				//Check entries here
+				if(uDatacenter==0)
+					tContainer("<blink>Error:</blink> Unexpected uDatacenter==0!");
+				if(uNode==0)
+					tContainer("<blink>Error:</blink> Unexpected uNode==0!");
+				if(uIPv4==0)
+					tContainer("<blink>Error:</blink> You must select a IPv4");
+				if(uOSTemplate==0)
+					tContainer("<blink>Error:</blink> You must select a OSTemplate");
+				if(uConfig==0)
+					tContainer("<blink>Error:</blink> You must select a Config");
+				if(uNameserver==0)
+					tContainer("<blink>Error:</blink> You must select a Nameserver");
+				if(uSearchdomain==0)
+					tContainer("<blink>Error:</blink> You must select a Searchdomain");
+				if(uGroup==0 && cService3[0]==0)
+					tContainer("<blink>Error:</blink> Group is now required");
+				if(uGroup!=0 && cService3[0]!=0)
+					tContainer("<blink>Error:</blink> Or select a group or create a new one, not both");
+				if((uLabelLen=strlen(cLabel))<2)
+					tContainer("<blink>Error:</blink> cLabel is too short");
+				if(strchr(cLabel,'.'))
+					tContainer("<blink>Error:</blink> cLabel has at least one '.'");
+				if(strstr(cLabel,"-clone"))
+					tContainer("<blink>Error:</blink> cLabel can't have '-clone'");
+				if((uHostnameLen=strlen(cHostname))<5)
+					tContainer("<blink>Error:</blink> cHostname is too short");
+				if(cHostname[uHostnameLen-1]=='.')
+					tContainer("<blink>Error:</blink> cHostname can't end with a '.'");
+				if(strstr(cHostname+(uHostnameLen-strlen(".cloneNN")-1),".clone"))
+					tContainer("<blink>Error:</blink> cHostname can't end with '.cloneN'");
+					
+				if(cService1[0] && strlen(cService1)<6)
+					tContainer("<blink>Error:</blink> Optional password must be at least 6 chars");
+				//Direct datacenter checks
+				sscanf(ForeignKey("tIP","uDatacenter",uIPv4),"%u",&uIPv4Datacenter);
+				if(uDatacenter!=uIPv4Datacenter)
+					tContainer("<blink>Error:</blink> The specified uIPv4 does not "
+							"belong to the specified uDatacenter.");
+				sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
+				if(uDatacenter!=uNodeDatacenter)
+					tContainer("<blink>Error:</blink> The specified uNode does not "
+							"belong to the specified uDatacenter.");
+				//tProperty based datacenter checks
+				//VETH device
+				if(uVeth)
+				{
+					GetNodeProp(uNode,"Container-Type",cContainerType);
+					if(!strstr(cContainerType,"VETH"))
+						tContainer("<blink>Error:</blink> uNode selected does not support VETH");
+						
+				}
+
+				//If auto clone setup check required values
+				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+				if(cAutoCloneNode[0])
+				{
+
+					if(uTargetNode==0)
+						tContainer("<blink>Error:</blink> Please select a valid target node"
+								" for the clone");
+					if(uTargetNode==uNode)
+						tContainer("<blink>Error:</blink> Can't clone to same node");
+					sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uNodeDatacenter);
+					if(uDatacenter!=uNodeDatacenter)
+						tContainer("<blink>Error:</blink> The specified clone uNode does not "
+							"belong to the specified uDatacenter.");
+					GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
+					if(!cTargetNodeIPv4[0])
+						tContainer("<blink>Error:</blink> Your target node is"
+							" missing it's cIPv4 property");
+					if(!uWizIPv4)
+						tContainer("<blink>Error:</blink> You must select an IP for the clone");
+					if(uWizIPv4==uIPv4)
+						tContainer("<blink>Error:</blink> You must select a different IP for the"
+										" clone");
+					sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
+					if(uDatacenter!=uIPv4Datacenter)
+						tContainer("<blink>Error:</blink> The specified uIPv4 does not "
+							"belong to the specified uDatacenter.");
+					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
+						tContainer("<blink>Error:</blink> Clone uSyncPeriod out of range:"
+								" Max 30 days, min 5 minutes or 0 off.");
+				}
+
+				//TODO review this policy.
+				//No same names or hostnames for same datacenter allowed.
+				//TODO periods "." should be expanded to "[.]"
+				//for correct cHostname REGEXP.
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE ("
+							" cHostname REGEXP '^%s[0-9]+%s$'"
+							" OR cLabel REGEXP '%s[0-9]+$'"
+							" ) AND uDatacenter=%u LIMIT 1",
+								cLabel,cHostname,cLabel,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+					mysql_free_result(res);
+					//debug only
+					//tContainer(gcQuery);
+					tContainer("<blink>Error:</blink> Multiple containers, similar cHostname"
+					" cLabel pattern already used at this datacenter!");
+				}
+				mysql_free_result(res);
+
+				//Check to see if enough IPs are available early to avoid
+				//complex cleanup/rollback below
+				//First get class c mask will be used here and again in main loop below
+
+				//Get container IP cIPv4ClassC
+				sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
+						" AND uOwner=%u AND uDatacenter=%u",uIPv4,uForClient,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					sprintf(cIPv4ClassC,"%.31s",field[0]);
+				}
+				else
+				{
+					tContainer("<blink>Error:</blink> Someone grabbed your IP"
+						", multiple container creation aborted -if Root select"
+						" a company with IPs!");
+				}
+				mysql_free_result(res);
+				for(i=strlen(cIPv4ClassC);i>0;i--)
+				{
+					if(cIPv4ClassC[i]=='.')
+					{
+						cIPv4ClassC[i]=0;
+						break;
+					}
+				}
+				//Check IPs for clones first if so configured
+				if(cAutoCloneNode[0])
+				{
+					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
+						" AND uOwner=%u AND uDatacenter=%u",uWizIPv4,uForClient,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+					{
+						sprintf(cIPv4ClassCClone,"%.31s",field[0]);
+					}
+					else
+					{
+						tContainer("<blink>Error:</blink> Someone grabbed your clone IP"
+							", multiple container creation aborted -if Root select"
+							" a company with IPs!");
+					}
+					mysql_free_result(res);
+					for(i=strlen(cIPv4ClassCClone);i>0;i--)
+					{
+						if(cIPv4ClassCClone[i]=='.')
+						{
+							cIPv4ClassCClone[i]=0;
+							break;
+						}
+					}
+					//TODO
+					if(!strcmp(cIPv4ClassCClone,cIPv4ClassC))
+						tContainer("<blink>Error:</blink> Clone IPs must belong to a different"
+								" class C");
+					//Count clone IPs
+					sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+							" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
+								uForClient,cIPv4ClassCClone,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+						sscanf(field[0],"%u",&uAvailableIPs);
+					mysql_free_result(res);
+					if(!uAvailableIPs)
+						tContainer("<blink>Error:</blink> No clone IP in given"
+							" class C"
+							" available!");
+				}//cAutoCloneNode
+
+				//Count main IPs
+				uAvailableIPs=0;
+				sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+						" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
+								uForClient,cIPv4ClassC,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uAvailableIPs);
+				mysql_free_result(res);
+				if(!uAvailableIPs)
+					tContainer("<blink>Error:</blink> No IP in given class C"
+						" available!");
+
+				//User chooses to create a new group
+				if(cService3[0])
+				{
+					if(strlen(cService3)<3)
+						tContainer("<blink>Error:</blink> New tGroup.cLabel too short!");
+					sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s'",cService3);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)>0)
+					{
+						tContainer("<blink>Error:</blink> New tGroup.cLabel already in use!");
+					}
+					else
+					{
+						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"
+							"uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								cService3,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						uGroup=mysql_insert_id(&gMysql);
+					}
+					mysql_free_result(res);
+				}
+
+				//
+				//debug after initial checks
+				//char cBuffer[256];
+				//sprintf(cBuffer,"uIPv4=%u uOSTemplate=%u uConfig=%u uNameserver=%u uSearchdomain=%u"
+				//		" uNode=%u uDatacenter=%u",
+				//			uIPv4,uOSTemplate,uConfig,uNameserver,uSearchdomain,
+				//			uNode,uDatacenter);
+				//tContainer(cBuffer);
+				//
+
+				//Checks done commited to create
+                       		guMode=0;
+				uStatus=uINITSETUP;//Initial setup
+				uContainer=0;
+				uCreatedBy=guLoginClient;
+				guCompany=uForClient;
+				uOwner=guCompany;
+				uModBy=0;//Never modified
+				uModDate=0;//Never modified
+				//Convenience
+				sprintf(cSearch,"%.31s",cLabel);
+
+				//This sets new file global uContainer
+				uContainer=0;
+				NewtContainer(1);
+
+				//tIP
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+						" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
+									uIPv4,uForClient,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				if(mysql_affected_rows(&gMysql)!=1)
+				{
+					sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
+						uContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					tContainer("<blink>Error:</blink> Someone grabbed your IP"
+						", container creation aborted!");
+				}
+				
+				//Name property
+				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='Name',cValue='%s'",
+							uContainer,uForClient,guLoginClient,cLabel);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+
+				//Optional passwd
+				if(cService1[0])
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cPasswd',cValue='%s'",
+							uContainer,uForClient,guLoginClient,cService1);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
+
+				//Add property template entries for VETH device based container
+				if(uVeth)
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cVEID.mount',cValue='defaultVETH.mount'",
+							uContainer,uForClient,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cVEID.start',cValue='defaultVETH.start'",
+							uContainer,uForClient,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
+
+				if(uGroup)
+					ChangeGroup(uContainer,uGroup);
+
+				if(cAutoCloneNode[0])
+				{
+					uNewVeid=CommonCloneContainer(
+									uContainer,
+									uOSTemplate,
+									uConfig,
+									uNameserver,
+									uSearchdomain,
+									uDatacenter,
+									uForClient,
+									cLabel,
+									uNode,
+									uStatus,
+									cHostname,
+									cIPv4ClassCClone,
+									uWizIPv4,
+									cWizLabel,
+									cWizHostname,
+									uTargetNode);
+					SetContainerStatus(uContainer,uINITSETUP);
+					if(uGroup)
+						ChangeGroup(uNewVeid,uGroup);
+
+						//TODO cIPv4ClassCClone can't = cIPv4ClassC
+						//Get next available uWizIPv4
+					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+							" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
+								uForClient,cIPv4ClassCClone,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+						sscanf(field[0],"%u",&uWizIPv4);
+					else
+						tContainer("<blink>Error:</blink> No clone IP available"
+								", container creation aborted!");
+					mysql_free_result(res);
+				}//cAutoCloneNode
+
+				if(uCreateDNSJob)
+					CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter);
+
 				tContainer("New container created");
 			}
 			else
@@ -769,6 +1129,446 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
+		else if(!strcmp(gcCommand,"Create Multiple Containers"))
+                {
+			if(guPermLevel>=9)
+			{
+				unsigned uNumContainer=0;
+				char cTargetNodeIPv4[32]={""};
+				MYSQL_ROW field;
+				unsigned uNewVeid=0;
+				register int i;
+				char cIPv4ClassC[32]={""};
+				char cIPv4ClassCClone[32]={""};
+				unsigned uAvailableIPs=0;
+				char cGenLabel[32]={""};
+				char cGenHostname[100]={""};
+				char cOrgLabel[32]={""};
+				char cOrgHostname[100]={""};
+				unsigned uHostnameLen=0;
+				unsigned uLabelLen=0;
+
+                        	ProcesstContainerVars(entries,x);
+				sscanf(cService2,"%u",&uNumContainer);
+
+                        	guMode=9004;
+				//Check entries here
+				if(uNumContainer==0)
+					tContainer("<blink>Error:</blink> You must specify the number of containers");
+				if(uNumContainer>64)
+				{
+					sprintf(cService2,"64");
+					tContainer("<blink>Error:</blink> The maximum number of containers you can"
+							" create at once is 64");
+				}
+				if(uDatacenter==0)
+					tContainer("<blink>Error:</blink> Unexpected uDatacenter==0!");
+				if(uNode==0)
+					tContainer("<blink>Error:</blink> Unexpected uNode==0!");
+				if(uIPv4==0)
+					tContainer("<blink>Error:</blink> You must select a IPv4");
+				if(uOSTemplate==0)
+					tContainer("<blink>Error:</blink> You must select a OSTemplate");
+				if(uConfig==0)
+					tContainer("<blink>Error:</blink> You must select a Config");
+				if(uNameserver==0)
+					tContainer("<blink>Error:</blink> You must select a Nameserver");
+				if(uSearchdomain==0)
+					tContainer("<blink>Error:</blink> You must select a Searchdomain");
+				if(uGroup==0 && cService3[0]==0)
+					tContainer("<blink>Error:</blink> Group is now required");
+				if(uGroup!=0 && cService3[0]!=0)
+					tContainer("<blink>Error:</blink> Or select a group or create a new one, not both");
+				if((uLabelLen=strlen(cLabel))<2)
+					tContainer("<blink>Error:</blink> cLabel is too short");
+				if(strchr(cLabel,'.'))
+					tContainer("<blink>Error:</blink> cLabel has at least one '.'");
+				if(strstr(cLabel,"-clone"))
+					tContainer("<blink>Error:</blink> cLabel can't have '-clone'");
+				if((uHostnameLen=strlen(cHostname))<5)
+					tContainer("<blink>Error:</blink> cHostname is too short");
+				if(cHostname[uHostnameLen-1]=='.')
+					tContainer("<blink>Error:</blink> cHostname can't end with a '.'");
+				if(strstr(cHostname+(uHostnameLen-strlen(".cloneNN")-1),".clone"))
+					tContainer("<blink>Error:</blink> cHostname can't end with '.cloneN'");
+				if(cHostname[0]!='.')
+					tContainer("<blink>Error:</blink> Multiple containers cHostname has"
+							" to start with '.'");
+				if((uHostnameLen+uLabelLen)>62)
+					tContainer("<blink>Error:</blink> Combined length of cLabel+cHostname is too long");
+					
+				if(cService1[0] && strlen(cService1)<6)
+					tContainer("<blink>Error:</blink> Optional password must be at least 6 chars");
+				//Direct datacenter checks
+				sscanf(ForeignKey("tIP","uDatacenter",uIPv4),"%u",&uIPv4Datacenter);
+				if(uDatacenter!=uIPv4Datacenter)
+					tContainer("<blink>Error:</blink> The specified uIPv4 does not "
+							"belong to the specified uDatacenter.");
+				sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
+				if(uDatacenter!=uNodeDatacenter)
+					tContainer("<blink>Error:</blink> The specified uNode does not "
+							"belong to the specified uDatacenter.");
+				//tProperty based datacenter checks
+				//VETH device
+				if(uVeth)
+				{
+					GetNodeProp(uNode,"Container-Type",cContainerType);
+					if(!strstr(cContainerType,"VETH"))
+						tContainer("<blink>Error:</blink> uNode selected does not support VETH");
+						
+				}
+
+				//If auto clone setup check required values
+				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+				if(cAutoCloneNode[0])
+				{
+
+					if(uTargetNode==0)
+						tContainer("<blink>Error:</blink> Please select a valid target node"
+								" for the clone");
+					if(uTargetNode==uNode)
+						tContainer("<blink>Error:</blink> Can't clone to same node");
+					sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uNodeDatacenter);
+					if(uDatacenter!=uNodeDatacenter)
+						tContainer("<blink>Error:</blink> The specified clone uNode does not "
+							"belong to the specified uDatacenter.");
+					GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
+					if(!cTargetNodeIPv4[0])
+						tContainer("<blink>Error:</blink> Your target node is"
+							" missing it's cIPv4 property");
+					if(!uWizIPv4)
+						tContainer("<blink>Error:</blink> You must select an IP for the clone");
+					if(uWizIPv4==uIPv4)
+						tContainer("<blink>Error:</blink> You must select a different IP for the"
+										" clone");
+					sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
+					if(uDatacenter!=uIPv4Datacenter)
+						tContainer("<blink>Error:</blink> The specified uIPv4 does not "
+							"belong to the specified uDatacenter.");
+					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
+						tContainer("<blink>Error:</blink> Clone uSyncPeriod out of range:"
+								" Max 30 days, min 5 minutes or 0 off.");
+				}
+
+				//TODO review this policy.
+				//No same names or hostnames for same datacenter allowed.
+				//TODO periods "." should be expanded to "[.]"
+				//for correct cHostname REGEXP.
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE ("
+							" cHostname REGEXP '^%s[0-9]+%s$'"
+							" OR cLabel REGEXP '%s[0-9]+$'"
+							" ) AND uDatacenter=%u LIMIT 1",
+								cLabel,cHostname,cLabel,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+					mysql_free_result(res);
+					//debug only
+					//tContainer(gcQuery);
+					tContainer("<blink>Error:</blink> Multiple containers, similar cHostname"
+					" cLabel pattern already used at this datacenter!");
+				}
+				mysql_free_result(res);
+
+				//Check to see if enough IPs are available early to avoid
+				//complex cleanup/rollback below
+				//First get class c mask will be used here and again in main loop below
+
+				//Get container IP cIPv4ClassC
+				sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
+						" AND uOwner=%u AND uDatacenter=%u",uIPv4,uForClient,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					sprintf(cIPv4ClassC,"%.31s",field[0]);
+				}
+				else
+				{
+					tContainer("<blink>Error:</blink> Someone grabbed your IP"
+						", multiple container creation aborted -if Root select"
+						" a company with IPs!");
+				}
+				mysql_free_result(res);
+				for(i=strlen(cIPv4ClassC);i>0;i--)
+				{
+					if(cIPv4ClassC[i]=='.')
+					{
+						cIPv4ClassC[i]=0;
+						break;
+					}
+				}
+				//Check IPs for clones first if so configured
+				if(cAutoCloneNode[0])
+				{
+					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
+						" AND uOwner=%u AND uDatacenter=%u",uWizIPv4,uForClient,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+					{
+						sprintf(cIPv4ClassCClone,"%.31s",field[0]);
+					}
+					else
+					{
+						tContainer("<blink>Error:</blink> Someone grabbed your clone IP"
+							", multiple container creation aborted -if Root select"
+							" a company with IPs!");
+					}
+					mysql_free_result(res);
+					for(i=strlen(cIPv4ClassCClone);i>0;i--)
+					{
+						if(cIPv4ClassCClone[i]=='.')
+						{
+							cIPv4ClassCClone[i]=0;
+							break;
+						}
+					}
+					//TODO
+					if(!strcmp(cIPv4ClassCClone,cIPv4ClassC))
+						tContainer("<blink>Error:</blink> Clone IPs must belong to a different"
+								" class C");
+					//Count clone IPs
+					sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+							" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
+								uForClient,cIPv4ClassCClone,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+						sscanf(field[0],"%u",&uAvailableIPs);
+					mysql_free_result(res);
+					if(uNumContainer>uAvailableIPs)
+						tContainer("<blink>Error:</blink> Not enough clone IPs in given"
+							" class C"
+							" available!");
+				}//cAutoCloneNode
+
+				//Count main IPs
+				uAvailableIPs=0;
+				sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+						" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
+								uForClient,cIPv4ClassC,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uAvailableIPs);
+				mysql_free_result(res);
+				if(uNumContainer>uAvailableIPs)
+					tContainer("<blink>Error:</blink> Not enough IPs in given class C"
+						" available!");
+
+				//User chooses to create a new group
+				if(cService3[0])
+				{
+					if(strlen(cService3)<3)
+						tContainer("<blink>Error:</blink> New tGroup.cLabel too short!");
+					sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s'",cService3);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)>0)
+					{
+						tContainer("<blink>Error:</blink> New tGroup.cLabel already in use!");
+					}
+					else
+					{
+						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"
+							"uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								cService3,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						uGroup=mysql_insert_id(&gMysql);
+					}
+					mysql_free_result(res);
+				}
+
+				//
+				//debug after initial checks
+				//char cBuffer[256];
+				//sprintf(cBuffer,"uIPv4=%u uOSTemplate=%u uConfig=%u uNameserver=%u uSearchdomain=%u"
+				//		" uNode=%u uDatacenter=%u",
+				//			uIPv4,uOSTemplate,uConfig,uNameserver,uSearchdomain,
+				//			uNode,uDatacenter);
+				//tContainer(cBuffer);
+				//
+
+				//Checks done commited to create
+                       		guMode=0;
+				uStatus=uINITSETUP;//Initial setup
+				uContainer=0;
+				uCreatedBy=guLoginClient;
+				guCompany=uForClient;
+				uOwner=guCompany;
+				uModBy=0;//Never modified
+				uModDate=0;//Never modified
+				sprintf(cOrgLabel,"%.31s",cLabel);
+				sprintf(cOrgHostname,"%.68s",cHostname);
+				//Convenience
+				sprintf(cSearch,"%.31s",cLabel);
+
+				//Loop creation
+				for(i=0;i<uNumContainer;i++)
+				{
+
+					//Create cLabel and cHostname
+					sprintf(cGenLabel,"%.29s%d",cOrgLabel,i);//i is limited to 2 digits
+					sprintf(cGenHostname,"%.29s%d%.68s",cOrgLabel,i,cOrgHostname);
+					if(strlen(cGenLabel)>31)
+						tContainer("<blink>Error:</blink> cLabel length exceeded"
+							", multiple container creation aborted!");
+					if(strlen(cGenHostname)>64)
+						tContainer("<blink>Error:</blink> cHostname length exceeded"
+							", multiple container creation aborted!");
+					sprintf(cLabel,"%.31s",cGenLabel);
+					sprintf(cHostname,"%.64s",cGenHostname);//TODO check above
+
+					//This sets new file global uContainer
+					uContainer=0;
+					NewtContainer(1);
+
+					//tIP
+					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+						" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
+									uIPv4,uForClient,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					if(mysql_affected_rows(&gMysql)!=1)
+					{
+						sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
+							uContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						tContainer("<blink>Error:</blink> Someone grabbed your IP"
+							", multiple container creation aborted!");
+					}
+				
+					//Name property
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='Name',cValue='%s'",
+							uContainer,uForClient,guLoginClient,cLabel);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+
+					//Optional passwd
+					if(cService1[0])
+					{
+						sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cPasswd',cValue='%s'",
+							uContainer,uForClient,guLoginClient,cService1);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
+
+					//Add property template entries for VETH device based container
+					if(uVeth)
+					{
+						sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cVEID.mount',cValue='defaultVETH.mount'",
+							uContainer,uForClient,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+
+						sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cVEID.start',cValue='defaultVETH.start'",
+							uContainer,uForClient,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
+
+					if(uGroup)
+						ChangeGroup(uContainer,uGroup);
+
+					if(cAutoCloneNode[0])
+					{
+						uNewVeid=CommonCloneContainer(
+									uContainer,
+									uOSTemplate,
+									uConfig,
+									uNameserver,
+									uSearchdomain,
+									uDatacenter,
+									uForClient,
+									cLabel,
+									uNode,
+									uStatus,
+									cHostname,
+									cIPv4ClassCClone,
+									uWizIPv4,
+									cWizLabel,
+									cWizHostname,
+									uTargetNode);
+						SetContainerStatus(uContainer,uINITSETUP);
+						if(uGroup)
+							ChangeGroup(uNewVeid,uGroup);
+
+						//TODO cIPv4ClassCClone can't = cIPv4ClassC
+						//Get next available uWizIPv4
+						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+							" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
+								uForClient,cIPv4ClassCClone,uDatacenter);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						res=mysql_store_result(&gMysql);
+						if((field=mysql_fetch_row(res)))
+							sscanf(field[0],"%u",&uWizIPv4);
+						else
+							tContainer("<blink>Error:</blink> No more clone IPs available"
+								", multiple container creation aborted!");
+						mysql_free_result(res);
+					}
+
+					if(uCreateDNSJob)
+						CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter);
+
+					//Get next available uIPv4
+					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+						" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
+								uForClient,cIPv4ClassC,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+						sscanf(field[0],"%u",&uIPv4);
+					else
+						tContainer("<blink>Error:</blink> No more IPs available"
+							", multiple container creation aborted!");
+					mysql_free_result(res);
+
+				}//end of loop
+
+				tContainer("New containers created");
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}//Multiple containers
+		//New wizard section ends
 
 
 
@@ -832,11 +1632,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
 				unsigned uNumContainer=0;
 				char cTargetNodeIPv4[32]={""};
-				MYSQL_ROW field;
 				unsigned uNewVeid=0;
-				register int i;
-				char cIPv4ClassC[32]={""};
-				char cIPv4ClassCClone[32]={""};
 
                         	ProcesstContainerVars(entries,x);
 
@@ -867,41 +1663,6 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cLabel has at least one '.'!");
 				if(strstr(cLabel,"-clone"))
 					tContainer("<blink>Error:</blink> cLabel can't have '-clone'!");
-
-				char cBuffer[256];
-				sprintf(cBuffer,"uIPv4=%u uOSTemplate=%u uConfig=%u uNameserver=%u uSearchdomain=%u"
-						" uNode=%u uDatacenter=%u",
-							uIPv4,uOSTemplate,uConfig,uNameserver,uSearchdomain,
-							uNode,uDatacenter);
-				tContainer(cBuffer);
-
-				//datacenter checks
-				sscanf(ForeignKey("tIP","uDatacenter",uIPv4),"%u",&uIPv4Datacenter);
-				if(uDatacenter!=uIPv4Datacenter)
-					tContainer("<blink>Error:</blink> The specified uIPv4 does not "
-							"belong to the specified uDatacenter.");
-				sscanf(ForeignKey("tOSTemplate","uDatacenter",uOSTemplate),"%u",&uOSTemplateDatacenter);
-				if(uDatacenter!=uOSTemplateDatacenter)
-					tContainer("<blink>Error:</blink> The specified uOSTemplate does not "
-							"belong to the specified uDatacenter.");
-				sscanf(ForeignKey("tConfig","uDatacenter",uConfig),"%u",&uConfigDatacenter);
-				if(uDatacenter!=uConfigDatacenter)
-					tContainer("<blink>Error:</blink> The specified uConfig does not "
-							"belong to the specified uDatacenter.");
-				sscanf(ForeignKey("tNameserver","uDatacenter",uNameserver),"%u",&uNameserverDatacenter);
-				if(uDatacenter!=uNameserverDatacenter)
-					tContainer("<blink>Error:</blink> The specified uNameserver does not "
-							"belong to the specified uDatacenter.");
-				sscanf(ForeignKey("tSearchdomain","uDatacenter",uSearchdomain),"%u",&uSearchdomainDatacenter);
-				if(uDatacenter!=uSearchdomainDatacenter)
-					tContainer("<blink>Error:</blink> The specified uSearchdomain does not "
-							"belong to the specified uDatacenter.");
-				sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
-				if(uDatacenter!=uNodeDatacenter)
-					tContainer("<blink>Error:</blink> The specified uNode does not "
-							"belong to the specified uDatacenter.");
-
-
 				if(cHostname[strlen(cHostname)-1]=='.')
 					tContainer("<blink>Error:</blink> cHostname can't end with a '.'!");
 				if(strstr(cHostname+(strlen(cHostname)-strlen(".cloneN")-1),".cloneN"))
@@ -910,19 +1671,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Group is now required!");
 				if(uGroup!=0 && cService3[0]!=0)
 					tContainer("<blink>Error:</blink> Or select a group or create a new one!");
-
-				if(uNumContainer>1)
-				{
-					if(cHostname[0]!='.')
-						tContainer("<blink>Error:</blink> Multiple containers cHostname has"
-							" to start with '.'!");
-				}
-				else
-				{
-					if(cHostname[0]=='.')
-						tContainer("<blink>Error:</blink> cHostname can't"
-							" start with  a '.'!");
-				}
+				if(cHostname[0]=='.')
+					tContainer("<blink>Error:</blink> cHostname can't start with  a '.'!");
 				if(uVeth)
 				{
 					GetNodeProp(uNode,"Container-Type",cContainerType);
@@ -931,35 +1681,17 @@ void ExttContainerCommands(pentry entries[], int x)
 						
 				}
 
-				//User chooses to create a new group
-				if(cService3[0])
-				{
-					if(strlen(cService3)<3)
-						tContainer("<blink>Error:</blink> New tGroup.cLabel too short!");
-					sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s'",cService3);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					if(mysql_num_rows(res)>0)
-					{
-						tContainer("<blink>Error:</blink> New tGroup.cLabel already in use!");
-					}
-					else
-					{
-						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"
-							"uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-								cService3,guLoginClient);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-						uGroup=mysql_insert_id(&gMysql);
-					}
-					mysql_free_result(res);
-				}
+				//datacenter checks
+				sscanf(ForeignKey("tIP","uDatacenter",uIPv4),"%u",&uIPv4Datacenter);
+				if(uDatacenter!=uIPv4Datacenter)
+					tContainer("<blink>Error:</blink> The specified uIPv4 does not "
+							"belong to the specified uDatacenter.");
+				sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
+				if(uDatacenter!=uNodeDatacenter)
+					tContainer("<blink>Error:</blink> The specified uNode does not "
+							"belong to the specified uDatacenter.");
 
 				//If auto clone setup check required values
-				char cAutoCloneNode[256]={""};
 				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
 				if(cAutoCloneNode[0])
 				{
@@ -991,152 +1723,61 @@ void ExttContainerCommands(pentry entries[], int x)
 								" Max 30 days, min 5 minutes or 0 off.");
 				}
 
-				//For debug only
-				//tContainer("<blink>Debug</blink>: d1");
-
-				//No same names or hostnames for same datacenter allowed.
-				if(uNumContainer>1)
+				//Do not allow same cLabel or cHostname for same datacenters
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR"
+							" cLabel='%s') AND uDatacenter=%u LIMIT 1",
+									cHostname,cLabel,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
 				{
-					unsigned uAvailableIPs=0;
+					mysql_free_result(res);
+					tContainer("<blink>Error:</blink> cHostname or cLabel already used at this"
+						" datacenter!");
+				}
+				mysql_free_result(res);
 
-					//TODO periods "." should be expanded to "[.]"
-					//for correct cHostname REGEXP.
-					sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE ("
-							" cHostname REGEXP '^%s[0-9]+%s$'"
-							" OR cLabel REGEXP '%s[0-9]+$'"
-							" ) AND uDatacenter=%u LIMIT 1",
-								cLabel,cHostname,cLabel,uDatacenter);
+				//User chooses to create a new group
+				if(cService3[0])
+				{
+					if(strlen(cService3)<3)
+						tContainer("<blink>Error:</blink> New tGroup.cLabel too short!");
+					sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s'",cService3);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
 					res=mysql_store_result(&gMysql);
 					if(mysql_num_rows(res)>0)
 					{
-						mysql_free_result(res);
-						//debug only
-						//tContainer(gcQuery);
-						tContainer("<blink>Error:</blink> Multiple containers, similar cHostname"
-						" cLabel pattern already used at this datacenter!");
-					}
-					mysql_free_result(res);
-
-					//Check to see if enough IPs are available early to avoid
-					//complex cleanup/rollback below
-					//First get class c mask will be used here and again in main loop below
-
-					//Check IPs for clones first if so configured
-					if(cAutoCloneNode[0])
-					{
-						sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
-							" AND uOwner=%u AND uDatacenter=%u",uWizIPv4,guCompany,uDatacenter);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-						res=mysql_store_result(&gMysql);
-						if((field=mysql_fetch_row(res)))
-						{
-							sprintf(cIPv4ClassCClone,"%.31s",field[0]);
-						}
-						else
-						{
-                        				guMode=2000;
-							tContainer("<blink>Error:</blink> Someone grabbed your clone IP"
-							", multiple container creation aborted -if Root select"
-							" a company with IPs!");
-						}
-						mysql_free_result(res);
-						for(i=strlen(cIPv4ClassCClone);i>0;i--)
-						{
-							if(cIPv4ClassCClone[i]=='.')
-							{
-								cIPv4ClassCClone[i]=0;
-								break;
-							}
-						}
-						sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-							" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
-									uOwner,cIPv4ClassCClone,uDatacenter);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-						res=mysql_store_result(&gMysql);
-						if((field=mysql_fetch_row(res)))
-							sscanf(field[0],"%u",&uAvailableIPs);
-						mysql_free_result(res);
-						if(uNumContainer>uAvailableIPs)
-							tContainer("<blink>Error:</blink> Not enough clone IPs in given"
-								" class C"
-								" available!");
-					}
-
-					//Main container
-					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
-							" AND uOwner=%u AND uDatacenter=%u",uIPv4,guCompany,uDatacenter);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
-					{
-						sprintf(cIPv4ClassC,"%.31s",field[0]);
+						tContainer("<blink>Error:</blink> New tGroup.cLabel already in use!");
 					}
 					else
 					{
-                        			guMode=2000;
-						tContainer("<blink>Error:</blink> Someone grabbed your IP"
-							", multiple container creation aborted -if Root select"
-							" a company with IPs!");
-					}
-					mysql_free_result(res);
-					for(i=strlen(cIPv4ClassC);i>0;i--)
-					{
-						if(cIPv4ClassC[i]=='.')
-						{
-							cIPv4ClassC[i]=0;
-							break;
-						}
-					}
-					//debug only
-					//tContainer(cIPv4ClassC);
-					uAvailableIPs=0;
-					sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-							" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
-									uOwner,cIPv4ClassC,uDatacenter);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
-						sscanf(field[0],"%u",&uAvailableIPs);
-					mysql_free_result(res);
-					//If clone class C same as main class C we need double the IPs here.
-					//note integer math, so we may need +1 IPs
-					if(!strcmp(cIPv4ClassC,cIPv4ClassCClone))
-						uAvailableIPs=uAvailableIPs/2;
-					if(uNumContainer>uAvailableIPs)
-						tContainer("<blink>Error:</blink> Not enough IPs in given class C"
-							" available!");
-
-                        		guMode=0;
-				}
-				else
-				{
-					sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR"
-							" cLabel='%s') AND uDatacenter=%u LIMIT 1",
-									cHostname,cLabel,uDatacenter);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
+						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"
+							"uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								cService3,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					if(mysql_num_rows(res)>0)
-					{
-						mysql_free_result(res);
-						tContainer("<blink>Error:</blink> cHostname or cLabel already used at this"
-							" datacenter!");
+						uGroup=mysql_insert_id(&gMysql);
 					}
 					mysql_free_result(res);
-                        		guMode=200;//Step 2
 				}
+
+
+				//
+				//debug
+				char cBuffer[256];
+				sprintf(cBuffer,"uIPv4=%u uOSTemplate=%u uConfig=%u uNameserver=%u uSearchdomain=%u"
+						" uNode=%u uDatacenter=%u",
+							uIPv4,uOSTemplate,uConfig,uNameserver,uSearchdomain,
+							uNode,uDatacenter);
+				tContainer(cBuffer);
+				//
+
+                        	guMode=200;//Step 2
 
 				uStatus=uINITSETUP;//Initial setup
 				uContainer=0;
@@ -1146,244 +1787,99 @@ void ExttContainerCommands(pentry entries[], int x)
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 
-				if(uNumContainer>1)
-				{
-					char cGenLabel[32]={""};
-					char cGenHostname[100]={""};
-					char cOrgLabel[32]={""};
-					char cOrgHostname[100]={""};
+				//Single container
+				NewtContainer(1);
 
-					sprintf(cOrgLabel,"%.31s",cLabel);
-					sprintf(cOrgHostname,"%.64s",cHostname);
-
-					//Convenience
-					sprintf(cSearch,"%.31s",cLabel);
-
-					//Loop creation
-					for(i=0;i<uNumContainer;i++)
-					{
-
-						//Create cLabel and cHostname
-						sprintf(cGenLabel,"%.24s%d",cOrgLabel,i);
-						sprintf(cGenHostname,"%.24s%d%.64s",cOrgLabel,i,cOrgHostname);
-						if(strlen(cGenLabel)>31)
-							tContainer("<blink>Error:</blink> cLabel length exceeded"
-								", multiple container creation aborted!");
-						if(strlen(cGenHostname)>64)
-							tContainer("<blink>Error:</blink> cHostname length exceeded"
-								", multiple container creation aborted!");
-						sprintf(cLabel,"%.31s",cGenLabel);
-						sprintf(cHostname,"%.64s",cGenHostname);
-
-						//This sets new file global uContainer
-						uContainer=0;
-						NewtContainer(1);
-
-						//tIP
-						sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-							" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
-										uIPv4,guCompany,uDatacenter);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-						if(mysql_affected_rows(&gMysql)!=1)
-						{
-							sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
-								uContainer);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-							tContainer("<blink>Error:</blink> Someone grabbed your IP"
-								", multiple container creation aborted!");
-						}
-					
-						//Name property
-						sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='Name',cValue='%s'",
-								uContainer,guCompany,guLoginClient,cLabel);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-
-						//Optional passwd
-						if(cService1[0])
-						{
-							sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='cPasswd',cValue='%s'",
-								uContainer,guCompany,guLoginClient,cService1);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-						}
-
-						//Add property template entries for VETH device based container
-						if(uVeth)
-						{
-							sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='cVEID.mount',cValue='defaultVETH.mount'",
-								uContainer,guCompany,guLoginClient);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-
-							sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='cVEID.start',cValue='defaultVETH.start'",
-								uContainer,guCompany,guLoginClient);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-						}
-
-						if(uGroup)
-							ChangeGroup(uContainer,uGroup);
-
-						if(cAutoCloneNode[0])
-						{
-							uNewVeid=CommonCloneContainer(
-										uContainer,
-										uOSTemplate,
-										uConfig,
-										uNameserver,
-										uSearchdomain,
-										uDatacenter,
-										uOwner,
-										cLabel,
-										uNode,
-										uStatus,
-										cHostname,
-										cIPv4ClassCClone,
-										uWizIPv4,
-										cWizLabel,
-										cWizHostname,
-										uTargetNode);
-							SetContainerStatus(uContainer,uINITSETUP);
-							if(uGroup)
-								ChangeGroup(uNewVeid,uGroup);
-						}
-
-						if(uCreateDNSJob)
-							CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter);
-
-						//Get next available IP, set uIPv4
-						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-							" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
-									uOwner,cIPv4ClassC,uDatacenter);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-						res=mysql_store_result(&gMysql);
-						if((field=mysql_fetch_row(res)))
-							sscanf(field[0],"%u",&uIPv4);
-						else
-							tContainer("<blink>Error:</blink> No more IPs available"
-								", multiple container creation aborted!");
-						mysql_free_result(res);
-
-					}//end of loop
-
-				}//end of multiple container section
-				else
-				{
-					//Single container
-					NewtContainer(1);
-
-					//tIP
-					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+				//tIP
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 						" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
 							uIPv4,guCompany,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				if(mysql_affected_rows(&gMysql)!=1)
+				{
+					sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uContainer);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
-					if(mysql_affected_rows(&gMysql)!=1)
-					{
-						sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uContainer);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-                        			guMode=2000;
-						tContainer("<blink>Error:</blink> Someone grabbed your IP"
-								", No container created -if Root select a company with IPs!");
-					}
+                        		guMode=2000;
+					tContainer("<blink>Error:</blink> Someone grabbed your IP"
+							", No container created -if Root select a company with IPs!");
+				}
 
-					//Name property
-					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+				//Name property
+				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
 							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 							",cName='Name',cValue='%s'",
 								uContainer,guCompany,guLoginClient,cLabel);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+
+				//Optional passwd
+				if(cService1[0])
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cPasswd',cValue='%s'",
+							uContainer,guCompany,guLoginClient,cService1);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
 
-					//Optional passwd
-					if(cService1[0])
-					{
-						sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='cPasswd',cValue='%s'",
-								uContainer,guCompany,guLoginClient,cService1);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-					}
+				//Add property template entries for VETH device based container
+				if(uVeth)
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cVEID.mount',cValue='defaultVETH.mount'",
+							uContainer,guCompany,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
 
-					//Add property template entries for VETH device based container
-					if(uVeth)
-					{
-						sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='cVEID.mount',cValue='defaultVETH.mount'",
-								uContainer,guCompany,guLoginClient);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cVEID.start',cValue='defaultVETH.start'",
+							uContainer,guCompany,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
 
-						sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='cVEID.start',cValue='defaultVETH.start'",
-								uContainer,guCompany,guLoginClient);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-					}
+				if(uGroup)
+					ChangeGroup(uContainer,uGroup);
 
+				if(cAutoCloneNode[0])
+				{
+					uNewVeid=CommonCloneContainer(
+							uContainer,
+							uOSTemplate,
+							uConfig,
+							uNameserver,
+							uSearchdomain,
+							uDatacenter,
+							uOwner,
+							cLabel,
+							uNode,
+							uStatus,
+							cHostname,
+							"",
+							uWizIPv4,
+							cWizLabel,
+							cWizHostname,
+							uTargetNode);
+					SetContainerStatus(uContainer,uINITSETUP);
 					if(uGroup)
-						ChangeGroup(uContainer,uGroup);
+						ChangeGroup(uNewVeid,uGroup);
+				}
 
-					if(cAutoCloneNode[0])
-					{
-						uNewVeid=CommonCloneContainer(
-								uContainer,
-								uOSTemplate,
-								uConfig,
-								uNameserver,
-								uSearchdomain,
-								uDatacenter,
-								uOwner,
-								cLabel,
-								uNode,
-								uStatus,
-								cHostname,
-								"",
-								uWizIPv4,
-								cWizLabel,
-								cWizHostname,
-								uTargetNode);
-						SetContainerStatus(uContainer,uINITSETUP);
-						if(uGroup)
-							ChangeGroup(uNewVeid,uGroup);
-					}
+				if(uCreateDNSJob)
+					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter);
 
-					if(uCreateDNSJob)
-						CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter);
-
-					tContainer("New container created and default properties created");
-				}//end of single container
-
-				tContainer("New containers created and default properties created");
+				tContainer("New container created");
 			}
 			else
 			{
@@ -2255,7 +2751,6 @@ void ExttContainerCommands(pentry entries[], int x)
 
 void ExttContainerButtons(void)
 {
-	char cunxsBindRecordJobNSSet[256]={""};
 
 	OpenFieldSet("tContainer Aux Panel",100);
 	switch(guMode)
@@ -2505,7 +3000,6 @@ void ExttContainerButtons(void)
 			if(!uForClient && uOwner) uForClient=uOwner;
 			tTablePullDownResellers(uForClient,1);//uForClient after
 			//Optionally create clone on new.
-			char cAutoCloneNode[256]={""};
 			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
 			if(cAutoCloneNode[0])
 			{
@@ -2600,6 +3094,16 @@ void ExttContainerButtons(void)
 			printf("Set container creation parameters. Choices are limited based on selected datacenter, node,"
 				" and the organization that the container is being created for. We recommend that the cLabel"
 				" be the short cHostname, in DNS terms.<p>");
+			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+			if(cAutoCloneNode[0])
+				printf("Auto-clone subsystem in enabled for selected datacenter: Clone target node"
+					" must not match selected node. Similarly, clone start uIPv4"
+					" must not match uIPv4 or fall in same range as per number of containers.<p>");
+			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
+			if(cunxsBindRecordJobNSSet[0])
+				printf("unxsBind interface is configured for selected datacenter: DNS will be setup"
+					" automatically for you, unless you opt-out by un-checking the <i>Create job...</i>"
+					" checkbox in the right data panel.<p>");
 			printf("<input type=submit class=largeButton"
 				" title='Configure container and continue to create a single container'"
 				" name=gcCommand value='Single Container Creation'>\n");
@@ -2622,6 +3126,16 @@ void ExttContainerButtons(void)
 				" your containers will be <i>cLabel=ct0</i> and <i>cHostname=ct0.yourdomain.tld</i>"
 				" through <i>cLabel=ctN</i> and <i>cHostname=ctN.yourdomain.tld</i>,"
 				" where N is the number of containers specfied minus 1.<p>");
+			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+			if(cAutoCloneNode[0])
+				printf("Auto-clone subsystem is enabled for selected datacenter: Clone target node"
+					" must not match selected node. Similarly, clone start uIPv4"
+					" must not match uIPv4 or fall in same range as per number of containers.<p>");
+			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
+			if(cunxsBindRecordJobNSSet[0])
+				printf("unxsBind interface is configured for selected datacenter: DNS will be setup"
+					" automatically for you, unless you opt-out by un-checking the <i>Create job...</i>"
+					" checkbox in the right data panel.<p>");
 			printf("<input type=submit class=largeButton"
 				" title='Commit to creating multiple containers'"
 				" name=gcCommand value='Create Multiple Containers'>\n");
