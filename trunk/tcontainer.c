@@ -1229,9 +1229,8 @@ void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFie
         }
 
 
-        sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND ( uOwner=%u OR uOwner IN"
-				" (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u)) ORDER BY %s",
-				cFieldName,cLocalTableName,uDatacenter,uClient,uClient,cOrderby);
+	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u ORDER BY %s",
+				cFieldName,cLocalTableName,uDatacenter,uClient,cOrderby);
 
 	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
 	i=mysql_num_rows(mysqlRes);

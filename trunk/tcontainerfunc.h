@@ -670,7 +670,6 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(guPermLevel>=9)
 			{
 	                        ProcesstContainerVars(entries,x);
-                        	//guMode=2000;
                         	guMode=9001;
 	                        tContainer("New container step 1");
 			}
@@ -1572,28 +1571,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 
 
-                else if(!strcmp(gcCommand,"Continue"))
-                {
-                        ProcesstContainerVars(entries,x);
-			if(guPermLevel>=9)
-			{
-                        	guMode=0;
-
-				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
-				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it!");
-
-                        	guMode=200;
-				//Check here
-
-	                       	guMode=201;
-				tContainer("New container step 3/3");
-			}
-			else
-			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
-			}
-		}
+		//TODO mount settings wizard
                 else if(!strcmp(gcCommand,"Confirm Mount Settings") ||
 			!strcmp(gcCommand,"Confirm Container Settings"))
                 {
@@ -1619,267 +1597,6 @@ void ExttContainerCommands(pentry entries[], int x)
 			
                         	guMode=0;
 				tContainer("New container setup completed");
-			}
-			else
-			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
-			}
-		}
-		//else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
-		else if(!strcmp(gcCommand,"Confirm Container Fields"))
-                {
-			if(guPermLevel>=9)
-			{
-				unsigned uNumContainer=0;
-				char cTargetNodeIPv4[32]={""};
-				unsigned uNewVeid=0;
-
-                        	ProcesstContainerVars(entries,x);
-
-				sscanf(cService2,"%u",&uNumContainer);
-
-                        	guMode=2000;
-				//Check entries here
-				if(uOSTemplate==0)
-					tContainer("<blink>Error:</blink> uOSTemplate==0!");
-				if(uDatacenter==0)
-					tContainer("<blink>Error:</blink> uDatacenter==0!");
-				if(uNode==0)
-					tContainer("<blink>Error:</blink> uNode==0!");
-				if(uIPv4==0)
-					tContainer("<blink>Error:</blink> uIPv4==0!"
-							" (See advanced operations if applicable.)");
-				if(uConfig==0)
-					tContainer("<blink>Error:</blink> uConfig==0!");
-				if(uNameserver==0)
-					tContainer("<blink>Error:</blink> uNameserver==0!");
-				if(uSearchdomain==0)
-					tContainer("<blink>Error:</blink> uSearchdomain==0!");
-				if(strlen(cHostname)<5)
-					tContainer("<blink>Error:</blink> cHostname too short!");
-				if(strlen(cLabel)<2)
-					tContainer("<blink>Error:</blink> cLabel too short!");
-				if(strchr(cLabel,'.'))
-					tContainer("<blink>Error:</blink> cLabel has at least one '.'!");
-				if(strstr(cLabel,"-clone"))
-					tContainer("<blink>Error:</blink> cLabel can't have '-clone'!");
-				if(cHostname[strlen(cHostname)-1]=='.')
-					tContainer("<blink>Error:</blink> cHostname can't end with a '.'!");
-				if(strstr(cHostname+(strlen(cHostname)-strlen(".cloneN")-1),".cloneN"))
-					tContainer("<blink>Error:</blink> cHostname can't end with '.clone'!");
-				if(uGroup==0 && cService3[0]==0)
-					tContainer("<blink>Error:</blink> Group is now required!");
-				if(uGroup!=0 && cService3[0]!=0)
-					tContainer("<blink>Error:</blink> Or select a group or create a new one!");
-				if(cHostname[0]=='.')
-					tContainer("<blink>Error:</blink> cHostname can't start with  a '.'!");
-				if(uVeth)
-				{
-					GetNodeProp(uNode,"Container-Type",cContainerType);
-					if(!strstr(cContainerType,"VETH"))
-						tContainer("<blink>Error:</blink> uNode selected does not support VETH!");
-						
-				}
-
-				//datacenter checks
-				sscanf(ForeignKey("tIP","uDatacenter",uIPv4),"%u",&uIPv4Datacenter);
-				if(uDatacenter!=uIPv4Datacenter)
-					tContainer("<blink>Error:</blink> The specified uIPv4 does not "
-							"belong to the specified uDatacenter.");
-				sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
-				if(uDatacenter!=uNodeDatacenter)
-					tContainer("<blink>Error:</blink> The specified uNode does not "
-							"belong to the specified uDatacenter.");
-
-				//If auto clone setup check required values
-				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
-				if(cAutoCloneNode[0])
-				{
-
-					if(!uWizIPv4)
-						tContainer("<blink>Error:</blink> You must select an IP for the clone!");
-					if(uWizIPv4==uIPv4)
-						tContainer("<blink>Error:</blink> You must select a different IP for the"
-										" clone!");
-					if(uTargetNode==0)
-						tContainer("<blink>Error:</blink> Please select a valid target node"
-								" for the clone!");
-					if(uTargetNode==uNode)
-						tContainer("<blink>Error:</blink> Can't clone to same node!");
-					sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uNodeDatacenter);
-					if(uDatacenter!=uNodeDatacenter)
-						tContainer("<blink>Error:</blink> The specified clone uNode does not "
-							"belong to the specified uDatacenter.");
-					GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
-					if(!cTargetNodeIPv4[0])
-						tContainer("<blink>Error:</blink> Your target node is"
-							" missing it's cIPv4 property!");
-					sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
-					if(uDatacenter!=uIPv4Datacenter)
-						tContainer("<blink>Error:</blink> The specified uIPv4 does not "
-							"belong to the specified uDatacenter.");
-					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
-						tContainer("<blink>Error:</blink> Clone uSyncPeriod out of range:"
-								" Max 30 days, min 5 minutes or 0 off.");
-				}
-
-				//Do not allow same cLabel or cHostname for same datacenters
-				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR"
-							" cLabel='%s') AND uDatacenter=%u LIMIT 1",
-									cHostname,cLabel,uDatacenter);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-				res=mysql_store_result(&gMysql);
-				if(mysql_num_rows(res)>0)
-				{
-					mysql_free_result(res);
-					tContainer("<blink>Error:</blink> cHostname or cLabel already used at this"
-						" datacenter!");
-				}
-				mysql_free_result(res);
-
-				//User chooses to create a new group
-				if(cService3[0])
-				{
-					if(strlen(cService3)<3)
-						tContainer("<blink>Error:</blink> New tGroup.cLabel too short!");
-					sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s'",cService3);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					if(mysql_num_rows(res)>0)
-					{
-						tContainer("<blink>Error:</blink> New tGroup.cLabel already in use!");
-					}
-					else
-					{
-						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"
-							"uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-								cService3,guLoginClient);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-						uGroup=mysql_insert_id(&gMysql);
-					}
-					mysql_free_result(res);
-				}
-
-
-				//
-				//debug
-				char cBuffer[256];
-				sprintf(cBuffer,"uIPv4=%u uOSTemplate=%u uConfig=%u uNameserver=%u uSearchdomain=%u"
-						" uNode=%u uDatacenter=%u",
-							uIPv4,uOSTemplate,uConfig,uNameserver,uSearchdomain,
-							uNode,uDatacenter);
-				tContainer(cBuffer);
-				//
-
-                        	guMode=200;//Step 2
-
-				uStatus=uINITSETUP;//Initial setup
-				uContainer=0;
-				uCreatedBy=guLoginClient;
-				if(uForClient) guCompany=uForClient;
-				uOwner=guCompany;
-				uModBy=0;//Never modified
-				uModDate=0;//Never modified
-
-				//Single container
-				NewtContainer(1);
-
-				//tIP
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-						" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
-							uIPv4,guCompany,uDatacenter);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
-				if(mysql_affected_rows(&gMysql)!=1)
-				{
-					sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uContainer);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-                        		guMode=2000;
-					tContainer("<blink>Error:</blink> Someone grabbed your IP"
-							", No container created -if Root select a company with IPs!");
-				}
-
-				//Name property
-				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							",cName='Name',cValue='%s'",
-								uContainer,guCompany,guLoginClient,cLabel);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-
-				//Optional passwd
-				if(cService1[0])
-				{
-					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-						",cName='cPasswd',cValue='%s'",
-							uContainer,guCompany,guLoginClient,cService1);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-				}
-
-				//Add property template entries for VETH device based container
-				if(uVeth)
-				{
-					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-						",cName='cVEID.mount',cValue='defaultVETH.mount'",
-							uContainer,guCompany,guLoginClient);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-
-					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-						",cName='cVEID.start',cValue='defaultVETH.start'",
-							uContainer,guCompany,guLoginClient);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-				}
-
-				if(uGroup)
-					ChangeGroup(uContainer,uGroup);
-
-				if(cAutoCloneNode[0])
-				{
-					uNewVeid=CommonCloneContainer(
-							uContainer,
-							uOSTemplate,
-							uConfig,
-							uNameserver,
-							uSearchdomain,
-							uDatacenter,
-							uOwner,
-							cLabel,
-							uNode,
-							uStatus,
-							cHostname,
-							"",
-							uWizIPv4,
-							cWizLabel,
-							cWizHostname,
-							uTargetNode);
-					SetContainerStatus(uContainer,uINITSETUP);
-					if(uGroup)
-						ChangeGroup(uNewVeid,uGroup);
-				}
-
-				if(uCreateDNSJob)
-					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter);
-
-				tContainer("New container created");
 			}
 			else
 			{
@@ -2243,7 +1960,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
 				
 				guMode=7001;
-				tContainer("Select Target Node and IPv4");
+				tContainer("Select target node, uIPv4 and set other settings");
 			}
 			else
 			{
@@ -2262,34 +1979,36 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it!");
+					tContainer("<blink>Error:</blink> This record was modified. Reload it");
 
                         	guMode=7001;
+				if(uTargetNode==0)
+					tContainer("<blink>Error:</blink> Please select a valid target node");
+				if(uTargetNode==uNode)
+					tContainer("<blink>Error:</blink> Can't clone to same node");
 				if(uSource)
-					tContainer("<blink>Error:</blink> No clones of clones yet!");
+					tContainer("<blink>Error:</blink> No clones of clones allowed");
 				if(!uWizIPv4)
-					tContainer("<blink>Error:</blink> You must select an IP!");
+					tContainer("<blink>Error:</blink> You must select an IP");
 				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
 				if(uDatacenter!=uIPv4Datacenter)
 					tContainer("<blink>Error:</blink> The specified target uIPv4 does not "
 							"belong to the specified uDatacenter.");
 				if(!uOSTemplate || !uConfig || !uNameserver || !uSearchdomain || !uDatacenter )
-					tContainer("<blink>Error:</blink> Problem with missing source container settings!");
-				if(uTargetNode==0)
-					tContainer("<blink>Error:</blink> Please select a valid target node!");
-				if(uTargetNode==uNode)
-					tContainer("<blink>Error:</blink> Can't clone to same node!");
+					tContainer("<blink>Error:</blink> Unexpected problem with missing source container"
+							" settings!");
 				GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
 				if(!cTargetNodeIPv4[0])
-					tContainer("<blink>Error:</blink> Your target node is"
+					tContainer("<blink>Error:</blink> Unexpected problem, target node is"
 							" missing it's cIPv4 property!");
-				if(uSyncPeriod>86400*30)
-					tContainer("<blink>Error:</blink> uSyncPeriod out of range, max 30 days!");
+				if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
+						tContainer("<blink>Error:</blink> Clone uSyncPeriod seconds out of range:"
+								" Max 30 days, min 5 minutes or 0 off.");
 				if(uVeth)
 				{
 					GetNodeProp(uNode,"Container-Type",cContainerType);
 					if(!strstr(cContainerType,"VETH"))
-						tContainer("<blink>Error:</blink> uNode selected does not support VETH!");
+						tContainer("<blink>Error:</blink> uNode selected does not support VETH");
 						
 				}
                         	guMode=0;
@@ -2312,7 +2031,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					uNode,
 					uStatus,
 					cHostname,
-					"",
+					"",//Do not check Class C
 					uWizIPv4,
 					cWizLabel,
 					cWizHostname,
@@ -2845,34 +2564,35 @@ void ExttContainerButtons(void)
 			printf("Here you will select the hardware node target. If the selected node is"
 				" oversubscribed, not available, or scheduled for maintenance. You will"
 				" be informed at the next step.\n<p>\n"
-				"You also must carefully select a new IP that usually will be of the same type"
-				" as the source container. Caveat-emptor.<p>"
-				"Any mount/umount files of the source container will not be used"
+				"You must also select a uIPv4 for the cloned container, and set the initial"
+				" state of the clone."
+				" Usually clones should be kept stopped to conserve resources and facilitate rsync."
+				" Use the checkbox to change this default behavior."
+				" Any mount/umount files of the source container will NOT be used"
 				" by the new cloned container. This issue will be left for manual"
-				" or automated failover to the cloned container. If you wish to"
-				" keep the source and clone container sync'ed you must specify that"
-				" in the cloned container via the 'cuSyncPeriod' entry in it's properties table.<p>"
-				"Usually clones should be kept stopped to conserve resources until required"
-				" for failover. Use the checkbox to change this default behavior.");
+				" or automated failover to the cloned container.<p>If you wish to"
+				" keep the source and clone container sync'ed you can specify a non zero"
+				" value via the 'cuSyncPeriod' entry below.");
 			printf("<p>Select target node<br>");
-			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
+			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
+				cuTargetNodePullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
 			printf("<p>Select new IPv4<br>");
-			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
-			printf("<p>Keep clone stopped<br>");
-			printf("<input type=checkbox name=uCloneStop checked>");
+			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
+				uDatacenter,uOwner);
+			printf("<p><input type=checkbox name=uCloneStop checked> Initial state is stopped");
 			printf("<p>cuSyncPeriod<br>");
 			printf("<input title='Keep clone in sync every cuSyncPeriod seconds"
 					". You can change this at any time via the property panel.'"
 					" type=text size=10 maxlength=7"
 					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
-			printf("<p><input title='Create a clone job for the current container'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Confirm Clone'>\n");
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 			if(uGroup)
 				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
+			printf("<p><input title='Create a clone job for the current container'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Clone'>\n");
                 break;
 
                 case 8001:
@@ -2893,161 +2613,6 @@ void ExttContainerButtons(void)
 			printf("<p><input title='Creates manual failover (switchover) jobs for the current container'"
 					" type=submit class=lwarnButton"
 					" name=gcCommand value='Confirm Failover'>\n");
-                break;
-
-                case 200:
-			printf("<p><u>New container step 2/3</u><br>");
-			if(!uVeth)
-			{
-				printf("Optionally select node mount template for new container.");
-				printf(" Please select node mount template for new container."
-					" Or '---' for none.<p>");
-				htmlMountTemplateSelect(uMountTemplate);
-			}
-			else
-			{
-				printf("You have selected a VETH device based container."
-					" make sure you understand the template, network and host security implications."
-					"<p>Default mount and start /etc/vz/conf/ action scripts will be configured."
-					" These can be changed later for other script templates if the need"
-					" arises.");
-				
-			}
-			printf("<p><input title='Continue to step 3 of new container creation'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Continue'>\n");
-			printf("<p>If you wish to abort this container creation use the [Delete] button above.");
-			if(uGroup)
-				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
-			if(uCreateDNSJob)
-				printf("<input type=hidden name=uCreateDNSJob >");
-                break;
-
-                case 201:
-			printf("<p><u>New container step 3/3</u><br>");
-			if(uMountTemplate)
-			{
-				printf("Complete required mount settings for <i>%s</i> template.<p>",cuTemplateDropDown);
-				htmlGenMountInputs(uMountTemplate);
-				printf("<input type=hidden name=uMountTemplate value='%u'>\n",uMountTemplate);
-				printf("<p><input title='Finish container creation'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Confirm Mount Settings'>\n");
-			}
-			else if(uVeth)
-			{
-				printf("Default VETH device container mount and start scripts will be created.");
-				printf("<p><input title='Finish container creation'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Confirm Container Settings'>\n");
-			}
-			else if(1)
-			{
-				printf("You have chosen to not create a mount template."
-					" If correct confirm below, else go back and select a template.<p>");
-				printf("<p><input title='Finish container creation'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Confirm Container Settings'>\n");
-			}
-			printf("<p>If you wish to abort this container creation use the [Delete] button above.");
-			if(uGroup)
-				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
-			if(uCreateDNSJob)
-				printf("<input type=hidden name=uCreateDNSJob >");
-                break;
-
-                case 2000:
-			printf("<p><u>New container step 1/3*</u><br>");
-			
-			printf("Complete required container fields in the record data panel to your right."
-				" You can also select other options (like create for another company you control) below."
-				"<p>uVeth='Yes'"
-				" containers should only be used when layer 2 connectivity is absolutely required"
-				" (The uNode selected must support VETH containers -See tNode Property.)"
-				" uVeth='Yes' container tOSTemplate should be reviewed to make sure it's"
-				" network settings will not interfere with standard OpenVZ VETH device usage.");
-			printf("<p><u>Advanced operations</u>");
-			printf("<br>Creating multiple containers: Specify the number, specify a special cLabel"
-				" and cHostname that will be used to generate the multiple containers (see example below),"
-				" specify a start uIPv4 -the system will use the given uIPv4's class C to try to allocate"
-				" IPs from tIP. *Only 2 steps, you can't currently specify mount/umount files."
-				" <p>cLabel, cHostname example: For cLabel=ct and cHostname=.yourdomain.tld, your containers"
-				" will be cLabel=ct0 and cHostname=ct0.yourdomain.tld through cLabel=ctN and"
-				" cHostname=ctN.yourdomain.tld, where N is the number of containers specfied minus 1.");
-			printf("<p>\n");
-			if(cService2[0]==0) sprintf(cService2,"1");
-			printf("<p>Select the number of containers to create<br>");
-			printf("<input title='Number of containers to be created. See \"Advanced operations\" above'"
-				" type=text name=cService2 value='%s' maxlength=2><br>",cService2);
-			printf("<p>Optionally select a password<br>");
-			printf("<input title='Optional container password set on deployment and saved in"
-				" container property table' type=text name=cService1 value='%s' maxlength=31><br>",cService1);
-			printf("<p>Select a group to assign the new container(s) to<br>");
-			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
-			printf("<br>Or create and assign this new group label<br>");
-			printf("<input title='Enter a new tGroup.cLabel' type=text name=cService3 value='%s'"
-				" maxlength=31><br>",cService3);
-			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
-			if(cunxsBindRecordJobNSSet[0])
-			{
-				printf("<p>Create job for unxsBind A record<br>");
-				printf("<input type=checkbox name=uCreateDNSJob");
-				if(uCreateDNSJob)
-					printf(" checked>");
-				else
-					printf(" >");
-			}
-			if(!uForClient && uOwner) uForClient=uOwner;
-			tTablePullDownResellers(uForClient,1);//uForClient after
-			//Optionally create clone on new.
-			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
-			if(cAutoCloneNode[0])
-			{
-        			MYSQL_RES *res;
-				MYSQL_ROW field;
-				char cAutoCloneSyncTime[256]={""};
-
-				uTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
-				GetConfiguration("cAutoCloneSyncTime",cAutoCloneSyncTime,uDatacenter,0,0,0);
-				if(cAutoCloneSyncTime[0])
-					sscanf(cAutoCloneSyncTime,"%u",&uSyncPeriod);
-				//Get next available IP, set uIPv4
-				if(guCompany==1)
-					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 LIMIT 1");
-				else
-					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u LIMIT 1",
-										guCompany);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
-				res=mysql_store_result(&gMysql);
-				if((field=mysql_fetch_row(res)))
-					sscanf(field[0],"%u",&uWizIPv4);
-				mysql_free_result(res);
-				printf("<p>System configured for auto clones, select target node<br>");
-				tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
-				printf("<p>Select clone IPv4<br>");
-				tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
-				printf("<p>Keep clone stopped<br>");
-				printf("<input type=checkbox name=uCloneStop checked>");
-				printf("<p>Clone cuSyncPeriod<br>");
-				printf("<input title='Keep clone in sync every cuSyncPeriod seconds"
-					". You can change this at any time via the property panel.'"
-					" type=text size=10 maxlength=7"
-					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
-			}
-			if(uVeth)
-				printf("<p>Make sure you understand the implications of using uVeth='Yes' containers"
-				" before proceeding. Alternatively change uVeth to 'No' now.");
-			printf("<p><input title='Enter/Mod tContainer record data, then continue"
-					" to step 2 of new container creation'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Confirm Container Fields'>\n");
-			if(cSearch[0])
-				printf("<input type=hidden name=cSearch value='%s'>",cSearch);
-			if(uGroup)
-				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
-                        //printf(LANG_NBB_CONFIRMNEW);
                 break;
 
                 case 2001:
@@ -4851,7 +4416,7 @@ void htmlCloneInfo(unsigned uContainer)
 	if(mysql_num_rows(res)>0)
 		printf("<br>Clone(s) of current container:\n");
 
-	if((field=mysql_fetch_row(res)))
+	while((field=mysql_fetch_row(res)))
 		printf("<br> &nbsp; <a class=darkLink href=unxsVZ.cgi?"
 				"gcFunction=tContainer&uContainer=%s>"
 				"%s</a>\n",field[1],field[0]);
@@ -5104,7 +4669,8 @@ unsigned CommonCloneContainer(
 
 	if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus))
 	{
-		//In some cases we need to let this function assign the IP by class C mask
+		//TODO something is wrong here.
+		//If we specify a class C mask then we check it here. Why?
 		if(cClassC[0])
 		{
 			if(guCompany==1)
@@ -5117,7 +4683,7 @@ unsigned CommonCloneContainer(
 					" AND uDatacenter=%u",
 						uWizIPv4,uOwner,cClassC,uDatacenter);
 		}
-		//Others we have already pre-assigned an available uWizIPv4
+		//Here no such class c check
 		else
 		{
 			if(guCompany==1)
