@@ -13,20 +13,6 @@ AUTHOR/LEGAL
 */
 
 
-void GetConfiguration(const char *cName,char *cValue,
-		unsigned uDatacenter,
-		unsigned uNode,
-		unsigned uContainer,
-		unsigned uHtml);
-void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
-                        const char *cOrderby, unsigned uSelector, unsigned uMode);
-void tTablePullDownOwnerAvail(const char *cTableName, const char *cFieldName,
-                        const char *cOrderby, unsigned uSelector, unsigned uMode);
-void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
-		const char *cOrderby, unsigned uSelector, unsigned uMode, const char *cDatacenter,
-		unsigned uType, unsigned uDatacenter);
-void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFieldName,
-	const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter,unsigned uClient);
 #include "mysqlrad.h"
 
 //Table Variables

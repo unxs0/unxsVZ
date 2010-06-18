@@ -49,7 +49,7 @@ static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
 
-
+void tJobNewStep(unsigned uStep);
 
 #define VAR_LIST_tJob "tJob.uJob,tJob.cLabel,tJob.cJobName,tJob.uDatacenter,tJob.uNode,tJob.uContainer,tJob.cJobData,tJob.uJobDate,tJob.uJobStatus,tJob.cRemoteMsg,tJob.uOwner,tJob.uCreatedBy,tJob.uCreatedDate,tJob.uModBy,tJob.uModDate"
 
@@ -268,7 +268,16 @@ void tJob(const char *cResult)
 	//
 	OpenFieldSet("tJob Record Data",100);
 
-	if(guMode==2000 || guMode==2002)
+	//Custom right panel for new containers
+	if(guMode==9001)
+		tJobNewStep(1);
+	else if(guMode==9002)
+		tJobNewStep(2);
+	else if(guMode==9003)
+		tJobNewStep(3);
+	else if(guMode==9004)
+		tJobNewStep(4);
+	else if(guMode==2000 || guMode==2002)
 		tJobInput(1);
 	else
 		tJobInput(0);
@@ -285,13 +294,70 @@ void tJob(const char *cResult)
 }//end of tJob();
 
 
+void tJobNewStep(unsigned uStep)
+{
+
+	if(uStep==1)
+	{
+		OpenRow("Select an available datacenter","black");
+		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+
+		OpenRow("Select an organization","black");
+		tTablePullDownResellers(uForClient,0);
+	}
+	else if(uStep==2)
+	{
+		OpenRow("Selected datacenter","black");
+		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+
+		OpenRow("Selected organization","black");
+		tTablePullDown("tClient;cuClientPullDown","cLabel","cLabel",uForClient,0);
+
+		OpenRow("Optionally assign to node","black");
+		tTablePullDownDatacenter("tNode;cuNodePullDown","cLabel","cLabel",uNode,1,
+			cuDatacenterPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+
+		OpenRow("Optionally assign to container","black");
+		tTablePullDownDatacenter("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,1,
+			cuContainerPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+
+		OpenRow("Assign a label","black");
+		printf("<input title='A useful identification label' type=text name=cLabel"
+			" size=40 maxlength=100 value=\"%s\">\n",cLabel);
+
+		OpenRow("Select recurring minute","black");
+		printf("<input title='Minute on the hour 0-59' type=text name=uMin"
+			" value=0 size=40 maxlength=2 >\n");
+
+		OpenRow("Select recurring hour","black");
+		printf("<input title='Hour of the day 0-24. 0 for all hours' type=text name=uHour"
+			" value=0 size=40 maxlength=2 >\n");
+
+		OpenRow("Select recurring day of week number","black");
+		printf("<input title='Day of the week 0-7. Sunday is 1. 0 for all days' type=text name=uDayOfWeek"
+			" value=0 size=40 maxlength=1 >\n");
+
+		OpenRow("Select recurring day of month number","black");
+		printf("<input title='Day of the month 1-31. 0 for all days. Trumps day of week' type=text name=uDayOfMonth"
+			" value=0 size=40 maxlength=1 >\n");
+
+		OpenRow("Select recurring month number","black");
+		printf("<input title='Month of the year. 1-12. 0 for all months' type=text name=uMonth"
+			" value=0 size=40 maxlength=2 >\n");
+
+		OpenRow("Select starting date","black");
+	}
+
+}//void tJobNewStep(unsigned uStep)
+
+
+
 void tJobInput(unsigned uMode)
 {
 
 //uJob
 	OpenRow(LANG_FL_tJob_uJob,"black");
-	printf("<input title='%s' type=text name=uJob value=%u size=16 maxlength=10 "
-,LANG_FT_tJob_uJob,uJob);
+	printf("<input title='%s' type=text name=uJob value=%u size=16 maxlength=10 ",LANG_FT_tJob_uJob,uJob);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -303,8 +369,8 @@ void tJobInput(unsigned uMode)
 	}
 //cLabel
 	OpenRow(LANG_FL_tJob_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=100 "
-,LANG_FT_tJob_cLabel,EncodeDoubleQuotes(cLabel));
+	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=100 ",LANG_FT_tJob_cLabel,
+						EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -316,8 +382,8 @@ void tJobInput(unsigned uMode)
 	}
 //cJobName
 	OpenRow(LANG_FL_tJob_cJobName,"black");
-	printf("<input title='%s' type=text name=cJobName value=\"%s\" size=40 maxlength=64 "
-,LANG_FT_tJob_cJobName,EncodeDoubleQuotes(cJobName));
+	printf("<input title='%s' type=text name=cJobName value=\"%s\" size=40 maxlength=64 ",LANG_FT_tJob_cJobName,
+						EncodeDoubleQuotes(cJobName));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -343,26 +409,27 @@ void tJobInput(unsigned uMode)
 	OpenRow("uNode","black");
 	if(guPermLevel>=0 && uMode)
 	{
-	printf("%s<input type=hidden name=uNode value=%u >\n",ForeignKey("tNode","cLabel",uNode),uNode);
+		printf("%s<input type=hidden name=uNode value=%u >\n",ForeignKey("tNode","cLabel",uNode),uNode);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uNode value=%u >\n",ForeignKey("tNode","cLabel",uNode),uNode);
+		printf("%s<input type=hidden name=uNode value=%u >\n",ForeignKey("tNode","cLabel",uNode),uNode);
 	}
 //uContainer
 	OpenRow("uContainer","black");
 	if(guPermLevel>=0 && uMode)
 	{
-	printf("%s<input type=hidden name=uContainer value=%u >\n",ForeignKey("tContainer","cLabel",uContainer),uContainer);
+		printf("%s<input type=hidden name=uContainer value=%u >\n",
+				ForeignKey("tContainer","cLabel",uContainer),uContainer);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uContainer value=%u >\n",ForeignKey("tContainer","cLabel",uContainer),uContainer);
+		printf("%s<input type=hidden name=uContainer value=%u >\n",
+				ForeignKey("tContainer","cLabel",uContainer),uContainer);
 	}
 //cJobData
 	OpenRow(LANG_FL_tJob_cJobData,"black");
-	printf("<textarea title='%s' cols=80 wrap=hard rows=8 name=cJobData "
-,LANG_FT_tJob_cJobData);
+	printf("<textarea title='%s' cols=80 wrap=hard rows=8 name=cJobData ",LANG_FT_tJob_cJobData);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cJobData);
@@ -387,8 +454,8 @@ void tJobInput(unsigned uMode)
 		tTablePullDown("tJobStatus;cuJobStatusPullDown","cLabel","cLabel",uJobStatus,0);
 //cRemoteMsg
 	OpenRow(LANG_FL_tJob_cRemoteMsg,"black");
-	printf("<input title='%s' type=text name=cRemoteMsg value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tJob_cRemoteMsg,EncodeDoubleQuotes(cRemoteMsg));
+	printf("<input title='%s' type=text name=cRemoteMsg value=\"%s\" size=40 maxlength=32 ",LANG_FT_tJob_cRemoteMsg,
+							EncodeDoubleQuotes(cRemoteMsg));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -402,21 +469,23 @@ void tJobInput(unsigned uMode)
 	OpenRow(LANG_FL_tJob_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	}
 //uCreatedBy
 	OpenRow(LANG_FL_tJob_uCreatedBy,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",
+				ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",
+				ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	}
 //uCreatedDate
 	OpenRow(LANG_FL_tJob_uCreatedDate,"black");
@@ -429,11 +498,11 @@ void tJobInput(unsigned uMode)
 	OpenRow(LANG_FL_tJob_uModBy,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	}
 //uModDate
 	OpenRow(LANG_FL_tJob_uModDate,"black");
@@ -443,8 +512,6 @@ void tJobInput(unsigned uMode)
 		printf("---\n\n");
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
-
-
 
 }//void tJobInput(unsigned uMode)
 
@@ -472,8 +539,8 @@ void NewtJob(unsigned uMode)
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uJob);
-	tJob(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uJob);
+		tJob(gcQuery);
 	}
 
 }//NewtJob(unsigned uMode)
@@ -503,7 +570,9 @@ void Insert_tJob(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tJob SET uJob=%u,cLabel='%s',cJobName='%s',uDatacenter=%u,uNode=%u,uContainer=%u,cJobData='%s',uJobDate=%lu,uJobStatus=%u,cRemoteMsg='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tJob SET uJob=%u,cLabel='%s',cJobName='%s',uDatacenter=%u,uNode=%u,uContainer=%u,"
+			"cJobData='%s',uJobDate=%lu,uJobStatus=%u,cRemoteMsg='%s',uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uJob
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cJobName)
@@ -527,7 +596,9 @@ void Update_tJob(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tJob SET uJob=%u,cLabel='%s',cJobName='%s',uDatacenter=%u,uNode=%u,uContainer=%u,cJobData='%s',uJobDate=%lu,uJobStatus=%u,cRemoteMsg='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tJob SET uJob=%u,cLabel='%s',cJobName='%s',uDatacenter=%u,uNode=%u,uContainer=%u,"
+			"cJobData='%s',uJobDate=%lu,uJobStatus=%u,cRemoteMsg='%s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uJob
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cJobName)
@@ -555,13 +626,13 @@ void ModtJob(void)
 
 	//Mod select gcQuery
 	if(guPermLevel<10)
-	sprintf(gcQuery,"SELECT tJob.uJob,\
-				tJob.uModDate\
-				FROM tJob,tClient\
-				WHERE tJob.uJob=%u\
-				AND tJob.uOwner=tClient.uClient\
-				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
-			,uJob,guLoginClient,guLoginClient);
+	sprintf(gcQuery,"SELECT tJob.uJob,"
+				"tJob.uModDate"
+				"FROM tJob,tClient"
+				"WHERE tJob.uJob=%u"
+				"AND tJob.uOwner=tClient.uClient"
+				"AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+					,uJob,guLoginClient,guLoginClient);
 	else
 	sprintf(gcQuery,"SELECT uJob,uModDate FROM tJob WHERE uJob=%u",uJob);
 
@@ -608,9 +679,22 @@ void tJobList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uJob<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>cJobName<td><font face=arial,helvetica color=white>uDatacenter<td><font face=arial,helvetica color=white>uNode<td><font face=arial,helvetica color=white>uContainer<td><font face=arial,helvetica color=white>cJobData<td><font face=arial,helvetica color=white>uJobDate<td><font face=arial,helvetica color=white>uJobStatus<td><font face=arial,helvetica color=white>cRemoteMsg<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uJob"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>cJobName"
+		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>uNode"
+		"<td><font face=arial,helvetica color=white>uContainer"
+		"<td><font face=arial,helvetica color=white>cJobData"
+		"<td><font face=arial,helvetica color=white>uJobDate"
+		"<td><font face=arial,helvetica color=white>uJobStatus"
+		"<td><font face=arial,helvetica color=white>cRemoteMsg"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -674,8 +758,22 @@ void tJobList(void)
 
 void CreatetJob(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJob ( cJobName VARCHAR(64) NOT NULL DEFAULT '', uModDate INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, cJobData TEXT NOT NULL DEFAULT '', uJob INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(100) NOT NULL DEFAULT '', uJobStatus INT UNSIGNED NOT NULL DEFAULT 0, uJobDate INT UNSIGNED NOT NULL DEFAULT 0, cRemoteMsg VARCHAR(32) NOT NULL DEFAULT '', uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, uNode INT UNSIGNED NOT NULL DEFAULT 0, uContainer INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uJobStatus), INDEX (uNode), INDEX (uContainer), INDEX (uDatacenter) )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJob ( "
+			"uJob INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cLabel VARCHAR(100) NOT NULL DEFAULT '',"
+			"cJobName VARCHAR(64) NOT NULL DEFAULT '',"
+			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uDatacenter),"
+			"uNode INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uNode),"
+			"uContainer INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uContainer),"
+			"cJobData TEXT NOT NULL DEFAULT '',"
+			"uJobDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uJobStatus INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uJobStatus),"
+			"cRemoteMsg VARCHAR(32) NOT NULL DEFAULT '',"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0");
 	MYSQL_RUN;
 }//CreatetJob()
 
-//perlSAR patch1
