@@ -157,6 +157,20 @@ void ExtSelectSearchPublic(const char *cTable,const char *cVarList,const char *c
 void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow);
 void CloneReport(const char *cOptionalMsg);
 void tTablePullDownResellers(unsigned uSelector,unsigned uBanner);
+void GetConfiguration(const char *cName,char *cValue,
+		unsigned uDatacenter,
+		unsigned uNode,
+		unsigned uContainer,
+		unsigned uHtml);
+void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
+                        const char *cOrderby, unsigned uSelector, unsigned uMode);
+void tTablePullDownOwnerAvail(const char *cTableName, const char *cFieldName,
+                        const char *cOrderby, unsigned uSelector, unsigned uMode);
+void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
+		const char *cOrderby, unsigned uSelector, unsigned uMode, const char *cDatacenter,
+		unsigned uType, unsigned uDatacenter);
+void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFieldName,
+	const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter,unsigned uClient);
 
 char *cURLEncode(char *cURL);
 void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
