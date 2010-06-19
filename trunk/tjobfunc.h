@@ -18,10 +18,13 @@ static char cuClientPullDown[256]={""};
 static char cuDatacenterPullDown[256]={""};
 static char cuNodePullDown[256]={""};
 static char cuContainerPullDown[256]={""};
-unsigned uMin=0,uHour=0,uDayOfWeek=0,uDayOfMonth=0,uMonth=0;
+static unsigned uMin=0,uHour=0,uDayOfWeek=0,uDayOfMonth=0,uMonth=0;
+static char cStartDate[32]={""};
 time_t luStartDate=0;
 
 void tJobNavList(void);
+char *strptime(const char *s, const char *format, struct tm *tm);
+time_t cStartDateToUnixTime(char *cStartDate);
 
 void ExtProcesstJobVars(pentry entries[], int x)
 {
@@ -65,6 +68,8 @@ void ExtProcesstJobVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uDayOfMonth);
 		else if(!strcmp(entries[i].name,"uMonth"))
 			sscanf(entries[i].val,"%u",&uMonth);
+		else if(!strcmp(entries[i].name,"cStartDate"))
+			sprintf(cStartDate,"%.31s",entries[i].val);
 	}
 }//void ExtProcesstJobVars(pentry entries[], int x)
 
@@ -181,6 +186,10 @@ void ExttJobCommands(pentry entries[], int x)
                 {
 			if(guPermLevel>=9)
 			{
+
+				unsigned uYear=0,uMon=0,uDay=0;
+				char cBuffer[256];
+
                         	ProcesstJobVars(entries,x);
                         	guMode=9002;
 				if(!uDatacenter)
@@ -223,17 +232,42 @@ void ExttJobCommands(pentry entries[], int x)
 				if(uMonth>12)
 					tJob("<blink>Error:</blink> Must specify a month number from 0-12."
 						" 0 for all months.");
-				if(!luStartDate)
-					tJob("<blink>Error:</blink> Must specify a start date for initial job.");
+				if(!cStartDate[0])
+					tJob("<blink>Error:</blink> Must specify a year-month-day start date for "
+								"initial job.");
 
+				sscanf(cStartDate,"%u-%u-%u",&uYear,&uMon,&uDay);
+				if(uYear>3010 || uYear<2010)
+					tJob("<blink>Error:</blink> Year out-of-range, ex. 2010-01-22");
+				if(uMon>12 || uMon<1)
+					tJob("<blink>Error:</blink> Mon out-of-range, ex. 2010-01-22");
+				if(uDay>31 || uDay<1)
+					tJob("<blink>Error:</blink> Day out-of-range, ex. 2010-01-22");
+
+				luStartDate=cStartDateToUnixTime(cStartDate);
+
+				if(luStartDate == (time_t)(-1))
+					tJob("<blink>Unexpected error:</blink> mktime() failed!");
+				if(!luStartDate)
+					tJob("<blink>Unexpected error:</blink> luStartDate==0!");
+
+				luStartDate+=(uMin*60)+(uHour*3600);
+
+				uJob=0;
 				guMode=0;
 				uOwner=uForClient;
 				uCreatedBy=guLoginClient;
 				sprintf(cJobName,"RecurringJob");
-				sprintf(cJobData,"uMin=%u;\nuHour=%u;\nuDayOfWeek=%u;uDayOfMonth=%u;\nuMonth=%u;\n",
+				cJobData=cBuffer;
+				uJobStatus=uWAITING;
+				sprintf(cJobData,"uMin=%u;\nuHour=%u;\nuDayOfWeek=%u;\nuDayOfMonth=%u;\nuMonth=%u;\n",
 						uMin,uHour,uDayOfWeek,uDayOfMonth,uMonth);
 				uJobDate=luStartDate;
-	                        tJob("Recurring job added");
+				NewtJob(1);
+				if(uJob)
+	                        	tJob("Recurring job added");
+				else
+					tJob("<blink>Unexpected error:</blink> uJob==0!");
 			}
 		}
 		else if(!strcmp(gcCommand,"Cancel"))
@@ -478,3 +512,18 @@ void tJobNavList(void)
 
 }//void tJobNavList(void)
 
+
+time_t cStartDateToUnixTime(char *cStartDate)
+{
+        struct  tm locTime;
+        time_t  res;
+
+        bzero(&locTime, sizeof(struct tm));
+	if(strchr(cStartDate,'-'))
+        	strptime(cStartDate,"%Y-%m-%d", &locTime);
+        locTime.tm_sec = 0;
+        locTime.tm_min = 0;
+        locTime.tm_hour = 0;
+        res = mktime(&locTime);
+        return(res);
+}//time_t cStartDateToUnixTime(char *cDate)

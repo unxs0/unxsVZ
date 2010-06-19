@@ -64,7 +64,7 @@ char *gcRADStatus="Forked";
 
 //Local
 void Footer_ism3(void);
-void Header_ism3(char *cMsg, int iJs);
+void Header_ism3(const char *cMsg, int iJs);
 const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 char *cEmailInput(char *cInput);
 void GetClientOwner(unsigned uClient, unsigned *uOwner);
@@ -451,7 +451,7 @@ void StyleSheet(void)
 
 void jsCalendarHeader(void)
 {
-        printf("<link rel='stylesheet' type='text/css' media='all' href='/js/calendar-blue.css'/>\n");
+        printf("<link rel='stylesheet' type='text/css' media='all' href='/css/calendar-blue.css'/>\n");
         printf("<script type='text/javascript' src='/js/calendar.js'></script>\n");
         printf("<script type='text/javascript' src='/js/calendar-en.js'></script>\n");
         printf("<script type='text/javascript' src='/js/calendar-setup.js'></script>\n");
@@ -465,26 +465,31 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
         if(!uMode)
                 sprintf(cMode,"disabled");
 
-        printf("<input id='%s' class='field_input' type='text' name='%s' value='%s' size=40 style='display: ; \
-                vertical-align: middle; ' %s >\n",cInputName,cInputName,cValue,cMode);
+        printf("<input id='%s' class='field_input' type='text' name='%s' value='%s' size=40 maxlength=31"
+		" style='display: ; vertical-align: middle; ' %s >\n",cInputName,cInputName,cValue,cMode);
 
         if(uMode)
         {
-                printf("<img date_trigger='1' class='record_button' date_field='%s' id='date_trigger_%s_501' src='/images/calendar.gif' \
-                        onmouseout='swapClass(event); this.src='/images/calendar.gif' ' onmouseover='swapClass(event); this.src='/images/calendar_mo.gif' \
-                        onmousedown='this.style.top = '1px'; this.style.left = '1px'' onmouseup='this.style.top = '0px'; this.style.left = '0px'' \
-                        style='position: relative; vertical-align: middle; display: ; ' title='Date selector'/>\n",cInputName,cInputName);
-                printf("<script type='text/javascript'>\n \
-                        Calendar.setup({\n \
-                        inputField     :    '%s',\n \
-                        ifFormat : '%%Y-%%m-%%d',\n \
-                        button         :    'date_trigger_%s_501',\n \
-                        align          :    'bR',\n \
-                        singleClick    :    true,\n \
-                        weekNumbers    :    false,\n \
-                        step           :    1,\n \
-                        timeFormat : 12\n \
-                        });</script>\n",cInputName,cInputName);
+                printf("<img date_trigger=1 class=record_button date_field='%s' id='date_trigger_%s_501'"
+			" src=\"/images/calendar.gif\""
+			//Can't find swapClass function have to ask Hugo...
+			//" onmouseout=\"swapClass(event); this.src='/images/calendar.gif'\""
+			//" onmouseover=\"swapClass(event); this.src='/images/calendar_mo.gif'\""
+			" onmousedown=\"this.style.top='1px'; this.style.left='1px'\""
+			" onmouseup=\"this.style.top='0px'; this.style.left='0px'\""
+			" style=\"position: relative; vertical-align: middle; display: ;\""
+			" title='Select date'/>\n",cInputName,cInputName);
+                printf("<script type='text/javascript'>\n" 
+                        "Calendar.setup({\n"
+                        "\tinputField     :    '%s',\n"
+                        "\tifFormat : '%%Y-%%m-%%d',\n"
+                        "\tbutton         :    'date_trigger_%s_501',\n"
+                        "\talign          :    'bR',\n"
+                        "\tsingleClick    :    true,\n"
+                        "\tweekNumbers    :    false,\n"
+                        "\tstep           :    1,\n"
+                        "\ttimeFormat : 12\n"
+                        "});</script>\n",cInputName,cInputName);
         }
         else
                 printf("<input type=hidden name='%s' value='%s'>\n",cInputName,cValue);
@@ -492,7 +497,7 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 }//void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 
 
-void Header_ism3(char *title, int js)
+void Header_ism3(const char *title, int iJs)
 {
 	printf("Content-type: text/html\n\n");
 	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\""
@@ -500,7 +505,7 @@ void Header_ism3(char *title, int js)
         printf("<html><head><title>"HEADER_TITLE" %s %s </title>",gcHostname,title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
-        if(js)
+        if(iJs)
                 jsCalendarHeader();
 	
 	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
