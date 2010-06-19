@@ -71,6 +71,7 @@ AUTHOR
 #define uPROP_NAMESERVER 7
 #define uPROP_OSTEMPLATE 8
 #define uPROP_SEARCHDOMAIN 9
+#define uPROP_RECJOB	10	
 
 //tJobStatus constants
 #define uWAITING 	1
@@ -153,6 +154,7 @@ void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearch
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
 void ExtListSelectPublic(const char *cTable,const char *cVarList);
 void ExtSelectPublic(const char *cTable,const char *cVarList);
+void ExtSelectPublicOrder(const char *cTable,const char *cVarList,const char *cOrderBy);
 void ExtSelectSearchPublic(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch);
 void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow);
 void CloneReport(const char *cOptionalMsg);

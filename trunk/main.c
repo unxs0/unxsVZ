@@ -2330,9 +2330,17 @@ void ExtSelect(const char *cTable,const char *cVarList)
 //For those tables you want anybody to be able to read. Like tStatus.
 void ExtSelectPublic(const char *cTable,const char *cVarList)
 {
-	sprintf(gcQuery,"SELECT %s FROM %s",cVarList,cTable);
+	sprintf(gcQuery,"SELECT %.1024s FROM %.99s ORDER BY _rowid",cVarList,cTable);
 
 }//void ExtSelectPublic(...)
+
+
+void ExtSelectPublicOrder(const char *cTable,const char *cVarList,const char *cOrderBy)
+{
+	sprintf(gcQuery,"SELECT %.1024s FROM %.99s ORDER BY %.99s",cVarList,cTable,cOrderBy);
+
+}//void ExtSelectPublicOrder(...)
+
 
 
 void ExtSelectSearchPublic(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch)

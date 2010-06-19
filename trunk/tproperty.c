@@ -7,6 +7,9 @@ PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tpropertyfunc.h while 
 	RAD is still to be used.
+AUTHOR/LEGAL
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file.	
 */
 
 
@@ -189,16 +192,16 @@ void tProperty(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
-		sscanf(field[0],"%u",&uProperty);
-		sprintf(cName,"%.32s",field[1]);
-		cValue=field[2];
-		sscanf(field[3],"%u",&uType);
-		sscanf(field[4],"%u",&uKey);
-		sscanf(field[5],"%u",&uOwner);
-		sscanf(field[6],"%u",&uCreatedBy);
-		sscanf(field[7],"%lu",&uCreatedDate);
-		sscanf(field[8],"%u",&uModBy);
-		sscanf(field[9],"%lu",&uModDate);
+			sscanf(field[0],"%u",&uProperty);
+			sprintf(cName,"%.32s",field[1]);
+			cValue=field[2];
+			sscanf(field[3],"%u",&uType);
+			sscanf(field[4],"%u",&uKey);
+			sscanf(field[5],"%u",&uOwner);
+			sscanf(field[6],"%u",&uCreatedBy);
+			sscanf(field[7],"%lu",&uCreatedDate);
+			sscanf(field[8],"%u",&uModBy);
+			sscanf(field[9],"%lu",&uModDate);
 
 		}
 
@@ -262,8 +265,8 @@ void tPropertyInput(unsigned uMode)
 
 //uProperty
 	OpenRow(LANG_FL_tProperty_uProperty,"black");
-	printf("<input title='%s' type=text name=uProperty value=%u size=16 maxlength=10 "
-,LANG_FT_tProperty_uProperty,uProperty);
+	printf("<input title='%s' type=text name=uProperty value=%u size=16 maxlength=10 ",
+			LANG_FT_tProperty_uProperty,uProperty);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -275,8 +278,8 @@ void tPropertyInput(unsigned uMode)
 	}
 //cName
 	OpenRow(LANG_FL_tProperty_cName,"black");
-	printf("<input title='%s' type=text name=cName value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tProperty_cName,EncodeDoubleQuotes(cName));
+	printf("<input title='%s' type=text name=cName value=\"%s\" size=40 maxlength=32 ",
+			LANG_FT_tProperty_cName,EncodeDoubleQuotes(cName));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -288,8 +291,7 @@ void tPropertyInput(unsigned uMode)
 	}
 //cValue
 	OpenRow(LANG_FL_tProperty_cValue,"black");
-	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cValue "
-,LANG_FT_tProperty_cValue);
+	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cValue ",LANG_FT_tProperty_cValue);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cValue);
@@ -307,8 +309,7 @@ void tPropertyInput(unsigned uMode)
 		tTablePullDown("tType;cuTypePullDown","cLabel","cLabel",uType,0);
 //uKey
 	OpenRow(LANG_FL_tProperty_uKey,"black");
-	printf("<input title='%s' type=text name=uKey value=%u size=16 maxlength=10 "
-,LANG_FT_tProperty_uKey,uKey);
+	printf("<input title='%s' type=text name=uKey value=%u size=16 maxlength=10 ",LANG_FT_tProperty_uKey,uKey);
 	if(guPermLevel>=12 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -321,23 +322,17 @@ void tPropertyInput(unsigned uMode)
 //uOwner
 	OpenRow(LANG_FL_tProperty_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
-	}
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
 	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
-	}
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
 //uCreatedBy
 	OpenRow(LANG_FL_tProperty_uCreatedBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
-	}
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",
+			ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
 	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
-	}
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",
+			ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
 //uCreatedDate
 	OpenRow(LANG_FL_tProperty_uCreatedDate,"black");
 	if(uCreatedDate)
@@ -348,13 +343,9 @@ void tPropertyInput(unsigned uMode)
 //uModBy
 	OpenRow(LANG_FL_tProperty_uModBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
-	}
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
 	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
-	}
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
 //uModDate
 	OpenRow(LANG_FL_tProperty_uModDate,"black");
 	if(uModDate)
@@ -423,7 +414,8 @@ void Insert_tProperty(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tProperty SET uProperty=%u,cName='%s',cValue='%s',uType=%u,uKey=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tProperty SET uProperty=%u,cName='%s',cValue='%s',uType=%u,uKey=%u,uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uProperty
 			,TextAreaSave(cName)
 			,TextAreaSave(cValue)
@@ -442,7 +434,8 @@ void Update_tProperty(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tProperty SET uProperty=%u,cName='%s',cValue='%s',uType=%u,uKey=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tProperty SET uProperty=%u,cName='%s',cValue='%s',uType=%u,uKey=%u,uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uProperty
 			,TextAreaSave(cName)
 			,TextAreaSave(cValue)
@@ -507,9 +500,17 @@ void tPropertyList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uProperty<td><font face=arial,helvetica color=white>cName<td><font face=arial,helvetica color=white>cValue<td><font face=arial,helvetica color=white>uType<td><font face=arial,helvetica color=white>uKey<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uProperty"
+		"<td><font face=arial,helvetica color=white>cName"
+		"<td><font face=arial,helvetica color=white>cValue"
+		"<td><font face=arial,helvetica color=white>uType"
+		"<td><font face=arial,helvetica color=white>uKey"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -537,7 +538,8 @@ void tPropertyList(void)
 			ctime_r(&luTime9,cBuf9);
 		else
 			sprintf(cBuf9,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td><textarea disabled>%s</textarea>"
+			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
@@ -561,7 +563,17 @@ void tPropertyList(void)
 
 void CreatetProperty(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tProperty ( uProperty INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cName VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cValue TEXT NOT NULL DEFAULT '', uKey INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uKey), uType INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uType), INDEX (cName) )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tProperty ( "
+			"uProperty INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cName VARCHAR(32) NOT NULL DEFAULT '', INDEX (cName),"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"cValue TEXT NOT NULL DEFAULT '',"
+			"uKey INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uKey),"
+			"uType INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uType)");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
