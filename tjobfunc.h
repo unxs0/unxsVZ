@@ -296,7 +296,11 @@ void ExttJobButtons(void)
 
                 case 9002:
 			printf("<u>Recurring Job Data</u><br>");
-			printf("Enter the recurring job data.<p>");
+			printf("Enter the recurring job data."
+				"<p>Starting date has to be in year-mon-day number format."
+				"<p>Recurring hour/week-day/month-day and month numbers use number 0 as wildcard."
+				" Day of month number trumps day of week number if used."
+				"<p>The job label should be meaningful.<p>");
 			printf("<input type=submit class=largeButton title='Select hardware node'"
 				" name=gcCommand value='Confirm Fields'>\n");
 			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
