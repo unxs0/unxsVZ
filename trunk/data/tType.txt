@@ -2,4 +2,9 @@
 2	Hardware Node	1	1	1218391714	0	0
 3	VZ Container	1	1	1218391744	0	0
 4	Group	1	1	1223300855	0	0
-5	GroupType	1	1	1246453728	0	0
+6	tConfig	1	1	1276388876	0	0
+7	tNameserver	1	1	1276388899	0	0
+8	tOSTemplate	1	1	1276388951	0	0
+9	tSearchdomain	1	1	1276388981	0	0
+5	GroupType	1	1	1276389321	0	0
+10	Recurring Job	1	1	1276955718	0	0
