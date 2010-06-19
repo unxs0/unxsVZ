@@ -49,7 +49,6 @@ static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
 
-void tJobNewStep(unsigned uStep);
 
 #define VAR_LIST_tJob "tJob.uJob,tJob.cLabel,tJob.cJobName,tJob.uDatacenter,tJob.uNode,tJob.uContainer,tJob.cJobData,tJob.uJobDate,tJob.uJobStatus,tJob.cRemoteMsg,tJob.uOwner,tJob.uCreatedBy,tJob.uCreatedDate,tJob.uModBy,tJob.uModDate"
 
@@ -57,6 +56,11 @@ void tJobNewStep(unsigned uStep);
 void Insert_tJob(void);
 void Update_tJob(char *cRowid);
 void ProcesstJobListVars(pentry entries[], int x);
+void tJobNewStep(unsigned uStep);
+void RecurringJobDropDown(unsigned uSelector, unsigned uMode);
+unsigned ReadRecurringDropDown(char *cRecurringJobDropDown);
+static unsigned uRecurringJob=0;
+static char cRecurringJobDropDown[100]={""};
 
  //In tJobfunc.h file included below
 void ExtProcesstJobVars(pentry entries[], int x);
@@ -102,6 +106,13 @@ void ProcesstJobVars(pentry entries[], int x)
 		{
 			sprintf(cuJobStatusPullDown,"%.255s",entries[i].val);
 			uJobStatus=ReadPullDown("tJobStatus","cLabel",cuJobStatusPullDown);
+		}
+		else if(!strcmp(entries[i].name,"uRecurringJob"))
+			sscanf(entries[i].val,"%u",&uRecurringJob);
+		else if(!strcmp(entries[i].name,"cRecurringJobDropDown"))
+		{
+			sprintf(cRecurringJobDropDown,"%.255s",entries[i].val);
+			uRecurringJob=ReadRecurringDropDown(cRecurringJobDropDown);
 		}
 		else if(!strcmp(entries[i].name,"cRemoteMsg"))
 			sprintf(cRemoteMsg,"%.32s",entries[i].val);
@@ -321,6 +332,9 @@ void tJobNewStep(unsigned uStep)
 		tTablePullDownDatacenter("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,1,
 			cuContainerPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
 
+		OpenRow("Select Recurring Job","black");
+		RecurringJobDropDown(uRecurringJob,1);
+
 		OpenRow("Assign a label","black");
 		printf("<input title='A useful identification label' type=text name=cLabel"
 			" size=40 maxlength=100 value=\"%s\">\n",cLabel);
@@ -334,7 +348,7 @@ void tJobNewStep(unsigned uStep)
 			" value=0 size=40 maxlength=2 >\n");
 
 		OpenRow("Select recurring day of week number","black");
-		printf("<input title='Day of the week 0-7. Sunday is 1. 0 for all days' type=text name=uDayOfWeek"
+		printf("<input title='Day of the week 0-7. Moday is 1. 0 for all days' type=text name=uDayOfWeek"
 			" value=0 size=40 maxlength=1 >\n");
 
 		OpenRow("Select recurring day of month number","black");
@@ -792,3 +806,171 @@ void CreatetJob(void)
 	MYSQL_RUN;
 }//CreatetJob()
 
+
+void PropertyDropDown(const char *cTableName, const char *cFieldName,
+		const char *cOrderby, unsigned uSelector, unsigned uMode, const char *cDatacenter,
+		unsigned uType, unsigned uDatacenter)
+{
+        register int i,n;
+        char cLabel[256];
+        MYSQL_RES *mysqlRes;         
+        MYSQL_ROW mysqlField;
+
+        char cSelectName[100]={""};
+	char cHidden[100]={""};
+        char cLocalTableName[256]={""};
+        char *cp;
+	char *cMode="";
+
+	if(!uMode)
+		cMode="disabled";
+      
+        if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
+        {
+                printf("Invalid input tTablePullDownDatacenter()");
+                return;
+        }
+
+        //Extended functionality
+        sprintf(cLocalTableName,"%.255s",cTableName);
+        if((cp=strchr(cLocalTableName,';')))
+        {
+                sprintf(cSelectName,"%.99s",cp+1);
+                *cp=0;
+        }
+
+
+	if(uType)
+	       	sprintf(gcQuery,"SELECT _rowid AS uRowid,%s FROM %s WHERE"
+			" LOCATE('All Datacenters',"
+			"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=%u AND uKey=uRowid))>0"
+			" OR LOCATE('%s',"
+			"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=%u AND uKey=uRowid))>0"
+			" ORDER BY %s",
+				cFieldName,cLocalTableName,uType,cDatacenter,uType,cOrderby);
+	else
+	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u ORDER BY %s",
+				cFieldName,cLocalTableName,uDatacenter,cOrderby);
+	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
+	i=mysql_num_rows(mysqlRes);
+
+	if(cSelectName[0])
+                sprintf(cLabel,"%s",cSelectName);
+        else
+                sprintf(cLabel,"%s_%sPullDown",cLocalTableName,cFieldName);
+
+        if(i>0)
+        {
+		int unsigned field0;
+                printf("<select name=%s %s>\n",cLabel,cMode);
+
+                //Default no selection
+                printf("<option title='No selection'>---</option>\n");
+
+                for(n=0;n<i;n++)
+                {
+
+			field0=0;
+                        mysqlField=mysql_fetch_row(mysqlRes);
+                        sscanf(mysqlField[0],"%u",&field0);
+
+                        if(uSelector != field0)
+                        {
+                             printf("<option>%s</option>\n",mysqlField[1]);
+                        }
+                        else
+                        {
+                             printf("<option selected>%s</option>\n",mysqlField[1]);
+			     if(!uMode)
+			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
+			     		cLabel,mysqlField[1]);
+                        }
+                }
+        }
+        else
+        {
+		printf("<select name=%s %s><option title='No selection'>---</option></select>\n"
+                        ,cLabel,cMode);
+		if(!uMode)
+		sprintf(cHidden,"<input type=hidden name=%99s value='0'>\n",cLabel);
+        }
+        printf("</select>\n");
+	if(cHidden[0])
+		printf("%s",cHidden);
+
+}//tTablePullDownDatacenter()
+
+
+void RecurringJobDropDown(unsigned uSelector, unsigned uMode)
+{
+        MYSQL_RES *mysqlRes;         
+        MYSQL_ROW mysqlField;
+	register int i,n;
+	char *cMode="";
+	char cHidden[256]={""};
+
+	if(!uMode)
+		cMode="disabled";
+      
+	sprintf(gcQuery,"SELECT uProperty,cName FROM tProperty WHERE uType=%u and uKey=0",uPROP_RECJOB);
+
+	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
+	i=mysql_num_rows(mysqlRes);
+
+        if(i>0)
+        {
+		int unsigned field0;
+                printf("<select name=cRecurringJobDropDown %s>\n",cMode);
+
+                //Default no selection
+                printf("<option title='No selection'>---</option>\n");
+
+                for(n=0;n<i;n++)
+                {
+
+			field0=0;
+                        mysqlField=mysql_fetch_row(mysqlRes);
+                        sscanf(mysqlField[0],"%u",&field0);
+
+                        if(uSelector != field0)
+                        {
+                             printf("<option>%s</option>\n",mysqlField[1]);
+                        }
+                        else
+                        {
+                             printf("<option selected>%s</option>\n",mysqlField[1]);
+			     if(!uMode)
+				sprintf(cHidden,"<input type=hidden name=cRecurringJobDropDown value='%.99s'>\n",
+					mysqlField[1]);
+                        }
+                }
+        }
+        else
+        {
+		printf("<select name=cRecurringJobDropDown %s><option title='No selection'>---</option></select>\n",cMode);
+		if(!uMode)
+			sprintf(cHidden,"<input type=hidden name=cRecurringJobDropDown value='0'>\n");
+        }
+        printf("</select>\n");
+	if(cHidden[0])
+		printf("%s",cHidden);
+
+}//void RecurringJobDropDown(unsigned uSelector, unsigned uMode)
+
+
+unsigned ReadRecurringDropDown(char *cRecurringJobDropDown)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+
+        unsigned uRowid=0;//Not found
+
+        sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=0 AND uType=%u AND cName='%.99s'",
+			uPROP_RECJOB,cRecurringJobDropDown);
+        MYSQL_RUN_STORE(mysqlRes);
+        if((mysqlField=mysql_fetch_row(mysqlRes)))
+        	sscanf(mysqlField[0],"%u",&uRowid);
+        mysql_free_result(mysqlRes);
+        return(uRowid);
+
+}//unsigned ReadRecurringDropDown(char *cRecurringJobDropDown)

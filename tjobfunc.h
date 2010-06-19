@@ -188,7 +188,7 @@ void ExttJobCommands(pentry entries[], int x)
 			{
 
 				unsigned uYear=0,uMon=0,uDay=0;
-				char cBuffer[256];
+				char cBuffer[512];
 
                         	ProcesstJobVars(entries,x);
                         	guMode=9002;
@@ -217,6 +217,8 @@ void ExttJobCommands(pentry entries[], int x)
 						tJob("<blink>Error:</blink> The specified container does not "
 							"belong to the specified node.");
 				}
+				if(!uRecurringJob)
+					tJob("<blink>Error:</blink> Must specify a recurring job.");
 				if(!cLabel[0])
 					tJob("<blink>Error:</blink> Must specify a cLabel.");
 				if(uMin>59)
@@ -225,7 +227,7 @@ void ExttJobCommands(pentry entries[], int x)
 					tJob("<blink>Error:</blink> Must specify an hour from 0-24. 0 for all hours.");
 				if(uDayOfWeek>7)
 					tJob("<blink>Error:</blink> Must specify a day of week number from 0-7."
-						" 0 for all days. Sunday is day 1.");
+						" 0 for all days. Monday is day 1.");
 				if(uDayOfMonth>31)
 					tJob("<blink>Error:</blink> Must specify a day of month number from 0-31."
 						" 0 for all days. If not 0 this value trumps and day of week number set.");
@@ -245,13 +247,10 @@ void ExttJobCommands(pentry entries[], int x)
 					tJob("<blink>Error:</blink> Day out-of-range, ex. 2010-01-22");
 
 				luStartDate=cStartDateToUnixTime(cStartDate);
-
 				if(luStartDate == (time_t)(-1))
 					tJob("<blink>Unexpected error:</blink> mktime() failed!");
 				if(!luStartDate)
 					tJob("<blink>Unexpected error:</blink> luStartDate==0!");
-
-				luStartDate+=(uMin*60)+(uHour*3600);
 
 				uJob=0;
 				guMode=0;
@@ -260,8 +259,11 @@ void ExttJobCommands(pentry entries[], int x)
 				sprintf(cJobName,"RecurringJob");
 				cJobData=cBuffer;
 				uJobStatus=uWAITING;
-				sprintf(cJobData,"uMin=%u;\nuHour=%u;\nuDayOfWeek=%u;\nuDayOfMonth=%u;\nuMonth=%u;\n",
-						uMin,uHour,uDayOfWeek,uDayOfMonth,uMonth);
+				sprintf(cJobData,"uMin=%u;\nuHour=%u;\nuDayOfWeek=%u;\nuDayOfMonth=%u;\nuMonth=%u;\n"
+						"cRecurringJob=%s;\n",
+						uMin,uHour,uDayOfWeek,uDayOfMonth,uMonth,cRecurringJobDropDown);
+				if(uHour==24) uHour=0;//Adjust for start after posting correct value above.
+				luStartDate+=(uMin*60)+(uHour*3600);
 				uJobDate=luStartDate;
 				NewtJob(1);
 				if(uJob)

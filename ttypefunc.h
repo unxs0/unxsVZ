@@ -124,6 +124,8 @@ void ExttTypeButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
+			printf("These are usually fixed uType value entries used internally for our <i>big table</i>"
+				" tProperty.");
 			printf("<p><u>Record Context Info</u><br>");
 			tTypeNavList();
 	}
@@ -243,7 +245,7 @@ void tTypeNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	ExtSelectPublic("tType","tType.uType,tType.cLabel");
+	ExtSelectPublicOrder("tType","uType,cLabel","cLabel");
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
