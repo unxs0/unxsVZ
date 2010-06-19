@@ -117,7 +117,7 @@ extern char gcErrormsg[];
 void unxsVZ(const char *cResult);
 void ConnectDb(void);
 void Footer_ism3(void);
-void Header_ism3(char *cMsg, int iJs);
+void Header_ism3(const char *cMsg, int iJs);
 void ProcessControlVars(pentry entries[], int x);
 void OpenRow(const char *cFieldLabel, const char *cColor);
 void OpenFieldSet(char *cLabel, unsigned uWidth);

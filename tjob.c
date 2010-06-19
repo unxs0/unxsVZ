@@ -232,7 +232,7 @@ void tJob(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tJob",0);
+	Header_ism3(":: tJob",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -346,6 +346,21 @@ void tJobNewStep(unsigned uStep)
 			" value=0 size=40 maxlength=2 >\n");
 
 		OpenRow("Select starting date","black");
+		char cTime[32]={""};
+		if(!cStartDate[0])
+		{
+			time_t luClock;
+			const struct tm *tmTime;
+
+			time(&luClock);
+			tmTime=localtime(&luClock);
+			strftime(cTime,31,"%Y-%m-%d",tmTime);
+		}
+		else
+		{
+			sprintf(cTime,"%.31s",cStartDate);
+		}
+		jsCalendarInput("cStartDate",cTime,1);
 	}
 
 }//void tJobNewStep(unsigned uStep)
@@ -442,9 +457,9 @@ void tJobInput(unsigned uMode)
 //uJobDate
 	OpenRow(LANG_FL_tJob_uJobDate,"black");
 	if(uJobDate)
-		printf("<input type=text name=cuJobDate value='%s' disabled>\n",ctime(&uJobDate));
+		printf("<input type=text name=cuJobDate value='%s' size=40 disabled>\n",ctime(&uJobDate));
 	else
-		printf("<input type=text name=cuJobDate value='---' disabled>\n");
+		printf("<input type=text name=cuJobDate value='---' size=40 disabled>\n");
 	printf("<input type=hidden name=uJobDate value=%lu>\n",uJobDate);
 //uJobStatus
 	OpenRow(LANG_FL_tJob_uJobStatus,"black");
