@@ -2,3 +2,4 @@
 2	dnsrrCluster	1	1	1218391714	0	0
 3	hardware	1	1	1218391744	0	0
 4	otherCluster	1	1	1218391744	0	0
+11	clone	1	1	1254574740	0	0
