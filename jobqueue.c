@@ -4,8 +4,9 @@ FILE
 	$Id$
 PURPOSE
 	Command line processing of jobs in the tJob queue.
-AUTHOR
-	(C) 2008-2009 Gary Wallis for Unxiservice, LLC. GPLv2 License applies.
+AUTHOR/LEGAL
+	(C) 2008-2010 Gary Wallis for Unxiservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 NOTES
 	We still use KISS code, var naming conventions, and Allman (ANSI) style C 
 	indentation to make our software readable and writable by any programmer. 
@@ -18,6 +19,12 @@ TODO
 	logic that makes the code hard to maintain by non-authors.
 	Use uNotValidSystemCallArg() before all system() calls where any args
 	come from db and are not formatted (sprintf) as numbers.
+FILE CONTENTS
+	1-. Top redundant protos as the appear in file for a simple TOC.
+	2-. More protos: Major external functions used.
+	3-. File scoped vars.
+	4-. Top level functions.
+	5-. Rest of functions.
 */
 
 #include "mysqlrad.h"
@@ -28,52 +35,50 @@ TODO
 //The following prototype declarations should provide a 
 //	table of contents
 
-static unsigned guDebug=0;
-
-//local protos
-unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteContainer);
-void LogError(char *cErrorMsg,unsigned uKey);
+//local protos, order=ret type, in file
 void ProcessJobQueue(unsigned uDebug);
 void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		unsigned uContainer,char *cJobName,char *cJobData);
 void tJobErrorUpdate(unsigned uJob, char *cErrorMsg);
 void tJobDoneUpdate(unsigned uJob);
 void tJobWaitingUpdate(unsigned uJob);
-void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
-void ChangeHostnameContainer(unsigned uJob,unsigned uContainer);
-//OpenVZ action scripts
-void ActionScripts(unsigned uJob,unsigned uContainer);
 void NewContainer(unsigned uJob,unsigned uContainer);
 void DestroyContainer(unsigned uJob,unsigned uContainer);
+void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
+void ChangeHostnameContainer(unsigned uJob,unsigned uContainer);
 void StopContainer(unsigned uJob,unsigned uContainer);
 void StartContainer(unsigned uJob,unsigned uContainer);
 void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData);
-void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
-void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
+void ActionScripts(unsigned uJob,unsigned uContainer);
+void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
+void AppFunctions(FILE *fp,char *cFunction);
 void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData);
 void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData);
-//OpenVZ action scripts
-int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
-unsigned uNotValidSystemCallArg(char *cSSHOptions);
 void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData);
 void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData);
-unsigned GetContainerStatus(const unsigned uContainer,unsigned *uStatus);
+void GetIPFromtIP(const unsigned uIPv4,char *cIP);
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
+void logfileLine(const char *cFunction,const char *cLogline);
+void LogError(char *cErrorMsg,unsigned uKey);
+unsigned uNotValidSystemCallArg(char *cSSHOptions);
+unsigned GetContainerStatus(const unsigned uContainer, unsigned *uStatus);
 unsigned GetContainerMainIP(const unsigned uContainer,char *cIP);
 unsigned GetContainerSource(const unsigned uContainer, unsigned *uSource);
 unsigned SetContainerIP(const unsigned uContainer,char *cIP);
 unsigned SetContainerSource(const unsigned uContainer,const unsigned uSource);
-void GetIPFromtIP(const unsigned uIPv4,char *cIP);
 unsigned SetContainerHostname(const unsigned uContainer,
 			const char *cHostname,const char *cLabel);
 unsigned GetContainerNames(const unsigned uContainer,char *cHostname,char *cLabel);
 unsigned GetContainerNodeStatus(const unsigned uContainer, unsigned *uStatus);
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 unsigned FailToJobDone(unsigned uJob);
+unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteContainer);
+int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
 
 //extern protos
 void TextConnectDb(void); //main.c
@@ -85,175 +90,17 @@ void GetConfiguration(const char *cName,char *cValue,
 		unsigned uContainer,
 		unsigned uHtml);
 
-//file scoped. fix this someday
+//file scoped vars.
 static unsigned gfuNode=0;
 static unsigned gfuDatacenter=0;
+static unsigned guDebug=0;
+static char cHostname[100]={""};//file scope
+static FILE *gLfp=NULL;//log file
 
 
 //Using the local server hostname get max 100 jobs for this node from the tJob queue.
 //Then dispatch jobs via ProcessJob() this function in turn calls specific functions for
 //each known cJobName.
-static char cHostname[100]={""};//file scope
-
-
-static FILE *gLfp=NULL;
-void logfileLine(const char *cFunction,const char *cLogline)
-{
-	time_t luClock;
-	char cTime[32];
-	pid_t pidThis;
-	const struct tm *tmTime;
-
-	pidThis=getpid();
-
-	time(&luClock);
-	tmTime=localtime(&luClock);
-	strftime(cTime,31,"%b %d %T",tmTime);
-
-        fprintf(gLfp,"%s jobqueue.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
-	fflush(gLfp);
-
-}//void logfileLine(char *cLogline)
-
-
-
-unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteContainer)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-	unsigned uPeriod=0;
-
-	if(guDebug)
-	{
-		sprintf(gcQuery,"Start uContainer=%u,uRemoteContainer=%u",uContainer,uRemoteContainer);
-		logfileLine("ProcessCloneSyncJob",gcQuery);
-	}
-
-	//Make sure source uContainer is on this node if not return no error.
-	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND uNode=%u",
-					uContainer,uNode);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
-		return(1);
-	}
-        res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)<1)
-	{
-		mysql_free_result(res);
-		if(guDebug)
-			logfileLine("ProcessCloneSyncJob","source container not on this node");
-		return(0);
-	}
-	mysql_free_result(res);
-
-	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cuSyncPeriod'",
-					uRemoteContainer);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
-		return(2);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uPeriod);
-	mysql_free_result(res);
-
-	if(uPeriod!=0)
-	{
-		if(guDebug)
-		{
-			sprintf(gcQuery,"uPeriod=%u",uPeriod);
-			logfileLine("ProcessCloneSyncJob",gcQuery);
-		}
-
-		sprintf(gcQuery,"SELECT tNode.cLabel FROM tContainer,tNode WHERE"
-				" tContainer.uNode=tNode.uNode AND"
-				" tNode.uStatus=1 AND"//Active NODE
-				" tContainer.uContainer=%u AND"
-				" tContainer.uModDate+%u<=UNIX_TIMESTAMP(NOW())",uRemoteContainer,uPeriod);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
-			return(3);
-		}
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			if(uNotValidSystemCallArg(field[0]))
-			{
-				mysql_free_result(res);
-				logfileLine("ProcessCloneSyncJob","security alert");
-				return(4);
-			}
-			//Before running a recurring job we must update the cloned containers 
-			// uModDate. This is done to not allow a script to run concurrently,
-			// scripts should also have a lockfile mechanism to avoid this.
-			sprintf(gcQuery,"UPDATE tContainer SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1"
-						" WHERE uContainer=%u",uRemoteContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				mysql_free_result(res);
-				logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
-				return(5);
-			}
-			sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s",uContainer,uRemoteContainer,field[0]);
-			if(guDebug)
-				logfileLine("ProcessCloneSyncJob",gcQuery);
-
-			if(system(gcQuery))
-			{
-				mysql_free_result(res);
-				logfileLine("ProcessCloneSyncJob",gcQuery);
-				return(6);
-			}
-			else
-			{
-				//After running a recurring job we also update the cloned containers 
-				// uModDate. This is for marking last time it was done.
-				sprintf(gcQuery,"UPDATE tContainer SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1"
-							" WHERE uContainer=%u",uRemoteContainer);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					mysql_free_result(res);
-					logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
-					return(7);
-				}
-			}
-		}
-		mysql_free_result(res);
-	}
-	if(guDebug)
-		logfileLine("ProcessCloneSyncJob","End");
-	return(0);
-
-}//void ProcessCloneSyncJob()
-
-
-void LogError(char *cErrorMsg,unsigned uKey)
-{
-	sprintf(gcQuery,"INSERT INTO tLog SET"
-		" cLabel='unxsVZ CLI Error',"
-		"uLogType=4,uLoginClient=1,"
-		"cLogin='unxsVZ.cgi',cMessage=\"%s uKey=%u\","
-		"cServer='%s',uOwner=1,uCreatedBy=1,"
-		"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					cErrorMsg,uKey,cHostname);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("LogError",mysql_error(&gMysql));
-		exit(2);
-	}
-
-}//void LogError(char *cErrorMsg)
-
-
 void ProcessJobQueue(unsigned uDebug)
 {
         MYSQL_RES *res;
@@ -3673,3 +3520,159 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 	mysql_free_result(res);
 
 }//void GetNodeProp()
+
+
+void logfileLine(const char *cFunction,const char *cLogline)
+{
+	time_t luClock;
+	char cTime[32];
+	pid_t pidThis;
+	const struct tm *tmTime;
+
+	pidThis=getpid();
+
+	time(&luClock);
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
+
+        fprintf(gLfp,"%s jobqueue.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
+	fflush(gLfp);
+
+}//void logfileLine(char *cLogline)
+
+
+unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uPeriod=0;
+
+	if(guDebug)
+	{
+		sprintf(gcQuery,"Start uContainer=%u,uRemoteContainer=%u",uContainer,uRemoteContainer);
+		logfileLine("ProcessCloneSyncJob",gcQuery);
+	}
+
+	//Make sure source uContainer is on this node if not return no error.
+	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND uNode=%u",
+					uContainer,uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
+		return(1);
+	}
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)<1)
+	{
+		mysql_free_result(res);
+		if(guDebug)
+			logfileLine("ProcessCloneSyncJob","source container not on this node");
+		return(0);
+	}
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cuSyncPeriod'",
+					uRemoteContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
+		return(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uPeriod);
+	mysql_free_result(res);
+
+	if(uPeriod!=0)
+	{
+		if(guDebug)
+		{
+			sprintf(gcQuery,"uPeriod=%u",uPeriod);
+			logfileLine("ProcessCloneSyncJob",gcQuery);
+		}
+
+		sprintf(gcQuery,"SELECT tNode.cLabel FROM tContainer,tNode WHERE"
+				" tContainer.uNode=tNode.uNode AND"
+				" tNode.uStatus=1 AND"//Active NODE
+				" tContainer.uContainer=%u AND"
+				" tContainer.uModDate+%u<=UNIX_TIMESTAMP(NOW())",uRemoteContainer,uPeriod);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
+			return(3);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			if(uNotValidSystemCallArg(field[0]))
+			{
+				mysql_free_result(res);
+				logfileLine("ProcessCloneSyncJob","security alert");
+				return(4);
+			}
+			//Before running a recurring job we must update the cloned containers 
+			// uModDate. This is done to not allow a script to run concurrently,
+			// scripts should also have a lockfile mechanism to avoid this.
+			sprintf(gcQuery,"UPDATE tContainer SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1"
+						" WHERE uContainer=%u",uRemoteContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				mysql_free_result(res);
+				logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
+				return(5);
+			}
+			sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s",uContainer,uRemoteContainer,field[0]);
+			if(guDebug)
+				logfileLine("ProcessCloneSyncJob",gcQuery);
+
+			if(system(gcQuery))
+			{
+				mysql_free_result(res);
+				logfileLine("ProcessCloneSyncJob",gcQuery);
+				return(6);
+			}
+			else
+			{
+				//After running a recurring job we also update the cloned containers 
+				// uModDate. This is for marking last time it was done.
+				sprintf(gcQuery,"UPDATE tContainer SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1"
+							" WHERE uContainer=%u",uRemoteContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					mysql_free_result(res);
+					logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
+					return(7);
+				}
+			}
+		}
+		mysql_free_result(res);
+	}
+	if(guDebug)
+		logfileLine("ProcessCloneSyncJob","End");
+	return(0);
+
+}//void ProcessCloneSyncJob()
+
+
+void LogError(char *cErrorMsg,unsigned uKey)
+{
+	sprintf(gcQuery,"INSERT INTO tLog SET"
+		" cLabel='unxsVZ CLI Error',"
+		"uLogType=4,uLoginClient=1,"
+		"cLogin='unxsVZ.cgi',cMessage=\"%s uKey=%u\","
+		"cServer='%s',uOwner=1,uCreatedBy=1,"
+		"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cErrorMsg,uKey,cHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("LogError",mysql_error(&gMysql));
+		exit(2);
+	}
+
+}//void LogError(char *cErrorMsg)
