@@ -1802,7 +1802,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//3-. restore on target node to new veid
 	//4-. change ip, name and hostname
 	//5-. remove any other /etc/vz/conf/veid.x files
-	//6-. conditionally start new veid
+	//6-. conditionally start new veid and modify VEID.conf file to not start on boot.
 	//7-. update source container status
 	//8-. update target container status
 	//9-. remove /vz/dump files
@@ -2036,6 +2036,14 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 	else
 	{
+		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --onboot no --save'",
+								cSSHOptions,cTargetNodeIPv4,uNewVeid);
+		if(system(gcQuery))
+		{
+			logfileLine("CloneContainer",gcQuery);
+			tJobErrorUpdate(uJob,"error 6c");
+			goto CommonExit;
+		}
 		SetContainerStatus(uNewVeid,uSTOPPED);
 	}
 
