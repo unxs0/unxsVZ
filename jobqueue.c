@@ -65,6 +65,9 @@ void GetIPFromtIP(const unsigned uIPv4,char *cIP);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 void logfileLine(const char *cFunction,const char *cLogline);
 void LogError(char *cErrorMsg,unsigned uKey);
+void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
+void SetJobStatus(unsigned uJob,unsigned uJobStatus);
+
 unsigned uNotValidSystemCallArg(char *cSSHOptions);
 unsigned GetContainerStatus(const unsigned uContainer, unsigned *uStatus);
 unsigned GetContainerMainIP(const unsigned uContainer,char *cIP);
@@ -78,6 +81,7 @@ unsigned GetContainerNodeStatus(const unsigned uContainer, unsigned *uStatus);
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 unsigned FailToJobDone(unsigned uJob);
 unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteContainer);
+
 int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
 
 //extern protos
@@ -146,6 +150,7 @@ void ProcessJobQueue(unsigned uDebug)
 	TextConnectDb();//Uses login data from local.h
 	guLoginClient=1;//Root user
 
+	//Get node and datacenter via hostname
 	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -162,11 +167,11 @@ void ProcessJobQueue(unsigned uDebug)
 	}
 	mysql_free_result(res);
 
+	//FQDN vs short name of 2nd NIC mess
 	if(!uNode)
 	{
 		char *cp;
 
-		//FQDN vs short name of 2nd NIC mess
 		if((cp=strchr(cHostname,'.')))
 			*cp=0;
 		sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
@@ -228,6 +233,7 @@ void ProcessJobQueue(unsigned uDebug)
 		logfileLine("ProcessJobQueue",gcQuery);
 	}
 
+	//
 	//Main loop normal jobs
 	//uWAITING==1
 	//TODO can the LIMIT partition related jobs that need to run close together?
@@ -349,6 +355,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"LocalImportConfigJob"))
 	{
 		LocalImportConfig(uJob,uDatacenter,cJobData);
+	}
+	else if(!strcmp(cJobName,"RecurringJob"))
+	{
+		RecurringJob(uJob,uDatacenter,uNode,uContainer,cJobData);
 	}
 	else if(1)
 	{
@@ -3684,3 +3694,164 @@ void LogError(char *cErrorMsg,unsigned uKey)
 	}
 
 }//void LogError(char *cErrorMsg)
+
+
+void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+	char *cp;
+	unsigned uMin=-1,uHour=-1,uDayOfWeek=-1,uDayOfMonth=-1,uMonth=-1;
+	char cRecurringJob[100]={""};
+	char cCommand[100]={""};
+	time_t luClock;
+	struct tm structTm;
+	struct stat statInfo;
+
+	//Parse job data
+	if((cp=strstr(cJobData,"uMin=")))
+		sscanf(cp+5,"%u",&uMin);
+	if((cp=strstr(cJobData,"uHour=")))
+		sscanf(cp+6,"%u",&uHour);
+	if((cp=strstr(cJobData,"uDayOfWeek=")))
+		sscanf(cp+11,"%u",&uDayOfWeek);
+	if((cp=strstr(cJobData,"uDayOfMonth=")))
+		sscanf(cp+12,"%u",&uDayOfMonth);
+	if((cp=strstr(cJobData,"uMonth=")))
+		sscanf(cp+7,"%u",&uMonth);
+	if(uMin== -1 || uHour== -1 || uDayOfWeek== -1 || uDayOfMonth== -1 || uMonth== -1)
+	{
+		logfileLine("RecurringJob One or more data=-1 cJobData=",cJobData);
+		tJobErrorUpdate(uJob,"recurring job data=-1");
+		return;
+	}
+	if(!uMin && !uHour && !uDayOfWeek && !uDayOfMonth && !uMonth)
+	{
+		logfileLine("RecurringJob All recurring job data=0 cJobData=",cJobData);
+		tJobErrorUpdate(uJob,"recurring job data=0");
+		return;
+	}
+
+	if((cp=strstr(cJobData,"cRecurringJob=")))
+		sprintf(cRecurringJob,"%.99s",cp+14);
+	if((cp=strchr(cRecurringJob,';')))
+		*cp=0;
+	if(!cRecurringJob[0])	
+	{
+		logfileLine("RecurringJob cRecurringJob empty cJobData=",cJobData);
+		tJobErrorUpdate(uJob,"cRecurringJob empty");
+		return;
+	}
+
+	//Determine if we run the job
+	//debug only
+	printf("Job: uMonth=%u uDayOfMonth=%u uDayOfWeek=%u uHour=%u uMin=%u\n",
+				uMonth,uDayOfMonth,uDayOfWeek,uHour,uMin);
+	time(&luClock);
+	localtime_r(&luClock,&structTm);
+	//debug only
+	printf("Now: uMonth=%d uDayOfMonth=%d uDayOfWeek=%d uHour=%d uMin=%d\n",
+			structTm.tm_mon+1,structTm.tm_mday,structTm.tm_wday,structTm.tm_hour,structTm.tm_min);
+
+	//If not any month and now month is less than job month do not run.
+	if(uMonth && uMonth>structTm.tm_mon+1)
+	{
+		//debug only
+		printf("uMonth not reached\n");
+		goto Common_WaitingExit;
+	}
+	//If not any day of month and now day of month is less than job day of month do not run.
+	if(uDayOfMonth && uDayOfMonth>structTm.tm_mday)
+	{
+		//debug only
+		printf("uDayOfMonth not reached\n");
+		goto Common_WaitingExit;
+	}
+	//If not any day of week and now day of week is less than job day of week do not run.
+	if(uDayOfWeek && uDayOfWeek>structTm.tm_wday)
+	{
+		//debug only
+		printf("uDayOfWeek not reached\n");
+		goto Common_WaitingExit;
+	}
+	//If not any hour and now hour is less than job hour do not run.
+	if(uHour && uHour>structTm.tm_hour)
+	{
+		//debug only
+		printf("uHour not reached\n");
+		goto Common_WaitingExit;
+	}
+	//If now min is less than job min do not run.
+	if(uMin>structTm.tm_min)
+	{
+		//debug only
+		printf("uMin not reached\n");
+		goto Common_WaitingExit;
+	}
+
+	//Passed all constraints run job
+	//Get command via cRecurringJob
+
+        sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=0 AND uType=%u AND cName='%.99s'",
+										uPROP_RECJOB,cRecurringJob);
+        MYSQL_RUN_STORE(mysqlRes);
+        if((mysqlField=mysql_fetch_row(mysqlRes)))
+        	sprintf(cCommand,"%.99s",mysqlField[0]);
+        mysql_free_result(mysqlRes);
+
+	//debug only
+	printf("Run job (%s)\n",cCommand);
+
+	if(uNotValidSystemCallArg(cCommand))
+	{
+		logfileLine("RecurringJob","cCommand security alert");
+		tJobErrorUpdate(uJob,"cCommand sec alert!");
+		return;
+	}
+	//Only run if command is chmod 500 for extra security reasons.
+	if(stat(cCommand,&statInfo))
+	{
+		tJobErrorUpdate(uJob,"stat(cCommand)");
+		logfileLine("RecurringJob","stat failed for cCommand");
+		return;
+	}
+	if(statInfo.st_mode | S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP )
+	{
+		tJobErrorUpdate(uJob,"cCommand is not chmod 500");
+		logfileLine("RecurringJob","cCommand is not chmod 500");
+		return;
+	}
+	goto Common_WaitingExit;
+	if(system(cCommand))
+	{
+		tJobErrorUpdate(uJob,"system(cCommand)");
+		logfileLine("RecurringJob",cCommand);
+		return;
+	}
+
+	//If done ok
+	tJobDoneUpdate(uJob);
+	return;
+
+Common_WaitingExit:
+	//debug only
+	printf("Skipping job not time yet\n");
+	SetJobStatus(uJob,uWAITING);
+	return;
+
+
+}//void RecurringJob(uJob,uDatacenter,uNode,uContainer,cJobData)
+
+
+void SetJobStatus(unsigned uJob,unsigned uJobStatus)
+{
+	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,uModBy=1,"
+				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uJobStatus,uJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("SetJobStatus",mysql_error(&gMysql));
+		exit(2);
+	}
+
+}//void SetJobStatus(unsigned uJob,unsigned uJobStatus)
