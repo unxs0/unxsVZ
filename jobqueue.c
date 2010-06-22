@@ -3815,13 +3815,14 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 		logfileLine("RecurringJob","stat failed for cCommand");
 		return;
 	}
-	if(statInfo.st_mode | S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP )
+	if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
 	{
 		tJobErrorUpdate(uJob,"cCommand is not chmod 500");
 		logfileLine("RecurringJob","cCommand is not chmod 500");
 		return;
 	}
-	goto Common_WaitingExit;
+	//printf("good perms (%x)\n",statInfo.st_mode&(S_IWOTH|S_IWGRP|S_IWUSR|S_IXOTH|S_IROTH|S_IXGRP|S_IRGRP));
+	//goto Common_WaitingExit;
 	if(system(cCommand))
 	{
 		tJobErrorUpdate(uJob,"system(cCommand)");
