@@ -827,7 +827,7 @@ void PropertyDropDown(const char *cTableName, const char *cFieldName,
       
         if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
         {
-                printf("Invalid input tTablePullDownDatacenter()");
+                printf("Invalid input PropertyDropDown()()");
                 return;
         }
 
@@ -898,7 +898,7 @@ void PropertyDropDown(const char *cTableName, const char *cFieldName,
 	if(cHidden[0])
 		printf("%s",cHidden);
 
-}//tTablePullDownDatacenter()
+}//PropertyDropDown()
 
 
 void RecurringJobDropDown(unsigned uSelector, unsigned uMode)
