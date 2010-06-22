@@ -39,7 +39,7 @@ FILE CONTENTS
 void ProcessJobQueue(unsigned uDebug);
 void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		unsigned uContainer,char *cJobName,char *cJobData);
-void tJobErrorUpdate(unsigned uJob, char *cErrorMsg);
+void tJobErrorUpdate(unsigned uJob, const char *cErrorMsg);
 void tJobDoneUpdate(unsigned uJob);
 void tJobWaitingUpdate(unsigned uJob);
 void NewContainer(unsigned uJob,unsigned uContainer);
@@ -372,7 +372,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 //Shared functions
 
 
-void tJobErrorUpdate(unsigned uJob, char *cErrorMsg)
+void tJobErrorUpdate(unsigned uJob, const char *cErrorMsg)
 {
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=14,cRemoteMsg='%.31s',uModBy=1,"
 				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",
@@ -398,7 +398,7 @@ void tJobErrorUpdate(unsigned uJob, char *cErrorMsg)
 		exit(2);
 	}
 
-}//void tJobErrorUpdate(unsigned uJob, char *cErrorMsg)
+}//void tJobErrorUpdate()
 
 
 void tJobDoneUpdate(unsigned uJob)
@@ -3744,48 +3744,48 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 	}
 
 	//Determine if we run the job
-	//debug only
-	printf("Job: uMonth=%u uDayOfMonth=%u uDayOfWeek=%u uHour=%u uMin=%u\n",
+	if(guDebug)
+		printf("Job: uMonth=%u uDayOfMonth=%u uDayOfWeek=%u uHour=%u uMin=%u\n",
 				uMonth,uDayOfMonth,uDayOfWeek,uHour,uMin);
 	time(&luClock);
 	localtime_r(&luClock,&structTm);
-	//debug only
-	printf("Now: uMonth=%d uDayOfMonth=%d uDayOfWeek=%d uHour=%d uMin=%d\n",
+	if(guDebug)
+		printf("Now: uMonth=%d uDayOfMonth=%d uDayOfWeek=%d uHour=%d uMin=%d\n",
 			structTm.tm_mon+1,structTm.tm_mday,structTm.tm_wday,structTm.tm_hour,structTm.tm_min);
 
 	//If not any month and now month is less than job month do not run.
 	if(uMonth && uMonth>structTm.tm_mon+1)
 	{
-		//debug only
-		printf("uMonth not reached\n");
+		if(guDebug)
+			printf("uMonth not reached\n");
 		goto Common_WaitingExit;
 	}
 	//If not any day of month and now day of month is less than job day of month do not run.
 	if(uDayOfMonth && uDayOfMonth>structTm.tm_mday)
 	{
-		//debug only
-		printf("uDayOfMonth not reached\n");
+		if(guDebug)
+			printf("uDayOfMonth not reached\n");
 		goto Common_WaitingExit;
 	}
 	//If not any day of week and now day of week is less than job day of week do not run.
 	if(uDayOfWeek && uDayOfWeek>structTm.tm_wday)
 	{
-		//debug only
-		printf("uDayOfWeek not reached\n");
+		if(guDebug)
+			printf("uDayOfWeek not reached\n");
 		goto Common_WaitingExit;
 	}
 	//If not any hour and now hour is less than job hour do not run.
 	if(uHour && uHour>structTm.tm_hour)
 	{
-		//debug only
-		printf("uHour not reached\n");
+		if(guDebug)
+			printf("uHour not reached\n");
 		goto Common_WaitingExit;
 	}
 	//If now min is less than job min do not run.
 	if(uMin>structTm.tm_min)
 	{
-		//debug only
-		printf("uMin not reached\n");
+		if(guDebug)
+			printf("uMin not reached\n");
 		goto Common_WaitingExit;
 	}
 
@@ -3794,13 +3794,20 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 
         sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=0 AND uType=%u AND cName='%.99s'",
 										uPROP_RECJOB,cRecurringJob);
-        MYSQL_RUN_STORE(mysqlRes);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("RecurringJob",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"tProperty WHERE uKey=0 AND uType");
+		return;
+	}
+        mysqlRes=mysql_store_result(&gMysql);
         if((mysqlField=mysql_fetch_row(mysqlRes)))
         	sprintf(cCommand,"%.99s",mysqlField[0]);
         mysql_free_result(mysqlRes);
 
-	//debug only
-	printf("Run job (%s)\n",cCommand);
+	if(guDebug)
+		printf("Run job (%s)\n",cCommand);
 
 	if(uNotValidSystemCallArg(cCommand))
 	{
@@ -3827,16 +3834,37 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 	{
 		tJobErrorUpdate(uJob,"system(cCommand)");
 		logfileLine("RecurringJob",cCommand);
-		return;
+		return;//Here we might want to continue anyway TODO
 	}
 
-	//If done ok
-	tJobDoneUpdate(uJob);
+	//Update uJobDate based on cJobData.
+	//TODO: Analyze what happens when jobs for some reason do not run for given periods.
+	if(uMonth)
+        	sprintf(gcQuery,"UPDATE tJob SET"
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(NOW(),INTERVAL 1 YEAR))"
+		" WHERE uJob=%u",uJob);
+	else if(uDayOfMonth)
+        	sprintf(gcQuery,"UPDATE tJob SET"
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(NOW(),INTERVAL 1 MONTH))"
+		" WHERE uJob=%u",uJob);
+	else if(uDayOfWeek)
+        	sprintf(gcQuery,"UPDATE tJob SET"
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(NOW(),INTERVAL 1 WEEK))"
+		" WHERE uJob=%u",uJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("RecurringJob",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"DATE_ADD(NOW(),INTERVAL 1 WEEK)");
+		return;
+	}
+	//Done
+	SetJobStatus(uJob,uWAITING);
 	return;
 
 Common_WaitingExit:
-	//debug only
-	printf("Skipping job not time yet\n");
+	if(guDebug)
+		printf("Skipping job not time yet\n");
 	SetJobStatus(uJob,uWAITING);
 	return;
 
