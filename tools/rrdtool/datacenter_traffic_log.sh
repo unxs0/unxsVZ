@@ -48,6 +48,15 @@ if ! test -e $RRDFILE; then
 	fi
 fi
 
+
+#only gather data if vz is running, this should avoid nasty spikes that are very hard to eliminate correctly.
+/sbin/service vz status | grep run > /dev/null 2>&1;
+if [ $? != 0 ];then
+	
+	fLog "vz not running will not collect, add or graph data";
+	exit 1;
+fi
+
 #for each datacenter node then add them , set this same as allnodecmd.sh
 #cNameSuffix="lax-f2";
 cNameSuffix="vm";

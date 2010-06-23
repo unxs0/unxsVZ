@@ -53,6 +53,15 @@ if ! test -e $RRDFILE; then
 		exit 0;
 	fi
 fi
+
+#only gather data if vz is running, this should avoid nasty spikes that are very hard to eliminate correctly.
+/sbin/service vz status | grep run > /dev/null 2>&1;
+if [ $? != 0 ];then
+	
+	fLog "vz not running will not collect, add or graph data";
+	exit 1;
+fi
+
  
 eval `grep $DEV /proc/net/dev  | awk -F: '{print $2}' | awk '{printf"CTIN=%-15d\nCTOUT=%-15d\n", $1, $9}'`
 if [ $? == 0 ] && [ "$CTIN" != "" ] && [ "$CTOUT" != "" ];then
