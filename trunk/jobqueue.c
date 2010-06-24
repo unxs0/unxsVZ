@@ -3753,7 +3753,7 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 	//Note structTm.tm_mon+1. We adjust for normal 1-12
 	if(guDebug)
 		printf("Now: uMonth=%d uDayOfMonth=%d uDayOfWeek=%d uHour=%d uMin=%d\n",
-			structTm.tm_mon+1,structTm.tm_mday,structTm.tm_wday,structTm.tm_hour,structTm.tm_min);
+			structTm.tm_mon+1,structTm.tm_mday,structTm.tm_wday+1,structTm.tm_hour,structTm.tm_min);
 
 	//If not any month and now month is less than job month do not run.
 	if(uMonth && uMonth>structTm.tm_mon+1)
@@ -3770,7 +3770,7 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 		goto Common_WaitingExit;
 	}
 	//If not any day of week and now day of week is less than job day of week do not run.
-	if(uDayOfWeek && uDayOfWeek>structTm.tm_wday)
+	if(uDayOfWeek && uDayOfWeek>structTm.tm_wday+1)
 	{
 		if(guDebug)
 			printf("uDayOfWeek not reached\n");
@@ -3852,15 +3852,15 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 	//	all the cases below except the every hour case, which does not require it -it seems.)
 	if(uMonth)
         	sprintf(gcQuery,"UPDATE tJob SET"
-		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 YEAR))+%u+%u-((DAYOFYEAR(CURDATE())+(%u*30))*86400)"
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 YEAR))+%u+%u-((DAYOFYEAR(CURDATE())-(%u*30))*86400)"
 		" WHERE uJob=%u",uMin*60,uHour*3600,uMonth,uJob);
 	else if(uDayOfMonth)
         	sprintf(gcQuery,"UPDATE tJob SET"
-		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 MONTH))+%u+%u-((DAY(CURDATE())+%u)*86400)"
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 MONTH))+%u+%u-((DAY(CURDATE())-%u)*86400)"
 		" WHERE uJob=%u",uMin*60,uHour*3600,uDayOfMonth,uJob);
 	else if(uDayOfWeek)
         	sprintf(gcQuery,"UPDATE tJob SET"
-		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 WEEK))+%u+%u-((DAYOFWEEK(CURDATE())+%u)*86400)"
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 WEEK))+%u+%u-((DAYOFWEEK(CURDATE())-%u)*86400)"
 		" WHERE uJob=%u",uMin*60,uHour*3600,uDayOfWeek,uJob);
 	else if(1)
         	sprintf(gcQuery,"UPDATE tJob SET"
