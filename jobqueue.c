@@ -3841,21 +3841,25 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 	//TODO: Analyze what happens when jobs for some reason do not run for given periods.
 	if(uMonth)
         	sprintf(gcQuery,"UPDATE tJob SET"
-		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(NOW(),INTERVAL 1 YEAR))"
-		" WHERE uJob=%u",uJob);
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 YEAR))+%u+%u"
+		" WHERE uJob=%u",uMin*60,uHour*3600,uJob);
 	else if(uDayOfMonth)
         	sprintf(gcQuery,"UPDATE tJob SET"
-		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(NOW(),INTERVAL 1 MONTH))"
-		" WHERE uJob=%u",uJob);
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 MONTH))+%u+%u"
+		" WHERE uJob=%u",uMin*60,uHour*3600,uJob);
 	else if(uDayOfWeek)
         	sprintf(gcQuery,"UPDATE tJob SET"
-		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(NOW(),INTERVAL 1 WEEK))"
-		" WHERE uJob=%u",uJob);
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 WEEK))+%u+%u"
+		" WHERE uJob=%u",uMin*60,uHour*3600,uJob);
+	else if(1)
+        	sprintf(gcQuery,"UPDATE tJob SET"
+		" uJobDate=UNIX_TIMESTAMP(CURDATE())+%u+%u"
+		" WHERE uJob=%u",uMin*60,uHour*3600,uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("RecurringJob",mysql_error(&gMysql));
-		tJobErrorUpdate(uJob,"DATE_ADD(NOW(),INTERVAL 1 WEEK)");
+		tJobErrorUpdate(uJob,"DATE_ADD(CURDATE(),INTERVAL");
 		return;
 	}
 	//Done
