@@ -3749,6 +3749,8 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 				uMonth,uDayOfMonth,uDayOfWeek,uHour,uMin);
 	time(&luClock);
 	localtime_r(&luClock,&structTm);
+
+	//Note structTm.tm_mon+1. We adjust for normal 1-12
 	if(guDebug)
 		printf("Now: uMonth=%d uDayOfMonth=%d uDayOfWeek=%d uHour=%d uMin=%d\n",
 			structTm.tm_mon+1,structTm.tm_mday,structTm.tm_wday,structTm.tm_hour,structTm.tm_min);
@@ -3839,18 +3841,27 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 
 	//Update uJobDate based on cJobData.
 	//TODO: Analyze what happens when jobs for some reason do not run for given periods.
+	//Case 1: Job set to run every Sunday (day 7) at 3:15 AM. Server was down since last saturday, it is now
+	//	 Friday and job has not run since Sunday more than a week ago. So 
+	//	tJob.uJobDate<UNIX_TIMESTAMP(NOW)) and RecurringJob() will
+	//	be run. Since uDayOfWeek is 5 job will not run. On Sunday it will run correctly.
+	//Case 2: Job is set to run every day 1 of every month. Server was down from previous month up to
+	//	day 2. RecurringJob() will be called since it is day 2 > day 1 job will run. But next time
+	//	it will also run on day 2 instead of day 1 unless we adjust the DATE_ADD() by 1 month minus 1
+	//	day (i.e. Current day - target day.) (This at first blush seems to able to be extended to
+	//	all the cases below except the every hour case, which does not require it -it seems.)
 	if(uMonth)
         	sprintf(gcQuery,"UPDATE tJob SET"
-		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 YEAR))+%u+%u"
-		" WHERE uJob=%u",uMin*60,uHour*3600,uJob);
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 YEAR))+%u+%u-((DAYOFYEAR(CURDATE())+(%u*30))*86400)"
+		" WHERE uJob=%u",uMin*60,uHour*3600,uMonth,uJob);
 	else if(uDayOfMonth)
         	sprintf(gcQuery,"UPDATE tJob SET"
-		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 MONTH))+%u+%u"
-		" WHERE uJob=%u",uMin*60,uHour*3600,uJob);
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 MONTH))+%u+%u-((DAY(CURDATE())+%u)*86400)"
+		" WHERE uJob=%u",uMin*60,uHour*3600,uDayOfMonth,uJob);
 	else if(uDayOfWeek)
         	sprintf(gcQuery,"UPDATE tJob SET"
-		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 WEEK))+%u+%u"
-		" WHERE uJob=%u",uMin*60,uHour*3600,uJob);
+		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 WEEK))+%u+%u-((DAYOFWEEK(CURDATE())+%u)*86400)"
+		" WHERE uJob=%u",uMin*60,uHour*3600,uDayOfWeek,uJob);
 	else if(1)
         	sprintf(gcQuery,"UPDATE tJob SET"
 		" uJobDate=UNIX_TIMESTAMP(CURDATE())+%u+%u"

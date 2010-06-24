@@ -226,8 +226,8 @@ void ExttJobCommands(pentry entries[], int x)
 				if(uHour>24)
 					tJob("<blink>Error:</blink> Must specify an hour from 0-24. 0 for all hours.");
 				if(uDayOfWeek>7)
-					tJob("<blink>Error:</blink> Must specify a day of week number from 0-7."
-						" 0 for all days. Monday is day 1.");
+					tJob("<blink>Error:</blink> Must specify a day of week number from 0 to 7."
+						" 0 for all days. Sunday is day 1.");
 				if(uDayOfMonth>31)
 					tJob("<blink>Error:</blink> Must specify a day of month number from 0-31."
 						" 0 for all days. If not 0 this value trumps and day of week number set.");
