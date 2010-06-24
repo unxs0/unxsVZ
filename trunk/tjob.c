@@ -348,7 +348,7 @@ void tJobNewStep(unsigned uStep)
 			" value=0 size=40 maxlength=2 >\n");
 
 		OpenRow("Select recurring day of week number","black");
-		printf("<input title='Day of the week 0-7. Moday is 1. 0 for all days' type=text name=uDayOfWeek"
+		printf("<input title='Day of the week, range 0-7. Sunday is 1. 0 for all days' type=text name=uDayOfWeek"
 			" value=0 size=40 maxlength=1 >\n");
 
 		OpenRow("Select recurring day of month number","black");
