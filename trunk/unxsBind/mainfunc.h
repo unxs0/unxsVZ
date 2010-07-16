@@ -1493,6 +1493,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 	sprintf(gcQuery,"ALTER TABLE tAuthorize MODIFY cPasswd VARCHAR(35) NOT NULL DEFAULT ''");
 	mysql_query(&gMysql,gcQuery);
@@ -1519,6 +1520,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 
 	//tLog
@@ -1542,6 +1544,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 	if(ucServer)
 	{
@@ -1549,6 +1552,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 
 	//tHit
@@ -1577,6 +1581,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 
 	//tZoneImport
@@ -1599,6 +1604,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 
 	//tZone
@@ -1623,6 +1629,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 	if(uClient)
 	{
@@ -1630,6 +1637,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 
 	//tDeletedZone
@@ -1653,6 +1661,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 	if(uDeletedZoneNSSet)
 	{
@@ -1660,6 +1669,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 
 	//tDeletedResource
@@ -1683,6 +1693,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 	if(ucParam4)
 	{
@@ -1690,6 +1701,7 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+		printf("%s\n",gcQuery);
 	}
 	
 	//
