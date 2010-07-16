@@ -297,6 +297,8 @@ void tAuthorizeNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uNum=0;
+	unsigned uCount=0;
 
 	sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient FROM tAuthorize "
 			" WHERE uOwner=%u OR uOwner IN (SELECT uClient FROM " TCLIENT
@@ -310,12 +312,18 @@ void tAuthorizeNavList(void)
         }
 
         res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	if((uNum=mysql_num_rows(res)))
 	{
-        	printf("<p><u>tAuthorizeNavList</u><br>\n");
+        	printf("<p><u>tAuthorizeNavList(%u)</u><br>\n",uNum);
         	while((field=mysql_fetch_row(res)))
+		{
 			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
 				"%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
+			if((++uCount)>30) break;
+		}
+		if(uCount>30)
+			printf("Only first 30 shown\n");
+				
 	}
         mysql_free_result(res);
 
