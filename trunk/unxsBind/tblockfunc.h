@@ -20,7 +20,7 @@ static char cSearch[64]={""};
 //Aux drop/pull downs
 static char cForClientPullDown[256]={""};
 static unsigned uForClient=0;
-void tTablePullDownResellers(int unsigned uSelector);
+void tTablePullDownResellers(unsigned uSelector,unsigned uMode);
 void tBlockNavList(void);
 void tBlockContextInfo(void);
 
@@ -28,7 +28,7 @@ void tBlockContextInfo(void);
 static char cIPBlock[256]={""};
 static char cZone[256]={""};
 static unsigned uZone=0;
-static unsigned uMathCheck=0;
+static unsigned uDryRun=0;
 
 void UpdateSerialNum(unsigned uZone);
 void CustomerDropDown(unsigned uClient);
@@ -47,8 +47,8 @@ void ExtProcesstBlockVars(pentry entries[], int x)
 			sprintf(cSearch,"%.63s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cIPBlock"))
 			sprintf(cIPBlock,"%.99s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uMathCheck"))
-			sscanf(entries[i].val,"%u",&uMathCheck);
+		else if(!strcmp(entries[i].name,"uDryRun"))
+			uDryRun=1;
 	}
 
 }//void ExtProcesstBlockVars(pentry entries[], int x)
@@ -164,13 +164,18 @@ void ExttBlockCommands(pentry entries[], int x)
 			
 					if(!uA)
 					{
-						guMode=4001;
+						guMode=2002;
 						tBlock("<blink>IP Block incorrect format</blink>");
 					}
 					if((uA>255)||(uB>255)||(uC>255)||(uD>255))
 					{
-						guMode=4001;
+						guMode=2002;
 						tBlock("<blink>IP Block incorrect format</blink>");
+					}
+					if(uE<21 || uE>29)
+					{
+						guMode=2002;
+						tBlock("<blink>This tool is only for /21 to /29 blocks</blink>");
 					}
 
 					sprintf(cZone,"%u.%u.%u.in-addr.arpa",uC,uB,uA);
@@ -183,7 +188,7 @@ void ExttBlockCommands(pentry entries[], int x)
 					{
 						MYSQL_ROW field;
 						uNumIPs=uGetNumIPs(cLabel);
-						uNumIPs+=2; //Add broadcast and router
+						uNumIPs+=2; //uCIDRLib TODO Add 2 since uNumIPs are the usable IPs.
 						uBlockEnd=uD+uNumIPs;
 
 						//Loop is for handling all zone views
@@ -193,11 +198,7 @@ void ExttBlockCommands(pentry entries[], int x)
 							{
 								sprintf(gcQuery,"UPDATE tResource SET uOwner=%u "
 										"WHERE cName='%i' AND uZone='%s' "
-										"AND uRRType=7",
-										uForClient
-										,uI
-										,field[0]
-										);
+										"AND uRRType=7",uForClient,uI,field[0]);
 								mysql_query(&gMysql,gcQuery);
 								if(mysql_errno(&gMysql))
 									htmlPlainTextError(mysql_error(&gMysql));
@@ -234,7 +235,7 @@ void ExttBlockCommands(pentry entries[], int x)
 			if(!uForClient)
 			{
 				guMode=6000;
-				tBlock("<blink>Must select a company first</blink>");
+				tBlock("<blink>Must select a company/organization first</blink>");
 			}
 
 			if(!cIPBlock[0])
@@ -247,42 +248,44 @@ void ExttBlockCommands(pentry entries[], int x)
 			sscanf(cIPBlock,"%s",gcQuery);
 			sprintf(cIPBlock,"%.99s",gcQuery);
 			sscanf(cIPBlock,"%u.%u.%u.%u/%u",&uA,&uB,&uC,&uD,&uE);
+			sprintf(cIPBlock,"%u.%u.%u.%u/%u",uA,uB,uC,uD,uE);
 			
-			//Is this check actually required?
-			/*if(uE<23)
-			{
-				guMode=4001;
-				tBlock("<blink>This tool is only for larger than /24 blocks</blink>");
-			}
-			*/
 			if(!uA)
 			{
-				guMode=4001;
+				guMode=6000;
 				tBlock("<blink>IP Block incorrect format</blink>");
 			}
 			if((uA>255)||(uB>255)||(uC>255)||(uD>255))
 			{
-				guMode=4001;
+				guMode=6000;
 				tBlock("<blink>IP Block incorrect format</blink>");
+			}
+			if(uE<21 || uE>29)
+			{
+				guMode=6000;
+				tBlock("<blink>This tool is only for /21 to /29 blocks</blink>");
 			}
 			
 			uNumIPs=uGetNumIPs(cIPBlock);
 			uNumNets=uGetNumNets(cIPBlock);
 			
 			//Debug Only
-			if(uMathCheck)
+			if(uDryRun)
 			{
 				printf("Content-type: text/plain\n\n");
+				printf("Assign IP Block debug/dry-run (use back to return)\n\n");
 				printf("Number of networks:%u\n",uNumNets);
 				printf("Number of IPs:%u\n",uNumIPs);
-				exit(0);
 			}
 			for(uI=uC;uI<((uC+uNumNets));uI++)
 			{
 				//
 				//Create the tZone record if it not exists, otherwise update uOwner
 				sprintf(cZone,"%u.%u.%u.in-addr.arpa",uI,uB,uA);
-				
+				if(uDryRun)
+					printf("cZone:%s\n",cZone);
+			
+				//TODO External zone only	
 				sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
 				//printf("%s\n",gcQuery);
 				mysql_query(&gMysql,gcQuery);
@@ -294,58 +297,55 @@ void ExttBlockCommands(pentry entries[], int x)
 				
 				if(!mysql_num_rows(res))
 				{
-					sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=1,cHostmaster='%s %s Assigned',"
-							"uExpire=604800,uRefresh=28800,uTTL=86400,uRetry=7200,uZoneTTL=86400,uView=2,"
-							"uOwner='%u',uCreatedBy='%u',uCreatedDate=UNIX_TIMESTAMP(NOW())",
-							cZone
-							,HOSTMASTER
-							,cIPBlock
-							,uForClient
-							,guLoginClient
-					       );
-					mysql_query(&gMysql,gcQuery);
-					//printf("%s\n",gcQuery);
-					
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					uZone=mysql_insert_id(&gMysql);
-					UpdateSerialNum(uZone);
-
-					SubmitJob("New",1,cZone,0,0);
+					sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=1,cHostmaster='%s %s"
+							" Assigned',"
+							"uExpire=604800,uRefresh=28800,uTTL=86400,uRetry=7200,uZoneTTL=86400,"
+							"uView=2,uOwner='%u',uCreatedBy='%u',"
+							"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							cZone ,HOSTMASTER,cIPBlock,uForClient,guLoginClient);
+					if(uDryRun)
+					{
+						printf("%s\n",gcQuery);
+					}
+					else
+					{
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						uZone=mysql_insert_id(&gMysql);
+						UpdateSerialNum(uZone);
+						SubmitJob("New",1,cZone,0,0);
+					}
 				}
 				else
 				{
 					MYSQL_ROW field;
 					
-					sprintf(gcQuery,"UPDATE tZone SET uOwner='%u',cHostmaster='%s %s Assigned',uModBy='%u',"
+					sprintf(gcQuery,"UPDATE tZone SET uOwner='%u',cHostmaster='%s %s"
+							" Assigned',uModBy='%u',"
 							"uModDate=UNIX_TIMESTAMP(NOW()) WHERE cZone='%s' AND uView=2",
-							uForClient
-							,HOSTMASTER
-							,cIPBlock
-							,guLoginClient
-							,cZone
-					       );
-					mysql_query(&gMysql,gcQuery);
-					//printf("%s\n",gcQuery);
-					
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					//Should update zone serial here?
-					field=mysql_fetch_row(res);
-
-					sprintf(gcQuery,"UPDATE tResource SET uOwner='%u' WHERE uZone='%s'",
-							uForClient
-							,field[0]
-						);
-					//printf("%s\n",gcQuery);
-					mysql_query(&gMysql,gcQuery);
-
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-
+							uForClient,HOSTMASTER,cIPBlock,guLoginClient,cZone);
+					if(uDryRun)
+					{
+						printf("%s\n",gcQuery);
+					}
+					else
+					{
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						field=mysql_fetch_row(res);
+						sprintf(gcQuery,"UPDATE tResource SET uOwner='%u' WHERE uZone='%s'",
+							uForClient,field[0]);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
 				}
 				//Create the tBlock entry if it does not exists
 				sprintf(cZone,"%u.%u.%u.0/24",uA,uB,uI);
+				if(uDryRun)
+					printf("cZone:%s\n",cZone);
 				
 				sprintf(gcQuery,"SELECT uBlock FROM tBlock WHERE cLabel='%s'",cZone);
 				mysql_query(&gMysql,gcQuery);
@@ -356,27 +356,28 @@ void ExttBlockCommands(pentry entries[], int x)
 				res=mysql_store_result(&gMysql);
 
 				if(!mysql_num_rows(res))
-					sprintf(gcQuery,"INSERT INTO tBlock SET cLabel='%s',cComment='BlockAssign()',uCreatedBy='%u',"
-							"uOwner='%u',uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							,cZone
-							,guLoginClient
-							,uForClient
-					       );
+					sprintf(gcQuery,"INSERT INTO tBlock SET cLabel='%s',"
+							"cComment='BlockAssign()',uCreatedBy='%u',"
+							"uOwner='%u',uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								cZone,guLoginClient,uForClient);
 				else
-					sprintf(gcQuery,"UPDATE tBlock SET uOwner='%u',uModBy='%u',uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel='%s'",
-							uForClient
-							,guLoginClient
-							,cZone
-					       );
-				//printf("%s\n",gcQuery);
-
-				mysql_query(&gMysql,gcQuery);
-
-				if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));	
+					sprintf(gcQuery,"UPDATE tBlock SET uOwner='%u',uModBy='%u',"
+							"uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel='%s'",
+								uForClient,guLoginClient,cZone);
+				if(uDryRun)
+				{
+					printf("%s\n",gcQuery);
+				}
+				else
+				{
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));	
+				}
 
 			}//for
-			//exit(0);
+			if(uDryRun)
+				exit(0);
 			tBlock("CIDR IP Block Assigned OK");
 		}
 		else if(!strcmp(gcCommand,"Remove Assigned IP Block"))
@@ -405,22 +406,28 @@ void ExttBlockCommands(pentry entries[], int x)
 			sprintf(cIPBlock,"%.99s",gcQuery);
 			
 			sscanf(cIPBlock,"%u.%u.%u.%u/%u",&uA,&uB,&uC,&uD,&uE);
+			sprintf(cIPBlock,"%u.%u.%u.%u/%u",uA,uB,uC,uD,uE);
 
 			if(!uA)
 			{
-				guMode=4001;
+				guMode=6000;
 				tBlock("<blink>IP Block incorrect format</blink>");
 			}
 			if((uA>255)||(uB>255)||(uC>255)||(uD>255))
 			{
-				guMode=4001;
+				guMode=6000;
 				tBlock("<blink>IP Block incorrect format</blink>");
+			}
+			if(uE<21 || uE>29)
+			{
+				guMode=6000;
+				tBlock("<blink>This tool is only for /21 to /29 blocks</blink>");
 			}
 			
 			uNumIPs=uGetNumIPs(cIPBlock);
 			uNumNets=uGetNumNets(cIPBlock);
 
-			if(uMathCheck)
+			if(uDryRun)
 			{
 				printf("Content-type: text/plain\n\n");
 				printf("Number of networks:%u\n",uNumNets);
@@ -434,10 +441,8 @@ void ExttBlockCommands(pentry entries[], int x)
 				//Delete the tZone record
 				sprintf(cZone,"%u.%u.%u.in-addr.arpa",uI,uB,uA);
 				
-				sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2 AND cHostmaster LIKE '%%%s Assigned'",
-						cZone
-						,cIPBlock
-						);
+				sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2 AND"
+						" cHostmaster LIKE '%%%s Assigned'",cZone,cIPBlock);
 				//printf("%s\n",gcQuery);
 				mysql_query(&gMysql,gcQuery);
 
@@ -492,7 +497,7 @@ void ExttBlockButtons(void)
 			if(guPermLevel>7)
 			{
 				printf("<p><u>Create for customer</u><br>");
-				tTablePullDownResellers(uForClient);
+				tTablePullDownResellers(uForClient,1);
 			}
                         printf(LANG_NBB_CONFIRMNEW);
                 break;
@@ -507,35 +512,29 @@ void ExttBlockButtons(void)
 			if(guPermLevel>7)
 			{
 				printf("<p><u>Change uOwner for customer</u><br>");
-				tTablePullDownResellers(uForClient);
+				tTablePullDownResellers(uForClient,1);
 			}
                         printf(LANG_NBB_CONFIRMMOD);
 		break;
 
 		case 6000:
 			printf("<p><u>Block Assignment Tools</u></p>\n");
-			printf("<p>By pressing the button below you confirm the assignment of the "
-				"IP Block you have entered to the selected customer. If the "
-				"reverse zones that are required for this assigment do not "
-				"exist they will be created. Please note and take into account that "
-				"<font color=red><strong>existing zone ownership may be altered</strong></font> "
-				"by using this tool. It will also create the required tBlock entries so the selected "
-				"company can work with the zones using the idnsOrg interface<br>"
-				"<font color=red><strong>Warning:</strong></font>The assignment operation takes place immediately. "
-				"There's no undo available. One job will be submitted for each created zone. "
-				"Please be extremely careful when deleting an IP block assignment (Using the red button below.)<br>\n");
+			printf("<p>Here you can create and assign or delete (previously assigned) arpa zones and tBlock"
+				" entries in one step. Existing arpa zone PTR resource records in the block also have"
+				" their ownership updated.\n");
 
 				printf("<p><u>Assign to customer</u><br>\n");
-				tTablePullDownResellers(uForClient);
-				printf("<p><u>CIDR IP Block</u><br>\n");
-				printf("<p><input title='Ex. entry 10.0.0.0/24' type=text name=cIPBlock"
-						" maxlength=64 size=30>\n");
+				tTablePullDownResellers(uForClient,1);
+				printf("<p><u>CIDR IP Block</u>\n");
+				printf("<br><input title='Ex. entry 10.0.0.0/24' type=text name=cIPBlock"
+						" maxlength=18 size=30 value='%s'>\n",cIPBlock);
 				printf("<p><input type=submit title='Assigns the CIDR block to "
 					"the selected customer' name=gcCommand class=largeButton value='Assign IP Block'>"
-					"<br>\n");
+					"\n");
 				printf("<p><input type=submit title='Deletes the zones and blocks for the "
 					"entered CIDR block' name=gcCommand class=lwarnButton value='Remove Assigned"
-					" IP Block'><br>\n");
+					" IP Block'>\n");
+				printf("<p><input type=checkbox name=uDryRun CHECKED> uDryRun\n");
 				
 		break;
 		
@@ -679,13 +678,16 @@ void ExttBlockListFilter(void)
 
 void ExttBlockNavBar(void)
 {
+	if(guMode==6000)
+		return;
+
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
 	if(guPermLevel>=10 && !guListMode)
 		printf(LANG_NBB_NEW);
-	
+
 	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 	
