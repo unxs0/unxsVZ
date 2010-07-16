@@ -1737,11 +1737,47 @@ void UpdateSchema(void)
 			printf("\t\t%s\n",field[0]);
 			//Create single new tNSSet from cLabel
 			//Create tNS entries from cList
+			if(field[1][0])
+			{
+				register int i,j=0;
+				char cFQDN[100];
+				char cNSType[33];
+				char *cp;
+
+				//Parse each line get string for tNS.cFQDN and uNSType
+				for(i=0;field[1][i];i++)
+				{
+					cNSType[0]=0;
+					cFQDN[j++]=field[1][i];
+					if(field[1][i]=='\r' || field[1][i]=='\n')
+					{
+						cFQDN[j-1]=0;
+						if((cp=strchr(cFQDN,' ')))
+						{
+							*cp=0;
+							sprintf(cNSType,"%.32s",cp+1);
+						}
+						printf("\t\t\t%s %s\n",cFQDN,cNSType);
+						j=0;
+					}
+				}
+				if(cFQDN[j])
+				{
+					cFQDN[j-1]=0;
+					if((cp=strchr(cFQDN,' ')))
+					{
+						*cp=0;
+						sprintf(cNSType,"%.32s",cp+1);
+					}
+					printf("\t\t\t%s %s\n",cFQDN,cNSType);
+				}
+			}
+			//Not sure yet about cMasterIPs
 		}
 	       	mysql_free_result(res);
 
 		//Set tZone.uNSSet from tZone.uNameServer
-		printf("\tEnd\n");
+		printf("\tEnd of tNameServer based conversion\n");
 	}
 
 	printf("UpdateSchema() end\n");
