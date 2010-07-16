@@ -1456,6 +1456,7 @@ void UpdateSchema(void)
 	unsigned ucClrPasswd=1;
 	unsigned ucMessage=1;
 	unsigned ucServer=1;
+	unsigned uNameServer=0;
 	unsigned uNSSet=1;
 	unsigned uZoneImportNSSet=1;
 	unsigned uViewNSSet=1;
@@ -1471,6 +1472,10 @@ void UpdateSchema(void)
 	//Gather current schema info for new columns and new or complex index mods/changes
 	//Modifies do nothing bad but in the future for the sake of efficiency we should
 	//	also not repeat them.
+	//Organized by table not in alphabetical order yet TODO
+
+
+	//tAuthorize
 	sprintf(gcQuery,"SHOW COLUMNS IN tAuthorize");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1482,7 +1487,41 @@ void UpdateSchema(void)
 	while((field=mysql_fetch_row(res)))
 		if(!strcmp(field[0],"cClrPasswd")) ucClrPasswd=0;
        	mysql_free_result(res);
+	if(ucClrPasswd)
+	{
+		sprintf(gcQuery,"ALTER TABLE tAuthorize ADD cClrPasswd VARCHAR(32) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
+	sprintf(gcQuery,"ALTER TABLE tAuthorize MODIFY cPasswd VARCHAR(35) NOT NULL DEFAULT ''");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+		printf("%s\n",mysql_error(&gMysql));
 
+	//tView
+	sprintf(gcQuery,"SHOW COLUMNS IN tView");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uNSSet")) uViewNSSet=0;
+	}
+       	mysql_free_result(res);
+	if(uViewNSSet)
+	{
+		sprintf(gcQuery,"ALTER TABLE tView ADD uNSSet INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
+
+	//tLog
 	sprintf(gcQuery,"SHOW COLUMNS IN tLog");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1497,118 +1536,6 @@ void UpdateSchema(void)
 		else if(!strcmp(field[0],"cServer")) ucServer=0;
 	}
        	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tZone");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uNSSet")) uNSSet=0;
-		else if(!strcmp(field[0],"uClient")) uClient=0;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tJob");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uNSSet")) uJobNSSet=0;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tView");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uNSSet")) uViewNSSet=0;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tZoneImport");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uNSSet")) uZoneImportNSSet=0;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tDeletedZone");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uClient")) uClientDel=0;
-		else if(!strcmp(field[0],"uNSSet")) uDeletedZoneNSSet=0;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tDeletedResource");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"cParam3")) ucParam3=0;
-		else if(!strcmp(field[0],"cParam4")) ucParam4=0;
-	}
-       	mysql_free_result(res);
-
-
-	//tAuthorize
-	if(ucClrPasswd)
-	{
-		sprintf(gcQuery,"ALTER TABLE tAuthorize ADD cClrPasswd VARCHAR(32) NOT NULL DEFAULT ''");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql)) 
-			printf("%s\n",mysql_error(&gMysql));
-	}
-	sprintf(gcQuery,"ALTER TABLE tAuthorize MODIFY cPasswd VARCHAR(35) NOT NULL DEFAULT ''");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) 
-		printf("%s\n",mysql_error(&gMysql));
-
-	//tView
-	if(uViewNSSet)
-	{
-		sprintf(gcQuery,"ALTER TABLE tView ADD uNSSet INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql)) 
-			printf("%s\n",mysql_error(&gMysql));
-	}
-
-	//tLog
 	if(ucMessage)
 	{
 		sprintf(gcQuery,"ALTER TABLE tLog ADD cMessage VARCHAR(255) NOT NULL DEFAULT ''");
@@ -1631,6 +1558,19 @@ void UpdateSchema(void)
 		printf("%s\n",mysql_error(&gMysql));
 
 	//tJob
+	sprintf(gcQuery,"SHOW COLUMNS IN tJob");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uNSSet")) uJobNSSet=0;
+	}
+       	mysql_free_result(res);
 	if(uJobNSSet)
 	{
 		sprintf(gcQuery,"ALTER TABLE tJob ADD uNSSet INT UNSIGNED NOT NULL DEFAULT 0");
@@ -1640,6 +1580,19 @@ void UpdateSchema(void)
 	}
 
 	//tZoneImport
+	sprintf(gcQuery,"SHOW COLUMNS IN tZoneImport");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uNSSet")) uZoneImportNSSet=0;
+	}
+       	mysql_free_result(res);
 	if(uZoneImportNSSet)
 	{
 		sprintf(gcQuery,"ALTER TABLE tZoneImport ADD uNSSet INT UNSIGNED NOT NULL DEFAULT 0");
@@ -1649,6 +1602,21 @@ void UpdateSchema(void)
 	}
 
 	//tZone
+	sprintf(gcQuery,"SHOW COLUMNS IN tZone");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uNSSet")) uNSSet=0;
+		else if(!strcmp(field[0],"uClient")) uClient=0;
+		else if(!strcmp(field[0],"uNameServer")) uNameServer=1;//Note rev logic
+	}
+       	mysql_free_result(res);
 	if(uNSSet)
 	{
 		sprintf(gcQuery,"ALTER TABLE tZone ADD uNSSet INT UNSIGNED NOT NULL DEFAULT 0");
@@ -1665,6 +1633,20 @@ void UpdateSchema(void)
 	}
 
 	//tDeletedZone
+	sprintf(gcQuery,"SHOW COLUMNS IN tDeletedZone");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uClient")) uClientDel=0;
+		else if(!strcmp(field[0],"uNSSet")) uDeletedZoneNSSet=0;
+	}
+       	mysql_free_result(res);
 	if(uClientDel)
 	{
 		sprintf(gcQuery,"ALTER TABLE tDeletedZone ADD uClient INT UNSIGNED NOT NULL DEFAULT 0");
@@ -1681,6 +1663,20 @@ void UpdateSchema(void)
 	}
 
 	//tDeletedResource
+	sprintf(gcQuery,"SHOW COLUMNS IN tDeletedResource");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"cParam3")) ucParam3=0;
+		else if(!strcmp(field[0],"cParam4")) ucParam4=0;
+	}
+       	mysql_free_result(res);
 	if(ucParam3)
 	{
 		sprintf(gcQuery,"ALTER TABLE tDeletedResource ADD cParam3 VARCHAR(255) NOT NULL DEFAULT ''");
@@ -1694,6 +1690,46 @@ void UpdateSchema(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
+	}
+	
+	//
+	//Upgrading from very old pre tNSSet versions
+	//Check for tNameServer
+	unsigned utNameServer=0;
+	sprintf(gcQuery,"SHOW TABLES");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"tNameServer")) utNameServer=1;
+	}
+       	mysql_free_result(res);
+	if(utNameServer && uNameServer)//uNameServer set in tZone check above
+	{
+		printf("\tStarting conversion to tNSSet version from tNameServer data\n");
+		sprintf(gcQuery,"SELECT cLabel,cList,cMasterIPs,uOwner FROM tNameServer");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("\t\t%s\n",field[0]);
+			//Create single new tNSSet from cLabel
+			//Create tNS entries from cList
+		}
+	       	mysql_free_result(res);
+
+		//Set tZone.uNSSet from tZone.uNameServer
+		printf("\tEnd\n");
 	}
 
 	printf("UpdateSchema() end\n");

@@ -52,7 +52,7 @@ void EncryptPasswd(char *cPasswd);//main.c
 void GetClientMaxParams(unsigned uClient,unsigned *uMaxSites,unsigned *uMaxIPs);
 const char *cUserLevel(unsigned uPermLevel);
 unsigned uMaxClientsReached(unsigned uClient);
-void tTablePullDownResellers(unsigned uSelector);
+void tTablePullDownResellers(unsigned uSelector,unsigned uMode);
 void ContactsNavList(void);
 void htmlRecordContext(void);
 void tClientNavList(void);
@@ -341,9 +341,9 @@ void ExttClientButtons(void)
 			if(guPermLevel>7)
 			{
 				if(uOwner==1)
-					tTablePullDownResellers(uClient);
+					tTablePullDownResellers(uClient,0);
 				else
-					tTablePullDownResellers(uOwner);
+					tTablePullDownResellers(uOwner,0);
 			}
                         printf(LANG_NBB_CONFIRMNEW);
 			printf("<br>\n");
@@ -361,7 +361,7 @@ void ExttClientButtons(void)
 			htmlRecordContext();
 			if(guPermLevel>7)
 			{
-				tTablePullDownResellers(uForClient);
+				tTablePullDownResellers(uForClient,0);
 			}
                         printf("<p>");
                         printf(LANG_NBB_CONFIRMMOD);
@@ -689,7 +689,7 @@ unsigned uMaxClientsReached(unsigned uClient)
 }//unsigned uMaxClientsReached(unsigned uClient)
 
 
-void tTablePullDownResellers(unsigned uSelector)
+void tTablePullDownResellers(unsigned uSelector,unsigned uMode)
 {
 	if(guPermLevel<10)
 		return;
@@ -730,7 +730,8 @@ void tTablePullDownResellers(unsigned uSelector)
 
         if(i>0)
         {
-		printf("<p><u>Optionally Select an Existing Company</u><br>");
+		if(!uMode)
+			printf("<p><u>Optionally Select an Existing Company</u><br>");
                 printf("<select name=cForClientPullDown>\n");
 
                 //Default no selection
