@@ -1457,6 +1457,10 @@ void UpdateSchema(void)
 	unsigned ucMessage=1;
 	unsigned ucServer=1;
 	unsigned uNSSet=1;
+	unsigned uZoneImportNSSet=1;
+	unsigned uViewNSSet=1;
+	unsigned uJobNSSet=1;
+	unsigned uDeletedZoneNSSet=1;
 	unsigned uClient=1;
 	unsigned uClientDel=1;
 	unsigned ucParam3=1;
@@ -1509,6 +1513,48 @@ void UpdateSchema(void)
 	}
        	mysql_free_result(res);
 
+	sprintf(gcQuery,"SHOW COLUMNS IN tJob");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uNSSet")) uJobNSSet=0;
+	}
+       	mysql_free_result(res);
+
+	sprintf(gcQuery,"SHOW COLUMNS IN tView");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uNSSet")) uViewNSSet=0;
+	}
+       	mysql_free_result(res);
+
+	sprintf(gcQuery,"SHOW COLUMNS IN tZoneImport");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uNSSet")) uZoneImportNSSet=0;
+	}
+       	mysql_free_result(res);
+
 	sprintf(gcQuery,"SHOW COLUMNS IN tDeletedZone");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1520,6 +1566,7 @@ void UpdateSchema(void)
 	while((field=mysql_fetch_row(res)))
 	{
 		if(!strcmp(field[0],"uClient")) uClientDel=0;
+		else if(!strcmp(field[0],"uNSSet")) uDeletedZoneNSSet=0;
 	}
        	mysql_free_result(res);
 
@@ -1553,6 +1600,13 @@ void UpdateSchema(void)
 		printf("%s\n",mysql_error(&gMysql));
 
 	//tView
+	if(uViewNSSet)
+	{
+		sprintf(gcQuery,"ALTER TABLE tView ADD uNSSet INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
 
 	//tLog
 	if(ucMessage)
@@ -1576,6 +1630,24 @@ void UpdateSchema(void)
 	if(mysql_errno(&gMysql)) 
 		printf("%s\n",mysql_error(&gMysql));
 
+	//tJob
+	if(uJobNSSet)
+	{
+		sprintf(gcQuery,"ALTER TABLE tJob ADD uNSSet INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
+
+	//tZoneImport
+	if(uZoneImportNSSet)
+	{
+		sprintf(gcQuery,"ALTER TABLE tZoneImport ADD uNSSet INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
+
 	//tZone
 	if(uNSSet)
 	{
@@ -1596,6 +1668,13 @@ void UpdateSchema(void)
 	if(uClientDel)
 	{
 		sprintf(gcQuery,"ALTER TABLE tDeletedZone ADD uClient INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+			printf("%s\n",mysql_error(&gMysql));
+	}
+	if(uDeletedZoneNSSet)
+	{
+		sprintf(gcQuery,"ALTER TABLE tDeletedZone ADD uNSSet INT UNSIGNED NOT NULL DEFAULT 0");
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 			printf("%s\n",mysql_error(&gMysql));
