@@ -76,6 +76,8 @@ void GetConfiguration(const char *cName, char *cValue, unsigned uHtml);
 void Initialize(char *cPasswd);
 void ExportTable(char *cTable, char *cFile);
 time_t cDateToUnixTime(char *cDate);
+unsigned NewNSSet(char *cLabel,char *cMasterIPs,char *cuOwner);
+void NewNS(char *cFQDN,char *cNSType,unsigned uNSSet);
 
 //extern bind.c protos
 void CreateMasterFiles(char *cMasterNS, char *cZone,unsigned uModDBFiles,
@@ -1723,6 +1725,8 @@ void UpdateSchema(void)
        	mysql_free_result(res);
 	if(utNameServer && uNameServer)//uNameServer set in tZone check above
 	{
+		unsigned uNSSet=0;
+
 		printf("\tStarting conversion to tNSSet version from tNameServer data\n");
 		sprintf(gcQuery,"SELECT cLabel,cList,cMasterIPs,uOwner FROM tNameServer");
 		mysql_query(&gMysql,gcQuery);
@@ -1736,6 +1740,8 @@ void UpdateSchema(void)
 		{
 			printf("\t\t%s\n",field[0]);
 			//Create single new tNSSet from cLabel
+			uNSSet=NewNSSet(field[0],field[2],field[3]);
+
 			//Create tNS entries from cList
 			if(field[1][0])
 			{
@@ -1758,6 +1764,7 @@ void UpdateSchema(void)
 							sprintf(cNSType,"%.32s",cp+1);
 						}
 						printf("\t\t\t%s %s\n",cFQDN,cNSType);
+						NewNS(cFQDN,cNSType,uNSSet);
 						j=0;
 					}
 				}
@@ -1770,6 +1777,7 @@ void UpdateSchema(void)
 						sprintf(cNSType,"%.32s",cp+1);
 					}
 					printf("\t\t\t%s %s\n",cFQDN,cNSType);
+					NewNS(cFQDN,cNSType,uNSSet);
 				}
 			}
 			//Not sure yet about cMasterIPs
@@ -1777,9 +1785,30 @@ void UpdateSchema(void)
 	       	mysql_free_result(res);
 
 		//Set tZone.uNSSet from tZone.uNameServer
+		sprintf(gcQuery,"SELECT tZone.uZone,tNSSet.uNSSet FROM tZone,tNameServer,tNSSet"
+				" WHERE tZone.uNameServer=tNameServer.uNameServer AND tNameServer.cLabel=tNSSet.cLabel"
+				" AND tZone.uNSSet=0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			sprintf(gcQuery,"UPDATE tZone SET uNSSet=%s WHERE uZone=%s",field[1],field[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
+		}
+	       	mysql_free_result(res);
+
 		printf("\tEnd of tNameServer based conversion\n");
 	}
-
 	printf("UpdateSchema() end\n");
 
 }//void UpdateSchema(void)
@@ -2951,3 +2980,112 @@ void ZeroSystem(void)
 	//Removed error handling since this is obviously wrong.
 
 }//void ZeroSystem(void)
+
+
+unsigned NewNSSet(char *cLabel,char *cMasterIPs,char *cuOwner)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uNSSet FROM tNSSet WHERE cLabel='%s'",cLabel);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uNSSet=0;
+
+		sscanf(field[0],"%u",&uNSSet);
+		printf("\t\ttNSSet record already exists...updating\n");
+		sprintf(gcQuery,"UPDATE tNSSet SET cMasterIPs='%s',uOwner=%s,"
+				"uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uNSSet=%u",
+					cMasterIPs,cuOwner,uNSSet);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		return(uNSSet);
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT tNSSet SET cLabel='%s',cMasterIPs='%s',uOwner=%s,uCreatedBy=1,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				cLabel,cMasterIPs,cuOwner);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		return(mysql_insert_id(&gMysql));
+	}
+	mysql_free_result(res);
+
+}//unsigned NewNSSet(char *cLabel,char *cMasterIPs,char *cuOwner)
+
+
+void NewNS(char *cFQDN,char *cNSType,unsigned uNSSet)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uNSType=1;
+
+	sprintf(gcQuery,"SELECT uNSType FROM tNSType WHERE cLabel='%s'",cNSType);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uNSType);
+	else
+		printf("\t\tCould not determine uNSType...using default\n");
+	mysql_free_result(res);
+		
+
+	sprintf(gcQuery,"SELECT uNS FROM tNS WHERE cFQDN='%s' AND uNSSet=%u",cFQDN,uNSSet);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("\t\ttNS record already exists...updating\n");
+		sprintf(gcQuery,"UPDATE tNS SET uNSType=%u,"
+				"uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uNS=%s",
+					uNSType,field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT tNS SET cFQDN='%s',uNSType=%u,uNSSet=%u,uOwner=1,uCreatedBy=1,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cFQDN,uNSType,uNSSet);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+	}
+	mysql_free_result(res);
+
+}//void NewNS(...)
