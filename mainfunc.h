@@ -5,9 +5,9 @@ PURPOSE
 	Included in main.c. For command line interface and html main link.
 
 AUTHOR/LEGAL
-	(C) 2001-2009 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
 	This software distributed under the GPLv2 license.
- 
+	See LICENSE file included.
 */
 
 
