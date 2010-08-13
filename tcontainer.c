@@ -1136,7 +1136,7 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
 				" _rowid IN"
 				" (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND"
-				" uType=%u AND (cValue='All Datacenters' OR cValue='%s'))"
+				" uType=%u AND (cValue='All Datacenters' OR LOCATE('%s',cValue)>0))"
 				" ORDER BY %s",
 					cFieldName,cLocalTableName,uType,cDatacenter,cOrderby);
 	else
