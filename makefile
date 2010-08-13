@@ -12,6 +12,8 @@
 
 CFLAGS=-Wall
 LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate
+CGIDIR=cgi-bin
+#CGIDIR=cgi-bin/alpha
 
 all: unxsVZ.cgi
 
@@ -128,5 +130,5 @@ clean:
 	rm -f *.o
 
 install: unxsVZ.cgi
-	install -s unxsVZ.cgi /var/www/unxs/cgi-bin/unxsVZ.cgi
+	install -s unxsVZ.cgi /var/www/unxs/$(CGIDIR)/unxsVZ.cgi
 	@ rm unxsVZ.cgi
