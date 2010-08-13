@@ -588,7 +588,8 @@ void ExttPropertyNavBar(void)
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=10 && !guListMode)
+	//By allow new in mod we can save time duplicating similar records.
+	if(guPermLevel>=10)
 		printf(LANG_NBB_NEW);
 
 	if(uAllowMod(uOwner,uCreatedBy))
