@@ -951,7 +951,6 @@ void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
 				cFieldName,cLocalTableName,guCompany,cOrderby);
 
 	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
-	
 	i=mysql_num_rows(mysqlRes);
 
 	if(cSelectName[0])
@@ -1123,19 +1122,33 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
                 *cp=0;
         }
 
-
 	if(uType)
-	       	sprintf(gcQuery,"SELECT _rowid AS uRowid,%s FROM %s WHERE"
-			" LOCATE('All Datacenters',"
-			"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=%u AND uKey=uRowid))>0"
-			" OR LOCATE('%s',"
-			"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=%u AND uKey=uRowid))>0"
-			" ORDER BY %s",
-				cFieldName,cLocalTableName,uType,cDatacenter,uType,cOrderby);
+		//This does not work in 5.0.77
+	       	//sprintf(gcQuery,"SELECT _rowid AS uRowid,%s FROM %s WHERE"
+		//	" LOCATE('All Datacenters',"
+		//	"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=%u AND uKey=uRowid))>0"
+		//	" OR LOCATE('%s',"
+		//	"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=%u AND uKey=uRowid))>0"
+		//	" ORDER BY %s",
+		//		cFieldName,cLocalTableName,uType,cDatacenter,uType,cOrderby);
+
+		//SELECT _rowid,cLabel FROM tOSTemplate WHERE _rowid IN (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND uType=8 AND (cValue='All Datacenters' OR cValue='Wilshire1'));
+	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
+				" _rowid IN"
+				" (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND"
+				" uType=%u AND (cValue='All Datacenters' OR cValue='%s'))"
+				" ORDER BY %s",
+					cFieldName,cLocalTableName,uType,cDatacenter,cOrderby);
 	else
 	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u ORDER BY %s",
 				cFieldName,cLocalTableName,uDatacenter,cOrderby);
-	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		return;
+	}
+	mysqlRes=mysql_store_result(&gMysql);
 	i=mysql_num_rows(mysqlRes);
 
 	if(cSelectName[0])
@@ -1146,10 +1159,10 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
         if(i>0)
         {
 		int unsigned field0;
-                printf("<select name=%s %s>\n",cLabel,cMode);
 
-                //Default no selection
-                printf("<option title='No selection'>---</option>\n");
+		printf("<select name=%s %s>\n",cLabel,cMode);
+		//Default no selection
+       		printf("<option title='No selection'>---</option>\n");
 
                 for(n=0;n<i;n++)
                 {
