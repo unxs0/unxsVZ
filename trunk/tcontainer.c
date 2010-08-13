@@ -519,8 +519,7 @@ void tContainerInput(unsigned uMode)
 
 //uContainer
 	OpenRow(LANG_FL_tContainer_uContainer,"black");
-	printf("<input title='%s' type=text name=uContainer value=%u size=16 maxlength=10 "
-,LANG_FT_tContainer_uContainer,uContainer);
+	printf("<input title='%s' type=text name=uContainer value=%u size=16 maxlength=10 ",LANG_FT_tContainer_uContainer,uContainer);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -532,8 +531,8 @@ void tContainerInput(unsigned uMode)
 	}
 //cLabel
 	OpenRow(LANG_FL_tContainer_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tContainer_cLabel,EncodeDoubleQuotes(cLabel));
+	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 ",LANG_FT_tContainer_cLabel,
+		EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -545,8 +544,8 @@ void tContainerInput(unsigned uMode)
 	}
 //cHostname
 	OpenRow(LANG_FL_tContainer_cHostname,"black");
-	printf("<input title='%s' type=text name=cHostname value=\"%s\" size=40 maxlength=64 "
-,LANG_FT_tContainer_cHostname,EncodeDoubleQuotes(cHostname));
+	printf("<input title='%s' type=text name=cHostname value=\"%s\" size=40 maxlength=64 ",LANG_FT_tContainer_cHostname,
+		EncodeDoubleQuotes(cHostname));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -567,31 +566,35 @@ void tContainerInput(unsigned uMode)
 	if(guPermLevel>=7 && uMode)
 		tTablePullDownOwnerAvail("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1);
 	else
-		tTablePullDownOwner("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,0);
+		tTablePullDown("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,0);
 //uOSTemplate
 	OpenRow(LANG_FL_tContainer_uOSTemplate,"black");
 	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwner("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1);
+		tTablePullDownDatacenter("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1,
+			cuDatacenterPullDown,uPROP_OSTEMPLATE,0);
 	else
-		tTablePullDownOwner("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,0);
+		tTablePullDown("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,0);
 //uConfig
 	OpenRow(LANG_FL_tContainer_uConfig,"black");
 	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwner("tConfig;cuConfigPullDown","cLabel","cLabel",uConfig,1);
+		tTablePullDownDatacenter("tConfig;cuConfigPullDown","cLabel","cLabel",uConfig,1,
+			cuDatacenterPullDown,uPROP_CONFIG,0);
 	else
-		tTablePullDownOwner("tConfig;cuConfigPullDown","cLabel","cLabel",uConfig,0);
+		tTablePullDown("tConfig;cuConfigPullDown","cLabel","cLabel",uConfig,0);
 //uNameserver
 	OpenRow(LANG_FL_tContainer_uNameserver,"black");
 	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwner("tNameserver;cuNameserverPullDown","cLabel","cLabel",uNameserver,1);
+		tTablePullDownDatacenter("tNameserver;cuNameserverPullDown","cLabel","cLabel",uNameserver,1,
+			cuDatacenterPullDown,uPROP_NAMESERVER,0);
 	else
-		tTablePullDownOwner("tNameserver;cuNameserverPullDown","cLabel","cLabel",uNameserver,0);
+		tTablePullDown("tNameserver;cuNameserverPullDown","cLabel","cLabel",uNameserver,0);
 //uSearchdomain
 	OpenRow(LANG_FL_tContainer_uSearchdomain,"black");
 	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwner("tSearchdomain;cuSearchdomainPullDown","cLabel","cLabel",uSearchdomain,1);
+		tTablePullDownDatacenter("tSearchdomain;cuSearchdomainPullDown","cLabel","cLabel",uSearchdomain,1,
+			cuDatacenterPullDown,uPROP_SEARCHDOMAIN,0);
 	else
-		tTablePullDownOwner("tSearchdomain;cuSearchdomainPullDown","cLabel","cLabel",uSearchdomain,0);
+		tTablePullDown("tSearchdomain;cuSearchdomainPullDown","cLabel","cLabel",uSearchdomain,0);
 //uDatacenter
 	OpenRow(LANG_FL_tContainer_uDatacenter,"black");
 	if(guPermLevel>=7 && uMode)
