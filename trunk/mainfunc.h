@@ -68,6 +68,7 @@ void GetConfiguration(const char *cName,char *cValue,
 		unsigned uContainer,
 		unsigned uHtml);
 void UpdateSchema(void);
+void RecoverMode(void);
 
 //jobqueue.c
 void ProcessJobQueue(unsigned uDebug);
@@ -586,6 +587,8 @@ void ExtMainShell(int argc, char *argv[])
                 ProcessJobQueue(1);
         else if(argc==2 && !strcmp(argv[1],"UpdateSchema"))
                 UpdateSchema();
+        else if(argc==2 && !strcmp(argv[1],"RecoverMode"))
+                RecoverMode();
 	else if(argc==5 && !strcmp(argv[1],"ImportTemplateFile"))
                 ImportTemplateFile(argv[2],argv[3],argv[4]);
 	else if(argc==3 && !strcmp(argv[1],"Initialize"))
@@ -609,6 +612,7 @@ void ExtMainShell(int argc, char *argv[])
 		//printf("\tProcessExtJobQueue <cServer>\n");
 		printf("\nSpecial Admin Ops:\n");
 		printf("\tUpdateSchema\n");
+		printf("\tRecoverMode\n");
 		printf("\tImportTemplateFile <mysql root passwd> <tTemplate.cLabel>"
 				" <filespec> <tTemplateSet.cLabel>\n");
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
@@ -1866,3 +1870,94 @@ void GetConfiguration(const char *cName,char *cValue,
 
 }//void GetConfiguration(...)
 
+
+void RecoverMode(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cHostname[100];
+	unsigned uNode=0,uDatacenter=0;
+
+	printf("RecoverMode(): Start\n");
+
+	if(gethostname(cHostname,99)!=0)
+	{
+		printf("Could not determine cHostname\n");
+		exit(1);
+	}
+
+	TextConnectDb();
+
+	//Get node and datacenter via hostname
+	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
+	}
+	mysql_free_result(res);
+
+	//FQDN vs short name of 2nd NIC mess
+	if(!uNode)
+	{
+		char *cp;
+
+		if((cp=strchr(cHostname,'.')))
+			*cp=0;
+		sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uNode);
+			sscanf(field[1],"%u",&uDatacenter);
+		}
+		mysql_free_result(res);
+	}
+
+	if(!uNode)
+	{
+		printf("Could not determine uNode\n");
+		mysql_close(&gMysql);
+		exit(1);
+	}
+
+	//Take note if what we need to change/add
+	//This is based on expanded and incorrect schema of previous releases. Yes this sucks.
+	sprintf(gcQuery,"SELECT uContainer FROM tJob WHERE cJobName='FailoverFrom' AND uJobStatus=1 AND uJobDate<UNIX_TIMESTAMP(NOW())"
+			" AND uDatacenter=%u AND uNode=%u",uDatacenter,uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"/bin/sed -i 's/ONBOOT=\"yes\"/ONBOOT=\"no\"/g' /etc/vz/conf/%s.conf",field[0]);
+		printf("%s\n",gcQuery);	
+		if(system(gcQuery))
+			printf("\tfailed\n");	
+	}
+	mysql_free_result(res);
+
+	mysql_close(&gMysql);
+	printf("RecoverMode(): End\n");
+
+}//void RecoverMode(void)
