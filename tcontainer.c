@@ -852,8 +852,10 @@ void tContainerList(void)
 			ctime_r(&luTime16,cBuf16);
 		else
 			sprintf(cBuf16,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s"
+		printf("<td><input type=submit name=ED%s value=Edit> <a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+			"%s<a><td>%s<td>%s<td>%s<td>%s<td>%s"
 			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			,field[0]
 			,field[0]
 			,field[0]
 			,field[1]
