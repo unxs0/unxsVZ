@@ -2661,9 +2661,9 @@ void ExttContainerButtons(void)
 				" be the short cHostname, in DNS terms.<p>");
 			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
 			if(cAutoCloneNode[0])
-				printf("Auto-clone subsystem in enabled for selected datacenter: Clone target node"
+				printf("Auto-clone subsystem is enabled for selected datacenter: Clone target node"
 					" must not match selected node. Similarly, clone start uIPv4"
-					" must not match uIPv4 or fall in same range as per number of containers.<p>");
+					" must not match uIPv4 or fall in same range -as defined per number of containers.<p>");
 			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
 			if(cunxsBindRecordJobNSSet[0])
 				printf("unxsBind interface is configured for selected datacenter: DNS will be setup"
@@ -2695,7 +2695,7 @@ void ExttContainerButtons(void)
 			if(cAutoCloneNode[0])
 				printf("Auto-clone subsystem is enabled for selected datacenter: Clone target node"
 					" must not match selected node. Similarly, clone start uIPv4"
-					" must not match uIPv4 or fall in same range as per number of containers.<p>");
+					" must not match uIPv4 or fall in same range -as defined per number of containers.<p>");
 			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
 			if(cunxsBindRecordJobNSSet[0])
 				printf("unxsBind interface is configured for selected datacenter: DNS will be setup"

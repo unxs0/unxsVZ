@@ -438,6 +438,14 @@ void NewContainer(unsigned uJob,unsigned uContainer)
         MYSQL_ROW field;
 	unsigned uVeth=0;
 
+	//Must wait for clone or template operations to finish.
+	if(access("/var/run/vzdump.lock",R_OK)==0)
+	{
+		logfileLine("NewContainer","/var/run/vzdump.lock exists");
+		tJobWaitingUpdate(uJob);
+		return;
+	}
+
 	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tIP.cLabel"
 			",tOSTemplate.cLabel,tNameserver.cLabel,tSearchdomain.cLabel,tConfig.cLabel,tContainer.uVeth"
 			" FROM tContainer,tOSTemplate,tNameserver,tSearchdomain,tConfig,tIP WHERE uContainer=%u"
@@ -1632,7 +1640,8 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 //This goto MAYBE ok
 CommonExit:
 	//6-. remove lock file
-	unlink("/var/run/vzdump.lock");
+	//vzdump script should handle this?
+	//unlink("/var/run/vzdump.lock");
 	return;
 
 }//void TemplateContainer(...)
@@ -2085,7 +2094,8 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 //This goto MIGHT be ok.
 CommonExit:
 	//9c-. remove lock file
-	unlink("/var/run/vzdump.lock");
+	//vzdump script should handle this?
+	//unlink("/var/run/vzdump.lock");
 
 	return;
 
