@@ -163,7 +163,6 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 }//void htmlBulkOpPage()
 
 
-#define BULKIMPORT_JOB
 void BulkResourceImport(void)
 {
 	char cLine[512]={"ERROR"};
