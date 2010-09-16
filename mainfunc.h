@@ -101,6 +101,7 @@ void CloneReport(const char *cOptionalMsg)
 
 	char cuContainer[16];
 	unsigned uContainer;
+	unsigned uCount=0;
 	char cuSyncPeriod[16];
 	char *cColor;
 
@@ -130,6 +131,7 @@ void CloneReport(const char *cOptionalMsg)
         	if((mysqlField2=mysql_fetch_row(mysqlRes2)))
 			sprintf(cuContainer,"%.15s",mysqlField2[2]);
 		mysql_free_result(mysqlRes2);
+		uCount++;
 
 		if(!cuContainer[0])
 		{
@@ -152,6 +154,8 @@ void CloneReport(const char *cOptionalMsg)
 	}
 	mysql_free_result(mysqlRes);
 
+	//Lets add a count
+	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td><td></td>\n",uCount);
 	CloseFieldSet();
 
 }//void CloneReport(const char *cOptionalMsg)
