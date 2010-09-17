@@ -131,11 +131,10 @@ void CloneReport(const char *cOptionalMsg)
         	if((mysqlField2=mysql_fetch_row(mysqlRes2)))
 			sprintf(cuContainer,"%.15s",mysqlField2[2]);
 		mysql_free_result(mysqlRes2);
-		uCount++;
 
 		if(!cuContainer[0])
 		{
-
+			uCount++;
 			printf("<tr><td></td><td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
 				"<td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",mysqlField[2],
 					mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField[4]);
@@ -146,10 +145,13 @@ void CloneReport(const char *cOptionalMsg)
 			sscanf(mysqlField2[2],"%u",&uContainer);
 			GetContainerProp(uContainer,"cuSyncPeriod",cuSyncPeriod);
 			if(cuSyncPeriod[0] && cuSyncPeriod[0]=='0')
+			{
+				uCount++;
 				printf("<tr><td>Clone w/cuSyncPeriod=0</td><td>"
 					"<a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>%s<a></td>"
 					"<td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",uContainer,
 						mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField[4]);
+			}
 		}
 	}
 	mysql_free_result(mysqlRes);
