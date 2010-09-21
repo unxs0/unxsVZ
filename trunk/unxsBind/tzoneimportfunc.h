@@ -122,7 +122,7 @@ void ExttZoneImportCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Import Zone"))
                 {
                         ProcesstZoneImportVars(entries,x);
-			if( guPermLevel>=12 && uZone )
+			if( guPermLevel>=12 && uZone && uView)
 			{
 				unsigned uNewZone=0;
 				MYSQL_RES *res;
@@ -130,7 +130,7 @@ void ExttZoneImportCommands(pentry entries[], int x)
 
 				SerialNum(cSerialNum);
 
-				sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=2",cZone);
+				sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u",cZone,uView);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
