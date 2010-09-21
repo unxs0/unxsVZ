@@ -100,7 +100,7 @@ void RRCheck(int uMode)
 
 
 	//TODO
-	if(strchr(cName,'.'))
+	if(cName[strlen(cName)-1]=='.')
 	{
 		sprintf(gcQuery,"%s.",cZone);
 		if(strcmp(gcQuery,cName))

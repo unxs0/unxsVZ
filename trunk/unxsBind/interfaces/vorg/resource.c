@@ -805,7 +805,7 @@ unsigned RRCheck(void)
 
 
 	//2-. If it has a period must be full qually time
-	if(strchr(cName,'.'))
+	if(cName[strlen(cName)-1]=='.')
 	{
 		sprintf(gcQuery,"%.4095s.",cZone);
 		if(strcmp(gcQuery,cName))
