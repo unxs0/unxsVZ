@@ -102,10 +102,18 @@ void RRCheck(int uMode)
 	//TODO
 	if(cName[strlen(cName)-1]=='.')
 	{
-		sprintf(gcQuery,"%s.",cZone);
+		//Another bug may allow zones to be added with trailing dot.
+		if(cName[strlen(cZone)-1]=='.')
+			sprintf(gcQuery,"%s",cZone);
+		else
+			sprintf(gcQuery,"%s.",cZone);
 		if(strcmp(gcQuery,cName))
 		{
-			sprintf(gcQuery,".%s.",cZone);
+			//Another bug may allow zones to be added with trailing dot.
+			if(cName[strlen(cZone)-1]=='.')
+				sprintf(gcQuery,".%s",cZone);
+			else
+				sprintf(gcQuery,".%s.",cZone);
 			if(!strstr(cName+(strlen(cName)-strlen(gcQuery)),gcQuery))
 			{
 				guMode=uMode;

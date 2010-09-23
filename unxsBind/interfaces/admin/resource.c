@@ -988,10 +988,18 @@ unsigned RRCheck(void)
 	//2-. If it has a period must be full qually time
 	if(cName[strlen(cName)-1]=='.')
 	{
-		sprintf(gcQuery,"%.4095s.",gcZone);
+		//Another bug may allow zones to be added with trailing dot.
+		if(cName[strlen(gcZone)-1]=='.')
+			sprintf(gcQuery,"%.4095s",gcZone);
+		else
+			sprintf(gcQuery,"%.4095s.",gcZone);
 		if(strcmp(gcQuery,cName))
 		{
-			sprintf(gcQuery,".%.4095s.",gcZone);
+			//Another bug may allow zones to be added with trailing dot.
+			if(cName[strlen(gcZone)-1]=='.')
+				sprintf(gcQuery,".%.4095s",gcZone);
+			else
+				sprintf(gcQuery,".%.4095s.",gcZone);
 			if(!strstr(cName+(strlen(cName)-strlen(gcQuery)),gcQuery))
 			{
 				if(strstr(cName+strlen(cName)-strlen(gcZone),gcZone))
