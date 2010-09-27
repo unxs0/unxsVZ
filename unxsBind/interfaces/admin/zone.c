@@ -1418,6 +1418,9 @@ unsigned ValidateZoneInput(void)
 		gcMessage="<blink>Error: </blink>No zone name specified!";
 		return(0);
 	}
+	//Remove trailing period/dot from zone FQDN to adhere to our internal model.
+	if(gcZone[strlen(gcZone)-1]=='.')
+		gcZone[strlen(gcZone)-1]=0;
 
 	if(!strcmp(gcFunction,"Confirm New"))
 	{
