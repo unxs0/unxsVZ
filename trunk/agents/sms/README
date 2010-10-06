@@ -1,0 +1,42 @@
+SMS unxsVZ Agent
+----------------
+
+We started this small sub-project since we require an extra layer bewteen our 
+application SMS messaging and our SMS gateway provider for alert digests and to
+throttle the number of sms messages sent per minute.
+
+The issues are:
+
+1-. Massive failures can trigger a flood of SMS messages that may disable the
+	receipient's cell phone or otherwise render the messages useless.
+
+2-. SMS messages cost money if some configuration error (or bug ) creates 100s 
+	or 1000s of SMS messages, that could wipe out are SMS account and when we really
+	need the SMSs to arrive they won't.
+
+The solution maybe to place messages in a FIFO queue that sends a single SMS or 
+a digest of multiple SMSs on a per recipient (phone number) and time-schedule basis.
+
+Examples:
+
+External application sends a 100 messages to number 11235551212 to our SMS agent 
+during the last 11235551212 configured receive time period seconds and 100 is 
+equal or larger than the conifgured digest number. Our SMS gateway proxy agent
+creates a single SMS message digest and sends it at the end of the configured 
+send time period.
+
+External application sends 1 message to number 12342342345, our agent sends it out
+in configured receive time period seconds.
+
+Thus we have the following configuration parameters per phone number:
+
+1-. uDigestThreshold. Number of messages per uReceivePeriod that are 
+	needed to instruct agent to replace incoming SMSs with a digest message like:
+	"20 messages received. {first message 100 chars}"
+2-. uReceivePeriod. Number of seconds to count incoming SMS messages that 
+	are placed in FIFO queue.
+3-. uSendPeriod. Number of seconds to wait before sending digest messages.
+	
+This should allow for quickly processed full single messages every average 
+uReceivePeriod/2 seconds. And control rapid incoming SMS traffic by sending a 
+single digest every average uReceivePeriod/2 + uSendPeriod seconds.
