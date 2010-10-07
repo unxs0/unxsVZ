@@ -3,7 +3,7 @@ SMS unxsVZ Agent
 
 We started this small sub-project since we require an extra layer bewteen our 
 application SMS messaging and our SMS gateway provider for alert digests and to
-throttle the number of sms messages sent per minute.
+throttle the number of SMS messages sent per minute.
 
 The issues are:
 
@@ -11,8 +11,8 @@ The issues are:
 	receipient's cell phone or otherwise render the messages useless.
 
 2-. SMS messages cost money if some configuration error (or bug ) creates 100s 
-	or 1000s of SMS messages, that could wipe out are SMS account and when we really
-	need the SMSs to arrive they won't.
+	or 1000s of SMS messages, that could wipe out our SMS account; and when 
+	we really need the SMSs to arrive they won't.
 
 The solution maybe to place messages in a FIFO queue that sends a single SMS or 
 a digest of multiple SMSs on a per recipient (phone number) and time-schedule basis.
@@ -40,3 +40,14 @@ Thus we have the following configuration parameters per phone number:
 This should allow for quickly processed full single messages every average 
 uReceivePeriod/2 seconds. And control rapid incoming SMS traffic by sending a 
 single digest every average uReceivePeriod/2 + uSendPeriod seconds.
+
+Other:
+
+We probably should build this application as a standalone daemon with it's own MySQL 
+database. Then we need to code:
+
+1-. CLI to initialize MySQL schema.
+2-. CLI to configure SMS settings (and later add group functionality like 1111 would
+	be a group of N phone numbers.)
+3-. CLI to daemonize or run program in foreground with debug messages.
+4-. Need a fake SMS gateway (httpd server) to test the curl based interface.
