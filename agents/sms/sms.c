@@ -23,9 +23,26 @@ char gcProgram[32]={""};
 unsigned guStatus=0;//not a valid status
 unsigned uDebug=1;
 
-//local protos
+//extern same dir
 void TextConnectDb(void);
-void Initialize(void);
+
+//this file protos TOC
+void logfileLine(const char *cFunction,const char *cLogline);
+int main(int iArgc, char *cArgv[]);
+void Initialize(const char *cPasswd);
+void ErrorExit(void);
+void NormalExit(void);
+void mySQLRootConnect(const char *cPasswd);
+
+#define macro_MySQLQueryBasic \
+	mysql_query(&gMysql,gcQuery);\
+	if(mysql_errno(&gMysql))\
+	{\
+		printf("%s\n",mysql_error(&gMysql));\
+		ErrorExit();\
+	}
+
+//MySQL run query and store result w/error checking
 
 void logfileLine(const char *cFunction,const char *cLogline)
 {
@@ -66,50 +83,111 @@ int main(int iArgc, char *cArgv[])
 	if(sysinfo(&structSysinfo))
 	{
 		logfileLine("main","sysinfo() failed");
-		fclose(gLfp);
-		exit(1);
+		ErrorExit();
 	}
 #define LINUX_SYSINFO_LOADS_SCALE 65536
 #define JOBQUEUE_MAXLOAD 20 //This is equivalent to uptime 20.00 last 1 min avg load
 	if(structSysinfo.loads[0]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
 	{
 		logfileLine("main","structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD");
-		fclose(gLfp);
-		exit(1);
+		ErrorExit();
 	}
 
 	switch(iArgc)
 	{
-		case 2:
+		case 1:
+			printf("Usage %s: initialize <mysql password> | run | debug\n",cArgv[0]);
+		break;
+
+		case 3:
 			if(!strncmp(cArgv[1],"initialize",10))
 			{
-				Initialize();
+				Initialize(cArgv[2]);
 			}
 			else
 			{
 				sprintf(gcQuery,"unknown command cArgv[1]=%.32s",cArgv[1]);
 				logfileLine("main",gcQuery);
-				fclose(gLfp);
-				exit(1);
+				ErrorExit();
 			}
 		break;
 
 		default:
 			sprintf(gcQuery,"unknown command iArgc=%d",iArgc);
 			logfileLine("main",gcQuery);
-			fclose(gLfp);
-			exit(1);
+			ErrorExit();
 	}
 
-	fclose(gLfp);
+	NormalExit();
 	return(0);
+
 }//main()
 
 
-void Initialize(void)
+void Initialize(const char *cPasswd)
 {
 	if(uDebug)
 		printf("Initialize()\n");
-	
-}//void Initialize(void)
 
+	if(getuid()!=0)
+	{
+		logfileLine("Initialize","Must be root to run Initialize");
+		ErrorExit();
+	}
+
+	mySQLRootConnect(cPasswd);
+
+	sprintf(gcQuery,"DROP DATABASE unxssms");
+	macro_MySQLQueryBasic;
+
+	sprintf(gcQuery,"CREATE DATABASE unxssms");
+	macro_MySQLQueryBasic;
+
+	sprintf(gcQuery,"USE unxssms");
+	macro_MySQLQueryBasic;
+
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tPhone ("
+			" uPhone INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cNumber VARCHAR(32) NOT NULL DEFAULT '',"
+			" uDigestThreshold INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uReceivePeriod INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uSendPeriod INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uPeriodCount INT UNSIGNED NOT NULL DEFAULT 0,"
+			" )");
+	macro_MySQLQueryBasic;
+
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tQueue ("
+			" uQueue INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cMessage VARCHAR(140) NOT NULL DEFAULT '',"
+			" uPhone INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uDateCreated INT UNSIGNED NOT NULL DEFAULT 0,"
+			" )");
+	macro_MySQLQueryBasic;
+
+}//void Initialize()
+
+
+void ErrorExit(void)
+{
+	fclose(gLfp);
+	exit(1);
+}//void ErrorExit(void)
+
+
+void NormalExit(void)
+{
+	fclose(gLfp);
+	exit(0);
+}//void NormalExit(void)
+
+
+void mySQLRootConnect(const char *cPasswd)
+{
+        mysql_init(&gMysql);
+        if (!mysql_real_connect(&gMysql,NULL,"root",cPasswd,"mysql",0,NULL,0))
+        {
+		logfileLine("mySQLRootConnect","MySQL server not available");
+		ErrorExit();
+        }
+
+}//void mySQLRootConnect(void)
