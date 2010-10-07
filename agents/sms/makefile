@@ -18,11 +18,14 @@ all: unxsSMS
 unxsSMS: sms.o mysqlconnect.o
 	cc sms.o mysqlconnect.o -o unxsSMS $(LIBS) 
 
-sms.o: sms.c ../../mysqlrad.h ../../local.h
+sms.o: sms.c mysqlrad.h local.h
 	cc -c sms.c -o sms.o $(CFLAGS)
 
-mysqlconnect.o: mysqlconnect.c ../../mysqlrad.h ../../local.h
+mysqlconnect.o: mysqlconnect.c mysqlrad.h local.h
 	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)
+
+local.h: local.h.default
+	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
 
 clean:
 	rm -f *.o unxsSMS
@@ -30,3 +33,5 @@ clean:
 install: unxsSMS
 	install -s unxsSMS /usr/sbin/unxsSMS
 	rm unxsSMS
+
+
