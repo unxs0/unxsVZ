@@ -13,6 +13,7 @@ NOTES
 
 #include "mysqlrad.h"
 #include <sys/sysinfo.h>
+#include <ctype.h>
 
 MYSQL gMysql;
 FILE *gLfp=NULL;
@@ -27,6 +28,9 @@ unsigned uDebug=1;
 void TextConnectDb(void);
 
 //this file protos TOC
+void Run(void);
+void Set(const char *cPhone,const char *cuDigestThreshold,const char *cuReceivePeriod,const char *cuSendPeriod,const char *cuPeriodCount);
+void QueueMessage(const char *cPhone,const char *cMessage);
 void logfileLine(const char *cFunction,const char *cLogline);
 int main(int iArgc, char *cArgv[]);
 void Initialize(const char *cPasswd);
@@ -42,7 +46,21 @@ void mySQLRootConnect(const char *cPasswd);
 		ErrorExit();\
 	}
 
-//MySQL run query and store result w/error checking
+
+void Run(void)
+{
+}//void Run(void)
+
+
+void Set(const char *cPhone,const char *cuDigestThreshold,const char *cuReceivePeriod,const char *cuSendPeriod,const char *cuPeriodCount)
+{
+}//void Set()
+
+
+void QueueMessage(const char *cPhone,const char *cMessage)
+{
+}//void QueueMessage()
+
 
 void logfileLine(const char *cFunction,const char *cLogline)
 {
@@ -96,7 +114,27 @@ int main(int iArgc, char *cArgv[])
 	switch(iArgc)
 	{
 		case 1:
-			printf("Usage %s: initialize <mysql password> | run | debug\n",cArgv[0]);
+			printf("Usage: %s <cPhone> <cMessage> | initialize <mysql password> | run | debug |\n"
+				"\t\t\tset <cPhone> <uDigestThreshold> <uReceivePeriod> <uSendPeriod> <uPeriodCount>\n",cArgv[0]);
+		break;
+
+		case 2:
+			if(!strncmp(cArgv[1],"run",3))
+			{
+				uDebug=0;
+				Run();
+			}
+			else if(!strncmp(cArgv[1],"debug",5))
+			{
+				uDebug=1;
+				Run();
+			}
+			else
+			{
+				sprintf(gcQuery,"unknown command cArgv[1]=%.32s",cArgv[1]);
+				logfileLine("main",gcQuery);
+				ErrorExit();
+			}
 		break;
 
 		case 3:
@@ -104,9 +142,27 @@ int main(int iArgc, char *cArgv[])
 			{
 				Initialize(cArgv[2]);
 			}
+			else if(isdigit(cArgv[1][0]) && strlen(cArgv[1])<33 && strlen(cArgv[2])<145)
+			{
+				QueueMessage(cArgv[1],cArgv[2]);
+			}
 			else
 			{
-				sprintf(gcQuery,"unknown command cArgv[1]=%.32s",cArgv[1]);
+				sprintf(gcQuery,"unknown command cArgv[1]=%.32s cArgv[2]=%.140s",cArgv[1],cArgv[2]);
+				logfileLine("main",gcQuery);
+				ErrorExit();
+			}
+		break;
+
+		case 7:
+			if(!strncmp(cArgv[1],"set",10))
+			{
+				Set(cArgv[2],cArgv[3],cArgv[4],cArgv[5],cArgv[6]);
+			}
+			else
+			{
+				sprintf(gcQuery,"unknown command cArgv[1]=%.32s cArgv[2]=%.32s cArgv[3]=%.32s cArgv[4]=%.32s cArgv[5]=%.32s cArgv[6]=%.32s",
+					cArgv[1],cArgv[2],cArgv[3],cArgv[4],cArgv[5],cArgv[6]);
 				logfileLine("main",gcQuery);
 				ErrorExit();
 			}
