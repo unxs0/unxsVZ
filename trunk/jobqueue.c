@@ -2095,7 +2095,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 CommonExit:
 	//9c-. remove lock file
 	//vzdump script should handle this?
-	//unlink("/var/run/vzdump.lock");
+	unlink("/var/run/vzdump.lock");
 
 	return;
 
