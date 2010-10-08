@@ -137,7 +137,7 @@ void Initialize(const char *cPasswd)
 
 	mySQLRootConnect(cPasswd);
 
-	sprintf(gcQuery,"DROP DATABASE unxssms");
+	sprintf(gcQuery,"DROP DATABASE IF EXISTS unxssms");
 	macro_MySQLQueryBasic;
 
 	sprintf(gcQuery,"CREATE DATABASE unxssms");
@@ -152,7 +152,7 @@ void Initialize(const char *cPasswd)
 			" uDigestThreshold INT UNSIGNED NOT NULL DEFAULT 0,"
 			" uReceivePeriod INT UNSIGNED NOT NULL DEFAULT 0,"
 			" uSendPeriod INT UNSIGNED NOT NULL DEFAULT 0,"
-			" uPeriodCount INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uPeriodCount INT UNSIGNED NOT NULL DEFAULT 0"
 			" )");
 	macro_MySQLQueryBasic;
 
@@ -160,7 +160,7 @@ void Initialize(const char *cPasswd)
 			" uQueue INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
 			" cMessage VARCHAR(140) NOT NULL DEFAULT '',"
 			" uPhone INT UNSIGNED NOT NULL DEFAULT 0,"
-			" uDateCreated INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uDateCreated INT UNSIGNED NOT NULL DEFAULT 0"
 			" )");
 	macro_MySQLQueryBasic;
 
