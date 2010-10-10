@@ -22,7 +22,7 @@ unsigned guLoginClient=1;//Root user
 char cHostname[100]={""};
 char gcProgram[32]={""};
 unsigned guStatus=0;//not a valid status
-unsigned uDebug=1;
+unsigned guDebug=1;
 
 //extern same dir
 void TextConnectDb(void);
@@ -59,6 +59,46 @@ void Set(const char *cPhone,const char *cuDigestThreshold,const char *cuReceiveP
 
 void QueueMessage(const char *cPhone,const char *cMessage)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uPhone=0;
+	unsigned uDigestThreshold=0;
+	unsigned uReceivePeriod=0;
+	unsigned uSendPeriod=0;
+	unsigned uPeriodCount=0;
+
+	TextConnectDb();
+	if(guDebug)
+		logfileLine("QueueMessage","Entry");
+
+	//Check
+	sprintf(gcQuery,"SELECT uPhone,uDigestThreshold,uReceivePeriod,uSendPeriod,uPeriodCount FROM tPhone WHERE cNumber='%s'",cPhone);
+	macro_MySQLQueryBasic;
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uPhone);
+		sscanf(field[1],"%u",&uDigestThreshold);
+		sscanf(field[2],"%u",&uReceivePeriod);
+		sscanf(field[3],"%u",&uSendPeriod);
+		sscanf(field[4],"%u",&uPeriodCount);
+	}
+	mysql_free_result(res);
+
+	//If phone has been configured queue and increase uReceivePeriod window counter uPeriodCount
+	if(uPhone && uDigestThreshold && uReceivePeriod && uSendPeriod && uPeriodCount)
+	{
+		sprintf(gcQuery,"%s configured",cPhone);
+		logfileLine("QueueMessage",gcQuery);
+	}
+	else if(guDebug)
+	{
+		sprintf(gcQuery,"%s not configured",cPhone);
+		logfileLine("QueueMessage",gcQuery);
+	}
+
+	//
+
 }//void QueueMessage()
 
 
@@ -78,7 +118,7 @@ void logfileLine(const char *cFunction,const char *cLogline)
 		strftime(cTime,31,"%b %d %T",tmTime);
 
 		fprintf(gLfp,"%s %s[%u]: %s.\n",cTime,cFunction,pidThis,cLogline);
-		if(uDebug)
+		if(guDebug)
 			fprintf(stdout,"%s %s[%u]: %s.\n",cTime,cFunction,pidThis,cLogline);
 		fflush(gLfp);
 	}
@@ -121,12 +161,12 @@ int main(int iArgc, char *cArgv[])
 		case 2:
 			if(!strncmp(cArgv[1],"run",3))
 			{
-				uDebug=0;
+				guDebug=0;
 				Run();
 			}
 			else if(!strncmp(cArgv[1],"debug",5))
 			{
-				uDebug=1;
+				guDebug=1;
 				Run();
 			}
 			else
@@ -182,7 +222,7 @@ int main(int iArgc, char *cArgv[])
 
 void Initialize(const char *cPasswd)
 {
-	if(uDebug)
+	if(guDebug)
 		printf("Initialize()\n");
 
 	if(getuid()!=0)
@@ -204,7 +244,7 @@ void Initialize(const char *cPasswd)
 
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tPhone ("
 			" uPhone INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-			" cNumber VARCHAR(32) NOT NULL DEFAULT '',"
+			" cNumber VARCHAR(32) NOT NULL DEFAULT '', INDEX (cNumber),"
 			" uDigestThreshold INT UNSIGNED NOT NULL DEFAULT 0,"
 			" uReceivePeriod INT UNSIGNED NOT NULL DEFAULT 0,"
 			" uSendPeriod INT UNSIGNED NOT NULL DEFAULT 0,"
@@ -218,6 +258,9 @@ void Initialize(const char *cPasswd)
 			" uPhone INT UNSIGNED NOT NULL DEFAULT 0,"
 			" uDateCreated INT UNSIGNED NOT NULL DEFAULT 0"
 			" )");
+	macro_MySQLQueryBasic;
+
+	sprintf(gcQuery,"GRANT ALL ON unxssms.* TO unxssms@localhost IDENTIFIED BY 'wsxedc'");
 	macro_MySQLQueryBasic;
 
 }//void Initialize()
