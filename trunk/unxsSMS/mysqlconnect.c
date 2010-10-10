@@ -23,7 +23,7 @@ NOTES
 #define SELECT_TIMEOUT_USEC 300000
 
 //extern protos
-void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer);
+void logfileLine(const char *cFunction,const char *cLogline);
 
 //TOC protos
 void TextConnectDb(void);
@@ -64,7 +64,7 @@ void TextConnectDb(void)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
-			logfileLine("TextConnectDb","Could not create TextConnectDB() socket DBIP0",0);
+			logfileLine("TextConnectDb","Could not create TextConnectDB() socket DBIP0");
 			exit(1);
 		}
 
@@ -110,7 +110,7 @@ void TextConnectDb(void)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
-			logfileLine("TextConnectDb","Could not create TextConnectDB() socket DBIP1",0);
+			logfileLine("TextConnectDb","Could not create TextConnectDB() socket DBIP1");
 			exit(1);
 		}
 
@@ -154,17 +154,17 @@ void TextConnectDb(void)
 	//Failure exit 4 cases
 	char cMessage[256];
 	if(DBIP1!=NULL && DBIP0!=NULL)
-		sprintf(cMessage,"Could not connect to DBIP0:%1$s or DBIP1:%1$s\n",cPort);
+		sprintf(cMessage,"Could not connect to DBIP0:%1$s or DBIP1:%1$s",cPort);
 	else if(DBIP1==NULL && DBIP0==NULL)
-		sprintf(cMessage,"Could not connect to local socket\n");
+		sprintf(cMessage,"Could not connect to local socket");
 	else if(DBIP0!=NULL && DBIP1==NULL)
-		sprintf(cMessage,"Could not connect to DBIP0:%s or local socket (DBIP1)\n",cPort);
+		sprintf(cMessage,"Could not connect to DBIP0:%s or local socket (DBIP1)",cPort);
 	else if(DBIP0==NULL && DBIP1!=NULL)
-		sprintf(cMessage,"Could not connect to DBIP1:%s or local socket (DBIP0)\n",cPort);
+		sprintf(cMessage,"Could not connect to DBIP1:%s or local socket (DBIP0)",cPort);
 	else if(1)
-		sprintf(cMessage,"Could not connect unexpected case\n");
+		sprintf(cMessage,"Could not connect unexpected case");
 
-	logfileLine("TextConnectDb",cMessage,0);
+	logfileLine("TextConnectDb",cMessage);
 	exit(1);
 
 }//TextConnectDb()
