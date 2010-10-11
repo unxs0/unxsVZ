@@ -50,6 +50,40 @@ void mySQLRootConnect(const char *cPasswd);
 
 void Run(void)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	TextConnectDb();
+	if(guDebug)
+	{
+		logfileLine("Run","Entry");
+
+		logfileLine("Run","Dump tPhone");
+		sprintf(gcQuery,"SELECT uPhone,cNumber,uDigestThreshold,uReceivePeriod,uSendPeriod,uPeriodCount FROM tPhone");
+		macro_MySQLQueryBasic;
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("%s %s %s %s %s %s\n",field[0],field[1],field[2],field[3],field[4],field[5]);
+		}
+		mysql_free_result(res);
+
+		logfileLine("Run","Dump tQueue");
+		sprintf(gcQuery,"SELECT uQueue,cMessage,uPhone,FROM_UNIXTIME(uDateCreated) FROM tQueue");
+		macro_MySQLQueryBasic;
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("uQueue:%s cMessage:%s uPhone:%s uDateCreated:%s\n",field[0],field[1],field[2],field[3]);
+		}
+		mysql_free_result(res);
+	}
+
+	mysql_close(&gMysql);
+
+	if(guDebug)
+		logfileLine("Run","Exit");
+
 }//void Run(void)
 
 
@@ -61,6 +95,44 @@ void Version(void)
 
 void Set(const char *cPhone,const char *cuDigestThreshold,const char *cuReceivePeriod,const char *cuSendPeriod,const char *cuPeriodCount)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uPhone=0;
+
+	if(guDebug)
+		logfileLine("Set","Entry");
+
+	TextConnectDb();
+
+	sprintf(gcQuery,"SELECT uPhone FROM tPhone WHERE cNumber='%s'",cPhone);
+	macro_MySQLQueryBasic;
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uPhone);
+	mysql_free_result(res);
+
+	if(!uPhone)
+	{
+		sprintf(gcQuery,"INSERT tPhone SET cNumber='%s',uDigestThreshold=%s,uReceivePeriod=%s,uSendPeriod=%s,uPeriodCount=%s",
+				cPhone,cuDigestThreshold,cuReceivePeriod,cuSendPeriod,cuPeriodCount);
+		macro_MySQLQueryBasic;
+		if(guDebug)
+			logfileLine("Set","Insert");
+	}
+	else
+	{
+		sprintf(gcQuery,"UPDATE tPhone SET uDigestThreshold=%s,uReceivePeriod=%s,uSendPeriod=%s,uPeriodCount=%s WHERE cNumber='%s'",
+				cuDigestThreshold,cuReceivePeriod,cuSendPeriod,cuPeriodCount,cPhone);
+		macro_MySQLQueryBasic;
+		if(guDebug)
+			logfileLine("Set","Update");
+	}
+
+	mysql_close(&gMysql);
+
+	if(guDebug)
+		logfileLine("Set","Exit");
+
 }//void Set()
 
 
