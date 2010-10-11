@@ -13,14 +13,24 @@ void tConfigNavList(void);
 unsigned htmlConfigContext(void);
 unsigned LocalImportConfigJob(unsigned uConfig);
 
+//file scoped var
+static unsigned uDatacenter=0;
+static char cuDatacenterPullDown[256]={""};
+
+
 void ExtProcesstConfigVars(pentry entries[], int x)
 {
-	/*
 	register int i;
 	for(i=0;i<x;i++)
 	{
+		if(!strcmp(entries[i].name,"uDatacenter"))
+			sscanf(entries[i].val,"%u",&uDatacenter);
+		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
+		{
+			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
+			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
+		}
 	}
-	*/
 }//void ExtProcesstConfigVars(pentry entries[], int x)
 
 
@@ -194,6 +204,60 @@ void ExttConfigCommands(pentry entries[], int x)
 					tConfig("<blink>Error</blink>: LocalImportTemplateJob() failed!");
 			}
 		}
+                else if(!strcmp(gcCommand,"Enable"))
+                {
+                        ProcesstConfigVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=6;
+				sscanf(ForeignKey("tConfig","uModDate",uConfig),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tConfig("<blink>Error</blink>: This record was modified. Reload it.");
+				if(!uDatacenter)
+					sprintf(gcQuery,"INSERT tProperty SET cName='cDatacenter',cValue='All Datacenters',"
+						"uType=%u,uKey=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						uPROP_CONFIG,uConfig,uOwner,guLoginClient);
+				else
+					sprintf(gcQuery,"INSERT tProperty SET cName='cDatacenter',cValue='%s',"
+						"uType=%u,uKey=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						ForeignKey("tDatacenter","cLabel",uDatacenter),	
+						uPROP_CONFIG,uConfig,uOwner,guLoginClient);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+			}
+			else
+			{
+				tConfig("<blink>Error</blink>: Enable not allowed!");
+			}
+		}
+                else if(!strcmp(gcCommand,"Disable"))
+                {
+                        ProcesstConfigVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) && uConfig && cLabel[0] && uOwner && uCreatedBy && uCreatedDate)
+			{
+                        	guMode=6;
+				sscanf(ForeignKey("tConfig","uModDate",uConfig),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tConfig("<blink>Error</blink>: This record was modified. Reload it.");
+				if(!uDatacenter)
+					sprintf(gcQuery,"DELETE FROM tProperty WHERE cName='cDatacenter' AND cValue='All Datacenters'"
+						" AND uType=%u AND uKey=%u AND (uOwner=%u OR uCreatedBy=%u)",
+						uPROP_CONFIG,uConfig,uOwner,guLoginClient);
+				else
+					sprintf(gcQuery,"DELETE FROM tProperty WHERE cName='cDatacenter' AND cValue='%s'"
+						" AND uType=%u AND uKey=%u AND (uOwner=%u OR uCreatedBy=%u)",
+						ForeignKey("tDatacenter","cLabel",uDatacenter),
+						uPROP_CONFIG,uConfig,uOwner,guLoginClient);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+			}
+			else
+			{
+				tConfig("<blink>Error</blink>: Disable not allowed!");
+			}
+		}
 	}
 
 }//void ExttConfigCommands(pentry entries[], int x)
@@ -238,7 +302,7 @@ void ExttConfigButtons(void)
 			if(uConfig>0 && uNum==0)
 			{
 				printf("<p><u>Extended table actions</u><br>");
-                        	printf("<input title='Submit a job for the local import of the currently selected "
+                        	printf("<input class=largeButton title='Submit a job for the local import of the currently selected "
 					"config' type=submit name=gcCommand value='Local Import'>");
 			}
 	}
@@ -265,9 +329,9 @@ void ExttConfigAuxTable(void)
 		htmlPlainTextError(mysql_error(&gMysql));
 
         res=mysql_store_result(&gMysql);
+	printf("<table cols=2>");
 	if(mysql_num_rows(res))
 	{
-		printf("<table cols=2>");
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("<tr>\n");
@@ -277,8 +341,25 @@ void ExttConfigAuxTable(void)
 						field[0],uConfig,field[1],field[2]);
 			printf("</tr>\n");
 		}
-		printf("</table>");
 	}
+
+	//Simple interface to add to tConfiguration table
+	if(uAllowMod(uOwner,uCreatedBy))
+	{
+		printf("<tr>");
+		printf("<td width=200 valign=top><input type=submit class=largeButton"
+		" title='Enable for one or more datacenters; for new container creation'"
+		" name=gcCommand value='Enable'><p>");
+		printf("<input type=submit class=largeButton"
+		" title='Disable for one or more datacenters; for new container creation'"
+		" name=gcCommand value='Disable'</td>");
+		printf("<td valign=top> Select a datacenter or none (---) for all ");
+		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+		printf("</td>");
+		printf("</tr>\n");
+	}
+	
+	printf("</table>");
 
 	CloseFieldSet();
 
