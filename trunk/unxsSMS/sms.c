@@ -1,7 +1,7 @@
 /*
 FILE
 	sms.c
-	$Id: sms.c 1466 2010-05-18 16:32:59Z Gary $
+	$Id$
 PURPOSE
 	SMS gateway preprocessor interface
 AUTHOR
@@ -28,6 +28,7 @@ unsigned guDebug=1;
 void TextConnectDb(void);
 
 //this file protos TOC
+void Version(void);
 void Run(void);
 void Set(const char *cPhone,const char *cuDigestThreshold,const char *cuReceivePeriod,const char *cuSendPeriod,const char *cuPeriodCount);
 void QueueMessage(const char *cPhone,const char *cMessage);
@@ -50,6 +51,12 @@ void mySQLRootConnect(const char *cPasswd);
 void Run(void)
 {
 }//void Run(void)
+
+
+void Version(void)
+{
+	printf("$Id$\n");
+}//void Version(void)
 
 
 void Set(const char *cPhone,const char *cuDigestThreshold,const char *cuReceivePeriod,const char *cuSendPeriod,const char *cuPeriodCount)
@@ -154,7 +161,7 @@ int main(int iArgc, char *cArgv[])
 	switch(iArgc)
 	{
 		case 1:
-			printf("Usage: %s <cPhone> <cMessage> | initialize <mysql password> | run | debug |\n"
+			printf("Usage: %s <cPhone> <cMessage> | initialize <mysql password> | run | debug | version\n"
 				"\t\t\tset <cPhone> <uDigestThreshold> <uReceivePeriod> <uSendPeriod> <uPeriodCount>\n",cArgv[0]);
 		break;
 
@@ -168,6 +175,11 @@ int main(int iArgc, char *cArgv[])
 			{
 				guDebug=1;
 				Run();
+			}
+			else if(!strncmp(cArgv[1],"version",7))
+			{
+				guDebug=1;
+				Version();
 			}
 			else
 			{
@@ -262,6 +274,9 @@ void Initialize(const char *cPasswd)
 
 	sprintf(gcQuery,"GRANT ALL ON unxssms.* TO unxssms@localhost IDENTIFIED BY 'wsxedc'");
 	macro_MySQLQueryBasic;
+
+	if(guDebug)
+		printf("Initialize() done\n");
 
 }//void Initialize()
 
