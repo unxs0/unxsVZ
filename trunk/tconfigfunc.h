@@ -5,7 +5,7 @@ FILE
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2009 Unixservice, LLC.
+	(C) 2001-2010 Unixservice, LLC.
  
 */
 
@@ -234,7 +234,7 @@ void ExttConfigCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Disable"))
                 {
                         ProcesstConfigVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy) && uConfig && cLabel[0] && uOwner && uCreatedBy && uCreatedDate)
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=6;
 				sscanf(ForeignKey("tConfig","uModDate",uConfig),"%lu",&uActualModDate);
