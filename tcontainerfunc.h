@@ -2760,7 +2760,7 @@ void ExttContainerButtons(void)
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 
 			tContainerNavList(0,cSearch);
-			if(uContainer)
+			if(uContainer && uAllowMod(uOwner,uCreatedBy) && guPermLevel>7)
 			{
 				if(uStatus==uACTIVE)
 				{
@@ -3058,7 +3058,7 @@ void ExttContainerNavBar(void)
 		printf(LANG_NBB_SEARCH);
 	}
 
-	if(guPermLevel>=7 && !guListMode && guMode<9000)
+	if(guPermLevel>7 && !guListMode && guMode<9000)
 		printf(LANG_NBB_NEW);
 
 	//11 Initial setup 31 Stopped
