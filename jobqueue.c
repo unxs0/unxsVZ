@@ -1641,7 +1641,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 CommonExit:
 	//6-. remove lock file
 	//vzdump script should handle this?
-	//unlink("/var/run/vzdump.lock");
+	unlink("/var/run/vzdump.lock");
 	return;
 
 }//void TemplateContainer(...)
