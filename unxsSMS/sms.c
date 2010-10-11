@@ -165,18 +165,29 @@ void QueueMessage(const char *cPhone,const char *cMessage)
 	mysql_free_result(res);
 
 	//If phone has been configured queue and increase uReceivePeriod window counter uPeriodCount
-	if(uPhone && uDigestThreshold && uReceivePeriod && uSendPeriod && uPeriodCount)
+	if(uPhone && uDigestThreshold && uReceivePeriod && uSendPeriod)
 	{
-		sprintf(gcQuery,"%s configured",cPhone);
-		logfileLine("QueueMessage",gcQuery);
+		if(guDebug)
+		{
+			sprintf(gcQuery,"%s configured",cPhone);
+			logfileLine("QueueMessage",gcQuery);
+		}
+
+		//Case 1: uPeriodCount==0 we send message immediately
+
+		//Case 2: uPeriodCount>0 we queue message
 	}
-	else if(guDebug)
-	{
+	else
+	{ 
+		//Incorrectly configured phone we log this condition.
 		sprintf(gcQuery,"%s not configured",cPhone);
 		logfileLine("QueueMessage",gcQuery);
 	}
 
 	//
+
+	if(guDebug)
+		logfileLine("QueueMessage","Exit");
 
 }//void QueueMessage()
 
