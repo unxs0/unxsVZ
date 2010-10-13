@@ -103,19 +103,26 @@ void RRCheck(int uMode)
 	if(cName[strlen(cName)-1]=='.')
 	{
 		//Another bug may allow zones to be added with trailing dot.
-		if(cName[strlen(cZone)-1]=='.')
+		if(cZone[strlen(cZone)-1]=='.')
 			sprintf(gcQuery,"%s",cZone);
 		else
 			sprintf(gcQuery,"%s.",cZone);
 		if(strcmp(gcQuery,cName))
 		{
-			//Another bug may allow zones to be added with trailing dot.
-			if(cName[strlen(cZone)-1]=='.')
+			//Another bug may allow zones to be added with trailing dot. See above
+			//We are only adding a prefix dot.
+			if(cZone[strlen(cZone)-1]=='.')
+			{
 				sprintf(gcQuery,".%s",cZone);
+			}
 			else
+			{
 				sprintf(gcQuery,".%s.",cZone);
+			}
+
 			if(!strstr(cName+(strlen(cName)-strlen(gcQuery)),gcQuery))
 			{
+
 				guMode=uMode;
 				tResource("If cName is fully qualified it must end with cZone and final period.");
 			}
