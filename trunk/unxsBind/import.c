@@ -20,6 +20,14 @@ NOTES
 #include <dirent.h>
 #include <openisp/ucidr.h>
 
+#define macro_MySQLQueryBasic \
+	mysql_query(&gMysql,gcQuery);\
+	if(mysql_errno(&gMysql))\
+	{\
+		printf("%s\n",mysql_error(&gMysql));\
+		exit(1);\
+	}
+
 //
 //Local data
 //
@@ -71,6 +79,9 @@ void MassZoneNSUpdate(char *cLabel);//mainfunc.h CLI command
 
 //Export operations
 void ExportRRCSV(char *cCompany, char *cOutFile);
+
+//New
+void ImportAxfr(void);
 
 
 void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
@@ -193,7 +204,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 	else if(!strcasecmp(cType,"CNAME"))
 	{
 		char cZone[254];
-		char cName[254];
+		//char cName[254];
 		uRRType=5;
 		if(!cParam1[0] || cParam2[0])
 		{
@@ -218,9 +229,10 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 			}
 		}
 		sprintf(cZone,"%s.",FQDomainName(cZoneName));
-		strcpy(cName,FQDomainName(cParam1));
-		if(strcmp(cName+strlen(cName)-strlen(cZone),cZone))
-			fprintf(stdout,"Warning: CNAME RHS should probably end with zone: %s\n",cLine);
+
+		//strcpy(cName,FQDomainName(cParam1));
+		//if(strcmp(cName+strlen(cName)-strlen(cZone),cZone))
+		//	fprintf(stdout,"Warning: CNAME RHS should probably end with zone: %s\n",cLine);
 	}
 	else if(!strcasecmp(cType,"NS"))
 	{
@@ -2253,4 +2265,122 @@ unsigned uGetNSSet(char *cNameServer)
 
 }//unsigned uGetNSSet(char *cNameServer)
 
+
+//Import non tZone RRs from dig axfr format file for existing zones
+//Ignores all lines with SOA and NS
+//Files must be named tZone.cZone and be in /usr/local/idns/axfr/<cView>/ where <cView> is an exsiting tView.cLabel
+void ImportAxfr(void)
+{
+	register int i,j;
+	struct dirent **direntViewDir;
+	struct dirent **direntZoneFile;
+	unsigned uViewDir=0;
+	unsigned uZoneFile=0;
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uView=0;
+	unsigned uZone=0;
+	unsigned uOwner=1;
+	unsigned uNSSet=1;
+
+	fprintf(stdout,"ImportAxfr() Start\n");
+
+	uViewDir=scandir("/usr/local/idns/axfr",&direntViewDir,0,0);
+	if(uViewDir<0)
+	{
+		fprintf(stdout,"scandir() error: Does /usr/local/idns/axfr exist?\n");
+		return;
+	}
+	else if(uViewDir==2)
+	{
+		fprintf(stdout,"No view dirs found in /usr/local/idns/axfr/\n");
+		return;
+	}
+
+	for(j=0;j<uViewDir;j++)
+	{
+		//skip the . and .. entries
+		if(direntViewDir[j]->d_name[0]=='.') continue;
+
+		//
+		//fprintf(stdout,"View %.100s\n",direntViewDir[j]->d_name);
+
+		//if no such tView.cLabel inform and skip
+		uView=0;
+		sprintf(gcQuery,"SELECT uView FROM tView WHERE cLabel='%s'",direntViewDir[j]->d_name);
+		macro_MySQLQueryBasic;
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sscanf(field[0],"%u",&uView);
+		mysql_free_result(res);
+		if(uView==0)
+		{
+			fprintf(stdout,"View '%.100s' not in tView\n",direntViewDir[j]->d_name);
+			continue;
+		}
+
+		sprintf(gcQuery,"/usr/local/idns/axfr/%.100s",direntViewDir[j]->d_name);
+		uZoneFile=scandir(gcQuery,&direntZoneFile,0,0);
+		if(uZoneFile<0)
+		{
+			fprintf(stdout,"scandir() error: Does /usr/local/idns/axfr/%s/ exist?\n",direntViewDir[j]->d_name);
+			return;
+		}
+		else if(uZoneFile==2)
+		{
+			fprintf(stdout,"No zone files found in /usr/local/idns/axfr/%s/\n",direntViewDir[j]->d_name);
+			continue;
+		}
+
+		for(i=0;i<uZoneFile;i++)
+		{
+			//skip the . and .. entries
+			if(direntZoneFile[i]->d_name[0]=='.') continue;
+
+			//if no such tZone.cZone with tView.uView==uView from above inform and skip
+			uZone=0;
+			sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u",
+					direntZoneFile[i]->d_name,uView);
+			macro_MySQLQueryBasic;
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uZone);
+			mysql_free_result(res);
+			if(uZone==0)
+			{
+				fprintf(stdout,"Zone '%.100s' with view='%s' (uView=%u) not in tZone\n",
+					direntZoneFile[i]->d_name,direntViewDir[j]->d_name,uView);
+				continue;
+			}
+
+			FILE *fp;
+
+			sprintf(gcQuery,"/usr/local/idns/axfr/%.100s/%.100s",direntViewDir[j]->d_name,direntZoneFile[i]->d_name);
+			if(!(fp=fopen(gcQuery,"r")))
+			{
+				fprintf(stdout,"Error: Could not open: %s\n",gcQuery);
+				return;
+			}
+
+			//Start processing
+			fprintf(stdout,"%.100s/%.100s\n",direntViewDir[j]->d_name,direntZoneFile[i]->d_name);
+
+			while(fgets(gcQuery,254,fp)!=NULL)
+			{
+				if(strstr(gcQuery,"SOA"))
+					continue;
+				if(strstr(gcQuery,"NS"))
+					continue;
+				ProcessRRLine(gcQuery,FQDomainName(direntZoneFile[i]->d_name),uZone,uOwner,uNSSet,1,"ImportAxfr");
+			}
+
+			fclose(fp);
+	
+		}//for each zone file in view dir
+
+	}//for each view dir
+
+	fprintf(stdout,"ImportAxfr() Done\n");
+
+}//void ImportAxfr(void)
 
