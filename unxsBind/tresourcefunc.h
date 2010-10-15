@@ -1115,6 +1115,7 @@ void ResourceLinks(unsigned uZone)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uArpa=0;
+	unsigned uCount=0;
 
 	if(!strcmp(cZone+strlen(cZone)-5,".arpa"))
 	{
@@ -1131,7 +1132,9 @@ void ResourceLinks(unsigned uZone)
 	if(mysql_errno(&gMysql)) tResource(mysql_error(&gMysql));
 
 	res=mysql_store_result(&gMysql);
+	uCount=mysql_num_rows(res);
 
+	printf("<p><u>RRNavList(%u)</u><br>",uCount);
 	while((field=mysql_fetch_row(res)))
 	{
 		if(uArpa)
@@ -1149,7 +1152,8 @@ void ExttResourceButtons(void)
 {
 	unsigned uDefault=0;
 
-	OpenFieldSet("tResource Aux Panel",100);
+	sprintf(gcQuery,"tResource Aux Panel");
+	OpenFieldSet(gcQuery,100);
 
 	strcpy(cZone,ForeignKey("tZone","cZone",uZone));
 
@@ -1236,13 +1240,16 @@ void ExttResourceButtons(void)
 				"name=cSearch value=\"%s\" maxlength=99 size=20>",cSearch);
 			if(uZone)
 			{
+				unsigned uView=0;
+
+				sscanf(ForeignKey("tZone","uView",uZone),"%u",&uView);
+
 				printf("<p><u>ZoneNavList</u><br>");
 				printf("<a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%u&cZone=%s>",uZone,cZone);
 				if(cZone[0])
-					printf("%s</a>",cZone);
+					printf("%s %s</a>",cZone,ForeignKey("tView","cLabel",uView));
 				else
 					printf("Back to Zone</a>");
-				printf("<p><u>RRNavList</u><br>");
 				ResourceLinks(uZone);
 			}
 
