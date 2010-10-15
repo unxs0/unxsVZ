@@ -2274,8 +2274,8 @@ void ImportAxfr(void)
 	register int i,j;
 	struct dirent **direntViewDir;
 	struct dirent **direntZoneFile;
-	unsigned uViewDir=0;
-	unsigned uZoneFile=0;
+	int uViewDir=0;
+	int uZoneFile=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uView=0;
