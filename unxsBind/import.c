@@ -2280,8 +2280,12 @@ void ImportAxfr(void)
 	MYSQL_ROW field;
 	unsigned uView=0;
 	unsigned uZone=0;
-	unsigned uOwner=1;
-	unsigned uNSSet=1;
+	unsigned uOwner;
+	unsigned uNSSet;
+	char cuOwner[256]="1";
+
+	GetConfiguration("cuOwner",cuOwner,0);
+	sscanf(cuOwner,"%u",&uOwner);
 
 	fprintf(stdout,"ImportAxfr() Start\n");
 
@@ -2339,16 +2343,26 @@ void ImportAxfr(void)
 
 			//if no such tZone.cZone with tView.uView==uView from above inform and skip
 			uZone=0;
-			sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u",
+			uNSSet=0;
+			sprintf(gcQuery,"SELECT uZone,uNSSet FROM tZone WHERE cZone='%s' AND uView=%u",
 					direntZoneFile[i]->d_name,uView);
 			macro_MySQLQueryBasic;
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
+			{
 				sscanf(field[0],"%u",&uZone);
+				sscanf(field[1],"%u",&uNSSet);
+			}
 			mysql_free_result(res);
 			if(uZone==0)
 			{
 				fprintf(stdout,"Zone '%.100s' with view='%s' (uView=%u) not in tZone\n",
+					direntZoneFile[i]->d_name,direntViewDir[j]->d_name,uView);
+				continue;
+			}
+			if(uNSSet==0)
+			{
+				fprintf(stdout,"Zone '%.100s' with view='%s' (uView=%u) has uNSSet==0\n",
 					direntZoneFile[i]->d_name,direntViewDir[j]->d_name,uView);
 				continue;
 			}
