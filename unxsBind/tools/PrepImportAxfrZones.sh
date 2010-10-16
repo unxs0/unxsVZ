@@ -31,11 +31,28 @@
 #	run ImportAxfrZones on. This can be tricky to get right.
 #
 
-#Set these and run from correct server to get correct view data.
-cView1NS="127.0.0.1";
+#very simple argument handling
+if [ "$1" == "" ] || [ "$2" == "" ];then
+	echo "usage: $0 <first view NS IP> <second view NS IP> [<first view label> <second view label>]";
+	exit 0;
+fi
+
+if [ "$3" != "" ] && [ "$4" == "" ];then
+	echo "usage: $0 <first view NS IP> <second view NS IP> [<first view label> <second view label>]";
+	exit 0;
+fi
+
+cView1NS=$1;
+cView2NS=$2;
+#defaults for common internal and external view labels
 cView1="internal";
-cView2NS="127.0.0.1";
 cView2="external";
+
+#if provided must provide both
+if [ "$3" != "" ] && [ "$4" != "" ];then
+	cView1="$3";
+	cView2="$4";
+fi
 
 mkdir -p /usr/local/idns/axfr/$cView1;
 mkdir -p /usr/local/idns/axfr/$cView2;
