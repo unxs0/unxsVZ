@@ -32,19 +32,31 @@
 #
 
 #Set these and run from correct server to get correct view data.
-cExternalNS="127.0.0.1";
-cInternalNS="127.0.0.1";
+cView1NS="127.0.0.1";
+cView1="internal";
+cView2NS="127.0.0.1";
+cView2="external";
 
-mkdir -p /usr/local/idns/axfr/external;
-mkdir -p /usr/local/idns/axfr/internal;
+mkdir -p /usr/local/idns/axfr/$cView1;
+mkdir -p /usr/local/idns/axfr/$cView2;
 
+if [ ! -f /usr/local/idns/axfr/zonelist.txt ];then
+	echo "No /usr/local/idns/axfr/zonelist.txt file found...exiting";
+	exit 1;
+fi
 
 exec</usr/local/idns/axfr/zonelist.txt;
 while read cZone
 do
 	echo "$cZone";
-	dig @$cExternalNS $cZone axfr > /usr/local/idns/axfr/external/$cZone;
-	dig @$cInternalNS $cZone axfr > /usr/local/idns/axfr/internal/$cZone;
+	dig @$cView1NS $cZone axfr > /usr/local/idns/axfr/$cView1/$cZone;
+	if [ $? != 0 ];then
+		echo "dig @$cView1NS $cZone error";
+	fi
+	dig @$cView2NS $cZone axfr > /usr/local/idns/axfr/$cView2/$cZone;
+	if [ $? != 0 ];then
+		echo "dig @$cView2NS $cZone error";
+	fi
 done
 
-exit;
+exit 0;
