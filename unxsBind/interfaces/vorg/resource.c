@@ -808,14 +808,14 @@ unsigned RRCheck(void)
 	if(cName[strlen(cName)-1]=='.')
 	{
 		//Another bug may allow zones to be added with trailing dot.
-		if(cName[strlen(cZone)-1]=='.')
+		if(cZone[strlen(cZone)-1]=='.')
 			sprintf(gcQuery,"%.4095s",cZone);
 		else
 			sprintf(gcQuery,"%.4095s.",cZone);
 		if(strcmp(gcQuery,cName))
 		{
 			//Another bug may allow zones to be added with trailing dot.
-			if(cName[strlen(cZone)-1]=='.')
+			if(cZone[strlen(cZone)-1]=='.')
 				sprintf(gcQuery,".%.4095s",cZone);
 			else
 				sprintf(gcQuery,".%.4095s.",cZone);
@@ -2028,6 +2028,7 @@ void MasterFunctionSelect(void)
 					htmlResourceWizard(uStep);
 				}
 
+				//TODO see other "fully qualified" checks
 				//2-. If it has a period must be full qually time
 				if(strchr(cName,'.'))
 				{

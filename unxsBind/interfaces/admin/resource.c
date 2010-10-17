@@ -989,14 +989,14 @@ unsigned RRCheck(void)
 	if(cName[strlen(cName)-1]=='.')
 	{
 		//Another bug may allow zones to be added with trailing dot.
-		if(cName[strlen(gcZone)-1]=='.')
+		if(gcZone[strlen(gcZone)-1]=='.')
 			sprintf(gcQuery,"%.4095s",gcZone);
 		else
 			sprintf(gcQuery,"%.4095s.",gcZone);
 		if(strcmp(gcQuery,cName))
 		{
 			//Another bug may allow zones to be added with trailing dot.
-			if(cName[strlen(gcZone)-1]=='.')
+			if(gcZone[strlen(gcZone)-1]=='.')
 				sprintf(gcQuery,".%.4095s",gcZone);
 			else
 				sprintf(gcQuery,".%.4095s.",gcZone);
