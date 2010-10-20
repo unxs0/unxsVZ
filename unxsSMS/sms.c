@@ -14,6 +14,7 @@ NOTES
 #include "mysqlrad.h"
 #include <sys/sysinfo.h>
 #include <ctype.h>
+#include <curl/curl.h>
 
 MYSQL gMysql;
 FILE *gLfp=NULL;
@@ -54,10 +55,12 @@ void Run(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
+	logfileLine("Run","Entry");
+
 	TextConnectDb();
+
 	if(guDebug)
 	{
-		logfileLine("Run","Entry");
 
 		logfileLine("Run","Dump tPhone");
 		sprintf(gcQuery,"SELECT uPhone,cNumber,uDigestThreshold,uReceivePeriod,uSendPeriod,uPeriodCount FROM tPhone");
@@ -81,10 +84,26 @@ void Run(void)
 		mysql_free_result(res);
 	}
 
-	mysql_close(&gMysql);
 
-	if(guDebug)
-		logfileLine("Run","Exit");
+	//Send messages that are ready, then delete them from the queue and reset their uPeriodCount
+	sprintf(gcQuery,"SELECT NOW(),tPhone.cNumber,tQueue.cMessage,FROM_UNIXTIME(tQueue.uDateCreated),"
+			"tPhone.uSendPeriod,tPhone.uPeriodCount,tPhone.uDigestThreshold,tPhone.uPhone,tQueue.uQueue"
+			" FROM tQueue,tPhone WHERE tQueue.uPhone=tPhone.uPhone"
+			" AND tQueue.uDateCreated+tPhone.uSendPeriod<UNIX_TIMESTAMP(NOW())"
+			" AND tPhone.uPeriodCount>tPhone.uDigestThreshold");
+	macro_MySQLQueryBasic;
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		
+		//if(guDebug)
+			printf("%s %s \"%s\" uDateCreated:%s uSendPeriod:%s uPeriodCount:%s uDigestThreshold:%s\n",
+				field[0],field[1],field[2],field[3],field[4],field[5],field[6]);
+	}
+	mysql_free_result(res);
+
+	mysql_close(&gMysql);
+	logfileLine("Run","Exit");
 
 }//void Run(void)
 
@@ -422,7 +441,24 @@ void mySQLRootConnect(const char *cPasswd)
 //Here we will use libcurl to https the message to our SMS gateway provider.
 unsigned SendMessage(const char *cPhone,const char *cMessage)
 {
-	logfileLine("SendMessage",cPhone);
-	return(0);
+	CURL *curl;
+	CURLcode res;
+	char cURL[256]={"http://google.com"};
+ 
+	curl = curl_easy_init();
+	if(curl)
+	{
+		curl_easy_setopt(curl,CURLOPT_URL,cURL);
+		res=curl_easy_perform(curl);
+ 
+		// always cleanup
+		curl_easy_cleanup(curl);
+
+		logfileLine("SendMessage ok",cPhone);
+		return(0);
+	}
+
+	logfileLine("SendMessage curl error",cPhone);
+	return(1);
 
 }//unsigned SendMessage(const char *cPhone,const char *cMessage)
