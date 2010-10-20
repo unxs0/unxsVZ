@@ -1,3 +1,7 @@
+Important
+---------
+Requires yum install curl-devel.i386
+
 SMS unxsVZ Agent
 ----------------
 
