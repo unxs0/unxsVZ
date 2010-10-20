@@ -38,6 +38,7 @@ void Initialize(const char *cPasswd);
 void ErrorExit(void);
 void NormalExit(void);
 void mySQLRootConnect(const char *cPasswd);
+unsigned SendMessage(const char *cPhone,const char *cMessage);
 
 #define macro_MySQLQueryBasic \
 	mysql_query(&gMysql,gcQuery);\
@@ -69,12 +70,13 @@ void Run(void)
 		mysql_free_result(res);
 
 		logfileLine("Run","Dump tQueue");
-		sprintf(gcQuery,"SELECT uQueue,cMessage,uPhone,FROM_UNIXTIME(uDateCreated) FROM tQueue");
+		sprintf(gcQuery,"SELECT uQueue,cMessage,uPhone,FROM_UNIXTIME(uDateCreated),FROM_UNIXTIME(uDateMod) FROM tQueue");
 		macro_MySQLQueryBasic;
 		res=mysql_store_result(&gMysql);
 		while((field=mysql_fetch_row(res)))
 		{
-			printf("uQueue:%s cMessage:%s uPhone:%s uDateCreated:%s\n",field[0],field[1],field[2],field[3]);
+			printf("uQueue:%s cMessage:%s uPhone:%s uDateCreated:%s uDateMod:%s\n",
+				field[0],field[1],field[2],field[3],field[4]);
 		}
 		mysql_free_result(res);
 	}
@@ -167,15 +169,41 @@ void QueueMessage(const char *cPhone,const char *cMessage)
 	//If phone has been configured queue and increase uReceivePeriod window counter uPeriodCount
 	if(uPhone && uDigestThreshold && uReceivePeriod && uSendPeriod)
 	{
+		unsigned uQueue=0;
+
 		if(guDebug)
 		{
 			sprintf(gcQuery,"%s configured",cPhone);
 			logfileLine("QueueMessage",gcQuery);
 		}
 
-		//Case 1: uPeriodCount==0 we send message immediately
+		sprintf(gcQuery,"SELECT uQueue FROM tQueue WHERE uPhone=%u",uPhone);
+		macro_MySQLQueryBasic;
+	        res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sscanf(field[0],"%u",&uQueue);
 
-		//Case 2: uPeriodCount>0 we queue message
+		if(!uQueue)
+		{
+			sprintf(gcQuery,"INSERT tQueue SET uPhone=%u,cMessage='%.140s',uDateCreated=UNIX_TIMESTAMP(NOW())"
+				,uPhone,cMessage);
+			macro_MySQLQueryBasic;
+			if(guDebug)
+				logfileLine("QueueMessage","Insert");
+		}
+		else
+		{
+			sprintf(gcQuery,"UPDATE tQueue SET cMessage='d%u %s',uDateMod=UNIX_TIMESTAMP(NOW()) WHERE uQueue=%u"
+				,uPeriodCount,cMessage,uQueue);
+			macro_MySQLQueryBasic;
+			if(guDebug)
+				logfileLine("QueueMessage","Update");
+		}
+
+		sprintf(gcQuery,"UPDATE tPhone SET uPeriodCount=uPeriodCount+1 WHERE uPhone=%u",uPhone);
+		macro_MySQLQueryBasic;
+		if(guDebug)
+			logfileLine("QueueMessage","Update uPeriodCount++");
 	}
 	else
 	{ 
@@ -351,7 +379,8 @@ void Initialize(const char *cPasswd)
 			" uQueue INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
 			" cMessage VARCHAR(140) NOT NULL DEFAULT '',"
 			" uPhone INT UNSIGNED NOT NULL DEFAULT 0,"
-			" uDateCreated INT UNSIGNED NOT NULL DEFAULT 0"
+			" uDateCreated INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uDateMod INT UNSIGNED NOT NULL DEFAULT 0"
 			" )");
 	macro_MySQLQueryBasic;
 
@@ -388,3 +417,12 @@ void mySQLRootConnect(const char *cPasswd)
         }
 
 }//void mySQLRootConnect(void)
+
+
+//Here we will use libcurl to https the message to our SMS gateway provider.
+unsigned SendMessage(const char *cPhone,const char *cMessage)
+{
+	logfileLine("SendMessage",cPhone);
+	return(0);
+
+}//unsigned SendMessage(const char *cPhone,const char *cMessage)

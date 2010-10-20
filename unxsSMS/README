@@ -22,11 +22,11 @@ Examples:
 External application sends a 100 messages to number 11235551212 to our SMS agent 
 during the last 11235551212 configured receive time period seconds and 100 is 
 equal or larger than the conifgured digest number. Our SMS gateway proxy agent
-creates a single SMS message digest and sends it at the end of the configured 
-send time period.
+sends the first message immediately then creates a single SMS message digest
+and sends it at the end of the configured send time period.
 
 External application sends 1 message to number 12342342345, our agent sends it out
-in configured receive time period seconds.
+immediately configured receive time period seconds.
 
 Thus we have the following configuration parameters per phone number:
 
@@ -36,6 +36,8 @@ Thus we have the following configuration parameters per phone number:
 2-. uReceivePeriod. Number of seconds to count incoming SMS messages that 
 	are placed in FIFO queue.
 3-. uSendPeriod. Number of seconds to wait before sending digest messages.
+4-. uPeriodCount. Number of messages recieved during uReceivePeriod. It
+	is reset when uReceivePeriod is over.
 	
 This should allow for quickly processed full single messages every average 
 uReceivePeriod/2 seconds. And control rapid incoming SMS traffic by sending a 
