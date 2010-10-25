@@ -820,6 +820,25 @@ unsigned RRCheck(void)
 			}
 		}
 	}
+	//More cName validation. Do not allow .. or .- or -. in cName
+	if(strstr(cName,".."))
+	{
+		gcMessage="<blink>Error: </blink>Name can't contain '..'";
+		cNameStyle="type_fields_req";
+		return(2);
+	}
+	if(strstr(cName,".-"))
+	{
+		gcMessage="<blink>Error: </blink>Name can't contain '.-'";
+		cNameStyle="type_fields_req";
+		return(2);
+	}
+	if(strstr(cName,"-."))
+	{
+		gcMessage="<blink>Error: </blink>Name can't contain '-.'";
+		cNameStyle="type_fields_req";
+		return(2);
+	}
 
 	//3-. Can only have digits, letters, dash and dots the ampersand and the asterix wild card.
 	//This is mostly for the (default) problem we have experienced after deployment :(
@@ -828,7 +847,8 @@ unsigned RRCheck(void)
 		if(!isalnum(cName[i]) && cName[i]!='-' && cName[i]!='.' && cName[i]!='@'
 				&& cName[i]!='*' && cName[i]!='_')
 		{
-			gcMessage="<blink>Name can be empty or have only letters, numbers, the default origin @ symbol. Or dashes (-) and periods (.)</blink>";
+			gcMessage="<blink>Name can be empty or have only letters, numbers, the default origin @ symbol."
+					" Or dashes (-) and periods (.)</blink>";
 			cNameStyle="type_fields_req";
 			return(2);
 		}
@@ -1997,15 +2017,36 @@ void MasterFunctionSelect(void)
 							if(strstr(cName+strlen(cName)-strlen(gcZone),gcZone))
 							{
 								strcat(cName,".");
-								gcMessage="<blink>We have added a final period. If this correct confirm</blink>";
+								gcMessage="<blink>We have added a final period."
+										" If this correct confirm</blink>";
 								cNameStyle="type_fields_req";
 								htmlResourceWizard(uStep);
 							}
-							gcMessage="<blink>If Name is fully qualified it must end with the zone and final period</blink>";
+							gcMessage="<blink>If Name is fully qualified it must end with the zone"
+									" and final period</blink>";
 							htmlResourceWizard(uStep);
 						}
 					}
 				}
+
+				//2b-.
+				//More cName validation. Do not allow .. or .- or -. in cName
+				if(strstr(cName,".."))
+				{
+					gcMessage="<blink>Error: </blink>Name can't contain '..'";
+					htmlResourceWizard(uStep);
+				}
+				if(strstr(cName,".-"))
+				{
+					gcMessage="<blink>Error: </blink>Name can't contain '.-'";
+					htmlResourceWizard(uStep);
+				}
+				if(strstr(cName,"-."))
+				{
+					gcMessage="<blink>Error: </blink>Name can't contain '-.'";
+					htmlResourceWizard(uStep);
+				}
+
 
 				//3-. Can only have digits, letters, dash and dots the ampersand and the asterix wild card.
 				//This is mostly for the (default) problem we have experienced after deployment :(
