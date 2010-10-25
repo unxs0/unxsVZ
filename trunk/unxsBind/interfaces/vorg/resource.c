@@ -835,6 +835,25 @@ unsigned RRCheck(void)
 			}
 		}
 	}
+	//More cName validation. Do not allow .. or .- or -. in cName
+	if(strstr(cName,".."))
+	{
+		gcMessage="<blink>Error: </blink>Name can't contain '..'";
+		cNameStyle="type_fields_req";
+		return(2);
+	}
+	if(strstr(cName,".-"))
+	{
+		gcMessage="<blink>Error: </blink>Name can't contain '.-'";
+		cNameStyle="type_fields_req";
+		return(2);
+	}
+	if(strstr(cName,"-."))
+	{
+		gcMessage="<blink>Error: </blink>Name can't contain '-.'";
+		cNameStyle="type_fields_req";
+		return(2);
+	}
 
 	//3-. Can only have digits, letters, dash and dots the ampersand and the asterix wild card.
 	//This is mostly for the (default) problem we have experienced after deployment :(
@@ -2052,6 +2071,24 @@ void MasterFunctionSelect(void)
 						}
 					}
 				}
+				//2b-.
+				//More cName validation. Do not allow .. or .- or -. in cName
+				if(strstr(cName,".."))
+				{
+					gcMessage="<blink>Error: </blink>Name can't contain '..'";
+					htmlResourceWizard(uStep);
+				}
+				if(strstr(cName,".-"))
+				{
+					gcMessage="<blink>Error: </blink>Name can't contain '.-'";
+					htmlResourceWizard(uStep);
+				}
+				if(strstr(cName,"-."))
+				{
+					gcMessage="<blink>Error: </blink>Name can't contain '-.'";
+					htmlResourceWizard(uStep);
+				}
+
 
 				//3-. Can only have digits, letters, dash and dots the ampersand and the asterix wild card.
 				//This is mostly for the (default) problem we have experienced after deployment :(

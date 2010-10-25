@@ -129,6 +129,24 @@ void RRCheck(int uMode)
 		}
 	}
 
+	//More cName validation. Do not allow .. or .- or -. in cName
+	if(strstr(cName,".."))
+	{
+		guMode=uMode;
+		tResource("cName can't contain '..' (two or more consecutive periods.)");
+	}
+	if(strstr(cName,".-"))
+	{
+		guMode=uMode;
+		tResource("cName can't contain '.-'.");
+	}
+	if(strstr(cName,"-."))
+	{
+		guMode=uMode;
+		tResource("cName can't contain '-.'.");
+	}
+
+
 	//TODO
 	//Make sure only one cName exists with same value per zone...
 
