@@ -15,7 +15,8 @@
 #	We will soon fix this rpm beginners mess. And setup a correct build root envirnoment.
 #
 
-function ErrorExit {
+function NormalExit {
+	echo "NormalExit $1";
 	if [ "$1" == "unxsVZ" ]; then
 		cd $UNXSVZ;
 		mv -i ./unxsAdmin unxsVZ/unxsAdmin;
@@ -27,6 +28,26 @@ function ErrorExit {
 		mv -i ./unxsMail unxsVZ/unxsMail;
 		mv -i ./unxsRadius unxsVZ/unxsRadius;
 		mv -i ./unxsRadiusLib unxsVZ/unxsRadiusLib;
+		mv -i ./unxsSMS unxsVZ/unxsSMS;
+		mv -i ./unxsTemplateLib unxsVZ/unxsTemplateLib;
+	fi
+	exit 0;
+}
+
+function ErrorExit {
+	echo "ErrorExit $1";
+	if [ "$1" == "unxsVZ" ]; then
+		#cd $UNXSVZ;
+		mv -i ./unxsAdmin unxsVZ/unxsAdmin;
+		mv -i ./unxsApache unxsVZ/unxsApache;
+		mv -i ./unxsBind unxsVZ/unxsBind;
+		mv -i ./unxsCIDRLib unxsVZ/unxsCIDRLib;
+		mv -i ./unxsBlog unxsVZ/unxsBlog;
+		mv -i ./unxsISP unxsVZ/unxsISP;
+		mv -i ./unxsMail unxsVZ/unxsMail;
+		mv -i ./unxsRadius unxsVZ/unxsRadius;
+		mv -i ./unxsRadiusLib unxsVZ/unxsRadiusLib;
+		mv -i ./unxsSMS unxsVZ/unxsSMS;
 		mv -i ./unxsTemplateLib unxsVZ/unxsTemplateLib;
 	fi
 	exit 0;
@@ -63,12 +84,11 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-cd $UNXSVZ;
 
 #Special case need to move stuff out of our giant unxsVZ dir
 if [ "$1" == "unxsVZ" ]; then
-	ls unxsVZ > /dev/null 2>&1;
-	if [ $? != 0 ];then
+
+	if [ ! -d ./unxsVZ ];then
 		echo "unxsVZ build must be from a nested unxsVZ dir";
 		exit 1;
 	fi
@@ -82,7 +102,10 @@ if [ "$1" == "unxsVZ" ]; then
 	mv -i unxsVZ/unxsMail ./;
 	mv -i unxsVZ/unxsRadius ./;
 	mv -i unxsVZ/unxsRadiusLib ./;
+	mv -i unxsVZ/unxsSMS ./;
 	mv -i unxsVZ/unxsTemplateLib ./;
+else
+	cd $UNXSVZ;
 fi
 
 
@@ -222,11 +245,14 @@ else
 		/usr/bin/scp -P $4 /usr/src/redhat/SOURCES/$LCNAME-$2.tar.gz $5:;
 		/usr/bin/scp -P $4  /usr/src/redhat/SRPMS/$LCNAME-$2-$3.src.rpm $5:;
 		/usr/bin/scp -P $4  /usr/src/redhat/RPMS/i386/$LCNAME-$2-$3.i386.rpm $5:;
-		/usr/bin/scp -P $4  /usr/src/redhat/RPMS/x86_64/$LCNAME-$2-$3.x86_64.rpm $5:;
+		if [ -f /usr/src/redhat/RPMS/x86_64/$LCNAME-$2-$3.x86_64.rpm ];then
+			/usr/bin/scp -P $4  /usr/src/redhat/RPMS/x86_64/$LCNAME-$2-$3.x86_64.rpm $5:;
+		fi
 		/usr/bin/ssh -p $4 $5 "sudo /usr/sbin/unxsrpm-install.sh $LCNAME-$2-$3 $LCNAME-$2";
 	else
 		echo "You specified only one of the required scp args.";
 	fi
 fi
 
-ErrorExit $1;
+
+NormalExit $1;
