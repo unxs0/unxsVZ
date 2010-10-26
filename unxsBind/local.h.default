@@ -128,5 +128,5 @@ LEGAL
 //table related files.
 
 //For openisp staff mod only. Staff: Remember to change makefile also.
-#define RELEASE "Release 3.0/rpm-3.0"
-#define REV "3.0/rpm-3.0"
+#define RELEASE "Release 3.1/rpm-3.1"
+#define REV "3.1/rpm-3.1"

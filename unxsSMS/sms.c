@@ -86,10 +86,10 @@ void Run(void)
 
 
 	//Send messages that are ready, then delete them from the queue and reset their uPeriodCount
-	sprintf(gcQuery,"SELECT NOW(),tPhone.cNumber,tQueue.cMessage,FROM_UNIXTIME(tQueue.uDateCreated),"
+	sprintf(gcQuery,"SELECT NOW(),tPhone.cNumber,tQueue.cMessage,FROM_UNIXTIME(tQueue.uDateMod),"
 			"tPhone.uSendPeriod,tPhone.uPeriodCount,tPhone.uDigestThreshold,tPhone.uPhone,tQueue.uQueue"
 			" FROM tQueue,tPhone WHERE tQueue.uPhone=tPhone.uPhone"
-			" AND tQueue.uDateCreated+tPhone.uSendPeriod<UNIX_TIMESTAMP(NOW())"
+			" AND tQueue.uDateMod+tPhone.uSendPeriod<UNIX_TIMESTAMP(NOW())"
 			" AND tPhone.uPeriodCount>tPhone.uDigestThreshold");
 	macro_MySQLQueryBasic;
 	res=mysql_store_result(&gMysql);
@@ -97,7 +97,7 @@ void Run(void)
 	{
 		
 		//if(guDebug)
-			printf("%s %s \"%s\" uDateCreated:%s uSendPeriod:%s uPeriodCount:%s uDigestThreshold:%s\n",
+			printf("%s %s \"%s\" uDateMod:%s uSendPeriod:%s uPeriodCount:%s uDigestThreshold:%s\n",
 				field[0],field[1],field[2],field[3],field[4],field[5],field[6]);
 	}
 	mysql_free_result(res);
@@ -204,19 +204,31 @@ void QueueMessage(const char *cPhone,const char *cMessage)
 
 		if(!uQueue)
 		{
-			sprintf(gcQuery,"INSERT tQueue SET uPhone=%u,cMessage='%.140s',uDateCreated=UNIX_TIMESTAMP(NOW())"
+			sprintf(gcQuery,"INSERT tQueue SET uPhone=%u,cMessage='%.140s',uDateCreated=UNIX_TIMESTAMP(NOW(),uDateMod=UNIX_TIMESTAMP(NOW())"
 				,uPhone,cMessage);
 			macro_MySQLQueryBasic;
 			if(guDebug)
-				logfileLine("QueueMessage","Insert");
+				logfileLine("QueueMessage","Insert new");
 		}
 		else
 		{
-			sprintf(gcQuery,"UPDATE tQueue SET cMessage='d%u %s',uDateMod=UNIX_TIMESTAMP(NOW()) WHERE uQueue=%u"
-				,uPeriodCount,cMessage,uQueue);
-			macro_MySQLQueryBasic;
-			if(guDebug)
-				logfileLine("QueueMessage","Update");
+
+			if(uPeriodCount+1>uDigestThreshold)
+			{
+				sprintf(gcQuery,"UPDATE tQueue SET cMessage='d%u %s',uDateMod=UNIX_TIMESTAMP(NOW()) WHERE uQueue=%u"
+					,uPeriodCount+1,cMessage,uQueue);
+				macro_MySQLQueryBasic;
+				if(guDebug)
+					logfileLine("QueueMessage","Update");
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT tQueue SET uPhone=%u,cMessage='%.140s',uDateCreated=UNIX_TIMESTAMP(NOW(),uDateMod=UNIX_TIMESTAMP(NOW())"
+					,uPhone,cMessage);
+				macro_MySQLQueryBasic;
+				if(guDebug)
+					logfileLine("QueueMessage","Insert uDigestThreshold");
+			}
 		}
 
 		sprintf(gcQuery,"UPDATE tPhone SET uPeriodCount=uPeriodCount+1 WHERE uPhone=%u",uPhone);

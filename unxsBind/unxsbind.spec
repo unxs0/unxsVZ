@@ -1,10 +1,10 @@
 Summary: DNS BIND 9 telco quality manager with admin and end-user web interfaces. Integrated rrdtool graphics.
 Name: unxsbind
-Version: 3.0
-Release: 18
+Version: 3.1
+Release: 1
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsbind-3.0.tar.gz
+Source: http://unixservice.com/source/unxsbind-3.1.tar.gz
 URL: http://openisp.net/openisp/unxsBind
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -429,6 +429,8 @@ fi
 
 
 %changelog
+* Tue Oct 26 2010 Gary Wallis <support@unixservice.com>
+- Added AXFR import support and fixed some cNAME input validation bugs.
 * Mon May 3 2010 Gary Wallis <support@unixservice.com>
 - Correcting update path.
 * Fri Apr 30 2010 Gary Wallis <support@unixservice.com>
