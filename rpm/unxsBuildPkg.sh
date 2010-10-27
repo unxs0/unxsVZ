@@ -17,19 +17,20 @@
 
 function NormalExit {
 	echo "NormalExit $1";
+	pwd;
 	if [ "$1" == "unxsVZ" ]; then
-		cd $UNXSVZ;
-		mv -i ./unxsAdmin unxsVZ/unxsAdmin;
-		mv -i ./unxsApache unxsVZ/unxsApache;
-		mv -i ./unxsBind unxsVZ/unxsBind;
-		mv -i ./unxsCIDRLib unxsVZ/unxsCIDRLib;
-		mv -i ./unxsBlog unxsVZ/unxsBlog;
-		mv -i ./unxsISP unxsVZ/unxsISP;
-		mv -i ./unxsMail unxsVZ/unxsMail;
-		mv -i ./unxsRadius unxsVZ/unxsRadius;
-		mv -i ./unxsRadiusLib unxsVZ/unxsRadiusLib;
-		mv -i ./unxsSMS unxsVZ/unxsSMS;
-		mv -i ./unxsTemplateLib unxsVZ/unxsTemplateLib;
+		cd $UNXSVZ/..;
+		mv -i unxsAdmin unxsVZ/unxsAdmin;
+		mv -i unxsApache unxsVZ/unxsApache;
+		mv -i unxsBind unxsVZ/unxsBind;
+		mv -i unxsCIDRLib unxsVZ/unxsCIDRLib;
+		mv -i unxsBlog unxsVZ/unxsBlog;
+		mv -i unxsISP unxsVZ/unxsISP;
+		mv -i unxsMail unxsVZ/unxsMail;
+		mv -i unxsRadius unxsVZ/unxsRadius;
+		mv -i unxsRadiusLib unxsVZ/unxsRadiusLib;
+		mv -i unxsSMS unxsVZ/unxsSMS;
+		mv -i unxsTemplateLib unxsVZ/unxsTemplateLib;
 	fi
 	exit 0;
 }
@@ -89,7 +90,7 @@ fi
 if [ "$1" == "unxsVZ" ]; then
 
 	if [ ! -d ./unxsVZ ];then
-		echo "unxsVZ build must be from a nested unxsVZ dir";
+		echo "unxsVZ build must be from a nested unxsVZ dir and one level up";
 		exit 1;
 	fi
 
@@ -166,13 +167,13 @@ if [ $? != 0 ];then
 	ErrorExit $1;
 fi
 
-mv $1.tar.gz ../rpm-staging/
+mv $1.tar.gz $UNXSVZ/../rpm-staging/
 if [ $? != 0 ];then
 	echo error 3;
 	ErrorExit $1;
 fi
 
-cd ../rpm-staging
+cd $UNXSVZ/../rpm-staging
 if [ $? != 0 ];then
 	echo error 4;
 	ErrorExit $1;
