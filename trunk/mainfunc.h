@@ -836,6 +836,7 @@ void Initialize(char *cPasswd)
 	}
 	
 
+	//debug only
 	//Create tables and install default data
 	//Standard RAD3 required tables
 	CreatetAuthorize();

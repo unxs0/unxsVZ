@@ -573,7 +573,7 @@ void CreatetProperty(void)
 			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
 			"cValue TEXT NOT NULL DEFAULT '',"
 			"uKey INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uKey),"
-			"uType INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uType)");
+			"uType INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uType) )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
