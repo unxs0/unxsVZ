@@ -509,7 +509,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		}
 
 		//2-.
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --nameserver \"%.99s\" --searchdomain %.32s --save",
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --nameserver \"%.99s\" --searchdomain \"%.32s\" --save",
 				uContainer,field[4],field[5]);
 		if(system(gcQuery))
 		{
