@@ -13,6 +13,8 @@ AUTHOR/LEGAL
 
 void tIPReport(void);
 void tIPNavList(unsigned uAvailable);
+void tIPUsedButAvailableNavList(void);
+void tIPUsedButAvailableFix(void);
 
 //uForClient: Create for, on 'New;
 static unsigned uForClient=0;
@@ -217,6 +219,18 @@ void ExttIPCommands(pentry entries[], int x)
 				tIP("Not allowed by permissions settings");
 			}
                 }
+                else if(!strcmp(gcCommand,"Fix"))
+                {
+                        ProcesstIPVars(entries,x);
+			if((uAllowMod(uOwner,uCreatedBy)) || guPermLevel>=11)
+			{
+				tIPUsedButAvailableFix();
+			}
+			else
+			{
+				tIP("Not allowed by permissions settings");
+			}
+		}
 	}
 
 }//void ExttIPCommands(pentry entries[], int x)
@@ -278,6 +292,7 @@ void ExttIPButtons(void)
 			tIPNavList(1);
 			if(uIP)
 				tIPReport();
+			tIPUsedButAvailableNavList();
 	}
 	CloseFieldSet();
 
@@ -404,50 +419,27 @@ void tIPNavList(unsigned uAvailable)
 
 	if(guPermLevel>11)
 	{
-		if(uAvailable)
-		{
-			if(cSearch[0])
-				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND cLabel"
-					" LIKE '%s%%' ORDER BY cLabel",uAvailable,cSearch);
-			else
-				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u ORDER BY cLabel",uAvailable);
-		}
+		if(cSearch[0])
+			sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+				" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE tIP.uAvailable=%u"
+				" AND tIP.cLabel LIKE '%s%%' ORDER BY tIP.cLabel",uAvailable,cSearch);
 		else
-		{
-			if(cSearch[0])
-				sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-					" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE tIP.uAvailable=%u"
-					" AND tIP.cLabel LIKE '%s%%' ORDER BY tIP.cLabel",uAvailable,cSearch);
-			else
-				sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-						" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE"
-						" tIP.uAvailable=%u ORDER BY tIP.cLabel",uAvailable);
-		}
+			sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+					" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE"
+					" tIP.uAvailable=%u ORDER BY tIP.cLabel",uAvailable);
 	}
 	else
 	{
-		if(uAvailable)
-		{
-			if(cSearch[0])
-				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND uOwner=%u AND"
-					" cLabel LIKE '%s%%' ORDER BY cLabel", uAvailable,guCompany,cSearch);
-			else
-				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=%u AND uOwner=%u"
-					" ORDER BY cLabel",uAvailable,guCompany);
-		}
+		if(cSearch[0])
+			sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+					" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE"
+					" tIP.uAvailable=%u AND tIP.cLabel LIKE '%s%%' AND"
+					" tIP.uOwner=%u ORDER BY tIP.cLabel",uAvailable,cSearch,guCompany);
 		else
-		{
-			if(cSearch[0])
-				sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-						" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE"
-						" tIP.uAvailable=%u AND tIP.cLabel LIKE '%s%%' AND"
-						" tIP.uOwner=%u ORDER BY tIP.cLabel",uAvailable,cSearch,guCompany);
-			else
-				sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-						" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE"
-						" tIP.uAvailable=%u AND tIP.uOwner=%u ORDER BY tIP.cLabel",
-							uAvailable,guCompany);
-		}
+			sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+					" tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP WHERE"
+					" tIP.uAvailable=%u AND tIP.uOwner=%u ORDER BY tIP.cLabel",
+						uAvailable,guCompany);
 	}
 
         mysql_query(&gMysql,gcQuery);
@@ -470,36 +462,23 @@ void tIPNavList(unsigned uAvailable)
 	        while((field=mysql_fetch_row(res)))
 		{
 
-			if(uAvailable)
-			{
-				if(cSearch[0])
-					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP"
-					"&uIP=%s&cSearch=%s>%s</a><br>\n",field[0],
-						cURLEncode(cSearch),field[1]);
-				else
-					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP"
-					"&uIP=%s>%s</a><br>\n",field[0],field[1]);
-			}
-			else
-			{
-				if(cSearch[0])
-					if(field[2]!=NULL)
+			if(cSearch[0])
+				if(field[2]!=NULL)
 					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s&cSearch=%s>%s</a>"
 						" (<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s"
 						"</a>)<br>\n",
 						field[0],cURLEncode(cSearch),field[1],field[3],field[2]);
-					else
+				else
 					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s&cSearch=%s>%s"
 						"</a><br>\n",field[0],cURLEncode(cSearch),field[1]);
-				else
-					if(field[2]!=NULL)
+			else
+				if(field[2]!=NULL)
 					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>"
 						" (<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s"
 						"</a>)<br>\n",field[0],field[1],field[3],field[2]);
-					else
+				else
 					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a><br>\n",
 							field[0],field[1]);
-			}
 			if(++uNumRows>uLIMIT)
 			{
 				printf("(Only %u IPs shown use search/filters to shorten list.)<br>\n",uLIMIT);
@@ -672,3 +651,125 @@ void DelIPRange(char *cIPRange)
 		tIP("<blink>Note:</blink> Partial cIPRange deleted. At least one available IP controlled by you did not exist");
 
 }//void DelIPRange(char *cIPRange)
+
+
+void tIPUsedButAvailableNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uNumRows=0;
+	unsigned uMySQLNumRows=0;
+#define uUBALIMIT 64
+
+	if(guPermLevel>11)
+	{
+		if(cSearch[0])
+			sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+				" tIP,tContainer WHERE tContainer.uIPv4=tIP.uIP AND tIP.uAvailable=1"
+				" AND tIP.cLabel LIKE '%s%%' ORDER BY tIP.cLabel",cSearch);
+		else
+			sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+					" tIP,tContainer WHERE tContainer.uIPv4=tIP.uIP AND"
+					" tIP.uAvailable=1 ORDER BY tIP.cLabel");
+	}
+	else
+	{
+		if(cSearch[0])
+			sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+					" tIP,tContainer WHERE tContainer.uIPv4=tIP.uIP AND"
+					" tIP.uAvailable=1 AND tIP.cLabel LIKE '%s%%' AND"
+					" tIP.uOwner=%u ORDER BY tIP.cLabel",cSearch,guCompany);
+		else
+			sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
+					" tIP,tContainer WHERE tContainer.uIPv4=tIP.uIP AND"
+					" tIP.uAvailable=1 AND tIP.uOwner=%u ORDER BY tIP.cLabel",guCompany);
+	}
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tIPUsedButAvailableNavList</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if((uMySQLNumRows=mysql_num_rows(res)))
+	{	
+        	printf("<p><u>tIPUsedButAvailableNavList(%u)</u><br>\n",uMySQLNumRows);
+
+	        while((field=mysql_fetch_row(res)))
+		{
+
+			if(cSearch[0])
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s&cSearch=%s>%s</a>"
+						" (<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s"
+						"</a>)<br>\n",
+						field[0],cURLEncode(cSearch),field[1],field[3],field[2]);
+			else
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>"
+						" (<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s"
+						"</a>)<br>\n",field[0],field[1],field[3],field[2]);
+			if(++uNumRows>uLIMIT)
+			{
+				printf("(Only %u IPs shown use search/filters to shorten list.)<br>\n",uLIMIT);
+				break;
+			}
+		}
+
+		printf("<input type=submit class=lwarnButton name=gcCommand value=Fix"
+				" title='Change all the tIPUsedButAvailableNavList IPs to not available'><br>\n");
+	}
+        mysql_free_result(res);
+
+}//void tIPUsedButAvailableNavList()
+
+
+void tIPUsedButAvailableFix(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(guPermLevel>11)
+	{
+		if(cSearch[0])
+			sprintf(gcQuery,"SELECT tIP.uIP FROM"
+				" tIP,tContainer WHERE tContainer.uIPv4=tIP.uIP AND tIP.uAvailable=1"
+				" AND tIP.cLabel LIKE '%s%%' ORDER BY tIP.cLabel",cSearch);
+		else
+			sprintf(gcQuery,"SELECT tIP.uIP FROM"
+					" tIP,tContainer WHERE tContainer.uIPv4=tIP.uIP AND"
+					" tIP.uAvailable=1 ORDER BY tIP.cLabel");
+	}
+	else
+	{
+		if(cSearch[0])
+			sprintf(gcQuery,"SELECT tIP.uIP FROM"
+					" tIP,tContainer WHERE tContainer.uIPv4=tIP.uIP AND"
+					" tIP.uAvailable=1 AND tIP.cLabel LIKE '%s%%' AND"
+					" tIP.uOwner=%u ORDER BY tIP.cLabel",cSearch,guCompany);
+		else
+			sprintf(gcQuery,"SELECT tIP.uIP FROM"
+					" tIP,tContainer WHERE tContainer.uIPv4=tIP.uIP AND"
+					" tIP.uAvailable=1 AND tIP.uOwner=%u ORDER BY tIP.cLabel",guCompany);
+	}
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		tIP(mysql_error(&gMysql));
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{	
+	        while((field=mysql_fetch_row(res)))
+		{
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0 WHERE uIP=%s",field[0]);
+        		mysql_query(&gMysql,gcQuery);
+		        if(mysql_errno(&gMysql))
+				tIP(mysql_error(&gMysql));
+		}
+	}
+        mysql_free_result(res);
+
+}//void tIPUsedButAvailableFix()
+
