@@ -484,15 +484,17 @@ void tJobNavList(void)
 #define uERROR		14
 */
 	if(guPermLevel<10)
-		sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tNode.cLabel FROM tJob,tNode,tClient WHERE"
+		sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tNode.cLabel,tJobStatus.cLabel FROM tJob,tNode,tClient,tJobStatus WHERE"
 				" tJob.uOwner=tClient.uClient AND tJob.uNode=tNode.uNode AND"
+				" tJob.uJobStatus=tJobStatus.uJobStatus AND"
 				" (tClient.uOwner=%u OR tClient.uClient=%u) AND"
 				" (tJob.uJobStatus=1 OR tJob.uJobStatus=14 OR tJob.uJobStatus=2 OR"
 				" tJob.uJobStatus=10 OR tJob.uJobStatus=4)",
 						guLoginClient,guLoginClient);
 	else
-	        sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tNode.cLabel FROM tJob,tNode"
+	        sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tNode.cLabel,tJobStatus.cLabel FROM tJob,tNode,tJobStatus"
 					" WHERE tJob.uNode=tNode.uNode AND"
+					" tJob.uJobStatus=tJobStatus.uJobStatus AND"
 					" (tJob.uJobStatus=1 OR tJob.uJobStatus=14 OR tJob.uJobStatus=2 OR"
 					" tJob.uJobStatus=10 OR tJob.uJobStatus=4)"
 													);
@@ -511,8 +513,8 @@ void tJobNavList(void)
         	printf("<p><u>tJobNavList (Waiting and Error)</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",
-				field[0],field[1],field[2]);
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tJob&uJob=%s>%s/%s/%s</a><br>\n",
+				field[0],field[1],field[2],field[3]);
 	}
         mysql_free_result(res);
 
