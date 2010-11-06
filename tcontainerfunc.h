@@ -959,8 +959,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					else
 					{
 						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"
-							"uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-								cService3,guLoginClient);
+							"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								cService3,uForClient,guLoginClient);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -1384,8 +1384,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					else
 					{
 						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"
-							"uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-								cService3,guLoginClient);
+							"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								cService3,uForClient,guLoginClient);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
