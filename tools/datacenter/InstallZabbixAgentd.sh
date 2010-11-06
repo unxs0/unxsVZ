@@ -78,15 +78,18 @@ do
 		cPrevInstalled="y";
 	fi
 
-	#install agent binary
-	cp /usr/local/sbin/zabbix_agentd\
-		 /vz/private/$uContainer/usr/local/sbin/zabbix_agentd < /dev/tty;
-	#install init.d script
+	#install agent binary if not there (it is probably running.)
+	if [ ! -f /vz/private/$uContainer/usr/local/sbin/zabbix_agentd ];then
+		cp /usr/local/sbin/zabbix_agentd\
+			 /vz/private/$uContainer/usr/local/sbin/zabbix_agentd < /dev/tty;
+	fi
+
+	#install init.d script always (upgrade works here.)
 	cp /etc/init.d/zabbix_agentd\
 		 /vz/private/$uContainer/etc/init.d/zabbix_agentd < /dev/tty;
 	#create /etc/zabbix dir
 	mkdir -p /vz/private/$uContainer/etc/zabbix < /dev/tty;
-	#create zabbix agent conf file
+	#create zabbix agent conf file (upgrade works here.)
 	cp ./zabbix_agentd.conf /vz/private/$uContainer/etc/zabbix/ < /dev/tty;
 	echo "Hostname=$cHostname" >> /vz/private/$uContainer/etc/zabbix/zabbix_agentd.conf;
 
@@ -99,14 +102,16 @@ do
 	        /usr/sbin/vzctl exec2 $uContainer 'groupadd zabbix;\
 						useradd -g zabbix -s /sbin/nologin zabbix;\
 						chown zabbix.zabbix /etc/zabbix/;\
-						touch /var/log/zabbix_agentd.log;\
-						chown zabbix.zabbix /var/log/zabbix_agentd.log;\
+						mkdir /var/log/zabbix;\
+						touch /var/log/zabbix/zabbix_agentd.log;\
+						chown -R zabbix.zabbix /var/log/zabbix;\
 						/etc/init.d/zabbix_agentd start;\
 						/sbin/chkconfig --level 3 zabbix_agentd on; ' < /dev/tty;
 	else
 		#we assume that the first install was done correctly DANGER
-		#and that this is just an update like after a hostname change etc.
-		#or we install a better conf or init or new agentd
+		#	and that this is just an update like after a hostname change etc.
+		#	or we install a better conf or init.
+		#	New agentd case is not covered in this simplistic script.
 	        /usr/sbin/vzctl exec2 $uContainer '/etc/init.d/zabbix_agentd stop;\
 						sleep 1;\
 						/etc/init.d/zabbix_agentd start; ' < /dev/tty;
