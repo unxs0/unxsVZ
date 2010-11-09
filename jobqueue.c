@@ -102,7 +102,7 @@ static char cHostname[100]={""};//file scope
 static FILE *gLfp=NULL;//log file
 
 
-//Using the local server hostname get max 100 jobs for this node from the tJob queue.
+//Using the local server hostname get max 32 jobs for this node from the tJob queue.
 //Then dispatch jobs via ProcessJob() this function in turn calls specific functions for
 //each known cJobName.
 void ProcessJobQueue(unsigned uDebug)
@@ -237,15 +237,24 @@ void ProcessJobQueue(unsigned uDebug)
 	//Main loop normal jobs
 	//uWAITING==1
 	//TODO can the LIMIT partition related jobs that need to run close together?
+	//Testing allow only one to run at the same time.
+	if(mkdir("/var/run/unxsvz.lock",S_IRWXU))
+	{
+		logfileLine("ProcessJobQueue","/var/run/unxsvz.lock mkdir error");
+		exit(127);
+	}
+
 	sprintf(gcQuery,"SELECT uJob,uContainer,cJobName,cJobData FROM tJob WHERE uJobStatus=1"
 				" AND uDatacenter=%u AND uNode=%u"
-				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) ORDER BY uJob LIMIT 100",
+				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) ORDER BY uJob LIMIT 32",
 						uDatacenter,uNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
 		mysql_close(&gMysql);
+		if(rmdir("/var/run/unxsvz.lock"))
+			logfileLine("ProcessJobQueue","/var/run/unxsvz.lock rmdir error");
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -262,6 +271,8 @@ void ProcessJobQueue(unsigned uDebug)
 	}
 	mysql_free_result(res);
 
+	if(rmdir("/var/run/unxsvz.lock"))
+		logfileLine("ProcessJobQueue","/var/run/unxsvz.lock rmdir error");
 	if(guDebug) logfileLine("ProcessJobQueue","End");
 	fclose(gLfp);
 	mysql_close(&gMysql);
