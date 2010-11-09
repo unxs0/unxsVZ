@@ -99,7 +99,7 @@ static char cForClientPullDown[256]={""};
 void tContainerNavList(unsigned uNode, char *cSearch);
 unsigned CreateNewContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
-unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned DestroyContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
@@ -290,7 +290,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							if(DestroyContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uCtContainer))
+									sContainer.uNode,uCtContainer,guCompany))
 							{
 								SetContainerStatus(uCtContainer,uAWAITDEL);
 								uGroupJobs++;
@@ -1837,7 +1837,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
 
-				if(DestroyContainerJob(uDatacenter,uNode,uContainer))
+				if(DestroyContainerJob(uDatacenter,uNode,uContainer,uOwner))
 				{
 					uStatus=uAWAITDEL;
 					SetContainerStatus(uContainer,5);//Awaiting Deletion
@@ -3364,7 +3364,7 @@ unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uC
 }//unsigned CreateStartContainerJob(...)
 
 
-unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner)
 {
 	unsigned uCount=0;
 
@@ -3383,7 +3383,7 @@ unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 	unxsVZLog(uContainer,"tContainer","Destroy");
 	return(uCount);
 
-}//unsigned DestroyContainerJob(...)
+}//unsigned DestroyContainerJob()
 
 
 unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)

@@ -539,8 +539,10 @@ void tDatacenterHealth(void)
 
 	//2-. None zero historic fail counters
 	sprintf(gcQuery,"SELECT cValue,uKey,cLabel,cName FROM tProperty,tContainer WHERE"
-			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND cName LIKE '%%.luFailcnt'"
-			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10");
+			" tProperty.uKey=tContainer.uContainer AND"
+			" tContainer.uDatacenter=%u AND"
+			" cValue!='0' AND uType=3 AND cName LIKE '%%.luFailcnt'"
+			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uDatacenter);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -564,8 +566,9 @@ void tDatacenterHealth(void)
 	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/300000),2),uKey,cHostname FROM tProperty,tContainer WHERE"
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
 			" tContainer.uStatus=%u AND"
+			" tContainer.uDatacenter=%u AND"
 			" (cName='Venet0.luInDelta' OR cName='Venet0.luOutDelta')"
-			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE);
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -589,9 +592,10 @@ void tDatacenterHealth(void)
 	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000000000),2),uKey,cHostname FROM"
 			" tProperty,tContainer WHERE"
 			" tContainer.uStatus=%u AND"
+			" tContainer.uDatacenter=%u AND"
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
 			" (cName='Venet0.luIn' OR cName='Venet0.luOut')"
-			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE);
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
