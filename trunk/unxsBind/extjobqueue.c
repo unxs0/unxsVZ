@@ -146,7 +146,7 @@ void ParseExtParams(structExtJobParameters *structExtParam, char *cJobData)
 		if(cp2) *cp2='\n';
 		structExtParam->uParamZone=1;
 	}
-	if((cp=strstr(cJobData,"Zone=")))
+	if((cp=strstr(cJobData,"Zone=")) && !strstr(cJobData,"cZone="))
 	{
 		cp2=NULL;
 		if((cp2=strchr(cp+5,'\n'))) *cp2=0;
@@ -1823,6 +1823,7 @@ void ProcessVZJobQueue(void)
 
 		//debug only
 		printf("ProcessVZJobQueue() connected ok\n");
+		gethostname(gcHostname,98);
 	
 		//mysqlISP_Waiting same as unxsVZ.tJobStatus.cLabel "RemoteWaiting" 10
 		sprintf(gcQuery,"SELECT cJobName,cJobData,uJob,uOwner FROM tJob WHERE"
@@ -1839,10 +1840,10 @@ void ProcessVZJobQueue(void)
 		{
 			uJob=0;
 			unsigned uZone=0;
+			unsigned uView=0;
 			unsigned uOwner=0;
 			unsigned uResource=0;
 			unsigned uNSSet=0;
-			char cZone[100]={""};
 
 			InitializeParams(&structExtParam);
 			sscanf(field[2],"%u",&uJob);
@@ -1850,11 +1851,13 @@ void ProcessVZJobQueue(void)
 
 			//unxsVZRR-FQName
 			//cName is a fully qualified DNS RR name, i.e. it ends in the zone name.
-			if(!strcmp("unxsVZRR-FQName",field[0]))
+			if(!strcmp("unxsVZContainerARR",field[0]))
 			{	
+				printf("ProcessVZJobQueue() unxsVZContainerARR\n");
+
 				//Update remote job queue running
-				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZRR-FQName'"
-						" WHERE uJob=%u",unxsVZ_uRUNNING,uJob);
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='%.32s'"
+						" WHERE uJob=%u",unxsVZ_uRUNNING,gcHostname,uJob);
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
 				{
@@ -1865,16 +1868,12 @@ void ProcessVZJobQueue(void)
 				ParseExtParams(&structExtParam,field[1]);
 				//debug only
 				printf("%s(%u) data:\n",field[0],uJob);
+				if(structExtParam.ucIPv4)
+					printf("\tcIPv4=%s;\n",structExtParam.cIPv4);
 				if(structExtParam.ucName)
 					printf("\tcName=%s;\n",structExtParam.cName);
-				if(structExtParam.ucuTTL)
-					printf("\tcuTTL=%s;\n",structExtParam.cuTTL);
-				if(structExtParam.ucRRType)
-					printf("\tcRRType=%s;\n",structExtParam.cRRType);
-				if(structExtParam.ucParam1)
-					printf("\tcParam1=%s;\n",structExtParam.cParam1);
-				if(structExtParam.ucNSSet)
-					printf("\tcNSSet=%s;\n",structExtParam.cNSSet);
+				if(structExtParam.ucZone)
+					printf("\tcZone=%s;\n",structExtParam.cZone);
 				if(structExtParam.ucView)
 					printf("\tcView=%s;\n",structExtParam.cView);
 
@@ -1886,15 +1885,20 @@ void ProcessVZJobQueue(void)
 					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cName);
 					goto ErrorExit;
 				}
+				//cName must end in cZone.
+				if(!strcmp(structExtParam.cName+(strlen(structExtParam.cName)-strlen(structExtParam.cZone)-1),
+					structExtParam.cZone))
+				{
+					fprintf(stderr,"'%s' does not end with '%s'\n",structExtParam.cName,structExtParam.cZone);
+					goto ErrorExit;
+				}
 
-				//We need to determine the uZone from the FQName
-				sprintf(gcQuery,"SELECT uZone,cZone,uNSSet,uView FROM tZone WHERE"
+				//Get required data
+				sprintf(gcQuery,"SELECT uZone,uNSSet,uView,uOwner FROM tZone WHERE"
 						" uView=(SELECT uView FROM tView WHERE cLabel='%s' LIMIT 1) AND"
-						" uNSSet=(SELECT uNSSet FROM tNSSet WHERE cLabel='%s' LIMIT 1) AND"
-						" LOCATE(cZone,'%s')>0 LIMIT 1",
+						" cZone='%s' LIMIT 1",
 							structExtParam.cView,
-							structExtParam.cNSSet,
-							structExtParam.cName);
+							structExtParam.cZone);
 				//debug only
 				//printf("%s\n",gcQuery);
 				mysql_query(&gMysql,gcQuery);
@@ -1907,28 +1911,29 @@ void ProcessVZJobQueue(void)
 				if((field2=mysql_fetch_row(res2)))
 				{
 					sscanf(field2[0],"%u",&uZone);
-					sprintf(cZone,"%.99s",field2[1]);
-					sscanf(field2[2],"%u",&uNSSet);
+					sscanf(field2[1],"%u",&uNSSet);
+					sscanf(field2[2],"%u",&uView);
+					sscanf(field2[3],"%u",&uOwner);
 				}
 				mysql_free_result(res2);
 
 				if(!uZone)
 				{
-					fprintf(stderr,"No tZone.uZone for %s %s %s\n",
+					fprintf(stderr,"No tZone.uZone for %s %s\n",
 								structExtParam.cView,
-								structExtParam.cNSSet,
-								structExtParam.cName);
+								structExtParam.cZone);
+					fprintf(stderr,"%s",gcQuery);
 					goto ErrorExit;
 				}
 				//debug only
-				printf("uZone=%u\n",uZone);
+				printf("uZone=%u uNSSet=%u uView=%u\n",uZone,uNSSet,uView);
 
 				//Do not add same record based on type and cName
 				//If zone owner needs multiple records she will have to use an interface to do it.
 				//Note that we will change cParam1 for existing record.
 				sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cNAME='%s' AND uZone=%u"
-						" AND uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='%s' LIMIT 1)",
-							structExtParam.cName,uZone,structExtParam.cRRType);
+						" AND uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='A' LIMIT 1)",
+							structExtParam.cName,uZone);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -1943,10 +1948,10 @@ void ProcessVZJobQueue(void)
 				if(uResource)
 				{
 					sprintf(gcQuery,"UPDATE tResource SET cName='%s',cParam1='%s',uModBy=1,"
-							"uModDate=UNIX_TIMESTAMP(NOW()),"
-							"uTTL=%s WHERE uResource=%u",
-							structExtParam.cName,structExtParam.cParam1,
-							structExtParam.cuTTL,uResource);
+							"uOwner=%u,"
+							"uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uResource=%u",
+							structExtParam.cName,structExtParam.cIPv4,uOwner,uResource);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
@@ -1958,14 +1963,13 @@ void ProcessVZJobQueue(void)
 				}
 				else
 				{
-					sprintf(gcQuery,"INSERT tResource SET cName='%s',cParam1='%s',uOwner=1,uCreatedBy=1,"
-							"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='unxsVZRR-FQName',"
-							"uTTL=%s,"
+					sprintf(gcQuery,"INSERT tResource SET cName='%s',cParam1='%s',"
+							"uOwner=%u,uCreatedBy=1,"
+							"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='unxsVZContainerARR',"
+							"uTTL=0,"
 							"uZone=%u,"
-							"uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='%s' LIMIT 1)",
-							structExtParam.cName,structExtParam.cParam1,structExtParam.cuTTL,
-								uZone,
-								structExtParam.cRRType);
+							"uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='A' LIMIT 1)",
+							structExtParam.cName,structExtParam.cIPv4,uOwner,uZone);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
@@ -1978,14 +1982,16 @@ void ProcessVZJobQueue(void)
 				UpdateSerialNum(uZone);
 
 				//Submit zone mod job
-				if(SubmitJob("Modify",uNSSet,cZone,0,0))
+				guLoginClient=1;
+				guCompany=uOwner;
+				if(SubmitJob("Modify",uNSSet,structExtParam.cZone,0,0))
 				{
 					fprintf(stderr,"SubmitJob() failed.\n");
 					goto ErrorExit;
 				}
 
 				//Update remote job queue done ok
-				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZRR-FQName ok'"
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZContainerARR ok'"
 						" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
@@ -1994,11 +2000,16 @@ void ProcessVZJobQueue(void)
 					goto ErrorExit;
 				}
 				goto NormalExit;
-			}//unxsVZRR-FQName
+			}//unxsVZContainerARR
 		}//while
 		mysql_free_result(res);
 	
 	}//connected
+	else
+	{
+		printf("ProcessVZJobQueue() could not connect to db\n");
+		return;
+	}
 
 //Organize this later with another function
 ErrorExit:
