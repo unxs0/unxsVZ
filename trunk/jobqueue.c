@@ -240,7 +240,7 @@ void ProcessJobQueue(unsigned uDebug)
 	//Testing allow only one to run at the same time.
 	if(mkdir("/var/run/unxsvz.lock",S_IRWXU))
 	{
-		logfileLine("ProcessJobQueue","/var/run/unxsvz.lock mkdir error");
+		logfileLine("ProcessJobQueue","/var/run/unxsvz.lock");
 		exit(127);
 	}
 
