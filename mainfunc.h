@@ -51,6 +51,8 @@ void Restore(char *cPasswd, char *cTableName);
 void RestoreAll(char *cPasswd);
 void mySQLRootConnect(char *cPasswd);
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet);
+void ImportRemoteDatacenter(const char *cDatacenter,const char *cHost,const char *cUser,
+	const char *cPasswd,const char *cuOwner);
 void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath);
 time_t cDateToUnixTime(char *cDate);
 void CreatetLogTable(char *cTableName);
@@ -610,6 +612,8 @@ void ExtMainShell(int argc, char *argv[])
                 RestoreAll(argv[2]);
 	else if(argc==6 && !strcmp(argv[1],"ExtracttLog"))
                	ExtracttLog(argv[2],argv[3],argv[4],argv[5]);
+	else if(argc==7 && !strcmp(argv[1],"ImportRemoteDatacenter"))
+                ImportRemoteDatacenter(argv[2],argv[3],argv[4],argv[5],argv[6]);
         else
 	{
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
@@ -626,6 +630,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tImportTemplateFile <mysql root passwd> <tTemplate.cLabel>"
 				" <filespec> <tTemplateSet.cLabel>\n");
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
+		printf("\tImportRemoteDatacenter <tDatacenter.cLabel> <host> <user> <passwd> <uOwner>\n");
 		printf("\n");
 	}
 	mysql_close(&gMysql);
@@ -909,7 +914,7 @@ void Initialize(char *cPasswd)
 }//void Initialize(void)
 
 
-//No need to redundancy here like TextConnectDb()
+//No need for redundancy here like TextConnectDb()
 void mySQLRootConnect(char *cPasswd)
 {
         mysql_init(&gMysql);
@@ -2073,3 +2078,79 @@ void ResetAllSyncPeriod(void)
 	printf("ResetAllSyncPeriod(): End\n");
 
 }//void ResetAllSyncPeriod(void)
+
+
+void ImportRemoteDatacenter(const char *cDatacenter,const char *cHost,
+			const char *cUser,const char *cPasswd,const char *cuOwner)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	MYSQL gMysqlExt;
+
+	printf("ImportRemoteDatacenter(): Start\n");
+
+	TextConnectDb();
+
+        mysql_init(&gMysqlExt);
+        if(!mysql_real_connect(&gMysqlExt,cHost,cUser,cPasswd,"unxsvz",0,NULL,0))
+        {
+                printf("Could not connect and/or authenticate to remote database.\n");
+                exit(1);
+        }
+
+	//Checks
+	//1. tDatacenter check
+	sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE cLabel='%s'",cDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)!=0)
+	{
+		printf("Local tDatacenter.cLabel=%s exists\n",cDatacenter);
+		exit(1);
+	}
+       	mysql_free_result(res);
+
+	mysql_query(&gMysqlExt,gcQuery);
+	if(mysql_errno(&gMysqlExt))
+		printf("%s\n",mysql_error(&gMysqlExt));
+	mysql_query(&gMysqlExt,gcQuery);
+	res=mysql_store_result(&gMysqlExt);
+	if(mysql_num_rows(res)==0)
+	{
+		printf("Remote tDatacenter.cLabel=%s does not exist\n",cDatacenter);
+		exit(1);
+	}
+       	mysql_free_result(res);
+
+	//2. tClient check
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uOwner=%s",cuOwner);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)==0)
+	{
+		printf("Local tClient.uClient=%s does not exist\n",cuOwner);
+		exit(1);
+	}
+       	mysql_free_result(res);
+
+	//Can start to add
+	//2-. Add tDatacenter, 3==Offline
+	sprintf(gcQuery,"INSERT INTO tDatacenter SET cLabel='%s',uStatus=3,uOwner=%s,"
+			"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				cDatacenter,cuOwner);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+
+	mysql_close(&gMysql);
+	mysql_close(&gMysqlExt);
+	printf("ImportRemoteDatacenter(): End\n");
+
+}//void ImportRemoteDatacenter()
