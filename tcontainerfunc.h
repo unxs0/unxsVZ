@@ -101,7 +101,7 @@ unsigned CreateNewContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCon
 unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned DestroyContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
-unsigned CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned CancelContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uCancelMode);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 void htmlContainerNotes(unsigned uContainer);
@@ -327,12 +327,19 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							mysql_query(&gMysql,gcQuery);
 							if(mysql_errno(&gMysql))
 								htmlPlainTextError(mysql_error(&gMysql));
-							//Cancel any outstanding jobs. TODO review this further
-							//Keeps job container from staying stuck in an awaiting state,
-							//but is confusing in logs since the function below should be
-							//extended for this case.
 							CancelContainerJob(sContainer.uDatacenter,sContainer.uNode,
-								uCtContainer);
+								uCtContainer,0);//0 is not specific cancel job attempt
+							//81=Awaiting clone
+							sprintf(gcQuery,"DELETE FROM tContainer WHERE uStatus=81 AND uSource=%u"
+										,uCtContainer);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer="
+							"(SELECT uContainer FROM tContainer WHERE uSource=%u AND uStatus=81)",uContainer);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
 							sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
 								uCtContainer);
 							mysql_query(&gMysql,gcQuery);
@@ -354,11 +361,8 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							sContainer.uStatus==uAWAITSTOP)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
-							//Keeps job container from staying stuck in an awaiting state,
-							//but is confusing in logs since the function below should be
-							//extended for this case.
 							if(!CancelContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uCtContainer))
+									sContainer.uNode,uCtContainer,1))
 							{
 								if(sContainer.uStatus==uAWAITDEL || 
 										sContainer.uStatus==uAWAITSTOP)
@@ -1643,7 +1647,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<blink>Error:</blink> Delete denied by permissions settings");
 			}
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
@@ -1677,15 +1681,22 @@ void ExttContainerCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
-				//Keeps job container from staying stuck in an awaiting state,
-				//but is confusing in logs since the function below should be
-				//extended for this case.
-				CancelContainerJob(uDatacenter,uNode,uContainer);
+				CancelContainerJob(uDatacenter,uNode,uContainer,0);
+				//81=Awaiting clone
+				sprintf(gcQuery,"DELETE FROM tContainer WHERE uStatus=81 AND uSource=%u",uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer="
+						"(SELECT uContainer FROM tContainer WHERE uSource=%u AND uStatus=81)",uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
 				DeletetContainer();
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<blink>Error:</blink> Delete denied by permissions settings");
 			}
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
@@ -1922,7 +1933,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> This record was modified. Job may have run!");
 
 				//Cancel any outstanding jobs.
-				if(CancelContainerJob(uDatacenter,uNode,uContainer))
+				if(CancelContainerJob(uDatacenter,uNode,uContainer,1))
 				{
 					tContainer("<blink>Error:</blink> Unexpected no jobs canceled! Late?");
 				}
@@ -2671,7 +2682,9 @@ void ExttContainerButtons(void)
 
                 case 2001:
                         printf("<p><u>Think twice</u>");
-                        printf("<br>Container and it's properties will be removed from unxsVZ database for good.<br>");
+                        printf("<br>Container and it's properties will be removed from unxsVZ database for good.<br>Any jobs"
+				" pending for this container or it's clone will be canceled. Any clone in <i>Awaiting clone</i>"
+				" status, will also be deleted.<p>");
                         printf(LANG_NBB_CONFIRMDEL);
                 break;
 
@@ -3465,23 +3478,48 @@ unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContai
 //Keeps job container from staying stuck in an awaiting state,
 //but is confusing in logs since the function below should be
 //extended for this case.
-unsigned CancelContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+unsigned CancelContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uCancelMode)
 {
+	unsigned uContainerJobsCanceled;
+	unsigned uContainerCloneJobsCanceled;
+
+	//Cancel any jobs for uContainer 1=Waiting 10=RemoteWaiting
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE "
-			"uDatacenter=%u AND uNode=%u AND uContainer=%u AND uJobStatus=1"
+			"uDatacenter=%u AND uNode=%u AND uContainer=%u AND (uJobStatus=1 OR uJobStatus=10)"
 				,uDatacenter,uNode,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-	if(mysql_affected_rows(&gMysql)>0)
+	uContainerJobsCanceled=mysql_affected_rows(&gMysql);
+
+	//Also cancel any jobs for uContainer's clones 1=Waiting 10=RemoteWaiting
+	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE "
+			"uDatacenter=%u AND uContainer=(SELECT uContainer FROM tContainer WHERE uSource=%u) AND uJobStatus=1"
+				,uDatacenter,uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uContainerCloneJobsCanceled=mysql_affected_rows(&gMysql);
+
+	//This convoluted logic is needed for specifically attempting to cancel container jobs uCancelMode=1
+	//versus general job queue clean up attempts.
+	if(uContainerJobsCanceled || uContainerCloneJobsCanceled)
 	{
 		unxsVZLog(uContainer,"tContainer","CancelJob");
-		return(0);
+		if(uCancelMode && !uContainerJobsCanceled)
+			return(1);
+		else
+			return(0);
 	}
-	unxsVZLog(uContainer,"tContainer","CancelJobLate");
-	return(1);
+	else if(uCancelMode)
+	{
+		unxsVZLog(uContainer,"tContainer","CancelJobLate");
+		return(1);
+	}
 
-}//unsigned CancelContainerJob(...)
+	return(0);
+
+}//unsigned CancelContainerJob()
 
 
 void SetContainerStatus(unsigned uContainer,unsigned uStatus)
