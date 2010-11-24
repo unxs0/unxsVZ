@@ -1812,7 +1812,8 @@ void ProcessVZJobQueue(void)
 	unsigned uJob=0;
 	MYSQL gMysql2;
 
-	printf("ProcessVZJobQueue() start\n");
+	//debug only
+	//printf("ProcessVZJobQueue() start\n");
 	if(!TextConnectDb() && !TextConnectExtDb(&gMysql2,TEXT_CONNECT_UNXSVZ))
 	{
 		MYSQL_RES *res;
@@ -1822,7 +1823,7 @@ void ProcessVZJobQueue(void)
 		structExtJobParameters structExtParam;
 
 		//debug only
-		printf("ProcessVZJobQueue() connected ok\n");
+		//printf("ProcessVZJobQueue() connected ok\n");
 		gethostname(gcHostname,98);
 	
 		//mysqlISP_Waiting same as unxsVZ.tJobStatus.cLabel "RemoteWaiting" 10
@@ -1852,8 +1853,9 @@ void ProcessVZJobQueue(void)
 			//unxsVZRR-FQName
 			//cName is a fully qualified DNS RR name, i.e. it ends in the zone name.
 			if(!strcmp("unxsVZContainerARR",field[0]))
-			{	
-				printf("ProcessVZJobQueue() unxsVZContainerARR\n");
+			{
+				//debug only
+				//printf("ProcessVZJobQueue() unxsVZContainerARR\n");
 
 				//Update remote job queue running
 				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='%.32s'"
@@ -1867,7 +1869,7 @@ void ProcessVZJobQueue(void)
 	
 				ParseExtParams(&structExtParam,field[1]);
 				//debug only
-				printf("%s(%u) data:\n",field[0],uJob);
+				//printf("%s(%u) data:\n",field[0],uJob);
 				if(structExtParam.ucIPv4)
 					printf("\tcIPv4=%s;\n",structExtParam.cIPv4);
 				if(structExtParam.ucName)
@@ -1926,7 +1928,7 @@ void ProcessVZJobQueue(void)
 					goto ErrorExit;
 				}
 				//debug only
-				printf("uZone=%u uNSSet=%u uView=%u\n",uZone,uNSSet,uView);
+				//printf("uZone=%u uNSSet=%u uView=%u\n",uZone,uNSSet,uView);
 
 				//Do not add same record based on type and cName
 				//If zone owner needs multiple records she will have to use an interface to do it.
@@ -2013,7 +2015,6 @@ void ProcessVZJobQueue(void)
 
 //Organize this later with another function
 ErrorExit:
-	//debug only
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsBind ext jobqueue error'"
 			" WHERE uJob=%u",unxsVZ_uERROR,uJob);
 	mysql_query(&gMysql2,gcQuery);
@@ -2021,7 +2022,8 @@ ErrorExit:
 		fprintf(stderr,"%s\n",mysql_error(&gMysql2));
 
 NormalExit:
-	printf("ProcessVZJobQueue() done\n");
+	//debug only
+	//printf("ProcessVZJobQueue() done\n");
 	mysql_close(&gMysql);
 
 }//void ProcessVZJobQueue(void)
