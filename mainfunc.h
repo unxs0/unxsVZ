@@ -2084,7 +2084,7 @@ void ImportRemoteDatacenter(const char *cDatacenter,const char *cHost,
 			const char *cUser,const char *cPasswd,const char *cuOwner)
 {
 	MYSQL_RES *res;
-	MYSQL_ROW field;
+	//MYSQL_ROW field;
 	MYSQL gMysqlExt;
 
 	printf("ImportRemoteDatacenter(): Start\n");

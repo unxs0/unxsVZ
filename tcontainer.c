@@ -65,7 +65,7 @@ static unsigned uSource=0;
 
 static char cuClientPullDown[256]={""};
 static char cAutoCloneNode[256]={""};
-static char cunxsBindRecordJobNSSet[256]={""};
+static char cunxsBindARecordJobZone[256]={""};
 
 #define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource"
 
@@ -443,7 +443,7 @@ void tContainerNewStep(unsigned uStep)
 		printf(" Create new group <input title='Instead of selecting an existing group optionally enter"
 			" a new tGroup.cLabel' type=text name=cService3 value='%s' maxlength=31><br>",cService3);
 
-		if(cunxsBindRecordJobNSSet[0])
+		if(cunxsBindARecordJobZone[0])
 		{
 			OpenRow("Create job for unxsBind","black");
 			printf("<input type=checkbox name=uCreateDNSJob ");
