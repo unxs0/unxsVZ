@@ -46,7 +46,7 @@ struct structContainer
 void GetContainerProps(unsigned uContainer,struct structContainer *sContainer);
 void InitContainerProps(struct structContainer *sContainer);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);
-unsigned unxsBindRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
+unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
 void ChangeGroup(unsigned uContainer, unsigned uGroup);
 unsigned CommonCloneContainer(
 		unsigned uContainer,
@@ -770,6 +770,19 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cHostname can't end with a '.'");
 				if(strstr(cHostname+(uHostnameLen-strlen(".cloneNN")-1),".clone"))
 					tContainer("<blink>Error:</blink> cHostname can't end with '.cloneN'");
+
+				//DNS sanity check
+				if(uCreateDNSJob)
+				{
+					cunxsBindARecordJobZone[0]=0;
+					GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+					if(!cunxsBindARecordJobZone[0])
+						tContainer("<blink>Error:</blink> Create job for unxsBind,"
+								" but no cunxsBindARecordJobZone");
+					
+					if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
+						tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+				}
 					
 				if(cService1[0] && strlen(cService1)<6)
 					tContainer("<blink>Error:</blink> Optional password must be at least 6 chars");
@@ -865,7 +878,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				else
 				{
 					tContainer("<blink>Error:</blink> Someone grabbed your IP"
-						", multiple container creation aborted -if Root select"
+						", single container creation aborted -if Root select"
 						" a company with IPs!");
 				}
 				mysql_free_result(res);
@@ -893,7 +906,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					else
 					{
 						tContainer("<blink>Error:</blink> Someone grabbed your clone IP"
-							", multiple container creation aborted -if Root select"
+							", single container creation aborted -if Root select"
 							" a company with IPs!");
 					}
 					mysql_free_result(res);
@@ -905,7 +918,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							break;
 						}
 					}
-					//TODO
+					//TODO --WHY can't they?
 					if(!strcmp(cIPv4ClassCClone,cIPv4ClassC))
 						tContainer("<blink>Error:</blink> Clone IPs must belong to a different"
 								" class C");
@@ -1195,6 +1208,19 @@ void ExttContainerCommands(pentry entries[], int x)
 							" to start with '.'");
 				if((uHostnameLen+uLabelLen)>62)
 					tContainer("<blink>Error:</blink> Combined length of cLabel+cHostname is too long");
+
+				//DNS sanity check
+				if(uCreateDNSJob)
+				{
+					cunxsBindARecordJobZone[0]=0;
+					GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+					if(!cunxsBindARecordJobZone[0])
+						tContainer("<blink>Error:</blink> Create job for unxsBind,"
+								" but no cunxsBindARecordJobZone");
+					
+					if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
+						tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+				}
 					
 				if(cService1[0] && strlen(cService1)<6)
 					tContainer("<blink>Error:</blink> Optional password must be at least 6 chars");
@@ -2218,6 +2244,8 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
+				unsigned uHostnameLen=0;
+
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -2226,12 +2254,24 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(!strcmp(cWizHostname,cHostname) && !strcmp(cWizLabel,cLabel))
 					tContainer("<blink>Error:</blink> cHostname and cLabel are the same!"
 							" You must change at least one.");
-				if(strlen(cWizHostname)<5)
+				if((uHostnameLen=strlen(cWizHostname))<5)
 					tContainer("<blink>Error:</blink> cHostname too short!");
 				if(strlen(cWizLabel)<2)
 					tContainer("<blink>Error:</blink> cLabel too short!");
 				if(strchr(cWizLabel,'.'))
 					tContainer("<blink>Error:</blink> cLabel has at least one '.'!");
+				//DNS sanity check
+				if(uCreateDNSJob)
+				{
+					cunxsBindARecordJobZone[0]=0;
+					GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+					if(!cunxsBindARecordJobZone[0])
+						tContainer("<blink>Error:</blink> Create job for unxsBind,"
+								" but no cunxsBindARecordJobZone");
+					
+					if(!strstr(cWizHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
+						tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+				}
 				//No same names or hostnames for same datacenter allowed.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
 						" AND uDatacenter=%u AND uContainer!=%u",
@@ -2302,6 +2342,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
 				unsigned uOldIPv4;
+				unsigned uHostnameLen=0;
 
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -2314,6 +2355,19 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uDatacenter!=uIPv4Datacenter)
 					tContainer("<blink>Error:</blink> The specified target uIPv4 does not "
 							"belong to the specified uDatacenter.");
+				//DNS sanity check
+				if(uCreateDNSJob)
+				{
+					cunxsBindARecordJobZone[0]=0;
+					GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+					if(!cunxsBindARecordJobZone[0])
+						tContainer("<blink>Error:</blink> Create job for unxsBind,"
+								" but no cunxsBindARecordJobZone");
+				
+					uHostnameLen=strlen(cHostname);
+					if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
+						tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+				}
                         	guMode=0;
 
 				//Fatal error section
@@ -2489,8 +2543,8 @@ void ExttContainerButtons(void)
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
-			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
-			if(cunxsBindRecordJobNSSet[0])
+			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+			if(cunxsBindARecordJobZone[0])
 			{
 				printf("<p>Create job for unxsBind A record<br>");
 				printf("<input type=checkbox name=uCreateDNSJob >");
@@ -2515,8 +2569,8 @@ void ExttContainerButtons(void)
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
-			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
-			if(cunxsBindRecordJobNSSet[0])
+			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+			if(cunxsBindARecordJobZone[0])
 			{
 				printf("<p>Create job for unxsBind A record<br>");
 				printf("<input type=checkbox name=uCreateDNSJob >");
@@ -2664,11 +2718,11 @@ void ExttContainerButtons(void)
 				printf("Auto-clone subsystem is enabled for selected datacenter: Clone target node"
 					" must not match selected node. Similarly, clone start uIPv4"
 					" must not match uIPv4 or fall in same range -as defined per number of containers.<p>");
-			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
-			if(cunxsBindRecordJobNSSet[0])
-				printf("unxsBind interface is configured for selected datacenter: DNS will be setup"
+			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+			if(cunxsBindARecordJobZone[0])
+				printf("unxsBind interface is configured for selected datacenter and <i>%s</i> zone: DNS will be setup"
 					" automatically for you, unless you opt-out by un-checking the <i>Create job...</i>"
-					" checkbox in the right data panel.<p>");
+					" checkbox in the right data panel.<p>",cunxsBindARecordJobZone);
 			printf("<input type=submit class=largeButton"
 				" title='Configure container and continue to create a single container'"
 				" name=gcCommand value='Single Container Creation'>\n");
@@ -2696,11 +2750,11 @@ void ExttContainerButtons(void)
 				printf("Auto-clone subsystem is enabled for selected datacenter: Clone target node"
 					" must not match selected node. Similarly, clone start uIPv4"
 					" must not match uIPv4 or fall in same range -as defined per number of containers.<p>");
-			GetConfiguration("cunxsBindRecordJobNSSet",cunxsBindRecordJobNSSet,uDatacenter,0,0,0);
-			if(cunxsBindRecordJobNSSet[0])
-				printf("unxsBind interface is configured for selected datacenter: DNS will be setup"
+			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+			if(cunxsBindARecordJobZone[0])
+				printf("unxsBind interface is configured for selected datacenter and <i>%s</i> zone: DNS will be setup"
 					" automatically for you, unless you opt-out by un-checking the <i>Create job...</i>"
-					" checkbox in the right data panel.<p>");
+					" checkbox in the right data panel.<p>",cunxsBindARecordJobZone);
 			printf("<input type=submit class=largeButton"
 				" title='Commit to creating multiple containers'"
 				" name=gcCommand value='Create Multiple Containers'>\n");
@@ -4529,11 +4583,11 @@ cParam1=174.121.136.102;
 cNSSet=ns1-2.yourdomain.com;
 cView=external;
 */
-unsigned unxsBindRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData)
+unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData)
 {
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindRecordJob(%u)',cJobName='unxsVZRR-FQName'"
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindARecordJob(%u)',cJobName='unxsVZContainerARR'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=%u"
@@ -4548,10 +4602,10 @@ unsigned unxsBindRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContain
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
-	unxsVZLog(uContainer,"tContainer","unxsBindRecordJob");
+	unxsVZLog(uContainer,"tContainer","unxsBindARecordJob");
 	return(uCount);
 
-}//unsigned unxsBindRecordJob(...)
+}//unsigned unxsBindARecordJob(...)
 
 
 void ChangeGroup(unsigned uContainer, unsigned uGroup)
@@ -4764,12 +4818,13 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	char cJobData[512];
-	char cIPv4[32]={"127.0.0.1"};
-	char cOwner[32]={"Root"};
+	char cIPv4[32]={""};
+	//char cOwner[32]={"Root"};
 	//Get all these from tConfiguration once.
 	static char cView[256]={"external"};
-	static char cuTTL[256]={"3600"};
-	static char cNSSet[256]={"ns1-2.yourdomain.com"};
+	static char cZone[256]={""};
+	//static char cuTTL[256]={"0"};//for zone default we use 0
+	//static char cNSSet[256]={""};//not supported yet
 	static unsigned uOnlyOnce=1;
 
 	//Sanity checks
@@ -4781,11 +4836,15 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 	//If called in loop be efficient.
 	if(uOnlyOnce)
 	{
-		GetConfiguration("cunxsBindRecordJobNSSet",cNSSet,uDatacenter,0,0,0);
-		GetConfiguration("cunxsBindRecordJobTTL",cuTTL,uDatacenter,0,0,0);
-		GetConfiguration("cunxsBindRecordJobView",cView,uDatacenter,0,0,0);
+		GetConfiguration("cunxsBindARecordJobZone",cZone,uDatacenter,0,0,0);
+		GetConfiguration("cunxsBindARecordJobView",cView,uDatacenter,0,0,0);
+		//GetConfiguration("cunxsBindARecordJobTTL",cuTTL,uDatacenter,0,0,0);//not supported yet
 		uOnlyOnce=0;
 	}
+
+	//Sanity checks
+	if(!cZone[0])
+		return;
 
 	if(cOptionalIPv4!=NULL && cOptionalIPv4[0])
 	{
@@ -4802,6 +4861,12 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 			sprintf(cIPv4,"%.31s",field[0]);
 	}
 
+	//Sanity checks
+	if(!cIPv4[0])
+		return;
+
+/*
+	//not supported yet
 	if(uOwner)
 	{
 		sprintf(gcQuery,"SELECT cLabel FROM tClient WHERE uClient=%u",uOwner);
@@ -4812,17 +4877,18 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 		if((field=mysql_fetch_row(res)))
 			sprintf(cOwner,"%.31s",field[0]);
 	}
+*/
 
 	mysql_free_result(res);
 	sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
-		"cuTTL=%.15s;\n"
-		"cRRType=A;\n"
-		"cParam1=%.99s;\n"
-		"cNSSet=%.31s;\n"
-		"cView=%.31s;\n"
-		"cOwner=%.31s;\n",
-			cHostname,cuTTL,cIPv4,cNSSet,cView,cOwner);
+		//"cuTTL=%.15s;\n"
+		"cIPv4=%.99s;\n"
+		//"cNSSet=%.31s;\n"
+		"cZone=%.99s;\n"
+		"cView=%.31s;\n",
+		//"cOwner=%.31s;\n",
+			cHostname,cIPv4,cZone,cView);
 
-	unxsBindRecordJob(uDatacenter,uNode,uContainer,cJobData);
+	unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData);
 
 }//void CreateDNSJob()
