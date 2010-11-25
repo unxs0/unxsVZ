@@ -105,7 +105,6 @@ void CloneReport(const char *cOptionalMsg)
 	unsigned uContainer;
 	unsigned uCount=0;
 	char cuSyncPeriod[16];
-	char *cColor;
 
 	//To handle error messages etc.
 	if(cOptionalMsg[0] && strcmp(cOptionalMsg,"CloneReport"))
@@ -116,7 +115,7 @@ void CloneReport(const char *cOptionalMsg)
 
 	OpenFieldSet("CloneReport",100);
 
-	OpenRow("<u>Not Being Cloned Containers</u>","black");
+	OpenRow("<u>Containers not being cloned</u>","black");
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
 				" uSource=0 AND (uStatus=1 OR uStatus=31) ORDER BY cLabel,uDatacenter,uNode");
 	macro_mySQLQueryErrorText
@@ -125,7 +124,6 @@ void CloneReport(const char *cOptionalMsg)
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		cuContainer[0]=0;
-		cColor="";
 
 		sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
 					" uSource=%s",mysqlField[2]);
@@ -155,6 +153,38 @@ void CloneReport(const char *cOptionalMsg)
 						mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField[4]);
 			}
 		}
+	}
+	mysql_free_result(mysqlRes);
+
+	//Lets add a count
+	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td><td></td>\n",uCount);
+
+	//1=Active 31=Stopped TODO
+	uCount=0;
+	OpenRow("<p>","black");
+	OpenRow("<u>Cloned containers not updated</u>","black");
+	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
+				" uSource=0 AND (uStatus=1 OR uStatus=31) ORDER BY cLabel,uDatacenter,uNode");
+	macro_mySQLQueryErrorText
+	printf("</td></tr><tr><td></td><td><u>cLabel</u></td><td><u>cHostname</u></td><td><u>uContainer</u></td>"
+			"<td><u>Clone Status</u></td><td><u>uNode</td><td><u>uDatacenter</u></td>\n");
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		sprintf(gcQuery,"SELECT tContainer.uContainer,tStatus.cLabel FROM tContainer,tStatus WHERE"
+					" tContainer.uSource=%s AND tContainer.uModDate<(UNIX_TIMESTAMP(NOW())-3600)"
+					" AND tContainer.uStatus=tStatus.uStatus",
+						mysqlField[2]);
+		macro_mySQLQueryErrorText2
+        	if((mysqlField2=mysql_fetch_row(mysqlRes2)))
+		{
+			uCount++;
+			printf("<tr><td></td><td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
+				"<td>%s</td><td>%s</td><td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>"
+				"</td><td>%s</td><td>%s</td>\n",mysqlField[2],mysqlField[0],mysqlField[1],
+								mysqlField[2],mysqlField2[0],mysqlField2[1],
+										mysqlField[3],mysqlField[4]);
+		}
+		mysql_free_result(mysqlRes2);
 	}
 	mysql_free_result(mysqlRes);
 

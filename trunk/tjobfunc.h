@@ -394,7 +394,17 @@ void ExttJobListSelect(void)
 			strcat(gcQuery," WHERE ");
 		else
 			strcat(gcQuery," AND ");
-		sprintf(cCat,"tJob.uJob=%u ORDER BY uJob",uJob);
+		sprintf(cCat,"tJob.uJob=%u",uJob);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uContainer"))
+        {
+                sscanf(gcCommand,"%u",&uContainer);
+		if(guLoginClient==1 && guPermLevel>11)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
+		sprintf(cCat,"tJob.uContainer=%u ORDER BY uJob",uContainer);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cLabel"))
@@ -425,6 +435,10 @@ void ExttJobListFilter(void)
                 printf("<option>uJob</option>");
         else
                 printf("<option selected>uJob</option>");
+        if(strcmp(gcFilter,"uContainer"))
+                printf("<option>uContainer</option>");
+        else
+                printf("<option selected>uContainer</option>");
         if(strcmp(gcFilter,"cLabel"))
                 printf("<option>cLabel</option>");
         else
