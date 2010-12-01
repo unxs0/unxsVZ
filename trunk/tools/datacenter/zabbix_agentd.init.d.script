@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# chkconfig: 2345 99 01
+# description: script to start zabbix agent
+# Processname: zabbix_agentd
+#
+#Based on Zabbix SIA init.d script in 1.8.3 release tar.gz.
+#Improvements by Unixservice, LLC.
+#Released into to the public domain 12/2010.
+#
+#FILE
+#	zabbix_agentd.init.d.script
+#INSTALL AS
+#	/etc/init.d/zabbix_agentd
+#PURPOSE
+#	Clean up very initial Zabbix version, with an also KISS version
+#	but a little cleaner (I hope.)
+#	and add /etc/zabbix/zabbix_agentd.conf hostname change on start.
+#DEPENDS ON
+#	hostname -f providing correct output 
+#	GNU sed with -i support.
+#	/etc/zabbix/zabbix_agentd.conf having standard Hostname=whatever.domain.dom line
+#
+case $1 in
+
+	start)
+		/usr/local/sbin/zabbix_agentd --config /etc/zabbix/zabbix_agentd.conf  > /dev/null 2>&1;
+		if [ $? != 0 ];then
+			echo "could not start zabbix_agentd";
+		fi
+		;;
+	stop)
+		/usr/bin/killall -9 zabbix_agentd > /dev/null 2>&1;
+		if [ $? != 0 ];then
+			echo "could not stop zabbix_agentd";
+		fi
+		;;
+	restart)
+		/usr/bin/killall -9 zabbix_agentd > /dev/null 2>&1;
+		if [ $? != 0 ];then
+			echo "could not stop zabbix_agentd";
+		fi
+		/usr/local/sbin/zabbix_agentd --config /etc/zabbix/zabbix_agentd.conf  > /dev/null 2>&1;
+		if [ $? != 0 ];then
+			echo "could not start zabbix_agentd";
+		fi
+		;;
+	status)
+		/bin/ps -ef | /bin/grep zabbix_agentd > /dev/null 2>&1;
+		if [ $? == 0 ];then
+			echo "zabbix_agentd is running";
+		else
+			echo "zabbix_agentd is NOT running";
+		fi
+		;;
+	change-hostname)
+		cHostname=`/bin/hostname -f`;
+		if [ "$cHostname" == "" ];then
+			echo "hostname -f failed";		
+			exit 1;
+		fi
+		/bin/sed -i -e "s/^Hostname=.*$/Hostname=$cHostname/" /etc/zabbix/zabbix_agentd.conf > /dev/null 2>&1;
+		if [ $? != 0 ];then
+			echo "could not change-hostname";
+		fi
+		;;
+	*)
+		echo "Usage: $0 start|stop|restart|status|change-hostname"
+esac
