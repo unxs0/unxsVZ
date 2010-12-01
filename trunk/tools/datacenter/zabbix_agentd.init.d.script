@@ -16,8 +16,8 @@
 #	Clean up very initial Zabbix version, with an also KISS version
 #	but a little cleaner (I hope.)
 #	and added /etc/zabbix/zabbix_agentd.conf hostname change on start.
-#	Since pbx's can come with preconfigured zabbix agentd conf for a generic
-#	server name.
+#	Since containers can come with preconfigured zabbix agentd conf for a generic
+#	server name, that needs to be set on initial start up.
 #DEPENDS ON
 #	hostname -f providing correct output 
 #	GNU sed with -i support.
