@@ -15,35 +15,53 @@
 #PURPOSE
 #	Clean up very initial Zabbix version, with an also KISS version
 #	but a little cleaner (I hope.)
-#	and add /etc/zabbix/zabbix_agentd.conf hostname change on start.
+#	and added /etc/zabbix/zabbix_agentd.conf hostname change on start.
+#	Since pbx's can come with preconfigured zabbix agentd conf for a generic
+#	server name.
 #DEPENDS ON
 #	hostname -f providing correct output 
 #	GNU sed with -i support.
 #	/etc/zabbix/zabbix_agentd.conf having standard Hostname=whatever.domain.dom line
 #
+
+function start {
+	/usr/local/sbin/zabbix_agentd --config /etc/zabbix/zabbix_agentd.conf  > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		echo "could not start zabbix_agentd";
+	fi
+}
+
+function stop {
+	/usr/bin/killall -9 /usr/local/sbin/zabbix_agentd > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		echo "could not stop zabbix_agentd";
+	fi
+}
+
+function change-hostname {
+	cHostname=`/bin/hostname -f`;
+	if [ "$cHostname" == "" ];then
+		echo "hostname -f failed";		
+		exit 1;
+	fi
+	/bin/sed -i -e "s/^Hostname=.*$/Hostname=$cHostname/" /etc/zabbix/zabbix_agentd.conf > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		echo "could not change-hostname";
+	fi
+}
+
 case $1 in
 
 	start)
-		/usr/local/sbin/zabbix_agentd --config /etc/zabbix/zabbix_agentd.conf  > /dev/null 2>&1;
-		if [ $? != 0 ];then
-			echo "could not start zabbix_agentd";
-		fi
+		change-hostname;
+		start;
 		;;
 	stop)
-		/usr/bin/killall -9 zabbix_agentd > /dev/null 2>&1;
-		if [ $? != 0 ];then
-			echo "could not stop zabbix_agentd";
-		fi
+		stop;
 		;;
 	restart)
-		/usr/bin/killall -9 zabbix_agentd > /dev/null 2>&1;
-		if [ $? != 0 ];then
-			echo "could not stop zabbix_agentd";
-		fi
-		/usr/local/sbin/zabbix_agentd --config /etc/zabbix/zabbix_agentd.conf  > /dev/null 2>&1;
-		if [ $? != 0 ];then
-			echo "could not start zabbix_agentd";
-		fi
+		stop;
+		start;
 		;;
 	status)
 		/bin/ps -ef | /bin/grep zabbix_agentd > /dev/null 2>&1;
@@ -54,15 +72,7 @@ case $1 in
 		fi
 		;;
 	change-hostname)
-		cHostname=`/bin/hostname -f`;
-		if [ "$cHostname" == "" ];then
-			echo "hostname -f failed";		
-			exit 1;
-		fi
-		/bin/sed -i -e "s/^Hostname=.*$/Hostname=$cHostname/" /etc/zabbix/zabbix_agentd.conf > /dev/null 2>&1;
-		if [ $? != 0 ];then
-			echo "could not change-hostname";
-		fi
+		change-hostname;
 		;;
 	*)
 		echo "Usage: $0 start|stop|restart|status|change-hostname"
