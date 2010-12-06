@@ -437,3 +437,77 @@ job does not finish correctly. It also maybe some extended job "done ok" message
 <p>\
 When debugging you should take note of this message as well as any other logfile\
 lines of interest and send them to your unxsVZ systems admin.
+761	Containers not being cloned	1	1	1269471626	1	1290690838	A simple report consisting of a list of containers that are not configured for\
+cloning. Or that having a clone, the clone is not configured for periodic rsync.\
+\
+<p>\
+<u>More details</u>:\
+\
+<p>\
+Cloned container can be setup as one-time snapshots and then periodically\
+rsync'd. The rsync period is set in the cloned container's <i>cuSyncPeriod</i>\
+property.
+771	Cloned containers not updated	1	1	1290691465	1	1290691524	A simple report consisting of a list of containers that have clones, but \
+where these clones have not been updated during the last hour.\
+\
+<p>\
+<u>More details</u>:\
+\
+<p>\
+Cloned container can be setup as one-time snapshots and then periodically\
+rsync'd. The rsync period is set in the cloned container's <i>cuSyncPeriod</i>\
+property. This list is useful for find problems with sub hour sync period clones.
+781	Selected datacenter	1	1	1291666041	1	1291666063	Refers to the datacenter (roughly equivalent to a set of nodes) you are using as a \
+property or will select for a given operation.\
+\
+<p>\
+Related terms: Selected node, selected organization
+791	Selected node	1	1	1291666125	0	0	Refers to the hardware node (roughly equivalent to a physical server or a set of \
+containers) you are using as a \
+property or will select for a given operation.\
+\
+<p>\
+Related terms: Selected datacenter, selected organization
+801	Selected organization	1	1	1291666261	0	0	Refers to the owner (see tClient) of the resource you are creating.\
+\
+<p>\
+Related terms: Selected datacenter, selected node.
+811	Select group	1	1	1291666476	0	0	Refers to an optional group (see tGroup), you will classify the resource you are \
+creating under.\
+\
+<p>\
+Related terms: Create new group.
+821	Create job for unxsBind	1	1	1291666640	0	0	Some operations optionally allow (if unxsVZ has been so configured via \
+tConfiguration) for associated unxsBind controlled DNS servers to be instructed to \
+change (or update) DNS data.\
+\
+
+831	Optional password	1	1	1291667122	0	0	Optionally set a container's password (or if applicable the same password for multiple \
+containers.) Only useful if container has root login services like ssh, or other \
+<i>/etc/passwd</i> root based authorization services. For security reasons this is \
+usually not recommended.
+841	Clone target node	1	1	1291667257	0	0	If unxsVZ has been setup to require failover containers (cloned containers) you must \
+specify the datacenter hardware node were the clone will be located. It must not be \
+the same node being used for the source container.
+851	Clone start uIPv4	1	1	1291667463	1	1291667619	If unxsVZ has been setup to require failover containers (cloned containers) you must \
+specify the IPs the clone (or clones) will use. \
+<p>\
+You specify a start IP, if you are creating more than one container other unused IPs of \
+the same class C will be assigned based on tIP.uIP order.\
+<p>\
+They must not be of the same class C \
+as the IPs used by the source container (containers.) This last requirement is being \
+reviewed as it may not be necessary with the latest versions of unxsVZ.
+861	Keep clone stopped	1	1	1291667864	0	0	If unxsVZ has been setup to require failover containers (cloned containers) you must \
+specify whether the cloned container(s) will be running or stopped. \
+<p>\
+Usually clones are kept stopped to save node system resources, and also since the \
+sync operations can be performed faster and more reliably.\
+
+871	Clone cuSyncPeriod	1	1	1291668194	0	0	If unxsVZ has been setup to require failover containers (cloned containers) you must \
+specify the cloned container(s) rsync period in seconds. \
+<p>\
+0 seconds for no rsync operations. Special external rsync scripts are used and should be customized for specific container \
+type sync requirements: Keeping in mind the period size, the number of files to be checked for incremental backup and the \
+amount of data that needs to be transfered on each sync period.\
+
