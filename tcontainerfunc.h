@@ -1739,17 +1739,17 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
 
 				guMode=5;
-				uStatus=0;//Internal hack for deploy button
+				uStatus=0;//Internal hack for deploy button turn off
 				//Release IPs
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
-						" WHERE uIP=%u and uAvailable=0",uIPv4);
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uIP=%u AND uAvailable=0",guLoginClient,uIPv4);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
 				//Node IP if any MySQL5+
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel IN"
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel IN"
 						" (SELECT cValue FROM tProperty WHERE uKey=%u"
-						" AND uType=3 AND cName='cNodeIP')",uContainer);
+						" AND uType=3 AND cName='cNodeIP')",guLoginClient,uContainer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -1771,6 +1771,13 @@ void ExttContainerCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
+				//Release clone IP
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uIP=(SELECT uIPv4 FROM tContainer WHERE uSource=%u AND uStatus=81)"
+						" AND uAvailable=0",guLoginClient,uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
 				DeletetContainer();
 			}
 			else
@@ -1789,15 +1796,6 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				guMode=2002;
 
-				//UI trick: Set the selected IP as available, otherwise it doesn't show up
-				//at the IP dropdown. Upon confirm modify it will be set unavailable again
-				//or if the IP is changed, it will be 'released' by this query below ;)
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
-						" WHERE uIP=%u AND uAvailable=0",uIPv4);
-						
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
 				tContainer(LANG_NB_CONFIRMMOD);
 			}
 			else
