@@ -807,6 +807,19 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup!=0 && cService3[0]!=0)
 					tContainer("<blink>Error:</blink> Or select a group or create a new one, not both");
 
+				//Let's not allow same cLabel containers in our system for now.
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cLabel);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+					mysql_free_result(res);
+					tContainer("<blink>Error:</blink> cLabel already in use");
+				}
+				mysql_free_result(res);
+
 				//DNS sanity check
 				if(uCreateDNSJob)
 				{
