@@ -44,6 +44,8 @@ struct structContainer
 	unsigned long uModDate;
 };
 void GetContainerProps(unsigned uContainer,struct structContainer *sContainer);
+void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue);
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 void InitContainerProps(struct structContainer *sContainer);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);
 unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
@@ -666,6 +668,9 @@ void ExttContainerCommands(pentry entries[], int x)
 		unsigned uNodeDatacenter=0;
 		time_t uActualModDate= -1;
 		char cContainerType[256]={""};
+		char cNCMDatacenter[256]={""};
+		char cNCMNode[256]={""};
+
 
 		uHideProps=1;
 
@@ -690,9 +695,13 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=9001;
 				if(!uDatacenter)
 					tContainer("<blink>Error:</blink> Must select a datacenter.");
+				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
+				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
+					tContainer("<blink>Error:</blink> Selected datacenter is full or not active. Select another.");
 				if(!uForClient)
 					tContainer("<blink>Error:</blink> Must select an organization"
 							" (company, NGO or similar.)");
+
                         	guMode=9002;
 	                        tContainer("New container step 2");
 			}
@@ -714,6 +723,16 @@ void ExttContainerCommands(pentry entries[], int x)
 							" (company, NGO or similar.)");
 				if(!uNode)
 					tContainer("<blink>Error:</blink> Must select a node.");
+
+				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
+				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
+					tContainer("<blink>Error:</blink> Selected datacenter is full or not active. Select another.");
+
+				GetNodeProp(uNode,"NewContainerMode",cNCMNode);
+				if(cNCMNode[0] && strcmp(cNCMNode,"Active"))
+					tContainer("<blink>Error:</blink> Selected node is not configured for active containers."
+							"Select another.");
+
                         	guMode=9003;
 	                        tContainer("New container step 3");
 			}
@@ -748,20 +767,16 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Unexpected uDatacenter==0!");
 				if(uNode==0)
 					tContainer("<blink>Error:</blink> Unexpected uNode==0!");
-				if(uIPv4==0)
-					tContainer("<blink>Error:</blink> You must select a IPv4");
-				if(uOSTemplate==0)
-					tContainer("<blink>Error:</blink> You must select a OSTemplate");
-				if(uConfig==0)
-					tContainer("<blink>Error:</blink> You must select a Config");
-				if(uNameserver==0)
-					tContainer("<blink>Error:</blink> You must select a Nameserver");
-				if(uSearchdomain==0)
-					tContainer("<blink>Error:</blink> You must select a Searchdomain");
-				if(uGroup==0 && cService3[0]==0)
-					tContainer("<blink>Error:</blink> Group is now required");
-				if(uGroup!=0 && cService3[0]!=0)
-					tContainer("<blink>Error:</blink> Or select a group or create a new one, not both");
+
+				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
+				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
+					tContainer("<blink>Error:</blink> Selected datacenter is full or not active. Select another.");
+
+				GetNodeProp(uNode,"NewContainerMode",cNCMNode);
+				if(cNCMNode[0] && strcmp(cNCMNode,"Active"))
+					tContainer("<blink>Error:</blink> Selected node is not configured for active containers."
+							"Select another.");
+
 				if((uLabelLen=strlen(cLabel))<2)
 					tContainer("<blink>Error:</blink> cLabel is too short");
 				if(strchr(cLabel,'.'))
@@ -774,6 +789,23 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cHostname can't end with a '.'");
 				if(strstr(cHostname+(uHostnameLen-strlen(".cloneNN")-1),".clone"))
 					tContainer("<blink>Error:</blink> cHostname can't end with '.cloneN'");
+				//New rule: cLabel must be first part (first stop) of cHostname.
+				if(strncmp(cLabel,cHostname,uLabelLen))
+					tContainer("<blink>Error:</blink> cLabel must be first part of cHostname.");
+				if(uIPv4==0)
+					tContainer("<blink>Error:</blink> You must select a uIPv4");
+				if(uOSTemplate==0)
+					tContainer("<blink>Error:</blink> You must select a uOSTemplate");
+				if(uConfig==0)
+					tContainer("<blink>Error:</blink> You must select a uConfig");
+				if(uNameserver==0)
+					tContainer("<blink>Error:</blink> You must select a uNameserver");
+				if(uSearchdomain==0)
+					tContainer("<blink>Error:</blink> You must select a uSearchdomain");
+				if(uGroup==0 && cService3[0]==0)
+					tContainer("<blink>Error:</blink> Group is now required");
+				if(uGroup!=0 && cService3[0]!=0)
+					tContainer("<blink>Error:</blink> Or select a group or create a new one, not both");
 
 				//DNS sanity check
 				if(uCreateDNSJob)
@@ -819,6 +851,12 @@ void ExttContainerCommands(pentry entries[], int x)
 								" for the clone");
 					if(uTargetNode==uNode)
 						tContainer("<blink>Error:</blink> Can't clone to same node");
+
+					GetNodeProp(uTargetNode,"NewContainerMode",cNCMNode);
+					if(cNCMNode[0] && strcmp(cNCMNode,"Clone"))
+					tContainer("<blink>Error:</blink> Selected clone target node is not configured for clone containers."
+							"Select another.");
+
 					sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uNodeDatacenter);
 					if(uDatacenter!=uNodeDatacenter)
 						tContainer("<blink>Error:</blink> The specified clone uNode does not "
@@ -1129,6 +1167,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(guPermLevel>=9)
 			{
                         	ProcesstContainerVars(entries,x);
+
                         	guMode=9003;
 				if(!uDatacenter)
 					tContainer("<blink>Error:</blink> Must select a datacenter.");
@@ -1137,6 +1176,16 @@ void ExttContainerCommands(pentry entries[], int x)
 							" (company, NGO or similar.)");
 				if(!uNode)
 					tContainer("<blink>Error:</blink> Must select a node.");
+
+				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
+				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
+					tContainer("<blink>Error:</blink> Selected datacenter is full or not active. Select another.");
+
+				GetNodeProp(uNode,"NewContainerMode",cNCMNode);
+				if(cNCMNode[0] && strcmp(cNCMNode,"Active"))
+					tContainer("<blink>Error:</blink> Selected node is not configured for active containers."
+							"Select another.");
+
                         	guMode=9004;
 	                        tContainer("New container step 4");
 			}
@@ -1181,20 +1230,16 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Unexpected uDatacenter==0!");
 				if(uNode==0)
 					tContainer("<blink>Error:</blink> Unexpected uNode==0!");
-				if(uIPv4==0)
-					tContainer("<blink>Error:</blink> You must select a IPv4");
-				if(uOSTemplate==0)
-					tContainer("<blink>Error:</blink> You must select a OSTemplate");
-				if(uConfig==0)
-					tContainer("<blink>Error:</blink> You must select a Config");
-				if(uNameserver==0)
-					tContainer("<blink>Error:</blink> You must select a Nameserver");
-				if(uSearchdomain==0)
-					tContainer("<blink>Error:</blink> You must select a Searchdomain");
-				if(uGroup==0 && cService3[0]==0)
-					tContainer("<blink>Error:</blink> Group is now required");
-				if(uGroup!=0 && cService3[0]!=0)
-					tContainer("<blink>Error:</blink> Or select a group or create a new one, not both");
+
+				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
+				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
+					tContainer("<blink>Error:</blink> Selected datacenter is full or not active. Select another.");
+
+				GetNodeProp(uNode,"NewContainerMode",cNCMNode);
+				if(cNCMNode[0] && strcmp(cNCMNode,"Active"))
+					tContainer("<blink>Error:</blink> Selected node is not configured for active containers."
+							"Select another.");
+
 				if((uLabelLen=strlen(cLabel))<2)
 					tContainer("<blink>Error:</blink> cLabel is too short");
 				if(strchr(cLabel,'.'))
@@ -1212,6 +1257,21 @@ void ExttContainerCommands(pentry entries[], int x)
 							" to start with '.'");
 				if((uHostnameLen+uLabelLen)>62)
 					tContainer("<blink>Error:</blink> Combined length of cLabel+cHostname is too long");
+
+				if(uIPv4==0)
+					tContainer("<blink>Error:</blink> You must select a uIPv4");
+				if(uOSTemplate==0)
+					tContainer("<blink>Error:</blink> You must select a uOSTemplate");
+				if(uConfig==0)
+					tContainer("<blink>Error:</blink> You must select a uConfig");
+				if(uNameserver==0)
+					tContainer("<blink>Error:</blink> You must select a uNameserver");
+				if(uSearchdomain==0)
+					tContainer("<blink>Error:</blink> You must select a uSearchdomain");
+				if(uGroup==0 && cService3[0]==0)
+					tContainer("<blink>Error:</blink> Group is now required");
+				if(uGroup!=0 && cService3[0]!=0)
+					tContainer("<blink>Error:</blink> Or select a group or create a new one, not both");
 
 				//DNS sanity check
 				if(uCreateDNSJob)
@@ -1257,6 +1317,12 @@ void ExttContainerCommands(pentry entries[], int x)
 								" for the clone");
 					if(uTargetNode==uNode)
 						tContainer("<blink>Error:</blink> Can't clone to same node");
+
+					GetNodeProp(uTargetNode,"NewContainerMode",cNCMNode);
+					if(cNCMNode[0] && strcmp(cNCMNode,"Clone"))
+					tContainer("<blink>Error:</blink> Selected node is not configured for clone containers."
+							"Select another.");
+
 					sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uNodeDatacenter);
 					if(uDatacenter!=uNodeDatacenter)
 						tContainer("<blink>Error:</blink> The specified clone uNode does not "
@@ -2707,6 +2773,8 @@ void ExttContainerButtons(void)
 				" name=gcCommand value='Select Datacenter/Org'>\n");
 			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
 				" name=gcCommand value='Cancel'>\n");
+			//if(!uOwner && uForClient)
+			//	printf("<input type=hidden name=uOwner value='%u'>\n",uForClient);
                 break;
 
                 case 9002:
@@ -2724,8 +2792,8 @@ void ExttContainerButtons(void)
                 case 9003:
 			printf("<u>New Container Setup</u><br>");
 			printf("Set container creation parameters. Choices are limited based on selected datacenter, node,"
-				" and the organization that the container is being created for. We recommend that the cLabel"
-				" be the short cHostname, in DNS terms.<p>");
+				" and the organization that the container is being created for. We now require that the cLabel"
+				" be the first part (first stop) of the cHostname (for multiple container creation this is automatic.)<p>");
 			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
 			if(cAutoCloneNode[0])
 				printf("Auto-clone subsystem is enabled for selected datacenter: Clone target node"

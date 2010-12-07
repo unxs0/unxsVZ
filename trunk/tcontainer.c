@@ -376,6 +376,9 @@ void tContainerNewStep(unsigned uStep)
 		OpenRow("Select an organization","black");
 		uForClient=uOwner;
 		tTablePullDownResellers(uForClient,0);
+		//Helper
+		if(uOwner)
+			printf("<input type=hidden name=uOwner value=%u >\n",uOwner);
 	}
 	else if(uStep==2)
 	{
