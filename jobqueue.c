@@ -63,6 +63,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData);
 void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData);
 void GetIPFromtIP(const unsigned uIPv4,char *cIP);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
+void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue);
 void logfileLine(const char *cFunction,const char *cLogline);
 void LogError(char *cErrorMsg,unsigned uKey);
 void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
@@ -3533,6 +3534,7 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 
 	if(uNode==0) return;
 
+	//2 is node
 	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",
 				uNode,cName);
 	mysql_query(&gMysql,gcQuery);
@@ -3559,6 +3561,42 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 	mysql_free_result(res);
 
 }//void GetNodeProp()
+
+
+void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uDatacenter==0) return;
+
+	//1 is datacenter
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=1 AND cName='%s'",
+				uDatacenter,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		if(gLfp!=NULL)
+		{
+			logfileLine("GetDatacenterProp",mysql_error(&gMysql));
+			exit(2);
+		}
+		else
+		{
+			htmlPlainTextError(mysql_error(&gMysql));
+		}
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetDatacenterProp()
 
 
 void logfileLine(const char *cFunction,const char *cLogline)
