@@ -137,6 +137,7 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 void DelProperties(unsigned uNode,unsigned uType);//tnodefunc.h
 
+#include <openisp/ucidr.h>
 
 void htmlGenMountInputs(unsigned const uMountTemplate)
 {
@@ -670,7 +671,7 @@ void ExttContainerCommands(pentry entries[], int x)
 		char cContainerType[256]={""};
 		char cNCMDatacenter[256]={""};
 		char cNCMNode[256]={""};
-
+		char cNCCloneRange[256]={""};
 
 		uHideProps=1;
 
@@ -794,18 +795,6 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cLabel must be first part of cHostname.");
 				if(uIPv4==0)
 					tContainer("<blink>Error:</blink> You must select a uIPv4");
-				if(uOSTemplate==0)
-					tContainer("<blink>Error:</blink> You must select a uOSTemplate");
-				if(uConfig==0)
-					tContainer("<blink>Error:</blink> You must select a uConfig");
-				if(uNameserver==0)
-					tContainer("<blink>Error:</blink> You must select a uNameserver");
-				if(uSearchdomain==0)
-					tContainer("<blink>Error:</blink> You must select a uSearchdomain");
-				if(uGroup==0 && cService3[0]==0)
-					tContainer("<blink>Error:</blink> Group is now required");
-				if(uGroup!=0 && cService3[0]!=0)
-					tContainer("<blink>Error:</blink> Or select a group or create a new one, not both");
 
 				//Let's not allow same cLabel containers in our system for now.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cLabel);
@@ -819,6 +808,24 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cLabel already in use");
 				}
 				mysql_free_result(res);
+
+				GetDatacenterProp(uDatacenter,"NewContainerCloneRange",cNCCloneRange);
+				if(cNCCloneRange[0] && uIpv4InCIDR4(ForeignKey("tIP","cLabel",uIPv4),cNCCloneRange))
+					tContainer("<blink>Error:</blink> uIPv4 must not be in datacenter clone IP range");
+
+				if(uOSTemplate==0)
+					tContainer("<blink>Error:</blink> You must select a uOSTemplate");
+				if(uConfig==0)
+					tContainer("<blink>Error:</blink> You must select a uConfig");
+				if(uNameserver==0)
+					tContainer("<blink>Error:</blink> You must select a uNameserver");
+				if(uSearchdomain==0)
+					tContainer("<blink>Error:</blink> You must select a uSearchdomain");
+				if(uGroup==0 && cService3[0]==0)
+					tContainer("<blink>Error:</blink> Group is now required");
+				if(uGroup!=0 && cService3[0]!=0)
+					tContainer("<blink>Error:</blink> Or select a group or create a new one, not both");
+
 
 				//DNS sanity check
 				if(uCreateDNSJob)
@@ -887,9 +894,12 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uDatacenter!=uIPv4Datacenter)
 						tContainer("<blink>Error:</blink> The specified uIPv4 does not "
 							"belong to the specified uDatacenter.");
+					if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
+						tContainer("<blink>Error:</blink> Clone start uIPv4 must be in datacenter clone IP range");
 					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
 						tContainer("<blink>Error:</blink> Clone uSyncPeriod out of range:"
 								" Max 30 days, min 5 minutes or 0 off.");
+					//tContainer("<blink>Error:</blink> d1");
 				}
 
 				//TODO review this policy.
