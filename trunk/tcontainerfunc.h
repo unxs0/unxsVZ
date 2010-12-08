@@ -1283,6 +1283,10 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(uIPv4==0)
 					tContainer("<blink>Error:</blink> You must select a uIPv4");
+				GetDatacenterProp(uDatacenter,"NewContainerCloneRange",cNCCloneRange);
+				if(cNCCloneRange[0] && uIpv4InCIDR4(ForeignKey("tIP","cLabel",uIPv4),cNCCloneRange))
+					tContainer("<blink>Error:</blink> uIPv4 must not be in datacenter clone IP range");
+
 				if(uOSTemplate==0)
 					tContainer("<blink>Error:</blink> You must select a uOSTemplate");
 				if(uConfig==0)
@@ -1363,6 +1367,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uDatacenter!=uIPv4Datacenter)
 						tContainer("<blink>Error:</blink> The specified uIPv4 does not "
 							"belong to the specified uDatacenter.");
+					if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
+						tContainer("<blink>Error:</blink> Clone start uIPv4 must be in datacenter clone IP range");
 					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
 						tContainer("<blink>Error:</blink> Clone uSyncPeriod out of range:"
 								" Max 30 days, min 5 minutes or 0 off.");
