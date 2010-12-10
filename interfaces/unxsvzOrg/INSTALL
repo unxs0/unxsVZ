@@ -1,0 +1,27 @@
+#
+#FILE
+#	unxsVZ/interfaces/unxsvzOrg/INSTALL
+#	$Id: INSTALL 1334 2010-04-09 16:03:46Z Gary $
+#AUTHOR-LEGAL
+#	(C) 2010 Gary Wallis for Unixservice LLC.
+#	GPLv2 license applies. See included LICENSE file.
+#NOTES
+#	Based on using BASH shell on a CentOS 5 GNU/Linux server (or VE/VM.)
+#	Examples commands may have to be changed. They are based on the CentOS5 
+#	rpm distribution.
+#
+
+unxsvzOrg Quick Install Instructions
+
+---
+Brief Introduction:
+
+---
+Prerequisites:
+
+---
+Important notes about upgrading and other post install issues:
+
+
+---
+Instructions:
