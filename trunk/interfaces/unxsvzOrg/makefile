@@ -1,0 +1,42 @@
+#
+#FILE
+#	makefile
+#	$Id: makefile 1456 2010-05-16 22:32:30Z Gary $
+#AUTHOR/LEGAL
+#	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+#	(C) 2010 Gary Wallis for Unixservice, LLC.
+#	GPLv2 license applies. See included LICENSE file.
+#PURPOSE
+#	General purpose RAD3 interface makefile
+#	Must customize CGINAME 
+#
+
+CGINAME= unxsvzOrg.cgi
+
+CFLAGS=-Wall
+LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
+
+interface.cgi: main.o glossary.o ldap.o ../../cgi.o mysqlconnect.o
+	cc main.o glossary.o ldap.o ../../cgi.o mysqlconnect.o -o interface.cgi $(LIBS)
+
+main.o: main.c interface.h ../../local.h ../../mysqlrad.h
+	cc -c main.c -o main.o $(CFLAGS) 
+
+glossary.o: glossary.c interface.h ../../local.h ../../mysqlrad.h
+	cc -c glossary.c -o glossary.o $(CFLAGS)
+
+ldap.o: ldap.c  interface.h ../../local.h ../../mysqlrad.h
+	cc -o ldap.o -c ldap.c $(CFLAGS)
+
+mysqlconnect.o: mysqlconnect.c  ../../local.h interface.h
+	cc -o mysqlconnect.o -c mysqlconnect.c $(CFLAGS)
+
+cgi.o: ../../cgi.c  ../../cgi.h
+	cc -o ../../cgi.o -c ../../cgi.c $(CFLAGS)
+
+clean:
+	rm -f *.o *.cgi
+	
+install: interface.cgi
+	install -m 510 -g apache -s interface.cgi /var/www/unxs/cgi-bin/$(CGINAME)
+	rm -f interface.cgi
