@@ -66,7 +66,6 @@ void GetPLAndClient(char *cUser);
 void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization);
 #endif
 void htmlLogin(void);
-void htmlUser(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
 
 
@@ -79,6 +78,7 @@ int main(int argc, char *argv[])
 	register int i;
 	int cl=0;
 
+
 	ConnectDb();
 
 	if(getenv("REMOTE_ADDR")!=NULL)
@@ -90,8 +90,8 @@ int main(int argc, char *argv[])
 			guBrowserFirefox=1;
 	}
 
-	gethostname(gcHostname, 98);
-	
+	gethostname(gcHostname,98);
+
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{
 		//Get	
@@ -116,6 +116,8 @@ int main(int argc, char *argv[])
 				GlossaryGetHook(gentries,i);
 			else if(!strcmp(gcPage,"User"))
 				UserGetHook(gentries,i);
+			else if(!strcmp(gcPage,"Container"))
+				ContainerGetHook(gentries,i);
 		}
 	}
 	else
@@ -173,6 +175,7 @@ int main(int argc, char *argv[])
 
 	//Per page command tree
 	UserCommands(entries,i);
+	ContainerCommands(entries,i);
 	
 	//default logged in page
 	htmlUser();

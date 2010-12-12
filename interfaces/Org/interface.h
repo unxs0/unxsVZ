@@ -93,6 +93,13 @@ extern unsigned guView;
 //Menu
 //
 
+//container.c
+void ProcessContainerVars(pentry entries[], int x);
+void ContainerGetHook(entry gentries[],int x);
+void ContainerCommands(pentry entries[], int x);
+void htmlContainer(void);
+void htmlContainerPage(char *cTitle, char *cTemplateName);
+
 //user.c
 void ProcessUserVars(pentry entries[], int x);
 void UserGetHook(entry gentries[],int x);
