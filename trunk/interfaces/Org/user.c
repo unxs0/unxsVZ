@@ -13,7 +13,22 @@ PURPOSE
 #include "interface.h"
 
 extern unsigned guBrowserFirefox;//main.c
-static char cDomain[100]={""};
+extern char cHostname[];
+static char cCurPasswd[32]={""};
+static char cPasswd[32]={""};
+static char cPasswd2[32]={""};
+
+//TOC
+void ProcessUserVars(pentry entries[], int x);
+void UserGetHook(entry gentries[],int x);
+unsigned uNoUpper(const char *cPasswd);
+unsigned uNoDigit(const char *cPasswd);
+unsigned uNoLower(const char *cPasswd);
+unsigned uChangePassword(const char *cPasswd);
+void EncryptPasswdWithSalt(char *pw, char *salt);
+char *cGetPasswd(char *gcLogin);
+unsigned uValidLoginPasswd(const char *cPasswd);
+
 
 void ProcessUserVars(pentry entries[], int x)
 {
@@ -21,8 +36,14 @@ void ProcessUserVars(pentry entries[], int x)
 	
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(entries[i].name,"cDomain"))
-			sprintf(cDomain,"%.99s",entries[i].val);
+		if(!strcmp(entries[i].name,"cCurPasswd"))
+			sprintf(cCurPasswd,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cPasswd"))
+			sprintf(cPasswd,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cPasswd2"))
+			sprintf(cPasswd2,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cHostname"))
+			sprintf(cHostname,"%.99s",entries[i].val);
 	}
 
 }//void ProcessUserVars(pentry entries[], int x)
@@ -36,9 +57,75 @@ void UserGetHook(entry gentries[],int x)
 }//void UserGetHook(entry gentries[],int x)
 
 
-void SelectDomain(void)
+unsigned uNoUpper(const char *cPasswd)
 {
-}//void SelectDomain(void)
+	register int i;
+	for(i=0;cPasswd[i];i++)
+		if(isupper(cPasswd[i])) return(0);
+	return(1);
+}//unsigned uNoUpper(const char *cPasswd)
+
+
+unsigned uNoLower(const char *cPasswd)
+{
+	register int i;
+	for(i=0;cPasswd[i];i++)
+		if(islower(cPasswd[i])) return(0);
+	return(1);
+}//unsigned uNoLower(const char *cPasswd)
+
+
+unsigned uNoDigit(const char *cPasswd)
+{
+	register int i;
+	for(i=0;cPasswd[i];i++)
+		if(isdigit(cPasswd[i])) return(0);
+	return(1);
+}//unsigned uNoDigit(const char *cPasswd)
+
+
+unsigned uChangePassword(const char *cPasswd)
+{
+	char cBuffer[100]={""};
+	char cSalt[16]={"$1$23abc123$"};//TODO set to random salt;
+
+	sprintf(cBuffer,"%.99s",cPasswd);
+	EncryptPasswdWithSalt(cBuffer,cSalt);
+
+	sprintf(gcQuery,"UPDATE tAuthorize SET cPasswd='%.99s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel='%s'",
+			cBuffer,guLoginClient,gcLogin);
+	mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		return(1);
+	if(mysql_affected_rows(&gMysql)<1)
+		return(1);
+	return(0);
+}//unsigned uChangePassword(const char *cPasswd)
+
+
+unsigned uValidLoginPasswd(const char *cPasswd)
+{
+	char cSalt[16]={""};
+	char cPassword[100]={""};
+	char cBuffer[100]={""};
+
+	sprintf(cPassword,"%.99s",cGetPasswd(gcLogin));
+	sprintf(cBuffer,"%.99s",cPasswd);
+	if(cPassword[0])
+	{
+		//MD5 vs DES salt determination
+		if(cPassword[0]=='$' && cPassword[2]=='$')
+			sprintf(cSalt,"%.12s",cPassword);
+		else
+			sprintf(cSalt,"%.2s",cPassword);
+		EncryptPasswdWithSalt(cBuffer,cSalt);
+		if(!strcmp(cBuffer,cPassword))
+				return 1;
+	}
+
+	return 0;
+
+}//unsigned uValidLoginPasswd(const char *cPasswd)
 
 
 void UserCommands(pentry entries[], int x)
@@ -46,9 +133,52 @@ void UserCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"User"))
 	{
 		ProcessUserVars(entries,x);
-		if(!strcmp(gcFunction,"Select Domain"))
+		if(!strcmp(gcFunction,"Change Password"))
 		{
-			SelectDomain();
+			if(!cCurPasswd[0])
+			{
+				gcMessage="<blink>Error</blink>: Must enter 'Current Password'";
+				htmlUser();
+			}
+			if(!cPasswd[0] || !cPasswd2[0] || strcmp(cPasswd,cPasswd2))
+			{
+				gcMessage="<blink>Error</blink>: Must enter new 'Password' twice and they must match";
+				htmlUser();
+			}
+			if(!strcmp(cCurPasswd,cPasswd))
+			{
+				gcMessage="<blink>Error</blink>: New 'Password' is the same as current password";
+				htmlUser();
+			}
+			if(strlen(cPasswd)<6)
+			{
+				gcMessage="<blink>Error</blink>: New 'Password' must be at least 6 chars long";
+				htmlUser();
+			}
+			if(strstr(cPasswd,gcLogin) || strstr(gcLogin,cPasswd) ||
+				strstr(cPasswd,gcName) || strstr(gcName,cPasswd) ||
+				strstr(gcOrgName,cPasswd) || strstr(cPasswd,gcOrgName))
+			{
+				gcMessage="<blink>Error</blink>: New 'Password' must not be related to your login or company";
+				htmlUser();
+			}
+			if(uNoUpper(cPasswd) || uNoLower(cPasswd) || uNoDigit(cPasswd))
+			{
+				gcMessage="<blink>Error</blink>: New 'Password' must have some upper and lower case letters,"
+						" and at least one number";
+				htmlUser();
+			}
+			if(!uValidLoginPasswd(cCurPasswd))
+			{
+				gcMessage="<blink>Error</blink>: Current Password is not correct";
+				htmlUser();
+			}
+			if(uChangePassword(cPasswd))
+			{
+				gcMessage="<blink>Error</blink>: Password not changed contact system admin";
+				htmlUser();
+			}
+			gcMessage="Password changed you will need to login again";
 			htmlUser();
 		}
 	}
@@ -102,11 +232,16 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[7]="gcMessage";
 			template.cpValue[7]=gcMessage;
 
-			template.cpName[8]="cDomain";
-			template.cpValue[8]=cDomain;
+			template.cpName[8]="cHostname";
+			template.cpValue[8]=cHostname;
 
 			template.cpName[9]="";
 
+//debug only
+//printf("Content-type: text/html\n\n");
+//printf("d6 %s",gcUser);
+//exit(0);
+	
 			printf("\n<!-- Start htmlUserPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
 			printf("\n<!-- End htmlUserPage(%s) -->\n",cTemplateName); 
