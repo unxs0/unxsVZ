@@ -18,7 +18,7 @@
 	<a title='User settings page' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=User'><b class ="font10pt">User</b></a>
 </td>
 <td class="wpsUnSelectedPlace" nowrap height="100%">
-	<a title='Container management page' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=Container&uContainer={{uContainer}}'><b class ="font10pt">Container</b></a>
+	<a title='Container management page' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=Container&guContainer={{guContainer}}'><b class ="font10pt">Container</b></a>
 </td>
 
 </tr>
@@ -41,7 +41,8 @@
 
 <form method=post action={{cCGI}} style="margin:0px;">
 <input type=hidden name="gcPage" value="User">
-<input type=hidden name="cHostname" value="{{cHostname}}">
+<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
+<input type=hidden name="guContainer" value="{{guContainer}}">
 <table width=1200  border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td>
@@ -97,7 +98,7 @@
 			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Login')"><strong>Login</strong></a>
 		</td>
 		<td>
-			<input type=text name=cLogin value='{{gcLogin}}' size=40 maxlength=99 disabled class="type_fields_on">
+			<input type=text name=cLogin value='{{gcLogin}}' size=40 maxlength=99 disabled class="type_fields_off">
 			<input type=hidden name=cLogin value='{{gcLogin}}'>
 		</td>
 	</tr>
@@ -107,7 +108,7 @@
 			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Current Password</strong></a>
 		</td>
 		<td>
-			<input type=password name=cCurPasswd autocomplete=off size=40 maxlength=32 class="type_fields_on">
+			<input type=password name=cCurPasswd autocomplete=off size=40 maxlength=32 class="type_fields">
 		</td>
 	</tr>
 
@@ -116,7 +117,7 @@
 			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Password</strong></a>
 		</td>
 		<td>
-			<input type=password name=cPasswd value='{{cPasswd}}' size=40 maxlength=32 class="type_fields_on">
+			<input type=password name=cPasswd value='{{cPasswd}}' size=40 maxlength=32 class="type_fields">
 		</td>
 	</tr>
 
@@ -125,7 +126,7 @@
 			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Password Again</strong></a>
 		</td>
 		<td>
-			<input type=password name=cPasswd2 value='{{cPasswd2}}' size=40 maxlength=32 class="type_fields_on">
+			<input type=password name=cPasswd2 value='{{cPasswd2}}' size=40 maxlength=32 class="type_fields">
 		</td>
 	</tr>
 
