@@ -15,10 +15,10 @@
 <tr>
 
 <td class="wpsUnSelectedPlace" nowrap height="100%">
-	<a title='User management page' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=User&uContainer={{uContainer}}'><b class ="font10pt">User</b></a>
+	<a title='User management page' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=User&guContainer={{guContainer}}'><b class ="font10pt">User</b></a>
 </td>
 <td class="wpsSelectedPlace" nowrap height="100%">
-	<a title='Container settings page' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=Container&uContainer={{uContainer}}'><b class ="font10pt">Container</b></a>
+	<a title='Container settings page' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=Container&guContainer={{guContainer}}'><b class ="font10pt">Container</b></a>
 </td>
 
 </tr>
@@ -41,7 +41,7 @@
 
 <form method=post action={{cCGI}} style="margin:0px;">
 <input type=hidden name="gcPage" value="Container">
-<input type=hidden name="cHostname" value="{{cHostname}}">
+<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
 <table width=1200  border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td>
@@ -57,7 +57,7 @@
 <td width="10"> </td>
 <td valign="top" width="9" class="hdrtout padlt8"></td>
 <td class="hdrtout padlt8">
-	<h6 class="modhdr">{{cHostname}} Container settings</h6>
+	<h6 class="modhdr">{{gcCtHostname}} Container settings</h6>
 </td>
 <td valign="top" width="9" class="hdrtout padlt8"></td>
 </tr>
@@ -69,13 +69,22 @@
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
 	<tr>
 		<td valign="top">
-			<strong><u>Search</u></strong>
+			<strong><u>Select</u></strong>
 		</td>
 		<td>
 			<br>
-			<input type=input title='Enter a container name or hostname, you can use SQL "%" and "." pattern matching chars'
-			name=cSearch value='{{cSearch}}'>
-			<br><input type=submit name="gcFunction" class=largeButton value="Container Search">
+			{{funcSelectContainer}}
+		</td>
+	</tr>
+	<tr>
+		<td valign="top">
+			<strong><u>Filter</u></strong>
+		</td>
+		<td>
+			<br>
+			<input type=text class=type_fields 
+			title='Enter first letter(s), or you can use SQL "%" and "_" pattern matching chars'
+			name=gcSearch value='{{gcSearch}}' size=16 maxlength=32 onChange='submit()'>
 		</td>
 	</tr>
 	<tr>
@@ -83,7 +92,7 @@
 			<strong><u>Usage</u></strong>
 		</td>
 		<td>
-			<br>Here you can search for a container and find specific information about it. Enter the containers hostname, label or VEID number in the search box above. Once you have selected and loaded a container you will be able to view different container details.
+			<br>Here you can search for a container and find specific information about it. Set a containers hostname filter then use the select. Once you have loaded a container you will be able to access specific details.
 		</td>
 	</tr>
 			
@@ -99,16 +108,24 @@
 <!-- Container settings panel content -->
 <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
 	<tr>
+	<td> </td>
+	<td>{{funcContainerImageTag}}</td>
+	</tr>
+
+	<tr>
 		<td>
+			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Name</strong></a>
 		</td>
 		<td>
+			<input type=text name=gcLabel value='{{gcLabel}}' size=40 maxlength=32 class="type_fields_off">
 		</td>
 	</tr>
 
 	<tr>
-		<td> </td>
 		<td colspan=2>
-		<input type=submit title='Show selected container details' disabled class=largeButton name=gcFunction value='Show Details'>
+		<br>
+		<input type=submit title='Show selected container details' {{cDisabled}} 
+			class=largeButton name=gcFunction value='Show Details'>
 		</td>
 	</tr>
 </table>

@@ -336,10 +336,10 @@ void htmlFooter(char *cTemplateName)
 //libtemplate.a required
 void AppFunctions(FILE *fp,char *cFunction)
 {
-	//if(!strcmp(cFunction,"funcSelectZone"))
-	//	funcSelectZone(fp);
-	//else if(!strcmp(cFunction,"funcSelectBlock"))
-        //       funcSelectBlock(fp);
+	if(!strcmp(cFunction,"funcSelectContainer"))
+		funcSelectContainer(fp);
+	else if(!strcmp(cFunction,"funcContainerImageTag"))
+		funcContainerImageTag(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 

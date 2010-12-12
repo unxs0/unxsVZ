@@ -13,7 +13,7 @@ PURPOSE
 #include "interface.h"
 
 extern unsigned guBrowserFirefox;//main.c
-extern char cHostname[];
+extern char gcCtHostname[];
 static char cCurPasswd[32]={""};
 static char cPasswd[32]={""};
 static char cPasswd2[32]={""};
@@ -28,6 +28,7 @@ unsigned uChangePassword(const char *cPasswd);
 void EncryptPasswdWithSalt(char *pw, char *salt);
 char *cGetPasswd(char *gcLogin);
 unsigned uValidLoginPasswd(const char *cPasswd);
+extern unsigned guContainer;
 
 
 void ProcessUserVars(pentry entries[], int x)
@@ -42,8 +43,10 @@ void ProcessUserVars(pentry entries[], int x)
 			sprintf(cPasswd,"%.32s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cPasswd2"))
 			sprintf(cPasswd2,"%.32s",entries[i].val);
-		else if(!strcmp(entries[i].name,"cHostname"))
-			sprintf(cHostname,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"gcCtHostname"))
+			sprintf(gcCtHostname,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"guContainer"))
+			sscanf(entries[i].val,"%u",&guContainer);
 	}
 
 }//void ProcessUserVars(pentry entries[], int x)
@@ -51,6 +54,13 @@ void ProcessUserVars(pentry entries[], int x)
 
 void UserGetHook(entry gentries[],int x)
 {
+	register int i;
+	
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"guContainer"))
+			sscanf(gentries[i].val,"%u",&guContainer);
+	}
 
 	htmlUser();
 
@@ -232,10 +242,15 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[7]="gcMessage";
 			template.cpValue[7]=gcMessage;
 
-			template.cpName[8]="cHostname";
-			template.cpValue[8]=cHostname;
+			template.cpName[8]="gcCtHostname";
+			template.cpValue[8]=gcCtHostname;
 
-			template.cpName[9]="";
+			char cguContainer[16];
+			sprintf(cguContainer,"%u",guContainer);
+			template.cpName[9]="guContainer";
+			template.cpValue[9]=cguContainer;
+
+			template.cpName[10]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");
