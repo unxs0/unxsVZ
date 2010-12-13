@@ -267,3 +267,32 @@ void SelectContainer(void)
 	
 }//void SelectContainer(void)
 
+
+
+void funcContainerInfo(FILE *fp)
+{
+	if(!guContainer)
+		return;
+
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	fprintf(fp,"<!-- funcContainerInfo (fp) Start -->\n");
+
+	//SUBSTR based on 5 char cOrg_ prefix
+	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName LIKE 'cOrg_%%'",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=%s')\">"
+			" <strong>%s</strong></a></td><td><input type=text name='%s' value='%s' size=40 maxlength=32"
+			" class=\"type_fields_off\"> </td></tr>\n",field[0],field[0],field[0],field[1]);
+	}
+	mysql_free_result(res);
+
+	fprintf(fp,"<!-- funcSelectContainer(fp) End -->\n");
+
+}//void funcContainerInfo(FILE *fp)

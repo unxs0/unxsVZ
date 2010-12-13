@@ -28,7 +28,7 @@
 </tr>
 <tr>
 <td valign=top align=right class=notice>
-{{gcName}} of {{gcOrgName}} is logged in from {{gcHost}} [{{cUserLevel}}]
+"{{gcName}}" of {{gcOrgName}} is logged in from {{gcHost}} [{{cUserLevel}}]
 	<a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout</a>
 </td>
 </tr>
@@ -112,6 +112,9 @@
 	<td>{{funcContainerImageTag}}</td>
 	</tr>
 
+	{{funcContainerInfo}}
+
+<!--
 	<tr>
 		<td>
 			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Name</strong></a>
@@ -127,6 +130,7 @@
 		<br>
 		<input type=submit title='Show selected container details' {{cDisabled}} 
 			class=largeButton name=gcFunction value='Show Details'>
+-->
 		</td>
 	</tr>
 </table>

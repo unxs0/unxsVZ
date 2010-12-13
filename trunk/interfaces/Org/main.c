@@ -340,6 +340,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcSelectContainer(fp);
 	else if(!strcmp(cFunction,"funcContainerImageTag"))
 		funcContainerImageTag(fp);
+	else if(!strcmp(cFunction,"funcContainerInfo"))
+		funcContainerInfo(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
