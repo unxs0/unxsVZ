@@ -614,8 +614,8 @@ void SetLogin(void)
 {
 	if(iValidLogin(0))
 	{
-		printf("Set-Cookie: unxsvzOrgLogin=%s;\n",gcLogin);
-		printf("Set-Cookie: unxsvzOrgPasswd=%s;\n",gcPasswd);
+		printf("Set-Cookie: unxsvzOrgLogin=%s; secure=1;\n",gcLogin);
+		printf("Set-Cookie: unxsvzOrgPasswd=%s; secure=1;\n",gcPasswd);
 		sprintf(gcUser,"%.41s",gcLogin);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
@@ -629,8 +629,8 @@ void SetLogin(void)
 #ifdef cLDAPURI
 	else if(iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
 	{
-		printf("Set-Cookie: unxsvzOrgLogin=%s;\n",gcLogin);
-		printf("Set-Cookie: unxsvzOrgPasswd=%s;\n",gcPasswd);
+		printf("Set-Cookie: unxsvzOrgLogin=%s; secure=1;\n",gcLogin);
+		printf("Set-Cookie: unxsvzOrgPasswd=%s; secure=1;\n",gcPasswd);
 		sprintf(gcUser,"%.41s",gcLogin);
 		GetPLAndClientLDAP(gcUser,gcOrgName);
 		guSSLCookieLogin=1;
