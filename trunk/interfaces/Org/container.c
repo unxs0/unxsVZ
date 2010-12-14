@@ -175,7 +175,8 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 void funcContainerImageTag(FILE *fp)
 {
 	if(guContainer)
-		fprintf(fp,"<img src=/traffic/%u.png>",guContainer);
+		fprintf(fp,"<a href=https://%s/admin ><img src=/traffic/%u.png border=0 ></a>",
+			cGetHostname(guContainer),guContainer);
 
 }//void funcContainerImageTag(FILE *fp)
 

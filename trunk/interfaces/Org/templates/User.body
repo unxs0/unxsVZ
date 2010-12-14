@@ -68,6 +68,7 @@
 
 <!-- User settings panel content -->
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
+	{{funcMOTD}}
 	<tr>
 		<td valign="top">
 			<strong><u>Usage</u></strong>

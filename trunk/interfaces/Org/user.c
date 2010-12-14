@@ -270,3 +270,25 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 	}
 
 }//void htmlUserPage()
+
+
+void funcMOTD(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	fprintf(fp,"<!-- funcMOTD(fp) Start -->\n");
+
+	sprintf(gcQuery,"SELECT cComment FROM tConfiguration WHERE uDatacenter=0 AND uNode=0 AND uContainer=0"
+			" AND cLabel='cOrg_MOTD' LIMIT 1");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		fprintf(fp,"<tr><td valign=top ><strong><u>Message of the Day</u></strong></td><td><br>%s</td></tr>",field[0]);
+	mysql_free_result(res);
+
+	fprintf(fp,"<!-- funcMOTD(fp) End -->\n");
+
+}//void funcMOTD(FILE *fp)
