@@ -192,10 +192,10 @@ void funcSelectContainer(FILE *fp)
 	if(gcSearch[0])
 		sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
 			"uSource=0 AND uOwner=%u AND cHostname LIKE '%s%%' "
-			"ORDER BY cHostname LIMIT 101",guOrg,gcSearch);
+			"ORDER BY cHostname LIMIT 301",guOrg,gcSearch);
 	else
 		sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
-			"uOwner=%u AND uSource=0 ORDER BY cHostname LIMIT 101",guOrg);
+			"uOwner=%u AND uSource=0 ORDER BY cHostname LIMIT 301",guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -209,7 +209,7 @@ void funcSelectContainer(FILE *fp)
 		fprintf(fp,"<option value=%s",field[0]);
 		if(guContainer==uContainer)
 			fprintf(fp," selected");
-		if((uCount++)<=100)
+		if((uCount++)<=300)
 			fprintf(fp,">%s</option>",field[1]);
 		else
 			fprintf(fp,">Limit reached! Use better filter</option>");
@@ -279,8 +279,83 @@ void funcContainerInfo(FILE *fp)
 
 	fprintf(fp,"<!-- funcContainerInfo (fp) Start -->\n");
 
+	//Datacenter
+	sprintf(gcQuery,"SELECT tDatacenter.cLabel FROM tContainer,tDatacenter WHERE tContainer.uDatacenter=tDatacenter.uDatacenter"
+			" AND tContainer.uContainer=%u",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uDatacenter')\">"
+			" <strong>Datacenter</strong></a></td><td><input type=text name='cDatacenter' value='%s' size=40 maxlength=32"
+			" class=\"type_fields_off\"> </td></tr>\n",field[0]);
+	}
+	mysql_free_result(res);
+
+	//Node
+	sprintf(gcQuery,"SELECT tNode.cLabel FROM tContainer,tNode WHERE tContainer.uNode=tNode.uNode"
+			" AND tContainer.uContainer=%u",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uNode')\">"
+			" <strong>Node</strong></a></td><td><input type=text name='cNode' value='%s' size=40 maxlength=32"
+			" class=\"type_fields_off\"> </td></tr>\n",field[0]);
+	}
+	mysql_free_result(res);
+
+	//Status
+	sprintf(gcQuery,"SELECT tStatus.cLabel FROM tContainer,tStatus WHERE tContainer.uStatus=tStatus.uStatus"
+			" AND tContainer.uContainer=%u",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uStatus')\">"
+			" <strong>Status</strong></a></td><td><input type=text name='cStatus' value='%s' size=40 maxlength=32"
+			" class=\"type_fields_off\"> </td></tr>\n",field[0]);
+	}
+	mysql_free_result(res);
+
+	//IP
+	sprintf(gcQuery,"SELECT tIP.cLabel FROM tContainer,tIP WHERE tIP.uIP=tContainer.uIPv4 AND uContainer=%u",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uIPv4')\">"
+			" <strong>IPv4</strong></a></td><td><input type=text name='cIPv4' value='%s' size=40 maxlength=32"
+			" class=\"type_fields_off\"> </td></tr>\n",field[0]);
+	}
+	mysql_free_result(res);
+
+	//Groups
+	sprintf(gcQuery,"SELECT tGroup.cLabel FROM tGroup,tGroupGlue WHERE tGroup.uGroup=tGroupGlue.uGroup AND tGroupGlue.uContainer=%u",
+		guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=Group')\">"
+			" <strong>Group</strong></a></td><td><input type=text name='cGroup' value='%s' size=40 maxlength=32"
+			" class=\"type_fields_off\"> </td></tr>\n",field[0]);
+	}
+	mysql_free_result(res);
+
 	//SUBSTR based on 5 char cOrg_ prefix
-	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName LIKE 'cOrg_%%'",guContainer);
+	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName LIKE 'cOrg_%%'"
+			" ORDER BY cName",guContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
