@@ -342,6 +342,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcContainerImageTag(fp);
 	else if(!strcmp(cFunction,"funcContainerInfo"))
 		funcContainerInfo(fp);
+	else if(!strcmp(cFunction,"funcMOTD"))
+		funcMOTD(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 

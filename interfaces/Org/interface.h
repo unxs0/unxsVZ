@@ -109,6 +109,7 @@ void UserGetHook(entry gentries[],int x);
 void UserCommands(pentry entries[], int x);
 void htmlUser(void);
 void htmlUserPage(char *cTitle, char *cTemplateName);
+void funcMOTD(FILE *fp);
 
 //glossary.c
 void GlossaryGetHook(entry gentries[],int x);
