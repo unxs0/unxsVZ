@@ -24,6 +24,7 @@ static char gcLabel[33]={""};
 void ProcessContainerVars(pentry entries[], int x);
 void ContainerGetHook(entry gentries[],int x);
 char *cGetHostname(unsigned uContainer);
+char *cGetImageHost(unsigned uContainer);
 void SelectContainer(void);
 
 void ProcessContainerVars(pentry entries[], int x)
@@ -175,8 +176,8 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 void funcContainerImageTag(FILE *fp)
 {
 	if(guContainer)
-		fprintf(fp,"<a href=https://%s/admin ><img src=/traffic/%u.png border=0 ></a>",
-			cGetHostname(guContainer),guContainer);
+		fprintf(fp,"<a href=https://%s/admin ><img src=https://%s/traffic/%u.png border=0 ></a>",
+			cGetHostname(guContainer),cGetImageHost(guContainer),guContainer);
 
 }//void funcContainerImageTag(FILE *fp)
 
@@ -372,3 +373,34 @@ void funcContainerInfo(FILE *fp)
 	fprintf(fp,"<!-- funcSelectContainer(fp) End -->\n");
 
 }//void funcContainerInfo(FILE *fp)
+
+
+char *cGetImageHost(unsigned uContainer)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	static char cHostname[100]={""};
+	char cOrg_ImageNodeDomain[64]={""};
+
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=0"
+			" AND uContainer=0 AND uNode=0 AND cLabel='cOrg_ImageNodeDomain'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return((char *)mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cOrg_ImageNodeDomain,"%.63s",field[0]);
+
+	sprintf(gcQuery,"SELECT tNode.cLabel FROM tContainer,tNode WHERE tContainer.uNode=tNode.uNode AND uContainer=%u",
+		uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return((char *)mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cHostname,"%.32s.%.63s",field[0],cOrg_ImageNodeDomain);
+
+	return(cHostname);
+
+}//char *cGetImageHost(unsigned uContainer)
+
