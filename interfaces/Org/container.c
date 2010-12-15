@@ -176,7 +176,7 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 void funcContainerImageTag(FILE *fp)
 {
 	if(guContainer)
-		fprintf(fp,"<a href=https://%s/admin ><img src=https://%s/traffic/%u.png border=0 ></a>",
+		fprintf(fp,"<a href=https://%s/admin ><img src=%s/traffic/%u.png border=0 ></a>",
 			cGetHostname(guContainer),cGetImageHost(guContainer),guContainer);
 
 }//void funcContainerImageTag(FILE *fp)
@@ -391,6 +391,9 @@ char *cGetImageHost(unsigned uContainer)
 	if((field=mysql_fetch_row(res)))
 		sprintf(cOrg_ImageNodeDomain,"%.63s",field[0]);
 
+	if(!cOrg_ImageNodeDomain[0])
+		return(cHostname);
+
 	sprintf(gcQuery,"SELECT tNode.cLabel FROM tContainer,tNode WHERE tContainer.uNode=tNode.uNode AND uContainer=%u",
 		uContainer);
 	mysql_query(&gMysql,gcQuery);
@@ -398,7 +401,7 @@ char *cGetImageHost(unsigned uContainer)
 		return((char *)mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sprintf(cHostname,"%.32s.%.63s",field[0],cOrg_ImageNodeDomain);
+		sprintf(cHostname,"https://%.32s.%.63s",field[0],cOrg_ImageNodeDomain);
 
 	return(cHostname);
 
