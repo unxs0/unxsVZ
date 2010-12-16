@@ -2154,12 +2154,25 @@ void ImportRemoteDatacenter(
 			const char *cuOwner)
 {
 	MYSQL_RES *res;
-	MYSQL_RES *res2;
 	MYSQL_ROW field;
-	MYSQL gMysqlExt;
 
-	unsigned uRemoteNode=0;
+	MYSQL gMysqlExt;
+	MYSQL_RES *resExt;
+	MYSQL_ROW fieldExt;
+
+	//Same for all import ops
+	unsigned uLocalDatacenter=0;
+	unsigned uLocalNode=0;
 	unsigned uRemoteDatacenter=0;
+	unsigned uRemoteNode=0;
+	unsigned uClient=0;//Same as c/uOwner
+
+	//Used in loop
+	unsigned uIP;
+	unsigned uOSTemplate;
+	unsigned uConfig;
+	unsigned uNameserver;
+	unsigned uSearchdomain;
 
 	printf("ImportRemoteDatacenter(): Start\n");
 
@@ -2180,27 +2193,29 @@ void ImportRemoteDatacenter(
 		printf("%s\n",mysql_error(&gMysql));
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)==0)
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uLocalDatacenter);
+       	mysql_free_result(res);
+	if(!uLocalDatacenter)
 	{
 		printf("Local tDatacenter.cLabel=%s does not exist\n",cLocalDatacenter);
 		exit(1);
 	}
-       	mysql_free_result(res);
 
 	sprintf(gcQuery,"SELECT uDatacenter FROM tDatacenter WHERE cLabel='%s'",cRemoteDatacenter);
 	mysql_query(&gMysqlExt,gcQuery);
 	if(mysql_errno(&gMysqlExt))
 		printf("%s\n",mysql_error(&gMysqlExt));
 	mysql_query(&gMysqlExt,gcQuery);
-	res=mysql_store_result(&gMysqlExt);
-	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uRemoteDatacenter);
+	resExt=mysql_store_result(&gMysqlExt);
+	if((fieldExt=mysql_fetch_row(resExt)))
+		sscanf(fieldExt[0],"%u",&uRemoteDatacenter);
+       	mysql_free_result(resExt);
 	if(!uRemoteDatacenter)
 	{
 		printf("Remote tDatacenter.cLabel=%s does not exist\n",cRemoteDatacenter);
 		exit(1);
 	}
-       	mysql_free_result(res);
 
 	//2. tNode check
 	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE cLabel='%s'",cLocalNode);
@@ -2209,27 +2224,29 @@ void ImportRemoteDatacenter(
 		printf("%s\n",mysql_error(&gMysql));
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)==0)
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uLocalNode);
+       	mysql_free_result(res);
+	if(!uLocalNode)
 	{
 		printf("Local tNode.cLabel=%s does not exist\n",cLocalNode);
 		exit(1);
 	}
-       	mysql_free_result(res);
 
 	sprintf(gcQuery,"SELECT uNode FROM tNode WHERE cLabel='%s'",cRemoteNode);
 	mysql_query(&gMysqlExt,gcQuery);
 	if(mysql_errno(&gMysqlExt))
 		printf("%s\n",mysql_error(&gMysqlExt));
 	mysql_query(&gMysqlExt,gcQuery);
-	res=mysql_store_result(&gMysqlExt);
-	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uRemoteNode);
+	resExt=mysql_store_result(&gMysqlExt);
+	if((fieldExt=mysql_fetch_row(resExt)))
+		sscanf(fieldExt[0],"%u",&uRemoteNode);
+       	mysql_free_result(resExt);
 	if(!uRemoteNode)
 	{
 		printf("Remote tNode.cLabel=%s does not exist\n",cRemoteNode);
 		exit(1);
 	}
-       	mysql_free_result(res);
 
 	//3. tClient check
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uOwner=%s",cuOwner);
@@ -2238,40 +2255,122 @@ void ImportRemoteDatacenter(
 		printf("%s\n",mysql_error(&gMysql));
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)==0)
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uClient);
+       	mysql_free_result(res);
+	if(!uClient)
 	{
 		printf("Local tClient.uClient=%s does not exist\n",cuOwner);
 		exit(1);
 	}
-       	mysql_free_result(res);
 
 	//Start importing
 	//Only active (1) not clones
-	sprintf(gcQuery,"SELECT cLabel FROM tContainer WHERE uSource=0 AND uDatacenter=%u AND uNode=%u AND uStatus=1",
-			uRemoteDatacenter,uRemoteNode);
+	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,"
+			" tIP.cLabel,tOSTemplate.cLabel,tConfig.cLabel,tNameserver.cLabel,tSearchdomain.cLabel"
+			" FROM tContainer,tIP,tOSTemplate,tConfig,tNameserver,tSearchdomain"
+			" WHERE tContainer.uIPv4=tIP.uIP AND tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
+			" AND tContainer.uConfig=tConfig.uConfig AND tContainer.uNameserver=tNameserver.uNameserver"
+			" AND tContainer.uSearchdomain=tSearchdomain.uSearchdomain"
+			" AND tContainer.uStatus=1 AND tContainer.uSource=0 AND tContainer.uDatacenter=%u AND tContainer.uNode=%u",
+				uRemoteDatacenter,uRemoteNode);
 	mysql_query(&gMysqlExt,gcQuery);
 	if(mysql_errno(&gMysqlExt))
 		printf("%s\n",mysql_error(&gMysqlExt));
 	mysql_query(&gMysqlExt,gcQuery);
-	res=mysql_store_result(&gMysqlExt);
-	while((field=mysql_fetch_row(res)))
+	resExt=mysql_store_result(&gMysqlExt);
+	while((fieldExt=mysql_fetch_row(resExt)))
 	{
-		printf("%s\n",field[0]);
-		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",field[0]);
+		uIP=0;
+		uOSTemplate=0;
+		uConfig=0;
+		uNameserver=0;
+		uSearchdomain=0;
+
+		printf("%s\t%s\n",fieldExt[0],fieldExt[1]);
+		//printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		//	fieldExt[0],fieldExt[1],fieldExt[2],fieldExt[3],fieldExt[4],fieldExt[5],fieldExt[6]);
+
+		//Do not add if we already have a local tContainer.cLabel
+		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",fieldExt[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			printf("%s\n",mysql_error(&gMysql));
 		mysql_query(&gMysql,gcQuery);
-		res2=mysql_store_result(&gMysql);
-		if(mysql_num_rows(res2)!=0)
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)!=0)
 		{
 			printf("Local tContainer.cLabel=%s exists\n",field[0]);
 			continue;
 		}
-       		mysql_free_result(res2);
+       		mysql_free_result(res);
 
+		//tIP.cLabel [2]
+		sprintf(gcQuery,"SELECT uIP FROM tIP WHERE cLabel='%s'",fieldExt[2]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)==0)
+		{
+			sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uAvailable=0,uDatacenter=%u,uOwner=%u,"
+					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						fieldExt[2],uLocalDatacenter,uClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				printf("%s\n",mysql_error(&gMysql));
+			uIP=mysql_insert_id(&gMysql);
+		}
+		else
+		{
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uIP);
+			printf("Local tIP.cLabel=%s exists. Not adding.\n",fieldExt[2]);
+			if(!uIP)
+			{
+				printf("Unexpected uIP==0 error skip to next container\n");
+				continue;
+			}
+		}
+       		mysql_free_result(res);
+
+		//tOSTemplate.cLabel [3]
+		sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s'",fieldExt[3]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)==0)
+		{
+			sprintf(gcQuery,"INSERT INTO tOSTemplate SET cLabel='%s',uOwner=%u,"
+					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						fieldExt[2],uClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				printf("%s\n",mysql_error(&gMysql));
+			uOSTemplate=mysql_insert_id(&gMysql);
+			//Enable for only this datacenter via tProperty tOSTemplate type = 8
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=8,uKey=%u"
+					"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						cLocalDatacenter,uOSTemplate,uClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				printf("%s\n",mysql_error(&gMysql));
+		}
+		else
+		{
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uOSTemplate);
+			printf("Local tOSTemplate.cLabel=%s exists. Not adding.\n",fieldExt[3]);
+			if(!uOSTemplate)
+			{
+				printf("Unexpected uOSTemplate==0 error skip to next container\n");
+				continue;
+			}
+		}
+       		mysql_free_result(res);
 	}
-       	mysql_free_result(res);
+       	mysql_free_result(resExt);
 
 
 	mysql_close(&gMysql);
