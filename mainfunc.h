@@ -2166,6 +2166,7 @@ void ImportRemoteDatacenter(
 	unsigned uRemoteDatacenter=0;
 	unsigned uRemoteNode=0;
 	unsigned uClient=0;//Same as c/uOwner
+	unsigned uGroup=0;
 
 	//Used in loop
 	unsigned uIP;
@@ -2173,6 +2174,7 @@ void ImportRemoteDatacenter(
 	unsigned uConfig;
 	unsigned uNameserver;
 	unsigned uSearchdomain;
+	unsigned uContainer;
 
 	printf("ImportRemoteDatacenter(): Start\n");
 
@@ -2190,7 +2192,10 @@ void ImportRemoteDatacenter(
 	sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE cLabel='%s'",cLocalDatacenter);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
+	{
 		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -2205,7 +2210,10 @@ void ImportRemoteDatacenter(
 	sprintf(gcQuery,"SELECT uDatacenter FROM tDatacenter WHERE cLabel='%s'",cRemoteDatacenter);
 	mysql_query(&gMysqlExt,gcQuery);
 	if(mysql_errno(&gMysqlExt))
+	{
 		printf("%s\n",mysql_error(&gMysqlExt));
+		exit(1);
+	}
 	mysql_query(&gMysqlExt,gcQuery);
 	resExt=mysql_store_result(&gMysqlExt);
 	if((fieldExt=mysql_fetch_row(resExt)))
@@ -2221,7 +2229,10 @@ void ImportRemoteDatacenter(
 	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE cLabel='%s'",cLocalNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
+	{
 		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -2236,7 +2247,10 @@ void ImportRemoteDatacenter(
 	sprintf(gcQuery,"SELECT uNode FROM tNode WHERE cLabel='%s'",cRemoteNode);
 	mysql_query(&gMysqlExt,gcQuery);
 	if(mysql_errno(&gMysqlExt))
+	{
 		printf("%s\n",mysql_error(&gMysqlExt));
+		exit(1);
+	}
 	mysql_query(&gMysqlExt,gcQuery);
 	resExt=mysql_store_result(&gMysqlExt);
 	if((fieldExt=mysql_fetch_row(resExt)))
@@ -2252,7 +2266,10 @@ void ImportRemoteDatacenter(
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uOwner=%s",cuOwner);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
+	{
 		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -2263,6 +2280,20 @@ void ImportRemoteDatacenter(
 		printf("Local tClient.uClient=%s does not exist\n",cuOwner);
 		exit(1);
 	}
+
+	//4. Optional tGroup with same name as remote datacenter cLabel
+	sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s'",cRemoteDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uGroup);
+       	mysql_free_result(res);
 
 	//Start importing
 	//Only active (1) not clones
@@ -2276,7 +2307,10 @@ void ImportRemoteDatacenter(
 				uRemoteDatacenter,uRemoteNode);
 	mysql_query(&gMysqlExt,gcQuery);
 	if(mysql_errno(&gMysqlExt))
+	{
 		printf("%s\n",mysql_error(&gMysqlExt));
+		exit(1);
+	}
 	mysql_query(&gMysqlExt,gcQuery);
 	resExt=mysql_store_result(&gMysqlExt);
 	while((fieldExt=mysql_fetch_row(resExt)))
@@ -2286,8 +2320,8 @@ void ImportRemoteDatacenter(
 		uConfig=0;
 		uNameserver=0;
 		uSearchdomain=0;
+		uContainer=0;
 
-		printf("%s\t%s\n",fieldExt[0],fieldExt[1]);
 		//printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 		//	fieldExt[0],fieldExt[1],fieldExt[2],fieldExt[3],fieldExt[4],fieldExt[5],fieldExt[6]);
 
@@ -2295,7 +2329,10 @@ void ImportRemoteDatacenter(
 		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",fieldExt[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
+		{
 			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
 		mysql_query(&gMysql,gcQuery);
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res)!=0)
@@ -2309,7 +2346,10 @@ void ImportRemoteDatacenter(
 		sprintf(gcQuery,"SELECT uIP FROM tIP WHERE cLabel='%s'",fieldExt[2]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
+		{
 			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res)==0)
 		{
@@ -2318,7 +2358,10 @@ void ImportRemoteDatacenter(
 						fieldExt[2],uLocalDatacenter,uClient);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
+			{
 				printf("%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
 			uIP=mysql_insert_id(&gMysql);
 		}
 		else
@@ -2338,16 +2381,22 @@ void ImportRemoteDatacenter(
 		sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s'",fieldExt[3]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
+		{
 			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res)==0)
 		{
 			sprintf(gcQuery,"INSERT INTO tOSTemplate SET cLabel='%s',uOwner=%u,"
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						fieldExt[2],uClient);
+						fieldExt[3],uClient);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
+			{
 				printf("%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
 			uOSTemplate=mysql_insert_id(&gMysql);
 			//Enable for only this datacenter via tProperty tOSTemplate type = 8
 			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=8,uKey=%u"
@@ -2355,7 +2404,10 @@ void ImportRemoteDatacenter(
 						cLocalDatacenter,uOSTemplate,uClient);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
+			{
 				printf("%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
 		}
 		else
 		{
@@ -2369,7 +2421,194 @@ void ImportRemoteDatacenter(
 			}
 		}
        		mysql_free_result(res);
-	}
+
+		//tConfig.cLabel [4]
+		sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",fieldExt[4]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)==0)
+		{
+			sprintf(gcQuery,"INSERT INTO tConfig SET cLabel='%s',uOwner=%u,"
+					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						fieldExt[4],uClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
+			uConfig=mysql_insert_id(&gMysql);
+			//Enable for only this datacenter via tProperty tConfig type = 6 TODO defines
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=6,uKey=%u"
+					"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						cLocalDatacenter,uConfig,uClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
+		}
+		else
+		{
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uConfig);
+			printf("Local tConfig.cLabel=%s exists. Not adding.\n",fieldExt[4]);
+			if(!uConfig)
+			{
+				printf("Unexpected uConfig==0 error skip to next container\n");
+				continue;
+			}
+		}
+       		mysql_free_result(res);
+
+		//tNameserver.cLabel [5]
+		sprintf(gcQuery,"SELECT uNameserver FROM tNameserver WHERE cLabel='%s'",fieldExt[5]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)==0)
+		{
+			sprintf(gcQuery,"INSERT INTO tNameserver SET cLabel='%s',uOwner=%u,"
+					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						fieldExt[5],uClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
+			uNameserver=mysql_insert_id(&gMysql);
+			//Enable for only this datacenter via tProperty tNameserver type = 7 TODO defines
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=6,uKey=%u"
+					"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						cLocalDatacenter,uNameserver,uClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
+		}
+		else
+		{
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uNameserver);
+			printf("Local tNameserver.cLabel=%s exists. Not adding.\n",fieldExt[5]);
+			if(!uNameserver)
+			{
+				printf("Unexpected uNameserver==0 error skip to next container\n");
+				continue;
+			}
+		}
+
+		//tSearchdomain.cLabel [6]
+		sprintf(gcQuery,"SELECT uSearchdomain FROM tSearchdomain WHERE cLabel='%s'",fieldExt[6]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)==0)
+		{
+			sprintf(gcQuery,"INSERT INTO tSearchdomain SET cLabel='%s',uOwner=%u,"
+					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						fieldExt[6],uClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
+			uSearchdomain=mysql_insert_id(&gMysql);
+			//Enable for only this datacenter via tProperty tSearchdomain type = 9 TODO defines
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=9,uKey=%u"
+					"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						cLocalDatacenter,uSearchdomain,uClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
+		}
+		else
+		{
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uSearchdomain);
+			printf("Local tSearchdomain.cLabel=%s exists. Not adding.\n",fieldExt[6]);
+			if(!uSearchdomain)
+			{
+				printf("Unexpected uSearchdomain==0 error skip to next container\n");
+				continue;
+			}
+		}
+
+		//Add container
+		sprintf(gcQuery,"INSERT INTO tContainer SET"
+				" cLabel='%s',"
+				" cHostname='%s',"
+				" uVeth=0,"
+				" uIPv4=%u,"
+				" uOSTemplate=%u,"
+				" uConfig=%u,"
+				" uNameserver=%u,"
+				" uSearchdomain=%u,"
+				" uDatacenter=%u,"
+				" uNode=%u,"
+				" uStatus=3," //Offline
+				" uSource=0,"
+				" uOwner=%u,"
+				" uCreatedBy=1,"
+				" uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				fieldExt[0],
+				fieldExt[1],
+				uIP,
+				uOSTemplate,
+				uConfig,
+				uNameserver,
+				uSearchdomain,
+				uLocalDatacenter,
+				uLocalNode,
+				uClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		printf("Imported: %s\n",fieldExt[1]);
+		uContainer=mysql_insert_id(&gMysql);
+		if(!uContainer)
+		{
+			printf("Unexpected uContainer==0 error skipping group section\n");
+			continue;
+		}
+
+		//Add container to premade optional group "cRemoteDatacenter"
+		if(uGroup)
+		{
+			sprintf(gcQuery,"INSERT INTO tGroupGlue SET uGroup=%u,uContainer=%u",uGroup,uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
+		}
+
+	}//While remote containers
        	mysql_free_result(resExt);
 
 
