@@ -5,7 +5,7 @@ PURPOSE
 	Included in main.c. For command line interface and html main link.
 
 AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2011 Gary Wallis for Unixservice, LLC.
 	This software distributed under the GPLv2 license.
 	See LICENSE file included.
 */
@@ -2189,7 +2189,7 @@ void ImportRemoteDatacenter(
 
 	//Checks
 	//1. tDatacenter check
-	sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE cLabel='%s'",cLocalDatacenter);
+	sprintf(gcQuery,"SELECT uDatacenter FROM tDatacenter WHERE cLabel='%s'",cLocalDatacenter);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2226,7 +2226,7 @@ void ImportRemoteDatacenter(
 	}
 
 	//2. tNode check
-	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE cLabel='%s'",cLocalNode);
+	sprintf(gcQuery,"SELECT uNode FROM tNode WHERE cLabel='%s'",cLocalNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2263,7 +2263,7 @@ void ImportRemoteDatacenter(
 	}
 
 	//3. tClient check
-	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uOwner=%s",cuOwner);
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient=%s",cuOwner);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2337,7 +2337,7 @@ void ImportRemoteDatacenter(
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res)!=0)
 		{
-			printf("Local tContainer.cLabel=%s exists\n",field[0]);
+			printf("Local tContainer.cLabel=%s exists\n",fieldExt[0]);
 			continue;
 		}
        		mysql_free_result(res);
@@ -2368,7 +2368,7 @@ void ImportRemoteDatacenter(
 		{
 			if((field=mysql_fetch_row(res)))
 				sscanf(field[0],"%u",&uIP);
-			printf("Local tIP.cLabel=%s exists. Not adding.\n",fieldExt[2]);
+			//printf("Local tIP.cLabel=%s exists. Not adding.\n",fieldExt[2]);
 			if(!uIP)
 			{
 				printf("Unexpected uIP==0 error skip to next container\n");
@@ -2376,6 +2376,10 @@ void ImportRemoteDatacenter(
 			}
 		}
        		mysql_free_result(res);
+
+		//debug only
+		//printf("Post tIP import stop %s uClient=%u\n",fieldExt[2],uClient);
+		//exit(0);
 
 		//tOSTemplate.cLabel [3]
 		sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s'",fieldExt[3]);
@@ -2399,8 +2403,8 @@ void ImportRemoteDatacenter(
 			}
 			uOSTemplate=mysql_insert_id(&gMysql);
 			//Enable for only this datacenter via tProperty tOSTemplate type = 8
-			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=8,uKey=%u"
-					"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=8,uKey=%u,"
+					" uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						cLocalDatacenter,uOSTemplate,uClient);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -2413,7 +2417,7 @@ void ImportRemoteDatacenter(
 		{
 			if((field=mysql_fetch_row(res)))
 				sscanf(field[0],"%u",&uOSTemplate);
-			printf("Local tOSTemplate.cLabel=%s exists. Not adding.\n",fieldExt[3]);
+			//printf("Local tOSTemplate.cLabel=%s exists. Not adding.\n",fieldExt[3]);
 			if(!uOSTemplate)
 			{
 				printf("Unexpected uOSTemplate==0 error skip to next container\n");
@@ -2421,6 +2425,10 @@ void ImportRemoteDatacenter(
 			}
 		}
        		mysql_free_result(res);
+
+		//debug only
+		//printf("Post tOSTemplate import stop uOSTemplate=%u\n",uOSTemplate);
+		//exit(0);
 
 		//tConfig.cLabel [4]
 		sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",fieldExt[4]);
@@ -2444,7 +2452,7 @@ void ImportRemoteDatacenter(
 			}
 			uConfig=mysql_insert_id(&gMysql);
 			//Enable for only this datacenter via tProperty tConfig type = 6 TODO defines
-			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=6,uKey=%u"
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=6,uKey=%u,"
 					"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						cLocalDatacenter,uConfig,uClient);
 			mysql_query(&gMysql,gcQuery);
@@ -2458,7 +2466,7 @@ void ImportRemoteDatacenter(
 		{
 			if((field=mysql_fetch_row(res)))
 				sscanf(field[0],"%u",&uConfig);
-			printf("Local tConfig.cLabel=%s exists. Not adding.\n",fieldExt[4]);
+			//printf("Local tConfig.cLabel=%s exists. Not adding.\n",fieldExt[4]);
 			if(!uConfig)
 			{
 				printf("Unexpected uConfig==0 error skip to next container\n");
@@ -2466,6 +2474,10 @@ void ImportRemoteDatacenter(
 			}
 		}
        		mysql_free_result(res);
+
+		//debug only
+		//printf("Post tConfig import stop uConfig=%u\n",uConfig);
+		//exit(0);
 
 		//tNameserver.cLabel [5]
 		sprintf(gcQuery,"SELECT uNameserver FROM tNameserver WHERE cLabel='%s'",fieldExt[5]);
@@ -2489,8 +2501,8 @@ void ImportRemoteDatacenter(
 			}
 			uNameserver=mysql_insert_id(&gMysql);
 			//Enable for only this datacenter via tProperty tNameserver type = 7 TODO defines
-			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=6,uKey=%u"
-					"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=7,uKey=%u,"
+					" uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						cLocalDatacenter,uNameserver,uClient);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -2503,13 +2515,17 @@ void ImportRemoteDatacenter(
 		{
 			if((field=mysql_fetch_row(res)))
 				sscanf(field[0],"%u",&uNameserver);
-			printf("Local tNameserver.cLabel=%s exists. Not adding.\n",fieldExt[5]);
+			//printf("Local tNameserver.cLabel=%s exists. Not adding.\n",fieldExt[5]);
 			if(!uNameserver)
 			{
 				printf("Unexpected uNameserver==0 error skip to next container\n");
 				continue;
 			}
 		}
+
+		//debug only
+		//printf("Post tNameserver import stop uNameserver=%u\n",uNameserver);
+		//exit(0);
 
 		//tSearchdomain.cLabel [6]
 		sprintf(gcQuery,"SELECT uSearchdomain FROM tSearchdomain WHERE cLabel='%s'",fieldExt[6]);
@@ -2533,7 +2549,7 @@ void ImportRemoteDatacenter(
 			}
 			uSearchdomain=mysql_insert_id(&gMysql);
 			//Enable for only this datacenter via tProperty tSearchdomain type = 9 TODO defines
-			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=9,uKey=%u"
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cDatacenter',cValue='%s',uType=9,uKey=%u,"
 					"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						cLocalDatacenter,uSearchdomain,uClient);
 			mysql_query(&gMysql,gcQuery);
@@ -2547,13 +2563,17 @@ void ImportRemoteDatacenter(
 		{
 			if((field=mysql_fetch_row(res)))
 				sscanf(field[0],"%u",&uSearchdomain);
-			printf("Local tSearchdomain.cLabel=%s exists. Not adding.\n",fieldExt[6]);
+			//printf("Local tSearchdomain.cLabel=%s exists. Not adding.\n",fieldExt[6]);
 			if(!uSearchdomain)
 			{
 				printf("Unexpected uSearchdomain==0 error skip to next container\n");
 				continue;
 			}
 		}
+
+		//debug only
+		//printf("Post tSearchdomain import stop uSearchdomain=%u\n",uSearchdomain);
+		//exit(0);
 
 		//Add container
 		sprintf(gcQuery,"INSERT INTO tContainer SET"

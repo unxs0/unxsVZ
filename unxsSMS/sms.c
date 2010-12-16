@@ -31,15 +31,15 @@ void TextConnectDb(void);
 //this file protos TOC
 void Version(void);
 void Run(void);
-void Set(const char *cPhone,const char *cuDigestThreshold,const char *cuReceivePeriod,const char *cuSendPeriod,const char *cuPeriodCount);
-void QueueMessage(const char *cPhone,const char *cMessage);
+void Set(char *cPhone,const char *cuDigestThreshold,const char *cuReceivePeriod,const char *cuSendPeriod,const char *cuPeriodCount);
+void QueueMessage(const char *cPhone,char *cMessage);
 void logfileLine(const char *cFunction,const char *cLogline);
 int main(int iArgc, char *cArgv[]);
 void Initialize(const char *cPasswd);
 void ErrorExit(void);
 void NormalExit(void);
 void mySQLRootConnect(const char *cPasswd);
-unsigned SendMessage(const char *cPhone,const char *cMessage);
+unsigned SendMessage(const char *cPhone,char *cMessage);
 
 #define macro_MySQLQueryBasic \
 	mysql_query(&gMysql,gcQuery);\
@@ -114,11 +114,24 @@ void Version(void)
 }//void Version(void)
 
 
-void Set(const char *cPhone,const char *cuDigestThreshold,const char *cuReceivePeriod,const char *cuSendPeriod,const char *cuPeriodCount)
+void Set(char *cPhone,const char *cuDigestThreshold,const char *cuReceivePeriod,const char *cuSendPeriod,const char *cuPeriodCount)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uPhone=0;
+	register int x;
+
+	//TODO
+	//Minor dumb cleanup of message for now.
+	for(x=0;cPhone[x];x++)
+	{
+		if(!isdigit(cPhone[x]))
+		{
+			cPhone[x]=0;
+			break;
+		}
+	}
+
 
 	if(guDebug)
 		logfileLine("Set","Entry");
@@ -157,7 +170,7 @@ void Set(const char *cPhone,const char *cuDigestThreshold,const char *cuReceiveP
 }//void Set()
 
 
-void QueueMessage(const char *cPhone,const char *cMessage)
+void QueueMessage(const char *cPhone,char *cMessage)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -451,12 +464,20 @@ void mySQLRootConnect(const char *cPasswd)
 
 
 //Here we will use libcurl to https the message to our SMS gateway provider.
-unsigned SendMessage(const char *cPhone,const char *cMessage)
+unsigned SendMessage(const char *cPhone,char *cMessage)
 {
 	CURL *curl;
 	CURLcode res;
-	char cURL[256]={"http://google.com"};
- 
+	char cURL[256];
+	register int x;
+
+	//TODO
+	//Minor dumb cleanup of message for now.
+	for(x=0;cMessage[x];x++)
+		if(cMessage[x]==' ' || cMessage[x]=='&') cMessage[x]='+';
+
+	sprintf(cURL,"http://unixservice.com?cPhone=%.32s&cMessage=%.140s",cPhone,cMessage);
+
 	curl = curl_easy_init();
 	if(curl)
 	{
@@ -473,4 +494,4 @@ unsigned SendMessage(const char *cPhone,const char *cMessage)
 	logfileLine("SendMessage curl error",cPhone);
 	return(1);
 
-}//unsigned SendMessage(const char *cPhone,const char *cMessage)
+}//unsigned SendMessage(const char *cPhone,char *cMessage)
