@@ -16,8 +16,10 @@ extern unsigned guBrowserFirefox;//main.c
 char gcCtHostname[100]={""};
 static char gcSearch[100]={""};
 unsigned guContainer=0;
+unsigned guNewContainer=0;
 //Container details
 static char gcLabel[33]={""};
+static char gcNewHostname[100]={""};
 
 
 //TOC
@@ -39,6 +41,10 @@ void ProcessContainerVars(pentry entries[], int x)
 			sprintf(gcCtHostname,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gcSearch"))
 			sprintf(gcSearch,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"guNewContainer"))
+			sscanf(entries[i].val,"%u",&guNewContainer);
+		else if(!strcmp(entries[i].name,"gcNewHostname"))
+			sprintf(gcNewHostname,"%.99s",entries[i].val);
 	}
 
 }//void ProcessContainerVars(pentry entries[], int x)
@@ -70,14 +76,14 @@ void ContainerCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"Container"))
 	{
 		ProcessContainerVars(entries,x);
-		if(!strcmp(gcFunction,"Container Search"))
+		if(!strcmp(gcFunction,"Change Hostname"))
 		{
-			if(!gcSearch[0])
-			{
-				gcMessage="<blink>Error</blink>: Search pattern must be specified";
-				htmlContainer();
-			}
-			gcMessage="Search performed";
+			//TODO validation and make sure no one else is trying to use the same source container .
+			if(guNewContainer && gcNewHostname[0])
+				gcMessage="Hostname changed. Review new container status.";
+			else
+				gcMessage="Hostname not changed. Must select a source container and a new hostname.";
+			guContainer=guNewContainer;
 			htmlContainer();
 		}
 		htmlContainer();
@@ -370,7 +376,7 @@ void funcContainerInfo(FILE *fp)
 	}
 	mysql_free_result(res);
 
-	fprintf(fp,"<!-- funcSelectContainer(fp) End -->\n");
+	fprintf(fp,"<!-- funcContainerInfo(fp) End -->\n");
 
 }//void funcContainerInfo(FILE *fp)
 
@@ -406,4 +412,82 @@ char *cGetImageHost(unsigned uContainer)
 	return(cHostname);
 
 }//char *cGetImageHost(unsigned uContainer)
+
+
+//Func for left panel "new" container "creation" 
+//Safe and fast for non tech-users. Just select and provide new name.
+//Special "pre-spinned stand-by" containers that can simply 
+//be name changed for actual use.
+//We use special reserved group name "Stand-by" to identify
+
+void funcNewContainer(FILE *fp)
+{
+	if(guPermLevel<7)
+		return;
+
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uCount=1;
+	unsigned uContainer=0;
+	char cOrg_NewGroupLabel[33]={"Pre-Spinned"};
+
+	fprintf(fp,"<!-- funcNewContainer(fp) Start -->\n");
+
+	fprintf(fp,"<tr><td valign=\"top\"><strong><u>New Container</u></strong></td><td><br>\n");
+
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=0"
+			" AND uContainer=0 AND uNode=0 AND cLabel='cOrg_NewGroupLabel'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		htmlPlainTextError(mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cOrg_NewGroupLabel,"%.32s",field[0]);
+
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tGroupGlue,tGroup WHERE "
+			"tContainer.uContainer=tGroupGlue.uContainer AND "
+			"tGroupGlue.uGroup=tGroup.uGroup AND tGroup.cLabel='%s' AND "
+			"tContainer.uOwner=%u AND tContainer.uSource=0 ORDER BY tContainer.cHostname LIMIT 301",
+				cOrg_NewGroupLabel,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		htmlPlainTextError(mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	fprintf(fp,"<select class=type_textarea title='Select the container you want to use with this dropdown'"
+			" name=guNewContainer >\n");
+	fprintf(fp,"<option>---</option>");
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uContainer);
+		fprintf(fp,"<option value=%s",field[0]);
+		if(guNewContainer==uContainer)
+			fprintf(fp," selected");
+		if((uCount++)<=300)
+			fprintf(fp,">%s</option>",field[1]);
+		else
+			fprintf(fp,">Limit reached. Contact your sysadmin ASAP!</option>");
+	}
+	mysql_free_result(res);
+
+	fprintf(fp,"</select>\n");
+
+	fprintf(fp,"<br><input type=text class=type_fields"
+			" title='Enter new container fully qualifed hostname for the above selected container'"
+			" name=gcNewHostname value='%s' size=40 maxlength=64>\n",gcNewHostname);
+
+	fprintf(fp,"<br><input type=submit class=largeButton"
+			" title='Select a container, enter the FQDN new hostname. Use this button to change it. Review status.'"
+			" name=gcFunction value='Change Hostname'>\n");
+
+	fprintf(fp,"</td></tr>\n");
+
+	fprintf(fp,"<!-- funcNewContainer(fp) End -->\n");
+
+}//void funcNewContainer(FILE *fp)
 

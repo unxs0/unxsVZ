@@ -102,6 +102,7 @@ void htmlContainerPage(char *cTitle, char *cTemplateName);
 void funcSelectContainer(FILE *fp);
 void funcContainerImageTag(FILE *fp);
 void funcContainerInfo(FILE *fp);
+void funcNewContainer(FILE *fp);
 
 //user.c
 void ProcessUserVars(pentry entries[], int x);
