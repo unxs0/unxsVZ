@@ -250,9 +250,19 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 
 	for(i=0;i<x;i++)
 	{
+		//Some of these must go before group Ct operations
 		if(!strcmp(entries[i].name,"cSearch"))
 		{
 			sprintf(cSearch,"%.31s",TextAreaSave(entries[i].val));
+		}
+		else if(!strcmp(entries[i].name,"uGroup"))
+		{
+			sscanf(entries[i].val,"%u",&uGroup);
+		}
+		else if(!strcmp(entries[i].name,"cuGroupPullDown"))
+		{
+			sprintf(cuGroupPullDown,"%.255s",entries[i].val);
+			uGroup=ReadPullDown("tGroup","cLabel",cuGroupPullDown);
 		}
 		else if(!strncmp(entries[i].name,"Ct",2))
 		{
@@ -298,6 +308,28 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 								SetContainerStatus(uCtContainer,uAWAITDEL);
 								uGroupJobs++;
 							}
+						}
+					}
+					else if(!strcmp(gcCommand,"Group Change"))
+					{
+						struct structContainer sContainer;
+
+						InitContainerProps(&sContainer);
+						GetContainerProps(uCtContainer,&sContainer);
+						if( (sContainer.uOwner==guCompany || guCompany==1) && uGroup)
+						{
+							//Remove from all groups
+							sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",
+								uCtContainer);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
+								uCtContainer,uGroup);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							uGroupJobs++;
 						}
 					}
 					else if(!strcmp(gcCommand,"Group Delete"))
@@ -639,15 +671,6 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cuWizIPv4PullDown,"%.31s",entries[i].val);
 			uWizIPv4=ReadPullDown("tIP","cLabel",cuWizIPv4PullDown);
-		}
-		else if(!strcmp(entries[i].name,"uGroup"))
-		{
-			sscanf(entries[i].val,"%u",&uGroup);
-		}
-		else if(!strcmp(entries[i].name,"cuGroupPullDown"))
-		{
-			sprintf(cuGroupPullDown,"%.255s",entries[i].val);
-			uGroup=ReadPullDown("tGroup","cLabel",cuGroupPullDown);
 		}
 		else if(!strcmp(entries[i].name,"cForClientPullDown"))
 		{
@@ -1754,6 +1777,19 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
 
+	                        guMode=2001;
+				//Special safety for root level cleanup dels
+				if(uStatus!=uINITSETUP && uSource)
+				{
+					sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u",uSource);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        				res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)!=0)
+						tContainer("<blink>Error:</blink> This container has a source. Delete it first.");
+				}
+
 				guMode=5;
 				uStatus=0;//Internal hack for deploy button turn off
 				//Release IPs
@@ -1762,6 +1798,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
+				//TODO this operation may not be datacenter safe review
 				//Node IP if any MySQL5+
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel IN"
 						" (SELECT cValue FROM tProperty WHERE uKey=%u"
@@ -2392,6 +2429,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 				mysql_free_result(res);
 
+                        	guMode=0;
 				//Optional change group.
 				if(uGroup)
 					ChangeGroup(uContainer,uGroup);
@@ -3227,7 +3265,8 @@ void ExttContainerNavBar(void)
 	if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy) && guMode<9000)
 		printf(LANG_NBB_MODIFY);
 
-	if( uStatus==uINITSETUP && uAllowDel(uOwner,uCreatedBy) && guMode<9000) 
+	if( (uStatus==uINITSETUP && uAllowDel(uOwner,uCreatedBy) && guMode<9000) ||
+		(uStatus==uAWAITCLONE && guPermLevel>11) )
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner && guMode<9000)
@@ -3462,6 +3501,9 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 			printf("<br><input title='Creates job(s) for deleting initial setup container(s).'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Delete'>\n");
+			printf("<br><input title='Deletes any existing group association then adds selected group to selected containers'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Change'>\n");
 			printf("<p><input title='Creates job(s) for cloning active or stopped container(s) that"
 				" are not clones themselves.'"
 				" type=submit class=lwarnButton"
