@@ -86,15 +86,21 @@
 			name=gcSearch value='{{gcSearch}}' size=16 maxlength=32 onChange='submit()'>
 		</td>
 	</tr>
+
+	<!-- role based additional sctions -->
+	{{funcNewContainer}}
+
 	<tr>
 		<td valign="top">
 			<strong><u>Usage</u></strong>
 		</td>
 		<td>
-			<br>Here you can search for a container and find specific information about it. Set a containers hostname filter then use the select. Once you have loaded a container you will be able to access specific details.
+			<br>Here you can search for a container and find specific information about it.
+			Set a containers hostname filter that restricts the select. 
+			<p>Once you have loaded a container you will be able to view it's settings.
+			<p>Depending on your account role other operations may be available, such as changing a containers name or group.
 		</td>
 	</tr>
-	{{funcNewContainer}}
 			
 </table>
 
