@@ -19,7 +19,7 @@ unsigned guContainer=0;
 unsigned guNewContainer=0;
 //Container details
 static char gcLabel[33]={""};
-static char gcNewHostname[100]={""};
+static char gcNewHostname[33]={""};
 
 
 //TOC
@@ -28,6 +28,7 @@ void ContainerGetHook(entry gentries[],int x);
 char *cGetHostname(unsigned uContainer);
 char *cGetImageHost(unsigned uContainer);
 void SelectContainer(void);
+char *NameToLower(char *cInput);
 
 void ProcessContainerVars(pentry entries[], int x)
 {
@@ -44,7 +45,7 @@ void ProcessContainerVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"guNewContainer"))
 			sscanf(entries[i].val,"%u",&guNewContainer);
 		else if(!strcmp(entries[i].name,"gcNewHostname"))
-			sprintf(gcNewHostname,"%.99s",entries[i].val);
+			sprintf(gcNewHostname,"%.32s",NameToLower(entries[i].val));
 	}
 
 }//void ProcessContainerVars(pentry entries[], int x)
@@ -78,11 +79,120 @@ void ContainerCommands(pentry entries[], int x)
 		ProcessContainerVars(entries,x);
 		if(!strcmp(gcFunction,"Change Hostname"))
 		{
-			//TODO validation and make sure no one else is trying to use the same source container .
-			if(guNewContainer && gcNewHostname[0])
-				gcMessage="Hostname changed. Review new container status.";
-			else
-				gcMessage="Hostname not changed. Must select a source container and a new hostname.";
+        		MYSQL_RES *res;
+	        	MYSQL_ROW field;
+			unsigned uLen=0;
+
+			//1-. Validate gcNewHostname
+			if(strstr(gcNewHostname,"."))
+			{
+				gcMessage="New container name can not have anymore \"stops\" (periods.)";
+				htmlContainer();
+			}
+			if((uLen=strlen(gcNewHostname))<2)
+			{
+				gcMessage="New container name must have at least two chars.";
+				htmlContainer();
+			}
+			if(uLen>32)
+			{
+				gcMessage="New container name must have at most 32 chars.";
+				htmlContainer();
+			}
+			//Check uniqueness
+			sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",gcNewHostname);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage=(char *)mysql_error(&gMysql);
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)>0)
+			{
+				gcMessage="New container name must not be already in use.";
+				htmlContainer();
+			}
+
+			//Validate target container
+			if(!guNewContainer)
+			{
+				gcMessage="Must select a container.";
+				htmlContainer();
+			}
+			//Check job queue
+			//Waiting, Running, Done Error, Remote waiting, Error
+			sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uContainer=%u AND"
+					" (uJobStatus=1 OR uJobStatus=2 OR uJobStatus=4 OR uJobStatus=10 OR uJobStatus=14)",
+						guNewContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage=(char *)mysql_error(&gMysql);
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)>0)
+			{
+				gcMessage="Selected container is being used by another process. Please try another.";
+				htmlContainer();
+			}
+			//uContainer must still exist
+			sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u",guNewContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage=(char *)mysql_error(&gMysql);
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)!=1)
+			{
+				gcMessage="Selected container does not exist. Please try another.";
+				htmlContainer();
+			}
+			//uStatus must still be active
+			sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND uStatus!=1",guNewContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage=(char *)mysql_error(&gMysql);
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)>0)
+			{
+				gcMessage="Selected container is not active. Please try another.";
+				htmlContainer();
+			}
+
+			//Check for configuration problems
+			//1-. unxsBind zone and view
+			//2-. Datacenter and node availability
+			char cunxsBindARecordJobZone[65]={""};
+
+			sprintf(gcQuery,"SELECT cValue FROM tConfiguration"
+					" WHERE uDatacenter=(SELECT uDatacenter FROM tContainer WHERE uContainer=%u LIMIT 1)"
+					" AND uContainer=0 AND uNode=0 AND cLabel='cunxsBindARecordJobZone'",guNewContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage=(char *)mysql_error(&gMysql);
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cunxsBindARecordJobZone,"%.63s",field[0]);
+			if(strlen(cunxsBindARecordJobZone)<2)
+			{
+				gcMessage="Configuration error contact your sysadmin: cunxsBindARecordJobZone.";
+				htmlContainer();
+			}
+
+			//for all the above
+			mysql_free_result(res);
+				
+			gcMessage="Hostname change being attempted. Review new container status in a few minutes.";
 			guContainer=guNewContainer;
 			htmlContainer();
 		}
@@ -430,10 +540,11 @@ void funcNewContainer(FILE *fp)
 	unsigned uCount=1;
 	unsigned uContainer=0;
 	char cOrg_NewGroupLabel[33]={"Pre-Spinned"};
+	char cOrg_NewHostname[65]={"somedomain.tld"};
 
 	fprintf(fp,"<!-- funcNewContainer(fp) Start -->\n");
 
-	fprintf(fp,"<tr><td valign=\"top\"><strong><u>New Container</u></strong></td><td><br>\n");
+	fprintf(fp,"<tr><td valign=\"top\"><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=Special+OPs')\" <strong><u>Special OPs</u></strong></a></td><td>\n");
 
 	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=0"
 			" AND uContainer=0 AND uNode=0 AND cLabel='cOrg_NewGroupLabel'");
@@ -447,6 +558,18 @@ void funcNewContainer(FILE *fp)
 	if((field=mysql_fetch_row(res)))
 		sprintf(cOrg_NewGroupLabel,"%.32s",field[0]);
 
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=0"
+			" AND uContainer=0 AND uNode=0 AND cLabel='cOrg_NewHostname'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		htmlPlainTextError(mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cOrg_NewHostname,"%.64s",field[0]);
+
 	sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tGroupGlue,tGroup WHERE "
 			"tContainer.uContainer=tGroupGlue.uContainer AND "
 			"tGroupGlue.uGroup=tGroup.uGroup AND tGroup.cLabel='%s' AND "
@@ -459,7 +582,7 @@ void funcNewContainer(FILE *fp)
 		return;
 	}
 	res=mysql_store_result(&gMysql);
-	fprintf(fp,"<select class=type_textarea title='Select the container you want to use with this dropdown'"
+	fprintf(fp,"<br><select class=type_textarea title='Select the container you want to use.'"
 			" name=guNewContainer >\n");
 	fprintf(fp,"<option>---</option>");
 	while((field=mysql_fetch_row(res)))
@@ -477,12 +600,14 @@ void funcNewContainer(FILE *fp)
 
 	fprintf(fp,"</select>\n");
 
-	fprintf(fp,"<br><input type=text class=type_fields"
-			" title='Enter new container fully qualifed hostname for the above selected container'"
-			" name=gcNewHostname value='%s' size=40 maxlength=64>\n",gcNewHostname);
+	fprintf(fp,"<p><input type=text class=type_fields"
+			" title='Enter new name for the above selected container'"
+			" name=gcNewHostname value='%s' size=16 maxlength=32>",gcNewHostname);
 
-	fprintf(fp,"<br><input type=submit class=largeButton"
-			" title='Select a container, enter the FQDN new hostname. Use this button to change it. Review status.'"
+	fprintf(fp,".%s\n",cOrg_NewHostname);
+
+	fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Select a container, enter the first part of the new FQDN hostname. Then use this button.'"
 			" name=gcFunction value='Change Hostname'>\n");
 
 	fprintf(fp,"</td></tr>\n");
@@ -491,3 +616,19 @@ void funcNewContainer(FILE *fp)
 
 }//void funcNewContainer(FILE *fp)
 
+
+char *NameToLower(char *cInput)
+{
+	register int i;
+
+	for(i=0;cInput[i];i++)
+	{
+	
+		if(!isalnum(cInput[i]) ) break;
+		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
+	}
+	cInput[i]=0;
+
+	return(cInput);
+
+}//char *NameToLower(char *cInput)
