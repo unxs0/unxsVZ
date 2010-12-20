@@ -29,6 +29,7 @@ char *cGetHostname(unsigned uContainer);
 char *cGetImageHost(unsigned uContainer);
 void SelectContainer(void);
 char *NameToLower(char *cInput);
+void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 
 void ProcessContainerVars(pentry entries[], int x)
 {
@@ -83,6 +84,12 @@ void ContainerCommands(pentry entries[], int x)
 	        	MYSQL_ROW field;
 			unsigned uLen=0;
 
+			//Validate target container
+			if(!guNewContainer)
+			{
+				gcMessage="Must select a container.";
+				htmlContainer();
+			}
 			//1-. Validate gcNewHostname
 			if(strstr(gcNewHostname,"."))
 			{
@@ -104,7 +111,7 @@ void ContainerCommands(pentry entries[], int x)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				gcMessage=(char *)mysql_error(&gMysql);
+				gcMessage="Select uContainer/cLabel error, contact sysadmin!";
 				htmlContainer();
 			}
 			res=mysql_store_result(&gMysql);
@@ -114,12 +121,6 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//Validate target container
-			if(!guNewContainer)
-			{
-				gcMessage="Must select a container.";
-				htmlContainer();
-			}
 			//Check job queue
 			//Waiting, Running, Done Error, Remote waiting, Error
 			sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uContainer=%u AND"
@@ -128,7 +129,7 @@ void ContainerCommands(pentry entries[], int x)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				gcMessage=(char *)mysql_error(&gMysql);
+				gcMessage="Select uJob error, contact sysadmin!";
 				htmlContainer();
 			}
 			res=mysql_store_result(&gMysql);
@@ -142,7 +143,7 @@ void ContainerCommands(pentry entries[], int x)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				gcMessage=(char *)mysql_error(&gMysql);
+				gcMessage="Select uContainer error, contact sysadmin!";
 				htmlContainer();
 			}
 			res=mysql_store_result(&gMysql);
@@ -152,17 +153,30 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 			//uStatus must still be active
-			sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND uStatus!=1",guNewContainer);
+			unsigned uNode=0;
+			unsigned uDatacenter=0;
+			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u AND uStatus=1",
+				guNewContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				gcMessage=(char *)mysql_error(&gMysql);
+				gcMessage="Select uNode error, contact sysadmin!";
 				htmlContainer();
 			}
 			res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res)>0)
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[1],"%u",&uNode);
+				sscanf(field[2],"%u",&uDatacenter);
+			}
+			if(mysql_num_rows(res)<1)
 			{
 				gcMessage="Selected container is not active. Please try another.";
+				htmlContainer();
+			}
+			if(!uNode || !uDatacenter)
+			{
+				gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
 				htmlContainer();
 			}
 
@@ -170,14 +184,13 @@ void ContainerCommands(pentry entries[], int x)
 			//1-. unxsBind zone and view
 			//2-. Datacenter and node availability
 			char cunxsBindARecordJobZone[65]={""};
-
 			sprintf(gcQuery,"SELECT cValue FROM tConfiguration"
 					" WHERE uDatacenter=(SELECT uDatacenter FROM tContainer WHERE uContainer=%u LIMIT 1)"
 					" AND uContainer=0 AND uNode=0 AND cLabel='cunxsBindARecordJobZone'",guNewContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				gcMessage=(char *)mysql_error(&gMysql);
+				gcMessage="Select cunxsBindARecordJobZone failed, contact sysadmin!";
 				htmlContainer();
 			}
 			res=mysql_store_result(&gMysql);
@@ -188,11 +201,163 @@ void ContainerCommands(pentry entries[], int x)
 				gcMessage="Configuration error contact your sysadmin: cunxsBindARecordJobZone.";
 				htmlContainer();
 			}
+			char cunxsBindARecordJobView[65]={""};
+			sprintf(gcQuery,"SELECT cValue FROM tConfiguration"
+					" WHERE uDatacenter=(SELECT uDatacenter FROM tContainer WHERE uContainer=%u LIMIT 1)"
+					" AND uContainer=0 AND uNode=0 AND cLabel='cunxsBindARecordJobView'",guNewContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select cunxsBindARecordJobView failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cunxsBindARecordJobView,"%.63s",field[0]);
+			if(strlen(cunxsBindARecordJobView)<2)
+			{
+				gcMessage="Configuration error contact your sysadmin: cunxsBindARecordJobView.";
+				htmlContainer();
+			}
+			char cIPv4[32]={""};
+			sprintf(gcQuery,"SELECT cLabel FROM tIP"
+					" WHERE uIP=(SELECT uIPv4 FROM tContainer WHERE uContainer=%u LIMIT 1)",guNewContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select cIPv4 failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cIPv4,"%.31s",field[0]);
+			if(strlen(cIPv4)<7)
+			{
+				gcMessage="Configuration error contact your sysadmin: cIPv4.";
+				htmlContainer();
+			}
 
 			//for all the above
 			mysql_free_result(res);
-				
-			gcMessage="Hostname change being attempted. Review new container status in a few minutes.";
+
+			//Change the target container's names
+			sprintf(gcQuery,"UPDATE tContainer SET cLabel='%s',cHostname='%s.%s',"
+					" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uContainer=%u",
+						gcNewHostname,gcNewHostname,cunxsBindARecordJobZone,
+						guLoginClient,
+						guNewContainer);
+        		mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="UPDATE tContainer failed, contact sysadmin!";
+				htmlContainer();
+			}
+
+			//Change hostname job
+			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ChangeHostnameContainer(%u)',cJobName='ChangeHostnameContainer'"
+					",uDatacenter=%u,uNode=%u,uContainer=%u"
+					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+					",uJobStatus=1"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guNewContainer,
+						uDatacenter,uNode,guNewContainer,
+						guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="ChangeHostnameContainer insert failed, contact sysadmin!";
+				htmlContainer();
+			}
+			SetContainerStatus(guNewContainer,61);
+
+			/*
+				cName=london32.your.net.;
+				cIPv4=81.82.83.84;
+				cZone=your.net;
+				cView=external;
+			*/
+			//DNS job
+			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindARecordJob(%u)',cJobName='unxsVZContainerARR'"
+					",uDatacenter=%u,uNode=%u,uContainer=%u"
+					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+					",uJobStatus=%u"
+					",cJobData='"
+					"cName=%s.%s.;\n"
+					"cIPv4=%s;\n"
+					"cZone=%s;\n"
+					"cView=%s;\n'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guNewContainer,
+						uDatacenter,uNode,guNewContainer,
+						uREMOTEWAITING,
+						gcNewHostname,cunxsBindARecordJobZone,cIPv4,cunxsBindARecordJobZone,cunxsBindARecordJobView,
+						guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="unxsBindARecordJob insert failed, contact sysadmin!";
+				htmlContainer();
+			}
+
+			//Change group
+			char cOrg_NewGroupLabel[32]={""};
+			char cOrg_AfterNewGroupLabel[32]={""};
+			unsigned uGroup=0;
+			sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=0"
+					" AND uContainer=0 AND uNode=0 AND cLabel='cOrg_NewGroupLabel'");
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select cOrg_NewGroupLabel failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cOrg_NewGroupLabel,"%.32s",field[0]);
+
+			sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s'",cOrg_NewGroupLabel);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select cOrg_AfterNewGroupLabel failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uGroup);
+
+			sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=0"
+					" AND uContainer=0 AND uNode=0 AND cLabel='cOrg_AfterNewGroupLabel'");
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select cOrg_AfterNewGroupLabel failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cOrg_AfterNewGroupLabel,"%.32s",field[0]);
+
+			if(!uGroup || !cOrg_AfterNewGroupLabel[0] || !cOrg_NewGroupLabel[0])
+			{
+				gcMessage="Group configuration problem-1, contact sysadmin!";
+				htmlContainer();
+			}
+
+			sprintf(gcQuery,"UPDATE tGroupGlue SET uGroup=(SELECT uGroup FROM tGroup WHERE cLabel='%s' LIMIT 1)"
+					" WHERE uContainer=%u AND uGroup=%u",cOrg_AfterNewGroupLabel,guNewContainer,uGroup);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Update tGroupGlue failed, contact sysadmin!";
+				htmlContainer();
+			}
+			if(mysql_affected_rows(&gMysql)<1)
+				gcMessage="Hostname change being attempted. Group not changed. Review new container status in a few minutes.";
+			else
+				gcMessage="Hostname change being attempted. Review new container status in a few minutes.";
+
 			guContainer=guNewContainer;
 			htmlContainer();
 		}
@@ -532,7 +697,7 @@ char *cGetImageHost(unsigned uContainer)
 
 void funcNewContainer(FILE *fp)
 {
-	if(guPermLevel<7)
+	if(guPermLevel<6)
 		return;
 
 	MYSQL_RES *res;
@@ -632,3 +797,13 @@ char *NameToLower(char *cInput)
 	return(cInput);
 
 }//char *NameToLower(char *cInput)
+
+
+void SetContainerStatus(unsigned uContainer,unsigned uStatus)
+{
+	sprintf(gcQuery,"UPDATE tContainer SET uStatus=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+			" WHERE uContainer=%u",
+					uStatus,guLoginClient,uContainer);
+	mysql_query(&gMysql,gcQuery);
+
+}//void SetContainerStatus(unsigned uContainer,unsigned uStatus)
