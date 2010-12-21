@@ -64,21 +64,51 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\''$cSSHPort'\''' -avxlH --delete 
+#debug only
+#rmdir $cLockfile;
+#exit 0;
+#'\''$cPasswd'\''
+
+#test with --dry-run switch
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
 			$1:/var/spool/asterisk/ /vz/private/$2/var/spool/asterisk/
 #we can ignore return value 24:
 #rsync warning: some files vanished before they could be transferred (code 24) at main.c(892) [sender=2.6.8]
 if [ $? != 0 ] && [ $? != 24 ];then
-	fLog "rsync failed";
-	#rollback
-	rmdir $cLockfile;
-	exit 3;
-else
-	#remove lock file
-	rmdir $cLockfile;
-
-	#debug only
-	#fLog "end";
-	exit 0;
+	fLog "rsync 1 failed";
 fi
 
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+			$1:/var/lib/mysql/asterisk/ /vz/private/$2/var/lib/mysql/asterisk/
+if [ $? != 0 ] && [ $? != 24 ];then
+	fLog "rsync 2 failed";
+fi
+
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+			$1:/var/lib/mysql/asteriskcdrdb/ /vz/private/$2/var/lib/mysql/asteriskcdrdb/
+if [ $? != 0 ] && [ $? != 24 ];then
+	fLog "rsync 3 failed";
+fi
+
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+			$1:/etc/asterisk/ /vz/private/$2/etc/asterisk/
+if [ $? != 0 ] && [ $? != 24 ];then
+	fLog "rsync 4 failed";
+fi
+
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+			$1:/var/lib/asterisk/ /vz/private/$2/var/lib/asterisk/
+if [ $? != 0 ] && [ $? != 24 ];then
+	fLog "rsync 5 failed";
+fi
+
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+			$1:/var/www/html/panel/ /vz/private/$2/var/www/html/panel/
+if [ $? != 0 ] && [ $? != 24 ];then
+	fLog "rsync 6 failed";
+fi
+
+rmdir $cLockfile;
+#debug only
+fLog "end";
+exit 0;
