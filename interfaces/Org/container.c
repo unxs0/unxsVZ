@@ -16,6 +16,7 @@ extern unsigned guBrowserFirefox;//main.c
 char gcCtHostname[100]={""};
 static char gcSearch[100]={""};
 unsigned guContainer=0;
+unsigned guStatus=0;
 unsigned guNewContainer=0;
 //Container details
 static char gcLabel[33]={""};
@@ -456,7 +457,21 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 
 void funcContainerImageTag(FILE *fp)
 {
-	if(guContainer)
+	if(!guContainer)
+		return;
+
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uStatus FROM tContainer WHERE uContainer=%u",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&guStatus);
+	mysql_free_result(res);
+	if(guStatus!=uREMOTEAPPLIANCE && guStatus!=uAWAITACT)
 		fprintf(fp,"<a href=https://%s/admin ><img src=%s/traffic/%u.png border=0 ></a>",
 			cGetHostname(guContainer),cGetImageHost(guContainer),guContainer);
 
@@ -569,11 +584,11 @@ void funcContainerInfo(FILE *fp)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
+	if((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uDatacenter')\">"
 			" <strong>Datacenter</strong></a></td><td><input type=text name='cDatacenter' value='%s' size=40 maxlength=32"
-			" class=\"type_fields_off\"> </td></tr>\n",field[0]);
+			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 	mysql_free_result(res);
 
@@ -584,11 +599,11 @@ void funcContainerInfo(FILE *fp)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
+	if((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uNode')\">"
 			" <strong>Node</strong></a></td><td><input type=text name='cNode' value='%s' size=40 maxlength=32"
-			" class=\"type_fields_off\"> </td></tr>\n",field[0]);
+			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 	mysql_free_result(res);
 
@@ -599,11 +614,11 @@ void funcContainerInfo(FILE *fp)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
+	if((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uStatus')\">"
 			" <strong>Status</strong></a></td><td><input type=text name='cStatus' value='%s' size=40 maxlength=32"
-			" class=\"type_fields_off\"> </td></tr>\n",field[0]);
+			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 	mysql_free_result(res);
 
@@ -617,7 +632,7 @@ void funcContainerInfo(FILE *fp)
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uIPv4')\">"
 			" <strong>IPv4</strong></a></td><td><input type=text name='cIPv4' value='%s' size=40 maxlength=32"
-			" class=\"type_fields_off\"> </td></tr>\n",field[0]);
+			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 	mysql_free_result(res);
 
@@ -632,7 +647,82 @@ void funcContainerInfo(FILE *fp)
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=Group')\">"
 			" <strong>Group</strong></a></td><td><input type=text name='cGroup' value='%s' size=40 maxlength=32"
-			" class=\"type_fields_off\"> </td></tr>\n",field[0]);
+			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
+	}
+	mysql_free_result(res);
+
+/*
+	//Owner
+	sprintf(gcQuery,"SELECT tClient.cLabel FROM tContainer,tClient WHERE tContainer.uOwner=tClient.uClient AND"
+			" tContainer.uContainer=%u",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uOwner')\">"
+			" <strong>Owner</strong></a></td><td><input type=text name='cOwner' value='%s' size=40 maxlength=32"
+			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
+	}
+*/
+
+	//CreatedBy
+	sprintf(gcQuery,"SELECT tClient.cLabel FROM tContainer,tClient WHERE tContainer.uCreatedBy=tClient.uClient AND"
+			" tContainer.uContainer=%u",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uCreatedBy')\">"
+			" <strong>Created By</strong></a></td><td><input type=text name='cCreatedBy' value='%s' size=40 maxlength=32"
+			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
+	}
+
+	//CreatedDate
+	sprintf(gcQuery,"SELECT FROM_UNIXTIME(uCreatedDate,'%%a %%b %%d %%T %%Y') FROM tContainer WHERE uContainer=%u",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uCreatedDate')\">"
+			" <strong>Date Created</strong></a></td><td><input type=text name='cCreatedDate' value='%s'" " size=40 maxlength=32"
+			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
+	}
+
+/*
+	//ModBy
+	sprintf(gcQuery,"SELECT tClient.cLabel FROM tContainer,tClient WHERE tContainer.uModBy=tClient.uClient AND"
+			" tContainer.uContainer=%u",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uModBy')\">"
+			" <strong>Modified By</strong></a></td><td><input type=text name='cModBy'");
+	if((field=mysql_fetch_row(res)))
+		printf(" value='%s'",field[0]);
+	else
+		printf(" value='---'");
+	printf(" disabled size=40 maxlength=32 class=\"type_fields_off\"> </td></tr>\n");
+	mysql_free_result(res);
+*/
+
+	//cPasswd
+	sprintf(gcQuery,"SELECT cName,cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName='cPasswd'",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=%s')\">"
+			" <strong>SSH Passwd</strong></a></td><td><input type=text name='%s' value='%s' size=40 maxlength=32"
+			" class=\"type_fields_off\"> </td></tr>\n",field[0],field[0],field[1]);
 	}
 	mysql_free_result(res);
 
@@ -709,7 +799,9 @@ void funcNewContainer(FILE *fp)
 
 	fprintf(fp,"<!-- funcNewContainer(fp) Start -->\n");
 
-	fprintf(fp,"<tr><td valign=\"top\"><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=Special+OPs')\" <strong><u>Special OPs</u></strong></a></td><td>\n");
+	fprintf(fp,"<tr><td valign=\"top\"><a class=inputLink href=\"#\""
+		" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=Special+OPs')\""
+		" <strong><u>Special OPs</u></strong></a></td><td>\n");
 
 	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=0"
 			" AND uContainer=0 AND uNode=0 AND cLabel='cOrg_NewGroupLabel'");
