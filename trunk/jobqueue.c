@@ -914,6 +914,50 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 		tJobErrorUpdate(uJob,"No line from query");
 	}
 
+
+	//Optional group based script may exist to be executed.
+	//
+	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+			" AND tProperty.uKey=tGroupGlue.uGroup"
+			" AND tGroupGlue.uContainer=%u"
+			" AND tProperty.cName='cJob_OnChangeHostnameScript' LIMIT 1",uPROP_GROUP,uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ChangeHostnameContainer",mysql_error(&gMysql));
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		struct stat statInfo;
+
+		if(uNotValidSystemCallArg(field[0]))
+		{
+			logfileLine("ChangeHostnameContainer","cJob_OnChangeHostnameScript security alert");
+			goto CommonExit;
+		}
+
+		//Only run if command is chmod 500 for extra security reasons.
+		if(stat(field[0],&statInfo))
+		{
+			logfileLine("ChangeHostnameContainer","stat failed for cJob_OnChangeHostnameScript");
+			goto CommonExit;
+		}
+
+		if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
+		{
+			logfileLine("ChangeHostnameContainer","cJob_OnChangeHostnameScript is not chmod 500");
+			goto CommonExit;
+		}
+
+		if(system(field[0]))
+		{
+			logfileLine("ChangeHostnameContainer",field[0]);
+		}
+	}
+
+
 CommonExit:
 	mysql_free_result(res);
 	return;
