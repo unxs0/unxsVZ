@@ -28,8 +28,8 @@ if [ ! -f /usr/local/sbin/zabbix_agentd ];then
 	exit 0;
 fi
 
-if [ ! -f /etc/init.d/zabbix_agentd ];then
-	echo "/etc/init.d/zabbix_agentd not installed";
+if [ ! -f ./zabbix_agentd.init.d.script ];then
+	echo "./zabbix_agentd.init.d.script not installed";
 	exit 0;
 fi
 
@@ -85,7 +85,7 @@ do
 	fi
 
 	#install init.d script always (upgrade works here.)
-	cp /etc/init.d/zabbix_agentd\
+	cp zabbix_agentd.init.d.script\
 		 /vz/private/$uContainer/etc/init.d/zabbix_agentd < /dev/tty;
 	#create /etc/zabbix dir
 	mkdir -p /vz/private/$uContainer/etc/zabbix < /dev/tty;

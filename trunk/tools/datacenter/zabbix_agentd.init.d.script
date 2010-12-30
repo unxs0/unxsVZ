@@ -64,7 +64,8 @@ case $1 in
 		start;
 		;;
 	status)
-		/bin/ps -ef | /bin/grep zabbix_agentd > /dev/null 2>&1;
+		cStatus=`/bin/ps -ef | /bin/grep /usr/local/sbin/zabbix_agentd | /bin/grep -v grep`;
+		echo $cStatus | /bin/grep zabbix_agentd > /dev/null 2>&1;
 		if [ $? == 0 ];then
 			echo "zabbix_agentd is running";
 		else
