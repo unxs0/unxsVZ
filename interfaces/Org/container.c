@@ -18,9 +18,12 @@ static char gcSearch[100]={""};
 unsigned guContainer=0;
 unsigned guStatus=0;
 unsigned guNewContainer=0;
+static char gcNewContainerTZ[64]={"PST5PDT"};
 //Container details
 static char gcLabel[33]={""};
 static char gcNewHostname[33]={""};
+static char gcNewHostParam0[33]={""};
+static char gcNewHostParam1[33]={""};
 
 
 //TOC
@@ -48,6 +51,12 @@ void ProcessContainerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&guNewContainer);
 		else if(!strcmp(entries[i].name,"gcNewHostname"))
 			sprintf(gcNewHostname,"%.32s",NameToLower(entries[i].val));
+		else if(!strcmp(entries[i].name,"gcNewContainerTZ"))
+			sprintf(gcNewContainerTZ,"%.63s",entries[i].val);
+		else if(!strcmp(entries[i].name,"gcNewHostParam0"))
+			sprintf(gcNewHostParam0,"%.32s",NameToLower(entries[i].val));
+		else if(!strcmp(entries[i].name,"gcNewHostParam1"))
+			sprintf(gcNewHostParam1,"%.32s",NameToLower(entries[i].val));
 	}
 
 }//void ProcessContainerVars(pentry entries[], int x)
@@ -79,7 +88,7 @@ void ContainerCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"Container"))
 	{
 		ProcessContainerVars(entries,x);
-		if(!strcmp(gcFunction,"Change Hostname"))
+		if(!strcmp(gcFunction,"Repurpose Container"))
 		{
         		MYSQL_RES *res;
 	        	MYSQL_ROW field;
@@ -238,14 +247,178 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
+			if(gcNewHostParam0[0])
+			{
+				unsigned uProperty=0;
+				char cOrgPropName[64]={"Unknown"};
+				char *cp;
+
+				sprintf(gcQuery,"SELECT cComment FROM tConfiguration WHERE cLabel='cNewHostParam0'");
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Select cComment failed, contact sysadmin!";
+					htmlContainer();
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					if((cp=strstr(field[0],"cOrgPropName=")))
+					{
+						sprintf(cOrgPropName,"%.63s",cp+strlen("cOrgPropName="));
+						if((cp=strchr(cOrgPropName,';')))
+							*cp=0;
+					}
+				}
+
+				sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					" WHERE uKey=%u AND uType=3 AND cName='cOrg_%s'",guNewContainer,cOrgPropName);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Select uProperty failed, contact sysadmin!";
+					htmlContainer();
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uProperty);
+				if(uProperty)
+				{
+					sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%u",
+						gcNewHostParam0,uProperty);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						gcMessage="Update tProperty failed, contact sysadmin!";
+						htmlContainer();
+					}
+				}
+				else
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_%s',cValue='%s',uType=3,uKey=%u"
+							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						cOrgPropName,gcNewHostParam0,guNewContainer,guOrg,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						gcMessage="Update tProperty failed, contact sysadmin!";
+						htmlContainer();
+					}
+				}
+			}
+
+			if(gcNewHostParam1[0])
+			{
+				unsigned uProperty=0;
+				char cOrgPropName[64]={"Unknown"};
+				char *cp;
+
+				sprintf(gcQuery,"SELECT cComment FROM tConfiguration WHERE cLabel='cNewHostParam1'");
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Select cComment failed, contact sysadmin!";
+					htmlContainer();
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					if((cp=strstr(field[0],"cOrgPropName=")))
+					{
+						sprintf(cOrgPropName,"%.63s",cp+strlen("cOrgPropName="));
+						if((cp=strchr(cOrgPropName,';')))
+							*cp=0;
+					}
+				}
+
+				sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					" WHERE uKey=%u AND uType=3 AND cName='cOrg_%s'",guNewContainer,cOrgPropName);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Select uProperty failed, contact sysadmin!";
+					htmlContainer();
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uProperty);
+				if(uProperty)
+				{
+					sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%u",
+						gcNewHostParam1,uProperty);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						gcMessage="Update tProperty failed, contact sysadmin!";
+						htmlContainer();
+					}
+				}
+				else
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_%s',cValue='%s',uType=3,uKey=%u"
+							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						cOrgPropName,gcNewHostParam1,guNewContainer,guOrg,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						gcMessage="Update tProperty failed, contact sysadmin!";
+						htmlContainer();
+					}
+				}
+			}
+
+
+			//Always update GMT
+			unsigned uProperty=0;
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					" WHERE uKey=%u AND uType=3 AND cName='cOrg_TimeZone'",guNewContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select uProperty failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uProperty);
+			if(uProperty)
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%u",
+						gcNewContainerTZ,uProperty);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Update tProperty failed, contact sysadmin!";
+					htmlContainer();
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_TimeZone',cValue='%s',uType=3,uKey=%u"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcNewContainerTZ,guNewContainer,guOrg,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Update tProperty failed, contact sysadmin!";
+					htmlContainer();
+				}
+			}
+
 			//for all the above
 			mysql_free_result(res);
 
+			//debug only
+			//gcMessage="Test mode";
+			//htmlContainer();
+
 			//Change the target container's names
+			//Special created by non standard usage
 			sprintf(gcQuery,"UPDATE tContainer SET cLabel='%s',cHostname='%s.%s',"
-					" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+					" uCreatedBy=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 						" WHERE uContainer=%u",
 						gcNewHostname,gcNewHostname,cunxsBindARecordJobZone,
+						guLoginClient,
 						guLoginClient,
 						guNewContainer);
         		mysql_query(&gMysql,gcQuery);
@@ -796,6 +969,8 @@ void funcNewContainer(FILE *fp)
 	unsigned uContainer=0;
 	char cOrg_NewGroupLabel[33]={"Pre-Spinned"};
 	char cOrg_NewHostname[65]={"somedomain.tld"};
+	char cTitle[64]={""};
+	char *cp;
 
 	fprintf(fp,"<!-- funcNewContainer(fp) Start -->\n");
 
@@ -854,9 +1029,75 @@ void funcNewContainer(FILE *fp)
 			fprintf(fp,">Limit reached. Contact your sysadmin ASAP!</option>");
 	}
 	mysql_free_result(res);
+	fprintf(fp,"</select> Select container\n");
 
+	//Time zone
+	sprintf(gcQuery,"SELECT cValue,cComment FROM tConfiguration WHERE cLabel='cTimeZone' ORDER BY uConfiguration");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		htmlPlainTextError(mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	fprintf(fp,"<p><select class=type_textarea title='Select the time zone you want to use.'"
+			" name=gcNewContainerTZ >\n");
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"<option value=%s",field[0]);
+		if(!strcmp(gcNewContainerTZ,field[0]))
+			fprintf(fp," selected");
+		fprintf(fp,">%s</option>",field[1]);
+	}
+	mysql_free_result(res);
 	fprintf(fp,"</select>\n");
 
+	//Optional inputs
+	sprintf(gcQuery,"SELECT cValue,cComment FROM tConfiguration WHERE cLabel='cNewHostParam0'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		htmlPlainTextError(mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		if((cp=strstr(field[1],"cTitle=")))
+		{
+			sprintf(cTitle,"%.63s",cp+7);
+			if((cp=strchr(cTitle,';')))
+				*cp=0;
+		}
+		fprintf(fp,"<p><input type=text class=type_fields"
+			" title='%s'"
+			" name=gcNewHostParam0 value='%s' size=16 maxlength=32> %s",cTitle,field[0],cTitle);
+	}
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT cValue,cComment FROM tConfiguration WHERE cLabel='cNewHostParam1'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		htmlPlainTextError(mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		if((cp=strstr(field[1],"cTitle=")))
+		{
+			sprintf(cTitle,"%.63s",cp+7);
+			if((cp=strchr(cTitle,';')))
+				*cp=0;
+		}
+		fprintf(fp,"<p><input type=text class=type_fields"
+			" title='%s'"
+			" name=gcNewHostParam1 value='%s' size=16 maxlength=32> %s",cTitle,field[0],cTitle);
+	}
+	mysql_free_result(res);
+
+	//New hostname
 	fprintf(fp,"<p><input type=text class=type_fields"
 			" title='Enter new name for the above selected container'"
 			" name=gcNewHostname value='%s' size=16 maxlength=32>",gcNewHostname);
@@ -864,8 +1105,9 @@ void funcNewContainer(FILE *fp)
 	fprintf(fp,".%s\n",cOrg_NewHostname);
 
 	fprintf(fp,"<p><input type=submit class=largeButton"
-			" title='Select a container, enter the first part of the new FQDN hostname. Then use this button.'"
-			" name=gcFunction value='Change Hostname'>\n");
+			" title='Select a container, base time zone, then enter the first part of the new FQDN hostname."
+			" Other options (as configured) may apply.'"
+			" name=gcFunction value='Repurpose Container'>\n");
 
 	fprintf(fp,"</td></tr>\n");
 
