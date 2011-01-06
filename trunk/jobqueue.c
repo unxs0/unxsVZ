@@ -938,13 +938,17 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 			goto CommonExit;
 		}
 
-		//Only run if command is chmod 500 for extra security reasons.
+		//Only run if command is chmod 500 and owned by root for extra security reasons.
 		if(stat(field[0],&statInfo))
 		{
 			logfileLine("ChangeHostnameContainer","stat failed for cJob_OnChangeHostnameScript");
 			goto CommonExit;
 		}
-
+		if(statInfo.st_uid!=0)
+		{
+			logfileLine("ChangeHostnameContainer","cJob_OnChangeHostnameScript is not owned by root");
+			goto CommonExit;
+		}
 		if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
 		{
 			logfileLine("ChangeHostnameContainer","cJob_OnChangeHostnameScript is not chmod 500");
