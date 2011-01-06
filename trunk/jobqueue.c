@@ -644,6 +644,25 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		}
 	}
 
+	//5-. Optional container CentOS linux timezone set
+	//Example (cOrg_TimeZone) cTimezone "Europe/Zurich"
+	//For /usr/share/zoneinfo/Europe/Zurich
+	char cTimezone[256]={""};
+	GetContainerProp(uContainer,"cOrg_TimeZone",cTimezone);
+	if(cTimezone[0] && !uNotValidSystemCallArg(cPasswd) )
+	{
+		FILE *pp;
+
+		sprintf(gcQuery,"/usr/sbin/vzctl exec %u -",uContainer);
+		if((pp=popen(gcQuery,"w"))!=NULL)
+		{
+			fprintf(pp,"rm /etc/localtime\n");
+			fprintf(pp,"ln -s /usr/share/zoneinfo/%s /etc/localtime\n",cTimezone);
+			pclose(pp);
+			logfileLine("NewContainer","Container timezone changed");
+		}
+	}
+
 	//Everything went ok;
 	SetContainerStatus(uContainer,1);//Active
 	tJobDoneUpdate(uJob);
