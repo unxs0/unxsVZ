@@ -649,7 +649,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	//For /usr/share/zoneinfo/Europe/Zurich
 	char cTimezone[256]={""};
 	GetContainerProp(uContainer,"cOrg_TimeZone",cTimezone);
-	if(cTimezone[0] && !uNotValidSystemCallArg(cPasswd) )
+	if(cTimezone[0] && !uNotValidSystemCallArg(cTimezone) )
 	{
 		FILE *pp;
 
@@ -977,6 +977,30 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 		if(system(field[0]))
 		{
 			logfileLine("ChangeHostnameContainer",field[0]);
+		}
+	}
+
+	//Please note that some container programs may need to also have time based info
+	//set or maybe restarted. This should be done by the above script.
+	//Since it is beyond the scope of unxsVZ to handle all the diff types of container
+	//Good example is a complex service container like a FreePBX/Asterisk virtual server.
+
+	//Optional container CentOS linux timezone set. See New also.
+	//Example (cOrg_TimeZone) cTimezone "Europe/Zurich"
+	//For /usr/share/zoneinfo/Europe/Zurich
+	char cTimezone[256]={""};
+	GetContainerProp(uContainer,"cOrg_TimeZone",cTimezone);
+	if(cTimezone[0] && !uNotValidSystemCallArg(cTimezone) )
+	{
+		FILE *pp;
+
+		sprintf(gcQuery,"/usr/sbin/vzctl exec %u -",uContainer);
+		if((pp=popen(gcQuery,"w"))!=NULL)
+		{
+			fprintf(pp,"rm /etc/localtime\n");
+			fprintf(pp,"ln -s /usr/share/zoneinfo/%s /etc/localtime\n",cTimezone);
+			pclose(pp);
+			logfileLine("NewContainer","Container timezone changed");
 		}
 	}
 
