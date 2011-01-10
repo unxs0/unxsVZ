@@ -66,6 +66,7 @@ static unsigned uSource=0;
 static char cuClientPullDown[256]={""};
 static char cAutoCloneNode[256]={""};
 static char cunxsBindARecordJobZone[256]={""};
+static char gcNewContainerTZ[64]={"PST8PDT"};
 
 #define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource"
 
@@ -460,6 +461,27 @@ void tContainerNewStep(unsigned uStep)
 		OpenRow("Optional password","black");
 		printf("<input title='Optional container password set on deployment and saved in"
 			" container property table' type=text name=cService1 value='%s' maxlength=31><br>",cService1);
+
+		//Time zone
+		MYSQL_RES *res;
+		MYSQL_ROW field;
+		OpenRow("Time Zone","black");
+		sprintf(gcQuery,"SELECT cValue,cComment FROM tConfiguration WHERE cLabel='cTimeZone' ORDER BY uConfiguration");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		printf("<p><select class=type_textarea title='Select the time zone you want to use.'"
+			" name=gcNewContainerTZ >\n");
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("<option value=%s",field[0]);
+			if(!strcmp(gcNewContainerTZ,field[0]))
+				printf(" selected");
+			printf(">%s</option>",field[1]);
+		}
+		mysql_free_result(res);
+		printf("</select>\n");
 
 		if(cAutoCloneNode[0])
 		{
