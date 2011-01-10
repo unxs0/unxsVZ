@@ -18,7 +18,7 @@ static char gcSearch[100]={""};
 unsigned guContainer=0;
 unsigned guStatus=0;
 unsigned guNewContainer=0;
-static char gcNewContainerTZ[64]={"PST5PDT"};
+static char gcNewContainerTZ[64]={"PST8PDT"};
 //Container details
 static char gcLabel[33]={""};
 static char gcNewHostname[33]={""};
