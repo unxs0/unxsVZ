@@ -181,6 +181,8 @@ void ProcesstContainerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%lu",&uModDate);
 		else if(!strcmp(entries[i].name,"uSource"))
 			sscanf(entries[i].val,"%u",&uSource);
+		else if(!strcmp(entries[i].name,"gcNewContainerTZ"))
+			sprintf(gcNewContainerTZ,"%.63s",entries[i].val);
 
 	}
 
@@ -471,8 +473,9 @@ void tContainerNewStep(unsigned uStep)
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 		res=mysql_store_result(&gMysql);
-		printf("<p><select class=type_textarea title='Select the time zone you want to use.'"
+		printf("<select class=type_textarea title='Select the time zone you want to use.'"
 			" name=gcNewContainerTZ >\n");
+		printf("<option>---</option>");
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("<option value=%s",field[0]);

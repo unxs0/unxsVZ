@@ -769,7 +769,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 {
 			guMode=0;
 		}
-		else if(!strcmp(gcCommand,"Appliance Container Creation"))
+		else if(!strcmp(gcCommand,"Appliance Creation"))
                 {
 			if(guPermLevel>=9)
 			{
@@ -1567,6 +1567,17 @@ void ExttContainerCommands(pentry entries[], int x)
 						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 						",cName='cPasswd',cValue='%s'",
 							uContainer,uForClient,guLoginClient,cService1);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
+
+				//Optional timezone note the --- not selected value.
+				if(gcNewContainerTZ[0]!='-')
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_TimeZone',cValue='%s',uType=3,uKey=%u"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcNewContainerTZ,uContainer,uForClient,guLoginClient);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -3316,9 +3327,9 @@ void ExttContainerButtons(void)
 			printf("<p><input type=submit class=largeButton"
 				" title='Configure base container and continue to create multiple containers'"
 				" name=gcCommand value='Multiple Container Creation'>\n");
-			printf("<p><input type=submit class=warnButton"
+			printf("<p><input type=submit class=lwarnButton"
 				" title='Configure and create a special remote appliance container'"
-				" name=gcCommand value='Appliance Container Creation'>\n");
+				" name=gcCommand value='Appliance Creation'>\n");
 			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
 				" name=gcCommand value='Cancel'>\n");
                 break;
