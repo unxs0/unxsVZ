@@ -667,6 +667,54 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		}
 	}
 
+	//6-.
+	//Optional group based script may exist to be executed.
+	//
+	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+			" AND tProperty.uKey=tGroupGlue.uGroup"
+			" AND tGroupGlue.uContainer=%u"
+			" AND tProperty.cName='cJob_OnNewContainerScript' LIMIT 1",uPROP_GROUP,uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("NewContainer",mysql_error(&gMysql));
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		struct stat statInfo;
+
+		if(uNotValidSystemCallArg(field[0]))
+		{
+			logfileLine("NewContainer","cJob_OnNewContainerScript security alert");
+			goto CommonExit2;
+		}
+
+		//Only run if command is chmod 500 and owned by root for extra security reasons.
+		if(stat(field[0],&statInfo))
+		{
+			logfileLine("NewContainer","stat failed for cJob_OnNewContainerScript");
+			goto CommonExit2;
+		}
+		if(statInfo.st_uid!=0)
+		{
+			logfileLine("NewContainer","cJob_OnNewContainerScript is not owned by root");
+			goto CommonExit2;
+		}
+		if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
+		{
+			logfileLine("NewContainer","cJob_OnNewContainerScript is not chmod 500");
+			goto CommonExit2;
+		}
+
+		if(system(field[0]))
+			logfileLine("NewContainer",field[0]);
+	}
+
+//In this case the goto MIGHT be justified
+CommonExit2:
+
 	//Everything went ok;
 	SetContainerStatus(uContainer,1);//Active
 	tJobDoneUpdate(uJob);
@@ -885,6 +933,7 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 {
 	char cHostname[100]={""};
 	char cName[100]={""};
+	char cTimezone[256]={""};
         MYSQL_RES *res;
         MYSQL_ROW field;
 
@@ -957,24 +1006,24 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 		if(uNotValidSystemCallArg(field[0]))
 		{
 			logfileLine("ChangeHostnameContainer","cJob_OnChangeHostnameScript security alert");
-			goto CommonExit;
+			goto CommonExit2;
 		}
 
 		//Only run if command is chmod 500 and owned by root for extra security reasons.
 		if(stat(field[0],&statInfo))
 		{
 			logfileLine("ChangeHostnameContainer","stat failed for cJob_OnChangeHostnameScript");
-			goto CommonExit;
+			goto CommonExit2;
 		}
 		if(statInfo.st_uid!=0)
 		{
 			logfileLine("ChangeHostnameContainer","cJob_OnChangeHostnameScript is not owned by root");
-			goto CommonExit;
+			goto CommonExit2;
 		}
 		if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
 		{
 			logfileLine("ChangeHostnameContainer","cJob_OnChangeHostnameScript is not chmod 500");
-			goto CommonExit;
+			goto CommonExit2;
 		}
 
 		if(system(field[0]))
@@ -982,6 +1031,8 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 			logfileLine("ChangeHostnameContainer",field[0]);
 		}
 	}
+
+CommonExit2:
 
 	//Please note that some container programs may need to also have time based info
 	//set or maybe restarted. This should be done by the above script.
@@ -991,7 +1042,6 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 	//Optional container CentOS linux timezone set. See New also.
 	//Example (cOrg_TimeZone) cTimezone "Europe/Zurich"
 	//For /usr/share/zoneinfo/Europe/Zurich
-	char cTimezone[256]={""};
 	GetContainerProp(uContainer,"cOrg_TimeZone",cTimezone);
 	if(cTimezone[0] && !uNotValidSystemCallArg(cTimezone) )
 	{

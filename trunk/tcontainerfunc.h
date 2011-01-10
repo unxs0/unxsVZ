@@ -944,7 +944,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					mysql_free_result(res);
 					//debug only
 					//tContainer(gcQuery);
-					tContainer("<blink>Error:</blink> Multiple containers, similar cHostname"
+					tContainer("<blink>Error:</blink> Appliance container, similar cHostname"
 					" cLabel pattern already used at this datacenter!");
 				}
 				mysql_free_result(res);
@@ -1132,6 +1132,17 @@ void ExttContainerCommands(pentry entries[], int x)
 						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 						",cName='cPasswd',cValue='%s'",
 							uContainer,uForClient,guLoginClient,cService1);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
+
+				//Optional timezone note the --- not selected value.
+				if(gcNewContainerTZ[0]!='-')
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_TimeZone',cValue='%s',uType=3,uKey=%u"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcNewContainerTZ,uContainer,uForClient,guLoginClient);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -1380,7 +1391,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					mysql_free_result(res);
 					//debug only
 					//tContainer(gcQuery);
-					tContainer("<blink>Error:</blink> Multiple containers, similar cHostname"
+					tContainer("<blink>Error:</blink> Single container, similar cHostname"
 					" cLabel pattern already used at this datacenter!");
 				}
 				mysql_free_result(res);
@@ -2068,6 +2079,17 @@ void ExttContainerCommands(pentry entries[], int x)
 						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 						",cName='cPasswd',cValue='%s'",
 							uContainer,uForClient,guLoginClient,cService1);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
+
+					//Optional timezone note the --- not selected value.
+					if(gcNewContainerTZ[0]!='-')
+					{
+						sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_TimeZone',cValue='%s',"
+								"uType=3,uKey=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcNewContainerTZ,uContainer,uForClient,guLoginClient);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
