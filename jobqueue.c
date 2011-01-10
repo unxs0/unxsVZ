@@ -651,15 +651,19 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	GetContainerProp(uContainer,"cOrg_TimeZone",cTimezone);
 	if(cTimezone[0] && !uNotValidSystemCallArg(cTimezone) )
 	{
-		FILE *pp;
-
-		sprintf(gcQuery,"/usr/sbin/vzctl exec %u -",uContainer);
-		if((pp=popen(gcQuery,"w"))!=NULL)
+		sprintf(gcQuery,"rm -f /vz/private/%u/etc/localtime",uContainer);
+		if(system(gcQuery))
 		{
-			fprintf(pp,"rm /etc/localtime\n");
-			fprintf(pp,"ln -s /usr/share/zoneinfo/%s /etc/localtime\n",cTimezone);
-			pclose(pp);
-			logfileLine("NewContainer","Container timezone changed");
+			logfileLine("NewContainer",gcQuery);
+		}
+		else
+		{
+			sprintf(gcQuery,"ln -s /vz/private/%u/usr/share/zoneinfo/%s /vz/private/%u/etc/localtime",
+				uContainer,cTimezone,uContainer);
+			if(system(gcQuery))
+				logfileLine("NewContainer",gcQuery);
+			else
+				logfileLine("NewContainer","Container timezone changed");
 		}
 	}
 
@@ -670,7 +674,6 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 //In this case the goto MIGHT be justified
 CommonExit:
 	mysql_free_result(res);
-
 
 }//void NewContainer(...)
 
@@ -992,18 +995,21 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 	GetContainerProp(uContainer,"cOrg_TimeZone",cTimezone);
 	if(cTimezone[0] && !uNotValidSystemCallArg(cTimezone) )
 	{
-		FILE *pp;
-
-		sprintf(gcQuery,"/usr/sbin/vzctl exec %u -",uContainer);
-		if((pp=popen(gcQuery,"w"))!=NULL)
+		sprintf(gcQuery,"rm -f /vz/private/%u/etc/localtime",uContainer);
+		if(system(gcQuery))
 		{
-			fprintf(pp,"rm /etc/localtime\n");
-			fprintf(pp,"ln -s /usr/share/zoneinfo/%s /etc/localtime\n",cTimezone);
-			pclose(pp);
-			logfileLine("NewContainer","Container timezone changed");
+			logfileLine("ChangeHostnameContainer",gcQuery);
+		}
+		else
+		{
+			sprintf(gcQuery,"ln -s /vz/private/%u/usr/share/zoneinfo/%s /vz/private/%u/etc/localtime",
+				uContainer,cTimezone,uContainer);
+			if(system(gcQuery))
+				logfileLine("ChangeHostnameContainer",gcQuery);
+			else
+				logfileLine("ChangeHostnameContainer","Container timezone changed");
 		}
 	}
-
 
 CommonExit:
 	mysql_free_result(res);
