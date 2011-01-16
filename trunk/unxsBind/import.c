@@ -2549,10 +2549,10 @@ void CloneZonesFromList(void)
 		sprintf(gcQuery,"INSERT INTO tZoneImport"
 				" (cZone,uNSSet,cHostmaster,"
 				"uSerial,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
-				"uMailServers,uView,cMainAddress,uRegistrar,uSecondaryOnly,cMasterIPs,cOptions,"
+				"uMailServers,uView,cMainAddress,uRegistrar,uSecondaryOnly,cOptions,"
 				"uOwner,uCreatedBy,uCreatedDate)"
 				" SELECT '%s',uNSSet,cHostmaster,%s,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
-				"uMailServers,%u,cMainAddress,uRegistrar,uSecondaryOnly,cMasterIPs,cOptions,"
+				"uMailServers,%u,cMainAddress,uRegistrar,uSecondaryOnly,cOptions,"
 				"%u,1,UNIX_TIMESTAMP(NOW()) FROM tZone WHERE uZone=%u",
 				cZone,cSerial,uView,uOwner,uZone);
 		macro_MySQLQueryBasic;
@@ -2560,10 +2560,10 @@ void CloneZonesFromList(void)
 		sprintf(gcQuery,"INSERT INTO tZone"
 				" (cZone,uNSSet,cHostmaster,"
 				"uSerial,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
-				"uMailServers,uView,cMainAddress,uRegistrar,uSecondaryOnly,cMasterIPs,cOptions,"
+				"uMailServers,uView,cMainAddress,uRegistrar,uSecondaryOnly,cOptions,"
 				"uOwner,uCreatedBy,uCreatedDate)"
 				" SELECT cZone,uNSSet,cHostmaster,uSerial,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
-				"uMailServers,uView,cMainAddress,uRegistrar,uSecondaryOnly,cMasterIPs,cOptions,"
+				"uMailServers,uView,cMainAddress,uRegistrar,uSecondaryOnly,cOptions,"
 				"uOwner,uCreatedBy,uCreatedDate FROM tZoneImport WHERE uZone=%u",(unsigned)mysql_insert_id(&gMysql));
 		macro_MySQLQueryBasic;
 		//Cleanup

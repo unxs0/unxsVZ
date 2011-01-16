@@ -2264,7 +2264,11 @@ void htmlMassUpdate(void)
 		}
 
 		//First check tZone
-		sprintf(gcQuery,"SELECT uNSSet,uZone FROM tZone WHERE cZone='%s' AND uOwner=%u"
+		if(guLoginClient==1)
+			sprintf(gcQuery,"SELECT uNSSet,uZone FROM tZone WHERE cZone='%s'"
+					,cZone);
+		else
+			sprintf(gcQuery,"SELECT uNSSet,uZone FROM tZone WHERE cZone='%s' AND uOwner=%u"
 					,cZone,guCompany);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
