@@ -51,6 +51,7 @@ void CreatetHitTable(char *cTableName);
 void ZeroSystem(void);
 void Import(void);
 void ImportAxfr(void);
+void CloneZonesFromList(void);
 void DropImportedZones(void);
 void ImportCompanies(void);
 void DropCompanies(void);
@@ -874,6 +875,7 @@ void PrintUsage(char *arg0)
 	printf("\tExportTemplateFiles <dir> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 	printf("\tImportZones\n");
 	printf("\tImportAxfrZones\n");
+	printf("\tCloneZonesFromList\n");
 	printf("\tDropImportedZones\n");
 	printf("\tImportCompanies\n");
 	printf("\tDropCompanies\n");
@@ -964,6 +966,12 @@ void ExtMainShell(int argc, char *argv[])
 		{
 			TextConnectDb();
 			ImportAxfr();
+			exit(0);
+		}
+		else if(!strcmp(argv[1],"CloneZonesFromList"))
+		{
+			TextConnectDb();
+			CloneZonesFromList();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"DropImportedZones"))

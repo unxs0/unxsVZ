@@ -2379,6 +2379,10 @@ void ImportAxfr(void)
 			//Start processing
 			fprintf(stdout,"%.100s/%.100s\n",direntViewDir[j]->d_name,direntZoneFile[i]->d_name);
 
+			//Zap existing zone RRs. Be WARNED!
+			sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%u",uZone);
+			macro_MySQLQueryBasic;
+
 			while(fgets(gcQuery,254,fp)!=NULL)
 			{
 				if(strstr(gcQuery,"SOA"))
@@ -2398,3 +2402,174 @@ void ImportAxfr(void)
 
 }//void ImportAxfr(void)
 
+
+//Create new empty zones based on given (in list) base uZone, new uOwner, new uView
+void SerialNum(char *cSerialNum);//bind.c
+void CloneZonesFromList(void)
+{
+	unsigned uZone=0;
+	unsigned uOwner=0;
+	unsigned uView=0;
+	FILE *fp;
+	char *cp;
+	MYSQL_RES *res;
+	char cLine[256];
+
+	sprintf(gcQuery,"/usr/local/idns/clonezones.txt");
+	if(!(fp=fopen(gcQuery,"r")))
+	{
+		fprintf(stdout,"Error: Could not open: %s\n",gcQuery);
+		return;
+	}
+
+	while(fgets(cLine,254,fp)!=NULL)
+	{
+		//fprintf(stdout,"%s",cLine);
+
+		if(!strncmp(cLine,"#",1))
+			continue;
+		if(!strncmp(cLine,";",1))
+			continue;
+		if(!strncmp(cLine,"\n",1))
+			continue;
+		if(!strncmp(cLine,"\r",1))
+			continue;
+
+		if((cp=strchr(cLine,'\n'))) *cp=0;
+
+		if(!strncmp(cLine,"uZone=",6))
+		{
+			sscanf(cLine+6,"%u",&uZone);
+			if(!uZone)
+			{
+				fprintf(stdout,"Error: uZone==0 %s\n",cLine);
+				return;
+			}
+			else
+			{
+				fprintf(stdout,"uZone=%u\n",uZone);
+			}
+			continue;
+		}
+
+		if(!strncmp(cLine,"uOwner=",7))
+		{
+			sscanf(cLine+7,"%u",&uOwner);
+			if(!uOwner)
+			{
+				fprintf(stdout,"Error: uOwner==0 %s\n",cLine);
+				return;
+			}
+			else
+			{
+				fprintf(stdout,"uOwner=%u\n",uOwner);
+			}
+			continue;
+		}
+
+		if(!strncmp(cLine,"uView=",6))
+		{
+			sscanf(cLine+6,"%u",&uView);
+			if(!uView)
+			{
+				fprintf(stdout,"Error: uView==0 %s\n",cLine);
+				return;
+			}
+			else
+			{
+				fprintf(stdout,"uView=%u\n",uView);
+			}
+			continue;
+		}
+
+		if(!uZone)
+		{
+			fprintf(stdout,"Error: uZone==0\n");
+			return;
+		}
+		if(!uOwner)
+		{
+			fprintf(stdout,"Error: uOwner==0\n");
+			return;
+		}
+		if(!uView)
+		{
+			fprintf(stdout,"Error: uView==0\n");
+			return;
+		}
+
+		//Check valid uZone
+		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE uZone=%u",uZone);
+		macro_MySQLQueryBasic;
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)==0)
+		{
+			fprintf(stdout,"Current uZone=%u does not exist\n",uZone);
+			continue;
+		}
+		mysql_free_result(res);
+		//Check valid uView
+		sprintf(gcQuery,"SELECT uView FROM tView WHERE uView=%u",uView);
+		macro_MySQLQueryBasic;
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)==0)
+		{
+			fprintf(stdout,"Current uView=%u does not exist\n",uView);
+			continue;
+		}
+		mysql_free_result(res);
+		//Check valid uOwner
+		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient=%u",uOwner);
+		macro_MySQLQueryBasic;
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)==0)
+		{
+			fprintf(stdout,"Current uOwner=%u does not exist\n",uOwner);
+			continue;
+		}
+		mysql_free_result(res);
+
+		char cZone[65]={""};
+		sprintf(cZone,"%.64s",WordToLower(cLine));
+		//If cZone already exists skip
+		sprintf(gcQuery,"SELECT uZone FROM tZone WHERE cZone='%s' AND uView=%u",cZone,uView);
+		macro_MySQLQueryBasic;
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)>0)
+		{
+			fprintf(stdout,"Zone %s with uView=%u already exists\n",cZone,uView);
+			continue;
+		}
+		mysql_free_result(res);
+
+		fprintf(stdout,"Creating zone %s\n",cZone);
+		char cSerial[32];
+		SerialNum(cSerial);
+		//Source
+		sprintf(gcQuery,"INSERT INTO tZoneImport"
+				" (cZone,uNSSet,cHostmaster,"
+				"uSerial,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
+				"uMailServers,uView,cMainAddress,uRegistrar,uSecondaryOnly,cMasterIPs,cOptions,"
+				"uOwner,uCreatedBy,uCreatedDate)"
+				" SELECT '%s',uNSSet,cHostmaster,%s,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
+				"uMailServers,%u,cMainAddress,uRegistrar,uSecondaryOnly,cMasterIPs,cOptions,"
+				"%u,1,UNIX_TIMESTAMP(NOW()) FROM tZone WHERE uZone=%u",
+				cZone,cSerial,uView,uOwner,uZone);
+		macro_MySQLQueryBasic;
+		//Production zone
+		sprintf(gcQuery,"INSERT INTO tZone"
+				" (cZone,uNSSet,cHostmaster,"
+				"uSerial,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
+				"uMailServers,uView,cMainAddress,uRegistrar,uSecondaryOnly,cMasterIPs,cOptions,"
+				"uOwner,uCreatedBy,uCreatedDate)"
+				" SELECT cZone,uNSSet,cHostmaster,uSerial,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
+				"uMailServers,uView,cMainAddress,uRegistrar,uSecondaryOnly,cMasterIPs,cOptions,"
+				"uOwner,uCreatedBy,uCreatedDate FROM tZoneImport WHERE uZone=%u",(unsigned)mysql_insert_id(&gMysql));
+		macro_MySQLQueryBasic;
+		//Cleanup
+		sprintf(gcQuery,"DELETE FROM tZoneImport WHERE uZone=%u",(unsigned)mysql_insert_id(&gMysql));
+		macro_MySQLQueryBasic;
+	}
+	fclose(fp);
+
+}//void CloneZonesFromList(void)
