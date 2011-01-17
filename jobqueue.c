@@ -658,8 +658,8 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		}
 		else
 		{
-			sprintf(gcQuery,"ln -s /vz/private/%u/usr/share/zoneinfo/%s /vz/private/%u/etc/localtime",
-				uContainer,cTimezone,uContainer);
+			sprintf(gcQuery,"ln -s /usr/share/zoneinfo/%s /vz/private/%u/etc/localtime",
+							cTimezone,uContainer);
 			if(system(gcQuery))
 				logfileLine("NewContainer",gcQuery);
 			else
@@ -1052,8 +1052,9 @@ CommonExit2:
 		}
 		else
 		{
-			sprintf(gcQuery,"ln -s /vz/private/%u/usr/share/zoneinfo/%s /vz/private/%u/etc/localtime",
-				uContainer,cTimezone,uContainer);
+			//The link target is internal to container
+			sprintf(gcQuery,"ln -s /usr/share/zoneinfo/%s /vz/private/%u/etc/localtime",
+							cTimezone,uContainer);
 			if(system(gcQuery))
 				logfileLine("ChangeHostnameContainer",gcQuery);
 			else
