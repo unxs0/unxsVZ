@@ -66,7 +66,7 @@ void CreatetLogTable(char *cTableName);
 void NextMonthYear(char *cMonth,char *cYear,char *cNextMonth,char *cNextYear);
 
 void CalledByAlias(int iArgc,char *cArgv[]);
-void TextConnectDb(void);
+unsigned TextConnectDb(void);//mysqlconnect.c
 void DashBoard(const char *cOptionalMsg);
 void CloneReport(const char *cOptionalMsg);
 void ContainerReport(const char *cOptionalMsg);
@@ -989,7 +989,8 @@ void UpdateSchema(void)
 
 	printf("UpdateSchema(): Start\n");
 
-	TextConnectDb();
+	if(TextConnectDb())
+		exit(1);
 
 	//Take note if what we need to change/add
 	//This is based on expanded and incorrect schema of previous releases. Yes this sucks.
@@ -1393,7 +1394,8 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
 
 	printf("\nImportTemplateFile(): Start\n");
 
-	TextConnectDb();
+	if(TextConnectDb())
+		exit(1);
 
 	sprintf(gcQuery,"USE %s",DBNAME);
 	mysql_query(&gMysql,gcQuery);
@@ -1549,7 +1551,9 @@ void CalledByAlias(int iArgc,char *cArgv[])
 
 		//Loop for each tJob error
 		//Connect to local mySQL
-		TextConnectDb();
+		if(TextConnectDb())
+			exit(1);
+
 		sprintf(gcQuery,"SELECT uJob,cServer,cJobName,uUser,cJobData FROM tJob WHERE uJobStatus=4");//4 is tJobStatus Done Error(s)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -1960,7 +1964,8 @@ void RecoverMode(void)
 		exit(1);
 	}
 
-	TextConnectDb();
+	if(TextConnectDb())
+		exit(1);
 
 	//Get node and datacenter via hostname
 	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
@@ -2052,7 +2057,8 @@ void ResetAllSyncPeriod(void)
 		exit(1);
 	}
 
-	TextConnectDb();
+	if(TextConnectDb())
+		exit(1);
 
 	//Get node and datacenter via hostname
 	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
@@ -2178,7 +2184,8 @@ void ImportRemoteDatacenter(
 
 	printf("ImportRemoteDatacenter(): Start\n");
 
-	TextConnectDb();
+	if(TextConnectDb())
+		exit(1);
 
         mysql_init(&gMysqlExt);
         if(!mysql_real_connect(&gMysqlExt,cHost,cUser,cPasswd,"unxsvz",0,NULL,0))

@@ -5,7 +5,7 @@ FILE
 PURPOSE
 	Command line processing of jobs in the tJob queue.
 AUTHOR/LEGAL
-	(C) 2008-2010 Gary Wallis for Unxiservice, LLC.
+	(C) 2008-2011 Gary Wallis for Unxiservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 NOTES
 	We still use KISS code, var naming conventions, and Allman (ANSI) style C 
@@ -86,7 +86,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
 
 //extern protos
-void TextConnectDb(void); //main.c
+unsigned TextConnectDb(void); //mysqlconnect.c
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 void GetConfiguration(const char *cName,char *cValue,
@@ -148,7 +148,10 @@ void ProcessJobQueue(unsigned uDebug)
 	//printf("structSysinfo.loads[0]/65536.0=%2.2f\n",(float)structSysinfo.loads[0]/(float)LINUX_SYSINFO_LOADS_SCALE);
 	//exit(0);
 
-	TextConnectDb();//Uses login data from local.h
+	//Uses login data from local.h
+	if(TextConnectDb())
+		exit(1);
+
 	guLoginClient=1;//Root user
 
 	//Get node and datacenter via hostname
