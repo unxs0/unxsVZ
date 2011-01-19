@@ -2217,6 +2217,8 @@ void htmlMassUpdate(void)
 	time_t luClock;
 	unsigned uFoundCount=0,uCount=0,uUpdateCount=0;
 	unsigned uZone=0;
+	unsigned uView=1;//default view internal usually
+
 
 	printf("Content-type: text/plain\n\n");
 	printf("htmlMassUpdate() start\n");
@@ -2258,18 +2260,44 @@ void htmlMassUpdate(void)
 				continue;
 			}
 		}
-		else
+		else if((cp=strstr(cZone,"uView=")))
+		{
+			char *cp2;
+			if((cp2=strchr(cp+6,';')))
+			{
+				*cp2=0;
+				sscanf(cp+6,"%u",&uView);
+				//NSs selection
+				sprintf(gcQuery,"SELECT uView FROM tView WHERE uView=%u",uView);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					exit(0);
+				}
+				res=mysql_store_result(&gMysql);
+				uView=0;
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uView);
+       		         	mysql_free_result(res);
+
+				if(uView)
+					printf("uView assigned:%u\n",uView);
+				continue;
+			}
+		}
+		else if(1)
 		{
 			uCount++;
 		}
 
 		//First check tZone
 		if(guLoginClient==1)
-			sprintf(gcQuery,"SELECT uNSSet,uZone FROM tZone WHERE cZone='%s'"
-					,cZone);
+			sprintf(gcQuery,"SELECT uNSSet,uZone FROM tZone WHERE cZone='%s' AND uView=%u"
+					,cZone,uView);
 		else
-			sprintf(gcQuery,"SELECT uNSSet,uZone FROM tZone WHERE cZone='%s' AND uOwner=%u"
-					,cZone,guCompany);
+			sprintf(gcQuery,"SELECT uNSSet,uZone FROM tZone WHERE cZone='%s'  AND uView=%u AND uOwner=%u"
+					,cZone,uView,guCompany);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -2279,7 +2307,7 @@ void htmlMassUpdate(void)
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res)==0)
 		{
-			printf("%s not found. Ignoring this zone for update\n",cZone);
+			printf("%s/uView=%u not found. Ignoring this zone for update\n",cZone,uView);
 			continue;
 		}
 		else if((field=mysql_fetch_row(res)))
@@ -2313,6 +2341,7 @@ void htmlMassUpdate(void)
 
 		if(cNSSet[0] && uNSSet!=uAssignedNSSet)
 		{
+			//All views!
 			sprintf(gcQuery,"UPDATE tZone SET uNSSet=%u WHERE cZone='%s'",
 				uAssignedNSSet,cZone);
 			mysql_query(&gMysql,gcQuery);
@@ -2334,6 +2363,7 @@ void htmlMassUpdate(void)
 		UpdateSerialNum(uZone);
 		if(uDDClient)
 		{
+			//All views!
 			sprintf(gcQuery,"UPDATE tZone SET uOwner=%u WHERE cZone='%s'",
 				uDDClient,cZone);
 			mysql_query(&gMysql,gcQuery);
@@ -2343,8 +2373,8 @@ void htmlMassUpdate(void)
 				exit(0);
 			}
 
-			//TODO Must test this, creates dependency on mySQL version 4.1.20+
-			//Check this out further may work with prev releases.
+			//All views!
+			//Updates RRs also
 			sprintf(gcQuery,"UPDATE tResource,tZone SET tResource.uOwner=%u"
 					" WHERE tResource.uZone=tZone.uZone AND tZone.cZone='%s'",
 							uDDClient,cZone);
