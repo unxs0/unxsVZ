@@ -535,6 +535,51 @@ void ContainerCommands(pentry entries[], int x)
 			guContainer=guNewContainer;
 			htmlContainer();
 		}
+		else if(!strcmp(gcFunction,"Container Report"))
+		{
+        		MYSQL_RES *res;
+	        	MYSQL_ROW field;
+        		MYSQL_RES *res2;
+	        	MYSQL_ROW field2;
+
+
+			printf("Content-type: text/plain\n\n");
+			printf("uContainer,cLabel,cHostname,cDatacenter,cNode,cGroup\n");
+
+			sprintf(gcQuery,"SELECT tContainer.uContainer,"
+					" tContainer.cLabel,"
+					" tContainer.cHostname,"
+					" tDatacenter.cLabel,"
+					" tNode.cLabel"
+					" FROM tContainer,tDatacenter,tNode"
+					" WHERE tContainer.uDatacenter=tDatacenter.uDatacenter"
+					" AND tContainer.uNode=tNode.uNode AND tContainer.uSource=0");
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			while((field=mysql_fetch_row(res)))
+			{
+				char cGroup[33]={"NoGroup"};
+
+				sprintf(gcQuery,"SELECT tGroup.cLabel"
+					" FROM tGroup,tGroupGlue"
+					" WHERE tGroup.uGroup=tGroupGlue.uGroup"
+					" AND tGroupGlue.uContainer=%.15s",field[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+					sprintf(cGroup,"%.32s",field2[0]);
+				mysql_free_result(res2);
+
+				printf("%s,%s,%s,%s,%s,%s\n",field[0],field[1],field[2],field[3],field[4],cGroup);
+			}
+			mysql_free_result(res);
+			exit(0);
+		}
+
 		htmlContainer();
 	}
 
@@ -1005,6 +1050,7 @@ void funcNewContainer(FILE *fp)
 	sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tGroupGlue,tGroup WHERE "
 			"tContainer.uContainer=tGroupGlue.uContainer AND "
 			"tGroupGlue.uGroup=tGroup.uGroup AND tGroup.cLabel='%s' AND "
+			"tContainer.uStatus=1 AND "
 			"tContainer.uOwner=%u AND tContainer.uSource=0 ORDER BY tContainer.cHostname LIMIT 301",
 				cOrg_NewGroupLabel,guOrg);
 	mysql_query(&gMysql,gcQuery);
@@ -1108,6 +1154,11 @@ void funcNewContainer(FILE *fp)
 			" title='Select a container, base time zone, then enter the first part of the new FQDN hostname."
 			" Other options (as configured) may apply.'"
 			" name=gcFunction value='Repurpose Container'>\n");
+
+	if(guPermLevel>=6)
+	fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Generate a cvs report of all PBX containers direct to browser'"
+			" name=gcFunction value='Container Report'>\n");
 
 	fprintf(fp,"</td></tr>\n");
 
