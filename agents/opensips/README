@@ -1,0 +1,8 @@
+This directory contains code for the collection of OpenSIPS
+data to be used with PBX containers that use OpenSIPS dynamic routing.
+
+Initially we will add to the "big table" tProperties cOrg_ prefixed
+name/value pairs for:
+
+DIDs (dr_rules.prefix)
+Number of lines contracted (dr_gateways.attrs)
