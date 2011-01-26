@@ -99,13 +99,21 @@ void ProcessDR(void)
         MYSQL_RES *res2;
         MYSQL_ROW field2;
 	unsigned uContainer=0;
+	unsigned uOwner=0;
+	unsigned uGwid=0;//OpenSIPS schema
+	char cAttrs[256];//OpenSIPS schema
+	char cPrefix[65];//OpenSIPS schema
 
 	//Uses login data from local.h
 	TextConnectDb();
 	TextConnectOpenSIPSDb();
 	guLoginClient=1;//Root user
 
-	sprintf(gcQuery,"SELECT cHostname,uContainer FROM tContainer WHERE uSource=0");
+	sprintf(gcQuery,"SELECT tContainer.cHostname,tContainer.uContainer,tContainer.uOwner FROM tContainer,tGroupGlue,tGroup"
+			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
+			" AND tGroup.uGroup=tGroupGlue.uGroup"
+			" AND tGroup.cLabel LIKE '%%PBX%%'"
+			" AND tContainer.uSource=0");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -114,9 +122,15 @@ void ProcessDR(void)
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
+	//debug only
+	//if((field=mysql_fetch_row(res)))
 	while((field=mysql_fetch_row(res)))
 	{
+		uGwid=0;
+		cAttrs[0]=0;
+		cPrefix[0]=0;
 		sscanf(field[1],"%u",&uContainer);
+		sscanf(field[2],"%u",&uOwner);
 
 		//debug only
 		printf("%s %u\n",field[0],uContainer);
@@ -135,14 +149,68 @@ void ProcessDR(void)
 		res2=mysql_store_result(&gMysqlExt);
 		if((field2=mysql_fetch_row(res2)))
 		{
+			sscanf(field2[0],"%u",&uGwid);
+			//sprintf(cAttrs,"%.255s",field2[1]);
 			//debug only
 			printf("gwid=%s attrs=%s\n",field2[0],field2[1]);
-		}
-		else
-		{
-			logfileLine("ProcessDR",field[0],uContainer);
+
+			//Clean out
+			sprintf(gcQuery,"DELETE FROM tProperty WHERE (cName='cOrg_OpenSIPS_DID' OR cName='cOrg_OpenSIPS_Attrs')"
+					" AND uType=3 AND uKey=%u",uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_OpenSIPS_Attrs',cValue='%s'"
+					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+						field2[1],uContainer,uOwner);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
 		}
 		mysql_free_result(res2);
+
+		if(uGwid)
+		{
+			sprintf(gcQuery,"SELECT prefix FROM dr_rules WHERE gwlist='%u'",uGwid);
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				logfileLine("ProcessDR",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res2=mysql_store_result(&gMysqlExt);
+			while((field2=mysql_fetch_row(res2)))
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_OpenSIPS_DID',cValue='%s'"
+					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+						field2[0],uContainer,uOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				//debug only
+				printf("\tprefix=%s\n",field2[0]);
+	
+			}
+			mysql_free_result(res2);
+		}
 		
 	}
 	mysql_free_result(res);
