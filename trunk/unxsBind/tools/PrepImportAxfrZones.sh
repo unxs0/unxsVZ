@@ -48,6 +48,10 @@ cView2NS=$2;
 cView1="internal";
 cView2="external";
 
+if [ "$cView1NS" == "$cView2NS" ];then
+	cMode="SingleSource";
+fi
+
 #if provided must provide both
 if [ "$3" != "" ] && [ "$4" != "" ];then
 	cView1="$3";
@@ -62,17 +66,26 @@ if [ ! -f /usr/local/idns/axfr/zonelist.txt ];then
 	exit 1;
 fi
 
+if [ "$cMode" == "SingleSource" ];then
+	echo "SingleSource mode on";
+fi
+
 exec</usr/local/idns/axfr/zonelist.txt;
 while read cZone
 do
-	echo "$cZone";
+	#echo "$cZone";
 	dig @$cView1NS $cZone axfr > /usr/local/idns/axfr/$cView1/$cZone;
 	if [ $? != 0 ];then
 		echo "dig @$cView1NS $cZone error";
 	fi
-	dig @$cView2NS $cZone axfr > /usr/local/idns/axfr/$cView2/$cZone;
-	if [ $? != 0 ];then
-		echo "dig @$cView2NS $cZone error";
+
+	if [ "$cMode" != "SingleSource" ];then
+		dig @$cView2NS $cZone axfr > /usr/local/idns/axfr/$cView2/$cZone;
+		if [ $? != 0 ];then
+			echo "dig @$cView2NS $cZone error";
+		fi
+	else
+		cp /usr/local/idns/axfr/$cView1/$cZone /usr/local/idns/axfr/$cView2/$cZone;
 	fi
 done
 
