@@ -3335,15 +3335,15 @@ void ExttContainerButtons(void)
 				" This new type of container is identified, for now, via a special uStatus.");
 			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
 			if(cAutoCloneNode[0])
-				printf("Auto-clone subsystem is enabled for selected datacenter: Clone target node"
+				printf("<p>Auto-clone subsystem is enabled for selected datacenter: Clone target node"
 					" must not match selected node. Similarly, clone start uIPv4"
-					" must not match uIPv4 or fall in same range -as defined per number of containers.<p>");
+					" must not match uIPv4 or fall in same range -as defined per number of containers.");
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 			if(cunxsBindARecordJobZone[0])
-				printf("unxsBind interface is configured for selected datacenter and <i>%s</i> zone: DNS will be setup"
+				printf("<p>unxsBind interface is configured for selected datacenter and <i>%s</i> zone: DNS will be setup"
 					" automatically for you, unless you opt-out by un-checking the <i>Create job...</i>"
-					" checkbox in the right data panel.<p>",cunxsBindARecordJobZone);
-			printf("<input type=submit class=largeButton"
+					" checkbox in the right data panel.",cunxsBindARecordJobZone);
+			printf("<p><input type=submit class=largeButton"
 				" title='Configure container and create a single container'"
 				" name=gcCommand value='Single Container Creation'>\n");
 			printf("<p><input type=submit class=largeButton"
