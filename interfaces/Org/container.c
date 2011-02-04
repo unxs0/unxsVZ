@@ -705,13 +705,14 @@ void funcSelectContainer(FILE *fp)
 
 	fprintf(fp,"<!-- funcSelectContainer(fp) Start -->\n");
 
+	//LENGTH(alphanumeric), alphanumeric
 	if(gcSearch[0])
 		sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
 			"uSource=0 AND uOwner=%u AND cHostname LIKE '%s%%' "
-			"ORDER BY cHostname LIMIT 301",guOrg,gcSearch);
+			"ORDER BY LENGTH(cHostname),cHostname LIMIT 301",guOrg,gcSearch);
 	else
 		sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
-			"uOwner=%u AND uSource=0 ORDER BY cHostname LIMIT 301",guOrg);
+			"uOwner=%u AND uSource=0 ORDER BY LENGTH(cHostname),cHostname LIMIT 301",guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1051,7 +1052,8 @@ void funcNewContainer(FILE *fp)
 			"tContainer.uContainer=tGroupGlue.uContainer AND "
 			"tGroupGlue.uGroup=tGroup.uGroup AND tGroup.cLabel='%s' AND "
 			"tContainer.uStatus=1 AND "
-			"tContainer.uOwner=%u AND tContainer.uSource=0 ORDER BY tContainer.cHostname LIMIT 301",
+			"tContainer.uOwner=%u AND tContainer.uSource=0 "
+			"ORDER BY LENGTH(tContainer.cHostname),tContainer.cHostname LIMIT 301",
 				cOrg_NewGroupLabel,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
