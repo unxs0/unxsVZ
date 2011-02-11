@@ -30,6 +30,7 @@ void TextConnectDb(void);
 void ProcessDR(void);
 void unxsVZJobs(void);
 void TextConnectOpenSIPSDb(void);
+void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -116,6 +117,7 @@ void unxsVZJobs(void)
         MYSQL_ROW field;
         MYSQL_RES *res2;
         MYSQL_ROW field2;
+	unsigned uDRReload=0;
 
 	//Uses login data from local.h
 	TextConnectDb();
@@ -125,7 +127,7 @@ void unxsVZJobs(void)
 	sprintf(gcQuery,"SELECT uJob,uDatacenter,uNode,uContainer,uOwner,cJobName,cJobData FROM tJob"
 			" WHERE uJobStatus=10"
 			" AND cJobName LIKE 'unxsSIPS%%'"
-			" AND uJobDate<=UNIX_TIMESTAMP(NOW()) LIMIT 1");
+			" AND uJobDate<=UNIX_TIMESTAMP(NOW()) LIMIT 100");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -134,7 +136,7 @@ void unxsVZJobs(void)
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
+	while((field=mysql_fetch_row(res)))
 	{
 		char *cp;
 		char *cp2;
@@ -157,6 +159,8 @@ void unxsVZJobs(void)
 
 		if(!strncmp(cJobName,"unxsSIPSNewDID",14))
 		{
+			//Update tJob running
+			UpdateJob(2,uContainer,uJob);
 
 			if((cp=strstr(field[6],"cDID=")))
 			{
@@ -182,6 +186,8 @@ void unxsVZJobs(void)
 			mysql_query(&gMysqlExt,gcQuery);
 			if(mysql_errno(&gMysqlExt))
 			{
+				//Update tJob error
+				UpdateJob(14,uContainer,uJob);
 				logfileLine("unxsVZJobs",mysql_error(&gMysqlExt),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
@@ -200,7 +206,9 @@ void unxsVZJobs(void)
 				mysql_query(&gMysqlExt,gcQuery);
 				if(mysql_errno(&gMysqlExt))
 				{
-					logfileLine("ProcessDR",mysql_error(&gMysqlExt),uContainer);
+					//Update tJob error
+					UpdateJob(14,uContainer,uJob);
+					logfileLine("unxsVZJobs",mysql_error(&gMysqlExt),uContainer);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
@@ -208,8 +216,29 @@ void unxsVZJobs(void)
 				res2=mysql_store_result(&gMysqlExt);
 				if(mysql_num_rows(res2)==0)
 				{
+					sprintf(gcQuery,"INSERT INTO dr_rules SET"
+							" groupid=1,"//Magic number TODO! 1 is for PBX, 2 is the id for trunks.
+							" prefix='%s',"
+							" gwlist='%u',"
+							" description='%s'",
+								cDID,uGwid,cHostname);
+					mysql_query(&gMysqlExt,gcQuery);
+					if(mysql_errno(&gMysqlExt))
+					{
+						//Update tJob error
+						UpdateJob(14,uContainer,uJob);
+						logfileLine("unxsVZJobs",mysql_error(&gMysqlExt),uContainer);
+						mysql_close(&gMysql);
+						mysql_close(&gMysqlExt);
+						exit(2);
+					}
+
 					//debug only
-					printf("Add %s for %s\n",cDID,cHostname);
+					printf("Added %s for %s\n",cDID,cHostname);
+
+					//Update tJob OK
+					UpdateJob(3,uContainer,uJob);
+					uDRReload=uJob;
 				}
 				else
 				{
@@ -227,6 +256,20 @@ void unxsVZJobs(void)
 	}
 	mysql_free_result(res);
 
+	if(uDRReload)
+	{
+		printf("Reloading DR rules...\n");
+		sprintf(gcQuery,"/usr/sbin/opensipsctl fifo dr_reload");	
+		if(system(gcQuery))
+		{
+			logfileLine("unxsVZJobs",gcQuery,0);
+			printf("Failed!\n");
+			//At least mark the last one as error to notify operator
+			UpdateJob(14,0,uDRReload);
+		}
+		printf("Done\n");
+	}
+
 	mysql_close(&gMysql);
 	mysql_close(&gMysqlExt);
 	exit(0);
@@ -242,6 +285,8 @@ void ProcessDR(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uContainer=0;
+	unsigned uSelects=0;
+	unsigned uInserts=0;
 	unsigned uOwner=0;
 	unsigned uGwid=0;//OpenSIPS schema
 	char cAttrs[256];//OpenSIPS schema
@@ -276,7 +321,8 @@ void ProcessDR(void)
 		sscanf(field[2],"%u",&uOwner);
 
 		//debug only
-		printf("%s %u\n",field[0],uContainer);
+		//printf("%s %u\n",field[0],uContainer);
+		uSelects++;
 
 		//Wish the OPenSIPS guys would use modern SQL var naming conventions
 		//like we do ;)
@@ -295,7 +341,7 @@ void ProcessDR(void)
 			sscanf(field2[0],"%u",&uGwid);
 			//sprintf(cAttrs,"%.255s",field2[1]);
 			//debug only
-			printf("gwid=%s attrs=%s\n",field2[0],field2[1]);
+			//printf("gwid=%s attrs=%s\n",field2[0],field2[1]);
 
 			//Clean out
 			sprintf(gcQuery,"DELETE FROM tProperty WHERE (cName='cOrg_OpenSIPS_DID' OR cName='cOrg_OpenSIPS_Attrs')"
@@ -320,6 +366,7 @@ void ProcessDR(void)
 				mysql_close(&gMysqlExt);
 				exit(2);
 			}
+			uInserts++;
 		}
 		mysql_free_result(res2);
 
@@ -349,7 +396,8 @@ void ProcessDR(void)
 					exit(2);
 				}
 				//debug only
-				printf("\tprefix=%s\n",field2[0]);
+				//printf("\tprefix=%s\n",field2[0]);
+				uInserts++;
 	
 			}
 			mysql_free_result(res2);
@@ -360,6 +408,8 @@ void ProcessDR(void)
 
 	mysql_close(&gMysql);
 	mysql_close(&gMysqlExt);
+
+	printf("uSelects=%u uInserts=%u\n",uSelects,uInserts);
 	exit(0);
 
 }//void ProcessDR(void)
@@ -379,3 +429,21 @@ void TextConnectOpenSIPSDb(void)
 
 }//TextConnectOpenSIPSDb()
 
+
+void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob)
+{
+	//Update tJob running
+	sprintf(gcQuery,"UPDATE tJob SET"
+			" uJobStatus=%u,"
+			" uModBy=1,"
+			" uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uStatus,uJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("UpdateJob",mysql_error(&gMysql),uContainer);
+		mysql_close(&gMysql);
+		mysql_close(&gMysqlExt);
+		exit(2);
+	}
+
+}//void UpdateJob()
