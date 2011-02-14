@@ -346,6 +346,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcMOTD(fp);
 	else if(!strcmp(cFunction,"funcNewContainer"))
 		funcNewContainer(fp);
+	else if(!strcmp(cFunction,"funcContainer"))
+		funcContainer(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 

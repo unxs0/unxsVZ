@@ -662,6 +662,24 @@ void ContainerCommands(pentry entries[], int x)
 			}
 			mysql_free_result(res);
 
+			//Check to see if DID is already in property table
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					" WHERE uKey=%u AND uType=3 AND cName='cOrg_OpenSIPS_DID' AND cValue='%s'",guContainer,gcDID);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Check for cOrg_OpenSIPS_DID failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)>0)
+			{
+				mysql_free_result(res);
+				gcMessage="DID not added, already in property table.";
+				htmlContainer();
+			}
+			mysql_free_result(res);
+
 			//unxsSIPS job
 			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
 			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSNewDID(%u)',cJobName='unxsSIPSNewDID'"
@@ -687,7 +705,17 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//Change group
+			sprintf(gcQuery,"INSERT INTO tProperty"
+					" SET uKey=%u,uType=3,cName='cOrg_Pending_DID',cValue='%s'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guContainer,gcDID,guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="INSERT for new cOrg_OpenSIPS_DID failed, contact sysadmin!";
+				htmlContainer();
+			}
+
 			gcMessage="Remote 'Add DID' task created for OpenSIPS.";
 			htmlContainer();
 		}
@@ -1274,16 +1302,6 @@ void funcNewContainer(FILE *fp)
 			" title='Generate a cvs report of all PBX containers direct to browser'"
 			" name=gcFunction value='Container Report'>\n");
 
-	if(guPermLevel>=10 && guContainer )
-	{
-		fprintf(fp,"<p><input type=text class=type_fields"
-			" title='Enter a valid DID number'"
-			" name=gcDID value='%s' size=16 maxlength=16>",gcDID);
-		fprintf(fp,"<br><input type=submit class=largeButton"
-			" title='Add a DID to a PBX container that already has OpenSIPS_Attrs'"
-			" name=gcFunction value='Add DID'>\n");
-	}
-
 	fprintf(fp,"</td></tr>\n");
 
 	fprintf(fp,"<!-- funcNewContainer(fp) End -->\n");
@@ -1332,3 +1350,32 @@ void SetContainerStatus(unsigned uContainer,unsigned uStatus)
 	mysql_query(&gMysql,gcQuery);
 
 }//void SetContainerStatus(unsigned uContainer,unsigned uStatus)
+
+
+//functions that operate on loaded container
+void funcContainer(FILE *fp)
+{
+	if(guPermLevel<6 || guContainer==0)
+		return;
+
+	fprintf(fp,"<!-- funcContainer(fp) Start -->\n");
+
+	fprintf(fp,"<tr><td valign=\"top\"><a class=inputLink href=\"#\""
+		" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=Container+OPs')\""
+		" <strong><u>Container OPs</u></strong></a></td><td>\n");
+
+	if(guPermLevel>=10)
+	{
+		fprintf(fp,"<p><br><input type=text class=type_fields"
+			" title='Enter a valid DID number'"
+			" name=gcDID value='%s' size=16 maxlength=16> DID",gcDID);
+		fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Add a DID to currently loaded PBX container that already has OpenSIPS_Attrs'"
+			" name=gcFunction value='Add DID'>\n");
+	}
+
+	fprintf(fp,"</td></tr>\n");
+
+	fprintf(fp,"<!-- funcContainer(fp) End -->\n");
+
+}//void funcContainer(FILE *fp)
