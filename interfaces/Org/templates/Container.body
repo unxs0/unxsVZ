@@ -87,7 +87,11 @@
 		</td>
 	</tr>
 
-	<!-- role based additional sctions -->
+	<!-- menu for loaded container operations -->
+	{{funcContainer}}
+
+
+	<!-- role based additional sections -->
 	{{funcNewContainer}}
 
 	<tr>
