@@ -30,7 +30,7 @@ void TextConnectDb(void);
 void ProcessDR(void);
 void unxsVZJobs(void);
 void TextConnectOpenSIPSDb(void);
-void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob);
+void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -118,6 +118,7 @@ void unxsVZJobs(void)
         MYSQL_RES *res2;
         MYSQL_ROW field2;
 	unsigned uDRReload=0;
+	unsigned uContainer;
 
 	//Uses login data from local.h
 	TextConnectDb();
@@ -143,10 +144,11 @@ void unxsVZJobs(void)
 		char cDID[16]={""};
 		char cHostname[64]={""};
 		char cJobName[33]={""};
+		char cMessage[128]={""};
 		unsigned uJob=0;
 		unsigned uDatacenter=0;
 		unsigned uNode=0;
-		unsigned uContainer=0;
+		uContainer=0;
 		unsigned uOwner=0;
 		unsigned uGwid=0;//OpenSIPS schema
 
@@ -160,7 +162,7 @@ void unxsVZJobs(void)
 		if(!strncmp(cJobName,"unxsSIPSNewDID",14))
 		{
 			//Update tJob running
-			UpdateJob(2,uContainer,uJob);
+			UpdateJob(2,uContainer,uJob,"");
 
 			if((cp=strstr(field[6],"cDID=")))
 			{
@@ -187,7 +189,7 @@ void unxsVZJobs(void)
 			if(mysql_errno(&gMysqlExt))
 			{
 				//Update tJob error
-				UpdateJob(14,uContainer,uJob);
+				UpdateJob(14,uContainer,uJob,gcQuery);
 				logfileLine("unxsVZJobs",mysql_error(&gMysqlExt),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
@@ -207,7 +209,7 @@ void unxsVZJobs(void)
 				if(mysql_errno(&gMysqlExt))
 				{
 					//Update tJob error
-					UpdateJob(14,uContainer,uJob);
+					UpdateJob(14,uContainer,uJob,gcQuery);
 					logfileLine("unxsVZJobs",mysql_error(&gMysqlExt),uContainer);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
@@ -222,35 +224,59 @@ void unxsVZJobs(void)
 							" gwlist='%u',"
 							" description='%s'",
 								cDID,uGwid,cHostname);
+					//debug only
+					//printf("%s\n",gcQuery);
 					mysql_query(&gMysqlExt,gcQuery);
 					if(mysql_errno(&gMysqlExt))
 					{
 						//Update tJob error
-						UpdateJob(14,uContainer,uJob);
+						UpdateJob(14,uContainer,uJob,gcQuery);
 						logfileLine("unxsVZJobs",mysql_error(&gMysqlExt),uContainer);
 						mysql_close(&gMysql);
 						mysql_close(&gMysqlExt);
 						exit(2);
 					}
 
+					sprintf(cMessage,"Added %.11s for %.32s",cDID,cHostname);
 					//debug only
-					printf("Added %s for %s\n",cDID,cHostname);
+					printf("%s\n",cMessage);
 
-					//Update tJob OK
-					UpdateJob(3,uContainer,uJob);
 					uDRReload=uJob;
+
+					//Rename pending DID
+					sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_OpenSIPS_DID' WHERE cName='cOrg_Pending_DID'"
+							" AND cValue='%s'"
+							" AND uKey=%u"
+							" AND uType=3",cDID,uContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						//Update tJob error
+						UpdateJob(14,uContainer,uJob,gcQuery);
+						logfileLine("unxsVZJobs",mysql_error(&gMysql),uContainer);
+						mysql_close(&gMysql);
+						mysql_close(&gMysqlExt);
+						exit(2);
+					}
 				}
 				else
 				{
+					sprintf(cMessage,"%.11s for %.32s in dr_rules",cDID,cHostname);
 					//debug only
-					printf("%s for %s already in dr_rules\n",cDID,cHostname);
+					printf("%s\n",cMessage);
 				}
 			}
 			else
 			{
 				//debug only
-				printf("%s is not in dr_gateways\n",cHostname);
+				sprintf(cMessage,"%.32s not in dr_gateways",cHostname);
+				//debug only
+				printf("%s\n",cMessage);
 			}
+
+			//Update tJob OK
+			UpdateJob(3,uContainer,uJob,cMessage);
+			logfileLine("unxsVZJobs",cMessage,uContainer);
 
 		}//unxsSIPSNewDID
 	}
@@ -262,12 +288,17 @@ void unxsVZJobs(void)
 		sprintf(gcQuery,"/usr/sbin/opensipsctl fifo dr_reload");	
 		if(system(gcQuery))
 		{
-			logfileLine("unxsVZJobs",gcQuery,0);
+			logfileLine("unxsVZJobs",gcQuery,uContainer);
 			printf("Failed!\n");
-			//At least mark the last one as error to notify operator
-			UpdateJob(14,0,uDRReload);
+			//At least mark the last one (uDRReload=tJob.uJob) as error to notify operator
+			UpdateJob(14,0,uDRReload,gcQuery);
 		}
-		printf("Done\n");
+		else
+		{
+			logfileLine("unxsVZJobs","DR rules reloaded ok",uContainer);
+			//debug only
+			printf("Done\n");
+		}
 	}
 
 	mysql_close(&gMysql);
@@ -430,13 +461,14 @@ void TextConnectOpenSIPSDb(void)
 }//TextConnectOpenSIPSDb()
 
 
-void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob)
+void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage)
 {
 	//Update tJob running
 	sprintf(gcQuery,"UPDATE tJob SET"
 			" uJobStatus=%u,"
+			" cRemoteMsg='%.100s',"
 			" uModBy=1,"
-			" uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uStatus,uJob);
+			" uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uStatus,cMessage,uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
