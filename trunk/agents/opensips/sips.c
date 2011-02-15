@@ -31,6 +31,7 @@ void ProcessDR(void);
 void unxsVZJobs(void);
 void TextConnectOpenSIPSDb(void);
 void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage);
+void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -139,8 +140,6 @@ void unxsVZJobs(void)
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		char *cp;
-		char *cp2;
 		char cDID[16]={""};
 		char cHostname[64]={""};
 		char cJobName[33]={""};
@@ -164,24 +163,7 @@ void unxsVZJobs(void)
 			//Update tJob running
 			UpdateJob(2,uContainer,uJob,"");
 
-			if((cp=strstr(field[6],"cDID=")))
-			{
-				if((cp2=strchr(cp+5,';')))
-				{
-					*cp2=0;
-					sprintf(cDID,cp+5);
-					*cp2=';';
-				}
-			}
-			if((cp=strstr(field[6],"cHostname=")))
-			{
-				if((cp2=strchr(cp+10,';')))
-				{
-					*cp2=0;
-					sprintf(cHostname,cp+10);
-					*cp2=';';
-				}
-			}
+			ParseDIDJobData(field[6],cDID,cHostname);
 
 			//Make sure PBX is registered
 			sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
@@ -190,7 +172,7 @@ void unxsVZJobs(void)
 			{
 				//Update tJob error
 				UpdateJob(14,uContainer,uJob,gcQuery);
-				logfileLine("unxsVZJobs",mysql_error(&gMysqlExt),uContainer);
+				logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
 				exit(2);
@@ -210,7 +192,7 @@ void unxsVZJobs(void)
 				{
 					//Update tJob error
 					UpdateJob(14,uContainer,uJob,gcQuery);
-					logfileLine("unxsVZJobs",mysql_error(&gMysqlExt),uContainer);
+					logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
@@ -231,7 +213,7 @@ void unxsVZJobs(void)
 					{
 						//Update tJob error
 						UpdateJob(14,uContainer,uJob,gcQuery);
-						logfileLine("unxsVZJobs",mysql_error(&gMysqlExt),uContainer);
+						logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
 						mysql_close(&gMysql);
 						mysql_close(&gMysqlExt);
 						exit(2);
@@ -239,7 +221,7 @@ void unxsVZJobs(void)
 
 					sprintf(cMessage,"Added %.11s for %.32s",cDID,cHostname);
 					//debug only
-					printf("%s\n",cMessage);
+					//printf("%s\n",cMessage);
 
 					uDRReload=uJob;
 
@@ -253,7 +235,7 @@ void unxsVZJobs(void)
 					{
 						//Update tJob error
 						UpdateJob(14,uContainer,uJob,gcQuery);
-						logfileLine("unxsVZJobs",mysql_error(&gMysql),uContainer);
+						logfileLine("unxsSIPSNewDID",mysql_error(&gMysql),uContainer);
 						mysql_close(&gMysql);
 						mysql_close(&gMysqlExt);
 						exit(2);
@@ -263,33 +245,108 @@ void unxsVZJobs(void)
 				{
 					sprintf(cMessage,"%.11s for %.32s in dr_rules",cDID,cHostname);
 					//debug only
-					printf("%s\n",cMessage);
+					//printf("%s\n",cMessage);
 				}
 			}
 			else
 			{
-				//debug only
 				sprintf(cMessage,"%.32s not in dr_gateways",cHostname);
 				//debug only
-				printf("%s\n",cMessage);
+				//printf("%s\n",cMessage);
 			}
 
 			//Update tJob OK
 			UpdateJob(3,uContainer,uJob,cMessage);
-			logfileLine("unxsVZJobs",cMessage,uContainer);
+			logfileLine("unxsSIPSNewDID",cMessage,uContainer);
 
 		}//unxsSIPSNewDID
+		else if(!strncmp(cJobName,"unxsSIPSRemoveDID",14))
+		{
+			//Update tJob running
+			UpdateJob(2,uContainer,uJob,"");
+
+			ParseDIDJobData(field[6],cDID,cHostname);
+
+			//Make sure PBX is registered
+			sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				//Update tJob error
+				UpdateJob(14,uContainer,uJob,gcQuery);
+				logfileLine("unxsSIPSRemoveDID",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res2=mysql_store_result(&gMysqlExt);
+			if((field2=mysql_fetch_row(res2)))
+				sscanf(field2[0],"%u",&uGwid);
+			mysql_free_result(res2);
+
+			if(uGwid)
+			{
+				//Remove DID
+				sprintf(gcQuery,"DELETE FROM dr_rules WHERE gwlist='%u' AND prefix='%s'",
+								uGwid,cDID);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					//Update tJob error
+					UpdateJob(14,uContainer,uJob,gcQuery);
+					logfileLine("unxsSIPSRemoveDID",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+
+				sprintf(cMessage,"Removed %.11s for %.32s",cDID,cHostname);
+				//debug only
+				//printf("%s\n",cMessage);
+
+				uDRReload=uJob;
+
+				//Remove from unxsVZ
+				sprintf(gcQuery,"DELETE FROM tProperty WHERE cName='cOrg_Remove_DID'"
+							" AND cValue='%s'"
+							" AND uKey=%u"
+							" AND uType=3",cDID,uContainer);
+					mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					//Update tJob error
+					UpdateJob(14,uContainer,uJob,gcQuery);
+					logfileLine("unxsSIPSRemoveDID",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(cMessage,"%.32s not in dr_gateways",cHostname);
+				//debug only
+				//printf("%s\n",cMessage);
+			}
+
+			//Update tJob OK
+			UpdateJob(3,uContainer,uJob,cMessage);
+			logfileLine("unxsSIPSRemoveDID",cMessage,uContainer);
+
+		}//unxsSIPSRemoveDID
 	}
 	mysql_free_result(res);
 
 	if(uDRReload)
 	{
-		printf("Reloading DR rules...\n");
+		//debug only
+		//printf("Reloading DR rules...\n");
 		sprintf(gcQuery,"/usr/sbin/opensipsctl fifo dr_reload");	
 		if(system(gcQuery))
 		{
 			logfileLine("unxsVZJobs",gcQuery,uContainer);
-			printf("Failed!\n");
+			//debug only
+			//printf("Failed!\n");
 			//At least mark the last one (uDRReload=tJob.uJob) as error to notify operator
 			UpdateJob(14,0,uDRReload,gcQuery);
 		}
@@ -297,7 +354,7 @@ void unxsVZJobs(void)
 		{
 			logfileLine("unxsVZJobs","DR rules reloaded ok",uContainer);
 			//debug only
-			printf("Done\n");
+			//printf("Done\n");
 		}
 	}
 
@@ -479,3 +536,29 @@ void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage
 	}
 
 }//void UpdateJob()
+
+
+void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname)
+{
+	char *cp;
+	char *cp2;
+
+	if((cp=strstr(cJobData,"cDID=")))
+	{
+		if((cp2=strchr(cp+5,';')))
+		{
+			*cp2=0;
+			sprintf(cDID,"%.32s",cp+5);
+			*cp2=';';
+		}
+	}
+	if((cp=strstr(cJobData,"cHostname=")))
+	{
+		if((cp2=strchr(cp+10,';')))
+		{
+			*cp2=0;
+			sprintf(cHostname,"%.63s",cp+10);
+			*cp2=';';
+		}
+	}
+}//void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname)
