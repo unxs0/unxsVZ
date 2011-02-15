@@ -170,8 +170,8 @@ void ContainerCommands(pentry entries[], int x)
 			//uStatus must still be active
 			unsigned uNode=0;
 			unsigned uDatacenter=0;
-			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u AND uStatus=1",
-				guNewContainer);
+			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u"
+					" AND uStatus=1",guNewContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -616,11 +616,11 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//uStatus must still be active
+			//uStatus must be active or offline or appliance
 			unsigned uNode=0;
 			unsigned uDatacenter=0;
-			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u AND uStatus=1",
-				guContainer);
+			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u"
+					" AND (uStatus=1 OR uStatus=3 OR uStatus=101)",guContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -635,7 +635,7 @@ void ContainerCommands(pentry entries[], int x)
 			}
 			if(mysql_num_rows(res)<1)
 			{
-				gcMessage="Selected container is not active. Please try another.";
+				gcMessage="Selected container status is incorrect.";
 				htmlContainer();
 			}
 			if(!uNode || !uDatacenter)
@@ -718,7 +718,143 @@ void ContainerCommands(pentry entries[], int x)
 
 			gcMessage="Remote 'Add DID' task created for OpenSIPS.";
 			htmlContainer();
-		}
+		}//Add DID
+		else if(!strcmp(gcFunction,"Remove DID"))
+		{
+			char gcQuery[1024];
+        		MYSQL_RES *res;
+	        	MYSQL_ROW field;
+
+			if(!guContainer)
+			{
+				gcMessage="Unexpected error guContainer==0.";
+				htmlContainer();
+			}
+			if((uLen=strlen(gcDID))<10)
+			{
+				gcMessage="DID must have at least 10 numbers.";
+				htmlContainer();
+			}
+			if(uLen>11)
+			{
+				gcMessage="DID must have at most 11 numbers.";
+				htmlContainer();
+			}
+			if(uLen==11 && gcDID[0]!='1')
+			{
+				gcMessage="11 digit DID must start with digit number 1.";
+				htmlContainer();
+			}
+			if(uLen==10 && gcDID[0]=='1')
+			{
+				gcMessage="10 digit DID can not start with digit number 1.";
+				htmlContainer();
+			}
+
+			//uStatus must be active or offline or appliance
+			unsigned uNode=0;
+			unsigned uDatacenter=0;
+			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u"
+					" AND (uStatus=1 OR uStatus=3 OR uStatus=101)",guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select uNode error, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[1],"%u",&uNode);
+				sscanf(field[2],"%u",&uDatacenter);
+			}
+			if(mysql_num_rows(res)<1)
+			{
+				gcMessage="Selected container status is incorrect.";
+				htmlContainer();
+			}
+			if(!uNode || !uDatacenter)
+			{
+				gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
+				htmlContainer();
+			}
+
+			//Must be already registered with OpenSIPS
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND cName='cOrg_OpenSIPS_Attrs'",
+								guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Check for cOrg_OpenSIPS_Attrs failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)<1)
+			{
+				mysql_free_result(res);
+				gcMessage="Container must be registered with OpenSIPS first.";
+				htmlContainer();
+			}
+			mysql_free_result(res);
+
+			//Check to see if DID is already in property table
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					" WHERE uKey=%u AND uType=3 AND cName='cOrg_OpenSIPS_DID' AND cValue='%s'",guContainer,gcDID);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Check for cOrg_OpenSIPS_DID failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)<1)
+			{
+				mysql_free_result(res);
+				gcMessage="DID not removed, not in property table.";
+				htmlContainer();
+			}
+			mysql_free_result(res);
+
+			//unxsSIPS job
+			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSRemoveDID(%u)',cJobName='unxsSIPSRemoveDID'"
+					",uDatacenter=%u,uNode=%u,uContainer=%u"
+					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+					",uJobStatus=%u"
+					",cJobData='"
+					"cDID=%s;\n"
+					"cHostname=%s;\n'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guContainer,
+						uDatacenter,
+						uNode,
+						guContainer,
+						uREMOTEWAITING,
+						gcDID,
+						gcCtHostname,
+						guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="unxsSIPSRemoveDID tJob insert failed, contact sysadmin!";
+				htmlContainer();
+			}
+
+			sprintf(gcQuery,"UPDATE tProperty"
+					" SET cName='cOrg_Remove_DID'"
+					",uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+					" WHERE uKey=%u AND uType=3 AND cValue='%s' AND Name='cOrg_OpenSIPS_DID'",
+						guLoginClient,guContainer,gcDID);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="UPDATE for cOrg_OpenSIPS_DID failed, contact sysadmin!";
+				htmlContainer();
+			}
+
+			gcMessage="Remote 'Remove DID' task created for OpenSIPS.";
+			htmlContainer();
+		}//Remove DID
 
 		htmlContainer();
 	}
@@ -1364,15 +1500,16 @@ void funcContainer(FILE *fp)
 		" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=Container+OPs')\""
 		" <strong><u>Container OPs</u></strong></a></td><td>\n");
 
-	if(guPermLevel>=10)
-	{
-		fprintf(fp,"<p><br><input type=text class=type_fields"
+	//DID
+	fprintf(fp,"<p><br><input type=text class=type_fields"
 			" title='Enter a valid DID number'"
 			" name=gcDID value='%s' size=16 maxlength=16> DID",gcDID);
-		fprintf(fp,"<p><input type=submit class=largeButton"
+	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Add a DID to currently loaded PBX container that already has OpenSIPS_Attrs'"
 			" name=gcFunction value='Add DID'>\n");
-	}
+	fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Remove a DID from currently loaded PBX container'"
+			" name=gcFunction value='Remove DID'>\n");
 
 	fprintf(fp,"</td></tr>\n");
 
