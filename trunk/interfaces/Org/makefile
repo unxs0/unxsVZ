@@ -43,6 +43,10 @@ cgi.o: ../../cgi.c  ../../cgi.h
 clean:
 	rm -f *.o *.cgi
 	
-install: interface.cgi
+install: interface.cgi ./templates/Footer
 	install -m 510 -g apache -s interface.cgi /var/www/unxs/cgi-bin/$(CGINAME)
 	rm -f interface.cgi
+
+./templates/Footer: ./templates/Footer.default
+	@ if [ ! -f ./templates/Footer ];then cp -i ./templates/Footer.default ./templates/Footer; fi
+

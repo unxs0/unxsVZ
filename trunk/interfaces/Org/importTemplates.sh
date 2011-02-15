@@ -13,7 +13,7 @@
 if [ ! -z "$CGIDIR" ]; then
     if [ -e "${CGIDIR}unxsVZ.cgi" ]; then
     for cFile in `find ./templates -maxdepth 1 -type f`; do
-    	if [[ $cFile != *.swp ]];then
+    	if [[ $cFile != *.swp ]] && [[ $cFile != *.default ]];then
         	${CGIDIR}unxsVZ.cgi ImportTemplateFile  `echo $cFile | cut -f 3 -d /`  ./$cFile plain "unxsvzOrg Interface";
 	fi
     done
