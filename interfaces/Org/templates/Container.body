@@ -84,7 +84,6 @@
 			<input type=text class=type_fields 
 			title='Enter first letter(s), or you can use SQL "%" and "_" pattern matching chars'
 			name=gcSearch value='{{gcSearch}}' size=16 maxlength=32 onChange='submit()'>
-			<input type=hidden name=gcFunction value=null>
 		</td>
 	</tr>
 

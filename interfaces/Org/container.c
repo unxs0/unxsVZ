@@ -584,7 +584,7 @@ void ContainerCommands(pentry entries[], int x)
 			mysql_free_result(res);
 			exit(0);
 		}
-		else if(!strcmp(gcFunction,"Add DID"))
+		else if(!strcmp(gcFunction,"Add DID") && gcDID[0])
 		{
 			char gcQuery[1024];
         		MYSQL_RES *res;
@@ -592,7 +592,7 @@ void ContainerCommands(pentry entries[], int x)
 
 			if(!guContainer)
 			{
-				gcMessage="Unexpected error guContainer==0.";
+				gcMessage="Must select a container.";
 				htmlContainer();
 			}
 			if((uLen=strlen(gcDID))<10)
@@ -719,7 +719,7 @@ void ContainerCommands(pentry entries[], int x)
 			gcMessage="Remote 'Add DID' task created for OpenSIPS.";
 			htmlContainer();
 		}//Add DID
-		else if(!strcmp(gcFunction,"Remove DID"))
+		else if(!strcmp(gcFunction,"Remove DID") && gcDID[0])
 		{
 			char gcQuery[1024];
         		MYSQL_RES *res;
@@ -727,7 +727,7 @@ void ContainerCommands(pentry entries[], int x)
 
 			if(!guContainer)
 			{
-				gcMessage="Unexpected error guContainer==0.";
+				gcMessage="Must select a container.";
 				htmlContainer();
 			}
 			if((uLen=strlen(gcDID))<10)
@@ -1501,7 +1501,7 @@ void funcContainer(FILE *fp)
 	//DID
 	fprintf(fp,"<p><br><input type=text class=type_fields"
 			" title='Enter a valid DID number'"
-			" name=gcDID value='%s' size=16 maxlength=16> DID",gcDID);
+			" name=gcDID size=16 maxlength=16> DID");
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Add a DID to currently loaded PBX container that already has OpenSIPS_Attrs'"
 			" name=gcFunction value='Add DID'>\n");
