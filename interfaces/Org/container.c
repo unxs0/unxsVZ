@@ -680,6 +680,17 @@ void ContainerCommands(pentry entries[], int x)
 			}
 			mysql_free_result(res);
 
+			sprintf(gcQuery,"INSERT INTO tProperty"
+					" SET uKey=%u,uType=3,cName='cOrg_Pending_DID',cValue='%s'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guContainer,gcDID,guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="INSERT for new cOrg_OpenSIPS_DID failed, contact sysadmin!";
+				htmlContainer();
+			}
+
 			//unxsSIPS job
 			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
 			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSNewDID(%u)',cJobName='unxsSIPSNewDID'"
@@ -702,17 +713,6 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="unxsSIPSNewDID tJob insert failed, contact sysadmin!";
-				htmlContainer();
-			}
-
-			sprintf(gcQuery,"INSERT INTO tProperty"
-					" SET uKey=%u,uType=3,cName='cOrg_Pending_DID',cValue='%s'"
-					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						guContainer,gcDID,guOrg,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="INSERT for new cOrg_OpenSIPS_DID failed, contact sysadmin!";
 				htmlContainer();
 			}
 
@@ -815,6 +815,16 @@ void ContainerCommands(pentry entries[], int x)
 			}
 			mysql_free_result(res);
 
+			sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_Remove_DID',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+					" WHERE uKey=%u AND uType=3 AND cValue='%s' AND cName='cOrg_OpenSIPS_DID'",
+						guLoginClient,guContainer,gcDID);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="UPDATE for cOrg_OpenSIPS_DID failed, contact sysadmin!";
+				htmlContainer();
+			}
+
 			//unxsSIPS job
 			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
 			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSRemoveDID(%u)',cJobName='unxsSIPSRemoveDID'"
@@ -837,18 +847,6 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="unxsSIPSRemoveDID tJob insert failed, contact sysadmin!";
-				htmlContainer();
-			}
-
-			sprintf(gcQuery,"UPDATE tProperty"
-					" SET cName='cOrg_Remove_DID'"
-					",uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
-					" WHERE uKey=%u AND uType=3 AND cValue='%s' AND Name='cOrg_OpenSIPS_DID'",
-						guLoginClient,guContainer,gcDID);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="UPDATE for cOrg_OpenSIPS_DID failed, contact sysadmin!";
 				htmlContainer();
 			}
 
