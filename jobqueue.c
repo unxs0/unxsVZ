@@ -250,7 +250,7 @@ void ProcessJobQueue(unsigned uDebug)
 
 	sprintf(gcQuery,"SELECT uJob,uContainer,cJobName,cJobData FROM tJob WHERE uJobStatus=1"
 				" AND uDatacenter=%u AND uNode=%u"
-				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) ORDER BY uJob LIMIT 32",
+				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) ORDER BY uJob LIMIT 64",
 						uDatacenter,uNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1005,6 +1005,7 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 	if((field=mysql_fetch_row(res)))
 	{
 		struct stat statInfo;
+		char OnChangeHostnameScriptCall[386];
 
 		if(uNotValidSystemCallArg(field[0]))
 		{
@@ -1029,7 +1030,8 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 			goto CommonExit2;
 		}
 
-		if(system(field[0]))
+		sprintf(OnChangeHostnameScriptCall,"%.255s %.64s",field[0],cHostname);
+		if(system(OnChangeHostnameScriptCall))
 		{
 			logfileLine("ChangeHostnameContainer",field[0]);
 		}
@@ -1645,6 +1647,22 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		goto CommonExit;
 	}
 
+	//New vzdump uses new file format, E.G.: /var/vzdump/vzdump-openvz-10511-2011_02_03-07_37_01.tgz
+	//Quick fix (hackorama) just mv it to old format
+	if(!cSnapshotDir[0])
+		sprintf(gcQuery,"mv `ls -1 /vz/dump/vzdump*-%u-*.tgz | head -n 1` /vz/dump/vzdump-%u.tgz",
+				uContainer,uContainer);
+	else
+		sprintf(gcQuery,"mv `ls -1 %s/vzdump*-%u-*.tgz | head -n 1` %s/vzdump-%u.tgz",
+				cSnapshotDir,uContainer,cSnapshotDir,uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("TemplateContainer",gcQuery);
+		tJobErrorUpdate(uJob,"error 1a1");
+		goto CommonExit;
+	}
+
+
 	//2-.	
 	if(!cSnapshotDir[0])
 		sprintf(gcQuery,"mv /vz/dump/vzdump-%u.tgz /vz/template/cache/%.67s-%.32s.tar.gz",
@@ -2039,6 +2057,24 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		goto CommonExit;
 	}
 
+
+	//Support for old and new vzdump
+	//New vzdump uses new file format, E.G.: /var/vzdump/vzdump-openvz-10511-2011_02_03-07_37_01.tgz
+	//Quick fix (hackorama) just mv it to old format
+	if(!cSnapshotDir[0])
+		sprintf(gcQuery,"mv `ls -1 /vz/dump/vzdump*-%u-*.tgz | head -n 1` /vz/dump/vzdump-%u.tgz",
+				uContainer,uContainer);
+	else
+		sprintf(gcQuery,"mv `ls -1 %s/vzdump*-%u-*.tgz | head -n 1` %s/vzdump-%u.tgz",
+				cSnapshotDir,uContainer,cSnapshotDir,uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("CloneContainer",gcQuery);
+		tJobErrorUpdate(uJob,"error 1a1");
+		goto CommonExit;
+	}
+
+
 	//1a-. Need an md5sum file created. TODO
 	if(!cSnapshotDir[0])
 		sprintf(gcQuery,"/usr/bin/md5sum /vz/dump/vzdump-%u.tgz > /vz/dump/vzdump-%u.tgz.md5sum",
@@ -2114,9 +2150,16 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		//INFO: sh: /vz/private/3281/etc/vzdump/vps.conf: No such file or directory
 		//Apr 01 17:24:19 jobqueue.CloneContainer[16404]: ssh -p 12337 -c blowfish -C 10.0.10.2 '/usr/sbin/vzdump --compress --restore /vz/dump/vzdump-2704.tgz 3281'
 		//then we "resubmit" the job for 30 mins in the future. 30 mins tConfiguration configurable.
-		logfileLine("CloneContainer",gcQuery);
-		tJobErrorUpdate(uJob,"error 3");
-		goto CommonExit;
+
+		//Try new version vzrestore
+		sprintf(gcQuery,"ssh %s %s '/usr/sbin/vzrestore /vz/dump/vzdump-%u.tgz %u'",
+				cSSHOptions,cTargetNodeIPv4,uContainer,uNewVeid);
+		if(system(gcQuery))
+		{
+			logfileLine("CloneContainer",gcQuery);
+			tJobErrorUpdate(uJob,"error 3");
+			goto CommonExit;
+		}
 	}
 
 	//4a-.
