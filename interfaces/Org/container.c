@@ -644,8 +644,9 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//Must be already registered with OpenSIPS
-			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND cName='cOrg_OpenSIPS_Attrs'",
+			//Must be already registered with OpenSIPS or have LinesContracted value
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND"
+					" (cName='cOrg_OpenSIPS_Attrs' OR cName='cOrg_LinesContracted')",
 								guContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -657,14 +658,15 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_num_rows(res)<1)
 			{
 				mysql_free_result(res);
-				gcMessage="Container must be registered with OpenSIPS first.";
+				gcMessage="Container must be registered with OpenSIPS or have LinesContracted value.";
 				htmlContainer();
 			}
 			mysql_free_result(res);
 
 			//Check to see if DID is already in property table
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
-					" WHERE uKey=%u AND uType=3 AND cName='cOrg_OpenSIPS_DID' AND cValue='%s'",guContainer,gcDID);
+					" WHERE uKey=%u AND uType=3 AND (cName='cOrg_OpenSIPS_DID' OR cName='cOrg_Pending_DID')"
+					" AND cValue='%s'",guContainer,gcDID);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -779,8 +781,9 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//Must be already registered with OpenSIPS
-			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND cName='cOrg_OpenSIPS_Attrs'",
+			//Must be already registered with OpenSIPS or have LinesContracted value
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND"
+					" (cName='cOrg_OpenSIPS_Attrs' OR cName='cOrg_LinesContracted')",
 								guContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -792,7 +795,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_num_rows(res)<1)
 			{
 				mysql_free_result(res);
-				gcMessage="Container must be registered with OpenSIPS first.";
+				gcMessage="Container must be registered with OpenSIPS or have LinesContracted value.";
 				htmlContainer();
 			}
 			mysql_free_result(res);
@@ -1114,6 +1117,21 @@ void funcContainerInfo(FILE *fp)
 	}
 	mysql_free_result(res);
 
+	//OSTemplate
+	sprintf(gcQuery,"SELECT tOSTemplate.cLabel FROM tContainer,tOSTemplate WHERE tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
+			" AND tContainer.uContainer=%u",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uOSTemplate')\">"
+			" <strong>OSTemplate</strong></a></td><td><input type=text name='uOSTemplate' value='%s' size=40 maxlength=32"
+			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
+	}
+	mysql_free_result(res);
+
 	//IP
 	sprintf(gcQuery,"SELECT tIP.cLabel FROM tContainer,tIP WHERE tIP.uIP=tContainer.uIPv4 AND uContainer=%u",guContainer);
 	mysql_query(&gMysql,gcQuery);
@@ -1372,7 +1390,7 @@ void funcNewContainer(FILE *fp)
 		fprintf(fp,">%s</option>",field[1]);
 	}
 	mysql_free_result(res);
-	fprintf(fp,"</select>\n");
+	fprintf(fp,"</select> Time zone\n");
 
 	//Optional inputs
 	sprintf(gcQuery,"SELECT cValue,cComment FROM tConfiguration WHERE cLabel='cNewHostParam0'");
@@ -1503,7 +1521,7 @@ void funcContainer(FILE *fp)
 			" title='Enter a valid DID number'"
 			" name=gcDID size=16 maxlength=16> DID");
 	fprintf(fp,"<p><input type=submit class=largeButton"
-			" title='Add a DID to currently loaded PBX container that already has OpenSIPS_Attrs'"
+			" title='Add a DID to currently loaded PBX container that has OpenSIPS_Attrs or LinesContracted values'"
 			" name=gcFunction value='Add DID'>\n");
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Remove a DID from currently loaded PBX container'"

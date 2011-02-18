@@ -37,7 +37,7 @@ static time_t uJobDate=0;
 static unsigned uJobStatus=0;
 static char cuJobStatusPullDown[256]={""};
 //cRemoteMsg: Remote subsytem error message
-static char cRemoteMsg[33]={""};
+static char cRemoteMsg[65]={""};
 //uOwner: Record owner
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
@@ -115,7 +115,7 @@ void ProcesstJobVars(pentry entries[], int x)
 			uRecurringJob=ReadRecurringDropDown(cRecurringJobDropDown);
 		}
 		else if(!strcmp(entries[i].name,"cRemoteMsg"))
-			sprintf(cRemoteMsg,"%.32s",entries[i].val);
+			sprintf(cRemoteMsg,"%.64s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -232,7 +232,7 @@ void tJob(const char *cResult)
 			cJobData=field[6];
 			sscanf(field[7],"%lu",&uJobDate);
 			sscanf(field[8],"%u",&uJobStatus);
-			sprintf(cRemoteMsg,"%.32s",field[9]);
+			sprintf(cRemoteMsg,"%.64s",field[9]);
 			sscanf(field[10],"%u",&uOwner);
 			sscanf(field[11],"%u",&uCreatedBy);
 			sscanf(field[12],"%lu",&uCreatedDate);
@@ -483,7 +483,7 @@ void tJobInput(unsigned uMode)
 		tTablePullDown("tJobStatus;cuJobStatusPullDown","cLabel","cLabel",uJobStatus,0);
 //cRemoteMsg
 	OpenRow(LANG_FL_tJob_cRemoteMsg,"black");
-	printf("<input title='%s' type=text name=cRemoteMsg value=\"%s\" size=40 maxlength=32 ",LANG_FT_tJob_cRemoteMsg,
+	printf("<input title='%s' type=text name=cRemoteMsg value=\"%s\" size=80 maxlength=64 ",LANG_FT_tJob_cRemoteMsg,
 							EncodeDoubleQuotes(cRemoteMsg));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -797,7 +797,7 @@ void CreatetJob(void)
 			"cJobData TEXT NOT NULL DEFAULT '',"
 			"uJobDate INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uJobStatus INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uJobStatus),"
-			"cRemoteMsg VARCHAR(32) NOT NULL DEFAULT '',"
+			"cRemoteMsg VARCHAR(64) NOT NULL DEFAULT '',"
 			"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
 			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"

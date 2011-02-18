@@ -102,7 +102,7 @@ void tContainerNavList(unsigned uNode, char *cSearch);
 unsigned CreateNewContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned DestroyContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
-unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned StopContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned CancelContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uCancelMode);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
@@ -286,7 +286,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							if(StopContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uCtContainer))
+									sContainer.uNode,uCtContainer,guCompany))
 							{
 								SetContainerStatus(uCtContainer,uAWAITSTOP);
 								uGroupJobs++;
@@ -2502,7 +2502,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
 
-				if(StopContainerJob(uDatacenter,uNode,uContainer))
+				if(StopContainerJob(uDatacenter,uNode,uContainer,guCompany))
 				{
 					uStatus=uAWAITSTOP;
 					SetContainerStatus(uContainer,41);//Awaiting Stop
@@ -3974,6 +3974,8 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 		}
 		if(guPermLevel>9 && uNode==0)
 		{
+			printf("<input type=checkbox name=all onClick='checkAll(document.formMain,this)'> Check all<br>\n");
+
 			printf("<input title='Cancels job(s) for container(s) waiting for activation, deletion or stop.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Cancel'>\n");
@@ -4072,7 +4074,7 @@ unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 }//unsigned DestroyContainerJob()
 
 
-unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner)
 {
 	unsigned uCount=0;
 
