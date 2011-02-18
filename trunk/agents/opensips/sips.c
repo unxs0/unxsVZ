@@ -188,6 +188,7 @@ void unxsVZJobs(void)
         			MYSQL_RES *res;
 			        MYSQL_ROW field;
 				unsigned uLinesContracted=0;
+				char cCustomerName[64]={""};
 
 				sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cOrg_LinesContracted'",
 					uContainer);
@@ -206,6 +207,26 @@ void unxsVZJobs(void)
 					sscanf(field[0],"%u",&uLinesContracted);
 				mysql_free_result(res);
 
+				sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cOrg_CustomerName'",
+					uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					//Update tJob error
+					UpdateJob(14,uContainer,uJob,gcQuery);
+					logfileLine("unxsSIPSNewDID",mysql_error(&gMysql),0);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			        res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sprintf(cCustomerName,"%.63s",field[0]);
+				mysql_free_result(res);
+
+				if(!cCustomerName[0])
+					sprintf(cCustomerName,"%.63s",cHostname);
+				
 				if(uLinesContracted)
 				{
 					//gwid    type    address strip   pri_prefix      attrs   probe_mode      description
@@ -214,7 +235,7 @@ void unxsVZJobs(void)
 							" address='%s',"
 							" attrs='unxsvzOrg|%u',"
 							" description='%s'"
-									,cHostname,uLinesContracted,cHostname);
+									,cHostname,uLinesContracted,cCustomerName);
 					mysql_query(&gMysqlExt,gcQuery);
 					if(mysql_errno(&gMysqlExt))
 					{
