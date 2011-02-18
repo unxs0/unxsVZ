@@ -483,7 +483,7 @@ void ProcessDR(void)
 
 		//Wish the OPenSIPS guys would use modern SQL var naming conventions
 		//like we do ;)
-		sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",field[0]);
+		sprintf(gcQuery,"SELECT gwid,attrs,description FROM dr_gateways WHERE type=1 AND address='%s'",field[0]);
 		mysql_query(&gMysqlExt,gcQuery);
 		if(mysql_errno(&gMysqlExt))
 		{
@@ -501,7 +501,8 @@ void ProcessDR(void)
 			//printf("gwid=%s attrs=%s\n",field2[0],field2[1]);
 
 			//Clean out
-			sprintf(gcQuery,"DELETE FROM tProperty WHERE (cName='cOrg_OpenSIPS_DID' OR cName='cOrg_OpenSIPS_Attrs')"
+			sprintf(gcQuery,"DELETE FROM tProperty WHERE (cName='cOrg_OpenSIPS_DID' OR"
+					" cName='cOrg_OpenSIPS_Attrs' OR cName='cOrg_CustomerName')"
 					" AND uType=3 AND uKey=%u",uContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -515,6 +516,19 @@ void ProcessDR(void)
 			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_OpenSIPS_Attrs',cValue='%s'"
 					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
 						field2[1],uContainer,uOwner);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			uInserts++;
+
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_CustomerName',cValue='%s'"
+					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+						field2[2],uContainer,uOwner);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
