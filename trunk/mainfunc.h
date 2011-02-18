@@ -1377,6 +1377,14 @@ void UpdateSchema(void)
 			printf("Added uDatacenter to tSearchdomain\n");
 	}
 
+		sprintf(gcQuery,"ALTER TABLE tJob MODIFY cRemoteMsg VARCHAR(64) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Corrected cRemoteMsg of tJob\n");
+
+
 	printf("UpdateSchema(): End\n");
 
 }//void UpdateSchema(void)

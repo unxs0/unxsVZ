@@ -100,9 +100,9 @@
 		</td>
 		<td>
 			<br>Here you can search for a container and find specific information about it.
-			Set a containers hostname filter that restricts the select. 
+			Set a containers hostname filter that refines the select if needed. 
 			<p>Once you have loaded a container you will be able to view it's settings.
-			<p>Depending on your account role other operations may be available, such as changing a containers name or group.
+			<p>Depending on your account role other operations may be available, such as adding a DID.
 		</td>
 	</tr>
 			

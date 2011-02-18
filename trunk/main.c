@@ -78,6 +78,7 @@ void DashBoard(const char *cOptionalMsg);
 
 //Only local
 void ConnectDb(void);
+void jsToggleCheckboxes(void);
 void NoSuchFunction(void);
 void unxsVZ(const char *cResult);
 void InitialInstall(void);
@@ -455,8 +456,14 @@ void jsCalendarHeader(void)
         printf("<script type='text/javascript' src='/js/calendar.js'></script>\n");
         printf("<script type='text/javascript' src='/js/calendar-en.js'></script>\n");
         printf("<script type='text/javascript' src='/js/calendar-setup.js'></script>\n");
-
 }//void jsCalendarHeader(void)
+
+
+void jsToggleCheckboxes(void)
+{
+        printf("<script> function checkAll(checkname, toggle) {"
+		" for (i = 0; i < checkname.length; i++) checkname[i].checked = toggle.checked? true:false } </script> ");
+}//void jsToggleCheckboxes(void)
 
 
 void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
@@ -505,11 +512,12 @@ void Header_ism3(const char *title, int iJs)
         printf("<html><head><title>"HEADER_TITLE" %s %s </title>",gcHostname,title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
-        if(iJs)
+        if(iJs==1)
                 jsCalendarHeader();
-	
+        else if(iJs==2)
+		jsToggleCheckboxes();
 	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
-	printf("</head><body><form action=unxsVZ.cgi method=post><blockquote>\n");
+	printf("</head><body><form name=formMain action=unxsVZ.cgi method=post><blockquote>\n");
 	printf("<img src=/images/unxslogo.gif>&nbsp;&nbsp;\n");
 
 	//ModuleRAD3NavBars()

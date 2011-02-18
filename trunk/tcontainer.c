@@ -304,7 +304,7 @@ void tContainer(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: OpenVZ Container",0);
+	Header_ism3(":: OpenVZ Container",2);//2 toggle checkboxes js
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
