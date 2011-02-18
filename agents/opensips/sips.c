@@ -182,6 +182,54 @@ void unxsVZJobs(void)
 				sscanf(field2[0],"%u",&uGwid);
 			mysql_free_result(res2);
 
+			//If unxsVZ.tProperty cOrg_LinesContracted exists we can safely register and get a new uGwid
+			if(!uGwid)
+			{
+        			MYSQL_RES *res;
+			        MYSQL_ROW field;
+				unsigned uLinesContracted=0;
+
+				sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cOrg_LinesContracted'",
+					uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					//Update tJob error
+					UpdateJob(14,uContainer,uJob,gcQuery);
+					logfileLine("unxsSIPSNewDID",mysql_error(&gMysql),0);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			        res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uLinesContracted);
+				mysql_free_result(res);
+
+				if(uLinesContracted)
+				{
+					//gwid    type    address strip   pri_prefix      attrs   probe_mode      description
+					sprintf(gcQuery,"INSERT INTO dr_gateways SET"
+							" type=1,"
+							" address='%s',"
+							" attrs='unxsvzOrg|%u',"
+							" description='%s'"
+									,cHostname,uLinesContracted,cHostname);
+					mysql_query(&gMysqlExt,gcQuery);
+					if(mysql_errno(&gMysqlExt))
+					{
+						//Update tJob error
+						UpdateJob(14,uContainer,uJob,gcQuery);
+						logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
+						mysql_close(&gMysql);
+						mysql_close(&gMysqlExt);
+						exit(2);
+					}
+					logfileLine("unxsSIPSNewDID","dr_gateways record added",uContainer);
+					uGwid=mysql_insert_id(&gMysqlExt);
+				}
+			}
+
 			if(uGwid)
 			{
 				//Add new DID only if not already in table
