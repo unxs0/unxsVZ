@@ -25,6 +25,7 @@ static char gcNewHostname[33]={""};
 static char gcNewHostParam0[33]={""};
 static char gcNewHostParam1[33]={""};
 static char gcDID[17]={""};
+static char gcCustomerName[33]={""};
 
 
 //TOC
@@ -33,6 +34,7 @@ void ContainerGetHook(entry gentries[],int x);
 char *cGetHostname(unsigned uContainer);
 char *cGetImageHost(unsigned uContainer);
 void SelectContainer(void);
+char *CustomerName(char *cInput);
 char *NameToLower(char *cInput);
 char *cNumbersOnly(char *cInput);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
@@ -58,9 +60,11 @@ void ProcessContainerVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"gcNewHostParam0"))
 			sprintf(gcNewHostParam0,"%.32s",NameToLower(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcNewHostParam1"))
-			sprintf(gcNewHostParam1,"%.32s",NameToLower(entries[i].val));
+			sprintf(gcNewHostParam1,"%.32s",CustomerName(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcDID"))
 			sprintf(gcDID,"%.16s",cNumbersOnly(entries[i].val));
+		else if(!strcmp(entries[i].name,"gcCustomerName"))
+			sprintf(gcCustomerName,"%.32s",CustomerName(entries[i].val));
 	}
 
 }//void ProcessContainerVars(pentry entries[], int x)
@@ -584,6 +588,134 @@ void ContainerCommands(pentry entries[], int x)
 			mysql_free_result(res);
 			exit(0);
 		}
+		else if(!strcmp(gcFunction,"Mod CustomerName") && gcCustomerName[0])
+		{
+			char gcQuery[1024];
+        		MYSQL_RES *res;
+	        	MYSQL_ROW field;
+
+			if(!guContainer)
+			{
+				gcMessage="Must select a container.";
+				htmlContainer();
+			}
+			if((uLen=strlen(gcCustomerName))<3)
+			{
+				gcMessage="Customer name must be at least 3 characters long.";
+				htmlContainer();
+			}
+			if(uLen>32)
+			{
+				gcMessage="Customer name length exceeded.";
+				htmlContainer();
+			}
+
+			//uStatus must be active or offline or appliance
+			unsigned uNode=0;
+			unsigned uDatacenter=0;
+			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u"
+					" AND (uStatus=1 OR uStatus=3 OR uStatus=101)",guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select uNode error, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[1],"%u",&uNode);
+				sscanf(field[2],"%u",&uDatacenter);
+			}
+			if(mysql_num_rows(res)<1)
+			{
+				gcMessage="Selected container status is incorrect.";
+				htmlContainer();
+			}
+			if(!uNode || !uDatacenter)
+			{
+				gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
+				htmlContainer();
+			}
+
+			//Must be already registered with OpenSIPS or have LinesContracted value
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND"
+					" (cName='cOrg_OpenSIPS_Attrs' OR cName='cOrg_LinesContracted')",
+								guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Check for cOrg_OpenSIPS_Attrs failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)<1)
+			{
+				mysql_free_result(res);
+				gcMessage="Container must be registered with OpenSIPS or have LinesContracted value.";
+				htmlContainer();
+			}
+			mysql_free_result(res);
+
+			//Check to see if customer name is already in property table
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					" WHERE uKey=%u AND uType=3 AND cName='cOrg_CustomerName'"
+					" AND cValue='%s'",guContainer,gcCustomerName);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Check for cOrg_CustomerName failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)>0)
+			{
+				mysql_free_result(res);
+				gcMessage="Customer name not changed, already in property table.";
+				htmlContainer();
+			}
+			mysql_free_result(res);
+
+			sprintf(gcQuery,"INSERT INTO tProperty"
+					" SET cValue='%s',"
+					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+					"uKey=%u,uType=3,cName='cOrg_CustomerMod'"
+						,gcCustomerName,guOrg,guLoginClient,guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="INSERT for cOrg_CustomerMod failed, contact sysadmin!";
+				htmlContainer();
+			}
+
+			//unxsSIPS job
+			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSModCustomerName(%u)',cJobName='unxsSIPSModCustomerName'"
+					",uDatacenter=%u,uNode=%u,uContainer=%u"
+					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+					",uJobStatus=%u"
+					",cJobData='"
+					"cCustomerName=%s;\n"
+					"cHostname=%s;\n'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guContainer,
+						uDatacenter,
+						uNode,
+						guContainer,
+						uREMOTEWAITING,
+						gcCustomerName,
+						gcCtHostname,
+						guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="unxsSIPSModCustomerName tJob insert failed, contact sysadmin!";
+				htmlContainer();
+			}
+
+			gcMessage="Remote 'Mod CustomerName' task created for OpenSIPS.";
+			htmlContainer();
+		}//Mod CustomerName
 		else if(!strcmp(gcFunction,"Add DID") && gcDID[0])
 		{
 			char gcQuery[1024];
@@ -1461,6 +1593,20 @@ void funcNewContainer(FILE *fp)
 }//void funcNewContainer(FILE *fp)
 
 
+char *CustomerName(char *cInput)
+{
+	register int i;
+
+	for(i=0;cInput[i];i++)
+		if(!isalnum(cInput[i]) && cInput[i]!=' ' 
+			&& cInput[i]!='.' && cInput[i]!=',') break;
+	cInput[i]=0;
+
+	return(cInput);
+
+}//char *CustomerName(char *cInput)
+
+
 char *NameToLower(char *cInput)
 {
 	register int i;
@@ -1526,6 +1672,12 @@ void funcContainer(FILE *fp)
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Remove a DID from currently loaded PBX container'"
 			" name=gcFunction value='Remove DID'>\n");
+	fprintf(fp,"<p><br><input type=text class=type_fields"
+			" title='Enter a valid customer name'"
+			" name=gcCustomerName value='%s' size=16 maxlength=32> Customer name",gcCustomerName);
+	fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Modify currently loaded PBX container customer name'"
+			" name=gcFunction value='Mod CustomerName'>\n");
 
 	fprintf(fp,"</td></tr>\n");
 
