@@ -1189,6 +1189,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							uApplianceContainer,uForClient,guLoginClient);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
 					//cPasswd property
 					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
 						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
