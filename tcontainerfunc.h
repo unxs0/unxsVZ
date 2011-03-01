@@ -1095,9 +1095,10 @@ void ExttContainerCommands(pentry entries[], int x)
 
 
 				unsigned uApplianceIPv4=0;
+				unsigned uApplianceDatacenter=41;
+				unsigned uApplianceNode=81;
 				if(uCreateAppliance)
 				{
-					unsigned uApplianceDatacenter=41;
 
 					//New tIP for remote appliance
 					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE cLabel='%s' AND uAvailable=1",gcIPv4);
@@ -1126,12 +1127,78 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> uApplianceIPv4 not determined!!");
 				}
 
+				unsigned uApplianceContainer=0;
 				if(uCreateAppliance)
 				{
-					tContainer("<blink>Not implemented</blink> uCreateAppliance!");
-					//Here we need to create special tContainer entry. Keep the uContainer
-					//use it below for uSource
-				}
+					char *cp;
+					char cApplianceLabel[33]={""};
+					char cApplianceHostname[100]={""};
+
+					if((cp=strstr(cLabel,"-app")))
+					{
+						*cp=0;
+						sprintf(cApplianceLabel,"%.32s",cLabel);
+						*cp='-';
+					}
+
+					if((cp=strstr(cHostname,"-app.")))
+						sprintf(cApplianceHostname,"%.99s",cp+5);
+
+					if(cApplianceLabel[0]==0 || cApplianceHostname[0]==0)
+						tContainer("<blink>Error:</blink> cApplianceLabel/cApplianceHostname not defined");
+
+#define uREMOTEAPPLIANCE 101
+					sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%s',cHostname='%s.%s',"
+							"uIPv4=%u,"
+							"uDatacenter=%u,"
+							"uNode=%u,"
+							"uStatus=%u,"
+							"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								cApplianceLabel,cApplianceLabel,cApplianceHostname,
+								uApplianceIPv4,
+								uApplianceDatacenter,
+								uApplianceNode,
+								uREMOTEAPPLIANCE,
+								uForClient,
+								guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					uApplianceContainer=mysql_insert_id(&gMysql);
+
+					if(!uApplianceContainer)
+						tContainer("<blink>Error:</blink> uApplianceContainer not determined!!");
+
+					//Add to appliance group
+					if(uGroup)
+						ChangeGroup(uApplianceContainer,uGroup);
+
+					//Add properties
+					//Name property
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='Name',cValue='%s'",
+							uApplianceContainer,uForClient,guLoginClient,cApplianceLabel);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					//cOrg_FreePBXAdminPasswd property
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cOrg_FreePBXAdminPasswd',cValue='unknown'",
+							uApplianceContainer,uForClient,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					//cPasswd property
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cPasswd',cValue='unknown'",
+							uApplianceContainer,uForClient,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+
+				}//end if uCreateAppliance
 
 				//
 				//debug after initial checks
@@ -1157,6 +1224,8 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				//This sets new file global uContainer
 				uContainer=0;
+				if(uCreateAppliance)
+					uSource=uApplianceContainer;
 				NewtContainer(1);
 
 				//tIP

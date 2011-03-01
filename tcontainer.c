@@ -728,7 +728,7 @@ void Insert_tContainer(void)
 	sprintf(gcQuery,"INSERT INTO tContainer SET uContainer=%u,cLabel='%s',cHostname='%s',uVeth=%u,"
 				"uIPv4=%u,uOSTemplate=%u,uConfig=%u,uNameserver=%u,uSearchdomain=%u,"
 				"uDatacenter=%u,uNode=%u,uStatus=%u,uOwner=%u,uCreatedBy=%u,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uSource=%u",
 			uContainer
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cHostname)
@@ -743,6 +743,7 @@ void Insert_tContainer(void)
 			,uStatus
 			,uOwner
 			,uCreatedBy
+			,uSource
 			);
 	MYSQL_RUN;
 
