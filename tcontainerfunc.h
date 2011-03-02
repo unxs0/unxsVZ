@@ -1095,8 +1095,14 @@ void ExttContainerCommands(pentry entries[], int x)
 
 
 				unsigned uApplianceIPv4=0;
-				unsigned uApplianceDatacenter=41;
-				unsigned uApplianceNode=81;
+				unsigned uApplianceDatacenter=41;//My current default for testing
+				unsigned uApplianceNode=81;//My current default for testing
+				char cuApplianceDatacenter[256]={""};
+				char cuApplianceNode[256]={""};
+				GetConfiguration("uApplianceDatacenter",cuApplianceDatacenter,uDatacenter,0,0,0);
+				sscanf(cuApplianceDatacenter,"%u",&uApplianceDatacenter);
+				GetConfiguration("uApplianceNode",cuApplianceNode,uDatacenter,0,0,0);
+				sscanf(cuApplianceNode,"%u",&uApplianceNode);
 				if(uCreateAppliance)
 				{
 
@@ -1128,11 +1134,11 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 
 				unsigned uApplianceContainer=0;
+				char cApplianceLabel[33]={""};
+				char cApplianceHostname[100]={""};
 				if(uCreateAppliance)
 				{
 					char *cp;
-					char cApplianceLabel[33]={""};
-					char cApplianceHostname[100]={""};
 
 					if((cp=strstr(cLabel,"-app")))
 					{
@@ -1146,6 +1152,18 @@ void ExttContainerCommands(pentry entries[], int x)
 
 					if(cApplianceLabel[0]==0 || cApplianceHostname[0]==0)
 						tContainer("<blink>Error:</blink> cApplianceLabel/cApplianceHostname not defined");
+
+					sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cApplianceLabel);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)>0)
+					{
+						mysql_free_result(res);
+						tContainer("<blink>Error:</blink> cApplianceLabel already in use");
+					}
+					mysql_free_result(res);
 
 #define uREMOTEAPPLIANCE 101
 					sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%s',cHostname='%s.%s',"
@@ -1221,7 +1239,11 @@ void ExttContainerCommands(pentry entries[], int x)
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				//Convenience
-				sprintf(cSearch,"%.31s",cLabel);
+				if(uCreateAppliance)
+					sprintf(cSearch,"%.31s",cApplianceLabel);
+				else
+					sprintf(cSearch,"%.31s",cLabel);
+
 
 				//This sets new file global uContainer
 				uContainer=0;
