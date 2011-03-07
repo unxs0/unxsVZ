@@ -124,7 +124,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 
 
 	//debug only
-	//printf("<u>%s</u>\n",cLine);
+	//printf("%s",cLine);
 
 	if(cLine[0]=='\t')
 	{
@@ -286,7 +286,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 	}
 	else if(!strcasecmp(cType,"MX"))
 	{
-		unsigned uMX=0;
+		unsigned uMX=999999;
 		uRRType=3;
 		if(!cParam1[0] || !cParam2[0] )
 		{
@@ -295,7 +295,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 			return;
 		}
 		sscanf(cParam1,"%u",&uMX);
-		if(uMX<1 || uMX>99999)
+		if(uMX>99999)
 		{
 			fprintf(stdout,"ProcessRRLine() Error %s: Incorrect MX format: %s\n",
 					cZoneName,cLine);
@@ -354,7 +354,7 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 			return;
 		}
 		//debug only
-		fprintf(stdout,"TXT: %s\n",cParam1);
+		//fprintf(stdout,"TXT: %s\n",cParam1);
 	}
 	else if(!strcasecmp(cType,"SPF"))
 	{
@@ -938,7 +938,7 @@ void ProcessSORRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 	}
 	else if(!strcasecmp(cType,"MX"))
 	{
-		unsigned uMX=0;
+		unsigned uMX=999999;
 		uRRType=3;
 		if(!cParam1[0] || !cParam2[0] )
 		{
@@ -1008,7 +1008,7 @@ void ProcessSORRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 			return;
 		}
 		//debug only
-		fprintf(stdout,"TXT: %s\n",cParam1);
+		//fprintf(stdout,"TXT: %s\n",cParam1);
 	}
 	else if(!strcasecmp(cType,"SPF"))
 	{
@@ -1110,17 +1110,19 @@ void DropImportedZones(void)
 	char cZoneImportTable[256]="tZoneImport";
 	char cResourceImportTable[256]="tResourceImport";
 
-	GetConfiguration("cZoneImportTable",cZoneImportTable,0);
-	GetConfiguration("cResourceImportTable",cResourceImportTable,0);
+	//GetConfiguration("cZoneImportTable",cZoneImportTable,0);
+	//GetConfiguration("cResourceImportTable",cResourceImportTable,0);
 
 	fprintf(stdout,"DropImportedZones() Start\n");
 
-	sprintf(gcQuery,"DELETE FROM %s WHERE cHostmaster LIKE '%% IMPORTED'",cZoneImportTable);
+	//sprintf(gcQuery,"DELETE FROM %s WHERE cHostmaster LIKE '%% IMPORTED'",cZoneImportTable);
+	sprintf(gcQuery,"TRUNCATE %s",cZoneImportTable);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		fprintf(stdout,"Error: %s\n",mysql_error(&gMysql));
 
-	sprintf(gcQuery,"DELETE FROM %s WHERE cComment LIKE '%% IMPORTED'",cResourceImportTable);
+	//sprintf(gcQuery,"DELETE FROM %s WHERE cComment LIKE '%% IMPORTED'",cResourceImportTable);
+	sprintf(gcQuery,"TRUNCATE %s",cResourceImportTable);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		fprintf(stdout,"Error: %s\n",mysql_error(&gMysql));

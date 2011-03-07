@@ -1814,7 +1814,7 @@ char *FQDomainName(char *cInput)
 	{
 	
 		if(!isalnum(cInput[i]) && cInput[i]!='.'  && cInput[i]!='-' 
-			&& cInput[i]!='_' && cInput[i]!='@' && cInput[i]!='/')
+			&& cInput[i]!='_' && cInput[i]!='@' && cInput[i]!='/' && cInput[i]!='*')
 			break;
 		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
 	}
