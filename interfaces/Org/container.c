@@ -1377,7 +1377,8 @@ void funcContainerInfo(FILE *fp)
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=%s')\">"
+		if(strncmp(field[0],"FreePBXEngPasswd",16) || guPermLevel>=10)
+			printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=%s')\">"
 			" <strong>%s</strong></a></td><td><input type=text name='%s' value='%s' size=40 maxlength=32"
 			" class=\"type_fields_off\"> </td></tr>\n",field[0],field[0],field[0],field[1]);
 	}
