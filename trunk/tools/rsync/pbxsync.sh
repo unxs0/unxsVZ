@@ -27,13 +27,16 @@
 
 #Settings
 cSSHPort="22";
+#test with --dry-run switch
+cDryrun="--dry-run";
+#cDryrun="";
 
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
 #Low priority script do not run when server is loaded.
 nLoad=`uptime | cut -f 5 -d : | cut -f 1 -d .`;
-if (( $nLoad > 10 ));then
-	fLog "waiting for $nLoad to go below 10";
+if (( $nLoad > 5 ));then
+	fLog "waiting for $nLoad to go below 5";
 	exit 0;
 fi
 
@@ -75,33 +78,34 @@ if [ "$cStatus" == "" ] || [ "$cStatus" != "stopped" ] && [ "$cStatus" != "runni
 fi
 
 #debug only
+#echo $2 is $cStatus;
 #rmdir $cLockfile;
 #exit 0;
 
 #wrap asterisk stop start conditional
 if [ "$cStatus" == "running" ];then
-	/usr/sbin/vzctl exec2 $2 "service asterisk stop";
+	/usr/sbin/vzctl exec2 $2 "service asterisk stop" > /dev/null 2>&1;
 	if [ $? != 0 ];then
 		fLog "local asterisk stop failed";
 		#rollback
 		rmdir $cLockfile;
 		exit 1;
 	fi
-else 
-	#this sync may be too slow for mail servers and other similar 
-	#many file open #servers
-	/usr/bin/ssh -p $cSSHPort $1 "/bin/sync > /dev/null 2>&1";
-	if [ $? != 0 ];then
-		fLog "remote sync failed";
-		#rollback
-		rmdir $cLockfile;
-		exit 1;
-	fi
+fi
+
+#this sync may be too slow for mail servers and other similar 
+#many file open #servers
+/usr/bin/ssh -c arcfour -p $cSSHPort $1 "/bin/sync > /dev/null 2>&1";
+if [ $? != 0 ];then
+	fLog "remote sync failed";
+	#rollback
+	rmdir $cLockfile;
+	exit 1;
 fi
 
 
-#test with --dry-run switch
-/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
 			$1:/var/spool/asterisk/ /vz/private/$2/var/spool/asterisk/
 #we can ignore return value 24:
 #rsync warning: some files vanished before they could be transferred (code 24) at main.c(892) [sender=2.6.8]
@@ -109,19 +113,19 @@ if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 1 failed";
 fi
 
-/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
 			$1:/etc/asterisk/ /vz/private/$2/etc/asterisk/
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 4 failed";
 fi
 
-/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
 			$1:/var/lib/asterisk/ /vz/private/$2/var/lib/asterisk/
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 5 failed";
 fi
 
-/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
 			$1:/var/www/html/panel/ /vz/private/$2/var/www/html/panel/
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 6 failed";
@@ -129,23 +133,23 @@ fi
 
 #wrap mysql data in stop start conditional
 if [ "$cStatus" == "running" ];then
-	/usr/sbin/vzctl exec2 $2 "service mysqld stop";
+	/usr/sbin/vzctl exec2 $2 "service mysqld stop" > /dev/null 2>&1;
 	if [ $? != 0 ];then
 		fLog "local mysqld stop failed. mysql data not rsync'd";
 	else
-		/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+		/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
 			$1:/var/lib/mysql/asterisk/ /vz/private/$2/var/lib/mysql/asterisk/
 		if [ $? != 0 ] && [ $? != 24 ];then
 			fLog "rsync 2 failed";
 		fi
 
-		/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+		/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
 			$1:/var/lib/mysql/asteriskcdrdb/ /vz/private/$2/var/lib/mysql/asteriskcdrdb/
 		if [ $? != 0 ] && [ $? != 24 ];then
 			fLog "rsync 3 failed";
 		fi
 
-		/usr/sbin/vzctl exec2 $2 "service mysqld start";
+		/usr/sbin/vzctl exec2 $2 "service mysqld start" > /dev/null 2>&1;
 		if [ $? != 0 ];then
 			fLog "local mysqld start failed";
 		fi
@@ -155,7 +159,7 @@ fi
 
 #wrap asterisk stop start conditional
 if [ "$cStatus" == "running" ];then
-	/usr/sbin/vzctl exec2 $2 "service asterisk start";
+	/usr/sbin/vzctl exec2 $2 "service asterisk start" > /dev/null 2>&1;
 	if [ $? != 0 ];then
 		fLog "local asterisk start failed";
 	fi
