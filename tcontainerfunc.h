@@ -1127,10 +1127,10 @@ void ExttContainerCommands(pentry entries[], int x)
 							htmlPlainTextError(mysql_error(&gMysql));
 						uApplianceIPv4=mysql_insert_id(&gMysql);
 					}
-				}
-				if(!uApplianceIPv4)
-				{
-					tContainer("<blink>Error:</blink> uApplianceIPv4 not determined!!");
+					if(!uApplianceIPv4)
+					{
+						tContainer("<blink>Error:</blink> uApplianceIPv4 not determined!!");
+					}
 				}
 
 				unsigned uApplianceContainer=0;
