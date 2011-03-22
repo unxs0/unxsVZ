@@ -24,12 +24,19 @@
 #
 #	/var/www/html/panel
 #	(op_buttons_additional.cfg)
+#
+#FAX
+#	/var/spool/hylafax/
+#	/var/www/html/fax/faxes
+
 
 #Settings
 cSSHPort="22";
 #test with --dry-run switch
-cDryrun="--dry-run";
-#cDryrun="";
+#cDryrun="--dry-run";
+cDryrun="";
+cIgnoreSpool="yes";
+
 
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
@@ -93,42 +100,58 @@ if [ "$cStatus" == "running" ];then
 	fi
 fi
 
-#this sync may be too slow for mail servers and other similar 
-#many file open #servers
-/usr/bin/ssh -c arcfour -p $cSSHPort $1 "/bin/sync > /dev/null 2>&1";
-if [ $? != 0 ];then
-	fLog "remote sync failed";
-	#rollback
-	rmdir $cLockfile;
-	exit 1;
+if [ "$cDryrun" == "" ];then
+	#this sync may be too slow for mail servers and other similar 
+	#many file open #servers
+	/usr/bin/ssh -c arcfour -p $cSSHPort $1 "/bin/sync > /dev/null 2>&1";
+	if [ $? != 0 ];then
+		fLog "remote sync failed";
+		#rollback
+		rmdir $cLockfile;
+		exit 1;
+	fi
 fi
 
-
-
-/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+if [ "$cIgnoreSpool" != "yes" ];then
+	/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
 			$1:/var/spool/asterisk/ /vz/private/$2/var/spool/asterisk/
-#we can ignore return value 24:
-#rsync warning: some files vanished before they could be transferred (code 24) at main.c(892) [sender=2.6.8]
-if [ $? != 0 ] && [ $? != 24 ];then
-	fLog "rsync 1 failed";
+	#we can ignore return value 24:
+	#rsync warning: some files vanished before they could be transferred (code 24) at main.c(892) [sender=2.6.8]
+	if [ $? != 0 ] && [ $? != 24 ];then
+		fLog "rsync 1 failed";
+	fi
+
 fi
 
-/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
 			$1:/etc/asterisk/ /vz/private/$2/etc/asterisk/
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 4 failed";
 fi
 
-/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
 			$1:/var/lib/asterisk/ /vz/private/$2/var/lib/asterisk/
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 5 failed";
 fi
 
-/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
 			$1:/var/www/html/panel/ /vz/private/$2/var/www/html/panel/
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 6 failed";
+fi
+
+#hylafax
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
+			$1:/var/spool/hylafax/ /vz/private/$2/var/spool/hylafax/
+if [ $? != 0 ] && [ $? != 24 ];then
+	fLog "rsync 7 failed";
+fi
+
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
+			$1:/var/www/html/fax/faxes/ /vz/private/$2/var/www/html/fax/faxes/
+if [ $? != 0 ] && [ $? != 24 ];then
+	fLog "rsync 8 failed";
 fi
 
 #wrap mysql data in stop start conditional
