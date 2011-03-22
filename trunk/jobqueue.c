@@ -249,7 +249,7 @@ void ProcessJobQueue(unsigned uDebug)
 	}
 
 	sprintf(gcQuery,"SELECT uJob,uContainer,cJobName,cJobData FROM tJob WHERE uJobStatus=1"
-				" AND uDatacenter=%u AND uNode=%u"
+				" AND uDatacenter=%u AND (uNode=%u OR uNode=0)" //uNode=0 all node job
 				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) ORDER BY uJob LIMIT 64",
 						uDatacenter,uNode);
 	mysql_query(&gMysql,gcQuery);
@@ -3961,6 +3961,12 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 	struct tm structTm;
 	struct stat statInfo;
 
+	//error policy: only on job format or sql errors mark as error, otherwise try again later
+	//	but provide tJob error/info message.
+
+	//devel only
+	unsigned guDebug=1;
+
 	//Parse job data
 	if((cp=strstr(cJobData,"uMin=")))
 		sscanf(cp+5,"%u",&uMin);
@@ -3998,56 +4004,63 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 
 	//Determine if we run the job
 	if(guDebug)
-		printf("Job: uMonth=%u uDayOfMonth=%u uDayOfWeek=%u uHour=%u uMin=%u\n",
+	{
+		sprintf(gcQuery,"Job: uMonth=%u uDayOfMonth=%u uDayOfWeek=%u uHour=%u uMin=%u",
 				uMonth,uDayOfMonth,uDayOfWeek,uHour,uMin);
+		logfileLine("RecurringJob info",gcQuery);
+	}
+
 	time(&luClock);
 	localtime_r(&luClock,&structTm);
 
 	//Note structTm.tm_mon+1. We adjust for normal 1-12
 	if(guDebug)
-		printf("Now: uMonth=%d uDayOfMonth=%d uDayOfWeek=%d uHour=%d uMin=%d\n",
+	{
+		sprintf(gcQuery,"Now: uMonth=%d uDayOfMonth=%d uDayOfWeek=%d uHour=%d uMin=%d",
 			structTm.tm_mon+1,structTm.tm_mday,structTm.tm_wday+1,structTm.tm_hour,structTm.tm_min);
+		logfileLine("RecurringJob info",gcQuery);
+	}
 
 	//If not any month and now month is less than job month do not run.
 	if(uMonth && uMonth>structTm.tm_mon+1)
 	{
 		if(guDebug)
-			printf("uMonth not reached\n");
+			logfileLine("RecurringJob info","uMonth not reached");
 		goto Common_WaitingExit;
 	}
 	//If not any day of month and now day of month is less than job day of month do not run.
 	if(uDayOfMonth && uDayOfMonth>structTm.tm_mday)
 	{
 		if(guDebug)
-			printf("uDayOfMonth not reached\n");
+			logfileLine("RecurringJob info","uDayOfMonth not reached");
 		goto Common_WaitingExit;
 	}
 	//If not any day of week and now day of week is less than job day of week do not run.
 	if(uDayOfWeek && uDayOfWeek>structTm.tm_wday+1)
 	{
 		if(guDebug)
-			printf("uDayOfWeek not reached\n");
+			logfileLine("RecurringJob info","uDayOfWeek not reached");
 		goto Common_WaitingExit;
 	}
 	//If not any hour and now hour is less than job hour do not run.
 	if(uHour && uHour>structTm.tm_hour)
 	{
 		if(guDebug)
-			printf("uHour not reached\n");
+			logfileLine("RecurringJob info","uHour not reached");
 		goto Common_WaitingExit;
 	}
 	//If now min is less than job min do not run.
 	if(uMin>structTm.tm_min)
 	{
 		if(guDebug)
-			printf("uMin not reached\n");
+			logfileLine("RecurringJob info","uMin not reached");
 		goto Common_WaitingExit;
 	}
 
 	//Passed all constraints run job
 	//Get command via cRecurringJob
 
-        sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=0 AND uType=%u AND cName='%.99s'",
+        sprintf(gcQuery,"SELECT TRIM(cValue) FROM tProperty WHERE uKey=0 AND uType=%u AND cName='%.99s'",
 										uPROP_RECJOB,cRecurringJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -4061,35 +4074,47 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
         	sprintf(cCommand,"%.99s",mysqlField[0]);
         mysql_free_result(mysqlRes);
 
+	//Remove trailing junk
+	if((cp=strchr(cCommand,'\n')) || (cp=strchr(cCommand,'\r')))
+		*cp=0;
+		
 	if(guDebug)
-		printf("Run job (%s)\n",cCommand);
+	{
+		sprintf(gcQuery,"Proposed job to run: %s",cCommand);
+		logfileLine("RecurringJob info",gcQuery);
+	}
 
 	if(uNotValidSystemCallArg(cCommand))
 	{
-		logfileLine("RecurringJob","cCommand security alert");
 		tJobErrorUpdate(uJob,"cCommand sec alert!");
-		return;
+		logfileLine("RecurringJob","cCommand security alert");
+		goto Common_WaitingExit;
 	}
 	//Only run if command is chmod 500 for extra security reasons.
 	if(stat(cCommand,&statInfo))
 	{
 		tJobErrorUpdate(uJob,"stat(cCommand)");
 		logfileLine("RecurringJob","stat failed for cCommand");
-		return;
+		goto Common_WaitingExit;
 	}
 	if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
 	{
 		tJobErrorUpdate(uJob,"cCommand is not chmod 500");
 		logfileLine("RecurringJob","cCommand is not chmod 500");
-		return;
+		goto Common_WaitingExit;
 	}
 	//printf("good perms (%x)\n",statInfo.st_mode&(S_IWOTH|S_IWGRP|S_IWUSR|S_IXOTH|S_IROTH|S_IXGRP|S_IRGRP));
 	//goto Common_WaitingExit;
+	if(guDebug)
+	{
+		sprintf(gcQuery,"Attempting %s",cCommand);
+		logfileLine("RecurringJob info",gcQuery);
+	}
 	if(system(cCommand))
 	{
 		tJobErrorUpdate(uJob,"system(cCommand)");
 		logfileLine("RecurringJob",cCommand);
-		return;//Here we might want to continue anyway TODO
+		goto Common_WaitingExit;
 	}
 
 	//Update uJobDate based on cJobData.
@@ -4126,16 +4151,11 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 		tJobErrorUpdate(uJob,"DATE_ADD(CURDATE(),INTERVAL");
 		return;
 	}
-	//Done
-	SetJobStatus(uJob,uWAITING);
-	return;
+	tJobDoneUpdate(uJob);
 
 Common_WaitingExit:
-	if(guDebug)
-		printf("Skipping job not time yet\n");
 	SetJobStatus(uJob,uWAITING);
 	return;
-
 
 }//void RecurringJob(uJob,uDatacenter,uNode,uContainer,cJobData)
 
