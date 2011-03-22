@@ -141,7 +141,9 @@ void ProcessJobQueue(unsigned uDebug)
 #define JOBQUEUE_MAXLOAD 20 //This is equivalent to uptime 20.00 last 1 min avg load
 	if(structSysinfo.loads[0]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
 	{
-		logfileLine("ProcessJobQueue","structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD");
+		sprintf(gcQuery,"structSysinfo.loads[0]=%lu larger than JOBQUEUE_MAXLOAD=%u",
+				structSysinfo.loads[0]/LINUX_SYSINFO_LOADS_SCALE,JOBQUEUE_MAXLOAD);
+		logfileLine("ProcessJobQueue",gcQuery);
 		exit(1);
 	}
 	//debug only
@@ -4128,6 +4130,10 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 	//	it will also run on day 2 instead of day 1 unless we adjust the DATE_ADD() by 1 month minus 1
 	//	day (i.e. Current day - target day.) (This at first blush seems to able to be extended to
 	//	all the cases below except the every hour case, which does not require it -it seems.)
+	//SELECT FROM_UNIXTIME( UNIX_TIMESTAMP(NOW())  - 
+	//	(EXTRACT(MINUTE FROM NOW())*60) - 
+	//	(EXTRACT(SECOND FROM NOW())) +
+	//		 3600 ) AS RoundUpNextHour;
 	if(uMonth)
         	sprintf(gcQuery,"UPDATE tJob SET"
 		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 YEAR))+%u+%u-((DAYOFYEAR(CURDATE())-(%u*30))*86400)"
@@ -4142,13 +4148,13 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 		" WHERE uJob=%u",uMin*60,uHour*3600,uDayOfWeek,uJob);
 	else if(1)
         	sprintf(gcQuery,"UPDATE tJob SET"
-		" uJobDate=UNIX_TIMESTAMP(CURDATE())+%u+%u"
+		" uJobDate=UNIX_TIMESTAMP(NOW())-(EXTRACT(MINUTE FROM NOW())*60)-(EXTRACT(SECOND FROM NOW()))+3600+%u+%u"
 		" WHERE uJob=%u",uMin*60,uHour*3600,uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("RecurringJob",mysql_error(&gMysql));
-		tJobErrorUpdate(uJob,"DATE_ADD(CURDATE(),INTERVAL");
+		tJobErrorUpdate(uJob,"DateAdjustSQL");
 		return;
 	}
 	tJobDoneUpdate(uJob);
