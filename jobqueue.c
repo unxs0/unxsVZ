@@ -3967,7 +3967,7 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 	//	but provide tJob error/info message.
 
 	//devel only
-	unsigned guDebug=1;
+	//unsigned guDebug=1;
 
 	//Parse job data
 	if((cp=strstr(cJobData,"uMin=")))
@@ -4110,7 +4110,7 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 	if(guDebug)
 	{
 		sprintf(gcQuery,"Attempting %s",cCommand);
-		logfileLine("RecurringJob info",gcQuery);
+		logfileLine("RecurringJob",gcQuery);
 	}
 	if(system(cCommand))
 	{
@@ -4118,7 +4118,8 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 		logfileLine("RecurringJob",cCommand);
 		goto Common_WaitingExit;
 	}
-
+	sprintf(gcQuery,"Ran %s",cCommand);
+	logfileLine("RecurringJob",gcQuery);
 	//Update uJobDate based on cJobData.
 	//TODO: Analyze what happens when jobs for some reason do not run for given periods.
 	//Case 1: Job set to run every Sunday (day 7) at 3:15 AM. Server was down since last saturday, it is now
