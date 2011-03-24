@@ -688,18 +688,27 @@ void NewContainer(unsigned uJob,unsigned uContainer)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
+		char OnNewContainerScriptCall[386];
 		struct stat statInfo;
+		char cCommand[256];
+		char *cp;
 
-		if(uNotValidSystemCallArg(field[0]))
+		sprintf(cCommand,"%.255s",field[0]);
+
+		//Remove trailing junk
+		if((cp=strchr(cCommand,'\n')) || (cp=strchr(cCommand,'\r'))) *cp=0;
+
+		if(uNotValidSystemCallArg(cCommand))
 		{
 			logfileLine("NewContainer","cJob_OnNewContainerScript security alert");
 			goto CommonExit2;
 		}
 
 		//Only run if command is chmod 500 and owned by root for extra security reasons.
-		if(stat(field[0],&statInfo))
+		if(stat(cCommand,&statInfo))
 		{
 			logfileLine("NewContainer","stat failed for cJob_OnNewContainerScript");
+			logfileLine("NewContainer",cCommand);
 			goto CommonExit2;
 		}
 		if(statInfo.st_uid!=0)
@@ -713,8 +722,9 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 			goto CommonExit2;
 		}
 
-		if(system(field[0]))
-			logfileLine("NewContainer",field[0]);
+		sprintf(OnNewContainerScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
+		if(system(OnNewContainerScriptCall))
+			logfileLine("NewContainer",OnNewContainerScriptCall);
 	}
 
 //In this case the goto MIGHT be justified
@@ -1008,17 +1018,25 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 	{
 		struct stat statInfo;
 		char OnChangeHostnameScriptCall[386];
+		char cCommand[256];
+		char *cp;
 
-		if(uNotValidSystemCallArg(field[0]))
+		sprintf(cCommand,"%.255s",field[0]);
+
+		//Remove trailing junk
+		if((cp=strchr(cCommand,'\n')) || (cp=strchr(cCommand,'\r'))) *cp=0;
+
+		if(uNotValidSystemCallArg(cCommand))
 		{
 			logfileLine("ChangeHostnameContainer","cJob_OnChangeHostnameScript security alert");
 			goto CommonExit2;
 		}
 
 		//Only run if command is chmod 500 and owned by root for extra security reasons.
-		if(stat(field[0],&statInfo))
+		if(stat(cCommand,&statInfo))
 		{
 			logfileLine("ChangeHostnameContainer","stat failed for cJob_OnChangeHostnameScript");
+			logfileLine("ChangeHostnameContainer",cCommand);
 			goto CommonExit2;
 		}
 		if(statInfo.st_uid!=0)
@@ -1032,10 +1050,10 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 			goto CommonExit2;
 		}
 
-		sprintf(OnChangeHostnameScriptCall,"%.255s %.64s",field[0],cHostname);
+		sprintf(OnChangeHostnameScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
 		if(system(OnChangeHostnameScriptCall))
 		{
-			logfileLine("ChangeHostnameContainer",field[0]);
+			logfileLine("ChangeHostnameContainer",cCommand);
 		}
 	}
 
