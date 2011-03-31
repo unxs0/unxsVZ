@@ -16,6 +16,7 @@ extern unsigned guBrowserFirefox;//main.c
 char gcCtHostname[100]={""};
 static char gcSearch[100]={""};
 static char gcSearchAux[32]={""};
+unsigned guSearchList=0;
 unsigned guContainer=0;
 unsigned guStatus=0;
 unsigned guNewContainer=0;
@@ -54,6 +55,8 @@ void ProcessContainerVars(pentry entries[], int x)
 			sprintf(gcSearch,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gcSearchAux"))
 			sprintf(gcSearchAux,"%.31s",entries[i].val);
+		else if(!strcmp(entries[i].name,"guSearchList"))
+			guSearchList=1;
 		else if(!strcmp(entries[i].name,"guNewContainer"))
 			sscanf(entries[i].val,"%u",&guNewContainer);
 		else if(!strcmp(entries[i].name,"gcNewHostname"))
@@ -997,10 +1000,10 @@ void ContainerCommands(pentry entries[], int x)
         		MYSQL_RES *res;
 	        	MYSQL_ROW field;
 
-			sprintf(gcQuery,"SELECT uKey FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
+			sprintf(gcQuery,"SELECT uKey,tContainer.cHostname FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
 					" (uStatus=1 OR uStatus=3 OR uStatus=101) AND"
 					" cValue LIKE '%.31s%%' AND"
-					" cName='cOrg_OpenSIPS_DID' AND uType=3",gcSearchAux);
+					" cName='cOrg_OpenSIPS_DID' AND uType=3 GROUP BY tContainer.cHostname",gcSearchAux);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -1008,18 +1011,32 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-			{
-				sscanf(field[0],"%u",&guContainer);
-			}
 			if(mysql_num_rows(res)<1)
 			{
 				gcMessage="No container with specied DID pattern found.";
 				htmlContainer();
 			}
+			if(guSearchList)
+			{
+				printf("Content-type: text\n\nList for DID pattern: %s\n\n",gcSearchAux);
+				while((field=mysql_fetch_row(res)))
+				{
+					sscanf(field[0],"%u",&guContainer);
+					printf("%s (%s)\n",field[1],field[0]);
+				}
+				mysql_free_result(res);
+				exit(0);
+			}
+			else
+			{
+				if((field=mysql_fetch_row(res)))
+				{
+					sscanf(field[0],"%u",&guContainer);
+				}
+			}
 			if(mysql_num_rows(res)>1)
 			{
-				gcMessage="More than one container with specied DID pattern found. Only first one is shown.";
+				gcMessage="More than one container with specied DID pattern found. Only first one is shown. Use list option.";
 				htmlContainer();
 			}
 			mysql_free_result(res);
@@ -1031,10 +1048,10 @@ void ContainerCommands(pentry entries[], int x)
         		MYSQL_RES *res;
 	        	MYSQL_ROW field;
 
-			sprintf(gcQuery,"SELECT uKey FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
+			sprintf(gcQuery,"SELECT uKey,tContainer.cHostname FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
 					" (uStatus=1 OR uStatus=3 OR uStatus=101) AND"
 					" cValue LIKE '%.31s%%' AND"
-					" cName='cOrg_CustomerName' AND uType=3",gcSearchAux);
+					" cName='cOrg_CustomerName' AND uType=3 GROUP BY tContainer.cHostname",gcSearchAux);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -1042,18 +1059,32 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-			{
-				sscanf(field[0],"%u",&guContainer);
-			}
 			if(mysql_num_rows(res)<1)
 			{
 				gcMessage="No container with specied customer pattern found.";
 				htmlContainer();
 			}
+			if(guSearchList)
+			{
+				printf("Content-type: text\n\nList for customer name pattern: %s\n\n",gcSearchAux);
+				while((field=mysql_fetch_row(res)))
+				{
+					sscanf(field[0],"%u",&guContainer);
+					printf("%s (%s)\n",field[1],field[0]);
+				}
+				mysql_free_result(res);
+				exit(0);
+			}
+			else
+			{
+				if((field=mysql_fetch_row(res)))
+				{
+					sscanf(field[0],"%u",&guContainer);
+				}
+			}
 			if(mysql_num_rows(res)>1)
 			{
-				gcMessage="More than one container with specied customer pattern found. Only first one is shown.";
+				gcMessage="More than one container with specied customer pattern found. Only first one is shown. Use list option.";
 				htmlContainer();
 			}
 			mysql_free_result(res);
@@ -1661,18 +1692,22 @@ void funcNewContainer(FILE *fp)
 			" title='Generate a cvs report of all PBX containers direct to browser'"
 			" name=gcFunction value='Container Report'>\n");
 
+	printf("<fieldset><legend>Search</b></legend>");
 	//Search DID
-	fprintf(fp,"<p><input type=text class=type_fields"
+	fprintf(fp,"<input type=text class=type_fields"
 			" title='Search for a container by DID'"
 			" name=gcSearchAux value='%.31s' size=16 maxlength=31>",gcSearchAux);
+	fprintf(fp,"&nbsp; <input type=checkbox"
+			" title='Optionally provide list of containers when results are more than 1'"
+			" name=guSearchList> list mode");
 	fprintf(fp,"<br><input type=submit class=largeButton"
 			" title='Enter DID above, then use this function to search for a container'"
 			" name=gcFunction value='Search DID'>\n");
-
 	//Search customer name
 	fprintf(fp,"<br><input type=submit class=largeButton"
 			" title='Enter customer above, then use this function to search for a container'"
 			" name=gcFunction value='Search Customer'>\n");
+	printf("</fieldset>");
 
 
 	fprintf(fp,"</td></tr>\n");
