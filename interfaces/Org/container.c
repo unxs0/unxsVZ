@@ -16,7 +16,7 @@ extern unsigned guBrowserFirefox;//main.c
 char gcCtHostname[100]={""};
 static char gcSearch[100]={""};
 static char gcSearchAux[32]={""};
-unsigned guSearchList=0;
+static char *gcSearchName={""};
 unsigned guContainer=0;
 unsigned guStatus=0;
 unsigned guNewContainer=0;
@@ -30,8 +30,9 @@ static char gcDID[17]={""};
 static char gcCustomerName[33]={""};
 
 
-//TOC
+//TOC incomplete TODO
 void ProcessContainerVars(pentry entries[], int x);
+void htmlContainerList(void);
 void ContainerGetHook(entry gentries[],int x);
 char *cGetHostname(unsigned uContainer);
 char *cGetImageHost(unsigned uContainer);
@@ -40,6 +41,7 @@ char *CustomerName(char *cInput);
 char *NameToLower(char *cInput);
 char *cNumbersOnly(char *cInput);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
+void funcContainerList(FILE *fp);
 
 void ProcessContainerVars(pentry entries[], int x)
 {
@@ -55,8 +57,6 @@ void ProcessContainerVars(pentry entries[], int x)
 			sprintf(gcSearch,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gcSearchAux"))
 			sprintf(gcSearchAux,"%.31s",entries[i].val);
-		else if(!strcmp(entries[i].name,"guSearchList"))
-			guSearchList=1;
 		else if(!strcmp(entries[i].name,"guNewContainer"))
 			sscanf(entries[i].val,"%u",&guNewContainer);
 		else if(!strcmp(entries[i].name,"gcNewHostname"))
@@ -1001,10 +1001,11 @@ void ContainerCommands(pentry entries[], int x)
 	        	MYSQL_ROW field;
 			unsigned uNumRows=0;
 
-			sprintf(gcQuery,"SELECT uKey,tContainer.cHostname FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
+			gcSearchName="cOrg_OpenSIPS_DID";
+			sprintf(gcQuery,"SELECT uKey FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
 					" (uStatus=1 OR uStatus=3 OR uStatus=101) AND"
 					" cValue LIKE '%.31s%%' AND"
-					" cName='cOrg_OpenSIPS_DID' AND uType=3 GROUP BY tContainer.cHostname",gcSearchAux);
+					" cName='%s' AND uType=3 GROUP BY tContainer.cHostname LIMIT 2",gcSearchAux,gcSearchName);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -1017,16 +1018,9 @@ void ContainerCommands(pentry entries[], int x)
 				gcMessage="No container with specied DID pattern found.";
 				htmlContainer();
 			}
-			if(guSearchList && uNumRows>1)
+			if(uNumRows>1)
 			{
-				printf("Content-type: text\n\nList for DID pattern: %s\n\n",gcSearchAux);
-				while((field=mysql_fetch_row(res)))
-				{
-					sscanf(field[0],"%u",&guContainer);
-					printf("%s (%s)\n",field[1],field[0]);
-				}
-				mysql_free_result(res);
-				exit(0);
+				htmlContainerList();
 			}
 			else
 			{
@@ -1034,12 +1028,6 @@ void ContainerCommands(pentry entries[], int x)
 				{
 					sscanf(field[0],"%u",&guContainer);
 				}
-			}
-			if(uNumRows>1)
-			{
-				gcMessage="More than one container with specied DID pattern found."
-					" Only first one is shown. Use list option.";
-				htmlContainer();
 			}
 			mysql_free_result(res);
 			gcMessage="Found single container based on DID pattern.";
@@ -1051,10 +1039,11 @@ void ContainerCommands(pentry entries[], int x)
 	        	MYSQL_ROW field;
 			unsigned uNumRows=0;
 
-			sprintf(gcQuery,"SELECT uKey,tContainer.cHostname FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
+			gcSearchName="cOrg_CustomerName";
+			sprintf(gcQuery,"SELECT uKey FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
 					" (uStatus=1 OR uStatus=3 OR uStatus=101) AND"
 					" cValue LIKE '%.31s%%' AND"
-					" cName='cOrg_CustomerName' AND uType=3 GROUP BY tContainer.cHostname",gcSearchAux);
+					" cName='%s' AND uType=3 GROUP BY tContainer.cHostname LIMIT 2",gcSearchAux,gcSearchName);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -1067,16 +1056,9 @@ void ContainerCommands(pentry entries[], int x)
 				gcMessage="No container with specied customer pattern found.";
 				htmlContainer();
 			}
-			if(guSearchList && uNumRows>1)
+			if(uNumRows>1)
 			{
-				printf("Content-type: text\n\nList for customer name pattern: %s\n\n",gcSearchAux);
-				while((field=mysql_fetch_row(res)))
-				{
-					sscanf(field[0],"%u",&guContainer);
-					printf("%s (%s)\n",field[1],field[0]);
-				}
-				mysql_free_result(res);
-				exit(0);
+				htmlContainerList();
 			}
 			else
 			{
@@ -1084,12 +1066,6 @@ void ContainerCommands(pentry entries[], int x)
 				{
 					sscanf(field[0],"%u",&guContainer);
 				}
-			}
-			if(uNumRows>1)
-			{
-				gcMessage="More than one container with specied customer pattern found."
-				" Only first one is shown. Use list option.";
-				htmlContainer();
 			}
 			mysql_free_result(res);
 			gcMessage="Found single container based on customer pattern.";
@@ -1110,6 +1086,15 @@ void htmlContainer(void)
 	htmlFooter("Footer");
 
 }//void htmlContainer(void)
+
+
+void htmlContainerList(void)
+{
+	htmlHeader("unxsvzOrg","Header");
+	htmlContainerPage("unxsvzOrg","ContainerList.Body");
+	htmlFooter("Footer");
+
+}//void htmlContainerList(void)
 
 
 void htmlContainerPage(char *cTitle, char *cTemplateName)
@@ -1557,6 +1542,21 @@ void funcNewContainer(FILE *fp)
 		" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=Special+OPs')\""
 		" <strong><u>Special OPs</u></strong></a></td><td>\n");
 
+	printf("<fieldset><legend>Search</b></legend>");
+	//Search DID
+	fprintf(fp,"<input type=text class=type_fields"
+			" title='Search for a container by DID'"
+			" name=gcSearchAux value='%.31s' size=16 maxlength=31>",gcSearchAux);
+	fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Enter DID above, then use this function to search for a container'"
+			" name=gcFunction value='Search DID'>\n");
+	//Search customer name
+	fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Enter customer above, then use this function to search for a container'"
+			" name=gcFunction value='Search Customer'>\n");
+	printf("</fieldset>");
+
+
 	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=0"
 			" AND uContainer=0 AND uNode=0 AND cLabel='cOrg_NewGroupLabel'");
 	mysql_query(&gMysql,gcQuery);
@@ -1596,7 +1596,8 @@ void funcNewContainer(FILE *fp)
 		return;
 	}
 	res=mysql_store_result(&gMysql);
-	fprintf(fp,"<br><select class=type_textarea title='Select the container you want to use.'"
+	printf("<fieldset><legend>Repurpose</b></legend>");
+	fprintf(fp,"<select class=type_textarea title='Select the container you want to use.'"
 			" name=guNewContainer >\n");
 	fprintf(fp,"<option>---</option>");
 	while((field=mysql_fetch_row(res)))
@@ -1690,28 +1691,12 @@ void funcNewContainer(FILE *fp)
 			" title='Select a container, base time zone, then enter the first part of the new FQDN hostname."
 			" Other options (as configured) may apply.'"
 			" name=gcFunction value='Repurpose Container'>\n");
+	printf("</fieldset>");
 
 	if(guPermLevel>=6)
 		fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Generate a cvs report of all PBX containers direct to browser'"
 			" name=gcFunction value='Container Report'>\n");
-
-	printf("<fieldset><legend>Search</b></legend>");
-	//Search DID
-	fprintf(fp,"<input type=text class=type_fields"
-			" title='Search for a container by DID'"
-			" name=gcSearchAux value='%.31s' size=16 maxlength=31>",gcSearchAux);
-	fprintf(fp,"&nbsp; <input type=checkbox"
-			" title='Optionally provide list of containers when results are more than 1'"
-			" name=guSearchList> list mode");
-	fprintf(fp,"<br><input type=submit class=largeButton"
-			" title='Enter DID above, then use this function to search for a container'"
-			" name=gcFunction value='Search DID'>\n");
-	//Search customer name
-	fprintf(fp,"<br><input type=submit class=largeButton"
-			" title='Enter customer above, then use this function to search for a container'"
-			" name=gcFunction value='Search Customer'>\n");
-	printf("</fieldset>");
 
 
 	fprintf(fp,"</td></tr>\n");
@@ -1791,7 +1776,8 @@ void funcContainer(FILE *fp)
 		" <strong><u>Container OPs</u></strong></a></td><td>\n");
 
 	//DID
-	fprintf(fp,"<p><br><input type=text class=type_fields"
+	printf("<fieldset><legend>DID OPs</b></legend>");
+	fprintf(fp,"<input type=text class=type_fields"
 			" title='Enter a valid DID number'"
 			" name=gcDID size=16 maxlength=16> DID");
 	fprintf(fp,"<p><input type=submit class=largeButton"
@@ -1800,15 +1786,58 @@ void funcContainer(FILE *fp)
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Remove a DID from currently loaded PBX container'"
 			" name=gcFunction value='Remove DID'>\n");
-	fprintf(fp,"<p><br><input type=text class=type_fields"
+	printf("</fieldset>");
+
+	printf("<fieldset><legend>CustomerName OPs</b></legend>");
+	fprintf(fp,"<input type=text class=type_fields"
 			" title='Enter a valid customer name'"
 			" name=gcCustomerName value='%s' size=16 maxlength=32> Customer name",gcCustomerName);
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Modify currently loaded PBX container customer name'"
 			" name=gcFunction value='Mod CustomerName'>\n");
+	printf("</fieldset>");
 
 	fprintf(fp,"</td></tr>\n");
 
 	fprintf(fp,"<!-- funcContainer(fp) End -->\n");
 
 }//void funcContainer(FILE *fp)
+
+
+void funcContainerList(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uCount=0;
+
+	fprintf(fp,"<!-- funcContainerList(fp) Start -->\n");
+
+	if(!gcSearchAux[0] || !gcSearchName[0]) return;
+
+	sprintf(gcQuery,"SELECT uKey,tContainer.cHostname FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
+				" (uStatus=1 OR uStatus=3 OR uStatus=101) AND"
+				" cValue LIKE '%.31s%%' AND"
+				" cName='%.32s' AND uType=3 GROUP BY tContainer.cHostname LIMIT 33",gcSearchAux,gcSearchName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(++uCount>32)
+		{
+			printf("<tr><td>Search returned more than 32 records. Refine search pattern.</td></tr>\n");
+			break;
+		}
+		else
+		{
+			printf("<tr><td><a class=inputLink href=unxsvzOrg.cgi?gcPage=Container&guContainer=%s>%s</a></td></tr>\n",
+					field[0],field[1]);
+		}
+	}
+	mysql_free_result(res);
+
+	fprintf(fp,"<!-- funcContainerList(fp) End -->\n");
+
+}//void funcContainerList(FILE *fp)
+

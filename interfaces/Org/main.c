@@ -348,6 +348,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcNewContainer(fp);
 	else if(!strcmp(cFunction,"funcContainer"))
 		funcContainer(fp);
+	else if(!strcmp(cFunction,"funcContainerList"))
+		funcContainerList(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
