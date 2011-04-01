@@ -104,6 +104,7 @@ void funcContainerImageTag(FILE *fp);
 void funcContainerInfo(FILE *fp);
 void funcNewContainer(FILE *fp);
 void funcContainer(FILE *fp);
+void funcContainerList(FILE *fp);
 
 //user.c
 void ProcessUserVars(pentry entries[], int x);
