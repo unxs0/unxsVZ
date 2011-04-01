@@ -999,6 +999,7 @@ void ContainerCommands(pentry entries[], int x)
 			char gcQuery[256];
         		MYSQL_RES *res;
 	        	MYSQL_ROW field;
+			unsigned uNumRows=0;
 
 			sprintf(gcQuery,"SELECT uKey,tContainer.cHostname FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
 					" (uStatus=1 OR uStatus=3 OR uStatus=101) AND"
@@ -1011,12 +1012,12 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 			res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res)<1)
+			if((uNumRows=mysql_num_rows(res))<1)
 			{
 				gcMessage="No container with specied DID pattern found.";
 				htmlContainer();
 			}
-			if(guSearchList)
+			if(guSearchList && uNumRows>1)
 			{
 				printf("Content-type: text\n\nList for DID pattern: %s\n\n",gcSearchAux);
 				while((field=mysql_fetch_row(res)))
@@ -1034,9 +1035,10 @@ void ContainerCommands(pentry entries[], int x)
 					sscanf(field[0],"%u",&guContainer);
 				}
 			}
-			if(mysql_num_rows(res)>1)
+			if(uNumRows>1)
 			{
-				gcMessage="More than one container with specied DID pattern found. Only first one is shown. Use list option.";
+				gcMessage="More than one container with specied DID pattern found."
+					" Only first one is shown. Use list option.";
 				htmlContainer();
 			}
 			mysql_free_result(res);
@@ -1047,6 +1049,7 @@ void ContainerCommands(pentry entries[], int x)
 			char gcQuery[256];
         		MYSQL_RES *res;
 	        	MYSQL_ROW field;
+			unsigned uNumRows=0;
 
 			sprintf(gcQuery,"SELECT uKey,tContainer.cHostname FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
 					" (uStatus=1 OR uStatus=3 OR uStatus=101) AND"
@@ -1059,12 +1062,12 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 			res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res)<1)
+			if((uNumRows=mysql_num_rows(res))<1)
 			{
 				gcMessage="No container with specied customer pattern found.";
 				htmlContainer();
 			}
-			if(guSearchList)
+			if(guSearchList && uNumRows>1)
 			{
 				printf("Content-type: text\n\nList for customer name pattern: %s\n\n",gcSearchAux);
 				while((field=mysql_fetch_row(res)))
@@ -1082,9 +1085,10 @@ void ContainerCommands(pentry entries[], int x)
 					sscanf(field[0],"%u",&guContainer);
 				}
 			}
-			if(mysql_num_rows(res)>1)
+			if(uNumRows>1)
 			{
-				gcMessage="More than one container with specied customer pattern found. Only first one is shown. Use list option.";
+				gcMessage="More than one container with specied customer pattern found."
+				" Only first one is shown. Use list option.";
 				htmlContainer();
 			}
 			mysql_free_result(res);
