@@ -41,7 +41,7 @@ cIgnoreSpool="yes";
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
 #Low priority script do not run when server is loaded.
-nLoad=`uptime | cut -f 5 -d : | cut -f 1 -d .`;
+nLoad=`uptime | awk '{print $10}'| cut -f 1 -d .`;
 if (( $nLoad > 5 ));then
 	fLog "waiting for $nLoad to go below 5";
 	exit 0;
@@ -60,8 +60,6 @@ fi
 fLog "start $1 to local $2";
 
 cLockfile="/tmp/pbxsync.sh.lock.$1.$2";
-
-#do not run if another (same source and target VEIDs) clone job is also running
 if [ -d $cLockfile ]; then
 	fLog "waiting for lock release $cLockfile";
 	exit 0;
@@ -112,8 +110,10 @@ if [ "$cDryrun" == "" ];then
 	fi
 fi
 
+#recover wav files later if needed from downed server or backup drive
 if [ "$cIgnoreSpool" != "yes" ];then
-	/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
+	fLog "rsync /var/spool/asterisk/";
+	/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --exclude '*.wav' --exclude '*.gz'\
 			$1:/var/spool/asterisk/ /vz/private/$2/var/spool/asterisk/
 	#we can ignore return value 24:
 	#rsync warning: some files vanished before they could be transferred (code 24) at main.c(892) [sender=2.6.8]
@@ -123,32 +123,36 @@ if [ "$cIgnoreSpool" != "yes" ];then
 
 fi
 
-/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
+fLog "rsync /etc/asterisk/";
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --exclude '*.gz'\
 			$1:/etc/asterisk/ /vz/private/$2/etc/asterisk/
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 4 failed";
 fi
 
-/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
+fLog "rsync /var/lib/asterisk/";
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --bwlimit=100 --delete --exclude '*.gz'\
 			$1:/var/lib/asterisk/ /vz/private/$2/var/lib/asterisk/
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 5 failed";
 fi
 
-/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
+fLog "rsync /var/www/html/panel/";
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --exclude '*.gz'\
 			$1:/var/www/html/panel/ /vz/private/$2/var/www/html/panel/
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 6 failed";
 fi
 
-#hylafax
-/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
+fLog "rsync /var/spool/hylafax/";
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --exclude '*.gz'\
 			$1:/var/spool/hylafax/ /vz/private/$2/var/spool/hylafax/
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 7 failed";
 fi
 
-/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --max-size=2m\
+fLog "rsync /var/www/html/fax/faxes/";
+/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete --exclude '*.gz'\
 			$1:/var/www/html/fax/faxes/ /vz/private/$2/var/www/html/fax/faxes/
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync 8 failed";
@@ -160,22 +164,40 @@ if [ "$cStatus" == "running" ];then
 	if [ $? != 0 ];then
 		fLog "local mysqld stop failed. mysql data not rsync'd";
 	else
-		/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+		#fRsyncDB;
+	fLog "rsync /var/lib/mysql/asterisk/";
+	/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
 			$1:/var/lib/mysql/asterisk/ /vz/private/$2/var/lib/mysql/asterisk/
-		if [ $? != 0 ] && [ $? != 24 ];then
-			fLog "rsync 2 failed";
-		fi
+	if [ $? != 0 ] && [ $? != 24 ];then
+		fLog "rsync 2 failed";
+	fi
 
-		/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
-			$1:/var/lib/mysql/asteriskcdrdb/ /vz/private/$2/var/lib/mysql/asteriskcdrdb/
-		if [ $? != 0 ] && [ $? != 24 ];then
-			fLog "rsync 3 failed";
-		fi
+	fLog "rsync /var/lib/mysql/asteriskcdrdb/";
+	/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+		$1:/var/lib/mysql/asteriskcdrdb/ /vz/private/$2/var/lib/mysql/asteriskcdrdb/
+	if [ $? != 0 ] && [ $? != 24 ];then
+		fLog "rsync 3 failed";
+	fi
 
 		/usr/sbin/vzctl exec2 $2 "service mysqld start" > /dev/null 2>&1;
 		if [ $? != 0 ];then
 			fLog "local mysqld start failed";
 		fi
+	fi
+else
+	#fRsyncDB;
+	fLog "rsync /var/lib/mysql/asterisk/";
+	/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+			$1:/var/lib/mysql/asterisk/ /vz/private/$2/var/lib/mysql/asterisk/
+	if [ $? != 0 ] && [ $? != 24 ];then
+		fLog "rsync 2 failed";
+	fi
+
+	fLog "rsync /var/lib/mysql/asteriskcdrdb/";
+	/usr/bin/rsync $cDryrun -e '/usr/bin/ssh -ax -c arcfour -p '\'$cSSHPort\''' -avxlH  --delete \
+		$1:/var/lib/mysql/asteriskcdrdb/ /vz/private/$2/var/lib/mysql/asteriskcdrdb/
+	if [ $? != 0 ] && [ $? != 24 ];then
+		fLog "rsync 3 failed";
 	fi
 fi
 
