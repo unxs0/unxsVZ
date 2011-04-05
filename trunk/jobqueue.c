@@ -1591,6 +1591,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	struct stat statInfo;
 	unsigned uOwner=1;
 	unsigned uCreatedBy=1;
+	unsigned uPrevStatus=0;
 
 	//Parse data and basic sanity checks
 	sscanf(cJobData,"tConfig.Label=%31s;",cConfigLabel);
@@ -1602,6 +1603,13 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		tJobErrorUpdate(uJob,"cConfigLabel[0]==0");
 		goto CommonExit;
 	}
+	sscanf(cJobData,"tConfig.Label=%*31s;\nuPrevStatus=%u;",&uPrevStatus);
+	if(!uPrevStatus)
+	{
+		logfileLine("TemplateContainer","Could not determine uPrevStatus assuming active");
+		uPrevStatus=1;
+	}
+
 
 	sprintf(gcQuery,"SELECT tOSTemplate.cLabel FROM tContainer,tOSTemplate"
 			" WHERE tContainer.uOSTemplate=tOSTemplate.uOSTemplate AND"
@@ -1835,7 +1843,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	mysql_free_result(res);
 
 	//Everything ok
-	SetContainerStatus(uContainer,1);//Active
+	SetContainerStatus(uContainer,uPrevStatus);
 	tJobDoneUpdate(uJob);
 
 //This goto MAYBE ok
