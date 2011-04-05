@@ -2459,7 +2459,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Template Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
+			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -2479,7 +2479,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm Template"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
+			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
         			MYSQL_ROW field;
 				char cOSTLabel[101]={""};
@@ -3188,7 +3188,7 @@ void ExttContainerButtons(void)
 					if(uSource)
 						printf("<p><input title='Creates jobs for manual failover (switchover.)'"
 						" type=submit class=lwarnButton"
-						" name=gcCommand value='Failover %.25s'>\n",cLabel);
+						" name=gcCommand value='Failover %.25s'><br>\n",cLabel);
 				}
 
 				if( uStatus==uSTOPPED || uStatus==uACTIVE )

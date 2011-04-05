@@ -68,22 +68,17 @@
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
 	<tr>
 		<td valign="top">
-			<strong><u>Select</u></strong>
+			<strong><u>Container</u></strong>
 		</td>
 		<td>
-			<br>
+			<fieldset><legend>Select</legend>
 			{{funcSelectContainer}}
-		</td>
-	</tr>
-	<tr>
-		<td valign="top">
-			<strong><u>Filter</u></strong>
-		</td>
-		<td>
-			<br>
+			<p>
 			<input type=text class=type_fields 
 			title='Enter first letter(s), or you can use SQL "%" and "_" pattern matching chars'
 			name=gcSearch value='{{gcSearch}}' size=16 maxlength=32 onChange='submit()'>
+			&nbsp;Filter
+			</fieldset>
 		</td>
 	</tr>
 
