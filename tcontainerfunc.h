@@ -114,7 +114,7 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus);
 void htmlHealth(unsigned uContainer,unsigned uType);
 void htmlGroups(unsigned uNode, unsigned uContainer);
-unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus);
 unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
@@ -2522,7 +2522,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							" Select another tConfig.cLabel!");
 				mysql_free_result(res);
                         	guMode=0;
-				if(TemplateContainerJob(uDatacenter,uNode,uContainer))
+				if(TemplateContainerJob(uDatacenter,uNode,uContainer,uStatus))
 				{
 					uStatus=uAWAITTML;
 					SetContainerStatus(uContainer,51);
@@ -4087,7 +4087,7 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 }//void htmlHealth(...)
 
 
-unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus)
 {
 	unsigned uCount=0;
 
@@ -4095,11 +4095,13 @@ unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCo
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"
-			",cJobData='tConfig.Label=%.31s;'"
+			",cJobData='tConfig.Label=%.31s;\n"
+			"uPrevStatus=%u;\n'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
 				cConfigLabel,
+				uStatus,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -4108,7 +4110,7 @@ unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCo
 	unxsVZLog(uContainer,"tContainer","Template");
 	return(uCount);
 
-}//unsigned TemplateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+}//unsigned TemplateContainerJob()
 
 
 unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
