@@ -3157,10 +3157,6 @@ void ExttContainerButtons(void)
 					printf("<p><input title='Migrate container to another hardware node'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Migration Wizard'><br>\n");
-					printf("<input title='Template a container."
-					" Creates and installs OS and VZ conf templates on all nodes.'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Template Wizard'><br>\n");
 					if(!strstr(cLabel,"-clone"))
 					printf("<input title='Clone a container to this or another hardware node."
 					" The clone will be an online container with another IP and hostname."
@@ -3176,7 +3172,7 @@ void ExttContainerButtons(void)
 					if(uSource)
 						printf("<p><input title='Creates jobs for manual failover (switchover.)'"
 						" type=submit class=lwarnButton"
-						" name=gcCommand value='Failover %.25s'>\n",cLabel);
+						" name=gcCommand value='Failover %.25s'><br>\n",cLabel);
 				}
 				else if( uStatus==uSTOPPED)
 				{
@@ -3200,6 +3196,10 @@ void ExttContainerButtons(void)
 					printf("<input title='Change current container name and hostname'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Hostname Change Wizard'><br>\n");
+					printf("<input title='Template a container."
+					" Creates and installs OS and VZ conf templates on all nodes.'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Template Wizard'><br>\n");
 				}
 
 				char cVEIDMount[256]={""};
