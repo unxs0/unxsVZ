@@ -532,32 +532,6 @@ void tJobNavList(void)
 	}
         mysql_free_result(res);
 
-	sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tJobStatus.cLabel FROM tJob,tJobStatus"
-					" WHERE tJob.uJobStatus=tJobStatus.uJobStatus AND"
-					" tJob.cJobName='RecurringJob' AND"
-					" (tJob.uJobStatus=1 OR tJob.uJobStatus=14 OR tJob.uJobStatus=2 OR"
-					" tJob.uJobStatus=10 OR tJob.uJobStatus=4)"
-													);
-
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-        {
-        	printf("<p><u>tJobNavList</u><br>\n");
-                printf("%s",mysql_error(&gMysql));
-                return;
-        }
-
-        res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
-	{	
-        	printf("<p><u>tJobNavList (Recurring)</u><br>\n");
-
-	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tJob&uJob=%s>%s/%s</a><br>\n",
-				field[0],field[1],field[2]);
-	}
-        mysql_free_result(res);
-
 }//void tJobNavList(void)
 
 
