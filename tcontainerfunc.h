@@ -114,7 +114,8 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus);
 void htmlHealth(unsigned uContainer,unsigned uType);
 void htmlGroups(unsigned uNode, unsigned uContainer);
-unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus);
+unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus,
+		unsigned uOwner,char *cConfigLabel);
 unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
@@ -562,6 +563,53 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 									SetContainerStatus(uCtContainer,uAWAITACT);
 									uGroupJobs++;
 								}
+							}
+						}
+					}
+					else if(!strcmp(gcCommand,"Group Template"))
+					{
+						struct structContainer sContainer;
+
+						InitContainerProps(&sContainer);
+						GetContainerProps(uCtContainer,&sContainer);
+
+						if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
+							&& (sContainer.uOwner==guCompany || guCompany==1))
+						{
+							MYSQL_RES *res;
+							char cOSTLabel[101]={""};
+							char cConfigLabel[33]={""};
+
+							//Here we set the template to use the source container short name label
+							sprintf(cConfigLabel,"%.31s",ForeignKey("tContainer","cLabel",uCtContainer));
+							sprintf(cOSTLabel,"%.100s",ForeignKey("tOSTemplate","cLabel",sContainer.uOSTemplate));
+							if(!cOSTLabel[0])
+								tContainer("<blink>Error:</blink> No tOSTemplate.cLabel!");
+							if(!cConfigLabel[0])
+								tContainer("<blink>Error:</blink> No tContainer.cLabel!");
+							sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",cConfigLabel);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+			        			res=mysql_store_result(&gMysql);
+							if(mysql_num_rows(res)>0)
+								tContainer("<blink>Error:</blink> tConfig.cLabel collision!");
+							mysql_free_result(res);
+							sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%.67s-%.32s'",
+									cOSTLabel,cConfigLabel);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+			        			res=mysql_store_result(&gMysql);
+							if(mysql_num_rows(res)>0)
+								tContainer("<blink>Error:</blink> tOSTemplate.cLabel collision!");
+
+							if(TemplateContainerJob(sContainer.uDatacenter,
+								sContainer.uNode,uCtContainer,sContainer.uStatus,
+								sContainer.uOwner,cConfigLabel))
+							{
+								SetContainerStatus(uCtContainer,uAWAITTML);
+								uGroupJobs++;
 							}
 						}
 					}
@@ -2522,10 +2570,10 @@ void ExttContainerCommands(pentry entries[], int x)
 							" Select another tConfig.cLabel!");
 				mysql_free_result(res);
                         	guMode=0;
-				if(TemplateContainerJob(uDatacenter,uNode,uContainer,uStatus))
+				if(TemplateContainerJob(uDatacenter,uNode,uContainer,uStatus,uOwner,cConfigLabel))
 				{
 					uStatus=uAWAITTML;
-					SetContainerStatus(uContainer,51);
+					SetContainerStatus(uContainer,uStatus);
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("TemplateContainerJob() Done");
 				}
@@ -3694,6 +3742,11 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 			printf("<br><input title='Creates job(s) for starting stopped or initial setup container(s).'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Start'>\n");
+			printf("<br><input title='Creates job(s) for templating stopped or active container(s)."
+				" Uses the container label for new tOSTemplate and tConfig entries."
+				" If active, containers may be stopped for several minutes if not setup for vzdump snapshot.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Template'>\n");
 			printf("<br><input title='Creates job(s) for deleting initial setup container(s).'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Delete'>\n");
@@ -4087,7 +4140,7 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 }//void htmlHealth(...)
 
 
-unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus)
+unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus,unsigned uOwner,char *cConfigLabel)
 {
 	unsigned uCount=0;
 
