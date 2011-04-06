@@ -1603,7 +1603,8 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		tJobErrorUpdate(uJob,"cConfigLabel[0]==0");
 		goto CommonExit;
 	}
-	sscanf(cJobData,"tConfig.Label=%*31s;\nuPrevStatus=%u;",&uPrevStatus);
+	if((cp=strstr(cJobData,"uPrevStatus=")))
+		sscanf(cp+12,"%u",&uPrevStatus);
 	if(!uPrevStatus)
 	{
 		logfileLine("TemplateContainer","Could not determine uPrevStatus assuming active");
@@ -1677,12 +1678,18 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 	//New vzdump uses new file format, E.G.: /var/vzdump/vzdump-openvz-10511-2011_02_03-07_37_01.tgz
 	//Quick fix (hackorama) just mv it to old format
+	//Added support for old vzdump
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"mv `ls -1 /vz/dump/vzdump*-%u-*.tgz | head -n 1` /vz/dump/vzdump-%u.tgz",
-				uContainer,uContainer);
+		sprintf(gcQuery,"if [ ! -f /var/vzdump/vzdump-%u.tgz ];then"
+				" mv `ls -1 /vz/dump/vzdump*-%u-*.tgz | head -n 1` /vz/dump/vzdump-%u.tgz; fi;",
+					uContainer,uContainer,uContainer);
 	else
-		sprintf(gcQuery,"mv `ls -1 %s/vzdump*-%u-*.tgz | head -n 1` %s/vzdump-%u.tgz",
-				cSnapshotDir,uContainer,cSnapshotDir,uContainer);
+		sprintf(gcQuery,"if [ -f /var/vzdump/vzdump-%u.tgz ] && [ \"%s\" != \"/var/vzdump\" ];then"
+				" mv /var/vzdump/vzdump-%u.tgz %s/vzdump-%u.tgz;else"
+				" if [ -f %s/vzdump*-%u-*.tgz ];then mv `ls -1 %s/vzdump*-%u-*.tgz | head -n 1` %s/vzdump-%u.tgz;fi;fi;",
+				uContainer,cSnapshotDir,
+				uContainer,cSnapshotDir,uContainer,
+				cSnapshotDir,uContainer,cSnapshotDir,uContainer,cSnapshotDir,uContainer);
 	if(system(gcQuery))
 	{
 		logfileLine("TemplateContainer",gcQuery);
