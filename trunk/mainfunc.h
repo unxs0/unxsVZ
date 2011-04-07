@@ -51,6 +51,7 @@ void Restore(char *cPasswd, char *cTableName);
 void RestoreAll(char *cPasswd);
 void mySQLRootConnect(char *cPasswd);
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType);
+void ImportOSTemplates(char *cPath);
 void ImportRemoteDatacenter(
 			const char *cLocalDatacenter,
 			const char *cRemoteDatacenter,
@@ -651,6 +652,8 @@ void ExtMainShell(int argc, char *argv[])
                	ExtracttLog(argv[2],argv[3],argv[4],argv[5]);
 	else if(argc==10 && !strcmp(argv[1],"ImportRemoteDatacenter"))
                 ImportRemoteDatacenter(argv[2],argv[3],argv[4],argv[5],argv[6],argv[7],argv[8],argv[9]);
+	else if(argc==3 && !strcmp(argv[1],"ImportOSTemplates"))
+                ImportOSTemplates(argv[2]);
         else
 	{
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
@@ -668,6 +671,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 		printf("\tImportRemoteDatacenter <local datacenter> <remote datacenter> <local node> <remote node>\n"
 			"\t\t<host> <user> <passwd> <local uOwner>\n");
+		printf("\tImportOSTemplates <path to templates e.g. /vz/template/cache/>\n");
 		printf("\n");
 	}
 	mysql_close(&gMysql);
@@ -1388,7 +1392,6 @@ void UpdateSchema(void)
 	printf("UpdateSchema(): End\n");
 
 }//void UpdateSchema(void)
-
 
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType)
 {
@@ -2652,3 +2655,68 @@ void ImportRemoteDatacenter(
 	printf("ImportRemoteDatacenter(): End\n");
 
 }//void ImportRemoteDatacenter()
+
+
+void ImportOSTemplates(char *cPath)
+{
+	char cHostname[100]={""};
+	unsigned uNode=0;
+	unsigned uDatacenter=0;
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	printf("ImportOSTemplates(): Start\n");
+
+	if(TextConnectDb())
+		exit(1);
+
+	if(gethostname(cHostname,99)!=0)
+	{
+		printf("gethostname() failed\n");
+		exit(1);
+	}
+
+	//Get node and datacenter via hostname
+	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf(mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
+	}
+	mysql_free_result(res);
+	//FQDN vs short name of 2nd NIC mess
+	if(!uNode)
+	{
+		char *cp;
+
+		if((cp=strchr(cHostname,'.')))
+			*cp=0;
+		sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf(mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uNode);
+			sscanf(field[1],"%u",&uDatacenter);
+		}
+		mysql_free_result(res);
+	}
+	printf("uNode=%u uDatacenter=%u\n",uNode,uDatacenter);
+
+	printf("ImportOSTemplates(): End\n");
+
+}//void ImportOSTemplates(char *cPath)
