@@ -32,6 +32,7 @@ AUTHOR/LEGAL
 					mysqlRes2=mysql_store_result(&gMysql);
 
 #include "local.h"
+#include <dirent.h>
 char *strptime(const char *s, const char *format, struct tm *tm);
 
 static char cTableList[64][32]={ "tAuthorize", "tClient", "tConfig", "tConfiguration", "tContainer",
@@ -51,7 +52,7 @@ void Restore(char *cPasswd, char *cTableName);
 void RestoreAll(char *cPasswd);
 void mySQLRootConnect(char *cPasswd);
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType);
-void ImportOSTemplates(char *cPath);
+void ImportOSTemplates(char *cPath,char *cOwner);
 void ImportRemoteDatacenter(
 			const char *cLocalDatacenter,
 			const char *cRemoteDatacenter,
@@ -652,8 +653,8 @@ void ExtMainShell(int argc, char *argv[])
                	ExtracttLog(argv[2],argv[3],argv[4],argv[5]);
 	else if(argc==10 && !strcmp(argv[1],"ImportRemoteDatacenter"))
                 ImportRemoteDatacenter(argv[2],argv[3],argv[4],argv[5],argv[6],argv[7],argv[8],argv[9]);
-	else if(argc==3 && !strcmp(argv[1],"ImportOSTemplates"))
-                ImportOSTemplates(argv[2]);
+	else if(argc==4 && !strcmp(argv[1],"ImportOSTemplates"))
+                ImportOSTemplates(argv[2],argv[3]);
         else
 	{
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
@@ -671,7 +672,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 		printf("\tImportRemoteDatacenter <local datacenter> <remote datacenter> <local node> <remote node>\n"
 			"\t\t<host> <user> <passwd> <local uOwner>\n");
-		printf("\tImportOSTemplates <path to templates e.g. /vz/template/cache/>\n");
+		printf("\tImportOSTemplates <path to templates e.g. /vz/template/cache/> <tClient.cLabel owner string>\n");
 		printf("\n");
 	}
 	mysql_close(&gMysql);
@@ -2657,11 +2658,16 @@ void ImportRemoteDatacenter(
 }//void ImportRemoteDatacenter()
 
 
-void ImportOSTemplates(char *cPath)
+void ImportOSTemplates(char *cPath, char *cOwner)
 {
 	char cHostname[100]={""};
+	char cLabel[100]={""};
+	unsigned uOwner=0;
 	unsigned uNode=0;
 	unsigned uDatacenter=0;
+	struct dirent **namelist;
+	register int n,i;
+	char *cp;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
@@ -2695,8 +2701,6 @@ void ImportOSTemplates(char *cPath)
 	//FQDN vs short name of 2nd NIC mess
 	if(!uNode)
 	{
-		char *cp;
-
 		if((cp=strchr(cHostname,'.')))
 			*cp=0;
 		sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
@@ -2715,8 +2719,104 @@ void ImportOSTemplates(char *cPath)
 		}
 		mysql_free_result(res);
 	}
-	printf("uNode=%u uDatacenter=%u\n",uNode,uDatacenter);
+
+	//Get uOwner
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cOwner);
+        mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf(mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uOwner);
+	mysql_free_result(res);
+	if(!uOwner)
+	{
+		printf("No such owner: \"%s\"\n",cOwner);
+		exit(1);
+	}
+	printf("uNode=%u uDatacenter=%u uOwner=%u\n",uNode,uDatacenter,uOwner);
+
+	n=scandir(cPath,&namelist,0,0);
+	if(n<0)
+	{
+		printf("scandir() error.\n");
+		exit(1);
+	}
+	else if(n==2)
+	{
+		printf("No files found.\n");
+		exit(1);
+	}
+	for(i=0;i<n;i++)
+	{
+
+		//Added some end of list test hack a long time ago. Remove?
+		if(namelist[i]->d_name[0]=='.' || 
+			strstr(namelist[i]->d_name+strlen(namelist[i]->d_name)-5,
+				".done"))
+		{
+			;
+		}
+		else
+		{
+			if(!strcmp(namelist[i]->d_name+strlen(namelist[i]->d_name)-6,"tar.gz"))
+			{
+				unsigned uOSTemplate=0;
+
+				sprintf(cLabel,"%.100s",namelist[i]->d_name);
+
+				//Chop off .tar.gz
+				if((cp=strstr(cLabel,".tar.gz")))
+					*cp=0;
+
+				//Ignore if already in tOSTemplate
+				sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s'",cLabel);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf(mysql_error(&gMysql));
+					mysql_close(&gMysql);
+					exit(2);
+				}
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					mysql_free_result(res);
+					continue;
+				}
+				mysql_free_result(res);
+
+				//Add new record
+				sprintf(gcQuery,"INSERT INTO tOSTemplate SET cLabel='%s',uOwner=%u,uCreatedBy=1,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW())",TextAreaSave(cLabel),uOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf(mysql_error(&gMysql));
+					mysql_close(&gMysql);
+					exit(2);
+				}
+				uOSTemplate=mysql_insert_id(&gMysql);
+				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType="PROP_OSTEMPLATE
+						",cName='cDatacenter',cValue='%s',uOwner=%u,uCreatedBy=1"
+						",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							,uOSTemplate,ForeignKey("tDatacenter","cLabel",uDatacenter),uOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf(mysql_error(&gMysql));
+					mysql_close(&gMysql);
+					exit(2);
+				}
+				printf("%s\n",cLabel);
+			}
+		}
+	}
 
 	printf("ImportOSTemplates(): End\n");
 
-}//void ImportOSTemplates(char *cPath)
+}//void ImportOSTemplates()
