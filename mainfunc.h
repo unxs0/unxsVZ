@@ -2930,6 +2930,21 @@ void MassCreateContainers(char *cConfigfileName)
 		if(strstr(gcQuery,"ContainerList"))
 		{
 			uList=1;
+			printf("Global settings\n");
+			printf("\tcIPv4ClassC=%s\n",cIPv4ClassC);
+			printf("\tcIPv4CloneClassC=%s\n",cIPv4CloneClassC);
+			printf("\tcPasswd=%s\n",cPasswd);
+			printf("\tcTimeZone=%s\n",cTimeZone);
+			printf("\tuOwner=%u\n",uOwner);
+			printf("\tuConfig=%u\n",uConfig);
+			printf("\tuNameserver=%u\n",uNameserver);
+			printf("\tuSearchdomain=%u\n",uSearchdomain);
+			printf("\tuGroup=%u\n",uGroup);
+			printf("\tuOSTemplate=%u\n",uOSTemplate);
+			printf("\tuSyncPeriod=%u\n",uSyncPeriod);
+			printf("\tuDNSJob=%u\n",uDNSJob);
+			printf("\tuCloneTargetNode=%u\n",uCloneTargetNode);
+			printf("\tuCloneStopped=%u\n",uCloneStopped);
 			continue;
 		}
 
@@ -2985,8 +3000,6 @@ void MassCreateContainers(char *cConfigfileName)
 			cHostname[0]=0;
 			cLabel[0]=0;
 			cAltLabel[0]=0;
-			//here we start creating the new container jobs
-			//after input validation
 			if((cp=strchr(gcQuery,'.')))
 			{
 				*cp=0;
@@ -3007,25 +3020,405 @@ void MassCreateContainers(char *cConfigfileName)
 					printf(" cAltLabel=%s\n",cAltLabel);
 				else
 					printf("\n");
-			}
+
+				//
+				//here we start creating the new container jobs
+				//after input validation
+				//
+				if(uDatacenter==0)
+				{
+					printf("Unexpected uDatacenter==0!");
+					continue;
+				}
+				if(uNode==0)
+				{
+					printf("Unexpected uNode==0!");
+					continue;
+				}
+
+				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
+				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
+				{
+					printf("Selected datacenter is full or not active. Select another.");
+					continue;
+				}
+
+				GetNodeProp(uNode,"NewContainerMode",cNCMNode);
+				if(cNCMNode[0] && strcmp(cNCMNode,"Active"))
+				{
+					printf("Selected node is not configured for active containers."
+							"Select another.");
+					continue;
+				}
+
+				if((uLabelLen=strlen(cLabel))<2)
+				{
+					printf("cLabel is too short");
+					continue;
+				}
+				if(strchr(cLabel,'.'))
+				{
+					printf("cLabel has at least one '.'");
+					continue;
+				}
+				if(strstr(cLabel,"-clone"))
+				{
+					printf("cLabel can't have '-clone'");
+					continue;
+				}
+				if(uCreateAppliance)
+				{
+					if(!strstr(cLabel+(uLabelLen-strlen("-app")-1),"-app"))
+					{
+						printf("Appliance cLabel must end with '-app'.");
+						continue;
+					}
+					if(strlen(gcIPv4)<7 || strlen(gcIPv4)>15)
+					{
+						printf("Appliance requires valid gcIPv4.");
+						continue;
+					}
+
+					unsigned a=0,b=0,c=0,d=0;
+					sscanf(gcIPv4,"%u.%u.%u.%u",&a,&b,&c,&d);
+					if(a==0 || d==0)
+					{
+						printf("Appliance requires valid gcIPv4.");
+						continue;
+					}
+				}
+				else
+				{
+					if(strstr(cLabel,"-app"))
+					{
+						printf("Normal container cLabel can't have '-app'");
+						continue;
+					}
+				}
+
+				if((uHostnameLen=strlen(cHostname))<5)
+				{
+					printf("cHostname is too short");
+					continue;
+				}
+				if(cHostname[uHostnameLen-1]=='.')
+				{
+					printf("cHostname can't end with a '.'");
+					continue;
+				}
+				if(strstr(cHostname+(uHostnameLen-strlen(".cloneNN")-1),".clone"))
+				{
+					printf("cHostname can't end with '.cloneN'");
+					continue;
+				}
+				//New rule: cLabel must be first part (first stop) of cHostname.
+				if(strncmp(cLabel,cHostname,uLabelLen))
+				{
+					printf("cLabel must be first part of cHostname.");
+					continue;
+				}
+				if(uIPv4==0)
+				{
+					printf("You must select a uIPv4");
+					continue;
+				}
+
+				//Let's not allow same cLabel containers in our system for now.
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cLabel);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+					mysql_free_result(res);
+					printf("cLabel already in use");
+					continue;
+				}
+				mysql_free_result(res);
+
+				GetDatacenterProp(uDatacenter,"NewContainerCloneRange",cNCCloneRange);
+				if(cNCCloneRange[0] && uIpv4InCIDR4(ForeignKey("tIP","cLabel",uIPv4),cNCCloneRange))
+				{
+					printf("uIPv4 must not be in datacenter clone IP range");
+					continue;
+				}
+
+				if(uOSTemplate==0)
+				{
+					printf("You must select a uOSTemplate");
+					continue;
+				}
+				if(uConfig==0)
+				{
+					printf("You must select a uConfig");
+					continue;
+				}
+				if(uNameserver==0)
+				{
+					printf("You must select a uNameserver");
+					continue;
+				}
+				if(uSearchdomain==0)
+				{
+					printf("You must select a uSearchdomain");
+					continue;
+				}
+
+				if(uGroup==0 && cService3[0]==0)
+				{
+					printf("Group is now required");
+					continue;
+				}
+				if(uGroup!=0 && cService3[0]!=0)
+				{
+					printf("Or select a group or create a new one, not both");
+					continue;
+				}
+
+
+				//DNS sanity check
+				if(uDNSJob)
+				{
+					cunxsBindARecordJobZone[0]=0;
+					GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+					if(!cunxsBindARecordJobZone[0])
+					{
+						printf("<blink>Error:</blink> Create job for unxsBind,"
+								" but no cunxsBindARecordJobZone");
+						continue;
+					}
+					
+					if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
+					{
+						printf("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+						continue;
+					}
+				}
+					
+				if(cService1[0] && strlen(cService1)<6)
+				{
+					printf("Optional password must be at least 6 chars");
+					continue;
+				}
+				//Direct datacenter checks
+				sscanf(ForeignKey("tIP","uDatacenter",uIPv4),"%u",&uIPv4Datacenter);
+				if(uDatacenter!=uIPv4Datacenter)
+				{
+					printf("The specified uIPv4 does not "
+							"belong to the specified uDatacenter.");
+					continue;
+				}
+				sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
+				if(uDatacenter!=uNodeDatacenter)
+				{
+					printf("The specified uNode does not "
+							"belong to the specified uDatacenter.");
+					continue;
+				}
+
+				//If auto clone setup check required values
+				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+				if(cAutoCloneNode[0])
+				{
+
+					if(uTargetNode==0)
+					{
+						printf("Please select a valid target node"
+								" for the clone");
+						continue;
+					}
+					if(uTargetNode==uNode)
+					{
+						printf("Can't clone to same node");
+						continue;
+					}
+
+					GetNodeProp(uTargetNode,"NewContainerMode",cNCMNode);
+					if(cNCMNode[0] && strcmp(cNCMNode,"Clone"))
+					{
+						printf("Selected clone target node is not configured for clone containers."
+							"Select another.");
+						continue;
+					}
+
+					sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uNodeDatacenter);
+					if(uDatacenter!=uNodeDatacenter)
+					{
+						printf("The specified clone uNode does not "
+							"belong to the specified uDatacenter.");
+						continue;
+					}
+
+					GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
+					if(!cTargetNodeIPv4[0])
+					{
+						printf("Your target node is"
+							" missing it's cIPv4 property");
+						continue;
+					}
+					if(!uWizIPv4)
+					{
+						printf("You must select an IP for the clone");
+						continue;
+					}
+					if(uWizIPv4==uIPv4)
+					{
+						printf("You must select a different IP for the"
+										" clone");
+						continue;
+					}
+					sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
+					if(uDatacenter!=uIPv4Datacenter)
+					{
+						printf("The specified uIPv4 does not "
+							"belong to the specified uDatacenter.");
+						continue;
+					}
+					if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
+					{
+						printf("Clone start uIPv4 must be in datacenter clone IP range");
+						continue;
+					}
+					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
+					{
+						printf("Clone uSyncPeriod out of range:"
+								" Max 30 days, min 5 minutes or 0 off.");
+						continue;
+					}
+				}//if(cAutoCloneNode[0])
+
+				//TODO review this policy.
+				//No same names or hostnames for same datacenter allowed.
+				//TODO periods "." should be expanded to "[.]"
+				//for correct cHostname REGEXP.
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE ("
+							" cHostname REGEXP '^%s[0-9]+%s$'"
+							" OR cLabel REGEXP '%s[0-9]+$'"
+							" ) AND uDatacenter=%u LIMIT 1",
+								cLabel,cHostname,cLabel,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+					mysql_free_result(res);
+					printf("<blink>Error:</blink> Single container, similar cHostname"
+					" cLabel pattern already used at this datacenter!");
+					continue;
+				}
+				mysql_free_result(res);
+
+				//Check to see if enough IPs are available early to avoid
+				//complex cleanup/rollback below
+				//First get class c mask will be used here and again in main loop below
+
+				//Get container IP cIPv4ClassC
+				sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
+						" AND uOwner=%u AND uDatacenter=%u",uIPv4,uForClient,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					sprintf(cIPv4ClassC,"%.31s",field[0]);
+				}
+				else
+				{
+					printf("<blink>Error:</blink> Someone grabbed your IP"
+						", single container creation aborted -if Root select"
+						" a company with IPs!");
+					continue;
+				}
+				mysql_free_result(res);
+				for(i=strlen(cIPv4ClassC);i>0;i--)
+				{
+					if(cIPv4ClassC[i]=='.')
+					{
+						cIPv4ClassC[i]=0;
+						break;
+					}
+				}
+				//Check IPs for clones first if so configured
+				if(cAutoCloneNode[0])
+				{
+					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
+						" AND uOwner=%u AND uDatacenter=%u",uWizIPv4,uForClient,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+					{
+						sprintf(cIPv4ClassCClone,"%.31s",field[0]);
+					}
+					else
+					{
+						printf("<blink>Error:</blink> Someone grabbed your clone IP"
+							", single container creation aborted -if Root select"
+							" a company with IPs!");
+						continue;
+					}
+					mysql_free_result(res);
+					for(i=strlen(cIPv4ClassCClone);i>0;i--)
+					{
+						if(cIPv4ClassCClone[i]=='.')
+						{
+							cIPv4ClassCClone[i]=0;
+							break;
+						}
+					}
+					//TODO --WHY can't they?
+					if(!strcmp(cIPv4ClassCClone,cIPv4ClassC))
+					{
+						printf("<blink>Error:</blink> Clone IPs must belong to a different"
+								" class C");
+						continue;
+					}
+					//Count clone IPs
+					sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+							" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
+								uForClient,cIPv4ClassCClone,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+						sscanf(field[0],"%u",&uAvailableIPs);
+					mysql_free_result(res);
+					if(!uAvailableIPs)
+					{
+						printf("<blink>Error:</blink> No clone IP in given"
+							" class C"
+							" available!");
+						continue;
+					}
+				}//cAutoCloneNode
+
+				//Count main IPs
+				uAvailableIPs=0;
+				sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+						" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
+								uForClient,cIPv4ClassC,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uAvailableIPs);
+				mysql_free_result(res);
+				if(!uAvailableIPs)
+				{
+					printf("<blink>Error:</blink> No IP in given class C"
+						" available!");
+					continue;
+				}
+			}//valid hostname and label
 		}
 	}
 
-	printf("Global settings\n");
-	printf("\tcIPv4ClassC=%s\n",cIPv4ClassC);
-	printf("\tcIPv4CloneClassC=%s\n",cIPv4CloneClassC);
-	printf("\tcPasswd=%s\n",cPasswd);
-	printf("\tcTimeZone=%s\n",cTimeZone);
-	printf("\tuOwner=%u\n",uOwner);
-	printf("\tuConfig=%u\n",uConfig);
-	printf("\tuNameserver=%u\n",uNameserver);
-	printf("\tuSearchdomain=%u\n",uSearchdomain);
-	printf("\tuGroup=%u\n",uGroup);
-	printf("\tuOSTemplate=%u\n",uOSTemplate);
-	printf("\tuSyncPeriod=%u\n",uSyncPeriod);
-	printf("\tuDNSJob=%u\n",uDNSJob);
-	printf("\tuCloneTargetNode=%u\n",uCloneTargetNode);
-	printf("\tuCloneStopped=%u\n",uCloneStopped);
 
 	fclose(fp);
 
