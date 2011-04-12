@@ -53,6 +53,7 @@ void RestoreAll(char *cPasswd);
 void mySQLRootConnect(char *cPasswd);
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType);
 void ImportOSTemplates(char *cPath,char *cOwner);
+void MassCreateContainers(char *cConfigfileName);
 void ImportRemoteDatacenter(
 			const char *cLocalDatacenter,
 			const char *cRemoteDatacenter,
@@ -655,6 +656,8 @@ void ExtMainShell(int argc, char *argv[])
                 ImportRemoteDatacenter(argv[2],argv[3],argv[4],argv[5],argv[6],argv[7],argv[8],argv[9]);
 	else if(argc==4 && !strcmp(argv[1],"ImportOSTemplates"))
                 ImportOSTemplates(argv[2],argv[3]);
+	else if(argc==3 && !strcmp(argv[1],"MassCreateContainers"))
+                MassCreateContainers(argv[2]);
         else
 	{
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
@@ -673,6 +676,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tImportRemoteDatacenter <local datacenter> <remote datacenter> <local node> <remote node>\n"
 			"\t\t<host> <user> <passwd> <local uOwner>\n");
 		printf("\tImportOSTemplates <path to templates e.g. /vz/template/cache/> <tClient.cLabel owner string>\n");
+		printf("\tMassCreateContainers <configuration file>\n");
 		printf("\n");
 	}
 	mysql_close(&gMysql);
@@ -2820,3 +2824,187 @@ void ImportOSTemplates(char *cPath, char *cOwner)
 	printf("ImportOSTemplates(): End\n");
 
 }//void ImportOSTemplates()
+
+
+void MassCreateContainers(char *cConfigfileName)
+{
+	char cHostname[100]={""};
+	unsigned uNode=0;
+	unsigned uDatacenter=0;
+	char *cp;
+	FILE *fp;
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	printf("MassCreateContainers(): Start\n");
+
+	if(TextConnectDb())
+		exit(1);
+
+	if(gethostname(cHostname,99)!=0)
+	{
+		printf("gethostname() failed\n");
+		exit(1);
+	}
+
+	//
+	//Get node and datacenter via hostname
+	//
+	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf(mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
+	}
+	mysql_free_result(res);
+	//FQDN vs short name of 2nd NIC mess
+	if(!uNode)
+	{
+		if((cp=strchr(cHostname,'.')))
+			*cp=0;
+		sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf(mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uNode);
+			sscanf(field[1],"%u",&uDatacenter);
+		}
+		mysql_free_result(res);
+	}
+	printf("uNode=%u uDatacenter=%u\n",uNode,uDatacenter);
+
+	//
+	//Now we can read the config file
+	//
+	if((fp=fopen(cConfigfileName,"r"))==NULL)
+	{
+		printf("Could not open %s\n",cConfigfileName);
+		exit(1);
+	}
+
+
+	//config file has two sections
+	unsigned uList=0;
+
+	//these two are for section two
+	char cLabel[33]={""};
+	//char cHostname[100]={""};
+
+	char cIPv4ClassC[16]={""};
+	char cPasswd[16]={""};
+	char cTimeZone[32]={""};//PST8PDT
+	char cIPv4CloneClassC[16]={""};
+
+	unsigned uConfig=0;
+	unsigned uNameserver=0;
+	unsigned uSearchdomain=0;
+	unsigned uGroup=0;
+	unsigned uOwner=0;
+	unsigned uOSTemplate=0;
+	unsigned uDNSJob=0;
+	unsigned uSyncPeriod=0;
+	unsigned uCloneTargetNode=0;
+	unsigned uCloneStopped=0;
+
+	while(fgets(gcQuery,1024,fp)!=NULL)
+	{
+		if(gcQuery[0]=='#')
+			continue;
+
+		if(strstr(gcQuery,"ContainerList"))
+		{
+			uList=1;
+			continue;
+		}
+
+		if(!uList)
+		{
+			if(!strncmp(gcQuery,"cIPv4ClassC=",strlen("cIPv4ClassC")))
+			{
+				sprintf(cIPv4ClassC,"%.15s",gcQuery+strlen("cIPv4ClassC="));
+				if((cp=strchr(cIPv4ClassC,';')))
+					*cp=0;
+			}
+			else if(!strncmp(gcQuery,"cIPv4CloneClassC=",strlen("cIPv4CloneClassC")))
+			{
+				sprintf(cIPv4CloneClassC,"%.15s",gcQuery+strlen("cIPv4CloneClassC="));
+				if((cp=strchr(cIPv4CloneClassC,';')))
+					*cp=0;
+			}
+			else if(!strncmp(gcQuery,"cPasswd=",strlen("cPasswd")))
+			{
+				sprintf(cPasswd,"%.15s",gcQuery+strlen("cPasswd="));
+				if((cp=strchr(cPasswd,';')))
+					*cp=0;
+			}
+			else if(!strncmp(gcQuery,"cTimeZone=",strlen("cTimeZone")))
+			{
+				sprintf(cTimeZone,"%.31s",gcQuery+strlen("cTimeZone="));
+				if((cp=strchr(cTimeZone,';')))
+					*cp=0;
+			}
+			else if(!strncmp(gcQuery,"uOwner=",strlen("uOwner=")))
+				sscanf(gcQuery,"uOwner=%u;",&uOwner);
+			else if(!strncmp(gcQuery,"uConfig=",strlen("uConfig=")))
+				sscanf(gcQuery,"uConfig=%u;",&uConfig);
+			else if(!strncmp(gcQuery,"uNameserver=",strlen("uNameserver=")))
+				sscanf(gcQuery,"uNameserver=%u;",&uNameserver);
+			else if(!strncmp(gcQuery,"uSearchdomain=",strlen("uSearchdomain=")))
+				sscanf(gcQuery,"uSearchdomain=%u;",&uSearchdomain);
+			else if(!strncmp(gcQuery,"uGroup=",strlen("uGroup=")))
+				sscanf(gcQuery,"uGroup=%u;",&uGroup);
+			else if(!strncmp(gcQuery,"uOSTemplate=",strlen("uOSTemplate=")))
+				sscanf(gcQuery,"uOSTemplate=%u;",&uOSTemplate);
+			else if(!strncmp(gcQuery,"uSyncPeriod=",strlen("uSyncPeriod=")))
+				sscanf(gcQuery,"uSyncPeriod=%u;",&uSyncPeriod);
+			else if(!strncmp(gcQuery,"uDNSJob=",strlen("uDNSJob=")))
+				sscanf(gcQuery,"uDNSJob=%u;",&uDNSJob);
+			else if(!strncmp(gcQuery,"uCloneTargetNode=",strlen("uCloneTargetNode=")))
+				sscanf(gcQuery,"uCloneTargetNode=%u;",&uCloneTargetNode);
+			else if(!strncmp(gcQuery,"uCloneStopped=",strlen("uCloneStopped=")))
+				sscanf(gcQuery,"uCloneStopped=%u;",&uCloneStopped);
+		}
+		else
+		{
+			//here we start creating the new container jobs
+			//after input validation
+			printf(gcQuery);
+		}
+	}
+
+	printf("Global settings\n");
+	printf("\tcIPv4ClassC=%s\n",cIPv4ClassC);
+	printf("\tcIPv4CloneClassC=%s\n",cIPv4CloneClassC);
+	printf("\tcPasswd=%s\n",cPasswd);
+	printf("\tcTimeZone=%s\n",cTimeZone);
+	printf("\tuOwner=%u\n",uOwner);
+	printf("\tuConfig=%u\n",uConfig);
+	printf("\tuNameserver=%u\n",uNameserver);
+	printf("\tuSearchdomain=%u\n",uSearchdomain);
+	printf("\tuGroup=%u\n",uGroup);
+	printf("\tuOSTemplate=%u\n",uOSTemplate);
+	printf("\tuSyncPeriod=%u\n",uSyncPeriod);
+	printf("\tuDNSJob=%u\n",uDNSJob);
+	printf("\tuCloneTargetNode=%u\n",uCloneTargetNode);
+	printf("\tuCloneStopped=%u\n",uCloneStopped);
+
+	fclose(fp);
+
+	printf("MassCreateContainers(): End\n");
+
+}//void MassCreateContainers(char *cConfigfileName)
