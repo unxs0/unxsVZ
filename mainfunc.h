@@ -2903,6 +2903,7 @@ void MassCreateContainers(char *cConfigfileName)
 
 	//these two are for section two
 	char cLabel[33]={""};
+	char cAltLabel[33]={""};
 	//char cHostname[100]={""};
 
 	char cIPv4ClassC[16]={""};
@@ -2981,9 +2982,32 @@ void MassCreateContainers(char *cConfigfileName)
 		}
 		else
 		{
+			cHostname[0]=0;
+			cLabel[0]=0;
+			cAltLabel[0]=0;
 			//here we start creating the new container jobs
 			//after input validation
-			printf(gcQuery);
+			if((cp=strchr(gcQuery,'.')))
+			{
+				*cp=0;
+				sprintf(cLabel,"%.31s",gcQuery);
+				*cp='.';
+				if((cp=strchr(gcQuery,',')))
+				{
+					*cp=0;
+					sprintf(cAltLabel,"%.31s",cp+1);
+				}
+				sprintf(cHostname,"%.99s",gcQuery);
+				if((cp=strchr(cHostname,'\n')))
+					*cp=0;
+				if((cp=strchr(cAltLabel,'\n')))
+					*cp=0;
+				printf("cHostname=%s cLabel=%s",cHostname,cLabel);
+				if(cAltLabel[0])
+					printf(" cAltLabel=%s\n",cAltLabel);
+				else
+					printf("\n");
+			}
 		}
 	}
 
