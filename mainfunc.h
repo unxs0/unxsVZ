@@ -2928,13 +2928,14 @@ void MassCreateContainers(char *cConfigfileName)
 	unsigned uSyncPeriod=0;
 	unsigned uCloneTargetNode=0;
 	unsigned uCloneStopped=0;
+	unsigned uIgnoreBindARecordJobZone=0;
 
 	while(fgets(gcQuery,1024,fp)!=NULL)
 	{
 		if(gcQuery[0]=='#')
 			continue;
 
-		if(strstr(gcQuery,"ContainerList"))
+		if(!strncmp(gcQuery,"ContainerList",strlen("ContainerList")))
 		{
 			uList=1;
 			printf("Global settings\n");
@@ -3001,6 +3002,8 @@ void MassCreateContainers(char *cConfigfileName)
 				sscanf(gcQuery,"uCloneTargetNode=%u;",&uCloneTargetNode);
 			else if(!strncmp(gcQuery,"uCloneStopped=",strlen("uCloneStopped=")))
 				sscanf(gcQuery,"uCloneStopped=%u;",&uCloneStopped);
+			else if(!strncmp(gcQuery,"IgnoreBindARecordJobZone",strlen("IgnoreBindARecordJobZone")))
+				uIgnoreBindARecordJobZone=1;
 		}
 		else
 		{
@@ -3074,10 +3077,16 @@ void MassCreateContainers(char *cConfigfileName)
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
 					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
+					if(mysql_num_rows(res)==1)
 					{
+						field=mysql_fetch_row(res);
 						sscanf(field[0],"%u",&uOSTemplate);
 						printf("tOSTemplate %s\n",field[1]);
+					}
+					else
+					{
+						printf("No single tOSTemplate match found based on:%s\n",cAltLabel);
+						//printf("%s\n",gcQuery);
 					}
 					mysql_free_result(res);
 				}
@@ -3240,7 +3249,7 @@ void MassCreateContainers(char *cConfigfileName)
 				}
 
 				//DNS sanity check
-				if(uDNSJob)
+				if(uDNSJob && uIgnoreBindARecordJobZone==0)
 				{
 					char cunxsBindARecordJobZone[256]={""};
 					GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
