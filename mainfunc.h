@@ -3028,18 +3028,72 @@ void MassCreateContainers(char *cConfigfileName)
 				else
 					printf("\n");
 
+
+				//
+				//Gather data from config settings
+				//
+
+				//Get some available IPs for this new container
+				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=1 AND"
+						" cLabel LIKE '%s%%'"
+						" AND uOwner=%u AND uDatacenter=%u",cIPv4ClassC,uOwner,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					sscanf(field[0],"%u",&uIPv4);
+					printf("cIPv4ClassC IP %s\n",field[1]);
+				}
+				mysql_free_result(res);
+				//Get some available IPs for this new container
+				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=1 AND"
+						" cLabel LIKE '%s%%'"
+						" AND uOwner=%u AND uDatacenter=%u",cIPv4CloneClassC,uOwner,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					sscanf(field[0],"%u",&uCloneIPv4);
+					printf("cIPv4CloneClassC IP %s\n",field[1]);
+				}
+				mysql_free_result(res);
+
+				if(!uOSTemplate)
+				{
+					if(!cAltLabel[0])
+						sprintf(cAltLabel,"%31s",cLabel);
+
+					//Try to find a matching tOSTemplate
+					sprintf(gcQuery,"SELECT uOSTemplate,cLabel FROM tOSTemplate WHERE "
+						" cLabel LIKE '%%%s%%'",cAltLabel);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+					{
+						sscanf(field[0],"%u",&uOSTemplate);
+						printf("tOSTemplate %s\n",field[1]);
+					}
+					mysql_free_result(res);
+				}
+
 				//
 				//here we start creating the new container jobs
 				//after input validation
 				//
 				if(uDatacenter==0)
 				{
-					printf("Unexpected uDatacenter==0!");
+					printf("Unexpected uDatacenter==0!\n");
 					continue;
 				}
 				if(uNode==0)
 				{
-					printf("Unexpected uNode==0!");
+					printf("Unexpected uNode==0!\n");
 					continue;
 				}
 
@@ -3047,7 +3101,7 @@ void MassCreateContainers(char *cConfigfileName)
 				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
 				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
 				{
-					printf("Selected datacenter is full or not active. Select another.");
+					printf("Selected datacenter is full or not active. Select another.\n");
 					continue;
 				}
 
@@ -3056,24 +3110,24 @@ void MassCreateContainers(char *cConfigfileName)
 				if(cNCMNode[0] && strcmp(cNCMNode,"Active"))
 				{
 					printf("Selected node is not configured for active containers."
-							"Select another.");
+							"Select another.\n");
 					continue;
 				}
 
 				unsigned uLabelLen=0;
 				if((uLabelLen=strlen(cLabel))<2)
 				{
-					printf("cLabel is too short");
+					printf("cLabel is too short\n");
 					continue;
 				}
 				if(strchr(cLabel,'.'))
 				{
-					printf("cLabel has at least one '.'");
+					printf("cLabel has at least one '.'\n");
 					continue;
 				}
 				if(strstr(cLabel,"-clone"))
 				{
-					printf("cLabel can't have '-clone'");
+					printf("cLabel can't have '-clone'\n");
 					continue;
 				}
 				unsigned uCreateAppliance=0;
@@ -3082,12 +3136,12 @@ void MassCreateContainers(char *cConfigfileName)
 				{
 					if(!strstr(cLabel+(uLabelLen-strlen("-app")-1),"-app"))
 					{
-						printf("Appliance cLabel must end with '-app'.");
+						printf("Appliance cLabel must end with '-app'.\n");
 						continue;
 					}
 					if(strlen(gcIPv4)<7 || strlen(gcIPv4)>15)
 					{
-						printf("Appliance requires valid gcIPv4.");
+						printf("Appliance requires valid gcIPv4.\n");
 						continue;
 					}
 
@@ -3095,7 +3149,7 @@ void MassCreateContainers(char *cConfigfileName)
 					sscanf(gcIPv4,"%u.%u.%u.%u",&a,&b,&c,&d);
 					if(a==0 || d==0)
 					{
-						printf("Appliance requires valid gcIPv4.");
+						printf("Appliance requires valid gcIPv4.\n");
 						continue;
 					}
 				}
@@ -3103,7 +3157,7 @@ void MassCreateContainers(char *cConfigfileName)
 				{
 					if(strstr(cLabel,"-app"))
 					{
-						printf("Normal container cLabel can't have '-app'");
+						printf("Normal container cLabel can't have '-app'\n");
 						continue;
 					}
 				}
@@ -3111,28 +3165,28 @@ void MassCreateContainers(char *cConfigfileName)
 				unsigned uHostnameLen=0;
 				if((uHostnameLen=strlen(cHostname))<5)
 				{
-					printf("cHostname is too short");
+					printf("cHostname is too short\n");
 					continue;
 				}
 				if(cHostname[uHostnameLen-1]=='.')
 				{
-					printf("cHostname can't end with a '.'");
+					printf("cHostname can't end with a '.'\n");
 					continue;
 				}
 				if(strstr(cHostname+(uHostnameLen-strlen(".cloneNN")-1),".clone"))
 				{
-					printf("cHostname can't end with '.cloneN'");
+					printf("cHostname can't end with '.cloneN'\n");
 					continue;
 				}
 				//New rule: cLabel must be first part (first stop) of cHostname.
 				if(strncmp(cLabel,cHostname,uLabelLen))
 				{
-					printf("cLabel must be first part of cHostname.");
+					printf("cLabel must be first part of cHostname.\n");
 					continue;
 				}
 				if(uIPv4==0)
 				{
-					printf("You must select a uIPv4");
+					printf("You must select a uIPv4\n");
 					continue;
 				}
 
@@ -3145,7 +3199,7 @@ void MassCreateContainers(char *cConfigfileName)
 				if(mysql_num_rows(res)>0)
 				{
 					mysql_free_result(res);
-					printf("cLabel already in use");
+					printf("cLabel already in use\n");
 					continue;
 				}
 				mysql_free_result(res);
@@ -3154,34 +3208,34 @@ void MassCreateContainers(char *cConfigfileName)
 				GetDatacenterProp(uDatacenter,"NewContainerCloneRange",cNCCloneRange);
 				if(cNCCloneRange[0] && uIpv4InCIDR4(ForeignKey("tIP","cLabel",uIPv4),cNCCloneRange))
 				{
-					printf("uIPv4 must not be in datacenter clone IP range");
+					printf("uIPv4 must not be in datacenter clone IP range\n");
 					continue;
 				}
 
 				if(uOSTemplate==0)
 				{
-					printf("You must select a uOSTemplate");
+					printf("You must select a uOSTemplate\n");
 					continue;
 				}
 				if(uConfig==0)
 				{
-					printf("You must select a uConfig");
+					printf("You must select a uConfig\n");
 					continue;
 				}
 				if(uNameserver==0)
 				{
-					printf("You must select a uNameserver");
+					printf("You must select a uNameserver\n");
 					continue;
 				}
 				if(uSearchdomain==0)
 				{
-					printf("You must select a uSearchdomain");
+					printf("You must select a uSearchdomain\n");
 					continue;
 				}
 
 				if(uGroup==0)
 				{
-					printf("Group is now required");
+					printf("Group is now required\n");
 					continue;
 				}
 
@@ -3193,20 +3247,20 @@ void MassCreateContainers(char *cConfigfileName)
 					if(!cunxsBindARecordJobZone[0])
 					{
 						printf("Create job for unxsBind,"
-								" but no cunxsBindARecordJobZone");
+								" but no cunxsBindARecordJobZone\n");
 						continue;
 					}
 					
 					if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
 					{
-						printf("cHostname must end with cunxsBindARecordJobZone");
+						printf("cHostname must end with cunxsBindARecordJobZone\n");
 						continue;
 					}
 				}
 					
 				if(cPasswd[0] && strlen(cPasswd)<6)
 				{
-					printf("Optional password must be at least 6 chars");
+					printf("Optional password must be at least 6 chars\n");
 					continue;
 				}
 				//Direct datacenter checks
@@ -3215,7 +3269,7 @@ void MassCreateContainers(char *cConfigfileName)
 				if(uDatacenter!=uIPv4Datacenter)
 				{
 					printf("The specified uIPv4 does not "
-							"belong to the specified uDatacenter.");
+							"belong to the specified uDatacenter.\n");
 					continue;
 				}
 				unsigned uNodeDatacenter=0;
@@ -3223,7 +3277,7 @@ void MassCreateContainers(char *cConfigfileName)
 				if(uDatacenter!=uNodeDatacenter)
 				{
 					printf("The specified uNode does not "
-							"belong to the specified uDatacenter.");
+							"belong to the specified uDatacenter.\n");
 					continue;
 				}
 
@@ -3235,12 +3289,12 @@ void MassCreateContainers(char *cConfigfileName)
 					if(uCloneTargetNode==0)
 					{
 						printf("Please select a valid target node"
-								" for the clone");
+								" for the clone\n");
 						continue;
 					}
 					if(uCloneTargetNode==uNode)
 					{
-						printf("Can't clone to same node");
+						printf("Can't clone to same node\n");
 						continue;
 					}
 
@@ -3248,7 +3302,7 @@ void MassCreateContainers(char *cConfigfileName)
 					if(cNCMNode[0] && strcmp(cNCMNode,"Clone"))
 					{
 						printf("Selected clone target node is not configured for clone containers."
-							"Select another.");
+							"Select another.\n");
 						continue;
 					}
 
@@ -3256,7 +3310,7 @@ void MassCreateContainers(char *cConfigfileName)
 					if(uDatacenter!=uNodeDatacenter)
 					{
 						printf("The specified clone uNode does not "
-							"belong to the specified uDatacenter.");
+							"belong to the specified uDatacenter.\n");
 						continue;
 					}
 
@@ -3265,36 +3319,36 @@ void MassCreateContainers(char *cConfigfileName)
 					if(!cTargetNodeIPv4[0])
 					{
 						printf("Your target node is"
-							" missing it's cIPv4 property");
+							" missing it's cIPv4 property\n");
 						continue;
 					}
 					if(!uCloneIPv4)
 					{
-						printf("You must select an IP for the clone");
+						printf("You must select an IP for the clone\n");
 						continue;
 					}
 					if(uCloneIPv4==uIPv4)
 					{
 						printf("You must select a different IP for the"
-										" clone");
+										" clone\n");
 						continue;
 					}
 					sscanf(ForeignKey("tIP","uDatacenter",uCloneIPv4),"%u",&uIPv4Datacenter);
 					if(uDatacenter!=uIPv4Datacenter)
 					{
 						printf("The specified uIPv4 does not "
-							"belong to the specified uDatacenter.");
+							"belong to the specified uDatacenter.\n");
 						continue;
 					}
 					if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uCloneIPv4),cNCCloneRange))
 					{
-						printf("Clone start uIPv4 must be in datacenter clone IP range");
+						printf("Clone start uIPv4 must be in datacenter clone IP range\n");
 						continue;
 					}
 					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
 					{
 						printf("Clone uSyncPeriod out of range:"
-								" Max 30 days, min 5 minutes or 0 off.");
+								" Max 30 days, min 5 minutes or 0 off.\n");
 						continue;
 					}
 				}//if(cAutoCloneNode[0])
@@ -3315,8 +3369,8 @@ void MassCreateContainers(char *cConfigfileName)
 				if(mysql_num_rows(res)>0)
 				{
 					mysql_free_result(res);
-					printf("<blink>Error:</blink> Single container, similar cHostname"
-					" cLabel pattern already used at this datacenter!");
+					printf("Single container, similar cHostname"
+					" cLabel pattern already used at this datacenter!\n");
 					continue;
 				}
 				mysql_free_result(res);
@@ -3338,9 +3392,9 @@ void MassCreateContainers(char *cConfigfileName)
 				}
 				else
 				{
-					printf("<blink>Error:</blink> Someone grabbed your IP"
+					printf("Someone grabbed your IP"
 						", single container creation aborted -if Root select"
-						" a company with IPs!");
+						" a company with IPs!\n");
 					continue;
 				}
 				mysql_free_result(res);
@@ -3371,9 +3425,9 @@ void MassCreateContainers(char *cConfigfileName)
 					}
 					else
 					{
-						printf("<blink>Error:</blink> Someone grabbed your clone IP"
+						printf("Someone grabbed your clone IP"
 							", single container creation aborted -if Root select"
-							" a company with IPs!");
+							" a company with IPs!\n");
 						continue;
 					}
 					mysql_free_result(res);
@@ -3388,8 +3442,8 @@ void MassCreateContainers(char *cConfigfileName)
 					//TODO --WHY can't they?
 					if(!strcmp(cIPv4ClassCClone,cIPv4ClassC))
 					{
-						printf("<blink>Error:</blink> Clone IPs must belong to a different"
-								" class C");
+						printf("Clone IPs must belong to a different"
+								" class C\n");
 						continue;
 					}
 					//Count clone IPs
@@ -3405,9 +3459,9 @@ void MassCreateContainers(char *cConfigfileName)
 					mysql_free_result(res);
 					if(!uAvailableIPs)
 					{
-						printf("<blink>Error:</blink> No clone IP in given"
+						printf("No clone IP in given"
 							" class C"
-							" available!");
+							" available!\n");
 						continue;
 					}
 				}//cAutoCloneNode
@@ -3426,8 +3480,8 @@ void MassCreateContainers(char *cConfigfileName)
 				mysql_free_result(res);
 				if(!uAvailableIPs)
 				{
-					printf("<blink>Error:</blink> No IP in given class C"
-						" available!");
+					printf("No IP in given class C"
+						" available!\n");
 					continue;
 				}
 			}//valid hostname and label
