@@ -149,8 +149,8 @@ int main(int argc, char *argv[])
 		if(!strncmp(gcFunction,"Logout",5))
 		{
 			//8 idnsOrg log type, need to globally add 9 for unxsvzOrg
-			printf("Set-Cookie: unxsvzOrgLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			printf("Set-Cookie: unxsvzOrgPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: unxsvzOrgLogin=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: unxsvzOrgPasswd=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=8,uPermLevel=%u,"
 					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -622,8 +622,8 @@ void SetLogin(void)
 {
 	if(iValidLogin(0))
 	{
-		printf("Set-Cookie: unxsvzOrgLogin=%s; secure=1;\n",gcLogin);
-		printf("Set-Cookie: unxsvzOrgPasswd=%s; secure=1;\n",gcPasswd);
+		printf("Set-Cookie: unxsvzOrgLogin=%s; secure; max-age=300;\n",gcLogin);
+		printf("Set-Cookie: unxsvzOrgPasswd=%s; secure; max-age=300;\n",gcPasswd);
 		sprintf(gcUser,"%.41s",gcLogin);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
@@ -637,8 +637,8 @@ void SetLogin(void)
 #ifdef cLDAPURI
 	else if(iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
 	{
-		printf("Set-Cookie: unxsvzOrgLogin=%s; secure=1;\n",gcLogin);
-		printf("Set-Cookie: unxsvzOrgPasswd=%s; secure=1;\n",gcPasswd);
+		printf("Set-Cookie: unxsvzOrgLogin=%s; secure; max-age=300;\n",gcLogin);
+		printf("Set-Cookie: unxsvzOrgPasswd=%s; secure; max-age=300;\n",gcPasswd);
 		sprintf(gcUser,"%.41s",gcLogin);
 		GetPLAndClientLDAP(gcUser,gcOrgName);
 		guSSLCookieLogin=1;
