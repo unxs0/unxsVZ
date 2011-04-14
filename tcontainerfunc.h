@@ -5147,6 +5147,9 @@ unsigned CommonCloneContainer(
 		htmlPlainTextError(mysql_error(&gMysql));
 	uNewVeid=mysql_insert_id(&gMysql);
 
+	if(!uNewVeid)
+		return(0);
+
 	if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus))
 	{
 		//TODO something is wrong here.
