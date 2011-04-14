@@ -35,6 +35,26 @@ AUTHOR/LEGAL
 #include <dirent.h>
 #include <openisp/ucidr.h>
 void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue);//tcontainerfunc.h
+void SetContainerStatus(unsigned uContainer,unsigned uStatus);
+void ChangeGroup(unsigned uContainer, unsigned uGroup);
+void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter);
+unsigned CommonCloneContainer(
+		unsigned uContainer,
+		unsigned uOSTemplate,
+		unsigned uConfig,
+		unsigned uNameserver,
+		unsigned uSearchdomain,
+		unsigned uDatacenter,
+		unsigned uOwner,
+		const char *cLabel,
+		unsigned uNode,
+		unsigned uStatus,
+		const char *cHostname,
+		const char *cClassC,
+		unsigned uWizIPv4,
+		char *cWizLabel,
+		char *cWizHostname,
+		unsigned uTargetNode);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 char *strptime(const char *s, const char *format, struct tm *tm);
 
@@ -2906,6 +2926,8 @@ void MassCreateContainers(char *cConfigfileName)
 
 	//these two are for section two
 	char cLabel[33]={""};
+	char cCloneLabel[33]={""};
+	char cCloneHostname[100]={""};
 	char cAltLabel[33]={""};
 	//char cHostname[100]={""};
 
@@ -3037,6 +3059,16 @@ void MassCreateContainers(char *cConfigfileName)
 				//
 
 				//Get some available IPs for this new container
+				if(!cIPv4ClassC[0])
+				{
+					printf("cIPv4ClassC must be specified\n");
+					continue;
+				}
+				if(!cIPv4CloneClassC[0])
+				{
+					printf("cIPv4CloneClassC must be specified\n");
+					continue;
+				}
 				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=1 AND"
 						" cLabel LIKE '%s%%'"
 						" AND uOwner=%u AND uDatacenter=%u",cIPv4ClassC,uOwner,uDatacenter);
@@ -3050,7 +3082,6 @@ void MassCreateContainers(char *cConfigfileName)
 					printf("cIPv4ClassC IP %s\n",field[1]);
 				}
 				mysql_free_result(res);
-				//Get some available IPs for this new container
 				sprintf(gcQuery,"SELECT uIP,cLabel FROM tIP WHERE uAvailable=1 AND"
 						" cLabel LIKE '%s%%'"
 						" AND uOwner=%u AND uDatacenter=%u",cIPv4CloneClassC,uOwner,uDatacenter);
@@ -3378,121 +3409,130 @@ void MassCreateContainers(char *cConfigfileName)
 				if(mysql_num_rows(res)>0)
 				{
 					mysql_free_result(res);
-					printf("Single container, similar cHostname"
-					" cLabel pattern already used at this datacenter!\n");
+					printf("Similar cHostname cLabel pattern already used at this datacenter!\n");
 					continue;
 				}
 				mysql_free_result(res);
 
-				//Check to see if enough IPs are available early to avoid
-				//complex cleanup/rollback below
-				//First get class c mask will be used here and again in main loop below
-
-				//Get container IP cIPv4ClassC
-				sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
-						" AND uOwner=%u AND uDatacenter=%u",uIPv4,uOwner,uDatacenter);
+				//
+				//Everything is ready and checked so we start modifying things
+				//
+				unsigned uContainer=0;
+				sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%s',cHostname='%s',"
+							"uIPv4=%u,"
+							"uDatacenter=%u,"
+							"uNode=%u,"
+							"uOSTemplate=%u,"
+							"uConfig=%u,"
+							"uNameserver=%u,"
+							"uSearchdomain=%u,"
+							"uStatus=%u,"
+							"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								cLabel,cHostname,
+								uIPv4,
+								uDatacenter,
+								uNode,
+								uOSTemplate,
+								uConfig,
+								uNameserver,
+								uSearchdomain,
+								uINITSETUP,
+								uOwner);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
-				res=mysql_store_result(&gMysql);
-				if((field=mysql_fetch_row(res)))
+				uContainer=mysql_insert_id(&gMysql);
+				if(!uContainer)
 				{
-					sprintf(cIPv4ClassC,"%.31s",field[0]);
-				}
-				else
-				{
-					printf("Someone grabbed your IP"
-						", single container creation aborted -if Root select"
-						" a company with IPs!\n");
+					printf("uContainer not determined!!");
 					continue;
 				}
-				mysql_free_result(res);
-				register int i;
-				for(i=strlen(cIPv4ClassC);i>0;i--)
-				{
-					if(cIPv4ClassC[i]=='.')
-					{
-						cIPv4ClassC[i]=0;
-						break;
-					}
-				}
-				//Check IPs for clones first if so configured
-				unsigned uAvailableIPs=0;
-				if(cAutoCloneNode[0])
-				{
-					char cIPv4ClassCClone[32]={""};
 
-					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
-						" AND uOwner=%u AND uDatacenter=%u",uCloneIPv4,uOwner,uDatacenter);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
-					{
-						sprintf(cIPv4ClassCClone,"%.31s",field[0]);
-					}
-					else
-					{
-						printf("Someone grabbed your clone IP"
-							", single container creation aborted -if Root select"
-							" a company with IPs!\n");
-						continue;
-					}
-					mysql_free_result(res);
-					for(i=strlen(cIPv4ClassCClone);i>0;i--)
-					{
-						if(cIPv4ClassCClone[i]=='.')
-						{
-							cIPv4ClassCClone[i]=0;
-							break;
-						}
-					}
-					//TODO --WHY can't they?
-					if(!strcmp(cIPv4ClassCClone,cIPv4ClassC))
-					{
-						printf("Clone IPs must belong to a different"
-								" class C\n");
-						continue;
-					}
-					//Count clone IPs
-					sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-							" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
-								uOwner,cIPv4ClassCClone,uDatacenter);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
-						sscanf(field[0],"%u",&uAvailableIPs);
-					mysql_free_result(res);
-					if(!uAvailableIPs)
-					{
-						printf("No clone IP in given"
-							" class C"
-							" available!\n");
-						continue;
-					}
-				}//cAutoCloneNode
+				//Add to group
+				if(uGroup)
+					ChangeGroup(uContainer,uGroup);
 
-				//Count main IPs
-				uAvailableIPs=0;
-				sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-						" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
-								uOwner,cIPv4ClassC,uDatacenter);
+				//tIP
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+						" WHERE uIP=%u AND uAvailable=1 AND uDatacenter=%u",
+									uIPv4,uDatacenter);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
-				res=mysql_store_result(&gMysql);
-				if((field=mysql_fetch_row(res)))
-					sscanf(field[0],"%u",&uAvailableIPs);
-				mysql_free_result(res);
-				if(!uAvailableIPs)
+				if(mysql_affected_rows(&gMysql)!=1)
 				{
-					printf("No IP in given class C"
-						" available!\n");
+					sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
+						uContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					printf("Someone grabbed your IP container creation aborted!");
 					continue;
 				}
+				
+				//Add properties
+				//Name property
+				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+					",uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+					",cName='Name',cValue='%s'",
+						uContainer,uOwner,cLabel);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				//cPasswd property
+				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+					",uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+					",cName='cPasswd',cValue='%s'",
+						uContainer,uOwner,cPasswd);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				//Optional timezone note the --- not selected value.
+				if(cTimeZone[0])
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_TimeZone',cValue='%s',uType=3,uKey=%u"
+						",uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							cTimeZone,uContainer,uOwner);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
+
+				if(cAutoCloneNode[0])
+				{
+					unsigned uNewVeid=0;
+
+					uNewVeid=CommonCloneContainer(  uContainer,
+									uOSTemplate,
+									uConfig,
+									uNameserver,
+									uSearchdomain,
+									uDatacenter,
+									uOwner,
+									cLabel,
+									uNode,
+									uINITSETUP,
+									cHostname,
+									cIPv4CloneClassC,
+									uCloneIPv4,
+									cCloneLabel,
+									cCloneHostname,
+									uCloneTargetNode);
+					if(!uNewVeid)
+					{
+						printf("Clone container %s creation failed!",cCloneHostname);
+					}
+					else
+					{
+						SetContainerStatus(uContainer,uINITSETUP);//See CommonCloneContainer()
+						if(uGroup)
+							ChangeGroup(uNewVeid,uGroup);
+					}
+				}//cAutoCloneNode
+
+				if(uDNSJob)
+					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter);
+
 			}//valid hostname and label
 		}
 	}
