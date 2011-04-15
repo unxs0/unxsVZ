@@ -88,6 +88,7 @@ static char cuWizIPv4PullDown[32]={""};
 static unsigned uAllPortsOpen=0;
 static unsigned uCloneStop=0;
 static unsigned uSyncPeriod=0;
+static unsigned guNoClones=0;
 static char cSearch[32]={""};
 static unsigned uGroupJobs=0;
 //uGroup: Group type association
@@ -653,6 +654,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 					}
 				}
 			}
+		}
+		else if(!strcmp(entries[i].name,"guNoClones"))
+		{
+			guNoClones=1;
 		}
 		else if(!strcmp(entries[i].name,"cuTargetNodePullDown"))
 		{
@@ -3193,6 +3198,10 @@ void ExttContainerButtons(void)
 			printf("<p><u>Container Search by cLabel</u><br>");
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
 					" name=cSearch value='%s'>",cSearch);
+			printf(" <input type=checkbox name=guNoClones");
+			if(guNoClones)
+				printf(" checked");
+			printf("> guNoClones");
 			printf("<p><u>Container NavList Filter by tGroup</u><br>");
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 
@@ -3534,6 +3543,107 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 
 	if(!uNode)
 	{
+	    if(guNoClones)
+	    {
+		if(cSearch[0] && !uGroup)
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
+					" WHERE tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uSource=0"
+					" AND tContainer.cLabel LIKE '%s%%'"
+					" ORDER BY tContainer.cLabel",cSearch);
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uSource=0"
+					" AND tContainer.cLabel LIKE '%2$s%%'"
+					" ORDER BY tContainer.cLabel",guCompany,cSearch);
+		}
+		else if(cSearch[0] && uGroup)
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
+					" WHERE tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uSource=0"
+					" AND tContainer.cLabel LIKE '%s%%'"
+					" AND tContainer.uContainer=tGroupGlue.uContainer"
+					" AND tGroupGlue.uGroup=%u"
+					" ORDER BY tContainer.cLabel",cSearch,uGroup);
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uSource=0"
+					" AND tContainer.cLabel LIKE '%2$s%%'"
+					" AND tContainer.uContainer=tGroupGlue.uContainer"
+					" AND tGroupGlue.uGroup=%3$u"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+					" ORDER BY tContainer.cLabel",guCompany,cSearch,uGroup);
+		}
+		else if(!cSearch[0] && uGroup)
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
+					" WHERE tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uSource=0"
+					" AND tContainer.uContainer=tGroupGlue.uContainer"
+					" AND tGroupGlue.uGroup=%u"
+					" ORDER BY tContainer.cLabel",uGroup);
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uSource=0"
+					" AND tContainer.uContainer=tGroupGlue.uContainer"
+					" AND tGroupGlue.uGroup=%2$u"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+					" ORDER BY tContainer.cLabel",guCompany,uGroup);
+		}
+		else if(1)
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
+					" WHERE tContainer.uNode=tNode.uNode"
+					" AND tContainer.uSource=0"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" ORDER BY tContainer.cLabel");
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uSource=0"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" ORDER BY tContainer.cLabel",guCompany);
+		}
+	   }
+	   else //guNoClones==0
+	   {
 		if(cSearch[0] && !uGroup)
 		{
 			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
@@ -3622,6 +3732,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" AND tContainer.uStatus=tStatus.uStatus"
 					" ORDER BY tContainer.cLabel",guCompany);
 		}
+	   }//if(guNoClones)
 	}
 	else
 	{
