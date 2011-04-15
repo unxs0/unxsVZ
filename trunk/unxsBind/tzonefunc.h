@@ -99,6 +99,7 @@ int FetchNSSet(char *cList, char *cNSSet);
 void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 		                unsigned uModStubs, unsigned uDebug);
 void PassDirectHtml(char *file);//bind.c aux section
+void PassDirectHtmlLineNum(char *file);
 
 void PrepareTestData(unsigned uResource,char *cName,char *cParam1,char *cParam2,char *cParam3,
 			char *cParam4,char *cRRType,char *cComment,unsigned uRRTTL,unsigned uCalledFrom);
@@ -3481,7 +3482,7 @@ void htmlMasterZoneFile(void)
 
 			Header_ism3("htmlMasterZoneFile()",0);
 			printf("</center><pre>%s<blockquote>",cFile);
-			PassDirectHtml(cFile);
+			PassDirectHtmlLineNum(cFile);
 			printf("</blockquote></pre>");
 			printf("<input type=hidden name=gcFunction value=tZoneTools>");
 			printf("Back w/search link: <a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%u&cSearch=%s%s>%s [%s]</a><br>\n",
@@ -3987,4 +3988,24 @@ void PrepDelToolsTestData(unsigned uNumIPs)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-}
+
+}//void PrepDelToolsTestData(unsigned uNumIPs)
+
+
+void PassDirectHtmlLineNum(char *file)
+{
+	FILE *fp;
+	char buffer[1024];
+
+	if((fp=fopen(file,"r"))!=NULL)
+	{
+		register int n=1;
+
+		while(fgets(buffer,1024,fp)!=NULL)
+			fprintf(stdout,"(%d) %s",n++,buffer);
+
+		fclose(fp);
+	}
+
+}//void PassDirectHtmlLineNum(char *file)
+
