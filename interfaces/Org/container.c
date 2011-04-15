@@ -1545,7 +1545,7 @@ void funcNewContainer(FILE *fp)
 	printf("<fieldset><legend>Search</b></legend>");
 	//Search DID
 	fprintf(fp,"<input type=text class=type_fields"
-			" title='Search for a container by DID'"
+			" title='Search for a container by DID or customer name. %% wildcard can be used.'"
 			" name=gcSearchAux value='%.31s' size=16 maxlength=31>",gcSearchAux);
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Enter DID above, then use this function to search for a container'"
