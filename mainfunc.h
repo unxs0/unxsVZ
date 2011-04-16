@@ -37,7 +37,7 @@ AUTHOR/LEGAL
 void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue);//tcontainerfunc.h
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void ChangeGroup(unsigned uContainer, unsigned uGroup);
-void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter);
+void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
 unsigned CommonCloneContainer(
 		unsigned uContainer,
 		unsigned uOSTemplate,
@@ -54,7 +54,9 @@ unsigned CommonCloneContainer(
 		unsigned uWizIPv4,
 		char *cWizLabel,
 		char *cWizHostname,
-		unsigned uTargetNode);
+		unsigned uTargetNode,
+		unsigned uSyncPeriod,
+		unsigned uLoginClient);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 char *strptime(const char *s, const char *format, struct tm *tm);
 
@@ -2859,7 +2861,7 @@ void MassCreateContainers(char *cConfigfileName)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	printf("MassCreateContainers(): Start\n");
+	printf("MassCreateContainers(): Start\n\n");
 
 	if(TextConnectDb())
 		exit(1);
@@ -2949,8 +2951,7 @@ void MassCreateContainers(char *cConfigfileName)
 	unsigned uDNSJob=0;
 	unsigned uSyncPeriod=0;
 	unsigned uCloneTargetNode=0;
-	unsigned uCloneStopped=0;
-	unsigned uIgnoreBindARecordJobZone=0;
+	unsigned uCloneStopped=1;
 
 	while(fgets(gcQuery,1024,fp)!=NULL)
 	{
@@ -3024,8 +3025,6 @@ void MassCreateContainers(char *cConfigfileName)
 				sscanf(gcQuery,"uCloneTargetNode=%u;",&uCloneTargetNode);
 			else if(!strncmp(gcQuery,"uCloneStopped=",strlen("uCloneStopped=")))
 				sscanf(gcQuery,"uCloneStopped=%u;",&uCloneStopped);
-			else if(!strncmp(gcQuery,"IgnoreBindARecordJobZone",strlen("IgnoreBindARecordJobZone")))
-				uIgnoreBindARecordJobZone=1;
 		}
 		else
 		{
@@ -3047,7 +3046,7 @@ void MassCreateContainers(char *cConfigfileName)
 					*cp=0;
 				if((cp=strchr(cAltLabel,'\n')))
 					*cp=0;
-				printf("cHostname=%s cLabel=%s",cHostname,cLabel);
+				printf("\ncHostname=%s cLabel=%s",cHostname,cLabel);
 				if(cAltLabel[0])
 					printf(" cAltLabel=%s\n",cAltLabel);
 				else
@@ -3280,7 +3279,7 @@ void MassCreateContainers(char *cConfigfileName)
 				}
 
 				//DNS sanity check
-				if(uDNSJob && uIgnoreBindARecordJobZone==0)
+				if(uDNSJob)
 				{
 					char cunxsBindARecordJobZone[256]={""};
 					GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
@@ -3501,6 +3500,10 @@ void MassCreateContainers(char *cConfigfileName)
 				if(cAutoCloneNode[0])
 				{
 					unsigned uNewVeid=0;
+					unsigned uStatus=uINITSETUP;
+
+					if(uCloneStopped)
+						uStatus=uSTOPPED;
 
 					uNewVeid=CommonCloneContainer(  uContainer,
 									uOSTemplate,
@@ -3511,13 +3514,15 @@ void MassCreateContainers(char *cConfigfileName)
 									uOwner,
 									cLabel,
 									uNode,
-									uINITSETUP,
+									uStatus,
 									cHostname,
 									cIPv4CloneClassC,
 									uCloneIPv4,
 									cCloneLabel,
 									cCloneHostname,
-									uCloneTargetNode);
+									uCloneTargetNode,
+									uSyncPeriod,
+									1 );
 					if(!uNewVeid)
 					{
 						printf("Clone container %s creation failed!",cCloneHostname);
@@ -3531,7 +3536,7 @@ void MassCreateContainers(char *cConfigfileName)
 				}//cAutoCloneNode
 
 				if(uDNSJob)
-					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter);
+					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,1);
 
 			}//valid hostname and label
 		}
@@ -3540,6 +3545,6 @@ void MassCreateContainers(char *cConfigfileName)
 
 	fclose(fp);
 
-	printf("MassCreateContainers(): End\n");
+	printf("\nMassCreateContainers(): End\n");
 
 }//void MassCreateContainers(char *cConfigfileName)

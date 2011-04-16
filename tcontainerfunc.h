@@ -48,7 +48,8 @@ void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 void InitContainerProps(struct structContainer *sContainer);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);
-unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
+unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
+		unsigned uOwner,unsigned uCreatedBy);
 void ChangeGroup(unsigned uContainer, unsigned uGroup);
 unsigned CommonCloneContainer(
 		unsigned uContainer,
@@ -66,7 +67,9 @@ unsigned CommonCloneContainer(
 		unsigned uWizIPv4,
 		char *cWizLabel,
 		char *cWizHostname,
-		unsigned uTargetNode);
+		unsigned uTargetNode,
+		unsigned uSyncPeriod,
+		unsigned uLoginClient);
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
@@ -112,7 +115,7 @@ void htmlContainerNotes(unsigned uContainer);
 void htmlContainerMount(unsigned uContainer);
 unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
-				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus);
+				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,unsigned uOwner,unsigned uCreatedBy);
 void htmlHealth(unsigned uContainer,unsigned uType);
 void htmlGroups(unsigned uNode, unsigned uContainer);
 unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus,
@@ -134,7 +137,8 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
 				unsigned uStatus,unsigned uFailToJob);
 void htmlCloneInfo(unsigned uContainer);
-void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter);
+void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,
+			char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -524,7 +528,9 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 										uWizIPv4,
 										cWizLabel,
 										cWizHostname,
-										uTargetNode);
+										uTargetNode,
+										uSyncPeriod,
+										guLoginClient);
 								//Now that container exists we can assign group.
 								if(!uNewVeid)
 									continue;
@@ -1395,7 +1401,9 @@ void ExttContainerCommands(pentry entries[], int x)
 									uWizIPv4,
 									cWizLabel,
 									cWizHostname,
-									uTargetNode);
+									uTargetNode,
+									uSyncPeriod,
+									guLoginClient);
 					SetContainerStatus(uContainer,uINITSETUP);
 					if(uGroup)
 						ChangeGroup(uNewVeid,uGroup);
@@ -1418,7 +1426,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				}//cAutoCloneNode
 
 				if(uCreateDNSJob)
-					CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter);
+					CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient);
 
 				tContainer("New container created");
 			}
@@ -1896,7 +1904,9 @@ void ExttContainerCommands(pentry entries[], int x)
 									uWizIPv4,
 									cWizLabel,
 									cWizHostname,
-									uTargetNode);
+									uTargetNode,
+									uSyncPeriod,
+									guLoginClient);
 						SetContainerStatus(uContainer,uINITSETUP);
 						if(uGroup)
 							ChangeGroup(uNewVeid,uGroup);
@@ -1919,7 +1929,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					}
 
 					if(uCreateDNSJob)
-						CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter);
+						CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient);
 
 					//Get next available uIPv4
 					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
@@ -2432,7 +2442,9 @@ void ExttContainerCommands(pentry entries[], int x)
 					uWizIPv4,
 					cWizLabel,
 					cWizHostname,
-					uTargetNode);
+					uTargetNode,
+					uSyncPeriod,
+					guLoginClient);
 
 				//Set group of clone to group of source.
 				uGroup=uGetGroup(0,uContainer);
@@ -2672,7 +2684,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				sprintf(cLabel,"%.31s",cWizLabel);
 				sprintf(cHostname,"%.99s",cWizHostname);
 				if(uCreateDNSJob)
-					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter);
+					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient);
 				if(HostnameContainerJob(uDatacenter,uNode,uContainer))
 				{
 					uStatus=uAWAITHOST;
@@ -2771,7 +2783,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					SetContainerStatus(uContainer,71);
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					if(uCreateDNSJob)
-						CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter);
+						CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter,guLoginClient);
 					tContainer("IPContainerJob() Done");
 				}
 				else
@@ -4351,7 +4363,7 @@ unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContai
 
 
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
-				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus)
+				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,unsigned uOwner,unsigned uCreatedBy)
 {
 	unsigned uCount=0;
 
@@ -4371,7 +4383,7 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 				uNewVeid,
 				uCloneStop,//file global
 				uPrevStatus,
-				guCompany,guLoginClient);
+				uOwner,uCreatedBy);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -4502,7 +4514,7 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 		printf("uNewVeid=%u\n",uNewVeid);
 #endif
 
-		if(CloneContainerJob(uDatacenter,uSourceNode,uContainer,uTargetNode,uNewVeid,uStatus))
+		if(CloneContainerJob(uDatacenter,uSourceNode,uContainer,uTargetNode,uNewVeid,uStatus,uOwner,guLoginClient))
 		{
 #ifdef DEBUG_CLONENODE
 			//Debug only
@@ -5120,7 +5132,8 @@ cParam1=174.121.136.102;
 cNSSet=ns1-2.yourdomain.com;
 cView=external;
 */
-unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData)
+unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
+	unsigned uOwner,unsigned uCreatedBy)
 {
 	unsigned uCount=0;
 
@@ -5134,7 +5147,7 @@ unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 				uDatacenter,uNode,uContainer,
 				uREMOTEWAITING,
 				cJobData,
-				uOwner,guLoginClient);
+				uOwner,uCreatedBy);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -5204,7 +5217,9 @@ unsigned CommonCloneContainer(
 		unsigned uWizIPv4,
 		char *cWizLabel,
 		char *cWizHostname,
-		unsigned uTargetNode)
+		unsigned uTargetNode,
+		unsigned uSyncPeriod,
+		unsigned uLoginClient)
 {	
 	MYSQL_RES *res;
 	unsigned uNewVeid=0;
@@ -5251,7 +5266,7 @@ unsigned CommonCloneContainer(
 				uTargetNode,
 				uAWAITCLONE,
 				uOwner,
-				guLoginClient,
+				uLoginClient,
 				uContainer);
        	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -5261,7 +5276,7 @@ unsigned CommonCloneContainer(
 	if(!uNewVeid)
 		return(0);
 
-	if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus))
+	if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus,uOwner,uLoginClient))
 	{
 		//TODO something is wrong here.
 		//If we specify a class C mask then we check it here. Why?
@@ -5318,7 +5333,7 @@ unsigned CommonCloneContainer(
 		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
 				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 				",cName='Name',cValue='%s'",
-					uNewVeid,uOwner,guLoginClient,cWizLabel);
+					uNewVeid,uOwner,uLoginClient,cWizLabel);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -5331,11 +5346,11 @@ unsigned CommonCloneContainer(
 		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
 				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 				",cName='cuSyncPeriod',cValue='%u'",
-					uNewVeid,uOwner,guLoginClient,uSyncPeriod);
+					uNewVeid,uOwner,uLoginClient,uSyncPeriod);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
-		uModBy=guLoginClient;
+		uModBy=uLoginClient;
 		uStatus=uAWAITCLONE;
 		SetContainerStatus(uContainer,uAWAITCLONE);
 	}
@@ -5353,7 +5368,7 @@ unsigned CommonCloneContainer(
 }//unsigned CommonCloneContainer()
 
 
-void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter)
+void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -5429,6 +5444,6 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 		//"cOwner=%.31s;\n",
 			cHostname,cIPv4,cZone,cView);
 
-	unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData);
+	unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy);
 
 }//void CreateDNSJob()
