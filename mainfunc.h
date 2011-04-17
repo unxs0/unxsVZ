@@ -56,7 +56,8 @@ unsigned CommonCloneContainer(
 		char *cWizHostname,
 		unsigned uTargetNode,
 		unsigned uSyncPeriod,
-		unsigned uLoginClient);
+		unsigned uLoginClient,
+		unsigned uCloneStop);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 char *strptime(const char *s, const char *format, struct tm *tm);
 
@@ -2948,6 +2949,7 @@ void MassCreateContainers(char *cConfigfileName)
 	unsigned uGroup=0;
 	unsigned uOwner=0;
 	unsigned uOSTemplate=0;
+	unsigned uOSLoopTemplate=0;
 	unsigned uDNSJob=0;
 	unsigned uSyncPeriod=0;
 	unsigned uCloneTargetNode=0;
@@ -3097,6 +3099,8 @@ void MassCreateContainers(char *cConfigfileName)
 
 				if(!uOSTemplate)
 				{
+					uOSLoopTemplate=0;
+
 					if(!cAltLabel[0])
 						sprintf(cAltLabel,"%31s",cLabel);
 
@@ -3110,7 +3114,7 @@ void MassCreateContainers(char *cConfigfileName)
 					if(mysql_num_rows(res)==1)
 					{
 						field=mysql_fetch_row(res);
-						sscanf(field[0],"%u",&uOSTemplate);
+						sscanf(field[0],"%u",&uOSLoopTemplate);
 						printf("tOSTemplate %s\n",field[1]);
 					}
 					else
@@ -3119,6 +3123,10 @@ void MassCreateContainers(char *cConfigfileName)
 						//printf("%s\n",gcQuery);
 					}
 					mysql_free_result(res);
+				}
+				else
+				{
+					uOSLoopTemplate=uOSTemplate;
 				}
 
 				//
@@ -3251,7 +3259,7 @@ void MassCreateContainers(char *cConfigfileName)
 					continue;
 				}
 
-				if(uOSTemplate==0)
+				if(uOSLoopTemplate==0)
 				{
 					printf("You must select a uOSTemplate\n");
 					continue;
@@ -3431,7 +3439,7 @@ void MassCreateContainers(char *cConfigfileName)
 								uIPv4,
 								uDatacenter,
 								uNode,
-								uOSTemplate,
+								uOSLoopTemplate,
 								uConfig,
 								uNameserver,
 								uSearchdomain,
@@ -3502,11 +3510,8 @@ void MassCreateContainers(char *cConfigfileName)
 					unsigned uNewVeid=0;
 					unsigned uStatus=uINITSETUP;
 
-					if(uCloneStopped)
-						uStatus=uSTOPPED;
-
 					uNewVeid=CommonCloneContainer(  uContainer,
-									uOSTemplate,
+									uOSLoopTemplate,
 									uConfig,
 									uNameserver,
 									uSearchdomain,
@@ -3522,7 +3527,8 @@ void MassCreateContainers(char *cConfigfileName)
 									cCloneHostname,
 									uCloneTargetNode,
 									uSyncPeriod,
-									1 );
+									1,
+									uCloneStopped);
 					if(!uNewVeid)
 					{
 						printf("Clone container %s creation failed!",cCloneHostname);

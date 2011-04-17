@@ -138,16 +138,17 @@ void ProcessJobQueue(unsigned uDebug)
 		exit(1);
 	}
 #define LINUX_SYSINFO_LOADS_SCALE 65536
-#define JOBQUEUE_MAXLOAD 20 //This is equivalent to uptime 20.00 last 1 min avg load
-	if(structSysinfo.loads[0]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
+#define JOBQUEUE_MAXLOAD 10 //This is equivalent to uptime 10.00 last 5 min avg load
+	if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
 	{
-		sprintf(gcQuery,"structSysinfo.loads[0]=%lu larger than JOBQUEUE_MAXLOAD=%u",
-				structSysinfo.loads[0]/LINUX_SYSINFO_LOADS_SCALE,JOBQUEUE_MAXLOAD);
+		sprintf(gcQuery,"structSysinfo.loads[1]=%lu larger than JOBQUEUE_MAXLOAD=%u",
+				structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE,JOBQUEUE_MAXLOAD);
 		logfileLine("ProcessJobQueue",gcQuery);
 		exit(1);
 	}
 	//debug only
-	//printf("structSysinfo.loads[0]/65536.0=%2.2f\n",(float)structSysinfo.loads[0]/(float)LINUX_SYSINFO_LOADS_SCALE);
+	//sprintf(gcQuery,"%2.2f",(float)structSysinfo.loads[1]/(float)LINUX_SYSINFO_LOADS_SCALE);
+	//logfileLine("structSysinfo.loads",gcQuery);
 	//exit(0);
 
 	//Uses login data from local.h
@@ -212,26 +213,47 @@ void ProcessJobQueue(unsigned uDebug)
 	//and the target node is a remote node.
 	//1 uACTIVE
 	//31 uSTOPPED
+	logfileLine("ProcessCloneSyncJob","Start");
 	sprintf(gcQuery,"SELECT uSource,uContainer FROM tContainer WHERE uSource>0 AND"
 			" uDatacenter=%u AND (uStatus=1 OR uStatus=31)",uDatacenter);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+		logfileLine("ProcessCloneSyncJob query error",mysql_error(&gMysql));
 		mysql_close(&gMysql);
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
+		if(sysinfo(&structSysinfo))
+		{
+			logfileLine("ProcessCloneSyncJob","sysinfo() failed");
+			mysql_free_result(res);
+			fclose(gLfp);
+			mysql_close(&gMysql);
+			exit(0);
+		}
+		if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
+		{
+			logfileLine("ProcessCloneSyncJob","structSysinfo.loads[1] too high");
+			mysql_free_result(res);
+			fclose(gLfp);
+			mysql_close(&gMysql);
+			exit(0);
+		}
 		//uSource==uContainer has to be on this node. We defer that determination
 		//to ProcessCloneSyncJob()
 		sscanf(field[0],"%u",&uContainer);
 		sscanf(field[1],"%u",&uRemoteContainer);
 		if((uError=ProcessCloneSyncJob(uNode,uContainer,uRemoteContainer)))
+		{
+			logfileLine("ProcessCloneSyncJob uError remote container",field[1]);
 			LogError("ProcessCloneSyncJob()",uError);
+		}
 	}
 	mysql_free_result(res);
+	logfileLine("ProcessCloneSyncJob","End");
 
 	if(guDebug)
 	{
@@ -266,6 +288,21 @@ void ProcessJobQueue(unsigned uDebug)
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
+		if(sysinfo(&structSysinfo))
+		{
+			logfileLine("ProcessJobQueue","sysinfo() failed");
+			exit(1);
+		}
+		if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
+		{
+			logfileLine("ProcessJobQueue-mainloop","structSysinfo.loads[1] too high");
+			mysql_free_result(res);
+			if(rmdir("/var/run/unxsvz.lock"))
+				logfileLine("ProcessJobQueue-mainloop","/var/run/unxsvz.lock rmdir error");
+			fclose(gLfp);
+			mysql_close(&gMysql);
+			exit(0);
+		}
 		sscanf(field[0],"%u",&uJob);
 		sscanf(field[1],"%u",&uContainer);
 		//Job dispatcher based on cJobName
