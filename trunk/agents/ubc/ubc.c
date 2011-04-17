@@ -63,23 +63,27 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 
 }//void logfileLine()
 
+#define LINUX_SYSINFO_LOADS_SCALE 65536
+#define JOBQUEUE_MAXLOAD 10 //This is equivalent to uptime 10.00 last 5 min avg load
+struct sysinfo structSysinfo;
 
 int main(int iArgc, char *cArgv[])
 {
-	struct sysinfo structSysinfo;
-
 	sprintf(gcProgram,"%.31s",cArgv[0]);
-
+	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
+	{
+		fprintf(stderr,"%s main() fopen logfile error\n",gcProgram);
+		exit(1);
+	}
+		
 	if(sysinfo(&structSysinfo))
 	{
 		logfileLine("main","sysinfo() failed",0);
 		exit(1);
 	}
-#define LINUX_SYSINFO_LOADS_SCALE 65536
-#define JOBQUEUE_MAXLOAD 20 //This is equivalent to uptime 20.00 last 1 min avg load
-	if(structSysinfo.loads[0]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
+	if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
 	{
-		logfileLine("main","structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD",0);
+		logfileLine("main","structSysinfo.loads[1] larger than JOBQUEUE_MAXLOAD",0);
 		exit(1);
 	}
 	//Check to see if this program is still running. If it is exit.
@@ -300,12 +304,6 @@ void ProcessUBC(void)
 		logfileLine("ProcessUBC","gethostname() failed",uContainer);
 		exit(1);
 	}
-	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
-	{
-		logfileLine("ProcessUBC","fopen logfile failed",uContainer);
-		exit(1);
-	}
-		
 
 	//Uses login data from local.h
 	TextConnectDb();
@@ -379,6 +377,17 @@ void ProcessUBC(void)
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
+		if(sysinfo(&structSysinfo))
+		{
+			logfileLine("ProcessUBC","sysinfo() failed",0);
+			exit(1);
+		}
+		if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
+		{
+			logfileLine("ProcessUBC","structSysinfo.loads[1] larger than JOBQUEUE_MAXLOAD",0);
+			exit(1);
+		}
+
 		sscanf(field[0],"%u",&uContainer);
 		sscanf(field[1],"%u",&guContainerOwner);
 		sscanf(field[2],"%u",&guStatus);

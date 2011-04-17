@@ -69,7 +69,8 @@ unsigned CommonCloneContainer(
 		char *cWizHostname,
 		unsigned uTargetNode,
 		unsigned uSyncPeriod,
-		unsigned uLoginClient);
+		unsigned uLoginClient,
+		unsigned uCloneStop);
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
@@ -115,7 +116,8 @@ void htmlContainerNotes(unsigned uContainer);
 void htmlContainerMount(unsigned uContainer);
 unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
-				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,unsigned uOwner,unsigned uCreatedBy);
+				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,
+				unsigned uOwner,unsigned uCreatedBy,unsigned uCloneStop);
 void htmlHealth(unsigned uContainer,unsigned uType);
 void htmlGroups(unsigned uNode, unsigned uContainer);
 unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus,
@@ -530,7 +532,8 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 										cWizHostname,
 										uTargetNode,
 										uSyncPeriod,
-										guLoginClient);
+										guLoginClient,
+										uCloneStop);
 								//Now that container exists we can assign group.
 								if(!uNewVeid)
 									continue;
@@ -1403,7 +1406,8 @@ void ExttContainerCommands(pentry entries[], int x)
 									cWizHostname,
 									uTargetNode,
 									uSyncPeriod,
-									guLoginClient);
+									guLoginClient,
+									uCloneStop);
 					SetContainerStatus(uContainer,uINITSETUP);
 					if(uGroup)
 						ChangeGroup(uNewVeid,uGroup);
@@ -1906,7 +1910,8 @@ void ExttContainerCommands(pentry entries[], int x)
 									cWizHostname,
 									uTargetNode,
 									uSyncPeriod,
-									guLoginClient);
+									guLoginClient,
+									uCloneStop);
 						SetContainerStatus(uContainer,uINITSETUP);
 						if(uGroup)
 							ChangeGroup(uNewVeid,uGroup);
@@ -2444,7 +2449,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					cWizHostname,
 					uTargetNode,
 					uSyncPeriod,
-					guLoginClient);
+					guLoginClient,
+					uCloneStop);
 
 				//Set group of clone to group of source.
 				uGroup=uGetGroup(0,uContainer);
@@ -4363,7 +4369,8 @@ unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContai
 
 
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
-				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,unsigned uOwner,unsigned uCreatedBy)
+				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,
+				unsigned uOwner,unsigned uCreatedBy,unsigned uCloneStop)
 {
 	unsigned uCount=0;
 
@@ -4381,7 +4388,7 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 				uDatacenter,uNode,uContainer,
 				uTargetNode,
 				uNewVeid,
-				uCloneStop,//file global
+				uCloneStop,
 				uPrevStatus,
 				uOwner,uCreatedBy);
 	mysql_query(&gMysql,gcQuery);
@@ -4514,7 +4521,7 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 		printf("uNewVeid=%u\n",uNewVeid);
 #endif
 
-		if(CloneContainerJob(uDatacenter,uSourceNode,uContainer,uTargetNode,uNewVeid,uStatus,uOwner,guLoginClient))
+		if(CloneContainerJob(uDatacenter,uSourceNode,uContainer,uTargetNode,uNewVeid,uStatus,uOwner,guLoginClient,uCloneStop))
 		{
 #ifdef DEBUG_CLONENODE
 			//Debug only
@@ -5219,7 +5226,8 @@ unsigned CommonCloneContainer(
 		char *cWizHostname,
 		unsigned uTargetNode,
 		unsigned uSyncPeriod,
-		unsigned uLoginClient)
+		unsigned uLoginClient,
+		unsigned uCloneStop)
 {	
 	MYSQL_RES *res;
 	unsigned uNewVeid=0;
@@ -5276,7 +5284,7 @@ unsigned CommonCloneContainer(
 	if(!uNewVeid)
 		return(0);
 
-	if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus,uOwner,uLoginClient))
+	if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus,uOwner,uLoginClient,uCloneStop))
 	{
 		//TODO something is wrong here.
 		//If we specify a class C mask then we check it here. Why?
