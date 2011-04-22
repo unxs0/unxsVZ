@@ -22,6 +22,9 @@ void DelProperties(unsigned uNode,unsigned uType);
 void tNodeNavList(unsigned uDataCenter);
 void tContainerNavList(unsigned uNode, char *cSearch);//tcontainerfunc.h
 void htmlGroups(unsigned uNode, unsigned uContainer);
+unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uSource,
+			unsigned uSourceNode, unsigned uSourceDatacenter, unsigned uIPv4, unsigned uStatus,
+			char *cLabel, char *cHostname);
 
 //external
 //tcontainerfunc.h
@@ -30,8 +33,12 @@ void htmlNodeHealth(unsigned uNode);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 				unsigned uTargetNode, unsigned uNewVeid);
 unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown);
-unsigned FailoverNode(unsigned uNode);
 char *cRatioColor(float *fRatio);
+unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
+				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
+				unsigned uStatus,unsigned uFailToJob);
+void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 //tcontainer.c
 void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
@@ -327,22 +334,15 @@ void ExttNodeCommands(pentry entries[], int x)
                         ProcesstNodeVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
 			{
-				unsigned uRetVal=0;
-
                         	guMode=0;
 
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
 					tNode("<blink>Error</blink>: This record was modified. Reload it.");
 
-                        	guMode=8001;
-                        	guMode=0;
+                        	guMode=8002;
 
-				uRetVal=FailoverNode(uNode);
-				if(uRetVal)
-					tNode("<blink>Error</blink>: Unexpected FailoverNode() error!");
-				else if(!uRetVal)
-					tNode("All failover node container jobs created ok");
+				tNode("For failover jobs created see clone panel below");
 
 			}
 		}
@@ -390,6 +390,12 @@ void ExttNodeButtons(void)
 					" and for other node`s corresponding clone container`s'"
 					" type=submit class=lwarnButton"
 					" name=gcCommand value='Confirm Failover Node'>\n");
+                break;
+
+                case 8002:
+                        printf("<p><u>Failover Wizard</u><br>");
+			printf("Failover jobs have been attempted to be created see panel below for results."
+				" See <a href=unxsVZ.cgi?gcFunction=tJob>tJob</a> for details.<p>");
                 break;
 
                 case 2000:
@@ -462,10 +468,20 @@ void ExttNodeAuxTable(void)
 	switch(guMode)
 	{
 		case 8001:
+		case 8002:
 			sprintf(gcQuery,"%s Clone Panel",cLabel);
 			OpenFieldSet(gcQuery,100);
-			sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname FROM tContainer WHERE"
-							" uNode=%u AND uSource=0 ORDER BY cLabel",uNode);
+			printf("<table>");
+			printf("<tr>"
+				"<td><u>master label</u></td>"
+				"<td><u>master hostname</u></td>"
+				"<td><u>clone label</u></td>"
+				"<td><u>clone hostname</u></td>"
+				"<td><u>seconds since rsync</u></td>"
+				"<td><u>job created</u></td>"
+				"</tr>");
+			sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,uNode,uDatacenter FROM tContainer WHERE"
+							" uNode=%u AND uSource=0 AND uStatus= ORDER BY cLabel",uNode);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -475,30 +491,67 @@ void ExttNodeAuxTable(void)
 				MYSQL_RES *res2;
 				MYSQL_ROW field2;
 
-				printf("<table>");
 				while((field=mysql_fetch_row(res)))
 				{
 					printf("<tr>");
-					printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+					printf("<td><a class=darkLink href=unxsVZ.cgi?"
 							"gcFunction=tContainer&uContainer=%s>"
-							"%s</a></td><td>%s</td>\n",
+							"%s</a></td><td>%s</td>",
 								field[0],field[1],field[2]);
-					sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,(UNIX_TIMESTAMP(NOW())-uModDate)"
+					sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,(UNIX_TIMESTAMP(NOW())-uModDate),"
+							"uDatacenter,uNode,uIPv4,uStatus,uOwner"
 							" FROM tContainer WHERE uSource=%s",field[0]);
 				        mysql_query(&gMysql,gcQuery);
 				        if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
 				        res2=mysql_store_result(&gMysql);
 					if((field2=mysql_fetch_row(res2)))
+					{
 						printf("<td><a class=darkLink href=unxsVZ.cgi?"
 							"gcFunction=tContainer&uContainer=%s>"
-							"%s</a></td><td>%s</td><td>%s</td>\n",
+							"%s</a></td><td>%s</td><td>%s</td>",
 								field2[0],field2[1],field2[2],field2[3]);
+						if(guMode==8002)
+						{ 
+							unsigned uRetVal=0;
+
+							unsigned uDatacenter=0;
+							unsigned uNode=0;
+							unsigned uContainer=0;
+							unsigned uIPv4=0;
+							unsigned uStatus=0;
+
+							unsigned uSource=0;
+							unsigned uSourceNode=0;
+							unsigned uSourceDatacenter=0;
+
+							sscanf(field2[0],"%u",&uContainer);
+							sscanf(field2[4],"%u",&uDatacenter);
+							sscanf(field2[5],"%u",&uNode);
+							sscanf(field2[6],"%u",&uIPv4);
+							sscanf(field2[7],"%u",&uStatus);
+
+							//TODO note file scope global
+							//Used in tcontainerfunc failover funcs.
+							sscanf(field2[8],"%u",&uOwner);
+
+							sscanf(field[0],"%u",&uSource);
+							sscanf(field[3],"%u",&uSourceNode);
+							sscanf(field[4],"%u",&uSourceDatacenter);
+
+							uRetVal=FailoverCloneContainer(uDatacenter,uNode,uContainer,uSource,
+								uSourceNode,uSourceDatacenter,uIPv4,uStatus,field2[1],field2[2]);
+							if(uRetVal==0)
+								printf("<td>X</td>");
+							else if(uRetVal==1)
+								printf("<td>!</td>");
+						}
+					}
 					mysql_free_result(res2);
-					printf("</tr>");
+					printf("</tr>\n");
 				}
-				printf("</table>");
 			}
+			printf("</table>");
 			CloseFieldSet();
 		break;
 
@@ -930,8 +983,28 @@ NextSection2:
 }//void htmlNodeHealth(unsigned uNode)
 
 
-unsigned FailoverNode(unsigned uNode)
+unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uSource,
+			unsigned uSourceNode, unsigned uSourceDatacenter, unsigned uIPv4, unsigned uStatus,
+			char *cLabel, char *cHostname)
 {
-	return(0);
+	unsigned uRetVal=2;
+	unsigned uFailToJob=0;
 
-}//unsigned FailoverNode(unsigned uNode)
+	if((uFailToJob=FailoverToJob(uDatacenter,uNode,uContainer)))
+	{
+		if(FailoverFromJob(uSourceDatacenter,uSourceNode,uSource,uIPv4,
+				cLabel,cHostname,uContainer,uStatus,uFailToJob))
+		{
+			SetContainerStatus(uContainer,uAWAITFAIL);
+			SetContainerStatus(uSource,uAWAITFAIL);
+			uRetVal=0;
+		}
+		else
+		{
+			uRetVal=1;
+		}
+	}
+
+	return(uRetVal);
+
+}//unsigned FailoverCloneContainer()
