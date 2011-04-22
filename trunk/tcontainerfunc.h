@@ -2634,6 +2634,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
 				unsigned uHostnameLen=0;
+				unsigned uLabelLen=0;
 
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -2641,14 +2642,20 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
                         	guMode=5001;
 				if(!strcmp(cWizHostname,cHostname) && !strcmp(cWizLabel,cLabel))
-					tContainer("<blink>Error:</blink> cHostname and cLabel are the same!"
-							" You must change at least one.");
+					tContainer("<blink>Error:</blink> cHostname and cLabel are the same!");
 				if((uHostnameLen=strlen(cWizHostname))<5)
 					tContainer("<blink>Error:</blink> cHostname too short!");
-				if(strlen(cWizLabel)<2)
+				if((uLabelLen=strlen(cWizLabel))<2)
 					tContainer("<blink>Error:</blink> cLabel too short!");
 				if(strchr(cWizLabel,'.'))
 					tContainer("<blink>Error:</blink> cLabel has at least one '.'!");
+				if(strstr(cWizLabel,"-clone"))
+					tContainer("<blink>Error:</blink> cLabel can't have '-clone'");
+				if(strstr(cWizHostname+(uHostnameLen-strlen(".cloneNN")-1),".clone"))
+					tContainer("<blink>Error:</blink> cHostname can't end with '.cloneN'");
+				//New rule: cLabel must be first part (first stop) of cHostname.
+				if(strncmp(cWizLabel,cWizHostname,uLabelLen))
+					tContainer("<blink>Error:</blink> cLabel must be first part of cHostname.");
 				//DNS sanity check
 				if(uCreateDNSJob)
 				{
@@ -2662,7 +2669,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
 				}
 				//No same names or hostnames for same XXXdatacenterXXX -now global restriction- allowed.
-				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
+				sprintf(gcQuery,"SELECT uContainer,uStatus,uIPv4 FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
 						" AND uContainer!=%u",
 							cWizHostname,cWizLabel,uContainer);
 				mysql_query(&gMysql,gcQuery);
@@ -2671,9 +2678,45 @@ void ExttContainerCommands(pentry entries[], int x)
         			res=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res)>0)
 				{
-					mysql_free_result(res);
-					tContainer("<blink>Error:</blink> cHostname or cLabel already used"
+					unsigned uOfflineContainer=0;
+					unsigned uOfflineStatusCheck=0;
+					unsigned uOfflineIPv4=0;
+        				MYSQL_ROW field;
+
+					if((field=mysql_fetch_row(res)))
+					{
+						sscanf(field[0],"%u",&uOfflineContainer);
+						sscanf(field[1],"%u",&uOfflineStatusCheck);
+						sscanf(field[2],"%u",&uOfflineIPv4);
+					}
+					if(uOfflineStatusCheck==uOFFLINE && uOfflineContainer)
+					{
+						//Delete offline container with same name as
+						//the change to name. Only the first one is removed for now.
+						//Release IPs
+						sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
+								" WHERE uIP=%u and uAvailable=0",uOfflineIPv4);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						//Now we can remove properties
+						DelProperties(uOfflineContainer,3);
+						//Remove from any groups
+						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",uOfflineContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",uOfflineContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
+					else
+					{
+						mysql_free_result(res);
+						tContainer("<blink>Error:</blink> cHostname or cLabel already used"
 							" in this unxsVZ system!");
+					}
 				}
 				mysql_free_result(res);
 
@@ -2945,8 +2988,9 @@ void ExttContainerButtons(void)
                         printf("<p><u>Hostname Change Wizard</u><br>");
 			printf("Here you will change the container label (name) and hostname."
 				" The container will not be stopped. Only operations depending on the /etc/hosts file"
-				" and the hostname may be affected. It is recommended that cLabel be the first part"
-				" of the cHostname.<p>\n");
+				" and the hostname may be affected. It is required that cLabel be the first part"
+				" of the cHostname. If an offline container with same target name exists it will be"
+				" deleted, to help with multi node system migration. <p>\n");
 			printf("<p>New cLabel<br>");
 			printf("<input title='Short container name, almost always the first part of cHostname'"
 					" type=text name=cWizLabel maxlength=31 value='%s'>\n",cLabel);
