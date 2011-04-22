@@ -30,6 +30,7 @@ void htmlNodeHealth(unsigned uNode);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 				unsigned uTargetNode, unsigned uNewVeid);
 unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown);
+unsigned FailoverNode(unsigned uNode);
 char *cRatioColor(float *fRatio);
 //tcontainer.c
 void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
@@ -302,6 +303,49 @@ void ExttNodeCommands(pentry entries[], int x)
 
 			}
 		}
+                else if(!strcmp(gcCommand,"Clone Failover Wizard"))
+                {
+                        ProcesstNodeVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+				
+				guMode=8001;
+				tNode("Select Target Node and IPv4 range");
+			}
+			else
+			{
+				tNode("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Confirm Failover Node"))
+                {
+                        ProcesstNodeVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			{
+				unsigned uRetVal=0;
+
+                        	guMode=0;
+
+				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+
+                        	guMode=8001;
+                        	guMode=0;
+
+				uRetVal=FailoverNode(uNode);
+				if(uRetVal)
+					tNode("<blink>Error</blink>: Unexpected FailoverNode() error!");
+				else if(!uRetVal)
+					tNode("All failover node container jobs created ok");
+
+			}
+		}
 	}
 
 }//void ExttNodeCommands(pentry entries[], int x)
@@ -335,6 +379,17 @@ void ExttNodeButtons(void)
 					" that don`t already have clones'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Clone Node'>\n");
+                break;
+
+                case 8001:
+                        printf("<p><u>Failover Wizard</u><br>");
+			printf("The current node should be down (or offline.)"
+				" Other nodes should have \"-clone\" (uSource!=0) containers that have been kept updated."
+				" The candidate containers are presented below for your approval.<p>");
+			printf("<p><input title='Create failover jobs for all the current node`s master containers"
+					" and for other node`s corresponding clone container`s'"
+					" type=submit class=lwarnButton"
+					" name=gcCommand value='Confirm Failover Node'>\n");
                 break;
 
                 case 2000:
@@ -389,6 +444,9 @@ void ExttNodeButtons(void)
 				printf("<p><input type=submit class=largeButton title='Clone all containers"
 					" on this node to another node'"
 					" name=gcCommand value='Clone Node Wizard'><br>");
+				printf("<input type=submit class=largeButton title='Failover to this node`s clone containers"
+					" the master containers`s of down node'"
+					" name=gcCommand value='Clone Failover Wizard'><br>");
 			}
 	}
 	CloseFieldSet();
@@ -398,36 +456,81 @@ void ExttNodeButtons(void)
 
 void ExttNodeAuxTable(void)
 {
-	if(!uNode) return;
+	MYSQL_RES *res;
+	MYSQL_ROW field;
 
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	sprintf(gcQuery,"%s Property Panel",cLabel);
-	OpenFieldSet(gcQuery,100);
-	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType=2 ORDER BY cName",uNode);
-
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-        res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	switch(guMode)
 	{
-		printf("<table>");
-		while((field=mysql_fetch_row(res)))
-		{
-			printf("<tr>");
-			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
-					"gcFunction=tProperty&uProperty=%s&cReturn=tNode_%u>"
-					"%s</a></td><td>%s</td>\n",
-						field[0],uNode,field[1],field[2]);
-			printf("</tr>");
-		}
-		printf("</table>");
-	}
+		case 8001:
+			sprintf(gcQuery,"%s Clone Panel",cLabel);
+			OpenFieldSet(gcQuery,100);
+			sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname FROM tContainer WHERE"
+							" uNode=%u AND uSource=0 ORDER BY cLabel",uNode);
+		        mysql_query(&gMysql,gcQuery);
+		        if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		        res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				MYSQL_RES *res2;
+				MYSQL_ROW field2;
 
-	CloseFieldSet();
+				printf("<table>");
+				while((field=mysql_fetch_row(res)))
+				{
+					printf("<tr>");
+					printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+							"gcFunction=tContainer&uContainer=%s>"
+							"%s</a></td><td>%s</td>\n",
+								field[0],field[1],field[2]);
+					sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,(UNIX_TIMESTAMP(NOW())-uModDate)"
+							" FROM tContainer WHERE uSource=%s",field[0]);
+				        mysql_query(&gMysql,gcQuery);
+				        if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				        res2=mysql_store_result(&gMysql);
+					if((field2=mysql_fetch_row(res2)))
+						printf("<td><a class=darkLink href=unxsVZ.cgi?"
+							"gcFunction=tContainer&uContainer=%s>"
+							"%s</a></td><td>%s</td><td>%s</td>\n",
+								field2[0],field2[1],field2[2],field2[3]);
+					mysql_free_result(res2);
+					printf("</tr>");
+				}
+				printf("</table>");
+			}
+			CloseFieldSet();
+		break;
+
+		default:
+			if(!uNode || guMode!=6) return;
+
+			sprintf(gcQuery,"%s Property Panel",cLabel);
+			OpenFieldSet(gcQuery,100);
+
+			sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE"
+							" uKey=%u AND uType=2 ORDER BY cName",uNode);
+		        mysql_query(&gMysql,gcQuery);
+		        if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		        res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				printf("<table>");
+				while((field=mysql_fetch_row(res)))
+				{
+					printf("<tr>");
+					printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+							"gcFunction=tProperty&uProperty=%s&cReturn=tNode_%u>"
+							"%s</a></td><td>%s</td>\n",
+								field[0],uNode,field[1],field[2]);
+					printf("</tr>");
+				}
+				printf("</table>");
+			}
+
+			CloseFieldSet();
+	}
 
 }//void ExttNodeAuxTable(void)
 
@@ -825,3 +928,10 @@ NextSection2:
 	mysql_free_result(res);
 
 }//void htmlNodeHealth(unsigned uNode)
+
+
+unsigned FailoverNode(unsigned uNode)
+{
+	return(0);
+
+}//unsigned FailoverNode(unsigned uNode)
