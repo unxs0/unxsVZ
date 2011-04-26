@@ -1195,7 +1195,9 @@ void StartContainer(unsigned uJob,unsigned uContainer)
 void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 {
 	char cTargetNodeIPv4[256]={""};
+	char cIPv4[32]={""};
 	unsigned uTargetNode=0;
+	unsigned uIPv4=0;
 
 	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
 	if(!uTargetNode)
@@ -1203,6 +1205,14 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		logfileLine("MigrateContainer","Could not determine uTargetNode");
 		tJobErrorUpdate(uJob,"uTargetNode==0");
 		return;
+	}
+
+	sscanf(cJobData,"uTargetNode=%*u;\nuIPv4=%u;",&uIPv4);
+	if(uIPv4)
+	{
+		logfileLine("MigrateContainer","Migration with new IP");
+		sprintf(cIPv4,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
+		logfileLine("MigrateContainer",cIPv4);
 	}
 
 	GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
