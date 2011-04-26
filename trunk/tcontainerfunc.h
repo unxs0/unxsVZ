@@ -2594,6 +2594,11 @@ void ExttContainerCommands(pentry entries[], int x)
 				{
 					uStatus=uAWAITMIG;
 					SetContainerStatus(uContainer,21);//Awaiting Migration
+					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+								" WHERE uIP=%u and uAvailable=1",uWizIPv4);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("MigrateContainerJob() Done");
 				}
@@ -4287,8 +4292,7 @@ unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"
-			",cJobData='uTargetNode=%u;\n'"
-			"uIPv4=%u;'"
+			",cJobData='uTargetNode=%u;\nuIPv4=%u;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,uTargetNode,
 				uDatacenter,uNode,uContainer,
