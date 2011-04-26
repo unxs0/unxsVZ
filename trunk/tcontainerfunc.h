@@ -115,7 +115,7 @@ void SetContainerNode(unsigned uContainer,unsigned uNode);
 void htmlContainerNotes(unsigned uContainer);
 void htmlContainerMount(unsigned uContainer);
 unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode,
-			unsigned uOwner, unsigned uLoginClient);
+			unsigned uOwner, unsigned uLoginClient, unsigned uIPv4);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,
 				unsigned uOwner,unsigned uCreatedBy,unsigned uCloneStop);
@@ -2515,7 +2515,82 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup)
 					ChangeGroup(uContainer,uGroup);
 
-				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient))
+				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient,0))
+				{
+					uStatus=uAWAITMIG;
+					SetContainerStatus(uContainer,21);//Awaiting Migration
+					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+					tContainer("MigrateContainerJob() Done");
+				}
+				else
+				{
+					tContainer("<blink>Error:</blink> No jobs created!");
+				}
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Remote Migration"))
+                {
+                        ProcesstContainerVars(entries,x);
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+				guMode=10001;
+				tContainer("Select Migration Target");
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Confirm Remote Migration"))
+                {
+                        ProcesstContainerVars(entries,x);
+			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
+			{
+				unsigned uTargetDatacenter=0;
+                        	guMode=0;
+
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+
+                        	guMode=10001;
+				if(uTargetNode==uNode)
+					tContainer("<blink>Error:</blink> Can't migrate to same node. Try 'Template Wizard'");
+				if(uTargetNode==0)
+					tContainer("<blink>Error:</blink> Please select a valid target node");
+				sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
+				if(uTargetDatacenter==uDatacenter)
+					tContainer("<blink>Error:</blink> Can't migrate to same datacenter. Try 'Migration Wizard'");
+				if(uVeth)
+				{
+					GetNodeProp(uNode,"Container-Type",cContainerType);
+					if(!strstr(cContainerType,"VETH"))
+						tContainer("<blink>Error:</blink> uNode selected does not support VETH!");
+						
+				}
+				if(uWizIPv4==0)
+					tContainer("<blink>Error:</blink> Please select a valid uIPv4");
+				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
+				if(uTargetDatacenter!=uIPv4Datacenter)
+					tContainer("<blink>Error:</blink> The specified uIPv4 does not "
+							"belong to the remote datacenter.");
+				tContainer("d1");
+                        	guMode=0;
+
+				//Optional change group.
+				if(uGroup)
+					ChangeGroup(uContainer,uGroup);
+
+				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient,uWizIPv4))
 				{
 					uStatus=uAWAITMIG;
 					SetContainerStatus(uContainer,21);//Awaiting Migration
@@ -3044,12 +3119,30 @@ void ExttContainerButtons(void)
 				" be informed at the next step\n<p>\n");
 			printf("<p>Target node<br>");
 			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
-			printf("<p><input title='Create a migration job for the current container'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Confirm Migration'>\n");
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			printf("<p><input title='Create a migration job for the current container'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Migration'>\n");
+                break;
+
+                case 10001:
+                        printf("<p><u>Remote Migration</u><br>");
+			printf("Here you will select the hardware node target (must be on a different datacenter.)"
+				" If the selected node is"
+				" oversubscribed, not available, or scheduled for maintenance. You will"
+				" be informed at the next step\n<p>\n");
+			printf("<p>Target node<br>");
+			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
+			printf("<p>Select new IPv4<br>");
+			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
+			printf("<p>Optional primary group change<br>");
+			uGroup=uGetGroup(0,uContainer);//0=not for node
+			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			printf("<p><input title='Create a migration job for the current container'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Remote Migration'>\n");
                 break;
 
                 case 7001:
@@ -3281,6 +3374,9 @@ void ExttContainerButtons(void)
 					printf("<p><input title='Migrate container to another hardware node'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Migration Wizard'><br>\n");
+					printf("<input title='Migrate container to another datacenter node'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Remote Migration'><br>\n");
 					if(!strstr(cLabel,"-clone"))
 					printf("<input title='Clone a container to this or another hardware node."
 					" The clone will be an online container with another IP and hostname."
@@ -4183,7 +4279,7 @@ void htmlGroups(unsigned uNode, unsigned uContainer)
 
 
 unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode,
-			unsigned uOwner, unsigned uLoginClient)
+			unsigned uOwner, unsigned uLoginClient, unsigned uIPv4)
 {
 	unsigned uCount=0;
 
@@ -4191,11 +4287,13 @@ unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"
-			",cJobData='uTargetNode=%u;'"
+			",cJobData='uTargetNode=%u;\n'"
+			"uIPv4=%u;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,uTargetNode,
 				uDatacenter,uNode,uContainer,
 				uTargetNode,
+				uIPv4,
 				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
