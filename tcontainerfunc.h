@@ -114,7 +114,8 @@ void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 void htmlContainerNotes(unsigned uContainer);
 void htmlContainerMount(unsigned uContainer);
-unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode);
+unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode,
+			unsigned uOwner, unsigned uLoginClient);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,
 				unsigned uOwner,unsigned uCreatedBy,unsigned uCloneStop);
@@ -2486,6 +2487,7 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
+				unsigned uTargetDatacenter=0;
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -2497,6 +2499,9 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Can't migrate to same node. Try 'Template Wizard'");
 				if(uTargetNode==0)
 					tContainer("<blink>Error:</blink> Please select a valid target node");
+				sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
+				if(uTargetDatacenter!=uDatacenter)
+					tContainer("<blink>Error:</blink> Can't migrate to different datacenter. Try 'Remote Migration'");
 				if(uVeth)
 				{
 					GetNodeProp(uNode,"Container-Type",cContainerType);
@@ -2510,7 +2515,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup)
 					ChangeGroup(uContainer,uGroup);
 
-				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode))
+				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient))
 				{
 					uStatus=uAWAITMIG;
 					SetContainerStatus(uContainer,21);//Awaiting Migration
@@ -4177,7 +4182,8 @@ void htmlGroups(unsigned uNode, unsigned uContainer)
 }//void htmlGroups(...)
 
 
-unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode)
+unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode,
+			unsigned uOwner, unsigned uLoginClient)
 {
 	unsigned uCount=0;
 
@@ -4190,7 +4196,7 @@ unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 				uContainer,uTargetNode,
 				uDatacenter,uNode,uContainer,
 				uTargetNode,
-				uOwner,guLoginClient);
+				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
