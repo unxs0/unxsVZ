@@ -828,7 +828,7 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 	//Check 1-. Check to make sure container is on this node, if not 
 	//	give job back to queue
-	sprintf(gcQuery,"/usr/sbin/vzlist %u > /dev/null",uContainer);
+	sprintf(gcQuery,"/usr/sbin/vzlist %u > /dev/null 2>&1",uContainer);
 	if(system(gcQuery))
 	{
 		logfileLine("ChangeIPContainer","Job returned to queue");
