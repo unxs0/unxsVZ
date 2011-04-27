@@ -826,6 +826,17 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
         MYSQL_ROW field;
 	unsigned uVeth=0;
 
+	//Check 1-. Check to make sure container is on this node, if not 
+	//	give job back to queue
+	sprintf(gcQuery,"/usr/sbin/vzlist %u > /dev/null",uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("ChangeIPContainer","Job returned to queue");
+		tJobWaitingUpdate(uJob);
+		return;
+	}
+
+
 	//0-. Get required data
 	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uVeth"
 			" FROM tContainer,tIP WHERE uContainer=%u"
