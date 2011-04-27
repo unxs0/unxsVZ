@@ -481,7 +481,7 @@ void ExttNodeAuxTable(void)
 				"<td><u>job created</u></td>"
 				"</tr>");
 			sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,uNode,uDatacenter FROM tContainer WHERE"
-							" uNode=%u AND uSource=0 AND uStatus= ORDER BY cLabel",uNode);
+							" uNode=%u AND uSource=0 AND uStatus=%u ORDER BY cLabel",uNode,uACTIVE);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
