@@ -446,16 +446,8 @@ void tJobInput(unsigned uMode)
 	}
 //uContainer
 	OpenRow("uContainer","black");
-	if(guPermLevel>=0 && uMode)
-	{
-		printf("%s<input type=hidden name=uContainer value=%u >\n",
-				ForeignKey("tContainer","cLabel",uContainer),uContainer);
-	}
-	else
-	{
-		printf("%s<input type=hidden name=uContainer value=%u >\n",
-				ForeignKey("tContainer","cLabel",uContainer),uContainer);
-	}
+	printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>%s</a><input type=hidden name=uContainer value=%u >\n",
+				uContainer,ForeignKey("tContainer","cLabel",uContainer),uContainer);
 //cJobData
 	OpenRow(LANG_FL_tJob_cJobData,"black");
 	printf("<textarea title='%s' cols=80 wrap=hard rows=8 name=cJobData ",LANG_FT_tJob_cJobData);

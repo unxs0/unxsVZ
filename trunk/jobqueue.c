@@ -89,6 +89,7 @@ int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
 unsigned TextConnectDb(void); //mysqlconnect.c
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
+void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter);
 void GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
 		unsigned uNode,
@@ -1192,11 +1193,14 @@ void StartContainer(unsigned uJob,unsigned uContainer)
 }//void StartContainer(...)
 
 
+//Covers Migration Wizard and Remote Migration
+//Remote Migration must setup ChangeIP and DNS jobs
 void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 {
 	char cTargetNodeIPv4[256]={""};
 	char cIPv4[32]={""};
 	unsigned uTargetNode=0;
+	unsigned uTargetDatacenter=0;
 	unsigned uIPv4=0;
 
 	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
@@ -1213,13 +1217,21 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		logfileLine("MigrateContainer","Migration with new IP");
 		sprintf(cIPv4,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
 		logfileLine("MigrateContainer",cIPv4);
+		sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
+
+		//Remote migration uses node name for ssh
+		sprintf(cTargetNodeIPv4,"%.255s",ForeignKey("tNode","cLabel",uTargetNode));
+	}
+	else
+	{
+		//Local cluster migration use private LAN IP
+		GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
 	}
 
-	GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
 	if(!cTargetNodeIPv4[0])
 	{
-		logfileLine("MigrateContainer","Could not determine tProperty.cTargetNodeIPv4");
-		tJobErrorUpdate(uJob,"tProperty.cTargetNodeIPv4");
+		logfileLine("MigrateContainer","Could not determine cTargetNodeIPv4");
+		tJobErrorUpdate(uJob,"cTargetNodeIPv4");
 		return;
 	}
 
@@ -1296,6 +1308,8 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//Everything ok
 	SetContainerStatus(uContainer,1);//Active
 	SetContainerNode(uContainer,uTargetNode);//Migrated!
+	if(uIPv4 && uTargetDatacenter)
+		SetContainerDatacenter(uContainer,uTargetDatacenter);//Remote Migration
 	tJobDoneUpdate(uJob);
 
 }//void MigrateContainer(...)
