@@ -79,7 +79,6 @@ static char cuTemplateDropDown[256]={""};
 static char cConfigLabel[32]={""};
 static char cWizHostname[100]={""};
 static char cWizLabel[32]={""};
-static char cIPOld[32]={""};
 static char cService1[32]={""};//Also used for optional container password
 static char cService2[32]={""};
 static char cService3[32]={""};
@@ -112,6 +111,7 @@ unsigned StopContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContaine
 unsigned CancelContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uCancelMode);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
+void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter);
 void htmlContainerNotes(unsigned uContainer);
 void htmlContainerMount(unsigned uContainer);
 unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode,
@@ -124,7 +124,8 @@ void htmlGroups(unsigned uNode, unsigned uContainer);
 unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus,
 		unsigned uOwner,char *cConfigLabel);
 unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
-unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned IPContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
+			unsigned uOwner,unsigned uLoginClient,char const *cIPOld);
 unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown);
 char *cRatioColor(float *fRatio);
@@ -2556,6 +2557,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
 				unsigned uTargetDatacenter=0;
+				unsigned uIPv4Available=0;
                         	guMode=0;
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -2577,13 +2579,30 @@ void ExttContainerCommands(pentry entries[], int x)
 						tContainer("<blink>Error:</blink> uNode selected does not support VETH!");
 						
 				}
+				if(uIPv4==0)
+					tContainer("<blink>Error:</blink> Unexpected current uIPv4");
 				if(uWizIPv4==0)
 					tContainer("<blink>Error:</blink> Please select a valid uIPv4");
 				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
 				if(uTargetDatacenter!=uIPv4Datacenter)
 					tContainer("<blink>Error:</blink> The specified uIPv4 does not "
 							"belong to the remote datacenter.");
-				tContainer("d1");
+				sscanf(ForeignKey("tIP","uAvailable",uWizIPv4),"%u",&uIPv4Available);
+				if(!uIPv4Available)
+					tContainer("<blink>Error:</blink> The specified uIPv4 is no longer"
+							"available, select another.");
+
+				//External DNS job check
+				unsigned uHostnameLen=0;
+				cunxsBindARecordJobZone[0]=0;
+				GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+				if(!cunxsBindARecordJobZone[0])
+					tContainer("<blink>Error:</blink> Create job for unxsBind,"
+								" but no cunxsBindARecordJobZone");
+				uHostnameLen=strlen(cHostname);
+				if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
+					tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+
                         	guMode=0;
 
 				//Optional change group.
@@ -2592,13 +2611,36 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient,uWizIPv4))
 				{
+					char cIPOld[32]={""};
+
 					uStatus=uAWAITMIG;
 					SetContainerStatus(uContainer,21);//Awaiting Migration
+
+					//Mark IP used
 					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 								" WHERE uIP=%u and uAvailable=1",uWizIPv4);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
+
+					//Change container IP
+					sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
+								" WHERE uContainer=%u",uWizIPv4,uContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+
+					//Create change IP job
+					sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
+					if(!cIPOld[0])
+						htmlPlainTextError("Unexpected !cIPOld");
+					//Note that job is for new node
+					//Then this job must run after migration.
+					if(IPContainerJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,cIPOld))
+
+					//Create unxsBind DNS
+					CreateDNSJob(uWizIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient);
+
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("MigrateContainerJob() Done");
 				}
@@ -2861,6 +2903,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
 				unsigned uOldIPv4;
 				unsigned uHostnameLen=0;
+				char cIPOld[32]={""};
 
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
@@ -2911,7 +2954,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup)
 					ChangeGroup(uContainer,uGroup);
 				uIPv4=uWizIPv4;
-				if(IPContainerJob(uDatacenter,uNode,uContainer))
+				if(IPContainerJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient,cIPOld))
 				{
 					uStatus=uAWAITIP;
 					SetContainerStatus(uContainer,71);
@@ -4211,6 +4254,18 @@ void SetContainerNode(unsigned uContainer,unsigned uNode)
 }//void SetContainerNode(unsigned uContainer,unsigned uNode)
 
 
+void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter)
+{
+	sprintf(gcQuery,"UPDATE tContainer SET uDatacenter=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+			" WHERE uContainer=%u",
+					uDatacenter,guLoginClient,uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+}//void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter)
+
+
 void htmlContainerNotes(unsigned uContainer)
 {
         MYSQL_RES *res;
@@ -4469,7 +4524,8 @@ unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCo
 }//unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
 
 
-unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+unsigned IPContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
+			unsigned uOwner,unsigned uLoginClient,char const *cIPOld)
 {
 	unsigned uCount=0;
 
@@ -4481,7 +4537,7 @@ unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContaine
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,cIPOld,
-				uOwner,guLoginClient);
+				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -4489,7 +4545,7 @@ unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContaine
 	unxsVZLog(uContainer,"tContainer","ChangeIP");
 	return(uCount);
 
-}//unsigned IPContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+}//unsigned IPContainerJob()
 
 
 unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
