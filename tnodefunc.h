@@ -498,7 +498,7 @@ void ExttNodeAuxTable(void)
 							"gcFunction=tContainer&uContainer=%s>"
 							"%s</a></td><td>%s</td>",
 								field[0],field[1],field[2]);
-					sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,(UNIX_TIMESTAMP(NOW())-uModDate),"
+					sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,(UNIX_TIMESTAMP(NOW())-uBackupDate),"
 							"uDatacenter,uNode,uIPv4,uStatus,uOwner"
 							" FROM tContainer WHERE uSource=%s",field[0]);
 				        mysql_query(&gMysql,gcQuery);
