@@ -3980,7 +3980,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 				" tContainer.uNode=tNode.uNode AND"
 				" tNode.uStatus=1 AND"//Active NODE
 				" tContainer.uContainer=%u AND"
-				" tContainer.uModDate+%u<=UNIX_TIMESTAMP(NOW())",uRemoteContainer,uPeriod);
+				" tContainer.uBackupDate+%u<=UNIX_TIMESTAMP(NOW())",uRemoteContainer,uPeriod);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -3997,9 +3997,10 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 				return(4);
 			}
 			//Before running a recurring job we must update the cloned containers 
-			// uModDate. This is done to not allow a script to run concurrently,
+			// uBackupDate. This is done to not allow a script to run concurrently,
 			// scripts should also have a lockfile mechanism to avoid this.
-			sprintf(gcQuery,"UPDATE tContainer SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1"
+			//New uBackupDate
+			sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=UNIX_TIMESTAMP(NOW())"
 						" WHERE uContainer=%u",uRemoteContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -4021,9 +4022,9 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 			else
 			{
 				//After running a recurring job we also update the cloned containers 
-				// uModDate. This is for marking last time it was done.
-				sprintf(gcQuery,"UPDATE tContainer SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1"
-							" WHERE uContainer=%u",uRemoteContainer);
+				// uBackupDate. This is for marking last time it was done.
+				sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uContainer=%u",uRemoteContainer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{

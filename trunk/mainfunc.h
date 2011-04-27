@@ -1003,6 +1003,7 @@ void UpdateSchema(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uVeth=0;
+	unsigned uBackupDate=0;
 	unsigned uSource=0;
 
 	unsigned uIPDatacenter=0;
@@ -1048,6 +1049,10 @@ void UpdateSchema(void)
 			uSource=1;
 			if(!strcmp(field[2],"YES"))
 				uIncorrectSource=1;
+		}
+		if(!strcmp(field[0],"uBackupDate"))
+		{
+			uBackupDate=1;
 		}
 	}
        	mysql_free_result(res);
@@ -1197,6 +1202,15 @@ void UpdateSchema(void)
 			printf("%s\n",mysql_error(&gMysql));
 		else
 			printf("Added uVeth to tContainer\n");
+	}
+	if(!uBackupDate)
+	{
+		sprintf(gcQuery,"ALTER TABLE tContainer ADD uBackupDate INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uBackupDate to tContainer\n");
 	}
 
 	sprintf(gcQuery,"SELECT uStatus FROM tStatus WHERE uStatus=81");	
@@ -1412,6 +1426,7 @@ void UpdateSchema(void)
 			printf("Added uDatacenter to tSearchdomain\n");
 	}
 
+	//Please fix this TODO
 		sprintf(gcQuery,"ALTER TABLE tJob MODIFY cRemoteMsg VARCHAR(64) NOT NULL DEFAULT ''");
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
