@@ -136,10 +136,10 @@ void AddMountProps(unsigned uContainer);
 void CopyContainerProps(unsigned uSource, unsigned uTarget);
 //These two jobs are always done in pairs. Even though the second may run much later
 //for example after hardware failure has been fixed.
-unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,unsigned uOwner,unsigned uLoginClient);
 unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
-				unsigned uStatus,unsigned uFailToJob);
+				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient);
 void htmlCloneInfo(unsigned uContainer);
 void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,
 			char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
@@ -635,10 +635,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							 (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
-							if(FailoverToJob(sContainer.uDatacenter,sContainer.uNode,
-								uCtContainer))
+							unsigned uFailToJob=0;
+							if((uFailToJob=FailoverToJob(sContainer.uDatacenter,sContainer.uNode,
+								uCtContainer,sContainer.uOwner,guLoginClient)))
 							{
-								unsigned uFailToJob=mysql_insert_id(&gMysql);
 								unsigned uSourceDatacenter=0;
 								unsigned uSourceNode=0;
 								sscanf(ForeignKey("tContainer","uDatacenter",
@@ -654,7 +654,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 									sContainer.uSource,sContainer.uIPv4,
 									sContainer.cLabel,sContainer.cHostname,
 										uCtContainer,sContainer.uStatus,
-										uFailToJob))
+										uFailToJob,sContainer.uOwner,guLoginClient))
 								{
 									SetContainerStatus(uCtContainer,uAWAITFAIL);
 									SetContainerStatus(sContainer.uSource,uAWAITFAIL);
@@ -3035,9 +3035,9 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Unexpected source container status!");
                         	guMode=0;
 
-				if(FailoverToJob(uDatacenter,uNode,uContainer))
+				unsigned uFailToJob=0;
+				if((uFailToJob=FailoverToJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient)))
 				{
-					unsigned uFailToJob=mysql_insert_id(&gMysql);
 					unsigned uSourceDatacenter=0;
 					unsigned uSourceNode=0;
 
@@ -3047,7 +3047,7 @@ void ExttContainerCommands(pentry entries[], int x)
 //These two jobs are always done in pairs. Even though the second may run much later
 //for example after hardware failure has been fixed.
 					if(FailoverFromJob(uSourceDatacenter,uSourceNode,uSource,uIPv4,
-							cLabel,cHostname,uContainer,uStatus,uFailToJob))
+							cLabel,cHostname,uContainer,uStatus,uFailToJob,uOwner,guLoginClient))
 					{
 						uStatus=uAWAITFAIL;
 						SetContainerStatus(uContainer,uAWAITFAIL);
@@ -5156,20 +5156,19 @@ void CopyContainerProps(unsigned uSource, unsigned uTarget)
 
 
 //Both these failover jobs must in some sense check each other's status it seems at first blush.
-unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+unsigned FailoverToJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner,unsigned uLoginClient)
 {
 	unsigned uCount=0;
 
 	if(!uDatacenter || !uNode || !uContainer) return(0);
-
-	if(!uOwner) uOwner=1;
-	if(!guLoginClient) guLoginClient=1;
 
 	//This job should try to stop the uSource container if possible. Or at least
 	//make sure it's IP is down. There are many failover scenarios it seems at first glance
 	//we will try to handle all of them.
 	//Remote datacenter failover seems to involve DNS changes. Since we can't use the VIP
 	//method that should be available in a correctly configured unxsVZ datacenter.
+	//debug only
+	//sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverToJob(%u)',cJobName='FailoverToDEBUG'"
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverToJob(%u)',cJobName='FailoverTo'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())"
@@ -5177,7 +5176,7 @@ unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
-				uOwner,guLoginClient);
+				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -5189,18 +5188,17 @@ unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer
 
 unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
-				unsigned uStatus,unsigned uFailToJob)
+				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient)
 {
 	unsigned uCount=0;
 
 	if(!uDatacenter || !uNode || !uContainer) return(0);
 
-	if(!uOwner) uOwner=1;
-	if(!guLoginClient) guLoginClient=1;
-
 	//If the source node is down this job will be stuck
 	//When node is fixed and boots we must avoid the source continater coming up with same IP
 	//as the new production container (the FailoverToJob container.)
+	//debug only
+	//sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverFromJob(%u)',cJobName='FailoverFromDEBUG'"
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverFromJob(%u)',cJobName='FailoverFrom'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())"
@@ -5211,7 +5209,7 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 				uContainer,
 				uDatacenter,uNode,uContainer,
 				uIPv4,cLabel,cHostname,uSource,uStatus,uFailToJob,
-				uOwner,guLoginClient);
+				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
