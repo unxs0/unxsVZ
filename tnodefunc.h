@@ -24,8 +24,7 @@ void tContainerNavList(unsigned uNode, char *cSearch);//tcontainerfunc.h
 void htmlGroups(unsigned uNode, unsigned uContainer);
 unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uSource,
 			unsigned uSourceNode, unsigned uSourceDatacenter, unsigned uIPv4, unsigned uStatus,
-			char *cLabel, char *cHostname);
-
+			char *cLabel, char *cHostname,unsigned uOwner,unsigned uDebug);
 //external
 //tcontainerfunc.h
 void htmlHealth(unsigned uContainer,unsigned uType);
@@ -34,11 +33,11 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 				unsigned uTargetNode, unsigned uNewVeid);
 unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown);
 char *cRatioColor(float *fRatio);
-unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+void SetContainerStatus(unsigned uContainer,unsigned uStatus);
+unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,unsigned uOwner,unsigned uLoginClient);
 unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
-				unsigned uStatus,unsigned uFailToJob);
-void SetContainerStatus(unsigned uContainer,unsigned uStatus);
+				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient);
 //tcontainer.c
 void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
@@ -540,7 +539,8 @@ void ExttNodeAuxTable(void)
 							sscanf(field[4],"%u",&uSourceDatacenter);
 
 							uRetVal=FailoverCloneContainer(uDatacenter,uNode,uContainer,uSource,
-								uSourceNode,uSourceDatacenter,uIPv4,uStatus,field2[1],field2[2]);
+								uSourceNode,uSourceDatacenter,uIPv4,uStatus,field2[1],field2[2],
+								uOwner,1);//1 debug on
 							if(uRetVal==0)
 								printf("<td>X</td>");
 							else if(uRetVal==1)
@@ -985,18 +985,21 @@ NextSection2:
 
 unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uSource,
 			unsigned uSourceNode, unsigned uSourceDatacenter, unsigned uIPv4, unsigned uStatus,
-			char *cLabel, char *cHostname)
+			char *cLabel, char *cHostname,unsigned uOwner,unsigned uDebug)
 {
 	unsigned uRetVal=2;
 	unsigned uFailToJob=0;
 
-	if((uFailToJob=FailoverToJob(uDatacenter,uNode,uContainer)))
+	if((uFailToJob=FailoverToJob(uDatacenter,uNode,uContainer,uOwner,1)))
 	{
 		if(FailoverFromJob(uSourceDatacenter,uSourceNode,uSource,uIPv4,
-				cLabel,cHostname,uContainer,uStatus,uFailToJob))
+				cLabel,cHostname,uContainer,uStatus,uFailToJob,uOwner,1))
 		{
-			SetContainerStatus(uContainer,uAWAITFAIL);
-			SetContainerStatus(uSource,uAWAITFAIL);
+			if(!uDebug)
+			{
+				SetContainerStatus(uContainer,uAWAITFAIL);
+				SetContainerStatus(uSource,uAWAITFAIL);
+			}
 			uRetVal=0;
 		}
 		else
