@@ -28,6 +28,7 @@ static char gcNewHostParam0[33]={""};
 static char gcNewHostParam1[33]={""};
 static char gcDID[17]={""};
 static char gcCustomerName[33]={""};
+static char *gcShowDetails="";
 
 
 //TOC incomplete TODO
@@ -71,6 +72,8 @@ void ProcessContainerVars(pentry entries[], int x)
 			sprintf(gcDID,"%.16s",cNumbersOnly(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcCustomerName"))
 			sprintf(gcCustomerName,"%.32s",CustomerName(entries[i].val));
+		else if(!strcmp(entries[i].name,"gcShowDetails"))
+			gcShowDetails="checked";
 	}
 
 }//void ProcessContainerVars(pentry entries[], int x)
@@ -550,7 +553,7 @@ void ContainerCommands(pentry entries[], int x)
 			guContainer=guNewContainer;
 			htmlContainer();
 		}
-		else if(!strcmp(gcFunction,"Container Report"))
+		else if(!strcmp(gcFunction,"Container Report") && guPermLevel>=10)
 		{
         		MYSQL_RES *res;
 	        	MYSQL_ROW field;
@@ -1070,6 +1073,91 @@ void ContainerCommands(pentry entries[], int x)
 			mysql_free_result(res);
 			gcMessage="Found single container based on customer pattern.";
 		}//Search Customer
+		else if(!strcmp(gcFunction,"DID Report") && guPermLevel>=10)
+		{
+        		MYSQL_RES *res;
+	        	MYSQL_ROW field;
+
+			printf("Content-type: text/plain\n\n");
+
+			printf("cHostname,cDID\n");
+			sprintf(gcQuery,"SELECT"
+					" tContainer.cHostname,"
+					" tProperty.cValue"
+					" FROM tContainer,tProperty"
+					" WHERE tContainer.uSource=0 AND"
+					" tContainer.uContainer=tProperty.uKey AND"
+					" tProperty.uType=3 AND"
+					" tProperty.cName='cOrg_OpenSIPS_DID' ORDER BY tContainer.cHostname");
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			while((field=mysql_fetch_row(res)))
+			{
+				printf("%s,%s\n",field[0],field[1]);
+			}
+			mysql_free_result(res);
+
+			printf("\ncHostname,cExtension\n");
+			sprintf(gcQuery,"SELECT"
+					" tContainer.cHostname,"
+					" tProperty.cValue"
+					" FROM tContainer,tProperty"
+					" WHERE tContainer.uSource=0 AND"
+					" tContainer.uContainer=tProperty.uKey AND"
+					" tProperty.uType=3 AND"
+					" tProperty.cName='cOrg_Extension' ORDER BY tContainer.cHostname");
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			while((field=mysql_fetch_row(res)))
+			{
+				printf("%s,%s\n",field[0],field[1]);
+			}
+			mysql_free_result(res);
+
+			printf("\ncHostname,cTrunk\n");
+			sprintf(gcQuery,"SELECT"
+					" tContainer.cHostname,"
+					" tProperty.cValue"
+					" FROM tContainer,tProperty"
+					" WHERE tContainer.uSource=0 AND"
+					" tContainer.uContainer=tProperty.uKey AND"
+					" tProperty.uType=3 AND"
+					" tProperty.cName='cOrg_SIPTrunk' ORDER BY tContainer.cHostname");
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			while((field=mysql_fetch_row(res)))
+			{
+				printf("%s,%s\n",field[0],field[1]);
+			}
+			mysql_free_result(res);
+
+			printf("\ncHostname,cFreePBXVersion\n");
+			sprintf(gcQuery,"SELECT"
+					" tContainer.cHostname,"
+					" tProperty.cValue"
+					" FROM tContainer,tProperty"
+					" WHERE tContainer.uSource=0 AND"
+					" tContainer.uContainer=tProperty.uKey AND"
+					" tProperty.uType=3 AND"
+					" tProperty.cName='cOrg_FreePBXVersion' ORDER BY tContainer.cHostname");
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			while((field=mysql_fetch_row(res)))
+			{
+				printf("%s,%s\n",field[0],field[1]);
+			}
+			mysql_free_result(res);
+
+			exit(0);
+		}//DID Report
 
 		htmlContainer();
 	}
@@ -1464,7 +1552,7 @@ void funcContainerInfo(FILE *fp)
 
 	//SUBSTR based on 5 char cOrg_ prefix
 	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName LIKE 'cOrg_%%'"
-			" ORDER BY cName",guContainer);
+			" AND cName!='cOrg_Extension' AND cName!='cOrg_OpenSIPS_DID' AND cName!='cOrg_SIPTrunk' ORDER BY cName",guContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1477,6 +1565,23 @@ void funcContainerInfo(FILE *fp)
 			" class=\"type_fields_off\"> </td></tr>\n",field[0],field[0],field[0],field[1]);
 	}
 	mysql_free_result(res);
+
+	if(gcShowDetails[0])
+	{
+		sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u"
+			" AND (cName='cOrg_Extension' OR cName='cOrg_OpenSIPS_DID' OR cName='cOrg_SIPTrunk') ORDER BY cName",guContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=%s')\">"
+			" <strong>%s</strong></a></td><td><input type=text name='%s' value='%s' size=40 maxlength=32"
+			" class=\"type_fields_off\"> </td></tr>\n",field[0],field[0],field[0],field[1]);
+		}
+		mysql_free_result(res);
+	}
 
 	fprintf(fp,"<!-- funcContainerInfo(fp) End -->\n");
 
@@ -1693,10 +1798,19 @@ void funcNewContainer(FILE *fp)
 			" name=gcFunction value='Repurpose Container'>\n");
 	printf("</fieldset>");
 
-	if(guPermLevel>=6)
+	fprintf(fp,"<p><input type=checkbox name=gcShowDetails %s> DID/Extension/Trunk Details",gcShowDetails);
+	fprintf(fp,"<br><input type=submit class=largeButton"
+			" title='Reload current container info with options as set above'"
+			" name=gcFunction value='Reload'>\n");
+	if(guPermLevel>=10)
+	{
 		fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Generate a cvs report of all PBX containers direct to browser'"
 			" name=gcFunction value='Container Report'>\n");
+		fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Generate a cvs report of all DID/Trunk PBX container data direct to browser'"
+			" name=gcFunction value='DID Report'>\n");
+	}
 
 
 	fprintf(fp,"</td></tr>\n");
