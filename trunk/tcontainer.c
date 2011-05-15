@@ -61,6 +61,8 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 //uSource semi HIDDEN for now
 static unsigned uSource=0;
+//uBackupDate: Unix seconds date last insert
+static time_t uBackupDate=0;
 
 
 static char cuClientPullDown[256]={""};
@@ -68,7 +70,7 @@ static char cAutoCloneNode[256]={""};
 static char cunxsBindARecordJobZone[256]={""};
 static char gcNewContainerTZ[64]={"PST8PDT"};
 
-#define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource"
+#define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource,tContainer.uBackupDate"
 
  //Local only
 void tContainerNewStep(unsigned uStep);
@@ -181,6 +183,8 @@ void ProcesstContainerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%lu",&uModDate);
 		else if(!strcmp(entries[i].name,"uSource"))
 			sscanf(entries[i].val,"%u",&uSource);
+		else if(!strcmp(entries[i].name,"uBackupDate"))
+			sscanf(entries[i].val,"%lu",&uBackupDate);
 		else if(!strcmp(entries[i].name,"gcNewContainerTZ"))
 			sprintf(gcNewContainerTZ,"%.63s",entries[i].val);
 
@@ -299,6 +303,7 @@ void tContainer(const char *cResult)
 		sscanf(field[15],"%u",&uModBy);
 		sscanf(field[16],"%lu",&uModDate);
 		sscanf(field[17],"%u",&uSource);
+		sscanf(field[18],"%lu",&uBackupDate);
 
 		}
 
@@ -669,6 +674,13 @@ void tContainerInput(unsigned uMode)
 	else
 		printf("---\n\n");
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
+//uBackupDate
+	OpenRow(LANG_FL_tContainer_uBackupDate,"black");
+	if(uBackupDate)
+		printf("%s\n\n",ctime(&uBackupDate));
+	else
+		printf("---\n\n");
+	printf("<input type=hidden name=uBackupDate value=%lu >\n",uBackupDate);
 	printf("</tr>\n");
 
 }//void tContainerInput(unsigned uMode)
@@ -853,7 +865,8 @@ void tContainerList(void)
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
 		"<td><font face=arial,helvetica color=white>uCreatedDate"
 		"<td><font face=arial,helvetica color=white>uModBy"
-		"<td><font face=arial,helvetica color=white>uModDate</tr>");
+		"<td><font face=arial,helvetica color=white>uModDate"
+		"<td><font face=arial,helvetica color=white>uBackupDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -881,10 +894,15 @@ void tContainerList(void)
 			ctime_r(&luTime16,cBuf16);
 		else
 			sprintf(cBuf16,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> <a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+		time_t luTime17=strtoul(field[17],NULL,10);
+		char cBuf17[32];
+		if(luTime17)
+			ctime_r(&luTime17,cBuf17);
+		else
+			sprintf(cBuf17,"---");
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
 			"%s<a><td>%s<td>%s<td>%s<td>%s<td>%s"
-			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
+			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
@@ -903,6 +921,7 @@ void tContainerList(void)
 			,cBuf14
 			,ForeignKey("tClient","cLabel",strtoul(field[15],NULL,10))
 			,cBuf16
+			,cBuf17
 				);
 
 	}
