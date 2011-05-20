@@ -15,7 +15,7 @@
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
 #Note that you must change the rsync line also. Since we have not had time to fix this.
-cSSHPort="-p 22";
+cSSHPort="-p 12337";
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	echo "usage: $0 <source VEID> <target VEID> <target node host>";
@@ -24,6 +24,11 @@ fi
 
 #debug only
 #fLog "start $1 to $3:$2";
+uRunning=`nice /bin/ps -ef | /bin/grep clonesync | /bin/grep -v /bin/grep | /usr/bin/wc -l`;
+if [ "$uRunning" -gt 5 ];then
+	fLog "clonesync is already running $uRunning times";
+	exit 0;
+fi
 
 cLockfile="/tmp/clonesync.sh.lock.$1.$2";
 
@@ -43,20 +48,20 @@ fi
 #so we test as herein a quick and dirty or a targeted single service type
 #container approach
 
-#this sync may be too slow for mail servers
-/usr/sbin/vzctl exec $1 /bin/sync > /dev/null 2>&1;
-if [ $? != 0 ];then
-	#fLog  "warn sync failed -source is probably stopped";
-	#container is now allowed to be in stopped state
-	#but must be on disk
-	if [ ! -d "/vz/private/$1" ]; then
-		fLog "dir /vz/private/$1 does not exist";
-		#rollback
-		rm -f $cLockfile;
-		exit 1;
-	fi
-
-fi
+##this sync may be too slow for mail servers
+##/usr/sbin/vzctl exec $1 /bin/sync > /dev/null 2>&1;
+#if [ $? != 0 ];then
+#	#fLog  "warn sync failed -source is probably stopped";
+#	#container is now allowed to be in stopped state
+#	#but must be on disk
+#	if [ ! -d "/vz/private/$1" ]; then
+#		fLog "dir /vz/private/$1 does not exist";
+#		#rollback
+#		rm -f $cLockfile;
+#		exit 1;
+#	fi
+#
+#fi
 
 #make sure ssh is working
 /usr/bin/ssh $cSSHPort $3 "ls /vz/private/$2 > /dev/null 2>&1";
@@ -71,7 +76,7 @@ fi
 #no compression
 #/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxlH --delete \
 #no verbose and fastest encryption
-/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p 22' -axlH --delete \
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p 12337' -axlH --delete \
 			--exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
 			--exclude /etc/sysconfig/network \

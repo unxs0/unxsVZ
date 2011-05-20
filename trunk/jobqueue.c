@@ -235,7 +235,7 @@ void ProcessJobQueue(unsigned uDebug)
 			mysql_close(&gMysql);
 			exit(0);
 		}
-		if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
+		if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>(JOBQUEUE_MAXLOAD/2))
 		{
 			logfileLine("ProcessCloneSyncJob","structSysinfo.loads[1] too high");
 			mysql_free_result(res);
