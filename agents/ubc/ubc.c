@@ -395,7 +395,7 @@ void ProcessUBC(void)
 		if(guStatus==uSTOPPED)
 		{
 			ProcessSingleStatus(uContainer);
-			ProcessSingleHDUsage(uContainer);
+			//ProcessSingleHDUsage(uContainer);
 		}
 		else
 		{
@@ -405,7 +405,7 @@ void ProcessUBC(void)
 			ProcessVZMemCheck(uContainer,0);
 			ProcessVZCPUCheck(uContainer,0);
 			ProcessSingleTraffic(uContainer);
-			ProcessSingleHDUsage(uContainer);
+			//ProcessSingleHDUsage(uContainer);
 		}
 
 	}
