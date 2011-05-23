@@ -214,7 +214,7 @@ void ProcessJobQueue(unsigned uDebug)
 	//and the target node is a remote node.
 	//1 uACTIVE
 	//31 uSTOPPED
-	logfileLine("ProcessCloneSyncJob","Start");
+	//logfileLine("ProcessCloneSyncJob","Start");
 	sprintf(gcQuery,"SELECT uSource,uContainer FROM tContainer WHERE uSource>0 AND"
 			" uDatacenter=%u AND (uStatus=1 OR uStatus=31)",uDatacenter);
 	mysql_query(&gMysql,gcQuery);
@@ -254,7 +254,7 @@ void ProcessJobQueue(unsigned uDebug)
 		}
 	}
 	mysql_free_result(res);
-	logfileLine("ProcessCloneSyncJob","End");
+	//logfileLine("ProcessCloneSyncJob","End");
 
 	if(guDebug)
 	{
