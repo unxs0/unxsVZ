@@ -440,8 +440,8 @@ void ExttNodeButtons(void)
 			printf("<p><u>Container Search</u><br>");
 			printf("<input title='Use [Search], enter cLabel start or MySQL LIKE pattern (%% or _ allowed)'"
 					" type=text name=cSearch value='%s'>",cSearch);
-			tContainerNavList(uNode,cSearch);
 			tNodeNavList(0);
+			tContainerNavList(uNode,cSearch);
 			if(uNode)
 			{
 				htmlHealth(uNode,2);
