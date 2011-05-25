@@ -1254,10 +1254,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 			}
 			mysql_free_result(res2);
 
-			if((luMaxNowDate-(7*24*3600))>luMaxCreatedDate)
+			if((luMaxNowDate-(24*3600))>luMaxCreatedDate)
 			{
 				sprintf(gcQuery,"UPDATE tProperty SET cValue=0,"
-					"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
 					" uProperty=%u"
 							,guContainerOwner
 							,uMaxProperty);
@@ -1393,6 +1393,88 @@ void ProcessSingleTraffic(unsigned uContainer)
 			{
 				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
 				exit(2);
+			}
+
+			//
+			//New Maximums section
+			//
+			long unsigned luMaxDailyOutDelta=0;
+			unsigned uMaxProperty=0;
+			long unsigned luMaxCreatedDate= -1;
+			long unsigned luMaxNowDate= -1;
+
+			//Daily
+			//
+			sprintf(gcQuery,"SELECT cValue,uProperty,uCreatedDate,UNIX_TIMESTAMP(NOW())"
+					" FROM tProperty WHERE cName='Venet0.luMaxDailyOutDelta'"
+							" AND uKey=%u AND uType=3",uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				exit(2);
+			}
+			res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+			{
+				sscanf(field2[0],"%lu",&luMaxDailyOutDelta);
+				sscanf(field2[1],"%u",&uMaxProperty);
+				sscanf(field2[2],"%lu",&luMaxCreatedDate);
+				sscanf(field2[3],"%lu",&luMaxNowDate);
+			}
+			else
+			{
+
+				//First sample daily max delta is 0
+				sprintf(gcQuery,"INSERT INTO tProperty SET cValue=0"
+						",cName='Venet0.luMaxDailyOutDelta'"
+						",uType=3"
+						",uKey=%u"
+						",uOwner=%u"
+						",uCreatedBy=1"
+						",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							,uContainer
+							,guContainerOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+					exit(2);
+				}
+				uMaxProperty=mysql_insert_id(&gMysql);
+			}
+			mysql_free_result(res2);
+
+			if((luMaxNowDate-(24*3600))>luMaxCreatedDate)
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue=0,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+					" uProperty=%u"
+							,guContainerOwner
+							,uMaxProperty);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+					exit(2);
+				}
+				luMaxDailyOutDelta=0;
+			}
+
+			if(luMaxDailyOutDelta<luNewOutDelta)
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
+					"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+					" uProperty=%u"
+							,luNewOutDelta
+							,guContainerOwner
+							,uMaxProperty);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+					exit(2);
+				}
 			}
 		}
 		else
