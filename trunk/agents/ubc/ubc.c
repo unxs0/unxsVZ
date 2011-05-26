@@ -1104,8 +1104,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 		return;
 	}
 		
-	sprintf(cCommand,"/usr/sbin/vzctl exec %u \"grep venet0 /proc/net/dev\" 2> /dev/null",uContainer);
-
+	sprintf(cCommand,"/bin/grep venet0 /vz/root/%u/proc/net/dev 2> /dev/null",uContainer);
 	if((fp=popen(cCommand,"r")))
 	{
         	MYSQL_RES *res;
