@@ -1235,13 +1235,14 @@ void ProcessSingleTraffic(unsigned uContainer)
 			{
 
 				//First sample daily max delta is 0
+				//DATE(NOW()) for time stamp at 0 hours
 				sprintf(gcQuery,"INSERT INTO tProperty SET cValue=0"
 						",cName='Venet0.luMaxDailyInDelta'"
 						",uType=3"
 						",uKey=%u"
 						",uOwner=%u"
 						",uCreatedBy=1"
-						",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",uCreatedDate=UNIX_TIMESTAMP(DATE(NOW()))"
 							,uContainer
 							,guContainerOwner);
 				mysql_query(&gMysql,gcQuery);
@@ -1254,10 +1255,15 @@ void ProcessSingleTraffic(unsigned uContainer)
 			}
 			mysql_free_result(res2);
 
+			//Day is always from today 0 hours
+			//So after 00:00:00 we lose the max for "yesterday."
+			//This limits the usefulness, but soon we will have MaxWeekly 
+			//and MaxMonthly that will help make this a minor issue.
 			if((luMaxNowDate-(24*3600))>luMaxCreatedDate)
 			{
+				//DATE(NOW()) for time stamp at 0 hours
 				sprintf(gcQuery,"UPDATE tProperty SET cValue=0,"
-					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+					"uCreatedDate=UNIX_TIMESTAMP(DATE(NOW())),uModBy=1,uOwner=%u WHERE"
 					" uProperty=%u"
 							,guContainerOwner
 							,uMaxProperty);
@@ -1432,7 +1438,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 						",uKey=%u"
 						",uOwner=%u"
 						",uCreatedBy=1"
-						",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",uCreatedDate=UNIX_TIMESTAMP(DATE(NOW()))"
 							,uContainer
 							,guContainerOwner);
 				mysql_query(&gMysql,gcQuery);
@@ -1448,7 +1454,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			if((luMaxNowDate-(24*3600))>luMaxCreatedDate)
 			{
 				sprintf(gcQuery,"UPDATE tProperty SET cValue=0,"
-					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+					"uCreatedDate=UNIX_TIMESTAMP(DATE(NOW())),uModBy=1,uOwner=%u WHERE"
 					" uProperty=%u"
 							,guContainerOwner
 							,uMaxProperty);
