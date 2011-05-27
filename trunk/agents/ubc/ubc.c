@@ -57,7 +57,7 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 		tmTime=localtime(&luClock);
 		strftime(cTime,31,"%b %d %T",tmTime);
 
-		fprintf(gLfp,"%s %s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
+		fprintf(gLfp,"%s unxsUBC.%s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
 		fflush(gLfp);
 	}
 
@@ -401,7 +401,9 @@ void ProcessUBC(void)
 		if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
 		{
 			logfileLine("ProcessUBC","structSysinfo.loads[1] larger than JOBQUEUE_MAXLOAD",0);
-			exit(1);
+			mysql_free_result(res);
+			mysql_close(&gMysql);
+			return;
 		}
 
 		sscanf(field[0],"%u",&uContainer);
