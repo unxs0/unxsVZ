@@ -91,7 +91,23 @@ int main(int iArgc, char *cArgv[])
 	//will avoid runaway du and other unexpected high load
 	//situations. See #120.
 
+	struct stat structStat;
+	if(!stat("/tmp/ubc.lock",&structStat))
+	{
+		logfileLine("main","waiting for rmdir(/tmp/ubc.lock)",0);
+		return(1);
+	}
+	if(mkdir("/tmp/ubc.lock",S_IRUSR|S_IWUSR|S_IXUSR))
+	{
+		logfileLine("main","could not open /tmp/ubc.lock dir",0);
+		return(1);
+	}
 	ProcessUBC();//does vzquota and vzmemcheck also via other subsytems
+	if(rmdir("/tmp/ubc.lock"))
+	{
+		logfileLine("main","could not rmdir(/tmp/ubc.lock)",0);
+		return(1);
+	}
 	return(0);
 }//main()
 
@@ -419,10 +435,8 @@ void ProcessUBC(void)
 	//debug only
 	//printf("ProcessUBC() End\n");
 	mysql_close(&gMysql);
-	exit(0);
 
 }//void ProcessUBC(void)
-
 
 void ProcessSingleHDUsage(unsigned uContainer)
 {
@@ -1134,7 +1148,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 
 
 		//1-. IN Bytes
-		sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='Venet0.luInDelta'"
+		sprintf(gcQuery,"SELECT uProperty,uModDate,UNIX_TIMESTAMP(NOW()) FROM tProperty WHERE cName='Venet0.luInDelta'"
 							" AND uKey=%u AND uType=3",uContainer);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -1147,6 +1161,8 @@ void ProcessSingleTraffic(unsigned uContainer)
 		{
 			long unsigned luNewInDelta=0;
 			long unsigned luPrevIn=0;
+			long unsigned luDeltaModDate=0;
+			long unsigned luNowDate= -1;
 			unsigned uProperty=0;
         		MYSQL_RES *res2;
         		MYSQL_ROW field2;
@@ -1177,6 +1193,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 			//printf("luNewInDelta=%lu = luIn=%lu - luPrevIn=%lu\n",luNewInDelta,luIn,luPrevIn);
 
 			//Update delta
+			sscanf(field[1],"%lu",&luDeltaModDate);
+			sscanf(field[2],"%lu",&luNowDate);
+			//Calculate traffic per second
+			luNewInDelta=(luNewInDelta/(luNowDate-luDeltaModDate));
 			sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
 					"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
 					" uProperty=%s"
@@ -1209,11 +1229,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 			long unsigned luMaxDailyInDelta=0;
 			unsigned uMaxProperty=0;
 			long unsigned luMaxCreatedDate= -1;
-			long unsigned luMaxNowDate= -1;
 
 			//Daily
 			//
-			sprintf(gcQuery,"SELECT cValue,uProperty,uCreatedDate,UNIX_TIMESTAMP(NOW())"
+			sprintf(gcQuery,"SELECT cValue,uProperty,uCreatedDate"
 					" FROM tProperty WHERE cName='Venet0.luMaxDailyInDelta'"
 							" AND uKey=%u AND uType=3",uContainer);
 			mysql_query(&gMysql,gcQuery);
@@ -1228,7 +1247,6 @@ void ProcessSingleTraffic(unsigned uContainer)
 				sscanf(field2[0],"%lu",&luMaxDailyInDelta);
 				sscanf(field2[1],"%u",&uMaxProperty);
 				sscanf(field2[2],"%lu",&luMaxCreatedDate);
-				sscanf(field2[3],"%lu",&luMaxNowDate);
 			}
 			else
 			{
@@ -1258,7 +1276,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			//So after 00:00:00 we lose the max for "yesterday."
 			//This limits the usefulness, but soon we will have MaxWeekly 
 			//and MaxMonthly that will help make this a minor issue.
-			if((luMaxNowDate-(24*3600))>luMaxCreatedDate)
+			if((luNowDate-(24*3600))>luMaxCreatedDate)
 			{
 				//DATE(NOW()) for time stamp at 0 hours
 				sprintf(gcQuery,"UPDATE tProperty SET cValue=0,"
@@ -1331,7 +1349,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 		mysql_free_result(res);
 
 		//2-. OUT Bytes
-		sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='Venet0.luOutDelta'"
+		sprintf(gcQuery,"SELECT uProperty,uModDate,UNIX_TIMESTAMP(NOW()) FROM tProperty WHERE cName='Venet0.luOutDelta'"
 							" AND uKey=%u AND uType=3",uContainer);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -1344,6 +1362,8 @@ void ProcessSingleTraffic(unsigned uContainer)
 		{
 			long unsigned luNewOutDelta=0;
 			long unsigned luPrevOut=0;
+			long unsigned luNowDate= -1;
+			long unsigned luDeltaModDate=0;
 			unsigned uProperty=0;
         		MYSQL_RES *res2;
         		MYSQL_ROW field2;
@@ -1374,6 +1394,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 			//printf("luNewOutDelta=%lu = luOut=%lu  - luPrevOut=%lu\n",luNewOutDelta,luOut,luPrevOut);
 
 			//Update delta
+			sscanf(field[1],"%lu",&luDeltaModDate);
+			sscanf(field[2],"%lu",&luNowDate);
+			luNewOutDelta=(luNewOutDelta/(luNowDate-luDeltaModDate));
+			//Calculate traffic per second
 			sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
 					"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
 					" uProperty=%s"
@@ -1406,11 +1430,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 			long unsigned luMaxDailyOutDelta=0;
 			unsigned uMaxProperty=0;
 			long unsigned luMaxCreatedDate= -1;
-			long unsigned luMaxNowDate= -1;
 
 			//Daily
 			//
-			sprintf(gcQuery,"SELECT cValue,uProperty,uCreatedDate,UNIX_TIMESTAMP(NOW())"
+			sprintf(gcQuery,"SELECT cValue,uProperty,uCreatedDate"
 					" FROM tProperty WHERE cName='Venet0.luMaxDailyOutDelta'"
 							" AND uKey=%u AND uType=3",uContainer);
 			mysql_query(&gMysql,gcQuery);
@@ -1425,7 +1448,6 @@ void ProcessSingleTraffic(unsigned uContainer)
 				sscanf(field2[0],"%lu",&luMaxDailyOutDelta);
 				sscanf(field2[1],"%u",&uMaxProperty);
 				sscanf(field2[2],"%lu",&luMaxCreatedDate);
-				sscanf(field2[3],"%lu",&luMaxNowDate);
 			}
 			else
 			{
@@ -1450,7 +1472,7 @@ void ProcessSingleTraffic(unsigned uContainer)
 			}
 			mysql_free_result(res2);
 
-			if((luMaxNowDate-(24*3600))>luMaxCreatedDate)
+			if((luNowDate-(24*3600))>luMaxCreatedDate)
 			{
 				sprintf(gcQuery,"UPDATE tProperty SET cValue=0,"
 					"uCreatedDate=UNIX_TIMESTAMP(DATE(NOW())),uModBy=1,uOwner=%u WHERE"
