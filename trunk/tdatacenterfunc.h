@@ -562,12 +562,13 @@ void tDatacenterHealth(void)
 	}
         mysql_free_result(res);
 
-	//3-. Last 24 hours top talkers
-	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/300000),2),uKey,cHostname FROM tProperty,tContainer WHERE"
+	//3a-. Todays top in
+	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000),2),uKey,cHostname,TIME(FROM_UNIXTIME(tProperty.uModDate)) FROM"
+			" tProperty,tContainer WHERE"
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
 			" tContainer.uStatus=%u AND"
 			" tContainer.uDatacenter=%u AND"
-			" (cName='Venet0.luMaxDailyInDelta' OR cName='Venet0.luMaxDailyOutDelta')"
+			" cName='Venet0.luMaxDailyInDelta'"
 			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -576,20 +577,46 @@ void tDatacenterHealth(void)
                 printf("5-. %s",mysql_error(&gMysql));
                 return;
         }
-
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>Last 24hrs peak talkers</u><br>\n");
+        	printf("<p><u>Today's peak in talkers</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
-				"%s %sKB/s</a><br>\n",field[1],field[2],field[0]);
+				"%s/%s %sKB/s</a><br>\n",field[1],field[2],field[3],field[0]);
+	}
+        mysql_free_result(res);
+
+	//3b-. Todays top out
+	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000),2),uKey,cHostname,TIME(FROM_UNIXTIME(tProperty.uModDate)) FROM"
+			" tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
+			" tContainer.uStatus=%u AND"
+			" tContainer.uDatacenter=%u AND"
+			" cName='Venet0.luMaxDailyOutDelta'"
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tDatacenterHealth</u><br>\n");
+                printf("5-. %s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Today's peak out talkers</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s/%s %sKB/s</a><br>\n",field[1],field[2],field[3],field[0]);
 	}
         mysql_free_result(res);
 
 	//4-. Last 5 min top talkers
-	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/300000),2),uKey,cHostname FROM tProperty,tContainer WHERE"
+	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/2000),2),uKey,cHostname FROM"
+			" tProperty,tContainer WHERE"
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
 			" tContainer.uStatus=%u AND"
 			" tContainer.uDatacenter=%u AND"
@@ -602,7 +629,6 @@ void tDatacenterHealth(void)
                 printf("5-. %s",mysql_error(&gMysql));
                 return;
         }
-
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
