@@ -65,6 +65,8 @@ void TextConnectDb(void)
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
 			logfileLine("TextConnectDb","Could not create TextConnectDB() socket DBIP0",0);
+			if(rmdir("/tmp/ubc.lock"))
+				logfileLine("TextConnectDb","could not rmdir(/tmp/ubc.lock)",0);
 			exit(1);
 		}
 
@@ -111,6 +113,8 @@ void TextConnectDb(void)
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
 			logfileLine("TextConnectDb","Could not create TextConnectDB() socket DBIP1",0);
+			if(rmdir("/tmp/ubc.lock"))
+				logfileLine("TextConnectDb","could not rmdir(/tmp/ubc.lock)",0);
 			exit(1);
 		}
 
@@ -165,6 +169,8 @@ void TextConnectDb(void)
 		sprintf(cMessage,"Could not connect unexpected case\n");
 
 	logfileLine("TextConnectDb",cMessage,0);
+	if(rmdir("/tmp/ubc.lock"))
+		logfileLine("TextConnectDb","could not rmdir(/tmp/ubc.lock)",0);
 	exit(1);
 
 }//TextConnectDb()
