@@ -94,7 +94,10 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 			{
 				//Place limits on what non root users can change.
 				if(uPerm>guPermLevel) uPerm=guPermLevel;
-				if(guPermLevel<12 && uCertClient!=guLoginClient) uCertClient=guLoginClient;
+				//we should not allow non root uses to change uCertClient
+				unsigned uPrevCertClient=0;
+				sscanf(ForeignKey("tAuthorize","uCertClient",uAuthorize),"%u",&uPrevCertClient);
+				if(guPermLevel<12 && uPrevCertClient) uCertClient=uPrevCertClient;
 				if(uPerm<6 || uPerm>12)
 				{
 					guMode=2002;
