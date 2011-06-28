@@ -183,7 +183,8 @@ void ContainerCommands(pentry entries[], int x)
 			//uStatus must still be active
 			unsigned uNode=0;
 			unsigned uDatacenter=0;
-			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u"
+			char cPrevHostname[100]={""};
+			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter,cHostname FROM tContainer WHERE uContainer=%u"
 					" AND uStatus=1",guNewContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -196,6 +197,7 @@ void ContainerCommands(pentry entries[], int x)
 			{
 				sscanf(field[1],"%u",&uNode);
 				sscanf(field[2],"%u",&uDatacenter);
+				sprintf(cPrevHostname,"%.99s",field[3]);
 			}
 			if(mysql_num_rows(res)<1)
 			{
@@ -447,13 +449,16 @@ void ContainerCommands(pentry entries[], int x)
 			}
 
 			//Change hostname job
+			//See HostnameContainerJob() in tcontainerfunc.h
 			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ChangeHostnameContainer(%u)',cJobName='ChangeHostnameContainer'"
 					",uDatacenter=%u,uNode=%u,uContainer=%u"
 					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 					",uJobStatus=1"
+					",cJobData='cPrevHostname=%.99s;'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						guNewContainer,
 						uDatacenter,uNode,guNewContainer,
+						cPrevHostname,
 						guOrg,guLoginClient);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
