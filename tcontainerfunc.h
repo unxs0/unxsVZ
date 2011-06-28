@@ -123,7 +123,7 @@ void htmlHealth(unsigned uContainer,unsigned uType);
 void htmlGroups(unsigned uNode, unsigned uContainer);
 unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus,
 		unsigned uOwner,char *cConfigLabel);
-unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
+unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname);
 unsigned IPContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 			unsigned uOwner,unsigned uLoginClient,char const *cIPOld);
 unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
@@ -2858,10 +2858,12 @@ void ExttContainerCommands(pentry entries[], int x)
 			        if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
 				sprintf(cLabel,"%.31s",cWizLabel);
+				char cPrevHostname[100]={""};
+				sprintf(cPrevHostname,"%.99s",cHostname);
 				sprintf(cHostname,"%.99s",cWizHostname);
 				if(uCreateDNSJob)
 					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient);
-				if(HostnameContainerJob(uDatacenter,uNode,uContainer))
+				if(HostnameContainerJob(uDatacenter,uNode,uContainer,cPrevHostname))
 				{
 					uStatus=uAWAITHOST;
 					SetContainerStatus(uContainer,61);
@@ -4502,7 +4504,7 @@ unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 }//unsigned TemplateContainerJob()
 
 
-unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname)
 {
 	unsigned uCount=0;
 
@@ -4510,9 +4512,11 @@ unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCo
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"
+			",cJobData='cPrevHostname=%s;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				cPrevHostname,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -4521,7 +4525,7 @@ unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCo
 	unxsVZLog(uContainer,"tContainer","Hostname");
 	return(uCount);
 
-}//unsigned HostnameContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
+}//unsigned HostnameContainerJob()
 
 
 unsigned IPContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
