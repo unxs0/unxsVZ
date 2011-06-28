@@ -1407,6 +1407,7 @@ void funcContainerInfo(FILE *fp)
 	mysql_free_result(res);
 
 	//Node
+	unsigned uAppliance=0;
 	sprintf(gcQuery,"SELECT tNode.cLabel FROM tContainer,tNode WHERE tContainer.uNode=tNode.uNode"
 			" AND tContainer.uContainer=%u",guContainer);
 	mysql_query(&gMysql,gcQuery);
@@ -1418,6 +1419,8 @@ void funcContainerInfo(FILE *fp)
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uNode')\">"
 			" <strong>Node</strong></a></td><td><input type=text name='cNode' value='%s' size=40 maxlength=32"
 			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
+		if(!strncmp(field[0],"appliance",9))
+			uAppliance=1;
 	}
 	mysql_free_result(res);
 
@@ -1542,18 +1545,21 @@ void funcContainerInfo(FILE *fp)
 */
 
 	//cPasswd
-	sprintf(gcQuery,"SELECT cName,cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName='cPasswd'",guContainer);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
+	if(!uAppliance || guPermLevel>=10)
 	{
-		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=%s')\">"
+		sprintf(gcQuery,"SELECT cName,cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName='cPasswd'",guContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=%s')\">"
 			" <strong>SSH Passwd</strong></a></td><td><input type=text name='%s' value='%s' size=40 maxlength=32"
 			" class=\"type_fields_off\"> </td></tr>\n",field[0],field[0],field[1]);
+		}
+		mysql_free_result(res);
 	}
-	mysql_free_result(res);
 
 	//SUBSTR based on 5 char cOrg_ prefix
 	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName LIKE 'cOrg_%%'"
