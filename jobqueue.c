@@ -45,7 +45,7 @@ void tJobWaitingUpdate(unsigned uJob);
 void NewContainer(unsigned uJob,unsigned uContainer);
 void DestroyContainer(unsigned uJob,unsigned uContainer);
 void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
-void ChangeHostnameContainer(unsigned uJob,unsigned uContainer);
+void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void StopContainer(unsigned uJob,unsigned uContainer);
 void StartContainer(unsigned uJob,unsigned uContainer);
 void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData);
@@ -377,7 +377,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	}
 	else if(!strcmp(cJobName,"ChangeHostnameContainer"))
 	{
-		ChangeHostnameContainer(uJob,uContainer);
+		ChangeHostnameContainer(uJob,uContainer,cJobData);
 	}
 	else if(!strcmp(cJobName,"ChangeIPContainer"))
 	{
@@ -993,13 +993,21 @@ CommonExit:
 }//void ChangeIPContainer()
 
 
-void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
+void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 {
 	char cHostname[100]={""};
 	char cName[100]={""};
 	char cTimezone[256]={""};
         MYSQL_RES *res;
         MYSQL_ROW field;
+
+
+	//New for external script
+	char cPrevHostname[100]={""};
+	char *cp;
+	sscanf(cJobData,"cPrevHostname=%99s;",cPrevHostname);
+	if((cp=strchr(cPrevHostname,';')))
+		*cp=0;
 
 	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname"
 			" FROM tContainer WHERE uContainer=%u",uContainer);
@@ -1066,7 +1074,7 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 	if((field=mysql_fetch_row(res)))
 	{
 		struct stat statInfo;
-		char OnChangeHostnameScriptCall[386];
+		char OnChangeHostnameScriptCall[512];
 		char cCommand[256];
 		char *cp;
 
@@ -1099,7 +1107,7 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer)
 			goto CommonExit2;
 		}
 
-		sprintf(OnChangeHostnameScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
+		sprintf(OnChangeHostnameScriptCall,"%.255s %.64s %u %.99s",cCommand,cHostname,uContainer,cPrevHostname);
 		if(system(OnChangeHostnameScriptCall))
 		{
 			logfileLine("ChangeHostnameContainer",cCommand);
