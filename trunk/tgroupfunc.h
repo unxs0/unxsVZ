@@ -345,7 +345,7 @@ void tGroupMemberNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uContainer,uNode FROM tGroupGlue WHERE uGroup=%u",uGroup);
+	sprintf(gcQuery,"SELECT uContainer,uNode FROM tGroupGlue WHERE uGroup=%u LIMIT 33",uGroup);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -356,13 +356,19 @@ void tGroupMemberNavList(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{
-		unsigned uContainer,uNode;
+		unsigned uContainer,uNode,uLimit=0;
         	MYSQL_RES *res2;
         	MYSQL_ROW field2;
 
         	printf("<p><u>tGroupMemberNavList</u><br>\n");
 	        while((field=mysql_fetch_row(res)))
 		{	
+			if(++uLimit>32)
+			{
+				printf("(Only first 32 shown)<br>");
+				break;
+			}
+
 			sscanf(field[0],"%u",&uContainer);
 			sscanf(field[1],"%u",&uNode);
 			if(uContainer)
