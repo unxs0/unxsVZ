@@ -760,9 +760,26 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 			goto CommonExit2;
 		}
 
-		sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
-		if(system(cOnScriptCall))
-			logfileLine("NewContainer",cOnScriptCall);
+		char cHostname[100]={""};
+		sprintf(gcQuery,"SELECT tContainer.cHostname"
+				" FROM tContainer WHERE uContainer=%u",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("",mysql_error(&gMysql));
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cHostname,"%.99s",field[0]);
+
+			sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
+			if(system(cOnScriptCall))
+			{
+				logfileLine("NewContainer",cOnScriptCall);
+			}
+		}
 	}
 
 //In this case the goto MIGHT be justified
@@ -859,10 +876,25 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 			goto CommonExit2;
 		}
 
-		sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
-		if(system(cOnScriptCall))
+		char cHostname[100]={""};
+		sprintf(gcQuery,"SELECT tContainer.cHostname"
+				" FROM tContainer WHERE uContainer=%u",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
 		{
-			logfileLine("DestroyContainer",cOnScriptCall);
+			logfileLine("",mysql_error(&gMysql));
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cHostname,"%.99s",field[0]);
+
+			sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
+			if(system(cOnScriptCall))
+			{
+				logfileLine("DestroyContainer",cOnScriptCall);
+			}
 		}
 	}
 CommonExit2:
@@ -1283,10 +1315,25 @@ void StopContainer(unsigned uJob,unsigned uContainer)
 			goto CommonExit2;
 		}
 
-		sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
-		if(system(cOnScriptCall))
+		char cHostname[100]={""};
+		sprintf(gcQuery,"SELECT tContainer.cHostname"
+				" FROM tContainer WHERE uContainer=%u",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
 		{
-			logfileLine("StopContainer",cOnScriptCall);
+			logfileLine("",mysql_error(&gMysql));
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cHostname,"%.99s",field[0]);
+
+			sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
+			if(system(cOnScriptCall))
+			{
+				logfileLine("StopContainer",cOnScriptCall);
+			}
 		}
 	}
 CommonExit2:
@@ -1375,10 +1422,25 @@ void StartContainer(unsigned uJob,unsigned uContainer)
 			goto CommonExit2;
 		}
 
-		sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
-		if(system(cOnScriptCall))
+		char cHostname[100]={""};
+		sprintf(gcQuery,"SELECT tContainer.cHostname"
+				" FROM tContainer WHERE uContainer=%u",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
 		{
-			logfileLine("StartContainer",cOnScriptCall);
+			logfileLine("",mysql_error(&gMysql));
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cHostname,"%.99s",field[0]);
+
+			sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
+			if(system(cOnScriptCall))
+			{
+				logfileLine("StartContainer",cOnScriptCall);
+			}
 		}
 	}
 CommonExit2:
