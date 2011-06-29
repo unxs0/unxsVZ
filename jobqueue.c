@@ -716,7 +716,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
-			" AND tProperty.cName='cJob_OnNewContainerScript' LIMIT 1",uPROP_GROUP,uContainer);
+			" AND tProperty.cName='cJob_OnNewScript' LIMIT 1",uPROP_GROUP,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -726,7 +726,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		char OnNewContainerScriptCall[386];
+		char cOnScriptCall[386];
 		struct stat statInfo;
 		char cCommand[256];
 		char *cp;
@@ -738,31 +738,31 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 
 		if(uNotValidSystemCallArg(cCommand))
 		{
-			logfileLine("NewContainer","cJob_OnNewContainerScript security alert");
+			logfileLine("NewContainer","cJob_OnNewScript security alert");
 			goto CommonExit2;
 		}
 
 		//Only run if command is chmod 500 and owned by root for extra security reasons.
 		if(stat(cCommand,&statInfo))
 		{
-			logfileLine("NewContainer","stat failed for cJob_OnNewContainerScript");
+			logfileLine("NewContainer","stat failed for cJob_OnNewScript");
 			logfileLine("NewContainer",cCommand);
 			goto CommonExit2;
 		}
 		if(statInfo.st_uid!=0)
 		{
-			logfileLine("NewContainer","cJob_OnNewContainerScript is not owned by root");
+			logfileLine("NewContainer","cJob_OnNewScript is not owned by root");
 			goto CommonExit2;
 		}
 		if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
 		{
-			logfileLine("NewContainer","cJob_OnNewContainerScript is not chmod 500");
+			logfileLine("NewContainer","cJob_OnNewScript is not chmod 500");
 			goto CommonExit2;
 		}
 
-		sprintf(OnNewContainerScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
-		if(system(OnNewContainerScriptCall))
-			logfileLine("NewContainer",OnNewContainerScriptCall);
+		sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
+		if(system(cOnScriptCall))
+			logfileLine("NewContainer",cOnScriptCall);
 	}
 
 //In this case the goto MIGHT be justified
@@ -862,7 +862,7 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 		sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
 		if(system(cOnScriptCall))
 		{
-			logfileLine("DestroyContainer",cCommand);
+			logfileLine("DestroyContainer",cOnScriptCall);
 		}
 	}
 CommonExit2:
@@ -1134,7 +1134,7 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if((field=mysql_fetch_row(res)))
 	{
 		struct stat statInfo;
-		char OnChangeHostnameScriptCall[512];
+		char cOnScriptCall[512];
 		char cCommand[256];
 		char *cp;
 
@@ -1167,10 +1167,10 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			goto CommonExit2;
 		}
 
-		sprintf(OnChangeHostnameScriptCall,"%.255s %.64s %u %.99s",cCommand,cHostname,uContainer,cPrevHostname);
-		if(system(OnChangeHostnameScriptCall))
+		sprintf(cOnScriptCall,"%.255s %.64s %u %.99s",cCommand,cHostname,uContainer,cPrevHostname);
+		if(system(cOnScriptCall))
 		{
-			logfileLine("ChangeHostnameContainer",cCommand);
+			logfileLine("ChangeHostnameContainer",cOnScriptCall);
 		}
 	}
 
@@ -1286,7 +1286,7 @@ void StopContainer(unsigned uJob,unsigned uContainer)
 		sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
 		if(system(cOnScriptCall))
 		{
-			logfileLine("StopContainer",cCommand);
+			logfileLine("StopContainer",cOnScriptCall);
 		}
 	}
 CommonExit2:
