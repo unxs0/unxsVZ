@@ -1324,6 +1324,65 @@ void StartContainer(unsigned uJob,unsigned uContainer)
 		return;
 	}
 
+	//Optional group based script may exist to be executed.
+	//
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+			" AND tProperty.uKey=tGroupGlue.uGroup"
+			" AND tGroupGlue.uContainer=%u"
+			" AND tProperty.cName='cJob_OnStartScript' LIMIT 1",uPROP_GROUP,uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("StartContainer",mysql_error(&gMysql));
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		struct stat statInfo;
+		char cOnScriptCall[512];
+		char cCommand[256];
+		char *cp;
+
+		sprintf(cCommand,"%.255s",field[0]);
+
+		//Remove trailing junk
+		if((cp=strchr(cCommand,'\n')) || (cp=strchr(cCommand,'\r'))) *cp=0;
+
+		if(uNotValidSystemCallArg(cCommand))
+		{
+			logfileLine("StartContainer","cJob_OnStartScript security alert");
+			goto CommonExit2;
+		}
+
+		//Only run if command is chmod 500 and owned by root for extra security reasons.
+		if(stat(cCommand,&statInfo))
+		{
+			logfileLine("StartContainer","stat failed for cJob_OnStartScript");
+			logfileLine("StartContainer",cCommand);
+			goto CommonExit2;
+		}
+		if(statInfo.st_uid!=0)
+		{
+			logfileLine("StartContainer","cJob_OnStartScript is not owned by root");
+			goto CommonExit2;
+		}
+		if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
+		{
+			logfileLine("StartContainer","cJob_OnStartScript is not chmod 500");
+			goto CommonExit2;
+		}
+
+		sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
+		if(system(cOnScriptCall))
+		{
+			logfileLine("StartContainer",cOnScriptCall);
+		}
+	}
+CommonExit2:
+	mysql_free_result(res);
 
 	//Everything ok
 	SetContainerStatus(uContainer,uACTIVE);
