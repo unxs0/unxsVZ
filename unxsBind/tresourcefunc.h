@@ -47,11 +47,13 @@ void DebugOnly(const char *cLabel1, const char *cValue1, const char *cLabel2, co
 }//DebugOnly()
 */
 
+unsigned guGrpDelete=0;
 
 void ExtProcesstResourceVars(pentry entries[], int x)
 {
 
 	register int i;
+	unsigned uGrpResource;
 	
 	for(i=0;i<x;i++)
 	{
@@ -78,6 +80,39 @@ void ExtProcesstResourceVars(pentry entries[], int x)
 			uClient=ReadPullDown("tClient","cLabel",
 					cCustomerDropDown);
 		}
+		else if(guGrpDelete && !strncmp(entries[i].name,"uGrpResource",12))
+		{
+			uGrpResource=0;
+			sscanf(entries[i].name+12,"%u",&uGrpResource);
+			if(uGrpResource && uZone)
+			{
+				sprintf(gcQuery,"DELETE FROM tResource WHERE uResource=%u AND uZone=%u",uGrpResource,uZone);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					tResource(mysql_error(&gMysql));
+			}
+			else
+			{
+				tResource(entries[i].name);
+				tResource("Unexpected uGrpResource parsing error");
+			}
+		}
+	}//for all name value pairs
+
+	//single shot
+	if(uGrpResource && uZone)
+	{
+		unsigned uNSSet;
+		time_t clock;
+
+		//tZone needs to be updated
+		sscanf(ForeignKey("tZone","uNSSet",uZone),"%u",&uNSSet);
+		time(&clock);
+		if(SubmitJob("Modify",uNSSet,ForeignKey("tZone","cZone",uZone),0,clock))
+			tResource(mysql_error(&gMysql));
+		UpdateSerialNum(uZone);                      	
+
+		tResource("One or more selected RRs deleted, mod job created");
 	}
 
 }//void ExtProcesstResourceVars(pentry entries[], int x)
@@ -1123,6 +1158,14 @@ void ExttResourceCommands(pentry entries[], int x)
 			else
 				tResource("<blink>Error</blink>: Denied by permissions settings");
 		}
+                else if(!strcmp(gcCommand,"Delete Selected Records"))
+                {
+			if(guPermLevel>=12 && guLoginClient==1) //Root only operation
+			{
+				guGrpDelete=1;
+                        	ProcesstResourceVars(entries,x);
+			}
+		}
 	}
 
 }//void ExttResourceCommands(pentry entries[], int x)
@@ -1155,6 +1198,7 @@ void ResourceLinks(unsigned uZone)
 	printf("<p><u>RRNavList(%u)</u><br>",uCount);
 	while((field=mysql_fetch_row(res)))
 	{
+		printf("<input type=checkbox name=uGrpResource%s> ",field[1]);
 		if(uArpa)
 			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s&cZone=%s>%s %s</a><br>\n",
 				field[1],cZone,field[0],field[2]);
@@ -1162,6 +1206,10 @@ void ResourceLinks(unsigned uZone)
 			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s>%s %s</a><br>\n",
 				field[1],field[0],field[2]);
 	}
+
+	printf("<p><u>Group Operations</u><br>");
+	printf("<input title='Will remove the above checkbox selected records' "
+		"class=lwarnButton type=submit name=gcCommand value='Delete Selected Records'>");
 
 }//void ResourceLinks(unsigned uZone)
 
@@ -1198,9 +1246,12 @@ void ExttResourceButtons(void)
                 case 2001:
 			printf("<p><u>Think twice</u><br>");
                         printf(LANG_NBB_CONFIRMDEL);
-			if(guPermLevel>9)
-			printf("<p><input title='Will remove all records for this zone' "
-				"class=lwarnButton type=submit name=gcCommand value='Delete Records'>");
+			if(guPermLevel>11 && guLoginClient==1)
+			{
+				printf("<p><u>Are you sure you want to remove all RRs from this zone?</u><br>");
+				printf("<input title='Will remove all records for this zone' "
+					"class=lwarnButton type=submit name=gcCommand value='Delete Records'>");
+			}
                 break;
 
                 case 2002:
