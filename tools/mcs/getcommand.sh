@@ -11,6 +11,7 @@
 cSharedSecret="topsecret";
 cMCSServerFQDN="mcs.example.com";
 cMCSServerPort="80";
+cMCSInstallPath="/usr/local/mcsremoteagent";
 
 if [ "$1" == "" ];then
 	echo "usage: $0 run";
@@ -31,11 +32,43 @@ fi
 
 cResponse=`/usr/bin/wget --quiet --no-check-certificate --output-document=-\
          https://$cMCSServerFQDN:$cMCSServerPort/$cFile`;
-#cResponse=`/usr/bin/wget --no-check-certificate --output-document=-\
-#         https://$cMCSServerFQDN:$cMCSServerPort/$cFile`;
 if [ $? != 0 ];then
         echo "wget error 0";
         exit 1;
 fi
 
-echo $cResponse;
+#run
+echo $cResponse | grep -w "agentVoip=run;" > /dev/null 2>&1;
+if [ $? == 0 ];then
+        echo "attempt run";
+        ps -ef | grep -v grep | grep -w "rta.jar" > /dev/null 2>&1;
+        if [ $? == 0 ];then
+                echo "already running";
+        else
+                echo "start rta";
+                $cMCSInstallPath/start_rta.sh > /dev/null 2>&1;
+                if [ $? != 0 ];then
+                        echo "$cMCSInstallPath/start_rta.sh error";
+                        exit 1;
+                fi
+        fi
+fi
+
+#stop
+echo $cResponse | grep -w "agentVoip=stop;" > /dev/null 2>&1;
+if [ $? == 0 ];then
+        echo "attempt stop";
+        ps -ef | grep -v grep | grep -w "rta.jar" > /dev/null 2>&1;
+        if [ $? != 0 ];then
+                echo "not running";
+        else
+                echo "stop rta";
+                $cMCSInstallPath/stop_rta.sh > /dev/null 2>&1;
+                if [ $? != 0 ];then
+                        echo "$cMCSInstallPath/stop_rta.sh error";
+                        exit 1;
+                fi
+        fi
+fi
+
+exit 0;
