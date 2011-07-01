@@ -31,10 +31,9 @@ if [ $? != 0 ];then
 fi
 
 cResponse=`/usr/bin/wget --quiet --no-check-certificate --output-document=-\
-         https://$cMCSServerFQDN:$cMCSServerPort/$cFile`;
+         https://$cMCSServerFQDN:$cMCSServerPort/$cFile | grep -v "^\#"`;
 if [ $? != 0 ];then
-        echo "wget error 0";
-        exit 1;
+        exit 0;
 fi
 
 #run
@@ -51,6 +50,7 @@ if [ $? == 0 ];then
                         echo "$cMCSInstallPath/start_rta.sh error";
                         exit 1;
                 fi
+        	exit 0;
         fi
 fi
 
@@ -68,6 +68,7 @@ if [ $? == 0 ];then
                         echo "$cMCSInstallPath/stop_rta.sh error";
                         exit 1;
                 fi
+        	exit 0;
         fi
 fi
 
