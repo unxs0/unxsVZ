@@ -24,7 +24,7 @@
 #This is for configuring MCS server
 
 [voip] INSERT INTO tVoipTest SET uRecordId=%RECORDID%, uTestId=%TESTID%,
-cTime='%TIME%', uTime=%TIMEINT%, cDetailLink='%DETAILLINK%', uSID=%SID%,
+cTime='%TIME%', uTime=%TIMEINT%, cDetailLink='%DETAILLINK%', cSID='%SID%',
 cIP='%IP%', cDNSName='%DNSNAME%', cCountry='%CC%', cISP='%ISP%',
 dUpJitter=%VOIP.JITTER%,  dDownJitter=%VOIP.DJITTER%, dUpLoss=%VOIP.LOSS%,
 dDownLoss=%VOIP.DLOSS%, dUpOrder=%VOIP.ORDER%, dDownOrder=%VOIP.DORDER%,
