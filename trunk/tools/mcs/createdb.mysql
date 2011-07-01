@@ -1,0 +1,49 @@
+#    * %VOIP.JITTER% - The connection's upstream jitter
+#    * %VOIP.DJITTER% - The connection's downstream jitter
+#    * %VOIP.LOSS% - The upstream packet loss
+#    * %VOIP.DLOSS% - The downstream packet loss
+#    * %VOIP.ORDER% - The upstream packet order
+#    * %VOIP.DORDER% - The downstream packet order
+#    * %VOIP.DISCARDS% - The packet discards
+#    * %VOIP.MOS% - Mean Opinion Score
+#    * %VOIP.REGISTER% - Time taken to perform SIP REGISTER
+#    * %VOIP.INVITE% - Time taken to perform SIP INVITE
+#    * %VOIP.BYE% - Time taken to perform SIP BYE
+
+#    * %RECORDID% - the unique ID number for this single record
+#    * %TESTID% - the unique ID number for this group of tests
+#    * %TIME% - the date and time of the test (GMT string)
+#    * %TIMEINT% - the date and time as a number (eg: 20110725140500 for 14:05 on 25-Jul-2011)
+#    * %DETAILLINK% - the URL for the detail report
+#    * %SID% - the session ID number
+#    * %IP% - the IP address of the system which performed the test
+#    * %DNSNAME% - the host name of the system which performed the test
+#    * %CC% - the two-letter country code representing the system's location
+#    * %ISP% - the name of the ISP to which the system is connected
+
+
+CREATE DATABASE IF NOT EXISTS mcs;
+USE mcs;
+CREATE TABLE IF NOT EXISTS tVoipTest (\
+	uVoipTest INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,\
+	uRecordId INT UNSIGNED NOT NULL DEFAULT 0,\
+	uTestId INT UNSIGNED NOT NULL DEFAULT 0,\
+	cTime VARCHAR(64) NOT NULL DEFAULT '',\
+	uTime BIGINT UNSIGNED NOT NULL DEFAULT 0,\
+	cDetailLink VARCHAR(100) NOT NULL DEFAULT '',\
+	uSID BIGINT UNSIGNED NOT NULL DEFAULT 0,\
+	cIP VARCHAR(32) NOT NULL DEFAULT '',\
+	cDNSName VARCHAR(100) NOT NULL DEFAULT '',\
+	cCountry VARCHAR(2) NOT NULL DEFAULT '',\
+	cISP VARCHAR(100) NOT NULL DEFAULT '',\
+	dUpJitter DECIMAL(5,2),\
+	dDownJitter DECIMAL(5,2),\
+	dUpLoss DECIMAL(5,2),\
+	dDownLoss DECIMAL(5,2),\
+	dUpOrder DECIMAL(5,2),\
+	dDownOrder DECIMAL(5,2),\
+	dDiscards DECIMAL(5,2),\
+	dMOS DECIMAL(5,2),\
+	uRegisterTime INT UNSIGNED NOT NULL DEFAULT 0,\
+	uInviteTime INT UNSIGNED NOT NULL DEFAULT 0,\
+	uByeTime INT UNSIGNED NOT NULL DEFAULT 0);
