@@ -1,0 +1,5 @@
+This directory contains code for the collection of Visualware 
+MyConnection Server remote agent data to be used with PBX containers.
+
+Other code required is in tools/mcs still.
+
