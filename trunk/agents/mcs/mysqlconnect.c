@@ -154,15 +154,15 @@ void TextConnectDb(void)
 	//Failure exit 4 cases
 	char cMessage[256];
 	if(DBIP1!=NULL && DBIP0!=NULL)
-		sprintf(cMessage,"Could not connect to DBIP0:%1$s or DBIP1:%1$s\n",cPort);
+		sprintf(cMessage,"Could not connect to DBIP0:%1$s or DBIP1:%1$s",cPort);
 	else if(DBIP1==NULL && DBIP0==NULL)
-		sprintf(cMessage,"Could not connect to local socket\n");
+		sprintf(cMessage,"Could not connect to local socket");
 	else if(DBIP0!=NULL && DBIP1==NULL)
-		sprintf(cMessage,"Could not connect to DBIP0:%s or local socket (DBIP1)\n",cPort);
+		sprintf(cMessage,"Could not connect to DBIP0:%s or local socket (DBIP1)",cPort);
 	else if(DBIP0==NULL && DBIP1!=NULL)
-		sprintf(cMessage,"Could not connect to DBIP1:%s or local socket (DBIP0)\n",cPort);
+		sprintf(cMessage,"Could not connect to DBIP1:%s or local socket (DBIP0)",cPort);
 	else if(1)
-		sprintf(cMessage,"Could not connect unexpected case\n");
+		sprintf(cMessage,"Could not connect unexpected case");
 
 	logfileLine("TextConnectDb",cMessage,0);
 	exit(1);

@@ -106,6 +106,8 @@ CommonExit:
 
 void Process(void)
 {
+        MYSQL_RES *res3;
+        MYSQL_ROW field3;
         MYSQL_RES *res2;
         MYSQL_ROW field2;
         MYSQL_RES *res;
@@ -121,7 +123,7 @@ void Process(void)
 	sprintf(gcQuery,"SELECT tContainer.cHostname,tContainer.uContainer,tContainer.uOwner FROM tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
-			" AND tGroup.cLabel LIKE '%%PBX%%'"
+			" AND tGroup.cLabel='Appliance PBXs'"
 			" AND tContainer.uSource=0");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -138,7 +140,8 @@ void Process(void)
 		sscanf(field[1],"%u",&uContainer);
 		sscanf(field[2],"%u",&uOwner);
 
-		sprintf(gcQuery,"SELECT MAX(dUpJitter),MAX(dDownJitter),MIN(dMOS) FROM tVoipTest WHERE cSID LIKE '%%/%s'",field[0]);
+		sprintf(gcQuery,"SELECT MAX(dUpJitter),MAX(dDownJitter),MIN(dMOS),MAX(dUpLoss),MAX(dDownLoss)"
+					" FROM tVoipTest WHERE cSID LIKE '%%/%s'",field[0]);
 		mysql_query(&gMysqlExt,gcQuery);
 		if(mysql_errno(&gMysqlExt))
 		{
@@ -150,21 +153,17 @@ void Process(void)
 		res2=mysql_store_result(&gMysqlExt);
 		if((field2=mysql_fetch_row(res2)))
 		{
-			//Clean out
-			sprintf(gcQuery,"DELETE FROM tProperty WHERE cName='cOrg_MCS_QOS' "
-					" AND uType=3 AND uKey=%u",uContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				logfileLine("Process",mysql_error(&gMysql),uContainer);
-				mysql_close(&gMysql);
-				mysql_close(&gMysqlExt);
-				exit(2);
-			}
+			//Using groups always will get at least one row
+			if(field2[0]==NULL)
+				continue;
 
-			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_MCS_QOS',cValue='dUpJitter=%s dDownJitter=%s dMOS=%s'"
-					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
-						field2[0],field2[1],field2[2],uContainer,uOwner);
+			//debug only
+			//printf("%s\n",field[0]);
+
+			//cOrg_MCS_JitterUp
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+						" WHERE cName='cOrg_MCS_JitterUp' AND uType=3 AND uKey=%u",
+							uContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -173,12 +172,233 @@ void Process(void)
 				mysql_close(&gMysqlExt);
 				exit(2);
 			}
+			res3=mysql_store_result(&gMysql);
+			if((field3=mysql_fetch_row(res3)))
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue=GREATEST(cValue,'%s')"
+						",uModBy=1"
+						",uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uProperty=%s",
+							field2[0],field3[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				//debug only
+				//printf("UPDATE %s %s\n",field3[0],field2[0]);
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_MCS_JitterUp',cValue='%s'"
+					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+						field2[0],uContainer,uOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				//debug only
+				//printf("INSERT %s\n",field2[0]);
+			}
+			mysql_free_result(res3);
+			//cOrg_MCS_JitterUp end
+
+			//cOrg_MCS_JitterDown
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+						" WHERE cName='cOrg_MCS_JitterDown' AND uType=3 AND uKey=%u",
+							uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("Process",mysql_error(&gMysql),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res3=mysql_store_result(&gMysql);
+			if((field3=mysql_fetch_row(res3)))
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue=GREATEST(cValue,'%s')"
+						",uModBy=1"
+						",uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uProperty=%s",
+							field2[1],field3[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_MCS_JitterDown',cValue='%s'"
+					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+						field2[1],uContainer,uOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			mysql_free_result(res3);
+			//cOrg_MCS_JitterDown end
+
+			//cOrg_MCS_MOS
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+						" WHERE cName='cOrg_MCS_MOS' AND uType=3 AND uKey=%u",
+							uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("Process",mysql_error(&gMysql),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res3=mysql_store_result(&gMysql);
+			if((field3=mysql_fetch_row(res3)))
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue=LEAST(cValue,'%s')"
+						",uModBy=1"
+						",uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uProperty=%s",
+							field2[2],field3[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_MCS_MOS',cValue='%s'"
+					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+						field2[2],uContainer,uOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			mysql_free_result(res3);
+			//cOrg_MCS_MOS end
+
+			//cOrg_MCS_LossUp
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+						" WHERE cName='cOrg_MCS_LossUp' AND uType=3 AND uKey=%u",
+							uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("Process",mysql_error(&gMysql),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res3=mysql_store_result(&gMysql);
+			if((field3=mysql_fetch_row(res3)))
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue=GREATEST(cValue,'%s')"
+						",uModBy=1"
+						",uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uProperty=%s",
+							field2[3],field3[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_MCS_LossUp',cValue='%s'"
+					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+						field2[3],uContainer,uOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			mysql_free_result(res3);
+			//cOrg_MCS_LossUp end
+
+			//cOrg_MCS_LossDown
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+						" WHERE cName='cOrg_MCS_LossDown' AND uType=3 AND uKey=%u",
+							uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("Process",mysql_error(&gMysql),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res3=mysql_store_result(&gMysql);
+			if((field3=mysql_fetch_row(res3)))
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue=GREATEST(cValue,'%s')"
+						",uModBy=1"
+						",uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uProperty=%s",
+							field2[4],field3[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_MCS_LossDown',cValue='%s'"
+					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+						field2[4],uContainer,uOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			mysql_free_result(res3);
 		}
 		mysql_free_result(res2);
 		
 	}
 	mysql_free_result(res);
 
+/*
 	//Everything is cool we can clean up 
 	sprintf(gcQuery,"TRUNCATE tVoipTest");
 	mysql_query(&gMysqlExt,gcQuery);
@@ -189,6 +409,7 @@ void Process(void)
 		mysql_close(&gMysqlExt);
 		exit(2);
 	}
+*/
 
 	mysql_close(&gMysql);
 	mysql_close(&gMysqlExt);
