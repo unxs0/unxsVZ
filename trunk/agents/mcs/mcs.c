@@ -27,6 +27,9 @@ unsigned guStatus=0;//not a valid status
 void TextConnectDb(void);
 
 //local protos
+void DeleteMCSData(void);
+void RoundRobinMCSDataElement(char *cNamePreFix);
+void RoundRobinMCSData(void);
 void Process(void);
 void TextConnectOpenMCSDb(void);
 
@@ -93,15 +96,93 @@ int main(int iArgc, char *cArgv[])
 			Process();
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"DeleteMCSData",13))
+		{
+			DeleteMCSData();
+			goto CommonExit;
+		}
+		else if(!strncmp(cArgv[1],"RoundRobinMCSData",16))
+		{
+			RoundRobinMCSData();
+			goto CommonExit;
+		}
 	}
 
-	printf("Usage: %s Process\n",gcProgram);
+	printf("Usage: %s Process|DeleteMCSData|RoundRobinMCSData\n",gcProgram);
 
 CommonExit:
 	fclose(gLfp);
 	return(0);
 
 }//main()
+
+
+void DeleteMCSData(void)
+{
+	TextConnectDb();
+
+	sprintf(gcQuery,"DELETE FROM tProperty WHERE cName LIKE 'cOrg_MCS_%%' AND uType=3");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("DeleteMCSData",mysql_error(&gMysql),0);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+
+	mysql_close(&gMysql);
+	exit(0);
+
+}//void DeleteMCSData(void)
+
+
+void RoundRobinMCSDataElement(char *cNamePreFix)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uContainer=0;
+
+	TextConnectDb();
+
+	sprintf(gcQuery,"SELECT uProperty,uKey FROM tProperty WHERE uType=3 AND cName='%.32s'",cNamePreFix);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("RoundRobinMCSData",mysql_error(&gMysql),0);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uContainer);
+
+		//Move to previous day
+		sprintf(gcQuery,"UPDATE tProperty SET cName=concat('%.32s_',DAYNAME(FROM_UNIXTIME(UNIX_TIMESTAMP(NOW())-86400)))"
+					" WHERE uProperty=%s",cNamePreFix,field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("RoundRobinMCSData",mysql_error(&gMysql),uContainer);
+			mysql_close(&gMysql);
+			exit(2);
+		}
+	}
+	mysql_close(&gMysql);
+	exit(0);
+
+}//void RoundRobinMCSDataElement(char *cNamePreFix)
+
+
+void RoundRobinMCSData(void)
+{
+	RoundRobinMCSDataElement("cOrg_MCS_MOS");
+	RoundRobinMCSDataElement("cOrg_MCS_JitterUp");
+	RoundRobinMCSDataElement("cOrg_MCS_JitterDown");
+	RoundRobinMCSDataElement("cOrg_MCS_LossUp");
+	RoundRobinMCSDataElement("cOrg_MCS_LossDown");
+
+}//void RoundRobinMCSData(void)
 
 
 void Process(void)
@@ -141,7 +222,7 @@ void Process(void)
 		sscanf(field[2],"%u",&uOwner);
 
 		sprintf(gcQuery,"SELECT MAX(dUpJitter),MAX(dDownJitter),MIN(dMOS),MAX(dUpLoss),MAX(dDownLoss)"
-					" FROM tVoipTest WHERE cSID LIKE '%%/%s'",field[0]);
+					" FROM tVoipTest WHERE cSID LIKE '%%/%s' AND uStatus=0",field[0]);
 		mysql_query(&gMysqlExt,gcQuery);
 		if(mysql_errno(&gMysqlExt))
 		{
@@ -392,24 +473,23 @@ void Process(void)
 				}
 			}
 			mysql_free_result(res3);
+
+			//We wharehouse data here now, so we mark processed.
+			//Note the we may clobber some data points if they come in at exactly the wrong second.
+			sprintf(gcQuery,"UPDATE tVoipTest SET uStatus=1 WHERE cSID LIKE '%%/%s'",field[0]);
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				logfileLine("Process",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
 		}
 		mysql_free_result(res2);
 		
 	}
 	mysql_free_result(res);
-
-/*
-	//Everything is cool we can clean up 
-	sprintf(gcQuery,"TRUNCATE tVoipTest");
-	mysql_query(&gMysqlExt,gcQuery);
-	if(mysql_errno(&gMysqlExt))
-	{
-		logfileLine("Process",mysql_error(&gMysqlExt),uContainer);
-		mysql_close(&gMysql);
-		mysql_close(&gMysqlExt);
-		exit(2);
-	}
-*/
 
 	mysql_close(&gMysql);
 	mysql_close(&gMysqlExt);
