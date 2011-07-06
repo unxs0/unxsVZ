@@ -158,6 +158,15 @@ void RoundRobinMCSDataElement(char *cNamePreFix)
 		sscanf(field[1],"%u",&uContainer);
 
 		//Move to previous day
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE cName=concat('%.32s_',DAYNAME(FROM_UNIXTIME(UNIX_TIMESTAMP(NOW())-86400)))"
+					" AND uKey=%u AND uType=3",cNamePreFix,uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("RoundRobinMCSData",mysql_error(&gMysql),uContainer);
+			mysql_close(&gMysql);
+			exit(2);
+		}
 		sprintf(gcQuery,"UPDATE tProperty SET cName=concat('%.32s_',DAYNAME(FROM_UNIXTIME(UNIX_TIMESTAMP(NOW())-86400)))"
 					" WHERE uProperty=%s",cNamePreFix,field[0]);
 		mysql_query(&gMysql,gcQuery);
