@@ -158,7 +158,7 @@ void RoundRobinMCSDataElement(char *cNamePreFix)
 		sscanf(field[1],"%u",&uContainer);
 
 		//Move to previous day
-		sprintf(gcQuery,"DELETE FROM tProperty WHERE cName=concat('%.32s_',DAYNAME(FROM_UNIXTIME(UNIX_TIMESTAMP(NOW())-86400)))"
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE cName=concat('%.32s_',WEEKDAY(FROM_UNIXTIME(UNIX_TIMESTAMP(NOW())-86400)))"
 					" AND uKey=%u AND uType=3",cNamePreFix,uContainer);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -167,7 +167,7 @@ void RoundRobinMCSDataElement(char *cNamePreFix)
 			mysql_close(&gMysql);
 			exit(2);
 		}
-		sprintf(gcQuery,"UPDATE tProperty SET cName=concat('%.32s_',DAYNAME(FROM_UNIXTIME(UNIX_TIMESTAMP(NOW())-86400)))"
+		sprintf(gcQuery,"UPDATE tProperty SET cName=concat('%.32s_',WEEKDAY(FROM_UNIXTIME(UNIX_TIMESTAMP(NOW())-86400)))"
 					" WHERE uProperty=%s",cNamePreFix,field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -178,7 +178,6 @@ void RoundRobinMCSDataElement(char *cNamePreFix)
 		}
 	}
 	mysql_close(&gMysql);
-	exit(0);
 
 }//void RoundRobinMCSDataElement(char *cNamePreFix)
 
@@ -190,6 +189,7 @@ void RoundRobinMCSData(void)
 	RoundRobinMCSDataElement("cOrg_MCS_JitterDown");
 	RoundRobinMCSDataElement("cOrg_MCS_LossUp");
 	RoundRobinMCSDataElement("cOrg_MCS_LossDown");
+	exit(0);
 
 }//void RoundRobinMCSData(void)
 
