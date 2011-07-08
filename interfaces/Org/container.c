@@ -34,6 +34,7 @@ static char *gcShowDetails="";
 //TOC incomplete TODO
 void ProcessContainerVars(pentry entries[], int x);
 void htmlContainerList(void);
+void htmlContainerQOS(void);
 void ContainerGetHook(entry gentries[],int x);
 char *cGetHostname(unsigned uContainer);
 char *cGetImageHost(unsigned uContainer);
@@ -1163,6 +1164,10 @@ void ContainerCommands(pentry entries[], int x)
 
 			exit(0);
 		}//DID Report
+		else if(!strcmp(gcFunction,"QOS Report"))
+		{
+				htmlContainerQOS();
+		}
 
 		htmlContainer();
 	}
@@ -1188,6 +1193,15 @@ void htmlContainerList(void)
 	htmlFooter("Footer");
 
 }//void htmlContainerList(void)
+
+
+void htmlContainerQOS(void)
+{
+	htmlHeader("unxsvzOrg","Header");
+	htmlContainerPage("unxsvzOrg","ContainerQOS.Body");
+	htmlFooter("Footer");
+
+}//void htmlContainerQOS(void)
 
 
 void htmlContainerPage(char *cTitle, char *cTemplateName)
@@ -1563,7 +1577,8 @@ void funcContainerInfo(FILE *fp)
 
 	//SUBSTR based on 5 char cOrg_ prefix
 	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName LIKE 'cOrg_%%'"
-			" AND cName!='cOrg_Extension' AND cName!='cOrg_OpenSIPS_DID' AND cName!='cOrg_SIPTrunk' ORDER BY cName",guContainer);
+			" AND cName!='cOrg_Extension' AND cName!='cOrg_OpenSIPS_DID' AND cName!='cOrg_SIPTrunk'"
+			" AND cName NOT LIKE 'cOrg_MCS%%' ORDER BY cName",guContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1822,7 +1837,10 @@ void funcNewContainer(FILE *fp)
 			" title='Generate a cvs report of all DID/Trunk PBX container data direct to browser'"
 			" name=gcFunction value='DID Report'>\n");
 	}
-
+	if(guContainer)
+		fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Quality of service report'"
+			" name=gcFunction value='QOS Report'>\n");
 
 	fprintf(fp,"</td></tr>\n");
 
@@ -1965,4 +1983,70 @@ void funcContainerList(FILE *fp)
 	fprintf(fp,"<!-- funcContainerList(fp) End -->\n");
 
 }//void funcContainerList(FILE *fp)
+
+
+void funcContainerQOS(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	if(!guContainer) return;
+
+	fprintf(fp,"<!-- funcContainerQOS(fp) Start --><tr> </tr>\n");
+
+	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue,FROM_UNIXTIME(uModDate) FROM tProperty WHERE uKey=%u AND"
+				" cName LIKE 'cOrg_MCS_%%MOS' AND uType=3 ORDER BY cName DESC",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+			printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=%s')\">"
+			" <strong>%s</strong></a></td>"
+			"<td><input type=text name='%s' value='%s' size=40 maxlength=32 disabled class=\"type_fields_off\"> </td>\n"
+			"<td><input type=text name='%s' value='%s' size=40 maxlength=32 disabled class=\"type_fields_off\"> </td></tr>\n",
+						field[0],field[0],
+						field[0],field[1],
+						field[0],field[2]);
+	}
+	fprintf(fp,"<tr></tr>\n");
+	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue,FROM_UNIXTIME(uModDate) FROM tProperty WHERE uKey=%u AND"
+				" cName LIKE 'cOrg_MCS_%%Jitter%%' AND uType=3 ORDER BY cName DESC",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+			printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=%s')\">"
+			" <strong>%s</strong></a></td>"
+			"<td><input type=text name='%s' value='%s' size=40 maxlength=32 disabled class=\"type_fields_off\"> </td>\n"
+			"<td><input type=text name='%s' value='%s' size=40 maxlength=32 disabled class=\"type_fields_off\"> </td></tr>\n",
+						field[0],field[0],
+						field[0],field[1],
+						field[0],field[2]);
+	}
+	fprintf(fp,"<tr></tr>\n");
+	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue,FROM_UNIXTIME(uModDate) FROM tProperty WHERE uKey=%u AND"
+				" cName LIKE 'cOrg_MCS_%%Loss%%' AND uType=3 ORDER BY cName DESC",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+			printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=%s')\">"
+			" <strong>%s</strong></a></td>"
+			"<td><input type=text name='%s' value='%s' size=40 maxlength=32 disabled class=\"type_fields_off\"> </td>\n"
+			"<td><input type=text name='%s' value='%s' size=40 maxlength=32 disabled class=\"type_fields_off\"> </td></tr>\n",
+						field[0],field[0],
+						field[0],field[1],
+						field[0],field[2]);
+	}
+	mysql_free_result(res);
+
+	fprintf(fp,"<!-- funcContainerQOS(fp) End -->\n");
+
+}//void funcContainerQOS(FILE *fp)
 
