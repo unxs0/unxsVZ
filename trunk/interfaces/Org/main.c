@@ -350,6 +350,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcContainer(fp);
 	else if(!strcmp(cFunction,"funcContainerList"))
 		funcContainerList(fp);
+	else if(!strcmp(cFunction,"funcContainerQOS"))
+		funcContainerQOS(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
