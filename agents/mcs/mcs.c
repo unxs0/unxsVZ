@@ -251,19 +251,18 @@ void Process(void)
 		{
 			unsigned i;
 
+			//debug only
+			//printf("MAX %s\n",field[0]);
+
 			//Using groups always will get at least one row
 			if(field2[0]==NULL)
-				continue;
-
-			//debug only
-			printf("%s\n",field[0]);
+				goto ExitSection;
 
 			//Each array element
 			for(i=0;i<5;i++)
 			{
 				//debug only
-				printf("%s %s\n",cNameArray[i],cFuncArray[i]);
-
+				//printf("%s %s\n",cNameArray[i],cFuncArray[i]);
 	
 				sprintf(gcQuery,"SELECT uProperty FROM tProperty"
 						" WHERE cName='cOrg_MCS_%s' AND uType=3 AND uKey=%u",
@@ -295,7 +294,7 @@ void Process(void)
 						exit(2);
 					}
 					//debug only
-					printf("UPDATE %s %s\n",field3[0],field2[i]);
+					//printf("UPDATE %s %s\n",field3[0],field2[i]);
 				}
 				else
 				{
@@ -311,7 +310,7 @@ void Process(void)
 						exit(2);
 					}
 					//debug only
-					printf("INSERT %s\n",field2[i]);
+					//printf("INSERT %s\n",field2[i]);
 				}
 				mysql_free_result(res3);
 			}//for each array element
@@ -327,10 +326,185 @@ void Process(void)
 				mysql_close(&gMysqlExt);
 				exit(2);
 			}
-		}
+		}//if
+ExitSection:
 		mysql_free_result(res2);
 		//End MAX section
-	}
+
+		//daily STDDEV section
+		sprintf(gcQuery,"SELECT STDDEV(dMOS),AVG(dMOS),MAX(dMOS) FROM tVoipTest WHERE"
+				" uTime>DATE_FORMAT(NOW(),'%%Y%%m%%d000000') AND cIP='%s'",field[0]);
+		mysql_query(&gMysqlExt,gcQuery);
+		if(mysql_errno(&gMysqlExt))
+		{
+			logfileLine("Process",mysql_error(&gMysqlExt),uContainer);
+			mysql_close(&gMysql);
+			mysql_close(&gMysqlExt);
+			exit(2);
+		}
+		res2=mysql_store_result(&gMysqlExt);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			//debug only
+			//printf("STDDEV %s\n",field[0]);
+
+			//Using groups always will get at least one row
+			if(field2[0]==NULL)
+				goto ExitSection1;
+
+			//STDDEV
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					" WHERE cName='cOrg_MCS_stddevMOS' AND uType=3 AND uKey=%u",
+						uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("Process",mysql_error(&gMysql),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res3=mysql_store_result(&gMysql);
+			if((field3=mysql_fetch_row(res3)))
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue='%s'"
+						",uModBy=1"
+						",uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uProperty=%s",
+							field2[0],field3[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				//debug only
+				//printf("UPDATE %s %s\n",field3[0],field2[0]);
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_MCS_stddevMOS',cValue='%s'"
+					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+						field2[0],uContainer,uOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				//debug only
+				//printf("INSERT %s\n",field2[0]);
+			}
+
+			//AVG
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					" WHERE cName='cOrg_MCS_avgMOS' AND uType=3 AND uKey=%u",
+						uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("Process",mysql_error(&gMysql),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res3=mysql_store_result(&gMysql);
+			if((field3=mysql_fetch_row(res3)))
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue='%s'"
+						",uModBy=1"
+						",uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uProperty=%s",
+							field2[1],field3[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				//debug only
+				//printf("UPDATE %s %s\n",field3[0],field2[1]);
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_MCS_avgMOS',cValue='%s'"
+					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+						field2[1],uContainer,uOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				//debug only
+				//printf("INSERT %s\n",field2[1]);
+			}
+			mysql_free_result(res3);
+
+			//MAX
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					" WHERE cName='cOrg_MCS_maxMOS' AND uType=3 AND uKey=%u",
+						uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("Process",mysql_error(&gMysql),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res3=mysql_store_result(&gMysql);
+			if((field3=mysql_fetch_row(res3)))
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue='%s'"
+						",uModBy=1"
+						",uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uProperty=%s",
+							field2[2],field3[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				//debug only
+				//printf("UPDATE %s %s\n",field3[0],field2[2]);
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_MCS_maxMOS',cValue='%s'"
+					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+						field2[2],uContainer,uOwner);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("Process",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				//debug only
+				//printf("INSERT %s\n",field2[2]);
+			}
+			mysql_free_result(res3);
+
+		}//if
+ExitSection1:
+		mysql_free_result(res2);
+		//End STDDEV section
+
+	}//While each container
+
 	mysql_free_result(res);
 
 	mysql_close(&gMysql);
