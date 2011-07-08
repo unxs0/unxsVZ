@@ -88,12 +88,18 @@ void ContainerGetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"guContainer"))
 			sscanf(gentries[i].val,"%u",&guContainer);
+		else if(!strcmp(gentries[i].name,"gcFunction"))
+			sprintf(gcFunction,"%.99s",gentries[i].val);
 	}
 
-	if(guContainer)
+	if(guContainer && !gcFunction[0])
 	{
 		SelectContainer();
-		htmlContainer();
+	}
+	else if(guContainer && !strcmp(gcFunction,"QOSReport"))
+	{
+		SelectContainer();
+		htmlContainerQOS();
 	}
 
 	htmlContainer();
@@ -1609,6 +1615,11 @@ void funcContainerInfo(FILE *fp)
 		mysql_free_result(res);
 	}
 
+	if(uAppliance)
+	printf("<tr></tr><tr><td><a href=unxsvzOrg.cgi?gcPage=Container&gcFunction=QOSReport&guContainer=%u title='QOS Report'>"
+			"<img src=/images/plus.png border=0 ></a></td></tr>\n",
+			guContainer);
+
 	fprintf(fp,"<!-- funcContainerInfo(fp) End -->\n");
 
 }//void funcContainerInfo(FILE *fp)
@@ -1671,7 +1682,7 @@ void funcNewContainer(FILE *fp)
 
 	fprintf(fp,"<tr><td valign=\"top\"><a class=inputLink href=\"#\""
 		" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=Special+OPs')\""
-		" <strong><u>Special OPs</u></strong></a></td><td>\n");
+		" <strong>Special OPs</strong></a></td><td>\n");
 
 	printf("<fieldset><legend>Search</b></legend>");
 	//Search DID
@@ -1916,7 +1927,7 @@ void funcContainer(FILE *fp)
 
 	fprintf(fp,"<tr><td valign=\"top\"><a class=inputLink href=\"#\""
 		" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=Container+OPs')\""
-		" <strong><u>Container OPs</u></strong></a></td><td>\n");
+		" <strong>Container OPs</strong></a></td><td>\n");
 
 	//DID
 	printf("<fieldset><legend>DID OPs</b></legend>");
