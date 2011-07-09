@@ -261,7 +261,7 @@ void Process(void)
 			float dMOS=0.0;
 
 			//Send alert email when dMOS<3.8
-			sscanf(field[2],"%f",&dMOS);
+			sscanf(field2[2],"%f",&dMOS);
 			if(dMOS<3.8)
 			{
 				sprintf(gcQuery,"Warning MOS for %s/%s is %f",field[3],field[0],dMOS);
