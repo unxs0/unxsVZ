@@ -349,7 +349,7 @@ ExitSection:
 		//End MAX section
 
 		//daily STDDEV section
-		sprintf(gcQuery,"SELECT STDDEV(dMOS),AVG(dMOS),MAX(dMOS) FROM tVoipTest WHERE"
+		sprintf(gcQuery,"SELECT FORMAT(STDDEV(dMOS),2),FORMAT(AVG(dMOS),2),MAX(dMOS) FROM tVoipTest WHERE"
 				" uTime>DATE_FORMAT(NOW(),'%%Y%%m%%d000000') AND cIP='%s'",field[0]);
 		mysql_query(&gMysqlExt,gcQuery);
 		if(mysql_errno(&gMysqlExt))
