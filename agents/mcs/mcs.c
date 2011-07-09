@@ -32,6 +32,7 @@ void RoundRobinMCSDataElement(char *cNamePreFix);
 void RoundRobinMCSData(void);
 void Process(void);
 void TextConnectOpenMCSDb(void);
+void SendAlertEmail(char *cMsg);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -106,9 +107,14 @@ int main(int iArgc, char *cArgv[])
 			RoundRobinMCSData();
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"TestEmail",9))
+		{
+			SendAlertEmail("Test message");
+			goto CommonExit;
+		}
 	}
 
-	printf("Usage: %s Process|DeleteMCSData|RoundRobinMCSData\n",gcProgram);
+	printf("Usage: %s Process|DeleteMCSData|RoundRobinMCSData|TestEmail\n",gcProgram);
 
 CommonExit:
 	fclose(gLfp);
@@ -187,6 +193,7 @@ void RoundRobinMCSDataElement(char *cNamePreFix)
 void RoundRobinMCSData(void)
 {
 	RoundRobinMCSDataElement("MOS");
+	RoundRobinMCSDataElement("avgMOS");
 	RoundRobinMCSDataElement("JitterUp");
 	RoundRobinMCSDataElement("JitterDown");
 	RoundRobinMCSDataElement("LossUp");
@@ -214,7 +221,8 @@ void Process(void)
 	TextConnectOpenMCSDb();
 	guLoginClient=1;//Root user
 
-	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uContainer,tContainer.uOwner FROM tContainer,tGroupGlue,tGroup,tIP"
+	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uContainer,tContainer.uOwner,tContainer.cHostname"
+			" FROM tContainer,tGroupGlue,tGroup,tIP"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
 			" AND tIP.uIP=tContainer.uIPv4"
@@ -250,6 +258,15 @@ void Process(void)
 		if((field2=mysql_fetch_row(res2)))
 		{
 			unsigned i;
+			float dMOS=0.0;
+
+			//Send alert email when dMOS<3.8
+			sscanf(field[2],"%f",&dMOS);
+			if(dMOS<3.8)
+			{
+				sprintf(gcQuery,"Warning MOS for %s/%s is %f",field[3],field[0],dMOS);
+				SendAlertEmail(gcQuery);
+			}
 
 			//debug only
 			//printf("MAX %s\n",field[0]);
@@ -529,3 +546,28 @@ void TextConnectOpenMCSDb(void)
 
 }//TextConnectOpenMCSDb()
 
+
+void SendAlertEmail(char *cMsg)
+{
+	FILE *pp;
+
+	pp=popen("/usr/lib/sendmail -t","w");
+	if(pp==NULL)
+	{
+		logfileLine("SendAlertEmail","popen() /usr/lib/sendmail",0);
+		return;
+	}
+			
+	fprintf(pp,"To: supportgrp@unixservice.com\n");
+	fprintf(pp,"From: noreply@unixservice.com\n");
+	fprintf(pp,"Subject: unxsCMS Alert\n");
+
+	fprintf(pp,"%s\n",cMsg);
+
+	fprintf(pp,".\n");
+
+	pclose(pp);
+
+	logfileLine("SendAlertEmail","email attempt ok",0);
+
+}//void SendAlertEmail(char *cMsg)
