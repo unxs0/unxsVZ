@@ -260,6 +260,13 @@ void Process(void)
 			unsigned i;
 			float dMOS=0.0;
 
+			//debug only
+			//printf("MAX %s\n",field[0]);
+
+			//Using groups always will get at least one row
+			if(field2[0]==NULL)
+				goto ExitSection;
+
 			//Send alert email when dMOS<3.8
 			sscanf(field2[2],"%f",&dMOS);
 			if(dMOS<3.8)
@@ -267,13 +274,6 @@ void Process(void)
 				sprintf(gcQuery,"Warning MOS for %s/%s is %f",field[3],field[0],dMOS);
 				SendAlertEmail(gcQuery);
 			}
-
-			//debug only
-			//printf("MAX %s\n",field[0]);
-
-			//Using groups always will get at least one row
-			if(field2[0]==NULL)
-				goto ExitSection;
 
 			//Each array element
 			for(i=0;i<5;i++)
