@@ -271,7 +271,12 @@ void Process(void)
 			sscanf(field2[2],"%f",&dMOS);
 			if(dMOS<3.8)
 			{
-				sprintf(gcQuery,"Warning MOS for %s/%s is %f",field[3],field[0],dMOS);
+				sprintf(gcQuery,"Warning MOS for %s/%s is %f\n\n"
+						"Upstream jitter=%s, downstream jitter=%s\n"
+						"Upstream loss=%s, downstream loss=%s\n",
+							field[3],field[0],dMOS,
+							field2[0],field2[1],
+							field2[3],field2[4]);
 				SendAlertEmail(gcQuery);
 			}
 
