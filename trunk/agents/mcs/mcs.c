@@ -10,8 +10,10 @@ AUTHOR
 NOTES
 */
 
+#include "local.h"
 #include "../../mysqlrad.h"
 #include <sys/sysinfo.h>
+
 
 MYSQL gMysql;
 MYSQL gMysqlExt;
@@ -540,7 +542,6 @@ ExitSection1:
 void TextConnectOpenMCSDb(void)
 {
 
-#include "local.h"
 
         mysql_init(&gMysqlExt);
         if (!mysql_real_connect(&gMysqlExt,NULL,"mcs",MCSPWD,"mcs",0,NULL,0))
@@ -555,6 +556,11 @@ void TextConnectOpenMCSDb(void)
 void SendAlertEmail(char *cMsg)
 {
 	FILE *pp;
+	pid_t pidChild;
+
+	pidChild=fork();
+	if(pidChild!=0)
+		return;
 
 	pp=popen("/usr/lib/sendmail -t","w");
 	if(pp==NULL)
@@ -563,7 +569,7 @@ void SendAlertEmail(char *cMsg)
 		return;
 	}
 			
-	fprintf(pp,"To: supportgrp@unixservice.com\n");
+	fprintf(pp,"To: %s\n",cMAILTO);//define in local.h
 	fprintf(pp,"From: noreply@unixservice.com\n");
 	fprintf(pp,"Subject: unxsCMS Alert\n");
 
