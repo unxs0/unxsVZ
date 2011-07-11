@@ -34,7 +34,7 @@ void ExttGlossaryCommands(pentry entries[], int x)
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=10)
 			{
 	                        ProcesstGlossaryVars(entries,x);
                         	guMode=2000;
@@ -43,7 +43,7 @@ void ExttGlossaryCommands(pentry entries[], int x)
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=10)
 			{
                         	ProcesstGlossaryVars(entries,x);
 
@@ -62,10 +62,7 @@ void ExttGlossaryCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstGlossaryVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
 				tGlossary(LANG_NB_CONFIRMDEL);
@@ -74,10 +71,7 @@ void ExttGlossaryCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstGlossaryVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
 				DeletetGlossary();
@@ -86,10 +80,7 @@ void ExttGlossaryCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstGlossaryVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tGlossary(LANG_NB_CONFIRMMOD);
@@ -98,10 +89,7 @@ void ExttGlossaryCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstGlossaryVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
 				//Check entries here
@@ -237,17 +225,13 @@ void ExttGlossaryNavBar(void)
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=12 && !guListMode)
+	if(guPermLevel>=10 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowDel(uOwner,uCreatedBy))
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
