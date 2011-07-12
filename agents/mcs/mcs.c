@@ -569,9 +569,17 @@ void SendAlertEmail(char *cMsg)
 		return;
 	}
 			
-	fprintf(pp,"To: %s\n",cMAILTO);//define in local.h
-	fprintf(pp,"From: noreply@unixservice.com\n");
-	fprintf(pp,"Subject: unxsCMS Alert\n");
+	//should be defined in local.h
+	fprintf(pp,"To: %s\n",cMAILTO);
+	if(cBCC!=NULL)
+	{
+		char cBcc[512]={""};
+		sprintf(cBcc,"%.511s",cBCC);
+		if(cBcc[0])
+			fprintf(pp,"Bcc: %s\n",cBcc);
+	}
+	fprintf(pp,"From: %s\n",cFROM);
+	fprintf(pp,"Subject: %s\n",cSUBJECT);
 
 	fprintf(pp,"%s\n",cMsg);
 
