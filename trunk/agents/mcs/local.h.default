@@ -1,2 +1,5 @@
 #define MCSPWD "ultrasecret"
 #define cMAILTO "supportgrp@unixservice.com"
+//#define cBCC ""
+#define cFROM "noreply@unixsevice.com"
+#define cSUBJECT "unxsCMS Alert"
