@@ -434,6 +434,79 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							if(mysql_affected_rows(&gMysql)>0)
 								uGroupJobs++;
 						}
+						if(guOpOnClones)
+						{
+        						MYSQL_RES *res;
+						        MYSQL_ROW field;
+							unsigned uContainer=0;
+							unsigned uNode=0;
+							unsigned uDatacenter=0;
+							unsigned uStatus=0;
+							unsigned uOwner=0;
+							unsigned uIPv4=0;
+
+							sprintf(gcQuery,"SELECT uDatacenter,uNode,uContainer,uStatus,uOwner,uIPv4 FROM"
+									" tContainer WHERE uSource=%u",uCtContainer);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+						        res=mysql_store_result(&gMysql);
+							while((field=mysql_fetch_row(res)))
+							{
+								sscanf(field[0],"%u",&uDatacenter);
+								sscanf(field[1],"%u",&uNode);
+								sscanf(field[2],"%u",&uContainer);
+								sscanf(field[3],"%u",&uStatus);
+								sscanf(field[4],"%u",&uOwner);
+								sscanf(field[5],"%u",&uIPv4);
+								if((uStatus==uINITSETUP) && (uOwner==guCompany || guCompany==1))
+								{
+									//Release IPs
+									sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
+										" WHERE uIP=%u and uAvailable=0",uIPv4);
+									mysql_query(&gMysql,gcQuery);
+									if(mysql_errno(&gMysql))
+										htmlPlainTextError(mysql_error(&gMysql));
+									//Node IP if any MySQL5+
+									sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel IN"
+									" (SELECT cValue FROM tProperty WHERE uKey=%u"
+									" AND uType=3 AND cName='cNodeIP')",uContainer);
+									mysql_query(&gMysql,gcQuery);
+									if(mysql_errno(&gMysql))
+										htmlPlainTextError(mysql_error(&gMysql));
+									//Now we can remove properties
+									DelProperties(uContainer,3);
+									//Remove from any groups
+									sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",
+										uContainer);
+									mysql_query(&gMysql,gcQuery);
+									if(mysql_errno(&gMysql))
+										htmlPlainTextError(mysql_error(&gMysql));
+									//0 is not specific cancel job attempt
+									CancelContainerJob(uDatacenter,uNode,uContainer,0);
+									//81=Awaiting clone
+									sprintf(gcQuery,"DELETE FROM tContainer WHERE"
+											" uStatus=81 AND uSource=%u",uContainer);
+									mysql_query(&gMysql,gcQuery);
+									if(mysql_errno(&gMysql))
+										htmlPlainTextError(mysql_error(&gMysql));
+									sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE"
+											" uContainer=(SELECT uContainer FROM tContainer"
+											" WHERE uSource=%u AND uStatus=81)",uContainer);
+									mysql_query(&gMysql,gcQuery);
+									if(mysql_errno(&gMysql))
+										htmlPlainTextError(mysql_error(&gMysql));
+									sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
+										uContainer);
+									mysql_query(&gMysql,gcQuery);
+									if(mysql_errno(&gMysql))
+										htmlPlainTextError(mysql_error(&gMysql));
+									if(mysql_affected_rows(&gMysql)>0)
+										uGroupJobs++;
+								}
+							}
+							mysql_free_result(res);
+						}
 					}
 					//Cancel
 					else if(!strcmp(gcCommand,"Group Cancel"))
