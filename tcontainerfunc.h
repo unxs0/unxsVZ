@@ -92,6 +92,7 @@ static unsigned uAllPortsOpen=0;
 static unsigned uCloneStop=0;
 static unsigned uSyncPeriod=0;
 static unsigned guNoClones=0;
+static unsigned guOpOnClones=0;
 static char cSearch[32]={""};
 static unsigned uGroupJobs=0;
 //uGroup: Group type association
@@ -275,6 +276,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 			sprintf(cuGroupPullDown,"%.255s",entries[i].val);
 			uGroup=ReadPullDown("tGroup","cLabel",cuGroupPullDown);
 		}
+		else if(!strcmp(entries[i].name,"guOpOnClones"))
+		{
+			guOpOnClones=1;
+		}
 		else if(!strncmp(entries[i].name,"Ct",2))
 		{
 			//insider xss protection
@@ -319,6 +324,41 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 								SetContainerStatus(uCtContainer,uAWAITDEL);
 								uGroupJobs++;
 							}
+						}
+						if(guOpOnClones)
+						{
+        						MYSQL_RES *res;
+						        MYSQL_ROW field;
+							unsigned uContainer=0;
+							unsigned uNode=0;
+							unsigned uDatacenter=0;
+							unsigned uStatus=0;
+							unsigned uOwner=0;
+
+							sprintf(gcQuery,"SELECT uDatacenter,uNode,uContainer,uStatus,uOwner FROM tContainer"
+									" WHERE uSource=%u",uCtContainer);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+						        res=mysql_store_result(&gMysql);
+							while((field=mysql_fetch_row(res)))
+							{
+								sscanf(field[0],"%u",&uDatacenter);
+								sscanf(field[1],"%u",&uNode);
+								sscanf(field[2],"%u",&uContainer);
+								sscanf(field[3],"%u",&uStatus);
+								sscanf(field[4],"%u",&uOwner);
+								if((uStatus==uSTOPPED || uStatus==uACTIVE)
+									&& (uOwner==guCompany || guCompany==1))
+								{
+									if(DestroyContainerJob(uDatacenter,uNode,uContainer,guCompany))
+									{
+										SetContainerStatus(uContainer,uAWAITDEL);
+										uGroupJobs++;
+									}
+								}
+							}
+							mysql_free_result(res);
 						}
 					}
 					else if(!strcmp(gcCommand,"Group Change"))
@@ -3408,10 +3448,12 @@ void ExttContainerButtons(void)
 			printf("<p><u>Container Search by cLabel</u><br>");
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
 					" name=cSearch value='%s'>",cSearch);
-			printf(" <input type=checkbox name=guNoClones");
+			printf("<br><input title='Remove clones from search nav list' type=checkbox name=guNoClones");
 			if(guNoClones)
 				printf(" checked");
 			printf("> guNoClones");
+			printf("<input title='Operate on clones in group functions when appropiate'"
+					" type=checkbox name=guOpOnClones> guOpOnClones\n");
 			printf("<p><u>Container NavList Filter by tGroup</u><br>");
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 
