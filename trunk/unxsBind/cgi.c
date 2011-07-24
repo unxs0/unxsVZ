@@ -113,23 +113,6 @@ void plustospace(char *str) {
     for(x=0;str[x];x++) if(str[x] == '+') str[x] = ' ';
 }
 
-int getline(char *s, int n, FILE *f) {
-    register int i=0;
-
-    while(1) {
-        s[i] = (char)fgetc(f);
-
-        if(s[i] == CR)
-            s[i] = fgetc(f);
-
-        if((s[i] == 0x4) || (s[i] == LF) || (i == (n-1))) {
-            s[i] = '\0';
-            return (feof(f) ? 1 : 0);
-        }
-        ++i;
-    }
-}
-
 int ind(char *s, char c) {
     register int x;
 
