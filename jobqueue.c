@@ -3591,6 +3591,11 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 			//level 1 done
 			return;
 		}
+
+		//If we stop we keep stopped on reboot.
+		sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot no --save",uContainer);
+		system(gcQuery);
+
 		SetContainerStatus(uContainer,uSTOPPED);
 	}
 	else
