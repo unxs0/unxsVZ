@@ -3777,6 +3777,9 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		return;
 	}
 	//To play it safe for now we remove any cuSyncPeriod property.
+	//This means that once the node is operational and we want to resume
+	//clone sync operations we need to copy the source container cuSyncPeriod
+	//to the clone container for sync operation to resume.
 	SetContainerProperty(uContainer,"cuSyncPeriod","0");
 
 	//Everything ok
@@ -4178,6 +4181,7 @@ void logfileLine(const char *cFunction,const char *cLogline)
 }//void logfileLine(char *cLogline)
 
 
+//uRemoteContainer is the -clone container.
 unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemoteContainer)
 {
         MYSQL_RES *res;
@@ -4209,6 +4213,9 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uRemote
 	}
 	mysql_free_result(res);
 
+	//After failover cuSyncPeriod is 0 for clone (remote) container.
+	//This allows for safekeeping of potentially useful data.
+	//mainfunc RecoverMode recover cuSyncPeriod from source to clone.
 	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cuSyncPeriod'",
 					uRemoteContainer);
 	mysql_query(&gMysql,gcQuery);

@@ -3093,7 +3093,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
-                else if(!strncmp(gcCommand,"Failover",8))
+                else if(!strncmp(gcCommand,"Switchover",10))
                 {
                         ProcesstContainerVars(entries,x);
 			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
@@ -3125,7 +3125,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
-                else if(!strcmp(gcCommand,"Confirm Failover"))
+                else if(!strcmp(gcCommand,"Confirm Switchover"))
                 {
                         ProcesstContainerVars(entries,x);
 			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
@@ -3173,6 +3173,10 @@ void ExttContainerCommands(pentry entries[], int x)
 						SetContainerStatus(uContainer,uAWAITFAIL);
 						SetContainerStatus(uSource,uAWAITFAIL);
 						sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+						//Make sure group is the same as source
+						unsigned uGroup=uGetGroup(0,uSource);
+						if(uGroup)
+							ChangeGroup(uContainer,uGroup);
 						tContainer("FailoverJob() Done");
 					}
 					else
@@ -3350,23 +3354,23 @@ void ExttContainerButtons(void)
                 break;
 
                 case 8001:
-                        printf("<p><u>Failover</u><br>");
-			printf("Confirm all the information presented for a manual failover (switchover) to take place."
+                        printf("<p><u>Switchover Container Pair</u><br>");
+			printf("Confirm all the information presented for a manual failover to take place."
 				"<p>Jobs will be created for the source and this container. If jobs run successfully,"
 				" everything but the container VEIDs will be switched.<p>This clone (renamed to the"
 				" source names) will be the new production container and the source container will"
 				" be the clone container and kept in sync if cuSyncPeriod is changed to a non 0 value."
 				" This should only be done after confirmation that switchover container works fine.");
-                        printf("<p><u>Failover Data</u>");
+                        printf("<p><u>Switchover Data</u>");
 			if(uSource)
 			{
 				printf("<br>%s will replace ",cLabel);
 				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>"
 					"%s</a>",uSource,ForeignKey("tContainer","cLabel",uSource));
 			}
-			printf("<p><input title='Creates manual failover (switchover) jobs for the current container'"
+			printf("<p><input title='Creates manual failover jobs for the current container'"
 					" type=submit class=lwarnButton"
-					" name=gcCommand value='Confirm Failover'>\n");
+					" name=gcCommand value='Confirm Switchover'>\n");
                 break;
 
                 case 2001:
@@ -3564,9 +3568,9 @@ void ExttContainerButtons(void)
 						" type=submit class=lwarnButton"
 						" name=gcCommand value='Stop %.24s'><br>\n",cLabel);
 					if(uSource)
-						printf("<p><input title='Creates jobs for manual failover (switchover.)'"
+						printf("<p><input title='Creates jobs for manual failover.'"
 						" type=submit class=lwarnButton"
-						" name=gcCommand value='Failover %.25s'><br>\n",cLabel);
+						" name=gcCommand value='Switchover %.25s'><br>\n",cLabel);
 				}
 				else if( uStatus==uSTOPPED)
 				{
@@ -3580,9 +3584,9 @@ void ExttContainerButtons(void)
 					" type=submit class=largeButton"
 					" name=gcCommand value='Clone Wizard'><br>\n");
 					if(uSource)
-						printf("<p><input title='Creates jobs for manual failover (switchover.)'"
+						printf("<p><input title='Creates jobs for manual failover.'"
 						" type=submit class=lwarnButton"
-						" name=gcCommand value='Failover %.25s'><br>\n",cLabel);
+						" name=gcCommand value='Switchover %.25s'><br>\n",cLabel);
 				}
 
 				if( uStatus==uSTOPPED || uStatus==uACTIVE )
