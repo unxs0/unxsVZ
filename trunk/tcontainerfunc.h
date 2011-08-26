@@ -138,10 +138,10 @@ void AddMountProps(unsigned uContainer);
 void CopyContainerProps(unsigned uSource, unsigned uTarget);
 //These two jobs are always done in pairs. Even though the second may run much later
 //for example after hardware failure has been fixed.
-unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,unsigned uOwner,unsigned uLoginClient);
+unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,unsigned uOwner,unsigned uLoginClient,unsigned uDebug);
 unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
-				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient);
+				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient,unsigned uDebug);
 void htmlCloneInfo(unsigned uContainer);
 void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,
 			char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
@@ -751,7 +751,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 						{
 							unsigned uFailToJob=0;
 							if((uFailToJob=FailoverToJob(sContainer.uDatacenter,sContainer.uNode,
-								uCtContainer,sContainer.uOwner,guLoginClient)))
+								uCtContainer,sContainer.uOwner,guLoginClient,0)))
 							{
 								unsigned uSourceDatacenter=0;
 								unsigned uSourceNode=0;
@@ -768,7 +768,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 									sContainer.uSource,sContainer.uIPv4,
 									sContainer.cLabel,sContainer.cHostname,
 										uCtContainer,sContainer.uStatus,
-										uFailToJob,sContainer.uOwner,guLoginClient))
+										uFailToJob,sContainer.uOwner,guLoginClient,0))
 								{
 									SetContainerStatus(uCtContainer,uAWAITFAIL);
 									SetContainerStatus(sContainer.uSource,uAWAITFAIL);
@@ -3125,11 +3125,14 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
-                else if(!strcmp(gcCommand,"Confirm Switchover"))
+                else if(!strncmp(gcCommand,"Confirm Switchover",18))
                 {
                         ProcesstContainerVars(entries,x);
 			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
+				unsigned uDebug=0;
+                		if(strstr(gcCommand+18,"Debug")) uDebug=1;
+
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -3156,7 +3159,7 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=0;
 
 				unsigned uFailToJob=0;
-				if((uFailToJob=FailoverToJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient)))
+				if((uFailToJob=FailoverToJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient,uDebug)))
 				{
 					unsigned uSourceDatacenter=0;
 					unsigned uSourceNode=0;
@@ -3167,17 +3170,24 @@ void ExttContainerCommands(pentry entries[], int x)
 //These two jobs are always done in pairs. Even though the second may run much later
 //for example after hardware failure has been fixed.
 					if(FailoverFromJob(uSourceDatacenter,uSourceNode,uSource,uIPv4,
-							cLabel,cHostname,uContainer,uStatus,uFailToJob,uOwner,guLoginClient))
+							cLabel,cHostname,uContainer,uStatus,uFailToJob,uOwner,guLoginClient,uDebug))
 					{
-						uStatus=uAWAITFAIL;
-						SetContainerStatus(uContainer,uAWAITFAIL);
-						SetContainerStatus(uSource,uAWAITFAIL);
-						sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
-						//Make sure group is the same as source
-						unsigned uGroup=uGetGroup(0,uSource);
-						if(uGroup)
-							ChangeGroup(uContainer,uGroup);
-						tContainer("FailoverJob() Done");
+						if(!uDebug)
+						{
+							uStatus=uAWAITFAIL;
+							SetContainerStatus(uContainer,uAWAITFAIL);
+							SetContainerStatus(uSource,uAWAITFAIL);
+							sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+							//Make sure group is the same as source
+							unsigned uGroup=uGetGroup(0,uSource);
+							if(uGroup)
+								ChangeGroup(uContainer,uGroup);
+							tContainer("FailoverJob() Done");
+						}
+						else
+						{
+							tContainer("Debug FailoverJob() Done");
+						}
 					}
 					else
 					{
@@ -5387,7 +5397,7 @@ void CopyContainerProps(unsigned uSource, unsigned uTarget)
 
 
 //Both these failover jobs must in some sense check each other's status it seems at first blush.
-unsigned FailoverToJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner,unsigned uLoginClient)
+unsigned FailoverToJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner,unsigned uLoginClient,unsigned uDebug)
 {
 	unsigned uCount=0;
 
@@ -5398,9 +5408,17 @@ unsigned FailoverToJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,u
 	//we will try to handle all of them.
 	//Remote datacenter failover seems to involve DNS changes. Since we can't use the VIP
 	//method that should be available in a correctly configured unxsVZ datacenter.
-	//debug only
-	//sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverToJob(%u)',cJobName='FailoverToDEBUG'"
-	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverToJob(%u)',cJobName='FailoverTo'"
+	if(uDebug)
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverToJob(%u)',cJobName='FailoverToDEBUG'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())"
+			",uJobStatus=1"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				uOwner,uLoginClient);
+	else
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverToJob(%u)',cJobName='FailoverTo'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())"
 			",uJobStatus=1"
@@ -5419,7 +5437,7 @@ unsigned FailoverToJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,u
 
 unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
-				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient)
+				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient,unsigned uDebug)
 {
 	unsigned uCount=0;
 
@@ -5428,9 +5446,20 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 	//If the source node is down this job will be stuck
 	//When node is fixed and boots we must avoid the source continater coming up with same IP
 	//as the new production container (the FailoverToJob container.)
-	//debug only
-	//sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverFromJob(%u)',cJobName='FailoverFromDEBUG'"
-	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverFromJob(%u)',cJobName='FailoverFrom'"
+	if(uDebug)
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverFromJob(%u)',cJobName='FailoverFromDEBUG'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())"
+			",uJobStatus=1"
+			",cJobData='uIPv4=%u;\ncLabel=%s;\ncHostname=%s;\nuSource=%u;\nuStatus=%u;\n"
+			"uFailToJob=%u;'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				uIPv4,cLabel,cHostname,uSource,uStatus,uFailToJob,
+				uOwner,uLoginClient);
+	else
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverFromJob(%u)',cJobName='FailoverFrom'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())"
 			",uJobStatus=1"

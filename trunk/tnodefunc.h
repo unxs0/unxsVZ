@@ -34,10 +34,10 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown);
 char *cRatioColor(float *fRatio);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
-unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,unsigned uOwner,unsigned uLoginClient);
+unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,unsigned uOwner,unsigned uLoginClient,unsigned uDebug);
 unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
-				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient);
+				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient,unsigned uDebug);
 //tcontainer.c
 void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
@@ -540,7 +540,7 @@ void ExttNodeAuxTable(void)
 
 							uRetVal=FailoverCloneContainer(uDatacenter,uNode,uContainer,uSource,
 								uSourceNode,uSourceDatacenter,uIPv4,uStatus,field2[1],field2[2],
-								uOwner,0);//1 debug on
+								uOwner,1);//1 debug on
 							if(uRetVal==0)
 								printf("<td>X</td>");
 							else if(uRetVal==1)
@@ -990,10 +990,10 @@ unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned u
 	unsigned uRetVal=2;
 	unsigned uFailToJob=0;
 
-	if((uFailToJob=FailoverToJob(uDatacenter,uNode,uContainer,uOwner,1)))
+	if((uFailToJob=FailoverToJob(uDatacenter,uNode,uContainer,uOwner,1,uDebug)))
 	{
 		if(FailoverFromJob(uSourceDatacenter,uSourceNode,uSource,uIPv4,
-				cLabel,cHostname,uContainer,uStatus,uFailToJob,uOwner,1))
+				cLabel,cHostname,uContainer,uStatus,uFailToJob,uOwner,1,uDebug))
 		{
 			if(!uDebug)
 			{
