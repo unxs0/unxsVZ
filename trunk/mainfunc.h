@@ -2086,10 +2086,7 @@ void RecoverMode(void)
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		sprintf(gcQuery,"/bin/sed -i 's/ONBOOT=\"yes\"/ONBOOT=\"no\"/g' /etc/vz/conf/%s.conf",field[0]);
-		printf("%s\n",gcQuery);	
-		if(system(gcQuery))
-			printf("\tfailed\n");	
+		//Nothing yet. Old startup issue was fixed in jobqueue.c
 	}
 	mysql_free_result(res);
 
@@ -2184,7 +2181,7 @@ void ResetAllSyncPeriod(void)
 	while((field=mysql_fetch_row(res)))
 	{
 		printf("%s\n",field[0]);
-		sprintf(gcQuery,"UPDATE tProperty SET cValue='600' WHERE uProperty=%s",field[0]);
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='1200' WHERE uProperty=%s",field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{

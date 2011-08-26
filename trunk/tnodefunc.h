@@ -321,7 +321,7 @@ void ExttNodeCommands(pentry entries[], int x)
 					tNode("<blink>Error</blink>: This record was modified. Reload it.");
 				
 				guMode=8001;
-				tNode("Select Target Node and IPv4 range");
+				tNode("Candiate failover jobs listed below, double check.");
 			}
 			else
 			{
@@ -540,7 +540,7 @@ void ExttNodeAuxTable(void)
 
 							uRetVal=FailoverCloneContainer(uDatacenter,uNode,uContainer,uSource,
 								uSourceNode,uSourceDatacenter,uIPv4,uStatus,field2[1],field2[2],
-								uOwner,1);//1 debug on
+								uOwner,0);//1 debug on
 							if(uRetVal==0)
 								printf("<td>X</td>");
 							else if(uRetVal==1)
