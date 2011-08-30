@@ -46,12 +46,17 @@ else
 fi
 
 /usr/bin/diff --brief -r -x udev -x dev $cDir/$1 $cDir/$2 2>/dev/null 1>/tmp/diffdata.list;
-if [ $? != 0 ];then
-	fLog "diff error";
-fi
 
 while read cLine; do
-	echo $cLine;
+	cFile=`echo ${cLine} | grep differ | cut -f 2 -d " "`;
+	if [ "$cFile" != "" ];then
+		echo $cFile;
+	fi
+	cDir=`echo ${cLine} | grep Only | cut -f 3 -d " " | cut -f 1 -d ":"`;
+	cFile2=`echo ${cLine} | grep Only | cut -f 4 -d " "`;
+	if [ "$cDir" != "" ] && [ "$cFile2" != "" ];then
+		echo $cDir$cFile2;
+	fi
 done < /tmp/diffdata.list;
 
 rmdir $cLockfile;
