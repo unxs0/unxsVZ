@@ -47,17 +47,20 @@ fi
 
 /usr/bin/diff --brief -r -x udev -x dev $cDir/$1 $cDir/$2 2>/dev/null 1>/tmp/diffdata.list;
 
+cat /dev/null > /tmp/diffdata.files;
 while read cLine; do
 	cFile=`echo ${cLine} | grep differ | cut -f 2 -d " "`;
 	if [ "$cFile" != "" ];then
-		echo $cFile;
+		echo $cFile >> /tmp/diffdata.files;
 	fi
-	cDir=`echo ${cLine} | grep Only | cut -f 3 -d " " | cut -f 1 -d ":"`;
-	cFile2=`echo ${cLine} | grep Only | cut -f 4 -d " "`;
+	cDir=`echo ${cLine} | grep Only | grep "/$1/" | cut -f 3 -d " " | cut -f 1 -d ":"`;
+	cFile2=`echo ${cLine} | grep Only | grep "/$1/" | cut -f 4 -d " "`;
 	if [ "$cDir" != "" ] && [ "$cFile2" != "" ];then
-		echo $cDir$cFile2;
+		echo $cDir/$cFile2 >> /tmp/diffdata.files;
 	fi
 done < /tmp/diffdata.list;
+
+cat /tmp/diffdata.files | xargs tar czf /tmp/diffdata.tar.gz;
 
 rmdir $cLockfile;
 #debug only
