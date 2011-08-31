@@ -10,6 +10,10 @@
 #	Move that xz file to remote
 #	server.
 #NOTES
+#	Source veid will be vzdump'd to get a consistent
+#	snapshot. LVM should be setup correctly.
+#
+#	Base veid should be of a stopped container or equiv.
 
 
 #Settings
@@ -34,8 +38,34 @@ if [ "$4" != "" ];then
 	cSSHPort="$4";
 fi
 
-#debug only
-fLog "start $1 $2";
+fLog "start $1 $2 $3:$cSSHPort";
+
+#Pre qualify to avoid load for no reason.
+if [ ! -d "$cDir/$1" ];then
+	fLog "$cDir/$1 is not a dir";
+	exit 1;
+fi
+
+if [ ! -d "$cDir/$2" ];then
+	fLog "$cDir/$2 is not a dir";
+	exit 1;
+fi
+
+if [ ! -x "/usr/sbin/lvcreate" ];then
+	fLog "lvcreate not found";
+	exit 1;
+fi
+
+if [ ! -x "/usr/sbin/lvremove" ];then
+	fLog "lvcreate not found";
+	exit 1;
+fi
+
+/usr/bin/ssh -c arcfour -p $cSSHPort $3 ls > /dev/null 2>&1;
+if [ $? != 0 ];then
+	fLog "ssh test to $3:$cSSHPort failed";
+	exit 1;
+fi
 
 cLockfile="/tmp/diffdata.sh.lock";
 if [ -d $cLockfile ]; then
@@ -45,8 +75,37 @@ else
 	mkdir $cLockfile; 
 fi
 
+#create a stopped source veid dir
+cVZVolName=`/usr/sbin/lvs --noheadings -o lv_name | head -n 1 | cut -f 3 -d " "`;
+cVZMount=`/bin/mount | grep -w vz`;
+cVZVolGroup=`/usr/sbin/lvs --noheadings -o vg_name | head -n 1 | cut -f 3 -d " "`;
+cTest=`echo ${cVZMount} | grep ${cVZVolName}`;
+if [ "$cTest" != "$cVZMount" ];then
+	fLog "Could not determine correct LVM vol name to use";
+	rmdir $cLockfile;
+	exit 1;
+fi
+##debug only
+#echo "$cTest /dev/$cVZVolGroup/$cVZVolName";
+#rmdir $cLockfile;
+#exit 0;
+/usr/sbin/lvcreate --size 1G --snapshot --name snapvol /dev/$cVZVolGroup/$cVZVolName;
+if [ $? != 0 ];then
+	fLog "lvcreate snapvol of vz failed";
+	rmdir $cLockfile;
+	exit 1;
+fi
+
+/bin/mount /dev/$cVZVolGroup/snapvol /mnt;
+if [ $? != 0 ];then
+	fLog "mount failed";
+	rmdir $cLockfile;
+	exit 1;
+fi
+
 cat /dev/null > /tmp/diffdata.list;
-/usr/bin/diff --brief -r -x udev -x dev $cDir/$1 $cDir/$2 2>/dev/null 1>/tmp/diffdata.list;
+cd /mnt;
+/usr/bin/diff --brief -r -x udev -x dev private/$1 $cDir/$2 2>/dev/null 1>/tmp/diffdata.list;
 if [ ! -s /tmp/diffdata.list ];then
 	fLog "/tmp/diffdata.list empty";
 	rmdir $cLockfile;
@@ -75,6 +134,19 @@ cat /tmp/diffdata.files | /usr/bin/xargs /bin/tar cf /tmp/diffdata.tar > /dev/nu
 if [ $? != 0 ]; then
 	fLog "tar failed";
 	rmdir $cLockfile;
+	exit 1;
+fi
+
+#we don;t remove the lock file here to insure this
+#is fixed.
+/bin/umount /mnt;
+if [ $? != 0 ]; then
+	fLog "umount failed";
+	exit 1;
+fi
+/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol;
+if [ $? != 0 ]; then
+	fLog "lvremove failed";
 	exit 1;
 fi
 
