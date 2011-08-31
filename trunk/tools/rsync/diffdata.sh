@@ -139,6 +139,7 @@ fi
 
 #we don;t remove the lock file here to insure this
 #is fixed.
+cd /;
 /bin/umount /mnt;
 if [ $? != 0 ]; then
 	fLog "umount failed";
