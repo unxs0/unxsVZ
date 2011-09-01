@@ -73,7 +73,7 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-cLockfile="/tmp/diffdata.sh.lock";
+cLockfile="/tmp/osdeltasync.sh.lock";
 if [ -d $cLockfile ]; then
 	fLog "waiting for lock release $cLockfile";
 	exit 0;
@@ -109,34 +109,34 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-cat /dev/null > /tmp/diffdata.list;
+cat /dev/null > /tmp/osdeltasync.list;
 cd /mnt;
-/usr/bin/diff --brief -r -x udev -x dev private/$1 $cDir/$cOSTemplateVEID 2>/dev/null 1>/tmp/diffdata.list;
-if [ ! -s /tmp/diffdata.list ];then
-	fLog "/tmp/diffdata.list empty";
+/usr/bin/diff --brief -r -x udev -x dev private/$1 $cDir/$cOSTemplateVEID 2>/dev/null 1>/tmp/osdeltasync.list;
+if [ ! -s /tmp/osdeltasync.list ];then
+	fLog "/tmp/osdeltasync.list empty";
 	rmdir $cLockfile;
 	exit 1;
 fi
 
-cat /dev/null > /tmp/diffdata.files;
+cat /dev/null > /tmp/osdeltasync.files;
 while read cLine; do
 	cFile=`echo ${cLine} | /bin/grep differ | cut -f 2 -d " "`;
 	if [ "$cFile" != "" ];then
-		echo $cFile >> /tmp/diffdata.files;
+		echo $cFile >> /tmp/osdeltasync.files;
 	fi
 	cDir=`echo ${cLine} | /bin/grep Only | /bin/grep "/$1/" | cut -f 3 -d " " | cut -f 1 -d ":"`;
 	cFile2=`echo ${cLine} | /bin/grep Only | /bin/grep "/$1/" | cut -f 4 -d " "`;
 	if [ "$cDir" != "" ] && [ "$cFile2" != "" ];then
-		echo $cDir/$cFile2 >> /tmp/diffdata.files;
+		echo $cDir/$cFile2 >> /tmp/osdeltasync.files;
 	fi
-done < /tmp/diffdata.list;
-if [ ! -s /tmp/diffdata.files ];then
-	fLog "/tmp/diffdata.files empty";
+done < /tmp/osdeltasync.list;
+if [ ! -s /tmp/osdeltasync.files ];then
+	fLog "/tmp/osdeltasync.files empty";
 	rmdir $cLockfile;
 	exit 1;
 fi
 
-cat /tmp/diffdata.files | /usr/bin/xargs /bin/tar cf /tmp/diffdata.tar > /dev/null 2>&1;
+cat /tmp/osdeltasync.files | /usr/bin/xargs /bin/tar cf /tmp/osdeltasync.tar > /dev/null 2>&1;
 if [ $? != 0 ]; then
 	fLog "tar failed";
 	rmdir $cLockfile;
@@ -157,19 +157,28 @@ if [ $? != 0 ]; then
 	exit 1;
 fi
 
-/usr/bin/xz -f /tmp/diffdata.tar;
+/usr/bin/xz -f /tmp/osdeltasync.tar;
 if [ $? != 0 ]; then
 	fLog "xz failed";
 	rmdir $cLockfile;
 	exit 1;
 fi
 
-/usr/bin/scp -c arcfour -P $cSSHPort /tmp/diffdata.tar.xz $3:/tmp/diffdata.$1.tar.xz > /dev/null;
+/usr/bin/scp -c arcfour -P $cSSHPort /tmp/osdeltasync.tar.xz $3:/tmp/osdeltasync.$1.tar.xz > /dev/null;
 if [ $? != 0 ];then
 	fLog "scp failed";
 	rmdir $cLockfile;
 	exit 1;
 fi
+
+#now we patch the clone file system with the tar
+/usr/bin/ssh -c arcfour -p $cSSHPort $3 "cd /vz;unxz /tmp/osdeltasync.$1.tar.xz;tar xf /tmp/osdeltasync.$1.tar" > /dev/null;
+if [ $? != 0 ];then
+	fLog "ssh tar failed";
+	rmdir $cLockfile;
+	exit 1;
+fi
+
 
 rmdir $cLockfile;
 #debug only
