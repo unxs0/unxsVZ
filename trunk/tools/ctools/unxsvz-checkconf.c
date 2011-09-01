@@ -25,6 +25,7 @@ unsigned guStatus=0;//not a valid status
 //local protos
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer);
 void CheckConf(void);
+void GetNodeHostnameFromContainer(unsigned uContainer,char *cHost);
 
 //external
 void TextConnectDb(void);
@@ -57,6 +58,9 @@ struct sysinfo structSysinfo;
 
 int main(int iArgc, char *cArgv[])
 {
+
+	if(getuid()>1)
+		return(0);
 	sprintf(gcProgram,"%.31s",cArgv[0]);
 	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
 	{
@@ -100,6 +104,11 @@ int main(int iArgc, char *cArgv[])
 }//main()
 
 
+//We run this on nodes with clone containers.
+//It compares the md5sum hash of the clone container
+//against the ssh remote gathered md5sum of the clone
+//container uSource container.
+//Only reporting those that do not match.
 void CheckConf(void)
 {
         MYSQL_RES *res;
@@ -107,9 +116,11 @@ void CheckConf(void)
 	unsigned uDatacenter=0;
 	unsigned uNode=0;
 	unsigned uContainer=0;
+	unsigned uSource=0;
 	FILE *fp;
 	char cCommand[128];
-	char cMD5Sum[64];
+	char cLocalMD5Sum[64];
+	char cRemoteMD5Sum[64];
 
 	if(gethostname(cHostname,99)!=0)
 	{
@@ -174,10 +185,11 @@ void CheckConf(void)
 			cHostname,uNode,uDatacenter);
 
 	//Main loop. TODO use defines for tStatus.uStatus values.
-	sprintf(gcQuery,"SELECT uContainer,uOwner,uStatus FROM tContainer WHERE uNode=%u"
+	sprintf(gcQuery,"SELECT uContainer,uSource FROM tContainer WHERE uNode=%u"
 				" AND uDatacenter=%u"
-				" AND (uStatus=1"//Active
-				" OR uStatus=31) LIMIT 10"//Stopped
+				" AND uSource>0"
+				" AND (uStatus=1"//Active OR
+				" OR uStatus=31)"//Stopped
 						,uNode,uDatacenter);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -203,19 +215,60 @@ void CheckConf(void)
 		}
 
 		sscanf(field[0],"%u",&uContainer);
-		sscanf(field[1],"%u",&guContainerOwner);
-		sscanf(field[2],"%u",&guStatus);
-		sprintf(cCommand,"/usr/bin/md5sum /etc/vz/conf/%u.conf",uContainer);
+		sscanf(field[1],"%u",&uSource);
+
+		//local first
+		sprintf(cCommand,"cat /etc/vz/conf/%u.conf|grep -v IP_ADDRESS|grep -v ONBOOT|grep -v NAME|/usr/bin/md5sum",
+					uContainer);
 		if((fp=popen(cCommand,"r"))==NULL)
 		{
 			logfileLine("CheckConf",cCommand,0);
+			pclose(fp);
 			continue;
 		}
-		fgets(cMD5Sum,63,fp);
-		printf("%s",cMD5Sum);
+		fgets(cLocalMD5Sum,33,fp);
 		pclose(fp);
+
+		//remote
+		char cHost[100]={""};
+		GetNodeHostnameFromContainer(uSource,cHost);
+		sprintf(cCommand,"/usr/bin/ssh -c arcfour %s "
+				"\"cat /etc/vz/conf/%u.conf|grep -v IP_ADDRESS|grep -v ONBOOT|grep -v NAME|/usr/bin/md5sum\"",
+					cHost,uSource);
+		if((fp=popen(cCommand,"r"))==NULL)
+		{
+			logfileLine("CheckConf",cCommand,0);
+			pclose(fp);
+			continue;
+		}
+		fgets(cRemoteMD5Sum,33,fp);
+
+		if(strcmp(cLocalMD5Sum,cRemoteMD5Sum))
+			printf("/etc/vz/conf/ file mismatch for %u %s %u %s\n",uContainer,cLocalMD5Sum,uSource,cRemoteMD5Sum);
 	}
 	mysql_free_result(res);
 	mysql_close(&gMysql);
 
 }//void CheckConf(void)
+
+
+void GetNodeHostnameFromContainer(unsigned uContainer,char *cHost)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tNode.cLabel FROM tNode,tContainer WHERE tContainer.uContainer=%u"
+				" AND tNode.uNode=tContainer.uNode",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("GetNodeHostnameFromContainer",mysql_error(&gMysql),uContainer);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cHost,"%.99s",field[0]);
+	mysql_free_result(res);
+
+}//void GetNodeHostname(unsigned uSource,char *cHost)
