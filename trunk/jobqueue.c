@@ -492,6 +492,8 @@ void NewContainer(unsigned uJob,unsigned uContainer)
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uVeth=0;
+	unsigned uDeployStopped=0;
+	char cDeployOptions[256]={""};
 
 	//Must wait for clone or template operations to finish.
 	if(access("/var/run/vzdump.lock",R_OK)==0)
@@ -583,6 +585,9 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		//3-.
 		//TODO hardcoded eth0 problem. Solution is easy get from node properties.
 		//problem remains if datacenter nodes have diff eth device!
+		GetContainerProp(uContainer,"cDeployOptions",cDeployOptions);
+		if(strstr(cDeployOptions,"uDeployStopped=1;"))
+			uDeployStopped=1;
 		if(uVeth)
 		{
 			char cIPv4[32]={""};
@@ -639,22 +644,32 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 			sprintf(gcQuery,"/usr/sbin/vzctl exec %u \"/sbin/ip route add default dev eth0\"",uContainer);
 			if(system(gcQuery))
 				logfileLine("NewContainer",gcQuery);
+
+			if(uDeployStopped)
+			{
+				sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
+				if(system(gcQuery))
+					logfileLine("NewContainer",gcQuery);
+			}
 		}
 		else
 		{
-			sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-			if(system(gcQuery))
+			if(!uDeployStopped)
 			{
-				logfileLine("NewContainer",gcQuery);
-				tJobErrorUpdate(uJob,"vzctl start failed");
-				//Roll back step 1-.
-				sprintf(gcQuery,"/usr/sbin/vzctl destroy %u",uContainer);
+				sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
 				if(system(gcQuery))
 				{
 					logfileLine("NewContainer",gcQuery);
-					tJobErrorUpdate(uJob,"rb3: vzctl destroy failed");
+					tJobErrorUpdate(uJob,"vzctl start failed");
+					//Roll back step 1-.
+					sprintf(gcQuery,"/usr/sbin/vzctl destroy %u",uContainer);
+					if(system(gcQuery))
+					{
+						logfileLine("NewContainer",gcQuery);
+						tJobErrorUpdate(uJob,"rb3: vzctl destroy failed");
+					}
+					goto CommonExit;
 				}
-				goto CommonExit;
 			}
 		}
 	}
@@ -674,17 +689,9 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	GetContainerProp(uContainer,"cPasswd",cPasswd);
 	if(cPasswd[0] && !uNotValidSystemCallArg(cPasswd) )
 	{
-		FILE *pp;
-
-		sprintf(gcQuery,"/usr/sbin/vzctl exec %u -",uContainer);
-		if((pp=popen(gcQuery,"w"))!=NULL)
-		{
-			fprintf(pp,"passwd\n");
-			fprintf(pp,"%s\n",cPasswd);
-			fprintf(pp,"%s\n",cPasswd);
-			pclose(pp);
-			logfileLine("NewContainer","Container passwd changed");
-		}
+		sprintf(gcQuery,"/usr/sbin/vzctl --userpasswd \"root:%s\" %u",cPasswd,uContainer);
+		if(system(gcQuery))
+			logfileLine("NewContainer","Container passwd not changed!");
 	}
 
 	//5-. Optional container CentOS linux timezone set
@@ -786,7 +793,10 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 CommonExit2:
 
 	//Everything went ok;
-	SetContainerStatus(uContainer,1);//Active
+	if(uDeployStopped)
+		SetContainerStatus(uContainer,31);//Stopped
+	else
+		SetContainerStatus(uContainer,1);//Active
 	tJobDoneUpdate(uJob);
 
 //In this case the goto MIGHT be justified
