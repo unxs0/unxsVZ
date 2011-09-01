@@ -73,7 +73,7 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-cLockfile="/tmp/osdeltasync.sh.lock";
+cLockfile="/tmp/unxsvz.lvm.lock";
 if [ -d $cLockfile ]; then
 	fLog "waiting for lock release $cLockfile";
 	exit 0;
@@ -143,7 +143,7 @@ if [ $? != 0 ]; then
 	exit 1;
 fi
 
-#we don;t remove the lock file here to insure this
+#we don't remove the lock file here to insure this
 #is fixed.
 cd /;
 /bin/umount /mnt;
@@ -171,8 +171,14 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-#now we patch the clone file system with the tar
-/usr/bin/ssh -c arcfour -p $cSSHPort $3 "cd /vz;unxz /tmp/osdeltasync.$1.tar.xz;tar xf /tmp/osdeltasync.$1.tar" > /dev/null;
+#now we update the clone file system with the tar
+/usr/bin/ssh -c arcfour -p $cSSHPort $3\
+	"cd /vz;"\
+	"unxz /tmp/osdeltasync.$1.tar.xz;"\
+	"tar xf /tmp/osdeltasync.$1.tar;"\
+	"rm /tmp/osdeltasync.$1.tar;"\
+	"rsync -axlH /vz/private/$1/ /vz/private/$2;"
+					 > /dev/null;
 if [ $? != 0 ];then
 	fLog "ssh tar failed";
 	rmdir $cLockfile;
