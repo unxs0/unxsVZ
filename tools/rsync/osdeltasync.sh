@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #FILE
-#	tools/rsync/diffdata.sh
+#	tools/rsync/osdeltasync.sh
 #PURPOSE
 #	Using a common base dir
 #	create an xz file of only
@@ -9,6 +9,7 @@
 #	source dir
 #	Move that xz file to remote
 #	server.
+#	Install files on target veid
 #NOTES
 #	Source veid will be vzdump'd to get a consistent
 #	snapshot. LVM should be setup correctly.
@@ -30,7 +31,7 @@ if (( $nLoad > 5 ));then
 fi
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
-	echo "usage: $0 <source veid> <base veid> <remote server> [<ssh port>]";
+	echo "usage: $0 <source veid> <clone veid> <remote server> [<ssh port>]";
 	exit 0;
 fi
 
@@ -38,7 +39,12 @@ if [ "$4" != "" ];then
 	cSSHPort="$4";
 fi
 
-fLog "start $1 $2 $3:$cSSHPort";
+#All datacente nodes must have special stopped containers that are
+#the base OS template of reference
+cOSTemplate=`vzlist --no-header --output ostemplate $1 | awk '{print $1}'`;
+cOSTemplateVEID=`vzlist --no-header --output veid $cOSTemplate | awk '{print $1}'`;
+
+fLog "start $1 $2 $3:$cSSHPort $cOSTemplate $cOSTemplateVEID";
 
 #Pre qualify to avoid load for no reason.
 if [ ! -d "$cDir/$1" ];then
@@ -46,8 +52,8 @@ if [ ! -d "$cDir/$1" ];then
 	exit 1;
 fi
 
-if [ ! -d "$cDir/$2" ];then
-	fLog "$cDir/$2 is not a dir";
+if [ ! -d "$cDir/$cOSTemplateVEID" ];then
+	fLog "$cDir/$cOSTemplateVEID is not a dir";
 	exit 1;
 fi
 
@@ -76,9 +82,9 @@ else
 fi
 
 #create a stopped source veid dir
-cVZVolName=`/usr/sbin/lvs --noheadings -o lv_name | head -n 1 | cut -f 3 -d " "`;
+cVZVolName=`/usr/sbin/lvs --noheadings -o lv_name | head -n 1 | awk '{print $1}'`;
 cVZMount=`/bin/mount | grep -w vz`;
-cVZVolGroup=`/usr/sbin/lvs --noheadings -o vg_name | head -n 1 | cut -f 3 -d " "`;
+cVZVolGroup=`/usr/sbin/lvs --noheadings -o vg_name | head -n 1 | awk '{print $1}'`;
 cTest=`echo ${cVZMount} | grep ${cVZVolName}`;
 if [ "$cTest" != "$cVZMount" ];then
 	fLog "Could not determine correct LVM vol name to use";
@@ -105,7 +111,7 @@ fi
 
 cat /dev/null > /tmp/diffdata.list;
 cd /mnt;
-/usr/bin/diff --brief -r -x udev -x dev private/$1 $cDir/$2 2>/dev/null 1>/tmp/diffdata.list;
+/usr/bin/diff --brief -r -x udev -x dev private/$1 $cDir/$cOSTemplateVEID 2>/dev/null 1>/tmp/diffdata.list;
 if [ ! -s /tmp/diffdata.list ];then
 	fLog "/tmp/diffdata.list empty";
 	rmdir $cLockfile;
