@@ -56,7 +56,7 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
 void ActionScripts(unsigned uJob,unsigned uContainer);
 void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
-void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData);
+void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNewVeid);
 void AppFunctions(FILE *fp,char *cFunction);
 void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData);
 void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData);
@@ -2244,6 +2244,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	char cHostname[100]={""};
 	char cName[32]={""};
 
+
 	//We can't clone a container that is not ready
 	if(GetContainerStatus(uContainer,&uStatus))
 	{
@@ -2293,6 +2294,27 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		tJobErrorUpdate(uJob,"uNewVeid==0");
 		goto CommonExit;
 	}
+	//
+	//Handle remote datacenter clone jobs differently
+	unsigned uTargetDatacenter=0;
+	sprintf(gcQuery,"SELECT uDatacenter FROM tContainer WHERE uContainer=%u",uNewVeid);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("CloneContainer",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"SELECT uDatacenter");
+		goto CommonExit;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uTargetDatacenter);
+	mysql_free_result(res);
+	if(gfuDatacenter!=uTargetDatacenter && uTargetDatacenter!=0 && gfuDatacenter!=0)
+	{
+		CloneRemoteContainer(uJob,uContainer,cJobData,uNewVeid);
+		return;
+	}
+	//
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%u;",&uCloneStop);
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%*u;\nuPrevStatus=%u;",&uPrevStatus);
 	if(!uPrevStatus)
@@ -4683,14 +4705,12 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 }//void ProcessOSDeltaSyncJob()
 
 
-void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData)
+void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNewVeid)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	char cTargetNodeIPv4[256]={""};
-	unsigned uNewVeid=0;
 	unsigned uCloneStop=0;
-	unsigned uStatus=0;
 	unsigned uPrevStatus=0;
 	unsigned uTargetNode=0;
 	char cNewIP[32]={""};
@@ -4699,47 +4719,8 @@ void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	char cOSTemplate[32]={""};
 	char cConfig[32]={""};
 
-	//Must wait for clone or template operations to finish.
-	if(access("/var/run/vzdump.lock",R_OK)==0)
-	{
-		logfileLine("NewContainer","/var/run/vzdump.lock exists");
-		tJobWaitingUpdate(uJob);
-		return;
-	}
-
-	//We can't clone a container that is not ready
-	if(GetContainerStatus(uContainer,&uStatus))
-	{
-		logfileLine("CloneRemoteContainer","GetContainerStatus() failed");
-		//Keep job status running...hopefully someone will notice.
-		return;
-	}
-	if(!(uStatus==uACTIVE || uStatus==uSTOPPED || uStatus==uAWAITCLONE))
-	{
-		sprintf(gcQuery,"UPDATE tJob SET uJobStatus=1,cRemoteMsg='Waiting for source container',uModBy=1,"
-				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uJob);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			logfileLine("ProcessJob()",mysql_error(&gMysql));
-		logfileLine("CloneRemoteContainer","Waiting");
-		return;
-	}
-
 	//Set job data based vars
 	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
-	if(!uTargetNode)
-	{
-		logfileLine("CloneRemoteContainer","Could not determine uTargetNode");
-		tJobErrorUpdate(uJob,"uTargetNode==0");
-		goto CommonExit;
-	}
-	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%u;",&uNewVeid);
-	if(!uNewVeid)
-	{
-		logfileLine("CloneRemoteContainer","Could not determine uNewVeid");
-		tJobErrorUpdate(uJob,"uNewVeid==0");
-		goto CommonExit;
-	}
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%u;",&uCloneStop);
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%*u;\nuPrevStatus=%u;",&uPrevStatus);
 	if(!uPrevStatus)
