@@ -58,6 +58,7 @@ unsigned CommonCloneContainer(
 		unsigned uNameserver,
 		unsigned uSearchdomain,
 		unsigned uDatacenter,
+		unsigned uTargetDatacenter,
 		unsigned uOwner,
 		const char *cLabel,
 		unsigned uNode,
@@ -74,6 +75,8 @@ unsigned CommonCloneContainer(
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
+static unsigned uTargetDatacenter=0;
+static char cuTargetDatacenterPullDown[256]={""};
 static unsigned uMountTemplate=0;
 static char cuTemplateDropDown[256]={""};
 static char cConfigLabel[32]={""};
@@ -637,6 +640,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 										sContainer.uNameserver,
 										sContainer.uSearchdomain,
 										sContainer.uDatacenter,
+										sContainer.uDatacenter,
 										sContainer.uOwner,
 										sContainer.cLabel,
 										sContainer.uNode,
@@ -792,6 +796,11 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cuTargetNodePullDown,"%.255s",entries[i].val);
 			uTargetNode=ReadPullDown("tNode","cLabel",cuTargetNodePullDown);
+		}
+		else if(!strcmp(entries[i].name,"cuTargetDatacenterPullDown"))
+		{
+			sprintf(cuTargetDatacenterPullDown,"%.255s",entries[i].val);
+			uTargetDatacenter=ReadPullDown("tDatacenter","cLabel",cuTargetDatacenterPullDown);
 		}
 		else if(!strcmp(entries[i].name,"MountTemplateSelect"))
 		{
@@ -1515,6 +1524,7 @@ void ExttContainerCommands(pentry entries[], int x)
 									uNameserver,
 									uSearchdomain,
 									uDatacenter,
+									uDatacenter,
 									uForClient,
 									cLabel,
 									uNode,
@@ -2019,6 +2029,7 @@ void ExttContainerCommands(pentry entries[], int x)
 									uNameserver,
 									uSearchdomain,
 									uDatacenter,
+									uDatacenter,
 									uForClient,
 									cLabel,
 									uNode,
@@ -2480,6 +2491,135 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
+                else if(!strcmp(gcCommand,"Remote Clone Wizard"))
+                {
+                        ProcesstContainerVars(entries,x);
+			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+				
+				if(uSource)
+					tContainer("<blink>Error:</blink> No clones of clones allowed");
+
+				guMode=11001;
+				tContainer("Select datacenter");
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Select Clone Datacenter"))
+                {
+                        ProcesstContainerVars(entries,x);
+			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+				
+				if(uSource)
+					tContainer("<blink>Error:</blink> No clones of clones allowed");
+
+				guMode=11002;
+				tContainer("Select node, uIPv4 and more");
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Confirm Remote Clone"))
+                {
+                        ProcesstContainerVars(entries,x);
+			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
+			{
+				char cTargetNodeIPv4[32]={""};
+				unsigned uNewVeid=0;
+
+                        	guMode=0;
+
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error:</blink> This record was modified. Reload it");
+
+                        	guMode=11002;
+				if(uTargetNode==0)
+					tContainer("<blink>Error:</blink> Please select a valid target node");
+				if(uTargetNode==uNode)
+					tContainer("<blink>Error:</blink> Can't clone to same node");
+				if(uSource)
+					tContainer("<blink>Error:</blink> No clones of clones allowed");
+				if(!uWizIPv4)
+					tContainer("<blink>Error:</blink> You must select an IP");
+				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
+				if(uTargetDatacenter!=uIPv4Datacenter)
+					tContainer("<blink>Error:</blink> The specified target uIPv4 does not "
+							"belong to the specified uDatacenter.");
+				if(!uOSTemplate || !uConfig || !uNameserver || !uSearchdomain || !uDatacenter || !uTargetDatacenter )
+					tContainer("<blink>Error:</blink> Unexpected problem with missing source container"
+							" settings!");
+				GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
+				if(!cTargetNodeIPv4[0])
+					tContainer("<blink>Error:</blink> Unexpected problem, target node is"
+							" missing it's cIPv4 property!");
+				if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
+						tContainer("<blink>Error:</blink> Clone uSyncPeriod seconds out of range:"
+								" Max 30 days, min 5 minutes or 0 off.");
+				if(uVeth)
+				{
+					GetNodeProp(uNode,"Container-Type",cContainerType);
+					if(!strstr(cContainerType,"VETH"))
+						tContainer("<blink>Error:</blink> uNode selected does not support VETH");
+						
+				}
+                        	guMode=0;
+
+				//Optional change group of source container.
+				if(uGroup)
+					ChangeGroup(uContainer,uGroup);
+
+				//Set local global cWizHostname
+				//Insert clone container into tContainer
+				uNewVeid=CommonCloneContainer(
+					uContainer,
+					uOSTemplate,
+					uConfig,
+					uNameserver,
+					uSearchdomain,
+					uDatacenter,
+					uTargetDatacenter,
+					uOwner,
+					cLabel,
+					uNode,
+					uStatus,
+					cHostname,
+					"",//Do not check Class C
+					uWizIPv4,
+					cWizLabel,
+					cWizHostname,
+					uTargetNode,
+					uSyncPeriod,
+					guLoginClient,
+					uCloneStop);
+
+				//Set group of clone to group of source.
+				uGroup=uGetGroup(0,uContainer);
+				if(uGroup)
+					ChangeGroup(uNewVeid,uGroup);
+				tContainer("CloneContainerJob() Done");
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
                 else if(!strcmp(gcCommand,"Clone Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
@@ -2557,6 +2697,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					uConfig,
 					uNameserver,
 					uSearchdomain,
+					uDatacenter,
 					uDatacenter,
 					uOwner,
 					cLabel,
@@ -3363,6 +3504,57 @@ void ExttContainerButtons(void)
 					" name=gcCommand value='Confirm Clone'>\n");
                 break;
 
+                case 11001:
+                        printf("<p><u>Remote Clone Wizard (Step 1/2)</u><br>");
+			printf("Here you will select the remote datacenter. If it is oversubscribed or not"
+				" configured for use, or otherwise unavailable you will have to select another.");
+			printf("<p>Select remote datacenter<br>");
+			tTablePullDown("tDatacenter;cuTargetDatacenterPullDown","cLabel","cLabel",uTargetDatacenter,1);
+			if(uGroup)
+				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
+			printf("<p><input title='Step one of remote clone wizard'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Select Clone Datacenter'>\n");
+                break;
+
+                case 11002:
+                        printf("<p><u>Remote Clone Wizard (Step 2/2)</u><br>");
+			printf("Here you will select the hardware node target. If the selected node is"
+				" oversubscribed, not available, or scheduled for maintenance. You will"
+				" be informed at the next step.\n<p>\n"
+				"You must also select a uIPv4 for the cloned container, and set the initial"
+				" state of the clone."
+				" Usually clones should be kept stopped to conserve resources and facilitate rsync."
+				" Use the checkbox to change this default behavior."
+				" Any mount/umount files of the source container will NOT be used"
+				" by the new cloned container. This issue will be left for manual"
+				" or automated failover to the cloned container.<p>If you wish to"
+				" keep the source and clone container sync'ed you can specify a non zero"
+				" value via the 'cuSyncPeriod' entry below.");
+			printf("<p>Selected datacenter<br>");
+			tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uTargetDatacenter,0);
+			printf("<p>Select target node<br>");
+			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
+				cuTargetNodePullDown,0,uTargetDatacenter);//0 does not use tProperty, uses uDatacenter
+			printf("<p>Select new IPv4<br>");
+			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
+				uTargetDatacenter,uOwner);
+			printf("<p><input type=checkbox name=uCloneStop checked> Initial state is stopped");
+			printf("<p>cuSyncPeriod<br>");
+			printf("<input title='Keep clone in sync every cuSyncPeriod seconds"
+					". You can change this at any time via the property panel.'"
+					" type=text size=10 maxlength=7"
+					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
+			printf("<p>Optional primary group change<br>");
+			uGroup=uGetGroup(0,uContainer);//0=not for node
+			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			if(uGroup)
+				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
+			printf("<p><input title='Create a clone job for the current container'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Confirm Remote Clone'>\n");
+                break;
+
                 case 8001:
                         printf("<p><u>Switchover Container Pair</u><br>");
 			printf("Confirm all the information presented for a manual failover to take place."
@@ -3571,6 +3763,11 @@ void ExttContainerButtons(void)
 					" It will be kept updated via rsync on a configurable basis.'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Clone Wizard'><br>\n");
+					printf("<input title='Clone container to a remote datacenter hardware node."
+					" The clone will be an online container with another IP and hostname."
+					" It will be kept updated via rsync on a configurable basis.'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Remote Clone Wizard'><br>\n");
 					printf("<input title='Change current container IPv4'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='IP Change Wizard'><br>\n");
@@ -3593,6 +3790,11 @@ void ExttContainerButtons(void)
 					" It will be kept updated via rsync on a configurable basis.'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Clone Wizard'><br>\n");
+					printf("<input title='Clone container to a remote datacenter hardware node."
+					" The clone will be an online container with another IP and hostname."
+					" It will be kept updated via rsync on a configurable basis.'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Remote Clone Wizard'><br>\n");
 					if(uSource)
 						printf("<p><input title='Creates jobs for manual failover.'"
 						" type=submit class=lwarnButton"
@@ -5681,6 +5883,7 @@ unsigned CommonCloneContainer(
 		unsigned uNameserver,
 		unsigned uSearchdomain,
 		unsigned uDatacenter,
+		unsigned uTargetDatacenter,
 		unsigned uOwner,
 		const char *cLabel,
 		unsigned uNode,
@@ -5736,7 +5939,7 @@ unsigned CommonCloneContainer(
 				uConfig,
 				uNameserver,
 				uSearchdomain,
-				uDatacenter,
+				uTargetDatacenter,
 				uTargetNode,
 				uAWAITCLONE,
 				uOwner,
@@ -5759,12 +5962,12 @@ unsigned CommonCloneContainer(
 			if(guCompany==1)
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 				" WHERE uIP=%u AND uAvailable=1 AND cLabel LIKE '%s%%' AND uDatacenter=%u",
-					uWizIPv4,cClassC,uDatacenter);
+					uWizIPv4,cClassC,uTargetDatacenter);
 			else
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND cLabel LIKE '%s%%'"
 					" AND uDatacenter=%u",
-						uWizIPv4,uOwner,cClassC,uDatacenter);
+						uWizIPv4,uOwner,cClassC,uTargetDatacenter);
 		}
 		//Here no such class c check
 		else
@@ -5772,11 +5975,11 @@ unsigned CommonCloneContainer(
 			if(guCompany==1)
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 				" WHERE uIP=%u AND uAvailable=1 AND uDatacenter=%u",
-					uWizIPv4,uDatacenter);
+					uWizIPv4,uTargetDatacenter);
 			else
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
 					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
-						uWizIPv4,uOwner,uDatacenter);
+						uWizIPv4,uOwner,uTargetDatacenter);
 		}
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
