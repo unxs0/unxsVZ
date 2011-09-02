@@ -56,6 +56,7 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
 void ActionScripts(unsigned uJob,unsigned uContainer);
 void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
+void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void AppFunctions(FILE *fp,char *cFunction);
 void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData);
 void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData);
@@ -2239,7 +2240,6 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	unsigned uStatus=0;
 	unsigned uPrevStatus=0;
 	unsigned uTargetNode=0;
-	char cSourceContainerIP[32]={""};
 	char cNewIP[32]={""};
 	char cHostname[100]={""};
 	char cName[32]={""};
@@ -2339,26 +2339,6 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	{
 		logfileLine("CloneContainer","Could not determine cName");
 		tJobErrorUpdate(uJob,"No cName");
-		goto CommonExit;
-	}
-
-	sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer WHERE tIP.uIP=tContainer.uIPv4"
-			" AND tContainer.uContainer=%u",uContainer);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("CloneContainer",mysql_error(&gMysql));
-		tJobErrorUpdate(uJob,"SELECT tOSTemplate.cLabel");
-		goto CommonExit;
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-		sprintf(cSourceContainerIP,"%.31s",field[0]);
-	mysql_free_result(res);
-	if(!cSourceContainerIP[0])
-	{
-		logfileLine("CloneContainer","Could not determine cSourceContainerIP");
-		tJobErrorUpdate(uJob,"No cSourceContainerIP");
 		goto CommonExit;
 	}
 
@@ -2585,7 +2565,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//Some containers have more than one IP when how? Not via jobqueue.c
 	//Only via action scripts other IPs are used.
 	//Any way we can use --ipdel all instead of ticket #83
-	if(uNotValidSystemCallArg(cSourceContainerIP))
+	if(uNotValidSystemCallArg(cTargetNodeIPv4))
 	{
 		tJobErrorUpdate(uJob,"fail sec alert!");
 		goto CommonExit;
@@ -4701,3 +4681,328 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 	return(0);
 
 }//void ProcessOSDeltaSyncJob()
+
+
+void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	char cTargetNodeIPv4[256]={""};
+	unsigned uNewVeid=0;
+	unsigned uCloneStop=0;
+	unsigned uStatus=0;
+	unsigned uPrevStatus=0;
+	unsigned uTargetNode=0;
+	char cNewIP[32]={""};
+	char cHostname[100]={""};
+	char cName[32]={""};
+	char cOSTemplate[32]={""};
+	char cConfig[32]={""};
+
+	//Must wait for clone or template operations to finish.
+	if(access("/var/run/vzdump.lock",R_OK)==0)
+	{
+		logfileLine("NewContainer","/var/run/vzdump.lock exists");
+		tJobWaitingUpdate(uJob);
+		return;
+	}
+
+	//We can't clone a container that is not ready
+	if(GetContainerStatus(uContainer,&uStatus))
+	{
+		logfileLine("CloneRemoteContainer","GetContainerStatus() failed");
+		//Keep job status running...hopefully someone will notice.
+		return;
+	}
+	if(!(uStatus==uACTIVE || uStatus==uSTOPPED || uStatus==uAWAITCLONE))
+	{
+		sprintf(gcQuery,"UPDATE tJob SET uJobStatus=1,cRemoteMsg='Waiting for source container',uModBy=1,"
+				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uJob);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			logfileLine("ProcessJob()",mysql_error(&gMysql));
+		logfileLine("CloneRemoteContainer","Waiting");
+		return;
+	}
+
+	//Set job data based vars
+	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
+	if(!uTargetNode)
+	{
+		logfileLine("CloneRemoteContainer","Could not determine uTargetNode");
+		tJobErrorUpdate(uJob,"uTargetNode==0");
+		goto CommonExit;
+	}
+	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%u;",&uNewVeid);
+	if(!uNewVeid)
+	{
+		logfileLine("CloneRemoteContainer","Could not determine uNewVeid");
+		tJobErrorUpdate(uJob,"uNewVeid==0");
+		goto CommonExit;
+	}
+	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%u;",&uCloneStop);
+	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%*u;\nuPrevStatus=%u;",&uPrevStatus);
+	if(!uPrevStatus)
+	{
+		logfileLine("CloneRemoteContainer","Could not determine uPrevStatus");
+		tJobErrorUpdate(uJob,"uPrevStatus==0");
+		goto CommonExit;
+	}
+
+	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.cHostname,tContainer.cLabel FROM tIP,tContainer"
+				" WHERE tIP.uIP=tContainer.uIPv4"
+				" AND tContainer.uContainer=%u",uNewVeid);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("CloneRemoteContainer",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"SELECT tIP.cLabel");
+		goto CommonExit;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cNewIP,"%.31s",field[0]);
+		sprintf(cHostname,"%.99s",field[1]);
+		sprintf(cName,"%.31s",field[2]);
+	}
+	mysql_free_result(res);
+	if(!cNewIP[0])
+	{
+		logfileLine("CloneRemoteContainer","Could not determine cNewIP");
+		tJobErrorUpdate(uJob,"No cNewIP");
+		goto CommonExit;
+	}
+	if(!cHostname[0])
+	{
+		logfileLine("CloneRemoteContainer","Could not determine cHostname");
+		tJobErrorUpdate(uJob,"No cHostname");
+		goto CommonExit;
+	}
+	if(!cName[0])
+	{
+		logfileLine("CloneRemoteContainer","Could not determine cName");
+		tJobErrorUpdate(uJob,"No cName");
+		goto CommonExit;
+	}
+
+	sprintf(gcQuery,"SELECT tOSTemplate.cLabel FROM tOSTemplate,tContainer WHERE tOSTemplate.uOSTemplate=tContainer.uOSTemplate"
+			" AND tContainer.uContainer=%u",uNewVeid);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("CloneRemoteContainer",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"SELECT tOSTemplate.cLabel");
+		goto CommonExit;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cOSTemplate,"%.31s",field[0]);
+	mysql_free_result(res);
+	if(!cOSTemplate[0])
+	{
+		logfileLine("CloneRemoteContainer","Could not determine cOSTemplate");
+		tJobErrorUpdate(uJob,"No cOSTemplate");
+		goto CommonExit;
+	}
+
+	sprintf(gcQuery,"SELECT tConfig.cLabel FROM tConfig,tContainer WHERE tConfig.uConfig=tContainer.uConfig"
+			" AND tContainer.uContainer=%u",uNewVeid);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("CloneRemoteContainer",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"SELECT tConfig.cLabel");
+		goto CommonExit;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cConfig,"%.31s",field[0]);
+	mysql_free_result(res);
+	if(!cOSTemplate[0])
+	{
+		logfileLine("CloneRemoteContainer","Could not determine cConfig");
+		tJobErrorUpdate(uJob,"No cConfig");
+		goto CommonExit;
+	}
+
+	//Remote datacenter node: We use the node cLabel. It follows that DNS/hosts must
+	//be setup correctly.
+	sprintf(cTargetNodeIPv4,"%.31s",ForeignKey("tNode","cLabel",uTargetNode));
+	if(!cTargetNodeIPv4[0])
+	{
+		logfileLine("CloneRemoteContainer","Could not determine cTargetNodeIPv4");
+		tJobErrorUpdate(uJob,"cTargetNodeIPv4");
+		goto CommonExit;
+	}
+
+	//Most specific tConfiguration is used. This allows for some nodes to be set global
+	//and others specific. But is slower than the other option with what maybe
+	//very large numbers of per node tConfiguration entries.
+	char cSSHOptions[256]={""};
+	GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	if(!cSSHOptions[0])
+	{
+		GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSSHOptions[0])
+			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
+	}
+	//Default for less conditions below
+	if(!cSSHOptions[0] || uNotValidSystemCallArg(cSSHOptions))
+		sprintf(cSSHOptions,"-p 22 -c arcfour");
+
+	//debug only
+	printf("uNewVeid=%u uTargetNode=%u cNewIP=%s cHostname=%s cTargetNodeIPv4=%s"
+			"cOSTemplate=%s uCloneStop=%u cSSHOptions=%s cConfig=%s\n",
+				uNewVeid,uTargetNode,cNewIP,cHostname,
+				cTargetNodeIPv4,cOSTemplate,uCloneStop,cSSHOptions,cConfig);
+
+	//0-. we check data that could be comprimised that will be used by root shell commands
+	//1-. we create a container on target node from same os template as source container
+	//2-. we run osdeltasync on this source node to create a working clone
+	//3-. we set ip, name and hostname
+	//4-. remove any other /etc/vz/conf/veid.x files
+	//5-. conditionally start new veid and modify VEID.conf file to not start on boot.
+	//6-. update source container status
+	//7-. update target container status
+
+	//0-.
+	if(uNotValidSystemCallArg(cTargetNodeIPv4))
+	{
+		tJobErrorUpdate(uJob,"fail sec alert!");
+		goto CommonExit;
+	}
+	if(uNotValidSystemCallArg(cHostname))
+	{
+		tJobErrorUpdate(uJob,"fail sec alert!");
+		goto CommonExit;
+	}
+	if(uNotValidSystemCallArg(cName))
+	{
+		tJobErrorUpdate(uJob,"fail sec alert!");
+		goto CommonExit;
+	}
+
+	//1-.
+	sprintf(gcQuery,"ssh %s %s '/usr/sbin/vzctl --verbose create %u --ostemplate %s --config %s'",
+				cSSHOptions,cTargetNodeIPv4,
+				uNewVeid,cOSTemplate,cConfig);
+	if(system(gcQuery))
+	{
+		logfileLine("CloneRemoteContainer",gcQuery);
+		tJobErrorUpdate(uJob,"vzctl create failed");
+		goto CommonExit;
+	}
+
+	//2-.
+	unsigned uSSHPort=22;
+	char *cp;
+	if((cp=strstr(cSSHOptions,"-p ")))
+		sscanf(cp+3,"%u",&uSSHPort);
+	sprintf(gcQuery,"/usr/sbin/osdeltasync.sh %u %u %s %u",uContainer,uNewVeid,cTargetNodeIPv4,uSSHPort);
+	if(system(gcQuery))
+	{
+		tJobErrorUpdate(uJob,"osdeltasync.sh");
+		goto CommonExit;
+	}
+
+	//3-.
+	//cHostname set
+	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --hostname %s --save'",
+				cSSHOptions,cTargetNodeIPv4,uNewVeid,cHostname);
+	if(system(gcQuery))
+	{
+		logfileLine("CloneRemoteContainer",gcQuery);
+		tJobErrorUpdate(uJob,"cHostname");
+		goto CommonExit;
+	}
+	//cName set
+	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --name %s --save'",
+				cSSHOptions,cTargetNodeIPv4,uNewVeid,cName);
+	if(system(gcQuery))
+	{
+		logfileLine("CloneRemoteContainer",gcQuery);
+		tJobErrorUpdate(uJob,"cName");
+		goto CommonExit;
+	}
+	//IP set
+	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipdel all --save'",
+				cSSHOptions,cTargetNodeIPv4,uNewVeid);
+	if(system(gcQuery))
+	{
+		logfileLine("CloneRemoteContainer",gcQuery);
+		tJobErrorUpdate(uJob,"error 4c");
+		goto CommonExit;
+	}
+	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipadd %s --save'",
+				cSSHOptions,cTargetNodeIPv4,uNewVeid,cNewIP);
+	if(system(gcQuery))
+	{
+		logfileLine("CloneRemoteContainer",gcQuery);
+		tJobErrorUpdate(uJob,"error 4d");
+		goto CommonExit;
+	}
+
+	//4-. Remove action script files if found
+	//Business logic: Target container may have these files, but we need them only if we
+	//'Failover' to this cloned VE. Also we defer to that action the setup of the
+	//containers tProperty values needed for processing the action script templates:
+	//cNetmask, cExtraNodeIP, cPrivateIPs, cService1, cService2, cVEID.mount and cVEID.umount, etc.
+	sprintf(gcQuery,"ssh %3$s %1$s 'rm -f /etc/vz/conf/%2$u.umount /etc/vz/conf/%2$u.mount"
+					" /etc/vz/conf/%2$u.start /etc/vz/conf/%2$u.stop'",
+						cTargetNodeIPv4,uNewVeid,cSSHOptions);
+	if(system(gcQuery))
+	{
+		logfileLine("CloneRemoteContainer",gcQuery);
+		tJobErrorUpdate(uJob,"error 4");
+		goto CommonExit;
+	}
+
+	//5-.
+	//This is optional since clones can be in stopped state and still be
+	//kept in sync with source container. Also the failover can start (a fast operation)
+	//with the extra advantage of being able to keep original IPs. Only needing an arping
+	//to move the VIPs around the datacenter.
+	if(uCloneStop==0)
+	{
+		sprintf(gcQuery,"ssh %s %s 'vzctl start %u'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
+		if(system(gcQuery))
+		{
+			logfileLine("CloneRemoteContainer",gcQuery);
+			tJobErrorUpdate(uJob,"error 5");
+			goto CommonExit;
+		}
+		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --onboot yes --save'",
+								cSSHOptions,cTargetNodeIPv4,uNewVeid);
+		if(system(gcQuery))
+		{
+			logfileLine("CloneRemoteContainer",gcQuery);
+			tJobErrorUpdate(uJob,"error 5b");
+			goto CommonExit;
+		}
+		SetContainerStatus(uNewVeid,uACTIVE);
+	}
+	else
+	{
+		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --onboot no --save'",
+								cSSHOptions,cTargetNodeIPv4,uNewVeid);
+		if(system(gcQuery))
+		{
+			logfileLine("CloneRemoteContainer",gcQuery);
+			tJobErrorUpdate(uJob,"error 5c");
+			goto CommonExit;
+		}
+		SetContainerStatus(uNewVeid,uSTOPPED);
+	}
+
+	//6-.
+	if(uPrevStatus!=uINITSETUP)
+		//Not an auto clone job is only possibility but this maybe a hack. TODO
+		SetContainerStatus(uContainer,uPrevStatus);
+	tJobDoneUpdate(uJob);
+
+//This goto MIGHT be ok.
+CommonExit:
+	return;
+
+}//void CloneRemoteContainer(...)
