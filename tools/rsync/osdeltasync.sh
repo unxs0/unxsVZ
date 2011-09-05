@@ -41,8 +41,16 @@ fi
 
 #All datacente nodes must have special stopped containers that are
 #the base OS template of reference
-cOSTemplate=`vzlist --no-header --output ostemplate $1 | awk '{print $1}'`;
-cOSTemplateVEID=`vzlist --no-header --output veid $cOSTemplate | awk '{print $1}'`;
+cOSTemplate=`/usr/sbin/vzlist --no-header --output ostemplate $1 | awk '{print $1}'`;
+if [ $? != 0 ] || [ "$cOSTemplate" == "" ];then
+	fLog "cOSTemplate error";
+	exit 1;
+fi
+cOSTemplateVEID=`/usr/sbin/vzlist --no-header --output veid $cOSTemplate | awk '{print $1}'`;
+if [ $? != 0 ] || [ "$cOSTemplateVEID" == "" ];then
+	fLog "cOSTemplate error";
+	exit 1;
+fi
 
 fLog "start $1 $2 $3:$cSSHPort $cOSTemplate $cOSTemplateVEID";
 

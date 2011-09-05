@@ -4719,6 +4719,8 @@ void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsig
 	char cOSTemplate[32]={""};
 	char cConfig[32]={""};
 
+	logfileLine("CloneRemoteContainer","Start");
+
 	//Set job data based vars
 	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%u;",&uCloneStop);
@@ -4833,10 +4835,10 @@ void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsig
 		sprintf(cSSHOptions,"-p 22 -c arcfour");
 
 	//debug only
-	printf("uNewVeid=%u uTargetNode=%u cNewIP=%s cHostname=%s cTargetNodeIPv4=%s"
-			"cOSTemplate=%s uCloneStop=%u cSSHOptions=%s cConfig=%s\n",
-				uNewVeid,uTargetNode,cNewIP,cHostname,
-				cTargetNodeIPv4,cOSTemplate,uCloneStop,cSSHOptions,cConfig);
+	//printf("uNewVeid=%u uTargetNode=%u cNewIP=%s cHostname=%s cTargetNodeIPv4=%s"
+	//		" cOSTemplate=%s uCloneStop=%u cSSHOptions=%s cConfig=%s\n",
+	//			uNewVeid,uTargetNode,cNewIP,cHostname,
+	//			cTargetNodeIPv4,cOSTemplate,uCloneStop,cSSHOptions,cConfig);
 
 	//0-. we check data that could be comprimised that will be used by root shell commands
 	//1-. we create a container on target node from same os template as source container
@@ -4883,7 +4885,12 @@ void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsig
 	sprintf(gcQuery,"/usr/sbin/osdeltasync.sh %u %u %s %u",uContainer,uNewVeid,cTargetNodeIPv4,uSSHPort);
 	if(system(gcQuery))
 	{
+		logfileLine("CloneRemoteContainer",gcQuery);
 		tJobErrorUpdate(uJob,"osdeltasync.sh");
+		//rollback
+		sprintf(gcQuery,"ssh %s %s 'vzctl destroy %u'",
+				cSSHOptions,cTargetNodeIPv4,uNewVeid);
+		system(gcQuery);
 		goto CommonExit;
 	}
 
