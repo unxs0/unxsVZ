@@ -89,6 +89,21 @@ else
 	mkdir $cLockfile; 
 fi
 
+fCleanExit ()
+{
+	rmdir $cLockfile;
+	#debug only
+	fLog "end";
+	exit 0;
+}
+
+fErrorExit ()
+{
+	rmdir $cLockfile;
+	fLog $@;
+	exit 1;
+}
+
 #create a stopped source veid dir
 cVZVolName=`/usr/sbin/lvs --noheadings -o lv_name | head -n 1 | awk '{print $1}'`;
 cVZMount=`/bin/mount | grep -w vz`;
@@ -99,6 +114,22 @@ if [ "$cTest" != "$cVZMount" ];then
 	rmdir $cLockfile;
 	exit 1;
 fi
+
+fUnLVM ()
+{
+	cd /;
+	/bin/umount /mnt;
+	if [ $? != 0 ]; then
+		fLog "umount failed";
+		exit 1;
+	fi
+	/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol;
+	if [ $? != 0 ]; then
+		fLog "lvremove failed";
+		exit 1;
+	fi
+}
+
 ##debug only
 #echo "$cTest /dev/$cVZVolGroup/$cVZVolName";
 #rmdir $cLockfile;
@@ -119,7 +150,16 @@ fi
 
 cat /dev/null > /tmp/osdeltasync.list;
 cd /mnt;
-/usr/bin/diff --brief -r -x udev -x dev private/$1 $cDir/$cOSTemplateVEID 2>/dev/null 1>/tmp/osdeltasync.list;
+/usr/bin/rsync --dry-run -avxlH \
+			--exclude "/proc/" --exclude "/root/.ccache/" \
+			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
+			--exclude /etc/sysconfig/network \
+			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:0 \
+			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:1 \
+			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:2 \
+			--exclude /var/www/html/avantfax/tmp \
+			--exclude /var/lib/php/session/ \
+				private/$1/ $cDir/$cOSTemplateVEID/ > /tmp/osdeltasync.list;
 if [ ! -s /tmp/osdeltasync.list ];then
 	fLog "/tmp/osdeltasync.list empty";
 	rmdir $cLockfile;
@@ -128,14 +168,9 @@ fi
 
 cat /dev/null > /tmp/osdeltasync.files;
 while read cLine; do
-	cFile=`echo ${cLine} | /bin/grep differ | cut -f 2 -d " "`;
+	cFile=`echo ${cLine} | /bin/grep -v "/$" | /bin/grep -v "^building" | /bin/grep -v "^sent" | /bin/grep -v "^total" `;
 	if [ "$cFile" != "" ];then
 		echo $cFile >> /tmp/osdeltasync.files;
-	fi
-	cDir=`echo ${cLine} | /bin/grep Only | /bin/grep "/$1/" | cut -f 3 -d " " | cut -f 1 -d ":"`;
-	cFile2=`echo ${cLine} | /bin/grep Only | /bin/grep "/$1/" | cut -f 4 -d " "`;
-	if [ "$cDir" != "" ] && [ "$cFile2" != "" ];then
-		echo $cDir/$cFile2 >> /tmp/osdeltasync.files;
 	fi
 done < /tmp/osdeltasync.list;
 if [ ! -s /tmp/osdeltasync.files ];then
@@ -144,26 +179,21 @@ if [ ! -s /tmp/osdeltasync.files ];then
 	exit 1;
 fi
 
+#debug only
+#fUnLVM;
+#fCleanExit;
+
+cd private/$1;
+if [ $? != 0 ];then
+	fLog "cd private/$1 failed";
+fi
 cat /tmp/osdeltasync.files | /usr/bin/xargs /bin/tar cf /tmp/osdeltasync.tar > /dev/null 2>&1;
 if [ $? != 0 ]; then
-	fLog "tar failed";
-	rmdir $cLockfile;
-	exit 1;
+	fUnLVM;
+	fErrorExit "tar failed";
 fi
 
-#we don't remove the lock file here to insure this
-#is fixed.
-cd /;
-/bin/umount /mnt;
-if [ $? != 0 ]; then
-	fLog "umount failed";
-	exit 1;
-fi
-/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol;
-if [ $? != 0 ]; then
-	fLog "lvremove failed";
-	exit 1;
-fi
+fUnLVM;
 
 /usr/bin/xz -f /tmp/osdeltasync.tar;
 if [ $? != 0 ]; then
@@ -193,8 +223,4 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-
-rmdir $cLockfile;
-#debug only
-fLog "end";
-exit 0;
+fCleanExit;
