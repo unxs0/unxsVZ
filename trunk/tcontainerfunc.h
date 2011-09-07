@@ -2524,8 +2524,11 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
 				
+				guMode=11001;
 				if(uSource)
 					tContainer("<blink>Error:</blink> No clones of clones allowed");
+				if(uTargetDatacenter==uDatacenter)
+					tContainer("<blink>Error:</blink> Can't remote clone to same datacenter");
 
 				guMode=11002;
 				tContainer("Select node, uIPv4 and more");
@@ -2554,6 +2557,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Please select a valid target node");
 				if(uTargetNode==uNode)
 					tContainer("<blink>Error:</blink> Can't clone to same node");
+				if(uTargetDatacenter==uDatacenter)
+					tContainer("<blink>Error:</blink> Can't remote clone to same datacenter");
 				if(uSource)
 					tContainer("<blink>Error:</blink> No clones of clones allowed");
 				if(!uWizIPv4)
@@ -3532,7 +3537,7 @@ void ExttContainerButtons(void)
 				" keep the source and clone container sync'ed you can specify a non zero"
 				" value via the 'cuSyncPeriod' entry below.");
 			printf("<p>Selected datacenter<br>");
-			tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uTargetDatacenter,0);
+			tTablePullDown("tDatacenter;cuTargetDatacenterPullDown","cLabel","cLabel",uTargetDatacenter,0);
 			printf("<p>Select target node<br>");
 			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
 				cuTargetNodePullDown,0,uTargetDatacenter);//0 does not use tProperty, uses uDatacenter
