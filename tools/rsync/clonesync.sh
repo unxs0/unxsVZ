@@ -15,7 +15,7 @@
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
 #Note that you must change the rsync line also. Since we have not had time to fix this.
-cSSHPort="-p 12337";
+cSSHPort="-p 22";
 cUseLVM="Yes";
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
@@ -94,11 +94,11 @@ if [ "$cUseLVM" == "Yes" ];then
 fi
 
 
-#/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxzlH --delete \
-#no compression
-#/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxlH --delete \
-#no verbose and fastest encryption
-/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p 12337' -axlH --delete \
+#note to change for non standard port
+#verbose for check
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxlH --delete \
+#production
+#/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p 22' -axlH --delete \
 			--exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
 			--exclude /etc/sysconfig/network \

@@ -75,7 +75,7 @@ if [ ! -x "/usr/sbin/lvremove" ];then
 	exit 1;
 fi
 
-/usr/bin/ssh -c arcfour -p $cSSHPort $3 ls > /dev/null 2>&1;
+/usr/bin/ssh -c arcfour -p $cSSHPort $3 "unxz --help" > /dev/null 2>&1;
 if [ $? != 0 ];then
 	fLog "ssh test to $3:$cSSHPort failed";
 	exit 1;
@@ -106,9 +106,9 @@ fErrorExit ()
 
 #create a stopped source veid dir
 cVZVolName=`/usr/sbin/lvs --noheadings -o lv_name | head -n 1 | awk '{print $1}'`;
-cVZMount=`/bin/mount | grep -w vz`;
+cVZMount=`/bin/mount | /bin/grep -w vz`;
 cVZVolGroup=`/usr/sbin/lvs --noheadings -o vg_name | head -n 1 | awk '{print $1}'`;
-cTest=`echo ${cVZMount} | grep ${cVZVolName}`;
+cTest=`echo ${cVZMount} | /bin/grep ${cVZVolName}`;
 if [ "$cTest" != "$cVZMount" ];then
 	fLog "Could not determine correct LVM vol name to use";
 	rmdir $cLockfile;
@@ -123,7 +123,7 @@ fUnLVM ()
 		fLog "umount failed";
 		exit 1;
 	fi
-	/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol;
+	/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol > /dev/null;
 	if [ $? != 0 ]; then
 		fLog "lvremove failed";
 		exit 1;
@@ -134,7 +134,7 @@ fUnLVM ()
 #echo "$cTest /dev/$cVZVolGroup/$cVZVolName";
 #rmdir $cLockfile;
 #exit 0;
-/usr/sbin/lvcreate --size 1G --snapshot --name snapvol /dev/$cVZVolGroup/$cVZVolName;
+/usr/sbin/lvcreate --size 1G --snapshot --name snapvol /dev/$cVZVolGroup/$cVZVolName > /dev/null;
 if [ $? != 0 ];then
 	fLog "lvcreate snapvol of vz failed";
 	rmdir $cLockfile;
@@ -211,7 +211,8 @@ fi
 
 #now we update the clone file system with the tar
 /usr/bin/ssh -c arcfour -p $cSSHPort $3\
-	"cd /vz;"\
+	"mkdir -p /vz/private/$1;"\
+	"cd /vz/private/$1;"\
 	"unxz /tmp/osdeltasync.$1.tar.xz;"\
 	"tar xf /tmp/osdeltasync.$1.tar;"\
 	"rm /tmp/osdeltasync.$1.tar;"\
