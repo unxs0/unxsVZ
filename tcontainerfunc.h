@@ -2584,7 +2584,20 @@ void ExttContainerCommands(pentry entries[], int x)
 						tContainer("<blink>Error:</blink> uNode selected does not support VETH");
 						
 				}
-                        	guMode=0;
+
+				//we don't allow extra remote clones on same node --seems to be no reason to do so
+				//	since you can always clone a local container if you need to make "copies."
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uSource=%u AND uDatacenter=%u"
+							" AND uNode=%u",uContainer,uTargetDatacenter,uTargetNode);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+					tContainer("<blink>Error:</blink> A clone of this container already exists on selected node");
+				mysql_free_result(res);
+
+				//tContainer("debug break point");
 
 				//Optional change group of source container.
 				if(uGroup)
