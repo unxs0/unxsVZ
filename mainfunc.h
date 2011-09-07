@@ -152,81 +152,131 @@ void CloneReport(const char *cOptionalMsg)
 
 	OpenFieldSet("CloneReport",100);
 
-	OpenRow("<u>Containers not being cloned</u>","black");
-	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
-				" uSource=0 AND (uStatus=1 OR uStatus=31) ORDER BY cLabel,uDatacenter,uNode");
+	OpenRow("<u>Containers with no clone</u>","black");
+	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tContainer.uContainer,tNode.cLabel,tDatacenter.cLabel"
+			" FROM tContainer,tNode,tDatacenter"
+			" WHERE tContainer.uNode=tNode.uNode AND tContainer.uDatacenter=tDatacenter.uDatacenter"
+			" AND tContainer.uSource=0 AND (tContainer.uStatus=1 OR tContainer.uStatus=31)"
+			" ORDER BY tContainer.cLabel,tContainer.uDatacenter,tContainer.uNode");
 	macro_mySQLQueryErrorText
-	printf("</td></tr><tr><td></td><td><u>cLabel</u></td><td><u>cHostname</u></td><td><u>uContainer</u></td>"
-			"<td><u>uNode</td><td><u>uDatacenter</u></td>\n");
+	printf("</td></tr><tr><td></td><td><u>cLabel</u></td><td><u>cHostname</u></td>"
+			"<td><u>Node</td><td><u>Datacenter</u></td>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		cuContainer[0]=0;
 
-		sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
-					" uSource=%s",mysqlField[2]);
+		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uSource=%s",mysqlField[2]);
 		macro_mySQLQueryErrorText2
         	if((mysqlField2=mysql_fetch_row(mysqlRes2)))
-			sprintf(cuContainer,"%.15s",mysqlField2[2]);
+			sprintf(cuContainer,"%.15s",mysqlField2[0]);
 		mysql_free_result(mysqlRes2);
 
 		if(!cuContainer[0])
 		{
 			uCount++;
 			printf("<tr><td></td><td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
-				"<td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",mysqlField[2],
-					mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField[4]);
+				"<td>%s</td><td>%s</td><td>%s</td>\n",mysqlField[2],
+					mysqlField[0],mysqlField[1],mysqlField[3],mysqlField[4]);
 		}
 		else
 		{
 			cuSyncPeriod[0]=0;
-			sscanf(mysqlField2[2],"%u",&uContainer);
+			sscanf(mysqlField2[0],"%u",&uContainer);
 			GetContainerProp(uContainer,"cuSyncPeriod",cuSyncPeriod);
 			if(cuSyncPeriod[0] && cuSyncPeriod[0]=='0')
 			{
 				uCount++;
 				printf("<tr><td>Clone w/cuSyncPeriod=0</td><td>"
 					"<a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>%s<a></td>"
-					"<td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",uContainer,
-						mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField[4]);
+					"<td>%s</td><td>%s</td><td>%s</td>\n",uContainer,
+						mysqlField[0],mysqlField[1],mysqlField[3],mysqlField[4]);
 			}
 		}
 	}
 	mysql_free_result(mysqlRes);
-
 	//Lets add a count
-	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td><td></td>\n",uCount);
+	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td>\n",uCount);
 
 	//1=Active 31=Stopped TODO
 	uCount=0;
 	OpenRow("<p>","black");
-	OpenRow("<u>Cloned containers not updated</u>","black");
-	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter FROM tContainer WHERE"
-				" uSource=0 AND (uStatus=1 OR uStatus=31) ORDER BY cLabel,uDatacenter,uNode");
+	OpenRow("<u>Containers with clones not updated in last hour</u>","black");
+	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tContainer.uContainer,tContainer.uNode,"
+				"tContainer.uDatacenter,tDatacenter.cLabel FROM tContainer,tDatacenter WHERE"
+				" tContainer.uSource=0 AND (tContainer.uStatus=1 OR tContainer.uStatus=31) AND"
+				" tContainer.uDatacenter=tDatacenter.uDatacenter ORDER BY tContainer.cLabel");
 	macro_mySQLQueryErrorText
-	printf("</td></tr><tr><td></td><td><u>cLabel</u></td><td><u>cHostname</u></td><td><u>uContainer</u></td>"
-			"<td><u>Clone Status</u></td><td><u>uNode</td><td><u>uDatacenter</u></td>\n");
+	printf("</td></tr><tr><td></td><td><u>Source cLabel</u></td>"
+			"<td><u>Clone cLabel</u><td><u>Source cHostname</u></td>"
+			"<td><u>Clone Status/cuSyncPeriod</u></td><td><u>Clone Node</td><td><u>Datacenter</u></td>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
-		sprintf(gcQuery,"SELECT tContainer.uContainer,tStatus.cLabel FROM tContainer,tStatus WHERE"
-					" tContainer.uSource=%s AND tContainer.uModDate<(UNIX_TIMESTAMP(NOW())-3600)"
-					" AND tContainer.uStatus=tStatus.uStatus",
+		sprintf(gcQuery,"SELECT tContainer.uContainer,tStatus.cLabel,tContainer.cLabel,tContainer.cLabel,"
+					"tNode.cLabel"
+					" FROM tContainer,tStatus,tNode WHERE"
+					" tContainer.uSource=%s AND tContainer.uBackupDate<(UNIX_TIMESTAMP(NOW())-3600)"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uNode=tNode.uNode",
 						mysqlField[2]);
 		macro_mySQLQueryErrorText2
-        	if((mysqlField2=mysql_fetch_row(mysqlRes2)))
+        	while((mysqlField2=mysql_fetch_row(mysqlRes2)))
 		{
 			uCount++;
+			sscanf(mysqlField2[0],"%u",&uContainer);
+			GetContainerProp(uContainer,"cuSyncPeriod",cuSyncPeriod);
 			printf("<tr><td></td><td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
-				"<td>%s</td><td>%s</td><td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>"
-				"</td><td>%s</td><td>%s</td>\n",mysqlField[2],mysqlField[0],mysqlField[1],
-								mysqlField[2],mysqlField2[0],mysqlField2[1],
-										mysqlField[3],mysqlField[4]);
+				"<td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
+				"<td>%s</td><td>%s/%s</a>"
+				"</td><td>%s</td><td>%s</td>\n",mysqlField[2],mysqlField[0],
+								mysqlField2[0],mysqlField2[2],
+								mysqlField[1],mysqlField2[1],cuSyncPeriod,
+								mysqlField2[4],mysqlField[5]);
 		}
 		mysql_free_result(mysqlRes2);
 	}
 	mysql_free_result(mysqlRes);
-
 	//Lets add a count
-	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td><td></td>\n",uCount);
+	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td>\n",uCount);
+
+	uCount=0;
+	OpenRow("<p>","black");
+	OpenRow("<u>Containers with remote clones</u>","black");
+	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tContainer.uContainer,tContainer.uNode,"
+				"tContainer.uDatacenter,tDatacenter.cLabel FROM tContainer,tDatacenter WHERE"
+				" tContainer.uSource=0 AND (tContainer.uStatus=1 OR tContainer.uStatus=31) AND"
+				" tContainer.uDatacenter=tDatacenter.uDatacenter ORDER BY tContainer.cLabel");
+	macro_mySQLQueryErrorText
+	printf("</td></tr><tr><td></td><td><u>Source cLabel</u></td>"
+			"<td><u>Clone cLabel</u><td><u>Source cHostname</u></td>"
+			"<td><u>Clone Status/cuSyncPeriod</u></td><td><u>Source Datacenter</td><td><u>Clone Datacenter</u></td>\n");
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		sprintf(gcQuery,"SELECT tContainer.uContainer,tStatus.cLabel,tContainer.cLabel,tContainer.cLabel"
+					",tDatacenter.cLabel"
+					" FROM tContainer,tStatus,tDatacenter WHERE"
+					" tContainer.uSource=%s AND tContainer.uDatacenter!=%s"
+					" AND tContainer.uStatus=tStatus.uStatus AND tContainer.uDatacenter=tDatacenter.uDatacenter",
+						mysqlField[2],mysqlField[4]);
+		macro_mySQLQueryErrorText2
+        	while((mysqlField2=mysql_fetch_row(mysqlRes2)))
+		{
+			uCount++;
+			sscanf(mysqlField2[0],"%u",&uContainer);
+			GetContainerProp(uContainer,"cuSyncPeriod",cuSyncPeriod);
+			printf("<tr><td></td><td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
+				"<td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
+				"<td>%s</td><td>%s/%s</a>"
+				"</td><td>%s</td><td>%s</td>\n",mysqlField[2],mysqlField[0],
+								mysqlField2[0],mysqlField2[2],
+								mysqlField[1],mysqlField2[1],cuSyncPeriod,
+								mysqlField[5],mysqlField2[4]);
+		}
+		mysql_free_result(mysqlRes2);
+	}
+	mysql_free_result(mysqlRes);
+	//Lets add a count
+	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td>\n",uCount);
+
 	CloseFieldSet();
 
 }//void CloneReport(const char *cOptionalMsg)
