@@ -208,6 +208,10 @@ void ProcessJobQueue(unsigned uDebug)
 		exit(1);
 	}
 
+	//Some file scoped globals we need to cleanout someday
+	gfuNode=uNode;
+	gfuDatacenter=uDatacenter;
+
 	//Special recurring jobs based on special containers
 	//Main loop normal jobs
 	//1-. Maintain clone containers
@@ -217,13 +221,11 @@ void ProcessJobQueue(unsigned uDebug)
 	//1 uACTIVE
 	//31 uSTOPPED
 	//logfileLine("ProcessCloneSyncJob","Start");
-	unsigned uSyncCloneMode=0;
-	char cSyncCloneMode[256]={""};
-	GetDatacenterProp(uDatacenter,"cSyncCloneMode",cSyncCloneMode);
-	if(strstr(cSyncCloneMode,"OSTemplateData"))
-		uSyncCloneMode=2;
-	sprintf(gcQuery,"SELECT uSource,uContainer FROM tContainer WHERE uSource>0 AND"
-			" uDatacenter=%u AND (uStatus=1 OR uStatus=31)",uDatacenter);
+	//Select clone containers of active or stopped source containers
+	//running on this node
+	sprintf(gcQuery,"SELECT t1.uContainer,t2.uContainer,t1.uStatus FROM tContainer AS t1,tContainer AS t2"
+			" WHERE (t2.uStatus=1 OR t2.uStatus=31)"
+			" AND t1.uSource=t2.uContainer AND t2.uNode=%u",uNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -234,6 +236,8 @@ void ProcessJobQueue(unsigned uDebug)
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
+		unsigned uCloneStatus=0;
+
 		if(sysinfo(&structSysinfo))
 		{
 			logfileLine("ProcessCloneSyncJob","sysinfo() failed");
@@ -250,13 +254,15 @@ void ProcessJobQueue(unsigned uDebug)
 			mysql_close(&gMysql);
 			exit(0);
 		}
-		//uSource==uContainer has to be on this node. We defer that determination
-		//to ProcessCloneSyncJob()
-		sscanf(field[0],"%u",&uContainer);
-		sscanf(field[1],"%u",&uCloneContainer);
-		switch(uSyncCloneMode)
+		sscanf(field[0],"%u",&uCloneContainer);
+		sscanf(field[1],"%u",&uContainer);
+		sscanf(field[2],"%u",&uCloneStatus);
+		switch(uCloneStatus)
 		{
-			case 2:
+			//We only move the delta files to the
+			//remote node for backup (cold spare) and possible remote failover BC/DR.
+			//Provided sample script osdeltasync.sh handles the details.
+			case uINITSETUP:
 				if((uError=ProcessOSDeltaSyncJob(uNode,uContainer,uCloneContainer)))
 				{
 					logfileLine("ProcessOSDeltaCloneSyncJob uError",field[1]);
@@ -264,6 +270,8 @@ void ProcessJobQueue(unsigned uDebug)
 				}
 			break;
 
+			//Here provided sample script clonesync.sh does an rsync
+			//and keeps the clone container as warm spare.
 			default:
 				if((uError=ProcessCloneSyncJob(uNode,uContainer,uCloneContainer)))
 				{
@@ -348,10 +356,6 @@ void ProcessJobQueue(unsigned uDebug)
 void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		unsigned uContainer,char *cJobName,char *cJobData)
 {
-	//static unsigned uCount=0;
-	gfuNode=uNode;
-	gfuDatacenter=uDatacenter;
-
 	//Some jobs may take quite some time, we need to make sure we don't run again!
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=2,cRemoteMsg='Running',uModBy=1,"
 				"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uJob);
@@ -4224,25 +4228,6 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 		logfileLine("ProcessCloneSyncJob",gcQuery);
 	}
 
-	//Make sure source uContainer is on this node if not return no error.
-	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND uNode=%u",
-					uContainer,uNode);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
-		return(1);
-	}
-        res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)<1)
-	{
-		mysql_free_result(res);
-		if(guDebug)
-			logfileLine("ProcessCloneSyncJob","source container not on this node");
-		return(0);
-	}
-	mysql_free_result(res);
-
 	//After failover cuSyncPeriod is 0 for clone (remote) container.
 	//This allows for safekeeping of potentially useful data.
 	//mainfunc RecoverMode recover cuSyncPeriod from source to clone.
@@ -4287,10 +4272,41 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 				logfileLine("ProcessCloneSyncJob","security alert");
 				return(4);
 			}
-			//Before running a recurring job we must update the cloned containers 
-			// uBackupDate. This is done to not allow a script to run concurrently,
-			// scripts should also have a lockfile mechanism to avoid this.
+
+			//Try to keep options out of scripts
+			char cSSHOptions[256]={""};
+			GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+			if(!cSSHOptions[0])
+			{
+				GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+				if(!cSSHOptions[0])
+					GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
+			}
+			//Default for less conditions below
+			if(!cSSHOptions[0] || uNotValidSystemCallArg(cSSHOptions))
+				sprintf(cSSHOptions,"-p 22 -c arcfour");
+			unsigned uSSHPort=22;
+			char *cp;
+			if((cp=strstr(cSSHOptions,"-p ")))
+				sscanf(cp+3,"%u",&uSSHPort);
+
 			//New uBackupDate
+			unsigned uLastBackupDate=0;
+        		MYSQL_RES *res2;
+			MYSQL_ROW field2;
+			sprintf(gcQuery,"SELECT uBackupDate FROM tContainer"
+						" WHERE uContainer=%u",uCloneContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				mysql_free_result(res);
+				logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
+				return(5);
+			}
+			res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+				sscanf(field2[0],"%u",&uLastBackupDate);
+			mysql_free_result(res2);
 			sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=UNIX_TIMESTAMP(NOW())"
 						" WHERE uContainer=%u",uCloneContainer);
 			mysql_query(&gMysql,gcQuery);
@@ -4300,7 +4316,8 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 				logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
 				return(5);
 			}
-			sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s",uContainer,uCloneContainer,field[0]);
+
+			sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
 			if(guDebug)
 				logfileLine("ProcessCloneSyncJob",gcQuery);
 
@@ -4308,14 +4325,8 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 			{
 				mysql_free_result(res);
 				logfileLine("ProcessCloneSyncJob",gcQuery);
-				return(6);
-			}
-			else
-			{
-				//After running a recurring job we also update the cloned containers 
-				// uBackupDate. This is for marking last time it was done.
-				sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=UNIX_TIMESTAMP(NOW())"
-						" WHERE uContainer=%u",uCloneContainer);
+				sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=%u"
+						" WHERE uContainer=%u",uLastBackupDate,uCloneContainer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -4323,6 +4334,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 					logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
 					return(7);
 				}
+				return(6);
 			}
 		}
 		mysql_free_result(res);
@@ -4595,25 +4607,6 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 		logfileLine("ProcessOSDeltaSyncJob",gcQuery);
 	}
 
-	//Make sure uContainer is on this node if not return no error.
-	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND uNode=%u",
-					uContainer,uNode);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessOSDeltaSyncJob",mysql_error(&gMysql));
-		return(1);
-	}
-        res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)<1)
-	{
-		mysql_free_result(res);
-		if(guDebug)
-			logfileLine("ProcessOSDeltaSyncJob","source container not on this node");
-		return(0);
-	}
-	mysql_free_result(res);
-
 	//After failover cuSyncPeriod is 0 for clone (remote) container.
 	//This allows for safekeeping of potentially useful data.
 	//mainfunc RecoverMode recover cuSyncPeriod from source to clone.
@@ -4658,10 +4651,41 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 				logfileLine("ProcessOSDeltaSyncJob","security alert");
 				return(4);
 			}
-			//Before running a recurring job we must update the cloned containers 
-			// uBackupDate. This is done to not allow a script to run concurrently,
-			// scripts should also have a lockfile mechanism to avoid this.
-			//New uBackupDate
+
+			//Try to keep options out of scripts
+			char cSSHOptions[256]={""};
+			GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+			if(!cSSHOptions[0])
+			{
+				GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+				if(!cSSHOptions[0])
+					GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
+			}
+			//Default for less conditions below
+			if(!cSSHOptions[0] || uNotValidSystemCallArg(cSSHOptions))
+				sprintf(cSSHOptions,"-p 22 -c arcfour");
+			unsigned uSSHPort=22;
+			char *cp;
+			if((cp=strstr(cSSHOptions,"-p ")))
+				sscanf(cp+3,"%u",&uSSHPort);
+
+			//New uBackupDate. Undone later if backup fails
+			unsigned uLastBackupDate=0;
+        		MYSQL_RES *res2;
+			MYSQL_ROW field2;
+			sprintf(gcQuery,"SELECT uBackupDate FROM tContainer"
+						" WHERE uContainer=%u",uCloneContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				mysql_free_result(res);
+				logfileLine("ProcessOSDeltaSyncJob",mysql_error(&gMysql));
+				return(5);
+			}
+			res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+				sscanf(field2[0],"%u",&uLastBackupDate);
+			mysql_free_result(res2);
 			sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=UNIX_TIMESTAMP(NOW())"
 						" WHERE uContainer=%u",uCloneContainer);
 			mysql_query(&gMysql,gcQuery);
@@ -4671,22 +4695,17 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 				logfileLine("ProcessOSDeltaSyncJob",mysql_error(&gMysql));
 				return(5);
 			}
-			sprintf(gcQuery,"/usr/sbin/osdeltasync.sh %u %u %s",uContainer,uCloneContainer,field[0]);
+
+			sprintf(gcQuery,"/usr/sbin/osdeltasync.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
 			if(guDebug)
 				logfileLine("ProcessOSDeltaSyncJob",gcQuery);
-
 			if(system(gcQuery))
 			{
 				mysql_free_result(res);
 				logfileLine("ProcessOSDeltaSyncJob",gcQuery);
-				return(6);
-			}
-			else
-			{
-				//After running a recurring job we also update the cloned containers 
-				// uBackupDate. This is for marking last time it was done.
-				sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=UNIX_TIMESTAMP(NOW())"
-						" WHERE uContainer=%u",uCloneContainer);
+				//sync script failed so we reset the backup date
+				sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=%u"
+						" WHERE uContainer=%u",uLastBackupDate,uCloneContainer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -4694,6 +4713,7 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 					logfileLine("ProcessOSDeltaSyncJob",mysql_error(&gMysql));
 					return(7);
 				}
+				return(6);
 			}
 		}
 		mysql_free_result(res);
