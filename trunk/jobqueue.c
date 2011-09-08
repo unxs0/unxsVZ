@@ -229,7 +229,7 @@ void ProcessJobQueue(unsigned uDebug)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("ProcessCloneSyncJob query error",mysql_error(&gMysql));
+		logfileLine("CloneSync",mysql_error(&gMysql));
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -240,7 +240,7 @@ void ProcessJobQueue(unsigned uDebug)
 
 		if(sysinfo(&structSysinfo))
 		{
-			logfileLine("ProcessCloneSyncJob","sysinfo() failed");
+			logfileLine("CloneSync","sysinfo() failed");
 			mysql_free_result(res);
 			fclose(gLfp);
 			mysql_close(&gMysql);
@@ -248,7 +248,7 @@ void ProcessJobQueue(unsigned uDebug)
 		}
 		if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>(JOBQUEUE_MAXLOAD/2))
 		{
-			logfileLine("ProcessCloneSyncJob","structSysinfo.loads[1] too high");
+			logfileLine("CloneSync","structSysinfo.loads[1] too high");
 			mysql_free_result(res);
 			fclose(gLfp);
 			mysql_close(&gMysql);
@@ -257,6 +257,12 @@ void ProcessJobQueue(unsigned uDebug)
 		sscanf(field[0],"%u",&uCloneContainer);
 		sscanf(field[1],"%u",&uContainer);
 		sscanf(field[2],"%u",&uCloneStatus);
+		if(guDebug)
+		{
+			sprintf(gcQuery,"uCloneStatus=%u",uCloneStatus);
+			logfileLine("CloneSync",gcQuery);
+		}
+
 		switch(uCloneStatus)
 		{
 			//We only move the delta files to the
@@ -281,7 +287,6 @@ void ProcessJobQueue(unsigned uDebug)
 		}
 	}
 	mysql_free_result(res);
-	//logfileLine("ProcessCloneSyncJob","End");
 
 	if(guDebug)
 	{
