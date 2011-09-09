@@ -687,6 +687,10 @@ void GlossaryGetHook(entry gentries[],int x);
 #define macro_mySQLRunAndStoreTextVoidRet(res) macro_mySQLRunReturnVoid;\
 						res=mysql_store_result(&gMysql)
 
+//Backup container constants
+#define HOT_CLONE 0
+#define WARM_CLONE 1
+#define COLD_CLONE 2
 
 //Table Variables
 

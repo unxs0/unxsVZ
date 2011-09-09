@@ -4891,15 +4891,20 @@ void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsig
 		goto CommonExit;
 	}
 
-	//1-.
-	sprintf(gcQuery,"ssh %s %s '/usr/sbin/vzctl --verbose create %u --ostemplate %s --config %s'",
+	//2 is no container cold initial state only in db
+	if(uCloneStop!=COLD_CLONE)
+	{
+
+		//1-.
+		sprintf(gcQuery,"ssh %s %s '/usr/sbin/vzctl --verbose create %u --ostemplate %s --config %s'",
 				cSSHOptions,cTargetNodeIPv4,
 				uNewVeid,cOSTemplate,cConfig);
-	if(system(gcQuery))
-	{
-		logfileLine("CloneRemoteContainer",gcQuery);
-		tJobErrorUpdate(uJob,"vzctl create failed");
-		goto CommonExit;
+		if(system(gcQuery))
+		{
+			logfileLine("CloneRemoteContainer",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl create failed");
+			goto CommonExit;
+		}
 	}
 
 	//2-.
@@ -4913,101 +4918,107 @@ void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsig
 		logfileLine("CloneRemoteContainer",gcQuery);
 		tJobErrorUpdate(uJob,"osdeltasync.sh");
 		//rollback
-		sprintf(gcQuery,"ssh %s %s 'vzctl destroy %u'",
+		if(uCloneStop!=COLD_CLONE)
+		{
+			sprintf(gcQuery,"ssh %s %s 'vzctl destroy %u'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid);
-		system(gcQuery);
+			system(gcQuery);
+		}
 		goto CommonExit;
 	}
 
-	//3-.
-	//cHostname set
-	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --hostname %s --save'",
+	if(uCloneStop!=COLD_CLONE)
+	{
+		//3-.
+		//cHostname set
+		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --hostname %s --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cHostname);
-	if(system(gcQuery))
-	{
-		logfileLine("CloneRemoteContainer",gcQuery);
-		tJobErrorUpdate(uJob,"cHostname");
-		goto CommonExit;
-	}
-	//cName set
-	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --name %s --save'",
+		if(system(gcQuery))
+		{
+			logfileLine("CloneRemoteContainer",gcQuery);
+			tJobErrorUpdate(uJob,"cHostname");
+			goto CommonExit;
+		}
+		//cName set
+		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --name %s --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cName);
-	if(system(gcQuery))
-	{
-		logfileLine("CloneRemoteContainer",gcQuery);
-		tJobErrorUpdate(uJob,"cName");
-		goto CommonExit;
-	}
-	//IP set
-	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipdel all --save'",
+		if(system(gcQuery))
+		{
+			logfileLine("CloneRemoteContainer",gcQuery);
+			tJobErrorUpdate(uJob,"cName");
+			goto CommonExit;
+		}
+		//IP set
+		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipdel all --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid);
-	if(system(gcQuery))
-	{
-		logfileLine("CloneRemoteContainer",gcQuery);
-		tJobErrorUpdate(uJob,"error 4c");
-		goto CommonExit;
-	}
-	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipadd %s --save'",
+		if(system(gcQuery))
+		{
+			logfileLine("CloneRemoteContainer",gcQuery);
+			tJobErrorUpdate(uJob,"error 4c");
+			goto CommonExit;
+		}
+		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipadd %s --save'",
 				cSSHOptions,cTargetNodeIPv4,uNewVeid,cNewIP);
-	if(system(gcQuery))
-	{
-		logfileLine("CloneRemoteContainer",gcQuery);
-		tJobErrorUpdate(uJob,"error 4d");
-		goto CommonExit;
-	}
+		if(system(gcQuery))
+		{
+			logfileLine("CloneRemoteContainer",gcQuery);
+			tJobErrorUpdate(uJob,"error 4d");
+			goto CommonExit;
+		}
 
-	//4-. Remove action script files if found
-	//Business logic: Target container may have these files, but we need them only if we
-	//'Failover' to this cloned VE. Also we defer to that action the setup of the
-	//containers tProperty values needed for processing the action script templates:
-	//cNetmask, cExtraNodeIP, cPrivateIPs, cService1, cService2, cVEID.mount and cVEID.umount, etc.
-	sprintf(gcQuery,"ssh %3$s %1$s 'rm -f /etc/vz/conf/%2$u.umount /etc/vz/conf/%2$u.mount"
+		//4-. Remove action script files if found
+		//Business logic: Target container may have these files, but we need them only if we
+		//'Failover' to this cloned VE. Also we defer to that action the setup of the
+		//containers tProperty values needed for processing the action script templates:
+		//cNetmask, cExtraNodeIP, cPrivateIPs, cService1, cService2, cVEID.mount and cVEID.umount, etc.
+		sprintf(gcQuery,"ssh %3$s %1$s 'rm -f /etc/vz/conf/%2$u.umount /etc/vz/conf/%2$u.mount"
 					" /etc/vz/conf/%2$u.start /etc/vz/conf/%2$u.stop'",
 						cTargetNodeIPv4,uNewVeid,cSSHOptions);
-	if(system(gcQuery))
-	{
-		logfileLine("CloneRemoteContainer",gcQuery);
-		tJobErrorUpdate(uJob,"error 4");
-		goto CommonExit;
-	}
+		if(system(gcQuery))
+		{
+			logfileLine("CloneRemoteContainer",gcQuery);
+			tJobErrorUpdate(uJob,"error 4");
+			goto CommonExit;
+		}
 
-	//5-.
-	//This is optional since clones can be in stopped state and still be
-	//kept in sync with source container. Also the failover can start (a fast operation)
-	//with the extra advantage of being able to keep original IPs. Only needing an arping
-	//to move the VIPs around the datacenter.
-	if(uCloneStop==0)
-	{
-		sprintf(gcQuery,"ssh %s %s 'vzctl start %u'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
-		if(system(gcQuery))
+		//5-.
+		//This is optional since clones can be in stopped state and still be
+		//kept in sync with source container. Also the failover can start (a fast operation)
+		//with the extra advantage of being able to keep original IPs. Only needing an arping
+		//to move the VIPs around the datacenter.
+		if(uCloneStop==HOT_CLONE)
 		{
-			logfileLine("CloneRemoteContainer",gcQuery);
-			tJobErrorUpdate(uJob,"error 5");
-			goto CommonExit;
+			sprintf(gcQuery,"ssh %s %s 'vzctl start %u'",cSSHOptions,cTargetNodeIPv4,uNewVeid);
+			if(system(gcQuery))
+			{
+				logfileLine("CloneRemoteContainer",gcQuery);
+				tJobErrorUpdate(uJob,"error 5");
+				goto CommonExit;
+			}
+			sprintf(gcQuery,"ssh %s %s 'vzctl set %u --onboot yes --save'",
+									cSSHOptions,cTargetNodeIPv4,uNewVeid);
+			if(system(gcQuery))
+			{
+				logfileLine("CloneRemoteContainer",gcQuery);
+				tJobErrorUpdate(uJob,"error 5b");
+				goto CommonExit;
+			}
+			SetContainerStatus(uNewVeid,uACTIVE);
 		}
-		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --onboot yes --save'",
-								cSSHOptions,cTargetNodeIPv4,uNewVeid);
-		if(system(gcQuery))
+		else
 		{
-			logfileLine("CloneRemoteContainer",gcQuery);
-			tJobErrorUpdate(uJob,"error 5b");
-			goto CommonExit;
+			sprintf(gcQuery,"ssh %s %s 'vzctl set %u --onboot no --save'",
+									cSSHOptions,cTargetNodeIPv4,uNewVeid);
+			if(system(gcQuery))
+			{
+				logfileLine("CloneRemoteContainer",gcQuery);
+				tJobErrorUpdate(uJob,"error 5c");
+				goto CommonExit;
+			}
+			SetContainerStatus(uNewVeid,uSTOPPED);
 		}
-		SetContainerStatus(uNewVeid,uACTIVE);
 	}
-	else
-	{
-		sprintf(gcQuery,"ssh %s %s 'vzctl set %u --onboot no --save'",
-								cSSHOptions,cTargetNodeIPv4,uNewVeid);
-		if(system(gcQuery))
-		{
-			logfileLine("CloneRemoteContainer",gcQuery);
-			tJobErrorUpdate(uJob,"error 5c");
-			goto CommonExit;
-		}
-		SetContainerStatus(uNewVeid,uSTOPPED);
-	}
-
+	
 	//6-.
 	if(uPrevStatus!=uINITSETUP)
 		//Not an auto clone job is only possibility but this maybe a hack. TODO
