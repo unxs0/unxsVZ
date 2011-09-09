@@ -210,13 +210,14 @@ if [ $? != 0 ];then
 fi
 
 #now we update the clone file system with the tar
+#if target is warm or hot we rsync files. if target is cold the $2 dir does not exist
 /usr/bin/ssh -c arcfour -p $cSSHPort $3\
 	"mkdir -p /vz/private/$1;"\
 	"cd /vz/private/$1;"\
 	"unxz /tmp/osdeltasync.$1.tar.xz;"\
 	"tar xf /tmp/osdeltasync.$1.tar;"\
 	"rm /tmp/osdeltasync.$1.tar;"\
-	"rsync -axlH /vz/private/$1/ /vz/private/$2;"
+	"if [ -d /vz/private/$2 ];then rsync -axlH /vz/private/$1/ /vz/private/$2;fi;"
 					 > /dev/null;
 if [ $? != 0 ];then
 	fLog "ssh tar failed";
