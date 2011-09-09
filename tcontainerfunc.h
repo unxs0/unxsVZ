@@ -92,7 +92,7 @@ static char cNetmask[64]={""};
 static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
 static unsigned uAllPortsOpen=0;
-static unsigned uCloneStop=0;
+static unsigned uCloneStop=WARM_CLONE;
 static unsigned uSyncPeriod=0;
 static unsigned guNoClones=0;
 static unsigned guOpOnClones=0;
@@ -571,7 +571,6 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							//We do not allow clones of clones yet.
 							if(uTargetNode && !sContainer.uSource && cAutoCloneIPClass[0])
 							{
-								char cTargetNodeIPv4[256]={""};
 								unsigned uNewVeid=0;
 								MYSQL_RES *res;
 								MYSQL_ROW field;
@@ -606,11 +605,6 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 
 								//Target node can't match source node.
 								if(uTargetNode==sContainer.uNode)
-									continue;
-
-								//We need the target nodes IP for the clone job data.
-								GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
-								if(!cTargetNodeIPv4[0])
 									continue;
 
 								//Check for sane sync periods
@@ -817,7 +811,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		}
 		else if(!strcmp(entries[i].name,"uCloneStop"))
 		{
-			uCloneStop=1;
+			sscanf(entries[i].val,"%u",&uCloneStop);
 		}
 		else if(!strcmp(entries[i].name,"uSyncPeriod"))
 		{
@@ -969,7 +963,6 @@ void ExttContainerCommands(pentry entries[], int x)
                 {
 			if(guPermLevel>=9)
 			{
-				char cTargetNodeIPv4[32]={""};
 				MYSQL_ROW field;
 				unsigned uNewVeid=0;
 				register int i;
@@ -1118,10 +1111,6 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uDatacenter!=uNodeDatacenter)
 						tContainer("<blink>Error:</blink> The specified clone uNode does not "
 							"belong to the specified uDatacenter.");
-					GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
-					if(!cTargetNodeIPv4[0])
-						tContainer("<blink>Error:</blink> Your target node is"
-							" missing it's cIPv4 property");
 					if(!uWizIPv4)
 						tContainer("<blink>Error:</blink> You must select an IP for the clone");
 					if(uWizIPv4==uIPv4)
@@ -1606,7 +1595,6 @@ void ExttContainerCommands(pentry entries[], int x)
 			if(guPermLevel>=9)
 			{
 				unsigned uNumContainer=0;
-				char cTargetNodeIPv4[32]={""};
 				MYSQL_ROW field;
 				unsigned uNewVeid=0;
 				register int i;
@@ -1738,10 +1726,6 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uDatacenter!=uNodeDatacenter)
 						tContainer("<blink>Error:</blink> The specified clone uNode does not "
 							"belong to the specified uDatacenter.");
-					GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
-					if(!cTargetNodeIPv4[0])
-						tContainer("<blink>Error:</blink> Your target node is"
-							" missing it's cIPv4 property");
 					if(!uWizIPv4)
 						tContainer("<blink>Error:</blink> You must select an IP for the clone");
 					if(uWizIPv4==uIPv4)
@@ -2543,7 +2527,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
-				char cTargetNodeIPv4[32]={""};
 				unsigned uNewVeid=0;
 
                         	guMode=0;
@@ -2553,6 +2536,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it");
 
                         	guMode=11002;
+				if(uCloneStop>COLD_CLONE || uCloneStop<HOT_CLONE)
+					tContainer("<blink>Error:</blink> Unexpected initial state");
 				if(uTargetNode==0)
 					tContainer("<blink>Error:</blink> Please select a valid target node");
 				if(uTargetNode==uNode)
@@ -2570,10 +2555,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(!uOSTemplate || !uConfig || !uNameserver || !uSearchdomain || !uDatacenter || !uTargetDatacenter )
 					tContainer("<blink>Error:</blink> Unexpected problem with missing source container"
 							" settings!");
-				GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
-				if(!cTargetNodeIPv4[0])
-					tContainer("<blink>Error:</blink> Unexpected problem, target node is"
-							" missing it's cIPv4 property!");
 				if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
 						tContainer("<blink>Error:</blink> Clone uSyncPeriod seconds out of range:"
 								" Max 30 days, min 5 minutes or 0 off.");
@@ -2662,7 +2643,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
-				char cTargetNodeIPv4[32]={""};
 				unsigned uNewVeid=0;
 
                         	guMode=0;
@@ -2672,6 +2652,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it");
 
                         	guMode=7001;
+				if(uCloneStop>WARM_CLONE || uCloneStop<HOT_CLONE)
+					tContainer("<blink>Error:</blink> Unexpected initial state");
 				if(uTargetNode==0)
 					tContainer("<blink>Error:</blink> Please select a valid target node");
 				if(uTargetNode==uNode)
@@ -2687,10 +2669,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(!uOSTemplate || !uConfig || !uNameserver || !uSearchdomain || !uDatacenter )
 					tContainer("<blink>Error:</blink> Unexpected problem with missing source container"
 							" settings!");
-				GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
-				if(!cTargetNodeIPv4[0])
-					tContainer("<blink>Error:</blink> Unexpected problem, target node is"
-							" missing it's cIPv4 property!");
 				if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
 						tContainer("<blink>Error:</blink> Clone uSyncPeriod seconds out of range:"
 								" Max 30 days, min 5 minutes or 0 off.");
@@ -3506,7 +3484,17 @@ void ExttContainerButtons(void)
 			printf("<p>Select new IPv4<br>");
 			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
 				uDatacenter,uOwner);
-			printf("<p><input type=checkbox name=uCloneStop checked> Initial state is stopped");
+
+			printf("<p>Select clone state<br>");
+			printf("<input type=radio name=uCloneStop value=%u",WARM_CLONE);
+			if(uCloneStop==WARM_CLONE)
+				printf(" checked");
+			printf("> Stopped/Warm");
+			printf("<input type=radio name=uCloneStop value=%u",HOT_CLONE);
+			if(uCloneStop==HOT_CLONE)
+				printf(" checked");
+			printf("> Active/Hot");
+
 			printf("<p>cuSyncPeriod<br>");
 			printf("<input title='Keep clone in sync every cuSyncPeriod seconds"
 					". You can change this at any time via the property panel.'"
@@ -3557,7 +3545,21 @@ void ExttContainerButtons(void)
 			printf("<p>Select new IPv4<br>");
 			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
 				uTargetDatacenter,uOwner);
-			printf("<p><input type=checkbox name=uCloneStop checked> Initial state is stopped");
+
+			printf("<p>Select clone state<br>");
+			printf("<input type=radio name=uCloneStop value=%u",WARM_CLONE);
+			if(uCloneStop==WARM_CLONE)
+				printf(" checked");
+			printf("> Stopped/Warm");
+			printf("<input type=radio name=uCloneStop value=%u",COLD_CLONE);
+			if(uCloneStop==COLD_CLONE)
+				printf(" checked");
+			printf("> Initial Setup/Cold");
+			printf("<input type=radio name=uCloneStop value=%u",HOT_CLONE);
+			if(uCloneStop==HOT_CLONE)
+				printf(" checked");
+			printf("> Active/Hot");
+
 			printf("<p>cuSyncPeriod<br>");
 			printf("<input title='Keep clone in sync every cuSyncPeriod seconds"
 					". You can change this at any time via the property panel.'"
