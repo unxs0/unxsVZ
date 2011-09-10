@@ -8,12 +8,11 @@
 #	those files different from
 #	source dir
 #	Move that xz file to remote
-#	server.
+#	server on initial setup.
+#	Else we rsync based on list of files.
 #	Install files on target veid
 #NOTES
-#	Source veid will be vzdump'd to get a consistent
-#	snapshot. LVM should be setup correctly.
-#
+#	LVM is required with enough free space for snapshot.
 #	Base veid should be of a stopped container or equiv.
 
 
@@ -148,6 +147,8 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
+cLockfile="/tmp/unxsvz.lvm.lock";
+
 cat /dev/null > /tmp/osdeltasync.list;
 cd /mnt;
 /usr/bin/rsync --dry-run -avxlH \
@@ -179,50 +180,74 @@ if [ ! -s /tmp/osdeltasync.files ];then
 	exit 1;
 fi
 
-#debug only
-#fUnLVM;
-#fCleanExit;
-
-cd private/$1;
-if [ $? != 0 ];then
-	fLog "cd private/$1 failed";
-fi
-cat /tmp/osdeltasync.files | /usr/bin/xargs /bin/tar cf /tmp/osdeltasync.tar > /dev/null 2>&1;
-if [ $? != 0 ]; then
+#if we already created remote osdeltasync dir, then we rsync
+#else we transfer over the whole thing
+/usr/bin/ssh -c arcfour -p $cSSHPort $3 "ls /vz/private/$1/osdeltasync.flag" > /dev/null 2>&1;
+if [ $? == 0 ];then
 	fUnLVM;
-	fErrorExit "tar failed";
-fi
+	#rsync only the files directly and install
+	#must configure /etc/ssh/ssh_config correctly if using non standard ssh port
+	/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish' -avxlH\
+			 --files-from=/tmp/osdeltasync.files /vz/private/$1/ $3:/vz/private/$1
+	if [ $? != 0 ];then
+		fLog "rsync /vz/private/$1/ $3:/vz/private/$1 error";
+	fi
 
-fUnLVM;
+	#now we update the clone file system with the tar
+	#if target is warm or hot we rsync files. if target is cold the $2 dir does not exist
+	/usr/bin/ssh -c arcfour -p $cSSHPort $3\
+		"if [ -d /vz/private/$2 ];then rsync -axlH /vz/private/$1/ /vz/private/$2;fi;"
+						 > /dev/null;
+	if [ $? != 0 ];then
+		fLog "ssh conditional rsync on $3 failed";
+		rmdir $cLockfile;
+		exit 1;
+	fi
+else
+	fLog "scp tar.xz and install";
+	cd /mnt/private/$1;
+	if [ $? != 0 ];then
+		fUnLVM;
+		fErrorExit "cd private/$1 failed";
+	fi
+	cat /tmp/osdeltasync.files | /usr/bin/xargs /bin/tar cf /tmp/osdeltasync.tar > /dev/null 2>&1;
+	if [ $? != 0 ]; then
+		fUnLVM;
+		fErrorExit "tar failed";
+	fi
+	fUnLVM;
 
-/usr/bin/xz -f /tmp/osdeltasync.tar;
-if [ $? != 0 ]; then
-	fLog "xz failed";
-	rmdir $cLockfile;
-	exit 1;
-fi
+	/usr/bin/xz -f /tmp/osdeltasync.tar;
+	if [ $? != 0 ]; then
+		fLog "xz failed";
+		rmdir $cLockfile;
+		exit 1;
+	fi
 
-/usr/bin/scp -c arcfour -P $cSSHPort /tmp/osdeltasync.tar.xz $3:/tmp/osdeltasync.$1.tar.xz > /dev/null;
-if [ $? != 0 ];then
-	fLog "scp failed";
-	rmdir $cLockfile;
-	exit 1;
-fi
+	/usr/bin/scp -c arcfour -P $cSSHPort /tmp/osdeltasync.tar.xz $3:/tmp/osdeltasync.$1.tar.xz > /dev/null;
+	if [ $? != 0 ];then
+		fLog "scp failed";
+		rmdir $cLockfile;
+		exit 1;
+	fi
 
-#now we update the clone file system with the tar
-#if target is warm or hot we rsync files. if target is cold the $2 dir does not exist
-/usr/bin/ssh -c arcfour -p $cSSHPort $3\
-	"mkdir -p /vz/private/$1;"\
-	"cd /vz/private/$1;"\
-	"unxz /tmp/osdeltasync.$1.tar.xz;"\
-	"tar xf /tmp/osdeltasync.$1.tar;"\
-	"rm /tmp/osdeltasync.$1.tar;"\
-	"if [ -d /vz/private/$2 ];then rsync -axlH /vz/private/$1/ /vz/private/$2;fi;"
-					 > /dev/null;
-if [ $? != 0 ];then
-	fLog "ssh tar failed";
-	rmdir $cLockfile;
-	exit 1;
+	#now we update the clone file system with the tar
+	#if target is warm or hot we rsync files. if target is cold the $2 dir does not exist
+	/usr/bin/ssh -c arcfour -p $cSSHPort $3\
+		"mkdir -p /vz/private/$1;"\
+		"cd /vz/private/$1;touch osdeltasync.flag;"\
+		"unxz /tmp/osdeltasync.$1.tar.xz;"\
+		"tar xf /tmp/osdeltasync.$1.tar;"\
+		"rm /tmp/osdeltasync.$1.tar;"\
+		"if [ -d /vz/private/$2 ];then rsync -axlH /vz/private/$1/ /vz/private/$2;fi;"
+						 > /dev/null;
+	if [ $? != 0 ];then
+		fLog "ssh tar failed";
+		rmdir $cLockfile;
+		exit 1;
+	fi
+#end of if rsync or scp
 fi
 
 fCleanExit;
+
