@@ -15,7 +15,6 @@
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
 #Note that you must change the rsync line also. Since we have not had time to fix this.
-cSSHPort="-p 22";
 cUseLVM="Yes";
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
@@ -42,7 +41,8 @@ else
 fi
 
 #make sure ssh is working
-/usr/bin/ssh $cSSHPort $3 "ls /vz/private/$2 > /dev/null 2>&1";
+#change /etc/ssh/ssh_conf for non standard port
+/usr/bin/ssh $3 "ls /vz/private/$2 > /dev/null 2>&1";
 if [ $? != 0 ];then
 	fLog "/usr/bin/ssh $3 ls /vz/private/$2 failed";
 	#rollback
@@ -94,11 +94,10 @@ if [ "$cUseLVM" == "Yes" ];then
 fi
 
 
-#note to change for non standard port
+#change /etc/ssh/ssh_conf for non standard port
 #verbose for check
-/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish -p 22' -avxlH --delete \
-#production
-#/usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour -p 22' -axlH --delete \
+#/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish' -avxlH --delete \
+/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish' -axlH --delete \
 			--exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
 			--exclude /etc/sysconfig/network \
