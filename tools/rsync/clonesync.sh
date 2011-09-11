@@ -27,7 +27,7 @@ fi
 uRunning=`nice /bin/ps -ef | /bin/grep clonesync | /bin/grep -v /bin/grep | /usr/bin/wc -l`;
 if [ "$uRunning" -gt 5 ];then
 	fLog "clonesync is already running $uRunning times";
-	exit 0;
+	exit 1;
 fi
 
 cLockfile="/tmp/clonesync.sh.lock.$1.$2";
@@ -35,7 +35,7 @@ cLockfile="/tmp/clonesync.sh.lock.$1.$2";
 #do not run if another (same source and target VEIDs) clone job is also running
 if [ -e $cLockfile ]; then
 	fLog "waiting for lock release $cLockfile";
-	exit 0;
+	exit 1;
 else
 	touch $cLockfile; 
 fi
@@ -57,7 +57,7 @@ if [ "$cUseLVM" == "Yes" ];then
 	if [ -d $cLVMLock ]; then
 		fLog "waiting for lock release $cLVMLock";
 		rm -f $cLockfile;
-		exit 0;
+		exit 3;
 	else
 		mkdir $cLVMLock; 
 	fi
@@ -71,7 +71,7 @@ if [ "$cUseLVM" == "Yes" ];then
 		fLog "Could not determine correct LVM vol name to use";
 		rmdir $cLVMLock;
 		rm -f $cLockfile;
-		exit 1;
+		exit 4;
 	fi
 
 	/usr/sbin/lvcreate --size 1G --snapshot --name snapvol /dev/$cVZVolGroup/$cVZVolName > /dev/null 2>&1;
@@ -79,7 +79,7 @@ if [ "$cUseLVM" == "Yes" ];then
 		fLog "lvcreate snapvol of vz failed";
 		rmdir $cLVMLock;
 		rm -f $cLockfile;
-		exit 1;
+		exit 5;
 	fi
 
 	/bin/mount /dev/$cVZVolGroup/snapvol /mnt > /dev/null 2>&1;
@@ -87,7 +87,7 @@ if [ "$cUseLVM" == "Yes" ];then
 		fLog "mount failed";
 		rmdir $cLVMLock;
 		rm -f $cLockfile;
-		exit 1;
+		exit 6;
 	fi
 
 	cBaseDir="mnt";
@@ -107,9 +107,10 @@ fi
 			/$cBaseDir/private/$1/ $3:/vz/private/$2
 #we can ignore return value 24:
 #rsync warning: some files vanished before they could be transferred (code 24) at main.c(892) [sender=2.6.8]
+uExitVal=0;
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync failed";
-	uExitVal=3;
+	uExitVal=9;
 fi
 
 if [ "$cUseLVM" == "Yes" ];then
@@ -117,12 +118,12 @@ if [ "$cUseLVM" == "Yes" ];then
 	/bin/umount /mnt;
 	if [ $? != 0 ]; then
 		fLog "umount failed";
-		exit 1;
+		exit 7;
 	fi
 	/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol > /dev/null 2>&1;
 	if [ $? != 0 ]; then
 		fLog "lvremove failed";
-		exit 1;
+		exit 8;
 	fi
 	rmdir $cLVMLock;
 fi
