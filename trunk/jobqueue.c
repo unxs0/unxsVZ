@@ -272,7 +272,9 @@ void ProcessJobQueue(unsigned uDebug)
 				if((uError=ProcessOSDeltaSyncJob(uNode,uContainer,uCloneContainer)))
 				{
 					logfileLine("ProcessOSDeltaCloneSyncJob uError",field[1]);
-					LogError("ProcessOSDeltaCloneSyncJob()",uError);
+					//error return(6) when clone script fails.
+					if(uError!=6)
+						LogError("ProcessOSDeltaCloneSyncJob()",uError);
 				}
 			break;
 
@@ -282,7 +284,9 @@ void ProcessJobQueue(unsigned uDebug)
 				if((uError=ProcessCloneSyncJob(uNode,uContainer,uCloneContainer)))
 				{
 					logfileLine("ProcessCloneSyncJob uError",field[1]);
-					LogError("ProcessCloneSyncJob()",uError);
+					//error return(6) when clone script fails.
+					if(uError!=6)
+						LogError("ProcessCloneSyncJob()",uError);
 				}
 		}
 	}
