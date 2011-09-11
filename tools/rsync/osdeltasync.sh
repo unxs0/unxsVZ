@@ -47,7 +47,7 @@ if [ $? != 0 ] || [ "$cOSTemplate" == "" ];then
 fi
 cOSTemplateVEID=`/usr/sbin/vzlist --no-header --output veid $cOSTemplate | awk '{print $1}'`;
 if [ $? != 0 ] || [ "$cOSTemplateVEID" == "" ];then
-	fLog "cOSTemplate error";
+	fLog "cOSTemplateVEID error";
 	exit 1;
 fi
 
@@ -83,7 +83,7 @@ fi
 cLockfile="/tmp/unxsvz.lvm.lock";
 if [ -d $cLockfile ]; then
 	fLog "waiting for lock release $cLockfile";
-	exit 0;
+	exit 2;
 else
 	mkdir $cLockfile; 
 fi
@@ -100,7 +100,7 @@ fErrorExit ()
 {
 	rmdir $cLockfile;
 	fLog $@;
-	exit 1;
+	exit 3;
 }
 
 #create a stopped source veid dir
@@ -111,7 +111,7 @@ cTest=`echo ${cVZMount} | /bin/grep ${cVZVolName}`;
 if [ "$cTest" != "$cVZMount" ];then
 	fLog "Could not determine correct LVM vol name to use";
 	rmdir $cLockfile;
-	exit 1;
+	exit 4;
 fi
 
 fUnLVM ()
@@ -120,12 +120,12 @@ fUnLVM ()
 	/bin/umount /mnt;
 	if [ $? != 0 ]; then
 		fLog "umount failed";
-		exit 1;
+		exit 5;
 	fi
 	/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol > /dev/null;
 	if [ $? != 0 ]; then
 		fLog "lvremove failed";
-		exit 1;
+		exit 6;
 	fi
 }
 
@@ -137,14 +137,14 @@ fUnLVM ()
 if [ $? != 0 ];then
 	fLog "lvcreate snapvol of vz failed";
 	rmdir $cLockfile;
-	exit 1;
+	exit 7;
 fi
 
 /bin/mount /dev/$cVZVolGroup/snapvol /mnt;
 if [ $? != 0 ];then
 	fLog "mount failed";
 	rmdir $cLockfile;
-	exit 1;
+	exit 8;
 fi
 
 cLockfile="/tmp/unxsvz.lvm.lock";
@@ -164,7 +164,7 @@ cd /mnt;
 if [ ! -s /tmp/osdeltasync.list ];then
 	fLog "/tmp/osdeltasync.list empty";
 	rmdir $cLockfile;
-	exit 1;
+	exit 9;
 fi
 
 cat /dev/null > /tmp/osdeltasync.files;
@@ -177,7 +177,7 @@ done < /tmp/osdeltasync.list;
 if [ ! -s /tmp/osdeltasync.files ];then
 	fLog "/tmp/osdeltasync.files empty";
 	rmdir $cLockfile;
-	exit 1;
+	exit 10;
 fi
 
 #if we already created remote osdeltasync dir, then we rsync
@@ -201,7 +201,7 @@ if [ $? == 0 ];then
 	if [ $? != 0 ];then
 		fLog "ssh conditional rsync on $3 failed";
 		rmdir $cLockfile;
-		exit 1;
+		exit 11;
 	fi
 else
 	fLog "scp tar.xz and install";
@@ -221,14 +221,14 @@ else
 	if [ $? != 0 ]; then
 		fLog "xz failed";
 		rmdir $cLockfile;
-		exit 1;
+		exit 12;
 	fi
 
 	/usr/bin/scp -c arcfour -P $cSSHPort /tmp/osdeltasync.tar.xz $3:/tmp/osdeltasync.$1.tar.xz > /dev/null;
 	if [ $? != 0 ];then
 		fLog "scp failed";
 		rmdir $cLockfile;
-		exit 1;
+		exit 13;
 	fi
 
 	#now we update the clone file system with the tar
@@ -244,7 +244,7 @@ else
 	if [ $? != 0 ];then
 		fLog "ssh tar failed";
 		rmdir $cLockfile;
-		exit 1;
+		exit 14;
 	fi
 #end of if rsync or scp
 fi
