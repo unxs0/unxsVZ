@@ -2584,6 +2584,19 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup)
 					ChangeGroup(uContainer,uGroup);
 
+				//This is needed to distinguish destroyed clone containers from
+				//initial setup clone containers for remote cold backup
+				if(uCloneStop==COLD_CLONE)
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cName='cSyncMode',cValue='Cold'",
+							uContainer,guCompany,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
+
 				//Set local global cWizHostname
 				//Insert clone container into tContainer
 				uNewVeid=CommonCloneContainer(
