@@ -30,15 +30,15 @@ if [ "$uRunning" -gt 5 ];then
 	exit 1;
 fi
 
-cLockfile="/tmp/clonesync.sh.lock.$1.$2";
-
 #do not run if another (same source and target VEIDs) clone job is also running
-if [ -e $cLockfile ]; then
-	fLog "waiting for lock release $cLockfile";
+cContainerLock="/tmp/clonesync.sh.lock.$1.$2";
+if [ -d $cContainerLock ]; then
+	fLog "waiting for lock release $cContainerLock";
 	exit 1;
 else
-	touch $cLockfile; 
+	mkdir $cContainerLock; 
 fi
+
 
 #make sure ssh is working
 #change /etc/ssh/ssh_conf for non standard port
@@ -46,7 +46,7 @@ fi
 if [ $? != 0 ];then
 	fLog "/usr/bin/ssh $3 ls /vz/private/$2 failed";
 	#rollback
-	rm -f $cLockfile;
+	rmdir $cContainerLock;
 	exit 2;
 fi
 
@@ -56,7 +56,7 @@ if [ "$cUseLVM" == "Yes" ];then
 	cLVMLock="/tmp/unxsvz.lvm.lock";
 	if [ -d $cLVMLock ]; then
 		fLog "waiting for lock release $cLVMLock";
-		rm -f $cLockfile;
+		rmdir $cContainerLock;
 		exit 3;
 	else
 		mkdir $cLVMLock; 
@@ -70,7 +70,7 @@ if [ "$cUseLVM" == "Yes" ];then
 	if [ "$cTest" != "$cVZMount" ];then
 		fLog "Could not determine correct LVM vol name to use";
 		rmdir $cLVMLock;
-		rm -f $cLockfile;
+		rmdir $cContainerLock;
 		exit 4;
 	fi
 
@@ -78,7 +78,7 @@ if [ "$cUseLVM" == "Yes" ];then
 	if [ $? != 0 ];then
 		fLog "lvcreate snapvol of vz failed";
 		rmdir $cLVMLock;
-		rm -f $cLockfile;
+		rmdir $cContainerLock;
 		exit 5;
 	fi
 
@@ -86,7 +86,7 @@ if [ "$cUseLVM" == "Yes" ];then
 	if [ $? != 0 ];then
 		fLog "mount failed";
 		rmdir $cLVMLock;
-		rm -f $cLockfile;
+		rmdir $cContainerLock;
 		exit 6;
 	fi
 
@@ -128,5 +128,5 @@ if [ "$cUseLVM" == "Yes" ];then
 	rmdir $cLVMLock;
 fi
 
-rm -f $cLockfile;
+rmdir $cContainerLock;
 exit $uExitVal;
