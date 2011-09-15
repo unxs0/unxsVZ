@@ -274,129 +274,165 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			if(gcNewHostParam0[0])
-			{
-				unsigned uProperty=0;
-				char cOrgPropName[64]={"Unknown"};
-				char *cp;
-
-				sprintf(gcQuery,"SELECT cComment FROM tConfiguration WHERE cLabel='cNewHostParam0'");
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					gcMessage="Select cComment failed, contact sysadmin!";
-					htmlContainer();
-				}
-				res=mysql_store_result(&gMysql);
-				if((field=mysql_fetch_row(res)))
-				{
-					if((cp=strstr(field[0],"cOrgPropName=")))
-					{
-						sprintf(cOrgPropName,"%.63s",cp+strlen("cOrgPropName="));
-						if((cp=strchr(cOrgPropName,';')))
-							*cp=0;
-					}
-				}
-
-				sprintf(gcQuery,"SELECT uProperty FROM tProperty"
-					" WHERE uKey=%u AND uType=3 AND cName='cOrg_%s'",guNewContainer,cOrgPropName);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					gcMessage="Select uProperty failed, contact sysadmin!";
-					htmlContainer();
-				}
-				res=mysql_store_result(&gMysql);
-				if((field=mysql_fetch_row(res)))
-					sscanf(field[0],"%u",&uProperty);
-				if(uProperty)
-				{
-					sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%u",
-						gcNewHostParam0,uProperty);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-					{
-						gcMessage="Update tProperty failed, contact sysadmin!";
-						htmlContainer();
-					}
-				}
-				else
-				{
-					sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_%s',cValue='%s',uType=3,uKey=%u"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						cOrgPropName,gcNewHostParam0,guNewContainer,guOrg,guLoginClient);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-					{
-						gcMessage="Update tProperty failed, contact sysadmin!";
-						htmlContainer();
-					}
-				}
-			}
-
-			if(gcNewHostParam1[0])
-			{
-				unsigned uProperty=0;
-				char cOrgPropName[64]={"Unknown"};
-				char *cp;
-
-				sprintf(gcQuery,"SELECT cComment FROM tConfiguration WHERE cLabel='cNewHostParam1'");
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					gcMessage="Select cComment failed, contact sysadmin!";
-					htmlContainer();
-				}
-				res=mysql_store_result(&gMysql);
-				if((field=mysql_fetch_row(res)))
-				{
-					if((cp=strstr(field[0],"cOrgPropName=")))
-					{
-						sprintf(cOrgPropName,"%.63s",cp+strlen("cOrgPropName="));
-						if((cp=strchr(cOrgPropName,';')))
-							*cp=0;
-					}
-				}
-
-				sprintf(gcQuery,"SELECT uProperty FROM tProperty"
-					" WHERE uKey=%u AND uType=3 AND cName='cOrg_%s'",guNewContainer,cOrgPropName);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					gcMessage="Select uProperty failed, contact sysadmin!";
-					htmlContainer();
-				}
-				res=mysql_store_result(&gMysql);
-				if((field=mysql_fetch_row(res)))
-					sscanf(field[0],"%u",&uProperty);
-				if(uProperty)
-				{
-					sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%u",
-						gcNewHostParam1,uProperty);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-					{
-						gcMessage="Update tProperty failed, contact sysadmin!";
-						htmlContainer();
-					}
-				}
-				else
-				{
-					sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_%s',cValue='%s',uType=3,uKey=%u"
-							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						cOrgPropName,gcNewHostParam1,guNewContainer,guOrg,guLoginClient);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-					{
-						gcMessage="Update tProperty failed, contact sysadmin!";
-						htmlContainer();
-					}
-				}
-			}
-
-
-			//Always update GMT
 			unsigned uProperty=0;
+			unsigned uOrgPropMaxLength=0;
+			unsigned uOrgPropMinLength=0;
+			char cOrgPropName[64]={"Unknown"};
+			char *cp;
+
+			//
+			//cNewHostParam0
+			//
+			sprintf(gcQuery,"SELECT cComment FROM tConfiguration WHERE cLabel='cNewHostParam0'");
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select cComment failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				if((cp=strstr(field[0],"cOrgPropName=")))
+				{
+					sprintf(cOrgPropName,"%.63s",cp+strlen("cOrgPropName="));
+					if((cp=strchr(cOrgPropName,';')))
+						*cp=0;
+				}
+				if((cp=strstr(field[0],"uOrgPropMaxLength=")))
+					sscanf(cp+strlen("uOrgPropMaxLength="),"%u",&uOrgPropMaxLength);
+				if((cp=strstr(field[0],"uOrgPropMinLength=")))
+					sscanf(cp+strlen("uOrgPropMinLength="),"%u",&uOrgPropMinLength);
+			}
+
+			//Min
+			if(strlen(gcNewHostParam0)<uOrgPropMinLength)
+			{
+				sprintf(cOrgPropName,"%s must be at least %u characters long",cOrgPropName,uOrgPropMinLength);
+				gcMessage=cOrgPropName;
+				htmlContainer();
+			}
+			//Max
+			if(strlen(gcNewHostParam0)>uOrgPropMaxLength)
+			{
+				sprintf(cOrgPropName,"%s can only be %u characters long",cOrgPropName,uOrgPropMaxLength);
+				gcMessage=cOrgPropName;
+				htmlContainer();
+			}
+
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+				" WHERE uKey=%u AND uType=3 AND cName='cOrg_%s'",guNewContainer,cOrgPropName);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select uProperty failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uProperty);
+			if(uProperty)
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%u",
+					gcNewHostParam0,uProperty);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Update tProperty failed, contact sysadmin!";
+					htmlContainer();
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_%s',cValue='%s',uType=3,uKey=%u"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cOrgPropName,gcNewHostParam0,guNewContainer,guOrg,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Update tProperty failed, contact sysadmin!";
+					htmlContainer();
+				}
+			}
+
+			uOrgPropMaxLength=0;
+			uOrgPropMinLength=0;
+			//
+			//cNewHostParam1
+			//
+			sprintf(gcQuery,"SELECT cComment FROM tConfiguration WHERE cLabel='cNewHostParam1'");
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select cComment failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				if((cp=strstr(field[0],"cOrgPropName=")))
+				{
+					sprintf(cOrgPropName,"%.63s",cp+strlen("cOrgPropName="));
+					if((cp=strchr(cOrgPropName,';')))
+						*cp=0;
+				}
+				if((cp=strstr(field[0],"uOrgPropMaxLength=")))
+					sscanf(cp+strlen("uOrgPropMaxLength="),"%u",&uOrgPropMaxLength);
+				if((cp=strstr(field[0],"uOrgPropMinLength=")))
+					sscanf(cp+strlen("uOrgPropMinLength="),"%u",&uOrgPropMinLength);
+			}
+
+			//Min
+			if(strlen(gcNewHostParam1)<uOrgPropMinLength)
+			{
+				sprintf(cOrgPropName,"%s must be at least %u characters long",cOrgPropName,uOrgPropMinLength);
+				gcMessage=cOrgPropName;
+				htmlContainer();
+			}
+			//Max
+			if(strlen(gcNewHostParam1)>uOrgPropMaxLength)
+			{
+				sprintf(cOrgPropName,"%s can only be %u characters long",cOrgPropName,uOrgPropMaxLength);
+				gcMessage=cOrgPropName;
+				htmlContainer();
+			}
+
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+				" WHERE uKey=%u AND uType=3 AND cName='cOrg_%s'",guNewContainer,cOrgPropName);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select uProperty failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uProperty);
+			if(uProperty)
+			{
+				sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%u",
+					gcNewHostParam1,uProperty);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Update tProperty failed, contact sysadmin!";
+					htmlContainer();
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_%s',cValue='%s',uType=3,uKey=%u"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cOrgPropName,gcNewHostParam1,guNewContainer,guOrg,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Update tProperty failed, contact sysadmin!";
+					htmlContainer();
+				}
+			}
+		
+			//Always update GMT
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
 					" WHERE uKey=%u AND uType=3 AND cName='cOrg_TimeZone'",guNewContainer);
 			mysql_query(&gMysql,gcQuery);

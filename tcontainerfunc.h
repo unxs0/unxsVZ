@@ -2625,6 +2625,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				uGroup=uGetGroup(0,uContainer);
 				if(uGroup)
 					ChangeGroup(uNewVeid,uGroup);
+                        	guMode=0;
 				tContainer("CloneContainerJob() Done");
 			}
 			else
