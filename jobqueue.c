@@ -280,7 +280,8 @@ void ProcessJobQueue(unsigned uDebug)
 
 			//Here provided sample script clonesync.sh does an rsync
 			//and keeps the clone container as warm spare.
-			default:
+			case uSTOPPED:
+			case uACTIVE:
 				if((uError=ProcessCloneSyncJob(uNode,uContainer,uCloneContainer)))
 				{
 					logfileLine("ProcessCloneSyncJob uError",field[1]);
@@ -4609,12 +4610,29 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uPeriod=0;
+	char cSyncMode[32]={""};
+
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cSyncMode'",
+					uCloneContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ProcessOSDeltaSyncJob",mysql_error(&gMysql));
+		return(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cSyncMode,"%.31s",field[0]);
+	mysql_free_result(res);
 
 	if(guDebug)
 	{
-		sprintf(gcQuery,"Start uContainer=%u,uCloneContainer=%u",uContainer,uCloneContainer);
+		sprintf(gcQuery,"Start uContainer=%u,uCloneContainer=%u,cSyncMode=%s",uContainer,uCloneContainer,cSyncMode);
 		logfileLine("ProcessOSDeltaSyncJob",gcQuery);
 	}
+
+	if(cSyncMode[0]==0 || cSyncMode[0]!='C')
+		return(0);
 
 	//After failover cuSyncPeriod is 0 for clone (remote) container.
 	//This allows for safekeeping of potentially useful data.
@@ -5022,10 +5040,14 @@ void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsig
 			SetContainerStatus(uNewVeid,uSTOPPED);
 		}
 	}
-	
-	//6-.
-	if(uPrevStatus!=uINITSETUP)
-		//Not an auto clone job is only possibility but this maybe a hack. TODO
+	else
+	{
+		//Cold clone
+		SetContainerStatus(uNewVeid,uINITSETUP);
+	}
+
+	//Some job setup may have already changed it to active?
+	if(uPrevStatus!=uINITSETUP)	
 		SetContainerStatus(uContainer,uPrevStatus);
 	tJobDoneUpdate(uJob);
 

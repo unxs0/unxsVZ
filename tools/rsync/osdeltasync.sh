@@ -117,7 +117,7 @@ fi
 fUnLVM ()
 {
 	cd /;
-	/bin/umount /mnt;
+	/bin/umount /mntsnapvol;
 	if [ $? != 0 ]; then
 		fLog "umount failed";
 		exit 5;
@@ -140,7 +140,7 @@ if [ $? != 0 ];then
 	exit 7;
 fi
 
-/bin/mount /dev/$cVZVolGroup/snapvol /mnt;
+/bin/mount /dev/$cVZVolGroup/snapvol /mntsnapvol;
 if [ $? != 0 ];then
 	fLog "mount failed";
 	rmdir $cLockfile;
@@ -150,8 +150,9 @@ fi
 cLockfile="/tmp/unxsvz.lvm.lock";
 
 cat /dev/null > /tmp/osdeltasync.list;
-cd /mnt;
-/usr/bin/rsync --dry-run -avxlH \
+cd /mntsnapvol;
+#/usr/bin/rsync --dry-run -avxlH \
+/usr/bin/rsync --dry-run -avx \
 			--exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
 			--exclude /etc/sysconfig/network \
@@ -171,7 +172,8 @@ cat /dev/null > /tmp/osdeltasync.files;
 while read cLine; do
 	cFile=`echo ${cLine} | /bin/grep -v "/$" | /bin/grep -v "^building" | /bin/grep -v "^sent" | /bin/grep -v "^total" `;
 	if [ "$cFile" != "" ];then
-		echo $cFile >> /tmp/osdeltasync.files;
+		#remove symlink parts
+		echo $cFile | /bin/sed -e "s/ ->.*//g" | sed -e "s/.*/\"&\"/g" >> /tmp/osdeltasync.files;
 	fi
 done < /tmp/osdeltasync.list;
 if [ ! -s /tmp/osdeltasync.files ];then
@@ -179,6 +181,10 @@ if [ ! -s /tmp/osdeltasync.files ];then
 	rmdir $cLockfile;
 	exit 10;
 fi
+
+#debug only
+#fUnLVM;
+#fErrorExit "testing part one";
 
 #if we already created remote osdeltasync dir, then we rsync
 #else we transfer over the whole thing
@@ -205,12 +211,12 @@ if [ $? == 0 ];then
 	fi
 else
 	fLog "scp tar.xz and install";
-	cd /mnt/private/$1;
+	cd /mntsnapvol/private/$1;
 	if [ $? != 0 ];then
 		fUnLVM;
 		fErrorExit "cd private/$1 failed";
 	fi
-	cat /tmp/osdeltasync.files | /usr/bin/xargs /bin/tar cf /tmp/osdeltasync.tar > /dev/null 2>&1;
+	cat /tmp/osdeltasync.files | /usr/bin/xargs /bin/tar cf /tmp/osdeltasync.tar;
 	if [ $? != 0 ]; then
 		fUnLVM;
 		fErrorExit "tar failed";
