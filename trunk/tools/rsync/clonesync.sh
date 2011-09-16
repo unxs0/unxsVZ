@@ -53,6 +53,8 @@ fi
 cBaseDir="vz";
 if [ "$cUseLVM" == "Yes" ];then
 
+	mkdir -p /mntsnapvol;
+
 	cLVMLock="/tmp/unxsvz.lvm.lock";
 	if [ -d $cLVMLock ]; then
 		fLog "waiting for lock release $cLVMLock";
@@ -63,9 +65,9 @@ if [ "$cUseLVM" == "Yes" ];then
 	fi
 
 	#create a stopped source veid dir
-	cVZVolName=`/usr/sbin/lvs --noheadings -o lv_name | head -n 1 | awk '{print $1}'`;
+	cVZVolName=`/usr/sbin/lvs --noheadings -o lv_name 2>/dev/null| head -n 1 | awk '{print $1}'`;
 	cVZMount=`/bin/mount | grep -w vz`;
-	cVZVolGroup=`/usr/sbin/lvs --noheadings -o vg_name | head -n 1 | awk '{print $1}'`;
+	cVZVolGroup=`/usr/sbin/lvs --noheadings -o vg_name 2>/dev/null| head -n 1 | awk '{print $1}'`;
 	cTest=`echo ${cVZMount} | grep ${cVZVolName}`;
 	if [ "$cTest" != "$cVZMount" ];then
 		fLog "Could not determine correct LVM vol name to use";
@@ -77,20 +79,36 @@ if [ "$cUseLVM" == "Yes" ];then
 	/usr/sbin/lvcreate --size 1G --snapshot --name snapvol /dev/$cVZVolGroup/$cVZVolName > /dev/null 2>&1;
 	if [ $? != 0 ];then
 		fLog "lvcreate snapvol of vz failed";
-		rmdir $cLVMLock;
-		rmdir $cContainerLock;
-		exit 5;
+		#see if we can recover
+		cd /;
+		/bin/umount /mntsnapvol;
+		/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol > /dev/null 2>&1;
+		if [ $? != 0 ]; then
+			fLog "lvremove snapvol fix failed";
+		else
+			/usr/sbin/lvcreate --size 1G --snapshot --name snapvol /dev/$cVZVolGroup/$cVZVolName > /dev/null 2>&1;
+			if [ $? != 0 ]; then
+				fLog "lvcreate snapvol second try failed";
+				rmdir $cLVMLock;
+				rmdir $cContainerLock;
+				exit 5;
+			fi
+		fi
 	fi
 
-	/bin/mount /dev/$cVZVolGroup/snapvol /mnt > /dev/null 2>&1;
+	/bin/mount /dev/$cVZVolGroup/snapvol /mntsnapvol > /dev/null 2>&1;
 	if [ $? != 0 ];then
 		fLog "mount failed";
+		/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol > /dev/null 2>&1;
+		if [ $? != 0 ]; then
+			fLog "lvremove rollback failed";
+		fi
 		rmdir $cLVMLock;
 		rmdir $cContainerLock;
 		exit 6;
 	fi
 
-	cBaseDir="mnt";
+	cBaseDir="mntsnapvol";
 fi
 
 
@@ -115,11 +133,22 @@ fi
 
 if [ "$cUseLVM" == "Yes" ];then
 	cd /;
-	/bin/umount /mnt;
+	/bin/umount /mntsnapvol;
 	if [ $? != 0 ]; then
-		fLog "umount failed";
-		exit 7;
+		fLog "umount failed will retry in 60s";
+		sleep 60;
+		/bin/umount /mntsnapvol;
+		if [ $? != 0 ]; then
+			fLog "umount failed twice will retry in 120s";
+			sleep 120;
+			/bin/umount /mntsnapvol;
+			if [ $? != 0 ]; then
+				fLog "umount failed 3 times giving up";
+				exit 7;
+			fi
+		fi
 	fi
+
 	/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol > /dev/null 2>&1;
 	if [ $? != 0 ]; then
 		fLog "lvremove failed";
