@@ -14,6 +14,10 @@ static char cuTargetNodePullDown[256]={""};
 static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
 static char cSearch[32]={""};
+static unsigned uTargetDatacenter=0;
+static char cuTargetDatacenterPullDown[256]={""};
+static unsigned uCloneStop=WARM_CLONE;
+static unsigned uSyncPeriod=0;
 
 
 //ModuleFunctionProtos()
@@ -72,6 +76,19 @@ void ExtProcesstNodeVars(pentry entries[], int x)
 		{
 			sprintf(cuWizIPv4PullDown,"%.31s",entries[i].val);
 			uWizIPv4=ReadPullDown("tIP","cLabel",cuWizIPv4PullDown);
+		}
+		else if(!strcmp(entries[i].name,"cuTargetDatacenterPullDown"))
+		{
+			sprintf(cuTargetDatacenterPullDown,"%.255s",entries[i].val);
+			uTargetDatacenter=ReadPullDown("tDatacenter","cLabel",cuTargetDatacenterPullDown);
+		}
+		else if(!strcmp(entries[i].name,"uCloneStop"))
+		{
+			sscanf(entries[i].val,"%u",&uCloneStop);
+		}
+		else if(!strcmp(entries[i].name,"uSyncPeriod"))
+		{
+			sscanf(entries[i].val,"%u",&uSyncPeriod);
 		}
 	}
 
@@ -256,7 +273,30 @@ void ExttNodeCommands(pentry entries[], int x)
 					tNode("<blink>Error</blink>: This record was modified. Reload it.");
 				
 				guMode=7001;
-				tNode("Select Target Node and IPv4 range");
+				tNode("Select datacenter");
+			}
+			else
+			{
+				tNode("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Select Clone Datacenter"))
+                {
+                        ProcesstNodeVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+
+				guMode=7001;
+				if(uTargetDatacenter==uDatacenter)
+					tContainer("<blink>Error:</blink> Can't remote clone to same datacenter");
+				
+				guMode=7002;
+				tNode("Select node, uIPv4 and more");
 			}
 			else
 			{
@@ -270,6 +310,7 @@ void ExttNodeCommands(pentry entries[], int x)
 			{
 				char cTargetNodeIPv4[32]={""};
 				unsigned uRetVal=0;
+				unsigned uIPv4Datacenter=0;
 
                         	guMode=0;
 
@@ -277,7 +318,9 @@ void ExttNodeCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tNode("<blink>Error</blink>: This record was modified. Reload it.");
 
-                        	guMode=7001;
+                        	guMode=7002;
+				tNode("Function not available. Try again later");
+
 				if(!uWizIPv4)
 					tNode("<blink>Error</blink>: You must select a start IP!");
 				if(uTargetNode==0)
@@ -288,6 +331,20 @@ void ExttNodeCommands(pentry entries[], int x)
 				if(!cTargetNodeIPv4[0])
 					tNode("<blink>Error</blink>: Your target node is"
 							" missing it's cIPv4 property!");
+				if(uCloneStop>COLD_CLONE || uCloneStop<HOT_CLONE)
+					tNode("<blink>Error:</blink> Unexpected initial state");
+				if(uTargetDatacenter==uDatacenter)
+					tNode("<blink>Error:</blink> Can't remote clone to same datacenter");
+				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
+				if(uTargetDatacenter!=uIPv4Datacenter)
+					tNode("<blink>Error:</blink> The specified target uIPv4 does not "
+							"belong to the specified uDatacenter.");
+				if(!uDatacenter || !uTargetDatacenter )
+					tNode("<blink>Error:</blink> Unexpected problem with missing source node"
+							" settings!");
+				if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
+						tNode("<blink>Error:</blink> Clone uSyncPeriod seconds out of range:"
+								" Max 30 days, min 5 minutes or 0 off.");
                         	guMode=0;
 
 				
@@ -356,26 +413,60 @@ void ExttNodeButtons(void)
 	switch(guMode)
         {
                 case 7001:
-                        printf("<p><u>Clone Wizard</u><br>");
+                        printf("<p><u>Node Clone Wizard (Step 1/2)</u><br>");
+			printf("Here you will select the remote datacenter. If it is oversubscribed or not"
+				" configured for use, or otherwise unavailable you will have to select another.");
+			printf("<p>Select remote datacenter<br>");
+			tTablePullDown("tDatacenter;cuTargetDatacenterPullDown","cLabel","cLabel",uTargetDatacenter,1);
+			printf("<p><input title='Step one of remote clone wizard'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Select Clone Datacenter'>\n");
+                break;
+
+                case 7002:
+                        printf("<p><u>Node Clone Wizard (Step 2/2)</u><br>");
 			printf("Here you will select the hardware node target. If the selected node is"
 				" oversubscribed, not available, or scheduled for maintenance. You will"
 				" be informed at the next step.\n<p>\n"
-				"You also must carefully select a new IP range that usually will be of"
-				" the same type as the source container. This is done by selecting a"
-				" starting IPv4 from the select below. Please note that enough available"
-				" IPs starting at the one given must be available for the node clone operation"
-				" to be accomplished. The IP range selected must be contiguous via tIP.uIP.<p>"
-				"Any mount/umount files of the source container will not be used"
+				"You must also select a start uIPv4 for the cloned containers, and set the initial"
+				" state of the clone."
+				" Usually clones should be kept stopped to conserve resources and facilitate rsync."
+				" Use the checkbox to change this default behavior."
+				" Any mount/umount files of the source container will NOT be used"
 				" by the new cloned container. This issue will be left for manual"
-				" or automated failover to the cloned container. If you wish to"
-				" keep the source and clone containers sync'ed you must specify that"
-				" in each clone container via a 'cSyncSchedule' entry in it's properties table.<p>");
-			printf("Select target node ");
-			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
-			printf("<br>Select start IPv4 ");
-			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
-			printf("<p><input title='Create clone jobs for all the current node`s containers"
-					" that don`t already have clones'"
+				" or automated failover to the cloned container.<p>If you wish to"
+				" keep the source and clone container sync'd you can specify a non zero"
+				" value via the 'cuSyncPeriod' entry below.");
+			printf("<p>Selected datacenter<br>");
+			tTablePullDown("tDatacenter;cuTargetDatacenterPullDown","cLabel","cLabel",uTargetDatacenter,0);
+			printf("<p>Select target node<br>");
+			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
+				cuTargetNodePullDown,0,uTargetDatacenter);//0 does not use tProperty, uses uDatacenter
+			printf("<p>Select new IPv4<br>");
+			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
+				uTargetDatacenter,uOwner);
+
+			printf("<p>Select clone state<br>");
+			printf("<input type=radio name=uCloneStop value=%u",WARM_CLONE);
+			if(uCloneStop==WARM_CLONE)
+				printf(" checked");
+			printf("> Stopped/Warm");
+			printf("<input type=radio name=uCloneStop value=%u",COLD_CLONE);
+			if(uCloneStop==COLD_CLONE)
+				printf(" checked");
+			printf("> Initial Setup/Cold");
+			printf("<input type=radio name=uCloneStop value=%u",HOT_CLONE);
+			if(uCloneStop==HOT_CLONE)
+				printf(" checked");
+			printf("> Active/Hot");
+
+			printf("<p>cuSyncPeriod<br>");
+			printf("<input title='Keep clone in sync every cuSyncPeriod seconds"
+					". You can change this at any time via the property panel.'"
+					" type=text size=10 maxlength=7"
+					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
+			printf("<p>Optional primary group change<br>");
+			printf("<p><input title='Create a clone job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Clone Node'>\n");
                 break;
@@ -466,6 +557,67 @@ void ExttNodeAuxTable(void)
 
 	switch(guMode)
 	{
+		//Off for now
+		case 13377001:
+			sprintf(gcQuery,"%s Active Containers",cLabel);
+			OpenFieldSet(gcQuery,100);
+			printf("<table>");
+			printf("<tr>"
+				"<td><u>select</u></td>"
+				"<td><u>master label</u></td>"
+				"<td><u>master hostname</u></td>"
+				"<td><u>clone label</u></td>"
+				"<td><u>clone hostname</u></td>"
+				"<td><u>seconds since rsync</u></td>"
+				"<td><u>job created</u></td>"
+				"</tr>");
+			sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,uNode,uDatacenter FROM tContainer WHERE"
+							" uNode=%u AND uSource=0 AND uStatus=%u ORDER BY cLabel",uNode,uACTIVE);
+		        mysql_query(&gMysql,gcQuery);
+		        if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		        res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				MYSQL_RES *res2;
+				MYSQL_ROW field2;
+
+				while((field=mysql_fetch_row(res)))
+				{
+					printf("<tr>");
+					printf("<td><input type=checkbox name=CNW%s</td>"
+							"<td><a class=darkLink href=unxsVZ.cgi?"
+							"gcFunction=tContainer&uContainer=%s>"
+							"%s</a></td><td>%s</td>",
+								field[0],field[0],field[1],field[2]);
+					sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,(UNIX_TIMESTAMP(NOW())-uBackupDate),"
+							"uDatacenter,uNode,uIPv4,uStatus,uOwner"
+							" FROM tContainer WHERE uSource=%s",field[0]);
+				        mysql_query(&gMysql,gcQuery);
+				        if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				        res2=mysql_store_result(&gMysql);
+					if((field2=mysql_fetch_row(res2)))
+					{
+						printf("<td><a class=darkLink href=unxsVZ.cgi?"
+							"gcFunction=tContainer&uContainer=%s>"
+							"%s</a></td><td>%s</td><td>%s</td>",
+								field2[0],field2[1],field2[2],field2[3]);
+					}
+					else
+					{
+						printf("<td>---</a></td><td>---</td><td>---</td>");
+					}
+					mysql_free_result(res2);
+					printf("</tr>\n");
+				}
+				printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'>"
+						" Check all</td></tr>\n");
+			}
+			printf("</table>");
+			CloseFieldSet();
+		break;
+
 		case 8001:
 		case 8002:
 			sprintf(gcQuery,"%s Clone Panel",cLabel);
