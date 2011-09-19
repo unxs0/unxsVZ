@@ -246,6 +246,28 @@ void CreatetContainer(void);
 void DeletetContainer(void);
 void ExttContainerGetHook(entry gentries[], int x);
 void ExttContainerNavBar(void);
+unsigned CommonCloneContainer(
+		unsigned uContainer,
+		unsigned uOSTemplate,
+		unsigned uConfig,
+		unsigned uNameserver,
+		unsigned uSearchdomain,
+		unsigned uDatacenter,
+		unsigned uTargetDatacenter,
+		unsigned uOwner,
+		const char *cLabel,
+		unsigned uNode,
+		unsigned uStatus,
+		const char *cHostname,
+		const char *cClassC,
+		unsigned uWizIPv4,
+		char *cWizLabel,
+		char *cWizHostname,
+		unsigned uTargetNode,
+		unsigned uSyncPeriod,
+		unsigned uLoginClient,
+		unsigned uCloneStop,
+		unsigned uMode);
 
 //tProperty
 int tPropertyCommands(pentry entries[], int x);

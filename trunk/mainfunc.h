@@ -38,27 +38,6 @@ void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void ChangeGroup(unsigned uContainer, unsigned uGroup);
 void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
-unsigned CommonCloneContainer(
-		unsigned uContainer,
-		unsigned uOSTemplate,
-		unsigned uConfig,
-		unsigned uNameserver,
-		unsigned uSearchdomain,
-		unsigned uDatacenter,
-		unsigned uTargetDatacenter,
-		unsigned uOwner,
-		const char *cLabel,
-		unsigned uNode,
-		unsigned uStatus,
-		const char *cHostname,
-		const char *cClassC,
-		unsigned uWizIPv4,
-		char *cWizLabel,
-		char *cWizHostname,
-		unsigned uTargetNode,
-		unsigned uSyncPeriod,
-		unsigned uLoginClient,
-		unsigned uCloneStop);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 char *strptime(const char *s, const char *format, struct tm *tm);
 
@@ -3592,7 +3571,7 @@ void MassCreateContainers(char *cConfigfileName)
 									uCloneTargetNode,
 									uSyncPeriod,
 									1,
-									uCloneStopped);
+									uCloneStopped,7);
 					if(!uNewVeid)
 					{
 						printf("Clone container %s creation failed!",cCloneHostname);

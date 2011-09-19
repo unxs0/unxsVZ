@@ -51,27 +51,6 @@ unsigned uGetGroup(unsigned uNode, unsigned uContainer);
 unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
 		unsigned uOwner,unsigned uCreatedBy);
 void ChangeGroup(unsigned uContainer, unsigned uGroup);
-unsigned CommonCloneContainer(
-		unsigned uContainer,
-		unsigned uOSTemplate,
-		unsigned uConfig,
-		unsigned uNameserver,
-		unsigned uSearchdomain,
-		unsigned uDatacenter,
-		unsigned uTargetDatacenter,
-		unsigned uOwner,
-		const char *cLabel,
-		unsigned uNode,
-		unsigned uStatus,
-		const char *cHostname,
-		const char *cClassC,
-		unsigned uWizIPv4,
-		char *cWizLabel,
-		char *cWizHostname,
-		unsigned uTargetNode,
-		unsigned uSyncPeriod,
-		unsigned uLoginClient,
-		unsigned uCloneStop);
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
@@ -647,7 +626,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 										uTargetNode,
 										uSyncPeriod,
 										guLoginClient,
-										uCloneStop);
+										uCloneStop,0);
 								//Now that container exists we can assign group.
 								if(!uNewVeid)
 									continue;
@@ -1526,7 +1505,7 @@ void ExttContainerCommands(pentry entries[], int x)
 									uTargetNode,
 									uSyncPeriod,
 									guLoginClient,
-									uCloneStop);
+									uCloneStop,0);
 					SetContainerStatus(uContainer,uINITSETUP);
 					if(uGroup)
 						ChangeGroup(uNewVeid,uGroup);
@@ -2026,7 +2005,7 @@ void ExttContainerCommands(pentry entries[], int x)
 									uTargetNode,
 									uSyncPeriod,
 									guLoginClient,
-									uCloneStop);
+									uCloneStop,0);
 						SetContainerStatus(uContainer,uINITSETUP);
 						if(uGroup)
 							ChangeGroup(uNewVeid,uGroup);
@@ -2619,7 +2598,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					uTargetNode,
 					uSyncPeriod,
 					guLoginClient,
-					uCloneStop);
+					uCloneStop,0);
 
 				//Set group of clone to group of source.
 				uGroup=uGetGroup(0,uContainer);
@@ -2721,7 +2700,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					uTargetNode,
 					uSyncPeriod,
 					guLoginClient,
-					uCloneStop);
+					uCloneStop,0);
 
 				//Set group of clone to group of source.
 				uGroup=uGetGroup(0,uContainer);
@@ -5930,7 +5909,8 @@ unsigned CommonCloneContainer(
 		unsigned uTargetNode,
 		unsigned uSyncPeriod,
 		unsigned uLoginClient,
-		unsigned uCloneStop)
+		unsigned uCloneStop,
+		unsigned uMode)
 {	
 	MYSQL_RES *res;
 	unsigned uNewVeid=0;
@@ -6031,8 +6011,12 @@ unsigned CommonCloneContainer(
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 
-			tContainer("<blink>Error:</blink> Someone grabbed your clone IP"
-					", No jobs created! (source container may have been created)");
+		if(uMode==0)
+			tContainer("<blink>Error:</blink> No jobs created. Clone IP gone!");
+		else if(uMode==1)
+			tNode("<blink>Error:</blink> No jobs created. Clone IP gone!");
+		else if(uMode==7)
+			printf("CommonCloneContainer() No jobs created. Clone IP gone!\n");
 		}
 		CopyContainerProps(uContainer,uNewVeid);
 		//Update NAME
@@ -6071,7 +6055,12 @@ unsigned CommonCloneContainer(
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
-		tContainer("<blink>Error:</blink> No jobs created!");
+		if(uMode==0)
+			tContainer("<blink>Error:</blink> No jobs created!");
+		else if(uMode==1)
+			tNode("<blink>Error:</blink> No jobs created!");
+		else if(uMode==7)
+			printf("CommonCloneContainer() No jobs created!\n");
 	}
 
 	return(uNewVeid);
