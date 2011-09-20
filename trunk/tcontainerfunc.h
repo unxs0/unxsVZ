@@ -371,7 +371,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 
 						InitContainerProps(&sContainer);
 						GetContainerProps(uCtContainer,&sContainer);
-						if( (sContainer.uStatus==uINITSETUP)
+						if( (sContainer.uStatus==uINITSETUP || sContainer.uStatus==uAWAITCLONE)
 							&& (sContainer.uOwner==guCompany || guCompany==1))
 						{
 							//Release IPs
@@ -397,7 +397,8 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 								htmlPlainTextError(mysql_error(&gMysql));
 							CancelContainerJob(sContainer.uDatacenter,sContainer.uNode,
 								uCtContainer,0);//0 is not specific cancel job attempt
-							//81=Awaiting clone
+							//81=Awaiting clone. TODO properties of clones may
+							//exist
 							sprintf(gcQuery,"DELETE FROM tContainer WHERE uStatus=81 AND uSource=%u"
 										,uCtContainer);
 							mysql_query(&gMysql,gcQuery);
@@ -4522,7 +4523,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 				" If active, containers may be stopped for several minutes if not setup for vzdump snapshot.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Template'>\n");
-			printf("<br><input title='Creates job(s) for deleting initial setup container(s).'"
+			printf("<br><input title='Deletes initial setup or awaiting clone container(s).'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Delete'>\n");
 			printf("<br><input title='Deletes any existing group association then adds selected group to selected containers'"
@@ -4644,19 +4645,19 @@ unsigned CancelContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 	unsigned uContainerJobsCanceled;
 	unsigned uContainerCloneJobsCanceled;
 
-	//Cancel any jobs for uContainer 1=Waiting 10=RemoteWaiting
+	//Cancel any jobs for uContainer 1=Waiting 10=RemoteWaiting, 14=Error
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE "
-			"uDatacenter=%u AND uNode=%u AND uContainer=%u AND (uJobStatus=1 OR uJobStatus=10)"
+			"uDatacenter=%u AND uNode=%u AND uContainer=%u AND (uJobStatus=1 OR uJobStatus=10 OR uJobStatus=14)"
 				,uDatacenter,uNode,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uContainerJobsCanceled=mysql_affected_rows(&gMysql);
 
-	//Also cancel any jobs for uContainer's clones 1=Waiting 10=RemoteWaiting
-	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE "
-			"uDatacenter=%u AND uContainer=(SELECT uContainer FROM tContainer WHERE uSource=%u) AND uJobStatus=1"
-				,uDatacenter,uContainer);
+	//Also cancel any jobs for uContainer's clones 1=Waiting 10=RemoteWaiting, 14=Error
+	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE"
+			" uDatacenter=%u AND uContainer=(SELECT uContainer FROM tContainer WHERE uSource=%u) AND"
+			" (uJobStatus=1 OR uJobStatus=10 OR uJobStatus=14)",uDatacenter,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -5710,12 +5711,12 @@ unsigned CommonCloneContainer(
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 
-		if(uMode==0)
-			tContainer("<blink>Error:</blink> No jobs created. Clone IP gone!");
-		else if(uMode==1)
-			tNode("<blink>Error:</blink> No jobs created. Clone IP gone!");
-		else if(uMode==7)
-			printf("CommonCloneContainer() No jobs created. Clone IP gone!\n");
+			if(uMode==0)
+				tContainer("<blink>Error:</blink> No jobs created. Clone IP gone!");
+			else if(uMode==1)
+				tNode("<blink>Error:</blink> No jobs created. Clone IP gone!");
+			else if(uMode==7)
+				printf("CommonCloneContainer() No jobs created. Clone IP gone!\n");
 		}
 		CopyContainerProps(uContainer,uNewVeid);
 		//Update NAME
