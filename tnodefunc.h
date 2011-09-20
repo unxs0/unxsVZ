@@ -1207,7 +1207,7 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 						uNameserver,
 						uSearchdomain,
 						uDatacenter,
-						uDatacenter,
+						uTargetDatacenter,
 						uOwner,
 						field[0],
 						uNode,
@@ -1220,10 +1220,18 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 						uTargetNode,
 						uSyncPeriod,
 						guLoginClient,
-						uCloneStop,2);//uMode 2 tNode errors
-		if(!uNewVeid) return(1);//unexpected error.
+						uCloneStop,1);//uMode 1 tNode errors
+		if(!uNewVeid)
+		{
+			mysql_free_result(res);
+			return(1);//unexpected error.
+		}
+		SetContainerStatus(uContainer,uStatus);//undo CommonCloneContainer() set
 		uGroup=uGetGroup(0,uContainer);
 		if(uGroup) ChangeGroup(uNewVeid,uGroup);
+
+		//debug only
+		tNode(cWizHostname);
 	}
 	mysql_free_result(res);
 
