@@ -11,11 +11,16 @@
 #	For example an Asterix FreePBX container can be analyzed
 #	to see what actually changes over a long period and then
 #	have this script modified just for the service important items.
+#
+#	rsync and ssh depend on correct:
+#	/etc/ssh/ssh_config 
+#	and this must be consistent for all datacenters and nodes.
 
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
-#Note that you must change the rsync line also. Since we have not had time to fix this.
-cUseLVM="Yes";
+#heavily loaded servers may experience too much io wait with LVM
+#cUseLVM="Yes";
+cUseLVM="No";
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	echo "usage: $0 <source VEID> <target VEID> <target node host>";
