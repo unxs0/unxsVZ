@@ -1231,7 +1231,7 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 		if(uGroup) ChangeGroup(uNewVeid,uGroup);
 
 		//debug only
-		tNode(cWizHostname);
+		//tNode(cWizHostname);
 	}
 	mysql_free_result(res);
 
