@@ -268,6 +268,10 @@ unsigned CommonCloneContainer(
 		unsigned uLoginClient,
 		unsigned uCloneStop,
 		unsigned uMode);
+void CopyContainerProps(unsigned uSource, unsigned uTarget);
+unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
+				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,
+				unsigned uOwner,unsigned uCreatedBy,unsigned uCloneStop);
 
 //tProperty
 int tPropertyCommands(pentry entries[], int x);
@@ -718,4 +722,5 @@ void GlossaryGetHook(entry gentries[],int x);
 
 
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
-
+void ChangeGroup(unsigned uContainer, unsigned uGroup);
+unsigned uGetGroup(unsigned uNode, unsigned uContainer);
