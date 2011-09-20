@@ -14,6 +14,11 @@
 #NOTES
 #	LVM is required with enough free space for snapshot.
 #	Base veid should be of a stopped container or equiv.
+#
+#	remote ssh rsync requires that:
+#	/etc/ssh/ssh_config
+#	be configured correctly.
+#
 
 
 #Settings
