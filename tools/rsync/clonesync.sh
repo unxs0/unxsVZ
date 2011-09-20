@@ -144,6 +144,7 @@ if [ "$cUseLVM" == "Yes" ];then
 			/bin/umount /mntsnapvol;
 			if [ $? != 0 ]; then
 				fLog "umount failed 3 times giving up";
+				rmdir $cContainerLock;
 				exit 7;
 			fi
 		fi
@@ -152,6 +153,7 @@ if [ "$cUseLVM" == "Yes" ];then
 	/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol > /dev/null 2>&1;
 	if [ $? != 0 ]; then
 		fLog "lvremove failed";
+		rmdir $cContainerLock;
 		exit 8;
 	fi
 	rmdir $cLVMLock;
