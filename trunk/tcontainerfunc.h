@@ -4656,12 +4656,20 @@ unsigned CancelContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 
 	//Also cancel any jobs for uContainer's clones 1=Waiting 10=RemoteWaiting, 14=Error
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE"
-			" uDatacenter=%u AND uContainer=(SELECT uContainer FROM tContainer WHERE uSource=%u) AND"
-			" (uJobStatus=1 OR uJobStatus=10 OR uJobStatus=14)",uDatacenter,uContainer);
+			" uContainer=(SELECT uContainer FROM tContainer WHERE uSource=%u) AND"
+			" (uJobStatus=1 OR uJobStatus=10 OR uJobStatus=14)",uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	uContainerCloneJobsCanceled=mysql_affected_rows(&gMysql);
+
+	//Also cancel master container clone jobs
+	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE"
+			" uContainer=(SELECT uSource FROM tContainer WHERE uContainer=%u) AND"
+			" (uJobStatus=1 OR uJobStatus=10 OR uJobStatus=14) AND cJobName='CloneContainer'",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
 
 	//This convoluted logic is needed for specifically attempting to cancel container jobs uCancelMode=1
 	//versus general job queue clean up attempts.
