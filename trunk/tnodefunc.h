@@ -29,13 +29,13 @@ void htmlGroups(unsigned uNode, unsigned uContainer);
 unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uSource,
 			unsigned uSourceNode, unsigned uSourceDatacenter, unsigned uIPv4, unsigned uStatus,
 			char *cLabel, char *cHostname,unsigned uOwner,unsigned uDebug);
+unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown,
+			unsigned uSyncPeriod,unsigned uCloneStop);
+
 //external
 //tcontainerfunc.h
 void htmlHealth(unsigned uContainer,unsigned uType);
 void htmlNodeHealth(unsigned uNode);
-unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
-				unsigned uTargetNode, unsigned uNewVeid);
-unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown);
 char *cRatioColor(float *fRatio);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,unsigned uOwner,unsigned uLoginClient,unsigned uDebug);
@@ -292,8 +292,8 @@ void ExttNodeCommands(pentry entries[], int x)
 					tNode("<blink>Error</blink>: This record was modified. Reload it.");
 
 				guMode=7001;
-				if(uTargetDatacenter==uDatacenter)
-					tContainer("<blink>Error:</blink> Can't remote clone to same datacenter");
+				if(!uTargetDatacenter)
+					tNode("<blink>Error:</blink> You must select a datacenter");
 				
 				guMode=7002;
 				tNode("Select node, uIPv4 and more");
@@ -303,7 +303,7 @@ void ExttNodeCommands(pentry entries[], int x)
 				tNode("<blink>Error</blink>: Denied by permissions settings");
 			}
 		}
-                else if(!strcmp(gcCommand,"Confirm Clone Node"))
+                else if(!strcmp(gcCommand,"Confirm Node Clone"))
                 {
                         ProcesstNodeVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
@@ -319,7 +319,7 @@ void ExttNodeCommands(pentry entries[], int x)
 					tNode("<blink>Error</blink>: This record was modified. Reload it.");
 
                         	guMode=7002;
-				tNode("Function not available. Try again later");
+				//tNode("Function not available. Try again later");
 
 				if(!uWizIPv4)
 					tNode("<blink>Error</blink>: You must select a start IP!");
@@ -333,8 +333,6 @@ void ExttNodeCommands(pentry entries[], int x)
 							" missing it's cIPv4 property!");
 				if(uCloneStop>COLD_CLONE || uCloneStop<HOT_CLONE)
 					tNode("<blink>Error:</blink> Unexpected initial state");
-				if(uTargetDatacenter==uDatacenter)
-					tNode("<blink>Error:</blink> Can't remote clone to same datacenter");
 				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
 				if(uTargetDatacenter!=uIPv4Datacenter)
 					tNode("<blink>Error:</blink> The specified target uIPv4 does not "
@@ -348,25 +346,16 @@ void ExttNodeCommands(pentry entries[], int x)
                         	guMode=0;
 
 				
-				uRetVal=CloneNode(uNode,uTargetNode,uWizIPv4,cuWizIPv4PullDown);
-				if(uRetVal==1)
-					tNode("<blink>Error</blink>: You did not select a valid start IP"
-						" no containers for cloning created!");
-				else if(uRetVal==2)
-					tNode("<blink>Error</blink>: No clone jobs created."
-						" Already cloned or target node does not allow the containers to be cloned");
-				else if(uRetVal==3)
-					tNode("<blink>Error</blink>: You did not select a valid start IP"
-						" only some containers for cloning created!");
-				else if(uRetVal)
-					tNode("<blink>Error</blink>: Unexpected CloneNode() error!");
+				uRetVal=CloneNode(uNode,uTargetNode,uWizIPv4,cuWizIPv4PullDown,uSyncPeriod,uCloneStop);
+				if(uRetVal)
+					tNode("<blink>Error</blink>: Unexpected CloneNode() error! Check tJob");
 				else if(!uRetVal)
-					tNode("All clone node container jobs created ok");
+					tNode("Clone node container jobs created");
 					
 
 			}
 		}
-                else if(!strcmp(gcCommand,"Clone Failover Wizard"))
+                else if(!strcmp(gcCommand,"Failover Node Wizard"))
                 {
                         ProcesstNodeVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
@@ -385,7 +374,7 @@ void ExttNodeCommands(pentry entries[], int x)
 				tNode("<blink>Error</blink>: Denied by permissions settings");
 			}
 		}
-                else if(!strcmp(gcCommand,"Confirm Failover Node"))
+                else if(!strcmp(gcCommand,"Confirm Node Failover"))
                 {
                         ProcesstNodeVars(entries,x);
 			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
@@ -414,7 +403,7 @@ void ExttNodeButtons(void)
         {
                 case 7001:
                         printf("<p><u>Node Clone Wizard (Step 1/2)</u><br>");
-			printf("Here you will select the remote datacenter. If it is oversubscribed or not"
+			printf("Here you will select the datacenter. If it is oversubscribed or not"
 				" configured for use, or otherwise unavailable you will have to select another.");
 			printf("<p>Select remote datacenter<br>");
 			tTablePullDown("tDatacenter;cuTargetDatacenterPullDown","cLabel","cLabel",uTargetDatacenter,1);
@@ -442,7 +431,7 @@ void ExttNodeButtons(void)
 			printf("<p>Select target node<br>");
 			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
 				cuTargetNodePullDown,0,uTargetDatacenter);//0 does not use tProperty, uses uDatacenter
-			printf("<p>Select new IPv4<br>");
+			printf("<p>Select start uIPv4<br>");
 			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
 				uTargetDatacenter,uOwner);
 
@@ -468,22 +457,22 @@ void ExttNodeButtons(void)
 			printf("<p>Optional primary group change<br>");
 			printf("<p><input title='Create a clone job for the current container'"
 					" type=submit class=largeButton"
-					" name=gcCommand value='Confirm Clone Node'>\n");
+					" name=gcCommand value='Confirm Node Clone'>\n");
                 break;
 
                 case 8001:
-                        printf("<p><u>Failover Wizard</u><br>");
+                        printf("<p><u>Failover Node Wizard</u><br>");
 			printf("The current node should be down (or offline.)"
 				" Other nodes should have \"-clone\" (uSource!=0) containers that have been kept updated."
 				" The candidate containers are presented below for your approval.<p>");
 			printf("<p><input title='Create failover jobs for all the current node`s master containers"
 					" and for other node`s corresponding clone container`s'"
 					" type=submit class=lwarnButton"
-					" name=gcCommand value='Confirm Failover Node'>\n");
+					" name=gcCommand value='Confirm Node Failover'>\n");
                 break;
 
                 case 8002:
-                        printf("<p><u>Failover Wizard</u><br>");
+                        printf("<p><u>Failover Node Wizard</u><br>");
 			printf("Failover jobs have been attempted to be created see panel below for results."
 				" See <a href=unxsVZ.cgi?gcFunction=tJob>tJob</a> for details.<p>");
                 break;
@@ -542,7 +531,7 @@ void ExttNodeButtons(void)
 					" name=gcCommand value='Clone Node Wizard'><br>");
 				printf("<input type=submit class=largeButton title='Failover to this node`s clone containers"
 					" the master containers`s of down node'"
-					" name=gcCommand value='Clone Failover Wizard'><br>");
+					" name=gcCommand value='Failover Node Wizard'><br>");
 			}
 	}
 	CloseFieldSet();
@@ -1163,3 +1152,81 @@ unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned u
 	return(uRetVal);
 
 }//unsigned FailoverCloneContainer()
+
+
+//Can return 0,1,2,3 or 4
+unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown,
+			unsigned uSyncPeriod,unsigned uCloneStop)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uContainer=0;
+	unsigned uDatacenter=0;
+	unsigned uOSTemplate=0;
+	unsigned uConfig=0;
+	unsigned uNameserver=0;
+	unsigned uSearchdomain=0;
+	unsigned uNewVeid=0;
+	unsigned uStatus=0;
+	unsigned uOwner=0;
+	unsigned uVeth=0;
+	unsigned uGroup=0;
+	char cWizLabel[32]={""};
+	char cWizHostname[100]={""};
+	
+	sprintf(gcQuery,"SELECT cLabel,cHostname,uOSTemplate,uConfig,uNameserver,uSearchdomain,uDatacenter"
+			",uContainer,uStatus,uOwner,uVeth FROM tContainer WHERE uNode=%u AND"
+			" (uStatus=%u OR uStatus=%u) AND uSource=0",uSourceNode,uSTOPPED,uACTIVE);
+	mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[2],"%u",&uOSTemplate);
+		sscanf(field[3],"%u",&uConfig);
+		sscanf(field[4],"%u",&uNameserver);
+		sscanf(field[5],"%u",&uSearchdomain);
+		sscanf(field[6],"%u",&uDatacenter);
+		sscanf(field[7],"%u",&uContainer);
+		sscanf(field[8],"%u",&uStatus);
+		sscanf(field[9],"%u",&uOwner);
+		sscanf(field[10],"%u",&uVeth);
+
+		if(!uDatacenter || !uContainer || !uOSTemplate || !uConfig || ! uNameserver ||
+							!uSearchdomain || !field[0][0] || !field[1][0])
+		{
+			mysql_free_result(res);
+			return(1);//unexpected error.
+		}
+
+		uNewVeid=CommonCloneContainer(
+						uContainer,
+						uOSTemplate,
+						uConfig,
+						uNameserver,
+						uSearchdomain,
+						uDatacenter,
+						uDatacenter,
+						uOwner,
+						field[0],
+						uNode,
+						uStatus,
+						field[1],
+						"",//No cClassC
+						uWizIPv4,
+						cWizLabel,
+						cWizHostname,
+						uTargetNode,
+						uSyncPeriod,
+						guLoginClient,
+						uCloneStop,2);//uMode 2 tNode errors
+		if(!uNewVeid) return(1);//unexpected error.
+		uGroup=uGetGroup(0,uContainer);
+		if(uGroup) ChangeGroup(uNewVeid,uGroup);
+	}
+	mysql_free_result(res);
+
+	return(0);
+
+}//unsigned CloneNode()
