@@ -889,7 +889,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(!uDatacenter)
 					tContainer("<blink>Error:</blink> Must select a datacenter.");
 				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
-				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
+				if(cNCMDatacenter[0] && !strstr(cNCMDatacenter,"Active"))
 					tContainer("<blink>Error:</blink> Selected datacenter is full or not active. Select another.");
 				if(!uForClient)
 					tContainer("<blink>Error:</blink> Must select an organization"
@@ -918,11 +918,11 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Must select a node.");
 
 				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
-				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
+				if(cNCMDatacenter[0] && !strstr(cNCMDatacenter,"Active"))
 					tContainer("<blink>Error:</blink> Selected datacenter is full or not active. Select another.");
 
 				GetNodeProp(uNode,"NewContainerMode",cNCMNode);
-				if(cNCMNode[0] && strcmp(cNCMNode,"Active"))
+				if(cNCMNode[0] && !strstr(cNCMNode,"Active"))
 					tContainer("<blink>Error:</blink> Selected node is not configured for active containers."
 							"Select another.");
 
@@ -965,11 +965,11 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Unexpected uNode==0!");
 
 				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
-				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
+				if(cNCMDatacenter[0] && !strstr(cNCMDatacenter,"Active"))
 					tContainer("<blink>Error:</blink> Selected datacenter is full or not active. Select another.");
 
 				GetNodeProp(uNode,"NewContainerMode",cNCMNode);
-				if(cNCMNode[0] && strcmp(cNCMNode,"Active"))
+				if(cNCMNode[0] && !strstr(cNCMNode,"Active"))
 					tContainer("<blink>Error:</blink> Selected node is not configured for active containers."
 							"Select another.");
 
@@ -1082,7 +1082,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						tContainer("<blink>Error:</blink> Can't clone to same node");
 
 					GetNodeProp(uTargetNode,"NewContainerMode",cNCMNode);
-					if(cNCMNode[0] && strcmp(cNCMNode,"Clone"))
+					if(cNCMNode[0] && !strstr(cNCMNode,"Clone"))
 					tContainer("<blink>Error:</blink> Selected clone target node is not configured for clone containers."
 							"Select another.");
 
@@ -1553,11 +1553,11 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Must select a node.");
 
 				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
-				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
+				if(cNCMDatacenter[0] && !strstr(cNCMDatacenter,"Active"))
 					tContainer("<blink>Error:</blink> Selected datacenter is full or not active. Select another.");
 
 				GetNodeProp(uNode,"NewContainerMode",cNCMNode);
-				if(cNCMNode[0] && strcmp(cNCMNode,"Active"))
+				if(cNCMNode[0] && !strstr(cNCMNode,"Active"))
 					tContainer("<blink>Error:</blink> Selected node is not configured for active containers."
 							"Select another.");
 
@@ -1606,11 +1606,11 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Unexpected uNode==0!");
 
 				GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
-				if(cNCMDatacenter[0] && strcmp(cNCMDatacenter,"Active"))
+				if(cNCMDatacenter[0] && !strstr(cNCMDatacenter,"Active"))
 					tContainer("<blink>Error:</blink> Selected datacenter is full or not active. Select another.");
 
 				GetNodeProp(uNode,"NewContainerMode",cNCMNode);
-				if(cNCMNode[0] && strcmp(cNCMNode,"Active"))
+				if(cNCMNode[0] && !strstr(cNCMNode,"Active"))
 					tContainer("<blink>Error:</blink> Selected node is not configured for active containers."
 							"Select another.");
 
@@ -1697,7 +1697,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						tContainer("<blink>Error:</blink> Can't clone to same node");
 
 					GetNodeProp(uTargetNode,"NewContainerMode",cNCMNode);
-					if(cNCMNode[0] && strcmp(cNCMNode,"Clone"))
+					if(cNCMNode[0] && !strstr(cNCMNode,"Clone"))
 					tContainer("<blink>Error:</blink> Selected node is not configured for clone containers."
 							"Select another.");
 

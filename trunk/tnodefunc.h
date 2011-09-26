@@ -30,7 +30,7 @@ unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned u
 			unsigned uSourceNode, unsigned uSourceDatacenter, unsigned uIPv4, unsigned uStatus,
 			char *cLabel, char *cHostname,unsigned uOwner,unsigned uDebug);
 unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown,
-			unsigned uSyncPeriod,unsigned uCloneStop);
+			unsigned uSyncPeriod,unsigned uCloneStop,unsigned uTargetDatacenter);
 
 //external
 //tcontainerfunc.h
@@ -346,8 +346,13 @@ void ExttNodeCommands(pentry entries[], int x)
                         	guMode=0;
 
 				
-				uRetVal=CloneNode(uNode,uTargetNode,uWizIPv4,cuWizIPv4PullDown,uSyncPeriod,uCloneStop);
-				if(uRetVal)
+				uRetVal=CloneNode(uNode,uTargetNode,uWizIPv4,cuWizIPv4PullDown,uSyncPeriod,uCloneStop,
+							uTargetDatacenter);
+				if(uRetVal==5)
+					tNode("<blink>Operation not completed</blink>: Not enough IPs are available");
+				else if(uRetVal==2)
+					tNode("<blink>Error</blink>: Unexpected CommonCloneContainer() error! Check tJob");
+				else if(uRetVal)
 					tNode("<blink>Error</blink>: Unexpected CloneNode() error! Check tJob");
 				else if(!uRetVal)
 					tNode("Clone node container jobs created");
@@ -405,7 +410,7 @@ void ExttNodeButtons(void)
                         printf("<p><u>Node Clone Wizard (Step 1/2)</u><br>");
 			printf("Here you will select the datacenter. If it is oversubscribed or not"
 				" configured for use, or otherwise unavailable you will have to select another.");
-			printf("<p>Select remote datacenter<br>");
+			printf("<p>Select datacenter<br>");
 			tTablePullDown("tDatacenter;cuTargetDatacenterPullDown","cLabel","cLabel",uTargetDatacenter,1);
 			printf("<p><input title='Step one of remote clone wizard'"
 					" type=submit class=largeButton"
@@ -1156,7 +1161,7 @@ unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned u
 
 //Can return 0,1,2,3 or 4
 unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown,
-			unsigned uSyncPeriod,unsigned uCloneStop)
+			unsigned uSyncPeriod,unsigned uCloneStop,unsigned uTargetDatacenter)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -1173,7 +1178,70 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 	unsigned uGroup=0;
 	char cWizLabel[32]={""};
 	char cWizHostname[100]={""};
-	
+
+
+	//First lets make sure we have enough IPs available of same class C on target datacenter
+	//Get container IP cIPv4ClassC
+	char cIPv4ClassC[32]={""};
+	int i;
+	unsigned uIPsAvailable=0;
+	unsigned uContainers=0;
+	sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
+					" AND uDatacenter=%u",uWizIPv4,uTargetDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cIPv4ClassC,"%.31s",field[0]);
+	else
+		return(1);
+	mysql_free_result(res);
+	for(i=strlen(cIPv4ClassC);i>0;i--)
+	{
+		if(cIPv4ClassC[i]=='.')
+		{
+			cIPv4ClassC[i]=0;
+			break;
+		}
+	}
+	//Count number of IPs available in same class C
+	if(guCompany==1)
+		sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE cLabel LIKE '%s.%%' AND uAvailable=1"
+					" AND uDatacenter=%u",cIPv4ClassC,uTargetDatacenter);
+	else
+		sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE cLabel LIKE '%s.%%' AND uAvailable=1"
+					" AND uOwner=%u AND uDatacenter=%u",cIPv4ClassC,guCompany,uTargetDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uIPsAvailable);
+	else
+		return(1);
+	mysql_free_result(res);
+	//Count number of containers to clone
+	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND"
+			" (uStatus=%u OR uStatus=%u) AND uSource=0",uSourceNode,uSTOPPED,uACTIVE);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uContainers);
+	else
+		return(1);
+	mysql_free_result(res);
+	//Test
+	if(uIPsAvailable<uContainers)
+	{
+		char cMsg[100];
+		sprintf(cMsg,"<blink>Not enough IPs</blink>: uIPsAvailable(%u)&lt;uContainers(%u) for cIPv4ClassC=%s, uOwner=%u",
+			uIPsAvailable,uContainers,cIPv4ClassC,guCompany);
+		tNode(cMsg);
+	}
+
 	sprintf(gcQuery,"SELECT cLabel,cHostname,uOSTemplate,uConfig,uNameserver,uSearchdomain,uDatacenter"
 			",uContainer,uStatus,uOwner,uVeth FROM tContainer WHERE uNode=%u AND"
 			" (uStatus=%u OR uStatus=%u) AND uSource=0",uSourceNode,uSTOPPED,uACTIVE);
@@ -1224,7 +1292,7 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 		if(!uNewVeid)
 		{
 			mysql_free_result(res);
-			return(1);//unexpected error.
+			return(2);//unexpected error from CommonCloneContainer)(.
 		}
 		SetContainerStatus(uContainer,uStatus);//undo CommonCloneContainer() set
 		uGroup=uGetGroup(0,uContainer);
