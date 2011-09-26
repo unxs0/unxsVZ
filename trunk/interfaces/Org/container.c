@@ -1917,7 +1917,7 @@ char *NameToLower(char *cInput)
 	for(i=0;cInput[i];i++)
 	{
 	
-		if(!isalnum(cInput[i]) ) break;
+		if(!isalnum(cInput[i]) && cInput[i]!='-' ) break;
 		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
 	}
 	cInput[i]=0;
