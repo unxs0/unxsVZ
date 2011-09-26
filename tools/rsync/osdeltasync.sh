@@ -12,18 +12,25 @@
 #	Else we rsync based on list of files.
 #	Install files on target veid
 #NOTES
-#	LVM is required with enough free space for snapshot.
+#	LVM if used requires that enough free space for snapshot
+#	be available.
 #	Base veid should be of a stopped container or equiv.
 #
 #	remote ssh rsync requires that:
 #	/etc/ssh/ssh_config
 #	be configured correctly.
 #
+#	vzlist version must be fairly new to support ostemplate
+#
 
 
 #Settings
 cSSHPort="22";
 cDir="/vz/private";
+#heavily loaded servers may experience too much io wait with LVM
+#cUseLVM="Yes";
+cUseLVM="No";
+
 
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
@@ -69,14 +76,16 @@ if [ ! -d "$cDir/$cOSTemplateVEID" ];then
 	exit 1;
 fi
 
-if [ ! -x "/usr/sbin/lvcreate" ];then
-	fLog "lvcreate not found";
-	exit 1;
-fi
+if [ "$cUseLVM" == "Yes" ];then
+	if [ ! -x "/usr/sbin/lvcreate" ];then
+		fLog "lvcreate not found";
+		exit 1;
+	fi
 
-if [ ! -x "/usr/sbin/lvremove" ];then
-	fLog "lvcreate not found";
-	exit 1;
+	if [ ! -x "/usr/sbin/lvremove" ];then
+		fLog "lvcreate not found";
+		exit 1;
+	fi
 fi
 
 /usr/bin/ssh -c arcfour -p $cSSHPort $3 "unxz --help" > /dev/null 2>&1;
@@ -85,7 +94,11 @@ if [ $? != 0 ];then
 	exit 1;
 fi
 
-cLockfile="/tmp/unxsvz.lvm.lock";
+if [ "$cUseLVM" == "Yes" ];then
+	cLockfile="/tmp/unxsvz.lvm.lock";
+else
+	cLockfile="/tmp/osdeltasync.sh.lock";
+fi
 if [ -d $cLockfile ]; then
 	fLog "waiting for lock release $cLockfile";
 	exit 2;
@@ -108,54 +121,60 @@ fErrorExit ()
 	exit 3;
 }
 
-#create a stopped source veid dir
-cVZVolName=`/usr/sbin/lvs --noheadings -o lv_name | head -n 1 | awk '{print $1}'`;
-cVZMount=`/bin/mount | /bin/grep -w vz`;
-cVZVolGroup=`/usr/sbin/lvs --noheadings -o vg_name | head -n 1 | awk '{print $1}'`;
-cTest=`echo ${cVZMount} | /bin/grep ${cVZVolName}`;
-if [ "$cTest" != "$cVZMount" ];then
-	fLog "Could not determine correct LVM vol name to use";
-	rmdir $cLockfile;
-	exit 4;
-fi
-
 fUnLVM ()
 {
-	cd /;
-	/bin/umount /mntsnapvol;
-	if [ $? != 0 ]; then
-		fLog "umount failed";
-		exit 5;
-	fi
-	/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol > /dev/null;
-	if [ $? != 0 ]; then
-		fLog "lvremove failed";
-		exit 6;
+	if [ "$cUseLVM" == "Yes" ];then
+		cd /;
+		/bin/umount /mntsnapvol;
+		if [ $? != 0 ]; then
+			fLog "umount failed";
+			exit 5;
+		fi
+		/usr/sbin/lvremove -f /dev/$cVZVolGroup/snapvol > /dev/null;
+		if [ $? != 0 ]; then
+			fLog "lvremove failed";
+			exit 6;
+		fi
 	fi
 }
 
-##debug only
-#echo "$cTest /dev/$cVZVolGroup/$cVZVolName";
-#rmdir $cLockfile;
-#exit 0;
-/usr/sbin/lvcreate --size 1G --snapshot --name snapvol /dev/$cVZVolGroup/$cVZVolName > /dev/null;
-if [ $? != 0 ];then
-	fLog "lvcreate snapvol of vz failed";
-	rmdir $cLockfile;
-	exit 7;
-fi
+cBaseDir="vz";
+if [ "$cUseLVM" == "Yes" ];then
+	#create a stopped source veid dir
+	cVZVolName=`/usr/sbin/lvs --noheadings -o lv_name | head -n 1 | awk '{print $1}'`;
+	cVZMount=`/bin/mount | /bin/grep -w vz`;
+	cVZVolGroup=`/usr/sbin/lvs --noheadings -o vg_name | head -n 1 | awk '{print $1}'`;
+	cTest=`echo ${cVZMount} | /bin/grep ${cVZVolName}`;
+	if [ "$cTest" != "$cVZMount" ];then
+		fLog "Could not determine correct LVM vol name to use";
+		rmdir $cLockfile;
+		exit 4;
+	fi
 
-/bin/mount /dev/$cVZVolGroup/snapvol /mntsnapvol;
-if [ $? != 0 ];then
-	fLog "mount failed";
-	rmdir $cLockfile;
-	exit 8;
-fi
+	##debug only
+	#echo "$cTest /dev/$cVZVolGroup/$cVZVolName";
+	#rmdir $cLockfile;
+	#exit 0;
 
-cLockfile="/tmp/unxsvz.lvm.lock";
+	/usr/sbin/lvcreate --size 1G --snapshot --name snapvol /dev/$cVZVolGroup/$cVZVolName > /dev/null;
+	if [ $? != 0 ];then
+		fLog "lvcreate snapvol of vz failed";
+		rmdir $cLockfile;
+		exit 7;
+	fi
+
+	/bin/mount /dev/$cVZVolGroup/snapvol /mntsnapvol;
+	if [ $? != 0 ];then
+		fLog "mount failed";
+		rmdir $cLockfile;
+		exit 8;
+	fi
+
+	cBaseDir="mntsnapvol";
+fi
 
 cat /dev/null > /tmp/osdeltasync.list;
-cd /mntsnapvol;
+cd /$cBaseDir;
 #/usr/bin/rsync --dry-run -avxlH \
 /usr/bin/rsync --dry-run -avx \
 			--exclude "/proc/" --exclude "/root/.ccache/" \
@@ -175,10 +194,12 @@ fi
 
 cat /dev/null > /tmp/osdeltasync.files;
 while read cLine; do
-	cFile=`echo ${cLine} | /bin/grep -v "/$" | /bin/grep -v "^building" | /bin/grep -v "^sent" | /bin/grep -v "^total" `;
+	cFile=`echo ${cLine} | /bin/grep -v "/$" | /bin/grep -v "^building" | /bin/grep -v "^sent" |\
+								/bin/grep -v "^total" | /bin/grep -v "^sending"`;
 	if [ "$cFile" != "" ];then
-		#remove symlink parts
-		echo $cFile | /bin/sed -e "s/ ->.*//g" | sed -e "s/.*/\"&\"/g" >> /tmp/osdeltasync.files;
+		#remove symlink parts and wrap in quotes
+		#echo $cFile | /bin/sed -e "s/ ->.*//g" | sed -e "s/.*/\"&\"/g" >> /tmp/osdeltasync.files;
+		echo $cFile | /bin/sed -e "s/ ->.*//g" >> /tmp/osdeltasync.files;
 	fi
 done < /tmp/osdeltasync.list;
 if [ ! -s /tmp/osdeltasync.files ];then
@@ -188,14 +209,15 @@ if [ ! -s /tmp/osdeltasync.files ];then
 fi
 
 #debug only
-#fUnLVM;
-#fErrorExit "testing part one";
+fUnLVM;
+fErrorExit "testing part one";
 
 #if we already created remote osdeltasync dir, then we rsync
 #else we transfer over the whole thing
 /usr/bin/ssh -c arcfour -p $cSSHPort $3 "ls /vz/private/$1/osdeltasync.flag" > /dev/null 2>&1;
 if [ $? == 0 ];then
 	fUnLVM;
+	fLog "rsync and install";
 	#rsync only the files directly and install
 	#must configure /etc/ssh/ssh_config correctly if using non standard ssh port
 	/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish' -avxlH\
@@ -216,10 +238,10 @@ if [ $? == 0 ];then
 	fi
 else
 	fLog "scp tar.xz and install";
-	cd /mntsnapvol/private/$1;
+	cd /$cBaseDir/private/$1;
 	if [ $? != 0 ];then
 		fUnLVM;
-		fErrorExit "cd private/$1 failed";
+		fErrorExit "cd /$cBaseDir/private/$1 failed";
 	fi
 	cat /tmp/osdeltasync.files | /usr/bin/xargs /bin/tar cf /tmp/osdeltasync.tar;
 	if [ $? != 0 ]; then
