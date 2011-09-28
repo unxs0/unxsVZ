@@ -70,6 +70,8 @@ static char gcIPv4[16]={""};
 static char cNetmask[64]={""};
 static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
+static unsigned uWizContainer=0;
+static char cuWizContainerPullDown[32]={""};
 static unsigned uAllPortsOpen=0;
 static unsigned uCloneStop=WARM_CLONE;
 static unsigned uSyncPeriod=0;
@@ -845,6 +847,11 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cForClientPullDown,"%.255s",entries[i].val);
 			uForClient=ReadPullDown("tClient","cLabel",cForClientPullDown);
+		}
+		else if(!strcmp(entries[i].name,"cuWizContainerPullDown"))
+		{
+			sprintf(cuWizContainerPullDown,"%.31s",entries[i].val);
+			uWizContainer=ReadPullDown("tContainer","cLabel",cuWizContainerPullDown);
 		}
 	}
 
@@ -3160,62 +3167,167 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
                         	guMode=6001;
-				if(!uWizIPv4)
-					tContainer("<blink>Error:</blink> You must select an IP!");
-				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
-				if(uDatacenter!=uIPv4Datacenter)
-					tContainer("<blink>Error:</blink> The specified target uIPv4 does not "
+
+				if(uWizIPv4 && uWizContainer)
+					tContainer("<blink>Error:</blink> You must select either a swap or a new IP not both!");
+				if(!uWizIPv4 && !uWizContainer)
+					tContainer("<blink>Error:</blink> You must select an IP or a container to swap with!");
+				if(uWizIPv4)
+				{
+					sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
+					if(uDatacenter!=uIPv4Datacenter)
+						tContainer("<blink>Error:</blink> The specified target uIPv4 does not "
 							"belong to the specified uDatacenter.");
-				//DNS sanity check
-				if(uCreateDNSJob)
-				{
-					cunxsBindARecordJobZone[0]=0;
-					GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
-					if(!cunxsBindARecordJobZone[0])
-						tContainer("<blink>Error:</blink> Create job for unxsBind,"
-								" but no cunxsBindARecordJobZone");
-				
-					uHostnameLen=strlen(cHostname);
-					if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
-						tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
 				}
-                        	guMode=0;
-
-				//Fatal error section
-				sscanf(ForeignKey("tContainer","uIPv4",uContainer),"%u",&uOldIPv4);
-				if(!uOldIPv4)
-					htmlPlainTextError("Unexpected !uIPv4 and !uOldIPv4");
-				sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uOldIPv4));
-				if(!cIPOld[0])
-					htmlPlainTextError("Unexpected !cIPOldv4");
-
-				//New uIPv4
-				sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
-						" WHERE uContainer=%u",uWizIPv4,uContainer);
-        			mysql_query(&gMysql,gcQuery);
-			        if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-						" WHERE uIP=%u",uWizIPv4);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-				//Optional change group.
-				if(uGroup)
-					ChangeGroup(uContainer,uGroup);
-				uIPv4=uWizIPv4;
-				if(IPContainerJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient,cIPOld))
+				else if(uWizContainer)
 				{
-					uStatus=uAWAITIP;
-					SetContainerStatus(uContainer,71);
-					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+					sscanf(ForeignKey("tContainer","uDatacenter",uWizContainer),"%u",&uIPv4Datacenter);
+					if(uDatacenter!=uIPv4Datacenter)
+						tContainer("<blink>Error:</blink> The specified swap container does not "
+							"belong to the same datacenter.");
+					//we reuse uWizIPv4 for swap method
+					uIPv4Datacenter=0;
+					sscanf(ForeignKey("tContainer","uIPv4",uWizContainer),"%u",&uWizIPv4);
+					sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
+					if(uDatacenter!=uIPv4Datacenter)
+						tContainer("<blink>Error:</blink> The specified target uIPv4 does not "
+							"belong to the specified uDatacenter.");
+				}
+
+
+				if(uWizIPv4)
+				{
+					//Basic direct IP change
+					//DNS sanity check
 					if(uCreateDNSJob)
-						CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter,guLoginClient);
-					tContainer("IPContainerJob() Done");
-				}
+					{
+						cunxsBindARecordJobZone[0]=0;
+						GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+						if(!cunxsBindARecordJobZone[0])
+							tContainer("<blink>Error:</blink> Create job for unxsBind,"
+									" but no cunxsBindARecordJobZone");
+					
+						uHostnameLen=strlen(cHostname);
+						if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),
+							cunxsBindARecordJobZone))
+							tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+					}
+					guMode=0;
+					//Fatal error section
+					sscanf(ForeignKey("tContainer","uIPv4",uContainer),"%u",&uOldIPv4);
+					if(!uOldIPv4)
+						htmlPlainTextError("Unexpected !uIPv4 and !uOldIPv4");
+					sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uOldIPv4));
+					if(!cIPOld[0])
+						htmlPlainTextError("Unexpected !cIPOld");
+	
+					//New uIPv4
+					sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
+							" WHERE uContainer=%u",uWizIPv4,uContainer);
+					mysql_query(&gMysql,gcQuery);
+				        if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+							" WHERE uIP=%u",uWizIPv4);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					//Optional change group.
+					if(uGroup)
+						ChangeGroup(uContainer,uGroup);
+					uIPv4=uWizIPv4;
+					if(IPContainerJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient,cIPOld))
+					{
+						uStatus=uAWAITIP;
+						SetContainerStatus(uContainer,71);
+						sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+						if(uCreateDNSJob)
+							CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter,guLoginClient);
+						tContainer("IPContainerJob() Done");
+					}
+					else
+					{
+						tContainer("<blink>Error:</blink> No jobs created!");
+					}
+				}//if uWizIPv4
 				else
 				{
-					tContainer("<blink>Error:</blink> No jobs created!");
+					//Swap IP with selected uWizContainer
+
+					//Modify tContainer
+					//Optional: Create two DNS
+					//Optional: Change group for both containers. Study this.
+					//Create two IP Container jobs
+
+					guMode=0;
+
+					//Fatal error section loaded container
+					sscanf(ForeignKey("tContainer","uIPv4",uContainer),"%u",&uOldIPv4);
+					if(!uOldIPv4)
+						htmlPlainTextError("Unexpected !uIPv4 and !uOldIPv4");
+					sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uOldIPv4));
+					if(!cIPOld[0])
+						htmlPlainTextError("Unexpected !cIPOld");
+	
+					//New uIPv4
+					sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
+							" WHERE uContainer=%u",uWizIPv4,uContainer);
+					mysql_query(&gMysql,gcQuery);
+				        if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					//Optional change group.
+					if(uGroup)
+						ChangeGroup(uContainer,uGroup);
+					uIPv4=uWizIPv4;
+					if(IPContainerJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient,cIPOld))
+					{
+						uStatus=uAWAITIP;
+						SetContainerStatus(uContainer,71);
+						sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+						if(uCreateDNSJob)
+							CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter,guLoginClient);
+					}
+					else
+					{
+						tContainer("<blink>Error:</blink> No jobs created!");
+					}
+
+					//Fatal error section swap container
+					sscanf(ForeignKey("tContainer","uIPv4",uWizContainer),"%u",&uOldIPv4);
+					if(!uOldIPv4)
+						htmlPlainTextError("Unexpected !uIPv4 and !uOldIPv4");
+					sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uOldIPv4));
+					if(!cIPOld[0])
+						htmlPlainTextError("Unexpected !cIPOld");
+	
+					//New uIPv4 for swap container
+					sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
+							" WHERE uContainer=%u",uIPv4,uWizContainer);
+					mysql_query(&gMysql,gcQuery);
+				        if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					//Optional change group.
+					if(uGroup)
+						ChangeGroup(uWizContainer,uGroup);
+					unsigned uSwapNode=0;
+					sscanf(ForeignKey("tContainer","uNode",uWizContainer),"%u",&uSwapNode);
+					if(IPContainerJob(uDatacenter,uSwapNode,uWizContainer,uOwner,guLoginClient,cIPOld))
+					{
+						uStatus=uAWAITIP;
+						SetContainerStatus(uWizContainer,71);
+						if(uCreateDNSJob)
+						{
+							CreateDNSJob(uIPv4,uOwner,
+									ForeignKey("tIP","cLabel",uIPv4),
+									ForeignKey("tContainer","cHostname",uWizContainer),
+										uDatacenter,guLoginClient);
+						}
+						tContainer("IPContainerJob() Done");
+					}
+					else
+					{
+						tContainer("<blink>Error:</blink> No jobs created!");
+					}
 				}
 			}
 			else
@@ -3355,23 +3467,23 @@ void ExttContainerButtons(void)
         {
                 case 6001:
                         printf("<p><u>IP Change Wizard</u><br>");
-			printf("Here you will change the container IPv4 number."
-				" The container will be stopped then started after the IP is changed to"
-				" insure that any mount/umount scripts that reference the container IP"
-				" are handled correctly."
+			printf("Here you will can change the container's IPv4 number."
 				" <p>Container services may be affected or need reconfiguration for new IP.\n");
 			printf("<p>Select new IPv4<br>");
 			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
+			printf("<p>Or swap IPs with this container<br>");
+			tTablePullDownDatacenter("tContainer;cuWizContainerPullDown","cLabel","cLabel",uWizContainer,1,
+					cuWizContainerPullDown,0,uDatacenter);
 			printf("<p><input title='Create an IP change job for the current container'"
 					" type=submit class=lwarnButton"
 					" name=gcCommand value='Confirm IP Change'>\n");
-			printf("<p>Optional primary group change<br>");
+			printf("<p>Optional primary group change (if swap changes for both)<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 			if(cunxsBindARecordJobZone[0])
 			{
-				printf("<p>Create job for unxsBind A record<br>");
+				printf("<p>Create job(s) for unxsBind A record(s)<br>");
 				printf("<input type=checkbox name=uCreateDNSJob >");
 			}
                 break;
