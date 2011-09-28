@@ -3158,10 +3158,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
 			{
-				unsigned uOldIPv4;
-				unsigned uHostnameLen=0;
-				char cIPOld[32]={""};
-
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -3172,6 +3168,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> You must select either a swap or a new IP not both!");
 				if(!uWizIPv4 && !uWizContainer)
 					tContainer("<blink>Error:</blink> You must select an IP or a container to swap with!");
+				if(uContainer==uWizContainer)
+					tContainer("<blink>Error:</blink> You can't swap with the same container!");
 				if(uWizIPv4)
 				{
 					sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
@@ -3194,10 +3192,20 @@ void ExttContainerCommands(pentry entries[], int x)
 							"belong to the specified uDatacenter.");
 				}
 
+				//tContainer("This function is not available yet!");
 
-				if(uWizIPv4)
+				unsigned uOldIPv4=0;
+				char cIPOld[32]={""};
+
+				if(!uWizContainer)
 				{
+					unsigned uHostnameLen=0;
+					unsigned uAvailable=0;
+
 					//Basic direct IP change
+					sscanf(ForeignKey("tIP","uAvailable",uWizIPv4),"%u",&uAvailable);
+					if(!uAvailable)
+						tContainer("<blink>Error:</blink> The uIPv4 selected is not available anymore!");
 					//DNS sanity check
 					if(uCreateDNSJob)
 					{
@@ -3253,6 +3261,9 @@ void ExttContainerCommands(pentry entries[], int x)
 				else
 				{
 					//Swap IP with selected uWizContainer
+					unsigned uSwapNode=0;
+
+					tContainer("The swap change IP function is not available yet");
 
 					//Modify tContainer
 					//Optional: Create two DNS
@@ -3268,7 +3279,14 @@ void ExttContainerCommands(pentry entries[], int x)
 					sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uOldIPv4));
 					if(!cIPOld[0])
 						htmlPlainTextError("Unexpected !cIPOld");
-	
+					sprintf(cuWizIPv4PullDown,"%.31s",ForeignKey("tIP","cLabel",uWizIPv4));
+					if(!cuWizIPv4PullDown[0])
+						htmlPlainTextError("Unexpected !cuWizIPv4PullDown");
+
+					//debug only
+					//tContainer(cIPOld);
+					//tContainer(cuWizIPv4PullDown);
+
 					//New uIPv4
 					sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
 							" WHERE uContainer=%u",uWizIPv4,uContainer);
@@ -3278,14 +3296,13 @@ void ExttContainerCommands(pentry entries[], int x)
 					//Optional change group.
 					if(uGroup)
 						ChangeGroup(uContainer,uGroup);
-					uIPv4=uWizIPv4;
 					if(IPContainerJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient,cIPOld))
 					{
 						uStatus=uAWAITIP;
 						SetContainerStatus(uContainer,71);
 						sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 						if(uCreateDNSJob)
-							CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter,guLoginClient);
+							CreateDNSJob(uWizIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter,guLoginClient);
 					}
 					else
 					{
@@ -3299,6 +3316,10 @@ void ExttContainerCommands(pentry entries[], int x)
 					sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uOldIPv4));
 					if(!cIPOld[0])
 						htmlPlainTextError("Unexpected !cIPOld");
+					sprintf(cuWizIPv4PullDown,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
+					if(!cuWizIPv4PullDown[0])
+						htmlPlainTextError("Unexpected !cuWizIPv4PullDown");
+
 	
 					//New uIPv4 for swap container
 					sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
@@ -3309,16 +3330,15 @@ void ExttContainerCommands(pentry entries[], int x)
 					//Optional change group.
 					if(uGroup)
 						ChangeGroup(uWizContainer,uGroup);
-					unsigned uSwapNode=0;
 					sscanf(ForeignKey("tContainer","uNode",uWizContainer),"%u",&uSwapNode);
+					uIPv4=uWizIPv4;
 					if(IPContainerJob(uDatacenter,uSwapNode,uWizContainer,uOwner,guLoginClient,cIPOld))
 					{
 						uStatus=uAWAITIP;
 						SetContainerStatus(uWizContainer,71);
 						if(uCreateDNSJob)
 						{
-							CreateDNSJob(uIPv4,uOwner,
-									ForeignKey("tIP","cLabel",uIPv4),
+							CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,
 									ForeignKey("tContainer","cHostname",uWizContainer),
 										uDatacenter,guLoginClient);
 						}
@@ -3470,7 +3490,8 @@ void ExttContainerButtons(void)
 			printf("Here you will can change the container's IPv4 number."
 				" <p>Container services may be affected or need reconfiguration for new IP.\n");
 			printf("<p>Select new IPv4<br>");
-			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
+			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
+				uDatacenter,uOwner);
 			printf("<p>Or swap IPs with this container<br>");
 			tTablePullDownDatacenter("tContainer;cuWizContainerPullDown","cLabel","cLabel",uWizContainer,1,
 					cuWizContainerPullDown,0,uDatacenter);
