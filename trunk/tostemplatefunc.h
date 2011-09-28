@@ -249,14 +249,15 @@ void ExttOSTemplateCommands(pentry entries[], int x)
 				if(uModDate!=luActualModDate)
 					tOSTemplate("<blink>Error</blink>: This record was modified. Reload it.");
 				if(!uDatacenter)
-					sprintf(gcQuery,"DELETE FROM tProperty WHERE cName='cDatacenter' AND cValue='All Datacenters'"
+					//Delete all
+					sprintf(gcQuery,"DELETE FROM tProperty WHERE cName='cDatacenter'"
 						" AND uType=%u AND uKey=%u AND (uOwner=%u OR uCreatedBy=%u)",
-						uPROP_OSTEMPLATE,uOSTemplate,uOwner,guLoginClient);
+						uPROP_OSTEMPLATE,uOSTemplate,guCompany,guLoginClient);
 				else
 					sprintf(gcQuery,"DELETE FROM tProperty WHERE cName='cDatacenter' AND cValue='%s'"
 						" AND uType=%u AND uKey=%u AND (uOwner=%u OR uCreatedBy=%u)",
 						ForeignKey("tDatacenter","cLabel",uDatacenter),
-						uPROP_OSTEMPLATE,uOSTemplate,uOwner,guLoginClient);
+						uPROP_OSTEMPLATE,uOSTemplate,guCompany,guLoginClient);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -266,7 +267,29 @@ void ExttOSTemplateCommands(pentry entries[], int x)
 				tOSTemplate("<blink>Error</blink>: Disable not allowed!");
 			}
 		}
-
+                else if(!strcmp(gcCommand,"Clear All"))
+                {
+                        ProcesstOSTemplateVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=6;
+				if(guCompany==1)
+					sprintf(gcQuery,"DELETE FROM tProperty WHERE cName='cDatacenter'"
+						" AND uType=%u",uPROP_OSTEMPLATE);
+				else
+					sprintf(gcQuery,"DELETE FROM tProperty WHERE cName='cDatacenter'"
+						" AND uType=%u AND (uOwner=%u OR uCreatedBy=%u)",
+						uPROP_OSTEMPLATE,guCompany,guLoginClient);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				tOSTemplate("'Clear All' done");
+			}
+			else
+			{
+				tOSTemplate("<blink>Error</blink>: 'Clear All' not allowed!");
+			}
+		}
 	}
 
 }//void ExttOSTemplateCommands(pentry entries[], int x)
@@ -432,7 +455,10 @@ void ExttOSTemplateAuxTable(void)
 		" name=gcCommand value='Enable'><p>");
 		printf("<input type=submit class=largeButton"
 		" title='Disable for one or more datacenters; for new container creation'"
-		" name=gcCommand value='Disable'</td>");
+		" name=gcCommand value='Disable'><p>");
+		printf("<input type=submit class=lwarnButton"
+		" title='Clear all templates from tProperty association'"
+		" name=gcCommand value='Clear All'></td>");
 		printf("<td valign=top> Select a datacenter or none (---) for all ");
 		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
 		printf("</td>");
@@ -551,6 +577,7 @@ void tOSTemplateNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+        MYSQL_RES *res2;
 
 	ExtSelect("tOSTemplate","tOSTemplate.uOSTemplate,tOSTemplate.cLabel");
 
@@ -567,9 +594,21 @@ void tOSTemplateNavList(void)
 	{	
         	printf("<p><u>tOSTemplateNavList</u><br>\n");
 
+		
 	        while((field=mysql_fetch_row(res)))
+		{
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tOSTemplate"
-					"&uOSTemplate=%s>%s</a><br>\n",field[0],field[1]);
+					"&uOSTemplate=%s>%s</a>",field[0],field[1]);
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%s AND uType="PROP_OSTEMPLATE"",field[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				printf("%s",mysql_error(&gMysql));
+	        	res2=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res2))
+				printf("*");
+			printf("<br>\n");
+		        	mysql_free_result(res2);
+		}
 	}
         mysql_free_result(res);
 
