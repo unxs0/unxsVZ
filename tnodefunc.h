@@ -261,6 +261,25 @@ void ExttNodeCommands(pentry entries[], int x)
 			else
 				tNode("<blink>Error</blink>: Denied by permissions settings");
                 }
+                else if(!strcmp(gcCommand,"Node Container Report"))
+                {
+                        ProcesstNodeVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+				
+				guMode=9001;
+				tNode("");
+			}
+			else
+			{
+				tNode("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
                 else if(!strcmp(gcCommand,"Clone Node Wizard"))
                 {
                         ProcesstNodeVars(entries,x);
@@ -406,6 +425,11 @@ void ExttNodeButtons(void)
 	OpenFieldSet("tNode Aux Panel",100);
 	switch(guMode)
         {
+                case 9001:
+                        printf("<p><u>Node Container Report</u><br>");
+			printf("See bottom panel.");
+                break;
+
                 case 7001:
                         printf("<p><u>Node Clone Wizard (Step 1/2)</u><br>");
 			printf("Here you will select the datacenter. If it is oversubscribed or not"
@@ -531,6 +555,9 @@ void ExttNodeButtons(void)
 			{
 				htmlHealth(uNode,2);
 				htmlNodeHealth(uNode);
+				printf("<p><input type=submit class=largeButton title='Display node container"
+					" report'"
+					" name=gcCommand value='Node Container Report'><br>");
 				printf("<p><input type=submit class=largeButton title='Clone all containers"
 					" on this node to another node'"
 					" name=gcCommand value='Clone Node Wizard'><br>");
@@ -551,22 +578,28 @@ void ExttNodeAuxTable(void)
 
 	switch(guMode)
 	{
-		//Off for now
-		case 13377001:
-			sprintf(gcQuery,"%s Active Containers",cLabel);
+		//Node Container Report
+		case 9001:
+			sprintf(gcQuery,"Non clone %s Containers",cLabel);
 			OpenFieldSet(gcQuery,100);
 			printf("<table>");
 			printf("<tr>"
-				"<td><u>select</u></td>"
+				//"<td><u>select</u></td>"
 				"<td><u>master label</u></td>"
 				"<td><u>master hostname</u></td>"
+				"<td><u>template</u></td>"
 				"<td><u>clone label</u></td>"
 				"<td><u>clone hostname</u></td>"
 				"<td><u>seconds since rsync</u></td>"
 				"<td><u>job created</u></td>"
 				"</tr>");
-			sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,uNode,uDatacenter FROM tContainer WHERE"
-							" uNode=%u AND uSource=0 AND uStatus=%u ORDER BY cLabel",uNode,uACTIVE);
+			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,"
+					"tContainer.uNode,tContainer.uDatacenter,tOSTemplate.cLabel"
+					" FROM tContainer,tOSTemplate"
+					" WHERE tContainer.uNode=%u"
+					" AND tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
+					" AND tContainer.uSource=0"
+					" ORDER BY tContainer.cLabel",uNode);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -578,12 +611,15 @@ void ExttNodeAuxTable(void)
 
 				while((field=mysql_fetch_row(res)))
 				{
-					printf("<tr>");
-					printf("<td><input type=checkbox name=CNW%s</td>"
-							"<td><a class=darkLink href=unxsVZ.cgi?"
-							"gcFunction=tContainer&uContainer=%s>"
-							"%s</a></td><td>%s</td>",
-								field[0],field[0],field[1],field[2]);
+					printf(	"<tr>"
+						//"<td><input type=checkbox name=CNW%s</td>"
+						"<td>"
+						"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>"
+						"</td>"
+						"<td>%s</td>"
+						"<td>%s</td>",
+							//field[0],
+							field[0],field[1],field[2],field[5]);
 					sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,(UNIX_TIMESTAMP(NOW())-uBackupDate),"
 							"uDatacenter,uNode,uIPv4,uStatus,uOwner"
 							" FROM tContainer WHERE uSource=%s",field[0]);
@@ -605,8 +641,8 @@ void ExttNodeAuxTable(void)
 					mysql_free_result(res2);
 					printf("</tr>\n");
 				}
-				printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'>"
-						" Check all</td></tr>\n");
+				//printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'>"
+				//		" Check all</td></tr>\n");
 			}
 			printf("</table>");
 			CloseFieldSet();
