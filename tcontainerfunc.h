@@ -112,6 +112,8 @@ unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname);
 unsigned IPContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 			unsigned uOwner,unsigned uLoginClient,char const *cIPOld);
+unsigned IPSameNodeContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer1,unsigned uContainer2,
+			unsigned uOwner,unsigned uLoginClient,char const *cIPOld1,char const *cIPOld2);
 unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
 char *cRatioColor(float *fRatio);
 void htmlGenMountInputs(unsigned const uMountTemplate);
@@ -3257,13 +3259,11 @@ void ExttContainerCommands(pentry entries[], int x)
 					{
 						tContainer("<blink>Error:</blink> No jobs created!");
 					}
-				}//if uWizIPv4
+				}
 				else
 				{
 					//Swap IP with selected uWizContainer
 					unsigned uSwapNode=0;
-
-					tContainer("The swap change IP function is not available yet");
 
 					//Modify tContainer
 					//Optional: Create two DNS
@@ -3272,81 +3272,154 @@ void ExttContainerCommands(pentry entries[], int x)
 
 					guMode=0;
 
-					//Fatal error section loaded container
-					sscanf(ForeignKey("tContainer","uIPv4",uContainer),"%u",&uOldIPv4);
-					if(!uOldIPv4)
-						htmlPlainTextError("Unexpected !uIPv4 and !uOldIPv4");
-					sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uOldIPv4));
-					if(!cIPOld[0])
-						htmlPlainTextError("Unexpected !cIPOld");
-					sprintf(cuWizIPv4PullDown,"%.31s",ForeignKey("tIP","cLabel",uWizIPv4));
-					if(!cuWizIPv4PullDown[0])
-						htmlPlainTextError("Unexpected !cuWizIPv4PullDown");
 
-					//debug only
-					//tContainer(cIPOld);
-					//tContainer(cuWizIPv4PullDown);
-
-					//New uIPv4
-					sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
-							" WHERE uContainer=%u",uWizIPv4,uContainer);
-					mysql_query(&gMysql,gcQuery);
-				        if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					//Optional change group.
-					if(uGroup)
-						ChangeGroup(uContainer,uGroup);
-					if(IPContainerJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient,cIPOld))
-					{
-						uStatus=uAWAITIP;
-						SetContainerStatus(uContainer,71);
-						sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
-						if(uCreateDNSJob)
-							CreateDNSJob(uWizIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter,guLoginClient);
-					}
-					else
-					{
-						tContainer("<blink>Error:</blink> No jobs created!");
-					}
-
-					//Fatal error section swap container
-					sscanf(ForeignKey("tContainer","uIPv4",uWizContainer),"%u",&uOldIPv4);
-					if(!uOldIPv4)
-						htmlPlainTextError("Unexpected !uIPv4 and !uOldIPv4");
-					sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uOldIPv4));
-					if(!cIPOld[0])
-						htmlPlainTextError("Unexpected !cIPOld");
-					sprintf(cuWizIPv4PullDown,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
-					if(!cuWizIPv4PullDown[0])
-						htmlPlainTextError("Unexpected !cuWizIPv4PullDown");
-
-	
-					//New uIPv4 for swap container
-					sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
-							" WHERE uContainer=%u",uIPv4,uWizContainer);
-					mysql_query(&gMysql,gcQuery);
-				        if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					//Optional change group.
-					if(uGroup)
-						ChangeGroup(uWizContainer,uGroup);
+					//Two cases swap same node, swap different nodes
 					sscanf(ForeignKey("tContainer","uNode",uWizContainer),"%u",&uSwapNode);
-					uIPv4=uWizIPv4;
-					if(IPContainerJob(uDatacenter,uSwapNode,uWizContainer,uOwner,guLoginClient,cIPOld))
+					if(uNode!=uSwapNode)
 					{
-						uStatus=uAWAITIP;
-						SetContainerStatus(uWizContainer,71);
-						if(uCreateDNSJob)
+
+						//Fatal error section loaded container
+						sscanf(ForeignKey("tContainer","uIPv4",uContainer),"%u",&uOldIPv4);
+						if(!uOldIPv4)
+							htmlPlainTextError("Unexpected !uIPv4 and !uOldIPv4");
+						sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uOldIPv4));
+						if(!cIPOld[0])
+							htmlPlainTextError("Unexpected !cIPOld");
+						sprintf(cuWizIPv4PullDown,"%.31s",ForeignKey("tIP","cLabel",uWizIPv4));
+						if(!cuWizIPv4PullDown[0])
+							htmlPlainTextError("Unexpected !cuWizIPv4PullDown");
+
+						//New uIPv4
+						sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
+								" WHERE uContainer=%u",uWizIPv4,uContainer);
+						mysql_query(&gMysql,gcQuery);
+					        if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						//Optional change group.
+						if(uGroup)
+							ChangeGroup(uContainer,uGroup);
+
+
+						if(IPContainerJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient,cIPOld))
 						{
-							CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,
-									ForeignKey("tContainer","cHostname",uWizContainer),
-										uDatacenter,guLoginClient);
+							uStatus=uAWAITIP;
+							SetContainerStatus(uContainer,71);
+							sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+							if(uCreateDNSJob)
+								CreateDNSJob(uWizIPv4,uOwner,cuWizIPv4PullDown,
+									cHostname,uDatacenter,guLoginClient);
 						}
-						tContainer("IPContainerJob() Done");
+						else
+						{
+							tContainer("<blink>Error:</blink> No jobs created!");
+						}
+	
+						//Fatal error section swap container
+						sscanf(ForeignKey("tContainer","uIPv4",uWizContainer),"%u",&uOldIPv4);
+						if(!uOldIPv4)
+							htmlPlainTextError("Unexpected !uIPv4 and !uOldIPv4");
+						sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uOldIPv4));
+						if(!cIPOld[0])
+							htmlPlainTextError("Unexpected !cIPOld");
+						sprintf(cuWizIPv4PullDown,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
+						if(!cuWizIPv4PullDown[0])
+							htmlPlainTextError("Unexpected !cuWizIPv4PullDown");
+	
+		
+						//New uIPv4 for swap container
+						sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
+								" WHERE uContainer=%u",uIPv4,uWizContainer);
+						mysql_query(&gMysql,gcQuery);
+					        if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						//Optional change group.
+						if(uGroup)
+							ChangeGroup(uWizContainer,uGroup);
+						uIPv4=uWizIPv4;
+						if(IPContainerJob(uDatacenter,uSwapNode,uWizContainer,uOwner,guLoginClient,cIPOld))
+						{
+							uStatus=uAWAITIP;
+							SetContainerStatus(uWizContainer,71);
+							if(uCreateDNSJob)
+							{
+								CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,
+										ForeignKey("tContainer","cHostname",uWizContainer),
+											uDatacenter,guLoginClient);
+							}
+							tContainer("IPContainerJob() Done.");
+						}
+						else
+						{
+							tContainer("<blink>Error:</blink> No swap container jobs created! Check tJob.");
+						}
+	
 					}
 					else
 					{
-						tContainer("<blink>Error:</blink> No jobs created!");
+						unsigned uWizOldIPv4=0;
+						char cWizIPOld[32]={""};
+
+						//Same node swap case
+						tContainer("The swap change IP function is not yet available for same node containers");
+
+						//Fatal error section
+						sscanf(ForeignKey("tContainer","uIPv4",uContainer),"%u",&uOldIPv4);
+						if(!uOldIPv4)
+							htmlPlainTextError("Unexpected !uOldIPv4");
+						sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uOldIPv4));
+						if(!cIPOld[0])
+							htmlPlainTextError("Unexpected !cIPOld");
+						sscanf(ForeignKey("tContainer","uIPv4",uWizContainer),"%u",&uWizOldIPv4);
+						if(!uWizOldIPv4)
+							htmlPlainTextError("Unexpected !uWizOldIPv4");
+						sprintf(cWizIPOld,"%.31s",ForeignKey("tIP","cLabel",uWizOldIPv4));
+						if(!cWizIPOld[0])
+							htmlPlainTextError("Unexpected !cWizIPOld");
+						sprintf(cuWizIPv4PullDown,"%.31s",ForeignKey("tIP","cLabel",uWizIPv4));
+						if(!cuWizIPv4PullDown[0])
+							htmlPlainTextError("Unexpected !cuWizIPv4PullDown");
+
+						//Swap IPs in tContainer
+						sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
+								" WHERE uContainer=%u",uWizIPv4,uContainer);
+						mysql_query(&gMysql,gcQuery);
+					        if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
+								" WHERE uContainer=%u",uIPv4,uWizContainer);
+						mysql_query(&gMysql,gcQuery);
+					        if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						//Optional change group.
+						if(uGroup)
+						{
+							ChangeGroup(uContainer,uGroup);
+							ChangeGroup(uWizContainer,uGroup);
+						}
+
+						if(IPSameNodeContainerJob(uDatacenter,uNode,uContainer,uWizContainer,
+											uOwner,guLoginClient,cIPOld,cWizIPOld))
+						{
+							//Update displayed data
+							uStatus=uAWAITIP;
+							sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+
+							SetContainerStatus(uContainer,uAWAITIP);
+							SetContainerStatus(uWizContainer,uAWAITIP);
+							if(uCreateDNSJob)
+							{
+								CreateDNSJob(uWizIPv4,uOwner,cuWizIPv4PullDown,
+									cHostname,uDatacenter,guLoginClient);
+								CreateDNSJob(uIPv4,uOwner,
+										ForeignKey("tIP","cLabel",uIPv4),
+										ForeignKey("tContainer","cHostname",uWizContainer),
+											uDatacenter,guLoginClient);
+							}
+						}
+						else
+						{
+							tContainer("<blink>Error:</blink> No jobs created!");
+						}
 					}
 				}
 			}
@@ -5143,6 +5216,30 @@ unsigned IPContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 	return(uCount);
 
 }//unsigned IPContainerJob()
+
+
+unsigned IPSameNodeContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer1,unsigned uContainer2,
+			unsigned uOwner,unsigned uLoginClient,char const *cIPOld1,char const *cIPOld2)
+{
+	unsigned uCount=0;
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='SwapIPContainer(%u)',cJobName='SwapIPContainer'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=1"
+			",cJobData='uContainer2=%u;\ncIPOld1=%.31s;\ncIPOld2=%.31s;\n'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer1,uContainer2,cIPOld1,cIPOld2,
+				uOwner,uLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","SwapIPContainer");
+	return(uCount);
+
+}//unsigned IPSameNodeContainerJob()
 
 
 unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer)
