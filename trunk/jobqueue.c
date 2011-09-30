@@ -45,6 +45,7 @@ void tJobWaitingUpdate(unsigned uJob);
 void NewContainer(unsigned uJob,unsigned uContainer);
 void DestroyContainer(unsigned uJob,unsigned uContainer);
 void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
+void SwapIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void StopContainer(unsigned uJob,unsigned uContainer);
 void StartContainer(unsigned uJob,unsigned uContainer);
@@ -415,6 +416,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"ChangeIPContainer"))
 	{
 		ChangeIPContainer(uJob,uContainer,cJobData);
+	}
+	else if(!strcmp(cJobName,"SwapIPContainer"))
+	{
+		SwapIPContainer(uJob,uContainer,cJobData);
 	}
 	else if(!strcmp(cJobName,"StopContainer"))
 	{
@@ -5056,3 +5061,183 @@ CommonExit:
 	return;
 
 }//void CloneRemoteContainer(...)
+
+
+void SwapIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
+{
+
+	char cIPNew1[31]={""};
+	char cIPNew2[31]={""};
+	char cIPOld1[31]={""};
+	char cIPOld2[31]={""};
+	char *cp;
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uVeth=0;
+	unsigned uContainer2=0;
+
+	//Check 1-. Check to make sure container is on this node, if not 
+	//	give job back to queue
+	sprintf(gcQuery,"/usr/sbin/vzlist %u > /dev/null 2>&1",uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("SwapIPContainer","Job returned to queue");
+		tJobWaitingUpdate(uJob);
+		return;
+	}
+
+
+	//0-. Get required data
+	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uVeth"
+			" FROM tContainer,tIP WHERE uContainer=%u"
+			" AND tContainer.uIPv4=tIP.uIP",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("SwapIPContainer",mysql_error(&gMysql));
+		exit(2);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+        	MYSQL_RES *res2;
+	        MYSQL_ROW field2;
+
+		//db
+		sscanf(field[1],"%u",&uVeth);
+
+		sprintf(cIPNew1,"%.31s",field[0]);
+		if(!cIPNew1[0])	
+		{
+			logfileLine("SwapIPContainer cIPNew",gcQuery);
+			tJobErrorUpdate(uJob,"Get cIPNew failed");
+			goto CommonExit;
+		}
+
+		//job data
+		sscanf(cJobData,"uContainer2=%u;",&uContainer2);
+		if(!uContainer2)	
+		{
+			logfileLine("SwapIPContainer uContainer2 from cJobData=",cJobData);
+			tJobErrorUpdate(uJob,"Get uContainer2 failed");
+			goto CommonExit;
+		}
+		sscanf(cJobData,"uContainer2=%*u;\ncIPOld1=%31s;\n",cIPOld1);
+		if((cp=strchr(cIPOld1,';')))
+			*cp=0;
+		if(!cIPOld1[0])	
+		{
+			logfileLine("ChangeIPContainer cIPOld1 from cJobData=",cJobData);
+			tJobErrorUpdate(uJob,"Get cIPOld1 failed");
+			goto CommonExit;
+		}
+		if((cp=strstr(cJobData,"cIPOld2=")))
+		{
+			char *cp1;
+
+			sscanf(cp,"cIPOld2=%31s;",cIPOld2);
+			if((cp1=strchr(cIPOld2,';')))
+				*cp1=0;
+		}
+		if(!cIPOld2[0])	
+		{
+			logfileLine("ChangeIPContainer cIPOld2 from cJobData=",cJobData);
+			tJobErrorUpdate(uJob,"Get cIPOld2 failed");
+			goto CommonExit;
+		}
+
+		sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uVeth"
+			" FROM tContainer,tIP WHERE uContainer=%u"
+			" AND tContainer.uIPv4=tIP.uIP",uContainer2);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("SwapIPContainer",mysql_error(&gMysql));
+			exit(2);
+		}
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			sprintf(cIPNew2,"%.31s",field2[0]);
+			if(!cIPNew2[0])	
+			{
+				logfileLine("SwapIPContainer cIPNew2",gcQuery);
+				tJobErrorUpdate(uJob,"Get cIPNew2 failed");
+				goto CommonExit;
+			}
+		}
+		mysql_free_result(res2);
+
+		if(uNotValidSystemCallArg(cIPNew1)||uNotValidSystemCallArg(cIPNew2))
+		{
+			logfileLine("SwapIPContainer","security alert");
+			tJobErrorUpdate(uJob,"failed sec alert!");
+			goto CommonExit;
+		}
+
+
+		//debug only
+		sprintf(gcQuery,"%u %s %s, %u %s %s",uContainer,cIPNew1,cIPOld1,uContainer2,cIPNew2,cIPOld2);
+		logfileLine("SwapIPContainer",gcQuery);
+		//tJobErrorUpdate(uJob,"debug");
+		//goto CommonExit;
+
+		if(!uVeth)
+		{
+			//1-.
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel %s --save",uContainer,cIPOld1);
+			if(system(gcQuery))
+			{
+				logfileLine("SwapIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl set ipdel failed");
+				goto CommonExit;
+			}
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipdel %s --save",uContainer2,cIPOld2);
+			if(system(gcQuery))
+			{
+				logfileLine("SwapIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl set ipdel failed");
+				goto CommonExit;
+			}
+
+			//2-.
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cIPNew1);
+			if(system(gcQuery))
+			{
+				logfileLine("SwapIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl set ipadd failed");
+				goto CommonExit;
+			}
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer2,cIPNew2);
+			if(system(gcQuery))
+			{
+				logfileLine("SwapIPContainer",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl set ipadd failed");
+				goto CommonExit;
+			}
+		}
+		else
+		{
+			logfileLine("SwapIPContainer","uVeth containers not supported");
+			tJobErrorUpdate(uJob,"uVeth container");
+			goto CommonExit;
+		}
+
+		//Everything ok
+		SetContainerStatus(uContainer,1);//Active
+		SetContainerStatus(uContainer2,1);//Active
+		tJobDoneUpdate(uJob);
+
+	}
+	else
+	{
+		logfileLine("SwapIPContainer",gcQuery);
+		tJobErrorUpdate(uJob,"No line from query");
+	}
+
+//This goto MIGHT be ok
+CommonExit:
+	mysql_free_result(res);
+	return;
+
+}//void SwapIPContainer()

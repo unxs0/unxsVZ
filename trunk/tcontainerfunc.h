@@ -3181,6 +3181,9 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 				else if(uWizContainer)
 				{
+					if(uVeth)
+						tContainer("<blink>Error:</blink> VETH device network containers"
+									" not supported at this time!");
 					sscanf(ForeignKey("tContainer","uDatacenter",uWizContainer),"%u",&uIPv4Datacenter);
 					if(uDatacenter!=uIPv4Datacenter)
 						tContainer("<blink>Error:</blink> The specified swap container does not "
@@ -3270,8 +3273,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					//Optional: Change group for both containers. Study this.
 					//Create two IP Container jobs
 
+					//Return to main container tab
 					guMode=0;
-
 
 					//Two cases swap same node, swap different nodes
 					sscanf(ForeignKey("tContainer","uNode",uWizContainer),"%u",&uSwapNode);
@@ -3359,10 +3362,10 @@ void ExttContainerCommands(pentry entries[], int x)
 						unsigned uWizOldIPv4=0;
 						char cWizIPOld[32]={""};
 
-						//Same node swap case
-						tContainer("The swap change IP function is not yet available for same node containers");
-
 						//Fatal error section
+						//Return to main container tab
+						guMode=0;
+
 						sscanf(ForeignKey("tContainer","uIPv4",uContainer),"%u",&uOldIPv4);
 						if(!uOldIPv4)
 							htmlPlainTextError("Unexpected !uOldIPv4");
@@ -3378,6 +3381,10 @@ void ExttContainerCommands(pentry entries[], int x)
 						sprintf(cuWizIPv4PullDown,"%.31s",ForeignKey("tIP","cLabel",uWizIPv4));
 						if(!cuWizIPv4PullDown[0])
 							htmlPlainTextError("Unexpected !cuWizIPv4PullDown");
+
+						//tContainer(cIPOld);
+						//tContainer(cWizIPOld);
+						//tContainer(cuWizIPv4PullDown);
 
 						//Swap IPs in tContainer
 						sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
@@ -3415,6 +3422,7 @@ void ExttContainerCommands(pentry entries[], int x)
 										ForeignKey("tContainer","cHostname",uWizContainer),
 											uDatacenter,guLoginClient);
 							}
+							tContainer("SwapIPContainer job created");
 						}
 						else
 						{
@@ -3572,7 +3580,7 @@ void ExttContainerButtons(void)
 					" type=submit class=lwarnButton"
 					" name=gcCommand value='Confirm IP Change'>\n");
 			printf("<p>Optional primary group change (if swap changes for both)<br>");
-			uGroup=uGetGroup(0,uContainer);//0=not for node
+			//uGroup=uGetGroup(0,uContainer);//0=not for node
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 			if(cunxsBindARecordJobZone[0])
