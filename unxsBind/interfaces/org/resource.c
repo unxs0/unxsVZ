@@ -839,6 +839,13 @@ unsigned RRCheck(void)
 		cNameStyle="type_fields_req";
 		return(2);
 	}
+	//More cName validation. If @ present it must be only char.
+	if(strchr(cName,'@') && strlen(cName)>1)
+	{
+		gcMessage="<blink>Error: </blink>If @ is used it must be the only char";
+		cNameStyle="type_fields_req";
+		return(2);
+	}
 
 	//3-. Can only have digits, letters, dash and dots the ampersand and the asterix wild card.
 	//This is mostly for the (default) problem we have experienced after deployment :(
