@@ -180,6 +180,12 @@ void RRCheck(int uMode)
 		guMode=uMode;
 		tResource("cName can't contain '-.'.");
 	}
+	//More cName validation. If @ present it must be only char.
+	if(strchr(cName,'@') && strlen(cName)>1)
+	{
+		guMode=uMode;
+		tResource("If @ is used it must be the only char");
+	}
 
 
 	//TODO
