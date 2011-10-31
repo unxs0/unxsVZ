@@ -41,7 +41,10 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 	unsigned uCount=0;
 	unsigned uNode=0;
 
-	sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u",uDatacenter);
+	if(uDatacenter)
+		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u",uDatacenter);
+	else
+		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE cLabel!='appliance' ORDER BY uDatacenter,uNode");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		ErrorMsg(mysql_error(&gMysql));
@@ -155,9 +158,9 @@ int main(int iArgc, char *cArgv[])
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
         unsigned long sc[4]={0xFF8080,0x8080FF,0x33CC66,0x999933};
-        char cDatacenter[100]={""};
+        char cDatacenter[256]={""};
         unsigned uNumNodes=24;
-	unsigned uDatacenter=1;
+	unsigned uDatacenter=0;
 	register unsigned i;
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -167,14 +170,33 @@ int main(int iArgc, char *cArgv[])
 	if(iArgc>1)
 		sscanf(cArgv[1],"%u",&uDatacenter);
 
-	sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE uDatacenter=%u",uDatacenter);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		ErrorMsg(mysql_error(&gMysql));
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-		sprintf(cDatacenter,"%.99s",field[0]);
-	mysql_free_result(res);
+	if(uDatacenter)
+	{
+		sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE uDatacenter=%u",uDatacenter);
+	        mysql_query(&gMysql,gcQuery);
+	        if(mysql_errno(&gMysql))
+			ErrorMsg(mysql_error(&gMysql));
+	        res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sprintf(cDatacenter,"%.99s",field[0]);
+		mysql_free_result(res);
+
+	}
+	else
+	{
+		sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE cLabel!='CustomerPremise' ORDER BY uDatacenter");
+	        mysql_query(&gMysql,gcQuery);
+	        if(mysql_errno(&gMysql))
+			ErrorMsg(mysql_error(&gMysql));
+	        res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			strncat(cDatacenter,field[0],31);
+			strcat(cDatacenter," ");
+			if(strlen(cDatacenter)>(sizeof(cDatacenter)-32)) break;
+		}
+		mysql_free_result(res);
+	}
 
 	if(!cDatacenter[0])
 		ErrorMsg("No such datacenter");
