@@ -42,7 +42,7 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 	unsigned uNode=0;
 
 	if(uDatacenter)
-		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u",uDatacenter);
+		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u ORDER BY uNode",uDatacenter);
 	else
 		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE cLabel!='appliance' ORDER BY uDatacenter,uNode");
         mysql_query(&gMysql,gcQuery);
