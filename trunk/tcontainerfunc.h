@@ -4652,7 +4652,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" AND tContainer.uStatus=tStatus.uStatus"
 						" AND tContainer.uNode=%u ORDER BY tContainer.cLabel",uNode);
 			else
-				sprintf(gcQuery,"SELECT tContainer.uContainer"
+				sprintf(gcQuery,"SELECT DISTINCT tContainer.uContainer"
 					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
 					" FROM tContainer," TCLIENT ",tNode,tStatus"
 					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
@@ -4663,6 +4663,10 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" AND tContainer.uStatus=tStatus.uStatus"
 					" ORDER BY tContainer.cLabel",uNode,guCompany);
 		}
+		//debug only
+		//printf("%s",gcQuery);
+                //return;
+
 	}
 
         mysql_query(&gMysql,gcQuery);
