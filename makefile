@@ -27,6 +27,13 @@ unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o
 		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o \
 		jobqueue.o glossary.o main.o cgi.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) 
 
+#new standalone job queue processor
+unxsvz: jobqueue.o unxsvz.o mysqlconnect.o
+	cc jobqueue.o unxsvz.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) 
+
+unxsvz.o: unxsvz.c mysqlrad.h local.h
+	cc -c unxsvz.c -o unxsvz.o $(CFLAGS)
+
 mysqlconnect.o: mysqlconnect.c mysqlrad.h local.h
 	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)
 
@@ -129,6 +136,8 @@ local.h: local.h.default
 clean:
 	rm -f *.o
 
-install: unxsVZ.cgi
+install: unxsVZ.cgi unxsvz
 	install -s unxsVZ.cgi /var/www/unxs/$(CGIDIR)/unxsVZ.cgi
+	install -s unxsvz /usr/sbin/unxsvz
 	@ rm unxsVZ.cgi
+	@ rm unxsvz
