@@ -31,7 +31,7 @@ void ProcessDR(void);
 void unxsVZJobs(void);
 void TextConnectOpenSIPSDb(void);
 void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage);
-void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname);
+void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -143,6 +143,7 @@ void unxsVZJobs(void)
 		char cDID[16]={""};
 		char cHostname[64]={""};
 		char cJobName[33]={""};
+		char cCustomerName[33]={""};
 		char cMessage[128]={""};
 		unsigned uJob=0;
 		unsigned uDatacenter=0;
@@ -163,7 +164,7 @@ void unxsVZJobs(void)
 			//Update tJob running
 			UpdateJob(2,uContainer,uJob,"");
 
-			ParseDIDJobData(field[6],cDID,cHostname);
+			ParseDIDJobData(field[6],cDID,cHostname,cCustomerName);
 
 			//Make sure PBX is registered
 			sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
@@ -295,7 +296,8 @@ void unxsVZJobs(void)
 					uDRReload=uJob;
 
 					//Rename pending DID
-					sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_OpenSIPS_DID' WHERE cName='cOrg_Pending_DID'"
+					sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_OpenSIPS_DID',uModBy=1,"
+							"uModDate=UNIX_TIMESTAMP(NOW()) WHERE cName='cOrg_Pending_DID'"
 							" AND cValue='%s'"
 							" AND uKey=%u"
 							" AND uType=3",cDID,uContainer);
@@ -334,7 +336,7 @@ void unxsVZJobs(void)
 			//Update tJob running
 			UpdateJob(2,uContainer,uJob,"");
 
-			ParseDIDJobData(field[6],cDID,cHostname);
+			ParseDIDJobData(field[6],cDID,cHostname,cCustomerName);
 
 			//Make sure PBX is registered
 			sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
@@ -403,6 +405,94 @@ void unxsVZJobs(void)
 			logfileLine("unxsSIPSRemoveDID",cMessage,uContainer);
 
 		}//unxsSIPSRemoveDID
+		else if(!strncmp(cJobName,"unxsSIPSModCustomerName",22))
+		{
+			//Update tJob running
+			UpdateJob(2,uContainer,uJob,"");
+
+			ParseDIDJobData(field[6],cDID,cHostname,cCustomerName);
+
+			//Make sure PBX is registered
+			sprintf(gcQuery,"SELECT gwid FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				//Update tJob error
+				UpdateJob(14,uContainer,uJob,gcQuery);
+				logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res2=mysql_store_result(&gMysqlExt);
+			if((field2=mysql_fetch_row(res2)))
+				sscanf(field2[0],"%u",&uGwid);
+			mysql_free_result(res2);
+
+			if(uGwid)
+			{
+				//Update description
+				sprintf(gcQuery,"UPDATE dr_gateways SET description='%s' WHERE gwid='%u'",cCustomerName,uGwid);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					//Update tJob error
+					UpdateJob(14,uContainer,uJob,gcQuery);
+					logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+
+				//Delete previous
+				sprintf(gcQuery,"DELETE FROM tProperty"
+						" WHERE cName='cOrg_CustomerName'"
+						" AND uKey=%u"
+						" AND uType=3",uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					//Update tJob error
+					UpdateJob(14,uContainer,uJob,gcQuery);
+					logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+
+				//Rename pending name change
+				sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_CustomerName',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE cName='cOrg_CustomerMod'"
+						" AND cValue='%s'"
+						" AND uKey=%u"
+						" AND uType=3",cCustomerName,uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					//Update tJob error
+					UpdateJob(14,uContainer,uJob,gcQuery);
+					logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+
+				sprintf(cMessage,"Updated %.11s for %.32s",cCustomerName,cHostname);
+				//debug only
+				//printf("%s\n",cMessage);
+			}
+			else
+			{
+				sprintf(cMessage,"%.32s not in dr_gateways",cHostname);
+				//debug only
+				//printf("%s\n",cMessage);
+			}
+
+			//Update tJob OK
+			UpdateJob(3,uContainer,uJob,cMessage);
+			logfileLine("unxsSIPSModCustomerName",cMessage,uContainer);
+
+		}//unxsSIPSModCustomerName
 	}
 	mysql_free_result(res);
 
@@ -621,7 +711,7 @@ void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage
 }//void UpdateJob()
 
 
-void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname)
+void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName)
 {
 	char *cp;
 	char *cp2;
@@ -644,4 +734,13 @@ void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname)
 			*cp2=';';
 		}
 	}
-}//void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname)
+	if((cp=strstr(cJobData,"cCustomerName=")))
+	{
+		if((cp2=strchr(cp+14,';')))
+		{
+			*cp2=0;
+			sprintf(cCustomerName,"%.32s",cp+14);
+			*cp2=';';
+		}
+	}
+}//void ParseDIDJobData()
