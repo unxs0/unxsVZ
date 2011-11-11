@@ -727,7 +727,9 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	GetContainerProp(uContainer,"cPasswd",cPasswd);
 	if(cPasswd[0] && !uNotValidSystemCallArg(cPasswd) )
 	{
-		sprintf(gcQuery,"/usr/sbin/vzctl --userpasswd \"root:%s\" %u",cPasswd,uContainer);
+		//sprintf(gcQuery,"/usr/sbin/vzctl --userpasswd \"root:%s\" %u",cPasswd,uContainer);
+		//This works on older vzctl also
+		sprintf(gcQuery,"/usr/sbin/vzctl set %u --userpasswd \"root:%s\"",uContainer,cPasswd);
 		if(system(gcQuery))
 			logfileLine("NewContainer","Container passwd not changed!");
 	}
