@@ -8,8 +8,8 @@ LEGAL
 	(C) Gary Wallis 2001-2012. All Rights Reserved.
 	LICENSE file should be included in distribution.
 */
-#include "mysqlrad.h"
-#include "local.h"
+#include "../../mysqlrad.h"
+#include "../../local.h"
 #include <dirent.h>
 #include <ctype.h>
 
@@ -18,6 +18,7 @@ unsigned guMode=0;
 unsigned guLine;
 unsigned guClient=0;
 unsigned guView=0;
+unsigned guNameServer=0;
 char gcQuery[1028];
 typedef struct {
 	unsigned uSerial;
@@ -35,11 +36,17 @@ void ConnectDb(void);
 structSOA *ProcessSOA(FILE *fp);
 void ProcessRRLine(char *cLine,char *cZoneName,const unsigned uZone,const unsigned uCustId,const unsigned uNameServer);
 unsigned uStrscan(char *cIn,char *cOut[]);
+int SubmitJob(const char *cCommand, unsigned uNameServerArg, const char *cZoneArg,
+				unsigned uPriorityArg, time_t luTimeArg);
+int SubmitSingleJob(const char *cCommand,const char *cZoneArg, unsigned uNameServerArg,
+		const char *cTargetServer, unsigned uPriorityArg, time_t luTimeArg
+	       			,unsigned *uMasterJob);
 
 int main(int iArgc, char *cArg[])
 {
 
 	register unsigned n,i;
+	char cMasterIPs[100]={""};
 
 #ifdef TESTSTRSCAN
 	char *cOut[7]={NULL,NULL,NULL,NULL,NULL,NULL,NULL};
@@ -51,22 +58,25 @@ int main(int iArgc, char *cArg[])
 	exit(0);
 #endif
 
-	if(iArgc!=5)
+	if(iArgc!=6)
 	{
-		printf("usage :%s <import dir path> <tClient.uClient> <tView.cLabel> <mode: test|debug|live>\n",cArg[0]);
+		printf("usage :%s <import dir path> <tClient.uClient> <tView.cLabel>"
+				" <tNameServer.cLabel> <mode: test|debug|commit|commitwjobs>\n",cArg[0]);
 		exit(0);
 	}
 
-	if(strcmp(cArg[4],"test")==0)
+	if(strcmp(cArg[5],"test")==0)
 		guMode=1;
-	else if(strcmp(cArg[4],"debug")==0)
+	else if(strcmp(cArg[5],"debug")==0)
 		guMode=2;
-	else if(strcmp(cArg[4],"live")==0)
+	else if(strcmp(cArg[5],"commit")==0)
 		guMode=3;
+	else if(strcmp(cArg[5],"commitwjobs")==0)
+		guMode=4;
 
 	if(!guMode)
 	{
-		printf("Incorrect mode specified <mode: test|debug|live>\n");
+		printf("Incorrect mode specified <mode: test|debug|commit|commitwjobs>\n");
 		exit(1);
 	}
 
@@ -116,6 +126,28 @@ int main(int iArgc, char *cArg[])
 		exit(1);
 	}
 
+	sprintf(gcQuery,"SELECT uNameServer,cMasterIPs FROM tNameServer WHERE cLabel='%s'",cArg[4]);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(20);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&guNameServer);
+		sprintf(cMasterIPs,"%.99s",field[1]);
+	}
+	mysql_free_result(res);
+	if(!guNameServer)
+	{
+		printf("No such tNameServer.cLabel=%s\n",cArg[4]);
+		exit(1);
+	}
+	if(!cMasterIPs[0])
+		printf("!Warning no cMasterIPs for selected tNameServer set!\n");
+
 	printf("Starting import dir=%s uClient=%u guMode=%u\n",cArg[1],guClient,guMode);
 	struct dirent **direntNamelist;
 		
@@ -153,20 +185,19 @@ int main(int iArgc, char *cArg[])
 			}
 
 			//Process
-			if(strncmp(direntNamelist[i]->d_name+strlen(direntNamelist[i]->d_name)-3,".db",3))
-				sprintf(cZone,"%.100s",direntNamelist[i]->d_name);
-			else
-			{
+			//Remove standard suffixes
+			if(!strncmp(direntNamelist[i]->d_name+strlen(direntNamelist[i]->d_name)-3,".db",3))
 				direntNamelist[i]->d_name[strlen(direntNamelist[i]->d_name)-3]=0;
-				sprintf(cZone,"%.100s",direntNamelist[i]->d_name);
-			}
+			sprintf(cZone,"%.100s",FQDomainName(direntNamelist[i]->d_name));
 			if(guMode<3) printf("\n%s for zone %s\n",gcQuery,cZone);
 
 			//Major import component
 			importSOA=ProcessSOA(fp);
 
 			//Add more rule based checking of TTLs	
-			if(	importSOA->uTTL &&
+			//if(	importSOA->uTTL &&
+			//allow 0 TTL
+			if(
 				importSOA->uSerial &&
 				importSOA->uRefresh &&
 				importSOA->uRetry &&
@@ -174,20 +205,19 @@ int main(int iArgc, char *cArg[])
 				importSOA->uNegTTL &&
 				importSOA->cHostmaster[0] )
 			{
-				//All zones will belong to the default #1 NS
-				unsigned uZone=0,uNameServer=1;
+				unsigned uZone=0;
 
 				//Import zone
 				importSOA->cNameServer[strlen(importSOA->cNameServer)-1]=0;
 				importSOA->cHostmaster[strlen(importSOA->cHostmaster)-1]=0;
 
-				if(guMode==3)
+				if(guMode>=3)
 				{
 					//Allow repeat import
 					//We need to remove any possible RRs first
 					sprintf(gcQuery,"DELETE FROM tResource WHERE"
 							" uZone=(SELECT uZone FROM tZone WHERE cZone='%s' AND uOwner=%u AND uView=%u)",
-							FQDomainName(direntNamelist[i]->d_name),guClient,guView);
+								cZone,guClient,guView);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql)) 
 					{
@@ -197,7 +227,7 @@ int main(int iArgc, char *cArg[])
 					}
 					//Then we can remove the zone if it exists
 					sprintf(gcQuery,"DELETE FROM tZone WHERE cZone='%s' AND uOwner=%u AND uView=%u",
-							FQDomainName(direntNamelist[i]->d_name),guClient,guView);
+								cZone,guClient,guView);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql)) 
 					{
@@ -207,20 +237,24 @@ int main(int iArgc, char *cArg[])
 					}
 
 					//uZoneTTL is the NegTTL
-					sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNameServer=%u,uSerial=%u,uExpire=%u,"
+					//allow-transfer { key allslaves-master.;}; HACK FIX ASAP TODO
+					sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNameServer=%u,"
+						"uSerial=CONVERT(DATE_FORMAT(NOW(),'%%Y%%m%%d00'),UNSIGNED),uExpire=%u,"
 						"uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,uMailServers=0,cMainAddress='0.0.0.0',"
 						"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uModBy=0,uModDate=0,"
-						"cHostmaster='%s',uView=%u",
-							FQDomainName(direntNamelist[i]->d_name),
-							uNameServer,
-							importSOA->uSerial,
+						"cHostmaster='%s',uView=%u,"
+						"cOptions='allow-transfer { key allslaves-master.;};',"
+						"cMasterIPs='%s'",
+							cZone,
+							guNameServer,
+							//importSOA->uSerial,
 							importSOA->uExp,
 							importSOA->uRefresh,
 							importSOA->uTTL,
 							importSOA->uRetry,
 							importSOA->uNegTTL,
 							guClient,
-							importSOA->cHostmaster,guView);
+							importSOA->cHostmaster,guView,cMasterIPs);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql)) 
 					{
@@ -236,12 +270,29 @@ int main(int iArgc, char *cArg[])
 					guLine++;
 				  	//skip empty lines
 				  	if(gcQuery[0]!='\n' || gcQuery[0]!=';')
-						ProcessRRLine(gcQuery,FQDomainName(direntNamelist[i]->d_name),uZone,guClient,uNameServer);
+						ProcessRRLine(gcQuery,cZone,uZone,guClient,guNameServer);
+				}
+
+				if(guMode>=4)
+				{
+					time_t luClock;
+
+					sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+								" WHERE cZone='%.255s'",cZone);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql)) 
+					{
+						printf("%s\n",mysql_error(&gMysql));
+						fclose(fp);
+						exit(1);
+					}
+					time(&luClock);
+					SubmitJob("Modify New",guNameServer,cZone,0,luClock);
 				}
 			}
 			else
 			{
-				printf("Error: ProcessSOA() failed!\n");
+				printf("Error %s: ProcessSOA() failed!\n",cZone);
 			}
 			fclose(fp);
 		}
@@ -803,7 +854,7 @@ void ProcessRRLine(char *cLine,char *cZoneName,const unsigned uZone,const unsign
 
 
 	//Commit to db
-	if(guMode==3)
+	if(guMode>=3)
 	{
 		if(uRRType==6)//TXT special case
 			sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',"
@@ -910,3 +961,127 @@ unsigned uStrscan(char *cIn,char *cOut[])
 	cIn[i]=0;
 	return(j);
 }//unsigned uStrscan();
+
+
+int SubmitJob(const char *cCommand, unsigned uNameServerArg, const char *cZoneArg,
+				unsigned uPriorityArg, time_t luTimeArg)
+{
+	MYSQL_RES *res2;
+	MYSQL_ROW field;
+	static unsigned uMasterJob=0;
+	static char cTargetServer[101]={""};
+
+	//Submit one job per EACH NS in the list, group with
+	//uMasterJob
+	sprintf(gcQuery,"SELECT cList FROM tNameServer WHERE uNameServer=%u",
+			uNameServerArg);
+
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+	{
+		printf("Error %s: %s\n",gcQuery,mysql_error(&gMysql));
+		exit(1);
+	}
+	res2=mysql_store_result(&gMysql);
+	
+	if((field=mysql_fetch_row(res2)))
+	{
+		register int i,j=0;
+
+		for(i=0;i<strlen(field[0]);i++)
+		{
+			if(field[0][i]!='\n' && field[0][i])
+			{
+				cTargetServer[j++]=field[0][i];
+			}
+			else
+			{
+				cTargetServer[j]=0;
+				j=0;
+
+				if(SubmitSingleJob(cCommand,cZoneArg,uNameServerArg,
+					cTargetServer,uPriorityArg,luTimeArg,&uMasterJob))
+				{
+					printf("Error %s: %s\n",gcQuery,mysql_error(&gMysql));
+					exit(1);
+				}
+			}//if else
+		}//for
+	}//if field
+	mysql_free_result(res2);
+
+	return(0);
+
+}//int SubmitJob()
+
+
+int SubmitSingleJob(const char *cCommand,const char *cZoneArg, unsigned uNameServerArg,
+		const char *cTargetServer, unsigned uPriorityArg, time_t luTimeArg
+	       			,unsigned *uMasterJob)
+{
+	MYSQL_RES *res;
+
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE cJob='%s' AND cZone='%s' AND uNameServer=%u AND cTargetServer='%s'",
+				cCommand,cZoneArg,uNameServerArg,cTargetServer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+	{
+		printf("Error %s: %s\n",gcQuery,mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	
+	if(mysql_num_rows(res)==0)
+	{
+		unsigned uJob;
+
+		sprintf(gcQuery,"INSERT INTO tJob SET cJob='%s',cZone='%s',"
+				"uNameServer=%u,cTargetServer='%s',uPriority=%u,uTime=%lu,"
+				"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			cCommand,
+			cZoneArg,
+			uNameServerArg,
+			cTargetServer,
+			uPriorityArg,
+			luTimeArg,
+			guClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_error(&gMysql)[0])
+		{
+			mysql_free_result(res);
+			return(1);
+		}
+
+		if(*uMasterJob == 0)
+		{
+			uJob=*uMasterJob=mysql_insert_id(&gMysql);
+			if(!strstr(cTargetServer,"MASTER"))
+			{
+				printf("Master must be first\n");
+				exit(1);
+			}
+		}
+		else
+		{
+			uJob=mysql_insert_id(&gMysql);
+		}
+	
+		sprintf(gcQuery,"UPDATE tJob SET uMasterJob=%u WHERE uJob=%u",*uMasterJob,uJob);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
+		{
+			printf("Error %s: %s\n",gcQuery,mysql_error(&gMysql));
+			exit(1);
+		}
+		if(mysql_affected_rows(&gMysql)==0)
+		{
+			if(guMode<3);
+				printf("uMasterJob %u",*uMasterJob);
+		}
+	}
+	mysql_free_result(res);
+
+	return(0);
+
+}//int SubmitSingleJob()
+
