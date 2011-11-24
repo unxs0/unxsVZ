@@ -118,7 +118,7 @@ int main(int iArgc, char *cArg[])
 	static char cPrevZoneName[100]={""};
 	static char cPrevcName[100]={""};
 	unsigned uItems=0;
-	unsigned uZone=0;
+	unsigned uZone;
 	static unsigned uPrevTTL=0;//Has to be reset every new cZoneName
 	unsigned uTTL=0;
 
@@ -173,14 +173,96 @@ int main(int iArgc, char *cArg[])
 		}
 		if(guMode<3) printf("%u.%s. IN PTR %s\n",d,cZoneName,cParam3);
 
+
 		//If zone does not exist create. Add uZone if guMode>=commit
-		//Get uZone
+		if(guMode>2)
+		{
+			MYSQL_RES *res;
+			MYSQL_ROW field;
 
-		//If RR exists continue
+			//Get uZone
+			uZone=0;
+			sprintf(gcQuery,"SELECT uZone FROM tZone WHERE uView=%u AND cZone='%s'",guView,cZoneName);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql)) 
+			{
+				printf("Error %s: %s\n",cZoneName,mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uZone);
+			mysql_free_result(res);
 
-		//Add uResource
+			if(!uZone)
+			{
+				sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNameServer=%u,"
+						"uSerial=CONVERT(DATE_FORMAT(NOW(),'%%Y%%m%%d00'),UNSIGNED),uExpire=%u,"
+						"uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,uMailServers=0,cMainAddress='0.0.0.0',"
+						"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uModBy=0,uModDate=0,"
+						"cHostmaster='%s',uView=%u,"
+						"cOptions='allow-transfer { key allslaves-master.;};',"
+						"cMasterIPs='%s'",
+							cZoneName,
+							guNameServer,
+							//importSOA->uSerial,
+							importSOA->uExp,
+							importSOA->uRefresh,
+							importSOA->uTTL,
+							importSOA->uRetry,
+							importSOA->uNegTTL,
+							guClient,
+							importSOA->cHostmaster,guView,cMasterIPs);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					fclose(fp);
+					exit(1);
+				}
+				uZone=mysql_insert_id(&gMysql);
+			}
 
-		//Depending on what was added and guMode create jobs
+			//If RR exists skip to next line
+			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE uZone=%u AND cName='' AND uRRType=999"
+					" AND cParam1=''",uZone);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql)) 
+			{
+				printf("Error %s: %s\n",cZoneName,mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				mysql_free_result(res);
+				continue;
+			}
+			mysql_free_result(res);
+
+
+			//Add uResource
+			sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%s',uTTL=%u,uRRType=%u,"
+					"cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',"
+					"cComment='idns-importarpaptrs',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+					,uZone
+					,FQDomainName(cNamePlus)
+					,uTTL
+					,uRRType
+					,FQDomainName(cParam1)
+					,FQDomainName(cParam2)
+					,FQDomainName(cParam3)
+					,FQDomainName(cParam4)
+					,uCustId);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql)) 
+				printf("Error %s: %s\n",cZoneName,mysql_error(&gMysql));
+
+			//Depending on what was added and guMode create jobs
+			if(guMode==4)
+			{
+			}
+		}
 	
 	}
 
