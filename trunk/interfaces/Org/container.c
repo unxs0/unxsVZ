@@ -610,16 +610,19 @@ void ContainerCommands(pentry entries[], int x)
 
 
 			printf("Content-type: text/plain\n\n");
-			printf("uContainer,cLabel,cHostname,cDatacenter,cNode,cGroup\n");
+			printf("uContainer,cLabel,cHostname,cDatacenter,cNode,cGroup,cTemplate\n");
 
 			sprintf(gcQuery,"SELECT tContainer.uContainer,"
 					" tContainer.cLabel,"
 					" tContainer.cHostname,"
 					" tDatacenter.cLabel,"
-					" tNode.cLabel"
-					" FROM tContainer,tDatacenter,tNode"
-					" WHERE tContainer.uDatacenter=tDatacenter.uDatacenter"
-					" AND tContainer.uNode=tNode.uNode AND tContainer.uSource=0");
+					" tNode.cLabel,"
+					" tOSTemplate.cLabel"
+					" FROM tContainer,tDatacenter,tNode,tOSTemplate"
+					" WHERE tContainer.uDatacenter=tDatacenter.uDatacenter AND"
+					" tContainer.uNode=tNode.uNode AND"
+					" tOSTemplate.uOSTemplate=tContainer.uOSTemplate AND"
+					" tContainer.uSource=0");
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -640,7 +643,7 @@ void ContainerCommands(pentry entries[], int x)
 					sprintf(cGroup,"%.32s",field2[0]);
 				mysql_free_result(res2);
 
-				printf("%s,%s,%s,%s,%s,%s\n",field[0],field[1],field[2],field[3],field[4],cGroup);
+				printf("%s,%s,%s,%s,%s,%s,%s\n",field[0],field[1],field[2],field[3],field[4],cGroup,field[5]);
 			}
 			mysql_free_result(res);
 			exit(0);
