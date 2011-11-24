@@ -32,9 +32,6 @@ int SubmitSingleJob(const char *cCommand,const char *cZoneArg, unsigned uNameSer
 int main(int iArgc, char *cArg[])
 {
 
-	register unsigned n,i;
-	char cMasterIPs[100]={""};
-
 	if(iArgc!=5)
 	{
 		printf("usage :%s <import file spec> <tClient.uClient> <tView.cLabel>"
@@ -112,14 +109,79 @@ int main(int iArgc, char *cArg[])
 		exit(4);
 	}
 
+	char cParam1[256]={""};
+	char cParam2[256]={""};
+	char cParam3[256]={""};
+	char cParam4[256]={""};
+	static char cName[256]={""};
+	static char cZoneName[100]={""};
+	static char cPrevZoneName[100]={""};
+	static char cPrevcName[100]={""};
+	unsigned uItems=0;
+	unsigned uZone=0;
+	static unsigned uPrevTTL=0;//Has to be reset every new cZoneName
+	unsigned uTTL=0;
+
 	while(fgets(gcQuery,1027,fp)!=NULL)
 	{
-		char cZone[101]={""};
 		guLine++;
-		//skip empty lines
-		if(gcQuery[0]!='\n' || gcQuery[0]!=';')
+		//skip empty lines and comments
+		if(gcQuery[0]=='\n' || gcQuery[0]==';')
+			continue;
 
-		printf("%s",gcQuery);
+		//echo all lines
+		if(guMode==2) printf("%s",gcQuery);
+
+		char *cOut[7]={NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+		uItems=uStrscan(gcQuery,cOut);
+		if(uItems==0)
+		{
+			if(guMode==2) printf("uItems 0 case1\n");
+			continue;
+		}
+		if(cOut[0]!=NULL)
+			sprintf(cName,"%.255s",cOut[0]);
+		if(cOut[1]!=NULL)
+			sprintf(cParam1,"%.255s",cOut[1]);
+		if(cOut[2]!=NULL)
+			sprintf(cParam2,"%.255s",cOut[2]);
+		if(cOut[3]!=NULL)
+			sprintf(cParam3,"%.255s",cOut[3]);
+		if(cOut[4]!=NULL)
+			sprintf(cParam4,"%.255s",cOut[4]);
+		if(guMode==2) printf("cName=%s cParam1=%s cParam2=%s cParam3=%s cParam4=%s\n",cName,cParam1,cParam2,cParam3,cParam4);
+
+
+		//TODO
+		//Initial support must have IN and no TTLs
+		if(strcasecmp(cParam2,"PTR"))
+			continue;
+
+		//Parse zone name
+		unsigned a,b,c,d;
+		sscanf(cName,"%u.%u.%u.%u.in-addr.arpa",&d,&c,&b,&a);
+		sprintf(cZoneName,"%u.%u.%u.in-addr.arpa",c,b,a);
+
+		static char cPrevOrigin[100]={""};
+		if(strcmp(cZoneName,cPrevZoneName))
+		{
+			sprintf(cPrevZoneName,"%.99s",cZoneName);
+			uPrevTTL=0;
+			cPrevOrigin[0]=0;
+			cPrevcName[0]=0;
+			if(guMode==2) printf("cZoneName=%s\n",cZoneName);
+		}
+		if(guMode<3) printf("%u.%s. IN PTR %s\n",d,cZoneName,cParam3);
+
+		//If zone does not exist create. Add uZone if guMode>=commit
+		//Get uZone
+
+		//If RR exists continue
+
+		//Add uResource
+
+		//Depending on what was added and guMode create jobs
+	
 	}
 
 	fclose(fp);
