@@ -304,7 +304,7 @@ int main(int iArgc, char *cArg[])
 void ConnectDb(void)
 {
         mysql_init(&gMysql);
-        if(!mysql_real_connect(&gMysql,DBIP,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
+        if(!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
 	{
 		printf("Could not connect to MySQL server\n");
 		exit(0);
