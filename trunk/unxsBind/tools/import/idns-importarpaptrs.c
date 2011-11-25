@@ -296,24 +296,24 @@ int main(int iArgc, char *cArg[])
 				uAddedSomething++;
 				if(guDebug) printf("Resource added %u.%s.\n",d,cZoneName);
 		}
+	}
 
-		if(guMode==4 && uAddedSomething)
+	if(guMode==4 && uAddedSomething)
+	{
+		time_t luClock;
+
+		sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+					" WHERE uZone=%u",uZone);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql)) 
 		{
-			time_t luClock;
-
-			sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
-						" WHERE uZone=%u",uZone);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql)) 
-			{
-				printf("%s\n",mysql_error(&gMysql));
-				fclose(fp);
-				exit(1);
-			}
-			time(&luClock);
-			SubmitJob("New",guNameServer,FQDomainName(cZoneName),0,luClock);
-			if(guDebug) printf("New job created for %s\n",cZoneName);
+			printf("%s\n",mysql_error(&gMysql));
+			fclose(fp);
+			exit(1);
 		}
+		time(&luClock);
+		SubmitJob("New",guNameServer,FQDomainName(cZoneName),0,luClock);
+		if(guDebug) printf("New job created for %s\n",cZoneName);
 	}
 
 	fclose(fp);
