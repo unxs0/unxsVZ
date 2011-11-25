@@ -287,7 +287,7 @@ int main(int iArgc, char *cArg[])
 						exit(1);
 					}
 					time(&luClock);
-					SubmitJob("Modify New",guNameServer,cZone,0,luClock);
+					SubmitJob("New",guNameServer,cZone,0,luClock);
 				}
 			}
 			else
