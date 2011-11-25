@@ -22,7 +22,15 @@ idns-importzones: idns-importzones.o
 idns-importzones.o: idns-importzones.c ../../local.h ../../mysqlrad.h
 	cc -c idns-importzones.c -o idns-importzones.o $(CFLAGS)
 
-install: idns-importzones idns-importarpaptrs
+install-arpa: idns-importarpaptrs
+	install -s idns-importarpaptrs /usr/sbin/idns-importarpaptrs
+	rm -f idns-importarpaptrs
+
+install-zones: idns-importzones
+	install -s idns-importzones /usr/sbin/idns-importzones
+	rm -f idns-importzones
+
+install-all: idns-importzones idns-importarpaptrs
 	install -s idns-importzones /usr/sbin/idns-importzones
 	rm -f idns-importzones
 	install -s idns-importarpaptrs /usr/sbin/idns-importarpaptrs

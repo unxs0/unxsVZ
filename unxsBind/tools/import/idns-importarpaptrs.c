@@ -18,6 +18,7 @@ unsigned guMode=0;
 unsigned guLine;
 unsigned guClient=0;
 unsigned guView=0;
+unsigned guSOAZone=0;
 char gcQuery[1028];
 
 //TOC
@@ -32,20 +33,20 @@ int SubmitSingleJob(const char *cCommand,const char *cZoneArg, unsigned uNameSer
 int main(int iArgc, char *cArg[])
 {
 
-	if(iArgc!=5)
+	if(iArgc!=6)
 	{
 		printf("usage :%s <import file spec> <tClient.uClient> <tView.cLabel>"
-				" <mode: test|debug|commit|commitwjobs>\n",cArg[0]);
+				" <SOA source tZone.uZone> <mode: test|debug|commit|commitwjobs>\n",cArg[0]);
 		exit(0);
 	}
 
-	if(strcmp(cArg[4],"test")==0)
+	if(strcmp(cArg[5],"test")==0)
 		guMode=1;
-	else if(strcmp(cArg[4],"debug")==0)
+	else if(strcmp(cArg[5],"debug")==0)
 		guMode=2;
-	else if(strcmp(cArg[4],"commit")==0)
+	else if(strcmp(cArg[5],"commit")==0)
 		guMode=3;
-	else if(strcmp(cArg[4],"commitwjobs")==0)
+	else if(strcmp(cArg[5],"commitwjobs")==0)
 		guMode=4;
 
 	if(!guMode)
@@ -63,7 +64,6 @@ int main(int iArgc, char *cArg[])
 
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-
 	ConnectDb();
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient=%u",guClient);
@@ -74,6 +74,7 @@ int main(int iArgc, char *cArg[])
 		exit(20);
 	}
 	res=mysql_store_result(&gMysql);
+	guClient=0;
 	if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&guClient);
 	mysql_free_result(res);
@@ -100,12 +101,37 @@ int main(int iArgc, char *cArg[])
 		exit(1);
 	}
 
+	sscanf(cArg[4],"%u",&guSOAZone);
+	if(!guSOAZone)
+	{
+		printf("Could not sscanf for guSOAZone%s\n",cArg[4]);
+		exit(1);
+	}
+
+	sprintf(gcQuery,"SELECT uZone FROM tZone WHERE uZone=%u",guSOAZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(20);
+	}
+	res=mysql_store_result(&gMysql);
+	guSOAZone=0;
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&guSOAZone);
+	mysql_free_result(res);
+	if(!guSOAZone)
+	{
+		printf("No such guSOAZone=%s\n",cArg[4]);
+		exit(1);
+	}
+
 	printf("Starting import from file=%s uClient=%u guMode=%u\n",cArg[1],guClient,guMode);
 	FILE *fp;
 
 	if(!(fp=fopen(cArg[1],"r")))
 	{
-		printf("Error: Could not open: %s\n",gcQuery);
+		printf("Error: Could not open: %s\n",cArg[1]);
 		exit(4);
 	}
 
@@ -119,8 +145,9 @@ int main(int iArgc, char *cArg[])
 	static char cPrevcName[100]={""};
 	unsigned uItems=0;
 	unsigned uZone;
-	static unsigned uPrevTTL=0;//Has to be reset every new cZoneName
+	unsigned uRRType=7;
 	unsigned uTTL=0;
+	static unsigned uPrevTTL=0;//Has to be reset every new cZoneName
 
 	while(fgets(gcQuery,1027,fp)!=NULL)
 	{
@@ -150,7 +177,6 @@ int main(int iArgc, char *cArg[])
 		if(cOut[4]!=NULL)
 			sprintf(cParam4,"%.255s",cOut[4]);
 		if(guMode==2) printf("cName=%s cParam1=%s cParam2=%s cParam3=%s cParam4=%s\n",cName,cParam1,cParam2,cParam3,cParam4);
-
 
 		//TODO
 		//Initial support must have IN and no TTLs
@@ -196,23 +222,20 @@ int main(int iArgc, char *cArg[])
 
 			if(!uZone)
 			{
-				sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNameServer=%u,"
-						"uSerial=CONVERT(DATE_FORMAT(NOW(),'%%Y%%m%%d00'),UNSIGNED),uExpire=%u,"
-						"uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,uMailServers=0,cMainAddress='0.0.0.0',"
-						"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uModBy=0,uModDate=0,"
-						"cHostmaster='%s',uView=%u,"
-						"cOptions='allow-transfer { key allslaves-master.;};',"
-						"cMasterIPs='%s'",
+				//Requires MySQL>=5.1 for select from same table
+				sprintf(gcQuery,"INSERT INTO tZone"
+						" (cZone,uNameServer,uSerial,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
+						"uMailServers,cMainAddress,uOwner,uCreatedBy,uCreatedDate,"
+						"cHostmaster,uView,cOptions,cMasterIPs)"
+						" SELECT '%s',uNameServer,CONVERT(DATE_FORMAT(NOW(),'%%Y%%m%%d00'),UNSIGNED),"
+								"uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
+						"uMailServers,cMainAddress,%u,1,UNIX_TIMESTAMP(NOW()),"
+						"cHostmaster,%u,cOptions,cMasterIPs"
+						" FROM tZone WHERE uZone=%u",
 							cZoneName,
-							guNameServer,
-							//importSOA->uSerial,
-							importSOA->uExp,
-							importSOA->uRefresh,
-							importSOA->uTTL,
-							importSOA->uRetry,
-							importSOA->uNegTTL,
 							guClient,
-							importSOA->cHostmaster,guView,cMasterIPs);
+							guView,
+							guSOAZone);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql)) 
 				{
@@ -222,38 +245,37 @@ int main(int iArgc, char *cArg[])
 				}
 				uZone=mysql_insert_id(&gMysql);
 			}
-
-			//If RR exists skip to next line
-			sprintf(gcQuery,"SELECT uResource FROM tResource WHERE uZone=%u AND cName='' AND uRRType=999"
-					" AND cParam1=''",uZone);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql)) 
+			else
 			{
-				printf("Error %s: %s\n",cZoneName,mysql_error(&gMysql));
-				continue;
-			}
-			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-			{
+				//If RR exists skip to next line
+				sprintf(gcQuery,"SELECT uResource FROM tResource WHERE uZone=%u AND cName='' AND uRRType=7"
+						" AND cParam1=''",uZone);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					printf("Error %s: %s\n",cZoneName,mysql_error(&gMysql));
+					continue;
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					mysql_free_result(res);
+					continue;
+				}
 				mysql_free_result(res);
-				continue;
 			}
-			mysql_free_result(res);
 
 
 			//Add uResource
 			sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%s',uTTL=%u,uRRType=%u,"
-					"cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',"
+					"cParam1='%s',"
 					"cComment='idns-importarpaptrs',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 					,uZone
-					,FQDomainName(cNamePlus)
+					,FQDomainName(cZoneName)
 					,uTTL
 					,uRRType
-					,FQDomainName(cParam1)
-					,FQDomainName(cParam2)
 					,FQDomainName(cParam3)
-					,FQDomainName(cParam4)
-					,uCustId);
+					,guClient);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql)) 
 				printf("Error %s: %s\n",cZoneName,mysql_error(&gMysql));
@@ -263,7 +285,6 @@ int main(int iArgc, char *cArg[])
 			{
 			}
 		}
-	
 	}
 
 	fclose(fp);
