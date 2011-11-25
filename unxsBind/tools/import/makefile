@@ -9,7 +9,7 @@ CFLAGS= -DLinux -Wall
 #centos
 LIBS= /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl /usr/lib/openisp/libucidr.a
 #debian
-LIBS= /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm /usr/lib/openisp/libucidr.a
+#LIBS= /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm /usr/lib/openisp/libucidr.a
 
 all: idns-importzones idns-importarpaptrs
 
