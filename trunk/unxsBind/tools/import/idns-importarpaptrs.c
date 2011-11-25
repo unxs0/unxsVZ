@@ -19,6 +19,7 @@ unsigned guLine;
 unsigned guClient=0;
 unsigned guView=0;
 unsigned guSOAZone=0;
+unsigned guNameServer=0;
 char gcQuery[1028];
 
 //TOC
@@ -108,7 +109,7 @@ int main(int iArgc, char *cArg[])
 		exit(1);
 	}
 
-	sprintf(gcQuery,"SELECT uZone FROM tZone WHERE uZone=%u",guSOAZone);
+	sprintf(gcQuery,"SELECT uZone,uNameServer FROM tZone WHERE uZone=%u",guSOAZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
 	{
@@ -118,7 +119,10 @@ int main(int iArgc, char *cArg[])
 	res=mysql_store_result(&gMysql);
 	guSOAZone=0;
 	if((field=mysql_fetch_row(res)))
+	{
 		sscanf(field[0],"%u",&guSOAZone);
+		sscanf(field[1],"%u",&guNameServer);
+	}
 	mysql_free_result(res);
 	if(!guSOAZone)
 	{
@@ -139,15 +143,16 @@ int main(int iArgc, char *cArg[])
 	char cParam2[256]={""};
 	char cParam3[256]={""};
 	char cParam4[256]={""};
-	static char cName[256]={""};
-	static char cZoneName[100]={""};
-	static char cPrevZoneName[100]={""};
-	static char cPrevcName[100]={""};
+	char cName[256]={""};
+	char cZoneName[100]={""};
+	char cPrevZoneName[100]={""};
+	char cPrevcName[100]={""};
 	unsigned uItems=0;
 	unsigned uZone;
 	unsigned uRRType=7;
 	unsigned uTTL=0;
-	static unsigned uPrevTTL=0;//Has to be reset every new cZoneName
+	unsigned uNewZone=0;
+	unsigned uPrevTTL=0;//Has to be reset every new cZoneName
 
 	while(fgets(gcQuery,1027,fp)!=NULL)
 	{
@@ -232,7 +237,7 @@ int main(int iArgc, char *cArg[])
 						"uMailServers,cMainAddress,%u,1,UNIX_TIMESTAMP(NOW()),"
 						"cHostmaster,%u,cOptions,cMasterIPs"
 						" FROM tZone WHERE uZone=%u",
-							cZoneName,
+							FQDomainName(cZoneName),
 							guClient,
 							guView,
 							guSOAZone);
@@ -244,12 +249,15 @@ int main(int iArgc, char *cArg[])
 					exit(1);
 				}
 				uZone=mysql_insert_id(&gMysql);
+				uNewZone=1;
 			}
 			else
 			{
 				//If RR exists skip to next line
-				sprintf(gcQuery,"SELECT uResource FROM tResource WHERE uZone=%u AND cName='' AND uRRType=7"
-						" AND cParam1=''",uZone);
+				sprintf(gcQuery,"SELECT uResource FROM tResource WHERE uZone=%u AND ( cName='%u' OR "
+						"cName='%u.%s.')"
+						" AND uRRType=7"
+						" AND cParam1='%s'",uZone,d,d,FQDomainName(cZoneName),FQDomainName(cParam3));
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql)) 
 				{
@@ -267,11 +275,11 @@ int main(int iArgc, char *cArg[])
 
 
 			//Add uResource
-			sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%s',uTTL=%u,uRRType=%u,"
+			sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%u',uTTL=%u,uRRType=%u,"
 					"cParam1='%s',"
 					"cComment='idns-importarpaptrs',uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 					,uZone
-					,FQDomainName(cZoneName)
+					,d
 					,uTTL
 					,uRRType
 					,FQDomainName(cParam3)
@@ -283,6 +291,22 @@ int main(int iArgc, char *cArg[])
 			//Depending on what was added and guMode create jobs
 			if(guMode==4)
 			{
+				time_t luClock;
+
+				sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uZone=%u",uZone);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					fclose(fp);
+					exit(1);
+				}
+				time(&luClock);
+				if(uNewZone)
+					SubmitJob("New",guNameServer,FQDomainName(cZoneName),0,luClock);
+				else
+					SubmitJob("Modify",guNameServer,FQDomainName(cZoneName),0,luClock);
 			}
 		}
 	}
