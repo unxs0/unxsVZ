@@ -20,15 +20,15 @@ unsigned guLine;
 unsigned guClient=0;
 unsigned guView=0;
 unsigned guSOAZone=0;
-unsigned guNameServer=0;
+unsigned guNSSet=0;
 char gcQuery[1028];
 
 //TOC
 void ConnectDb(void);
 unsigned uStrscan(char *cIn,char *cOut[]);
-int SubmitJob(const char *cCommand, unsigned uNameServerArg, const char *cZoneArg,
+int SubmitJob(const char *cCommand, unsigned uNSSetArg, const char *cZoneArg,
 				unsigned uPriorityArg, time_t luTimeArg);
-int SubmitSingleJob(const char *cCommand,const char *cZoneArg, unsigned uNameServerArg,
+int SubmitSingleJob(const char *cCommand,const char *cZoneArg, unsigned uNSSetArg,
 		const char *cTargetServer, unsigned uPriorityArg, time_t luTimeArg
 	       			,unsigned *uMasterJob);
 
@@ -114,7 +114,8 @@ int main(int iArgc, char *cArg[])
 		exit(1);
 	}
 
-	sprintf(gcQuery,"SELECT uZone,uNameServer FROM tZone WHERE uZone=%u",guSOAZone);
+	//sprintf(gcQuery,"SELECT uZone,uNameServer FROM tZone WHERE uZone=%u",guSOAZone);
+	sprintf(gcQuery,"SELECT uZone,uNSSet FROM tZone WHERE uZone=%u",guSOAZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
 	{
@@ -126,7 +127,7 @@ int main(int iArgc, char *cArg[])
 	if((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&guSOAZone);
-		sscanf(field[1],"%u",&guNameServer);
+		sscanf(field[1],"%u",&guNSSet);
 	}
 	mysql_free_result(res);
 	if(!guSOAZone)
@@ -206,6 +207,25 @@ int main(int iArgc, char *cArg[])
 			cPrevOrigin[0]=0;
 			cPrevcName[0]=0;
 			if(guDebug==2) printf("cZoneName=%s\n",cZoneName);
+			//if(guMode==4 && uAddedSomething && uZone)
+			if(guMode==4 && uZone)
+			{
+				time_t luClock;
+	
+				sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uZone=%u",uZone);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					fclose(fp);
+					exit(1);
+				}
+				time(&luClock);
+				SubmitJob("New",guNSSet,FQDomainName(cZoneName),0,luClock);
+				if(guDebug) printf("New job created for %s\n",cZoneName);
+			}
+			uAddedSomething=0;
 		}
 		if(guDebug==1 || guDebug==2) printf("%u.%s. IN PTR %s\n",d,cZoneName,cParam3);
 
@@ -234,13 +254,13 @@ int main(int iArgc, char *cArg[])
 			{
 				//Requires MySQL>=5.1 for select from same table
 				sprintf(gcQuery,"INSERT INTO tZone"
-						" (cZone,uNameServer,uSerial,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
+						" (cZone,uNSSet,uSerial,uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
 						"uMailServers,cMainAddress,uOwner,uCreatedBy,uCreatedDate,"
-						"cHostmaster,uView,cOptions,cMasterIPs)"
-						" SELECT '%s',uNameServer,CONVERT(DATE_FORMAT(NOW(),'%%Y%%m%%d00'),UNSIGNED),"
+						"cHostmaster,uView,cOptions)"
+						" SELECT '%s',uNSSet,CONVERT(DATE_FORMAT(NOW(),'%%Y%%m%%d00'),UNSIGNED),"
 								"uExpire,uRefresh,uTTL,uRetry,uZoneTTL,"
 						"uMailServers,cMainAddress,%u,1,UNIX_TIMESTAMP(NOW()),"
-						"cHostmaster,%u,cOptions,cMasterIPs"
+						"cHostmaster,%u,cOptions"
 						" FROM tZone WHERE uZone=%u",
 							FQDomainName(cZoneName),
 							guClient,
@@ -249,7 +269,7 @@ int main(int iArgc, char *cArg[])
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql)) 
 				{
-					printf("%s\n",mysql_error(&gMysql));
+					printf("INSERT tZone error %s\n",mysql_error(&gMysql));
 					fclose(fp);
 					exit(1);
 				}
@@ -295,13 +315,15 @@ int main(int iArgc, char *cArg[])
 			else
 				uAddedSomething++;
 				if(guDebug) printf("Resource added %u.%s.\n",d,cZoneName);
+
 		}
 	}
 
-	if(guMode==4 && uAddedSomething)
+	//if(guMode==4 && uAddedSomething && uZone)
+	if(guMode==4 && uZone)
 	{
 		time_t luClock;
-
+	
 		sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
 					" WHERE uZone=%u",uZone);
 		mysql_query(&gMysql,gcQuery);
@@ -312,10 +334,9 @@ int main(int iArgc, char *cArg[])
 			exit(1);
 		}
 		time(&luClock);
-		SubmitJob("New",guNameServer,FQDomainName(cZoneName),0,luClock);
+		SubmitJob("New",guNSSet,FQDomainName(cZoneName),0,luClock);
 		if(guDebug) printf("New job created for %s\n",cZoneName);
 	}
-
 	fclose(fp);
 	return(0);
 }//main()
@@ -391,66 +412,55 @@ unsigned uStrscan(char *cIn,char *cOut[])
 }//unsigned uStrscan();
 
 
-int SubmitJob(const char *cCommand, unsigned uNameServerArg, const char *cZoneArg,
+int SubmitJob(const char *cCommand, unsigned uNSSetArg, const char *cZoneArg,
 				unsigned uPriorityArg, time_t luTimeArg)
 {
-	MYSQL_RES *res2;
+	MYSQL_RES *res;
 	MYSQL_ROW field;
 	static unsigned uMasterJob=0;
-	static char cTargetServer[101]={""};
+	char cTargetServer[100];
 
-	//Submit one job per EACH NS in the list, group with
-	//uMasterJob
-	sprintf(gcQuery,"SELECT cList FROM tNameServer WHERE uNameServer=%u",
-			uNameServerArg);
+	sprintf(gcQuery,"SELECT tNS.cFQDN,tNSType.cLabel FROM tNSSet,tNS,tNSType,tServer"
+			" WHERE tNSSet.uNSSet=tNS.uNSSet AND tNS.uServer=tServer.uServer AND"
+			" tNS.uNSType=tNSType.uNSType AND tNSSet.uNSSet=%u ORDER BY tNSType.uNSType",
+			uNSSetArg);
 
 	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) 
+	if(mysql_errno(&gMysql))
 	{
 		printf("Error %s: %s\n",gcQuery,mysql_error(&gMysql));
 		exit(1);
 	}
-	res2=mysql_store_result(&gMysql);
+	res=mysql_store_result(&gMysql);
 	
-	if((field=mysql_fetch_row(res2)))
+	while((field=mysql_fetch_row(res)))
 	{
-		register int i,j=0;
+		//cTargetServer is really the target NS with the type qualification
+		//Do not confuse with tServer based partions of zones and tNS NSs.
+		sprintf(cTargetServer,"%.64s %.32s",field[0],field[1]);
 
-		for(i=0;i<strlen(field[0]);i++)
+		if(SubmitSingleJob(cCommand,cZoneArg,uNSSetArg,
+				cTargetServer,uPriorityArg,luTimeArg,&uMasterJob))
 		{
-			if(field[0][i]!='\n' && field[0][i])
-			{
-				cTargetServer[j++]=field[0][i];
-			}
-			else
-			{
-				cTargetServer[j]=0;
-				j=0;
-
-				if(SubmitSingleJob(cCommand,cZoneArg,uNameServerArg,
-					cTargetServer,uPriorityArg,luTimeArg,&uMasterJob))
-				{
-					printf("Error %s: %s\n",gcQuery,mysql_error(&gMysql));
-					exit(1);
-				}
-			}//if else
-		}//for
+			printf("Error %s: %s\n",gcQuery,mysql_error(&gMysql));
+			exit(1);
+		}
 	}//if field
-	mysql_free_result(res2);
+	mysql_free_result(res);
 
 	return(0);
 
 }//int SubmitJob()
 
 
-int SubmitSingleJob(const char *cCommand,const char *cZoneArg, unsigned uNameServerArg,
+int SubmitSingleJob(const char *cCommand,const char *cZoneArg, unsigned uNSSetArg,
 		const char *cTargetServer, unsigned uPriorityArg, time_t luTimeArg
 	       			,unsigned *uMasterJob)
 {
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE cJob='%s' AND cZone='%s' AND uNameServer=%u AND cTargetServer='%s'",
-				cCommand,cZoneArg,uNameServerArg,cTargetServer);
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE cJob='%s' AND cZone='%s' AND uNSSet=%u AND cTargetServer='%s'",
+				cCommand,cZoneArg,uNSSetArg,cTargetServer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
 	{
@@ -464,11 +474,11 @@ int SubmitSingleJob(const char *cCommand,const char *cZoneArg, unsigned uNameSer
 		unsigned uJob;
 
 		sprintf(gcQuery,"INSERT INTO tJob SET cJob='%s',cZone='%s',"
-				"uNameServer=%u,cTargetServer='%s',uPriority=%u,uTime=%lu,"
+				"uNSSet=%u,cTargetServer='%s',uPriority=%u,uTime=%lu,"
 				"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cCommand,
 			cZoneArg,
-			uNameServerArg,
+			uNSSetArg,
 			cTargetServer,
 			uPriorityArg,
 			luTimeArg,
