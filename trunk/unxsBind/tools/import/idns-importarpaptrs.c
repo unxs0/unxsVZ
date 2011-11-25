@@ -15,6 +15,7 @@ LEGAL
 
 MYSQL gMysql;
 unsigned guMode=0;
+unsigned guDebug=0;
 unsigned guLine;
 unsigned guClient=0;
 unsigned guView=0;
@@ -37,22 +38,26 @@ int main(int iArgc, char *cArg[])
 	if(iArgc!=6)
 	{
 		printf("usage :%s <import file spec> <tClient.uClient> <tView.cLabel>"
-				" <SOA source tZone.uZone> <mode: test|debug|commit|commitwjobs>\n",cArg[0]);
+				" <SOA source tZone.uZone> <mode: test|commit|jobs optionally w/+debug>\n",cArg[0]);
 		exit(0);
 	}
 
-	if(strcmp(cArg[5],"test")==0)
+	if(strstr(cArg[5],"test"))
+	{
+		guDebug=1;
 		guMode=1;
-	else if(strcmp(cArg[5],"debug")==0)
-		guMode=2;
-	else if(strcmp(cArg[5],"commit")==0)
+	}
+	else if(strstr(cArg[5],"commit"))
 		guMode=3;
-	else if(strcmp(cArg[5],"commitwjobs")==0)
+	else if(strstr(cArg[5],"jobs"))
 		guMode=4;
+
+	if(strstr(cArg[5],"debug"))
+		guDebug=2;
 
 	if(!guMode)
 	{
-		printf("Incorrect mode specified <mode: test|debug|commit|commitwjobs>\n");
+		printf("Incorrect mode specified <mode: test|commit|jobs optionally w/+debug>\n");
 		exit(1);
 	}
 
@@ -130,7 +135,7 @@ int main(int iArgc, char *cArg[])
 		exit(1);
 	}
 
-	printf("Starting import from file=%s uClient=%u guMode=%u\n",cArg[1],guClient,guMode);
+	printf("Starting import from file=%s uClient=%u guMode=%u guDebug=%u\n",cArg[1],guClient,guMode,guDebug);
 	FILE *fp;
 
 	if(!(fp=fopen(cArg[1],"r")))
@@ -148,10 +153,10 @@ int main(int iArgc, char *cArg[])
 	char cPrevZoneName[100]={""};
 	char cPrevcName[100]={""};
 	unsigned uItems=0;
+	unsigned uAddedSomething=0;
 	unsigned uZone;
 	unsigned uRRType=7;
 	unsigned uTTL=0;
-	unsigned uNewZone=0;
 	unsigned uPrevTTL=0;//Has to be reset every new cZoneName
 
 	while(fgets(gcQuery,1027,fp)!=NULL)
@@ -162,13 +167,13 @@ int main(int iArgc, char *cArg[])
 			continue;
 
 		//echo all lines
-		if(guMode==2) printf("%s",gcQuery);
+		if(guDebug==2) printf("%s",gcQuery);
 
 		char *cOut[7]={NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 		uItems=uStrscan(gcQuery,cOut);
 		if(uItems==0)
 		{
-			if(guMode==2) printf("uItems 0 case1\n");
+			if(guDebug==2) printf("uItems 0 case1\n");
 			continue;
 		}
 		if(cOut[0]!=NULL)
@@ -181,7 +186,7 @@ int main(int iArgc, char *cArg[])
 			sprintf(cParam3,"%.255s",cOut[3]);
 		if(cOut[4]!=NULL)
 			sprintf(cParam4,"%.255s",cOut[4]);
-		if(guMode==2) printf("cName=%s cParam1=%s cParam2=%s cParam3=%s cParam4=%s\n",cName,cParam1,cParam2,cParam3,cParam4);
+		if(guDebug==2) printf("cName=%s cParam1=%s cParam2=%s cParam3=%s cParam4=%s\n",cName,cParam1,cParam2,cParam3,cParam4);
 
 		//TODO
 		//Initial support must have IN and no TTLs
@@ -200,9 +205,9 @@ int main(int iArgc, char *cArg[])
 			uPrevTTL=0;
 			cPrevOrigin[0]=0;
 			cPrevcName[0]=0;
-			if(guMode==2) printf("cZoneName=%s\n",cZoneName);
+			if(guDebug==2) printf("cZoneName=%s\n",cZoneName);
 		}
-		if(guMode<3) printf("%u.%s. IN PTR %s\n",d,cZoneName,cParam3);
+		if(guDebug==1 || guDebug==2) printf("%u.%s. IN PTR %s\n",d,cZoneName,cParam3);
 
 
 		//If zone does not exist create. Add uZone if guMode>=commit
@@ -249,7 +254,8 @@ int main(int iArgc, char *cArg[])
 					exit(1);
 				}
 				uZone=mysql_insert_id(&gMysql);
-				uNewZone=1;
+				uAddedSomething++;
+				if(guDebug) printf("Zone added %s\n",cZoneName);
 			}
 			else
 			{
@@ -273,7 +279,6 @@ int main(int iArgc, char *cArg[])
 				mysql_free_result(res);
 			}
 
-
 			//Add uResource
 			sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%u',uTTL=%u,uRRType=%u,"
 					"cParam1='%s',"
@@ -287,27 +292,27 @@ int main(int iArgc, char *cArg[])
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql)) 
 				printf("Error %s: %s\n",cZoneName,mysql_error(&gMysql));
+			else
+				uAddedSomething++;
+				if(guDebug) printf("Resource added %u.%s.\n",d,cZoneName);
+		}
 
-			//Depending on what was added and guMode create jobs
-			if(guMode==4)
+		if(guMode==4 && uAddedSomething)
+		{
+			time_t luClock;
+
+			sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uZone=%u",uZone);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql)) 
 			{
-				time_t luClock;
-
-				sprintf(gcQuery,"UPDATE tZone SET uSerial=uSerial+1,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
-							" WHERE uZone=%u",uZone);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql)) 
-				{
-					printf("%s\n",mysql_error(&gMysql));
-					fclose(fp);
-					exit(1);
-				}
-				time(&luClock);
-				if(uNewZone)
-					SubmitJob("New",guNameServer,FQDomainName(cZoneName),0,luClock);
-				else
-					SubmitJob("Modify",guNameServer,FQDomainName(cZoneName),0,luClock);
+				printf("%s\n",mysql_error(&gMysql));
+				fclose(fp);
+				exit(1);
 			}
+			time(&luClock);
+			SubmitJob("New",guNameServer,FQDomainName(cZoneName),0,luClock);
+			if(guDebug) printf("New job created for %s\n",cZoneName);
 		}
 	}
 
@@ -498,7 +503,7 @@ int SubmitSingleJob(const char *cCommand,const char *cZoneArg, unsigned uNameSer
 		}
 		if(mysql_affected_rows(&gMysql)==0)
 		{
-			if(guMode<3);
+			if(guDebug==2 || guDebug==1);
 				printf("uMasterJob %u",*uMasterJob);
 		}
 	}
