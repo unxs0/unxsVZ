@@ -49,3 +49,12 @@ LEGAL
 #define RELEASE "1.34/rpm-3.4"
 #define REV "1.34/rpm-3.4"
 
+//For interfaces
+#define cMAILTO "noc@someisp.net"
+#define cBCC ""
+#define cFROM "noc@someisp.net"
+#define cSUBJECT "OneLogin system message"
+#define cUNXSVZORGLOGFILE "/var/log/unxsvzOrg.log"
+
+//Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
+#define DBIP0 NULL
