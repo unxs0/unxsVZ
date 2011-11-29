@@ -56,5 +56,3 @@ LEGAL
 #define cSUBJECT "OneLogin system message"
 #define cUNXSVZORGLOGFILE "/var/log/unxsvzOrg.log"
 
-//Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
-#define DBIP0 NULL
