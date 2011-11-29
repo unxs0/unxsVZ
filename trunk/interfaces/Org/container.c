@@ -28,6 +28,7 @@ static char gcNewHostParam0[33]={""};
 static char gcNewHostParam1[33]={""};
 static char gcDID[17]={""};
 static char gcCustomerName[33]={""};
+static char gcAuthCode[33]={""};
 static char *gcShowDetails="";
 
 
@@ -73,6 +74,8 @@ void ProcessContainerVars(pentry entries[], int x)
 			sprintf(gcDID,"%.16s",cNumbersOnly(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcCustomerName"))
 			sprintf(gcCustomerName,"%.32s",CustomerName(entries[i].val));
+		else if(!strcmp(entries[i].name,"gcAuthCode"))
+			sprintf(gcAuthCode,"%.32s",CustomerName(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcShowDetails"))
 			gcShowDetails="checked";
 	}
@@ -112,13 +115,15 @@ void ContainerCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"Container"))
 	{
 		unsigned uLen=0;
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+        	MYSQL_RES *res2;
+	        MYSQL_ROW field2;
+
 
 		ProcessContainerVars(entries,x);
 		if(!strcmp(gcFunction,"Repurpose Container"))
 		{
-        		MYSQL_RES *res;
-	        	MYSQL_ROW field;
-
 			//Validate target container
 			if(!guNewContainer)
 			{
@@ -603,24 +608,21 @@ void ContainerCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Container Report") && guPermLevel>=10)
 		{
-        		MYSQL_RES *res;
-	        	MYSQL_ROW field;
-        		MYSQL_RES *res2;
-	        	MYSQL_ROW field2;
-
 
 			printf("Content-type: text/plain\n\n");
-			printf("uContainer,cLabel,cHostname,cDatacenter,cNode,cGroup,cTemplate\n");
+			printf("uContainer,cLabel,cHostname,cDatacenter,cNode,cGroup,cTemplate,cStatus\n");
 
 			sprintf(gcQuery,"SELECT tContainer.uContainer,"
 					" tContainer.cLabel,"
 					" tContainer.cHostname,"
 					" tDatacenter.cLabel,"
 					" tNode.cLabel,"
-					" tOSTemplate.cLabel"
-					" FROM tContainer,tDatacenter,tNode,tOSTemplate"
+					" tOSTemplate.cLabel,"
+					" tStatus.cLabel"
+					" FROM tContainer,tDatacenter,tNode,tOSTemplate,tStatus"
 					" WHERE tContainer.uDatacenter=tDatacenter.uDatacenter AND"
 					" tContainer.uNode=tNode.uNode AND"
+					" tContainer.uStatus=tStatus.uStatus AND"
 					" tOSTemplate.uOSTemplate=tContainer.uOSTemplate AND"
 					" tContainer.uSource=0");
 			mysql_query(&gMysql,gcQuery);
@@ -643,16 +645,133 @@ void ContainerCommands(pentry entries[], int x)
 					sprintf(cGroup,"%.32s",field2[0]);
 				mysql_free_result(res2);
 
-				printf("%s,%s,%s,%s,%s,%s,%s\n",field[0],field[1],field[2],field[3],field[4],cGroup,field[5]);
+				printf("%s,%s,%s,%s,%s,%s,%s,%s\n",
+					field[0],field[1],field[2],field[3],field[4],cGroup,field[5],field[6]);
 			}
 			mysql_free_result(res);
 			exit(0);
 		}
+		else if(!strcmp(gcFunction,"Upgrade Container"))
+		{
+			char cAuthCode[32]={"PsW3jGd"};
+			char cTag[32]={""};
+
+			sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=0"
+					" AND uContainer=0 AND uNode=0 AND cLabel='cOrg_UpgradeAuthCode'");
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select cOrg_UpgradeAuthCode failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cAuthCode,"%.31s",field[0]);
+
+			if(strcmp(gcAuthCode,cAuthCode))
+			{
+				gcMessage="Authorization code is not valid";
+				htmlContainer();
+			}
+
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uType=3 AND uKey=%u AND"
+					" cName='cOrg_LifecycleTag'",guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Check for cOrg_LifecycleTag failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cTag,"%.31s",field[0]);
+			mysql_free_result(res);
+			if(strcmp(cTag,"Upgrade"))
+			{
+				//Tag container for upgrade
+				sprintf(gcQuery,"INSERT INTO tProperty"
+					" SET cValue='Upgrade',"
+					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+					"uKey=%u,uType=3,cName='cOrg_LifecycleTag'"
+						,guOrg,guLoginClient,guContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="INSERT for cOrg_LifecycleTag failed, contact sysadmin!";
+					htmlContainer();
+				}
+			}
+			else
+			{
+				gcMessage="Container already tagged for upgrade";
+				htmlContainer();
+			}
+
+			gcMessage="break point 1";
+			htmlContainer();
+		}
+		else if(!strcmp(gcFunction,"Cancel Container"))
+		{
+			char cAuthCode[32]={"lwXM722Ki"};
+			char cTag[32]={""};
+
+			sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=0"
+					" AND uContainer=0 AND uNode=0 AND cLabel='cOrg_CancelAuthCode'");
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select cOrg_UpgradeAuthCode failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cAuthCode,"%.31s",field[0]);
+
+			if(strcmp(gcAuthCode,cAuthCode))
+			{
+				gcMessage="Authorization code is not valid";
+				htmlContainer();
+			}
+
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uType=3 AND uKey=%u AND"
+					" cName='cOrg_LifecycleTag'",guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Check for cOrg_LifecycleTag failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cTag,"%.31s",field[0]);
+			mysql_free_result(res);
+			if(strcmp(cTag,"Cancel"))
+			{
+				//Tag container for upgrade
+				sprintf(gcQuery,"INSERT INTO tProperty"
+					" SET cValue='Cancel',"
+					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+					"uKey=%u,uType=3,cName='cOrg_LifecycleTag'"
+						,guOrg,guLoginClient,guContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="INSERT for cOrg_LifecycleTag failed, contact sysadmin!";
+					htmlContainer();
+				}
+			}
+			else
+			{
+				gcMessage="Container already tagged for cancel";
+				htmlContainer();
+			}
+
+			gcMessage="break point 1";
+			htmlContainer();
+		}
 		else if(!strcmp(gcFunction,"Mod CustomerName") && gcCustomerName[0])
 		{
 			char gcQuery[1024];
-        		MYSQL_RES *res;
-	        	MYSQL_ROW field;
 
 			if(!guContainer)
 			{
@@ -779,8 +898,6 @@ void ContainerCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Add DID") && gcDID[0])
 		{
 			char gcQuery[1024];
-        		MYSQL_RES *res;
-	        	MYSQL_ROW field;
 
 			if(!guContainer)
 			{
@@ -916,8 +1033,6 @@ void ContainerCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Remove DID") && gcDID[0])
 		{
 			char gcQuery[1024];
-        		MYSQL_RES *res;
-	        	MYSQL_ROW field;
 
 			if(!guContainer)
 			{
@@ -1051,8 +1166,6 @@ void ContainerCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Search DID") && gcSearchAux[0])
 		{
 			char gcQuery[256];
-        		MYSQL_RES *res;
-	        	MYSQL_ROW field;
 			unsigned uNumRows=0;
 
 			gcSearchName="cOrg_OpenSIPS_DID";
@@ -1089,8 +1202,6 @@ void ContainerCommands(pentry entries[], int x)
 		else if(!strcmp(gcFunction,"Search Customer") && gcSearchAux[0])
 		{
 			char gcQuery[256];
-        		MYSQL_RES *res;
-	        	MYSQL_ROW field;
 			unsigned uNumRows=0;
 
 			gcSearchName="cOrg_CustomerName";
@@ -1126,9 +1237,6 @@ void ContainerCommands(pentry entries[], int x)
 		}//Search Customer
 		else if(!strcmp(gcFunction,"DID Report") && guPermLevel>=10)
 		{
-        		MYSQL_RES *res;
-	        	MYSQL_ROW field;
-
 			printf("Content-type: text/plain\n\n");
 
 			printf("cHostname,cDID\n");
@@ -1989,6 +2097,19 @@ void funcContainer(FILE *fp)
 			" title='Modify currently loaded PBX container customer name'"
 			" name=gcFunction value='Mod CustomerName'>\n");
 	printf("</fieldset>");
+
+	printf("<fieldset><legend>Lifecycle OPs</b></legend>");
+	fprintf(fp,"<input type=password class=type_fields"
+			" title='Special authorization code required to cancel a container'"
+			" name=gcAuthCode size=16 maxlength=32> Authorization Code");
+	fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Immediately destroys all container data and functionality'"
+			" name=gcFunction value='Cancel Container'>\n");
+	fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Schedules a job for container upgrade to latest version'"
+			" name=gcFunction value='Upgrade Container'>\n");
+	printf("</fieldset>");
+
 
 	fprintf(fp,"</td></tr>\n");
 
