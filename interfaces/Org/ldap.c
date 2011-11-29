@@ -15,6 +15,34 @@ NOTES
 */
 
 #include "interface.h"
+void logfileLine(const char *cFunction,const char *cLogline)
+{
+	time_t luClock;
+	char cTime[32];
+	pid_t pidThis;
+	const struct tm *tmTime;
+	static FILE *gLfp=NULL;
+
+	if(gLfp==NULL)
+	{
+		if((gLfp=fopen(cUNXSVZORGLOGFILE,"a"))==NULL)
+		{
+			sprintf(gcQuery,"Could not open logfile: %s\n",cUNXSVZORGLOGFILE);
+			htmlPlainTextError(gcQuery);
+       		}
+	}
+
+	pidThis=getpid();
+
+	time(&luClock);
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
+
+        fprintf(gLfp,"%s idnsOrg.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
+	fflush(gLfp);
+
+}//void logfileLine(char *cLogline)
+
 
 #ifdef cLDAPURI
 
@@ -192,35 +220,5 @@ void ldapErrorLog(char *cMessage,LDAP *ld)
 	
 }//void ldapErrorLog(char *cMessage,LDAP *ld)
 
-
-#ifdef DEBUG_LDAP
-void logfileLine(const char *cFunction,const char *cLogline)
-{
-	time_t luClock;
-	char cTime[32];
-	pid_t pidThis;
-	const struct tm *tmTime;
-	static FILE *gLfp=NULL;
-
-	if(gLfp==NULL)
-	{
-		if((gLfp=fopen(cVDNSORGLOGFILE,"a"))==NULL)
-		{
-			sprintf(gcQuery,"Could not open logfile: %s\n",cVDNSORGLOGFILE);
-			htmlPlainTextError(gcQuery);
-       		}
-	}
-
-	pidThis=getpid();
-
-	time(&luClock);
-	tmTime=localtime(&luClock);
-	strftime(cTime,31,"%b %d %T",tmTime);
-
-        fprintf(gLfp,"%s vdnsOrg.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
-	fflush(gLfp);
-
-}//void logfileLine(char *cLogline)
-#endif
 
 #endif

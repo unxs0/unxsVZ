@@ -45,6 +45,7 @@ char *NameToLower(char *cInput);
 char *cNumbersOnly(char *cInput);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void funcContainerList(FILE *fp);
+void SendAlertEmail(char *cMsg);
 
 void ProcessContainerVars(pentry entries[], int x)
 {
@@ -707,7 +708,11 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			gcMessage="break point 1";
+			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+			sprintf(gcQuery,"Container %s (%u) flagged for upgrade by %s\n",gcCtHostname,guContainer,gcName);
+			SendAlertEmail(gcQuery);
+
+			gcMessage="upgrade break point 1";
 			htmlContainer();
 		}
 		else if(!strcmp(gcFunction,"Cancel Container"))
@@ -766,7 +771,11 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			gcMessage="break point 1";
+			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+			sprintf(gcQuery,"Container %s (%u) flagged for cancel by %s\n",gcCtHostname,guContainer,gcName);
+			SendAlertEmail(gcQuery);
+
+			gcMessage="cancel break point 1";
 			htmlContainer();
 		}
 		else if(!strcmp(gcFunction,"Mod CustomerName") && gcCustomerName[0])
@@ -2221,3 +2230,41 @@ void funcContainerQOS(FILE *fp)
 
 }//void funcContainerQOS(FILE *fp)
 
+
+void SendAlertEmail(char *cMsg)
+{
+	FILE *pp;
+	pid_t pidChild;
+
+	pidChild=fork();
+	if(pidChild!=0)
+		return;
+
+	pp=popen("/usr/lib/sendmail -t","w");
+	if(pp==NULL)
+	{
+		logfileLine("SendAlertEmail","popen() /usr/lib/sendmail");
+		return;
+	}
+			
+	//should be defined in local.h
+	fprintf(pp,"To: %s\n",cMAILTO);
+	if(cBCC!=NULL)
+	{
+		char cBcc[512]={""};
+		sprintf(cBcc,"%.511s",cBCC);
+		if(cBcc[0])
+			fprintf(pp,"Bcc: %s\n",cBcc);
+	}
+	fprintf(pp,"From: %s\n",cFROM);
+	fprintf(pp,"Subject: %s\n",cSUBJECT);
+
+	fprintf(pp,"%s\n",cMsg);
+
+	fprintf(pp,".\n");
+
+	pclose(pp);
+
+	logfileLine("SendAlertEmail","email attempt ok");
+
+}//void SendAlertEmail(char *cMsg)
