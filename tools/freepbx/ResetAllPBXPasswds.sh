@@ -63,25 +63,25 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 
         echo $uContainer;
 
-	cAdminPasswd=`head -c 32 /dev/urandom | /usr/bin/md5sum | /bin/cut -c1-8`;
+	cAdminPasswd=`head -c 64 /dev/urandom | tr -cd [:alnum:] | /bin/cut -c1-8`;
 	if [ $? != 0 ] || [ "$cAdminPasswd" == "" ];then
 		echo "Admin random passwd creation failed";
 		exit 1;
 	fi
 
-	cOpPasswd=`head -c 32 /dev/urandom | /usr/bin/md5sum | /bin/cut -c1-8`;
+	cOpPasswd=`head -c 64 /dev/urandom | tr -cd [:alnum:] | /bin/cut -c1-8`;
 	if [ $? != 0 ] || [ "$cOpPasswd" == "" ];then
 		echo "Op random passwd creation failed";
 		exit 1;
 	fi
 
-	cEngPasswd=`head -c 32 /dev/urandom | /usr/bin/md5sum | /bin/cut -c1-8`;
+	cEngPasswd=`head -c 64 /dev/urandom | tr -cd [:alnum:] | /bin/cut -c1-8`;
 	if [ $? != 0 ] || [ "$cEngPasswd" == "" ];then
 		echo "Eng random passwd creation failed";
 		exit 1;
 	fi
 
-	cSSHPasswd=`head -c 32 /dev/urandom | /usr/bin/md5sum | /bin/cut -c1-8`;
+	cSSHPasswd=`head -c 64 /dev/urandom | tr -cd [:alnum:] | /bin/cut -c1-8`;
 	if [ $? != 0 ] || [ "$cSSHPasswd" == "" ];then
 		echo "SSH random passwd creation failed";
 		exit 1;
