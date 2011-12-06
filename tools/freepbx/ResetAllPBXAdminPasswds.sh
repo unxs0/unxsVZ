@@ -21,7 +21,7 @@
 #	(C) 2011, 2012 Unixservice, LLC.
 #	GPLv2 license applies
 
-cHost="node1.someisp.net";
+cHost="localhost";
 cPasswd="wsxedc";
 cGroupStatement="(tGroup.cLabel='Production PBXs' OR tGroup.cLabel='UK PBXs')";
 cMySQLConnect="/usr/bin/mysql -h $cHost -u unxsvz -p$cPasswd unxsvz";
@@ -48,7 +48,7 @@ fi
 
 #Do not change certain passwords unless new
 cEngPasswdSet="n";
-cSSHPasswdSet="y";
+cSSHPasswdSet="n";
 cOpPasswdSet="n";
 
 for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGroupGlue WHERE $cGroupStatement AND tGroup.uGroup=tGroupGlue.uGroup AND tContainer.uContainer=tGroupGlue.uContainer AND tContainer.uNode=$uNode AND tContainer.uStatus=1" | $cMySQLConnect | grep -v uContainer`;do
@@ -189,6 +189,11 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 				echo "mysql command 11 failed";
 			fi
 			cSSHPasswdSet="y";
+		else
+			echo "UPDATE tProperty SET cValue='$cSSHPasswd',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uKey=$uContainer AND uType=3 AND cName='cPasswd'" | $cMySQLConnect;
+			if [ $? != 0 ];then
+				echo "mysql command 11b failed";
+			fi
 		fi
 
 		cCurrentEngPwd=`echo "SELECT cValue FROM tProperty WHERE uKey=$uContainer AND uType=3 AND cName='cOrg_FreePBXEngPasswd'" | $cMySQLConnect | grep -v cValue`;
@@ -276,13 +281,13 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 		if [ $? != 0 ];then
 			echo "vzctl set $uContainer --userpasswd root:$cSSHPasswd failed";
 		fi
-		echo "New root ssh passwd set";
+		echo "New root ssh passwd set $cSSHPasswd";
 	elif [ "$cCurrentSSHPwd" != "" ];then
-		/usr/sbin/vzctl set $uContainer --userpasswd root:$cCurrentSSHPasswd;
+		/usr/sbin/vzctl set $uContainer --userpasswd root:$cCurrentSSHPwd;
 		if [ $? != 0 ];then
 			echo "vzctl set $uContainer --userpasswd root:$cCurrentSSHPwd failed";
 		fi
-		echo "New root ssh passwd set from unxsVZ";
+		echo "New root ssh passwd set from unxsVZ $cCurrentSSHPwd";
 	fi
 
 done
