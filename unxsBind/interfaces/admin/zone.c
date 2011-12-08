@@ -683,7 +683,12 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpName[62]="uModDateForm";
 			template.cpValue[62]=cuModDateForm;
 
-			template.cpName[63]="";
+			template.cpName[63]="cZoneGetLink";
+			char cZoneGetLink[128];
+			sprintf(cZoneGetLink,"&cZone=%.63s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
+			template.cpValue[63]=cZoneGetLink;
+
+			template.cpName[64]="";
 
 			printf("\n<!-- Start htmlZonePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
