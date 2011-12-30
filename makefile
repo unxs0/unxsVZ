@@ -136,8 +136,12 @@ local.h: local.h.default
 clean:
 	rm -f *.o
 
-install: unxsVZ.cgi unxsvz
+install-all: unxsVZ.cgi unxsvz
 	install -s unxsVZ.cgi /var/www/unxs/$(CGIDIR)/unxsVZ.cgi
 	install -s unxsvz /usr/sbin/unxsvz
 	@ rm unxsVZ.cgi
 	@ rm unxsvz
+
+install: unxsVZ.cgi
+	install -s unxsVZ.cgi /var/www/unxs/$(CGIDIR)/unxsVZ.cgi
+	@ rm unxsVZ.cgi
