@@ -588,16 +588,18 @@ void ExttNodeAuxTable(void)
 				"<td><u>master label</u></td>"
 				"<td><u>master hostname</u></td>"
 				"<td><u>template</u></td>"
+				"<td><u>status</u></td>"
 				"<td><u>clone label</u></td>"
 				"<td><u>clone hostname</u></td>"
 				"<td><u>seconds since rsync</u></td>"
 				"<td><u>job created</u></td>"
 				"</tr>");
 			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,"
-					"tContainer.uNode,tContainer.uDatacenter,tOSTemplate.cLabel"
-					" FROM tContainer,tOSTemplate"
+					"tContainer.uNode,tContainer.uDatacenter,tOSTemplate.cLabel,tStatus.cLabel"
+					" FROM tContainer,tOSTemplate,tStatus"
 					" WHERE tContainer.uNode=%u"
 					" AND tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
+					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.uSource=0"
 					" ORDER BY tContainer.cLabel",uNode);
 		        mysql_query(&gMysql,gcQuery);
@@ -617,9 +619,10 @@ void ExttNodeAuxTable(void)
 						"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>"
 						"</td>"
 						"<td>%s</td>"
+						"<td>%s</td>"
 						"<td>%s</td>",
 							//field[0],
-							field[0],field[1],field[2],field[5]);
+							field[0],field[1],field[2],field[5],field[6]);
 					sprintf(gcQuery,"SELECT uContainer,cLabel,cHostname,(UNIX_TIMESTAMP(NOW())-uBackupDate),"
 							"uDatacenter,uNode,uIPv4,uStatus,uOwner"
 							" FROM tContainer WHERE uSource=%s",field[0]);
