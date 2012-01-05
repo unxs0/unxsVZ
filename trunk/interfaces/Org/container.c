@@ -1702,6 +1702,28 @@ void funcContainerInfo(FILE *fp)
 			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 
+	//BackupDate
+	sprintf(gcQuery,"SELECT FROM_UNIXTIME(uBackupDate,'%%a %%b %%d %%T %%Y'),cLabel FROM tContainer"
+			" WHERE uContainer IN (SELECT uContainer FROM tContainer WHERE uSource=%u)",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uBackupDate')\">"
+			" <strong>Backup Date</strong></a></td><td><input type=text name='cBackupDate' value='%s (%s)'"
+			" size=40 maxlength=32"
+			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0],field[1]);
+	}
+	else
+	{
+		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=uBackupDate')\">"
+			" <strong>Backup Date</strong></a></td><td><input type=text name='cBackupDate' value='!No backup available!'"
+			" size=40 maxlength=32"
+			" disabled class=\"type_fields_off\"> </td></tr>\n");
+	}
+
 /*
 	//ModBy
 	sprintf(gcQuery,"SELECT tClient.cLabel FROM tContainer,tClient WHERE tContainer.uModBy=tClient.uClient AND"
