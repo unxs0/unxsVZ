@@ -1512,12 +1512,20 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	unsigned uTargetNode=0;
 	unsigned uTargetDatacenter=0;
 	unsigned uIPv4=0;
+	unsigned uStatus=0;
 
 	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
 	if(!uTargetNode)
 	{
 		logfileLine("MigrateContainer","Could not determine uTargetNode");
 		tJobErrorUpdate(uJob,"uTargetNode==0");
+		return;
+	}
+
+	if(GetContainerStatus(uContainer,&uStatus))
+	{
+		logfileLine("MigrateContainer","GetContainerStatus() failed");
+		tJobErrorUpdate(uJob,"GetContainerStatus()");
 		return;
 	}
 
@@ -1574,19 +1582,35 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
 
-	if(cSSHOptions[0])
-		sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
+
+	if(uStatus==uACTIVE)
+	{
+		if(cSSHOptions[0])
+			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
 				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst --online -v %s %u",
 					cSSHOptions,cTargetNodeIPv4,uContainer);
-	else
-		sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin;"
+		else
+			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin;"
 				"/usr/sbin/vzmigrate --keep-dst --online -v %s %u",
 					cTargetNodeIPv4,uContainer);
+	}
+	else
+	{
+		if(cSSHOptions[0])
+			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
+				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst -v %s %u",
+					cSSHOptions,cTargetNodeIPv4,uContainer);
+		else
+			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin;"
+				"/usr/sbin/vzmigrate --keep-dst -v %s %u",
+					cTargetNodeIPv4,uContainer);
+	}
+
 	if(system(gcQuery))
 	{
 		//We may not want this optional behavior may violate QoS for given migration
-		logfileLine("MigrateContainer","Trying offline migration (check kernel compat)");
-		tJobErrorUpdate(uJob,"Live failed trying offline");
+		logfileLine("MigrateContainer","Trying offline migration");
+		tJobErrorUpdate(uJob,"Failed once trying offline");
 
 		if(cSSHOptions[0])
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
