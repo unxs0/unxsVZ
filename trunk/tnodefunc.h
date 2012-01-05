@@ -592,7 +592,6 @@ void ExttNodeAuxTable(void)
 				"<td><u>clone label</u></td>"
 				"<td><u>clone hostname</u></td>"
 				"<td><u>seconds since rsync</u></td>"
-				"<td><u>job created</u></td>"
 				"</tr>");
 			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,"
 					"tContainer.uNode,tContainer.uDatacenter,tOSTemplate.cLabel,tStatus.cLabel"
@@ -610,6 +609,8 @@ void ExttNodeAuxTable(void)
 			{
 				MYSQL_RES *res2;
 				MYSQL_ROW field2;
+				long unsigned luTotalDiskSpace=0;
+				long unsigned luDiskSpace;
 
 				while((field=mysql_fetch_row(res)))
 				{
@@ -643,9 +644,23 @@ void ExttNodeAuxTable(void)
 					}
 					mysql_free_result(res2);
 					printf("</tr>\n");
+
+					sprintf(gcQuery,"SELECT cValue FROM tProperty"
+							" WHERE cName='1k-blocks.luUsage' AND uType=3 AND uKey=%s",field[0]);
+				        mysql_query(&gMysql,gcQuery);
+				        if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				        res2=mysql_store_result(&gMysql);
+					if((field2=mysql_fetch_row(res2)))
+					{
+						luDiskSpace=0;
+						sscanf(field2[0],"%lu",&luDiskSpace);
+						luTotalDiskSpace+=luDiskSpace;
+					}
+					mysql_free_result(res2);
+
 				}
-				//printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'>"
-				//		" Check all</td></tr>\n");
+				printf("<tr><td>Total disk space used: %lu</td></tr>",luTotalDiskSpace);
 			}
 			printf("</table>");
 			CloseFieldSet();

@@ -2725,7 +2725,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Migration Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
+			if( (uStatus==uACTIVE || uStatus==uSTOPPED ) && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -2743,7 +2743,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm Migration"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
+			if( (uStatus==uACTIVE || uStatus==uSTOPPED ) && uAllowMod(uOwner,uCreatedBy))
 			{
 				unsigned uTargetDatacenter=0;
                         	guMode=0;
@@ -3978,10 +3978,7 @@ void ExttContainerButtons(void)
 				if(uStatus==uACTIVE)
 				{
 					htmlHealth(uContainer,3);
-					printf("<p><input title='Migrate container to another hardware node'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Migration Wizard'><br>\n");
-					printf("<input title='Migrate container to another datacenter node'"
+					printf("<p><input title='Migrate container to another datacenter node'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Remote Migration'><br>\n");
 					if(!strstr(cLabel,"-clone"))
@@ -4030,6 +4027,9 @@ void ExttContainerButtons(void)
 
 				if( uStatus==uSTOPPED || uStatus==uACTIVE )
 				{
+					printf("<input title='Migrate container to another hardware node'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Migration Wizard'><br>\n");
 					printf("<input title='Change current container name and hostname'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Hostname Change Wizard'><br>\n");
