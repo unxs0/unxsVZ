@@ -1512,7 +1512,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	unsigned uTargetNode=0;
 	unsigned uTargetDatacenter=0;
 	unsigned uIPv4=0;
-	unsigned uStatus=0;
+	unsigned uPrevStatus=0;
 
 	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
 	if(!uTargetNode)
@@ -1522,12 +1522,6 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		return;
 	}
 
-	if(GetContainerStatus(uContainer,&uStatus))
-	{
-		logfileLine("MigrateContainer","GetContainerStatus() failed");
-		tJobErrorUpdate(uJob,"GetContainerStatus()");
-		return;
-	}
 
 	sscanf(cJobData,"uTargetNode=%*u;\nuIPv4=%u;",&uIPv4);
 	if(uIPv4)
@@ -1550,6 +1544,14 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	{
 		logfileLine("MigrateContainer","Could not determine cTargetNodeIPv4");
 		tJobErrorUpdate(uJob,"cTargetNodeIPv4");
+		return;
+	}
+
+	sscanf(cJobData,"uTargetNode=%*u;\nuIPv4=%*u;\nuPrevStatus=%u;",&uPrevStatus);
+	if(uPrevStatus!=uACTIVE || uPrevStatus!=uSTOPPED)
+	{
+		logfileLine("MigrateContainer","Could not determine uPrevStatus");
+		tJobErrorUpdate(uJob,"uPrevStatus==0");
 		return;
 	}
 
@@ -1583,7 +1585,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
 
 
-	if(uStatus==uACTIVE)
+	if(uPrevStatus==uACTIVE)
 	{
 		if(cSSHOptions[0])
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
@@ -1640,7 +1642,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//Everything ok
-	SetContainerStatus(uContainer,1);//Active
+	SetContainerStatus(uContainer,uPrevStatus);//Previous to awaiting migration
 	SetContainerNode(uContainer,uTargetNode);//Migrated!
 	if(uIPv4 && uTargetDatacenter)
 		SetContainerDatacenter(uContainer,uTargetDatacenter);//Remote Migration

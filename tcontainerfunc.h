@@ -101,7 +101,7 @@ void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter);
 void htmlContainerNotes(unsigned uContainer);
 void htmlContainerMount(unsigned uContainer);
 unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode,
-			unsigned uOwner, unsigned uLoginClient, unsigned uIPv4);
+			unsigned uOwner, unsigned uLoginClient, unsigned uIPv4,unsigned uPrevStatus);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,
 				unsigned uOwner,unsigned uCreatedBy,unsigned uCloneStop);
@@ -2773,10 +2773,10 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup)
 					ChangeGroup(uContainer,uGroup);
 
-				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient,0))
+				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient,0,uStatus))
 				{
 					uStatus=uAWAITMIG;
-					SetContainerStatus(uContainer,21);//Awaiting Migration
+					SetContainerStatus(uContainer,uAWAITMIG);//Awaiting Migration
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("MigrateContainerJob() Done");
 				}
@@ -2866,12 +2866,12 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup)
 					ChangeGroup(uContainer,uGroup);
 
-				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient,uWizIPv4))
+				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient,uWizIPv4,uStatus))
 				{
 					char cIPOld[32]={""};
 
 					uStatus=uAWAITMIG;
-					SetContainerStatus(uContainer,21);//Awaiting Migration
+					SetContainerStatus(uContainer,uAWAITMIG);//Awaiting Migration
 
 					//Mark IP used
 					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
@@ -5019,7 +5019,7 @@ void htmlGroups(unsigned uNode, unsigned uContainer)
 
 
 unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uTargetNode,
-			unsigned uOwner, unsigned uLoginClient, unsigned uIPv4)
+			unsigned uOwner, unsigned uLoginClient, unsigned uIPv4,unsigned uPrevStatus)
 {
 	unsigned uCount=0;
 
@@ -5027,12 +5027,13 @@ unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"
-			",cJobData='uTargetNode=%u;\nuIPv4=%u;'"
+			",cJobData='uTargetNode=%u;\nuIPv4=%u;\nuPrevStatus=%u;\n'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,uTargetNode,
 				uDatacenter,uNode,uContainer,
 				uTargetNode,
 				uIPv4,
+				uPrevStatus,
 				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
