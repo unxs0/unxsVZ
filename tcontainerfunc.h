@@ -1595,6 +1595,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				char cOrgHostname[100]={""};
 				unsigned uHostnameLen=0;
 				unsigned uLabelLen=0;
+				unsigned uTargetDatacenter=0;
 
                         	ProcesstContainerVars(entries,x);
 				sscanf(cService2,"%u",&uNumContainer);
@@ -1710,19 +1711,20 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Selected node is not configured for clone containers."
 							"Select another.");
 
-					sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uNodeDatacenter);
-					if(uDatacenter!=uNodeDatacenter)
-						tContainer("<blink>Error:</blink> The specified clone uNode does not "
-							"belong to the specified uDatacenter.");
+					//We are moving to normal remote datacenter clone containers
+					sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
+					//if(uDatacenter!=uTargetDatacenter)
+					//	tContainer("<blink>Error:</blink> The specified clone uNode does not "
+					//		"belong to the specified uDatacenter.");
 					if(!uWizIPv4)
 						tContainer("<blink>Error:</blink> You must select an IP for the clone");
 					if(uWizIPv4==uIPv4)
 						tContainer("<blink>Error:</blink> You must select a different IP for the"
 										" clone");
 					sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
-					if(uDatacenter!=uIPv4Datacenter)
-						tContainer("<blink>Error:</blink> The specified uIPv4 does not "
-							"belong to the specified uDatacenter.");
+					if(uTargetDatacenter!=uIPv4Datacenter)
+						tContainer("<blink>Error:</blink> The specified clone uIPv4 does not "
+							"belong to the specified uTargetDatacenter.");
 					if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
 						tContainer("<blink>Error:</blink> Clone start uIPv4 must be in datacenter clone IP range");
 					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
@@ -1787,7 +1789,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(cAutoCloneNode[0])
 				{
 					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
-						" AND uOwner=%u AND uDatacenter=%u",uWizIPv4,uForClient,uDatacenter);
+						" AND uOwner=%u AND uDatacenter=%u",uWizIPv4,uForClient,uTargetDatacenter);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -1818,7 +1820,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					//Count clone IPs
 					sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
 							" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
-								uForClient,cIPv4ClassCClone,uDatacenter);
+								uForClient,cIPv4ClassCClone,uTargetDatacenter);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -2001,7 +2003,7 @@ void ExttContainerCommands(pentry entries[], int x)
 									uNameserver,
 									uSearchdomain,
 									uDatacenter,
-									uDatacenter,
+									uTargetDatacenter,
 									uForClient,
 									cLabel,
 									uNode,
@@ -2023,7 +2025,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						//Get next available uWizIPv4
 						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
 							" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
-								uForClient,cIPv4ClassCClone,uDatacenter);
+								uForClient,cIPv4ClassCClone,uTargetDatacenter);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
