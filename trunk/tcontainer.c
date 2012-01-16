@@ -494,14 +494,26 @@ void tContainerNewStep(unsigned uStep)
 		if(cAutoCloneNode[0])
 		{
 			char cAutoCloneSyncTime[256]={""};
+			char cAutoCloneNode[256]={""};
+			unsigned uTargetDatacenter=0;
+
+			MYSQL_RES *res;
+			MYSQL_ROW field;
 
 			OpenRow("Clone target node","black");
-			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
-				cuTargetNodePullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
+			sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%s'",cAutoCloneNode);
+			MYSQL_RUN_STORE(res);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&uTargetNode);
+				sscanf(field[1],"%u",&uTargetDatacenter);
+			}
+			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,0);
 
 			OpenRow("Clone start uIPv4","black");
 			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
-				uDatacenter,uForClient);
+				uTargetDatacenter,uForClient);
 
 			OpenRow("Keep clone stopped","black");
 			printf("<input type=checkbox name=uCloneStop ");
