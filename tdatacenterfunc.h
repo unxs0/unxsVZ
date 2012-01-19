@@ -10,6 +10,9 @@ AUTHOR
 
 static unsigned uClone=0;
 static unsigned uOldDatacenter=0;
+static unsigned uTargetNode=0;
+static char cuTargetNodePullDown[256]={""};
+
 //ModuleFunctionProtos()
 void tDatacenterNavList(void);
 void tDatacenterHealth(void);
@@ -40,6 +43,11 @@ void ExtProcesstDatacenterVars(pentry entries[], int x)
 		{
 			strcpy(cForClientPullDown,entries[i].val);
 			uForClient=ReadPullDown(TCLIENT,"cLabel",cForClientPullDown);
+		}
+		else if(!strcmp(entries[i].name,"cuTargetNodePullDown"))
+		{
+			sprintf(cuTargetNodePullDown,"%.255s",entries[i].val);
+			uTargetNode=ReadPullDown("tNode","cLabel",cuTargetNodePullDown);
 		}
 	}
 }//void ExtProcesstDatacenterVars(pentry entries[], int x)
@@ -434,6 +442,10 @@ void tDatacenterHealth(void)
         MYSQL_ROW field;
 
 
+	printf("<p>Select uNode<br>");
+	tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
+			"",0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+
 	//1-. Disk space usage/soft limit ratio
 	//1a-. Create temp table
 	sprintf(gcQuery,"CREATE TEMPORARY TABLE tDiskUsage (uContainer INT UNSIGNED NOT NULL DEFAULT 0,"
@@ -448,7 +460,14 @@ void tDatacenterHealth(void)
         }
 
 	//1b-. Populate with data per container
-	sprintf(gcQuery,"SELECT tProperty.uKey,tProperty.cValue,tContainer.cLabel FROM tProperty,tContainer"
+	if(uTargetNode)
+		sprintf(gcQuery,"SELECT tProperty.uKey,tProperty.cValue,tContainer.cLabel FROM tProperty,tContainer"
+			" WHERE tProperty.uKey=tContainer.uContainer AND tProperty.uType=3 AND"
+			" tProperty.cName='1k-blocks.luUsage' AND tContainer.uDatacenter=%u"
+			" AND tContainer.uNode=%u"
+			" AND tContainer.uStatus=1",uDatacenter,uTargetNode);
+	else
+		sprintf(gcQuery,"SELECT tProperty.uKey,tProperty.cValue,tContainer.cLabel FROM tProperty,tContainer"
 			" WHERE tProperty.uKey=tContainer.uContainer AND tProperty.uType=3 AND"
 			" tProperty.cName='1k-blocks.luUsage' AND tContainer.uDatacenter=%u"
 			" AND tContainer.uStatus=1",uDatacenter);
@@ -474,7 +493,14 @@ void tDatacenterHealth(void)
 	}
 	mysql_free_result(res);
 
-	sprintf(gcQuery,"SELECT tProperty.uKey,tProperty.cValue FROM tProperty,tContainer"
+	if(uTargetNode)
+		sprintf(gcQuery,"SELECT tProperty.uKey,tProperty.cValue FROM tProperty,tContainer"
+			" WHERE tProperty.uKey=tContainer.uContainer AND tProperty.uType=3 AND"
+			" tProperty.cName='1k-blocks.luSoftLimit' AND tContainer.uDatacenter=%u"
+			" AND tContainer.uNode=%u"
+			" AND tContainer.uStatus=1",uDatacenter,uTargetNode);
+	else
+		sprintf(gcQuery,"SELECT tProperty.uKey,tProperty.cValue FROM tProperty,tContainer"
 			" WHERE tProperty.uKey=tContainer.uContainer AND tProperty.uType=3 AND"
 			" tProperty.cName='1k-blocks.luSoftLimit' AND tContainer.uDatacenter=%u"
 			" AND tContainer.uStatus=1",uDatacenter);
@@ -538,7 +564,15 @@ void tDatacenterHealth(void)
 
 
 	//2-. None zero historic fail counters
-	sprintf(gcQuery,"SELECT cValue,uKey,cLabel,cName FROM tProperty,tContainer WHERE"
+	if(uTargetNode)
+		sprintf(gcQuery,"SELECT cValue,uKey,cLabel,cName FROM tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND"
+			" tContainer.uDatacenter=%u AND"
+			" tContainer.uNode=%u AND"
+			" cValue!='0' AND uType=3 AND cName LIKE '%%.luFailcnt'"
+			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uDatacenter,uTargetNode);
+	else
+		sprintf(gcQuery,"SELECT cValue,uKey,cLabel,cName FROM tProperty,tContainer WHERE"
 			" tProperty.uKey=tContainer.uContainer AND"
 			" tContainer.uDatacenter=%u AND"
 			" cValue!='0' AND uType=3 AND cName LIKE '%%.luFailcnt'"
@@ -563,7 +597,17 @@ void tDatacenterHealth(void)
         mysql_free_result(res);
 
 	//3a-. Todays top in
-	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000),2),uKey,cHostname,TIME(FROM_UNIXTIME(tProperty.uModDate)) FROM"
+	if(uTargetNode)
+		sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000),2),uKey,cHostname,TIME(FROM_UNIXTIME(tProperty.uModDate)) FROM"
+			" tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
+			" tContainer.uStatus=%u AND"
+			" tContainer.uDatacenter=%u AND"
+			" tContainer.uNode=%u AND"
+			" cName='Venet0.luMaxDailyInDelta'"
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter,uTargetNode);
+	else
+		sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000),2),uKey,cHostname,TIME(FROM_UNIXTIME(tProperty.uModDate)) FROM"
 			" tProperty,tContainer WHERE"
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
 			" tContainer.uStatus=%u AND"
@@ -589,7 +633,17 @@ void tDatacenterHealth(void)
         mysql_free_result(res);
 
 	//3b-. Todays top out
-	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000),2),uKey,cHostname,TIME(FROM_UNIXTIME(tProperty.uModDate)) FROM"
+	if(uTargetNode)
+		sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000),2),uKey,cHostname,TIME(FROM_UNIXTIME(tProperty.uModDate)) FROM"
+			" tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
+			" tContainer.uStatus=%u AND"
+			" tContainer.uDatacenter=%u AND"
+			" tContainer.uNode=%u AND"
+			" cName='Venet0.luMaxDailyOutDelta'"
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter,uTargetNode);
+	else
+		sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000),2),uKey,cHostname,TIME(FROM_UNIXTIME(tProperty.uModDate)) FROM"
 			" tProperty,tContainer WHERE"
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
 			" tContainer.uStatus=%u AND"
@@ -615,7 +669,17 @@ void tDatacenterHealth(void)
         mysql_free_result(res);
 
 	//4-. Last 5 min top talkers
-	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/2000),2),uKey,cHostname FROM"
+	if(uTargetNode)
+		sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/2000),2),uKey,cHostname FROM"
+			" tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
+			" tContainer.uStatus=%u AND"
+			" tContainer.uDatacenter=%u AND"
+			" tContainer.uNode=%u AND"
+			" (cName='Venet0.luInDelta' OR cName='Venet0.luOutDelta')"
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter,uTargetNode);
+	else
+		sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/2000),2),uKey,cHostname FROM"
 			" tProperty,tContainer WHERE"
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
 			" tContainer.uStatus=%u AND"
@@ -641,7 +705,17 @@ void tDatacenterHealth(void)
         mysql_free_result(res);
 
 	//4-. Top talkers
-	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000000000),2),uKey,cHostname FROM"
+	if(uTargetNode)
+		sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000000000),2),uKey,cHostname FROM"
+			" tProperty,tContainer WHERE"
+			" tContainer.uStatus=%u AND"
+			" tContainer.uDatacenter=%u AND"
+			" tContainer.uNode=%u AND"
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
+			" (cName='Venet0.luIn' OR cName='Venet0.luOut')"
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter,uTargetNode);
+	else
+		sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000000000),2),uKey,cHostname FROM"
 			" tProperty,tContainer WHERE"
 			" tContainer.uStatus=%u AND"
 			" tContainer.uDatacenter=%u AND"
