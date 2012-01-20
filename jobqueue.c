@@ -973,10 +973,30 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	sprintf(gcQuery,"/usr/sbin/vzlist %u > /dev/null 2>&1",uContainer);
 	if(system(gcQuery))
 	{
-		logfileLine("ChangeIPContainer","Job returned to queue");
+		logfileLine("ChangeIPContainer","Job returned to queue no such container");
 		tJobWaitingUpdate(uJob);
 		return;
 	}
+
+	//Check 2-. Wait till any other jobs currently in the job queue for this
+	//	container are done.
+	sprintf(gcQuery,"SELECT uJob FROM tJob"
+			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u)",uContainer,uWAITING,uRUNNING);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ChangeIPContainer",mysql_error(&gMysql));
+		exit(2);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		logfileLine("ChangeIPContainer","Job returned to queue other jobs pending");
+		tJobWaitingUpdate(uJob);
+		mysql_free_result(res);
+		return;
+	}
+	mysql_free_result(res);
 
 
 	//0-. Get required data
