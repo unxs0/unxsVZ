@@ -1665,7 +1665,6 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	{
 		//We may not want this optional behavior may violate QoS for given migration
 		logfileLine("MigrateContainer","Trying offline migration");
-		tJobErrorUpdate(uJob,"Failed once trying offline");
 
 		if(cSSHOptions[0])
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"

@@ -28,8 +28,9 @@ unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o
 		jobqueue.o glossary.o main.o cgi.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) 
 
 #new standalone job queue processor
+#needs new (and yet to be be developed) libunxsvz 
 unxsvz: jobqueue.o unxsvz.o mysqlconnect.o
-	cc jobqueue.o unxsvz.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) 
+	cc jobqueue.o unxsvz.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) -lunxsvz
 
 unxsvz.o: unxsvz.c mysqlrad.h local.h
 	cc -c unxsvz.c -o unxsvz.o $(CFLAGS)
