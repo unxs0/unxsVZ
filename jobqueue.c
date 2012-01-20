@@ -1137,6 +1137,9 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 
 		//Everything ok
+		sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot yes --save",uContainer);
+		if(system(gcQuery))
+			logfileLine("ChangeIPContainer",gcQuery);
 		SetContainerStatus(uContainer,1);//Active
 		tJobDoneUpdate(uJob);
 
@@ -1162,6 +1165,36 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	char cTimezone[256]={""};
         MYSQL_RES *res;
         MYSQL_ROW field;
+
+	//Check 1-. Check to make sure container is on this node, if not 
+	//	give job back to queue
+	sprintf(gcQuery,"/usr/sbin/vzlist %u > /dev/null 2>&1",uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("ChangeHostnameContainer","Job returned to queue no such container");
+		tJobWaitingUpdate(uJob);
+		return;
+	}
+
+	//Check 2-. Wait till any other jobs currently in the job queue for this
+	//	container are done.
+	sprintf(gcQuery,"SELECT uJob FROM tJob"
+			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u)",uContainer,uWAITING,uRUNNING);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ChangeHostnameContainer",mysql_error(&gMysql));
+		exit(2);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		logfileLine("ChangeHostnameContainer","Job returned to queue other jobs pending");
+		tJobWaitingUpdate(uJob);
+		mysql_free_result(res);
+		return;
+	}
+	mysql_free_result(res);
 
 
 	//New for external script
