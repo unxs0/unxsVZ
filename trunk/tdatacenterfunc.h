@@ -704,6 +704,39 @@ void tDatacenterHealth(void)
 	}
         mysql_free_result(res);
 
+	//4b-. Last 5 min top diff talkers
+	if(uTargetNode)
+		sprintf(gcQuery,"SELECT ABS(CONVERT(t2.cValue,SIGNED)-CONVERT(t1.cValue,SIGNED)),t1.uKey,t1.uKey FROM"
+			" tProperty AS t1, tProperty AS t2 WHERE"
+			" t1.uKey IN (SELECT uContainer from tContainer where uStatus=%u AND uDatacenter=%u AND uNode=%u) AND"
+			" t1.uKey=t2.uKey AND t1.uType=3 AND t1.cName='Venet0.luInDelta' AND"
+			" t2.uKey=t2.uKey AND t2.uType=3 AND t2.cName='Venet0.luOutDelta'"
+			" ORDER BY ABS(CONVERT(t2.cValue,SIGNED)-CONVERT(t1.cValue,SIGNED)) DESC LIMIT 10",uACTIVE,uDatacenter,uTargetNode);
+	else
+		sprintf(gcQuery,"SELECT ABS(CONVERT(t2.cValue,SIGNED)-CONVERT(t1.cValue,SIGNED)),t1.uKey,t1.uKey FROM"
+			" tProperty AS t1, tProperty AS t2 WHERE"
+			" t1.uKey IN (SELECT uContainer from tContainer where uStatus=%u AND uDatacenter=%u) AND"
+			" t1.uKey=t2.uKey AND t1.uType=3 AND t1.cName='Venet0.luInDelta' AND"
+			" t2.uKey=t2.uKey AND t2.uType=3 AND t2.cName='Venet0.luOutDelta'"
+			" ORDER BY ABS(CONVERT(t2.cValue,SIGNED)-CONVERT(t1.cValue,SIGNED)) DESC LIMIT 10",uACTIVE,uDatacenter);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tDatacenterHealth</u><br>\n");
+                printf("5-. %s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Last 5min top diff</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s %sB/s</a><br>\n",field[1],field[2],field[0]);
+	}
+        mysql_free_result(res);
+
 	//4-. Top talkers
 	if(uTargetNode)
 		sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000000000),2),uKey,cHostname FROM"
