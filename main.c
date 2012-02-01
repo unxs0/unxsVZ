@@ -2050,7 +2050,6 @@ void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt)
 }//void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt)
 
 
-
 void GetPLAndClient(char *cUser)
 {
         MYSQL_RES *mysqlRes;
