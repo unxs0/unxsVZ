@@ -25,7 +25,6 @@ FREE HELP
 #include "local.h"
 
 //Global vars
-
 #define SHOWPAGE 30
 MYSQL gMysql;
 unsigned long gluRowid;
@@ -82,7 +81,6 @@ void NoSuchFunction(void);
 void unxsVZ(const char *cResult);
 void InitialInstall(void);
 const char *cUserLevel(unsigned uPermLevel);
-
 int iValidLogin(int iMode);
 void SSLCookieLogin(void);
 void SetLogin(void);
@@ -988,38 +986,58 @@ void ProcessControlVars(pentry entries[], int x)
 void PageMachine(char *cFuncName, int iLmode, char *cMsg)
 {
 	
-if(iLmode)
-{
-	//List mode
-	
-	if(gluRowid<1) gluRowid=1;
-	if(gluRowid>(guN=((guI/SHOWPAGE)+1))) gluRowid=guN;
-
-	if(!strcmp(gcFind," >"))
+	if(iLmode)
 	{
-		//If NOT on last page show next page
-		if( gluRowid >= guN-1 )
+		//List mode
+	
+		if(gluRowid<1) gluRowid=1;
+		if(gluRowid>(guN=((guI/SHOWPAGE)+1))) gluRowid=guN;
+
+		if(!strcmp(gcFind," >"))
 		{
-			//If on last page adjust end
+			//If NOT on last page show next page
+			if( gluRowid >= guN-1 )
+			{
+				//If on last page adjust end
+				guStart= ((guI/SHOWPAGE)*SHOWPAGE) + 1;
+				guEnd=guI;
+			}
+			else
+			{
+				guStart=((gluRowid)*SHOWPAGE)+1;
+				guEnd=guStart+SHOWPAGE-1;
+				gluRowid++;
+			}
+		}
+		else if(!strcmp(gcFind,"< "))
+		{
+			if(gluRowid>1 )
+			{
+				gluRowid--;
+				guStart=(gluRowid)*SHOWPAGE-SHOWPAGE+1;
+				guEnd=guStart+SHOWPAGE-1;
+			}
+			else
+			{
+				guStart=1;
+				if(guI > SHOWPAGE)
+				{
+					guEnd=SHOWPAGE;
+				}
+				else
+				{
+					guEnd=guI;
+				}
+				gluRowid=1;
+			}
+		}
+		else if(!strcmp(gcFind,">>"))
+		{
 			guStart= ((guI/SHOWPAGE)*SHOWPAGE) + 1;
 			guEnd=guI;
+			gluRowid=guN;
 		}
-		else
-		{
-			guStart=((gluRowid)*SHOWPAGE)+1;
-			guEnd=guStart+SHOWPAGE-1;
-			gluRowid++;
-		}
-	}
-	else if(!strcmp(gcFind,"< "))
-	{
-		if(gluRowid>1 )
-		{
-			gluRowid--;
-			guStart=(gluRowid)*SHOWPAGE-SHOWPAGE+1;
-			guEnd=guStart+SHOWPAGE-1;
-		}
-		else
+		else if(1)
 		{
 			guStart=1;
 			if(guI > SHOWPAGE)
@@ -1032,101 +1050,81 @@ if(iLmode)
 			}
 			gluRowid=1;
 		}
-	}
-	else if(!strcmp(gcFind,">>"))
-	{
-		guStart= ((guI/SHOWPAGE)*SHOWPAGE) + 1;
-		guEnd=guI;
-		gluRowid=guN;
-	}
-	else if(1)
-	{
-		guStart=1;
-		if(guI > SHOWPAGE)
-		{
-			guEnd=SHOWPAGE;
-		}
-		else
-		{
-			guEnd=guI;
-		}
-		gluRowid=1;
-	}
-
-	guListMode=1;
-	Header_ism3(cFuncName,0);
-
-	if(!guI) 
-        {
-                printf(LANG_PAGEMACHINE_HINT);
-
-        }
- 
-
-        printf(LANG_PAGEMACHINE_SHOWING,1+(guStart/SHOWPAGE),guN,guStart,guEnd,guI);
-
-
-	printf("<input type=hidden name=gluRowid value=%lu>",gluRowid);
-	printf("<input type=hidden name=gcFunction value=%s >",cFuncName);
-	printf("<input type=hidden name=guListMode value=1 >\n");
-}
-else
-{
-	//Page mode
-	//on entry guI has number of rows
-	//on entry gluRowid has current position unless guI=1
-	//if guI=1 then we need to figure out real guI
-
-	guN=guI;
-
-	if(gluRowid<1)
-	{
-		gluRowid=1;
-		return;
-	}
 	
-	if(!strcmp(gcFind," >"))
+		guListMode=1;
+		Header_ism3(cFuncName,0);
+	
+		if(!guI) 
+	        {
+	                printf(LANG_PAGEMACHINE_HINT);
+	
+	        }
+	 
+	
+	        printf(LANG_PAGEMACHINE_SHOWING,1+(guStart/SHOWPAGE),guN,guStart,guEnd,guI);
+	
+	
+		printf("<input type=hidden name=gluRowid value=%lu>",gluRowid);
+		printf("<input type=hidden name=gcFunction value=%s >",cFuncName);
+		printf("<input type=hidden name=guListMode value=1 >\n");
+	}
+	else
 	{
-		//If on last page stay there
-		if( gluRowid >= guI )
+		//Page mode
+		//on entry guI has number of rows
+		//on entry gluRowid has current position unless guI=1
+		//if guI=1 then we need to figure out real guI
+
+		guN=guI;
+	
+		if(gluRowid<1)
 		{
-			//If on last page adjust guEnd
+			gluRowid=1;
+			return;
+		}
+		
+		if(!strcmp(gcFind," >"))
+		{
+			//If on last page stay there
+			if( gluRowid >= guI )
+			{
+				//If on last page adjust guEnd
+				gluRowid=guI;
+			}
+			else
+			{
+				gluRowid++;
+			}
+		}
+		else if(!strcmp(gcFind,"< "))
+		{
+			if(gluRowid>1 )
+			{
+				gluRowid--;
+			}
+			else
+			{
+				gluRowid=1;
+			}
+		}
+		else if(!strcmp(gcFind,">>"))
+		{
 			gluRowid=guI;
 		}
-		else
-		{
-			gluRowid++;
-		}
-	}
-	else if(!strcmp(gcFind,"< "))
-	{
-		if(gluRowid>1 )
-		{
-			gluRowid--;
-		}
-		else
+		else if(!strcmp(gcFind,"<<"))
 		{
 			gluRowid=1;
 		}
-	}
-	else if(!strcmp(gcFind,">>"))
-	{
-		gluRowid=guI;
-	}
-	else if(!strcmp(gcFind,"<<"))
-	{
-		gluRowid=1;
-	}
-	else if(1)
-	{
-		//If on last page stay there
-		if( gluRowid >= guI )
+		else if(1)
 		{
-			gluRowid=guI;
+			//If on last page stay there
+			if( gluRowid >= guI )
+			{
+				gluRowid=guI;
+			}
 		}
-	}
 
-}//guEnd iLmode
+	}//guEnd iLmode
 
 }//PageMachine()
 
