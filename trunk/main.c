@@ -9,10 +9,10 @@ PURPOSE
 	you mess with them in non standard ways...lol.
 	
 AUTHOR/LEGAL
-	(C) 2001-2010 Unixservice, LLC.
+	(C) 2001-2012 Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 OTHER
-	Only tested on CentOS 5 and Firefox browser (3.0.19).
+	Only tested on CentOS 5 and Firefox browser (9.0.1).
 FREE HELP
 	support @ openisp . net
 	supportgrp @ unixservice . com
