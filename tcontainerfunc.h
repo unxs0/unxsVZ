@@ -2795,7 +2795,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Remote Migration"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
+			if( (uStatus==uACTIVE||uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
 
@@ -2813,7 +2813,7 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm Remote Migration"))
                 {
                         ProcesstContainerVars(entries,x);
-			if(uStatus==uACTIVE && uAllowMod(uOwner,uCreatedBy))
+			if( (uStatus==uACTIVE||uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
 				unsigned uTargetDatacenter=0;
 				unsigned uIPv4Available=0;
@@ -2858,9 +2858,57 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(!cunxsBindARecordJobZone[0])
 					tContainer("<blink>Error:</blink> Create job for unxsBind,"
 								" but no cunxsBindARecordJobZone");
+
+				//label-cloneN and hostname.cloneN mess change to new format
+				// new hostname is based on source cLabel and cHostname
+				char cPrevHostname[100]={""};
+				if(uSource)
+				{
+					char cSourceHostname[100]={""};
+					char cWizLabel[33]={""};
+					char cNewLabel[33]={""};
+					char *cp=NULL;
+					unsigned uWizLabelLoop=1;
+					unsigned uWizLabelSuffix=0;
+
+					sprintf(cPrevHostname,"%s",cHostname);
+
+					sprintf(cLabel,"%.25s",ForeignKey("tContainer","cLabel",uSource));
+					//Get first available <cLabel>-clone<uNum>
+					while(uWizLabelLoop)
+					{
+						uWizLabelSuffix++;
+						if(uWizLabelSuffix>9) tContainer("<blink>Error:</blink> Clone limit reached");
+						sprintf(cWizLabel,"%.25s-clone%u",cLabel,uWizLabelSuffix);
+						sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cWizLabel);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						res=mysql_store_result(&gMysql);
+						uWizLabelLoop=mysql_num_rows(res);
+						mysql_free_result(res);
+					}
+					sprintf(cNewLabel,"%.25s-clone%u",cLabel,uWizLabelSuffix);
+					sprintf(cLabel,"%.32s",cNewLabel);
+
+					sprintf(cSourceHostname,"%.99s",ForeignKey("tContainer","cHostname",uSource));
+					if((cp=strchr(cSourceHostname,'.')))
+					{
+						sprintf(cHostname,"%.32s.%.64s",cLabel,cp+1);
+					}
+				}
+
 				uHostnameLen=strlen(cHostname);
 				if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
-					tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+						tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+				if(uSource)
+				{
+					sprintf(gcQuery,"UPDATE tContainer SET cHostname='%s',cLabel='%s'"
+								" WHERE uContainer=%u",cHostname,cLabel,uContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
 
                         	guMode=0;
 
@@ -2893,12 +2941,16 @@ void ExttContainerCommands(pentry entries[], int x)
 					sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
 					if(!cIPOld[0])
 						htmlPlainTextError("Unexpected !cIPOld");
-					//Note that job is for new node
-					//Then this job must run after migration.
-					if(IPContainerJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,cIPOld))
 
+					//Note that these jobs are for new node
+					//Then this job must run after migration.
+					IPContainerJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,cIPOld);
 					//Create unxsBind DNS
 					CreateDNSJob(uWizIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient);
+
+					//Create change hostname job
+					if(uSource)
+						HostnameContainerJob(uTargetDatacenter,uTargetNode,uContainer,cPrevHostname);
 
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("MigrateContainerJob() Done");
@@ -3980,11 +4032,8 @@ void ExttContainerButtons(void)
 				if(uStatus==uACTIVE)
 				{
 					htmlHealth(uContainer,3);
-					printf("<p><input title='Migrate container to another datacenter node'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Remote Migration'><br>\n");
 					if(!strstr(cLabel,"-clone"))
-					printf("<input title='Clone a container to this or another hardware node."
+					printf("<p><input title='Clone a container to this or another hardware node."
 					" The clone will be an online container with another IP and hostname."
 					" It will be kept updated via rsync on a configurable basis.'"
 					" type=submit class=largeButton"
@@ -4032,6 +4081,9 @@ void ExttContainerButtons(void)
 					printf("<input title='Migrate container to another hardware node'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Migration Wizard'><br>\n");
+					printf("<input title='Migrate container to another datacenter node'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Remote Migration'><br>\n");
 					printf("<input title='Change current container name and hostname'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Hostname Change Wizard'><br>\n");
