@@ -981,7 +981,7 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//Check 2-. Wait till any other jobs currently in the job queue for this
 	//	container are done.
 	sprintf(gcQuery,"SELECT uJob FROM tJob"
-			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u)",uContainer,uWAITING,uRUNNING);
+			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u) AND uJob!=%u",uContainer,uWAITING,uRUNNING,uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1179,7 +1179,7 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//Check 2-. Wait till any other jobs currently in the job queue for this
 	//	container are done.
 	sprintf(gcQuery,"SELECT uJob FROM tJob"
-			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u)",uContainer,uWAITING,uRUNNING);
+			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u) AND uJob!=%u",uContainer,uWAITING,uRUNNING,uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
