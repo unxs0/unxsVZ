@@ -75,6 +75,7 @@ static char cuWizContainerPullDown[32]={""};
 static unsigned uAllPortsOpen=0;
 static unsigned uCloneStop=WARM_CLONE;
 static unsigned uSyncPeriod=0;
+static unsigned guSameNode=0;//Same node as right loaded container uNode.
 static unsigned guNoClones=0;
 static unsigned guOpOnClones=0;
 static unsigned guInitOnly=0;
@@ -89,7 +90,7 @@ static unsigned uCreateDNSJob=0;
 static char cForClientPullDown[256]={""};
 
 //ModuleFunctionProtos()
-void tContainerNavList(unsigned uNode, char *cSearch);
+void tContainerNavList(unsigned uNode, char *cSearch);//uNode is really a node mode
 unsigned CreateNewContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned DestroyContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
@@ -760,6 +761,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 					}
 				}
 			}
+		}
+		else if(!strcmp(entries[i].name,"guSameNode"))
+		{
+			guSameNode=1;
 		}
 		else if(!strcmp(entries[i].name,"guNoClones"))
 		{
@@ -4013,20 +4018,28 @@ void ExttContainerButtons(void)
 			printf("<p><u>Container Search by cLabel</u><br>");
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
 					" name=cSearch value='%s'>",cSearch);
-			printf("<br><input title='Remove clones from search nav list' type=checkbox name=guNoClones");
+
+			printf("<br><input title='Additional NavList filter same node as loaded container' type=checkbox name=guSameNode");
+			if(guSameNode)
+				printf(" checked");
+			printf("> guSameNode");
+
+			printf("<input title='Remove clones from search nav list' type=checkbox name=guNoClones");
 			if(guNoClones)
 				printf(" checked");
 			printf("> guNoClones");
+
 			printf("<input title='-Initial Setup- status containers only' type=checkbox name=guInitOnly");
 			if(guInitOnly)
 				printf(" checked");
 			printf("> guInitOnly");
+
 			printf("<input title='Operate on clones in group functions when appropiate'"
 					" type=checkbox name=guOpOnClones> guOpOnClones\n");
 			printf("<p><u>Container NavList Filter by tGroup</u><br>");
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 
-			tContainerNavList(0,cSearch);
+			tContainerNavList(0,cSearch);//0 means container mode or tContainer tab mode.
 			if(uContainer && uAllowMod(uOwner,uCreatedBy) && guPermLevel>7)
 			{
 				if(uStatus==uACTIVE)
@@ -4366,7 +4379,8 @@ void ExttContainerNavBar(void)
 
 }//void ExttContainerNavBar(void)
 
-
+//uNode=0 means container mode or tContainer tab mode.
+//uNode!=0 is used for a nav list of containers from same node.
 void tContainerNavList(unsigned uNode, char *cSearch)
 {
         MYSQL_RES *res;
@@ -4577,6 +4591,109 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 	   }
 	   else //guNoClones==0 and guInitOnly==0
 	   {
+
+	   if(guSameNode)
+	   {
+		if(cSearch[0] && !uGroup)
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
+					" WHERE tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uNode=%u"
+					" AND tContainer.cLabel LIKE '%s%%'"
+					" ORDER BY tContainer.cLabel",guSameNode,cSearch);
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uNode=%3$u"
+					" AND tContainer.cLabel LIKE '%2$s%%'"
+					" ORDER BY tContainer.cLabel",guCompany,cSearch,guSameNode);
+		}
+		else if(cSearch[0] && uGroup)
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
+					" WHERE tContainer.uNode=tNode.uNode"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uNode=%u"
+					" AND tContainer.cLabel LIKE '%s%%'"
+					" AND tContainer.uContainer=tGroupGlue.uContainer"
+					" AND tGroupGlue.uGroup=%u"
+					" ORDER BY tContainer.cLabel",guSameNode,cSearch,uGroup);
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uNode=%4$u"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.cLabel LIKE '%2$s%%'"
+					" AND tContainer.uContainer=tGroupGlue.uContainer"
+					" AND tGroupGlue.uGroup=%3$u"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+					" ORDER BY tContainer.cLabel",guCompany,cSearch,uGroup,guSameNode);
+		}
+		else if(!cSearch[0] && uGroup)
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
+					" WHERE tContainer.uNode=tNode.uNode"
+					" AND tContainer.uNode=%u"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uContainer=tGroupGlue.uContainer"
+					" AND tGroupGlue.uGroup=%u"
+					" ORDER BY tContainer.cLabel",guSameNode,uGroup);
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uNode=%3$u"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uContainer=tGroupGlue.uContainer"
+					" AND tGroupGlue.uGroup=%2$u"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+					" ORDER BY tContainer.cLabel",guCompany,uGroup,guSameNode);
+		}
+		else if(1)
+		{
+			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
+					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
+					" WHERE tContainer.uNode=tNode.uNode"
+					" AND tContainer.uNode=%u"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" ORDER BY tContainer.cLabel",guSameNode);
+			else
+				sprintf(gcQuery,"SELECT tContainer.uContainer"
+					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
+					" FROM tContainer," TCLIENT ",tNode,tStatus"
+					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
+					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
+					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
+					" AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uNode=%2$u"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" ORDER BY tContainer.cLabel",guCompany,guSameNode);
+		}
+	}
+	else
+	//guSameNode==0
+	{
 		if(cSearch[0] && !uGroup)
 		{
 			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
@@ -4665,6 +4782,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" AND tContainer.uStatus=tStatus.uStatus"
 					" ORDER BY tContainer.cLabel",guCompany);
 		}
+	}
 	   }//if(guNoClones)
 	}
 	else
@@ -4795,7 +4913,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 				" If active, containers may be stopped for several minutes if not setup for vzdump snapshot.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Template'>\n");
-			printf("<br><input title='Deletes initial setup or awaiting clone container(s).'"
+			printf("<br><input title='Deletes initial setup or awaiting intial setup clone container(s) and optionally their clones.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Delete'>\n");
 			printf("<br><input title='Deletes any existing group association then adds selected group to selected containers'"
@@ -4808,10 +4926,13 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 			printf("<p><input title='Creates job(s) for stopping active container(s).'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Stop'>\n");
-			printf("<p><input title='Creates job(s) for switching over cloned container(s).'"
+			printf("<p><input title='Creates job(s) for switching over cloned container(s) of same datacenter.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Switchover'>\n");
-			printf("<p><input title='Creates job(s) for destroying active or stopped container(s).'"
+			printf("<p><input title='Creates job(s) for migrating container(s) and optionally their clones. Two step.'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Migration'>\n");
+			printf("<p><input title='Creates job(s) for destroying active or stopped container(s) and optionally their clones.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Destroy'>\n");
 		}

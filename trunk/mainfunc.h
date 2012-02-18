@@ -179,7 +179,7 @@ void CloneReport(const char *cOptionalMsg)
 	//1=Active 31=Stopped TODO
 	uCount=0;
 	OpenRow("<p>","black");
-	OpenRow("<u>Containers with clones not updated in last half-hour</u>","black");
+	OpenRow("<u>Containers with clones not updated in last hour</u>","black");
 	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tContainer.uContainer,tContainer.uNode,"
 				"tContainer.uDatacenter,tDatacenter.cLabel FROM tContainer,tDatacenter WHERE"
 				" tContainer.uSource=0 AND (tContainer.uStatus=1 OR tContainer.uStatus=31) AND"
@@ -193,7 +193,7 @@ void CloneReport(const char *cOptionalMsg)
 		sprintf(gcQuery,"SELECT tContainer.uContainer,tStatus.cLabel,tContainer.cLabel,tContainer.cLabel,"
 					"tNode.cLabel"
 					" FROM tContainer,tStatus,tNode WHERE"
-					" tContainer.uSource=%s AND tContainer.uBackupDate<(UNIX_TIMESTAMP(NOW())-1800)"
+					" tContainer.uSource=%s AND tContainer.uBackupDate<(UNIX_TIMESTAMP(NOW())-3600)"
 					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.uNode=tNode.uNode",
 						mysqlField[2]);
