@@ -291,9 +291,13 @@ void tConfigurationNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	ExtSelectPublic("tConfiguration","tConfiguration.uConfiguration,tConfiguration.cLabel");
-
-        mysql_query(&gMysql,gcQuery);
+	sprintf(gcQuery,"SELECT tConfiguration.uConfiguration,tConfiguration.cLabel,"
+			" IFNULL(tDatacenter.cLabel,'AllDatacenters'),IFNULL(tNode.cLabel,'AllNodes')"
+			" FROM tConfiguration"
+			" LEFT JOIN tDatacenter ON tConfiguration.uDatacenter=tDatacenter.uDatacenter"
+			" LEFT JOIN tNode ON tConfiguration.uNode=tNode.uNode"
+			" ORDER BY tConfiguration.cLabel,tConfiguration.uDatacenter,tConfiguration.uNode");
+	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
         	printf("<p><u>tConfigurationNavList</u><br>\n");
@@ -308,7 +312,7 @@ void tConfigurationNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tConfiguration&"
-				"uConfiguration=%s>%s</a><br>\n",field[0],field[1]);
+					"uConfiguration=%s>%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
 	}
         mysql_free_result(res);
 
