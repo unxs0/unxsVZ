@@ -786,30 +786,35 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 									" datacenter configured",uTargetNode);
 							tContainer(gcQuery);
 						}
-						GetConfiguration("cAutoCloneNode",cAutoCloneNode,uTargetDatacenter,uTargetNode,0,0);
-						if(!cAutoCloneNode[0])
-							GetConfiguration("cAutoCloneNode",cAutoCloneNode,uTargetDatacenter,0,0,0);
-						if(!cAutoCloneNode[0])
+						if(guCloneTargetNode && guOpOnClones)
 						{
-							sprintf(gcQuery,"<blink>Error</blink> target node (%u) has no"
-									" tConfiguration cAutoCloneNode configured",uTargetNode);
-							tContainer(gcQuery);
+							cAutoCloneNode[0]=0;
+							GetConfiguration("cAutoCloneNode",cAutoCloneNode,uTargetDatacenter,uTargetNode,0,0);
+							if(!cAutoCloneNode[0])
+								GetConfiguration("cAutoCloneNode",cAutoCloneNode,uTargetDatacenter,0,0,0);
+							if(!cAutoCloneNode[0])
+							{
+								sprintf(gcQuery,"<blink>Error</blink> target node (%u) has no"
+										" tConfiguration cAutoCloneNode configured",uTargetNode);
+								tContainer(gcQuery);
+							}
+							unsigned uCloneTargetNode=0;
+							uCloneTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
+							if(!uCloneTargetNode)
+							{
+								sprintf(gcQuery,"<blink>Error</blink> cAutoCloneNode %s has no"
+										" tNode entry!",cAutoCloneNode);
+								tContainer(gcQuery);
+							}
+							if(uCloneTargetNode!=guCloneTargetNode)
+							{
+								sprintf(gcQuery,"<blink>Error</blink> Target node auto clone target %s (%u)"
+										" does not match provided"
+										" guCloneTargetNode (%u)!",
+											cAutoCloneNode,uCloneTargetNode,guCloneTargetNode);
+								tContainer(gcQuery);
+							}
 						}
-						unsigned uCloneTargetNode=0;
-						uCloneTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
-						if(!uCloneTargetNode)
-						{
-							sprintf(gcQuery,"<blink>Error</blink> cAutoCloneNode %s has no"
-									" tNode entry!",cAutoCloneNode);
-							tContainer(gcQuery);
-						}
-						if(uCloneTargetNode!=guCloneTargetNode)
-						{
-							sprintf(gcQuery,"<blink>Error</blink> Clone target node %s is not configured"
-									" for auto clone!",cAutoCloneNode);
-							tContainer(gcQuery);
-						}
-						tContainer("d1");
 
 						InitContainerProps(&sContainer);
 						GetContainerProps(uCtContainer,&sContainer);
@@ -847,8 +852,8 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 										sscanf(field[2],"%u",&uCloneContainer);
 										sscanf(field[3],"%u",&uCloneStatus);
 										sscanf(field[4],"%u",&uCloneOwner);
-										if((uStatus==uSTOPPED || uStatus==uACTIVE)
-											&& (uOwner==guCompany || guCompany==1))
+										if((uCloneStatus==uSTOPPED || uCloneStatus==uACTIVE)
+											&& (uCloneOwner==guCompany || guCompany==1))
 										{
 											if(MigrateContainerJob(uCloneDatacenter,
 												uCloneNode,uCloneContainer,guCloneTargetNode,
