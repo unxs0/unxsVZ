@@ -1601,7 +1601,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	sscanf(cJobData,"uTargetNode=%*u;\nuIPv4=%*u;\nuPrevStatus=%u;",&uPrevStatus);
-	if(uPrevStatus!=uACTIVE || uPrevStatus!=uSTOPPED)
+	if(uPrevStatus!=uACTIVE && uPrevStatus!=uSTOPPED)
 	{
 		sprintf(gcQuery,"cJobData uPrevStatus not active or stopped. uPrevStatus=%u",uPrevStatus);
 		logfileLine("MigrateContainer",gcQuery);
