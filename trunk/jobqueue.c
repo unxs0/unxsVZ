@@ -1603,8 +1603,9 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	sscanf(cJobData,"uTargetNode=%*u;\nuIPv4=%*u;\nuPrevStatus=%u;",&uPrevStatus);
 	if(uPrevStatus!=uACTIVE || uPrevStatus!=uSTOPPED)
 	{
-		logfileLine("MigrateContainer","Could not determine uPrevStatus");
-		tJobErrorUpdate(uJob,"uPrevStatus==0");
+		sprintf(gcQuery,"cJobData uPrevStatus not active or stopped. uPrevStatus=%u",uPrevStatus);
+		logfileLine("MigrateContainer",gcQuery);
+		tJobErrorUpdate(uJob,"uPrevStatus problem");
 		return;
 	}
 
