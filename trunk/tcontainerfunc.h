@@ -853,7 +853,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 										sscanf(field[3],"%u",&uCloneStatus);
 										sscanf(field[4],"%u",&uCloneOwner);
 										if((uCloneStatus==uSTOPPED || uCloneStatus==uACTIVE)
-											&& (uCloneOwner==guCompany || guCompany==1))
+											&& (uCloneOwner==guCompany || guCompany==1)
+											//Do not create useless job if clone is already on
+											//target node
+											&& (guCloneTargetNode!=uCloneNode) )
 										{
 											if(MigrateContainerJob(uCloneDatacenter,
 												uCloneNode,uCloneContainer,guCloneTargetNode,
