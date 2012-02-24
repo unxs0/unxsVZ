@@ -1128,8 +1128,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cHostname is too short");
 				if(cHostname[uHostnameLen-1]=='.')
 					tContainer("<blink>Error:</blink> cHostname can't end with a '.'");
-				if(strstr(cHostname+(uHostnameLen-strlen(".cloneNN")-1),".clone"))
-					tContainer("<blink>Error:</blink> cHostname can't end with '.cloneN'");
+				if(strstr(cHostname,"-clone"))
+					tContainer("<blink>Error:</blink> cHostname can't have '-clone'");
 				//New rule: cLabel must be first part (first stop) of cHostname.
 				if(strncmp(cLabel,cHostname,uLabelLen))
 					tContainer("<blink>Error:</blink> cLabel must be first part of cHostname.");
@@ -1617,6 +1617,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(cAutoCloneNode[0])
 				{
+					//TODO what about clone datacenter?
 					uNewVeid=CommonCloneContainer(
 									uContainer,
 									uOSTemplate,
@@ -1657,6 +1658,10 @@ void ExttContainerCommands(pentry entries[], int x)
 						tContainer("<blink>Error:</blink> No clone IP available"
 								", container creation aborted!");
 					mysql_free_result(res);
+
+					//Create DNS job for clones also
+					if(uCreateDNSJob)
+						CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uDatacenter,guLoginClient);
 				}//cAutoCloneNode
 
 				if(uCreateDNSJob)
@@ -1757,8 +1762,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cHostname is too short");
 				if(cHostname[uHostnameLen-1]=='.')
 					tContainer("<blink>Error:</blink> cHostname can't end with a '.'");
-				if(strstr(cHostname+(uHostnameLen-strlen(".cloneNN")-1),".clone"))
-					tContainer("<blink>Error:</blink> cHostname can't end with '.cloneN'");
+				if(strstr(cHostname,"-clone"))
+					tContainer("<blink>Error:</blink> cHostname can't have '-clone'");
 				if(cHostname[0]!='.')
 					tContainer("<blink>Error:</blink> Multiple containers cHostname has"
 							" to start with '.'");
@@ -2159,6 +2164,9 @@ void ExttContainerCommands(pentry entries[], int x)
 							tContainer("<blink>Error:</blink> No more clone IPs available"
 								", multiple container creation aborted!");
 						mysql_free_result(res);
+
+						if(uCreateDNSJob)
+							CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uTargetDatacenter,guLoginClient);
 					}
 
 					if(uCreateDNSJob)
@@ -2366,8 +2374,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cLabel too short!");
 				if(strstr(cLabel,"-clone"))
 					tContainer("<blink>Error:</blink> cLabel can't have '-clone'!");
-				if(strstr(cHostname,".clone"))
-					tContainer("<blink>Error:</blink> cHostname can't have '.clone'!");
+				if(strstr(cHostname,"-clone"))
+					tContainer("<blink>Error:</blink> cHostname can't have '-clone'!");
 				//No same names or hostnames for same datacenter allowed.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
 						" AND uContainer!=%u",
@@ -2982,8 +2990,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Create job for unxsBind,"
 								" but no cunxsBindARecordJobZone");
 
-				//label-cloneN and hostname.cloneN mess change to new format
-				// new hostname is based on source cLabel and cHostname
+				//This code should be compatible with new -clone hostname scheme
 				char cPrevHostname[100]={""};
 				if(uSource)
 				{
@@ -3212,8 +3219,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cLabel has at least one '.'!");
 				if(strstr(cWizLabel,"-clone"))
 					tContainer("<blink>Error:</blink> cLabel can't have '-clone'");
-				if(strstr(cWizHostname+(uHostnameLen-strlen(".cloneNN")-1),".clone"))
-					tContainer("<blink>Error:</blink> cHostname can't end with '.cloneN'");
+				if(strstr(cWizHostname,"-clone"))
+					tContainer("<blink>Error:</blink> cHostname can't have '-clone'");
 				//New rule: cLabel must be first part (first stop) of cHostname.
 				if(strncmp(cWizLabel,cWizHostname,uLabelLen))
 					tContainer("<blink>Error:</blink> cLabel must be first part of cHostname.");
@@ -4168,7 +4175,7 @@ void ExttContainerButtons(void)
 				if(uStatus==uACTIVE)
 				{
 					htmlHealth(uContainer,3);
-					if(!strstr(cLabel,"-clone"))
+					if(!strstr(cLabel,"-clone") && uSource==0)
 					printf("<p><input title='Clone a container to this or another hardware node."
 					" The clone will be an online container with another IP and hostname."
 					" It will be kept updated via rsync on a configurable basis.'"
@@ -4195,7 +4202,7 @@ void ExttContainerButtons(void)
 					printf("<p><input title='Creates a job for starting a stopped container.'"
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Start %.25s'><br>\n",cLabel);
-					if(!strstr(cLabel,"-clone"))
+					if(!strstr(cLabel,"-clone") && uSource==0)
 					printf("<input title='Clone a container to this or another hardware node."
 					" The clone will be an online container with another IP and hostname."
 					" It will be kept updated via rsync on a configurable basis.'"
