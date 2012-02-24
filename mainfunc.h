@@ -88,6 +88,7 @@ void GetConfiguration(const char *cName,char *cValue,
 void UpdateSchema(void);
 void RecoverMode(void);
 void ResetAllSyncPeriod(void);
+void UpdateCloneHostnames(void);
 
 //jobqueue.c
 void ProcessJobQueue(unsigned uDebug);
@@ -692,6 +693,8 @@ void ExtMainShell(int argc, char *argv[])
                 ProcessJobQueue(1);
         else if(argc==2 && !strcmp(argv[1],"UpdateSchema"))
                 UpdateSchema();
+        else if(argc==2 && !strcmp(argv[1],"UpdateCloneHostnames"))
+                UpdateCloneHostnames();
         else if(argc==2 && !strcmp(argv[1],"RecoverMode"))
                 RecoverMode();
         else if(argc==2 && !strcmp(argv[1],"ResetAllSyncPeriod"))
@@ -725,6 +728,7 @@ void ExtMainShell(int argc, char *argv[])
 		//printf("\tProcessExtJobQueue <cServer>\n");
 		printf("\nSpecial Admin Ops:\n");
 		printf("\tUpdateSchema\n");
+		printf("\tUpdateCloneHostnames\n");
 		printf("\tRecoverMode\n");
 		printf("\tResetAllSyncPeriod\n");
 		printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
@@ -2034,6 +2038,94 @@ void GetConfiguration(const char *cName,char *cValue,
         mysql_free_result(res);
 
 }//void GetConfiguration(...)
+
+
+unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname,unsigned uOwner,unsigned uLoginClient);
+void UpdateCloneHostnames(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	
+	printf("UpdateCloneHostnames(): Start\n");
+
+	if(TextConnectDb())
+		exit(1);
+
+	sprintf(gcQuery,"SELECT cLabel,cHostname,uDatacenter,uNode,uContainer FROM tContainer WHERE uSource!=0 AND uStatus=31"
+			" AND cLabel LIKE '%%-clone%%' AND cHostname LIKE '%%.clone%%'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		char *cp=NULL;
+		char cLabel[100]={""};
+		char cHostname[100]={""};
+		char cNewHostname[100]={""};
+		unsigned uDatacenter=0,uNode=0,uContainer=0,uCloneNumber=0;
+
+		sscanf(field[2],"%u",&uDatacenter);
+		sscanf(field[3],"%u",&uNode);
+		sscanf(field[4],"%u",&uContainer);
+
+		if(uDatacenter==0 || uNode==0 || uContainer==0 || field[0][0]==0 || field[1][0]==0)
+		{
+			printf("%s error\n",field[1]);
+			continue;
+		}
+
+		sprintf(cLabel,"%.99s",field[0]);
+		sprintf(cHostname,"%.99s",field[1]);
+
+		if((cp=strstr(cLabel,"-clone")))
+		{
+			*cp=0;
+		}
+		if((cp=strstr(cHostname,".clone")))
+		{
+			*cp=0;
+			sscanf(cp+1,"clone%u",&uCloneNumber);
+			if(uCloneNumber==0)
+			{
+				printf("%s %s error\n",field[1],cp+1);
+				continue;
+			}
+			if((cp=strchr(cHostname,'.')))
+			{
+				*cp=0;
+				sprintf(cNewHostname,"%s-clone%u.%s",cLabel,uCloneNumber,cp+1);
+			}
+			else
+			{
+				printf("%s . error\n",field[1]);
+				continue;
+			}
+		}
+
+		printf("%s %s %s %u\n",field[0],cNewHostname,field[1],uContainer);
+
+		sprintf(gcQuery,"UPDATE tContainer SET cHostname='%s' WHERE uContainer=%u",cNewHostname,uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+
+		HostnameContainerJob(uDatacenter,uNode,uContainer,field[1],1,1);
+	}
+	mysql_free_result(res);
+
+	mysql_close(&gMysql);
+	printf("UpdateCloneHostnames(): End\n");
+
+}//void UpdateCloneHostnames(void)
 
 
 void RecoverMode(void)
