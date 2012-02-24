@@ -1579,6 +1579,14 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		return;
 	}
 
+	//New...Now we always get the target datacenter
+	sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
+	if(!uTargetDatacenter)
+	{
+		logfileLine("MigrateContainer","Could not determine uTargetDatacenter");
+		tJobErrorUpdate(uJob,"uTargetDatacenter==0");
+		return;
+	}
 
 	sscanf(cJobData,"uTargetNode=%*u;\nuIPv4=%u;",&uIPv4);
 	if(uIPv4)
@@ -1586,7 +1594,6 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		logfileLine("MigrateContainer","Migration with new IP");
 		sprintf(cIPv4,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
 		logfileLine("MigrateContainer",cIPv4);
-		sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
 
 		//Remote migration uses node name for ssh
 		sprintf(cTargetNodeIPv4,"%.255s",ForeignKey("tNode","cLabel",uTargetNode));
@@ -1701,8 +1708,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//Everything ok
 	SetContainerStatus(uContainer,uPrevStatus);//Previous to awaiting migration
 	SetContainerNode(uContainer,uTargetNode);//Migrated!
-	if(uIPv4 && uTargetDatacenter)
-		SetContainerDatacenter(uContainer,uTargetDatacenter);//Remote Migration
+	SetContainerDatacenter(uContainer,uTargetDatacenter);
 	tJobDoneUpdate(uJob);
 
 }//void MigrateContainer(...)
