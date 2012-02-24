@@ -6296,7 +6296,17 @@ unsigned CommonCloneContainer(
 		uWizLabelLoop=mysql_num_rows(res);
 		mysql_free_result(res);
 	}
-	sprintf(cWizHostname,"%.93s.clone%u",cHostname,uWizLabelSuffix);
+	//New clone naming convention
+	char *cp=NULL;
+	if((cp=strchr(cHostname,'.')))
+	{
+		*cp=0;
+		sprintf(cWizHostname,"%.32s-clone%u.%.60s",cHostname,uWizLabelSuffix,cp+1);
+	}
+	else
+	{
+		sprintf(cWizHostname,"%.93s.clone%u",cHostname,uWizLabelSuffix);
+	}
 
 	sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%s',"
 				"cHostname='%s',"

@@ -2051,7 +2051,7 @@ void UpdateCloneHostnames(void)
 	if(TextConnectDb())
 		exit(1);
 
-	sprintf(gcQuery,"SELECT cLabel,cHostname,uDatacenter,uNode,uContainer FROM tContainer WHERE uSource!=0 AND uStatus=31"
+	sprintf(gcQuery,"SELECT cLabel,cHostname,uDatacenter,uNode,uContainer FROM tContainer WHERE uSource!=0 AND uStatus=81"
 			" AND cLabel LIKE '%%-clone%%' AND cHostname LIKE '%%.clone%%'");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -2118,7 +2118,7 @@ void UpdateCloneHostnames(void)
 			exit(2);
 		}
 
-		HostnameContainerJob(uDatacenter,uNode,uContainer,field[1],1,1);
+		//HostnameContainerJob(uDatacenter,uNode,uContainer,field[1],1,1);
 	}
 	mysql_free_result(res);
 
