@@ -419,6 +419,25 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
                 }
+		else if(!strcmp(gcCommand,"Create Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstContainerVars(entries,x);
+                        	guMode=12001;
+
+				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroupGlue,uGroup,uNode,uContainer)"
+						" SELECT 0,81,0,uContainer FROM tContainer WHERE cLabel LIKE 'ab%%'");
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+	                        tContainer("Search set created");
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
 		else if(!strcmp(gcCommand,"Search Set Operations"))
                 {
 			if(guPermLevel>=9)
@@ -3775,6 +3794,10 @@ while((field=mysql_fetch_row(res)))
 		sprintf(cCtLabel,"Ct%u",uCtContainer);
 		for(i=0;i<x;i++)
 		{
+			//insider xss protection
+			if(guPermLevel<10)
+				continue;
+
 			if(!strcmp(entries[i].name,cCtLabel))
 			{
 				if(!strcmp(gcCommand,"Set Test"))
