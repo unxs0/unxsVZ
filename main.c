@@ -91,12 +91,14 @@ void htmlSSLLogin(void);
 //mainfunc.h for symbolic links to this program
 void CalledByAlias(int iArgc,char *cArgv[]);
 
+//Testing globalization
+pentry entries[64];
+entry gentries[16];
+int x;
+
 int main(int iArgc, char *cArgv[])
 {
-	pentry entries[64];
-	entry gentries[16];
 	char *gcl;
-	register int x;
 	int cl=0;
 
 	gethostname(gcHostname, 98);

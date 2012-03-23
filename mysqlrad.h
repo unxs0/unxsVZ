@@ -116,6 +116,10 @@ extern unsigned guMode;
 extern int guError;
 extern char gcErrormsg[];
 
+extern pentry entries[];
+extern entry gentries[];
+extern int x;
+
 void unxsVZ(const char *cResult);
 void ConnectDb(void);
 void Footer_ism3(void);

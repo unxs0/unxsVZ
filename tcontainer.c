@@ -73,6 +73,7 @@ static char gcNewContainerTZ[64]={"PST8PDT"};
 #define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource,tContainer.uBackupDate"
 
  //Local only
+void tContainerSearchSet(unsigned uStep);
 void tContainerNewStep(unsigned uStep);
 void Insert_tContainer(void);
 void Update_tContainer(char *cRowid);
@@ -345,8 +346,13 @@ void tContainer(const char *cResult)
 	//
 	OpenFieldSet("tContainer Record Data",100);
 
+	//Custom right panel for creating search sets
+	if(guMode==12001)
+		tContainerSearchSet(1);
+	else if(guMode==12002)
+		tContainerSearchSet(2);
 	//Custom right panel for new containers
-	if(guMode==9001)
+	else if(guMode==9001)
 		tContainerNewStep(1);
 	else if(guMode==9002)
 		tContainerNewStep(2);
@@ -369,6 +375,21 @@ void tContainer(const char *cResult)
 	Footer_ism3();
 
 }//end of tContainer();
+
+
+void tContainerSearchSet(unsigned uStep)
+{
+
+	if(uStep==1)
+	{
+		OpenRow("Establish search criteria","black");
+	}
+	else if(uStep==2)
+	{
+		OpenRow("Set operation took place","black");
+	}
+
+}//void tContainerSearchSet(unsigned uStep)
 
 
 void tContainerNewStep(unsigned uStep)
