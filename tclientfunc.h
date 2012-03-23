@@ -759,7 +759,7 @@ void tTablePullDownResellers(unsigned uSelector,unsigned uBanner)
                                 printf("<option selected>%s</option>\n",field[1]);
                         }
                 }
-        	printf("</select><p>\n");
+        	printf("</select>\n");
         }
 
 }//tTablePullDownResellers()

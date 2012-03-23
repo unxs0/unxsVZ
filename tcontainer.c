@@ -64,6 +64,10 @@ static unsigned uSource=0;
 //uBackupDate: Unix seconds date last insert
 static time_t uBackupDate=0;
 
+//Extensions for searching
+//uStatus: Container tStatus.uStatus
+static unsigned uSearchStatus=0;
+static char cuSearchStatusPullDown[256]={""};
 
 static char cuClientPullDown[256]={""};
 static char cAutoCloneNode[256]={""};
@@ -188,6 +192,12 @@ void ProcesstContainerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%lu",&uBackupDate);
 		else if(!strcmp(entries[i].name,"gcNewContainerTZ"))
 			sprintf(gcNewContainerTZ,"%.63s",entries[i].val);
+
+		else if(!strcmp(entries[i].name,"cuSearchStatusPullDown"))
+		{
+			sprintf(cuSearchStatusPullDown,"%.255s",entries[i].val);
+			uSearchStatus=ReadPullDown("tStatus","cLabel",cuSearchStatusPullDown);
+		}
 
 	}
 
@@ -379,14 +389,34 @@ void tContainer(const char *cResult)
 
 void tContainerSearchSet(unsigned uStep)
 {
+	char cHostnameSearch[64]={""};
+	char cIPv4Search[16]={""};
+
+	OpenRow("<u>Set search paramters</u>","black");
+	OpenRow("Hostname pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cHostnameSearch"
+			"value=\"%s\" size=40 maxlength=63 >",cHostnameSearch);
+	OpenRow("IPv4 pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
+			"value=\"%s\" size=40 maxlength=15 >",cIPv4Search);
+	OpenRow("Datacenter","black");
+	tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+	OpenRow("Node","black");
+	tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
+	OpenRow("Owner","black");
+	tTablePullDownResellers(uForClient,0);
+	OpenRow("Status","black");
+	tTablePullDown("tStatus;cuSearchStatusPullDown","cLabel","cLabel",uSearchStatus,1);
+	OpenRow("OSTemplate","black");
+	tTablePullDown("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1);
 
 	if(uStep==1)
 	{
-		OpenRow("Establish search criteria","black");
+		;
 	}
 	else if(uStep==2)
 	{
-		OpenRow("Set operation took place","black");
+		;
 	}
 
 }//void tContainerSearchSet(unsigned uStep)
