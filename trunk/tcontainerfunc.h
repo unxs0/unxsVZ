@@ -498,30 +498,6 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 							mysql_free_result(res);
 						}
 					}
-					//Cancel
-					else if(!strcmp(gcCommand,"Group Cancel"))
-					{
-						struct structContainer sContainer;
-
-						InitContainerProps(&sContainer);
-						GetContainerProps(uCtContainer,&sContainer);
-
-						if((sContainer.uStatus==uAWAITDEL || sContainer.uStatus==uAWAITACT ||
-							sContainer.uStatus==uAWAITSTOP)
-							&& (sContainer.uOwner==guCompany || guCompany==1))
-						{
-							if(!CancelContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uCtContainer,1))
-							{
-								if(sContainer.uStatus==uAWAITDEL || 
-										sContainer.uStatus==uAWAITSTOP)
-									SetContainerStatus(uCtContainer,uACTIVE);
-								else if(sContainer.uStatus==uAWAITACT)
-									SetContainerStatus(uCtContainer,uINITSETUP);
-								uGroupJobs++;
-							}
-						}
-					}
 					//Clone selected containers
 					else if(!strcmp(gcCommand,"Group Clone"))
 					{
@@ -1006,6 +982,19 @@ void ExttContainerCommands(pentry entries[], int x)
 	                        ProcesstContainerVars(entries,x);
                         	guMode=9001;
 	                        tContainer("New container step 1");
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
+		else if(!strcmp(gcCommand,"Search Set Operations"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstContainerVars(entries,x);
+                        	guMode=12001;
+	                        tContainer("Search Set Operations");
 			}
 			else
 			{
@@ -1860,6 +1849,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uTargetDatacenter!=uIPv4Datacenter)
 						tContainer("<blink>Error:</blink> The specified clone uIPv4 does not "
 							"belong to the specified uTargetDatacenter.");
+					GetDatacenterProp(uTargetDatacenter,"NewContainerCloneRange",cNCCloneRange);
 					if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
 						tContainer("<blink>Error:</blink> Clone start uIPv4 must be in datacenter clone IP range");
 					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
@@ -2176,6 +2166,8 @@ void ExttContainerCommands(pentry entries[], int x)
 							CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uTargetDatacenter,guLoginClient);
 					}
 
+
+					//For some reason cHostname is cLabel at this point. TODO debug.
 					if(uCreateDNSJob)
 						CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient);
 
@@ -3738,13 +3730,11 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
-                else if(!strncmp(gcCommand,"Group",5))
+                else if(!strncmp(gcCommand,"Set ",4) || !strncmp(gcCommand,"Group ",6))
                 {
-			ExtProcesstContainerVars(entries,x);
-			if(uGroupJobs)
-				tContainer("'Group' jobs created/canceled");
-			else
-				tContainer("No 'Group' jobs created/canceled");
+			//ExtProcesstContainerVars(entries,x);
+                        guMode=12002;
+			tContainer(gcCommand);
 		}
 	}
 
@@ -4010,6 +4000,19 @@ void ExttContainerButtons(void)
 			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
                 break;
 
+                case 12001:
+                case 12002:
+			printf("<u>Create or refine your user search set</u><br>");
+			printf("In the right panel you can select your search criteria. When refining you do not need"
+				" to reuse your initial search critieria.<p>");
+			printf("<input type=submit class=largeButton title='Create a new user search set'"
+				" name=gcCommand value='Create Search Set'>\n");
+			printf("<input type=submit class=largeButton title='Further refine your search set'"
+				" name=gcCommand value='Refine Search Set'>\n");
+			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
+				" name=gcCommand value='Cancel'>\n");
+                break;
+
                 case 9001:
 			printf("<u>New Container Datacenter and Organization</u><br>");
 			printf("In conjunction with your master plan; review datacenter location, usage, traffic"
@@ -4151,32 +4154,21 @@ void ExttContainerButtons(void)
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
 					" name=cSearch value='%s'>",cSearch);
 
-			printf("<br><input title='Additional NavList filter same node as loaded container' type=checkbox name=guSameNode");
-			if(guSameNode)
-				printf(" checked");
-			printf("> guSameNode");
-
 			printf("<input title='Remove clones from search nav list' type=checkbox name=guNoClones");
 			if(guNoClones)
 				printf(" checked");
 			printf("> guNoClones");
 
-			printf("<input title='-Initial Setup- status containers only' type=checkbox name=guInitOnly");
+			printf("<input title='Remove all but initial setup status containers from nav list."
+				" Mutually exclusive with guNoClones option.' type=checkbox name=guInitOnly");
 			if(guInitOnly)
 				printf(" checked");
 			printf("> guInitOnly");
 
-			printf("<input title='Operate on clones in group functions when appropiate'"
-					" type=checkbox name=guOpOnClones> guOpOnClones\n");
-			printf("<p><u>Container NavList Filter by tGroup</u><br>");
-			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
-
-			printf("<p>Target Node ");
-			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
-			printf("Clone Target ");
-			tTablePullDown("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1);
-
 			tContainerNavList(0,cSearch);//0 means container mode or tContainer tab mode.
+			printf("<p><input type=submit class=largeButton title='Open user search set page. There you can create search sets and operate"
+				" on selected containers of the loaded container set.'"
+				" name=gcCommand value='Search Set Operations'>\n");
 			if(uContainer && uAllowMod(uOwner,uCreatedBy) && guPermLevel>7)
 			{
 				if(uStatus==uACTIVE)
@@ -4262,46 +4254,196 @@ void ExttContainerButtons(void)
 
 void ExttContainerAuxTable(void)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
 
-	if(uHideProps || !uContainer || (guMode!=0 && guMode!=6)) return;
-
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	sprintf(gcQuery,"%s Property Panel",cLabel);
-	OpenFieldSet(gcQuery,100);
-	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType=3"
-				" AND cName!='Notes' ORDER BY cName",uContainer);
-
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-        res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	switch(guMode)
 	{
-		printf("<table>");
-		while((field=mysql_fetch_row(res)))
-		{
-			printf("<tr>");
-			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+		case 12001:
+		case 12002:
+			//Set operation buttons
+			OpenFieldSet("Set Operations",100);
+			printf("<input title='Test' type=submit class=largeButton name=gcCommand value='Set Test'>\n");
+			printf("&nbsp; <input title='Cancels job(s) for container(s) waiting for activation, deletion or stop.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Cancel'>\n");
+			printf("&nbsp; <input title='Creates job(s) for starting stopped or initial setup container(s).'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Start'>\n");
+			printf("&nbsp; <input title='Creates job(s) for templating stopped or active container(s)."
+				" Uses the container label for new tOSTemplate and tConfig entries."
+				" If active, containers may be stopped for several minutes if not setup for vzdump snapshot.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Template'>\n");
+			printf("&nbsp; <input title='Deletes initial setup or awaiting intial setup clone container(s) and optionally their clones.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Delete'>\n");
+			printf("&nbsp; <input title='Deletes any existing group association then adds selected group to selected containers'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Change'>\n");
+			printf("<p><input title='Creates job(s) for cloning active or stopped container(s) that"
+				" are not clones themselves.'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Clone'>\n");
+			printf("&nbsp; <input title='Creates job(s) for stopping active container(s).'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Stop'>\n");
+			printf("&nbsp; <input title='Creates job(s) for switching over cloned container(s) of same datacenter.'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Switchover'>\n");
+			printf("&nbsp; <input title='Creates job(s) for migrating container(s) and optionally their clones."
+				" Uses target and clone node selects above'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Migration'>\n");
+			printf("&nbsp; <input title='Creates job(s) for destroying active or stopped container(s) and optionally their clones.'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Destroy'>\n");
+			CloseFieldSet();
+
+			sprintf(gcQuery,"Search Set Contents");
+			OpenFieldSet(gcQuery,100);
+			sprintf(gcQuery,"SELECT"
+					" tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tStatus.cLabel,"
+					" tIP.cLabel,tNode.cLabel,tDatacenter.cLabel,tContainer.uSource,"
+					" FROM_UNIXTIME(tContainer.uCreatedDate,'%%a %%b %%d %%T %%Y')"
+					" FROM tContainer,tIP,tNode,tDatacenter,tStatus"
+					" WHERE tContainer.uIPv4=tIP.uIP AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=81)");
+		        mysql_query(&gMysql,gcQuery);
+		        if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		        res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				char cResult[100]={""};
+				char cCtLabel[100]={""};
+
+				printf("<table>");
+				printf("<tr>");
+				printf("<td>cLabel</td><td>cHostname</td><td>Status</td><td>IPv4</td><td>Node</td>");
+				printf("<td>Datacenter</td><td>uSource</td><td>uCreatedDate</td><td>Set operation result</td>\n");
+				printf("</tr>");
+				while((field=mysql_fetch_row(res)))
+				{
+					if(guMode==12002)
+					{
+						register int i;
+						unsigned uCtContainer=0;
+
+						sprintf(cResult,"Not processed");
+						sscanf(field[0],"%u",&uCtContainer);
+						sprintf(cCtLabel,"Ct%u",uCtContainer);
+						for(i=0;i<x;i++)
+						{
+							if(!strcmp(entries[i].name,cCtLabel))
+							{
+								if(!strcmp(gcCommand,"Set Test"))
+								{
+									sprintf(cResult,"Set Test Processed");
+									break;
+								}
+
+								else if(!strcmp(gcCommand,"Group Cancel"))
+								{
+									struct structContainer sContainer;
+
+									InitContainerProps(&sContainer);
+									GetContainerProps(uCtContainer,&sContainer);
+
+									if((sContainer.uStatus==uAWAITDEL || sContainer.uStatus==uAWAITACT ||
+										sContainer.uStatus==uAWAITSTOP)
+										&& (sContainer.uOwner==guCompany || guCompany==1))
+									{
+										if(!CancelContainerJob(sContainer.uDatacenter,
+												sContainer.uNode,uCtContainer,1))
+										{
+											if(sContainer.uStatus==uAWAITDEL || 
+													sContainer.uStatus==uAWAITSTOP)
+												SetContainerStatus(uCtContainer,uACTIVE);
+											else if(sContainer.uStatus==uAWAITACT)
+												SetContainerStatus(uCtContainer,uINITSETUP);
+											sprintf(cResult,"group cancel job created");
+											break;
+										}
+										else
+										{
+											sprintf(cResult,"group cancel job not created!");
+											break;
+										}
+									}
+									sprintf(cResult,"group cancel request ignored");
+									break;
+								}
+
+								else
+								{
+									sprintf(cResult,"Unexpected gcCommand=%.64s",gcCommand);
+									break;
+								}
+							}
+						}
+					}
+					else
+					{
+						sprintf(cResult,"---");
+					}
+
+					printf("<tr>");
+					printf("<td width=200 valign=top>"
+					"<input type=checkbox name=Ct%s >"
+					"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>"
+					"</td>"
+					"<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
+						field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],cResult);
+					printf("</tr>");
+				}
+				printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> Check all</td></tr>\n");
+				printf("</table>");
+			}
+			mysql_free_result(res);
+			CloseFieldSet();
+		break;
+
+		default:
+
+			if(uHideProps || !uContainer || (guMode!=0 && guMode!=6)) return;
+
+			sprintf(gcQuery,"%s Property Panel",cLabel);
+			OpenFieldSet(gcQuery,100);
+			sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType=3"
+				" AND cName!='Notes' ORDER BY cName",uContainer);
+		        mysql_query(&gMysql,gcQuery);
+		        if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		        res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				printf("<table>");
+				while((field=mysql_fetch_row(res)))
+				{
+					printf("<tr>");
+					printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
 					"gcFunction=tProperty&uProperty=%s&cReturn=tContainer_%u>"
 					"%s</a></td><td>%s</td>\n",
 						field[0],uContainer,field[1],field[2]);
-			printf("</tr>");
-		}
-		printf("</table>");
-	}
-	mysql_free_result(res);
+					printf("</tr>");
+				}
+				printf("</table>");
+			}
+			mysql_free_result(res);
 
-	//Special per container buttons
-	if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowDel(uOwner,uCreatedBy))
-		printf("<p><input title='Creates a job for stopping and destroying an active container."
-			" No backups may be available, the container is gone for good!'"
-			" type=submit class=lwarnButton"
-			" name=gcCommand value='Destroy %.24s'>\n",cLabel);
+			//Special per container buttons
+			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowDel(uOwner,uCreatedBy))
+				printf("<p><input title='Creates a job for stopping and destroying an active container."
+					" No backups may be available, the container is gone for good!'"
+					" type=submit class=lwarnButton"
+					" name=gcCommand value='Destroy %.24s'>\n",cLabel);
 
-	CloseFieldSet();
+			CloseFieldSet();
+
+	}//switch(guMode)
 
 }//void ExttContainerAuxTable(void)
 
@@ -4544,118 +4686,12 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 
 	if(!uNode)
 	{
+		if(!cSearch[0])
+			return;
+
 	    if(guNoClones)
 	    {
-		   if(guSameNode)
-		   {
-			if(cSearch[0] && !uGroup)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uNode=%u"
-						" AND tContainer.uSource=0"
-						" AND tContainer.cLabel LIKE '%s%%'"
-						" ORDER BY tContainer.cLabel",guSameNode,cSearch);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uNode=%3$u"
-						" AND tContainer.uSource=0"
-						" AND tContainer.cLabel LIKE '%2$s%%'"
-						" ORDER BY tContainer.cLabel",guCompany,cSearch,guSameNode);
-			}
-			else if(cSearch[0] && uGroup)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uNode=%u"
-						" AND tContainer.uSource=0"
-						" AND tContainer.cLabel LIKE '%s%%'"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%u"
-						" ORDER BY tContainer.cLabel",guSameNode,cSearch,uGroup);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uNode=%4$u"
-						" AND tContainer.uSource=0"
-						" AND tContainer.cLabel LIKE '%2$s%%'"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%3$u"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" ORDER BY tContainer.cLabel",guCompany,cSearch,uGroup,guSameNode);
-			}
-			else if(!cSearch[0] && uGroup)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uNode=%u"
-						" AND tContainer.uSource=0"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%u"
-						" ORDER BY tContainer.cLabel",guSameNode,uGroup);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uNode=%3$u"
-						" AND tContainer.uSource=0"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%2$u"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" ORDER BY tContainer.cLabel",guCompany,uGroup,guSameNode);
-			}
-			else if(1)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uSource=0"
-						" AND tContainer.uNode=%u"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" ORDER BY tContainer.cLabel",guSameNode);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uSource=0"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uNode=%2$u"
-						" ORDER BY tContainer.cLabel",guCompany,guSameNode);
-			}
-		}//else if guSameNode
-		else
-		{
-			if(cSearch[0] && !uGroup)
+			if(cSearch[0])
 			{
 				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
@@ -4678,84 +4714,10 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 						" AND tContainer.cLabel LIKE '%2$s%%'"
 						" ORDER BY tContainer.cLabel",guCompany,cSearch);
 			}
-			else if(cSearch[0] && uGroup)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uSource=0"
-						" AND tContainer.cLabel LIKE '%s%%'"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%u"
-						" ORDER BY tContainer.cLabel",cSearch,uGroup);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uSource=0"
-						" AND tContainer.cLabel LIKE '%2$s%%'"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%3$u"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" ORDER BY tContainer.cLabel",guCompany,cSearch,uGroup);
-			}
-			else if(!cSearch[0] && uGroup)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uSource=0"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%u"
-						" ORDER BY tContainer.cLabel",uGroup);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uSource=0"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%2$u"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" ORDER BY tContainer.cLabel",guCompany,uGroup);
-			}
-			else if(1)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uSource=0"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" ORDER BY tContainer.cLabel");
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uSource=0"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" ORDER BY tContainer.cLabel",guCompany);
-			}
-		}//end if guSameNode
 	   }
 	   else if(guInitOnly)
 	   {
-		if(cSearch[0] && !uGroup)
+		if(cSearch[0])
 		{
 			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
@@ -4778,185 +4740,10 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 					" AND tContainer.cLabel LIKE '%2$s%%'"
 					" ORDER BY tContainer.cLabel",guCompany,cSearch);
 		}
-		else if(cSearch[0] && uGroup)
-		{
-			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
-					" WHERE tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus"
-					" AND tContainer.uStatus=11"
-					" AND tContainer.cLabel LIKE '%s%%'"
-					" AND tContainer.uContainer=tGroupGlue.uContainer"
-					" AND tGroupGlue.uGroup=%u"
-					" ORDER BY tContainer.cLabel",cSearch,uGroup);
-			else
-				sprintf(gcQuery,"SELECT tContainer.uContainer"
-					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-					" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
-					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-					" AND tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus"
-					" AND tContainer.uStatus=11"
-					" AND tContainer.cLabel LIKE '%2$s%%'"
-					" AND tContainer.uContainer=tGroupGlue.uContainer"
-					" AND tGroupGlue.uGroup=%3$u"
-					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-					" ORDER BY tContainer.cLabel",guCompany,cSearch,uGroup);
-		}
-		else if(!cSearch[0] && uGroup)
-		{
-			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
-					" WHERE tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus"
-					" AND tContainer.uStatus=11"
-					" AND tContainer.uContainer=tGroupGlue.uContainer"
-					" AND tGroupGlue.uGroup=%u"
-					" ORDER BY tContainer.cLabel",uGroup);
-			else
-				sprintf(gcQuery,"SELECT tContainer.uContainer"
-					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-					" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
-					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-					" AND tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=tStatus.uStatus"
-					" AND tContainer.uStatus=11"
-					" AND tContainer.uContainer=tGroupGlue.uContainer"
-					" AND tGroupGlue.uGroup=%2$u"
-					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-					" ORDER BY tContainer.cLabel",guCompany,uGroup);
-		}
-		else if(1)
-		{
-			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-					"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
-					" WHERE tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=11"
-					" AND tContainer.uStatus=tStatus.uStatus"
-					" ORDER BY tContainer.cLabel");
-			else
-				sprintf(gcQuery,"SELECT tContainer.uContainer"
-					",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-					" FROM tContainer," TCLIENT ",tNode,tStatus"
-					" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-					" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-					" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-					" AND tContainer.uNode=tNode.uNode"
-					" AND tContainer.uStatus=11"
-					" AND tContainer.uStatus=tStatus.uStatus"
-					" ORDER BY tContainer.cLabel",guCompany);
-		}
 	   }
 	   else //guNoClones==0 and guInitOnly==0
 	   {
-		   if(guSameNode)
-		   {
-			if(cSearch[0] && !uGroup)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uNode=%u"
-						" AND tContainer.cLabel LIKE '%s%%'"
-						" ORDER BY tContainer.cLabel",guSameNode,cSearch);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uNode=%3$u"
-						" AND tContainer.cLabel LIKE '%2$s%%'"
-						" ORDER BY tContainer.cLabel",guCompany,cSearch,guSameNode);
-			}
-			else if(cSearch[0] && uGroup)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uNode=%u"
-						" AND tContainer.cLabel LIKE '%s%%'"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%u"
-						" ORDER BY tContainer.cLabel",guSameNode,cSearch,uGroup);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uNode=%4$u"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.cLabel LIKE '%2$s%%'"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%3$u"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" ORDER BY tContainer.cLabel",guCompany,cSearch,uGroup,guSameNode);
-			}
-			else if(!cSearch[0] && uGroup)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uNode=%u"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%u"
-						" ORDER BY tContainer.cLabel",guSameNode,uGroup);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uNode=%3$u"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%2$u"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" ORDER BY tContainer.cLabel",guCompany,uGroup,guSameNode);
-			}
-			else if(1)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uNode=%u"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" ORDER BY tContainer.cLabel",guSameNode);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uNode=%2$u"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" ORDER BY tContainer.cLabel",guCompany,guSameNode);
-			}
-		}
-		else
-		//guSameNode==0
-		{
-			if(cSearch[0] && !uGroup)
+			if(cSearch[0])
 			{
 				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
@@ -4977,75 +4764,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 						" AND tContainer.cLabel LIKE '%2$s%%'"
 						" ORDER BY tContainer.cLabel",guCompany,cSearch);
 			}
-			else if(cSearch[0] && uGroup)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.cLabel LIKE '%s%%'"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%u"
-						" ORDER BY tContainer.cLabel",cSearch,uGroup);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.cLabel LIKE '%2$s%%'"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%3$u"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" ORDER BY tContainer.cLabel",guCompany,cSearch,uGroup);
-			}
-			else if(!cSearch[0] && uGroup)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%u"
-						" ORDER BY tContainer.cLabel",uGroup);
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus,tGroupGlue"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" AND tContainer.uContainer=tGroupGlue.uContainer"
-						" AND tGroupGlue.uGroup=%2$u"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" ORDER BY tContainer.cLabel",guCompany,uGroup);
-			}
-			else if(1)
-			{
-				if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-					sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
-						"tNode.cLabel,tStatus.cLabel FROM tContainer,tNode,tStatus"
-						" WHERE tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" ORDER BY tContainer.cLabel");
-				else
-					sprintf(gcQuery,"SELECT tContainer.uContainer"
-						",tContainer.cLabel,tNode.cLabel,tStatus.cLabel"
-						" FROM tContainer," TCLIENT ",tNode,tStatus"
-						" WHERE tContainer.uOwner=" TCLIENT ".uClient"
-						" AND (" TCLIENT ".uClient=%1$u OR " TCLIENT ".uOwner"
-						" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-						" AND tContainer.uNode=tNode.uNode"
-						" AND tContainer.uStatus=tStatus.uStatus"
-						" ORDER BY tContainer.cLabel",guCompany);
-			}
-		}//if(guSameNode)
-	   }//if(guNoClones)
+	   }
 	}
 	else
 	{
@@ -5115,32 +4834,27 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 	if((uMySQLNumRows=mysql_num_rows(res)))
 	{	
         	printf("<p><u>tContainerNavList(%d)</u><br>\n",uMySQLNumRows);
-		if(guPermLevel>11 && uNode==0)
-		{
-        		printf("You may select containers and then appply a group"
-				" function. !No confirmation step is provided!<br>\n");
-		}
 
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(guPermLevel>9 && uNode==0)
 			{
 				if(cSearch[0] && uGroup)
-				printf("<input type=checkbox name=Ct%s checked><a class=darkLink href=unxsVZ.cgi?gcFunction="
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction="
 					"tContainer&uContainer=%s&cSearch=%s&uGroup=%u>%s/%s/%s</a><br>\n",
-						field[0],field[0],cURLEncode(cSearch),uGroup,field[1],field[2],field[3]);
+						field[0],cURLEncode(cSearch),uGroup,field[1],field[2],field[3]);
 				else if(cSearch[0])
-				printf("<input type=checkbox name=Ct%s><a class=darkLink href=unxsVZ.cgi?gcFunction="
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction="
 					"tContainer&uContainer=%s&cSearch=%s>%s/%s/%s</a><br>\n",
-						field[0],field[0],cURLEncode(cSearch),field[1],field[2],field[3]);
+						field[0],cURLEncode(cSearch),field[1],field[2],field[3]);
 				else if(uGroup)
-				printf("<input type=checkbox name=Ct%s><a class=darkLink href=unxsVZ.cgi?gcFunction="
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction="
 					"tContainer&uContainer=%s&uGroup=%u>%s/%s/%s</a><br>\n",
-						field[0],field[0],uGroup,field[1],field[2],field[3]);
+						field[0],uGroup,field[1],field[2],field[3]);
 				else
-				printf("<input type=checkbox name=Ct%s><a class=darkLink href=unxsVZ.cgi?gcFunction="
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction="
 					"tContainer&uContainer=%s>%s/%s/%s</a><br>\n",
-						field[0],field[0],field[1],field[2],field[3]);
+						field[0],field[1],field[2],field[3]);
 			}
 			else
 			{
@@ -5160,46 +4874,6 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 				break;
 			}
 		}
-		if(guPermLevel>9 && uNode==0)
-		{
-			printf("<input type=checkbox name=all onClick='checkAll(document.formMain,this)'> Check all<br>\n");
-
-			printf("<input title='Cancels job(s) for container(s) waiting for activation, deletion or stop.'"
-				" type=submit class=largeButton"
-				" name=gcCommand value='Group Cancel'>\n");
-			printf("<br><input title='Creates job(s) for starting stopped or initial setup container(s).'"
-				" type=submit class=largeButton"
-				" name=gcCommand value='Group Start'>\n");
-			printf("<br><input title='Creates job(s) for templating stopped or active container(s)."
-				" Uses the container label for new tOSTemplate and tConfig entries."
-				" If active, containers may be stopped for several minutes if not setup for vzdump snapshot.'"
-				" type=submit class=largeButton"
-				" name=gcCommand value='Group Template'>\n");
-			printf("<br><input title='Deletes initial setup or awaiting intial setup clone container(s) and optionally their clones.'"
-				" type=submit class=largeButton"
-				" name=gcCommand value='Group Delete'>\n");
-			printf("<br><input title='Deletes any existing group association then adds selected group to selected containers'"
-				" type=submit class=largeButton"
-				" name=gcCommand value='Group Change'>\n");
-			printf("<p><input title='Creates job(s) for cloning active or stopped container(s) that"
-				" are not clones themselves.'"
-				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Clone'>\n");
-			printf("<p><input title='Creates job(s) for stopping active container(s).'"
-				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Stop'>\n");
-			printf("<p><input title='Creates job(s) for switching over cloned container(s) of same datacenter.'"
-				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Switchover'>\n");
-			printf("<p><input title='Creates job(s) for migrating container(s) and optionally their clones."
-				" Uses target and clone node selects above'"
-				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Migration'>\n");
-			printf("<p><input title='Creates job(s) for destroying active or stopped container(s) and optionally their clones.'"
-				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Destroy'>\n");
-		}
-
 	}
         mysql_free_result(res);
 
