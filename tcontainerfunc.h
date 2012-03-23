@@ -245,9 +245,6 @@ unsigned uCheckMountSettings(unsigned uMountTemplate)
 void ExtProcesstContainerVars(pentry entries[], int x)
 {
 	register int i;
-	unsigned uOnlyOnce=1;
-	char cConfBuffer[256]={""};
-	char cAutoCloneIPClass[256]={""};
 
 	for(i=0;i<x;i++)
 	{
@@ -281,573 +278,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 			{
 				if(!strcmp(gcFunction,"tContainerTools"))
 				{
-					if(!strcmp(gcCommand,"Group Stop"))
-					{
-						struct structContainer sContainer;
-
-						InitContainerProps(&sContainer);
-						GetContainerProps(uCtContainer,&sContainer);
-						if( (sContainer.uStatus==uACTIVE)
-							&& (sContainer.uOwner==guCompany || guCompany==1))
-						{
-							if(StopContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uCtContainer,guCompany))
-							{
-								SetContainerStatus(uCtContainer,uAWAITSTOP);
-								uGroupJobs++;
-							}
-						}
-					}
-					else if(!strcmp(gcCommand,"Group Destroy"))
-					{
-						struct structContainer sContainer;
-
-						InitContainerProps(&sContainer);
-						GetContainerProps(uCtContainer,&sContainer);
-						if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
-							&& (sContainer.uOwner==guCompany || guCompany==1))
-						{
-							if(DestroyContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uCtContainer,guCompany))
-							{
-								SetContainerStatus(uCtContainer,uAWAITDEL);
-								uGroupJobs++;
-							}
-						}
-						if(guOpOnClones)
-						{
-        						MYSQL_RES *res;
-						        MYSQL_ROW field;
-							unsigned uContainer=0;
-							unsigned uNode=0;
-							unsigned uDatacenter=0;
-							unsigned uStatus=0;
-							unsigned uOwner=0;
-
-							sprintf(gcQuery,"SELECT uDatacenter,uNode,uContainer,uStatus,uOwner FROM tContainer"
-									" WHERE uSource=%u",uCtContainer);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-						        res=mysql_store_result(&gMysql);
-							while((field=mysql_fetch_row(res)))
-							{
-								sscanf(field[0],"%u",&uDatacenter);
-								sscanf(field[1],"%u",&uNode);
-								sscanf(field[2],"%u",&uContainer);
-								sscanf(field[3],"%u",&uStatus);
-								sscanf(field[4],"%u",&uOwner);
-								if((uStatus==uSTOPPED || uStatus==uACTIVE)
-									&& (uOwner==guCompany || guCompany==1))
-								{
-									if(DestroyContainerJob(uDatacenter,uNode,uContainer,guCompany))
-									{
-										SetContainerStatus(uContainer,uAWAITDEL);
-										uGroupJobs++;
-									}
-								}
-							}
-							mysql_free_result(res);
-						}
-					}
-					else if(!strcmp(gcCommand,"Group Change"))
-					{
-						struct structContainer sContainer;
-
-						InitContainerProps(&sContainer);
-						GetContainerProps(uCtContainer,&sContainer);
-						if( (sContainer.uOwner==guCompany || guCompany==1) && uGroup)
-						{
-							//Remove from all groups
-							sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",
-								uCtContainer);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-							sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
-								uCtContainer,uGroup);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-							uGroupJobs++;
-						}
-					}
-					else if(!strcmp(gcCommand,"Group Delete"))
-					{
-						struct structContainer sContainer;
-
-						InitContainerProps(&sContainer);
-						GetContainerProps(uCtContainer,&sContainer);
-						if( (sContainer.uStatus==uINITSETUP || sContainer.uStatus==uAWAITCLONE)
-							&& (sContainer.uOwner==guCompany || guCompany==1))
-						{
-							//Release IPs
-							sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
-								" WHERE uIP=%u and uAvailable=0",sContainer.uIPv4);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-							//Node IP if any MySQL5+
-							sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel IN"
-							" (SELECT cValue FROM tProperty WHERE uKey=%u"
-							" AND uType=3 AND cName='cNodeIP')",uCtContainer);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-							//Now we can remove properties
-							DelProperties(uCtContainer,3);
-							//Remove from any groups
-							sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",
-								uCtContainer);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-							CancelContainerJob(sContainer.uDatacenter,sContainer.uNode,
-								uCtContainer,0);//0 is not specific cancel job attempt
-							//81=Awaiting clone. TODO properties of clones may
-							//exist
-							sprintf(gcQuery,"DELETE FROM tContainer WHERE uStatus=81 AND uSource=%u"
-										,uCtContainer);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-							sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer="
-							"(SELECT uContainer FROM tContainer WHERE uSource=%u AND uStatus=81)",uContainer);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-							sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
-								uCtContainer);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-							if(mysql_affected_rows(&gMysql)>0)
-								uGroupJobs++;
-						}
-						if(guOpOnClones)
-						{
-        						MYSQL_RES *res;
-						        MYSQL_ROW field;
-							unsigned uContainer=0;
-							unsigned uNode=0;
-							unsigned uDatacenter=0;
-							unsigned uStatus=0;
-							unsigned uOwner=0;
-							unsigned uIPv4=0;
-
-							sprintf(gcQuery,"SELECT uDatacenter,uNode,uContainer,uStatus,uOwner,uIPv4 FROM"
-									" tContainer WHERE uSource=%u",uCtContainer);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-						        res=mysql_store_result(&gMysql);
-							while((field=mysql_fetch_row(res)))
-							{
-								sscanf(field[0],"%u",&uDatacenter);
-								sscanf(field[1],"%u",&uNode);
-								sscanf(field[2],"%u",&uContainer);
-								sscanf(field[3],"%u",&uStatus);
-								sscanf(field[4],"%u",&uOwner);
-								sscanf(field[5],"%u",&uIPv4);
-								if((uStatus==uINITSETUP) && (uOwner==guCompany || guCompany==1))
-								{
-									//Release IPs
-									sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
-										" WHERE uIP=%u and uAvailable=0",uIPv4);
-									mysql_query(&gMysql,gcQuery);
-									if(mysql_errno(&gMysql))
-										htmlPlainTextError(mysql_error(&gMysql));
-									//Node IP if any MySQL5+
-									sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel IN"
-									" (SELECT cValue FROM tProperty WHERE uKey=%u"
-									" AND uType=3 AND cName='cNodeIP')",uContainer);
-									mysql_query(&gMysql,gcQuery);
-									if(mysql_errno(&gMysql))
-										htmlPlainTextError(mysql_error(&gMysql));
-									//Now we can remove properties
-									DelProperties(uContainer,3);
-									//Remove from any groups
-									sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",
-										uContainer);
-									mysql_query(&gMysql,gcQuery);
-									if(mysql_errno(&gMysql))
-										htmlPlainTextError(mysql_error(&gMysql));
-									//0 is not specific cancel job attempt
-									CancelContainerJob(uDatacenter,uNode,uContainer,0);
-									//81=Awaiting clone
-									sprintf(gcQuery,"DELETE FROM tContainer WHERE"
-											" uStatus=81 AND uSource=%u",uContainer);
-									mysql_query(&gMysql,gcQuery);
-									if(mysql_errno(&gMysql))
-										htmlPlainTextError(mysql_error(&gMysql));
-									sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE"
-											" uContainer=(SELECT uContainer FROM tContainer"
-											" WHERE uSource=%u AND uStatus=81)",uContainer);
-									mysql_query(&gMysql,gcQuery);
-									if(mysql_errno(&gMysql))
-										htmlPlainTextError(mysql_error(&gMysql));
-									sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
-										uContainer);
-									mysql_query(&gMysql,gcQuery);
-									if(mysql_errno(&gMysql))
-										htmlPlainTextError(mysql_error(&gMysql));
-									if(mysql_affected_rows(&gMysql)>0)
-										uGroupJobs++;
-								}
-							}
-							mysql_free_result(res);
-						}
-					}
-					//Clone selected containers
-					else if(!strcmp(gcCommand,"Group Clone"))
-					{
-						struct structContainer sContainer;
-
-						InitContainerProps(&sContainer);
-						GetContainerProps(uCtContainer,&sContainer);
-						if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
-							&& (sContainer.uOwner==guCompany || guCompany==1))
-						{
-							//For complete clone run, these stay constant.
-							if(uOnlyOnce)
-							{
-
-							//We can only fo this if tConfiguration has been setup
-							//with datacenter wide cAutoCloneNode=node1,cAutoCloneSyncTime=600
-							//for example.
-							GetConfiguration("cAutoCloneNode",cConfBuffer,uDatacenter,0,0,0);
-							if(cConfBuffer[0])
-								uTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
-							//We need the cuSyncPeriod
-							uSyncPeriod=0;//Never rsync
-							GetConfiguration("cAutoCloneSyncTime",cConfBuffer,uDatacenter,0,0,0);
-							if(cConfBuffer[0])
-								sscanf(cConfBuffer,"%u",&uSyncPeriod);
-							GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,
-								0,0,0);
-
-								uOnlyOnce=0;
-
-							}
-							//Basic conditions
-							//We do not allow clones of clones yet.
-							if(uTargetNode && !sContainer.uSource && cAutoCloneIPClass[0])
-							{
-								unsigned uNewVeid=0;
-								MYSQL_RES *res;
-								MYSQL_ROW field;
-
-								//Get next available IP, set uIPv4
-								uWizIPv4=0;
-								//TODO we cant let root just grab anybodys IPs
-								if(guCompany==1)
-									sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-									" uAvailable=1 AND cLabel LIKE '%s.%%' LIMIT 1",
-										cAutoCloneIPClass);
-								else
-									sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-										" uAvailable=1 AND cLabel LIKE '%s.%%' AND"
-									" uOwner=%u LIMIT 1",cAutoCloneIPClass,guCompany);
-								mysql_query(&gMysql,gcQuery);
-								if(mysql_errno(&gMysql))
-									htmlPlainTextError(mysql_error(&gMysql));
-								res=mysql_store_result(&gMysql);
-								if((field=mysql_fetch_row(res)))
-									sscanf(field[0],"%u",&uWizIPv4);
-								mysql_free_result(res);
-
-								//
-								//We impose further abort conditions
-
-								//Need valid clone IP
-								if(!uWizIPv4)
-									continue;
-								if(uWizIPv4==sContainer.uIPv4)
-									continue;
-
-								//Target node can't match source node.
-								if(uTargetNode==sContainer.uNode)
-									continue;
-
-								//Check for sane sync periods
-								if(!uSyncPeriod && uSyncPeriod<300 && uSyncPeriod>86400*30)
-									continue;
-
-								//If the container is VETH then target node must support it.
-								if(sContainer.uVeth)
-								{
-									GetNodeProp(uNode,"Container-Type",cConfBuffer);
-									if(!strstr(cConfBuffer,"VETH"))
-										continue;
-								}
-
-								//We require group now.
-								//Get group from source container
-								uGroup=uGetGroup(0,uCtContainer);
-								if(!uGroup)
-									continue;
-
-								//Finally we can create the clone container
-								//and the clone job
-								uNewVeid=CommonCloneContainer(
-										uCtContainer,
-										sContainer.uOSTemplate,
-										sContainer.uConfig,
-										sContainer.uNameserver,
-										sContainer.uSearchdomain,
-										sContainer.uDatacenter,
-										sContainer.uDatacenter,
-										sContainer.uOwner,
-										sContainer.cLabel,
-										sContainer.uNode,
-										sContainer.uStatus,
-										sContainer.cHostname,
-										"",
-										uWizIPv4,
-										cWizLabel,
-										cWizHostname,
-										uTargetNode,
-										uSyncPeriod,
-										guLoginClient,
-										uCloneStop,0);
-								//Now that container exists we can assign group.
-								if(!uNewVeid)
-									continue;
-								ChangeGroup(uNewVeid,uGroup);
-								SetContainerStatus(uCtContainer,uAWAITCLONE);
-								SetContainerStatus(uNewVeid,uAWAITCLONE);
-								uGroupJobs++;
-							}
-						}
-					}
-					//Start or Create
-					else if(!strcmp(gcCommand,"Group Start"))
-					{
-						struct structContainer sContainer;
-
-						InitContainerProps(&sContainer);
-						GetContainerProps(uCtContainer,&sContainer);
-
-						if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uINITSETUP)
-							&& (sContainer.uOwner==guCompany || guCompany==1))
-						{
-							if(sContainer.uStatus==uINITSETUP)
-							{
-								if(CreateNewContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uCtContainer,sContainer.uOwner))
-								{
-									SetContainerStatus(uCtContainer,uAWAITACT);
-									uGroupJobs++;
-								}
-							}
-							else
-							{
-								uOwner=guCompany;
-								if(CreateStartContainerJob(sContainer.uDatacenter,
-									sContainer.uNode,uCtContainer,sContainer.uOwner))
-								{
-									SetContainerStatus(uCtContainer,uAWAITACT);
-									uGroupJobs++;
-								}
-							}
-						}
-					}
-					else if(!strcmp(gcCommand,"Group Template"))
-					{
-						struct structContainer sContainer;
-
-						InitContainerProps(&sContainer);
-						GetContainerProps(uCtContainer,&sContainer);
-
-						if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
-							&& (sContainer.uOwner==guCompany || guCompany==1))
-						{
-							MYSQL_RES *res;
-							char cOSTLabel[101]={""};
-							char cConfigLabel[33]={""};
-
-							//Here we set the template to use the source container short name label
-							sprintf(cConfigLabel,"%.31s",ForeignKey("tContainer","cLabel",uCtContainer));
-							sprintf(cOSTLabel,"%.100s",ForeignKey("tOSTemplate","cLabel",sContainer.uOSTemplate));
-							if(!cOSTLabel[0])
-								tContainer("<blink>Error:</blink> No tOSTemplate.cLabel!");
-							if(!cConfigLabel[0])
-								tContainer("<blink>Error:</blink> No tContainer.cLabel!");
-							sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",cConfigLabel);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-			        			res=mysql_store_result(&gMysql);
-							if(mysql_num_rows(res)>0)
-								tContainer("<blink>Error:</blink> tConfig.cLabel collision!");
-							mysql_free_result(res);
-							sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%.67s-%.32s'",
-									cOSTLabel,cConfigLabel);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-								htmlPlainTextError(mysql_error(&gMysql));
-			        			res=mysql_store_result(&gMysql);
-							if(mysql_num_rows(res)>0)
-								tContainer("<blink>Error:</blink> tOSTemplate.cLabel collision!");
-
-							if(TemplateContainerJob(sContainer.uDatacenter,
-								sContainer.uNode,uCtContainer,sContainer.uStatus,
-								sContainer.uOwner,cConfigLabel))
-							{
-								SetContainerStatus(uCtContainer,uAWAITTML);
-								uGroupJobs++;
-							}
-						}
-					}
-					else if(!strcmp(gcCommand,"Group Switchover"))
-					{
-					//These two jobs are always done in pairs. Even though the second may run much later
-					//for example after hardware failure has been fixed.
-						struct structContainer sContainer;
-
-						InitContainerProps(&sContainer);
-						GetContainerProps(uCtContainer,&sContainer);
-						if( sContainer.uSource!=0 &&
-							 (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
-							&& (sContainer.uOwner==guCompany || guCompany==1))
-						{
-							unsigned uFailToJob=0;
-							if((uFailToJob=FailoverToJob(sContainer.uDatacenter,sContainer.uNode,
-								uCtContainer,sContainer.uOwner,guLoginClient,0)))
-							{
-								unsigned uSourceDatacenter=0;
-								unsigned uSourceNode=0;
-								sscanf(ForeignKey("tContainer","uDatacenter",
-									sContainer.uSource),
-									"%u",&uSourceDatacenter);
-								sscanf(ForeignKey("tContainer","uNode",
-									sContainer.uSource),
-									"%u",&uSourceNode);
-
-								if(FailoverFromJob(uSourceDatacenter,uSourceNode,
-									sContainer.uSource,sContainer.uIPv4,
-									sContainer.cLabel,sContainer.cHostname,
-										uCtContainer,sContainer.uStatus,
-										uFailToJob,sContainer.uOwner,guLoginClient,0))
-								{
-									SetContainerStatus(uCtContainer,uAWAITFAIL);
-									SetContainerStatus(sContainer.uSource,uAWAITFAIL);
-									uGroupJobs++;
-								}
-							}
-						}
-					}
-					else if(!strcmp(gcCommand,"Group Migration"))
-					{
-					//This is a new type of group job that requires a uTargetNode and
-					//optionally a guCloneTargetNode that must be set in the left panel
-						struct structContainer sContainer;
-
-						//debug
-						//sprintf(gcQuery,"d1: target node %u clone target node %u",uTargetNode,guCloneTargetNode);
-						//tContainer(gcQuery);
-						if(uTargetNode==guCloneTargetNode)
-						{
-							sprintf(gcQuery,"<blink>Error</blink> target node (%u) is the same as clone target node!",
-								uTargetNode);
-							tContainer(gcQuery);
-						}
-						//More validation
-						//Get most specific cAutoCloneNode
-						unsigned uTargetDatacenter=0;
-						sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
-						if(!uTargetDatacenter)
-						{
-							sprintf(gcQuery,"<blink>Error</blink> target node (%u) has no"
-									" datacenter configured",uTargetNode);
-							tContainer(gcQuery);
-						}
-						if(guCloneTargetNode && guOpOnClones)
-						{
-							cAutoCloneNode[0]=0;
-							GetConfiguration("cAutoCloneNode",cAutoCloneNode,uTargetDatacenter,uTargetNode,0,0);
-							if(!cAutoCloneNode[0])
-								GetConfiguration("cAutoCloneNode",cAutoCloneNode,uTargetDatacenter,0,0,0);
-							if(!cAutoCloneNode[0])
-							{
-								sprintf(gcQuery,"<blink>Error</blink> target node (%u) has no"
-										" tConfiguration cAutoCloneNode configured",uTargetNode);
-								tContainer(gcQuery);
-							}
-							unsigned uCloneTargetNode=0;
-							uCloneTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
-							if(!uCloneTargetNode)
-							{
-								sprintf(gcQuery,"<blink>Error</blink> cAutoCloneNode %s has no"
-										" tNode entry!",cAutoCloneNode);
-								tContainer(gcQuery);
-							}
-							if(uCloneTargetNode!=guCloneTargetNode)
-							{
-								sprintf(gcQuery,"<blink>Error</blink> Target node auto clone target %s (%u)"
-										" does not match provided"
-										" guCloneTargetNode (%u)!",
-											cAutoCloneNode,uCloneTargetNode,guCloneTargetNode);
-								tContainer(gcQuery);
-							}
-						}
-
-						InitContainerProps(&sContainer);
-						GetContainerProps(uCtContainer,&sContainer);
-						if( uTargetNode && (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
-							&& (sContainer.uOwner==guCompany || guCompany==1))
-						{
-
-							if(MigrateContainerJob(sContainer.uDatacenter,
-										sContainer.uNode,uCtContainer,uTargetNode,
-										sContainer.uOwner,guLoginClient,0,sContainer.uStatus))
-							{
-								SetContainerStatus(uCtContainer,uAWAITMIG);
-								uGroupJobs++;
-
-								if(guCloneTargetNode && guOpOnClones)
-								{
-									unsigned uCloneDatacenter=0;
-									unsigned uCloneNode=0;
-									unsigned uCloneContainer=0;
-									unsigned uCloneOwner=0;
-									unsigned uCloneStatus=0;
-									MYSQL_RES *res;
-									MYSQL_ROW field;
-
-									sprintf(gcQuery,"SELECT uDatacenter,uNode,uContainer,uStatus,uOwner FROM tContainer"
-										" WHERE uSource=%u",uCtContainer);
-									mysql_query(&gMysql,gcQuery);
-									if(mysql_errno(&gMysql))
-										htmlPlainTextError(mysql_error(&gMysql));
-								        res=mysql_store_result(&gMysql);
-									while((field=mysql_fetch_row(res)))
-									{
-										sscanf(field[0],"%u",&uCloneDatacenter);
-										sscanf(field[1],"%u",&uCloneNode);
-										sscanf(field[2],"%u",&uCloneContainer);
-										sscanf(field[3],"%u",&uCloneStatus);
-										sscanf(field[4],"%u",&uCloneOwner);
-										if((uCloneStatus==uSTOPPED || uCloneStatus==uACTIVE)
-											&& (uCloneOwner==guCompany || guCompany==1)
-											//Do not create useless job if clone is already on
-											//target node
-											&& (guCloneTargetNode!=uCloneNode) )
-										{
-											if(MigrateContainerJob(uCloneDatacenter,
-												uCloneNode,uCloneContainer,guCloneTargetNode,
-												uCloneOwner,guLoginClient,0,uCloneStatus))
-											{
-												SetContainerStatus(uCloneContainer,uAWAITMIG);
-												uGroupJobs++;
-
-											}
-										}
-									}
-								}
-							}
-						}
-					}
+					;
 				}
 			}
 		}
@@ -4322,86 +3753,716 @@ void ExttContainerAuxTable(void)
 
 				printf("<table>");
 				printf("<tr>");
-				printf("<td>cLabel</td><td>cHostname</td><td>Status</td><td>IPv4</td><td>Node</td>");
-				printf("<td>Datacenter</td><td>uSource</td><td>uCreatedDate</td><td>Set operation result</td>\n");
-				printf("</tr>");
-				while((field=mysql_fetch_row(res)))
+				printf("<td><u>cLabel</u></td>"
+					"<td><u>cHostname</u></td>"
+					"<td><u>Status</u></td>"
+					"<td><u>IPv4</u></td>"
+					"<td><u>Node</u></td>"
+					"<td><u>Datacenter</u></td>"
+					"<td><u>uSource</u></td>"
+					"<td><u>uCreatedDate</u></td>"
+					"<td><u>Set operation result</u></td></tr>");
+//Reset margin start
+while((field=mysql_fetch_row(res)))
+{
+	if(guMode==12002)
+	{
+		register int i;
+		unsigned uCtContainer=0;
+
+		sprintf(cResult,"Not processed");
+		sscanf(field[0],"%u",&uCtContainer);
+		sprintf(cCtLabel,"Ct%u",uCtContainer);
+		for(i=0;i<x;i++)
+		{
+			if(!strcmp(entries[i].name,cCtLabel))
+			{
+				if(!strcmp(gcCommand,"Set Test"))
 				{
-					if(guMode==12002)
+					sprintf(cResult,"Set Test Processed");
+					break;
+				}//Set Test
+
+				else if(!strcmp(gcCommand,"Group Cancel"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+
+					if((sContainer.uStatus==uAWAITDEL || sContainer.uStatus==uAWAITACT ||
+						sContainer.uStatus==uAWAITSTOP)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
-						register int i;
-						unsigned uCtContainer=0;
-
-						sprintf(cResult,"Not processed");
-						sscanf(field[0],"%u",&uCtContainer);
-						sprintf(cCtLabel,"Ct%u",uCtContainer);
-						for(i=0;i<x;i++)
+						if(!CancelContainerJob(sContainer.uDatacenter,
+								sContainer.uNode,uCtContainer,1))
 						{
-							if(!strcmp(entries[i].name,cCtLabel))
-							{
-								if(!strcmp(gcCommand,"Set Test"))
-								{
-									sprintf(cResult,"Set Test Processed");
-									break;
-								}
-
-								else if(!strcmp(gcCommand,"Group Cancel"))
-								{
-									struct structContainer sContainer;
-
-									InitContainerProps(&sContainer);
-									GetContainerProps(uCtContainer,&sContainer);
-
-									if((sContainer.uStatus==uAWAITDEL || sContainer.uStatus==uAWAITACT ||
-										sContainer.uStatus==uAWAITSTOP)
-										&& (sContainer.uOwner==guCompany || guCompany==1))
-									{
-										if(!CancelContainerJob(sContainer.uDatacenter,
-												sContainer.uNode,uCtContainer,1))
-										{
-											if(sContainer.uStatus==uAWAITDEL || 
-													sContainer.uStatus==uAWAITSTOP)
-												SetContainerStatus(uCtContainer,uACTIVE);
-											else if(sContainer.uStatus==uAWAITACT)
-												SetContainerStatus(uCtContainer,uINITSETUP);
-											sprintf(cResult,"group cancel job created");
-											break;
-										}
-										else
-										{
-											sprintf(cResult,"group cancel job not created!");
-											break;
-										}
-									}
-									sprintf(cResult,"group cancel request ignored");
-									break;
-								}
-
-								else
-								{
-									sprintf(cResult,"Unexpected gcCommand=%.64s",gcCommand);
-									break;
-								}
-							}
+							if(sContainer.uStatus==uAWAITDEL || 
+									sContainer.uStatus==uAWAITSTOP)
+								SetContainerStatus(uCtContainer,uACTIVE);
+							else if(sContainer.uStatus==uAWAITACT)
+								SetContainerStatus(uCtContainer,uINITSETUP);
+							sprintf(cResult,"group cancel job created");
+						}
+						else
+						{
+							sprintf(cResult,"group cancel job not created!");
 						}
 					}
 					else
 					{
-						sprintf(cResult,"---");
+						sprintf(cResult,"group cancel request ignored");
+					}
+					break;
+				}//Group Cancel
+
+				else if(!strcmp(gcCommand,"Group Stop"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uACTIVE)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						if(StopContainerJob(sContainer.uDatacenter,
+								sContainer.uNode,uCtContainer,guCompany))
+						{
+							SetContainerStatus(uCtContainer,uAWAITSTOP);
+							sprintf(cResult,"group stop job created");
+						}
+						else
+						{
+							sprintf(cResult,"group stop job not created!");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"group stop request ignored");
+					}
+					break;
+				}//Group Stop
+
+				//Uses guOpOnClones
+				else if(!strcmp(gcCommand,"Group Destroy"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						if(DestroyContainerJob(sContainer.uDatacenter,
+								sContainer.uNode,uCtContainer,guCompany))
+						{
+							SetContainerStatus(uCtContainer,uAWAITDEL);
+							sprintf(cResult,"group destroy job created");
+						}
+						else
+						{
+							sprintf(cResult,"group destroy job not created!");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"group destroy request ignored");
+					}
+					if(guOpOnClones)
+					{
+       						MYSQL_RES *res;
+					        MYSQL_ROW field;
+						unsigned uContainer=0;
+						unsigned uNode=0;
+						unsigned uDatacenter=0;
+						unsigned uStatus=0;
+						unsigned uOwner=0;
+
+						sprintf(gcQuery,"SELECT uDatacenter,uNode,uContainer,uStatus,uOwner FROM tContainer"
+								" WHERE uSource=%u",uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					        res=mysql_store_result(&gMysql);
+						while((field=mysql_fetch_row(res)))
+						{
+							sscanf(field[0],"%u",&uDatacenter);
+							sscanf(field[1],"%u",&uNode);
+							sscanf(field[2],"%u",&uContainer);
+							sscanf(field[3],"%u",&uStatus);
+							sscanf(field[4],"%u",&uOwner);
+							if((uStatus==uSTOPPED || uStatus==uACTIVE)
+								&& (uOwner==guCompany || guCompany==1))
+							{
+								if(DestroyContainerJob(uDatacenter,uNode,uContainer,guCompany))
+								{
+									SetContainerStatus(uContainer,uAWAITDEL);
+									strcat(cResult," +clone job");
+								}
+								else
+								{
+									strcat(cResult," +clone job error!");
+								}
+							}
+						}
+						mysql_free_result(res);
+					}//op on clones
+					break;
+				}//Group Destroy
+
+				//Requires uGroup
+				else if(!strcmp(gcCommand,"Group Change"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uOwner==guCompany || guCompany==1) && uGroup)
+					{
+						//Remove from all groups
+						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",
+							uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
+							uCtContainer,uGroup);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						sprintf(cResult,"group changed");
+					}
+					else
+					{
+						sprintf(cResult,"group change ignored");
+					}
+				}//Group Change
+
+
+				else if(!strcmp(gcCommand,"Group Delete"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uINITSETUP || sContainer.uStatus==uAWAITCLONE)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						//Release IPs
+						sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
+							" WHERE uIP=%u and uAvailable=0",sContainer.uIPv4);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						//Node IP if any MySQL5+
+						sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel IN"
+						" (SELECT cValue FROM tProperty WHERE uKey=%u"
+						" AND uType=3 AND cName='cNodeIP')",uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						//Now we can remove properties
+						DelProperties(uCtContainer,3);
+						//Remove from any groups
+						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",
+							uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						CancelContainerJob(sContainer.uDatacenter,sContainer.uNode,
+							uCtContainer,0);//0 is not specific cancel job attempt
+						//81=Awaiting clone. TODO properties of clones may
+						//exist
+						sprintf(gcQuery,"DELETE FROM tContainer WHERE uStatus=81 AND uSource=%u"
+									,uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer="
+						"(SELECT uContainer FROM tContainer WHERE uSource=%u AND uStatus=81)",uContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
+							uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						if(mysql_affected_rows(&gMysql)>0)
+							sprintf(cResult,"group delete done");
+					}
+					else
+					{
+						sprintf(cResult,"group delete ignored");
+					}
+					if(guOpOnClones)
+					{
+       						MYSQL_RES *res;
+					        MYSQL_ROW field;
+						unsigned uContainer=0;
+						unsigned uNode=0;
+						unsigned uDatacenter=0;
+						unsigned uStatus=0;
+						unsigned uOwner=0;
+						unsigned uIPv4=0;
+
+						sprintf(gcQuery,"SELECT uDatacenter,uNode,uContainer,uStatus,uOwner,uIPv4 FROM"
+								" tContainer WHERE uSource=%u",uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					        res=mysql_store_result(&gMysql);
+						while((field=mysql_fetch_row(res)))
+						{
+							sscanf(field[0],"%u",&uDatacenter);
+							sscanf(field[1],"%u",&uNode);
+							sscanf(field[2],"%u",&uContainer);
+							sscanf(field[3],"%u",&uStatus);
+							sscanf(field[4],"%u",&uOwner);
+							sscanf(field[5],"%u",&uIPv4);
+							if((uStatus==uINITSETUP) && (uOwner==guCompany || guCompany==1))
+							{
+								//Release IPs
+								sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
+									" WHERE uIP=%u and uAvailable=0",uIPv4);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+									htmlPlainTextError(mysql_error(&gMysql));
+								//Node IP if any MySQL5+
+								sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel IN"
+								" (SELECT cValue FROM tProperty WHERE uKey=%u"
+								" AND uType=3 AND cName='cNodeIP')",uContainer);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+									htmlPlainTextError(mysql_error(&gMysql));
+								//Now we can remove properties
+								DelProperties(uContainer,3);
+								//Remove from any groups
+								sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",
+									uContainer);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+									htmlPlainTextError(mysql_error(&gMysql));
+								//0 is not specific cancel job attempt
+								CancelContainerJob(uDatacenter,uNode,uContainer,0);
+								//81=Awaiting clone
+								sprintf(gcQuery,"DELETE FROM tContainer WHERE"
+										" uStatus=81 AND uSource=%u",uContainer);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+									htmlPlainTextError(mysql_error(&gMysql));
+								sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE"
+										" uContainer=(SELECT uContainer FROM tContainer"
+										" WHERE uSource=%u AND uStatus=81)",uContainer);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+									htmlPlainTextError(mysql_error(&gMysql));
+								sprintf(gcQuery,"DELETE FROM tContainer WHERE uContainer=%u",
+									uContainer);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+									htmlPlainTextError(mysql_error(&gMysql));
+								if(mysql_affected_rows(&gMysql)>0)
+									strcat(cResult," +clone delete");
+							}//if clone
+						}//while
+						mysql_free_result(res);
+					}
+					break;
+				}//Group Delete
+
+				//Clone selected containers
+				if(!strcmp(gcCommand,"Group Clone"))
+				{
+					struct structContainer sContainer;
+					static unsigned uOnlyOnce=1;
+					char cConfBuffer[256]={""};
+					char cAutoCloneIPClass[256]={""};
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						//For complete clone run, these stay constant.
+						if(uOnlyOnce)
+						{
+
+						//We can only fo this if tConfiguration has been setup
+						//with datacenter wide cAutoCloneNode=node1,cAutoCloneSyncTime=600
+						//for example.
+						GetConfiguration("cAutoCloneNode",cConfBuffer,uDatacenter,0,0,0);
+						if(cConfBuffer[0])
+							uTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
+						//We need the cuSyncPeriod
+						uSyncPeriod=0;//Never rsync
+						GetConfiguration("cAutoCloneSyncTime",cConfBuffer,uDatacenter,0,0,0);
+						if(cConfBuffer[0])
+							sscanf(cConfBuffer,"%u",&uSyncPeriod);
+						GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,
+							0,0,0);
+
+							uOnlyOnce=0;
+
+						}
+						//Basic conditions
+						//We do not allow clones of clones yet.
+						if(uTargetNode && !sContainer.uSource && cAutoCloneIPClass[0])
+						{
+							unsigned uNewVeid=0;
+							MYSQL_RES *res;
+							MYSQL_ROW field;
+
+							//Get next available IP, set uIPv4
+							uWizIPv4=0;
+							//TODO we cant let root just grab anybodys IPs
+							if(guCompany==1)
+								sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+								" uAvailable=1 AND cLabel LIKE '%s.%%' LIMIT 1",
+									cAutoCloneIPClass);
+							else
+								sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+									" uAvailable=1 AND cLabel LIKE '%s.%%' AND"
+								" uOwner=%u LIMIT 1",cAutoCloneIPClass,guCompany);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							res=mysql_store_result(&gMysql);
+							if((field=mysql_fetch_row(res)))
+								sscanf(field[0],"%u",&uWizIPv4);
+							mysql_free_result(res);
+
+							//
+							//We impose further abort conditions
+
+							//Need valid clone IP
+							if(!uWizIPv4)
+								continue;
+							if(uWizIPv4==sContainer.uIPv4)
+								continue;
+
+							//Target node can't match source node.
+							if(uTargetNode==sContainer.uNode)
+								continue;
+
+							//Check for sane sync periods
+							if(!uSyncPeriod && uSyncPeriod<300 && uSyncPeriod>86400*30)
+								continue;
+
+							//If the container is VETH then target node must support it.
+							if(sContainer.uVeth)
+							{
+								GetNodeProp(uNode,"Container-Type",cConfBuffer);
+								if(!strstr(cConfBuffer,"VETH"))
+									continue;
+							}
+
+							//We require group now.
+							//Get group from source container
+							uGroup=uGetGroup(0,uCtContainer);
+							if(!uGroup)
+								continue;
+
+							//Finally we can create the clone container
+							//and the clone job
+							uNewVeid=CommonCloneContainer(
+									uCtContainer,
+									sContainer.uOSTemplate,
+									sContainer.uConfig,
+									sContainer.uNameserver,
+									sContainer.uSearchdomain,
+									sContainer.uDatacenter,
+									sContainer.uDatacenter,
+									sContainer.uOwner,
+									sContainer.cLabel,
+									sContainer.uNode,
+									sContainer.uStatus,
+									sContainer.cHostname,
+									"",
+									uWizIPv4,
+									cWizLabel,
+									cWizHostname,
+									uTargetNode,
+									uSyncPeriod,
+									guLoginClient,
+									uCloneStop,0);
+							//Now that container exists we can assign group.
+							if(!uNewVeid)
+								continue;
+							ChangeGroup(uNewVeid,uGroup);
+							SetContainerStatus(uCtContainer,uAWAITCLONE);
+							SetContainerStatus(uNewVeid,uAWAITCLONE);
+							uGroupJobs++;
+						}
+					}
+					break;
+				}//Group Clone
+
+				//Start or Create
+				else if(!strcmp(gcCommand,"Group Start"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+
+					if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uINITSETUP)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						if(sContainer.uStatus==uINITSETUP)
+						{
+							if(CreateNewContainerJob(sContainer.uDatacenter,
+								sContainer.uNode,uCtContainer,sContainer.uOwner))
+							{
+								SetContainerStatus(uCtContainer,uAWAITACT);
+								uGroupJobs++;
+							}
+						}
+						else
+						{
+							uOwner=guCompany;
+							if(CreateStartContainerJob(sContainer.uDatacenter,
+								sContainer.uNode,uCtContainer,sContainer.uOwner))
+							{
+								SetContainerStatus(uCtContainer,uAWAITACT);
+								uGroupJobs++;
+							}
+						}
+					}
+					break;
+				}//Group Start
+
+				else if(!strcmp(gcCommand,"Group Template"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+
+					if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						MYSQL_RES *res;
+						char cOSTLabel[101]={""};
+						char cConfigLabel[33]={""};
+
+						//Here we set the template to use the source container short name label
+						sprintf(cConfigLabel,"%.31s",ForeignKey("tContainer","cLabel",uCtContainer));
+						sprintf(cOSTLabel,"%.100s",ForeignKey("tOSTemplate","cLabel",sContainer.uOSTemplate));
+						if(!cOSTLabel[0])
+							tContainer("<blink>Error:</blink> No tOSTemplate.cLabel!");
+						if(!cConfigLabel[0])
+							tContainer("<blink>Error:</blink> No tContainer.cLabel!");
+						sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",cConfigLabel);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+		        			res=mysql_store_result(&gMysql);
+						if(mysql_num_rows(res)>0)
+							tContainer("<blink>Error:</blink> tConfig.cLabel collision!");
+						mysql_free_result(res);
+						sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%.67s-%.32s'",
+								cOSTLabel,cConfigLabel);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+		        			res=mysql_store_result(&gMysql);
+						if(mysql_num_rows(res)>0)
+							tContainer("<blink>Error:</blink> tOSTemplate.cLabel collision!");
+
+						if(TemplateContainerJob(sContainer.uDatacenter,
+							sContainer.uNode,uCtContainer,sContainer.uStatus,
+							sContainer.uOwner,cConfigLabel))
+						{
+							SetContainerStatus(uCtContainer,uAWAITTML);
+							uGroupJobs++;
+						}
+					}
+					break;
+				}//Group Template
+
+				else if(!strcmp(gcCommand,"Group Switchover"))
+				{
+				//These two jobs are always done in pairs. Even though the second may run much later
+				//for example after hardware failure has been fixed.
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( sContainer.uSource!=0 &&
+						 (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						unsigned uFailToJob=0;
+						if((uFailToJob=FailoverToJob(sContainer.uDatacenter,sContainer.uNode,
+							uCtContainer,sContainer.uOwner,guLoginClient,0)))
+						{
+							unsigned uSourceDatacenter=0;
+							unsigned uSourceNode=0;
+							sscanf(ForeignKey("tContainer","uDatacenter",
+								sContainer.uSource),
+								"%u",&uSourceDatacenter);
+							sscanf(ForeignKey("tContainer","uNode",
+								sContainer.uSource),
+								"%u",&uSourceNode);
+
+							if(FailoverFromJob(uSourceDatacenter,uSourceNode,
+								sContainer.uSource,sContainer.uIPv4,
+								sContainer.cLabel,sContainer.cHostname,
+									uCtContainer,sContainer.uStatus,
+									uFailToJob,sContainer.uOwner,guLoginClient,0))
+							{
+								SetContainerStatus(uCtContainer,uAWAITFAIL);
+								SetContainerStatus(sContainer.uSource,uAWAITFAIL);
+								uGroupJobs++;
+							}
+						}
+					}
+					break;
+				}//Group Switchover
+
+				else if(!strcmp(gcCommand,"Group Migration"))
+				{
+				//This is a new type of group job that requires a uTargetNode and
+				//optionally a guCloneTargetNode that must be set in the left panel
+					struct structContainer sContainer;
+
+					//debug
+					//sprintf(gcQuery,"d1: target node %u clone target node %u",uTargetNode,guCloneTargetNode);
+					//tContainer(gcQuery);
+					if(uTargetNode==guCloneTargetNode)
+					{
+						sprintf(gcQuery,"<blink>Error</blink> target node (%u) is the same as clone target node!",
+							uTargetNode);
+						tContainer(gcQuery);
+					}
+					//More validation
+					//Get most specific cAutoCloneNode
+					unsigned uTargetDatacenter=0;
+					sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
+					if(!uTargetDatacenter)
+					{
+						sprintf(gcQuery,"<blink>Error</blink> target node (%u) has no"
+								" datacenter configured",uTargetNode);
+						tContainer(gcQuery);
+					}
+					if(guCloneTargetNode && guOpOnClones)
+					{
+						cAutoCloneNode[0]=0;
+						GetConfiguration("cAutoCloneNode",cAutoCloneNode,uTargetDatacenter,uTargetNode,0,0);
+						if(!cAutoCloneNode[0])
+							GetConfiguration("cAutoCloneNode",cAutoCloneNode,uTargetDatacenter,0,0,0);
+						if(!cAutoCloneNode[0])
+						{
+							sprintf(gcQuery,"<blink>Error</blink> target node (%u) has no"
+									" tConfiguration cAutoCloneNode configured",uTargetNode);
+							tContainer(gcQuery);
+						}
+						unsigned uCloneTargetNode=0;
+						uCloneTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
+						if(!uCloneTargetNode)
+						{
+							sprintf(gcQuery,"<blink>Error</blink> cAutoCloneNode %s has no"
+									" tNode entry!",cAutoCloneNode);
+							tContainer(gcQuery);
+						}
+						if(uCloneTargetNode!=guCloneTargetNode)
+						{
+							sprintf(gcQuery,"<blink>Error</blink> Target node auto clone target %s (%u)"
+									" does not match provided"
+									" guCloneTargetNode (%u)!",
+										cAutoCloneNode,uCloneTargetNode,guCloneTargetNode);
+							tContainer(gcQuery);
+						}
 					}
 
-					printf("<tr>");
-					printf("<td width=200 valign=top>"
-					"<input type=checkbox name=Ct%s >"
-					"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>"
-					"</td>"
-					"<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
-						field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],cResult);
-					printf("</tr>");
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( uTargetNode && (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+
+						if(MigrateContainerJob(sContainer.uDatacenter,
+									sContainer.uNode,uCtContainer,uTargetNode,
+									sContainer.uOwner,guLoginClient,0,sContainer.uStatus))
+						{
+							SetContainerStatus(uCtContainer,uAWAITMIG);
+							uGroupJobs++;
+
+							if(guCloneTargetNode && guOpOnClones)
+							{
+								unsigned uCloneDatacenter=0;
+								unsigned uCloneNode=0;
+								unsigned uCloneContainer=0;
+								unsigned uCloneOwner=0;
+								unsigned uCloneStatus=0;
+								MYSQL_RES *res;
+								MYSQL_ROW field;
+
+								sprintf(gcQuery,"SELECT uDatacenter,uNode,uContainer,uStatus,uOwner FROM tContainer"
+									" WHERE uSource=%u",uCtContainer);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+									htmlPlainTextError(mysql_error(&gMysql));
+							        res=mysql_store_result(&gMysql);
+								while((field=mysql_fetch_row(res)))
+								{
+									sscanf(field[0],"%u",&uCloneDatacenter);
+									sscanf(field[1],"%u",&uCloneNode);
+									sscanf(field[2],"%u",&uCloneContainer);
+									sscanf(field[3],"%u",&uCloneStatus);
+									sscanf(field[4],"%u",&uCloneOwner);
+									if((uCloneStatus==uSTOPPED || uCloneStatus==uACTIVE)
+										&& (uCloneOwner==guCompany || guCompany==1)
+										//Do not create useless job if clone is already on
+										//target node
+										&& (guCloneTargetNode!=uCloneNode) )
+									{
+										if(MigrateContainerJob(uCloneDatacenter,
+											uCloneNode,uCloneContainer,guCloneTargetNode,
+											uCloneOwner,guLoginClient,0,uCloneStatus))
+										{
+											SetContainerStatus(uCloneContainer,uAWAITMIG);
+											uGroupJobs++;
+
+										}
+									}
+								}
+							}
+						}
+					}
+					break;
+				}//Group Migration
+
+				else if(1)
+				{
+					sprintf(cResult,"Unexpected gcCommand=%.64s",gcCommand);
+					break;
 				}
-				printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> Check all</td></tr>\n");
-				printf("</table>");
-			}
+			}//end if Ct block
+		}//end for()
+	}
+	else
+	{
+		sprintf(cResult,"---");
+	}
+
+	printf("<tr>");
+	printf("<td width=200 valign=top>"
+	"<input type=checkbox name=Ct%s >"
+	"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>"
+	"</td>"
+	"<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
+		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],cResult);
+	printf("</tr>");
+
+}//while()
+//Reset margin end
+
+			printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> Check all</td></tr>\n");
+			printf("</table>");
+
+			}//If results
 			mysql_free_result(res);
 			CloseFieldSet();
 		break;
