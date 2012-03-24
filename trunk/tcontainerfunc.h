@@ -441,36 +441,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
-		else if(!strcmp(gcCommand,"Clear Search Set"))
-                {
-			if(guPermLevel>=9)
-			{
-	                        ProcesstContainerVars(entries,x);
-                        	guMode=12002;
 
-				if((uGroup=uGetSearchGroup(gcUser))==0)
-	                        	tContainer("You must first create an search set before clearing it");
-				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u",uGroup);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-				unsigned uNumber=0;
-				if((uNumber=mysql_affected_rows(&gMysql))>0)
-				{
-	                        	sprintf(gcQuery,"%u container records were removed from your search set",uNumber);
-	                        	tContainer(gcQuery);
-				}
-				else
-				{
-	                        	tContainer("No records were removed from your empty search set");
-				}
-			}
-			else
-			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
-			}
-                }
-		else if(!strcmp(gcCommand,"Add to Search Set"))
+		else if(!strcmp(gcCommand,"Add to Search Set") || !strcmp(gcCommand,"Create Search Set"))
                 {
 			if(guPermLevel>=9)
 			{
@@ -494,6 +466,16 @@ void ExttContainerCommands(pentry entries[], int x)
 					if((uGroup=mysql_insert_id(&gMysql))==0)
 		                        	tContainer("An error ocurred when attempting to create your search set");
 				}
+				else
+				{
+					if(!strcmp(gcCommand,"Create Search Set"))
+					{
+						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u",uGroup);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
+                		}
 
 				//Initial query section
 				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroupGlue,uGroup,uNode,uContainer)"
@@ -503,7 +485,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if(cHostnameSearch[0])
 				{
-					sprintf(cQuerySection," Hostname LIKE '%s%%'",cHostnameSearch);
+					sprintf(cQuerySection," cHostname LIKE '%s%%'",cHostnameSearch);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -544,6 +526,19 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uLink)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," uStatus=%u",uSearchStatus);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				//Clone YesNo tristate
+				if(uSearchSource)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					if(uSearchSource==2)//Tri state Yes
+						sprintf(cQuerySection," uSource>0");
+					else
+						sprintf(cQuerySection," uSource=0");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -3605,11 +3600,11 @@ void ExttContainerButtons(void)
 			printf("<u>Create or refine your user search set</u><br>");
 			printf("In the right panel you can select your search criteria. When refining you do not need"
 				" to reuse your initial search critieria. Your search set is persistent even across unxsVZ sessions.<p>");
-			printf("<input type=submit class=largeButton title='Clear your search set'"
-				" name=gcCommand value='Clear Search Set'>\n");
-			printf("<input type=submit class=largeButton title='Add the results to your search set'"
+			printf("<input type=submit class=largeButton title='Create an initial or replace an existing search set'"
+				" name=gcCommand value='Create Search Set'>\n");
+			printf("<input type=submit class=largeButton title='Add the results to your current search set'"
 				" name=gcCommand value='Add to Search Set'>\n");
-			printf("<p><input type=submit class=largeButton title='Apply the right panel filter to refine your existing search set'"
+			printf("<p><input disabled type=submit class=largeButton title='Apply the right panel filter to refine your existing search set'"
 				" name=gcCommand value='Refine Search Set'>\n");
 			printf("<p><input type=submit class=largeButton title='Reload your search set'"
 				" name=gcCommand value='Reload Search Set'>\n");
@@ -3913,11 +3908,14 @@ void ExttContainerAuxTable(void)
 			sprintf(gcQuery,"SELECT"
 					" tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tStatus.cLabel,"
 					" tIP.cLabel,tNode.cLabel,tDatacenter.cLabel,tContainer.uSource,"
+					" tClient.cLabel,tOSTemplate.cLabel,"
 					" FROM_UNIXTIME(tContainer.uCreatedDate,'%%a %%b %%d %%T %%Y')"
-					" FROM tContainer,tIP,tNode,tDatacenter,tStatus"
+					" FROM tContainer,tIP,tNode,tDatacenter,tStatus,tClient,tOSTemplate"
 					" WHERE tContainer.uIPv4=tIP.uIP AND tContainer.uNode=tNode.uNode"
 					" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
 					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uOwner=tClient.uClient"
+					" AND tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
 					" AND uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uGroup);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
@@ -3937,6 +3935,8 @@ void ExttContainerAuxTable(void)
 					"<td><u>Node</u></td>"
 					"<td><u>Datacenter</u></td>"
 					"<td><u>uSource</u></td>"
+					"<td><u>Owner</u></td>"
+					"<td><u>OSTemplate</u></td>"
 					"<td><u>uCreatedDate</u></td>"
 					"<td><u>Set operation result</u></td></tr>");
 //Reset margin start
@@ -4643,8 +4643,8 @@ while((field=mysql_fetch_row(res)))
 	"<input type=checkbox name=Ct%s >"
 	"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>"
 	"</td>"
-	"<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
-		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],cResult);
+	"<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
+		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],field[9],field[10],cResult);
 	printf("</tr>");
 
 }//while()
@@ -6495,3 +6495,55 @@ unsigned uGetSearchGroup(const char *gcUser)
 	return(uGroup);
 
 }//unsigned uGetSearchGroup(const char *gcUser)
+
+
+void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode)
+{
+	char cHidden[100]={""};
+	char *cMode="";
+
+	if(!uMode)
+		cMode="disabled";
+      
+	printf("<select name=cYesNo%s %s>\n",cFieldName,cMode);
+
+        if(uSelect==0)
+		printf("<option selected>---</option>\n");
+	else
+		printf("<option>---</option>\n");
+
+        if(uSelect==1)
+                printf("<option selected>No</option>\n");
+        else
+                printf("<option>No</option>\n");
+
+        if(uSelect==2)
+	{
+                printf("<option selected>Yes</option>\n");
+		if(!uMode)
+			sprintf(cHidden,"<input type=hidden name=cYesNo%s value='Yes'>\n",
+			     		cFieldName);
+	}
+        else
+	{
+                printf("<option>Yes</option>\n");
+	}
+
+        printf("</select>\n");
+	if(cHidden[0])
+		printf("%s",cHidden);
+
+}//YesNoPullDownTriState()
+
+
+int ReadYesNoPullDownTriState(const char *cLabel)
+{
+        if(!strcmp(cLabel,"Yes"))
+                return(2);
+        else if(!strcmp(cLabel,"No"))
+                return(1);
+	else
+                return(0);
+
+}//ReadYesNoPullDownTriState(char *cLabel)
+
