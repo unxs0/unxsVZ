@@ -70,6 +70,10 @@ static unsigned uSearchStatus=0;
 static char cuSearchStatusPullDown[256]={""};
 static char cHostnameSearch[64]={""};
 static char cIPv4Search[16]={""};
+int ReadYesNoPullDownTriState(const char *cLabel);
+void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode);
+static unsigned uSearchSource=0;
+static char cYesNouSearchSource[32]={""};
 
 static char cuClientPullDown[256]={""};
 static char cAutoCloneNode[256]={""};
@@ -199,6 +203,13 @@ void ProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cuSearchStatusPullDown,"%.255s",entries[i].val);
 			uSearchStatus=ReadPullDown("tStatus","cLabel",cuSearchStatusPullDown);
+		}
+		else if(!strcmp(entries[i].name,"uSearchSource"))
+			sscanf(entries[i].val,"%u",&uSearchSource);
+		else if(!strcmp(entries[i].name,"cYesNouSearchSource"))
+		{
+			sprintf(cYesNouSearchSource,"%.31s",entries[i].val);
+			uSearchSource=ReadYesNoPullDownTriState(cYesNouSearchSource);
 		}
 
 	}
@@ -404,6 +415,8 @@ void tContainerSearchSet(unsigned uStep)
 	tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
 	OpenRow("Owner","black");
 	tTablePullDownResellers(uForClient,0);
+	OpenRow("Clone","black");
+	YesNoPullDownTriState("uSearchSource",uSearchSource,1);
 	OpenRow("Status","black");
 	tTablePullDown("tStatus;cuSearchStatusPullDown","cLabel","cLabel",uSearchStatus,1);
 	OpenRow("OSTemplate","black");
