@@ -68,6 +68,8 @@ static time_t uBackupDate=0;
 //uStatus: Container tStatus.uStatus
 static unsigned uSearchStatus=0;
 static char cuSearchStatusPullDown[256]={""};
+static char cHostnameSearch[64]={""};
+static char cIPv4Search[16]={""};
 
 static char cuClientPullDown[256]={""};
 static char cAutoCloneNode[256]={""};
@@ -389,16 +391,13 @@ void tContainer(const char *cResult)
 
 void tContainerSearchSet(unsigned uStep)
 {
-	char cHostnameSearch[64]={""};
-	char cIPv4Search[16]={""};
-
 	OpenRow("<u>Set search paramters</u>","black");
 	OpenRow("Hostname pattern","black");
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cHostnameSearch"
-			"value=\"%s\" size=40 maxlength=63 >",cHostnameSearch);
+			" value=\"%s\" size=40 maxlength=63 >",cHostnameSearch);
 	OpenRow("IPv4 pattern","black");
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
-			"value=\"%s\" size=40 maxlength=15 >",cIPv4Search);
+			" value=\"%s\" size=40 maxlength=15 >",cIPv4Search);
 	OpenRow("Datacenter","black");
 	tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
 	OpenRow("Node","black");

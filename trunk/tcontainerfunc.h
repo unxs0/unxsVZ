@@ -48,6 +48,7 @@ void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 void InitContainerProps(struct structContainer *sContainer);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);
+unsigned uGetSearchGroup(const char *gcUser);
 unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
 		unsigned uOwner,unsigned uCreatedBy);
 void ChangeGroup(unsigned uContainer, unsigned uGroup);
@@ -385,6 +386,14 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 			sprintf(cuWizContainerPullDown,"%.31s",entries[i].val);
 			uWizContainer=ReadPullDown("tContainer","cLabel",cuWizContainerPullDown);
 		}
+		else if(!strcmp(entries[i].name,"cHostnameSearch"))
+		{
+			sprintf(cHostnameSearch,"%.99s",entries[i].val);
+		}
+		else if(!strcmp(entries[i].name,"cIPv4Search"))
+		{
+			sprintf(cIPv4Search,"%.15s",entries[i].val);
+		}
 	}
 
 }//void ExtProcesstContainerVars(pentry entries[], int x)
@@ -419,19 +428,160 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
                 }
-		else if(!strcmp(gcCommand,"Create Search Set"))
+		else if(!strcmp(gcCommand,"Reload Search Set"))
                 {
 			if(guPermLevel>=9)
 			{
 	                        ProcesstContainerVars(entries,x);
-                        	guMode=12001;
+                        	guMode=12002;
+	                        tContainer("Search set reloaded");
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+		else if(!strcmp(gcCommand,"Clear Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstContainerVars(entries,x);
+                        	guMode=12002;
 
-				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroupGlue,uGroup,uNode,uContainer)"
-						" SELECT 0,81,0,uContainer FROM tContainer WHERE cLabel LIKE 'ab%%'");
+				if((uGroup=uGetSearchGroup(gcUser))==0)
+	                        	tContainer("You must first create an search set before clearing it");
+				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u",uGroup);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
-	                        tContainer("Search set created");
+				unsigned uNumber=0;
+				if((uNumber=mysql_affected_rows(&gMysql))>0)
+				{
+	                        	sprintf(gcQuery,"%u container records were removed from your search set",uNumber);
+	                        	tContainer(gcQuery);
+				}
+				else
+				{
+	                        	tContainer("No records were removed from your empty search set");
+				}
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
+		else if(!strcmp(gcCommand,"Add to Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstContainerVars(entries,x);
+                        	guMode=12002;
+				char cQuerySection[256];
+				unsigned uLink=0;
+
+				if(cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
+						&& uForClient==0 && uOSTemplate==0)
+	                        	tContainer("You must specify at least one search parameter");
+
+				if((uGroup=uGetSearchGroup(gcUser))==0)
+				{
+					sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=2"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcUser,guCompany,guLoginClient);//2=search set type TODO
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					if((uGroup=mysql_insert_id(&gMysql))==0)
+		                        	tContainer("An error ocurred when attempting to create your search set");
+				}
+
+				//Initial query section
+				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroupGlue,uGroup,uNode,uContainer)"
+						" SELECT 0,%u,0,uContainer FROM tContainer WHERE",uGroup);
+
+				//Build AND query section
+
+				if(cHostnameSearch[0])
+				{
+					sprintf(cQuerySection," Hostname LIKE '%s%%'",cHostnameSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+				else
+				{
+					uLink=0;
+				}
+
+				if(cIPv4Search[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uIPv4 IN (SELECT uIP FROM tIP WHERE cLabel LIKE '%s%%')",cIPv4Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uDatacenter)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uDatacenter=%u",uDatacenter);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uNode)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uNode=%u",uNode);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uSearchStatus)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uStatus=%u",uSearchStatus);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uOSTemplate)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uOSTemplate=%u",uOSTemplate);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uForClient)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uOwner=%u",uForClient);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				//debug only
+	                        //tContainer(gcQuery);
+
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				unsigned uNumber=0;
+				if((uNumber=mysql_affected_rows(&gMysql))>0)
+				{
+	                        	sprintf(gcQuery,"%u container records were added to your search set",uNumber);
+	                        	tContainer(gcQuery);
+				}
+				else
+				{
+	                        	tContainer("No records were added to your search set. Filter returned 0 records");
+				}
 			}
 			else
 			{
@@ -3180,9 +3330,9 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
-                else if(!strncmp(gcCommand,"Set ",4) || !strncmp(gcCommand,"Group ",6))
+                else if(!strncmp(gcCommand,"Set ",4) || !strncmp(gcCommand,"Group ",6) || !strncmp(gcCommand,"Delete Checked",14))
                 {
-			//ExtProcesstContainerVars(entries,x);
+			ProcesstContainerVars(entries,x);
                         guMode=12002;
 			tContainer(gcCommand);
 		}
@@ -3454,12 +3604,16 @@ void ExttContainerButtons(void)
                 case 12002:
 			printf("<u>Create or refine your user search set</u><br>");
 			printf("In the right panel you can select your search criteria. When refining you do not need"
-				" to reuse your initial search critieria.<p>");
-			printf("<input type=submit class=largeButton title='Create a new user search set'"
-				" name=gcCommand value='Create Search Set'>\n");
-			printf("<input type=submit class=largeButton title='Further refine your search set'"
+				" to reuse your initial search critieria. Your search set is persistent even across unxsVZ sessions.<p>");
+			printf("<input type=submit class=largeButton title='Clear your search set'"
+				" name=gcCommand value='Clear Search Set'>\n");
+			printf("<input type=submit class=largeButton title='Add the results to your search set'"
+				" name=gcCommand value='Add to Search Set'>\n");
+			printf("<p><input type=submit class=largeButton title='Apply the right panel filter to refine your existing search set'"
 				" name=gcCommand value='Refine Search Set'>\n");
-			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
+			printf("<p><input type=submit class=largeButton title='Reload your search set'"
+				" name=gcCommand value='Reload Search Set'>\n");
+			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
 				" name=gcCommand value='Cancel'>\n");
                 break;
 
@@ -3706,6 +3860,7 @@ void ExttContainerAuxTable(void)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	unsigned uGroup=0;
 
 	switch(guMode)
 	{
@@ -3713,7 +3868,9 @@ void ExttContainerAuxTable(void)
 		case 12002:
 			//Set operation buttons
 			OpenFieldSet("Set Operations",100);
-			printf("<input title='Test' type=submit class=largeButton name=gcCommand value='Set Test'>\n");
+			printf("<input title='Delete checked containers from your search set. They will still be visible but will"
+				" marked deleted and will not be used in any subsequent set operation'"
+				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
 			printf("&nbsp; <input title='Cancels job(s) for container(s) waiting for activation, deletion or stop.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Cancel'>\n");
@@ -3752,6 +3909,7 @@ void ExttContainerAuxTable(void)
 
 			sprintf(gcQuery,"Search Set Contents");
 			OpenFieldSet(gcQuery,100);
+			uGroup=uGetSearchGroup(gcUser);
 			sprintf(gcQuery,"SELECT"
 					" tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tStatus.cLabel,"
 					" tIP.cLabel,tNode.cLabel,tDatacenter.cLabel,tContainer.uSource,"
@@ -3760,7 +3918,7 @@ void ExttContainerAuxTable(void)
 					" WHERE tContainer.uIPv4=tIP.uIP AND tContainer.uNode=tNode.uNode"
 					" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
 					" AND tContainer.uStatus=tStatus.uStatus"
-					" AND uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=81)");
+					" AND uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uGroup);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -3800,11 +3958,21 @@ while((field=mysql_fetch_row(res)))
 
 			if(!strcmp(entries[i].name,cCtLabel))
 			{
-				if(!strcmp(gcCommand,"Set Test"))
+				if(!strcmp(gcCommand,"Delete Checked"))
 				{
-					sprintf(cResult,"Set Test Processed");
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uContainer=%u",uGroup,uCtContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,mysql_error(&gMysql));
+						break;
+					}
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"Deleted from set");
+					else
+						sprintf(cResult,"Unexpected non deletion");
 					break;
-				}//Set Test
+				}//Delete Checked
 
 				else if(!strcmp(gcCommand,"Group Cancel"))
 				{
@@ -6304,3 +6472,26 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 	unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy);
 
 }//void CreateDNSJob()
+
+
+unsigned uGetSearchGroup(const char *gcUser)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uGroup=0;
+
+	sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s'",gcUser);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		if(field[0]!=NULL)
+			sscanf(field[0],"%u",&uGroup);
+	}
+	mysql_free_result(res);
+
+	return(uGroup);
+
+}//unsigned uGetSearchGroup(const char *gcUser)
