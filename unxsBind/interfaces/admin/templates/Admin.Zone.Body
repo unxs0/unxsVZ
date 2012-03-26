@@ -34,7 +34,7 @@
 						<a title='Zone resource record management' class="wpsUnSelectedPlaceLink" href='idnsAdmin.cgi?&gcPage=Resource{{cZoneGetLink}}' {{cResourcesTabStatus}}><b class ="font10pt">Resources</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Bulk import zones and RRs' class="wpsUnSelectedPlaceLink" href='idnsAdmin.cgi?&gcPage=BulkOp'><b class ="font10pt">Bulk Operations</b></a>
+						<a title='Bulk import zones and RRs' class="wpsUnSelectedPlaceLink" href='idnsAdmin.cgi?&gcPage=BulkOp{{cZoneGetLink}}'><b class ="font10pt">Bulk Operations</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
 						<a title='Restore deleted zones' class="wpsUnSelectedPlaceLink" href='idnsAdmin.cgi?&gcPage=RestoreZone'><b class ="font10pt">Restore Zones</b></a>
