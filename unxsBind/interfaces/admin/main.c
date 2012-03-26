@@ -1009,9 +1009,13 @@ void funcTopInfo(FILE *fp)
 	fprintf(fp,"<br><br>");
 	if(gcCustomer[0])
 	{
+		unsigned uView=0;
+
+		sscanf(cuView,"%u",&uView);
 		sprintf(cOutput,"<font size=+1>%s :: iDNS Admin Interface</font>",gcCustomer);
 		if(gcZone[0])
-			sprintf(cOutput,"<font size=+1>%s :: %s :: iDNS Admin Interface</font>",gcZone,gcCustomer);
+			sprintf(cOutput,"<font size=+1>%.64s %.32s :: %.32s :: iDNS Admin Interface</font>",
+				gcZone,ForeignKey("tView","cLabel",uView),gcCustomer);
 	}
 
 	fprintf(fp,"%s",cOutput);
