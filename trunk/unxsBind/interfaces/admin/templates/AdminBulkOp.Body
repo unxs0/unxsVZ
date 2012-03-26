@@ -31,7 +31,7 @@
 						<a title='Zone management' class="wpsUnSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=Zone{{cZoneGetLink}}"><b class ="font10pt">Zones</b></a>
 						</td>
 						<td class="wpsUnSelectedPlace" nowrap height="100%">
-						<a title='Zone resource record management' class="wpsUnSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=Resource"><b class ="font10pt">Resources</b></a>
+						<a title='Zone resource record management' class="wpsUnSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=Resource{{cZoneGetLink}}"><b class ="font10pt">Resources</b></a>
 						</td>
 						<td class="wpsSelectedPlace" nowrap height="100%">
 						<a title='Bulk import zones and RRs' class="wpsSelectedPlaceLink" href="idnsAdmin.cgi?&gcPage=BulkOp{{cZoneGetLink}}"><b class ="font10pt">Bulk Operations</b></a>

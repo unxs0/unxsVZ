@@ -54,7 +54,8 @@ void ProcessBulkOpVars(pentry entries[], int x)
 
 void BulkOpGetHook(entry gentries[],int x)
 {
-/*	register int i;
+
+	register int i;
 
 	for(i=0;i<x;i++)
 	{
@@ -63,7 +64,6 @@ void BulkOpGetHook(entry gentries[],int x)
 		else if(!strcmp(gentries[i].name,"uView"))
 			sprintf(cuView,"%.15s",gentries[i].val);
 	}
-*/	
 	htmlBulkOp();
 
 }//void BulkOpGetHook(entry gentries[],int x)
@@ -162,7 +162,13 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 			template.cpName[13]="uResource";
 			template.cpValue[13]=cuResource;
 
-			template.cpName[14]="";
+			template.cpName[14]="cZoneGetLink";
+			char cZoneGetLink[128];
+			sprintf(cZoneGetLink,"&cZone=%.63s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
+			template.cpValue[14]=cZoneGetLink;
+
+
+			template.cpName[15]="";
 
 			printf("\n<!-- Start htmlBulkOpPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -201,7 +207,7 @@ void BulkResourceImport(void)
 
 	uZone=uGetuZone(gcZone,cuView);
 	
-	sprintf(cImportMsg,"Bulk Resource Record Import begin. Zone=%s\n",gcZone);
+	sprintf(cImportMsg,"Bulk Resource Record Import begin. Zone=%s/%u/%s\n",gcZone,uZone,cuView);
 	
 	while(1)
 	{

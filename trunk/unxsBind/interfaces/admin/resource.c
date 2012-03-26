@@ -559,7 +559,12 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			template.cpName[47]="uCreatedByForm";
 			template.cpValue[47]=cuCreatedByForm;
 
-			template.cpName[48]="";
+			template.cpName[48]="cZoneGetLink";
+			char cZoneGetLink[128];
+			sprintf(cZoneGetLink,"&cZone=%.63s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
+			template.cpValue[48]=cZoneGetLink;
+
+			template.cpName[49]="";
 
 			printf("\n<!-- Start htmlResourcePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
