@@ -1446,7 +1446,16 @@ void ExttContainerCommands(pentry entries[], int x)
 							"belong to the specified uTargetDatacenter.");
 					GetDatacenterProp(uTargetDatacenter,"NewContainerCloneRange",cNCCloneRange);
 					if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
-						tContainer("<blink>Error:</blink> Clone start uIPv4 must be in datacenter clone IP range");
+					{
+						GetDatacenterProp(uTargetDatacenter,"NewContainerCloneRange2",cNCCloneRange);
+						if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
+						{
+							GetDatacenterProp(uTargetDatacenter,"NewContainerCloneRange3",cNCCloneRange);
+							if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
+								tContainer("<blink>Error:</blink> Clone start uIPv4 must be in datacenter"
+										" clone IP range (cmc)");
+						}
+					}
 					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
 						tContainer("<blink>Error:</blink> Clone uSyncPeriod out of range:"
 								" Max 30 days, min 5 minutes or 0 off.");
@@ -1766,20 +1775,23 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uCreateDNSJob)
 						CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient);
 
-					//Get next available uIPv4
-					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+					//Get next available uIPv4 only if not last loop iteration
+					if(i<uNumContainer)
+					{
+						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
 						" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
 								uForClient,cIPv4ClassC,uDatacenter);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
-						sscanf(field[0],"%u",&uIPv4);
-					else
-						tContainer("<blink>Error:</blink> No more IPs available"
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						res=mysql_store_result(&gMysql);
+						if((field=mysql_fetch_row(res)))
+							sscanf(field[0],"%u",&uIPv4);
+						else
+							tContainer("<blink>Error:</blink> No more IPs available"
 							", multiple container creation aborted!");
-					mysql_free_result(res);
+						mysql_free_result(res);
+					}
 
 				}//end of loop
 
@@ -3602,7 +3614,8 @@ void ExttContainerButtons(void)
 				" to reuse your initial search critieria. Your search set is persistent even across unxsVZ sessions.<p>");
 			printf("<input type=submit class=largeButton title='Create an initial or replace an existing search set'"
 				" name=gcCommand value='Create Search Set'>\n");
-			printf("<input type=submit class=largeButton title='Add the results to your current search set'"
+			printf("<input type=submit class=largeButton title='Add the results to your current search set. Do not add the same search"
+				" over and over again it will not result in any change but may slow down processing.'"
 				" name=gcCommand value='Add to Search Set'>\n");
 			printf("<p><input disabled type=submit class=largeButton title='Apply the right panel filter to refine your existing search set'"
 				" name=gcCommand value='Refine Search Set'>\n");
@@ -4034,7 +4047,7 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Group Stop
 
-				//Uses guOpOnClones
+				//Group Destroy Uses guOpOnClones
 				else if(!strcmp(gcCommand,"Group Destroy"))
 				{
 					struct structContainer sContainer;
@@ -4130,6 +4143,7 @@ while((field=mysql_fetch_row(res)))
 				}//Group Change
 
 
+				//Group Delete Uses guOpOnClones
 				else if(!strcmp(gcCommand,"Group Delete"))
 				{
 					struct structContainer sContainer;
@@ -4512,6 +4526,7 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Group Switchover
 
+				//Group Migration Uses guOpOnClones, uTargetNode and guCloneTargetNode
 				else if(!strcmp(gcCommand,"Group Migration"))
 				{
 				//This is a new type of group job that requires a uTargetNode and
@@ -6251,6 +6266,7 @@ unsigned CommonCloneContainer(
 	{
 		*cp=0;
 		sprintf(cWizHostname,"%.32s-clone%u.%.60s",cHostname,uWizLabelSuffix,cp+1);
+		*cp='.';
 	}
 	else
 	{
