@@ -1776,7 +1776,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient);
 
 					//Get next available uIPv4 only if not last loop iteration
-					if(i<uNumContainer)
+					if((i+1)<uNumContainer)
 					{
 						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
 						" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
@@ -3619,7 +3619,7 @@ void ExttContainerButtons(void)
 				" name=gcCommand value='Add to Search Set'>\n");
 			printf("<p><input disabled type=submit class=largeButton title='Apply the right panel filter to refine your existing search set'"
 				" name=gcCommand value='Refine Search Set'>\n");
-			printf("<p><input type=submit class=largeButton title='Reload your search set'"
+			printf("<p><input type=submit class=largeButton title='Reload current search set. Good for checking for any new status updates'"
 				" name=gcCommand value='Reload Search Set'>\n");
 			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
 				" name=gcCommand value='Cancel'>\n");
