@@ -404,6 +404,9 @@ void tContainerSearchSet(unsigned uStep)
 {
 	OpenRow("<u>Set search paramters</u>","black");
 	OpenRow("Hostname pattern","black");
+	//Usability: Transfer from main tContainer page any current search pattern
+	if(cSearch[0])
+		sprintf(cHostnameSearch,"%.31s",cSearch);
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cHostnameSearch"
 			" value=\"%s\" size=40 maxlength=63 >",cHostnameSearch);
 	OpenRow("IPv4 pattern","black");
