@@ -83,7 +83,7 @@ static unsigned guNoClones=0;
 static unsigned guOpOnClones=0;
 static unsigned guInitOnly=0;
 static char cSearch[32]={""};
-static unsigned uGroupJobs=0;
+//static unsigned uGroupJobs=0;
 //uGroup: Group type association
 static unsigned uGroup=0;
 static char cuGroupPullDown[256]={""};
@@ -4342,31 +4342,49 @@ while((field=mysql_fetch_row(res)))
 
 							//Need valid clone IP
 							if(!uWizIPv4)
-								continue;
+							{
+								sprintf(cResult,"Need valid clone IP");
+								break;
+							}
 							if(uWizIPv4==sContainer.uIPv4)
-								continue;
+							{
+								sprintf(cResult,"Invalid clone IP");
+								break;
+							}
 
 							//Target node can't match source node.
 							if(uTargetNode==sContainer.uNode)
-								continue;
+							{
+								sprintf(cResult,"Target node can't match source node");
+								break;
+							}
 
 							//Check for sane sync periods
 							if(!uSyncPeriod && uSyncPeriod<300 && uSyncPeriod>86400*30)
-								continue;
+							{
+								sprintf(cResult,"Insane sync periods");
+								break;
+							}
 
 							//If the container is VETH then target node must support it.
 							if(sContainer.uVeth)
 							{
 								GetNodeProp(uNode,"Container-Type",cConfBuffer);
 								if(!strstr(cConfBuffer,"VETH"))
-									continue;
+								{
+									sprintf(cResult,"Non VETH target node");
+									break;
+								}
 							}
 
 							//We require group now.
 							//Get group from source container
 							uGroup=uGetGroup(0,uCtContainer);
 							if(!uGroup)
-								continue;
+							{
+								sprintf(cResult,"We require group");
+								break;
+							}
 
 							//Finally we can create the clone container
 							//and the clone job
@@ -4393,12 +4411,23 @@ while((field=mysql_fetch_row(res)))
 									uCloneStop,0);
 							//Now that container exists we can assign group.
 							if(!uNewVeid)
-								continue;
+							{
+								sprintf(cResult,"uNewVeid error");
+								break;
+							}
 							ChangeGroup(uNewVeid,uGroup);
 							SetContainerStatus(uCtContainer,uAWAITCLONE);
 							SetContainerStatus(uNewVeid,uAWAITCLONE);
-							uGroupJobs++;
+							sprintf(cResult,"Clone job created");
 						}
+						else
+						{
+							sprintf(cResult,"Clones of clones not allowed");
+						}
+					}
+					else
+					{
+							sprintf(cResult,"Clone job not created");
 					}
 					break;
 				}//Group Clone
@@ -4420,7 +4449,7 @@ while((field=mysql_fetch_row(res)))
 								sContainer.uNode,uCtContainer,sContainer.uOwner))
 							{
 								SetContainerStatus(uCtContainer,uAWAITACT);
-								uGroupJobs++;
+								sprintf(cResult,"Start job created for init setup container");
 							}
 						}
 						else
@@ -4430,9 +4459,13 @@ while((field=mysql_fetch_row(res)))
 								sContainer.uNode,uCtContainer,sContainer.uOwner))
 							{
 								SetContainerStatus(uCtContainer,uAWAITACT);
-								uGroupJobs++;
+								sprintf(cResult,"Start job created for stopped container");
 							}
 						}
+					}
+					else
+					{
+						sprintf(cResult,"Start job not created");
 					}
 					break;
 				}//Group Start
@@ -4455,16 +4488,25 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cConfigLabel,"%.31s",ForeignKey("tContainer","cLabel",uCtContainer));
 						sprintf(cOSTLabel,"%.100s",ForeignKey("tOSTemplate","cLabel",sContainer.uOSTemplate));
 						if(!cOSTLabel[0])
-							tContainer("<blink>Error:</blink> No tOSTemplate.cLabel!");
+						{
+							sprintf(cResult,"No tOSTemplate.cLabel");
+							break;
+						}
 						if(!cConfigLabel[0])
-							tContainer("<blink>Error:</blink> No tContainer.cLabel!");
+						{
+							sprintf(cResult,"No tContainer.cLabel");
+							break;
+						}
 						sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",cConfigLabel);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
 		        			res=mysql_store_result(&gMysql);
 						if(mysql_num_rows(res)>0)
-							tContainer("<blink>Error:</blink> tConfig.cLabel collision!");
+						{
+							sprintf(cResult,"tConfig.cLabel collision");
+							break;
+						}
 						mysql_free_result(res);
 						sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%.67s-%.32s'",
 								cOSTLabel,cConfigLabel);
@@ -4473,15 +4515,26 @@ while((field=mysql_fetch_row(res)))
 							htmlPlainTextError(mysql_error(&gMysql));
 		        			res=mysql_store_result(&gMysql);
 						if(mysql_num_rows(res)>0)
-							tContainer("<blink>Error:</blink> tOSTemplate.cLabel collision!");
+						{
+							sprintf(cResult,"tOSTemplate.cLabel collision");
+							break;
+						}
 
 						if(TemplateContainerJob(sContainer.uDatacenter,
 							sContainer.uNode,uCtContainer,sContainer.uStatus,
 							sContainer.uOwner,cConfigLabel))
 						{
 							SetContainerStatus(uCtContainer,uAWAITTML);
-							uGroupJobs++;
+							sprintf(cResult,"Template job created");
 						}
+						else
+						{
+							sprintf(cResult,"Template job creation error");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"Template job ignored");
 					}
 					break;
 				}//Group Template
@@ -4519,9 +4572,21 @@ while((field=mysql_fetch_row(res)))
 							{
 								SetContainerStatus(uCtContainer,uAWAITFAIL);
 								SetContainerStatus(sContainer.uSource,uAWAITFAIL);
-								uGroupJobs++;
+								sprintf(cResult,"Switchover job created");
+							}
+							else
+							{
+								sprintf(cResult,"FailoverFromJob() failed");
 							}
 						}
+						else
+						{
+							sprintf(cResult,"FailoverToJob() failed");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"Switchover job ignored");
 					}
 					break;
 				}//Group Switchover
@@ -4593,7 +4658,7 @@ while((field=mysql_fetch_row(res)))
 									sContainer.uOwner,guLoginClient,0,sContainer.uStatus))
 						{
 							SetContainerStatus(uCtContainer,uAWAITMIG);
-							uGroupJobs++;
+							sprintf(cResult,"Migration job created");
 
 							if(guCloneTargetNode && guOpOnClones)
 							{
@@ -4629,13 +4694,29 @@ while((field=mysql_fetch_row(res)))
 											uCloneOwner,guLoginClient,0,uCloneStatus))
 										{
 											SetContainerStatus(uCloneContainer,uAWAITMIG);
-											uGroupJobs++;
+											strcat(cResult," +clone job");
 
 										}
+										else
+										{
+											strcat(cResult," +clone job error");
+										}
+									}
+									else
+									{
+										strcat(cResult," +clone job ignored");
 									}
 								}
 							}
 						}
+						else
+						{
+							sprintf(cResult,"Migration job failed");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"Migration job ignored");
 					}
 					break;
 				}//Group Migration
