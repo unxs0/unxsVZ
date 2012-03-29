@@ -13,7 +13,7 @@ AUTHOR/LEGAL
 void tTableMultiplePullDown(const char *cTableName,const char *cFieldName,const char *cOrderby);
 
 
-//uContainer: Glue into tContainer
+//uResource: Glue into tContainer
 static char cuMulContainerPullDown[256]={""};
 
 void ExtProcesstGroupGlueVars(pentry entries[], int x)
@@ -21,26 +21,28 @@ void ExtProcesstGroupGlueVars(pentry entries[], int x)
 	register int i;
 	for(i=0;i<x;i++)
 	{
+/*
 		if(!strcmp(entries[i].name,"cuMulContainerPullDown") && !strcmp(gcCommand,"Add Multiple Containers"))
 		{
 			sprintf(cuMulContainerPullDown,"%.255s",entries[i].val);
-			uContainer=ReadPullDown("tContainer","cLabel",cuMulContainerPullDown);
+			uResource=ReadPullDown("tContainer","cLabel",cuMulContainerPullDown);
 			uGroupGlue=0;
-			uNode=0;
-			if(uContainer && uGroup) NewtGroupGlue(1);
+			uZone=0;
+			if(uResource && uGroup) NewtGroupGlue(1);
 		}
 		else if(!strcmp(entries[i].name,"cuMulContainerPullDown") && !strcmp(gcCommand,"Del Multiple Containers"))
 		{
 			sprintf(cuMulContainerPullDown,"%.255s",entries[i].val);
-			uContainer=ReadPullDown("tContainer","cLabel",cuMulContainerPullDown);
-			if(uContainer && uGroup)
+			uResource=ReadPullDown("tContainer","cLabel",cuMulContainerPullDown);
+			if(uResource && uGroup)
 			{
-				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u AND uGroup=%u",
-						uContainer,uGroup);
+				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uResource=%u AND uGroup=%u",
+						uResource,uGroup);
 				MYSQL_RUN;
 			}
 		
 		}
+*/
 	}
 
 }//void ExtProcesstGroupGlueVars(pentry entries[], int x)
@@ -69,24 +71,12 @@ void ExttGroupGlueCommands(pentry entries[], int x)
                         	ProcesstGroupGlueVars(entries,x);
 
                         	guMode=2000;
-				if(!uGroup || (uNode==0 && uContainer==0))
-	                        	tGroupGlue("Must Supply a uGroup and a uNode or uContainer");
+				if(!uGroup || (uZone==0 && uResource==0))
+	                        	tGroupGlue("Must Supply a uGroup and a uZone or uResource");
                         	guMode=0;
 
 				uGroupGlue=0;
 				NewtGroupGlue(0);
-			}
-		}
-		else if(!strcmp(gcCommand,"Add Multiple Containers"))
-		{
-			if(guPermLevel>=12)
-			{
-                        	ProcesstGroupGlueVars(entries,x);
-                        	guMode=0;
-				if(mysql_insert_id(&gMysql)>0)
-	                        	tGroupGlue("Multiple containers added");
-				else
-	                        	tGroupGlue("No containers added");
 			}
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
@@ -107,18 +97,6 @@ void ExttGroupGlueCommands(pentry entries[], int x)
 				DeletetGroupGlue();
 			}
                 }
-		else if(!strcmp(gcCommand,"Del Multiple Containers"))
-		{
-			if(guPermLevel>=12)
-			{
-                        	ProcesstGroupGlueVars(entries,x);
-                        	guMode=0;
-				if(mysql_affected_rows(&gMysql)>0)
-	                        	tGroupGlue("Multiple containers deleted");
-				else
-	                        	tGroupGlue("No containers deleted");
-			}
-		}
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
 			if(guPermLevel>=12)
@@ -153,23 +131,11 @@ void ExttGroupGlueButtons(void)
                 case 2000:
 			printf("<p><u>Enter/mod data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
-			printf("<p><u>Add multiple containers</u><br>");
-			printf("Select with shift and ctrl multiple containers from list below"
-				" to the uGroup selected in right panel. The uContainer and uNode are ignored."
-				" Warning: You may add inadvertently the same containers multiple times no"
-				" checking takes place.<p>");
-			tTableMultiplePullDown("tContainer;cuMulContainerPullDown","cLabel","cLabel");
-                        printf("<p><input type=submit class=largeButton name=gcCommand value='Add Multiple Containers'>");
                 break;
 
                 case 2001:
                         printf("<p><u>Think twice</u><br>");
                         printf(LANG_NBB_CONFIRMDEL);
-			printf("<p><u>Delete multiple containers</u><br>");
-			printf("Select with shift and ctrl multiple containers from list below"
-				" to the uGroup selected in right panel. The uContainer and uNode are ignored.<p>");
-			tTableMultiplePullDown("tContainer;cuMulContainerPullDown","cLabel","cLabel");
-                        printf("<p><input type=submit class=largeButton name=gcCommand value='Del Multiple Containers'>");
                 break;
 
                 case 2002:
@@ -212,17 +178,14 @@ void ExttGroupGlueGetHook(entry gentries[], int x)
 
 void ExttGroupGlueSelect(void)
 {
-	sprintf(gcQuery,"SELECT %s FROM tGroupGlue ORDER BY\
-					uGroupGlue",
-					VAR_LIST_tGroupGlue);
+	sprintf(gcQuery,"SELECT %s FROM tGroupGlue ORDER BY uGroupGlue",VAR_LIST_tGroupGlue);
 
 }//void ExttGroupGlueSelect(void)
 
 
 void ExttGroupGlueSelectRow(void)
 {
-	sprintf(gcQuery,"SELECT %s FROM tGroupGlue WHERE uGroupGlue=%u",
-			VAR_LIST_tGroupGlue,uGroupGlue);
+	sprintf(gcQuery,"SELECT %s FROM tGroupGlue WHERE uGroupGlue=%u",VAR_LIST_tGroupGlue,uGroupGlue);
 
 }//void ExttGroupGlueSelectRow(void)
 
@@ -246,16 +209,16 @@ void ExttGroupGlueListSelect(void)
 		sprintf(cCat," WHERE tGroupGlue.uGroup=%u ORDER BY uGroup",uGroup);
 		strcat(gcQuery,cCat);
         }
-        else if(!strcmp(gcFilter,"uNode"))
+        else if(!strcmp(gcFilter,"uZone"))
         {
-                sscanf(gcCommand,"%u",&uNode);
-		sprintf(cCat," WHERE tGroupGlue.uNode=%u ORDER BY uNode",uNode);
+                sscanf(gcCommand,"%u",&uZone);
+		sprintf(cCat," WHERE tGroupGlue.uZone=%u ORDER BY uZone",uZone);
 		strcat(gcQuery,cCat);
         }
-        else if(!strcmp(gcFilter,"uContainer"))
+        else if(!strcmp(gcFilter,"uResource"))
         {
-                sscanf(gcCommand,"%u",&uContainer);
-		sprintf(cCat," WHERE tGroupGlue.uContainer=%u ORDER BY uContainer",uContainer);
+                sscanf(gcCommand,"%u",&uResource);
+		sprintf(cCat," WHERE tGroupGlue.uResource=%u ORDER BY uResource",uResource);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -281,14 +244,14 @@ void ExttGroupGlueListFilter(void)
                 printf("<option>uGroup</option>");
         else
                 printf("<option selected>uGroup</option>");
-        if(strcmp(gcFilter,"uNode"))
-                printf("<option>uNode</option>");
+        if(strcmp(gcFilter,"uZone"))
+                printf("<option>uZone</option>");
         else
-                printf("<option selected>uNode</option>");
-        if(strcmp(gcFilter,"uContainer"))
-                printf("<option>uContainer</option>");
+                printf("<option selected>uZone</option>");
+        if(strcmp(gcFilter,"uResource"))
+                printf("<option>uResource</option>");
         else
-                printf("<option selected>uContainer</option>");
+                printf("<option selected>uResource</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else

@@ -353,10 +353,11 @@ void Restore(char *cPasswd, char *cTableName)
 		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe/unxsVZ\n");
 		exit(1);
 	}
-	printf("Restoring iDNS data from .txt file in %s/iDNS/data...\n\n",cISMROOT);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
+
+	printf("Restoring iDNS data from .txt file in %s/iDNS/data...\n\n",cISMROOT);
 
 	sprintf(gcQuery,"USE %s",DBNAME);
 	mysql_query(&gMysql,gcQuery);
