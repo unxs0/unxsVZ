@@ -2433,3 +2433,21 @@ void EncryptPasswd(char *pw)
 
 }//void EncryptPasswd(char *pw)
 
+
+int ReadPullDownOwner(const char *cTableName,const char *cFieldName,
+				const char *cLabel,const unsigned uOwner)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+
+        unsigned int iRowid=0;//Not found
+
+        sprintf(gcQuery,"SELECT _rowid FROM %s WHERE %s='%s' AND (uOwner=%u OR uOwner=%u)",
+                        cTableName,cFieldName,TextAreaSave((char *) cLabel),uOwner,guCompany);
+        MYSQL_RUN_STORE(mysqlRes);
+        if((mysqlField=mysql_fetch_row(mysqlRes)))
+        	sscanf(mysqlField[0],"%u",&iRowid);
+        mysql_free_result(mysqlRes);
+        return(iRowid);
+
+}//ReadPullDownOwner()

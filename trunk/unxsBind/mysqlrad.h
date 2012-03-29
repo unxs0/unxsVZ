@@ -470,6 +470,53 @@ void DeletetGlossary(void);
 void ExttGlossaryGetHook(entry gentries[], int x);
 void ExttGlossaryNavBar(void);
 
+//tGroupType
+int tGroupTypeCommands(pentry entries[], int x);
+void tGroupType(const char *results);
+void ProcesstGroupTypeVars(pentry entries[], int x);
+void tGroupTypeContent(void);
+void tGroupTypeInputContent(void);
+void tGroupTypeInput(unsigned uMode);
+void tGroupTypeList(void);
+void NewtGroupType(unsigned uMode);
+void ModtGroupType(void);
+void CreatetGroupType(void);
+void DeletetGroupType(void);
+void ExttGroupTypeGetHook(entry gentries[], int x);
+void ExttGroupTypeNavBar(void);
+
+//tGroup
+int tGroupCommands(pentry entries[], int x);
+void tGroup(const char *results);
+void ProcesstGroupVars(pentry entries[], int x);
+void tGroupContent(void);
+void tGroupInputContent(void);
+void tGroupInput(unsigned uMode);
+void tGroupList(void);
+void NewtGroup(unsigned uMode);
+void ModtGroup(void);
+void CreatetGroup(void);
+void DeletetGroup(void);
+void ExttGroupGetHook(entry gentries[], int x);
+void ExttGroupNavBar(void);
+
+//tGroupGlue
+int tGroupGlueCommands(pentry entries[], int x);
+void tGroupGlue(const char *results);
+void ProcesstGroupGlueVars(pentry entries[], int x);
+void tGroupGlueContent(void);
+void tGroupGlueInputContent(void);
+void tGroupGlueInput(unsigned uMode);
+void tGroupGlueList(void);
+void NewtGroupGlue(unsigned uMode);
+void ModtGroupGlue(void);
+void CreatetGroupGlue(void);
+void DeletetGroupGlue(void);
+void ExttGroupGlueGetHook(entry gentries[], int x);
+void ExttGroupGlueNavBar(void);
+void tTableMultiplePullDown(const char *cTableName,const char *cFieldName,const char *cOrderby);
+
+
 //tZoneImport
 int tZoneImportCommands(pentry entries[], int x);
 void tZoneImport(const char *results);
@@ -681,6 +728,13 @@ void ExttAuthorizeGetHook(entry gentries[], int x);
 void ExttAuthorizeNavBar(void);
 
 //In-line code macros
+//Common
+#define _RUN_QUERY mysql_query(&gMysql,gcQuery);if(mysql_errno(&gMysql))
+
+//MySQL run query only w/error checking
+//HTML
+#define MYSQL_RUN _RUN_QUERY htmlPlainTextError(mysql_error(&gMysql))
+#define MYSQL_RUN_STORE(res) MYSQL_RUN;res=mysql_store_result(&gMysql)
 
 //Common - This macro shouldn't be used directly, as is part of the others only
 #define macro_mySQLQueryBasic mysql_query(&gMysql,gcQuery);\
@@ -727,3 +781,21 @@ void ExttAuthorizeNavBar(void);
 #define macro_mySQLRunAndStoreTextVoidRet(res) macro_mySQLRunReturnVoid;\
 						res=mysql_store_result(&gMysql)
 #define cLOGFILE "/var/log/unxsbindlog"
+
+//MySQL run query and store result w/error checking
+//HTML
+#define MYSQL_RUN_STORE(res) MYSQL_RUN;res=mysql_store_result(&gMysql)
+//Text
+#define MYSQL_RUN_STORE_TEXT(res) MYSQL_RUN_TEXT;res=mysql_store_result(&gMysql)
+//Text with return() instead of exit()
+//return(1); if MySQL error
+#define MYSQL_RUN_TEXT_RETURN _RUN_QUERY{fprintf(stderr,"%s\n",mysql_error(&gMysql));return(1);}
+//return; if MySQL error
+#define MYSQL_RUN_TEXT_RET_VOID _RUN_QUERY{fprintf(stderr,"%s\n",mysql_error(&gMysql));return;}
+
+//MySQL run query and store result w/error checking (Text); uses return() call instead of exit()
+//return(1); if MySQL error
+#define MYSQL_RUN_STORE_TEXT_RETURN(res) MYSQL_RUN_TEXT_RETURN res=mysql_store_result(&gMysql)
+//return; if MySQL error
+#define MYSQL_RUN_STORE_TEXT_RET_VOID(res) MYSQL_RUN_TEXT_RET_VOID res=mysql_store_result(&gMysql)
+

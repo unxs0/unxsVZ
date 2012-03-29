@@ -15,8 +15,8 @@ LIBS= -L/usr/lib/mysql -L/usr/lib/openisp -lz -lcrypt -lm -lssl -lucidr -lmysqlc
 
 all: iDNS.cgi
 
-iDNS.cgi: tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o import.o extjobqueue.o cgi.o mysqlconnect.o
-	cc tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o import.o extjobqueue.o cgi.o mysqlconnect.o -o iDNS.cgi $(LIBS)
+iDNS.cgi: tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o  tgrouptype.o tgroup.o tgroupglue.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o import.o extjobqueue.o cgi.o mysqlconnect.o
+	cc tzone.o tresource.o trrtype.o tjob.o tmailserver.o tconfiguration.o tnstype.o tnsset.o tns.o tserver.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tblock.o tview.o tregistrar.o tglossary.o  tgrouptype.o tgroup.o tgroupglue.o tzoneimport.o tresourceimport.o tmonthhit.o tmonth.o tlogmonth.o thit.o thitmonth.o tdeletedzone.o tdeletedresource.o tclient.o tauthorize.o  bind.o main.o import.o extjobqueue.o cgi.o mysqlconnect.o -o iDNS.cgi $(LIBS)
 
 mysqlping: mysqlping.o
 	cc mysqlping.c -o mysqlping $(LIBS)
@@ -116,6 +116,15 @@ tclient.o: tclient.c mysqlrad.h language.h tclientfunc.h local.h
 
 tauthorize.o: tauthorize.c mysqlrad.h language.h tauthorizefunc.h local.h
 	cc -c tauthorize.c -o tauthorize.o $(CFLAGS)
+
+tgrouptype.o: tgrouptype.c mysqlrad.h language.h tgrouptypefunc.h local.h
+	cc -c tgrouptype.c -o tgrouptype.o $(CFLAGS)
+
+tgroup.o: tgroup.c mysqlrad.h language.h tgroupfunc.h local.h
+	cc -c tgroup.c -o tgroup.o $(CFLAGS)
+
+tgroupglue.o: tgroupglue.c mysqlrad.h language.h tgroupgluefunc.h local.h
+	cc -c tgroupglue.c -o tgroupglue.o $(CFLAGS)
 
 main.o: main.c mysqlrad.h mainfunc.h language.h local.h
 	cc -c main.c -o main.o $(CFLAGS)
