@@ -140,12 +140,6 @@ void ExttGroupTypeButtons(void)
 
 void ExttGroupTypeAuxTable(void)
 {
-	if(!uGroupType) return;
-
-	sprintf(gcQuery,"%s Property Panel",cLabel);
-	OpenFieldSet(gcQuery,100);
-
-	CloseFieldSet();
 
 }//void ExttGroupTypeAuxTable(void)
 
@@ -271,7 +265,7 @@ void tGroupTypeNavList(void)
         	printf("<p><u>tGroupTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tGroupType&uGroupType=%s>%s</a><br>\n",
+			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tGroupType&uGroupType=%s>%s</a><br>\n",
 					field[0],field[1]);
 	}
         mysql_free_result(res);

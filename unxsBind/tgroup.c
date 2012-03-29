@@ -11,7 +11,6 @@ PURPOSE
 
 
 #include "mysqlrad.h"
-void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 
 //Table Variables
 //Table Variables
@@ -330,18 +329,6 @@ void tGroupInput(unsigned uMode)
 		printf("---\n\n");
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
-
-/*
-	char cGraph0[256]={""};
-	GetGroupProp(uGroup,"Graph0",cGraph0);
-	if(cGraph0[0])
-	{
-		OpenRow("Optional Graph","black");
-		printf("<img src=%s border=0>\n",cGraph0);
-		printf("</tr>\n");
-	}
-*/
-
 
 }//void tGroupInput(unsigned uMode)
 
