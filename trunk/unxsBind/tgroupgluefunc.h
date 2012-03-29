@@ -13,9 +13,6 @@ AUTHOR/LEGAL
 void tTableMultiplePullDown(const char *cTableName,const char *cFieldName,const char *cOrderby);
 
 
-//uResource: Glue into tContainer
-static char cuMulContainerPullDown[256]={""};
-
 void ExtProcesstGroupGlueVars(pentry entries[], int x)
 {
 	register int i;
