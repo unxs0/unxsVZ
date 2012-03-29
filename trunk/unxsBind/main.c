@@ -201,6 +201,12 @@ int main(int iArgc, char *cArgv[])
 				ExttRegistrarGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tGlossary"))
 				ExttGlossaryGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tGroup"))
+				ExttGroupGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tGroupGlue"))
+				ExttGroupGlueGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tGroupType"))
+				ExttGroupTypeGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tZoneImport"))
 				ExttZoneImportGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tResourceImport"))
@@ -286,6 +292,9 @@ int main(int iArgc, char *cArgv[])
 	tViewCommands(entries,x);
 	tRegistrarCommands(entries,x);
 	tGlossaryCommands(entries,x);
+	tGroupCommands(entries,x);
+	tGroupGlueCommands(entries,x);
+	tGroupTypeCommands(entries,x);
 	tZoneImportCommands(entries,x);
 	tResourceImportCommands(entries,x);
 	tMonthHitCommands(entries,x);
@@ -579,6 +588,15 @@ void Header_ism3(char *title, int js)
 	else if(!strcmp(gcFunction,"tGlossary") || !strcmp(gcFunction,"tGlossaryTools") ||
 			!strcmp(gcFunction,"tGlossaryList"))
 		ExttGlossaryNavBar();
+	else if(!strcmp(gcFunction,"tGroup") || !strcmp(gcFunction,"tGroupTools") ||
+			!strcmp(gcFunction,"tGroupList"))
+		ExttGroupNavBar();
+	else if(!strcmp(gcFunction,"tGroupGlue") || !strcmp(gcFunction,"tGroupGlueTools") ||
+			!strcmp(gcFunction,"tGroupGlueList"))
+		ExttGroupGlueNavBar();
+	else if(!strcmp(gcFunction,"tGroupType") || !strcmp(gcFunction,"tGroupTypeTools") ||
+			!strcmp(gcFunction,"tGroupTypeList"))
+		ExttGroupTypeNavBar();
 	else if(!strcmp(gcFunction,"tZoneImport") || !strcmp(gcFunction,"tZoneImportTools") ||
 			!strcmp(gcFunction,"tZoneImportList"))
 		ExttZoneImportNavBar();
@@ -848,6 +866,39 @@ void Header_ism3(char *title, int js)
 	  else
 		  printf(" id=current>\n");
 	  printf("\t\t\t<a title='Stores the Glossary definitions' href=iDNS.cgi?gcFunction=tGlossary>tGlossary</a>\n");
+	}
+	//tGroup
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tGroup") && strcmp(gcFunction,"tGroupTools") &&
+			strcmp(gcFunction,"tGroupList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='tGroup' href=iDNS.cgi?gcFunction=tGroup>tGroup</a>\n");
+	}
+	//tGroupGlue
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tGroupGlue") && strcmp(gcFunction,"tGroupGlueTools") &&
+			strcmp(gcFunction,"tGroupGlueList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='tGroupGlue' href=iDNS.cgi?gcFunction=tGroupGlue>tGroupGlue</a>\n");
+	}
+	//tGroupType
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tGroupType") && strcmp(gcFunction,"tGroupTypeTools") &&
+			strcmp(gcFunction,"tGroupTypeList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='tGroupType' href=iDNS.cgi?gcFunction=tGroupType>tGroupType</a>\n");
 	}
 	//tZoneImport
 	if(guPermLevel>=20)
