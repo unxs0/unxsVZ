@@ -19,16 +19,16 @@ static unsigned uGroupGlue=0;
 //uGroup: Glue into tGroup
 static unsigned uGroup=0;
 static char cuGroupPullDown[256]={""};
-//uNode: Glue into tNode
-static unsigned uNode=0;
-static char cuNodePullDown[256]={""};
-//uContainer: Glue into tContainer
-static unsigned uContainer=0;
-static char cuContainerPullDown[256]={""};
+//uZone: Glue into tZone
+static unsigned uZone=0;
+static char cuZonePullDown[256]={""};
+//uResource: Glue into tResource
+static unsigned uResource=0;
+static char cuResourcePullDown[256]={""};
 
 
 
-#define VAR_LIST_tGroupGlue "tGroupGlue.uGroupGlue,tGroupGlue.uGroup,tGroupGlue.uNode,tGroupGlue.uContainer"
+#define VAR_LIST_tGroupGlue "tGroupGlue.uGroupGlue,tGroupGlue.uGroup,tGroupGlue.uZone,tGroupGlue.uResource"
 
  //Local only
 void Insert_tGroupGlue(void);
@@ -66,19 +66,19 @@ void ProcesstGroupGlueVars(pentry entries[], int x)
 			sprintf(cuGroupPullDown,"%.255s",entries[i].val);
 			uGroup=ReadPullDown("tGroup","cLabel",cuGroupPullDown);
 		}
-		else if(!strcmp(entries[i].name,"uNode"))
-			sscanf(entries[i].val,"%u",&uNode);
-		else if(!strcmp(entries[i].name,"cuNodePullDown"))
+		else if(!strcmp(entries[i].name,"uZone"))
+			sscanf(entries[i].val,"%u",&uZone);
+		else if(!strcmp(entries[i].name,"cuZonePullDown"))
 		{
-			sprintf(cuNodePullDown,"%.255s",entries[i].val);
-			uNode=ReadPullDown("tNode","cLabel",cuNodePullDown);
+			sprintf(cuZonePullDown,"%.255s",entries[i].val);
+			uZone=ReadPullDown("tZone","cLabel",cuZonePullDown);
 		}
-		else if(!strcmp(entries[i].name,"uContainer"))
-			sscanf(entries[i].val,"%u",&uContainer);
-		else if(!strcmp(entries[i].name,"cuContainerPullDown"))
+		else if(!strcmp(entries[i].name,"uResource"))
+			sscanf(entries[i].val,"%u",&uResource);
+		else if(!strcmp(entries[i].name,"cuResourcePullDown"))
 		{
-			sprintf(cuContainerPullDown,"%.255s",entries[i].val);
-			uContainer=ReadPullDown("tContainer","cLabel",cuContainerPullDown);
+			sprintf(cuResourcePullDown,"%.255s",entries[i].val);
+			uResource=ReadPullDown("tResource","cLabel",cuResourcePullDown);
 		}
 
 	}
@@ -179,14 +179,14 @@ void tGroupGlue(const char *cResult)
 			field=mysql_fetch_row(res);
 		sscanf(field[0],"%u",&uGroupGlue);
 		sscanf(field[1],"%u",&uGroup);
-		sscanf(field[2],"%u",&uNode);
-		sscanf(field[3],"%u",&uContainer);
+		sscanf(field[2],"%u",&uZone);
+		sscanf(field[3],"%u",&uResource);
 
 		}
 
 	}//Internal Skip
 
-	Header_ism3(":: Glues uContainers or uNodes to uGroups",0);
+	Header_ism3(":: Glues uResources or uZones to uGroups",0);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -244,8 +244,7 @@ void tGroupGlueInput(unsigned uMode)
 
 //uGroupGlue
 	OpenRow(LANG_FL_tGroupGlue_uGroupGlue,"black");
-	printf("<input title='%s' type=text name=uGroupGlue value=%u size=16 maxlength=10 "
-,LANG_FT_tGroupGlue_uGroupGlue,uGroupGlue);
+	printf("<input title='%s' type=text name=uGroupGlue value=%u size=16 maxlength=10 ",LANG_FT_tGroupGlue_uGroupGlue,uGroupGlue);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -261,18 +260,30 @@ void tGroupGlueInput(unsigned uMode)
 		tTablePullDownOwner("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 	else
 		tTablePullDownOwner("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,0);
-//uNode
-	OpenRow(LANG_FL_tGroupGlue_uNode,"black");
+//uZone
+	OpenRow("uZone","black");
 	if(guPermLevel>=10 && uMode)
-		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
+	{
+		printf("<input title='uZone' type=text name=uZone value=%u size=16 maxlength=10 ",uZone);
+		printf("></td></tr>\n");
+	}
 	else
-		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
-//uContainer
-	OpenRow(LANG_FL_tGroupGlue_uContainer,"black");
+	{
+		printf("%s</td></tr>\n",ForeignKey("tZone","cZone",uZone));
+		printf("<input type=hidden name=uGroupGlue value=%u >\n",uZone);
+	}
+//uResource
+	OpenRow("uResource","black");
 	if(guPermLevel>=10 && uMode)
-		tTablePullDownOwner("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,1);
+	{
+		printf("<input title='uResource' type=text name=uResource value=%u size=16 maxlength=10 ",uResource);
+		printf("></td></tr>\n");
+	}
 	else
-		tTablePullDownOwner("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,0);
+	{
+		printf("%s</td></tr>\n",ForeignKey("tResource","cName",uResource));
+		printf("<input type=hidden name=uResource value=%u >\n",uResource);
+	}
 	printf("</tr>\n");
 
 
@@ -324,13 +335,12 @@ void Insert_tGroupGlue(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tGroupGlue SET uGroupGlue=%u,uGroup=%u,uNode=%u,uContainer=%u",
+	sprintf(gcQuery,"INSERT INTO tGroupGlue SET uGroupGlue=%u,uGroup=%u,uZone=%u,uResource=%u",
 			uGroupGlue
 			,uGroup
-			,uNode
-			,uContainer
+			,uZone
+			,uResource
 			);
-
 	MYSQL_RUN;
 
 }//void Insert_tGroupGlue(void)
@@ -340,13 +350,12 @@ void Update_tGroupGlue(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tGroupGlue SET uGroupGlue=%u,uGroup=%u,uNode=%u,uContainer=%u WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tGroupGlue SET uGroupGlue=%u,uGroup=%u,uZone=%u,uResource=%u WHERE _rowid=%s",
 			uGroupGlue
 			,uGroup
-			,uNode
-			,uContainer
+			,uZone
+			,uResource
 			,cRowid);
-
 	MYSQL_RUN;
 
 }//void Update_tGroupGlue(void)
@@ -397,7 +406,11 @@ void tGroupGlueList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uGroupGlue<td><font face=arial,helvetica color=white>uGroup<td><font face=arial,helvetica color=white>uNode<td><font face=arial,helvetica color=white>uContainer</tr>");
+	printf("<tr bgcolor=black>"
+			"<td><font face=arial color=white>uGroupGlue"
+			"<td><font face=arial color=white>uGroup"
+			"<td><font face=arial color=white>uZone"
+			"<td><font face=arial color=white>uResource</tr>");
 
 
 
@@ -419,8 +432,8 @@ void tGroupGlueList(void)
 			,field[0]
 			,field[0]
 			,ForeignKey("tGroup","cLabel",strtoul(field[1],NULL,10))
-			,ForeignKey("tNode","cLabel",strtoul(field[2],NULL,10))
-			,ForeignKey("tContainer","cLabel",strtoul(field[3],NULL,10))
+			,ForeignKey("tZone","cLabel",strtoul(field[2],NULL,10))
+			,ForeignKey("tResource","cLabel",strtoul(field[3],NULL,10))
 				);
 
 	}
@@ -435,8 +448,8 @@ void CreatetGroupGlue(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGroupGlue ("
 			" uGroup INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uGroup),"
-			" uNode INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uNode),"
-			" uContainer INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uContainer),"
+			" uZone INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uZone),"
+			" uResource INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uResource),"
 			" uGroupGlue INT UNSIGNED PRIMARY KEY AUTO_INCREMENT )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
