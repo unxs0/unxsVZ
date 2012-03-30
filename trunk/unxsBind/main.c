@@ -92,12 +92,13 @@ void CalledByAlias(int iArgc,char *cArgv[]);
 void MonthUsageData(unsigned uSimile);
 void DayUsageData(unsigned uLogType);
 
+pentry entries[64];
+int x;
+
 int main(int iArgc, char *cArgv[])
 {
-	pentry entries[64];
 	entry gentries[16];
 	char *gcl;
-	register int x;
 	int cl=0;
 
 	gethostname(gcHostname, 98);
@@ -1240,7 +1241,8 @@ void CloseFieldSet(void)
 
 void OpenRow(const char *cFieldLabel, const char *cColor)
 {
-	printf("<tr><td width=20%% valign=top><a href=iDNS.cgi?gcFunction=tGlossary&cSearch=%s class=darkLink><font color=%.32s>%.32s</a></td><td>",cFieldLabel,cColor,cFieldLabel);
+	printf("<tr><td width=20%% valign=top><a href=iDNS.cgi?gcFunction=tGlossary&cSearch=%s"
+		" class=darkLink><font color=%.32s>%.32s</a></td><td>",cFieldLabel,cColor,cFieldLabel);
 
 }//void OpenRow()
 
