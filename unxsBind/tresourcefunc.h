@@ -840,7 +840,7 @@ void ExttResourceCommands(pentry entries[], int x)
                 		}
 
 				//Initial query section
-				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroupGlue,uGroup,uNode,uResource)"
+				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroupGlue,uGroup,uZone,uResource)"
 						" SELECT 0,%u,0,uResource FROM tResource WHERE",uGroup);
 
 				//Build AND query section
@@ -860,7 +860,16 @@ void ExttResourceCommands(pentry entries[], int x)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," cParam1 LIKE '%s%%')",cIPv4Search);
+					sprintf(cQuerySection," cParam1 LIKE '%s%%'",cIPv4Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(cNameSearch[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cName LIKE '%s%%'",cNameSearch);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -1291,6 +1300,12 @@ void ExttResourceCommands(pentry entries[], int x)
                         	ProcesstResourceVars(entries,x);
 			}
 		}
+                else if(!strncmp(gcCommand,"Group ",6) || !strncmp(gcCommand,"Delete Checked",14))
+                {
+			ProcesstResourceVars(entries,x);
+                        guMode=12002;
+			tResource(gcCommand);
+		}
 	}
 
 }//void ExttResourceCommands(pentry entries[], int x)
@@ -1500,8 +1515,11 @@ void ExttResourceAuxTable(void)
 			OpenFieldSet(gcQuery,100);
 			uGroup=uGetSearchGroup(gcUser);
 			sprintf(gcQuery,"SELECT"
-					" tResource.uResource,tZone.cZone,tResource.cName,"
-					" tResource.uTTL,tRRType.cLabel,"
+					" tResource.uResource,"
+					" tZone.cZone,"
+					" tResource.cName,"
+					" tResource.uTTL,"
+					" tRRType.cLabel,"
 					" tResource.cParam1,"
 					" tResource.cParam2,"
 					" tResource.cParam3,"
@@ -1590,8 +1608,8 @@ while((field=mysql_fetch_row(res)))
 	"<input type=checkbox name=Ct%s >"
 	"<a class=darkLink href=unxsVZ.cgi?gcFunction=tResource&uResource=%s>%s</a>"
 	"</td>"
-	"<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
-		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],field[9],field[10],cResult);
+	"<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
+		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],field[9],field[10],field[11],cResult);
 	printf("</tr>");
 
 }//while()

@@ -58,6 +58,7 @@ static char cZoneSearch[64]={""};
 static char cNameSearch[64]={""};
 static char cIPv4Search[32]={""};
 static unsigned uForClient=0;
+static char cForClientPullDown[256]={""};
 void tResourceSearchSet(unsigned uStep);
 
  //In tResourcefunc.h file included below
@@ -117,6 +118,17 @@ void ProcesstResourceVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"cNameSearch"))
+			sprintf(cNameSearch,"%.63s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cZoneSearch"))
+			sprintf(cZoneSearch,"%.63s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cIPv4Search"))
+			sprintf(cIPv4Search,"%.15s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cForClientPullDown"))
+		{
+			strcpy(cForClientPullDown,entries[i].val);
+			uForClient=ReadPullDown(TCLIENT,"cLabel",cForClientPullDown);
+		}
 
 	}
 
@@ -300,7 +312,7 @@ void tResourceSearchSet(unsigned uStep)
 	//Usability: Transfer from main tContainer page any current search pattern
 	if(cSearch[0])
 		sprintf(cZoneSearch,"%.31s",cSearch);
-	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cHostnameSearch"
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cZoneSearch"
 			" value=\"%s\" size=40 maxlength=63 >",cZoneSearch);
 
 	OpenRow("cName pattern","black");
