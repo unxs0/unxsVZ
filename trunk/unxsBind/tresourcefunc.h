@@ -814,8 +814,9 @@ void ExttResourceCommands(pentry entries[], int x)
 				char cQuerySection[256];
 				unsigned uLink=0;
 
-				if(cZoneSearch[0]==0 && cIPv4Search[0]==0 && cNameSearch[0]==0)
-	                        	tResource("You must specify at least one search parameter");
+				if(cZoneSearch[0]==0 && cParam1Search[0]==0 && cParam2Search[0]==0 && cParam3Search[0]==0 && 
+								cParam4Search[0]==0 && cCommentSearch[0]==0 && cNameSearch[0]==0)
+	                        	tResource("You must specify at least one search parameter beyond record type, owner and view");
 
 				if((uGroup=uGetSearchGroup(gcUser))==0)
 				{
@@ -856,11 +857,47 @@ void ExttResourceCommands(pentry entries[], int x)
 					uLink=0;
 				}
 
-				if(cIPv4Search[0])
+				if(cParam1Search[0])
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," cParam1 LIKE '%s%%'",cIPv4Search);
+					sprintf(cQuerySection," cParam1 LIKE '%s%%'",cParam1Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(cParam2Search[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cParam2 LIKE '%s%%'",cParam2Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(cParam3Search[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cParam3 LIKE '%s%%'",cParam3Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(cParam4Search[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cParam4 LIKE '%s%%'",cParam4Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(cCommentSearch[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cComment LIKE '%s%%'",cCommentSearch);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -879,6 +916,24 @@ void ExttResourceCommands(pentry entries[], int x)
 					if(uLink)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," uOwner=%u",uForClient);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uView)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE uView=%u)",uView);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uRRType)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uRRType=%u",uRRType);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -1314,7 +1369,6 @@ void ExttResourceCommands(pentry entries[], int x)
 void ResourceLinks(unsigned uZone)
 {
 	MYSQL_RES *res;
-	MYSQL_ROW field;
 	unsigned uArpa=0;
 	unsigned uCount=0;
 
@@ -1334,6 +1388,8 @@ void ResourceLinks(unsigned uZone)
 
 	res=mysql_store_result(&gMysql);
 	uCount=mysql_num_rows(res);
+/*
+	MYSQL_ROW field;
 
 	printf("<p><u>RRNavList(%u)</u><br>",uCount);
 	while((field=mysql_fetch_row(res)))
@@ -1350,6 +1406,7 @@ void ResourceLinks(unsigned uZone)
 	printf("<p><u>Group Operations</u><br>");
 	printf("<input title='Will remove the above checkbox selected records' "
 		"class=lwarnButton type=submit name=gcCommand value='Delete Selected Records'>");
+*/
 
 }//void ResourceLinks(unsigned uZone)
 
@@ -1517,6 +1574,7 @@ void ExttResourceAuxTable(void)
 			sprintf(gcQuery,"SELECT"
 					" tResource.uResource,"
 					" tZone.cZone,"
+					" tView.cLabel,"
 					" tResource.cName,"
 					" tResource.uTTL,"
 					" tRRType.cLabel,"
@@ -1527,10 +1585,11 @@ void ExttResourceAuxTable(void)
 					" tResource.cComment,"
 					" FROM_UNIXTIME(tResource.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
 					" tClient.cLabel"
-					" FROM tResource,tZone,tRRType,tClient"
+					" FROM tResource,tZone,tRRType,tClient,tView"
 					" WHERE tResource.uRRType=tRRType.uRRType"
 					" AND tResource.uOwner=tClient.uClient"
 					" AND tResource.uZone=tZone.uZone"
+					" AND tZone.uView=tView.uView"
 					" AND uResource IN (SELECT uResource FROM tGroupGlue WHERE uGroup=%u)",uGroup);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
@@ -1543,8 +1602,9 @@ void ExttResourceAuxTable(void)
 
 				printf("<table>");
 				printf("<tr>");
-				printf("<td><u>cName</u></td>"
-					"<td><u>cZone</u></td>"
+				printf("<td><u>cZone</u></td>"
+					"<td><u>View</u></td>"
+					"<td><u>cName</u></td>"
 					"<td><u>uTTL</u></td>"
 					"<td><u>RRType</u></td>"
 					"<td><u>cParam1</u></td>"
@@ -1563,7 +1623,7 @@ while((field=mysql_fetch_row(res)))
 		register int i;
 		unsigned uCtResource=0;
 
-		sprintf(cResult,"Not processed");
+		cResult[0]=0;
 		sscanf(field[0],"%u",&uCtResource);
 		sprintf(cCtLabel,"Ct%u",uCtResource);
 		for(i=0;i<x;i++)
@@ -1598,18 +1658,26 @@ while((field=mysql_fetch_row(res)))
 			}//end if Ct block
 		}//end for()
 	}
-	else
-	{
-		sprintf(cResult,"---");
-	}
 
 	printf("<tr>");
 	printf("<td width=200 valign=top>"
-	"<input type=checkbox name=Ct%s >"
-	"<a class=darkLink href=unxsVZ.cgi?gcFunction=tResource&uResource=%s>%s</a>"
-	"</td>"
-	"<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
-		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],field[9],field[10],field[11],cResult);
+		"<input type=checkbox name=Ct%s >"
+		"<a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s>%s</a>"
+		"</td>"
+		"<td>%.64s</td>"
+		"<td>%.64s</td>"
+		"<td>%.64s</td>"
+		"<td>%.64s</td>"
+		"<td>%.64s</td>"
+		"<td>%.64s</td>"
+		"<td>%.64s</td>"
+		"<td>%.64s</td>"
+		"<td>%.64s</td>"
+		"<td>%.64s</td>"
+		"<td>%.64s</td>"
+		"<td>%.64s</td>\n",
+			field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],
+			field[7],field[8],field[9],field[10],field[11],field[12],cResult);
 	printf("</tr>");
 
 }//while()
