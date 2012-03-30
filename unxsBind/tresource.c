@@ -56,9 +56,15 @@ void Update_tResource(char *cRowid);
 void ProcesstResourceListVars(pentry entries[], int x);
 static char cZoneSearch[64]={""};
 static char cNameSearch[64]={""};
-static char cIPv4Search[32]={""};
+static char cParam1Search[64]={""};
+static char cParam2Search[64]={""};
+static char cParam3Search[64]={""};
+static char cParam4Search[64]={""};
+static char cCommentSearch[64]={""};
 static unsigned uForClient=0;
 static char cForClientPullDown[256]={""};
+static unsigned uView=0;
+static char cuViewPullDown[256]={""};
 void tResourceSearchSet(unsigned uStep);
 
  //In tResourcefunc.h file included below
@@ -122,12 +128,25 @@ void ProcesstResourceVars(pentry entries[], int x)
 			sprintf(cNameSearch,"%.63s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cZoneSearch"))
 			sprintf(cZoneSearch,"%.63s",entries[i].val);
-		else if(!strcmp(entries[i].name,"cIPv4Search"))
-			sprintf(cIPv4Search,"%.15s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cParam1Search"))
+			sprintf(cParam1Search,"%.63s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cParam2Search"))
+			sprintf(cParam2Search,"%.63s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cParam3Search"))
+			sprintf(cParam3Search,"%.63s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cParam4Search"))
+			sprintf(cParam4Search,"%.63s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cCommentSearch"))
+			sprintf(cCommentSearch,"%.63s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cForClientPullDown"))
 		{
 			strcpy(cForClientPullDown,entries[i].val);
 			uForClient=ReadPullDown(TCLIENT,"cLabel",cForClientPullDown);
+		}
+		else if(!strcmp(entries[i].name,"cuViewPullDown"))
+		{
+			sprintf(cuViewPullDown,"%.255s",entries[i].val);
+			uView=ReadPullDown("tView","cLabel",cuViewPullDown);
 		}
 
 	}
@@ -315,13 +334,35 @@ void tResourceSearchSet(unsigned uStep)
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cZoneSearch"
 			" value=\"%s\" size=40 maxlength=63 >",cZoneSearch);
 
+	OpenRow("View","black");
+	tTablePullDown("tView;cuViewPullDown","cLabel","cLabel",uView,1);
+
 	OpenRow("cName pattern","black");
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cNameSearch"
 			" value=\"%s\" size=40 maxlength=63 >",cNameSearch);
 
-	OpenRow("A/AAAA record IPv4 pattern","black");
-	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
-			" value=\"%s\" size=40 maxlength=31 >",cIPv4Search);
+	OpenRow("RRType","black");
+	tTablePullDown("tRRType;cuRRTypePullDown","cLabel","cLabel",uRRType,1);
+
+	OpenRow("cParam1 pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cParam1Search"
+			" value=\"%s\" size=40 maxlength=63 >",cParam1Search);
+
+	OpenRow("cParam2 pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cParam2Search"
+			" value=\"%s\" size=40 maxlength=63 >",cParam2Search);
+
+	OpenRow("cParam3 pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cParam3Search"
+			" value=\"%s\" size=40 maxlength=63 >",cParam3Search);
+
+	OpenRow("cParam4 pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cParam4Search"
+			" value=\"%s\" size=40 maxlength=63 >",cParam4Search);
+
+	OpenRow("cComment pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cCommentSearch"
+			" value=\"%s\" size=40 maxlength=63 >",cCommentSearch);
 
 	OpenRow("Owner","black");
 	tTablePullDownResellers(uForClient,1);
