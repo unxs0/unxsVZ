@@ -21,6 +21,7 @@ static unsigned uZoneOwner=0;
 void CustomerDropDown(unsigned uSelector);//tzonefunc.h
 static char cCustomerDropDown[256]={""};
 static unsigned uClient=0;
+static unsigned uGroup=0;
 
 //Called from tzonefunc.h
 void tResourceTableAddRR(unsigned uZoneId);
@@ -790,6 +791,111 @@ void ExttResourceCommands(pentry entries[], int x)
 				tResource("<blink>Error:</blink> Denied by permissions settings");
 			}
                 }
+		else if(!strcmp(gcCommand,"Reload Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstResourceVars(entries,x);
+                        	guMode=12002;
+	                        tResource("Search set reloaded");
+			}
+			else
+			{
+				tResource("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+
+		else if(!strcmp(gcCommand,"Add to Search Set") || !strcmp(gcCommand,"Create Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstResourceVars(entries,x);
+                        	guMode=12002;
+				char cQuerySection[256];
+				unsigned uLink=0;
+
+				if(cZoneSearch[0]==0 && cIPv4Search[0]==0 && cNameSearch[0]==0)
+	                        	tResource("You must specify at least one search parameter");
+
+				if((uGroup=uGetSearchGroup(gcUser))==0)
+				{
+					sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=2"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcUser,guCompany,guLoginClient);//2=search set type TODO
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					if((uGroup=mysql_insert_id(&gMysql))==0)
+		                        	tResource("An error ocurred when attempting to create your search set");
+				}
+				else
+				{
+					if(!strcmp(gcCommand,"Create Search Set"))
+					{
+						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u",uGroup);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
+                		}
+
+				//Initial query section
+				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroupGlue,uGroup,uNode,uResource)"
+						" SELECT 0,%u,0,uResource FROM tResource WHERE",uGroup);
+
+				//Build AND query section
+
+				if(cZoneSearch[0])
+				{
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE cZone LIKE '%s%%')",cZoneSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+				else
+				{
+					uLink=0;
+				}
+
+				if(cIPv4Search[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cParam1 LIKE '%s%%')",cIPv4Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uForClient)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uOwner=%u",uForClient);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				//debug only
+	                        //tResource(gcQuery);
+
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				unsigned uNumber=0;
+				if((uNumber=mysql_affected_rows(&gMysql))>0)
+				{
+	                        	sprintf(gcQuery,"%u resource records were added to your search set",uNumber);
+	                        	tResource(gcQuery);
+				}
+				else
+				{
+	                        	tResource("No records were added to your search set. Filter returned 0 records");
+				}
+			}
+			else
+			{
+				tResource("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
 		//Default wizard like two step creation and deletion
 		else if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -1258,7 +1364,7 @@ void ExttResourceButtons(void)
 				" name=gcCommand value='Refine Search Set'>\n");
 			printf("<p><input type=submit class=largeButton title='Reload current search set. Good for checking for any new status updates'"
 				" name=gcCommand value='Reload Search Set'>\n");
-			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
+			printf("<input type=submit class=largeButton title='Return to main tResource tab page'"
 				" name=gcCommand value='Cancel'>\n");
                 break;
 
@@ -1345,7 +1451,7 @@ void ExttResourceButtons(void)
 			printf("<input type=text title=\"cName search input. Use %% . and _ for power searching.\" "
 				"name=cSearch value=\"%s\" maxlength=99 size=20>",cSearch);
 			printf("<p><input type=submit class=largeButton title='Open user search set page. There you can create search sets and operate"
-				" on selected containers of the loaded container set.'"
+				" on selected resources of the loaded resource set.'"
 				" name=gcCommand value='Search Set Operations'>\n");
 			if(uZone)
 			{
@@ -1394,17 +1500,20 @@ void ExttResourceAuxTable(void)
 			OpenFieldSet(gcQuery,100);
 			uGroup=uGetSearchGroup(gcUser);
 			sprintf(gcQuery,"SELECT"
-					" tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tStatus.cLabel,"
-					" tIP.cLabel,tNode.cLabel,tDatacenter.cLabel,tContainer.uSource,"
-					" tClient.cLabel,tOSTemplate.cLabel,"
-					" FROM_UNIXTIME(tContainer.uCreatedDate,'%%a %%b %%d %%T %%Y')"
-					" FROM tContainer,tIP,tNode,tDatacenter,tStatus,tClient,tOSTemplate"
-					" WHERE tContainer.uIPv4=tIP.uIP AND tContainer.uNode=tNode.uNode"
-					" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
-					" AND tContainer.uStatus=tStatus.uStatus"
-					" AND tContainer.uOwner=tClient.uClient"
-					" AND tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
-					" AND uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uGroup);
+					" tResource.uResource,tZone.cZone,tResource.cName,"
+					" tResource.uTTL,tRRType.cLabel,"
+					" tResource.cParam1,"
+					" tResource.cParam2,"
+					" tResource.cParam3,"
+					" tResource.cParam4,"
+					" tResource.cComment,"
+					" FROM_UNIXTIME(tResource.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
+					" tClient.cLabel"
+					" FROM tResource,tZone,tRRType,tClient"
+					" WHERE tResource.uRRType=tRRType.uRRType"
+					" AND tResource.uOwner=tClient.uClient"
+					" AND tResource.uZone=tZone.uZone"
+					" AND uResource IN (SELECT uResource FROM tGroupGlue WHERE uGroup=%u)",uGroup);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1416,16 +1525,17 @@ void ExttResourceAuxTable(void)
 
 				printf("<table>");
 				printf("<tr>");
-				printf("<td><u>cLabel</u></td>"
-					"<td><u>cHostname</u></td>"
-					"<td><u>Status</u></td>"
-					"<td><u>IPv4</u></td>"
-					"<td><u>Node</u></td>"
-					"<td><u>Datacenter</u></td>"
-					"<td><u>uSource</u></td>"
-					"<td><u>Owner</u></td>"
-					"<td><u>OSTemplate</u></td>"
+				printf("<td><u>cName</u></td>"
+					"<td><u>cZone</u></td>"
+					"<td><u>uTTL</u></td>"
+					"<td><u>RRType</u></td>"
+					"<td><u>cParam1</u></td>"
+					"<td><u>cParam2</u></td>"
+					"<td><u>cParam3</u></td>"
+					"<td><u>cParam4</u></td>"
+					"<td><u>cComment</u></td>"
 					"<td><u>uCreatedDate</u></td>"
+					"<td><u>Owner</u></td>"
 					"<td><u>Set operation result</u></td></tr>");
 //Reset margin start
 while((field=mysql_fetch_row(res)))
@@ -1433,11 +1543,11 @@ while((field=mysql_fetch_row(res)))
 	if(guMode==12002)
 	{
 		register int i;
-		unsigned uCtContainer=0;
+		unsigned uCtResource=0;
 
 		sprintf(cResult,"Not processed");
-		sscanf(field[0],"%u",&uCtContainer);
-		sprintf(cCtLabel,"Ct%u",uCtContainer);
+		sscanf(field[0],"%u",&uCtResource);
+		sprintf(cCtLabel,"Ct%u",uCtResource);
 		for(i=0;i<x;i++)
 		{
 			//insider xss protection
@@ -1448,7 +1558,7 @@ while((field=mysql_fetch_row(res)))
 			{
 				if(!strcmp(gcCommand,"Delete Checked"))
 				{
-					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uContainer=%u",uGroup,uCtContainer);
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uResource=%u",uGroup,uCtResource);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
@@ -1478,7 +1588,7 @@ while((field=mysql_fetch_row(res)))
 	printf("<tr>");
 	printf("<td width=200 valign=top>"
 	"<input type=checkbox name=Ct%s >"
-	"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>"
+	"<a class=darkLink href=unxsVZ.cgi?gcFunction=tResource&uResource=%s>%s</a>"
 	"</td>"
 	"<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
 		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],field[9],field[10],cResult);
@@ -1628,6 +1738,10 @@ void ExttResourceListFilter(void)
 
 void ExttResourceNavBar(void)
 {
+
+	if(guMode>10000)
+		return;
+
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
