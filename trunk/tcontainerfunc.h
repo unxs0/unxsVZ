@@ -87,6 +87,8 @@ static char cSearch[32]={""};
 //uGroup: Group type association
 static unsigned uGroup=0;
 static char cuGroupPullDown[256]={""};
+static unsigned uChangeGroup=0;
+static char ctContainerGroupPullDown[256]={""};
 //uForClient: Create for, on 'New;
 static unsigned uForClient=0;
 static unsigned uCreateDNSJob=0;
@@ -262,6 +264,12 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cuGroupPullDown,"%.255s",entries[i].val);
 			uGroup=ReadPullDown("tGroup","cLabel",cuGroupPullDown);
+		}
+		else if(!strcmp(entries[i].name,"ctContainerGroupPullDown"))
+		{
+			sprintf(ctContainerGroupPullDown,"%.255s",entries[i].val);
+			uChangeGroup=ReadPullDown("tGroup","uGroupType=1 AND cLabel",ctContainerGroupPullDown);
+			uGroup=uChangeGroup;//For legacy support TODO
 		}
 		else if(!strcmp(entries[i].name,"guOpOnClones"))
 		{
@@ -457,7 +465,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				if((uGroup=uGetSearchGroup(gcUser))==0)
 				{
-					sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=2"
+					sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=2"//2 is search group
 						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 							gcUser,guCompany,guLoginClient);//2=search set type TODO
 					mysql_query(&gMysql,gcQuery);
@@ -964,7 +972,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					}
 					else
 					{
-						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"
+						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"//1 is container type
 							"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 								cService3,uForClient,guLoginClient);
 						mysql_query(&gMysql,gcQuery);
@@ -1595,7 +1603,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					}
 					else
 					{
-						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"
+						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=1,"//1 is container type
 							"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 								cService3,uForClient,guLoginClient);
 						mysql_query(&gMysql,gcQuery);
@@ -1896,7 +1904,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				//Now we can remove properties
 				DelProperties(uContainer,3);
 				//Remove from any groups
-				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",uContainer);
+				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",uContainer);//Ok to delete from all groups
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -1906,7 +1914,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
-				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer="
+				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer IN "
 						"(SELECT uContainer FROM tContainer WHERE uSource=%u AND uStatus=81)",uContainer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
@@ -2876,7 +2884,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						//Now we can remove properties
 						DelProperties(uOfflineContainer,3);
 						//Remove from any groups
-						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",uOfflineContainer);
+						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",uOfflineContainer);//Ok to remove
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -3369,7 +3377,7 @@ void ExttContainerButtons(void)
 					" name=gcCommand value='Confirm IP Change'>\n");
 			printf("<p>Optional primary group change (if swap changes for both)<br>");
 			//uGroup=uGetGroup(0,uContainer);//0=not for node
-			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1);
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 			if(cunxsBindARecordJobZone[0])
 			{
@@ -3396,7 +3404,7 @@ void ExttContainerButtons(void)
 					" name=gcCommand value='Confirm Hostname Change'>\n");
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
-			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1);
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 			if(cunxsBindARecordJobZone[0])
 			{
@@ -3435,7 +3443,7 @@ void ExttContainerButtons(void)
 			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
-			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1);
 			printf("<p><input title='Create a migration job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Migration'>\n");
@@ -3453,7 +3461,7 @@ void ExttContainerButtons(void)
 			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
-			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1);
 			printf("<p><input title='Create a migration job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Remote Migration'>\n");
@@ -3497,7 +3505,7 @@ void ExttContainerButtons(void)
 					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
-			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1);
 			if(uGroup)
 				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
 			printf("<p><input title='Create a clone job for the current container'"
@@ -3562,7 +3570,7 @@ void ExttContainerButtons(void)
 					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
-			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1);
 			if(uGroup)
 				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
 			printf("<p><input title='Create a clone job for the current container'"
@@ -3604,7 +3612,7 @@ void ExttContainerButtons(void)
                         printf(LANG_NBB_CONFIRMMOD);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetGroup(0,uContainer);//0=not for node
-			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1);
                 break;
 
                 case 12001:
@@ -3613,16 +3621,26 @@ void ExttContainerButtons(void)
 			printf("In the right panel you can select your search criteria. When refining you do not need"
 				" to reuse your initial search critieria. Your search set is persistent even across unxsVZ sessions.<p>");
 			printf("<input type=submit class=largeButton title='Create an initial or replace an existing search set'"
-				" name=gcCommand value='Create Search Set'>\n");
+				" name=gcCommand value='Create Search Set'>");
 			printf("<input type=submit class=largeButton title='Add the results to your current search set. Do not add the same search"
 				" over and over again it will not result in any change but may slow down processing.'"
-				" name=gcCommand value='Add to Search Set'>\n");
+				" name=gcCommand value='Add to Search Set'>");
 			printf("<p><input disabled type=submit class=largeButton title='Apply the right panel filter to refine your existing search set'"
-				" name=gcCommand value='Refine Search Set'>\n");
+				" name=gcCommand value='Refine Search Set'>");
 			printf("<p><input type=submit class=largeButton title='Reload current search set. Good for checking for any new status updates'"
-				" name=gcCommand value='Reload Search Set'>\n");
+				" name=gcCommand value='Reload Search Set'>");
 			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
-				" name=gcCommand value='Cancel'>\n");
+				" name=gcCommand value='Cancel'>");
+			printf("<p><u>Set Operation Options</u>");
+			printf("<br>uGroup ");
+			tContainerGroupPullDown(uChangeGroup,1);
+			printf("<br><input title='For supported set operations (like Group Delete, Destroy or Migration)"
+				" apply same to their clone containers.'"
+				" type=checkbox name=guOpOnClones");
+			if(guOpOnClones)
+				printf(" checked");
+			printf("> guOpOnClones");
+
                 break;
 
                 case 9001:
@@ -3893,7 +3911,8 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Deletes initial setup or awaiting intial setup clone container(s) and optionally their clones.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Delete'>\n");
-			printf("&nbsp; <input title='Deletes any existing group association then adds selected group to selected containers'"
+			printf("&nbsp; <input title='Deletes any existing group association then adds selected group to selected containers. Requires"
+					" that you select the new group with the select tool above.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Change'>\n");
 			printf("<p><input title='Creates job(s) for cloning active or stopped container(s) that"
@@ -3923,13 +3942,14 @@ void ExttContainerAuxTable(void)
 					" tIP.cLabel,tNode.cLabel,tDatacenter.cLabel,tContainer.uSource,"
 					" tClient.cLabel,tOSTemplate.cLabel,"
 					" FROM_UNIXTIME(tContainer.uCreatedDate,'%%a %%b %%d %%T %%Y')"
-					" FROM tContainer,tIP,tNode,tDatacenter,tStatus,tClient,tOSTemplate"
-					" WHERE tContainer.uIPv4=tIP.uIP AND tContainer.uNode=tNode.uNode"
-					" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
-					" AND tContainer.uStatus=tStatus.uStatus"
-					" AND tContainer.uOwner=tClient.uClient"
-					" AND tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
-					" AND uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uGroup);
+					" FROM tContainer"
+					" LEFT JOIN tIP ON tContainer.uIPv4=tIP.uIP"
+					" LEFT JOIN tNode ON tContainer.uNode=tNode.uNode"
+					" LEFT JOIN tDatacenter ON tContainer.uDatacenter=tDatacenter.uDatacenter"
+					" LEFT JOIN tStatus ON tContainer.uStatus=tStatus.uStatus"
+					" LEFT JOIN tClient ON tContainer.uOwner=tClient.uClient"
+					" LEFT JOIN tOSTemplate ON tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
+					" WHERE uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uGroup);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -4108,6 +4128,10 @@ while((field=mysql_fetch_row(res)))
 									strcat(cResult," +clone job error!");
 								}
 							}
+							else
+							{
+								strcat(cResult," +no clone job");
+							}
 						}
 						mysql_free_result(res);
 					}//op on clones
@@ -4121,16 +4145,17 @@ while((field=mysql_fetch_row(res)))
 
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
-					if( (sContainer.uOwner==guCompany || guCompany==1) && uGroup)
+					if( (sContainer.uOwner==guCompany || guCompany==1) && uChangeGroup)
 					{
-						//Remove from all groups
-						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u",
+						//Remove from all container type groups
+						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u AND"
+								" uGroup IN (SELECT uGroup FROM tGroup WHERE uGroupType=1)",//1=container type 
 							uCtContainer);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
 						sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
-							uCtContainer,uGroup);
+							uCtContainer,uChangeGroup);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -4140,6 +4165,7 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"group change ignored");
 					}
+					break;
 				}//Group Change
 
 
@@ -4270,9 +4296,13 @@ while((field=mysql_fetch_row(res)))
 								if(mysql_affected_rows(&gMysql)>0)
 									strcat(cResult," +clone delete");
 							}//if clone
+							else
+							{
+								strcat(cResult," +no clone deleted");
+							}
 						}//while
 						mysql_free_result(res);
-					}
+					}//if op on clones
 					break;
 				}//Group Delete
 
@@ -6192,7 +6222,7 @@ void InitContainerProps(struct structContainer *sContainer)
 
 
 //Lowest uGroup. Which we define here as the primary group
-//of a node or container.
+//of a node or container. Since a container or node can belong to different groups at the same time.
 unsigned uGetGroup(unsigned uNode, unsigned uContainer)
 {
         MYSQL_RES *res;
@@ -6201,10 +6231,10 @@ unsigned uGetGroup(unsigned uNode, unsigned uContainer)
 
 	if(uNode)
 		sprintf(gcQuery,"SELECT MIN(tGroup.uGroup) FROM tGroupGlue,tGroup WHERE tGroupGlue.uNode=%u"
-				" AND tGroupGlue.uGroup=tGroup.uGroup",uNode);
+				" AND tGroupGlue.uGroup=tGroup.uGroup AND tGroup.uGroupType=1",uNode);//1 is container type used here temporarily
 	else
 		sprintf(gcQuery,"SELECT MIN(tGroup.uGroup) FROM tGroupGlue,tGroup WHERE tGroupGlue.uContainer=%u"
-				" AND tGroupGlue.uGroup=tGroup.uGroup",uContainer);
+				" AND tGroupGlue.uGroup=tGroup.uGroup AND tGroup.uGroupType=1",uContainer);//1 is container type
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -6267,8 +6297,9 @@ void ChangeGroup(unsigned uContainer, unsigned uGroup)
 		unsigned uPrimaryGroup=0;
 
 		//Get the PK of the primary group of this container.
-		sprintf(gcQuery,"SELECT uGroupGlue,uGroup FROM tGroupGlue WHERE"
-			" uContainer=%u ORDER BY uGroup LIMIT 1",uContainer);
+		sprintf(gcQuery,"SELECT tGroupGlue.uGroupGlue,tGroupGlue.uGroup FROM tGroupGlue,tGroup WHERE"
+			" tGroupGlue.uGroup=tGroup.uGroup AND tGroupGlue.uContainer=%u"
+			" AND tGroup.uGroupType=1 ORDER BY tGroupGlue.uGroup LIMIT 1",uContainer);//1 is container type
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -6577,7 +6608,7 @@ unsigned uGetSearchGroup(const char *gcUser)
         MYSQL_ROW field;
 	unsigned uGroup=0;
 
-	sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s'",gcUser);
+	sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s' AND uGroupType=2",gcUser);//2 is search type
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

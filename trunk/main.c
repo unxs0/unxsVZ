@@ -2467,3 +2467,55 @@ void EncryptPasswd(char *pw)
 
 }//void EncryptPasswd(char *pw)
 
+
+void tContainerGroupPullDown(unsigned uGroup, unsigned uMode)
+{
+        register int i,n;
+        MYSQL_RES *mysqlRes;         
+        MYSQL_ROW mysqlField;
+
+	char cHidden[100]={""};
+	char *cMode="";
+
+	if(!uMode)
+		cMode="disabled";
+      
+        sprintf(gcQuery,"SELECT uGroup,cLabel FROM tGroup WHERE uGroupType=1 ORDER BY cLabel");
+	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
+	i=mysql_num_rows(mysqlRes);
+        if(i>0)
+        {
+                printf("<select name=ctContainerGroupPullDown %s>\n",cMode);
+
+                printf("<option title='No selection'>---</option>\n");
+                for(n=0;n<i;n++)
+                {
+                        int unsigned field0=0;
+
+                        mysqlField=mysql_fetch_row(mysqlRes);
+                        sscanf(mysqlField[0],"%u",&field0);
+                        if(uGroup != field0)
+                        {
+                             printf("<option>%s</option>\n",mysqlField[1]);
+                        }
+                        else
+                        {
+                             printf("<option selected>%s</option>\n",mysqlField[1]);
+			     if(!uMode)
+				     sprintf(cHidden,"<input type=hidden name=ctContainerGroupPullDown value='%.99s'>\n",
+				     			mysqlField[1]);
+                        }
+                }
+        }
+        else
+        {
+		printf("<select name=ctContainerGroupPullDown %s><option title='No selection'>---</option></select>\n",cMode);
+		if(!uMode)
+			sprintf(cHidden,"<input type=hidden name=ctContainerGroupPullDown value='0'>\n");
+        }
+        printf("</select>\n");
+	if(cHidden[0])
+		printf("%s",cHidden);
+
+}//tContainerGroupPullDown()
+
