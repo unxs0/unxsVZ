@@ -48,7 +48,9 @@ void DebugOnly(const char *cLabel1, const char *cValue1, const char *cLabel2, co
 }//DebugOnly()
 */
 
+/*
 unsigned guGrpDelete=0;
+*/
 
 void ExtProcesstResourceVars(pentry entries[], int x)
 {
@@ -81,6 +83,7 @@ void ExtProcesstResourceVars(pentry entries[], int x)
 			uClient=ReadPullDown("tClient","cLabel",
 					cCustomerDropDown);
 		}
+/*
 		else if(guGrpDelete && !strncmp(entries[i].name,"uGrpResource",12))
 		{
 			uGrpResource=0;
@@ -98,6 +101,7 @@ void ExtProcesstResourceVars(pentry entries[], int x)
 				tResource("Unexpected uGrpResource parsing error");
 			}
 		}
+*/
 	}//for all name value pairs
 
 	//single shot
@@ -783,6 +787,12 @@ void ExttResourceCommands(pentry entries[], int x)
 			if(guPermLevel>=9)
 			{
 	                        ProcesstResourceVars(entries,x);
+				uRRType=0;
+				if(uZone)
+				{
+					sscanf(ForeignKey("tZone","uView",uZone),"%u",&uView);
+					sprintf(cZoneSearch,"%.63s",ForeignKey("tZone","cZone",uZone));
+				}
                         	guMode=12001;
 	                        tResource("Search Set Operations");
 			}
@@ -1347,6 +1357,7 @@ void ExttResourceCommands(pentry entries[], int x)
 			else
 				tResource("<blink>Error</blink>: Denied by permissions settings");
 		}
+/*
                 else if(!strcmp(gcCommand,"Delete Selected Records"))
                 {
 			if(guPermLevel>=12 && guLoginClient==1) //Root only operation
@@ -1355,6 +1366,7 @@ void ExttResourceCommands(pentry entries[], int x)
                         	ProcesstResourceVars(entries,x);
 			}
 		}
+*/
                 else if(!strncmp(gcCommand,"Group ",6) || !strncmp(gcCommand,"Delete Checked",14))
                 {
 			ProcesstResourceVars(entries,x);
@@ -1566,6 +1578,18 @@ void ExttResourceAuxTable(void)
 			printf("<input title='Delete checked resource records from your search set. They will still be visible but will"
 				" marked deleted and will not be used in any subsequent set operation'"
 				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
+			printf("<input disabled title='Append comment to selected resource records.'"
+				" type=submit class=largeButton name=gcCommand value='Group Append Comment'>\n");
+			printf("<input disabled title='Replace comment of selected resource records.'"
+				" type=submit class=largeButton name=gcCommand value='Group Replace Comment'>\n");
+			printf("<input disabled title='Change RRType of selected resource records.'"
+				" type=submit class=lwarnButton name=gcCommand value='Group Change RRType'>\n");
+			printf("<input disabled title='Change TTL of selected resource records.'"
+				" type=submit class=lwarnButton name=gcCommand value='Group Change TTL'>\n");
+			printf("<input disabled title='Add a string to the end of selected resource record cName.'"
+				" type=submit class=lwarnButton name=gcCommand value='Group Append cName'>\n");
+			printf("<input title='Delete selected resource records from tResource -no undo available'"
+				" type=submit class=lwarnButton name=gcCommand value='Group Delete'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -1649,6 +1673,22 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Unexpected non deletion");
 					break;
 				}//Delete Checked
+
+				else if(!strcmp(gcCommand,"Group Delete"))
+				{
+					sprintf(gcQuery,"DELETE FROM tResource WHERE uResource=%u",uCtResource);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,mysql_error(&gMysql));
+						break;
+					}
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"Deleted");
+					else
+						sprintf(cResult,"Unexpected non deletion");
+					break;
+				}//Group Delete
 		
 				else if(1)
 				{
