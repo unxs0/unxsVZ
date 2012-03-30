@@ -18,7 +18,7 @@ extern unsigned guJS;//Global used by bind.c
 //define cBinDir at tConfiguration
 char gcBinDir[100]={"/usr/sbin"};
 static char cTableList[36][32]={"tAuthorize","tBlock","tClient","tConfiguration","tDeletedResource","tDeletedZone","tGlossary","tGroup","tGroupGlue","tGroupType","tHit","tHitMonth","tJob","tLog","tLogMonth","tLogType","tMailServer","tMonth","tMonthHit","tNS","tNSSet","tNSType","tRRType","tRegistrar","tResource","tResourceImport","tServer","tTemplate","tTemplateSet","tTemplateType","tView","tZone","tZoneImport",""};
-char cInitTableList[36][32]={ "tAuthorize","tBlock","tClient","tConfiguration","tGlossary","tGroup","tGroupGlue","tGroupType","tLogType","tMailServer","tNS","tNSSet","tNSType","tRRType","tRegistrar","tResource","tServer","tTemplate","tTemplateSet","tTemplateType","tView","tZone",""};
+char cInitTableList[36][32]={ "tAuthorize","tBlock","tClient","tConfiguration","tGlossary","tGroupType","tLogType","tMailServer","tNS","tNSSet","tNSType","tRRType","tRegistrar","tResource","tServer","tTemplate","tTemplateSet","tTemplateType","tView","tZone",""};
 
 
 //Please clean up ths TOC proto section.

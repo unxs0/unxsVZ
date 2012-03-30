@@ -54,6 +54,11 @@ static long uModDate=0;
 void Insert_tResource(void);
 void Update_tResource(char *cRowid);
 void ProcesstResourceListVars(pentry entries[], int x);
+static char cZoneSearch[64]={""};
+static char cNameSearch[64]={""};
+static char cIPv4Search[32]={""};
+static unsigned uForClient=0;
+void tResourceSearchSet(unsigned uStep);
 
  //In tResourcefunc.h file included below
 void ExtProcesstResourceVars(pentry entries[], int x);
@@ -265,9 +270,14 @@ void tResource(const char *cResult)
 	//
 	OpenFieldSet("tResource Record Data",100);
 
-	if(guMode==2000 || guMode==2002)
+	//Custom right panel for creating search sets
+	if(guMode==12001)
+		tResourceSearchSet(1);
+	else if(guMode==12002)
+		tResourceSearchSet(2);
+	else if(guMode==2000 || guMode==2002)
 		tResourceInput(1);
-	else
+	else if(1)
 		tResourceInput(0);
 
 	//
@@ -280,6 +290,40 @@ void tResource(const char *cResult)
 	Footer_ism3();
 
 }//end of tResource();
+
+
+void tResourceSearchSet(unsigned uStep)
+{
+	printf("<tr><td><u>Set search paramters</u></td></tr>");
+
+	OpenRow("cZone pattern","black");
+	//Usability: Transfer from main tContainer page any current search pattern
+	if(cSearch[0])
+		sprintf(cZoneSearch,"%.31s",cSearch);
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cHostnameSearch"
+			" value=\"%s\" size=40 maxlength=63 >",cZoneSearch);
+
+	OpenRow("cName pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cNameSearch"
+			" value=\"%s\" size=40 maxlength=63 >",cNameSearch);
+
+	OpenRow("A/AAAA record IPv4 pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
+			" value=\"%s\" size=40 maxlength=31 >",cIPv4Search);
+
+	OpenRow("Owner","black");
+	tTablePullDownResellers(uForClient,1);
+
+	if(uStep==1)
+	{
+		;
+	}
+	else if(uStep==2)
+	{
+		;
+	}
+
+}//void tResourceSearchSet(unsigned uStep)
 
 
 void tResourceInput(unsigned uMode)

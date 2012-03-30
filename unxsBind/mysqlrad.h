@@ -105,6 +105,10 @@ extern unsigned guMode;
 extern int guError;
 extern char gcErrormsg[];
 
+extern pentry entries[];
+extern int x;
+
+
 void iDNS(const char *cResult);
 void ConnectDb(void);
 unsigned TextConnectDb(void);
@@ -157,6 +161,8 @@ void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
 void ExtListSelectPublic(const char *cTable,const char *cVarList);
 void ExtSelectPublic(const char *cTable,const char *cVarList);
 void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow);
+
+void tTablePullDownResellers(unsigned uSelector,unsigned uMode);
 
 
  //Standard tInputFunc functions
@@ -214,6 +220,8 @@ void CreatetResource(void);
 void DeletetResource(void);
 void ExttResourceGetHook(entry gentries[], int x);
 void ExttResourceNavBar(void);
+unsigned uGetSearchGroup(const char *gcUser);
+
 
 //tRRType
 int tRRTypeCommands(pentry entries[], int x);

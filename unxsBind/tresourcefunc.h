@@ -777,8 +777,21 @@ void ExttResourceCommands(pentry entries[], int x)
 	{
 		//ModuleFunctionProcess()
 
+		if(!strcmp(gcCommand,"Search Set Operations"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstResourceVars(entries,x);
+                        	guMode=12001;
+	                        tResource("Search Set Operations");
+			}
+			else
+			{
+				tResource("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
 		//Default wizard like two step creation and deletion
-		if(!strcmp(gcCommand,LANG_NB_NEW))
+		else if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
 			ProcesstResourceVars(entries,x);
 			sscanf(ForeignKey("tZone","uOwner",uZone),"%u",
@@ -1231,6 +1244,24 @@ void ExttResourceButtons(void)
 
 	switch(guMode)
         {
+                case 12001:
+                case 12002:
+			printf("<u>Create or refine your user search set</u><br>");
+			printf("In the right panel you can select your search criteria. When refining you do not need"
+				" to reuse your initial search critieria. Your search set is persistent even across unxsVZ sessions.<p>");
+			printf("<input type=submit class=largeButton title='Create an initial or replace an existing search set'"
+				" name=gcCommand value='Create Search Set'>\n");
+			printf("<input type=submit class=largeButton title='Add the results to your current search set. Do not add the same search"
+				" over and over again it will not result in any change but may slow down processing.'"
+				" name=gcCommand value='Add to Search Set'>\n");
+			printf("<p><input disabled type=submit class=largeButton title='Apply the right panel filter to refine your existing search set'"
+				" name=gcCommand value='Refine Search Set'>\n");
+			printf("<p><input type=submit class=largeButton title='Reload current search set. Good for checking for any new status updates'"
+				" name=gcCommand value='Reload Search Set'>\n");
+			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
+				" name=gcCommand value='Cancel'>\n");
+                break;
+
                 case 2000:
 			printf("<p><u>Enter required data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
@@ -1313,6 +1344,9 @@ void ExttResourceButtons(void)
 			printf("<p><u>Search Tools</u><br>");
 			printf("<input type=text title=\"cName search input. Use %% . and _ for power searching.\" "
 				"name=cSearch value=\"%s\" maxlength=99 size=20>",cSearch);
+			printf("<p><input type=submit class=largeButton title='Open user search set page. There you can create search sets and operate"
+				" on selected containers of the loaded container set.'"
+				" name=gcCommand value='Search Set Operations'>\n");
 			if(uZone)
 			{
 				unsigned uView=0;
@@ -1341,6 +1375,127 @@ void ExttResourceButtons(void)
 
 void ExttResourceAuxTable(void)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uGroup=0;
+
+	switch(guMode)
+	{
+		case 12001:
+		case 12002:
+			//Set operation buttons
+			OpenFieldSet("Set Operations",100);
+			printf("<input title='Delete checked resource records from your search set. They will still be visible but will"
+				" marked deleted and will not be used in any subsequent set operation'"
+				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
+			CloseFieldSet();
+
+			sprintf(gcQuery,"Search Set Contents");
+			OpenFieldSet(gcQuery,100);
+			uGroup=uGetSearchGroup(gcUser);
+			sprintf(gcQuery,"SELECT"
+					" tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tStatus.cLabel,"
+					" tIP.cLabel,tNode.cLabel,tDatacenter.cLabel,tContainer.uSource,"
+					" tClient.cLabel,tOSTemplate.cLabel,"
+					" FROM_UNIXTIME(tContainer.uCreatedDate,'%%a %%b %%d %%T %%Y')"
+					" FROM tContainer,tIP,tNode,tDatacenter,tStatus,tClient,tOSTemplate"
+					" WHERE tContainer.uIPv4=tIP.uIP AND tContainer.uNode=tNode.uNode"
+					" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
+					" AND tContainer.uStatus=tStatus.uStatus"
+					" AND tContainer.uOwner=tClient.uClient"
+					" AND tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
+					" AND uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uGroup);
+		        mysql_query(&gMysql,gcQuery);
+		        if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		        res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				char cResult[100]={""};
+				char cCtLabel[100]={""};
+
+				printf("<table>");
+				printf("<tr>");
+				printf("<td><u>cLabel</u></td>"
+					"<td><u>cHostname</u></td>"
+					"<td><u>Status</u></td>"
+					"<td><u>IPv4</u></td>"
+					"<td><u>Node</u></td>"
+					"<td><u>Datacenter</u></td>"
+					"<td><u>uSource</u></td>"
+					"<td><u>Owner</u></td>"
+					"<td><u>OSTemplate</u></td>"
+					"<td><u>uCreatedDate</u></td>"
+					"<td><u>Set operation result</u></td></tr>");
+//Reset margin start
+while((field=mysql_fetch_row(res)))
+{
+	if(guMode==12002)
+	{
+		register int i;
+		unsigned uCtContainer=0;
+
+		sprintf(cResult,"Not processed");
+		sscanf(field[0],"%u",&uCtContainer);
+		sprintf(cCtLabel,"Ct%u",uCtContainer);
+		for(i=0;i<x;i++)
+		{
+			//insider xss protection
+			if(guPermLevel<10)
+				continue;
+
+			if(!strcmp(entries[i].name,cCtLabel))
+			{
+				if(!strcmp(gcCommand,"Delete Checked"))
+				{
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uContainer=%u",uGroup,uCtContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,mysql_error(&gMysql));
+						break;
+					}
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"Deleted from set");
+					else
+						sprintf(cResult,"Unexpected non deletion");
+					break;
+				}//Delete Checked
+		
+				else if(1)
+				{
+					sprintf(cResult,"Unexpected gcCommand=%.64s",gcCommand);
+					break;
+				}
+			}//end if Ct block
+		}//end for()
+	}
+	else
+	{
+		sprintf(cResult,"---");
+	}
+
+	printf("<tr>");
+	printf("<td width=200 valign=top>"
+	"<input type=checkbox name=Ct%s >"
+	"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>"
+	"</td>"
+	"<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
+		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],field[9],field[10],cResult);
+	printf("</tr>");
+
+}//while()
+//Reset margin end
+
+			printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> Check all</td></tr>\n");
+			printf("</table>");
+
+			}//If results
+			mysql_free_result(res);
+			CloseFieldSet();
+		break;
+
+	}//switch(guMode)
 
 }//void ExttResourceAuxTable(void)
 
@@ -1631,5 +1786,24 @@ void PrepareTestData(void)
 }//void PrepareTestData(void)
 
 
+unsigned uGetSearchGroup(const char *gcUser)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uGroup=0;
 
+	sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s'",gcUser);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		if(field[0]!=NULL)
+			sscanf(field[0],"%u",&uGroup);
+	}
+	mysql_free_result(res);
 
+	return(uGroup);
+
+}//unsigned uGetSearchGroup(const char *gcUser)
