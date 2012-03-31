@@ -265,7 +265,7 @@ void tResource(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tResource",1);
+	Header_ism3(":: tResource",2);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
