@@ -1865,7 +1865,7 @@ while((field=mysql_fetch_row(res)))
 //Reset margin end
 
 			printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> Check all</td></tr>\n");
-			printf("</table>");
+			printf("</table></form>");
 
 			}//If results
 			mysql_free_result(res);

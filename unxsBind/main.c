@@ -519,7 +519,13 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 }//void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 
 
-void Header_ism3(char *title, int js)
+void jsToggleCheckboxes(void)
+{
+        printf("<script> function checkAll(checkname, toggle) {"
+		" for (i = 0; i < checkname.length; i++) checkname[i].checked = toggle.checked? true:false } </script> ");
+}//void jsToggleCheckboxes(void)
+
+void Header_ism3(char *title, int iJs)
 {
 	printf("Content-type: text/html\n\n");
 	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\""
@@ -527,8 +533,12 @@ void Header_ism3(char *title, int js)
         printf("<html><head><title>unxsBind %s %s </title>",gcHostname,title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
+        if(iJs==1)
+                jsCalendarHeader();
+        else if(iJs==2)
+		jsToggleCheckboxes();
 
-	printf("</head><body><form action=iDNS.cgi method=post><blockquote>\n");
+	printf("</head><body><form name=formMain action=iDNS.cgi method=post><blockquote>\n");
 	printf("<img src=/images/unxsbind.jpg>&nbsp;&nbsp;\n");
 
 	//ModuleRAD3NavBars()
