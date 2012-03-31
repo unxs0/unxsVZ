@@ -3980,7 +3980,7 @@ while((field=mysql_fetch_row(res)))
 		register int i;
 		unsigned uCtContainer=0;
 
-		sprintf(cResult,"Not processed");
+		cResult[0]=0;
 		sscanf(field[0],"%u",&uCtContainer);
 		sprintf(cCtLabel,"Ct%u",uCtContainer);
 		for(i=0;i<x;i++)
@@ -4758,10 +4758,6 @@ while((field=mysql_fetch_row(res)))
 				}
 			}//end if Ct block
 		}//end for()
-	}
-	else
-	{
-		sprintf(cResult,"---");
 	}
 
 	printf("<tr>");
