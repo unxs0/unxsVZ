@@ -16,6 +16,7 @@ static unsigned uSelectNSSet=0;
 static unsigned uCIDR=0;
 static unsigned uStartBlock=0;
 static unsigned uZoneOwner=0;
+static unsigned uSubmitJob=0;
 
 //Aux drop/pull downs
 void CustomerDropDown(unsigned uSelector);//tzonefunc.h
@@ -56,7 +57,6 @@ void ExtProcesstResourceVars(pentry entries[], int x)
 {
 
 	register int i;
-	unsigned uGrpResource;
 	
 	for(i=0;i<x;i++)
 	{
@@ -83,42 +83,10 @@ void ExtProcesstResourceVars(pentry entries[], int x)
 			uClient=ReadPullDown("tClient","cLabel",
 					cCustomerDropDown);
 		}
-/*
-		else if(guGrpDelete && !strncmp(entries[i].name,"uGrpResource",12))
-		{
-			uGrpResource=0;
-			sscanf(entries[i].name+12,"%u",&uGrpResource);
-			if(uGrpResource && uZone)
-			{
-				sprintf(gcQuery,"DELETE FROM tResource WHERE uResource=%u AND uZone=%u",uGrpResource,uZone);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					tResource(mysql_error(&gMysql));
-			}
-			else
-			{
-				tResource(entries[i].name);
-				tResource("Unexpected uGrpResource parsing error");
-			}
-		}
-*/
+		else if(!strcmp(entries[i].name,"uSubmitJob"))
+			uSubmitJob=1;			
 	}//for all name value pairs
 
-	//single shot
-	if(uGrpResource && uZone)
-	{
-		unsigned uNSSet;
-		time_t clock;
-
-		//tZone needs to be updated
-		sscanf(ForeignKey("tZone","uNSSet",uZone),"%u",&uNSSet);
-		time(&clock);
-		if(SubmitJob("Modify",uNSSet,ForeignKey("tZone","cZone",uZone),0,clock))
-			tResource(mysql_error(&gMysql));
-		UpdateSerialNum(uZone);                      	
-
-		tResource("One or more selected RRs deleted, mod job created");
-	}
 
 }//void ExtProcesstResourceVars(pentry entries[], int x)
 
@@ -815,6 +783,144 @@ void ExttResourceCommands(pentry entries[], int x)
 			}
 		}
 
+		else if(!strcmp(gcCommand,"Remove from Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstResourceVars(entries,x);
+                        	guMode=12002;
+				char cQuerySection[256];
+				unsigned uLink=0;
+
+				if(cZoneSearch[0]==0 && cParam1Search[0]==0 && cParam2Search[0]==0 && cParam3Search[0]==0 && 
+								cParam4Search[0]==0 && cCommentSearch[0]==0 && cNameSearch[0]==0 &&
+					uView==0 && uRRType==0 && uOwner==0)
+	                        	tResource("You must specify at least one search parameter");
+
+				if((uGroup=uGetSearchGroup(gcUser))==0)
+		                        tResource("No search set exists. Please create one first.");
+
+				//Initial query section
+				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uResource IN"
+						" (SELECT uResource FROM tResource WHERE",uGroup);
+
+				//Build AND query section
+
+				if(cZoneSearch[0])
+				{
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE cZone LIKE '%s%%')",cZoneSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+				else
+				{
+					uLink=0;
+				}
+
+				if(cParam1Search[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cParam1 LIKE '%s%%'",cParam1Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(cParam2Search[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cParam2 LIKE '%s%%'",cParam2Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(cParam3Search[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cParam3 LIKE '%s%%'",cParam3Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(cParam4Search[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cParam4 LIKE '%s%%'",cParam4Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(cCommentSearch[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cComment LIKE '%s%%'",cCommentSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(cNameSearch[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cName LIKE '%s%%'",cNameSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uForClient)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uOwner=%u",uForClient);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uView)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE uView=%u)",uView);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uRRType)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uRRType=%u",uRRType);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				strcat(gcQuery,")");
+				//debug only
+	                        //tResource(gcQuery);
+
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				unsigned uNumber=0;
+				if((uNumber=mysql_affected_rows(&gMysql))>0)
+				{
+	                        	sprintf(gcQuery,"%u resource records were removed from your search set",uNumber);
+	                        	tResource(gcQuery);
+				}
+				else
+				{
+	                        	tResource("No records were removed from your search set");
+				}
+			}
+			else
+			{
+				tResource("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
 		else if(!strcmp(gcCommand,"Add to Search Set") || !strcmp(gcCommand,"Create Search Set"))
                 {
 			if(guPermLevel>=9)
@@ -1444,12 +1550,20 @@ void ExttResourceButtons(void)
 			printf("<input type=submit class=largeButton title='Add the results to your current search set. Do not add the same search"
 				" over and over again it will not result in any change but may slow down processing.'"
 				" name=gcCommand value='Add to Search Set'>\n");
-			printf("<p><input disabled type=submit class=largeButton title='Apply the right panel filter to refine your existing search set'"
-				" name=gcCommand value='Refine Search Set'>\n");
+			printf("<p><input type=submit class=largeButton title='Apply the right panel filter to refine your existing search set"
+				" by removing set elements that match the filter settings.'"
+				" name=gcCommand value='Remove from Search Set'>\n");
 			printf("<p><input type=submit class=largeButton title='Reload current search set. Good for checking for any new status updates'"
 				" name=gcCommand value='Reload Search Set'>\n");
 			printf("<input type=submit class=largeButton title='Return to main tResource tab page'"
 				" name=gcCommand value='Cancel'>\n");
+			printf("<p><u>Set Operation Options</u>");
+			printf("<p><input title='For supported set operations (like Group Delete)"
+				" create the appropiate jobs for changes to go into effect.'"
+				" type=checkbox name=uSubmitJob");
+			if(uSubmitJob)
+				printf(" checked");
+			printf("> uSubmitJob");
                 break;
 
                 case 2000:
@@ -1608,7 +1722,8 @@ void ExttResourceAuxTable(void)
 					" tResource.cParam4,"
 					" tResource.cComment,"
 					" FROM_UNIXTIME(tResource.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
-					" tClient.cLabel"
+					" tClient.cLabel,"
+					" tZone.uZone"
 					" FROM tResource,tZone,tRRType,tClient,tView"
 					" WHERE tResource.uRRType=tRRType.uRRType"
 					" AND tResource.uOwner=tClient.uClient"
@@ -1638,6 +1753,7 @@ void ExttResourceAuxTable(void)
 					"<td><u>cComment</u></td>"
 					"<td><u>uCreatedDate</u></td>"
 					"<td><u>Owner</u></td>"
+					"<td><u>uZone</u></td>"
 					"<td><u>Set operation result</u></td></tr>");
 //Reset margin start
 while((field=mysql_fetch_row(res)))
@@ -1658,6 +1774,10 @@ while((field=mysql_fetch_row(res)))
 
 			if(!strcmp(entries[i].name,cCtLabel))
 			{
+				unsigned uZone=0;
+
+				sscanf(field[13],"%u",&uZone);
+
 				if(!strcmp(gcCommand,"Delete Checked"))
 				{
 					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uResource=%u",uGroup,uCtResource);
@@ -1667,6 +1787,7 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,mysql_error(&gMysql));
 						break;
 					}
+
 					if(mysql_affected_rows(&gMysql)>0)
 						sprintf(cResult,"Deleted from set");
 					else
@@ -1676,6 +1797,8 @@ while((field=mysql_fetch_row(res)))
 
 				else if(!strcmp(gcCommand,"Group Delete"))
 				{
+					static unsigned uPrevZone=0;
+
 					sprintf(gcQuery,"DELETE FROM tResource WHERE uResource=%u",uCtResource);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
@@ -1684,7 +1807,24 @@ while((field=mysql_fetch_row(res)))
 						break;
 					}
 					if(mysql_affected_rows(&gMysql)>0)
+					{
 						sprintf(cResult,"Deleted");
+
+						if(uZone && uPrevZone!=uZone && uSubmitJob)
+						{
+							unsigned uNSSet;
+							time_t clock;
+	
+							sscanf(ForeignKey("tZone","uNSSet",uZone),"%u",&uNSSet);
+							time(&clock);
+							UpdateSerialNum(uZone);                      	
+							if(SubmitJob("Modify",uNSSet,ForeignKey("tZone","cZone",uZone),0,clock+60))
+								strcat(cResult,mysql_error(&gMysql));
+							else
+								strcat(cResult," +SubmitJob(Modify)");
+							uPrevZone=uZone;
+						}
+					}
 					else
 						sprintf(cResult,"Unexpected non deletion");
 					break;
@@ -1715,9 +1855,10 @@ while((field=mysql_fetch_row(res)))
 		"<td>%.64s</td>"
 		"<td>%.64s</td>"
 		"<td>%.64s</td>"
+		"<td>%.64s</td>"
 		"<td>%.64s</td>\n",
 			field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],
-			field[7],field[8],field[9],field[10],field[11],field[12],cResult);
+			field[7],field[8],field[9],field[10],field[11],field[12],field[13],cResult);
 	printf("</tr>");
 
 }//while()
