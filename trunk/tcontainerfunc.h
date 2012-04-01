@@ -450,6 +450,128 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 		}
 
+		else if(!strcmp(gcCommand,"Remove from Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstContainerVars(entries,x);
+                        	guMode=12002;
+				char cQuerySection[256];
+				unsigned uLink=0;
+
+				if(cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
+						&& uForClient==0 && uOSTemplate==0)
+	                        	tContainer("You must specify at least one search parameter");
+
+				if((uGroup=uGetSearchGroup(gcUser))==0)
+		                        tContainer("No search set exists. Please create one first.");
+
+				//Initial query section
+				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uContainer IN"
+						" (SELECT uContainer FROM tContainer WHERE",uGroup);
+
+				//Build AND query section
+				if(cHostnameSearch[0])
+				{
+					sprintf(cQuerySection," cHostname LIKE '%s%%'",cHostnameSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+				else
+				{
+					uLink=0;
+				}
+
+				if(cIPv4Search[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uIPv4 IN (SELECT uIP FROM tIP WHERE cLabel LIKE '%s%%')",cIPv4Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uDatacenter)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uDatacenter=%u",uDatacenter);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uNode)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uNode=%u",uNode);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uSearchStatus)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uStatus=%u",uSearchStatus);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				//Clone YesNo tristate
+				if(uSearchSource)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					if(uSearchSource==2)//Tri state Yes
+						sprintf(cQuerySection," uSource>0");
+					else
+						sprintf(cQuerySection," uSource=0");
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uOSTemplate)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uOSTemplate=%u",uOSTemplate);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uForClient)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uOwner=%u",uForClient);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				strcat(gcQuery,")");
+				//debug only
+	                        //tContainer(gcQuery);
+
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				unsigned uNumber=0;
+				if((uNumber=mysql_affected_rows(&gMysql))>0)
+				{
+	                        	sprintf(gcQuery,"%u container records were removed from your search set",uNumber);
+	                        	tContainer(gcQuery);
+				}
+				else
+				{
+	                        	tContainer("No records were removed from your search set");
+				}
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
 		else if(!strcmp(gcCommand,"Add to Search Set") || !strcmp(gcCommand,"Create Search Set"))
                 {
 			if(guPermLevel>=9)
@@ -3625,8 +3747,9 @@ void ExttContainerButtons(void)
 			printf("<input type=submit class=largeButton title='Add the results to your current search set. Do not add the same search"
 				" over and over again it will not result in any change but may slow down processing.'"
 				" name=gcCommand value='Add to Search Set'>");
-			printf("<p><input disabled type=submit class=largeButton title='Apply the right panel filter to refine your existing search set'"
-				" name=gcCommand value='Refine Search Set'>");
+			printf("<p><input type=submit class=largeButton title='Apply the right panel filter to refine your existing search set"
+				" by removing set elements that match the filter settings.'"
+				" name=gcCommand value='Remove from Search Set'>\n");
 			printf("<p><input type=submit class=largeButton title='Reload current search set. Good for checking for any new status updates'"
 				" name=gcCommand value='Reload Search Set'>");
 			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
