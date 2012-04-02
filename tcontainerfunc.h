@@ -4010,6 +4010,7 @@ void ExttContainerAuxTable(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uGroup=0;
+	unsigned uNumRows=0;
 
 	switch(guMode)
 	{
@@ -4077,7 +4078,7 @@ void ExttContainerAuxTable(void)
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 		        res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res))
+			if((uNumRows=mysql_num_rows(res)))
 			{
 				char cResult[100]={""};
 				char cCtLabel[100]={""};
@@ -4895,7 +4896,8 @@ while((field=mysql_fetch_row(res)))
 }//while()
 //Reset margin end
 
-			printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> Check all</td></tr>\n");
+			printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'>"
+					"Check all %u containers</td></tr>\n",uNumRows);
 			printf("</table>");
 
 			}//If results
