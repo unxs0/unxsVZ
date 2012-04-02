@@ -106,6 +106,7 @@ void funcNewContainer(FILE *fp);
 void funcContainer(FILE *fp);
 void funcContainerList(FILE *fp);
 void funcContainerQOS(FILE *fp);
+void funcContainerBulk(FILE *fp);
 
 //user.c
 void ProcessUserVars(pentry entries[], int x);
