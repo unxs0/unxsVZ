@@ -352,6 +352,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcContainerList(fp);
 	else if(!strcmp(cFunction,"funcContainerQOS"))
 		funcContainerQOS(fp);
+	else if(!strcmp(cFunction,"funcContainerBulk"))
+		funcContainerBulk(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 

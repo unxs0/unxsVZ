@@ -27,6 +27,7 @@ static char gcNewHostname[33]={""};
 static char gcNewHostParam0[33]={""};
 static char gcNewHostParam1[33]={""};
 static char gcDID[17]={""};
+static char *gcBulkData={""};
 static char gcCustomerName[33]={""};
 static char gcAuthCode[33]={""};
 static char *gcShowDetails="";
@@ -36,6 +37,7 @@ static char *gcShowDetails="";
 void ProcessContainerVars(pentry entries[], int x);
 void htmlContainerList(void);
 void htmlContainerQOS(void);
+void htmlContainerBulk(void);
 void ContainerGetHook(entry gentries[],int x);
 char *cGetHostname(unsigned uContainer);
 char *cGetImageHost(unsigned uContainer);
@@ -46,6 +48,11 @@ char *cNumbersOnly(char *cInput);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void funcContainerList(FILE *fp);
 void SendAlertEmail(char *cMsg);
+void funcContainerBulk(FILE *fp);
+char *ParseTextAreaLines(char *cTextArea);
+void BulkDIDAdd(void);
+void BulkDIDRemove(void);
+void DIDOpsCommonChecking(void);
 
 void ProcessContainerVars(pentry entries[], int x)
 {
@@ -79,6 +86,8 @@ void ProcessContainerVars(pentry entries[], int x)
 			sprintf(gcAuthCode,"%.32s",CustomerName(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcShowDetails"))
 			gcShowDetails="checked";
+		if(!strcmp(entries[i].name,"gcBulkData"))
+			gcBulkData=entries[i].val;
 	}
 
 }//void ProcessContainerVars(pentry entries[], int x)
@@ -120,7 +129,8 @@ void ContainerCommands(pentry entries[], int x)
 	        MYSQL_ROW field;
         	MYSQL_RES *res2;
 	        MYSQL_ROW field2;
-
+		unsigned uNode=0;
+		unsigned uDatacenter=0;
 
 		ProcessContainerVars(entries,x);
 		if(!strcmp(gcFunction,"Repurpose Container"))
@@ -194,8 +204,6 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 			//uStatus must still be active
-			unsigned uNode=0;
-			unsigned uDatacenter=0;
 			char cPrevHostname[100]={""};
 			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter,cHostname FROM tContainer WHERE uContainer=%u"
 					" AND uStatus=1",guNewContainer);
@@ -799,8 +807,6 @@ void ContainerCommands(pentry entries[], int x)
 			}
 
 			//uStatus must be active or offline or appliance
-			unsigned uNode=0;
-			unsigned uDatacenter=0;
 			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u"
 					" AND (uStatus=1 OR uStatus=3 OR uStatus=101)",guContainer);
 			mysql_query(&gMysql,gcQuery);
@@ -904,15 +910,35 @@ void ContainerCommands(pentry entries[], int x)
 			gcMessage="Remote 'Mod CustomerName' task created for OpenSIPS.";
 			htmlContainer();
 		}//Mod CustomerName
-		else if(!strcmp(gcFunction,"Add DID") && gcDID[0])
-		{
-			char gcQuery[1024];
 
-			if(!guContainer)
+		else if(!strcmp(gcFunction,"Bulk Operations") && guContainer)
+		{
+			gcMessage="Bulk Operations";
+			htmlContainerBulk();
+		}//Bulk Operations
+		else if(!strcmp(gcFunction,"Bulk Remove DIDs") && guContainer)
+		{
+			if(strlen(gcBulkData)<10)
 			{
-				gcMessage="Must select a container.";
+				gcMessage="You must provide a valid list of DIDs to remove";
 				htmlContainer();
 			}
+			DIDOpsCommonChecking();
+			BulkDIDRemove();
+		}//Bulk Remove DIDs
+		else if(!strcmp(gcFunction,"Bulk Add DIDs") && guContainer)
+		{
+			if(strlen(gcBulkData)<10)
+			{
+				gcMessage="You must provide a valid list of DIDs to add";
+				htmlContainer();
+			}
+			DIDOpsCommonChecking();
+			BulkDIDAdd();
+		}//Bulk Add DIDs
+
+		else if(!strcmp(gcFunction,"Add DID") && gcDID[0])
+		{
 			if((uLen=strlen(gcDID))<10)
 			{
 				gcMessage="DID must have at least 10 numbers.";
@@ -934,52 +960,7 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//uStatus must be active or offline or appliance
-			unsigned uNode=0;
-			unsigned uDatacenter=0;
-			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u"
-					" AND (uStatus=1 OR uStatus=3 OR uStatus=101)",guContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="Select uNode error, contact sysadmin!";
-				htmlContainer();
-			}
-			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-			{
-				sscanf(field[1],"%u",&uNode);
-				sscanf(field[2],"%u",&uDatacenter);
-			}
-			if(mysql_num_rows(res)<1)
-			{
-				gcMessage="Selected container status is incorrect.";
-				htmlContainer();
-			}
-			if(!uNode || !uDatacenter)
-			{
-				gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
-				htmlContainer();
-			}
-
-			//Must be already registered with OpenSIPS or have LinesContracted value
-			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND"
-					" (cName='cOrg_OpenSIPS_Attrs' OR cName='cOrg_LinesContracted')",
-								guContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="Check for cOrg_OpenSIPS_Attrs failed, contact sysadmin!";
-				htmlContainer();
-			}
-			res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res)<1)
-			{
-				mysql_free_result(res);
-				gcMessage="Container must be registered with OpenSIPS or have LinesContracted value.";
-				htmlContainer();
-			}
-			mysql_free_result(res);
+			DIDOpsCommonChecking();
 
 			//Check to see if DID is already in property table
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
@@ -1070,8 +1051,6 @@ void ContainerCommands(pentry entries[], int x)
 			}
 
 			//uStatus must be active or offline or appliance
-			unsigned uNode=0;
-			unsigned uDatacenter=0;
 			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u"
 					" AND (uStatus=1 OR uStatus=3 OR uStatus=101)",guContainer);
 			mysql_query(&gMysql,gcQuery);
@@ -1355,6 +1334,15 @@ void htmlContainerList(void)
 	htmlFooter("Footer");
 
 }//void htmlContainerList(void)
+
+
+void htmlContainerBulk(void)
+{
+	htmlHeader("unxsvzOrg","Header");
+	htmlContainerPage("unxsvzOrg","ContainerBulk.Body");
+	htmlFooter("Footer");
+
+}//void htmlContainerBulk(void)
 
 
 void htmlContainerQOS(void)
@@ -2115,6 +2103,9 @@ void funcContainer(FILE *fp)
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Add a DID to currently loaded PBX container that has OpenSIPS_Attrs or LinesContracted values'"
 			" name=gcFunction value='Add DID'>\n");
+	fprintf(fp,"<input type=submit class=largeButton"
+			" title='Open special page for bulk operations on DIDs and similar'"
+			" name=gcFunction value='Bulk Operations'>\n");
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Remove a DID from currently loaded PBX container'"
 			" name=gcFunction value='Remove DID'>\n");
@@ -2290,3 +2281,189 @@ void SendAlertEmail(char *cMsg)
 	logfileLine("SendAlertEmail","email attempt ok");
 
 }//void SendAlertEmail(char *cMsg)
+
+
+//functions that operate on loaded container
+void funcContainerBulk(FILE *fp)
+{
+	if(guPermLevel<6 || guContainer==0)
+		return;
+
+	fprintf(fp,"<!-- funcContainerBulk(fp) Start -->\n");
+
+	//DID
+	printf("<fieldset><legend>DID Bulk OPs</b></legend>");
+	fprintf(fp,"<textarea rows=10 cols=20"
+			" title='Enter a valid bulk data as per operation specs'"
+			" name=gcBulkData >%s</textarea>",gcBulkData);
+	fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Add DIDs only -no comments or other characters allowed, add only one per line.'"
+			" name=gcFunction value='Bulk Add DIDs'>\n");
+	fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Remove DIDs specified one per line from currently loaded PBX container'"
+			" name=gcFunction value='Bulk Remove DIDs'>\n");
+	printf("</fieldset>");
+
+	fprintf(fp,"<!-- funcContainerBulk(fp) End -->\n");
+
+}//void funcContainerBulk(FILE *fp)
+
+
+//Does not allow empty lines...this may need reviewing ;) to say the least.
+char *ParseTextAreaLines(char *cTextArea)
+{
+	static unsigned uEnd=0;
+	static unsigned uStart=0;
+	static char cRetVal[512];
+
+	uStart=uEnd;
+	while(cTextArea[uEnd++])
+	{
+		if(cTextArea[uEnd]=='\n' || cTextArea[uEnd]=='\r' || cTextArea[uEnd]==0
+				|| cTextArea[uEnd]==10 || cTextArea[uEnd]==13 )
+		{
+			char cSave[1];
+
+			if(cTextArea[uEnd]==0)
+				break;
+
+			memcpy(cSave,cTextArea+uEnd,1);
+			cTextArea[uEnd]=0;
+			sprintf(cRetVal,"%.511s",cTextArea+uStart);
+			memcpy(cTextArea+uEnd,cSave,1);
+
+			if(cRetVal[0]=='\n' || cRetVal[0]==13)
+			{
+				uStart=uEnd=0;
+				return("");
+			}
+
+			if(cTextArea[uEnd+1]==10)
+				uEnd+=2;
+			else
+				uEnd++;
+
+			return(cRetVal);
+		}
+	}
+
+	if(uStart!=uEnd)
+	{
+		sprintf(cRetVal,"%.511s",cTextArea+uStart);
+		return(cRetVal);
+	}
+
+	uStart=uEnd=0;
+	return("");
+
+}//char *ParseTextAreaLines(char *cTextArea)
+
+
+void BulkDIDAdd(void)
+{
+
+	unsigned uCount=0;
+	unsigned uProcessedCount=0;
+	char cMsg[128];
+
+#define uMAX_DIDs_ALLOWED 128
+
+	while(uCount<uMAX_DIDs_ALLOWED)
+	{
+
+		sprintf(gcDID,"%.16s",cNumbersOnly(ParseTextAreaLines(gcBulkData)));
+		if(gcDID[0]==0) break;
+		uCount++;
+
+	}
+	sprintf(cMsg,"%u DIDs found %u added.\n",uCount,uProcessedCount);
+	gcMessage=cMsg;
+	htmlContainerBulk();
+
+}//void BulkDIDAdd(void)
+
+
+void BulkDIDRemove(void)
+{
+
+	unsigned uCount=0;
+	unsigned uProcessedCount=0;
+	char cMsg[128];
+
+#define uMAX_DIDs_ALLOWED 128
+
+	while(uCount<uMAX_DIDs_ALLOWED)
+	{
+
+		sprintf(gcDID,"%.16s",cNumbersOnly(ParseTextAreaLines(gcBulkData)));
+		if(gcDID[0]==0) break;
+		uCount++;
+
+	}
+	sprintf(cMsg,"%u DIDs found %u removed.\n",uCount,uProcessedCount);
+	gcMessage=cMsg;
+	htmlContainerBulk();
+
+}//void BulkDIDRemove(void)
+
+
+void DIDOpsCommonChecking(void)
+{
+	char gcQuery[1024];
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uNode=0;
+	unsigned uDatacenter=0;
+
+	if(!guContainer)
+	{
+		gcMessage="Must select a container.";
+		htmlContainer();
+	}
+
+	//uStatus must be active or offline or appliance
+	sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u"
+					" AND (uStatus=1 OR uStatus=3 OR uStatus=101)",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Select uNode error, contact sysadmin!";
+		htmlContainer();
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uNode);
+		sscanf(field[2],"%u",&uDatacenter);
+	}
+	if(mysql_num_rows(res)<1)
+	{
+		gcMessage="Selected container status is incorrect.";
+		htmlContainer();
+	}
+	if(!uNode || !uDatacenter)
+	{
+		gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
+		htmlContainer();
+	}
+
+	//Must be already registered with OpenSIPS or have LinesContracted value
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND"
+			" (cName='cOrg_OpenSIPS_Attrs' OR cName='cOrg_LinesContracted')",
+								guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Check for cOrg_OpenSIPS_Attrs failed, contact sysadmin!";
+		htmlContainer();
+	}
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)<1)
+			{
+		mysql_free_result(res);
+		gcMessage="Container must be registered with OpenSIPS or have LinesContracted value.";
+		htmlContainer();
+	}
+	mysql_free_result(res);
+
+}//void DIDOpsCommonChecking(void);
