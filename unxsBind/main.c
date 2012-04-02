@@ -521,9 +521,12 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 
 void jsToggleCheckboxes(void)
 {
-        printf("<script> function checkAll(checkname, toggle) {"
-		" for (i = 0; i < checkname.length; i++) checkname[i].checked = toggle.checked? true:false } </script> ");
+        printf("<script> function checkAll(checkname, toggle){"
+		"for (i = 0; i < checkname.length; i++)"
+		"{if(checkname[i].name!=\"uSubmitJob\")"
+		"{checkname[i].checked=toggle.checked? true:false}}}</script>");
 }//void jsToggleCheckboxes(void)
+
 
 void Header_ism3(char *title, int iJs)
 {
