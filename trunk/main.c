@@ -460,8 +460,16 @@ void jsCalendarHeader(void)
 
 void jsToggleCheckboxes(void)
 {
-        printf("<script> function checkAll(checkname, toggle) {"
-		" for (i = 0; i < checkname.length; i++) checkname[i].checked = toggle.checked? true:false } </script> ");
+        printf("<script>"
+		"function checkAll(checkname, toggle)"
+		"{"
+		"	for (i = 0; i < checkname.length; i++)"
+		"	if(checkname[i].name!=\"guOpOnClones\")"
+		"	{"
+		"		checkname[i].checked = toggle.checked? true:false"
+		"	}"
+		"}"
+		"</script>");
 }//void jsToggleCheckboxes(void)
 
 
