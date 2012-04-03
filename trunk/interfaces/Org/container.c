@@ -21,6 +21,8 @@ unsigned guContainer=0;
 unsigned guStatus=0;
 unsigned guNewContainer=0;
 static char gcNewContainerTZ[64]={"PST8PDT"};
+static unsigned guNode=0;
+static unsigned guDatacenter=0;
 //Container details
 static char gcLabel[33]={""};
 static char gcNewHostname[33]={""};
@@ -129,8 +131,6 @@ void ContainerCommands(pentry entries[], int x)
 	        MYSQL_ROW field;
         	MYSQL_RES *res2;
 	        MYSQL_ROW field2;
-		unsigned uNode=0;
-		unsigned uDatacenter=0;
 
 		ProcessContainerVars(entries,x);
 		if(!strcmp(gcFunction,"Repurpose Container"))
@@ -216,8 +216,8 @@ void ContainerCommands(pentry entries[], int x)
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
 			{
-				sscanf(field[1],"%u",&uNode);
-				sscanf(field[2],"%u",&uDatacenter);
+				sscanf(field[1],"%u",&guNode);
+				sscanf(field[2],"%u",&guDatacenter);
 				sprintf(cPrevHostname,"%.99s",field[3]);
 			}
 			if(mysql_num_rows(res)<1)
@@ -225,7 +225,7 @@ void ContainerCommands(pentry entries[], int x)
 				gcMessage="Selected container is not active. Please try another.";
 				htmlContainer();
 			}
-			if(!uNode || !uDatacenter)
+			if(!guNode || !guDatacenter)
 			{
 				gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
 				htmlContainer();
@@ -514,7 +514,7 @@ void ContainerCommands(pentry entries[], int x)
 					",cJobData='cPrevHostname=%.99s;'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						guNewContainer,
-						uDatacenter,uNode,guNewContainer,
+						guDatacenter,guNode,guNewContainer,
 						cPrevHostname,
 						guOrg,guLoginClient);
 			mysql_query(&gMysql,gcQuery);
@@ -543,7 +543,7 @@ void ContainerCommands(pentry entries[], int x)
 					"cView=%s;\n'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						guNewContainer,
-						uDatacenter,uNode,guNewContainer,
+						guDatacenter,guNode,guNewContainer,
 						uREMOTEWAITING,
 						gcNewHostname,cunxsBindARecordJobZone,cIPv4,cunxsBindARecordJobZone,cunxsBindARecordJobView,
 						guOrg,guLoginClient);
@@ -818,15 +818,15 @@ void ContainerCommands(pentry entries[], int x)
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
 			{
-				sscanf(field[1],"%u",&uNode);
-				sscanf(field[2],"%u",&uDatacenter);
+				sscanf(field[1],"%u",&guNode);
+				sscanf(field[2],"%u",&guDatacenter);
 			}
 			if(mysql_num_rows(res)<1)
 			{
 				gcMessage="Selected container status is incorrect.";
 				htmlContainer();
 			}
-			if(!uNode || !uDatacenter)
+			if(!guNode || !guDatacenter)
 			{
 				gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
 				htmlContainer();
@@ -893,8 +893,8 @@ void ContainerCommands(pentry entries[], int x)
 					"cHostname=%s;\n'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						guContainer,
-						uDatacenter,
-						uNode,
+						guDatacenter,
+						guNode,
 						guContainer,
 						uREMOTEWAITING,
 						gcCustomerName,
@@ -1003,8 +1003,8 @@ void ContainerCommands(pentry entries[], int x)
 					"cHostname=%s;\n'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						guContainer,
-						uDatacenter,
-						uNode,
+						guDatacenter,
+						guNode,
 						guContainer,
 						uREMOTEWAITING,
 						gcDID,
@@ -1050,50 +1050,7 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//uStatus must be active or offline or appliance
-			sprintf(gcQuery,"SELECT uContainer,uNode,uDatacenter FROM tContainer WHERE uContainer=%u"
-					" AND (uStatus=1 OR uStatus=3 OR uStatus=101)",guContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="Select uNode error, contact sysadmin!";
-				htmlContainer();
-			}
-			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-			{
-				sscanf(field[1],"%u",&uNode);
-				sscanf(field[2],"%u",&uDatacenter);
-			}
-			if(mysql_num_rows(res)<1)
-			{
-				gcMessage="Selected container status is incorrect.";
-				htmlContainer();
-			}
-			if(!uNode || !uDatacenter)
-			{
-				gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
-				htmlContainer();
-			}
-
-			//Must be already registered with OpenSIPS or have LinesContracted value
-			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND"
-					" (cName='cOrg_OpenSIPS_Attrs' OR cName='cOrg_LinesContracted')",
-								guContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="Check for cOrg_OpenSIPS_Attrs failed, contact sysadmin!";
-				htmlContainer();
-			}
-			res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res)<1)
-			{
-				mysql_free_result(res);
-				gcMessage="Container must be registered with OpenSIPS or have LinesContracted value.";
-				htmlContainer();
-			}
-			mysql_free_result(res);
+			DIDOpsCommonChecking();
 
 			//Check to see if DID is already in property table
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
@@ -1134,8 +1091,8 @@ void ContainerCommands(pentry entries[], int x)
 					"cHostname=%s;\n'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						guContainer,
-						uDatacenter,
-						uNode,
+						guDatacenter,
+						guNode,
 						guContainer,
 						uREMOTEWAITING,
 						gcDID,
@@ -2293,7 +2250,7 @@ void funcContainerBulk(FILE *fp)
 
 	//DID
 	printf("<fieldset><legend>DID Bulk OPs</b></legend>");
-	fprintf(fp,"<textarea rows=10 cols=20"
+	fprintf(fp,"<textarea rows=10 cols=31"
 			" title='Enter a valid bulk data as per operation specs'"
 			" name=gcBulkData >%s</textarea>",gcBulkData);
 	fprintf(fp,"<p><input type=submit class=largeButton"
@@ -2361,12 +2318,16 @@ char *ParseTextAreaLines(char *cTextArea)
 
 void BulkDIDAdd(void)
 {
-
+        MYSQL_RES *res;
 	unsigned uCount=0;
+	unsigned uLen=0;
 	unsigned uProcessedCount=0;
 	char cMsg[128];
 
 #define uMAX_DIDs_ALLOWED 128
+	static char cReply[(33*uMAX_DIDs_ALLOWED)]={""};
+
+	cReply[0]=0;
 
 	while(uCount<uMAX_DIDs_ALLOWED)
 	{
@@ -2375,9 +2336,88 @@ void BulkDIDAdd(void)
 		if(gcDID[0]==0) break;
 		uCount++;
 
+		strncat(cReply,gcDID,16);
+
+		if((uLen=strlen(gcDID))<10)
+		{
+			strncat(cReply," err len 10-11\n",15);
+			continue;
+		}
+		if(uLen>11)
+		{
+			strncat(cReply," err maxlen 11\n",15);
+			continue;
+		}
+		if(uLen==11 && gcDID[0]!='1')
+		{
+			strncat(cReply," err start w/1\n",15);
+			continue;
+		}
+		if(uLen==10 && gcDID[0]=='1')
+		{
+			strncat(cReply," err starts w/1\n",16);
+			continue;
+		}
+
+		sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					" WHERE uKey=%u AND uType=3 AND (cName='cOrg_OpenSIPS_DID' OR cName='cOrg_Pending_DID')"
+					" AND cValue='%s'",guContainer,gcDID);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			strncat(cReply," select error 1\n",15);
+			htmlContainerBulk();
+		}
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)>0)
+		{
+			mysql_free_result(res);
+			strncat(cReply," already added\n",15);
+			continue;
+		}
+		mysql_free_result(res);
+
+		sprintf(gcQuery,"INSERT INTO tProperty"
+					" SET uKey=%u,uType=3,cName='cOrg_Pending_DID',cValue='%s'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guContainer,gcDID,guOrg,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			strncat(cReply," insert error 1\n",15);
+			continue;
+		}
+
+		//unxsSIPS job
+		sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSNewDID(%u)',cJobName='unxsSIPSNewDID'"
+					",uDatacenter=%u,uNode=%u,uContainer=%u"
+					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+					",uJobStatus=%u"
+					",cJobData='"
+					"cDID=%s;\n"
+					"cHostname=%s;\n'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guContainer,
+						guDatacenter,
+						guNode,
+						guContainer,
+						uREMOTEWAITING,
+						gcDID,
+						gcCtHostname,
+						guOrg,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			strncat(cReply," insert error 2\n",15);
+			continue;
+		}
+		strncat(cReply," added\n",15);
+		uProcessedCount++;
 	}
 	sprintf(cMsg,"%u DIDs found %u added.\n",uCount,uProcessedCount);
 	gcMessage=cMsg;
+	gcBulkData=cReply;
 	htmlContainerBulk();
 
 }//void BulkDIDAdd(void)
@@ -2386,11 +2426,15 @@ void BulkDIDAdd(void)
 void BulkDIDRemove(void)
 {
 
+        MYSQL_RES *res;
 	unsigned uCount=0;
+	unsigned uLen=0;
 	unsigned uProcessedCount=0;
 	char cMsg[128];
 
-#define uMAX_DIDs_ALLOWED 128
+	static char cReply[(33*uMAX_DIDs_ALLOWED)]={""};
+
+	cReply[0]=0;
 
 	while(uCount<uMAX_DIDs_ALLOWED)
 	{
@@ -2399,9 +2443,88 @@ void BulkDIDRemove(void)
 		if(gcDID[0]==0) break;
 		uCount++;
 
+		strncat(cReply,gcDID,16);
+
+		if((uLen=strlen(gcDID))<10)
+		{
+			strncat(cReply," err len 10-11\n",15);
+			continue;
+		}
+		if(uLen>11)
+		{
+			strncat(cReply," err maxlen 11\n",15);
+			continue;
+		}
+		if(uLen==11 && gcDID[0]!='1')
+		{
+			strncat(cReply," err start w/1\n",15);
+			continue;
+		}
+		if(uLen==10 && gcDID[0]=='1')
+		{
+			strncat(cReply," err starts w/1\n",16);
+			continue;
+		}
+
+		sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					" WHERE uKey=%u AND uType=3 AND (cName='cOrg_OpenSIPS_DID' OR cName='cOrg_Pending_DID')"
+					" AND cValue='%s'",guContainer,gcDID);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			strncat(cReply," select error 1\n",15);
+			continue;
+		}
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)<1)
+		{
+			mysql_free_result(res);
+			strncat(cReply," not found\n",15);
+			continue;
+		}
+		mysql_free_result(res);
+
+		sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_Remove_DID',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+					" WHERE uKey=%u AND uType=3 AND cValue='%s' AND cName='cOrg_OpenSIPS_DID'",
+						guLoginClient,guContainer,gcDID);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			strncat(cReply," update error 1\n",15);
+			continue;
+		}
+
+		//unxsSIPS job
+		sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSRemoveDID(%u)',cJobName='unxsSIPSRemoveDID'"
+					",uDatacenter=%u,uNode=%u,uContainer=%u"
+					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+					",uJobStatus=%u"
+					",cJobData='"
+					"cDID=%s;\n"
+					"cHostname=%s;\n'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guContainer,
+						guDatacenter,
+						guNode,
+						guContainer,
+						uREMOTEWAITING,
+						gcDID,
+						gcCtHostname,
+						guOrg,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			strncat(cReply," insert error 1\n",15);
+			continue;
+		}
+
+		strncat(cReply," removed\n",15);
+		uProcessedCount++;
 	}
 	sprintf(cMsg,"%u DIDs found %u removed.\n",uCount,uProcessedCount);
 	gcMessage=cMsg;
+	gcBulkData=cReply;
 	htmlContainerBulk();
 
 }//void BulkDIDRemove(void)
@@ -2412,13 +2535,11 @@ void DIDOpsCommonChecking(void)
 	char gcQuery[1024];
         MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uNode=0;
-	unsigned uDatacenter=0;
 
 	if(!guContainer)
 	{
 		gcMessage="Must select a container.";
-		htmlContainer();
+		htmlContainerBulk();
 	}
 
 	//uStatus must be active or offline or appliance
@@ -2428,23 +2549,23 @@ void DIDOpsCommonChecking(void)
 	if(mysql_errno(&gMysql))
 	{
 		gcMessage="Select uNode error, contact sysadmin!";
-		htmlContainer();
+		htmlContainerBulk();
 	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[1],"%u",&uNode);
-		sscanf(field[2],"%u",&uDatacenter);
+		sscanf(field[1],"%u",&guNode);
+		sscanf(field[2],"%u",&guDatacenter);
 	}
 	if(mysql_num_rows(res)<1)
 	{
 		gcMessage="Selected container status is incorrect.";
-		htmlContainer();
+		htmlContainerBulk();
 	}
-	if(!uNode || !uDatacenter)
+	if(!guNode || !guDatacenter)
 	{
 		gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
-		htmlContainer();
+		htmlContainerBulk();
 	}
 
 	//Must be already registered with OpenSIPS or have LinesContracted value
@@ -2455,14 +2576,14 @@ void DIDOpsCommonChecking(void)
 	if(mysql_errno(&gMysql))
 	{
 		gcMessage="Check for cOrg_OpenSIPS_Attrs failed, contact sysadmin!";
-		htmlContainer();
+		htmlContainerBulk();
 	}
 	res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)<1)
 			{
 		mysql_free_result(res);
 		gcMessage="Container must be registered with OpenSIPS or have LinesContracted value.";
-		htmlContainer();
+		htmlContainerBulk();
 	}
 	mysql_free_result(res);
 
