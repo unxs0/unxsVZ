@@ -34,6 +34,11 @@ static char gcCustomerName[33]={""};
 static char gcAuthCode[33]={""};
 static char *gcShowDetails="";
 
+unsigned guMode;
+
+#define uMAX_DIDs_ALLOWED 128
+static char cReply[(33*uMAX_DIDs_ALLOWED)]={""};
+
 
 //TOC incomplete TODO
 void ProcessContainerVars(pentry entries[], int x);
@@ -55,6 +60,7 @@ char *ParseTextAreaLines(char *cTextArea);
 void BulkDIDAdd(void);
 void BulkDIDRemove(void);
 void DIDOpsCommonChecking(void);
+void LoadAllDIDs(void);
 
 void ProcessContainerVars(pentry entries[], int x)
 {
@@ -916,14 +922,30 @@ void ContainerCommands(pentry entries[], int x)
 			gcMessage="Bulk Operations";
 			htmlContainerBulk();
 		}//Bulk Operations
+		else if(!strcmp(gcFunction,"Load All DIDs") && guContainer)
+		{
+			gcMessage="All DIDs loaded";
+			LoadAllDIDs();
+		}//Load All DIDs
 		else if(!strcmp(gcFunction,"Bulk Remove DIDs") && guContainer)
 		{
 			if(strlen(gcBulkData)<10)
 			{
 				gcMessage="You must provide a valid list of DIDs to remove";
-				htmlContainer();
+				htmlContainerBulk();
 			}
 			DIDOpsCommonChecking();
+			guMode=1;
+			htmlContainerBulk();
+		}
+		else if(!strcmp(gcFunction,"Confirm Bulk Remove DIDs") && guContainer)
+		{
+			if(strlen(gcBulkData)<10)
+			{
+				gcMessage="You must provide a valid list of DIDs to remove";
+			}
+			DIDOpsCommonChecking();
+			guMode=0;
 			BulkDIDRemove();
 		}//Bulk Remove DIDs
 		else if(!strcmp(gcFunction,"Bulk Add DIDs") && guContainer)
@@ -931,7 +953,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(strlen(gcBulkData)<10)
 			{
 				gcMessage="You must provide a valid list of DIDs to add";
-				htmlContainer();
+				htmlContainerBulk();
 			}
 			DIDOpsCommonChecking();
 			BulkDIDAdd();
@@ -2250,15 +2272,28 @@ void funcContainerBulk(FILE *fp)
 
 	//DID
 	printf("<fieldset><legend>DID Bulk OPs</b></legend>");
+
 	fprintf(fp,"<textarea rows=10 cols=31"
 			" title='Enter a valid bulk data as per operation specs'"
 			" name=gcBulkData >%s</textarea>",gcBulkData);
-	fprintf(fp,"<p><input type=submit class=largeButton"
+	if(guMode==0)
+	{
+		fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Add DIDs only -no comments or other characters allowed, add only one per line.'"
 			" name=gcFunction value='Bulk Add DIDs'>\n");
-	fprintf(fp,"<p><input type=submit class=largeButton"
+		fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Remove DIDs specified one per line from currently loaded PBX container'"
 			" name=gcFunction value='Bulk Remove DIDs'>\n");
+		fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Load all active and pending backend registered DIDs'"
+			" name=gcFunction value='Load All DIDs'>\n");
+	}
+	else if(guMode==1)
+	{
+		fprintf(fp,"<p><input type=submit class=lwarnButton"
+			" title='Remove DIDs specified one per line from currently loaded PBX container'"
+			" name=gcFunction value='Confirm Bulk Remove DIDs'>\n");
+	}
 	printf("</fieldset>");
 
 	fprintf(fp,"<!-- funcContainerBulk(fp) End -->\n");
@@ -2323,9 +2358,6 @@ void BulkDIDAdd(void)
 	unsigned uLen=0;
 	unsigned uProcessedCount=0;
 	char cMsg[128];
-
-#define uMAX_DIDs_ALLOWED 128
-	static char cReply[(33*uMAX_DIDs_ALLOWED)]={""};
 
 	cReply[0]=0;
 
@@ -2431,8 +2463,6 @@ void BulkDIDRemove(void)
 	unsigned uLen=0;
 	unsigned uProcessedCount=0;
 	char cMsg[128];
-
-	static char cReply[(33*uMAX_DIDs_ALLOWED)]={""};
 
 	cReply[0]=0;
 
@@ -2588,3 +2618,50 @@ void DIDOpsCommonChecking(void)
 	mysql_free_result(res);
 
 }//void DIDOpsCommonChecking(void);
+
+
+void LoadAllDIDs(void)
+{
+	char gcQuery[1024];
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	if(!guContainer)
+	{
+		gcMessage="Must select a container.";
+		htmlContainerBulk();
+	}
+
+	cReply[0]=0;
+
+	sprintf(gcQuery,"SELECT cValue FROM tProperty"
+			" WHERE uKey=%u AND uType=3 AND (cName='cOrg_OpenSIPS_DID' OR cName='cOrg_Pending_DID')",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		sprintf(cReply,"%.255s\n",mysql_error(&gMysql));
+		goto Exit;
+	}
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)<1)
+	{
+		mysql_free_result(res);
+		strcat(cReply,"No DIDs found\n");
+		goto Exit;
+	}
+	while((field=mysql_fetch_row(res)))
+	{
+		if(field[0])
+		{
+			strcat(cReply,field[0]);
+			strcat(cReply,"\n");
+		}
+	}
+	mysql_free_result(res);
+
+
+Exit:
+	gcBulkData=cReply;
+	htmlContainerBulk();
+
+}//void LoadAllDIDs(void);
