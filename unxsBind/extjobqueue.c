@@ -125,6 +125,30 @@ void ParseExtParams(structExtJobParameters *structExtParam, char *cJobData)
 		if(cp2) *cp2=';';
 		structExtParam->ucParam1=1;
 	}
+	if((cp=strstr(cJobData,"cParam2=")))
+	{
+		cp2=NULL;
+		if((cp2=strchr(cp+8,';'))) *cp2=0;
+			sprintf(structExtParam->cParam2,"%.254s",cp+8);
+		if(cp2) *cp2=';';
+		structExtParam->ucParam2=1;
+	}
+	if((cp=strstr(cJobData,"cParam3=")))
+	{
+		cp2=NULL;
+		if((cp2=strchr(cp+8,';'))) *cp2=0;
+			sprintf(structExtParam->cParam3,"%.254s",cp+8);
+		if(cp2) *cp2=';';
+		structExtParam->ucParam3=1;
+	}
+	if((cp=strstr(cJobData,"cParam4=")))
+	{
+		cp2=NULL;
+		if((cp2=strchr(cp+8,';'))) *cp2=0;
+			sprintf(structExtParam->cParam4,"%.254s",cp+8);
+		if(cp2) *cp2=';';
+		structExtParam->ucParam4=1;
+	}
 	if((cp=strstr(cJobData,"cView=")))
 	{
 		cp2=NULL;
@@ -2003,9 +2027,184 @@ void ProcessVZJobQueue(void)
 				}
 				goto NormalExit;
 			}//unxsVZContainerARR
+
+			//Add or update a complete resource record
+			//cName is a fully qualified DNS RR name, i.e. it ends in the zone name.
+			else if(!strcmp("unxsVZGenericRR",field[0]))
+			{
+				//Update remote job queue running
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='%.32s'"
+						" WHERE uJob=%u",unxsVZ_uRUNNING,gcHostname,uJob);
+				mysql_query(&gMysql2,gcQuery);
+				if(mysql_errno(&gMysql2))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					goto ErrorExit;
+				}
+	
+				ParseExtParams(&structExtParam,field[1]);
+				//debug only
+				//printf("%s(%u) data:\n",field[0],uJob);
+				if(structExtParam.ucRRType)
+					printf("\tcRRType=%s;\n",structExtParam.cRRType);
+				if(structExtParam.ucParam1)
+					printf("\tcParam1=%s;\n",structExtParam.cParam1);
+				if(structExtParam.ucParam2)
+					printf("\tcParam2=%s;\n",structExtParam.cParam2);
+				if(structExtParam.ucParam3)
+					printf("\tcParam3=%s;\n",structExtParam.cParam3);
+				if(structExtParam.ucParam4)
+					printf("\tcParam4=%s;\n",structExtParam.cParam4);
+				if(structExtParam.ucName)
+					printf("\tcName=%s;\n",structExtParam.cName);
+				if(structExtParam.ucZone)
+					printf("\tcZone=%s;\n",structExtParam.cZone);
+				if(structExtParam.ucView)
+					printf("\tcView=%s;\n",structExtParam.cView);
+
+				//Create local job mod zone, after checking and inserting new RR data.
+				//cName must be FQDN
+				if(!structExtParam.cParam1[0])
+				{
+					fprintf(stderr,"cParam1 is required\n");
+					goto ErrorExit;
+				}
+
+				if(!structExtParam.cRRType[0])
+				{
+					fprintf(stderr,"cRRType is required\n");
+					goto ErrorExit;
+				}
+
+				//cName must be FQDN
+				if(structExtParam.cName[strlen(structExtParam.cName)-1]!='.')
+				{
+					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cName);
+					goto ErrorExit;
+				}
+				//cName must end in cZone.
+				if(!strcmp(structExtParam.cName+(strlen(structExtParam.cName)-strlen(structExtParam.cZone)-1),
+					structExtParam.cZone))
+				{
+					fprintf(stderr,"'%s' does not end with '%s'\n",structExtParam.cName,structExtParam.cZone);
+					goto ErrorExit;
+				}
+
+				//Validate RRType
+				sprintf(gcQuery,"SELECT uRRType FROM tRRType WHERE"
+						" cLabel='%s' LIMIT 1",structExtParam.cRRType);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					goto ErrorExit;
+				}
+				res2=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res2)!=1)
+				{
+					mysql_free_result(res2);
+					fprintf(stderr,"Valid cRRType is required\n");
+					goto ErrorExit;
+				}
+				mysql_free_result(res2);
+
+				//Get required data
+				sprintf(gcQuery,"SELECT uZone,uNSSet,uView,uOwner FROM tZone WHERE"
+						" uView=(SELECT uView FROM tView WHERE cLabel='%s' LIMIT 1) AND"
+						" cZone='%s' LIMIT 1",
+							structExtParam.cView,
+							structExtParam.cZone);
+				//debug only
+				//printf("%s\n",gcQuery);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					goto ErrorExit;
+				}
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+				{
+					sscanf(field2[0],"%u",&uZone);
+					sscanf(field2[1],"%u",&uNSSet);
+					sscanf(field2[2],"%u",&uView);
+					sscanf(field2[3],"%u",&uOwner);
+				}
+				mysql_free_result(res2);
+
+				if(!uZone)
+				{
+					fprintf(stderr,"No tZone.uZone for %s %s\n",
+								structExtParam.cView,
+								structExtParam.cZone);
+					fprintf(stderr,"%s",gcQuery);
+					goto ErrorExit;
+				}
+				//debug only
+				//printf("uZone=%u uNSSet=%u uView=%u\n",uZone,uNSSet,uView);
+
+				//Do not add same record again
+				//No updating only adding
+				sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cNAME='%s' AND uZone=%u"
+						" AND cParam1='%s' AND cParam2='%s' AND cParam3='%s' AND cParam4='%s'"
+						" AND uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='%s' LIMIT 1)",
+							structExtParam.cName,uZone,structExtParam.cParam1,structExtParam.cParam2,
+							structExtParam.cParam3,structExtParam.cParam4,structExtParam.cRRType);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					goto ErrorExit;
+				}
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+					sscanf(field2[0],"%u",&uResource);
+				mysql_free_result(res2);
+
+				if(!uResource)
+				{
+					sprintf(gcQuery,"INSERT tResource SET cName='%s',cParam1='%s',"
+							"cParam2='%s',cParam3='%s',cParam4='%s',"
+							"uOwner=%u,uCreatedBy=1,"
+							"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='unxsVZGenericRR',"
+							"uTTL=0,"
+							"uZone=%u,"
+							"uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='%s' LIMIT 1)",
+							structExtParam.cName,structExtParam.cParam1,structExtParam.cParam2,
+							structExtParam.cParam3,structExtParam.cParam4,uOwner,uZone,structExtParam.cRRType);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+					uResource=mysql_insert_id(&gMysql);
+					printf("Inserting uResource=%u\n",uResource);
+				}
+				UpdateSerialNum(uZone);
+
+				//Submit zone mod job
+				guLoginClient=1;
+				guCompany=uOwner;
+				if(SubmitJob("Modify",uNSSet,structExtParam.cZone,0,0))
+				{
+					fprintf(stderr,"SubmitJob() failed.\n");
+					goto ErrorExit;
+				}
+
+				//Update remote job queue done ok
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZGenericRR ok'"
+						" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
+				mysql_query(&gMysql2,gcQuery);
+				if(mysql_errno(&gMysql2))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					goto ErrorExit;
+				}
+				goto NormalExit;
+			}//unxsVZGenericRR
 		}//while
 		mysql_free_result(res);
-	
 	}//connected
 	else
 	{
