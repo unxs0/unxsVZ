@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		sprintf(gcQuery,"SELECT uNode FROM tNode WHERE uStatus=1 AND uOwner=%u",guOrg);
+		sprintf(gcQuery,"SELECT uNode FROM tNode WHERE uStatus=1 AND uOwner=%u AND cLabel!='appliance'",guOrg);
 		mysql_query(&gMysql,gcQuery);
 		res=mysql_store_result(&gMysql);
 		while((field=mysql_fetch_row(res)))
@@ -670,7 +670,7 @@ void SetLogin(void)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		sprintf(gcQuery,"SELECT uNode FROM tNode WHERE uStatus=1 AND uOwner=%u",guOrg);
+		sprintf(gcQuery,"SELECT uNode FROM tNode WHERE uStatus=1 AND uOwner=%u AND cLabel!='appliance'",guOrg);
 		mysql_query(&gMysql,gcQuery);
 		res=mysql_store_result(&gMysql);
 		while((field=mysql_fetch_row(res)))

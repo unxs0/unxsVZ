@@ -402,11 +402,11 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	{
 		NewContainer(uJob,uContainer);
 	}
-	else if(!strcmp(cJobName,"AllowAccess"))
+	else if(!strcmp(cJobName,"AllowAccess") && uNode)
 	{
 		AllowAccess(uJob,cJobData);
 	}
-	else if(!strcmp(cJobName,"DenyAccess"))
+	else if(!strcmp(cJobName,"DenyAccess") && uNode)
 	{
 		DenyAccess(uJob,cJobData);
 	}
@@ -5397,6 +5397,7 @@ void DenyAccess(unsigned uJob,const char *cJobData)
 	if(system(gcQuery))
 		logfileLine("DenyAccess","iptables del command failed but ignored");
 
+	logfileLine("DenyAccess","iptables command ok");
 	tJobDoneUpdate(uJob);
 	return;
 
