@@ -156,6 +156,34 @@ int main(int argc, char *argv[])
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 			mysql_query(&gMysql,gcQuery);
+#define PERNODEFIREWALL 
+#ifdef PERNODEFIREWALL
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+
+		sprintf(gcQuery,"SELECT uNode FROM tNode WHERE uStatus=1 AND uOwner=%u",guOrg);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			unsigned uNode=0;
+
+			sscanf(field[0],"%u",&uNode);
+			if(!uNode) continue;
+
+			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DenyAccess %u',cJobName='DenyAccess'"
+					",uDatacenter=0,uNode=%u,uContainer=0"//All datacenters
+					",uJobDate=UNIX_TIMESTAMP(NOW())"
+					",uJobStatus=1"
+					",cJobData='cIPv4=%.15s;'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guLoginClient,
+						uNode,
+						gcHost,
+						guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+		}
+#endif
         		guPermLevel=0;
 			gcUser[0]=0;
 			guLoginClient=0;
@@ -637,6 +665,34 @@ void SetLogin(void)
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 		mysql_query(&gMysql,gcQuery);
+
+#ifdef PERNODEFIREWALL
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+
+		sprintf(gcQuery,"SELECT uNode FROM tNode WHERE uStatus=1 AND uOwner=%u",guOrg);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			unsigned uNode=0;
+
+			sscanf(field[0],"%u",&uNode);
+			if(!uNode) continue;
+
+			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='AllowAccess %u',cJobName='AllowAccess'"
+					",uDatacenter=0,uNode=%u,uContainer=0"//All datacenters
+					",uJobDate=UNIX_TIMESTAMP(NOW())"
+					",uJobStatus=1"
+					",cJobData='cIPv4=%.15s;'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guLoginClient,
+						uNode,
+						gcHost,
+						guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+		}
+#endif
 	}
 #ifdef cLDAPURI
 	else if(iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
