@@ -56,6 +56,8 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
 void ActionScripts(unsigned uJob,unsigned uContainer);
+void AllowAccess(unsigned uJob,const char *cJobData);
+void DenyAccess(unsigned uJob,const char *cJobData);
 void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNewVeid);
 void AppFunctions(FILE *fp,char *cFunction);
@@ -312,7 +314,7 @@ void ProcessJobQueue(unsigned uDebug)
 	}
 
 	sprintf(gcQuery,"SELECT uJob,uContainer,cJobName,cJobData FROM tJob WHERE uJobStatus=1"
-				" AND uDatacenter=%u AND (uNode=%u OR uNode=0)" //uNode=0 all node job
+				" AND (uDatacenter=%u OR uDatacenter=0) AND (uNode=%u OR uNode=0)" //uDatacenter,uNode=0 all type jobs
 				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) ORDER BY uJob LIMIT 128",
 						uDatacenter,uNode);
 	mysql_query(&gMysql,gcQuery);
@@ -399,6 +401,14 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"NewContainer"))
 	{
 		NewContainer(uJob,uContainer);
+	}
+	else if(!strcmp(cJobName,"AllowAccess"))
+	{
+		AllowAccess(uJob,cJobData);
+	}
+	else if(!strcmp(cJobName,"DenyAccess"))
+	{
+		DenyAccess(uJob,cJobData);
 	}
 	else if(!strcmp(cJobName,"ActionScripts"))
 	{
@@ -5332,3 +5342,62 @@ CommonExit:
 	return;
 
 }//void SwapIPContainer()
+
+
+//These functions assume something like this at end part of /etc/sysconfig/iptables:
+// -A INPUT -p tcp -m tcp --dport 443 -j REJECT --reject-with icmp-port-unreachable
+void AllowAccess(unsigned uJob,const char *cJobData)
+{
+	char cIPv4[16]={""};
+	char *cp;
+
+	sscanf(cJobData,"cIPv4=%15s;",cIPv4);
+	if((cp=strchr(cIPv4,';')))
+		*cp=0;
+	if(!cIPv4[0])
+	{
+		logfileLine("AllowAccess","Could not determine cIPv4");
+		tJobErrorUpdate(uJob,"cIPv4[0]==0");
+		return;
+	}
+
+	//Test fixed rule for now
+	sprintf(gcQuery,"/sbin/iptables -I INPUT -s %.15s -p tcp -m tcp --dport 443 -j ACCEPT",cIPv4);
+	if(system(gcQuery))
+	{
+		logfileLine("AllowAccess","iptables command failed");
+		tJobErrorUpdate(uJob,"iptables command failed");
+		return;
+	}
+
+	logfileLine("AllowAccess","iptables command ok");
+	tJobDoneUpdate(uJob);
+	return;
+
+}//void AllowAccess(unsigned uJob,const char *cJobData)
+
+
+void DenyAccess(unsigned uJob,const char *cJobData)
+{
+	char cIPv4[16]={""};
+	char *cp;
+
+	sscanf(cJobData,"cIPv4=%15s;",cIPv4);
+	if((cp=strchr(cIPv4,';')))
+		*cp=0;
+	if(!cIPv4[0])
+	{
+		logfileLine("DenyAccess","Could not determine cIPv4");
+		tJobErrorUpdate(uJob,"cIPv4[0]==0");
+		return;
+	}
+
+	//Test fixed rule for now
+	sprintf(gcQuery,"/sbin/iptables -D INPUT -s %.15s -p tcp -m tcp --dport 443 -j ACCEPT",cIPv4);
+	if(system(gcQuery))
+		logfileLine("DenyAccess","iptables del command failed but ignored");
+
+	tJobDoneUpdate(uJob);
+	return;
+
+}//void DenyAccess(unsigned uJob,const char *cJobData)
