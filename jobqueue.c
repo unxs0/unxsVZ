@@ -5345,7 +5345,7 @@ CommonExit:
 
 
 //These functions assume something like this at end part of /etc/sysconfig/iptables:
-// -A INPUT -p tcp -m tcp --dport 443 -j REJECT --reject-with icmp-port-unreachable
+// -A FORWARD -p tcp -m tcp --dport 443 -j REJECT --reject-with icmp-port-unreachable
 void AllowAccess(unsigned uJob,const char *cJobData)
 {
 	char cIPv4[16]={""};
@@ -5362,7 +5362,8 @@ void AllowAccess(unsigned uJob,const char *cJobData)
 	}
 
 	//Test fixed rule for now
-	sprintf(gcQuery,"/sbin/iptables -I INPUT -s %.15s -p tcp -m tcp --dport 443 -j ACCEPT",cIPv4);
+	sprintf(gcQuery,"/sbin/iptables -L -n | grep %.15s > /dev/null; if [ $? != 0 ];then"
+			" /sbin/iptables -I FORWARD -s %.15s -p tcp -m tcp --dport 443 -j ACCEPT; fi;",cIPv4,cIPv4);
 	if(system(gcQuery))
 	{
 		logfileLine("AllowAccess","iptables command failed");
@@ -5393,7 +5394,8 @@ void DenyAccess(unsigned uJob,const char *cJobData)
 	}
 
 	//Test fixed rule for now
-	sprintf(gcQuery,"/sbin/iptables -D INPUT -s %.15s -p tcp -m tcp --dport 443 -j ACCEPT",cIPv4);
+	sprintf(gcQuery,"/sbin/iptables -L -n | grep %.15s > /dev/null; if [ $? == 0 ];then"
+			" /sbin/iptables -D FORWARD -s %.15s -p tcp -m tcp --dport 443 -j ACCEPT; fi;",cIPv4,cIPv4);
 	if(system(gcQuery))
 		logfileLine("DenyAccess","iptables del command failed but ignored");
 
