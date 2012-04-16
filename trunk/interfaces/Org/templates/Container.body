@@ -55,7 +55,7 @@
 <td width="10"> </td>
 <td valign="top" width="9" class="hdrtout padlt8"></td>
 <td class="hdrtout padlt8">
-	<h6 class="modhdr"><a href="https://{{gcCtHostname}}/admin" style="text-decoration : none">{{gcCtHostname}}</a>
+	<h6 class="modhdr"><a href="https://{{gcCtHostname}}{{gcAdminPort}}/admin" style="text-decoration : none">{{gcCtHostname}}</a>
 		Container settings</h6>
 </td>
 <td valign="top" width="9" class="hdrtout padlt8"></td>
