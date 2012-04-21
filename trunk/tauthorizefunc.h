@@ -98,7 +98,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 				unsigned uPrevCertClient=0;
 				sscanf(ForeignKey("tAuthorize","uCertClient",uAuthorize),"%u",&uPrevCertClient);
 				if(guPermLevel<12 && uPrevCertClient) uCertClient=uPrevCertClient;
-				if(uPerm<6 || uPerm>12)
+				if(uPerm<1 || uPerm>12)
 				{
 					guMode=2002;
 					sprintf(gcQuery,"uPerm level error:%u",uPerm);
@@ -110,7 +110,8 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 					tAuthorize("Must provide a passwd");
 				}
 
-				if(cClrPasswd[0])
+				//Must clear out encrypted password before replacing
+				if(cClrPasswd[0] && strncmp(cPasswd,"..",2) && strncmp(cPasswd,"$1$",3))
 				{
 					sprintf(cPasswd,"%.35s",cClrPasswd);
 					EncryptPasswd(cPasswd);

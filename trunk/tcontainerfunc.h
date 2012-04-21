@@ -3755,8 +3755,10 @@ void ExttContainerButtons(void)
 			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
 				" name=gcCommand value='Cancel'>");
 			printf("<p><u>Set Operation Options</u>");
-			printf("<br>uGroup ");
-			tContainerGroupPullDown(uChangeGroup,1);
+			printf("<br>Target node");
+			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
+			printf(" Clone target node");
+			tTablePullDown("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1);
 			printf("<br><input title='For supported set operations (like Group Delete, Destroy or Migration)"
 				" apply same to their clone containers.'"
 				" type=checkbox name=guOpOnClones");
