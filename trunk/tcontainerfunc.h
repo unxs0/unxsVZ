@@ -271,7 +271,7 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 			uChangeGroup=ReadPullDown("tGroup","uGroupType=1 AND cLabel",ctContainerGroupPullDown);
 			uGroup=uChangeGroup;//For legacy support TODO
 		}
-		else if(!strcmp(entries[i].name,"guOpOnClones"))
+		else if(!strcmp(entries[i].name,"guOpOnClonesNoCA"))
 		{
 			guOpOnClones=1;
 		}
@@ -513,7 +513,10 @@ void ExttContainerCommands(pentry entries[], int x)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," uStatus=%u",uSearchStatus);
+					if(uSearchStatusNot)
+						sprintf(cQuerySection," uStatus!=%u",uSearchStatus);
+					else
+						sprintf(cQuerySection," uStatus=%u",uSearchStatus);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -655,7 +658,10 @@ void ExttContainerCommands(pentry entries[], int x)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," uStatus=%u",uSearchStatus);
+					if(uSearchStatusNot)
+						sprintf(cQuerySection," uStatus!=%u",uSearchStatus);
+					else
+						sprintf(cQuerySection," uStatus=%u",uSearchStatus);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -3761,7 +3767,7 @@ void ExttContainerButtons(void)
 			tTablePullDown("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1);
 			printf("<br><input title='For supported set operations (like Group Delete, Destroy or Migration)"
 				" apply same to their clone containers.'"
-				" type=checkbox name=guOpOnClones");
+				" type=checkbox name=guOpOnClonesNoCA");
 			if(guOpOnClones)
 				printf(" checked");
 			printf("> guOpOnClones");

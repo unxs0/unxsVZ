@@ -68,6 +68,7 @@ static time_t uBackupDate=0;
 //uStatus: Container tStatus.uStatus
 static unsigned uSearchStatus=0;
 static char cuSearchStatusPullDown[256]={""};
+static unsigned uSearchStatusNot=0;
 static char cHostnameSearch[64]={""};
 static char cIPv4Search[16]={""};
 int ReadYesNoPullDownTriState(const char *cLabel);
@@ -206,6 +207,8 @@ void ProcesstContainerVars(pentry entries[], int x)
 		}
 		else if(!strcmp(entries[i].name,"uSearchSource"))
 			sscanf(entries[i].val,"%u",&uSearchSource);
+		else if(!strcmp(entries[i].name,"uSearchStatusNotNoCA"))
+			uSearchStatusNot=1;
 		else if(!strcmp(entries[i].name,"cYesNouSearchSource"))
 		{
 			sprintf(cYesNouSearchSource,"%.31s",entries[i].val);
@@ -422,6 +425,10 @@ void tContainerSearchSet(unsigned uStep)
 	YesNoPullDownTriState("uSearchSource",uSearchSource,1);
 	OpenRow("Status","black");
 	tTablePullDown("tStatus;cuSearchStatusPullDown","cLabel","cLabel",uSearchStatus,1);
+	printf("<input title='Logical NOT of selected status if any' type=checkbox name=uSearchStatusNotNoCA ");
+	if(uSearchStatusNot)
+		printf(" checked");
+	printf("> Not");
 	OpenRow("OSTemplate","black");
 	tTablePullDown("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1);
 
