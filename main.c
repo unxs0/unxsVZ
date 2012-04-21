@@ -464,7 +464,7 @@ void jsToggleCheckboxes(void)
 		"function checkAll(checkname, toggle)"
 		"{"
 		"	for (i = 0; i < checkname.length; i++)"
-		"	if(checkname[i].name!=\"guOpOnClones\")"
+		"	if( checkname[i].name.indexOf(\"NoCA\")==(-1) )"
 		"	{"
 		"		checkname[i].checked = toggle.checked? true:false"
 		"	}"
