@@ -8,6 +8,7 @@ LEGAL
 	GPL license applies (see www.fsf.org for more info.)
 	License included with this distribution.
 */
+#define LOCALCOPYRIGHT "&copy; 2000-2012 Unixservice, LLC. All Rights Reserved."
 
 //Set these up to match your mySQL database settings and location
 //NULL is for stream socket on local server. Much faster than localhost tcp/ip.
