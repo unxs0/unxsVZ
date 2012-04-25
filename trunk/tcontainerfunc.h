@@ -1886,25 +1886,29 @@ void ExttContainerCommands(pentry entries[], int x)
 						if(uGroup)
 							ChangeGroup(uNewVeid,uGroup);
 
-						//TODO cIPv4ClassCClone can't = cIPv4ClassC
-						//Get next available uWizIPv4
-						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-							" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
-								uForClient,cIPv4ClassCClone,uTargetDatacenter);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-							htmlPlainTextError(mysql_error(&gMysql));
-						res=mysql_store_result(&gMysql);
-						if((field=mysql_fetch_row(res)))
-							sscanf(field[0],"%u",&uWizIPv4);
-						else
-							tContainer("<blink>Error:</blink> No more clone IPs available"
-								", multiple container creation aborted!");
-						mysql_free_result(res);
+						//Get next available clone uIPv4 only if not last loop iteration
+						if((i+1)<uNumContainer)
+						{
+							//TODO cIPv4ClassCClone can't = cIPv4ClassC
+							//Get next available uWizIPv4
+							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+								" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
+									uForClient,cIPv4ClassCClone,uTargetDatacenter);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							res=mysql_store_result(&gMysql);
+							if((field=mysql_fetch_row(res)))
+								sscanf(field[0],"%u",&uWizIPv4);
+							else
+								tContainer("<blink>Error:</blink> No more clone IPs available"
+									", multiple container creation aborted!");
+							mysql_free_result(res);
+						}
 
 						if(uCreateDNSJob)
 							CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uTargetDatacenter,guLoginClient);
-					}
+					}//cAutoCloneNode
 
 
 					//For some reason cHostname is cLabel at this point. TODO debug.

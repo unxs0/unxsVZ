@@ -405,7 +405,7 @@ void ExttOSTemplateButtons(void)
 			if(uOSTemplate>0 && uNum==0)
 			{
 				printf("<p><u>Extended table actions</u><br>");
-                        	printf("<input title='Submit a job for the local import of the currently selected "
+                        	printf("<input class=largeButton title='Submit a job for the local import of the currently selected "
 					"template' type=submit name=gcCommand value='Local Import'>");
 			}
 	}
