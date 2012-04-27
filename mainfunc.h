@@ -1045,6 +1045,7 @@ void UpdateSchema(void)
 	unsigned uConfigDatacenter=0;
 	unsigned uNameserverDatacenter=0;
 	unsigned uSearchdomainDatacenter=0;
+	unsigned uGroupGlueIP=0;
 
 	unsigned uIncorrectSource=0;
 	unsigned uIncorrectVeth=0;
@@ -1153,6 +1154,19 @@ void UpdateSchema(void)
 	{
 		if(!strcmp(field[0],"uDatacenter"))
 			uSearchdomainDatacenter=1;
+	}
+       	mysql_free_result(res);
+
+	sprintf(gcQuery,"SHOW COLUMNS IN tGroupGlue");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uIP"))
+			uGroupGlueIP=1;
 	}
        	mysql_free_result(res);
 
@@ -1458,6 +1472,22 @@ void UpdateSchema(void)
 			printf("%s\n",mysql_error(&gMysql));
 		else
 			printf("Added uDatacenter to tSearchdomain\n");
+	}
+
+	if(!uGroupGlueIP)
+	{
+		sprintf(gcQuery,"ALTER TABLE tGroupGlue ADD uIP INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uIP to tGroupGlue\n");
+		sprintf(gcQuery,"ALTER TABLE tGroupGlue ADD INDEX (uIP)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uIP to tGroupGlue\n");
 	}
 
 	//Please fix this TODO

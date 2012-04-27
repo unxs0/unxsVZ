@@ -433,7 +433,14 @@ void tGroupGlueList(void)
 
 void CreatetGroupGlue(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGroupGlue ( uGroup INT UNSIGNED NOT NULL DEFAULT 0,index (uGroup), uNode INT UNSIGNED NOT NULL DEFAULT 0,index (uNode), uContainer INT UNSIGNED NOT NULL DEFAULT 0,index (uContainer), uGroupGlue INT UNSIGNED PRIMARY KEY AUTO_INCREMENT )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGroupGlue "
+			" ("
+			" uGroup INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uGroup),"
+			" uNode INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uNode),"
+			" uContainer INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uContainer),"
+			" uIP INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uIP),"
+			" uGroupGlue INT UNSIGNED PRIMARY KEY AUTO_INCREMENT"
+			" )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

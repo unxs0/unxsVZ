@@ -405,7 +405,7 @@ void tContainer(const char *cResult)
 
 void tContainerSearchSet(unsigned uStep)
 {
-	OpenRow("<u>Set search paramters</u>","black");
+	OpenRow("<u>Set search parameters</u>","black");
 	OpenRow("Hostname pattern","black");
 	//Usability: Transfer from main tContainer page any current search pattern
 	if(cSearch[0])

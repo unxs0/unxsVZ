@@ -449,7 +449,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
-
 		else if(!strcmp(gcCommand,"Remove from Search Set"))
                 {
 			if(guPermLevel>=9)
