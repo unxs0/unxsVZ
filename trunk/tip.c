@@ -39,10 +39,22 @@ static unsigned uDatacenter=0;
 static char cuDatacenterPullDown[256]={""};
 
 
+//Extensions for searching
+static char cIPv4Search[16]={""};
+static unsigned uAvailableSearch=0;
+static char cYesNouAvailableSearch[8]={""};
+static unsigned uNodeSearch=0;
+static char cuNodeSearchPullDown[256]={""};
+static unsigned uOwnerSearch=0;
+static unsigned uDatacenterSearch=0;
+static char cuDatacenterSearchPullDown[256]={""};
+int ReadYesNoPullDownTriState(const char *cLabel);
+void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode);
 
 #define VAR_LIST_tIP "tIP.uIP,tIP.cLabel,tIP.uAvailable,tIP.uOwner,tIP.uCreatedBy,tIP.uCreatedDate,tIP.uModBy,tIP.uModDate,tIP.uDatacenter"
 
  //Local only
+void tIPSearchSet(unsigned uStep);
 void Insert_tIP(void);
 void Update_tIP(char *cRowid);
 void ProcesstIPListVars(pentry entries[], int x);
@@ -96,6 +108,34 @@ void ProcesstIPVars(pentry entries[], int x)
 		{
 			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
 			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
+		}
+		else if(!strcmp(entries[i].name,"uOwnerSearch"))
+			sscanf(entries[i].val,"%u",&uOwnerSearch);
+		else if(!strcmp(entries[i].name,"cForClientPullDown"))
+		{
+			sprintf(cForClientPullDown,"%.255s",entries[i].val);
+			uOwnerSearch=ReadPullDown("tClient","cLabel",cForClientPullDown);
+		}
+		else if(!strcmp(entries[i].name,"uDatacenterSearch"))
+			sscanf(entries[i].val,"%u",&uDatacenterSearch);
+		else if(!strcmp(entries[i].name,"cuDatacenterSearchPullDown"))
+		{
+			sprintf(cuDatacenterSearchPullDown,"%.255s",entries[i].val);
+			uDatacenterSearch=ReadPullDown("tDatacenter","cLabel",cuDatacenterSearchPullDown);
+		}
+		else if(!strcmp(entries[i].name,"uNodeSearch"))
+			sscanf(entries[i].val,"%u",&uNodeSearch);
+		else if(!strcmp(entries[i].name,"cuNodeSearchPullDown"))
+		{
+			sprintf(cuNodeSearchPullDown,"%.255s",entries[i].val);
+			uNodeSearch=ReadPullDown("tNode","cLabel",cuNodeSearchPullDown);
+		}
+		else if(!strcmp(entries[i].name,"cIPv4Search"))
+			sprintf(cIPv4Search,"%.15s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cYesNouAvailableSearch"))
+		{
+			sprintf(cYesNouAvailableSearch,"%.8s",entries[i].val);
+			uAvailableSearch=ReadYesNoPullDownTriState(cYesNouAvailableSearch);
 		}
 
 	}
@@ -208,7 +248,7 @@ void tIP(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: IPs used and reserved for use",0);
+	Header_ism3(":: IPs used and reserved for use",2);//checkbox js = 2
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -244,9 +284,14 @@ void tIP(const char *cResult)
 	//
 	OpenFieldSet("tIP Record Data",100);
 
-	if(guMode==2000 || guMode==2002)
+	//Custom right panel for creating search sets
+	if(guMode==12001)
+		tIPSearchSet(1);
+	else if(guMode==12002)
+		tIPSearchSet(2);
+	else if(guMode==2000 || guMode==2002)
 		tIPInput(1);
-	else
+	else if(1)
 		tIPInput(0);
 
 	//
@@ -259,6 +304,38 @@ void tIP(const char *cResult)
 	Footer_ism3();
 
 }//end of tIP();
+
+
+void tIPSearchSet(unsigned uStep)
+{
+	OpenRow("<u>Set search parameters</u>","black");
+
+	OpenRow("IPv4 pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
+			" value=\"%s\" size=40 maxlength=15 >",cIPv4Search);
+
+	OpenRow("Datacenter","black");
+	tTablePullDown("tDatacenter;cuDatacenterSearchPullDown","cLabel","cLabel",uDatacenterSearch,1);
+
+	OpenRow("Node","black");
+	tTablePullDown("tNode;cuNodeSearchPullDown","cLabel","cLabel",uNodeSearch,1);
+
+	OpenRow("Owner","black");
+	tTablePullDownResellers(uOwnerSearch,0);
+
+	OpenRow("Available","black");
+	YesNoPullDownTriState("uAvailableSearch",uAvailableSearch,1);
+
+	if(uStep==1)
+	{
+		;
+	}
+	else if(uStep==2)
+	{
+		;
+	}
+
+}//void tIPSearchSet(unsigned uStep)
 
 
 void tIPInput(unsigned uMode)

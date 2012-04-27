@@ -25,6 +25,8 @@ static char cSearch[32]={""};
 void AddIPRange(char *cIPRange);
 void DelIPRange(char *cIPRange);
 
+//extern
+unsigned uGetSearchGroup(const char *gcUser);
 
 void ExtProcesstIPVars(pentry entries[], int x)
 {
@@ -53,7 +55,60 @@ void ExttIPCommands(pentry entries[], int x)
 	{
         	MYSQL_RES *res;
 
-		if(!strcmp(gcCommand,LANG_NB_NEW))
+                if(!strncmp(gcCommand,"Set ",4) || !strncmp(gcCommand,"Group ",6) || !strncmp(gcCommand,"Delete Checked",14))
+                {
+			ProcesstIPVars(entries,x);
+                        guMode=12002;
+			tIP(gcCommand);
+		}
+		else if(!strcmp(gcCommand,"Reload Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstIPVars(entries,x);
+                        	guMode=12002;
+	                        tIP("Search set reloaded");
+			}
+			else
+			{
+				tIP("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+		else if(!strcmp(gcCommand,"Remove from Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        	tIP("No records were removed from your search set");
+			}
+			else
+			{
+				tIP("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
+		else if(!strcmp(gcCommand,"Add to Search Set") || !strcmp(gcCommand,"Create Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        	tIP("No records were added to your search set. Filter returned 0 records");
+			}
+			else
+			{
+				tIP("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
+		else if(!strcmp(gcCommand,"Search Set Operations"))
+                {
+			if(guPermLevel>=9)
+			{
+                        	guMode=12001;
+	                        tIP("Search Set Operations");
+			}
+			else
+			{
+				tIP("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
+		else if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
 			if(guPermLevel>=10)
 			{
@@ -241,6 +296,27 @@ void ExttIPButtons(void)
 	OpenFieldSet("tIP Aux Panel",100);
 	switch(guMode)
         {
+                case 12001:
+                case 12002:
+			printf("<u>Create or refine your user search set</u><br>");
+			printf("In the right panel you can select your search criteria. When refining you do not need"
+				" to reuse your initial search critieria. Your search set is persistent even across unxsVZ sessions.<p>");
+			printf("<input type=submit class=largeButton title='Create an initial or replace an existing search set'"
+				" name=gcCommand value='Create Search Set'>");
+			printf("<input type=submit class=largeButton title='Add the results to your current search set. Do not add the same search"
+				" over and over again it will not result in any change but may slow down processing.'"
+				" name=gcCommand value='Add to Search Set'>");
+			printf("<p><input type=submit class=largeButton title='Apply the right panel filter to refine your existing search set"
+				" by removing set elements that match the filter settings.'"
+				" name=gcCommand value='Remove from Search Set'>\n");
+			printf("<p><input type=submit class=largeButton title='Reload current search set. Good for checking for any new status updates'"
+				" name=gcCommand value='Reload Search Set'>");
+			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
+				" name=gcCommand value='Cancel'>");
+			printf("<p><u>Set Operation Options</u>");
+
+                break;
+
                 case 2000:
 			printf("<p><u>Enter/mod data</u><br>");
 			tTablePullDownResellers(uForClient,1);
@@ -285,6 +361,9 @@ void ExttIPButtons(void)
 				" To add an initial range use [New], then [Modify], enter new CIDR range."
 				"<p>You can also delete available IPs <i>en masse</i> via the cIPRange at the [Delete]"
 				" stage.");
+			printf("<p><input type=submit class=largeButton title='Open user search set page. There you can create search sets and operate"
+				" on selected containers of the loaded container set.'"
+				" name=gcCommand value='Search Set Operations'>\n");
 			printf("<p><u>Filter by cLabel</u><br>");
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
 					" name=cSearch value='%s'>",cSearch);
@@ -301,8 +380,130 @@ void ExttIPButtons(void)
 
 void ExttIPAuxTable(void)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uGroup=0;
+	unsigned uNumRows=0;
 
-}//void ExttIPAuxTable(void)
+	switch(guMode)
+	{
+		case 12001:
+		case 12002:
+			//Set operation buttons
+			OpenFieldSet("Set Operations",100);
+			printf("<input title='Delete checked containers from your search set. They will still be visible but will"
+				" marked deleted and will not be used in any subsequent set operation'"
+				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
+			CloseFieldSet();
+
+			sprintf(gcQuery,"Search Set Contents");
+			OpenFieldSet(gcQuery,100);
+			uGroup=uGetSearchGroup(gcUser);
+			sprintf(gcQuery,"SELECT"
+					" tIP.uIP,"
+					" tIP.cLabel,"
+					" tIP.uAvailable,"
+					" tDatacenter.cLabel,"
+					" tClient.cLabel,"
+					" FROM_UNIXTIME(tIP.uCreatedDate,'%%a %%b %%d %%T %%Y')"
+					" FROM tIP"
+					" LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP"
+					" LEFT JOIN tDatacenter ON tIP.uDatacenter=tDatacenter.uDatacenter"
+					" LEFT JOIN tClient ON tIP.uOwner=tClient.uClient"
+					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u)",uGroup);
+		        mysql_query(&gMysql,gcQuery);
+		        if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		        res=mysql_store_result(&gMysql);
+			if((uNumRows=mysql_num_rows(res)))
+			{
+				char cResult[100]={""};
+				char cCtLabel[100]={""};
+
+				printf("<table>");
+				printf("<tr>");
+				printf("<td><u>cLabel</u></td>"
+					"<td><u>uAvailable</u></td>"
+					"<td><u>Datacenter</u></td>"
+					"<td><u>Owner</u></td>"
+					"<td><u>CreatedDate</u></td>"
+					"<td><u>Set operation result</u></td></tr>");
+//Reset margin start
+while((field=mysql_fetch_row(res)))
+{
+	if(guMode==12002)
+	{
+		register int i;
+		unsigned uCtContainer=0;
+
+		cResult[0]=0;
+		sscanf(field[0],"%u",&uCtContainer);
+		sprintf(cCtLabel,"Ct%u",uCtContainer);
+		for(i=0;i<x;i++)
+		{
+			//insider xss protection
+			if(guPermLevel<10)
+				continue;
+
+			if(!strcmp(entries[i].name,cCtLabel))
+			{
+				if(!strcmp(gcCommand,"Delete Checked"))
+				{
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uIP=%u",uGroup,uCtContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,mysql_error(&gMysql));
+						break;
+					}
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"Deleted from set");
+					else
+						sprintf(cResult,"Unexpected non deletion");
+					break;
+				}//Delete Checked
+
+				else if(1)
+				{
+					sprintf(cResult,"Unexpected gcCommand=%.64s",gcCommand);
+					break;
+				}
+			}//end if Ct block
+		}//end for()
+	}
+
+	printf("<tr>");
+	printf("<td width=200 valign=top>"
+	"<input type=checkbox name=Ct%s >" //0
+	"<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>" //0 and 1
+	"</td>"
+	"<td>%s</td>" //2
+	"<td>%s</td>" //3
+	"<td>%s</td>" //4
+	"<td>%s</td>" //5
+	"<td>%s</td>\n", //cResult
+		field[0],field[0],field[1],field[2],field[3],field[4],field[5],cResult);
+	printf("</tr>");
+
+}//while()
+//Reset margin end
+
+			printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'>"
+					"Check all %u IPs</td></tr>\n",uNumRows);
+			printf("</table>");
+
+			}//If results
+			mysql_free_result(res);
+			CloseFieldSet();
+		break;
+
+		default:
+			;
+
+	}//switch(guMode)
+
+}//void ExttContainerAuxTable(void)
+
 
 
 void ExttIPGetHook(entry gentries[], int x)
