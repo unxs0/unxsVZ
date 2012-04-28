@@ -85,7 +85,7 @@ void ExttIPCommands(pentry entries[], int x)
 				unsigned uGroup=0;
 
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
-						&& uOwnerSearch==0)
+						&& uOwnerSearch==0 && uIPv4Exclude==0)
 	                        	tIP("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser))==0)
@@ -153,6 +153,17 @@ void ExttIPCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
+				if(uIPv4Exclude)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cLabel NOT LIKE '10.%%.%%.%%' AND"
+								" cLabel NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
+								" cLabel NOT LIKE '192.168.%%.%%'");
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
 				strcat(gcQuery,")");
 				//debug only
 	                        //tIP(gcQuery);
@@ -187,7 +198,7 @@ void ExttIPCommands(pentry entries[], int x)
 				unsigned uGroup=0;
 
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
-						&& uOwnerSearch==0)
+						&& uOwnerSearch==0 && uIPv4Exclude==0)
 	                        	tIP("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser))==0)
@@ -272,6 +283,17 @@ void ExttIPCommands(pentry entries[], int x)
 					if(uLink)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," uOwner=%u",uOwnerSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uIPv4Exclude)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cLabel NOT LIKE '10.%%.%%.%%' AND"
+								" cLabel NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
+								" cLabel NOT LIKE '192.168.%%.%%'");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -593,6 +615,9 @@ void ExttIPAuxTable(void)
 			printf("<input title='Delete checked containers from your search set. They will still be visible but will"
 				" marked deleted and will not be used in any subsequent set operation'"
 				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
+			printf("&nbsp; <input title='Deletes IPs not in used by containers.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Delete'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -638,11 +663,11 @@ while((field=mysql_fetch_row(res)))
 	if(guMode==12002)
 	{
 		register int i;
-		unsigned uCtContainer=0;
+		unsigned uCtIP=0;
 
 		cResult[0]=0;
-		sscanf(field[0],"%u",&uCtContainer);
-		sprintf(cCtLabel,"Ct%u",uCtContainer);
+		sscanf(field[0],"%u",&uCtIP);
+		sprintf(cCtLabel,"Ct%u",uCtIP);
 		for(i=0;i<x;i++)
 		{
 			//insider xss protection
@@ -653,7 +678,7 @@ while((field=mysql_fetch_row(res)))
 			{
 				if(!strcmp(gcCommand,"Delete Checked"))
 				{
-					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uIP=%u",uGroup,uCtContainer);
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uIP=%u",uGroup,uCtIP);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
@@ -666,6 +691,38 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Unexpected non deletion");
 					break;
 				}//Delete Checked
+
+				//Group Delete Uses guOpOnClones
+				else if(!strcmp(gcCommand,"Group Delete"))
+				{
+					MYSQL_RES *res;
+
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uIP=%u",uGroup,uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+
+					sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        				res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)>0)
+					{
+						sprintf(cResult,"IP in use");
+						break;
+					}
+
+					sprintf(gcQuery,"DELETE FROM tIP WHERE uIP=%u",uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"group delete done");
+					else
+						cResult[0]=0;
+					break;
+				}//Group Delete
 
 				else if(1)
 				{
