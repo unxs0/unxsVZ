@@ -46,6 +46,7 @@ static char cYesNouAvailableSearch[8]={""};
 static unsigned uNodeSearch=0;
 static char cuNodeSearchPullDown[256]={""};
 static unsigned uNodeSearchNot=0;
+static unsigned uIPv4Exclude=0;
 static unsigned uOwnerSearch=0;
 static unsigned uDatacenterSearch=0;
 static char cuDatacenterSearchPullDown[256]={""};
@@ -140,6 +141,8 @@ void ProcesstIPVars(pentry entries[], int x)
 		}
 		else if(!strcmp(entries[i].name,"uNodeSearchNotNoCA"))
 			uNodeSearchNot=1;
+		else if(!strcmp(entries[i].name,"uIPv4ExcludeNoCA"))
+			uIPv4Exclude=1;
 
 	}
 
@@ -316,6 +319,10 @@ void tIPSearchSet(unsigned uStep)
 	OpenRow("IPv4 pattern","black");
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
 			" value=\"%s\" size=40 maxlength=15 >",cIPv4Search);
+	printf("<input title='Exclude 10/8, 172.16/12 and 192.168/16 IPs' type=checkbox name=uIPv4ExcludeNoCA ");
+	if(uIPv4Exclude)
+		printf(" checked");
+	printf("> Exclude RFC1918 IPs");
 
 	OpenRow("Datacenter","black");
 	tTablePullDown("tDatacenter;cuDatacenterSearchPullDown","cLabel","cLabel",uDatacenterSearch,1);
