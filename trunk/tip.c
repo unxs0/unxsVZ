@@ -45,6 +45,7 @@ static unsigned uAvailableSearch=0;
 static char cYesNouAvailableSearch[8]={""};
 static unsigned uNodeSearch=0;
 static char cuNodeSearchPullDown[256]={""};
+static unsigned uNodeSearchNot=0;
 static unsigned uOwnerSearch=0;
 static unsigned uDatacenterSearch=0;
 static char cuDatacenterSearchPullDown[256]={""};
@@ -137,6 +138,8 @@ void ProcesstIPVars(pentry entries[], int x)
 			sprintf(cYesNouAvailableSearch,"%.8s",entries[i].val);
 			uAvailableSearch=ReadYesNoPullDownTriState(cYesNouAvailableSearch);
 		}
+		else if(!strcmp(entries[i].name,"uNodeSearchNotNoCA"))
+			uNodeSearchNot=1;
 
 	}
 
@@ -319,6 +322,10 @@ void tIPSearchSet(unsigned uStep)
 
 	OpenRow("Node","black");
 	tTablePullDown("tNode;cuNodeSearchPullDown","cLabel","cLabel",uNodeSearch,1);
+	printf("<input title='Logical NOT of selected node if any. Including default any node (no node)' type=checkbox name=uNodeSearchNotNoCA ");
+	if(uNodeSearchNot)
+		printf(" checked");
+	printf("> Not");
 
 	OpenRow("Owner","black");
 	tTablePullDownResellers(uOwnerSearch,0);

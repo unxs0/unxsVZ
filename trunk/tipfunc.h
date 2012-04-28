@@ -78,7 +78,98 @@ void ExttIPCommands(pentry entries[], int x)
                 {
 			if(guPermLevel>=9)
 			{
+	                        ProcesstIPVars(entries,x);
+                        	guMode=12002;
+				char cQuerySection[256];
+				unsigned uLink=0;
+				unsigned uGroup=0;
+
+				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
+						&& uOwnerSearch==0)
+	                        	tIP("You must specify at least one search parameter");
+
+				if((uGroup=uGetSearchGroup(gcUser))==0)
+		                        tIP("No search set exists. Please create one first.");
+
+				//Initial query section
+				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uIP IN"
+						" (SELECT uIP FROM tIP WHERE",uGroup);
+
+				if(cIPv4Search[0])
+				{
+					sprintf(cQuerySection," uIP IN (SELECT uIP FROM tIP WHERE cLabel LIKE '%s%%')",cIPv4Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+				else
+				{
+					uLink=0;
+				}
+
+				if(uDatacenterSearch)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uDatacenter=%u",uDatacenterSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uNodeSearch || uNodeSearchNot)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					if(uNodeSearchNot && uNodeSearch )
+						sprintf(cQuerySection," uIP IN (SELECT uIPv4 FROM tContainer WHERE uNode!=%u)",uNodeSearch);
+					else if(uNodeSearch)
+						sprintf(cQuerySection," uIP IN (SELECT uIPv4 FROM tContainer WHERE uNode=%u)",uNodeSearch);
+					else
+						sprintf(cQuerySection," uIP IN"
+								" (SELECT uIP FROM tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP"
+								" WHERE tContainer.cLabel IS NULL)");
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				//YesNo tristate
+				if(uAvailableSearch)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					if(uAvailableSearch==2)//Tri state Yes
+						sprintf(cQuerySection," uAvailable>0");
+					else
+						sprintf(cQuerySection," uAvailable=0");
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uOwnerSearch)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uOwner=%u",uOwnerSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				strcat(gcQuery,")");
+				//debug only
+	                        //tIP(gcQuery);
+
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				unsigned uNumber=0;
+				if((uNumber=mysql_affected_rows(&gMysql))>0)
+				{
+	                        	sprintf(gcQuery,"%u tIP records were removed from your search set",uNumber);
+	                        	tIP(gcQuery);
+				}
+				else
+				{
 	                        	tIP("No records were removed from your search set");
+				}
 			}
 			else
 			{
@@ -89,7 +180,118 @@ void ExttIPCommands(pentry entries[], int x)
                 {
 			if(guPermLevel>=9)
 			{
+	                        ProcesstIPVars(entries,x);
+                        	guMode=12002;
+				char cQuerySection[256];
+				unsigned uLink=0;
+				unsigned uGroup=0;
+
+				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
+						&& uOwnerSearch==0)
+	                        	tIP("You must specify at least one search parameter");
+
+				if((uGroup=uGetSearchGroup(gcUser))==0)
+				{
+					sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=2"//2 is search group
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcUser,guCompany,guLoginClient);//2=search set type TODO
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					if((uGroup=mysql_insert_id(&gMysql))==0)
+		                        	tIP("An error ocurred when attempting to create your search set");
+				}
+				else
+				{
+					if(!strcmp(gcCommand,"Create Search Set"))
+					{
+						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u",uGroup);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
+                		}
+
+				//Initial query section
+				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uIP)"
+						" SELECT %u,uIP FROM tIP WHERE",uGroup);
+
+				//Build AND query section
+
+				if(cIPv4Search[0])
+				{
+					sprintf(cQuerySection," uIP IN (SELECT uIP FROM tIP WHERE cLabel LIKE '%s%%')",cIPv4Search);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+				else
+				{
+					uLink=0;
+				}
+
+				if(uDatacenterSearch)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uDatacenter=%u",uDatacenterSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uNodeSearch || uNodeSearchNot)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					if(uNodeSearchNot && uNodeSearch )
+						sprintf(cQuerySection," uIP IN (SELECT uIPv4 FROM tContainer WHERE uNode!=%u)",uNodeSearch);
+					else if(uNodeSearch)
+						sprintf(cQuerySection," uIP IN (SELECT uIPv4 FROM tContainer WHERE uNode=%u)",uNodeSearch);
+					else
+						sprintf(cQuerySection," uIP IN"
+								" (SELECT uIP FROM tIP LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP"
+								" WHERE tContainer.cLabel IS NULL)");
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				//YesNo tristate
+				if(uAvailableSearch)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					if(uAvailableSearch==2)//Tri state Yes
+						sprintf(cQuerySection," uAvailable>0");
+					else
+						sprintf(cQuerySection," uAvailable=0");
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uOwnerSearch)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uOwner=%u",uOwnerSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				//debug only
+	                        //tIP(gcQuery);
+
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				unsigned uNumber=0;
+				if((uNumber=mysql_affected_rows(&gMysql))>0)
+				{
+	                        	sprintf(gcQuery,"%u tIP records were added to your search set",uNumber);
+	                        	tIP(gcQuery);
+				}
+				else
+				{
 	                        	tIP("No records were added to your search set. Filter returned 0 records");
+				}
 			}
 			else
 			{
@@ -364,14 +566,11 @@ void ExttIPButtons(void)
 			printf("<p><input type=submit class=largeButton title='Open user search set page. There you can create search sets and operate"
 				" on selected containers of the loaded container set.'"
 				" name=gcCommand value='Search Set Operations'>\n");
+
 			printf("<p><u>Filter by cLabel</u><br>");
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
 					" name=cSearch value='%s'>",cSearch);
 			tIPNavList(0);
-			tIPNavList(1);
-			if(uIP)
-				tIPReport();
-			tIPUsedButAvailableNavList();
 	}
 	CloseFieldSet();
 
@@ -402,13 +601,16 @@ void ExttIPAuxTable(void)
 			sprintf(gcQuery,"SELECT"
 					" tIP.uIP,"
 					" tIP.cLabel,"
-					" tIP.uAvailable,"
-					" tDatacenter.cLabel,"
+					" IF(tIP.uAvailable>0,'Yes','No'),"
+					" IFNULL(tDatacenter.cLabel,''),"
+					" IFNULL(tNode.cLabel,''),"
+					" IFNULL(tContainer.cHostname,''),"
 					" tClient.cLabel,"
-					" FROM_UNIXTIME(tIP.uCreatedDate,'%%a %%b %%d %%T %%Y')"
+					" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y')"
 					" FROM tIP"
 					" LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP"
 					" LEFT JOIN tDatacenter ON tIP.uDatacenter=tDatacenter.uDatacenter"
+					" LEFT JOIN tNode ON tContainer.uNode=tNode.uNode"
 					" LEFT JOIN tClient ON tIP.uOwner=tClient.uClient"
 					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u)",uGroup);
 		        mysql_query(&gMysql,gcQuery);
@@ -423,10 +625,12 @@ void ExttIPAuxTable(void)
 				printf("<table>");
 				printf("<tr>");
 				printf("<td><u>cLabel</u></td>"
-					"<td><u>uAvailable</u></td>"
+					"<td><u>Available</u></td>"
 					"<td><u>Datacenter</u></td>"
+					"<td><u>Node</u></td>"
+					"<td><u>Hostname</u></td>"
 					"<td><u>Owner</u></td>"
-					"<td><u>CreatedDate</u></td>"
+					"<td><u>ModifiedDate</u></td>"
 					"<td><u>Set operation result</u></td></tr>");
 //Reset margin start
 while((field=mysql_fetch_row(res)))
@@ -481,8 +685,10 @@ while((field=mysql_fetch_row(res)))
 	"<td>%s</td>" //3
 	"<td>%s</td>" //4
 	"<td>%s</td>" //5
+	"<td>%s</td>" //6
+	"<td>%s</td>" //7
 	"<td>%s</td>\n", //cResult
-		field[0],field[0],field[1],field[2],field[3],field[4],field[5],cResult);
+		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],cResult);
 	printf("</tr>");
 
 }//while()
