@@ -38,6 +38,8 @@ static time_t uModDate=0;
 static unsigned uDatacenter=0;
 static char cuDatacenterPullDown[256]={""};
 
+//cComment
+static char *cComment={""};
 
 //Extensions for searching
 static char cIPv4Search[16]={""};
@@ -53,7 +55,7 @@ static char cuDatacenterSearchPullDown[256]={""};
 int ReadYesNoPullDownTriState(const char *cLabel);
 void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode);
 
-#define VAR_LIST_tIP "tIP.uIP,tIP.cLabel,tIP.uAvailable,tIP.uOwner,tIP.uCreatedBy,tIP.uCreatedDate,tIP.uModBy,tIP.uModDate,tIP.uDatacenter"
+#define VAR_LIST_tIP "tIP.uIP,tIP.cLabel,tIP.uAvailable,tIP.uOwner,tIP.uCreatedBy,tIP.uCreatedDate,tIP.uModBy,tIP.uModDate,tIP.uDatacenter,tIP.cComment"
 
  //Local only
 void tIPSearchSet(unsigned uStep);
@@ -106,6 +108,8 @@ void ProcesstIPVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%lu",&uModDate);
 		else if(!strcmp(entries[i].name,"uDatacenter"))
 			sscanf(entries[i].val,"%u",&uDatacenter);
+		else if(!strcmp(entries[i].name,"cComment"))
+			cComment=entries[i].val;
 		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
 		{
 			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
@@ -249,6 +253,7 @@ void tIP(const char *cResult)
 		sscanf(field[6],"%u",&uModBy);
 		sscanf(field[7],"%lu",&uModDate);
 		sscanf(field[8],"%u",&uDatacenter);
+		cComment=field[9];
 
 		}
 
@@ -393,6 +398,18 @@ void tIPInput(unsigned uMode)
 		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
 	else
 		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+//cComment
+	OpenRow("cComment","black");
+	printf("<textarea title='Additional information about IP use' cols=80 wrap=hard rows=4 name=cComment ");
+	if(guPermLevel>=7 && uMode)
+	{
+		printf(">%s</textarea></td></tr>\n",TransformAngleBrackets(cComment));
+	}
+	else
+	{
+		printf("disabled>%s</textarea></td></tr>\n",TransformAngleBrackets(cComment));
+		printf("<input type=hidden name=cComment value=\"%s\" >\n",EncodeDoubleQuotes(cComment));
+	}
 //uOwner
 	OpenRow(LANG_FL_tIP_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
@@ -493,13 +510,14 @@ void DeletetIP(void)
 void Insert_tIP(void)
 {
 	sprintf(gcQuery,"INSERT INTO tIP SET uIP=%u,cLabel='%s',uAvailable=%u,uOwner=%u,uCreatedBy=%u,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u",
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s'",
 			uIP
 			,TextAreaSave(cLabel)
 			,uAvailable
 			,uOwner
 			,uCreatedBy
-			,uDatacenter);
+			,uDatacenter
+			,cComment);
 	MYSQL_RUN;
 
 }//void Insert_tIP(void)
@@ -508,12 +526,13 @@ void Insert_tIP(void)
 void Update_tIP(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tIP SET uIP=%u,cLabel='%s',uAvailable=%u,uModBy=%u,"
-				"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u WHERE _rowid=%s",
+				"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s' WHERE _rowid=%s",
 			uIP
 			,TextAreaSave(cLabel)
 			,uAvailable
 			,uModBy
 			,uDatacenter
+			,cComment
 			,cRowid);
 	MYSQL_RUN;
 
@@ -582,6 +601,7 @@ void tIPList(void)
 		"<td><font face=arial,helvetica color=white>cLabel"
 		"<td><font face=arial,helvetica color=white>uAvailable"
 		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>cComment"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
 		"<td><font face=arial,helvetica color=white>uCreatedDate"
@@ -622,12 +642,13 @@ void tIPList(void)
 			ctime_r(&luTime7,cBuf7);
 		else
 			sprintf(cBuf7,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
 			,cBuf2
 			,ForeignKey("tDatacenter","cLabel",strtoul(field[8],NULL,10))
+			,field[9]
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
 			,cBuf5
@@ -646,6 +667,7 @@ void CreatetIP(void)
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tIP ( "
 			"uIP INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
 			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			"cComment VARCHAR(255) NOT NULL DEFAULT '',"
 			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
 			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"

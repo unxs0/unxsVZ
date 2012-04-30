@@ -615,9 +615,12 @@ void ExttIPAuxTable(void)
 			printf("<input title='Delete checked containers from your search set. They will still be visible but will"
 				" marked deleted and will not be used in any subsequent set operation'"
 				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
-			printf("&nbsp; <input title='Deletes IPs not in used by containers.'"
+			printf("&nbsp; <input title='Deletes IPs not in use by containers.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Delete'>\n");
+			printf("&nbsp; <input title='Updates IPs to uAvailable=1 for IPs not in use by containers.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Make Available'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -631,7 +634,8 @@ void ExttIPAuxTable(void)
 					" IFNULL(tNode.cLabel,''),"
 					" IFNULL(tContainer.cHostname,''),"
 					" tClient.cLabel,"
-					" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y')"
+					" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
+					" tIP.cComment"
 					" FROM tIP"
 					" LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP"
 					" LEFT JOIN tDatacenter ON tIP.uDatacenter=tDatacenter.uDatacenter"
@@ -656,6 +660,7 @@ void ExttIPAuxTable(void)
 					"<td><u>Hostname</u></td>"
 					"<td><u>Owner</u></td>"
 					"<td><u>ModifiedDate</u></td>"
+					"<td><u>Comment</u></td>"
 					"<td><u>Set operation result</u></td></tr>");
 //Reset margin start
 while((field=mysql_fetch_row(res)))
@@ -692,7 +697,7 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Delete Checked
 
-				//Group Delete Uses guOpOnClones
+				//Group Delete
 				else if(!strcmp(gcCommand,"Group Delete"))
 				{
 					MYSQL_RES *res;
@@ -724,6 +729,34 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Group Delete
 
+
+				//Group Make Available
+				else if(!strcmp(gcCommand,"Group Make Available"))
+				{
+					MYSQL_RES *res;
+
+					sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        				res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)>0)
+					{
+						sprintf(cResult,"IP in use");
+						break;
+					}
+
+					sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE uIP=%u AND uAvailable=0",uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"make available done");
+					else
+						cResult[0]=0;
+					break;
+				}//Group Make Available
+
 				else if(1)
 				{
 					sprintf(cResult,"Unexpected gcCommand=%.64s",gcCommand);
@@ -744,8 +777,9 @@ while((field=mysql_fetch_row(res)))
 	"<td>%s</td>" //5
 	"<td>%s</td>" //6
 	"<td>%s</td>" //7
+	"<td>%s</td>" //8
 	"<td>%s</td>\n", //cResult
-		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],cResult);
+		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],cResult);
 	printf("</tr>");
 
 }//while()

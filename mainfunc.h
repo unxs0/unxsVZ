@@ -1041,6 +1041,7 @@ void UpdateSchema(void)
 	unsigned uSource=0;
 
 	unsigned uIPDatacenter=0;
+	unsigned uIPComment=0;
 	unsigned uOSTemplateDatacenter=0;
 	unsigned uConfigDatacenter=0;
 	unsigned uNameserverDatacenter=0;
@@ -1102,6 +1103,8 @@ void UpdateSchema(void)
 	{
 		if(!strcmp(field[0],"uDatacenter"))
 			uIPDatacenter=1;
+		if(!strcmp(field[0],"cComment"))
+			uIPComment=1;
 	}
        	mysql_free_result(res);
 
@@ -1432,6 +1435,16 @@ void UpdateSchema(void)
 			printf("%s\n",mysql_error(&gMysql));
 		else
 			printf("Added uDatacenter to tIP\n");
+	}
+
+	if(!uIPComment)
+	{
+		sprintf(gcQuery,"ALTER TABLE tIP ADD cComment VARCHAR(255) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added cComment to tIP\n");
 	}
 
 	if(!uOSTemplateDatacenter)
