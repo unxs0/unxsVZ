@@ -2419,6 +2419,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		tJobErrorUpdate(uJob,"uNewVeid==0");
 		goto CommonExit;
 	}
+
 	//
 	//Handle remote datacenter clone jobs differently
 	unsigned uTargetDatacenter=0;
@@ -2440,6 +2441,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		//CloneRemoteContainer(uJob,uContainer,cJobData,uNewVeid);
 		//return;
 	}
+
 	//
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%u;",&uCloneStop);
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%*u;\nuPrevStatus=%u;",&uPrevStatus);
