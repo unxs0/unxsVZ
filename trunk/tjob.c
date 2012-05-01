@@ -450,7 +450,7 @@ void tJobInput(unsigned uMode)
 				uContainer,ForeignKey("tContainer","cLabel",uContainer),uContainer);
 //cJobData
 	OpenRow(LANG_FL_tJob_cJobData,"black");
-	printf("<textarea title='%s' cols=80 wrap=hard rows=8 name=cJobData ",LANG_FT_tJob_cJobData);
+	printf("<textarea title='%s' cols=80 wrap=soft rows=8 name=cJobData ",LANG_FT_tJob_cJobData);
 	if(guPermLevel>=0 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cJobData);

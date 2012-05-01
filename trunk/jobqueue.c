@@ -5464,17 +5464,35 @@ void ExecuteCommands(unsigned uJob,unsigned uContainer,char *cJobData)
 	mysql_free_result(res);
 
 	//1-.
-	sprintf(gcQuery,"/usr/sbin/vzctl exec2 %u '%s'",uContainer,cJobData);
-	if(system(gcQuery))
+	FILE *pfp;
+	sprintf(gcQuery,"/usr/sbin/vzctl exec %u -",uContainer);
+	if((pfp=popen(gcQuery,"w"))==NULL)
 	{
 		logfileLine("ExecuteCommands",gcQuery);
-		tJobErrorUpdate(uJob,"exec error");
+		tJobErrorUpdate(uJob,"popen error");
+		return;
+	}
+	if(fprintf(pfp,"%s",cJobData)<0)
+	{
+		logfileLine("ExecuteCommands",gcQuery);
+		tJobErrorUpdate(uJob,"fprintf error");
+		return;
+	}
+	if(pclose(pfp)<0)
+	{
+		logfileLine("ExecuteCommands",gcQuery);
+		tJobErrorUpdate(uJob,"pclose error");
 		return;
 	}
 
 	//Everything ok
 	SetContainerStatus(uContainer,1);//Active
 	tJobDoneUpdate(uJob);
+	//Clean out what may be a lot of repeated cJobData
+	sprintf(gcQuery,"UPDATE tJob SET cJobData='' WHERE uJob=%u",uJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("ExecuteCommands",mysql_error(&gMysql));
 	return;
 
 }//void ExecuteCommands()

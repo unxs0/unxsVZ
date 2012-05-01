@@ -6845,7 +6845,7 @@ unsigned CreateExecuteCommandsJob(unsigned uDatacenter,unsigned uNode,unsigned u
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"
-			",cJobData='%.1024s'"
+			",cJobData='%.1023s'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
