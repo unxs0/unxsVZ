@@ -136,6 +136,7 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 void htmlCloneInfo(unsigned uContainer);
 void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,
 			char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
+unsigned CreateExecuteCommandsJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner,char *cCommands);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -4067,6 +4068,9 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Creates job(s) for destroying active or stopped container(s) and optionally their clones.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Destroy'>\n");
+			printf("&nbsp; <input title='Creates job(s) with given commands to run via vzctl exec2'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Execute'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -4634,6 +4638,31 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group Start
+
+				//execute any commands in container(s)
+				else if(!strcmp(gcCommand,"Group Execute"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+
+					if(	sContainer.uStatus==uACTIVE
+						&& (sContainer.uOwner==guCompany || guCompany==1) && cCommands[0])
+					{
+						if(CreateExecuteCommandsJob(sContainer.uDatacenter,
+								sContainer.uNode,uCtContainer,sContainer.uOwner,cCommands))
+						{
+							SetContainerStatus(uCtContainer,uAWAITACT);
+							sprintf(cResult,"Execute job created");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"Execute job not created");
+					}
+					break;
+				}//Group Execute
 
 				else if(!strcmp(gcCommand,"Group Template"))
 				{
@@ -6806,4 +6835,27 @@ int ReadYesNoPullDownTriState(const char *cLabel)
                 return(0);
 
 }//ReadYesNoPullDownTriState(char *cLabel)
+
+
+unsigned CreateExecuteCommandsJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner,char *cCommands)
+{
+	unsigned uCount=0;
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ExecuteCommandsJob(%u)',cJobName='ExecuteCommands'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=1"
+			",cJobData='%.1024s'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				TextAreaSave(cCommands),
+				uOwner,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	return(uCount);
+
+}//unsigned CreateExecuteCommandsJob()
 

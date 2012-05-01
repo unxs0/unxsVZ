@@ -47,6 +47,7 @@ void DestroyContainer(unsigned uJob,unsigned uContainer);
 void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void SwapIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData);
+void ExecuteCommands(unsigned uJob,unsigned uContainer,char *cJobData);
 void StopContainer(unsigned uJob,unsigned uContainer);
 void StartContainer(unsigned uJob,unsigned uContainer);
 void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData);
@@ -422,6 +423,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"ChangeHostnameContainer"))
 	{
 		ChangeHostnameContainer(uJob,uContainer,cJobData);
+	}
+	else if(!strcmp(cJobName,"ExecuteCommands"))
+	{
+		ExecuteCommands(uJob,uContainer,cJobData);
 	}
 	else if(!strcmp(cJobName,"ChangeIPContainer"))
 	{
@@ -5404,3 +5409,57 @@ void DenyAccess(unsigned uJob,const char *cJobData)
 	return;
 
 }//void DenyAccess(unsigned uJob,const char *cJobData)
+
+
+//This is a big security risk implement some kind of MD5 hash shared secret for it
+//If MySQL is under enemy control they can run commands as root in any and all containers
+void ExecuteCommands(unsigned uJob,unsigned uContainer,char *cJobData)
+{
+        MYSQL_RES *res;
+
+	//Check 1-. Check to make sure container is on this node, if not 
+	//	give job back to queue
+	sprintf(gcQuery,"/usr/sbin/vzlist %u > /dev/null 2>&1",uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("ExecuteCommands","Job returned to queue no such container");
+		tJobWaitingUpdate(uJob);
+		return;
+	}
+
+	//Check 2-. Wait till any other jobs currently in the job queue for this
+	//	container are done.
+	sprintf(gcQuery,"SELECT uJob FROM tJob"
+			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u) AND uJob!=%u",uContainer,uWAITING,uRUNNING,uJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ExecuteCommands",mysql_error(&gMysql));
+		exit(2);
+	}
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{
+		logfileLine("ExecuteCommands","Job returned to queue other jobs pending");
+		tJobWaitingUpdate(uJob);
+		mysql_free_result(res);
+		return;
+	}
+	mysql_free_result(res);
+
+	//1-.
+	sprintf(gcQuery,"/usr/sbin/vzctl exec2 %u '%s'",uContainer,cJobData);
+	if(system(gcQuery))
+	{
+		logfileLine("ExecuteCommands",gcQuery);
+		tJobErrorUpdate(uJob,"exec error");
+		return;
+	}
+
+	//Everything ok
+	SetContainerStatus(uContainer,1);//Active
+	tJobDoneUpdate(uJob);
+	return;
+
+}//void ExecuteCommands()
+
