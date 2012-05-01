@@ -81,6 +81,8 @@ static char cAutoCloneNode[256]={""};
 static char cunxsBindARecordJobZone[256]={""};
 static char gcNewContainerTZ[64]={"PST8PDT"};
 
+static char cCommands[512]={""};
+
 #define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource,tContainer.uBackupDate"
 
  //Local only
@@ -116,6 +118,8 @@ void ProcesstContainerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uContainer);
 		else if(!strcmp(entries[i].name,"cLabel"))
 			sprintf(cLabel,"%.32s",FQDomainName(entries[i].val));
+		else if(!strcmp(entries[i].name,"cCommands"))
+			sprintf(cCommands,"%.511s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cHostname"))
 			sprintf(cHostname,"%.64s",FQDomainName(entries[i].val));
 		else if(!strcmp(entries[i].name,"uVeth"))
@@ -412,6 +416,9 @@ void tContainerSearchSet(unsigned uStep)
 		sprintf(cHostnameSearch,"%.31s",cSearch);
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cHostnameSearch"
 			" value=\"%s\" size=40 maxlength=63 >",cHostnameSearch);
+	//Temp placement
+	printf("<td><textarea title='Group execute commands' cols=40 wrap=hard rows=1 name=cCommands>%s</textarea></td>",cCommands);
+
 	OpenRow("IPv4 pattern","black");
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
 			" value=\"%s\" size=40 maxlength=15 >",cIPv4Search);
