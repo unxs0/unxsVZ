@@ -3626,6 +3626,12 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	char cOrigLabel[32]={""};
 	char cOrigHostname[64]={""};
 
+	unsigned uDebug=0;
+
+	if(uDebug)
+		printf("DEBUG FailoverFrom() uJob=%u uContainer=%u\n",uJob,uContainer);
+
+
 	//0-. uCloneContainer not used yet.
 	if((cp=strstr(cJobData,"uIPv4=")))
 	{
@@ -3709,14 +3715,17 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//So if it hasn't we contine to wait.
 	if(!FailToJobDone(uFailToJob))
 	{
+		char cuFailToJob[64];
+		sprintf(cuFailToJob,"uFailToJob=%u",uFailToJob);
+		logfileLine("FailoverFrom",cuFailToJob);
 		tJobWaitingUpdate(uJob);
 		return;
 	}
 
 
-	//debug only
-	//printf("FailoverFrom() cJobData: uIPv4=%u cLabel=%s cHostname=%s uSource=%u\n",
-	//			uIPv4,cLabel,cHostname,uSource);
+	if(uDebug)
+		printf("DEBUG FailoverFrom() cJobData: uIPv4=%u cLabel=%s cHostname=%s uSource=%u\n",
+				uIPv4,cLabel,cHostname,uSource);
 
 	//1-.
 	GetContainerMainIP(uContainer,cOrigIP);//rollback required
@@ -4225,7 +4234,11 @@ unsigned FailToJobDone(unsigned uJob)
 {
         MYSQL_RES *res;
 
-	if(uJob==0) return(0);
+	if(uJob==0)
+	{
+		logfileLine("FailToJobDone","uJob==0");
+		return(0);
+	}
 
 	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uJob=%u AND uJobStatus=3",uJob);
 	mysql_query(&gMysql,gcQuery);
