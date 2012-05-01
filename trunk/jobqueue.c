@@ -2436,8 +2436,9 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	mysql_free_result(res);
 	if(gfuDatacenter!=uTargetDatacenter && uTargetDatacenter!=0 && gfuDatacenter!=0)
 	{
-		CloneRemoteContainer(uJob,uContainer,cJobData,uNewVeid);
-		return;
+		logfileLine("CloneContainer","CloneRemoteContainer() bypass test on");
+		//CloneRemoteContainer(uJob,uContainer,cJobData,uNewVeid);
+		//return;
 	}
 	//
 	sscanf(cJobData,"uTargetNode=%*u;\nuNewVeid=%*u;\nuCloneStop=%u;",&uCloneStop);
