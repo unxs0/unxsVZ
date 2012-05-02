@@ -5486,7 +5486,8 @@ void ExecuteCommands(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 
 	//Everything ok
-	SetContainerStatus(uContainer,1);//Active
+	//This job has no transient status change
+	//SetContainerStatus(uContainer,1);//Active
 	tJobDoneUpdate(uJob);
 	//Clean out what may be a lot of repeated cJobData
 	sprintf(gcQuery,"UPDATE tJob SET cJobData='' WHERE uJob=%u",uJob);

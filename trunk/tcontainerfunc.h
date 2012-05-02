@@ -143,6 +143,7 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue
 void DelProperties(unsigned uNode,unsigned uType);//tnodefunc.h
 
 #include <openisp/ucidr.h>
+#include <ctype.h>
 
 void htmlGenMountInputs(unsigned const uMountTemplate)
 {
@@ -458,13 +459,61 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=12002;
 				char cQuerySection[256];
 				unsigned uLink=0;
+				unsigned uNumber=0;
+
+				if((uGroup=uGetSearchGroup(gcUser))==0)
+		                        tContainer("No search set exists. Please create one first.");
+
+				//We extend to this other optional list and ignore the other filter items
+				if(cCommands[0])
+				{
+					register int i,j;
+					char cHostname[64];
+
+					for(i=0,j=0;cCommands[i];i++)
+					{
+						if( isspace(cCommands[i]) || cCommands[i]==';' || cCommands[i]=='#' || j>62)
+						{
+							cHostname[j]=0;
+							j=0;
+
+							sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uContainer IN"
+									" (SELECT uContainer FROM tContainer WHERE cHostname='%s')",
+										uGroup,cHostname);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							uNumber+=mysql_affected_rows(&gMysql);
+
+							for(;cCommands[i];i++)
+							{
+								//jump to next line
+								if( cCommands[i]=='\n' || cCommands[i]=='\r')
+									break;
+							}
+						}
+						else
+						{
+							cHostname[j++]=cCommands[i];
+						}
+					}
+					//Last line case
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uContainer IN"
+								" (SELECT uContainer FROM tContainer WHERE cHostname='%s')",
+									uGroup,cHostname);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					uNumber+=mysql_affected_rows(&gMysql);
+
+	                        	sprintf(gcQuery,"%u container records removed via cHostname list",uNumber);
+	                        	tContainer(gcQuery);
+				}//if(cCommands[0])
 
 				if(cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
 						&& uForClient==0 && uOSTemplate==0)
 	                        	tContainer("You must specify at least one search parameter");
 
-				if((uGroup=uGetSearchGroup(gcUser))==0)
-		                        tContainer("No search set exists. Please create one first.");
 
 				//Initial query section
 				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uContainer IN"
@@ -559,7 +608,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
-				unsigned uNumber=0;
 				if((uNumber=mysql_affected_rows(&gMysql))>0)
 				{
 	                        	sprintf(gcQuery,"%u container records were removed from your search set",uNumber);
@@ -583,9 +631,10 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=12002;
 				char cQuerySection[256];
 				unsigned uLink=0;
+				unsigned uNumber=0;
 
 				if(cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
-						&& uForClient==0 && uOSTemplate==0)
+						&& uForClient==0 && uOSTemplate==0 && cCommands[0]==0)
 	                        	tContainer("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser))==0)
@@ -609,6 +658,52 @@ void ExttContainerCommands(pentry entries[], int x)
 							htmlPlainTextError(mysql_error(&gMysql));
 					}
                 		}
+
+				//We extend to this other optional list and ignore the other filter items
+				if(cCommands[0])
+				{
+					register int i,j;
+					char cHostname[64];
+
+					for(i=0,j=0;cCommands[i];i++)
+					{
+						if( isspace(cCommands[i]) || cCommands[i]==';' || cCommands[i]=='#' || j>62)
+						{
+							cHostname[j]=0;
+							j=0;
+
+							sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uContainer)"
+									" SELECT %u,uContainer FROM tContainer WHERE cHostname='%s'",
+												uGroup,cHostname);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							uNumber+=mysql_affected_rows(&gMysql);
+
+							for(;cCommands[i];i++)
+							{
+								//jump to next line
+								if( cCommands[i]=='\n' || cCommands[i]=='\r')
+									break;
+							}
+						}
+						else
+						{
+							cHostname[j++]=cCommands[i];
+						}
+					}
+					//Last line case
+					sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uContainer)"
+							" SELECT %u,uContainer FROM tContainer WHERE cHostname='%s'",
+												uGroup,cHostname);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					uNumber+=mysql_affected_rows(&gMysql);
+
+	                        	sprintf(gcQuery,"%u container records added via cHostname list",uNumber);
+	                        	tContainer(gcQuery);
+				}//if(cCommands[0])
 
 				//Initial query section
 				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroupGlue,uGroup,uNode,uContainer)"
@@ -703,7 +798,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
-				unsigned uNumber=0;
 				if((uNumber=mysql_affected_rows(&gMysql))>0)
 				{
 	                        	sprintf(gcQuery,"%u container records were added to your search set",uNumber);
@@ -4650,12 +4744,15 @@ while((field=mysql_fetch_row(res)))
 					if(	sContainer.uStatus==uACTIVE
 						&& (sContainer.uOwner==guCompany || guCompany==1) && cCommands[0])
 					{
+
+						if(strlen(cCommands)>2047)
+						{
+							sprintf(cResult,"Script too long");
+							break;
+						}
 						if(CreateExecuteCommandsJob(sContainer.uDatacenter,
 								sContainer.uNode,uCtContainer,sContainer.uOwner,cCommands))
-						{
-							SetContainerStatus(uCtContainer,uAWAITACT);
 							sprintf(cResult,"Execute job created");
-						}
 					}
 					else
 					{
@@ -6845,7 +6942,7 @@ unsigned CreateExecuteCommandsJob(unsigned uDatacenter,unsigned uNode,unsigned u
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"
-			",cJobData='%.1023s'"
+			",cJobData='%.2047s'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
