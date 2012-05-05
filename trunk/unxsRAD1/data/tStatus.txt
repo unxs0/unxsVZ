@@ -1,0 +1,9 @@
+1	Active	1	1	1019835249	0	0
+2	OnHold	1	1	1019835258	0	0
+3	Offline	1	1	1019835282	0	0
+4	Awaiting Modification	1	1	1019845118	1	1019845216
+5	Awaiting Deletion	1	1	1019845139	1	1019845208
+6	Awaiting Activation	1	1	1019845157	0	0
+7	Cancelled	1	1	1020545191	0	0
+8	Modified	1	1	1020555448	0	0
+9	Modification Problem	1	1	1020699074	0	0
