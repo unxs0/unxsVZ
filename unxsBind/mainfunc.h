@@ -37,6 +37,7 @@ void NamedConf(void);
 void MasterZones(void);
 void Admin(void);
 void ListZones(void);
+void PerfQueryList(void);
 void UpdateSchema(void);
 void UpdateTables(void);
 void ImportFromDb(char *cSourceDbName, char *cTargetDbName, char *cPasswd);
@@ -862,6 +863,7 @@ void PrintUsage(char *arg0)
 	printf("\tinstallbind <listen ipnum>\n");
 	printf("\texport <table> <filename>\n");
 	printf("\tListZones\n");
+	printf("\tPerfQueryList\n");
 	printf("\tPrintNSList <cuNSSet>\n");
 	printf("\tPrintMXList <cuMailServer>\n");
 	printf("\tCreateWebZone <cDomain> <cIP> [<cNSSet group label> <cMailServer group label>]\n");
@@ -948,6 +950,11 @@ void ExtMainShell(int argc, char *argv[])
 		if(!strcmp(argv[1],"Backup"))
 		{
                 	Backup("");
+			exit(0);
+		}
+		else if(!strcmp(argv[1],"PerfQueryList"))
+		{
+                	PerfQueryList();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"ListZones"))
@@ -3109,3 +3116,33 @@ void NewNS(char *cFQDN,char *cNSType,unsigned uNSSet)
 	mysql_free_result(res);
 
 }//void NewNS(...)
+
+
+//List A records for queryperf file
+void PerfQueryList(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	TextConnectDb();
+
+	sprintf(gcQuery,"SELECT tResource.cName,tZone.cZone FROM tZone,tNSSet,tResource"
+			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tZone.uZone=tResource.uZone"
+			" AND tResource.uRRType=1 AND tResource.cName NOT LIKE '%%.' AND tResource.cName!='' AND tResource.cName!='*'"
+			" AND tResource.cName!='@' AND tResource.cName!='\t'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+	{
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res))) 
+	{
+		//printf("%s %s\n",field[0],field[1]);
+		printf("%s.%s A\n",field[0],field[1]);
+	}
+	mysql_free_result(res);
+	exit(0);
+
+}//void PerfQueryList(void)
