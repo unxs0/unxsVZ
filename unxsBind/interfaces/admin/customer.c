@@ -143,11 +143,12 @@ void LoadCustomer(void)
 		if(strcmp(gcCustomer,cCompanyName))
 		{
 			sprintf(gcCustomer,"%.99s",cCompanyName);
+			sprintf(gcCookieCustomer,"%.99s",cCompanyName);
 			gcZone[0]=0;
 			cuView[0]=0;
 			uResource=0;
-			guContact=0;
-			sys_SetSessionCookie();
+			guCookieContact=0;
+			SetSessionCookie();
 		}
 		gcMessage="1 record(s) found";
 	}
@@ -645,12 +646,13 @@ void NewCustomer(void)
 	
 	//Set session cookie after creating new company
 	sprintf(gcCustomer,"%.99s",cCompanyName);
+	sprintf(gcCookieCustomer,"%.99s",cCompanyName);
 	//If there's a zone or a RR selected, will unselect
 	gcZone[0]=0;
 	cuView[0]=0;
 	uResource=0;
-	guContact=0;
-	sys_SetSessionCookie();
+	guCookieContact=0;
+	SetSessionCookie();
 
 }//void NewCustomer(void)
 
@@ -686,7 +688,8 @@ void ModCustomer(void)
 	uModBy=guLoginClient;
 	
 	sprintf(gcCustomer,"%.99s",cCompanyName);
-	sys_SetSessionCookie();
+	sprintf(gcCookieCustomer,"%.99s",cCompanyName);
+	SetSessionCookie();
 
 }//void ModCustomer(void)
 
@@ -710,12 +713,12 @@ void DelCustomer(void)
 		iDNSLog(uClient,"tClient","Del Fail");
 	}
 	
-	gcCustomer[0]=0;
-	gcZone[0]=0;
-	cuView[0]=0;
-	uResource=0;
-	guContact=0;
-	sys_SetSessionCookie();
+	gcCookieCustomer[0]=0;
+	gcCookieZone[0]=0;
+	guCookieView=0;
+	guCookieResource=0;
+	guCookieContact=0;
+	SetSessionCookie();
 
 }//void DelCustomer(void)
 
@@ -1065,10 +1068,13 @@ void funcCompanyNavList(FILE *fp,unsigned uSetCookie)
 			LoadCustomer();
 			sprintf(gcCustomer,"%.99s",cCompanyName);
 			if(uSetCookie)
-				sys_SetSessionCookie();
+			{
+				sprintf(gcCookieCustomer,"%.99s",cCompanyName);
+				SetSessionCookie();
+			}
 			mysql_free_result(res);
 
-			fprintf(fp,"<a class=darkLink href=\"idnsAdmin.cgi?gcPage=Customer&uClient==%s\">%s</a><br>\n",
+			fprintf(fp,"<a class=darkLink href=\"idnsAdmin.cgi?gcPage=Customer&uClient=%s\">%s</a><br>\n",
 				field[0]
 				,field[1]);
 				

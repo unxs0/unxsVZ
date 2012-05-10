@@ -4,7 +4,7 @@ FILE
 	$Id$
 AUTHOR/LEGAL
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
-	(C) 2010 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2012 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	idnsAdmin program file.
@@ -211,8 +211,10 @@ void ZoneGetHook(entry gentries[],int x)
 			uForClient=uGetClient(gcCustomer);
 		}
 	}
-	//If no gcCustomer provided as GET arg, try to get it from session cookie
-	if(gcCustomer[0]) uForClient=uGetClient(gcCustomer);
+	if(gcCookieCustomer[0] && uForClient==0) uForClient=uGetClient(gcCookieCustomer);
+	if(gcCookieZone[0] && gcZone[0]==0) sprintf(gcZone,"%.63s",gcCookieZone);
+	if(guCookieView && cuView[0]==0) sprintf(cuView,"%u",guCookieView);
+
 	if(gcZone[0] && cuView[0])
 	{
 		SelectZone(1);
@@ -390,21 +392,6 @@ void ZoneCommands(pentry entries[], int x)
 
 void htmlZone(void)
 {
-
-	if(cSearch[0])
-	{
-		//If we have a search term, must call funcZoneNavList before htmlZonePage(). Why?
-		//Because if we found one search result, must set template vars before
-		//rendering the page. Otherwise a bunch of data will be lost (Ref: ticket #61)
-		FILE *fp;
-
-		if((fp=fopen("/dev/null","w")))
-		{
-			funcZoneNavList(fp,1);
-			fclose(fp);
-		}
-	}
-
 	htmlHeader("idnsAdmin","Header");
 	htmlZonePage("idnsAdmin","Admin.Zone.Body");
 	htmlFooter("Footer");
@@ -912,6 +899,8 @@ void SelectZone(unsigned uSetCookie)
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
+		unsigned uView=0;
+
 		sprintf(cuZone,"%.10s",field[0]);
 		sprintf(cMainAddress,"%.16s",field[1]);
 		sprintf(cHostmaster,"%.99s",field[2]);
@@ -924,6 +913,7 @@ void SelectZone(unsigned uSetCookie)
 		sprintf(cuRetry,"%.15s",field[9]);
 		sprintf(cuZoneTTL,"%.15s",field[10]);
 		sprintf(cSelectView,"%s",cGetViewLabel(field[11]));
+		sscanf(field[11],"%u",&uView);
 		sprintf(cuNameServer,"%.15s",field[12]);
 		//sscanf(field[13],"%u",&uForClient);
 		//sprintf(gcCustomer,"%.99s",cClientLabel(uForClient));
@@ -939,8 +929,13 @@ void SelectZone(unsigned uSetCookie)
 		if(!gcMessage[0]) gcMessage="Zone Selected";
 		if(uHasDeletedRR(cuZone))
 			cRestoreRRStatus="";
-		if(uSetCookie)
-			sys_SetSessionCookie();
+		if(uSetCookie && (strcmp(gcCookieZone,gcZone) || guCookieView!=uView))
+		{
+			sprintf(gcCookieZone,"%.63s",gcZone);
+			guCookieView=uView;
+			guCookieResource=0;
+			SetSessionCookie();
+		}
 	}
 	else
 	{
@@ -1016,7 +1011,7 @@ void NewZone(void)
 			uTTL,
 			uRetry,
 			uZoneTTL,
-			uGetView(cSelectView),
+			(guCookieView=uGetView(cSelectView)),
 			cMainAddress,
 			cHostmaster,
 			cuMailServers,
@@ -1048,8 +1043,10 @@ void NewZone(void)
 	if(strcmp(cForClientPullDown,gcCustomer))
 		sprintf(gcCustomer,"%.99s",cForClientPullDown);
 	uResource=0;
-	sys_SetSessionCookie();
 
+	guCookieResource=0;
+	sprintf(gcCookieZone,"%.63s",gcZone);
+	SetSessionCookie();
 
 }//void NewZone(void)
 
@@ -1079,7 +1076,11 @@ void DelZone(void)
 	gcZone[0]=0;
 	cuView[0]=0;
 	uResource=0;
-	sys_SetSessionCookie();
+
+	gcCookieZone[0]=0;
+	guCookieResource=0;
+	guCookieView=0;
+	SetSessionCookie();
 
 }//void DelZone(void)
 
@@ -1186,7 +1187,9 @@ void UpdateZone(void)
 	if(strcmp(cForClientPullDown,gcCustomer))
 		sprintf(gcCustomer,"%.99s",cForClientPullDown);
 	uResource=0;
-	sys_SetSessionCookie();
+
+	guCookieResource=0;
+	SetSessionCookie();
 
 }//void UpdateZone(void)
 
@@ -1883,8 +1886,6 @@ void funcZoneNavList(FILE *fp,unsigned uSetCookie)
 			sscanf(field[4],"%u",&uForClient);
 			sprintf(gcCustomer,"%s",field[3]);
 			SelectZone(uSetCookie);
-			if(uSetCookie)
-				sys_SetSessionCookie();
 			mysql_free_result(res);
 
 			fprintf(fp,"<a class=darkLink href=\"idnsAdmin.cgi?gcPage=Zone&cZone=%s&uView=%s&cCustomer=%s\">%s [%s]</a><br>\n",

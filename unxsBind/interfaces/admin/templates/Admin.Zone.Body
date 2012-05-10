@@ -54,7 +54,7 @@
 		</tr>
                 <tr>
 		<td valign=top align=right class=notice>
-{{gcName}} ({{gcLogin}}) of {{gcOrgName}} is logged in (d3) from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout
+{{gcName}} ({{gcLogin}}) of {{gcOrgName}} is logged in from {{gcHost}} [{{cUserLevel}}] <a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout
 </a>
 		{{funcTopInfo}}
 		</td>
