@@ -52,6 +52,13 @@ char gcFunction[100]={""};
 char gcPage[100]={""};
 unsigned guBrowserFirefox=0;
 
+//new cookie cleanup
+unsigned guCookieResource=0;
+unsigned guCookieView=0;
+unsigned guCookieContact=0;
+char gcCookieZone[100]={""};
+char gcCookieCustomer[100]={""};
+
 //
 //Local only
 int main(int argc, char *argv[]);
@@ -64,7 +71,6 @@ void htmlLoginPage(char *cTitle, char *cTemplateName);
 char *cShortenText(char *cText);
 void SetSessionCookie(void);
 void GetSessionCookie(void);
-void sys_SetSessionCookie(void);
 
 int main(int argc, char *argv[])
 {
@@ -113,7 +119,7 @@ int main(int argc, char *argv[])
 				sprintf(gcCustomer,"%.99s",gentries[i].val);
 		}
 		SSLCookieLogin();
-		SetSessionCookie();
+		GetSessionCookie();
 		//Required to be logged in GET section
 		if(gcPage[0])
 		{
@@ -170,28 +176,43 @@ int main(int argc, char *argv[])
 				sprintf(gcPasswd,"%.99s",entries[i].val);
 			else if(!strcmp(entries[i].name,"cZone"))
 			{
-				if(strcmp(entries[i].val,gcZone))
-					sys_SetSessionCookie();
-				sprintf(gcZone,"%.99s",entries[i].val);
+				//if diff from current zone
+				if(strcmp(entries[i].val,gcCookieZone))
+				{
+					sprintf(gcCookieZone,"%.63s",entries[i].val);
+					SetSessionCookie();
+				}
+				sprintf(gcZone,"%.63s",entries[i].val);
 			}
 			else if(!strcmp(entries[i].name,"uView"))
 			{
-				if(strcmp(entries[i].val,cuView))
-					sys_SetSessionCookie();
+				unsigned uNewView=0;
+				sscanf(entries[i].val,"%u",&uNewView);
+				if(uNewView!=guCookieView)
+				{
+					sscanf(entries[i].val,"%u",&guCookieView);
+					SetSessionCookie();
+				}
 				sprintf(cuView,"%.15s",entries[i].val);
 			}
 			else if(!strcmp(entries[i].name,"uResource"))
 			{
 				unsigned uNewRR=0;
 				sscanf(entries[i].val,"%u",&uNewRR);
-				if(uNewRR!=uResource)
-					sys_SetSessionCookie();
+				if(uNewRR!=guCookieResource)
+				{
+					sscanf(entries[i].val,"%u",&guCookieResource);
+					SetSessionCookie();
+				}
 				sscanf(entries[i].val,"%u",&uResource);
 			}
 			else if(!strcmp(entries[i].name,"cCustomer"))
 			{
-				if(strcmp(entries[i].val,gcCustomer))
-					sys_SetSessionCookie();
+				if(strcmp(entries[i].val,gcCookieCustomer))
+				{
+					sprintf(gcCookieCustomer,"%.31s",entries[i].val);
+					SetSessionCookie();
+				}
 				sprintf(gcCustomer,"%.99s",entries[i].val);
 			}
 		}
@@ -737,8 +758,8 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: idnsAdminLogin=%s;\n",gcLogin);
-		printf("Set-Cookie: idnsAdminPasswd=%s;\n",gcPasswd);
+		printf("Set-Cookie: idnsAdminLogin=%s; Secure; HttpOnly\n",gcLogin);
+		printf("Set-Cookie: idnsAdminPasswd=%s; Secure; HttpOnly\n",gcPasswd);
 		sprintf(gcUser,"%.41s",gcLogin);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
@@ -1004,20 +1025,20 @@ void funcTopInfo(FILE *fp)
 {
 	//<font size=+1>{{cZone}} :: {{cLabel}} :: iDNS Admin Interface</font>
 	
-	char cOutput[512]={"<font size=+1> iDNS Admin Interface</font>"};
+	char cOutput[512]={""};
+	char cView[32]={""};
+	char cResource[100]={""};
+
+
+	if(guCookieView)
+		sprintf(cView,"%.31s",ForeignKey("tView","cLabel",guCookieView));
+	if(guCookieResource)
+		sprintf(cResource,"%.99s",ForeignKey("tResource","cName",guCookieResource));
+
+	sprintf(cOutput,"<font size=+1>%.99s %.31s %.63s %.31s :: iDNS Admin Interface</font>",
+				cResource,cView,gcCookieZone,gcCookieCustomer);
 
 	fprintf(fp,"<br><br>");
-	if(gcCustomer[0])
-	{
-		unsigned uView=0;
-
-		sscanf(cuView,"%u",&uView);
-		sprintf(cOutput,"<font size=+1>%s :: iDNS Admin Interface</font>",gcCustomer);
-		if(gcZone[0])
-			sprintf(cOutput,"<font size=+1>%.64s %.32s :: %.32s :: iDNS Admin Interface</font>",
-				gcZone,ForeignKey("tView","cLabel",uView),gcCustomer);
-	}
-
 	fprintf(fp,"%s",cOutput);
 
 }//void funcTopInfo(FILE *fp)
@@ -1045,27 +1066,9 @@ void ConvertToEnglishDate(char *cDate)
 
 void SetSessionCookie(void)
 {
-	if(!gcZone[0] || !gcCustomer[0])
-	{
-		//fprintf(stderr,"GetSessionCookie\n");
-		GetSessionCookie();
-		//fprintf(stderr,"gcZone=%s|gcCustomer=%s|cuView=%s|uResource=%u|",gcZone,gcCustomer,cuView,uResource);
-	}
-	else if(1)
-	{
-		//fprintf(stderr,"Set-Cookie\n");
-//		fprintf(stderr,"gcZone=%s\ngcCustomer=%s\ncuView=%s\nuResource=%u\n",gcZone,gcCustomer,cuView,uResource);
-		printf("Set-Cookie: iDNSSessionCookie=\"cCustomer=%s;cZone=%s;uView=%s;uContact=%u;uResource=%u;\";\n",
-			gcCustomer,gcZone,cuView,guContact,uResource);
-	}
+	printf("Set-Cookie: iDNSSessionCookie=cCustomer=%s|cZone=%s|uView=%u|uContact=%u|uResource=%u|; Secure; HttpOnly\n",
+			gcCookieCustomer,gcCookieZone,guCookieView,guCookieContact,guCookieResource);
 };
-
-void sys_SetSessionCookie(void)
-{
-	printf("Set-Cookie: iDNSSessionCookie=\"cCustomer=%s;cZone=%s;uView=%s;uContact=%u;uResource=%u;\";\n",
-		gcCustomer,gcZone,cuView,guContact,uResource);
-
-}//void SetSessionCookie(void)
 
 
 void GetSessionCookie(void)
@@ -1073,7 +1076,6 @@ void GetSessionCookie(void)
 	char *ptr;
 	char *ptr2;
 	char ciDNSSessionCookie[512]={""};
-	unsigned uView=0;
 
 	if(getenv("HTTP_COOKIE")!=NULL)
 		sprintf(gcCookie,"%.1022s",getenv("HTTP_COOKIE"));
@@ -1082,7 +1084,7 @@ void GetSessionCookie(void)
 		if((ptr=strstr(gcCookie,"iDNSSessionCookie=")))
 		{
 			ptr+=strlen("iDNSSessionCookie=");
-			if((ptr2=strstr(ptr,"\";")))
+			if((ptr2=strchr(ptr,';')))
 			{
 				*ptr2=0;
 				sprintf(ciDNSSessionCookie,"%.511s",ptr);
@@ -1093,59 +1095,64 @@ void GetSessionCookie(void)
 		}
 	}
 
+
 	if(ciDNSSessionCookie[0])
 	{
 		if((ptr=strstr(ciDNSSessionCookie,"cCustomer=")))
 		{
 			ptr+=strlen("cCustomer=");
-			if((ptr2=strchr(ptr,';')))
+			if((ptr2=strchr(ptr,'|')))
 			{
 				*ptr2=0;
-				sprintf(gcCustomer,"%s",ptr);
-				*ptr2=';';
+				sprintf(gcCookieCustomer,"%s",ptr);
+				*ptr2='|';
 			}
 		}
 		if((ptr=strstr(ciDNSSessionCookie,"cZone=")))
 		{
 			ptr+=strlen("cZone=");
-			if((ptr2=strchr(ptr,';')))
+			if((ptr2=strchr(ptr,'|')))
 			{
 				*ptr2=0;
-				sprintf(gcZone,"%s",ptr);
-				*ptr2=';';
+				sprintf(gcCookieZone,"%s",ptr);
+				*ptr2='|';
 			}
 		}
 		if((ptr=strstr(ciDNSSessionCookie,"uView=")))
 		{
 			ptr+=strlen("uView=");
-			if((ptr2=strchr(ptr,';')))
+			if((ptr2=strchr(ptr,'|')))
 			{
 				*ptr2=0;
-				sscanf(ptr,"%u",&uView);
-				sprintf(cuView,"%u",uView);
-				*ptr2=';';
+				sscanf(ptr,"%u",&guCookieView);
+				*ptr2='|';
 			}
 		}
 		if((ptr=strstr(ciDNSSessionCookie,"uContact=")))
 		{
 			ptr+=strlen("uContact=");
-			if((ptr2=strchr(ptr,';')))
+			if((ptr2=strchr(ptr,'|')))
 			{
 				*ptr2=0;
-				sscanf(ptr,"%u",&guContact);
-				*ptr2=';';
+				sscanf(ptr,"%u",&guCookieContact);
+				*ptr2='|';
 			}
 		}
 		if((ptr=strstr(ciDNSSessionCookie,"uResource=")))
 		{
 			ptr+=strlen("uResource=");
-			if((ptr2=strchr(ptr,';')))
+			if((ptr2=strchr(ptr,'|')))
 			{
 				*ptr2=0;
-				sscanf(ptr,"%u",&uResource);
-				*ptr2=';';
+				sscanf(ptr,"%u",&guCookieResource);
+				*ptr2='|';
 			}
 		}
+//If debug
+//	printf("Content-type: text/plain\n\nciDNSSessionCookie='%s'"
+//			" guCookieResource=%u guCookieContact=%u guCookieView=%u gcCookieZone=%s gcCookieCustomer=%s\n",
+//				ciDNSSessionCookie,guCookieResource,guCookieContact,guCookieView,gcCookieZone,gcCookieCustomer);
+//	exit(0);
 	}
 //	htmlPlainTextError(gcZone);
 }//void GetSessionCookie(void)

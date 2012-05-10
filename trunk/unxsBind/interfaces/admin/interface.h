@@ -55,7 +55,8 @@ const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned
 void funcTopInfo(FILE *fp);	
 void ConvertToEnglishDate(char *cDate);
 char *cURLEncode(char *cURL);
-void sys_SetSessionCookie();
+void SetSessionCookie();
+void GetSessionCookie();
 
 //Global vars all declared in main.c
 //libtemplate.a required
@@ -77,6 +78,14 @@ extern char gcName[];
 extern char gcOrgName[];
 extern char gcHost[];
 extern unsigned guBrowserFirefox;
+//new cookie cleanup
+extern unsigned guCookieResource;
+extern unsigned guCookieView;
+extern unsigned guCookieContact;
+extern char gcCookieZone[];
+extern char gcCookieCustomer[];
+
+//
 
 //Cgi form commands and major area function
 extern char gcFunction[];

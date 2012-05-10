@@ -54,12 +54,6 @@ void SetTimeStep(void)
 void htmlDashBoard(void)
 {
 	SetTimeStep();
-	gcCustomer[0]=0;
-	gcZone[0]=0;
-	cuView[0]=0;
-	uResource=0;
-	guContact=0;
-	sys_SetSessionCookie();
 	
 	htmlHeader("iidnsAdmin","Header");
 	htmlDashBoardPage("","DashBoard.Body");

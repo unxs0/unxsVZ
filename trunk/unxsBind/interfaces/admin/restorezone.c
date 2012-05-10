@@ -148,7 +148,10 @@ void RestoreZoneCommands(pentry entries[], int x)
 			gcMessage="Zone restored ok. Wait a few minutes so it gets propagated trough the NS cluster.";
 			sprintf(gcZone,"%s",cZone);
 			sprintf(cuView,"%u",uView);
-			sys_SetSessionCookie();
+
+			sprintf(gcCookieZone,"%s",cZone);
+			guCookieView=uView;
+			SetSessionCookie();
 			
 		}
 		if(!strcmp(gcFunction,"Back to Zones Tab"))

@@ -23,7 +23,6 @@ PURPOSE
 #define BO_ROOT		"Backend Root"
 #define BO_ADMIN	"Backend Admin"
 
-unsigned guContact=0;
 char *cPermPullDownStyle="type_fields_off";//has to be referenced from adminuser.c
 
 static unsigned uStep=0;
@@ -108,7 +107,7 @@ void ProcessCustomerContactVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"uForClient"))
 			sscanf(entries[i].val,"%u",&uForClient);
 		else if(!strcmp(entries[i].name,"uClient"))
-			sscanf(entries[i].val,"%u",&guContact);
+			sscanf(entries[i].val,"%u",&guCookieContact);
 		else if(!strcmp(entries[i].name,"uSaveClrPassword"))
 			sscanf(entries[i].val,"%u",&uSaveClrPassword);
 		else if(!strcmp(entries[i].name,"cClearPassword"))
@@ -155,7 +154,9 @@ char *cPermLevel(unsigned uPerm)
 	}
 	return(cRet);
 	
-}
+}//char *cPermLevel(unsigned uPerm)
+
+
 void CustomerContactGetHook(entry gentries[],int x)
 {
 	register int i;
@@ -163,15 +164,15 @@ void CustomerContactGetHook(entry gentries[],int x)
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(gentries[i].name,"uClient"))
-			sscanf(gentries[i].val,"%u",&guContact);
+			sscanf(gentries[i].val,"%u",&guCookieContact);
 	}
 
-	if(guContact)
+	if(guCookieContact)
 	{
-		sys_SetSessionCookie();
+		SetSessionCookie();
 		LoadCustomerContact();
 	}
-	else if(gcCustomer[0] && !guContact)
+	else if(gcCustomer[0] && !guCookieContact)
 	{
 		//
 		//Load the first Contact
@@ -188,7 +189,7 @@ void CustomerContactGetHook(entry gentries[],int x)
 
 		if((field=mysql_fetch_row(res)))
 		{
-			sscanf(field[0],"%u",&guContact);
+			sscanf(field[0],"%u",&guCookieContact);
 			LoadCustomerContact();
 		}
 		htmlCustomerContact();
@@ -241,7 +242,7 @@ void CustomerContactCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Confirm Modify"))
 		{
-			if(!guContact)
+			if(!guCookieContact)
 			{
 				gcMessage="<blink>Error: </blink>Can't modify. No record selected";
 				htmlCustomerContact();
@@ -262,7 +263,7 @@ void CustomerContactCommands(pentry entries[], int x)
 		}		
 		else if(!strcmp(gcFunction,"Confirm Delete"))
 		{
-			if(!guContact)
+			if(!guCookieContact)
 			{
 				gcMessage="<blink>Error: </blink>No record selected";
 				htmlCustomerContact();
@@ -393,7 +394,7 @@ void CustomerContactCommands(pentry entries[], int x)
 		{
 			cUserName[0]=0;
 			guContactPerm=0;
-			guContact=0;
+			guCookieContact=0;
 			cPassword[0]=0;
 			cClearPassword[0]=0;
 			uSaveClrPassword=0;
@@ -579,7 +580,7 @@ void htmlCustomerContactPage(char *cTitle, char *cTemplateName)
 			template.cpValue[20]=cPassword;
 			
 			template.cpName[21]="cBtnStatus";
-			if(guContact)
+			if(guCookieContact)
 				template.cpValue[21]="";
 			else
 				template.cpValue[21]="disabled";
@@ -668,7 +669,7 @@ void NewCustomerContact(void)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 
-	guContact=mysql_insert_id(&gMysql);
+	guCookieContact=mysql_insert_id(&gMysql);
 
 	if(strncmp(cPassword,"..",2) && strncmp(cPassword,"$1$",3) && uSaveClrPassword)
 		sprintf(cClearPassword,"%.99s",cPassword);
@@ -681,7 +682,7 @@ void NewCustomerContact(void)
 			,cPassword
 			,cClearPassword
 			,guContactPerm
-			,guContact
+			,guCookieContact
 			,uForClient
 			,guLoginClient);
 
@@ -689,21 +690,21 @@ void NewCustomerContact(void)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 
-	if(mysql_insert_id(&gMysql) && guContact)
+	if(mysql_insert_id(&gMysql) && guCookieContact)
 	{
-		iDNSLog(guContact,"tClient","New");
+		iDNSLog(guCookieContact,"tClient","New");
 		gcMessage="Company contact created OK";
 	}
 	else
 	{
-		iDNSLog(guContact,"tClient","New Fail");
+		iDNSLog(guCookieContact,"tClient","New Fail");
 		gcMessage="<blink>Error: </blink>Company contact NOT created";
 	}
 	
 	time(&uCreatedDate);
 	uOwner=uForClient;
 	uCreatedBy=guLoginClient;
-	sys_SetSessionCookie();
+	SetSessionCookie();
 
 }//void NewCustomerContact(void)
 
@@ -719,7 +720,7 @@ void ModCustomerContact(void)
 			,cInfo
 			,guLoginClient
 			,uForClient
-			,guContact);
+			,guCookieContact);
 	mysql_query(&gMysql,gcQuery);
 	
 	if(mysql_errno(&gMysql))
@@ -743,7 +744,7 @@ void ModCustomerContact(void)
 			,cClearPassword
 			,guContactPerm
 			,guLoginClient
-			,guContact);
+			,guCookieContact);
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
@@ -753,12 +754,12 @@ void ModCustomerContact(void)
 
 	if(uWasMod==2)
 	{
-		iDNSLog(guContact,"tClient","Mod");
+		iDNSLog(guCookieContact,"tClient","Mod");
 		gcMessage="Company contact modified OK";
 	}
 	else
 	{
-		iDNSLog(guContact,"tClient","Mod Fail");
+		iDNSLog(guCookieContact,"tClient","Mod Fail");
 		gcMessage="<blink>Error: </blink>Company contact NOT modified";
 	}
 	time(&uModDate);
@@ -769,14 +770,14 @@ void ModCustomerContact(void)
 
 void DelCustomerContact(void)
 {
-	sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%u",guContact);
+	sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%u",guCookieContact);
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 
 
-	sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient=%u",guContact);
+	sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient=%u",guCookieContact);
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql))
@@ -784,16 +785,16 @@ void DelCustomerContact(void)
 
 	if(mysql_affected_rows(&gMysql))
 	{
-		iDNSLog(guContact,"tClient","Del");
+		iDNSLog(guCookieContact,"tClient","Del");
 		gcMessage="Company contact deleted OK";
 	}
 	else
 	{
-		iDNSLog(guContact,"tClient","Del Fail");
+		iDNSLog(guCookieContact,"tClient","Del Fail");
 		gcMessage="<blink>Error: </blink>Company contact NOT deleted";
 	}
-	guContact=0;
-	sys_SetSessionCookie();
+	guCookieContact=0;
+	SetSessionCookie();
 
 }//void DelCustomerContact(void)
 
@@ -843,7 +844,7 @@ unsigned ValidateCustomerContactInput(void)
 		else if(!strcmp(gcFunction,"Confirm Modify"))
 		{
 			if(strcmp(TextAreaSave(cClientName),
-				ForeignKey("tClient","cLabel",guContact)))
+				ForeignKey("tClient","cLabel",guCookieContact)))
 			{
 				sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND uOwner=%u",
 						TextAreaSave(cClientName)
@@ -1161,7 +1162,7 @@ void LoadCustomerContact(void)
 			"tAuthorize.cLabel,tAuthorize.uPerm,tAuthorize.cPasswd,tAuthorize.cClrPasswd, "
 			"tClient.uCreatedBy,tClient.uCreatedDate,tClient.uModBy,tClient.uModDate FROM "
 			"tClient,tAuthorize WHERE tClient.uClient=%u AND tAuthorize.uCertClient=tClient.uClient "
-			,guContact);
+			,guCookieContact);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1186,11 +1187,12 @@ void LoadCustomerContact(void)
 
 		if(strcmp(gcCustomer,cForClientPullDown))
 		{
-			sprintf(gcCustomer,"%.100s",cForClientPullDown);
-			gcZone[0]=0;
-			cuView[0]=0;
-			uResource=0;
-			sys_SetSessionCookie();
+			sprintf(gcCookieCustomer,"%.100s",cForClientPullDown);
+			gcCookieZone[0]=0;
+			guCookieView=0;
+			guCookieResource=0;
+			guCookieContact=0;
+			SetSessionCookie();
 		}
 
 	}
@@ -1252,9 +1254,9 @@ void funcContactNavList(FILE *fp,unsigned uSetCookie)
 		//Load single record, free result, return
 		if((field=mysql_fetch_row(res)))
 		{
-			sscanf(field[0],"%u",&guContact);
+			sscanf(field[0],"%u",&guCookieContact);
 			if(uSetCookie)
-				sys_SetSessionCookie();
+				SetSessionCookie();
 			LoadCustomerContact();
 			mysql_free_result(res);
 
@@ -1308,11 +1310,11 @@ void funcContactLast7DaysActivity(FILE *fp)
 
 	template.cpName[0]="";
 
-	if(!guContact) return;
+	if(!guCookieContact) return;
 
 	if(guContactPerm>6)
 	{
-		funcAdmLast7DaysAct(fp,guContact);
+		funcAdmLast7DaysAct(fp,guCookieContact);
 		return;
 	}
 	
@@ -1325,7 +1327,7 @@ void funcContactLast7DaysActivity(FILE *fp)
 			"IF(cTableName='tZone',(SELECT uView FROM tZone WHERE uZone=uTablePK),''),IF(cTableName='tZone',(SELECT "
 			"tClient.cLabel FROM tClient,tZone WHERE tClient.uClient=tZone.uOwner=tClient.uClient AND uZone=uTablePK),'') "
 			"FROM tLog WHERE (uLogType=1 OR uLogType=2 OR uLogType=3) AND "
-			"uLoginClient=%u AND uCreatedDate>(UNIX_TIMESTAMP(NOW())-604800) ORDER BY tLog.uCreatedDate DESC LIMIT 100",guContact);
+			"uLoginClient=%u AND uCreatedDate>(UNIX_TIMESTAMP(NOW())-604800) ORDER BY tLog.uCreatedDate DESC LIMIT 100",guCookieContact);
 	/*
 	0: tLog.cLabel
 	1: tLog.uTablePK

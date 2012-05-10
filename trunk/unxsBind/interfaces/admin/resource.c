@@ -231,6 +231,8 @@ void ResourceCommands(pentry entries[], int x)
 void ResourceGetHook(entry gentries[],int x)
 {
 	register int i;
+
+	uResource=0;
 	
 	for(i=0;i<x;i++)
 	{
@@ -248,7 +250,10 @@ void ResourceGetHook(entry gentries[],int x)
 			sscanf(gentries[i].val,"%u",&uStep);
 	}
 
-	if(gcCustomer[0]) uForClient=uGetClient(gcCustomer);
+	if(gcCookieCustomer[0]) uForClient=uGetClient(gcCookieCustomer);
+	if(gcCookieZone[0]) sprintf(gcZone,"%.63s",gcCookieZone);
+	if(guCookieView) sprintf(cuView,"%u",guCookieView);
+	if(guCookieResource && uResource==0) uResource=guCookieResource;
 
 	if(cRRType[0] && gcFunction[0] && gcZone[0])
 	{
@@ -657,8 +662,11 @@ void SelectResource(void)
 		sscanf(field[23],"%lu",&uCreatedDate);
 		sscanf(field[24],"%u",&uModBy);
 		sscanf(field[25],"%lu",&uModDate);
-		if(uResource)
-			sys_SetSessionCookie();
+		if(uResource!=guCookieResource)
+		{
+			guCookieResource=uResource;
+			SetSessionCookie();
+		}
 
 		if(!gcMessage[0]) gcMessage="Zone Resource Selected";
 	}
@@ -827,13 +835,15 @@ void NewResource(void)
 	}
 	else
 	{
+		uResource=0;
 		gcMessage="<blink>Error: </blink>Zone Resource Not Created";
 	}
 	uOwner=uGetZoneOwner(uZone);
 	uCreatedBy=guLoginClient;
 	time(&uCreatedDate);
 
-	sys_SetSessionCookie();
+	guCookieResource=uResource;
+	SetSessionCookie();
 
 }//void NewResource(void)
 
@@ -892,8 +902,8 @@ void DelResource(void)
 		gcMessage="<blink>Error: </blink>Zone Resource Not Deleted";
 	}
 	
-	uResource=0;
-	sys_SetSessionCookie();
+	guCookieResource=0;
+	SetSessionCookie();
 
 }//void DelResource(void)
 
