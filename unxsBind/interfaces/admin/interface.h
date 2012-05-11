@@ -81,6 +81,7 @@ extern unsigned guBrowserFirefox;
 //new cookie cleanup
 extern unsigned guCookieResource;
 extern unsigned guCookieView;
+extern char gcView[];
 extern unsigned guCookieContact;
 extern char gcCookieZone[];
 extern char gcCookieCustomer[];

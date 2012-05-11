@@ -276,7 +276,11 @@ void htmlRestoreZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[7]=gcModStep;
 
 			template.cpName[8]="cZone";
-			template.cpValue[8]=cZone;
+			char cZoneView[100];
+			sprintf(cZoneView,cZone);
+			if(uView)
+				sprintf(cZoneView,"%.63s/%.31s",cZone,ForeignKey("tView","cLabel",uView));
+			template.cpValue[8]=cZoneView;
 
 			template.cpName[9]="gcMessage";
 			template.cpValue[9]=gcMessage;

@@ -55,6 +55,7 @@ unsigned guBrowserFirefox=0;
 //new cookie cleanup
 unsigned guCookieResource=0;
 unsigned guCookieView=0;
+char gcView[32]={""};
 unsigned guCookieContact=0;
 char gcCookieZone[100]={""};
 char gcCookieCustomer[100]={""};
@@ -175,46 +176,13 @@ int main(int argc, char *argv[])
 			else if(!strcmp(entries[i].name,"gcPasswd"))
 				sprintf(gcPasswd,"%.99s",entries[i].val);
 			else if(!strcmp(entries[i].name,"cZone"))
-			{
-				//if diff from current zone
-				if(strcmp(entries[i].val,gcCookieZone))
-				{
-					sprintf(gcCookieZone,"%.63s",entries[i].val);
-					SetSessionCookie();
-				}
 				sprintf(gcZone,"%.63s",entries[i].val);
-			}
 			else if(!strcmp(entries[i].name,"uView"))
-			{
-				unsigned uNewView=0;
-				sscanf(entries[i].val,"%u",&uNewView);
-				if(uNewView!=guCookieView)
-				{
-					sscanf(entries[i].val,"%u",&guCookieView);
-					SetSessionCookie();
-				}
 				sprintf(cuView,"%.15s",entries[i].val);
-			}
 			else if(!strcmp(entries[i].name,"uResource"))
-			{
-				unsigned uNewRR=0;
-				sscanf(entries[i].val,"%u",&uNewRR);
-				if(uNewRR!=guCookieResource)
-				{
-					sscanf(entries[i].val,"%u",&guCookieResource);
-					SetSessionCookie();
-				}
 				sscanf(entries[i].val,"%u",&uResource);
-			}
 			else if(!strcmp(entries[i].name,"cCustomer"))
-			{
-				if(strcmp(entries[i].val,gcCookieCustomer))
-				{
-					sprintf(gcCookieCustomer,"%.31s",entries[i].val);
-					SetSessionCookie();
-				}
 				sprintf(gcCustomer,"%.99s",entries[i].val);
-			}
 		}
 	}
 
@@ -1026,19 +994,19 @@ void funcTopInfo(FILE *fp)
 	//<font size=+1>{{cZone}} :: {{cLabel}} :: iDNS Admin Interface</font>
 	
 	char cOutput[512]={""};
-	char cView[32]={""};
 	char cResource[100]={""};
-
+	char cContact[100]={""};
 
 	if(guCookieView)
-		sprintf(cView,"%.31s",ForeignKey("tView","cLabel",guCookieView));
+		sprintf(gcView,"%.31s",ForeignKey("tView","cLabel",guCookieView));
 	if(guCookieResource)
 		sprintf(cResource,"%.99s",ForeignKey("tResource","cName",guCookieResource));
+	if(guCookieContact)
+		sprintf(cContact,"%.31s",ForeignKey("tClient","cLabel",guCookieContact));
 
-	sprintf(cOutput,"<font size=+1>%.99s %.31s %.63s %.31s :: iDNS Admin Interface</font>",
-				cResource,cView,gcCookieZone,gcCookieCustomer);
+	sprintf(cOutput,"<br><br><b>%.99s %.31s %.63s %.31s %.31s :: iDNS Admin Interface</b>",
+				cResource,gcView,gcCookieZone,gcCookieCustomer,cContact);
 
-	fprintf(fp,"<br><br>");
 	fprintf(fp,"%s",cOutput);
 
 }//void funcTopInfo(FILE *fp)
