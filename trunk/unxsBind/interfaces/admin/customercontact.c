@@ -159,40 +159,65 @@ char *cPermLevel(unsigned uPerm)
 
 void CustomerContactGetHook(entry gentries[],int x)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
 	register int i;
+	unsigned uClient=0;
+	unsigned uOwner=0;
 	
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(gentries[i].name,"uClient"))
-			sscanf(gentries[i].val,"%u",&guCookieContact);
+			sscanf(gentries[i].val,"%u",&uClient);
 	}
 
-	if(guCookieContact)
+	if(guCookieContact && !uClient)
 	{
-		SetSessionCookie();
 		LoadCustomerContact();
 	}
-	else if(gcCustomer[0] && !guCookieContact)
+	else if(gcCookieCustomer[0] && !guCookieContact)
 	{
 		//
-		//Load the first Contact
-		MYSQL_RES *res;
-		MYSQL_ROW field;
-		
-		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uOwner=%u ORDER BY cLabel LIMIT 1",uGetClient(gcCustomer));
+		//Load the first contact as defualt
+		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uOwner=%u ORDER BY cLabel LIMIT 1",uGetClient(gcCookieCustomer));
 		mysql_query(&gMysql,gcQuery);
-
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
-
 		res=mysql_store_result(&gMysql);
-
 		if((field=mysql_fetch_row(res)))
 		{
 			sscanf(field[0],"%u",&guCookieContact);
+			SetSessionCookie();
 			LoadCustomerContact();
 		}
 		htmlCustomerContact();
+	}
+	else if(uClient)
+	{
+		sprintf(gcQuery,"SELECT uOwner FROM tClient WHERE uClient=%u",uClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sscanf(field[0],"%u",&uOwner);
+		mysql_free_result(res);
+
+		if(uOwner)
+		{
+			sprintf(gcQuery,"SELECT cLabel FROM tClient WHERE uClient=%u",uOwner);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(gcCookieCustomer,"%.31s",field[0]);
+			mysql_free_result(res);
+
+			guCookieContact=uClient;
+			SetSessionCookie();
+			LoadCustomerContact();
+		}
 	}
 	htmlCustomerContact();
 	
@@ -436,18 +461,6 @@ void htmlCustomerContactWizard(unsigned uStep)
 
 void htmlCustomerContact(void)
 {
-	if(cSearch[0])
-	{
-		//See ticket #61 for reference
-		FILE *fp;
-
-		if((fp=fopen("/dev/null","w")))
-		{
-			funcContactNavList(fp,1);
-			fclose(fp);
-		}
-	}
-
 	htmlHeader("idnsAdmin","Header");
 	htmlCustomerContactPage("idnsAdmin","CustomerUser.Body");
 	htmlFooter("Footer");
@@ -589,7 +602,7 @@ void htmlCustomerContactPage(char *cTitle, char *cTemplateName)
 			template.cpValue[22]=cClearPassword;
 			
 			template.cpName[23]="cCustomer";
-			template.cpValue[23]=gcCustomer;
+			template.cpValue[23]=gcCookieCustomer;
 
 			template.cpName[24]="gcZone";
 			template.cpValue[24]=gcZone;
@@ -1184,22 +1197,11 @@ void LoadCustomerContact(void)
 		sscanf(field[10],"%lu",&uCreatedDate);
 		sscanf(field[11],"%u",&uModBy);
 		sscanf(field[12],"%lu",&uModDate);
-
-		if(strcmp(gcCustomer,cForClientPullDown))
-		{
-			sprintf(gcCookieCustomer,"%.100s",cForClientPullDown);
-			gcCookieZone[0]=0;
-			guCookieView=0;
-			guCookieResource=0;
-			guCookieContact=0;
-			SetSessionCookie();
-		}
-
 	}
-	//else
-	//	gcMessage="No records found";
+	else
+		gcMessage="No records found";
 
-//	mysql_free_result(res);
+	mysql_free_result(res);
 
 }//void LoadCustomerContact(void)
 
@@ -1230,11 +1232,21 @@ void funcContactNavList(FILE *fp,unsigned uSetCookie)
 	if(!cSearch[0]) return;
 
 	if(guASPContact)
-		sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tAuthorize.cLabel FROM "
+	{
+		if(gcCookieCustomer[0])
+			sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tAuthorize.cLabel FROM "
+				"tClient,tAuthorize WHERE tClient.uClient=tAuthorize.uCertClient AND "
+				"(tClient.cLabel LIKE '%1$s%%' OR tAuthorize.cLabel LIKE '%1$s%%') AND "
+				"tAuthorize.uCertClient!=1 AND "
+				"tClient.uOwner=%2$u "
+				"ORDER BY tClient.cLabel",cSearch,uGetClient(gcCookieCustomer));
+		else
+			sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tAuthorize.cLabel FROM "
 				"tClient,tAuthorize WHERE tClient.uClient=tAuthorize.uCertClient AND "
 				"(tClient.cLabel LIKE '%1$s%%' OR tAuthorize.cLabel LIKE '%1$s%%') AND "
 				"tAuthorize.uCertClient!=1 "
 				"ORDER BY tClient.cLabel",cSearch);
+	}
 	else
 		sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tAuthorize.cLabel FROM "
 				"tClient,tAuthorize WHERE tClient.uClient=tAuthorize.uCertClient AND "

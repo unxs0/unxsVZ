@@ -145,7 +145,11 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 			template.cpValue[7]=gcModStep;
 
 			template.cpName[8]="cZone";
-			template.cpValue[8]=gcZone;
+			char cZoneView[100];
+			sprintf(cZoneView,gcZone);
+			if(guCookieView && !strchr(gcZone,'/'))//hack TODO
+				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
+			template.cpValue[8]=cZoneView;
 
 			template.cpName[9]="gcMessage";
 			template.cpValue[9]=gcMessage;
@@ -190,9 +194,9 @@ void BulkResourceImport(void)
 	char cLine[512]={"ERROR"};
 	char *cp;
 	unsigned uZone;
-	unsigned uView=2;//external
 	unsigned uZoneOwner;
 	unsigned uNSSet;
+	unsigned uView=2;
 	unsigned uZoneCount=0,uResourceCount=0,uImportCount=0,uZoneFoundCount=0;
 	unsigned uOnlyOncePerZone=1;
 	static char cMsg[128];
@@ -201,13 +205,21 @@ void BulkResourceImport(void)
 
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	
-	if(!cuView[0])
-		sprintf(cuView,"%u",uView);
 
-	uZone=uGetuZone(gcZone,cuView);
+	if(guCookieView) uView=guCookieView;	
+	sprintf(cuView,"%u",uView);
+	uZone=uGetuZone(gcCookieZone,cuView);
 	
-	sprintf(cImportMsg,"Bulk Resource Record Import begin. Zone=%s/%u/%s\n",gcZone,uZone,cuView);
+
+	if(!uZone)
+	{	
+		sprintf(cImportMsg,"Bulk Resource Record aborted. Zone=%s/%u/%s\n",gcCookieZone,uZone,cuView);
+		htmlBulkOp();
+	}
+
+	sprintf(cImportMsg,"Bulk resource record import begin. Zone=%s/%u/%s\n",gcCookieZone,uZone,cuView);
+
+	sprintf(gcZone,gcCookieZone);
 	
 	while(1)
 	{
@@ -248,6 +260,7 @@ void BulkResourceImport(void)
 			if(uView>2 || uView<1)
 				uView=2;
 			sprintf(cMsg,"%u: uView=%u\n",uLineNumber,uView);
+			sprintf(cuView,"%u",uView);
 			strcat(cImportMsg,cMsg);
 			continue;
 		}
@@ -290,7 +303,10 @@ void BulkResourceImport(void)
 				//If we set the parameter to create non-existant zones, create it :) (using the default from zone.c)
 				SerialNum(cuSerial);
 				uNSSet=1;
-				sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=%u,cHostmaster='nsadmin.unixservice.com',uSerial='%s',uExpire=604800,uRefresh=10800,uTTL=86400,uRetry=3600,uZoneTTL=86400,uMailServers=0,cMainAddress='',uView=%u,uRegistrar=0,cOptions='',uSecondaryOnly=0,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				sprintf(gcQuery,"INSERT INTO tZone SET cZone='%s',uNSSet=%u,cHostmaster='nsadmin.unixservice.com',"
+						"uSerial='%s',uExpire=604800,uRefresh=10800,uTTL=86400,uRetry=3600,uZoneTTL=86400,"
+						"uMailServers=0,cMainAddress='',uView=%u,uRegistrar=0,cOptions='',uSecondaryOnly=0,"
+						"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						gcZone
 						,uNSSet
 						,cuSerial
@@ -335,6 +351,7 @@ void BulkResourceImport(void)
 		{
 			unsigned uResource=0;
 			//A resource candidate line
+			uResourceCount++;
 			
 			//If we have no defined zone keep on going.
 			if(!uZone) continue;
@@ -343,21 +360,26 @@ void BulkResourceImport(void)
 				"idnsAdmin.BulkResourceImport()");
 			if(uResource && (mysql_affected_rows(&gMysql)==1))
 			{
-				uResourceCount++;
 				uImportCount++;
 				
 				if(uOnlyOncePerZone && !uDebug)
 				{
 					time_t luClock;
 					uNSSet=uGetuNameServer(gcZone);
-					sprintf(cuView,"%.9u",uView);
+					if(!uNSSet)
+						strcat(cImportMsg,"uGetuNameServer() failed!\n");
 					//Submit job for first RR. Time for now + 5 minutes
 					//This should allow for many more RRs to be added
 					//here without complicating the code. A KISS hack?
 					UpdateSerialNum(gcZone,cuView);
+					if(mysql_affected_rows(&gMysql)<1)
+						strcat(cImportMsg,"UpdateSerialNum() failed!\n");
 					time(&luClock);
 					luClock+=300;
-					AdminSubmitJob("Modify",uNSSet,gcZone,0,luClock);
+					if(AdminSubmitJob("Modify",uNSSet,gcZone,0,luClock))
+						strcat(cImportMsg,"AdminSubmitJob() failed!\n");
+					else
+						strcat(cImportMsg,"AdminSubmitJob() ok.\n");
 					uOnlyOncePerZone=0;
 				}
 				iDNSLog(uResource,"tResource","New");
@@ -366,9 +388,9 @@ void BulkResourceImport(void)
 
 	}
 
-	sprintf(cMsg,"Bulk Resource Record Import ends.\n");
+	sprintf(cMsg,"Bulk resource record import ends.\n");
 	strcat(cImportMsg,cMsg);
-	sprintf(cMsg,"%u of %u tZone.cZone found. %u resource lines found %u imported.\n",
+	sprintf(cMsg,"Zone creation: %u of %u tZone.cZone found.\nResource import: %u resource lines found %u imported.\n",
 		uZoneFoundCount,uZoneCount,uResourceCount,uImportCount);
 	strcat(cImportMsg,cMsg);
 	htmlBulkOp();

@@ -511,7 +511,11 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[13]=cMainAddress;
 
 			template.cpName[14]="cZone";
-			template.cpValue[14]=gcZone;
+			char cZoneView[100];
+			sprintf(cZoneView,gcZone);
+			if(guCookieView)
+				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
+			template.cpValue[14]=cZoneView;
 
 			template.cpName[15]="cHostmaster";
 			template.cpValue[15]=cHostmaster;
@@ -1865,9 +1869,13 @@ void funcZoneNavList(FILE *fp,unsigned uSetCookie)
 	
 	if(!cSearch[0]) return;
 
-	sprintf(gcQuery,"SELECT tZone.cZone,tZone.uView,tView.cLabel,tClient.cLabel,tZone.uOwner FROM tZone,tView,tClient "
+	if(gcCookieCustomer[0])
+		sprintf(gcQuery,"SELECT tZone.cZone,tZone.uView,tView.cLabel,tClient.cLabel,tZone.uOwner FROM tZone,tView,tClient "
+			"WHERE tZone.uView=tView.uView AND tZone.uOwner=tClient.uClient AND tZone.uOwner=%u AND tZone.cZone LIKE '%s%%'",
+				uGetClient(gcCookieCustomer),cSearch);
+	else
+		sprintf(gcQuery,"SELECT tZone.cZone,tZone.uView,tView.cLabel,tClient.cLabel,tZone.uOwner FROM tZone,tView,tClient "
 			"WHERE tZone.uView=tView.uView AND tZone.uOwner=tClient.uClient AND tZone.cZone LIKE '%s%%'",cSearch);
-	//fprintf(fp,"%s",gcQuery);return;
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

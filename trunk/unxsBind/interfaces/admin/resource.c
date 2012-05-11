@@ -541,7 +541,11 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			template.cpValue[39]=gcCustomer;
 
 			template.cpName[40]="cZone";
-			template.cpValue[40]=gcZone;
+			char cZoneView[100];
+			sprintf(cZoneView,gcZone);
+			if(guCookieView)
+				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
+			template.cpValue[40]=cZoneView;
 			
 			template.cpName[41]="uOwner";
 			template.cpValue[41]=cuOwner;

@@ -103,7 +103,7 @@
     <td width="10"> </td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
     <td class="hdrtout padlt8">
-		<h6 class="modhdr">Contact Data </h6></td>
+		<h6 class="modhdr">{{cClientName}} Contact Data </h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
   <tr>
@@ -306,7 +306,7 @@ Company contacts are the persons authorized by the company to modify zone data v
   <tr>
 
     <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-    <td class="hdrtout padlt8"><h6 class="modhdr">Company Contacts</h6></td>
+    <td class="hdrtout padlt8"><h6 class="modhdr">{{cCustomer}} Company Contacts</h6></td>
     <td valign="top" width="9" class="hdrtout padlt8"></td>
   </tr>
   <tr>

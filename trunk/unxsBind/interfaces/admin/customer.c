@@ -102,14 +102,10 @@ void CustomerGetHook(entry gentries[],int x)
 			sscanf(gentries[i].val,"%u",&uClient);
 	}
 
-	if(uClient)
-		LoadCustomer();
-	else if(gcCustomer[0])
-	{
-		uClient=uGetClient(gcCustomer);
-		LoadCustomer();
-	}
+	if(gcCookieCustomer[0] && !uClient)
+		uClient=uGetClient(gcCookieCustomer);
 	
+	LoadCustomer();
 	htmlCustomer();
 
 }//void CustomerGetHook(entry gentries[],int x)
@@ -139,14 +135,13 @@ void LoadCustomer(void)
 		sscanf(field[6],"%lu",&uCreatedDate);
 		sscanf(field[7],"%u",&uModBy);
 		sscanf(field[8],"%lu",&uModDate);
-		
-		if(strcmp(gcCustomer,cCompanyName))
+
+		if(strcmp(gcCookieCustomer,cCompanyName))
 		{
-			sprintf(gcCustomer,"%.99s",cCompanyName);
 			sprintf(gcCookieCustomer,"%.99s",cCompanyName);
-			gcZone[0]=0;
-			cuView[0]=0;
-			uResource=0;
+			gcCookieZone[0]=0;
+			guCookieResource=0;
+			guCookieView=0;
 			guCookieContact=0;
 			SetSessionCookie();
 		}
@@ -551,10 +546,10 @@ void funcCustomerContacts(FILE *fp)
 
 	fprintf(fp,"<!-- funcCustomerContacts(fp) Start -->\n");
 
-	if(!uClient && !gcCustomer[0]) return;
+	if(!uClient && !gcCookieCustomer[0]) return;
 
-	if(!uClient && gcCustomer[0])
-		uClient=uGetClient(gcCustomer);
+	if(!uClient && gcCookieCustomer[0])
+		uClient=uGetClient(gcCookieCustomer);
 
 
 	sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tClient.cEmail,tClient.cInfo,"
@@ -643,9 +638,9 @@ void NewCustomer(void)
 	}
 	uOwner=guOrg;
 	uCreatedBy=guLoginClient;
+	sprintf(gcCustomer,"%.99s",cCompanyName);
 	
 	//Set session cookie after creating new company
-	sprintf(gcCustomer,"%.99s",cCompanyName);
 	sprintf(gcCookieCustomer,"%.99s",cCompanyName);
 	//If there's a zone or a RR selected, will unselect
 	gcZone[0]=0;
@@ -686,8 +681,8 @@ void ModCustomer(void)
 	}
 
 	uModBy=guLoginClient;
-	
 	sprintf(gcCustomer,"%.99s",cCompanyName);
+
 	sprintf(gcCookieCustomer,"%.99s",cCompanyName);
 	SetSessionCookie();
 
@@ -713,6 +708,8 @@ void DelCustomer(void)
 		iDNSLog(uClient,"tClient","Del Fail");
 	}
 	
+	gcCustomer[0]=0;
+
 	gcCookieCustomer[0]=0;
 	gcCookieZone[0]=0;
 	guCookieView=0;
@@ -1066,12 +1063,6 @@ void funcCompanyNavList(FILE *fp,unsigned uSetCookie)
 		{
 			sscanf(field[0],"%u",&uClient);
 			LoadCustomer();
-			sprintf(gcCustomer,"%.99s",cCompanyName);
-			if(uSetCookie)
-			{
-				sprintf(gcCookieCustomer,"%.99s",cCompanyName);
-				SetSessionCookie();
-			}
 			mysql_free_result(res);
 
 			fprintf(fp,"<a class=darkLink href=\"idnsAdmin.cgi?gcPage=Customer&uClient=%s\">%s</a><br>\n",
