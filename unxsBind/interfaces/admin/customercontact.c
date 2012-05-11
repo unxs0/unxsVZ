@@ -726,6 +726,9 @@ void ModCustomerContact(void)
 {
 	unsigned uWasMod=0;
 
+	if(!uForClient && gcCookieCustomer[0])
+		uForClient=uGetClient(gcCookieCustomer);
+
 	sprintf(gcQuery,"UPDATE tClient SET cLabel='%s',cEmail='%s',cInfo='%s',uModBy=%u,uOwner=%u,"
 			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uClient=%u",
 			cClientName
@@ -735,22 +738,22 @@ void ModCustomerContact(void)
 			,uForClient
 			,guCookieContact);
 	mysql_query(&gMysql,gcQuery);
-	
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-
 	uWasMod=mysql_affected_rows(&gMysql);
-	
 
-	if(strncmp(cPassword,"..",2) && strncmp(cPassword,"$1$",3) && uSaveClrPassword)
-		sprintf(cClearPassword,"%.99s",cPassword);
-	else
-		cClearPassword[0]=0;
+	if(!strstr(cInfo,"LDAP"))
+	{
 
-	if(strncmp(cPassword,"..",2) && strncmp(cPassword,"$1$",3))
-		EncryptPasswd(cPassword);
+		if(strncmp(cPassword,"..",2) && strncmp(cPassword,"$1$",3) && uSaveClrPassword)
+			sprintf(cClearPassword,"%.99s",cPassword);
+		else
+			cClearPassword[0]=0;
+
+		if(strncmp(cPassword,"..",2) && strncmp(cPassword,"$1$",3))
+			EncryptPasswd(cPassword);
 	
-	sprintf(gcQuery,"UPDATE tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',uPerm=%u,"
+		sprintf(gcQuery,"UPDATE tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',uPerm=%u,"
 			"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uCertClient=%u",
 			cUserName
 			,cPassword
@@ -758,14 +761,13 @@ void ModCustomerContact(void)
 			,guContactPerm
 			,guLoginClient
 			,guCookieContact);
-	mysql_query(&gMysql,gcQuery);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		uWasMod+=mysql_affected_rows(&gMysql);
+	}
 
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-	uWasMod+=mysql_affected_rows(&gMysql);
-
-	if(uWasMod==2)
+	if(uWasMod)
 	{
 		iDNSLog(guCookieContact,"tClient","Mod");
 		gcMessage="Company contact modified OK";
@@ -898,9 +900,9 @@ unsigned ValidateCustomerContactInput(void)
 			
 	}
 		
-	if(!cUserName[0])
+	if(!cUserName[0] && !strstr(cInfo,"LDAP"))
 	{
-		gcMessage="<blink>Error: </blink>Login is required.";
+		gcMessage="<blink>Error: </blink>Login is required, unless LDAP is in the additional info field.";
 		SetCustomerContactFieldsOn();
 		cUserNameStyle="type_fields_req";
 		return(0);
@@ -938,14 +940,14 @@ unsigned ValidateCustomerContactInput(void)
 			}
 		}
 	}
-	if(!cPassword[0])
+	if(!cPassword[0]  && !strstr(cInfo,"LDAP"))
 	{
 		gcMessage="<blink>Error: </blink>Password must be provided.";
 		SetCustomerContactFieldsOn();
 		cPasswordStyle="type_fields_req";
 		return(0);
 	}
-	else
+	else if( !strstr("LDAP",cInfo))
 	{
 		if(strlen(cPassword)<5)
 		{
@@ -956,7 +958,7 @@ unsigned ValidateCustomerContactInput(void)
 		}
 	}
 	
-	if(!uForClient)
+	if(!uForClient && !gcCookieCustomer[0])
 	{
 		gcMessage="<blink>Error: </blink>Please select a Company to create the Contact for.";
 		SetCustomerContactFieldsOn();
@@ -965,7 +967,7 @@ unsigned ValidateCustomerContactInput(void)
 	}
 	return(1);
 		
-}//unsigned ValidateCustomerInput(void)
+}//unsigned ValidateCustomerContactInput(void)
 
 
 void funcTablePullDownResellers(FILE *fp,unsigned uUseStatus)
@@ -1170,11 +1172,11 @@ void LoadCustomerContact(void)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	
+
 	sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tClient.cInfo,tClient.cEmail,tClient.uOwner,"
-			"tAuthorize.cLabel,tAuthorize.uPerm,tAuthorize.cPasswd,tAuthorize.cClrPasswd, "
-			"tClient.uCreatedBy,tClient.uCreatedDate,tClient.uModBy,tClient.uModDate FROM "
-			"tClient,tAuthorize WHERE tClient.uClient=%u AND tAuthorize.uCertClient=tClient.uClient "
+			" tAuthorize.cLabel,tAuthorize.uPerm,tAuthorize.cPasswd,tAuthorize.cClrPasswd,"
+			" tClient.uCreatedBy,tClient.uCreatedDate,tClient.uModBy,tClient.uModDate"
+			" FROM tClient LEFT JOIN tAuthorize ON tAuthorize.uCertClient=tClient.uClient WHERE tClient.uClient=%u"
 			,guCookieContact);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1187,10 +1189,17 @@ void LoadCustomerContact(void)
 		sprintf(cInfo,"%.512s",field[2]);
 		sprintf(cEmail,"%.100s",field[3]);
 		sscanf(field[4],"%u",&uForClient);
-		sprintf(cUserName,"%.100s",field[5]);
-		sscanf(field[6],"%u",&guContactPerm);
-		sprintf(cPassword,"%.100s",field[7]);
-		sprintf(cClearPassword,"%.100s",field[8]);
+
+		//LEFT JOIN
+		if(field[5]!=NULL)
+			sprintf(cUserName,"%.100s",field[5]);
+		if(field[6]!=NULL)
+			sscanf(field[6],"%u",&guContactPerm);
+		if(field[7]!=NULL)
+			sprintf(cPassword,"%.100s",field[7]);
+		if(field[8]!=NULL)
+			sprintf(cClearPassword,"%.100s",field[8]);
+
 		sprintf(cForClientPullDown,"%.100s",cClientLabel(uForClient));
 		sscanf(field[4],"%u",&uOwner);
 		sscanf(field[9],"%u",&uCreatedBy);
