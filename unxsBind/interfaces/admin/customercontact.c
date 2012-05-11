@@ -767,15 +767,25 @@ void ModCustomerContact(void)
 		uWasMod+=mysql_affected_rows(&gMysql);
 	}
 
-	if(uWasMod)
+	if(uWasMod==2 && !strstr(cInfo,"LDAP"))
 	{
 		iDNSLog(guCookieContact,"tClient","Mod");
 		gcMessage="Company contact modified OK";
 	}
-	else
+	else if(uWasMod==1 && !strstr(cInfo,"LDAP"))
+	{
+		iDNSLog(guCookieContact,"tClient","Mod");
+		gcMessage="Company contact modified but tAuthorize not updated! Contact sysadmin.";
+	}
+	else if(uWasMod==1 && strstr(cInfo,"LDAP"))
+	{
+		iDNSLog(guCookieContact,"tClient","Mod");
+		gcMessage="Company contact modified OK for LDAP account";
+	}
+	else if(uWasMod==0)
 	{
 		iDNSLog(guCookieContact,"tClient","Mod Fail");
-		gcMessage="<blink>Error: </blink>Company contact NOT modified";
+		gcMessage="<blink>Error: </blink>Company contact NOT modified!";
 	}
 	time(&uModDate);
 	uModBy=guLoginClient;
