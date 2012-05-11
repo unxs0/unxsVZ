@@ -1234,25 +1234,32 @@ void funcContactNavList(FILE *fp,unsigned uSetCookie)
 	if(guASPContact)
 	{
 		if(gcCookieCustomer[0])
-			sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tAuthorize.cLabel FROM "
-				"tClient,tAuthorize WHERE tClient.uClient=tAuthorize.uCertClient AND "
-				"(tClient.cLabel LIKE '%1$s%%' OR tAuthorize.cLabel LIKE '%1$s%%') AND "
-				"tAuthorize.uCertClient!=1 AND "
-				"tClient.uOwner=%2$u "
-				"ORDER BY tClient.cLabel",cSearch,uGetClient(gcCookieCustomer));
+			sprintf(gcQuery,"SELECT uClient,cLabel"
+				" FROM tClient"
+				" WHERE cLabel LIKE '%1$s%%'"
+				" AND tClient.uOwner=%2$u "
+				"ORDER BY cLabel",cSearch,uGetClient(gcCookieCustomer));
 		else
-			sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tAuthorize.cLabel FROM "
-				"tClient,tAuthorize WHERE tClient.uClient=tAuthorize.uCertClient AND "
-				"(tClient.cLabel LIKE '%1$s%%' OR tAuthorize.cLabel LIKE '%1$s%%') AND "
-				"tAuthorize.uCertClient!=1 "
-				"ORDER BY tClient.cLabel",cSearch);
+			sprintf(gcQuery,"SELECT uClient,cLabel"
+				" FROM tClient"
+				" WHERE cLabel LIKE '%1$s%%'"
+				"ORDER BY cLabel",cSearch);
 	}
 	else
-		sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tAuthorize.cLabel FROM "
-				"tClient,tAuthorize WHERE tClient.uClient=tAuthorize.uCertClient AND "
-				"(tClient.cLabel LIKE '%1$s%%' OR tAuthorize.cLabel LIKE '%1$s%%') AND "
-				"tAuthorize.uCertClient!=1 AND tClient.uOwner=%2$u "
-				"ORDER BY tClient.cLabel",cSearch,guOrg);
+	{
+		if(gcCookieCustomer[0])
+			sprintf(gcQuery,"SELECT uClient,cLabel"
+				" FROM tClient"
+				" WHERE cLabel LIKE '%1$s%%'"
+				" AND tClient.uOwner=%2$u "
+				"ORDER BY cLabel",cSearch,uGetClient(gcCookieCustomer));
+		else
+			sprintf(gcQuery,"SELECT uClient,cLabel"
+				" FROM tClient"
+				" WHERE cLabel LIKE '%1$s%%'"
+				" AND tClient.uOwner=%2$u "
+				"ORDER BY cLabel",cSearch,guOrg);
+	}
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1272,10 +1279,9 @@ void funcContactNavList(FILE *fp,unsigned uSetCookie)
 			LoadCustomerContact();
 			mysql_free_result(res);
 
-			fprintf(fp,"<a class=darkLink href=idnsAdmin.cgi?gcPage=CustomerUser&uClient=%s>%s (%s)</a><br>\n",
+			fprintf(fp,"<a class=darkLink href=idnsAdmin.cgi?gcPage=CustomerUser&uClient=%s>%s</a><br>\n",
 				field[0]
-				,field[1]
-				,field[2]);
+				,field[1]);
 				
 			return;
 		}
@@ -1288,10 +1294,9 @@ void funcContactNavList(FILE *fp,unsigned uSetCookie)
 		while((field=mysql_fetch_row(res)))
 		{
 			uCount++;
-			fprintf(fp,"<a class=darkLink href=idnsAdmin.cgi?gcPage=CustomerUser&uClient=%s>%s (%s)</a><br>\n",
+			fprintf(fp,"<a class=darkLink href=idnsAdmin.cgi?gcPage=CustomerUser&uClient=%s>%s</a><br>\n",
 				field[0]
-				,field[1]
-				,field[2]);
+				,field[1]);
 
 			if(uCount==MAX_RESULTS) break;
 		}
@@ -1304,6 +1309,7 @@ void funcContactNavList(FILE *fp,unsigned uSetCookie)
 	else if(!uResults)
 	{
 		//Show no rcds found msg, free result, return}
+		//fprintf(fp,"No records found.<br>%s\n",gcQuery);
 		fprintf(fp,"No records found.<br>\n");
 	}
 
