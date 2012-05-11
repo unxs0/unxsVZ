@@ -553,8 +553,10 @@ void funcCustomerContacts(FILE *fp)
 
 
 	sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel,tClient.cEmail,tClient.cInfo,"
-			"tAuthorize.uPerm FROM tClient,tAuthorize WHERE tClient.uOwner=%u AND "
-			"tAuthorize.uCertClient=tClient.uClient ORDER BY cLabel",uClient);
+			" tAuthorize.uPerm"
+			" FROM tClient LEFT JOIN tAuthorize ON tAuthorize.uCertClient=tClient.uClient"
+			" WHERE tClient.uOwner=%u"
+			" ORDER BY cLabel",uClient);
 		
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -563,7 +565,8 @@ void funcCustomerContacts(FILE *fp)
 	res=mysql_store_result(&gMysql);
        	while((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[4],"%u",&uPerm);
+		if(field[4]!=NULL)
+			sscanf(field[4],"%u",&uPerm);
 		if(uPerm>7)
 			cPage="Administrator";
 		else
