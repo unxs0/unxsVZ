@@ -511,11 +511,7 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[13]=cMainAddress;
 
 			template.cpName[14]="cZone";
-			char cZoneView[100];
-			sprintf(cZoneView,gcZone);
-			if(guCookieView)
-				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
-			template.cpValue[14]=cZoneView;
+			template.cpValue[14]=gcZone;
 
 			template.cpName[15]="cHostmaster";
 			template.cpValue[15]=cHostmaster;
@@ -679,7 +675,14 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			sprintf(cZoneGetLink,"&cZone=%.63s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
 			template.cpValue[63]=cZoneGetLink;
 
-			template.cpName[64]="";
+			template.cpName[64]="cZoneView";
+			char cZoneView[100];
+			sprintf(cZoneView,gcZone);
+			if(guCookieView)
+				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
+			template.cpValue[64]=cZoneView;
+
+			template.cpName[65]="";
 
 			printf("\n<!-- Start htmlZonePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);

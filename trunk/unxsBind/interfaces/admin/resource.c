@@ -541,11 +541,7 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			template.cpValue[39]=gcCustomer;
 
 			template.cpName[40]="cZone";
-			char cZoneView[100];
-			sprintf(cZoneView,gcZone);
-			if(guCookieView)
-				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
-			template.cpValue[40]=cZoneView;
+			template.cpValue[40]=gcZone;
 			
 			template.cpName[41]="uOwner";
 			template.cpValue[41]=cuOwner;
@@ -573,7 +569,14 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			sprintf(cZoneGetLink,"&cZone=%.63s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
 			template.cpValue[48]=cZoneGetLink;
 
-			template.cpName[49]="";
+			template.cpName[49]="cZoneView";
+			char cZoneView[100];
+			sprintf(cZoneView,gcZone);
+			if(guCookieView)
+				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
+			template.cpValue[49]=cZoneView;
+			
+			template.cpName[50]="";
 
 			printf("\n<!-- Start htmlResourcePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
