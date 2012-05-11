@@ -92,7 +92,7 @@ void CalledByAlias(int iArgc,char *cArgv[]);
 void MonthUsageData(unsigned uSimile);
 void DayUsageData(unsigned uLogType);
 
-pentry entries[64];
+pentry entries[256];
 int x;
 
 int main(int iArgc, char *cArgv[])
@@ -246,7 +246,7 @@ int main(int iArgc, char *cArgv[])
 
 	//Post method interface
 	cl = atoi(getenv("CONTENT_LENGTH"));
-	for(x=0;cl && (!feof(stdin)) && x<64 ;x++)
+	for(x=0;cl && (!feof(stdin)) && x<256 ;x++)
 	{
 		entries[x].val = fmakeword(stdin,'&',&cl);
 		plustospace(entries[x].val);
