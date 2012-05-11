@@ -145,11 +145,7 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 			template.cpValue[7]=gcModStep;
 
 			template.cpName[8]="cZone";
-			char cZoneView[100];
-			sprintf(cZoneView,gcZone);
-			if(guCookieView && !strchr(gcZone,'/'))//hack TODO
-				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
-			template.cpValue[8]=cZoneView;
+			template.cpValue[8]=gcZone;
 
 			template.cpName[9]="gcMessage";
 			template.cpValue[9]=gcMessage;
@@ -171,8 +167,14 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 			sprintf(cZoneGetLink,"&cZone=%.63s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
 			template.cpValue[14]=cZoneGetLink;
 
+			template.cpName[15]="cZoneView";
+			char cZoneView[100];
+			sprintf(cZoneView,gcZone);
+			if(guCookieView)
+				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
+			template.cpValue[15]=cZoneView;
 
-			template.cpName[15]="";
+			template.cpName[16]="";
 
 			printf("\n<!-- Start htmlBulkOpPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
