@@ -104,7 +104,7 @@ void ProcessAdminUserVars(pentry entries[], int x)
 			sprintf(cClearPassword,"%.99s",entries[i].val);		
 		else if(!strcmp(entries[i].name,"uSaveClrPassword"))
 			sscanf(entries[i].val,"%u",&uSaveClrPassword);	
-		else if(!strcmp(entries[i].name,"uPerm"))
+		else if(!strcmp(entries[i].name,"cuPerm"))
 			sscanf(entries[i].val,"%u",&guContactPerm);
 		else if(!strcmp(entries[i].name,"cForClientPullDown"))
 		{
@@ -642,6 +642,8 @@ void NewAdminUser(void)
 			,uClient
 			,uForClient
 			,guLoginClient);
+	if(!guContactPerm || !uClient || !uForClient)	
+		htmlPlainTextError(gcQuery);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

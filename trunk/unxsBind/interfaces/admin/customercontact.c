@@ -23,11 +23,11 @@ PURPOSE
 #define BO_ROOT		"Backend Root"
 #define BO_ADMIN	"Backend Admin"
 
-char *cPermPullDownStyle="type_fields_off";//has to be referenced from adminuser.c
 
 static unsigned uStep=0;
 
 unsigned guContactPerm=0;
+char *cPermPullDownStyle="type_fields_off";//has to be referenced from adminuser.c
 
 static char cUserName[100]={""};
 static char *cUserNameStyle="type_fields_off";
@@ -87,7 +87,7 @@ void ProcessCustomerContactVars(pentry entries[], int x)
 			sprintf(cUserName,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cPassword"))
 			sprintf(cPassword,"%.99s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uPerm"))
+		else if(!strcmp(entries[i].name,"cuPerm"))
 			sscanf(entries[i].val,"%u",&guContactPerm);
 		else if(!strcmp(entries[i].name,"cForClientPullDown"))
 		{
@@ -297,6 +297,8 @@ void CustomerContactCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcFunction,"Add Contact Wizard"))
 		{			
+			guCookieContact=0;
+			SetSessionCookie();
 			htmlCustomerContactWizard(1);
 		}
 		else if(!strcmp(gcFunction,"Next"))
@@ -380,6 +382,15 @@ void CustomerContactCommands(pentry entries[], int x)
 						gcMessage="<blink>Error: </blink>Password with at least 5 chars is required";
 						htmlCustomerContactWizard(3);
 					}
+					if(guContactPerm<1 || guContactPerm>6)
+					{
+						char gcQuery[128];
+						cPermPullDownStyle="type_fields_req";
+						sprintf(gcQuery,"<blink>Error: </blink>Permission level must be set correctly (%u)",guContactPerm);
+						gcMessage=gcQuery;
+						htmlCustomerContactWizard(3);
+					}
+					gcInputStatus[0]=0;
 					break;
 			}//switch(uStep)
 			uStep++;
@@ -688,7 +699,7 @@ void NewCustomerContact(void)
 		sprintf(cClearPassword,"%.99s",cPassword);
 	
 	EncryptPasswd(cPassword);
-	
+
 	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',cPasswd='%s',cClrPasswd='%s',uPerm=%u,"
 			"uCertClient=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cUserName
@@ -698,6 +709,8 @@ void NewCustomerContact(void)
 			,guCookieContact
 			,uForClient
 			,guLoginClient);
+	if(!guContactPerm || !guCookieContact || !uForClient)	
+		htmlPlainTextError(gcQuery);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -975,6 +988,15 @@ unsigned ValidateCustomerContactInput(void)
 		cForClientPullDownStyle="type_fields_req";
 		return(0);
 	}
+
+	if(!guContactPerm)
+	{
+		gcMessage="<blink>Error: </blink>Please select a permission level for contact.";
+		SetCustomerContactFieldsOn();
+		cPermPullDownStyle="type_fields_req";
+		return(0);
+	}
+
 	return(1);
 		
 }//unsigned ValidateCustomerContactInput(void)
@@ -987,6 +1009,9 @@ void funcTablePullDownResellers(FILE *fp,unsigned uUseStatus)
 
         register int i,n; 
 	char *cTitle;
+
+	if(gcCookieCustomer[0])
+		uUseStatus=1;//disable select forced to use cookie value
 
 	if(!strcmp(gcPage,"CustomerUser"))
 		cTitle="Select the Company you want to create the Company Contact for";
@@ -1008,6 +1033,7 @@ void funcTablePullDownResellers(FILE *fp,unsigned uUseStatus)
 	i=mysql_num_rows(res);
 
 	fprintf(fp,"<input type=hidden name=uForClient value=%u>\n",uForClient);
+	if(gcCookieCustomer[0]) sprintf(gcCustomer,"%.32s",gcCookieCustomer);
 	fprintf(fp,"<input type=hidden name=cForClientPullDown value='%s'>\n",gcCustomer);
         if(i>0)
         {
@@ -1067,7 +1093,7 @@ void funcPermLevelDropDown(FILE *fp,unsigned uUseStatus)
 	fprintf(fp,"<input type=hidden name=uPerm value='%u'>\n",guContactPerm);
 
 	if(uUseStatus)
-		fprintf(fp,"<select name=uPerm class=%s %s>\n",cPermPullDownStyle,gcInputStatus);
+		fprintf(fp,"<select name=cuPerm class=%s %s>\n",cPermPullDownStyle,gcInputStatus);
 	else
 		fprintf(fp,"<select title='Select the permission level %s' name=cuPerm class=%s>\n",cTitle,cPermPullDownStyle);
 
@@ -1349,7 +1375,7 @@ void funcContactLast7DaysActivity(FILE *fp)
 
 	if(!guCookieContact) return;
 
-	if(guContactPerm>6)
+	if(guPermLevel>=6)
 	{
 		funcAdmLast7DaysAct(fp,guCookieContact);
 		return;

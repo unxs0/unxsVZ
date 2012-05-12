@@ -1,10 +1,10 @@
 /*
 FILE 
-	bulkop.c
+	ipauth.c
 	$Id$
 AUTHOR/LEGAL
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
-	(C) 2010 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2012 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	iDNS Administration (ASP) Interface
@@ -1563,6 +1563,8 @@ unsigned ProcessCompanyTransaction(char *cCompany,char *cAction)
 			,cSavePasswd
 			,guLoginClient
 			);
+	if(!uContact || !uClient)	
+		htmlPlainTextError(gcQuery);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(gcQuery);
@@ -1578,7 +1580,7 @@ char *cGetRandomPassword(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	mysql_query(&gMysql,"DROP function if exists generate_alpha");
+	mysql_query(&gMysql,"DROP FUNCTION IF EXISTS generate_alpha");
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(gcQuery);
 	mysql_query(&gMysql,"CREATE FUNCTION generate_alpha () RETURNS CHAR(1) "
