@@ -4,7 +4,7 @@ FILE
 	$Id$
 AUTHOR/LEGAL
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
-	(C) 2010 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2012 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file in main source dir.
 PURPOSE
 	idnsAdmin program file.
@@ -1709,6 +1709,14 @@ unsigned uPerRRTypeCheck(void)
 			return(18);
 		}
 
+		//
+		//TODO make sure we follow http://tools.ietf.org/html/rfc5952
+		// The only issue I see here is the choice of the first ::
+		// As long as the "else if's" are in the right order this should work
+		// I changed the order of the 2 consecutive ) cases and it worked
+		// I now changed all the cases to give priority to first :: (left to right) placement
+		// Need to test with all possible cases of same size consecutive zero groups.
+		//
 		//Mandatory rewrite in shortest possible IPv6 format.
 		//This is needed to speed up DNSSEC and reduce BIND zone file size.
 		//This may not be a good idea. Need to research further: If someone wants to
@@ -1719,37 +1727,37 @@ unsigned uPerRRTypeCheck(void)
 		if(!h2 && !h3 && !h4 && !h5 && !h6 && !h7)
 			sprintf(cParam1,"%x::%x",h1,h8);
 		//5 consecutive 0 cases
-		else if(!h3 && !h4 && !h5 && !h6 && !h7)
-			sprintf(cParam1,"%x:%x::%x",h1,h2,h8);
 		else if(!h2 && !h3 && !h4 && !h5 && !h6)
 			sprintf(cParam1,"%x::%x:%x",h1,h7,h8);
+		else if(!h3 && !h4 && !h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x::%x",h1,h2,h8);
 		//4 consecutive 0 cases
-		else if(!h4 && !h5 && !h6 && !h7)
-			sprintf(cParam1,"%x:%x:%x::%x",h1,h2,h3, h8);
-		else if(!h3 && !h4 && !h5 && !h6)
-			sprintf(cParam1,"%x:%x::%x:%x",h1,h2, h7,h8);
 		else if(!h2 && !h3 && !h4 && !h5)
 			sprintf(cParam1,"%x::%x:%x:%x",h1, h6,h7,h8);
+		else if(!h3 && !h4 && !h5 && !h6)
+			sprintf(cParam1,"%x:%x::%x:%x",h1,h2, h7,h8);
+		else if(!h4 && !h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x::%x",h1,h2,h3, h8);
 		//3 consecutive 0 cases
-		else if(!h5 && !h6 && !h7)
-			sprintf(cParam1,"%x:%x:%x:%x::%x",h1,h2,h3,h4, h8);
-		else if(!h4 && !h5 && !h6)
-			sprintf(cParam1,"%x:%x:%x::%x:%x",h1,h2,h3, h7,h8);
-		else if(!h3 && !h4 && !h5)
-			sprintf(cParam1,"%x:%x::%x:%x:%x",h1,h2, h6,h7,h8);
 		else if(!h2 && !h3 && !h4)
 			sprintf(cParam1,"%x::%x:%x:%x:%x",h1, h5,h6,h7,h8);
+		else if(!h3 && !h4 && !h5)
+			sprintf(cParam1,"%x:%x::%x:%x:%x",h1,h2, h6,h7,h8);
+		else if(!h4 && !h5 && !h6)
+			sprintf(cParam1,"%x:%x:%x::%x:%x",h1,h2,h3, h7,h8);
+		else if(!h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x:%x::%x",h1,h2,h3,h4, h8);
 		//2 consecutive 0 cases
-		else if(!h6 && !h7)
-			sprintf(cParam1,"%x:%x:%x:%x:%x::%x",h1,h2,h3,h4,h5, h8);
-		else if(!h5 && !h6)
-			sprintf(cParam1,"%x:%x:%x:%x::%x:%x",h1,h2,h3,h4, h7,h8);
-		else if(!h4 && !h5)
-			sprintf(cParam1,"%x:%x:%x::%x:%x:%x",h1,h2,h3, h6,h7,h8);
-		else if(!h3 && !h4)
-			sprintf(cParam1,"%x:%x::%x:%x:%x:%x",h1,h2, h5,h6,h7,h8);
 		else if(!h2 && !h3)
 			sprintf(cParam1,"%x::%x:%x:%x:%x:%x",h1, h4,h5,h6,h7,h8);
+		else if(!h3 && !h4)
+			sprintf(cParam1,"%x:%x::%x:%x:%x:%x",h1,h2, h5,h6,h7,h8);
+		else if(!h4 && !h5)
+			sprintf(cParam1,"%x:%x:%x::%x:%x:%x",h1,h2,h3, h6,h7,h8);
+		else if(!h5 && !h6)
+			sprintf(cParam1,"%x:%x:%x:%x::%x:%x",h1,h2,h3,h4, h7,h8);
+		else if(!h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x:%x:%x::%x",h1,h2,h3,h4,h5, h8);
 		//0 consecutive 0 case, i.e. no double colon case
 		else if(1)
 			sprintf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",h1,h2,h3,h4,h5,h6,h7,h8);
