@@ -447,16 +447,17 @@ void RRCheck(int uMode)
 		else if(!h2 && !h3 && !h4)
 			sprintf(cParam1,"%x::%x:%x:%x:%x",h1, h5,h6,h7,h8);
 		//2 consecutive 0 cases
-		else if(!h6 && !h7)
-			sprintf(cParam1,"%x:%x:%x:%x:%x::%x",h1,h2,h3,h4,h5, h8);
-		else if(!h5 && !h6)
-			sprintf(cParam1,"%x:%x:%x:%x::%x:%x",h1,h2,h3,h4, h7,h8);
-		else if(!h4 && !h5)
-			sprintf(cParam1,"%x:%x:%x::%x:%x:%x",h1,h2,h3, h6,h7,h8);
-		else if(!h3 && !h4)
-			sprintf(cParam1,"%x:%x::%x:%x:%x:%x",h1,h2, h5,h6,h7,h8);
+		//RFC 5952 issue spotted here
 		else if(!h2 && !h3)
 			sprintf(cParam1,"%x::%x:%x:%x:%x:%x",h1, h4,h5,h6,h7,h8);
+		else if(!h3 && !h4)
+			sprintf(cParam1,"%x:%x::%x:%x:%x:%x",h1,h2, h5,h6,h7,h8);
+		else if(!h4 && !h5)
+			sprintf(cParam1,"%x:%x:%x::%x:%x:%x",h1,h2,h3, h6,h7,h8);
+		else if(!h5 && !h6)
+			sprintf(cParam1,"%x:%x:%x:%x::%x:%x",h1,h2,h3,h4, h7,h8);
+		else if(!h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x:%x:%x::%x",h1,h2,h3,h4,h5, h8);
 		//0 consecutive 0 case, i.e. no double colon case
 		else if(1)
 			sprintf(cParam1,"%x:%x:%x:%x:%x:%x:%x:%x",h1,h2,h3,h4,h5,h6,h7,h8);
