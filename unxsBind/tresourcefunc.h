@@ -417,6 +417,7 @@ void RRCheck(int uMode)
 		}
 
 		//Mandatory rewrite in shortest possible IPv6 format.
+		//Should follow RFC 5952 canonical format
 		//This is needed to speed up DNSSEC and reduce BIND zone file size.
 		//This may not be a good idea. Need to research further: If someone wants to
 		//write a bunch of 0's why not?
@@ -426,26 +427,26 @@ void RRCheck(int uMode)
 		if(!h2 && !h3 && !h4 && !h5 && !h6 && !h7)
 			sprintf(cParam1,"%x::%x",h1,h8);
 		//5 consecutive 0 cases
-		else if(!h3 && !h4 && !h5 && !h6 && !h7)
-			sprintf(cParam1,"%x:%x::%x",h1,h2,h8);
 		else if(!h2 && !h3 && !h4 && !h5 && !h6)
 			sprintf(cParam1,"%x::%x:%x",h1,h7,h8);
+		else if(!h3 && !h4 && !h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x::%x",h1,h2,h8);
 		//4 consecutive 0 cases
-		else if(!h4 && !h5 && !h6 && !h7)
-			sprintf(cParam1,"%x:%x:%x::%x",h1,h2,h3, h8);
-		else if(!h3 && !h4 && !h5 && !h6)
-			sprintf(cParam1,"%x:%x::%x:%x",h1,h2, h7,h8);
 		else if(!h2 && !h3 && !h4 && !h5)
 			sprintf(cParam1,"%x::%x:%x:%x",h1, h6,h7,h8);
+		else if(!h3 && !h4 && !h5 && !h6)
+			sprintf(cParam1,"%x:%x::%x:%x",h1,h2, h7,h8);
+		else if(!h4 && !h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x::%x",h1,h2,h3, h8);
 		//3 consecutive 0 cases
-		else if(!h5 && !h6 && !h7)
-			sprintf(cParam1,"%x:%x:%x:%x::%x",h1,h2,h3,h4, h8);
-		else if(!h4 && !h5 && !h6)
-			sprintf(cParam1,"%x:%x:%x::%x:%x",h1,h2,h3, h7,h8);
-		else if(!h3 && !h4 && !h5)
-			sprintf(cParam1,"%x:%x::%x:%x:%x",h1,h2, h6,h7,h8);
 		else if(!h2 && !h3 && !h4)
 			sprintf(cParam1,"%x::%x:%x:%x:%x",h1, h5,h6,h7,h8);
+		else if(!h3 && !h4 && !h5)
+			sprintf(cParam1,"%x:%x::%x:%x:%x",h1,h2, h6,h7,h8);
+		else if(!h4 && !h5 && !h6)
+			sprintf(cParam1,"%x:%x:%x::%x:%x",h1,h2,h3, h7,h8);
+		else if(!h5 && !h6 && !h7)
+			sprintf(cParam1,"%x:%x:%x:%x::%x",h1,h2,h3,h4, h8);
 		//2 consecutive 0 cases
 		//RFC 5952 issue spotted here
 		else if(!h2 && !h3)
@@ -1665,6 +1666,12 @@ void ExttResourceButtons(void)
 				else
 					printf("Back to Zone</a>");
 				ResourceLinks(uZone);
+			}
+			if(uRRType==9)
+			{
+				printf("<p><input type=submit class=largeButton title='Create if needed an ip6.arpa zone and add PTR for loaded RR."
+				" Will use /16 zone file reduced PTR format if creating a new ip6.arpa zone.'"
+				" name=gcCommand value='Create ip6.arpa Zone'>\n");
 			}
 
 
