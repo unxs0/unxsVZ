@@ -1755,7 +1755,7 @@ void funcSelectRRType(FILE *fp, unsigned uUseStatus)
 		fprintf(fp,"onChange='submit()'>\n");
 
 	//Only allow PTR RRs
-	if(strstr(ForeignKey("tZone","cZone",guZone),"in-addr.arpa"))
+	if(strstr(ForeignKey("tZone","cZone",guZone),".arpa"))
 	{
 		if(guBrowserFirefox)
 		{

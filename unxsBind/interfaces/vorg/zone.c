@@ -797,6 +797,27 @@ void funcSelectZone(FILE *fp)
 	}
 	mysql_free_result(res);
 
+	//ip6.arpa zones
+	sprintf(gcQuery,"SELECT uZone,cZone,tView.cLabel FROM tZone,tView WHERE tZone.uView=tView.uView AND "
+			"cZone LIKE '%%.ip6.arpa' AND (tZone.uOwner=%u OR tZone.uOwner=%u) AND uSecondaryOnly=0 "
+			"ORDER BY cZone LIMIT 501",guLoginClient,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uZone);
+		fprintf(fp,"<option value=%s",field[0]);
+		if(guZone==uZone)
+			fprintf(fp," selected");
+		if((uCount++)<=500)
+			fprintf(fp,">%s [%s]</option>",field[1],field[2]);
+		else
+			fprintf(fp,">LIMIT REACHED CONTACT sysadmin</option>");
+	}
+	mysql_free_result(res);
+
 	fprintf(fp,"</select>\n");
 
 	fprintf(fp,"<!-- funcSelectZone(fp) End -->\n");
