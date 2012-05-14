@@ -341,23 +341,15 @@ void tJobInput(unsigned uMode)
 //uJobTarget
 	OpenRow(LANG_FL_tJob_uJobTarget,"black");
 	if(guPermLevel>=0 && uMode)
-	{
-	printf("%s<input type=hidden name=uJobTarget value=%u >\n",ForeignKey("tTarget","cDomain",uJobTarget),uJobTarget);
-	}
+		printf("%s<input type=hidden name=uJobTarget value=%u >\n",ForeignKey("tServer","cLabel",uJobTarget),uJobTarget);
 	else
-	{
-	printf("%s<input type=hidden name=uJobTarget value=%u >\n",ForeignKey("tTarget","cDomain",uJobTarget),uJobTarget);
-	}
+		printf("%s<input type=hidden name=uJobTarget value=%u >\n",ForeignKey("tServer","cLabel",uJobTarget),uJobTarget);
 //uJobTargetUser
 	OpenRow(LANG_FL_tJob_uJobTargetUser,"black");
 	if(guPermLevel>=0 && uMode)
-	{
-	printf("%s<input type=hidden name=uJobTargetUser value=%u >\n",ForeignKey("tTargetUser","cLogin",uJobTargetUser),uJobTargetUser);
-	}
+		printf("%s<input type=hidden name=uJobTargetUser value=%u >\n",ForeignKey("tClient","cLabel",uJobTargetUser),uJobTargetUser);
 	else
-	{
-	printf("%s<input type=hidden name=uJobTargetUser value=%u >\n",ForeignKey("tTargetUser","cLogin",uJobTargetUser),uJobTargetUser);
-	}
+		printf("%s<input type=hidden name=uJobTargetUser value=%u >\n",ForeignKey("tClient","cLabel",uJobTargetUser),uJobTargetUser);
 //cJobData
 	OpenRow(LANG_FL_tJob_cJobData,"black");
 	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cJobData "
