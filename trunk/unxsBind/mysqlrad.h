@@ -164,6 +164,13 @@ void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow);
 
 void tTablePullDownResellers(unsigned uSelector,unsigned uMode);
 
+int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtmlMode, 
+					const unsigned uFromZone, const unsigned uZoneOwner, const unsigned uNSSet);
+int PopulateArpaZoneIPv6(const char *cIPv6ArpaZoneName, const char *cIPv6PTR, const char *cHostname, const unsigned uHtmlMode, 
+					const unsigned uFromZone, const unsigned uZoneOwner, const unsigned uNSSet);
+int AddNewArpaZone(const char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);//tzonefunc.h
+int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);//tresourcefunc.h
+int AutoAddPTRResourceIPv6(const char *cIPv6PTR,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);//tresourcefunc.h
 
  //Standard tInputFunc functions
 char *WordToLower(char *cInput);

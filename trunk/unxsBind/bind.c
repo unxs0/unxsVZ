@@ -42,7 +42,9 @@ void GetConfiguration(const char *cName, char *cValue, unsigned uHtml);//local u
 void PassDirectHtml(char *file);//local also used by tzonefunc.h
 //local used in tzonefunc.h and tresourcefunc.h:
 int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtmlMode, 
-					const unsigned uFromZone, const unsigned uZoneOwner);
+					const unsigned uFromZone, const unsigned uZoneOwner, const unsigned uNSSet);
+int PopulateArpaZoneIPv6(const char *cIPv6ArpaZoneName, const char *cIPv6PTR, const char *cHostname, const unsigned uHtmlMode, 
+					const unsigned uFromZone, const unsigned uZoneOwner, const unsigned uNSSet);
 void SerialNum(char *serial);//local also used in tzonefunc.h
 
 //Job queue processing functions
@@ -65,9 +67,10 @@ void PrintMXList(FILE *zfp,char *cuMailServers);//local
 unsigned ViewReloadZone(char *cZone);//local
 
 //External. Used here but located in other files.
-int AddNewArpaZone(char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);//tzonefunc.h
-int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);
-void UpdateSerialNum(unsigned uZone);//
+int AddNewArpaZone(const char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);//tzonefunc.h
+int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);//tresourcefunc.h
+int AutoAddPTRResourceIPv6(const char *cIPv6PTR,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);//tresourcefunc.h
+void UpdateSerialNum(unsigned uZone);//tzonefunc.h
 unsigned TextConnectDb(void);//mysqlconnect.c
 int InformExtISPJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus);//extjobqueue.c
 
@@ -1318,10 +1321,10 @@ void GenerateArpaZones(void)
 	char cZone[100];
 	unsigned uZone=0;
 	unsigned uOwner=0;
-	
+	unsigned uNSSet=0;
 
 	//Zone A Records
-	sprintf(gcQuery,"SELECT cZone,cMainAddress,uZone,uOwner FROM tZone WHERE cZone NOT LIKE '%%.arpa'");
+	sprintf(gcQuery,"SELECT cZone,cMainAddress,uZone,uOwner,uNSSet FROM tZone WHERE cZone NOT LIKE '%%.arpa'");
 	mysql_query(&gMysql,gcQuery);
 
 	if(mysql_errno(&gMysql)) 
@@ -1339,10 +1342,11 @@ void GenerateArpaZones(void)
 			strcpy(cZone,field[0]);
 			sscanf(field[2],"%u",&uZone);
 			sscanf(field[3],"%u",&uOwner);
+			sscanf(field[4],"%u",&uNSSet);
 			if( !strcmp(field[1],"0.0.0.0") || field[1][0]==0)
 				continue;
 			
-			if(PopulateArpaZone(field[0],field[1],0,uZone,uOwner)) continue;
+			if(PopulateArpaZone(field[0],field[1],0,uZone,uOwner,uNSSet)) continue;
 
 		}
 	}
@@ -1350,7 +1354,7 @@ void GenerateArpaZones(void)
 	
 	
 	//A Resource Records
-	sprintf(gcQuery,"SELECT tZone.cZone,tResource.cParam1,tResource.cName,tZone.uZone,tZone.uOwner FROM"
+	sprintf(gcQuery,"SELECT tZone.cZone,tResource.cParam1,tResource.cName,tZone.uZone,tZone.uOwner,tZone.uNSSet FROM"
 			" tResource,tZone,tRRType WHERE tResource.uZone=tZone.uZone AND"
 			" tResource.uRRType=tRRType.uRRType AND tRRType.cLabel='A'");
 	mysql_query(&gMysql,gcQuery);
@@ -1384,7 +1388,8 @@ void GenerateArpaZones(void)
 
 			sscanf(field[3],"%u",&uZone);
 			sscanf(field[4],"%u",&uOwner);
-			if(PopulateArpaZone(cZone,field[1],0,uZone,uOwner)) continue;
+			sscanf(field[5],"%u",&uNSSet);
+			if(PopulateArpaZone(cZone,field[1],0,uZone,uOwner,uNSSet)) continue;
 		}
 	}
 	mysql_free_result(res);
@@ -1395,8 +1400,96 @@ void GenerateArpaZones(void)
 }//void GenerateArpaZones(void)
 
 
+int PopulateArpaZoneIPv6(const char *cIPv6ArpaZoneName, const char *cIPv6PTR, const char *cHostname, const unsigned uHtmlMode, 
+					const unsigned uFromZone, const unsigned uZoneOwner, const unsigned uNSSet)
+{
+	MYSQL_RES *res2;
+	MYSQL_ROW field;
+	unsigned uZone=0;
+	unsigned uNew=0;
+	char cHostMaster[256]="hostmaster.isp.net";
+	char cuView[256]="2";
+
+	GetConfiguration("cHostMaster",cHostMaster,0);
+	GetConfiguration("cuView",cuView,0);
+
+	sprintf(gcQuery,"SELECT cZone,uZone FROM tZone WHERE cZone='%s' AND uView=%.2s",
+			cIPv6ArpaZoneName,cuView);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+	{
+		if(uHtmlMode)
+			htmlPlainTextError(mysql_error(&gMysql));
+		else
+			fprintf(stdout,"PopulateArpaZoneIPv6() Select Error: %s\n",mysql_error(&gMysql));
+		return(1);
+	}
+	res2=mysql_store_result(&gMysql);
+	if(!mysql_num_rows(res2)) 
+	{
+		if(!uHtmlMode)
+			fprintf(stdout,"<font color=blue>Adding new ip6.arpa zone: %s</font>\n",cIPv6ArpaZoneName);
+		//This adds view 1 nd view 2 only hardcoded please fix TODO
+		if(AddNewArpaZone(cIPv6ArpaZoneName,uNSSet,cHostMaster)) 
+		{
+			if(uHtmlMode)
+				htmlPlainTextError(mysql_error(&gMysql));
+			else
+				fprintf(stdout,"AddNewArpaZone() Error: %s\n",mysql_error(&gMysql));
+			return(1);//tzonefunc.h
+		}
+		uZone=mysql_insert_id(&gMysql);
+		uNew=1;
+
+	}
+	else if((field=mysql_fetch_row(res2)))
+	{
+		sscanf(field[1],"%u",&uZone);
+	}
+
+	mysql_free_result(res2);
+
+	if(uZone)
+	{
+		unsigned uErrNum=0;
+
+		if(!uHtmlMode)
+			fprintf(stdout,"Adding RR to ip6.arpa zone: %s,uZone=%u,uZoneOwner=%u\n",
+					cIPv6PTR,uZone,uZoneOwner);
+
+		//Add PTR record 
+		if((uErrNum=AutoAddPTRResourceIPv6(cIPv6PTR,cHostname,uZone,uZoneOwner)))
+		{
+			if(uHtmlMode)
+				tZone(mysql_error(&gMysql));
+			else
+				if(!uHtmlMode)
+					fprintf(stdout,"AutoAddPTRResourceIPv6() Error(%u): %s\n",
+						uErrNum,mysql_error(&gMysql));
+				else
+					htmlPlainTextError(mysql_error(&gMysql));
+			return(1);
+		}
+
+		if(!uNew)
+			SubmitJob("Modify",uNSSet,cIPv6ArpaZoneName,0,0);
+		else
+			SubmitJob("New",uNSSet,cIPv6ArpaZoneName,0,0);
+		UpdateSerialNum(uZone);
+	}
+
+	//TODO what is this for comments please!
+	if(uNew && uFromZone)
+	{
+		SubmitJob("New",uNSSet,cIPv6ArpaZoneName,0,0);
+	}
+	return(0);
+
+}//int PopulateArpaZoneIPv6()
+
+
 int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtmlMode, 
-					const unsigned uFromZone, const unsigned uZoneOwner)
+					const unsigned uFromZone, const unsigned uZoneOwner, const unsigned uNSSet)
 {
 	unsigned a=0,b=0,c=0,d=0;
 	MYSQL_RES *res2;
@@ -1433,7 +1526,7 @@ int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtml
 	{
 		if(!uHtmlMode)
 			fprintf(stdout,"<font color=blue>Adding new arpa zone: %s</font>\n",cArpaZone);
-		if(AddNewArpaZone(cArpaZone,1,cHostMaster)) 
+		if(AddNewArpaZone(cArpaZone,uNSSet,cHostMaster)) 
 		{
 			if(uHtmlMode)
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1475,16 +1568,16 @@ int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtml
 		}
 
 		if(!uNew)
-			SubmitJob("Modify",1,cArpaZone,0,0);
+			SubmitJob("Modify",uNSSet,cArpaZone,0,0);
 		else
-			SubmitJob("New",1,cArpaZone,0,0);
+			SubmitJob("New",uNSSet,cArpaZone,0,0);
 		UpdateSerialNum(uZone);
 	}
 
 	//TODO what is this for comments please!
 	if(uNew && uFromZone)
 	{
-		SubmitJob("New",1,cArpaZone,0,0);
+		SubmitJob("New",uNSSet,cArpaZone,0,0);
 	}
 	return(0);
 
