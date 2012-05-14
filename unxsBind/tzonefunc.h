@@ -52,7 +52,7 @@ void ResourceRecordList(unsigned uZone);
 void TableAddRR(void);
 void UpdateSerialNum(unsigned uZone);
 void tResourceTableAddRR(unsigned uZone);
-int AddNewArpaZone(char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);
+int AddNewArpaZone(const char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);//tzonefunc.h
 int IllegalZoneDataChange(void);
 #ifndef DEBUG_REPORT_STATS_OFF
 	int UpdateInfo();
@@ -1492,7 +1492,7 @@ void TableAddRR(void)
 }//TableAddRR
 
 
-int AddNewArpaZone(char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster)
+int AddNewArpaZone(const char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster)
 {
 	int retval=0;
 	char cSerial[32];

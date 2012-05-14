@@ -31,12 +31,10 @@ static char cZone[255]={""};
 static unsigned uAddArpaPTR=0;
 
 int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);
+int AutoAddPTRResourceIPv6(const char *cIPv6PTR,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);
 
 unsigned IsSecondaryOnlyZone(unsigned uZone);
 
-//Extern
-int PopulateArpaZone(char *cZone, char *cIPNum, unsigned uHtmlMode,
-					unsigned uFromZone, unsigned uZoneOwner);
 void UpdateSerialNum(unsigned uZone);//tzonefunc.h
 void PrepareTestData(void);
 
@@ -741,6 +739,195 @@ void RRCheck(int uMode)
 }//void RRCheck(int uMode)
 
 
+//Public domain from http://www.programmingsimplified.com/c-program-reverse-string
+void ReverseString(char *x, int beg, int end)
+{
+   char c;
+ 
+   if ( beg >= end )
+      return;   
+ 
+   c = *(x+beg);
+   *(x+beg) = *(x+end);
+   *(x+end) = c;
+ 
+   ReverseString(x, ++beg, --end);
+
+}//void ReverseString(char *x, int beg, int end)
+
+
+char *CreateArpaZoneFileNameFromIPv6(const char *cIPv6, char *cIPv6FileName, char *cIPv6PTR)
+{
+	register int i;
+	unsigned h1=0;
+	unsigned h2=0;
+	unsigned h3=0;
+	unsigned h4=0;
+	unsigned h5=0;
+	unsigned h6=0;
+	unsigned h7=0;
+	unsigned h8=0;
+	unsigned uColonCount=0;
+	unsigned uRead=0;
+
+	char cInBuffer[100];
+
+	//Now for the hard work
+	for(i=0;cIPv6[i];i++)
+	{
+		if(cIPv6[i]==':')
+			uColonCount++;
+		if(cIPv6[i]!=':' && !isxdigit(cIPv6[i]))
+		{
+			tResource("<blink>IPv6 number can only have hexadecimal digits and colons!</blink>");
+		}
+	}
+
+	switch(uColonCount)
+	{
+		case 0:
+		case 1:
+			tResource("<blink>IPv6 too few colons: Min is 2!</blink>");
+		break;
+
+		case 2:
+			uRead=sscanf(cIPv6,"%x::%x",&h1,&h8);
+			if(uRead!=2)
+			{
+				tResource("<blink>IPv6 format-2 error!</blink>");
+			}
+		break;
+
+		case 3:
+			uRead=sscanf(cIPv6,"%x::%x:%x",&h1,&h7,&h8);
+			if(uRead!=3)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x",&h1,&h2,&h8);
+				if(uRead!=3)
+				{
+					tResource("<blink>IPv6 format-3 error!</blink>");
+				}
+			}
+		break;
+
+		case 4:
+			uRead=sscanf(cIPv6,"%x::%x:%x:%x",&h1,&h6,&h7,&h8);
+			if(uRead!=4)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x:%x",&h1,&h2,&h7,&h8);
+				if(uRead!=4)
+				{
+					uRead=sscanf(cIPv6,"%x:%x:%x::%x",&h1,&h2,&h3,&h8);
+					if(uRead!=4)
+					{
+						tResource("<blink>IPv6 format-4 error!</blink>");
+					}
+				}
+			}
+		break;
+
+		case 5:
+			uRead=sscanf(cIPv6,"%x::%x:%x:%x:%x",&h1,&h5,&h6,&h7,&h8);
+			if(uRead!=5)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x:%x:%x",&h1,&h2,&h6,&h7,&h8);
+				if(uRead!=5)
+				{
+					uRead=sscanf(cIPv6,"%x:%x:%x::%x:%x",&h1,&h2,&h3,&h7,&h8);
+					if(uRead!=5)
+					{
+						uRead=sscanf(cIPv6,"%x:%x:%x:%x::%x",&h1,&h2,&h3,&h4,&h8);
+						if(uRead!=5)
+						{
+							tResource("<blink>IPv6 format-5 error!</blink>");
+						}
+					}
+				}
+			}
+		break;
+
+		case 6:
+			uRead=sscanf(cIPv6,"%x::%x:%x:%x:%x:%x",&h1,&h4,&h5,&h6,&h7,&h8);
+			if(uRead!=6)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x:%x:%x:%x",&h1,&h2,&h5,&h6,&h7,&h8);
+				if(uRead!=6)
+				{
+					uRead=sscanf(cIPv6,"%x:%x:%x::%x:%x:%x",&h1,&h2,&h3,&h6,&h7,&h8);
+					if(uRead!=6)
+					{
+						uRead=sscanf(cIPv6,"%x:%x:%x:%x::%x:%x",&h1,&h2,&h3,&h4,&h7,&h8);
+						if(uRead!=6)
+						{
+							uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x::%x",
+										&h1,&h2,&h3,&h4,&h5,&h8);
+							if(uRead!=6)
+							{
+								tResource("<blink>IPv6 format-6 error!</blink>");
+							}
+						}
+					}
+				}
+			}
+		break;
+
+		case 7:
+			uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
+			if(uRead!=8)
+			{
+				tResource("<blink>IPv6 format-7 error!</blink>");
+			}
+		break;
+
+		default:
+			tResource("<blink>IPv6 too many colons: Max is 7!</blink>");
+		
+	}
+
+	//First basic checks for AAAA hosts
+	if(!h1)
+	{
+		tResource("IPv6 number can not have a 0 in first 16 bit hex word.");
+	}
+
+	if(!h8)
+	{
+		sprintf(gcQuery," IPv6 number can not have a 0 in last 16 bit hex word:"
+				" %x:%x:%x:%x:%x:%x:%x:%x",h1,h2,h3,h4,h5,h6,h7,h8);
+		tResource(gcQuery);
+	}
+
+
+	//KISS standardize on 128-16= /112 CIDR or /16 subnet ip6.arpa files
+	//this will keep PTRs small and the possible number of PTRs per file
+	//a manageable 65535 max number
+	sprintf(cInBuffer,"%4.4x%4.4x%4.4x%4.4x%4.4x%4.4x%4.4x",h1,h2,h3,h4,h5,h6,h7);
+	ReverseString(cInBuffer,0,strlen(cInBuffer)-1);
+	register int j=0;
+	for(i=0;cInBuffer[i] && j<99;i++)
+	{
+		cIPv6FileName[j++]=cInBuffer[i];
+		cIPv6FileName[j++]='.';
+	}
+	cIPv6FileName[j]=0;
+	strcat(cIPv6FileName,"ip6.arpa");
+
+	//The PTR part
+	sprintf(cInBuffer,"%4.4x",h8);
+	ReverseString(cInBuffer,0,strlen(cInBuffer)-1);
+	j=0;
+	for(i=0;cInBuffer[i] && j<99;i++)
+	{
+		cIPv6PTR[j++]=cInBuffer[i];
+		cIPv6PTR[j++]='.';
+	}
+	cIPv6PTR[j-1]=0;
+
+	return(cIPv6FileName);
+
+}//char *CreateArpaZoneFileNameFromIPv6()
+
+
 void ExttResourceCommands(pentry entries[], int x)
 {
 	MYSQL_RES *res;
@@ -752,7 +939,50 @@ void ExttResourceCommands(pentry entries[], int x)
 	{
 		//ModuleFunctionProcess()
 
-		if(!strcmp(gcCommand,"Search Set Operations"))
+		if(!strcmp(gcCommand,"Create ip6.arpa Zone"))
+                {
+			unsigned uNSSet=0;
+
+			ProcesstResourceVars(entries,x);
+			sprintf(cZone,"%.64s",ForeignKey("tZone","cZone",uZone));
+			sscanf(ForeignKey("tZone","uNSSet",uZone),"%u",&uNSSet);
+			//tResource(ForeignKey("tZone","uNSSet",uZone));
+
+			if(guPermLevel>=9 && uZone && uOwner && cName[0] && cZone[0] && cParam1[0] && uNSSet)
+			{
+				char cFQDN[512];
+				char cIPv6PTR[100];
+				char cIPv6FileName[100];
+				char cNameSave[256];
+
+				sprintf(cNameSave,"%.255s",cName);
+				if(cName[strlen(cName)-1]!='.')
+				{
+					if(strcmp(cName,"@"))
+						sprintf(cFQDN,"%.255s.%.255s.",cName,cZone);
+					else
+						sprintf(cFQDN,"%.511s.",cZone);
+				}
+				else
+					sprintf(cFQDN,"%.511s",cName);
+
+	                        ProcesstResourceVars(entries,x);
+				//cIPv6PTR e.g. 1.0.0.0
+	                        CreateArpaZoneFileNameFromIPv6(cParam1,cIPv6FileName,cIPv6PTR);
+	                        //tResource(cIPv6FileName);
+	                        //tResource(cIPv6PTR);
+	                        //tResource(cFQDN);
+				guLoginClient=uZoneOwner;//For tJob coolness
+				PopulateArpaZoneIPv6(cIPv6FileName,cIPv6PTR,cFQDN,1,uZone,uOwner,uNSSet);
+				sprintf(cName,"%.255s",cNameSave);
+	                        tResource("ip6.arpa record added");
+			}
+			else
+			{
+				tResource("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+		else if(!strcmp(gcCommand,"Search Set Operations"))
                 {
 			if(guPermLevel>=9)
 			{
@@ -1156,7 +1386,9 @@ void ExttResourceCommands(pentry entries[], int x)
 						sprintf(cFQDN,"%.511s",cName);
 
 					guLoginClient=uZoneOwner;//For tJob coolness
-					PopulateArpaZone(cFQDN,cParam1,1,uZone,uZoneOwner);
+					unsigned uNSSet=0;
+					sscanf(ForeignKey("tZone","uNSSet",uZone),"%u",&uNSSet);
+					PopulateArpaZone(cFQDN,cParam1,1,uZone,uZoneOwner,uNSSet);
 					sprintf(cName,"%.255s",cNameSave);
 					guLoginClient=uSaveLoginClient;
 				}
@@ -1286,7 +1518,9 @@ void ExttResourceCommands(pentry entries[], int x)
 
 					sscanf(ForeignKey("tZone","uOwner",uZone),"%u",
 							&uZoneOwner);
-					PopulateArpaZone(cFQDN,cParam1,1,uZone,uZoneOwner);
+					unsigned uNSSet=0;
+					sscanf(ForeignKey("tZone","uNSSet",uZone),"%u",&uNSSet);
+					PopulateArpaZone(cFQDN,cParam1,1,uZone,uZoneOwner,uNSSet);
 					sprintf(cParam1,"%.255s",cParam1Save);
 					sprintf(cName,"%.255s",cNameSave);
 					uResource=uResourceSave;
@@ -2120,6 +2354,50 @@ int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZo
 	return(0);
 
 }//int AutoAddPTRResource()
+
+
+int AutoAddPTRResourceIPv6(const char *cIPv6PTR,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner)
+{
+	char gcQuery[1024];
+	char cParam1[512];
+	char cComment[100]={"AutoAddPTRResourceIPv6()"};
+
+	if(!cIPv6PTR[0] || !cDomain[0] || !uInZone || !uSourceZoneOwner) return(1);
+
+	uResource=0;
+	if(cDomain[strlen(cDomain)-1]!='.')
+		sprintf(cParam1,"%s.",cDomain);
+	else
+		sprintf(cParam1,"%s",cDomain);
+
+	//Only allow one PTR entry per FQDN for same uOwner
+
+	sprintf(gcQuery,"DELETE FROM tResource WHERE uRRType=%u AND cParam1='%s' AND uOwner=%u",
+				RRTYPE_PTR,cParam1,uSourceZoneOwner);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+		return(2);
+	
+	//Check for other entries, if they exist first come first served
+	//(round-robin PTR records actually)
+	//notify admin to resolve dispute for rev dns
+
+	sprintf(gcQuery,"INSERT INTO tResource SET uZone=%u,cName='%.99s',uRRType=%u,cParam1='%.511s',cComment='%.99s',"
+			"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uInZone
+				,cIPv6PTR
+				,RRTYPE_PTR
+				,cParam1
+				,cComment
+				,uSourceZoneOwner
+				,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+		return(3);
+
+	return(0);
+
+}//int AutoAddPTRResourceIPv6()
 
 
 void PrepareTestData(void)

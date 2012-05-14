@@ -59,8 +59,6 @@ void CreateNewClient(structExtJobParameters *structExtParam);
 unsigned TextConnectDb(void);//mysqlconnect.c
 unsigned TextConnectExtDb(MYSQL *Mysql, unsigned uMode);
 void SerialNum(char *cSerialNum);//bind.c
-int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtmlMode, 
-					const unsigned uFromZone, const unsigned uZoneOwner);
 void UpdateSerialNum(unsigned uZone);//tzonefunc.h
 
 
@@ -1156,7 +1154,7 @@ unsigned WebNew(structExtJobParameters *structExtParam,unsigned uJob, char *cSer
 			&& strcmp(structExtParam->cMainAddress,"0.0.0.0"))
 	{
 		if(PopulateArpaZone(structExtParam->cZone,
-					structExtParam->cMainAddress,0,uZone,1))
+					structExtParam->cMainAddress,0,uZone,1,structExtParam->uNSSet))
 			return(1);
 	}
 
@@ -1257,7 +1255,7 @@ unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, cha
 
 	if(structExtParam->cMainAddress[0] && structExtParam->uRevDns && strcmp(structExtParam->cMainAddress,"0.0.0.0"))
 	{
-		if(PopulateArpaZone(structExtParam->cZone,structExtParam->cMainAddress,0,uZone,1))
+		if(PopulateArpaZone(structExtParam->cZone,structExtParam->cMainAddress,0,uZone,1,structExtParam->uNSSet))
 		{
 			fprintf(stderr,"PopulateArpaZone() call failed\n");
 			return(1);
@@ -1432,7 +1430,7 @@ void CreateWebZone(char *cDomain, char *cIP, char *cNameServer, char *cMailServe
 
 	if(structExtParam.cMainAddress[0] && structExtParam.uRevDns && strcmp(structExtParam.cMainAddress,"0.0.0.0"))
 	{
-		if(PopulateArpaZone(structExtParam.cZone,structExtParam.cMainAddress,0,uZone,1))
+		if(PopulateArpaZone(structExtParam.cZone,structExtParam.cMainAddress,0,uZone,1,structExtParam.uNSSet))
 		{
 			fprintf(stderr,"PopulateArpaZone() call failed\n");
 			return;
@@ -1566,7 +1564,7 @@ unsigned NewSimpleWebZone(structExtJobParameters *structExtParam,unsigned uJob,
 			&& strcmp(structExtParam->cMainAddress,"0.0.0.0"))
 	{
 		if(PopulateArpaZone(structExtParam->cZone,
-					structExtParam->cMainAddress,0,uZone,1))
+					structExtParam->cMainAddress,0,uZone,1,structExtParam->uNSSet))
 			return(1);
 	}
 
