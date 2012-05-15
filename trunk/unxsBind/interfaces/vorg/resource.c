@@ -1084,13 +1084,9 @@ unsigned uPerRRTypeCheck(void)
 			return(7);
 		}
 
-		if(strchr(cName,"_"))
+		if(strchr(cName,'_'))
 		{
-			guMode=uMode;
-			tResource("A RR cName can't contain '_'");
-
-			sprintf(gcQuery,"<blink>A RR cName can't contain '_'</blink>");
-			gcMessage=gcQuery;
+			gcMessage="<blink>A RR cName can't contain '_'</blink>";
 			cNameStyle="type_fields_req";
 			return(7);
 		}
@@ -1384,6 +1380,13 @@ unsigned uPerRRTypeCheck(void)
 
 		//Insure these are empty
 		cParam2[0]=0;
+
+		if(strchr(cName,'_'))
+		{
+			gcMessage="<blink>AAAA RR cName can't contain '_'</blink>";
+			cNameStyle="type_fields_req";
+			return(18);
+		}
 
 		if(strlen(cParam1)<4)
 		{
