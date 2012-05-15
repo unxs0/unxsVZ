@@ -1520,8 +1520,8 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		}
 		if(strchr(cName,'_'))
 		{
-			sprintf(cMsg,"%u: Error %s: cName (check-names): %s\n",
-					uLineNumber,cZoneName,cLine);
+			sprintf(cMsg,"<blink>Error %s: cName (check-names): %s</blink>",
+					cZoneName,cLine);
 			gcMessage=cMsg;
 			return;
 		}
