@@ -52,7 +52,7 @@ void ResourceRecordList(unsigned uZone);
 void TableAddRR(void);
 void UpdateSerialNum(unsigned uZone);
 void tResourceTableAddRR(unsigned uZone);
-int AddNewArpaZone(const char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);//tzonefunc.h
+int AddNewArpaZone(const char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster, unsigned uExtOwner);
 int IllegalZoneDataChange(void);
 #ifndef DEBUG_REPORT_STATS_OFF
 	int UpdateInfo();
@@ -1492,7 +1492,7 @@ void TableAddRR(void)
 }//TableAddRR
 
 
-int AddNewArpaZone(const char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster)
+int AddNewArpaZone(const char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster, unsigned uExtOwner)
 {
 	int retval=0;
 	char cSerial[32];
@@ -1512,7 +1512,10 @@ int AddNewArpaZone(const char *cArpaZone, unsigned uExtNSSet, char *cExtHostmast
 	strcpy(cMainAddress,"0.0.0.0");
 	strcpy(cZone,cArpaZone);
 	uCreatedBy=0;//Do not provide info for other resellers etc...
-	uOwner=0;//Public zone
+	if(strstr(cZone,"ip6.arpa") && uExtOwner)
+		uOwner=uExtOwner;
+	else
+		uOwner=0;//Public zone unless ip6.arpa
 	uModBy=0;//Never modified
 	uView=1;
 	SerialNum(cSerial);
