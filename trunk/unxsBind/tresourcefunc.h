@@ -240,6 +240,11 @@ void RRCheck(int uMode)
 			guMode=uMode;
 			tResource("Invalid IP Number for cParam1");
 		}
+		if(strchr(cName,"_"))
+		{
+			guMode=uMode;
+			tResource("A RR cName can't contain '_'");
+		}
 	}
 	else if(!strcmp(cRRType,"AAAA"))
 	{

@@ -1240,6 +1240,16 @@ unsigned uPerRRTypeCheck(void)
 			cRRTypeStyle="type_fields_req";
 			return(7);
 		}
+		if(strchr(cName,"_"))
+		{
+			guMode=uMode;
+			tResource("A RR cName can't contain '_'");
+
+			sprintf(gcQuery,"<blink>A RR cName can't contain '_'</blink>");
+			gcMessage=gcQuery;
+			cNameStyle="type_fields_req";
+			return(7);
+		}
 	}
 	else if(!strcmp(cRRType,"PTR"))
 	{
