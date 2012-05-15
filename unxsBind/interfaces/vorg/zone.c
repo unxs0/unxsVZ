@@ -1479,7 +1479,6 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 	if(!cLine[0] || cLine[0]==';')
 			return;
 
-
 	if(cName[0]!='$')
 	{
 		//Shift left on inline TTL NOT $TTL directive
@@ -1502,7 +1501,6 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		strcpy(cParam3,cParam4);
 	}
 
-
 	//Check for recognized data and verify needed params
 	if(!strcasecmp(cType,"A"))
 	{
@@ -1516,8 +1514,15 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,
 		}
 		if(!strcmp(IPNumber(cParam1),"0.0.0.0"))
 		{
-		sprintf(cMsg,"<blink>Incorrect A IP number format: %s</blink>",cLine);
-		gcMessage=cMsg;
+			sprintf(cMsg,"<blink>Incorrect A IP number format: %s</blink>",cLine);
+			gcMessage=cMsg;
+			return;
+		}
+		if(strchr(cName,'_'))
+		{
+			sprintf(cMsg,"%u: Error %s: cName (check-names): %s\n",
+					uLineNumber,cZoneName,cLine);
+			gcMessage=cMsg;
 			return;
 		}
 	}
