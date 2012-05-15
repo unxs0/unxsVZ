@@ -67,7 +67,6 @@ void PrintMXList(FILE *zfp,char *cuMailServers);//local
 unsigned ViewReloadZone(char *cZone);//local
 
 //External. Used here but located in other files.
-int AddNewArpaZone(const char *cArpaZone, unsigned uExtNSSet, char *cExtHostmaster);//tzonefunc.h
 int AutoAddPTRResource(const unsigned d,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);//tresourcefunc.h
 int AutoAddPTRResourceIPv6(const char *cIPv6PTR,const char *cDomain,const unsigned uInZone,const unsigned uSourceZoneOwner);//tresourcefunc.h
 void UpdateSerialNum(unsigned uZone);//tzonefunc.h
@@ -1430,7 +1429,7 @@ int PopulateArpaZoneIPv6(const char *cIPv6ArpaZoneName, const char *cIPv6PTR, co
 		if(!uHtmlMode)
 			fprintf(stdout,"<font color=blue>Adding new ip6.arpa zone: %s</font>\n",cIPv6ArpaZoneName);
 		//This adds view 1 nd view 2 only hardcoded please fix TODO
-		if(AddNewArpaZone(cIPv6ArpaZoneName,uNSSet,cHostMaster)) 
+		if(AddNewArpaZone(cIPv6ArpaZoneName,uNSSet,cHostMaster,uZoneOwner)) 
 		{
 			if(uHtmlMode)
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1526,7 +1525,7 @@ int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtml
 	{
 		if(!uHtmlMode)
 			fprintf(stdout,"<font color=blue>Adding new arpa zone: %s</font>\n",cArpaZone);
-		if(AddNewArpaZone(cArpaZone,uNSSet,cHostMaster)) 
+		if(AddNewArpaZone(cArpaZone,uNSSet,cHostMaster,uZoneOwner)) 
 		{
 			if(uHtmlMode)
 				htmlPlainTextError(mysql_error(&gMysql));

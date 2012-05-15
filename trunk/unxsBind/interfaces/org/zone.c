@@ -1424,64 +1424,6 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,const 
 		strcpy(cParam3,cParam4);
 	}
 
-
-	//Check for recognized data and verify needed params
-	if(!strcasecmp(cType,"A"))
-	{
-		uRRType=1;
-		if(!cParam1[0] || cParam2[0])
-		{
-			fprintf(stdout,"ProcessRRLine() Error %s: Incorrect A format: %s\n",
-					cZoneName,cLine);
-			return;
-		}
-		if(!strcmp(IPNumber(cParam1),"0.0.0.0"))
-		{
-			fprintf(stdout,"Incorrect A IP number format: %s\n",cLine);
-			return;
-		}
-		if(strchr(cName,'_'))
-		{
-			fprintf(stdout,"ProcessRRLine() Error %s: cName (check-names): %s\n",
-					cZoneName,cLine);
-			return;
-		}
-	}
-	else if(!strcasecmp(cType,"CNAME"))
-	{
-		char cZone[254];
-		//char cName[254];
-		uRRType=5;
-		if(!cParam1[0] || cParam2[0])
-		{
-			fprintf(stdout,"ProcessRRLine() Error %s: Incorrect CNAME format: %s\n",
-					cZoneName,cLine);
-			return;
-		}
-
-	if(cName[0]!='$')
-	{
-		//Shift left on inline TTL NOT $TTL directive
-		sscanf(cType,"%u",&uTTL);
-		if(uTTL>1 && uTTL<800000)
-		{
-			strcpy(cType,cParam1);
-			strcpy(cParam1,cParam2);
-			strcpy(cParam2,cParam3);
-			strcpy(cParam3,cParam4);
-		}
-	}
-
-	//Shift left on IN
-	if(!strcasecmp(cType,"IN"))
-	{
-		strcpy(cType,cParam1);
-		strcpy(cParam1,cParam2);
-		strcpy(cParam2,cParam3);
-		strcpy(cParam3,cParam4);
-	}
-
-
 	//Check for recognized data and verify needed params
 	if(!strcasecmp(cType,"A"))
 	{
@@ -1496,6 +1438,12 @@ void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,const 
 		if(!strcmp(IPNumber(cParam1),"0.0.0.0"))
 		{
 		sprintf(cMsg,"<blink>Incorrect A IP number format: %s</blink>",cLine);
+		gcMessage=cMsg;
+			return;
+		}
+		if(strchr(cName,'_'))
+		{
+		sprintf(cMsg,"<blink>Hostname _ not allowed: %s</blink>",cLine);
 		gcMessage=cMsg;
 			return;
 		}

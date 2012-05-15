@@ -240,10 +240,10 @@ void RRCheck(int uMode)
 			guMode=uMode;
 			tResource("Invalid IP Number for cParam1");
 		}
-		if(strchr(cName,"_"))
+		if(strchr(cName,'_'))
 		{
 			guMode=uMode;
-			tResource("A RR cName can't contain '_'");
+			tResource("A RR cName/Hostname can't contain '_'");
 		}
 	}
 	else if(!strcmp(cRRType,"AAAA"))
@@ -264,7 +264,13 @@ void RRCheck(int uMode)
 		//Insure these are empty
 		cParam2[0]=0;
 
-		if(!strcmp(cZone+strlen(cZone)-5,".arpa"))
+		if(strchr(cName,'_'))
+		{
+			guMode=uMode;
+			tResource("AAAA RR cName/Hostname can't contain '_'");
+		}
+
+		if(!strcmp(cZone+strlen(cZone)-5,"arpa"))
 			tResource("Can not add AAAA records to arpa zones");
 
 		if(strlen(cParam1)<4)
