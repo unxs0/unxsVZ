@@ -583,14 +583,20 @@ void tContainerNewStep(unsigned uStep)
 
 			OpenRow("Clone target node","black");
 			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
+			if(!cAutoCloneNode[0])
+				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);//All nodes
 			sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%s'",cAutoCloneNode);
 			MYSQL_RUN_STORE(res);
 			if((field=mysql_fetch_row(res)))
 			{
 				sscanf(field[0],"%u",&uTargetNode);
 				sscanf(field[1],"%u",&uTargetDatacenter);
+				tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,0);//disabled
 			}
-			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,0);
+			else
+			{
+				printf("Configuration error: '%s' %u %u",cAutoCloneNode,uDatacenter,uNode);
+			}
 
 			OpenRow("Clone start uIPv4","black");
 			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
