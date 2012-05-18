@@ -537,7 +537,7 @@ void Initialize(char *cPasswd)
 void mySQLRootConnect(char *cPasswd)
 {
         mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,NULL,"root",cPasswd,"mysql",0,NULL,0))
+        if (!mysql_real_connect(&gMysql,DBIP0,"root",cPasswd,"mysql",0,DBSOCKET,0))
         {
 		printf("Database server unavailable\n");
 		exit(1);
@@ -1901,7 +1901,7 @@ void UpdateTables(void)
 	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uMax);
+		if(field[0]!=NULL) sscanf(field[0],"%u",&uMax);
        	mysql_free_result(res);
 	if(uMax<RRTYPE_NAPTR)
 	{
@@ -1924,7 +1924,15 @@ void UpdateTables(void)
 #define NSTYPE_MHIDDEN 2
 #define NSTYPE_MEXTERN 3
 #define NSTYPE_SLAVE 4
-	uMax=NSTYPE_SLAVE;
+	//Upgrade from very old version will need these tables first
+	CreatetNSType();
+	CreatetNSSet();
+	CreatetNS();
+	CreatetServer();
+	CreatetGroup();
+	CreatetGroupType();
+	CreatetGroupGlue();
+	uMax=0;
 	sprintf(gcQuery,"SELECT MAX(uNSType) FROM tNSType");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1934,9 +1942,9 @@ void UpdateTables(void)
 	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uMax);
+		if(field[0]!=NULL) sscanf(field[0],"%u",&uMax);
        	mysql_free_result(res);
-	if(uMax<NSTYPE_SLAVE)
+	if(uMax==0 || uMax<NSTYPE_SLAVE)
 	{
 		sprintf(cCommand,"/usr/bin/mysql -h %.64s -u %.32s -p%.32s %.32s < %.99s/tNSType.sql",
 					cDBIP,
@@ -1964,7 +1972,7 @@ void UpdateTables(void)
 	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uMax);
+		if(field[0]!=NULL) sscanf(field[0],"%u",&uMax);
        	mysql_free_result(res);
 	if(uMax<LOGTYPE_IDNSORG_LOGIN)
 	{
@@ -1995,7 +2003,7 @@ void UpdateTables(void)
 	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uMax);
+		if(field[0]!=NULL) sscanf(field[0],"%u",&uMax);
        	mysql_free_result(res);
 	if(uMax<TEMPLATETYPE_VDNSORG)
 	{
@@ -2025,7 +2033,7 @@ void UpdateTables(void)
 	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uMax);
+		if(field[0]!=NULL) sscanf(field[0],"%u",&uMax);
        	mysql_free_result(res);
 	if(uMax<TEMPLATESET_PLAIN)
 	{
@@ -2061,7 +2069,7 @@ void UpdateTables(void)
 	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uMax);
+		if(field[0]!=NULL) sscanf(field[0],"%u",&uMax);
        	mysql_free_result(res);
 	//We are assuming that for an rpm update user, if user does not have vdnsOrg templates, that this 
 	//means the user needs all the other template tables updated also.

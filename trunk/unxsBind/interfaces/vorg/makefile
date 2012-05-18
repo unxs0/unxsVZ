@@ -14,7 +14,8 @@
 CGINAME= vdnsOrg.cgi
 
 CFLAGS=-Wall
-LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
+#LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
+LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl
 
 interface.cgi: main.o zone.o resource.o glossary.o bulkop.o ldap.o ../../cgi.o mysqlconnect.o
 	cc main.o zone.o resource.o glossary.o bulkop.o ldap.o ../../cgi.o mysqlconnect.o -o interface.cgi $(LIBS)

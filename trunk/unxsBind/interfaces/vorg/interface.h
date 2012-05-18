@@ -12,8 +12,10 @@ AUTHOR
 #include "../../local.h"
 #include <ctype.h>
 #include <openisp/template.h>
-#include <lber.h>
-#include <ldap.h>
+#ifdef cLDAPURI
+	#include <lber.h>
+	#include <ldap.h>
+#endif
 
 //libtemplate required
 #define MAXPOSTVARS 64
@@ -139,5 +141,7 @@ void BulkOpCommands(pentry entries[], int x);
 
 //ldap.c
 int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization);
-void ldapErrorLog(char *cMessage,LDAP *ld);
+#ifdef cLDAPURI
+	void ldapErrorLog(char *cMessage,LDAP *ld);
+#endif
 void logfileLine(const char *cFunction,const char *cLogline);

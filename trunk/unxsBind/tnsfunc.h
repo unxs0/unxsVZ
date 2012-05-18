@@ -125,6 +125,63 @@ void ExttNSCommands(pentry entries[], int x)
 			else
 				tNS("<blink>Error</blink>: Denied by permissions settings");
                 }
+                else if(!strcmp(gcCommand,"Create tServer"))
+                {
+			if(guPermLevel>10)
+			{
+        			MYSQL_RES *res;
+				MYSQL_ROW field;
+        			MYSQL_RES *res2;
+				MYSQL_ROW field2;
+
+                        	ProcesstNSVars(entries,x);
+                        	guMode=0;
+
+				sprintf(gcQuery,"SELECT cFQDN,uNS FROM tNS WHERE cFQDN!='' AND uServer=0");
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					tNS(mysql_error(&gMysql));
+			        res=mysql_store_result(&gMysql);
+	        		while((field=mysql_fetch_row(res)))
+				{
+
+					uServer=0;
+					sprintf(gcQuery,"SELECT uServer FROM tServer WHERE cLabel='%s'",field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						tNS(mysql_error(&gMysql));
+				        res2=mysql_store_result(&gMysql);
+		        		if((field2=mysql_fetch_row(res2)))
+						sscanf(field2[0],"%u",&uServer);
+					mysql_free_result(res2);
+	
+					if(!uServer)
+					{
+						sprintf(gcQuery,"INSERT INTO tServer SET cLabel='%s'",field[0]);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							tNS(mysql_error(&gMysql));
+						uServer=mysql_insert_id(&gMysql);
+					}
+
+					if(uServer)
+					{
+						sprintf(gcQuery,"UPDATE tNS SET uServer=%u WHERE uNS=%s",uServer,field[1]);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							tNS(mysql_error(&gMysql));
+					}
+				}
+				mysql_free_result(res);
+
+				if(mysql_affected_rows(&gMysql))
+					tNS("tServer was changed");
+				else
+					tNS("tServer was not changed");
+			}
+			else
+				tNS("<blink>Error</blink>: Denied by permissions settings");
+		}
 	}
 
 }//void ExttNSCommands(pentry entries[], int x)
@@ -152,6 +209,10 @@ void ExttNSButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
+			printf("These NSs are what are used to create NS sets. Also see tServer,tNSSet and tNSType.");
+			if(guPermLevel>10)
+			printf("<p><input class=largeButton title='Add tServer records based on cFQDN and associate' " 
+				"type=submit name=gcCommand value='Create tServer'><br>\n");
 			printf("<p><u>Record Context Info</u><br>");
 			tNSContextInfo();
 			tNSNavList();

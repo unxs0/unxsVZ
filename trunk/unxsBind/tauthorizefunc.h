@@ -300,9 +300,12 @@ void tAuthorizeNavList(void)
 	unsigned uNum=0;
 	unsigned uCount=0;
 
+	if(!uOwner) return;
+	//sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient FROM tAuthorize "
+	//		" WHERE uOwner=%u OR uOwner IN (SELECT uClient FROM " TCLIENT
+	//		" WHERE uOwner=%u)",guCompany,guCompany);
 	sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient FROM tAuthorize "
-			" WHERE uOwner=%u OR uOwner IN (SELECT uClient FROM " TCLIENT
-			" WHERE uOwner=%u)",guCompany,guCompany);
+			" WHERE uOwner=%u",uOwner);
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))

@@ -57,6 +57,8 @@ void ContactsNavList(void);
 void htmlRecordContext(void);
 void tClientNavList(void);
 void BasictClientCheck(void);
+void htmlAuthorizeLinksFromClient(unsigned uCertClient);
+void tAuthorizeNavListForLoadedOwner(void);
 
 
 void ExtProcesstClientVars(pentry entries[], int x)
@@ -193,7 +195,7 @@ void ExttClientCommands(pentry entries[], int x)
 					tClient("Can't delete client with resources");
 				mysql_free_result(res);
 				
-				if(!strcmp(cCode,"Contact"))
+				if(!strcmp(cCode,"Contact") || !strncmp(cCode,"CONT",4))
 				{
 					sprintf(gcQuery,"DELETE FROM " TAUTHORIZE 
 						" WHERE (cLabel='%s' OR uCertClient=%u)",
@@ -202,7 +204,7 @@ void ExttClientCommands(pentry entries[], int x)
         				if(mysql_errno(&gMysql))
                 				tClient(mysql_error(&gMysql));
 				}
-				else if(!strcmp(cCode,"Organization"))
+				else if(!strcmp(cCode,"Organization") || !strncmp(cCode,"COMP",4))
 				{
 					sprintf(gcQuery,"DELETE FROM " TCLIENT 
 						" WHERE uOwner=%u",uClient);
@@ -337,7 +339,11 @@ void ExttClientButtons(void)
         {
                 case 2000:
 			printf("<u>New: Step 1 Tips</u><br>");
-			printf("Here you would usually enter a new company name into cLabel. Optionally some standardized company info in cInfo, like addresses phone numbers and such. A main company email is usually helpful, cCode is used internally. <br>If you are creating a contact for an existing company select that company from the drop down select below and use cLabel for the contact name (Ex. Anne Flechter) and the cInfo would be the contacts personal phone numbers and or address etc.");
+			printf("Here you would usually enter a new company name into cLabel. Optionally some standardized company info in cInfo,"
+				" like addresses phone numbers and such. A main company email is usually helpful, cCode is used internally."
+				" <br>If you are creating a contact for an existing company select that company from the drop down select"
+				" below and use cLabel for the contact name (Ex. Anne Flechter) and the cInfo would be the contacts personal"
+				" phone numbers and or address etc.");
 			if(guPermLevel>7)
 			{
 				if(uOwner==1)
@@ -351,12 +357,18 @@ void ExttClientButtons(void)
 
                 case 2001:
                         printf(LANG_NBB_CONFIRMDEL);
-			printf("<br>Note: Will also delete tAuthorize entries related to this uClient. Probably not a good idea to delete Root owned tClient records this way, even if you have the permissions to do so.\n");
+			printf("<br>Note: Will also delete tAuthorize entries related to this uClient. Probably not a good idea"
+				" to delete Root owned tClient records this way, even if you have the permissions to do so.\n");
                 break;
 
                 case 2002:
 			printf("<u>Modify: Step 1 Tips</u><br>");
-			printf("Here you can modify the contact or company name. In the later case still keeping all associated contacts. You can update the cInfo text area. Add an email or company or contact code.<br>A much more advanced operation and one that must be done with care is the use of the 'Change or Create' drop down select: It is meant primarily to associate or change the association of contacts or other orphan tClient records with a given company. In any case the 'Change or Create' feature must be used with caution since it may affect many other tClient and tAuthorize records indirectly, especially if used on a company record.");
+			printf("Here you can modify the contact or company name. In the later case still keeping all associated contacts."
+				" You can update the cInfo text area. Add an email or company or contact code.<br>A much more advanced"
+				" operation and one that must be done with care is the use of the 'Change or Create' drop down select:"
+				" It is meant primarily to associate or change the association of contacts or other orphan tClient records"
+				" with a given company. In any case the 'Change or Create' feature must be used with caution since it may"
+				" affect many other tClient and tAuthorize records indirectly, especially if used on a company record.");
 
 			htmlRecordContext();
 			if(guPermLevel>7)
@@ -368,7 +380,12 @@ void ExttClientButtons(void)
                 break;
 
                 case 3000:
-			printf("<u>Authorize: Step 1 Tips</u><br>Depending on the user level you may authorize a contact to access interfaces (like the organization/contact portal.) Or even to use this back-office. In the 'Login' you would enter a login (that can be the same as the tClient.cLabel) for this contact and a password. The most common user permission level is 'Organization Admin' that would allow this contact to login to the idnsOrg.cgi interface and have full control over the companies DNS resource records. The second most common user level is 'Back-Office Root' that will allow the user full access to this back-office iDNS.cgi interface.<p>\n");
+			printf("<u>Authorize: Step 1 Tips</u><br>Depending on the user level you may authorize a contact to access interfaces"
+				" (like the organization/contact portal.) Or even to use this back-office. In the 'Login' you would enter a"
+				" login (that can be the same as the tClient.cLabel) for this contact and a password. The most common user"
+				" permission level is 'Organization Admin' that would allow this contact to login to the idnsOrg.cgi interface"
+				" and have full control over the companies DNS resource records. The second most common user level is"
+				" 'Back-Office Root' that will allow the user full access to this back-office iDNS.cgi interface.<p>\n");
 			if(guPermLevel>7)
 				PermLevelDropDown(cuPerm);
 			printf("<br>Login <input type=text title='Login to use' name=cLogin value='%s'"
@@ -394,9 +411,12 @@ void ExttClientButtons(void)
 					" their contacts. Finally the contacts are assigned a role that limits the"
 					" operations they can perform for their company and the interfaces they can use.");
 				printf("<p><u>Search Tools</u><br>");
-				printf("Enter the complete or the first part of a company or contact name below. Not case sensitive. You can use %% and _ SQL LIKE matching chars. The check box further limits your search.<br>");
-				printf("<input type=text title='cLabel search. Use %% . and _ for pattern matching.' name=cSearch value=\"%s\" maxlength=99 size=20><br>",cSearch);
-				printf("Only ASPs <input title='Limit search to Root owned tClient records that in this model are the controlling ASP companies' type=checkbox name=uOnlyASPs ");
+				printf("Enter the complete or the first part of a company or contact name below."
+					" Not case sensitive. You can use %% and _ SQL LIKE matching chars. The check box further limits your search.<br>");
+				printf("<input type=text title='cLabel search. Use %% . and _ for pattern matching.'"
+					" name=cSearch value=\"%s\" maxlength=99 size=20><br>",cSearch);
+				printf("Only ASPs <input title='Limit search to Root owned tClient records that in this model"
+					" are the controlling ASP companies' type=checkbox name=uOnlyASPs ");
 				if(uOnlyASPs)
 					printf("checked><br>");
 				else
@@ -405,11 +425,14 @@ void ExttClientButtons(void)
 				htmlRecordContext();
 			}
 
+			//COMP if from an old customer fork e.g. COMP12345
+			if(strcmp(cCode,"Organization") && strncmp(cCode,"COMP",4) && uClient)
+				htmlAuthorizeLinksFromClient(uClient);
+
 			if( strcmp(cCode,"Organization") && uClient && guPermLevel>9 && uClient!=guLoginClient 
 				&& !IsAuthUser(cLabel,uOwner,uClient) &&guMode!=5 && uOwner!=1)
-			{
-				printf("<p><input class=largeButton title='Authorize %s to manage his company resources' type=submit name=gcCommand value='Authorize'>",cLabel);
-			}
+				printf("<p><input class=largeButton title='Authorize %s to manage his company resources'"
+					" type=submit name=gcCommand value='Authorize'>",cLabel);
 
 			ContactsNavList();
 
@@ -702,14 +725,14 @@ void tTablePullDownResellers(unsigned uSelector,unsigned uMode)
 	if(guPermLevel>11)
 	{
 		sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT
-				" WHERE cCode='Organization' AND uClient!=1"
+				" WHERE (cCode='Organization' OR SUBSTR(cCode,0,4)='COMP') AND uClient!=1"
 				" ORDER BY cLabel");
 	}
 	else
 	{
 		sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT
 				" WHERE cLabel!='%s'"
-				" AND cCode='Organization'"
+				" AND (cCode='Organization' OR SUBSTR(cCode,0,4)='COMP')" 
 				" AND (uClient=%u OR uOwner"
 				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u OR uClient=%u))"
 				" ORDER BY cLabel",
@@ -867,7 +890,6 @@ const char *cUserLevel(unsigned uPermLevel)
 }//const char *cUserLevel(unsigned uPermLevel)
 
 
-void tAuthorizeNavList(void);//tauthorizefunc.h
 void ContactsNavList(void)
 {
         MYSQL_RES *res;
@@ -877,10 +899,8 @@ void ContactsNavList(void)
 		return;
 
 	//Login info
-	if(uOwner!=1 && strcmp(cCode,"Organization"))
-	{
-		tAuthorizeNavList();
-	}
+	if(uOwner!=1 && strcmp(cCode,"Organization") && strncmp(cCode,"COMP",4))
+		tAuthorizeNavListForLoadedOwner();
 
 	//NavList proper
 	sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT " WHERE uOwner=%u AND uOwner!=1",uClient);
@@ -916,10 +936,11 @@ void ContactsNavList(void)
 void htmlRecordContext(void)
 {
 	printf("<p><u>Record Context Info</u><br>");
-	if(uOwner>1 && strcmp(cCode,"Contact"))
+	if(uOwner>1 && strcmp(cCode,"Contact") && strncmp(cCode,"CONT",4))
 		printf("'%s' appears to be a reseller or ASP owned company or organization",cLabel);
-	else if(uOwner>1 && strcmp(cCode,"Organization"))
-		printf("'%s' appears to be a contact of <a class=darkLink href=iDNS.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
+	else if(uOwner>1 && strcmp(cCode,"Organization") && strncmp(cCode,"COMP",4))
+		printf("'%s' appears to be a contact of <a class=darkLink href=iDNS.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",
+				cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
 	else if(uOwner==1 && strcmp(cLabel,"Root"))
 		printf("'%s' appears to be an ASP root company",cLabel);
 	else if(uOwner==1 && !strcmp(cLabel,"Root"))
@@ -982,4 +1003,64 @@ void BasictClientCheck(void)
 		}
 	}
 }//void BasictClientCheck(void)
+
+
+void htmlAuthorizeLinksFromClient(unsigned uCertClient)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(!uCertClient) return;
+
+        sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm FROM "TAUTHORIZE" WHERE uCertClient=%u",uCertClient);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+        while((field=mysql_fetch_row(res)))
+		printf("<br><a class=darkLink href=iDNS.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
+				"%s/%s/%s</a>\n",field[0],cLabel,field[1],field[2]);
+        mysql_free_result(res);
+
+}//void htmlAuthorizeLinksFromClient()
+
+
+void tAuthorizeNavListForLoadedOwner(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uNum=0;
+	unsigned uCount=0;
+
+	sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient FROM tAuthorize "
+			" WHERE uOwner=%u OR uOwner IN (SELECT uClient FROM " TCLIENT
+			" WHERE uOwner=%u)",uOwner,uOwner);
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if((uNum=mysql_num_rows(res)))
+	{
+        	printf("<p><u>tAuthorizeNavList(%u)</u><br>\n",uNum);
+        	while((field=mysql_fetch_row(res)))
+		{
+			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
+				"%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
+			if((++uCount)>30) break;
+		}
+		if(uCount>30)
+			printf("Only first 30 shown\n");
+				
+	}
+        mysql_free_result(res);
+
+}//void tAuthorizeNavListForLoadedOwner(void)
 
