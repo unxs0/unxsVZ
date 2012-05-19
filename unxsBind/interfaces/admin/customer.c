@@ -145,10 +145,13 @@ void LoadCustomer(void)
 			guCookieContact=0;
 			SetSessionCookie();
 		}
-		gcMessage="1 record(s) found";
+		//gcMessage="1 record(s) found";
 	}
 	else
-		gcMessage="<blink>Error: </blink>No records found.";
+	{
+		if(gcCookieCustomer[0])
+			gcMessage="<blink>Error: </blink>No records found.";
+	}
 
 	mysql_free_result(res);
 
@@ -1045,11 +1048,11 @@ void funcCompanyNavList(FILE *fp,unsigned uSetCookie)
 	
 	if(!guASPContact)
 	        sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE uClient!=1 AND "
-				"cLabel LIKE '%s%%' AND (uClient=%u OR uOwner=%u) AND cCode='Organization' ORDER BY cLabel",
+				"cLabel LIKE '%s%%' AND (uClient=%u OR uOwner=%u) AND (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP') ORDER BY cLabel",
 					cSearch,guOrg,guOrg);
 	else
 		sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE uClient!=1 AND "
-				"cLabel LIKE '%s%%' AND cCode='Organization' ORDER BY cLabel",cSearch);
+				"cLabel LIKE '%s%%' AND (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP') ORDER BY cLabel",cSearch);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
