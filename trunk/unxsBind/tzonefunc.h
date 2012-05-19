@@ -2600,9 +2600,10 @@ void CustomerDropDown(unsigned uSelector)
         MYSQL_ROW mysqlField;
 	
 	if(guLoginClient==1)
-	        sprintf(gcQuery,"SELECT uClient,cLabel FROM "TCLIENT" WHERE cCode='Organization' ORDER BY cLabel");
+	        sprintf(gcQuery,"SELECT uClient,cLabel FROM "TCLIENT" WHERE cCode='Organization' OR SUBSTR(cCode,1,4)='COMP' ORDER BY cLabel");
 	else
-		sprintf(gcQuery,"SELECT uClient,cLabel FROM "TCLIENT" WHERE (uClient=%u OR uOwner=%u) AND cCode='Organization'",
+		sprintf(gcQuery,"SELECT uClient,cLabel FROM "TCLIENT" WHERE (uClient=%u OR uOwner=%u) AND"
+				" (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP') ",
 				guCompany,guCompany);
 
         mysql_query(&gMysql,gcQuery);

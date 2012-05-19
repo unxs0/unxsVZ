@@ -429,7 +429,7 @@ void ExttClientButtons(void)
 			if(strcmp(cCode,"Organization") && strncmp(cCode,"COMP",4) && uClient)
 				htmlAuthorizeLinksFromClient(uClient);
 
-			if( strcmp(cCode,"Organization") && uClient && guPermLevel>9 && uClient!=guLoginClient 
+			if( strcmp(cCode,"Organization") && strncmp(cCode,"COMP",4) && uClient && guPermLevel>9 && uClient!=guLoginClient 
 				&& !IsAuthUser(cLabel,uOwner,uClient) &&guMode!=5 && uOwner!=1)
 				printf("<p><input class=largeButton title='Authorize %s to manage his company resources'"
 					" type=submit name=gcCommand value='Authorize'>",cLabel);
@@ -515,7 +515,7 @@ void ExttClientSelect(void)
         {
                 if(guLoginClient==1 && guPermLevel>11)//Root can read access all
                         sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT " WHERE"
-                                        " tClient.uOwner=1 ORDER BY cLabeñ");
+                                        " tClient.uOwner=1 ORDER BY cLabel");
                         else
                                 sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT
                                         " WHERE (uClient=%1$u OR uOwner"

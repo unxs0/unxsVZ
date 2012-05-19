@@ -1021,7 +1021,7 @@ void funcTablePullDownResellers(FILE *fp,unsigned uUseStatus)
 		cTitle="Select the Company you want to create the Administrator for";
 
 	sprintf(gcQuery,"SELECT tClient.uClient,tClient.cLabel FROM tClient WHERE"
-			" (uOwner=1 OR uOwner=%u) AND cCode='Organization' ORDER BY cLabel",guOrg);
+			" (uOwner=1 OR uOwner=%u) AND (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP') ORDER BY cLabel",guOrg);
 
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

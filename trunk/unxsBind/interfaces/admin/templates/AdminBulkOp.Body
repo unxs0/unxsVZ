@@ -138,20 +138,13 @@
 		</tr>
 		<tr>
 			<td colspan=2>
-				<p>
-				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Bulk Operations Tab Details')"><strong>Bulk Operations Tab Details</strong></a><br>
-<strong>Warning this panel is not a two step system. No undo available. Operations take place immediately</strong><br>
-At the Bulk Data Entry Panel you have to enter the resource(s) record(s) you want to import.<br>
-The format of this input is:<br>
-RRName RRType RRParam1 [RRParam2]<br>
-<br>
-RRName is the Name of the Resource Record, use '@' for $ORIGIN.<br>
-RRType is the Resource Record Type. It may be one of the following:<br><br>
-<strong>A</strong> RRParam1 required. E.g: host A 216.32.45.78<br>
-<strong>MX</strong> RRParam1 and RRParam2 required. E.g: @ MX 10 mail.isp.net<br>
-<strong>HINFO</strong> RRParam1 and RRParam2 required. E.g. gateway i686 Linux 2.6<br>
-<strong>CNAME</strong> RRParam1 required. E.g: www CNAME domain.com.<br> 
-<strong>TXT</strong> RRParam1 required E.g: domain.com TXT "v=spf1 ptr ~all"
+				<p><br>
+				<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Bulk Operations Tab Details')"><strong>Bulk Operations Tab Details</strong></a>
+
+<p><strong>Warning: Bulk operations take place immediately no quick undo available.</strong>
+
+<p>See right panel link for help on syntax and available options.
+
 </td>
 		</tr>
 	</table>

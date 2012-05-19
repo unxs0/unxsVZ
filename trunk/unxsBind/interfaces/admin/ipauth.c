@@ -646,7 +646,7 @@ void funcReportActions(FILE *fp)
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel NOT IN "
 		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
+		"uClient!=1 AND uClient!=%u AND (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP')",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(gcQuery);
@@ -658,7 +658,7 @@ void funcReportActions(FILE *fp)
 
 	sprintf(gcQuery,"SELECT uBlock FROM tBlock WHERE uOwner IN (SELECT uClient FROM tClient WHERE cLabel NOT IN "
 		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization')",uDefaultClient);
+		"uClient!=1 AND uClient!=%u AND (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP'))",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(gcQuery);
@@ -751,7 +751,7 @@ void funcRemovedCompanies(FILE *fp)
 
 	sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE cLabel NOT IN "
 		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization' ORDER BY cLabel",uDefaultClient);
+		"uClient!=1 AND uClient!=%u AND (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP') ORDER BY cLabel",uDefaultClient);
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -781,7 +781,7 @@ void funcRemovedBlocks(FILE *fp)
 	sprintf(gcQuery,"SELECT tBlock.cLabel,tClient.cLabel " 
 		"FROM tBlock,tClient WHERE tBlock.uOwner IN (SELECT uClient FROM tClient WHERE cLabel NOT IN "
 		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization') AND tClient.uClient=tBlock.uOwner ORDER BY tClient.cLabel",uDefaultClient);
+		"uClient!=1 AND uClient!=%u AND (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP') ) AND tClient.uClient=tBlock.uOwner ORDER BY tClient.cLabel",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(gcQuery);
@@ -1236,7 +1236,7 @@ unsigned ProcessTransaction(char *cIPBlock,char *cCompany,char *cAction)
 	//printf("uNumIPs=%u\n",uNumIPs);
 	//printf("uNumNets=%u\n",uNumNets);
 	
-	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND cCode='Organization'",cCompany);
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' AND (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP')",cCompany);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(gcQuery);
@@ -1633,7 +1633,7 @@ void CleanUpCompanies(void)
 
 	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel NOT IN "
 		"(SELECT DISTINCT cCompany FROM tTransaction) AND "
-		"uClient!=1 AND uClient!=%u AND cCode='Organization'",uDefaultClient);
+		"uClient!=1 AND uClient!=%u AND (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP')",uDefaultClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(gcQuery);
