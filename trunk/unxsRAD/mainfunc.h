@@ -24,7 +24,7 @@ void Backup(char *cPasswd);
 void Restore(char *cPasswd, char *cTableName);
 void RestoreAll(char *cPasswd);
 void mySQLRootConnect(char *cPasswd);
-void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet);
+void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateType, char *cTemplateSet);
 void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath);
 time_t cDateToUnixTime(char *cDate);
 void CreatetLogTable(char *cTableName);
@@ -191,8 +191,8 @@ void ExtMainShell(int argc, char *argv[])
 		exit(0);
 	}
 
-	if(argc==5 && !strcmp(argv[1],"ImportTemplateFile"))
-                ImportTemplateFile(argv[2],argv[3],argv[4]);
+	if(argc==6 && !strcmp(argv[1],"ImportTemplateFile"))
+                ImportTemplateFile(argv[2],argv[3],argv[4],argv[5]);
 	else if(argc==3 && !strcmp(argv[1],"Initialize"))
                 Initialize(argv[2]);
         else if(argc==3 && !strcmp(argv[1],"Backup"))
@@ -212,7 +212,7 @@ void ExtMainShell(int argc, char *argv[])
 		//printf("\tProcessJobQueue <cServer>\n");
 		//printf("\tProcessExtJobQueue <cServer>\n");
 		printf("\nSpecial Admin Ops:\n");
-		printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel>\n");
+		printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 		printf("\n");
 	}
@@ -481,11 +481,12 @@ void mySQLRootConnect(char *cPasswd)
 }//void mySQLRootConnect(void)
 
 
-void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
+void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType)
 {
 	FILE *fp;
 	unsigned uTemplate=0;
 	unsigned uTemplateSet=0;
+	unsigned uTemplateType=0;
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 	char cBuffer[2048]={""};
@@ -527,6 +528,25 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 		exit(1);
 	}
 
+	//uTemplateType
+	sprintf(gcQuery,"SELECT uTemplateType FROM tTemplateType WHERE cLabel='%s'",cTemplateType);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+        mysqlRes=mysql_store_result(&gMysql);
+        if((mysqlField=mysql_fetch_row(mysqlRes)))
+        	sscanf(mysqlField[0],"%u",&uTemplateType);
+	mysql_free_result(mysqlRes);
+
+	if(!uTemplateType)
+	{
+		printf("Could not find tTemplateType.clabel=%s\n",cTemplateType);
+		exit(1);
+	}
+
 	//uTemplate
 	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s'",cTemplate);
 	mysql_query(&gMysql,gcQuery);
@@ -540,11 +560,11 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
         	sscanf(mysqlField[0],"%u",&uTemplate);
 	mysql_free_result(mysqlRes);
 
-
 	if(uTemplate)
 	{
 		printf("Updating tTemplate for %s\n",cTemplate);
-		sprintf(cBuffer,"UPDATE tTemplate SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),cTemplate='',uTemplateSet=%u WHERE uTemplate=%u",uTemplateSet,uTemplate);
+		sprintf(cBuffer,"UPDATE tTemplate SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),cTemplate='',uTemplateSet=%u"
+				",uTemplateType=%u WHERE uTemplate=%u",uTemplateSet,uTemplateType,uTemplate);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{
@@ -556,7 +576,8 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet)
 	else
 	{
 		printf("Inserting new tTemplate for %s\n",cTemplate);
-		sprintf(cBuffer,"INSERT INTO tTemplate SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cLabel='%s',uTemplateSet=%u",cTemplate,uTemplateSet);
+		sprintf(cBuffer,"INSERT INTO tTemplate SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				",cLabel='%s',uTemplateSet=%u,uTemplateType=%u",cTemplate,uTemplateSet,uTemplateType);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{
