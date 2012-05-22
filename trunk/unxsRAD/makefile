@@ -14,7 +14,7 @@
 #CFLAGS=-O -DLinux -Wall -pedantic
 CFLAGS= -DLinux -Wall
 RELEASE= 0.1
-LIBS= /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl
+LIBS= -L/usr/lib/openisp /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl -ltemplate
 
 
 all: unxsRAD.cgi
