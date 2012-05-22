@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id: main.c.template 2979 2011-12-11 15:24:44Z Gary $
+	$Id$
 	mysqlRAD2.cgi created application file for unxsRAD.cgi
 	(tAuthorize.cPasswd template set)
 	mysqlRAD2 to mysqlRAD3 transition template
@@ -65,7 +65,7 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id: main.c.template 2979 2011-12-11 15:24:44Z Gary $";
+char *gcBuildInfo="$Id$";
 char *gcRADStatus="Start";
 
 //Local

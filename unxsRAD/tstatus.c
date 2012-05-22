@@ -2,7 +2,7 @@
 FILE
 	tStatus source code of unxsRAD.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tstatus.c 1291 2007-07-09 23:20:17Z Gary $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tstatusfunc.h while 
