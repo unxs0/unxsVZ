@@ -171,7 +171,7 @@ void ExttTemplateButtons(void)
 			printf("<p><u>Record Context Info</u><br>");
 			printf("<p><u>Operations</u><br>");
 			tTablePullDownOwner("tTable;cuTablePullDown","cLabel","cLabel",uTable,1);
-			printf("<br><input type=submit class=largeButton title='Create file from this template based on cLabel'"
+			printf("<br><input type=submit class=largeButton title='Create /tmp debug file from this template based on cLabel'"
 				" name=gcCommand value='Create File'>");
 			tTemplateNavList();
 	}
@@ -373,13 +373,85 @@ void tTemplateNavList(void)
 
 }//void tTemplateNavList(void)
 
+#include <openisp/template.h>
 
 unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 {
+	FILE *fp;
 	unsigned uRetVal= -1;
 
 	if(!uTable || !uTemplate) return(uRetVal);
-	return(0);
+
+	char cTableName[32]={""};
+	char cTableNameLC[32]={""};
+	char cFile[100]={""};
+
+	sprintf(cTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
+	sprintf(cTableNameLC,"%.31s",cTableName);
+	WordToLower(cTableNameLC);
+
+	sprintf(cFile,"/tmp/%.31s.c",cTableNameLC);
+	if((fp=fopen(cFile,"w"))==NULL)
+		return(1);
+
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cTemplate FROM tTemplate WHERE uTemplate=%u",uTemplate);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s\n",mysql_error(&gMysql));
+		return(uRetVal);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		struct t_template template;
+
+/*
+	ModuleCreateQuery
+	ModuleInsertQuery
+	ModuleListPrint
+	ModuleListTable
+	ModuleLoadVars
+	ModuleProcVars
+	ModuleRAD3Input
+	ModuleUpdateQuery
+	ModuleVars
+	ModuleVarList
+	cProject
+	cTableKey
+	cTableName
+	cTableNameLC
+	cTableTitle
+*/
+			
+		template.cpName[0]="cTableName";
+		template.cpValue[0]=cTableName;
+			
+		template.cpName[1]="cTableNameLC";
+		template.cpValue[1]=cTableNameLC;
+			
+		template.cpName[2]="cTableKey";
+		char cTableKey[33]={""};
+		sprintf(cTableKey,"u%.31s",cTableName+1);//New table name includes table type t prefix
+		template.cpValue[2]=cTableKey;
+			
+		template.cpName[3]="";
+
+		Template(field[0],&template,fp);
+		uRetVal=0;
+	}
+	else
+	{
+		fprintf(fp,"No such uTemplate %u\n",uTemplate);
+		uRetVal=2;
+	}
+	mysql_free_result(res);
+	fclose(fp);
+
+	return(uRetVal);
 
 }//unsigned CreateModuleFile()
 
@@ -411,3 +483,13 @@ unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable)
 	return(uRetVal);
 
 }//unsigned CreateFileFromTemplate()
+
+
+//libtemplate.a required
+void AppFunctions(FILE *fp,char *cFunction)
+{
+	//Not implemented yet
+	//else if(!strcmp(cFunction,"funcZoneStatus"))
+	//funcZoneStatus(fp);
+	
+}//void AppFunctions(FILE *fp,char *cFunction)

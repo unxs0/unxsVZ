@@ -5,14 +5,12 @@ PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
 	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
-{{
 TEMPLATE VARS AND FUNCTIONS
 	ModuleFunctionProcess
 	ModuleFunctionProtos
 	cProject
 	cTableKey
 	cTableName
-}}
 */
 
 {{ModuleFunctionProtos}}

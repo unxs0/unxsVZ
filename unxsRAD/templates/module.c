@@ -7,7 +7,6 @@ PURPOSE
 	while unxsRAD can still to be used to change this schema dependent file.
 AUTHOR
 	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
-{{
 TEMPLATE VARS AND FUNCTIONS
 	ModuleCreateQuery
 	ModuleInsertQuery
@@ -24,7 +23,6 @@ TEMPLATE VARS AND FUNCTIONS
 	cTableName
 	cTableNameLC
 	cTableTitle
-}}
 */
 
 
@@ -230,9 +228,7 @@ void New{{cTableName}}(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT {{cTableKey}} FROM {{cTableName}}\
-				WHERE {{cTableKey}}=%u"
-							,{{cTableKey}});
+	sprintf(gcQuery,"SELECT {{cTableKey}} FROM {{cTableName}} WHERE {{cTableKey}}=%u",{{cTableKey}});
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
