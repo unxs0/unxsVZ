@@ -1,20 +1,25 @@
 /*
 FILE
 	$Id$
-	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2009 Gary Wallis for Unixservice.
- 
+	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
+{{
+TEMPLATE VARS AND FUNCTIONS
+	ModuleFunctionProcess
+	ModuleFunctionProtos
+	cProject
+	cTableKey
+	cTableName
+}}
 */
 
-//ModuleFunctionProtos()
+{{ModuleFunctionProtos}}
 
+void {{cTableName}}NavList(void);
 
-void tIndexTypeNavList(void);
-
-void ExtProcesstIndexTypeVars(pentry entries[], int x)
+void ExtProcess{{cTableName}}Vars(pentry entries[], int x)
 {
 	/*
 	register int i;
@@ -22,85 +27,84 @@ void ExtProcesstIndexTypeVars(pentry entries[], int x)
 	{
 	}
 	*/
-}//void ExtProcesstIndexTypeVars(pentry entries[], int x)
+}//void ExtProcess{{cTableName}}Vars(pentry entries[], int x)
 
 
-void ExttIndexTypeCommands(pentry entries[], int x)
+void Ext{{cTableName}}Commands(pentry entries[], int x)
 {
 
-	if(!strcmp(gcFunction,"tIndexTypeTools"))
+	if(!strcmp(gcFunction,"{{cTableName}}Tools"))
 	{
-		//ModuleFunctionProcess()
-
+		{{ModuleFunctionProcess}}
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
 			if(guPermLevel>=9)
 			{
-	                        ProcesstIndexTypeVars(entries,x);
+	                        Process{{cTableName}}Vars(entries,x);
                         	guMode=2000;
-	                        tIndexType(LANG_NB_CONFIRMNEW);
+	                        {{cTableName}}(LANG_NB_CONFIRMNEW);
 			}
 			else
-				tIndexType("<blink>Error</blink>: Denied by permissions settings");
+				{{cTableName}}("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
 			if(guPermLevel>=9)
 			{
 				unsigned uContactParentCompany=0;
-                        	ProcesstIndexTypeVars(entries,x);
+                        	Process{{cTableName}}Vars(entries,x);
 				GetClientOwner(guLoginClient,&uContactParentCompany);
 				
                         	guMode=2000;
 				//Check entries here
                         	guMode=0;
 
-				uIndexType=0;
+				{{cTableKey}}=0;
 				uCreatedBy=guLoginClient;
 				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
-				NewtIndexType(0);
+				New{{cTableName}}(0);
 			}
 			else
-				tIndexType("<blink>Error</blink>: Denied by permissions settings");
+				{{cTableName}}("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
-                        ProcesstIndexTypeVars(entries,x);
+                        Process{{cTableName}}Vars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
-				tIndexType(LANG_NB_CONFIRMDEL);
+				{{cTableName}}(LANG_NB_CONFIRMDEL);
 			}
 			else
-				tIndexType("<blink>Error</blink>: Denied by permissions settings");
+				{{cTableName}}("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
-                        ProcesstIndexTypeVars(entries,x);
+                        Process{{cTableName}}Vars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
-				DeletetIndexType();
+				Delete{{cTableName}}();
 			}
 			else
-				tIndexType("<blink>Error</blink>: Denied by permissions settings");
+				{{cTableName}}("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
-                        ProcesstIndexTypeVars(entries,x);
+                        Process{{cTableName}}Vars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
-				tIndexType(LANG_NB_CONFIRMMOD);
+				{{cTableName}}(LANG_NB_CONFIRMMOD);
 			}
 			else
-				tIndexType("<blink>Error</blink>: Denied by permissions settings");
+				{{cTableName}}("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
-                        ProcesstIndexTypeVars(entries,x);
+                        Process{{cTableName}}Vars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
@@ -108,19 +112,19 @@ void ExttIndexTypeCommands(pentry entries[], int x)
                         	guMode=0;
 
 				uModBy=guLoginClient;
-				ModtIndexType();
+				Mod{{cTableName}}();
 			}
 			else
-				tIndexType("<blink>Error</blink>: Denied by permissions settings");
+				{{cTableName}}("<blink>Error</blink>: Denied by permissions settings");
                 }
 	}
 
-}//void ExttIndexTypeCommands(pentry entries[], int x)
+}//void Ext{{cTableName}}Commands(pentry entries[], int x)
 
 
-void ExttIndexTypeButtons(void)
+void Ext{{cTableName}}Buttons(void)
 {
-	OpenFieldSet("tIndexType Aux Panel",100);
+	OpenFieldSet("{{cTableName}} Aux Panel",100);
 	switch(guMode)
         {
                 case 2000:
@@ -141,37 +145,37 @@ void ExttIndexTypeButtons(void)
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
-			tIndexTypeNavList();
+			{{cTableName}}NavList();
 	}
 	CloseFieldSet();
 
-}//void ExttIndexTypeButtons(void)
+}//void Ext{{cTableName}}Buttons(void)
 
 
-void ExttIndexTypeAuxTable(void)
+void Ext{{cTableName}}AuxTable(void)
 {
 
-}//void ExttIndexTypeAuxTable(void)
+}//void Ext{{cTableName}}AuxTable(void)
 
 
-void ExttIndexTypeGetHook(entry gentries[], int x)
+void Ext{{cTableName}}GetHook(entry gentries[], int x)
 {
 	register int i;
 
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(gentries[i].name,"uIndexType"))
+		if(!strcmp(gentries[i].name,"{{cTableKey}}"))
 		{
-			sscanf(gentries[i].val,"%u",&uIndexType);
+			sscanf(gentries[i].val,"%u",&{{cTableKey}});
 			guMode=6;
 		}
 	}
-	tIndexType("");
+	{{cTableName}}("");
 
-}//void ExttIndexTypeGetHook(entry gentries[], int x)
+}//void Ext{{cTableName}}GetHook(entry gentries[], int x)
 
 
-void ExttIndexTypeSelect(void)
+void Ext{{cTableName}}Select(void)
 {
 
 	unsigned uContactParentCompany=0;
@@ -179,43 +183,43 @@ void ExttIndexTypeSelect(void)
 	GetClientOwner(guLoginClient,&uContactParentCompany);
 
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT %s FROM tIndexType ORDER BY"
-				" uIndexType",
-				VAR_LIST_tIndexType);
+		sprintf(gcQuery,"SELECT %s FROM {{cTableName}} ORDER BY"
+				" {{cTableKey}}",
+				VAR_LIST_{{cTableName}});
 	else //If you own it, the company you work for owns the company that owns it,
 		//you created it, or your company owns it you can at least read access it
 		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
-	sprintf(gcQuery,"SELECT %s FROM tIndexType,tClient WHERE tIndexType.uOwner=tClient.uClient"
+	sprintf(gcQuery,"SELECT %s FROM {{cTableName}},tClient WHERE {{cTableName}}.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" ORDER BY uIndexType",
-					VAR_LIST_tIndexType,uContactParentCompany,uContactParentCompany);
+				" ORDER BY {{cTableKey}}",
+					VAR_LIST_{{cTableName}},uContactParentCompany,uContactParentCompany);
 					
 
-}//void ExttIndexTypeSelect(void)
+}//void Ext{{cTableName}}Select(void)
 
 
-void ExttIndexTypeSelectRow(void)
+void Ext{{cTableName}}SelectRow(void)
 {
 	unsigned uContactParentCompany=0;
 
 	GetClientOwner(guLoginClient,&uContactParentCompany);
 
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-                sprintf(gcQuery,"SELECT %s FROM tIndexType WHERE uIndexType=%u",
-			VAR_LIST_tIndexType,uIndexType);
+                sprintf(gcQuery,"SELECT %s FROM {{cTableName}} WHERE {{cTableKey}}=%u",
+			VAR_LIST_{{cTableName}},{{cTableKey}});
 	else
-                sprintf(gcQuery,"SELECT %s FROM tIndexType,tClient"
-                                " WHERE tIndexType.uOwner=tClient.uClient"
+                sprintf(gcQuery,"SELECT %s FROM {{cTableName}},tClient"
+                                " WHERE {{cTableName}}.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" AND tIndexType.uIndexType=%u",
-                        		VAR_LIST_tIndexType
+				" AND {{cTableName}}.{{cTableKey}}=%u",
+                        		VAR_LIST_{{cTableName}}
 					,uContactParentCompany,uContactParentCompany
-					,uIndexType);
+					,{{cTableKey}});
 
-}//void ExttIndexTypeSelectRow(void)
+}//void Ext{{cTableName}}SelectRow(void)
 
 
-void ExttIndexTypeListSelect(void)
+void Ext{{cTableName}}ListSelect(void)
 {
 	char cCat[512];
 	unsigned uContactParentCompany=0;
@@ -223,58 +227,58 @@ void ExttIndexTypeListSelect(void)
 	GetClientOwner(guLoginClient,&uContactParentCompany);
 
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT %s FROM tIndexType",
-				VAR_LIST_tIndexType);
+		sprintf(gcQuery,"SELECT %s FROM {{cTableName}}",
+				VAR_LIST_{{cTableName}});
 	else
-		sprintf(gcQuery,"SELECT %s FROM tIndexType,tClient"
-				" WHERE tIndexType.uOwner=tClient.uClient"
+		sprintf(gcQuery,"SELECT %s FROM {{cTableName}},tClient"
+				" WHERE {{cTableName}}.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				VAR_LIST_tIndexType
+				VAR_LIST_{{cTableName}}
 				,uContactParentCompany
 				,uContactParentCompany);
 
-	//Changes here must be reflected below in ExttIndexTypeListFilter()
-        if(!strcmp(gcFilter,"uIndexType"))
+	//Changes here must be reflected below in Ext{{cTableName}}ListFilter()
+        if(!strcmp(gcFilter,"{{cTableKey}}"))
         {
-                sscanf(gcCommand,"%u",&uIndexType);
+                sscanf(gcCommand,"%u",&{{cTableKey}});
 		if(guPermLevel<10)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tIndexType.uIndexType=%u"
-						" ORDER BY uIndexType",
-						uIndexType);
+		sprintf(cCat,"{{cTableName}}.{{cTableKey}}=%u"
+						" ORDER BY {{cTableKey}}",
+						{{cTableKey}});
 		strcat(gcQuery,cCat);
         }
         else if(1)
         {
                 //None NO FILTER
                 strcpy(gcFilter,"None");
-		strcat(gcQuery," ORDER BY uIndexType");
+		strcat(gcQuery," ORDER BY {{cTableKey}}");
         }
 
-}//void ExttIndexTypeListSelect(void)
+}//void Ext{{cTableName}}ListSelect(void)
 
 
-void ExttIndexTypeListFilter(void)
+void Ext{{cTableName}}ListFilter(void)
 {
         //Filter
         printf("&nbsp;&nbsp;&nbsp;Filter on ");
         printf("<select name=gcFilter>");
-        if(strcmp(gcFilter,"uIndexType"))
-                printf("<option>uIndexType</option>");
+        if(strcmp(gcFilter,"{{cTableKey}}"))
+                printf("<option>{{cTableKey}}</option>");
         else
-                printf("<option selected>uIndexType</option>");
+                printf("<option selected>{{cTableKey}}</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
                 printf("<option selected>None</option>");
         printf("</select>");
 
-}//void ExttIndexTypeListFilter(void)
+}//void Ext{{cTableName}}ListFilter(void)
 
 
-void ExttIndexTypeNavBar(void)
+void Ext{{cTableName}}NavBar(void)
 {
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
@@ -296,10 +300,10 @@ void ExttIndexTypeNavBar(void)
 	printf(LANG_NBB_SKIPLAST);
 	printf("&nbsp;&nbsp;&nbsp;\n");
 
-}//void ExttIndexTypeNavBar(void)
+}//void Ext{{cTableName}}NavBar(void)
 
 
-void tIndexTypeNavList(void)
+void {{cTableName}}NavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -310,19 +314,19 @@ void tIndexTypeNavList(void)
 	if(guReseller==1) guReseller=0;//...except Root companies
 	
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uIndexType,cLabel FROM tIndexType ORDER BY cLabel");
+		sprintf(gcQuery,"SELECT {{cTableKey}},cLabel FROM {{cTableName}} ORDER BY cLabel");
 	else
-		sprintf(gcQuery,"SELECT tIndexType.uIndexType,"
-				" tIndexType.cLabel"
-				" FROM tIndexType,tClient"
-				" WHERE tIndexType.uOwner=tClient.uClient"
+		sprintf(gcQuery,"SELECT {{cTableName}}.{{cTableKey}},"
+				" {{cTableName}}.cLabel"
+				" FROM {{cTableName}},tClient"
+				" WHERE {{cTableName}}.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
 				uContactParentCompany
 				,uContactParentCompany);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
-        	printf("<p><u>tIndexTypeNavList</u><br>\n");
+        	printf("<p><u>{{cTableName}}NavList</u><br>\n");
                 printf("%s",mysql_error(&gMysql));
                 return;
         }
@@ -330,15 +334,15 @@ void tIndexTypeNavList(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>tIndexTypeNavList</u><br>\n");
+        	printf("<p><u>{{cTableName}}NavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tIndexType"
-				"&uIndexType=%s>%s</a><br>\n",
+			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction={{cTableName}}"
+				"&{{cTableKey}}=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}
         mysql_free_result(res);
 
-}//void tIndexTypeNavList(void)
+}//void {{cTableName}}NavList(void)
 
 

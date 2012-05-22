@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: mainfunc.h.template 1911 2008-10-06 15:30:38Z hus $
+	$Id$
 PURPOSE
 	Included in main.c. For command line interface and html main link.
 
@@ -212,7 +212,7 @@ void ExtMainShell(int argc, char *argv[])
 		//printf("\tProcessJobQueue <cServer>\n");
 		//printf("\tProcessExtJobQueue <cServer>\n");
 		printf("\nSpecial Admin Ops:\n");
-		printf("\tImportTemplateFile <mysql root passwd> <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel>\n");
+		printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel>\n");
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 		printf("\n");
 	}

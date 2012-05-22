@@ -2,7 +2,7 @@
 FILE
 	tTemplateType source code of unxsRAD.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: ttemplatetype.c 42 2006-11-08 16:26:27Z root $
+	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in ttemplatetypefunc.h while 

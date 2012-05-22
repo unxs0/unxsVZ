@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: modulefunc.h.template 2459 2009-02-11 12:04:10Z Gary $
+	$Id$
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
