@@ -9,19 +9,28 @@ AUTHOR
  
 */
 
+static unsigned uTable=0;
+static char cuTablePullDown[256]={""};
+
 //ModuleFunctionProtos()
+unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable);
 
 
 void tTemplateNavList(void);
 
 void ExtProcesstTemplateVars(pentry entries[], int x)
 {
-	/*
 	register int i;
 	for(i=0;i<x;i++)
 	{
+		if(!strcmp(entries[i].name,"uTable"))
+			sscanf(entries[i].val,"%u",&uTable);
+		else if(!strcmp(entries[i].name,"cuTablePullDown"))
+		{
+			sprintf(cuTablePullDown,"%.255s",entries[i].val);
+			uTable=ReadPullDown("tTable","cLabel",cuTablePullDown);
+		}
 	}
-	*/
 }//void ExtProcesstTemplateVars(pentry entries[], int x)
 
 
@@ -39,6 +48,25 @@ void ExttTemplateCommands(pentry entries[], int x)
 	                        ProcesstTemplateVars(entries,x);
                         	guMode=2000;
 	                        tTemplate(LANG_NB_CONFIRMNEW);
+			}
+			else
+				tTemplate("<blink>Error</blink>: Denied by permissions settings");
+		}
+		else if(!strcmp(gcCommand,"Create File"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstTemplateVars(entries,x);
+                        	guMode=0;
+				if(!uTable)
+	                        	tTemplate("Must select a table");
+				if(!uTemplate)
+	                        	tTemplate("Must load a template");
+
+				if(CreateFileFromTemplate(uTemplate,uTable))
+	                        	tTemplate("Create file error");
+				else
+	                        	tTemplate("Create file ok");
 			}
 			else
 				tTemplate("<blink>Error</blink>: Denied by permissions settings");
@@ -141,6 +169,10 @@ void ExttTemplateButtons(void)
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
+			printf("<p><u>Operations</u><br>");
+			tTablePullDownOwner("tTable;cuTablePullDown","cLabel","cLabel",uTable,1);
+			printf("<br><input type=submit class=largeButton title='Create file from this template based on cLabel'"
+				" name=gcCommand value='Create File'>");
 			tTemplateNavList();
 	}
 	CloseFieldSet();
@@ -342,3 +374,40 @@ void tTemplateNavList(void)
 }//void tTemplateNavList(void)
 
 
+unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
+{
+	unsigned uRetVal= -1;
+
+	if(!uTable || !uTemplate) return(uRetVal);
+	return(0);
+
+}//unsigned CreateModuleFile()
+
+
+unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable)
+{
+	unsigned uRetVal= -1;
+
+	if(!uTable || !uTemplate) return(uRetVal);
+	return(0);
+
+}//unsigned CreateModuleFuncFile()
+
+
+unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable)
+{
+	char cFile[32];
+	unsigned uRetVal= -1;
+
+	if(!uTable || !uTemplate) return(uRetVal);
+
+	sprintf(cFile,"%.31s",ForeignKey("tTemplate","cLabel",uTemplate));
+
+	if(!strcmp(cFile,"module.c"))
+		uRetVal=CreateModuleFile(uTemplate,uTable);
+	else if(!strcmp(cFile,"modulefunc.h"))
+		uRetVal=CreateModuleFuncFile(uTemplate,uTable);
+
+	return(uRetVal);
+
+}//unsigned CreateFileFromTemplate()
