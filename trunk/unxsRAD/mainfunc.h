@@ -475,7 +475,7 @@ void mySQLRootConnect(char *cPasswd)
         mysql_init(&gMysql);
         if (!mysql_real_connect(&gMysql,NULL,"root",cPasswd,"mysql",0,NULL,0))
         {
-                printf("Database server unavailable\n");
+                printf("Database root server unavailable cPasswd=%s\n",cPasswd);
                 exit(1);
         }
 }//void mySQLRootConnect(void)

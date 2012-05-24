@@ -10,9 +10,10 @@ AUTHOR
 */
 
 //ModuleFunctionProtos()
-
+void AddDefaultFields(void);
 
 void tTableNavList(void);
+void tTableFieldNavList(void);
 
 void ExtProcesstTableVars(pentry entries[], int x)
 {
@@ -53,6 +54,8 @@ void ExttTableCommands(pentry entries[], int x)
 				
                         	guMode=2000;
 				//Check entries here
+				if(cLabel[0]!='t')
+					tTable("<blink>Error</blink>: Table must start with lower case t");
                         	guMode=0;
 
 				uTable=0;
@@ -105,6 +108,8 @@ void ExttTableCommands(pentry entries[], int x)
 			{
                         	guMode=2002;
 				//Check entries here
+				if(cLabel[0]!='t')
+					tTable("<blink>Error</blink>: Table must start with lower case t");
                         	guMode=0;
 
 				uModBy=guLoginClient;
@@ -113,8 +118,23 @@ void ExttTableCommands(pentry entries[], int x)
 			else
 				tTable("<blink>Error</blink>: Denied by permissions settings");
                 }
+		else if(!strcmp(gcCommand,"Add standard fields"))
+                {
+                        ProcesstTableVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+				if(!uTable)
+					tTable("<blink>Error</blink>: No uTable");
+				if(!uProject)
+					tTable("<blink>Error</blink>: No uProject");
+				AddDefaultFields();
+				tTable("Standard fields added");
+			}
+			else
+				tTable("<blink>Error</blink>: Denied by permissions settings");
+                }
 	}
-
 }//void ExttTableCommands(pentry entries[], int x)
 
 
@@ -141,7 +161,11 @@ void ExttTableButtons(void)
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
+			printf("<p><u>Operations</u><br>");
+			printf("<br><input type=submit class=largeButton title='Add standard primary key, cLabel and audit fields'"
+				" name=gcCommand value='Add standard fields'>");
 			tTableNavList();
+			tTableFieldNavList();
 	}
 	CloseFieldSet();
 
@@ -303,12 +327,7 @@ void tTableNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uContactParentCompany=0;
 
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
-	if(guReseller==1) guReseller=0;//...except Root companies
-	
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable ORDER BY cLabel");
 	else
@@ -317,8 +336,8 @@ void tTableNavList(void)
 				" FROM tTable,tClient"
 				" WHERE tTable.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				uContactParentCompany
-				,uContactParentCompany);
+					guCompany
+					,guLoginClient);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -341,4 +360,215 @@ void tTableNavList(void)
 
 }//void tTableNavList(void)
 
+
+void tTableFieldNavList(void)
+{
+	if(!uTable) return;
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uField,cLabel FROM tField WHERE uTable=%u ORDER BY uOrder,cLabel",uTable);
+	else
+		sprintf(gcQuery,"SELECT tField.uField,"
+				" tField.cLabel"
+				" FROM tField,tClient"
+				" WHERE tField.uOwner=tClient.uClient"
+				" AND tField.uTable=%u"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY tField.uOrder,tField.cLabel",
+					uTable,guCompany,guLoginClient);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tFieldNavList</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>tFieldNavList</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tField"
+				"&uField=%s>%s</a><br>\n",
+				field[0],field[1]);
+	}
+        mysql_free_result(res);
+
+}//void tTableFieldNavList(void)
+
+
+
+
+ //Native MySQL fields
+#define COLTYPE_DECIMAL 0
+#define COLTYPE_MONEY 1102 //For BCD in future. Now allows $250,000.00 style input and output.
+#define COLTYPE_INTUNSIGNED 3
+#define COLTYPE_TIMESTAMP 7
+#define COLTYPE_DATETIME 12
+#define COLTYPE_CHAR 254
+#define COLTYPE_VARCHAR 253
+#define COLTYPE_TEXT 252
+#define COLTYPE_IMAGE 1101
+#define COLTYPE_FKIMAGE 1200
+#define COLTYPE_BIGINT 8
+
+ //Our special gui fields
+#define COLTYPE_SELECTTABLE 1000
+#define COLTYPE_SELECTTABLE_OWNER 1100
+#define COLTYPE_RADPRI 1001
+#define COLTYPE_PRIKEY 1002
+#define COLTYPE_YESNO 1003
+#define COLTYPE_UNIXTIMECREATE 1004
+#define COLTYPE_UNIXTIMEUPDATE 1005
+#define COLTYPE_EXTFUNC 1006
+#define COLTYPE_FOREIGNKEY 1007
+#define COLTYPE_UINTUKEY 1008
+#define COLTYPE_VARCHARUKEY 1009
+#define COLTYPE_UNIXTIME 2000
+static unsigned uRADPRI;
+static unsigned uVARCHAR;
+static unsigned uFOREIGNKEY;
+static unsigned uUNIXTIMECREATE;
+static unsigned uUNIXTIMEUPDATE;
+static unsigned uUNSIGNED;
+void GetuFieldTypes(void)
+{	
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_RADPRI);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	field=mysql_fetch_row(res);
+	sscanf(field[0],"%u",&uRADPRI);
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_VARCHAR);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	field=mysql_fetch_row(res);
+	sscanf(field[0],"%u",&uVARCHAR);
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_FOREIGNKEY);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	field=mysql_fetch_row(res);
+	sscanf(field[0],"%u",&uFOREIGNKEY);
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_UNIXTIMEUPDATE);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	field=mysql_fetch_row(res);
+	sscanf(field[0],"%u",&uUNIXTIMEUPDATE);
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_UNIXTIMECREATE);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	field=mysql_fetch_row(res);
+	sscanf(field[0],"%u",&uUNIXTIMECREATE);
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_INTUNSIGNED);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	field=mysql_fetch_row(res);
+	sscanf(field[0],"%u",&uUNSIGNED);
+	mysql_free_result(res);
+
+}//void GetuFieldTypes(void)
+
+
+//Uses file scoped vars from form
+void AddDefaultFields(void)
+{
+	GetuFieldTypes();
+
+	//Primary key: Given tSomething then it will be uSomething	
+	char cFieldName[32]={""};
+	sprintf(cFieldName,"u%.30s",cLabel+1);
+	sprintf(gcQuery,"INSERT INTO tField SET uTable=%u,uProject=%u,cLabel='%s',uOrder=1,"
+			"cTitle='Primary key',uFieldType=%u,uSQLSize=10,uReadLevel=20,uOwner=%u,uCreatedBy=%u",
+			uTable,
+			uProject,
+			cFieldName,
+			uRADPRI,guCompany,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		tTable(mysql_error(&gMysql));
+
+	//cLabel
+	sprintf(gcQuery,"INSERT INTO tField SET uTable=%u,uProject=%u,cLabel='cLabel',uOrder=2,"
+			"cTitle='Short label',uFieldType=%u,uSQLSize=32",
+			uTable,
+			uProject,
+			uVARCHAR,guCompany,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		tTable(mysql_error(&gMysql));
+
+	//uOwner
+	sprintf(gcQuery,"INSERT INTO tField SET uReadLevel=20,uTable=%u,uProject=%u,cLabel='uOwner',uOrder=1000,"
+			"cTitle='Record owner',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uOwner'",
+			uTable,
+			uProject,
+			uFOREIGNKEY,guCompany,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		tTable(mysql_error(&gMysql));
+
+	//uCreatedBy
+	sprintf(gcQuery,"INSERT INTO tField SET uReadLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedBy',uOrder=1001,"
+			"cTitle='Record created by',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uCreatedBy'",
+			uTable,
+			uProject,
+			uFOREIGNKEY,guCompany,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		tTable(mysql_error(&gMysql));
+
+	//uCreatedDate
+	sprintf(gcQuery,"INSERT INTO tField SET uReadLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedDate',uOrder=1002,"
+			"cTitle='Unix timestamp for creation date',uFieldType=%u,uSQLSize=10",
+			uTable,
+			uProject,
+			uUNIXTIMECREATE,guCompany,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		tTable(mysql_error(&gMysql));
+
+	//uModBy
+	sprintf(gcQuery,"INSERT INTO tField SET uReadLevel=20,uTable=%u,uProject=%u,cLabel='uModBy',uOrder=1003,"
+			"cTitle='Record modifed by',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uModBy'",
+			uTable,
+			uProject,
+			uFOREIGNKEY);
+	mysql_query(&gMysql,gcQuery,guCompany,guLoginClient);
+	if(mysql_errno(&gMysql))
+		tTable(mysql_error(&gMysql));
+
+	//uModDate
+	sprintf(gcQuery,"INSERT INTO tField SET uReadLevel=20,uTable=%u,uProject=%u,cLabel='uModDate',uOrder=1004,"
+			"cTitle='Unix timestamp for last update',uFieldType=%u,uSQLSize=10",
+			uTable,
+			uProject,
+			uUNIXTIMEUPDATE,guCompany,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		tTable(mysql_error(&gMysql));
+
+}//void AddDefaultFields(void)
 
