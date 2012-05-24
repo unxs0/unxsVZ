@@ -14,6 +14,7 @@ void AddDefaultFields(void);
 
 void tTableNavList(void);
 void tTableFieldNavList(void);
+void RemoveAllFields(void);
 
 void ExtProcesstTableVars(pentry entries[], int x)
 {
@@ -32,6 +33,7 @@ void ExttTableCommands(pentry entries[], int x)
 	if(!strcmp(gcFunction,"tTableTools"))
 	{
 		//ModuleFunctionProcess()
+		long unsigned uActualModDate=0;
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -73,6 +75,9 @@ void ExttTableCommands(pentry entries[], int x)
                         ProcesstTableVars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
+				sscanf(ForeignKey("tTable","uModDate",uTable),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tTable("<blink>Error</blink>: This record was modified. Reload it.");
 	                        guMode=2001;
 				tTable(LANG_NB_CONFIRMDEL);
 			}
@@ -84,6 +89,9 @@ void ExttTableCommands(pentry entries[], int x)
                         ProcesstTableVars(entries,x);
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
+				sscanf(ForeignKey("tTable","uModDate",uTable),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tTable("<blink>Error</blink>: This record was modified. Reload it.");
 				guMode=5;
 				DeletetTable();
 			}
@@ -95,6 +103,9 @@ void ExttTableCommands(pentry entries[], int x)
                         ProcesstTableVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
+				sscanf(ForeignKey("tTable","uModDate",uTable),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tTable("<blink>Error</blink>: This record was modified. Reload it.");
 				guMode=2002;
 				tTable(LANG_NB_CONFIRMMOD);
 			}
@@ -107,6 +118,9 @@ void ExttTableCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
+				sscanf(ForeignKey("tTable","uModDate",uTable),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tTable("<blink>Error</blink>: This record was modified. Reload it.");
 				//Check entries here
 				if(cLabel[0]!='t')
 					tTable("<blink>Error</blink>: Table must start with lower case t");
@@ -124,12 +138,54 @@ void ExttTableCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
+				sscanf(ForeignKey("tTable","uModDate",uTable),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tTable("<blink>Error</blink>: This record was modified. Reload it.");
 				if(!uTable)
 					tTable("<blink>Error</blink>: No uTable");
 				if(!uProject)
 					tTable("<blink>Error</blink>: No uProject");
 				AddDefaultFields();
 				tTable("Standard fields added");
+			}
+			else
+				tTable("<blink>Error</blink>: Denied by permissions settings");
+		}
+		else if(!strcmp(gcCommand,"Remove all fields"))
+                {
+                        ProcesstTableVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+				sscanf(ForeignKey("tTable","uModDate",uTable),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tTable("<blink>Error</blink>: This record was modified. Reload it.");
+				if(!uTable)
+					tTable("<blink>Error</blink>: No uTable");
+				if(!uProject)
+					tTable("<blink>Error</blink>: No uProject");
+                        	guMode=101;
+				tTable("Make sure");
+			}
+			else
+				tTable("<blink>Error</blink>: Denied by permissions settings");
+		}
+		else if(!strcmp(gcCommand,"Confirm Remove"))
+                {
+                        ProcesstTableVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=101;
+				sscanf(ForeignKey("tTable","uModDate",uTable),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tTable("<blink>Error</blink>: This record was modified. Reload it.");
+				if(!uTable)
+					tTable("<blink>Error</blink>: No uTable");
+				if(!uProject)
+					tTable("<blink>Error</blink>: No uProject");
+                        	guMode=0;
+				RemoveAllFields();
+				tTable("All fields removed");
 			}
 			else
 				tTable("<blink>Error</blink>: Denied by permissions settings");
@@ -158,12 +214,20 @@ void ExttTableButtons(void)
                         printf(LANG_NBB_CONFIRMMOD);
                 break;
 
+                case 101:
+			printf("<p><u>No undo available</u><br>");
+			printf("<br><input type=submit class=lwarnButton title='Remove all fields from the loaded table'"
+				" name=gcCommand value='Confirm Remove'>");
+                break;
+
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
 			printf("<p><u>Operations</u><br>");
 			printf("<br><input type=submit class=largeButton title='Add standard primary key, cLabel and audit fields'"
 				" name=gcCommand value='Add standard fields'>");
+			printf("<br><input type=submit class=lwarnButton title='Remove all fields from the loaded table'"
+				" name=gcCommand value='Remove all fields'>");
 			tTableNavList();
 			tTableFieldNavList();
 	}
@@ -501,7 +565,8 @@ void AddDefaultFields(void)
 	char cFieldName[32]={""};
 	sprintf(cFieldName,"u%.30s",cLabel+1);
 	sprintf(gcQuery,"INSERT INTO tField SET uTable=%u,uProject=%u,cLabel='%s',uOrder=1,"
-			"cTitle='Primary key',uFieldType=%u,uSQLSize=10,uReadLevel=20,uOwner=%u,uCreatedBy=%u",
+			"cTitle='Primary key',uFieldType=%u,uSQLSize=10,uModLevel=20,uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
 			cFieldName,
@@ -512,7 +577,8 @@ void AddDefaultFields(void)
 
 	//cLabel
 	sprintf(gcQuery,"INSERT INTO tField SET uTable=%u,uProject=%u,cLabel='cLabel',uOrder=2,"
-			"cTitle='Short label',uFieldType=%u,uSQLSize=32",
+			"cTitle='Short label',uFieldType=%u,uSQLSize=32,uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
 			uVARCHAR,guCompany,guLoginClient);
@@ -521,8 +587,9 @@ void AddDefaultFields(void)
 		tTable(mysql_error(&gMysql));
 
 	//uOwner
-	sprintf(gcQuery,"INSERT INTO tField SET uReadLevel=20,uTable=%u,uProject=%u,cLabel='uOwner',uOrder=1000,"
-			"cTitle='Record owner',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uOwner'",
+	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uOwner',uOrder=1000,"
+			"cTitle='Record owner',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uOwner',uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
 			uFOREIGNKEY,guCompany,guLoginClient);
@@ -531,8 +598,9 @@ void AddDefaultFields(void)
 		tTable(mysql_error(&gMysql));
 
 	//uCreatedBy
-	sprintf(gcQuery,"INSERT INTO tField SET uReadLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedBy',uOrder=1001,"
-			"cTitle='Record created by',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uCreatedBy'",
+	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedBy',uOrder=1001,"
+			"cTitle='Record created by',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uCreatedBy',uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
 			uFOREIGNKEY,guCompany,guLoginClient);
@@ -541,8 +609,9 @@ void AddDefaultFields(void)
 		tTable(mysql_error(&gMysql));
 
 	//uCreatedDate
-	sprintf(gcQuery,"INSERT INTO tField SET uReadLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedDate',uOrder=1002,"
-			"cTitle='Unix timestamp for creation date',uFieldType=%u,uSQLSize=10",
+	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedDate',uOrder=1002,"
+			"cTitle='Unix timestamp for creation date',uFieldType=%u,uSQLSize=10,uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
 			uUNIXTIMECREATE,guCompany,guLoginClient);
@@ -551,18 +620,20 @@ void AddDefaultFields(void)
 		tTable(mysql_error(&gMysql));
 
 	//uModBy
-	sprintf(gcQuery,"INSERT INTO tField SET uReadLevel=20,uTable=%u,uProject=%u,cLabel='uModBy',uOrder=1003,"
-			"cTitle='Record modifed by',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uModBy'",
+	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uModBy',uOrder=1003,"
+			"cTitle='Record modifed by',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uModBy',uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
-			uFOREIGNKEY);
-	mysql_query(&gMysql,gcQuery,guCompany,guLoginClient);
+			uFOREIGNKEY,guCompany,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		tTable(mysql_error(&gMysql));
 
 	//uModDate
-	sprintf(gcQuery,"INSERT INTO tField SET uReadLevel=20,uTable=%u,uProject=%u,cLabel='uModDate',uOrder=1004,"
-			"cTitle='Unix timestamp for last update',uFieldType=%u,uSQLSize=10",
+	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uModDate',uOrder=1004,"
+			"cTitle='Unix timestamp for last update',uFieldType=%u,uSQLSize=10,uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
 			uUNIXTIMEUPDATE,guCompany,guLoginClient);
@@ -572,3 +643,14 @@ void AddDefaultFields(void)
 
 }//void AddDefaultFields(void)
 
+
+void RemoveAllFields(void)
+{
+	sprintf(gcQuery,"DELETE FROM tField WHERE uTable=%u AND uProject=%u",
+			uTable,
+			uProject);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		tTable(mysql_error(&gMysql));
+
+}//void RemoveAllFields(void)
