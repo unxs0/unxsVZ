@@ -310,7 +310,7 @@ void tFieldNavList(void)
 	if(guReseller==1) guReseller=0;//...except Root companies
 	
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uField,cLabel FROM tField ORDER BY cLabel");
+		sprintf(gcQuery,"SELECT uField,cLabel FROM tField ORDER BY uOrder,cLabel");
 	else
 		sprintf(gcQuery,"SELECT tField.uField,"
 				" tField.cLabel"

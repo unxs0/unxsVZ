@@ -143,6 +143,9 @@ void Ext{{cTableName}}Buttons(void)
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
+			printf("<p><u>Operations</u><br>");
+			printf("<br><input type=submit class=largeButton title='Sample button help'"
+					" name=gcCommand value='Sample Button'>");
 			{{cTableName}}NavList();
 	}
 	CloseFieldSet();
