@@ -485,7 +485,7 @@ void Header_ism3(char *title, int js)
 	printf("</head><body><form action=unxsRAD.cgi method=post><blockquote>\n");
 
 	//Open header table
-	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td>\n");
+	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td valign=bottom><img src=/images/rad.png>\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tProject") || !strcmp(gcFunction,"tProjectTools") ||
@@ -563,7 +563,7 @@ void Header_ism3(char *title, int js)
 		printf(" <a title='Erase login cookies' href=unxsRAD.cgi?gcFunction=Logout>Logout</a> ");
 
 	//close first col
-	printf("</td><td align=right>\n");
+	printf("</td><td align=right valign=bottom>\n");
 
 	printf("%s %s %s",
 		ForeignKey("tField","cLabel",guCookieField),
