@@ -113,6 +113,21 @@ void ExttFieldCommands(pentry entries[], int x)
 			else
 				tField("<blink>Error</blink>: Denied by permissions settings");
                 }
+		else if(!strcmp(gcCommand,"Select"))
+                {
+                        ProcesstFieldVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+				if(uField)
+				{
+					guCookieField=uField;
+					SetSessionCookie();
+					tField("This field selected for workflow");
+				}
+			}
+			else
+				tField("<blink>Error</blink>: Denied by permissions settings");
+		}
 	}
 
 }//void ExttFieldCommands(pentry entries[], int x)
@@ -141,6 +156,10 @@ void ExttFieldButtons(void)
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
+			printf("<p><u>Operations</u><br>");
+			printf("<input type=submit class=largeButton"
+				" title='Select and keep this field marked for current work flow'"
+				" name=gcCommand value='Select'>");
 			tFieldNavList();
 	}
 	CloseFieldSet();
@@ -164,6 +183,11 @@ void ExttFieldGetHook(entry gentries[], int x)
 		{
 			sscanf(gentries[i].val,"%u",&uField);
 			guMode=6;
+		}
+		else if(guCookieField)
+		{
+			uField=guCookieField;
+			guMode=7;
 		}
 	}
 	tField("");
@@ -330,12 +354,18 @@ void tFieldNavList(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
+		char *cColor;
         	printf("<p><u>tFieldNavList</u><br>\n");
-
 	        while((field=mysql_fetch_row(res)))
+		{
+			if(atoi(field[0])==uField)
+				cColor="red";
+			else
+				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tField"
-				"&uField=%s>%s</a><br>\n",
-				field[0],field[1]);
+				"&uField=%s><font color=%s>%s</font></a><br>\n",
+				field[0],cColor,field[1]);
+		}
 	}
         mysql_free_result(res);
 

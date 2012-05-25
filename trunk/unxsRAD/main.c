@@ -61,6 +61,10 @@ char gcLogin[100]={""};
 char gcPasswd[100]={""};
 unsigned guSSLCookieLogin=0;
 
+unsigned guCookieProject=0,guCookieTable=0,guCookieField=0;
+void SetSessionCookie(void);
+void GetSessionCookie(void);
+
 char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
@@ -161,6 +165,7 @@ int main(int iArgc, char *cArgv[])
 			{
 				printf("Set-Cookie: unxsRADLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				printf("Set-Cookie: unxsRADPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsRADSessionCookie=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
 				macro_mySQLQueryHTMLError;
 				gcCookie[0]=0;
@@ -479,6 +484,9 @@ void Header_ism3(char *title, int js)
 
 	printf("</head><body><form action=unxsRAD.cgi method=post><blockquote>\n");
 
+	//Open header table
+	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td>\n");
+
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tProject") || !strcmp(gcFunction,"tProjectTools") ||
 			!strcmp(gcFunction,"tProjectList"))
@@ -553,6 +561,17 @@ void Header_ism3(char *title, int js)
 	//Logout link
 	if(guSSLCookieLogin)
 		printf(" <a title='Erase login cookies' href=unxsRAD.cgi?gcFunction=Logout>Logout</a> ");
+
+	//close first col
+	printf("</td><td align=right>\n");
+
+	printf("%s %s %s",
+		ForeignKey("tField","cLabel",guCookieField),
+		ForeignKey("tTable","cLabel",guCookieTable),
+		ForeignKey("tProject","cLabel",guCookieProject));
+
+	//Close header table
+	printf("</td></tr></table>\n");
 
 	//Generate Menu Items
 	printf("\n<!-- tab menu -->\n");
@@ -1795,6 +1814,9 @@ char *cGetPasswd(char *gcLogin)
 
 void SSLCookieLogin(void)
 {
+
+	GetSessionCookie();
+
 	char *ptr,*ptr2;
 
 	//Parse out login and passwd from cookies
@@ -2144,4 +2166,72 @@ void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow)
 					cVarList,guCompany,
 					cTable,cTable+1,uRow);
 }//void ExtSelectRow(...)
+
+
+void SetSessionCookie(void)
+{
+	printf("Set-Cookie: unxsRADSessionCookie=uProject=%u|uTable=%u|uField=%u|; Secure; HttpOnly\n",
+					guCookieProject,guCookieTable,guCookieField);
+};
+
+
+void GetSessionCookie(void)
+{
+	char *ptr;
+	char *ptr2;
+	char cunxsRADSessionCookie[512]={""};
+
+	if(getenv("HTTP_COOKIE")!=NULL)
+		sprintf(gcCookie,"%.1022s",getenv("HTTP_COOKIE"));
+	if(gcCookie[0])
+	{
+		if((ptr=strstr(gcCookie,"unxsRADSessionCookie=")))
+		{
+			ptr+=strlen("unxsRADSessionCookie=");
+			if((ptr2=strchr(ptr,';')))
+			{
+				*ptr2=0;
+				sprintf(cunxsRADSessionCookie,"%.511s",ptr);
+			}
+			else
+				 sprintf(cunxsRADSessionCookie,"%.511s",ptr);
+
+		}
+	}
+
+
+	if(cunxsRADSessionCookie[0])
+	{
+		if((ptr=strstr(cunxsRADSessionCookie,"uProject=")))
+		{
+			ptr+=strlen("uProject=");
+			if((ptr2=strchr(ptr,'|')))
+			{
+				*ptr2=0;
+				sscanf(ptr,"%u",&guCookieProject);
+				*ptr2='|';
+			}
+		}
+		if((ptr=strstr(cunxsRADSessionCookie,"uTable=")))
+		{
+			ptr+=strlen("uTable=");
+			if((ptr2=strchr(ptr,'|')))
+			{
+				*ptr2=0;
+				sscanf(ptr,"%u",&guCookieTable);
+				*ptr2='|';
+			}
+		}
+		if((ptr=strstr(cunxsRADSessionCookie,"uField=")))
+		{
+			ptr+=strlen("uField=");
+			if((ptr2=strchr(ptr,'|')))
+			{
+				*ptr2=0;
+				sscanf(ptr,"%u",&guCookieField);
+				*ptr2='|';
+			}
+		}
+	}
+}//void GetSessionCookie(void)
 

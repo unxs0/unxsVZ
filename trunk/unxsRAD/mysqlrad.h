@@ -52,6 +52,8 @@ extern int guPermLevel;
 extern unsigned guLoginClient; 
 extern unsigned guReseller; 
 extern unsigned guCompany; 
+extern unsigned guCookieProject,guCookieTable,guCookieField;
+void SetSessionCookie(void);
 
 extern char gcFunction[];
 extern unsigned guListMode; 
