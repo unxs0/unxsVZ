@@ -190,6 +190,22 @@ void ExttTableCommands(pentry entries[], int x)
 			else
 				tTable("<blink>Error</blink>: Denied by permissions settings");
                 }
+		else if(!strcmp(gcCommand,"Select"))
+                {
+                        ProcesstTableVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+				if(uTable)
+				{
+					guCookieTable=uTable;
+					guCookieField=0;
+					SetSessionCookie();
+					tTable("This table selected");
+				}
+			}
+			else
+				tTable("<blink>Error</blink>: Denied by permissions settings");
+		}
 	}
 }//void ExttTableCommands(pentry entries[], int x)
 
@@ -224,10 +240,13 @@ void ExttTableButtons(void)
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
 			printf("<p><u>Operations</u><br>");
-			printf("<br><input type=submit class=largeButton title='Add standard primary key, cLabel and audit fields'"
+			printf("<input type=submit class=largeButton title='Add standard primary key, cLabel and audit fields'"
 				" name=gcCommand value='Add standard fields'>");
 			printf("<br><input type=submit class=lwarnButton title='Remove all fields from the loaded table'"
 				" name=gcCommand value='Remove all fields'>");
+			printf("<br><input type=submit class=largeButton"
+				" title='Select and keep this table marked for current work flow. Release any selected field.'"
+				" name=gcCommand value='Select'>");
 			tTableNavList();
 			tTableFieldNavList();
 	}
@@ -252,6 +271,11 @@ void ExttTableGetHook(entry gentries[], int x)
 		{
 			sscanf(gentries[i].val,"%u",&uTable);
 			guMode=6;
+		}
+		else if(guCookieTable)
+		{
+			uTable=guCookieTable;
+			guMode=7;
 		}
 	}
 	tTable("");
@@ -413,12 +437,18 @@ void tTableNavList(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
+		char *cColor;
         	printf("<p><u>tTableNavList</u><br>\n");
-
 	        while((field=mysql_fetch_row(res)))
+		{
+			if(atoi(field[0])==uTable)
+				cColor="red";
+			else
+				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tTable"
-				"&uTable=%s>%s</a><br>\n",
-				field[0],field[1]);
+				"&uTable=%s><font color=%s>%s</font></a><br>\n",
+					field[0],cColor,field[1]);
+		}
 	}
         mysql_free_result(res);
 

@@ -228,13 +228,16 @@ void tProject(const char *cResult)
 		if(guMode==6)
 			//printf(" Found");
 			printf(LANG_NBR_FOUND);
+		else if(guMode==7)
+			printf("Workflow loaded");
 		else if(guMode==5)
 			//printf(" Modified");
 			printf(LANG_NBR_MODIFIED);
 		else if(guMode==4)
 			//printf(" New");
 			printf(LANG_NBR_NEW);
-		printf(LANG_NBRF_SHOWING,gluRowid,guI);
+		if(guMode!=7)
+			printf(LANG_NBRF_SHOWING,gluRowid,guI);
 	}
 	else
 	{
