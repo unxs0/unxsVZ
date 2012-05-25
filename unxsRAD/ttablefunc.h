@@ -484,12 +484,18 @@ void tTableFieldNavList(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
+		char *cColor;
         	printf("<p><u>tFieldNavList</u><br>\n");
-
 	        while((field=mysql_fetch_row(res)))
+		{
+			if(atoi(field[0])==guCookieField)
+				cColor="red";
+			else
+				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tField"
-				"&uField=%s>%s</a><br>\n",
-				field[0],field[1]);
+				"&uField=%s><font color=%s>%s</font></a><br>\n",
+				field[0],cColor,field[1]);
+		}
 	}
         mysql_free_result(res);
 
