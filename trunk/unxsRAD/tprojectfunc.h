@@ -13,6 +13,8 @@ AUTHOR
 
 
 void tProjectNavList(void);
+void tProjectTableNavList(void);
+void tProjectTableFieldNavList(void);
 
 void ExtProcesstProjectVars(pentry entries[], int x)
 {
@@ -163,6 +165,8 @@ void ExttProjectButtons(void)
 				" title='Select and keep this project marked for current work flow. Releases any saved table and field'"
 				" name=gcCommand value='Select'>");
 			tProjectNavList();
+			tProjectTableNavList();
+			tProjectTableFieldNavList();
 	}
 	CloseFieldSet();
 
@@ -372,5 +376,99 @@ void tProjectNavList(void)
         mysql_free_result(res);
 
 }//void tProjectNavList(void)
+
+
+void tProjectTableNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(!uProject) return;
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable WHERE uProject=%u ORDER BY cLabel",uProject);
+	else
+		sprintf(gcQuery,"SELECT tTable.uTable,"
+				" tTable.cLabel"
+				" FROM tTable,tClient"
+				" WHERE tTable.uOwner=tClient.uClient"
+				" AND tTable.uProject=%u"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+					uProject,guCompany,guLoginClient);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tTableNavList</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+		char *cColor;
+        	printf("<p><u>tTableNavList</u><br>\n");
+	        while((field=mysql_fetch_row(res)))
+		{
+			if(atoi(field[0])==guCookieTable)
+				cColor="red";
+			else
+				cColor="black";
+			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tTable"
+				"&uTable=%s><font color=%s>%s</font></a><br>\n",
+					field[0],cColor,field[1]);
+		}
+	}
+        mysql_free_result(res);
+
+}//void tProjectTableNavList(void)
+
+
+void tProjectTableFieldNavList(void)
+{
+	if(!guCookieTable) return;
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uField,cLabel FROM tField WHERE uTable=%u ORDER BY uOrder,cLabel",guCookieTable);
+	else
+		sprintf(gcQuery,"SELECT tField.uField,"
+				" tField.cLabel"
+				" FROM tField,tClient"
+				" WHERE tField.uOwner=tClient.uClient"
+				" AND tField.uTable=%u"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY tField.uOrder,tField.cLabel",
+					guCookieTable,guCompany,guLoginClient);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tFieldNavList</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>tFieldNavList</u><br>\n");
+		char *cColor;
+	        while((field=mysql_fetch_row(res)))
+		{	
+			if(atoi(field[0])==guCookieField)
+				cColor="red";
+			else
+				cColor="black";
+			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tField"
+				"&uField=%s><font color=%s>%s</font></a><br>\n",
+					field[0],cColor,field[1]);
+		}
+	}
+        mysql_free_result(res);
+
+}//void tProjectTableFieldNavList(void)
+
 
 
