@@ -278,7 +278,7 @@ void tProjectInput(unsigned uMode)
 //uProject
 	OpenRow(LANG_FL_tProject_uProject,"black");
 	printf("<input title='%s' type=text name=uProject value=%u size=16 maxlength=10 "
-,LANG_FT_tProject_uProject,uProject);
+			,LANG_FT_tProject_uProject,uProject);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -291,7 +291,7 @@ void tProjectInput(unsigned uMode)
 //cLabel
 	OpenRow(LANG_FL_tProject_cLabel,"black");
 	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tProject_cLabel,EncodeDoubleQuotes(cLabel));
+		,LANG_FT_tProject_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -316,7 +316,7 @@ void tProjectInput(unsigned uMode)
 //cDescription
 	OpenRow(LANG_FL_tProject_cDescription,"black");
 	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cDescription "
-,LANG_FT_tProject_cDescription);
+		,LANG_FT_tProject_cDescription);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cDescription);
@@ -329,7 +329,7 @@ void tProjectInput(unsigned uMode)
 //cDirectory
 	OpenRow(LANG_FL_tProject_cDirectory,"black");
 	printf("<input title='%s' type=text name=cDirectory value=\"%s\" size=40 maxlength=100 "
-,LANG_FT_tProject_cDirectory,EncodeDoubleQuotes(cDirectory));
+		,LANG_FT_tProject_cDirectory,EncodeDoubleQuotes(cDirectory));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -342,23 +342,15 @@ void tProjectInput(unsigned uMode)
 //uOwner
 	OpenRow(LANG_FL_tProject_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 //uCreatedBy
 	OpenRow(LANG_FL_tProject_uCreatedBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 //uCreatedDate
 	OpenRow(LANG_FL_tProject_uCreatedDate,"black");
 	if(uCreatedDate)
@@ -369,13 +361,9 @@ void tProjectInput(unsigned uMode)
 //uModBy
 	OpenRow(LANG_FL_tProject_uModBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 //uModDate
 	OpenRow(LANG_FL_tProject_uModDate,"black");
 	if(uModDate)
@@ -385,8 +373,6 @@ void tProjectInput(unsigned uMode)
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
 
-
-
 }//void tProjectInput(unsigned uMode)
 
 
@@ -394,10 +380,9 @@ void NewtProject(unsigned uMode)
 {
 	register int i=0;
 	MYSQL_RES *res;
+	char gcQuery[128];
 
-	sprintf(gcQuery,"SELECT uProject FROM tProject\
-				WHERE uProject=%u"
-							,uProject);
+	sprintf(gcQuery,"SELECT uProject FROM tProject WHERE uProject=%u",uProject);
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -405,19 +390,16 @@ void NewtProject(unsigned uMode)
 		//tProject("<blink>Record already exists");
 		tProject(LANG_NBR_RECEXISTS);
 
-	//insert query
 	Insert_tProject();
 	//sprintf(gcQuery,"New record %u added");
 	uProject=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tProject",uProject);
 	unxsRADLog(uProject,"tProject","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uProject);
-	tProject(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uProject);
+		tProject(gcQuery);
 	}
 
 }//NewtProject(unsigned uMode)
@@ -425,27 +407,18 @@ void NewtProject(unsigned uMode)
 
 void DeletetProject(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tProject WHERE uProject=%u AND ( uOwner=%u OR %u>9 )"
 					,uProject,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tProject WHERE uProject=%u"
-					,uProject);
-#endif
 	macro_mySQLQueryHTMLError;
 	//tProject("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uProject,"tProject","Del");
-#endif
 		tProject(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uProject,"tProject","DelError");
-#endif
 		tProject(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -454,9 +427,8 @@ void DeletetProject(void)
 
 void Insert_tProject(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tProject SET uProject=%u,cLabel='%s',uProjectStatus=%u,uTemplateSet=%u,cDescription='%s',cDirectory='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tProject SET uProject=%u,cLabel='%s',uProjectStatus=%u,uTemplateSet=%u,"
+			"cDescription='%s',cDirectory='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uProject
 			,TextAreaSave(cLabel)
 			,uProjectStatus
@@ -474,9 +446,8 @@ void Insert_tProject(void)
 
 void Update_tProject(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tProject SET uProject=%u,cLabel='%s',uProjectStatus=%u,uTemplateSet=%u,cDescription='%s',cDirectory='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tProject SET uProject=%u,cLabel='%s',uProjectStatus=%u,uTemplateSet=%u,"
+			"cDescription='%s',cDirectory='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uProject
 			,TextAreaSave(cLabel)
 			,uProjectStatus
@@ -496,28 +467,20 @@ void ModtProject(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
 	if(guPermLevel<10)
-	sprintf(gcQuery,"SELECT tProject.uProject,\
-				tProject.uModDate\
-				FROM tProject,tClient\
-				WHERE tProject.uProject=%u\
-				AND tProject.uOwner=tClient.uClient\
-				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
-			,uProject,guLoginClient,guLoginClient);
+	sprintf(gcQuery,"SELECT tProject.uProject,"
+			" tProject.uModDate"
+			" FROM tProject,tClient"
+			" WHERE tProject.uProject=%u"
+			" AND tProject.uOwner=tClient.uClient"
+			" AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+				,uProject,guLoginClient,guLoginClient);
 	else
-	sprintf(gcQuery,"SELECT uProject,uModDate FROM tProject\
-				WHERE uProject=%u"
-						,uProject);
-#else
-	sprintf(gcQuery,"SELECT uProject FROM tProject\
-				WHERE uProject=%u"
-						,uProject);
-#endif
-
+	sprintf(gcQuery,"SELECT uProject,uModDate FROM tProject WHERE uProject=%u",
+				uProject);
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -527,18 +490,14 @@ void ModtProject(void)
 	if(i>1) tProject(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tProject(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tProject(field[0]);
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tProject",uProject);
 	unxsRADLog(uProject,"tProject","Mod");
-#endif
 	tProject(gcQuery);
 
 }//ModtProject(void)
@@ -564,9 +523,18 @@ void tProjectList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uProject<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uProjectStatus<td><font face=arial,helvetica color=white>uTemplateSet<td><font face=arial,helvetica color=white>cDescription<td><font face=arial,helvetica color=white>cDirectory<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uProject"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>uProjectStatus"
+		"<td><font face=arial,helvetica color=white>uTemplateSet"
+		"<td><font face=arial,helvetica color=white>cDescription"
+		"<td><font face=arial,helvetica color=white>cDirectory"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -594,7 +562,8 @@ void tProjectList(void)
 			ctime_r(&luTime10,cBuf10);
 		else
 			sprintf(cBuf10,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit>"
+			"%s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
@@ -608,7 +577,6 @@ void tProjectList(void)
 			,ForeignKey("tClient","cLabel",strtoul(field[9],NULL,10))
 			,cBuf10
 				);
-
 	}
 
 	printf("</table></form>\n");
@@ -619,7 +587,18 @@ void tProjectList(void)
 
 void CreatetProject(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tProject ( uProject INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uProjectStatus INT UNSIGNED NOT NULL DEFAULT 0, uTemplateSet INT UNSIGNED NOT NULL DEFAULT 0, cDescription TEXT NOT NULL DEFAULT '', cDirectory VARCHAR(100) NOT NULL DEFAULT '' )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tProject ("
+			" uProject INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uProjectStatus INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uTemplateSet INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cDescription TEXT NOT NULL DEFAULT '',"
+			" cDirectory VARCHAR(100) NOT NULL DEFAULT '' )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

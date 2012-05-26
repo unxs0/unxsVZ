@@ -333,17 +333,17 @@ void tTableInput(unsigned uMode)
 	}
 //uProject
 	OpenRow(LANG_FL_tTable_uProject,"black");
-	if(guPermLevel>=7 && guPermLevel<10 && uMode)
-		tTablePullDownOwner("tProject;cuProjectPullDown","cLabel","cLabel",uProject,1);
-	else if(guPermLevel<10 && !uMode)
-		tTablePullDownOwner("tProject;cuProjectPullDown","cLabel","cLabel",uProject,0);
-	else if(uMode)
-	printf("<input title='%s' type=text size=20 maxlength=20 name=uProject value=%u >\n",LANG_FT_tTable_uProject,uProject);
-	else if(1)
-	{
+	//if(guPermLevel>=7 && guPermLevel<10 && uMode)
+	//	tTablePullDownOwner("tProject;cuProjectPullDown","cLabel","cLabel",uProject,1);
+	//else if(guPermLevel<10 && !uMode)
+	//	tTablePullDownOwner("tProject;cuProjectPullDown","cLabel","cLabel",uProject,0);
+	//else if(uMode)
+	//printf("<input title='%s' type=text size=20 maxlength=20 name=uProject value=%u >\n",LANG_FT_tTable_uProject,uProject);
+	//else if(1)
+	//{
 		printf("<input type=text size=20 value='%s' disabled>\n",ForeignKey("tProject","cLabel",uProject));
 		printf("<input type=hidden size=20 maxlength=20 name=uProject value=%u >\n",uProject);
-	}
+	//}
 //uTableOrder
 	OpenRow(LANG_FL_tTable_uTableOrder,"black");
 	printf("<input title='%s' type=text name=uTableOrder value=%u size=16 maxlength=10 "
