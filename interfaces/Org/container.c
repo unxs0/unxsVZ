@@ -67,6 +67,20 @@ void DIDOpsCommonChecking(void);
 void LoadAllDIDs(void);
 char *random_pw(char *dest);
 
+
+unsigned uPower10(unsigned uI)
+{
+	static unsigned uTotal=1;
+	register int i;
+
+	for(i=0;uI>0;uI--)
+		uTotal=uTotal*10;
+
+	return(uTotal);
+
+}//unsigned uPower10(unsigned uI)
+
+
 void ProcessContainerVars(pentry entries[], int x)
 {
 	register int i;
@@ -203,7 +217,7 @@ void ContainerCommands(pentry entries[], int x)
 			res=mysql_store_result(&gMysql);
 			if(mysql_num_rows(res)>0)
 			{
-				gcMessage="Selected container is being used by another process. Please try another.";
+				gcMessage="Selected container is being used by another process. Please try another or wait.";
 				htmlContainer();
 			}
 			//uContainer must still exist
@@ -309,6 +323,8 @@ void ContainerCommands(pentry entries[], int x)
 			unsigned uOrgPropMaxLength=0;
 			unsigned uOrgPropMinLength=0;
 			char cOrgPropName[64]={"Unknown"};
+			char cOrgPropType[64]={"Unknown"};
+			char cMessage[255];
 			char *cp;
 
 			//
@@ -334,21 +350,44 @@ void ContainerCommands(pentry entries[], int x)
 					sscanf(cp+strlen("uOrgPropMaxLength="),"%u",&uOrgPropMaxLength);
 				if((cp=strstr(field[0],"uOrgPropMinLength=")))
 					sscanf(cp+strlen("uOrgPropMinLength="),"%u",&uOrgPropMinLength);
+				if((cp=strstr(field[0],"cOrgPropType=")))
+				{
+					sprintf(cOrgPropType,"%.63s",cp+strlen("cOrgPropType="));
+					if((cp=strchr(cOrgPropType,';')))
+						*cp=0;
+				}
 			}
 
 			//Min
 			if(strlen(gcNewHostParam0)<uOrgPropMinLength)
 			{
-				sprintf(cOrgPropName,"%s must be at least %u characters long",cOrgPropName,uOrgPropMinLength);
-				gcMessage=cOrgPropName;
+				sprintf(cMessage,"%s must be at least %u characters long",cOrgPropName,uOrgPropMinLength);
+				gcMessage=cMessage;
 				htmlContainer();
 			}
 			//Max
 			if(strlen(gcNewHostParam0)>uOrgPropMaxLength)
 			{
-				sprintf(cOrgPropName,"%s can only be %u characters long",cOrgPropName,uOrgPropMaxLength);
-				gcMessage=cOrgPropName;
+				sprintf(cMessage,"%s can only be %u characters long",cOrgPropName,uOrgPropMaxLength);
+				gcMessage=cMessage;
 				htmlContainer();
+			}
+			//Check value if prop type is unsigned
+			if(!strcmp(cOrgPropType,"unsigned"))
+			{
+				unsigned ugcNewHostParam0=0;
+				unsigned ugcNewHostParam0Max=0;
+
+				sscanf(gcNewHostParam0,"%u",&ugcNewHostParam0);
+		
+				ugcNewHostParam0Max=uPower10(uOrgPropMaxLength)-1;	
+				if(ugcNewHostParam0==0 || ugcNewHostParam0>ugcNewHostParam0Max )
+				{
+					sprintf(cMessage,"%s does not appear to be a valid number or is larger than %u",
+						cOrgPropName,ugcNewHostParam0Max);
+					gcMessage=cMessage;
+					htmlContainer();
+				}
 			}
 
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
@@ -416,15 +455,15 @@ void ContainerCommands(pentry entries[], int x)
 			//Min
 			if(strlen(gcNewHostParam1)<uOrgPropMinLength)
 			{
-				sprintf(cOrgPropName,"%s must be at least %u characters long",cOrgPropName,uOrgPropMinLength);
-				gcMessage=cOrgPropName;
+				sprintf(cMessage,"%s must be at least %u characters long",cOrgPropName,uOrgPropMinLength);
+				gcMessage=cMessage;
 				htmlContainer();
 			}
 			//Max
 			if(strlen(gcNewHostParam1)>uOrgPropMaxLength)
 			{
-				sprintf(cOrgPropName,"%s can only be %u characters long",cOrgPropName,uOrgPropMaxLength);
-				gcMessage=cOrgPropName;
+				sprintf(cMessage,"%s can only be %u characters long",cOrgPropName,uOrgPropMaxLength);
+				gcMessage=cMessage;
 				htmlContainer();
 			}
 
@@ -631,7 +670,7 @@ void ContainerCommands(pentry entries[], int x)
 
 			guContainer=guNewContainer;
 			htmlContainer();
-		}
+		}//Repurpose Container ~480 lines
 		else if((!strcmp(gcFunction,"Container Report")||!strcmp(gcFunction,"Show Containers"))&&guPermLevel>5)
 		{
 
