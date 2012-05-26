@@ -41,6 +41,8 @@ void ExttTableCommands(pentry entries[], int x)
 			{
 	                        ProcesstTableVars(entries,x);
                         	guMode=2000;
+				if(guCookieProject)
+					uProject=guCookieProject;
 	                        tTable(LANG_NB_CONFIRMNEW);
 			}
 			else
@@ -239,10 +241,16 @@ void ExttTableButtons(void)
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
+			if(guCookieProject && guCookieProject!=uProject)
+				printf("Current workflow project has no tables.");
+			else if(guCookieProject && guCookieProject==uProject)
+				printf("Loaded table belongs to current workflow project.");
+			else if(!guCookieProject)
+				printf("First of all tables (if any) loaded.");
 			printf("<p><u>Operations</u><br>");
-			printf("<input type=submit class=largeButton title='Add standard primary key, cLabel and audit fields'"
+			printf("<input type=submit class=largeButton title='Add standard primary key, cLabel and audit fields.'"
 				" name=gcCommand value='Add standard fields'>");
-			printf("<br><input type=submit class=lwarnButton title='Remove all fields from the loaded table'"
+			printf("<br><input type=submit class=lwarnButton title='Remove all fields from the loaded table.'"
 				" name=gcCommand value='Remove all fields'>");
 			printf("<br><input type=submit class=largeButton"
 				" title='Select and keep this table marked for current work flow. Release any selected field.'"
@@ -276,6 +284,22 @@ void ExttTableGetHook(entry gentries[], int x)
 		{
 			uTable=guCookieTable;
 			guMode=7;
+		}
+		else if(guCookieProject)
+		{
+        		MYSQL_RES *res;
+        		MYSQL_ROW field;
+
+			sprintf(gcQuery,"SELECT uTable FROM tTable WHERE uProject=%u LIMIT 1",guCookieProject);
+        		mysql_query(&gMysql,gcQuery);
+        		if(mysql_errno(&gMysql))
+                		tTable(mysql_error(&gMysql));
+        		res=mysql_store_result(&gMysql);
+	        	if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&uTable);
+				guMode=7;
+			}
 		}
 	}
 	tTable("");
@@ -416,16 +440,31 @@ void tTableNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable ORDER BY cLabel");
+	if(guCookieProject)
+	{
+		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+			sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable WHERE uProject=%u ORDER BY cLabel",guCookieProject);
+		else
+			sprintf(gcQuery,"SELECT tTable.uTable,"
+				" tTable.cLabel"
+				" FROM tTable,tClient"
+				" WHERE tTable.uOwner=tClient.uClient"
+				" AND tTable.uProject=%u"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+					guCookieProject,guCompany,guLoginClient);
+	}
 	else
-		sprintf(gcQuery,"SELECT tTable.uTable,"
+	{
+		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+			sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable ORDER BY cLabel");
+		else
+			sprintf(gcQuery,"SELECT tTable.uTable,"
 				" tTable.cLabel"
 				" FROM tTable,tClient"
 				" WHERE tTable.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-					guCompany
-					,guLoginClient);
+					guCompany,guLoginClient);
+	}
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {

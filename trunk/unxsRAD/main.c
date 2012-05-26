@@ -482,7 +482,8 @@ void Header_ism3(char *title, int js)
         if(js)
                 jsCalendarHeader();
 
-	printf("</head><body><form action=unxsRAD.cgi method=post><blockquote>\n");
+	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/rad.ico>"
+		"</head><body><form action=unxsRAD.cgi method=post><blockquote>\n");
 
 	//Open header table
 	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td valign=bottom><img src=/images/rad.png>\n");
