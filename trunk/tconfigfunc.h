@@ -471,6 +471,7 @@ void tConfigNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+        MYSQL_RES *res2;
 
 	ExtSelect("tConfig","tConfig.uConfig,tConfig.cLabel");
 
@@ -488,8 +489,19 @@ void tConfigNavList(void)
         	printf("<p><u>tConfigNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
+		{
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tConfig&"
-					"uConfig=%s>%s</a><br>\n",field[0],field[1]);
+					"uConfig=%s>%s</a>",field[0],field[1]);
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%s AND uType="PROP_CONFIG"",field[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				printf("%s",mysql_error(&gMysql));
+	        	res2=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res2))
+				printf("*");
+			printf("<br>\n");
+		        	mysql_free_result(res2);
+		}
 	}
         mysql_free_result(res);
 
