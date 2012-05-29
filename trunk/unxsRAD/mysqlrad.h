@@ -107,6 +107,7 @@ long unsigned luGetModDate(char *cTableName, unsigned uTablePK);
 long unsigned luGetCreatedDate(char *cTableName, unsigned uTablePK);
 void DashBoard(const char *cOptionalMsg);
 void htmlPlainTextError(const char *cError);
+void TextError(const char *cError, unsigned uContinue);
 unsigned uAllowMod(const unsigned uOwner, const unsigned uCreatedBy);
 unsigned uAllowDel(const unsigned uOwner, const unsigned uCreatedBy);
 
@@ -150,6 +151,7 @@ void CreatetProject(void);
 void DeletetProject(void);
 void ExttProjectGetHook(entry gentries[], int x);
 void ExttProjectNavBar(void);
+void GetConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer, unsigned uHtml);
 
 //tTable
 int tTableCommands(pentry entries[], int x);
