@@ -290,7 +290,7 @@ void ExttTableGetHook(entry gentries[], int x)
         		MYSQL_RES *res;
         		MYSQL_ROW field;
 
-			sprintf(gcQuery,"SELECT uTable FROM tTable WHERE uProject=%u LIMIT 1",guCookieProject);
+			sprintf(gcQuery,"SELECT uTable FROM tTable WHERE uProject=%u ORDER BY uTableOrder LIMIT 1",guCookieProject);
         		mysql_query(&gMysql,gcQuery);
         		if(mysql_errno(&gMysql))
                 		tTable(mysql_error(&gMysql));
@@ -481,7 +481,7 @@ void tTableNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(atoi(field[0])==uTable)
-				cColor="red";
+				cColor="blue";
 			else
 				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tTable"
@@ -528,7 +528,7 @@ void tTableFieldNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(atoi(field[0])==guCookieField)
-				cColor="red";
+				cColor="blue";
 			else
 				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tField"

@@ -365,7 +365,7 @@ void tProjectNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(atoi(field[0])==uProject)
-				cColor="red";
+				cColor="blue";
 			else
 				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tProject"
@@ -411,7 +411,7 @@ void tProjectTableNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(atoi(field[0])==guCookieTable)
-				cColor="red";
+				cColor="blue";
 			else
 				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tTable"
@@ -458,7 +458,7 @@ void tProjectTableFieldNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{	
 			if(atoi(field[0])==guCookieField)
-				cColor="red";
+				cColor="blue";
 			else
 				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tField"

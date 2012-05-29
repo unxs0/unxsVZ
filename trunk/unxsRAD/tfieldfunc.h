@@ -189,6 +189,22 @@ void ExttFieldGetHook(entry gentries[], int x)
 			uField=guCookieField;
 			guMode=7;
 		}
+		else if(guCookieTable)
+		{
+        		MYSQL_RES *res;
+        		MYSQL_ROW field;
+
+			sprintf(gcQuery,"SELECT uField FROM tField WHERE uTable=%u ORDER BY uOrder LIMIT 1",guCookieTable);
+        		mysql_query(&gMysql,gcQuery);
+        		if(mysql_errno(&gMysql))
+                		tTable(mysql_error(&gMysql));
+        		res=mysql_store_result(&gMysql);
+	        	if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&uField);
+				guMode=7;
+			}
+		}
 	}
 	tField("");
 
@@ -327,22 +343,32 @@ void tFieldNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uContactParentCompany=0;
 
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
-	if(guReseller==1) guReseller=0;//...except Root companies
-	
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uField,cLabel FROM tField ORDER BY uOrder,cLabel");
+	if(guCookieTable)
+	{
+		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+			sprintf(gcQuery,"SELECT uField,cLabel FROM tField WHERE uTable=%u ORDER BY uOrder,cLabel",guCookieTable);
+		else
+			sprintf(gcQuery,"SELECT tField.uField,"
+				" tField.cLabel"
+				" FROM tField,tClient"
+				" WHERE tField.uOwner=tClient.uClient"
+				" AND tField.uTable=%u"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+					guCookieTable,guCompany,guLoginClient);
+	}
 	else
-		sprintf(gcQuery,"SELECT tField.uField,"
+	{
+		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+			sprintf(gcQuery,"SELECT uField,cLabel FROM tField ORDER BY uOrder,cLabel");
+		else
+			sprintf(gcQuery,"SELECT tField.uField,"
 				" tField.cLabel"
 				" FROM tField,tClient"
 				" WHERE tField.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				uContactParentCompany
-				,uContactParentCompany);
+					guCompany,guLoginClient);
+	}
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -359,7 +385,7 @@ void tFieldNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(atoi(field[0])==uField)
-				cColor="red";
+				cColor="blue";
 			else
 				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tField"
