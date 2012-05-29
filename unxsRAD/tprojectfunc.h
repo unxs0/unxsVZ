@@ -15,6 +15,7 @@ AUTHOR
 void tProjectNavList(void);
 void tProjectTableNavList(void);
 void tProjectTableFieldNavList(void);
+void AddDefaultTables(unsigned uProject);
 
 void ExtProcesstProjectVars(pentry entries[], int x)
 {
@@ -132,6 +133,18 @@ void ExttProjectCommands(pentry entries[], int x)
 			else
 				tProject("<blink>Error</blink>: Denied by permissions settings");
 		}
+		else if(!strcmp(gcCommand,"Add Default Tables"))
+                {
+                        ProcesstProjectVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+				if(uProject)
+					AddDefaultTables(uProject);
+				tProject("Default tables added");
+			}
+			else
+				tProject("<blink>Error</blink>: Denied by permissions settings");
+		}
 	}
 
 }//void ExttProjectCommands(pentry entries[], int x)
@@ -164,6 +177,9 @@ void ExttProjectButtons(void)
 			printf("<input type=submit class=largeButton"
 				" title='Select and keep this project marked for current work flow. Releases any saved table and field'"
 				" name=gcCommand value='Select'>");
+			printf("<input type=submit class=largeButton"
+				" title='Select and keep this project marked for current work flow. Releases any saved table and field'"
+				" name=gcCommand value='Add Default Tables'>");
 			tProjectNavList();
 			tProjectTableNavList();
 			tProjectTableFieldNavList();
@@ -472,3 +488,6 @@ void tProjectTableFieldNavList(void)
 
 
 
+void AddDefaultTables(unsigned uProject)
+{
+}//void AddDefaultTables(unsigned uProject)

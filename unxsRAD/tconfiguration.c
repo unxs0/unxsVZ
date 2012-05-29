@@ -29,7 +29,6 @@ static char *cComment={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -39,7 +38,9 @@ static time_t uModDate=0;
 
 
 
-#define VAR_LIST_tConfiguration "tConfiguration.uConfiguration,tConfiguration.uServer,tConfiguration.cLabel,tConfiguration.cValue,tConfiguration.cComment,tConfiguration.uOwner,tConfiguration.uCreatedBy,tConfiguration.uCreatedDate,tConfiguration.uModBy,tConfiguration.uModDate"
+#define VAR_LIST_tConfiguration "tConfiguration.uConfiguration,tConfiguration.uServer,tConfiguration.cLabel,tConfiguration.cValue,\
+				tConfiguration.cComment,tConfiguration.uOwner,tConfiguration.uCreatedBy,tConfiguration.uCreatedDate,\
+				tConfiguration.uModBy,tConfiguration.uModDate"
 
  //Local only
 void Insert_tConfiguration(void);
@@ -64,7 +65,6 @@ void ExttConfigurationAuxTable(void);
 void ProcesstConfigurationVars(pentry entries[], int x)
 {
 	register int i;
-
 
 	for(i=0;i<x;i++)
 	{
@@ -264,7 +264,7 @@ void tConfigurationInput(unsigned uMode)
 //uConfiguration
 	OpenRow(LANG_FL_tConfiguration_uConfiguration,"black");
 	printf("<input title='%s' type=text name=uConfiguration value=%u size=16 maxlength=10 "
-,LANG_FT_tConfiguration_uConfiguration,uConfiguration);
+			,LANG_FT_tConfiguration_uConfiguration,uConfiguration);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -283,7 +283,7 @@ void tConfigurationInput(unsigned uMode)
 //cLabel
 	OpenRow(LANG_FL_tConfiguration_cLabel,"black");
 	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=100 "
-,LANG_FT_tConfiguration_cLabel,EncodeDoubleQuotes(cLabel));
+		,LANG_FT_tConfiguration_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=8 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -296,7 +296,7 @@ void tConfigurationInput(unsigned uMode)
 //cValue
 	OpenRow(LANG_FL_tConfiguration_cValue,"black");
 	printf("<input title='%s' type=text name=cValue value=\"%s\" size=40 maxlength=255 "
-,LANG_FT_tConfiguration_cValue,EncodeDoubleQuotes(cValue));
+		,LANG_FT_tConfiguration_cValue,EncodeDoubleQuotes(cValue));
 	if(guPermLevel>=8 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -309,7 +309,7 @@ void tConfigurationInput(unsigned uMode)
 //cComment
 	OpenRow(LANG_FL_tConfiguration_cComment,"black");
 	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cComment "
-,LANG_FT_tConfiguration_cComment);
+		,LANG_FT_tConfiguration_cComment);
 	if(guPermLevel>=8 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cComment);
@@ -322,23 +322,15 @@ void tConfigurationInput(unsigned uMode)
 //uOwner
 	OpenRow(LANG_FL_tConfiguration_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 //uCreatedBy
 	OpenRow(LANG_FL_tConfiguration_uCreatedBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 //uCreatedDate
 	OpenRow(LANG_FL_tConfiguration_uCreatedDate,"black");
 	if(uCreatedDate)
@@ -349,13 +341,9 @@ void tConfigurationInput(unsigned uMode)
 //uModBy
 	OpenRow(LANG_FL_tConfiguration_uModBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 //uModDate
 	OpenRow(LANG_FL_tConfiguration_uModDate,"black");
 	if(uModDate)
@@ -365,8 +353,6 @@ void tConfigurationInput(unsigned uMode)
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
 
-
-
 }//void tConfigurationInput(unsigned uMode)
 
 
@@ -375,9 +361,7 @@ void NewtConfiguration(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uConfiguration FROM tConfiguration\
-				WHERE uConfiguration=%u"
-							,uConfiguration);
+	sprintf(gcQuery,"SELECT uConfiguration FROM tConfiguration WHERE uConfiguration=%u",uConfiguration);
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -390,15 +374,13 @@ void NewtConfiguration(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uConfiguration=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tConfiguration",uConfiguration);
 	unxsRADLog(uConfiguration,"tConfiguration","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uConfiguration);
-	tConfiguration(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uConfiguration);
+		tConfiguration(gcQuery);
 	}
 
 }//NewtConfiguration(unsigned uMode)
@@ -406,27 +388,18 @@ void NewtConfiguration(unsigned uMode)
 
 void DeletetConfiguration(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tConfiguration WHERE uConfiguration=%u AND ( uOwner=%u OR %u>9 )"
 					,uConfiguration,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tConfiguration WHERE uConfiguration=%u"
-					,uConfiguration);
-#endif
 	macro_mySQLQueryHTMLError;
 	//tConfiguration("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uConfiguration,"tConfiguration","Del");
-#endif
 		tConfiguration(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uConfiguration,"tConfiguration","DelError");
-#endif
 		tConfiguration(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -435,9 +408,8 @@ void DeletetConfiguration(void)
 
 void Insert_tConfiguration(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tConfiguration SET uConfiguration=%u,uServer=%u,cLabel='%s',cValue='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tConfiguration SET uConfiguration=%u,uServer=%u,cLabel='%s',cValue='%s',cComment='%s',"
+				"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uConfiguration
 			,uServer
 			,TextAreaSave(cLabel)
@@ -454,9 +426,8 @@ void Insert_tConfiguration(void)
 
 void Update_tConfiguration(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tConfiguration SET uConfiguration=%u,uServer=%u,cLabel='%s',cValue='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tConfiguration SET uConfiguration=%u,uServer=%u,cLabel='%s',cValue='%s',cComment='%s',"
+				"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uConfiguration
 			,uServer
 			,TextAreaSave(cLabel)
@@ -475,27 +446,20 @@ void ModtConfiguration(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
+	char gcQuery[512];
 
 	//Mod select gcQuery
 	if(guPermLevel<10)
-	sprintf(gcQuery,"SELECT tConfiguration.uConfiguration,\
-				tConfiguration.uModDate\
-				FROM tConfiguration,tClient\
-				WHERE tConfiguration.uConfiguration=%u\
-				AND tConfiguration.uOwner=tClient.uClient\
-				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+	sprintf(gcQuery,"SELECT tConfiguration.uConfiguration,"
+				" tConfiguration.uModDate"
+				" FROM tConfiguration,tClient"
+				" WHERE tConfiguration.uConfiguration=%u"
+				" AND tConfiguration.uOwner=tClient.uClient"
+				" AND (tClient.uOwner=%u OR tClient.uClient=%u)"
 			,uConfiguration,guLoginClient,guLoginClient);
 	else
-	sprintf(gcQuery,"SELECT uConfiguration,uModDate FROM tConfiguration\
-				WHERE uConfiguration=%u"
-						,uConfiguration);
-#else
-	sprintf(gcQuery,"SELECT uConfiguration FROM tConfiguration\
-				WHERE uConfiguration=%u"
-						,uConfiguration);
-#endif
+	sprintf(gcQuery,"SELECT uConfiguration,uModDate FROM tConfiguration WHERE uConfiguration=%u",uConfiguration);
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -505,19 +469,15 @@ void ModtConfiguration(void)
 	if(i>1) tConfiguration(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tConfiguration(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tConfiguration(field[0]);
+	uModDate=luGetModDate("tConfiguration",uConfiguration);
+	unxsRADLog(uConfiguration,"tConfiguration","Mod");
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
-	uModDate=luGetModDate("tConfiguration",uConfiguration);
-	unxsRADLog(uConfiguration,"tConfiguration","Mod");
-#endif
 	tConfiguration(gcQuery);
 
 }//ModtConfiguration(void)
@@ -543,9 +503,16 @@ void tConfigurationList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uConfiguration<td><font face=arial,helvetica color=white>uServer<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>cValue<td><font face=arial,helvetica color=white>cComment<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uConfiguration"
+		"<td><font face=arial,helvetica color=white>uServer"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>cValue"
+		"<td><font face=arial,helvetica color=white>cComment"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -573,7 +540,8 @@ void tConfigurationList(void)
 			ctime_r(&luTime9,cBuf9);
 		else
 			sprintf(cBuf9,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td><textarea disabled>"
+			"%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,ForeignKey("tServer","cLabel",strtoul(field[1],NULL,10))
@@ -586,7 +554,6 @@ void tConfigurationList(void)
 			,ForeignKey("tClient","cLabel",strtoul(field[8],NULL,10))
 			,cBuf9
 				);
-
 	}
 
 	printf("</table></form>\n");
@@ -597,8 +564,16 @@ void tConfigurationList(void)
 
 void CreatetConfiguration(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tConfiguration ( uModBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, cLabel VARCHAR(100) NOT NULL DEFAULT '', UNIQUE (cLabel,uServer), uConfiguration INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cComment TEXT NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uModDate INT UNSIGNED NOT NULL DEFAULT 0, cValue VARCHAR(255) NOT NULL DEFAULT '', uServer INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tConfiguration ("
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"cLabel VARCHAR(100) NOT NULL DEFAULT '',UNIQUE (cLabel,uServer),"
+			"uConfiguration INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cComment TEXT NOT NULL DEFAULT '',"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"cValue VARCHAR(255) NOT NULL DEFAULT '',"
+			"uServer INT UNSIGNED NOT NULL DEFAULT 0 )");
 	macro_mySQLQueryHTMLError;
 }//CreatetConfiguration()
-
-//perlSAR patch1
