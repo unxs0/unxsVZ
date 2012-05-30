@@ -17,6 +17,8 @@ void tProjectTableNavList(void);
 void tProjectTableFieldNavList(void);
 void AddTableFromDefaultTablesLine(char *cLine);
 void AddDefaultTables(unsigned uProject);
+void RemoveDefaultTables(unsigned uProject);
+void RemoveTableFromDefaultTablesLine(char *cLine);
 void GetConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer, unsigned uHtml);
 
 void ExtProcesstProjectVars(pentry entries[], int x)
@@ -135,14 +137,26 @@ void ExttProjectCommands(pentry entries[], int x)
 			else
 				tProject("<blink>Error</blink>: Denied by permissions settings");
 		}
-		else if(!strcmp(gcCommand,"Add TemplateSet Tables"))
+		else if(!strcmp(gcCommand,"Add/Update Default Tables"))
                 {
                         ProcesstProjectVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				if(uProject)
 					AddDefaultTables(uProject);
-				tProject("Default tables added");
+				tProject("Template tables added or updated");
+			}
+			else
+				tProject("<blink>Error</blink>: Denied by permissions settings");
+		}
+		else if(!strcmp(gcCommand,"Remove Default Tables"))
+                {
+                        ProcesstProjectVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+				if(uProject)
+					RemoveDefaultTables(uProject);
+				tProject("Template tables removed");
 			}
 			else
 				tProject("<blink>Error</blink>: Denied by permissions settings");
@@ -174,14 +188,30 @@ void ExttProjectButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
+			printf("Here we manage projects. Projects consists of a templates, tables,"
+				" fields and their properties. Source code and even ready to run applications can be"
+				" generated here if all the templates required exist.");
 			printf("<p><u>Record Context Info</u><br>");
+			if(guCookieProject && guCookieProject!=uProject)
+				printf("Loaded is not the workflow project.");
+			else if(guCookieProject && guCookieProject==uProject)
+				printf("Loaded project belongs to current workflow project.");
+			else if(!guCookieProject)
+				printf("No workflow project has been selected");
+			else if(!uProject)
+				printf("No project has been created");
 			printf("<p><u>Operations</u><br>");
 			printf("<input type=submit class=largeButton"
 				" title='Select and keep this project marked for current work flow. Releases any saved table and field'"
 				" name=gcCommand value='Select'>");
 			printf("<br><input type=submit class=largeButton"
-				" title='Add list of tables as per tTemplateSet and tConfiguration settings'"
-				" name=gcCommand value='Add TemplateSet Tables'>");
+				" title='Add or update to loaded project the list of default tables as defined per tTemplateSet"
+				" and tConfiguration settings'"
+				" name=gcCommand value='Add/Update Default Tables'>");
+			printf("<br><input type=submit class=largeButton"
+				" title='Remove from  loaded project the list of default tables as defined per tTemplateSet"
+				" and tConfiguration settings'"
+				" name=gcCommand value='Remove Default Tables'>");
 			tProjectNavList();
 			tProjectTableNavList();
 			tProjectTableFieldNavList();
@@ -534,6 +564,26 @@ char *ParseTextAreaLines(char *cTextArea)
 }//char *ParseTextAreaLines(char *cTextArea)
 
 
+void RemoveDefaultTables(unsigned uProject)
+{
+	char cValue[1024];
+	char cLine[256];
+
+        sprintf(cLine,"cDefaultTablesList_TemplateSet_%s",ForeignKey("tTemplateSet","cLabel",uTemplateSet));
+	GetConfiguration(cLine,cValue,1024,0,1);
+
+	while(1)
+	{
+		sprintf(cLine,"%.255s",ParseTextAreaLines(cValue));
+		if(cLine[0]=='#') continue;
+		if(cLine[0]==' ') continue;
+		if(!cLine[0]) break;
+		RemoveTableFromDefaultTablesLine(cLine);
+	}
+
+}//void RemoveDefaultTables(unsigned uProject)
+
+
 void AddDefaultTables(unsigned uProject)
 {
 	char cValue[1024];
@@ -552,6 +602,45 @@ void AddDefaultTables(unsigned uProject)
 	}
 
 }//void AddDefaultTables(unsigned uProject)
+
+
+void RemoveTableFromDefaultTablesLine(char *cLine)
+{
+
+	char cTable[32]={""};
+	unsigned uTable=0;
+	int iCount=0;
+
+	//tClient;1000;1;Organizations and their contacts;7;7;7;7;
+	iCount=sscanf(cLine,"%31[a-zA-Z0-9 ];%*u;%*u;%*99[a-zA-Z0-9 ];%*u;%*u;%*u;%*u;",cTable);
+	if(!cTable[0] || iCount!=1)
+	{
+		char gcQuery[512];
+		sprintf(gcQuery,"Error %s",cLine);
+		tProject(gcQuery);
+	}
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u",cTable,uProject);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        	htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uTable);
+        mysql_free_result(res);
+
+
+	if(uTable)
+	{
+		sprintf(gcQuery,"DELETE FROM tTable WHERE uTable=%u",uTable);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+        	        htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+}//void RemoveTableFromDefaultTablesLine(char cLine)
 
 
 void AddTableFromDefaultTablesLine(char *cLine)
