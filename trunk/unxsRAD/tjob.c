@@ -18,14 +18,11 @@ PURPOSE
 static unsigned uJob=0;
 //cLabel: Label for user feedback
 static char cLabel[101]={""};
-//cServer: Server name ip or any server
-static char cServer[65]={""};
 //cJobName: Subsystem.Function style job name
 static char cJobName[65]={""};
-//uJobTarget: Target ID
-static unsigned uJobTarget=0;
-//uJobTarget2: Target User ID
-static unsigned uJobTargetUser=0;
+//uServer: Target ID
+static unsigned uServer=0;
+static char cuServerPullDown[256]={""};
 //cJobData: Remote subsystem server function arguments
 static char *cJobData={""};
 //uJobDate: Unix seconds for job to start to be considered
@@ -39,7 +36,6 @@ static char cRemoteMsg[33]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -47,9 +43,7 @@ static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
 
-
-
-#define VAR_LIST_tJob "tJob.uJob,tJob.cLabel,tJob.cServer,tJob.cJobName,tJob.uJobTarget,tJob.uJobTargetUser,tJob.cJobData,tJob.uJobDate,tJob.uJobStatus,tJob.cRemoteMsg,tJob.uOwner,tJob.uCreatedBy,tJob.uCreatedDate,tJob.uModBy,tJob.uModDate"
+#define VAR_LIST_tJob "tJob.uJob,tJob.cLabel,tJob.cJobName,tJob.uServer,tJob.cJobData,tJob.uJobDate,tJob.uJobStatus,tJob.cRemoteMsg,tJob.uOwner,tJob.uCreatedBy,tJob.uCreatedDate,tJob.uModBy,tJob.uModDate"
 
  //Local only
 void Insert_tJob(void);
@@ -82,14 +76,15 @@ void ProcesstJobVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uJob);
 		else if(!strcmp(entries[i].name,"cLabel"))
 			sprintf(cLabel,"%.100s",entries[i].val);
-		else if(!strcmp(entries[i].name,"cServer"))
-			sprintf(cServer,"%.64s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cJobName"))
 			sprintf(cJobName,"%.64s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uJobTarget"))
-			sscanf(entries[i].val,"%u",&uJobTarget);
-		else if(!strcmp(entries[i].name,"uJobTargetUser"))
-			sscanf(entries[i].val,"%u",&uJobTargetUser);
+		else if(!strcmp(entries[i].name,"uServer"))
+			sscanf(entries[i].val,"%u",&uServer);
+		else if(!strcmp(entries[i].name,"cuServerPullDown"))
+		{
+			sprintf(cuServerPullDown,"%.255s",entries[i].val);
+			uServer=ReadPullDown("tServer","cLabel",cuServerPullDown);
+		}
 		else if(!strcmp(entries[i].name,"cJobData"))
 			cJobData=entries[i].val;
 		else if(!strcmp(entries[i].name,"uJobDate"))
@@ -212,19 +207,17 @@ void tJob(const char *cResult)
 			field=mysql_fetch_row(res);
 		sscanf(field[0],"%u",&uJob);
 		sprintf(cLabel,"%.100s",field[1]);
-		sprintf(cServer,"%.64s",field[2]);
-		sprintf(cJobName,"%.64s",field[3]);
-		sscanf(field[4],"%u",&uJobTarget);
-		sscanf(field[5],"%u",&uJobTargetUser);
-		cJobData=field[6];
-		sscanf(field[7],"%lu",&uJobDate);
-		sscanf(field[8],"%u",&uJobStatus);
-		sprintf(cRemoteMsg,"%.32s",field[9]);
-		sscanf(field[10],"%u",&uOwner);
-		sscanf(field[11],"%u",&uCreatedBy);
-		sscanf(field[12],"%lu",&uCreatedDate);
-		sscanf(field[13],"%u",&uModBy);
-		sscanf(field[14],"%lu",&uModDate);
+		sprintf(cJobName,"%.64s",field[2]);
+		sscanf(field[3],"%u",&uServer);
+		cJobData=field[4];
+		sscanf(field[5],"%lu",&uJobDate);
+		sscanf(field[6],"%u",&uJobStatus);
+		sprintf(cRemoteMsg,"%.32s",field[7]);
+		sscanf(field[8],"%u",&uOwner);
+		sscanf(field[9],"%u",&uCreatedBy);
+		sscanf(field[10],"%lu",&uCreatedDate);
+		sscanf(field[11],"%u",&uModBy);
+		sscanf(field[12],"%lu",&uModDate);
 
 		}
 
@@ -312,19 +305,6 @@ void tJobInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
 	}
-//cServer
-	OpenRow(LANG_FL_tJob_cServer,"black");
-	printf("<input title='%s' type=text name=cServer value=\"%s\" size=40 maxlength=64 "
-,LANG_FT_tJob_cServer,EncodeDoubleQuotes(cServer));
-	if(guPermLevel>=0 && uMode)
-	{
-		printf("></td></tr>\n");
-	}
-	else
-	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cServer value=\"%s\">\n",EncodeDoubleQuotes(cServer));
-	}
 //cJobName
 	OpenRow(LANG_FL_tJob_cJobName,"black");
 	printf("<input title='%s' type=text name=cJobName value=\"%s\" size=40 maxlength=64 "
@@ -338,18 +318,12 @@ void tJobInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cJobName value=\"%s\">\n",EncodeDoubleQuotes(cJobName));
 	}
-//uJobTarget
-	OpenRow(LANG_FL_tJob_uJobTarget,"black");
-	if(guPermLevel>=0 && uMode)
-		printf("%s<input type=hidden name=uJobTarget value=%u >\n",ForeignKey("tServer","cLabel",uJobTarget),uJobTarget);
+//uServer
+	OpenRow(LANG_FL_tJob_uServer,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tServer;cuServerPullDown","cLabel","cLabel",uServer,1);
 	else
-		printf("%s<input type=hidden name=uJobTarget value=%u >\n",ForeignKey("tServer","cLabel",uJobTarget),uJobTarget);
-//uJobTargetUser
-	OpenRow(LANG_FL_tJob_uJobTargetUser,"black");
-	if(guPermLevel>=0 && uMode)
-		printf("%s<input type=hidden name=uJobTargetUser value=%u >\n",ForeignKey("tClient","cLabel",uJobTargetUser),uJobTargetUser);
-	else
-		printf("%s<input type=hidden name=uJobTargetUser value=%u >\n",ForeignKey("tClient","cLabel",uJobTargetUser),uJobTargetUser);
+		tTablePullDown("tServer;cuServerPullDown","cLabel","cLabel",uServer,0);
 //cJobData
 	OpenRow(LANG_FL_tJob_cJobData,"black");
 	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cJobData "
@@ -366,9 +340,9 @@ void tJobInput(unsigned uMode)
 //uJobDate
 	OpenRow(LANG_FL_tJob_uJobDate,"black");
 	if(uJobDate)
-		printf("<input type=text name=cuJobDate value='%s' disabled>\n",ctime(&uJobDate));
+		printf("%s\n\n",ctime(&uJobDate));
 	else
-		printf("<input type=text name=cuJobDate value='---' disabled>\n");
+		printf("---\n\n");
 	printf("<input type=hidden name=uJobDate value=%lu>\n",uJobDate);
 //uJobStatus
 	OpenRow(LANG_FL_tJob_uJobStatus,"black");
@@ -435,8 +409,6 @@ void tJobInput(unsigned uMode)
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
 
-
-
 }//void tJobInput(unsigned uMode)
 
 
@@ -444,10 +416,9 @@ void NewtJob(unsigned uMode)
 {
 	register int i=0;
 	MYSQL_RES *res;
+	char gcQuery[512];
 
-	sprintf(gcQuery,"SELECT uJob FROM tJob\
-				WHERE uJob=%u"
-							,uJob);
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uJob=%u",uJob);
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -460,15 +431,13 @@ void NewtJob(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uJob=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tJob",uJob);
 	unxsRADLog(uJob,"tJob","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uJob);
-	tJob(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uJob);
+		tJob(gcQuery);
 	}
 
 }//NewtJob(unsigned uMode)
@@ -476,27 +445,17 @@ void NewtJob(unsigned uMode)
 
 void DeletetJob(void)
 {
-#ifdef ISM3FIELDS
-	sprintf(gcQuery,"DELETE FROM tJob WHERE uJob=%u AND ( uOwner=%u OR %u>9 )"
-					,uJob,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tJob WHERE uJob=%u"
-					,uJob);
-#endif
+	sprintf(gcQuery,"DELETE FROM tJob WHERE uJob=%u AND ( uOwner=%u OR %u>9 )",uJob,guLoginClient,guPermLevel);
 	macro_mySQLQueryHTMLError;
 	//tJob("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uJob,"tJob","Del");
-#endif
 		tJob(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uJob,"tJob","DelError");
-#endif
 		tJob(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -506,14 +465,14 @@ void DeletetJob(void)
 void Insert_tJob(void)
 {
 
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tJob SET uJob=%u,cLabel='%s',cServer='%s',cJobName='%s',uJobTarget=%u,uJobTargetUser=%u,cJobData='%s',uJobDate=%lu,uJobStatus=%u,cRemoteMsg='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tJob SET"
+			" uJob=%u,cLabel='%s',cJobName='%s',uServer=%u,"
+			" cJobData='%s',uJobDate=%lu,uJobStatus=%u,cRemoteMsg='%s',uOwner=%u,uCreatedBy=%u,"
+			" uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uJob
 			,TextAreaSave(cLabel)
-			,TextAreaSave(cServer)
 			,TextAreaSave(cJobName)
-			,uJobTarget
-			,uJobTargetUser
+			,uServer
 			,TextAreaSave(cJobData)
 			,uJobDate
 			,uJobStatus
@@ -530,14 +489,13 @@ void Insert_tJob(void)
 void Update_tJob(char *cRowid)
 {
 
-	//update query
-	sprintf(gcQuery,"UPDATE tJob SET uJob=%u,cLabel='%s',cServer='%s',cJobName='%s',uJobTarget=%u,uJobTargetUser=%u,cJobData='%s',uJobDate=%lu,uJobStatus=%u,cRemoteMsg='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tJob SET"
+			" uJob=%u,cLabel='%s',cJobName='%s',uServer=%u,"
+			" cJobData='%s',uJobDate=%lu,uJobStatus=%u,cRemoteMsg='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uJob
 			,TextAreaSave(cLabel)
-			,TextAreaSave(cServer)
 			,TextAreaSave(cJobName)
-			,uJobTarget
-			,uJobTargetUser
+			,uServer
 			,TextAreaSave(cJobData)
 			,uJobDate
 			,uJobStatus
@@ -555,27 +513,17 @@ void ModtJob(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
+	char gcQuery[512];
 
 	//Mod select gcQuery
 	if(guPermLevel<10)
-	sprintf(gcQuery,"SELECT tJob.uJob,\
-				tJob.uModDate\
-				FROM tJob,tClient\
-				WHERE tJob.uJob=%u\
-				AND tJob.uOwner=tClient.uClient\
-				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
-			,uJob,guLoginClient,guLoginClient);
+	sprintf(gcQuery,"SELECT tJob.uJob,tJob.uModDate FROM tJob,tClient"
+			" WHERE tJob.uJob=%u AND"
+			" tJob.uOwner=tClient.uClient AND"
+			" (tClient.uOwner=%u OR tClient.uClient=%u)",uJob,guLoginClient,guLoginClient);
 	else
-	sprintf(gcQuery,"SELECT uJob,uModDate FROM tJob\
-				WHERE uJob=%u"
-						,uJob);
-#else
-	sprintf(gcQuery,"SELECT uJob FROM tJob\
-				WHERE uJob=%u"
-						,uJob);
-#endif
+		sprintf(gcQuery,"SELECT uJob,uModDate FROM tJob WHERE uJob=%u",uJob);
 
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
@@ -586,19 +534,15 @@ void ModtJob(void)
 	if(i>1) tJob(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tJob(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tJob(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tJob",uJob);
 	unxsRADLog(uJob,"tJob","Mod");
-#endif
 	tJob(gcQuery);
 
 }//ModtJob(void)
@@ -624,10 +568,19 @@ void tJobList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uJob<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>cServer<td><font face=arial,helvetica color=white>cJobName<td><font face=arial,helvetica color=white>uJobTarget<td><font face=arial,helvetica color=white>uJobTargetUser<td><font face=arial,helvetica color=white>cJobData<td><font face=arial,helvetica color=white>uJobDate<td><font face=arial,helvetica color=white>uJobStatus<td><font face=arial,helvetica color=white>cRemoteMsg<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
-
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uJob"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>cJobName"
+		"<td><font face=arial,helvetica color=white>uServer"
+		"<td><font face=arial,helvetica color=white>cJobData"
+		"<td><font face=arial,helvetica color=white>uJobDate"
+		"<td><font face=arial,helvetica color=white>uJobStatus"
+		"<td><font face=arial,helvetica color=white>cRemoteMsg"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 	mysql_data_seek(res,guStart-1);
 
 	for(guN=0;guN<(guEnd-guStart+1);guN++)
@@ -642,43 +595,41 @@ void tJobList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		time_t luTime7=strtoul(field[7],NULL,10);
-		char cBuf7[32];
-		if(luTime7)
-			ctime_r(&luTime7,cBuf7);
+		time_t luTime5=strtoul(field[5],NULL,10);
+		char cBuf5[32];
+		if(luTime5)
+			ctime_r(&luTime5,cBuf5);
 		else
-			sprintf(cBuf7,"---");
+			sprintf(cBuf5,"---");
+		time_t luTime10=strtoul(field[10],NULL,10);
+		char cBuf10[32];
+		if(luTime10)
+			ctime_r(&luTime10,cBuf10);
+		else
+			sprintf(cBuf10,"---");
 		time_t luTime12=strtoul(field[12],NULL,10);
 		char cBuf12[32];
 		if(luTime12)
 			ctime_r(&luTime12,cBuf12);
 		else
 			sprintf(cBuf12,"---");
-		time_t luTime14=strtoul(field[14],NULL,10);
-		char cBuf14[32];
-		if(luTime14)
-			ctime_r(&luTime14,cBuf14);
-		else
-			sprintf(cBuf14,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s"
+			"<td>%s<td>%s<td>%s<td align=center><textarea rows=1 disabled>%s</textarea></td>"
+			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
 			,field[2]
-			,field[3]
-			,ForeignKey("tTarget","cDomain",strtoul(field[4],NULL,10))
-			,ForeignKey("tTargetUser","cLogin",strtoul(field[5],NULL,10))
-			,field[6]
-			,cBuf7
-			,ForeignKey("tJobStatus","cLabel",strtoul(field[8],NULL,10))
-			,field[9]
-			,ForeignKey("tClient","cLabel",strtoul(field[10],NULL,10))
+			,ForeignKey("tServer","cLabel",strtoul(field[3],NULL,10))
+			,field[4]
+			,cBuf5
+			,ForeignKey("tJobStatus","cLabel",strtoul(field[6],NULL,10))
+			,field[7]
+			,ForeignKey("tClient","cLabel",strtoul(field[8],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[9],NULL,10))
+			,cBuf10
 			,ForeignKey("tClient","cLabel",strtoul(field[11],NULL,10))
-			,cBuf12
-			,ForeignKey("tClient","cLabel",strtoul(field[13],NULL,10))
-			,cBuf14
-				);
-
+			,cBuf12);
 	}
 
 	printf("</table></form>\n");
@@ -689,8 +640,20 @@ void tJobList(void)
 
 void CreatetJob(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJob ( cJobName VARCHAR(64) NOT NULL DEFAULT '', uModDate INT UNSIGNED NOT NULL DEFAULT 0, cServer VARCHAR(64) NOT NULL DEFAULT '', uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, cJobData TEXT NOT NULL DEFAULT '', uJob INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(100) NOT NULL DEFAULT '', uJobStatus INT UNSIGNED NOT NULL DEFAULT 0, uJobDate INT UNSIGNED NOT NULL DEFAULT 0, cRemoteMsg VARCHAR(32) NOT NULL DEFAULT '', uJobTarget INT UNSIGNED NOT NULL DEFAULT 0, uJobTargetUser INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJob ("
+			" cJobName VARCHAR(64) NOT NULL DEFAULT '',"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cJobData TEXT NOT NULL DEFAULT '',"
+			" uJob INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cLabel VARCHAR(100) NOT NULL DEFAULT '',"
+			" uJobStatus INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uJobDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cRemoteMsg VARCHAR(32) NOT NULL DEFAULT '',"
+			" uServer INT UNSIGNED NOT NULL DEFAULT 0 )");
 	macro_mySQLQueryHTMLError;
-}//CreatetJob()
 
-//perlSAR patch1
+}//CreatetJob()

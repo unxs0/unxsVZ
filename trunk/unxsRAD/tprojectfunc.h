@@ -20,6 +20,7 @@ void AddDefaultTables(unsigned uProject);
 void RemoveDefaultTables(unsigned uProject);
 void RemoveTableFromDefaultTablesLine(char *cLine);
 void GetConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer, unsigned uHtml);
+unsigned CreateMakeSourceCodeJob(unsigned uProject,unsigned uServer,char *cProject);
 
 void ExtProcesstProjectVars(pentry entries[], int x)
 {
@@ -161,6 +162,24 @@ void ExttProjectCommands(pentry entries[], int x)
 			else
 				tProject("<blink>Error</blink>: Denied by permissions settings");
 		}
+		else if(!strcmp(gcCommand,"Make Source Code"))
+                {
+                        ProcesstProjectVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+				if(uProject)
+				{
+					if(CreateMakeSourceCodeJob(uProject,0,cLabel))//0 is any server
+						tProject("A make source code job not done or canceled already exists for this project");
+					else
+						tProject("Make source code job created");
+				}
+				else
+					tProject("<blink>Error</blink>: No project selected");
+			}
+			else
+				tProject("<blink>Error</blink>: Denied by permissions settings");
+		}
 	}
 
 }//void ExttProjectCommands(pentry entries[], int x)
@@ -212,6 +231,10 @@ void ExttProjectButtons(void)
 				" title='Remove from  loaded project the list of default tables as defined per tTemplateSet"
 				" and tConfiguration settings'"
 				" name=gcCommand value='Remove Default Tables'>");
+			printf("<p><input type=submit class=largeButton"
+				" title='Create a make source code job for loaded project. See tJob for status. Depending on tConfiguration"
+				" settings the project may also be compiled and installed'"
+				" name=gcCommand value='Make Source Code'>");
 			tProjectNavList();
 			tProjectTableNavList();
 			tProjectTableFieldNavList();
@@ -741,3 +764,38 @@ void GetConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsign
 }//void GetConfiguration()
 
 
+unsigned CreateMakeSourceCodeJob(unsigned uProject,unsigned uServer,char *cProject)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uJob=0;
+
+	//3 done ok, 7 canceled
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE cLabel='MakeSourceCode.%.17s' AND uServer=%u AND uJobStatus!=3 AND uJobStatus!=7",
+					cProject,uServer);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        	htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uJob);
+        mysql_free_result(res);
+
+	if(uJob)
+	{
+		return(uJob);
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='MakeSourceCode.%.17s',"
+			"cJobName='MakeSourceCodeJob',"
+			"cJobData='uProject=%u;',"
+			"uServer=%u,uOwner=%u,uCreatedBy=%u,uJobStatus=1,"//Waiting
+			"uCreatedDate=UNIX_TIMESTAMP(NOW()),uJobDate=UNIX_TIMESTAMP(NOW())+60",
+						cProject,uProject,uServer,guCompany,guLoginClient);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+        	        htmlPlainTextError(mysql_error(&gMysql));
+	}
+	return(0);
+}//unsigned CreateMakeSourceCodeJob()
