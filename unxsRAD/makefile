@@ -17,7 +17,14 @@ RELEASE= 0.1
 LIBS= -L/usr/lib/openisp /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl -ltemplate
 
 
-all: unxsRAD.cgi
+all: unxsRAD.cgi unxsRAD
+
+#New standalone CLI job queue model
+unxsRAD: unxsrad.o
+	cc unxsrad.o -o unxsRAD $(LIBS)
+
+unxsrad.o: unxsrad.c unxsrad.h mysqlrad.h local.h
+	cc -c unxsrad.c -o unxsrad.o $(CFLAGS)
 
 unxsRAD.cgi: tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o   main.o cgi.o
 	cc tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o   main.o cgi.o -o unxsRAD.cgi $(LIBS) 
@@ -103,8 +110,9 @@ clean:
 cleandist:
 	rm -f *.o *.gz
 
-install: unxsRAD.cgi
+install: unxsRAD.cgi unxsRAD
 	install -s unxsRAD.cgi $(CGIDIR)unxsRAD.cgi
+	install -s unxsRAD /usr/sbin/unxsRAD
 	rm unxsRAD.cgi
 
 distribution:

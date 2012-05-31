@@ -302,22 +302,18 @@ void tJobNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uContactParentCompany=0;
 
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
-	if(guReseller==1) guReseller=0;//...except Root companies
-	
+	//Show jobs pending somehow. 3 done ok, 7 canceled.
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uJob,cLabel FROM tJob ORDER BY cLabel");
+		sprintf(gcQuery,"SELECT uJob,cLabel FROM tJob WHERE uJobStatus!=3 AND uJobStatus!=7 ORDER BY cLabel");
 	else
 		sprintf(gcQuery,"SELECT tJob.uJob,"
 				" tJob.cLabel"
 				" FROM tJob,tClient"
 				" WHERE tJob.uOwner=tClient.uClient"
+				" AND tJob.uJobStatus!=3 AND tJob.uJobStatus!=7"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				uContactParentCompany
-				,uContactParentCompany);
+					guCompany,guLoginClient);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -332,9 +328,7 @@ void tJobNavList(void)
         	printf("<p><u>tJobNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tJob"
-				"&uJob=%s>%s</a><br>\n",
-				field[0],field[1]);
+			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tJob&uJob=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 
