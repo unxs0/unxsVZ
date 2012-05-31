@@ -68,7 +68,7 @@ void ExttJobCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstJobVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(uAllowDel(uOwner,uCreatedBy) && uJob)
 			{
 	                        guMode=2001;
 				tJob(LANG_NB_CONFIRMDEL);
@@ -79,7 +79,7 @@ void ExttJobCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstJobVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(uAllowDel(uOwner,uCreatedBy) && uJob)
 			{
 				guMode=5;
 				DeletetJob();
@@ -90,7 +90,7 @@ void ExttJobCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstJobVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) && uJob)
 			{
 				guMode=2002;
 				tJob(LANG_NB_CONFIRMMOD);
@@ -101,7 +101,7 @@ void ExttJobCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstJobVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) && uJob)
 			{
                         	guMode=2002;
 				//Check entries here
@@ -283,14 +283,13 @@ void ExttJobNavBar(void)
 	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(uAllowMod(uOwner,uCreatedBy))
+	if(uAllowMod(uOwner,uCreatedBy) && !guListMode && uJob)
 		printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy)) 
+	if(uAllowDel(uOwner,uCreatedBy) && !guListMode && uJob) 
 		printf(LANG_NBB_DELETE);
 
-	if(uOwner)
-		printf(LANG_NBB_LIST);
+	printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
 	printf(LANG_NBB_SKIPLAST);
