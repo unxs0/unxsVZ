@@ -17,7 +17,7 @@ HELP
 //Global vars
 MYSQL gMysql;
 char gcQuery[8192]={""};
-char *gcBuildInfo="$Id: main.c 1969 2012-05-31 01:48:19Z Colin $";
+char *gcBuildInfo="$Id$";
 
 int main(int iArgc, char *cArgv[])
 {
