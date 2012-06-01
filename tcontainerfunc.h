@@ -5295,6 +5295,7 @@ void ExttContainerNavBar(void)
 
 	if( (uStatus==uINITSETUP && uAllowDel(uOwner,uCreatedBy) && guMode<9000) ||
 		(uStatus==uOFFLINE && guPermLevel>11) ||
+		(uStatus==uREMOTEAPPLIANCE && guPermLevel>11) ||
 		(uStatus==uAWAITCLONE && guPermLevel>11) )
 		printf(LANG_NBB_DELETE);
 
