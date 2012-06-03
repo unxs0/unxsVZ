@@ -359,9 +359,11 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 				fprintf(sfp,"\t\t//tZone.cOptions\n\t\t%s\n",field[15]);
 			if(cTSIGKeyName[0])
 			{
-				fprintf(sfp,"\t\tallow-transfer { key %.99s.;};\n",
+				if(field[15][0] && !strstr(field[15],"allow-transfer"))
+					fprintf(sfp,"\t\tallow-transfer { key %.99s.;};\n",
 						cTSIGKeyName);
-				fprintf(sfp,"\t\tallow-update { key %.99s.;};\n",
+				if(field[15][0] && !strstr(field[15],"allow-update"))
+					fprintf(sfp,"\t\tallow-update { key %.99s.;};\n",
 						cTSIGKeyName);
 			}
 
