@@ -36,11 +36,6 @@ unsigned TextConnectDb(void)
 		if (mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
 			return(0);
 	}
-	if(DBIP1==NULL)
-	{
-		if (mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
-			return(0);
-	}
 
 	//Now we can use AF_INET/IPPROTO_TCP cases (TCP connections via IP number)
 	char *cPort="3306";//(*1)
@@ -101,6 +96,13 @@ unsigned TextConnectDb(void)
 			} 
 		}
 		close(iSock);//Don't need anymore.
+	}
+
+	//Moving this here should allow to use tcp/ip normally and then if that is down failover to local socket
+	if(DBIP1==NULL)
+	{
+		if (mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
+			return(0);
 	}
 
 	if(DBIP1!=NULL)
