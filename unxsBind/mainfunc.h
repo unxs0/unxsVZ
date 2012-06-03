@@ -558,7 +558,7 @@ void ExportTemplateFiles(char *cDir, char *cTemplateSet, char *cTemplateType)
 
 	printf("\nExportTemplateFiles(): Start\n");
 
-	TextConnectDb();
+	if(TextConnectDb()) exit(0);
 
 	//uTemplateSet
 	sprintf(gcQuery,"SELECT uTemplateSet FROM tTemplateSet WHERE cLabel='%s'",cTemplateSet);
@@ -642,7 +642,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
 
 	printf("\nImportTemplateFile(): Start\n");
 
-	TextConnectDb();
+	if(TextConnectDb()) exit(0);
 
 	sprintf(gcQuery,"USE %s",DBNAME);
 	mysql_query(&gMysql,gcQuery);
@@ -798,7 +798,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 
 		//Loop for each tJob error
 		//Connect to local mySQL
-		TextConnectDb();
+		if(TextConnectDb()) exit(0);
 		sprintf(gcQuery,"SELECT uJob,cServer,cJobName,uUser,cJobData FROM tJob WHERE uJobStatus=4");
 		//4 is tJobStatus Done Error(s)
 		mysql_query(&gMysql,gcQuery);
@@ -904,7 +904,7 @@ void PrintUsage(char *arg0)
 
 void ExtMainShell(int argc, char *argv[])
 {
-	char cCmdLineACL[256]={""};
+	//char cCmdLineACL[256]={""};
 
 	//Pre ACL
 	if(argc==3 && !strcmp(argv[1],"Initialize"))
@@ -913,36 +913,11 @@ void ExtMainShell(int argc, char *argv[])
 		exit(0);
 	}
 
-	if(TextConnectDb())
+	if(getuid())
 	{
-		GetConfiguration("cCmdLineACL",cCmdLineACL,0);
-		if(cCmdLineACL[0])
-		{
-			sprintf(gcQuery,";%u;",getuid());
-			if(!strstr(cCmdLineACL,gcQuery))
-			{
-				printf("Sorry! You must have permission to use this command.\n");
-				exit(1);
-			}
-		}		
-		else
-		{
-			if(getuid())
-			{
-				printf("Sorry! must be root to run iDNS.cgi command line.\n");
-				exit(1);
-			}
-		}
+		printf("Sorry! must be root to run iDNS.cgi command line.\n");
+		exit(1);
 	}
-	else
-	{
-		if(getuid())
-		{
-			printf("Sorry! must be root to run iDNS.cgi command line.\n");
-			exit(1);
-		}
-	}
-	mysql_close(&gMysql);
 
 
 	if(argc==2)
@@ -969,127 +944,127 @@ void ExtMainShell(int argc, char *argv[])
 		}
 		else if(!strcmp(argv[1],"ImportZones"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			Import();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"ImportAxfrZones"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			ImportAxfr();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"CloneZonesFromList"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			CloneZonesFromList();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"DropImportedZones"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			DropImportedZones();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"ImportCompanies"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			ImportCompanies();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"DropCompanies"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			DropCompanies();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"ImportUsers"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			ImportUsers();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"DropUsers"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			DropUsers();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"ImportBlocks"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			ImportBlocks();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"DropBlocks"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			DropBlocks();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"AssociateCompaniesZones"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			AssociateCompaniesZones();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"ImportRegistrars"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			ImportRegistrars();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"DropRegistrars"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			DropRegistrars();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"AssociateRegistrarsZones"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			AssociateRegistrarsZones();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"MassZoneUpdate"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			MassZoneUpdate();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"UpdateSchema"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			UpdateSchema();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"UpdateTables"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			UpdateTables();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"MonthHitData"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
                 	MonthHitData();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"ImportSORRs"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			ImportSORRs();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"CheckAllZones"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			CheckAllZones();
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"FixBlockOwnership"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			FixBlockOwnership();
 			exit(0);
 		}
@@ -1143,25 +1118,25 @@ void ExtMainShell(int argc, char *argv[])
 		}
 		else if(!strcmp(argv[1],"PrintNSList"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
                 	cPrintNSList(stdout,argv[2]);
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"PrintMXList"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
                 	PrintMXList(stdout,argv[2]);
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"DropZone"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			DropZone(argv[2],"");
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"MassZoneNSUpdate"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			MassZoneNSUpdate(argv[2]);
 			exit(0);
 		}
@@ -1169,7 +1144,7 @@ void ExtMainShell(int argc, char *argv[])
 		{
 			unsigned uLogType=0;
 
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			sscanf(argv[2],"%u",&uLogType);
 			if(uLogType)
 			{
@@ -1180,7 +1155,7 @@ void ExtMainShell(int argc, char *argv[])
 		else if(!strcmp(argv[1],"MonthUsageData"))
 		{
 			unsigned uSimile=0;
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			sscanf(argv[2],"%u",&uSimile);
                 	MonthUsageData(uSimile);
 			exit(0);
@@ -1205,25 +1180,25 @@ void ExtMainShell(int argc, char *argv[])
 		}
 		else if(!strcmp(argv[1],"CreateWebZone"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			CreateWebZone(argv[2],argv[3],"","");
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"DropZone"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			DropZone(argv[2],argv[3]);
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"DebugMasterFile"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			CreateMasterFiles(argv[2],argv[3],1,1,1);
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"CompareZones"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			CompareZones(argv[2],argv[3],"");
 			exit(0);
 		}
@@ -1240,13 +1215,13 @@ void ExtMainShell(int argc, char *argv[])
 		{
 			if(!strcmp(argv[2],"slave"))
 			{
-				TextConnectDb();
+				if(TextConnectDb()) exit(0);
 				CreateSlaveFiles(argv[3],"",argv[4],0);//All
 				exit(0);
 			}
 			else if(!strcmp(argv[2],"master"))
 			{
-				TextConnectDb();
+				if(TextConnectDb()) exit(0);
 				//All+DBFiles+Stubs
 				CreateMasterFiles(argv[3],"",1,1,0);
 				exit(0);
@@ -1265,19 +1240,19 @@ void ExtMainShell(int argc, char *argv[])
 		}
 		else if(!strcmp(argv[1],"CreateWebZone"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			CreateWebZone(argv[2],argv[3],argv[4],"");
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"DebugSlaveFile"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			CreateSlaveFiles(argv[2],argv[3],argv[4],1);
 			exit(0);
 		}
 		else if(!strcmp(argv[1],"CompareZones"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			//Optional uOwner to limit zones to compare
 			CompareZones(argv[2],argv[3],argv[4]);
 			exit(0);
@@ -1304,7 +1279,7 @@ void ExtMainShell(int argc, char *argv[])
 	{
 		if(!strcmp(argv[1],"CreateWebZone"))
 		{
-			TextConnectDb();
+			if(TextConnectDb()) exit(0);
 			CreateWebZone(argv[2],argv[3],argv[4],argv[5]);
 			exit(0);
 		}
@@ -1395,7 +1370,7 @@ void ListZones(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	TextConnectDb();
+	if(TextConnectDb()) exit(0);
 
 	sprintf(gcQuery,"SELECT cZone,cLabel FROM tZone,tNSSet WHERE tZone.uNSSet=tNSSet.uNSSet");
 	mysql_query(&gMysql,gcQuery);
@@ -3132,7 +3107,7 @@ void PerfQueryList(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	TextConnectDb();
+	if(TextConnectDb()) exit(0);
 
 	sprintf(gcQuery,"SELECT tResource.cName,tZone.cZone FROM tZone,tNSSet,tResource"
 			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tZone.uZone=tResource.uZone"
