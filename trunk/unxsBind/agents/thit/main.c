@@ -1,18 +1,15 @@
 /*
 FILE
 	main.c (for tHitCollector exe)
-	$Id: main.c 662 2008-12-18 18:52:33Z hus $
+	$Id$
 AUTHOR
-	(C) 2006-2009, Dylan Wallis and Gary Wallis for Unixservice USA - GPLv2 Applies
+	(C) 2006-2012, Dylan and Gary for Unixservice USA - GPLv2 Applies
 PURPOSE
 	Process BIND9 named.stats and collect data for tHit table.
 	Add data to rrd table and create graphs.
 NOTES
 	Limitations:
-	1-. This only works for a single NS. Need to add cHost field and
-	update on cZone and cHost. Then aggregation can be performed in this or another
-	program.
-	2-. When NSs are restarted we need to handle wrap around correctly. That
+	1-. When NSs are restarted we need to handle wrap around correctly. That
 	would be to add to the counters in this single case only.
 
 SAMPLE-INPUT
@@ -83,14 +80,14 @@ int main(int iArgc, char *cArgv[])
 
 		printf("Initializing rrdtool db for %s\n",cZone);
 
-		sprintf(cQuery,"rrdtool create /var/log/named/%s.rrd --start N --step 300"
-				" DS:allhits:COUNTER:600:U:U"
-				" DS:success:COUNTER:600:U:U"
-				" DS:referral:COUNTER:600:U:U"
-				" DS:nxrrset:COUNTER:600:U:U"
-				" DS:nxdomain:COUNTER:600:U:U"
-				" DS:recursion:COUNTER:600:U:U"
-				" DS:failure:COUNTER:600:U:U"
+		sprintf(cQuery,"rrdtool create /var/log/named/%s.rrd --start N --step 600"
+				" DS:allhits:COUNTER:1200:U:U"
+				" DS:success:COUNTER:1200:U:U"
+				" DS:referral:COUNTER:1200:U:U"
+				" DS:nxrrset:COUNTER:1200:U:U"
+				" DS:nxdomain:COUNTER:1200:U:U"
+				" DS:recursion:COUNTER:1200:U:U"
+				" DS:failure:COUNTER:1200:U:U"
 				" RRA:MAX:0.5:288:1440"
 				" RRA:LAST:0.5:1:1440",cZone);
 		if(system(cQuery))
@@ -102,9 +99,14 @@ int main(int iArgc, char *cArgv[])
 	}
 	else if(iArgc>=2 && !strcmp(cArgv[1],"AddData"))
 	{
-
+		cZone[0]=0;
 		if(iArgc==4 && !strcmp(cArgv[2],"--cZone"))
 			sprintf(cZone,"%.100s",cArgv[3]);
+		if(!cZone[0])
+		{
+			printf("Initializing rrdtool db error! No --cZone supplied\n");
+			exit(1);
+		}
 
 		if(TextConnectDb())
 			exit(1);
@@ -149,22 +151,28 @@ int main(int iArgc, char *cArgv[])
 	}
 	else if(iArgc>=2 && !strcmp(cArgv[1],"Graph"))
 	{
+		cZone[0]=0;
 		if(iArgc==4 && !strcmp(cArgv[2],"--cZone"))
 			sprintf(cZone,"%.100s",cArgv[3]);
+		if(!cZone[0])
+		{
+			printf("Initializing rrdtool db error! No --cZone supplied\n");
+			exit(1);
+		}
 
 		printf("Creating rrdtool graph %s\n",cZone);
 
 		sprintf(cQuery,"rrdtool graph /var/log/named/%1$s.png"
-				" --title=\"%1$s iDNS aggregated stats\""
+				" --title=\"%1$s aggregated stats\""
 				" --vertical-label=\"events per second\""
 				" --base=1000"
 				" --height=120"
 				" --width=500"
 				" --slope-mode"
-				" --font TITLE:10:"
-				" --font AXIS:6:"
-				" --font LEGEND:8:"
-				" --font UNIT:8:"
+			//	" --font TITLE:10:"
+			//	" --font AXIS:6:"
+			//	" --font LEGEND:8:"
+			//	" --font UNIT:8:"
 				" 'DEF:all=/var/log/named/%1$s.rrd:allhits:LAST'"
 				" 'DEF:success=/var/log/named/%1$s.rrd:success:LAST'"
 				" 'DEF:referral=/var/log/named/%1$s.rrd:referral:LAST'"
@@ -196,8 +204,10 @@ int main(int iArgc, char *cArgv[])
 	}
 	else if(iArgc>=2)
 	{
-		printf("Usage: %s [Initialize | AddData | Graph [--cZone <cZone in tHit>]]\n",cArgv[0]);
-		printf("(If no args supplied does the data collection. cZone required for Initialize)\n");
+		printf("Usage: %s [Initialize | AddData | Graph : All with --cZone <cZone in/for tHit>]\n"
+			" With no args, individual NS named.stats processing."
+			" All other options are only used on graph server.\n",
+			cArgv[0]);
 		exit(0);
 		
 	}
