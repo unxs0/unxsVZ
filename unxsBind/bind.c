@@ -1105,6 +1105,11 @@ void MasterJobQueue(char *cNameServer)
 
 	//Handle second optional NS
 	char cNameServer2[100]={""};
+	if((cp=strchr(cNameServer,',')))
+	{
+		sprintf(cNameServer2,"%.99s",cp+1);
+		*cp=0;
+	}
 	//MASTER OR MASTER HIDDEN
 	if(cNameServer2[0])
 	{
