@@ -629,6 +629,7 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 	}//if uModDBFile
 
 	if(dnfp) fclose(dnfp);
+	logfileLine("CreateMasterFiles","Exit");
 
 }//void CreateMasterFiles()
 
@@ -781,6 +782,7 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 	fprintf(fp,"};\n");
 	mysql_free_result(res);
 	if(fp && !uDebug) fclose(fp);
+	logfileLine("CreateSlaveFiles","Exit");
 
 }//void CreateSlaveFiles();
 
@@ -1157,7 +1159,16 @@ void MasterJobQueue(char *cNameServer)
 					//	uDelete,uModify,uNew,uDeleteFirst); 
 					uChanged+=ProcessMasterJob(cCurrentZone,uDelete,uModify,
 						uNew,uDeleteFirst,cNameServer);
-
+					if(uChanged==2)
+					{
+						guReconfig=1;
+						logfileLine("MasterJobQueue.ProcessMasterJob1","guReconfig=1");
+					}
+					else if(uChanged==3)
+					{
+						guReload=1;
+						logfileLine("MasterJobQueue.ProcessMasterJob1","guReload=1");
+					}
 					uModify=0;
 					uNew=0;
 					uDelete=0;
@@ -1172,12 +1183,30 @@ void MasterJobQueue(char *cNameServer)
 					//debug only
 			//fprintf(stdout,"%s\t%s\t%s\n",field[0],field[2],field[1]);
 			//Allow for combinations: Modify New, Delete New. Modify overrides a Delete.
-			if(strstr(field[1],"New")) uNew++;
+			if(strstr(field[1],"New"))
+			{
+				uNew++;
+				sprintf(cCmd,"uNew=%u",uNew);
+				logfileLine("MasterJobQueue",cCmd);
+			}
 			if(strstr(field[1],"Modify")) 
+			{
 				uModify++;
+				sprintf(cCmd,"uModify=%u",uModify);
+				logfileLine("MasterJobQueue",cCmd);
+			}
 			else if(strstr(field[1],"Delete")) 
+			{
 				uDelete++;
-			if(uDelete && !uNew) uDeleteFirst=1;
+				sprintf(cCmd,"uDelete=%u",uDelete);
+				logfileLine("MasterJobQueue",cCmd);
+			}
+			if(uDelete && !uNew)
+			{
+				uDeleteFirst=1;
+				sprintf(cCmd,"uDeleteFirst=%u",uDeleteFirst);
+				logfileLine("MasterJobQueue",cCmd);
+			}
 
 			//Inform ext queue of completion. Only for MASTER
 			//no error checking takes place fix this.
@@ -1191,6 +1220,7 @@ void MasterJobQueue(char *cNameServer)
 				sscanf(cp+5,"%u",&uExtJob);
 				InformExtISPJob(cMsg,cNameServer,
 						uExtJob,mysqlISP_Deployed);
+				logfileLine("MasterJobQueue.ExtJob",cMsg);
 			}
 
 			//Remove job from queue
@@ -1215,9 +1245,15 @@ void MasterJobQueue(char *cNameServer)
 				uNew,uDeleteFirst,cNameServer)))
 		{
 			if(uChanged==2)
+			{
 				guReconfig=1;
+				logfileLine("MasterJobQueue.ProcessMasterJob2","guReconfig=1");
+			}
 			else if(uChanged==3)
+			{
 				guReload=1;
+				logfileLine("MasterJobQueue.ProcessMasterJob2","guReload=1");
+			}
 		}
 	}
 
@@ -1230,7 +1266,7 @@ void MasterJobQueue(char *cNameServer)
 		else
 			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload > /dev/null 2>&1",gcBinDir);
 		
-		logfileLine("ProcessMasterJob.guReload",cCmd);
+		logfileLine("MasterJobQueue.guReload",cCmd);
 		if(system(cCmd))
 			exit(1);
 	}
@@ -1243,7 +1279,7 @@ void MasterJobQueue(char *cNameServer)
 		else
 			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reconfig > /dev/null 2>&1",gcBinDir);
 		
-		logfileLine("ProcessMasterJob.guReconfig",cCmd);
+		logfileLine("MasterJobQueue.guReconfig",cCmd);
 		if(system(cCmd))
 			exit(1);
 	}
@@ -1259,7 +1295,8 @@ int ProcessMasterJob(char *cZone,unsigned uDelete,unsigned uModify,
 			unsigned uNew,unsigned uDeleteFirst,char *cMasterNS)
 {
 
-	sprintf(gcQuery,"cZone=%.99s;cMasterNS=%.99s;",cZone,cMasterNS);
+	sprintf(gcQuery,"cZone=%.99s;cMasterNS=%.99s;uDelete=%u;uModify=%u;uNew=%u,uDeleteFirst=%u;",
+			cZone,cMasterNS,uDelete,uModify,uNew,uDeleteFirst);
 	logfileLine("ProcessMasterJob",gcQuery);
 	//return 0 if nothing needs to be done
 	//return 1 if zone info has changed
