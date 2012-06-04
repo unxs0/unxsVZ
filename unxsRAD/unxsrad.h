@@ -5,7 +5,7 @@ FILE
 PURPOSE
 	unxsRAD job queue CLI standalone program header file
 LEGAL
-	(C) Gary Wallis 2012. All Rights Reserved.
+	(C) Gary Wallis 2012 for Unixservice, LLC. All Rights Reserved.
 	LICENSE file should be included in distribution.
 OTHER
 HELP

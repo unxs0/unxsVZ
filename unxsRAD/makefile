@@ -114,6 +114,7 @@ install: unxsRAD.cgi unxsRAD
 	install -s unxsRAD.cgi $(CGIDIR)unxsRAD.cgi
 	install -s unxsRAD /usr/sbin/unxsRAD
 	rm unxsRAD.cgi
+	rm unxsRAD
 
 distribution:
 	cd ..;  tar czvf unxsRAD/unxsRAD$(RELEASE).tar.gz --exclude .svn\
