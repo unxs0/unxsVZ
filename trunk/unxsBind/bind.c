@@ -1729,7 +1729,11 @@ unsigned ViewReloadZone(char *cZone)
 	char cCmd[100]={""};
 
 	GetConfiguration("cuControlPort",cuControlPort,0);
-	if((uNamedCheckConf("ViewReloadZone() call"))) return(1);
+	if((uNamedCheckConf("ViewReloadZone() call")))
+	{
+		logfileLine("ViewReloadZone","uNamedCheckConf error");
+		return(1);
+	}
 	//Multiple view rndc reload
 	//Do we need to reload all views, when we might have only modified the internal view for example?
 	sprintf(gcQuery,"SELECT tView.cLabel,tZone.uSecondaryOnly FROM tZone,tView WHERE"
@@ -1764,7 +1768,7 @@ unsigned ViewReloadZone(char *cZone)
 		logfileLine("ViewReloadZone",cCmd);
 		uRetVal=system(cCmd);
 		if(uRetVal)
-			logfileLine("ViewReloadZone","uRetVal");
+			logfileLine("ViewReloadZone","uRetVal error");
 	}
 	mysql_free_result(res);
 
