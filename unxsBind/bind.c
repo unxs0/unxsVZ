@@ -648,10 +648,25 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 	GetConfiguration("cuGID",cuGID,0);
 	if(cuGID[0]) sscanf(cuGID,"%u",&uGID);
 
+	//Handle second optional NS
+	char cSlaveNS2[100]={""};
+	char *cpNS;
+	if((cpNS=strchr(cSlaveNS,',')))
+	{
+		sprintf(cSlaveNS2,"%.99s",cpNS+1);
+		*cpNS=0;
+	}
 	//debug only
-	//fprintf(stdout,"CreateSlaveFiles(%s)\n",cSlaveNS);
+	//printf("CreateSlaveFiles()cSlaveNS2=%s\n",cSlaveNS2);
 
-	sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tView.cLabel,tView.cSlave,tView.uView,tNSSet.cMasterIPs,"
+	if(cSlaveNS2[0])
+		sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tView.cLabel,tView.cSlave,tView.uView,tNSSet.cMasterIPs,"
+			"tZone.cOptions,tZone.uSecondaryOnly FROM tZone,tNSSet,tNS,tView WHERE"
+			" tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
+			" tNS.uNSType=4 AND tZone.uView=tView.uView AND (tNS.cFQDN='%s' OR tNS.cFQDN='%s')"
+			" ORDER BY tView.uOrder,tZone.cZone",cSlaveNS,cSlaveNS2);
+	else
+		sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tView.cLabel,tView.cSlave,tView.uView,tNSSet.cMasterIPs,"
 			"tZone.cOptions,tZone.uSecondaryOnly FROM tZone,tNSSet,tNS,tView WHERE"
 			" tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
 			" tNS.uNSType=4 AND tZone.uView=tView.uView AND tNS.cFQDN='%s'"
@@ -883,8 +898,27 @@ void SlaveJobQueue(char *cNameServer, char *cMasterIP)
 	if(TextConnectDb())
 		exit(0);
 	
-	sprintf(gcQuery,"SELECT uJob,cJob,cZone,uMasterJob FROM tJob WHERE cTargetServer='%s SLAVE'"
+	//Handle second optional NS
+	char cNameServer2[100]={""};
+	char *cp;
+	if((cp=strchr(cNameServer,',')))
+	{
+		sprintf(cNameServer2,"%.99s",cp+1);
+		*cp=0;
+	}
+	if(cNameServer2[0])
+	{
+		sprintf(gcQuery,"SELECT uJob,cJob,cZone,uMasterJob FROM tJob WHERE"
+			" (cTargetServer='%s SLAVE' OR cTargetServer='%s SLAVE')"
+			" AND uTime<=UNIX_TIMESTAMP(NOW()) ORDER BY cZone,uJob",cNameServer,cNameServer2);
+		*cp=',';//for debug info below
+	}
+	else
+	{
+		sprintf(gcQuery,"SELECT uJob,cJob,cZone,uMasterJob FROM tJob WHERE cTargetServer='%s SLAVE'"
 			" AND uTime<=UNIX_TIMESTAMP(NOW()) ORDER BY cZone,uJob",cNameServer);
+	}
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
 	{
@@ -1064,13 +1098,32 @@ void MasterJobQueue(char *cNameServer)
 
 	GetConfiguration("cuControlPort",cuControlPort,0);
 
-	//debug only
-	//fprintf(stdout,"MasterJobQueue(%s)\n",cNameServer);
 
+	//debug only
+	//fprintf(stdout,"MasterJobQueue(%s %s)\n",cNameServer,cNameServer2);
+
+
+	//Handle second optional NS
+	char cNameServer2[100]={""};
 	//MASTER OR MASTER HIDDEN
-	sprintf(gcQuery,"SELECT uJob,cJob,cZone,cJobData FROM tJob WHERE (cTargetServer='%s MASTER' OR"
+	if(cNameServer2[0])
+	{
+		sprintf(gcQuery,"SELECT uJob,cJob,cZone,cJobData FROM tJob"
+			" WHERE (cTargetServer='%s MASTER' OR"
+			" cTargetServer='%s MASTER' OR"
+			" cTargetServer='%s MASTER HIDDEN' OR"
+			" cTargetServer='%s MASTER HIDDEN') AND"
+			" uTime<=UNIX_TIMESTAMP(NOW()) ORDER BY cZone,uJob",
+					cNameServer,cNameServer2,cNameServer,cNameServer2);
+		*cp=',';//for debug info below
+	}
+	else
+	{
+		sprintf(gcQuery,"SELECT uJob,cJob,cZone,cJobData FROM tJob WHERE (cTargetServer='%s MASTER' OR"
 			" cTargetServer='%s MASTER HIDDEN') AND uTime<=UNIX_TIMESTAMP(NOW()) ORDER BY cZone,uJob",
 					cNameServer,cNameServer);
+	}
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
 	{
