@@ -20,8 +20,8 @@ WORK-IN-PROGRESS
 //Local data
 //
 static FILE *gLfp=NULL;
-static unsigned uReconfig=0;
-static unsigned uReload=0;
+static unsigned guReconfig=0;
+static unsigned guReload=0;
 
 //
 //TOC protos
@@ -247,6 +247,8 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 
 	if(uModStubs)
 	{
+		logfileLine("CreateMasterFiles","uModStubs");
+
 		char cTSIGKeyName[256]={""};
 
 		uView=0;
@@ -382,6 +384,8 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 	//db files can be single or all
 	if(uModDBFiles)
 	{
+		logfileLine("CreateMasterFiles","uModDBFiles");
+
 		char cuUID[256]={""};
 		char cuGID[256]={""};
 		unsigned uGID=25;
@@ -658,6 +662,9 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 	}
 	//debug only
 	//printf("CreateSlaveFiles()cSlaveNS2=%s\n",cSlaveNS2);
+	logfileLine("CreateSlaveFiles",cSlaveNS);
+	if(cSlaveNS2[0])
+		logfileLine("CreateSlaveFiles",cSlaveNS2);
 
 	if(cSlaveNS2[0])
 		sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tView.cLabel,tView.cSlave,tView.uView,tNSSet.cMasterIPs,"
@@ -1208,13 +1215,13 @@ void MasterJobQueue(char *cNameServer)
 				uNew,uDeleteFirst,cNameServer)))
 		{
 			if(uChanged==2)
-				uReconfig=1;
+				guReconfig=1;
 			else if(uChanged==3)
-				uReload=1;
+				guReload=1;
 		}
 	}
 
-	if(uReload)
+	if(guReload)
 	{
 		if((uNamedCheckConf(cNameServer))) exit(1); //Will exit without server reload or reconfig
 		if(cuControlPort[0])
@@ -1223,10 +1230,11 @@ void MasterJobQueue(char *cNameServer)
 		else
 			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload > /dev/null 2>&1",gcBinDir);
 		
+		logfileLine("ProcessMasterJob.guReload",cCmd);
 		if(system(cCmd))
 			exit(1);
 	}
-	else if(uReconfig)
+	else if(guReconfig)
 	{
 		if((uNamedCheckConf(cNameServer))) exit(1); //Will exit without server reload or reconfig
 		if(cuControlPort[0])
@@ -1235,6 +1243,7 @@ void MasterJobQueue(char *cNameServer)
 		else
 			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reconfig > /dev/null 2>&1",gcBinDir);
 		
+		logfileLine("ProcessMasterJob.guReconfig",cCmd);
 		if(system(cCmd))
 			exit(1);
 	}
@@ -1292,9 +1301,8 @@ int ProcessMasterJob(char *cZone,unsigned uDelete,unsigned uModify,
 		//This was learned by running 2nd NS set support test case #4
 		CreateMasterFiles(cMasterNS,cZone,1,1,0);
 		//Single zone reload
-		if(!uReload)//Set by return(3) above global
+		if(!guReload)//Set by return(3) above global
 			ViewReloadZone(cZone);
-		
 		return(1);
 	}
 	
@@ -1346,7 +1354,6 @@ int ProcessSlaveJob(char *cZone,unsigned uDelete,unsigned uModify,unsigned uNew,
 		else
 			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload > /dev/null 2>&1",gcBinDir);
 		system(cCmd);
-		
 		ViewReloadZone(cZone);
 		return(0);
 	}
@@ -1754,9 +1761,10 @@ unsigned ViewReloadZone(char *cZone)
 				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload %s in %s > /dev/null 2>&1",
 						gcBinDir,cZone,field[0]);
 		}
-		//debug only
-		//fprintf(stdout,"ViewReloadZone():%s\n",cCmd);
+		logfileLine("ViewReloadZone",cCmd);
 		uRetVal=system(cCmd);
+		if(uRetVal)
+			logfileLine("ViewReloadZone","uRetVal");
 	}
 	mysql_free_result(res);
 
