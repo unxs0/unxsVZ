@@ -146,10 +146,10 @@ void RestoreZoneCommands(pentry entries[], int x)
 			if(AdminSubmitJob("New",uNameServer,cZone,0,luClock))
 				htmlPlainTextError(mysql_error(&gMysql));
 			gcMessage="Zone restored ok. Wait a few minutes so it gets propagated trough the NS cluster.";
-			sprintf(gcZone,"%s",cZone);
+			sprintf(gcZone,"%.99s",cZone);
 			sprintf(cuView,"%u",uView);
 
-			sprintf(gcCookieZone,"%s",cZone);
+			sprintf(gcCookieZone,"%.99s",cZone);
 			guCookieView=uView;
 			SetSessionCookie();
 			

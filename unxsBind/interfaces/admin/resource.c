@@ -251,7 +251,7 @@ void ResourceGetHook(entry gentries[],int x)
 	}
 
 	if(gcCookieCustomer[0]) uForClient=uGetClient(gcCookieCustomer);
-	if(gcCookieZone[0]) sprintf(gcZone,"%.63s",gcCookieZone);
+	if(gcCookieZone[0]) sprintf(gcZone,"%.99s",gcCookieZone);
 	if(guCookieView) sprintf(cuView,"%u",guCookieView);
 	if(guCookieResource && uResource==0) uResource=guCookieResource;
 
@@ -565,15 +565,15 @@ void htmlResourcePage(char *cTitle, char *cTemplateName)
 			template.cpValue[47]=cuCreatedByForm;
 
 			template.cpName[48]="cZoneGetLink";
-			char cZoneGetLink[128];
-			sprintf(cZoneGetLink,"&cZone=%.63s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
+			char cZoneGetLink[256];
+			sprintf(cZoneGetLink,"&cZone=%.99s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
 			template.cpValue[48]=cZoneGetLink;
 
 			template.cpName[49]="cZoneView";
 			char cZoneView[100];
-			sprintf(cZoneView,gcZone);
+			sprintf(cZoneView,"%.99s",gcZone);
 			if(guCookieView)
-				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
+				sprintf(cZoneView,"%.99s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
 			template.cpValue[49]=cZoneView;
 			
 			template.cpName[50]="";
@@ -680,7 +680,7 @@ void SelectResource(void)
 	else
 	{
 		mysql_free_result(res);
-		if(!strstr(gcZone,"in-addr.arpa"))//A RR and has rights via uOwner
+		if(!strstr(gcZone,".arpa"))//A RR and has rights via uOwner
 			sprintf(gcQuery,"SELECT tRRType.cLabel,tZone.uNSSet,tZone.uZone,tRRType.cParam1Label,"
 					"tRRType.cParam1Tip,tRRType.cParam2Label,tRRType.cParam2Tip,"
 					"tRRType.cParam3Label,tRRType.cParam3Tip,tRRType.cParam4Label,"
@@ -1318,7 +1318,7 @@ unsigned uPerRRTypeCheck(void)
 			cParam2[0]=0;//Was just a temp place holder
 		}
 
-		//Non arpa PTR records. Should we allow?
+		//Non in-addr.arpa PTR records. Should we allow? Yes at least for ip6.arpa
 		cParam2[0]=0;
 		FQDomainName(cParam1);
 		if(!cParam1[0])
@@ -2047,7 +2047,7 @@ void funcSelectRRType(FILE *fp, unsigned uUseStatus)
 		fprintf(fp,"onChange='submit()'>\n");
 
 	//Only allow PTR RRs
-	if(strstr(gcZone,"in-addr.arpa"))
+	if(strstr(gcZone,".arpa"))
 	{
 		if(guBrowserFirefox)
 		{

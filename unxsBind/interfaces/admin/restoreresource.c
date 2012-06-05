@@ -151,7 +151,7 @@ void htmlRestoreResource(char *cuZone)
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			sprintf(gcZone,"%.255s",field[0]);
+			sprintf(gcZone,"%.99s",field[0]);
 			sprintf(cuView,"%.15s",field[1]);
 		}
 		mysql_free_result(res);
@@ -308,7 +308,7 @@ void LoadDeletedResource(unsigned uRowId)
 		sprintf(cNameLabel,"%.31s",field[13]);
 		sprintf(cParam3Label,"%.31s",field[14]);
 		sprintf(cParam4Label,"%.31s",field[15]);
-		sprintf(gcZone,"%.255s",field[16]);
+		sprintf(gcZone,"%.99s",field[16]);
 		sscanf(field[17],"%u",&uNameServer);
 	}
 	else

@@ -42,7 +42,7 @@ void ProcessBulkOpVars(pentry entries[], int x)
 		if(!strcmp(entries[i].name,"cMassList"))
 			cMassList=entries[i].val;
 		else if(!strcmp(entries[i].name,"cZone"))
-			sprintf(gcZone,entries[i].val);
+			sprintf(gcZone,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uView"))
 			sprintf(cuView,"%.9s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uDebug"))
@@ -163,15 +163,15 @@ void htmlBulkOpPage(char *cTitle, char *cTemplateName)
 			template.cpValue[13]=cuResource;
 
 			template.cpName[14]="cZoneGetLink";
-			char cZoneGetLink[128];
-			sprintf(cZoneGetLink,"&cZone=%.63s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
+			char cZoneGetLink[256];
+			sprintf(cZoneGetLink,"&cZone=%.99s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
 			template.cpValue[14]=cZoneGetLink;
 
 			template.cpName[15]="cZoneView";
-			char cZoneView[100];
-			sprintf(cZoneView,gcZone);
+			char cZoneView[256];
+			sprintf(cZoneView,"%.99s",gcZone);
 			if(guCookieView)
-				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
+				sprintf(cZoneView,"%.99s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
 			template.cpValue[15]=cZoneView;
 
 			template.cpName[16]="";
@@ -221,7 +221,7 @@ void BulkResourceImport(void)
 
 	sprintf(cImportMsg,"Bulk resource record import begin. Zone=%s/%u/%s\n",gcCookieZone,uZone,cuView);
 
-	sprintf(gcZone,gcCookieZone);
+	sprintf(gcZone,"%.99s",gcCookieZone);
 	
 	while(1)
 	{
@@ -277,7 +277,7 @@ void BulkResourceImport(void)
 			char cuSerial[100]={""};
 			if((cp=strchr(cLine,';')))
 				*cp=0;
-			sprintf(gcZone,"%.255s",cLine+6);
+			sprintf(gcZone,"%.99s",cLine+6);
 			//Debug only
 			sprintf(cMsg,"%u: cZone=(%s)\n",uLineNumber,gcZone);
 			strcat(cImportMsg,cMsg);

@@ -212,7 +212,7 @@ void ZoneGetHook(entry gentries[],int x)
 		}
 	}
 	if(gcCookieCustomer[0] && uForClient==0) uForClient=uGetClient(gcCookieCustomer);
-	if(gcCookieZone[0] && gcZone[0]==0) sprintf(gcZone,"%.63s",gcCookieZone);
+	if(gcCookieZone[0] && gcZone[0]==0) sprintf(gcZone,"%.99s",gcCookieZone);
 	if(guCookieView && cuView[0]==0) sprintf(cuView,"%u",guCookieView);
 
 	if(gcZone[0] && cuView[0])
@@ -671,15 +671,15 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[62]=cuModDateForm;
 
 			template.cpName[63]="cZoneGetLink";
-			char cZoneGetLink[128];
-			sprintf(cZoneGetLink,"&cZone=%.63s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
+			char cZoneGetLink[256];
+			sprintf(cZoneGetLink,"&cZone=%.99s&uView=%.16s&cCustomer=%.32s",gcZone,cuView,gcCustomer);
 			template.cpValue[63]=cZoneGetLink;
 
 			template.cpName[64]="cZoneView";
-			char cZoneView[100];
-			sprintf(cZoneView,gcZone);
+			char cZoneView[256];
+			sprintf(cZoneView,"%.99s",gcZone);
 			if(guCookieView)
-				sprintf(cZoneView,"%.63s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
+				sprintf(cZoneView,"%.99s/%.31s",gcZone,ForeignKey("tView","cLabel",guCookieView));
 			template.cpValue[64]=cZoneView;
 
 			template.cpName[65]="";
@@ -938,7 +938,7 @@ void SelectZone(unsigned uSetCookie)
 			cRestoreRRStatus="";
 		if(uSetCookie && (strcmp(gcCookieZone,gcZone) || guCookieView!=uView))
 		{
-			sprintf(gcCookieZone,"%.63s",gcZone);
+			sprintf(gcCookieZone,"%.99s",gcZone);
 			guCookieView=uView;
 			guCookieResource=0;
 			SetSessionCookie();
@@ -1052,7 +1052,7 @@ void NewZone(void)
 	uResource=0;
 
 	guCookieResource=0;
-	sprintf(gcCookieZone,"%.63s",gcZone);
+	sprintf(gcCookieZone,"%.99s",gcZone);
 	SetSessionCookie();
 
 }//void NewZone(void)
@@ -1695,9 +1695,9 @@ void ZoneDiagnostics(void)
 	for(i=0;i<strlen(cView);i++)
 		cView[i]=tolower(cView[i]);
 	
-	sprintf(cZoneFile,"/usr/local/idns/named.d/master/%s/%c/%s",cView,gcZone[0],gcZone);
+	sprintf(cZoneFile,"/usr/local/idns/named.d/master/%.31s/%c/%.99s",cView,gcZone[0],gcZone);
 
-	sprintf(gcQuery,"%s/named-checkzone %s %s",cBinDir,gcZone,cZoneFile);
+	sprintf(gcQuery,"%.99s/named-checkzone %.99s %.255s",cBinDir,gcZone,cZoneFile);
 	printf("Testing with:%s\n\n",gcQuery);
 	
 	if((fp=popen(gcQuery,"r")))
@@ -1892,7 +1892,7 @@ void funcZoneNavList(FILE *fp,unsigned uSetCookie)
 		//Load single record, free result, return
 		if((field=mysql_fetch_row(res)))
 		{
-			sprintf(gcZone,"%s",field[0]);
+			sprintf(gcZone,"%.99s",field[0]);
 			sprintf(cuView,"%s",field[1]);
 			sscanf(field[4],"%u",&uForClient);
 			sprintf(gcCustomer,"%s",field[3]);
