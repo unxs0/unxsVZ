@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 			else if(!strcmp(entries[i].name,"gcPasswd"))
 				sprintf(gcPasswd,"%.99s",entries[i].val);
 			else if(!strcmp(entries[i].name,"cZone"))
-				sprintf(gcZone,"%.63s",entries[i].val);
+				sprintf(gcZone,"%.99s",entries[i].val);
 			else if(!strcmp(entries[i].name,"uView"))
 				sprintf(cuView,"%.15s",entries[i].val);
 			else if(!strcmp(entries[i].name,"uResource"))
@@ -1004,7 +1004,7 @@ void funcTopInfo(FILE *fp)
 	if(guCookieContact)
 		sprintf(cContact,"%.31s",ForeignKey("tClient","cLabel",guCookieContact));
 
-	sprintf(cOutput,"<br><br><b>%.99s %.31s %.63s %.31s %.31s :: iDNS Admin Interface</b>",
+	sprintf(cOutput,"<br><br><b>%.99s %.31s %.99s %.31s %.31s :: iDNS Admin Interface</b>",
 				cResource,gcView,gcCookieZone,gcCookieCustomer,cContact);
 
 	fprintf(fp,"%s",cOutput);
