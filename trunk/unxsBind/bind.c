@@ -249,7 +249,8 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 	{
 		logfileLine("CreateMasterFiles","uModStubs");
 
-		char cTSIGKeyName[256]={""};
+		char cTSIGKeyNameUpdate[256]={""};
+		char cTSIGKeyNameTransfer[256]={""};
 
 		uView=0;
 		uCurrentView=0;
@@ -295,7 +296,8 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 		}
 
 		//Only once for all zones. TODO this is a limitation.
-		GetConfiguration("cTSIGKeyName",cTSIGKeyName,0);
+		GetConfiguration("cTSIGKeyNameTransfer",cTSIGKeyNameTransfer,0);
+		GetConfiguration("cTSIGKeyNameUpdate",cTSIGKeyNameUpdate,0);
 
 		while((field=mysql_fetch_row(res)))
 		{
@@ -357,16 +359,23 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 			{
 				fprintf(sfp,"\t\ttype master;\n");
 			}
+
+			//allow-transfer and allow-update have global optional
+			//inclusion that is overridden by cOptions if specified there.
 			if(field[15][0])
 				fprintf(sfp,"\t\t//tZone.cOptions\n\t\t%s\n",field[15]);
-			if(cTSIGKeyName[0])
+			//Note the trailing period after key
+			if(cTSIGKeyNameTransfer[0])
 			{
-				if(field[15][0] && !strstr(field[15],"allow-transfer"))
+				if(!field[15][0] || !strstr(field[15],"allow-transfer"))
 					fprintf(sfp,"\t\tallow-transfer { key %.99s.;};\n",
-						cTSIGKeyName);
-				if(field[15][0] && !strstr(field[15],"allow-update"))
+						cTSIGKeyNameTransfer);
+			}
+			if(cTSIGKeyNameUpdate[0])
+			{
+				if(!field[15][0] || !strstr(field[15],"allow-update"))
 					fprintf(sfp,"\t\tallow-update { key %.99s.;};\n",
-						cTSIGKeyName);
+						cTSIGKeyNameUpdate);
 			}
 
 			//cOptions DotSignedExtension
