@@ -1763,7 +1763,7 @@ unsigned ViewReloadZone(char *cZone)
 	MYSQL_ROW field;
 	unsigned uRetVal=1;
 	char cuControlPort[8]={""};
-	char cCmd[100]={""};
+	char cCmd[512]={""};
 
 	GetConfiguration("cuControlPort",cuControlPort,0);
 	if((uNamedCheckConf("ViewReloadZone() call")))
@@ -1809,6 +1809,7 @@ unsigned ViewReloadZone(char *cZone)
 	}
 	mysql_free_result(res);
 
+	logfileLine("ViewReloadZone","Exit");
 	return(uRetVal);
 
 }//unsigned ViewReloadZone(char *cZone)
