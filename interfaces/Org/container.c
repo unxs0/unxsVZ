@@ -2198,7 +2198,7 @@ void funcNewContainer(FILE *fp)
 		fprintf(fp,"<option value=%s",field[0]);
 		if(guReseller == uAuthorize)
 			fprintf(fp," selected");
-		if((uCount++)<=100)
+		if((uCount++)<=200)
 			fprintf(fp,">%s</option>",field[1]);
 		else
 			fprintf(fp,">Limit reached. Contact your sysadmin ASAP!</option>");
