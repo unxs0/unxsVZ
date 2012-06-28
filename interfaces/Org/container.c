@@ -1667,16 +1667,18 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 			template.cpName[13]="gcSearchAux";
 			template.cpValue[13]=gcSearchAux;
 
+			MYSQL_RES *res0;
+			MYSQL_ROW field0;
 			char cQuery[128];
 			char gcAdminPort[16]=":3321";
 			sprintf(cQuery,"SELECT cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName='cOrg_AdminPort'",guContainer);
 			mysql_query(&gMysql,cQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
-			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-				sprintf(gcAdminPort,"%s",field[0]);
-			mysql_free_result(res);
+			res0=mysql_store_result(&gMysql);
+			if((field0=mysql_fetch_row(res0)))
+				sprintf(gcAdminPort,":%.14s",field0[0]);
+			mysql_free_result(res0);
 			template.cpName[14]="gcAdminPort";
 			template.cpValue[14]=gcAdminPort;
 
