@@ -621,6 +621,9 @@ void ExttIPAuxTable(void)
 			printf("&nbsp; <input title='Updates IPs to uAvailable=1 for IPs not in use by containers.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Make Available'>\n");
+			printf("&nbsp; <input title='Send one ping packet to IP. Check firewall settings use with care.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Ping'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -653,7 +656,7 @@ void ExttIPAuxTable(void)
 
 				printf("<table>");
 				printf("<tr>");
-				printf("<td><u>cLabel</u></td>"
+				printf("<td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> <u>cLabel</u></td>"
 					"<td><u>Available</u></td>"
 					"<td><u>Datacenter</u></td>"
 					"<td><u>Node</u></td>"
@@ -756,6 +759,34 @@ while((field=mysql_fetch_row(res)))
 						cResult[0]=0;
 					break;
 				}//Group Make Available
+
+				//Group Ping
+				else if(!strcmp(gcCommand,"Group Ping"))
+				{
+					MYSQL_RES *res;
+					MYSQL_ROW field;
+
+					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        				res=mysql_store_result(&gMysql);
+	        			if((field=mysql_fetch_row(res)))
+					{
+						char cPingCommand[64];
+						sprintf(cPingCommand,"/bin/ping -c 1 %.15s",field[0]);
+						if(system(cPingCommand))
+							sprintf(cResult,"no ping response");
+						else
+							sprintf(cResult,"ping responded");
+					}
+					else
+					{
+							sprintf(cResult,"unexpected condition");
+					}
+					break;
+
+				}//Group Ping
 
 				else if(1)
 				{
