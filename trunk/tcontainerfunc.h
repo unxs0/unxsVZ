@@ -4196,7 +4196,7 @@ void ExttContainerAuxTable(void)
 
 				printf("<table>");
 				printf("<tr>");
-				printf("<td><u>cLabel</u></td>"
+				printf("<td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> <u>cLabel</u></td>"
 					"<td><u>cHostname</u></td>"
 					"<td><u>Status</u></td>"
 					"<td><u>IPv4</u></td>"
