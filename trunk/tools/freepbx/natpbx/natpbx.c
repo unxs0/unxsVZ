@@ -331,7 +331,8 @@ rtpend=10999
 		sprintf(cFile,"/vz/root/%u/etc/asterisk/rtp.conf",uContainer);
 		if((fp=fopen(cFile,"w"))==NULL)
 		{
-			fprintf(stderr,"file open error\n");
+			sprintf(cCommand,"%.99s file open error\n",cFile);
+			fprintf(stderr,cCommand);
 			logfileLine("CreateRTPData",cFile,uContainer);
 			continue;
 		}
