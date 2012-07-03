@@ -341,6 +341,7 @@ rtpend=10999
 		printf("[general]\n");
 		printf("rtpstart=%u\n",uPort);
 		printf("rtpend=%u\n",uRangeEnd);
+		fclose(fp);
 		
 	}
 	mysql_free_result(res);
