@@ -10,6 +10,15 @@ AUTHOR
 	Gary Wallis for Unxiservice, LLC. (C) 2011.
 	GPLv2 License applies. See LICENSE file.
 NOTES
+	Missing
+	/etc/asterisk/sip_general_additional.conf
+	modification:
+
+	bindport=6010 ADD
+	nat=route MOD
+	externip=50.97.32.50 ADD
+	localnet=172.16.0.0/255.255.255.0 ADD
+
 */
 
 #include "../../../mysqlrad.h"
