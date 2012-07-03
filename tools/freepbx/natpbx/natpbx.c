@@ -128,7 +128,10 @@ int main(int iArgc, char *cArgv[])
 			CreateSquidData(cArgv[2]);
 			goto CommonExit;
 		}
-		else if(!strncmp(cArgv[1],"CreateRTPData",13))
+	}
+	else if(iArgc==2)
+	{
+		if(!strncmp(cArgv[1],"CreateRTPData",13))
 		{
 			CreateRTPData();
 			goto CommonExit;
@@ -151,7 +154,7 @@ void CreateIptablesData(char *cSourceIPv4)
         MYSQL_ROW field;
 	unsigned uContainer=0;
 
-	sprintf(gcQuery,"SELECT tContainer.cHostname,tIP.cLabel,tContainer.uContainer FROM tIP,tContainer,tGroupGlue,tGroup"
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
@@ -173,7 +176,12 @@ void CreateIptablesData(char *cSourceIPv4)
 	{
 		unsigned uD=0;
 		sscanf(field[1],"%*u.%*u.%*u.%u",&uD);
-		if(!uD) continue;
+		if(!uD)
+		{
+			sscanf(field[0],"%u",&uContainer);
+			logfileLine("CreateIptablesData",field[1],uContainer);
+			continue;
+		}
 
 		//Admin web port
 		uPort=8000+uD;
@@ -195,7 +203,7 @@ void CreateIptablesData(char *cSourceIPv4)
 	}
 	mysql_free_result(res);
 
-}//void CreateIptablesData(void)
+}//void CreateIptablesData()
 
 
 void CreateSquidData(char *cSourceIPv4)
@@ -204,7 +212,7 @@ void CreateSquidData(char *cSourceIPv4)
         MYSQL_ROW field;
 	unsigned uContainer=0;
 
-	sprintf(gcQuery,"SELECT tContainer.cHostname,tIP.cLabel,tContainer.uContainer FROM tIP,tContainer,tGroupGlue,tGroup"
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname,tContainer.cLabel,tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
@@ -218,16 +226,54 @@ void CreateSquidData(char *cSourceIPv4)
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
-	//debug only
-	//if((field=mysql_fetch_row(res)))
+
+/*
+#pbx 1
+cache_peer 10.0.4.1 parent 443 0 no-query no-digest ssl sslflags=DONT_VERIFY_PEER originserver name=natpbx login=PASS
+acl sites_natpbx dstdomain natpbx.callingcloud.net
+cache_peer_access natpbx allow sites_natpbx
+#...
+#pbx 2
+cache_peer 10.0.4.2 parent 443 0 no-query no-digest ssl sslflags=DONT_VERIFY_PEER originserver name=aolock login=PASS
+acl sites_aolock dstdomain aolock.callingcloud.net
+cache_peer_access aolock allow sites_aolock
+#...
+#pbx 100
+cache_peer 10.0.4.100 parent 443 0 no-query no-digest ssl sslflags=DONT_VERIFY_PEER originserver name=n100 login=PASS
+acl sites_n100 dstdomain n100.callingcloud.net
+cache_peer_access n100 allow sites_n100
+
+#pbx 1
+acl our_sites dstdomain natpbx.callingcloud.net
+#pbx 2
+acl our_sites dstdomain aolock.callingcloud.net
+#...
+#pbx 100
+acl our_sites dstdomain n100.callingcloud.net
+#global
+acl our_sites dstdomain 72.52.75.235
+*/
+
 	while((field=mysql_fetch_row(res)))
 	{
-		printf("%s %s %s\n",field[0],field[1],field[2]);
-		
+		printf("#pbx %s\n",field[3]);
+		printf("cache_peer %s parent 443 0 no-query no-digest ssl sslflags=DONT_VERIFY_PEER originserver name=%s login=PASS\n",
+			field[3],field[2]);
+		printf("acl sites_%s dstdomain %s\n",
+			field[2],field[1]);
+		printf("cache_peer_access %s allow sites_%s\n",
+			field[2],field[2]);
 	}
+	mysql_data_seek(res,0);//rewind
+	printf("#\n");
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("#pbx %s\nacl our_sites dstdomain %s\n",field[3],field[1]);
+	}
+	printf("#\n#global\nacl our_sites dstdomain %s\n",cSourceIPv4);
 	mysql_free_result(res);
 
-}//void CreateSquidData(void)
+}//void CreateSquidData()
 
 
 void CreateRTPData(void)
