@@ -313,6 +313,7 @@ rtpend=10999
 	unsigned uPort;
 	unsigned uRangeEnd;
 	FILE *fp;
+	char cCommand[128];
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uContainer);
@@ -342,6 +343,9 @@ rtpend=10999
 		printf("rtpstart=%u\n",uPort);
 		printf("rtpend=%u\n",uRangeEnd);
 		fclose(fp);
+
+		sprintf(cCommand,"vzctl exec2 %u 'service asterisk restart'",uContainer);
+		system(cCommand);
 		
 	}
 	mysql_free_result(res);
