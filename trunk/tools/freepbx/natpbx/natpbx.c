@@ -17,12 +17,9 @@ NOTES
 
 MYSQL gMysql;
 char gcQuery[8192]={""};
-unsigned guLoginClient=1;//Root user
-char cHostname[100]={""};
+char gcHostname[100]={""};
 char gcProgram[100]={""};
-unsigned guNodeOwner=1;
-unsigned guContainerOwner=1;
-unsigned guStatus=0;//not a valid status
+unsigned guNode=0;
 
 //dir protos
 void TextConnectDb(void);
@@ -91,6 +88,33 @@ int main(int iArgc, char *cArgv[])
 
 	//Uses login data from ../../../local.h
 	TextConnectDb();
+
+	gethostname(gcHostname,98);
+	//short hostname
+	char *cp;
+	if((cp=strchr(gcHostname,'.')))
+		*cp=0;
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT uNode FROM tNode"
+			" WHERE cLabel='%s'",gcHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("main",mysql_error(&gMysql),0);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&guNode);
+	mysql_free_result(res);
+	if(!guNode)
+	{
+		fprintf(stderr,"could not determine node for %s\n",gcHostname);
+		logfileLine("main","could not determine node",0);
+		goto CommonExit;
+	}
 
 	if(iArgc==2)
 	{
@@ -193,7 +217,8 @@ void CreateRTPData(void)
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
-			" AND tGroup.cLabel LIKE '%%NatPBX%%'");
+			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
+			" AND tContainer.uNode=%u",guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
