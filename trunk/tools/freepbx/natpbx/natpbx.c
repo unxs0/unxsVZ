@@ -26,8 +26,8 @@ void TextConnectDb(void);
 
 //local protos
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer);
-void CreateIptablesData(void);
-void CreateSquidData(void);
+void CreateIptablesData(char *cSourceIPv4);
+void CreateSquidData(char *cSourceIPv4);
 void CreateRTPData(void);
 
 static FILE *gLfp=NULL;
@@ -116,16 +116,16 @@ int main(int iArgc, char *cArgv[])
 		goto CommonExit;
 	}
 
-	if(iArgc==2)
+	if(iArgc==3)
 	{
 		if(!strncmp(cArgv[1],"CreateIptablesData",18))
 		{
-			CreateIptablesData();
+			CreateIptablesData(cArgv[2]);
 			goto CommonExit;
 		}
 		else if(!strncmp(cArgv[1],"CreateSquidData",15))
 		{
-			CreateSquidData();
+			CreateSquidData(cArgv[2]);
 			goto CommonExit;
 		}
 		else if(!strncmp(cArgv[1],"CreateRTPData",13))
@@ -135,7 +135,7 @@ int main(int iArgc, char *cArgv[])
 		}
 	}
 
-	printf("Usage: %s CreateIptablesData|CreateSquidData|CreateRTPData\n",gcProgram);
+	printf("Usage: %s CreateIptablesData|CreateSquidData|CreateRTPData <Source cIPv4>\n",gcProgram);
 
 CommonExit:
 	mysql_close(&gMysql);
@@ -145,7 +145,7 @@ CommonExit:
 }//main()
 
 
-void CreateIptablesData(void)
+void CreateIptablesData(char *cSourceIPv4)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -155,7 +155,8 @@ void CreateIptablesData(void)
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
-			" AND tGroup.cLabel LIKE '%%NatPBX%%'");
+			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
+			" AND tContainer.uNode=%u ORDER BY tIP.uIP",guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -166,17 +167,38 @@ void CreateIptablesData(void)
         res=mysql_store_result(&gMysql);
 	//debug only
 	//if((field=mysql_fetch_row(res)))
+	unsigned uPort;
+	unsigned uRangeEnd;
 	while((field=mysql_fetch_row(res)))
 	{
-		printf("%s %s %s\n",field[0],field[1],field[2]);
-		
+		unsigned uD=0;
+		sscanf(field[1],"%*u.%*u.%*u.%u",&uD);
+		if(!uD) continue;
+
+		//Admin web port
+		uPort=8000+uD;
+		printf("#nat pbx %s\n-A PREROUTING -d %s -p tcp -m tcp --dport %u -j DNAT --to-destination %s:3321\n",
+			field[1],cSourceIPv4,uPort,field[1]);
+		//Zabbix port
+		uPort=9000+uD;
+		printf("-A PREROUTING -d %s -p tcp -m tcp --dport %u -j DNAT --to-destination %s:%u\n",
+			cSourceIPv4,uPort,field[1],uPort);
+		//Asterisk sip port
+		uPort=6000+uD;
+		printf("-A PREROUTING -p udp -m udp --dport %u -j DNAT --to-destination %s:%u\n",
+			uPort,field[1],uPort);
+		//Asterisk rtp port range (100 ports ~25 concurrent calls)
+		uPort=10000+(uD-1)*100;
+		uRangeEnd=uPort+99;
+		printf("-A PREROUTING -p udp -m udp --dport %u:%u -j DNAT --to-destination %s\n",
+			uPort,uRangeEnd,field[1]);
 	}
 	mysql_free_result(res);
 
 }//void CreateIptablesData(void)
 
 
-void CreateSquidData(void)
+void CreateSquidData(char *cSourceIPv4)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -186,7 +208,8 @@ void CreateSquidData(void)
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
-			" AND tGroup.cLabel LIKE '%%NatPBX%%'");
+			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
+			" AND tContainer.uNode=%u",guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
