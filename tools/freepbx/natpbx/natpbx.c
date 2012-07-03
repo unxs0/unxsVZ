@@ -179,6 +179,7 @@ void CreateIptablesData(char *cSourceIPv4)
 		if(!uD)
 		{
 			sscanf(field[0],"%u",&uContainer);
+			fprintf(stderr,"cIPv4 scan error\n");
 			logfileLine("CreateIptablesData",field[1],uContainer);
 			continue;
 		}
@@ -282,7 +283,7 @@ void CreateRTPData(void)
         MYSQL_ROW field;
 	unsigned uContainer=0;
 
-	sprintf(gcQuery,"SELECT tContainer.cHostname,tIP.cLabel,tContainer.uContainer FROM tIP,tContainer,tGroupGlue,tGroup"
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
@@ -296,11 +297,50 @@ void CreateRTPData(void)
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
-	//debug only
-	//if((field=mysql_fetch_row(res)))
+/*
+;
+; RTP Configuration
+;
+[general]
+;
+; RTP start and RTP end configure start and end addresses
+; These are the addresses where your system will RECEIVE audio and video streams.
+; If you have connections across a firewall, make sure that these are open.
+;
+rtpstart=10900
+rtpend=10999
+*/
+	unsigned uPort;
+	unsigned uRangeEnd;
+	FILE *fp;
 	while((field=mysql_fetch_row(res)))
 	{
-		printf("%s %s %s\n",field[0],field[1],field[2]);
+		sscanf(field[0],"%u",&uContainer);
+
+		unsigned uD=0;
+		sscanf(field[1],"%*u.%*u.%*u.%u",&uD);
+		if(!uD)
+		{
+			fprintf(stderr,"cIPv4 scan error\n");
+			logfileLine("CreateRTPData",field[1],uContainer);
+			continue;
+		}
+
+		char cFile[128];
+		sprintf(cFile,"/vz/root/%u/etc/asterisk/rtp.conf",uContainer);
+		if((fp=fopen(cFile,"w"))==NULL)
+		{
+			fprintf(stderr,"file open error\n");
+			logfileLine("CreateRTPData",cFile,uContainer);
+			continue;
+		}
+
+		//Admin web port
+		uPort=10000+(uD-1)*100;
+		uRangeEnd=uPort+99;
+		printf("[general]\n");
+		printf("rtpstart=%u\n",uPort);
+		printf("rtpend=%u\n",uRangeEnd);
 		
 	}
 	mysql_free_result(res);
