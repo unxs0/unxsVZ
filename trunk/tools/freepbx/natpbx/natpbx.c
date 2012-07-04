@@ -10,15 +10,10 @@ AUTHOR
 	Gary Wallis for Unxiservice, LLC. (C) 2011.
 	GPLv2 License applies. See LICENSE file.
 NOTES
-	Missing
-	/etc/asterisk/sip_general_additional.conf
-	modification:
-
-	bindport=6010 ADD
-	nat=route MOD
-	externip=50.97.32.50 ADD
-	localnet=172.16.0.0/255.255.255.0 ADD
-
+	We also need to be able to update/add A records for this group
+	of PBXs.
+	Next is creating the SRV records for these PBXs for correct
+	SIP switch interop.
 */
 
 #include "../../../mysqlrad.h"
@@ -29,6 +24,7 @@ char gcQuery[8192]={""};
 char gcHostname[100]={""};
 char gcProgram[100]={""};
 unsigned guNode=0;
+unsigned guDatacenter=0;
 
 //dir protos
 void TextConnectDb(void);
@@ -37,8 +33,14 @@ void TextConnectDb(void);
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer);
 void CreateIptablesData(char *cSourceIPv4);
 void CreateSquidData(char *cSourceIPv4);
+void UpdateBind(char *cSourceIPv4);
 void ChangeFreePBX(char *cExternalIP,char *cLAN);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
+void unxsBindARecordJob(unsigned uContainer,char const *cHostname,char const *cIPv4);
+void GetTextConfiguration(const char *cName,char *cValue,
+		unsigned uDatacenter,
+		unsigned uNode,
+		unsigned uContainer);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -106,7 +108,7 @@ int main(int iArgc, char *cArgv[])
 		*cp=0;
         MYSQL_RES *res;
         MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uNode FROM tNode"
+	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode"
 			" WHERE cLabel='%s'",gcHostname);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -118,7 +120,10 @@ int main(int iArgc, char *cArgv[])
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
+	{
 		sscanf(field[0],"%u",&guNode);
+		sscanf(field[1],"%u",&guDatacenter);
+	}
 	mysql_free_result(res);
 	if(!guNode)
 	{
@@ -139,6 +144,11 @@ int main(int iArgc, char *cArgv[])
 			CreateSquidData(cArgv[2]);
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"UpdateBind",15))
+		{
+			UpdateBind(cArgv[2]);
+			goto CommonExit;
+		}
 	}
 	else if(iArgc==4)
 	{
@@ -149,7 +159,7 @@ int main(int iArgc, char *cArgv[])
 		}
 	}
 
-	printf("Usage: %s CreateIptablesData|CreateSquidData <Source cIPv4>"
+	printf("Usage: %s CreateIptablesData|CreateSquidData|UpdateBind <Source cIPv4>"
 		" | ChangeFreePBX <External cIPv4> <LAN E.g. 10.0.0.0/255.255.255.0>\n",gcProgram);
 
 CommonExit:
@@ -303,9 +313,9 @@ void ChangeFreePBX(char *cExternalIP,char *cLAN)
 	sprintf(cLAN,"%u.%u.%u.%u",uA,uB,uC,uD);
 	sprintf(cMask,"%u.%u.%u.%u",umA,umB,umC,umD);
 
-	printf("%s/%s\n",cLAN,cMask);
+	printf("ChangeFreePBX() %s/%s\n",cLAN,cMask);
 
-	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel,tContainer.cHostname FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
@@ -360,13 +370,42 @@ rtpend=10999
 			continue;
 		}
 
-		//Admin web port
+		//rtp rtcp port ranges
 		uPort=10000+(uD-1)*100;
 		uRangeEnd=uPort+99;
 		fprintf(fp,"[general]\n");
 		fprintf(fp,"rtpstart=%u\n",uPort);
 		fprintf(fp,"rtpend=%u\n",uRangeEnd);
 		fclose(fp);
+
+
+		//Change /etc/zabbix/zabbix_agentd.conf
+		//Add or modify 
+		//ListenPort=9010
+		sprintf(cFile,"/vz/root/%u/etc/zabbix/zabbix_agentd.conf",uContainer);
+
+		uPort=9000+uD;
+		sprintf(cCommand,"grep -w ListenPort %s",cFile);
+		if(system(cCommand))
+		{
+			sprintf(cCommand,"echo 'ListenPort=%u' >> %s",uPort,cFile);
+			system(cCommand);
+		}
+		else
+		{
+			sprintf(cCommand,"sed -i -e 's/ListenPort=.*/ListenPort=%u/' %s",uPort,cFile);
+			system(cCommand);
+		}
+		
+		//restart 
+		sprintf(cCommand,"vzctl exec2 %u 'service iptables stop'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 iptables off'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'service zabbix_agentd restart'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"/usr/sbin/UpdateZabbixHostPort.sh %s %u",field[2],uPort);
+		system(cCommand);
 
 		//Change FreePBX MySQL data
 /*
@@ -709,4 +748,144 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
 	mysql_free_result(res);
 
 }//void GetContainerProp(...)
+
+
+void unxsBindARecordJob(unsigned uContainer,char const *cHostname,char const *cIPv4)
+{
+#define uREMOTEWAITING 10
+	char cJobData[512]={""};
+	//Get all these from tConfiguration once.
+	static char cView[256]={"external"};
+	static char cZone[256]={""};
+	static unsigned uOnlyOnce=1;
+
+	//If called in loop be efficient.
+	if(uOnlyOnce)
+	{
+		GetTextConfiguration("cunxsBindARecordJobZone",cZone,guDatacenter,0,0);
+		GetTextConfiguration("cunxsBindARecordJobView",cView,guDatacenter,0,0);
+		uOnlyOnce=0;
+	}
+
+	if(!uContainer || !guNode || !guDatacenter)
+	{
+		fprintf(stderr,"No uContainer etc. aborting!");
+		logfileLine("unxsBindARecordJob","No uContainer etc. aborting!",uContainer);
+		exit(2);
+	}
+
+	if(!cView[0] || !cZone[0])
+	{
+		fprintf(stderr,"No cZone or no cView aborting!");
+		logfileLine("unxsBindARecordJob","No cZone or no cView aborting!",uContainer);
+		exit(2);
+	}
+
+	if(!cHostname[0] || !cIPv4[0])
+	{
+		fprintf(stderr,"No cIPv4 or no cHostname aborting!");
+		logfileLine("unxsBindARecordJob","No cIPv4 or no cHostname aborting!",uContainer);
+		exit(2);
+	}
+
+	sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
+		"cIPv4=%.99s;\n"
+		"cZone=%.99s;\n"
+		"cView=%.31s;\n",
+			cHostname,cIPv4,cZone,cView);
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindARecordJob(%u)',cJobName='unxsVZContainerARR'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=%u"
+			",cJobData='%s'"
+			",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				guDatacenter,
+				guNode,
+				uContainer,
+				uREMOTEWAITING,
+				cJobData);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,gcQuery);
+		logfileLine("unxsBindARecordJob",mysql_error(&gMysql),0);
+		exit(2);
+	}
+
+}//unsigned unxsBindARecordJob()
+
+
+void GetTextConfiguration(const char *cName,char *cValue,
+		unsigned uDatacenter,
+		unsigned uNode,
+		unsigned uContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+        char cQuery[1024];
+	char cExtra[100]={""};
+
+        sprintf(cQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='%s'",
+			cName);
+	if(uDatacenter)
+	{
+		sprintf(cExtra," AND uDatacenter=%u",uDatacenter);
+		strcat(cQuery,cExtra);
+	}
+	if(uNode)
+	{
+		sprintf(cExtra," AND uNode=%u",uNode);
+		strcat(cQuery,cExtra);
+	}
+	if(uContainer)
+	{
+		sprintf(cExtra," AND uContainer=%u",uContainer);
+		strcat(cQuery,cExtra);
+	}
+        mysql_query(&gMysql,cQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,gcQuery);
+		logfileLine("GetTextConfiguration",mysql_error(&gMysql),0);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+        	sprintf(cValue,"%.255s",field[0]);
+        mysql_free_result(res);
+
+}//void GetTextConfiguration()
+
+
+void UpdateBind(char *cSourceIPv4)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uContainer=0;
+
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel,tContainer.cHostname FROM tIP,tContainer,tGroupGlue,tGroup"
+			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
+			" AND tContainer.uIPv4=tIP.uIP"
+			" AND tGroup.uGroup=tGroupGlue.uGroup"
+			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
+			" AND tContainer.uNode=%u",guNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,gcQuery);
+		logfileLine("UpdateBind",mysql_error(&gMysql),uContainer);
+		mysql_close(&gMysql);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uContainer);
+		unxsBindARecordJob(uContainer,field[2],cSourceIPv4);
+	}
+        mysql_free_result(res);
+
+}//void UpdateBind(char *cSourceIPv4)
 
