@@ -113,8 +113,8 @@ EOF
 
 service squid restart;
 
-#per container rtp.conf file in one command
+#per container rtp.conf file and sipsettings table changes in one command
 #does not save previous version or data!
 #is also restarts all natpbx containers asterisk service
-/usr/sbin/unxsNATPBX CreateRTPData;
+/usr/sbin/unxsNATPBX ChangeFreePBX;
 
