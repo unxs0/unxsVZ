@@ -37,7 +37,8 @@ void TextConnectDb(void);
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer);
 void CreateIptablesData(char *cSourceIPv4);
 void CreateSquidData(char *cSourceIPv4);
-void CreateRTPData(void);
+void ChangeFreePBX(char *cExternalIP,char *cLAN);
+void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -110,6 +111,7 @@ int main(int iArgc, char *cArgv[])
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
+		fprintf(stderr,gcQuery);
 		logfileLine("main",mysql_error(&gMysql),0);
 		mysql_close(&gMysql);
 		exit(2);
@@ -138,16 +140,17 @@ int main(int iArgc, char *cArgv[])
 			goto CommonExit;
 		}
 	}
-	else if(iArgc==2)
+	else if(iArgc==4)
 	{
-		if(!strncmp(cArgv[1],"CreateRTPData",13))
+		if(!strncmp(cArgv[1],"ChangeFreePBX",13))
 		{
-			CreateRTPData();
+			ChangeFreePBX(cArgv[2],cArgv[3]);
 			goto CommonExit;
 		}
 	}
 
-	printf("Usage: %s CreateIptablesData|CreateSquidData|CreateRTPData <Source cIPv4>\n",gcProgram);
+	printf("Usage: %s CreateIptablesData|CreateSquidData <Source cIPv4>"
+		" | ChangeFreePBX <External cIPv4> <LAN E.g. 10.0.0.0/255.255.255.0>\n",gcProgram);
 
 CommonExit:
 	mysql_close(&gMysql);
@@ -172,6 +175,7 @@ void CreateIptablesData(char *cSourceIPv4)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
+		fprintf(stderr,gcQuery);
 		logfileLine("CreateIptablesData",mysql_error(&gMysql),uContainer);
 		mysql_close(&gMysql);
 		exit(2);
@@ -231,6 +235,7 @@ void CreateSquidData(char *cSourceIPv4)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
+		fprintf(stderr,gcQuery);
 		logfileLine("CreateSquidData",mysql_error(&gMysql),uContainer);
 		mysql_close(&gMysql);
 		exit(2);
@@ -286,11 +291,19 @@ acl our_sites dstdomain 72.52.75.235
 }//void CreateSquidData()
 
 
-void CreateRTPData(void)
+void ChangeFreePBX(char *cExternalIP,char *cLAN)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uContainer=0;
+	char cMask[16];
+	unsigned uA=0,uB=0,uC=0,uD=0,umA=0,umB=0,umC=0,umD=0;
+
+	sscanf(cLAN,"%u.%u.%u.%u/%u.%u.%u.%u",&uA,&uB,&uC,&uD,&umA,&umB,&umC,&umD);
+	sprintf(cLAN,"%u.%u.%u.%u",uA,uB,uC,uD);
+	sprintf(cMask,"%u.%u.%u.%u",umA,umB,umC,umD);
+
+	printf("%s/%s\n",cLAN,cMask);
 
 	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
@@ -301,7 +314,8 @@ void CreateRTPData(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("CreateRTPData",mysql_error(&gMysql),uContainer);
+		fprintf(stderr,gcQuery);
+		logfileLine("ChangeFreePBX",mysql_error(&gMysql),uContainer);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -332,7 +346,7 @@ rtpend=10999
 		if(!uD)
 		{
 			fprintf(stderr,"cIPv4 scan error\n");
-			logfileLine("CreateRTPData",field[1],uContainer);
+			logfileLine("ChangeFreePBX",field[1],uContainer);
 			continue;
 		}
 
@@ -342,22 +356,357 @@ rtpend=10999
 		{
 			sprintf(cCommand,"%.99s file open error\n",cFile);
 			fprintf(stderr,cCommand);
-			logfileLine("CreateRTPData",cFile,uContainer);
+			logfileLine("ChangeFreePBX",cFile,uContainer);
 			continue;
 		}
 
 		//Admin web port
 		uPort=10000+(uD-1)*100;
 		uRangeEnd=uPort+99;
-		printf("[general]\n");
-		printf("rtpstart=%u\n",uPort);
-		printf("rtpend=%u\n",uRangeEnd);
+		fprintf(fp,"[general]\n");
+		fprintf(fp,"rtpstart=%u\n",uPort);
+		fprintf(fp,"rtpend=%u\n",uRangeEnd);
 		fclose(fp);
 
+		//Change FreePBX MySQL data
+/*
+mysql> select * from sipsettings; natbx test with changes 1.2.r10
++-------------------+--------------------------+-----+------+
+| keyword           | data                     | seq | type |
++-------------------+--------------------------+-----+------+
+| nat               | route                    |  39 |    0 |
+| nat_mode          | externip                 |  10 |    0 |
+| externip_val      | 50.97.32.50              |  40 |    0 |
+| externhost_val    |                          |  40 |    0 |
+| externrefresh     | 120                      |  41 |    0 |
+| localnet_0        | 172.16.0.0               |  42 |    0 |
+| netmask_0         | 255.255.255.0            |   0 |    0 |
+| canreinvite       | no                       |  10 |    0 |
+| bindaddr          |                          |   2 |    0 |
+| bindport          | 6010                     |   1 |    0 |
+| srvlookup         | no                       |  10 |    0 |
+...
+mysql> select * from sipsettings; no changes 1.2.r10
++-------------------+-------------------------+-----+------+
+| keyword           | data                    | seq | type |
++-------------------+-------------------------+-----+------+
+| nat               | yes                     |  39 |    0 |
+| nat_mode          | public                  |  10 |    0 |
+| externip_val      |                         |  40 |    0 |
+| externhost_val    |                         |  40 |    0 |
+| externrefresh     | 120                     |  41 |    0 |
+| canreinvite       | no                      |  10 |    0 |
+| bindaddr          |                         |   2 |    0 |
+| bindport          |                         |   1 |    0 |
+| srvlookup         | no                      |  10 |    0 |
+...
++---------+--------------+------+-----+---------+-------+
+| Field   | Type         | Null | Key | Default | Extra |
++---------+--------------+------+-----+---------+-------+
+| keyword | varchar(50)  | NO   | PRI |         |       |
+| data    | varchar(255) | NO   |     |         |       |
+| seq     | tinyint(1)   | NO   | PRI | 0       |       |
+| type    | tinyint(1)   | NO   | PRI | 0       |       |
++---------+--------------+------+-----+---------+-------+
+
+Conclusion need to mod/add the following:
+
+	bindport=6010 1 0
+	nat=route 39 0
+	nat_mode=externip 10 0
+	externip_val=50.97.32.50 40 0
+	localnet_0=172.16.0.0 42 0
+	netmask_0=255.255.255.0 0 0
+*/
+		MYSQL gMysqlExt;
+		mysql_init(&gMysqlExt);
+		char cLogin[256]={""};
+		char cPasswd[256]={""};
+		GetContainerProp(uContainer,"cOrg_AMPDBUSER",cLogin);
+		GetContainerProp(uContainer,"cOrg_MySQLAsteriskPasswd",cPasswd);
+		sprintf(cFile,"/vz/private/%u/var/lib/mysql/mysql.sock",uContainer);
+		//debug only
+		printf("%u %s %s %s\n",uContainer,cLogin,cPasswd,cFile);
+		//mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
+		if(mysql_real_connect(&gMysqlExt,NULL,cLogin,cPasswd,"asterisk",0,cFile,0))
+		{
+        		MYSQL_RES *res;
+        		MYSQL_ROW field;
+
+			uPort=6000+uD;
+
+			//bindport
+			sprintf(gcQuery,"SELECT data FROM sipsettings WHERE keyword='bindport'");
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				fprintf(stderr,gcQuery);
+				logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+		        res=mysql_store_result(&gMysqlExt);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(gcQuery,"UPDATE sipsettings SET data='%u' WHERE keyword='bindport'",uPort);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO sipsettings SET data='%u',keyword='bindport',seq=1,type=0",uPort);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			mysql_free_result(res);
+
+			//nat
+			sprintf(gcQuery,"SELECT data FROM sipsettings WHERE keyword='nat'");
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				fprintf(stderr,gcQuery);
+				logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+		        res=mysql_store_result(&gMysqlExt);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(gcQuery,"UPDATE sipsettings SET data='route' WHERE keyword='nat'");
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO sipsettings SET data='route',keyword='nat',seq=39,type=0");
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			mysql_free_result(res);
+
+			//nat_mode
+			sprintf(gcQuery,"SELECT data FROM sipsettings WHERE keyword='nat_mode'");
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				fprintf(stderr,gcQuery);
+				logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+		        res=mysql_store_result(&gMysqlExt);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(gcQuery,"UPDATE sipsettings SET data='externip' WHERE keyword='nat_mode'");
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO sipsettings SET data='externip',keyword='nat_mode',seq=10,type=0");
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			mysql_free_result(res);
+
+			//externip_val
+			sprintf(gcQuery,"SELECT data FROM sipsettings WHERE keyword='externip_val'");
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				fprintf(stderr,gcQuery);
+				logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+		        res=mysql_store_result(&gMysqlExt);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(gcQuery,"UPDATE sipsettings SET data='%s' WHERE keyword='externip_val'",cExternalIP);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO sipsettings SET data='%s',keyword='externip_val',seq=40,type=0",cExternalIP);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			mysql_free_result(res);
+
+			//localhost_0
+			sprintf(gcQuery,"SELECT data FROM sipsettings WHERE keyword='localhost_0'");
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				fprintf(stderr,gcQuery);
+				logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+		        res=mysql_store_result(&gMysqlExt);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(gcQuery,"UPDATE sipsettings SET data='%s' WHERE keyword='localhost_0'",cLAN);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO sipsettings SET data='%s',keyword='localhost_0',seq=42,type=0",cLAN);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			mysql_free_result(res);
+
+			//netmask_0
+			sprintf(gcQuery,"SELECT data FROM sipsettings WHERE keyword='netmask_0'");
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				fprintf(stderr,gcQuery);
+				logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+		        res=mysql_store_result(&gMysqlExt);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(gcQuery,"UPDATE sipsettings SET data='%s' WHERE keyword='netmask_0'",cMask);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO sipsettings SET data='%s',keyword='netmask_0',seq=0,type=0",cMask);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					fprintf(stderr,gcQuery);
+					logfileLine("ChangeFreePBX",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+			}
+			mysql_free_result(res);
+			mysql_close(&gMysqlExt);
+		}
+		else
+		{
+			sprintf(cCommand,"%.99s mysql_real_connect() error\n",cFile);
+			fprintf(stderr,cCommand);
+			logfileLine("ChangeFreePBX",cFile,uContainer);
+			continue;
+		}
+
+		//pull conf files from db
+		sprintf(cCommand,"vzctl exec2 %u '/var/lib/asterisk/bin/retrieve_conf'",uContainer);
+		system(cCommand);
+
+		//restart the whole thing ok since not in use supposedly
 		sprintf(cCommand,"vzctl exec2 %u 'service asterisk restart'",uContainer);
 		system(cCommand);
-		
 	}
 	mysql_free_result(res);
 
-}//void CreateRTPData(void)
+}//void ChangeFreePBX()
+
+
+void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0) return;
+
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='%s'",
+				uContainer,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		if(gLfp!=NULL)
+		{
+			fprintf(stderr,gcQuery);
+			logfileLine("GetContainerProp",mysql_error(&gMysql),0);
+			exit(2);
+		}
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetContainerProp(...)
+
