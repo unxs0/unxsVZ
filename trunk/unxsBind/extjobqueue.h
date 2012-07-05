@@ -22,7 +22,7 @@ typedef struct {
 	unsigned ucZone;
 
 	char cMainAddress[16];
-	char cTarget[100];
+	char cTarget[255];
 	char cParkedDomains[256];
 	char cNameServer[100];
 	char cMailServer[100];
@@ -37,6 +37,9 @@ typedef struct {
 	unsigned uZoneTTL;
 	unsigned uMailServer;
 	unsigned uNSSet;
+	unsigned uPriority;
+	unsigned uWeight;
+	unsigned uPort;
 
 	//New universal paramters
 	char cIPv4[32];
@@ -65,6 +68,10 @@ typedef struct {
 
 	char cParam4[255];
 	unsigned ucParam4;
+
+	//shared with Target=
+	//char cTarget[255];
+	unsigned ucTarget;
 
 	char cView[32];
 	unsigned ucView;
