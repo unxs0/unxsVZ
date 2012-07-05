@@ -10,9 +10,7 @@ AUTHOR
 	Gary Wallis for Unxiservice, LLC. (C) 2011.
 	GPLv2 License applies. See LICENSE file.
 NOTES
-	We also need to be able to update/add A records for this group
-	of PBXs.
-	Next is creating the SRV records for these PBXs for correct
+	Create the SRV records for these PBXs for correct
 	SIP switch interop.
 */
 
@@ -41,6 +39,7 @@ void GetTextConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
 		unsigned uNode,
 		unsigned uContainer);
+void SetContainerProp(const unsigned uContainer,const char *cName,const char *cValue);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -197,11 +196,12 @@ void CreateIptablesData(char *cSourceIPv4)
 	unsigned uRangeEnd;
 	while((field=mysql_fetch_row(res)))
 	{
+		sscanf(field[0],"%u",&uContainer);
+
 		unsigned uD=0;
 		sscanf(field[1],"%*u.%*u.%*u.%u",&uD);
 		if(!uD)
 		{
-			sscanf(field[0],"%u",&uContainer);
 			fprintf(stderr,"cIPv4 scan error\n");
 			logfileLine("CreateIptablesData",field[1],uContainer);
 			continue;
@@ -209,21 +209,32 @@ void CreateIptablesData(char *cSourceIPv4)
 
 		//Admin web port
 		uPort=8000+uD;
+		//Also save port info in tProperty
+		char cPort[32]={"0"};
+		sprintf(cPort,"%u",uPort);
+		SetContainerProp(uContainer,"cOrg_AdminPort",cPort);
 		printf("#nat pbx %s\n-A PREROUTING -d %s -p tcp -m tcp --dport %u -j DNAT --to-destination %s:3321\n",
 			field[1],cSourceIPv4,uPort,field[1]);
 		//Zabbix port
 		uPort=9000+uD;
+		sprintf(cPort,"%u",uPort);
+		SetContainerProp(uContainer,"cOrg_ZabbixPort",cPort);
 		printf("-A PREROUTING -d %s -p tcp -m tcp --dport %u -j DNAT --to-destination %s:%u\n",
 			cSourceIPv4,uPort,field[1],uPort);
 		//Asterisk sip port
 		uPort=6000+uD;
+		sprintf(cPort,"%u",uPort);
+		SetContainerProp(uContainer,"cOrg_SIPPort",cPort);
 		printf("-A PREROUTING -p udp -m udp --dport %u -j DNAT --to-destination %s:%u\n",
 			uPort,field[1],uPort);
 		//Asterisk rtp port range (100 ports ~25 concurrent calls)
 		uPort=10000+(uD-1)*100;
 		uRangeEnd=uPort+99;
+		sprintf(cPort,"%u:%u",uPort,uRangeEnd);
+		SetContainerProp(uContainer,"cOrg_RTPRange",cPort);
 		printf("-A PREROUTING -p udp -m udp --dport %u:%u -j DNAT --to-destination %s\n",
 			uPort,uRangeEnd,field[1]);
+
 	}
 	mysql_free_result(res);
 
@@ -747,7 +758,61 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
 	}
 	mysql_free_result(res);
 
-}//void GetContainerProp(...)
+}//void GetContainerProp()
+
+
+void SetContainerProp(const unsigned uContainer,const char *cName,const char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0 || !cName[0] || !cValue[0]) return;
+
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%u AND uType=3 AND cName='%s'",
+				uContainer,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		if(gLfp!=NULL)
+		{
+			fprintf(stderr,gcQuery);
+			logfileLine("SetContainerProp",mysql_error(&gMysql),0);
+			exit(2);
+		}
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%s",cValue,field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			if(gLfp!=NULL)
+			{
+				fprintf(stderr,gcQuery);
+				logfileLine("SetContainerProp",mysql_error(&gMysql),0);
+				exit(2);
+			}
+		}
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET cName='%s',cValue='%s',uKey=%u,uType=3,uOwner=1,uCreatedBy=1,"
+										"uCreatedDate=UNIX_TIMESTAMP(NOW())",cName,cValue,uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			if(gLfp!=NULL)
+			{
+				fprintf(stderr,gcQuery);
+				logfileLine("SetContainerProp",mysql_error(&gMysql),0);
+				exit(2);
+			}
+		}
+	}
+	mysql_free_result(res);
+
+}//void SetContainerProp()
 
 
 void unxsBindARecordJob(unsigned uContainer,char const *cHostname,char const *cIPv4)
