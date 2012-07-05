@@ -36,6 +36,7 @@ static char gcNewLogin[33]={"John Doe"};
 static char gcNewPasswd[33]={""};
 static char gcAuthCode[33]={""};
 static char *gcShowDetails="";
+char gcAdminPort[16]=":3321";
 
 unsigned guMode;
 
@@ -1670,7 +1671,6 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 			MYSQL_RES *res0;
 			MYSQL_ROW field0;
 			char cQuery[128];
-			char gcAdminPort[16]=":3321";
 			sprintf(cQuery,"SELECT cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName='cOrg_AdminPort'",guContainer);
 			mysql_query(&gMysql,cQuery);
 			if(mysql_errno(&gMysql))
@@ -1720,8 +1720,8 @@ void funcContainerImageTag(FILE *fp)
 		sscanf(field[0],"%u",&guStatus);
 	mysql_free_result(res);
 	if(guStatus && guStatus!=uREMOTEAPPLIANCE && guStatus!=uAWAITACT)
-		fprintf(fp,"<a href=https://%s/admin ><img src=%s/traffic/%u.png border=0 ></a>",
-			cGetHostname(guContainer),cGetImageHost(guContainer),guContainer);
+		fprintf(fp,"<a href=https://%s%s/admin ><img src=%s/traffic/%u.png border=0 ></a>",
+			cGetHostname(guContainer),gcAdminPort,cGetImageHost(guContainer),guContainer);
 
 }//void funcContainerImageTag(FILE *fp)
 
