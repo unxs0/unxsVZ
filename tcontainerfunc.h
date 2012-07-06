@@ -92,6 +92,7 @@ static char ctContainerGroupPullDown[256]={""};
 //uForClient: Create for, on 'New;
 static unsigned uForClient=0;
 static unsigned uCreateDNSJob=0;
+static unsigned uUsePublicIP=0;
 static char cForClientPullDown[256]={""};
 
 //ModuleFunctionProtos()
@@ -332,6 +333,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"uCreateDNSJob"))
 		{
 			uCreateDNSJob=1;
+		}
+		else if(!strcmp(entries[i].name,"uUsePublicIP"))
+		{
+			uUsePublicIP=1;
 		}
 		else if(!strcmp(entries[i].name,"uCloneStop"))
 		{
@@ -3143,7 +3148,15 @@ void ExttContainerCommands(pentry entries[], int x)
 				sprintf(cPrevHostname,"%.99s",cHostname);
 				sprintf(cHostname,"%.99s",cWizHostname);
 				if(uCreateDNSJob)
-					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient);
+				{
+					char cUseThisIP[256]={""};
+					if(uUsePublicIP)
+					{
+						GetContainerProp(uContainer,"cOrg_PublicIP",cUseThisIP);
+						IPNumber(cUseThisIP);
+					}
+					CreateDNSJob(uIPv4,uOwner,cUseThisIP,cHostname,uDatacenter,guLoginClient);
+				}
 				if(HostnameContainerJob(uDatacenter,uNode,uContainer,cPrevHostname,uOwner,guLoginClient))
 				{
 					uStatus=uAWAITHOST;
@@ -3634,8 +3647,10 @@ void ExttContainerButtons(void)
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 			if(cunxsBindARecordJobZone[0])
 			{
-				printf("<p>Create job for unxsBind A record<br>");
-				printf("<input type=checkbox name=uCreateDNSJob >");
+				printf("<p>Create job for unxsBind A record<br>"
+						"<input type=checkbox name=uCreateDNSJob >");
+				printf("<p>Use tProperty cOrg_PublicIP if available<br>"
+						"<input type=checkbox name=uUsePublicIP>");
 			}
                 break;
 
@@ -6558,6 +6573,8 @@ void ChangeGroup(unsigned uContainer, unsigned uGroup)
 		unsigned uPrimaryGroup=0;
 
 		//Get the PK of the primary group of this container.
+		//So smallest (oldest/first) uGroup is the primary group? This does not seem correct.
+		//The oldest/first uGroupGlue uGroup should be the primary group!
 		sprintf(gcQuery,"SELECT tGroupGlue.uGroupGlue,tGroupGlue.uGroup FROM tGroupGlue,tGroup WHERE"
 			" tGroupGlue.uGroup=tGroup.uGroup AND tGroupGlue.uContainer=%u"
 			" AND tGroup.uGroupType=1 ORDER BY tGroupGlue.uGroup LIMIT 1",uContainer);//1 is container type
