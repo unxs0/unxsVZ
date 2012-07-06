@@ -46,6 +46,9 @@ void GetTextConfiguration(const char *cName,char *cValue,
 		unsigned uNode,
 		unsigned uContainer);
 void SetContainerProp(const unsigned uContainer,const char *cName,const char *cValue);
+void AddSIPSRV(char *cuContainer);
+void DelSIPSRV(char *cHostname);
+void unxsBindSIPSRVDelRecordJob(unsigned uContainer,char const *cHostname,unsigned uSIPPort);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -162,6 +165,16 @@ int main(int iArgc, char *cArgv[])
 			UpdateBind(cArgv[2]);
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"AddSIPSRV",9))
+		{
+			AddSIPSRV(cArgv[2]);
+			goto CommonExit;
+		}
+		else if(!strncmp(cArgv[1],"DelSIPSRV",9))
+		{
+			DelSIPSRV(cArgv[2]);
+			goto CommonExit;
+		}
 	}
 	else if(iArgc==4)
 	{
@@ -173,7 +186,7 @@ int main(int iArgc, char *cArgv[])
 	}
 
 	printf("Usage: %s\nUpdateNonNatPBXContainers\nCreateIptablesData|CreateSquidData|UpdateBind <Source cIPv4>\n"
-		"ChangeFreePBX <External cIPv4> <LAN E.g. 10.0.0.0/255.255.255.0>\n",gcProgram);
+		"ChangeFreePBX <External cIPv4> <LAN E.g. 10.0.0.0/255.255.255.0>\nAddSIPSRV <uVEID>\nDelSIPSRV <cHostname>\n",gcProgram);
 
 CommonExit:
 	mysql_close(&gMysql);
@@ -705,8 +718,8 @@ void unxsBindSIPSRVRecordJob(unsigned uContainer,char const *cHostname,unsigned 
 	//If called in loop be efficient.
 	if(guOnlyOnce)
 	{
-		GetTextConfiguration("cunxsBindSIPSRVRecordJobZone",gcZone,guDatacenter,0,0);
-		GetTextConfiguration("cunxsBindSIPSRVRecordJobView",gcView,guDatacenter,0,0);
+		GetTextConfiguration("cunxsBindARecordJobZone",gcZone,guDatacenter,0,0);
+		GetTextConfiguration("cunxsBindARecordJobView",gcView,guDatacenter,0,0);
 		guOnlyOnce=0;
 	}
 
@@ -798,4 +811,155 @@ void UpdateNonNatPBXContainers(void)
 	mysql_free_result(res);
 
 }//void UpdateNonNatPBXContainers()
+
+
+void AddSIPSRV(char *cuContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uContainer=0;
+	unsigned uSIPPort=0;
+
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel,tContainer.cHostname FROM tIP,tContainer,tGroupGlue,tGroup"
+			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
+			" AND tContainer.uIPv4=tIP.uIP"
+			" AND tGroup.uGroup=tGroupGlue.uGroup"
+			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
+			" AND tContainer.uContainer=%s",cuContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,gcQuery);
+		logfileLine("AddSIPSRV",mysql_error(&gMysql),uContainer);
+		mysql_close(&gMysql);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uD=0;
+
+		sscanf(field[0],"%u",&uContainer);
+		sscanf(field[1],"%*u.%*u.%*u.%u",&uD);
+		if(!uD)
+		{
+			fprintf(stderr,"cIPv4 scan error\n");
+			logfileLine("AddSIPSRV",field[1],uContainer);
+			return;
+		}
+
+		uSIPPort=6000+uD;
+		unxsBindSIPSRVRecordJob(uContainer,field[2],uSIPPort);
+	}
+        mysql_free_result(res);
+
+}//void AddSIPSRV()
+
+
+void DelSIPSRV(char *cHostname)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uContainer=0;
+	unsigned uSIPPort=0;
+
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
+			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
+			" AND tContainer.uIPv4=tIP.uIP"
+			" AND tGroup.uGroup=tGroupGlue.uGroup"
+			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
+			" AND tContainer.cHostname='%s'",cHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,gcQuery);
+		logfileLine("DelSIPSRV",mysql_error(&gMysql),uContainer);
+		mysql_close(&gMysql);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uD=0;
+
+		sscanf(field[0],"%u",&uContainer);
+		sscanf(field[1],"%*u.%*u.%*u.%u",&uD);
+		if(!uD)
+		{
+			fprintf(stderr,"cIPv4 scan error\n");
+			logfileLine("DelSIPSRV",field[1],uContainer);
+			return;
+		}
+
+		uSIPPort=6000+uD;
+		unxsBindSIPSRVDelRecordJob(uContainer,cHostname,uSIPPort);
+	}
+        mysql_free_result(res);
+
+}//void DelSIPSRV()
+
+
+void unxsBindSIPSRVDelRecordJob(unsigned uContainer,char const *cHostname,unsigned uSIPPort)
+{
+	char cJobData[512]={""};
+
+	//If called in loop be efficient.
+	if(guOnlyOnce)
+	{
+		GetTextConfiguration("cunxsBindARecordJobZone",gcZone,guDatacenter,0,0);
+		GetTextConfiguration("cunxsBindARecordJobView",gcView,guDatacenter,0,0);
+		guOnlyOnce=0;
+	}
+
+	if(!uContainer || !guNode || !guDatacenter)
+	{
+		fprintf(stderr,"No uContainer etc. aborting!");
+		logfileLine("unxsBindSIPSRVDelRecordJob","No uContainer etc. aborting!",uContainer);
+		exit(2);
+	}
+
+	if(!gcView[0] || !gcZone[0])
+	{
+		fprintf(stderr,"No gcZone or no gcView aborting!");
+		logfileLine("unxsBindSIPSRVDelRecordJob","No gcZone or no gcView aborting!",uContainer);
+		exit(2);
+	}
+
+	if(!cHostname[0] || !uSIPPort)
+	{
+		fprintf(stderr,"No uSIPPort or no cHostname aborting!");
+		logfileLine("unxsBindSIPSRVDelRecordJob","No uSIPPort or no cHostname aborting!",uContainer);
+		exit(2);
+	}
+
+//_sip._udp.natpbx.callingcloud.net. 	SRV 10	1	6010	natpbx.callingcloud.net.	Testing UDP DNS SRV transport for nat PBX
+	sprintf(cJobData,"cName=_sip._udp.%.99s.;\n"//Note trailing dot
+		"uPriority=%u;\n"
+		"uWeight=%u;\n"
+		"uPort=%u;\n"
+		"cTarget=%.99s.;\n"
+		"cZone=%.99s;\n"
+		"cView=%.31s;\n",
+			cHostname,10,1,uSIPPort,cHostname,gcZone,gcView);
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindSIPSRVDelRecordJob(%u)',cJobName='unxsVZContainerDelSRVRR'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=%u"
+			",cJobData='%s'"
+			",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				guDatacenter,
+				guNode,
+				uContainer,
+				uREMOTEWAITING,
+				cJobData);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,gcQuery);
+		logfileLine("unxsBindSIPRSVDelRecordJob",mysql_error(&gMysql),0);
+		exit(2);
+	}
+
+}//unsigned unxsBindSIPRSVDelRecordJob()
+
 
