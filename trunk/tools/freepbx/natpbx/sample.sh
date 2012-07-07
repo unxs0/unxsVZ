@@ -108,7 +108,7 @@ http_access deny CONNECT !SSL_ports
 http_access deny all
 
 access_log /var/log/squid/access.log
-cache_mgr support@voicecarrier.com
+cache_mgr support@unixservice.com
 EOF
 
 service squid restart;
