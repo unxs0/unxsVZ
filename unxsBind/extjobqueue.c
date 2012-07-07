@@ -1897,9 +1897,142 @@ void ProcessVZJobQueue(void)
 			sscanf(field[2],"%u",&uJob);
 			sscanf(field[3],"%u",&uOwner);
 
-			//unxsVZRR-FQName
+			if(!strcmp("unxsVZContainerDelSRVRR",field[0]))
+			{
+				//Update remote job queue running
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='%.32s'"
+						" WHERE uJob=%u",unxsVZ_uRUNNING,gcHostname,uJob);
+				mysql_query(&gMysql2,gcQuery);
+				if(mysql_errno(&gMysql2))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					goto ErrorExit;
+				}
+	
+				ParseExtParams(&structExtParam,field[1]);
+				//debug only
+				printf("%s(%u) data:\n",field[0],uJob);
+				printf("\tcName=%s;\n",structExtParam.cName);
+				printf("\tuPriority=%u;\n",structExtParam.uPriority);
+				printf("\tuWeight=%u;\n",structExtParam.uWeight);
+				printf("\tuPort=%u;\n",structExtParam.uPort);
+				printf("\tcTarget=%s;\n",structExtParam.cTarget);
+				printf("\tcZone=%s;\n",structExtParam.cZone);
+				printf("\tcView=%s;\n\n",structExtParam.cView);
+
+				//cName must be FQDN
+				if(structExtParam.cName[strlen(structExtParam.cName)-1]!='.')
+				{
+					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cName);
+					goto ErrorExit;
+				}
+				//cTarget must be FQDN
+				if(structExtParam.cTarget[strlen(structExtParam.cTarget)-1]!='.')
+				{
+					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cTarget);
+					goto ErrorExit;
+				}
+				//cName must end in cZone.
+				if(!strcmp(structExtParam.cName+(strlen(structExtParam.cName)-strlen(structExtParam.cZone)-1),
+					structExtParam.cZone))
+				{
+					fprintf(stderr,"'%s' does not end with '%s'\n",structExtParam.cName,structExtParam.cZone);
+					goto ErrorExit;
+				}
+
+				//Get required data
+				sprintf(gcQuery,"SELECT uZone,uNSSet,uView,uOwner FROM tZone WHERE"
+						" uView=(SELECT uView FROM tView WHERE cLabel='%s' LIMIT 1) AND"
+						" cZone='%s' LIMIT 1",
+							structExtParam.cView,
+							structExtParam.cZone);
+				//debug only
+				//printf("%s\n",gcQuery);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					goto ErrorExit;
+				}
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+				{
+					sscanf(field2[0],"%u",&uZone);
+					sscanf(field2[1],"%u",&uNSSet);
+					sscanf(field2[2],"%u",&uView);
+					sscanf(field2[3],"%u",&uOwner);
+				}
+				mysql_free_result(res2);
+
+				if(!uZone)
+				{
+					fprintf(stderr,"No tZone.uZone for %s %s\n",
+								structExtParam.cView,
+								structExtParam.cZone);
+					fprintf(stderr,"%s",gcQuery);
+					goto ErrorExit;
+				}
+				sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u"
+						" AND uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='SRV' LIMIT 1)"
+						" AND cParam1='%u' AND cParam2='%u'",
+							structExtParam.cName,
+							uZone,
+							structExtParam.uPriority,
+							structExtParam.uWeight);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					goto ErrorExit;
+				}
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+					sscanf(field2[0],"%u",&uResource);
+				mysql_free_result(res2);
+
+				if(uResource)
+				{
+					sprintf(gcQuery,"DELETE FROM tResource WHERE uResource=%u",uResource);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+					//debug only
+					printf("Deleting uResource=%u\n",uResource);
+				}
+				else
+				{
+					//debug only
+					printf("No uResource found\n");
+					goto ErrorExit;
+				}
+				UpdateSerialNum(uZone);
+
+				//Submit zone mod job
+				guLoginClient=1;
+				guCompany=uOwner;
+				if(SubmitJob("Modify",uNSSet,structExtParam.cZone,0,0))
+				{
+					fprintf(stderr,"SubmitJob() failed.\n");
+					goto ErrorExit;
+				}
+
+				//Update remote job queue done ok
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZContainerDelSRVRR ok'"
+						" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
+				mysql_query(&gMysql2,gcQuery);
+				if(mysql_errno(&gMysql2))
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					goto ErrorExit;
+				}
+
+			}//unxsVZContainerDelSRVRR
+
 			//cName is a fully qualified DNS RR name, i.e. it ends in the zone name.
-			if(!strcmp("unxsVZContainerSRVRR",field[0]))
+			else if(!strcmp("unxsVZContainerSRVRR",field[0]))
 			{
 				//debug only
 				//printf("ProcessVZJobQueue() unxsVZContainerARR\n");
@@ -2068,7 +2201,6 @@ void ProcessVZJobQueue(void)
 				goto NormalExit;
 			}//unxsVZContainerSRVRR
 
-			//unxsVZRR-FQName
 			//cName is a fully qualified DNS RR name, i.e. it ends in the zone name.
 			else if(!strcmp("unxsVZContainerARR",field[0]))
 			{
@@ -2408,11 +2540,15 @@ void ProcessVZJobQueue(void)
 
 //Organize this later with another function
 ErrorExit:
-	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsBind ext jobqueue error'"
+	if(uJob)
+	{
+		fprintf(stderr,"ErrorExit uJob=%u\n",uJob);
+		sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsBind ext jobqueue error'"
 			" WHERE uJob=%u",unxsVZ_uERROR,uJob);
-	mysql_query(&gMysql2,gcQuery);
-	if(mysql_errno(&gMysql2))
-		fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+		mysql_query(&gMysql2,gcQuery);
+		if(mysql_errno(&gMysql2))
+			fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+	}
 
 NormalExit:
 	//debug only
