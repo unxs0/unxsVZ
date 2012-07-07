@@ -93,6 +93,7 @@ static char ctContainerGroupPullDown[256]={""};
 static unsigned uForClient=0;
 static unsigned uCreateDNSJob=0;
 static unsigned uUsePublicIP=0;
+static char gcUseThisIP[256]={""};
 static char cForClientPullDown[256]={""};
 
 //ModuleFunctionProtos()
@@ -337,6 +338,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"uUsePublicIP"))
 		{
 			uUsePublicIP=1;
+		}
+		else if(!strcmp(entries[i].name,"gcUseThisIP"))
+		{
+			sprintf(gcUseThisIP,"%.31s",IPNumber(entries[i].val));
 		}
 		else if(!strcmp(entries[i].name,"uCloneStop"))
 		{
@@ -2778,6 +2783,9 @@ void ExttContainerCommands(pentry entries[], int x)
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+				GetContainerProp(uContainer,"cOrg_PublicIP",gcUseThisIP);
+				if(gcUseThisIP)
+					tContainer("<blink>Error:</blink> NAT container remote migration not supported yet.");
 				guMode=10001;
 				tContainer("Select Migration Target");
 			}
@@ -2939,7 +2947,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
-		}
+		}//Confirm Remote Migration
                 else if(!strcmp(gcCommand,"Template Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
@@ -3054,8 +3062,11 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
                         	guMode=5001;
+				//debug only
+				//if(uUsePublicIP && gcUseThisIP[0])
+				//	tContainer(gcUseThisIP);
 				if(!strcmp(cWizHostname,cHostname) && !strcmp(cWizLabel,cLabel))
-					tContainer("<blink>Error:</blink> cHostname and cLabel are the same!");
+					tContainer("<blink>Error:</blink> cHostname and cLabel are the same as original!");
 				if((uHostnameLen=strlen(cWizHostname))<5)
 					tContainer("<blink>Error:</blink> cHostname too short!");
 				if((uLabelLen=strlen(cWizLabel))<2)
@@ -3149,13 +3160,10 @@ void ExttContainerCommands(pentry entries[], int x)
 				sprintf(cHostname,"%.99s",cWizHostname);
 				if(uCreateDNSJob)
 				{
-					char cUseThisIP[256]={""};
-					if(uUsePublicIP)
-					{
-						GetContainerProp(uContainer,"cOrg_PublicIP",cUseThisIP);
-						IPNumber(cUseThisIP);
-					}
-					CreateDNSJob(uIPv4,uOwner,cUseThisIP,cHostname,uDatacenter,guLoginClient);
+					if(uUsePublicIP && gcUseThisIP[0])
+						CreateDNSJob(uIPv4,uOwner,gcUseThisIP,cHostname,uDatacenter,guLoginClient);
+					else
+						CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient);
 				}
 				if(HostnameContainerJob(uDatacenter,uNode,uContainer,cPrevHostname,uOwner,guLoginClient))
 				{
@@ -3173,7 +3181,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
-		}
+		}//Confirm Hostname Change 
                 else if(!strcmp(gcCommand,"IP Change Wizard"))
                 {
                         ProcesstContainerVars(entries,x);
@@ -3647,10 +3655,21 @@ void ExttContainerButtons(void)
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 			if(cunxsBindARecordJobZone[0])
 			{
+				GetContainerProp(uContainer,"cOrg_PublicIP",gcUseThisIP);
 				printf("<p>Create job for unxsBind A record<br>"
-						"<input type=checkbox name=uCreateDNSJob >");
-				printf("<p>Use tProperty cOrg_PublicIP if available<br>"
-						"<input type=checkbox name=uUsePublicIP>");
+						"<input type=checkbox name=uCreateDNSJob ");
+				if(gcUseThisIP[0])
+				{
+					printf(" checked>");
+					IPNumber(gcUseThisIP);
+					printf("<p>Use tProperty cOrg_PublicIP %s<br>"
+						"<input type=checkbox name=uUsePublicIP checked>"
+						"<input type=hidden name=gcUseThisIP value='%s'>",gcUseThisIP,gcUseThisIP);
+				}
+				else
+				{
+					printf(" >");
+				}
 			}
                 break;
 
@@ -6606,6 +6625,7 @@ void ChangeGroup(unsigned uContainer, unsigned uGroup)
 		}
 		mysql_free_result(res);
 	}
+
 }//void ChangeGroup(unsigned uContainer, unsigned uGroup)
 
 
@@ -6805,12 +6825,8 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 	MYSQL_ROW field;
 	char cJobData[512];
 	char cIPv4[32]={""};
-	//char cOwner[32]={"Root"};
-	//Get all these from tConfiguration once.
 	static char cView[256]={"external"};
 	static char cZone[256]={""};
-	//static char cuTTL[256]={"0"};//for zone default we use 0
-	//static char cNSSet[256]={""};//not supported yet
 	static unsigned uOnlyOnce=1;
 
 	//Sanity checks
@@ -6824,7 +6840,6 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 	{
 		GetConfiguration("cunxsBindARecordJobZone",cZone,uDatacenter,0,0,0);
 		GetConfiguration("cunxsBindARecordJobView",cView,uDatacenter,0,0,0);
-		//GetConfiguration("cunxsBindARecordJobTTL",cuTTL,uDatacenter,0,0,0);//not supported yet
 		uOnlyOnce=0;
 	}
 
@@ -6835,6 +6850,7 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 	if(cOptionalIPv4!=NULL && cOptionalIPv4[0])
 	{
 		sprintf(cIPv4,"%.31s",cOptionalIPv4);
+
 	}
 	else if(uIPv4)
 	{
@@ -6845,34 +6861,17 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 			sprintf(cIPv4,"%.31s",field[0]);
+		mysql_free_result(res);
 	}
 
 	//Sanity checks
 	if(!cIPv4[0])
 		return;
 
-/*
-	//not supported yet
-	if(uOwner)
-	{
-		sprintf(gcQuery,"SELECT cLabel FROM tClient WHERE uClient=%u",uOwner);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-			sprintf(cOwner,"%.31s",field[0]);
-	}
-*/
-
-	mysql_free_result(res);
 	sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
-		//"cuTTL=%.15s;\n"
 		"cIPv4=%.99s;\n"
-		//"cNSSet=%.31s;\n"
 		"cZone=%.99s;\n"
 		"cView=%.31s;\n",
-		//"cOwner=%.31s;\n",
 			cHostname,cIPv4,cZone,cView);
 
 	unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy);
