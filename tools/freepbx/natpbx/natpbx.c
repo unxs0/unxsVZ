@@ -49,6 +49,7 @@ void SetContainerProp(const unsigned uContainer,const char *cName,const char *cV
 void AddSIPSRV(char *cuContainer);
 void DelSIPSRV(char *cHostname);
 void unxsBindSIPSRVDelRecordJob(unsigned uContainer,char const *cHostname,unsigned uSIPPort);
+void AddPublicIP(char *cSourceIPv4);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -170,6 +171,11 @@ int main(int iArgc, char *cArgv[])
 			AddSIPSRV(cArgv[2]);
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"AddPublicIP",11))
+		{
+			AddPublicIP(cArgv[2]);
+			goto CommonExit;
+		}
 		else if(!strncmp(cArgv[1],"DelSIPSRV",9))
 		{
 			DelSIPSRV(cArgv[2]);
@@ -185,7 +191,7 @@ int main(int iArgc, char *cArgv[])
 		}
 	}
 
-	printf("Usage: %s\nUpdateNonNatPBXContainers\nCreateIptablesData|CreateSquidData|UpdateBind <Source cIPv4>\n"
+	printf("Usage: %s\nUpdateNonNatPBXContainers\nCreateIptablesData|CreateSquidData|UpdateBind|AddPublicIP <Source cIPv4>\n"
 		"ChangeFreePBX <External cIPv4> <LAN E.g. 10.0.0.0/255.255.255.0>\nAddSIPSRV <uVEID>\nDelSIPSRV <cHostname>\n",gcProgram);
 
 CommonExit:
@@ -240,6 +246,7 @@ void CreateIptablesData(char *cSourceIPv4)
 		char cPort[32]={"0"};
 		sprintf(cPort,"%u",uPort);
 		SetContainerProp(uContainer,"cOrg_AdminPort",cPort);
+		SetContainerProp(uContainer,"cOrg_PublicIP",cSourceIPv4);
 		printf("#nat pbx %s\n-A PREROUTING -d %s -p tcp -m tcp --dport %u -j DNAT --to-destination %s:3321\n",
 			field[1],cSourceIPv4,uPort,field[1]);
 		//Zabbix port
@@ -820,12 +827,13 @@ void AddSIPSRV(char *cuContainer)
 	unsigned uContainer=0;
 	unsigned uSIPPort=0;
 
+	sscanf(cuContainer,"%u",&uContainer);
 	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel,tContainer.cHostname FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
 			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
-			" AND tContainer.uContainer=%s",cuContainer);
+			" AND tContainer.uContainer=%u",uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -857,42 +865,7 @@ void AddSIPSRV(char *cuContainer)
 
 void DelSIPSRV(char *cHostname)
 {
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-	unsigned uContainer=0;
-	unsigned uSIPPort=0;
-
-	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
-			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
-			" AND tContainer.uIPv4=tIP.uIP"
-			" AND tGroup.uGroup=tGroupGlue.uGroup"
-			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
-			" AND tContainer.cHostname='%s'",cHostname);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(stderr,gcQuery);
-		logfileLine("DelSIPSRV",mysql_error(&gMysql),uContainer);
-		mysql_close(&gMysql);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		unsigned uD=0;
-
-		sscanf(field[0],"%u",&uContainer);
-		sscanf(field[1],"%*u.%*u.%*u.%u",&uD);
-		if(!uD)
-		{
-			fprintf(stderr,"cIPv4 scan error\n");
-			logfileLine("DelSIPSRV",field[1],uContainer);
-			return;
-		}
-
-		uSIPPort=6000+uD;
-		unxsBindSIPSRVDelRecordJob(uContainer,cHostname,uSIPPort);
-	}
-        mysql_free_result(res);
+	unxsBindSIPSRVDelRecordJob(0,cHostname,0);
 
 }//void DelSIPSRV()
 
@@ -909,10 +882,10 @@ void unxsBindSIPSRVDelRecordJob(unsigned uContainer,char const *cHostname,unsign
 		guOnlyOnce=0;
 	}
 
-	if(!uContainer || !guNode || !guDatacenter)
+	if(!guNode || !guDatacenter)
 	{
-		fprintf(stderr,"No uContainer etc. aborting!");
-		logfileLine("unxsBindSIPSRVDelRecordJob","No uContainer etc. aborting!",uContainer);
+		fprintf(stderr,"No guNode aborting!");
+		logfileLine("unxsBindSIPSRVDelRecordJob","No guNode aborting!",uContainer);
 		exit(2);
 	}
 
@@ -923,10 +896,10 @@ void unxsBindSIPSRVDelRecordJob(unsigned uContainer,char const *cHostname,unsign
 		exit(2);
 	}
 
-	if(!cHostname[0] || !uSIPPort)
+	if(!cHostname[0])
 	{
-		fprintf(stderr,"No uSIPPort or no cHostname aborting!");
-		logfileLine("unxsBindSIPSRVDelRecordJob","No uSIPPort or no cHostname aborting!",uContainer);
+		fprintf(stderr,"No cHostname aborting!");
+		logfileLine("unxsBindSIPSRVDelRecordJob","No cHostname aborting!",uContainer);
 		exit(2);
 	}
 
@@ -962,4 +935,36 @@ void unxsBindSIPSRVDelRecordJob(unsigned uContainer,char const *cHostname,unsign
 
 }//unsigned unxsBindSIPRSVDelRecordJob()
 
+
+void AddPublicIP(char *cSourceIPv4)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uContainer=0;
+
+	sprintf(gcQuery,"SELECT tContainer.uContainer FROM tIP,tContainer,tGroupGlue,tGroup"
+			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
+			" AND tContainer.uIPv4=tIP.uIP"
+			" AND tGroup.uGroup=tGroupGlue.uGroup"
+			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
+			" AND tContainer.uNode=%u",guNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,gcQuery);
+		logfileLine("CreateIptablesData",mysql_error(&gMysql),uContainer);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uContainer);
+
+		SetContainerProp(uContainer,"cOrg_PublicIP",cSourceIPv4);
+
+	}
+	mysql_free_result(res);
+
+}//void AddPublicIP()
 
