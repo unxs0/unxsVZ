@@ -1350,7 +1350,7 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 		}
 		SetContainerStatus(uContainer,uStatus);//undo CommonCloneContainer() set
 		uGroup=uGetGroup(0,uContainer);
-		if(uGroup) ChangeGroup(uNewVeid,uGroup);
+		if(uGroup) UpdatePrimaryContainerGroup(uNewVeid,uGroup);
 
 		//debug only
 		//tNode(cWizHostname);
