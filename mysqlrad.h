@@ -727,5 +727,5 @@ void GlossaryGetHook(entry gentries[],int x);
 
 
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
-void ChangeGroup(unsigned uContainer, unsigned uGroup);
+unsigned UpdatePrimaryContainerGroup(unsigned uContainer, unsigned uGroup);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);

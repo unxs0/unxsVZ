@@ -36,7 +36,6 @@ AUTHOR/LEGAL
 #include <openisp/ucidr.h>
 void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue);//tcontainerfunc.h
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
-void ChangeGroup(unsigned uContainer, unsigned uGroup);
 void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 char *strptime(const char *s, const char *format, struct tm *tm);
@@ -3634,7 +3633,7 @@ void MassCreateContainers(char *cConfigfileName)
 
 				//Add to group
 				if(uGroup)
-					ChangeGroup(uContainer,uGroup);
+					UpdatePrimaryContainerGroup(uContainer,uGroup);
 
 				//tIP
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
@@ -3715,7 +3714,7 @@ void MassCreateContainers(char *cConfigfileName)
 					{
 						SetContainerStatus(uContainer,uINITSETUP);//See CommonCloneContainer()
 						if(uGroup)
-							ChangeGroup(uNewVeid,uGroup);
+							UpdatePrimaryContainerGroup(uNewVeid,uGroup);
 					}
 				}//cAutoCloneNode
 

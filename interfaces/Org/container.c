@@ -1931,7 +1931,8 @@ void funcContainerInfo(FILE *fp)
 	mysql_free_result(res);
 
 	//Groups
-	sprintf(gcQuery,"SELECT tGroup.cLabel FROM tGroup,tGroupGlue WHERE tGroup.uGroup=tGroupGlue.uGroup AND tGroupGlue.uContainer=%u",
+	sprintf(gcQuery,"SELECT tGroup.cLabel FROM tGroup,tGroupGlue WHERE tGroup.uGroup=tGroupGlue.uGroup"
+			" AND tGroup.uGroupType=1 AND tGroupGlue.uContainer=%u",
 		guContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
