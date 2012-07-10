@@ -1703,7 +1703,7 @@ void ZoneDiagnostics(void)
 	
 	sprintf(cZoneFile,"/usr/local/idns/named.d/master/%.31s/%c/%.99s",cView,gcZone[0],gcZone);
 
-	sprintf(gcQuery,"%.99s/named-checkzone %.99s %.255s",cBinDir,gcZone,cZoneFile);
+	sprintf(gcQuery,"%.99s/named-checkzone -k warn %.99s %.255s",cBinDir,gcZone,cZoneFile);
 	printf("Testing with:%s\n\n",gcQuery);
 	
 	if((fp=popen(gcQuery,"r")))

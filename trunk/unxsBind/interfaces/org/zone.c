@@ -1751,7 +1751,7 @@ void funcZoneStatus(FILE *fp)
 
 void ZoneDiagnostics(void)
 {
-	char cNamedCheckZone[100]={"/usr/local/sbin/named-checkzone"}; //will get from tConfiguration
+	char cNamedCheckZone[100]={"/usr/local/sbin/named-checkzone -k warn"}; //will get from tConfiguration
 	char cDig[100]={"/usr/local/bin/dig"}; //will get from tConfiguration
 	char cView[100]={"external"};
 	char cZoneFile[256]={""};
