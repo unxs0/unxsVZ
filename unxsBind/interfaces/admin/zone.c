@@ -1495,6 +1495,12 @@ unsigned ValidateZoneInput(void)
 		gcMessage="<blink>Error: </blink>FQDN Hostmaster required. Must specify 'email.' in front.";
 		uValid=0;
 	}
+	if(!strchr(cHostmaster,'@'))
+	{
+		gcMessage="<blink>Error: </blink>ISC BIND Hostmaster format does not allow the @ character. Use a . instead.";
+		uValid=0;
+		cHostmasterStyle="type_fields_req";
+	}
 	if(!strchr(cHostmaster,'.'))
 	{
 		gcMessage="<blink>Error: </blink>Must use a FQDN for Hostmaster with 'email.' in front";
