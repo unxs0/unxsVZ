@@ -2408,12 +2408,12 @@ unsigned idnsOnLineZoneCheck(void)
 
 		//Check the named-checkzone binary location for your setup
 		//We only support CentOS 5
-		sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1 > /dev/null",field[0],cZoneFile);
+		sprintf(gcQuery,"/usr/sbin/named-checkzone -k warn %s %s 2>&1 > /dev/null",field[0],cZoneFile);
 		if(system(gcQuery))
 		{
 			unsigned uMessageSet=0;
 			char cLine[1024]={""};
-			sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1",field[0],cZoneFile);
+			sprintf(gcQuery,"/usr/sbin/named-checkzone -k warn %s %s 2>&1",field[0],cZoneFile);
 			if((zfp=popen(gcQuery,"r"))==NULL)
 				htmlPlainTextError("popen() failed");
 			

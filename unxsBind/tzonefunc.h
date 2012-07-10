@@ -3347,7 +3347,7 @@ void htmlMassCheckZone(void)
 		//ParseTextAreaLines() required break;
 		if(cLine[0]==0) break;
 
-		sprintf(cCommand,"named-checkzone %.99s /usr/local/idns/named.d/master/external/%c/%.99s",
+		sprintf(cCommand,"named-checkzone -k warn %.99s /usr/local/idns/named.d/master/external/%c/%.99s",
 			cLine,cLine[0],cLine);
 		if((fp=popen(gcQuery,"r")))
 		{
@@ -3562,7 +3562,7 @@ void htmlMasterNamedCheckZone(void)
 
 	uPID=getpid();
 	sprintf(cTmpFile,"/tmp/iDNS.ncz.%u",uPID);
-	sprintf(cSystem,"/usr/sbin/named-checkzone %.64s /usr/local/idns/named.d/master/%.64s/%.1s/%.64s > %s 2>&1",
+	sprintf(cSystem,"/usr/sbin/named-checkzone -k warn %.64s /usr/local/idns/named.d/master/%.64s/%.1s/%.64s > %s 2>&1",
 		cZone,cView,cZone,cZone,cTmpFile);
 	system(cSystem);
 
@@ -3831,11 +3831,11 @@ unsigned OnLineZoneCheck(unsigned uZone,unsigned uCalledMode,unsigned uCalledFro
 		mysql_free_result(res2);
 		fclose(zfp);
 
-		sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1 > /dev/null",field[0],cZoneFile);
+		sprintf(gcQuery,"/usr/sbin/named-checkzone -k warn %s %s 2>&1 > /dev/null",field[0],cZoneFile);
 		if(system(gcQuery))
 		{
 			char cLine[1024]={""};
-			sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1",field[0],cZoneFile);
+			sprintf(gcQuery,"/usr/sbin/named-checkzone -k warn %s %s 2>&1",field[0],cZoneFile);
 
 			if((zfp=popen(gcQuery,"r"))==NULL)
 				htmlPlainTextError("popen() failed");
