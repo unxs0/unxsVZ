@@ -775,10 +775,11 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	//6-.
 	//Optional group based script may exist to be executed.
 	//
+	//Primary group is oldest tGroupGlue entry.
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
-			" AND tProperty.cName='cJob_OnNewScript' LIMIT 1",uPROP_GROUP,uContainer);
+			" AND tProperty.cName='cJob_OnNewScript' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",uPROP_GROUP,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -892,12 +893,13 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 
 	//Optional group based script may exist to be executed.
 	//
+	//Primary group is oldest tGroupGlue entry.
         MYSQL_RES *res;
         MYSQL_ROW field;
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
-			" AND tProperty.cName='cJob_OnDestroyScript' LIMIT 1",uPROP_GROUP,uContainer);
+			" AND tProperty.cName='cJob_OnDestroyScript' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",uPROP_GROUP,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1274,10 +1276,11 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 	//Optional group based script may exist to be executed.
 	//
+	//Primary group is oldest tGroupGlue entry.
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
-			" AND tProperty.cName='cJob_OnChangeHostnameScript' LIMIT 1",uPROP_GROUP,uContainer);
+			" AND tProperty.cName='cJob_OnChangeHostnameScript' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",uPROP_GROUP,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1388,12 +1391,13 @@ void StopContainer(unsigned uJob,unsigned uContainer)
 
 	//Optional group based script may exist to be executed.
 	//
+	//Primary group is oldest tGroupGlue entry.
         MYSQL_RES *res;
         MYSQL_ROW field;
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
-			" AND tProperty.cName='cJob_OnStopScript' LIMIT 1",uPROP_GROUP,uContainer);
+			" AND tProperty.cName='cJob_OnStopScript' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",uPROP_GROUP,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1495,12 +1499,13 @@ void StartContainer(unsigned uJob,unsigned uContainer)
 
 	//Optional group based script may exist to be executed.
 	//
+	//Primary group is oldest tGroupGlue entry.
         MYSQL_RES *res;
         MYSQL_ROW field;
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
-			" AND tProperty.cName='cJob_OnStartScript' LIMIT 1",uPROP_GROUP,uContainer);
+			" AND tProperty.cName='cJob_OnStartScript' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",uPROP_GROUP,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
