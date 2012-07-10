@@ -179,6 +179,11 @@ void ZoneCheck(unsigned uMode)
 		guMode=uMode;
 		tZone("Must use a FQDN for cHostmaster with 'email.' in front");
 	}
+	if(strchr(cHostmaster,'@'))
+	{
+		guMode=uMode;
+		tZone("Must use . for @ first symbol in hostmaster email address.");
+	}
 	if(cHostmaster[strlen(cHostmaster)-1]=='.')
 	{
 		guMode=uMode;
