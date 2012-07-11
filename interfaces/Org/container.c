@@ -303,22 +303,41 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 			char cIPv4[32]={""};
-			sprintf(gcQuery,"SELECT cLabel FROM tIP"
-					" WHERE uIP=(SELECT uIPv4 FROM tContainer WHERE uContainer=%u LIMIT 1)",guNewContainer);
+			sprintf(gcQuery,"SELECT cValue FROM tProperty"
+				" WHERE uKey=%u AND uType=3 AND cName='cOrg_PublicIP'",guNewContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				gcMessage="Select cIPv4 failed, contact sysadmin!";
+				gcMessage="Select uProperty failed, contact sysadmin!";
 				htmlContainer();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
 				sprintf(cIPv4,"%.31s",field[0]);
+			if(!cIPv4[0])
+			{
+				sprintf(gcQuery,"SELECT cLabel FROM tIP"
+					" WHERE uIP=(SELECT uIPv4 FROM tContainer WHERE uContainer=%u LIMIT 1)",guNewContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Select cIPv4 failed, contact sysadmin!";
+					htmlContainer();
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sprintf(cIPv4,"%.31s",field[0]);
+			}
 			if(strlen(cIPv4)<7)
 			{
 				gcMessage="Configuration error contact your sysadmin: cIPv4.";
 				htmlContainer();
 			}
+			//debug only
+			//char cDebugMsg[32]={"d1"};
+			//sprintf(cDebugMsg,"%s",cIPv4);
+			//gcMessage=cDebugMsg;
+			//htmlContainer();
 
 			unsigned uProperty=0;
 			unsigned uOrgPropMaxLength=0;
