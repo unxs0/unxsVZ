@@ -741,8 +741,8 @@ void funcSelectZone(FILE *fp)
 		{
 			sprintf(cPrevZone,"%.99s",cZone);
 
-			if(a==0 || e==0 || b>254 || c>254 || d>254 
-					|| a>254 || b>254 || e<21) continue;
+			if(a==0 || e==0 || b>255 || c>255 || d>255 
+					|| a>255 || b>255 || e<21) continue;
 			switch(e)
 			{
 				case 23:

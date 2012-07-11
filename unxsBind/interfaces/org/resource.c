@@ -997,10 +997,10 @@ unsigned uPerRRTypeCheck(void)
 			return(6);
 		}
 		sscanf(cParam1,"%u.%u.%u.%u",&a,&b,&c,&d);
-		if(a>254) a=0;
-		if(b>254) b=0;
+		if(a>255) a=0;
+		if(b>255) b=0;
 		if(c>255) c=0;  
-		if(d>254) d=0;  
+		if(d>255) d=0;  
 
 		sprintf(cParam1,"%u.%u.%u.%u",a,b,c,d);
 
@@ -1049,9 +1049,9 @@ unsigned uPerRRTypeCheck(void)
 			return(8);
 			}
 
-			if(uPtr>254)
+			if(uPtr>255)
 			{
-			sprintf(gcQuery,"<blink>PTR value out of range (1-254 allowed only)</blink>");
+			sprintf(gcQuery,"<blink>PTR value out of range (1-255 allowed only)</blink>");
 			gcMessage=gcQuery;
 			cNameStyle="type_fields_req";			
 			return(8);
