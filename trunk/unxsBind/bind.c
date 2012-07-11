@@ -1620,7 +1620,7 @@ int PopulateArpaZone(const char *cZone, const char *cIPNum, const unsigned uHtml
 	if(!uHtmlMode)
 		fprintf(stdout,"<u>%s %u.%u.%u.%u</u>\n",cZone,a,b,c,d);
 
-	if(a==0 || d==0 || a>254 || b>254 || c>254 || d>254) return(1);
+	if(a==0 || d==0 || a>255 || b>255 || c>255 || d>255) return(1);
 	sprintf(cArpaZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 	sprintf(gcQuery,"SELECT cZone,uZone FROM tZone WHERE cZone='%s' AND uView=%.2s",
 			cArpaZone,cuView);

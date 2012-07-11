@@ -227,10 +227,10 @@ void RRCheck(int uMode)
 		if(!strcmp(cZone+strlen(cZone)-5,".arpa"))
 			tResource("Can not add A records to arpa zones");
 		sscanf(cParam1,"%u.%u.%u.%u",&a,&b,&c,&d);
-		if(a>254) a=0;
-		if(b>254) b=0;
-		if(c>254) c=0;  
-		if(d>254) d=0;  
+		if(a>255) a=0;
+		if(b>255) b=0;
+		if(c>255) c=0;  
+		if(d>255) d=0;  
 
 		sprintf(cParam1,"%u.%u.%u.%u",a,b,c,d);
 
