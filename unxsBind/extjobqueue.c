@@ -2001,34 +2001,37 @@ void ProcessVZJobQueue(void)
 					}
 					//debug only
 					printf("Deleting uResource=%u\n",uResource);
+
+					UpdateSerialNum(uZone);
+
+					//Submit zone mod job
+					guLoginClient=1;
+					guCompany=uOwner;
+					if(SubmitJob("Modify",uNSSet,structExtParam.cZone,0,0))
+					{
+						fprintf(stderr,"SubmitJob() failed.\n");
+						goto ErrorExit;
+					}
+					sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZContainerDelSRVRR ok'"
+						" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
 				}
 				else
 				{
+					//We can ignore no such uResource
+					//since we can assume that it has been deleted or never existed.
 					//debug only
 					printf("No uResource found\n");
-					goto ErrorExit;
-				}
-				UpdateSerialNum(uZone);
-
-				//Submit zone mod job
-				guLoginClient=1;
-				guCompany=uOwner;
-				if(SubmitJob("Modify",uNSSet,structExtParam.cZone,0,0))
-				{
-					fprintf(stderr,"SubmitJob() failed.\n");
-					goto ErrorExit;
-				}
-
-				//Update remote job queue done ok
-				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZContainerDelSRVRR ok'"
+					sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='No uResource'"
 						" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
+				}
+
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
 				{
 					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
 					goto ErrorExit;
 				}
-
+				goto NormalExit;
 			}//unxsVZContainerDelSRVRR
 
 			//cName is a fully qualified DNS RR name, i.e. it ends in the zone name.
