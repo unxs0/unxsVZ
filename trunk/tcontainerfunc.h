@@ -4225,18 +4225,18 @@ void ExttContainerAuxTable(void)
 			OpenFieldSet(gcQuery,100);
 			uGroup=uGetSearchGroup(gcUser);
 			sprintf(gcQuery,"SELECT"
-					" tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tStatus.cLabel,"
-					" tIP.cLabel,tNode.cLabel,tDatacenter.cLabel,tContainer.uSource,"
+					" tC1.uContainer,tC1.cLabel,tC1.cHostname,tStatus.cLabel,"
+					" tIP.cLabel,tNode.cLabel,tDatacenter.cLabel,tC1.uSource,"
 					" tClient.cLabel,tOSTemplate.cLabel,"
-					" FROM_UNIXTIME(tContainer.uCreatedDate,'%%a %%b %%d %%T %%Y')"
-					" FROM tContainer"
-					" LEFT JOIN tIP ON tContainer.uIPv4=tIP.uIP"
-					" LEFT JOIN tNode ON tContainer.uNode=tNode.uNode"
-					" LEFT JOIN tDatacenter ON tContainer.uDatacenter=tDatacenter.uDatacenter"
-					" LEFT JOIN tStatus ON tContainer.uStatus=tStatus.uStatus"
-					" LEFT JOIN tClient ON tContainer.uOwner=tClient.uClient"
-					" LEFT JOIN tOSTemplate ON tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
-					" WHERE uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uGroup);
+					" FROM_UNIXTIME(tC1.uCreatedDate,'%%a %%b %%d %%T %%Y')"
+					" FROM tContainer AS tC1"
+					" LEFT JOIN tIP ON tC1.uIPv4=tIP.uIP"
+					" LEFT JOIN tNode ON tC1.uNode=tNode.uNode"
+					" LEFT JOIN tDatacenter ON tC1.uDatacenter=tDatacenter.uDatacenter"
+					" LEFT JOIN tStatus ON tC1.uStatus=tStatus.uStatus"
+					" LEFT JOIN tClient ON tC1.uOwner=tClient.uClient"
+					" LEFT JOIN tOSTemplate ON tC1.uOSTemplate=tOSTemplate.uOSTemplate"
+					" WHERE tC1.uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uGroup);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -4245,6 +4245,9 @@ void ExttContainerAuxTable(void)
 			{
 				char cResult[100]={""};
 				char cCtLabel[100]={""};
+				unsigned uSourceContainer=0;
+				unsigned uSourceNode=0;
+				char cSourceNode[32]={""};
 
 				printf("<table>");
 				printf("<tr>");
@@ -4256,6 +4259,7 @@ void ExttContainerAuxTable(void)
 					"<td valign=top><u>Node</u></td>"
 					"<td valign=top><u>Datacenter</u></td>"
 					"<td valign=top><u>uSource</u></td>"
+					"<td valign=top><u>Source Node</u></td>"
 					"<td valign=top><u>Owner</u></td>"
 					"<td valign=top><u>OSTemplate</u></td>"
 					"<td valign=top><u>uCreatedDate</u></td>"
@@ -5141,10 +5145,25 @@ while((field=mysql_fetch_row(res)))
 		}//end for()
 	}
 
+
+	if(field[7][0]!='0')
+	{
+		uSourceContainer=0;
+		uSourceNode=0;
+		cSourceNode[0]=0;
+		sscanf(field[7],"%u",&uSourceContainer);
+		if(uSourceContainer)
+		{
+			sscanf(ForeignKey2("tContainer","uNode",uSourceContainer),"%u",&uSourceNode);
+			if(uSourceNode)
+				sprintf(cSourceNode,"%.31s",ForeignKey2("tNode","cLabel",uSourceNode));
+		}
+	}
 	printf("<tr>");
 	printf(
 		"<td valign=top><input type=checkbox name=Ct%s ></td>"
 		"<td valign=top><a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
+		"<td valign=top>%s</td>"
 		"<td valign=top>%s</td>"
 		"<td valign=top>%s</td>"
 		"<td valign=top>%s</td>"
@@ -5164,6 +5183,7 @@ while((field=mysql_fetch_row(res)))
 			field[5],
 			field[6],
 			field[7],
+			cSourceNode,
 			field[8],
 			field[9],
 			field[10],
