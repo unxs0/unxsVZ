@@ -4248,6 +4248,7 @@ void ExttContainerAuxTable(void)
 				unsigned uSourceContainer=0;
 				unsigned uSourceNode=0;
 				char cSourceNode[32]={""};
+				char cSource[32]={""};
 
 				printf("<table>");
 				printf("<tr>");
@@ -4258,8 +4259,8 @@ void ExttContainerAuxTable(void)
 					"<td valign=top><u>IPv4</u></td>"
 					"<td valign=top><u>Node</u></td>"
 					"<td valign=top><u>Datacenter</u></td>"
-					"<td valign=top><u>uSource</u></td>"
-					"<td valign=top><u>Source Node</u></td>"
+					"<td valign=top><u>Source</u></td>"
+					"<td valign=top><u>SNode</u></td>"
 					"<td valign=top><u>Owner</u></td>"
 					"<td valign=top><u>OSTemplate</u></td>"
 					"<td valign=top><u>uCreatedDate</u></td>"
@@ -5151,9 +5152,11 @@ while((field=mysql_fetch_row(res)))
 		uSourceContainer=0;
 		uSourceNode=0;
 		cSourceNode[0]=0;
+		cSource[0]=0;
 		sscanf(field[7],"%u",&uSourceContainer);
 		if(uSourceContainer)
 		{
+			sprintf(cSource,"%.31s",ForeignKey("tContainer","cLabel",uSourceContainer));
 			sscanf(ForeignKey2("tContainer","uNode",uSourceContainer),"%u",&uSourceNode);
 			if(uSourceNode)
 				sprintf(cSourceNode,"%.31s",ForeignKey2("tNode","cLabel",uSourceNode));
@@ -5168,7 +5171,7 @@ while((field=mysql_fetch_row(res)))
 		"<td valign=top>%s</td>"
 		"<td valign=top>%s</td>"
 		"<td valign=top>%s</td>"
-		"<td valign=top>%s</td>"
+		"<td valign=top><a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>%s</a></td>"
 		"<td valign=top>%s</td>"
 		"<td valign=top>%s</td>"
 		"<td valign=top>%s</td>"
@@ -5182,7 +5185,7 @@ while((field=mysql_fetch_row(res)))
 			field[4],
 			field[5],
 			field[6],
-			field[7],
+			uSourceContainer,cSource,
 			cSourceNode,
 			field[8],
 			field[9],
