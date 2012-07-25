@@ -454,6 +454,14 @@ rtpend=10999
 		system(cCommand);
 		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 iptables off'",uContainer);
 		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'service fail2ban stop'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 fail2ban off'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'service sshd stop'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 sshd off'",uContainer);
+		system(cCommand);
 		sprintf(cCommand,"vzctl exec2 %u 'service zabbix_agentd restart'",uContainer);
 		system(cCommand);
 		sprintf(cCommand,"/usr/sbin/UpdateZabbixHostPort.sh %s %u",field[2],uPort);
@@ -483,6 +491,10 @@ rtpend=10999
 			//pull conf files from db
 			sprintf(cCommand,"vzctl exec2 %u '/var/lib/asterisk/bin/retrieve_conf'",uContainer);
 			system(cCommand);
+		}
+		else
+		{
+			fprintf(stderr,"Missing ./sipsettings.MYD\n");
 		}
 
 		//restart the whole thing ok since not in use supposedly
