@@ -50,6 +50,7 @@ void AddSIPSRV(char *cuContainer);
 void DelSIPSRV(char *cHostname);
 void unxsBindSIPSRVDelRecordJob(unsigned uContainer,char const *cHostname,unsigned uSIPPort);
 void AddPublicIP(char *cSourceIPv4);
+void GetZabbixPort(char *cHostname);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -181,6 +182,11 @@ int main(int iArgc, char *cArgv[])
 			DelSIPSRV(cArgv[2]);
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"GetZabbixPort",13))
+		{
+			GetZabbixPort(cArgv[2]);
+			goto CommonExit;
+		}
 	}
 	else if(iArgc==4)
 	{
@@ -192,7 +198,8 @@ int main(int iArgc, char *cArgv[])
 	}
 
 	printf("Usage: %s\nUpdateNonNatPBXContainers\nCreateIptablesData|CreateSquidData|UpdateBind|AddPublicIP <Source cIPv4>\n"
-		"ChangeFreePBX <External cIPv4> <LAN E.g. 10.0.0.0/255.255.255.0>\nAddSIPSRV <uVEID>\nDelSIPSRV <cHostname>\n",gcProgram);
+		"ChangeFreePBX <External cIPv4> <LAN E.g. 10.0.0.0/255.255.255.0>\nAddSIPSRV <uVEID>\nDelSIPSRV <cHostname>\n"
+		"GetZabbixPort <cHostname>\n",gcProgram);
 
 CommonExit:
 	mysql_close(&gMysql);
@@ -456,22 +463,27 @@ rtpend=10999
 		//Having problems with weird FreePBX table order this is a fast way to get things done.
 		//This will not port easy.
 		sprintf(cCommand,"/bin/cp ./sipsettings.MYD /vz/root/%u/var/lib/mysql/asterisk/",uContainer);
-		system(cCommand);
-		sprintf(cCommand,"/bin/cp ./sipsettings.MYI /vz/root/%u/var/lib/mysql/asterisk/",uContainer);
-		system(cCommand);
-		uPort=6000+uD;
-		sprintf(cCommand,"sed -i -e 's/6005/%u/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",uPort,uContainer);
-		system(cCommand);
-		sprintf(cCommand,"sed -i -e 's/10.0.4.0/%s/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",cLAN,uContainer);
-		system(cCommand);
-		sprintf(cCommand,"sed -i -e 's/255.255.255.0/%s/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",cMask,uContainer);
-		system(cCommand);
-		sprintf(cCommand,"sed -i -e 's/192.168.192.168/%s/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",cExternalIP,uContainer);
-		system(cCommand);
+		if(!system(cCommand))
+		{
+			sprintf(cCommand,"/bin/cp ./sipsettings.MYI /vz/root/%u/var/lib/mysql/asterisk/",uContainer);
+			if(!system(cCommand))
+			{
+				uPort=6000+uD;
+				sprintf(cCommand,"sed -i -e 's/6005/%u/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",uPort,uContainer);
+				system(cCommand);
+				sprintf(cCommand,"sed -i -e 's/10.0.4.0/%s/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",cLAN,uContainer);
+				system(cCommand);
+				sprintf(cCommand,"sed -i -e 's/255.255.255.0/%s/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",cMask,uContainer);
+				system(cCommand);
+				sprintf(cCommand,"sed -i -e 's/192.168.192.168/%s/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",
+						cExternalIP,uContainer);
+				system(cCommand);
+			}
 
-		//pull conf files from db
-		sprintf(cCommand,"vzctl exec2 %u '/var/lib/asterisk/bin/retrieve_conf'",uContainer);
-		system(cCommand);
+			//pull conf files from db
+			sprintf(cCommand,"vzctl exec2 %u '/var/lib/asterisk/bin/retrieve_conf'",uContainer);
+			system(cCommand);
+		}
 
 		//restart the whole thing ok since not in use supposedly
 		sprintf(cCommand,"vzctl exec2 %u 'service asterisk restart'",uContainer);
@@ -968,3 +980,42 @@ void AddPublicIP(char *cSourceIPv4)
 
 }//void AddPublicIP()
 
+
+void GetZabbixPort(char *cHostname)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
+			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
+			" AND tContainer.uIPv4=tIP.uIP"
+			" AND tContainer.cHostname='%s'"
+			" AND tGroup.uGroup=tGroupGlue.uGroup"
+			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
+			" AND tContainer.uNode=%u ORDER BY tIP.uIP LIMIT 1",cHostname,guNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,gcQuery);
+		logfileLine("GetZabbixPort",mysql_error(&gMysql),0);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	unsigned uD=0;
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%*u.%*u.%*u.%u",&uD);
+		if(!uD)
+		{
+			fprintf(stderr,"cIPv4 scan error %s\n",cHostname);
+			logfileLine("GetZabbixPort",field[0],0);
+		}
+	}
+	mysql_free_result(res);
+
+	if(uD)
+		printf("%u\n",uD+9000);
+	else
+		printf("10050\n");
+}//void GetZabbixPort(char *cHostname)
