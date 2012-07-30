@@ -266,8 +266,8 @@ void CreateIptablesData(char *cSourceIPv4)
 		uPort=6000+uD;
 		sprintf(cPort,"%u",uPort);
 		SetContainerProp(uContainer,"cOrg_SIPPort",cPort);
-		printf("-A PREROUTING -p udp -m udp --dport %u -j DNAT --to-destination %s:%u\n",
-			uPort,field[1],uPort);
+		printf("-A PREROUTING -d %s -p udp -m udp --dport %u -j DNAT --to-destination %s:%u\n",
+			cSourceIPv4,uPort,field[1],uPort);
 		//Asterisk rtp port range (100 ports ~25 concurrent calls)
 		uPort=10000+(uD-1)*100;
 		uRangeEnd=uPort+99;
