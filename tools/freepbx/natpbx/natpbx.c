@@ -273,8 +273,8 @@ void CreateIptablesData(char *cSourceIPv4)
 		uRangeEnd=uPort+99;
 		sprintf(cPort,"%u:%u",uPort,uRangeEnd);
 		SetContainerProp(uContainer,"cOrg_RTPRange",cPort);
-		printf("-A PREROUTING -p udp -m udp --dport %u:%u -j DNAT --to-destination %s\n",
-			uPort,uRangeEnd,field[1]);
+		printf("-A PREROUTING -d %s -p udp -m udp --dport %u:%u -j DNAT --to-destination %s\n",
+			cSourceIPv4,uPort,uRangeEnd,field[1]);
 
 	}
 	mysql_free_result(res);
