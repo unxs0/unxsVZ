@@ -1030,15 +1030,16 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 
 				//If auto clone setup check required values
-				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+				cAutoCloneNode[0]=0;
+				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
 				if(cAutoCloneNode[0])
 				{
 
 					if(uTargetNode==0)
 						tContainer("<blink>Error:</blink> Please select a valid target node"
-								" for the clone");
+								" for the clone.");
 					if(uTargetNode==uNode)
-						tContainer("<blink>Error:</blink> Can't clone to same node");
+						tContainer("<blink>Error:</blink> Can't clone to same node.");
 
 					GetNodeProp(uTargetNode,"NewContainerMode",cNCMNode);
 					if(cNCMNode[0] && !strstr(cNCMNode,"Clone"))
@@ -1658,7 +1659,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 
 				//If auto clone setup check required values
-				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
 				if(cAutoCloneNode[0])
 				{
 
@@ -3946,9 +3947,9 @@ void ExttContainerButtons(void)
 				" than runs on a remote node (or appliance) not part of this unxsVZ system. The clone is kept sync'd,"
 				" and it's uSource is, as usual, the uContainer of the container created."
 				" This new type of container is identified, for now, via a special uStatus.");
-			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
 			if(cAutoCloneNode[0])
-				printf("<p>Auto-clone subsystem is enabled for selected datacenter: Clone target node"
+				printf("<p>Auto-clone subsystem is enabled for selected datacenter/node: Clone target node"
 					" must not match selected node. Similarly, clone start uIPv4"
 					" must not match uIPv4 or fall in same range -as defined per number of containers.");
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
@@ -3986,7 +3987,7 @@ void ExttContainerButtons(void)
 				" your containers will be <i>cLabel=ct0</i> and <i>cHostname=ct0.yourdomain.tld</i>"
 				" through <i>cLabel=ctN</i> and <i>cHostname=ctN.yourdomain.tld</i>,"
 				" where N is the number of containers specfied minus 1.<p>");
-			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
 			if(cAutoCloneNode[0])
 				printf("Auto-clone subsystem is enabled for selected datacenter: Clone target node"
 					" must not match selected node. Similarly, clone start uIPv4"
