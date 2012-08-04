@@ -663,16 +663,19 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 	if(cuGID[0]) sscanf(cuGID,"%u",&uGID);
 
 	//Handle second optional NS
+	char cSlaveNS1[100]={""};
 	char cSlaveNS2[100]={""};
 	char *cpNS;
 	if((cpNS=strchr(cSlaveNS,',')))
 	{
 		sprintf(cSlaveNS2,"%.99s",cpNS+1);
-		*cpNS=0;
+		*cpNS=0;//for ns1
+		sprintf(cSlaveNS1,"%.99s",cSlaveNS);
+		*cpNS=',';//for return to as on entry
 	}
 	//debug only
 	//printf("CreateSlaveFiles()cSlaveNS2=%s\n",cSlaveNS2);
-	logfileLine("CreateSlaveFiles",cSlaveNS);
+	logfileLine("CreateSlaveFiles",cSlaveNS1);
 	if(cSlaveNS2[0])
 		logfileLine("CreateSlaveFiles",cSlaveNS2);
 
@@ -681,13 +684,13 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 			"tZone.cOptions,tZone.uSecondaryOnly FROM tZone,tNSSet,tNS,tView WHERE"
 			" tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
 			" tNS.uNSType=4 AND tZone.uView=tView.uView AND (tNS.cFQDN='%s' OR tNS.cFQDN='%s')"
-			" ORDER BY tView.uOrder,tZone.cZone",cSlaveNS,cSlaveNS2);
+			" ORDER BY tView.uOrder,tZone.cZone",cSlaveNS1,cSlaveNS2);
 	else
 		sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tView.cLabel,tView.cSlave,tView.uView,tNSSet.cMasterIPs,"
 			"tZone.cOptions,tZone.uSecondaryOnly FROM tZone,tNSSet,tNS,tView WHERE"
 			" tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
 			" tNS.uNSType=4 AND tZone.uView=tView.uView AND tNS.cFQDN='%s'"
-			" ORDER BY tView.uOrder,tZone.cZone",cSlaveNS);
+			" ORDER BY tView.uOrder,tZone.cZone",cSlaveNS1);
 	mysql_query(&gMysql,gcQuery);
 	//debug only
 	//printf("%s\n",gcQuery);
@@ -735,7 +738,7 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 			cViewXIP[0]=0;
 			//Note optional second NS must have same view settings as first
 			//if not "we have a problem houston."
-			sprintf(cViewXIPName,"cViewXIP:%.31s:%.31s",cSlaveNS,field[1]);
+			sprintf(cViewXIPName,"cViewXIP:%.31s:%.31s",cSlaveNS1,field[1]);
 			GetConfiguration(cViewXIPName,cViewXIP,0);
 			//debug only
 			//fprintf(fp,"//cViewXIPName=%s cViewXIP=%s\n",cViewXIPName,cViewXIP);
