@@ -46,12 +46,12 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 		tmTime=localtime(&luClock);
 		strftime(cTime,31,"%b %d %T",tmTime);
 
-		fprintf(gLfp,"%s unxsCloneTool::%s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
+		fprintf(gLfp,"%s unxsCloneTool:%s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
 		fflush(gLfp);
 	}
 	else
 	{
-		fprintf(stderr,"%s: unxsCloneTool::%s. uContainer=%u\n",cFunction,cLogline,uContainer);
+		fprintf(stdout,"%s: unxsCloneTool::%s. uContainer=%u\n",cFunction,cLogline,uContainer);
 	}
 
 }//void logfileLine()
@@ -65,12 +65,14 @@ int main(int iArgc, char *cArgv[])
 
 	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
 	{
+		fprintf(stderr,"fopen logfile failed");
 		logfileLine("main","fopen logfile failed",0);
 		exit(1);
 	}
 
 	if(sysinfo(&structSysinfo))
 	{
+		fprintf(stderr,"sysinfo() failed");
 		logfileLine("main","sysinfo() failed",0);
 		exit(1);
 	}
@@ -78,6 +80,7 @@ int main(int iArgc, char *cArgv[])
 #define JOBQUEUE_MAXLOAD 20 //This is equivalent to uptime 20.00 last 1 min avg load
 	if(structSysinfo.loads[0]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
 	{
+		fprintf(stderr,"structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD");
 		logfileLine("main","structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD",0);
 		exit(1);
 	}
@@ -115,7 +118,6 @@ int main(int iArgc, char *cArgv[])
 	mysql_free_result(res);
 	if(!guNode)
 	{
-		fprintf(stderr,"could not determine node for %s\n",gcHostname);
 		logfileLine("main","could not determine node",0);
 		goto CommonExit;
 	}
@@ -143,26 +145,103 @@ void CreateVZConfFiles(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uContainer=0;
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
+	char cSystem[256];
 
-	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel FROM tIP,tContainer"
+	//Only stopped container with uSource.
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.uSource,tContainer.cLabel,"
+			" tContainer.cHostname,tIP.cLabel"
+			" FROM tNode,tIP,tContainer"
 			" WHERE tContainer.uIPv4=tIP.uIP"
+			" AND tNode.uNode=tContainer.uNode"
 			" AND tContainer.uSource!=0"
-			" AND tContainer.uNode=%u ORDER BY tIP.uIP",guNode);
+			" AND tContainer.uStatus=31"//stopped
+			" AND tContainer.uNode=%u ORDER BY tContainer.uContainer",guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
 		fprintf(stderr,gcQuery);
-		logfileLine("CreateVZConfFiles",mysql_error(&gMysql),uContainer);
+		logfileLine("CreateVZConfFiles",mysql_error(&gMysql),0);
 		mysql_close(&gMysql);
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[0],"%u",&uContainer);
-		printf("uContainer=%u\n",uContainer);
+		unsigned uContainer=0;
+		unsigned uSource=0;
+		char cSourceNode[32]={""};
 
+		
+		sscanf(field[0],"%u",&uContainer);
+		sscanf(field[1],"%u",&uSource);
+
+		if( !uContainer || !uSource )
+		{
+			logfileLine("CreateVZConfFiles","Missing data",uContainer);
+			continue;
+		}
+
+
+		sprintf(gcQuery,"SELECT tNode.cLabel FROM tNode,tContainer WHERE tNode.uNode=tContainer.uNode AND tContainer.uContainer=%u",
+					uSource);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			fprintf(stderr,gcQuery);
+			logfileLine("CreateVZConfFiles",mysql_error(&gMysql),0);
+			mysql_close(&gMysql);
+			exit(2);
+		}
+        	res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+			sprintf(cSourceNode,"%.31s",field2[0]);
+		mysql_free_result(res2);
+
+		sprintf(gcQuery,"%u %u/%s %s %s %s\n",
+			uContainer,uSource,cSourceNode,field[2],field[3],field[4]);
+		logfileLine("CreateVZConfFiles",gcQuery,uContainer);
+		if(!cSourceNode[0])
+		{
+			logfileLine("CreateVZConfFiles","Missing data-2",uContainer);
+			continue;
+		}
+
+		//Get conf file
+		sprintf(cSystem,"scp %s:/etc/vz/conf/%u.conf /etc/vz/conf/%u.conf",cSourceNode,uSource,uContainer);
+		if(system(cSystem))
+		{
+			logfileLine("CreateVZConfFiles",cSystem,uContainer);
+			continue;
+		}
+
+		//Patch file with clone data
+		/*
+			#replace these lines with clone data
+			IP_ADDRESS="a.b.c.d"
+			HOSTNAME="n.isp.net"
+			NAME="n"
+			#replace this line
+			ONBOOT="yes"
+			#with
+			ONBOOT="no"
+		*/
+		sprintf(cSystem,"sed -i s/^ONBOOT=.*$/ONBOOT=\\\"no\\\"/ /etc/vz/conf/%u.conf",uContainer);
+		if(system(cSystem))
+			logfileLine("CreateVZConfFiles",cSystem,uContainer);
+
+		sprintf(cSystem,"sed -i s/^IP_ADDRESS=.*$/IP_ADDRESS=\\\"%s\\\"/ /etc/vz/conf/%u.conf",field[4],uContainer);
+		if(system(cSystem))
+			logfileLine("CreateVZConfFiles",cSystem,uContainer);
+
+		sprintf(cSystem,"sed -i s/^HOSTNAME=.*$/HOSTNAME=\\\"%s\\\"/ /etc/vz/conf/%u.conf",field[3],uContainer);
+		if(system(cSystem))
+			logfileLine("CreateVZConfFiles",cSystem,uContainer);
+
+		sprintf(cSystem,"sed -i s/^NAME=.*$/NAME=\\\"%s\\\"/ /etc/vz/conf/%u.conf",field[2],uContainer);
+		if(system(cSystem))
+			logfileLine("CreateVZConfFiles",cSystem,uContainer);
 	}
 	mysql_free_result(res);
 
