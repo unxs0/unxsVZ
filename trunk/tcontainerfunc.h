@@ -48,7 +48,7 @@ void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 void InitContainerProps(struct structContainer *sContainer);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);
-unsigned uGetSearchGroup(const char *gcUser);
+unsigned uGetSearchGroup(const char *gcUser,unsigned uGroupType);
 unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
 		unsigned uOwner,unsigned uCreatedBy);
 static unsigned uHideProps=0;
@@ -474,7 +474,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				unsigned uLink=0;
 				unsigned uNumber=0;
 
-				if((uGroup=uGetSearchGroup(gcUser))==0)
+				if((uGroup=uGetSearchGroup(gcUser,2))==0)
 		                        tContainer("No search set exists. Please create one first.");
 
 				//We extend to this other optional list and ignore the other filter items
@@ -650,7 +650,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						&& uForClient==0 && uOSTemplate==0 && cCommands[0]==0)
 	                        	tContainer("You must specify at least one search parameter");
 
-				if((uGroup=uGetSearchGroup(gcUser))==0)
+				if((uGroup=uGetSearchGroup(gcUser,2))==0)
 				{
 					sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=2"//2 is search group
 						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -4224,7 +4224,7 @@ void ExttContainerAuxTable(void)
 
 			sprintf(gcQuery,"Search Set Contents");
 			OpenFieldSet(gcQuery,100);
-			uGroup=uGetSearchGroup(gcUser);
+			uGroup=uGetSearchGroup(gcUser,2);
 			sprintf(gcQuery,"SELECT"
 					" tC1.uContainer,tC1.cLabel,tC1.cHostname,tStatus.cLabel,"
 					" tIP.cLabel,tNode.cLabel,tDatacenter.cLabel,tC1.uSource,"
@@ -7034,13 +7034,13 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 }//void CreateDNSJob()
 
 
-unsigned uGetSearchGroup(const char *gcUser)
+unsigned uGetSearchGroup(const char *gcUser,unsigned uGroupType)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uGroup=0;
 
-	sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s' AND uGroupType=2",gcUser);//2 is search type
+	sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s' AND uGroupType=%u",gcUser,uGroupType);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -7054,7 +7054,7 @@ unsigned uGetSearchGroup(const char *gcUser)
 
 	return(uGroup);
 
-}//unsigned uGetSearchGroup(const char *gcUser)
+}//unsigned uGetSearchGroup()
 
 
 void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode)

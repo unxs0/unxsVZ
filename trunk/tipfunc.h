@@ -26,7 +26,7 @@ void AddIPRange(char *cIPRange);
 void DelIPRange(char *cIPRange);
 
 //extern
-unsigned uGetSearchGroup(const char *gcUser);
+unsigned uGetSearchGroup(const char *gcUser,unsigned uGroupType);
 
 void ExtProcesstIPVars(pentry entries[], int x)
 {
@@ -88,7 +88,7 @@ void ExttIPCommands(pentry entries[], int x)
 						&& uOwnerSearch==0 && uIPv4Exclude==0)
 	                        	tIP("You must specify at least one search parameter");
 
-				if((uGroup=uGetSearchGroup(gcUser))==0)
+				if((uGroup=uGetSearchGroup(gcUser,31))==0)
 		                        tIP("No search set exists. Please create one first.");
 
 				//Initial query section
@@ -201,9 +201,9 @@ void ExttIPCommands(pentry entries[], int x)
 						&& uOwnerSearch==0 && uIPv4Exclude==0)
 	                        	tIP("You must specify at least one search parameter");
 
-				if((uGroup=uGetSearchGroup(gcUser))==0)
+				if((uGroup=uGetSearchGroup(gcUser,31))==0)
 				{
-					sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=2"//2 is search group
+					sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=31"//2 is search group
 						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 							gcUser,guCompany,guLoginClient);//2=search set type TODO
 					mysql_query(&gMysql,gcQuery);
@@ -628,7 +628,7 @@ void ExttIPAuxTable(void)
 
 			sprintf(gcQuery,"Search Set Contents");
 			OpenFieldSet(gcQuery,100);
-			uGroup=uGetSearchGroup(gcUser);
+			uGroup=uGetSearchGroup(gcUser,31);
 			sprintf(gcQuery,"SELECT"
 					" tIP.uIP,"
 					" tIP.cLabel,"
