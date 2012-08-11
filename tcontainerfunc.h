@@ -5148,12 +5148,12 @@ while((field=mysql_fetch_row(res)))
 	}
 
 
+	cSource[0]=0;
+	cSourceNode[0]=0;
 	if(field[7][0]!='0')
 	{
 		uSourceContainer=0;
 		uSourceNode=0;
-		cSourceNode[0]=0;
-		cSource[0]=0;
 		sscanf(field[7],"%u",&uSourceContainer);
 		if(uSourceContainer)
 		{
