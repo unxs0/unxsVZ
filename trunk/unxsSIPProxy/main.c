@@ -3,6 +3,39 @@ FILE
 	unxsVZ/unxsSIPProxy/main.c
 	$Id$
 PURPOSE
+	Listen for SIP traffic. Based on destination we forward traffic
+	to the correct SIP server and return answers to incoming message source. If no message
+	is available send appropiate SIP error message.
+
+	The SIP server port and IP that we relay the data to will come from a table, each
+	SIP server may have several IP, port tuples available that will be tried in a preference
+	based manner. We can also mark tuples as not available if certain SIP protocol expected
+	answers fail a certain number of times.
+
+	We will use a SIP server table with IPs, ports and preference. This will initially be used directly
+	from MySQL but later we will libmemcache it.
+
+	The table will be created from another hostname based table that will gather
+	the IPs, ports and preference info from DNS. This will be then memcached for
+	high speed access.
+
+	Simple rules mapping SIP servers to SIP servers will then be implemented.
+
+	We need to keep track of SIP "conversations" that we call dialogues.
+
+	We use the SIP protocol to maintain dailogue entries.
+
+INITIAL ARCHITECTURE
+
+	Create N listen children on startup.
+	
+	Build DNS based gateway, server IP, port, preference table. A signal can rebuild this
+	table during run time. The table can also have non DNS based static IP and port and preference
+	tuples if no noted in the source gateway tables by using IPv4 instead of hostnames.
+	
+	Every valid dialogue get's it's own child process.
+
+	The table is a libmemcache construct.
 	
 AUTHOR/LEGAL
 	(C) 2012 Gary Wallis for Unixservice, LLC.
