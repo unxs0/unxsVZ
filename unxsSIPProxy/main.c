@@ -7,6 +7,7 @@ PURPOSE
 AUTHOR/LEGAL
 	(C) 2012 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
+	Includes public domain beej.us networking source code.
 OTHER
 	Only tested on CentOS 5.
 FREE HELP
@@ -222,5 +223,5 @@ in_port_t get_in_port(struct sockaddr *sa)
 void sigchld_handler(int s)
 {
 	while(waitpid(-1,NULL,WNOHANG)>0);
-	logfileLine("sigchld_handler","ok");
+	//logfileLine("sigchld_handler","ok");
 }//void sigchld_handler(int s)
