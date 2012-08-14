@@ -75,6 +75,15 @@ in_port_t get_in_port(struct sockaddr *sa);
 #define MAXBUFLEN 100
 
 
+typedef struct {
+	unsigned uGateway;
+	char cGateway[100];
+	char cIPv4[16];
+	unsigned uPort;
+	unsigned uPrio;
+} structTypeGateway;
+
+
 int main(void)
 {
 	int sockfd;
@@ -85,6 +94,14 @@ int main(void)
 	char buf[MAXBUFLEN];
 	socklen_t addr_len;
 	char s[INET6_ADDRSTRLEN];
+
+	//Setup some sample test GWs
+	structTypeGateway structGateway[16];
+	structGateway[0].uGateway=1;
+	sprintf(structGateway[0].cGateway,"localhost");
+	sprintf(structGateway[0].cIPv4,"127.0.0.1");
+	structGateway[0].uPort=4590;
+	structGateway[0].uPrio=0;//Highest no other entries
 
 	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
 	{
@@ -157,6 +174,12 @@ int main(void)
 			//fork on every message recieved
 			if(!fork())
 			{
+				register int i;
+				char cGateway[100]={""};
+				char cIPv4[16]={""};
+				unsigned uPort=0;
+				
+
 				sprintf(gcQuery,"%s:%d",
 					inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr),s, sizeof s),
 					ntohs(get_in_port((struct sockaddr *)&their_addr)));
@@ -164,6 +187,44 @@ int main(void)
 				buf[numbytes] = '\0';
 				//printf("listener: packet contains \"%s\"\n", buf);
 				logfileLine("main",buf);
+
+
+				//Single test case sip packet INVITE
+				//	We will need to pass other packets also
+
+				//Parse the gateway from the INVITE data
+				//INVITE sip:13103566265@localhost SIP/2.0
+				sscanf(buf,"INVITE sip:%*[^@\n]@%[^ ]",cGateway);
+				logfileLine("main destination gw",cGateway);
+
+				//find the gateway in our lookup table
+				//temp test bigO n lookup no prio
+				for(i=0;i<16;i++)
+				{
+					if(!strcmp(cGateway,structGateway[i].cGateway))
+					{
+						sprintf(cIPv4,"%.15s",structGateway[i].cIPv4);
+						uPort=structGateway[i].uPort;
+						break;
+					}
+				}
+
+				if(!uPort)
+				{
+					//Return SIP error to dialogue initiator
+					logfileLine("main","gw not found");
+				}
+				else
+				{
+					//Check for existing dialogue entry
+					//	else create new dialogue.
+					//Forward UDP packet as is to dialgue destination gateway
+					sprintf(gcQuery,"%s:%u",cIPv4,uPort);
+					logfileLine("main destination ip:port",gcQuery);
+					//Wait around for SIP protocol answers and return them to initiator
+					//If no answers return SIP error
+					//Exit after timeout counter expires.
+				}
 
 				//this is the child process and it is no longer required
 				//not sure about this at all review your forking skills

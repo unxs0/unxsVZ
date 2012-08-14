@@ -31,3 +31,9 @@ clean:
 install: unxsSIPProxy
 	install -s unxsSIPProxy /usr/sbin/unxsSIPProxy
 	rm unxsSIPProxy
+
+install-run: unxsSIPProxy
+	killall unxsSIPProxy
+	install -s unxsSIPProxy /usr/sbin/unxsSIPProxy
+	rm unxsSIPProxy
+	/usr/sbin/unxsSIPProxy
