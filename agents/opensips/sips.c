@@ -28,10 +28,10 @@ void TextConnectDb(void);
 
 //local protos
 void ProcessDR(void);
-void unxsVZJobs(void);
+void unxsVZJobs(char const *cServer);
 void TextConnectOpenSIPSDb(void);
 void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage);
-void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName);
+void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName,char *cServer);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -96,14 +96,17 @@ int main(int iArgc, char *cArgv[])
 			ProcessDR();
 			goto CommonExit;
 		}
-		else if(!strncmp(cArgv[1],"unxsVZJobs",10))
+	}
+	else if(iArgc==3)
+	{
+		if(!strncmp(cArgv[1],"unxsVZJobs",10))
 		{
-			unxsVZJobs();
+			unxsVZJobs(cArgv[2]);
 			goto CommonExit;
 		}
 	}
 
-	printf("Usage: %s ProcessDR|unxsVZJobs\n",gcProgram);
+	printf("Usage: %s ProcessDR|unxsVZJobs <cServer>\n",gcProgram);
 
 CommonExit:
 	fclose(gLfp);
@@ -112,7 +115,7 @@ CommonExit:
 }//main()
 
 
-void unxsVZJobs(void)
+void unxsVZJobs(char const *cServer)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -144,6 +147,7 @@ void unxsVZJobs(void)
 		char cHostname[64]={""};
 		char cJobName[33]={""};
 		char cCustomerName[33]={""};
+		char cJobServer[32]={""};
 		char cMessage[128]={""};
 		unsigned uJob=0;
 		unsigned uDatacenter=0;
@@ -159,12 +163,19 @@ void unxsVZJobs(void)
 		sscanf(field[4],"%u",&uOwner);
 		sprintf(cJobName,"%.32s",field[5]);
 
+		//We only run jobs for us. Since the tJob queue was designed for
+		//for nodes only we added the cServer to the cJobData.
+		ParseDIDJobData(field[6],cDID,cHostname,cCustomerName,cJobServer);
+		//debug only
+		//logfileLine("unxsVZJobs cServer",cServer,0);
+		//logfileLine("unxsVZJobs cJobServer",cJobServer,0);
+		if(strcmp(cJobServer,cServer))
+			goto directExit;
+
 		if(!strncmp(cJobName,"unxsSIPSNewDID",14))
 		{
 			//Update tJob running
 			UpdateJob(2,uContainer,uJob,"");
-
-			ParseDIDJobData(field[6],cDID,cHostname,cCustomerName);
 
 			//Make sure PBX is registered
 			sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
@@ -336,8 +347,6 @@ void unxsVZJobs(void)
 			//Update tJob running
 			UpdateJob(2,uContainer,uJob,"");
 
-			ParseDIDJobData(field[6],cDID,cHostname,cCustomerName);
-
 			//Make sure PBX is registered
 			sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
 			mysql_query(&gMysqlExt,gcQuery);
@@ -409,8 +418,6 @@ void unxsVZJobs(void)
 		{
 			//Update tJob running
 			UpdateJob(2,uContainer,uJob,"");
-
-			ParseDIDJobData(field[6],cDID,cHostname,cCustomerName);
 
 			//Make sure PBX is registered
 			sprintf(gcQuery,"SELECT gwid FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
@@ -494,13 +501,16 @@ void unxsVZJobs(void)
 
 		}//unxsSIPSModCustomerName
 	}
+directExit:
 	mysql_free_result(res);
 
 	if(uDRReload)
 	{
 		//debug only
 		//printf("Reloading DR rules...\n");
-		sprintf(gcQuery,"/usr/sbin/opensipsctl fifo dr_reload");	
+		//sprintf(gcQuery,"/usr/sbin/opensipsctl fifo dr_reload");	
+		//logfileLine("unxsVZJobs","opensipsctl fifo dr_reload has been turned off",uContainer);
+		sprintf(gcQuery,"/usr/sbin/dr_reload.py");	
 		if(system(gcQuery))
 		{
 			logfileLine("unxsVZJobs",gcQuery,uContainer);
@@ -522,7 +532,7 @@ void unxsVZJobs(void)
 	exit(0);
 
 
-}//void unxsVZJobs(void)
+}//void unxsVZJobs()
 
 
 void ProcessDR(void)
@@ -711,7 +721,7 @@ void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage
 }//void UpdateJob()
 
 
-void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName)
+void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName,char *cServer)
 {
 	char *cp;
 	char *cp2;
@@ -731,6 +741,15 @@ void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerNa
 		{
 			*cp2=0;
 			sprintf(cHostname,"%.63s",cp+10);
+			*cp2=';';
+		}
+	}
+	if((cp=strstr(cJobData,"cServer=")))
+	{
+		if((cp2=strchr(cp+8,';')))
+		{
+			*cp2=0;
+			sprintf(cServer,"%.31s",cp+8);
 			*cp2=';';
 		}
 	}
