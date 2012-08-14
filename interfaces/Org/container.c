@@ -29,6 +29,7 @@ static char gcLabel[33]={""};
 static char gcNewHostname[33]={""};
 static char gcNewHostParam0[33]={""};
 static char gcNewHostParam1[33]={""};
+static char gcServer[32]={""};
 static char gcDID[17]={""};
 static char *gcBulkData={""};
 static char gcCustomerName[33]={""};
@@ -67,6 +68,7 @@ void BulkDIDRemove(void);
 void DIDOpsCommonChecking(void);
 void LoadAllDIDs(void);
 char *random_pw(char *dest);
+void GetConfigurationValue(char const *cName,char *cValue,unsigned uDatacenter,unsigned uNode,unsigned uContainer);
 
 
 unsigned uPower10(unsigned uI)
@@ -973,29 +975,43 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//unxsSIPS job
-			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
-			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSModCustomerName(%u)',cJobName='unxsSIPSModCustomerName'"
-					",uDatacenter=%u,uNode=%u,uContainer=%u"
-					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
-					",uJobStatus=%u"
-					",cJobData='"
-					"cCustomerName=%s;\n"
-					"cHostname=%s;\n'"
-					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						guContainer,
-						guDatacenter,
-						guNode,
-						guContainer,
-						uREMOTEWAITING,
-						gcCustomerName,
-						gcCtHostname,
-						guOrg,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			//unxsSIPS jobs
+			register int i,j=0;
+			char cSIPProxyList[256];
+			GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
+			for(i=0;cSIPProxyList[i];i++)
 			{
-				gcMessage="unxsSIPSModCustomerName tJob insert failed, contact sysadmin!";
-				htmlContainer();
+				if(cSIPProxyList[i]!=';')
+					continue;
+				cSIPProxyList[i]=0;
+				sprintf(gcServer,"%.31s",cSIPProxyList+j);
+				j=i+1;//next beg if app
+				cSIPProxyList[i]=';';
+				sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+				sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSModCustomerName(%u)',cJobName='unxsSIPSModCustomerName'"
+						",uDatacenter=%u,uNode=%u,uContainer=%u"
+						",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+						",uJobStatus=%u"
+						",cJobData='"
+						"cServer=%s;\n"
+						"cCustomerName=%s;\n"
+						"cHostname=%s;\n'"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							guContainer,
+							guDatacenter,
+							guNode,
+							guContainer,
+							uREMOTEWAITING,
+							gcServer,
+							gcCustomerName,
+							gcCtHostname,
+							guOrg,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="unxsSIPSModCustomerName tJob insert failed, contact sysadmin!";
+					htmlContainer();
+				}
 			}
 
 			gcMessage="Remote 'Mod CustomerName' task created for OpenSIPS.";
@@ -1099,29 +1115,43 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//unxsSIPS job
-			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
-			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSNewDID(%u)',cJobName='unxsSIPSNewDID'"
-					",uDatacenter=%u,uNode=%u,uContainer=%u"
-					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
-					",uJobStatus=%u"
-					",cJobData='"
-					"cDID=%s;\n"
-					"cHostname=%s;\n'"
-					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						guContainer,
-						guDatacenter,
-						guNode,
-						guContainer,
-						uREMOTEWAITING,
-						gcDID,
-						gcCtHostname,
-						guOrg,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			//unxsSIPS jobs
+			register int i,j=0;
+			char cSIPProxyList[256];
+			GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
+			for(i=0;cSIPProxyList[i];i++)
 			{
-				gcMessage="unxsSIPSNewDID tJob insert failed, contact sysadmin!";
-				htmlContainer();
+				if(cSIPProxyList[i]!=';')
+					continue;
+				cSIPProxyList[i]=0;
+				sprintf(gcServer,"%.31s",cSIPProxyList+j);
+				j=i+1;//next beg if app
+				cSIPProxyList[i]=';';
+				sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+				sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSNewDID(%u)',cJobName='unxsSIPSNewDID'"
+						",uDatacenter=%u,uNode=%u,uContainer=%u"
+						",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+						",uJobStatus=%u"
+						",cJobData='"
+						"cServer=%s;\n"
+						"cDID=%s;\n"
+						"cHostname=%s;\n'"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							guContainer,
+							guDatacenter,
+							guNode,
+							guContainer,
+							uREMOTEWAITING,
+							gcServer,
+							gcDID,
+							gcCtHostname,
+							guOrg,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="unxsSIPSNewDID tJob insert failed, contact sysadmin!";
+					htmlContainer();
+				}
 			}
 
 			gcMessage="Remote 'Add DID' task created for OpenSIPS.";
@@ -1187,29 +1217,43 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//unxsSIPS job
-			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
-			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSRemoveDID(%u)',cJobName='unxsSIPSRemoveDID'"
-					",uDatacenter=%u,uNode=%u,uContainer=%u"
-					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
-					",uJobStatus=%u"
-					",cJobData='"
-					"cDID=%s;\n"
-					"cHostname=%s;\n'"
-					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						guContainer,
-						guDatacenter,
-						guNode,
-						guContainer,
-						uREMOTEWAITING,
-						gcDID,
-						gcCtHostname,
-						guOrg,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			//unxsSIPS jobs
+			register int i,j=0;
+			char cSIPProxyList[256];
+			GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
+			for(i=0;cSIPProxyList[i];i++)
 			{
-				gcMessage="unxsSIPSRemoveDID tJob insert failed, contact sysadmin!";
-				htmlContainer();
+				if(cSIPProxyList[i]!=';')
+					continue;
+				cSIPProxyList[i]=0;
+				sprintf(gcServer,"%.31s",cSIPProxyList+j);
+				j=i+1;//next beg if app
+				cSIPProxyList[i]=';';
+				sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+				sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSRemoveDID(%u)',cJobName='unxsSIPSRemoveDID'"
+						",uDatacenter=%u,uNode=%u,uContainer=%u"
+						",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+						",uJobStatus=%u"
+						",cJobData='"
+						"cServer=%s;\n"
+						"cDID=%s;\n"
+						"cHostname=%s;\n'"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							guContainer,
+							guDatacenter,
+							guNode,
+							guContainer,
+							uREMOTEWAITING,
+							gcServer,
+							gcDID,
+							gcCtHostname,
+							guOrg,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="unxsSIPSRemoveDID tJob insert failed, contact sysadmin!";
+					htmlContainer();
+				}
 			}
 
 			gcMessage="Remote 'Remove DID' task created for OpenSIPS.";
@@ -2830,13 +2874,25 @@ void BulkDIDAdd(void)
 			continue;
 		}
 
-		//unxsSIPS job
-		sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSNewDID(%u)',cJobName='unxsSIPSNewDID'"
+		//unxsSIPS jobs
+		register int i,j=0;
+		char cSIPProxyList[256];
+		GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
+		for(i=0;cSIPProxyList[i];i++)
+		{
+			if(cSIPProxyList[i]!=';')
+				continue;
+			cSIPProxyList[i]=0;
+			sprintf(gcServer,"%.31s",cSIPProxyList+j);
+			j=i+1;//next beg if app
+			cSIPProxyList[i]=';';
+			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSNewDID(%u)',cJobName='unxsSIPSNewDID'"
 					",uDatacenter=%u,uNode=%u,uContainer=%u"
 					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 					",uJobStatus=%u"
 					",cJobData='"
+					"cServer=%s;\n"
 					"cDID=%s;\n"
 					"cHostname=%s;\n'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -2845,14 +2901,16 @@ void BulkDIDAdd(void)
 						guNode,
 						guContainer,
 						uREMOTEWAITING,
+						gcServer,
 						gcDID,
 						gcCtHostname,
 						guOrg,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			strncat(cReply," insert error 2\n",15);
-			continue;
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				strncat(cReply," ie\n",4);
+				continue;
+			}
 		}
 		strncat(cReply," added\n",15);
 		uProcessedCount++;
@@ -2934,13 +2992,28 @@ void BulkDIDRemove(void)
 			continue;
 		}
 
-		//unxsSIPS job
-		sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSRemoveDID(%u)',cJobName='unxsSIPSRemoveDID'"
+
+
+		//unxsSIPS jobs
+		register int i,j=0;
+		char cSIPProxyList[256];
+		GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
+		for(i=0;cSIPProxyList[i];i++)
+		{
+			if(cSIPProxyList[i]!=';')
+				continue;
+			cSIPProxyList[i]=0;
+			sprintf(gcServer,"%.31s",cSIPProxyList+j);
+			j=i+1;//next beg if app
+			cSIPProxyList[i]=';';
+			//unxsSIPS job
+			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSRemoveDID(%u)',cJobName='unxsSIPSRemoveDID'"
 					",uDatacenter=%u,uNode=%u,uContainer=%u"
 					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 					",uJobStatus=%u"
 					",cJobData='"
+					"cServer=%s;\n"
 					"cDID=%s;\n"
 					"cHostname=%s;\n'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -2949,14 +3022,13 @@ void BulkDIDRemove(void)
 						guNode,
 						guContainer,
 						uREMOTEWAITING,
+						gcServer,
 						gcDID,
 						gcCtHostname,
 						guOrg,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			strncat(cReply," insert error 1\n",15);
-			continue;
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				strncat(cReply," ie\n",4);
 		}
 
 		strncat(cReply," removed\n",15);
@@ -3112,3 +3184,21 @@ char *random_pw(char *dest)
 	}
     return dest;
 }//char *random_pw(char *dest)
+
+
+void GetConfigurationValue(char const *cName,char *cValue,unsigned uDatacenter,unsigned uNode,unsigned uContainer)
+{
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	cValue[0]=0;
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=%u"
+			" AND uNode=%u AND uContainer=%u AND cLabel='%s'",uDatacenter,uNode,uContainer,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return;
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cValue,"%.255s",field[0]);
+
+}//void GetConfigurationValue()
