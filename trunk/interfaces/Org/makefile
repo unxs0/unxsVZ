@@ -43,8 +43,12 @@ cgi.o: ../../cgi.c  ../../cgi.h
 clean:
 	rm -f *.o *.cgi
 	
-install: interface.cgi ./templates/Footer ./templates/ZLogin.Body
+install-test: interface.cgi ./templates/Footer ./templates/ZLogin.Body
 	install -m 510 -g apache -s interface.cgi /var/www/unxs/cgi-bin/test/$(CGINAME)
+	rm -f interface.cgi
+
+install: interface.cgi ./templates/Footer ./templates/ZLogin.Body
+	install -m 510 -g apache -s interface.cgi /var/www/unxs/cgi-bin/$(CGINAME)
 	rm -f interface.cgi
 
 ./templates/Footer: ./templates/Footer.default
