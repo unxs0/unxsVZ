@@ -71,12 +71,11 @@ void sigchld_handler(int s);
 void *get_in_addr(struct sockaddr *sa);
 in_port_t get_in_port(struct sockaddr *sa);
 
-#define MYPORT "4950"	// the port users will be connecting to
-#define MAXBUFLEN 100
+#define cudefMYPORT "4950"	// the port users will be connecting to
+#define udefMAXBUFLEN 100
 
 
 typedef struct {
-	unsigned uGateway;
 	char cGateway[100];
 	char cIPv4[16];
 	unsigned uPort;
@@ -84,109 +83,156 @@ typedef struct {
 } structTypeGateway;
 
 
+typedef struct {
+	structTypeGateway *structInitiatorGateway;
+	structTypeGateway *structDestinationGateway;
+	unsigned uCounter;//decide when to close if not via sip protocol
+	unsigned uStatus;//current status of call
+} structTypeDialogue;
+
+
 int main(void)
 {
-	int sockfd;
-	struct addrinfo hints, *servinfo, *p;
-	int rv;
-	int numbytes;
-	struct sockaddr_storage their_addr;
-	char buf[MAXBUFLEN];
-	socklen_t addr_len;
-	char s[INET6_ADDRSTRLEN];
+	int iSockFD;
+	struct addrinfo addrinfoHints, *addrinfoServer, *addrinfoPtr;
+	int iRv;
+	int iNumbytes;
 
-	//Setup some sample test GWs
-	structTypeGateway structGateway[16];
-	structGateway[0].uGateway=1;
-	sprintf(structGateway[0].cGateway,"localhost");
-	sprintf(structGateway[0].cIPv4,"127.0.0.1");
-	structGateway[0].uPort=4590;
-	structGateway[0].uPrio=0;//Highest no other entries
-
+	//This if for unxs default logging function.
 	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
 	{
 		logfileLine("main","fopen logfile failed");
 		exit(1);
 	}
 
-	memset(&hints, 0, sizeof hints);
-	//hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
-	hints.ai_family = AF_INET; // set to AF_INET to force IPv4
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_PASSIVE; // use my IP
 
-	if ((rv = getaddrinfo(NULL, MYPORT, &hints, &servinfo)) != 0) {
-		sprintf(gcQuery,"getaddrinfo: %.99s",gai_strerror(rv));
+	//
+	//Setup our lookup table section
+
+	//Setup some sample test destination GWs
+	structTypeGateway structGateway[16];
+	sprintf(structGateway[0].cGateway,"localhost");
+	sprintf(structGateway[0].cIPv4,"127.0.0.1");
+	structGateway[0].uPort=4590;
+	structGateway[0].uPrio=0;//Highest no other entries
+
+	//We also need some storage for the incoming gateway info
+	structTypeGateway structInitiatorGateway[16];
+
+	//End of setup our lookup table section
+	//
+
+
+	//
+	//Server socket setup section
+
+	//Setup hints for our needs
+	//In this case bind to all system IPs but only udp IPv4
+	memset(&addrinfoHints, 0, sizeof addrinfoHints);
+	addrinfoHints.ai_family = AF_INET; // set to AF_INET to force IPv4
+	addrinfoHints.ai_socktype = SOCK_DGRAM;
+	addrinfoHints.ai_flags = AI_PASSIVE; // use my IP
+
+	//We can bind to many here depending on our hints and other things
+	//Populate a list of addrinfo's
+	if ((iRv=getaddrinfo(NULL,cudefMYPORT,&addrinfoHints,&addrinfoServer))!=0)
+	{
+		sprintf(gcQuery,"getaddrinfo: %.99s",gai_strerror(iRv));
 		logfileLine("main",gcQuery);
 		return(1);
 	}
 
-	// loop through all the results and bind to the first we can
-	for(p = servinfo; p != NULL; p = p->ai_next) {
-		if ((sockfd = socket(p->ai_family, p->ai_socktype,
-				p->ai_protocol)) == -1) {
+	//Loop through all the results and bind to the first we can
+	for(addrinfoPtr=addrinfoServer;addrinfoPtr!=NULL;addrinfoPtr=addrinfoPtr->ai_next)
+	{
+		if((iSockFD=socket(addrinfoPtr->ai_family,addrinfoPtr->ai_socktype,addrinfoPtr->ai_protocol))== -1)
+		{
 			logfileLine("main","socket error");
 			continue;
 		}
 
-		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-			close(sockfd);
+		if(bind(iSockFD,addrinfoPtr->ai_addr,addrinfoPtr->ai_addrlen)== -1)
+		{
+			close(iSockFD);
 			logfileLine("main","bind error");
 			continue;
 		}
-
 		break;
-	}
+	}//For each addrinfo member
 
-	if (p == NULL) {
+	//Could not bind to anything bail!
+	if(addrinfoPtr==NULL)
+	{
 		logfileLine("main","failed to bind socket");
 		return(2);
 	}
 
-	freeaddrinfo(servinfo);
+	//We do not require this list anymore so we free it
+	freeaddrinfo(addrinfoServer);
 
+	//End of server socket setup section
+	//
+
+
+	//
+	//We have enough to start basic daemon so let's do it
 	daemonize();
-	//printf("listener: waiting to recvfrom...\n");
+	//
 
-	//handle wait via signals to avoud wait() blocking.
+
+	//
+	//This section is basically the waiting for recvfrom loop with
+	//child creation for handling incoming and outgoing sip messages.
+
+	//handle wait via signals to avoid wait() blocking.
 	struct sigaction sa;
 	sa.sa_handler=sigchld_handler; //reap all dead processes
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags=SA_RESTART;
-	if(sigaction(SIGCHLD,&sa,NULL) == -1)
+	if(sigaction(SIGCHLD,&sa,NULL)== -1)
 	{
 		logfileLine("main","sigaction error exit");
 		exit(1);
 	}
 	logfileLine("main","started");
 
+	//main recvfrom loop
+	struct sockaddr_storage sockaddrstorageOtherSide;
+	char cBuf[udefMAXBUFLEN];
+	socklen_t socklentypeAddrlen;
+	char cIPStr[INET_ADDRSTRLEN];
 	while(1)
 	{
-
-		addr_len = sizeof their_addr;
-		if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
-			(struct sockaddr *)&their_addr, &addr_len)) == -1) {
+		socklentypeAddrlen=sizeof sockaddrstorageOtherSide;
+		if ((iNumbytes=recvfrom(iSockFD,cBuf,udefMAXBUFLEN-1,0,(struct sockaddr *)&sockaddrstorageOtherSide,&socklentypeAddrlen))== -1)
+		{
 			logfileLine("main","recvfrom error");
 			return(3);
 		}
 		else
 		{
-			//fork on every message recieved
+			//These are key architecture concerns that will make the app robust and quick.
+			//Fork on every message recieved that comes in OR
+			//	only fork after determingin if traffic is from a valid source and destination and has valid sip traffic
+			//Probably an initial pool of forked listeners that will have threads handled via libevent or similar
+			//is the best solution.
+			//For now we will keep it as simple as possible to learn how to handle sip traffic and integrate with
+			//memcached DNS and DNS SRV based building of our routing table.
 			if(!fork())
 			{
 				register int i;
 				char cGateway[100]={""};
 				char cIPv4[16]={""};
 				unsigned uPort=0;
-				
 
 				sprintf(gcQuery,"%s:%d",
-					inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr),s, sizeof s),
-					ntohs(get_in_port((struct sockaddr *)&their_addr)));
+					inet_ntop(sockaddrstorageOtherSide.ss_family,get_in_addr((struct sockaddr *)&sockaddrstorageOtherSide),
+								cIPStr,sizeof cIPStr),
+					ntohs(get_in_port((struct sockaddr *)&sockaddrstorageOtherSide)));
 				logfileLine("main",gcQuery);
-				buf[numbytes] = '\0';
-				//printf("listener: packet contains \"%s\"\n", buf);
-				logfileLine("main",buf);
+				cBuf[iNumbytes]=0;
+				//printf("listener: packet contains \"%s\"\n", cBuf);
+				logfileLine("main",cBuf);
 
 
 				//Single test case sip packet INVITE
@@ -194,52 +240,61 @@ int main(void)
 
 				//Parse the gateway from the INVITE data
 				//INVITE sip:13103566265@localhost SIP/2.0
-				sscanf(buf,"INVITE sip:%*[^@\n]@%[^ ]",cGateway);
-				logfileLine("main destination gw",cGateway);
-
-				//find the gateway in our lookup table
-				//temp test bigO n lookup no prio
-				for(i=0;i<16;i++)
+				if(sscanf(cBuf,"INVITE sip:%*[^@\n]@%[^ ]",cGateway)==1)
 				{
-					if(!strcmp(cGateway,structGateway[i].cGateway))
+					logfileLine("main destination gw",cGateway);
+
+					//find the gateway in our lookup table
+					//temp test bigO n lookup no prio
+					for(i=0;i<16;i++)
 					{
-						sprintf(cIPv4,"%.15s",structGateway[i].cIPv4);
-						uPort=structGateway[i].uPort;
-						break;
+						if(!strcmp(cGateway,structGateway[i].cGateway))
+						{
+							sprintf(cIPv4,"%.15s",structGateway[i].cIPv4);
+							uPort=structGateway[i].uPort;
+							break;
+						}
 					}
-				}
 
-				if(!uPort)
-				{
-					//Return SIP error to dialogue initiator
-					logfileLine("main","gw not found");
-				}
-				else
-				{
-					//Check for existing dialogue entry
-					//	else create new dialogue.
-					//Forward UDP packet as is to dialgue destination gateway
-					sprintf(gcQuery,"%s:%u",cIPv4,uPort);
-					logfileLine("main destination ip:port",gcQuery);
-					//Wait around for SIP protocol answers and return them to initiator
-					//If no answers return SIP error
-					//Exit after timeout counter expires.
-				}
+					if(!uPort)
+					{
+						//Return SIP error to dialogue initiator
+						//Send a one time sip message then close
+						//	and exit this child.
+						logfileLine("main","gw not found");
+					}
+					else
+					{
+						//Check for existing dialogue entry
+						//	else create new dialogue.
+	
+						//Forward UDP packet as is to dialgue destination gateway
+						//Send a message but keep the socket available for future
+						// messages.
+						sprintf(gcQuery,"%s:%u",cIPv4,uPort);
+						logfileLine("main destination ip:port",gcQuery);
+						//Wait around for SIP protocol answers and return them to initiator
+						//If no answers return SIP error to initiator and then close sockets
+						// and exit this child.
+						//Exit after timeout counter expires close sockets and exit this child.
+					}
+				}//if cGateway
 
 				//this is the child process and it is no longer required
 				//not sure about this at all review your forking skills
 				if(gLfp!=NULL)
 					fclose(gLfp);
-				close(sockfd);
+				close(iSockFD);
 				exit(0);
 			}
 		}
 
-	}//while(1)
+	}//while(1) end of main recfrom outer loop
 
-	close(sockfd);
+	close(iSockFD);
 
 	return(0);
+
 }//int main()
 
 
@@ -293,27 +348,25 @@ void daemonize(void)
 }//void daemonize(void)
 
 
-// get sockaddr, IPv4 or IPv6:
+//Get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
 {
-	if (sa->sa_family == AF_INET) {
+	if(sa->sa_family==AF_INET)
 		return &(((struct sockaddr_in*)sa)->sin_addr);
-	}
-
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }//void *get_in_addr(struct sockaddr *sa)
 
 
-// get port, IPv4 or IPv6:
+//Get port, IPv4 or IPv6:
 in_port_t get_in_port(struct sockaddr *sa)
 {
-	if (sa->sa_family == AF_INET) {
+	if(sa->sa_family == AF_INET)
 		return (((struct sockaddr_in*)sa)->sin_port);
-	}
 	return (((struct sockaddr_in6*)sa)->sin6_port);
 }//in_port_t get_in_port(struct sockaddr *sa)
 
 
+//Very important snippet of code
 void sigchld_handler(int s)
 {
 	while(waitpid(-1,NULL,WNOHANG)>0);
