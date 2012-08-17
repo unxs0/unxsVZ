@@ -58,6 +58,7 @@ FREE HELP
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/wait.h>
+#include <libmemcached/memcached.h>
 
 MYSQL gMysql;
 static FILE *gLfp=NULL;

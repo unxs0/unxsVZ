@@ -9,7 +9,7 @@
 #
 
 CFLAGS= -Wall
-LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lm
+LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so.2
 
 all: unxsSIPProxy
 
