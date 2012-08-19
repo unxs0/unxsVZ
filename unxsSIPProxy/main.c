@@ -215,7 +215,7 @@ int main(void)
 			//These are key architecture concerns that will make the app robust and quick.
 			//Fork on every message recieved that comes in OR
 			//	only fork after determingin if traffic is from a valid source and destination and has valid sip traffic
-			//Probably an initial pool of forked listeners that will have threads handled via libevent or similar
+			//Probably an initial pool of forked listeners that will have i/o handled via libevent or similar
 			//is the best solution.
 			//For now we will keep it as simple as possible to learn how to handle sip traffic and integrate with
 			//memcached DNS and DNS SRV based building of our routing table.
