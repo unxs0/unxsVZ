@@ -34,42 +34,32 @@ NOTES
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <event.h>
+#include <signal.h>
 
+#define cLOGFILE "/var/log/unxsSIPProxy"
+
+//Global data
+unsigned guCount=0;
+unsigned guServerPort=5060;
+unsigned guClientPort=5060;
 unsigned guCount=0;
 char gcServerIP[16]={"127.0.0.1"};
 char gcClientIP[16]={""};
+static FILE *gLfp=NULL;
+char gcQuery[1024];
 
-#include <signal.h>
-void sig_handler(int signum)
-{
-	printf("guCount=%u\n",guCount);
-	exit(0);
-}
+//TOC
+void readEv(int fd,short event,void* arg);
+void logfileLine(const char *cFunction,const char *cLogline);
+void daemonize(void);
+void sigHandler(int iSignum);
+int iCheckLibEventVersion(void);
 
-int
-check_for_old_version(void)
-{
-    const char *v = event_get_version();
-    /* This is a dumb way to do it, but it is the only thing that works
-       before Libevent 2.0. */
-    if (!strncmp(v, "0.", 2) ||
-        !strncmp(v, "1.1", 3) ||
-        !strncmp(v, "1.2", 3) ||
-        !strncmp(v, "1.3", 3)) {
-
-        printf("Your version of Libevent is very old.  If you run into bugs,"
-               " consider upgrading.\n");
-        return -1;
-    } else {
-        printf("Running with Libevent version %s\n", v);
-        return 0;
-    }
-}	 
 
 void readEv(int fd,short event,void* arg)
 {
 	ssize_t len;
-	char buf[256]={""};
+	char cPacket[2048]={""};
 	//struct event *ev = arg;
 
 	socklen_t l=sizeof(struct sockaddr);
@@ -77,22 +67,21 @@ void readEv(int fd,short event,void* arg)
 
 	//printf("readEv called with %s fd: %d, event: %d\n",event_get_method(),fd,event);
 
-	len=recvfrom(fd,(void *)buf,255,0,(struct sockaddr*)&cAddr,&l);
+	len=recvfrom(fd,(void *)cPacket,2047,0,(struct sockaddr*)&cAddr,&l);
 
 	if(len== -1)
 	{
 		perror("recvfrom()");
+		logfileLine("readEv","recvfrom()");
 		return;
 	}
 	else if(len==0)
 	{
-		printf("Connection Closed\n");
+		printf("connection closed\n");
+		logfileLine("readEv","connection closed");
 		return;
 	}
 
-	//buf[len]='\0';
-	//printf("READ: %s\n",buf);
-	//printf(".");
 	guCount++;
 
 	//
@@ -107,7 +96,7 @@ void readEv(int fd,short event,void* arg)
 	struct sockaddr_in remoteServAddr;
 	char cMsg[100]={"SIP/2.0 100 OK\n"};
 	char cIPStr[INET_ADDRSTRLEN];
-	unsigned uPort=5060;//defaul
+	unsigned uPort=guClientPort;//default
 	//Get other side IP number and create quickest socket
 	inet_ntop(AF_INET,&cAddr.sin_addr,cIPStr,sizeof(cIPStr));
 	inet_aton(cIPStr,&remoteServAddr.sin_addr);
@@ -117,6 +106,7 @@ void readEv(int fd,short event,void* arg)
 	if(sd<0)
 	{
 		perror("socket()");
+		logfileLine("readEv","socket()");
 		return;
 	}
  	//In some cases we need to make sure we send messages from a specific IP 
@@ -131,6 +121,7 @@ void readEv(int fd,short event,void* arg)
 		if(rc<0)
 		{
 			perror("bind()");
+			logfileLine("readEv","bind()");
 			return;
 		}
 	}
@@ -139,6 +130,7 @@ void readEv(int fd,short event,void* arg)
 	if(rc<0)
 	{
 		perror("sendto()");
+		logfileLine("readEv","sendto()");
 		return;
 	}
 	close(sd);
@@ -152,7 +144,14 @@ void readEv(int fd,short event,void* arg)
 
 int main()
 {
-	check_for_old_version();
+	//This if for unxs default logging function.
+	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
+	{
+		logfileLine("main","fopen logfile failed");
+		exit(1);
+	}
+
+	iCheckLibEventVersion();
 
 	int sock;
 	int yes=1;
@@ -160,16 +159,18 @@ int main()
 	struct sockaddr_in addr;
 	if((sock=socket(AF_INET,SOCK_DGRAM,0))<0)
 	{
-		perror("socket");
+		perror("socket()");
+		logfileLine("main","socket()");
 		return 1;
 	}
 	if(setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) < 0)
 	{
-		perror("setsockopt");
+		perror("setsockopt()");
+		logfileLine("main","setsockopt()");
 		return 1;
 	}
 	addr.sin_family=AF_INET;
-	addr.sin_port=htons(4950);
+	addr.sin_port=htons(guServerPort);
 	if(gcServerIP[0])
 		inet_aton(gcServerIP,&addr.sin_addr);
 	else
@@ -177,11 +178,15 @@ int main()
 	bzero(&(addr.sin_zero),8);
 	if(bind(sock,(struct sockaddr*)&addr, len)<0)
 	{
-		perror("bind");
+		perror("bind()");
+		logfileLine("main","bind()");
 		return 1;
 	}
-	signal(SIGINT,sig_handler);
-	printf("Listening now...\n");
+
+	daemonize();
+	signal(SIGINT,sigHandler);
+	sprintf(gcQuery,"listening on %s:%u",gcServerIP,guServerPort);
+	logfileLine("main",gcQuery);
 
 	struct event ev;
 	event_init();
@@ -189,9 +194,86 @@ int main()
 	event_add(&ev, NULL);
 	event_dispatch();
 
-	printf("Done!\n");
-	return 1;
+	//We should never reach here unless something wrong has happened
+	logfileLine("main","unexpected return");
+	return(1);
 
 }//main()
 
 
+void logfileLine(const char *cFunction,const char *cLogline)
+{
+	if(gLfp!=NULL)
+	{
+		time_t luClock;
+		char cTime[32];
+		pid_t pidThis;
+		const struct tm *tmTime;
+
+		pidThis=getpid();
+
+		time(&luClock);
+		tmTime=localtime(&luClock);
+		strftime(cTime,31,"%b %d %T",tmTime);
+
+		fprintf(gLfp,"%s unxsSIPProxy::%s[%u]: %s.\n",cTime,cFunction,pidThis,cLogline);
+		fflush(gLfp);
+	}
+	else
+	{
+		fprintf(stderr,"%s: unxsSIPProxy::%s.\n",cFunction,cLogline);
+	}
+
+}//void logfileLine()
+
+
+void daemonize(void)
+{
+	switch(fork())
+	{
+		default:
+			_exit(0);
+
+		case -1:
+			fprintf(stderr,"fork failed\n");
+			_exit(1);
+
+		case 0:
+		break;
+	}
+
+	if(setsid()<0)
+	{
+		fprintf(stderr,"setsid failed\n");
+		_exit(1);
+	}
+
+}//void daemonize(void)
+
+
+void sigHandler(int iSignum)
+{
+	printf("guCount=%u\n",guCount);
+	exit(0);
+}//void sigHandler(int iSignum)
+
+
+int iCheckLibEventVersion(void)
+{
+	const char *v=event_get_version();
+	if (!strncmp(v,"0.",2) ||
+		!strncmp(v,"1.1",3) ||
+		!strncmp(v,"1.2",3) ||
+		!strncmp(v,"1.3",3) )
+	{
+
+		logfileLine("iCheckLibEventVersion","Libevent is very old. Consider upgrading.");
+		return(-1);
+	}
+	else
+	{
+		sprintf(gcQuery,"Running with Libevent version %s\n",v);
+		logfileLine("iCheckLibEventVersion",gcQuery);
+		return(0);
+	}
+}//int iCheckLibEventVersion(void)
