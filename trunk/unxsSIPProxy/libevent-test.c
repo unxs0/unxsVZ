@@ -35,6 +35,7 @@ NOTES
 #include <pthread.h>
 #include <event.h>
 #include <signal.h>
+#include <libmemcached/memcached.h>
 
 #define cLOGFILE "/var/log/unxsSIPProxy"
 
@@ -42,7 +43,6 @@ NOTES
 unsigned guCount=0;
 unsigned guServerPort=5060;
 unsigned guClientPort=5060;
-unsigned guCount=0;
 char gcServerIP[16]={"127.0.0.1"};
 char gcClientIP[16]={""};
 static FILE *gLfp=NULL;
@@ -253,7 +253,9 @@ void daemonize(void)
 
 void sigHandler(int iSignum)
 {
-	printf("guCount=%u\n",guCount);
+	sprintf(gcQuery,"guCount=%u",guCount);
+	logfileLine("sigHandler",gcQuery);
+	if(gLfp) fclose(gLfp);
 	exit(0);
 }//void sigHandler(int iSignum)
 
@@ -272,7 +274,7 @@ int iCheckLibEventVersion(void)
 	}
 	else
 	{
-		sprintf(gcQuery,"Running with Libevent version %s\n",v);
+		sprintf(gcQuery,"Running with Libevent version %s",v);
 		logfileLine("iCheckLibEventVersion",gcQuery);
 		return(0);
 	}
