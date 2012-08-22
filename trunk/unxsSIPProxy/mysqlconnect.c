@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: mysqlconnect.c 1350 2010-04-16 12:58:00Z Gary $
+	$Id$
 PURPOSE
 	Wrapper for mysql_real_connect() that supports very fast
 	connect to main or alternative local.h set MySQL servers.
