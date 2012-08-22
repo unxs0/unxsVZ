@@ -1,3 +1,8 @@
+//yum install memcached.x86_64
+//service memcached start
+//yum install libmemcached.x86_64
+//yum install libmemcached-devel.x86_64
+//gcc -Wall memcachetest.c -o memcachetest /usr/lib64/libmemcached.so
 
 #include <stdio.h>
 #include <string.h>
