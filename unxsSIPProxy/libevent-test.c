@@ -1,12 +1,15 @@
 /*
 FILE
 	unxsVZ/unxsSIPProxy/libevent-test.c
+	$Id$
 
 COMPILE
-	gcc -Wall libevent-test.c -o libevent-test /usr/lib64/libevent.so
+	gcc -Wall libevent-test.c -o libevent-test /usr/lib64/libevent.so\
+		 /usr/lib64/libmemcached.so
 TEST
 	Run and use ctrl-c to stop. In other terminal send traffic, e.g.:
 
+	DO NOT USE sipsak flood option ON PRODUCTION SERVER
 	sipsak -F -r 4950 -s sip:nobody@127.0.0.1
 
 	Try running several instances in the background you will
@@ -54,6 +57,7 @@ void logfileLine(const char *cFunction,const char *cLogline);
 void daemonize(void);
 void sigHandler(int iSignum);
 int iCheckLibEventVersion(void);
+int iSetupAndTestMemcached(void);
 
 
 void readEv(int fd,short event,void* arg)
@@ -65,8 +69,6 @@ void readEv(int fd,short event,void* arg)
 	socklen_t l=sizeof(struct sockaddr);
 	struct sockaddr_in cAddr;
 
-	//printf("readEv called with %s fd: %d, event: %d\n",event_get_method(),fd,event);
-
 	len=recvfrom(fd,(void *)cPacket,2047,0,(struct sockaddr*)&cAddr,&l);
 
 	if(len== -1)
@@ -77,7 +79,7 @@ void readEv(int fd,short event,void* arg)
 	}
 	else if(len==0)
 	{
-		printf("connection closed\n");
+		perror("connection closed");
 		logfileLine("readEv","connection closed");
 		return;
 	}
@@ -151,7 +153,17 @@ int main()
 		exit(1);
 	}
 
-	iCheckLibEventVersion();
+	if(iCheckLibEventVersion())
+	{
+		logfileLine("main","libevent version too old");
+		exit(1);
+	}
+
+	if(iSetupAndTestMemcached())
+	{
+		logfileLine("main","memcached failed");
+		exit(1);
+	}
 
 	int sock;
 	int yes=1;
@@ -236,6 +248,7 @@ void daemonize(void)
 
 		case -1:
 			fprintf(stderr,"fork failed\n");
+			logfileLine("daemonize","fork failed");
 			_exit(1);
 
 		case 0:
@@ -245,6 +258,7 @@ void daemonize(void)
 	if(setsid()<0)
 	{
 		fprintf(stderr,"setsid failed\n");
+		logfileLine("daemonize","setsid failed");
 		_exit(1);
 	}
 
@@ -279,3 +293,54 @@ int iCheckLibEventVersion(void)
 		return(0);
 	}
 }//int iCheckLibEventVersion(void)
+
+
+int iSetupAndTestMemcached(void)
+{
+	memcached_server_st *servers = NULL;
+	memcached_st *memc;
+	memcached_return rc;
+	char *key= "unxsSIPProxy";
+	char *value= "$Id$";
+
+	memcached_server_st *memcached_servers_parse(const char *server_strings);
+	memc=memcached_create(NULL);
+
+	servers=memcached_server_list_append(servers,"localhost",11211,&rc);
+	rc=memcached_server_push(memc, servers);
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		sprintf(gcQuery,"Couldn't add server: %s",memcached_strerror(memc, rc));
+		logfileLine("iSetupAndTestMemcached",gcQuery);
+		return(-1);
+	}
+
+	rc=memcached_set(memc,key,strlen(key),value,strlen(value),(time_t)0,(uint32_t)0);
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		sprintf(gcQuery,"Couldn't store test key: %s",memcached_strerror(memc, rc));
+		logfileLine("iSetupAndTestMemcached",gcQuery);
+		return(-1);
+	}
+
+	char cValue[100]={""};
+	size_t size=100;
+	uint32_t flags=0;
+	sprintf(cValue,"%.99s",memcached_get(memc,key,strlen(key),&size,&flags,&rc));
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		sprintf(gcQuery,"Couldn't retrieve test key: %s",memcached_strerror(memc, rc));
+		logfileLine("iSetupAndTestMemcached",gcQuery);
+		return(-1);
+	}
+
+	if(strncmp(cValue,value,size))
+	{
+		sprintf(gcQuery,"Keys differ: (%s) (%s)",cValue,value);
+		logfileLine("iSetupAndTestMemcached",gcQuery);
+		return(-1);
+	}
+
+	return(0);
+
+}//int iSetupAndTestMemcached(void)
