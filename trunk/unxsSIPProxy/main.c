@@ -47,7 +47,6 @@ FREE HELP
 
 #include "sipproxy.h"
 
-
 //Global data
 MYSQL gMysql; 
 unsigned guCount=0;
@@ -57,6 +56,7 @@ char gcServerIP[16]={"127.0.0.1"};
 char gcClientIP[16]={""};
 static FILE *gLfp=NULL;
 char gcQuery[1024];
+unsigned guLogLevel=4;//1 errors, 2 warnings, 3 info, 4 debug
 
 //TOC
 void readEv(int fd,short event,void* arg);
@@ -65,19 +65,19 @@ void daemonize(void);
 void sigHandler(int iSignum);
 int iCheckLibEventVersion(void);
 int iSetupAndTestMemcached(void);
+int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort);
 
 
 void readEv(int fd,short event,void* arg)
 {
+
+	//
+	//Load message
 	ssize_t len;
 	char cPacket[2048]={""};
-	//struct event *ev = arg;
-
 	socklen_t l=sizeof(struct sockaddr);
-	struct sockaddr_in cAddr;
-
-	len=recvfrom(fd,(void *)cPacket,2047,0,(struct sockaddr*)&cAddr,&l);
-
+	struct sockaddr_in sourceAddr;
+	len=recvfrom(fd,(void *)cPacket,2047,0,(struct sockaddr*)&sourceAddr,&l);
 	if(len== -1)
 	{
 		perror("recvfrom()");
@@ -90,61 +90,43 @@ void readEv(int fd,short event,void* arg)
 		logfileLine("readEv","connection closed");
 		return;
 	}
-
 	guCount++;
+
+	//
+	//Parse message
+
+	//
+	//Check for transaction if not found create
+
+	//	
+	//Save source and destination IPs and ports for
+	//possible future use.
+	//Get other side IP number and port
+	//
+	char cSourceIP[INET_ADDRSTRLEN];
+	unsigned uSourcePort=ntohs(sourceAddr.sin_port);
+	inet_ntop(AF_INET,&sourceAddr.sin_addr,cSourceIP,sizeof(cSourceIP));
+
+	//transaction expires via memcached timer
+
 
 	//
 	//Response
 	//Decide on which response message to send
 	//This is based on the type of message and also based on the memcached routing table
-	//Examples: No matter what message, if cIPStr is not a PBX or Carrier gateway we can ignore and return before socket()
+	//Examples: No matter what message, if cSourceIP is not a PBX or Carrier gateway we can ignore and return before socket()
 	//	if did@gw yields no match for INVITE we can return a 400 response.
 	//	if we forward to gw then we return a 100 response.
 	//To the server the message came from
-	register int sd,rc;
-	struct sockaddr_in remoteServAddr;
 	char cMsg[100]={"SIP/2.0 200 OK\n"};
-	char cIPStr[INET_ADDRSTRLEN];
-	unsigned uPort=ntohs(cAddr.sin_port);
-	//Get other side IP number and create quickest socket
-	inet_ntop(AF_INET,&cAddr.sin_addr,cIPStr,sizeof(cIPStr));
-	inet_aton(cIPStr,&remoteServAddr.sin_addr);
-	remoteServAddr.sin_family=AF_INET;
-	remoteServAddr.sin_port=htons(uPort);
-	sd=socket(AF_INET,SOCK_DGRAM,0);
-	if(sd<0)
+	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 	{
-		perror("socket()");
-		logfileLine("readEv","socket()");
-		return;
-	}
- 	//In some cases we need to make sure we send messages from a specific IP 
-	if(gcClientIP[0])
-	{
-		struct sockaddr_in cliAddr;
-
-		cliAddr.sin_family=AF_INET;
-		inet_aton(gcClientIP, &cliAddr.sin_addr);
-		cliAddr.sin_port=htons(0);
-		rc=bind(sd,(struct sockaddr *)&cliAddr,sizeof(cliAddr));
-		if(rc<0)
+		if(guLogLevel>3)
 		{
-			perror("bind()");
-			logfileLine("readEv","bind()");
-			return;
+			sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
+			logfileLine("readEv",gcQuery);
 		}
 	}
-	//Send reponse message
-	rc=sendto(sd,cMsg,strlen(cMsg),0,(struct sockaddr *)&remoteServAddr,sizeof(remoteServAddr));
-	if(rc<0)
-	{
-		perror("sendto()");
-		logfileLine("readEv","sendto()");
-		return;
-	}
-	close(sd);
-	sprintf(gcQuery,"reply sent to %s:%u",cIPStr,uPort);
-	logfileLine("readEv",gcQuery);
 
 	//
 	//Forward
@@ -158,18 +140,30 @@ int main(int iArgc, char *cArgv[])
 	//This if for unxs default logging function.
 	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
 	{
+		perror(cLOGFILE);
 		logfileLine("main","fopen logfile failed");
+		exit(1);
+	}
+
+	FILE *fp;
+	if((fp=fopen(cPIDFILE,"r"))!=NULL)
+	{
+		perror("unxsSIPProxy pid file exists");
+		logfileLine("main","unxsSIPProxy may already be running");
+		fclose(fp);
 		exit(1);
 	}
 
 	if(iCheckLibEventVersion())
 	{
+		perror("libevent too old");
 		logfileLine("main","libevent version too old");
 		exit(1);
 	}
 
 	if(iSetupAndTestMemcached())
 	{
+		perror("memcached failed");
 		logfileLine("main","memcached failed");
 		exit(1);
 	}
@@ -205,7 +199,7 @@ int main(int iArgc, char *cArgv[])
 	}
 
 	daemonize();
-	signal(SIGINT|SIGHUP|SIGKILL,sigHandler);
+	signal(SIGINT,sigHandler);
 	sprintf(gcQuery,"listening on %s:%u",gcServerIP,guServerPort);
 	logfileLine("main",gcQuery);
 
@@ -364,3 +358,47 @@ int iSetupAndTestMemcached(void)
 
 }//int iSetupAndTestMemcached(void)
 
+
+int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort)
+{
+	register int sd,rc;
+	struct sockaddr_in sourceServAddr;
+
+	inet_aton(cIP,&sourceServAddr.sin_addr);
+	sourceServAddr.sin_family=AF_INET;
+	sourceServAddr.sin_port=htons(uPort);
+	sd=socket(AF_INET,SOCK_DGRAM,0);
+	if(sd<0)
+	{
+		perror("socket()");
+		logfileLine("SendUDPMessage","socket()");
+		return(1);
+	}
+ 	//In some cases we need to make sure we send messages from a specific IP 
+	if(gcClientIP[0])
+	{
+		struct sockaddr_in clientAddr;
+
+		clientAddr.sin_family=AF_INET;
+		inet_aton(gcClientIP, &clientAddr.sin_addr);
+		clientAddr.sin_port=htons(0);
+		rc=bind(sd,(struct sockaddr *)&clientAddr,sizeof(clientAddr));
+		if(rc<0)
+		{
+			perror("bind()");
+			logfileLine("SendUDPMessage","bind()");
+			return(2);
+		}
+	}
+	//Send reponse message
+	rc=sendto(sd,cMsg,strlen(cMsg),0,(struct sockaddr *)&sourceServAddr,sizeof(sourceServAddr));
+	if(rc<0)
+	{
+		perror("sendto()");
+		logfileLine("SendUDPMessage","sendto()");
+		return(3);
+	}
+	close(sd);
+
+	return(0);
+}//int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort)
