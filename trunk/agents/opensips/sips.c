@@ -245,9 +245,9 @@ void unxsVZJobs(char const *cServer)
 					sprintf(gcQuery,"INSERT INTO dr_gateways SET"
 							" type=1,"
 							" address='%s',"
-							" attrs='unxsvzOrg|%u',"
+							" attrs='%.12s|%u',"
 							" description='%s'"
-									,cHostname,uLinesContracted,cCustomerName);
+									,cHostname,cHostname,uLinesContracted,cCustomerName);
 					mysql_query(&gMysqlExt,gcQuery);
 					if(mysql_errno(&gMysqlExt))
 					{
