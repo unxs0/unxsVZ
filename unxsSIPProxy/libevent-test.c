@@ -42,6 +42,7 @@ NOTES
 #include <libmemcached/memcached.h>
 
 #define cLOGFILE "/var/log/unxsSIPProxy"
+#define cPIDFILE "/var/run/unxsSIPProxy.pid"
 
 //Global data
 unsigned guCount=0;
@@ -244,8 +245,11 @@ void logfileLine(const char *cFunction,const char *cLogline)
 
 void daemonize(void)
 {
+	FILE *fp;
+
 	switch(fork())
 	{
+
 		default:
 			_exit(0);
 
@@ -255,6 +259,11 @@ void daemonize(void)
 			_exit(1);
 
 		case 0:
+			if((fp=fopen(cPIDFILE,"w"))!=NULL)
+			{
+				fprintf(fp,"%u\n",getpid());
+				fclose(fp);
+			}
 		break;
 	}
 
@@ -273,6 +282,7 @@ void sigHandler(int iSignum)
 	sprintf(gcQuery,"guCount=%u",guCount);
 	logfileLine("sigHandler",gcQuery);
 	if(gLfp) fclose(gLfp);
+	system("rm -f "cPIDFILE);
 	exit(0);
 }//void sigHandler(int iSignum)
 

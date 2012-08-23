@@ -21,28 +21,24 @@ PURPOSE
 
 	Simple rules mapping SIP servers to SIP servers will then be implemented.
 
-	We need to keep track of SIP "conversations" that we call dialogues.
-
-	We use the SIP protocol to maintain dailogue entries.
+	We need to keep track of SIP transactions or maybe a only limited subset of dialogues.
 
 INITIAL ARCHITECTURE
 
-	Create N listen children on startup.
-	
 	Build DNS based gateway, server IP, port, preference table. A signal can rebuild this
 	table during run time. The table can also have non DNS based static IP and port and preference
 	tuples if no noted in the source gateway tables by using IPv4 instead of hostnames.
 	
-	Every valid dialogue get's it's own child process.
-
-	The table is a libmemcache construct.
+	The table is a libmemcached construct.
 	
 AUTHOR/LEGAL
 	(C) 2012 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 	Includes public domain beej.us networking source code.
+	Based on public domain libevent-test.c by Brian Smith
 OTHER
 	Only tested on CentOS 5.
+	yum install libmemcached, memcached, libevent
 FREE HELP
 	support @ openisp . net
 	supportgrp @ unixservice . com
@@ -51,54 +47,114 @@ FREE HELP
 
 #include "sipproxy.h"
 
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/wait.h>
-#include <libmemcached/memcached.h>
 
-MYSQL gMysql;
+//Global data
+MYSQL gMysql; 
+unsigned guCount=0;
+unsigned guServerPort=5060;
+unsigned guClientPort=5060;
+char gcServerIP[16]={"127.0.0.1"};
+char gcClientIP[16]={""};
 static FILE *gLfp=NULL;
 char gcQuery[1024];
 
-//toc
-int main(void);
+//TOC
+void readEv(int fd,short event,void* arg);
 void logfileLine(const char *cFunction,const char *cLogline);
 void daemonize(void);
-void sigchld_handler(int s);
-void *get_in_addr(struct sockaddr *sa);
-in_port_t get_in_port(struct sockaddr *sa);
-
-#define cudefMYPORT "4950"	// the port users will be connecting to
-#define udefMAXBUFLEN 100
+void sigHandler(int iSignum);
+int iCheckLibEventVersion(void);
+int iSetupAndTestMemcached(void);
 
 
-typedef struct {
-	char cGateway[100];
-	char cIPv4[16];
-	unsigned uPort;
-	unsigned uPrio;
-} structTypeGateway;
-
-
-typedef struct {
-	structTypeGateway *structInitiatorGateway;
-	structTypeGateway *structDestinationGateway;
-	unsigned uCounter;//decide when to close if not via sip protocol
-	unsigned uStatus;//current status of call
-} structTypeDialogue;
-
-
-int main(void)
+void readEv(int fd,short event,void* arg)
 {
-	int iSockFD;
-	struct addrinfo addrinfoHints, *addrinfoServer, *addrinfoPtr;
-	int iRv;
-	int iNumbytes;
+	ssize_t len;
+	char cPacket[2048]={""};
+	//struct event *ev = arg;
 
+	socklen_t l=sizeof(struct sockaddr);
+	struct sockaddr_in cAddr;
+
+	len=recvfrom(fd,(void *)cPacket,2047,0,(struct sockaddr*)&cAddr,&l);
+
+	if(len== -1)
+	{
+		perror("recvfrom()");
+		logfileLine("readEv","recvfrom()");
+		return;
+	}
+	else if(len==0)
+	{
+		perror("connection closed");
+		logfileLine("readEv","connection closed");
+		return;
+	}
+
+	guCount++;
+
+	//
+	//Response
+	//Decide on which response message to send
+	//This is based on the type of message and also based on the memcached routing table
+	//Examples: No matter what message, if cIPStr is not a PBX or Carrier gateway we can ignore and return before socket()
+	//	if did@gw yields no match for INVITE we can return a 400 response.
+	//	if we forward to gw then we return a 100 response.
+	//To the server the message came from
+	register int sd,rc;
+	struct sockaddr_in remoteServAddr;
+	char cMsg[100]={"SIP/2.0 200 OK\n"};
+	char cIPStr[INET_ADDRSTRLEN];
+	unsigned uPort=ntohs(cAddr.sin_port);
+	//Get other side IP number and create quickest socket
+	inet_ntop(AF_INET,&cAddr.sin_addr,cIPStr,sizeof(cIPStr));
+	inet_aton(cIPStr,&remoteServAddr.sin_addr);
+	remoteServAddr.sin_family=AF_INET;
+	remoteServAddr.sin_port=htons(uPort);
+	sd=socket(AF_INET,SOCK_DGRAM,0);
+	if(sd<0)
+	{
+		perror("socket()");
+		logfileLine("readEv","socket()");
+		return;
+	}
+ 	//In some cases we need to make sure we send messages from a specific IP 
+	if(gcClientIP[0])
+	{
+		struct sockaddr_in cliAddr;
+
+		cliAddr.sin_family=AF_INET;
+		inet_aton(gcClientIP, &cliAddr.sin_addr);
+		cliAddr.sin_port=htons(0);
+		rc=bind(sd,(struct sockaddr *)&cliAddr,sizeof(cliAddr));
+		if(rc<0)
+		{
+			perror("bind()");
+			logfileLine("readEv","bind()");
+			return;
+		}
+	}
+	//Send reponse message
+	rc=sendto(sd,cMsg,strlen(cMsg),0,(struct sockaddr *)&remoteServAddr,sizeof(remoteServAddr));
+	if(rc<0)
+	{
+		perror("sendto()");
+		logfileLine("readEv","sendto()");
+		return;
+	}
+	close(sd);
+	sprintf(gcQuery,"reply sent to %s:%u",cIPStr,uPort);
+	logfileLine("readEv",gcQuery);
+
+	//
+	//Forward
+
+
+}//void readEv(int fd,short event,void* arg)
+
+
+int main()
+{
 	//This if for unxs default logging function.
 	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
 	{
@@ -106,197 +162,64 @@ int main(void)
 		exit(1);
 	}
 
-
-	//
-	//Setup our lookup table section
-
-	//Setup some sample test destination GWs
-	structTypeGateway structGateway[16];
-	sprintf(structGateway[0].cGateway,"localhost");
-	sprintf(structGateway[0].cIPv4,"127.0.0.1");
-	structGateway[0].uPort=4590;
-	structGateway[0].uPrio=0;//Highest no other entries
-
-	//We also need some storage for the incoming gateway info
-	structTypeGateway structInitiatorGateway[16];
-
-	//End of setup our lookup table section
-	//
-
-
-	//
-	//Server socket setup section
-
-	//Setup hints for our needs
-	//In this case bind to all system IPs but only udp IPv4
-	memset(&addrinfoHints, 0, sizeof addrinfoHints);
-	addrinfoHints.ai_family = AF_INET; // set to AF_INET to force IPv4
-	addrinfoHints.ai_socktype = SOCK_DGRAM;
-	addrinfoHints.ai_flags = AI_PASSIVE; // use my IP
-
-	//We can bind to many here depending on our hints and other things
-	//Populate a list of addrinfo's
-	if ((iRv=getaddrinfo(NULL,cudefMYPORT,&addrinfoHints,&addrinfoServer))!=0)
+	if(iCheckLibEventVersion())
 	{
-		sprintf(gcQuery,"getaddrinfo: %.99s",gai_strerror(iRv));
-		logfileLine("main",gcQuery);
-		return(1);
-	}
-
-	//Loop through all the results and bind to the first we can
-	for(addrinfoPtr=addrinfoServer;addrinfoPtr!=NULL;addrinfoPtr=addrinfoPtr->ai_next)
-	{
-		if((iSockFD=socket(addrinfoPtr->ai_family,addrinfoPtr->ai_socktype,addrinfoPtr->ai_protocol))== -1)
-		{
-			logfileLine("main","socket error");
-			continue;
-		}
-
-		if(bind(iSockFD,addrinfoPtr->ai_addr,addrinfoPtr->ai_addrlen)== -1)
-		{
-			close(iSockFD);
-			logfileLine("main","bind error");
-			continue;
-		}
-		break;
-	}//For each addrinfo member
-
-	//Could not bind to anything bail!
-	if(addrinfoPtr==NULL)
-	{
-		logfileLine("main","failed to bind socket");
-		return(2);
-	}
-
-	//We do not require this list anymore so we free it
-	freeaddrinfo(addrinfoServer);
-
-	//End of server socket setup section
-	//
-
-
-	//
-	//We have enough to start basic daemon so let's do it
-	daemonize();
-	//
-
-
-	//
-	//This section is basically the waiting for recvfrom loop with
-	//child creation for handling incoming and outgoing sip messages.
-
-	//handle wait via signals to avoid wait() blocking.
-	struct sigaction sa;
-	sa.sa_handler=sigchld_handler; //reap all dead processes
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags=SA_RESTART;
-	if(sigaction(SIGCHLD,&sa,NULL)== -1)
-	{
-		logfileLine("main","sigaction error exit");
+		logfileLine("main","libevent version too old");
 		exit(1);
 	}
-	logfileLine("main","started");
 
-	//main recvfrom loop
-	struct sockaddr_storage sockaddrstorageOtherSide;
-	char cBuf[udefMAXBUFLEN];
-	socklen_t socklentypeAddrlen;
-	char cIPStr[INET_ADDRSTRLEN];
-	while(1)
+	if(iSetupAndTestMemcached())
 	{
-		socklentypeAddrlen=sizeof sockaddrstorageOtherSide;
-		if ((iNumbytes=recvfrom(iSockFD,cBuf,udefMAXBUFLEN-1,0,(struct sockaddr *)&sockaddrstorageOtherSide,&socklentypeAddrlen))== -1)
-		{
-			logfileLine("main","recvfrom error");
-			return(3);
-		}
-		else
-		{
-			//These are key architecture concerns that will make the app robust and quick.
-			//Fork on every message recieved that comes in OR
-			//	only fork after determingin if traffic is from a valid source and destination and has valid sip traffic
-			//Probably an initial pool of forked listeners that will have i/o handled via libevent or similar
-			//is the best solution.
-			//For now we will keep it as simple as possible to learn how to handle sip traffic and integrate with
-			//memcached DNS and DNS SRV based building of our routing table.
-			if(!fork())
-			{
-				register int i;
-				char cGateway[100]={""};
-				char cIPv4[16]={""};
-				unsigned uPort=0;
+		logfileLine("main","memcached failed");
+		exit(1);
+	}
 
-				sprintf(gcQuery,"%s:%d",
-					inet_ntop(sockaddrstorageOtherSide.ss_family,get_in_addr((struct sockaddr *)&sockaddrstorageOtherSide),
-								cIPStr,sizeof cIPStr),
-					ntohs(get_in_port((struct sockaddr *)&sockaddrstorageOtherSide)));
-				logfileLine("main",gcQuery);
-				cBuf[iNumbytes]=0;
-				//printf("listener: packet contains \"%s\"\n", cBuf);
-				logfileLine("main",cBuf);
+	int sock;
+	int yes=1;
+	int len=sizeof(struct sockaddr);
+	struct sockaddr_in addr;
+	if((sock=socket(AF_INET,SOCK_DGRAM,0))<0)
+	{
+		perror("socket()");
+		logfileLine("main","socket()");
+		return 1;
+	}
+	if(setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) < 0)
+	{
+		perror("setsockopt()");
+		logfileLine("main","setsockopt()");
+		return 1;
+	}
+	addr.sin_family=AF_INET;
+	addr.sin_port=htons(guServerPort);
+	if(gcServerIP[0])
+		inet_aton(gcServerIP,&addr.sin_addr);
+	else
+		addr.sin_addr.s_addr=INADDR_ANY;
+	bzero(&(addr.sin_zero),8);
+	if(bind(sock,(struct sockaddr*)&addr, len)<0)
+	{
+		perror("bind()");
+		logfileLine("main","bind()");
+		return 1;
+	}
 
+	daemonize();
+	signal(SIGINT,sigHandler);
+	sprintf(gcQuery,"listening on %s:%u",gcServerIP,guServerPort);
+	logfileLine("main",gcQuery);
 
-				//Single test case sip packet INVITE
-				//	We will need to pass other packets also
+	struct event ev;
+	event_init();
+	event_set(&ev, sock, EV_READ | EV_PERSIST, readEv, &ev);
+	event_add(&ev, NULL);
+	event_dispatch();
 
-				//Parse the gateway from the INVITE data
-				//INVITE sip:13103566265@localhost SIP/2.0
-				if(sscanf(cBuf,"INVITE sip:%*[^@\n]@%[^ ]",cGateway)==1)
-				{
-					logfileLine("main destination gw",cGateway);
+	//We should never reach here unless something wrong has happened
+	logfileLine("main","unexpected return");
+	return(1);
 
-					//find the gateway in our lookup table
-					//temp test bigO n lookup no prio
-					for(i=0;i<16;i++)
-					{
-						if(!strcmp(cGateway,structGateway[i].cGateway))
-						{
-							sprintf(cIPv4,"%.15s",structGateway[i].cIPv4);
-							uPort=structGateway[i].uPort;
-							break;
-						}
-					}
-
-					if(!uPort)
-					{
-						//Return SIP error to dialogue initiator
-						//Send a one time sip message then close
-						//	and exit this child.
-						logfileLine("main","gw not found");
-					}
-					else
-					{
-						//Check for existing dialogue entry
-						//	else create new dialogue.
-	
-						//Forward UDP packet as is to dialgue destination gateway
-						//Send a message but keep the socket available for future
-						// messages.
-						sprintf(gcQuery,"%s:%u",cIPv4,uPort);
-						logfileLine("main destination ip:port",gcQuery);
-						//Wait around for SIP protocol answers and return them to initiator
-						//If no answers return SIP error to initiator and then close sockets
-						// and exit this child.
-						//Exit after timeout counter expires close sockets and exit this child.
-					}
-				}//if cGateway
-
-				//this is the child process and it is no longer required
-				//not sure about this at all review your forking skills
-				if(gLfp!=NULL)
-					fclose(gLfp);
-				close(iSockFD);
-				exit(0);
-			}
-		}
-
-	}//while(1) end of main recfrom outer loop
-
-	close(iSockFD);
-
-	return(0);
-
-}//int main()
+}//main()
 
 
 void logfileLine(const char *cFunction,const char *cLogline)
@@ -327,49 +250,117 @@ void logfileLine(const char *cFunction,const char *cLogline)
 
 void daemonize(void)
 {
+	FILE *fp;
+
 	switch(fork())
 	{
+
 		default:
 			_exit(0);
 
 		case -1:
 			fprintf(stderr,"fork failed\n");
+			logfileLine("daemonize","fork failed");
 			_exit(1);
 
 		case 0:
+			if((fp=fopen(cPIDFILE,"w"))!=NULL)
+			{
+				fprintf(fp,"%u\n",getpid());
+				fclose(fp);
+			}
 		break;
 	}
 
 	if(setsid()<0)
 	{
 		fprintf(stderr,"setsid failed\n");
+		logfileLine("daemonize","setsid failed");
 		_exit(1);
 	}
 
 }//void daemonize(void)
 
 
-//Get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
+void sigHandler(int iSignum)
 {
-	if(sa->sa_family==AF_INET)
-		return &(((struct sockaddr_in*)sa)->sin_addr);
-	return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}//void *get_in_addr(struct sockaddr *sa)
+	sprintf(gcQuery,"guCount=%u",guCount);
+	logfileLine("sigHandler",gcQuery);
+	if(gLfp) fclose(gLfp);
+	system("rm -f "cPIDFILE);
+	exit(0);
+}//void sigHandler(int iSignum)
 
 
-//Get port, IPv4 or IPv6:
-in_port_t get_in_port(struct sockaddr *sa)
+int iCheckLibEventVersion(void)
 {
-	if(sa->sa_family == AF_INET)
-		return (((struct sockaddr_in*)sa)->sin_port);
-	return (((struct sockaddr_in6*)sa)->sin6_port);
-}//in_port_t get_in_port(struct sockaddr *sa)
+	const char *v=event_get_version();
+	if (!strncmp(v,"0.",2) ||
+		!strncmp(v,"1.1",3) ||
+		!strncmp(v,"1.2",3) ||
+		!strncmp(v,"1.3",3) )
+	{
+
+		logfileLine("iCheckLibEventVersion","libevent is very old. Consider upgrading.");
+		return(-1);
+	}
+	else
+	{
+		sprintf(gcQuery,"running with Libevent version %s",v);
+		logfileLine("iCheckLibEventVersion",gcQuery);
+		return(0);
+	}
+}//int iCheckLibEventVersion(void)
 
 
-//Very important snippet of code
-void sigchld_handler(int s)
+int iSetupAndTestMemcached(void)
 {
-	while(waitpid(-1,NULL,WNOHANG)>0);
-	//logfileLine("sigchld_handler","ok");
-}//void sigchld_handler(int s)
+	memcached_server_st *servers = NULL;
+	memcached_st *memc;
+	memcached_return rc;
+	char *key= "unxsSIPProxy";
+	char *value= "$Id$";
+
+	memcached_server_st *memcached_servers_parse(const char *server_strings);
+	memc=memcached_create(NULL);
+
+	servers=memcached_server_list_append(servers,"localhost",11211,&rc);
+	rc=memcached_server_push(memc, servers);
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		sprintf(gcQuery,"couldn't add server: %s",memcached_strerror(memc, rc));
+		logfileLine("iSetupAndTestMemcached",gcQuery);
+		return(-1);
+	}
+
+	rc=memcached_set(memc,key,strlen(key),value,strlen(value),(time_t)0,(uint32_t)0);
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		sprintf(gcQuery,"couldn't store test key: %s",memcached_strerror(memc, rc));
+		logfileLine("iSetupAndTestMemcached",gcQuery);
+		return(-1);
+	}
+
+	char cValue[100]={""};
+	size_t size=100;
+	uint32_t flags=0;
+	sprintf(cValue,"%.99s",memcached_get(memc,key,strlen(key),&size,&flags,&rc));
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		sprintf(gcQuery,"couldn't retrieve test key: %s",memcached_strerror(memc, rc));
+		logfileLine("iSetupAndTestMemcached",gcQuery);
+		return(-1);
+	}
+
+	if(strncmp(cValue,value,size))
+	{
+		sprintf(gcQuery,"keys differ: (%s) (%s)",cValue,value);
+		logfileLine("iSetupAndTestMemcached",gcQuery);
+		return(-1);
+	}
+	logfileLine("iSetupAndTestMemcached","memcached running");
+
+	return(0);
+
+}//int iSetupAndTestMemcached(void)
+
