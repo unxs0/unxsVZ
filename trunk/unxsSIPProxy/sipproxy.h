@@ -7,25 +7,22 @@ AUTHOR
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pwd.h>
-#include <signal.h>
-#include <time.h>
+#include <syslog.h>
+#include <errno.h>
+#include <unistd.h>
+#include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
-#include <crypt.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
-#include <string.h>
-#include <sys/file.h>
+#include <pthread.h>
+#include <event.h>
+#include <signal.h>
+#include <libmemcached/memcached.h>
 
 #include <mysql/mysql.h>
-
-#include <unistd.h>
-#include <locale.h>
-#include <monetary.h>
-
-#define cLOGFILE "/var/log/sipproxylog"
-
 extern MYSQL gMysql; 
+
+#define cLOGFILE "/var/log/unxsSIPProxy"
+#define cPIDFILE "/var/run/unxsSIPProxy.pid"
