@@ -34,8 +34,8 @@ INITIAL ARCHITECTURE
 AUTHOR/LEGAL
 	(C) 2012 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
-	Includes public domain beej.us networking source code.
-	Based on public domain libevent-test.c by Brian Smith
+	Includes code based on public domain beej.us networking source code.
+	Libevent sections based on public domain libevent-test.c by Brian Smith
 OTHER
 	Only tested on CentOS 5.
 	yum install libmemcached, memcached, libevent
@@ -153,7 +153,7 @@ void readEv(int fd,short event,void* arg)
 }//void readEv(int fd,short event,void* arg)
 
 
-int main()
+int main(int iArgc, char *cArgv[])
 {
 	//This if for unxs default logging function.
 	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
@@ -205,7 +205,7 @@ int main()
 	}
 
 	daemonize();
-	signal(SIGINT,sigHandler);
+	signal(SIGINT|SIGHUP|SIGKILL,sigHandler);
 	sprintf(gcQuery,"listening on %s:%u",gcServerIP,guServerPort);
 	logfileLine("main",gcQuery);
 
