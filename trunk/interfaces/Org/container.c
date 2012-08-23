@@ -2257,7 +2257,7 @@ void funcNewContainer(FILE *fp)
 	//reseller select
 	unsigned uAuthorize=0;
 	sprintf(gcQuery,"SELECT tClient.uClient,tAuthorize.cLabel FROM tAuthorize,tClient"
-				" WHERE tAuthorize.uPerm=1 AND tClient.uClient=tAuthorize.uCertClient ORDER BY tAuthorize.cLabel LIMIT 101");
+				" WHERE tAuthorize.uPerm=1 AND tClient.uClient=tAuthorize.uCertClient ORDER BY tAuthorize.cLabel LIMIT 301");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2274,7 +2274,7 @@ void funcNewContainer(FILE *fp)
 		fprintf(fp,"<option value=%s",field[0]);
 		if(guReseller == uAuthorize)
 			fprintf(fp," selected");
-		if((uCount++)<=200)
+		if((uCount++)<=300)
 			fprintf(fp,">%s</option>",field[1]);
 		else
 			fprintf(fp,">Limit reached. Contact your sysadmin ASAP!</option>");
