@@ -10,7 +10,8 @@ TEST
 	Run and use ctrl-c to stop. In other terminal send traffic, e.g.:
 
 	DO NOT USE sipsak flood option ON PRODUCTION SERVER
-	sipsak -F -r 4950 -s sip:nobody@127.0.0.1
+	sipsak -s sip:nobody@127.0.0.1
+	sipsak -F -r 5060 -s sip:nobody@127.0.0.1
 
 	Try running several instances in the background you will
 	be suprised about how many messages per seconds this program will handle.
@@ -96,9 +97,9 @@ void readEv(int fd,short event,void* arg)
 	//To the server the message came from
 	register int sd,rc;
 	struct sockaddr_in remoteServAddr;
-	char cMsg[100]={"SIP/2.0 100 OK\n"};
+	char cMsg[100]={"SIP/2.0 200 OK\n"};
 	char cIPStr[INET_ADDRSTRLEN];
-	unsigned uPort=guClientPort;//default
+	unsigned uPort=ntohs(cAddr.sin_port);
 	//Get other side IP number and create quickest socket
 	inet_ntop(AF_INET,&cAddr.sin_addr,cIPStr,sizeof(cIPStr));
 	inet_aton(cIPStr,&remoteServAddr.sin_addr);
@@ -136,6 +137,8 @@ void readEv(int fd,short event,void* arg)
 		return;
 	}
 	close(sd);
+	sprintf(gcQuery,"reply sent to %s:%u",cIPStr,uPort);
+	logfileLine("readEv",gcQuery);
 
 	//
 	//Forward
@@ -283,12 +286,12 @@ int iCheckLibEventVersion(void)
 		!strncmp(v,"1.3",3) )
 	{
 
-		logfileLine("iCheckLibEventVersion","Libevent is very old. Consider upgrading.");
+		logfileLine("iCheckLibEventVersion","libevent is very old. Consider upgrading.");
 		return(-1);
 	}
 	else
 	{
-		sprintf(gcQuery,"Running with Libevent version %s",v);
+		sprintf(gcQuery,"running with Libevent version %s",v);
 		logfileLine("iCheckLibEventVersion",gcQuery);
 		return(0);
 	}
@@ -310,7 +313,7 @@ int iSetupAndTestMemcached(void)
 	rc=memcached_server_push(memc, servers);
 	if(rc!=MEMCACHED_SUCCESS)
 	{
-		sprintf(gcQuery,"Couldn't add server: %s",memcached_strerror(memc, rc));
+		sprintf(gcQuery,"couldn't add server: %s",memcached_strerror(memc, rc));
 		logfileLine("iSetupAndTestMemcached",gcQuery);
 		return(-1);
 	}
@@ -318,7 +321,7 @@ int iSetupAndTestMemcached(void)
 	rc=memcached_set(memc,key,strlen(key),value,strlen(value),(time_t)0,(uint32_t)0);
 	if(rc!=MEMCACHED_SUCCESS)
 	{
-		sprintf(gcQuery,"Couldn't store test key: %s",memcached_strerror(memc, rc));
+		sprintf(gcQuery,"couldn't store test key: %s",memcached_strerror(memc, rc));
 		logfileLine("iSetupAndTestMemcached",gcQuery);
 		return(-1);
 	}
@@ -329,17 +332,18 @@ int iSetupAndTestMemcached(void)
 	sprintf(cValue,"%.99s",memcached_get(memc,key,strlen(key),&size,&flags,&rc));
 	if(rc!=MEMCACHED_SUCCESS)
 	{
-		sprintf(gcQuery,"Couldn't retrieve test key: %s",memcached_strerror(memc, rc));
+		sprintf(gcQuery,"couldn't retrieve test key: %s",memcached_strerror(memc, rc));
 		logfileLine("iSetupAndTestMemcached",gcQuery);
 		return(-1);
 	}
 
 	if(strncmp(cValue,value,size))
 	{
-		sprintf(gcQuery,"Keys differ: (%s) (%s)",cValue,value);
+		sprintf(gcQuery,"keys differ: (%s) (%s)",cValue,value);
 		logfileLine("iSetupAndTestMemcached",gcQuery);
 		return(-1);
 	}
+	logfileLine("iSetupAndTestMemcached","memcached running");
 
 	return(0);
 
