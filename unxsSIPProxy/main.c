@@ -93,11 +93,23 @@ void readEv(int fd,short event,void* arg)
 	}
 	guCount++;
 
+	//	
+	//Save source and destination IPs and ports for
+	//possible future use.
+	//Get other side IP number and port
+	//
+	char cSourceIP[INET_ADDRSTRLEN];
+	unsigned uSourcePort=ntohs(sourceAddr.sin_port);
+	inet_ntop(AF_INET,&sourceAddr.sin_addr,cSourceIP,sizeof(cSourceIP));
+
+
 	//
 	//Parse message
+	char *cp;
+	char *cp1;
 /*
 fprintf(gLfp,"[%s]\n",cPacket); returns this
-after sipsak -v -s sip:nobody@127.0.0.1
+after sipsak -v -s sip:nobody@127.0.0.1:
 
 [OPTIONS sip:nobody@127.0.0.1 SIP/2.0
 Via: SIP/2.0/UDP 72.52.75.232:44736;branch=z9hG4bK.3bcb1ce3;rport;alias
@@ -119,10 +131,8 @@ Notes:
 */
 
 	char cCallID[100]={""};
-	char *cp;
 	if((cp=strstr(cPacket,"Call-ID: ")))
 	{
-		char *cp1;
 		if((cp1=strchr(cp+strlen("Call-ID: "),'\r')))
 		{
 			*cp1=0;
@@ -134,31 +144,81 @@ Notes:
 		logfileLine("readEv cCallID",cCallID);
 	if(guLogLevel>1 && !cCallID[0])
 		logfileLine("readEv","No Call-ID");
+	//cCallID
 
+	char cTo[100]={""};
+	if((cp=strstr(cPacket,"To: ")))
+	{
+		if((cp1=strchr(cp+strlen("To: "),'\r')))
+		{
+			*cp1=0;
+			sprintf(cTo,"%.99s",cp+strlen("To: "));
+			*cp1='\r';
+		}
+	}//cTo
 
-	//	
-	//Save source and destination IPs and ports for
-	//possible future use.
-	//Get other side IP number and port
+	char cToDomain[100]={""};
+	if(cTo[0])
+	{
+		if((cp=strchr(cTo,'@')))
+			sprintf(cToDomain,"%.99s",cp+1);
+	}//cToDomain
+
+	if(guLogLevel>3)
+	{
+		sprintf(gcQuery,"cTo:%s cToDomain:%s",cTo,cToDomain);
+		logfileLine("readEv",gcQuery);
+	}
+
 	//
-	char cSourceIP[INET_ADDRSTRLEN];
-	unsigned uSourcePort=ntohs(sourceAddr.sin_port);
-	inet_ntop(AF_INET,&sourceAddr.sin_addr,cSourceIP,sizeof(cSourceIP));
+	//Routing decisions
+	//
+
+	//Pre routing decisions: ACLs
+	//If cToDomain not in cache respond with a 400
+	char cMsg[100]={""};
+	char cData[256]={""};
+	char cKey[128]={""};
+	size_t sizeData=255;
+	uint32_t flags=0;
+	memcached_return rc;
+
+	if(cToDomain[0])
+	{
+		sprintf(cKey,"%s-acl",cToDomain);
+		sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
+		if(rc!=MEMCACHED_SUCCESS)
+		{
+			//Not found
+			sprintf(cMsg,"SIP/2.0 404 User not found\n");
+			if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
+			{
+				if(guLogLevel>3)
+				{
+					sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
+					logfileLine("readEv",gcQuery);
+				}
+			}
+			else
+			{
+				if(guLogLevel>1)
+				{
+					sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
+					logfileLine("readEv",gcQuery);
+				}
+			}
+			if(guLogLevel>3)
+				logfileLine("readEv cToDomain rejected",cKey);
+			return;
+		}
+	}
 
 	//
 	//Check for cCallID state record if not found create
 	//record expires via memcached timer
-	memcached_return rc;
-	char cData[256]={""};
-	size_t sizeData=255;
-	uint32_t flags=0;
 	//Get data associated with cCallID
 	sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
 	if(rc!=MEMCACHED_SUCCESS)
-		logfileLine("readEv","memcached_get() error");
-	else if(guLogLevel>1)
-			logfileLine("readEv","memcached_set() ok");
-	if(!cData[0])
 	{
 		time_t timeNow;
 		time(&timeNow);
@@ -167,7 +227,7 @@ Notes:
 		rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),timeNow,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 			logfileLine("readEv","memcached_set() error");
-		else if(guLogLevel>1)
+		else if(guLogLevel>3)
 			logfileLine("readEv","memcached_set() ok");
 	}
 	if(guLogLevel>3 && cData[0])
@@ -181,7 +241,7 @@ Notes:
 	//	if did@gw yields no match for INVITE we can return a 400 response.
 	//	if we forward to gw then we return a 100 response.
 	//To the server the message came from
-	char cMsg[100]={"SIP/2.0 200 OK\n"};
+	sprintf(cMsg,"SIP/2.0 200 OK\n");
 	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 	{
 		if(guLogLevel>3)
@@ -189,6 +249,16 @@ Notes:
 			sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
 			logfileLine("readEv",gcQuery);
 		}
+		return;
+	}
+	else
+	{
+		if(guLogLevel>1)
+		{
+			sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
+			logfileLine("readEv",gcQuery);
+		}
+		return;
 	}
 
 	//
@@ -208,6 +278,9 @@ int main(int iArgc, char *cArgv[])
 		exit(1);
 	}
 
+	if(guLogLevel>3)
+		logfileLine("main","started");
+
 	FILE *fp;
 	if((fp=fopen(cPIDFILE,"r"))!=NULL)
 	{
@@ -216,6 +289,9 @@ int main(int iArgc, char *cArgv[])
 		fclose(fp);
 		exit(1);
 	}
+
+	if(guLogLevel>3)
+		logfileLine("main pid file created: ",cPIDFILE);
 
 	if(iCheckLibEventVersion())
 	{
@@ -262,6 +338,8 @@ int main(int iArgc, char *cArgv[])
 	}
 
 	daemonize();
+	if(guLogLevel>3)
+		logfileLine("main","forked");
 	signal(SIGINT,sigHandler);
 	sprintf(gcQuery,"listening on %s:%u",gcServerIP,guServerPort);
 	logfileLine("main",gcQuery);
@@ -294,7 +372,7 @@ void logfileLine(const char *cFunction,const char *cLogline)
 		tmTime=localtime(&luClock);
 		strftime(cTime,31,"%b %d %T",tmTime);
 
-		fprintf(gLfp,"%s unxsSIPProxy::%s[%u]: %s.\n",cTime,cFunction,pidThis,cLogline);
+		fprintf(gLfp,"%s unxsSIPProxy[%u]::%s %s.\n",cTime,pidThis,cFunction,cLogline);
 		fflush(gLfp);
 	}
 	else
