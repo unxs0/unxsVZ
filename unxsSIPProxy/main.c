@@ -57,6 +57,7 @@ char gcClientIP[16]={""};
 static FILE *gLfp=NULL;
 char gcQuery[1024];
 unsigned guLogLevel=4;//1 errors, 2 warnings, 3 info, 4 debug
+memcached_st *gsMemc;
 
 //TOC
 void readEv(int fd,short event,void* arg);
@@ -94,9 +95,46 @@ void readEv(int fd,short event,void* arg)
 
 	//
 	//Parse message
+/*
+fprintf(gLfp,"[%s]\n",cPacket); returns this
+after sipsak -v -s sip:nobody@127.0.0.1
 
-	//
-	//Check for transaction if not found create
+[OPTIONS sip:nobody@127.0.0.1 SIP/2.0
+Via: SIP/2.0/UDP 72.52.75.232:44736;branch=z9hG4bK.3bcb1ce3;rport;alias
+From: sip:sipsak@72.52.75.232:44736;tag=808799b
+To: sip:nobody@127.0.0.1
+Call-ID: 134773147@72.52.75.232
+CSeq: 1 OPTIONS
+Contact: sip:sipsak@72.52.75.232:44736
+Content-Length: 0
+Max-Forwards: 70
+User-Agent: sipsak 0.9.6
+Accept: text/plain
+
+]
+
+Notes:
+	Lines are cr-lf terminated
+	Last text/plain line is double cr-lf terminated.
+*/
+
+	char cCallID[100]={""};
+	char *cp;
+	if((cp=strstr(cPacket,"Call-ID: ")))
+	{
+		char *cp1;
+		if((cp1=strchr(cp+strlen("Call-ID: "),'\r')))
+		{
+			*cp1=0;
+			sprintf(cCallID,"%.99s",cp+strlen("Call-ID: "));
+			*cp1='\r';
+		}
+	}
+	if(guLogLevel>3 && cCallID[0])
+		logfileLine("readEv cCallID",cCallID);
+	if(guLogLevel>1 && !cCallID[0])
+		logfileLine("readEv","No Call-ID");
+
 
 	//	
 	//Save source and destination IPs and ports for
@@ -107,8 +145,33 @@ void readEv(int fd,short event,void* arg)
 	unsigned uSourcePort=ntohs(sourceAddr.sin_port);
 	inet_ntop(AF_INET,&sourceAddr.sin_addr,cSourceIP,sizeof(cSourceIP));
 
-	//transaction expires via memcached timer
-
+	//
+	//Check for cCallID state record if not found create
+	//record expires via memcached timer
+	memcached_return rc;
+	char cData[256]={""};
+	size_t sizeData=255;
+	uint32_t flags=0;
+	//Get data associated with cCallID
+	sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
+	if(rc!=MEMCACHED_SUCCESS)
+		logfileLine("readEv","memcached_get() error");
+	else if(guLogLevel>1)
+			logfileLine("readEv","memcached_set() ok");
+	if(!cData[0])
+	{
+		time_t timeNow;
+		time(&timeNow);
+		timeNow+=300;//expire in 5 mins
+		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;",cSourceIP,uSourcePort);
+		rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),timeNow,(uint32_t)0);
+		if(rc!=MEMCACHED_SUCCESS)
+			logfileLine("readEv","memcached_set() error");
+		else if(guLogLevel>1)
+			logfileLine("readEv","memcached_set() ok");
+	}
+	if(guLogLevel>3 && cData[0])
+		logfileLine("readEv cData",cData);
 
 	//
 	//Response
@@ -310,27 +373,26 @@ int iCheckLibEventVersion(void)
 int iSetupAndTestMemcached(void)
 {
 	memcached_server_st *servers = NULL;
-	memcached_st *memc;
 	memcached_return rc;
 	char *key= "unxsSIPProxy";
 	char *value= "$Id$";
 
 	memcached_server_st *memcached_servers_parse(const char *server_strings);
-	memc=memcached_create(NULL);
+	gsMemc=memcached_create(NULL);
 
 	servers=memcached_server_list_append(servers,"localhost",11211,&rc);
-	rc=memcached_server_push(memc, servers);
+	rc=memcached_server_push(gsMemc, servers);
 	if(rc!=MEMCACHED_SUCCESS)
 	{
-		sprintf(gcQuery,"couldn't add server: %s",memcached_strerror(memc, rc));
+		sprintf(gcQuery,"couldn't add server: %s",memcached_strerror(gsMemc, rc));
 		logfileLine("iSetupAndTestMemcached",gcQuery);
 		return(-1);
 	}
 
-	rc=memcached_set(memc,key,strlen(key),value,strlen(value),(time_t)0,(uint32_t)0);
+	rc=memcached_set(gsMemc,key,strlen(key),value,strlen(value),(time_t)0,(uint32_t)0);
 	if(rc!=MEMCACHED_SUCCESS)
 	{
-		sprintf(gcQuery,"couldn't store test key: %s",memcached_strerror(memc, rc));
+		sprintf(gcQuery,"couldn't store test key: %s",memcached_strerror(gsMemc, rc));
 		logfileLine("iSetupAndTestMemcached",gcQuery);
 		return(-1);
 	}
@@ -338,10 +400,10 @@ int iSetupAndTestMemcached(void)
 	char cValue[100]={""};
 	size_t size=100;
 	uint32_t flags=0;
-	sprintf(cValue,"%.99s",memcached_get(memc,key,strlen(key),&size,&flags,&rc));
+	sprintf(cValue,"%.99s",memcached_get(gsMemc,key,strlen(key),&size,&flags,&rc));
 	if(rc!=MEMCACHED_SUCCESS)
 	{
-		sprintf(gcQuery,"couldn't retrieve test key: %s",memcached_strerror(memc, rc));
+		sprintf(gcQuery,"couldn't retrieve test key: %s",memcached_strerror(gsMemc, rc));
 		logfileLine("iSetupAndTestMemcached",gcQuery);
 		return(-1);
 	}

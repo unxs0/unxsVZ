@@ -33,7 +33,14 @@ install: unxsSIPProxy
 	rm unxsSIPProxy
 
 install-run: unxsSIPProxy
-	killall unxsSIPProxy
+	/usr/sbin/stopsipproxy.sh
 	install -s unxsSIPProxy /usr/sbin/unxsSIPProxy
 	rm unxsSIPProxy
 	/usr/sbin/unxsSIPProxy
+
+install-test: unxsSIPProxy
+	/usr/sbin/stopsipproxy.sh
+	install -s unxsSIPProxy /usr/sbin/unxsSIPProxy
+	rm unxsSIPProxy
+	/usr/sbin/unxsSIPProxy
+	./test.sh
