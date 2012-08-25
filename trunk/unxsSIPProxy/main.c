@@ -94,12 +94,12 @@ void readEv(int fd,short event,void* arg)
 	guCount++;
 
 	//	
-	//Save source and destination IPs and ports for
-	//possible future use.
-	//Get other side IP number and port
+	//Save source IP and port for future use.
 	//
-	char cSourceIP[INET_ADDRSTRLEN];
+	char cSourceIP[INET_ADDRSTRLEN]={""};
+	char cDestinationIP[INET_ADDRSTRLEN]={""};
 	unsigned uSourcePort=ntohs(sourceAddr.sin_port);
+	unsigned uDestinationPort=0;
 	inet_ntop(AF_INET,&sourceAddr.sin_addr,cSourceIP,sizeof(cSourceIP));
 
 
@@ -129,6 +129,17 @@ Notes:
 	Lines are cr-lf terminated
 	Last text/plain line is double cr-lf terminated.
 */
+
+
+	char cFirstLine[100]={""};
+	if((cp1=strchr(cPacket,'\r')))
+	{
+		*cp1=0;
+		sprintf(cFirstLine,"%.99s",cPacket);
+		*cp1='\r';
+	}
+	if(guLogLevel>3 && cFirstLine[0])
+		logfileLine("readEv cFirstLine",cFirstLine);
 
 	char cCallID[100]={""};
 	if((cp=strstr(cPacket,"Call-ID: ")))
@@ -175,17 +186,20 @@ Notes:
 	//
 
 	//Pre routing decisions: ACLs
-	//If cToDomain not in cache respond with a 400
+	//If cToDomain not in PBX cache respond with a 400
+	//If cToDomain in PBX cache parse cDestinationIP and uDestinationPort
 	char cMsg[100]={""};
 	char cData[256]={""};
 	char cKey[128]={""};
 	size_t sizeData=255;
 	uint32_t flags=0;
+	unsigned uRespond=0;
+	unsigned uState=0;
 	memcached_return rc;
 
 	if(cToDomain[0])
 	{
-		sprintf(cKey,"%s-acl",cToDomain);
+		sprintf(cKey,"%s-pbx",cToDomain);
 		sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -211,27 +225,40 @@ Notes:
 				logfileLine("readEv cToDomain rejected",cKey);
 			return;
 		}
+		else if(rc==MEMCACHED_SUCCESS)
+		{
+			//parse cData for forwarding information
+			sscanf(cData,"cDestinationIP=%[^;];uDestinationPort=%u;",cDestinationIP,&uDestinationPort);
+			if(guLogLevel>3)
+			{
+				sprintf(gcQuery,"cDestinationIP:%s uDestinationPort:%u",cDestinationIP,uDestinationPort);
+				logfileLine("readEv",gcQuery);
+			}
+		}
 	}
 
 	//
 	//Check for cCallID state record if not found create
 	//record expires via memcached timer
 	//Get data associated with cCallID
-	sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
-	if(rc!=MEMCACHED_SUCCESS)
+	if(uState)
 	{
-		time_t timeNow;
-		time(&timeNow);
-		timeNow+=300;//expire in 5 mins
-		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;",cSourceIP,uSourcePort);
-		rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),timeNow,(uint32_t)0);
+		sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
 		if(rc!=MEMCACHED_SUCCESS)
-			logfileLine("readEv","memcached_set() error");
-		else if(guLogLevel>3)
-			logfileLine("readEv","memcached_set() ok");
-	}
-	if(guLogLevel>3 && cData[0])
-		logfileLine("readEv cData",cData);
+		{
+			time_t timeNow;
+			time(&timeNow);
+			timeNow+=300;//expire in 5 mins
+			sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;",cSourceIP,uSourcePort);
+			rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),timeNow,(uint32_t)0);
+			if(rc!=MEMCACHED_SUCCESS)
+				logfileLine("readEv","memcached_set() error");
+			else if(guLogLevel>3)
+				logfileLine("readEv","memcached_set() ok");
+		}
+		if(guLogLevel>3 && cData[0])
+			logfileLine("readEv cData",cData);
+	}//if(uState)
 
 	//
 	//Response
@@ -241,28 +268,50 @@ Notes:
 	//	if did@gw yields no match for INVITE we can return a 400 response.
 	//	if we forward to gw then we return a 100 response.
 	//To the server the message came from
-	sprintf(cMsg,"SIP/2.0 200 OK\n");
-	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
+	if(uRespond)
 	{
-		if(guLogLevel>3)
+		sprintf(cMsg,"SIP/2.0 200 OK\n");
+		if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 		{
-			sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv",gcQuery);
+			if(guLogLevel>3)
+			{
+				sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
+				logfileLine("readEv",gcQuery);
+			}
 		}
-		return;
-	}
-	else
-	{
-		if(guLogLevel>1)
+		else
 		{
-			sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv",gcQuery);
+			if(guLogLevel>1)
+			{
+				sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
+				logfileLine("readEv",gcQuery);
+			}
+			return;
 		}
-		return;
-	}
+	}//if(uRespond)
 
 	//
-	//Forward
+	//Forward unmodified packet
+	if(cDestinationIP[0] && uDestinationPort)
+	{
+		if(!iSendUDPMessage(cPacket,cDestinationIP,uDestinationPort))
+		{
+			if(guLogLevel>3)
+			{
+				sprintf(gcQuery,"message forwarded to %s:%u",cDestinationIP,uDestinationPort);
+				logfileLine("readEv",gcQuery);
+			}
+		}
+		else
+		{
+			if(guLogLevel>1)
+			{
+				sprintf(gcQuery,"forward failed to %s:%u",cDestinationIP,uDestinationPort);
+				logfileLine("readEv",gcQuery);
+			}
+			return;
+		}
+	}//if(cDestinationIP[0] && uDestinationPort)
 
 
 }//void readEv(int fd,short event,void* arg)
