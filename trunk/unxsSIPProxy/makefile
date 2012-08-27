@@ -10,17 +10,24 @@
 
 CFLAGS= -Wall
 LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so /usr/lib64/libevent.so
+LIBS2= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so
 
 all: unxsSIPProxy
 
 unxsSIPProxy: main.o mysqlconnect.o
 	cc main.o mysqlconnect.o -o unxsSIPProxy $(LIBS) 
 
+unxsLoadNatPBX: loadnatpbx.o mysqlconnect.o
+	cc loadnatpbx.o mysqlconnect.o -o unxsLoadNatPBX $(LIBS2) 
+
 main.o: main.c sipproxy.h local.h
 	cc -c main.c -o main.o $(CFLAGS)
 
 mysqlconnect.o: mysqlconnect.c sipproxy.h local.h
 	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)
+
+loadnatpbx.o: loadnatpbx.c mysqlconnect.c sipproxy.h local.h
+	cc -c loadnatpbx.c -o loadnatpbx.o $(CFLAGS)
 
 local.h: local.h.default
 	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi

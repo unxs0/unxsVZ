@@ -319,6 +319,28 @@ Notes:
 
 int main(int iArgc, char *cArgv[])
 {
+
+	if(iArgc!=3)
+	{
+		printf("usage: %s <listen ipv4> <listen port>\n",cArgv[0]);
+		exit(0);
+	}
+
+	if(cArgv[1][0])
+		sprintf(gcServerIP,"%.15s",cArgv[1]);
+	if(cArgv[2][0])
+		sscanf(cArgv[2],"%u",&guServerPort);
+
+	if(guServerPort==0 || guServerPort>9999 || guServerPort<1025)
+	{
+		printf("usage: %s <listen ipv4> <listen port>\n",cArgv[0]);
+		exit(0);
+	}
+
+	//debug only
+	//printf("gcServerIP=%s guServerPort=%u\n",gcServerIP,guServerPort);
+	//exit(0);
+
 	//This if for unxs default logging function.
 	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
 	{
