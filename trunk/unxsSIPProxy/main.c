@@ -47,7 +47,6 @@ void sigHandler(int iSignum);
 int iCheckLibEventVersion(void);
 int iSetupAndTestMemcached(void);
 int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort);
-unsigned uReadOrCreateTransaction(const char *cCallID, char *cSourceIP, unsigned uSourcePort);
 
 
 void readEv(int fd,short event,void* arg)
@@ -154,11 +153,20 @@ Notes:
 		}
 	}//cTo
 
+	//From: "103" <sip:103@vcinternaltestingonly.callingcloud.net:6002>;tag=1764399065
 	char cToDomain[100]={""};
 	if(cTo[0])
 	{
 		if((cp=strchr(cTo,'@')))
+		{
 			sprintf(cToDomain,"%.99s",cp+1);
+			if((cp=strchr(cToDomain,':')))
+				*cp=0;
+			if((cp=strchr(cToDomain,'>')))
+				*cp=0;
+			if((cp=strchr(cToDomain,';')))
+				*cp=0;
+		}
 	}//cToDomain
 
 	if(guLogLevel>3)
@@ -224,7 +232,6 @@ Notes:
 
 	char cData[256]={""};
 	char cKey[128]={""};
-	unsigned uRetVal=0;
 	size_t sizeData=255;
 	uint32_t flags=0;
 	memcached_return rc;
@@ -266,45 +273,50 @@ Notes:
 			else if(rc==MEMCACHED_SUCCESS)
 			{
 				//parse cData for forwarding information
-				sscanf(cData,"cDestinationIP=%[^;];uDestinationPort=%u;",cDestinationIP,&uDestinationPort);
+				if((cp=strstr(cData,"cDestinationIP=")))
+				{
+					if((cp1=strchr(cp+15,';')))
+					{
+						*cp1=0;
+						sprintf(cDestinationIP,"%.15s",cp+15);
+						*cp1=';';
+					}
+				}
+				if((cp=strstr(cData,"uDestinationPort=")))
+					sscanf(cp+17,"%u",&uDestinationPort);
 				if(guLogLevel>3)
 				{
 					sprintf(gcQuery,"cDestinationIP:%s uDestinationPort:%u",cDestinationIP,uDestinationPort);
 					logfileLine("readEv",gcQuery);
 				}
+				if(!cDestinationIP[0] || !uDestinationPort)
+					logfileLine("readEv pbx parse error",cData);
 			}
 		}
-		if(!(uRetVal=uReadOrCreateTransaction(cCallID,cDestinationIP,uDestinationPort)))
+		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;",cSourceIP,uSourcePort);
+		rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),(time_t)0,(uint32_t)0);
+		if(rc!=MEMCACHED_SUCCESS)
 		{
-			switch(uRetVal)
+			sprintf(cMsg,"SIP/2.0 500 Could not create transaction\n");
+			if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 			{
-				case 1:
-					//new transaction created
-				break;
-
-				default:
-					sprintf(cMsg,"SIP/2.0 500 Server Internal Error\n");
-					if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-					{
-						if(guLogLevel>3)
-						{
-							sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
-							logfileLine("readEv",gcQuery);
-						}
-					}
-					else
-					{
-						if(guLogLevel>1)
-						{
-							sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
-							logfileLine("readEv",gcQuery);
-						}
-					}
-					if(guLogLevel>3)
-						logfileLine("readEv 500 Server Internal Error",cKey);
-					return;
-				break;
+				if(guLogLevel>3)
+				{
+					sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
+					logfileLine("readEv",gcQuery);
+				}
 			}
+			else
+			{
+				if(guLogLevel>1)
+				{
+					sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
+					logfileLine("readEv",gcQuery);
+				}
+			}
+			if(guLogLevel>3)
+				logfileLine("readEv 500 Could not create transaction",cKey);
+			return;
 		}
 
 	}//if a request (e.g. commands like INVITE, ACK, BYE, CANCEL, OPTIONS, REGISTER and INFO)
@@ -393,8 +405,28 @@ Notes:
 	}//if(cDestinationIP[0] && uDestinationPort)
 	else
 	{
+		sprintf(cMsg,"SIP/2.0 500 Forward failed\n");
+		if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
+		{
+			if(guLogLevel>3)
+			{
+				sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
+				logfileLine("readEv",gcQuery);
+			}
+		}
+		else
+		{
+			if(guLogLevel>1)
+			{
+				sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
+				logfileLine("readEv",gcQuery);
+			}
+		}
 		if(guLogLevel>3)
-			logfileLine("readEv unexpected no cDestinationIP",cCallID);
+			logfileLine("readEv 500 Forward failed",cDestinationIP);
+		return;
+		if(guLogLevel>3)
+			logfileLine("readEv unexpected no cDestinationIP/uDestinationPort",cCallID);
 	}
 
 
@@ -698,49 +730,4 @@ int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort)
 	return(0);
 }//int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort)
 
-
-unsigned uReadOrCreateTransaction(const char *cCallID, char *cSourceIP, unsigned uSourcePort)
-{
-	char cData[256]={""};
-	size_t sizeData=255;
-	uint32_t flags=0;
-	memcached_return rc;
-	//
-	//Check for cCallID state record if not found create
-	//record expires via memcached timer NOT USED YET
-	//Get data associated with cCallID
-	sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
-	if(rc!=MEMCACHED_SUCCESS)
-	{
-		time_t timeNow;
-		time(&timeNow);
-		timeNow+=300;//expire in 5 mins NOT USED HERE
-		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;",cSourceIP,uSourcePort);
-		rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),(time_t)0,(uint32_t)0);
-		if(rc!=MEMCACHED_SUCCESS)
-		{
-			logfileLine("readEv","memcached_set() error");
-			return(2);
-		}
-		else if(guLogLevel>3)
-		{
-			logfileLine("readEv","memcached_set() ok");
-		}
-		return(1);
-	}
-	else
-	{
-		if(guLogLevel>3 && cData[0])
-			logfileLine("readEv cData",cData);
-		//parse cData for forwarding information
-		sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;",cSourceIP,&uSourcePort);
-		if(guLogLevel>3)
-		{
-			sprintf(gcQuery,"cSourceIP:%s uSourcePort:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv",gcQuery);
-		}
-		return(0);
-	}
-	return(3);
-}//unsigned uReadOrCreateTransaction(const char *cCallID, char *cSourceIP, unsigned uSourcePort)
 

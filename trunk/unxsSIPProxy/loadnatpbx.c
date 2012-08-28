@@ -77,7 +77,7 @@ void AddNatPBXs(char const *cServer)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf(gcQuery);
+		//printf(gcQuery);
 		logfileLine("AddNatPBXs",mysql_error(&gMysql));
 		mysql_close(&gMysql);
 		exit(2);
@@ -90,7 +90,7 @@ void AddNatPBXs(char const *cServer)
 		unsigned rc;
 
 		sprintf(cKey,"%.90s-pbx",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;cDestinationPort=%.5s;",field[1],field[2]);
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;",field[1],field[2]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 			logfileLine("AddNatPBXs",cKey);
