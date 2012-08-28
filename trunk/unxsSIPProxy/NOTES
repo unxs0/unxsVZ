@@ -1,0 +1,40 @@
+unxsSIPProxy
+------------
+
+Using very scalable and ubiquitous software and libraries
+develop a high speed extremely reliable and scalable
+SIP proxy based on rfc3261.
+
+Initially we will test this software in production as a front-end
+to our NAT PBX solution. That is to allow our shared IP NAT PBXs to also share
+the same port (e.g. 5060.) This will be a simple stateless transparent proxy
+that at first will not be rfc3261 compliant.
+
+Initial design notes:
+
+- Server will listen on the shared IP port 5060.
+
+- Incoming messages will be parsed and checked for correctness.
+	If incorrect an error response will be sent back.
+
+- Incoming messages will be classified as requests or responses.
+	This will be done by looking at the first message line only.
+
+- Incoming requests will have the target sip domain checked against our table.
+	If not found, a 4xx error message will be sent back.
+
+- Incoming requests will create a new transaction record that will
+	store the IP and port of incoming request element.
+	The call id will be used as the unique key. Any existing
+	transaction record will be replaced by a new one.
+
+- Incoming requests will be forwarded to the IP and port as found in the
+	sip domain lookup table value. The key is the sip domain.
+
+- Incoming responses will have the source sip domain checked
+	against our table.
+	If not found a 4xx error message will be sent back.
+
+- Incoming responses will be forwarded to the IP and port found in the transaction
+	table.
+	If not found an appropriate error message will be sent back.
