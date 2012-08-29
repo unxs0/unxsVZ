@@ -70,6 +70,16 @@ void readEv(int fd,short event,void* arg)
 		logfileLine("readEv","connection closed");
 		return;
 	}
+	//Silently discard keep alive and other non SIP protocol packets
+	//until we really know what to do with them.
+	else if(len<5)
+	{
+		if(guLogLevel>3)
+			logfileLine("readEv","small packet discarded");
+		return;
+	}
+
+	
 	guCount++;
 
 	//	
