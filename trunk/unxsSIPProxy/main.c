@@ -152,15 +152,19 @@ Notes:
 		}
 	}//cTo
 
-	//From: "103" <sip:103@vcinternaltestingonly.callingcloud.net:6002>;tag=1764399065
 	char cToDomain[100]={""};
+	unsigned uToPort=0;
 	if(cTo[0])
 	{
 		if((cp=strchr(cTo,'@')))
 		{
 			sprintf(cToDomain,"%.99s",cp+1);
 			if((cp=strchr(cToDomain,':')))
+			{
+				//get port then chop off
+				sscanf(cp+1,"%u",&uToPort);
 				*cp=0;
+			}
 			if((cp=strchr(cToDomain,'>')))
 				*cp=0;
 			if((cp=strchr(cToDomain,';')))
@@ -168,9 +172,42 @@ Notes:
 		}
 	}//cToDomain
 
+	char cFrom[100]={""};
+	if((cp=strstr(cMessage,"From: ")))
+	{
+		if((cp1=strchr(cp+strlen("From: "),'\r')))
+		{
+			*cp1=0;
+			sprintf(cFrom,"%.99s",cp+strlen("From: "));
+			*cp1='\r';
+		}
+	}//cFrom
+
+	char cFromDomain[100]={""};
+	unsigned uFromPort=0;
+	if(cFrom[0])
+	{
+		if((cp=strchr(cFrom,'@')))
+		{
+			sprintf(cFromDomain,"%.99s",cp+1);
+			if((cp=strchr(cFromDomain,':')))
+			{
+				//get port then chop off
+				sscanf(cp+1,"%u",&uFromPort);
+				*cp=0;
+			}
+			if((cp=strchr(cFromDomain,'>')))
+				*cp=0;
+			if((cp=strchr(cFromDomain,';')))
+				*cp=0;
+		}
+	}//cFromDomain
+
 	if(guLogLevel>3)
 	{
-		sprintf(gcQuery,"cTo:%s cToDomain:%s",cTo,cToDomain);
+		sprintf(gcQuery,"cTo:%s cToDomain:%s:%u",cTo,cToDomain,uToPort);
+		logfileLine("readEv",gcQuery);
+		sprintf(gcQuery,"cFrom:%s cFromDomain:%s:%u",cFrom,cFromDomain,uFromPort);
 		logfileLine("readEv",gcQuery);
 	}
 
@@ -247,27 +284,40 @@ Notes:
 			sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
 			if(rc!=MEMCACHED_SUCCESS)
 			{
-				//Not found
-				sprintf(cMsg,"SIP/2.0 404 User not found\n");
-				if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
+				//Not found. Try the from domain
+				sprintf(cKey,"%s-pbx",cFromDomain);
+				sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
+				if(rc!=MEMCACHED_SUCCESS)
 				{
+					//Not found
+					sprintf(cMsg,"SIP/2.0 404 User not found\n");
+					if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
+					{
+						if(guLogLevel>3)
+						{
+							sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
+							logfileLine("readEv",gcQuery);
+						}
+					}
+					else
+					{
+						if(guLogLevel>1)
+						{
+							sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
+							logfileLine("readEv",gcQuery);
+						}
+					}
 					if(guLogLevel>3)
-					{
-						sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
-						logfileLine("readEv",gcQuery);
-					}
+						logfileLine("readEv cToDomain/cFromDomain 404 not found",cKey);
+					return;
 				}
-				else
+				else if(rc==MEMCACHED_SUCCESS)
 				{
-					if(guLogLevel>1)
-					{
-						sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
-						logfileLine("readEv",gcQuery);
-					}
+					//The destination is the cToDomain and the uToPort
+					//If cToDomain is not an IP this will not work.
+					sprintf(cDestinationIP,"%.15s",cToDomain);
+					uDestinationPort=uToPort;
 				}
-				if(guLogLevel>3)
-					logfileLine("readEv cToDomain 404 not found",cKey);
-				return;
 			}
 			else if(rc==MEMCACHED_SUCCESS)
 			{
