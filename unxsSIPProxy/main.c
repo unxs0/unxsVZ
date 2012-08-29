@@ -31,13 +31,12 @@ FREE HELP
 MYSQL gMysql; 
 unsigned guCount=0;
 unsigned guServerPort=5060;
-unsigned guClientPort=5060;
 char gcServerIP[16]={"127.0.0.1"};
-char gcClientIP[16]={""};
 static FILE *gLfp=NULL;
 char gcQuery[1024];
 unsigned guLogLevel=4;//1 errors, 2 warnings, 3 info, 4 debug
 memcached_st *gsMemc;
+int giSock;
 
 //TOC
 void readEv(int fd,short event,void* arg);
@@ -494,17 +493,16 @@ int main(int iArgc, char *cArgv[])
 		exit(1);
 	}
 
-	int sock;
 	int yes=1;
 	int len=sizeof(struct sockaddr);
 	struct sockaddr_in addr;
-	if((sock=socket(AF_INET,SOCK_DGRAM,0))<0)
+	if((giSock=socket(AF_INET,SOCK_DGRAM,0))<0)
 	{
 		perror("socket()");
 		logfileLine("main","socket()");
 		return 1;
 	}
-	if(setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) < 0)
+	if(setsockopt(giSock,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) < 0)
 	{
 		perror("setsockopt()");
 		logfileLine("main","setsockopt()");
@@ -517,7 +515,7 @@ int main(int iArgc, char *cArgv[])
 	else
 		addr.sin_addr.s_addr=INADDR_ANY;
 	bzero(&(addr.sin_zero),8);
-	if(bind(sock,(struct sockaddr*)&addr, len)<0)
+	if(bind(giSock,(struct sockaddr*)&addr, len)<0)
 	{
 		perror("bind()");
 		logfileLine("main","bind()");
@@ -533,7 +531,7 @@ int main(int iArgc, char *cArgv[])
 
 	struct event ev;
 	event_init();
-	event_set(&ev, sock, EV_READ | EV_PERSIST, readEv, &ev);
+	event_set(&ev,giSock,EV_READ|EV_PERSIST,readEv,&ev);
 	event_add(&ev, NULL);
 	event_dispatch();
 
@@ -688,44 +686,22 @@ int iSetupAndTestMemcached(void)
 
 int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort)
 {
-	register int sd,rc;
+	register int rc;
 	struct sockaddr_in sourceServAddr;
 
 	inet_aton(cIP,&sourceServAddr.sin_addr);
 	sourceServAddr.sin_family=AF_INET;
 	sourceServAddr.sin_port=htons(uPort);
-	sd=socket(AF_INET,SOCK_DGRAM,0);
-	if(sd<0)
-	{
-		perror("socket()");
-		logfileLine("SendUDPMessage","socket()");
-		return(1);
-	}
- 	//In some cases we need to make sure we send messages from a specific IP 
-	if(gcClientIP[0])
-	{
-		struct sockaddr_in clientAddr;
 
-		clientAddr.sin_family=AF_INET;
-		inet_aton(gcClientIP, &clientAddr.sin_addr);
-		clientAddr.sin_port=htons(0);
-		rc=bind(sd,(struct sockaddr *)&clientAddr,sizeof(clientAddr));
-		if(rc<0)
-		{
-			perror("bind()");
-			logfileLine("SendUDPMessage","bind()");
-			return(2);
-		}
-	}
-	//Send reponse message
-	rc=sendto(sd,cMsg,strlen(cMsg),0,(struct sockaddr *)&sourceServAddr,sizeof(sourceServAddr));
+	//Send reponse message from same socket as the listner is on
+	rc=sendto(giSock,cMsg,strlen(cMsg),0,(struct sockaddr *)&sourceServAddr,sizeof(sourceServAddr));
 	if(rc<0)
 	{
 		perror("sendto()");
 		logfileLine("SendUDPMessage","sendto()");
 		return(3);
 	}
-	close(sd);
+	//close(sd);
 
 	return(0);
 }//int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort)
