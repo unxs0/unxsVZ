@@ -51,3 +51,14 @@ install-test: unxsSIPProxy
 	rm unxsSIPProxy
 	/usr/sbin/unxsSIPProxy
 	./test.sh
+
+
+libctest: ctest.c
+	cc -Wall -fPIC -c ctest.c
+	cc -shared -Wl,-soname,libctest.so.1 -o libctest.so.1.0 ctest.o
+	mv libctest.so.1.0 /var/lib
+	ln -sf /var/lib/libctest.so.1.0 /var/lib/libctest.so
+	ln -sf /var/lib/libctest.so.1.0 /var/lib/libctest.so.1
+
+dltest: dltest.c
+	gcc -rdynamic -o dltest dltest.c -ldl
