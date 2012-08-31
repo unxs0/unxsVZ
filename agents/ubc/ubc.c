@@ -19,6 +19,8 @@ NOTES
 #include "../../mysqlrad.h"
 #include <sys/sysinfo.h>
 
+#define cUBCLOGFILE "/var/log/unxsUBC.log"
+
 MYSQL gMysql;
 char gcQuery[8192]={""};
 unsigned guLoginClient=1;//Root user
@@ -41,6 +43,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
 void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
 void ProcessSingleTraffic(unsigned uContainer);
 
+unsigned guLogLevel=4;
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
 {
@@ -70,7 +73,7 @@ struct sysinfo structSysinfo;
 int main(int iArgc, char *cArgv[])
 {
 	sprintf(gcProgram,"%.31s",cArgv[0]);
-	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
+	if((gLfp=fopen(cUBCLOGFILE,"a"))==NULL)
 	{
 		fprintf(stderr,"%s main() fopen logfile error\n",gcProgram);
 		exit(1);
@@ -417,12 +420,31 @@ void ProcessUBC(void)
 		}
 		else
 		{
+			if(guLogLevel>3)
+				logfileLine("ProcessSingleUBC","start",uContainer);
 			ProcessSingleUBC(uContainer,0);
+
+			if(guLogLevel>3)
+				logfileLine("ProcessSingleQuota","start",uContainer);
 			ProcessSingleQuota(uContainer);
+
+			if(guLogLevel>3)
+				logfileLine("ProcessSingleStatus","start",uContainer);
 			ProcessSingleStatus(uContainer);
+
+			if(guLogLevel>3)
+				logfileLine("ProcessVZMemCheck","start",uContainer);
 			ProcessVZMemCheck(uContainer,0);
+
+			if(guLogLevel>3)
+				logfileLine("ProcessVZCPUCheck","start",uContainer);
 			ProcessVZCPUCheck(uContainer,0);
+
+			if(guLogLevel>3)
+				logfileLine("ProcessSingleTraffic","start",uContainer);
 			ProcessSingleTraffic(uContainer);
+
+			//This function needs to be much more efficient
 			//ProcessSingleHDUsage(uContainer);
 		}
 
@@ -430,8 +452,16 @@ void ProcessUBC(void)
 	mysql_free_result(res);
 
 	//Process  node
+	if(guLogLevel>3)
+		logfileLine("ProcessSingleUBC","node start",uNode);
 	ProcessSingleUBC(0,uNode);
+
+	if(guLogLevel>3)
+		logfileLine("ProcessVZMemCheck","node start",uNode);
 	ProcessVZMemCheck(0,uNode);
+
+	if(guLogLevel>3)
+		logfileLine("ProcessVZCPUCheck","node start",uNode);
 	ProcessVZCPUCheck(0,uNode);
 
 	//debug only
