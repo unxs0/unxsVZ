@@ -29,6 +29,15 @@ char gcProgram[32]={""};
 unsigned guNodeOwner=1;
 unsigned guContainerOwner=1;
 unsigned guStatus=0;//not a valid status
+unsigned guParallel=0;
+unsigned guNoUBC=0;
+unsigned guUBCOnly=0;
+unsigned guRunUBC=0;
+unsigned guRunQuota=0;
+unsigned guRunStatus=0;
+unsigned guRunMemCheck=0;
+unsigned guRunCPUCheck=0;
+unsigned guRunTraffic=0;
 
 //local protos
 void TextConnectDb(void);
@@ -43,7 +52,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
 void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
 void ProcessSingleTraffic(unsigned uContainer);
 
-unsigned guLogLevel=3;
+unsigned guLogLevel=4;
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
 {
@@ -72,6 +81,32 @@ struct sysinfo structSysinfo;
 
 int main(int iArgc, char *cArgv[])
 {
+
+
+	if(iArgc>1)
+	{
+		register int i;
+		for(i=1;i<iArgc;i++)
+		{
+			if(!strcmp(cArgv[i],"--parallel"))
+				guParallel=1;
+			if(!strcmp(cArgv[i],"--noUBC"))
+				guNoUBC=1;
+			if(!strcmp(cArgv[i],"--UBCOnly"))
+				guUBCOnly=1;
+			if(!strcmp(cArgv[i],"--help"))
+			{
+				printf("usage: %s [--parallel] [--noUBC] [--UBCOnly] [--help] [--version]\n",cArgv[0]);
+				exit(0);
+			}
+			if(!strcmp(cArgv[i],"--version"))
+			{
+				printf("version: %s $Id$\n",cArgv[0]);
+				exit(0);
+			}
+		}
+	}
+
 	sprintf(gcProgram,"%.31s",cArgv[0]);
 	if((gLfp=fopen(cUBCLOGFILE,"a"))==NULL)
 	{
@@ -105,7 +140,165 @@ int main(int iArgc, char *cArgv[])
 		logfileLine("main","could not open /tmp/ubc.lock dir",0);
 		return(1);
 	}
-	ProcessUBC();//does vzquota and vzmemcheck also via other subsytems
+	if(guParallel)
+	{
+		unsigned uPID=0;
+
+		switch((uPID=fork()))
+		{
+
+			default:
+				//child
+				logfileLine("main","fork 1",uPID);
+				guRunUBC=0;
+				guRunQuota=0;
+				guRunStatus=0;
+				guRunMemCheck=0;
+				guRunCPUCheck=0;
+				guRunTraffic=1;
+				ProcessUBC();
+				return(0);
+			break;
+
+			case -1:
+				//failure
+				exit(1);
+
+			case 0:
+				//parent
+			break;
+		}
+		switch((uPID=fork()))
+		{
+
+			default:
+				//child
+				logfileLine("main","fork 2",uPID);
+				guRunUBC=0;
+				guRunQuota=0;
+				guRunStatus=0;
+				guRunMemCheck=0;
+				guRunCPUCheck=1;
+				guRunTraffic=0;
+				ProcessUBC();
+				return(0);
+			break;
+
+			case -1:
+				//failure
+				exit(1);
+
+			case 0:
+				//parent
+			break;
+		}
+		switch((uPID=fork()))
+		{
+
+			default:
+				//child
+				logfileLine("main","fork 3",uPID);
+				guRunUBC=0;
+				guRunQuota=0;
+				guRunStatus=0;
+				guRunMemCheck=1;
+				guRunCPUCheck=0;
+				guRunTraffic=0;
+				ProcessUBC();
+				return(0);
+			break;
+
+			case -1:
+				//failure
+				exit(1);
+
+			case 0:
+				//parent
+			break;
+		}
+		switch((uPID=fork()))
+		{
+
+			default:
+				//child
+				logfileLine("main","fork 4",uPID);
+				guRunUBC=0;
+				guRunQuota=0;
+				guRunStatus=1;
+				guRunMemCheck=0;
+				guRunCPUCheck=0;
+				guRunTraffic=0;
+				ProcessUBC();
+				return(0);
+			break;
+
+			case -1:
+				//failure
+				exit(1);
+
+			case 0:
+				//parent
+			break;
+		}
+		switch((uPID=fork()))
+		{
+
+			default:
+				//child
+				logfileLine("main","fork 5",uPID);
+				guRunUBC=0;
+				guRunQuota=1;
+				guRunStatus=0;
+				guRunMemCheck=0;
+				guRunCPUCheck=0;
+				guRunTraffic=0;
+				ProcessUBC();
+				return(0);
+			break;
+
+			case -1:
+				//failure
+				exit(1);
+
+			case 0:
+				//parent
+			break;
+		}
+		switch((uPID=fork()))
+		{
+
+			default:
+				//child
+				logfileLine("main","fork 6",uPID);
+				guRunUBC=1;
+				guRunQuota=0;
+				guRunStatus=0;
+				guRunMemCheck=0;
+				guRunCPUCheck=0;
+				guRunTraffic=0;
+				ProcessUBC();
+				return(0);
+			break;
+
+			case -1:
+				//failure
+				exit(1);
+
+			case 0:
+				//parent
+			break;
+		}
+	}
+	else
+	{
+		guRunUBC=1;
+		guRunQuota=1;
+		guRunStatus=1;
+		guRunMemCheck=1;
+		guRunCPUCheck=1;
+		guRunTraffic=1;
+		ProcessUBC();//For all node containers
+	}
 	if(rmdir("/tmp/ubc.lock"))
 	{
 		logfileLine("main","could not rmdir(/tmp/ubc.lock)",0);
@@ -117,6 +310,10 @@ int main(int iArgc, char *cArgv[])
 
 void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 {
+	if(!guRunUBC) return;
+	if(guLogLevel>3)
+		logfileLine("ProcessSingleUBC","start",uContainer);
+
 	FILE *fp;
 	char cLine[256];
 	char cContainerTag[64];
@@ -426,29 +623,18 @@ void ProcessUBC(void)
 		}
 		else
 		{
-			if(guLogLevel>3)
-				logfileLine("ProcessSingleUBC","start",uContainer);
-			ProcessSingleUBC(uContainer,0);
 
-			if(guLogLevel>3)
-				logfileLine("ProcessSingleQuota","start",uContainer);
-			ProcessSingleQuota(uContainer);
+			if(!guNoUBC)
+				ProcessSingleUBC(uContainer,0);
 
-			if(guLogLevel>3)
-				logfileLine("ProcessSingleStatus","start",uContainer);
-			ProcessSingleStatus(uContainer);
-
-			if(guLogLevel>3)
-				logfileLine("ProcessVZMemCheck","start",uContainer);
-			ProcessVZMemCheck(uContainer,0);
-
-			if(guLogLevel>3)
-				logfileLine("ProcessVZCPUCheck","start",uContainer);
-			ProcessVZCPUCheck(uContainer,0);
-
-			if(guLogLevel>3)
-				logfileLine("ProcessSingleTraffic","start",uContainer);
-			ProcessSingleTraffic(uContainer);
+			if(!guUBCOnly)
+			{
+				ProcessSingleQuota(uContainer);
+				ProcessSingleStatus(uContainer);
+				ProcessVZMemCheck(uContainer,0);
+				ProcessVZCPUCheck(uContainer,0);
+				ProcessSingleTraffic(uContainer);
+			}
 
 			//This function needs to be much more efficient
 			//ProcessSingleHDUsage(uContainer);
@@ -470,11 +656,12 @@ void ProcessUBC(void)
 		logfileLine("ProcessVZCPUCheck","node start",uNode);
 	ProcessVZCPUCheck(0,uNode);
 
-	//debug only
-	//printf("ProcessUBC() End\n");
+	if(guLogLevel>3)
+		logfileLine("ProcessUBC","end",uNode);
 	mysql_close(&gMysql);
 
 }//void ProcessUBC(void)
+
 
 void ProcessSingleHDUsage(unsigned uContainer)
 {
@@ -598,6 +785,11 @@ void ProcessSingleHDUsage(unsigned uContainer)
 
 void ProcessSingleQuota(unsigned uContainer)
 {
+	if(!guRunQuota) return;
+
+	if(guLogLevel>3)
+		logfileLine("ProcessSingleQuota","start",uContainer);
+
 	FILE *fp;
 	char cLine[1024];
 	char cContainerTag[64];
@@ -804,6 +996,10 @@ Summary:	0.09    3.46    0.15    0.05    4.83    0.07    4.83   12.96
 */
 void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 {
+	if(!guRunMemCheck) return;
+	if(guLogLevel>3)
+		logfileLine("ProcessVZMemCheck","start",uContainer);
+
 	FILE *fp;
 	char cLine[256];
 	char cContainerTag[64];
@@ -948,6 +1144,10 @@ Power of the node: 184838
 */
 void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 {
+	if(!guRunCPUCheck) return;
+	if(guLogLevel>3)
+		logfileLine("ProcessVZCPUCheck","start",uContainer);
+
 	FILE *fp;
 	char cLine[256];
 	char cContainerTag[64];
@@ -1144,6 +1344,10 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 //Not uVETH=1 compatible function
 void ProcessSingleTraffic(unsigned uContainer)
 {
+	if(!guRunTraffic) return;
+	if(guLogLevel>3)
+		logfileLine("ProcessSingleTraffic","start",uContainer);
+
 	char cCommand[128];
 	char cLine[512];
 	unsigned long luIn=0;
@@ -1596,6 +1800,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 
 void ProcessSingleStatus(unsigned uContainer)
 {
+	if(!guRunStatus) return;
+	if(guLogLevel>3)
+		logfileLine("ProcessSingleStatus","start",uContainer);
+
 	FILE *fp;
 
 	if(uContainer)
