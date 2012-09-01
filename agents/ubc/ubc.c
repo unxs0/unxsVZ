@@ -43,6 +43,7 @@ unsigned guRunTraffic=0;
 void TextConnectDb(void);
 void ProcessSingleUBC(unsigned uContainer, unsigned uNode);
 void ProcessUBC(void);
+void ProcessNodeUBC(void);
 void ProcessSingleHDUsage(unsigned uContainer);
 void ProcessSingleQuota(unsigned uContainer);
 void ProcessSingleStatus(unsigned uContainer);
@@ -52,7 +53,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
 void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
 void ProcessSingleTraffic(unsigned uContainer);
 
-unsigned guLogLevel=4;
+unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
 {
@@ -129,6 +130,7 @@ int main(int iArgc, char *cArgv[])
 	//will avoid runaway du and other unexpected high load
 	//situations. See #120.
 
+/*
 	struct stat structStat;
 	if(!stat("/tmp/ubc.lock",&structStat))
 	{
@@ -140,6 +142,8 @@ int main(int iArgc, char *cArgv[])
 		logfileLine("main","could not open /tmp/ubc.lock dir",0);
 		return(1);
 	}
+*/
+
 	if(guParallel)
 	{
 		unsigned uPID=0;
@@ -291,6 +295,7 @@ int main(int iArgc, char *cArgv[])
 	}
 	else
 	{
+		logfileLine("main","start",0);
 		guRunUBC=1;
 		guRunQuota=1;
 		guRunStatus=1;
@@ -299,11 +304,17 @@ int main(int iArgc, char *cArgv[])
 		guRunTraffic=1;
 		ProcessUBC();//For all node containers
 	}
+
+	ProcessNodeUBC();
+
+/*
 	if(rmdir("/tmp/ubc.lock"))
 	{
 		logfileLine("main","could not rmdir(/tmp/ubc.lock)",0);
 		return(1);
 	}
+*/
+	logfileLine("main","end",0);
 	return(0);
 }//main()
 
@@ -642,25 +653,96 @@ void ProcessUBC(void)
 
 	}
 	mysql_free_result(res);
-
-	//Process  node
-	if(guLogLevel>3)
-		logfileLine("ProcessSingleUBC","node start",uNode);
-	ProcessSingleUBC(0,uNode);
-
-	if(guLogLevel>3)
-		logfileLine("ProcessVZMemCheck","node start",uNode);
-	ProcessVZMemCheck(0,uNode);
-
-	if(guLogLevel>3)
-		logfileLine("ProcessVZCPUCheck","node start",uNode);
-	ProcessVZCPUCheck(0,uNode);
-
-	if(guLogLevel>3)
-		logfileLine("ProcessUBC","end",uNode);
 	mysql_close(&gMysql);
 
 }//void ProcessUBC(void)
+
+
+void ProcessNodeUBC(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uDatacenter=0;
+	unsigned uNode=0;
+
+	if(gethostname(cHostname,99)!=0)
+	{
+		logfileLine("ProcessNodeUBC","gethostname() failed",0);
+		exit(1);
+	}
+
+	//Uses login data from local.h
+	TextConnectDb();
+	guLoginClient=1;//Root user
+
+	sprintf(gcQuery,"SELECT uNode,uDatacenter,uOwner FROM tNode WHERE cLabel='%.99s'",cHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ProcessNodeUBC",mysql_error(&gMysql),0);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
+		sscanf(field[2],"%u",&guNodeOwner);
+	}
+	mysql_free_result(res);
+	if(!uNode)
+	{
+		char *cp;
+
+		//FQDN vs short name of 2nd NIC mess
+		if((cp=strchr(cHostname,'.')))
+			*cp=0;
+		sprintf(gcQuery,"SELECT uNode,uDatacenter,uOwner FROM tNode WHERE cLabel='%.99s'",cHostname);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessNodeUBC",mysql_error(&gMysql),0);
+			mysql_close(&gMysql);
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uNode);
+			sscanf(field[1],"%u",&uDatacenter);
+			sscanf(field[2],"%u",&guNodeOwner);
+		}
+		mysql_free_result(res);
+	}
+
+	if(!uNode)
+	{
+		logfileLine("ProcessNodeUBC","Could not determine uNode",0);
+		mysql_close(&gMysql);
+		exit(1);
+	}
+
+
+	//Process  node
+	if(guLogLevel>2)
+		logfileLine("ProcessSingleUBC","node start",uNode);
+	ProcessSingleUBC(0,uNode);
+
+	if(guLogLevel>2)
+		logfileLine("ProcessVZMemCheck","node start",uNode);
+	ProcessVZMemCheck(0,uNode);
+
+	if(guLogLevel>2)
+		logfileLine("ProcessVZCPUCheck","node start",uNode);
+	ProcessVZCPUCheck(0,uNode);
+
+	if(guLogLevel>2)
+		logfileLine("ProcessNodeUBC","end",uNode);
+	mysql_free_result(res);
+	mysql_close(&gMysql);
+
+}//void ProcessNodeUBC(void)
 
 
 void ProcessSingleHDUsage(unsigned uContainer)
