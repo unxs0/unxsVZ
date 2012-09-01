@@ -32,12 +32,12 @@ unsigned guStatus=0;//not a valid status
 unsigned guParallel=0;
 unsigned guNoUBC=0;
 unsigned guUBCOnly=0;
-unsigned guRunUBC=0;
-unsigned guRunQuota=0;
-unsigned guRunStatus=0;
-unsigned guRunMemCheck=0;
-unsigned guRunCPUCheck=0;
-unsigned guRunTraffic=0;
+unsigned guRunUBC=1;
+unsigned guRunQuota=1;
+unsigned guRunStatus=1;
+unsigned guRunMemCheck=1;
+unsigned guRunCPUCheck=1;
+unsigned guRunTraffic=1;
 
 //local protos
 void TextConnectDb(void);
@@ -130,7 +130,6 @@ int main(int iArgc, char *cArgv[])
 	//will avoid runaway du and other unexpected high load
 	//situations. See #120.
 
-/*
 	struct stat structStat;
 	if(!stat("/tmp/ubc.lock",&structStat))
 	{
@@ -142,7 +141,6 @@ int main(int iArgc, char *cArgv[])
 		logfileLine("main","could not open /tmp/ubc.lock dir",0);
 		return(1);
 	}
-*/
 
 	if(guParallel)
 	{
@@ -152,6 +150,14 @@ int main(int iArgc, char *cArgv[])
 		{
 
 			default:
+				//parent
+			break;
+
+			case -1:
+				//failure
+				exit(1);
+
+			case 0:
 				//child
 				logfileLine("main","fork 1",uPID);
 				guRunUBC=0;
@@ -163,19 +169,19 @@ int main(int iArgc, char *cArgv[])
 				ProcessUBC();
 				return(0);
 			break;
+		}
+		switch((uPID=fork()))
+		{
+
+			default:
+				//parent
+			break;
 
 			case -1:
 				//failure
 				exit(1);
 
 			case 0:
-				//parent
-			break;
-		}
-		switch((uPID=fork()))
-		{
-
-			default:
 				//child
 				logfileLine("main","fork 2",uPID);
 				guRunUBC=0;
@@ -187,19 +193,19 @@ int main(int iArgc, char *cArgv[])
 				ProcessUBC();
 				return(0);
 			break;
+		}
+		switch((uPID=fork()))
+		{
+
+			default:
+				//parent
+			break;
 
 			case -1:
 				//failure
 				exit(1);
 
 			case 0:
-				//parent
-			break;
-		}
-		switch((uPID=fork()))
-		{
-
-			default:
 				//child
 				logfileLine("main","fork 3",uPID);
 				guRunUBC=0;
@@ -211,19 +217,19 @@ int main(int iArgc, char *cArgv[])
 				ProcessUBC();
 				return(0);
 			break;
+		}
+		switch((uPID=fork()))
+		{
+
+			default:
+				//parent
+			break;
 
 			case -1:
 				//failure
 				exit(1);
 
 			case 0:
-				//parent
-			break;
-		}
-		switch((uPID=fork()))
-		{
-
-			default:
 				//child
 				logfileLine("main","fork 4",uPID);
 				guRunUBC=0;
@@ -235,19 +241,19 @@ int main(int iArgc, char *cArgv[])
 				ProcessUBC();
 				return(0);
 			break;
+		}
+		switch((uPID=fork()))
+		{
+
+			default:
+				//parent
+			break;
 
 			case -1:
 				//failure
 				exit(1);
 
 			case 0:
-				//parent
-			break;
-		}
-		switch((uPID=fork()))
-		{
-
-			default:
 				//child
 				logfileLine("main","fork 5",uPID);
 				guRunUBC=0;
@@ -259,19 +265,19 @@ int main(int iArgc, char *cArgv[])
 				ProcessUBC();
 				return(0);
 			break;
+		}
+		switch((uPID=fork()))
+		{
+
+			default:
+				//parent
+			break;
 
 			case -1:
 				//failure
 				exit(1);
 
 			case 0:
-				//parent
-			break;
-		}
-		switch((uPID=fork()))
-		{
-
-			default:
 				//child
 				logfileLine("main","fork 6",uPID);
 				guRunUBC=1;
@@ -283,43 +289,21 @@ int main(int iArgc, char *cArgv[])
 				ProcessUBC();
 				return(0);
 			break;
-
-			case -1:
-				//failure
-				exit(1);
-
-			case 0:
-				//parent
-			break;
 		}
 	}
 	else
 	{
 		logfileLine("main","start",0);
-		guRunUBC=1;
-		guRunQuota=1;
-		guRunStatus=1;
-		guRunMemCheck=1;
-		guRunCPUCheck=1;
-		guRunTraffic=1;
 		ProcessUBC();//For all node containers
 	}
 
-	guRunUBC=1;
-	guRunQuota=1;
-	guRunStatus=1;
-	guRunMemCheck=1;
-	guRunCPUCheck=1;
-	guRunTraffic=1;
 	ProcessNodeUBC();
 
-/*
 	if(rmdir("/tmp/ubc.lock"))
 	{
 		logfileLine("main","could not rmdir(/tmp/ubc.lock)",0);
 		return(1);
 	}
-*/
 	logfileLine("main","end",0);
 	return(0);
 }//main()
@@ -745,7 +729,7 @@ void ProcessNodeUBC(void)
 
 	if(guLogLevel>2)
 		logfileLine("ProcessNodeUBC","end",uNode);
-	mysql_free_result(res);
+
 	mysql_close(&gMysql);
 
 }//void ProcessNodeUBC(void)
