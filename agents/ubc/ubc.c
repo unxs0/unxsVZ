@@ -305,6 +305,12 @@ int main(int iArgc, char *cArgv[])
 		ProcessUBC();//For all node containers
 	}
 
+	guRunUBC=1;
+	guRunQuota=1;
+	guRunStatus=1;
+	guRunMemCheck=1;
+	guRunCPUCheck=1;
+	guRunTraffic=1;
 	ProcessNodeUBC();
 
 /*
