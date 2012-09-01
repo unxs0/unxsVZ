@@ -2634,6 +2634,13 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	{
 		logfileLine("CloneContainer",gcQuery);
 		tJobErrorUpdate(uJob,"error 2");
+		//roll back large file created above
+		sprintf(gcQuery,"rm -f /var/vzdump/vzdump-%u.tgz",uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("CloneContainer",gcQuery);
+			tJobErrorUpdate(uJob,"error 2+rb1");
+		}
 		goto CommonExit;
 	}
 

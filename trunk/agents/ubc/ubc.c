@@ -43,7 +43,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
 void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
 void ProcessSingleTraffic(unsigned uContainer);
 
-unsigned guLogLevel=4;
+unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
 {
@@ -233,6 +233,8 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 
 							if(luFailcnt>luPrevFailcnt)
 							{
+								if(guLogLevel>2)
+									logfileLine("ProcessSingleUBC","insert luFailcnt",uContainer);
 								luKnownUBCVals[5]+=luFailcnt;
 								//Notify via log system message
 								sprintf(gcQuery,"INSERT INTO tLog SET"
@@ -258,6 +260,8 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 								luKnownUBCVals[5]=0;
 							}
 						}
+						if(guLogLevel>4)
+							logfileLine("ProcessSingleUBC","update",uContainer);
 						sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
 								"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
 								" cName='%.63s.%.32s' AND uProperty=%s"
@@ -276,6 +280,8 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 					}
 					else
 					{
+						if(guLogLevel>4)
+							logfileLine("ProcessSingleUBC","insert",uContainer);
 						sprintf(gcQuery,"INSERT INTO tProperty SET cValue=%lu"
 								",cName='%.63s.%.32s'"
 								",uType=%u"
