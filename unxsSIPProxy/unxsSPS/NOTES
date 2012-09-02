@@ -1,0 +1,55 @@
+unxsSIPProxy (unxsSPS) Backend Design Notes
+-------------------------------------------
+
+Main function tables:
+---
+
+tDID: 		Phone numbers used for incoming route determination.
+tPrefixes:	Phone number prefixes (like area codes) that have
+		information to determine international, offshore and intra or inter state
+		given two of them. Also must have cost information for least cost routing.
+tPBX:		Asterisk b2bua destination and sip trunk traffic source.
+tPBXGroup:	A way to tag PBXs as belonging to some logical group for use in tRules.
+tCarrier:	A set of one or more incoming and outbound gateways.
+tGateway:	A sip gateway that we can send and receive sip traffic from.
+tRules:		A way to decide how to route PBX sip trunk outbound traffic. Uses 
+		priorities, weights, DID prefixes, time scheduling (both one off and 
+		periodic) and optional PBX groups. Also has rules for stripping or
+		otherwise formatting SIP URIs (e.g. adding or removing leading chars like
+		country codes and + symbol.) Can also use least cost routing via different
+		assignable methods.
+		Time scheduling: Start and end time for first event. Then recurring settings:
+		N times the period. Where the period is day, week, 2weeks, month or year.
+		N==0 onetime event.
+		Groups can specify PBX or Carrier groups. Can specify include or exclude.
+tCDR:		Call description records authoritative source for billing. CDRs should go
+		beyond normal fields and also include the rule that was used. This means
+		that old rules must be saved for easy and efficient reference.
+tDatacenter:	A collection of servers.
+tServer:	A SIP proxy server.
+
+System tables:
+---
+
+tCompany:	Organizations and contacts of organizations that manage or own data.
+tAuthorize:	Login credentials and permissions for contacts that use backend end or
+		other web apps that run off backend.
+tConfiguration:	Misc configuration table.
+tStatus:	Status codes used by main function tables.
+tJobStatus:	Status codes used by tJob job queue system.
+tGlossary:	Glossary of terms used in the ecosystem.
+tJob:		Job queue table. Used for async control of servers.
+tLog:		System log.
+tLogType:	Log entry types.
+tLogMonth:	Used for archiving logs in read only fashion.
+tMonth:		Used for organizing archived logs.
+tGroup:		Group names.
+tGroupGlue:	Associates groups with items being grouped like PBXs and gateways.
+tGroupType:	Flexible way of extending group tags to any item with unique keys.
+tTemplate:	Html/css/javascript templates for web apps.
+tTemplateSet:	Template skin set names.
+tTemplateType:	Web app template set names.
+
+This backend should be able to provision mutiple unxsSIPProxy servers.
+It should also have everything needed to manage and interface with DID and termination providers.
+Should have tie-ins to unxsVZ for help in billing and managing virtual PBX system.

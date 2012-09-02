@@ -8,7 +8,8 @@ void ctest2(int *);
 int main(int argc, char **argv) 
 {
 	void *lib_handle;
-	double (*fn)(int *);
+	double (*fn1)(int *,char *cBuffer);
+	double (*fn2)(int *,char *cBuffer);
 	int x;
 	char *error;
 
@@ -19,14 +20,23 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	fn = dlsym(lib_handle, "ctest1");
+	fn1 = dlsym(lib_handle, "ctest1");
+	if((error=dlerror())!=NULL)  
+	{
+		fprintf(stderr, "%s\n", error);
+		exit(1);
+	}
+	fn2 = dlsym(lib_handle, "ctest2");
 	if((error=dlerror())!=NULL)  
 	{
 		fprintf(stderr, "%s\n", error);
 		exit(1);
 	}
 
-	(*fn)(&x);
+
+	(*fn1)(&x,"This is data");
+	printf("Valx=%d\n",x);
+	(*fn2)(&x,"This is more data");
 	printf("Valx=%d\n",x);
 
 	dlclose(lib_handle);
