@@ -108,6 +108,10 @@ int main(int iArgc, char *cArgv[])
 		}
 	}
 
+	char cLockfile[64]={"/tmp/ubc.lock"};
+	if(guUBCOnly)
+		sprintf(cLockfile,"/tmp/ubc.ubconly.lock");
+
 	sprintf(gcProgram,"%.31s",cArgv[0]);
 	if((gLfp=fopen(cUBCLOGFILE,"a"))==NULL)
 	{
@@ -131,14 +135,14 @@ int main(int iArgc, char *cArgv[])
 	//situations. See #120.
 
 	struct stat structStat;
-	if(!stat("/tmp/ubc.lock",&structStat))
+	if(!stat(cLockfile,&structStat))
 	{
-		logfileLine("main","waiting for rmdir(/tmp/ubc.lock)",0);
+		logfileLine("main","waiting for rmdir(cLockfile)",0);
 		return(1);
 	}
-	if(mkdir("/tmp/ubc.lock",S_IRUSR|S_IWUSR|S_IXUSR))
+	if(mkdir(cLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
 	{
-		logfileLine("main","could not open /tmp/ubc.lock dir",0);
+		logfileLine("main","could not open cLockfile dir",0);
 		return(1);
 	}
 
@@ -299,9 +303,9 @@ int main(int iArgc, char *cArgv[])
 
 	ProcessNodeUBC();
 
-	if(rmdir("/tmp/ubc.lock"))
+	if(rmdir(cLockfile))
 	{
-		logfileLine("main","could not rmdir(/tmp/ubc.lock)",0);
+		logfileLine("main","could not rmdir(cLockfile)",0);
 		return(1);
 	}
 	logfileLine("main","end",0);
