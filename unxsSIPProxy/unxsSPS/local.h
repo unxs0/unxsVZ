@@ -48,8 +48,8 @@ LEGAL
 
 //End-users: Do not change these!
 //Also edit main.c header RAD status line if you change the following
-#define RELEASE "1.34/rpm-3.4"
-#define REV "1.34/rpm-3.4"
+#define RELEASE "0.01/rpm-0.1"
+#define REV "0.01/rpm-0.1"
 
 //For interfaces
 #define cMAILTO "noc@someisp.net"

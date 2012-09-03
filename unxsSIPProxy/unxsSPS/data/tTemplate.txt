@@ -1,0 +1,838 @@
+1	dnsVE.mount	1	1	1240231455	1	1249304999	DNS container /etc/vz/conf/VEID.mount template for DNS container\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
+cNetmask=255.255.254.0 Also from container properties\
+cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
+\
+Additional usage info:\
+\
+cVEID.mount=dnsVE.mount\
+\
+Must be in container property list\
+\
+#Wizard lines do not remove\
+WizardInput:0:cExtraNodeIP:IPv4\
+WizardInput:1:cNetmask:IPv4Netmask\
+WizardInput:2:cPrivateIPs:IPv4/Mask	#!/bin/bash\
+#\
+#On vzctl start we may need to configure things on the hardware node.\
+#\
+#Specialized mount script for DNS server container with private datacenter wide\
+#       movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
+NETMASK="{{cNetmask}}";\
+PRIVATEIPS="{{cPrivateIPs}}";\
+SERVICE="53";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#ip section\
+/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up;\
+if [ $? != 0 ]; then\
+        echo "/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up; failed!";\
+        exit 1;\
+fi\
+\
+#iptables section\
+/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $SERVICE\\\
+                 -j DNAT --to-destination $CTIP:$SERVICE;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 1";\
+        exit 1;\
+fi\
+/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p udp -m udp --dport $SERVICE\\\
+                 -j DNAT --to-destination $CTIP:$SERVICE;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 2";\
+        exit 1;\
+fi\
+#special rule for making sure DNS answers come from public IP\
+/sbin/iptables -t nat -A POSTROUTING -p udp -m udp -s $CTIP -j SNAT --to-source $ExtraNodeIPv4;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 3";\
+        exit 1;\
+fi\
+\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 added and iptables operations completed.";\
+exit 0;\
+	1	1
+11	dnsVE.umount	1	1	1240231655	1	1240262526	DNS container /etc/vz/conf/VEID.umount template for DNS container\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
+cNetmask=255.255.254.0 Also from container properties\
+cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
+\
+Additional usage info:\
+\
+cVEID.umount=dnsVE.mount\
+\
+Must be in container property list	#!/bin/bash\
+#\
+#On vzctl stop we may need to configure things on the hardware node.\
+#\
+#Specialized umount script for DNS server container with private datacenter\
+# wide movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
+NETMASK="{{cNetmask}}";\
+PRIVATEIPS="{{cPrivateIPs}}";\
+SERVICE="53";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#ip section\
+/sbin/ifconfig eth0:$VEID down;\
+if [ $? != 0 ]; then\
+        echo "/sbin/ifconfig eth0:$VEID down; failed!";\
+        exit 1;\
+fi\
+\
+#iptables section\
+/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $SERVICE\\\
+                         -j DNAT --to-destination $CTIP:$SERVICE;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 1";\
+        exit 1;\
+fi\
+/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p udp -m udp --dport $SERVICE\\\
+                         -j DNAT --to-destination $CTIP:$SERVICE;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 2";\
+        exit 1;\
+fi\
+#special rule for making sure DNS answers come from public IP\
+/sbin/iptables -t nat -D POSTROUTING -p udp -m udp -s $CTIP -j SNAT --to-source $ExtraNodeIPv4;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 3";\
+        exit 1;\
+fi\
+\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 and iptables entries removed";\
+exit 0;\
+	1	1
+21	webVE.umount	1	1	1240235905	1	1240262489	Website container /etc/vz/conf/VEID.umount template for public IP that will run\
+datacenter wide.\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cService1=80 Must be in container properties\
+cService2=443 Same as above\
+\
+Additional use information:\
+\
+cVEID.umount=webVE.umount must be in container properties	#!/bin/bash\
+#\
+#On vzctl stop we may need to configure things on the hardware node.\
+#\
+#Specialized umount script for web server container with public datacenter \
+# wide movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+SERVICE1="{{cService1}}";\
+SERVICE2="{{cService2}}";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#iptables section - remove firewall rules for -j ACCEPT\
+/sbin/iptables -D RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE1 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 1 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -D RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE2 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 2 failed!";\
+        exit 1;\
+fi\
+\
+echo "ct0 $VEID $CTIP iptables entries removed for $SERVICE1/$SERVICE2";\
+exit 0;\
+	1	1
+31	webVE.mount	1	1	1240236073	1	1240238585	Website container /etc/vz/conf/VEID.mount template for public IP that will run\
+datacenter wide.\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cService1=80 Must be in container properties\
+cService2=443 Same as above\
+\
+Additional use information:\
+\
+cVEID.mount=webVE.mount must be in container properties	#!/bin/bash\
+#\
+#On vzctl start we may need to configure things on the hardware node.\
+#\
+#Specialized mount script for web server container with public datacenter wide\
+#       movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+SERVICE1="{{cService1}}";\
+SERVICE2="{{cService2}}";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#iptables section - add to top (insert) firewall rules for -j ACCEPT\
+/sbin/iptables -I RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE1 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 1 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -I RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE2 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 2 failed!";\
+        exit 1;\
+fi\
+\
+echo "ct0 $VEID $CTIP iptables entries inserted for $SERVICE1/$SERVICE2";\
+exit 0;\
+	1	1
+41	mxVE.mount	1	1	1240264125	0	0	MX container /etc/vz/conf/VEID.mount template for public IP that will run\
+datacenter wide.\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cService1=25 Must be in container properties\
+cService2=587 Same as above\
+\
+Additional use information:\
+\
+cVEID.mount=mxVE.mount must be in container properties	#!/bin/bash\
+#\
+#On vzctl start we may need to configure things on the hardware node.\
+#\
+#Specialized mount script for MX server container with public datacenter wide\
+#       movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+SERVICE1="{{cService1}}";\
+SERVICE2="{{cService2}}";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#iptables section - add to top (insert) firewall rules for -j ACCEPT\
+/sbin/iptables -I RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE1 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 1 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -I RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE2 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 2 failed!";\
+        exit 1;\
+fi\
+\
+echo "ct0 $VEID $CTIP iptables entries inserted for $SERVICE1/$SERVICE2";\
+exit 0;\
+	1	1
+51	mxVE.umount	1	1	1240264196	0	0	MX container /etc/vz/conf/VEID.umount template for public IP that will run\
+datacenter wide.\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cService1=80 Must be in container properties\
+cService2=587 Same as above\
+\
+Additional use information:\
+\
+cVEID.umount=mxVE.umount must be in container properties	#!/bin/bash\
+#\
+#On vzctl stop we may need to configure things on the hardware node.\
+#\
+#Specialized umount script for MX container with public datacenter \
+# wide movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+SERVICE1="{{cService1}}";\
+SERVICE2="{{cService2}}";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#iptables section - remove firewall rules for -j ACCEPT\
+/sbin/iptables -D RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE1 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 1 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -D RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE2 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 2 failed!";\
+        exit 1;\
+fi\
+\
+echo "ct0 $VEID $CTIP iptables entries removed for $SERVICE1/$SERVICE2";\
+exit 0;\
+	1	1
+61	webp2VE.mount	1	1	1240349556	1	1240349703	Web admin container /etc/vz/conf/VEID.mount template for private IPs private per\
+node.\
+\
+Example 10.0.0.0/24 is the internal node private subnet (i.e. all nodes are\
+connected with another NIC on this subnet.) 192.168.0.0/24 container IPs would\
+be private per node.\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
+cNetmask=255.255.254.0 Also from container properties\
+cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
+cService1=443 Also from container properties\
+cService2=9456 Also from container properties\
+\
+Additional usage info:\
+\
+cVEID.mount=webp2VE.mount\
+\
+Must be in container property list	#!/bin/bash\
+#\
+#On vzctl start we may need to configure things on the hardware node.\
+#\
+#Specialized mount script for web server container with private datacenter wide\
+#       movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
+NETMASK="{{cNetmask}}";\
+PRIVATEIPS="{{cPrivateIPs}}";\
+PRIVATE_SERVICE="{{cService1}}";\
+PUBLIC_SERVICE="{{cService2}}";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#ip section\
+/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up;\
+if [ $? != 0 ]; then\
+        echo "/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up; failed!";\
+        exit 1;\
+fi\
+\
+#iptables section\
+/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $PUBLIC_SERVICE\\\
+                 -j DNAT --to-destination $CTIP:$PRIVATE_SERVICE;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 1";\
+        exit 1;\
+fi\
+/sbin/iptables -t nat -A POSTROUTING -p tcp -m tcp -s $CTIP -j SNAT --to-source $ExtraNodeIPv4;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 3";\
+        exit 1;\
+fi\
+\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 added and iptables operations completed.";\
+exit 0;\
+	1	1
+71	webp2VE.umount	1	1	1240349673	0	0	Web admin container /etc/vz/conf/VEID.umount template for private IPs private per\
+node.\
+\
+Example 10.0.0.0/24 is the internal node private subnet (i.e. all nodes are\
+connected with another NIC on this subnet.) 192.168.0.0/24 container IPs would\
+be private per node.\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
+cNetmask=255.255.254.0 Also from container properties\
+cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
+cService1=443 Also from container properties\
+cService2=9456 Also from container properties\
+\
+Additional usage info:\
+\
+cVEID.mount=webp2VE.mount\
+\
+Must be in container property list	#!/bin/bash\
+#\
+#On vzctl stop we may need to un-configure things on the hardware node.\
+#\
+#Specialized umount script for web server container with private datacenter wide\
+#       movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
+NETMASK="{{cNetmask}}";\
+PRIVATEIPS="{{cPrivateIPs}}";\
+PRIVATE_SERVICE="{{cService1}}";\
+PUBLIC_SERVICE="{{cService2}}";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#ip section\
+/sbin/ifconfig eth0:$VEID down;\
+if [ $? != 0 ]; then\
+        echo "/sbin/ifconfig eth0:$VEID down; failed!";\
+        exit 1;\
+fi\
+\
+#iptables section\
+/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $PUBLIC_SERVICE\\\
+                 -j DNAT --to-destination $CTIP:$PRIVATE_SERVICE;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 1";\
+        exit 1;\
+fi\
+/sbin/iptables -t nat -D POSTROUTING -p tcp -m tcp -s $CTIP -j SNAT --to-source $ExtraNodeIPv4;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 3";\
+        exit 1;\
+fi\
+\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 removed and iptables operations completed.";\
+exit 0;\
+	1	1
+81	mailstoreVE.mount	1	1	1240404992	1	1240434708	mail store container /etc/vz/conf/VEID.mount template for public IP that will run\
+datacenter wide.\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+\
+Additional use information:\
+\
+cVEID.mount=mailstoreVE.mount must be in container properties	#!/bin/bash\
+#\
+#On vzctl start we may need to configure things on the hardware node.\
+#\
+#Specialized mount script for mail store server container with public datacenter wide\
+#       movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+SERVICE1="25";\
+SERVICE2="110";\
+SERVICE3="143";\
+SERVICE4="465";\
+SERVICE5="587";\
+SERVICE6="995";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#iptables section - add to top (insert) firewall rules for -j ACCEPT\
+/sbin/iptables -I RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE1 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 1 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -I RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE2 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 2 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -I RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE3 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 3 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -I RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE4 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 4 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -I RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE5 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 5 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -I RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE6 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 6 failed!";\
+        exit 1;\
+fi\
+\
+echo "ct0 $VEID $CTIP iptables entries inserted for $SERVICE1/$SERVICE2";\
+exit 0;\
+	1	1
+91	mailstoreVE.umount	1	1	1240405239	1	1240434757	mail store container /etc/vz/conf/VEID.umount template for public IP that will run\
+datacenter wide.\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+\
+Additional use information:\
+\
+cVEID.umount=mailstoreVE.umount must be in container properties	#!/bin/bash\
+#\
+#On vzctl stop we may need to configure things on the hardware node.\
+#\
+#Specialized umount script for mail store server container with public datacenter \
+# wide movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+SERVICE1="25";\
+SERVICE2="110";\
+SERVICE3="143";\
+SERVICE4="465";\
+SERVICE5="587";\
+SERVICE6="995";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#iptables section - remove firewall rules for -j ACCEPT\
+/sbin/iptables -D RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE1 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 1 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -D RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE2 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 2 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -D RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE3 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 3 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -D RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE4 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 4 failed!";\
+        exit 1;\
+fi\
+\
+\
+/sbin/iptables -D RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE5 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 5 failed!";\
+        exit 1;\
+fi\
+\
+/sbin/iptables -D RH-Firewall-1-INPUT -i eth0 -p tcp -m tcp\\\
+      -d $CTIP --dport $SERVICE6 -j ACCEPT\
+if [ $? != 0 ]; then\
+        echo "iptables: 6 failed!";\
+        exit 1;\
+fi\
+\
+echo "ct0 $VEID $CTIP iptables entries removed for $SERVICE1/$SERVICE2";\
+exit 0;\
+	1	1
+101	mysqlVE.mount	1	1	1240448233	0	0	mySQL container /etc/vz/conf/VEID.mount template\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
+cNetmask=255.255.254.0 Also from container properties\
+cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
+\
+Additional usage info:\
+\
+cVEID.mount=mysqlVE.mount\
+\
+Must be in container property list	#!/bin/bash\
+#\
+#On vzctl start we may need to configure things on the hardware node.\
+#\
+#Specialized mount script for mySQL  server container with private datacenter wide\
+#       movable IP. Allows public IP containers access via also public added here ExtraNodeIPv4\
+#\
+\
+VEID="{{cVeID}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
+NETMASK="{{cNetmask}}";\
+PRIVATEIPS="{{cPrivateIPs}}";\
+SERVICE="3306";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#ip section\
+/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up;\
+if [ $? != 0 ]; then\
+        echo "/sbin/ifconfig eth0:$VEID $ExtraNodeIPv4 netmask $NETMASK up; failed!";\
+        exit 1;\
+fi\
+\
+#iptables section\
+/sbin/iptables -t nat -A PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $SERVICE\\\
+                 -j DNAT --to-destination $CTIP:$SERVICE;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 1";\
+        exit 1;\
+fi\
+\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 added and iptables operations completed.";\
+exit 0;\
+	1	1
+111	mysqlVE.umount	1	1	1240448334	0	0	mySQL container /etc/vz/conf/VEID.umount template\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cExtraNodeIP=209.177.154.68 Must be provided in container properties\
+cNetmask=255.255.254.0 Also from container properties\
+cPrivateIPs=10.0.0.0/255.255.255.0 Also from container properties\
+\
+Additional usage info:\
+\
+cVEID.umount=mysqlVE.umount\
+\
+Must be in container property list	#!/bin/bash\
+#\
+#On vzctl stop we may need to configure things on the hardware node.\
+#\
+#Specialized umount script for mySQL server container with private datacenter\
+# wide movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+ExtraNodeIPv4="{{cExtraNodeIP}}";\
+NETMASK="{{cNetmask}}";\
+PRIVATEIPS="{{cPrivateIPs}}";\
+SERVICE="3306";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+#ip section\
+/sbin/ifconfig eth0:$VEID down;\
+if [ $? != 0 ]; then\
+        echo "/sbin/ifconfig eth0:$VEID down; failed!";\
+        exit 1;\
+fi\
+\
+#iptables section\
+/sbin/iptables -t nat -D PREROUTING -s ! $PRIVATEIPS -d $ExtraNodeIPv4 -p tcp -m tcp --dport $SERVICE\\\
+                         -j DNAT --to-destination $CTIP:$SERVICE;\
+if [ $? != 0 ]; then\
+        echo "iptables: error 1";\
+        exit 1;\
+fi\
+\
+echo "ct0 ip eth0:$VEID $ExtraNodeIPv4 and iptables entries removed";\
+exit 0;\
+	1	1
+121	openPub.mount	1	1	1240690495	1	1249591518	Open all service/ports container /etc/vz/conf/VEID.mount template for public IP\
+that will run\
+datacenter wide.\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+\
+Additional use information:\
+\
+cVEID.mount=openPub.mount must be in container properties	#!/bin/bash\
+#\
+#On vzctl start we may need to configure things on the hardware node.\
+#\
+#Specialized mount script for all ports open server container with public datacenter \
+# wide movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+for cIP in $CTIP;\
+do\
+\
+        /sbin/iptables -I RH-Firewall-1-INPUT -i eth0  -d $cIP -j ACCEPT\
+        if [ $? != 0 ]; then\
+                echo "iptables: 1 failed!";\
+                exit 1;\
+        fi\
+done\
+\
+echo "ct0 $VEID $CTIP iptables entries inserted for all ports";\
+exit 0;	1	1
+131	openPub.umount	1	1	1240690568	1	1249591542	Open all service/ports container /etc/vz/conf/VEID.umount template for public IP\
+that will run datacenter wide.\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+\
+Additional use information:\
+\
+cVEID.umount=openPub.umount must be in container properties	#!/bin/bash\
+#\
+#On vzctl stop we may need to configure things on the hardware node.\
+#\
+#Specialized umount script for all ports open server container with public datacenter \
+# wide movable IP\
+#\
+\
+VEID="{{cVeID}}";\
+\
+CTIP=`grep "^IP_ADDRESS=" /etc/vz/conf/$VEID.conf | cut -f 2 -d \\"`;\
+if [ $? != 0 ]; then\
+        echo "grep $VEID.conf | cut for CTIP failed!";\
+        exit 1;\
+fi\
+\
+for cIP in $CTIP;\
+do\
+\
+        /sbin/iptables -D RH-Firewall-1-INPUT -i eth0 -d $cIP -j ACCEPT\
+        if [ $? != 0 ]; then\
+                echo "iptables: 1 failed!";\
+                exit 1;\
+        fi\
+done\
+\
+echo "ct0 $VEID $CTIP iptables entries deleted for all ports";\
+exit 0;	1	1
+171	defaultVETH.mount	1	1	1259071062	1	1259075871	Default VETH device mount script.\
+\
+Waits for for special ifconfig device to be available then configures some\
+related dev settings. It ends by adding a route for the new VETH OPenVZ container.\
+\
+IMPORTANT\
+\
+Make sure that CT0 cHostDEV is set correctly before using.\
+\
+\
+Variables with sample values:\
+\
+cVeID=201. Comes directly from jobqueue.c\
+cIPv4=209.177.154.68	#!/bin/bash\
+\
+#CT0 host device name cluster wide for now.\
+cHostDEV="eth0";\
+\
+cIPv4="{{cIPv4}}";\
+cDEV="veth{{cVeID}}.0";\
+\
+\
+\
+echo 1 > /proc/sys/net/ipv4/conf/$cHostDEV/proxy_arp;\
+\
+# Configure veth with cIPv4 after VPS has started\
+{\
+        while sleep 1; do\
+        /sbin/ifconfig $cDEV 0 >/dev/null 2>&1;\
+        if [ $? -eq 0 ]; then\
+                echo 1 > /proc/sys/net/ipv4/conf/$cDEV/forwarding;\
+                echo 1 > /proc/sys/net/ipv4/conf/$cDEV/proxy_arp;\
+                /sbin/ip route add $cIPv4 dev $cDEV;\
+                break;\
+        fi\
+        done\
+} &\
+	1	1
+181	defaultVETH.start	1	1	1259071633	1	1259078935	Default VETH device start script.\
+\
+IMPORTANT\
+\
+Make sure that CT OS Template allows for eth0 implict hardcoded device.\
+\
+\
+Variables with sample values:\
+\
+cIPv4=209.177.154.68	#!/bin/bash\
+\
+cIPv4="{{cIPv4}}";\
+\
+/sbin/ifconfig eth0 0;\
+if [ $? -eq 0 ]; then\
+   sleep 1;\
+   /sbin/ip addr add $cIPv4 dev eth0;\
+   /sbin/ip route add default dev eth0;\
+fi\
+\
+exit 0;	1	11

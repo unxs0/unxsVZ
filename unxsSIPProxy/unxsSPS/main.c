@@ -171,6 +171,8 @@ int main(int iArgc, char *cArgv[])
 
 			if(!strcmp(gcFunction,"tDatacenter"))
 				ExttDatacenterGetHook(gentries,x);
+			if(!strcmp(gcFunction,"tNode"))
+				ExttNodeGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tDID"))
 				ExttDIDGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tGroupType"))
@@ -248,6 +250,7 @@ int main(int iArgc, char *cArgv[])
 
 	//Main Post Menu
 	tDatacenterCommands(entries,x);
+	tNodeCommands(entries,x);
 	tDIDCommands(entries,x);
 	tGroupTypeCommands(entries,x);
 	tGroupCommands(entries,x);
@@ -496,9 +499,9 @@ void Header_ism3(const char *title, int iJs)
         else if(iJs==2)
 		jsToggleCheckboxes();
 	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
-	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/unxsvz.ico>\n");
+	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/unxssps.ico>\n");
 	printf("</head><body><form name=formMain action=unxsSPS.cgi method=post><blockquote>\n");
-	printf("<img src=/images/unxslogo.gif>&nbsp;&nbsp;\n");
+	printf("<img src=/images/unxssps.jpg title='Unixservice SIP proxy server manager'>&nbsp;&nbsp;\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tDID") || !strcmp(gcFunction,"tDIDTools") ||

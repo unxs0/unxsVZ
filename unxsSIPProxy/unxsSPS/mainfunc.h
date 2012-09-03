@@ -40,12 +40,12 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue
 char *strptime(const char *s, const char *format, struct tm *tm);
 
 static char cTableList[64][32]={ "tAuthorize", "tClient", "tConfiguration",
-		"tDatacenter", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tDID", "tJob",
+		"tDatacenter", "tNode", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tDID", "tJob",
 		"tJobStatus", "tLog", "tLogMonth", "tLogType", "tMonth",
 		"tStatus", "tTemplate", "tTemplateSet", "tTemplateType", ""};
 
-char cInitTableList[64][32]={ "tAuthorize", "tClient", "tConfig", "tGlossary", "tGroupType",
-		"tJobStatus", "tLogType", "tOSTemplate", "tStatus", "tTemplate", "tTemplateSet",
+char cInitTableList[64][32]={ "tAuthorize", "tClient", "tGlossary", "tGroupType",
+		"tJobStatus", "tLogType", "tStatus", "tTemplate", "tTemplateSet",
 			"tTemplateType", ""};
 
 void ExtMainShell(int argc, char *argv[]);
@@ -106,12 +106,6 @@ void DashBoard(const char *cOptionalMsg)
 	time_t luClock;
 	char cConfigBuffer[256]={""};
 
-	long unsigned luTotalFailcnt=1;
-	long unsigned luFailcnt=0;
-	long unsigned luTotalUsage=1,luTotalSoftLimit=1;
-	double fRatio;
-	char *cColor={""};
-
 	//To handle error messages etc.
 	if(cOptionalMsg[0] && strcmp(cOptionalMsg,"DashBoard"))
 	{
@@ -158,123 +152,6 @@ void DashBoard(const char *cOptionalMsg)
 		printf("</td>");
 	}
 
-
-
-	//
-	OpenRow("Global Cluster Health","black");
-	sprintf(gcQuery,"SELECT COUNT(uProperty) FROM tProperty WHERE cName LIKE '%%.luFailDelta'");
-	macro_mySQLQueryErrorText
-	printf("</td></tr>\n");
-        if((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		sscanf(mysqlField[0],"%lu",&luTotalFailcnt);
-	}
-	mysql_free_result(mysqlRes);
-
-	sprintf(gcQuery,"SELECT COUNT(uProperty) FROM tProperty WHERE cName LIKE '%%.luFailDelta' AND cValue!='0'");
-	macro_mySQLQueryErrorText
-	printf("</td></tr>\n");
-        if((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		sscanf(mysqlField[0],"%lu",&luFailcnt);
-	}
-	mysql_free_result(mysqlRes);
-	if(luTotalFailcnt==0) luTotalFailcnt=1;
-	fRatio= ((float) luFailcnt / (float) luTotalFailcnt) * 100.00;
-	if(fRatio==0.0)
-		cColor="green";
-	else if(fRatio<1.5)
-		cColor="teal";
-	else if(fRatio<2.0)
-		cColor="yellow";
-	else if(fRatio<5.0)
-		cColor="fuchsia";
-	else if(fRatio>=5.0)
-		cColor="red";
-	printf("<tr><td></td><td>Current luFailDelta Ratio %2.2f%%</td><td>%lu/%lu</td><td bgcolor=%s colspan=2></td></tr>\n",
-		fRatio,luFailcnt,luTotalFailcnt,cColor);
-	//
-
-
-	//
-	luTotalFailcnt=1;
-	sprintf(gcQuery,"SELECT COUNT(uProperty) FROM tProperty WHERE cName LIKE '%%.luFailcnt'");
-	macro_mySQLQueryErrorText
-	printf("</td></tr>\n");
-        if((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		sscanf(mysqlField[0],"%lu",&luTotalFailcnt);
-	}
-	mysql_free_result(mysqlRes);
-
-	//sprintf(gcQuery,"SELECT COUNT(uProperty) FROM tProperty WHERE cName LIKE '%%.luFailcnt' AND cValue!='0'");
-	sprintf(gcQuery,"select count(uLog) from tLog where cMessage like '%%>%% %%:%%'"
-				" and uCreatedDate>(unix_timestamp(now())-(86400*7))");
-	macro_mySQLQueryErrorText
-	printf("</td></tr>\n");
-        if((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		sscanf(mysqlField[0],"%lu",&luFailcnt);
-	}	
-	if(luTotalFailcnt==0) luTotalFailcnt=1;
-	mysql_free_result(mysqlRes);
-	if(luTotalFailcnt==0) luTotalFailcnt=1;
-	fRatio= ((float) luFailcnt / (float) luTotalFailcnt) * 100.00;
-	if(fRatio<1.0)
-		cColor="green";
-	else if(fRatio<2.0)
-		cColor="teal";
-	else if(fRatio<5.0)
-		cColor="yellow";
-	else if(fRatio<10.0)
-		cColor="fuchsia";
-	else if(fRatio>=10.0)
-		cColor="red";
-	printf("<tr><td></td><td>Last 7 Day <i>failcnt</i> Ratio %2.2f%%</td><td>%lu/%lu</td><td bgcolor=%s colspan=2></td></tr>\n",
-		fRatio,luFailcnt,luTotalFailcnt,cColor);
-	//
-
-
-	sprintf(gcQuery,"SELECT SUM(CONVERT(cValue,UNSIGNED)) FROM tProperty WHERE cName='1k-blocks.luUsage'");
-	macro_mySQLQueryErrorText
-        if((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		if(mysqlField[0]!=NULL)
-			sscanf(mysqlField[0],"%lu",&luTotalUsage);
-	}
-	mysql_free_result(mysqlRes);
-
-	sprintf(gcQuery,"SELECT SUM(CONVERT(cValue,UNSIGNED)) FROM tProperty WHERE cName='1k-blocks.luSoftlimit'");
-	macro_mySQLQueryErrorText
-        if((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		if(mysqlField[0]!=NULL)
-			sscanf(mysqlField[0],"%lu",&luTotalSoftLimit);
-	}
-	mysql_free_result(mysqlRes);
-	if(luTotalSoftLimit==0) luTotalSoftLimit=1;
-	fRatio= ((float) luTotalUsage/ (float) luTotalSoftLimit) * 100.00 ;
-	if(fRatio<20.00)
-		cColor="green";
-	else if(fRatio<30.00)
-		cColor="teal";
-	else if(fRatio<40.00)
-		cColor="yellow";
-	else if(fRatio<50.00)
-		cColor="fuchsia";
-	else if(fRatio>=50.00)
-		cColor="red";
-
-	if(luTotalSoftLimit==1)
-		printf("<tr><td></td><td>No Container Usage Ratio</td>"
-		"<td>%luG/%luG</td><td bgcolor=green colspan=2></td></tr>\n",
-		luTotalUsage/1048576,luTotalSoftLimit/1048576);
-	else
-		printf("<tr><td></td><td>All Container Usage Ratio %2.2f%%</td>"
-		"<td>%luG/%luG</td><td bgcolor=%s colspan=2></td></tr>\n",
-		fRatio,luTotalUsage/1048576,luTotalSoftLimit/1048576,cColor);
-	//
-	//
 
 
 	if(guPermLevel>11 && guLoginClient==1)
@@ -410,13 +287,8 @@ void ExtMainContent(void)
 	OpenRow("Build Information","black");
 	printf("<td>%s</td></tr>\n",gcBuildInfo);
 
-	OpenRow("RAD Status","black");
-	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);
-
 	OpenRow("Application Summary","black");
-	printf("<td>Manages OpenVZ containers across datacenters and hardware nodes. Flexible and"
-		" extensible configuration management. Cloning, migration, duplication and backup"
-		" operations supported, across both nodes and datacenters.</td></tr>\n");
+	printf("<td>Manages unxsSIPProxy servers across nodes and datacenters.</td></tr>\n");
 	if(guPermLevel>9)
 	{
 		register unsigned int i;
@@ -426,12 +298,6 @@ void ExtMainContent(void)
 			printf("<a href=unxsSPS.cgi?gcFunction=%.32s>%.32s</a><br>\n",
 				cTableList[i],cTableList[i]);
 		printf("</td></tr>\n");
-        	OpenRow("Admin Functions","black");
-		printf("<td><input type=hidden name=gcFunction value=MainTools>\n");
-		printf(" <input title='Find containers not being cloned' class=largeButton type=submit name=gcCommand"
-			" value=CloneReport > \n");
-		printf(" <input title='Find inconsistencies between actual node vz containers and unxsSPS status'"
-			" class=largeButton type=submit name=gcCommand value=ContainerReport ></td></tr>\n");
 	}
 
 	CloseFieldSet();
@@ -493,22 +359,22 @@ void ExtMainShell(int argc, char *argv[])
 
 void RestoreAll(char *cPasswd)
 {
-	char cISMROOT[256]={""};
+	char cInstallHome[256]={""};
 	register int i;
 
-	if(getenv("ISMROOT")!=NULL)
+	if(getenv("InstallHome")!=NULL)
 	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
+		strncpy(cInstallHome,getenv("InstallHome"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cISMROOT[0])
+	if(!cInstallHome[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe\n");
+		printf("You must set InstallHome env var first. Ex. export InstallHome=/home/joe\n");
 		exit(1);
 	}
 
-	printf("Restoring unxsSPS data from .txt file in %s/unxsSPS/data...\n\n",cISMROOT);
+	printf("Restoring unxsSPS data from .txt file in %s/unxsSPS/data...\n\n",cInstallHome);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -524,7 +390,7 @@ void RestoreAll(char *cPasswd)
 	for(i=0;cTableList[i][0];i++)
 	{
 		sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsSPS/data/%s.txt' REPLACE INTO TABLE %s",
-				cISMROOT,cTableList[i],cTableList[i]);
+				cInstallHome,cTableList[i],cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -541,21 +407,21 @@ void RestoreAll(char *cPasswd)
 
 void Restore(char *cPasswd, char *cTableName)
 {
-	char cISMROOT[256]={""};
+	char cInstallHome[256]={""};
 
-	if(getenv("ISMROOT")!=NULL)
+	if(getenv("InstallHome")!=NULL)
 	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
+		strncpy(cInstallHome,getenv("InstallHome"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cISMROOT[0])
+	if(!cInstallHome[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe\n");
+		printf("You must set InstallHome env var first. Ex. export InstallHome=/home/joe\n");
 		exit(1);
 	}
 
-	printf("Restoring unxsSPS data from .txt file in %s/unxsSPS/data...\n\n",cISMROOT);
+	printf("Restoring unxsSPS data from .txt file in %s/unxsSPS/data...\n\n",cInstallHome);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -569,7 +435,7 @@ void Restore(char *cPasswd, char *cTableName)
 	}
 
 	sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsSPS/data/%s.txt' REPLACE INTO TABLE %s",
-			cISMROOT,cTableName,cTableName);
+			cInstallHome,cTableName,cTableName);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -585,21 +451,21 @@ void Restore(char *cPasswd, char *cTableName)
 void Backup(char *cPasswd)
 {
 	register int i;
-	char cISMROOT[256]={""};
+	char cInstallHome[256]={""};
 
-	if(getenv("ISMROOT")!=NULL)
+	if(getenv("InstallHome")!=NULL)
 	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
+		strncpy(cInstallHome,getenv("InstallHome"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cISMROOT[0])
+	if(!cInstallHome[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe\n");
+		printf("You must set InstallHome env var first. Ex. export InstallHome=/home/joe\n");
 		exit(1);
 	}
 
-	printf("Backing up unxsSPS data to .txt files in %s/unxsSPS/data...\n\n",cISMROOT);
+	printf("Backing up unxsSPS data to .txt files in %s/unxsSPS/data...\n\n",cInstallHome);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -617,7 +483,7 @@ void Backup(char *cPasswd)
 		char cFileName[300];
 
 		sprintf(cFileName,"%s/unxsSPS/data/%s.txt"
-				,cISMROOT,cTableList[i]);
+				,cInstallHome,cTableList[i]);
 		unlink(cFileName);
 
 		sprintf(gcQuery,"SELECT * INTO OUTFILE '%s' FROM %s",
@@ -639,23 +505,23 @@ void Backup(char *cPasswd)
 
 void Initialize(char *cPasswd)
 {
-	char cISMROOT[256]={""};
+	char cInstallHome[256]={""};
 	register int i;
 
-	if(getenv("ISMROOT")!=NULL)
+	if(getenv("InstallHome")!=NULL)
 	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
+		strncpy(cInstallHome,getenv("InstallHome"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cISMROOT[0])
+	if(!cInstallHome[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. export ISMROOT=/home/joe\n");
+		printf("You must set InstallHome env var first. Ex. export InstallHome=/home/joe\n");
 		exit(1);
 	}
 
-	printf("Creating db and setting permissions, installing data from %sunxsSPS...\n\n",
-			cISMROOT);
+	printf("Creating db and setting permissions, installing data from %s/unxsSPS...\n\n",
+			cInstallHome);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -696,6 +562,7 @@ void Initialize(char *cPasswd)
 	CreatetClient();
         CreatetConfiguration();
 	CreatetDatacenter();
+	CreatetNode();
         CreatetGlossary();
 	CreatetGroup();
 	CreatetGroupGlue();
@@ -712,26 +579,10 @@ void Initialize(char *cPasswd)
         CreatetTemplateSet();
         CreatetTemplateType();
 
-	//Unique uContainer values starting at 101
-	sprintf(gcQuery,"INSERT INTO tContainer SET uContainer=100");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	sprintf(gcQuery,"DELETE FROM tContainer");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-
         for(i=0;cInitTableList[i][0];i++)
         {
                 sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsSPS/data/%s.txt' REPLACE INTO TABLE %s",
-			cISMROOT,cInitTableList[i],cInitTableList[i]);
+			cInstallHome,cInitTableList[i],cInitTableList[i]);
                 mysql_query(&gMysql,gcQuery);
                 if(mysql_errno(&gMysql))
                 {
@@ -770,62 +621,16 @@ void UpdateSchema(void)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uVeth=0;
-	unsigned uBackupDate=0;
-	unsigned uSource=0;
 
-	unsigned uIPDatacenter=0;
-	unsigned uIPComment=0;
-	unsigned uOSTemplateDatacenter=0;
-	unsigned uConfigDatacenter=0;
-	unsigned uNameserverDatacenter=0;
-	unsigned uSearchdomainDatacenter=0;
-	unsigned uGroupGlueIP=0;
+	unsigned uDIDDatacenter=0;
+	unsigned uDIDComment=0;
 
-	unsigned uIncorrectSource=0;
-	unsigned uIncorrectVeth=0;
-	unsigned uSourceIndex=0;
-	unsigned uPropertyNameIndex=0;
-	unsigned uJobStatusIndex=0;
-	unsigned uJobNodeIndex=0;
-	unsigned uJobDatacenterIndex=0;
-	unsigned uJobContainerIndex=0;
-	unsigned uTemplateLabelIndex=0;
 	unsigned uGlossaryLabelIndex=0;
 
 	printf("UpdateSchema(): Start\n");
 
 	if(TextConnectDb())
 		exit(1);
-
-	//Take note if what we need to change/add
-	//This is based on expanded and incorrect schema of previous releases. Yes this sucks.
-	sprintf(gcQuery,"SHOW COLUMNS IN tContainer");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uVeth"))
-		{
-			uVeth=1;
-			if(!strcmp(field[2],"YES"))
-				uIncorrectVeth=1;
-		}
-		if(!strcmp(field[0],"uSource"))
-		{
-			uSource=1;
-			if(!strcmp(field[2],"YES"))
-				uIncorrectSource=1;
-		}
-		if(!strcmp(field[0],"uBackupDate"))
-		{
-			uBackupDate=1;
-		}
-	}
-       	mysql_free_result(res);
 
 	sprintf(gcQuery,"SHOW COLUMNS IN tDID");
 	mysql_query(&gMysql,gcQuery);
@@ -836,125 +641,9 @@ void UpdateSchema(void)
 	while((field=mysql_fetch_row(res)))
 	{
 		if(!strcmp(field[0],"uDatacenter"))
-			uIPDatacenter=1;
+			uDIDDatacenter=1;
 		if(!strcmp(field[0],"cComment"))
-			uIPComment=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tOSTemplate");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uDatacenter"))
-			uOSTemplateDatacenter=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tConfig");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uDatacenter"))
-			uConfigDatacenter=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tNameserver");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uDatacenter"))
-			uNameserverDatacenter=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tSearchdomain");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uDatacenter"))
-			uSearchdomainDatacenter=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tGroupGlue");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uIP"))
-			uGroupGlueIP=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW INDEX IN tContainer");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[2],"uSource")) uSourceIndex=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW INDEX IN tProperty");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[2],"cName")) uPropertyNameIndex=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW INDEX IN tJob");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[2],"uJobStatus")) uJobStatusIndex=1;
-		else if(!strcmp(field[2],"uContainer")) uJobContainerIndex=1;
-		else if(!strcmp(field[2],"uNode")) uJobNodeIndex=1;
-		else if(!strcmp(field[2],"uDatacenter")) uJobDatacenterIndex=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW INDEX IN tTemplate");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[2],"cLabel")) uTemplateLabelIndex=1;
+			uDIDComment=1;
 	}
        	mysql_free_result(res);
 
@@ -970,187 +659,6 @@ void UpdateSchema(void)
 	}
        	mysql_free_result(res);
 
-	if(uIncorrectVeth)
-	{
-		sprintf(gcQuery,"ALTER TABLE tContainer MODIFY uVeth INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Corrected uVeth of tContainer\n");
-	}
-	if(!uVeth)
-	{
-		sprintf(gcQuery,"ALTER TABLE tContainer ADD uVeth INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uVeth to tContainer\n");
-	}
-	if(!uBackupDate)
-	{
-		sprintf(gcQuery,"ALTER TABLE tContainer ADD uBackupDate INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uBackupDate to tContainer\n");
-	}
-
-	sprintf(gcQuery,"SELECT uStatus FROM tStatus WHERE uStatus=81");	
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)==0)
-	{
-		sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=81,cLabel='Awaiting Clone',"
-				"uCreatedBy=1,uOwner=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Inserted uStatus=81 into tStatus\n");
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SELECT uStatus FROM tStatus WHERE uStatus=91");	
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)==0)
-	{
-		sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=91,cLabel='Awaiting Failover',"
-				"uCreatedBy=1,uOwner=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Inserted uStatus=91 into tStatus\n");
-	}
-       	mysql_free_result(res);
-
-	//Not important if repeated
-	sprintf(gcQuery,"UPDATE tConfiguration SET cLabel='cSSHOptions' WHERE cLabel='cSSLOptions'");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-
-	//Not important if repeated
-	sprintf(gcQuery,"ALTER TABLE tOSTemplate MODIFY cLabel VARCHAR(100) NOT NULL DEFAULT ''");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-
-	if(uIncorrectSource)
-	{
-		sprintf(gcQuery,"ALTER TABLE tContainer MODIFY uSource INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Corrected uSource of tContainer\n");
-
-		sprintf(gcQuery,"ALTER TABLE tContainer DROP INDEX uSource");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			printf("%s\n",mysql_error(&gMysql));
-		}
-		else
-		{
-			printf("Dropped uSource index of tContainer\n");
-			uSourceIndex=0;
-		}
-	}
-
-	if(!uSource)
-	{
-		sprintf(gcQuery,"ALTER TABLE tContainer ADD uSource INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uSource to tContainer\n");
-	}
-
-	if(!uSourceIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tContainer ADD INDEX (uSource)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX uSource tContainer\n");
-	}
-
-	//alter table tProperty add index (cName)
-	if(!uPropertyNameIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tProperty ADD INDEX (cName)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX cName tProperty\n");
-	}
-
-
-	//alter table tJob add index
-	if(!uJobStatusIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uJobStatus)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX uJobStatus tJob\n");
-	}
-
-	if(!uJobNodeIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uNode)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX uNode tJob\n");
-	}
-
-	if(!uJobDatacenterIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uDatacenter)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX uDatacenter tJob\n");
-	}
-
-	if(!uJobContainerIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uContainer)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX uContainer tJob\n");
-	}
-
-	if(!uTemplateLabelIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tTemplate ADD INDEX (cLabel)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX cLabel tTemplate\n");
-	}
-
 	if(!uGlossaryLabelIndex)
 	{
 		sprintf(gcQuery,"ALTER TABLE tGlossary ADD INDEX (cLabel)");
@@ -1161,7 +669,7 @@ void UpdateSchema(void)
 			printf("Added INDEX cLabel tGlossary\n");
 	}
 
-	if(!uIPDatacenter)
+	if(!uDIDDatacenter)
 	{
 		sprintf(gcQuery,"ALTER TABLE tDID ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
 		mysql_query(&gMysql,gcQuery);
@@ -1171,7 +679,7 @@ void UpdateSchema(void)
 			printf("Added uDatacenter to tDID\n");
 	}
 
-	if(!uIPComment)
+	if(!uDIDComment)
 	{
 		sprintf(gcQuery,"ALTER TABLE tDID ADD cComment VARCHAR(255) NOT NULL DEFAULT ''");
 		mysql_query(&gMysql,gcQuery);
@@ -1181,74 +689,10 @@ void UpdateSchema(void)
 			printf("Added cComment to tDID\n");
 	}
 
-	if(!uOSTemplateDatacenter)
-	{
-		sprintf(gcQuery,"ALTER TABLE tOSTemplate ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uDatacenter to tOSTemplate\n");
-	}
-
-	if(!uConfigDatacenter)
-	{
-		sprintf(gcQuery,"ALTER TABLE tConfig ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uDatacenter to tConfig\n");
-	}
-
-	if(!uNameserverDatacenter)
-	{
-		sprintf(gcQuery,"ALTER TABLE tNameserver ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uDatacenter to tNameserver\n");
-	}
-
-	if(!uSearchdomainDatacenter)
-	{
-		sprintf(gcQuery,"ALTER TABLE tSearchdomain ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uDatacenter to tSearchdomain\n");
-	}
-
-	if(!uGroupGlueIP)
-	{
-		sprintf(gcQuery,"ALTER TABLE tGroupGlue ADD uIP INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uIP to tGroupGlue\n");
-		sprintf(gcQuery,"ALTER TABLE tGroupGlue ADD INDEX (uIP)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX uIP to tGroupGlue\n");
-	}
-
-	//Please fix this TODO
-		sprintf(gcQuery,"ALTER TABLE tJob MODIFY cRemoteMsg VARCHAR(64) NOT NULL DEFAULT ''");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Corrected cRemoteMsg of tJob\n");
-
-
 	printf("UpdateSchema(): End\n");
 
 }//void UpdateSchema(void)
+
 
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType)
 {
