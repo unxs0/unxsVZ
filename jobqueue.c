@@ -5455,10 +5455,12 @@ void ExecuteCommands(unsigned uJob,unsigned uContainer,char *cJobData)
 		return;
 	}
 
-	//Check 2-. Wait till any other jobs currently in the job queue for this
+	//Check 2-. Wait till any OTHER jobs currently in the job queue for this
 	//	container are done.
 	sprintf(gcQuery,"SELECT uJob FROM tJob"
-			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u) AND uJob!=%u",uContainer,uWAITING,uRUNNING,uJob);
+			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u)"
+			" AND uJob!=%u AND cJobName!='ExecuteCommands'",
+				uContainer,uWAITING,uRUNNING,uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
