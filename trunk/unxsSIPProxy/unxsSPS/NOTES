@@ -6,12 +6,12 @@ Main function tables:
 
 tPBX:		Asterisk b2bua destination and sip trunk traffic source.
 tDID: 		Phone numbers used for incoming route determination.
-tPrefixes:	Phone number prefixes (like area codes) that have
+tGateway:	A sip gateway that we can send and receive sip traffic from.
+tCarrier:	A set of one or more incoming and/or outbound gateways.
+tPrefix:	Phone number prefixes (like area codes) that have
 		information to determine international, offshore and intra or inter state
 		given two of them. Also must have cost information for least cost routing.
-tCarrier:	A set of one or more incoming and/or outbound gateways.
-tGateway:	A sip gateway that we can send and receive sip traffic from.
-tRules:		A way to decide how to route PBX sip trunk outbound traffic. Uses 
+tRule:		A way to decide how to route PBX sip trunk outbound traffic. Uses 
 		priorities, weights, DID prefixes, time scheduling (both one off and 
 		periodic) and optional PBX groups. Also has rules for stripping or
 		otherwise formatting SIP URIs (e.g. adding or removing leading chars like
