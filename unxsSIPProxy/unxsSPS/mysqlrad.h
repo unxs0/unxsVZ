@@ -624,6 +624,36 @@ void DeletetCarrier(void);
 void ExttCarrierGetHook(entry gentries[], int x);
 void ExttCarrierNavBar(void);
 
+//tRule
+int tRuleCommands(pentry entries[], int x);
+void tRule(const char *results);
+void ProcesstRuleVars(pentry entries[], int x);
+void tRuleContent(void);
+void tRuleInputContent(void);
+void tRuleInput(unsigned uMode);
+void tRuleList(void);
+void NewtRule(unsigned uMode);
+void ModtRule(void);
+void CreatetRule(void);
+void DeletetRule(void);
+void ExttRuleGetHook(entry gentries[], int x);
+void ExttRuleNavBar(void);
+
+//tCDR
+int tCDRCommands(pentry entries[], int x);
+void tCDR(const char *results);
+void ProcesstCDRVars(pentry entries[], int x);
+void tCDRContent(void);
+void tCDRInputContent(void);
+void tCDRInput(unsigned uMode);
+void tCDRList(void);
+void NewtCDR(unsigned uMode);
+void ModtCDR(void);
+void CreatetCDR(void);
+void DeletetCDR(void);
+void ExttCDRGetHook(entry gentries[], int x);
+void ExttCDRNavBar(void);
+
 //tGlossary
 int tGlossaryCommands(pentry entries[], int x);
 void tGlossary(const char *results);

@@ -15,10 +15,10 @@ LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -lz -lcrypt -lm -lssl -lu
 
 all: unxsSPS.cgi
 
-unxsSPS.cgi: tdatacenter.o tserver.o tdid.o tpbx.o tgateway.o tprefix.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
+unxsSPS.cgi: tdatacenter.o tserver.o tdid.o tpbx.o tgateway.o tprefix.o trule.o tcdr.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
 	ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tcarrier.o tglossary.o \
 	tjob.o tjobstatus.o tstatus.o tconfiguration.o  jobqueue.o main.o cgi.o mysqlconnect.o
-	cc tdatacenter.o tserver.o tdid.o tpbx.o tgateway.o tprefix.o tcarrier.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
+	cc tdatacenter.o tserver.o tdid.o tpbx.o tgateway.o tprefix.o trule.o tcdr.o tcarrier.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
 		tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o \
 		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o \
 		jobqueue.o main.o cgi.o mysqlconnect.o -o unxsSPS.cgi $(LIBS) 
@@ -31,6 +31,12 @@ tdatacenter.o: tdatacenter.c mysqlrad.h language.h tdatacenterfunc.h local.h
 
 tserver.o: tserver.c mysqlrad.h language.h tserverfunc.h local.h
 	cc -c tserver.c -o tserver.o $(CFLAGS)
+
+trule.o: trule.c mysqlrad.h language.h trulefunc.h local.h
+	cc -c trule.c -o trule.o $(CFLAGS)
+
+tcdr.o: tcdr.c mysqlrad.h language.h tcdrfunc.h local.h
+	cc -c tcdr.c -o tcdr.o $(CFLAGS)
 
 tgateway.o: tgateway.c mysqlrad.h language.h tgatewayfunc.h local.h
 	cc -c tgateway.c -o tgateway.o $(CFLAGS)
