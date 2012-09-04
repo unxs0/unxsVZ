@@ -13,7 +13,7 @@ PURPOSE
 #include "mysqlrad.h"
 void GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
-		unsigned uNode,
+		unsigned uServer,
 		unsigned uContainer,
 		unsigned uHtml);
 

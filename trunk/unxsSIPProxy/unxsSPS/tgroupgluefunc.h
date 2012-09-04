@@ -26,7 +26,7 @@ void ExtProcesstGroupGlueVars(pentry entries[], int x)
 			sprintf(cuMulContainerPullDown,"%.255s",entries[i].val);
 			uContainer=ReadPullDown("tContainer","cLabel",cuMulContainerPullDown);
 			uGroupGlue=0;
-			uNode=0;
+			uServer=0;
 			if(uContainer && uGroup) NewtGroupGlue(1);
 		}
 		else if(!strcmp(entries[i].name,"cuMulContainerPullDown") && !strcmp(gcCommand,"Del Multiple Containers"))
@@ -69,8 +69,8 @@ void ExttGroupGlueCommands(pentry entries[], int x)
                         	ProcesstGroupGlueVars(entries,x);
 
                         	guMode=2000;
-				if(!uGroup || (uNode==0 && uContainer==0))
-	                        	tGroupGlue("Must Supply a uGroup and a uNode or uContainer");
+				if(!uGroup || (uServer==0 && uContainer==0))
+	                        	tGroupGlue("Must Supply a uGroup and a uServer or uContainer");
                         	guMode=0;
 
 				uGroupGlue=0;
@@ -155,7 +155,7 @@ void ExttGroupGlueButtons(void)
                         printf(LANG_NBB_CONFIRMNEW);
 			printf("<p><u>Add multiple containers</u><br>");
 			printf("Select with shift and ctrl multiple containers from list below"
-				" to the uGroup selected in right panel. The uContainer and uNode are ignored."
+				" to the uGroup selected in right panel. The uContainer and uServer are ignored."
 				" Warning: You may add inadvertently the same containers multiple times no"
 				" checking takes place.<p>");
 			tTableMultiplePullDown("tContainer;cuMulContainerPullDown","cLabel","cLabel");
@@ -167,7 +167,7 @@ void ExttGroupGlueButtons(void)
                         printf(LANG_NBB_CONFIRMDEL);
 			printf("<p><u>Delete multiple containers</u><br>");
 			printf("Select with shift and ctrl multiple containers from list below"
-				" to the uGroup selected in right panel. The uContainer and uNode are ignored.<p>");
+				" to the uGroup selected in right panel. The uContainer and uServer are ignored.<p>");
 			tTableMultiplePullDown("tContainer;cuMulContainerPullDown","cLabel","cLabel");
                         printf("<p><input type=submit class=largeButton name=gcCommand value='Del Multiple Containers'>");
                 break;
@@ -246,10 +246,10 @@ void ExttGroupGlueListSelect(void)
 		sprintf(cCat," WHERE tGroupGlue.uGroup=%u ORDER BY uGroup",uGroup);
 		strcat(gcQuery,cCat);
         }
-        else if(!strcmp(gcFilter,"uNode"))
+        else if(!strcmp(gcFilter,"uServer"))
         {
-                sscanf(gcCommand,"%u",&uNode);
-		sprintf(cCat," WHERE tGroupGlue.uNode=%u ORDER BY uNode",uNode);
+                sscanf(gcCommand,"%u",&uServer);
+		sprintf(cCat," WHERE tGroupGlue.uServer=%u ORDER BY uServer",uServer);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uContainer"))
@@ -281,10 +281,10 @@ void ExttGroupGlueListFilter(void)
                 printf("<option>uGroup</option>");
         else
                 printf("<option selected>uGroup</option>");
-        if(strcmp(gcFilter,"uNode"))
-                printf("<option>uNode</option>");
+        if(strcmp(gcFilter,"uServer"))
+                printf("<option>uServer</option>");
         else
-                printf("<option selected>uNode</option>");
+                printf("<option selected>uServer</option>");
         if(strcmp(gcFilter,"uContainer"))
                 printf("<option>uContainer</option>");
         else

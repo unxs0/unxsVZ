@@ -19,11 +19,11 @@ void tDIDUsedButAvailableFix(void);
 //uForClient: Create for, on 'New;
 static unsigned uForClient=0;
 static char cForClientPullDown[256]={""};
-static char cIPRange[32]={""};
+static char cDIDRange[32]={""};
 static char cSearch[32]={""};
 
-void AddIPRange(char *cIPRange);
-void DelIPRange(char *cIPRange);
+void AddDIDRange(char *cDIDRange);
+void DelDIDRange(char *cDIDRange);
 
 //extern
 unsigned uGetSearchGroup(const char *gcUser,unsigned uGroupType);
@@ -33,8 +33,8 @@ void ExtProcesstDIDVars(pentry entries[], int x)
 	register int i;
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(entries[i].name,"cIPRange"))
-			sprintf(cIPRange,"%.31s",entries[i].val);
+		if(!strcmp(entries[i].name,"cDIDRange"))
+			sprintf(cDIDRange,"%.31s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cForClientPullDown"))
 		{
 			sprintf(cForClientPullDown,"%.255s",entries[i].val);
@@ -84,20 +84,20 @@ void ExttDIDCommands(pentry entries[], int x)
 				unsigned uLink=0;
 				unsigned uGroup=0;
 
-				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
-						&& uOwnerSearch==0 && uIPv4Exclude==0)
+				if(cDIDv4Search[0]==0 && uDatacenterSearch==0 && uServerSearch==0 && uServerSearchNot==0 && uAvailableSearch==0
+						&& uOwnerSearch==0 && uDIDv4Exclude==0)
 	                        	tDID("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,31))==0)
 		                        tDID("No search set exists. Please create one first.");
 
 				//Initial query section
-				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uIP IN"
-						" (SELECT uIP FROM tDID WHERE",uGroup);
+				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uDID IN"
+						" (SELECT uDID FROM tDID WHERE",uGroup);
 
-				if(cIPv4Search[0])
+				if(cDIDv4Search[0])
 				{
-					sprintf(cQuerySection," uIP IN (SELECT uIP FROM tDID WHERE cLabel LIKE '%s%%')",cIPv4Search);
+					sprintf(cQuerySection," uDID IN (SELECT uDID FROM tDID WHERE cLabel LIKE '%s%%')",cDIDv4Search);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -115,17 +115,17 @@ void ExttDIDCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
-				if(uNodeSearch || uNodeSearchNot)
+				if(uServerSearch || uServerSearchNot)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					if(uNodeSearchNot && uNodeSearch )
-						sprintf(cQuerySection," uIP IN (SELECT uIPv4 FROM tContainer WHERE uNode!=%u)",uNodeSearch);
-					else if(uNodeSearch)
-						sprintf(cQuerySection," uIP IN (SELECT uIPv4 FROM tContainer WHERE uNode=%u)",uNodeSearch);
+					if(uServerSearchNot && uServerSearch )
+						sprintf(cQuerySection," uDID IN (SELECT uDIDv4 FROM tContainer WHERE uServer!=%u)",uServerSearch);
+					else if(uServerSearch)
+						sprintf(cQuerySection," uDID IN (SELECT uDIDv4 FROM tContainer WHERE uServer=%u)",uServerSearch);
 					else
-						sprintf(cQuerySection," uIP IN"
-								" (SELECT uIP FROM tDID LEFT JOIN tContainer ON tContainer.uIPv4=tDID.uIP"
+						sprintf(cQuerySection," uDID IN"
+								" (SELECT uDID FROM tDID LEFT JOIN tContainer ON tContainer.uDIDv4=tDID.uDID"
 								" WHERE tContainer.cLabel IS NULL)");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
@@ -153,7 +153,7 @@ void ExttDIDCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
-				if(uIPv4Exclude)
+				if(uDIDv4Exclude)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
@@ -197,8 +197,8 @@ void ExttDIDCommands(pentry entries[], int x)
 				unsigned uLink=0;
 				unsigned uGroup=0;
 
-				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
-						&& uOwnerSearch==0 && uIPv4Exclude==0)
+				if(cDIDv4Search[0]==0 && uDatacenterSearch==0 && uServerSearch==0 && uServerSearchNot==0 && uAvailableSearch==0
+						&& uOwnerSearch==0 && uDIDv4Exclude==0)
 	                        	tDID("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,31))==0)
@@ -224,14 +224,14 @@ void ExttDIDCommands(pentry entries[], int x)
                 		}
 
 				//Initial query section
-				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uIP)"
-						" SELECT %u,uIP FROM tDID WHERE",uGroup);
+				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uDID)"
+						" SELECT %u,uDID FROM tDID WHERE",uGroup);
 
 				//Build AND query section
 
-				if(cIPv4Search[0])
+				if(cDIDv4Search[0])
 				{
-					sprintf(cQuerySection," uIP IN (SELECT uIP FROM tDID WHERE cLabel LIKE '%s%%')",cIPv4Search);
+					sprintf(cQuerySection," uDID IN (SELECT uDID FROM tDID WHERE cLabel LIKE '%s%%')",cDIDv4Search);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -249,17 +249,17 @@ void ExttDIDCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
-				if(uNodeSearch || uNodeSearchNot)
+				if(uServerSearch || uServerSearchNot)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					if(uNodeSearchNot && uNodeSearch )
-						sprintf(cQuerySection," uIP IN (SELECT uIPv4 FROM tContainer WHERE uNode!=%u)",uNodeSearch);
-					else if(uNodeSearch)
-						sprintf(cQuerySection," uIP IN (SELECT uIPv4 FROM tContainer WHERE uNode=%u)",uNodeSearch);
+					if(uServerSearchNot && uServerSearch )
+						sprintf(cQuerySection," uDID IN (SELECT uDIDv4 FROM tContainer WHERE uServer!=%u)",uServerSearch);
+					else if(uServerSearch)
+						sprintf(cQuerySection," uDID IN (SELECT uDIDv4 FROM tContainer WHERE uServer=%u)",uServerSearch);
 					else
-						sprintf(cQuerySection," uIP IN"
-								" (SELECT uIP FROM tDID LEFT JOIN tContainer ON tContainer.uIPv4=tDID.uIP"
+						sprintf(cQuerySection," uDID IN"
+								" (SELECT uDID FROM tDID LEFT JOIN tContainer ON tContainer.uDIDv4=tDID.uDID"
 								" WHERE tContainer.cLabel IS NULL)");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
@@ -287,7 +287,7 @@ void ExttDIDCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
-				if(uIPv4Exclude)
+				if(uDIDv4Exclude)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
@@ -360,7 +360,7 @@ void ExttDIDCommands(pentry entries[], int x)
 					tDID("Must specify a uDatacenter");
                         	guMode=0;
 
-				uIP=0;
+				uDID=0;
 				uCreatedBy=guLoginClient;
 				if(uForClient) guCompany=uForClient;
 				uOwner=guCompany;
@@ -379,7 +379,7 @@ void ExttDIDCommands(pentry entries[], int x)
 			if((uAllowDel(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
 			{
 	                        guMode=0;
-				sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uIP);
+				sprintf(gcQuery,"SELECT uDIDv4 FROM tContainer WHERE uDIDv4=%u",uDID);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -387,7 +387,7 @@ void ExttDIDCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tDID("Can't delete an IP in use");
+					tDID("Can't delete an DID in use");
 				}
 	                        guMode=2001;
 				tDID(LANG_NB_CONFIRMDEL);
@@ -403,14 +403,14 @@ void ExttDIDCommands(pentry entries[], int x)
 			if((uAllowDel(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
 			{
 				guMode=5;
-				if(cIPRange[0])
+				if(cDIDRange[0])
 				{
 					if(uForClient) guCompany=uForClient;
-					DelIPRange(cIPRange);
+					DelDIDRange(cDIDRange);
 				}
 				else
 				{
-					sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uIP);
+					sprintf(gcQuery,"SELECT uDIDv4 FROM tContainer WHERE uDIDv4=%u",uDID);
         				mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -419,7 +419,7 @@ void ExttDIDCommands(pentry entries[], int x)
 					{
 						mysql_free_result(res);
 	                        		guMode=2001;
-						tDID("Can't delete an IP in use");
+						tDID("Can't delete an DID in use");
 					}
 					DeletetDID();
 				}
@@ -435,7 +435,7 @@ void ExttDIDCommands(pentry entries[], int x)
 			if((uAllowMod(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
 			{
 	                        guMode=0;
-				sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uIP);
+				sprintf(gcQuery,"SELECT uDIDv4 FROM tContainer WHERE uDIDv4=%u",uDID);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -443,7 +443,7 @@ void ExttDIDCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tDID("Can't modify an IP in use");
+					tDID("Can't modify an DID in use");
 				}
 	                        guMode=2002;
 				tDID(LANG_NB_CONFIRMMOD);
@@ -459,7 +459,7 @@ void ExttDIDCommands(pentry entries[], int x)
 			if((uAllowMod(uOwner,uCreatedBy)) || guPermLevel>=11)
 			{
                         	guMode=2002;
-				sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uIP);
+				sprintf(gcQuery,"SELECT uDIDv4 FROM tContainer WHERE uDIDv4=%u",uDID);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -467,7 +467,7 @@ void ExttDIDCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tDID("Can't modify an IP in use");
+					tDID("Can't modify an DID in use");
 				}
 				if(strlen(cLabel)<7)
 					tDID("cLabel too short");
@@ -478,18 +478,18 @@ void ExttDIDCommands(pentry entries[], int x)
 				if(uForClient)
 				{
 					guCompany=uForClient;
-					if(!cIPRange[0])
+					if(!cDIDRange[0])
 					{
 						uOwner=guCompany;
-						sprintf(gcQuery,"UPDATE tDID SET uOwner=%u WHERE uAvailable=1 AND uIP=%u",
-								guCompany,uIP);
+						sprintf(gcQuery,"UPDATE tDID SET uOwner=%u WHERE uAvailable=1 AND uDID=%u",
+								guCompany,uDID);
         					mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
 					}
 				}
-				if(cIPRange[0])
-					AddIPRange(cIPRange);
+				if(cDIDRange[0])
+					AddDIDRange(cDIDRange);
 				uModBy=guLoginClient;
 				ModtDID();
 			}
@@ -551,11 +551,11 @@ void ExttDIDButtons(void)
 
                 case 2001:
                         printf("<p><u>Think twice</u>");
-                        printf("<p>Here you can delete a single record or optionally a complete block of IPs."
+                        printf("<p>Here you can delete a single record or optionally a complete block of DIDs."
 				" In the later case you specify a uOwner company to limit the deletion.");
-			printf("<p>cIPRange<br>\n");
-			printf("<input title='Optionally enter CIDR IP Range (ex. 10.0.0.1/27) for available mass deletion'"
-				" type=text name=cIPRange><p>\n");
+			printf("<p>cDIDRange<br>\n");
+			printf("<input title='Optionally enter CIDR DID Range (ex. 10.0.0.1/27) for available mass deletion'"
+				" type=text name=cDIDRange><p>\n");
 			tTablePullDownResellers(uForClient,1);
 			if(cSearch[0])
 				printf("<input type=hidden name=cSearch value='%s'>",cSearch);
@@ -564,12 +564,12 @@ void ExttDIDButtons(void)
 
                 case 2002:
 			printf("<p><u>Review changes</u><br>");
-			printf("Change a single record or optionally add a block of available IPs. In all cases you must"
+			printf("Change a single record or optionally add a block of available DIDs. In all cases you must"
 				" specify a uDatacenter and optionally a new company (uOwner) if your"
 				" permissions allow.<br>");
-			printf("<p>cIPRange<br>\n");
-			printf("<input title='Optionally enter CIDR IP Range (ex. 10.0.0.1/27) for available mass addition'"
-				" type=text name=cIPRange value='%s'><p>\n",cIPRange);
+			printf("<p>cDIDRange<br>\n");
+			printf("<input title='Optionally enter CIDR DID Range (ex. 10.0.0.1/27) for available mass addition'"
+				" type=text name=cDIDRange value='%s'><p>\n",cDIDRange);
 			tTablePullDownResellers(uForClient,1);
 			if(cSearch[0])
 				printf("<input type=hidden name=cSearch value='%s'>",cSearch);
@@ -578,12 +578,12 @@ void ExttDIDButtons(void)
 
 		default:
 			printf("<p><u>Table Tips</u><br>");
-			printf("IPs used and available for container and new hardware node"
-				" deployment are tracked and maintained here.<p>You can add available IPs <i>en masse</i>"
-				" via the cIPRange at the [Modify] stage. For example 192.168.0.1/28 would add 16 IPs"
+			printf("DIDs used and available for container and new hardware server"
+				" deployment are tracked and maintained here.<p>You can add available DIDs <i>en masse</i>"
+				" via the cDIDRange at the [Modify] stage. For example 192.168.0.1/28 would add 16 DIDs"
 				" starting at 192.168.0.1 and ending at 192.168.0.16."
 				" To add an initial range use [New], then [Modify], enter new CIDR range."
-				"<p>You can also delete available IPs <i>en masse</i> via the cIPRange at the [Delete]"
+				"<p>You can also delete available DIDs <i>en masse</i> via the cDIDRange at the [Delete]"
 				" stage.");
 			printf("<p><input type=submit class=largeButton title='Open user search set page. There you can create search sets and operate"
 				" on selected containers of the loaded container set.'"
@@ -612,16 +612,16 @@ void ExttDIDAuxTable(void)
 		case 12002:
 			//Set operation buttons
 			OpenFieldSet("Set Operations",100);
-			printf("<input title='Delete checked containers from your search set. They will still be visible but will"
+			printf("<input title='Delete checked DIDs from your search set. They will still be visible but will"
 				" marked deleted and will not be used in any subsequent set operation'"
 				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
-			printf("&nbsp; <input title='Deletes IPs not in use by containers.'"
+			printf("&nbsp; <input title='Deletes DIDs not in use by servers.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Delete'>\n");
-			printf("&nbsp; <input title='Updates IPs to uAvailable=1 for IPs not in use by containers.'"
+			printf("&nbsp; <input title='Updates DIDs to uAvailable=1 for DIDs not in use by containers.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Make Available'>\n");
-			printf("&nbsp; <input title='Send one ping packet to IP. Check firewall settings use with care.'"
+			printf("&nbsp; <input title='Send one ping packet to DID. Check firewall settings use with care.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Ping'>\n");
 			CloseFieldSet();
@@ -630,21 +630,21 @@ void ExttDIDAuxTable(void)
 			OpenFieldSet(gcQuery,100);
 			uGroup=uGetSearchGroup(gcUser,31);
 			sprintf(gcQuery,"SELECT"
-					" tDID.uIP,"
+					" tDID.uDID,"
 					" tDID.cLabel,"
 					" IF(tDID.uAvailable>0,'Yes','No'),"
 					" IFNULL(tDatacenter.cLabel,''),"
-					" IFNULL(tNode.cLabel,''),"
+					" IFNULL(tServer.cLabel,''),"
 					" IFNULL(tContainer.cHostname,''),"
 					" tClient.cLabel,"
 					" FROM_UNIXTIME(tDID.uModDate,'%%a %%b %%d %%T %%Y'),"
 					" tDID.cComment"
 					" FROM tDID"
-					" LEFT JOIN tContainer ON tContainer.uIPv4=tDID.uIP"
+					" LEFT JOIN tContainer ON tContainer.uDIDv4=tDID.uDID"
 					" LEFT JOIN tDatacenter ON tDID.uDatacenter=tDatacenter.uDatacenter"
-					" LEFT JOIN tNode ON tContainer.uNode=tNode.uNode"
+					" LEFT JOIN tServer ON tContainer.uServer=tServer.uServer"
 					" LEFT JOIN tClient ON tDID.uOwner=tClient.uClient"
-					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u)",uGroup);
+					" WHERE uDID IN (SELECT uDID FROM tGroupGlue WHERE uGroup=%u)",uGroup);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -686,7 +686,7 @@ while((field=mysql_fetch_row(res)))
 			{
 				if(!strcmp(gcCommand,"Delete Checked"))
 				{
-					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uIP=%u",uGroup,uCtDID);
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uDID=%u",uGroup,uCtDID);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
@@ -705,23 +705,23 @@ while((field=mysql_fetch_row(res)))
 				{
 					MYSQL_RES *res;
 
-					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uIP=%u",uGroup,uCtDID);
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uDID=%u",uGroup,uCtDID);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
 
-					sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uCtDID);
+					sprintf(gcQuery,"SELECT uDIDv4 FROM tContainer WHERE uDIDv4=%u",uCtDID);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
         				res=mysql_store_result(&gMysql);
 					if(mysql_num_rows(res)>0)
 					{
-						sprintf(cResult,"IP in use");
+						sprintf(cResult,"DID in use");
 						break;
 					}
 
-					sprintf(gcQuery,"DELETE FROM tDID WHERE uIP=%u",uCtDID);
+					sprintf(gcQuery,"DELETE FROM tDID WHERE uDID=%u",uCtDID);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -738,18 +738,18 @@ while((field=mysql_fetch_row(res)))
 				{
 					MYSQL_RES *res;
 
-					sprintf(gcQuery,"SELECT uIPv4 FROM tContainer WHERE uIPv4=%u",uCtDID);
+					sprintf(gcQuery,"SELECT uDIDv4 FROM tContainer WHERE uDIDv4=%u",uCtDID);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
         				res=mysql_store_result(&gMysql);
 					if(mysql_num_rows(res)>0)
 					{
-						sprintf(cResult,"IP in use");
+						sprintf(cResult,"DID in use");
 						break;
 					}
 
-					sprintf(gcQuery,"UPDATE tDID SET uAvailable=1 WHERE uIP=%u AND uAvailable=0",uCtDID);
+					sprintf(gcQuery,"UPDATE tDID SET uAvailable=1 WHERE uDID=%u AND uAvailable=0",uCtDID);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -766,7 +766,7 @@ while((field=mysql_fetch_row(res)))
 					MYSQL_RES *res;
 					MYSQL_ROW field;
 
-					sprintf(gcQuery,"SELECT cLabel FROM tDID WHERE uIP=%u",uCtDID);
+					sprintf(gcQuery,"SELECT cLabel FROM tDID WHERE uDID=%u",uCtDID);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -800,7 +800,7 @@ while((field=mysql_fetch_row(res)))
 	printf("<tr>");
 	printf("<td width=200 valign=top>"
 	"<input type=checkbox name=Ct%s >" //0
-	"<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uIP=%s>%s</a>" //0 and 1
+	"<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uDID=%s>%s</a>" //0 and 1
 	"</td>"
 	"<td>%s</td>" //2
 	"<td>%s</td>" //3
@@ -817,7 +817,7 @@ while((field=mysql_fetch_row(res)))
 //Reset margin end
 
 			printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'>"
-					"Check all %u IPs</td></tr>\n",uNumRows);
+					"Check all %u DIDs</td></tr>\n",uNumRows);
 			printf("</table>");
 
 			}//If results
@@ -840,9 +840,9 @@ void ExttDIDGetHook(entry gentries[], int x)
 
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(gentries[i].name,"uIP"))
+		if(!strcmp(gentries[i].name,"uDID"))
 		{
-			sscanf(gentries[i].val,"%u",&uIP);
+			sscanf(gentries[i].val,"%u",&uDID);
 			guMode=6;
 		}
 		else if(!strcmp(gentries[i].name,"cSearch"))
@@ -867,7 +867,7 @@ void ExttDIDSelect(void)
 
 void ExttDIDSelectRow(void)
 {
-	ExtSelectRowPublic("tDID",VAR_LIST_tDID,uIP);
+	ExtSelectRowPublic("tDID",VAR_LIST_tDID,uDID);
 
 }//void ExttDIDSelectRow(void)
 
@@ -879,17 +879,17 @@ void ExttDIDListSelect(void)
 	ExtListSelectPublic("tDID",VAR_LIST_tDID);
 	
 	//Changes here must be reflected below in ExttDIDListFilter()
-        if(!strcmp(gcFilter,"uIP"))
+        if(!strcmp(gcFilter,"uDID"))
         {
-                sscanf(gcCommand,"%u",&uIP);
-		sprintf(cCat," WHERE tDID.uIP=%u ORDER BY uIP",uIP);
+                sscanf(gcCommand,"%u",&uDID);
+		sprintf(cCat," WHERE tDID.uDID=%u ORDER BY uDID",uDID);
 		strcat(gcQuery,cCat);
         }
         else if(1)
         {
                 //None NO FILTER
                 strcpy(gcFilter,"None");
-		strcat(gcQuery," ORDER BY uIP");
+		strcat(gcQuery," ORDER BY uDID");
         }
 
 }//void ExttDIDListSelect(void)
@@ -900,10 +900,10 @@ void ExttDIDListFilter(void)
         //Filter
         printf("&nbsp;&nbsp;&nbsp;Filter on ");
         printf("<select name=gcFilter>");
-        if(strcmp(gcFilter,"uIP"))
-                printf("<option>uIP</option>");
+        if(strcmp(gcFilter,"uDID"))
+                printf("<option>uDID</option>");
         else
-                printf("<option selected>uIP</option>");
+                printf("<option selected>uDID</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
@@ -949,24 +949,22 @@ void tDIDNavList(unsigned uAvailable)
 	if(guPermLevel>11)
 	{
 		if(cSearch[0])
-			sprintf(gcQuery,"SELECT tDID.uIP,tDID.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-				" tDID LEFT JOIN tContainer ON tContainer.uIPv4=tDID.uIP WHERE tDID.uAvailable=%u"
-				" AND tDID.cLabel LIKE '%s%%' ORDER BY tDID.cLabel",uAvailable,cSearch);
+			sprintf(gcQuery,"SELECT tDID.uDID,tDID.cLabel FROM"
+				" tDID WHERE tDID.uAvailable=%u AND tDID.cLabel LIKE '%s%%' ORDER BY tDID.cLabel",uAvailable,cSearch);
 		else
-			sprintf(gcQuery,"SELECT tDID.uIP,tDID.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-					" tDID LEFT JOIN tContainer ON tContainer.uIPv4=tDID.uIP WHERE"
-					" tDID.uAvailable=%u ORDER BY tDID.cLabel",uAvailable);
+			sprintf(gcQuery,"SELECT tDID.uDID,tDID.cLabel FROM"
+					" tDID WHERE tDID.uAvailable=%u ORDER BY tDID.cLabel",uAvailable);
 	}
 	else
 	{
 		if(cSearch[0])
-			sprintf(gcQuery,"SELECT tDID.uIP,tDID.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-					" tDID LEFT JOIN tContainer ON tContainer.uIPv4=tDID.uIP WHERE"
+			sprintf(gcQuery,"SELECT tDID.uDID,tDID.cLabel FROM"
+					" tDID WHERE"
 					" tDID.uAvailable=%u AND tDID.cLabel LIKE '%s%%' AND"
 					" tDID.uOwner=%u ORDER BY tDID.cLabel",uAvailable,cSearch,guCompany);
 		else
-			sprintf(gcQuery,"SELECT tDID.uIP,tDID.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-					" tDID LEFT JOIN tContainer ON tContainer.uIPv4=tDID.uIP WHERE"
+			sprintf(gcQuery,"SELECT tDID.uDID,tDID.cLabel FROM"
+					" tDID WHERE"
 					" tDID.uAvailable=%u AND tDID.uOwner=%u ORDER BY tDID.cLabel",
 						uAvailable,guCompany);
 	}
@@ -992,25 +990,14 @@ void tDIDNavList(unsigned uAvailable)
 		{
 
 			if(cSearch[0])
-				if(field[2]!=NULL)
-					printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uIP=%s&cSearch=%s>%s</a>"
-						" (<a class=darkLink href=unxsSPS.cgi?gcFunction=tContainer&uContainer=%s>%s"
-						"</a>)<br>\n",
-						field[0],cURLEncode(cSearch),field[1],field[3],field[2]);
-				else
-					printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uIP=%s&cSearch=%s>%s"
+				printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uDID=%s&cSearch=%s>%s"
 						"</a><br>\n",field[0],cURLEncode(cSearch),field[1]);
 			else
-				if(field[2]!=NULL)
-					printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uIP=%s>%s</a>"
-						" (<a class=darkLink href=unxsSPS.cgi?gcFunction=tContainer&uContainer=%s>%s"
-						"</a>)<br>\n",field[0],field[1],field[3],field[2]);
-				else
-					printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uIP=%s>%s</a><br>\n",
+				printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uDID=%s>%s</a><br>\n",
 							field[0],field[1]);
 			if(++uNumRows>uLIMIT)
 			{
-				printf("(Only %u IPs shown use search/filters to shorten list.)<br>\n",uLIMIT);
+				printf("(Only %u DIDs shown use search/filters to shorten list.)<br>\n",uLIMIT);
 				break;
 			}
 		}
@@ -1025,7 +1012,7 @@ void tDIDReport(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE uIPv4=%u",uIP);
+	sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE uDIDv4=%u",uDID);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -1060,7 +1047,7 @@ void tDIDReport(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>tDIDReport tContainer Extra IPs</u><br>\n");
+        	printf("<p><u>tDIDReport tContainer Extra DIDs</u><br>\n");
 
 
 	        while((field=mysql_fetch_row(res)))
@@ -1071,9 +1058,9 @@ void tDIDReport(void)
 	}
         mysql_free_result(res);
 
-	sprintf(gcQuery,"SELECT tProperty.uKey,tNode.cLabel FROM tProperty,tNode"
+	sprintf(gcQuery,"SELECT tProperty.uKey,tServer.cLabel FROM tProperty,tServer"
 				" WHERE tProperty.uType=2 AND tProperty.cValue='%s'"
-				" AND tProperty.uKey=tNode.uNode",cLabel);
+				" AND tProperty.uKey=tServer.uServer",cLabel);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -1084,13 +1071,13 @@ void tDIDReport(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>tDIDReport tNode</u><br>\n");
+        	printf("<p><u>tDIDReport tServer</u><br>\n");
 
 
 	        while((field=mysql_fetch_row(res)))
 		{
-			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tNode"
-					"&uNode=%s>%s used by %s</a><br>\n",field[0],cLabel,field[1]);
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tServer"
+					"&uServer=%s>%s used by %s</a><br>\n",field[0],cLabel,field[1]);
 	        }
 	}
         mysql_free_result(res);
@@ -1098,207 +1085,26 @@ void tDIDReport(void)
 }//void tDIDReport(void)
 
 
-void AddIPRange(char *cIPRange)
+void AddDIDRange(char *cDIDRange)
 {
-	char *cIPs[2048];//Warning max 4 class C's or /22
-	unsigned uCIDR4Mask=0;
-	unsigned uCIDR4IP=0;
-	register int i,uSkip=0;
-        MYSQL_RES *res;
 
-	if(!uInCIDR4Format(cIPRange,&uCIDR4IP,&uCIDR4Mask))
-		tDID("<blink>Error:</blink> cIPRange is not in standard CIDR format!");
-	if(uCIDR4Mask<22)
-		tDID("<blink>Error:</blink> cIPRange is limited to 4 class C's or /22!");
-	uCIDR4IP=ExpandCIDR4(cIPRange,&cIPs[0]);
-	for(i=0;i<uCIDR4IP;i++)
-	{
-		sprintf(gcQuery,"SELECT uIP FROM tDID WHERE cLabel='%s'",cIPs[i]);
-        	mysql_query(&gMysql,gcQuery);
-        	if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-        	res=mysql_store_result(&gMysql);
-		if(mysql_num_rows(res))
-		{
-			mysql_free_result(res);
-			uSkip++;
-			continue;
-		}
-		mysql_free_result(res);
-		
-		sprintf(gcQuery,"INSERT INTO tDID SET cLabel='%s',uOwner=%u,uCreatedBy=%u,uAvailable=1"
-				",uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u",
-					cIPs[i],guCompany,guLoginClient,uDatacenter);
-        	mysql_query(&gMysql,gcQuery);
-        	if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		free(cIPs[i]);
-	}
-	unxsSPSLog(mysql_insert_id(&gMysql),"tDID","NewRange");
-	if(!uSkip)
-		tDID("Complete cIPRange added");
-	else if(uSkip==i)
-		tDID("<blink>Warning:</blink> cIPRange already exists no IPs added");
-	else if(1)
-		tDID("<blink>Note:</blink> Partial cIPRange added. At least one already existed");
-
-}//void AddIPRange(char *cIPRange)
+}//void AddDIDRange(char *cDIDRange)
 
 
-void DelIPRange(char *cIPRange)
+void DelDIDRange(char *cDIDRange)
 {
-	char *cIPs[2048];//Warning max 4 class C's or /22
-	unsigned uCIDR4Mask=0;
-	unsigned uCIDR4IP=0;
-	register int i,uSkip=0;
 
-	if(!uInCIDR4Format(cIPRange,&uCIDR4IP,&uCIDR4Mask))
-		tDID("<blink>Error:</blink> cIPRange is not in standard CIDR format!");
-	if(uCIDR4Mask<22)
-		tDID("<blink>Error:</blink> cIPRange is limited to 4 class C's or /22!");
-	uCIDR4IP=ExpandCIDR4(cIPRange,&cIPs[0]);
-	for(i=0;i<uCIDR4IP;i++)
-	{
-		if(guCompany==1)
-			sprintf(gcQuery,"DELETE FROM tDID WHERE cLabel='%s' AND uAvailable=1",cIPs[i]);
-		else
-			sprintf(gcQuery,"DELETE FROM tDID WHERE cLabel='%s' AND uAvailable=1 AND uOwner=%u",
-										cIPs[i],guCompany);
-        	mysql_query(&gMysql,gcQuery);
-        	if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		if(mysql_affected_rows(&gMysql)==1)
-			uSkip++;
-		free(cIPs[i]);
-	}
-	unxsSPSLog(uIP,"tDID","DelRange");
-	if(!uSkip)
-		tDID("<blink>Warning:</blink> cIPRange of available IPs controlled by you did not exist!");
-	else if(uSkip==i)
-		tDID("Complete cIPRange deleted");
-	else if(1)
-		tDID("<blink>Note:</blink> Partial cIPRange deleted. At least one available IP controlled by you did not exist");
-
-}//void DelIPRange(char *cIPRange)
+}//void DelDIDRange(char *cDIDRange)
 
 
 void tDIDUsedButAvailableNavList(void)
 {
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-	unsigned uNumRows=0;
-	unsigned uMySQLNumRows=0;
-#define uUBALIMIT 64
-
-	if(guPermLevel>11)
-	{
-		if(cSearch[0])
-			sprintf(gcQuery,"SELECT tDID.uIP,tDID.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-				" tDID,tContainer WHERE tContainer.uIPv4=tDID.uIP AND tDID.uAvailable=1"
-				" AND tDID.cLabel LIKE '%s%%' ORDER BY tDID.cLabel",cSearch);
-		else
-			sprintf(gcQuery,"SELECT tDID.uIP,tDID.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-					" tDID,tContainer WHERE tContainer.uIPv4=tDID.uIP AND"
-					" tDID.uAvailable=1 ORDER BY tDID.cLabel");
-	}
-	else
-	{
-		if(cSearch[0])
-			sprintf(gcQuery,"SELECT tDID.uIP,tDID.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-					" tDID,tContainer WHERE tContainer.uIPv4=tDID.uIP AND"
-					" tDID.uAvailable=1 AND tDID.cLabel LIKE '%s%%' AND"
-					" tDID.uOwner=%u ORDER BY tDID.cLabel",cSearch,guCompany);
-		else
-			sprintf(gcQuery,"SELECT tDID.uIP,tDID.cLabel,tContainer.cLabel,tContainer.uContainer FROM"
-					" tDID,tContainer WHERE tContainer.uIPv4=tDID.uIP AND"
-					" tDID.uAvailable=1 AND tDID.uOwner=%u ORDER BY tDID.cLabel",guCompany);
-	}
-
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-        {
-        	printf("<p><u>tDIDUsedButAvailableNavList</u><br>\n");
-                printf("%s",mysql_error(&gMysql));
-                return;
-        }
-
-        res=mysql_store_result(&gMysql);
-	if((uMySQLNumRows=mysql_num_rows(res)))
-	{	
-        	printf("<p><u>tDIDUsedButAvailableNavList(%u)</u><br>\n",uMySQLNumRows);
-
-	        while((field=mysql_fetch_row(res)))
-		{
-
-			if(cSearch[0])
-				printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uIP=%s&cSearch=%s>%s</a>"
-						" (<a class=darkLink href=unxsSPS.cgi?gcFunction=tContainer&uContainer=%s>%s"
-						"</a>)<br>\n",
-						field[0],cURLEncode(cSearch),field[1],field[3],field[2]);
-			else
-				printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uIP=%s>%s</a>"
-						" (<a class=darkLink href=unxsSPS.cgi?gcFunction=tContainer&uContainer=%s>%s"
-						"</a>)<br>\n",field[0],field[1],field[3],field[2]);
-			if(++uNumRows>uLIMIT)
-			{
-				printf("(Only %u IPs shown use search/filters to shorten list.)<br>\n",uLIMIT);
-				break;
-			}
-		}
-
-		printf("<input type=submit class=lwarnButton name=gcCommand value=Fix"
-				" title='Change all the tDIDUsedButAvailableNavList IPs to not available'><br>\n");
-	}
-        mysql_free_result(res);
 
 }//void tDIDUsedButAvailableNavList()
 
 
 void tDIDUsedButAvailableFix(void)
 {
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(guPermLevel>11)
-	{
-		if(cSearch[0])
-			sprintf(gcQuery,"SELECT tDID.uIP FROM"
-				" tDID,tContainer WHERE tContainer.uIPv4=tDID.uIP AND tDID.uAvailable=1"
-				" AND tDID.cLabel LIKE '%s%%' ORDER BY tDID.cLabel",cSearch);
-		else
-			sprintf(gcQuery,"SELECT tDID.uIP FROM"
-					" tDID,tContainer WHERE tContainer.uIPv4=tDID.uIP AND"
-					" tDID.uAvailable=1 ORDER BY tDID.cLabel");
-	}
-	else
-	{
-		if(cSearch[0])
-			sprintf(gcQuery,"SELECT tDID.uIP FROM"
-					" tDID,tContainer WHERE tContainer.uIPv4=tDID.uIP AND"
-					" tDID.uAvailable=1 AND tDID.cLabel LIKE '%s%%' AND"
-					" tDID.uOwner=%u ORDER BY tDID.cLabel",cSearch,guCompany);
-		else
-			sprintf(gcQuery,"SELECT tDID.uIP FROM"
-					" tDID,tContainer WHERE tContainer.uIPv4=tDID.uIP AND"
-					" tDID.uAvailable=1 AND tDID.uOwner=%u ORDER BY tDID.cLabel",guCompany);
-	}
-
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		tDID(mysql_error(&gMysql));
-
-        res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)>0)
-	{	
-	        while((field=mysql_fetch_row(res)))
-		{
-			sprintf(gcQuery,"UPDATE tDID SET uAvailable=0 WHERE uIP=%s",field[0]);
-        		mysql_query(&gMysql,gcQuery);
-		        if(mysql_errno(&gMysql))
-				tDID(mysql_error(&gMysql));
-		}
-	}
-        mysql_free_result(res);
 
 }//void tDIDUsedButAvailableFix()
 

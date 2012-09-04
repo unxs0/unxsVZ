@@ -36,11 +36,11 @@ AUTHOR/LEGAL
 #include <openisp/ucidr.h>
 void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue);//tcontainerfunc.h
 void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
-void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
+void GetServerProp(const unsigned uServer,const char *cName,char *cValue);//jobqueue.c
 char *strptime(const char *s, const char *format, struct tm *tm);
 
 static char cTableList[64][32]={ "tAuthorize", "tClient", "tConfiguration",
-		"tDatacenter", "tNode", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tDID", "tJob",
+		"tDatacenter", "tServer", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tDID", "tJob",
 		"tJobStatus", "tLog", "tLogMonth", "tLogType", "tMonth",
 		"tStatus", "tTemplate", "tTemplateSet", "tTemplateType", ""};
 
@@ -79,7 +79,7 @@ void ContainerReport(const char *cOptionalMsg);
 void EncryptPasswdMD5(char *pw);
 void GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
-		unsigned uNode,
+		unsigned uServer,
 		unsigned uContainer,
 		unsigned uHtml);
 void UpdateSchema(void);
@@ -249,14 +249,14 @@ void DashBoard(const char *cOptionalMsg)
 
 	OpenRow("Pending or Stuck Jobs (Last 10)","black");
 	if(guPermLevel>11 && guLoginClient==1)
-		sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tNode.cLabel,tJobStatus.cLabel"
-			" FROM tJob,tJobStatus,tNode WHERE tJob.uNode=tNode.uNode AND"
+		sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tServer.cLabel,tJobStatus.cLabel"
+			" FROM tJob,tJobStatus,tServer WHERE tJob.uServer=tServer.uServer AND"
 			" tJob.uJobStatus=tJobStatus.uJobStatus AND tJob.uJobStatus!=3"
 			" AND tJob.uJobStatus!=7 AND tJob.uJobStatus!=6"
 			" ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 10");
 	else
-		sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tNode.cLabel,tJobStatus.cLabel"
-			" FROM tJob,tJobStatus,tNode WHERE tJob.uNode=tNode.uNode AND"
+		sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tServer.cLabel,tJobStatus.cLabel"
+			" FROM tJob,tJobStatus,tServer WHERE tJob.uServer=tServer.uServer AND"
 			" tJob.uJobStatus=tJobStatus.uJobStatus AND tJob.uJobStatus!=3"
 			" AND tJob.uJobStatus!=7 AND tJob.uJobStatus!=6 AND tJob.uOwner=%u"
 			" ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 10",guCompany);
@@ -288,7 +288,7 @@ void ExtMainContent(void)
 	printf("<td>%s</td></tr>\n",gcBuildInfo);
 
 	OpenRow("Application Summary","black");
-	printf("<td>Manages unxsSIPProxy servers across nodes and datacenters.</td></tr>\n");
+	printf("<td>Manages multiple OpenSIPS and unxsSIPProxy servers across datacenters.</td></tr>\n");
 	if(guPermLevel>9)
 	{
 		register unsigned int i;
@@ -562,7 +562,7 @@ void Initialize(char *cPasswd)
 	CreatetClient();
         CreatetConfiguration();
 	CreatetDatacenter();
-	CreatetNode();
+	CreatetServer();
         CreatetGlossary();
 	CreatetGroup();
 	CreatetGroupGlue();
@@ -1218,7 +1218,7 @@ void TextError(const char *cError, unsigned uContinue)
 
 void GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
-		unsigned uNode,
+		unsigned uServer,
 		unsigned uContainer,
 		unsigned uHtml)
 {
@@ -1235,9 +1235,9 @@ void GetConfiguration(const char *cName,char *cValue,
 		sprintf(cExtra," AND uDatacenter=%u",uDatacenter);
 		strcat(cQuery,cExtra);
 	}
-	if(uNode)
+	if(uServer)
 	{
-		sprintf(cExtra," AND uNode=%u",uNode);
+		sprintf(cExtra," AND uServer=%u",uServer);
 		strcat(cQuery,cExtra);
 	}
 	if(uContainer)

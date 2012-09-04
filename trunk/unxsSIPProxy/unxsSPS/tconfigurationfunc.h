@@ -10,7 +10,7 @@ AUTHOR/LEGAL
 */
 
 void tConfigurationNavList(void);
-unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uNode,unsigned uContainer);
+unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uServer,unsigned uContainer);
 void htmlGlossaryLink(char *cLabel);
 
 void ExtProcesstConfigurationVars(pentry entries[], int x)
@@ -107,7 +107,7 @@ void ExttConfigurationCommands(pentry entries[], int x)
 				if(uConfiguration==0)
 					tConfiguration("<blink>Error</blink>: uConfiguration==0!");
 					
-				if(uDatacenter==0 && uNode!=0)
+				if(uDatacenter==0 && uServer!=0)
 					tConfiguration("<blink>Error</blink>: uDatacenter==0!");
 					
 
@@ -116,7 +116,7 @@ void ExttConfigurationCommands(pentry entries[], int x)
 				if(uModDate==uActualModDate)
 				{
 					uCount=CreateConfigurationFileJob(uConfiguration,uDatacenter,
-							uNode,uContainer);
+							uServer,uContainer);
 					if(uCount)
 						tConfiguration("CreateConfigurationFileJob() Done");
 					else
@@ -292,11 +292,11 @@ void tConfigurationNavList(void)
         MYSQL_ROW field;
 
 	sprintf(gcQuery,"SELECT tConfiguration.uConfiguration,tConfiguration.cLabel,"
-			" IFNULL(tDatacenter.cLabel,'AllDatacenters'),IFNULL(tNode.cLabel,'AllNodes')"
+			" IFNULL(tDatacenter.cLabel,'AllDatacenters'),IFNULL(tServer.cLabel,'AllNodes')"
 			" FROM tConfiguration"
 			" LEFT JOIN tDatacenter ON tConfiguration.uDatacenter=tDatacenter.uDatacenter"
-			" LEFT JOIN tNode ON tConfiguration.uNode=tNode.uNode"
-			" ORDER BY tConfiguration.cLabel,tConfiguration.uDatacenter,tConfiguration.uNode");
+			" LEFT JOIN tServer ON tConfiguration.uServer=tServer.uServer"
+			" ORDER BY tConfiguration.cLabel,tConfiguration.uDatacenter,tConfiguration.uServer");
 	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -319,42 +319,42 @@ void tConfigurationNavList(void)
 }//void tConfigurationNavList(void)
 
 
-unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uNode,unsigned uContainer)
+unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uServer,unsigned uContainer)
 {
 	unsigned uCount=0;	
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	//All datacenters and all nodes, but no uContainers
-	if(uDatacenter==0 && uNode==0 && uContainer==0)
-		sprintf(gcQuery,"SELECT tNode.uDatacenter,tNode.uNode,0 FROM tNode");
-	//Single selected datacenter and every node of that datacenter, but no uContainers
-	else if(uDatacenter!=0 && uNode==0 && uContainer==0)
-		sprintf(gcQuery,"SELECT tNode.uDatacenter,tNode.uNode,0 FROM tNode WHERE"
-			" tNode.uDatacenter=%u",uDatacenter);
-	//Single selected datacenter node, no container
-	else if(uDatacenter!=0 && uNode!=0 && uContainer==0)
-		sprintf(gcQuery,"SELECT tNode.uDatacenter,tNode.uNode,0 FROM tNode WHERE"
-			" tNode.uDatacenter=%u AND tNode.uNode=%u",uDatacenter,uNode);
+	//All datacenters and all servers, but no uContainers
+	if(uDatacenter==0 && uServer==0 && uContainer==0)
+		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,0 FROM tServer");
+	//Single selected datacenter and every server of that datacenter, but no uContainers
+	else if(uDatacenter!=0 && uServer==0 && uContainer==0)
+		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,0 FROM tServer WHERE"
+			" tServer.uDatacenter=%u",uDatacenter);
+	//Single selected datacenter server, no container
+	else if(uDatacenter!=0 && uServer!=0 && uContainer==0)
+		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,0 FROM tServer WHERE"
+			" tServer.uDatacenter=%u AND tServer.uServer=%u",uDatacenter,uServer);
 
 	//Single containers
 	//Completely specified container. No migration ever happened. Seems useless to me now.
-	else if(uDatacenter!=0 && uNode!=0 && uContainer!=0)
-		sprintf(gcQuery,"SELECT tNode.uDatacenter,tNode.uNode,tContainer.uContainer FROM tNode,tContainer WHERE"
-			" tNode.uNode=tContainer.uNode AND tNode.uDatacenter=%u AND tNode.uNode=%u"
-			" AND tContainer.uContainer=%u",uDatacenter,uNode,uContainer);
-	//Find the datacenter and the node for a given container
-	else if(uDatacenter==0 && uNode==0 && uContainer!=0)
-		sprintf(gcQuery,"SELECT tNode.uDatacenter,tNode.uNode,tContainer.uContainer FROM tNode,tContainer WHERE"
-			" tNode.uNode=tContainer.uNode"
+	else if(uDatacenter!=0 && uServer!=0 && uContainer!=0)
+		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,tContainer.uContainer FROM tServer,tContainer WHERE"
+			" tServer.uServer=tContainer.uServer AND tServer.uDatacenter=%u AND tServer.uServer=%u"
+			" AND tContainer.uContainer=%u",uDatacenter,uServer,uContainer);
+	//Find the datacenter and the server for a given container
+	else if(uDatacenter==0 && uServer==0 && uContainer!=0)
+		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,tContainer.uContainer FROM tServer,tContainer WHERE"
+			" tServer.uServer=tContainer.uServer"
 			" AND tContainer.uContainer=%u",uContainer);
-	//Find the datacenter for a given container of a specified node
-	else if(uDatacenter==0 && uNode!=0 && uContainer!=0)
-		sprintf(gcQuery,"SELECT tNode.uDatacenter,tNode.uNode,tContainer.uContainer FROM tNode,tContainer WHERE"
-			" tNode.uNode=tContainer.uNode AND tNode.uNode=%u"
-			" AND tContainer.uContainer=%u",uNode,uContainer);
+	//Find the datacenter for a given container of a specified server
+	else if(uDatacenter==0 && uServer!=0 && uContainer!=0)
+		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,tContainer.uContainer FROM tServer,tContainer WHERE"
+			" tServer.uServer=tContainer.uServer AND tServer.uServer=%u"
+			" AND tContainer.uContainer=%u",uServer,uContainer);
 	else if(1)
-		htmlPlainTextError("Unexpected CreateConfigurationFileJob() uDatacenter,uNode and uContainer combination");
+		htmlPlainTextError("Unexpected CreateConfigurationFileJob() uDatacenter,uServer and uContainer combination");
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -363,7 +363,7 @@ unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter
 	while((field=mysql_fetch_row(res)))
 	{
 		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateConfigurationFileJob()',cJobName='InstallConfigFile'"
-			",uDatacenter=%s,uNode=%s,uContainer=%s"
+			",uDatacenter=%s,uServer=%s,uContainer=%s"
 			",cJobData='uConfiguration=%u;',uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",

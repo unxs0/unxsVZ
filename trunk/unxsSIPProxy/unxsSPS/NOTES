@@ -4,13 +4,12 @@ unxsSIPProxy (unxsSPS) Backend Design Notes
 Main function tables:
 ---
 
+tPBX:		Asterisk b2bua destination and sip trunk traffic source.
 tDID: 		Phone numbers used for incoming route determination.
 tPrefixes:	Phone number prefixes (like area codes) that have
 		information to determine international, offshore and intra or inter state
 		given two of them. Also must have cost information for least cost routing.
-tPBX:		Asterisk b2bua destination and sip trunk traffic source.
-tPBXGroup:	A way to tag PBXs as belonging to some logical group for use in tRules.
-tCarrier:	A set of one or more incoming and outbound gateways.
+tCarrier:	A set of one or more incoming and/or outbound gateways.
 tGateway:	A sip gateway that we can send and receive sip traffic from.
 tRules:		A way to decide how to route PBX sip trunk outbound traffic. Uses 
 		priorities, weights, DID prefixes, time scheduling (both one off and 
@@ -25,8 +24,8 @@ tRules:		A way to decide how to route PBX sip trunk outbound traffic. Uses
 tCDR:		Call description records authoritative source for billing. CDRs should go
 		beyond normal fields and also include the rule that was used. This means
 		that old rules must be saved for easy and efficient reference.
-tDatacenter:	A collection of servers.
-tServer:	A SIP proxy server.
+tDatacenter:	A collection of servers usually on the same LAN.
+tServer:	A unxsSIPProxy server.
 
 System tables:
 ---

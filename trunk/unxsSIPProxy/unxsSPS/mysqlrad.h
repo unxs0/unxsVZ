@@ -168,7 +168,7 @@ void CloneReport(const char *cOptionalMsg);
 void tTablePullDownResellers(unsigned uSelector,unsigned uBanner);
 void GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
-		unsigned uNode,
+		unsigned uServer,
 		unsigned uContainer,
 		unsigned uHtml);
 void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
@@ -223,20 +223,20 @@ void DeletetDatacenter(void);
 void ExttDatacenterGetHook(entry gentries[], int x);
 void ExttDatacenterNavBar(void);
 
-//tNode
-int tNodeCommands(pentry entries[], int x);
-void tNode(const char *results);
-void ProcesstNodeVars(pentry entries[], int x);
-void tNodeContent(void);
-void tNodeInputContent(void);
-void tNodeInput(unsigned uMode);
-void tNodeList(void);
-void NewtNode(unsigned uMode);
-void ModtNode(void);
-void CreatetNode(void);
-void DeletetNode(void);
-void ExttNodeGetHook(entry gentries[], int x);
-void ExttNodeNavBar(void);
+//tServer
+int tServerCommands(pentry entries[], int x);
+void tServer(const char *results);
+void ProcesstServerVars(pentry entries[], int x);
+void tServerContent(void);
+void tServerInputContent(void);
+void tServerInput(unsigned uMode);
+void tServerList(void);
+void NewtServer(unsigned uMode);
+void ModtServer(void);
+void CreatetServer(void);
+void DeletetServer(void);
+void ExttServerGetHook(entry gentries[], int x);
+void ExttServerNavBar(void);
 
 //tContainer
 int tContainerCommands(pentry entries[], int x);
@@ -262,21 +262,21 @@ unsigned CommonCloneContainer(
 		unsigned uTargetDatacenter,
 		unsigned uOwner,
 		const char *cLabel,
-		unsigned uNode,
+		unsigned uServer,
 		unsigned uStatus,
 		const char *cHostname,
 		const char *cClassC,
 		unsigned uWizIPv4,
 		char *cWizLabel,
 		char *cWizHostname,
-		unsigned uTargetNode,
+		unsigned uTargetServer,
 		unsigned uSyncPeriod,
 		unsigned uLoginClient,
 		unsigned uCloneStop,
 		unsigned uMode);
 void CopyContainerProps(unsigned uSource, unsigned uTarget);
-unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
-				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,
+unsigned CloneContainerJob(unsigned uDatacenter, unsigned uServer, unsigned uContainer,
+				unsigned uTargetServer, unsigned uNewVeid, unsigned uPrevStatus,
 				unsigned uOwner,unsigned uCreatedBy,unsigned uCloneStop);
 
 //tProperty
@@ -729,4 +729,4 @@ void GlossaryGetHook(entry gentries[],int x);
 
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 unsigned UpdatePrimaryContainerGroup(unsigned uContainer, unsigned uGroup);
-unsigned uGetGroup(unsigned uNode, unsigned uContainer);
+unsigned uGetGroup(unsigned uServer, unsigned uContainer);

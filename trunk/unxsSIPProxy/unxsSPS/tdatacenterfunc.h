@@ -5,13 +5,13 @@ FILE
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2009 Unixservice, LLC.
+	(C) 2001-2012 Unixservice, LLC.
 */
 
 static unsigned uClone=0;
 static unsigned uOldDatacenter=0;
-static unsigned uTargetNode=0;
-static char cuTargetNodePullDown[256]={""};
+static unsigned uTargetServer=0;
+static char cuTargetServerPullDown[256]={""};
 
 //ModuleFunctionProtos()
 void tDatacenterNavList(void);
@@ -35,10 +35,10 @@ void ExtProcesstDatacenterVars(pentry entries[], int x)
 			strcpy(cForClientPullDown,entries[i].val);
 			uForClient=ReadPullDown(TCLIENT,"cLabel",cForClientPullDown);
 		}
-		else if(!strcmp(entries[i].name,"cuTargetNodePullDown"))
+		else if(!strcmp(entries[i].name,"cuTargetServerPullDown"))
 		{
-			sprintf(cuTargetNodePullDown,"%.255s",entries[i].val);
-			uTargetNode=ReadPullDown("tNode","cLabel",cuTargetNodePullDown);
+			sprintf(cuTargetServerPullDown,"%.255s",entries[i].val);
+			uTargetServer=ReadPullDown("tServer","cLabel",cuTargetServerPullDown);
 		}
 	}
 }//void ExtProcesstDatacenterVars(pentry entries[], int x)
@@ -67,7 +67,6 @@ void ExttDatacenterCommands(pentry entries[], int x)
 			if(guPermLevel>=9)
 			{
                         	ProcesstDatacenterVars(entries,x);
-				uOldDatacenter=uDatacenter;
 
                         	guMode=2000;
 				//Check entries here
@@ -97,14 +96,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				uStatus=1;//Active
-				NewtDatacenter(1);
-				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=1"
-						",cName='Contact',uOwner=%u,uCreatedBy=%u"
-						",uCreatedDate=UNIX_TIMESTAMP(NOW())"
-							,uDatacenter,guCompany,guLoginClient);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
+				NewtDatacenter(0);
 				if(uDatacenter)
 					tDatacenter("New datacenter created");
 				else
@@ -120,7 +112,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				sscanf(ForeignKey("tDatacenter","uModDate",uDatacenter),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
 					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
-				sprintf(gcQuery,"SELECT uDatacenter FROM tContainer WHERE uDatacenter=%u",
+				sprintf(gcQuery,"SELECT uDatacenter FROM tServer WHERE uDatacenter=%u",
 									uDatacenter);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
@@ -130,7 +122,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				{
 					mysql_free_result(res);
 					tDatacenter("<blink>Error</blink>: Can't delete a datacenter"
-							" used by a container!");
+							" used by a server!");
 				}
 	                        guMode=2001;
 				tDatacenter(LANG_NB_CONFIRMDEL);
@@ -237,12 +229,8 @@ void ExttDatacenterButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("A datacenter is a collection of hardware nodes."
-					" These hardware nodes need not be located in the same"
-					" physical datacenter. Hardware nodes host VZ containers."
-					" It is in these containers that actual public services run."
-					" uVeth='Yes' container traffic is not included"
-					"in the datacenter graphs at this time.");
+			printf("A datacenter is a collection of SIP servers."
+					" These servers need not be located in the same physical datacenter.");
 			tGroupNavList();
 			tDatacenterNavList();
 	}
@@ -253,38 +241,6 @@ void ExttDatacenterButtons(void)
 
 void ExttDatacenterAuxTable(void)
 {
-	if(!uDatacenter || guMode==2000 )//uMODE_NEW
-		return;
-
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	sprintf(gcQuery,"%s Property Panel",cLabel);
-	OpenFieldSet(gcQuery,100);
-	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="PROP_DATACENTER
-			" ORDER BY cName",uDatacenter);
-
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-        res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
-	{
-		printf("<table cols=2>");
-		while((field=mysql_fetch_row(res)))
-		{
-			printf("<tr>\n");
-			printf("<td width=200 valign=top><a class=darkLink href=unxsSPS.cgi?"
-					"gcFunction=tProperty&uProperty=%s&cReturn=tDatacenter_%u>"
-					"%s</a></td><td valign=top><pre>%s</pre></td>\n",
-						field[0],uDatacenter,field[1],field[2]);
-			printf("</tr>\n");
-		}
-		printf("</table>");
-	}
-
-	CloseFieldSet();
 
 }//void ExttDatacenterAuxTable(void)
 
@@ -632,16 +588,6 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
         }
 
 	if(uType)
-		//This does not work in 5.0.77
-	       	//sprintf(gcQuery,"SELECT _rowid AS uRowid,%s FROM %s WHERE"
-		//	" LOCATE('All Datacenters',"
-		//	"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=%u AND uKey=uRowid))>0"
-		//	" OR LOCATE('%s',"
-		//	"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=%u AND uKey=uRowid))>0"
-		//	" ORDER BY %s",
-		//		cFieldName,cLocalTableName,uType,cDatacenter,uType,cOrderby);
-
-		//SELECT _rowid,cLabel FROM tOSTemplate WHERE _rowid IN (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND uType=8 AND (cValue='All Datacenters' OR cValue='Wilshire1'));
 	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
 				" _rowid IN"
 				" (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND"

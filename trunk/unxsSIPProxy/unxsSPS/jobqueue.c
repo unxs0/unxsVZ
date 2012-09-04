@@ -37,7 +37,7 @@ FILE CONTENTS
 
 //local protos, order=ret type, in file
 void ProcessJobQueue(unsigned uDebug);
-void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,char *cJobName,char *cJobData);
+void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uServer,char *cJobName,char *cJobData);
 void tJobErrorUpdate(unsigned uJob, const char *cErrorMsg);
 void tJobDoneUpdate(unsigned uJob);
 void tJobWaitingUpdate(unsigned uJob);
@@ -49,7 +49,7 @@ void GetIPFromtIP(const unsigned uIPv4,char *cIP);
 void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue);
 void logfileLine(const char *cFunction,const char *cLogline);
 void LogError(char *cErrorMsg,unsigned uKey);
-void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,const char *cJobData);
+void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uServer,const char *cJobData);
 void SetJobStatus(unsigned uJob,unsigned uJobStatus);
 
 unsigned uNotValidSystemCallArg(char *cSSHOptions);
@@ -58,19 +58,19 @@ unsigned uNotValidSystemCallArg(char *cSSHOptions);
 unsigned TextConnectDb(void); //mysqlconnect.c
 void GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
-		unsigned uNode,
+		unsigned uServer,
 		unsigned uContainer,
 		unsigned uHtml);
 
 //file scoped vars.
-static unsigned gfuNode=0;
+static unsigned gfuServer=0;
 static unsigned gfuDatacenter=0;
 static unsigned guDebug=0;
 static char cHostname[100]={""};//file scope
 static FILE *gLfp=NULL;//log file
 
 
-//Using the local server hostname get max 32 jobs for this node from the tJob queue.
+//Using the local server hostname get max 32 jobs for this server from the tJob queue.
 //Then dispatch jobs via ProcessJob() this function in turn calls specific functions for
 //each known cJobName.
 void ProcessJobQueue(unsigned uDebug)
@@ -78,7 +78,7 @@ void ProcessJobQueue(unsigned uDebug)
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uDatacenter=0;
-	unsigned uNode=0;
+	unsigned uServer=0;
 	unsigned uJob=0;
 	struct sysinfo structSysinfo;
 
@@ -121,8 +121,8 @@ void ProcessJobQueue(unsigned uDebug)
 
 	guLoginClient=1;//Root user
 
-	//Get node and datacenter via hostname
-	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+	//Get server and datacenter via hostname
+	sprintf(gcQuery,"SELECT uServer,uDatacenter FROM tServer WHERE cLabel='%.99s'",cHostname);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -133,19 +133,19 @@ void ProcessJobQueue(unsigned uDebug)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[0],"%u",&uNode);
+		sscanf(field[0],"%u",&uServer);
 		sscanf(field[1],"%u",&uDatacenter);
 	}
 	mysql_free_result(res);
 
 	//FQDN vs short name of 2nd NIC mess
-	if(!uNode)
+	if(!uServer)
 	{
 		char *cp;
 
 		if((cp=strchr(cHostname,'.')))
 			*cp=0;
-		sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+		sprintf(gcQuery,"SELECT uServer,uDatacenter FROM tServer WHERE cLabel='%.99s'",cHostname);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -156,26 +156,26 @@ void ProcessJobQueue(unsigned uDebug)
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			sscanf(field[0],"%u",&uNode);
+			sscanf(field[0],"%u",&uServer);
 			sscanf(field[1],"%u",&uDatacenter);
 		}
 		mysql_free_result(res);
 	}
 
-	if(!uNode)
+	if(!uServer)
 	{
-		logfileLine("ProcessJobQueue","could not determine uNode: aborted");
+		logfileLine("ProcessJobQueue","could not determine uServer: aborted");
 		mysql_close(&gMysql);
 		exit(1);
 	}
 
 	//Some file scoped globals we need to cleanout someday
-	gfuNode=uNode;
+	gfuServer=uServer;
 	gfuDatacenter=uDatacenter;
 
 	if(guDebug)
 	{
-		sprintf(gcQuery,"Start %s(uNode=%u,uDatacenter=%u)",cHostname,uNode,uDatacenter);
+		sprintf(gcQuery,"Start %s(uServer=%u,uDatacenter=%u)",cHostname,uServer,uDatacenter);
 		logfileLine("ProcessJobQueue",gcQuery);
 	}
 
@@ -191,9 +191,9 @@ void ProcessJobQueue(unsigned uDebug)
 	}
 
 	sprintf(gcQuery,"SELECT uJob,uContainer,cJobName,cJobData FROM tJob WHERE uJobStatus=1"
-				" AND (uDatacenter=%u OR uDatacenter=0) AND (uNode=%u OR uNode=0)" //uDatacenter,uNode=0 all type jobs
+				" AND (uDatacenter=%u OR uDatacenter=0) AND (uServer=%u OR uServer=0)" //uDatacenter,uServer=0 all type jobs
 				" AND uJobDate<=UNIX_TIMESTAMP(NOW()) ORDER BY uJob LIMIT 128",
-						uDatacenter,uNode);
+						uDatacenter,uServer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -226,7 +226,7 @@ void ProcessJobQueue(unsigned uDebug)
 		//These log entries combined with the output of system calls will provide framing
 		sprintf(gcQuery,"Start %s",field[2]);
 		logfileLine("ProcessJobQueue",gcQuery);
-		ProcessJob(uJob,uDatacenter,uNode,field[2],field[3]);
+		ProcessJob(uJob,uDatacenter,uServer,field[2],field[3]);
 		logfileLine("ProcessJobQueue","End");
 	}
 	mysql_free_result(res);
@@ -242,7 +242,7 @@ void ProcessJobQueue(unsigned uDebug)
 
 
 
-void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,char *cJobName,char *cJobData)
+void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uServer,char *cJobName,char *cJobData)
 {
 	//Some jobs may take quite some time, we need to make sure we don't run again!
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=2,cRemoteMsg='Running',uModBy=1,"
@@ -259,7 +259,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,char *cJobName
 	//Is priority order needed in some cases?
 	if(!strcmp(cJobName,"RecurringJob"))
 	{
-		RecurringJob(uJob,uDatacenter,uNode,cJobData);
+		RecurringJob(uJob,uDatacenter,uServer,cJobData);
 	}
 	else if(1)
 	{
@@ -465,7 +465,7 @@ void LogError(char *cErrorMsg,unsigned uKey)
 }//void LogError(char *cErrorMsg)
 
 
-void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,const char *cJobData)
+void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uServer,const char *cJobData)
 {
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
@@ -678,7 +678,7 @@ Common_WaitingExit:
 	SetJobStatus(uJob,uWAITING);
 	return;
 
-}//void RecurringJob(uJob,uDatacenter,uNode,uContainer,cJobData)
+}//void RecurringJob(uJob,uDatacenter,uServer,uContainer,cJobData)
 
 
 void SetJobStatus(unsigned uJob,unsigned uJobStatus)

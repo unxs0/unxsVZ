@@ -171,8 +171,8 @@ int main(int iArgc, char *cArgv[])
 
 			if(!strcmp(gcFunction,"tDatacenter"))
 				ExttDatacenterGetHook(gentries,x);
-			if(!strcmp(gcFunction,"tNode"))
-				ExttNodeGetHook(gentries,x);
+			if(!strcmp(gcFunction,"tServer"))
+				ExttServerGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tDID"))
 				ExttDIDGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tGroupType"))
@@ -250,7 +250,7 @@ int main(int iArgc, char *cArgv[])
 
 	//Main Post Menu
 	tDatacenterCommands(entries,x);
-	tNodeCommands(entries,x);
+	tServerCommands(entries,x);
 	tDIDCommands(entries,x);
 	tGroupTypeCommands(entries,x);
 	tGroupCommands(entries,x);
@@ -507,6 +507,12 @@ void Header_ism3(const char *title, int iJs)
 	if(!strcmp(gcFunction,"tDID") || !strcmp(gcFunction,"tDIDTools") ||
 			!strcmp(gcFunction,"tDIDList"))
 		ExttDIDNavBar();
+	else if(!strcmp(gcFunction,"tServer") || !strcmp(gcFunction,"tServerTools") ||
+			!strcmp(gcFunction,"tServerList"))
+		ExttServerNavBar();
+	else if(!strcmp(gcFunction,"tDatacenter") || !strcmp(gcFunction,"tDatacenterTools") ||
+			!strcmp(gcFunction,"tDatacenterList"))
+		ExttDatacenterNavBar();
 	else if(!strcmp(gcFunction,"tGroupType") || !strcmp(gcFunction,"tGroupTypeTools") ||
 			!strcmp(gcFunction,"tGroupTypeList"))
 		ExttGroupTypeNavBar();
@@ -609,16 +615,16 @@ void Header_ism3(const char *title, int iJs)
 		printf(" id=current>\n");
 	  printf("\t\t\t<a title='Datacenter' href=unxsSPS.cgi?gcFunction=tDatacenter>tDatacenter</a>\n");
 	}
-	//tNode
+	//tServer
 	if(guPermLevel>=7)
 	{
 	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tNode") && strcmp(gcFunction,"tNodeTools") &&
-			strcmp(gcFunction,"tNodeList"))
+	  if(strcmp(gcFunction,"tServer") && strcmp(gcFunction,"tServerTools") &&
+			strcmp(gcFunction,"tServerList"))
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Hardware node' href=unxsSPS.cgi?gcFunction=tNode>tNode</a>\n");
+	  printf("\t\t\t<a title='Hardware server' href=unxsSPS.cgi?gcFunction=tServer>tServer</a>\n");
 	}
 	//tDID
 	if(guPermLevel>=10)
@@ -640,7 +646,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Container or node group type' href=unxsSPS.cgi?gcFunction=tGroupType>tGroupType</a>\n");
+	  printf("\t\t\t<a title='Container or server group type' href=unxsSPS.cgi?gcFunction=tGroupType>tGroupType</a>\n");
 	}
 	//tGroup
 	if(guPermLevel>=10)
@@ -651,7 +657,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Container or node group' href=unxsSPS.cgi?gcFunction=tGroup>tGroup</a>\n");
+	  printf("\t\t\t<a title='Container or server group' href=unxsSPS.cgi?gcFunction=tGroup>tGroup</a>\n");
 	}
 	//tGroupGlue
 	if(guPermLevel>=20)
@@ -662,7 +668,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Glues uContainers or uNodes to uGroups' href=unxsSPS.cgi?gcFunction=tGroupGlue>tGroupGlue</a>\n");
+	  printf("\t\t\t<a title='Glues uContainers or uServers to uGroups' href=unxsSPS.cgi?gcFunction=tGroupGlue>tGroupGlue</a>\n");
 	}
 	//tClient
 	if(guPermLevel>=10)
