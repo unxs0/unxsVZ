@@ -181,6 +181,10 @@ int main(int iArgc, char *cArgv[])
 				ExttDatacenterGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tServer"))
 				ExttServerGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tCDR"))
+				ExttCDRGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tRule"))
+				ExttRuleGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tCarrier"))
 				ExttCarrierGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tGroupType"))
@@ -263,6 +267,8 @@ int main(int iArgc, char *cArgv[])
 	tDIDCommands(entries,x);
 	tPBXCommands(entries,x);
 	tGatewayCommands(entries,x);
+	tRuleCommands(entries,x);
+	tCDRCommands(entries,x);
 	tPrefixCommands(entries,x);
 	tGroupTypeCommands(entries,x);
 	tGroupCommands(entries,x);
@@ -528,6 +534,12 @@ void Header_ism3(const char *title, int iJs)
 	else if(!strcmp(gcFunction,"tDID") || !strcmp(gcFunction,"tDIDTools") ||
 			!strcmp(gcFunction,"tDIDList"))
 		ExttDIDNavBar();
+	else if(!strcmp(gcFunction,"tCDR") || !strcmp(gcFunction,"tCDRTools") ||
+			!strcmp(gcFunction,"tCDRList"))
+		ExttCDRNavBar();
+	else if(!strcmp(gcFunction,"tRule") || !strcmp(gcFunction,"tRuleTools") ||
+			!strcmp(gcFunction,"tRuleList"))
+		ExttRuleNavBar();
 	else if(!strcmp(gcFunction,"tCarrier") || !strcmp(gcFunction,"tCarrierTools") ||
 			!strcmp(gcFunction,"tCarrierList"))
 		ExttCarrierNavBar();
@@ -628,39 +640,6 @@ void Header_ism3(const char *title, int iJs)
 		printf("\t\t\t<a title='Home start page' href=unxsSPS.cgi?gcFunction=Main>Main</a>\n");
 	printf("\t\t\t</li>\n");
 
-	//tDatacenter
-	if(guPermLevel>=7)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tDatacenter") && strcmp(gcFunction,"tDatacenterTools") &&
-			strcmp(gcFunction,"tDatacenterList"))
-		printf(">\n");
-	  else
-		printf(" id=current>\n");
-	  printf("\t\t\t<a title='Datacenter' href=unxsSPS.cgi?gcFunction=tDatacenter>tDatacenter</a>\n");
-	}
-	//tServer
-	if(guPermLevel>=7)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tServer") && strcmp(gcFunction,"tServerTools") &&
-			strcmp(gcFunction,"tServerList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Managed SIP servers' href=unxsSPS.cgi?gcFunction=tServer>tServer</a>\n");
-	}
-	//tCarrier
-	if(guPermLevel>=7)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tCarrier") && strcmp(gcFunction,"tCarrierDIDTools") &&
-			strcmp(gcFunction,"tCarrierDIDList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Carriers' href=unxsSPS.cgi?gcFunction=tCarrier>tCarrier</a>\n");
-	}
 	//tPBX
 	if(guPermLevel>=7)
 	{
@@ -671,17 +650,6 @@ void Header_ism3(const char *title, int iJs)
 	  else
 		  printf(" id=current>\n");
 	  printf("\t\t\t<a title='PBX table' href=unxsSPS.cgi?gcFunction=tPBX>tPBX</a>\n");
-	}
-	//tGateway
-	if(guPermLevel>=7)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tGateway") && strcmp(gcFunction,"tGatewayTools") &&
-			strcmp(gcFunction,"tGatewayList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='PBX table' href=unxsSPS.cgi?gcFunction=tGateway>tGateway</a>\n");
 	}
 	//tDID
 	if(guPermLevel>=7)
@@ -694,6 +662,28 @@ void Header_ism3(const char *title, int iJs)
 		  printf(" id=current>\n");
 	  printf("\t\t\t<a title='DIDs in use and available for use' href=unxsSPS.cgi?gcFunction=tDID>tDID</a>\n");
 	}
+	//tGateway
+	if(guPermLevel>=7)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tGateway") && strcmp(gcFunction,"tGatewayTools") &&
+			strcmp(gcFunction,"tGatewayList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='PBX table' href=unxsSPS.cgi?gcFunction=tGateway>tGateway</a>\n");
+	}
+	//tRule
+	if(guPermLevel>=7)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tRule") && strcmp(gcFunction,"tRuleTools") &&
+			strcmp(gcFunction,"tRuleList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Outbound gateway dynamic routing rules' href=unxsSPS.cgi?gcFunction=tRule>tRule</a>\n");
+	}
 	//tPrefix
 	if(guPermLevel>=7)
 	{
@@ -704,6 +694,39 @@ void Header_ism3(const char *title, int iJs)
 	  else
 		  printf(" id=current>\n");
 	  printf("\t\t\t<a title='PBX table' href=unxsSPS.cgi?gcFunction=tPrefix>tPrefix</a>\n");
+	}
+	//tCarrier
+	if(guPermLevel>=7)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tCarrier") && strcmp(gcFunction,"tCarrierTools") &&
+			strcmp(gcFunction,"tCarrierList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Carriers' href=unxsSPS.cgi?gcFunction=tCarrier>tCarrier</a>\n");
+	}
+	//tServer
+	if(guPermLevel>=7)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tServer") && strcmp(gcFunction,"tServerTools") &&
+			strcmp(gcFunction,"tServerList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Managed SIP servers' href=unxsSPS.cgi?gcFunction=tServer>tServer</a>\n");
+	}
+	//tDatacenter
+	if(guPermLevel>=7)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tDatacenter") && strcmp(gcFunction,"tDatacenterTools") &&
+			strcmp(gcFunction,"tDatacenterList"))
+		printf(">\n");
+	  else
+		printf(" id=current>\n");
+	  printf("\t\t\t<a title='Datacenter' href=unxsSPS.cgi?gcFunction=tDatacenter>tDatacenter</a>\n");
 	}
 	//tGroupType
 	if(guPermLevel>=20)
@@ -717,7 +740,7 @@ void Header_ism3(const char *title, int iJs)
 	  printf("\t\t\t<a title='Container or server group type' href=unxsSPS.cgi?gcFunction=tGroupType>tGroupType</a>\n");
 	}
 	//tGroup
-	if(guPermLevel>=10)
+	if(guPermLevel>=20)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tGroup") && strcmp(gcFunction,"tGroupTools") &&

@@ -49,6 +49,6 @@ tTemplate:	Html/css/javascript templates for web apps.
 tTemplateSet:	Template skin set names.
 tTemplateType:	Web app template set names.
 
-This backend should be able to provision mutiple unxsSIPProxy servers.
+This backend should be able to provision mutiple OpenSIPS or unxsSIPProxy servers.
 It should also have everything needed to manage and interface with DID and termination providers.
 Should have tie-ins to unxsVZ for help in billing and managing virtual PBX system.
