@@ -39,9 +39,9 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 void GetServerProp(const unsigned uServer,const char *cName,char *cValue);//jobqueue.c
 char *strptime(const char *s, const char *format, struct tm *tm);
 
-static char cTableList[64][32]={ "tAuthorize", "tClient", "tConfiguration",
-		"tDatacenter", "tServer", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tDID", "tJob",
-		"tJobStatus", "tLog", "tLogMonth", "tLogType", "tMonth",
+static char cTableList[64][32]={ "tAuthorize", "tCarrier", "tClient", "tConfiguration",
+		"tDatacenter", "tDID", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tJob",
+		"tJobStatus", "tLog", "tLogMonth", "tLogType", "tMonth", "tPBX", "tServer",
 		"tStatus", "tTemplate", "tTemplateSet", "tTemplateType", ""};
 
 char cInitTableList[64][32]={ "tAuthorize", "tClient", "tGlossary", "tGroupType",
@@ -567,6 +567,7 @@ void Initialize(char *cPasswd)
 	CreatetGroup();
 	CreatetGroupGlue();
 	CreatetGroupType();
+	CreatetPBX();
 	CreatetDID();
         CreatetJob();
         CreatetJobStatus();

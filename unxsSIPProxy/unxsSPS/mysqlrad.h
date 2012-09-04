@@ -384,6 +384,51 @@ void DeletetDID(void);
 void ExttDIDGetHook(entry gentries[], int x);
 void ExttDIDNavBar(void);
 
+//tPBX
+int tPBXCommands(pentry entries[], int x);
+void tPBX(const char *results);
+void ProcesstPBXVars(pentry entries[], int x);
+void tPBXContent(void);
+void tPBXInputContent(void);
+void tPBXInput(unsigned uMode);
+void tPBXList(void);
+void NewtPBX(unsigned uMode);
+void ModtPBX(void);
+void CreatetPBX(void);
+void DeletetPBX(void);
+void ExttPBXGetHook(entry gentries[], int x);
+void ExttPBXNavBar(void);
+
+//tGateway
+int tGatewayCommands(pentry entries[], int x);
+void tGateway(const char *results);
+void ProcesstGatewayVars(pentry entries[], int x);
+void tGatewayContent(void);
+void tGatewayInputContent(void);
+void tGatewayInput(unsigned uMode);
+void tGatewayList(void);
+void NewtGateway(unsigned uMode);
+void ModtGateway(void);
+void CreatetGateway(void);
+void DeletetGateway(void);
+void ExttGatewayGetHook(entry gentries[], int x);
+void ExttGatewayNavBar(void);
+
+//tPrefix
+int tPrefixCommands(pentry entries[], int x);
+void tPrefix(const char *results);
+void ProcesstPrefixVars(pentry entries[], int x);
+void tPrefixContent(void);
+void tPrefixInputContent(void);
+void tPrefixInput(unsigned uMode);
+void tPrefixList(void);
+void NewtPrefix(unsigned uMode);
+void ModtPrefix(void);
+void CreatetPrefix(void);
+void DeletetPrefix(void);
+void ExttPrefixGetHook(entry gentries[], int x);
+void ExttPrefixNavBar(void);
+
 //tGroupType
 int tGroupTypeCommands(pentry entries[], int x);
 void tGroupType(const char *results);
@@ -563,6 +608,21 @@ void CreatetMonth(void);
 void DeletetMonth(void);
 void ExttMonthGetHook(entry gentries[], int x);
 void ExttMonthNavBar(void);
+
+//tCarrier
+int tCarrierCommands(pentry entries[], int x);
+void tCarrier(const char *results);
+void ProcesstCarrierVars(pentry entries[], int x);
+void tCarrierContent(void);
+void tCarrierInputContent(void);
+void tCarrierInput(unsigned uMode);
+void tCarrierList(void);
+void NewtCarrier(unsigned uMode);
+void ModtCarrier(void);
+void CreatetCarrier(void);
+void DeletetCarrier(void);
+void ExttCarrierGetHook(entry gentries[], int x);
+void ExttCarrierNavBar(void);
 
 //tGlossary
 int tGlossaryCommands(pentry entries[], int x);

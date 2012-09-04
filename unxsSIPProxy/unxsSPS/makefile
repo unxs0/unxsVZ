@@ -15,10 +15,10 @@ LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -lz -lcrypt -lm -lssl -lu
 
 all: unxsSPS.cgi
 
-unxsSPS.cgi: tdatacenter.o tserver.o tdid.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
-	ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o \
+unxsSPS.cgi: tdatacenter.o tserver.o tdid.o tpbx.o tgateway.o tprefix.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
+	ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tcarrier.o tglossary.o \
 	tjob.o tjobstatus.o tstatus.o tconfiguration.o  jobqueue.o main.o cgi.o mysqlconnect.o
-	cc tdatacenter.o tserver.o tdid.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
+	cc tdatacenter.o tserver.o tdid.o tpbx.o tgateway.o tprefix.o tcarrier.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
 		tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o \
 		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o \
 		jobqueue.o main.o cgi.o mysqlconnect.o -o unxsSPS.cgi $(LIBS) 
@@ -32,10 +32,17 @@ tdatacenter.o: tdatacenter.c mysqlrad.h language.h tdatacenterfunc.h local.h
 tserver.o: tserver.c mysqlrad.h language.h tserverfunc.h local.h
 	cc -c tserver.c -o tserver.o $(CFLAGS)
 
-tdid.o: tdid.c mysqlrad.h language.h tdidfunc.h local.h
+tgateway.o: tgateway.c mysqlrad.h language.h tgatewayfunc.h local.h
+	cc -c tgateway.c -o tgateway.o $(CFLAGS)
+
+tprefix.o: tprefix.c mysqlrad.h language.h tprefixfunc.h local.h
+	cc -c tprefix.c -o tprefix.o $(CFLAGS)
 
 tdid.o: tdid.c mysqlrad.h language.h tdidfunc.h local.h
 	cc -c tdid.c -o tdid.o $(CFLAGS)
+
+tpbx.o: tpbx.c mysqlrad.h language.h tpbxfunc.h local.h
+	cc -c tpbx.c -o tpbx.o $(CFLAGS)
 
 tgrouptype.o: tgrouptype.c mysqlrad.h language.h tgrouptypefunc.h local.h
 	cc -c tgrouptype.c -o tgrouptype.o $(CFLAGS)
@@ -72,6 +79,9 @@ tlogmonth.o: tlogmonth.c mysqlrad.h language.h tlogmonthfunc.h local.h
 
 tmonth.o: tmonth.c mysqlrad.h language.h tmonthfunc.h local.h
 	cc -c tmonth.c -o tmonth.o $(CFLAGS)
+
+tcarrier.o: tcarrier.c mysqlrad.h language.h tcarrierfunc.h local.h
+	cc -c tcarrier.c -o tcarrier.o $(CFLAGS)
 
 tglossary.o: tglossary.c mysqlrad.h language.h tglossaryfunc.h local.h
 	cc -c tglossary.c -o tglossary.o $(CFLAGS)
