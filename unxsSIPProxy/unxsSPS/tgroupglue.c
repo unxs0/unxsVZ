@@ -19,16 +19,16 @@ static unsigned uGroupGlue=0;
 //uGroup: Glue into tGroup
 static unsigned uGroup=0;
 static char cuGroupPullDown[256]={""};
-//uNode: Glue into tNode
-static unsigned uNode=0;
-static char cuNodePullDown[256]={""};
+//uServer: Glue into tServer
+static unsigned uServer=0;
+static char cuServerPullDown[256]={""};
 //uContainer: Glue into tContainer
 static unsigned uContainer=0;
 static char cuContainerPullDown[256]={""};
 
 
 
-#define VAR_LIST_tGroupGlue "tGroupGlue.uGroupGlue,tGroupGlue.uGroup,tGroupGlue.uNode,tGroupGlue.uContainer"
+#define VAR_LIST_tGroupGlue "tGroupGlue.uGroupGlue,tGroupGlue.uGroup,tGroupGlue.uServer,tGroupGlue.uContainer"
 
  //Local only
 void Insert_tGroupGlue(void);
@@ -66,12 +66,12 @@ void ProcesstGroupGlueVars(pentry entries[], int x)
 			sprintf(cuGroupPullDown,"%.255s",entries[i].val);
 			uGroup=ReadPullDown("tGroup","cLabel",cuGroupPullDown);
 		}
-		else if(!strcmp(entries[i].name,"uNode"))
-			sscanf(entries[i].val,"%u",&uNode);
-		else if(!strcmp(entries[i].name,"cuNodePullDown"))
+		else if(!strcmp(entries[i].name,"uServer"))
+			sscanf(entries[i].val,"%u",&uServer);
+		else if(!strcmp(entries[i].name,"cuServerPullDown"))
 		{
-			sprintf(cuNodePullDown,"%.255s",entries[i].val);
-			uNode=ReadPullDown("tNode","cLabel",cuNodePullDown);
+			sprintf(cuServerPullDown,"%.255s",entries[i].val);
+			uServer=ReadPullDown("tServer","cLabel",cuServerPullDown);
 		}
 		else if(!strcmp(entries[i].name,"uContainer"))
 			sscanf(entries[i].val,"%u",&uContainer);
@@ -179,14 +179,14 @@ void tGroupGlue(const char *cResult)
 			field=mysql_fetch_row(res);
 		sscanf(field[0],"%u",&uGroupGlue);
 		sscanf(field[1],"%u",&uGroup);
-		sscanf(field[2],"%u",&uNode);
+		sscanf(field[2],"%u",&uServer);
 		sscanf(field[3],"%u",&uContainer);
 
 		}
 
 	}//Internal Skip
 
-	Header_ism3(":: Glues uContainers or uNodes to uGroups",0);
+	Header_ism3(":: Glues uContainers or uServers to uGroups",0);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -261,12 +261,12 @@ void tGroupGlueInput(unsigned uMode)
 		tTablePullDownOwner("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 	else
 		tTablePullDownOwner("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,0);
-//uNode
-	OpenRow(LANG_FL_tGroupGlue_uNode,"black");
+//uServer
+	OpenRow(LANG_FL_tGroupGlue_uServer,"black");
 	if(guPermLevel>=10 && uMode)
-		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
+		tTablePullDown("tServer;cuServerPullDown","cLabel","cLabel",uServer,1);
 	else
-		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
+		tTablePullDown("tServer;cuServerPullDown","cLabel","cLabel",uServer,0);
 //uContainer
 	OpenRow(LANG_FL_tGroupGlue_uContainer,"black");
 	if(guPermLevel>=10 && uMode)
@@ -324,10 +324,10 @@ void Insert_tGroupGlue(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tGroupGlue SET uGroupGlue=%u,uGroup=%u,uNode=%u,uContainer=%u",
+	sprintf(gcQuery,"INSERT INTO tGroupGlue SET uGroupGlue=%u,uGroup=%u,uServer=%u,uContainer=%u",
 			uGroupGlue
 			,uGroup
-			,uNode
+			,uServer
 			,uContainer
 			);
 
@@ -340,10 +340,10 @@ void Update_tGroupGlue(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tGroupGlue SET uGroupGlue=%u,uGroup=%u,uNode=%u,uContainer=%u WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tGroupGlue SET uGroupGlue=%u,uGroup=%u,uServer=%u,uContainer=%u WHERE _rowid=%s",
 			uGroupGlue
 			,uGroup
-			,uNode
+			,uServer
 			,uContainer
 			,cRowid);
 
@@ -397,7 +397,7 @@ void tGroupGlueList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uGroupGlue<td><font face=arial,helvetica color=white>uGroup<td><font face=arial,helvetica color=white>uNode<td><font face=arial,helvetica color=white>uContainer</tr>");
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uGroupGlue<td><font face=arial,helvetica color=white>uGroup<td><font face=arial,helvetica color=white>uServer<td><font face=arial,helvetica color=white>uContainer</tr>");
 
 
 
@@ -419,7 +419,7 @@ void tGroupGlueList(void)
 			,field[0]
 			,field[0]
 			,ForeignKey("tGroup","cLabel",strtoul(field[1],NULL,10))
-			,ForeignKey("tNode","cLabel",strtoul(field[2],NULL,10))
+			,ForeignKey("tServer","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tContainer","cLabel",strtoul(field[3],NULL,10))
 				);
 
@@ -436,7 +436,7 @@ void CreatetGroupGlue(void)
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGroupGlue "
 			" ("
 			" uGroup INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uGroup),"
-			" uNode INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uNode),"
+			" uServer INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uServer),"
 			" uContainer INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uContainer),"
 			" uIP INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uIP),"
 			" uGroupGlue INT UNSIGNED PRIMARY KEY AUTO_INCREMENT"

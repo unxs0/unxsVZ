@@ -8,7 +8,7 @@ PURPOSE
 	Program app functionality in tdidfunc.h while 
 	RAD is still to be used.
 AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 */
 
@@ -17,11 +17,11 @@ AUTHOR/LEGAL
 
 //Table Variables
 //Table Variables
-//uIP: Primary Key
-static unsigned uIP=0;
+//uDID: Primary Key
+static unsigned uDID=0;
 //cLabel: Short label
 static char cLabel[33]={""};
-//uAvailable: IP is available for use
+//uAvailable: DID is available for use
 static unsigned uAvailable=0;
 static char cYesNouAvailable[32]={""};
 //uOwner: Record owner
@@ -42,20 +42,20 @@ static char cuDatacenterPullDown[256]={""};
 static char *cComment={""};
 
 //Extensions for searching
-static char cIPv4Search[16]={""};
+static char cDIDv4Search[16]={""};
 static unsigned uAvailableSearch=0;
 static char cYesNouAvailableSearch[8]={""};
-static unsigned uNodeSearch=0;
-static char cuNodeSearchPullDown[256]={""};
-static unsigned uNodeSearchNot=0;
-static unsigned uIPv4Exclude=0;
+static unsigned uServerSearch=0;
+static char cuServerSearchPullDown[256]={""};
+static unsigned uServerSearchNot=0;
+static unsigned uDIDv4Exclude=0;
 static unsigned uOwnerSearch=0;
 static unsigned uDatacenterSearch=0;
 static char cuDatacenterSearchPullDown[256]={""};
 int ReadYesNoPullDownTriState(const char *cLabel);
 void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode);
 
-#define VAR_LIST_tDID "tDID.uIP,tDID.cLabel,tDID.uAvailable,tDID.uOwner,tDID.uCreatedBy,tDID.uCreatedDate,tDID.uModBy,tDID.uModDate,tDID.uDatacenter,tDID.cComment"
+#define VAR_LIST_tDID "tDID.uDID,tDID.cLabel,tDID.uAvailable,tDID.uOwner,tDID.uCreatedBy,tDID.uCreatedDate,tDID.uModBy,tDID.uModDate,tDID.uDatacenter,tDID.cComment"
 
  //Local only
 void tDIDSearchSet(unsigned uStep);
@@ -85,8 +85,8 @@ void ProcesstDIDVars(pentry entries[], int x)
 
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(entries[i].name,"uIP"))
-			sscanf(entries[i].val,"%u",&uIP);
+		if(!strcmp(entries[i].name,"uDID"))
+			sscanf(entries[i].val,"%u",&uDID);
 		else if(!strcmp(entries[i].name,"cLabel"))
 			sprintf(cLabel,"%.32s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uAvailable"))
@@ -129,24 +129,24 @@ void ProcesstDIDVars(pentry entries[], int x)
 			sprintf(cuDatacenterSearchPullDown,"%.255s",entries[i].val);
 			uDatacenterSearch=ReadPullDown("tDatacenter","cLabel",cuDatacenterSearchPullDown);
 		}
-		else if(!strcmp(entries[i].name,"uNodeSearch"))
-			sscanf(entries[i].val,"%u",&uNodeSearch);
-		else if(!strcmp(entries[i].name,"cuNodeSearchPullDown"))
+		else if(!strcmp(entries[i].name,"uServerSearch"))
+			sscanf(entries[i].val,"%u",&uServerSearch);
+		else if(!strcmp(entries[i].name,"cuServerSearchPullDown"))
 		{
-			sprintf(cuNodeSearchPullDown,"%.255s",entries[i].val);
-			uNodeSearch=ReadPullDown("tNode","cLabel",cuNodeSearchPullDown);
+			sprintf(cuServerSearchPullDown,"%.255s",entries[i].val);
+			uServerSearch=ReadPullDown("tServer","cLabel",cuServerSearchPullDown);
 		}
-		else if(!strcmp(entries[i].name,"cIPv4Search"))
-			sprintf(cIPv4Search,"%.15s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cDIDv4Search"))
+			sprintf(cDIDv4Search,"%.15s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cYesNouAvailableSearch"))
 		{
 			sprintf(cYesNouAvailableSearch,"%.8s",entries[i].val);
 			uAvailableSearch=ReadYesNoPullDownTriState(cYesNouAvailableSearch);
 		}
-		else if(!strcmp(entries[i].name,"uNodeSearchNotNoCA"))
-			uNodeSearchNot=1;
-		else if(!strcmp(entries[i].name,"uIPv4ExcludeNoCA"))
-			uIPv4Exclude=1;
+		else if(!strcmp(entries[i].name,"uServerSearchNotNoCA"))
+			uServerSearchNot=1;
+		else if(!strcmp(entries[i].name,"uDIDv4ExcludeNoCA"))
+			uDIDv4Exclude=1;
 
 	}
 
@@ -164,7 +164,7 @@ void ProcesstDIDListVars(pentry entries[], int x)
         {
                 if(!strncmp(entries[i].name,"ED",2))
                 {
-                        sscanf(entries[i].name+2,"%u",&uIP);
+                        sscanf(entries[i].name+2,"%u",&uDID);
                         guMode=2002;
                         tDID("");
                 }
@@ -234,8 +234,8 @@ void tDID(const char *cResult)
 		{
 			if(guMode==6)
 			{
-			sprintf(gcQuery,"SELECT _rowid FROM tDID WHERE uIP=%u"
-						,uIP);
+			sprintf(gcQuery,"SELECT _rowid FROM tDID WHERE uDID=%u"
+						,uDID);
 				MYSQL_RUN_STORE(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
@@ -244,7 +244,7 @@ void tDID(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
-		sscanf(field[0],"%u",&uIP);
+		sscanf(field[0],"%u",&uDID);
 		sprintf(cLabel,"%.32s",field[1]);
 		sscanf(field[2],"%u",&uAvailable);
 		sscanf(field[3],"%u",&uOwner);
@@ -259,7 +259,7 @@ void tDID(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: IPs used and reserved for use",2);//checkbox js = 2
+	Header_ism3(":: DIDs used and reserved for use",2);//checkbox js = 2
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -321,21 +321,21 @@ void tDIDSearchSet(unsigned uStep)
 {
 	OpenRow("<u>Set search parameters</u>","black");
 
-	OpenRow("IPv4 pattern","black");
-	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
-			" value=\"%s\" size=40 maxlength=15 >",cIPv4Search);
-	printf("<input title='Exclude 10/8, 172.16/12 and 192.168/16 IPs' type=checkbox name=uIPv4ExcludeNoCA ");
-	if(uIPv4Exclude)
+	OpenRow("DIDv4 pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cDIDv4Search"
+			" value=\"%s\" size=40 maxlength=15 >",cDIDv4Search);
+	printf("<input title='Exclude 10/8, 172.16/12 and 192.168/16 DIDs' type=checkbox name=uDIDv4ExcludeNoCA ");
+	if(uDIDv4Exclude)
 		printf(" checked");
-	printf("> Exclude RFC1918 IPs");
+	printf("> Exclude RFC1918 DIDs");
 
 	OpenRow("Datacenter","black");
 	tTablePullDown("tDatacenter;cuDatacenterSearchPullDown","cLabel","cLabel",uDatacenterSearch,1);
 
 	OpenRow("Node","black");
-	tTablePullDown("tNode;cuNodeSearchPullDown","cLabel","cLabel",uNodeSearch,1);
-	printf("<input title='Logical NOT of selected node if any. Including default any node (no node)' type=checkbox name=uNodeSearchNotNoCA ");
-	if(uNodeSearchNot)
+	tTablePullDown("tServer;cuServerSearchPullDown","cLabel","cLabel",uServerSearch,1);
+	printf("<input title='Logical NOT of selected server if any. Including default any server (no server)' type=checkbox name=uServerSearchNotNoCA ");
+	if(uServerSearchNot)
 		printf(" checked");
 	printf("> Not");
 
@@ -360,10 +360,10 @@ void tDIDSearchSet(unsigned uStep)
 void tDIDInput(unsigned uMode)
 {
 
-//uIP
-	OpenRow(LANG_FL_tDID_uIP,"black");
-	printf("<input title='%s' type=text name=uIP value=%u size=16 maxlength=10 "
-,LANG_FT_tDID_uIP,uIP);
+//uDID
+	OpenRow(LANG_FL_tDID_uDID,"black");
+	printf("<input title='%s' type=text name=uDID value=%u size=16 maxlength=10 "
+,LANG_FT_tDID_uDID,uDID);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -371,7 +371,7 @@ void tDIDInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uIP value=%u >\n",uIP);
+		printf("<input type=hidden name=uDID value=%u >\n",uDID);
 	}
 //cLabel
 	OpenRow(LANG_FL_tDID_cLabel,"black");
@@ -400,7 +400,7 @@ void tDIDInput(unsigned uMode)
 		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
 //cComment
 	OpenRow("cComment","black");
-	printf("<textarea title='Additional information about IP use' cols=80 wrap=hard rows=4 name=cComment ");
+	printf("<textarea title='Additional information about DID use' cols=80 wrap=hard rows=4 name=cComment ");
 	if(guPermLevel>=7 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",TransformAngleBrackets(cComment));
@@ -465,7 +465,7 @@ void NewtDID(unsigned uMode)
 {
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uIP FROM tDID WHERE uIP=%u",uIP);
+	sprintf(gcQuery,"SELECT uDID FROM tDID WHERE uDID=%u",uDID);
 	MYSQL_RUN_STORE(res);
 	if(mysql_num_rows(res)) 
 		//tDID("<blink>Record already exists");
@@ -475,13 +475,13 @@ void NewtDID(unsigned uMode)
 	Insert_tDID();
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
-	uIP=mysql_insert_id(&gMysql);
-	uCreatedDate=luGetCreatedDate("tDID",uIP);
-	unxsSPSLog(uIP,"tDID","New");
+	uDID=mysql_insert_id(&gMysql);
+	uCreatedDate=luGetCreatedDate("tDID",uDID);
+	unxsSPSLog(uDID,"tDID","New");
 
 	if(!uMode)
 	{
-		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uIP);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uDID);
 		tDID(gcQuery);
 	}
 
@@ -490,17 +490,17 @@ void NewtDID(unsigned uMode)
 
 void DeletetDID(void)
 {
-	sprintf(gcQuery,"DELETE FROM tDID WHERE uIP=%u AND ( uOwner=%u OR %u>9 )",uIP,guLoginClient,guPermLevel);
+	sprintf(gcQuery,"DELETE FROM tDID WHERE uDID=%u AND ( uOwner=%u OR %u>9 )",uDID,guLoginClient,guPermLevel);
 	MYSQL_RUN;
 	//tDID("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		unxsSPSLog(uIP,"tDID","Del");
+		unxsSPSLog(uDID,"tDID","Del");
 		tDID(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		unxsSPSLog(uIP,"tDID","DelError");
+		unxsSPSLog(uDID,"tDID","DelError");
 		tDID(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -509,9 +509,9 @@ void DeletetDID(void)
 
 void Insert_tDID(void)
 {
-	sprintf(gcQuery,"INSERT INTO tDID SET uIP=%u,cLabel='%s',uAvailable=%u,uOwner=%u,uCreatedBy=%u,"
+	sprintf(gcQuery,"INSERT INTO tDID SET uDID=%u,cLabel='%s',uAvailable=%u,uOwner=%u,uCreatedBy=%u,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s'",
-			uIP
+			uDID
 			,TextAreaSave(cLabel)
 			,uAvailable
 			,uOwner
@@ -525,9 +525,9 @@ void Insert_tDID(void)
 
 void Update_tDID(char *cRowid)
 {
-	sprintf(gcQuery,"UPDATE tDID SET uIP=%u,cLabel='%s',uAvailable=%u,uModBy=%u,"
+	sprintf(gcQuery,"UPDATE tDID SET uDID=%u,cLabel='%s',uAvailable=%u,uModBy=%u,"
 				"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s' WHERE _rowid=%s",
-			uIP
+			uDID
 			,TextAreaSave(cLabel)
 			,uAvailable
 			,uModBy
@@ -548,11 +548,11 @@ void ModtDID(void)
 
 	//Mod select gcQuery
 	if(guPermLevel<10)
-		sprintf(gcQuery,"SELECT tDID.uIP,tDID.uModDate FROM tDID,tClient WHERE tDID.uIP=%u"
+		sprintf(gcQuery,"SELECT tDID.uDID,tDID.uModDate FROM tDID,tClient WHERE tDID.uDID=%u"
 				" AND tDID.uOwner=tClient.uClient AND (tClient.uOwner=%u OR tClient.uClient=%u)"
-					,uIP,guLoginClient,guLoginClient);
+					,uDID,guLoginClient,guLoginClient);
 	else
-		sprintf(gcQuery,"SELECT uIP,uModDate FROM tDID WHERE uIP=%u",uIP);
+		sprintf(gcQuery,"SELECT uDID,uModDate FROM tDID WHERE uDID=%u",uDID);
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -569,8 +569,8 @@ void ModtDID(void)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-	uModDate=luGetModDate("tDID",uIP);
-	unxsSPSLog(uIP,"tDID","Mod");
+	uModDate=luGetModDate("tDID",uDID);
+	unxsSPSLog(uDID,"tDID","Mod");
 	tDID(gcQuery);
 
 }//ModtDID(void)
@@ -597,7 +597,7 @@ void tDIDList(void)
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
 	printf("<tr bgcolor=black>"
-		"<td><font face=arial,helvetica color=white>uIP"
+		"<td><font face=arial,helvetica color=white>uDID"
 		"<td><font face=arial,helvetica color=white>cLabel"
 		"<td><font face=arial,helvetica color=white>uAvailable"
 		"<td><font face=arial,helvetica color=white>uDatacenter"
@@ -665,7 +665,7 @@ void tDIDList(void)
 void CreatetDID(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tDID ( "
-			"uIP INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"uDID INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
 			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
 			"cComment VARCHAR(255) NOT NULL DEFAULT '',"
 			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"

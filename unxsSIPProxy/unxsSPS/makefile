@@ -15,10 +15,10 @@ LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -lz -lcrypt -lm -lssl -lu
 
 all: unxsSPS.cgi
 
-unxsSPS.cgi: tdatacenter.o tnode.o tdid.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
+unxsSPS.cgi: tdatacenter.o tserver.o tdid.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
 	ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o \
 	tjob.o tjobstatus.o tstatus.o tconfiguration.o  jobqueue.o main.o cgi.o mysqlconnect.o
-	cc tdatacenter.o tnode.o tdid.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
+	cc tdatacenter.o tserver.o tdid.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
 		tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o \
 		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o \
 		jobqueue.o main.o cgi.o mysqlconnect.o -o unxsSPS.cgi $(LIBS) 
@@ -29,8 +29,8 @@ mysqlconnect.o: mysqlconnect.c mysqlrad.h local.h
 tdatacenter.o: tdatacenter.c mysqlrad.h language.h tdatacenterfunc.h local.h
 	cc -c tdatacenter.c -o tdatacenter.o $(CFLAGS)
 
-tnode.o: tnode.c mysqlrad.h language.h tnodefunc.h local.h
-	cc -c tnode.c -o tnode.o $(CFLAGS)
+tserver.o: tserver.c mysqlrad.h language.h tserverfunc.h local.h
+	cc -c tserver.c -o tserver.o $(CFLAGS)
 
 tdid.o: tdid.c mysqlrad.h language.h tdidfunc.h local.h
 

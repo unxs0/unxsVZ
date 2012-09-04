@@ -16,7 +16,7 @@ static unsigned uForClient=0;
 static char cForClientPullDown[256]={""};
 static char cuClientPullDown[256]={""};
 static char cuDatacenterPullDown[256]={""};
-static char cuNodePullDown[256]={""};
+static char cuServerPullDown[256]={""};
 static char cuContainerPullDown[256]={""};
 static unsigned uMin=0,uHour=0,uDayOfWeek=0,uDayOfMonth=0,uMonth=0;
 static char cStartDate[32]={""};
@@ -43,10 +43,10 @@ void ExtProcesstJobVars(pentry entries[], int x)
 			sprintf(cuClientPullDown,"%.255s",entries[i].val);
 			uForClient=ReadPullDown("tClient","cLabel",cuClientPullDown);
 		}
-		else if(!strcmp(entries[i].name,"cuNodePullDown"))
+		else if(!strcmp(entries[i].name,"cuServerPullDown"))
 		{
-			sprintf(cuNodePullDown,"%.255s",entries[i].val);
-			uNode=ReadPullDown("tNode","cLabel",cuNodePullDown);
+			sprintf(cuServerPullDown,"%.255s",entries[i].val);
+			uServer=ReadPullDown("tServer","cLabel",cuServerPullDown);
 		}
 		else if(!strcmp(entries[i].name,"cuContainerPullDown"))
 		{
@@ -197,25 +197,25 @@ void ExttJobCommands(pentry entries[], int x)
 				if(!uForClient)
 					tJob("<blink>Error:</blink> Must select an organization"
 							" (company, NGO or similar.)");
-				if(uContainer && !uNode)
-					tJob("<blink>Unexpected error:</blink> Must select a node if selecting container!");
-				if(uNode)
+				if(uContainer && !uServer)
+					tJob("<blink>Unexpected error:</blink> Must select a server if selecting container!");
+				if(uServer)
 				{
-					unsigned uNodeDatacenter=0;
+					unsigned uServerDatacenter=0;
 
-					sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
-					if(uDatacenter!=uNodeDatacenter)
-						tJob("<blink>Unexpected error:</blink> The specified node does not "
+					sscanf(ForeignKey("tServer","uDatacenter",uServer),"%u",&uServerDatacenter);
+					if(uDatacenter!=uServerDatacenter)
+						tJob("<blink>Unexpected error:</blink> The specified server does not "
 							"belong to the specified datacenter!");
 				}
-				if(uNode && uContainer)
+				if(uServer && uContainer)
 				{
-					unsigned uNodeContainer=0;
+					unsigned uServerContainer=0;
 
-					sscanf(ForeignKey("tContainer","uNode",uContainer),"%u",&uNodeContainer);
-					if(uNode!=uNodeContainer)
+					sscanf(ForeignKey("tContainer","uServer",uContainer),"%u",&uServerContainer);
+					if(uServer!=uServerContainer)
 						tJob("<blink>Error:</blink> The specified container does not "
-							"belong to the specified node.");
+							"belong to the specified server.");
 				}
 				if(!uRecurringJob)
 					tJob("<blink>Error:</blink> Must specify a recurring job.");
@@ -303,7 +303,7 @@ void ExttJobButtons(void)
 				"<p>Recurring hour/week-day/month-day and month numbers use number 0 as wildcard."
 				" Day of month number trumps day of week number if used."
 				"<p>The job label should be meaningful.<p>");
-			printf("<input type=submit class=largeButton title='Select hardware node'"
+			printf("<input type=submit class=largeButton title='Select hardware server'"
 				" name=gcCommand value='Confirm Fields'>\n");
 			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
 				" name=gcCommand value='Cancel'>\n");
@@ -331,7 +331,7 @@ void ExttJobButtons(void)
 				" here and then executed by the jobqueue.c on local or remote servers."
 				"<p>Most jobs are created in their own areas, an exception are recurring jobs that are"
 				" added here.");
-			printf("<p><input title='Create a recurring job for containers, nodes or datacenters.'"
+			printf("<p><input title='Create a recurring job for containers, servers or datacenters.'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Recurring Job Wizard'>\n");
 			printf("<p><u>Record Context Info</u><br>");
@@ -498,16 +498,16 @@ void tJobNavList(void)
 #define uERROR		14
 */
 	if(guPermLevel<10)
-		sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tNode.cLabel,tJobStatus.cLabel FROM tJob,tNode,tClient,tJobStatus WHERE"
-				" tJob.uOwner=tClient.uClient AND tJob.uNode=tNode.uNode AND"
+		sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tServer.cLabel,tJobStatus.cLabel FROM tJob,tServer,tClient,tJobStatus WHERE"
+				" tJob.uOwner=tClient.uClient AND tJob.uServer=tServer.uServer AND"
 				" tJob.uJobStatus=tJobStatus.uJobStatus AND"
 				" (tClient.uOwner=%u OR tClient.uClient=%u) AND"
 				" (tJob.uJobStatus=1 OR tJob.uJobStatus=14 OR tJob.uJobStatus=2 OR"
 				" tJob.uJobStatus=10 OR tJob.uJobStatus=4)",
 						guLoginClient,guLoginClient);
 	else
-	        sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tNode.cLabel,tJobStatus.cLabel FROM tJob,tNode,tJobStatus"
-					" WHERE tJob.uNode=tNode.uNode AND"
+	        sprintf(gcQuery,"SELECT tJob.uJob,tJob.cLabel,tServer.cLabel,tJobStatus.cLabel FROM tJob,tServer,tJobStatus"
+					" WHERE tJob.uServer=tServer.uServer AND"
 					" tJob.uJobStatus=tJobStatus.uJobStatus AND"
 					" (tJob.uJobStatus=1 OR tJob.uJobStatus=14 OR tJob.uJobStatus=2 OR"
 					" tJob.uJobStatus=10 OR tJob.uJobStatus=4)"

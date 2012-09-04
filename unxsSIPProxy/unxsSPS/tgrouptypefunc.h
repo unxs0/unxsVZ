@@ -129,7 +129,7 @@ void ExttGroupTypeButtons(void)
 			printf("tGroupType (and it's related tables <a href=?gcFunction=tGroupGlue>"
 				"tGroupGlue</a> and <a href=?gcFunction=tGroup>tGroup</a>)"
 				" provide a way to create"
-				" container and node groups of different types."
+				" container and server groups of different types."
 				" These groups can then be used for organizational and/or autonomic purposes.");
 			tGroupTypeNavList();
 	}

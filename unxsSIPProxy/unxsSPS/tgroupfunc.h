@@ -154,7 +154,7 @@ void ExttGroupButtons(void)
 			printf("tGroup (and it's related tables <a href=?gcFunction=tGroupGlue>"
 				"tGroupGlue</a> and <a href=?gcFunction=tGroupType>tGroupType</a>)"
 				" provide a way to create"
-				" container and node groups of different types."
+				" container and server groups of different types."
 				" These groups can then be used for organizational and/or autonomic purposes.");
 			if(uGroup) tGroupMemberNavList();
 			tGroupNavList();
@@ -345,7 +345,7 @@ void tGroupMemberNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uContainer,uNode FROM tGroupGlue WHERE uGroup=%u LIMIT 33",uGroup);
+	sprintf(gcQuery,"SELECT uContainer,uServer FROM tGroupGlue WHERE uGroup=%u LIMIT 33",uGroup);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -356,7 +356,7 @@ void tGroupMemberNavList(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{
-		unsigned uContainer,uNode,uLimit=0;
+		unsigned uContainer,uServer,uLimit=0;
         	MYSQL_RES *res2;
         	MYSQL_ROW field2;
 
@@ -370,7 +370,7 @@ void tGroupMemberNavList(void)
 			}
 
 			sscanf(field[0],"%u",&uContainer);
-			sscanf(field[1],"%u",&uNode);
+			sscanf(field[1],"%u",&uServer);
 			if(uContainer)
 			{
 				sprintf(gcQuery,"SELECT cLabel FROM tContainer WHERE uContainer=%u",uContainer);
@@ -387,9 +387,9 @@ void tGroupMemberNavList(void)
 					"&uContainer=%u>%s</a><br>\n",uContainer,field2[0]);
 				mysql_free_result(res2);
 			}
-			else if(uNode)
+			else if(uServer)
 			{
-				sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uNode=%u",uNode);
+				sprintf(gcQuery,"SELECT cLabel FROM tServer WHERE uServer=%u",uServer);
         			mysql_query(&gMysql,gcQuery);
 			        if(mysql_errno(&gMysql))
 			        {
@@ -399,8 +399,8 @@ void tGroupMemberNavList(void)
 			        }
 			        res2=mysql_store_result(&gMysql);
 	        		if((field2=mysql_fetch_row(res2)))
-					printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tNode"
-					"&uNode=%u>%s</a><br>\n",uNode,field2[0]);
+					printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tServer"
+					"&uServer=%u>%s</a><br>\n",uServer,field2[0]);
 				mysql_free_result(res2);
 			}
 		}

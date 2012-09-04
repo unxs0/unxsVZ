@@ -23,11 +23,11 @@ static unsigned uJob=0;
 static char cLabel[101]={""};
 //cJobName: Subsystem.Function style job name
 static char cJobName[65]={""};
-//uDatacenter: Collection of uNodes
+//uDatacenter: Collection of uServers
 static unsigned uDatacenter=0;
-//uNode: Hardware node
-static unsigned uNode=0;
-//uContainer: VZ VE container running on uNode
+//uServer: Hardware server
+static unsigned uServer=0;
+//uContainer: VZ VE container running on uServer
 static unsigned uContainer=0;
 //cJobData: Remote subsystem server function arguments
 static char *cJobData={""};
@@ -50,7 +50,7 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
-#define VAR_LIST_tJob "tJob.uJob,tJob.cLabel,tJob.cJobName,tJob.uDatacenter,tJob.uNode,tJob.uContainer,tJob.cJobData,tJob.uJobDate,tJob.uJobStatus,tJob.cRemoteMsg,tJob.uOwner,tJob.uCreatedBy,tJob.uCreatedDate,tJob.uModBy,tJob.uModDate"
+#define VAR_LIST_tJob "tJob.uJob,tJob.cLabel,tJob.cJobName,tJob.uDatacenter,tJob.uServer,tJob.uContainer,tJob.cJobData,tJob.uJobDate,tJob.uJobStatus,tJob.cRemoteMsg,tJob.uOwner,tJob.uCreatedBy,tJob.uCreatedDate,tJob.uModBy,tJob.uModDate"
 
  //Local only
 void Insert_tJob(void);
@@ -92,8 +92,8 @@ void ProcesstJobVars(pentry entries[], int x)
 			sprintf(cJobName,"%.64s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uDatacenter"))
 			sscanf(entries[i].val,"%u",&uDatacenter);
-		else if(!strcmp(entries[i].name,"uNode"))
-			sscanf(entries[i].val,"%u",&uNode);
+		else if(!strcmp(entries[i].name,"uServer"))
+			sscanf(entries[i].val,"%u",&uServer);
 		else if(!strcmp(entries[i].name,"uContainer"))
 			sscanf(entries[i].val,"%u",&uContainer);
 		else if(!strcmp(entries[i].name,"cJobData"))
@@ -227,7 +227,7 @@ void tJob(const char *cResult)
 			sprintf(cLabel,"%.100s",field[1]);
 			sprintf(cJobName,"%.64s",field[2]);
 			sscanf(field[3],"%u",&uDatacenter);
-			sscanf(field[4],"%u",&uNode);
+			sscanf(field[4],"%u",&uServer);
 			sscanf(field[5],"%u",&uContainer);
 			cJobData=field[6];
 			sscanf(field[7],"%lu",&uJobDate);
@@ -324,8 +324,8 @@ void tJobNewStep(unsigned uStep)
 		OpenRow("Selected organization","black");
 		tTablePullDown("tClient;cuClientPullDown","cLabel","cLabel",uForClient,0);
 
-		OpenRow("Optionally assign to node","black");
-		tTablePullDownDatacenter("tNode;cuNodePullDown","cLabel","cLabel",uNode,1,
+		OpenRow("Optionally assign to server","black");
+		tTablePullDownDatacenter("tServer;cuServerPullDown","cLabel","cLabel",uServer,1,
 			cuDatacenterPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
 
 		OpenRow("Optionally assign to container","black");
@@ -434,15 +434,15 @@ void tJobInput(unsigned uMode)
 		printf("%s<input type=hidden name=uDatacenter value=%u >\n",
 			ForeignKey("tDatacenter","cLabel",uDatacenter),uDatacenter);
 	}
-//uNode
-	OpenRow("uNode","black");
+//uServer
+	OpenRow("uServer","black");
 	if(guPermLevel>=0 && uMode)
 	{
-		printf("%s<input type=hidden name=uNode value=%u >\n",ForeignKey("tNode","cLabel",uNode),uNode);
+		printf("%s<input type=hidden name=uServer value=%u >\n",ForeignKey("tServer","cLabel",uServer),uServer);
 	}
 	else
 	{
-		printf("%s<input type=hidden name=uNode value=%u >\n",ForeignKey("tNode","cLabel",uNode),uNode);
+		printf("%s<input type=hidden name=uServer value=%u >\n",ForeignKey("tServer","cLabel",uServer),uServer);
 	}
 //uContainer
 	OpenRow("uContainer","black");
@@ -591,14 +591,14 @@ void Insert_tJob(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tJob SET uJob=%u,cLabel='%s',cJobName='%s',uDatacenter=%u,uNode=%u,uContainer=%u,"
+	sprintf(gcQuery,"INSERT INTO tJob SET uJob=%u,cLabel='%s',cJobName='%s',uDatacenter=%u,uServer=%u,uContainer=%u,"
 			"cJobData='%s',uJobDate=%lu,uJobStatus=%u,cRemoteMsg='%s',uOwner=%u,uCreatedBy=%u,"
 			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uJob
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cJobName)
 			,uDatacenter
-			,uNode
+			,uServer
 			,uContainer
 			,TextAreaSave(cJobData)
 			,uJobDate
@@ -617,14 +617,14 @@ void Update_tJob(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tJob SET uJob=%u,cLabel='%s',cJobName='%s',uDatacenter=%u,uNode=%u,uContainer=%u,"
+	sprintf(gcQuery,"UPDATE tJob SET uJob=%u,cLabel='%s',cJobName='%s',uDatacenter=%u,uServer=%u,uContainer=%u,"
 			"cJobData='%s',uJobDate=%lu,uJobStatus=%u,cRemoteMsg='%s',uModBy=%u,"
 			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uJob
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cJobName)
 			,uDatacenter
-			,uNode
+			,uServer
 			,uContainer
 			,TextAreaSave(cJobData)
 			,uJobDate
@@ -705,7 +705,7 @@ void tJobList(void)
 		"<td><font face=arial,helvetica color=white>cLabel"
 		"<td><font face=arial,helvetica color=white>cJobName"
 		"<td><font face=arial,helvetica color=white>uDatacenter"
-		"<td><font face=arial,helvetica color=white>uNode"
+		"<td><font face=arial,helvetica color=white>uServer"
 		"<td><font face=arial,helvetica color=white>uContainer"
 		"<td><font face=arial,helvetica color=white>cJobData"
 		"<td><font face=arial,helvetica color=white>uJobDate"
@@ -756,7 +756,7 @@ void tJobList(void)
 			,field[1]
 			,field[2]
 			,ForeignKey("tDatacenter","cLabel",strtoul(field[3],NULL,10))
-			,ForeignKey("tNode","cLabel",strtoul(field[4],NULL,10))
+			,ForeignKey("tServer","cLabel",strtoul(field[4],NULL,10))
 			,ForeignKey("tContainer","cLabel",strtoul(field[5],NULL,10))
 			,field[6]
 			,cBuf7
@@ -784,7 +784,7 @@ void CreatetJob(void)
 			"cLabel VARCHAR(100) NOT NULL DEFAULT '',"
 			"cJobName VARCHAR(64) NOT NULL DEFAULT '',"
 			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uDatacenter),"
-			"uNode INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uNode),"
+			"uServer INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uServer),"
 			"uContainer INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uContainer),"
 			"cJobData TEXT NOT NULL DEFAULT '',"
 			"uJobDate INT UNSIGNED NOT NULL DEFAULT 0,"

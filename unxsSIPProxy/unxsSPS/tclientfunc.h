@@ -190,14 +190,14 @@ void ExttClientCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 					tClient("Can't delete client with datacenters");
 				mysql_free_result(res);
-				sprintf(gcQuery,"SELECT uNode FROM tNode WHERE uOwner=%u OR uCreatedBy=%u",
+				sprintf(gcQuery,"SELECT uServer FROM tServer WHERE uOwner=%u OR uCreatedBy=%u",
 						uClient,uClient);
 				mysql_query(&gMysql,gcQuery);
         			if(mysql_errno(&gMysql))
                 			tClient(mysql_error(&gMysql));
         			res=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res))
-					tClient("Can't delete client with nodes");
+					tClient("Can't delete client with servers");
 				mysql_free_result(res);
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uOwner=%u OR uCreatedBy=%u",
 						uClient,uClient);
