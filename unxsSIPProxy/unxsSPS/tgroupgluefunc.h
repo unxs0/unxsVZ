@@ -10,38 +10,16 @@ AUTHOR/LEGAL
 */
 
 //ModuleFunctionProtos()
-void tTableMultiplePullDown(const char *cTableName,const char *cFieldName,const char *cOrderby);
 
 
 //uContainer: Glue into tContainer
-static char cuMulContainerPullDown[256]={""};
 
 void ExtProcesstGroupGlueVars(pentry entries[], int x)
 {
-	register int i;
-	for(i=0;i<x;i++)
-	{
-		if(!strcmp(entries[i].name,"cuMulContainerPullDown") && !strcmp(gcCommand,"Add Multiple Containers"))
-		{
-			sprintf(cuMulContainerPullDown,"%.255s",entries[i].val);
-			uContainer=ReadPullDown("tContainer","cLabel",cuMulContainerPullDown);
-			uGroupGlue=0;
-			uServer=0;
-			if(uContainer && uGroup) NewtGroupGlue(1);
-		}
-		else if(!strcmp(entries[i].name,"cuMulContainerPullDown") && !strcmp(gcCommand,"Del Multiple Containers"))
-		{
-			sprintf(cuMulContainerPullDown,"%.255s",entries[i].val);
-			uContainer=ReadPullDown("tContainer","cLabel",cuMulContainerPullDown);
-			if(uContainer && uGroup)
-			{
-				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u AND uGroup=%u",
-						uContainer,uGroup);
-				MYSQL_RUN;
-			}
-		
-		}
-	}
+	//register int i;
+	//for(i=0;i<x;i++)
+	//{
+	//}
 
 }//void ExtProcesstGroupGlueVars(pentry entries[], int x)
 
@@ -69,24 +47,12 @@ void ExttGroupGlueCommands(pentry entries[], int x)
                         	ProcesstGroupGlueVars(entries,x);
 
                         	guMode=2000;
-				if(!uGroup || (uServer==0 && uContainer==0))
-	                        	tGroupGlue("Must Supply a uGroup and a uServer or uContainer");
+				if(!uGroup || !uKey )
+	                        	tGroupGlue("Must Supply a uGroup and a uKey");
                         	guMode=0;
 
 				uGroupGlue=0;
 				NewtGroupGlue(0);
-			}
-		}
-		else if(!strcmp(gcCommand,"Add Multiple Containers"))
-		{
-			if(guPermLevel>=12)
-			{
-                        	ProcesstGroupGlueVars(entries,x);
-                        	guMode=0;
-				if(mysql_insert_id(&gMysql)>0)
-	                        	tGroupGlue("Multiple containers added");
-				else
-	                        	tGroupGlue("No containers added");
 			}
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
@@ -107,18 +73,6 @@ void ExttGroupGlueCommands(pentry entries[], int x)
 				DeletetGroupGlue();
 			}
                 }
-		else if(!strcmp(gcCommand,"Del Multiple Containers"))
-		{
-			if(guPermLevel>=12)
-			{
-                        	ProcesstGroupGlueVars(entries,x);
-                        	guMode=0;
-				if(mysql_affected_rows(&gMysql)>0)
-	                        	tGroupGlue("Multiple containers deleted");
-				else
-	                        	tGroupGlue("No containers deleted");
-			}
-		}
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
 			if(guPermLevel>=12)
@@ -153,23 +107,11 @@ void ExttGroupGlueButtons(void)
                 case 2000:
 			printf("<p><u>Enter/mod data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
-			printf("<p><u>Add multiple containers</u><br>");
-			printf("Select with shift and ctrl multiple containers from list below"
-				" to the uGroup selected in right panel. The uContainer and uServer are ignored."
-				" Warning: You may add inadvertently the same containers multiple times no"
-				" checking takes place.<p>");
-			tTableMultiplePullDown("tContainer;cuMulContainerPullDown","cLabel","cLabel");
-                        printf("<p><input type=submit class=largeButton name=gcCommand value='Add Multiple Containers'>");
                 break;
 
                 case 2001:
                         printf("<p><u>Think twice</u><br>");
                         printf(LANG_NBB_CONFIRMDEL);
-			printf("<p><u>Delete multiple containers</u><br>");
-			printf("Select with shift and ctrl multiple containers from list below"
-				" to the uGroup selected in right panel. The uContainer and uServer are ignored.<p>");
-			tTableMultiplePullDown("tContainer;cuMulContainerPullDown","cLabel","cLabel");
-                        printf("<p><input type=submit class=largeButton name=gcCommand value='Del Multiple Containers'>");
                 break;
 
                 case 2002:
@@ -246,16 +188,10 @@ void ExttGroupGlueListSelect(void)
 		sprintf(cCat," WHERE tGroupGlue.uGroup=%u ORDER BY uGroup",uGroup);
 		strcat(gcQuery,cCat);
         }
-        else if(!strcmp(gcFilter,"uServer"))
+        else if(!strcmp(gcFilter,"uKey"))
         {
-                sscanf(gcCommand,"%u",&uServer);
-		sprintf(cCat," WHERE tGroupGlue.uServer=%u ORDER BY uServer",uServer);
-		strcat(gcQuery,cCat);
-        }
-        else if(!strcmp(gcFilter,"uContainer"))
-        {
-                sscanf(gcCommand,"%u",&uContainer);
-		sprintf(cCat," WHERE tGroupGlue.uContainer=%u ORDER BY uContainer",uContainer);
+                sscanf(gcCommand,"%u",&uKey);
+		sprintf(cCat," WHERE tGroupGlue.uKey=%u ORDER BY uKey",uKey);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -281,14 +217,10 @@ void ExttGroupGlueListFilter(void)
                 printf("<option>uGroup</option>");
         else
                 printf("<option selected>uGroup</option>");
-        if(strcmp(gcFilter,"uServer"))
-                printf("<option>uServer</option>");
+        if(strcmp(gcFilter,"uKey"))
+                printf("<option>uKey</option>");
         else
-                printf("<option selected>uServer</option>");
-        if(strcmp(gcFilter,"uContainer"))
-                printf("<option>uContainer</option>");
-        else
-                printf("<option selected>uContainer</option>");
+                printf("<option selected>uKey</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
@@ -321,69 +253,4 @@ void ExttGroupGlueNavBar(void)
 	printf("&nbsp;&nbsp;&nbsp;\n");
 
 }//void ExttGroupGlueNavBar(void)
-
-
-void tTableMultiplePullDown(const char *cTableName,const char *cFieldName,const char *cOrderby)
-{
-        register int i,n;
-        char cLabel[256];
-        MYSQL_RES *mysqlRes;         
-        MYSQL_ROW mysqlField;
-
-        char cSelectName[100]={""};
-	char cHidden[100]={""};
-        char cLocalTableName[256]={""};
-        char *cp;
-
-        if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
-        {
-                printf("Invalid input tTableMultiplePullDown()");
-                return;
-        }
-
-        //Extended functionality
-        strncpy(cLocalTableName,cTableName,255);
-        if((cp=strchr(cLocalTableName,';')))
-        {
-                strncpy(cSelectName,cp+1,99);
-                cSelectName[99]=0;
-                *cp=0;
-        }
-
-
-        sprintf(gcQuery,"SELECT _rowid,%s FROM %s ORDER BY %s",
-                                cFieldName,cLocalTableName,cOrderby);
-
-	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
-	
-	i=mysql_num_rows(mysqlRes);
-
-	if(cSelectName[0])
-                sprintf(cLabel,"%s",cSelectName);
-        else
-                sprintf(cLabel,"%s_%sPullDown",cLocalTableName,cFieldName);
-
-        if(i>0)
-        {
-                printf("<select multiple size=%u name=%s >\n",(i>16)?16:i,cLabel);
-
-                for(n=0;n<i;n++)
-                {
-                        int unsigned field0=0;
-
-                        mysqlField=mysql_fetch_row(mysqlRes);
-                        sscanf(mysqlField[0],"%u",&field0);
-			printf("<option>%s</option>\n",mysqlField[1]);
-                }
-        }
-        else
-        {
-		printf("<select multiple size=1 name=%s><option title='No selection'>---</option></select>\n"
-                        ,cLabel);
-        }
-        printf("</select>\n");
-	if(cHidden[0])
-		printf("%s",cHidden);
-
-}//tTableMultiplePullDown()
 

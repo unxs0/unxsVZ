@@ -78,7 +78,7 @@ void ExttPBXCommands(pentry entries[], int x)
 				unsigned uLink=0;
 				unsigned uGroup=0;
 
-				if(cPBXSearch[0]==0 && uDatacenterSearch==0 && uServerSearch==0 && uServerSearchNot==0 && uAvailableSearch==0
+				if(cPBXSearch[0]==0 && uServerSearch==0 && uServerSearch==0 && uServerSearchNot==0 && uAvailableSearch==0
 						&& uOwnerSearch==0 && uPBXv4Exclude==0)
 	                        	tPBX("You must specify at least one search parameter");
 
@@ -91,7 +91,7 @@ void ExttPBXCommands(pentry entries[], int x)
 
 				if(cPBXSearch[0])
 				{
-					sprintf(cQuerySection," uPBX IN (SELECT uPBX FROM tPBX WHERE cLabel LIKE '%s%%')",cPBXSearch);
+					sprintf(cQuerySection," uPBX IN (SELECT uPBX FROM tPBX WHERE cHostname LIKE '%s%%')",cPBXSearch);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -100,11 +100,11 @@ void ExttPBXCommands(pentry entries[], int x)
 					uLink=0;
 				}
 
-				if(uDatacenterSearch)
+				if(uServerSearch)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," uDatacenter=%u",uDatacenterSearch);
+					sprintf(cQuerySection," uServer=%u",uServerSearch);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -151,9 +151,9 @@ void ExttPBXCommands(pentry entries[], int x)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," cLabel NOT LIKE '10.%%.%%.%%' AND"
-								" cLabel NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
-								" cLabel NOT LIKE '192.168.%%.%%'");
+					sprintf(cQuerySection," cHostname NOT LIKE '10.%%.%%.%%' AND"
+								" cHostname NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
+								" cHostname NOT LIKE '192.168.%%.%%'");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -191,7 +191,7 @@ void ExttPBXCommands(pentry entries[], int x)
 				unsigned uLink=0;
 				unsigned uGroup=0;
 
-				if(cPBXSearch[0]==0 && uDatacenterSearch==0 && uServerSearch==0 && uServerSearchNot==0 && uAvailableSearch==0
+				if(cPBXSearch[0]==0 && uServerSearch==0 && uServerSearch==0 && uServerSearchNot==0 && uAvailableSearch==0
 						&& uOwnerSearch==0 && uPBXv4Exclude==0)
 	                        	tPBX("You must specify at least one search parameter");
 
@@ -225,7 +225,7 @@ void ExttPBXCommands(pentry entries[], int x)
 
 				if(cPBXSearch[0])
 				{
-					sprintf(cQuerySection," uPBX IN (SELECT uPBX FROM tPBX WHERE cLabel LIKE '%s%%')",cPBXSearch);
+					sprintf(cQuerySection," uPBX IN (SELECT uPBX FROM tPBX WHERE cHostname LIKE '%s%%')",cPBXSearch);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -234,11 +234,11 @@ void ExttPBXCommands(pentry entries[], int x)
 					uLink=0;
 				}
 
-				if(uDatacenterSearch)
+				if(uServerSearch)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," uDatacenter=%u",uDatacenterSearch);
+					sprintf(cQuerySection," uServer=%u",uServerSearch);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -254,7 +254,7 @@ void ExttPBXCommands(pentry entries[], int x)
 					else
 						sprintf(cQuerySection," uPBX IN"
 								" (SELECT uPBX FROM tPBX LEFT JOIN tContainer ON tContainer.uPBXv4=tPBX.uPBX"
-								" WHERE tContainer.cLabel IS NULL)");
+								" WHERE tContainer.cHostname IS NULL)");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -285,9 +285,9 @@ void ExttPBXCommands(pentry entries[], int x)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," cLabel NOT LIKE '10.%%.%%.%%' AND"
-								" cLabel NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
-								" cLabel NOT LIKE '192.168.%%.%%'");
+					sprintf(cQuerySection," cHostname NOT LIKE '10.%%.%%.%%' AND"
+								" cHostname NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
+								" cHostname NOT LIKE '192.168.%%.%%'");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -348,10 +348,10 @@ void ExttPBXCommands(pentry entries[], int x)
                         	guMode=2000;
 				//Check entries here
 				//1.2.3.4 min
-				if(strlen(cLabel)<7)
-					tPBX("cLabel too short");
-				if(!uDatacenter)
-					tPBX("Must specify a uDatacenter");
+				if(strlen(cHostname)<7)
+					tPBX("cHostname too short");
+				if(!uServer)
+					tPBX("Must specify a uServer");
                         	guMode=0;
 
 				uPBX=0;
@@ -407,7 +407,7 @@ void ExttPBXCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tPBX("Can't modify a DID in use");
+					tPBX("Can't modify a PBX in use");
 				}
 	                        guMode=2002;
 				tPBX(LANG_NB_CONFIRMMOD);
@@ -431,12 +431,12 @@ void ExttPBXCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tPBX("Can't modify an DID in use");
+					tPBX("Can't modify a PBX in use");
 				}
-				if(strlen(cLabel)<7)
-					tPBX("cLabel too short");
-				if(!uDatacenter)
-					tPBX("Must specify a uDatacenter");
+				if(strlen(cHostname)<7)
+					tPBX("cHostname too short");
+				if(!uServer)
+					tPBX("Must specify a uServer");
                         	guMode=0;
 
 				if(uForClient)
@@ -521,7 +521,7 @@ void ExttPBXButtons(void)
                 case 2002:
 			printf("<p><u>Review changes</u><br>");
 			printf("Change a single record or optionally add a block of available DIDs. In all cases you must"
-				" specify a uDatacenter and optionally a new company (uOwner) if your"
+				" specify a uServer and optionally a new company (uOwner) if your"
 				" permissions allow.<br>");
 			tTablePullDownResellers(uForClient,1);
 			if(cSearch[0])
@@ -542,8 +542,8 @@ void ExttPBXButtons(void)
 				" on selected containers of the loaded container set.'"
 				" name=gcCommand value='Search Set Operations'>\n");
 
-			printf("<p><u>Filter by cLabel</u><br>");
-			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
+			printf("<p><u>Filter by cHostname</u><br>");
+			printf("<input title='Enter cHostname start or MySQL LIKE pattern (%% or _ allowed)' type=text"
 					" name=cSearch value='%s'>",cSearch);
 			tPBXNavList(0);
 	}
@@ -584,9 +584,8 @@ void ExttPBXAuxTable(void)
 			uGroup=uGetSearchGroup(gcUser,31);
 			sprintf(gcQuery,"SELECT"
 					" tPBX.uPBX,"
-					" tPBX.cLabel,"
+					" tPBX.cHostname,"
 					" IF(tPBX.uAvailable>0,'Yes','No'),"
-					" IFNULL(tDatacenter.cLabel,''),"
 					" IFNULL(tServer.cLabel,''),"
 					" IFNULL(tContainer.cHostname,''),"
 					" tClient.cLabel,"
@@ -594,7 +593,6 @@ void ExttPBXAuxTable(void)
 					" tPBX.cComment"
 					" FROM tPBX"
 					" LEFT JOIN tContainer ON tContainer.uPBXv4=tPBX.uPBX"
-					" LEFT JOIN tDatacenter ON tPBX.uDatacenter=tDatacenter.uDatacenter"
 					" LEFT JOIN tServer ON tContainer.uServer=tServer.uServer"
 					" LEFT JOIN tClient ON tPBX.uOwner=tClient.uClient"
 					" WHERE uPBX IN (SELECT uPBX FROM tGroupGlue WHERE uGroup=%u)",uGroup);
@@ -609,9 +607,8 @@ void ExttPBXAuxTable(void)
 
 				printf("<table>");
 				printf("<tr>");
-				printf("<td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> <u>cLabel</u></td>"
+				printf("<td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> <u>cHostname</u></td>"
 					"<td><u>Available</u></td>"
-					"<td><u>Datacenter</u></td>"
 					"<td><u>Node</u></td>"
 					"<td><u>Hostname</u></td>"
 					"<td><u>Owner</u></td>"
@@ -719,7 +716,7 @@ while((field=mysql_fetch_row(res)))
 					MYSQL_RES *res;
 					MYSQL_ROW field;
 
-					sprintf(gcQuery,"SELECT cLabel FROM tPBX WHERE uPBX=%u",uCtPBX);
+					sprintf(gcQuery,"SELECT cHostname FROM tPBX WHERE uPBX=%u",uCtPBX);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -811,7 +808,7 @@ void ExttPBXGetHook(entry gentries[], int x)
 void ExttPBXSelect(void)
 {
 	if(cSearch[0])
-		ExtSelectSearchPublic("tPBX",VAR_LIST_tPBX,"cLabel",cSearch);
+		ExtSelectSearchPublic("tPBX",VAR_LIST_tPBX,"cHostname",cSearch);
 	else
 		ExtSelectPublic("tPBX",VAR_LIST_tPBX);
 
@@ -902,23 +899,23 @@ void tPBXNavList(unsigned uAvailable)
 	if(guPermLevel>11)
 	{
 		if(cSearch[0])
-			sprintf(gcQuery,"SELECT tPBX.uPBX,tPBX.cLabel FROM"
-				" tPBX WHERE tPBX.uAvailable=%u AND tPBX.cLabel LIKE '%s%%' ORDER BY tPBX.cLabel",uAvailable,cSearch);
+			sprintf(gcQuery,"SELECT tPBX.uPBX,tPBX.cHostname FROM"
+				" tPBX WHERE tPBX.uAvailable=%u AND tPBX.cHostname LIKE '%s%%' ORDER BY tPBX.cHostname",uAvailable,cSearch);
 		else
-			sprintf(gcQuery,"SELECT tPBX.uPBX,tPBX.cLabel FROM"
-					" tPBX WHERE tPBX.uAvailable=%u ORDER BY tPBX.cLabel",uAvailable);
+			sprintf(gcQuery,"SELECT tPBX.uPBX,tPBX.cHostname FROM"
+					" tPBX WHERE tPBX.uAvailable=%u ORDER BY tPBX.cHostname",uAvailable);
 	}
 	else
 	{
 		if(cSearch[0])
-			sprintf(gcQuery,"SELECT tPBX.uPBX,tPBX.cLabel FROM"
+			sprintf(gcQuery,"SELECT tPBX.uPBX,tPBX.cHostname FROM"
 					" tPBX WHERE"
-					" tPBX.uAvailable=%u AND tPBX.cLabel LIKE '%s%%' AND"
-					" tPBX.uOwner=%u ORDER BY tPBX.cLabel",uAvailable,cSearch,guCompany);
+					" tPBX.uAvailable=%u AND tPBX.cHostname LIKE '%s%%' AND"
+					" tPBX.uOwner=%u ORDER BY tPBX.cHostname",uAvailable,cSearch,guCompany);
 		else
-			sprintf(gcQuery,"SELECT tPBX.uPBX,tPBX.cLabel FROM"
+			sprintf(gcQuery,"SELECT tPBX.uPBX,tPBX.cHostname FROM"
 					" tPBX WHERE"
-					" tPBX.uAvailable=%u AND tPBX.uOwner=%u ORDER BY tPBX.cLabel",
+					" tPBX.uAvailable=%u AND tPBX.uOwner=%u ORDER BY tPBX.cHostname",
 						uAvailable,guCompany);
 	}
 
@@ -982,14 +979,14 @@ void tPBXReport(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tContainer"
-					"&uContainer=%s>%s used by %s</a><br>\n",field[0],cLabel,field[1]);
+					"&uContainer=%s>%s used by %s</a><br>\n",field[0],cHostname,field[1]);
 	        }
 	}
         mysql_free_result(res);
 
-	sprintf(gcQuery,"SELECT tProperty.uKey,tContainer.cLabel FROM tProperty,tContainer"
+	sprintf(gcQuery,"SELECT tProperty.uKey,tContainer.cHostname FROM tProperty,tContainer"
 				" WHERE tProperty.uType=3 AND tProperty.cValue='%s'"
-				" AND tProperty.uKey=tContainer.uContainer",cLabel);
+				" AND tProperty.uKey=tContainer.uContainer",cHostname);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -1006,14 +1003,14 @@ void tPBXReport(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tContainer"
-					"&uContainer=%s>%s used by %s</a><br>\n",field[0],cLabel,field[1]);
+					"&uContainer=%s>%s used by %s</a><br>\n",field[0],cHostname,field[1]);
 	        }
 	}
         mysql_free_result(res);
 
-	sprintf(gcQuery,"SELECT tProperty.uKey,tServer.cLabel FROM tProperty,tServer"
+	sprintf(gcQuery,"SELECT tProperty.uKey,tServer.cHostname FROM tProperty,tServer"
 				" WHERE tProperty.uType=2 AND tProperty.cValue='%s'"
-				" AND tProperty.uKey=tServer.uServer",cLabel);
+				" AND tProperty.uKey=tServer.uServer",cHostname);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -1030,7 +1027,7 @@ void tPBXReport(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tServer"
-					"&uServer=%s>%s used by %s</a><br>\n",field[0],cLabel,field[1]);
+					"&uServer=%s>%s used by %s</a><br>\n",field[0],cHostname,field[1]);
 	        }
 	}
         mysql_free_result(res);

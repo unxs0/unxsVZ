@@ -14,8 +14,6 @@ AUTHOR
 
 void tGroupNavList(void);
 void tGroupMemberNavList(void);
-void voidCopyGroupType(unsigned uGroupType,unsigned uGroup);	
-void voidDelGroupProperties(unsigned uGroup);
 
 void ExtProcesstGroupVars(pentry entries[], int x)
 {
@@ -65,10 +63,7 @@ void ExttGroupCommands(pentry entries[], int x)
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 			
-				NewtGroup(1);
-				mysql_insert_id(&gMysql);
-				voidCopyGroupType(uGroupType,uGroup);	
-				tGroup("New group created properties copied from group type");
+				NewtGroup(0);
 			}
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
@@ -92,7 +87,6 @@ void ExttGroupCommands(pentry entries[], int x)
 				|| (guPermLevel>7 && guReseller==guLoginClient) )
 			{
 				guMode=5;
-				voidDelGroupProperties(uGroup);	
 				DeletetGroup();
 			}
                 }
@@ -154,8 +148,7 @@ void ExttGroupButtons(void)
 			printf("tGroup (and it's related tables <a href=?gcFunction=tGroupGlue>"
 				"tGroupGlue</a> and <a href=?gcFunction=tGroupType>tGroupType</a>)"
 				" provide a way to create"
-				" container and server groups of different types."
-				" These groups can then be used for organizational and/or autonomic purposes.");
+				" groups of different types.");
 			if(uGroup) tGroupMemberNavList();
 			tGroupNavList();
 	}
@@ -166,39 +159,6 @@ void ExttGroupButtons(void)
 
 void ExttGroupAuxTable(void)
 {
-	if(!uGroup) return;
-
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	sprintf(gcQuery,"%s Property Panel",cLabel);
-	OpenFieldSet(gcQuery,100);
-	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="
-			PROP_GROUP
-			" ORDER BY cName",
-				uGroup);
-
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-        res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
-	{
-		printf("<table cols=2>");
-		while((field=mysql_fetch_row(res)))
-		{
-			printf("<tr>\n");
-			printf("<td width=200 valign=top><a class=darkLink href=unxsSPS.cgi?"
-					"gcFunction=tProperty&uProperty=%s&cReturn=tGroup_%u>"
-					"%s</a></td><td>%s</td>\n",
-						field[0],uGroup,field[1],field[2]);
-			printf("</tr>\n");
-		}
-		printf("</table>");
-	}
-
-	CloseFieldSet();
 
 
 }//void ExttGroupAuxTable(void)
@@ -345,7 +305,7 @@ void tGroupMemberNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uContainer,uServer FROM tGroupGlue WHERE uGroup=%u LIMIT 33",uGroup);
+	sprintf(gcQuery,"SELECT uKey FROM tGroupGlue WHERE uGroup=%u LIMIT 33",uGroup);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -356,7 +316,7 @@ void tGroupMemberNavList(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{
-		unsigned uContainer,uServer,uLimit=0;
+		unsigned uKey,uLimit=0;
         	MYSQL_RES *res2;
         	MYSQL_ROW field2;
 
@@ -369,11 +329,10 @@ void tGroupMemberNavList(void)
 				break;
 			}
 
-			sscanf(field[0],"%u",&uContainer);
-			sscanf(field[1],"%u",&uServer);
-			if(uContainer)
+			sscanf(field[0],"%u",&uKey);
+			if(uKey)
 			{
-				sprintf(gcQuery,"SELECT cLabel FROM tContainer WHERE uContainer=%u",uContainer);
+				sprintf(gcQuery,"SELECT cLabel FROM tDID WHERE uDID=%u",uKey);
         			mysql_query(&gMysql,gcQuery);
 			        if(mysql_errno(&gMysql))
 			        {
@@ -383,24 +342,8 @@ void tGroupMemberNavList(void)
 			        }
 			        res2=mysql_store_result(&gMysql);
 	        		if((field2=mysql_fetch_row(res2)))
-					printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tContainer"
-					"&uContainer=%u>%s</a><br>\n",uContainer,field2[0]);
-				mysql_free_result(res2);
-			}
-			else if(uServer)
-			{
-				sprintf(gcQuery,"SELECT cLabel FROM tServer WHERE uServer=%u",uServer);
-        			mysql_query(&gMysql,gcQuery);
-			        if(mysql_errno(&gMysql))
-			        {
-			        	printf("<p><u>tGroupMemberNavList</u><br>\n");
-			                printf("%s",mysql_error(&gMysql));
-			                return;
-			        }
-			        res2=mysql_store_result(&gMysql);
-	        		if((field2=mysql_fetch_row(res2)))
-					printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tServer"
-					"&uServer=%u>%s</a><br>\n",uServer,field2[0]);
+					printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID"
+					"&uDID=%u>%s</a><br>\n",uKey,field2[0]);
 				mysql_free_result(res2);
 			}
 		}
@@ -408,31 +351,6 @@ void tGroupMemberNavList(void)
         mysql_free_result(res);
 
 }//void tGroupMemberNavList(void)
-
-
-void voidCopyGroupType(unsigned uGroupType,unsigned uGroup)
-{
-	//MySQL 5.0+ SQL
-	sprintf(gcQuery,"INSERT INTO tProperty (cName,cValue,uType,uKey,uOwner,uCreatedBy,uCreatedDate)"
-			" SELECT cName,cValue,"PROP_GROUP",%u,%u,%u,UNIX_TIMESTAMP(NOW()) FROM"
-			" tProperty WHERE uKey=%u AND uType="
-			PROP_GROUPTYPE
-					,uGroup,guLoginClient,guCompany,uGroupType);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-		
-}//void voidCopyGroupType()
-
-
-void voidDelGroupProperties(unsigned uGroup)
-{
-	sprintf(gcQuery,"DELETE FROM tProperty WHERE uType="PROP_GROUP" AND uKey=%u",uGroup);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-}//void voidDelGroupProperties(unsigned uGroup)
 
 
 unsigned uGetSearchGroup(const char *gcUser,unsigned uGroupType)

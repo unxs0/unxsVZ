@@ -12,15 +12,13 @@ AUTHOR/LEGAL
 	GPLv2 license applies. See LICENSE file included.
 */
 
-
 #include "mysqlrad.h"
 
 //Table Variables
-//Table Variables
 //uPBX: Primary Key
 static unsigned uPBX=0;
-//cLabel: Short label
-static char cLabel[33]={""};
+//cLabel: hostname
+static char cHostname[100]={""};
 //uAvailable: PBX is available for use
 static unsigned uAvailable=0;
 static char cYesNouAvailable[32]={""};
@@ -34,9 +32,9 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
-//uDatacenter: Belongs to this Datacenter
-static unsigned uDatacenter=0;
-static char cuDatacenterPullDown[256]={""};
+//uServer: Belongs to this Datacenter
+static unsigned uServer=0;
+static char cuServerPullDown[256]={""};
 
 //cComment
 static char *cComment={""};
@@ -50,12 +48,10 @@ static char cuServerSearchPullDown[256]={""};
 static unsigned uServerSearchNot=0;
 static unsigned uPBXv4Exclude=0;
 static unsigned uOwnerSearch=0;
-static unsigned uDatacenterSearch=0;
-static char cuDatacenterSearchPullDown[256]={""};
 int ReadYesNoPullDownTriState(const char *cLabel);
 void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode);
 
-#define VAR_LIST_tPBX "tPBX.uPBX,tPBX.cLabel,tPBX.uAvailable,tPBX.uOwner,tPBX.uCreatedBy,tPBX.uCreatedDate,tPBX.uModBy,tPBX.uModDate,tPBX.uDatacenter,tPBX.cComment"
+#define VAR_LIST_tPBX "tPBX.uPBX,tPBX.cHostname,tPBX.uAvailable,tPBX.uOwner,tPBX.uCreatedBy,tPBX.uCreatedDate,tPBX.uModBy,tPBX.uModDate,tPBX.uServer,tPBX.cComment"
 
  //Local only
 void tPBXSearchSet(unsigned uStep);
@@ -87,8 +83,8 @@ void ProcesstPBXVars(pentry entries[], int x)
 	{
 		if(!strcmp(entries[i].name,"uPBX"))
 			sscanf(entries[i].val,"%u",&uPBX);
-		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cHostname"))
+			sprintf(cHostname,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uAvailable"))
 			sscanf(entries[i].val,"%u",&uAvailable);
 		else if(!strcmp(entries[i].name,"cYesNouAvailable"))
@@ -106,14 +102,14 @@ void ProcesstPBXVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
-		else if(!strcmp(entries[i].name,"uDatacenter"))
-			sscanf(entries[i].val,"%u",&uDatacenter);
+		else if(!strcmp(entries[i].name,"uServer"))
+			sscanf(entries[i].val,"%u",&uServer);
 		else if(!strcmp(entries[i].name,"cComment"))
 			cComment=entries[i].val;
-		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
+		else if(!strcmp(entries[i].name,"cuServerPullDown"))
 		{
-			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
-			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
+			sprintf(cuServerPullDown,"%.255s",entries[i].val);
+			uServer=ReadPullDown("tServer","cLabel",cuServerPullDown);
 		}
 		else if(!strcmp(entries[i].name,"uOwnerSearch"))
 			sscanf(entries[i].val,"%u",&uOwnerSearch);
@@ -121,13 +117,6 @@ void ProcesstPBXVars(pentry entries[], int x)
 		{
 			sprintf(cForClientPullDown,"%.255s",entries[i].val);
 			uOwnerSearch=ReadPullDown("tClient","cLabel",cForClientPullDown);
-		}
-		else if(!strcmp(entries[i].name,"uDatacenterSearch"))
-			sscanf(entries[i].val,"%u",&uDatacenterSearch);
-		else if(!strcmp(entries[i].name,"cuDatacenterSearchPullDown"))
-		{
-			sprintf(cuDatacenterSearchPullDown,"%.255s",entries[i].val);
-			uDatacenterSearch=ReadPullDown("tDatacenter","cLabel",cuDatacenterSearchPullDown);
 		}
 		else if(!strcmp(entries[i].name,"uServerSearch"))
 			sscanf(entries[i].val,"%u",&uServerSearch);
@@ -243,14 +232,14 @@ void tPBX(const char *cResult)
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
 		sscanf(field[0],"%u",&uPBX);
-		sprintf(cLabel,"%.32s",field[1]);
+		sprintf(cHostname,"%.99s",field[1]);
 		sscanf(field[2],"%u",&uAvailable);
 		sscanf(field[3],"%u",&uOwner);
 		sscanf(field[4],"%u",&uCreatedBy);
 		sscanf(field[5],"%lu",&uCreatedDate);
 		sscanf(field[6],"%u",&uModBy);
 		sscanf(field[7],"%lu",&uModDate);
-		sscanf(field[8],"%u",&uDatacenter);
+		sscanf(field[8],"%u",&uServer);
 		cComment=field[9];
 
 		}
@@ -327,8 +316,8 @@ void tPBXSearchSet(unsigned uStep)
 		printf(" checked");
 	printf("> Exclude RFC1918 DIDs");
 
-	OpenRow("Datacenter","black");
-	tTablePullDown("tDatacenter;cuDatacenterSearchPullDown","cLabel","cLabel",uDatacenterSearch,1);
+	OpenRow("Server","black");
+	tTablePullDown("tServer;cuServerSearchPullDown","cLabel","cLabel",uServerSearch,1);
 
 	OpenRow("Node","black");
 	tTablePullDown("tServer;cuServerSearchPullDown","cLabel","cLabel",uServerSearch,1);
@@ -361,7 +350,7 @@ void tPBXInput(unsigned uMode)
 //uPBX
 	OpenRow(LANG_FL_tPBX_uPBX,"black");
 	printf("<input title='%s' type=text name=uPBX value=%u size=16 maxlength=10 "
-,LANG_FT_tPBX_uPBX,uPBX);
+		,LANG_FT_tPBX_uPBX,uPBX);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -371,10 +360,10 @@ void tPBXInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=uPBX value=%u >\n",uPBX);
 	}
-//cLabel
-	OpenRow(LANG_FL_tPBX_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tPBX_cLabel,EncodeDoubleQuotes(cLabel));
+//cHostname
+	OpenRow(LANG_FL_tPBX_cHostname,"black");
+	printf("<input title='%s' type=text name=cHostname value=\"%s\" size=40 maxlength=99 "
+		,LANG_FT_tPBX_cHostname,EncodeDoubleQuotes(cHostname));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -382,20 +371,20 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cHostname value=\"%s\">\n",EncodeDoubleQuotes(cHostname));
 	}
 //uAvailable
-	OpenRow(LANG_FL_tPBX_uAvailable,"black");
-	if(guPermLevel>=10 && uMode)
-		YesNoPullDown("uAvailable",uAvailable,1);
-	else
-		YesNoPullDown("uAvailable",uAvailable,0);
-//uDatacenter
-	OpenRow(LANG_FL_tDatacenter_uDatacenter,"black");
+//	OpenRow(LANG_FL_tPBX_uAvailable,"black");
+//	if(guPermLevel>=10 && uMode)
+//		YesNoPullDown("uAvailable",uAvailable,1);
+//	else
+//		YesNoPullDown("uAvailable",uAvailable,0);
+//uServer
+	OpenRow(LANG_FL_tServer_uServer,"black");
 	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+		tTablePullDownOwner("tServer;cuServerPullDown","cLabel","cLabel",uServer,1);
 	else
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+		tTablePullDownOwner("tServer;cuServerPullDown","cLabel","cLabel",uServer,0);
 //cComment
 	OpenRow("cComment","black");
 	printf("<textarea title='Additional information about DID use' cols=80 wrap=hard rows=4 name=cComment ");
@@ -410,24 +399,10 @@ void tPBXInput(unsigned uMode)
 	}
 //uOwner
 	OpenRow(LANG_FL_tPBX_uOwner,"black");
-	if(guPermLevel>=20 && uMode)
-	{
 	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
 //uCreatedBy
 	OpenRow(LANG_FL_tPBX_uCreatedBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
 	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
 //uCreatedDate
 	OpenRow(LANG_FL_tPBX_uCreatedDate,"black");
 	if(uCreatedDate)
@@ -437,14 +412,7 @@ void tPBXInput(unsigned uMode)
 	printf("<input type=hidden name=uCreatedDate value=%lu >\n",uCreatedDate);
 //uModBy
 	OpenRow(LANG_FL_tPBX_uModBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
 	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
 //uModDate
 	OpenRow(LANG_FL_tPBX_uModDate,"black");
 	if(uModDate)
@@ -507,14 +475,14 @@ void DeletetPBX(void)
 
 void Insert_tPBX(void)
 {
-	sprintf(gcQuery,"INSERT INTO tPBX SET uPBX=%u,cLabel='%s',uAvailable=%u,uOwner=%u,uCreatedBy=%u,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s'",
+	sprintf(gcQuery,"INSERT INTO tPBX SET uPBX=%u,cHostname='%s',uAvailable=%u,uOwner=%u,uCreatedBy=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uServer=%u,cComment='%s'",
 			uPBX
-			,TextAreaSave(cLabel)
+			,TextAreaSave(cHostname)
 			,uAvailable
 			,uOwner
 			,uCreatedBy
-			,uDatacenter
+			,uServer
 			,cComment);
 	MYSQL_RUN;
 
@@ -523,13 +491,13 @@ void Insert_tPBX(void)
 
 void Update_tPBX(char *cRowid)
 {
-	sprintf(gcQuery,"UPDATE tPBX SET uPBX=%u,cLabel='%s',uAvailable=%u,uModBy=%u,"
-				"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s' WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tPBX SET uPBX=%u,cHostname='%s',uAvailable=%u,uModBy=%u,"
+				"uModDate=UNIX_TIMESTAMP(NOW()),uServer=%u,cComment='%s' WHERE _rowid=%s",
 			uPBX
-			,TextAreaSave(cLabel)
+			,TextAreaSave(cHostname)
 			,uAvailable
 			,uModBy
-			,uDatacenter
+			,uServer
 			,cComment
 			,cRowid);
 	MYSQL_RUN;
@@ -596,9 +564,9 @@ void tPBXList(void)
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uPBX"
-		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>cHostname"
 		"<td><font face=arial,helvetica color=white>uAvailable"
-		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>uServer"
 		"<td><font face=arial,helvetica color=white>cComment"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
@@ -645,7 +613,7 @@ void tPBXList(void)
 			,field[0]
 			,field[1]
 			,cBuf2
-			,ForeignKey("tDatacenter","cLabel",strtoul(field[8],NULL,10))
+			,ForeignKey("tServer","cLabel",strtoul(field[8],NULL,10))
 			,field[9]
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
@@ -664,7 +632,7 @@ void CreatetPBX(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tPBX ( "
 			"uPBX INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			"cHostname VARCHAR(100) NOT NULL DEFAULT '',"
 			"cComment VARCHAR(255) NOT NULL DEFAULT '',"
 			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
 			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
@@ -672,7 +640,7 @@ void CreatetPBX(void)
 			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uAvailable INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
+			"uServer INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

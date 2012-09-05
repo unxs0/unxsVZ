@@ -333,7 +333,7 @@ void tGroupInput(unsigned uMode)
 	printf("</tr>\n");
 
 	char cGraph0[256]={""};
-	GetGroupProp(uGroup,"Graph0",cGraph0);
+	//GetGroupProp(uGroup,"Graph0",cGraph0);
 	if(cGraph0[0])
 	{
 		OpenRow("Optional Graph","black");
@@ -568,7 +568,15 @@ void tGroupList(void)
 
 void CreatetGroup(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGroup ( uGroup INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uGroupType INT UNSIGNED NOT NULL DEFAULT 0,index (uGroupType) )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGroup ("
+			" uGroup INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uGroupType INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uGroupType) )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
