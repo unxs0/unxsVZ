@@ -4,9 +4,9 @@ FILE
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tconfiguration.c 966 2009-11-10 18:18:47Z Gary $
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tconfigurationfunc.h while 
-	RAD is still to be used.
+AUTHOR/LEGAL
+	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 
@@ -22,9 +22,6 @@ static char cuDatacenterPullDown[256]={""};
 //uServer: Pull down for target hardware server
 static unsigned uServer=0;
 static char cuServerPullDown[256]={""};
-//uContainer: Pull down for target datacenter server container
-static unsigned uContainer=0;
-static char cuContainerPullDown[256]={""};
 //cLabel: Short label
 static char cLabel[101]={""};
 //cValue: Value of name(cLabel)/value pair
@@ -43,8 +40,7 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
-
-#define VAR_LIST_tConfiguration "tConfiguration.uConfiguration,tConfiguration.uDatacenter,tConfiguration.uServer,tConfiguration.uContainer,tConfiguration.cLabel,tConfiguration.cValue,tConfiguration.cComment,tConfiguration.uOwner,tConfiguration.uCreatedBy,tConfiguration.uCreatedDate,tConfiguration.uModBy,tConfiguration.uModDate"
+#define VAR_LIST_tConfiguration "tConfiguration.uConfiguration,tConfiguration.uDatacenter,tConfiguration.uServer,tConfiguration.cLabel,tConfiguration.cValue,tConfiguration.cComment,tConfiguration.uOwner,tConfiguration.uCreatedBy,tConfiguration.uCreatedDate,tConfiguration.uModBy,tConfiguration.uModDate"
 
  //Local only
 void Insert_tConfiguration(void);
@@ -88,13 +84,6 @@ void ProcesstConfigurationVars(pentry entries[], int x)
 		{
 			sprintf(cuServerPullDown,"%.255s",entries[i].val);
 			uServer=ReadPullDown("tServer","cLabel",cuServerPullDown);
-		}
-		else if(!strcmp(entries[i].name,"uContainer"))
-			sscanf(entries[i].val,"%u",&uContainer);
-		else if(!strcmp(entries[i].name,"cuContainerPullDown"))
-		{
-			sprintf(cuContainerPullDown,"%.255s",entries[i].val);
-			uContainer=ReadPullDown("tContainer","cLabel",cuContainerPullDown);
 		}
 		else if(!strcmp(entries[i].name,"cLabel"))
 			sprintf(cLabel,"%.100s",entries[i].val);
@@ -212,15 +201,14 @@ void tConfiguration(const char *cResult)
 		sscanf(field[0],"%u",&uConfiguration);
 		sscanf(field[1],"%u",&uDatacenter);
 		sscanf(field[2],"%u",&uServer);
-		sscanf(field[3],"%u",&uContainer);
-		sprintf(cLabel,"%.100s",field[4]);
-		sprintf(cValue,"%.255s",field[5]);
-		cComment=field[6];
-		sscanf(field[7],"%u",&uOwner);
-		sscanf(field[8],"%u",&uCreatedBy);
-		sscanf(field[9],"%lu",&uCreatedDate);
-		sscanf(field[10],"%u",&uModBy);
-		sscanf(field[11],"%lu",&uModDate);
+		sprintf(cLabel,"%.100s",field[3]);
+		sprintf(cValue,"%.255s",field[4]);
+		cComment=field[5];
+		sscanf(field[6],"%u",&uOwner);
+		sscanf(field[7],"%u",&uCreatedBy);
+		sscanf(field[8],"%lu",&uCreatedDate);
+		sscanf(field[9],"%u",&uModBy);
+		sscanf(field[10],"%lu",&uModDate);
 
 		}
 
@@ -307,12 +295,6 @@ void tConfigurationInput(unsigned uMode)
 		tTablePullDown("tServer;cuServerPullDown","cLabel","cLabel",uServer,1);
 	else
 		tTablePullDown("tServer;cuServerPullDown","cLabel","cLabel",uServer,0);
-//uContainer
-	OpenRow("uContainer","black");
-	if(guPermLevel>=8 && uMode)
-		tTablePullDown("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,1);
-	else
-		tTablePullDown("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,0);
 //cLabel
 	OpenRow(LANG_FL_tConfiguration_cLabel,"black");
 	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=100 "
@@ -459,11 +441,10 @@ void Insert_tConfiguration(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tConfiguration SET uConfiguration=%u,uDatacenter=%u,uServer=%u,uContainer=%u,cLabel='%s',cValue='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tConfiguration SET uConfiguration=%u,uDatacenter=%u,uServer=%u,cLabel='%s',cValue='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uConfiguration
 			,uDatacenter
 			,uServer
-			,uContainer
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cValue)
 			,TextAreaSave(cComment)
@@ -480,11 +461,10 @@ void Update_tConfiguration(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tConfiguration SET uConfiguration=%u,uDatacenter=%u,uServer=%u,uContainer=%u,cLabel='%s',cValue='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tConfiguration SET uConfiguration=%u,uDatacenter=%u,uServer=%u,cLabel='%s',cValue='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uConfiguration
 			,uDatacenter
 			,uServer
-			,uContainer
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cValue)
 			,TextAreaSave(cComment)
@@ -559,9 +539,17 @@ void tConfigurationList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uConfiguration<td><font face=arial,helvetica color=white>uDatacenter<td><font face=arial,helvetica color=white>uServer<td><font face=arial,helvetica color=white>uContainer<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>cValue<td><font face=arial,helvetica color=white>cComment<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uConfiguration"
+		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>uServer"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>cValue"
+		"<td><font face=arial,helvetica color=white>cComment"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -577,32 +565,43 @@ void tConfigurationList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		time_t luTime7=strtoul(field[9],NULL,10);
-		char cBuf7[32];
-		if(luTime7)
-			ctime_r(&luTime7,cBuf7);
+		time_t luTime8=strtoul(field[8],NULL,10);
+		char cBuf8[32];
+		if(luTime8)
+			ctime_r(&luTime8,cBuf8);
 		else
-			sprintf(cBuf7,"---");
-		time_t luTime9=strtoul(field[11],NULL,10);
-		char cBuf9[32];
-		if(luTime9)
-			ctime_r(&luTime9,cBuf9);
+			sprintf(cBuf8,"---");
+		time_t luTime10=strtoul(field[10],NULL,10);
+		char cBuf10[32];
+		if(luTime10)
+			ctime_r(&luTime10,cBuf10);
 		else
-			sprintf(cBuf9,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf10,"---");
+		printf("<td><input type=submit name=ED%s value=Edit>"
+			" <a class=darkLink href=unxsSPS.cgi?gcFunction=tConfiguration&uConfiguration=%s>%s</a>"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td><textarea disabled>%s</textarea>"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s</tr>"
+			,field[0]
 			,field[0]
 			,field[0]
 			,ForeignKey("tDatacenter","cLabel",strtoul(field[1],NULL,10))
 			,ForeignKey("tServer","cLabel",strtoul(field[2],NULL,10))
-			,ForeignKey("tContainer","cLabel",strtoul(field[3],NULL,10))
+			,field[3]
 			,field[4]
 			,field[5]
-			,field[6]
+			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[7],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[8],NULL,10))
-			,cBuf7
-			,ForeignKey("tClient","cLabel",strtoul(field[10],NULL,10))
-			,cBuf9
+			,cBuf8
+			,ForeignKey("tClient","cLabel",strtoul(field[9],NULL,10))
+			,cBuf10
 				);
 
 	}
@@ -615,8 +614,18 @@ void tConfigurationList(void)
 
 void CreatetConfiguration(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tConfiguration ( uModBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, cLabel VARCHAR(100) NOT NULL DEFAULT '', INDEX (cLabel), INDEX (uDatacenter), INDEX (uServer), INDEX (uContainer), uConfiguration INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cComment TEXT NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uModDate INT UNSIGNED NOT NULL DEFAULT 0, cValue VARCHAR(255) NOT NULL DEFAULT '', uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, uServer INT UNSIGNED NOT NULL DEFAULT 0, uContainer INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tConfiguration ("
+			" uConfiguration INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" uDatacenter INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uServer INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cLabel VARCHAR(100) NOT NULL DEFAULT '',"
+			" cValue VARCHAR(255) NOT NULL DEFAULT '',"
+			" cComment TEXT NOT NULL DEFAULT '',"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" INDEX (cLabel), INDEX (uDatacenter), INDEX (uServer), INDEX (uOwner) )");
 	MYSQL_RUN;
 }//CreatetConfiguration()
-
-//perlSAR patch1

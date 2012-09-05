@@ -10,7 +10,7 @@ AUTHOR/LEGAL
 */
 
 void tConfigurationNavList(void);
-unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uServer,unsigned uContainer);
+unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uServer);
 void htmlGlossaryLink(char *cLabel);
 
 void ExtProcesstConfigurationVars(pentry entries[], int x)
@@ -116,7 +116,7 @@ void ExttConfigurationCommands(pentry entries[], int x)
 				if(uModDate==uActualModDate)
 				{
 					uCount=CreateConfigurationFileJob(uConfiguration,uDatacenter,
-							uServer,uContainer);
+							uServer);
 					if(uCount)
 						tConfiguration("CreateConfigurationFileJob() Done");
 					else
@@ -319,42 +319,28 @@ void tConfigurationNavList(void)
 }//void tConfigurationNavList(void)
 
 
-unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uServer,unsigned uContainer)
+unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uServer)
 {
 	unsigned uCount=0;	
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	//All datacenters and all servers, but no uContainers
-	if(uDatacenter==0 && uServer==0 && uContainer==0)
+	//All datacenters and all servers
+	if(uDatacenter==0 && uServer==0)
 		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,0 FROM tServer");
-	//Single selected datacenter and every server of that datacenter, but no uContainers
-	else if(uDatacenter!=0 && uServer==0 && uContainer==0)
+	//Single selected datacenter and every server of that datacenter
+	else if(uDatacenter!=0 && uServer==0)
 		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,0 FROM tServer WHERE"
 			" tServer.uDatacenter=%u",uDatacenter);
-	//Single selected datacenter server, no container
-	else if(uDatacenter!=0 && uServer!=0 && uContainer==0)
+	//Single selected datacenter server
+	else if(uDatacenter!=0 && uServer!=0)
 		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,0 FROM tServer WHERE"
 			" tServer.uDatacenter=%u AND tServer.uServer=%u",uDatacenter,uServer);
-
-	//Single containers
-	//Completely specified container. No migration ever happened. Seems useless to me now.
-	else if(uDatacenter!=0 && uServer!=0 && uContainer!=0)
-		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,tContainer.uContainer FROM tServer,tContainer WHERE"
-			" tServer.uServer=tContainer.uServer AND tServer.uDatacenter=%u AND tServer.uServer=%u"
-			" AND tContainer.uContainer=%u",uDatacenter,uServer,uContainer);
-	//Find the datacenter and the server for a given container
-	else if(uDatacenter==0 && uServer==0 && uContainer!=0)
-		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,tContainer.uContainer FROM tServer,tContainer WHERE"
-			" tServer.uServer=tContainer.uServer"
-			" AND tContainer.uContainer=%u",uContainer);
-	//Find the datacenter for a given container of a specified server
-	else if(uDatacenter==0 && uServer!=0 && uContainer!=0)
-		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,tContainer.uContainer FROM tServer,tContainer WHERE"
-			" tServer.uServer=tContainer.uServer AND tServer.uServer=%u"
-			" AND tContainer.uContainer=%u",uServer,uContainer);
+	else if(uDatacenter==0 && uServer!=0)
+		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer FROM tServer WHERE"
+			" tServer.uServer=%u",uServer);
 	else if(1)
-		htmlPlainTextError("Unexpected CreateConfigurationFileJob() uDatacenter,uServer and uContainer combination");
+		htmlPlainTextError("Unexpected CreateConfigurationFileJob() uDatacenter,uServer combination");
 
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -363,12 +349,11 @@ unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter
 	while((field=mysql_fetch_row(res)))
 	{
 		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateConfigurationFileJob()',cJobName='InstallConfigFile'"
-			",uDatacenter=%s,uServer=%s,uContainer=%s"
+			",uDatacenter=%s,uServer=%s"
 			",cJobData='uConfiguration=%u;',uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				field[0],field[1],field[2],
-				uConfiguration,guLoginClient,guLoginClient);
+				field[0],field[1],uConfiguration,guLoginClient,guLoginClient);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));

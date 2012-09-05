@@ -454,8 +454,8 @@
 //tPBX
 #define LANG_FL_tPBX_uPBX "uPBX"
 #define LANG_FT_tPBX_uPBX "Primary Key"
-#define LANG_FL_tPBX_cLabel "cLabel"
-#define LANG_FT_tPBX_cLabel "Short label"
+#define LANG_FL_tPBX_cHostname "cHostname"
+#define LANG_FT_tPBX_cHostname "PBX Hostname"
 #define LANG_FL_tPBX_uAvailable "uAvailable"
 #define LANG_FT_tPBX_uAvailable "Is available for use"
 #define LANG_FL_tPBX_uOwner "uOwner"
@@ -539,10 +539,8 @@
 #define LANG_FT_tGroupGlue_uGroupGlue "Primary Key"
 #define LANG_FL_tGroupGlue_uGroup "uGroup"
 #define LANG_FT_tGroupGlue_uGroup "Glue into tGroup"
-#define LANG_FL_tGroupGlue_uServer "uServer"
-#define LANG_FT_tGroupGlue_uServer "Glue into tServer"
-#define LANG_FL_tGroupGlue_uContainer "uContainer"
-#define LANG_FT_tGroupGlue_uContainer "Glue into tContainer"
+#define LANG_FL_tGroupGlue_uKey "uKey"
+#define LANG_FT_tGroupGlue_uKey "Abstract key"
 //tServer
 #define LANG_FL_tServer_uServer "uServer"
 #define LANG_FT_tServer_uServer "Primary Key"
