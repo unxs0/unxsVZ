@@ -147,7 +147,7 @@ void TransferQuotaFile(void)
 	char cRemoteServer[100]={""};
 
 	sprintf(gcQuery,"SELECT uContainer,uSource FROM tContainer"
-			" WHERE uNode=%u AND uSource!=0",guNode);
+			" WHERE uNode=%u AND uSource!=0 AND uStatus=31",guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
