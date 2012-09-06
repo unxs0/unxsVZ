@@ -44,6 +44,33 @@ AUTHOR
 #include "language.h"
 #include "local.h"
 
+ //Native MySQL fields
+#define COLTYPE_DECIMAL 0
+#define COLTYPE_MONEY 1102 //For BCD in future. Now allows $250,000.00 style input and output.
+#define COLTYPE_INTUNSIGNED 3
+#define COLTYPE_TIMESTAMP 7
+#define COLTYPE_DATETIME 12
+#define COLTYPE_CHAR 254
+#define COLTYPE_VARCHAR 253
+#define COLTYPE_TEXT 252
+#define COLTYPE_IMAGE 1101
+#define COLTYPE_FKIMAGE 1200
+#define COLTYPE_BIGINT 8
+
+ //Our special gui fields
+#define COLTYPE_SELECTTABLE 1000
+#define COLTYPE_SELECTTABLE_OWNER 1100
+#define COLTYPE_RADPRI 1001
+#define COLTYPE_PRIKEY 1002
+#define COLTYPE_YESNO 1003
+#define COLTYPE_UNIXTIMECREATE 1004
+#define COLTYPE_UNIXTIMEUPDATE 1005
+#define COLTYPE_EXTFUNC 1006
+#define COLTYPE_FOREIGNKEY 1007
+#define COLTYPE_UINTUKEY 1008
+#define COLTYPE_VARCHARUKEY 1009
+#define COLTYPE_UNIXTIME 2000
+
 extern char gcHost[];
 extern char gcHostname[];
 extern char gcUser[];

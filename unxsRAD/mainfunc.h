@@ -16,7 +16,7 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 static char cTableList[64][32]={"tProject","tTable","tField","tTemplate","tTemplateSet","tTemplateType","tProjectStatus","tFieldType","tIndexType","tClient","tAuthorize","tStatus","tLog","tLogType","tLogMonth","tGlossary","tJob","tMonth","tJobStatus","tConfiguration","tServer",""};
 
 
-char cInitTableList[64][32]={"tLogType","tStatus","tJobStatus","tServer","tFieldType","tProjectStatus","tConfiguration","tTemplate","tTemplateSet","tTemplateType","tProject","tTable","tField",""};
+char cInitTableList[64][32]={"tLogType","tStatus","tJobStatus","tServer","tFieldType","tProjectStatus","tConfiguration","tTemplate","tTemplateSet","tTemplateType","tProject","tTable","tField","tIndexType",""};
 
 void ExtMainShell(int argc, char *argv[]);
 void Initialize(char *cPasswd);
@@ -458,6 +458,8 @@ void Initialize(char *cPasswd)
         CreatetField();
         CreatetTable();
         CreatetProject();
+        CreatetProjectStatus();
+        CreatetIndexType();
 
         for(i=0;cInitTableList[i][0];i++)
         {
