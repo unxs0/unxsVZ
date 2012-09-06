@@ -11,6 +11,9 @@ AUTHOR
 
 static unsigned uTable=0;
 static char cuTablePullDown[256]={""};
+static char cTableName[32]={""};
+static char cTableNameLC[32]={""};
+static char cTableKey[33]={""};
 
 //ModuleFunctionProtos()
 unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable);
@@ -382,8 +385,6 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 
 	if(!uTable || !uTemplate) return(uRetVal);
 
-	char cTableName[32]={""};
-	char cTableNameLC[32]={""};
 	char cFile[100]={""};
 
 	sprintf(cTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
@@ -410,16 +411,16 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 		struct t_template template;
 
 /*
-	ModuleCreateQuery
-	ModuleInsertQuery
-	ModuleListPrint
-	ModuleListTable
-	ModuleLoadVars
-	ModuleProcVars
-	ModuleRAD3Input
-	ModuleUpdateQuery
-	ModuleVars
-	ModuleVarList
+	funcModuleCreateQuery
+	funcModuleInsertQuery
+	funcModuleListPrint
+	funcModuleListTable
+	funcModuleLoadVars
+	funcModuleProcVars
+	funcModuleRAD3Input
+	funcModuleUpdateQuery
+	funcModuleVars
+	funcModuleVarList
 	cProject
 	cTableKey
 	cTableName
@@ -434,7 +435,6 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 		template.cpValue[1]=cTableNameLC;
 			
 		template.cpName[2]="cTableKey";
-		char cTableKey[33]={""};
 		sprintf(cTableKey,"u%.31s",cTableName+1);//New table name includes table type t prefix
 		template.cpValue[2]=cTableKey;
 			
@@ -485,11 +485,86 @@ unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable)
 }//unsigned CreateFileFromTemplate()
 
 
+void funcModuleCreateQuery(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	fprintf(fp,"void Create%s(void)\n{\n",cTableName);
+	fprintf(fp,"\tsprintf(gcQuery,\"CREATE TABLE IF NOT EXISTS %s (\"\n",cTableName);
+
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.cSQLCreatePart,"
+			"tFieldType.uRADType,tField.uSQLSize,"
+			"tField.uIndexType,tField.cExtIndex"
+			" FROM tField,tTable,tFieldType"
+			" WHERE tField.uTable=tTable.uTable"
+			" AND tField.uFieldType=tFieldType.uFieldType"
+			" AND tTable.cLabel='%s'"
+			" ORDER BY tField.uOrder",cTableName);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uFirst=0;
+	unsigned uRADType=0;
+	unsigned uIndexType=0;
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uFirst)
+			fprintf(fp,",\"\n");
+		sscanf(field[2],"%u",&uRADType);
+		sscanf(field[4],"%u",&uIndexType);
+		switch(uRADType)
+		{
+			default:
+			case(COLTYPE_RADPRI):
+				fprintf(fp,"\t\t\"%s INT UNSIGNED %s",field[0],field[1]);
+			break;
+			case(COLTYPE_VARCHAR):
+				fprintf(fp,"\t\t\"%s VARCHAR(%s) %s",field[0],field[3],field[1]);
+			break;
+		}
+		switch(uIndexType)
+		{
+			case(1):
+				fprintf(fp,", INDEX (%s)",field[0]);
+			break;
+			case(2):
+				fprintf(fp,", UNIQUE (%s)",field[0]);
+			break;
+			default:
+			break;
+		}
+		//cExtIndex
+		if(field[5][0])
+			fprintf(fp,", %s",field[5]);
+		uFirst=1;
+	}
+	fprintf(fp," )\");\n");
+	mysql_free_result(res);
+
+	fprintf(fp,"\tmysql_query(&gMysql,gcQuery);\n");
+	fprintf(fp,"\tif(mysql_errno(&gMysql))\n");
+	fprintf(fp,"\t\thtmlPlainTextError(mysql_error(&gMysql));\n");
+
+	fprintf(fp,"}//void Create%s(void)\n\n",cTableName);
+
+}//void funcModuleCreateQuery(FILE *fp)
+
+
 //libtemplate.a required
 void AppFunctions(FILE *fp,char *cFunction)
 {
 	//Not implemented yet
 	//else if(!strcmp(cFunction,"funcZoneStatus"))
+	if(!strcmp(cFunction,"funcModuleCreateQuery"))
+		funcModuleCreateQuery(fp);
+
 	//funcZoneStatus(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
+
+
