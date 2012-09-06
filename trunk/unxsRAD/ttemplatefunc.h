@@ -513,36 +513,133 @@ void funcModuleProcVars(FILE *fp)
 {
 }//void funcModuleProcVars(FILE *fp)
 
+
 void funcModuleRAD3Input(FILE *fp)
 {
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,"
+			" tField.uSQLSize,tField.uModLevel,"
+			" tField.uHtmlXSize,tField.uHtmlMax"
+			" FROM tField,tTable,tFieldType"
+			" WHERE tField.uTable=tTable.uTable"
+			" AND tField.uFieldType=tFieldType.uFieldType"
+			" AND tTable.uTable=%u"
+			" ORDER BY tField.uOrder",guTable);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uRADType=0;
+	unsigned uModLevel=0;
+	fprintf(fp,"\n");//Cancel out tab placed func
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uRADType);
+		sscanf(field[3],"%u",&uModLevel);
+		switch(uRADType)
+		{
+			default:
+			case(COLTYPE_RADPRI):
+				fprintf(fp,"\t//%s\n",field[0]);
+				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,field[0]);
+				fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%u size=16 maxlength=10 \"\n");
+				fprintf(fp,"\t\t,LANG_FT_%s_%s,%s);\n",gcTableName,field[0],field[0]);
+				fprintf(fp,"\tif(guPermLevel>=20 && uMode)\n\t{\n");
+				fprintf(fp,"\t\tprintf(\"></td></tr>\\n\");\n\t}\n\telse\n\t{\n");
+				fprintf(fp,"\t\tprintf(\"disabled></td></tr>\\n\");\n");
+				fprintf(fp,"\t\tprintf(\"<input type=hidden name=uTable value=%%u >\\n\",%s);\n\t}\n",field[0]);
+			break;
+			case(COLTYPE_VARCHAR):
+				fprintf(fp,"\t//%s\n",field[0]);
+				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,field[0]);
+				fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%u size=%s maxlength=%s \"\n",
+							field[4],field[5]);
+				fprintf(fp,"\t\t,LANG_FT_%s_%s,EncodeDoubleQuotes(%s));\n",gcTableName,field[0],field[0]);
+				fprintf(fp,"\tif(guPermLevel>=%s && uMode)\n\t{\n",field[3]);
+				fprintf(fp,"\t\tprintf(\"></td></tr>\\n\");\n\t}\n\telse\n\t{\n");
+				fprintf(fp,"\t\tprintf(\"disabled></td></tr>\\n\");\n");
+				fprintf(fp,"\t\tprintf(\"<input type=hidden name=uTable value='%%s'>\\n\",EncodeDoubleQuotes(%s));\n\t}\n",field[0]);
+			break;
+		}
+	}
+	mysql_free_result(res);
+
 }//void funcModuleRAD3Input(FILE *fp)
+
 
 void funcModuleVars(FILE *fp)
 {
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,"
+			" tField.uSQLSize"
+			" FROM tField,tTable,tFieldType"
+			" WHERE tField.uTable=tTable.uTable"
+			" AND tField.uFieldType=tFieldType.uFieldType"
+			" AND tTable.uTable=%u"
+			" ORDER BY tField.uOrder",guTable);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uRADType=0;
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uRADType);
+		switch(uRADType)
+		{
+			default:
+			case(COLTYPE_RADPRI):
+				fprintf(fp,"static unsigned %s=0;\n",field[0]);
+			break;
+			case(COLTYPE_VARCHAR):
+				fprintf(fp,"static char %s[%s]={\"\"};\n",field[0],field[2]);
+			break;
+		}
+	}
+	mysql_free_result(res);
+
 }//void funcModuleVars(FILE *fp)
+
 
 void funcModuleVarList(FILE *fp)
 {
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tTable"
+			" WHERE tField.uTable=tTable.uTable"
+			" AND tTable.uTable=%u"
+			" ORDER BY tField.uOrder",guTable);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uFirst=0;
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uFirst) fprintf(fp,",");
+		fprintf(fp,"%s.%s",gcTableName,field[0]);
+		uFirst=1;
+	}
+	mysql_free_result(res);
+
 }//void funcModuleVarList(FILE *fp)
 
-/*
-	sprintf(gcQuery,"UPDATE tTable SET uTable=%u,cLabel='%s',uProject=%u,uTableOrder=%u,uSourceLock=%u,cDescription='%s',cLegend='%s',cToolTip='%s',uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
-			uTable
-			,TextAreaSave(cLabel)
-			,uProject
-			,uTableOrder
-			,uSourceLock
-			,TextAreaSave(cDescription)
-			,TextAreaSave(cLegend)
-			,TextAreaSave(cToolTip)
-			,uNewLevel
-			,uModLevel
-			,uDelLevel
-			,uReadLevel
-			,uModBy
-			,cRowid);
 
-*/
 void funcModuleUpdateQuery(FILE *fp)
 {
        	MYSQL_RES *res;
@@ -591,8 +688,7 @@ void funcModuleUpdateQuery(FILE *fp)
 		uFirst=1;
 	}
 
-	fprintf(fp,"\",\n");
-	uFirst=0;
+	fprintf(fp,"\"\n");
 	uRADType=0;
 	mysql_data_seek(res,0);
 	while((field=mysql_fetch_row(res)))
@@ -602,24 +698,21 @@ void funcModuleUpdateQuery(FILE *fp)
 			continue;
 		if(!strcmp(field[0],"uCreatedDate"))
 			continue;
-		if(uFirst)
-			fprintf(fp,",\n");
 		sscanf(field[1],"%u",&uRADType);
 		switch(uRADType)
 		{
 			default:
 			case(COLTYPE_RADPRI):
-				fprintf(fp,"\t\t\t%s",field[0]);
+				fprintf(fp,"\t\t\t,%s\n",field[0]);
 			break;
 			case(COLTYPE_VARCHAR):
-				fprintf(fp,"\t\t\tTextAreasave(%s)",field[0]);
+				fprintf(fp,"\t\t\t,TextAreasave(%s)\n",field[0]);
 			break;
 		}
-		uFirst=1;
 	}
 	mysql_free_result(res);
 
-	fprintf(fp,");\n");
+	fprintf(fp,"\t\t);\n");
 }//void funcModuleUpdateQuery(FILE *fp)
 
 
@@ -671,8 +764,7 @@ void funcModuleInsertQuery(FILE *fp)
 		uFirst=1;
 	}
 
-	fprintf(fp,"\",\n");
-	uFirst=0;
+	fprintf(fp,"\"\n");
 	uRADType=0;
 	mysql_data_seek(res,0);
 	while((field=mysql_fetch_row(res)))
@@ -682,28 +774,23 @@ void funcModuleInsertQuery(FILE *fp)
 			continue;
 		if(!strcmp(field[0],"uModDate"))
 			continue;
-		if(uFirst)
-			fprintf(fp,",\n");
 		sscanf(field[1],"%u",&uRADType);
 		switch(uRADType)
 		{
 			default:
 			case(COLTYPE_RADPRI):
-				fprintf(fp,"\t\t\t%s",field[0]);
+				fprintf(fp,"\t\t\t,%s\n",field[0]);
 			break;
 			case(COLTYPE_VARCHAR):
-				fprintf(fp,"\t\t\tTextAreasave(%s)",field[0]);
+				fprintf(fp,"\t\t\t,TextAreasave(%s)\n",field[0]);
 			break;
 			case(COLTYPE_UNIXTIMECREATE):
-				uFirst=0;//Skip comma
-				continue;
 			break;
 		}
-		uFirst=1;
 	}
 	mysql_free_result(res);
 
-	fprintf(fp,");\n");
+	fprintf(fp,"\t\t);\n");
 
 }//void funcModuleInsertQuery(FILE *fp)
 
