@@ -174,14 +174,24 @@ void TransferQuotaFile(void)
 			exit(2);
 		}
         	res2=mysql_store_result(&gMysql);
+		cRemoteServer[0]=0;
 		if((field2=mysql_fetch_row(res2)))
 			sprintf(cRemoteServer,"%.99s",field2[0]);
 		mysql_free_result(res2);
 
+		if(!cRemoteServer[0])
+		{
+			fprintf(stderr,"No cRemoteServer");
+			logfileLine("TransferQuotaFile","No cRemoteServer",0);
+			continue;
+		}
 		sprintf(gcQuery,"scp %s:/var/vzquota/quota.%s /var/vzquota/quota.%s ",cRemoteServer,field[1],field[0]);
-		printf("%s\n",gcQuery);
 		if(system(gcQuery))
-			break;
+		{
+			logfileLine("TransferQuotaFile",gcQuery,0);
+			strcat(gcQuery,"\n");
+			fprintf(stderr,gcQuery);
+		}
 	}
 	mysql_free_result(res);
 
