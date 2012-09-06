@@ -16,7 +16,7 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 static char cTableList[64][32]={"tProject","tTable","tField","tTemplate","tTemplateSet","tTemplateType","tProjectStatus","tFieldType","tIndexType","tClient","tAuthorize","tStatus","tLog","tLogType","tLogMonth","tGlossary","tJob","tMonth","tJobStatus","tConfiguration","tServer",""};
 
 
-char cInitTableList[64][32]={"tLogType","tStatus","tJobStatus","tServer",""};
+char cInitTableList[64][32]={"tLogType","tStatus","tJobStatus","tServer","tFieldType",""};
 
 void ExtMainShell(int argc, char *argv[]);
 void Initialize(char *cPasswd);
@@ -227,22 +227,22 @@ void ExtMainShell(int argc, char *argv[])
 
 void RestoreAll(char *cPasswd)
 {
-	char cISMROOT[256]={""};
+	char cInstallDir[256]={""};
 	register int i;
 
-	if(getenv("ISMROOT")!=NULL)
+	if(getenv("cInstallDir")!=NULL)
 	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
+		strncpy(cInstallDir,getenv("cInstallDir"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cISMROOT[0])
+	if(!cInstallDir[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. (bash) export ISMROOT=/home/ism-3.0\n");
+		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/ism-3.0\n");
 		exit(1);
 	}
 
-	printf("Restoring unxsRAD data from .txt file in %s/unxsRAD/data...\n\n",cISMROOT);
+	printf("Restoring unxsRAD data from .txt file in %s/unxsRAD/data...\n\n",cInstallDir);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -257,7 +257,7 @@ void RestoreAll(char *cPasswd)
 
 	for(i=0;cTableList[i][0];i++)
 	{
-sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cTableList[i],cTableList[i]);
+sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s",cInstallDir,cTableList[i],cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -274,21 +274,21 @@ sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s
 
 void Restore(char *cPasswd, char *cTableName)
 {
-	char cISMROOT[256]={""};
+	char cInstallDir[256]={""};
 
-	if(getenv("ISMROOT")!=NULL)
+	if(getenv("cInstallDir")!=NULL)
 	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
+		strncpy(cInstallDir,getenv("cInstallDir"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cISMROOT[0])
+	if(!cInstallDir[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. (bash) export ISMROOT=/home/ism-3.0\n");
+		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/ism-3.0\n");
 		exit(1);
 	}
 
-	printf("Restoring unxsRAD data from .txt file in %s/unxsRAD/data...\n\n",cISMROOT);
+	printf("Restoring unxsRAD data from .txt file in %s/unxsRAD/data...\n\n",cInstallDir);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -301,7 +301,7 @@ void Restore(char *cPasswd, char *cTableName)
 		exit(1);
 	}
 
-	sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cTableName,cTableName);
+	sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s",cInstallDir,cTableName,cTableName);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -317,21 +317,21 @@ void Restore(char *cPasswd, char *cTableName)
 void Backup(char *cPasswd)
 {
 	register int i;
-	char cISMROOT[256]={""};
+	char cInstallDir[256]={""};
 
-	if(getenv("ISMROOT")!=NULL)
+	if(getenv("cInstallDir")!=NULL)
 	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
+		strncpy(cInstallDir,getenv("cInstallDir"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cISMROOT[0])
+	if(!cInstallDir[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. (bash) export ISMROOT=/home/ism-3.0\n");
+		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/ism-3.0\n");
 		exit(1);
 	}
 
-	printf("Backing up unxsRAD data to .txt files in %s/unxsRAD/data...\n\n",cISMROOT);
+	printf("Backing up unxsRAD data to .txt files in %s/unxsRAD/data...\n\n",cInstallDir);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -349,7 +349,7 @@ void Backup(char *cPasswd)
 		char cFileName[300];
 
 		sprintf(cFileName,"%s/unxsRAD/data/%s.txt"
-				,cISMROOT,cTableList[i]);
+				,cInstallDir,cTableList[i]);
 		unlink(cFileName);
 
 sprintf(gcQuery,"SELECT * INTO OUTFILE '%s' FROM %s",cFileName,cTableList[i]);
@@ -370,22 +370,22 @@ sprintf(gcQuery,"SELECT * INTO OUTFILE '%s' FROM %s",cFileName,cTableList[i]);
 
 void Initialize(char *cPasswd)
 {
-	char cISMROOT[256]={""};
+	char cInstallDir[256]={""};
 	register int i;
 
-	if(getenv("ISMROOT")!=NULL)
+	if(getenv("cInstallDir")!=NULL)
 	{
-		strncpy(cISMROOT,getenv("ISMROOT"),255);
+		strncpy(cInstallDir,getenv("cInstallDir"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cISMROOT[0])
+	if(!cInstallDir[0])
 	{
-		printf("You must set ISMROOT env var first. Ex. (bash) export ISMROOT=/home/ism-3.0\n");
+		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/joe/unxsVZ\n");
 		exit(1);
 	}
 
-	printf("Creating db and setting permissions, installing data from %s/unxsRAD...\n\n",cISMROOT);
+	printf("Creating db and setting permissions, installing data from %s/unxsRAD...\n\n",cInstallDir);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -421,8 +421,9 @@ void Initialize(char *cPasswd)
 	
 	CreatetAuthorize();
 	//And 1 standard example user
-	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='Root',uCertClient=1,cIpMask='0.0.0.0',uPerm=12,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cPasswd='..M0/uAvCFhis'");
-mysql_query(&gMysql,gcQuery);
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='Root',uCertClient=1,cIpMask='0.0.0.0',"
+				"uPerm=12,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cPasswd='..M0/uAvCFhis'");
+	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
 		printf("%s\n",mysql_error(&gMysql));
@@ -453,10 +454,15 @@ mysql_query(&gMysql,gcQuery);
         CreatetTemplate();
         CreatetTemplateSet();
         CreatetTemplateType();
+        CreatetFieldType();
+        CreatetField();
+        CreatetTable();
+        CreatetProject();
 
         for(i=0;cInitTableList[i][0];i++)
         {
-                sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s",cISMROOT,cInitTableList[i],cInitTableList[i]);
+                sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s",
+			cInstallDir,cInitTableList[i],cInitTableList[i]);
                 mysql_query(&gMysql,gcQuery);
                 if(mysql_errno(&gMysql))
                 {
