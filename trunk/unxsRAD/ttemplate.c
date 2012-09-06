@@ -312,7 +312,7 @@ void tTemplateInput(unsigned uMode)
 		tTablePullDown("tTemplateType;cuTemplateTypePullDown","cLabel","cLabel",uTemplateType,0);
 //cComment
 	OpenRow(LANG_FL_tTemplate_cComment,"black");
-	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cComment "
+	printf("<textarea title='%s' cols=100 wrap=hard rows=8 name=cComment "
 ,LANG_FT_tTemplate_cComment);
 	if(guPermLevel>=7 && uMode)
 	{
@@ -325,7 +325,7 @@ void tTemplateInput(unsigned uMode)
 	}
 //cTemplate
 	OpenRow(LANG_FL_tTemplate_cTemplate,"black");
-	printf("<textarea title='%s' cols=80 wrap=off rows=16 name=cTemplate "
+	printf("<textarea title='%s' cols=100 wrap=off rows=16 name=cTemplate "
 ,LANG_FT_tTemplate_cTemplate);
 	if(guPermLevel>=7 && uMode)
 	{

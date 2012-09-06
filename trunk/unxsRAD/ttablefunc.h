@@ -583,50 +583,52 @@ void GetuFieldTypes(void)
 
 	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_RADPRI);
 	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	if(mysql_errno(&gMysql))
+		tTable(gcQuery);
 	res=mysql_store_result(&gMysql);
-	field=mysql_fetch_row(res);
-	sscanf(field[0],"%u",&uRADPRI);
-	mysql_free_result(res);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uRADPRI);
 
 	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_VARCHAR);
 	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	if(mysql_errno(&gMysql))
+		tTable(gcQuery);
 	res=mysql_store_result(&gMysql);
-	field=mysql_fetch_row(res);
-	sscanf(field[0],"%u",&uVARCHAR);
-	mysql_free_result(res);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uVARCHAR);
 
 	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_FOREIGNKEY);
 	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	if(mysql_errno(&gMysql))
+		tTable(gcQuery);
 	res=mysql_store_result(&gMysql);
-	field=mysql_fetch_row(res);
-	sscanf(field[0],"%u",&uFOREIGNKEY);
-	mysql_free_result(res);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uFOREIGNKEY);
 
 	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_UNIXTIMEUPDATE);
 	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	if(mysql_errno(&gMysql))
+		tTable(gcQuery);
 	res=mysql_store_result(&gMysql);
-	field=mysql_fetch_row(res);
-	sscanf(field[0],"%u",&uUNIXTIMEUPDATE);
-	mysql_free_result(res);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uUNIXTIMEUPDATE);
 
 	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_UNIXTIMECREATE);
 	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	if(mysql_errno(&gMysql))
+		tTable(gcQuery);
 	res=mysql_store_result(&gMysql);
-	field=mysql_fetch_row(res);
-	sscanf(field[0],"%u",&uUNIXTIMECREATE);
-	mysql_free_result(res);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uUNIXTIMECREATE);
 
 	sprintf(gcQuery,"SELECT uFieldType FROM tFieldType WHERE uRADType=%u LIMIT 1",COLTYPE_INTUNSIGNED);
 	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) tTable(mysql_error(&gMysql));
+	if(mysql_errno(&gMysql))
+		tTable(gcQuery);
 	res=mysql_store_result(&gMysql);
-	field=mysql_fetch_row(res);
-	sscanf(field[0],"%u",&uUNSIGNED);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uUNSIGNED);
+
 	mysql_free_result(res);
 
 }//void GetuFieldTypes(void)
@@ -649,7 +651,7 @@ void AddDefaultFields(void)
 			uRADPRI,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		tTable(mysql_error(&gMysql));
+		tTable(gcQuery);
 
 	//cLabel
 	sprintf(gcQuery,"INSERT INTO tField SET uTable=%u,uProject=%u,cLabel='cLabel',uOrder=2,"
@@ -660,7 +662,7 @@ void AddDefaultFields(void)
 			uVARCHAR,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		tTable(mysql_error(&gMysql));
+		tTable(gcQuery);
 
 	//uOwner
 	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uOwner',uOrder=1000,"
@@ -671,7 +673,7 @@ void AddDefaultFields(void)
 			uFOREIGNKEY,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		tTable(mysql_error(&gMysql));
+		tTable(gcQuery);
 
 	//uCreatedBy
 	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedBy',uOrder=1001,"
@@ -682,7 +684,7 @@ void AddDefaultFields(void)
 			uFOREIGNKEY,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		tTable(mysql_error(&gMysql));
+		tTable(gcQuery);
 
 	//uCreatedDate
 	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedDate',uOrder=1002,"
@@ -693,7 +695,7 @@ void AddDefaultFields(void)
 			uUNIXTIMECREATE,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		tTable(mysql_error(&gMysql));
+		tTable(gcQuery);
 
 	//uModBy
 	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uModBy',uOrder=1003,"
@@ -704,7 +706,7 @@ void AddDefaultFields(void)
 			uFOREIGNKEY,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		tTable(mysql_error(&gMysql));
+		tTable(gcQuery);
 
 	//uModDate
 	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uModDate',uOrder=1004,"
@@ -715,7 +717,7 @@ void AddDefaultFields(void)
 			uUNIXTIMEUPDATE,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		tTable(mysql_error(&gMysql));
+		tTable(gcQuery);
 
 }//void AddDefaultFields(void)
 

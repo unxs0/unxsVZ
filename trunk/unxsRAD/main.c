@@ -1454,6 +1454,8 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 
+	static char gcQuery[256];
+
         sprintf(gcQuery,"SELECT %s FROM %s WHERE _rowid=%u",
                         cFieldName,cTableName,uKey);
         mysql_query(&gMysql,gcQuery);

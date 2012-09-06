@@ -15,6 +15,7 @@
 CFLAGS= -DLinux -Wall
 RELEASE= 0.1
 LIBS= -L/usr/lib/openisp /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl -ltemplate
+CGIDIR=/var/www/unxs/cgi-bin/
 
 
 all: unxsRAD.cgi unxsRAD
