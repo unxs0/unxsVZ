@@ -521,7 +521,8 @@ void funcModuleRAD3Input(FILE *fp)
 
 	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,"
 			" tField.uSQLSize,tField.uModLevel,"
-			" tField.uHtmlXSize,tField.uHtmlMax"
+			" tField.uHtmlXSize,tField.uHtmlMax,"
+			" tField.cFKSpec,tField.uHtmlYSize"
 			" FROM tField,tTable,tFieldType"
 			" WHERE tField.uTable=tTable.uTable"
 			" AND tField.uFieldType=tFieldType.uFieldType"
@@ -534,13 +535,28 @@ void funcModuleRAD3Input(FILE *fp)
                 return;
         }
         res=mysql_store_result(&gMysql);
+
+	unsigned uSQLSize=0;
+	unsigned uHtmlMax=0;
+	unsigned uHtmlXSize=0;
+	unsigned uHtmlYSize=0;
+	char *cWrap="hard";
 	unsigned uRADType=0;
 	unsigned uModLevel=0;
+	char cTableName[32]={""};
+	char cFieldName[32]={""};
+	char cField[32]={""};
+	char *cp;
 	fprintf(fp,"\n");//Cancel out tab placed func
 	while((field=mysql_fetch_row(res)))
 	{
+		sprintf(cField,"%.31s",field[0]);
 		sscanf(field[1],"%u",&uRADType);
+		sscanf(field[2],"%u",&uSQLSize);
 		sscanf(field[3],"%u",&uModLevel);
+		sscanf(field[4],"%u",&uHtmlXSize);
+		sscanf(field[5],"%u",&uHtmlMax);
+		sscanf(field[7],"%u",&uHtmlYSize);
 		switch(uRADType)
 		{
 			default:
@@ -549,17 +565,17 @@ void funcModuleRAD3Input(FILE *fp)
                         case(COLTYPE_INTUNSIGNED):
                         case(COLTYPE_UINTUKEY):
 			case(COLTYPE_BIGINT):
-				fprintf(fp,"\t//%s\n",field[0]);
-				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,field[0]);
+				fprintf(fp,"\t//%s\n",cField);
+				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
 				if(uRADType==COLTYPE_BIGINT)
 					fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%lu size=16 maxlength=10 \"\n");
 				else
 					fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%u size=16 maxlength=10 \"\n");
-				fprintf(fp,"\t\t,LANG_FT_%s_%s,%s);\n",gcTableName,field[0],field[0]);
-				fprintf(fp,"\tif(guPermLevel>=%s && uMode)\n\t{\n",field[3]);
+				fprintf(fp,"\t\t,LANG_FT_%s_%s,%s);\n",gcTableName,cField,cField);
+				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n\t{\n",uModLevel);
 				fprintf(fp,"\t\tprintf(\"></td></tr>\\n\");\n\t}\n\telse\n\t{\n");
 				fprintf(fp,"\t\tprintf(\"disabled></td></tr>\\n\");\n");
-				fprintf(fp,"\t\tprintf(\"<input type=hidden name=uTable value=%%u >\\n\",%s);\n\t}\n",field[0]);
+				fprintf(fp,"\t\tprintf(\"<input type=hidden name=uTable value=%%u >\\n\",%s);\n\t}\n",cField);
 			break;
 
 			case(COLTYPE_DECIMAL):
@@ -567,40 +583,172 @@ void funcModuleRAD3Input(FILE *fp)
                         case(COLTYPE_CHAR):
                         case(COLTYPE_VARCHARUKEY):
 			case(COLTYPE_VARCHAR):
-				fprintf(fp,"\t//%s\n",field[0]);
-				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,field[0]);
-				fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%u size=%s maxlength=%s \"\n",
-							field[4],field[5]);
-				fprintf(fp,"\t\t,LANG_FT_%s_%s,EncodeDoubleQuotes(%s));\n",gcTableName,field[0],field[0]);
-				fprintf(fp,"\tif(guPermLevel>=%s && uMode)\n\t{\n",field[3]);
+				fprintf(fp,"\t//%s\n",cField);
+				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
+				fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%u size=%u maxlength=%u \"\n",
+							uHtmlXSize,uHtmlMax);
+				if(uRADType==COLTYPE_MONEY)
+					fprintf(fp,"\t\t,LANG_FT_%s_%s,EncodeDoubleQuotes(%s));\n",gcTableName,cField,cField);
+				else
+					fprintf(fp,"\t\t,LANG_FT_%s_%s,cMoneyDisplay(%s));\n",gcTableName,cField,cField);
+				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n\t{\n",uModLevel);
 				fprintf(fp,"\t\tprintf(\"></td></tr>\\n\");\n\t}\n\telse\n\t{\n");
 				fprintf(fp,"\t\tprintf(\"disabled></td></tr>\\n\");\n");
-				fprintf(fp,"\t\tprintf(\"<input type=hidden name=uTable value='%%s'>\\n\",EncodeDoubleQuotes(%s));\n\t}\n",field[0]);
+				fprintf(fp,"\t\tprintf(\"<input type=hidden name=uTable value='%%s'>\\n\",EncodeDoubleQuotes(%s));\n\t}\n",cField);
 			break;
-/*
-//uModBy
-	OpenRow(LANG_FL_tTable_uModBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-//uModDate
-	OpenRow(LANG_FL_tTable_uModDate,"black");
-	if(uModDate)
-		printf("%s\n\n",ctime(&uModDate));
-	else
-		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
-	printf("</tr>\n");
-		}
-	}
-	mysql_free_result(res);
-*/
 
+			case COLTYPE_DATETIME:
+				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
+				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),1);\n",cField,cField);
+				fprintf(fp,"\telse\n");
+				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),0);\n",cField,cField);
+			break;
+
+			case COLTYPE_UNIXTIME:
+				fprintf(fp,"\tif(%s)\n",cField);
+				fprintf(fp,"\t\tprintf(\"<input type=text name=c%s value='%%s' disabled>\\n\",ctime(&%s));\n",cField,cField);
+				fprintf(fp,"\telse\n");
+				fprintf(fp,"\t\tprintf(\"<input type=text name=c%s value='---' disabled>\\n\");\n",cField);
+				fprintf(fp,"\tprintf(\"<input type=hidden name=%s value=%%lu>\\n\",%s);\n",cField,cField);	
+			break;
+			case COLTYPE_UNIXTIMECREATE:
+			case COLTYPE_UNIXTIMEUPDATE:
+				fprintf(fp,"\tif(%s)\n",cField);
+				fprintf(fp,"\t\tprintf(\"%%s\\n\\n\",ctime(&%s));\n",cField);
+				fprintf(fp,"\telse\n");
+				fprintf(fp,"\t\tprintf(\"---\\n\\n\");\n");
+				fprintf(fp,"\tprintf(\"<input type=hidden name=%s value=%%lu >\\n\",%s);\n",cField,cField);
+			break;
+
+			case COLTYPE_FOREIGNKEY:
+				//If other FK come after they will 'inherit'
+				//These table and field names
+				if((cp=strchr(field[6],'.')))
+				{
+					char *cp2=NULL;
+
+					*cp=0;
+					sprintf(cTableName,"%.31s",field[6]);
+					if((cp2=strchr(cp+1,' ')))
+						*cp2=0;
+					sprintf(cFieldName,"%.31s",cp+1);
+					*cp='.';
+					if(cp2) *cp2=' ';
+				}
+				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
+				fprintf(fp,"\t{\n");
+				if(strstr(field[6],"AllowMod"))
+					fprintf(fp,"\tprintf(\"<!--FK AllowMod-->\\n"
+					"<input title='%%s' type=text size=16 maxlength=20 name=%s value=%%u >\\n\",LANG_FT_%s_%s,%s);\n"
+							,cField,gcTableName,cField,cField);
+				else
+					fprintf(fp,"\tprintf(\"%%s<input type=hidden name=%s value=%%u >\\n"
+					"\",ForeignKey(\"%s\",\"%s\",%s),%s);\n",cField,cTableName,cFieldName,cField,cField);
+				fprintf(fp,"\t}\n");
+				fprintf(fp,"\telse\n");
+				fprintf(fp,"\t{\n");
+				if(strstr(field[14],"AllowMod"))
+					fprintf(fp,"\tprintf(\"<input title='%%s' type=text value='%%s' size=%u disabled>"
+					"<input type=hidden name='%s' value=%%u >\\n\",LANG_FT_%s_%s,ForeignKey(\"%s\",\"%s\",%s),%s);\n"
+						,uHtmlXSize,cField,gcTableName,cField,
+						cTableName,cFieldName,cField,cField);
+				else
+					fprintf(fp,"\tprintf(\"%%s<input type=hidden name=%s value=%%u >\\n"
+					"\",ForeignKey(\"%s\",\"%s\",%s),%s);\n",cField,cTableName,cFieldName,cField,cField);
+
+					fprintf(fp,"\t}\n");
+			break;//COLTYPE_FOREIGNKEY
+
+			case COLTYPE_EXTFUNC:
+			//function must exist in some .h or ext file see project
+			//void {{field6}}(void)
+				fprintf(fp,"\t%s(%s);\n",field[6],cField);
+			break;
+
+			case COLTYPE_YESNO:
+				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
+				fprintf(fp,"\t\tYesNoPullDown(\"%s\",%s,1);\n",cField,cField);
+				fprintf(fp,"\telse\n");
+				fprintf(fp,"\t\tYesNoPullDown(\"%s\",%s,0);\n",cField,cField);
+			break;
+
+			//Text Area
+			case COLTYPE_TEXT:
+				if(!uHtmlXSize) uHtmlXSize=80;
+				if(!uHtmlYSize) uHtmlYSize=16;
+
+				if(strstr(field[14],"textarea.wrap=off") || !strcmp(cField,"cTemplate"))
+					cWrap="off";
+				if(strstr(field[14],"textarea.wrap=soft"))
+					cWrap="soft";
+
+				fprintf(fp,"\tprintf(\"<textarea title='%%s' cols=%u wrap=%s rows=%u name=%s \"\n,LANG_FT_%s_%s);\n",
+					uHtmlXSize,cWrap,uHtmlYSize,cField,gcTableName,cField);
+				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
+				fprintf(fp,"\t{\n");
+				fprintf(fp,"\t\tprintf(\">%%s</textarea></td></tr>\\n\",%s);\n",cField);
+				fprintf(fp,"\t}\n");
+				fprintf(fp,"\telse\n");
+				fprintf(fp,"\t{\n");
+				fprintf(fp,"\t\tprintf(\"disabled>%%s</textarea></td></tr>\\n\",%s);\n",cField);
+				fprintf(fp,"\t\tprintf(\"<input type=hidden name=%s value=\\\"%%s\\\" >\\n\",EncodeDoubleQuotes(%s));\n",
+					cField,cField);
+				fprintf(fp,"\t}\n");
+
+			break;
+			
+			case COLTYPE_SELECTTABLE:
+				if((cp=strchr(field[6],'.')))
+				{
+					char *cp2=NULL;
+
+					*cp=0;
+					sprintf(cTableName,"%.31s",field[6]);
+					if((cp2=strchr(cp+1,' ')))
+						*cp2=0;
+					sprintf(cFieldName,"%.31s",cp+1);
+					*cp='.';
+					if(cp2) *cp2=' ';
+				}
+				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
+				fprintf(fp,"\t\ttTablePullDown(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,1);\n"
+					,cTableName,cField,cFieldName,cFieldName,cField);
+				fprintf(fp,"\telse\n");
+				fprintf(fp,"\t\ttTablePullDown(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,0);\n"
+					,cTableName,cField,cFieldName,cFieldName,cField);
+			break;
+
+			case COLTYPE_SELECTTABLE_OWNER:
+				if((cp=strchr(field[6],'.')))
+				{
+					char *cp2=NULL;
+
+					*cp=0;
+					sprintf(cTableName,"%.31s",field[6]);
+					if((cp2=strchr(cp+1,' ')))
+						*cp2=0;
+					sprintf(cFieldName,"%.31s",cp+1);
+					*cp='.';
+					if(cp2) *cp2=' ';
+				}
+				fprintf(fp,"\tif(guPermLevel>=%u && guPermLevel<10 && uMode)\n",uModLevel);
+				fprintf(fp,"\t\ttTablePullDownOwner(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,1);\n"
+					,cTableName,cField,cFieldName,cFieldName,cField);
+				fprintf(fp,"\telse if(guPermLevel<10 && !uMode)\n");
+				fprintf(fp,"\t\ttTablePullDownOwner(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,0);\n"
+					,cTableName,cField,cFieldName,cFieldName,cField);
+				fprintf(fp,"\telse if(uMode)\n");
+				fprintf(fp,"\tprintf(\"<input title='%%s' type=text size=20 maxlength=20 name=%s value=%%u >\\n\",LANG_FT_%s_%s,%s);\n"
+					,cField,gcTableName,cField,cField);
+				//We don't want admin or root users to be clobbered by a giant select
+				//so we use a modifiable FK
+				fprintf(fp,"\telse if(1)\n\t{\n");
+				fprintf(fp,"\t\tprintf(\"<input type=text size=20 value='%%s' disabled>\\n\",ForeignKey(\"%s\",\"%s\",%s));\n"
+					,cTableName,cFieldName,cField);
+				fprintf(fp,"\t\tprintf(\"<input type=hidden size=20 maxlength=20 name=%s value=%%u >\\n\",%s);\n"
+					,cField,cField);
+				fprintf(fp,"\t}\n");
+			break;
 
 		}//switch
 
