@@ -17,6 +17,7 @@ static char gcTableKey[33]={""};
 
 //ModuleFunctionProtos()
 unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable);
+void StripQuotes(char *cLine);
 
 
 void tTemplateNavList(void);
@@ -827,17 +828,19 @@ void funcModuleRAD3Input(FILE *fp)
 			
 			case COLTYPE_SELECTTABLE:
 				fprintf(fp,"\t//%s COLTYPE_SELECTTABLE\n",cField);
-				if((cp=strchr(field[6],'.')))
+				if((cp=strchr(field[6],',')))
 				{
 					char *cp2=NULL;
 
 					*cp=0;
 					sprintf(cTableName,"%.31s",field[6]);
-					if((cp2=strchr(cp+1,' ')))
+					if((cp2=strchr(cp+1,',')))
 						*cp2=0;
 					sprintf(cFieldName,"%.31s",cp+1);
-					*cp='.';
-					if(cp2) *cp2=' ';
+					*cp=',';
+					if(cp2) *cp2=',';
+					StripQuotes(cFieldName);
+					StripQuotes(cTableName);
 				}
 				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
 				fprintf(fp,"\t\ttTablePullDown(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,1);\n"
@@ -849,17 +852,19 @@ void funcModuleRAD3Input(FILE *fp)
 
 			case COLTYPE_SELECTTABLE_OWNER:
 				fprintf(fp,"\t//%s COLTYPE_SELECTTABLE_OWNER\n",cField);
-				if((cp=strchr(field[6],'.')))
+				if((cp=strchr(field[6],',')))
 				{
 					char *cp2=NULL;
 
 					*cp=0;
 					sprintf(cTableName,"%.31s",field[6]);
-					if((cp2=strchr(cp+1,' ')))
+					if((cp2=strchr(cp+1,',')))
 						*cp2=0;
 					sprintf(cFieldName,"%.31s",cp+1);
-					*cp='.';
-					if(cp2) *cp2=' ';
+					*cp=',';
+					if(cp2) *cp2=',';
+					StripQuotes(cFieldName);
+					StripQuotes(cTableName);
 				}
 				fprintf(fp,"\tif(guPermLevel>=%u && guPermLevel<10 && uMode)\n",uModLevel);
 				fprintf(fp,"\t\ttTablePullDownOwner(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,1);\n"
@@ -1206,4 +1211,26 @@ void AppFunctions(FILE *fp,char *cFunction)
 
 }//void AppFunctions(FILE *fp,char *cFunction)
 
+
+//Public domain snippet
+void StripQuotes(char *cLine)
+{
+	register int j=0,i=0;
+	for(i=0;cLine[i];i++)
+	{
+		if(cLine[i]!='"'&&cLine[i]!='\\')
+		{ 
+			cLine[j++] = cLine[i];
+		}
+		else if(cLine[i+1]== '"'&&cLine[i]=='\\')
+		{ 
+			cLine[j++] = '"';
+		}
+		else if(cLine[i+1]!='"'&&cLine[i]=='\\')
+		{ 
+			cLine[j++] = '\\';
+		}
+	}
+	if(j>0) cLine[j]=0;
+}//void StripQuotes(char *cLine)
 
