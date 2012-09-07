@@ -485,18 +485,6 @@ unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable)
 }//unsigned CreateFileFromTemplate()
 
 
-/*
-	funcModuleCreateQuery
-	funcModuleInsertQuery
-	funcModuleListPrint
-	funcModuleListTable
-	funcModuleLoadVars
-	funcModuleProcVars
-	funcModuleRAD3Input
-	funcModuleUpdateQuery
-	funcModuleVars
-	funcModuleVarList
-*/
 void funcModuleListPrint(FILE *fp)
 {
 }//void funcModuleListPrint(FILE *fp)
@@ -565,7 +553,7 @@ void funcModuleRAD3Input(FILE *fp)
                         case(COLTYPE_INTUNSIGNED):
                         case(COLTYPE_UINTUKEY):
 			case(COLTYPE_BIGINT):
-				fprintf(fp,"\t//%s\n",cField);
+				fprintf(fp,"\t//%s uRADType=%u\n",cField,uRADType);
 				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
 				if(uRADType==COLTYPE_BIGINT)
 					fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%lu size=16 maxlength=10 \"\n");
@@ -583,14 +571,14 @@ void funcModuleRAD3Input(FILE *fp)
                         case(COLTYPE_CHAR):
                         case(COLTYPE_VARCHARUKEY):
 			case(COLTYPE_VARCHAR):
-				fprintf(fp,"\t//%s\n",cField);
+				fprintf(fp,"\t//%s uRADType=%u\n",cField,uRADType);
 				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
 				fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%u size=%u maxlength=%u \"\n",
 							uHtmlXSize,uHtmlMax);
 				if(uRADType==COLTYPE_MONEY)
-					fprintf(fp,"\t\t,LANG_FT_%s_%s,EncodeDoubleQuotes(%s));\n",gcTableName,cField,cField);
-				else
 					fprintf(fp,"\t\t,LANG_FT_%s_%s,cMoneyDisplay(%s));\n",gcTableName,cField,cField);
+				else
+					fprintf(fp,"\t\t,LANG_FT_%s_%s,EncodeDoubleQuotes(%s));\n",gcTableName,cField,cField);
 				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n\t{\n",uModLevel);
 				fprintf(fp,"\t\tprintf(\"></td></tr>\\n\");\n\t}\n\telse\n\t{\n");
 				fprintf(fp,"\t\tprintf(\"disabled></td></tr>\\n\");\n");
@@ -598,6 +586,7 @@ void funcModuleRAD3Input(FILE *fp)
 			break;
 
 			case COLTYPE_DATETIME:
+				fprintf(fp,"\t//%s COLTYPE_UNIXTIME\n",cField);
 				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
 				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),1);\n",cField,cField);
 				fprintf(fp,"\telse\n");
@@ -605,6 +594,7 @@ void funcModuleRAD3Input(FILE *fp)
 			break;
 
 			case COLTYPE_UNIXTIME:
+				fprintf(fp,"\t//%s COLTYPE_UNIXTIME\n",cField);
 				fprintf(fp,"\tif(%s)\n",cField);
 				fprintf(fp,"\t\tprintf(\"<input type=text name=c%s value='%%s' disabled>\\n\",ctime(&%s));\n",cField,cField);
 				fprintf(fp,"\telse\n");
@@ -613,6 +603,7 @@ void funcModuleRAD3Input(FILE *fp)
 			break;
 			case COLTYPE_UNIXTIMECREATE:
 			case COLTYPE_UNIXTIMEUPDATE:
+				fprintf(fp,"\t//%s COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE\n",cField);
 				fprintf(fp,"\tif(%s)\n",cField);
 				fprintf(fp,"\t\tprintf(\"%%s\\n\\n\",ctime(&%s));\n",cField);
 				fprintf(fp,"\telse\n");
@@ -621,51 +612,38 @@ void funcModuleRAD3Input(FILE *fp)
 			break;
 
 			case COLTYPE_FOREIGNKEY:
-				//If other FK come after they will 'inherit'
-				//These table and field names
-				if((cp=strchr(field[6],'.')))
+				fprintf(fp,"\t//%s COLTYPE_FOREIGNKEY\n",cField);
+				if(uModLevel<=12)
 				{
-					char *cp2=NULL;
-
-					*cp=0;
-					sprintf(cTableName,"%.31s",field[6]);
-					if((cp2=strchr(cp+1,' ')))
-						*cp2=0;
-					sprintf(cFieldName,"%.31s",cp+1);
-					*cp='.';
-					if(cp2) *cp2=' ';
-				}
-				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
-				fprintf(fp,"\t{\n");
-				if(strstr(field[6],"AllowMod"))
-					fprintf(fp,"\tprintf(\"<!--FK AllowMod-->\\n"
+					fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
+					fprintf(fp,"\t\tprintf(\"<!--FK AllowMod-->\\n"
 					"<input title='%%s' type=text size=16 maxlength=20 name=%s value=%%u >\\n\",LANG_FT_%s_%s,%s);\n"
 							,cField,gcTableName,cField,cField);
+				}
 				else
 					fprintf(fp,"\tprintf(\"%%s<input type=hidden name=%s value=%%u >\\n"
-					"\",ForeignKey(\"%s\",\"%s\",%s),%s);\n",cField,cTableName,cFieldName,cField,cField);
-				fprintf(fp,"\t}\n");
-				fprintf(fp,"\telse\n");
-				fprintf(fp,"\t{\n");
-				if(strstr(field[14],"AllowMod"))
-					fprintf(fp,"\tprintf(\"<input title='%%s' type=text value='%%s' size=%u disabled>"
-					"<input type=hidden name='%s' value=%%u >\\n\",LANG_FT_%s_%s,ForeignKey(\"%s\",\"%s\",%s),%s);\n"
-						,uHtmlXSize,cField,gcTableName,cField,
-						cTableName,cFieldName,cField,cField);
-				else
-					fprintf(fp,"\tprintf(\"%%s<input type=hidden name=%s value=%%u >\\n"
-					"\",ForeignKey(\"%s\",\"%s\",%s),%s);\n",cField,cTableName,cFieldName,cField,cField);
-
-					fprintf(fp,"\t}\n");
+					"\",ForeignKey(%s));\n",cField,field[6]);
+				if(uModLevel<=12)
+				{
+					fprintf(fp,"\telse\n");
+					fprintf(fp,"\t\tprintf(\"<input title='%%s' type=text value='%%s' size=%u disabled>"
+					"<input type=hidden name='%s' value=%%u >\\n\",LANG_FT_%s_%s,"
+					"ForeignKey(%s));\n"
+						,uHtmlXSize,
+						cField,gcTableName,cField,
+						field[6]);
+				}
 			break;//COLTYPE_FOREIGNKEY
 
 			case COLTYPE_EXTFUNC:
+				fprintf(fp,"\t//%s COLTYPE_EXTFUNC\n",cField);
 			//function must exist in some .h or ext file see project
 			//void {{field6}}(void)
 				fprintf(fp,"\t%s(%s);\n",field[6],cField);
 			break;
 
 			case COLTYPE_YESNO:
+				fprintf(fp,"\t//%s COLTYPE_YESNO\n",cField);
 				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
 				fprintf(fp,"\t\tYesNoPullDown(\"%s\",%s,1);\n",cField,cField);
 				fprintf(fp,"\telse\n");
@@ -674,12 +652,13 @@ void funcModuleRAD3Input(FILE *fp)
 
 			//Text Area
 			case COLTYPE_TEXT:
+				fprintf(fp,"\t//%s COLTYPE_TEXT\n",cField);
 				if(!uHtmlXSize) uHtmlXSize=80;
 				if(!uHtmlYSize) uHtmlYSize=16;
 
-				if(strstr(field[14],"textarea.wrap=off") || !strcmp(cField,"cTemplate"))
+				if(strstr(field[6],"textarea.wrap=off") || !strcmp(cField,"cTemplate"))
 					cWrap="off";
-				if(strstr(field[14],"textarea.wrap=soft"))
+				if(strstr(field[6],"textarea.wrap=soft"))
 					cWrap="soft";
 
 				fprintf(fp,"\tprintf(\"<textarea title='%%s' cols=%u wrap=%s rows=%u name=%s \"\n,LANG_FT_%s_%s);\n",
@@ -698,6 +677,7 @@ void funcModuleRAD3Input(FILE *fp)
 			break;
 			
 			case COLTYPE_SELECTTABLE:
+				fprintf(fp,"\t//%s COLTYPE_SELECTTABLE\n",cField);
 				if((cp=strchr(field[6],'.')))
 				{
 					char *cp2=NULL;
@@ -719,6 +699,7 @@ void funcModuleRAD3Input(FILE *fp)
 			break;
 
 			case COLTYPE_SELECTTABLE_OWNER:
+				fprintf(fp,"\t//%s COLTYPE_SELECTTABLE_OWNER\n",cField);
 				if((cp=strchr(field[6],'.')))
 				{
 					char *cp2=NULL;
