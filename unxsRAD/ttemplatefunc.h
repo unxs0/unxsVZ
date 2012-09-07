@@ -635,7 +635,7 @@ void funcModuleListTable(FILE *fp)
 
 	unsigned uRADType=0;
 
-	fprintf(fp,"\tprintf(\"<tr bgcolor=black>\n");
+	fprintf(fp,"printf(\"<tr bgcolor=black>\"\n");
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[1],"%u",&uRADType);
@@ -647,11 +647,11 @@ void funcModuleListTable(FILE *fp)
 			break;
 
 			default:
-				fprintf(fp,"\"<td><font face=arial,helvetica color=white>%s\"\n",field[0]);
+				fprintf(fp,"\t\t\"<td><font face=arial,helvetica color=white>%s\"\n",field[0]);
 		}
 	}
 	mysql_free_result(res);
-	fprintf(fp,"</tr>\");\n\n");
+	fprintf(fp,"\t\t\"</tr>\");\n\n");
 }//void funcModuleListTable(FILE *fp)
 
 
