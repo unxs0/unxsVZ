@@ -1135,7 +1135,7 @@ void funcModuleVars(FILE *fp)
         MYSQL_ROW field;
 
 	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,"
-			" tField.uSQLSize"
+			" tField.uSQLSize,tField.cFormDefault,tField.cFKSpec"
 			" FROM tField,tTable,tFieldType"
 			" WHERE tField.uTable=tTable.uTable"
 			" AND tField.uFieldType=tFieldType.uFieldType"
@@ -1148,18 +1148,100 @@ void funcModuleVars(FILE *fp)
                 return;
         }
         res=mysql_store_result(&gMysql);
-	unsigned uRADType=0;
+	unsigned uFieldType=0;
+	unsigned uFieldSize=0;
+	unsigned uDefault=0;
 	while((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[1],"%u",&uRADType);
-		switch(uRADType)
+		sscanf(field[1],"%u",&uFieldType);
+		sscanf(field[2],"%u",&uFieldSize);
+		switch(uFieldType)
 		{
 			default:
-			case(COLTYPE_RADPRI):
-				fprintf(fp,"static unsigned %s=0;\n",field[0]);
+			case COLTYPE_CHAR:
+			case COLTYPE_VARCHAR:
+			case COLTYPE_VARCHARUKEY:
+			fprintf(fp,"static char %s[%u]={\"%s\"};\n",
+					field[0],uFieldSize+1,field[3]);
 			break;
-			case(COLTYPE_VARCHAR):
-				fprintf(fp,"static char %s[%s]={\"\"};\n",field[0],field[2]);
+
+			case COLTYPE_MONEY:
+			if(field[3][0])
+				fprintf(fp,"static char %s[32]={\"%s\"};\n",
+					field[0],field[3]);
+			else
+				fprintf(fp,"static char %s[32]={\"0.00\"};\n",field[0]);
+			break;
+
+			case COLTYPE_DECIMAL:
+			if(field[3][0])
+				fprintf(fp,"static char %s[16]={\"%s\"};\n",
+					field[0],field[3]);
+			else
+				fprintf(fp,"static char %s[16]={\"0.00\"};\n",field[0]);
+			break;
+
+			case COLTYPE_DATETIME:
+			if(field[3][0])
+				fprintf(fp,"static char %s[20]={\"%s\"};\n",
+					field[0],field[3]);
+			else
+				fprintf(fp,"static char %s[20]={\"2000-01-01 00:00:00\"};\n",field[0]);
+			break;
+
+			case COLTYPE_TIMESTAMP:
+				fprintf(fp,"static char %s[20]={\"Never modified\"};\n",
+					field[0]);
+			break;
+
+			case COLTYPE_TEXT:
+				fprintf(fp,"static char *%s={\"%s\"};\n",
+					field[0],field[3]);
+			break;
+
+			case COLTYPE_IMAGE:
+				//skip
+			break;
+			
+			
+			//Special
+			case COLTYPE_RADPRI:
+			case COLTYPE_YESNO:
+			case COLTYPE_PRIKEY:
+			case COLTYPE_INTUNSIGNED:
+			case COLTYPE_SELECTTABLE:
+			case COLTYPE_SELECTTABLE_OWNER:
+			case COLTYPE_EXTFUNC:
+			case COLTYPE_FOREIGNKEY:
+			case COLTYPE_FKIMAGE:
+			case COLTYPE_UINTUKEY:
+
+			sscanf(field[3],"%u",&uDefault);
+			fprintf(fp,"static unsigned %s=%u;\n",
+					field[0],uDefault);
+			if(uFieldType==COLTYPE_SELECTTABLE || uFieldType==COLTYPE_SELECTTABLE_OWNER)
+			{
+				fprintf(fp,"static char c%sPullDown[256]={\"\"};\n",field[0]);
+			}
+			else if(uFieldType==COLTYPE_YESNO)
+				fprintf(fp,"static char cYesNo%s[32]={\"\"};\n",
+						field[0]);
+			else if(uFieldType==COLTYPE_EXTFUNC)
+				//Sneak in a prototype
+				fprintf(fp,"void %s(unsigned %s);\n",
+						field[4],field[0]);
+			break;
+
+			case COLTYPE_UNIXTIME:
+			case COLTYPE_UNIXTIMECREATE:
+			case COLTYPE_UNIXTIMEUPDATE:
+				fprintf(fp,"static time_t %s=0;\n",
+					field[0]);
+			break;
+
+			case COLTYPE_BIGINT:
+				fprintf(fp,"static long unsigned %s=0;\n",
+					field[0]);
 			break;
 		}
 	}
