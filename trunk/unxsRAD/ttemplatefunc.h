@@ -499,6 +499,155 @@ void funcModuleLoadVars(FILE *fp)
 
 void funcModuleProcVars(FILE *fp)
 {
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,"
+			" tField.uSQLSize,tField.uModLevel,"
+			" tField.uHtmlXSize,tField.uHtmlMax,"
+			" tField.cFKSpec,tField.uHtmlYSize,"
+			" tField.cExtIndex"
+			" FROM tField,tTable,tFieldType"
+			" WHERE tField.uTable=tTable.uTable"
+			" AND tField.uFieldType=tFieldType.uFieldType"
+			" AND tTable.uTable=%u"
+			" ORDER BY tField.uOrder",guTable);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+
+	unsigned uSQLSize=0;
+	unsigned uHtmlMax=0;
+	unsigned uHtmlXSize=0;
+	unsigned uHtmlYSize=0;
+	char welse[6]={"else "};
+	char empty[2]={""};
+	char *temp=empty;
+	unsigned uRADType=0;
+	unsigned uModLevel=0;
+	char cTableName[32]={""};
+	char cFieldName[32]={""};
+	char cField[32]={""};
+	char *cp;
+	fprintf(fp,"\n");//Cancel out tab placed func
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(cField,"%.31s",field[0]);
+		sscanf(field[1],"%u",&uRADType);
+		sscanf(field[2],"%u",&uSQLSize);
+		sscanf(field[3],"%u",&uModLevel);
+		sscanf(field[4],"%u",&uHtmlXSize);
+		sscanf(field[5],"%u",&uHtmlMax);
+		sscanf(field[7],"%u",&uHtmlYSize);
+
+		//Top
+		switch(uRADType)
+		{
+			case COLTYPE_IMAGE:
+				//skip. below also
+			break;
+
+			default:
+			fprintf(fp,"\t\t%sif(!strcmp(entries[i].name,\"%s\"))\n",temp,cField);
+		}
+
+		//Main
+		switch(uRADType)
+		{
+
+			case COLTYPE_CHAR:
+			case COLTYPE_DATETIME:
+			case COLTYPE_TIMESTAMP:
+			case COLTYPE_VARCHAR:
+			case COLTYPE_VARCHARUKEY:
+				//cExtIndex can be used for input validation functions. Fix this TODO
+				if(field[8][0])
+					fprintf(fp,"\t\t\tsprintf(%s,\"%%.%us\",%s(entries[i].val));\n",cField,uHtmlXSize,field[8]);
+				else
+					fprintf(fp,"\t\t\tsprintf(%s,\"%%.%us\",entries[i].val);\n",cField,uHtmlXSize);
+			break;
+
+			case COLTYPE_DECIMAL:
+				if(field[8][0])
+					fprintf(fp,"\t\t\tsprintf(%s,\"%%.15s\",%s(entries[i].val));\n",cField,field[8]);
+				else
+					fprintf(fp,"\t\t\tsprintf(%s,\"%%.15s\",entries[i].val);\n",cField);
+			break;
+
+			case COLTYPE_MONEY:
+				if(field[8][0])
+					fprintf(fp,"\t\t\tsprintf(%s,\"%%.15s\",%s(entries[i].val));\n",cField,field[8]);
+				else
+					//Default input function Strip $ and , 
+					//Ex. $250,000.00 should internally be 250000.00
+					fprintf(fp,"\t\t\tsprintf(%s,\"%%.31s\",cMoneyInput(entries[i].val));\n",cField);
+			break;
+			
+			case COLTYPE_TEXT:
+				fprintf(fp,"\t\t\t%s=entries[i].val;\n",cField);
+			break;
+			
+			case COLTYPE_IMAGE:
+				//skip
+			break;
+			
+			case COLTYPE_INTUNSIGNED:
+			case COLTYPE_YESNO:
+			case COLTYPE_RADPRI:
+			case COLTYPE_PRIKEY:
+			case COLTYPE_UINTUKEY:
+			case COLTYPE_FOREIGNKEY:
+			case COLTYPE_FKIMAGE:
+			case COLTYPE_EXTFUNC:
+			case COLTYPE_SELECTTABLE:
+			case COLTYPE_SELECTTABLE_OWNER:
+				fprintf(fp,"\t\t\tsscanf(entries[i].val,\"%%u\",&%s);\n",cField);
+			break;
+			
+			case COLTYPE_UNIXTIME:
+			case COLTYPE_UNIXTIMECREATE:
+			case COLTYPE_UNIXTIMEUPDATE:
+			case COLTYPE_BIGINT:
+				fprintf(fp,"\t\t\tsscanf(entries[i].val,\"%%lu\",&%s);\n",cField);
+			break;
+
+		}
+
+		//Extra	stuff
+		switch(uRADType)
+		{
+			case COLTYPE_SELECTTABLE:
+			case COLTYPE_SELECTTABLE_OWNER:
+				if((cp=strchr(field[6],',')))
+				{
+					*cp=0;
+					sprintf(cTableName,"%.31s",field[6]);
+					sprintf(cFieldName,"%.31s",cp+1);
+					if((cp=strchr(cFieldName,',')))
+						*cp=0;
+				}
+				fprintf(fp,"\t\t%sif(!strcmp(entries[i].name,\"c%sPullDown\"))\n\t\t{\n" ,temp ,cField);
+				fprintf(fp,"\t\t\tsprintf(c%sPullDown,\"%%.255s\",entries[i].val);\n",cField);
+				fprintf(fp,"\t\t\t%s=ReadPullDown(%s,%s,c%sPullDown);\n",cField,cTableName,cFieldName,cField);
+				fprintf(fp,"\t\t}\n");
+			break;
+			
+			case COLTYPE_YESNO:
+				fprintf(fp,"\t\t%sif(!strcmp(entries[i].name,\"cYesNo%s\"))\n\t\t{\n" ,temp,cField);
+				fprintf(fp,"\t\t\tsprintf(cYesNo%s,\"%%.31s\",entries[i].val);\n",cField);
+				fprintf(fp,"\t\t\t%s=ReadYesNoPullDown(cYesNo%s);\n",cField,cField);
+				fprintf(fp,"\t\t}\n");
+			break;
+		}
+
+		temp=welse;
+	}
+	mysql_free_result(res);
+
 }//void funcModuleProcVars(FILE *fp)
 
 
