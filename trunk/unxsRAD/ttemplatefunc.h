@@ -488,15 +488,252 @@ unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable)
 
 void funcModuleListPrint(FILE *fp)
 {
-}//void funcModuleListPrint(FILE *fp)
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tFieldType.uRADType,tField.cLabel,tField.cFKSpec"
+			" FROM tField,tTable,tFieldType"
+			" WHERE tField.uTable=tTable.uTable"
+			" AND tField.uFieldType=tFieldType.uFieldType"
+			" AND tTable.uTable=%u"
+			" ORDER BY tField.uOrder",guTable);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uFieldType=0;
+	register int i=0,first=1;
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uFieldType);
+		if(uFieldType == COLTYPE_UNIXTIME ||
+				uFieldType == COLTYPE_UNIXTIMECREATE ||
+				uFieldType == COLTYPE_UNIXTIMEUPDATE )
+		{
+			fprintf(fp,"\t\ttime_t luTime%d=strtoul(field[%d],NULL,10);\n",
+					i,i);
+			fprintf(fp,"\t\tchar cBuf%d[32];\n",i);
+			fprintf(fp,"\t\tif(luTime%d)\n\t\t\tctime_r(&luTime%d,cBuf%d);\n",i,i,i);
+			fprintf(fp,"\t\telse\n\t\t\tsprintf(cBuf%d,\"---\");\n",i);
+
+		}
+		else if(uFieldType == COLTYPE_YESNO )
+		{
+			fprintf(fp,"\t\tlong unsigned luYesNo%d=strtoul(field[%d],NULL,10);\n",
+					i,i);
+			fprintf(fp,"\t\tchar cBuf%d[4];\n",i);
+			fprintf(fp,"\t\tif(luYesNo%d)\n\t\t\tsprintf(cBuf%d,\"Yes\");\n",i,i);
+			fprintf(fp,"\t\telse\n\t\t\tsprintf(cBuf%d,\"No\");\n",i);
+		}
+		i++;
+	}
+
+
+	fprintf(fp,"\t\tprintf(\"");
+	mysql_data_seek(res,0);//rewind
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uFieldType);
+		if( first && (uFieldType == COLTYPE_RADPRI ||
+				uFieldType == COLTYPE_PRIKEY ))
+		{
+			fprintf(fp,"<td><input type=submit name=ED%%s value=Edit> %%s");
+			first=0;
+		}
+		else if(uFieldType == COLTYPE_TEXT )
+		{
+			fprintf(fp,"<td><textarea disabled>%%s</textarea>");
+		}
+		else if(uFieldType == COLTYPE_IMAGE )
+		{
+			;
+		}
+		else if(1)
+		{
+			fprintf(fp,"<td>%%s");
+		}
+	}
+	fprintf(fp,"</tr>\"\n");
+
+	mysql_data_seek(res,0);//rewind
+	i=0;
+	first=1;
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uFieldType);
+		if( first && (uFieldType == COLTYPE_RADPRI ||
+				uFieldType == COLTYPE_PRIKEY ))
+		{
+			fprintf(fp,"\t\t\t,field[0]\n");
+			first=0;
+		}
+
+		if(uFieldType==COLTYPE_FOREIGNKEY ||
+				uFieldType==COLTYPE_SELECTTABLE ||
+				uFieldType==COLTYPE_SELECTTABLE_OWNER )//Index into another table
+		{
+			char cTableName[32]={""};
+			char cFieldName[32]={""};
+			char *cp;
+			if((cp=strchr(field[3],',')))
+			{
+				*cp=0;
+				sprintf(cTableName,"%.31s",field[3]);
+				sprintf(cFieldName,"%.31s",cp+1);
+				if((cp=strchr(cFieldName,',')))
+					*cp=0;
+			}
+			fprintf(fp,"\t\t\t,ForeignKey(%s,%s,strtoul(field[%d],NULL,10))\n",
+							cTableName,cFieldName,i++);
+		}
+		else if(uFieldType == COLTYPE_UNIXTIME ||
+				uFieldType == COLTYPE_UNIXTIMECREATE ||
+				uFieldType == COLTYPE_UNIXTIMEUPDATE ||
+				uFieldType ==COLTYPE_YESNO )
+		{
+			fprintf(fp,"\t\t\t,cBuf%d\n",i);
+			i++;
+		}
+		else if(uFieldType == COLTYPE_IMAGE)
+		{
+			//skip see above
+			//fprintf(fp,"\t\t\t,field[0]\n");
+			i++;
+		}
+		else if(1)
+		{
+			fprintf(fp,"\t\t\t,field[%d]\n",i++);
+		}
+	}
+	fprintf(fp,"\t\t\t\t);\n");
+	mysql_free_result(res);
+
+}//void ModuleListPrint(FILE *fp)
+
 
 void funcModuleListTable(FILE *fp)
 {
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+			" FROM tField,tTable,tFieldType"
+			" WHERE tField.uTable=tTable.uTable"
+			" AND tField.uFieldType=tFieldType.uFieldType"
+			" AND tTable.uTable=%u"
+			" ORDER BY tField.uOrder",guTable);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+
+	unsigned uRADType=0;
+
+	fprintf(fp,"\tprintf(\"<tr bgcolor=black>\n");
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uRADType);
+
+		switch(uRADType)
+		{
+			case COLTYPE_IMAGE:
+				//skip
+			break;
+
+			default:
+				fprintf(fp,"\"<td><font face=arial,helvetica color=white>%s\"\n",field[0]);
+		}
+	}
+	mysql_free_result(res);
+	fprintf(fp,"</tr>\");\n\n");
 }//void funcModuleListTable(FILE *fp)
+
 
 void funcModuleLoadVars(FILE *fp)
 {
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+	register int i=0;
+
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.uHtmlXSize"
+			" FROM tField,tTable,tFieldType"
+			" WHERE tField.uTable=tTable.uTable"
+			" AND tField.uFieldType=tFieldType.uFieldType"
+			" AND tTable.uTable=%u"
+			" ORDER BY tField.uOrder",guTable);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+
+	unsigned uHtmlXSize=0;
+	unsigned uRADType=0;
+	char cField[32]={""};
+	fprintf(fp,"\n");//Cancel out tab placed func
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(cField,"%.31s",field[0]);
+		sscanf(field[1],"%u",&uRADType);
+		sscanf(field[2],"%u",&uHtmlXSize);
+
+		switch(uRADType)
+		{
+			case COLTYPE_INTUNSIGNED:
+			case COLTYPE_SELECTTABLE:
+			case COLTYPE_SELECTTABLE_OWNER:
+			case COLTYPE_RADPRI:
+			case COLTYPE_PRIKEY:
+			case COLTYPE_UINTUKEY:
+			case COLTYPE_YESNO:
+			case COLTYPE_EXTFUNC:
+			case COLTYPE_FOREIGNKEY:
+			case COLTYPE_FKIMAGE:
+			fprintf(fp,"\t\tsscanf(field[%d],\"%%u\",&%s);\n"
+					,i,cField);
+			break;
+
+			case COLTYPE_UNIXTIME:
+			case COLTYPE_UNIXTIMECREATE:
+			case COLTYPE_UNIXTIMEUPDATE:
+			case COLTYPE_BIGINT:
+			fprintf(fp,"\t\tsscanf(field[%d],\"%%lu\",&%s);\n"
+					,i,cField);
+			break;
+			
+			case COLTYPE_TEXT:
+				fprintf(fp,"\t\t%s=field[%d];\n",cField,i);
+			break;
+			
+			case COLTYPE_IMAGE:
+				//skip
+				i--;
+			break;
+			
+			case COLTYPE_MONEY:
+				fprintf(fp,"\t\tsprintf(%s,\"%%.31s\",field[%d]);\n"
+					,cField,i);
+			break;
+
+			default:
+				fprintf(fp,"\t\tsprintf(%s,\"%%.%us\",field[%d]);\n"
+					,cField,uHtmlXSize,i);
+			break;
+		}
+		i++;
+	}
+	mysql_free_result(res);
+
 }//void funcModuleLoadVars(FILE *fp)
+
 
 void funcModuleProcVars(FILE *fp)
 {
