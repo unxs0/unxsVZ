@@ -545,15 +545,27 @@ void funcModuleRAD3Input(FILE *fp)
 		{
 			default:
 			case(COLTYPE_RADPRI):
+                        case(COLTYPE_PRIKEY):
+                        case(COLTYPE_INTUNSIGNED):
+                        case(COLTYPE_UINTUKEY):
+			case(COLTYPE_BIGINT):
 				fprintf(fp,"\t//%s\n",field[0]);
 				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,field[0]);
-				fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%u size=16 maxlength=10 \"\n");
+				if(uRADType==COLTYPE_BIGINT)
+					fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%lu size=16 maxlength=10 \"\n");
+				else
+					fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%u size=16 maxlength=10 \"\n");
 				fprintf(fp,"\t\t,LANG_FT_%s_%s,%s);\n",gcTableName,field[0],field[0]);
-				fprintf(fp,"\tif(guPermLevel>=20 && uMode)\n\t{\n");
+				fprintf(fp,"\tif(guPermLevel>=%s && uMode)\n\t{\n",field[3]);
 				fprintf(fp,"\t\tprintf(\"></td></tr>\\n\");\n\t}\n\telse\n\t{\n");
 				fprintf(fp,"\t\tprintf(\"disabled></td></tr>\\n\");\n");
 				fprintf(fp,"\t\tprintf(\"<input type=hidden name=uTable value=%%u >\\n\",%s);\n\t}\n",field[0]);
 			break;
+
+			case(COLTYPE_DECIMAL):
+                        case(COLTYPE_MONEY):
+                        case(COLTYPE_CHAR):
+                        case(COLTYPE_VARCHARUKEY):
 			case(COLTYPE_VARCHAR):
 				fprintf(fp,"\t//%s\n",field[0]);
 				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,field[0]);
@@ -565,9 +577,34 @@ void funcModuleRAD3Input(FILE *fp)
 				fprintf(fp,"\t\tprintf(\"disabled></td></tr>\\n\");\n");
 				fprintf(fp,"\t\tprintf(\"<input type=hidden name=uTable value='%%s'>\\n\",EncodeDoubleQuotes(%s));\n\t}\n",field[0]);
 			break;
+/*
+//uModBy
+	OpenRow(LANG_FL_tTable_uModBy,"black");
+	if(guPermLevel>=20 && uMode)
+	{
+	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	}
+	else
+	{
+	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	}
+//uModDate
+	OpenRow(LANG_FL_tTable_uModDate,"black");
+	if(uModDate)
+		printf("%s\n\n",ctime(&uModDate));
+	else
+		printf("---\n\n");
+	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
+	printf("</tr>\n");
 		}
 	}
 	mysql_free_result(res);
+*/
+
+
+		}//switch
+
+	}//while
 
 }//void funcModuleRAD3Input(FILE *fp)
 
