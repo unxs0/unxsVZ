@@ -12,7 +12,7 @@ AUTHOR
 static unsigned guTable=0;
 static char cuTablePullDown[256]={""};
 static char gcTableName[32]={""};
-static char gcTableNameLC[32]={""};
+static char gcTableNameLC[64]={""};
 static char gcTableKey[33]={""};
 
 //ModuleFunctionProtos()
@@ -389,10 +389,10 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 	char cFile[100]={""};
 
 	sprintf(gcTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
-	sprintf(gcTableNameLC,"%.31s",gcTableName);
+	sprintf(gcTableNameLC,"%.63s",gcTableName);
 	WordToLower(gcTableNameLC);
 
-	sprintf(cFile,"/tmp/%.31s.c",gcTableNameLC);
+	sprintf(cFile,"/tmp/%.63s.c",gcTableNameLC);
 	if((fp=fopen(cFile,"w"))==NULL)
 		return(1);
 
@@ -422,11 +422,9 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 	funcModuleUpdateQuery
 	funcModuleVars
 	funcModuleVarList
-	cProject
 	cTableKey
 	cTableName
 	cTableNameLC
-	cTableTitle
 */
 			
 		template.cpName[0]="cTableName";
@@ -459,10 +457,67 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 
 unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable)
 {
+	FILE *fp;
 	unsigned uRetVal= -1;
 
 	if(!uTable || !uTemplate) return(uRetVal);
-	return(0);
+
+	char cFile[100]={""};
+
+	sprintf(gcTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
+	sprintf(gcTableNameLC,"%.63s",gcTableName);
+	WordToLower(gcTableNameLC);
+
+	sprintf(cFile,"/tmp/%.63sfunc.h",gcTableNameLC);
+	if((fp=fopen(cFile,"w"))==NULL)
+		return(1);
+
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cTemplate FROM tTemplate WHERE uTemplate=%u",uTemplate);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s\n",mysql_error(&gMysql));
+		return(uRetVal);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		struct t_template template;
+
+/*
+	cTableKey
+	cTableName
+	cTableNameLC
+*/
+			
+		template.cpName[0]="cTableName";
+		template.cpValue[0]=gcTableName;
+			
+		template.cpName[1]="cTableNameLC";
+		template.cpValue[1]=gcTableNameLC;
+			
+		template.cpName[2]="cTableKey";
+		sprintf(gcTableKey,"u%.31s",gcTableName+1);//New table name includes table type t prefix
+		template.cpValue[2]=gcTableKey;
+			
+		template.cpName[3]="";
+
+		Template(field[0],&template,fp);
+		uRetVal=0;
+	}
+	else
+	{
+		fprintf(fp,"No such uTemplate %u\n",uTemplate);
+		uRetVal=2;
+	}
+	mysql_free_result(res);
+	fclose(fp);
+
+	return(uRetVal);
+
 
 }//unsigned CreateModuleFuncFile()
 
