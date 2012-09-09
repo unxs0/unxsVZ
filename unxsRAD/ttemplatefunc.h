@@ -422,9 +422,11 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 	funcModuleUpdateQuery
 	funcModuleVars
 	funcModuleVarList
+	cProject
 	cTableKey
 	cTableName
 	cTableNameLC
+	cTableTitle
 */
 			
 		template.cpName[0]="cTableName";
@@ -436,8 +438,18 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 		template.cpName[2]="cTableKey";
 		sprintf(gcTableKey,"u%.31s",gcTableName+1);//New table name includes table type t prefix
 		template.cpValue[2]=gcTableKey;
+
+		char cProject[32]={"Project"};
+		sprintf(cProject,"%.31s",ForeignKey("tProject","cLabel",guCookieProject));
+		template.cpName[3]="cProject";
+		template.cpValue[3]=cProject;
 			
-		template.cpName[3]="";
+		char cTableTitle[32]={"Title"};
+		sprintf(cTableTitle,"%.31s",ForeignKey("tTable","cLegend",guCookieTable));
+		template.cpName[4]="cTableTitle";
+		template.cpValue[4]=cTableTitle;
+			
+		template.cpName[5]="";
 
 		Template(field[0],&template,fp);
 		uRetVal=0;
@@ -633,10 +645,10 @@ void funcModuleListPrint(FILE *fp)
 			char cTableName[32]={""};
 			char cFieldName[32]={""};
 			char *cp;
-			if((cp=strchr(field[3],',')))
+			if((cp=strchr(field[2],',')))
 			{
 				*cp=0;
-				sprintf(cTableName,"%.31s",field[3]);
+				sprintf(cTableName,"%.31s",field[2]);
 				sprintf(cFieldName,"%.31s",cp+1);
 				if((cp=strchr(cFieldName,',')))
 					*cp=0;
@@ -1015,7 +1027,7 @@ void funcModuleRAD3Input(FILE *fp)
 			case(COLTYPE_VARCHAR):
 				fprintf(fp,"\t//%s uRADType=%u\n",cField,uRADType);
 				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
-				fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%u size=%u maxlength=%u \"\n",
+				fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value=%%s size=%u maxlength=%u \"\n",
 							uHtmlXSize,uHtmlMax);
 				if(uRADType==COLTYPE_MONEY)
 					fprintf(fp,"\t\t,LANG_FT_%s_%s,cMoneyDisplay(%s));\n",gcTableName,cField,cField);
@@ -1064,16 +1076,16 @@ void funcModuleRAD3Input(FILE *fp)
 				}
 				else
 					fprintf(fp,"\tprintf(\"%%s<input type=hidden name=%s value=%%u >\\n"
-					"\",ForeignKey(%s));\n",cField,field[6]);
+					"\",ForeignKey(%s),%s);\n",cField,field[6],cField);
 				if(uModLevel<=12)
 				{
 					fprintf(fp,"\telse\n");
 					fprintf(fp,"\t\tprintf(\"<input title='%%s' type=text value='%%s' size=%u disabled>"
 					"<input type=hidden name='%s' value=%%u >\\n\",LANG_FT_%s_%s,"
-					"ForeignKey(%s));\n"
+					"ForeignKey(%s),%s);\n"
 						,uHtmlXSize,
 						cField,gcTableName,cField,
-						field[6]);
+						field[6],cField);
 				}
 			break;//COLTYPE_FOREIGNKEY
 
@@ -1372,9 +1384,16 @@ void funcModuleUpdateQuery(FILE *fp)
 			case(COLTYPE_RADPRI):
 				fprintf(fp,"\t\t\"%s=%%u",field[0]);
 			break;
-			case(COLTYPE_VARCHAR):
+
+			case COLTYPE_CHAR:
+			case COLTYPE_DATETIME:
+			case COLTYPE_TIMESTAMP:
+			case COLTYPE_VARCHAR:
+			case COLTYPE_VARCHARUKEY:
+			case(COLTYPE_TEXT):
 				fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 			break;
+
 			case(COLTYPE_UNIXTIMEUPDATE):
 				fprintf(fp,"\t\t\"%s=UNIX_TIMESTAMP(NOW())",field[0]);
 			break;
@@ -1399,8 +1418,17 @@ void funcModuleUpdateQuery(FILE *fp)
 			case(COLTYPE_RADPRI):
 				fprintf(fp,"\t\t\t,%s\n",field[0]);
 			break;
-			case(COLTYPE_VARCHAR):
-				fprintf(fp,"\t\t\t,TextAreasave(%s)\n",field[0]);
+
+			case COLTYPE_CHAR:
+			case COLTYPE_DATETIME:
+			case COLTYPE_TIMESTAMP:
+			case COLTYPE_VARCHAR:
+			case COLTYPE_VARCHARUKEY:
+			case(COLTYPE_TEXT):
+				fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",field[0]);
+			break;
+
+			case(COLTYPE_UNIXTIMEUPDATE):
 			break;
 		}
 	}
@@ -1448,9 +1476,16 @@ void funcModuleInsertQuery(FILE *fp)
 			case(COLTYPE_RADPRI):
 				fprintf(fp,"\t\t\"%s=%%u",field[0]);
 			break;
-			case(COLTYPE_VARCHAR):
+
+			case COLTYPE_CHAR:
+			case COLTYPE_DATETIME:
+			case COLTYPE_TIMESTAMP:
+			case COLTYPE_VARCHAR:
+			case COLTYPE_VARCHARUKEY:
+			case(COLTYPE_TEXT):
 				fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 			break;
+
 			case(COLTYPE_UNIXTIMECREATE):
 				fprintf(fp,"\t\t\"%s=UNIX_TIMESTAMP(NOW())",field[0]);
 			break;
@@ -1475,8 +1510,13 @@ void funcModuleInsertQuery(FILE *fp)
 			case(COLTYPE_RADPRI):
 				fprintf(fp,"\t\t\t,%s\n",field[0]);
 			break;
-			case(COLTYPE_VARCHAR):
-				fprintf(fp,"\t\t\t,TextAreasave(%s)\n",field[0]);
+			case COLTYPE_CHAR:
+			case COLTYPE_DATETIME:
+			case COLTYPE_TIMESTAMP:
+			case COLTYPE_VARCHAR:
+			case COLTYPE_VARCHARUKEY:
+			case(COLTYPE_TEXT):
+				fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",field[0]);
 			break;
 			case(COLTYPE_UNIXTIMECREATE):
 			break;
