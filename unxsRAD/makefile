@@ -21,10 +21,10 @@ CGIDIR=/var/www/unxs/cgi-bin/
 all: unxsRAD.cgi unxsRAD
 
 #New standalone CLI job queue model
-unxsRAD: unxsrad.o
-	cc unxsrad.o -o unxsRAD $(LIBS)
+unxsRAD: unxsrad.o mysqlconnect.o
+	cc unxsrad.o mysqlconnect.o -o unxsRAD $(LIBS)
 
-unxsrad.o: unxsrad.c unxsrad.h mysqlrad.h local.h
+unxsrad.o: unxsrad.c unxsrad.h mysqlrad.h local.h mysqlconnect.c
 	cc -c unxsrad.c -o unxsrad.o $(CFLAGS)
 
 unxsRAD.cgi: tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o   main.o cgi.o
@@ -100,7 +100,8 @@ main.o: main.c mysqlrad.h mainfunc.h language.h local.h
 cgi.o: cgi.h cgi.c
 	cc -c cgi.c -o cgi.o $(CFLAGS)
 
-
+mysqlconnect.o: mysqlconnect.c mysqlrad.h local.h
+	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)
 
 local.h: local.h.default
 	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi

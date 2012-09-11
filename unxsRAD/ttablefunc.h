@@ -444,26 +444,28 @@ void tTableNavList(void)
 	if(guCookieProject)
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable WHERE uProject=%u ORDER BY cLabel",guCookieProject);
+			sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable WHERE uProject=%u ORDER BY uTableOrder",guCookieProject);
 		else
 			sprintf(gcQuery,"SELECT tTable.uTable,"
 				" tTable.cLabel"
 				" FROM tTable,tClient"
 				" WHERE tTable.uOwner=tClient.uClient"
 				" AND tTable.uProject=%u"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY tTable.uTableOrder",
 					guCookieProject,guCompany,guLoginClient);
 	}
 	else
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable ORDER BY cLabel");
+			sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable ORDER BY uTableOrder");
 		else
 			sprintf(gcQuery,"SELECT tTable.uTable,"
 				" tTable.cLabel"
 				" FROM tTable,tClient"
 				" WHERE tTable.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY tTable.uTableOrder",
 					guCompany,guLoginClient);
 	}
         mysql_query(&gMysql,gcQuery);
