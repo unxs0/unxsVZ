@@ -213,54 +213,44 @@ void ExttFieldGetHook(entry gentries[], int x)
 
 void ExttFieldSelect(void)
 {
-
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT %s FROM tField ORDER BY"
-				" uField",
-				VAR_LIST_tField);
-	else //If you own it, the company you work for owns the company that owns it,
-		//you created it, or your company owns it you can at least read access it
-		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
-	sprintf(gcQuery,"SELECT %s FROM tField,tClient WHERE tField.uOwner=tClient.uClient"
+	if(guCookieTable)
+	{
+		if(guLoginClient==1 && guPermLevel>11)
+			sprintf(gcQuery,"SELECT %s FROM tField WHERE uTable=%u ORDER BY uField",VAR_LIST_tField,guCookieTable);
+		else
+			sprintf(gcQuery,"SELECT %s FROM tField,tClient WHERE tField.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" ORDER BY uField",
-					VAR_LIST_tField,uContactParentCompany,uContactParentCompany);
-					
+				" AND tField.uTable=%u"
+				" ORDER BY uField",VAR_LIST_tField,guCookieTable,guCompany,guCompany);
+	}
+	else
+	{
+		if(guLoginClient==1 && guPermLevel>11)
+			sprintf(gcQuery,"SELECT %s FROM tField ORDER BY uField",VAR_LIST_tField);
+		else
+			sprintf(gcQuery,"SELECT %s FROM tField,tClient WHERE tField.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uField",VAR_LIST_tField,guCompany,guCompany);
+	}
 
 }//void ExttFieldSelect(void)
 
 
 void ExttFieldSelectRow(void)
 {
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-                sprintf(gcQuery,"SELECT %s FROM tField WHERE uField=%u",
-			VAR_LIST_tField,uField);
+		sprintf(gcQuery,"SELECT %s FROM tField WHERE uField=%u",VAR_LIST_tField,uField);
 	else
-                sprintf(gcQuery,"SELECT %s FROM tField,tClient"
-                                " WHERE tField.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" AND tField.uField=%u",
-                        		VAR_LIST_tField
-					,uContactParentCompany,uContactParentCompany
-					,uField);
-
+		sprintf(gcQuery,"SELECT %s FROM tField,tClient"
+			" WHERE tField.uOwner=tClient.uClient"
+			" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+			" AND tField.uField=%u",VAR_LIST_tField,guCompany,guCompany,uField);
 }//void ExttFieldSelectRow(void)
 
 
 void ExttFieldListSelect(void)
 {
 	char cCat[512];
-	unsigned uContactParentCompany=0;
-	
-	GetClientOwner(guLoginClient,&uContactParentCompany);
 
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT %s FROM tField",
@@ -270,8 +260,7 @@ void ExttFieldListSelect(void)
 				" WHERE tField.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
 				VAR_LIST_tField
-				,uContactParentCompany
-				,uContactParentCompany);
+				,guCompany,guCompany);
 
 	//Changes here must be reflected below in ExttFieldListFilter()
         if(!strcmp(gcFilter,"uField"))
@@ -281,9 +270,7 @@ void ExttFieldListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tField.uField=%u"
-						" ORDER BY uField",
-						uField);
+		sprintf(cCat,"tField.uField=%u ORDER BY uField",uField);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -347,26 +334,26 @@ void tFieldNavList(void)
 	if(guCookieTable)
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT uField,cLabel FROM tField WHERE uTable=%u ORDER BY uOrder,cLabel",guCookieTable);
+			sprintf(gcQuery,"SELECT uField,cLabel,uOrder FROM tField WHERE uTable=%u ORDER BY uOrder",guCookieTable);
 		else
-			sprintf(gcQuery,"SELECT tField.uField,"
-				" tField.cLabel"
+			sprintf(gcQuery,"SELECT tField.uField,tField.cLabel,tField.uOrder"
 				" FROM tField,tClient"
 				" WHERE tField.uOwner=tClient.uClient"
 				" AND tField.uTable=%u"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY tField.uOrder",
 					guCookieTable,guCompany,guLoginClient);
 	}
 	else
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT uField,cLabel FROM tField ORDER BY uOrder,cLabel");
+			sprintf(gcQuery,"SELECT uField,cLabel,uOrder FROM tField ORDER BY uOrder");
 		else
-			sprintf(gcQuery,"SELECT tField.uField,"
-				" tField.cLabel"
+			sprintf(gcQuery,"SELECT tField.uField,tField.cLabel,tField.uOrder"
 				" FROM tField,tClient"
 				" WHERE tField.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY tField.uOrder",
 					guCompany,guLoginClient);
 	}
         mysql_query(&gMysql,gcQuery);
@@ -389,8 +376,8 @@ void tFieldNavList(void)
 			else
 				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tField"
-				"&uField=%s><font color=%s>%s</font></a><br>\n",
-				field[0],cColor,field[1]);
+				"&uField=%s><font color=%s>%s %s</font></a><br>\n",
+				field[0],cColor,field[1],field[2]);
 		}
 	}
         mysql_free_result(res);

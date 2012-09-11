@@ -14,6 +14,9 @@ HELP
 
 #include "mysqlrad.h"
 #include "local.h"
+#include <ctype.h>
+
+#define cLOGFILE "/var/log/unxsRAD.log"
 
 //Global vars
 extern MYSQL gMysql;

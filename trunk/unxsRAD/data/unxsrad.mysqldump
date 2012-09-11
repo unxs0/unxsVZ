@@ -1,0 +1,739 @@
+-- MySQL dump 10.11
+--
+-- Host: localhost    Database: unxsrad
+-- ------------------------------------------------------
+-- Server version	5.0.95
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `tAuthorize`
+--
+
+DROP TABLE IF EXISTS `tAuthorize`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tAuthorize` (
+  `uAuthorize` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cIpMask` varchar(20) NOT NULL default '',
+  `uPerm` int(10) unsigned NOT NULL default '0',
+  `uCertClient` int(10) unsigned NOT NULL default '0',
+  `cPasswd` varchar(35) NOT NULL default '',
+  `cClrPasswd` varchar(32) NOT NULL default '',
+  PRIMARY KEY  (`uAuthorize`),
+  UNIQUE KEY `cLabel` (`cLabel`,`uOwner`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tAuthorize`
+--
+
+LOCK TABLES `tAuthorize` WRITE;
+/*!40000 ALTER TABLE `tAuthorize` DISABLE KEYS */;
+INSERT INTO `tAuthorize` VALUES (1,'Root',1,1,1346896415,0,0,'0.0.0.0',12,1,'..M0/uAvCFhis','');
+/*!40000 ALTER TABLE `tAuthorize` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tClient`
+--
+
+DROP TABLE IF EXISTS `tClient`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tClient` (
+  `uClient` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(100) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cInfo` text NOT NULL,
+  `cEmail` varchar(100) NOT NULL default '',
+  `cCode` varchar(32) NOT NULL default '',
+  PRIMARY KEY  (`uClient`),
+  UNIQUE KEY `cLabel` (`cLabel`,`uOwner`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tClient`
+--
+
+LOCK TABLES `tClient` WRITE;
+/*!40000 ALTER TABLE `tClient` DISABLE KEYS */;
+INSERT INTO `tClient` VALUES (1,'Root',1,1,1346896415,0,0,'','','');
+/*!40000 ALTER TABLE `tClient` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tConfiguration`
+--
+
+DROP TABLE IF EXISTS `tConfiguration`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tConfiguration` (
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `cLabel` varchar(100) NOT NULL default '',
+  `uConfiguration` int(10) unsigned NOT NULL auto_increment,
+  `cComment` text NOT NULL,
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cValue` varchar(255) NOT NULL default '',
+  `uServer` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uConfiguration`),
+  UNIQUE KEY `cLabel` (`cLabel`,`uServer`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tConfiguration`
+--
+
+LOCK TABLES `tConfiguration` WRITE;
+/*!40000 ALTER TABLE `tConfiguration` DISABLE KEYS */;
+INSERT INTO `tConfiguration` VALUES (1,1338298795,1,'cDefaultTablesList_TemplateSet_Default',1,'#Used by tprojectfunc.h DefaultTables()\n##The templates for these tables must exist\n#One table per row, fields are:\n##cLabel;uTableOrder;uSourceLock;cDescription;uNewLevel;uModLevel;uDelLevel;uReadLevel\n#\ntClient;1000;1;Organizations and their contacts;7;7;7;7;\ntAuthorize;1001;Contact credentials;1;7;7;7;20;\ntTemplate;5000;1;Templates;7;7;7;10;\ntTemplateSet;5001;Template sets;1;7;7;7;10;\ntTemplateType;5002;1;Template types;7;7;7;10;\ntLog;6000;1;Log;10;10;10;20;\ntLogType;6001;Log type;1;10;10;10;20;\ntLogMonth;6002;1;Archive of logs;10;10;10;20;\ntMonth;6003;1;Month of year;10;10;10;20;\ntGlossary;4000;1;Glossary and help;10;10;10;20;\ntJob;3000;1;Job queue;10;10;10;7;\ntServer;2000;1;Servers;10;10;10;20;\ntConfiguration;2001;General configuration;1;10;10;10;20;\ntStatus;2002;1;General status labels;10;10;10;20;\ntJobStatus;2003;1;Job queue status labels;10;10;10;20;\n',1,1338301194,'cComment',0);
+/*!40000 ALTER TABLE `tConfiguration` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tField`
+--
+
+DROP TABLE IF EXISTS `tField`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tField` (
+  `uField` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `uTable` int(10) unsigned NOT NULL default '0',
+  `uFieldType` int(10) unsigned NOT NULL default '0',
+  `uProject` int(10) unsigned NOT NULL default '0',
+  `uIndexType` int(10) unsigned NOT NULL default '0',
+  `cFKSpec` varchar(100) NOT NULL default '',
+  `cExtIndex` varchar(100) NOT NULL default '',
+  `uOrder` int(10) unsigned NOT NULL default '0',
+  `cTitle` varchar(100) NOT NULL default '',
+  `uSQLSize` int(10) unsigned NOT NULL default '0',
+  `uHtmlXSize` int(10) unsigned NOT NULL default '0',
+  `uHtmlYSize` int(10) unsigned NOT NULL default '0',
+  `uHtmlMax` int(10) unsigned NOT NULL default '0',
+  `cFormDefault` varchar(100) NOT NULL default '',
+  `cSQLDefault` varchar(100) NOT NULL default '',
+  `uModLevel` int(10) unsigned NOT NULL default '0',
+  `uReadLevel` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uField`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=76 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tField`
+--
+
+LOCK TABLES `tField` WRITE;
+/*!40000 ALTER TABLE `tField` DISABLE KEYS */;
+INSERT INTO `tField` VALUES (12,'uCreatedDate',1,1,1346894950,0,0,1,10,1,0,'','',1002,'Unix timestamp for creation date',10,0,0,0,'','',20,0),(11,'uCreatedBy',1,1,1346894950,0,0,1,13,1,0,'\"tClient\",\"cLabel\",uCreatedBy','',1001,'Record created by',10,0,0,0,'','',20,0),(10,'uOwner',1,1,1346894950,1,1346901278,1,13,1,1,'\"tClient\",\"cLabel\",uOwner','',1000,'Record owner',10,0,0,0,'','',20,0),(9,'cHostname',1,1,1346894950,1,1347331817,1,3,1,0,'','',2,'FQDN hostname or address',64,40,1,63,'','',10,7),(8,'uPBX',1,1,1346894950,1,1347331471,1,1,1,0,'','',1,'Primary key',10,0,0,0,'0','0',20,0),(13,'uModBy',1,1,1346894950,0,0,1,13,1,0,'\"tClient\",\"cLabel\",uModBy','',1003,'Record modifed by',10,0,0,0,'','',20,0),(14,'uModDate',1,1,1346894950,0,0,1,11,1,0,'','',1004,'Unix timestamp for last update',10,0,0,0,'','',20,0),(15,'uDatacenter',1,1,1347034673,1,1347331327,1,5,1,1,'\"tDatacenter\",\"cLabel\",uDatacenter','',200,'Datacenter PBX belongs to',10,0,0,0,'0','0',10,7),(16,'cComment',1,1,1347147172,1,1347331751,1,3,1,0,'','',220,'Notes on this PBX',64,40,0,63,'','',10,7),(17,'uDID',1,1,1347156282,0,0,2,1,1,0,'','',1,'Primary key',10,0,0,0,'','',20,0),(18,'cDID',1,1,1347156282,1,1347156434,2,3,1,2,'','',2,'DID Number',32,40,0,31,'','',10,7),(19,'uOwner',1,1,1347156282,0,0,2,13,1,0,'\"tClient\",\"cLabel\",uOwner','',1000,'Record owner',10,0,0,0,'','',20,0),(20,'uCreatedBy',1,1,1347156282,0,0,2,13,1,0,'\"tClient\",\"cLabel\",uCreatedBy','',1001,'Record created by',10,0,0,0,'','',20,0),(21,'uCreatedDate',1,1,1347156282,0,0,2,10,1,0,'','',1002,'Unix timestamp for creation date',10,0,0,0,'','',20,0),(22,'uModBy',1,1,1347156282,0,0,2,13,1,0,'\"tClient\",\"cLabel\",uModBy','',1003,'Record modifed by',10,0,0,0,'','',20,0),(23,'uModDate',1,1,1347156282,0,0,2,11,1,0,'','',1004,'Unix timestamp for last update',10,0,0,0,'','',20,0),(24,'uGateway',1,1,1347156745,0,0,3,1,1,0,'','',1,'Primary key',10,0,0,0,'','',20,0),(25,'cAddress',1,1,1347156745,1,1347156874,3,3,1,1,'','',2,'Gateway FQDN or IP number',32,40,0,31,'','',10,7),(26,'uOwner',1,1,1347156745,0,0,3,13,1,0,'\"tClient\",\"cLabel\",uOwner','',1000,'Record owner',10,0,0,0,'','',20,0),(27,'uCreatedBy',1,1,1347156745,0,0,3,13,1,0,'\"tClient\",\"cLabel\",uCreatedBy','',1001,'Record created by',10,0,0,0,'','',20,0),(28,'uCreatedDate',1,1,1347156745,0,0,3,10,1,0,'','',1002,'Unix timestamp for creation date',10,0,0,0,'','',20,0),(29,'uModBy',1,1,1347156745,0,0,3,13,1,0,'\"tClient\",\"cLabel\",uModBy','',1003,'Record modifed by',10,0,0,0,'','',20,0),(30,'uModDate',1,1,1347156745,0,0,3,11,1,0,'','',1004,'Unix timestamp for last update',10,0,0,0,'','',20,0),(31,'uServer',1,1,1347291737,0,0,7,1,1,0,'','',1,'Primary key',10,0,0,0,'','',20,0),(32,'cLabel',1,1,1347291737,0,0,7,3,1,0,'','',2,'Short label',32,0,0,0,'','',0,0),(33,'uOwner',1,1,1347291737,0,0,7,13,1,0,'\"tClient\",\"cLabel\",uOwner','',1000,'Record owner',10,0,0,0,'','',20,0),(34,'uCreatedBy',1,1,1347291737,0,0,7,13,1,0,'\"tClient\",\"cLabel\",uCreatedBy','',1001,'Record created by',10,0,0,0,'','',20,0),(35,'uCreatedDate',1,1,1347291737,0,0,7,10,1,0,'','',1002,'Unix timestamp for creation date',10,0,0,0,'','',20,0),(36,'uModBy',1,1,1347291737,0,0,7,13,1,0,'\"tClient\",\"cLabel\",uModBy','',1003,'Record modifed by',10,0,0,0,'','',20,0),(37,'uModDate',1,1,1347291737,0,0,7,11,1,0,'','',1004,'Unix timestamp for last update',10,0,0,0,'','',20,0),(38,'uDatacenter',1,1,1347291748,0,0,8,1,1,0,'','',1,'Primary key',10,0,0,0,'','',20,0),(39,'cLabel',1,1,1347291748,0,0,8,3,1,0,'','',2,'Short label',32,0,0,0,'','',0,0),(40,'uOwner',1,1,1347291748,0,0,8,13,1,0,'\"tClient\",\"cLabel\",uOwner','',1000,'Record owner',10,0,0,0,'','',20,0),(41,'uCreatedBy',1,1,1347291748,0,0,8,13,1,0,'\"tClient\",\"cLabel\",uCreatedBy','',1001,'Record created by',10,0,0,0,'','',20,0),(42,'uCreatedDate',1,1,1347291748,0,0,8,10,1,0,'','',1002,'Unix timestamp for creation date',10,0,0,0,'','',20,0),(43,'uModBy',1,1,1347291748,0,0,8,13,1,0,'\"tClient\",\"cLabel\",uModBy','',1003,'Record modifed by',10,0,0,0,'','',20,0),(44,'uModDate',1,1,1347291748,0,0,8,11,1,0,'','',1004,'Unix timestamp for last update',10,0,0,0,'','',20,0),(45,'uCarrier',1,1,1347291757,0,0,6,1,1,0,'','',1,'Primary key',10,0,0,0,'','',20,0),(46,'cLabel',1,1,1347291757,0,0,6,3,1,0,'','',2,'Short label',32,0,0,0,'','',0,0),(47,'uOwner',1,1,1347291757,0,0,6,13,1,0,'\"tClient\",\"cLabel\",uOwner','',1000,'Record owner',10,0,0,0,'','',20,0),(48,'uCreatedBy',1,1,1347291757,0,0,6,13,1,0,'\"tClient\",\"cLabel\",uCreatedBy','',1001,'Record created by',10,0,0,0,'','',20,0),(49,'uCreatedDate',1,1,1347291757,0,0,6,10,1,0,'','',1002,'Unix timestamp for creation date',10,0,0,0,'','',20,0),(50,'uModBy',1,1,1347291757,0,0,6,13,1,0,'\"tClient\",\"cLabel\",uModBy','',1003,'Record modifed by',10,0,0,0,'','',20,0),(51,'uModDate',1,1,1347291757,0,0,6,11,1,0,'','',1004,'Unix timestamp for last update',10,0,0,0,'','',20,0),(52,'uPrefix',1,1,1347291788,0,0,5,1,1,0,'','',1,'Primary key',10,0,0,0,'','',20,0),(53,'cLabel',1,1,1347291788,0,0,5,3,1,0,'','',2,'Short label',32,0,0,0,'','',0,0),(54,'uOwner',1,1,1347291788,0,0,5,13,1,0,'\"tClient\",\"cLabel\",uOwner','',1000,'Record owner',10,0,0,0,'','',20,0),(55,'uCreatedBy',1,1,1347291788,0,0,5,13,1,0,'\"tClient\",\"cLabel\",uCreatedBy','',1001,'Record created by',10,0,0,0,'','',20,0),(56,'uCreatedDate',1,1,1347291788,0,0,5,10,1,0,'','',1002,'Unix timestamp for creation date',10,0,0,0,'','',20,0),(57,'uModBy',1,1,1347291788,0,0,5,13,1,0,'\"tClient\",\"cLabel\",uModBy','',1003,'Record modifed by',10,0,0,0,'','',20,0),(58,'uModDate',1,1,1347291788,0,0,5,11,1,0,'','',1004,'Unix timestamp for last update',10,0,0,0,'','',20,0),(59,'uRule',1,1,1347291793,0,0,4,1,1,0,'','',1,'Primary key',10,0,0,0,'','',20,0),(60,'cLabel',1,1,1347291793,0,0,4,3,1,0,'','',2,'Short label',32,0,0,0,'','',0,0),(61,'uOwner',1,1,1347291793,0,0,4,13,1,0,'\"tClient\",\"cLabel\",uOwner','',1000,'Record owner',10,0,0,0,'','',20,0),(62,'uCreatedBy',1,1,1347291793,0,0,4,13,1,0,'\"tClient\",\"cLabel\",uCreatedBy','',1001,'Record created by',10,0,0,0,'','',20,0),(63,'uCreatedDate',1,1,1347291793,0,0,4,10,1,0,'','',1002,'Unix timestamp for creation date',10,0,0,0,'','',20,0),(64,'uModBy',1,1,1347291793,0,0,4,13,1,0,'\"tClient\",\"cLabel\",uModBy','',1003,'Record modifed by',10,0,0,0,'','',20,0),(65,'uModDate',1,1,1347291793,0,0,4,11,1,0,'','',1004,'Unix timestamp for last update',10,0,0,0,'','',20,0),(66,'cAttributes',1,1,1347330099,1,1347331871,1,3,1,0,'','',10,'OpenSIPS or other attributes',64,40,1,63,'','',10,7),(67,'cDescription',1,1,1347330120,1,1347331918,1,3,1,0,'','',20,'Description or other human ID information',64,40,1,63,'','',10,7),(68,'uStatus',1,1,1347330360,1,1347331934,1,2,1,0,'','',30,'Number of DIDs',10,0,0,0,'0','0',20,7),(69,'uLines',1,1,1347330453,1,1347331563,1,2,1,0,'','',40,'Max number of lines or simultabeous SIP channels',10,0,0,0,'0','0',10,7),(70,'uStrip',1,1,1347330661,1,1347331649,1,2,1,0,'','',50,'Number of chars to strip off of SIP URI',10,0,0,0,'0','0',10,7),(71,'cPrefix',1,1,1347330791,1,1347331673,1,3,1,0,'','',60,'Chars to add to SIP URI',32,40,0,31,'','',10,7),(72,'uPBX',1,1,1347332352,1,1347332777,2,13,1,1,'\"tPBX\",\"cHostname\",uPBX','',5,'PBX assigned to',10,0,0,0,'','',10,0),(73,'uCarrier',1,1,1347332511,0,0,2,13,1,1,'\"tCarrier\",\"cLabel\",uCarrier','',10,'Provided by this carrier',10,0,0,0,'','',10,0),(74,'cComment',1,1,1347332603,1,1347332645,2,3,1,0,'','',30,'Comment or other information',32,40,0,31,'','',10,7),(75,'uDatacenter',1,1,1347332750,0,0,2,13,1,1,'\"tDatacenter\",\"cLabel\",uDatacenter','',25,'Datacenter DID has been assigned to',10,0,0,0,'','',10,0);
+/*!40000 ALTER TABLE `tField` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tFieldType`
+--
+
+DROP TABLE IF EXISTS `tFieldType`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tFieldType` (
+  `uFieldType` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `uRADType` int(10) unsigned NOT NULL default '0',
+  `cSQLCreatePart` text NOT NULL,
+  PRIMARY KEY  (`uFieldType`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tFieldType`
+--
+
+LOCK TABLES `tFieldType` WRITE;
+/*!40000 ALTER TABLE `tFieldType` DISABLE KEYS */;
+INSERT INTO `tFieldType` VALUES (1,'Rad Primary',1,0,0,0,0,1001,'NOT NULL DEFAULT 0 PRIMARY KEY AUTO INCREMENT'),(2,'Int Unsigned',1,0,0,0,0,3,'NOT NULL DEFAULT 0'),(3,'Varchar',1,0,0,0,0,253,'NOT NULL DEFAULT \'\''),(4,'Text',1,0,0,0,0,252,'NOT NULL DEFAULT \'\''),(5,'Select Table',1,0,0,0,0,1000,'NOT NULL DEFAULT 0'),(6,'Primary Key',1,0,0,0,0,1002,'NOT NULL DEFAULT 0'),(7,'Date Time',1,0,0,0,0,12,'NOT NULL DEFAULT 0'),(8,'Time Stamp',1,0,0,0,0,7,'NOT NULL DEFAULT 0'),(9,'Yes/No',1,0,0,0,0,1003,'NOT NULL DEFAULT 0'),(10,'Unixtime Create',1,0,0,0,0,1004,'NOT NULL DEFAULT 0'),(11,'Unixtime Update',1,0,0,0,0,1005,'NOT NULL DEFAULT 0'),(12,'External Function',1,0,0,0,0,1006,'NOT NULL DEFAULT 0'),(13,'Foreign Key',1,0,0,0,0,1007,'NOT NULL DEFAULT 0'),(14,'Unsigned Unique Key',1,0,0,0,0,1008,'NOT NULL DEFAULT 0'),(15,'Varchar Unique Key',1,0,0,0,0,1009,'NOT NULL DEFAULT \'\''),(16,'Decimal',1,0,0,0,0,0,'NOT NULL DEFAULT 0'),(17,'BigInt Unsigned',1,0,0,0,0,8,'BIGINT NOT NULL DEFAULT 0'),(18,'Unixtime',1,0,0,0,0,2000,'NOT NULL DEFAULT 0'),(19,'Select Table Owner',1,0,0,0,0,1100,''),(20,'Image',1,0,0,0,0,1101,''),(21,'Money',1,0,0,0,0,1102,''),(22,'FK Image',1,0,0,0,0,1200,'');
+/*!40000 ALTER TABLE `tFieldType` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tGlossary`
+--
+
+DROP TABLE IF EXISTS `tGlossary`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tGlossary` (
+  `uGlossary` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cText` text NOT NULL,
+  PRIMARY KEY  (`uGlossary`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tGlossary`
+--
+
+LOCK TABLES `tGlossary` WRITE;
+/*!40000 ALTER TABLE `tGlossary` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tGlossary` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tIndexType`
+--
+
+DROP TABLE IF EXISTS `tIndexType`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tIndexType` (
+  `uIndexType` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uIndexType`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tIndexType`
+--
+
+LOCK TABLES `tIndexType` WRITE;
+/*!40000 ALTER TABLE `tIndexType` DISABLE KEYS */;
+INSERT INTO `tIndexType` VALUES (1,'INDEX',1,1,1346901175,1,1346901304),(2,'UNIQUE',1,1,1346901314,0,0);
+/*!40000 ALTER TABLE `tIndexType` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tJob`
+--
+
+DROP TABLE IF EXISTS `tJob`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tJob` (
+  `cJobName` varchar(64) NOT NULL default '',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `cJobData` text NOT NULL,
+  `uJob` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(100) NOT NULL default '',
+  `uJobStatus` int(10) unsigned NOT NULL default '0',
+  `uJobDate` int(10) unsigned NOT NULL default '0',
+  `cRemoteMsg` varchar(32) NOT NULL default '',
+  `uServer` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uJob`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tJob`
+--
+
+LOCK TABLES `tJob` WRITE;
+/*!40000 ALTER TABLE `tJob` DISABLE KEYS */;
+INSERT INTO `tJob` VALUES ('MakeSourceCodeJob',1347294286,1347291822,1,1,1,'uProject=1;',1,'MakeSourceCode.unxsSPS',1,1347291882,'',2);
+/*!40000 ALTER TABLE `tJob` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tJobStatus`
+--
+
+DROP TABLE IF EXISTS `tJobStatus`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tJobStatus` (
+  `uJobStatus` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uJobStatus`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tJobStatus`
+--
+
+LOCK TABLES `tJobStatus` WRITE;
+/*!40000 ALTER TABLE `tJobStatus` DISABLE KEYS */;
+INSERT INTO `tJobStatus` VALUES (1,'Waiting',1,1,1020035698,0,0),(2,'Running',1,1,1020035712,0,0),(3,'Done OK',1,1,1020035724,0,0),(4,'Done Error(s)',1,1,1020035745,0,0),(5,'Suspended',1,1,1020035769,0,0),(6,'Redundant',1,1,1020435397,0,0),(7,'Cancelled',1,1,1020448352,0,0),(10,'RemoteWaiting',1,1,1072194538,0,0);
+/*!40000 ALTER TABLE `tJobStatus` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tLog`
+--
+
+DROP TABLE IF EXISTS `tLog`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tLog` (
+  `uTablePK` varchar(32) NOT NULL default '',
+  `cHost` varchar(32) NOT NULL default '',
+  `uLoginClient` int(10) unsigned NOT NULL default '0',
+  `cLogin` varchar(32) NOT NULL default '',
+  `uPermLevel` int(10) unsigned NOT NULL default '0',
+  `cTableName` varchar(32) NOT NULL default '',
+  `uLog` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(64) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cHash` varchar(32) NOT NULL default '',
+  `uLogType` int(10) unsigned NOT NULL default '0',
+  `cMessage` varchar(255) NOT NULL default '',
+  `cServer` varchar(64) NOT NULL default '',
+  PRIMARY KEY  (`uLog`),
+  KEY `uOwner` (`uOwner`),
+  KEY `uLogType` (`uLogType`)
+) ENGINE=MyISAM AUTO_INCREMENT=61 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tLog`
+--
+
+LOCK TABLES `tLog` WRITE;
+/*!40000 ALTER TABLE `tLog` DISABLE KEYS */;
+INSERT INTO `tLog` VALUES ('1','186.124.140.16',1,'Root',12,'tProject',1,'Mod',1,1,1346896493,0,0,'edfab52dd6b439c6d2781494cc82fe56',1,'',''),('1','186.124.140.16',1,'Root',12,'tTemplate',2,'Mod',1,1,1346897176,0,0,'c0b8a60037c1542dae6e1b3803bd7ad0',1,'',''),('1','186.124.140.16',1,'Root',12,'tTemplate',3,'Mod',1,1,1346897400,0,0,'0b3732fd40656ec21f1b5a2a0d6dd0a4',1,'',''),('1','186.124.140.16',1,'Root',12,'tTemplate',4,'Mod',1,1,1346897427,0,0,'47ae61d42c30a44e848ade5a03a82297',1,'',''),('10','186.124.140.16',1,'Root',12,'tField',5,'Mod',1,1,1346901120,0,0,'3d2450ddbf974a0542cb2681c8c0f95f',1,'',''),('1','186.124.140.16',1,'Root',12,'tIndexType',6,'New',1,1,1346901175,0,0,'2a0f2a7c71db3aac5840e590d72465da',1,'',''),('10','186.124.140.16',1,'Root',12,'tField',7,'Mod',1,1,1346901212,0,0,'5709856c9872e9d9678376cc615e0367',1,'',''),('1','186.124.140.16',1,'Root',12,'tIndexType',8,'Mod',1,1,1346901244,0,0,'f86dbb4d936a4ff27ba87aa4b9a2f93e',1,'',''),('10','186.124.140.16',1,'Root',12,'tField',9,'Mod',1,1,1346901278,0,0,'3ce76ca1dc79b8a19f2284a85dfa8137',1,'',''),('1','186.124.140.16',1,'Root',12,'tIndexType',10,'Mod',1,1,1346901304,0,0,'3aeb80d93e29935266e947eb8bf508f4',1,'',''),('2','186.124.140.16',1,'Root',12,'tIndexType',11,'New',1,1,1346901314,0,0,'c76f9165fc415b80593f4c33faa1362f',1,'',''),('9','190.17.48.149',1,'Root',12,'tField',12,'Mod',1,1,1346948630,0,0,'ccbbe003cf32eebc8d7e782174693f5c',1,'',''),('15','190.17.48.149',1,'Root',12,'tField',13,'New',1,1,1347034673,0,0,'121be673978fd05e5942663b29a97cad',1,'',''),('2','190.17.48.149',1,'Root',12,'tTemplate',14,'Mod',1,1,1347050006,0,0,'bd873ad184b73673b6a9d5d515f126ed',1,'',''),('9','190.17.48.149',1,'Root',12,'tField',15,'Mod',1,1,1347145973,0,0,'0283243c1ea0f5d3bb0fe1680a926340',1,'',''),('15','190.17.48.149',1,'Root',12,'tField',16,'Mod',1,1,1347147106,0,0,'a5b2dffb7391f72118cf34bd74318169',1,'',''),('16','190.17.48.149',1,'Root',12,'tField',17,'New',1,1,1347147172,0,0,'56e465b0af4acbdf1ae0c8231265cb1f',1,'',''),('2','186.109.156.56',1,'Root',12,'tTable',18,'New',1,1,1347156186,0,0,'ea1ea87f3adb8adbcce4ed8c3f732e3f',1,'',''),('18','186.109.156.56',1,'Root',12,'tField',19,'Mod',1,1,1347156434,0,0,'8fc6941b19f8d38d6353f0b7321a6d03',1,'',''),('3','186.109.156.56',1,'Root',12,'tTable',20,'New',1,1,1347156742,0,0,'64e43d129e40c035a05cec6089200282',1,'',''),('25','186.109.156.56',1,'Root',12,'tField',21,'Mod',1,1,1347156874,0,0,'e6374468fcf811e5949cbb8e0f4cbc4c',1,'',''),('3','186.109.156.56',1,'Root',12,'tTable',22,'Mod',1,1,1347156956,0,0,'8f7ab4a00cb6184f8ff6fb93e2dfa248',1,'',''),('4','186.109.156.56',1,'Root',12,'tTable',23,'New',1,1,1347157086,0,0,'a01626b20f74842c05e4a3dc5729cafb',1,'',''),('5','186.109.156.56',1,'Root',12,'tTable',24,'New',1,1,1347157164,0,0,'8392295c9d1bfe0168507684a96fe93a',1,'',''),('6','186.109.156.56',1,'Root',12,'tTable',25,'New',1,1,1347157238,0,0,'20979a411b4347f3a63ad2847b6264b8',1,'',''),('7','186.109.156.56',1,'Root',12,'tTable',26,'New',1,1,1347157427,0,0,'9be7f83fcd5df4c42c845b66ead99ae3',1,'',''),('8','186.109.156.56',1,'Root',12,'tTable',27,'New',1,1,1347157528,0,0,'ad5e011e4bc72e259e03bc9252618608',1,'',''),('9','186.109.156.56',1,'Root',12,'tTable',28,'Del',1,1,1347157673,0,0,'b786c5b25a0fc7d879e9e9f36ce971d4',1,'',''),('2','190.17.48.149',1,'Root',12,'tServer',29,'Mod',1,1,1347294227,0,0,'bf737534bd0bd176e497f1ec085aff24',1,'',''),('1','190.17.48.149',1,'Root',12,'tJob',30,'Mod',1,1,1347294286,0,0,'0d2bd6d621ddf9766452afa779c10fc8',1,'',''),('1','190.17.48.149',1,'Root',12,'tTemplate',31,'Mod',1,1,1347296771,0,0,'521a461eb9b89567e2ebfa4cfef5b110',1,'',''),('2','190.17.48.149',1,'Root',12,'tTemplate',32,'Mod',1,1,1347296794,0,0,'e64f88ed7ce1f4c5835dd189f60c4df5',1,'',''),('66','190.30.67.194',1,'Root',12,'tField',33,'New',1,1,1347330099,0,0,'e1f9930aec9801aa1d67a4cfeb1f1b81',1,'',''),('67','190.30.67.194',1,'Root',12,'tField',34,'New',1,1,1347330120,0,0,'0264d48c39a73316167ff4e9f9a40508',1,'',''),('67','190.30.67.194',1,'Root',12,'tField',35,'Mod',1,1,1347330129,0,0,'b40cee6f3e05b5ae8c1030f4470bb2c5',1,'',''),('9','190.30.67.194',1,'Root',12,'tField',36,'Mod',1,1,1347330195,0,0,'1ef8ef4f9d12952728a493a2ad1e7d40',1,'',''),('68','190.30.67.194',1,'Root',12,'tField',37,'New',1,1,1347330360,0,0,'e75c9bd8924056348e9c6668d865bed9',1,'',''),('69','190.30.67.194',1,'Root',12,'tField',38,'New',1,1,1347330453,0,0,'c7c65a2178ee371d1e0459b9fbc403fe',1,'',''),('70','190.30.67.194',1,'Root',12,'tField',39,'New',1,1,1347330661,0,0,'d08e2aec8889ebc751e0de6de3fdbecd',1,'',''),('71','190.30.67.194',1,'Root',12,'tField',40,'New',1,1,1347330791,0,0,'4bdecc6f90612f61dad6b308065ee2fe',1,'',''),('15','190.30.67.194',1,'Root',12,'tField',41,'Mod',1,1,1347331327,0,0,'8eeb00760b812d121505b81caea1f8da',1,'',''),('8','190.30.67.194',1,'Root',12,'tField',42,'Mod',1,1,1347331385,0,0,'0b62ba644d85a049106af82dd9533ade',1,'',''),('8','190.30.67.194',1,'Root',12,'tField',43,'Mod',1,1,1347331471,0,0,'8f387ed8f19341db9c45851b6cd8511d',1,'',''),('68','190.30.67.194',1,'Root',12,'tField',44,'Mod',1,1,1347331512,0,0,'5949ca66c0ca4fffcfadeb4f02a29bfd',1,'',''),('68','190.30.67.194',1,'Root',12,'tField',45,'Mod',1,1,1347331530,0,0,'20b3e0daa9334a89742439dd023c42c9',1,'',''),('69','190.30.67.194',1,'Root',12,'tField',46,'Mod',1,1,1347331563,0,0,'b42a94424e8de6f6b5ab4f52397599be',1,'',''),('70','190.30.67.194',1,'Root',12,'tField',47,'Mod',1,1,1347331649,0,0,'7404a0e00822598c58c3aef508922dae',1,'',''),('71','190.30.67.194',1,'Root',12,'tField',48,'Mod',1,1,1347331673,0,0,'e224743931dc8f9a37f6936bc355e675',1,'',''),('16','190.30.67.194',1,'Root',12,'tField',49,'Mod',1,1,1347331751,0,0,'154540e02f3525a0e7937faa5e8691fd',1,'',''),('9','190.30.67.194',1,'Root',12,'tField',50,'Mod',1,1,1347331817,0,0,'487fac4db5a3e2e3571be4796486e74f',1,'',''),('66','190.30.67.194',1,'Root',12,'tField',51,'Mod',1,1,1347331871,0,0,'ba36bc85c604bf69ce4d479a90b28d3e',1,'',''),('67','190.30.67.194',1,'Root',12,'tField',52,'Mod',1,1,1347331918,0,0,'423a1d2446cb1ef556a7764e915bf9cb',1,'',''),('68','190.30.67.194',1,'Root',12,'tField',53,'Mod',1,1,1347331934,0,0,'a9e3267def1ebb9ee7b670f6013c7dff',1,'',''),('72','190.30.67.194',1,'Root',12,'tField',54,'New',1,1,1347332352,0,0,'1fa36e3491414cc716be7c9aee0ffbcf',1,'',''),('73','190.30.67.194',1,'Root',12,'tField',55,'New',1,1,1347332511,0,0,'a139145392a4eddf5505cafc88995e78',1,'',''),('74','190.30.67.194',1,'Root',12,'tField',56,'New',1,1,1347332603,0,0,'0640f6d487a59c71ca685a1dde4cb0e8',1,'',''),('72','190.30.67.194',1,'Root',12,'tField',57,'Mod',1,1,1347332630,0,0,'d597a60abda14c560b24d4295f1334ab',1,'',''),('74','190.30.67.194',1,'Root',12,'tField',58,'Mod',1,1,1347332645,0,0,'bb96ef2610b99d4f6a3e86bc28f8967a',1,'',''),('75','190.30.67.194',1,'Root',12,'tField',59,'New',1,1,1347332750,0,0,'15d18026ab96bda6b9202791d7c00846',1,'',''),('72','190.30.67.194',1,'Root',12,'tField',60,'Mod',1,1,1347332777,0,0,'71eed95a5ec0adc56df8eeae377fafc1',1,'','');
+/*!40000 ALTER TABLE `tLog` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tLogMonth`
+--
+
+DROP TABLE IF EXISTS `tLogMonth`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tLogMonth` (
+  `uTablePK` varchar(32) NOT NULL default '',
+  `cHost` varchar(32) NOT NULL default '',
+  `uLoginClient` int(10) unsigned NOT NULL default '0',
+  `cLogin` varchar(32) NOT NULL default '',
+  `uPermLevel` int(10) unsigned NOT NULL default '0',
+  `cTableName` varchar(32) NOT NULL default '',
+  `uLog` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(64) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cHash` varchar(32) NOT NULL default '',
+  `uLogType` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uLog`),
+  KEY `uOwner` (`uOwner`),
+  KEY `uLogType` (`uLogType`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tLogMonth`
+--
+
+LOCK TABLES `tLogMonth` WRITE;
+/*!40000 ALTER TABLE `tLogMonth` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tLogMonth` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tLogType`
+--
+
+DROP TABLE IF EXISTS `tLogType`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tLogType` (
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uLogType` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  PRIMARY KEY  (`uLogType`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tLogType`
+--
+
+LOCK TABLES `tLogType` WRITE;
+/*!40000 ALTER TABLE `tLogType` DISABLE KEYS */;
+INSERT INTO `tLogType` VALUES (0,0,1,1,1163026052,1,'backend'),(0,0,1,1,1163026077,2,'organization interface'),(0,0,1,1,1163026077,3,'admin interface'),(0,0,1,1,1163026077,4,'system event'),(0,0,1,1,1163026077,5,'named error'),(0,0,1,1,1163026077,6,'backend login'),(0,0,1,1,1163026077,7,'ispAdmin login'),(0,0,1,1,1163026077,8,'ispOrg login');
+/*!40000 ALTER TABLE `tLogType` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tMonth`
+--
+
+DROP TABLE IF EXISTS `tMonth`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tMonth` (
+  `uMonth` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uMonth`),
+  UNIQUE KEY `cLabel` (`cLabel`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tMonth`
+--
+
+LOCK TABLES `tMonth` WRITE;
+/*!40000 ALTER TABLE `tMonth` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tMonth` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tProject`
+--
+
+DROP TABLE IF EXISTS `tProject`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tProject` (
+  `uProject` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `uProjectStatus` int(10) unsigned NOT NULL default '0',
+  `uTemplateSet` int(10) unsigned NOT NULL default '0',
+  `cDescription` text NOT NULL,
+  `cDirectory` varchar(100) NOT NULL default '',
+  PRIMARY KEY  (`uProject`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tProject`
+--
+
+LOCK TABLES `tProject` WRITE;
+/*!40000 ALTER TABLE `tProject` DISABLE KEYS */;
+INSERT INTO `tProject` VALUES (1,'unxsSPS',1,1,1346893116,1,1346896493,3,1,'OpenSIPS and unxsSIPProxy management system','/home/unxs/unxsSIPProxy/unxsSPS');
+/*!40000 ALTER TABLE `tProject` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tProjectStatus`
+--
+
+DROP TABLE IF EXISTS `tProjectStatus`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tProjectStatus` (
+  `uStatus` int(10) unsigned NOT NULL auto_increment,
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cLabel` varchar(32) NOT NULL default '',
+  `uLockMain` int(10) unsigned NOT NULL default '0',
+  `uLockMainFunc` int(10) unsigned NOT NULL default '0',
+  `uLockModule` int(10) unsigned NOT NULL default '0',
+  `uLockModuleFunc` int(10) unsigned NOT NULL default '0',
+  `uLockMakefile` int(10) unsigned NOT NULL default '0',
+  `uLockInclude` int(10) unsigned NOT NULL default '0',
+  `uLockLanguage` int(10) unsigned NOT NULL default '0',
+  `uLockCapFiles` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uStatus`)
+) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tProjectStatus`
+--
+
+LOCK TABLES `tProjectStatus` WRITE;
+/*!40000 ALTER TABLE `tProjectStatus` DISABLE KEYS */;
+INSERT INTO `tProjectStatus` VALUES (1,1,1,0,0,0,'Start',1,1,1,1,1,1,1,0),(2,1,1,0,0,0,'Tables Done',0,1,1,1,0,1,1,0),(3,1,1,0,0,0,'Coding',1,1,1,0,1,1,1,0),(4,1,1,0,0,0,'Tables Done +Coding',0,0,1,0,0,1,1,0),(5,1,1,0,0,0,'Locked',0,0,0,0,0,0,0,0),(7,1,1,0,0,0,'Test Mode',1,1,0,1,1,1,1,0),(8,1,1,0,0,0,'Do not alter mainfunc.h/makefile',1,0,1,0,0,1,1,0),(9,1,1,0,0,0,'Coding do not change mainfunc.h',1,0,1,0,1,1,1,0),(10,1,1,0,0,0,'language.h only',1,1,0,0,1,1,1,0);
+/*!40000 ALTER TABLE `tProjectStatus` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tServer`
+--
+
+DROP TABLE IF EXISTS `tServer`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tServer` (
+  `uServer` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uServer`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tServer`
+--
+
+LOCK TABLES `tServer` WRITE;
+/*!40000 ALTER TABLE `tServer` DISABLE KEYS */;
+INSERT INTO `tServer` VALUES (1,'localhost',1,1,1021141902,0,0),(2,'rc18.callingcloud.net',1,1,1024433304,1,1347294227);
+/*!40000 ALTER TABLE `tServer` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tStatus`
+--
+
+DROP TABLE IF EXISTS `tStatus`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tStatus` (
+  `uStatus` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uStatus`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tStatus`
+--
+
+LOCK TABLES `tStatus` WRITE;
+/*!40000 ALTER TABLE `tStatus` DISABLE KEYS */;
+INSERT INTO `tStatus` VALUES (1,'Active',1,1,1019835249,0,0),(2,'OnHold',1,1,1019835258,0,0),(3,'Offline',1,1,1019835282,0,0),(4,'Awaiting Modification',1,1,1019845118,1,1019845216),(5,'Awaiting Deletion',1,1,1019845139,1,1019845208),(6,'Awaiting Activation',1,1,1019845157,0,0),(7,'Cancelled',1,1,1020545191,0,0),(8,'Modified',1,1,1020555448,0,0),(9,'Modification Problem',1,1,1020699074,0,0);
+/*!40000 ALTER TABLE `tStatus` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tTable`
+--
+
+DROP TABLE IF EXISTS `tTable`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tTable` (
+  `uTable` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `uNewLevel` int(10) unsigned NOT NULL default '0',
+  `uModLevel` int(10) unsigned NOT NULL default '0',
+  `uDelLevel` int(10) unsigned NOT NULL default '0',
+  `uReadLevel` int(10) unsigned NOT NULL default '0',
+  `uTableOrder` int(10) unsigned NOT NULL default '0',
+  `uSourceLock` int(10) unsigned NOT NULL default '0',
+  `cLegend` varchar(100) NOT NULL default '',
+  `cToolTip` varchar(100) NOT NULL default '',
+  `cDescription` varchar(100) NOT NULL default '',
+  `uProject` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uTable`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tTable`
+--
+
+LOCK TABLES `tTable` WRITE;
+/*!40000 ALTER TABLE `tTable` DISABLE KEYS */;
+INSERT INTO `tTable` VALUES (1,'tPBX',1,1,1346893255,0,0,7,7,7,7,1,0,'PBX Gateways','Asterisk PBXs or similar B2BUA','PBX Gateways',1),(2,'tDID',1,1,1347156186,0,0,7,7,7,7,2,0,'Direct inward dialing numbers','PBX DIDs','Direct inward dialing numbers',1),(3,'tGateway',1,1,1347156742,1,1347156956,7,7,7,7,3,0,'Outgoing termination provider gateways','Carrier SIP gateways','Outgoing termination provider gateways',1),(4,'tRule',1,1,1347157086,0,0,7,7,7,7,4,0,'Rules for routing traffic to termination gateways','Routing rules','Gateway routing rules',1),(5,'tPrefix',1,1,1347157164,0,0,7,7,7,7,5,0,'DID prefixes for use in rules and least cost routing','DID prefixes','DID prefixes for cost and other classification',1),(6,'tCarrier',1,1,1347157238,0,0,7,7,7,7,6,0,'Outgoing termination carriers','Termination carriers','Carrier information',1),(7,'tServer',1,1,1347157427,0,0,7,7,7,7,7,0,'SIP Proxy or session border controller servers','SIP servers','Servers that run a managed SIP Proxy or SBC',1),(8,'tDatacenter',1,1,1347157528,0,0,7,7,7,7,8,0,'Group of SIP servers','Datacenters','Datacenter or other logical grouping of SIP servers',1);
+/*!40000 ALTER TABLE `tTable` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tTemplate`
+--
+
+DROP TABLE IF EXISTS `tTemplate`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tTemplate` (
+  `uTemplate` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cComment` text NOT NULL,
+  `cTemplate` text NOT NULL,
+  `uTemplateSet` int(10) unsigned NOT NULL default '0',
+  `uTemplateType` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uTemplate`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tTemplate`
+--
+
+LOCK TABLES `tTemplate` WRITE;
+/*!40000 ALTER TABLE `tTemplate` DISABLE KEYS */;
+INSERT INTO `tTemplate` VALUES (1,'module.c',1,1,1346895231,1,1347296771,'TEMPLATE VARS AND FUNCTIONS\n	funcModuleCreateQuery\n	funcModuleInsertQuery\n	funcModuleListPrint\n	funcModuleListTable\n	funcModuleLoadVars\n	funcModuleProcVars\n	funcModuleRAD3Input\n	funcModuleUpdateQuery\n	funcModuleVars\n	funcModuleVarList\n	cProject\n	cTableKey\n	cTableName\n	cTableNameLC\n	cTableTitle\n','/*\nFILE\n	$Id: module.c 1955 2012-05-22 21:28:32Z Colin $\nPURPOSE\n	Schema dependent RAD generated file.\n	Program app functionality can be developed in {{cTableNameLC}}func.h\n	while unxsRAD can still to be used to change this schema dependent file.\nAUTHOR\n	(C) 2001-2012 Gary Wallis for Unixservice, LLC.\n*/\n\n\n#include \"mysqlrad.h\"\n\n//Table Variables\n{{funcModuleVars}}\n\n#define VAR_LIST_{{cTableName}} \"{{funcModuleVarList}}\"\n\n //Local only\nvoid Insert_{{cTableName}}(void);\nvoid Update_{{cTableName}}(char *cRowid);\nvoid Process{{cTableName}}ListVars(pentry entries[], int x);\n\n //In {{cTableName}}func.h file included below\nvoid ExtProcess{{cTableName}}Vars(pentry entries[], int x);\nvoid Ext{{cTableName}}Commands(pentry entries[], int x);\nvoid Ext{{cTableName}}Buttons(void);\nvoid Ext{{cTableName}}NavBar(void);\nvoid Ext{{cTableName}}GetHook(entry gentries[], int x);\nvoid Ext{{cTableName}}Select(void);\nvoid Ext{{cTableName}}SelectRow(void);\nvoid Ext{{cTableName}}ListSelect(void);\nvoid Ext{{cTableName}}ListFilter(void);\nvoid Ext{{cTableName}}AuxTable(void);\n\n#include \"{{cTableNameLC}}func.h\"\n\n //Table Variables Assignment Function\nvoid Process{{cTableName}}Vars(pentry entries[], int x)\n{\n	register int i;\n\n\n	for(i=0;i<x;i++)\n	{\n		{{funcModuleProcVars}}\n	}\n\n	//After so we can overwrite form data if needed.\n	ExtProcess{{cTableName}}Vars(entries,x);\n\n}//Process{{cTableName}}Vars()\n\n\nvoid Process{{cTableName}}ListVars(pentry entries[], int x)\n{\n        register int i;\n\n        for(i=0;i<x;i++)\n        {\n                if(!strncmp(entries[i].name,\"ED\",2))\n                {\n                        sscanf(entries[i].name+2,\"%u\",&{{cTableKey}});\n                        guMode=2002;\n                        {{cTableName}}(\"\");\n                }\n        }\n}//void Process{{cTableName}}ListVars(pentry entries[], int x)\n\n\nint {{cTableName}}Commands(pentry entries[], int x)\n{\n	ProcessControlVars(entries,x);\n\n	Ext{{cTableName}}Commands(entries,x);\n\n	if(!strcmp(gcFunction,\"{{cTableName}}Tools\"))\n	{\n		if(!strcmp(gcFind,LANG_NB_LIST))\n		{\n			{{cTableName}}List();\n		}\n\n		//Default\n		Process{{cTableName}}Vars(entries,x);\n		{{cTableName}}(\"\");\n	}\n	else if(!strcmp(gcFunction,\"{{cTableName}}List\"))\n	{\n		ProcessControlVars(entries,x);\n		Process{{cTableName}}ListVars(entries,x);\n		{{cTableName}}List();\n	}\n\n	return(0);\n\n}//{{cTableName}}Commands()\n\n\nvoid {{cTableName}}(const char *cResult)\n{\n	MYSQL_RES *res;\n	MYSQL_RES *res2;\n	MYSQL_ROW field;\n\n	//Internal skip reloading\n	if(!cResult[0])\n	{\n		if(guMode)\n			Ext{{cTableName}}SelectRow();\n		else\n			Ext{{cTableName}}Select();\n\n		mysql_query(&gMysql,gcQuery);\n		if(mysql_errno(&gMysql))\n        	{\n			if(strstr(mysql_error(&gMysql),\" doesn\'t exist\"))\n                	{\n				Create{{cTableName}}();\n				{{cProject}}(\"New {{cTableName}} table created\");\n                	}\n			else\n			{\n				htmlPlainTextError(mysql_error(&gMysql));\n			}\n        	}\n\n		res=mysql_store_result(&gMysql);\n		if((guI=mysql_num_rows(res)))\n		{\n			if(guMode==6)\n			{\n			sprintf(gcQuery,\"SELECT _rowid FROM {{cTableName}} WHERE {{cTableKey}}=%u\"\n						,{{cTableKey}});\n				macro_mySQLRunAndStore(res2);\n				field=mysql_fetch_row(res2);\n				sscanf(field[0],\"%lu\",&gluRowid);\n				gluRowid++;\n			}\n			PageMachine(\"\",0,\"\");\n			if(!guMode) mysql_data_seek(res,gluRowid-1);\n			field=mysql_fetch_row(res);\n			{{funcModuleLoadVars}}\n		}\n\n	}//Internal Skip\n\n	Header_ism3(\":: {{cTableTitle}}\",0);\n	printf(\"<table width=100%% cellspacing=0 cellpadding=0>\\n\");\n	printf(\"<tr><td colspan=2 align=right valign=center>\");\n\n\n	printf(\"<input type=hidden name=gcFunction value={{cTableName}}Tools>\");\n	printf(\"<input type=hidden name=gluRowid value=%lu>\",gluRowid);\n	if(guI)\n	{\n		if(guMode==6)\n			//printf(\" Found\");\n			printf(LANG_NBR_FOUND);\n		else if(guMode==5)\n			//printf(\" Modified\");\n			printf(LANG_NBR_MODIFIED);\n		else if(guMode==4)\n			//printf(\" New\");\n			printf(LANG_NBR_NEW);\n		printf(LANG_NBRF_SHOWING,gluRowid,guI);\n	}\n	else\n	{\n		if(!cResult[0])\n		//printf(\" No records found\");\n		printf(LANG_NBR_NORECS);\n	}\n	if(cResult[0]) printf(\"%s\",cResult);\n	printf(\"</td></tr>\");\n	printf(\"<tr><td valign=top width=25%%>\");\n\n        Ext{{cTableName}}Buttons();\n\n        printf(\"</td><td valign=top>\");\n	//\n	OpenFieldSet(\"{{cTableName}} Record Data\",100);\n\n	if(guMode==2000 || guMode==2002)\n		{{cTableName}}Input(1);\n	else\n		{{cTableName}}Input(0);\n\n	//\n	CloseFieldSet();\n\n	//Bottom table\n	printf(\"<tr><td colspan=2>\");\n        Ext{{cTableName}}AuxTable();\n\n	Footer_ism3();\n\n}//end of {{cTableName}}();\n\n\nvoid {{cTableName}}Input(unsigned uMode)\n{\n\n	{{funcModuleRAD3Input}}\n\n}//void {{cTableName}}Input(unsigned uMode)\n\n\nvoid New{{cTableName}}(unsigned uMode)\n{\n	register int i=0;\n	MYSQL_RES *res;\n\n	sprintf(gcQuery,\"SELECT {{cTableKey}} FROM {{cTableName}} WHERE {{cTableKey}}=%u\",{{cTableKey}});\n	macro_mySQLRunAndStore(res);\n	i=mysql_num_rows(res);\n\n	if(i) \n		{{cTableName}}(LANG_NBR_RECEXISTS);\n\n	Insert_{{cTableName}}();\n	{{cTableKey}}=mysql_insert_id(&gMysql);\n	uCreatedDate=luGetCreatedDate(\"{{cTableName}}\",{{cTableKey}});\n	{{cProject}}Log({{cTableKey}},\"{{cTableName}}\",\"New\");\n\n	if(!uMode)\n	{\n		sprintf(gcQuery,LANG_NBR_NEWRECADDED,{{cTableKey}});\n		{{cTableName}}(gcQuery);\n	}\n\n}//New{{cTableName}}(unsigned uMode)\n\n\nvoid Delete{{cTableName}}(void)\n{\n	sprintf(gcQuery,\"DELETE FROM {{cTableName}} WHERE {{cTableKey}}=%u AND ( uOwner=%u OR %u>9 )\"\n					,{{cTableKey}},guLoginClient,guPermLevel);\n	macro_mySQLQueryHTMLError;\n	if(mysql_affected_rows(&gMysql)>0)\n	{\n		{{cProject}}Log({{cTableKey}},\"{{cTableName}}\",\"Del\");\n		{{cTableName}}(LANG_NBR_RECDELETED);\n	}\n	else\n	{\n		{{cProject}}Log({{cTableKey}},\"{{cTableName}}\",\"DelError\");\n		{{cTableName}}(LANG_NBR_RECNOTDELETED);\n	}\n\n}//void Delete{{cTableName}}(void)\n\n\nvoid Insert_{{cTableName}}(void)\n{\n	{{funcModuleInsertQuery}}\n	macro_mySQLQueryHTMLError;\n\n}//void Insert_{{cTableName}}(void)\n\n\nvoid Update_{{cTableName}}(char *cRowid)\n{\n	{{funcModuleUpdateQuery}}\n	macro_mySQLQueryHTMLError;\n\n}//void Update_{{cTableName}}(void)\n\n\nvoid Mod{{cTableName}}(void)\n{\n	register int i=0;\n	MYSQL_RES *res;\n	MYSQL_ROW field;\n	unsigned uPreModDate=0;\n\n	//Mod select gcQuery\n	if(guPermLevel<10)\n	sprintf(gcQuery,\"SELECT {{cTableName}}.{{cTableKey}},\"\n				\" {{cTableName}}.uModDate\"\n				\" FROM {{cTableName}},tClient\"\n				\" WHERE {{cTableName}}.{{cTableKey}}=%u\"\n				\" AND {{cTableName}}.uOwner=tClient.uClient\"\n				\" AND (tClient.uOwner=%u OR tClient.uClient=%u)\"\n					,{{cTableKey}},guLoginClient,guLoginClient);\n	else\n	sprintf(gcQuery,\"SELECT {{cTableKey}},uModDate FROM {{cTableName}}\"\n				\" WHERE {{cTableKey}}=%u\"\n					,{{cTableKey}});\n\n	macro_mySQLRunAndStore(res);\n	i=mysql_num_rows(res);\n\n	if(i<1) {{cTableName}}(LANG_NBR_RECNOTEXIST);\n	if(i>1) {{cTableName}}(LANG_NBR_MULTRECS);\n\n	field=mysql_fetch_row(res);\n	sscanf(field[1],\"%u\",&uPreModDate);\n	if(uPreModDate!=uModDate) {{cTableName}}(LANG_NBR_EXTMOD);\n\n	Update_{{cTableName}}(field[0]);\n	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);\n	uModDate=luGetModDate(\"{{cTableName}}\",{{cTableKey}});\n	{{cProject}}Log({{cTableKey}},\"{{cTableName}}\",\"Mod\");\n	{{cTableName}}(gcQuery);\n\n}//Mod{{cTableName}}(void)\n\n\nvoid {{cTableName}}List(void)\n{\n	MYSQL_RES *res;\n	MYSQL_ROW field;\n\n	Ext{{cTableName}}ListSelect();\n\n	macro_mySQLRunAndStore(res);\n	guI=mysql_num_rows(res);\n\n	PageMachine(\"{{cTableName}}List\",1,\"\");//1 is auto header list guMode. Opens table!\n\n	//Filter select drop down\n	Ext{{cTableName}}ListFilter();\n\n	printf(\"<input type=text size=16 name=gcCommand maxlength=98 value=\\\"%s\\\" >\",gcCommand);\n\n	printf(\"</table>\\n\");\n\n	printf(\"<table bgcolor=#9BC1B3 border=0 width=100%%>\\n\");\n	{{funcModuleListTable}}\n\n	mysql_data_seek(res,guStart-1);\n\n	for(guN=0;guN<(guEnd-guStart+1);guN++)\n	{\n		field=mysql_fetch_row(res);\n		if(!field)\n		{\n			printf(\"<tr><td><font face=arial,helvetica>End of data</table>\");\n			Footer_ism3();\n		}\n			if(guN % 2)\n				printf(\"<tr bgcolor=#BBE1D3>\");\n			else\n				printf(\"<tr>\");\n		{{funcModuleListPrint}}\n	}\n\n	printf(\"</table></form>\\n\");\n	Footer_ism3();\n\n}//{{cTableName}}List()\n\n\n{{funcModuleCreateQuery}}\n',1,1),(2,'modulefunc.h',1,1,1346895231,1,1347296794,'TEMPLATE VARS AND FUNCTIONS\n	cProject\n	cTableKey\n	cTableName','/*\nFILE\n	$Id: modulefunc.h 1956 2012-05-24 21:38:56Z Colin $\nPURPOSE\n	Non schema-dependent table and application table related functions.\nAUTHOR\n	(C) 2001-2012 Gary Wallis for Unixservice, LLC.\n\n*/\n\nvoid {{cTableName}}NavList(void);\n\nvoid ExtProcess{{cTableName}}Vars(pentry entries[], int x)\n{\n	/*\n	register int i;\n	for(i=0;i<x;i++)\n	{\n	}\n	*/\n}//void ExtProcess{{cTableName}}Vars(pentry entries[], int x)\n\n\nvoid Ext{{cTableName}}Commands(pentry entries[], int x)\n{\n\n	if(!strcmp(gcFunction,\"{{cTableName}}Tools\"))\n	{\n		if(!strcmp(gcCommand,LANG_NB_NEW))\n                {\n			if(guPermLevel>=9)\n			{\n	                        Process{{cTableName}}Vars(entries,x);\n                        	guMode=2000;\n	                        {{cTableName}}(LANG_NB_CONFIRMNEW);\n			}\n			else\n				{{cTableName}}(\"<blink>Error</blink>: Denied by permissions settings\");\n                }\n		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))\n                {\n			if(guPermLevel>=9)\n			{\n				unsigned uContactParentCompany=0;\n                        	Process{{cTableName}}Vars(entries,x);\n				GetClientOwner(guLoginClient,&uContactParentCompany);\n				\n                        	guMode=2000;\n				//Check entries here\n                        	guMode=0;\n\n				{{cTableKey}}=0;\n				uCreatedBy=guLoginClient;\n				uOwner=uContactParentCompany;\n				uModBy=0;//Never modified\n				uModDate=0;//Never modified\n				New{{cTableName}}(0);\n			}\n			else\n				{{cTableName}}(\"<blink>Error</blink>: Denied by permissions settings\");\n		}\n		else if(!strcmp(gcCommand,LANG_NB_DELETE))\n                {\n                        Process{{cTableName}}Vars(entries,x);\n			if(uAllowDel(uOwner,uCreatedBy))\n			{\n	                        guMode=2001;\n				{{cTableName}}(LANG_NB_CONFIRMDEL);\n			}\n			else\n				{{cTableName}}(\"<blink>Error</blink>: Denied by permissions settings\");\n                }\n                else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))\n                {\n                        Process{{cTableName}}Vars(entries,x);\n			if(uAllowDel(uOwner,uCreatedBy))\n			{\n				guMode=5;\n				Delete{{cTableName}}();\n			}\n			else\n				{{cTableName}}(\"<blink>Error</blink>: Denied by permissions settings\");\n                }\n		else if(!strcmp(gcCommand,LANG_NB_MODIFY))\n                {\n                        Process{{cTableName}}Vars(entries,x);\n			if(uAllowMod(uOwner,uCreatedBy))\n			{\n				guMode=2002;\n				{{cTableName}}(LANG_NB_CONFIRMMOD);\n			}\n			else\n				{{cTableName}}(\"<blink>Error</blink>: Denied by permissions settings\");\n                }\n                else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))\n                {\n                        Process{{cTableName}}Vars(entries,x);\n			if(uAllowMod(uOwner,uCreatedBy))\n			{\n                        	guMode=2002;\n				//Check entries here\n                        	guMode=0;\n\n				uModBy=guLoginClient;\n				Mod{{cTableName}}();\n			}\n			else\n				{{cTableName}}(\"<blink>Error</blink>: Denied by permissions settings\");\n                }\n	}\n\n}//void Ext{{cTableName}}Commands(pentry entries[], int x)\n\n\nvoid Ext{{cTableName}}Buttons(void)\n{\n	OpenFieldSet(\"{{cTableName}} Aux Panel\",100);\n	switch(guMode)\n        {\n                case 2000:\n			printf(\"<p><u>Enter/mod data</u><br>\");\n                        printf(LANG_NBB_CONFIRMNEW);\n                break;\n\n                case 2001:\n                        printf(\"<p><u>Think twice</u><br>\");\n                        printf(LANG_NBB_CONFIRMDEL);\n                break;\n\n                case 2002:\n			printf(\"<p><u>Review changes</u><br>\");\n                        printf(LANG_NBB_CONFIRMMOD);\n                break;\n\n		default:\n			printf(\"<u>Table Tips</u><br>\");\n			printf(\"<p><u>Record Context Info</u><br>\");\n			printf(\"<p><u>Operations</u><br>\");\n			printf(\"<br><input type=submit class=largeButton title=\'Sample button help\'\"\n					\" name=gcCommand value=\'Sample Button\'>\");\n			{{cTableName}}NavList();\n	}\n	CloseFieldSet();\n\n}//void Ext{{cTableName}}Buttons(void)\n\n\nvoid Ext{{cTableName}}AuxTable(void)\n{\n\n}//void Ext{{cTableName}}AuxTable(void)\n\n\nvoid Ext{{cTableName}}GetHook(entry gentries[], int x)\n{\n	register int i;\n\n	for(i=0;i<x;i++)\n	{\n		if(!strcmp(gentries[i].name,\"{{cTableKey}}\"))\n		{\n			sscanf(gentries[i].val,\"%u\",&{{cTableKey}});\n			guMode=6;\n		}\n	}\n	{{cTableName}}(\"\");\n\n}//void Ext{{cTableName}}GetHook(entry gentries[], int x)\n\n\nvoid Ext{{cTableName}}Select(void)\n{\n\n	unsigned uContactParentCompany=0;\n\n	GetClientOwner(guLoginClient,&uContactParentCompany);\n\n	if(guLoginClient==1 && guPermLevel>11)//Root can read access all\n		sprintf(gcQuery,\"SELECT %s FROM {{cTableName}} ORDER BY\"\n				\" {{cTableKey}}\",\n				VAR_LIST_{{cTableName}});\n	else //If you own it, the company you work for owns the company that owns it,\n		//you created it, or your company owns it you can at least read access it\n		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);\n	sprintf(gcQuery,\"SELECT %s FROM {{cTableName}},tClient WHERE {{cTableName}}.uOwner=tClient.uClient\"\n				\" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)\"\n				\" ORDER BY {{cTableKey}}\",\n					VAR_LIST_{{cTableName}},uContactParentCompany,uContactParentCompany);\n					\n\n}//void Ext{{cTableName}}Select(void)\n\n\nvoid Ext{{cTableName}}SelectRow(void)\n{\n	unsigned uContactParentCompany=0;\n\n	GetClientOwner(guLoginClient,&uContactParentCompany);\n\n	if(guLoginClient==1 && guPermLevel>11)//Root can read access all\n                sprintf(gcQuery,\"SELECT %s FROM {{cTableName}} WHERE {{cTableKey}}=%u\",\n			VAR_LIST_{{cTableName}},{{cTableKey}});\n	else\n                sprintf(gcQuery,\"SELECT %s FROM {{cTableName}},tClient\"\n                                \" WHERE {{cTableName}}.uOwner=tClient.uClient\"\n				\" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)\"\n				\" AND {{cTableName}}.{{cTableKey}}=%u\",\n                        		VAR_LIST_{{cTableName}}\n					,uContactParentCompany,uContactParentCompany\n					,{{cTableKey}});\n\n}//void Ext{{cTableName}}SelectRow(void)\n\n\nvoid Ext{{cTableName}}ListSelect(void)\n{\n	char cCat[512];\n	unsigned uContactParentCompany=0;\n	\n	GetClientOwner(guLoginClient,&uContactParentCompany);\n\n	if(guLoginClient==1 && guPermLevel>11)//Root can read access all\n		sprintf(gcQuery,\"SELECT %s FROM {{cTableName}}\",\n				VAR_LIST_{{cTableName}});\n	else\n		sprintf(gcQuery,\"SELECT %s FROM {{cTableName}},tClient\"\n				\" WHERE {{cTableName}}.uOwner=tClient.uClient\"\n				\" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)\",\n				VAR_LIST_{{cTableName}}\n				,uContactParentCompany\n				,uContactParentCompany);\n\n	//Changes here must be reflected below in Ext{{cTableName}}ListFilter()\n        if(!strcmp(gcFilter,\"{{cTableKey}}\"))\n        {\n                sscanf(gcCommand,\"%u\",&{{cTableKey}});\n		if(guPermLevel<10)\n			strcat(gcQuery,\" AND \");\n		else\n			strcat(gcQuery,\" WHERE \");\n		sprintf(cCat,\"{{cTableName}}.{{cTableKey}}=%u\"\n						\" ORDER BY {{cTableKey}}\",\n						{{cTableKey}});\n		strcat(gcQuery,cCat);\n        }\n        else if(1)\n        {\n                //None NO FILTER\n                strcpy(gcFilter,\"None\");\n		strcat(gcQuery,\" ORDER BY {{cTableKey}}\");\n        }\n\n}//void Ext{{cTableName}}ListSelect(void)\n\n\nvoid Ext{{cTableName}}ListFilter(void)\n{\n        //Filter\n        printf(\"Â Â Â Filter on \");\n        printf(\"<select name=gcFilter>\");\n        if(strcmp(gcFilter,\"{{cTableKey}}\"))\n                printf(\"<option>{{cTableKey}}</option>\");\n        else\n                printf(\"<option selected>{{cTableKey}}</option>\");\n        if(strcmp(gcFilter,\"None\"))\n                printf(\"<option>None</option>\");\n        else\n                printf(\"<option selected>None</option>\");\n        printf(\"</select>\");\n\n}//void Ext{{cTableName}}ListFilter(void)\n\n\nvoid Ext{{cTableName}}NavBar(void)\n{\n	printf(LANG_NBB_SKIPFIRST);\n	printf(LANG_NBB_SKIPBACK);\n	printf(LANG_NBB_SEARCH);\n\n	if(guPermLevel>=7 && !guListMode)\n		printf(LANG_NBB_NEW);\n\n	if(uAllowMod(uOwner,uCreatedBy))\n		printf(LANG_NBB_MODIFY);\n\n	if(uAllowDel(uOwner,uCreatedBy)) \n		printf(LANG_NBB_DELETE);\n\n	if(uOwner)\n		printf(LANG_NBB_LIST);\n\n	printf(LANG_NBB_SKIPNEXT);\n	printf(LANG_NBB_SKIPLAST);\n	printf(\"Â Â Â \\n\");\n\n}//void Ext{{cTableName}}NavBar(void)\n\n\nvoid {{cTableName}}NavList(void)\n{\n        MYSQL_RES *res;\n        MYSQL_ROW field;\n	unsigned uContactParentCompany=0;\n\n	GetClientOwner(guLoginClient,&uContactParentCompany);\n	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...\n	if(guReseller==1) guReseller=0;//...except Root companies\n	\n	if(guLoginClient==1 && guPermLevel>11)//Root can read access all\n		sprintf(gcQuery,\"SELECT {{cTableKey}},cLabel FROM {{cTableName}} ORDER BY cLabel\");\n	else\n		sprintf(gcQuery,\"SELECT {{cTableName}}.{{cTableKey}},\"\n				\" {{cTableName}}.cLabel\"\n				\" FROM {{cTableName}},tClient\"\n				\" WHERE {{cTableName}}.uOwner=tClient.uClient\"\n				\" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)\",\n				uContactParentCompany\n				,uContactParentCompany);\n        mysql_query(&gMysql,gcQuery);\n        if(mysql_errno(&gMysql))\n        {\n        	printf(\"<p><u>{{cTableName}}NavList</u><br>\\n\");\n                printf(\"%s\",mysql_error(&gMysql));\n                return;\n        }\n\n        res=mysql_store_result(&gMysql);\n	if(mysql_num_rows(res))\n	{	\n        	printf(\"<p><u>{{cTableName}}NavList</u><br>\\n\");\n\n	        while((field=mysql_fetch_row(res)))\n			printf(\"<a class=darkLink href={{cProject}}.cgi?gcFunction={{cTableName}}\"\n				\"&{{cTableKey}}=%s>%s</a><br>\\n\",\n				field[0],field[1]);\n	}\n        mysql_free_result(res);\n\n}//void {{cTableName}}NavList(void)\n\n\n',1,1);
+/*!40000 ALTER TABLE `tTemplate` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tTemplateSet`
+--
+
+DROP TABLE IF EXISTS `tTemplateSet`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tTemplateSet` (
+  `uTemplateSet` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uTemplateSet`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tTemplateSet`
+--
+
+LOCK TABLES `tTemplateSet` WRITE;
+/*!40000 ALTER TABLE `tTemplateSet` DISABLE KEYS */;
+INSERT INTO `tTemplateSet` VALUES (1,'default',1,1,1346895191,0,0);
+/*!40000 ALTER TABLE `tTemplateSet` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tTemplateType`
+--
+
+DROP TABLE IF EXISTS `tTemplateType`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tTemplateType` (
+  `uTemplateType` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uTemplateType`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tTemplateType`
+--
+
+LOCK TABLES `tTemplateType` WRITE;
+/*!40000 ALTER TABLE `tTemplateType` DISABLE KEYS */;
+INSERT INTO `tTemplateType` VALUES (1,'RAD4',1,1,1346895225,0,0);
+/*!40000 ALTER TABLE `tTemplateType` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2012-09-10 22:07:32
