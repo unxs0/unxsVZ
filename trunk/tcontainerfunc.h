@@ -2977,9 +2977,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
-        			MYSQL_ROW field;
-				char cOSTLabel[101]={""};
-
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -2997,18 +2994,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(mysql_num_rows(res)>0)
 					tContainer("<blink>Error:</blink> tConfig.cLabel already exists create another!");
 				mysql_free_result(res);
-				sprintf(gcQuery,"SELECT cLabel FROM tOSTemplate WHERE uOSTemplate=%u",uOSTemplate);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
-        			res=mysql_store_result(&gMysql);
-				if((field=mysql_fetch_row(res)))
-					sprintf(cOSTLabel,"%.100s",field[0]);
-				else
-					tContainer("<blink>Error:</blink> No tOSTemplate.cLabel!");
-				mysql_free_result(res);
-				sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%.67s-%.32s'",
-						cOSTLabel,cConfigLabel);
+				sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s'",cConfigLabel);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));

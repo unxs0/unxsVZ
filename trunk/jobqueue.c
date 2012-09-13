@@ -2065,9 +2065,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
         MYSQL_ROW field;
 
 	char cConfigLabel[32]={""};
-	char cOSTemplateBase[68]={"centos-5-x86_64"};
 	char *cp;
-	register int i;
 	struct stat statInfo;
 	unsigned uOwner=1;
 	unsigned uCreatedBy=1;
@@ -2092,41 +2090,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 
 
-	sprintf(gcQuery,"SELECT tOSTemplate.cLabel FROM tContainer,tOSTemplate"
-			" WHERE tContainer.uOSTemplate=tOSTemplate.uOSTemplate AND"
-			" tContainer.uContainer=%u",uContainer);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("TemplateContainer",mysql_error(&gMysql));
-		tJobErrorUpdate(uJob,"SELECT tOSTemplate.cLabel");
-		goto CommonExit;
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-		sprintf(cOSTemplateBase,"%.67s",field[0]);
-	mysql_free_result(res);
-	if(!cOSTemplateBase[0])
-	{
-		logfileLine("TemplateContainer","Could not determine cOSTemplateBase");
-		tJobErrorUpdate(uJob,"cOSTemplateBase[0]==0");
-		goto CommonExit;
-	}
-
-	//Remove ending dash part if any
-	for(i=strlen(cOSTemplateBase)-1;i>0;i--)
-	{
-		if(cOSTemplateBase[i]=='-')
-		{
-			cOSTemplateBase[i]=0;	
-			break;
-		}
-	}
-	//debug only
-	//printf("cConfigLabel=%s; cOSTemplateBase=%s;\n",cConfigLabel,cOSTemplateBase);
-	//exit(0);
-
-	if(uNotValidSystemCallArg(cOSTemplateBase) || uNotValidSystemCallArg(cConfigLabel))
+	if(uNotValidSystemCallArg(cConfigLabel))
 	{
 		logfileLine("TemplateContainer","security alert");
 		tJobErrorUpdate(uJob,"failed sec alert!");
@@ -2180,11 +2144,10 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 	//2-.	
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"mv /vz/dump/vzdump-%u.tgz /vz/template/cache/%.67s-%.32s.tar.gz",
-				uContainer,cOSTemplateBase,cConfigLabel);
+		sprintf(gcQuery,"mv /vz/dump/vzdump-%u.tgz /vz/template/cache/%s.tar.gz",uContainer,cConfigLabel);
 	else
-		sprintf(gcQuery,"mv %s/vzdump-%u.tgz /vz/template/cache/%.67s-%.32s.tar.gz",
-				cSnapshotDir,uContainer,cOSTemplateBase,cConfigLabel);
+		sprintf(gcQuery,"mv %s/vzdump-%u.tgz /vz/template/cache/%s.tar.gz",
+				cSnapshotDir,uContainer,cConfigLabel);
 	if(system(gcQuery))
 	{
 		logfileLine("TemplateContainer",gcQuery);
@@ -2195,9 +2158,8 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//2b-. md5sum generation
 	if(!stat("/usr/bin/md5sum",&statInfo))
 	{
-		sprintf(gcQuery,"/usr/bin/md5sum /vz/template/cache/%.67s-%.32s.tar.gz >"
-				" /vz/template/cache/%.67s-%.32s.tar.gz.md5sum",
-			cOSTemplateBase,cConfigLabel,cOSTemplateBase,cConfigLabel);
+		sprintf(gcQuery,"/usr/bin/md5sum /vz/template/cache/%s.tar.gz >"
+				" /vz/template/cache/%s.tar.gz.md5sum",cConfigLabel,cConfigLabel);
 		if(system(gcQuery))
 		{
 			logfileLine("TemplateContainer",gcQuery);
@@ -2210,16 +2172,14 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//3-. scp template to all nodes depends on /usr/sbin/allnodescp.sh installed and configured correctly
 	if(!stat("/usr/sbin/allnodescp.sh",&statInfo))
 	{
-		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /vz/template/cache/%.67s-%.32s.tar.gz",
-			cOSTemplateBase,cConfigLabel);
+		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /vz/template/cache/%s.tar.gz",cConfigLabel);
 		if(system(gcQuery))
 		{
 			logfileLine("TemplateContainer",gcQuery);
 			tJobErrorUpdate(uJob,"allnodescp.sh .tar.gz failed");
 			goto CommonExit;
 		}
-		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /vz/template/cache/%.67s-%.32s.tar.gz.md5sum",
-			cOSTemplateBase,cConfigLabel);
+		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /vz/template/cache/%s.tar.gz.md5sum",cConfigLabel);
 		if(system(gcQuery))
 		{
 			logfileLine("TemplateContainer",gcQuery);
@@ -2232,8 +2192,8 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//Relies on new version of "/usr/sbin/allnodecmd.sh" that adds return values.
 	if(!stat("/usr/sbin/allnodecmd.sh",&statInfo) && !stat("/usr/bin/md5sum",&statInfo))
 	{
-		sprintf(gcQuery,"/usr/sbin/allnodecmd.sh \"/usr/bin/md5sum -c /vz/template/cache/%.67s-%.32s.tar.gz.md5sum\"",
-			cOSTemplateBase,cConfigLabel);
+		sprintf(gcQuery,"/usr/sbin/allnodecmd.sh"
+				" \"/usr/bin/md5sum -c /vz/template/cache/%s.tar.gz.md5sum\"",cConfigLabel);
 		if(system(gcQuery))
 		{
 			logfileLine("TemplateContainer",gcQuery);
@@ -2243,7 +2203,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 
 	//4-. Make /etc/vz/conf tConfig file and scp to all nodes. ve-proxpop.conf-sample
-	sprintf(gcQuery,"/bin/cp /etc/vz/conf/%u.conf /etc/vz/conf/ve-%.32s.conf-sample",
+	sprintf(gcQuery,"/bin/cp /etc/vz/conf/%u.conf /etc/vz/conf/ve-%s.conf-sample",
 		uContainer,cConfigLabel);
 	if(system(gcQuery))
 	{
@@ -2253,7 +2213,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 	if(!stat("/usr/sbin/allnodescp.sh",&statInfo))
 	{
-		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /etc/vz/conf/ve-%.32s.conf-sample",cConfigLabel);
+		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /etc/vz/conf/ve-%s.conf-sample",cConfigLabel);
 		if(system(gcQuery))
 		{
 			logfileLine("TemplateContainer",gcQuery);
@@ -2281,8 +2241,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		mysql_free_result(res);
 	}
 
-	sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%.67s-%.32s'"
-							,cOSTemplateBase,cConfigLabel);
+	sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s'",cConfigLabel);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2293,9 +2252,8 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)<1)
 	{
-		sprintf(gcQuery,"INSERT tOSTemplate SET cLabel='%.67s-%.32s',uOwner=%u,uCreatedBy=%u,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW())",cOSTemplateBase,cConfigLabel,
-									uOwner,uCreatedBy);
+		sprintf(gcQuery,"INSERT tOSTemplate SET cLabel='%s',uOwner=%u,uCreatedBy=%u,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",cConfigLabel,uOwner,uCreatedBy);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -2306,7 +2264,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 	mysql_free_result(res);
 	//5b-.
-	sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%.32s'",cConfigLabel);
+	sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",cConfigLabel);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -2317,7 +2275,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)<1)
 	{
-		sprintf(gcQuery,"INSERT tConfig SET cLabel='%.32s',uOwner=%u,uCreatedBy=%u,"
+		sprintf(gcQuery,"INSERT tConfig SET cLabel='%s',uOwner=%u,uCreatedBy=%u,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",cConfigLabel,uOwner,uCreatedBy);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
