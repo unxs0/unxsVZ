@@ -1158,7 +1158,7 @@ NextSection2:
 	sprintf(gcQuery,"SELECT tNode.cLabel,FROM_UNIXTIME(MAX(tProperty.uModDate)),"
 			"(UNIX_TIMESTAMP(NOW()) - MAX(tProperty.uModDate) > 900 ) FROM"
 			" tProperty,tNode WHERE tProperty.uKey=tNode.uNode AND"
-			" tProperty.uType=2 AND tNode.uStatus=1 GROUP BY tProperty.uKey");
+			" tProperty.uType=2 AND tNode.uStatus=1 AND tProperty.cName='numiptent.luFailcnt' GROUP BY tProperty.uKey");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
