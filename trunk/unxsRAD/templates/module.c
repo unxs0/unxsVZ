@@ -4,7 +4,7 @@ FILE
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality can be developed in {{cTableNameLC}}func.h
-	while unxsRAD can still to be used to change this schema dependent file.
+	while {{cProject}} can still to be used to change this schema dependent file.
 AUTHOR
 	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
 TEMPLATE VARS AND FUNCTIONS

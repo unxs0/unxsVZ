@@ -457,14 +457,15 @@ void tProjectTableNavList(void)
 	if(!uProject) return;
 
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable WHERE uProject=%u ORDER BY cLabel",uProject);
+		sprintf(gcQuery,"SELECT uTable,cLabel,uTableOrder FROM tTable WHERE uProject=%u ORDER BY uTableOrder,cLabel",uProject);
 	else
 		sprintf(gcQuery,"SELECT tTable.uTable,"
-				" tTable.cLabel"
+				" tTable.cLabel,tTable.uTableOrder"
 				" FROM tTable,tClient"
 				" WHERE tTable.uOwner=tClient.uClient"
 				" AND tTable.uProject=%u"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY tTable.uTableOrder,tTable.cLabel",
 					uProject,guCompany,guLoginClient);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -486,8 +487,8 @@ void tProjectTableNavList(void)
 			else
 				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tTable"
-				"&uTable=%s><font color=%s>%s</font></a><br>\n",
-					field[0],cColor,field[1]);
+				"&uTable=%s><font color=%s>%s/%s</font></a><br>\n",
+					field[0],cColor,field[1],field[2]);
 		}
 	}
         mysql_free_result(res);
@@ -609,11 +610,11 @@ void RemoveDefaultTables(unsigned uProject)
 
 void AddDefaultTables(unsigned uProject)
 {
-	char cValue[1024];
+	char cValue[2048];
 	char cLine[256];
 
         sprintf(cLine,"cDefaultTablesList_TemplateSet_%s",ForeignKey("tTemplateSet","cLabel",uTemplateSet));
-	GetConfiguration(cLine,cValue,1024,0,1);
+	GetConfiguration(cLine,cValue,2047,0,1);
 
 	while(1)
 	{
@@ -635,11 +636,11 @@ void RemoveTableFromDefaultTablesLine(char *cLine)
 	int iCount=0;
 
 	//tClient;1000;1;Organizations and their contacts;7;7;7;7;
-	iCount=sscanf(cLine,"%31[a-zA-Z0-9 ];%*u;%*u;%*99[a-zA-Z0-9 ];%*u;%*u;%*u;%*u;",cTable);
+	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%*u;%*u;%*99[a-zA-Z0-9 ];%*u;%*u;%*u;%*u;",cTable);
 	if(!cTable[0] || iCount!=1)
 	{
 		char gcQuery[512];
-		sprintf(gcQuery,"Error %s",cLine);
+		sprintf(gcQuery,"Error1 %s",cLine);
 		tProject(gcQuery);
 	}
 
@@ -681,12 +682,13 @@ void AddTableFromDefaultTablesLine(char *cLine)
 	int iCount=0;
 
 	//tClient;1000;1;Organizations and their contacts;7;7;7;7;
-	iCount=sscanf(cLine,"%31[a-zA-Z0-9 ];%u;%u;%99[a-zA-Z0-9 ];%u;%u;%u;%u;",cTable,&uOrder,&uSourceLock,
+	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%u;%u;%99[a-zA-Z0-9 ];%u;%u;%u;%u;",cTable,&uOrder,&uSourceLock,
 						cDescription,&uNewLevel,&uModLevel,&uDelLevel,&uReadLevel);
 	if(!cTable[0] || iCount!=8)
 	{
 		char gcQuery[512];
-		sprintf(gcQuery,"Error %s;%u;%u;%s;%u;%u;%u;%u;",cTable,uOrder,uSourceLock,cDescription,uNewLevel,uModLevel,uDelLevel,uReadLevel);
+		sprintf(gcQuery,"Error2 iCount=%d %s;%u;%u;%s;%u;%u;%u;%u; (%s)",
+				iCount,cTable,uOrder,uSourceLock,cDescription,uNewLevel,uModLevel,uDelLevel,uReadLevel,cLine);
 		tProject(gcQuery);
 	}
 
