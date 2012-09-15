@@ -1,342 +1,415 @@
 /*
-FILE 
-	unxsrad.c
-	$Id$
+FILE
+	$Id: ttemplatefunc.h 2101 2012-09-09 00:25:26Z Gary $
+	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
-	unxsRAD job queue CLI standalone program	
-LEGAL
-	(C) Gary Wallis 2012 for Unixservice, LLC. All Rights Reserved.
-	LICENSE file should be included in distribution.
-OTHER
-HELP
-
+	Non schema-dependent table and application table related functions.
+AUTHOR
+	(C) 2001-2009 Gary Wallis for Unixservice.
+ 
 */
 
-#include "unxsrad.h"
-#include <openisp/template.h>
-
-//Global vars
-MYSQL gMysql;
-char gcQuery[8192]={""};
-char *gcBuildInfo="$Id$";
-static FILE *gLfp=NULL;//log file
-char gcHostname[100]={""};
 static unsigned guTable=0;
+static char cuTablePullDown[256]={""};
 static char gcTableName[32]={""};
 static char gcTableNameLC[64]={""};
 static char gcTableKey[33]={""};
-unsigned guProject=0;
-char gcProject[32]={"Project"};
-char gcDirectory[100]={"/tmp"};
 
-//prototype TOC
-void ProcessJobQueue(void);
-void MakeSourceCodeJob(unsigned uJob,char const *cJobData);
-void logfileLine(const char *cFunction,const char *cLogline);
-unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable);
+//ModuleFunctionProtos()
 unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable);
-unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable);
-unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable);
-unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable);
-void funcModuleListPrint(FILE *fp);
-void funcModuleListTable(FILE *fp);
-void funcModuleLoadVars(FILE *fp);
-void funcModuleProcVars(FILE *fp);
-void funcModuleRAD3Input(FILE *fp);
-void funcModuleVars(FILE *fp);
-void funcModuleVarList(FILE *fp);
-void funcModuleUpdateQuery(FILE *fp);
-void funcModuleInsertQuery(FILE *fp);
-void funcModuleCreateQuery(FILE *fp);
-void AppFunctions(FILE *fp,char *cFunction);
 void StripQuotes(char *cLine);
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
-char *WordToLower(char *cInput);
 
 
-//external prototypes
-unsigned TextConnectDb(void); //mysqlconnect.c
+void tTemplateNavList(void);
 
-int main(int iArgc, char *cArgv[])
+void ExtProcesstTemplateVars(pentry entries[], int x)
 {
-	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
+	register int i;
+	for(i=0;i<x;i++)
 	{
-		fprintf(stderr,"Could not open logfile: %s\n",cLOGFILE);
-		exit(300);
-       	}
-
-	if(gethostname(gcHostname,99)!=0)
-	{
-		logfileLine("ProcessJobQueue","gethostname() failed");
-		exit(1);
+		if(!strcmp(entries[i].name,"uTable"))
+			sscanf(entries[i].val,"%u",&guTable);
+		else if(!strcmp(entries[i].name,"cuTablePullDown"))
+		{
+			sprintf(cuTablePullDown,"%.255s",entries[i].val);
+			guTable=ReadPullDown("tTable","cLabel",cuTablePullDown);
+		}
 	}
-	logfileLine("main",gcHostname);
+}//void ExtProcesstTemplateVars(pentry entries[], int x)
 
-	//Uses login data from local.h
-	if(TextConnectDb())
-		exit(1);
 
-	if(iArgc==2)
+void ExttTemplateCommands(pentry entries[], int x)
+{
+
+	if(!strcmp(gcFunction,"tTemplateTools"))
 	{
-		if(!strcmp(cArgv[1],"ProcessJobQueue"))
-			ProcessJobQueue();
+		//ModuleFunctionProcess()
+
+		if(!strcmp(gcCommand,LANG_NB_NEW))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstTemplateVars(entries,x);
+                        	guMode=2000;
+	                        tTemplate(LANG_NB_CONFIRMNEW);
+			}
+			else
+				tTemplate("<blink>Error</blink>: Denied by permissions settings");
+		}
+		else if(!strcmp(gcCommand,"Create File"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstTemplateVars(entries,x);
+                        	guMode=0;
+				if(!guTable)
+	                        	tTemplate("Must select a table");
+				if(!uTemplate)
+	                        	tTemplate("Must load a template");
+
+				if(CreateFileFromTemplate(uTemplate,guTable))
+	                        	tTemplate("Create file error");
+				else
+	                        	tTemplate("Create file ok");
+			}
+			else
+				tTemplate("<blink>Error</blink>: Denied by permissions settings");
+                }
+		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
+                {
+			if(guPermLevel>=9)
+			{
+				unsigned uContactParentCompany=0;
+                        	ProcesstTemplateVars(entries,x);
+				GetClientOwner(guLoginClient,&uContactParentCompany);
+				
+                        	guMode=2000;
+				//Check entries here
+                        	guMode=0;
+
+				uTemplate=0;
+				uCreatedBy=guLoginClient;
+				uOwner=uContactParentCompany;
+				uModBy=0;//Never modified
+				uModDate=0;//Never modified
+				NewtTemplate(0);
+			}
+			else
+				tTemplate("<blink>Error</blink>: Denied by permissions settings");
+		}
+		else if(!strcmp(gcCommand,LANG_NB_DELETE))
+                {
+                        ProcesstTemplateVars(entries,x);
+			if(uAllowDel(uOwner,uCreatedBy))
+			{
+	                        guMode=2001;
+				tTemplate(LANG_NB_CONFIRMDEL);
+			}
+			else
+				tTemplate("<blink>Error</blink>: Denied by permissions settings");
+                }
+                else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
+                {
+                        ProcesstTemplateVars(entries,x);
+			if(uAllowDel(uOwner,uCreatedBy))
+			{
+				guMode=5;
+				DeletetTemplate();
+			}
+			else
+				tTemplate("<blink>Error</blink>: Denied by permissions settings");
+                }
+		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
+                {
+                        ProcesstTemplateVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+				guMode=2002;
+				tTemplate(LANG_NB_CONFIRMMOD);
+			}
+			else
+				tTemplate("<blink>Error</blink>: Denied by permissions settings");
+                }
+                else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
+                {
+                        ProcesstTemplateVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=2002;
+				//Check entries here
+                        	guMode=0;
+
+				uModBy=guLoginClient;
+				ModtTemplate();
+			}
+			else
+				tTemplate("<blink>Error</blink>: Denied by permissions settings");
+                }
 	}
-	else if(1)
+
+}//void ExttTemplateCommands(pentry entries[], int x)
+
+
+void ExttTemplateButtons(void)
+{
+	OpenFieldSet("tTemplate Aux Panel",100);
+	switch(guMode)
+        {
+                case 2000:
+			printf("<p><u>Enter/mod data</u><br>");
+                        printf(LANG_NBB_CONFIRMNEW);
+                break;
+
+                case 2001:
+                        printf("<p><u>Think twice</u><br>");
+                        printf(LANG_NBB_CONFIRMDEL);
+                break;
+
+                case 2002:
+			printf("<p><u>Review changes</u><br>");
+                        printf(LANG_NBB_CONFIRMMOD);
+                break;
+
+		default:
+			printf("<u>Table Tips</u><br>");
+			printf("<p><u>Record Context Info</u><br>");
+			printf("<p><u>Operations</u><br>");
+			tTablePullDownOwner("tTable;cuTablePullDown","cLabel","cLabel",guTable,1);
+			printf("<br><input type=submit class=largeButton title='Create /tmp debug file from this template based on cLabel'"
+				" name=gcCommand value='Create File'>");
+			tTemplateNavList();
+	}
+	CloseFieldSet();
+
+}//void ExttTemplateButtons(void)
+
+
+void ExttTemplateAuxTable(void)
+{
+
+}//void ExttTemplateAuxTable(void)
+
+
+void ExttTemplateGetHook(entry gentries[], int x)
+{
+	register int i;
+
+	for(i=0;i<x;i++)
 	{
-		printf("usage: %s ProcessJobQueue\n",cArgv[0]);
+		if(!strcmp(gentries[i].name,"uTemplate"))
+		{
+			sscanf(gentries[i].val,"%u",&uTemplate);
+			guMode=6;
+		}
 	}
-	fclose(gLfp);
-	mysql_close(&gMysql);
-	return(0);
-}//main()
+	tTemplate("");
+
+}//void ExttTemplateGetHook(entry gentries[], int x)
 
 
-void ProcessJobQueue(void)
+void ExttTemplateSelect(void)
+{
+
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tTemplate ORDER BY"
+				" uTemplate",
+				VAR_LIST_tTemplate);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tTemplate,tClient WHERE tTemplate.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uTemplate",
+					VAR_LIST_tTemplate,uContactParentCompany,uContactParentCompany);
+					
+
+}//void ExttTemplateSelect(void)
+
+
+void ExttTemplateSelectRow(void)
+{
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tTemplate WHERE uTemplate=%u",
+			VAR_LIST_tTemplate,uTemplate);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tTemplate,tClient"
+                                " WHERE tTemplate.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tTemplate.uTemplate=%u",
+                        		VAR_LIST_tTemplate
+					,uContactParentCompany,uContactParentCompany
+					,uTemplate);
+
+}//void ExttTemplateSelectRow(void)
+
+
+void ExttTemplateListSelect(void)
+{
+	char cCat[512];
+	unsigned uContactParentCompany=0;
+	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tTemplate",
+				VAR_LIST_tTemplate);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tTemplate,tClient"
+				" WHERE tTemplate.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tTemplate
+				,uContactParentCompany
+				,uContactParentCompany);
+
+	//Changes here must be reflected below in ExttTemplateListFilter()
+        if(!strcmp(gcFilter,"uTemplate"))
+        {
+                sscanf(gcCommand,"%u",&uTemplate);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tTemplate.uTemplate=%u"
+						" ORDER BY uTemplate",
+						uTemplate);
+		strcat(gcQuery,cCat);
+        }
+        else if(1)
+        {
+                //None NO FILTER
+                strcpy(gcFilter,"None");
+		strcat(gcQuery," ORDER BY uTemplate");
+        }
+
+}//void ExttTemplateListSelect(void)
+
+
+void ExttTemplateListFilter(void)
+{
+        //Filter
+        printf("&nbsp;&nbsp;&nbsp;Filter on ");
+        printf("<select name=gcFilter>");
+        if(strcmp(gcFilter,"uTemplate"))
+                printf("<option>uTemplate</option>");
+        else
+                printf("<option selected>uTemplate</option>");
+        if(strcmp(gcFilter,"None"))
+                printf("<option>None</option>");
+        else
+                printf("<option selected>None</option>");
+        printf("</select>");
+
+}//void ExttTemplateListFilter(void)
+
+
+void ExttTemplateNavBar(void)
+{
+	printf(LANG_NBB_SKIPFIRST);
+	printf(LANG_NBB_SKIPBACK);
+	printf(LANG_NBB_SEARCH);
+
+	if(guPermLevel>=7 && !guListMode)
+		printf(LANG_NBB_NEW);
+
+	if(uAllowMod(uOwner,uCreatedBy))
+		printf(LANG_NBB_MODIFY);
+
+	if(uAllowDel(uOwner,uCreatedBy)) 
+		printf(LANG_NBB_DELETE);
+
+	if(uOwner)
+		printf(LANG_NBB_LIST);
+
+	printf(LANG_NBB_SKIPNEXT);
+	printf(LANG_NBB_SKIPLAST);
+	printf("&nbsp;&nbsp;&nbsp;\n");
+
+}//void ExttTemplateNavBar(void)
+
+
+void tTemplateNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uJob=0;
+	unsigned uContactParentCompany=0;
 
-	sprintf(gcQuery,"SELECT uJob,cJobName,cJobData FROM tJob,tServer"
-			" WHERE tJob.uServer=tServer.uServer AND tServer.cLabel='%s'"
-			" AND tJob.uJobStatus=1",
-					gcHostname);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
-		return;
-	}
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
+	
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tTemplate.uTemplate,"
+				" tTemplate.cLabel"
+				" FROM tTemplate,tClient"
+				" WHERE tTemplate.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tTemplateNavList</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
         res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u",&uJob);
-		if(!strcmp(field[1],"MakeSourceCodeJob"))
-			MakeSourceCodeJob(uJob,field[2]);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>tTemplateNavList</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tTemplate"
+				"&uTemplate=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
-	mysql_free_result(res);
+        mysql_free_result(res);
 
-}//void ProcessJobQueue(void)
+}//void tTemplateNavList(void)
 
-
-void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-	unsigned uProject=0;
-	unsigned uTable=0;
-	unsigned uTemplateSet=0;
-	unsigned uOnce=1;
-
-	logfileLine("MakeSourceCodeJob","start");
-
-	sscanf(cJobData,"uProject=%u;",&uProject);
-	guProject=uProject;
-	sprintf(gcProject,"%.31s",ForeignKey("tProject","cLabel",guProject));
-	sprintf(gcDirectory,"%.99s",ForeignKey("tProject","cDirectory",guProject));
-
-	sprintf(gcQuery,"SELECT tProject.cLabel,tTable.cLabel,tTable.uTable,tProject.uTemplateSet FROM tProject,tTable"
-			" WHERE tTable.uProject=tProject.uProject AND tProject.uProject=%u",
-					uProject);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
-		return;
-	}
-        res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(uOnce)
-		{
-			sscanf(field[3],"%u",&uTemplateSet);
-			printf("%s uTemplateSet:%u\n",field[0],uTemplateSet);
-			uOnce=0;
-		}
-		sscanf(field[2],"%u",&uTable);
-		printf("%s uTable:%u\n",field[1],uTable);
-		if(CreateFile(uTemplateSet,uTable,field[1]))
-			break;
-	}
-	mysql_free_result(res);
-
-	logfileLine("MakeSourceCodeJob","end");
-
-}//void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
-
-
-void logfileLine(const char *cFunction,const char *cLogline)
-{
-	time_t luClock;
-	char cTime[32];
-	pid_t pidThis;
-	const struct tm *tmTime;
-
-	pidThis=getpid();
-
-	time(&luClock);
-	tmTime=localtime(&luClock);
-	strftime(cTime,31,"%b %d %T",tmTime);
-
-        fprintf(gLfp,"%s unxsRAD[%u].%s: %s\n",cTime,pidThis,cFunction,cLogline);
-	fflush(gLfp);
-
-}//void logfileLine(char *cLogline)
-
-
-unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-	unsigned uRetVal=0;
-	unsigned uTemplate=0;
-
-	WordToLower(cTable);
-
-	//Here we decide which template to use
-
-	//e.g. makefile
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s' AND uTemplateSet=%u",cTable,uTemplateSet);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
-		return(-1);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u",&uTemplate);
-		if(uTemplate && uTable)
-			uRetVal=CreateGenericFile(uTemplate,uTable);
-	}
-	mysql_free_result(res);
-
-	if(uRetVal)
-		return(uRetVal);
-
-	//e.g. template based tconfiguration.c
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s.c' AND uTemplateSet=%u",cTable,uTemplateSet);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
-		return(-1);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u",&uTemplate);
-		if(uTemplate && uTable)
-			uRetVal=CreateGenericFile(uTemplate,uTable);
-	}
-	mysql_free_result(res);
-
-	if(uRetVal)
-		return(uRetVal);
-
-	//e.g. template based tclientfunc.h
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%sfunc.h' AND uTemplateSet=%u",cTable,uTemplateSet);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
-		return(-1);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u",&uTemplate);
-		if(uTemplate && uTable)
-			uRetVal=CreateGenericFile(uTemplate,uTable);
-	}
-	mysql_free_result(res);
-
-	if(uRetVal)
-		return(uRetVal);
-
-	//No specific template found for table use module.c and modulefunc.h
-	if(!uTemplate)
-	{
-		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='modulefunc.h' AND uTemplateSet=%u",uTemplateSet);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
-			return(-1);
-		}
-	        res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			sscanf(field[0],"%u",&uTemplate);
-			if(uTemplate && uTable)
-				uRetVal=CreateModuleFuncFile(uTemplate,uTable);
-		}
-		mysql_free_result(res);
-
-		if(uRetVal)
-			return(uRetVal);
-
-		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='module.c' AND uTemplateSet=%u",uTemplateSet);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
-			return(-1);
-		}
-	        res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			sscanf(field[0],"%u",&uTemplate);
-			if(uTemplate && uTable)
-				uRetVal=CreateModuleFile(uTemplate,uTable);
-		}
-		mysql_free_result(res);
-
-		if(uRetVal)
-			return(uRetVal);
-
-	}
-
-	//Here we decide which template to use
-	return(uRetVal);
-}//unsigned CreateFile()
-
+#include <openisp/template.h>
 
 unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 {
+	FILE *fp;
 	unsigned uRetVal= -1;
 
 	if(!uTable || !uTemplate) return(uRetVal);
 
+	char cFile[100]={""};
+
+	sprintf(gcTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
+	sprintf(gcTableNameLC,"%.63s",gcTableName);
+	WordToLower(gcTableNameLC);
+
+	sprintf(cFile,"/tmp/%.63s.c",gcTableNameLC);
+	if((fp=fopen(cFile,"w"))==NULL)
+		return(1);
 
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cTemplate,cLabel FROM tTemplate WHERE uTemplate=%u",uTemplate);
+	sprintf(gcQuery,"SELECT cTemplate FROM tTemplate WHERE uTemplate=%u",uTemplate);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
-		logfileLine("CreateModuleFile",mysql_error(&gMysql));
+		fprintf(fp,"%s\n",mysql_error(&gMysql));
 		return(uRetVal);
 	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
 		struct t_template template;
-
-		sprintf(gcTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
-		sprintf(gcTableNameLC,"%.63s",gcTableName);
-		WordToLower(gcTableNameLC);
-
-		FILE *fp;
-		char cFile[256]={""};
-		sprintf(cFile,"%.126s/%.126s.c",gcDirectory,gcTableNameLC);
-		if((fp=fopen(cFile,"w"))==NULL)
-		{
-			logfileLine("CreateModuleFile",cFile);
-			return(1);
-		}
 
 /*
 	funcModuleCreateQuery
@@ -366,99 +439,59 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 		sprintf(gcTableKey,"u%.31s",gcTableName+1);//New table name includes table type t prefix
 		template.cpValue[2]=gcTableKey;
 
+		char cProject[32]={"Project"};
+		sprintf(cProject,"%.31s",ForeignKey("tProject","cLabel",guCookieProject));
 		template.cpName[3]="cProject";
-		template.cpValue[3]=gcProject;
+		template.cpValue[3]=cProject;
 			
 		char cTableTitle[32]={"Title"};
-		sprintf(cTableTitle,"%.31s",ForeignKey("tTable","cLegend",uTable));
+		sprintf(cTableTitle,"%.31s",ForeignKey("tTable","cLegend",guCookieTable));
 		template.cpName[4]="cTableTitle";
 		template.cpValue[4]=cTableTitle;
 			
 		template.cpName[5]="";
 
 		Template(field[0],&template,fp);
-		fclose(fp);
 		uRetVal=0;
 	}
 	else
 	{
-		logfileLine("CreateModuleFile","No such uTemplate");
+		fprintf(fp,"No such uTemplate %u\n",uTemplate);
 		uRetVal=2;
 	}
 	mysql_free_result(res);
+	fclose(fp);
 
 	return(uRetVal);
 
 }//unsigned CreateModuleFile()
 
 
-unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable)
-{
-	unsigned uRetVal= -1;
-
-	if(!uTable || !uTemplate) return(uRetVal);
-
-       	MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	sprintf(gcQuery,"SELECT cTemplate,cLabel FROM tTemplate WHERE uTemplate=%u",uTemplate);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-	{
-		logfileLine("CreateGenericFile",mysql_error(&gMysql));
-		return(uRetVal);
-	}
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		struct t_template template;
-
-		FILE *fp=NULL;
-		char cFile[256]={""};
-		sprintf(cFile,"%.126s/%.126s",gcDirectory,field[1]);
-		if((fp=fopen(cFile,"w"))==NULL)
-		{
-			logfileLine("CreateGenericFile",cFile);
-			return(1);
-		}
-			
-		template.cpName[0]="cProject";
-		template.cpValue[0]=gcProject;
-			
-		template.cpName[1]="";
-
-		Template(field[0],&template,fp);
-		fclose(fp);
-		uRetVal=0;
-	}
-	else
-	{
-		logfileLine("CreateGenericFile","No such uTemplate");
-		uRetVal=2;
-	}
-	mysql_free_result(res);
-
-	return(uRetVal);
-
-
-}//unsigned CreateGenericFile()
-
-
 unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable)
 {
-
+	FILE *fp;
 	unsigned uRetVal= -1;
 
 	if(!uTable || !uTemplate) return(uRetVal);
 
+	char cFile[100]={""};
+
+	sprintf(gcTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
+	sprintf(gcTableNameLC,"%.63s",gcTableName);
+	WordToLower(gcTableNameLC);
+
+	sprintf(cFile,"/tmp/%.63sfunc.h",gcTableNameLC);
+	if((fp=fopen(cFile,"w"))==NULL)
+		return(1);
+
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cTemplate,cLabel FROM tTemplate WHERE uTemplate=%u",uTemplate);
+	sprintf(gcQuery,"SELECT cTemplate FROM tTemplate WHERE uTemplate=%u",uTemplate);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
-		logfileLine("CreateModuleFuncFile",mysql_error(&gMysql));
+		fprintf(fp,"%s\n",mysql_error(&gMysql));
 		return(uRetVal);
 	}
 	res=mysql_store_result(&gMysql);
@@ -466,19 +499,6 @@ unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable)
 	{
 		struct t_template template;
 
-		sprintf(gcTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
-		sprintf(gcTableNameLC,"%.63s",gcTableName);
-		WordToLower(gcTableNameLC);
-
-		FILE *fp=NULL;
-		char cFile[256]={""};
-		sprintf(cFile,"%.126s/%.126sfunc.h",gcDirectory,gcTableNameLC);
-		if((fp=fopen(cFile,"w"))==NULL)
-		{
-			logfileLine("CreateModuleFuncFile",cFile);
-			return(1);
-		}
-			
 /*
 	cTableKey
 	cTableName
@@ -498,21 +518,39 @@ unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable)
 		template.cpName[3]="";
 
 		Template(field[0],&template,fp);
-		fclose(fp);
 		uRetVal=0;
 	}
 	else
 	{
-		logfileLine("CreateModuleFuncFile","No such uTemplate");
+		fprintf(fp,"No such uTemplate %u\n",uTemplate);
 		uRetVal=2;
 	}
 	mysql_free_result(res);
+	fclose(fp);
 
 	return(uRetVal);
 
 
 }//unsigned CreateModuleFuncFile()
 
+
+unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable)
+{
+	char cFile[32];
+	unsigned uRetVal= -1;
+
+	if(!uTable || !uTemplate) return(uRetVal);
+
+	sprintf(cFile,"%.31s",ForeignKey("tTemplate","cLabel",uTemplate));
+
+	if(!strcmp(cFile,"module.c"))
+		uRetVal=CreateModuleFile(uTemplate,uTable);
+	else if(!strcmp(cFile,"modulefunc.h"))
+		uRetVal=CreateModuleFuncFile(uTemplate,uTable);
+
+	return(uRetVal);
+
+}//unsigned CreateFileFromTemplate()
 
 
 void funcModuleListPrint(FILE *fp)
@@ -1609,54 +1647,4 @@ void StripQuotes(char *cLine)
 	}
 	if(j>0) cLine[j]=0;
 }//void StripQuotes(char *cLine)
-
-
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
-{
-        MYSQL_RES *mysqlRes;
-        MYSQL_ROW mysqlField;
-
-	static char gcQuery[256];
-
-        sprintf(gcQuery,"SELECT %s FROM %s WHERE _rowid=%u",
-                        cFieldName,cTableName,uKey);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql)) return(mysql_error(&gMysql));
-
-        mysqlRes=mysql_store_result(&gMysql);
-        if(mysql_num_rows(mysqlRes)==1)
-        {
-                mysqlField=mysql_fetch_row(mysqlRes);
-                return(mysqlField[0]);
-        }
-
-	if(!uKey)
-	{
-        	return("---");
-	}
-	else
-	{
-		sprintf(gcQuery,"%u",uKey);
-        	return(gcQuery);
-	}
-
-}//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
-
-
-char *WordToLower(char *cInput)
-{
-	register int i;
-
-	for(i=0;cInput[i];i++)
-	{
-	
-		if(!isalnum(cInput[i]) && cInput[i]!='_' && cInput[i]!='-'
-				&& cInput[i]!='@' && cInput[i]!='.' ) break;
-		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
-	}
-	cInput[i]=0;
-
-	return(cInput);
-
-}//char *WordToLower(char *cInput)
 

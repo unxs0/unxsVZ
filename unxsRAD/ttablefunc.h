@@ -58,8 +58,8 @@ void ExttTableCommands(pentry entries[], int x)
 				
                         	guMode=2000;
 				//Check entries here
-				if(cLabel[0]!='t')
-					tTable("<blink>Error</blink>: Table must start with lower case t");
+				if(!cLabel[0])
+					tTable("<blink>Error</blink>: No cLabel");
                         	guMode=0;
 
 				uTable=0;
@@ -67,7 +67,14 @@ void ExttTableCommands(pentry entries[], int x)
 				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
-				NewtTable(0);
+				NewtTable(1);
+				if(uTable)
+				{
+					guCookieTable=uTable;
+					guCookieField=0;
+					SetSessionCookie();
+				}
+				tTable("New table created and selected from workflow operations");
 			}
 			else
 				tTable("<blink>Error</blink>: Denied by permissions settings");
@@ -95,6 +102,7 @@ void ExttTableCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tTable("<blink>Error</blink>: This record was modified. Reload it.");
 				guMode=5;
+				//We need to delete all fields also!
 				DeletetTable();
 			}
 			else
@@ -444,7 +452,8 @@ void tTableNavList(void)
 	if(guCookieProject)
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable WHERE uProject=%u ORDER BY uTableOrder",guCookieProject);
+			sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable WHERE uProject=%u AND SUBSTR(cLabel,1,1)='t' ORDER BY uTableOrder",
+				guCookieProject);
 		else
 			sprintf(gcQuery,"SELECT tTable.uTable,"
 				" tTable.cLabel"
