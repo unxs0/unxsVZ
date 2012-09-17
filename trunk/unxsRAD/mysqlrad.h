@@ -87,7 +87,7 @@ extern unsigned guListMode;
 extern char gcQuery[];
 extern char *gcQstr;
 extern char *gcBuildInfo;
-extern char *gcRADStatus;
+extern char gcRADStatus[];
 extern MYSQL gMysql; 
 extern MYSQL gMysql2; 
 extern unsigned long gluRowid;

@@ -4,14 +4,14 @@ FILE
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL
-        Copyright 2001-2007 Gary Wallis
+        Copyright 2001-2012 Gary Wallis for Unixservice, LLC.
 */
 
 //Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
 #define DBIP0 NULL
 #define DBIP1 "127.0.0.1"
-#define DBNAME "unxsrad"
-#define DBLOGIN "unxsrad"
+#define DBNAME "{{cProjectLC}}"
+#define DBLOGIN "{{cProjectLC}}"
 #define DBPASSWD "wsxedc"
 #define DBPORT 0
 #define DBSOCKET NULL

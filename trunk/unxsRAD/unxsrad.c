@@ -27,7 +27,10 @@ static char gcTableNameLC[64]={""};
 static char gcTableKey[33]={""};
 unsigned guProject=0;
 char gcProject[32]={"Project"};
+char gcProjectLC[32]={"project"};
+char gcRADStatus[32]={"Unknown"};
 char gcDirectory[100]={"/tmp"};
+char gcAppSummary[256]={"No application summary"};
 
 //prototype TOC
 void ProcessJobQueue(void);
@@ -42,7 +45,7 @@ void funcModuleListPrint(FILE *fp);
 void funcModuleListTable(FILE *fp);
 void funcModuleLoadVars(FILE *fp);
 void funcModuleProcVars(FILE *fp);
-void funcModuleRAD3Input(FILE *fp);
+void funcModuleInput(FILE *fp);
 void funcModuleVars(FILE *fp);
 void funcModuleVarList(FILE *fp);
 void funcModuleUpdateQuery(FILE *fp);
@@ -52,6 +55,14 @@ void AppFunctions(FILE *fp,char *cFunction);
 void StripQuotes(char *cLine);
 const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 char *WordToLower(char *cInput);
+void funcMakefileObjects(FILE *fp);
+void funcMakefileRules(FILE *fp);
+void funcModulePrototypes(FILE *fp);
+void funcMainGetMenu(FILE *fp);
+void funcMainNavBars(FILE *fp);
+void funcMainPostFunctions(FILE *fp);
+void funcMainTabMenu(FILE *fp);
+void funcMainInitTableList(FILE *fp);
 
 
 //external prototypes
@@ -124,6 +135,7 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uProject=0;
+	unsigned uProjectStatus=0;
 	unsigned uTable=0;
 	unsigned uTemplateSet=0;
 	unsigned uOnce=1;
@@ -133,7 +145,16 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 	sscanf(cJobData,"uProject=%u;",&uProject);
 	guProject=uProject;
 	sprintf(gcProject,"%.31s",ForeignKey("tProject","cLabel",guProject));
+
+	sprintf(gcProjectLC,"%.31s",ForeignKey("tProject","cLabel",guProject));
+	WordToLower(gcProjectLC);
+
+	sprintf(gcAppSummary,"%.255s",ForeignKey("tProject","cDescription",guProject));
+
 	sprintf(gcDirectory,"%.99s",ForeignKey("tProject","cDirectory",guProject));
+
+	sscanf(ForeignKey("tProject","uProjectStatus",guProject),"%u",&uProjectStatus);
+	sprintf(gcRADStatus,"%.31s",ForeignKey("tProjectStatus","cLabel",uProjectStatus));
 
 	sprintf(gcQuery,"SELECT tProject.cLabel,tTable.cLabel,tTable.uTable,tProject.uTemplateSet FROM tProject,tTable"
 			" WHERE tTable.uProject=tProject.uProject AND tProject.uProject=%u",
@@ -345,7 +366,7 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 	funcModuleListTable
 	funcModuleLoadVars
 	funcModuleProcVars
-	funcModuleRAD3Input
+	funcModuleInput
 	funcModuleUpdateQuery
 	funcModuleVars
 	funcModuleVarList
@@ -425,7 +446,16 @@ unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable)
 		template.cpName[0]="cProject";
 		template.cpValue[0]=gcProject;
 			
-		template.cpName[1]="";
+		template.cpName[1]="cProjectLC";
+		template.cpValue[1]=gcProjectLC;
+			
+		template.cpName[2]="gcRADStatus";
+		template.cpValue[2]=gcRADStatus;
+			
+		template.cpName[3]="cAppSummary";
+		template.cpValue[3]=gcAppSummary;
+			
+		template.cpName[4]="";
 
 		Template(field[0],&template,fp);
 		fclose(fp);
@@ -918,7 +948,7 @@ void funcModuleProcVars(FILE *fp)
 }//void funcModuleProcVars(FILE *fp)
 
 
-void funcModuleRAD3Input(FILE *fp)
+void funcModuleInput(FILE *fp)
 {
        	MYSQL_RES *res;
         MYSQL_ROW field;
@@ -1155,7 +1185,7 @@ void funcModuleRAD3Input(FILE *fp)
 
 	}//while
 
-}//void funcModuleRAD3Input(FILE *fp)
+}//void funcModuleInput(FILE *fp)
 
 
 void funcModuleVars(FILE *fp)
@@ -1561,7 +1591,7 @@ void funcModuleCreateQuery(FILE *fp)
 }//void funcModuleCreateQuery(FILE *fp)
 
 
-//libtemplate.a required
+//libtemplate.a required call back hook
 void AppFunctions(FILE *fp,char *cFunction)
 {
 	if(!strcmp(cFunction,"funcModuleCreateQuery"))
@@ -1576,14 +1606,30 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcModuleLoadVars(fp);
 	else if(!strcmp(cFunction,"funcModuleProcVars"))
 		funcModuleProcVars(fp);
-	else if(!strcmp(cFunction,"funcModuleRAD3Input"))
-		funcModuleRAD3Input(fp);
+	else if(!strcmp(cFunction,"funcModuleInput"))
+		funcModuleInput(fp);
 	else if(!strcmp(cFunction,"funcModuleUpdateQuery"))
 		funcModuleUpdateQuery(fp);
 	else if(!strcmp(cFunction,"funcModuleVars"))
 		funcModuleVars(fp);
 	else if(!strcmp(cFunction,"funcModuleVarList"))
 		funcModuleVarList(fp);
+	else if(!strcmp(cFunction,"funcMakefileObjects"))
+		funcMakefileObjects(fp);
+	else if(!strcmp(cFunction,"funcMakefileRules"))
+		funcMakefileRules(fp);
+	else if(!strcmp(cFunction,"funcModulePrototypes"))
+		funcModulePrototypes(fp);
+	else if(!strcmp(cFunction,"funcMainGetMenu"))
+		funcMainGetMenu(fp);
+	else if(!strcmp(cFunction,"funcMainNavBars"))
+		funcMainNavBars(fp);
+	else if(!strcmp(cFunction,"funcMainPostFunctions"))
+		funcMainPostFunctions(fp);
+	else if(!strcmp(cFunction,"funcMainTabMenu"))
+		funcMainTabMenu(fp);
+	else if(!strcmp(cFunction,"funcMainInitTableList"))
+		funcMainInitTableList(fp);
 
 }//void AppFunctions(FILE *fp,char *cFunction)
 
@@ -1659,4 +1705,249 @@ char *WordToLower(char *cInput)
 	return(cInput);
 
 }//char *WordToLower(char *cInput)
+
+
+void funcMakefileObjects(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" ORDER BY uTableOrder",guProject);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+		fprintf(fp,"%s.o ",WordToLower(field[0]));
+	mysql_free_result(res);
+
+}//void funcMakefileObjects(FILE *fp)
+
+
+void funcMakefileRules(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" ORDER BY uTableOrder",guProject);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		WordToLower(field[0]);
+		fprintf(fp,"%1$s.o: %1$s.c mysqlrad.h language.h %1$sfunc.h local.h\n",field[0]);
+		fprintf(fp,"\tcc -c %1$s.c -o %1$s.o $(CFLAGS)\n\n",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void funcMakefileRules(FILE *fp)
+
+
+void funcModulePrototypes(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" ORDER BY uTableOrder",guProject);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"//%s\n",field[0]);
+		fprintf(fp,"int %sCommands(pentry entries[], int x);\n",field[0]);
+		fprintf(fp,"void %s(const char *results);\n",field[0]);
+		fprintf(fp,"void Process%sVars(pentry entries[], int x);\n",field[0]);
+		fprintf(fp,"void %sContent(void);\n",field[0]);
+		fprintf(fp,"void %sInputContent(void);\n",field[0]);
+		fprintf(fp,"void %sInput(unsigned uMode);\n",field[0]);
+		fprintf(fp,"void %sList(void);\n",field[0]);
+		fprintf(fp,"void New%s(unsigned uMode);\n",field[0]);
+		fprintf(fp,"void Mod%s(void);\n",field[0]);
+		fprintf(fp,"void Create%s(void);\n",field[0]);
+		fprintf(fp,"void Delete%s(void);\n",field[0]);
+		fprintf(fp,"void Ext%sGetHook(entry gentries[], int x);\n",field[0]);
+		fprintf(fp,"void Ext%sNavBar(void);\n",field[0]);
+		fprintf(fp,"\n");
+	}
+	mysql_free_result(res);
+
+}//void funcModulePrototypes(FILE *fp)
+
+
+void funcMainGetMenu(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" ORDER BY uTableOrder",guProject);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"\t\t\telse if(!strcmp(gcFunction,\"%s\"))\n",field[0]);
+		fprintf(fp,"\t\t\t\tExt%sGetHook(gentries,x);\n",field[0]);
+	}
+        mysql_free_result(res);
+
+}//void funcMainGetMenu(FILE *fp)
+
+
+void funcMainNavBars(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" ORDER BY uTableOrder",guProject);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uFirst=1;
+	fprintf(fp,"\t//funcMainNavBars()\n");
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uFirst)
+			fprintf(fp,"\tif");
+		else
+			fprintf(fp,"\telse if");
+		fprintf(fp,"(!strcmp(gcFunction,\"%s\") || !strcmp(gcFunction,\"%sTools\") ||\n"
+				"\t\t\t!strcmp(gcFunction,\"%sList\"))\n",field[0],field[0],field[0]);
+		fprintf(fp,"\t\tExt%sNavBar();\n",field[0]);
+		uFirst=0;
+	}
+	mysql_free_result(res);
+
+}//void funcMainNavBars(FILE *ofp)
+
+
+void funcMainPostFunctions(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" ORDER BY uTableOrder",guProject);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+		fprintf(fp,"\t%sCommands(entries,x);\n",field[0]);
+        mysql_free_result(res);
+
+}//void funcMainPostFunctions(FILE *fp)
+
+
+void funcMainTabMenu(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel,uReadLevel,cToolTip"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" ORDER BY uTableOrder",guProject);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"\t//%s\n",field[0]);
+		fprintf(fp,"\tif(guPermLevel>=%s)\n",field[1]);
+		fprintf(fp,"\t{\n");
+		fprintf(fp,"\t  printf(\"\\t\\t\\t<li\");\n");
+		fprintf(fp,"\t  if(strcmp(gcFunction,\"%s\") && strcmp(gcFunction,\"%sTools\") &&\n"
+				"\t\t\tstrcmp(gcFunction,\"%sList\"))\n",field[0],field[0],field[0]);
+		fprintf(fp,"\t\t  printf(\">\\n\");\n");
+		fprintf(fp,"\t  else\n");
+		fprintf(fp,"\t\t  printf(\" id=current>\\n\");\n");
+		fprintf(fp,"\t  printf(\"\\t\\t\\t<a title='%s' href=%s.cgi?gcFunction=%s>%s</a>\\n\");\n",field[2],gcProject,field[0],field[0]);
+		fprintf(fp,"\t}\n");
+	}
+        mysql_free_result(res);
+
+}//void funcMainTabMenu(FILE *fp)
+
+
+void funcMainInitTableList(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel,uReadLevel,cToolTip"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" ORDER BY uTableOrder",guProject);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+        if(mysql_num_rows(res)>0)
+        {
+                fprintf(fp,"{");
+                while((field=mysql_fetch_row(res)))
+                {
+                        fprintf(fp,"\"%s\",",field[0]);
+                }
+                fprintf(fp,"\"\"};\n");
+        }
+        mysql_free_result(res);
+
+}//void funcMainInitTableList(FILE *fp)
 

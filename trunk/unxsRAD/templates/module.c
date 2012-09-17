@@ -14,7 +14,7 @@ TEMPLATE VARS AND FUNCTIONS
 	ModuleListTable
 	ModuleLoadVars
 	ModuleProcVars
-	ModuleRAD3Input
+	ModuleInput
 	ModuleUpdateQuery
 	ModuleVars
 	ModuleVarList
@@ -218,7 +218,7 @@ void {{cTableName}}(const char *cResult)
 void {{cTableName}}Input(unsigned uMode)
 {
 
-	{{ModuleRAD3Input}}
+	{{ModuleInput}}
 
 }//void {{cTableName}}Input(unsigned uMode)
 
