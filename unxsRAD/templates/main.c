@@ -155,7 +155,10 @@ int main(int iArgc, char *cArgv[])
 				printf("Set-Cookie: {{cProject}}Login=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				printf("Set-Cookie: {{cProject}}Passwd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				printf("Set-Cookie: {{cProject}}SessionCookie=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
+						"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,"
+						"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
 				macro_mySQLQueryHTMLError;
 				gcCookie[0]=0;
                                 guPermLevel=0;
@@ -204,7 +207,7 @@ int main(int iArgc, char *cArgv[])
                 SSLCookieLogin();
 
 	//Main Post Menu
-	{{funcMainPostMenu}}
+	{{funcMainPostFunctions}}
 
 	iExtMainCommands(entries,x);
 

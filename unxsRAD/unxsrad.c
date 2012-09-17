@@ -1816,10 +1816,16 @@ void funcMainGetMenu(FILE *fp)
                 return;
         }
         res=mysql_store_result(&gMysql);
+	fprintf(fp,"//funcMainGetMenu()\n");
+	unsigned uFirst=1;
 	while((field=mysql_fetch_row(res)))
 	{
-		fprintf(fp,"\t\t\telse if(!strcmp(gcFunction,\"%s\"))\n",field[0]);
+		if(uFirst)
+			fprintf(fp,"\t\t\tif(!strcmp(gcFunction,\"%s\"))\n",field[0]);
+		else
+			fprintf(fp,"\t\t\telse if(!strcmp(gcFunction,\"%s\"))\n",field[0]);
 		fprintf(fp,"\t\t\t\tExt%sGetHook(gentries,x);\n",field[0]);
+		uFirst=0;
 	}
         mysql_free_result(res);
 
@@ -1844,7 +1850,7 @@ void funcMainNavBars(FILE *fp)
         }
         res=mysql_store_result(&gMysql);
 	unsigned uFirst=1;
-	fprintf(fp,"\t//funcMainNavBars()\n");
+	fprintf(fp,"//funcMainNavBars()\n");
 	while((field=mysql_fetch_row(res)))
 	{
 		if(uFirst)
@@ -1878,6 +1884,7 @@ void funcMainPostFunctions(FILE *fp)
                 return;
         }
         res=mysql_store_result(&gMysql);
+	fprintf(fp,"//funcMainPostFunctions()\n");
 	while((field=mysql_fetch_row(res)))
 		fprintf(fp,"\t%sCommands(entries,x);\n",field[0]);
         mysql_free_result(res);
@@ -1902,6 +1909,7 @@ void funcMainTabMenu(FILE *fp)
                 return;
         }
         res=mysql_store_result(&gMysql);
+	fprintf(fp,"//funcMainTabMenu()\n");
 	while((field=mysql_fetch_row(res)))
 	{
 		fprintf(fp,"\t//%s\n",field[0]);
