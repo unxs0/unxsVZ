@@ -349,6 +349,7 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 		sprintf(gcTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
 		sprintf(gcTableNameLC,"%.63s",gcTableName);
 		WordToLower(gcTableNameLC);
+		guTable=uTable;
 
 		FILE *fp;
 		char cFile[256]={""};
@@ -499,6 +500,7 @@ unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable)
 		sprintf(gcTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
 		sprintf(gcTableNameLC,"%.63s",gcTableName);
 		WordToLower(gcTableNameLC);
+		guTable=uTable;
 
 		FILE *fp=NULL;
 		char cFile[256]={""};

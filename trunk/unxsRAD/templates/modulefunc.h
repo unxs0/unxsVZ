@@ -13,7 +13,7 @@ TEMPLATE VARS AND FUNCTIONS
 	cTableName
 */
 
-{{ModuleFunctionProtos}}
+{{funcModuleFunctionProtos}}
 
 void {{cTableName}}NavList(void);
 
@@ -33,7 +33,7 @@ void Ext{{cTableName}}Commands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"{{cTableName}}Tools"))
 	{
-		{{ModuleFunctionProcess}}
+		{{funcModuleFunctionProcess}}
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
 			if(guPermLevel>=9)

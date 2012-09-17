@@ -29,9 +29,9 @@ TEMPLATE VARS AND FUNCTIONS
 #include "mysqlrad.h"
 
 //Table Variables
-{{ModuleVars}}
+{{funcModuleVars}}
 
-#define VAR_LIST_{{cTableName}} "{{ModuleVarList}}"
+#define VAR_LIST_{{cTableName}} "{{funcModuleVarList}}"
 
  //Local only
 void Insert_{{cTableName}}(void);
@@ -60,7 +60,7 @@ void Process{{cTableName}}Vars(pentry entries[], int x)
 
 	for(i=0;i<x;i++)
 	{
-		{{ModuleProcVars}}
+		{{funcModuleProcVars}}
 	}
 
 	//After so we can overwrite form data if needed.
@@ -218,7 +218,7 @@ void {{cTableName}}(const char *cResult)
 void {{cTableName}}Input(unsigned uMode)
 {
 
-	{{ModuleInput}}
+	{{funcModuleInput}}
 
 }//void {{cTableName}}Input(unsigned uMode)
 
@@ -270,7 +270,7 @@ void Delete{{cTableName}}(void)
 
 void Insert_{{cTableName}}(void)
 {
-	{{ModuleInsertQuery}}
+	{{funcModuleInsertQuery}}
 	macro_mySQLQueryHTMLError;
 
 }//void Insert_{{cTableName}}(void)
@@ -278,7 +278,7 @@ void Insert_{{cTableName}}(void)
 
 void Update_{{cTableName}}(char *cRowid)
 {
-	{{ModuleUpdateQuery}}
+	{{funcModuleUpdateQuery}}
 	macro_mySQLQueryHTMLError;
 
 }//void Update_{{cTableName}}(void)
@@ -344,7 +344,7 @@ void {{cTableName}}List(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	{{ModuleListTable}}
+	{{funcModuleListTable}}
 
 	mysql_data_seek(res,guStart-1);
 
@@ -360,7 +360,7 @@ void {{cTableName}}List(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		{{ModuleListPrint}}
+		{{funcModuleListPrint}}
 	}
 
 	printf("</table></form>\n");
@@ -369,4 +369,4 @@ void {{cTableName}}List(void)
 }//{{cTableName}}List()
 
 
-{{ModuleCreateQuery}}
+{{funcModuleCreateQuery}}
