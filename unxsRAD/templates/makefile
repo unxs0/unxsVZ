@@ -27,57 +27,12 @@ all: {{cProject}}.cgi {{cProject}}
 	cc -c {{cProjectLC}}.c -o {{cProjectLC}}.o $(CFLAGS)
 
 #included standard RAD4 objects
-{{cProject}}.cgi: {{funcMakefileObjects}} ttemplate.o ttemplateset.o ttemplatetype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o  main.o cgi.o
-	cc {{funcMakefileObjects}} ttemplate.o ttemplateset.o ttemplatetype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o main.o cgi.o -o {{cProject}}.cgi $(LIBS) 
+{{cProject}}.cgi: {{funcMakefileObjects}} mysqlconnect.o main.o cgi.o
+	cc {{funcMakefileObjects}} mysqlconnect.o main.o cgi.o -o {{cProject}}.cgi $(LIBS) 
 
 {{funcMakefileRules}}
 
-#standard RAD4 tables
-ttemplate.o: ttemplate.c mysqlrad.h language.h ttemplatefunc.h local.h
-	cc -c ttemplate.c -o ttemplate.o $(CFLAGS)
-
-ttemplateset.o: ttemplateset.c mysqlrad.h language.h ttemplatesetfunc.h local.h
-	cc -c ttemplateset.c -o ttemplateset.o $(CFLAGS)
-
-ttemplatetype.o: ttemplatetype.c mysqlrad.h language.h ttemplatetypefunc.h local.h
-	cc -c ttemplatetype.c -o ttemplatetype.o $(CFLAGS)
-
-tclient.o: tclient.c mysqlrad.h language.h tclientfunc.h local.h
-	cc -c tclient.c -o tclient.o $(CFLAGS)
-
-tauthorize.o: tauthorize.c mysqlrad.h language.h tauthorizefunc.h local.h
-	cc -c tauthorize.c -o tauthorize.o $(CFLAGS)
-
-tstatus.o: tstatus.c mysqlrad.h language.h tstatusfunc.h local.h
-	cc -c tstatus.c -o tstatus.o $(CFLAGS)
-
-tlog.o: tlog.c mysqlrad.h language.h tlogfunc.h local.h
-	cc -c tlog.c -o tlog.o $(CFLAGS)
-
-tlogtype.o: tlogtype.c mysqlrad.h language.h tlogtypefunc.h local.h
-	cc -c tlogtype.c -o tlogtype.o $(CFLAGS)
-
-tlogmonth.o: tlogmonth.c mysqlrad.h language.h tlogmonthfunc.h local.h
-	cc -c tlogmonth.c -o tlogmonth.o $(CFLAGS)
-
-tglossary.o: tglossary.c mysqlrad.h language.h tglossaryfunc.h local.h
-	cc -c tglossary.c -o tglossary.o $(CFLAGS)
-
-tjob.o: tjob.c mysqlrad.h language.h tjobfunc.h local.h
-	cc -c tjob.c -o tjob.o $(CFLAGS)
-
-tmonth.o: tmonth.c mysqlrad.h language.h tmonthfunc.h local.h
-	cc -c tmonth.c -o tmonth.o $(CFLAGS)
-
-tjobstatus.o: tjobstatus.c mysqlrad.h language.h tjobstatusfunc.h local.h
-	cc -c tjobstatus.c -o tjobstatus.o $(CFLAGS)
-
-tconfiguration.o: tconfiguration.c mysqlrad.h language.h tconfigurationfunc.h local.h
-	cc -c tconfiguration.c -o tconfiguration.o $(CFLAGS)
-
-tserver.o: tserver.c mysqlrad.h language.h tserverfunc.h local.h
-	cc -c tserver.c -o tserver.o $(CFLAGS)
-
+#standard RAD4 
 main.o: main.c mysqlrad.h mainfunc.h language.h local.h
 	cc -c main.c -o main.o $(CFLAGS)
 

@@ -63,6 +63,7 @@ void funcMainNavBars(FILE *fp);
 void funcMainPostFunctions(FILE *fp);
 void funcMainTabMenu(FILE *fp);
 void funcMainInitTableList(FILE *fp);
+void funcModuleLanguage(FILE *fp);
 
 
 //external prototypes
@@ -1632,6 +1633,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcMainTabMenu(fp);
 	else if(!strcmp(cFunction,"funcMainInitTableList"))
 		funcMainInitTableList(fp);
+	else if(!strcmp(cFunction,"funcModuleLanguage"))
+		funcModuleLanguage(fp);
 
 }//void AppFunctions(FILE *fp,char *cFunction)
 
@@ -1961,3 +1964,30 @@ void funcMainInitTableList(FILE *fp)
 
 }//void funcMainInitTableList(FILE *fp)
 
+
+void funcModuleLanguage(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel,tField.cTitle,tTable.cLabel"
+			" FROM tField,tTable"
+			" WHERE tField.uTable=tTable.uTable"
+			" AND tTable.uProject=%u"
+			" ORDER BY tField.uOrder",guProject);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	fprintf(fp,"//funcModuleLanguage()\n");
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"#define LANG_FL_%s_%s \"%s\"\n",field[2],field[0],field[0]);
+		fprintf(fp,"#define LANG_FT_%s_%s \"%s\"\n",field[2],field[0],field[1]);
+        }
+        mysql_free_result(res);
+
+}//void funcModuleLanguage(FILE *fp)
