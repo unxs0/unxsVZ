@@ -14,8 +14,6 @@ AUTHOR
 char *strptime(const char *s, const char *format, struct tm *tm);
 
 static char cTableList[64][32]={{funcMainInitTableList}}
-
-
 char cInitTableList[64][32]={"tLogType","tStatus","tJobStatus","tServer","tConfiguration","tTemplate","tTemplateSet","tTemplateType","tGlossary",""};
 
 void ExtMainShell(int argc, char *argv[]);
