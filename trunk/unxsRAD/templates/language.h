@@ -48,6 +48,8 @@
 #define LANG_PAGEMACHINE_SEARCH "<input type=submit name=gcFind value=Search >"
 #define LANG_PAGEMACHINE_SEARCHBUTTON "Search"
 
+{{funcModuleLanguage}}
+
 //tTemplate
 #define LANG_FL_tTemplate_uTemplate "uTemplate"
 #define LANG_FT_tTemplate_uTemplate "Primary Key"
