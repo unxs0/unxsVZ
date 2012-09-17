@@ -237,7 +237,9 @@ void New{{cTableName}}(unsigned uMode)
 
 	Insert_{{cTableName}}();
 	{{cTableKey}}=mysql_insert_id(&gMysql);
+#ifdef StandardFields
 	uCreatedDate=luGetCreatedDate("{{cTableName}}",{{cTableKey}});
+#endif
 	{{cProject}}Log({{cTableKey}},"{{cTableName}}","New");
 
 	if(!uMode)
@@ -251,8 +253,13 @@ void New{{cTableName}}(unsigned uMode)
 
 void Delete{{cTableName}}(void)
 {
+#ifdef StandardFields
 	sprintf(gcQuery,"DELETE FROM {{cTableName}} WHERE {{cTableKey}}=%u AND ( uOwner=%u OR %u>9 )"
 					,{{cTableKey}},guLoginClient,guPermLevel);
+#else
+	sprintf(gcQuery,"DELETE FROM {{cTableName}} WHERE {{cTableKey}}=%u AND %u>9 )"
+					,{{cTableKey}},guPermLevel);
+#endif
 	macro_mySQLQueryHTMLError;
 	if(mysql_affected_rows(&gMysql)>0)
 	{
@@ -289,8 +296,9 @@ void Mod{{cTableName}}(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uPreModDate=0;
 
+#ifdef StandardFields
+	unsigned uPreModDate=0;
 	//Mod select gcQuery
 	if(guPermLevel<10)
 	sprintf(gcQuery,"SELECT {{cTableName}}.{{cTableKey}},"
@@ -304,6 +312,11 @@ void Mod{{cTableName}}(void)
 	sprintf(gcQuery,"SELECT {{cTableKey}},uModDate FROM {{cTableName}}"
 				" WHERE {{cTableKey}}=%u"
 					,{{cTableKey}});
+#else
+	sprintf(gcQuery,"SELECT {{cTableKey}} FROM {{cTableName}}"
+				" WHERE {{cTableKey}}=%u"
+					,{{cTableKey}});
+#endif
 
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
@@ -312,12 +325,16 @@ void Mod{{cTableName}}(void)
 	if(i>1) {{cTableName}}(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
+#ifdef StandardFields
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) {{cTableName}}(LANG_NBR_EXTMOD);
+#endif
 
 	Update_{{cTableName}}(field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
+#ifdef StandardFields
 	uModDate=luGetModDate("{{cTableName}}",{{cTableKey}});
+#endif
 	{{cProject}}Log({{cTableKey}},"{{cTableName}}","Mod");
 	{{cTableName}}(gcQuery);
 

@@ -29,7 +29,7 @@ void CreatetLogTable(char *cTableName);
 void NextMonthYear(char *cMonth,char *cYear,char *cNextMonth,char *cNextYear);
 
 void CalledByAlias(int iArgc,char *cArgv[]);
-void TextConnectDb(void);
+unsigned TextConnectDb(void);
 void DashBoard(const char *cOptionalMsg);
 void EncryptPasswdMD5(char *pw);
 
@@ -159,7 +159,7 @@ void ExtMainContent(void)
 	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);
 
 	OpenRow("Application Summary","black");
-	printf("<td>This tool is used to create C mySQL CGI applications from template code sets. <br>First you setup the schema and it's UI characteristics then you build the source code. You must then 'make' the application binary from the command line.<br>You can program the application logic in the per table .h files while the schema is still under development. Quick start hints: Create a new project at tProject add tTable and tField schema elements and then build source code.</td></tr>\n");
+	printf("<td>{{gcAppSummary}}</td></tr>\n");
 
 	if(guPermLevel>9)
 	{
@@ -452,12 +452,6 @@ void Initialize(char *cPasswd)
         CreatetTemplate();
         CreatetTemplateSet();
         CreatetTemplateType();
-        CreatetFieldType();
-        CreatetField();
-        CreatetTable();
-        CreatetProject();
-        CreatetProjectStatus();
-        CreatetIndexType();
 
         for(i=0;cInitTableList[i][0];i++)
         {
@@ -499,7 +493,11 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
 
 	printf("\nImportTemplateFile(): Start\n");
 
-	TextConnectDb();
+	if(TextConnectDb())
+	{
+		printf("TextConnectDb()\n");
+		exit(1);
+	}
 
 	sprintf(gcQuery,"USE %s",DBNAME);
 	mysql_query(&gMysql,gcQuery);
@@ -655,7 +653,12 @@ void CalledByAlias(int iArgc,char *cArgv[])
 
 		//Loop for each tJob error
 		//Connect to local mySQL
-		TextConnectDb();
+		if(TextConnectDb())
+		{
+			fprintf(stderr,"TextConnectDb()\n");
+			exit(1);
+		}
+
 		sprintf(gcQuery,"SELECT uJob,cServer,cJobName,uUser,cJobData FROM tJob WHERE uJobStatus=4");//4 is tJobStatus Done Error(s)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -692,26 +695,6 @@ void CalledByAlias(int iArgc,char *cArgv[])
 	}
 
 }//void CalledByAlias(int iArgc,char *cArgv[])
-
-
-void TextConnectDb(void)
-{
-	//
-	//First will try to connect to the MySQL server at DBIP0.
-	//If it fails it will try to connect to the MySQL server at DBIP1, if that fails too
-	//an error message will be displayed and the software will exit
-	//
-        mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-        {
-        	if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-		{
-			fprintf(stderr,"Database server unavailable.\n");
-			exit(1);
-		}
-        }
-
-}//end of TextConnectDb()
 
 
 void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
