@@ -70,7 +70,7 @@ unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
 char *gcBuildInfo="$Id$";
-char *gcRADStatus="Start";
+char gcRADStatus[32]={"start"};
 
 //Local
 void Footer_ism3(void);

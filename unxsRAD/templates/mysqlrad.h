@@ -3,6 +3,7 @@ FILE
 	$Id: mysqlrad.h 2085 2012-09-06 03:27:21Z Dylan $
 AUTHOR
 	(C) 2001-2008 Gary Wallis and Hugo Urquiza. 
+	(C) 2009-2012 Gary Wallis for Unixservice LLC.
 */
 
 #include <stdio.h>
@@ -164,52 +165,9 @@ void PageMachine(char *cFuncName, int iLmode, char *cMsg);
 #define ISPURL "www.openisp.net"
 #define ADMIN 9
 
-//tProject
-int tProjectCommands(pentry entries[], int x);
-void tProject(const char *results);
-void ProcesstProjectVars(pentry entries[], int x);
-void tProjectContent(void);
-void tProjectInputContent(void);
-void tProjectInput(unsigned uMode);
-void tProjectList(void);
-void NewtProject(unsigned uMode);
-void ModtProject(void);
-void CreatetProject(void);
-void DeletetProject(void);
-void ExttProjectGetHook(entry gentries[], int x);
-void ExttProjectNavBar(void);
-void GetConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer, unsigned uHtml);
+{{funcModulePrototypes}}
 
-//tTable
-int tTableCommands(pentry entries[], int x);
-void tTable(const char *results);
-void ProcesstTableVars(pentry entries[], int x);
-void tTableContent(void);
-void tTableInputContent(void);
-void tTableInput(unsigned uMode);
-void tTableList(void);
-void NewtTable(unsigned uMode);
-void ModtTable(void);
-void CreatetTable(void);
-void DeletetTable(void);
-void ExttTableGetHook(entry gentries[], int x);
-void ExttTableNavBar(void);
-
-//tField
-int tFieldCommands(pentry entries[], int x);
-void tField(const char *results);
-void ProcesstFieldVars(pentry entries[], int x);
-void tFieldContent(void);
-void tFieldInputContent(void);
-void tFieldInput(unsigned uMode);
-void tFieldList(void);
-void NewtField(unsigned uMode);
-void ModtField(void);
-void CreatetField(void);
-void DeletetField(void);
-void ExttFieldGetHook(entry gentries[], int x);
-void ExttFieldNavBar(void);
-
+//Standard RAD4 tables
 //tTemplate
 int tTemplateCommands(pentry entries[], int x);
 void tTemplate(const char *results);
@@ -254,51 +212,6 @@ void CreatetTemplateType(void);
 void DeletetTemplateType(void);
 void ExttTemplateTypeGetHook(entry gentries[], int x);
 void ExttTemplateTypeNavBar(void);
-
-//tProjectStatus
-int tProjectStatusCommands(pentry entries[], int x);
-void tProjectStatus(const char *results);
-void ProcesstProjectStatusVars(pentry entries[], int x);
-void tProjectStatusContent(void);
-void tProjectStatusInputContent(void);
-void tProjectStatusInput(unsigned uMode);
-void tProjectStatusList(void);
-void NewtProjectStatus(unsigned uMode);
-void ModtProjectStatus(void);
-void CreatetProjectStatus(void);
-void DeletetProjectStatus(void);
-void ExttProjectStatusGetHook(entry gentries[], int x);
-void ExttProjectStatusNavBar(void);
-
-//tFieldType
-int tFieldTypeCommands(pentry entries[], int x);
-void tFieldType(const char *results);
-void ProcesstFieldTypeVars(pentry entries[], int x);
-void tFieldTypeContent(void);
-void tFieldTypeInputContent(void);
-void tFieldTypeInput(unsigned uMode);
-void tFieldTypeList(void);
-void NewtFieldType(unsigned uMode);
-void ModtFieldType(void);
-void CreatetFieldType(void);
-void DeletetFieldType(void);
-void ExttFieldTypeGetHook(entry gentries[], int x);
-void ExttFieldTypeNavBar(void);
-
-//tIndexType
-int tIndexTypeCommands(pentry entries[], int x);
-void tIndexType(const char *results);
-void ProcesstIndexTypeVars(pentry entries[], int x);
-void tIndexTypeContent(void);
-void tIndexTypeInputContent(void);
-void tIndexTypeInput(unsigned uMode);
-void tIndexTypeList(void);
-void NewtIndexType(unsigned uMode);
-void ModtIndexType(void);
-void CreatetIndexType(void);
-void DeletetIndexType(void);
-void ExttIndexTypeGetHook(entry gentries[], int x);
-void ExttIndexTypeNavBar(void);
 
 //tClient
 int tClientCommands(pentry entries[], int x);

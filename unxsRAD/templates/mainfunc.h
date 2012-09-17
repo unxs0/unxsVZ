@@ -13,10 +13,10 @@ AUTHOR
 #include "local.h"
 char *strptime(const char *s, const char *format, struct tm *tm);
 
-static char cTableList[64][32]={"tProject","tTable","tField","tTemplate","tTemplateSet","tTemplateType","tProjectStatus","tFieldType","tIndexType","tClient","tAuthorize","tStatus","tLog","tLogType","tLogMonth","tGlossary","tJob","tMonth","tJobStatus","tConfiguration","tServer",""};
+static char cTableList[64][32]={{funcMainInitTableList}}
 
 
-char cInitTableList[64][32]={"tLogType","tStatus","tJobStatus","tServer","tFieldType","tProjectStatus","tConfiguration","tTemplate","tTemplateSet","tTemplateType","tProject","tTable","tField","tIndexType",""};
+char cInitTableList[64][32]={"tLogType","tStatus","tJobStatus","tServer","tConfiguration","tTemplate","tTemplateSet","tTemplateType","tGlossary",""};
 
 void ExtMainShell(int argc, char *argv[]);
 void Initialize(char *cPasswd);

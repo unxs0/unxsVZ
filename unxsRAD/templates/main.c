@@ -2,30 +2,24 @@
 FILE 
 	main.c
 	$Id: main.c 2082 2012-09-06 01:44:03Z Dylan $
-	mysqlRAD2.cgi created application file for {{cProject}}.cgi
-	(tAuthorize.cPasswd template set)
-	mysqlRAD2 to mysqlRAD3 transition template
+	unxsRAD created application file for {{cProject}}.cgi
 PURPOSE
 	Main cgi interface and common functions used for all the other
 	table tx.c files and their schema independent txfunc.h files -until
-	you mess with them in non standard ways...lol.
+	you mess with them in non standard ways.
 	
 LEGAL
-	(C) Gary Wallis 2001-2007. All Rights Reserved.
+	(C) Gary Wallis 2001-2012. All Rights Reserved.
 	LICENSE file should be included in distribution.
 OTHER
-	Only Linux supported by openisp.net. 
-	Please share your ports with us.
+	Only tested on CentOS 5
 HELP
-	support @ openisp . net
+	support @ unixservice . com
 
 */
 
 #include "mysqlrad.h"
 #include <ctype.h>
-#ifdef Solaris
-        char *crypt(char *passwd, char *salt);
-#endif
 
 #include "language.h"
 #include "local.h"
@@ -111,12 +105,7 @@ int main(int iArgc, char *cArgv[])
 	register int x;
 	int cl=0;
 
-#if defined(Linux)
-	gethostname(gcHostname, 98);
-#else
-	//Solaris
-	sysinfo(SI_HOSTNAME, gcHostname, 98);
-#endif
+	gethostname(gcHostname,98);
 
 	if(!strstr(cArgv[0],"{{cProject}}.cgi"))
 		CalledByAlias(iArgc,cArgv);
@@ -177,49 +166,7 @@ int main(int iArgc, char *cArgv[])
                                 htmlSSLLogin();
 			}
 
-			else if(!strcmp(gcFunction,"tProject"))
-				ExttProjectGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tTable"))
-				ExttTableGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tField"))
-				ExttFieldGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tTemplate"))
-				ExttTemplateGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tTemplateSet"))
-				ExttTemplateSetGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tTemplateType"))
-				ExttTemplateTypeGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tProjectStatus"))
-				ExttProjectStatusGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tFieldType"))
-				ExttFieldTypeGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tIndexType"))
-				ExttIndexTypeGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tClient"))
-				ExttClientGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tAuthorize"))
-				ExttAuthorizeGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tStatus"))
-				ExttStatusGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tLog"))
-				ExttLogGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tLogType"))
-				ExttLogTypeGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tLogMonth"))
-				ExttLogMonthGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tGlossary"))
-				ExttGlossaryGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tJob"))
-				ExttJobGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tMonth"))
-				ExttMonthGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tJobStatus"))
-				ExttJobStatusGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tConfiguration"))
-				ExttConfigurationGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tServer"))
-				ExttServerGetHook(gentries,x);
-
+			{{funcMainGetMenu}}
 
 		}
 
@@ -257,28 +204,7 @@ int main(int iArgc, char *cArgv[])
                 SSLCookieLogin();
 
 	//Main Post Menu
-	tProjectCommands(entries,x);
-	tTableCommands(entries,x);
-	tFieldCommands(entries,x);
-	tTemplateCommands(entries,x);
-	tTemplateSetCommands(entries,x);
-	tTemplateTypeCommands(entries,x);
-	tProjectStatusCommands(entries,x);
-	tFieldTypeCommands(entries,x);
-	tIndexTypeCommands(entries,x);
-	tClientCommands(entries,x);
-	tAuthorizeCommands(entries,x);
-	tStatusCommands(entries,x);
-	tLogCommands(entries,x);
-	tLogTypeCommands(entries,x);
-	tLogMonthCommands(entries,x);
-	tGlossaryCommands(entries,x);
-	tJobCommands(entries,x);
-	tMonthCommands(entries,x);
-	tJobStatusCommands(entries,x);
-	tConfigurationCommands(entries,x);
-	tServerCommands(entries,x);
-
+	{{funcMainPostMenu}}
 
 	iExtMainCommands(entries,x);
 
@@ -488,71 +414,7 @@ void Header_ism3(char *title, int js)
 	//Open header table
 	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td valign=bottom><img src=/images/rad.png>\n");
 
-	//ModuleRAD3NavBars()
-	if(!strcmp(gcFunction,"tProject") || !strcmp(gcFunction,"tProjectTools") ||
-			!strcmp(gcFunction,"tProjectList"))
-		ExttProjectNavBar();
-	else if(!strcmp(gcFunction,"tTable") || !strcmp(gcFunction,"tTableTools") ||
-			!strcmp(gcFunction,"tTableList"))
-		ExttTableNavBar();
-	else if(!strcmp(gcFunction,"tField") || !strcmp(gcFunction,"tFieldTools") ||
-			!strcmp(gcFunction,"tFieldList"))
-		ExttFieldNavBar();
-	else if(!strcmp(gcFunction,"tTemplate") || !strcmp(gcFunction,"tTemplateTools") ||
-			!strcmp(gcFunction,"tTemplateList"))
-		ExttTemplateNavBar();
-	else if(!strcmp(gcFunction,"tTemplateSet") || !strcmp(gcFunction,"tTemplateSetTools") ||
-			!strcmp(gcFunction,"tTemplateSetList"))
-		ExttTemplateSetNavBar();
-	else if(!strcmp(gcFunction,"tTemplateType") || !strcmp(gcFunction,"tTemplateTypeTools") ||
-			!strcmp(gcFunction,"tTemplateTypeList"))
-		ExttTemplateTypeNavBar();
-	else if(!strcmp(gcFunction,"tProjectStatus") || !strcmp(gcFunction,"tProjectStatusTools") ||
-			!strcmp(gcFunction,"tProjectStatusList"))
-		ExttProjectStatusNavBar();
-	else if(!strcmp(gcFunction,"tFieldType") || !strcmp(gcFunction,"tFieldTypeTools") ||
-			!strcmp(gcFunction,"tFieldTypeList"))
-		ExttFieldTypeNavBar();
-	else if(!strcmp(gcFunction,"tIndexType") || !strcmp(gcFunction,"tIndexTypeTools") ||
-			!strcmp(gcFunction,"tIndexTypeList"))
-		ExttIndexTypeNavBar();
-	else if(!strcmp(gcFunction,"tClient") || !strcmp(gcFunction,"tClientTools") ||
-			!strcmp(gcFunction,"tClientList"))
-		ExttClientNavBar();
-	else if(!strcmp(gcFunction,"tAuthorize") || !strcmp(gcFunction,"tAuthorizeTools") ||
-			!strcmp(gcFunction,"tAuthorizeList"))
-		ExttAuthorizeNavBar();
-	else if(!strcmp(gcFunction,"tStatus") || !strcmp(gcFunction,"tStatusTools") ||
-			!strcmp(gcFunction,"tStatusList"))
-		ExttStatusNavBar();
-	else if(!strcmp(gcFunction,"tLog") || !strcmp(gcFunction,"tLogTools") ||
-			!strcmp(gcFunction,"tLogList"))
-		ExttLogNavBar();
-	else if(!strcmp(gcFunction,"tLogType") || !strcmp(gcFunction,"tLogTypeTools") ||
-			!strcmp(gcFunction,"tLogTypeList"))
-		ExttLogTypeNavBar();
-	else if(!strcmp(gcFunction,"tLogMonth") || !strcmp(gcFunction,"tLogMonthTools") ||
-			!strcmp(gcFunction,"tLogMonthList"))
-		ExttLogMonthNavBar();
-	else if(!strcmp(gcFunction,"tGlossary") || !strcmp(gcFunction,"tGlossaryTools") ||
-			!strcmp(gcFunction,"tGlossaryList"))
-		ExttGlossaryNavBar();
-	else if(!strcmp(gcFunction,"tJob") || !strcmp(gcFunction,"tJobTools") ||
-			!strcmp(gcFunction,"tJobList"))
-		ExttJobNavBar();
-	else if(!strcmp(gcFunction,"tMonth") || !strcmp(gcFunction,"tMonthTools") ||
-			!strcmp(gcFunction,"tMonthList"))
-		ExttMonthNavBar();
-	else if(!strcmp(gcFunction,"tJobStatus") || !strcmp(gcFunction,"tJobStatusTools") ||
-			!strcmp(gcFunction,"tJobStatusList"))
-		ExttJobStatusNavBar();
-	else if(!strcmp(gcFunction,"tConfiguration") || !strcmp(gcFunction,"tConfigurationTools") ||
-			!strcmp(gcFunction,"tConfigurationList"))
-		ExttConfigurationNavBar();
-	else if(!strcmp(gcFunction,"tServer") || !strcmp(gcFunction,"tServerTools") ||
-			!strcmp(gcFunction,"tServerList"))
-		ExttServerNavBar();
-
+	{{funcMainNavBars}}
 
 	//Login info
 	printf("<font size=3><b>{{cProject}}</b></font> \n ");
@@ -592,238 +454,7 @@ void Header_ism3(char *title, int js)
 		printf("\t\t\t<a title='Home start page' href={{cProject}}.cgi?gcFunction=Main>Main</a>\n");
 	printf("\t\t\t</li>\n");
 
-	//tProject
-	if(guPermLevel>=7)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tProject") && strcmp(gcFunction,"tProjectTools") &&
-			strcmp(gcFunction,"tProjectList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tProject' href={{cProject}}.cgi?gcFunction=tProject>tProject</a>\n");
-	}
-	//tTable
-	if(guPermLevel>=7)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tTable") && strcmp(gcFunction,"tTableTools") &&
-			strcmp(gcFunction,"tTableList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTable' href={{cProject}}.cgi?gcFunction=tTable>tTable</a>\n");
-	}
-	//tField
-	if(guPermLevel>=7)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tField") && strcmp(gcFunction,"tFieldTools") &&
-			strcmp(gcFunction,"tFieldList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tField' href={{cProject}}.cgi?gcFunction=tField>tField</a>\n");
-	}
-	//tTemplate
-	if(guPermLevel>=12)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tTemplate") && strcmp(gcFunction,"tTemplateTools") &&
-			strcmp(gcFunction,"tTemplateList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplate' href={{cProject}}.cgi?gcFunction=tTemplate>tTemplate</a>\n");
-	}
-	//tTemplateSet
-	if(guPermLevel>=12)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tTemplateSet") && strcmp(gcFunction,"tTemplateSetTools") &&
-			strcmp(gcFunction,"tTemplateSetList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateSet' href={{cProject}}.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
-	}
-	//tTemplateType
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tTemplateType") && strcmp(gcFunction,"tTemplateTypeTools") &&
-			strcmp(gcFunction,"tTemplateTypeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateType' href={{cProject}}.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
-	}
-	//tProjectStatus
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tProjectStatus") && strcmp(gcFunction,"tProjectStatusTools") &&
-			strcmp(gcFunction,"tProjectStatusList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tProjectStatus' href={{cProject}}.cgi?gcFunction=tProjectStatus>tProjectStatus</a>\n");
-	}
-	//tFieldType
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tFieldType") && strcmp(gcFunction,"tFieldTypeTools") &&
-			strcmp(gcFunction,"tFieldTypeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tFieldType' href={{cProject}}.cgi?gcFunction=tFieldType>tFieldType</a>\n");
-	}
-	//tIndexType
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tIndexType") && strcmp(gcFunction,"tIndexTypeTools") &&
-			strcmp(gcFunction,"tIndexTypeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Table Field Index Types' href={{cProject}}.cgi?gcFunction=tIndexType>tIndexType</a>\n");
-	}
-	//tClient
-	if(guPermLevel>=12)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tClient") && strcmp(gcFunction,"tClientTools") &&
-			strcmp(gcFunction,"tClientList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Client Info' href={{cProject}}.cgi?gcFunction=tClient>tClient</a>\n");
-	}
-	//tAuthorize
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tAuthorize") && strcmp(gcFunction,"tAuthorizeTools") &&
-			strcmp(gcFunction,"tAuthorizeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Login Authorization' href={{cProject}}.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
-	}
-	//tStatus
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tStatus") && strcmp(gcFunction,"tStatusTools") &&
-			strcmp(gcFunction,"tStatusList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tStatus' href={{cProject}}.cgi?gcFunction=tStatus>tStatus</a>\n");
-	}
-	//tLog
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tLog") && strcmp(gcFunction,"tLogTools") &&
-			strcmp(gcFunction,"tLogList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLog' href={{cProject}}.cgi?gcFunction=tLog>tLog</a>\n");
-	}
-	//tLogType
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tLogType") && strcmp(gcFunction,"tLogTypeTools") &&
-			strcmp(gcFunction,"tLogTypeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogType' href={{cProject}}.cgi?gcFunction=tLogType>tLogType</a>\n");
-	}
-	//tLogMonth
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tLogMonth") && strcmp(gcFunction,"tLogMonthTools") &&
-			strcmp(gcFunction,"tLogMonthList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogMonth' href={{cProject}}.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
-	}
-	//tGlossary
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tGlossary") && strcmp(gcFunction,"tGlossaryTools") &&
-			strcmp(gcFunction,"tGlossaryList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tGlossary' href={{cProject}}.cgi?gcFunction=tGlossary>tGlossary</a>\n");
-	}
-	//tJob
-	if(guPermLevel>=12)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tJob") && strcmp(gcFunction,"tJobTools") &&
-			strcmp(gcFunction,"tJobList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tJob' href={{cProject}}.cgi?gcFunction=tJob>tJob</a>\n");
-	}
-	//tMonth
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tMonth") && strcmp(gcFunction,"tMonthTools") &&
-			strcmp(gcFunction,"tMonthList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMonth' href={{cProject}}.cgi?gcFunction=tMonth>tMonth</a>\n");
-	}
-	//tJobStatus
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tJobStatus") && strcmp(gcFunction,"tJobStatusTools") &&
-			strcmp(gcFunction,"tJobStatusList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tJobStatus' href={{cProject}}.cgi?gcFunction=tJobStatus>tJobStatus</a>\n");
-	}
-	//tConfiguration
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tConfiguration") && strcmp(gcFunction,"tConfigurationTools") &&
-			strcmp(gcFunction,"tConfigurationList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tConfiguration' href={{cProject}}.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
-	}
-	//tServer
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tServer") && strcmp(gcFunction,"tServerTools") &&
-			strcmp(gcFunction,"tServerList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMonth' href={{cProject}}.cgi?gcFunction=tServer>tServer</a>\n");
-	}
-
+	{{funcMainTabMenu}}
 	
 	printf("\t\t\t</ol>\n");
 
@@ -844,29 +475,13 @@ void Footer_ism3(void)
 }//Footer_ism3(void)
 
 
-void ConnectDb(void)
-{
-	//
-	//First will try to connect to the MySQL server at DBIP0.
-	//If it fails it will try to connect to the MySQL server at DBIP1, if that fails too
-	//an error message will be displayed and the software will exit
-	//
-        mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-        {
-		if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-	                {{cProject}}("Database server unavailable. Did you run {{cProject}}.cgi Initialize &lt;mysqlpwd&gt;?");
-        }
-
-}//end of ConnectDb()
-
-
 void NoSuchFunction(void)
 {
 	 
 	sprintf(gcQuery,"[%s] Not Recognized",gcFunction);
 	{{cProject}}(gcQuery);
 }
+
 
 void ProcessControlVars(pentry entries[], int x)
 {
@@ -884,6 +499,7 @@ void ProcessControlVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%lu",&gluRowid);
 	}
 }
+
 
 //guMode=0 page guMode, guMode=1 list auto header mode
 void PageMachine(char *cFuncName, int iLmode, char *cMsg)

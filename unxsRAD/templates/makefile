@@ -1,6 +1,6 @@
 #
 #FILE
-#       unxsRAD/makefile
+#       {{cProject}}/makefile
 #       $Id: makefile.template 2979 2011-12-11 15:24:44Z Gary $
 #AUTHOR/LEGAL
 #       (C) 2001-2012 Gary Wallis for Unixservice. GPLv2 license applies.
@@ -10,35 +10,29 @@
 #       Feel free to repackage for your OS and let us know.
 #
 
-#Change these for your system: Ex. -DSolaris instead of -DLinux
 #CFLAGS=-O -DLinux -Wall -pedantic
 CFLAGS= -DLinux -Wall
 RELEASE= 0.1
+#If using lib64 make sure you have adjusted if any errors emerge
 LIBS= -L/usr/lib/openisp /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl -ltemplate
 CGIDIR=/var/www/unxs/cgi-bin/
 
-
-all: unxsRAD.cgi unxsRAD
+all: {{cProject}}.cgi {{cProject}}
 
 #New standalone CLI job queue model
-unxsRAD: unxsrad.o mysqlconnect.o
-	cc unxsrad.o mysqlconnect.o -o unxsRAD $(LIBS)
+{{cProject}}: {{cProjectLC}}.o mysqlconnect.o
+	cc {{cProjectLC}}.o mysqlconnect.o -o {{cProject}} $(LIBS)
 
-unxsrad.o: unxsrad.c unxsrad.h mysqlrad.h local.h mysqlconnect.c
-	cc -c unxsrad.c -o unxsrad.o $(CFLAGS)
+{{cProjectLC}}.o: {{cProjectLC}}.c {{cProjectLC}}.h mysqlrad.h local.h mysqlconnect.c
+	cc -c {{cProjectLC}}.c -o {{cProjectLC}}.o $(CFLAGS)
 
-unxsRAD.cgi: tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o   main.o cgi.o
-	cc tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o   main.o cgi.o -o unxsRAD.cgi $(LIBS) 
+#included standard RAD4 objects
+{{cProject}}.cgi: {{funcMakefileObjects}} ttemplate.o ttemplateset.o ttemplatetype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o  main.o cgi.o
+	cc {{funcMakefileObjects}} ttemplate.o ttemplateset.o ttemplatetype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o main.o cgi.o -o {{cProject}}.cgi $(LIBS) 
 
-tproject.o: tproject.c mysqlrad.h language.h tprojectfunc.h local.h
-	cc -c tproject.c -o tproject.o $(CFLAGS)
+{{funcMakefileRules}}
 
-ttable.o: ttable.c mysqlrad.h language.h ttablefunc.h local.h
-	cc -c ttable.c -o ttable.o $(CFLAGS)
-
-tfield.o: tfield.c mysqlrad.h language.h tfieldfunc.h local.h
-	cc -c tfield.c -o tfield.o $(CFLAGS)
-
+#standard RAD4 tables
 ttemplate.o: ttemplate.c mysqlrad.h language.h ttemplatefunc.h local.h
 	cc -c ttemplate.c -o ttemplate.o $(CFLAGS)
 
@@ -47,15 +41,6 @@ ttemplateset.o: ttemplateset.c mysqlrad.h language.h ttemplatesetfunc.h local.h
 
 ttemplatetype.o: ttemplatetype.c mysqlrad.h language.h ttemplatetypefunc.h local.h
 	cc -c ttemplatetype.c -o ttemplatetype.o $(CFLAGS)
-
-tprojectstatus.o: tprojectstatus.c mysqlrad.h language.h tprojectstatusfunc.h local.h
-	cc -c tprojectstatus.c -o tprojectstatus.o $(CFLAGS)
-
-tfieldtype.o: tfieldtype.c mysqlrad.h language.h tfieldtypefunc.h local.h
-	cc -c tfieldtype.c -o tfieldtype.o $(CFLAGS)
-
-tindextype.o: tindextype.c mysqlrad.h language.h tindextypefunc.h local.h
-	cc -c tindextype.c -o tindextype.o $(CFLAGS)
 
 tclient.o: tclient.c mysqlrad.h language.h tclientfunc.h local.h
 	cc -c tclient.c -o tclient.o $(CFLAGS)
@@ -93,7 +78,6 @@ tconfiguration.o: tconfiguration.c mysqlrad.h language.h tconfigurationfunc.h lo
 tserver.o: tserver.c mysqlrad.h language.h tserverfunc.h local.h
 	cc -c tserver.c -o tserver.o $(CFLAGS)
 
-
 main.o: main.c mysqlrad.h mainfunc.h language.h local.h
 	cc -c main.c -o main.o $(CFLAGS)
 
@@ -112,19 +96,19 @@ clean:
 cleandist:
 	rm -f *.o *.gz
 
-install: unxsRAD.cgi unxsRAD
-	install -s unxsRAD.cgi $(CGIDIR)unxsRAD.cgi
-	install -s unxsRAD /usr/sbin/unxsRAD
-	rm unxsRAD.cgi
-	rm unxsRAD
+install: {{cProject}}.cgi {{cProject}}
+	install -s {{cProject}}.cgi $(CGIDIR){{cProject}}.cgi
+	install -s {{cProject}} /usr/sbin/{{cProject}}
+	rm {{cProject}}.cgi
+	rm {{cProject}}
 
 distribution:
-	cd ..;  tar czvf unxsRAD/unxsRAD$(RELEASE).tar.gz --exclude .svn\
-		unxsRAD/*.h\
-		unxsRAD/*.c\
-		unxsRAD/data\
-		unxsRAD/docs\
-		unxsRAD/makefile\
-		unxsRAD/CHANGES\
-		unxsRAD/LICENSE\
-		unxsRAD/INSTALL
+	cd ..;  tar czvf {{cProject}}/{{cProject}}$(RELEASE).tar.gz --exclude .svn\
+		{{cProject}}/*.h\
+		{{cProject}}/*.c\
+		{{cProject}}/data\
+		{{cProject}}/docs\
+		{{cProject}}/makefile\
+		{{cProject}}/CHANGES\
+		{{cProject}}/LICENSE\
+		{{cProject}}/INSTALL
