@@ -71,6 +71,9 @@ void ExttFieldCommands(pentry entries[], int x)
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
+				guCookieTable=uTable;
+				guCookieField=uField;
+				SetSessionCookie();
 				tField(LANG_NB_CONFIRMDEL);
 			}
 			else
@@ -182,6 +185,21 @@ void ExttFieldGetHook(entry gentries[], int x)
 		if(!strcmp(gentries[i].name,"uField"))
 		{
 			sscanf(gentries[i].val,"%u",&uField);
+        		MYSQL_RES *res;
+        		MYSQL_ROW field;
+
+			sprintf(gcQuery,"SELECT uTable FROM tField WHERE uField=%u",uField);
+        		mysql_query(&gMysql,gcQuery);
+        		if(mysql_errno(&gMysql))
+                		tTable(mysql_error(&gMysql));
+        		res=mysql_store_result(&gMysql);
+	        	if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&uTable);
+				guCookieTable=uTable;
+				guCookieField=uField;
+				SetSessionCookie();
+			}
 			guMode=6;
 		}
 		else if(guCookieField)

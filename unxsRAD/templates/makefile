@@ -23,8 +23,12 @@ all: {{cProject}}.cgi {{cProject}}
 {{cProject}}: {{cProjectLC}}.o mysqlconnect.o
 	cc {{cProjectLC}}.o mysqlconnect.o -o {{cProject}} $(LIBS)
 
-{{cProjectLC}}.o: {{cProjectLC}}.c {{cProjectLC}}.h mysqlrad.h local.h mysqlconnect.c
+{{cProjectLC}}.o: {{cProjectLC}}.c mysqlrad.h local.h mysqlconnect.c
 	cc -c {{cProjectLC}}.c -o {{cProjectLC}}.o $(CFLAGS)
+
+#unxsRAD comes with a sample standalone program rename
+{{cProjectLC}}.c: unxsrad.c
+	@ if [ ! -f {{cProjectLC}}.c ];then cp -i unxsrad.c {{cProjectLC}}.c; fi
 
 #included standard RAD4 objects
 {{cProject}}.cgi: {{funcMakefileObjects}} mysqlconnect.o main.o cgi.o

@@ -58,10 +58,12 @@ void Ext{{cTableName}}Commands(pentry entries[], int x)
                         	guMode=0;
 
 				{{cTableKey}}=0;
+#ifdef StandardFields
 				uCreatedBy=guLoginClient;
 				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
+#endif
 				New{{cTableName}}(0);
 			}
 			else
@@ -70,7 +72,11 @@ void Ext{{cTableName}}Commands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         Process{{cTableName}}Vars(entries,x);
+#ifdef StandardFields
 			if(uAllowDel(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 	                        guMode=2001;
 				{{cTableName}}(LANG_NB_CONFIRMDEL);
@@ -81,7 +87,11 @@ void Ext{{cTableName}}Commands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         Process{{cTableName}}Vars(entries,x);
+#ifdef StandardFields
 			if(uAllowDel(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 				guMode=5;
 				Delete{{cTableName}}();
@@ -92,7 +102,11 @@ void Ext{{cTableName}}Commands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         Process{{cTableName}}Vars(entries,x);
+#ifdef StandardFields
 			if(uAllowMod(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 				guMode=2002;
 				{{cTableName}}(LANG_NB_CONFIRMMOD);
@@ -103,13 +117,19 @@ void Ext{{cTableName}}Commands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         Process{{cTableName}}Vars(entries,x);
+#ifdef StandardFields
 			if(uAllowMod(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
                         	guMode=2002;
 				//Check entries here
                         	guMode=0;
 
+#ifdef StandardFields
 				uModBy=guLoginClient;
+#endif
 				Mod{{cTableName}}();
 			}
 			else
@@ -179,6 +199,7 @@ void Ext{{cTableName}}GetHook(entry gentries[], int x)
 void Ext{{cTableName}}Select(void)
 {
 
+#ifdef StandardFields
 	unsigned uContactParentCompany=0;
 
 	GetClientOwner(guLoginClient,&uContactParentCompany);
@@ -194,6 +215,9 @@ void Ext{{cTableName}}Select(void)
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
 				" ORDER BY {{cTableKey}}",
 					VAR_LIST_{{cTableName}},uContactParentCompany,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT %s FROM {{cTableName}} ORDER BY {{cTableKey}}",VAR_LIST_{{cTableName}});
+#endif
 					
 
 }//void Ext{{cTableName}}Select(void)
@@ -201,6 +225,7 @@ void Ext{{cTableName}}Select(void)
 
 void Ext{{cTableName}}SelectRow(void)
 {
+#ifdef StandardFields
 	unsigned uContactParentCompany=0;
 
 	GetClientOwner(guLoginClient,&uContactParentCompany);
@@ -216,6 +241,9 @@ void Ext{{cTableName}}SelectRow(void)
                         		VAR_LIST_{{cTableName}}
 					,uContactParentCompany,uContactParentCompany
 					,{{cTableKey}});
+#else
+	sprintf(gcQuery,"SELECT %s FROM {{cTableName}} WHERE {{cTableKey}}=%u",VAR_LIST_{{cTableName}},{{cTableKey}});
+#endif
 
 }//void Ext{{cTableName}}SelectRow(void)
 
@@ -223,6 +251,7 @@ void Ext{{cTableName}}SelectRow(void)
 void Ext{{cTableName}}ListSelect(void)
 {
 	char cCat[512];
+#ifdef StandardFields
 	unsigned uContactParentCompany=0;
 	
 	GetClientOwner(guLoginClient,&uContactParentCompany);
@@ -237,6 +266,9 @@ void Ext{{cTableName}}ListSelect(void)
 				VAR_LIST_{{cTableName}}
 				,uContactParentCompany
 				,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT %s FROM {{cTableName}}",VAR_LIST_{{cTableName}});
+#endif
 
 	//Changes here must be reflected below in Ext{{cTableName}}ListFilter()
         if(!strcmp(gcFilter,"{{cTableKey}}"))
@@ -288,13 +320,25 @@ void Ext{{cTableName}}NavBar(void)
 	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
+#ifdef StandardFields
 	if(uAllowMod(uOwner,uCreatedBy))
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_MODIFY);
 
+#ifdef StandardFields
 	if(uAllowDel(uOwner,uCreatedBy)) 
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_DELETE);
 
+#ifdef StandardFields
 	if(uOwner)
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
@@ -314,6 +358,7 @@ void {{cTableName}}NavList(void)
 	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
 	if(guReseller==1) guReseller=0;//...except Root companies
 	
+#ifdef StandardFields
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT {{cTableKey}},cLabel FROM {{cTableName}} ORDER BY cLabel");
 	else
@@ -324,6 +369,9 @@ void {{cTableName}}NavList(void)
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
 				uContactParentCompany
 				,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT {{cTableKey}},cLabel FROM {{cTableName}} ORDER BY cLabel");
+#endif
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {

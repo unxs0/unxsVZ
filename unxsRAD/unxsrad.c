@@ -1217,6 +1217,8 @@ void funcModuleVars(FILE *fp)
 	{
 		sscanf(field[1],"%u",&uFieldType);
 		sscanf(field[2],"%u",&uFieldSize);
+		if(!strcmp(field[0],"uCreatedBy"))
+			fprintf(fp,"#define StandardFields\n");
 		switch(uFieldType)
 		{
 			default:
