@@ -11,6 +11,7 @@ tPBX:		Asterisk b2bua destination and sip trunk traffic source.
 		Should allow adding a PRI prefix.
 		Should allow striping 0-N chars from start of URI (in practice the outgoing dialed number.)
 tDID: 		Direct inward dial phone numbers used for incoming traffic route determination.
+		Must have a way to associate with a single or no tPBX.
 tGateway:	A sip gateway that we can send and receive sip traffic from.
 tCarrier:	A set of one or more incoming and/or outbound gateways.
 tPrefix:	Phone number prefixes (like area codes) that have

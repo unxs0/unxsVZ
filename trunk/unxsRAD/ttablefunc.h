@@ -132,8 +132,6 @@ void ExttTableCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tTable("<blink>Error</blink>: This record was modified. Reload it.");
 				//Check entries here
-				if(cLabel[0]!='t')
-					tTable("<blink>Error</blink>: Table must start with lower case t");
                         	guMode=0;
 
 				uModBy=guLoginClient;
