@@ -456,6 +456,8 @@
 #define LANG_FT_tPBX_uPBX "Primary Key"
 #define LANG_FL_tPBX_cHostname "cHostname"
 #define LANG_FT_tPBX_cHostname "PBX Hostname"
+#define LANG_FL_tPBX_cComment "cHostname"
+#define LANG_FT_tPBX_cComment "Notes on this PBX"
 #define LANG_FL_tPBX_uAvailable "uAvailable"
 #define LANG_FT_tPBX_uAvailable "Is available for use"
 #define LANG_FL_tPBX_uOwner "uOwner"
