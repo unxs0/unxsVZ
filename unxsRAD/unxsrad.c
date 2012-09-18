@@ -66,6 +66,7 @@ void funcMainTabMenu(FILE *fp);
 void funcMainInitTableList(FILE *fp);
 void funcMainCreateTables(FILE *fp);
 void funcModuleLanguage(FILE *fp);
+void GetRADConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer);
 
 
 //external prototypes
@@ -184,8 +185,9 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 	}
 	mysql_free_result(res);
 
-	//add other files and dirs
-	sprintf(gcQuery,"mkdir %s/data;cp %s/*.txt %s/data/",gcDirectory,gcRADDataDir,gcDirectory);
+	//Add other files and dirs
+	GetRADConfiguration("gcRADDataDir",gcRADDataDir,100,0);
+	sprintf(gcQuery,"mkdir -p %s/data;cp %s/*.txt %s/data/",gcDirectory,gcRADDataDir,gcDirectory);
 	system(gcQuery);
 	logfileLine("MakeSourceCodeJob","end");
 
@@ -2025,3 +2027,39 @@ void funcModuleLanguage(FILE *fp)
         mysql_free_result(res);
 
 }//void funcModuleLanguage(FILE *fp)
+
+
+void GetRADConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+        char cQuery[1024];
+	char cExtra[100]={""};
+
+        sprintf(cQuery,"SELECT cValue,cComment FROM tConfiguration WHERE cLabel='%s'",
+			cName);
+	if(uServer)
+	{
+		sprintf(cExtra," AND uServer=%u",uServer);
+		strcat(cQuery,cExtra);
+	}
+        mysql_query(&gMysql,cQuery);
+        if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,"%s",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+	{
+		char cFormat[16];
+        	sprintf(cFormat,"%%.%us",uValueSize-1);
+        	sprintf(cValue,cFormat,field[0]);
+		if(!strncmp(cValue,"cComment",8))
+        		sprintf(cValue,cFormat,field[1]);
+	}
+        mysql_free_result(res);
+
+}//void GetRADConfiguration()
+
