@@ -30,6 +30,7 @@ char gcProject[32]={"Project"};
 char gcProjectLC[32]={"project"};
 char gcRADStatus[32]={"Unknown"};
 char gcDirectory[100]={"/tmp"};
+char gcRADDataDir[100]={"/home/unxs/unxsVZ/unxsRAD/appdata/"};
 char gcAppSummary[256]={"No application summary"};
 
 //prototype TOC
@@ -63,6 +64,7 @@ void funcMainNavBars(FILE *fp);
 void funcMainPostFunctions(FILE *fp);
 void funcMainTabMenu(FILE *fp);
 void funcMainInitTableList(FILE *fp);
+void funcMainCreateTables(FILE *fp);
 void funcModuleLanguage(FILE *fp);
 
 
@@ -182,6 +184,9 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 	}
 	mysql_free_result(res);
 
+	//add other files and dirs
+	sprintf(gcQuery,"mkdir %s/data;cp %s/*.txt %s/data/",gcDirectory,gcRADDataDir,gcDirectory);
+	system(gcQuery);
 	logfileLine("MakeSourceCodeJob","end");
 
 }//void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
@@ -1635,6 +1640,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcMainTabMenu(fp);
 	else if(!strcmp(cFunction,"funcMainInitTableList"))
 		funcMainInitTableList(fp);
+	else if(!strcmp(cFunction,"funcMainCreateTables"))
+		funcMainCreateTables(fp);
 	else if(!strcmp(cFunction,"funcModuleLanguage"))
 		funcModuleLanguage(fp);
 
@@ -1965,6 +1972,31 @@ void funcMainInitTableList(FILE *fp)
         mysql_free_result(res);
 
 }//void funcMainInitTableList(FILE *fp)
+
+
+void funcMainCreateTables(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" ORDER BY uTableOrder",guProject);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	fprintf(fp,"//funcMainCreateTables()\n");
+	while((field=mysql_fetch_row(res)))
+		fprintf(fp,"\tCreate%s();\n",field[0]);
+        mysql_free_result(res);
+
+}//void funcMainCreateTables(FILE *fp)
 
 
 void funcModuleLanguage(FILE *fp)
