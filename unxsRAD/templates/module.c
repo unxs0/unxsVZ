@@ -157,7 +157,7 @@ void {{cTableName}}(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
-			{{ModuleLoadVars}}
+			{{funcModuleLoadVars}}
 		}
 
 	}//Internal Skip
