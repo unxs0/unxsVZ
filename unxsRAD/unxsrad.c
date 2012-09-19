@@ -67,6 +67,7 @@ void funcMainInitTableList(FILE *fp);
 void funcMainCreateTables(FILE *fp);
 void funcModuleLanguage(FILE *fp);
 void GetRADConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer);
+void funcConfiguration(FILE *fp,char *cFunction);
 
 
 //external prototypes
@@ -1668,6 +1669,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcMainCreateTables(fp);
 	else if(!strcmp(cFunction,"funcModuleLanguage"))
 		funcModuleLanguage(fp);
+	else if(!strncmp(cFunction,"funcConfiguration",17))
+		funcConfiguration(fp,cFunction);
 
 }//void AppFunctions(FILE *fp,char *cFunction)
 
@@ -2084,4 +2087,27 @@ void GetRADConfiguration(const char *cName,char *cValue,unsigned uValueSize, uns
         mysql_free_result(res);
 
 }//void GetRADConfiguration()
+
+
+void funcConfiguration(FILE *fp,char *cFunction)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cComment"
+			" FROM tConfiguration"
+			" WHERE cLabel='%s'",cFunction);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	fprintf(fp,"//funcConfiguration(%s)\n",cFunction);
+	while((field=mysql_fetch_row(res)))
+		fprintf(fp,"%.1024s",field[0]);
+        mysql_free_result(res);
+
+}//void funcConfiguration(FILE *fp,char *cFunction)
 
