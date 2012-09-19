@@ -535,8 +535,11 @@ unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable)
 		template.cpName[2]="cTableKey";
 		sprintf(gcTableKey,"u%.31s",gcTableName+1);//New table name includes table type t prefix
 		template.cpValue[2]=gcTableKey;
+
+		template.cpName[3]="cProject";
+		template.cpValue[3]=gcProject;
 			
-		template.cpName[3]="";
+		template.cpName[4]="";
 
 		Template(field[0],&template,fp);
 		fclose(fp);
@@ -1013,14 +1016,14 @@ void funcModuleInput(FILE *fp)
 				fprintf(fp,"\t//%s uRADType=%u\n",cField,uRADType);
 				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
 				if(uRADType==COLTYPE_BIGINT)
-					fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value='%%lu' size=16 maxlength=10 \"\n");
+					fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=%s value='%%lu' size=16 maxlength=10 \"\n",cField);
 				else
-					fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value='%%u' size=16 maxlength=10 \"\n");
+					fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=%s value='%%u' size=16 maxlength=10 \"\n",cField);
 				fprintf(fp,"\t\t,LANG_FT_%s_%s,%s);\n",gcTableName,cField,cField);
 				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n\t{\n",uModLevel);
 				fprintf(fp,"\t\tprintf(\"></td></tr>\\n\");\n\t}\n\telse\n\t{\n");
 				fprintf(fp,"\t\tprintf(\"disabled></td></tr>\\n\");\n");
-				fprintf(fp,"\t\tprintf(\"<input type=hidden name=uTable value='%%u' >\\n\",%s);\n\t}\n",cField);
+				fprintf(fp,"\t\tprintf(\"<input type=hidden name=%s value='%%u' >\\n\",%s);\n\t}\n",cField,cField);
 			break;
 
 			case(COLTYPE_DECIMAL):
@@ -1030,8 +1033,8 @@ void funcModuleInput(FILE *fp)
 			case(COLTYPE_VARCHAR):
 				fprintf(fp,"\t//%s uRADType=%u\n",cField,uRADType);
 				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
-				fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=uTable value='%%s' size=%u maxlength=%u \"\n",
-							uHtmlXSize,uHtmlMax);
+				fprintf(fp,"\tprintf(\"<input title='%%s' type=text name=%s value='%%s' size=%u maxlength=%u \"\n",
+							cField,uHtmlXSize,uHtmlMax);
 				if(uRADType==COLTYPE_MONEY)
 					fprintf(fp,"\t\t,LANG_FT_%s_%s,cMoneyDisplay(%s));\n",gcTableName,cField,cField);
 				else
@@ -1039,7 +1042,7 @@ void funcModuleInput(FILE *fp)
 				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n\t{\n",uModLevel);
 				fprintf(fp,"\t\tprintf(\"></td></tr>\\n\");\n\t}\n\telse\n\t{\n");
 				fprintf(fp,"\t\tprintf(\"disabled></td></tr>\\n\");\n");
-				fprintf(fp,"\t\tprintf(\"<input type=hidden name=uTable value='%%s'>\\n\",EncodeDoubleQuotes(%s));\n\t}\n",cField);
+				fprintf(fp,"\t\tprintf(\"<input type=hidden name=%s value='%%s'>\\n\",EncodeDoubleQuotes(%s));\n\t}\n",cField,cField);
 			break;
 
 			case COLTYPE_DATETIME:
@@ -1365,7 +1368,7 @@ void funcModuleUpdateQuery(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	fprintf(fp,"sprintf(gcQuery,\"UPDATE %s SET\"\n",gcTableName);
+	fprintf(fp,"sprintf(gcQuery,\"UPDATE %s SET \"\n",gcTableName);
 
 	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
 			" FROM tField,tTable,tFieldType"
@@ -1389,13 +1392,14 @@ void funcModuleUpdateQuery(FILE *fp)
 			continue;
 		if(!strcmp(field[0],"uCreatedDate"))
 			continue;
+		sscanf(field[1],"%u",&uRADType);
+		if(uRADType==COLTYPE_RADPRI)
+			continue;
 		if(uFirst)
 			fprintf(fp,",\"\n");
-		sscanf(field[1],"%u",&uRADType);
 		switch(uRADType)
 		{
 			default:
-			case(COLTYPE_RADPRI):
 				fprintf(fp,"\t\t\"%s=%%u",field[0]);
 			break;
 
@@ -1415,7 +1419,7 @@ void funcModuleUpdateQuery(FILE *fp)
 		uFirst=1;
 	}
 
-	fprintf(fp,"\"\n");
+	fprintf(fp,"\"\n\t\t\" WHERE _rowid=%%s\"\n");
 	uRADType=0;
 	mysql_data_seek(res,0);
 	while((field=mysql_fetch_row(res)))
@@ -1429,8 +1433,10 @@ void funcModuleUpdateQuery(FILE *fp)
 		switch(uRADType)
 		{
 			default:
-			case(COLTYPE_RADPRI):
 				fprintf(fp,"\t\t\t,%s\n",field[0]);
+			break;
+
+			case(COLTYPE_RADPRI):
 			break;
 
 			case COLTYPE_CHAR:
@@ -1448,7 +1454,8 @@ void funcModuleUpdateQuery(FILE *fp)
 	}
 	mysql_free_result(res);
 
-	fprintf(fp,"\t\t);\n");
+	fprintf(fp,"\t\t\t,cRowid\n\t\t);\n");
+
 }//void funcModuleUpdateQuery(FILE *fp)
 
 
@@ -1457,7 +1464,7 @@ void funcModuleInsertQuery(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	fprintf(fp,"sprintf(gcQuery,\"INSERT INTO %s SET\"\n",gcTableName);
+	fprintf(fp,"sprintf(gcQuery,\"INSERT INTO %s SET \"\n",gcTableName);
 
 	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
 			" FROM tField,tTable,tFieldType"
@@ -1481,14 +1488,18 @@ void funcModuleInsertQuery(FILE *fp)
 			continue;
 		if(!strcmp(field[0],"uModDate"))
 			continue;
+		sscanf(field[1],"%u",&uRADType);
+		if(uRADType==COLTYPE_RADPRI)
+			continue;
 		if(uFirst)
 			fprintf(fp,",\"\n");
-		sscanf(field[1],"%u",&uRADType);
 		switch(uRADType)
 		{
 			default:
-			case(COLTYPE_RADPRI):
 				fprintf(fp,"\t\t\"%s=%%u",field[0]);
+			break;
+
+			case(COLTYPE_RADPRI):
 			break;
 
 			case COLTYPE_CHAR:
@@ -1521,8 +1532,9 @@ void funcModuleInsertQuery(FILE *fp)
 		switch(uRADType)
 		{
 			default:
-			case(COLTYPE_RADPRI):
 				fprintf(fp,"\t\t\t,%s\n",field[0]);
+			break;
+			case(COLTYPE_RADPRI):
 			break;
 			case COLTYPE_CHAR:
 			case COLTYPE_DATETIME:
