@@ -486,7 +486,7 @@ void Header_ism3(char *title, int js)
 		"</head><body><form action=unxsRAD.cgi method=post><blockquote>\n");
 
 	//Open header table
-	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td valign=bottom><img src=/images/rad.png>\n");
+	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td align=left valign=bottom><img src=/images/rad.png>\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tProject") || !strcmp(gcFunction,"tProjectTools") ||
