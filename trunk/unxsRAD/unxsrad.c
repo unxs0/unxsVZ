@@ -614,7 +614,7 @@ void funcModuleListPrint(FILE *fp)
 		if( first && (uFieldType == COLTYPE_RADPRI ||
 				uFieldType == COLTYPE_PRIKEY ))
 		{
-			fprintf(fp,"<td><input type=submit name=ED%%s value=Edit> %%s");
+			fprintf(fp,"<td><a class=darkLink href=%s.cgi?gcFunction=%s&%s=%%s>%%s</a>",gcProject,gcTableName,field[1]);
 			first=0;
 		}
 		else if(uFieldType == COLTYPE_TEXT )
@@ -735,7 +735,7 @@ void funcModuleLoadVars(FILE *fp)
         MYSQL_ROW field;
 	register int i=0;
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.uHtmlXSize"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.uSQLSize"
 			" FROM tField,tTable,tFieldType"
 			" WHERE tField.uTable=tTable.uTable"
 			" AND tField.uFieldType=tFieldType.uFieldType"
@@ -749,7 +749,7 @@ void funcModuleLoadVars(FILE *fp)
         }
         res=mysql_store_result(&gMysql);
 
-	unsigned uHtmlXSize=0;
+	unsigned uSQLSize=0;
 	unsigned uRADType=0;
 	char cField[32]={""};
 	fprintf(fp,"\n");//Cancel out tab placed func
@@ -757,7 +757,7 @@ void funcModuleLoadVars(FILE *fp)
 	{
 		sprintf(cField,"%.31s",field[0]);
 		sscanf(field[1],"%u",&uRADType);
-		sscanf(field[2],"%u",&uHtmlXSize);
+		sscanf(field[2],"%u",&uSQLSize);
 
 		switch(uRADType)
 		{
@@ -799,7 +799,7 @@ void funcModuleLoadVars(FILE *fp)
 
 			default:
 				fprintf(fp,"\t\tsprintf(%s,\"%%.%us\",field[%d]);\n"
-					,cField,uHtmlXSize,i);
+					,cField,uSQLSize,i);
 			break;
 		}
 		i++;
