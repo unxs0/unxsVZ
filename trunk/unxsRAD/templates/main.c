@@ -236,97 +236,96 @@ void {{cProject}}(const char *cResult)
 void StyleSheet(void)
 {
 	printf("<style type=\"text/css\">\n");
-	printf(""
-	"input.first {\n"
-	"    background-image: url(/images/buttons/first.png);\n "
-	"    background-color: transparent;\n"
-	"    background-repeat: no-repeat;\n"
-	"    border: none;\n"
-	"    cursor: pointer;        /* make the cursor like hovering over an <a> element */\n"
-	"    height: 32px;\n"
-	"    width: 32px;\n"
-	"    color: transparent;\n"
-	"}\n"
-	"input.back {\n"
-	"    background-image: url(/images/buttons/back.png);\n "
-	"    background-color: transparent;\n"
-	"    background-repeat: no-repeat;\n"
-	"    border: none;\n"
-	"    cursor: pointer;\n"
-	"    height: 32px;\n"
-	"    width: 32px;\n"
-	"    color: transparent;\n"
-	"}\n"
-	"input.next {\n"
-	"    background-image: url(/images/buttons/next.png);\n "
-	"    background-color: transparent;\n"
-	"    background-repeat: no-repeat;\n"
-	"    border: none;\n"
-	"    cursor: pointer;\n"
-	"    height: 32px;\n"
-	"    width: 32px;\n"
-	"    color: transparent;\n"
-	"}\n"
-	"input.last {\n"
-	"    background-image: url(/images/buttons/last.png);\n "
-	"    background-color: transparent;\n"
-	"    background-repeat: no-repeat;\n"
-	"    border: none;\n"
-	"    cursor: pointer;\n"
-	"    height: 32px;\n"
-	"    width: 32px;\n"
-	"    color: transparent;\n"
-	"}\n"
-	"input.new {\n"
-	"    background-image: url(/images/buttons/new.png);\n "
-	"    background-color: transparent;\n"
-	"    background-repeat: no-repeat;\n"
-	"    border: none;\n"
-	"    cursor: pointer;\n"
-	"    height: 32px;\n"
-	"    width: 32px;\n"
-	"    color: transparent;\n"
-	"}\n"
-	"input.modify {\n"
-	"    background-image: url(/images/buttons/edit.png);\n "
-	"    background-color: transparent;\n"
-	"    background-repeat: no-repeat;\n"
-	"    border: none;\n"
-	"    cursor: pointer;\n"
-	"    height: 32px;\n"
-	"    width: 32px;\n"
-	"    color: transparent;\n"
-	"}\n"
-	"input.delete {\n"
-	"    background-image: url(/images/buttons/delete.png);\n "
-	"    background-color: transparent;\n"
-	"    background-repeat: no-repeat;\n"
-	"    border: none;\n"
-	"    cursor: pointer;\n"
-	"    height: 32px;\n"
-	"    width: 32px;\n"
-	"    color: transparent;\n"
-	"}\n"
-	"input.list {\n"
-	"    background-image: url(/images/buttons/list.png);\n "
-	"    background-color: transparent;\n"
-	"    background-repeat: no-repeat;\n"
-	"    border: none;\n"
-	"    cursor: pointer;\n"
-	"    height: 32px;\n"
-	"    width: 32px;\n"
-	"    color: transparent;\n"
-	"}\n"
-	"input.refresh {\n"
-	"    background-image: url(/images/buttons/refresh.png);\n "
-	"    background-color: transparent;\n"
-	"    background-repeat: no-repeat;\n"
-	"    border: none;\n"
-	"    cursor: pointer;\n"
-	"    height: 32px;\n"
-	"    width: 32px;\n"
-	"    color: transparent;\n"
-	"}\n"
+	printf( "input.first {\n"
+		"background-image: url(/images/buttons/first.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;        /* make the cursor like hovering over an <a> element */\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.back {\n"
+		"background-image: url(/images/buttons/back.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.next {\n"
+		"background-image: url(/images/buttons/next.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.last {\n"
+		"background-image: url(/images/buttons/last.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.new {\n"
+		"background-image: url(/images/buttons/new.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.modify {\n"
+		"background-image: url(/images/buttons/edit.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.delete {\n"
+		"background-image: url(/images/buttons/delete.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.list {\n"
+		"background-image: url(/images/buttons/list.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.refresh {\n"
+		"background-image: url(/images/buttons/refresh.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
 	);
 
 	printf("input.smallButton {width:50px;}\n");
@@ -378,7 +377,9 @@ void StyleSheet(void)
 
 	printf("#menutab\n");
 	printf("{\n");
-	printf("\tbackground: #e5e5e5 url('/images/hairline.gif') repeat-x bottom center;\n");
+	//Behind tabs background e.g. to the right of menu tabs
+	//printf("\tbackground: #e5e5e5 url('/images/hairline.gif') repeat-x bottom center;\n");
+	printf("\tbackground: #EAF3C1 url('/images/hairline.gif') repeat-x bottom center;\n");
 	printf("\tborder-top: 0px solid #BEBFBF;\n");
 	printf("\tborder-right: 1px solid #BEBFBF;\n");
 	printf("\tmargin-top: 8px;\n");
@@ -400,7 +401,7 @@ void StyleSheet(void)
 	printf("#menutab li\n");
 	printf("{\n");
 	printf("\tfloat: left;\n");
-	printf("\tbackground: url('/images/left.gif') no-repeat left top;\n");
+	printf("\tbackground: url('/images/left_grn.gif') no-repeat left top;\n");
 	printf("\tmargin: 0;\n");
 	printf("\tpadding: 0 0 0 9px;\n");
 	printf("}\n");
@@ -409,9 +410,9 @@ void StyleSheet(void)
 	printf("{\n");
 	printf("\tfloat:left;\n");
 	printf("\tdisplay: block;\n");
-	printf("\tbackground: url('/images/right.gif') no-repeat right top;\n");
+	printf("\tbackground: url('/images/right_grn.gif') no-repeat right top;\n");
 	printf("\tpadding: 5px 15px 2px 6px;\n");
-	printf("\tcolor: #222;\n");
+	printf("\tcolor: #222;\n");//tab text color
 	printf("\ttext-decoration: none;\n");
 	printf("}\n");
 
@@ -422,7 +423,7 @@ void StyleSheet(void)
 
 	printf("#menutab a.last\n");
 	printf("{\n");
-	printf("\tbackground: url('/images/right_last.gif') no-repeat right top;\n");
+	printf("\tbackground: url('/images/right_last_grn.gif') no-repeat right top;\n");
 	printf("\tpadding: 5px 17px 2px 6px;\n");
 	printf("}\n");
 
