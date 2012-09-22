@@ -3487,9 +3487,14 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 		return;
 	}
 	//This is needed until the sister job runs, due to unique index on cLabel,uDatacenter
+	//We will also add the .fo cLabel to the "domain part" of cHostname.
+	char cDomain[100];
+	char cFOHostname[100];
+	sscanf(cHostname,"%*[a-zA-Z0-9\\-].%s",cDomain);
+	sprintf(cFOHostname,"%.28s.fo.%.67s",cLabel,cDomain);
 	char cVEIDLabel[32];
 	sprintf(cVEIDLabel,"%.28s.fo",cLabel);
-	if(SetContainerHostname(uSourceContainer,cHostname,cVEIDLabel) || 
+	if(SetContainerHostname(uSourceContainer,cFOHostname,cVEIDLabel) || 
 		SetContainerHostname(uContainer,cHostname,cLabel))
 	{
 		logfileLine("FailoverTo","SetContainerHostname()");
