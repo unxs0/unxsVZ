@@ -1803,20 +1803,22 @@ void funcSelectContainer(FILE *fp)
 		if(gcSearch[0])
 			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
 			"uSource=0 AND uOwner=%u AND cHostname LIKE '%s%%' "
+			"AND uStatus!=91 "
 			"ORDER BY cHostname  LIMIT 301",guOrg,gcSearch);
 		else
 			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
-			"uOwner=%u AND uSource=0 ORDER BY cHostname LIMIT 301",guOrg);
+			"uOwner=%u AND uStatus!=91 AND uSource=0 ORDER BY cHostname LIMIT 301",guOrg);
 	}
 	else
 	{
 		if(gcSearch[0])
 			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
 			"uSource=0 AND uOwner=%u AND uCreatedBy=%u AND cHostname LIKE '%s%%' "
+			"AND uStatus!=91 "
 			"ORDER BY cHostname  LIMIT 301",guOrg,guLoginClient,gcSearch);
 		else
 			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
-			"uOwner=%u AND uCreatedBy=%u AND uSource=0 ORDER BY cHostname LIMIT 301",guOrg,guLoginClient);
+			"uOwner=%u AND uCreatedBy=%u AND uSource=0 AND uStatus!=91 ORDER BY cHostname LIMIT 301",guOrg,guLoginClient);
 	}
 
 	mysql_query(&gMysql,gcQuery);
