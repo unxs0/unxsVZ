@@ -159,6 +159,8 @@ void ExttIPCommands(pentry entries[], int x)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," cLabel NOT LIKE '10.%%.%%.%%' AND"
 								" cLabel NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
+								" cLabel NOT LIKE '172.17.%%.%%' AND" 
+								" cLabel NOT LIKE '172.18.%%.%%' AND"
 								" cLabel NOT LIKE '192.168.%%.%%'");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
@@ -293,6 +295,8 @@ void ExttIPCommands(pentry entries[], int x)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," cLabel NOT LIKE '10.%%.%%.%%' AND"
 								" cLabel NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
+								" cLabel NOT LIKE '172.17.%%.%%' AND" 
+								" cLabel NOT LIKE '172.18.%%.%%' AND"
 								" cLabel NOT LIKE '192.168.%%.%%'");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
