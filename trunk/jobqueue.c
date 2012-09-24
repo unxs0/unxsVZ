@@ -3586,6 +3586,21 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 		return;
 	}
 
+	//Attempt to get neighbors to refresh their arp table
+	//	This adds 3 seconds to every job
+	//arpsend -c 5 -U -i 65.49.53.159 eth0
+	char cArpDevice[256]={""};
+	GetConfiguration("cArpDevice",cArpDevice,gfuDatacenter,gfuNode,0,0);//First try node specific
+	if(!cArpDevice[0])
+	{
+		GetConfiguration("cArpDevice",cArpDevice,gfuDatacenter,0,0,0);//Second try datacenter wide
+		if(!cArpDevice[0])
+			GetConfiguration("cArpDevice",cArpDevice,0,0,0,0);//Last try global
+		else
+			sprintf(cArpDevice,"eth0");
+	}
+	sprintf(gcQuery,"/usr/sbin/arpsend -c 3 -U -i %.15s %.15s",cIP,cArpDevice);
+	system(gcQuery);
 
 	//Everything ok
 	tJobDoneUpdate(uJob);
