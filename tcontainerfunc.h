@@ -69,6 +69,7 @@ static char cService3[32]={""};
 static char cService4[32]={""};
 static char cPrivateIPs[64]={""};
 static char gcIPv4[16]={""};
+static char gcReturnMsg[32]={""};
 static char cNetmask[64]={""};
 static unsigned uWizIPv4=0;
 static char cuWizIPv4PullDown[32]={""};
@@ -4187,7 +4188,7 @@ void ExttContainerAuxTable(void)
 				" name=gcCommand value='Group Replace Primary'>\n");
 
 			printf("<p><input title='Creates job(s) for cloning active or stopped container(s) that"
-				" are not clones themselves.'"
+				" are not clones themselves. Must configure tConfiguration AutoCloneNode, cAutoCloneSyncTime and cAutoCloneIPClass'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Clone'>\n");
 			printf("&nbsp; <input title='Creates job(s) for stopping active container(s).'"
@@ -4664,27 +4665,34 @@ while((field=mysql_fetch_row(res)))
 					if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
 						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
-						//For complete clone run, these stay constant.
-						if(uOnlyOnce)
-						{
-
 						//We can only fo this if tConfiguration has been setup
 						//with datacenter wide cAutoCloneNode=node1,cAutoCloneSyncTime=600
 						//for example.
-						GetConfiguration("cAutoCloneNode",cConfBuffer,uDatacenter,0,0,0);
+						uTargetNode=0;
+						GetConfiguration("cAutoCloneNode",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
 						if(cConfBuffer[0])
 							uTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
 						//We need the cuSyncPeriod
-						uSyncPeriod=0;//Never rsync
-						GetConfiguration("cAutoCloneSyncTime",cConfBuffer,uDatacenter,0,0,0);
+						uSyncPeriod=3600;//default 1 hour rsync
+						GetConfiguration("cAutoCloneSyncTime",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
 						if(cConfBuffer[0])
 							sscanf(cConfBuffer,"%u",&uSyncPeriod);
-						GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,
-							0,0,0);
+						cAutoCloneIPClass[0]=0;
+						GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,sContainer.uDatacenter,sContainer.uNode,0,0);
+						uOnlyOnce=0;
 
-							uOnlyOnce=0;
-
+						//Some validation
+						if(!cAutoCloneIPClass[0])
+						{
+							sprintf(cResult,"No cAutoCloneIPClass!");
+							break;
 						}
+						if(!uTargetNode)
+						{
+							sprintf(cResult,"No uTargetNode!");
+							break;
+						}
+
 						//Basic conditions
 						//We do not allow clones of clones yet.
 						if(uTargetNode && !sContainer.uSource && cAutoCloneIPClass[0])
@@ -4698,12 +4706,12 @@ while((field=mysql_fetch_row(res)))
 							//TODO we cant let root just grab anybodys IPs
 							if(guCompany==1)
 								sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-								" uAvailable=1 AND cLabel LIKE '%s.%%' LIMIT 1",
-									cAutoCloneIPClass);
+								" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u LIMIT 1",
+									cAutoCloneIPClass,sContainer.uDatacenter);
 							else
 								sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-									" uAvailable=1 AND cLabel LIKE '%s.%%' AND"
-								" uOwner=%u LIMIT 1",cAutoCloneIPClass,guCompany);
+									" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u AND"
+								" uOwner=%u LIMIT 1",cAutoCloneIPClass,sContainer.uDatacenter,guCompany);
 							mysql_query(&gMysql,gcQuery);
 							if(mysql_errno(&gMysql))
 								htmlPlainTextError(mysql_error(&gMysql));
@@ -4763,6 +4771,7 @@ while((field=mysql_fetch_row(res)))
 
 							//Finally we can create the clone container
 							//and the clone job
+							gcReturnMsg[0]=0;
 							uNewVeid=CommonCloneContainer(
 									uCtContainer,
 									sContainer.uOSTemplate,
@@ -4783,11 +4792,14 @@ while((field=mysql_fetch_row(res)))
 									uTargetNode,
 									uSyncPeriod,
 									guLoginClient,
-									uCloneStop,0);
+									uCloneStop,7);//mode==7 sprintf gcReturnMsg error messages
 							//Now that container exists we can assign group.
 							if(!uNewVeid)
 							{
-								sprintf(cResult,"uNewVeid error");
+								if(gcReturnMsg[0])
+									sprintf(cResult,gcReturnMsg);
+								else
+									sprintf(cResult,"uNewVeid error");
 								break;
 							}
 							UpdatePrimaryContainerGroup(uNewVeid,uGroup);
@@ -4797,7 +4809,7 @@ while((field=mysql_fetch_row(res)))
 						}
 						else
 						{
-							sprintf(cResult,"Clones of clones not allowed");
+							sprintf(cResult,"Check target node, uStatus and cAutoCloneIPClass");
 						}
 					}
 					else
@@ -6908,7 +6920,10 @@ unsigned CommonCloneContainer(
 			else if(uMode==1)
 				tNode("<blink>Error:</blink> No jobs created. Clone IP gone!");
 			else if(uMode==7)
-				printf("CommonCloneContainer() No jobs created. Clone IP gone!\n");
+			{
+				sprintf(gcReturnMsg,"%.32s","No jobs. Clone IP gone!\n");
+				return(0);
+			}
 		}
 		CopyContainerProps(uContainer,uNewVeid);
 		//Update NAME
@@ -6952,9 +6967,11 @@ unsigned CommonCloneContainer(
 		else if(uMode==1)
 			tNode("<blink>Error:</blink> No jobs created!");
 		else if(uMode==7)
-			printf("CommonCloneContainer() No jobs created!\n");
+		{
+			sprintf(gcReturnMsg,"%.32s","No jobs created!\n");
+			return(0);
+		}
 	}
-
 	return(uNewVeid);
 
 }//unsigned CommonCloneContainer()
