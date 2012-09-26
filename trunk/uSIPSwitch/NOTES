@@ -38,3 +38,13 @@ Initial design notes:
 - Incoming responses will be forwarded to the IP and port found in the transaction
 	table.
 	If not found an appropriate error message will be sent back.
+
+Development Prep
+----------------
+yum install libmemcached-devel.x86_64
+yum install memcached.x86_64
+yum install libevent-devel.x86_64
+yum install mysql-devel.x86_64
+yum install mysql-server.x86_64
+yum install sipsak.x86_64
+ln -s /usr/lib64/mysql /usr/lib/mysql
