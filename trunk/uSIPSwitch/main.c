@@ -1,6 +1,6 @@
 /*
 FILE 
-	unxsVZ/unxsSIPProxy/main.c
+	unxsVZ/uSIPSwitch/main.c
 	$Id$
 PURPOSE
 	Develop simple proxy for sharing port 5060 with
@@ -530,8 +530,8 @@ int main(int iArgc, char *cArgv[])
 	FILE *fp;
 	if((fp=fopen(cPIDFILE,"r"))!=NULL)
 	{
-		perror("unxsSIPProxy pid file exists");
-		logfileLine("main","unxsSIPProxy may already be running");
+		perror("uSIPSwitch pid file exists");
+		logfileLine("main","uSIPSwitch may already be running");
 		fclose(fp);
 		exit(1);
 	}
@@ -617,12 +617,12 @@ void logfileLine(const char *cFunction,const char *cLogline)
 		tmTime=localtime(&luClock);
 		strftime(cTime,31,"%b %d %T",tmTime);
 
-		fprintf(gLfp,"%s unxsSIPProxy[%u]::%s %s.\n",cTime,pidThis,cFunction,cLogline);
+		fprintf(gLfp,"%s uSIPSwitch[%u]::%s %s.\n",cTime,pidThis,cFunction,cLogline);
 		fflush(gLfp);
 	}
 	else
 	{
-		fprintf(stderr,"%s: unxsSIPProxy::%s.\n",cFunction,cLogline);
+		fprintf(stderr,"%s: uSIPSwitch::%s.\n",cFunction,cLogline);
 	}
 
 }//void logfileLine()
@@ -697,7 +697,7 @@ int iSetupAndTestMemcached(void)
 {
 	memcached_server_st *servers = NULL;
 	memcached_return rc;
-	char *key= "unxsSIPProxy";
+	char *key= "uSIPSwitch";
 	char *value= "$Id$";
 
 	memcached_server_st *memcached_servers_parse(const char *server_strings);

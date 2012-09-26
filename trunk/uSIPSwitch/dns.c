@@ -1,6 +1,6 @@
 /*
 FILE
-	unxsSIPProxy/dns.c
+	uSIPSwitch/dns.c
 PURPOSE
 	Simple dns srv resolver testing
 COMPILE

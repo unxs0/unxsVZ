@@ -4,7 +4,7 @@ FILE
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL
-        Copyright 2001-2009 Gary Wallis
+        Copyright 2001-2012 Gary Wallis
 */
 
 #define LOCALCOPYRIGHT "&copy; 2000-2012 Unixservice, LLC. All Rights Reserved."
