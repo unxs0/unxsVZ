@@ -1,6 +1,6 @@
 /*
 FILE
-	unxsVZ/unxsSIPProxy/libevent-test.c
+	unxsVZ/uSIPSwitch/libevent-test.c
 	$Id$
 
 COMPILE
@@ -41,8 +41,8 @@ NOTES
 #include <signal.h>
 #include <libmemcached/memcached.h>
 
-#define cLOGFILE "/var/log/unxsSIPProxy"
-#define cPIDFILE "/var/run/unxsSIPProxy.pid"
+#define cLOGFILE "/var/log/uSIPSwitch"
+#define cPIDFILE "/var/run/uSIPSwitch.pid"
 
 //Global data
 unsigned guCount=0;
@@ -232,12 +232,12 @@ void logfileLine(const char *cFunction,const char *cLogline)
 		tmTime=localtime(&luClock);
 		strftime(cTime,31,"%b %d %T",tmTime);
 
-		fprintf(gLfp,"%s unxsSIPProxy::%s[%u]: %s.\n",cTime,cFunction,pidThis,cLogline);
+		fprintf(gLfp,"%s uSIPSwitch::%s[%u]: %s.\n",cTime,cFunction,pidThis,cLogline);
 		fflush(gLfp);
 	}
 	else
 	{
-		fprintf(stderr,"%s: unxsSIPProxy::%s.\n",cFunction,cLogline);
+		fprintf(stderr,"%s: uSIPSwitch::%s.\n",cFunction,cLogline);
 	}
 
 }//void logfileLine()
@@ -313,7 +313,7 @@ int iSetupAndTestMemcached(void)
 	memcached_server_st *servers = NULL;
 	memcached_st *memc;
 	memcached_return rc;
-	char *key= "unxsSIPProxy";
+	char *key= "uSIPSwitch";
 	char *value= "$Id$";
 
 	memcached_server_st *memcached_servers_parse(const char *server_strings);

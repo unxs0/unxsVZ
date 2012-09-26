@@ -1,6 +1,6 @@
 #
 # $Id$
-# unxsSIPProxy/makefile
+# uSIPSwitch/makefile
 #
 # (C) 2012 Gary Wallis for Unixservice, LLC.
 #
@@ -12,10 +12,10 @@ CFLAGS= -Wall
 LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so /usr/lib64/libevent.so
 LIBS2= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so
 
-all: unxsSIPProxy
+all: uSIPSwitch
 
-unxsSIPProxy: main.o mysqlconnect.o
-	cc main.o mysqlconnect.o -o unxsSIPProxy $(LIBS) 
+uSIPSwitch: main.o mysqlconnect.o
+	cc main.o mysqlconnect.o -o uSIPSwitch $(LIBS) 
 
 unxsLoadNatPBX: loadnatpbx.o mysqlconnect.o
 	cc loadnatpbx.o mysqlconnect.o -o unxsLoadNatPBX $(LIBS2) 
@@ -33,23 +33,23 @@ local.h: local.h.default
 	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
 
 clean:
-	rm -f *.o unxsSIPProxy
+	rm -f *.o uSIPSwitch
 
-install: unxsSIPProxy
-	install -s unxsSIPProxy /usr/sbin/unxsSIPProxy
-	rm unxsSIPProxy
+install: uSIPSwitch
+	install -s uSIPSwitch /usr/sbin/uSIPSwitch
+	rm uSIPSwitch
 
-install-run: unxsSIPProxy
+install-run: uSIPSwitch
 	/usr/sbin/stopsipproxy.sh
-	install -s unxsSIPProxy /usr/sbin/unxsSIPProxy
-	rm unxsSIPProxy
-	/usr/sbin/unxsSIPProxy
+	install -s uSIPSwitch /usr/sbin/uSIPSwitch
+	rm uSIPSwitch
+	/usr/sbin/uSIPSwitch
 
-install-test: unxsSIPProxy
+install-test: uSIPSwitch
 	/usr/sbin/stopsipproxy.sh
-	install -s unxsSIPProxy /usr/sbin/unxsSIPProxy
-	rm unxsSIPProxy
-	/usr/sbin/unxsSIPProxy
+	install -s uSIPSwitch /usr/sbin/uSIPSwitch
+	rm uSIPSwitch
+	/usr/sbin/uSIPSwitch
 	./test.sh
 
 

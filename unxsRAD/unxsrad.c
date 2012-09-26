@@ -1938,7 +1938,7 @@ void funcMainTabMenu(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cLabel,uReadLevel,cToolTip"
+	sprintf(gcQuery,"SELECT cLabel,uReadLevel,cDescription"
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
@@ -1975,7 +1975,7 @@ void funcMainInitTableList(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cLabel,uReadLevel,cToolTip"
+	sprintf(gcQuery,"SELECT cLabel,uReadLevel,cDescription"
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"

@@ -1,6 +1,6 @@
 /*
 FILE
-	unxsSIPProxy/sipproxy.h
+	uSIPSwitch/sipproxy.h
 AUTHOR
 	(C) 2012 Gary Wallis for Unixservice.
 */
@@ -24,5 +24,5 @@ AUTHOR
 #include <mysql/mysql.h>
 extern MYSQL gMysql; 
 
-#define cLOGFILE "/var/log/unxsSIPProxy"
-#define cPIDFILE "/var/run/unxsSIPProxy.pid"
+#define cLOGFILE "/var/log/uSIPSwitch"
+#define cPIDFILE "/var/run/uSIPSwitch.pid"
