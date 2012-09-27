@@ -2,7 +2,7 @@
 FILE
 	tStatus source code of unxsSPS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tstatus.c 166 2009-06-05 22:10:35Z Dylan $
+	$Id: tstatus.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tstatusfunc.h while 
@@ -164,7 +164,7 @@ void tStatus(const char *cResult)
 			{
 			sprintf(gcQuery,"SELECT _rowid FROM tStatus WHERE uStatus=%u"
 						,uStatus);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -184,7 +184,7 @@ void tStatus(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tStatus",0);
+	Header_ism3(":: tStatus",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -325,7 +325,7 @@ void NewtStatus(unsigned uMode)
 	sprintf(gcQuery,"SELECT uStatus FROM tStatus\
 				WHERE uStatus=%u"
 							,uStatus);
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
@@ -360,7 +360,7 @@ void DeletetStatus(void)
 	sprintf(gcQuery,"DELETE FROM tStatus WHERE uStatus=%u"
 					,uStatus);
 #endif
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 	//tStatus("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
@@ -391,7 +391,7 @@ void Insert_tStatus(void)
 			,uCreatedBy
 			);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Insert_tStatus(void)
 
@@ -406,7 +406,7 @@ void Update_tStatus(char *cRowid)
 			,uModBy
 			,cRowid);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tStatus(void)
 
@@ -438,7 +438,7 @@ void ModtStatus(void)
 						,uStatus);
 #endif
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	//if(i<1) tStatus("<blink>Record does not exist");
@@ -472,7 +472,7 @@ void tStatusList(void)
 
 	ExttStatusListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tStatusList",1,"");//1 is auto header list guMode. Opens table!
@@ -537,7 +537,7 @@ void tStatusList(void)
 void CreatetStatus(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tStatus ( uStatus INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//CreatetStatus()
 

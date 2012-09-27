@@ -1,0 +1,912 @@
+-- MySQL dump 10.11
+--
+-- Host: localhost    Database: unxssps
+-- ------------------------------------------------------
+-- Server version	5.0.95
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `tAuthorize`
+--
+
+DROP TABLE IF EXISTS `tAuthorize`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tAuthorize` (
+  `uAuthorize` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cIpMask` varchar(20) NOT NULL default '',
+  `uPerm` int(10) unsigned NOT NULL default '0',
+  `uCertClient` int(10) unsigned NOT NULL default '0',
+  `cPasswd` varchar(35) NOT NULL default '',
+  `cClrPasswd` varchar(32) NOT NULL default '',
+  PRIMARY KEY  (`uAuthorize`),
+  UNIQUE KEY `cLabel` (`cLabel`,`uOwner`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tAuthorize`
+--
+
+LOCK TABLES `tAuthorize` WRITE;
+/*!40000 ALTER TABLE `tAuthorize` DISABLE KEYS */;
+INSERT INTO `tAuthorize` VALUES (1,'Root',1,1,1348783765,0,0,'0.0.0.0',12,1,'..M0/uAvCFhis','');
+/*!40000 ALTER TABLE `tAuthorize` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tCDR`
+--
+
+DROP TABLE IF EXISTS `tCDR`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tCDR` (
+  `uCDR` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uCDR`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tCDR`
+--
+
+LOCK TABLES `tCDR` WRITE;
+/*!40000 ALTER TABLE `tCDR` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tCDR` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tCarrier`
+--
+
+DROP TABLE IF EXISTS `tCarrier`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tCarrier` (
+  `uCarrier` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `cComment` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uCarrier`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tCarrier`
+--
+
+LOCK TABLES `tCarrier` WRITE;
+/*!40000 ALTER TABLE `tCarrier` DISABLE KEYS */;
+INSERT INTO `tCarrier` VALUES (1,'Vitelity','',1,1,1348784026,0,0);
+/*!40000 ALTER TABLE `tCarrier` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tClient`
+--
+
+DROP TABLE IF EXISTS `tClient`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tClient` (
+  `uClient` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(100) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cInfo` text NOT NULL,
+  `cEmail` varchar(100) NOT NULL default '',
+  `cCode` varchar(32) NOT NULL default '',
+  PRIMARY KEY  (`uClient`),
+  UNIQUE KEY `cLabel` (`cLabel`,`uOwner`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tClient`
+--
+
+LOCK TABLES `tClient` WRITE;
+/*!40000 ALTER TABLE `tClient` DISABLE KEYS */;
+INSERT INTO `tClient` VALUES (1,'Root',1,1,1348783765,0,0,'','','');
+/*!40000 ALTER TABLE `tClient` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tCluster`
+--
+
+DROP TABLE IF EXISTS `tCluster`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tCluster` (
+  `uCluster` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `cComment` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uCluster`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tCluster`
+--
+
+LOCK TABLES `tCluster` WRITE;
+/*!40000 ALTER TABLE `tCluster` DISABLE KEYS */;
+INSERT INTO `tCluster` VALUES (1,'Hurricane Electric','',1,1,1348784006,0,0);
+/*!40000 ALTER TABLE `tCluster` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tConfiguration`
+--
+
+DROP TABLE IF EXISTS `tConfiguration`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tConfiguration` (
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `cLabel` varchar(100) NOT NULL default '',
+  `uConfiguration` int(10) unsigned NOT NULL auto_increment,
+  `cComment` text NOT NULL,
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cValue` varchar(255) NOT NULL default '',
+  `uServer` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uConfiguration`),
+  UNIQUE KEY `cLabel` (`cLabel`,`uServer`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tConfiguration`
+--
+
+LOCK TABLES `tConfiguration` WRITE;
+/*!40000 ALTER TABLE `tConfiguration` DISABLE KEYS */;
+INSERT INTO `tConfiguration` VALUES (1,1338298795,1,'Delme',1,'Dummy entry',1,1338301194,'cComment',0);
+/*!40000 ALTER TABLE `tConfiguration` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tDID`
+--
+
+DROP TABLE IF EXISTS `tDID`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tDID` (
+  `uDID` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `cDID` varchar(32) NOT NULL default '',
+  `uPBX` int(10) unsigned NOT NULL default '0',
+  `uCarrier` int(10) unsigned NOT NULL default '0',
+  `uCluster` int(10) unsigned NOT NULL default '0',
+  `cComment` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uDID`),
+  UNIQUE KEY `cDID` (`cDID`),
+  KEY `uPBX` (`uPBX`),
+  KEY `uCarrier` (`uCarrier`),
+  KEY `uCluster` (`uCluster`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tDID`
+--
+
+LOCK TABLES `tDID` WRITE;
+/*!40000 ALTER TABLE `tDID` DISABLE KEYS */;
+INSERT INTO `tDID` VALUES (1,'+17073613110','+17073613110',1,1,1,'',1,1,1348784550,0,0);
+/*!40000 ALTER TABLE `tDID` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tGateway`
+--
+
+DROP TABLE IF EXISTS `tGateway`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tGateway` (
+  `uGateway` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `cAddress` varchar(32) NOT NULL default '',
+  `cHostname` varchar(32) NOT NULL default '',
+  `uCarrier` int(10) unsigned NOT NULL default '0',
+  `uPort` int(10) unsigned NOT NULL default '0',
+  `uPriority` int(10) unsigned NOT NULL default '0',
+  `uWeight` int(10) unsigned NOT NULL default '0',
+  `uCluster` int(10) unsigned NOT NULL default '0',
+  `cComment` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uGateway`),
+  KEY `cAddress` (`cAddress`),
+  KEY `cHostname` (`cHostname`),
+  KEY `uCarrier` (`uCarrier`),
+  KEY `uCluster` (`uCluster`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tGateway`
+--
+
+LOCK TABLES `tGateway` WRITE;
+/*!40000 ALTER TABLE `tGateway` DISABLE KEYS */;
+INSERT INTO `tGateway` VALUES (1,'Vitelity primary inbound','64.2.142.90','',1,5060,0,0,1,'',1,1,1348784105,1,1348785459),(2,'Vitelity outbound','64.2.142.187','outbound.vitelity.net',1,5060,0,0,1,'',1,1,1348785439,0,0);
+/*!40000 ALTER TABLE `tGateway` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tGlossary`
+--
+
+DROP TABLE IF EXISTS `tGlossary`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tGlossary` (
+  `uGlossary` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cText` text NOT NULL,
+  PRIMARY KEY  (`uGlossary`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tGlossary`
+--
+
+LOCK TABLES `tGlossary` WRITE;
+/*!40000 ALTER TABLE `tGlossary` DISABLE KEYS */;
+INSERT INTO `tGlossary` VALUES (1,'Dummy',2,1,1269005128,0,0,'Dummy');
+/*!40000 ALTER TABLE `tGlossary` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tGroup`
+--
+
+DROP TABLE IF EXISTS `tGroup`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tGroup` (
+  `uGroup` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uGroup`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tGroup`
+--
+
+LOCK TABLES `tGroup` WRITE;
+/*!40000 ALTER TABLE `tGroup` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tGroup` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tGroupGlue`
+--
+
+DROP TABLE IF EXISTS `tGroupGlue`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tGroupGlue` (
+  `uGroupGlue` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uGroupGlue`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tGroupGlue`
+--
+
+LOCK TABLES `tGroupGlue` WRITE;
+/*!40000 ALTER TABLE `tGroupGlue` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tGroupGlue` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tGroupType`
+--
+
+DROP TABLE IF EXISTS `tGroupType`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tGroupType` (
+  `uGroupType` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uGroupType`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tGroupType`
+--
+
+LOCK TABLES `tGroupType` WRITE;
+/*!40000 ALTER TABLE `tGroupType` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tGroupType` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tJob`
+--
+
+DROP TABLE IF EXISTS `tJob`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tJob` (
+  `cJobName` varchar(64) NOT NULL default '',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `cJobData` text NOT NULL,
+  `uJob` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(100) NOT NULL default '',
+  `uJobStatus` int(10) unsigned NOT NULL default '0',
+  `uJobDate` int(10) unsigned NOT NULL default '0',
+  `cRemoteMsg` varchar(32) NOT NULL default '',
+  `uServer` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uJob`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tJob`
+--
+
+LOCK TABLES `tJob` WRITE;
+/*!40000 ALTER TABLE `tJob` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tJob` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tJobStatus`
+--
+
+DROP TABLE IF EXISTS `tJobStatus`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tJobStatus` (
+  `uJobStatus` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uJobStatus`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tJobStatus`
+--
+
+LOCK TABLES `tJobStatus` WRITE;
+/*!40000 ALTER TABLE `tJobStatus` DISABLE KEYS */;
+INSERT INTO `tJobStatus` VALUES (1,'Waiting',1,1,1020035698,0,0),(2,'Running',1,1,1020035712,0,0),(3,'Done OK',1,1,1020035724,0,0),(4,'Done Error(s)',1,1,1020035745,0,0),(5,'Suspended',1,1,1020035769,0,0),(6,'Redundant',1,1,1020435397,0,0),(7,'Cancelled',1,1,1020448352,0,0),(10,'RemoteWaiting',1,1,1072194538,0,0);
+/*!40000 ALTER TABLE `tJobStatus` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tLog`
+--
+
+DROP TABLE IF EXISTS `tLog`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tLog` (
+  `uTablePK` varchar(32) NOT NULL default '',
+  `cHost` varchar(32) NOT NULL default '',
+  `uLoginClient` int(10) unsigned NOT NULL default '0',
+  `cLogin` varchar(32) NOT NULL default '',
+  `uPermLevel` int(10) unsigned NOT NULL default '0',
+  `cTableName` varchar(32) NOT NULL default '',
+  `uLog` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(64) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cHash` varchar(32) NOT NULL default '',
+  `uLogType` int(10) unsigned NOT NULL default '0',
+  `cMessage` varchar(255) NOT NULL default '',
+  `cServer` varchar(64) NOT NULL default '',
+  PRIMARY KEY  (`uLog`),
+  KEY `uOwner` (`uOwner`),
+  KEY `uLogType` (`uLogType`)
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tLog`
+--
+
+LOCK TABLES `tLog` WRITE;
+/*!40000 ALTER TABLE `tLog` DISABLE KEYS */;
+INSERT INTO `tLog` VALUES ('1','201.231.88.54',1,'Root',12,'tCluster',1,'New',1,1,1348784006,0,0,'3cb631611f53bc5ce3e17af804048c7e',1,'',''),('1','201.231.88.54',1,'Root',12,'tCarrier',2,'New',1,1,1348784026,0,0,'57be931503979ef6afcb70eb5577bd61',1,'',''),('1','201.231.88.54',1,'Root',12,'tGateway',3,'New',1,1,1348784105,0,0,'55448ef39d51657f60f2532d64eba959',1,'',''),('1','201.231.88.54',1,'Root',12,'tDID',4,'New',1,1,1348784550,0,0,'d8970c5fb4ef08e8dcafcafe2fe60cfc',1,'',''),('1','201.231.88.54',1,'Root',12,'tPBX',5,'New',1,1,1348784822,0,0,'d04af339a10f9226abe43ae8e175b6b8',1,'',''),('2','201.231.88.54',1,'Root',12,'tGateway',6,'New',1,1,1348785439,0,0,'c0e6304f4a6f9d8c5a40a1c2b7f93475',1,'',''),('1','201.231.88.54',1,'Root',12,'tGateway',7,'Mod',1,1,1348785459,0,0,'9424548af898214f75bf31fb1d6b88fd',1,'',''),('1','201.231.88.54',1,'Root',12,'tRule',8,'New',1,1,1348785491,0,0,'060fa69f1c8cf536920bf9af70a69429',1,'','');
+/*!40000 ALTER TABLE `tLog` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tLogMonth`
+--
+
+DROP TABLE IF EXISTS `tLogMonth`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tLogMonth` (
+  `uTablePK` varchar(32) NOT NULL default '',
+  `cHost` varchar(32) NOT NULL default '',
+  `uLoginClient` int(10) unsigned NOT NULL default '0',
+  `cLogin` varchar(32) NOT NULL default '',
+  `uPermLevel` int(10) unsigned NOT NULL default '0',
+  `cTableName` varchar(32) NOT NULL default '',
+  `uLog` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(64) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cHash` varchar(32) NOT NULL default '',
+  `uLogType` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uLog`),
+  KEY `uOwner` (`uOwner`),
+  KEY `uLogType` (`uLogType`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tLogMonth`
+--
+
+LOCK TABLES `tLogMonth` WRITE;
+/*!40000 ALTER TABLE `tLogMonth` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tLogMonth` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tLogType`
+--
+
+DROP TABLE IF EXISTS `tLogType`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tLogType` (
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uLogType` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  PRIMARY KEY  (`uLogType`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tLogType`
+--
+
+LOCK TABLES `tLogType` WRITE;
+/*!40000 ALTER TABLE `tLogType` DISABLE KEYS */;
+INSERT INTO `tLogType` VALUES (0,0,1,1,1163026052,1,'backend'),(0,0,1,1,1163026077,2,'organization interface'),(0,0,1,1,1163026077,3,'admin interface'),(0,0,1,1,1163026077,4,'system event'),(0,0,1,1,1163026077,5,'named error'),(0,0,1,1,1163026077,6,'backend login'),(0,0,1,1,1163026077,7,'ispAdmin login'),(0,0,1,1,1163026077,8,'ispOrg login');
+/*!40000 ALTER TABLE `tLogType` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tMonth`
+--
+
+DROP TABLE IF EXISTS `tMonth`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tMonth` (
+  `uMonth` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uMonth`),
+  UNIQUE KEY `cLabel` (`cLabel`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tMonth`
+--
+
+LOCK TABLES `tMonth` WRITE;
+/*!40000 ALTER TABLE `tMonth` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tMonth` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tPBX`
+--
+
+DROP TABLE IF EXISTS `tPBX`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tPBX` (
+  `uPBX` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `cHostname` varchar(64) NOT NULL default '',
+  `cAddress` varchar(64) NOT NULL default '',
+  `uPort` int(10) unsigned NOT NULL default '0',
+  `uPriority` int(10) unsigned NOT NULL default '0',
+  `uWeight` int(10) unsigned NOT NULL default '0',
+  `cAttributes` varchar(64) NOT NULL default '',
+  `cDescription` varchar(64) NOT NULL default '',
+  `uStatus` int(10) unsigned NOT NULL default '0',
+  `uLines` int(10) unsigned NOT NULL default '0',
+  `uStrip` int(10) unsigned NOT NULL default '0',
+  `cPrefix` varchar(32) NOT NULL default '',
+  `uCluster` int(10) unsigned NOT NULL default '0',
+  `cComment` varchar(64) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uPBX`),
+  KEY `cHostname` (`cHostname`),
+  KEY `cAddress` (`cAddress`),
+  KEY `uCluster` (`uCluster`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tPBX`
+--
+
+LOCK TABLES `tPBX` WRITE;
+/*!40000 ALTER TABLE `tPBX` DISABLE KEYS */;
+INSERT INTO `tPBX` VALUES (1,'paulnewt2','paulnewt2.callingcloud.net','64.62.134.36',5060,0,0,'','',0,1,0,'',1,'Test PBX on unxsVZ infrastructure',1,1,1348784822,0,0);
+/*!40000 ALTER TABLE `tPBX` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tPrefix`
+--
+
+DROP TABLE IF EXISTS `tPrefix`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tPrefix` (
+  `uPrefix` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uPrefix`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tPrefix`
+--
+
+LOCK TABLES `tPrefix` WRITE;
+/*!40000 ALTER TABLE `tPrefix` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tPrefix` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tRule`
+--
+
+DROP TABLE IF EXISTS `tRule`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tRule` (
+  `uRule` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uGateway` int(10) unsigned NOT NULL default '0',
+  `uTimeInterval` int(10) unsigned NOT NULL default '0',
+  `cComment` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uRule`),
+  KEY `uGateway` (`uGateway`),
+  KEY `uTimeInterval` (`uTimeInterval`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tRule`
+--
+
+LOCK TABLES `tRule` WRITE;
+/*!40000 ALTER TABLE `tRule` DISABLE KEYS */;
+INSERT INTO `tRule` VALUES (1,'Default outbound',2,0,'',1,1,1348785491,0,0);
+/*!40000 ALTER TABLE `tRule` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tServer`
+--
+
+DROP TABLE IF EXISTS `tServer`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tServer` (
+  `uServer` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uServer`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tServer`
+--
+
+LOCK TABLES `tServer` WRITE;
+/*!40000 ALTER TABLE `tServer` DISABLE KEYS */;
+INSERT INTO `tServer` VALUES (1,'localhost',1,1,1021141902,0,0),(2,'spam.isp.net',1,1,1024433304,1,1072192394);
+/*!40000 ALTER TABLE `tServer` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tStatus`
+--
+
+DROP TABLE IF EXISTS `tStatus`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tStatus` (
+  `uStatus` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uStatus`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tStatus`
+--
+
+LOCK TABLES `tStatus` WRITE;
+/*!40000 ALTER TABLE `tStatus` DISABLE KEYS */;
+INSERT INTO `tStatus` VALUES (1,'Active',1,1,1019835249,0,0),(2,'OnHold',1,1,1019835258,0,0),(3,'Offline',1,1,1019835282,0,0),(4,'Awaiting Modification',1,1,1019845118,1,1019845216),(5,'Awaiting Deletion',1,1,1019845139,1,1019845208),(6,'Awaiting Activation',1,1,1019845157,0,0),(7,'Cancelled',1,1,1020545191,0,0),(8,'Modified',1,1,1020555448,0,0),(9,'Modification Problem',1,1,1020699074,0,0);
+/*!40000 ALTER TABLE `tStatus` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tTemplate`
+--
+
+DROP TABLE IF EXISTS `tTemplate`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tTemplate` (
+  `uTemplate` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `cComment` text NOT NULL,
+  `cTemplate` text NOT NULL,
+  `uTemplateSet` int(10) unsigned NOT NULL default '0',
+  `uTemplateType` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uTemplate`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tTemplate`
+--
+
+LOCK TABLES `tTemplate` WRITE;
+/*!40000 ALTER TABLE `tTemplate` DISABLE KEYS */;
+INSERT INTO `tTemplate` VALUES (1,'dummy.c',1,1,1346895231,0,0,'','dummy entry 1',1,0);
+/*!40000 ALTER TABLE `tTemplate` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tTemplateSet`
+--
+
+DROP TABLE IF EXISTS `tTemplateSet`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tTemplateSet` (
+  `uTemplateSet` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uTemplateSet`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tTemplateSet`
+--
+
+LOCK TABLES `tTemplateSet` WRITE;
+/*!40000 ALTER TABLE `tTemplateSet` DISABLE KEYS */;
+INSERT INTO `tTemplateSet` VALUES (1,'default',1,1,1346895191,0,0);
+/*!40000 ALTER TABLE `tTemplateSet` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tTemplateType`
+--
+
+DROP TABLE IF EXISTS `tTemplateType`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tTemplateType` (
+  `uTemplateType` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uTemplateType`),
+  KEY `uOwner` (`uOwner`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tTemplateType`
+--
+
+LOCK TABLES `tTemplateType` WRITE;
+/*!40000 ALTER TABLE `tTemplateType` DISABLE KEYS */;
+INSERT INTO `tTemplateType` VALUES (1,'RAD4',1,1,1346895225,0,0);
+/*!40000 ALTER TABLE `tTemplateType` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tTimeInterval`
+--
+
+DROP TABLE IF EXISTS `tTimeInterval`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tTimeInterval` (
+  `uTimeInterval` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `cStartTime` varchar(16) NOT NULL default '',
+  `cEndTime` varchar(16) NOT NULL default '',
+  `cStartDate` varchar(16) NOT NULL default '',
+  `cEndDate` varchar(16) NOT NULL default '',
+  `cDaysOfWeek` varchar(16) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uTimeInterval`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tTimeInterval`
+--
+
+LOCK TABLES `tTimeInterval` WRITE;
+/*!40000 ALTER TABLE `tTimeInterval` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tTimeInterval` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2012-09-27 17:38:40

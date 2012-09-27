@@ -1,23 +1,23 @@
 /*
 FILE
-	$Id: module.c 1955 2012-05-22 21:28:32Z Colin $
+	$Id: module.c 2115 2012-09-19 14:11:03Z Gary $
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality can be developed in tpbxfunc.h
-	while unxsRAD can still to be used to change this schema dependent file.
+	while unxsSPS can still to be used to change this schema dependent file.
 AUTHOR
 	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
 TEMPLATE VARS AND FUNCTIONS
-	funcModuleCreateQuery
-	funcModuleInsertQuery
-	funcModuleListPrint
-	funcModuleListTable
-	funcModuleLoadVars
-	funcModuleProcVars
-	funcModuleRAD3Input
-	funcModuleUpdateQuery
-	funcModuleVars
-	funcModuleVarList
+	ModuleCreateQuery
+	ModuleInsertQuery
+	ModuleListPrint
+	ModuleListTable
+	ModuleLoadVars
+	ModuleProcVars
+	ModuleInput
+	ModuleUpdateQuery
+	ModuleVars
+	ModuleVarList
 	cProject
 	cTableKey
 	cTableName
@@ -30,18 +30,30 @@ TEMPLATE VARS AND FUNCTIONS
 
 //Table Variables
 static unsigned uPBX=0;
+static char cLabel[33]={""};
+static char cAddress[65]={""};
 static char cHostname[65]={""};
-static unsigned uServer=0;
-static char cuServerPullDown[256]={""};
-static char *cComment={""};
+static unsigned uPort=0;
+static unsigned uPriority=0;
+static unsigned uWeight=0;
+static char cAttributes[65]={""};
+static char cDescription[65]={""};
+static unsigned uStatus=0;
+static unsigned uLines=0;
+static unsigned uStrip=0;
+static char cPrefix[33]={""};
+static unsigned uCluster=0;
+static char cuClusterPullDown[256]={""};
+static char cComment[65]={""};
 static unsigned uOwner=0;
+#define StandardFields
 static unsigned uCreatedBy=0;
 static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
-#define VAR_LIST_tPBX "tPBX.uPBX,tPBX.cHostname,tPBX.uServer,tPBX.cComment,tPBX.uOwner,tPBX.uCreatedBy,tPBX.uCreatedDate,tPBX.uModBy,tPBX.uModDate"
+#define VAR_LIST_tPBX "tPBX.uPBX,tPBX.cLabel,tPBX.cAddress,tPBX.cHostname,tPBX.uPort,tPBX.uPriority,tPBX.uWeight,tPBX.cAttributes,tPBX.cDescription,tPBX.uStatus,tPBX.uLines,tPBX.uStrip,tPBX.cPrefix,tPBX.uCluster,tPBX.cComment,tPBX.uOwner,tPBX.uCreatedBy,tPBX.uCreatedDate,tPBX.uModBy,tPBX.uModDate"
 
  //Local only
 void Insert_tPBX(void);
@@ -73,17 +85,39 @@ void ProcesstPBXVars(pentry entries[], int x)
 		
 		if(!strcmp(entries[i].name,"uPBX"))
 			sscanf(entries[i].val,"%u",&uPBX);
+		else if(!strcmp(entries[i].name,"cLabel"))
+			sprintf(cLabel,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cAddress"))
+			sprintf(cAddress,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cHostname"))
 			sprintf(cHostname,"%.40s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uServer"))
-			sscanf(entries[i].val,"%u",&uServer);
-		else if(!strcmp(entries[i].name,"cuServerPullDown"))
+		else if(!strcmp(entries[i].name,"uPort"))
+			sscanf(entries[i].val,"%u",&uPort);
+		else if(!strcmp(entries[i].name,"uPriority"))
+			sscanf(entries[i].val,"%u",&uPriority);
+		else if(!strcmp(entries[i].name,"uWeight"))
+			sscanf(entries[i].val,"%u",&uWeight);
+		else if(!strcmp(entries[i].name,"cAttributes"))
+			sprintf(cAttributes,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cDescription"))
+			sprintf(cDescription,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uStatus"))
+			sscanf(entries[i].val,"%u",&uStatus);
+		else if(!strcmp(entries[i].name,"uLines"))
+			sscanf(entries[i].val,"%u",&uLines);
+		else if(!strcmp(entries[i].name,"uStrip"))
+			sscanf(entries[i].val,"%u",&uStrip);
+		else if(!strcmp(entries[i].name,"cPrefix"))
+			sprintf(cPrefix,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uCluster"))
+			sscanf(entries[i].val,"%u",&uCluster);
+		else if(!strcmp(entries[i].name,"cuClusterPullDown"))
 		{
-			sprintf(cuServerPullDown,"%.255s",entries[i].val);
-			uServer=ReadPullDown("tServer","cLabel",cuServerPullDown);
+			sprintf(cuClusterPullDown,"%.255s",entries[i].val);
+			uCluster=ReadPullDown("tCluster","cLabel",cuClusterPullDown);
 		}
 		else if(!strcmp(entries[i].name,"cComment"))
-			cComment=entries[i].val;
+			sprintf(cComment,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -193,14 +227,25 @@ void tPBX(const char *cResult)
 			field=mysql_fetch_row(res);
 			
 		sscanf(field[0],"%u",&uPBX);
-		sprintf(cHostname,"%.40s",field[1]);
-		sscanf(field[2],"%u",&uServer);
-		cComment=field[3];
-		sscanf(field[4],"%u",&uOwner);
-		sscanf(field[5],"%u",&uCreatedBy);
-		sscanf(field[6],"%lu",&uCreatedDate);
-		sscanf(field[7],"%u",&uModBy);
-		sscanf(field[8],"%lu",&uModDate);
+		sprintf(cLabel,"%.32s",field[1]);
+		sprintf(cAddress,"%.64s",field[2]);
+		sprintf(cHostname,"%.64s",field[3]);
+		sscanf(field[4],"%u",&uPort);
+		sscanf(field[5],"%u",&uPriority);
+		sscanf(field[6],"%u",&uWeight);
+		sprintf(cAttributes,"%.64s",field[7]);
+		sprintf(cDescription,"%.64s",field[8]);
+		sscanf(field[9],"%u",&uStatus);
+		sscanf(field[10],"%u",&uLines);
+		sscanf(field[11],"%u",&uStrip);
+		sprintf(cPrefix,"%.32s",field[12]);
+		sscanf(field[13],"%u",&uCluster);
+		sprintf(cComment,"%.64s",field[14]);
+		sscanf(field[15],"%u",&uOwner);
+		sscanf(field[16],"%u",&uCreatedBy);
+		sscanf(field[17],"%lu",&uCreatedDate);
+		sscanf(field[18],"%u",&uModBy);
+		sscanf(field[19],"%lu",&uModDate);
 
 		}
 
@@ -265,7 +310,7 @@ void tPBXInput(unsigned uMode)
 	
 	//uPBX uRADType=1001
 	OpenRow(LANG_FL_tPBX_uPBX,"black");
-	printf("<input title='%s' type=text name=uTable value=%u size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uPBX value='%u' size=16 maxlength=10 "
 		,LANG_FT_tPBX_uPBX,uPBX);
 	if(guPermLevel>=20 && uMode)
 	{
@@ -274,12 +319,12 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uTable value=%u >\n",uPBX);
+		printf("<input type=hidden name=uPBX value='%u' >\n",uPBX);
 	}
-	//cHostname uRADType=253
-	OpenRow(LANG_FL_tPBX_cHostname,"black");
-	printf("<input title='%s' type=text name=uTable value=%s size=40 maxlength=63 "
-		,LANG_FT_tPBX_cHostname,EncodeDoubleQuotes(cHostname));
+	//cLabel uRADType=253
+	OpenRow(LANG_FL_tPBX_cLabel,"black");
+	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
+		,LANG_FT_tPBX_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -287,44 +332,194 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uTable value='%s'>\n",EncodeDoubleQuotes(cHostname));
+		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
-	//uServer COLTYPE_SELECTTABLE
-	if(guPermLevel>=10 && uMode)
-		tTablePullDown("tServer;cuServerPullDown","cLabel","cLabel",uServer,1);
-	else
-		tTablePullDown("tServer;cuServerPullDown","cLabel","cLabel",uServer,0);
-	//cComment COLTYPE_TEXT
-	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cComment "
-,LANG_FT_tPBX_cComment);
+	//cAddress uRADType=253
+	OpenRow(LANG_FL_tPBX_cAddress,"black");
+	printf("<input title='%s' type=text name=cAddress value='%s' size=40 maxlength=63 "
+		,LANG_FT_tPBX_cAddress,EncodeDoubleQuotes(cAddress));
 	if(guPermLevel>=10 && uMode)
 	{
-		printf(">%s</textarea></td></tr>\n",cComment);
+		printf("></td></tr>\n");
 	}
 	else
 	{
-		printf("disabled>%s</textarea></td></tr>\n",cComment);
-		printf("<input type=hidden name=cComment value=\"%s\" >\n",EncodeDoubleQuotes(cComment));
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cAddress value='%s'>\n",EncodeDoubleQuotes(cAddress));
+	}
+	//cHostname uRADType=253
+	OpenRow(LANG_FL_tPBX_cHostname,"black");
+	printf("<input title='%s' type=text name=cHostname value='%s' size=40 maxlength=63 "
+		,LANG_FT_tPBX_cHostname,EncodeDoubleQuotes(cHostname));
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cHostname value='%s'>\n",EncodeDoubleQuotes(cHostname));
+	}
+	//uPort uRADType=3
+	OpenRow(LANG_FL_tPBX_uPort,"black");
+	printf("<input title='%s' type=text name=uPort value='%u' size=16 maxlength=10 "
+		,LANG_FT_tPBX_uPort,uPort);
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uPort value='%u' >\n",uPort);
+	}
+	//uPriority uRADType=3
+	OpenRow(LANG_FL_tPBX_uPriority,"black");
+	printf("<input title='%s' type=text name=uPriority value='%u' size=16 maxlength=10 "
+		,LANG_FT_tPBX_uPriority,uPriority);
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uPriority value='%u' >\n",uPriority);
+	}
+	//uWeight uRADType=3
+	OpenRow(LANG_FL_tPBX_uWeight,"black");
+	printf("<input title='%s' type=text name=uWeight value='%u' size=16 maxlength=10 "
+		,LANG_FT_tPBX_uWeight,uWeight);
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uWeight value='%u' >\n",uWeight);
+	}
+	//cAttributes uRADType=253
+	OpenRow(LANG_FL_tPBX_cAttributes,"black");
+	printf("<input title='%s' type=text name=cAttributes value='%s' size=40 maxlength=63 "
+		,LANG_FT_tPBX_cAttributes,EncodeDoubleQuotes(cAttributes));
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cAttributes value='%s'>\n",EncodeDoubleQuotes(cAttributes));
+	}
+	//cDescription uRADType=253
+	OpenRow(LANG_FL_tPBX_cDescription,"black");
+	printf("<input title='%s' type=text name=cDescription value='%s' size=40 maxlength=63 "
+		,LANG_FT_tPBX_cDescription,EncodeDoubleQuotes(cDescription));
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cDescription value='%s'>\n",EncodeDoubleQuotes(cDescription));
+	}
+	//uStatus uRADType=3
+	OpenRow(LANG_FL_tPBX_uStatus,"black");
+	printf("<input title='%s' type=text name=uStatus value='%u' size=16 maxlength=10 "
+		,LANG_FT_tPBX_uStatus,uStatus);
+	if(guPermLevel>=20 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uStatus value='%u' >\n",uStatus);
+	}
+	//uLines uRADType=3
+	OpenRow(LANG_FL_tPBX_uLines,"black");
+	printf("<input title='%s' type=text name=uLines value='%u' size=16 maxlength=10 "
+		,LANG_FT_tPBX_uLines,uLines);
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uLines value='%u' >\n",uLines);
+	}
+	//uStrip uRADType=3
+	OpenRow(LANG_FL_tPBX_uStrip,"black");
+	printf("<input title='%s' type=text name=uStrip value='%u' size=16 maxlength=10 "
+		,LANG_FT_tPBX_uStrip,uStrip);
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uStrip value='%u' >\n",uStrip);
+	}
+	//cPrefix uRADType=253
+	OpenRow(LANG_FL_tPBX_cPrefix,"black");
+	printf("<input title='%s' type=text name=cPrefix value='%s' size=40 maxlength=31 "
+		,LANG_FT_tPBX_cPrefix,EncodeDoubleQuotes(cPrefix));
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cPrefix value='%s'>\n",EncodeDoubleQuotes(cPrefix));
+	}
+	//uCluster COLTYPE_SELECTTABLE
+	OpenRow(LANG_FL_tPBX_uCluster,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tCluster;cuClusterPullDown","cLabel","cLabel",uCluster,1);
+	else
+		tTablePullDown("tCluster;cuClusterPullDown","cLabel","cLabel",uCluster,0);
+	//cComment uRADType=253
+	OpenRow(LANG_FL_tPBX_cComment,"black");
+	printf("<input title='%s' type=text name=cComment value='%s' size=40 maxlength=63 "
+		,LANG_FT_tPBX_cComment,EncodeDoubleQuotes(cComment));
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cComment value='%s'>\n",EncodeDoubleQuotes(cComment));
 	}
 	//uOwner COLTYPE_FOREIGNKEY
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	OpenRow(LANG_FL_tPBX_uOwner,"black");
+	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	//uCreatedBy COLTYPE_FOREIGNKEY
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	OpenRow(LANG_FL_tPBX_uCreatedBy,"black");
+	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
+	OpenRow(LANG_FL_tPBX_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value=%lu >\n",uCreatedDate);
+	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
 	//uModBy COLTYPE_FOREIGNKEY
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	OpenRow(LANG_FL_tPBX_uModBy,"black");
+	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
+	OpenRow(LANG_FL_tPBX_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
-
+	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
+	printf("</tr>\n");
 
 }//void tPBXInput(unsigned uMode)
 
@@ -343,7 +538,9 @@ void NewtPBX(unsigned uMode)
 
 	Insert_tPBX();
 	uPBX=mysql_insert_id(&gMysql);
+#ifdef StandardFields
 	uCreatedDate=luGetCreatedDate("tPBX",uPBX);
+#endif
 	unxsSPSLog(uPBX,"tPBX","New");
 
 	if(!uMode)
@@ -357,8 +554,13 @@ void NewtPBX(unsigned uMode)
 
 void DeletetPBX(void)
 {
+#ifdef StandardFields
 	sprintf(gcQuery,"DELETE FROM tPBX WHERE uPBX=%u AND ( uOwner=%u OR %u>9 )"
 					,uPBX,guLoginClient,guPermLevel);
+#else
+	sprintf(gcQuery,"DELETE FROM tPBX WHERE uPBX=%u AND %u>9 )"
+					,uPBX,guPermLevel);
+#endif
 	macro_mySQLQueryHTMLError;
 	if(mysql_affected_rows(&gMysql)>0)
 	{
@@ -376,17 +578,37 @@ void DeletetPBX(void)
 
 void Insert_tPBX(void)
 {
-	sprintf(gcQuery,"INSERT INTO tPBX SET"
-		"uPBX=%u,"
+	sprintf(gcQuery,"INSERT INTO tPBX SET "
+		"cLabel='%s',"
+		"cAddress='%s',"
 		"cHostname='%s',"
-		"uServer=%u,"
+		"uPort=%u,"
+		"uPriority=%u,"
+		"uWeight=%u,"
+		"cAttributes='%s',"
+		"cDescription='%s',"
+		"uStatus=%u,"
+		"uLines=%u,"
+		"uStrip=%u,"
+		"cPrefix='%s',"
+		"uCluster=%u,"
 		"cComment='%s',"
 		"uOwner=%u,"
 		"uCreatedBy=%u,"
 		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
-			,uPBX
+			,TextAreaSave(cLabel)
+			,TextAreaSave(cAddress)
 			,TextAreaSave(cHostname)
-			,uServer
+			,uPort
+			,uPriority
+			,uWeight
+			,TextAreaSave(cAttributes)
+			,TextAreaSave(cDescription)
+			,uStatus
+			,uLines
+			,uStrip
+			,TextAreaSave(cPrefix)
+			,uCluster
 			,TextAreaSave(cComment)
 			,uOwner
 			,uCreatedBy
@@ -399,20 +621,42 @@ void Insert_tPBX(void)
 
 void Update_tPBX(char *cRowid)
 {
-	sprintf(gcQuery,"UPDATE tPBX SET"
-		"uPBX=%u,"
+	sprintf(gcQuery,"UPDATE tPBX SET "
+		"cLabel='%s',"
+		"cAddress='%s',"
 		"cHostname='%s',"
-		"uServer=%u,"
+		"uPort=%u,"
+		"uPriority=%u,"
+		"uWeight=%u,"
+		"cAttributes='%s',"
+		"cDescription='%s',"
+		"uStatus=%u,"
+		"uLines=%u,"
+		"uStrip=%u,"
+		"cPrefix='%s',"
+		"uCluster=%u,"
 		"cComment='%s',"
 		"uOwner=%u,"
 		"uModBy=%u,"
 		"uModDate=UNIX_TIMESTAMP(NOW())"
-			,uPBX
+		" WHERE _rowid=%s"
+			,TextAreaSave(cLabel)
+			,TextAreaSave(cAddress)
 			,TextAreaSave(cHostname)
-			,uServer
+			,uPort
+			,uPriority
+			,uWeight
+			,TextAreaSave(cAttributes)
+			,TextAreaSave(cDescription)
+			,uStatus
+			,uLines
+			,uStrip
+			,TextAreaSave(cPrefix)
+			,uCluster
 			,TextAreaSave(cComment)
 			,uOwner
 			,uModBy
+			,cRowid
 		);
 
 	macro_mySQLQueryHTMLError;
@@ -425,8 +669,9 @@ void ModtPBX(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uPreModDate=0;
 
+#ifdef StandardFields
+	unsigned uPreModDate=0;
 	//Mod select gcQuery
 	if(guPermLevel<10)
 	sprintf(gcQuery,"SELECT tPBX.uPBX,"
@@ -440,6 +685,11 @@ void ModtPBX(void)
 	sprintf(gcQuery,"SELECT uPBX,uModDate FROM tPBX"
 				" WHERE uPBX=%u"
 					,uPBX);
+#else
+	sprintf(gcQuery,"SELECT uPBX FROM tPBX"
+				" WHERE uPBX=%u"
+					,uPBX);
+#endif
 
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
@@ -448,12 +698,16 @@ void ModtPBX(void)
 	if(i>1) tPBX(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
+#ifdef StandardFields
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tPBX(LANG_NBR_EXTMOD);
+#endif
 
 	Update_tPBX(field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
+#ifdef StandardFields
 	uModDate=luGetModDate("tPBX",uPBX);
+#endif
 	unxsSPSLog(uPBX,"tPBX","Mod");
 	tPBX(gcQuery);
 
@@ -482,8 +736,19 @@ void tPBXList(void)
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uPBX"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>cAddress"
 		"<td><font face=arial,helvetica color=white>cHostname"
-		"<td><font face=arial,helvetica color=white>uServer"
+		"<td><font face=arial,helvetica color=white>uPort"
+		"<td><font face=arial,helvetica color=white>uPriority"
+		"<td><font face=arial,helvetica color=white>uWeight"
+		"<td><font face=arial,helvetica color=white>cAttributes"
+		"<td><font face=arial,helvetica color=white>cDescription"
+		"<td><font face=arial,helvetica color=white>uStatus"
+		"<td><font face=arial,helvetica color=white>uLines"
+		"<td><font face=arial,helvetica color=white>uStrip"
+		"<td><font face=arial,helvetica color=white>cPrefix"
+		"<td><font face=arial,helvetica color=white>uCluster"
 		"<td><font face=arial,helvetica color=white>cComment"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
@@ -508,29 +773,40 @@ void tPBXList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-				time_t luTime6=strtoul(field[6],NULL,10);
-		char cBuf6[32];
-		if(luTime6)
-			ctime_r(&luTime6,cBuf6);
+				time_t luTime17=strtoul(field[17],NULL,10);
+		char cBuf17[32];
+		if(luTime17)
+			ctime_r(&luTime17,cBuf17);
 		else
-			sprintf(cBuf6,"---");
-		time_t luTime8=strtoul(field[8],NULL,10);
-		char cBuf8[32];
-		if(luTime8)
-			ctime_r(&luTime8,cBuf8);
+			sprintf(cBuf17,"---");
+		time_t luTime19=strtoul(field[19],NULL,10);
+		char cBuf19[32];
+		if(luTime19)
+			ctime_r(&luTime19,cBuf19);
 		else
-			sprintf(cBuf8,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf19,"---");
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tPBX&uPBX=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
-			,ForeignKey("tServer","cLabel",strtoul(field[2],NULL,10))
+			,field[2]
 			,field[3]
-			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
-			,cBuf6
-			,ForeignKey("tClient","cLabel",strtoul(field[7],NULL,10))
-			,cBuf8
+			,field[4]
+			,field[5]
+			,field[6]
+			,field[7]
+			,field[8]
+			,field[9]
+			,field[10]
+			,field[11]
+			,field[12]
+			,ForeignKey("tCluster","cLabel",strtoul(field[13],NULL,10))
+			,field[14]
+			,ForeignKey("tClient","cLabel",strtoul(field[15],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[16],NULL,10))
+			,cBuf17
+			,ForeignKey("tClient","cLabel",strtoul(field[18],NULL,10))
+			,cBuf19
 				);
 
 	}
@@ -544,10 +820,21 @@ void tPBXList(void)
 void CreatetPBX(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tPBX ("
-		"uPBX INT UNSIGNED NOT NULL DEFAULT 0 PRIMARY KEY AUTO INCREMENT,"
-		"cHostname VARCHAR(64) NOT NULL DEFAULT '',"
-		"uServer INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uServer),"
-		"cComment INT UNSIGNED NOT NULL DEFAULT '',"
+		"uPBX INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+		"cAddress VARCHAR(64) NOT NULL DEFAULT '', INDEX (cAddress),"
+		"cHostname VARCHAR(64) NOT NULL DEFAULT '', INDEX (cHostname),"
+		"uPort INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uPriority INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uWeight INT UNSIGNED NOT NULL DEFAULT 0,"
+		"cAttributes VARCHAR(64) NOT NULL DEFAULT '',"
+		"cDescription VARCHAR(64) NOT NULL DEFAULT '',"
+		"uStatus INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uLines INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uStrip INT UNSIGNED NOT NULL DEFAULT 0,"
+		"cPrefix VARCHAR(32) NOT NULL DEFAULT '',"
+		"uCluster INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uCluster),"
+		"cComment VARCHAR(64) NOT NULL DEFAULT '',"
 		"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
 		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"

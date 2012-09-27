@@ -2,7 +2,7 @@
 FILE
 	tLogMonth source code of unxsSPS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tlogmonth.c 166 2009-06-05 22:10:35Z Dylan $
+	$Id: tlogmonth.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tlogmonthfunc.h while 
@@ -202,7 +202,7 @@ void tLogMonth(const char *cResult)
 			{
 			sprintf(gcQuery,"SELECT _rowid FROM tLogMonth WHERE uLog=%u"
 						,uLog);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -230,7 +230,7 @@ void tLogMonth(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tLogMonth",0);
+	Header_ism3(":: tLogMonth",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -467,7 +467,7 @@ void tLogMonthList(void)
 
 	ExttLogMonthListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tLogMonthList",1,"");//1 is auto header list guMode. Opens table!
@@ -540,7 +540,7 @@ void tLogMonthList(void)
 void CreatetLogMonth(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tLogMonth ( uTablePK VARCHAR(32) NOT NULL DEFAULT '', cHost VARCHAR(32) NOT NULL DEFAULT '', uLoginClient INT UNSIGNED NOT NULL DEFAULT 0, cLogin VARCHAR(32) NOT NULL DEFAULT '', uPermLevel INT UNSIGNED NOT NULL DEFAULT 0, cTableName VARCHAR(32) NOT NULL DEFAULT '', uLog INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(64) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cHash VARCHAR(32) NOT NULL DEFAULT '', uLogType INT UNSIGNED NOT NULL DEFAULT 0,index (uLogType) )");
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 	
 }//CreatetLogMonth()
 

@@ -4,5 +4,5 @@
 0	0	1	1	1163026077	4	system event
 0	0	1	1	1163026077	5	named error
 0	0	1	1	1163026077	6	backend login
-0	0	1	1	1163026077	7	Admin login
-0	0	1	1	1163026077	8	Org login
+0	0	1	1	1163026077	7	ispAdmin login
+0	0	1	1	1163026077	8	ispOrg login

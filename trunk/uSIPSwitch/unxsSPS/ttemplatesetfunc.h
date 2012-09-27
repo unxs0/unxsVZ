@@ -1,17 +1,18 @@
 /*
 FILE
-	$Id: ttemplatesetfunc.h 1380 2010-04-27 15:02:47Z Gary $
+	$Id: ttemplatesetfunc.h 1953 2012-05-22 15:03:17Z Colin $
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2008 Gary Wallis and Hugo Urquiza.
+	(C) 2001-2009 Gary Wallis for Unixservice.
  
 */
 
+//ModuleFunctionProtos()
+
 
 void tTemplateSetNavList(void);
-
 
 void ExtProcesstTemplateSetVars(pentry entries[], int x)
 {
@@ -46,7 +47,9 @@ void ExttTemplateSetCommands(pentry entries[], int x)
                 {
 			if(guPermLevel>=9)
 			{
+				unsigned uContactParentCompany=0;
                         	ProcesstTemplateSetVars(entries,x);
+				GetClientOwner(guLoginClient,&uContactParentCompany);
 				
                         	guMode=2000;
 				//Check entries here
@@ -54,7 +57,7 @@ void ExttTemplateSetCommands(pentry entries[], int x)
 
 				uTemplateSet=0;
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				NewtTemplateSet(0);
@@ -170,14 +173,44 @@ void ExttTemplateSetGetHook(entry gentries[], int x)
 
 void ExttTemplateSetSelect(void)
 {
-	ExtSelect("tTemplateSet",VAR_LIST_tTemplateSet);
+
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tTemplateSet ORDER BY"
+				" uTemplateSet",
+				VAR_LIST_tTemplateSet);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tTemplateSet,tClient WHERE tTemplateSet.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uTemplateSet",
+					VAR_LIST_tTemplateSet,uContactParentCompany,uContactParentCompany);
+					
 
 }//void ExttTemplateSetSelect(void)
 
 
 void ExttTemplateSetSelectRow(void)
 {
-	ExtSelectRow("tTemplateSet",VAR_LIST_tTemplateSet,uTemplateSet);
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tTemplateSet WHERE uTemplateSet=%u",
+			VAR_LIST_tTemplateSet,uTemplateSet);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tTemplateSet,tClient"
+                                " WHERE tTemplateSet.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tTemplateSet.uTemplateSet=%u",
+                        		VAR_LIST_tTemplateSet
+					,uContactParentCompany,uContactParentCompany
+					,uTemplateSet);
 
 }//void ExttTemplateSetSelectRow(void)
 
@@ -185,14 +218,32 @@ void ExttTemplateSetSelectRow(void)
 void ExttTemplateSetListSelect(void)
 {
 	char cCat[512];
+	unsigned uContactParentCompany=0;
+	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
 
-	ExtListSelectPublic("tTemplateSet",VAR_LIST_tTemplateSet);
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tTemplateSet",
+				VAR_LIST_tTemplateSet);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tTemplateSet,tClient"
+				" WHERE tTemplateSet.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tTemplateSet
+				,uContactParentCompany
+				,uContactParentCompany);
 
 	//Changes here must be reflected below in ExttTemplateSetListFilter()
         if(!strcmp(gcFilter,"uTemplateSet"))
         {
                 sscanf(gcCommand,"%u",&uTemplateSet);
-		sprintf(cCat," WHERE tTemplateSet.uTemplateSet=%u ORDER BY uTemplateSet",uTemplateSet);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tTemplateSet.uTemplateSet=%u"
+						" ORDER BY uTemplateSet",
+						uTemplateSet);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -252,8 +303,22 @@ void tTemplateSetNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
 
-	ExtSelect("tTemplateSet","tTemplateSet.uTemplateSet,tTemplateSet.cLabel");
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
+	
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uTemplateSet,cLabel FROM tTemplateSet ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tTemplateSet.uTemplateSet,"
+				" tTemplateSet.cLabel"
+				" FROM tTemplateSet,tClient"
+				" WHERE tTemplateSet.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {

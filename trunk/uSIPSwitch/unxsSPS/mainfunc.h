@@ -1,52 +1,21 @@
 /*
 FILE
-	$Id: mainfunc.h 2012 2012-07-08 03:25:56Z Dylan $
+	$Id: mainfunc.h 2085 2012-09-06 03:27:21Z Dylan $
 PURPOSE
 	Included in main.c. For command line interface and html main link.
 
-AUTHOR/LEGAL
-	(C) 2001-2011 Gary Wallis for Unixservice, LLC.
-	This software distributed under the GPLv2 license.
-	See LICENSE file included.
+AUTHOR
+	Template and mysqlRAD2 author: 
+	(C) 2001-2007 Gary Wallis.
+ 
 */
 
-
-#define macro_mySQLQueryErrorText	mysql_query(&gMysql,gcQuery);\
-					if(mysql_errno(&gMysql))\
-					{\
-						printf("%s\n",mysql_error(&gMysql));\
-						printf("</td></tr>\n");\
-						CloseFieldSet();\
-						return;\
-					}\
-					mysqlRes=mysql_store_result(&gMysql);
-
-#define macro_mySQLQueryErrorText2	mysql_query(&gMysql,gcQuery);\
-					if(mysql_errno(&gMysql))\
-					{\
-						printf("%s\n",mysql_error(&gMysql));\
-						printf("</td></tr>\n");\
-						CloseFieldSet();\
-						return;\
-					}\
-					mysqlRes2=mysql_store_result(&gMysql);
-
 #include "local.h"
-#include <dirent.h>
-#include <openisp/ucidr.h>
-void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue);//tcontainerfunc.h
-void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
-void GetServerProp(const unsigned uServer,const char *cName,char *cValue);//jobqueue.c
 char *strptime(const char *s, const char *format, struct tm *tm);
 
-static char cTableList[64][32]={ "tAuthorize", "tCDR", "tCarrier", "tClient", "tConfiguration",
-		"tDatacenter", "tDID", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tJob",
-		"tJobStatus", "tLog", "tLogMonth", "tLogType", "tMonth", "tPBX", "tPrefix", "tRule", "tServer",
-		"tStatus", "tTemplate", "tTemplateSet", "tTemplateType", ""};
+static char cTableList[64][32]={"tPBX","tDID","tGateway","tRule","tPrefix","tCarrier","tCDR","tCluster","tTimeInterval","tGroup","tGroupGlue","tGroupType","tClient","tAuthorize","tServer","tStatus","tConfiguration","tJob","tJobStatus","tGlossary","tTemplate","tTemplateSet","tTemplateType","tLog","tLogType","tLogMonth","tMonth",""};
 
-char cInitTableList[64][32]={ "tAuthorize", "tClient", "tGlossary", "tGroupType",
-		"tJobStatus", "tLogType", "tStatus", "tTemplate", "tTemplateSet",
-			"tTemplateType", ""};
+char cInitTableList[64][32]={"tConfiguration","tGlossary","tJobStatus","tLogType","tServer","tStatus","tTemplate","tTemplateSet","tTemplateType",""};
 
 void ExtMainShell(int argc, char *argv[]);
 void Initialize(char *cPasswd);
@@ -54,57 +23,38 @@ void Backup(char *cPasswd);
 void Restore(char *cPasswd, char *cTableName);
 void RestoreAll(char *cPasswd);
 void mySQLRootConnect(char *cPasswd);
-void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType);
-void ImportOSTemplates(char *cPath,char *cOwner);
-void MassCreateContainers(char *cConfigfileName);
-void ImportRemoteDatacenter(
-			const char *cLocalDatacenter,
-			const char *cRemoteDatacenter,
-			const char *cLocalNode,
-			const char *cRemoteNode,
-			const char *cHost,
-			const char *cUser,
-			const char *cPasswd,
-			const char *cuOwner);
+void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateType, char *cTemplateSet);
 void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath);
 time_t cDateToUnixTime(char *cDate);
 void CreatetLogTable(char *cTableName);
 void NextMonthYear(char *cMonth,char *cYear,char *cNextMonth,char *cNextYear);
 
 void CalledByAlias(int iArgc,char *cArgv[]);
-unsigned TextConnectDb(void);//mysqlconnect.c
+unsigned TextConnectDb(void);
 void DashBoard(const char *cOptionalMsg);
-void CloneReport(const char *cOptionalMsg);
-void ContainerReport(const char *cOptionalMsg);
 void EncryptPasswdMD5(char *pw);
-void GetConfiguration(const char *cName,char *cValue,
-		unsigned uDatacenter,
-		unsigned uServer,
-		unsigned uContainer,
-		unsigned uHtml);
-void UpdateSchema(void);
-void RecoverMode(void);
-void ResetAllSyncPeriod(void);
 
-//jobqueue.c
-void ProcessJobQueue(unsigned uDebug);
+//ProjectFunctionProtos()
 
 
 int iExtMainCommands(pentry entries[], int x)
 {
 	if(!strcmp(gcFunction,"MainTools"))
-		unxsSPS("MainTools");
+	{
+		if(!strcmp(gcCommand,"Dashboard"))
+		{
+			unxsSPS("DashBoard");
+		}
+	}
 	return(0);
 }
 
 
 void DashBoard(const char *cOptionalMsg)
 {
-
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 	time_t luClock;
-	char cConfigBuffer[256]={""};
 
 	//To handle error messages etc.
 	if(cOptionalMsg[0] && strcmp(cOptionalMsg,"DashBoard"))
@@ -115,152 +65,71 @@ void DashBoard(const char *cOptionalMsg)
 
 	OpenFieldSet("Dashboard",100);
 
-	GetConfiguration("DashGraph0",cConfigBuffer,0,0,0,0);//any server, txt error msg
-	if(cConfigBuffer[0])
+
+	OpenRow("System Messages (Last 20)","black");
+	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog WHERE uLogType=4 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 20");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
 	{
-		char cURL[256]={""};
-
-		OpenRow("DashGraphs","black");
-		printf("</td></tr>\n");
-
-		GetConfiguration("DashGraph0URL",cURL,0,0,0,0);
-		if(cConfigBuffer[0] && cURL[0])
-			printf("<tr><td></td><td colspan=3><a href=%s><img src=%s border=0></a>\n",
-					cURL,cConfigBuffer);
-		else if(cConfigBuffer[0])
-			printf("<tr><td></td><td colspan=3><img src=%s>\n",cConfigBuffer);
-
-		cURL[0]=0;
-		cConfigBuffer[0]=0;
-		GetConfiguration("DashGraph1",cConfigBuffer,0,0,0,0);
-		GetConfiguration("DashGraph1URL",cURL,0,0,0,0);
-		if(cConfigBuffer[0] && cURL[0])
-			printf("<a href=%s><img src=%s border=0></a>\n",cURL,cConfigBuffer);
-		else if(cConfigBuffer[0])
-			printf("<img src=%s>\n",cConfigBuffer);
-
-		cURL[0]=0;
-		cConfigBuffer[0]=0;
-		GetConfiguration("DashGraph2",cConfigBuffer,0,0,0,0);
-		GetConfiguration("DashGraph2URL",cURL,0,0,0,0);
-		if(cConfigBuffer[0] && cURL[0])
-			printf("<a href=%s><img src=%s border=0></a>\n",cURL,cConfigBuffer);
-		else if(cConfigBuffer[0])
-			printf("<img src=%s>\n",cConfigBuffer);
-
-
-		printf("</td>");
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
 	}
-
-
-
-	if(guPermLevel>11 && guLoginClient==1)
+        mysqlRes=mysql_store_result(&gMysql);
+	printf("</td></tr>\n");
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
-		OpenRow("System Messages (Last 10)","black");
-		sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog"
-				" WHERE uLogType=4 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 10");
-		macro_mySQLQueryErrorText
-		printf("</td></tr>\n");
-		while((mysqlField=mysql_fetch_row(mysqlRes)))
-		{
-			sscanf(mysqlField[1],"%lu",&luClock);
-			printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
-					ctime(&luClock),mysqlField[0],mysqlField[2]);
-		}
-		mysql_free_result(mysqlRes);
-
-
-		OpenRow("tLog (Last 10)","black");
-		sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,"
-				"tLog.cTableName,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE "
-				"tLog.uLogType=tLogType.uLogType AND tLog.uLogType!=4 AND tLog.uLogType!=6 "
-				"ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 10");
-		macro_mySQLQueryErrorText
-		printf("</td></tr>\n");
-	        while((mysqlField=mysql_fetch_row(mysqlRes)))
-		{
-			sscanf(mysqlField[1],"%lu",&luClock);
-			printf("<tr><td></td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td></tr>\n",
-				ctime(&luClock),mysqlField[0],mysqlField[3],mysqlField[5],mysqlField[2],mysqlField[4]);
-		}
-		mysql_free_result(mysqlRes);
-
-		OpenRow("Login Activity (Last 10)","black");
-		sprintf(gcQuery,"SELECT cLabel,GREATEST(uCreatedDate,uModDate),cServer,cHost FROM"
-				" tLog WHERE uLogType=6 ORDER BY GREATEST(uCreatedDate,uModDate)"
-				" DESC LIMIT 10");
-		macro_mySQLQueryErrorText
-		printf("</td></tr>\n");
-	        while((mysqlField=mysql_fetch_row(mysqlRes)))
-		{
-			sscanf(mysqlField[1],"%lu",&luClock);
-			printf("<td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
-				ctime(&luClock),mysqlField[0],mysqlField[2],mysqlField[3]);
-		}
-		mysql_free_result(mysqlRes);
+		sscanf(mysqlField[1],"%lu",&luClock);
+		printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+			ctime(&luClock),mysqlField[0],mysqlField[2]);
 	}
-	else
+	mysql_free_result(mysqlRes);
+
+
+	OpenRow("tLog (Last 20)","black");
+	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,tLog.cTableName,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType AND tLog.uLogType!=4 ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 20");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
 	{
-		OpenRow("System Messages (Last 10)","black");
-		sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog"
-				" WHERE uLogType=4 AND uOwner=%u ORDER BY GREATEST(uCreatedDate,uModDate)"
-				" DESC LIMIT 10",guCompany);
-		macro_mySQLQueryErrorText
-		printf("</td></tr>\n");
-		while((mysqlField=mysql_fetch_row(mysqlRes)))
-		{
-			sscanf(mysqlField[1],"%lu",&luClock);
-			printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
-					ctime(&luClock),mysqlField[0],mysqlField[2]);
-		}
-		mysql_free_result(mysqlRes);
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+        mysqlRes=mysql_store_result(&gMysql);
+	printf("</td></tr>\n");
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		sscanf(mysqlField[1],"%lu",&luClock);
+		printf("<tr><td></td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td></tr>\n",
+			ctime(&luClock),mysqlField[0],mysqlField[3],mysqlField[5],mysqlField[2],mysqlField[4]);
+	}
+	mysql_free_result(mysqlRes);
 
+	OpenRow("Login Activity (Last 20)","black");
+	sprintf(gcQuery,"SELECT cLabel,GREATEST(uCreatedDate,uModDate),cServer,cHost FROM tLog WHERE uLogType=6 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 20");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+        mysqlRes=mysql_store_result(&gMysql);
+	printf("</td></tr>\n");
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		sscanf(mysqlField[1],"%lu",&luClock);
+		printf("<td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+			ctime(&luClock),mysqlField[0],mysqlField[2],mysqlField[3]);
+	}
+	mysql_free_result(mysqlRes);
 
-		OpenRow("tLog (Last 10)","black");
-		sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,"
-				"tLog.cTableName,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE "
-				"tLog.uLogType=tLogType.uLogType AND tLog.uLogType!=4 AND tLog.uLogType!=6 AND"
-				" tLog.uOwner=%u ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 10",
-						guCompany);
-		macro_mySQLQueryErrorText
-		printf("</td></tr>\n");
-	        while((mysqlField=mysql_fetch_row(mysqlRes)))
-		{
-			sscanf(mysqlField[1],"%lu",&luClock);
-			printf("<tr><td></td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td></tr>\n",
-				ctime(&luClock),mysqlField[0],mysqlField[3],mysqlField[5],mysqlField[2],mysqlField[4]);
-		}
-		mysql_free_result(mysqlRes);
-
-		OpenRow("Login Activity (Last 10)","black");
-		sprintf(gcQuery,"SELECT cLabel,GREATEST(uCreatedDate,uModDate),cServer,cHost FROM"
-				" tLog WHERE uLogType=6 AND uOwner=%u ORDER BY GREATEST(uCreatedDate,uModDate)"
-				" DESC LIMIT 10",guCompany);
-		macro_mySQLQueryErrorText
-		printf("</td></tr>\n");
-	        while((mysqlField=mysql_fetch_row(mysqlRes)))
-		{
-			sscanf(mysqlField[1],"%lu",&luClock);
-			printf("<td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
-				ctime(&luClock),mysqlField[0],mysqlField[2],mysqlField[3]);
-		}
-		mysql_free_result(mysqlRes);
-	}//end of if(guPermLevel>11 ...)
-
-	OpenRow("Pending or Stuck Jobs (Last 10)","black");
-	if(guPermLevel>11 && guLoginClient==1)
-		sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tServer.cLabel,tJobStatus.cLabel"
-			" FROM tJob,tJobStatus,tServer WHERE tJob.uServer=tServer.uServer AND"
-			" tJob.uJobStatus=tJobStatus.uJobStatus AND tJob.uJobStatus!=3"
-			" AND tJob.uJobStatus!=7 AND tJob.uJobStatus!=6"
-			" ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 10");
-	else
-		sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tServer.cLabel,tJobStatus.cLabel"
-			" FROM tJob,tJobStatus,tServer WHERE tJob.uServer=tServer.uServer AND"
-			" tJob.uJobStatus=tJobStatus.uJobStatus AND tJob.uJobStatus!=3"
-			" AND tJob.uJobStatus!=7 AND tJob.uJobStatus!=6 AND tJob.uOwner=%u"
-			" ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 10",guCompany);
-	macro_mySQLQueryErrorText
+	OpenRow("Pending or Stuck Jobs (Last 20)","black");
+	sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tJob.cServer,tJobStatus.cLabel FROM tJob,tJobStatus WHERE tJob.uJobStatus=tJobStatus.uJobStatus AND tJob.uJobStatus!=3 ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 20");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+        mysqlRes=mysql_store_result(&gMysql);
 	printf("</td></tr>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
@@ -287,8 +156,12 @@ void ExtMainContent(void)
 	OpenRow("Build Information","black");
 	printf("<td>%s</td></tr>\n",gcBuildInfo);
 
+	OpenRow("RAD Status","black");
+	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);
+
 	OpenRow("Application Summary","black");
-	printf("<td>Manages multiple OpenSIPS and unxsSIPProxy servers across datacenters.</td></tr>\n");
+	printf("<td></td></tr>\n");
+
 	if(guPermLevel>9)
 	{
 		register unsigned int i;
@@ -298,6 +171,9 @@ void ExtMainContent(void)
 			printf("<a href=unxsSPS.cgi?gcFunction=%.32s>%.32s</a><br>\n",
 				cTableList[i],cTableList[i]);
 		printf("</td></tr>\n");
+        	OpenRow("Admin Functions","black");
+		printf("<td><input type=hidden name=gcFunction value=MainTools>\n");
+		printf(" <input class=largeButton type=submit name=gcCommand value=Dashboard></td></tr>\n");
 	}
 
 	CloseFieldSet();
@@ -314,13 +190,7 @@ void ExtMainShell(int argc, char *argv[])
 		exit(0);
 	}
 
-        if(argc==2 && !strcmp(argv[1],"ProcessJobQueue"))
-                ProcessJobQueue(0);
-        if(argc==2 && !strcmp(argv[1],"ProcessJobQueueDebug"))
-                ProcessJobQueue(1);
-        else if(argc==2 && !strcmp(argv[1],"UpdateSchema"))
-                UpdateSchema();
-	else if(argc==6 && !strcmp(argv[1],"ImportTemplateFile"))
+	if(argc==6 && !strcmp(argv[1],"ImportTemplateFile"))
                 ImportTemplateFile(argv[2],argv[3],argv[4],argv[5]);
 	else if(argc==3 && !strcmp(argv[1],"Initialize"))
                 Initialize(argv[2]);
@@ -337,17 +207,14 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
 		printf("\tInitialize|Backup|RestoreAll <mysql root passwd>\n");
 		printf("\tRestore <mysql root passwd> <Restore table name>\n");
-		printf("\nCrontab Ops:\n");
-		printf("\tProcessJobQueue\n");
-		printf("\tProcessJobQueueDebug\n");
+		//printf("\nCrontab Ops:\n");
+		//printf("\tProcessJobQueue <cServer>\n");
 		//printf("\tProcessExtJobQueue <cServer>\n");
 		printf("\nSpecial Admin Ops:\n");
-		printf("\tUpdateSchema\n");
 		printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 		printf("\n");
 	}
-	mysql_close(&gMysql);
         exit(0);
 
 
@@ -359,22 +226,22 @@ void ExtMainShell(int argc, char *argv[])
 
 void RestoreAll(char *cPasswd)
 {
-	char cInstallHome[256]={""};
+	char cInstallDir[256]={""};
 	register int i;
 
-	if(getenv("InstallHome")!=NULL)
+	if(getenv("cInstallDir")!=NULL)
 	{
-		strncpy(cInstallHome,getenv("InstallHome"),255);
+		strncpy(cInstallDir,getenv("cInstallDir"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cInstallHome[0])
+	if(!cInstallDir[0])
 	{
-		printf("You must set InstallHome env var first. Ex. export InstallHome=/home/joe\n");
+		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/ism-3.0\n");
 		exit(1);
 	}
 
-	printf("Restoring unxsSPS data from .txt file in %s/unxsSPS/data...\n\n",cInstallHome);
+	printf("Restoring unxsSPS data from .txt file in %s/unxsSPS/data...\n\n",cInstallDir);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -389,8 +256,7 @@ void RestoreAll(char *cPasswd)
 
 	for(i=0;cTableList[i][0];i++)
 	{
-		sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsSPS/data/%s.txt' REPLACE INTO TABLE %s",
-				cInstallHome,cTableList[i],cTableList[i]);
+sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsSPS/data/%s.txt' REPLACE INTO TABLE %s",cInstallDir,cTableList[i],cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -407,21 +273,21 @@ void RestoreAll(char *cPasswd)
 
 void Restore(char *cPasswd, char *cTableName)
 {
-	char cInstallHome[256]={""};
+	char cInstallDir[256]={""};
 
-	if(getenv("InstallHome")!=NULL)
+	if(getenv("cInstallDir")!=NULL)
 	{
-		strncpy(cInstallHome,getenv("InstallHome"),255);
+		strncpy(cInstallDir,getenv("cInstallDir"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cInstallHome[0])
+	if(!cInstallDir[0])
 	{
-		printf("You must set InstallHome env var first. Ex. export InstallHome=/home/joe\n");
+		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/ism-3.0\n");
 		exit(1);
 	}
 
-	printf("Restoring unxsSPS data from .txt file in %s/unxsSPS/data...\n\n",cInstallHome);
+	printf("Restoring unxsSPS data from .txt file in %s/unxsSPS/data...\n\n",cInstallDir);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -434,8 +300,7 @@ void Restore(char *cPasswd, char *cTableName)
 		exit(1);
 	}
 
-	sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsSPS/data/%s.txt' REPLACE INTO TABLE %s",
-			cInstallHome,cTableName,cTableName);
+	sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsSPS/data/%s.txt' REPLACE INTO TABLE %s",cInstallDir,cTableName,cTableName);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -451,21 +316,21 @@ void Restore(char *cPasswd, char *cTableName)
 void Backup(char *cPasswd)
 {
 	register int i;
-	char cInstallHome[256]={""};
+	char cInstallDir[256]={""};
 
-	if(getenv("InstallHome")!=NULL)
+	if(getenv("cInstallDir")!=NULL)
 	{
-		strncpy(cInstallHome,getenv("InstallHome"),255);
+		strncpy(cInstallDir,getenv("cInstallDir"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cInstallHome[0])
+	if(!cInstallDir[0])
 	{
-		printf("You must set InstallHome env var first. Ex. export InstallHome=/home/joe\n");
+		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/ism-3.0\n");
 		exit(1);
 	}
 
-	printf("Backing up unxsSPS data to .txt files in %s/unxsSPS/data...\n\n",cInstallHome);
+	printf("Backing up unxsSPS data to .txt files in %s/unxsSPS/data...\n\n",cInstallDir);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -483,11 +348,10 @@ void Backup(char *cPasswd)
 		char cFileName[300];
 
 		sprintf(cFileName,"%s/unxsSPS/data/%s.txt"
-				,cInstallHome,cTableList[i]);
+				,cInstallDir,cTableList[i]);
 		unlink(cFileName);
 
-		sprintf(gcQuery,"SELECT * INTO OUTFILE '%s' FROM %s",
-							cFileName,cTableList[i]);
+sprintf(gcQuery,"SELECT * INTO OUTFILE '%s' FROM %s",cFileName,cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -505,23 +369,22 @@ void Backup(char *cPasswd)
 
 void Initialize(char *cPasswd)
 {
-	char cInstallHome[256]={""};
+	char cInstallDir[256]={""};
 	register int i;
 
-	if(getenv("InstallHome")!=NULL)
+	if(getenv("cInstallDir")!=NULL)
 	{
-		strncpy(cInstallHome,getenv("InstallHome"),255);
+		strncpy(cInstallDir,getenv("cInstallDir"),255);
 		gcHost[255]=0;
 	}
 
-	if(!cInstallHome[0])
+	if(!cInstallDir[0])
 	{
-		printf("You must set InstallHome env var first. Ex. export InstallHome=/home/joe\n");
+		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/joe/unxsVZ\n");
 		exit(1);
 	}
 
-	printf("Creating db and setting permissions, installing data from %s/unxsSPS...\n\n",
-			cInstallHome);
+	printf("Creating db and setting permissions, installing data from %s/unxsSPS...\n\n",cInstallDir);
 
 	//connect as root to master db
 	mySQLRootConnect(cPasswd);
@@ -554,53 +417,66 @@ void Initialize(char *cPasswd)
 		exit(1);
 	}
 	
-
-	//debug only
-	//Create tables and install default data
-	//Standard RAD3 required tables
+	
 	CreatetAuthorize();
+	//And 1 standard example user
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='Root',uCertClient=1,cIpMask='0.0.0.0',"
+				"uPerm=12,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cPasswd='..M0/uAvCFhis'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+
 	CreatetClient();
-        CreatetConfiguration();
-	CreatetDatacenter();
-	CreatetServer();
-        CreatetGlossary();
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='Root',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+
+	//Create tables and install default data
+	//funcMainCreateTables()
+	CreatetPBX();
+	CreatetDID();
+	CreatetGateway();
+	CreatetRule();
+	CreatetPrefix();
+	CreatetCarrier();
+	CreatetCDR();
+	CreatetCluster();
+	CreatetTimeInterval();
 	CreatetGroup();
 	CreatetGroupGlue();
 	CreatetGroupType();
-	CreatetPBX();
-	CreatetDID();
-	CreatetCarrier();
-	CreatetRule();
-	CreatetPrefix();
-	CreatetCDR();
-        CreatetJob();
-        CreatetJobStatus();
-        CreatetLog();
-        CreatetLogMonth();
-        CreatetLogType();
-        CreatetMonth();
-        CreatetStatus();
-        CreatetTemplate();
-        CreatetTemplateSet();
-        CreatetTemplateType();
+	CreatetClient();
+	CreatetAuthorize();
+	CreatetServer();
+	CreatetStatus();
+	CreatetConfiguration();
+	CreatetJob();
+	CreatetJobStatus();
+	CreatetGlossary();
+	CreatetTemplate();
+	CreatetTemplateSet();
+	CreatetTemplateType();
+	CreatetLog();
+	CreatetLogType();
+	CreatetLogMonth();
+	CreatetMonth();
+
 
         for(i=0;cInitTableList[i][0];i++)
         {
-                sprintf(gcQuery,"LOAD DATA LOCAL INFILE '%s/unxsSPS/data/%s.txt' REPLACE INTO TABLE %s",
-			cInstallHome,cInitTableList[i],cInitTableList[i]);
+                sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsSPS/data/%s.txt' REPLACE INTO TABLE %s",
+			cInstallDir,cInitTableList[i],cInitTableList[i]);
                 mysql_query(&gMysql,gcQuery);
                 if(mysql_errno(&gMysql))
                 {
-                        printf("%s.\nAttempting to drop database for re-initialize...\n",mysql_error(&gMysql));
-
-			sprintf(gcQuery,"DROP DATABASE %s",DBNAME);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				printf("%s\n",mysql_error(&gMysql));
-				exit(1);
-			}
-
+                        printf("%s\n",mysql_error(&gMysql));
                         exit(1);
                 }
         }
@@ -610,93 +486,15 @@ void Initialize(char *cPasswd)
 }//void Initialize(void)
 
 
-//No need for redundancy here like TextConnectDb()
 void mySQLRootConnect(char *cPasswd)
 {
         mysql_init(&gMysql);
         if (!mysql_real_connect(&gMysql,NULL,"root",cPasswd,"mysql",0,NULL,0))
         {
-                printf("Database server unavailable\n");
+                printf("Database root server unavailable cPasswd=%s\n",cPasswd);
                 exit(1);
         }
 }//void mySQLRootConnect(void)
-
-
-void UpdateSchema(void)
-{
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-
-	unsigned uDIDDatacenter=0;
-	unsigned uDIDComment=0;
-
-	unsigned uGlossaryLabelIndex=0;
-
-	printf("UpdateSchema(): Start\n");
-
-	if(TextConnectDb())
-		exit(1);
-
-	sprintf(gcQuery,"SHOW COLUMNS IN tDID");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[0],"uDatacenter"))
-			uDIDDatacenter=1;
-		if(!strcmp(field[0],"cComment"))
-			uDIDComment=1;
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SHOW INDEX IN tGlossary");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[2],"cLabel")) uGlossaryLabelIndex=1;
-	}
-       	mysql_free_result(res);
-
-	if(!uGlossaryLabelIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tGlossary ADD INDEX (cLabel)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX cLabel tGlossary\n");
-	}
-
-	if(!uDIDDatacenter)
-	{
-		sprintf(gcQuery,"ALTER TABLE tDID ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added uDatacenter to tDID\n");
-	}
-
-	if(!uDIDComment)
-	{
-		sprintf(gcQuery,"ALTER TABLE tDID ADD cComment VARCHAR(255) NOT NULL DEFAULT ''");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added cComment to tDID\n");
-	}
-
-	printf("UpdateSchema(): End\n");
-
-}//void UpdateSchema(void)
 
 
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType)
@@ -712,7 +510,10 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
 	printf("\nImportTemplateFile(): Start\n");
 
 	if(TextConnectDb())
+	{
+		printf("TextConnectDb()\n");
 		exit(1);
+	}
 
 	sprintf(gcQuery,"USE %s",DBNAME);
 	mysql_query(&gMysql,gcQuery);
@@ -748,7 +549,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
 	}
 
 	//uTemplateType
-	sprintf(gcQuery,"SELECT uTemplateType FROM tTemplateType  WHERE cLabel='%s'",cTemplateType);
+	sprintf(gcQuery,"SELECT uTemplateType FROM tTemplateType WHERE cLabel='%s'",cTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -762,13 +563,12 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
 
 	if(!uTemplateType)
 	{
-		printf("Could not find tTemplateType.clabel=%s\n",cTemplateSet);
+		printf("Could not find tTemplateType.clabel=%s\n",cTemplateType);
 		exit(1);
 	}
 
 	//uTemplate
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s' AND uTemplateSet=%u AND uTemplateType=%u",
-						cTemplate,uTemplateSet,uTemplateType);
+	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s'",cTemplate);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -780,44 +580,45 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
         	sscanf(mysqlField[0],"%u",&uTemplate);
 	mysql_free_result(mysqlRes);
 
-
 	if(uTemplate)
 	{
-		printf("Updating tTemplate for %s %s %s\n",cTemplate,cTemplateSet,cTemplateType);
-		sprintf(cBuffer,"UPDATE tTemplate SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),cTemplate='',"
-				"uTemplateSet=%u,uTemplateType=%u,uModBy=1 WHERE uTemplate=%u",
-								uTemplateSet,uTemplateType,uTemplate);
+		printf("Updating tTemplate for %s\n",cTemplate);
+		sprintf(cBuffer,"UPDATE tTemplate SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),cTemplate='',uTemplateSet=%u"
+				",uTemplateType=%u WHERE uTemplate=%u",uTemplateSet,uTemplateType,uTemplate);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{
 			printf("%s\n%.254s\n",mysql_error(&gMysql),cBuffer);
 			exit(1);
 		}
+
 	}
 	else
 	{
 		printf("Inserting new tTemplate for %s\n",cTemplate);
-		sprintf(cBuffer,"INSERT INTO tTemplate SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
-				"cLabel='%s',uTemplateSet=%u,uTemplateType=%u",cTemplate,uTemplateSet,uTemplateType);
+		sprintf(cBuffer,"INSERT INTO tTemplate SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				",cLabel='%s',uTemplateSet=%u,uTemplateType=%u",cTemplate,uTemplateSet,uTemplateType);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{
 			printf("%s\n%.254s\n",mysql_error(&gMysql),cBuffer);
 			exit(1);
 		}
+
 		uTemplate=mysql_insert_id(&gMysql);
+
 	}
 
 	while(fgets(gcQuery,1024,fp)!=NULL)
 	{
-		sprintf(cBuffer,"UPDATE tTemplate SET cTemplate=CONCAT(cTemplate,'%s') WHERE uTemplate=%u",
-				TextAreaSave(gcQuery),uTemplate);
+		sprintf(cBuffer,"UPDATE tTemplate SET cTemplate=CONCAT(cTemplate,'%s') WHERE uTemplate=%u",TextAreaSave(gcQuery),uTemplate);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{
 			printf("%s\n%.254s\n",mysql_error(&gMysql),cBuffer);
 			exit(1);
 		}
+			
 	}
 	fclose(fp);
 
@@ -869,7 +670,10 @@ void CalledByAlias(int iArgc,char *cArgv[])
 		//Loop for each tJob error
 		//Connect to local mySQL
 		if(TextConnectDb())
+		{
+			fprintf(stderr,"TextConnectDb()\n");
 			exit(1);
+		}
 
 		sprintf(gcQuery,"SELECT uJob,cServer,cJobName,uUser,cJobData FROM tJob WHERE uJobStatus=4");//4 is tJobStatus Done Error(s)
 		mysql_query(&gMysql,gcQuery);
@@ -958,9 +762,7 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 		printf("%s\n",mysql_error(&gMysql));
 		exit(1);
 	}
-	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttLog() Start...',"
-			"cServer='%s',uLogType=4,uOwner=1,uCreatedBy=1,"
-			"uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
+	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttLog() Start...',cServer='%s',uLogType=4,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		fprintf(stderr,"%s\n",mysql_error(&gMysql));
@@ -1009,12 +811,7 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 	}
 
 	printf("Getting data from tLog...\n");
-	sprintf(gcQuery,"INSERT %s (uLog,cLabel,uLogType,cHash,uPermLevel,uLoginClient,cLogin,"
-			"cHost,uTablePK,cTableName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate)"
-			" SELECT uLog,cLabel,uLogType,cHash,uPermLevel,uLoginClient,cLogin,cHost,"
-			"uTablePK,cTableName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate"
-			" FROM tLog WHERE uCreatedDate>=%lu AND uCreatedDate<%lu",
-				cTableName,uStart,uEnd);
+	sprintf(gcQuery,"INSERT %s (uLog,cLabel,uLogType,cHash,uPermLevel,uLoginClient,cLogin,cHost,uTablePK,cTableName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate) SELECT uLog,cLabel,uLogType,cHash,uPermLevel,uLoginClient,cLogin,cHost,uTablePK,cTableName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate FROM tLog WHERE uCreatedDate>=%lu AND uCreatedDate<%lu",cTableName,uStart,uEnd);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1030,8 +827,7 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 	if(uRows)
 	{
 
-		sprintf(gcQuery,"REPLACE tMonth SET cLabel='%s',uOwner=1,uCreatedBy=1,"
-					"uCreatedDate=UNIX_TIMESTAMP(NOW())",cTableName);
+		sprintf(gcQuery,"REPLACE tMonth SET cLabel='%s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",cTableName);
         	mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -1086,8 +882,7 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 	}
 
 	printf("Removing records from tLog...\n");
-	sprintf(gcQuery,"DELETE QUICK FROM tLog WHERE uCreatedDate>=%lu AND uCreatedDate<%lu AND uLogType!=5",
-				uStart,uEnd);
+	sprintf(gcQuery,"DELETE QUICK FROM tLog WHERE uCreatedDate>=%lu AND uCreatedDate<%lu AND uLogType!=5",uStart,uEnd);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1098,8 +893,7 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 
 	printf("Extracted and Archived. Table flushed: %s\n",cTableName);
 	printf("ExtracttLog() End\n");
-	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttLog() End',cServer='%s',uLogType=4,"
-			"uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
+	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttLog() End',cServer='%s',uLogType=4,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		fprintf(stderr,"%s\n",mysql_error(&gMysql));
@@ -1208,10 +1002,7 @@ void TextError(const char *cError, unsigned uContinue)
 	printf("\nPlease report this unxsSPS fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
-        sprintf(gcQuery,"INSERT INTO tLog SET cLabel='TextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,"
-			"cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,"
-			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			guPermLevel,guLoginClient,gcUser,gcHost,cError,gcHostname,guLoginClient);
+        sprintf(gcQuery,"INSERT INTO tLog SET cLabel='TextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",guPermLevel,guLoginClient,gcUser,gcHost,cError,gcHostname,guLoginClient);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		printf("Another error occurred while attempting to log: %s\n",
@@ -1220,48 +1011,33 @@ void TextError(const char *cError, unsigned uContinue)
 
 }//void TextError(const char *cError, unsigned uContinue)
 
+//Passwd stuff
+static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
+        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-void GetConfiguration(const char *cName,char *cValue,
-		unsigned uDatacenter,
-		unsigned uServer,
-		unsigned uContainer,
-		unsigned uHtml)
+void to64(s, v, n)
+  register char *s;
+  register long v;
+  register int n;
 {
-        MYSQL_RES *res;
-        MYSQL_ROW field;
+    while (--n >= 0) {
+        *s++ = itoa64[v&0x3f];
+        v >>= 6;
+    }
+}//void to64(s, v, n)
 
-        char cQuery[1024];
-	char cExtra[100]={""};
 
-        sprintf(cQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='%s'",
-			cName);
-	if(uDatacenter)
-	{
-		sprintf(cExtra," AND uDatacenter=%u",uDatacenter);
-		strcat(cQuery,cExtra);
-	}
-	if(uServer)
-	{
-		sprintf(cExtra," AND uServer=%u",uServer);
-		strcat(cQuery,cExtra);
-	}
-	if(uContainer)
-	{
-		sprintf(cExtra," AND uContainer=%u",uContainer);
-		strcat(cQuery,cExtra);
-	}
-        mysql_query(&gMysql,cQuery);
-        if(mysql_errno(&gMysql))
-	{
-		if(uHtml)
-        	        htmlPlainTextError(mysql_error(&gMysql));
-		else
-        	        TextError(mysql_error(&gMysql),0);
-	}
-        res=mysql_store_result(&gMysql);
-        if((field=mysql_fetch_row(res)))
-        	sprintf(cValue,"%.255s",field[0]);
-        mysql_free_result(res);
+void EncryptPasswdMD5(char *pw)
+{
+	char cSalt[] = "$1$01234567$";
+        char *cpw;
 
-}//void GetConfiguration(...)
+    	(void)srand((int)time((time_t *)NULL));
+    	to64(&cSalt[3],rand(),8);
+	
+	cpw = crypt(pw,cSalt);
+	strcpy(pw,cpw);
+
+}//void EncryptPasswdMD5(char *pw)
+//End passwd stuff ;)
 

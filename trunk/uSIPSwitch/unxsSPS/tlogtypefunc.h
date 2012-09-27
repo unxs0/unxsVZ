@@ -1,12 +1,12 @@
 /*
 FILE
-	$Id: tlogtypefunc.h 1380 2010-04-27 15:02:47Z Gary $
+	$Id: tlogtypefunc.h 1953 2012-05-22 15:03:17Z Colin $
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
-	GPLv2 license applies. See LICENSE file.
+AUTHOR
+	(C) 2001-2009 Gary Wallis for Unixservice.
+ 
 */
 
 //ModuleFunctionProtos()
@@ -34,62 +34,74 @@ void ExttLogTypeCommands(pentry entries[], int x)
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
 	                        ProcesstLogTypeVars(entries,x);
                         	guMode=2000;
 	                        tLogType(LANG_NB_CONFIRMNEW);
 			}
+			else
+				tLogType("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
+				unsigned uContactParentCompany=0;
                         	ProcesstLogTypeVars(entries,x);
-
+				GetClientOwner(guLoginClient,&uContactParentCompany);
+				
                         	guMode=2000;
 				//Check entries here
                         	guMode=0;
 
 				uLogType=0;
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				NewtLogType(0);
 			}
+			else
+				tLogType("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstLogTypeVars(entries,x);
-			if(guPermLevel>=12 && guLoginClient==1)
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
 				tLogType(LANG_NB_CONFIRMDEL);
 			}
+			else
+				tLogType("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstLogTypeVars(entries,x);
-			if(guPermLevel>=12 && guLoginClient==1)
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
 				DeletetLogType();
 			}
+			else
+				tLogType("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstLogTypeVars(entries,x);
-			if(guPermLevel>=12)
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tLogType(LANG_NB_CONFIRMMOD);
 			}
+			else
+				tLogType("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstLogTypeVars(entries,x);
-			if(guPermLevel>=12)
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
 				//Check entries here
@@ -98,6 +110,8 @@ void ExttLogTypeCommands(pentry entries[], int x)
 				uModBy=guLoginClient;
 				ModtLogType();
 			}
+			else
+				tLogType("<blink>Error</blink>: Denied by permissions settings");
                 }
 	}
 
@@ -125,7 +139,8 @@ void ExttLogTypeButtons(void)
                 break;
 
 		default:
-
+			printf("<u>Table Tips</u><br>");
+			printf("<p><u>Record Context Info</u><br>");
 			tLogTypeNavList();
 	}
 	CloseFieldSet();
@@ -158,14 +173,44 @@ void ExttLogTypeGetHook(entry gentries[], int x)
 
 void ExttLogTypeSelect(void)
 {
-	ExtSelectPublic("tLogType",VAR_LIST_tLogType);
+
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tLogType ORDER BY"
+				" uLogType",
+				VAR_LIST_tLogType);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tLogType,tClient WHERE tLogType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uLogType",
+					VAR_LIST_tLogType,uContactParentCompany,uContactParentCompany);
+					
 
 }//void ExttLogTypeSelect(void)
 
 
 void ExttLogTypeSelectRow(void)
 {
-	ExtSelectRowPublic("tLogType",VAR_LIST_tLogType,uLogType);
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tLogType WHERE uLogType=%u",
+			VAR_LIST_tLogType,uLogType);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tLogType,tClient"
+                                " WHERE tLogType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tLogType.uLogType=%u",
+                        		VAR_LIST_tLogType
+					,uContactParentCompany,uContactParentCompany
+					,uLogType);
 
 }//void ExttLogTypeSelectRow(void)
 
@@ -173,14 +218,31 @@ void ExttLogTypeSelectRow(void)
 void ExttLogTypeListSelect(void)
 {
 	char cCat[512];
-
-	ExtListSelectPublic("tLogType",VAR_LIST_tLogType);
+	unsigned uContactParentCompany=0;
 	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tLogType",
+				VAR_LIST_tLogType);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tLogType,tClient"
+				" WHERE tLogType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tLogType
+				,uContactParentCompany
+				,uContactParentCompany);
+
 	//Changes here must be reflected below in ExttLogTypeListFilter()
         if(!strcmp(gcFilter,"uLogType"))
         {
                 sscanf(gcCommand,"%u",&uLogType);
-		sprintf(cCat," WHERE tLogType.uLogType=%u ORDER BY uLogType",
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tLogType.uLogType=%u"
+						" ORDER BY uLogType",
 						uLogType);
 		strcat(gcQuery,cCat);
         }
@@ -214,19 +276,17 @@ void ExttLogTypeListFilter(void)
 
 void ExttLogTypeNavBar(void)
 {
-	if(uOwner) GetClientOwner(uOwner,&guReseller);
-
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=12 && !guListMode)
+	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(guPermLevel>=12)
+	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if(guPermLevel>=12 && guLoginClient==1)
+	if(uAllowDel(uOwner,uCreatedBy)) 
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -243,9 +303,22 @@ void tLogTypeNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
 
-	ExtSelectPublic("tLogType","tLogType.uLogType,tLogType.cLabel");
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
 	
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uLogType,cLabel FROM tLogType ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tLogType.uLogType,"
+				" tLogType.cLabel"
+				" FROM tLogType,tClient"
+				" WHERE tLogType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -260,10 +333,12 @@ void tLogTypeNavList(void)
         	printf("<p><u>tLogTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tLogType&uLogType=%s>%s</a><br>\n",
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tLogType"
+				"&uLogType=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}
         mysql_free_result(res);
 
 }//void tLogTypeNavList(void)
+
 

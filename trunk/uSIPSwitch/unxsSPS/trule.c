@@ -1,38 +1,50 @@
 /*
 FILE
-	tRule source code of unxsSPS.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tmonth.c 166 2009-06-05 22:10:35Z Dylan $
+	$Id: module.c 2115 2012-09-19 14:11:03Z Gary $
 PURPOSE
 	Schema dependent RAD generated file.
-	Program app functionality in tmonthfunc.h while 
-	RAD is still to be used.
+	Program app functionality can be developed in trulefunc.h
+	while unxsSPS can still to be used to change this schema dependent file.
+AUTHOR
+	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
+TEMPLATE VARS AND FUNCTIONS
+	ModuleCreateQuery
+	ModuleInsertQuery
+	ModuleListPrint
+	ModuleListTable
+	ModuleLoadVars
+	ModuleProcVars
+	ModuleInput
+	ModuleUpdateQuery
+	ModuleVars
+	ModuleVarList
+	cProject
+	cTableKey
+	cTableName
+	cTableNameLC
+	cTableTitle
 */
 
 
 #include "mysqlrad.h"
 
 //Table Variables
-//Table Variables
-//uRule: Primary Key
 static unsigned uRule=0;
-//cLabel: Name of Archive Table Ex. tNov2009
 static char cLabel[33]={""};
-//uOwner: Record owner
+static unsigned uGateway=0;
+static char cuGatewayPullDown[256]={""};
+static unsigned uTimeInterval=0;
+static char cuTimeIntervalPullDown[256]={""};
+static char cComment[33]={""};
 static unsigned uOwner=0;
-//uCreatedBy: uClient for last insert
+#define StandardFields
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
-//uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
-//uModBy: uClient for last update
 static unsigned uModBy=0;
-//uModDate: Unix seconds date last update
 static time_t uModDate=0;
 
 
-
-#define VAR_LIST_tRule "tRule.uRule,tRule.cLabel,tRule.uOwner,tRule.uCreatedBy,tRule.uCreatedDate,tRule.uModBy,tRule.uModDate"
+#define VAR_LIST_tRule "tRule.uRule,tRule.cLabel,tRule.uGateway,tRule.uTimeInterval,tRule.cComment,tRule.uOwner,tRule.uCreatedBy,tRule.uCreatedDate,tRule.uModBy,tRule.uModDate"
 
  //Local only
 void Insert_tRule(void);
@@ -61,10 +73,27 @@ void ProcesstRuleVars(pentry entries[], int x)
 
 	for(i=0;i<x;i++)
 	{
+		
 		if(!strcmp(entries[i].name,"uRule"))
 			sscanf(entries[i].val,"%u",&uRule);
 		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.32s",entries[i].val);
+			sprintf(cLabel,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uGateway"))
+			sscanf(entries[i].val,"%u",&uGateway);
+		else if(!strcmp(entries[i].name,"cuGatewayPullDown"))
+		{
+			sprintf(cuGatewayPullDown,"%.255s",entries[i].val);
+			uGateway=ReadPullDown("tGateway","cLabel",cuGatewayPullDown);
+		}
+		else if(!strcmp(entries[i].name,"uTimeInterval"))
+			sscanf(entries[i].val,"%u",&uTimeInterval);
+		else if(!strcmp(entries[i].name,"cuTimeIntervalPullDown"))
+		{
+			sprintf(cuTimeIntervalPullDown,"%.255s",entries[i].val);
+			uTimeInterval=ReadPullDown("tTimeInterval","cLabel",cuTimeIntervalPullDown);
+		}
+		else if(!strcmp(entries[i].name,"cComment"))
+			sprintf(cComment,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -164,7 +193,7 @@ void tRule(const char *cResult)
 			{
 			sprintf(gcQuery,"SELECT _rowid FROM tRule WHERE uRule=%u"
 						,uRule);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -172,19 +201,23 @@ void tRule(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
+			
 		sscanf(field[0],"%u",&uRule);
 		sprintf(cLabel,"%.32s",field[1]);
-		sscanf(field[2],"%u",&uOwner);
-		sscanf(field[3],"%u",&uCreatedBy);
-		sscanf(field[4],"%lu",&uCreatedDate);
-		sscanf(field[5],"%u",&uModBy);
-		sscanf(field[6],"%lu",&uModDate);
+		sscanf(field[2],"%u",&uGateway);
+		sscanf(field[3],"%u",&uTimeInterval);
+		sprintf(cComment,"%.32s",field[4]);
+		sscanf(field[5],"%u",&uOwner);
+		sscanf(field[6],"%u",&uCreatedBy);
+		sscanf(field[7],"%lu",&uCreatedDate);
+		sscanf(field[8],"%u",&uModBy);
+		sscanf(field[9],"%lu",&uModDate);
 
 		}
 
 	}//Internal Skip
 
-	Header_ism3(":: tRule",0);
+	Header_ism3(":: Gateway routing rules",0);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -240,10 +273,11 @@ void tRule(const char *cResult)
 void tRuleInput(unsigned uMode)
 {
 
-//uRule
+	
+	//uRule uRADType=1001
 	OpenRow(LANG_FL_tRule_uRule,"black");
-	printf("<input title='%s' type=text name=uRule value=%u size=16 maxlength=10 "
-,LANG_FT_tRule_uRule,uRule);
+	printf("<input title='%s' type=text name=uRule value='%u' size=16 maxlength=10 "
+		,LANG_FT_tRule_uRule,uRule);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -251,12 +285,12 @@ void tRuleInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uRule value=%u >\n",uRule);
+		printf("<input type=hidden name=uRule value='%u' >\n",uRule);
 	}
-//cLabel
+	//cLabel uRADType=253
 	OpenRow(LANG_FL_tRule_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tRule_cLabel,EncodeDoubleQuotes(cLabel));
+	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
+		,LANG_FT_tRule_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -264,55 +298,57 @@ void tRuleInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
-//uOwner
+	//uGateway COLTYPE_SELECTTABLE
+	OpenRow(LANG_FL_tRule_uGateway,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tGateway;cuGatewayPullDown","cLabel","cLabel",uGateway,1);
+	else
+		tTablePullDown("tGateway;cuGatewayPullDown","cLabel","cLabel",uGateway,0);
+	//uTimeInterval COLTYPE_SELECTTABLE
+	OpenRow(LANG_FL_tRule_uTimeInterval,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tTimeInterval;cuTimeIntervalPullDown","cLabel","cLabel",uTimeInterval,1);
+	else
+		tTablePullDown("tTimeInterval;cuTimeIntervalPullDown","cLabel","cLabel",uTimeInterval,0);
+	//cComment uRADType=253
+	OpenRow(LANG_FL_tRule_cComment,"black");
+	printf("<input title='%s' type=text name=cComment value='%s' size=40 maxlength=31 "
+		,LANG_FT_tRule_cComment,EncodeDoubleQuotes(cComment));
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cComment value='%s'>\n",EncodeDoubleQuotes(cComment));
+	}
+	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tRule_uOwner,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
-//uCreatedBy
+	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	//uCreatedBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tRule_uCreatedBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
-//uCreatedDate
+	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tRule_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value=%lu >\n",uCreatedDate);
-//uModBy
+	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
+	//uModBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tRule_uModBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-//uModDate
+	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tRule_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
+	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
 	printf("</tr>\n");
-
-
 
 }//void tRuleInput(unsigned uMode)
 
@@ -322,30 +358,24 @@ void NewtRule(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uRule FROM tRule\
-				WHERE uRule=%u"
-							,uRule);
-	MYSQL_RUN_STORE(res);
+	sprintf(gcQuery,"SELECT uRule FROM tRule WHERE uRule=%u",uRule);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
-		//tRule("<blink>Record already exists");
 		tRule(LANG_NBR_RECEXISTS);
 
-	//insert query
 	Insert_tRule();
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	//sprintf(gcQuery,"New record %u added");
 	uRule=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
+#ifdef StandardFields
 	uCreatedDate=luGetCreatedDate("tRule",uRule);
-	unxsSPSLog(uRule,"tRule","New");
 #endif
+	unxsSPSLog(uRule,"tRule","New");
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uRule);
-	tRule(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uRule);
+		tRule(gcQuery);
 	}
 
 }//NewtRule(unsigned uMode)
@@ -353,27 +383,22 @@ void NewtRule(unsigned uMode)
 
 void DeletetRule(void)
 {
-#ifdef ISM3FIELDS
+#ifdef StandardFields
 	sprintf(gcQuery,"DELETE FROM tRule WHERE uRule=%u AND ( uOwner=%u OR %u>9 )"
 					,uRule,guLoginClient,guPermLevel);
 #else
-	sprintf(gcQuery,"DELETE FROM tRule WHERE uRule=%u"
-					,uRule);
+	sprintf(gcQuery,"DELETE FROM tRule WHERE uRule=%u AND %u>9 )"
+					,uRule,guPermLevel);
 #endif
-	MYSQL_RUN;
-	//tRule("Record Deleted");
+	macro_mySQLQueryHTMLError;
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsSPSLog(uRule,"tRule","Del");
-#endif
 		tRule(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsSPSLog(uRule,"tRule","DelError");
-#endif
 		tRule(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -382,31 +407,48 @@ void DeletetRule(void)
 
 void Insert_tRule(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tRule SET uRule=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uRule
+	sprintf(gcQuery,"INSERT INTO tRule SET "
+		"cLabel='%s',"
+		"uGateway=%u,"
+		"uTimeInterval=%u,"
+		"cComment='%s',"
+		"uOwner=%u,"
+		"uCreatedBy=%u,"
+		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
 			,TextAreaSave(cLabel)
+			,uGateway
+			,uTimeInterval
+			,TextAreaSave(cComment)
 			,uOwner
 			,uCreatedBy
-			);
+		);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Insert_tRule(void)
 
 
 void Update_tRule(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tRule SET uRule=%u,cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
-			uRule
+	sprintf(gcQuery,"UPDATE tRule SET "
+		"cLabel='%s',"
+		"uGateway=%u,"
+		"uTimeInterval=%u,"
+		"cComment='%s',"
+		"uOwner=%u,"
+		"uModBy=%u,"
+		"uModDate=UNIX_TIMESTAMP(NOW())"
+		" WHERE _rowid=%s"
 			,TextAreaSave(cLabel)
+			,uGateway
+			,uTimeInterval
+			,TextAreaSave(cComment)
+			,uOwner
 			,uModBy
-			,cRowid);
+			,cRowid
+		);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tRule(void)
 
@@ -416,50 +458,46 @@ void ModtRule(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
-	unsigned uPreModDate=0;
 
+#ifdef StandardFields
+	unsigned uPreModDate=0;
 	//Mod select gcQuery
 	if(guPermLevel<10)
-	sprintf(gcQuery,"SELECT tRule.uRule,\
-				tRule.uModDate\
-				FROM tRule,tClient\
-				WHERE tRule.uRule=%u\
-				AND tRule.uOwner=tClient.uClient\
-				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
-			,uRule,guLoginClient,guLoginClient);
+	sprintf(gcQuery,"SELECT tRule.uRule,"
+				" tRule.uModDate"
+				" FROM tRule,tClient"
+				" WHERE tRule.uRule=%u"
+				" AND tRule.uOwner=tClient.uClient"
+				" AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+					,uRule,guLoginClient,guLoginClient);
 	else
-	sprintf(gcQuery,"SELECT uRule,uModDate FROM tRule\
-				WHERE uRule=%u"
-						,uRule);
+	sprintf(gcQuery,"SELECT uRule,uModDate FROM tRule"
+				" WHERE uRule=%u"
+					,uRule);
 #else
-	sprintf(gcQuery,"SELECT uRule FROM tRule\
-				WHERE uRule=%u"
-						,uRule);
+	sprintf(gcQuery,"SELECT uRule FROM tRule"
+				" WHERE uRule=%u"
+					,uRule);
 #endif
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
-	//if(i<1) tRule("<blink>Record does not exist");
 	if(i<1) tRule(LANG_NBR_RECNOTEXIST);
-	//if(i>1) tRule("<blink>Multiple rows!");
 	if(i>1) tRule(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
+#ifdef StandardFields
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tRule(LANG_NBR_EXTMOD);
 #endif
 
 	Update_tRule(field[0]);
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
+#ifdef StandardFields
 	uModDate=luGetModDate("tRule",uRule);
-	unxsSPSLog(uRule,"tRule","Mod");
 #endif
+	unxsSPSLog(uRule,"tRule","Mod");
 	tRule(gcQuery);
 
 }//ModtRule(void)
@@ -472,7 +510,7 @@ void tRuleList(void)
 
 	ExttRuleListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tRuleList",1,"");//1 is auto header list guMode. Opens table!
@@ -485,7 +523,18 @@ void tRuleList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uRule<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uRule"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>uGateway"
+		"<td><font face=arial,helvetica color=white>uTimeInterval"
+		"<td><font face=arial,helvetica color=white>cComment"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate"
+		"</tr>");
 
 
 
@@ -503,27 +552,30 @@ void tRuleList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		time_t luTime4=strtoul(field[4],NULL,10);
-		char cBuf4[32];
-		if(luTime4)
-			ctime_r(&luTime4,cBuf4);
+				time_t luTime7=strtoul(field[7],NULL,10);
+		char cBuf7[32];
+		if(luTime7)
+			ctime_r(&luTime7,cBuf7);
 		else
-			sprintf(cBuf4,"---");
-		time_t luTime6=strtoul(field[6],NULL,10);
-		char cBuf6[32];
-		if(luTime6)
-			ctime_r(&luTime6,cBuf6);
+			sprintf(cBuf7,"---");
+		time_t luTime9=strtoul(field[9],NULL,10);
+		char cBuf9[32];
+		if(luTime9)
+			ctime_r(&luTime9,cBuf9);
 		else
-			sprintf(cBuf6,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf9,"---");
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tRule&uRule=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
-			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
-			,cBuf4
+			,ForeignKey("tGateway","cLabel",strtoul(field[2],NULL,10))
+			,ForeignKey("tTimeInterval","cLabel",strtoul(field[3],NULL,10))
+			,field[4]
 			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
-			,cBuf6
+			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
+			,cBuf7
+			,ForeignKey("tClient","cLabel",strtoul(field[8],NULL,10))
+			,cBuf9
 				);
 
 	}
@@ -536,8 +588,20 @@ void tRuleList(void)
 
 void CreatetRule(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tRule ( uRule INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', UNIQUE (cLabel), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
-	MYSQL_RUN;
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tRule ("
+		"uRule INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+		"uGateway INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uGateway),"
+		"uTimeInterval INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uTimeInterval),"
+		"cComment VARCHAR(32) NOT NULL DEFAULT '',"
+		"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+}//void CreatetRule(void)
 
-}//CreatetRule()
 

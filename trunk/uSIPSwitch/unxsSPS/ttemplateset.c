@@ -2,7 +2,7 @@
 FILE
 	tTemplateSet source code of unxsSPS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: ttemplateset.c 166 2009-06-05 22:10:35Z Dylan $
+	$Id: ttemplateset.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in ttemplatesetfunc.h while 
@@ -22,6 +22,7 @@ static char cLabel[33]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
+#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -163,7 +164,7 @@ void tTemplateSet(const char *cResult)
 			{
 			sprintf(gcQuery,"SELECT _rowid FROM tTemplateSet WHERE uTemplateSet=%u"
 						,uTemplateSet);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -183,7 +184,7 @@ void tTemplateSet(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tTemplateSet",0);
+	Header_ism3(":: tTemplateSet",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -269,21 +270,21 @@ void tTemplateSetInput(unsigned uMode)
 	OpenRow(LANG_FL_tTemplateSet_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	}
 //uCreatedBy
 	OpenRow(LANG_FL_tTemplateSet_uCreatedBy,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	}
 //uCreatedDate
 	OpenRow(LANG_FL_tTemplateSet_uCreatedDate,"black");
@@ -296,11 +297,11 @@ void tTemplateSetInput(unsigned uMode)
 	OpenRow(LANG_FL_tTemplateSet_uModBy,"black");
 	if(guPermLevel>=20 && uMode)
 	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	}
 	else
 	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	}
 //uModDate
 	OpenRow(LANG_FL_tTemplateSet_uModDate,"black");
@@ -324,7 +325,7 @@ void NewtTemplateSet(unsigned uMode)
 	sprintf(gcQuery,"SELECT uTemplateSet FROM tTemplateSet\
 				WHERE uTemplateSet=%u"
 							,uTemplateSet);
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
@@ -336,8 +337,10 @@ void NewtTemplateSet(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uTemplateSet=mysql_insert_id(&gMysql);
+#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tTemplateSet",uTemplateSet);
 	unxsSPSLog(uTemplateSet,"tTemplateSet","New");
+#endif
 
 	if(!uMode)
 	{
@@ -350,18 +353,27 @@ void NewtTemplateSet(unsigned uMode)
 
 void DeletetTemplateSet(void)
 {
+#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tTemplateSet WHERE uTemplateSet=%u AND ( uOwner=%u OR %u>9 )"
 					,uTemplateSet,guLoginClient,guPermLevel);
-	MYSQL_RUN;
+#else
+	sprintf(gcQuery,"DELETE FROM tTemplateSet WHERE uTemplateSet=%u"
+					,uTemplateSet);
+#endif
+	macro_mySQLQueryHTMLError;
 	//tTemplateSet("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
+#ifdef ISM3FIELDS
 		unxsSPSLog(uTemplateSet,"tTemplateSet","Del");
+#endif
 		tTemplateSet(LANG_NBR_RECDELETED);
 	}
 	else
 	{
+#ifdef ISM3FIELDS
 		unxsSPSLog(uTemplateSet,"tTemplateSet","DelError");
+#endif
 		tTemplateSet(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -379,7 +391,7 @@ void Insert_tTemplateSet(void)
 			,uCreatedBy
 			);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 	
 }//void Insert_tTemplateSet(void)
 
@@ -394,7 +406,7 @@ void Update_tTemplateSet(char *cRowid)
 			,uModBy
 			,cRowid);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tTemplateSet(void)
 
@@ -404,11 +416,29 @@ void ModtTemplateSet(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-
+#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
-	sprintf(gcQuery,"SELECT uTemplateSet,uModDate FROM tTemplateSet WHERE uTemplateSet=%u"
+
+	//Mod select gcQuery
+	if(guPermLevel<10)
+	sprintf(gcQuery,"SELECT tTemplateSet.uTemplateSet,\
+				tTemplateSet.uModDate\
+				FROM tTemplateSet,tClient\
+				WHERE tTemplateSet.uTemplateSet=%u\
+				AND tTemplateSet.uOwner=tClient.uClient\
+				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+			,uTemplateSet,guLoginClient,guLoginClient);
+	else
+	sprintf(gcQuery,"SELECT uTemplateSet,uModDate FROM tTemplateSet\
+				WHERE uTemplateSet=%u"
 						,uTemplateSet);
-	MYSQL_RUN_STORE(res);
+#else
+	sprintf(gcQuery,"SELECT uTemplateSet FROM tTemplateSet\
+				WHERE uTemplateSet=%u"
+						,uTemplateSet);
+#endif
+
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	//if(i<1) tTemplateSet("<blink>Record does not exist");
@@ -417,15 +447,19 @@ void ModtTemplateSet(void)
 	if(i>1) tTemplateSet(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
+#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tTemplateSet(LANG_NBR_EXTMOD);
+#endif
 
 	Update_tTemplateSet(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
+#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tTemplateSet",uTemplateSet);
 	unxsSPSLog(uTemplateSet,"tTemplateSet","Mod");
+#endif
 	tTemplateSet(gcQuery);
 
 }//ModtTemplateSet(void)
@@ -438,7 +472,7 @@ void tTemplateSetList(void)
 
 	ExttTemplateSetListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tTemplateSetList",1,"");//1 is auto header list guMode. Opens table!
@@ -485,10 +519,10 @@ void tTemplateSetList(void)
 			,field[0]
 			,field[0]
 			,field[1]
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[2],NULL,10))
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[3],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
 			,cBuf4
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[5],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
 			,cBuf6
 				);
 
@@ -503,7 +537,7 @@ void tTemplateSetList(void)
 void CreatetTemplateSet(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tTemplateSet ( uTemplateSet INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//CreatetTemplateSet()
 

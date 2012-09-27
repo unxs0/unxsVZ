@@ -1,26 +1,30 @@
 /*
 FILE
-	$Id: tgroupgluefunc.h 1355 2010-04-16 20:50:35Z Gary $
-	(Built initially by unixservice.com mysqlRAD2)
+	$Id: modulefunc.h 2116 2012-09-19 23:00:28Z Gary $
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
-	GPLv2 license applies. See LICENSE file included.
+AUTHOR
+	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
+TEMPLATE VARS AND FUNCTIONS
+	ModuleFunctionProcess
+	ModuleFunctionProtos
+	cProject
+	cTableKey
+	cTableName
 */
 
-//ModuleFunctionProtos()
 
 
-//uContainer: Glue into tContainer
+void tGroupGlueNavList(void);
 
 void ExtProcesstGroupGlueVars(pentry entries[], int x)
 {
-	//register int i;
-	//for(i=0;i<x;i++)
-	//{
-	//}
-
+	/*
+	register int i;
+	for(i=0;i<x;i++)
+	{
+	}
+	*/
 }//void ExtProcesstGroupGlueVars(pentry entries[], int x)
 
 
@@ -29,70 +33,107 @@ void ExttGroupGlueCommands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"tGroupGlueTools"))
 	{
-		//ModuleFunctionProcess()
-
+		
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
 	                        ProcesstGroupGlueVars(entries,x);
                         	guMode=2000;
 	                        tGroupGlue(LANG_NB_CONFIRMNEW);
 			}
+			else
+				tGroupGlue("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
+				unsigned uContactParentCompany=0;
                         	ProcesstGroupGlueVars(entries,x);
-
+				GetClientOwner(guLoginClient,&uContactParentCompany);
+				
                         	guMode=2000;
-				if(!uGroup || !uKey )
-	                        	tGroupGlue("Must Supply a uGroup and a uKey");
+				//Check entries here
                         	guMode=0;
 
 				uGroupGlue=0;
+#ifdef StandardFields
+				uCreatedBy=guLoginClient;
+				uOwner=uContactParentCompany;
+				uModBy=0;//Never modified
+				uModDate=0;//Never modified
+#endif
 				NewtGroupGlue(0);
 			}
+			else
+				tGroupGlue("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
-			if(guPermLevel>=12)
+                        ProcesstGroupGlueVars(entries,x);
+#ifdef StandardFields
+			if(uAllowDel(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
-                        	ProcesstGroupGlueVars(entries,x);
 	                        guMode=2001;
 				tGroupGlue(LANG_NB_CONFIRMDEL);
 			}
+			else
+				tGroupGlue("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
-			if(guPermLevel>=12)
+                        ProcesstGroupGlueVars(entries,x);
+#ifdef StandardFields
+			if(uAllowDel(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
-                        	ProcesstGroupGlueVars(entries,x);
 				guMode=5;
 				DeletetGroupGlue();
 			}
+			else
+				tGroupGlue("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
-			if(guPermLevel>=12)
+                        ProcesstGroupGlueVars(entries,x);
+#ifdef StandardFields
+			if(uAllowMod(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
-                        	ProcesstGroupGlueVars(entries,x);
 				guMode=2002;
 				tGroupGlue(LANG_NB_CONFIRMMOD);
 			}
+			else
+				tGroupGlue("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
-			if(guPermLevel>=12)
+                        ProcesstGroupGlueVars(entries,x);
+#ifdef StandardFields
+			if(uAllowMod(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
-                        	ProcesstGroupGlueVars(entries,x);
                         	guMode=2002;
 				//Check entries here
                         	guMode=0;
 
+#ifdef StandardFields
+				uModBy=guLoginClient;
+#endif
 				ModtGroupGlue();
 			}
+			else
+				tGroupGlue("<blink>Error</blink>: Denied by permissions settings");
                 }
 	}
 
@@ -121,8 +162,11 @@ void ExttGroupGlueButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("This is just a glue table, see [New], [Delete] and <a href=?gcFunction=tGroup>tGroup</a>"
-				" for more info.<br>");
+			printf("<p><u>Record Context Info</u><br>");
+			printf("<p><u>Operations</u><br>");
+			//printf("<br><input type=submit class=largeButton title='Sample button help'"
+			//		" name=gcCommand value='Sample Button'>");
+			tGroupGlueNavList();
 	}
 	CloseFieldSet();
 
@@ -154,17 +198,52 @@ void ExttGroupGlueGetHook(entry gentries[], int x)
 
 void ExttGroupGlueSelect(void)
 {
-	sprintf(gcQuery,"SELECT %s FROM tGroupGlue ORDER BY\
-					uGroupGlue",
-					VAR_LIST_tGroupGlue);
+
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tGroupGlue ORDER BY"
+				" uGroupGlue",
+				VAR_LIST_tGroupGlue);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tGroupGlue,tClient WHERE tGroupGlue.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uGroupGlue",
+					VAR_LIST_tGroupGlue,uContactParentCompany,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT %s FROM tGroupGlue ORDER BY uGroupGlue",VAR_LIST_tGroupGlue);
+#endif
+					
 
 }//void ExttGroupGlueSelect(void)
 
 
 void ExttGroupGlueSelectRow(void)
 {
-	sprintf(gcQuery,"SELECT %s FROM tGroupGlue WHERE uGroupGlue=%u",
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tGroupGlue WHERE uGroupGlue=%u",
 			VAR_LIST_tGroupGlue,uGroupGlue);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tGroupGlue,tClient"
+                                " WHERE tGroupGlue.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tGroupGlue.uGroupGlue=%u",
+                        		VAR_LIST_tGroupGlue
+					,uContactParentCompany,uContactParentCompany
+					,uGroupGlue);
+#else
+	sprintf(gcQuery,"SELECT %s FROM tGroupGlue WHERE uGroupGlue=%u",VAR_LIST_tGroupGlue,uGroupGlue);
+#endif
 
 }//void ExttGroupGlueSelectRow(void)
 
@@ -172,26 +251,36 @@ void ExttGroupGlueSelectRow(void)
 void ExttGroupGlueListSelect(void)
 {
 	char cCat[512];
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
 
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tGroupGlue",
+				VAR_LIST_tGroupGlue);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tGroupGlue,tClient"
+				" WHERE tGroupGlue.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tGroupGlue
+				,uContactParentCompany
+				,uContactParentCompany);
+#else
 	sprintf(gcQuery,"SELECT %s FROM tGroupGlue",VAR_LIST_tGroupGlue);
+#endif
 
 	//Changes here must be reflected below in ExttGroupGlueListFilter()
         if(!strcmp(gcFilter,"uGroupGlue"))
         {
                 sscanf(gcCommand,"%u",&uGroupGlue);
-		sprintf(cCat," WHERE tGroupGlue.uGroupGlue=%u ORDER BY uGroupGlue",uGroupGlue);
-		strcat(gcQuery,cCat);
-        }
-        else if(!strcmp(gcFilter,"uGroup"))
-        {
-                sscanf(gcCommand,"%u",&uGroup);
-		sprintf(cCat," WHERE tGroupGlue.uGroup=%u ORDER BY uGroup",uGroup);
-		strcat(gcQuery,cCat);
-        }
-        else if(!strcmp(gcFilter,"uKey"))
-        {
-                sscanf(gcCommand,"%u",&uKey);
-		sprintf(cCat," WHERE tGroupGlue.uKey=%u ORDER BY uKey",uKey);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tGroupGlue.uGroupGlue=%u"
+						" ORDER BY uGroupGlue",
+						uGroupGlue);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -213,14 +302,6 @@ void ExttGroupGlueListFilter(void)
                 printf("<option>uGroupGlue</option>");
         else
                 printf("<option selected>uGroupGlue</option>");
-        if(strcmp(gcFilter,"uGroup"))
-                printf("<option>uGroup</option>");
-        else
-                printf("<option selected>uGroup</option>");
-        if(strcmp(gcFilter,"uKey"))
-                printf("<option>uKey</option>");
-        else
-                printf("<option selected>uKey</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
@@ -236,16 +317,28 @@ void ExttGroupGlueNavBar(void)
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=12 && !guListMode)
+	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(guPermLevel>=12 && !guListMode)
+#ifdef StandardFields
+	if(uAllowMod(uOwner,uCreatedBy))
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_MODIFY);
 
-	if(guPermLevel>=12 && !guListMode)
+#ifdef StandardFields
+	if(uAllowDel(uOwner,uCreatedBy)) 
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_DELETE);
 
-	if(guPermLevel>=12)
+#ifdef StandardFields
+	if(uOwner)
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
@@ -253,4 +346,52 @@ void ExttGroupGlueNavBar(void)
 	printf("&nbsp;&nbsp;&nbsp;\n");
 
 }//void ExttGroupGlueNavBar(void)
+
+
+void tGroupGlueNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
+	
+#ifdef StandardFields
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uGroupGlue,cLabel FROM tGroupGlue ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tGroupGlue.uGroupGlue,"
+				" tGroupGlue.cLabel"
+				" FROM tGroupGlue,tClient"
+				" WHERE tGroupGlue.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT uGroupGlue,cLabel FROM tGroupGlue ORDER BY cLabel");
+#endif
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tGroupGlueNavList</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>tGroupGlueNavList</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupGlue"
+				"&uGroupGlue=%s>%s</a><br>\n",
+				field[0],field[1]);
+	}
+        mysql_free_result(res);
+
+}//void tGroupGlueNavList(void)
+
 

@@ -1,17 +1,15 @@
 /*
 FILE
-        $Id: local.h.default 1913 2012-04-13 23:58:37Z Dylan $
+        $Id: local.h.template 2483 2009-02-20 15:58:01Z Gary $
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL
-        Copyright 2012-2013 Gary Wallis
+        Copyright 2001-2012 Gary Wallis for Unixservice, LLC.
 */
-
-#define LOCALCOPYRIGHT "&copy; 2000-2012 Unixservice, LLC. All Rights Reserved."
 
 //Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
 #define DBIP0 NULL
-#define DBIP1 NULL
+#define DBIP1 "127.0.0.1"
 #define DBNAME "unxssps"
 #define DBLOGIN "unxssps"
 #define DBPASSWD "wsxedc"
@@ -29,7 +27,8 @@ LEGAL
 #define TAUTHORIZE "tAuthorize"
 //#define TAUTHORIZE "mysqlISP2.tAuthorize"
 
-//unxssps can report to us once a week some useful for
+
+//unxsrad can report to us once a week some useful for
 //debugging and development statistics.
 //This is very helpful to us and in the end we hope for yourself.
 //For improving and developing this software
@@ -39,22 +38,15 @@ LEGAL
 //for security.
 //Make sure mySQL ports are firewalled correctly if used on other servers.
 //VPN them?
-#define SSLONLY
+//#define SSLONLY
 
 //You should customize these for your own ISP
-#define EXTISPNAME "unixservice"
-#define EXTISPURL "unixservice.com"
-#define HEADER_TITLE "unxsVZ"
+#define EXTISPNAME "openisp"
+#define EXTISPURL "openisp.net"
+
 
 //End-users: Do not change these!
-//Also edit main.c header RAD status line if you change the following
-#define RELEASE "0.01/rpm-0.1"
-#define REV "0.01/rpm-0.1"
-
-//For interfaces
-#define cMAILTO "noc@someisp.net"
-#define cBCC ""
-#define cFROM "noc@someisp.net"
-#define cSUBJECT "OneLogin system message"
-#define cUNXSVZORGLOGFILE "/var/log/unxsspsOrg.log"
+//Developers: See makefile also when changing these
+#define RELEASE ""
+#define REV "0.1"
 

@@ -1,12 +1,12 @@
 /*
 FILE
-	$Id: tstatusfunc.h 1380 2010-04-27 15:02:47Z Gary $
+	$Id: tstatusfunc.h 1953 2012-05-22 15:03:17Z Colin $
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
-	GPLv2 license applies. See LICENSE file.
+AUTHOR
+	(C) 2001-2009 Gary Wallis for Unixservice.
+ 
 */
 
 //ModuleFunctionProtos()
@@ -34,56 +34,58 @@ void ExttStatusCommands(pentry entries[], int x)
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
 	                        ProcesstStatusVars(entries,x);
                         	guMode=2000;
 	                        tStatus(LANG_NB_CONFIRMNEW);
 			}
 			else
-				tStatus("Operation denied by permissions settings");
+				tStatus("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
+				unsigned uContactParentCompany=0;
                         	ProcesstStatusVars(entries,x);
-
+				GetClientOwner(guLoginClient,&uContactParentCompany);
+				
                         	guMode=2000;
 				//Check entries here
                         	guMode=0;
 
 				uStatus=0;
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				NewtStatus(0);
 			}
 			else
-				tStatus("Operation denied by permissions settings");
+				tStatus("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstStatusVars(entries,x);
-			if(guPermLevel>=12 && guLoginClient==1)
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
 				tStatus(LANG_NB_CONFIRMDEL);
 			}
 			else
-				tStatus("Operation denied by permissions settings");
+				tStatus("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstStatusVars(entries,x);
-			if(guPermLevel>=12 && guLoginClient==1)
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
 				DeletetStatus();
 			}
 			else
-				tStatus("Operation denied by permissions settings");
+				tStatus("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
@@ -94,7 +96,7 @@ void ExttStatusCommands(pentry entries[], int x)
 				tStatus(LANG_NB_CONFIRMMOD);
 			}
 			else
-				tStatus("Operation denied by permissions settings");
+				tStatus("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
@@ -109,7 +111,7 @@ void ExttStatusCommands(pentry entries[], int x)
 				ModtStatus();
 			}
 			else
-				tStatus("Operation denied by permissions settings");
+				tStatus("<blink>Error</blink>: Denied by permissions settings");
                 }
 	}
 
@@ -171,15 +173,44 @@ void ExttStatusGetHook(entry gentries[], int x)
 
 void ExttStatusSelect(void)
 {
-        //Set non search gcQuery here for tTableName()
-	ExtSelectPublic("tStatus",VAR_LIST_tStatus);
+
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tStatus ORDER BY"
+				" uStatus",
+				VAR_LIST_tStatus);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tStatus,tClient WHERE tStatus.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uStatus",
+					VAR_LIST_tStatus,uContactParentCompany,uContactParentCompany);
+					
 
 }//void ExttStatusSelect(void)
 
 
 void ExttStatusSelectRow(void)
 {
-	ExtSelectRowPublic("tStatus",VAR_LIST_tStatus,uStatus);
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tStatus WHERE uStatus=%u",
+			VAR_LIST_tStatus,uStatus);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tStatus,tClient"
+                                " WHERE tStatus.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tStatus.uStatus=%u",
+                        		VAR_LIST_tStatus
+					,uContactParentCompany,uContactParentCompany
+					,uStatus);
 
 }//void ExttStatusSelectRow(void)
 
@@ -187,14 +218,32 @@ void ExttStatusSelectRow(void)
 void ExttStatusListSelect(void)
 {
 	char cCat[512];
-
-	ExtListSelectPublic("tStatus",VAR_LIST_tStatus);
+	unsigned uContactParentCompany=0;
 	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tStatus",
+				VAR_LIST_tStatus);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tStatus,tClient"
+				" WHERE tStatus.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tStatus
+				,uContactParentCompany
+				,uContactParentCompany);
+
 	//Changes here must be reflected below in ExttStatusListFilter()
         if(!strcmp(gcFilter,"uStatus"))
         {
                 sscanf(gcCommand,"%u",&uStatus);
-		sprintf(cCat," WHERE tStatus.uStatus=%u ORDER BY uStatus",uStatus);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tStatus.uStatus=%u"
+						" ORDER BY uStatus",
+						uStatus);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -227,19 +276,17 @@ void ExttStatusListFilter(void)
 
 void ExttStatusNavBar(void)
 {
-	if(uOwner) GetClientOwner(uOwner,&guReseller);
-
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=12 && !guListMode)
+	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
 	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if(guPermLevel>=12 && guLoginClient==1)
+	if(uAllowDel(uOwner,uCreatedBy)) 
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -256,9 +303,22 @@ void tStatusNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
 
-	ExtSelectPublic("tStatus","tStatus.uStatus,tStatus.cLabel");
-
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
+	
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uStatus,cLabel FROM tStatus ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tStatus.uStatus,"
+				" tStatus.cLabel"
+				" FROM tStatus,tClient"
+				" WHERE tStatus.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -273,9 +333,12 @@ void tStatusNavList(void)
         	printf("<p><u>tStatusNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tStatus&uStatus=%s>"
-				"%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tStatus"
+				"&uStatus=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
         mysql_free_result(res);
 
 }//void tStatusNavList(void)
+
+

@@ -2,7 +2,7 @@
 FILE
 	tServer source code of unxsSPS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tserver.c 1810 2011-09-19 20:50:11Z Gary $
+	$Id: tserver.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tserverfunc.h while 
@@ -11,11 +11,6 @@ PURPOSE
 
 
 #include "mysqlrad.h"
-void GetConfiguration(const char *cName,char *cValue,
-		unsigned uDatacenter,
-		unsigned uServer,
-		unsigned uContainer,
-		unsigned uHtml);
 
 //Table Variables
 //Table Variables
@@ -23,11 +18,6 @@ void GetConfiguration(const char *cName,char *cValue,
 static unsigned uServer=0;
 //cLabel: Short label
 static char cLabel[33]={""};
-//uDatacenter: Belongs to this Datacenter
-static unsigned uDatacenter=0;
-static char cuDatacenterPullDown[256]={""};
-//uStatus: Status of Hardware Node
-static unsigned uStatus=0;
 //uOwner: Record owner
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
@@ -42,7 +32,7 @@ static time_t uModDate=0;
 
 
 
-#define VAR_LIST_tServer "tServer.uServer,tServer.cLabel,tServer.uDatacenter,tServer.uStatus,tServer.uOwner,tServer.uCreatedBy,tServer.uCreatedDate,tServer.uModBy,tServer.uModDate"
+#define VAR_LIST_tServer "tServer.uServer,tServer.cLabel,tServer.uOwner,tServer.uCreatedBy,tServer.uCreatedDate,tServer.uModBy,tServer.uModDate"
 
  //Local only
 void Insert_tServer(void);
@@ -75,15 +65,6 @@ void ProcesstServerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uServer);
 		else if(!strcmp(entries[i].name,"cLabel"))
 			sprintf(cLabel,"%.32s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uDatacenter"))
-			sscanf(entries[i].val,"%u",&uDatacenter);
-		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
-		{
-			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
-			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
-		}
-		else if(!strcmp(entries[i].name,"uStatus"))
-			sscanf(entries[i].val,"%u",&uStatus);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -183,7 +164,7 @@ void tServer(const char *cResult)
 			{
 			sprintf(gcQuery,"SELECT _rowid FROM tServer WHERE uServer=%u"
 						,uServer);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -193,19 +174,17 @@ void tServer(const char *cResult)
 			field=mysql_fetch_row(res);
 		sscanf(field[0],"%u",&uServer);
 		sprintf(cLabel,"%.32s",field[1]);
-		sscanf(field[2],"%u",&uDatacenter);
-		sscanf(field[3],"%u",&uStatus);
-		sscanf(field[4],"%u",&uOwner);
-		sscanf(field[5],"%u",&uCreatedBy);
-		sscanf(field[6],"%lu",&uCreatedDate);
-		sscanf(field[7],"%u",&uModBy);
-		sscanf(field[8],"%lu",&uModDate);
+		sscanf(field[2],"%u",&uOwner);
+		sscanf(field[3],"%u",&uCreatedBy);
+		sscanf(field[4],"%lu",&uCreatedDate);
+		sscanf(field[5],"%u",&uModBy);
+		sscanf(field[6],"%lu",&uModDate);
 
 		}
 
 	}//Internal Skip
 
-	Header_ism3(":: Hardware Node",2);
+	Header_ism3(":: tServer",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -260,22 +239,6 @@ void tServer(const char *cResult)
 
 void tServerInput(unsigned uMode)
 {
-	if(uServer && uDatacenter)
-	{
-		char cConfigBuffer[256]={""};
-
-		GetConfiguration("cNodeTrafficDirURL",cConfigBuffer,uDatacenter,0,0,0);
-		if(cConfigBuffer[0])
-		{
-	
-			OpenRow("Graph","black");
-			printf("<a href=%s/%s.png><img src=%s/%s.png border=0></a>\n",
-					cConfigBuffer,cLabel,cConfigBuffer,cLabel);
-			printf("</td></tr>\n");
-		}
-	}
-
-//uContainer
 
 //uServer
 	OpenRow(LANG_FL_tServer_uServer,"black");
@@ -303,25 +266,9 @@ void tServerInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
 	}
-//uDatacenter
-	OpenRow(LANG_FL_tServer_uDatacenter,"black");
-	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
-	else
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
-//uStatus
-	OpenRow(LANG_FL_tServer_uStatus,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uStatus value=%u >\n",ForeignKey("tStatus","cLabel",uStatus),uStatus);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uStatus value=%u >\n",ForeignKey("tStatus","cLabel",uStatus),uStatus);
-	}
 //uOwner
 	OpenRow(LANG_FL_tServer_uOwner,"black");
-	if(guPermLevel>=20 && uMode)
+	if(guPermLevel>=1 && uMode)
 	{
 	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	}
@@ -331,7 +278,7 @@ void tServerInput(unsigned uMode)
 	}
 //uCreatedBy
 	OpenRow(LANG_FL_tServer_uCreatedBy,"black");
-	if(guPermLevel>=20 && uMode)
+	if(guPermLevel>=1 && uMode)
 	{
 	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	}
@@ -348,7 +295,7 @@ void tServerInput(unsigned uMode)
 	printf("<input type=hidden name=uCreatedDate value=%lu >\n",uCreatedDate);
 //uModBy
 	OpenRow(LANG_FL_tServer_uModBy,"black");
-	if(guPermLevel>=20 && uMode)
+	if(guPermLevel>=1 && uMode)
 	{
 	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	}
@@ -365,14 +312,6 @@ void tServerInput(unsigned uMode)
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
 
-	char cGraph0[256]={""};
-	if(cGraph0[0])
-	{
-		OpenRow("Optional Graph","black");
-		printf("<img src=%s border=0>\n",cGraph0);
-		printf("</tr>\n");
-	}
-
 
 
 }//void tServerInput(unsigned uMode)
@@ -386,7 +325,7 @@ void NewtServer(unsigned uMode)
 	sprintf(gcQuery,"SELECT uServer FROM tServer\
 				WHERE uServer=%u"
 							,uServer);
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
@@ -421,7 +360,7 @@ void DeletetServer(void)
 	sprintf(gcQuery,"DELETE FROM tServer WHERE uServer=%u"
 					,uServer);
 #endif
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 	//tServer("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
@@ -445,16 +384,14 @@ void Insert_tServer(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tServer SET uServer=%u,cLabel='%s',uDatacenter=%u,uStatus=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tServer SET uServer=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uServer
 			,TextAreaSave(cLabel)
-			,uDatacenter
-			,uStatus
 			,uOwner
 			,uCreatedBy
 			);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Insert_tServer(void)
 
@@ -463,15 +400,13 @@ void Update_tServer(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tServer SET uServer=%u,cLabel='%s',uDatacenter=%u,uStatus=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tServer SET uServer=%u,cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uServer
 			,TextAreaSave(cLabel)
-			,uDatacenter
-			,uStatus
 			,uModBy
 			,cRowid);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tServer(void)
 
@@ -503,7 +438,7 @@ void ModtServer(void)
 						,uServer);
 #endif
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	//if(i<1) tServer("<blink>Record does not exist");
@@ -537,7 +472,7 @@ void tServerList(void)
 
 	ExttServerListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tServerList",1,"");//1 is auto header list guMode. Opens table!
@@ -550,7 +485,7 @@ void tServerList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uServer<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uDatacenter<td><font face=arial,helvetica color=white>uStatus<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uServer<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 
 
@@ -568,29 +503,27 @@ void tServerList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
+		time_t luTime4=strtoul(field[4],NULL,10);
+		char cBuf4[32];
+		if(luTime4)
+			ctime_r(&luTime4,cBuf4);
+		else
+			sprintf(cBuf4,"---");
 		time_t luTime6=strtoul(field[6],NULL,10);
 		char cBuf6[32];
 		if(luTime6)
 			ctime_r(&luTime6,cBuf6);
 		else
 			sprintf(cBuf6,"---");
-		time_t luTime8=strtoul(field[8],NULL,10);
-		char cBuf8[32];
-		if(luTime8)
-			ctime_r(&luTime8,cBuf8);
-		else
-			sprintf(cBuf8,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
-			,ForeignKey("tDatacenter","cLabel",strtoul(field[2],NULL,10))
-			,ForeignKey("tStatus","cLabel",strtoul(field[3],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
+			,cBuf4
 			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
 			,cBuf6
-			,ForeignKey("tClient","cLabel",strtoul(field[7],NULL,10))
-			,cBuf8
 				);
 
 	}
@@ -603,9 +536,9 @@ void tServerList(void)
 
 void CreatetServer(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tServer ( uServer INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uDatacenter INT UNSIGNED NOT NULL DEFAULT 0,unique (cLabel,uDatacenter), uStatus INT UNSIGNED NOT NULL DEFAULT 0 )");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tServer ( uServer INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+	macro_mySQLQueryHTMLError;
+
 }//CreatetServer()
 
+//perlSAR patch1

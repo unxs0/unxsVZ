@@ -1,17 +1,18 @@
 /*
 FILE
-	$Id: tconfigurationfunc.h 1868 2012-02-22 18:47:12Z Dylan $
+	$Id: tconfigurationfunc.h 1953 2012-05-22 15:03:17Z Colin $
+	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
-	Non-schema dependent tconfiguration.c expansion.
-AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
-	GPL License applies, see www.fsf.org for details
-	See LICENSE file in this distribution
+	Non schema-dependent table and application table related functions.
+AUTHOR
+	(C) 2001-2009 Gary Wallis for Unixservice.
+ 
 */
 
+//ModuleFunctionProtos()
+
+
 void tConfigurationNavList(void);
-unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uServer);
-void htmlGlossaryLink(char *cLabel);
 
 void ExtProcesstConfigurationVars(pentry entries[], int x)
 {
@@ -26,36 +27,43 @@ void ExtProcesstConfigurationVars(pentry entries[], int x)
 
 void ExttConfigurationCommands(pentry entries[], int x)
 {
+
 	if(!strcmp(gcFunction,"tConfigurationTools"))
 	{
-		time_t uActualModDate;
+		//ModuleFunctionProcess()
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=10)
+			if(guPermLevel>=9)
 			{
 	                        ProcesstConfigurationVars(entries,x);
                         	guMode=2000;
 	                        tConfiguration(LANG_NB_CONFIRMNEW);
 			}
+			else
+				tConfiguration("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=10)
+			if(guPermLevel>=9)
 			{
+				unsigned uContactParentCompany=0;
                         	ProcesstConfigurationVars(entries,x);
-
+				GetClientOwner(guLoginClient,&uContactParentCompany);
+				
                         	guMode=2000;
 				//Check entries here
                         	guMode=0;
 
 				uConfiguration=0;
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				NewtConfiguration(0);
 			}
+			else
+				tConfiguration("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
@@ -63,8 +71,10 @@ void ExttConfigurationCommands(pentry entries[], int x)
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
-				tConfiguration("Make sure this is the record you would like to delete");
+				tConfiguration(LANG_NB_CONFIRMDEL);
 			}
+			else
+				tConfiguration("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
@@ -74,6 +84,8 @@ void ExttConfigurationCommands(pentry entries[], int x)
 				guMode=5;
 				DeletetConfiguration();
 			}
+			else
+				tConfiguration("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
@@ -83,6 +95,8 @@ void ExttConfigurationCommands(pentry entries[], int x)
 				guMode=2002;
 				tConfiguration(LANG_NB_CONFIRMMOD);
 			}
+			else
+				tConfiguration("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
@@ -96,38 +110,9 @@ void ExttConfigurationCommands(pentry entries[], int x)
 				uModBy=guLoginClient;
 				ModtConfiguration();
 			}
+			else
+				tConfiguration("<blink>Error</blink>: Denied by permissions settings");
                 }
-                else if(!strcmp(gcCommand,"Create File Job"))
-                {
-                        ProcesstConfigurationVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy) && guPermLevel>11 && guLoginClient==1)
-			{
-				unsigned uCount=0;
-
-				if(uConfiguration==0)
-					tConfiguration("<blink>Error</blink>: uConfiguration==0!");
-					
-				if(uDatacenter==0 && uServer!=0)
-					tConfiguration("<blink>Error</blink>: uDatacenter==0!");
-					
-
-				sscanf(ForeignKey("tConfiguration","uModDate",uConfiguration),"%lu",&uActualModDate);
-
-				if(uModDate==uActualModDate)
-				{
-					uCount=CreateConfigurationFileJob(uConfiguration,uDatacenter,
-							uServer);
-					if(uCount)
-						tConfiguration("CreateConfigurationFileJob() Done");
-					else
-						tConfiguration("<blink>Error</blink>: No jobs created! Too specific?");
-				}
-				else
-				{
-					tConfiguration("This record was modified. Reload it.");
-				}
-			}
-		}
 	}
 
 }//void ExttConfigurationCommands(pentry entries[], int x)
@@ -135,39 +120,30 @@ void ExttConfigurationCommands(pentry entries[], int x)
 
 void ExttConfigurationButtons(void)
 {
-
 	OpenFieldSet("tConfiguration Aux Panel",100);
 	switch(guMode)
         {
                 case 2000:
-			printf("<p><u>Enter required data</u><br>");
+			printf("<p><u>Enter/mod data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
                 break;
 
                 case 2001:
-                        printf("<p>");
+                        printf("<p><u>Think twice</u><br>");
                         printf(LANG_NBB_CONFIRMDEL);
                 break;
 
                 case 2002:
-			printf("<p><u>Review record data</u><br>");
+			printf("<p><u>Review changes</u><br>");
                         printf(LANG_NBB_CONFIRMMOD);
                 break;
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("This table is used for configuration settings used by the "
-				"system that are of a more general nature than tProperty values. "
-				"Like tProperty if a tConfiguration.cLabel has an entry in tGlossary "
-				"then a link will be provided.<p>\n");
+			printf("<p><u>Record Context Info</u><br>");
 			tConfigurationNavList();
-			printf("<p>");
-			htmlGlossaryLink(cLabel);
-
 	}
 	CloseFieldSet();
-
-
 
 }//void ExttConfigurationButtons(void)
 
@@ -197,20 +173,44 @@ void ExttConfigurationGetHook(entry gentries[], int x)
 
 void ExttConfigurationSelect(void)
 {
-	if(guPermLevel>9)
-		ExtSelectPublic("tConfiguration",VAR_LIST_tConfiguration);
-	else
-		ExtSelect("tConfiguration",VAR_LIST_tConfiguration);
+
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tConfiguration ORDER BY"
+				" uConfiguration",
+				VAR_LIST_tConfiguration);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tConfiguration,tClient WHERE tConfiguration.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uConfiguration",
+					VAR_LIST_tConfiguration,uContactParentCompany,uContactParentCompany);
+					
 
 }//void ExttConfigurationSelect(void)
 
 
 void ExttConfigurationSelectRow(void)
 {
-	if(guPermLevel>9)
-		ExtSelectRowPublic("tConfiguration",VAR_LIST_tConfiguration,uConfiguration);
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tConfiguration WHERE uConfiguration=%u",
+			VAR_LIST_tConfiguration,uConfiguration);
 	else
-		ExtSelectRow("tConfiguration",VAR_LIST_tConfiguration,uConfiguration);
+                sprintf(gcQuery,"SELECT %s FROM tConfiguration,tClient"
+                                " WHERE tConfiguration.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tConfiguration.uConfiguration=%u",
+                        		VAR_LIST_tConfiguration
+					,uContactParentCompany,uContactParentCompany
+					,uConfiguration);
 
 }//void ExttConfigurationSelectRow(void)
 
@@ -218,8 +218,20 @@ void ExttConfigurationSelectRow(void)
 void ExttConfigurationListSelect(void)
 {
 	char cCat[512];
+	unsigned uContactParentCompany=0;
+	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
 
-	ExtListSelect("tConfiguration",VAR_LIST_tConfiguration);
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tConfiguration",
+				VAR_LIST_tConfiguration);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tConfiguration,tClient"
+				" WHERE tConfiguration.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tConfiguration
+				,uContactParentCompany
+				,uContactParentCompany);
 
 	//Changes here must be reflected below in ExttConfigurationListFilter()
         if(!strcmp(gcFilter,"uConfiguration"))
@@ -229,7 +241,9 @@ void ExttConfigurationListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tConfiguration.uConfiguration=%u ORDER BY uConfiguration",uConfiguration);
+		sprintf(cCat,"tConfiguration.uConfiguration=%u"
+						" ORDER BY uConfiguration",
+						uConfiguration);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -245,7 +259,7 @@ void ExttConfigurationListSelect(void)
 void ExttConfigurationListFilter(void)
 {
         //Filter
-        printf("&nbsp;&nbsp;&nbsp; Filter on ");
+        printf("&nbsp;&nbsp;&nbsp;Filter on ");
         printf("<select name=gcFilter>");
         if(strcmp(gcFilter,"uConfiguration"))
                 printf("<option>uConfiguration</option>");
@@ -262,19 +276,17 @@ void ExttConfigurationListFilter(void)
 
 void ExttConfigurationNavBar(void)
 {
-	if(uOwner) GetClientOwner(uOwner,&guReseller);
-
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=10)
+	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
 	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy))
+	if(uAllowDel(uOwner,uCreatedBy)) 
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -282,6 +294,7 @@ void ExttConfigurationNavBar(void)
 
 	printf(LANG_NBB_SKIPNEXT);
 	printf(LANG_NBB_SKIPLAST);
+	printf("&nbsp;&nbsp;&nbsp;\n");
 
 }//void ExttConfigurationNavBar(void)
 
@@ -290,14 +303,23 @@ void tConfigurationNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
 
-	sprintf(gcQuery,"SELECT tConfiguration.uConfiguration,tConfiguration.cLabel,"
-			" IFNULL(tDatacenter.cLabel,'AllDatacenters'),IFNULL(tServer.cLabel,'AllNodes')"
-			" FROM tConfiguration"
-			" LEFT JOIN tDatacenter ON tConfiguration.uDatacenter=tDatacenter.uDatacenter"
-			" LEFT JOIN tServer ON tConfiguration.uServer=tServer.uServer"
-			" ORDER BY tConfiguration.cLabel,tConfiguration.uDatacenter,tConfiguration.uServer");
-	mysql_query(&gMysql,gcQuery);
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
+	
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uConfiguration,cLabel FROM tConfiguration ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tConfiguration.uConfiguration,"
+				" tConfiguration.cLabel"
+				" FROM tConfiguration,tClient"
+				" WHERE tConfiguration.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
+        mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
         	printf("<p><u>tConfigurationNavList</u><br>\n");
@@ -311,56 +333,12 @@ void tConfigurationNavList(void)
         	printf("<p><u>tConfigurationNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tConfiguration&"
-					"uConfiguration=%s>%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tConfiguration"
+				"&uConfiguration=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
         mysql_free_result(res);
 
 }//void tConfigurationNavList(void)
 
 
-unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uServer)
-{
-	unsigned uCount=0;	
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	//All datacenters and all servers
-	if(uDatacenter==0 && uServer==0)
-		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,0 FROM tServer");
-	//Single selected datacenter and every server of that datacenter
-	else if(uDatacenter!=0 && uServer==0)
-		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,0 FROM tServer WHERE"
-			" tServer.uDatacenter=%u",uDatacenter);
-	//Single selected datacenter server
-	else if(uDatacenter!=0 && uServer!=0)
-		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer,0 FROM tServer WHERE"
-			" tServer.uDatacenter=%u AND tServer.uServer=%u",uDatacenter,uServer);
-	else if(uDatacenter==0 && uServer!=0)
-		sprintf(gcQuery,"SELECT tServer.uDatacenter,tServer.uServer FROM tServer WHERE"
-			" tServer.uServer=%u",uServer);
-	else if(1)
-		htmlPlainTextError("Unexpected CreateConfigurationFileJob() uDatacenter,uServer combination");
-
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-        res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateConfigurationFileJob()',cJobName='InstallConfigFile'"
-			",uDatacenter=%s,uServer=%s"
-			",cJobData='uConfiguration=%u;',uJobDate=UNIX_TIMESTAMP(NOW())+60"
-			",uJobStatus=1"
-			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				field[0],field[1],uConfiguration,guLoginClient,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		uCount++;
-	}
-        mysql_free_result(res);
-
-	return(uCount);
-
-}//unsigned CreateConfigurationFileJob()

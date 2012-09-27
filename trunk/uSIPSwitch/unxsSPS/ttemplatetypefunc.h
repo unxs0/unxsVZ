@@ -1,12 +1,12 @@
 /*
 FILE
-	$Id: ttemplatetypefunc.h 1380 2010-04-27 15:02:47Z Gary $
+	$Id: ttemplatetypefunc.h 1953 2012-05-22 15:03:17Z Colin $
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
-	GPLv2 license applies. See LICENSE file.
+AUTHOR
+	(C) 2001-2009 Gary Wallis for Unixservice.
+ 
 */
 
 //ModuleFunctionProtos()
@@ -27,68 +27,81 @@ void ExtProcesstTemplateTypeVars(pentry entries[], int x)
 
 void ExttTemplateTypeCommands(pentry entries[], int x)
 {
+
 	if(!strcmp(gcFunction,"tTemplateTypeTools"))
 	{
 		//ModuleFunctionProcess()
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
 	                        ProcesstTemplateTypeVars(entries,x);
                         	guMode=2000;
 	                        tTemplateType(LANG_NB_CONFIRMNEW);
 			}
+			else
+				tTemplateType("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
+				unsigned uContactParentCompany=0;
                         	ProcesstTemplateTypeVars(entries,x);
-
+				GetClientOwner(guLoginClient,&uContactParentCompany);
+				
                         	guMode=2000;
 				//Check entries here
                         	guMode=0;
 
 				uTemplateType=0;
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				NewtTemplateType(0);
 			}
+			else
+				tTemplateType("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstTemplateTypeVars(entries,x);
-			if(guPermLevel>=12 && guLoginClient==1)
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
 				tTemplateType(LANG_NB_CONFIRMDEL);
 			}
+			else
+				tTemplateType("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstTemplateTypeVars(entries,x);
-			if(guPermLevel>=12 && guLoginClient==1)
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
 				DeletetTemplateType();
 			}
+			else
+				tTemplateType("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstTemplateTypeVars(entries,x);
-			if(guPermLevel>=12)
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tTemplateType(LANG_NB_CONFIRMMOD);
 			}
+			else
+				tTemplateType("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstTemplateTypeVars(entries,x);
-			if(guPermLevel>=12)
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
 				//Check entries here
@@ -97,6 +110,8 @@ void ExttTemplateTypeCommands(pentry entries[], int x)
 				uModBy=guLoginClient;
 				ModtTemplateType();
 			}
+			else
+				tTemplateType("<blink>Error</blink>: Denied by permissions settings");
                 }
 	}
 
@@ -124,7 +139,8 @@ void ExttTemplateTypeButtons(void)
                 break;
 
 		default:
-
+			printf("<u>Table Tips</u><br>");
+			printf("<p><u>Record Context Info</u><br>");
 			tTemplateTypeNavList();
 	}
 	CloseFieldSet();
@@ -157,14 +173,44 @@ void ExttTemplateTypeGetHook(entry gentries[], int x)
 
 void ExttTemplateTypeSelect(void)
 {
-	ExtSelectPublic("tTemplateType",VAR_LIST_tTemplateType);
+
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tTemplateType ORDER BY"
+				" uTemplateType",
+				VAR_LIST_tTemplateType);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tTemplateType,tClient WHERE tTemplateType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uTemplateType",
+					VAR_LIST_tTemplateType,uContactParentCompany,uContactParentCompany);
+					
 
 }//void ExttTemplateTypeSelect(void)
 
 
 void ExttTemplateTypeSelectRow(void)
 {
-	ExtSelectRowPublic("tTemplateType",VAR_LIST_tTemplateType,uTemplateType);
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tTemplateType WHERE uTemplateType=%u",
+			VAR_LIST_tTemplateType,uTemplateType);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tTemplateType,tClient"
+                                " WHERE tTemplateType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tTemplateType.uTemplateType=%u",
+                        		VAR_LIST_tTemplateType
+					,uContactParentCompany,uContactParentCompany
+					,uTemplateType);
 
 }//void ExttTemplateTypeSelectRow(void)
 
@@ -172,14 +218,31 @@ void ExttTemplateTypeSelectRow(void)
 void ExttTemplateTypeListSelect(void)
 {
 	char cCat[512];
-
-	ExtListSelectPublic("tTemplateType",VAR_LIST_tTemplateType);
+	unsigned uContactParentCompany=0;
 	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tTemplateType",
+				VAR_LIST_tTemplateType);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tTemplateType,tClient"
+				" WHERE tTemplateType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tTemplateType
+				,uContactParentCompany
+				,uContactParentCompany);
+
 	//Changes here must be reflected below in ExttTemplateTypeListFilter()
         if(!strcmp(gcFilter,"uTemplateType"))
         {
                 sscanf(gcCommand,"%u",&uTemplateType);
-		sprintf(cCat," WHERE tTemplateType.uTemplateType=%u ORDER BY uTemplateType",
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tTemplateType.uTemplateType=%u"
+						" ORDER BY uTemplateType",
 						uTemplateType);
 		strcat(gcQuery,cCat);
         }
@@ -213,19 +276,17 @@ void ExttTemplateTypeListFilter(void)
 
 void ExttTemplateTypeNavBar(void)
 {
-	if(uOwner) GetClientOwner(uOwner,&guReseller);
-
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=12 && !guListMode)
+	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(guPermLevel>=12)
+	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if(guPermLevel>=12 && guLoginClient==1)
+	if(uAllowDel(uOwner,uCreatedBy)) 
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -242,9 +303,22 @@ void tTemplateTypeNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
 
-	ExtSelectPublic("tTemplateType","tTemplateType.uTemplateType,tTemplateType.cLabel");
-
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
+	
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uTemplateType,cLabel FROM tTemplateType ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tTemplateType.uTemplateType,"
+				" tTemplateType.cLabel"
+				" FROM tTemplateType,tClient"
+				" WHERE tTemplateType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -259,9 +333,12 @@ void tTemplateTypeNavList(void)
         	printf("<p><u>tTemplateTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tTemplateType&uTemplateType=%s>%s</a><br>\n",
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tTemplateType"
+				"&uTemplateType=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}
         mysql_free_result(res);
 
 }//void tTemplateTypeNavList(void)
+
+

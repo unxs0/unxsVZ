@@ -1,44 +1,45 @@
 /*
 FILE
-	tDatacenter source code of unxsSPS.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tdatacenter.c 1493 2010-06-08 15:32:14Z Gary $
+	$Id: module.c 2115 2012-09-19 14:11:03Z Gary $
 PURPOSE
 	Schema dependent RAD generated file.
-	Program app functionality in tdatacenterfunc.h while 
-	RAD is still to be used.
+	Program app functionality can be developed in tdatacenterfunc.h
+	while unxsSPS can still to be used to change this schema dependent file.
+AUTHOR
+	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
+TEMPLATE VARS AND FUNCTIONS
+	ModuleCreateQuery
+	ModuleInsertQuery
+	ModuleListPrint
+	ModuleListTable
+	ModuleLoadVars
+	ModuleProcVars
+	ModuleInput
+	ModuleUpdateQuery
+	ModuleVars
+	ModuleVarList
+	cProject
+	cTableKey
+	cTableName
+	cTableNameLC
+	cTableTitle
 */
 
 
 #include "mysqlrad.h"
-void GetConfiguration(const char *cName,char *cValue,
-		unsigned uDatacenter,
-		unsigned uServer,
-		unsigned uContainer,
-		unsigned uHtml);
 
 //Table Variables
-//Table Variables
-//uDatacenter: Primary Key
 static unsigned uDatacenter=0;
-//cLabel: Short label
 static char cLabel[33]={""};
-//uStatus: Status of Datacenter
-static unsigned uStatus=0;
-//uOwner: Record owner
 static unsigned uOwner=0;
-//uCreatedBy: uClient for last insert
+#define StandardFields
 static unsigned uCreatedBy=0;
-//uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
-//uModBy: uClient for last update
 static unsigned uModBy=0;
-//uModDate: Unix seconds date last update
 static time_t uModDate=0;
 
 
-
-#define VAR_LIST_tDatacenter "tDatacenter.uDatacenter,tDatacenter.cLabel,tDatacenter.uStatus,tDatacenter.uOwner,tDatacenter.uCreatedBy,tDatacenter.uCreatedDate,tDatacenter.uModBy,tDatacenter.uModDate"
+#define VAR_LIST_tDatacenter "tDatacenter.uDatacenter,tDatacenter.cLabel,tDatacenter.uOwner,tDatacenter.uCreatedBy,tDatacenter.uCreatedDate,tDatacenter.uModBy,tDatacenter.uModDate"
 
  //Local only
 void Insert_tDatacenter(void);
@@ -67,12 +68,11 @@ void ProcesstDatacenterVars(pentry entries[], int x)
 
 	for(i=0;i<x;i++)
 	{
+		
 		if(!strcmp(entries[i].name,"uDatacenter"))
 			sscanf(entries[i].val,"%u",&uDatacenter);
 		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.32s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uStatus"))
-			sscanf(entries[i].val,"%u",&uStatus);
+			sprintf(cLabel,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -172,7 +172,7 @@ void tDatacenter(const char *cResult)
 			{
 			sprintf(gcQuery,"SELECT _rowid FROM tDatacenter WHERE uDatacenter=%u"
 						,uDatacenter);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -180,20 +180,20 @@ void tDatacenter(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
+			
 		sscanf(field[0],"%u",&uDatacenter);
-		sprintf(cLabel,"%.32s",field[1]);
-		sscanf(field[2],"%u",&uStatus);
-		sscanf(field[3],"%u",&uOwner);
-		sscanf(field[4],"%u",&uCreatedBy);
-		sscanf(field[5],"%lu",&uCreatedDate);
-		sscanf(field[6],"%u",&uModBy);
-		sscanf(field[7],"%lu",&uModDate);
+		sprintf(cLabel,"%.40s",field[1]);
+		sscanf(field[2],"%u",&uOwner);
+		sscanf(field[3],"%u",&uCreatedBy);
+		sscanf(field[4],"%lu",&uCreatedDate);
+		sscanf(field[5],"%u",&uModBy);
+		sscanf(field[6],"%lu",&uModDate);
 
 		}
 
 	}//Internal Skip
 
-	Header_ism3(":: tDatacenter",0);
+	Header_ism3(":: Group of SIP servers",0);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -248,33 +248,12 @@ void tDatacenter(const char *cResult)
 
 void tDatacenterInput(unsigned uMode)
 {
-	if(uDatacenter)
-	{
-		char cConfigBuffer[256]={""};
-		char cConfigBuffer2[256]={"/traffic/datacenter.html"};
-		char cGetWhat[64];
 
-		sprintf(cGetWhat,"%.32s-cDatacenterTrafficPNG",cLabel);
-		GetConfiguration(cGetWhat,cConfigBuffer,0,0,0,0);
-		if(!cConfigBuffer[0])
-			GetConfiguration("cDatacenterTrafficDirURL",cConfigBuffer,0,0,0,0);
-		if(cConfigBuffer[0])
-		{
-			sprintf(cGetWhat,"%.32s-cDatacenterHtmlURL",cLabel);
-			GetConfiguration(cGetWhat,cConfigBuffer2,0,0,0,0);
 	
-			OpenRow("Graph","black");
-			printf("<a href=%s><img src=%s border=0></a>\n",cConfigBuffer2,cConfigBuffer);
-			printf("</td></tr>\n");
-		}
-	}
-
-//uContainer
-
-//uDatacenter
+	//uDatacenter uRADType=1001
 	OpenRow(LANG_FL_tDatacenter_uDatacenter,"black");
-	printf("<input title='%s' type=text name=uDatacenter value=%u size=16 maxlength=10 "
-,LANG_FT_tDatacenter_uDatacenter,uDatacenter);
+	printf("<input title='%s' type=text name=uDatacenter value='%u' size=16 maxlength=10 "
+		,LANG_FT_tDatacenter_uDatacenter,uDatacenter);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -282,12 +261,12 @@ void tDatacenterInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uDatacenter value=%u >\n",uDatacenter);
+		printf("<input type=hidden name=uDatacenter value='%u' >\n",uDatacenter);
 	}
-//cLabel
+	//cLabel uRADType=253
 	OpenRow(LANG_FL_tDatacenter_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tDatacenter_cLabel,EncodeDoubleQuotes(cLabel));
+	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
+		,LANG_FT_tDatacenter_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -295,65 +274,32 @@ void tDatacenterInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
-//uStatus
-	OpenRow(LANG_FL_tDatacenter_uStatus,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uStatus value=%u >\n",ForeignKey("tStatus","cLabel",uStatus),uStatus);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uStatus value=%u >\n",ForeignKey("tStatus","cLabel",uStatus),uStatus);
-	}
-//uOwner
+	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tDatacenter_uOwner,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey(TCLIENT,"cLabel",uOwner),uOwner);
-	}
-//uCreatedBy
+	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	//uCreatedBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tDatacenter_uCreatedBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uCreatedBy),uCreatedBy);
-	}
-//uCreatedDate
+	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tDatacenter_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value=%lu >\n",uCreatedDate);
-//uModBy
+	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
+	//uModBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tDatacenter_uModBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey(TCLIENT,"cLabel",uModBy),uModBy);
-	}
-//uModDate
+	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tDatacenter_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
+	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
 	printf("</tr>\n");
-
-
 
 }//void tDatacenterInput(unsigned uMode)
 
@@ -363,27 +309,24 @@ void NewtDatacenter(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uDatacenter FROM tDatacenter WHERE uDatacenter=%u"
-							,uDatacenter);
-	MYSQL_RUN_STORE(res);
+	sprintf(gcQuery,"SELECT uDatacenter FROM tDatacenter WHERE uDatacenter=%u",uDatacenter);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
-		//tDatacenter("<blink>Record already exists");
 		tDatacenter(LANG_NBR_RECEXISTS);
 
-	//insert query
 	Insert_tDatacenter();
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	//sprintf(gcQuery,"New record %u added");
 	uDatacenter=mysql_insert_id(&gMysql);
+#ifdef StandardFields
 	uCreatedDate=luGetCreatedDate("tDatacenter",uDatacenter);
+#endif
 	unxsSPSLog(uDatacenter,"tDatacenter","New");
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uDatacenter);
-	tDatacenter(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uDatacenter);
+		tDatacenter(gcQuery);
 	}
 
 }//NewtDatacenter(unsigned uMode)
@@ -391,10 +334,14 @@ void NewtDatacenter(unsigned uMode)
 
 void DeletetDatacenter(void)
 {
+#ifdef StandardFields
 	sprintf(gcQuery,"DELETE FROM tDatacenter WHERE uDatacenter=%u AND ( uOwner=%u OR %u>9 )"
 					,uDatacenter,guLoginClient,guPermLevel);
-	MYSQL_RUN;
-	//tDatacenter("Record Deleted");
+#else
+	sprintf(gcQuery,"DELETE FROM tDatacenter WHERE uDatacenter=%u AND %u>9 )"
+					,uDatacenter,guPermLevel);
+#endif
+	macro_mySQLQueryHTMLError;
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 		unxsSPSLog(uDatacenter,"tDatacenter","Del");
@@ -411,33 +358,36 @@ void DeletetDatacenter(void)
 
 void Insert_tDatacenter(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tDatacenter SET uDatacenter=%u,cLabel='%s',uStatus=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uDatacenter
+	sprintf(gcQuery,"INSERT INTO tDatacenter SET "
+		"cLabel='%s',"
+		"uOwner=%u,"
+		"uCreatedBy=%u,"
+		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
 			,TextAreaSave(cLabel)
-			,uStatus
 			,uOwner
 			,uCreatedBy
-			);
+		);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Insert_tDatacenter(void)
 
 
 void Update_tDatacenter(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tDatacenter SET uDatacenter=%u,cLabel='%s',uStatus=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
-			uDatacenter
+	sprintf(gcQuery,"UPDATE tDatacenter SET "
+		"cLabel='%s',"
+		"uOwner=%u,"
+		"uModBy=%u,"
+		"uModDate=UNIX_TIMESTAMP(NOW())"
+		" WHERE _rowid=%s"
 			,TextAreaSave(cLabel)
-			,uStatus
+			,uOwner
 			,uModBy
-			,cRowid);
+			,cRowid
+		);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tDatacenter(void)
 
@@ -447,27 +397,45 @@ void ModtDatacenter(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uPreModDate=0;
 
-	sprintf(gcQuery,"SELECT uDatacenter,uModDate FROM tDatacenter WHERE uDatacenter=%u"
-						,uDatacenter);
-	MYSQL_RUN_STORE(res);
+#ifdef StandardFields
+	unsigned uPreModDate=0;
+	//Mod select gcQuery
+	if(guPermLevel<10)
+	sprintf(gcQuery,"SELECT tDatacenter.uDatacenter,"
+				" tDatacenter.uModDate"
+				" FROM tDatacenter,tClient"
+				" WHERE tDatacenter.uDatacenter=%u"
+				" AND tDatacenter.uOwner=tClient.uClient"
+				" AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+					,uDatacenter,guLoginClient,guLoginClient);
+	else
+	sprintf(gcQuery,"SELECT uDatacenter,uModDate FROM tDatacenter"
+				" WHERE uDatacenter=%u"
+					,uDatacenter);
+#else
+	sprintf(gcQuery,"SELECT uDatacenter FROM tDatacenter"
+				" WHERE uDatacenter=%u"
+					,uDatacenter);
+#endif
+
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
-	//if(i<1) tDatacenter("<blink>Record does not exist");
 	if(i<1) tDatacenter(LANG_NBR_RECNOTEXIST);
-	//if(i>1) tDatacenter("<blink>Multiple rows!");
 	if(i>1) tDatacenter(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
+#ifdef StandardFields
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tDatacenter(LANG_NBR_EXTMOD);
+#endif
 
 	Update_tDatacenter(field[0]);
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
+#ifdef StandardFields
 	uModDate=luGetModDate("tDatacenter",uDatacenter);
+#endif
 	unxsSPSLog(uDatacenter,"tDatacenter","Mod");
 	tDatacenter(gcQuery);
 
@@ -481,7 +449,7 @@ void tDatacenterList(void)
 
 	ExttDatacenterListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tDatacenterList",1,"");//1 is auto header list guMode. Opens table!
@@ -494,7 +462,15 @@ void tDatacenterList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uDatacenter<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uStatus<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate"
+		"</tr>");
 
 
 
@@ -512,28 +488,27 @@ void tDatacenterList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		time_t luTime5=strtoul(field[5],NULL,10);
-		char cBuf5[32];
-		if(luTime5)
-			ctime_r(&luTime5,cBuf5);
+				time_t luTime4=strtoul(field[4],NULL,10);
+		char cBuf4[32];
+		if(luTime4)
+			ctime_r(&luTime4,cBuf4);
 		else
-			sprintf(cBuf5,"---");
-		time_t luTime7=strtoul(field[7],NULL,10);
-		char cBuf7[32];
-		if(luTime7)
-			ctime_r(&luTime7,cBuf7);
+			sprintf(cBuf4,"---");
+		time_t luTime6=strtoul(field[6],NULL,10);
+		char cBuf6[32];
+		if(luTime6)
+			ctime_r(&luTime6,cBuf6);
 		else
-			sprintf(cBuf7,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf6,"---");
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
-			,ForeignKey("tStatus","cLabel",strtoul(field[2],NULL,10))
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[3],NULL,10))
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[4],NULL,10))
-			,cBuf5
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[6],NULL,10))
-			,cBuf7
+			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
+			,cBuf4
+			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
+			,cBuf6
 				);
 
 	}
@@ -546,9 +521,17 @@ void tDatacenterList(void)
 
 void CreatetDatacenter(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tDatacenter ( uDatacenter INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '',unique (cLabel), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uStatus INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tDatacenter ("
+		"uDatacenter INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+		"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-}//CreatetDatacenter()
+}//void CreatetDatacenter(void)
+
 

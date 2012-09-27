@@ -1,16 +1,17 @@
 /*
 FILE
 	tAuthorize source code of unxsSPS.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id: tauthorize.c 1666 2011-02-18 00:19:34Z Gary $
+	Built by unxsSPS (C) Gary Wallis 2001-2012
+	$Id: tauthorize.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tauthorizefunc.h while 
-	RAD is still to be used.
+	Web application user authentication and authorization.
+	Closely tied to tclient code.
 */
 
 
 #include "mysqlrad.h"
+
+//Table Variables
 //Table Variables
 //uAuthorize: Primary Key
 static unsigned uAuthorize=0;
@@ -23,13 +24,14 @@ static unsigned uPerm=0;
 //uCertClient: User uClient
 static unsigned uCertClient=0;
 //cPasswd: Encrypted cgi login password
-static char cPasswd[101]={""};
+static char cPasswd[36]={""};
 //cClrPasswd: Optionally used non encrypted login password
 static char cClrPasswd[33]={""};
 //uOwner: Record owner
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
+#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -79,7 +81,7 @@ void ProcesstAuthorizeVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"uCertClient"))
 			sscanf(entries[i].val,"%u",&uCertClient);
 		else if(!strcmp(entries[i].name,"cPasswd"))
-			sprintf(cPasswd,"%.100s",entries[i].val);
+			sprintf(cPasswd,"%.35s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cClrPasswd"))
 			sprintf(cClrPasswd,"%.32s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
@@ -194,7 +196,7 @@ void tAuthorize(const char *cResult)
 		sprintf(cIpMask,"%.20s",field[2]);
 		sscanf(field[3],"%u",&uPerm);
 		sscanf(field[4],"%u",&uCertClient);
-		sprintf(cPasswd,"%.100s",field[5]);
+		sprintf(cPasswd,"%.35s",field[5]);
 		sprintf(cClrPasswd,"%.32s",field[6]);
 		sscanf(field[7],"%u",&uOwner);
 		sscanf(field[8],"%u",&uCreatedBy);
@@ -206,7 +208,7 @@ void tAuthorize(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tAuthorize",0);
+	Header_ism3(":: tAuthorize",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -329,7 +331,7 @@ void tAuthorizeInput(unsigned uMode)
 	}
 //cPasswd
 	OpenRow(LANG_FL_tAuthorize_cPasswd,"black");
-	printf("<input title='%s' type=text name=cPasswd value=\"%s\" size=40 maxlength=100 "
+	printf("<input title='%s' type=text name=cPasswd value=\"%s\" size=40 maxlength=35 "
 ,LANG_FT_tAuthorize_cPasswd,EncodeDoubleQuotes(cPasswd));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -422,8 +424,10 @@ void NewtAuthorize(unsigned uMode)
 	Insert_tAuthorize();
 	//sprintf(gcQuery,"New record %u added");
 	uAuthorize=mysql_insert_id(&gMysql);
+#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tAuthorize",uAuthorize);
 	unxsSPSLog(uAuthorize,"tAuthorize","New");
+#endif
 
 	if(!uMode)
 	{
@@ -436,18 +440,27 @@ void NewtAuthorize(unsigned uMode)
 
 void DeletetAuthorize(void)
 {
+#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uAuthorize=%u AND ( uOwner=%u OR %u>9 )"
 					,uAuthorize,guLoginClient,guPermLevel);
+#else
+	sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uAuthorize=%u"
+					,uAuthorize);
+#endif
 	macro_mySQLQueryHTMLError;
 	//tAuthorize("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
+#ifdef ISM3FIELDS
 		unxsSPSLog(uAuthorize,"tAuthorize","Del");
+#endif
 		tAuthorize(LANG_NBR_RECDELETED);
 	}
 	else
 	{
+#ifdef ISM3FIELDS
 		unxsSPSLog(uAuthorize,"tAuthorize","DelError");
+#endif
 		tAuthorize(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -500,6 +513,7 @@ void ModtAuthorize(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -515,6 +529,11 @@ void ModtAuthorize(void)
 	sprintf(gcQuery,"SELECT uAuthorize,uModDate FROM tAuthorize\
 				WHERE uAuthorize=%u"
 						,uAuthorize);
+#else
+	sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize\
+				WHERE uAuthorize=%u"
+						,uAuthorize);
+#endif
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -524,15 +543,19 @@ void ModtAuthorize(void)
 	if(i>1) tAuthorize(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
+#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tAuthorize(LANG_NBR_EXTMOD);
+#endif
 
 	Update_tAuthorize(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
+#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tAuthorize",uAuthorize);
 	unxsSPSLog(uAuthorize,"tAuthorize","Mod");
+#endif
 	tAuthorize(gcQuery);
 
 }//ModtAuthorize(void)
@@ -613,21 +636,7 @@ void tAuthorizeList(void)
 
 void CreatetAuthorize(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tAuthorize ( "
-			"uAuthorize INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
-			"UNIQUE (cLabel,uOwner),"
-			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
-			"INDEX (uOwner),"
-			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			"cIpMask VARCHAR(20) NOT NULL DEFAULT '',"
-			"uPerm INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uCertClient INT UNSIGNED NOT NULL DEFAULT 0,"
-			"cPasswd VARCHAR(100) NOT NULL DEFAULT '',"
-			"cClrPasswd VARCHAR(32) NOT NULL DEFAULT '' )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tAuthorize ( uAuthorize INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '',unique (cLabel,uOwner), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cIpMask VARCHAR(20) NOT NULL DEFAULT '', uPerm INT UNSIGNED NOT NULL DEFAULT 0, uCertClient INT UNSIGNED NOT NULL DEFAULT 0, cPasswd VARCHAR(35) NOT NULL DEFAULT '', cClrPasswd VARCHAR(32) NOT NULL DEFAULT '' )");
 	macro_mySQLQueryHTMLError;
 
 }//CreatetAuthorize()
