@@ -11,17 +11,19 @@ AUTHOR
 
 //ModuleFunctionProtos()
 
+static unsigned uTargetTable=0;
 
 void tFieldNavList(void);
 
 void ExtProcesstFieldVars(pentry entries[], int x)
 {
-	/*
 	register int i;
 	for(i=0;i<x;i++)
 	{
+		if(!strcmp(entries[i].name,"uTargetTable"))
+			sscanf(entries[i].val,"%u",&uTargetTable);
 	}
-	*/
+	
 }//void ExtProcesstFieldVars(pentry entries[], int x)
 
 
@@ -131,6 +133,22 @@ void ExttFieldCommands(pentry entries[], int x)
 			else
 				tField("<blink>Error</blink>: Denied by permissions settings");
 		}
+		else if(!strcmp(gcCommand,"Copy"))
+                {
+                        ProcesstFieldVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+				if(uTargetTable)
+				{
+					uField=0;
+					uTable=uTargetTable;
+					Insert_tField();
+					tField("Field has been copied");
+				}
+			}
+			else
+				tField("<blink>Error</blink>: Denied by permissions settings");
+		}
 	}
 
 }//void ExttFieldCommands(pentry entries[], int x)
@@ -163,6 +181,12 @@ void ExttFieldButtons(void)
 			printf("<input type=submit class=largeButton"
 				" title='Select and keep this field marked for current work flow'"
 				" name=gcCommand value='Select'>");
+			printf("<p><input type=text "
+				" title='Enter the uTable value'"
+				" name=uTargetTable value='%u'> uTargetTable",uTargetTable);
+			printf("<br><input type=submit class=largeButton"
+				" title='Copy this field to another table as specified above.'"
+				" name=gcCommand value='Copy'>");
 			tFieldNavList();
 	}
 	CloseFieldSet();

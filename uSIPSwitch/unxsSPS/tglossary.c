@@ -2,7 +2,7 @@
 FILE
 	tGlossary source code of unxsSPS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tglossary.c 1282 2010-03-19 15:04:03Z Gary $
+	$Id: tglossary.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tglossaryfunc.h while 
@@ -168,7 +168,7 @@ void tGlossary(const char *cResult)
 			{
 			sprintf(gcQuery,"SELECT _rowid FROM tGlossary WHERE uGlossary=%u"
 						,uGlossary);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -189,7 +189,7 @@ void tGlossary(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tGlossary",0);
+	Header_ism3(":: tGlossary",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -343,7 +343,7 @@ void NewtGlossary(unsigned uMode)
 	sprintf(gcQuery,"SELECT uGlossary FROM tGlossary\
 				WHERE uGlossary=%u"
 							,uGlossary);
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
@@ -378,7 +378,7 @@ void DeletetGlossary(void)
 	sprintf(gcQuery,"DELETE FROM tGlossary WHERE uGlossary=%u"
 					,uGlossary);
 #endif
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 	//tGlossary("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
@@ -410,7 +410,7 @@ void Insert_tGlossary(void)
 			,uCreatedBy
 			);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 	
 }//void Insert_tGlossary(void)
 
@@ -426,7 +426,7 @@ void Update_tGlossary(char *cRowid)
 			,uModBy
 			,cRowid);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tGlossary(void)
 
@@ -457,7 +457,7 @@ void ModtGlossary(void)
 				WHERE uGlossary=%u"
 						,uGlossary);
 #endif
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	//if(i<1) tGlossary("<blink>Record does not exist");
@@ -491,7 +491,7 @@ void tGlossaryList(void)
 
 	ExttGlossaryListSelect();
 	
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tGlossaryList",1,"");//1 is auto header list guMode. Opens table!
@@ -556,8 +556,8 @@ void tGlossaryList(void)
 
 void CreatetGlossary(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGlossary ( uGlossary INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '',INDEX (cLabel), uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cText TEXT NOT NULL DEFAULT '' )");
-	MYSQL_RUN;
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGlossary ( uGlossary INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cText TEXT NOT NULL DEFAULT '' )");
+	macro_mySQLQueryHTMLError;
 
 }//CreatetGlossary()
 

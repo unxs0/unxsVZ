@@ -2,7 +2,7 @@
 FILE
 	tJobStatus source code of unxsSPS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tjobstatus.c 429 2009-08-10 15:05:39Z Gary $
+	$Id: tjobstatus.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tjobstatusfunc.h while 
@@ -22,6 +22,7 @@ static char cLabel[33]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
+#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -161,9 +162,9 @@ void tJobStatus(const char *cResult)
 		{
 			if(guMode==6)
 			{
-				sprintf(gcQuery,"SELECT _rowid FROM tJobStatus WHERE uJobStatus=%u"
+			sprintf(gcQuery,"SELECT _rowid FROM tJobStatus WHERE uJobStatus=%u"
 						,uJobStatus);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -171,18 +172,19 @@ void tJobStatus(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
-			sscanf(field[0],"%u",&uJobStatus);
-			sprintf(cLabel,"%.32s",field[1]);
-			sscanf(field[2],"%u",&uOwner);
-			sscanf(field[3],"%u",&uCreatedBy);
-			sscanf(field[4],"%lu",&uCreatedDate);
-			sscanf(field[5],"%u",&uModBy);
-			sscanf(field[6],"%lu",&uModDate);
+		sscanf(field[0],"%u",&uJobStatus);
+		sprintf(cLabel,"%.32s",field[1]);
+		sscanf(field[2],"%u",&uOwner);
+		sscanf(field[3],"%u",&uCreatedBy);
+		sscanf(field[4],"%lu",&uCreatedDate);
+		sscanf(field[5],"%u",&uModBy);
+		sscanf(field[6],"%lu",&uModDate);
+
 		}
 
 	}//Internal Skip
 
-	Header_ism3(":: tJobStatus",0);
+	Header_ism3(":: tJobStatus",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -323,7 +325,7 @@ void NewtJobStatus(unsigned uMode)
 	sprintf(gcQuery,"SELECT uJobStatus FROM tJobStatus\
 				WHERE uJobStatus=%u"
 							,uJobStatus);
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
@@ -335,13 +337,15 @@ void NewtJobStatus(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uJobStatus=mysql_insert_id(&gMysql);
+#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tJobStatus",uJobStatus);
 	unxsSPSLog(uJobStatus,"tJobStatus","New");
+#endif
 
 	if(!uMode)
 	{
-		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uJobStatus);
-		tJobStatus(gcQuery);
+	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uJobStatus);
+	tJobStatus(gcQuery);
 	}
 
 }//NewtJobStatus(unsigned uMode)
@@ -349,18 +353,27 @@ void NewtJobStatus(unsigned uMode)
 
 void DeletetJobStatus(void)
 {
+#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tJobStatus WHERE uJobStatus=%u AND ( uOwner=%u OR %u>9 )"
 					,uJobStatus,guLoginClient,guPermLevel);
-	MYSQL_RUN;
+#else
+	sprintf(gcQuery,"DELETE FROM tJobStatus WHERE uJobStatus=%u"
+					,uJobStatus);
+#endif
+	macro_mySQLQueryHTMLError;
 	//tJobStatus("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
+#ifdef ISM3FIELDS
 		unxsSPSLog(uJobStatus,"tJobStatus","Del");
+#endif
 		tJobStatus(LANG_NBR_RECDELETED);
 	}
 	else
 	{
+#ifdef ISM3FIELDS
 		unxsSPSLog(uJobStatus,"tJobStatus","DelError");
+#endif
 		tJobStatus(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -369,29 +382,31 @@ void DeletetJobStatus(void)
 
 void Insert_tJobStatus(void)
 {
-	sprintf(gcQuery,"INSERT INTO tJobStatus SET uJobStatus=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,"
-			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+
+	//insert query
+	sprintf(gcQuery,"INSERT INTO tJobStatus SET uJobStatus=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uJobStatus
 			,TextAreaSave(cLabel)
 			,uOwner
 			,uCreatedBy
 			);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Insert_tJobStatus(void)
 
 
 void Update_tJobStatus(char *cRowid)
 {
-	sprintf(gcQuery,"UPDATE tJobStatus SET uJobStatus=%u,cLabel='%s',uModBy=%u,"
-			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+
+	//update query
+	sprintf(gcQuery,"UPDATE tJobStatus SET uJobStatus=%u,cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uJobStatus
 			,TextAreaSave(cLabel)
 			,uModBy
 			,cRowid);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tJobStatus(void)
 
@@ -401,6 +416,7 @@ void ModtJobStatus(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -416,8 +432,13 @@ void ModtJobStatus(void)
 	sprintf(gcQuery,"SELECT uJobStatus,uModDate FROM tJobStatus\
 				WHERE uJobStatus=%u"
 						,uJobStatus);
+#else
+	sprintf(gcQuery,"SELECT uJobStatus FROM tJobStatus\
+				WHERE uJobStatus=%u"
+						,uJobStatus);
+#endif
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	//if(i<1) tJobStatus("<blink>Record does not exist");
@@ -426,14 +447,19 @@ void ModtJobStatus(void)
 	if(i>1) tJobStatus(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
+#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tJobStatus(LANG_NBR_EXTMOD);
+#endif
+
 	Update_tJobStatus(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
+#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tJobStatus",uJobStatus);
 	unxsSPSLog(uJobStatus,"tJobStatus","Mod");
+#endif
 	tJobStatus(gcQuery);
 
 }//ModtJobStatus(void)
@@ -446,7 +472,7 @@ void tJobStatusList(void)
 
 	ExttJobStatusListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tJobStatusList",1,"");//1 is auto header list guMode. Opens table!
@@ -510,8 +536,8 @@ void tJobStatusList(void)
 
 void CreatetJobStatus(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJobStatus ( uJobStatus INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
-	MYSQL_RUN;
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJobStatus ( uJobStatus INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+	macro_mySQLQueryHTMLError;
 	
 }//CreatetJobStatus()
 

@@ -1,12 +1,12 @@
 /*
 FILE
-	$Id: tlogfunc.h 1397 2010-04-29 14:38:27Z Gary $
+	$Id: tlogfunc.h 1953 2012-05-22 15:03:17Z Colin $
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR/LEGAL
-	(C) 2007-2010 Gary Wallis for Unixservice, LLC.
-	GPLv2 license applies. See LICENSE file included.
+AUTHOR
+	(C) 2001-2007 Gary Wallis.
+ 
 */
 
 //ModuleFunctionProtos()
@@ -41,13 +41,10 @@ void ExttLogButtons(void)
 	OpenFieldSet("tLog Aux Panel",100);
 
 	printf("<u>Table Tips</u><br>");
-	printf("This table holds the non-archived logged and MD5 signed operations that have taken place in the system."
-		" Usually data is available here only for the current month. When possible context related info is"
-		" provided below. Current unxsSPS version does not save delete (Del) operation data.<p>"
-		"<a href=unxsSPS.cgi?gcFunction=tLogMonth>tLogMonth</a> allows access to all archived (read-only and"
-		" compressed) monthly tLog data sets. These archives are created from the command line usually by crontab"
-		" operation.");
+	printf("This table holds the non-archived logged and MD5 signed operations that have taken place in the system. Usually data is available here only for the current month. When possible context related info is provided below. Current unxsSPS version does not save delete (Del) operation data.<p><a href=unxsSPS.cgi?gcFunction=tLogMonth>tLogMonth</a> allows access to all archived (read-only and compressed) monthly tLog data sets. These archives are created from the command line usually by crontab operation.");
+
 	LogSummary();
+
 	CloseFieldSet();
 
 }//void ExttLogButtons(void)
@@ -78,14 +75,31 @@ void ExttLogGetHook(entry gentries[], int x)
 
 void ExttLogSelect(void)
 {
-	ExtSelect("tLog",VAR_LIST_tLog);
+        //Set non search gcQuery here for tTableName()
+	if(guPermLevel>=9)
+	sprintf(gcQuery,"SELECT %s FROM tLog ORDER BY\
+					uLog",
+					VAR_LIST_tLog);
+	else
+	sprintf(gcQuery,"SELECT %s FROM tLog WHERE uOwner=%u ORDER BY\
+					uLog",
+					VAR_LIST_tLog,guLoginClient);
 
 }//void ExttLogSelect(void)
 
 
 void ExttLogSelectRow(void)
 {
-	ExtSelectRow("tLog",VAR_LIST_tLog,uLog);
+	if(guPermLevel<10)
+                sprintf(gcQuery,"SELECT %s FROM tLog,tClient \
+                                WHERE tLog.uOwner=tClient.uClient\
+                                AND (tClient.uOwner=%u OR tClient.uClient=%u)\
+                                AND tLog.uLog=%u",
+                        		VAR_LIST_tLog,
+					guLoginClient,guLoginClient,uLog);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tLog WHERE uLog=%u",
+			VAR_LIST_tLog,uLog);
 
 }//void ExttLogSelectRow(void)
 
@@ -94,11 +108,9 @@ void ExttLogListSelect(void)
 {
 	char cCat[512];
 
-	if(guLoginClient!=1 || guPermLevel<12)
-		return;
+	sprintf(gcQuery,"SELECT %s FROM tLog",
+				VAR_LIST_tLog);
 
-	ExtListSelect("tLog",VAR_LIST_tLog);
-	
 	//Changes here must be reflected below in ExttLogListFilter()
         if(!strcmp(gcFilter,"uLog"))
         {
@@ -150,8 +162,7 @@ void ExttLogListSelect(void)
 		unsigned uZone=0;
 
                 sscanf(gcCommand,"%u",&uZone);
-		sprintf(cCat,",tResource WHERE tLog.uTablePK=tResource.uResource AND cTableName='tResource'"
-				" AND tResource.uZone=%u",uZone);
+		sprintf(cCat,",tResource WHERE tLog.uTablePK=tResource.uResource AND cTableName='tResource' AND tResource.uZone=%u",uZone);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -218,8 +229,7 @@ void ExttLogNavBar(void)
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guLoginClient==1 && guPermLevel>=12 && uLog)
-		printf(LANG_NBB_LIST);
+	printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
 	printf(LANG_NBB_SKIPLAST);
@@ -254,8 +264,7 @@ void LogSummary(void)
 			if( strcmp(cLabel,"Del") && uTPK && uZone && uRRType)
 			{
 
-				printf("<a title='Jump to tResource entry' href=unxsSPS.cgi?gcFunction=tResource&"
-					"uResource=%u>tResource</a><blockquote>\n",uTPK);
+				printf("<a title='Jump to tResource entry' href=unxsSPS.cgi?gcFunction=tResource&uResource=%u>tResource</a><blockquote>\n",uTPK);
 				printf("cZone=%s<br>\n",ForeignKey("tZone","cZone",uZone));
 				printf("cName=%s<br>\n",ForeignKey("tResource","cName",uTPK));
 				printf("RRType=%s<br>\n",ForeignKey("tRRType","cLabel",uRRType));
@@ -266,8 +275,7 @@ void LogSummary(void)
 
 			if(uLoginClient)
 			{
-				printf("Contact=<a title='Jump to tClient entry' href=unxsSPS.cgi?gcFunction="
-					"tClient&uClient=%u>%s</a><br></blockquote>\n",uLoginClient,
+				printf("Contact=<a title='Jump to tClient entry' href=unxsSPS.cgi?gcFunction=tClient&uClient=%u>%s</a><br></blockquote>\n",uLoginClient,
 				ForeignKey("tClient","cLabel",uLoginClient));
 			}
 		}

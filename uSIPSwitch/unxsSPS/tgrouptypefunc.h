@@ -1,15 +1,18 @@
 /*
 FILE
-	$Id: tgrouptypefunc.h 1380 2010-04-27 15:02:47Z Gary $
-	(Built initially by unixservice.com mysqlRAD2)
+	$Id: modulefunc.h 2116 2012-09-19 23:00:28Z Gary $
 PURPOSE
 	Non schema-dependent table and application table related functions.
-AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
-	GPLv2 license applies. See LICENSE file.
+AUTHOR
+	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
+TEMPLATE VARS AND FUNCTIONS
+	ModuleFunctionProcess
+	ModuleFunctionProtos
+	cProject
+	cTableKey
+	cTableName
 */
 
-//ModuleFunctionProtos()
 
 
 void tGroupTypeNavList(void);
@@ -30,74 +33,107 @@ void ExttGroupTypeCommands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"tGroupTypeTools"))
 	{
-		//ModuleFunctionProcess()
-
+		
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
 	                        ProcesstGroupTypeVars(entries,x);
                         	guMode=2000;
 	                        tGroupType(LANG_NB_CONFIRMNEW);
 			}
+			else
+				tGroupType("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
+				unsigned uContactParentCompany=0;
                         	ProcesstGroupTypeVars(entries,x);
-
+				GetClientOwner(guLoginClient,&uContactParentCompany);
+				
                         	guMode=2000;
-				//Check entries
+				//Check entries here
                         	guMode=0;
 
 				uGroupType=0;
+#ifdef StandardFields
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
+#endif
 				NewtGroupType(0);
 			}
+			else
+				tGroupType("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstGroupTypeVars(entries,x);
-			if(guPermLevel>=12 && guLoginClient==1)
+#ifdef StandardFields
+			if(uAllowDel(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 	                        guMode=2001;
 				tGroupType(LANG_NB_CONFIRMDEL);
 			}
+			else
+				tGroupType("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstGroupTypeVars(entries,x);
-			if(guPermLevel>=12 && guLoginClient==1)
+#ifdef StandardFields
+			if(uAllowDel(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 				guMode=5;
 				DeletetGroupType();
 			}
+			else
+				tGroupType("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstGroupTypeVars(entries,x);
-			if(guPermLevel>=12)
+#ifdef StandardFields
+			if(uAllowMod(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 				guMode=2002;
 				tGroupType(LANG_NB_CONFIRMMOD);
 			}
+			else
+				tGroupType("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstGroupTypeVars(entries,x);
-			if(guPermLevel>=12)
+#ifdef StandardFields
+			if(uAllowMod(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
                         	guMode=2002;
 				//Check entries here
                         	guMode=0;
 
+#ifdef StandardFields
 				uModBy=guLoginClient;
+#endif
 				ModtGroupType();
 			}
+			else
+				tGroupType("<blink>Error</blink>: Denied by permissions settings");
                 }
 	}
 
@@ -126,11 +162,10 @@ void ExttGroupTypeButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("tGroupType (and it's related tables <a href=?gcFunction=tGroupGlue>"
-				"tGroupGlue</a> and <a href=?gcFunction=tGroup>tGroup</a>)"
-				" provide a way to create"
-				" container and server groups of different types."
-				" These groups can then be used for organizational and/or autonomic purposes.");
+			printf("<p><u>Record Context Info</u><br>");
+			printf("<p><u>Operations</u><br>");
+			//printf("<br><input type=submit class=largeButton title='Sample button help'"
+			//		" name=gcCommand value='Sample Button'>");
 			tGroupTypeNavList();
 	}
 	CloseFieldSet();
@@ -140,39 +175,6 @@ void ExttGroupTypeButtons(void)
 
 void ExttGroupTypeAuxTable(void)
 {
-	if(!uGroupType) return;
-
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	sprintf(gcQuery,"%s Property Panel",cLabel);
-	OpenFieldSet(gcQuery,100);
-	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="
-			PROP_GROUPTYPE
-			" ORDER BY cName",
-				uGroupType);
-
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-
-        res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
-	{
-		printf("<table cols=2>");
-		while((field=mysql_fetch_row(res)))
-		{
-			printf("<tr>\n");
-			printf("<td width=200 valign=top><a class=darkLink href=unxsSPS.cgi?"
-					"gcFunction=tProperty&uProperty=%s&cReturn=tGroupType_%u>"
-					"%s</a></td><td>%s</td>\n",
-						field[0],uGroupType,field[1],field[2]);
-			printf("</tr>\n");
-		}
-		printf("</table>");
-	}
-
-	CloseFieldSet();
 
 }//void ExttGroupTypeAuxTable(void)
 
@@ -196,14 +198,52 @@ void ExttGroupTypeGetHook(entry gentries[], int x)
 
 void ExttGroupTypeSelect(void)
 {
-	ExtSelectPublic("tGroupType",VAR_LIST_tGroupType);
+
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tGroupType ORDER BY"
+				" uGroupType",
+				VAR_LIST_tGroupType);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tGroupType,tClient WHERE tGroupType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uGroupType",
+					VAR_LIST_tGroupType,uContactParentCompany,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT %s FROM tGroupType ORDER BY uGroupType",VAR_LIST_tGroupType);
+#endif
+					
 
 }//void ExttGroupTypeSelect(void)
 
 
 void ExttGroupTypeSelectRow(void)
 {
-	ExtSelectRowPublic("tGroupType",VAR_LIST_tGroupType,uGroupType);
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tGroupType WHERE uGroupType=%u",
+			VAR_LIST_tGroupType,uGroupType);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tGroupType,tClient"
+                                " WHERE tGroupType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tGroupType.uGroupType=%u",
+                        		VAR_LIST_tGroupType
+					,uContactParentCompany,uContactParentCompany
+					,uGroupType);
+#else
+	sprintf(gcQuery,"SELECT %s FROM tGroupType WHERE uGroupType=%u",VAR_LIST_tGroupType,uGroupType);
+#endif
 
 }//void ExttGroupTypeSelectRow(void)
 
@@ -211,14 +251,35 @@ void ExttGroupTypeSelectRow(void)
 void ExttGroupTypeListSelect(void)
 {
 	char cCat[512];
-
-	ExtListSelectPublic("tGroupType",VAR_LIST_tGroupType);
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
 	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tGroupType",
+				VAR_LIST_tGroupType);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tGroupType,tClient"
+				" WHERE tGroupType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tGroupType
+				,uContactParentCompany
+				,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT %s FROM tGroupType",VAR_LIST_tGroupType);
+#endif
+
 	//Changes here must be reflected below in ExttGroupTypeListFilter()
         if(!strcmp(gcFilter,"uGroupType"))
         {
                 sscanf(gcCommand,"%u",&uGroupType);
-		sprintf(cCat," WHERE tGroupType.uGroupType=%u ORDER BY uGroupType",
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tGroupType.uGroupType=%u"
+						" ORDER BY uGroupType",
 						uGroupType);
 		strcat(gcQuery,cCat);
         }
@@ -252,22 +313,32 @@ void ExttGroupTypeListFilter(void)
 
 void ExttGroupTypeNavBar(void)
 {
-	if(uOwner) GetClientOwner(uOwner,&guReseller);
-
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=12 && !guListMode)
+	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(guPermLevel>=12)
+#ifdef StandardFields
+	if(uAllowMod(uOwner,uCreatedBy))
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_MODIFY);
 
-	if(guPermLevel>=12 && guLoginClient==1)
+#ifdef StandardFields
+	if(uAllowDel(uOwner,uCreatedBy)) 
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_DELETE);
 
+#ifdef StandardFields
 	if(uOwner)
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
@@ -281,9 +352,26 @@ void tGroupTypeNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
 
-	ExtSelectPublic("tGroupType","tGroupType.uGroupType,tGroupType.cLabel");
-
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
+	
+#ifdef StandardFields
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uGroupType,cLabel FROM tGroupType ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tGroupType.uGroupType,"
+				" tGroupType.cLabel"
+				" FROM tGroupType,tClient"
+				" WHERE tGroupType.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT uGroupType,cLabel FROM tGroupType ORDER BY cLabel");
+#endif
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -298,8 +386,9 @@ void tGroupTypeNavList(void)
         	printf("<p><u>tGroupTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupType&uGroupType=%s>%s</a><br>\n",
-					field[0],field[1]);
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupType"
+				"&uGroupType=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
         mysql_free_result(res);
 

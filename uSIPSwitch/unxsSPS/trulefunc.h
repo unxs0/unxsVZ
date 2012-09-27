@@ -1,15 +1,18 @@
 /*
 FILE
-	$Id: tmonthfunc.h 1380 2010-04-27 15:02:47Z Gary $
-	(Built initially by unixservice.com mysqlRAD2)
+	$Id: modulefunc.h 2116 2012-09-19 23:00:28Z Gary $
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2007 Gary Wallis.
- 
+	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
+TEMPLATE VARS AND FUNCTIONS
+	ModuleFunctionProcess
+	ModuleFunctionProtos
+	cProject
+	cTableKey
+	cTableName
 */
 
-//ModuleFunctionProtos()
 
 
 void tRuleNavList(void);
@@ -30,86 +33,107 @@ void ExttRuleCommands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"tRuleTools"))
 	{
-		//ModuleFunctionProcess()
-
+		
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
 	                        ProcesstRuleVars(entries,x);
                         	guMode=2000;
 	                        tRule(LANG_NB_CONFIRMNEW);
 			}
+			else
+				tRule("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
+				unsigned uContactParentCompany=0;
                         	ProcesstRuleVars(entries,x);
-
+				GetClientOwner(guLoginClient,&uContactParentCompany);
+				
                         	guMode=2000;
 				//Check entries here
                         	guMode=0;
 
 				uRule=0;
+#ifdef StandardFields
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
+#endif
 				NewtRule(0);
 			}
+			else
+				tRule("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstRuleVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+			if(uAllowDel(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 	                        guMode=2001;
 				tRule(LANG_NB_CONFIRMDEL);
 			}
+			else
+				tRule("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstRuleVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+			if(uAllowDel(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 				guMode=5;
 				DeletetRule();
 			}
+			else
+				tRule("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstRuleVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+			if(uAllowMod(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 				guMode=2002;
 				tRule(LANG_NB_CONFIRMMOD);
 			}
+			else
+				tRule("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstRuleVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+			if(uAllowMod(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
                         	guMode=2002;
 				//Check entries here
                         	guMode=0;
 
+#ifdef StandardFields
 				uModBy=guLoginClient;
+#endif
 				ModtRule();
 			}
+			else
+				tRule("<blink>Error</blink>: Denied by permissions settings");
                 }
 	}
 
@@ -137,7 +161,11 @@ void ExttRuleButtons(void)
                 break;
 
 		default:
-
+			printf("<u>Table Tips</u><br>");
+			printf("<p><u>Record Context Info</u><br>");
+			printf("<p><u>Operations</u><br>");
+			//printf("<br><input type=submit class=largeButton title='Sample button help'"
+			//		" name=gcCommand value='Sample Button'>");
 			tRuleNavList();
 	}
 	CloseFieldSet();
@@ -170,15 +198,52 @@ void ExttRuleGetHook(entry gentries[], int x)
 
 void ExttRuleSelect(void)
 {
-        //Set non search gcQuery here for tTableName()
-	ExtSelect("tRule",VAR_LIST_tRule);
+
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tRule ORDER BY"
+				" uRule",
+				VAR_LIST_tRule);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tRule,tClient WHERE tRule.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uRule",
+					VAR_LIST_tRule,uContactParentCompany,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT %s FROM tRule ORDER BY uRule",VAR_LIST_tRule);
+#endif
+					
 
 }//void ExttRuleSelect(void)
 
 
 void ExttRuleSelectRow(void)
 {
-	ExtSelectRow("tRule",VAR_LIST_tRule,uRule);
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tRule WHERE uRule=%u",
+			VAR_LIST_tRule,uRule);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tRule,tClient"
+                                " WHERE tRule.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tRule.uRule=%u",
+                        		VAR_LIST_tRule
+					,uContactParentCompany,uContactParentCompany
+					,uRule);
+#else
+	sprintf(gcQuery,"SELECT %s FROM tRule WHERE uRule=%u",VAR_LIST_tRule,uRule);
+#endif
 
 }//void ExttRuleSelectRow(void)
 
@@ -186,18 +251,36 @@ void ExttRuleSelectRow(void)
 void ExttRuleListSelect(void)
 {
 	char cCat[512];
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
 
-	ExtListSelect("tRule",VAR_LIST_tRule);
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tRule",
+				VAR_LIST_tRule);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tRule,tClient"
+				" WHERE tRule.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tRule
+				,uContactParentCompany
+				,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT %s FROM tRule",VAR_LIST_tRule);
+#endif
 
 	//Changes here must be reflected below in ExttRuleListFilter()
         if(!strcmp(gcFilter,"uRule"))
         {
                 sscanf(gcCommand,"%u",&uRule);
-		if(guLoginClient==1 && guPermLevel>11)
-			strcat(gcQuery," WHERE ");
-		else
+		if(guPermLevel<10)
 			strcat(gcQuery," AND ");
-		sprintf(cCat,"tRule.uRule=%u ORDER BY uRule",uRule);
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tRule.uRule=%u"
+						" ORDER BY uRule",
+						uRule);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -230,26 +313,32 @@ void ExttRuleListFilter(void)
 
 void ExttRuleNavBar(void)
 {
-	if(uOwner) GetClientOwner(uOwner,&guReseller);
-
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=12 && !guListMode)
+	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+	if(uAllowMod(uOwner,uCreatedBy))
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_MODIFY);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+	if(uAllowDel(uOwner,uCreatedBy)) 
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_DELETE);
 
+#ifdef StandardFields
 	if(uOwner)
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
@@ -263,9 +352,26 @@ void tRuleNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
 
-	ExtSelect("tRule","tRule.uRule,tRule.cLabel");
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
 	
+#ifdef StandardFields
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uRule,cLabel FROM tRule ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tRule.uRule,"
+				" tRule.cLabel"
+				" FROM tRule,tClient"
+				" WHERE tRule.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT uRule,cLabel FROM tRule ORDER BY cLabel");
+#endif
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -280,10 +386,9 @@ void tRuleNavList(void)
         	printf("<p><u>tRuleNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tRule\
-&uRule=%s>%s</a><br>\n",field[0],field[1]);
-	        }
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tRule"
+				"&uRule=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
         mysql_free_result(res);
 

@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: cgi.c 785 2009-10-05 20:14:43Z Gary $
+	$Id: cgi.c 1953 2012-05-22 15:03:17Z Colin $
 LEGAL
 	Public Domain
 	
@@ -111,6 +111,23 @@ void plustospace(char *str) {
     register int x;
 
     for(x=0;str[x];x++) if(str[x] == '+') str[x] = ' ';
+}
+
+int getline(char *s, int n, FILE *f) {
+    register int i=0;
+
+    while(1) {
+        s[i] = (char)fgetc(f);
+
+        if(s[i] == CR)
+            s[i] = fgetc(f);
+
+        if((s[i] == 0x4) || (s[i] == LF) || (i == (n-1))) {
+            s[i] = '\0';
+            return (feof(f) ? 1 : 0);
+        }
+        ++i;
+    }
 }
 
 int ind(char *s, char c) {

@@ -7,12 +7,3 @@
 7	Cancelled	1	1	1020545191	0	0
 8	Modified	1	1	1020555448	0	0
 9	Modification Problem	1	1	1020699074	0	0
-11	Initial Setup	1	1	1218977896	0	0
-21	Awaiting Migration	1	1	1219445731	0	0
-31	Stopped	1	1	1222810148	0	0
-41	Awaiting Stop	1	1	1222811503	0	0
-51	Awaiting Template Creation	1	1	1223045868	0	0
-61	Awaiting Hostname Changes	1	1	1239317359	0	0
-71	Awaiting IP Changes	1	1	1239317382	0	0
-81	Awaiting Clone	1	1	1245161509	0	0
-91	Awaiting Failover	1	1	1255030521	0	0

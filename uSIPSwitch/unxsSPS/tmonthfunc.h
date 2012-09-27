@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: tmonthfunc.h 1380 2010-04-27 15:02:47Z Gary $
+	$Id: tmonthfunc.h 1953 2012-05-22 15:03:17Z Colin $
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Gary Wallis for Unixservice.
  
 */
 
@@ -34,74 +34,74 @@ void ExttMonthCommands(pentry entries[], int x)
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
 	                        ProcesstMonthVars(entries,x);
                         	guMode=2000;
 	                        tMonth(LANG_NB_CONFIRMNEW);
 			}
+			else
+				tMonth("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
+				unsigned uContactParentCompany=0;
                         	ProcesstMonthVars(entries,x);
-
+				GetClientOwner(guLoginClient,&uContactParentCompany);
+				
                         	guMode=2000;
 				//Check entries here
                         	guMode=0;
 
 				uMonth=0;
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				NewtMonth(0);
 			}
+			else
+				tMonth("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstMonthVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 	                        guMode=2001;
 				tMonth(LANG_NB_CONFIRMDEL);
 			}
+			else
+				tMonth("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstMonthVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
 				DeletetMonth();
 			}
+			else
+				tMonth("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstMonthVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				guMode=2002;
 				tMonth(LANG_NB_CONFIRMMOD);
 			}
+			else
+				tMonth("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstMonthVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
 				//Check entries here
@@ -110,6 +110,8 @@ void ExttMonthCommands(pentry entries[], int x)
 				uModBy=guLoginClient;
 				ModtMonth();
 			}
+			else
+				tMonth("<blink>Error</blink>: Denied by permissions settings");
                 }
 	}
 
@@ -137,7 +139,8 @@ void ExttMonthButtons(void)
                 break;
 
 		default:
-
+			printf("<u>Table Tips</u><br>");
+			printf("<p><u>Record Context Info</u><br>");
 			tMonthNavList();
 	}
 	CloseFieldSet();
@@ -170,15 +173,44 @@ void ExttMonthGetHook(entry gentries[], int x)
 
 void ExttMonthSelect(void)
 {
-        //Set non search gcQuery here for tTableName()
-	ExtSelect("tMonth",VAR_LIST_tMonth);
+
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tMonth ORDER BY"
+				" uMonth",
+				VAR_LIST_tMonth);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tMonth,tClient WHERE tMonth.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uMonth",
+					VAR_LIST_tMonth,uContactParentCompany,uContactParentCompany);
+					
 
 }//void ExttMonthSelect(void)
 
 
 void ExttMonthSelectRow(void)
 {
-	ExtSelectRow("tMonth",VAR_LIST_tMonth,uMonth);
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tMonth WHERE uMonth=%u",
+			VAR_LIST_tMonth,uMonth);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tMonth,tClient"
+                                " WHERE tMonth.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tMonth.uMonth=%u",
+                        		VAR_LIST_tMonth
+					,uContactParentCompany,uContactParentCompany
+					,uMonth);
 
 }//void ExttMonthSelectRow(void)
 
@@ -186,18 +218,32 @@ void ExttMonthSelectRow(void)
 void ExttMonthListSelect(void)
 {
 	char cCat[512];
+	unsigned uContactParentCompany=0;
+	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
 
-	ExtListSelect("tMonth",VAR_LIST_tMonth);
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tMonth",
+				VAR_LIST_tMonth);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tMonth,tClient"
+				" WHERE tMonth.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tMonth
+				,uContactParentCompany
+				,uContactParentCompany);
 
 	//Changes here must be reflected below in ExttMonthListFilter()
         if(!strcmp(gcFilter,"uMonth"))
         {
                 sscanf(gcCommand,"%u",&uMonth);
-		if(guLoginClient==1 && guPermLevel>11)
-			strcat(gcQuery," WHERE ");
-		else
+		if(guPermLevel<10)
 			strcat(gcQuery," AND ");
-		sprintf(cCat,"tMonth.uMonth=%u ORDER BY uMonth",uMonth);
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tMonth.uMonth=%u"
+						" ORDER BY uMonth",
+						uMonth);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -230,23 +276,17 @@ void ExttMonthListFilter(void)
 
 void ExttMonthNavBar(void)
 {
-	if(uOwner) GetClientOwner(uOwner,&guReseller);
-
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=12 && !guListMode)
+	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+	if(uAllowDel(uOwner,uCreatedBy)) 
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -263,9 +303,22 @@ void tMonthNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
 
-	ExtSelect("tMonth","tMonth.uMonth,tMonth.cLabel");
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
 	
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uMonth,cLabel FROM tMonth ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tMonth.uMonth,"
+				" tMonth.cLabel"
+				" FROM tMonth,tClient"
+				" WHERE tMonth.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -280,10 +333,9 @@ void tMonthNavList(void)
         	printf("<p><u>tMonthNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tMonth\
-&uMonth=%s>%s</a><br>\n",field[0],field[1]);
-	        }
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tMonth"
+				"&uMonth=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
         mysql_free_result(res);
 

@@ -2,14 +2,11 @@
 FILE
 	tLog source code template
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tlog.c 1407 2010-05-02 13:54:31Z Gary $
+	$Id: tlog.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tlogfunc.h while 
 	RAD is still to be used.
-AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
-	GPLv2 license applies. See LICENSE file included.
 */
 
 
@@ -46,6 +43,7 @@ static char cServer[65]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
+#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -212,7 +210,7 @@ void tLog(const char *cResult)
 			{
 			sprintf(gcQuery,"SELECT _rowid FROM tLog WHERE uLog=%u"
 						,uLog);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -242,7 +240,7 @@ void tLog(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tLog",0);
+	Header_ism3(":: tLog",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -301,7 +299,7 @@ void tLogInput(unsigned uMode)
 //uLog
 	OpenRow(LANG_FL_tLog_uLog,"black");
 	printf("<input title='%s' type=text name=uLog value=%u size=16 maxlength=10 "
-		,LANG_FT_tLog_uLog,uLog);
+,LANG_FT_tLog_uLog,uLog);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -314,7 +312,7 @@ void tLogInput(unsigned uMode)
 //cLabel
 	OpenRow(LANG_FL_tLog_cLabel,"black");
 	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=64 maxlength=64 "
-		,LANG_FT_tLog_cLabel,EncodeDoubleQuotes(cLabel));
+,LANG_FT_tLog_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -333,7 +331,7 @@ void tLogInput(unsigned uMode)
 //cHash
 	OpenRow(LANG_FL_tLog_cHash,"black");
 	printf("<input title='%s' type=text name=cHash value=\"%s\" size=40 maxlength=32 "
-		,LANG_FT_tLog_cHash,EncodeDoubleQuotes(cHash));
+,LANG_FT_tLog_cHash,EncodeDoubleQuotes(cHash));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -346,7 +344,7 @@ void tLogInput(unsigned uMode)
 //uPermLevel
 	OpenRow(LANG_FL_tLog_uPermLevel,"black");
 	printf("<input title='%s' type=text name=uPermLevel value=%u size=16 maxlength=32 "
-		,LANG_FT_tLog_uPermLevel,uPermLevel);
+,LANG_FT_tLog_uPermLevel,uPermLevel);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -359,7 +357,7 @@ void tLogInput(unsigned uMode)
 //uLoginClient
 	OpenRow(LANG_FL_tLog_uLoginClient,"black");
 	printf("<input title='%s' type=text name=uLoginClient value=%u size=16 maxlength=32 "
-		,LANG_FT_tLog_uLoginClient,uLoginClient);
+,LANG_FT_tLog_uLoginClient,uLoginClient);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -372,7 +370,7 @@ void tLogInput(unsigned uMode)
 //cLogin
 	OpenRow(LANG_FL_tLog_cLogin,"black");
 	printf("<input title='%s' type=text name=cLogin value=\"%s\" size=40 maxlength=32 "
-		,LANG_FT_tLog_cLogin,EncodeDoubleQuotes(cLogin));
+,LANG_FT_tLog_cLogin,EncodeDoubleQuotes(cLogin));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -385,7 +383,7 @@ void tLogInput(unsigned uMode)
 //cHost
 	OpenRow(LANG_FL_tLog_cHost,"black");
 	printf("<input title='%s' type=text name=cHost value=\"%s\" size=40 maxlength=32 "
-		,LANG_FT_tLog_cHost,EncodeDoubleQuotes(cHost));
+,LANG_FT_tLog_cHost,EncodeDoubleQuotes(cHost));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -398,7 +396,7 @@ void tLogInput(unsigned uMode)
 //uTablePK
 	OpenRow(LANG_FL_tLog_uTablePK,"black");
 	printf("<input title='%s' type=text name=uTablePK value=\"%s\" size=40 maxlength=32 "
-		,LANG_FT_tLog_uTablePK,EncodeDoubleQuotes(uTablePK));
+,LANG_FT_tLog_uTablePK,EncodeDoubleQuotes(uTablePK));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -411,7 +409,7 @@ void tLogInput(unsigned uMode)
 //cTableName
 	OpenRow(LANG_FL_tLog_cTableName,"black");
 	printf("<input title='%s' type=text name=cTableName value=\"%s\" size=40 maxlength=32 "
-		,LANG_FT_tLog_cTableName,EncodeDoubleQuotes(cTableName));
+,LANG_FT_tLog_cTableName,EncodeDoubleQuotes(cTableName));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -424,7 +422,7 @@ void tLogInput(unsigned uMode)
 //cMessage
 	OpenRow(LANG_FL_tLog_cMessage,"black");
 	printf("<input title='%s' type=text name=cMessage value=\"%s\" size=40 maxlength=255 "
-		,LANG_FT_tLog_cMessage,EncodeDoubleQuotes(cMessage));
+,LANG_FT_tLog_cMessage,EncodeDoubleQuotes(cMessage));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -437,7 +435,7 @@ void tLogInput(unsigned uMode)
 //cServer
 	OpenRow(LANG_FL_tLog_cServer,"black");
 	printf("<input title='%s' type=text name=cServer value=\"%s\" size=40 maxlength=64 "
-		,LANG_FT_tLog_cServer,EncodeDoubleQuotes(cServer));
+,LANG_FT_tLog_cServer,EncodeDoubleQuotes(cServer));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -450,17 +448,23 @@ void tLogInput(unsigned uMode)
 //uOwner
 	OpenRow(LANG_FL_tLog_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
-		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	{
+	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	}
 	else
-		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	{
+	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	}
 //uCreatedBy
 	OpenRow(LANG_FL_tLog_uCreatedBy,"black");
 	if(guPermLevel>=20 && uMode)
-		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",
-			ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	{
+	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	}
 	else
-		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",
-			ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	{
+	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	}
 //uCreatedDate
 	OpenRow(LANG_FL_tLog_uCreatedDate,"black");
 	if(uCreatedDate)
@@ -471,9 +475,13 @@ void tLogInput(unsigned uMode)
 //uModBy
 	OpenRow(LANG_FL_tLog_uModBy,"black");
 	if(guPermLevel>=20 && uMode)
-		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	{
+	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	}
 	else
-		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	{
+	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	}
 //uModDate
 	OpenRow(LANG_FL_tLog_uModDate,"black");
 	if(uModDate)
@@ -483,6 +491,8 @@ void tLogInput(unsigned uMode)
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
 
+
+
 }//void tLogInput(unsigned uMode)
 
 
@@ -491,8 +501,10 @@ void NewtLog(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uLog FROM tLog WHERE uLog=%u",uLog);
-	MYSQL_RUN_STORE(res);
+	sprintf(gcQuery,"SELECT uLog FROM tLog\
+				WHERE uLog=%u"
+							,uLog);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
@@ -504,8 +516,10 @@ void NewtLog(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uLog=mysql_insert_id(&gMysql);
+#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tLog",uLog);
 	unxsSPSLog(uLog,"tLog","New");
+#endif
 
 	if(!uMode)
 	{
@@ -518,17 +532,27 @@ void NewtLog(unsigned uMode)
 
 void DeletetLog(void)
 {
-	sprintf(gcQuery,"DELETE FROM tLog WHERE uLog=%u AND ( uOwner=%u OR %u>9 )",uLog,guLoginClient,guPermLevel);
-	MYSQL_RUN;
+#ifdef ISM3FIELDS
+	sprintf(gcQuery,"DELETE FROM tLog WHERE uLog=%u AND ( uOwner=%u OR %u>9 )"
+					,uLog,guLoginClient,guPermLevel);
+#else
+	sprintf(gcQuery,"DELETE FROM tLog WHERE uLog=%u"
+					,uLog);
+#endif
+	macro_mySQLQueryHTMLError;
 	//tLog("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
+#ifdef ISM3FIELDS
 		unxsSPSLog(uLog,"tLog","Del");
+#endif
 		tLog(LANG_NBR_RECDELETED);
 	}
 	else
 	{
+#ifdef ISM3FIELDS
 		unxsSPSLog(uLog,"tLog","DelError");
+#endif
 		tLog(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -537,9 +561,9 @@ void DeletetLog(void)
 
 void Insert_tLog(void)
 {
-	sprintf(gcQuery,"INSERT INTO tLog SET uLog=%u,cLabel='%s',uLogType=%u,cHash='%s',uPermLevel=%u,uLoginClient=%u,"
-			"cLogin='%s',cHost='%s',uTablePK='%s',cTableName='%s',cMessage='%s',cServer='%s',uOwner=%u,"
-			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+
+	//insert query
+	sprintf(gcQuery,"INSERT INTO tLog SET uLog=%u,cLabel='%s',uLogType=%u,cHash='%s',uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',uTablePK='%s',cTableName='%s',cMessage='%s',cServer='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uLog
 			,TextAreaSave(cLabel)
 			,uLogType
@@ -555,15 +579,17 @@ void Insert_tLog(void)
 			,uOwner
 			,uCreatedBy
 			);
-	MYSQL_RUN;
+
+	macro_mySQLQueryHTMLError;
+
 }//void Insert_tLog(void)
 
 
 void Update_tLog(char *cRowid)
 {
-	sprintf(gcQuery,"UPDATE tLog SET uLog=%u,cLabel='%s',uLogType=%u,cHash='%s',uPermLevel=%u,uLoginClient=%u,"
-			"cLogin='%s',cHost='%s',uTablePK='%s',cTableName='%s',cMessage='%s',cServer='%s',uModBy=%u,"
-			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+
+	//update query
+	sprintf(gcQuery,"UPDATE tLog SET uLog=%u,cLabel='%s',uLogType=%u,cHash='%s',uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',uTablePK='%s',cTableName='%s',cMessage='%s',cServer='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uLog
 			,TextAreaSave(cLabel)
 			,uLogType
@@ -578,7 +604,8 @@ void Update_tLog(char *cRowid)
 			,TextAreaSave(cServer)
 			,uModBy
 			,cRowid);
-	MYSQL_RUN;
+
+	macro_mySQLQueryHTMLError;
 }//void Update_tLog(void)
 
 
@@ -587,17 +614,29 @@ void ModtLog(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
 	if(guPermLevel<10)
-	sprintf(gcQuery,"SELECT tLog.uLog,tLog.uModDate FROM tLog,tClient WHERE tLog.uLog=%u AND"
-			" tLog.uOwner=tClient.uClient AND (tClient.uOwner=%u OR tClient.uClient=%u)",
-				uLog,guLoginClient,guLoginClient);
+	sprintf(gcQuery,"SELECT tLog.uLog,\
+				tLog.uModDate\
+				FROM tLog,tClient\
+				WHERE tLog.uLog=%u\
+				AND tLog.uOwner=tClient.uClient\
+				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+			,uLog,guLoginClient,guLoginClient);
 	else
-		sprintf(gcQuery,"SELECT uLog,uModDate FROM tLog WHERE uLog=%u",uLog);
+	sprintf(gcQuery,"SELECT uLog,uModDate FROM tLog\
+				WHERE uLog=%u"
+						,uLog);
+#else
+	sprintf(gcQuery,"SELECT uLog FROM tLog\
+				WHERE uLog=%u"
+						,uLog);
+#endif
 
-	MYSQL_RUN_STORE(res);	
+	macro_mySQLRunAndStore(res);	
 	i=mysql_num_rows(res);
 
 	//if(i<1) tLog("<blink>Record does not exist");
@@ -606,15 +645,19 @@ void ModtLog(void)
 	if(i>1) tLog(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
+#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tLog(LANG_NBR_EXTMOD);
+#endif
 
 	Update_tLog(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
+#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tLog",uLog);
 	unxsSPSLog(uLog,"tLog","Mod");
+#endif
 	tLog(gcQuery);
 
 }//ModtLog(void)
@@ -627,7 +670,7 @@ void tLogList(void)
 
 	ExttLogListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tLogList",1,"");//1 is auto header list guMode. Opens table!
@@ -640,15 +683,9 @@ void tLogList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uLog<td><font face=arial,helvetica color=white>"
-		"cLabel<td><font face=arial,helvetica color=white>uLogType<td><font face=arial,helvetica color=white>"
-		"cHash<td><font face=arial,helvetica color=white>uPermLevel<td><font face=arial,helvetica color=white>"
-		"uLoginClient<td><font face=arial,helvetica color=white>cLogin<td><font face=arial,helvetica color=white>"
-		"cHost<td><font face=arial,helvetica color=white>uTablePK<td><font face=arial,helvetica color=white>"
-		"cTableName<td><font face=arial,helvetica color=white>cMessage<td><font face=arial,helvetica color=white>"
-		"cServer<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>"
-		"uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>"
-		"uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uLog<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uLogType<td><font face=arial,helvetica color=white>cHash<td><font face=arial,helvetica color=white>uPermLevel<td><font face=arial,helvetica color=white>uLoginClient<td><font face=arial,helvetica color=white>cLogin<td><font face=arial,helvetica color=white>cHost<td><font face=arial,helvetica color=white>uTablePK<td><font face=arial,helvetica color=white>cTableName<td><font face=arial,helvetica color=white>cMessage<td><font face=arial,helvetica color=white>cServer<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+
+
 
 	mysql_data_seek(res,guStart-1);
 
@@ -676,8 +713,7 @@ void tLogList(void)
 			ctime_r(&luTime16,cBuf16);
 		else
 			sprintf(cBuf16,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>"
-			"%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
@@ -697,6 +733,7 @@ void tLogList(void)
 			,ForeignKey("tClient","cLabel",strtoul(field[15],NULL,10))
 			,cBuf16
 				);
+
 	}
 
 	printf("</table></form>\n");
@@ -707,25 +744,8 @@ void tLogList(void)
 
 void CreatetLog(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tLog ("
-			"uTablePK VARCHAR(32) NOT NULL DEFAULT '',"
-			"cHost VARCHAR(32) NOT NULL DEFAULT '',"
-			"uLoginClient INT UNSIGNED NOT NULL DEFAULT 0,"
-			"cLogin VARCHAR(32) NOT NULL DEFAULT '',"
-			"uPermLevel INT UNSIGNED NOT NULL DEFAULT 0,"
-			"cTableName VARCHAR(32) NOT NULL DEFAULT '',"
-			"uLog INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-			"cLabel VARCHAR(64) NOT NULL DEFAULT '',"
-			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
-			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			"cHash VARCHAR(32) NOT NULL DEFAULT '',"
-			"uLogType INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uLogType),"
-			"cMessage VARCHAR(255) NOT NULL DEFAULT '',"
-			"cServer VARCHAR(64) NOT NULL DEFAULT '' )");
-	MYSQL_RUN;
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tLog ( uTablePK VARCHAR(32) NOT NULL DEFAULT '', cHost VARCHAR(32) NOT NULL DEFAULT '', uLoginClient INT UNSIGNED NOT NULL DEFAULT 0, cLogin VARCHAR(32) NOT NULL DEFAULT '', uPermLevel INT UNSIGNED NOT NULL DEFAULT 0, cTableName VARCHAR(32) NOT NULL DEFAULT '', uLog INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(64) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cHash VARCHAR(32) NOT NULL DEFAULT '', uLogType INT UNSIGNED NOT NULL DEFAULT 0,index (uLogType), cMessage VARCHAR(255) NOT NULL DEFAULT '', cServer VARCHAR(64) NOT NULL DEFAULT '' )");
+	macro_mySQLQueryHTMLError;
 
 }//CreatetLog()
 

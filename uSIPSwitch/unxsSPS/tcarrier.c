@@ -1,38 +1,46 @@
 /*
 FILE
-	tCarrier source code of unxsSPS.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tmonth.c 166 2009-06-05 22:10:35Z Dylan $
+	$Id: module.c 2115 2012-09-19 14:11:03Z Gary $
 PURPOSE
 	Schema dependent RAD generated file.
-	Program app functionality in tmonthfunc.h while 
-	RAD is still to be used.
+	Program app functionality can be developed in tcarrierfunc.h
+	while unxsSPS can still to be used to change this schema dependent file.
+AUTHOR
+	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
+TEMPLATE VARS AND FUNCTIONS
+	ModuleCreateQuery
+	ModuleInsertQuery
+	ModuleListPrint
+	ModuleListTable
+	ModuleLoadVars
+	ModuleProcVars
+	ModuleInput
+	ModuleUpdateQuery
+	ModuleVars
+	ModuleVarList
+	cProject
+	cTableKey
+	cTableName
+	cTableNameLC
+	cTableTitle
 */
 
 
 #include "mysqlrad.h"
 
 //Table Variables
-//Table Variables
-//uCarrier: Primary Key
 static unsigned uCarrier=0;
-//cLabel: Name of Archive Table Ex. tNov2009
 static char cLabel[33]={""};
-//uOwner: Record owner
+static char cComment[33]={""};
 static unsigned uOwner=0;
-//uCreatedBy: uClient for last insert
+#define StandardFields
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
-//uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
-//uModBy: uClient for last update
 static unsigned uModBy=0;
-//uModDate: Unix seconds date last update
 static time_t uModDate=0;
 
 
-
-#define VAR_LIST_tCarrier "tCarrier.uCarrier,tCarrier.cLabel,tCarrier.uOwner,tCarrier.uCreatedBy,tCarrier.uCreatedDate,tCarrier.uModBy,tCarrier.uModDate"
+#define VAR_LIST_tCarrier "tCarrier.uCarrier,tCarrier.cLabel,tCarrier.cComment,tCarrier.uOwner,tCarrier.uCreatedBy,tCarrier.uCreatedDate,tCarrier.uModBy,tCarrier.uModDate"
 
  //Local only
 void Insert_tCarrier(void);
@@ -61,10 +69,13 @@ void ProcesstCarrierVars(pentry entries[], int x)
 
 	for(i=0;i<x;i++)
 	{
+		
 		if(!strcmp(entries[i].name,"uCarrier"))
 			sscanf(entries[i].val,"%u",&uCarrier);
 		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.32s",entries[i].val);
+			sprintf(cLabel,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cComment"))
+			sprintf(cComment,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -164,7 +175,7 @@ void tCarrier(const char *cResult)
 			{
 			sprintf(gcQuery,"SELECT _rowid FROM tCarrier WHERE uCarrier=%u"
 						,uCarrier);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -172,19 +183,21 @@ void tCarrier(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
+			
 		sscanf(field[0],"%u",&uCarrier);
 		sprintf(cLabel,"%.32s",field[1]);
-		sscanf(field[2],"%u",&uOwner);
-		sscanf(field[3],"%u",&uCreatedBy);
-		sscanf(field[4],"%lu",&uCreatedDate);
-		sscanf(field[5],"%u",&uModBy);
-		sscanf(field[6],"%lu",&uModDate);
+		sprintf(cComment,"%.32s",field[2]);
+		sscanf(field[3],"%u",&uOwner);
+		sscanf(field[4],"%u",&uCreatedBy);
+		sscanf(field[5],"%lu",&uCreatedDate);
+		sscanf(field[6],"%u",&uModBy);
+		sscanf(field[7],"%lu",&uModDate);
 
 		}
 
 	}//Internal Skip
 
-	Header_ism3(":: tCarrier",0);
+	Header_ism3(":: Outgoing termination carriers",0);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -240,10 +253,11 @@ void tCarrier(const char *cResult)
 void tCarrierInput(unsigned uMode)
 {
 
-//uCarrier
+	
+	//uCarrier uRADType=1001
 	OpenRow(LANG_FL_tCarrier_uCarrier,"black");
-	printf("<input title='%s' type=text name=uCarrier value=%u size=16 maxlength=10 "
-,LANG_FT_tCarrier_uCarrier,uCarrier);
+	printf("<input title='%s' type=text name=uCarrier value='%u' size=16 maxlength=10 "
+		,LANG_FT_tCarrier_uCarrier,uCarrier);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -251,12 +265,12 @@ void tCarrierInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uCarrier value=%u >\n",uCarrier);
+		printf("<input type=hidden name=uCarrier value='%u' >\n",uCarrier);
 	}
-//cLabel
+	//cLabel uRADType=253
 	OpenRow(LANG_FL_tCarrier_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tCarrier_cLabel,EncodeDoubleQuotes(cLabel));
+	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
+		,LANG_FT_tCarrier_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -264,55 +278,45 @@ void tCarrierInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
-//uOwner
+	//cComment uRADType=253
+	OpenRow(LANG_FL_tCarrier_cComment,"black");
+	printf("<input title='%s' type=text name=cComment value='%s' size=40 maxlength=31 "
+		,LANG_FT_tCarrier_cComment,EncodeDoubleQuotes(cComment));
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cComment value='%s'>\n",EncodeDoubleQuotes(cComment));
+	}
+	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tCarrier_uOwner,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
-//uCreatedBy
+	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	//uCreatedBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tCarrier_uCreatedBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
-//uCreatedDate
+	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tCarrier_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value=%lu >\n",uCreatedDate);
-//uModBy
+	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
+	//uModBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tCarrier_uModBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-//uModDate
+	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tCarrier_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
+	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
 	printf("</tr>\n");
-
-
 
 }//void tCarrierInput(unsigned uMode)
 
@@ -322,30 +326,24 @@ void NewtCarrier(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uCarrier FROM tCarrier\
-				WHERE uCarrier=%u"
-							,uCarrier);
-	MYSQL_RUN_STORE(res);
+	sprintf(gcQuery,"SELECT uCarrier FROM tCarrier WHERE uCarrier=%u",uCarrier);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
-		//tCarrier("<blink>Record already exists");
 		tCarrier(LANG_NBR_RECEXISTS);
 
-	//insert query
 	Insert_tCarrier();
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	//sprintf(gcQuery,"New record %u added");
 	uCarrier=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
+#ifdef StandardFields
 	uCreatedDate=luGetCreatedDate("tCarrier",uCarrier);
-	unxsSPSLog(uCarrier,"tCarrier","New");
 #endif
+	unxsSPSLog(uCarrier,"tCarrier","New");
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uCarrier);
-	tCarrier(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uCarrier);
+		tCarrier(gcQuery);
 	}
 
 }//NewtCarrier(unsigned uMode)
@@ -353,27 +351,22 @@ void NewtCarrier(unsigned uMode)
 
 void DeletetCarrier(void)
 {
-#ifdef ISM3FIELDS
+#ifdef StandardFields
 	sprintf(gcQuery,"DELETE FROM tCarrier WHERE uCarrier=%u AND ( uOwner=%u OR %u>9 )"
 					,uCarrier,guLoginClient,guPermLevel);
 #else
-	sprintf(gcQuery,"DELETE FROM tCarrier WHERE uCarrier=%u"
-					,uCarrier);
+	sprintf(gcQuery,"DELETE FROM tCarrier WHERE uCarrier=%u AND %u>9 )"
+					,uCarrier,guPermLevel);
 #endif
-	MYSQL_RUN;
-	//tCarrier("Record Deleted");
+	macro_mySQLQueryHTMLError;
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsSPSLog(uCarrier,"tCarrier","Del");
-#endif
 		tCarrier(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsSPSLog(uCarrier,"tCarrier","DelError");
-#endif
 		tCarrier(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -382,31 +375,40 @@ void DeletetCarrier(void)
 
 void Insert_tCarrier(void)
 {
-
-	//insert query
-	sprintf(gcQuery,"INSERT INTO tCarrier SET uCarrier=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uCarrier
+	sprintf(gcQuery,"INSERT INTO tCarrier SET "
+		"cLabel='%s',"
+		"cComment='%s',"
+		"uOwner=%u,"
+		"uCreatedBy=%u,"
+		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
 			,TextAreaSave(cLabel)
+			,TextAreaSave(cComment)
 			,uOwner
 			,uCreatedBy
-			);
+		);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Insert_tCarrier(void)
 
 
 void Update_tCarrier(char *cRowid)
 {
-
-	//update query
-	sprintf(gcQuery,"UPDATE tCarrier SET uCarrier=%u,cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
-			uCarrier
+	sprintf(gcQuery,"UPDATE tCarrier SET "
+		"cLabel='%s',"
+		"cComment='%s',"
+		"uOwner=%u,"
+		"uModBy=%u,"
+		"uModDate=UNIX_TIMESTAMP(NOW())"
+		" WHERE _rowid=%s"
 			,TextAreaSave(cLabel)
+			,TextAreaSave(cComment)
+			,uOwner
 			,uModBy
-			,cRowid);
+			,cRowid
+		);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tCarrier(void)
 
@@ -416,50 +418,46 @@ void ModtCarrier(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
-	unsigned uPreModDate=0;
 
+#ifdef StandardFields
+	unsigned uPreModDate=0;
 	//Mod select gcQuery
 	if(guPermLevel<10)
-	sprintf(gcQuery,"SELECT tCarrier.uCarrier,\
-				tCarrier.uModDate\
-				FROM tCarrier,tClient\
-				WHERE tCarrier.uCarrier=%u\
-				AND tCarrier.uOwner=tClient.uClient\
-				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
-			,uCarrier,guLoginClient,guLoginClient);
+	sprintf(gcQuery,"SELECT tCarrier.uCarrier,"
+				" tCarrier.uModDate"
+				" FROM tCarrier,tClient"
+				" WHERE tCarrier.uCarrier=%u"
+				" AND tCarrier.uOwner=tClient.uClient"
+				" AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+					,uCarrier,guLoginClient,guLoginClient);
 	else
-	sprintf(gcQuery,"SELECT uCarrier,uModDate FROM tCarrier\
-				WHERE uCarrier=%u"
-						,uCarrier);
+	sprintf(gcQuery,"SELECT uCarrier,uModDate FROM tCarrier"
+				" WHERE uCarrier=%u"
+					,uCarrier);
 #else
-	sprintf(gcQuery,"SELECT uCarrier FROM tCarrier\
-				WHERE uCarrier=%u"
-						,uCarrier);
+	sprintf(gcQuery,"SELECT uCarrier FROM tCarrier"
+				" WHERE uCarrier=%u"
+					,uCarrier);
 #endif
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
-	//if(i<1) tCarrier("<blink>Record does not exist");
 	if(i<1) tCarrier(LANG_NBR_RECNOTEXIST);
-	//if(i>1) tCarrier("<blink>Multiple rows!");
 	if(i>1) tCarrier(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
+#ifdef StandardFields
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tCarrier(LANG_NBR_EXTMOD);
 #endif
 
 	Update_tCarrier(field[0]);
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
+#ifdef StandardFields
 	uModDate=luGetModDate("tCarrier",uCarrier);
-	unxsSPSLog(uCarrier,"tCarrier","Mod");
 #endif
+	unxsSPSLog(uCarrier,"tCarrier","Mod");
 	tCarrier(gcQuery);
 
 }//ModtCarrier(void)
@@ -472,7 +470,7 @@ void tCarrierList(void)
 
 	ExttCarrierListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tCarrierList",1,"");//1 is auto header list guMode. Opens table!
@@ -485,7 +483,16 @@ void tCarrierList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uCarrier<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uCarrier"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>cComment"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate"
+		"</tr>");
 
 
 
@@ -503,27 +510,28 @@ void tCarrierList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		time_t luTime4=strtoul(field[4],NULL,10);
-		char cBuf4[32];
-		if(luTime4)
-			ctime_r(&luTime4,cBuf4);
+				time_t luTime5=strtoul(field[5],NULL,10);
+		char cBuf5[32];
+		if(luTime5)
+			ctime_r(&luTime5,cBuf5);
 		else
-			sprintf(cBuf4,"---");
-		time_t luTime6=strtoul(field[6],NULL,10);
-		char cBuf6[32];
-		if(luTime6)
-			ctime_r(&luTime6,cBuf6);
+			sprintf(cBuf5,"---");
+		time_t luTime7=strtoul(field[7],NULL,10);
+		char cBuf7[32];
+		if(luTime7)
+			ctime_r(&luTime7,cBuf7);
 		else
-			sprintf(cBuf6,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf7,"---");
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tCarrier&uCarrier=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
-			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
+			,field[2]
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
-			,cBuf4
-			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
-			,cBuf6
+			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
+			,cBuf5
+			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
+			,cBuf7
 				);
 
 	}
@@ -536,8 +544,18 @@ void tCarrierList(void)
 
 void CreatetCarrier(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tCarrier ( uCarrier INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', UNIQUE (cLabel), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
-	MYSQL_RUN;
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tCarrier ("
+		"uCarrier INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+		"cComment VARCHAR(32) NOT NULL DEFAULT '',"
+		"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+}//void CreatetCarrier(void)
 
-}//CreatetCarrier()
 

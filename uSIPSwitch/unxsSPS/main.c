@@ -1,21 +1,21 @@
 /*
 FILE 
-	unxsSPS/main.c
-	$Id: main.c 2020 2012-07-13 22:12:43Z Dylan $
+	main.c
+	$Id: main.c 2082 2012-09-06 01:44:03Z Dylan $
+	unxsRAD created application file for unxsSPS.cgi
 PURPOSE
 	Main cgi interface and common functions used for all the other
 	table tx.c files and their schema independent txfunc.h files -until
-	you mess with them in non standard ways...lol.
+	you mess with them in non standard ways.
 	
-AUTHOR/LEGAL
-	(C) 2001-2012 Unixservice, LLC.
-	GPLv2 license applies. See LICENSE file included.
+LEGAL
+	(C) Gary Wallis 2001-2012. All Rights Reserved.
+	LICENSE file should be included in distribution.
 OTHER
-	Only tested on CentOS 5 and Firefox browser (9.0.1).
-FREE HELP
-	support @ openisp . net
-	supportgrp @ unixservice . com
-	Join mailing list: https://lists.openisp.net/mailman/listinfo/unxsvz
+	Only tested on CentOS 5
+HELP
+	support @ unixservice . com
+
 */
 
 #include "mysqlrad.h"
@@ -25,8 +25,10 @@ FREE HELP
 #include "local.h"
 
 //Global vars
+
 #define SHOWPAGE 30
 MYSQL gMysql;
+MYSQL gMysql2;
 unsigned long gluRowid;
 unsigned guStart;
 unsigned guEnd;
@@ -41,11 +43,11 @@ unsigned guMode;
 int guPermLevel=0;
 unsigned guLoginClient=0;
 unsigned guReseller=0;
-unsigned guCompany=0;
-char gcCompany[100]={""};
 char gcUser[100]={""};
 char gcHost[100]={""};
 char gcHostname[100]={""};
+unsigned guCompany=0;
+char gcCompany[100]={""};
 
 //SSLLoginCookie()
 char gcCookie[1024]={""};
@@ -53,18 +55,21 @@ char gcLogin[100]={""};
 char gcPasswd[100]={""};
 unsigned guSSLCookieLogin=0;
 
+unsigned guCookieProject=0,guCookieTable=0,guCookieField=0;
+void SetSessionCookie(void);
+void GetSessionCookie(void);
+
 char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id: main.c 2020 2012-07-13 22:12:43Z Dylan $";
-char *gcRADStatus="Forked";
+char *gcBuildInfo="$Id: main.c 2082 2012-09-06 01:44:03Z Dylan $";
+char *gcRADStatus="Start";
 
 //Local
 void Footer_ism3(void);
-void Header_ism3(const char *cMsg, int iJs);
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
-const char *ForeignKey2(const char *cTableName, const char *cFieldName, unsigned uKey);
+void Header_ism3(char *cMsg, int iJs);
+const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 char *cEmailInput(char *cInput);
 void GetClientOwner(unsigned uClient, unsigned *uOwner);
 void htmlPlainTextError(const char *cError);
@@ -77,32 +82,30 @@ void DashBoard(const char *cOptionalMsg);
 
 //Only local
 void ConnectDb(void);
-void jsToggleCheckboxes(void);
 void NoSuchFunction(void);
 void unxsSPS(const char *cResult);
 void InitialInstall(void);
 const char *cUserLevel(unsigned uPermLevel);
+
 int iValidLogin(int iMode);
 void SSLCookieLogin(void);
 void SetLogin(void);
-void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt);
+void EncryptPasswdWithSalt(char *cPw, char *cSalt);
 void GetPLAndClient(char *cUser);
 void htmlSSLLogin(void);
 
 //mainfunc.h for symbolic links to this program
 void CalledByAlias(int iArgc,char *cArgv[]);
 
-//Testing globalization
-pentry entries[256];
-entry gentries[16];
-int x;
-
 int main(int iArgc, char *cArgv[])
 {
+	pentry entries[64];
+	entry gentries[16];
 	char *gcl;
+	register int x;
 	int cl=0;
 
-	gethostname(gcHostname, 98);
+	gethostname(gcHostname,98);
 
 	if(!strstr(cArgv[0],"unxsSPS.cgi"))
 		CalledByAlias(iArgc,cArgv);
@@ -151,15 +154,12 @@ int main(int iArgc, char *cArgv[])
 			{
 				printf("Set-Cookie: unxsSPSLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				printf("Set-Cookie: unxsSPSPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsSPSSessionCookie=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
-				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
-				" uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE "
-				" cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
-				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
-				" uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
-					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
-				MYSQL_RUN;
+						"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,"
+						"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+				macro_mySQLQueryHTMLError;
 				gcCookie[0]=0;
                                 guPermLevel=0;
                                 guLoginClient=0;
@@ -169,34 +169,47 @@ int main(int iArgc, char *cArgv[])
                                 htmlSSLLogin();
 			}
 
+			//funcMainGetMenu()
 			if(!strcmp(gcFunction,"tPBX"))
 				ExttPBXGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tDID"))
 				ExttDIDGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tGateway"))
 				ExttGatewayGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tPrefix"))
-				ExttPrefixGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tDatacenter"))
-				ExttDatacenterGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tServer"))
-				ExttServerGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tCDR"))
-				ExttCDRGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tRule"))
 				ExttRuleGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tPrefix"))
+				ExttPrefixGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tCarrier"))
 				ExttCarrierGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tGroupType"))
-				ExttGroupTypeGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tCDR"))
+				ExttCDRGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tCluster"))
+				ExttClusterGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tTimeInterval"))
+				ExttTimeIntervalGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tGroup"))
 				ExttGroupGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tGroupGlue"))
 				ExttGroupGlueGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tGroupType"))
+				ExttGroupTypeGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tClient"))
 				ExttClientGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tAuthorize"))
 				ExttAuthorizeGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tServer"))
+				ExttServerGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tStatus"))
+				ExttStatusGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tConfiguration"))
+				ExttConfigurationGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tJob"))
+				ExttJobGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tJobStatus"))
+				ExttJobStatusGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tGlossary"))
+				ExttGlossaryGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tTemplate"))
 				ExttTemplateGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tTemplateSet"))
@@ -211,20 +224,8 @@ int main(int iArgc, char *cArgv[])
 				ExttLogMonthGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tMonth"))
 				ExttMonthGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tGlossary"))
-				ExttGlossaryGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tJob"))
-				ExttJobGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tJobStatus"))
-				ExttJobStatusGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tStatus"))
-				ExttStatusGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tConfiguration"))
-				ExttConfigurationGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"Dashboard"))
-				unxsSPS("DashBoard");
-			else if(!strcmp(gcFunction,"Glossary"))
-				GlossaryGetHook(gentries,x);
+
+
 		}
 
 		unxsSPS(ISPNAME);
@@ -233,7 +234,7 @@ int main(int iArgc, char *cArgv[])
 
 	//Post method interface
 	cl = atoi(getenv("CONTENT_LENGTH"));
-	for(x=0;cl && (!feof(stdin)) && x<256 ;x++)
+	for(x=0;cl && (!feof(stdin)) && x<64 ;x++)
 	{
 		entries[x].val = fmakeword(stdin,'&',&cl);
 		plustospace(entries[x].val);
@@ -261,20 +262,27 @@ int main(int iArgc, char *cArgv[])
                 SSLCookieLogin();
 
 	//Main Post Menu
-	tDatacenterCommands(entries,x);
-	tServerCommands(entries,x);
-	tCarrierCommands(entries,x);
-	tDIDCommands(entries,x);
+	//funcMainPostFunctions()
 	tPBXCommands(entries,x);
+	tDIDCommands(entries,x);
 	tGatewayCommands(entries,x);
 	tRuleCommands(entries,x);
-	tCDRCommands(entries,x);
 	tPrefixCommands(entries,x);
-	tGroupTypeCommands(entries,x);
+	tCarrierCommands(entries,x);
+	tCDRCommands(entries,x);
+	tClusterCommands(entries,x);
+	tTimeIntervalCommands(entries,x);
 	tGroupCommands(entries,x);
 	tGroupGlueCommands(entries,x);
+	tGroupTypeCommands(entries,x);
 	tClientCommands(entries,x);
 	tAuthorizeCommands(entries,x);
+	tServerCommands(entries,x);
+	tStatusCommands(entries,x);
+	tConfigurationCommands(entries,x);
+	tJobCommands(entries,x);
+	tJobStatusCommands(entries,x);
+	tGlossaryCommands(entries,x);
 	tTemplateCommands(entries,x);
 	tTemplateSetCommands(entries,x);
 	tTemplateTypeCommands(entries,x);
@@ -282,11 +290,6 @@ int main(int iArgc, char *cArgv[])
 	tLogTypeCommands(entries,x);
 	tLogMonthCommands(entries,x);
 	tMonthCommands(entries,x);
-	tGlossaryCommands(entries,x);
-	tJobCommands(entries,x);
-	tJobStatusCommands(entries,x);
-	tStatusCommands(entries,x);
-	tConfigurationCommands(entries,x);
 
 
 	iExtMainCommands(entries,x);
@@ -304,13 +307,9 @@ void unxsSPS(const char *cResult)
 	Header_ism3("Main",0);
 
         if(cResult[0])
-	{
 		DashBoard(cResult);
-	}
         else
-	{
                 ExtMainContent();
-	}
 
 	Footer_ism3();
 
@@ -320,8 +319,99 @@ void unxsSPS(const char *cResult)
 void StyleSheet(void)
 {
 	printf("<style type=\"text/css\">\n");
-	printf("<!--\n");
+	printf( "input.first {\n"
+		"background-image: url(/images/buttons/first.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;        /* make the cursor like hovering over an <a> element */\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.back {\n"
+		"background-image: url(/images/buttons/back.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.next {\n"
+		"background-image: url(/images/buttons/next.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.last {\n"
+		"background-image: url(/images/buttons/last.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.new {\n"
+		"background-image: url(/images/buttons/new.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.modify {\n"
+		"background-image: url(/images/buttons/edit.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.delete {\n"
+		"background-image: url(/images/buttons/delete.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.list {\n"
+		"background-image: url(/images/buttons/list.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+		"input.refresh {\n"
+		"background-image: url(/images/buttons/refresh.png);\n "
+		"background-color: transparent;\n"
+		"background-repeat: no-repeat;\n"
+		"border: none;\n"
+		"cursor: pointer;\n"
+		"height: 32px;\n"
+		"width: 32px;\n"
+		"color: transparent;\n"
+		"}\n"
+	);
 
+	printf("input.smallButton {width:50px;}\n");
 	printf("input.smallButton {width:50px;}\n");
 	printf("input.medButton {width:100px;}\n");
 	printf("input.largeButton {width:150px;}\n");
@@ -370,7 +460,9 @@ void StyleSheet(void)
 
 	printf("#menutab\n");
 	printf("{\n");
-	printf("\tbackground: #e5e5e5 url('/images/hairline.gif') repeat-x bottom center;\n");
+	//Behind tabs background e.g. to the right of menu tabs
+	//printf("\tbackground: #e5e5e5 url('/images/hairline.gif') repeat-x bottom center;\n");
+	printf("\tbackground: #EAF3C1 url('/images/hairline.gif') repeat-x bottom center;\n");
 	printf("\tborder-top: 0px solid #BEBFBF;\n");
 	printf("\tborder-right: 1px solid #BEBFBF;\n");
 	printf("\tmargin-top: 8px;\n");
@@ -392,7 +484,7 @@ void StyleSheet(void)
 	printf("#menutab li\n");
 	printf("{\n");
 	printf("\tfloat: left;\n");
-	printf("\tbackground: url('/images/left.gif') no-repeat left top;\n");
+	printf("\tbackground: url('/images/left_grn.gif') no-repeat left top;\n");
 	printf("\tmargin: 0;\n");
 	printf("\tpadding: 0 0 0 9px;\n");
 	printf("}\n");
@@ -401,9 +493,9 @@ void StyleSheet(void)
 	printf("{\n");
 	printf("\tfloat:left;\n");
 	printf("\tdisplay: block;\n");
-	printf("\tbackground: url('/images/right.gif') no-repeat right top;\n");
+	printf("\tbackground: url('/images/right_grn.gif') no-repeat right top;\n");
 	printf("\tpadding: 5px 15px 2px 6px;\n");
-	printf("\tcolor: #222;\n");
+	printf("\tcolor: #222;\n");//tab text color
 	printf("\ttext-decoration: none;\n");
 	printf("}\n");
 
@@ -414,7 +506,7 @@ void StyleSheet(void)
 
 	printf("#menutab a.last\n");
 	printf("{\n");
-	printf("\tbackground: url('/images/right_last.gif') no-repeat right top;\n");
+	printf("\tbackground: url('/images/right_last_grn.gif') no-repeat right top;\n");
 	printf("\tpadding: 5px 17px 2px 6px;\n");
 	printf("}\n");
 
@@ -436,7 +528,6 @@ void StyleSheet(void)
 	printf("\ttext-decoration: none;\n");
 	printf("}\n");
 
-	printf("-->\n");
 	printf("</style>\n");
 
 }//void StyleSheet(void)
@@ -444,26 +535,12 @@ void StyleSheet(void)
 
 void jsCalendarHeader(void)
 {
-        printf("<link rel='stylesheet' type='text/css' media='all' href='/css/calendar-blue.css'/>\n");
+        printf("<link rel='stylesheet' type='text/css' media='all' href='/js/calendar-blue.css'/>\n");
         printf("<script type='text/javascript' src='/js/calendar.js'></script>\n");
         printf("<script type='text/javascript' src='/js/calendar-en.js'></script>\n");
         printf("<script type='text/javascript' src='/js/calendar-setup.js'></script>\n");
+
 }//void jsCalendarHeader(void)
-
-
-void jsToggleCheckboxes(void)
-{
-        printf("<script>"
-		"function checkAll(checkname, toggle)"
-		"{"
-		"	for (i = 0; i < checkname.length; i++)"
-		"	if( checkname[i].name.indexOf(\"NoCA\")==(-1) )"
-		"	{"
-		"		checkname[i].checked = toggle.checked? true:false"
-		"	}"
-		"}"
-		"</script>");
-}//void jsToggleCheckboxes(void)
 
 
 void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
@@ -472,31 +549,26 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
         if(!uMode)
                 sprintf(cMode,"disabled");
 
-        printf("<input id='%s' class='field_input' type='text' name='%s' value='%s' size=40 maxlength=31"
-		" style='display: ; vertical-align: middle; ' %s >\n",cInputName,cInputName,cValue,cMode);
+        printf("<input id='%s' class='field_input' type='text' name='%s' value='%s' size=40 style='display: ; \
+                vertical-align: middle; ' %s >\n",cInputName,cInputName,cValue,cMode);
 
         if(uMode)
         {
-                printf("<img date_trigger=1 class=record_button date_field='%s' id='date_trigger_%s_501'"
-			" src=\"/images/calendar.gif\""
-			//Can't find swapClass function have to ask Hugo...
-			//" onmouseout=\"swapClass(event); this.src='/images/calendar.gif'\""
-			//" onmouseover=\"swapClass(event); this.src='/images/calendar_mo.gif'\""
-			" onmousedown=\"this.style.top='1px'; this.style.left='1px'\""
-			" onmouseup=\"this.style.top='0px'; this.style.left='0px'\""
-			" style=\"position: relative; vertical-align: middle; display: ;\""
-			" title='Select date'/>\n",cInputName,cInputName);
-                printf("<script type='text/javascript'>\n" 
-                        "Calendar.setup({\n"
-                        "\tinputField     :    '%s',\n"
-                        "\tifFormat : '%%Y-%%m-%%d',\n"
-                        "\tbutton         :    'date_trigger_%s_501',\n"
-                        "\talign          :    'bR',\n"
-                        "\tsingleClick    :    true,\n"
-                        "\tweekNumbers    :    false,\n"
-                        "\tstep           :    1,\n"
-                        "\ttimeFormat : 12\n"
-                        "});</script>\n",cInputName,cInputName);
+                printf("<img date_trigger='1' class='record_button' date_field='%s' id='date_trigger_%s_501' src='/images/calendar.gif' \
+                        onmouseout='swapClass(event); this.src='/images/calendar.gif' ' onmouseover='swapClass(event); this.src='/images/calendar_mo.gif' \
+                        onmousedown='this.style.top = '1px'; this.style.left = '1px'' onmouseup='this.style.top = '0px'; this.style.left = '0px'' \
+                        style='position: relative; vertical-align: middle; display: ; ' title='Date selector'/>\n",cInputName,cInputName);
+                printf("<script type='text/javascript'>\n \
+                        Calendar.setup({\n \
+                        inputField     :    '%s',\n \
+                        ifFormat : '%%Y-%%m-%%d',\n \
+                        button         :    'date_trigger_%s_501',\n \
+                        align          :    'bR',\n \
+                        singleClick    :    true,\n \
+                        weekNumbers    :    false,\n \
+                        step           :    1,\n \
+                        timeFormat : 12\n \
+                        });</script>\n",cInputName,cInputName);
         }
         else
                 printf("<input type=hidden name='%s' value='%s'>\n",cInputName,cValue);
@@ -504,66 +576,83 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 }//void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 
 
-void Header_ism3(const char *title, int iJs)
+void Header_ism3(char *title, int js)
 {
 	printf("Content-type: text/html\n\n");
-	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\""
-			" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-        printf("<html><head><title>"HEADER_TITLE" %s %s </title>",gcHostname,title);
+	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
+        printf("<html><head><title>unxsSPS %s </title>",title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
-        if(iJs==1)
+        if(js)
                 jsCalendarHeader();
-        else if(iJs==2)
-		jsToggleCheckboxes();
-	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
-	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/unxssps.ico>\n");
-	printf("</head><body><form name=formMain action=unxsSPS.cgi method=post><blockquote>\n");
-	printf("<img src=/images/unxssps.jpg title='Unixservice SIP proxy server manager'>&nbsp;&nbsp;\n");
 
-	//ModuleRAD3NavBars()
+	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/rad.ico>"
+		"</head><body><form action=unxsSPS.cgi method=post><blockquote>\n");
+
+	//Open header table
+	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td valign=bottom><img src=/images/rad.png>\n");
+
+	//funcMainNavBars()
 	if(!strcmp(gcFunction,"tPBX") || !strcmp(gcFunction,"tPBXTools") ||
 			!strcmp(gcFunction,"tPBXList"))
 		ExttPBXNavBar();
-	else if(!strcmp(gcFunction,"tGateway") || !strcmp(gcFunction,"tGatewayTools") ||
-			!strcmp(gcFunction,"tGatewayList"))
-		ExttGatewayNavBar();
-	else if(!strcmp(gcFunction,"tPrefix") || !strcmp(gcFunction,"tPrefixTools") ||
-			!strcmp(gcFunction,"tPrefixList"))
-		ExttPrefixNavBar();
 	else if(!strcmp(gcFunction,"tDID") || !strcmp(gcFunction,"tDIDTools") ||
 			!strcmp(gcFunction,"tDIDList"))
 		ExttDIDNavBar();
-	else if(!strcmp(gcFunction,"tCDR") || !strcmp(gcFunction,"tCDRTools") ||
-			!strcmp(gcFunction,"tCDRList"))
-		ExttCDRNavBar();
+	else if(!strcmp(gcFunction,"tGateway") || !strcmp(gcFunction,"tGatewayTools") ||
+			!strcmp(gcFunction,"tGatewayList"))
+		ExttGatewayNavBar();
 	else if(!strcmp(gcFunction,"tRule") || !strcmp(gcFunction,"tRuleTools") ||
 			!strcmp(gcFunction,"tRuleList"))
 		ExttRuleNavBar();
+	else if(!strcmp(gcFunction,"tPrefix") || !strcmp(gcFunction,"tPrefixTools") ||
+			!strcmp(gcFunction,"tPrefixList"))
+		ExttPrefixNavBar();
 	else if(!strcmp(gcFunction,"tCarrier") || !strcmp(gcFunction,"tCarrierTools") ||
 			!strcmp(gcFunction,"tCarrierList"))
 		ExttCarrierNavBar();
-	else if(!strcmp(gcFunction,"tServer") || !strcmp(gcFunction,"tServerTools") ||
-			!strcmp(gcFunction,"tServerList"))
-		ExttServerNavBar();
-	else if(!strcmp(gcFunction,"tDatacenter") || !strcmp(gcFunction,"tDatacenterTools") ||
-			!strcmp(gcFunction,"tDatacenterList"))
-		ExttDatacenterNavBar();
-	else if(!strcmp(gcFunction,"tGroupType") || !strcmp(gcFunction,"tGroupTypeTools") ||
-			!strcmp(gcFunction,"tGroupTypeList"))
-		ExttGroupTypeNavBar();
+	else if(!strcmp(gcFunction,"tCDR") || !strcmp(gcFunction,"tCDRTools") ||
+			!strcmp(gcFunction,"tCDRList"))
+		ExttCDRNavBar();
+	else if(!strcmp(gcFunction,"tCluster") || !strcmp(gcFunction,"tClusterTools") ||
+			!strcmp(gcFunction,"tClusterList"))
+		ExttClusterNavBar();
+	else if(!strcmp(gcFunction,"tTimeInterval") || !strcmp(gcFunction,"tTimeIntervalTools") ||
+			!strcmp(gcFunction,"tTimeIntervalList"))
+		ExttTimeIntervalNavBar();
 	else if(!strcmp(gcFunction,"tGroup") || !strcmp(gcFunction,"tGroupTools") ||
 			!strcmp(gcFunction,"tGroupList"))
 		ExttGroupNavBar();
 	else if(!strcmp(gcFunction,"tGroupGlue") || !strcmp(gcFunction,"tGroupGlueTools") ||
 			!strcmp(gcFunction,"tGroupGlueList"))
 		ExttGroupGlueNavBar();
+	else if(!strcmp(gcFunction,"tGroupType") || !strcmp(gcFunction,"tGroupTypeTools") ||
+			!strcmp(gcFunction,"tGroupTypeList"))
+		ExttGroupTypeNavBar();
 	else if(!strcmp(gcFunction,"tClient") || !strcmp(gcFunction,"tClientTools") ||
 			!strcmp(gcFunction,"tClientList"))
 		ExttClientNavBar();
 	else if(!strcmp(gcFunction,"tAuthorize") || !strcmp(gcFunction,"tAuthorizeTools") ||
 			!strcmp(gcFunction,"tAuthorizeList"))
 		ExttAuthorizeNavBar();
+	else if(!strcmp(gcFunction,"tServer") || !strcmp(gcFunction,"tServerTools") ||
+			!strcmp(gcFunction,"tServerList"))
+		ExttServerNavBar();
+	else if(!strcmp(gcFunction,"tStatus") || !strcmp(gcFunction,"tStatusTools") ||
+			!strcmp(gcFunction,"tStatusList"))
+		ExttStatusNavBar();
+	else if(!strcmp(gcFunction,"tConfiguration") || !strcmp(gcFunction,"tConfigurationTools") ||
+			!strcmp(gcFunction,"tConfigurationList"))
+		ExttConfigurationNavBar();
+	else if(!strcmp(gcFunction,"tJob") || !strcmp(gcFunction,"tJobTools") ||
+			!strcmp(gcFunction,"tJobList"))
+		ExttJobNavBar();
+	else if(!strcmp(gcFunction,"tJobStatus") || !strcmp(gcFunction,"tJobStatusTools") ||
+			!strcmp(gcFunction,"tJobStatusList"))
+		ExttJobStatusNavBar();
+	else if(!strcmp(gcFunction,"tGlossary") || !strcmp(gcFunction,"tGlossaryTools") ||
+			!strcmp(gcFunction,"tGlossaryList"))
+		ExttGlossaryNavBar();
 	else if(!strcmp(gcFunction,"tTemplate") || !strcmp(gcFunction,"tTemplateTools") ||
 			!strcmp(gcFunction,"tTemplateList"))
 		ExttTemplateNavBar();
@@ -585,42 +674,30 @@ void Header_ism3(const char *title, int iJs)
 	else if(!strcmp(gcFunction,"tMonth") || !strcmp(gcFunction,"tMonthTools") ||
 			!strcmp(gcFunction,"tMonthList"))
 		ExttMonthNavBar();
-	else if(!strcmp(gcFunction,"tGlossary") || !strcmp(gcFunction,"tGlossaryTools") ||
-			!strcmp(gcFunction,"tGlossaryList"))
-		ExttGlossaryNavBar();
-	else if(!strcmp(gcFunction,"tJob") || !strcmp(gcFunction,"tJobTools") ||
-			!strcmp(gcFunction,"tJobList"))
-		ExttJobNavBar();
-	else if(!strcmp(gcFunction,"tJobStatus") || !strcmp(gcFunction,"tJobStatusTools") ||
-			!strcmp(gcFunction,"tJobStatusList"))
-		ExttJobStatusNavBar();
-	else if(!strcmp(gcFunction,"tStatus") || !strcmp(gcFunction,"tStatusTools") ||
-			!strcmp(gcFunction,"tStatusList"))
-		ExttStatusNavBar();
-	else if(!strcmp(gcFunction,"tConfiguration") || !strcmp(gcFunction,"tConfigurationTools") ||
-			!strcmp(gcFunction,"tConfigurationList"))
-		ExttConfigurationNavBar();
 
 
 	//Login info
-	//printf("<font size=3><b>unxsSPS</b></font> \n ");
-	if(!guPermLevel)
-	{
-		printf("&nbsp;&nbsp;&nbsp;<font color=red>Your IP address %s has been logged</font>",gcHost);
-	}
-	else
-	{
-		printf("&nbsp;&nbsp;&nbsp;<font color=red>%s ",gcUser);
-		if(strcmp(gcUser,gcCompany)) printf("(%s) ",gcCompany);
-		printf("logged in from %s [%s]</font>",gcHost,cUserLevel(guPermLevel));
-	}
+	printf("<font size=3><b>unxsSPS</b></font> \n ");
+	printf("&nbsp;&nbsp;&nbsp;<font color=red>%s logged in from %s [%s]</font>",
+							gcUser,gcHost,cUserLevel(guPermLevel));
 
 	//Logout link
 	if(guSSLCookieLogin)
-	{
 		printf(" <a title='Erase login cookies' href=unxsSPS.cgi?gcFunction=Logout>Logout</a> ");
-		printf(" <a title='Quick dashboard link' href=unxsSPS.cgi?gcFunction=Dashboard>Dashboard</a> ");
-	}
+
+	//close first col
+	printf("</td><td align=right valign=bottom>\n");
+
+	//Workflow cookie display
+	//funcConfiguration(funcConfiguration:MainCookieDisplay)
+        printf("%s %s %s",
+                ForeignKey("tPBX","cHostname",guCookieField),
+                ForeignKey("tServer","cLabel",guCookieTable),
+                ForeignKey("tDatacenter","cLabel",guCookieProject));
+
+
+	//Close header table
+	printf("</td></tr></table>\n");
 
 	//Generate Menu Items
 	printf("\n<!-- tab menu -->\n");
@@ -640,6 +717,7 @@ void Header_ism3(const char *title, int iJs)
 		printf("\t\t\t<a title='Home start page' href=unxsSPS.cgi?gcFunction=Main>Main</a>\n");
 	printf("\t\t\t</li>\n");
 
+	//funcMainTabMenu()
 	//tPBX
 	if(guPermLevel>=7)
 	{
@@ -649,7 +727,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='PBX table' href=unxsSPS.cgi?gcFunction=tPBX>tPBX</a>\n");
+	  printf("\t\t\t<a title='PBX Gateways' href=unxsSPS.cgi?gcFunction=tPBX>tPBX</a>\n");
 	}
 	//tDID
 	if(guPermLevel>=7)
@@ -660,7 +738,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='DIDs in use and available for use' href=unxsSPS.cgi?gcFunction=tDID>tDID</a>\n");
+	  printf("\t\t\t<a title='Direct inward dialing numbers' href=unxsSPS.cgi?gcFunction=tDID>tDID</a>\n");
 	}
 	//tGateway
 	if(guPermLevel>=7)
@@ -671,7 +749,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='PBX table' href=unxsSPS.cgi?gcFunction=tGateway>tGateway</a>\n");
+	  printf("\t\t\t<a title='Outgoing termination provider gateways' href=unxsSPS.cgi?gcFunction=tGateway>tGateway</a>\n");
 	}
 	//tRule
 	if(guPermLevel>=7)
@@ -682,7 +760,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Outbound gateway dynamic routing rules' href=unxsSPS.cgi?gcFunction=tRule>tRule</a>\n");
+	  printf("\t\t\t<a title='Rules for routing traffic to termination gateways' href=unxsSPS.cgi?gcFunction=tRule>tRule</a>\n");
 	}
 	//tPrefix
 	if(guPermLevel>=7)
@@ -693,7 +771,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='PBX table' href=unxsSPS.cgi?gcFunction=tPrefix>tPrefix</a>\n");
+	  printf("\t\t\t<a title='DID prefixes for cost and other classification' href=unxsSPS.cgi?gcFunction=tPrefix>tPrefix</a>\n");
 	}
 	//tCarrier
 	if(guPermLevel>=7)
@@ -704,40 +782,40 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Carriers' href=unxsSPS.cgi?gcFunction=tCarrier>tCarrier</a>\n");
+	  printf("\t\t\t<a title='Carrier information' href=unxsSPS.cgi?gcFunction=tCarrier>tCarrier</a>\n");
 	}
-	//tServer
+	//tCDR
 	if(guPermLevel>=7)
 	{
 	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tServer") && strcmp(gcFunction,"tServerTools") &&
-			strcmp(gcFunction,"tServerList"))
+	  if(strcmp(gcFunction,"tCDR") && strcmp(gcFunction,"tCDRTools") &&
+			strcmp(gcFunction,"tCDRList"))
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Managed SIP servers' href=unxsSPS.cgi?gcFunction=tServer>tServer</a>\n");
+	  printf("\t\t\t<a title='Call detail records' href=unxsSPS.cgi?gcFunction=tCDR>tCDR</a>\n");
 	}
-	//tDatacenter
+	//tCluster
 	if(guPermLevel>=7)
 	{
 	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tDatacenter") && strcmp(gcFunction,"tDatacenterTools") &&
-			strcmp(gcFunction,"tDatacenterList"))
-		printf(">\n");
+	  if(strcmp(gcFunction,"tCluster") && strcmp(gcFunction,"tClusterTools") &&
+			strcmp(gcFunction,"tClusterList"))
+		  printf(">\n");
 	  else
-		printf(" id=current>\n");
-	  printf("\t\t\t<a title='Datacenter' href=unxsSPS.cgi?gcFunction=tDatacenter>tDatacenter</a>\n");
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Datacenter or other logical grouping of SIP servers' href=unxsSPS.cgi?gcFunction=tCluster>tCluster</a>\n");
 	}
-	//tGroupType
+	//tTimeInterval
 	if(guPermLevel>=20)
 	{
 	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tGroupType") && strcmp(gcFunction,"tGroupTypeTools") &&
-			strcmp(gcFunction,"tGroupTypeList"))
+	  if(strcmp(gcFunction,"tTimeInterval") && strcmp(gcFunction,"tTimeIntervalTools") &&
+			strcmp(gcFunction,"tTimeIntervalList"))
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Container or server group type' href=unxsSPS.cgi?gcFunction=tGroupType>tGroupType</a>\n");
+	  printf("\t\t\t<a title='Define time intervals with recurrence' href=unxsSPS.cgi?gcFunction=tTimeInterval>tTimeInterval</a>\n");
 	}
 	//tGroup
 	if(guPermLevel>=20)
@@ -748,7 +826,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Container or server group' href=unxsSPS.cgi?gcFunction=tGroup>tGroup</a>\n");
+	  printf("\t\t\t<a title='Group names' href=unxsSPS.cgi?gcFunction=tGroup>tGroup</a>\n");
 	}
 	//tGroupGlue
 	if(guPermLevel>=20)
@@ -759,10 +837,21 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Glues uContainers or uServers to uGroups' href=unxsSPS.cgi?gcFunction=tGroupGlue>tGroupGlue</a>\n");
+	  printf("\t\t\t<a title='Group glue table' href=unxsSPS.cgi?gcFunction=tGroupGlue>tGroupGlue</a>\n");
+	}
+	//tGroupType
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tGroupType") && strcmp(gcFunction,"tGroupTypeTools") &&
+			strcmp(gcFunction,"tGroupTypeList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Group types' href=unxsSPS.cgi?gcFunction=tGroupType>tGroupType</a>\n");
 	}
 	//tClient
-	if(guPermLevel>=10)
+	if(guPermLevel>=7)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tClient") && strcmp(gcFunction,"tClientTools") &&
@@ -770,7 +859,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Client Info' href=unxsSPS.cgi?gcFunction=tClient>tClient</a>\n");
+	  printf("\t\t\t<a title='Organizations and their contacts' href=unxsSPS.cgi?gcFunction=tClient>tClient</a>\n");
 	}
 	//tAuthorize
 	if(guPermLevel>=20)
@@ -781,117 +870,18 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Login Authorization' href=unxsSPS.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
+	  printf("\t\t\t<a title='Contact credentials' href=unxsSPS.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
 	}
-	//tTemplate
+	//tServer
 	if(guPermLevel>=20)
 	{
 	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tTemplate") && strcmp(gcFunction,"tTemplateTools") &&
-			strcmp(gcFunction,"tTemplateList"))
+	  if(strcmp(gcFunction,"tServer") && strcmp(gcFunction,"tServerTools") &&
+			strcmp(gcFunction,"tServerList"))
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplate' href=unxsSPS.cgi?gcFunction=tTemplate>tTemplate</a>\n");
-	}
-	//tTemplateSet
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tTemplateSet") && strcmp(gcFunction,"tTemplateSetTools") &&
-			strcmp(gcFunction,"tTemplateSetList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateSet' href=unxsSPS.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
-	}
-	//tTemplateType
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tTemplateType") && strcmp(gcFunction,"tTemplateTypeTools") &&
-			strcmp(gcFunction,"tTemplateTypeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateType' href=unxsSPS.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
-	}
-	//tLog
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tLog") && strcmp(gcFunction,"tLogTools") &&
-			strcmp(gcFunction,"tLogList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLog' href=unxsSPS.cgi?gcFunction=tLog>tLog</a>\n");
-	}
-	//tLogType
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tLogType") && strcmp(gcFunction,"tLogTypeTools") &&
-			strcmp(gcFunction,"tLogTypeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogType' href=unxsSPS.cgi?gcFunction=tLogType>tLogType</a>\n");
-	}
-	//tLogMonth
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tLogMonth") && strcmp(gcFunction,"tLogMonthTools") &&
-			strcmp(gcFunction,"tLogMonthList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tLogMonth' href=unxsSPS.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
-	}
-	//tMonth
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tMonth") && strcmp(gcFunction,"tMonthTools") &&
-			strcmp(gcFunction,"tMonthList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMonth' href=unxsSPS.cgi?gcFunction=tMonth>tMonth</a>\n");
-	}
-	//tGlossary
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tGlossary") && strcmp(gcFunction,"tGlossaryTools") &&
-			strcmp(gcFunction,"tGlossaryList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tGlossary' href=unxsSPS.cgi?gcFunction=tGlossary>tGlossary</a>\n");
-	}
-	//tJob
-	if(guPermLevel>=7)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tJob") && strcmp(gcFunction,"tJobTools") &&
-			strcmp(gcFunction,"tJobList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tJob' href=unxsSPS.cgi?gcFunction=tJob>tJob</a>\n");
-	}
-	//tJobStatus
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tJobStatus") && strcmp(gcFunction,"tJobStatusTools") &&
-			strcmp(gcFunction,"tJobStatusList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tJobStatus' href=unxsSPS.cgi?gcFunction=tJobStatus>tJobStatus</a>\n");
+	  printf("\t\t\t<a title='Servers' href=unxsSPS.cgi?gcFunction=tServer>tServer</a>\n");
 	}
 	//tStatus
 	if(guPermLevel>=20)
@@ -902,7 +892,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tStatus' href=unxsSPS.cgi?gcFunction=tStatus>tStatus</a>\n");
+	  printf("\t\t\t<a title='General status labels' href=unxsSPS.cgi?gcFunction=tStatus>tStatus</a>\n");
 	}
 	//tConfiguration
 	if(guPermLevel>=20)
@@ -913,7 +903,117 @@ void Header_ism3(const char *title, int iJs)
 		  printf(">\n");
 	  else
 		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tConfiguration' href=unxsSPS.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
+	  printf("\t\t\t<a title='Program settings' href=unxsSPS.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
+	}
+	//tJob
+	if(guPermLevel>=7)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tJob") && strcmp(gcFunction,"tJobTools") &&
+			strcmp(gcFunction,"tJobList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Job queue' href=unxsSPS.cgi?gcFunction=tJob>tJob</a>\n");
+	}
+	//tJobStatus
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tJobStatus") && strcmp(gcFunction,"tJobStatusTools") &&
+			strcmp(gcFunction,"tJobStatusList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Job queue status' href=unxsSPS.cgi?gcFunction=tJobStatus>tJobStatus</a>\n");
+	}
+	//tGlossary
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tGlossary") && strcmp(gcFunction,"tGlossaryTools") &&
+			strcmp(gcFunction,"tGlossaryList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Glossary and help' href=unxsSPS.cgi?gcFunction=tGlossary>tGlossary</a>\n");
+	}
+	//tTemplate
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tTemplate") && strcmp(gcFunction,"tTemplateTools") &&
+			strcmp(gcFunction,"tTemplateList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Templates' href=unxsSPS.cgi?gcFunction=tTemplate>tTemplate</a>\n");
+	}
+	//tTemplateSet
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tTemplateSet") && strcmp(gcFunction,"tTemplateSetTools") &&
+			strcmp(gcFunction,"tTemplateSetList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Template sets' href=unxsSPS.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
+	}
+	//tTemplateType
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tTemplateType") && strcmp(gcFunction,"tTemplateTypeTools") &&
+			strcmp(gcFunction,"tTemplateTypeList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Template types' href=unxsSPS.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
+	}
+	//tLog
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tLog") && strcmp(gcFunction,"tLogTools") &&
+			strcmp(gcFunction,"tLogList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Log' href=unxsSPS.cgi?gcFunction=tLog>tLog</a>\n");
+	}
+	//tLogType
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tLogType") && strcmp(gcFunction,"tLogTypeTools") &&
+			strcmp(gcFunction,"tLogTypeList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Log type' href=unxsSPS.cgi?gcFunction=tLogType>tLogType</a>\n");
+	}
+	//tLogMonth
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tLogMonth") && strcmp(gcFunction,"tLogMonthTools") &&
+			strcmp(gcFunction,"tLogMonthList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Archive of logs' href=unxsSPS.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
+	}
+	//tMonth
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tMonth") && strcmp(gcFunction,"tMonthTools") &&
+			strcmp(gcFunction,"tMonthList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Month of year' href=unxsSPS.cgi?gcFunction=tMonth>tMonth</a>\n");
 	}
 
 	
@@ -931,7 +1031,6 @@ void Footer_ism3(void)
 {
 	printf("</blockquote>");
 
-	mysql_close(&gMysql);
 	exit(0);
 
 }//Footer_ism3(void)
@@ -943,6 +1042,7 @@ void NoSuchFunction(void)
 	sprintf(gcQuery,"[%s] Not Recognized",gcFunction);
 	unxsSPS(gcQuery);
 }
+
 
 void ProcessControlVars(pentry entries[], int x)
 {
@@ -961,62 +1061,43 @@ void ProcessControlVars(pentry entries[], int x)
 	}
 }
 
+
 //guMode=0 page guMode, guMode=1 list auto header mode
 void PageMachine(char *cFuncName, int iLmode, char *cMsg)
 {
 	
-	if(iLmode)
-	{
-		//List mode
+if(iLmode)
+{
+	//List mode
 	
-		if(gluRowid<1) gluRowid=1;
-		if(gluRowid>(guN=((guI/SHOWPAGE)+1))) gluRowid=guN;
+	if(gluRowid<1) gluRowid=1;
+	if(gluRowid>(guN=((guI/SHOWPAGE)+1))) gluRowid=guN;
 
-		if(!strcmp(gcFind," >"))
+	if(!strcmp(gcFind," >"))
+	{
+		//If NOT on last page show next page
+		if( gluRowid >= guN-1 )
 		{
-			//If NOT on last page show next page
-			if( gluRowid >= guN-1 )
-			{
-				//If on last page adjust end
-				guStart= ((guI/SHOWPAGE)*SHOWPAGE) + 1;
-				guEnd=guI;
-			}
-			else
-			{
-				guStart=((gluRowid)*SHOWPAGE)+1;
-				guEnd=guStart+SHOWPAGE-1;
-				gluRowid++;
-			}
-		}
-		else if(!strcmp(gcFind,"< "))
-		{
-			if(gluRowid>1 )
-			{
-				gluRowid--;
-				guStart=(gluRowid)*SHOWPAGE-SHOWPAGE+1;
-				guEnd=guStart+SHOWPAGE-1;
-			}
-			else
-			{
-				guStart=1;
-				if(guI > SHOWPAGE)
-				{
-					guEnd=SHOWPAGE;
-				}
-				else
-				{
-					guEnd=guI;
-				}
-				gluRowid=1;
-			}
-		}
-		else if(!strcmp(gcFind,">>"))
-		{
+			//If on last page adjust end
 			guStart= ((guI/SHOWPAGE)*SHOWPAGE) + 1;
 			guEnd=guI;
-			gluRowid=guN;
 		}
-		else if(1)
+		else
+		{
+			guStart=((gluRowid)*SHOWPAGE)+1;
+			guEnd=guStart+SHOWPAGE-1;
+			gluRowid++;
+		}
+	}
+	else if(!strcmp(gcFind,"< "))
+	{
+		if(gluRowid>1 )
+		{
+			gluRowid--;
+			guStart=(gluRowid)*SHOWPAGE-SHOWPAGE+1;
+			guEnd=guStart+SHOWPAGE-1;
+		}
+		else
 		{
 			guStart=1;
 			if(guI > SHOWPAGE)
@@ -1029,81 +1110,101 @@ void PageMachine(char *cFuncName, int iLmode, char *cMsg)
 			}
 			gluRowid=1;
 		}
-	
-		guListMode=1;
-		Header_ism3(cFuncName,0);
-	
-		if(!guI) 
-	        {
-	                printf(LANG_PAGEMACHINE_HINT);
-	
-	        }
-	 
-	
-	        printf(LANG_PAGEMACHINE_SHOWING,1+(guStart/SHOWPAGE),guN,guStart,guEnd,guI);
-	
-	
-		printf("<input type=hidden name=gluRowid value=%lu>",gluRowid);
-		printf("<input type=hidden name=gcFunction value=%s >",cFuncName);
-		printf("<input type=hidden name=guListMode value=1 >\n");
 	}
-	else
+	else if(!strcmp(gcFind,">>"))
 	{
-		//Page mode
-		//on entry guI has number of rows
-		//on entry gluRowid has current position unless guI=1
-		//if guI=1 then we need to figure out real guI
+		guStart= ((guI/SHOWPAGE)*SHOWPAGE) + 1;
+		guEnd=guI;
+		gluRowid=guN;
+	}
+	else if(1)
+	{
+		guStart=1;
+		if(guI > SHOWPAGE)
+		{
+			guEnd=SHOWPAGE;
+		}
+		else
+		{
+			guEnd=guI;
+		}
+		gluRowid=1;
+	}
 
-		guN=guI;
+	guListMode=1;
+	Header_ism3(cFuncName,0);
+
+	if(!guI) 
+        {
+                printf(LANG_PAGEMACHINE_HINT);
+
+        }
+ 
+
+        printf(LANG_PAGEMACHINE_SHOWING,1+(guStart/SHOWPAGE),guN,guStart,guEnd,guI);
+
+
+	printf("<input type=hidden name=gluRowid value=%lu>",gluRowid);
+	printf("<input type=hidden name=gcFunction value=%s >",cFuncName);
+	printf("<input type=hidden name=guListMode value=1 >\n");
+}
+else
+{
+	//Page mode
+	//on entry guI has number of rows
+	//on entry gluRowid has current position unless guI=1
+	//if guI=1 then we need to figure out real guI
+
+	guN=guI;
+
+	if(gluRowid<1)
+	{
+		gluRowid=1;
+		return;
+	}
 	
-		if(gluRowid<1)
+	if(!strcmp(gcFind," >"))
+	{
+		//If on last page stay there
+		if( gluRowid >= guI )
+		{
+			//If on last page adjust guEnd
+			gluRowid=guI;
+		}
+		else
+		{
+			gluRowid++;
+		}
+	}
+	else if(!strcmp(gcFind,"< "))
+	{
+		if(gluRowid>1 )
+		{
+			gluRowid--;
+		}
+		else
 		{
 			gluRowid=1;
-			return;
 		}
-		
-		if(!strcmp(gcFind," >"))
-		{
-			//If on last page stay there
-			if( gluRowid >= guI )
-			{
-				//If on last page adjust guEnd
-				gluRowid=guI;
-			}
-			else
-			{
-				gluRowid++;
-			}
-		}
-		else if(!strcmp(gcFind,"< "))
-		{
-			if(gluRowid>1 )
-			{
-				gluRowid--;
-			}
-			else
-			{
-				gluRowid=1;
-			}
-		}
-		else if(!strcmp(gcFind,">>"))
+	}
+	else if(!strcmp(gcFind,">>"))
+	{
+		gluRowid=guI;
+	}
+	else if(!strcmp(gcFind,"<<"))
+	{
+		gluRowid=1;
+	}
+	else if(1)
+	{
+		//If on last page stay there
+		if( gluRowid >= guI )
 		{
 			gluRowid=guI;
 		}
-		else if(!strcmp(gcFind,"<<"))
-		{
-			gluRowid=1;
-		}
-		else if(1)
-		{
-			//If on last page stay there
-			if( gluRowid >= guI )
-			{
-				gluRowid=guI;
-			}
-		}
+	}
 
-	}//guEnd iLmode
+}//guEnd iLmode
 
 }//PageMachine()
 
@@ -1124,34 +1225,7 @@ void CloseFieldSet(void)
 
 void OpenRow(const char *cFieldLabel, const char *cColor)
 {
-	//Skip underlined cFieldLabel for tGlossary.cLabel use.
-	if(cFieldLabel[0]=='<')
-	{
-		register int j;
-		char cGlossary[33]="";
-
-		for(j=3;cFieldLabel[j]&&j<32;j++)
-		{
-			if(!isalnum(cFieldLabel[j]) && cFieldLabel[j]!=' ')
-			{
-				cGlossary[j]=0;
-				break;
-			}
-			else
-			{
-				cGlossary[j]=cFieldLabel[j];
-			}
-		}
-		printf("<tr><td width=20%% valign=top><a class=darkLink "
-			"href=# onClick=\"open_popup('?gcFunction=Glossary&cLabel=%2$s')\">"
-			"<font color=%1$s>%3$s</font></td><td>",cColor,cGlossary+3,cFieldLabel);
-	}
-	else
-	{
-		printf("<tr><td width=20%% valign=top><a class=darkLink "
-			"href=# onClick=\"open_popup('?gcFunction=Glossary&cLabel=%2$s')\">"
-			"<font color=%1$s>%2$s</font></td><td>",cColor,cFieldLabel);
-	}
+	printf("<tr><td width=20%% valign=top><font color=%.32s>%.32s</td><td>",cColor,cFieldLabel);
 
 }//void OpenRow()
 
@@ -1161,11 +1235,11 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode)
 {
         register int i,n;
-        char cLabel[256];
+        char cLabel[128];
         MYSQL_RES *mysqlRes;         
         MYSQL_ROW mysqlField;
 
-        char cSelectName[100]={""};
+        char cSelectName[34]={""};
 	char cHidden[100]={""};
         char cLocalTableName[256]={""};
         char *cp;
@@ -1184,8 +1258,8 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
         strncpy(cLocalTableName,cTableName,255);
         if((cp=strchr(cLocalTableName,';')))
         {
-                strncpy(cSelectName,cp+1,99);
-                cSelectName[99]=0;
+                strncpy(cSelectName,cp+1,32);
+                cSelectName[32]=0;
                 *cp=0;
         }
 
@@ -1198,7 +1272,7 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
 				" (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u) ORDER BY %s",
 				cFieldName,cLocalTableName,guCompany,guCompany,cOrderby);
 
-	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
+	macro_mySQLRunAndStoreTextVoidRet(mysqlRes);
 	i=mysql_num_rows(mysqlRes);
 
 	if(cSelectName[0])
@@ -1228,7 +1302,7 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
                         {
                              printf("<option selected>%s</option>\n",mysqlField[1]);
 			     if(!uMode)
-			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
+			     sprintf(cHidden,"<input type=hidden name=%.32s value='%.32s'>\n",
 			     		cLabel,mysqlField[1]);
                         }
                 }
@@ -1238,7 +1312,7 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
 		printf("<select name=%s %s><option title='No selection'>---</option></select>\n"
                         ,cLabel,cMode);
 		if(!uMode)
-		sprintf(cHidden,"<input type=hidden name=%99s value='0'>\n",cLabel);
+		sprintf(cHidden,"<input type=hidden name=%.32s value='0'>\n",cLabel);
         }
         printf("</select>\n");
 	if(cHidden[0])
@@ -1251,11 +1325,11 @@ void tTablePullDown(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode)
 {
         register int i,n;
-        char cLabel[256];
+        char cLabel[128];
         MYSQL_RES *mysqlRes;         
         MYSQL_ROW mysqlField;
 
-        char cSelectName[100]={""};
+        char cSelectName[34]={""};
 	char cHidden[100]={""};
         char cLocalTableName[256]={""};
         char *cp;
@@ -1274,8 +1348,8 @@ void tTablePullDown(const char *cTableName, const char *cFieldName,
         strncpy(cLocalTableName,cTableName,255);
         if((cp=strchr(cLocalTableName,';')))
         {
-                strncpy(cSelectName,cp+1,99);
-                cSelectName[99]=0;
+                strncpy(cSelectName,cp+1,32);
+                cSelectName[32]=0;
                 *cp=0;
         }
 
@@ -1283,7 +1357,7 @@ void tTablePullDown(const char *cTableName, const char *cFieldName,
         sprintf(gcQuery,"SELECT _rowid,%s FROM %s ORDER BY %s",
                                 cFieldName,cLocalTableName,cOrderby);
 
-	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
+	macro_mySQLRunAndStoreTextVoidRet(mysqlRes);
 	
 	i=mysql_num_rows(mysqlRes);
 
@@ -1314,7 +1388,7 @@ void tTablePullDown(const char *cTableName, const char *cFieldName,
                         {
                              printf("<option selected>%s</option>\n",mysqlField[1]);
 			     if(!uMode)
-			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
+			     sprintf(cHidden,"<input type=hidden name=%.32s value='%.32s'>\n",
 			     		cLabel,mysqlField[1]);
                         }
                 }
@@ -1324,31 +1398,13 @@ void tTablePullDown(const char *cTableName, const char *cFieldName,
 		printf("<select name=%s %s><option title='No selection'>---</option></select>\n"
                         ,cLabel,cMode);
 		if(!uMode)
-		sprintf(cHidden,"<input type=hidden name=%.99s value='0'>\n",cLabel);
+		sprintf(cHidden,"<input type=hidden name=%.32s value='0'>\n",cLabel);
         }
         printf("</select>\n");
 	if(cHidden[0])
 		printf("%s",cHidden);
 
 }//tTablePullDown()
-
-
-int ReadPullDown(const char *cTableName,const char *cFieldName,const char *cLabel)
-{
-        MYSQL_RES *mysqlRes;
-        MYSQL_ROW mysqlField;
-
-        unsigned int iRowid=0;//Not found
-
-        sprintf(gcQuery,"SELECT _rowid FROM %s WHERE %s='%s'",
-                        cTableName,cFieldName,TextAreaSave((char *) cLabel));
-        MYSQL_RUN_STORE(mysqlRes);
-        if((mysqlField=mysql_fetch_row(mysqlRes)))
-        	sscanf(mysqlField[0],"%u",&iRowid);
-        mysql_free_result(mysqlRes);
-        return(iRowid);
-
-}//ReadPullDown(char *cTableName,char *cLabel)
 
 
 int ReadPullDownOwner(const char *cTableName,const char *cFieldName,
@@ -1361,13 +1417,31 @@ int ReadPullDownOwner(const char *cTableName,const char *cFieldName,
 
         sprintf(gcQuery,"SELECT _rowid FROM %s WHERE %s='%s' AND (uOwner=%u OR uOwner=%u)",
                         cTableName,cFieldName,TextAreaSave((char *) cLabel),uOwner,guCompany);
-        MYSQL_RUN_STORE(mysqlRes);
+        macro_mySQLRunAndStore(mysqlRes);
         if((mysqlField=mysql_fetch_row(mysqlRes)))
         	sscanf(mysqlField[0],"%u",&iRowid);
         mysql_free_result(mysqlRes);
         return(iRowid);
 
 }//ReadPullDownOwner()
+
+
+int ReadPullDown(const char *cTableName,const char *cFieldName,const char *cLabel)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+
+        unsigned int iRowid=0;//Not found
+
+        sprintf(gcQuery,"select _rowid from %s where %s='%s'",
+                        cTableName,cFieldName,TextAreaSave((char *) cLabel));
+        macro_mySQLRunAndStore(mysqlRes);
+        if((mysqlField=mysql_fetch_row(mysqlRes)))
+        	sscanf(mysqlField[0],"%u",&iRowid);
+        mysql_free_result(mysqlRes);
+        return(iRowid);
+
+}//ReadPullDown(char *cTableName,char *cLabel)
 
 
 char *TextAreaSave(char *cField)
@@ -1557,7 +1631,7 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 
-	static char scKey[16];
+	static char gcQuery[256];
 
         sprintf(gcQuery,"SELECT %s FROM %s WHERE _rowid=%u",
                         cFieldName,cTableName,uKey);
@@ -1577,35 +1651,11 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
 	}
 	else
 	{
-		sprintf(scKey,"%u",uKey);
-        	return(scKey);
+		sprintf(gcQuery,"%u",uKey);
+        	return(gcQuery);
 	}
 
 }//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
-
-
-const char *ForeignKey2(const char *cTableName, const char *cFieldName, unsigned uKey)
-{
-        MYSQL_RES *mysqlRes;
-        MYSQL_ROW mysqlField;
-
-        sprintf(gcQuery,"SELECT %s FROM %s WHERE _rowid=%u",
-                        cFieldName,cTableName,uKey);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql)) return(mysql_error(&gMysql));
-
-        mysqlRes=mysql_store_result(&gMysql);
-        if(mysql_num_rows(mysqlRes)==1)
-        {
-                mysqlField=mysql_fetch_row(mysqlRes);
-                return(mysqlField[0]);
-        }
-	else
-	{
-        	return("---");
-	}
-
-}//const char *ForeignKey2(const char *cTableName, const char *cFieldName, unsigned uKey)
 
 
 void InitialInstall(void)
@@ -1871,7 +1921,7 @@ void SetLogin(void)
 char *cGetPasswd(char *gcLogin);
 int iValidLogin(int mode)
 {
-	char cSalt[16]={""};
+	char salt[3]={'/','D',0};
 	char cPassword[100]={""};
 
 	//Notes:
@@ -1882,53 +1932,25 @@ int iValidLogin(int mode)
 	{
 		if(!mode)
 		{
-			//MD5 vs DES salt determination
-			if(cPassword[0]=='$' && cPassword[2]=='$')
-				sprintf(cSalt,"%.12s",cPassword);
-			else
-				sprintf(cSalt,"%.2s",cPassword);
-			EncryptPasswdWithSalt(gcPasswd,cSalt);
+			strncpy(salt,cPassword,2);
+			EncryptPasswdWithSalt(gcPasswd,salt);
 			if(!strcmp(gcPasswd,cPassword)) 
 			{
-				guCompany=1;//If next line does not work
-				GetPLAndClient(gcLogin);
-				guPermLevel=0;
-				guLoginClient=0;
 				//tLogType.cLabel='backend login'->uLogType=6
-				//Alpha testing ON DUPLICATE KEY UPDATE to avoid some replication problems
-				//that I have seen in logfiles.
-				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
-					" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
-					" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE"
-					" cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
-					" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
-					" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
-						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
-				MYSQL_RUN;
-				return(1);
+				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+				macro_mySQLQueryHTMLError;
+				return 1;
 			}
 		}
 		else
 		{
-			if(!strcmp(gcPasswd,cPassword)) return(1);
+			if(!strcmp(gcPasswd,cPassword)) return 1;
 		}
 	}
 	if(!mode)
 	{
-		guCompany=1;//If next line does not work
-		GetPLAndClient(gcLogin);
-		guPermLevel=0;
-		guLoginClient=0;
-		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,"
-				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
-				" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE"
-				" cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,"
-				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
-				" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
-					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
-		MYSQL_RUN;
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+		macro_mySQLQueryHTMLError;
 	}
 	return 0;
 
@@ -1945,15 +1967,23 @@ char *cGetPasswd(char *gcLogin)
 	//SQL injection code
 	if((cp=strchr(gcLogin,'\''))) *cp=0;
 
-	sprintf(gcQuery,"SELECT cPasswd FROM " TAUTHORIZE " WHERE cLabel='%s'",
+	sprintf(gcQuery,"SELECT cPasswd FROM tAuthorize WHERE cLabel='%s'",
 			gcLogin);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
+	{
+		char cError[100];
+
+                sprintf(cError,"Table '%s.tAuthorize' doesn't exist",DBNAME);
+		if(!strcmp(mysql_error(&gMysql),cError))
+			InitialInstall();
+                else
 			htmlPlainTextError(mysql_error(&gMysql));
+	}
 	mysqlRes=mysql_store_result(&gMysql);
 	cPasswd[0]=0;
 	if((mysqlField=mysql_fetch_row(mysqlRes)))
-		sprintf(cPasswd,"%.99s",mysqlField[0]);
+		strcpy(cPasswd,mysqlField[0]);
 	mysql_free_result(mysqlRes);
 
 	
@@ -1964,6 +1994,9 @@ char *cGetPasswd(char *gcLogin)
 
 void SSLCookieLogin(void)
 {
+
+	GetSessionCookie();
+
 	char *ptr,*ptr2;
 
 	//Parse out login and passwd from cookies
@@ -1998,12 +2031,12 @@ void SSLCookieLogin(void)
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
-			sprintf(gcPasswd,"%.99s",ptr);
+			strncpy(gcPasswd,ptr,20);
 			*ptr2=';';
 		}
 		else
 		{
-			sprintf(gcPasswd,"%.99s",ptr);
+			strncpy(gcPasswd,ptr,20);
 		}
 	}
 	
@@ -2036,21 +2069,19 @@ void htmlSSLLogin(void)
 }//void htmlSSLLogin(void)
 
 
-void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt)
+void EncryptPasswdWithSalt(char *pw, char *salt)
 {
-	char cPasswd[100]={""};
-	char *cp;
+	char passwd[102]={""};
+	char *cpw;
 			
-	sprintf(cPasswd,"%.99s",gcPasswd);
-	cp=crypt(cPasswd,cSalt);
-	sprintf(gcPasswd,"%.99s",cp);
+	strcpy(passwd,pw);
+				
+	cpw=crypt(passwd,salt);
 
-//Debug only
-//printf("Content-type: text/html\n\n");
-//printf("gcPasswd=(%s),cSalt=(%s)",gcPasswd,cSalt);
-//exit(0);
+	strcpy(pw,cpw);
 
-}//void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt)
+}//void EncryptPasswdWithSalt(char *pw, char *salt)
+
 
 
 void GetPLAndClient(char *cUser)
@@ -2065,7 +2096,7 @@ void GetPLAndClient(char *cUser)
 				" FROM " TAUTHORIZE "," TCLIENT
 				" WHERE tAuthorize.uOwner=tClient.uClient"
 				" AND tAuthorize.cLabel='%s'",cUser);
-	MYSQL_RUN_STORE(mysqlRes);
+	macro_mySQLRunAndStore(mysqlRes);
 	if(mysql_num_rows(mysqlRes))
 	{
 		mysqlField=mysql_fetch_row(mysqlRes);
@@ -2085,7 +2116,7 @@ void GetClientOwner(unsigned uClient, unsigned *uOwner)
         MYSQL_ROW mysqlField;
 	char cQuery[512]={""};
 	
-        sprintf(cQuery,"SELECT uOwner FROM " TCLIENT " WHERE uClient=%u",uClient);
+        sprintf(cQuery,"SELECT uOwner FROM tClient WHERE uClient=%u",uClient);
         mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	mysqlRes=mysql_store_result(&gMysql);
@@ -2103,9 +2134,7 @@ void unxsSPSLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 	char cQuery[512]={""};
 
 	//uLogType==1 is this back-office cgi by default tLogType install
-        sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.63s',uLogType=1,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',"
-			" cHost='%.99s',uTablePK=%u,cTableName='%.31s',cHash=MD5(CONCAT('%s','%u','%u','%s','%s',"
-			" '%u','%s','%s',UNIX_TIMESTAMP(NOW()))),uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+        sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.63s',uLogType=1,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',uTablePK=%u,cTableName='%.31s',cHash=MD5(CONCAT('%s','%u','%u','%s','%s','%u','%s','%s',UNIX_TIMESTAMP(NOW()))),uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 		cLogEntry,
 		guPermLevel,
 		guLoginClient,
@@ -2120,8 +2149,7 @@ void unxsSPSLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 		gcHost,
 		uTablePK,
 		cTableName,
-		cLogKey,
-		guCompany);
+		cLogKey);
 
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
@@ -2182,10 +2210,7 @@ void htmlPlainTextError(const char *cError)
 	printf("Please report this unxsSPS fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
-        sprintf(gcQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,"
-			" uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s (%.24s)\",cServer='%s',"
-			" cHash=MD5(CONCAT('%u','%u','%s','%s',\"%s (%.24s)\",'%s',UNIX_TIMESTAMP(NOW()),"
-			" '%s')),uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uTablePK=%u,cTableName='errno'",
+        sprintf(gcQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s (%.24s)\",cServer='%s',cHash=MD5(CONCAT('%u','%u','%s','%s',\"%s (%.24s)\",'%s',UNIX_TIMESTAMP(NOW()),'%s')),uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uTablePK=%u,cTableName='errno'",
 			guPermLevel,
 			guLoginClient,
 			gcLogin,
@@ -2201,7 +2226,6 @@ void htmlPlainTextError(const char *cError)
 			gcQuery,
 			gcHostname,
 			cLogKey,
-			guCompany,
 			guLoginClient,
 			mysql_errno(&gMysql));
         mysql_query(&gMysql,gcQuery);
@@ -2247,30 +2271,13 @@ char *cURLEncode(char *cURL)
 
 }//char *cURLEncode(char *cURL)
 
-//Starting cleanup of current client contact role permissions model
-//Description
-//1-. Root user == 1. Initial install super user, sets up root tClient ASP company
-//	and thus the uOwner of this tClient entry is root. There should be only one
-//	such company but this is not mandatory. This company will have the only 
-//	contacts that may have access to everything.
-//	Root user if owner of a record blocks delete operations done by others.
-//2-. If record uOwner is 0 something is broken and only Root can delete or modify.
-//3-. Any contact of a company with perm level >= admin can mod any record
-//	owned by parent company. For delete with perm level >= root.
-//4-. Any company contact with perm level >= root can delete or mod any record
-//	of companies owned by parent company.
-//5-. Any contact of perm level >=user that created a record and is owned by parent company can mod that record.
-//	Similarly for delete if user is admin level
-//
-//7 user level
-//10 admin level
-//12 root level
+
 unsigned uAllowDel(const unsigned uOwner, const unsigned uCreatedBy)
 {
 	//Set guReseller for tests to see if the owner of the owner is guCompany.
 	if(uOwner) GetClientOwner(uOwner,&guReseller);
 
-	if( (guPermLevel>10 && uOwner==guCompany) //r3
+	if( (guPermLevel>11 && uOwner==guCompany) //r3
 				|| (guPermLevel>9 && guCompany==guReseller) //r4
 				|| (guPermLevel>9 && uCreatedBy==guLoginClient && 
 					(uOwner==guCompany || guCompany==guReseller)) //r5
@@ -2309,99 +2316,27 @@ void ExtListSelect(const char *cTable,const char *cVarList)
 }//void ExtListSelect(...)
 
 
-void ExtListSelectPublic(const char *cTable,const char *cVarList)
-{
-		sprintf(gcQuery,"SELECT %s FROM %s",cVarList,cTable);
-}//void ExtListSelectPublic(...)
-
-
 void ExtSelect(const char *cTable,const char *cVarList)
 {
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		//sprintf(gcQuery,"SELECT %s FROM %s ORDER BY u%s",
-		sprintf(gcQuery,"SELECT %s FROM %s",
-					//cVarList,cTable,cTable+1);
-					cVarList,cTable);
+		sprintf(gcQuery,"SELECT %s FROM %s ORDER BY u%s",
+					cVarList,cTable,cTable+1);
 	else 
 		sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
 				" WHERE %3$s.uOwner=tClient.uClient"
 				" AND (tClient.uClient=%2$u OR tClient.uOwner"
-				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))",
-				//" ORDER BY u%4$s",
+				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
+				" ORDER BY u%4$s",
 					cVarList,guCompany,
-					cTable);
-					//cTable,cTable+1);
+					cTable,cTable+1);
 }//void ExtSelect(...)
-
-
-//For those tables you want anybody to be able to read. Like tStatus.
-void ExtSelectPublic(const char *cTable,const char *cVarList)
-{
-	sprintf(gcQuery,"SELECT %.1024s FROM %.99s ORDER BY _rowid",cVarList,cTable);
-
-}//void ExtSelectPublic(...)
-
-
-void ExtSelectPublicOrder(const char *cTable,const char *cVarList,const char *cOrderBy)
-{
-	sprintf(gcQuery,"SELECT %.1024s FROM %.99s ORDER BY %.99s",cVarList,cTable,cOrderBy);
-
-}//void ExtSelectPublicOrder(...)
-
-
-
-void ExtSelectSearchPublic(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch)
-{
-	sprintf(gcQuery,"SELECT %s FROM %s WHERE %s LIKE '%s%%' ORDER BY %s",
-					cVarList,cTable,cSearchField,cSearch,cSearchField);
-}//void ExtSelectSearchPublic(...)
-
-
-void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch)
-{
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT %s FROM %s WHERE %s LIKE '%s%%' ORDER BY %s",
-					cVarList,cTable,cSearchField,cSearch,cSearchField);
-	else 
-		sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
-				" WHERE %3$s.uOwner=tClient.uClient"
-				" AND (tClient.uClient=%2$u OR tClient.uOwner"
-				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
-				"AND %3$s.%4$s LIKE '%5$s%%' ORDER BY %4$s",
-					cVarList,guCompany,cTable,cSearchField,cSearch);
-}//void ExtSelectSearch(...)
-
-
-void ExtSelect2(const char *cTable,const char *cVarList,unsigned uMaxResults)
-{
-	if(guPermLevel>11 && guLoginClient==1)//Root can read access all
-		sprintf(gcQuery,"SELECT %1$s FROM %2$s ORDER BY %2$s._rowid",
-					cVarList,cTable);
-	else 
-		sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
-				" WHERE %3$s.uOwner=" TCLIENT ".uClient"
-				" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
-				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
-				" ORDER BY %3$s._rowid",
-					cVarList,guCompany,
-					cTable);
-	if(uMaxResults)
-	{
-		char cLimit[33]={""};
-		sprintf(cLimit," LIMIT %u",uMaxResults);
-		strcat(gcQuery,cLimit);
-	}
-
-}//void ExtSelect2(...)
 
 
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow)
 {
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		//sprintf(gcQuery,"SELECT %s FROM %s WHERE u%s=%u ORDER BY u%s",
-		sprintf(gcQuery,"SELECT %s FROM %s WHERE u%s=%u",
-					//cVarList,cTable,cTable+1,uRow,cTable+1);
-					cVarList,cTable,cTable+1,uRow);
+		sprintf(gcQuery,"SELECT %s FROM %s WHERE u%s=%u ORDER BY u%s",
+					cVarList,cTable,cTable+1,uRow,cTable+1);
 	else 
 		sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
 				" WHERE %3$s.uOwner=tClient.uClient"
@@ -2413,110 +2348,70 @@ void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow)
 }//void ExtSelectRow(...)
 
 
-void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow)
+void SetSessionCookie(void)
 {
-		sprintf(gcQuery,"SELECT %s FROM %s WHERE u%s=%u",cVarList,cTable,cTable+1,uRow);
-}//void ExtSelectRowPublic(...)
+	printf("Set-Cookie: unxsSPSSessionCookie=uProject=%u|uTable=%u|uField=%u|; Secure; HttpOnly\n",
+					guCookieProject,guCookieTable,guCookieField);
+};
 
 
-//Passwd stuff
-static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
-        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-void to64(s, v, n)
-  register char *s;
-  register long v;
-  register int n;
+void GetSessionCookie(void)
 {
-    while (--n >= 0) {
-        *s++ = itoa64[v&0x3f];
-        v >>= 6;
-    }
-}//void to64(s, v, n)
+	char *ptr;
+	char *ptr2;
+	char cunxsSPSSessionCookie[512]={""};
 
-
-void EncryptPasswd(char *pw)
-{
-	//Notes:
-	//	We should change time based salt 
-	//	(could be used for faster dictionary attack)
-	//	to /dev/random based system.
-
-        char salt[3];
-        char passwd[102]={""};
-        char *cpw;
-	char cMethod[16] ={""}; 
-
-	GetConfiguration("cCryptMethod",cMethod,0,0,0,0);
-	if(!strcmp(cMethod,"MD5"))
+	if(getenv("HTTP_COOKIE")!=NULL)
+		sprintf(gcCookie,"%.1022s",getenv("HTTP_COOKIE"));
+	if(gcCookie[0])
 	{
-		char cSalt[] = "$1$01234567$";
-	    	(void)srand((int)time((time_t *)NULL));
-    		to64(&cSalt[3],rand(),8);
-		cpw = crypt(pw,cSalt);
-		// error not verified, str NULL ("") returned	
+		if((ptr=strstr(gcCookie,"unxsSPSSessionCookie=")))
+		{
+			ptr+=strlen("unxsSPSSessionCookie=");
+			if((ptr2=strchr(ptr,';')))
+			{
+				*ptr2=0;
+				sprintf(cunxsSPSSessionCookie,"%.511s",ptr);
+			}
+			else
+				 sprintf(cunxsSPSSessionCookie,"%.511s",ptr);
+
+		}
 	}
-	else
+
+
+	if(cunxsSPSSessionCookie[0])
 	{
-		// default DES method
-	        sprintf(passwd,"%.99s",pw);
-    		(void)srand((int)time((time_t *)NULL));
-    		to64(&salt[0],rand(),2);
-		cpw=crypt(passwd,salt);
-	}	
-	sprintf(pw,"%.99s",cpw);
-
-}//void EncryptPasswd(char *pw)
-
-
-void tContainerGroupPullDown(unsigned uGroup, unsigned uMode)
-{
-        register int i,n;
-        MYSQL_RES *mysqlRes;         
-        MYSQL_ROW mysqlField;
-
-	char cHidden[100]={""};
-	char *cMode="";
-
-	if(!uMode)
-		cMode="disabled";
-      
-        sprintf(gcQuery,"SELECT uGroup,cLabel FROM tGroup WHERE uGroupType=1 ORDER BY cLabel");
-	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
-	i=mysql_num_rows(mysqlRes);
-        if(i>0)
-        {
-                printf("<select name=ctContainerGroupPullDown %s>\n",cMode);
-
-                printf("<option title='No selection'>---</option>\n");
-                for(n=0;n<i;n++)
-                {
-                        int unsigned field0=0;
-
-                        mysqlField=mysql_fetch_row(mysqlRes);
-                        sscanf(mysqlField[0],"%u",&field0);
-                        if(uGroup != field0)
-                        {
-                             printf("<option>%s</option>\n",mysqlField[1]);
-                        }
-                        else
-                        {
-                             printf("<option selected>%s</option>\n",mysqlField[1]);
-			     if(!uMode)
-				     sprintf(cHidden,"<input type=hidden name=ctContainerGroupPullDown value='%.99s'>\n",
-				     			mysqlField[1]);
-                        }
-                }
-        }
-        else
-        {
-		printf("<select name=ctContainerGroupPullDown %s><option title='No selection'>---</option></select>\n",cMode);
-		if(!uMode)
-			sprintf(cHidden,"<input type=hidden name=ctContainerGroupPullDown value='0'>\n");
-        }
-        printf("</select>\n");
-	if(cHidden[0])
-		printf("%s",cHidden);
-
-}//tContainerGroupPullDown()
+		if((ptr=strstr(cunxsSPSSessionCookie,"uProject=")))
+		{
+			ptr+=strlen("uProject=");
+			if((ptr2=strchr(ptr,'|')))
+			{
+				*ptr2=0;
+				sscanf(ptr,"%u",&guCookieProject);
+				*ptr2='|';
+			}
+		}
+		if((ptr=strstr(cunxsSPSSessionCookie,"uTable=")))
+		{
+			ptr+=strlen("uTable=");
+			if((ptr2=strchr(ptr,'|')))
+			{
+				*ptr2=0;
+				sscanf(ptr,"%u",&guCookieTable);
+				*ptr2='|';
+			}
+		}
+		if((ptr=strstr(cunxsSPSSessionCookie,"uField=")))
+		{
+			ptr+=strlen("uField=");
+			if((ptr2=strchr(ptr,'|')))
+			{
+				*ptr2=0;
+				sscanf(ptr,"%u",&guCookieField);
+				*ptr2='|';
+			}
+		}
+	}
+}//void GetSessionCookie(void)
 

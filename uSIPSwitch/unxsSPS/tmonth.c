@@ -2,7 +2,7 @@
 FILE
 	tMonth source code of unxsSPS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tmonth.c 166 2009-06-05 22:10:35Z Dylan $
+	$Id: tmonth.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tmonthfunc.h while 
@@ -164,7 +164,7 @@ void tMonth(const char *cResult)
 			{
 			sprintf(gcQuery,"SELECT _rowid FROM tMonth WHERE uMonth=%u"
 						,uMonth);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -184,7 +184,7 @@ void tMonth(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tMonth",0);
+	Header_ism3(":: tMonth",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -325,7 +325,7 @@ void NewtMonth(unsigned uMode)
 	sprintf(gcQuery,"SELECT uMonth FROM tMonth\
 				WHERE uMonth=%u"
 							,uMonth);
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	if(i) 
@@ -360,7 +360,7 @@ void DeletetMonth(void)
 	sprintf(gcQuery,"DELETE FROM tMonth WHERE uMonth=%u"
 					,uMonth);
 #endif
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 	//tMonth("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
@@ -391,7 +391,7 @@ void Insert_tMonth(void)
 			,uCreatedBy
 			);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Insert_tMonth(void)
 
@@ -406,7 +406,7 @@ void Update_tMonth(char *cRowid)
 			,uModBy
 			,cRowid);
 
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tMonth(void)
 
@@ -438,7 +438,7 @@ void ModtMonth(void)
 						,uMonth);
 #endif
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
 	//if(i<1) tMonth("<blink>Record does not exist");
@@ -472,7 +472,7 @@ void tMonthList(void)
 
 	ExttMonthListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tMonthList",1,"");//1 is auto header list guMode. Opens table!
@@ -537,7 +537,7 @@ void tMonthList(void)
 void CreatetMonth(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tMonth ( uMonth INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', UNIQUE (cLabel), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
-	MYSQL_RUN;
+	macro_mySQLQueryHTMLError;
 
 }//CreatetMonth()
 

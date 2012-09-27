@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tlogmonthfunc.h 166 2009-06-05 22:10:35Z Dylan $
+	$Id: tlogmonthfunc.h 1953 2012-05-22 15:03:17Z Colin $
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -179,14 +179,31 @@ void ExttLogMonthGetHook(entry gentries[], int x)
 
 void ExttLogMonthSelect(void)
 {
-	ExtSelect("tLogMonth",VAR_LIST_tLogMonth);
+        //Set non search gcQuery here for tTableName()
+	if(guPermLevel>=9)
+	sprintf(gcQuery,"SELECT %s FROM tLogMonth ORDER BY\
+					uLog",
+					VAR_LIST_tLogMonth);
+	else
+	sprintf(gcQuery,"SELECT %s FROM tLogMonth WHERE uOwner=%u ORDER BY\
+					uLog",
+					VAR_LIST_tLogMonth,guLoginClient);
 
 }//void ExttLogMonthSelect(void)
 
 
 void ExttLogMonthSelectRow(void)
 {
-	ExtSelectRow("tLogMonth",VAR_LIST_tLogMonth,uLog);
+	if(guPermLevel<10)
+                sprintf(gcQuery,"SELECT %s FROM tLogMonth,tClient \
+                                WHERE tLogMonth.uOwner=tClient.uClient\
+                                AND (tClient.uOwner=%u OR tClient.uClient=%u)\
+                                AND tLogMonth.uLog=%u",
+                        		VAR_LIST_tLogMonth,
+					guLoginClient,guLoginClient,uLog);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tLogMonth WHERE uLog=%u",
+			VAR_LIST_tLogMonth,uLog);
 
 }//void ExttLogMonthSelectRow(void)
 
@@ -195,8 +212,9 @@ void ExttLogMonthListSelect(void)
 {
 	char cCat[512];
 
-	ExtListSelect("tLogMonth",VAR_LIST_tLogMonth);
-	
+	sprintf(gcQuery,"SELECT %s FROM tLogMonth",
+				VAR_LIST_tLogMonth);
+
 	//Changes here must be reflected below in ExttLogMonthListFilter()
         if(!strcmp(gcFilter,"uLog"))
         {

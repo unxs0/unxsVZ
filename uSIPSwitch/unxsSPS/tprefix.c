@@ -1,64 +1,47 @@
 /*
 FILE
-	tPrefix source code of unxsSPS.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tprefix.c 1922 2012-04-30 14:46:24Z Dylan $
+	$Id: module.c 2115 2012-09-19 14:11:03Z Gary $
 PURPOSE
 	Schema dependent RAD generated file.
-	Program app functionality in tprefixfunc.h while 
-	RAD is still to be used.
-AUTHOR/LEGAL
+	Program app functionality can be developed in tprefixfunc.h
+	while unxsSPS can still to be used to change this schema dependent file.
+AUTHOR
 	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
-	GPLv2 license applies. See LICENSE file included.
+TEMPLATE VARS AND FUNCTIONS
+	ModuleCreateQuery
+	ModuleInsertQuery
+	ModuleListPrint
+	ModuleListTable
+	ModuleLoadVars
+	ModuleProcVars
+	ModuleInput
+	ModuleUpdateQuery
+	ModuleVars
+	ModuleVarList
+	cProject
+	cTableKey
+	cTableName
+	cTableNameLC
+	cTableTitle
 */
 
 
 #include "mysqlrad.h"
 
 //Table Variables
-//Table Variables
-//uPrefixes: Primary Key
-static unsigned uPrefixes=0;
-//cLabel: Short label
+static unsigned uPrefix=0;
 static char cLabel[33]={""};
-//uAvailable: PBX is available for use
-static unsigned uAvailable=0;
-static char cYesNouAvailable[32]={""};
-//uOwner: Record owner
 static unsigned uOwner=0;
-//uCreatedBy: uClient for last insert
+#define StandardFields
 static unsigned uCreatedBy=0;
-//uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
-//uModBy: uClient for last update
 static unsigned uModBy=0;
-//uModDate: Unix seconds date last update
 static time_t uModDate=0;
-//uDatacenter: Belongs to this Datacenter
-static unsigned uDatacenter=0;
-static char cuDatacenterPullDown[256]={""};
 
-//cComment
-static char *cComment={""};
 
-//Extensions for searching
-static char cPBXSearch[16]={""};
-static unsigned uAvailableSearch=0;
-static char cYesNouAvailableSearch[8]={""};
-static unsigned uServerSearch=0;
-static char cuServerSearchPullDown[256]={""};
-static unsigned uServerSearchNot=0;
-static unsigned uPrefixesv4Exclude=0;
-static unsigned uOwnerSearch=0;
-static unsigned uDatacenterSearch=0;
-static char cuDatacenterSearchPullDown[256]={""};
-int ReadYesNoPullDownTriState(const char *cLabel);
-void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode);
-
-#define VAR_LIST_tPrefix "tPrefix.uPrefixes,tPrefix.cLabel,tPrefix.uAvailable,tPrefix.uOwner,tPrefix.uCreatedBy,tPrefix.uCreatedDate,tPrefix.uModBy,tPrefix.uModDate,tPrefix.uDatacenter,tPrefix.cComment"
+#define VAR_LIST_tPrefix "tPrefix.uPrefix,tPrefix.cLabel,tPrefix.uOwner,tPrefix.uCreatedBy,tPrefix.uCreatedDate,tPrefix.uModBy,tPrefix.uModDate"
 
  //Local only
-void tPrefixSearchSet(unsigned uStep);
 void Insert_tPrefix(void);
 void Update_tPrefix(char *cRowid);
 void ProcesstPrefixListVars(pentry entries[], int x);
@@ -85,17 +68,11 @@ void ProcesstPrefixVars(pentry entries[], int x)
 
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(entries[i].name,"uPrefixes"))
-			sscanf(entries[i].val,"%u",&uPrefixes);
+		
+		if(!strcmp(entries[i].name,"uPrefix"))
+			sscanf(entries[i].val,"%u",&uPrefix);
 		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.32s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uAvailable"))
-			sscanf(entries[i].val,"%u",&uAvailable);
-		else if(!strcmp(entries[i].name,"cYesNouAvailable"))
-		{
-			sprintf(cYesNouAvailable,"%.31s",entries[i].val);
-			uAvailable=ReadYesNoPullDown(cYesNouAvailable);
-		}
+			sprintf(cLabel,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -106,45 +83,6 @@ void ProcesstPrefixVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
-		else if(!strcmp(entries[i].name,"uDatacenter"))
-			sscanf(entries[i].val,"%u",&uDatacenter);
-		else if(!strcmp(entries[i].name,"cComment"))
-			cComment=entries[i].val;
-		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
-		{
-			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
-			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
-		}
-		else if(!strcmp(entries[i].name,"uOwnerSearch"))
-			sscanf(entries[i].val,"%u",&uOwnerSearch);
-		else if(!strcmp(entries[i].name,"cForClientPullDown"))
-		{
-			sprintf(cForClientPullDown,"%.255s",entries[i].val);
-			uOwnerSearch=ReadPullDown("tClient","cLabel",cForClientPullDown);
-		}
-		else if(!strcmp(entries[i].name,"uDatacenterSearch"))
-			sscanf(entries[i].val,"%u",&uDatacenterSearch);
-		else if(!strcmp(entries[i].name,"cuDatacenterSearchPullDown"))
-		{
-			sprintf(cuDatacenterSearchPullDown,"%.255s",entries[i].val);
-			uDatacenterSearch=ReadPullDown("tDatacenter","cLabel",cuDatacenterSearchPullDown);
-		}
-		else if(!strcmp(entries[i].name,"uServerSearch"))
-			sscanf(entries[i].val,"%u",&uServerSearch);
-		else if(!strcmp(entries[i].name,"cuServerSearchPullDown"))
-		{
-			sprintf(cuServerSearchPullDown,"%.255s",entries[i].val);
-			uServerSearch=ReadPullDown("tServer","cLabel",cuServerSearchPullDown);
-		}
-		else if(!strcmp(entries[i].name,"cYesNouAvailableSearch"))
-		{
-			sprintf(cYesNouAvailableSearch,"%.8s",entries[i].val);
-			uAvailableSearch=ReadYesNoPullDownTriState(cYesNouAvailableSearch);
-		}
-		else if(!strcmp(entries[i].name,"uServerSearchNotNoCA"))
-			uServerSearchNot=1;
-		else if(!strcmp(entries[i].name,"uPrefixesv4ExcludeNoCA"))
-			uPrefixesv4Exclude=1;
 
 	}
 
@@ -162,7 +100,7 @@ void ProcesstPrefixListVars(pentry entries[], int x)
         {
                 if(!strncmp(entries[i].name,"ED",2))
                 {
-                        sscanf(entries[i].name+2,"%u",&uPrefixes);
+                        sscanf(entries[i].name+2,"%u",&uPrefix);
                         guMode=2002;
                         tPrefix("");
                 }
@@ -232,9 +170,9 @@ void tPrefix(const char *cResult)
 		{
 			if(guMode==6)
 			{
-			sprintf(gcQuery,"SELECT _rowid FROM tPrefix WHERE uPrefixes=%u"
-						,uPrefixes);
-				MYSQL_RUN_STORE(res2);
+			sprintf(gcQuery,"SELECT _rowid FROM tPrefix WHERE uPrefix=%u"
+						,uPrefix);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -242,22 +180,20 @@ void tPrefix(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
-		sscanf(field[0],"%u",&uPrefixes);
+			
+		sscanf(field[0],"%u",&uPrefix);
 		sprintf(cLabel,"%.32s",field[1]);
-		sscanf(field[2],"%u",&uAvailable);
-		sscanf(field[3],"%u",&uOwner);
-		sscanf(field[4],"%u",&uCreatedBy);
-		sscanf(field[5],"%lu",&uCreatedDate);
-		sscanf(field[6],"%u",&uModBy);
-		sscanf(field[7],"%lu",&uModDate);
-		sscanf(field[8],"%u",&uDatacenter);
-		cComment=field[9];
+		sscanf(field[2],"%u",&uOwner);
+		sscanf(field[3],"%u",&uCreatedBy);
+		sscanf(field[4],"%lu",&uCreatedDate);
+		sscanf(field[5],"%u",&uModBy);
+		sscanf(field[6],"%lu",&uModDate);
 
 		}
 
 	}//Internal Skip
 
-	Header_ism3(":: PBXs used and reserved for use",2);//checkbox js = 2
+	Header_ism3(":: DID prefixes for use in rules a",0);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -293,14 +229,9 @@ void tPrefix(const char *cResult)
 	//
 	OpenFieldSet("tPrefix Record Data",100);
 
-	//Custom right panel for creating search sets
-	if(guMode==12001)
-		tPrefixSearchSet(1);
-	else if(guMode==12002)
-		tPrefixSearchSet(2);
-	else if(guMode==2000 || guMode==2002)
+	if(guMode==2000 || guMode==2002)
 		tPrefixInput(1);
-	else if(1)
+	else
 		tPrefixInput(0);
 
 	//
@@ -315,53 +246,14 @@ void tPrefix(const char *cResult)
 }//end of tPrefix();
 
 
-void tPrefixSearchSet(unsigned uStep)
-{
-	OpenRow("<u>Set search parameters</u>","black");
-
-	OpenRow("PBX pattern","black");
-	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cPBXSearch"
-			" value=\"%s\" size=40 maxlength=15 >",cPBXSearch);
-	printf("<input title='Exclude 10/8, 172.16/12 and 192.168/16 DIDs' type=checkbox name=uPrefixesv4ExcludeNoCA ");
-	if(uPrefixesv4Exclude)
-		printf(" checked");
-	printf("> Exclude RFC1918 DIDs");
-
-	OpenRow("Datacenter","black");
-	tTablePullDown("tDatacenter;cuDatacenterSearchPullDown","cLabel","cLabel",uDatacenterSearch,1);
-
-	OpenRow("Node","black");
-	tTablePullDown("tServer;cuServerSearchPullDown","cLabel","cLabel",uServerSearch,1);
-	printf("<input title='Logical NOT of selected server if any. Including default any server (no server)' type=checkbox name=uServerSearchNotNoCA ");
-	if(uServerSearchNot)
-		printf(" checked");
-	printf("> Not");
-
-	OpenRow("Owner","black");
-	tTablePullDownResellers(uOwnerSearch,0);
-
-	OpenRow("Available","black");
-	YesNoPullDownTriState("uAvailableSearch",uAvailableSearch,1);
-
-	if(uStep==1)
-	{
-		;
-	}
-	else if(uStep==2)
-	{
-		;
-	}
-
-}//void tPrefixSearchSet(unsigned uStep)
-
-
 void tPrefixInput(unsigned uMode)
 {
 
-//uPrefixes
-	OpenRow(LANG_FL_tPrefix_uPrefixes,"black");
-	printf("<input title='%s' type=text name=uPrefixes value=%u size=16 maxlength=10 "
-,LANG_FT_tPrefix_uPrefixes,uPrefixes);
+	
+	//uPrefix uRADType=1001
+	OpenRow(LANG_FL_tPrefix_uPrefix,"black");
+	printf("<input title='%s' type=text name=uPrefix value='%u' size=16 maxlength=10 "
+		,LANG_FT_tPrefix_uPrefix,uPrefix);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -369,12 +261,12 @@ void tPrefixInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uPrefixes value=%u >\n",uPrefixes);
+		printf("<input type=hidden name=uPrefix value='%u' >\n",uPrefix);
 	}
-//cLabel
+	//cLabel uRADType=253
 	OpenRow(LANG_FL_tPrefix_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tPrefix_cLabel,EncodeDoubleQuotes(cLabel));
+	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
+		,LANG_FT_tPrefix_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -382,104 +274,58 @@ void tPrefixInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
-//uAvailable
-	OpenRow(LANG_FL_tPrefix_uAvailable,"black");
-	if(guPermLevel>=10 && uMode)
-		YesNoPullDown("uAvailable",uAvailable,1);
-	else
-		YesNoPullDown("uAvailable",uAvailable,0);
-//uDatacenter
-	OpenRow(LANG_FL_tDatacenter_uDatacenter,"black");
-	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
-	else
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
-//cComment
-	OpenRow("cComment","black");
-	printf("<textarea title='Additional information about DID use' cols=80 wrap=hard rows=4 name=cComment ");
-	if(guPermLevel>=7 && uMode)
-	{
-		printf(">%s</textarea></td></tr>\n",TransformAngleBrackets(cComment));
-	}
-	else
-	{
-		printf("disabled>%s</textarea></td></tr>\n",TransformAngleBrackets(cComment));
-		printf("<input type=hidden name=cComment value=\"%s\" >\n",EncodeDoubleQuotes(cComment));
-	}
-//uOwner
+	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tPrefix_uOwner,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
-//uCreatedBy
+	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	//uCreatedBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tPrefix_uCreatedBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
-//uCreatedDate
+	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tPrefix_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value=%lu >\n",uCreatedDate);
-//uModBy
+	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
+	//uModBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tPrefix_uModBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-//uModDate
+	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tPrefix_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
+	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
 	printf("</tr>\n");
-
-
 
 }//void tPrefixInput(unsigned uMode)
 
 
 void NewtPrefix(unsigned uMode)
 {
+	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uPrefixes FROM tPrefix WHERE uPrefixes=%u",uPrefixes);
-	MYSQL_RUN_STORE(res);
-	if(mysql_num_rows(res)) 
-		//tPrefix("<blink>Record already exists");
+	sprintf(gcQuery,"SELECT uPrefix FROM tPrefix WHERE uPrefix=%u",uPrefix);
+	macro_mySQLRunAndStore(res);
+	i=mysql_num_rows(res);
+
+	if(i) 
 		tPrefix(LANG_NBR_RECEXISTS);
 
-	//insert query
 	Insert_tPrefix();
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	//sprintf(gcQuery,"New record %u added");
-	uPrefixes=mysql_insert_id(&gMysql);
-	uCreatedDate=luGetCreatedDate("tPrefix",uPrefixes);
-	unxsSPSLog(uPrefixes,"tPrefix","New");
+	uPrefix=mysql_insert_id(&gMysql);
+#ifdef StandardFields
+	uCreatedDate=luGetCreatedDate("tPrefix",uPrefix);
+#endif
+	unxsSPSLog(uPrefix,"tPrefix","New");
 
 	if(!uMode)
 	{
-		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uPrefixes);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uPrefix);
 		tPrefix(gcQuery);
 	}
 
@@ -488,17 +334,22 @@ void NewtPrefix(unsigned uMode)
 
 void DeletetPrefix(void)
 {
-	sprintf(gcQuery,"DELETE FROM tPrefix WHERE uPrefixes=%u AND ( uOwner=%u OR %u>9 )",uPrefixes,guLoginClient,guPermLevel);
-	MYSQL_RUN;
-	//tPrefix("Record Deleted");
+#ifdef StandardFields
+	sprintf(gcQuery,"DELETE FROM tPrefix WHERE uPrefix=%u AND ( uOwner=%u OR %u>9 )"
+					,uPrefix,guLoginClient,guPermLevel);
+#else
+	sprintf(gcQuery,"DELETE FROM tPrefix WHERE uPrefix=%u AND %u>9 )"
+					,uPrefix,guPermLevel);
+#endif
+	macro_mySQLQueryHTMLError;
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-		unxsSPSLog(uPrefixes,"tPrefix","Del");
+		unxsSPSLog(uPrefix,"tPrefix","Del");
 		tPrefix(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-		unxsSPSLog(uPrefixes,"tPrefix","DelError");
+		unxsSPSLog(uPrefix,"tPrefix","DelError");
 		tPrefix(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -507,32 +358,36 @@ void DeletetPrefix(void)
 
 void Insert_tPrefix(void)
 {
-	sprintf(gcQuery,"INSERT INTO tPrefix SET uPrefixes=%u,cLabel='%s',uAvailable=%u,uOwner=%u,uCreatedBy=%u,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s'",
-			uPrefixes
+	sprintf(gcQuery,"INSERT INTO tPrefix SET "
+		"cLabel='%s',"
+		"uOwner=%u,"
+		"uCreatedBy=%u,"
+		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
 			,TextAreaSave(cLabel)
-			,uAvailable
 			,uOwner
 			,uCreatedBy
-			,uDatacenter
-			,cComment);
-	MYSQL_RUN;
+		);
+
+	macro_mySQLQueryHTMLError;
 
 }//void Insert_tPrefix(void)
 
 
 void Update_tPrefix(char *cRowid)
 {
-	sprintf(gcQuery,"UPDATE tPrefix SET uPrefixes=%u,cLabel='%s',uAvailable=%u,uModBy=%u,"
-				"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s' WHERE _rowid=%s",
-			uPrefixes
+	sprintf(gcQuery,"UPDATE tPrefix SET "
+		"cLabel='%s',"
+		"uOwner=%u,"
+		"uModBy=%u,"
+		"uModDate=UNIX_TIMESTAMP(NOW())"
+		" WHERE _rowid=%s"
 			,TextAreaSave(cLabel)
-			,uAvailable
+			,uOwner
 			,uModBy
-			,uDatacenter
-			,cComment
-			,cRowid);
-	MYSQL_RUN;
+			,cRowid
+		);
+
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tPrefix(void)
 
@@ -542,33 +397,46 @@ void ModtPrefix(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uPreModDate=0;
 
+#ifdef StandardFields
+	unsigned uPreModDate=0;
 	//Mod select gcQuery
 	if(guPermLevel<10)
-		sprintf(gcQuery,"SELECT tPrefix.uPrefixes,tPrefix.uModDate FROM tPrefix,tClient WHERE tPrefix.uPrefixes=%u"
-				" AND tPrefix.uOwner=tClient.uClient AND (tClient.uOwner=%u OR tClient.uClient=%u)"
-					,uPrefixes,guLoginClient,guLoginClient);
+	sprintf(gcQuery,"SELECT tPrefix.uPrefix,"
+				" tPrefix.uModDate"
+				" FROM tPrefix,tClient"
+				" WHERE tPrefix.uPrefix=%u"
+				" AND tPrefix.uOwner=tClient.uClient"
+				" AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+					,uPrefix,guLoginClient,guLoginClient);
 	else
-		sprintf(gcQuery,"SELECT uPrefixes,uModDate FROM tPrefix WHERE uPrefixes=%u",uPrefixes);
-	MYSQL_RUN_STORE(res);
+	sprintf(gcQuery,"SELECT uPrefix,uModDate FROM tPrefix"
+				" WHERE uPrefix=%u"
+					,uPrefix);
+#else
+	sprintf(gcQuery,"SELECT uPrefix FROM tPrefix"
+				" WHERE uPrefix=%u"
+					,uPrefix);
+#endif
+
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
-	//if(i<1) tPrefix("<blink>Record does not exist");
 	if(i<1) tPrefix(LANG_NBR_RECNOTEXIST);
-	//if(i>1) tPrefix("<blink>Multprefixle rows!");
 	if(i>1) tPrefix(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
+#ifdef StandardFields
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tPrefix(LANG_NBR_EXTMOD);
+#endif
 
 	Update_tPrefix(field[0]);
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-	uModDate=luGetModDate("tPrefix",uPrefixes);
-	unxsSPSLog(uPrefixes,"tPrefix","Mod");
+#ifdef StandardFields
+	uModDate=luGetModDate("tPrefix",uPrefix);
+#endif
+	unxsSPSLog(uPrefix,"tPrefix","Mod");
 	tPrefix(gcQuery);
 
 }//ModtPrefix(void)
@@ -581,7 +449,7 @@ void tPrefixList(void)
 
 	ExttPrefixListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tPrefixList",1,"");//1 is auto header list guMode. Opens table!
@@ -595,16 +463,14 @@ void tPrefixList(void)
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
 	printf("<tr bgcolor=black>"
-		"<td><font face=arial,helvetica color=white>uPrefixes"
+		"<td><font face=arial,helvetica color=white>uPrefix"
 		"<td><font face=arial,helvetica color=white>cLabel"
-		"<td><font face=arial,helvetica color=white>uAvailable"
-		"<td><font face=arial,helvetica color=white>uDatacenter"
-		"<td><font face=arial,helvetica color=white>cComment"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
 		"<td><font face=arial,helvetica color=white>uCreatedDate"
 		"<td><font face=arial,helvetica color=white>uModBy"
-		"<td><font face=arial,helvetica color=white>uModDate</tr>");
+		"<td><font face=arial,helvetica color=white>uModDate"
+		"</tr>");
 
 
 
@@ -622,36 +488,29 @@ void tPrefixList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		long unsigned luYesNo2=strtoul(field[2],NULL,10);
-		char cBuf2[4];
-		if(luYesNo2)
-			sprintf(cBuf2,"Yes");
+				time_t luTime4=strtoul(field[4],NULL,10);
+		char cBuf4[32];
+		if(luTime4)
+			ctime_r(&luTime4,cBuf4);
 		else
-			sprintf(cBuf2,"No");
-		time_t luTime5=strtoul(field[5],NULL,10);
-		char cBuf5[32];
-		if(luTime5)
-			ctime_r(&luTime5,cBuf5);
+			sprintf(cBuf4,"---");
+		time_t luTime6=strtoul(field[6],NULL,10);
+		char cBuf6[32];
+		if(luTime6)
+			ctime_r(&luTime6,cBuf6);
 		else
-			sprintf(cBuf5,"---");
-		time_t luTime7=strtoul(field[7],NULL,10);
-		char cBuf7[32];
-		if(luTime7)
-			ctime_r(&luTime7,cBuf7);
-		else
-			sprintf(cBuf7,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf6,"---");
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tPrefix&uPrefix=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
-			,cBuf2
-			,ForeignKey("tDatacenter","cLabel",strtoul(field[8],NULL,10))
-			,field[9]
+			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
-			,cBuf5
-			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
-			,cBuf7);
+			,cBuf4
+			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
+			,cBuf6
+				);
+
 	}
 
 	printf("</table></form>\n");
@@ -662,19 +521,17 @@ void tPrefixList(void)
 
 void CreatetPrefix(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tPrefix ( "
-			"uPrefixes INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
-			"cComment VARCHAR(255) NOT NULL DEFAULT '',"
-			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
-			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uAvailable INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tPrefix ("
+		"uPrefix INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+		"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-}//CreatetPrefix()
+}//void CreatetPrefix(void)
+
 

@@ -1,11 +1,11 @@
 /*
 FILE
-	$Id: tglossaryfunc.h 1768 2011-07-11 15:43:35Z Gary $
+	$Id: tglossaryfunc.h 1953 2012-05-22 15:03:17Z Colin $
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2009 Gary Wallis for Unixservice.
  
 */
 
@@ -34,30 +34,36 @@ void ExttGlossaryCommands(pentry entries[], int x)
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=10)
+			if(guPermLevel>=9)
 			{
 	                        ProcesstGlossaryVars(entries,x);
                         	guMode=2000;
 	                        tGlossary(LANG_NB_CONFIRMNEW);
 			}
+			else
+				tGlossary("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=10)
+			if(guPermLevel>=9)
 			{
+				unsigned uContactParentCompany=0;
                         	ProcesstGlossaryVars(entries,x);
-
+				GetClientOwner(guLoginClient,&uContactParentCompany);
+				
                         	guMode=2000;
 				//Check entries here
                         	guMode=0;
 
 				uGlossary=0;
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				NewtGlossary(0);
 			}
+			else
+				tGlossary("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
@@ -67,6 +73,8 @@ void ExttGlossaryCommands(pentry entries[], int x)
 	                        guMode=2001;
 				tGlossary(LANG_NB_CONFIRMDEL);
 			}
+			else
+				tGlossary("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
@@ -76,6 +84,8 @@ void ExttGlossaryCommands(pentry entries[], int x)
 				guMode=5;
 				DeletetGlossary();
 			}
+			else
+				tGlossary("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
@@ -85,6 +95,8 @@ void ExttGlossaryCommands(pentry entries[], int x)
 				guMode=2002;
 				tGlossary(LANG_NB_CONFIRMMOD);
 			}
+			else
+				tGlossary("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
@@ -98,6 +110,8 @@ void ExttGlossaryCommands(pentry entries[], int x)
 				uModBy=guLoginClient;
 				ModtGlossary();
 			}
+			else
+				tGlossary("<blink>Error</blink>: Denied by permissions settings");
                 }
 	}
 
@@ -125,7 +139,8 @@ void ExttGlossaryButtons(void)
                 break;
 
 		default:
-
+			printf("<u>Table Tips</u><br>");
+			printf("<p><u>Record Context Info</u><br>");
 			tGlossaryNavList();
 	}
 	CloseFieldSet();
@@ -158,14 +173,44 @@ void ExttGlossaryGetHook(entry gentries[], int x)
 
 void ExttGlossarySelect(void)
 {
-	ExtSelect("tGlossary",VAR_LIST_tGlossary);
+
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tGlossary ORDER BY"
+				" uGlossary",
+				VAR_LIST_tGlossary);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tGlossary,tClient WHERE tGlossary.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uGlossary",
+					VAR_LIST_tGlossary,uContactParentCompany,uContactParentCompany);
+					
 
 }//void ExttGlossarySelect(void)
 
 
 void ExttGlossarySelectRow(void)
 {
-	ExtSelectRow("tGlossary",VAR_LIST_tGlossary,uGlossary);
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tGlossary WHERE uGlossary=%u",
+			VAR_LIST_tGlossary,uGlossary);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tGlossary,tClient"
+                                " WHERE tGlossary.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tGlossary.uGlossary=%u",
+                        		VAR_LIST_tGlossary
+					,uContactParentCompany,uContactParentCompany
+					,uGlossary);
 
 }//void ExttGlossarySelectRow(void)
 
@@ -173,8 +218,20 @@ void ExttGlossarySelectRow(void)
 void ExttGlossaryListSelect(void)
 {
 	char cCat[512];
+	unsigned uContactParentCompany=0;
+	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
 
-	ExtListSelect("tGlossary",VAR_LIST_tGlossary);
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tGlossary",
+				VAR_LIST_tGlossary);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tGlossary,tClient"
+				" WHERE tGlossary.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tGlossary
+				,uContactParentCompany
+				,uContactParentCompany);
 
 	//Changes here must be reflected below in ExttGlossaryListFilter()
         if(!strcmp(gcFilter,"uGlossary"))
@@ -184,8 +241,8 @@ void ExttGlossaryListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tGlossary.uGlossary=%u \
-						ORDER BY uGlossary",
+		sprintf(cCat,"tGlossary.uGlossary=%u"
+						" ORDER BY uGlossary",
 						uGlossary);
 		strcat(gcQuery,cCat);
         }
@@ -219,19 +276,17 @@ void ExttGlossaryListFilter(void)
 
 void ExttGlossaryNavBar(void)
 {
-	if(uOwner) GetClientOwner(uOwner,&guReseller);
-
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=10 && !guListMode)
+	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
 	if(uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy))
+	if(uAllowDel(uOwner,uCreatedBy)) 
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -248,9 +303,22 @@ void tGlossaryNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
 
-	ExtSelect("tGlossary","tGlossary.uGlossary,tGlossary.cLabel");
-
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
+	
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uGlossary,cLabel FROM tGlossary ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tGlossary.uGlossary,"
+				" tGlossary.cLabel"
+				" FROM tGlossary,tClient"
+				" WHERE tGlossary.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -265,109 +333,12 @@ void tGlossaryNavList(void)
         	printf("<p><u>tGlossaryNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGlossary&uGlossary=%s>%s</a>",
-					field[0],field[1]);
-			printf(" (<a class=darkLink href=# onClick=\"open_popup('?gcFunction=Glossary&cLabel=%s')\">"
-					"preview</a>)<br>",field[1]);
-	        }
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGlossary"
+				"&uGlossary=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
         mysql_free_result(res);
 
 }//void tGlossaryNavList(void)
 
-
-void htmlGlossaryLink(char *cLabel)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(!cLabel[0]) return;
-
-	sprintf(gcQuery,"SELECT uGlossary FROM tGlossary WHERE cLabel='%s'",cLabel);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		printf("Glossary entry for <a class=darkLink href=#"
-			" onClick=\"open_popup('?gcFunction=Glossary&cLabel=%1$s')\">%1$s</a><p>",cLabel);
-
-	}
-	mysql_free_result(res);
-
-}//void htmlGlossaryLink()
-
-
-//Protos
-void StyleSheet(void);//main.c
-
-//
-//Local only
-void SelectGlossary(char *cLabel);
-void htmlGlossaryPage(void);
-void htmlGlossary(void);
-
-void GlossaryGetHook(entry gentries[],int x)
-{
-	register int i;
-	
-	for(i=0;i<x;i++)
-	{
-		if(!strcmp(gentries[i].name,"cLabel"))
-			sprintf(cLabel,"%.32s",gentries[i].val);
-	}
-
-	if(cLabel[0])
-	{
-		MYSQL_RES *res;
-		MYSQL_ROW field;
-		
-		SelectGlossary(cLabel);
-		res=mysql_store_result(&gMysql);
-		
-		if((field=mysql_fetch_row(res)))
-			cText=field[0];		
-		else
-			cText="No description available";
-	}
-		
-	htmlGlossary();
-	
-
-}//void GlossaryGetHook(entry gentries[],int x)
-
-
-void htmlGlossary(void)
-{
-	printf("Content-type: text/html\n\n");
-	StyleSheet();
-	printf("<title>%s Glossary Entry</title>\n",cLabel);
-	htmlGlossaryPage();
-	exit(0);
-
-}//void htmlGlossary(void)
-
-
-void htmlGlossaryPage(void)
-{
-	printf("<b>%s Glossary Entry</b><br><br>\n"
-		"%s",
-		cLabel
-		,cText
-		);
-
-}//void htmlGlossaryPage()
-
-
-void SelectGlossary(char *cLabel)
-{
-	sprintf(gcQuery,"SELECT cText FROM tGlossary WHERE cLabel='%s'",cLabel);
-	mysql_query(&gMysql,gcQuery);
-
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	
-}//void SelectGlossary(char *cLabel)
 

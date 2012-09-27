@@ -1,64 +1,57 @@
 /*
 FILE
-	tGateway source code of unxsSPS.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tgateway.c 1922 2012-04-30 14:46:24Z Dylan $
+	$Id: module.c 2115 2012-09-19 14:11:03Z Gary $
 PURPOSE
 	Schema dependent RAD generated file.
-	Program app functionality in tgatewayfunc.h while 
-	RAD is still to be used.
-AUTHOR/LEGAL
+	Program app functionality can be developed in tgatewayfunc.h
+	while unxsSPS can still to be used to change this schema dependent file.
+AUTHOR
 	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
-	GPLv2 license applies. See LICENSE file included.
+TEMPLATE VARS AND FUNCTIONS
+	ModuleCreateQuery
+	ModuleInsertQuery
+	ModuleListPrint
+	ModuleListTable
+	ModuleLoadVars
+	ModuleProcVars
+	ModuleInput
+	ModuleUpdateQuery
+	ModuleVars
+	ModuleVarList
+	cProject
+	cTableKey
+	cTableName
+	cTableNameLC
+	cTableTitle
 */
 
 
 #include "mysqlrad.h"
 
 //Table Variables
-//Table Variables
-//uGateway: Primary Key
 static unsigned uGateway=0;
-//cLabel: Short label
 static char cLabel[33]={""};
-//uAvailable: PBX is available for use
-static unsigned uAvailable=0;
-static char cYesNouAvailable[32]={""};
-//uOwner: Record owner
+static char cAddress[33]={""};
+static char cHostname[33]={""};
+static unsigned uCarrier=0;
+static char cuCarrierPullDown[256]={""};
+static unsigned uPort=0;
+static unsigned uPriority=0;
+static unsigned uWeight=0;
+static unsigned uCluster=0;
+static char cuClusterPullDown[256]={""};
+static char cComment[33]={""};
 static unsigned uOwner=0;
-//uCreatedBy: uClient for last insert
+#define StandardFields
 static unsigned uCreatedBy=0;
-//uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
-//uModBy: uClient for last update
 static unsigned uModBy=0;
-//uModDate: Unix seconds date last update
 static time_t uModDate=0;
-//uDatacenter: Belongs to this Datacenter
-static unsigned uDatacenter=0;
-static char cuDatacenterPullDown[256]={""};
 
-//cComment
-static char *cComment={""};
 
-//Extensions for searching
-static char cPBXSearch[16]={""};
-static unsigned uAvailableSearch=0;
-static char cYesNouAvailableSearch[8]={""};
-static unsigned uServerSearch=0;
-static char cuServerSearchPullDown[256]={""};
-static unsigned uServerSearchNot=0;
-static unsigned uGatewayv4Exclude=0;
-static unsigned uOwnerSearch=0;
-static unsigned uDatacenterSearch=0;
-static char cuDatacenterSearchPullDown[256]={""};
-int ReadYesNoPullDownTriState(const char *cLabel);
-void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode);
-
-#define VAR_LIST_tGateway "tGateway.uGateway,tGateway.cLabel,tGateway.uAvailable,tGateway.uOwner,tGateway.uCreatedBy,tGateway.uCreatedDate,tGateway.uModBy,tGateway.uModDate,tGateway.uDatacenter,tGateway.cComment"
+#define VAR_LIST_tGateway "tGateway.uGateway,tGateway.cLabel,tGateway.cAddress,tGateway.cHostname,tGateway.uCarrier,tGateway.uPort,tGateway.uPriority,tGateway.uWeight,tGateway.uCluster,tGateway.cComment,tGateway.uOwner,tGateway.uCreatedBy,tGateway.uCreatedDate,tGateway.uModBy,tGateway.uModDate"
 
  //Local only
-void tGatewaySearchSet(unsigned uStep);
 void Insert_tGateway(void);
 void Update_tGateway(char *cRowid);
 void ProcesstGatewayListVars(pentry entries[], int x);
@@ -85,17 +78,37 @@ void ProcesstGatewayVars(pentry entries[], int x)
 
 	for(i=0;i<x;i++)
 	{
+		
 		if(!strcmp(entries[i].name,"uGateway"))
 			sscanf(entries[i].val,"%u",&uGateway);
 		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.32s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uAvailable"))
-			sscanf(entries[i].val,"%u",&uAvailable);
-		else if(!strcmp(entries[i].name,"cYesNouAvailable"))
+			sprintf(cLabel,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cAddress"))
+			sprintf(cAddress,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cHostname"))
+			sprintf(cHostname,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uCarrier"))
+			sscanf(entries[i].val,"%u",&uCarrier);
+		else if(!strcmp(entries[i].name,"cuCarrierPullDown"))
 		{
-			sprintf(cYesNouAvailable,"%.31s",entries[i].val);
-			uAvailable=ReadYesNoPullDown(cYesNouAvailable);
+			sprintf(cuCarrierPullDown,"%.255s",entries[i].val);
+			uCarrier=ReadPullDown("tCarrier","cLabel",cuCarrierPullDown);
 		}
+		else if(!strcmp(entries[i].name,"uPort"))
+			sscanf(entries[i].val,"%u",&uPort);
+		else if(!strcmp(entries[i].name,"uPriority"))
+			sscanf(entries[i].val,"%u",&uPriority);
+		else if(!strcmp(entries[i].name,"uWeight"))
+			sscanf(entries[i].val,"%u",&uWeight);
+		else if(!strcmp(entries[i].name,"uCluster"))
+			sscanf(entries[i].val,"%u",&uCluster);
+		else if(!strcmp(entries[i].name,"cuClusterPullDown"))
+		{
+			sprintf(cuClusterPullDown,"%.255s",entries[i].val);
+			uCluster=ReadPullDown("tCluster","cLabel",cuClusterPullDown);
+		}
+		else if(!strcmp(entries[i].name,"cComment"))
+			sprintf(cComment,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -106,45 +119,6 @@ void ProcesstGatewayVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
-		else if(!strcmp(entries[i].name,"uDatacenter"))
-			sscanf(entries[i].val,"%u",&uDatacenter);
-		else if(!strcmp(entries[i].name,"cComment"))
-			cComment=entries[i].val;
-		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
-		{
-			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
-			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
-		}
-		else if(!strcmp(entries[i].name,"uOwnerSearch"))
-			sscanf(entries[i].val,"%u",&uOwnerSearch);
-		else if(!strcmp(entries[i].name,"cForClientPullDown"))
-		{
-			sprintf(cForClientPullDown,"%.255s",entries[i].val);
-			uOwnerSearch=ReadPullDown("tClient","cLabel",cForClientPullDown);
-		}
-		else if(!strcmp(entries[i].name,"uDatacenterSearch"))
-			sscanf(entries[i].val,"%u",&uDatacenterSearch);
-		else if(!strcmp(entries[i].name,"cuDatacenterSearchPullDown"))
-		{
-			sprintf(cuDatacenterSearchPullDown,"%.255s",entries[i].val);
-			uDatacenterSearch=ReadPullDown("tDatacenter","cLabel",cuDatacenterSearchPullDown);
-		}
-		else if(!strcmp(entries[i].name,"uServerSearch"))
-			sscanf(entries[i].val,"%u",&uServerSearch);
-		else if(!strcmp(entries[i].name,"cuServerSearchPullDown"))
-		{
-			sprintf(cuServerSearchPullDown,"%.255s",entries[i].val);
-			uServerSearch=ReadPullDown("tServer","cLabel",cuServerSearchPullDown);
-		}
-		else if(!strcmp(entries[i].name,"cYesNouAvailableSearch"))
-		{
-			sprintf(cYesNouAvailableSearch,"%.8s",entries[i].val);
-			uAvailableSearch=ReadYesNoPullDownTriState(cYesNouAvailableSearch);
-		}
-		else if(!strcmp(entries[i].name,"uServerSearchNotNoCA"))
-			uServerSearchNot=1;
-		else if(!strcmp(entries[i].name,"uGatewayv4ExcludeNoCA"))
-			uGatewayv4Exclude=1;
 
 	}
 
@@ -234,7 +208,7 @@ void tGateway(const char *cResult)
 			{
 			sprintf(gcQuery,"SELECT _rowid FROM tGateway WHERE uGateway=%u"
 						,uGateway);
-				MYSQL_RUN_STORE(res2);
+				macro_mySQLRunAndStore(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
 				gluRowid++;
@@ -242,22 +216,28 @@ void tGateway(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
+			
 		sscanf(field[0],"%u",&uGateway);
 		sprintf(cLabel,"%.32s",field[1]);
-		sscanf(field[2],"%u",&uAvailable);
-		sscanf(field[3],"%u",&uOwner);
-		sscanf(field[4],"%u",&uCreatedBy);
-		sscanf(field[5],"%lu",&uCreatedDate);
-		sscanf(field[6],"%u",&uModBy);
-		sscanf(field[7],"%lu",&uModDate);
-		sscanf(field[8],"%u",&uDatacenter);
-		cComment=field[9];
+		sprintf(cAddress,"%.32s",field[2]);
+		sprintf(cHostname,"%.32s",field[3]);
+		sscanf(field[4],"%u",&uCarrier);
+		sscanf(field[5],"%u",&uPort);
+		sscanf(field[6],"%u",&uPriority);
+		sscanf(field[7],"%u",&uWeight);
+		sscanf(field[8],"%u",&uCluster);
+		sprintf(cComment,"%.32s",field[9]);
+		sscanf(field[10],"%u",&uOwner);
+		sscanf(field[11],"%u",&uCreatedBy);
+		sscanf(field[12],"%lu",&uCreatedDate);
+		sscanf(field[13],"%u",&uModBy);
+		sscanf(field[14],"%lu",&uModDate);
 
 		}
 
 	}//Internal Skip
 
-	Header_ism3(":: PBXs used and reserved for use",2);//checkbox js = 2
+	Header_ism3(":: Outgoing termination provider g",0);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -293,14 +273,9 @@ void tGateway(const char *cResult)
 	//
 	OpenFieldSet("tGateway Record Data",100);
 
-	//Custom right panel for creating search sets
-	if(guMode==12001)
-		tGatewaySearchSet(1);
-	else if(guMode==12002)
-		tGatewaySearchSet(2);
-	else if(guMode==2000 || guMode==2002)
+	if(guMode==2000 || guMode==2002)
 		tGatewayInput(1);
-	else if(1)
+	else
 		tGatewayInput(0);
 
 	//
@@ -315,53 +290,14 @@ void tGateway(const char *cResult)
 }//end of tGateway();
 
 
-void tGatewaySearchSet(unsigned uStep)
-{
-	OpenRow("<u>Set search parameters</u>","black");
-
-	OpenRow("PBX pattern","black");
-	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cPBXSearch"
-			" value=\"%s\" size=40 maxlength=15 >",cPBXSearch);
-	printf("<input title='Exclude 10/8, 172.16/12 and 192.168/16 DIDs' type=checkbox name=uGatewayv4ExcludeNoCA ");
-	if(uGatewayv4Exclude)
-		printf(" checked");
-	printf("> Exclude RFC1918 DIDs");
-
-	OpenRow("Datacenter","black");
-	tTablePullDown("tDatacenter;cuDatacenterSearchPullDown","cLabel","cLabel",uDatacenterSearch,1);
-
-	OpenRow("Node","black");
-	tTablePullDown("tServer;cuServerSearchPullDown","cLabel","cLabel",uServerSearch,1);
-	printf("<input title='Logical NOT of selected server if any. Including default any server (no server)' type=checkbox name=uServerSearchNotNoCA ");
-	if(uServerSearchNot)
-		printf(" checked");
-	printf("> Not");
-
-	OpenRow("Owner","black");
-	tTablePullDownResellers(uOwnerSearch,0);
-
-	OpenRow("Available","black");
-	YesNoPullDownTriState("uAvailableSearch",uAvailableSearch,1);
-
-	if(uStep==1)
-	{
-		;
-	}
-	else if(uStep==2)
-	{
-		;
-	}
-
-}//void tGatewaySearchSet(unsigned uStep)
-
-
 void tGatewayInput(unsigned uMode)
 {
 
-//uGateway
+	
+	//uGateway uRADType=1001
 	OpenRow(LANG_FL_tGateway_uGateway,"black");
-	printf("<input title='%s' type=text name=uGateway value=%u size=16 maxlength=10 "
-,LANG_FT_tGateway_uGateway,uGateway);
+	printf("<input title='%s' type=text name=uGateway value='%u' size=16 maxlength=10 "
+		,LANG_FT_tGateway_uGateway,uGateway);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -369,12 +305,12 @@ void tGatewayInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uGateway value=%u >\n",uGateway);
+		printf("<input type=hidden name=uGateway value='%u' >\n",uGateway);
 	}
-//cLabel
+	//cLabel uRADType=253
 	OpenRow(LANG_FL_tGateway_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tGateway_cLabel,EncodeDoubleQuotes(cLabel));
+	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
+		,LANG_FT_tGateway_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -382,99 +318,143 @@ void tGatewayInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
-//uAvailable
-	OpenRow(LANG_FL_tGateway_uAvailable,"black");
+	//cAddress uRADType=253
+	OpenRow(LANG_FL_tGateway_cAddress,"black");
+	printf("<input title='%s' type=text name=cAddress value='%s' size=40 maxlength=32 "
+		,LANG_FT_tGateway_cAddress,EncodeDoubleQuotes(cAddress));
 	if(guPermLevel>=10 && uMode)
-		YesNoPullDown("uAvailable",uAvailable,1);
-	else
-		YesNoPullDown("uAvailable",uAvailable,0);
-//uDatacenter
-	OpenRow(LANG_FL_tDatacenter_uDatacenter,"black");
-	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
-	else
-		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
-//cComment
-	OpenRow("cComment","black");
-	printf("<textarea title='Additional information about DID use' cols=80 wrap=hard rows=4 name=cComment ");
-	if(guPermLevel>=7 && uMode)
 	{
-		printf(">%s</textarea></td></tr>\n",TransformAngleBrackets(cComment));
+		printf("></td></tr>\n");
 	}
 	else
 	{
-		printf("disabled>%s</textarea></td></tr>\n",TransformAngleBrackets(cComment));
-		printf("<input type=hidden name=cComment value=\"%s\" >\n",EncodeDoubleQuotes(cComment));
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cAddress value='%s'>\n",EncodeDoubleQuotes(cAddress));
 	}
-//uOwner
+	//cHostname uRADType=253
+	OpenRow(LANG_FL_tGateway_cHostname,"black");
+	printf("<input title='%s' type=text name=cHostname value='%s' size=40 maxlength=32 "
+		,LANG_FT_tGateway_cHostname,EncodeDoubleQuotes(cHostname));
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cHostname value='%s'>\n",EncodeDoubleQuotes(cHostname));
+	}
+	//uCarrier COLTYPE_SELECTTABLE
+	OpenRow(LANG_FL_tGateway_uCarrier,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tCarrier;cuCarrierPullDown","cLabel","cLabel",uCarrier,1);
+	else
+		tTablePullDown("tCarrier;cuCarrierPullDown","cLabel","cLabel",uCarrier,0);
+	//uPort uRADType=3
+	OpenRow(LANG_FL_tGateway_uPort,"black");
+	printf("<input title='%s' type=text name=uPort value='%u' size=16 maxlength=10 "
+		,LANG_FT_tGateway_uPort,uPort);
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uPort value='%u' >\n",uPort);
+	}
+	//uPriority uRADType=3
+	OpenRow(LANG_FL_tGateway_uPriority,"black");
+	printf("<input title='%s' type=text name=uPriority value='%u' size=16 maxlength=10 "
+		,LANG_FT_tGateway_uPriority,uPriority);
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uPriority value='%u' >\n",uPriority);
+	}
+	//uWeight uRADType=3
+	OpenRow(LANG_FL_tGateway_uWeight,"black");
+	printf("<input title='%s' type=text name=uWeight value='%u' size=16 maxlength=10 "
+		,LANG_FT_tGateway_uWeight,uWeight);
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uWeight value='%u' >\n",uWeight);
+	}
+	//uCluster COLTYPE_SELECTTABLE
+	OpenRow(LANG_FL_tGateway_uCluster,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tCluster;cuClusterPullDown","cLabel","cLabel",uCluster,1);
+	else
+		tTablePullDown("tCluster;cuClusterPullDown","cLabel","cLabel",uCluster,0);
+	//cComment uRADType=253
+	OpenRow(LANG_FL_tGateway_cComment,"black");
+	printf("<input title='%s' type=text name=cComment value='%s' size=40 maxlength=31 "
+		,LANG_FT_tGateway_cComment,EncodeDoubleQuotes(cComment));
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cComment value='%s'>\n",EncodeDoubleQuotes(cComment));
+	}
+	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tGateway_uOwner,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
-//uCreatedBy
+	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	//uCreatedBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tGateway_uCreatedBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
-//uCreatedDate
+	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tGateway_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value=%lu >\n",uCreatedDate);
-//uModBy
+	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
+	//uModBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tGateway_uModBy,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-//uModDate
+	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tGateway_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
+	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
 	printf("</tr>\n");
-
-
 
 }//void tGatewayInput(unsigned uMode)
 
 
 void NewtGateway(unsigned uMode)
 {
+	register int i=0;
 	MYSQL_RES *res;
 
 	sprintf(gcQuery,"SELECT uGateway FROM tGateway WHERE uGateway=%u",uGateway);
-	MYSQL_RUN_STORE(res);
-	if(mysql_num_rows(res)) 
-		//tGateway("<blink>Record already exists");
+	macro_mySQLRunAndStore(res);
+	i=mysql_num_rows(res);
+
+	if(i) 
 		tGateway(LANG_NBR_RECEXISTS);
 
-	//insert query
 	Insert_tGateway();
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	//sprintf(gcQuery,"New record %u added");
 	uGateway=mysql_insert_id(&gMysql);
+#ifdef StandardFields
 	uCreatedDate=luGetCreatedDate("tGateway",uGateway);
+#endif
 	unxsSPSLog(uGateway,"tGateway","New");
 
 	if(!uMode)
@@ -488,9 +468,14 @@ void NewtGateway(unsigned uMode)
 
 void DeletetGateway(void)
 {
-	sprintf(gcQuery,"DELETE FROM tGateway WHERE uGateway=%u AND ( uOwner=%u OR %u>9 )",uGateway,guLoginClient,guPermLevel);
-	MYSQL_RUN;
-	//tGateway("Record Deleted");
+#ifdef StandardFields
+	sprintf(gcQuery,"DELETE FROM tGateway WHERE uGateway=%u AND ( uOwner=%u OR %u>9 )"
+					,uGateway,guLoginClient,guPermLevel);
+#else
+	sprintf(gcQuery,"DELETE FROM tGateway WHERE uGateway=%u AND %u>9 )"
+					,uGateway,guPermLevel);
+#endif
+	macro_mySQLQueryHTMLError;
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 		unxsSPSLog(uGateway,"tGateway","Del");
@@ -507,32 +492,68 @@ void DeletetGateway(void)
 
 void Insert_tGateway(void)
 {
-	sprintf(gcQuery,"INSERT INTO tGateway SET uGateway=%u,cLabel='%s',uAvailable=%u,uOwner=%u,uCreatedBy=%u,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s'",
-			uGateway
+	sprintf(gcQuery,"INSERT INTO tGateway SET "
+		"cLabel='%s',"
+		"cAddress='%s',"
+		"cHostname='%s',"
+		"uCarrier=%u,"
+		"uPort=%u,"
+		"uPriority=%u,"
+		"uWeight=%u,"
+		"uCluster=%u,"
+		"cComment='%s',"
+		"uOwner=%u,"
+		"uCreatedBy=%u,"
+		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
 			,TextAreaSave(cLabel)
-			,uAvailable
+			,TextAreaSave(cAddress)
+			,TextAreaSave(cHostname)
+			,uCarrier
+			,uPort
+			,uPriority
+			,uWeight
+			,uCluster
+			,TextAreaSave(cComment)
 			,uOwner
 			,uCreatedBy
-			,uDatacenter
-			,cComment);
-	MYSQL_RUN;
+		);
+
+	macro_mySQLQueryHTMLError;
 
 }//void Insert_tGateway(void)
 
 
 void Update_tGateway(char *cRowid)
 {
-	sprintf(gcQuery,"UPDATE tGateway SET uGateway=%u,cLabel='%s',uAvailable=%u,uModBy=%u,"
-				"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s' WHERE _rowid=%s",
-			uGateway
+	sprintf(gcQuery,"UPDATE tGateway SET "
+		"cLabel='%s',"
+		"cAddress='%s',"
+		"cHostname='%s',"
+		"uCarrier=%u,"
+		"uPort=%u,"
+		"uPriority=%u,"
+		"uWeight=%u,"
+		"uCluster=%u,"
+		"cComment='%s',"
+		"uOwner=%u,"
+		"uModBy=%u,"
+		"uModDate=UNIX_TIMESTAMP(NOW())"
+		" WHERE _rowid=%s"
 			,TextAreaSave(cLabel)
-			,uAvailable
+			,TextAreaSave(cAddress)
+			,TextAreaSave(cHostname)
+			,uCarrier
+			,uPort
+			,uPriority
+			,uWeight
+			,uCluster
+			,TextAreaSave(cComment)
+			,uOwner
 			,uModBy
-			,uDatacenter
-			,cComment
-			,cRowid);
-	MYSQL_RUN;
+			,cRowid
+		);
+
+	macro_mySQLQueryHTMLError;
 
 }//void Update_tGateway(void)
 
@@ -542,32 +563,45 @@ void ModtGateway(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uPreModDate=0;
 
+#ifdef StandardFields
+	unsigned uPreModDate=0;
 	//Mod select gcQuery
 	if(guPermLevel<10)
-		sprintf(gcQuery,"SELECT tGateway.uGateway,tGateway.uModDate FROM tGateway,tClient WHERE tGateway.uGateway=%u"
-				" AND tGateway.uOwner=tClient.uClient AND (tClient.uOwner=%u OR tClient.uClient=%u)"
+	sprintf(gcQuery,"SELECT tGateway.uGateway,"
+				" tGateway.uModDate"
+				" FROM tGateway,tClient"
+				" WHERE tGateway.uGateway=%u"
+				" AND tGateway.uOwner=tClient.uClient"
+				" AND (tClient.uOwner=%u OR tClient.uClient=%u)"
 					,uGateway,guLoginClient,guLoginClient);
 	else
-		sprintf(gcQuery,"SELECT uGateway,uModDate FROM tGateway WHERE uGateway=%u",uGateway);
-	MYSQL_RUN_STORE(res);
+	sprintf(gcQuery,"SELECT uGateway,uModDate FROM tGateway"
+				" WHERE uGateway=%u"
+					,uGateway);
+#else
+	sprintf(gcQuery,"SELECT uGateway FROM tGateway"
+				" WHERE uGateway=%u"
+					,uGateway);
+#endif
+
+	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
-	//if(i<1) tGateway("<blink>Record does not exist");
 	if(i<1) tGateway(LANG_NBR_RECNOTEXIST);
-	//if(i>1) tGateway("<blink>Multgatewayle rows!");
 	if(i>1) tGateway(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
+#ifdef StandardFields
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tGateway(LANG_NBR_EXTMOD);
+#endif
 
 	Update_tGateway(field[0]);
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
+#ifdef StandardFields
 	uModDate=luGetModDate("tGateway",uGateway);
+#endif
 	unxsSPSLog(uGateway,"tGateway","Mod");
 	tGateway(gcQuery);
 
@@ -581,7 +615,7 @@ void tGatewayList(void)
 
 	ExttGatewayListSelect();
 
-	MYSQL_RUN_STORE(res);
+	macro_mySQLRunAndStore(res);
 	guI=mysql_num_rows(res);
 
 	PageMachine("tGatewayList",1,"");//1 is auto header list guMode. Opens table!
@@ -597,14 +631,20 @@ void tGatewayList(void)
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uGateway"
 		"<td><font face=arial,helvetica color=white>cLabel"
-		"<td><font face=arial,helvetica color=white>uAvailable"
-		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>cAddress"
+		"<td><font face=arial,helvetica color=white>cHostname"
+		"<td><font face=arial,helvetica color=white>uCarrier"
+		"<td><font face=arial,helvetica color=white>uPort"
+		"<td><font face=arial,helvetica color=white>uPriority"
+		"<td><font face=arial,helvetica color=white>uWeight"
+		"<td><font face=arial,helvetica color=white>uCluster"
 		"<td><font face=arial,helvetica color=white>cComment"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
 		"<td><font face=arial,helvetica color=white>uCreatedDate"
 		"<td><font face=arial,helvetica color=white>uModBy"
-		"<td><font face=arial,helvetica color=white>uModDate</tr>");
+		"<td><font face=arial,helvetica color=white>uModDate"
+		"</tr>");
 
 
 
@@ -622,36 +662,37 @@ void tGatewayList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		long unsigned luYesNo2=strtoul(field[2],NULL,10);
-		char cBuf2[4];
-		if(luYesNo2)
-			sprintf(cBuf2,"Yes");
+				time_t luTime12=strtoul(field[12],NULL,10);
+		char cBuf12[32];
+		if(luTime12)
+			ctime_r(&luTime12,cBuf12);
 		else
-			sprintf(cBuf2,"No");
-		time_t luTime5=strtoul(field[5],NULL,10);
-		char cBuf5[32];
-		if(luTime5)
-			ctime_r(&luTime5,cBuf5);
+			sprintf(cBuf12,"---");
+		time_t luTime14=strtoul(field[14],NULL,10);
+		char cBuf14[32];
+		if(luTime14)
+			ctime_r(&luTime14,cBuf14);
 		else
-			sprintf(cBuf5,"---");
-		time_t luTime7=strtoul(field[7],NULL,10);
-		char cBuf7[32];
-		if(luTime7)
-			ctime_r(&luTime7,cBuf7);
-		else
-			sprintf(cBuf7,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf14,"---");
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tGateway&uGateway=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
-			,cBuf2
-			,ForeignKey("tDatacenter","cLabel",strtoul(field[8],NULL,10))
+			,field[2]
+			,field[3]
+			,ForeignKey("tCarrier","cLabel",strtoul(field[4],NULL,10))
+			,field[5]
+			,field[6]
+			,field[7]
+			,ForeignKey("tCluster","cLabel",strtoul(field[8],NULL,10))
 			,field[9]
-			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
-			,cBuf5
-			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
-			,cBuf7);
+			,ForeignKey("tClient","cLabel",strtoul(field[10],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[11],NULL,10))
+			,cBuf12
+			,ForeignKey("tClient","cLabel",strtoul(field[13],NULL,10))
+			,cBuf14
+				);
+
 	}
 
 	printf("</table></form>\n");
@@ -662,19 +703,25 @@ void tGatewayList(void)
 
 void CreatetGateway(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGateway ( "
-			"uGateway INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
-			"cComment VARCHAR(255) NOT NULL DEFAULT '',"
-			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
-			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uAvailable INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGateway ("
+		"uGateway INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+		"cAddress VARCHAR(32) NOT NULL DEFAULT '', INDEX (cAddress),"
+		"cHostname VARCHAR(32) NOT NULL DEFAULT '', INDEX (cHostname),"
+		"uCarrier INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uCarrier),"
+		"uPort INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uPriority INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uWeight INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCluster INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uCluster),"
+		"cComment VARCHAR(32) NOT NULL DEFAULT '',"
+		"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-}//CreatetGateway()
+}//void CreatetGateway(void)
+
 

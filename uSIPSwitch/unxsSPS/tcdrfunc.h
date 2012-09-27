@@ -1,15 +1,18 @@
 /*
 FILE
-	$Id: tmonthfunc.h 1380 2010-04-27 15:02:47Z Gary $
-	(Built initially by unixservice.com mysqlRAD2)
+	$Id: modulefunc.h 2116 2012-09-19 23:00:28Z Gary $
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2007 Gary Wallis.
- 
+	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
+TEMPLATE VARS AND FUNCTIONS
+	ModuleFunctionProcess
+	ModuleFunctionProtos
+	cProject
+	cTableKey
+	cTableName
 */
 
-//ModuleFunctionProtos()
 
 
 void tCDRNavList(void);
@@ -30,86 +33,107 @@ void ExttCDRCommands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"tCDRTools"))
 	{
-		//ModuleFunctionProcess()
-
+		
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
 	                        ProcesstCDRVars(entries,x);
                         	guMode=2000;
 	                        tCDR(LANG_NB_CONFIRMNEW);
 			}
+			else
+				tCDR("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
-			if(guPermLevel>=12)
+			if(guPermLevel>=9)
 			{
+				unsigned uContactParentCompany=0;
                         	ProcesstCDRVars(entries,x);
-
+				GetClientOwner(guLoginClient,&uContactParentCompany);
+				
                         	guMode=2000;
 				//Check entries here
                         	guMode=0;
 
 				uCDR=0;
+#ifdef StandardFields
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
+#endif
 				NewtCDR(0);
 			}
+			else
+				tCDR("<blink>Error</blink>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstCDRVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+			if(uAllowDel(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 	                        guMode=2001;
 				tCDR(LANG_NB_CONFIRMDEL);
 			}
+			else
+				tCDR("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstCDRVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+			if(uAllowDel(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 				guMode=5;
 				DeletetCDR();
 			}
+			else
+				tCDR("<blink>Error</blink>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstCDRVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+			if(uAllowMod(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
 				guMode=2002;
 				tCDR(LANG_NB_CONFIRMMOD);
 			}
+			else
+				tCDR("<blink>Error</blink>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstCDRVars(entries,x);
-			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+			if(uAllowMod(uOwner,uCreatedBy))
+#else
+			if(guPermLevel>=9)
+#endif
 			{
                         	guMode=2002;
 				//Check entries here
                         	guMode=0;
 
+#ifdef StandardFields
 				uModBy=guLoginClient;
+#endif
 				ModtCDR();
 			}
+			else
+				tCDR("<blink>Error</blink>: Denied by permissions settings");
                 }
 	}
 
@@ -137,7 +161,11 @@ void ExttCDRButtons(void)
                 break;
 
 		default:
-
+			printf("<u>Table Tips</u><br>");
+			printf("<p><u>Record Context Info</u><br>");
+			printf("<p><u>Operations</u><br>");
+			//printf("<br><input type=submit class=largeButton title='Sample button help'"
+			//		" name=gcCommand value='Sample Button'>");
 			tCDRNavList();
 	}
 	CloseFieldSet();
@@ -170,15 +198,52 @@ void ExttCDRGetHook(entry gentries[], int x)
 
 void ExttCDRSelect(void)
 {
-        //Set non search gcQuery here for tTableName()
-	ExtSelect("tCDR",VAR_LIST_tCDR);
+
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tCDR ORDER BY"
+				" uCDR",
+				VAR_LIST_tCDR);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tCDR,tClient WHERE tCDR.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uCDR",
+					VAR_LIST_tCDR,uContactParentCompany,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT %s FROM tCDR ORDER BY uCDR",VAR_LIST_tCDR);
+#endif
+					
 
 }//void ExttCDRSelect(void)
 
 
 void ExttCDRSelectRow(void)
 {
-	ExtSelectRow("tCDR",VAR_LIST_tCDR,uCDR);
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tCDR WHERE uCDR=%u",
+			VAR_LIST_tCDR,uCDR);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tCDR,tClient"
+                                " WHERE tCDR.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tCDR.uCDR=%u",
+                        		VAR_LIST_tCDR
+					,uContactParentCompany,uContactParentCompany
+					,uCDR);
+#else
+	sprintf(gcQuery,"SELECT %s FROM tCDR WHERE uCDR=%u",VAR_LIST_tCDR,uCDR);
+#endif
 
 }//void ExttCDRSelectRow(void)
 
@@ -186,18 +251,36 @@ void ExttCDRSelectRow(void)
 void ExttCDRListSelect(void)
 {
 	char cCat[512];
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
 
-	ExtListSelect("tCDR",VAR_LIST_tCDR);
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tCDR",
+				VAR_LIST_tCDR);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tCDR,tClient"
+				" WHERE tCDR.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tCDR
+				,uContactParentCompany
+				,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT %s FROM tCDR",VAR_LIST_tCDR);
+#endif
 
 	//Changes here must be reflected below in ExttCDRListFilter()
         if(!strcmp(gcFilter,"uCDR"))
         {
                 sscanf(gcCommand,"%u",&uCDR);
-		if(guLoginClient==1 && guPermLevel>11)
-			strcat(gcQuery," WHERE ");
-		else
+		if(guPermLevel<10)
 			strcat(gcQuery," AND ");
-		sprintf(cCat,"tCDR.uCDR=%u ORDER BY uCDR",uCDR);
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tCDR.uCDR=%u"
+						" ORDER BY uCDR",
+						uCDR);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -230,26 +313,32 @@ void ExttCDRListFilter(void)
 
 void ExttCDRNavBar(void)
 {
-	if(uOwner) GetClientOwner(uOwner,&guReseller);
-
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 	printf(LANG_NBB_SEARCH);
 
-	if(guPermLevel>=12 && !guListMode)
+	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+	if(uAllowMod(uOwner,uCreatedBy))
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_MODIFY);
 
-			if( (guPermLevel>=12 && uOwner==guLoginClient)
-				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
-				|| (guPermLevel>7 && guReseller==guLoginClient) )
+#ifdef StandardFields
+	if(uAllowDel(uOwner,uCreatedBy)) 
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_DELETE);
 
+#ifdef StandardFields
 	if(uOwner)
+#else
+	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
@@ -263,9 +352,26 @@ void tCDRNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
 
-	ExtSelect("tCDR","tCDR.uCDR,tCDR.cLabel");
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
 	
+#ifdef StandardFields
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uCDR,cLabel FROM tCDR ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tCDR.uCDR,"
+				" tCDR.cLabel"
+				" FROM tCDR,tClient"
+				" WHERE tCDR.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT uCDR,cLabel FROM tCDR ORDER BY cLabel");
+#endif
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -280,10 +386,9 @@ void tCDRNavList(void)
         	printf("<p><u>tCDRNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-		{
-printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tCDR\
-&uCDR=%s>%s</a><br>\n",field[0],field[1]);
-	        }
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tCDR"
+				"&uCDR=%s>%s</a><br>\n",
+				field[0],field[1]);
 	}
         mysql_free_result(res);
 
