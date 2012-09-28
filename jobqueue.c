@@ -2787,10 +2787,11 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(system(gcQuery))
 		logfileLine("CloneContainer",gcQuery);
 
+	//This breaks starting clones turn off for now until we can figure out how to migrate quotas correctly.
 	//10-. If quota file exists copy also
-	sprintf(gcQuery,"scp /var/vzquota/quota.%u %s:/var/vzquota/quota.%u",uContainer,cTargetNodeIPv4,uNewVeid);
-	if(system(gcQuery))
-		logfileLine("CloneContainer",gcQuery);
+	//sprintf(gcQuery,"scp /var/vzquota/quota.%u %s:/var/vzquota/quota.%u",uContainer,cTargetNodeIPv4,uNewVeid);
+	//if(system(gcQuery))
+	//	logfileLine("CloneContainer",gcQuery);
 
 //This goto MIGHT be ok.
 CommonExit:
