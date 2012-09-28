@@ -108,5 +108,8 @@ if(guLogLevel>3)
 	logfileLine("readEv",gcQuery);
 }
 
+//debug only
+//return;
+
 
 //next section is "natpbx/postparsecheck.h"
