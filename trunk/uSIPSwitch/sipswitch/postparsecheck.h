@@ -12,16 +12,12 @@ DETAILS
 AVAILABLE DATA FROM readEv() and parsemessage.h
 	char cMessage[2048]={""};
 	char cSourceIP[INET_ADDRSTRLEN]={""};
-	char cDestinationIP[256]={""};
 	unsigned uSourcePort=ntohs(sourceAddr.sin_port);
-	unsigned uDestinationPort=0;
 	char cFirstLine[100]={""};
 	char cCallID[100]={""};
-	char cToDomain[100]={""};
-	unsigned uToPort=0;
-	char cFrom[100]={""};
-	char cFromDomain[100]={""};
-	unsigned uFromPort=0;
+	char cGateway[100]={""};
+	unsigned uGatewayPort=0;
+	char cDID[32]={""};
 
 */
 
@@ -54,9 +50,9 @@ if(!cCallID[0])
 		logfileLine("readEv 481 Call/Transaction Does Not Exist",cSourceIP);	
 }
 
-if(!cToDomain[0])
+if(!cGateway[0])
 {
-	//Empty cToDomain
+	//Empty cGateway
 	sprintf(cMsg,"SIP/2.0 416 Unsupported URI\n");
 	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 	{
@@ -75,7 +71,7 @@ if(!cToDomain[0])
 		}
 	}
 	if(guLogLevel>3)
-		logfileLine("readEv cToDomain 416 empty",cSourceIP);
+		logfileLine("readEv cGateway 416 empty",cSourceIP);
 	return;
 }
 
