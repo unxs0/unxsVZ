@@ -12,6 +12,13 @@ AUTHOR/LEGAL
 	GPLv2 license applies. See LICENSE file included.
 DETAILS
 	This module requires that these values be parsed from header 
+	INVITE:
+		cFirstLine
+		cDID
+		cGatewayIP
+		uGatewayPort
+		cCallID
+		uMaxForwards
 
 AVAILABLE DATA FROM readEv()
 	char cMessage[2048]={""};
@@ -19,6 +26,27 @@ AVAILABLE DATA FROM readEv()
 	unsigned uSourcePort=ntohs(sourceAddr.sin_port);
 */
 
+
+
+//Example cMessage
+/*
+[INVITE sip:7073613110@65.49.53.120:5060 SIP/2.0
+Record-Route: <sip:64.2.142.90;lr=on>
+Via: SIP/2.0/UDP 64.2.142.90;branch=z9hG4bKf6a8.e2464312.0
+Via: SIP/2.0/UDP 66.241.99.224:5060;received=66.241.99.224;branch=z9hG4bK15cac452;rport=5060
+From: "3103566265" <sip:3103566265@66.241.99.224>;tag=as63baabce
+To: <sip:7073613110@64.2.142.90:5060>
+Contact: <sip:3103566265@66.241.99.224>
+Call-ID: 3c56c63d0d18332d6ba961731532ad00@66.241.99.224
+CSeq: 102 INVITE
+User-Agent: packetrino
+Max-Forwards: 69
+Date: Thu, 27 Sep 2012 15:53:45 GMT
+Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO
+Supported: replaces
+Content-Type: application/sdp
+Content-Length: 336
+*/
 
 //This is used for request/reply determination
 char *cp,*cp1;
@@ -49,6 +77,7 @@ if(guLogLevel>1 && !cCallID[0])
 	logfileLine("readEv","No Call-ID");
 //cCallID
 
+//To: <sip:7073613110@64.2.142.90:5060>
 char cTo[100]={""};
 if((cp=strstr(cMessage,"To: ")))
 {
@@ -59,92 +88,25 @@ if((cp=strstr(cMessage,"To: ")))
 		*cp1='\r';
 	}
 }//cTo
-
-char cToDomain[100]={""};
-unsigned uToPort=0;
+char cDID[32]={""};
+char cGateway[100]={""};
+unsigned uGatewayPort=0;
 if(cTo[0])
 {
-	if((cp=strchr(cTo,'@')))
+	if((cp=strstr(cTo,"sip:")))
 	{
-		sprintf(cToDomain,"%.99s",cp+1);
-		if((cp=strchr(cToDomain,':')))
-		{
-			//get port then chop off
-			sscanf(cp+1,"%u",&uToPort);
-			*cp=0;
-		}
-		if((cp=strchr(cToDomain,'>')))
-			*cp=0;
-		if((cp=strchr(cToDomain,';')))
-			*cp=0;
+		if((cp1=strchr(cTo,'@')))
+			*cp1=0;
+		sprintf(cDID,"%.31s",cp+4);
+		sscanf(cp1+1,"%[0-9\\.]:%u",cGateway,&uGatewayPort);
 	}
-}//cToDomain
-
-char cFrom[100]={""};
-if((cp=strstr(cMessage,"From: ")))
-{
-	if((cp1=strchr(cp+strlen("From: "),'\r')))
-	{
-		*cp1=0;
-		sprintf(cFrom,"%.99s",cp+strlen("From: "));
-		*cp1='\r';
-	}
-}//cFrom
-
-char cFromDomain[100]={""};
-unsigned uFromPort=0;
-if(cFrom[0])
-{
-	if((cp=strchr(cFrom,'@')))
-	{
-		sprintf(cFromDomain,"%.99s",cp+1);
-		if((cp=strchr(cFromDomain,':')))
-		{
-			//get port then chop off
-			sscanf(cp+1,"%u",&uFromPort);
-			*cp=0;
-		}
-		if((cp=strchr(cFromDomain,'>')))
-			*cp=0;
-		if((cp=strchr(cFromDomain,';')))
-			*cp=0;
-	}
-}//cFromDomain
+}//cDID cGateway uGatewayPort
 
 if(guLogLevel>3)
 {
-	sprintf(gcQuery,"cTo:%s cToDomain:%s:%u",cTo,cToDomain,uToPort);
-	logfileLine("readEv",gcQuery);
-	sprintf(gcQuery,"cFrom:%s cFromDomain:%s:%u",cFrom,cFromDomain,uFromPort);
+	sprintf(gcQuery,"cTo:%s cDID:%s cGateway:%s:%u",cTo,cDID,cGateway,uGatewayPort);
 	logfileLine("readEv",gcQuery);
 }
 
 
 //next section is "natpbx/postparsecheck.h"
-
-
-//Example cMessage
-/*
-[OPTIONS sip:nobody@127.0.0.1 SIP/2.0
-Via: SIP/2.0/UDP 72.52.75.232:44736;branch=z9hG4bK.3bcb1ce3;rport;alias
-From: sip:sipsak@72.52.75.232:44736;tag=808799b
-To: sip:nobody@127.0.0.1
-Call-ID: 134773147@72.52.75.232
-CSeq: 1 OPTIONS
-Contact: sip:sipsak@72.52.75.232:44736
-Content-Length: 0
-Max-Forwards: 70
-User-Agent: sipsak 0.9.6
-Accept: text/plain
-
-]
-
-Note most common sip uri scheme:
-
-From: "103" <sip:103@vcinternaltestingonly.callingcloud.net:6002>;tag=1764399065
-To: "103" <sip:103@vcinternaltestingonly.callingcloud.net:6002>;tag=as2e679ce3
-
-Notes:
-	Lines are cr-lf terminated
-	Last text/plain line is double cr-lf terminated.
-*/

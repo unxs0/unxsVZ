@@ -11,16 +11,12 @@ DETAILS
 AVAILABLE DATA FROM readEv()
 	char cMessage[2048]={""};
 	char cSourceIP[INET_ADDRSTRLEN]={""};
-	char cDestinationIP[256]={""};
 	unsigned uSourcePort=ntohs(sourceAddr.sin_port);
-	unsigned uDestinationPort=0;
 	char cFirstLine[100]={""};
 	char cCallID[100]={""};
-	char cToDomain[100]={""};
-	unsigned uToPort=0;
-	char cFrom[100]={""};
-	char cFromDomain[100]={""};
-	unsigned uFromPort=0;
+	char cDID[32]={""};
+	char cGateway[100]={""};
+	unsigned uGatewayPort=0;
 
 */
 
@@ -42,46 +38,33 @@ memcached_return rc;
 //
 if(!uReply)
 {
-	if(cToDomain[0])
+	if(cDID[0])
 	{
-		sprintf(cKey,"%s-pbx",cToDomain);
+		sprintf(cKey,"%s-did",cDID);
 		sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
 		if(rc!=MEMCACHED_SUCCESS)
 		{
-			//Not found. Try the from domain
-			sprintf(cKey,"%s-pbx",cFromDomain);
-			sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
-			if(rc!=MEMCACHED_SUCCESS)
+			//Not found
+			sprintf(cMsg,"SIP/2.0 404 User not found\n");
+			if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 			{
-				//Not found
-				sprintf(cMsg,"SIP/2.0 404 User not found\n");
-				if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-				{
-					if(guLogLevel>3)
-					{
-						sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
-						logfileLine("readEv",gcQuery);
-					}
-				}
-				else
-				{
-					if(guLogLevel>1)
-					{
-						sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
-						logfileLine("readEv",gcQuery);
-					}
-				}
 				if(guLogLevel>3)
-					logfileLine("readEv cToDomain/cFromDomain 404 not found",cKey);
-				return;
+				{
+					sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
+					logfileLine("readEv",gcQuery);
+				}
 			}
-			else if(rc==MEMCACHED_SUCCESS)
+			else
 			{
-				//The destination is the cToDomain and the uToPort
-				//If cToDomain is not an IP this will not work.
-				sprintf(cDestinationIP,"%.15s",cToDomain);
-				uDestinationPort=uToPort;
+				if(guLogLevel>1)
+				{
+					sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
+					logfileLine("readEv",gcQuery);
+				}
 			}
+			if(guLogLevel>3)
+				logfileLine("readEv cToDomain/cFromDomain 404 not found",cKey);
+			return;
 		}
 		else if(rc==MEMCACHED_SUCCESS)
 		{
