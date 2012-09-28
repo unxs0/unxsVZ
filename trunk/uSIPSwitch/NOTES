@@ -1,9 +1,53 @@
-uSIPSwitch
-----------
+uSIPSwitch (Micro SIP Switch)
+-----------------------------
 
 Using very scalable and ubiquitous software and libraries
 develop a high speed extremely reliable and scalable
 SIP proxy based on rfc3261.
+
+SIP Switch Module
+-----------------
+
+Data from unxsSPS will be loaded into localhost memcached.
+
+Initial design notes:
+
+-See NAT PBX Module notes
+
+-Invite traffic from DID provider carrier.
+	Sample Vitelity packet lines of interest:
+
+	INVITE sip:7073613110@65.49.53.120:5060	
+	Record-Route: <sip:64.2.142.90;lr=on>
+	Via: SIP/2.0/UDP 64.2.142.90;branch=z9hG4bKf6a8.e2464312.0
+	...
+	Max-Forwards: 69
+	...
+	Call-ID: 3c56c63d0d18332d6ba961731532ad00@66.241.99.224
+
+	We have the source ip and source port, it should match the record route
+	We check for 64.2.142.90-gateway in memcached if it is found we continue
+	if not we return a 403 Forbidden error response and end. The proxy should probably
+	be firewalled to avoid useless non authorized traffic. E.g. traffic not from
+	PBXs or gateways.
+
+	We then return a 100 Trying response.
+
+	We lookup 7073613110-did if not found we return a 404 not found response and end.
+
+	When we lookup the DID we get the destination ip/port pair.
+
+	We create a call transaction for the Call-ID.
+
+	We add a record route header line and a via line and decrease the Max-Forwards.
+
+	We forward to PBX.
+	
+
+
+
+NAT PBX Module
+--------------
 
 Initially we will test this software in production as a front-end
 to our NAT PBX solution. That is to allow our shared IP NAT PBXs to also share
@@ -14,7 +58,7 @@ Initial design notes:
 
 - Server will listen on the shared IP port 5060.
 
-- Incoming messages will be parsed and checked for correctness.
+- Incoming messages will be parsed and checked for correctness. Including max number of forwards.
 	If incorrect an error response will be sent back.
 
 - Incoming messages will be classified as requests or responses.

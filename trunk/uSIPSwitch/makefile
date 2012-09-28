@@ -20,6 +20,9 @@ uSIPSwitch: main.o mysqlconnect.o
 unxsLoadNatPBX: loadnatpbx.o mysqlconnect.o
 	cc loadnatpbx.o mysqlconnect.o -o unxsLoadNatPBX $(LIBS2) 
 
+unxsLoadFromSPS: loadfromsps.o mysqlconnect.o
+	cc loadfromsps.o mysqlconnect.o -o unxsLoadFromSPS $(LIBS2) 
+
 main.o: main.c sipproxy.h local.h
 	cc -c main.c -o main.o $(CFLAGS)
 
@@ -28,6 +31,9 @@ mysqlconnect.o: mysqlconnect.c sipproxy.h local.h
 
 loadnatpbx.o: loadnatpbx.c mysqlconnect.c sipproxy.h local.h
 	cc -c loadnatpbx.c -o loadnatpbx.o $(CFLAGS)
+
+loadfromsps.o: loadfromsps.c mysqlconnect.c sipproxy.h local.h
+	cc -c loadfromsps.c -o loadfromsps.o $(CFLAGS)
 
 local.h: local.h.default
 	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
@@ -43,7 +49,7 @@ install-run: uSIPSwitch
 	/usr/sbin/stopsipproxy.sh
 	install -s uSIPSwitch /usr/sbin/uSIPSwitch
 	rm uSIPSwitch
-	/usr/sbin/uSIPSwitch
+	/usr/sbin/uSIPSwitch $(uSIPSwitchIP) $(uSIPSwitchPort)
 
 install-test: uSIPSwitch
 	/usr/sbin/stopsipproxy.sh
