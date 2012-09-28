@@ -215,7 +215,8 @@ void AddPBXs(char const *cCluster)
 		char cValue[100];
 		unsigned rc;
 
-		sprintf(cKey,"%.90s-pbx",field[0]);
+		//PBXs are gateways too. This makes the server run faster.
+		sprintf(cKey,"%.90s-gw",field[0]);
 		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;",field[0],field[1]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
