@@ -50,7 +50,7 @@ if(!cCallID[0])
 		logfileLine("readEv 481 Call/Transaction Does Not Exist",cSourceIP);	
 }
 
-if(!cGateway[0])
+if(!cGateway[0] || !cDID[0])
 {
 	//Empty cGateway
 	sprintf(cMsg,"SIP/2.0 416 Unsupported URI\n");
@@ -58,7 +58,7 @@ if(!cGateway[0])
 	{
 		if(guLogLevel>3)
 		{
-			sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
+			sprintf(gcQuery,"reply 416 sent to %s:%u",cSourceIP,uSourcePort);
 			logfileLine("readEv",gcQuery);
 		}
 	}
@@ -66,12 +66,12 @@ if(!cGateway[0])
 	{
 		if(guLogLevel>1)
 		{
-			sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
+			sprintf(gcQuery,"reply 416 failed to %s:%u",cSourceIP,uSourcePort);
 			logfileLine("readEv",gcQuery);
 		}
 	}
 	if(guLogLevel>3)
-		logfileLine("readEv cGateway 416 empty",cSourceIP);
+		logfileLine("readEv cGateway or cDID 416 empty",cSourceIP);
 	return;
 }
 

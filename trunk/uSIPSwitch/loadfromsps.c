@@ -19,12 +19,14 @@ char gcProgram[100]={""};
 unsigned guLogLevel=4;
 unsigned guSilent=0;
 
+//TOC
 void TextConnectDb(void);//mysqlconnect.c
 void AddPBXs(char const *cCluster);
 void AddDIDs(char const *cCluster);
 void AddGWs(char const *cCluster);
 void logfileLine(const char *cFunction,const char *cLogline);
 int iSetupAndTestMemcached(void);
+void AddOutbound(char const *cCluster);
 
 static FILE *gLfp=NULL;
 memcached_st *gsMemc;
@@ -59,11 +61,17 @@ int main(int iArgc, char *cArgv[])
 			AddGWs(cArgv[2]);
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"AddOutbound",10))
+		{
+			AddOutbound(cArgv[2]);
+			goto CommonExit;
+		}
 		else if(!strncmp(cArgv[1],"AddAll",6))
 		{
 			AddPBXs(cArgv[2]);
 			AddDIDs(cArgv[2]);
 			AddGWs(cArgv[2]);
+			AddOutbound(cArgv[2]);
 			goto CommonExit;
 		}
 	}
@@ -71,7 +79,7 @@ int main(int iArgc, char *cArgv[])
 	if(iArgc==4 && !strncmp(cArgv[3],"silent",6))
 		guSilent=1;
 
-	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddRules AddAll <cCluster> [silent]\n",gcProgram);
+	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddOutbound, AddRules, AddAll <cCluster> [silent]\n",gcProgram);
 
 CommonExit:
 	mysql_close(&gMysql);
@@ -90,6 +98,7 @@ void AddGWs(char const *cCluster)
 	sprintf(gcQuery,"SELECT tGateway.cAddress,tGateway.uPort"
 			" FROM tGateway,tCluster"
 			" WHERE tGateway.uCluster=tCluster.uCluster"
+			" AND tGateway.uGatewayType=1"//DID Inbound
 			" AND tCluster.cLabel='%s'",cCluster);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -107,7 +116,7 @@ void AddGWs(char const *cCluster)
 		unsigned rc;
 
 		sprintf(cKey,"%.90s-gw",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;",field[0],field[1]);
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=1;",field[0],field[1]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -217,7 +226,7 @@ void AddPBXs(char const *cCluster)
 
 		//PBXs are gateways too. This makes the server run faster.
 		sprintf(cKey,"%.90s-gw",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;",field[0],field[1]);
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=2;",field[0],field[1]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -321,3 +330,58 @@ int iSetupAndTestMemcached(void)
 
 }//int iSetupAndTestMemcached(void)
 
+
+void AddOutbound(char const *cCluster)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uCount=0;
+
+	sprintf(gcQuery,"SELECT tGateway.cAddress,tGateway.uPort"
+			" FROM tGateway,tCluster"
+			" WHERE tGateway.uCluster=tCluster.uCluster"
+			" AND tGateway.uGatewayType=2"//PSTN Outbound
+			" AND tCluster.cLabel='%s'",cCluster);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf(gcQuery);
+		logfileLine("AddOutbound",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	gcQuery[0]=0;
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uCount>7) break;
+		char cValue[100]={""};
+		sprintf(cValue,"cDestinationIP%u=%.15s;uDestinationPort%u=%.5s;",uCount,field[0],uCount,field[1]);
+		strcat(gcQuery,cValue);
+		uCount++;
+	}
+	mysql_free_result(res);
+
+	char cKey[100];
+	unsigned rc;
+
+	sprintf(cKey,"outbound");
+	rc=memcached_set(gsMemc,cKey,strlen(cKey),gcQuery,strlen(gcQuery),(time_t)0,(uint32_t)0);
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		if(guLogLevel>0)
+		{
+			logfileLine("AddOutbound error",cKey);
+			logfileLine("AddOutbound error",gcQuery);
+		}
+	}
+	if(!guSilent)
+		printf("%s %s\n",cKey,gcQuery);
+
+	if(guLogLevel>0)
+	{
+		sprintf(gcQuery,"Added 1 key with %u outbound servers",uCount);
+		logfileLine("AddOutbound",gcQuery);
+	}
+
+}//void AddOutbound()
