@@ -186,6 +186,8 @@ int main(int iArgc, char *cArgv[])
 				ExttCDRGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tCluster"))
 				ExttClusterGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tGatewayType"))
+				ExttGatewayTypeGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tTimeInterval"))
 				ExttTimeIntervalGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tGroup"))
@@ -271,6 +273,7 @@ int main(int iArgc, char *cArgv[])
 	tCarrierCommands(entries,x);
 	tCDRCommands(entries,x);
 	tClusterCommands(entries,x);
+	tGatewayTypeCommands(entries,x);
 	tTimeIntervalCommands(entries,x);
 	tGroupCommands(entries,x);
 	tGroupGlueCommands(entries,x);
@@ -617,6 +620,9 @@ void Header_ism3(char *title, int js)
 	else if(!strcmp(gcFunction,"tCluster") || !strcmp(gcFunction,"tClusterTools") ||
 			!strcmp(gcFunction,"tClusterList"))
 		ExttClusterNavBar();
+	else if(!strcmp(gcFunction,"tGatewayType") || !strcmp(gcFunction,"tGatewayTypeTools") ||
+			!strcmp(gcFunction,"tGatewayTypeList"))
+		ExttGatewayTypeNavBar();
 	else if(!strcmp(gcFunction,"tTimeInterval") || !strcmp(gcFunction,"tTimeIntervalTools") ||
 			!strcmp(gcFunction,"tTimeIntervalList"))
 		ExttTimeIntervalNavBar();
@@ -805,6 +811,17 @@ void Header_ism3(char *title, int js)
 	  else
 		  printf(" id=current>\n");
 	  printf("\t\t\t<a title='Datacenter or other logical grouping of SIP servers' href=unxsSPS.cgi?gcFunction=tCluster>tCluster</a>\n");
+	}
+	//tGatewayType
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tGatewayType") && strcmp(gcFunction,"tGatewayTypeTools") &&
+			strcmp(gcFunction,"tGatewayTypeList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Type of gateway' href=unxsSPS.cgi?gcFunction=tGatewayType>tGatewayType</a>\n");
 	}
 	//tTimeInterval
 	if(guPermLevel>=20)

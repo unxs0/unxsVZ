@@ -285,6 +285,21 @@ void DeletetCluster(void);
 void ExttClusterGetHook(entry gentries[], int x);
 void ExttClusterNavBar(void);
 
+//tGatewayType
+int tGatewayTypeCommands(pentry entries[], int x);
+void tGatewayType(const char *results);
+void ProcesstGatewayTypeVars(pentry entries[], int x);
+void tGatewayTypeContent(void);
+void tGatewayTypeInputContent(void);
+void tGatewayTypeInput(unsigned uMode);
+void tGatewayTypeList(void);
+void NewtGatewayType(unsigned uMode);
+void ModtGatewayType(void);
+void CreatetGatewayType(void);
+void DeletetGatewayType(void);
+void ExttGatewayTypeGetHook(entry gentries[], int x);
+void ExttGatewayTypeNavBar(void);
+
 //tTimeInterval
 int tTimeIntervalCommands(pentry entries[], int x);
 void tTimeInterval(const char *results);
