@@ -22,70 +22,107 @@ AVAILABLE DATA FROM readEv()
 
 //Previous section is postparsecheck.h
 
+#define GATEWAY 1
+#define PBX 2
+
 //Determine if message is a request or a reply
 unsigned uReply=0;
 if(cMessage[0]=='S') uReply=1;
 
 char cData[256]={""};
 char cKey[128]={""};
+unsigned uType=0;//1 is gateway, 2 is pbx, 0 is unknown
 size_t sizeData=255;
 uint32_t flags=0;
 memcached_return rc;
 
+
+int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
+{
+	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
+	{
+		if(guLogLevel>3)
+		{
+			//chop \n
+			cMsg[strlen(cMsg)-1]=0;
+			sprintf(gcQuery,"reply %s sent to %s:%u",cMsg,cSourceIP,uSourcePort);
+			logfileLine("readEv-process",gcQuery);
+		}
+		return(0);
+	}
+	else
+	{
+		if(guLogLevel>1)
+		{
+			cMsg[strlen(cMsg)-1]=0;
+			sprintf(gcQuery,"reply %s failed to %s:%u",cMsg,cSourceIP,uSourcePort);
+			logfileLine("readEv-process",gcQuery);
+		}
+	}
+	return(1);
+
+}//int iSendUDPMessageWrapper()
+
+
 //Check to see if request is coming from valid source
 //source can be carrier gateway or one of our SBC'd PBXs
 //PBXs and gateways are BOTH found in memcached as -gw keys
-if(cGateway[0])
+sprintf(cKey,"%s-gw",cSourceIP);
+sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
+if(rc!=MEMCACHED_SUCCESS)
 {
-	sprintf(cKey,"%s-gw",cGateway);
-	memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc);
-	if(rc!=MEMCACHED_SUCCESS)
+	//Not found
+	sprintf(cMsg,"SIP/2.0 403 Unregistered gateway\n");
+	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 	{
-		//Not found
-		sprintf(cMsg,"SIP/2.0 403 Unregistered gateway\n");
-		if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-		{
-			if(guLogLevel>3)
-			{
-				sprintf(gcQuery,"reply 403 Unregistered gateway sent to %s:%u",cSourceIP,uSourcePort);
-				logfileLine("readEv-process",gcQuery);
-			}
-		}
-		else
-		{
-			if(guLogLevel>1)
-			{
-				sprintf(gcQuery,"reply 403 Unregistered gateway failed to %s:%u",cSourceIP,uSourcePort);
-				logfileLine("readEv-process",gcQuery);
-			}
-		}
 		if(guLogLevel>3)
-			logfileLine("readEv-process 403 Forbidden IP not registered",cKey);
+		{
+			sprintf(gcQuery,"reply 403 Unregistered gateway sent to %s:%u",cSourceIP,uSourcePort);
+			logfileLine("readEv-process",gcQuery);
+		}
+	}
+	else
+	{
+		if(guLogLevel>1)
+		{
+			sprintf(gcQuery,"reply 403 Unregistered gateway failed to %s:%u",cSourceIP,uSourcePort);
+			logfileLine("readEv-process",gcQuery);
+		}
+	}
+	if(guLogLevel>3)
+		logfileLine("readEv-process 403 Forbidden IP not registered",cKey);
+	return;
+}
+else if(rc==MEMCACHED_SUCCESS)
+{
+	//Found let other side know we are working on their request
+	sprintf(cMsg,"SIP/2.0 100 Trying\n");
+	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
+	{
+		if(guLogLevel>3)
+		{
+			sprintf(gcQuery,"reply 100 Trying sent to %s:%u",cSourceIP,uSourcePort);
+			logfileLine("readEv-process",gcQuery);
+		}
+	}
+	else
+	{
+		if(guLogLevel>1)
+		{
+			sprintf(gcQuery,"reply 100 Trying failed to %s:%u",cSourceIP,uSourcePort);
+			logfileLine("readEv-process",gcQuery);
+		}
 		return;
 	}
-	else if(rc==MEMCACHED_SUCCESS)
+	sscanf(cData,"cDestinationIP=%[^;];uDestinationPort=%u;cType=%u;",cDestinationIP,&uDestinationPort,&uType);
+	if(cDestinationIP[0]==0 || uDestinationPort==0 || uType==0 )
 	{
-		//Found let other side know we are working on their request
-		sprintf(cMsg,"SIP/2.0 100 Trying\n");
-		if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-		{
-			if(guLogLevel>3)
-			{
-				sprintf(gcQuery,"reply 100 Trying sent to %s:%u",cSourceIP,uSourcePort);
-				logfileLine("readEv-process",gcQuery);
-			}
-		}
-		else
-		{
-			if(guLogLevel>1)
-			{
-				sprintf(gcQuery,"reply 100 Trying failed to %s:%u",cSourceIP,uSourcePort);
-				logfileLine("readEv-process",gcQuery);
-			}
-			return;
-		}
+		logfileLine("readEv-process","cData incorrect");
+		logfileLine("readEv-process",cData);
+		return;
 	}
-}//Check for valid gateway
+}
+//Approve gateway and get type
 
 //debug only
 //return;
@@ -98,8 +135,7 @@ if(!uReply)
 {
 	if(!strncmp(cFirstLine,"INVITE",6))
 	{
-
-		if(cDID[0])
+		if(uType==GATEWAY)
 		{
 			sprintf(cKey,"%s-did",cDID);
 			sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
@@ -149,32 +185,53 @@ if(!uReply)
 				if(!cDestinationIP[0] || !uDestinationPort)
 					logfileLine("readEv-process pbx parse error",cData);
 			}
-		}
-		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;",cSourceIP,uSourcePort);
-		rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),(time_t)0,(uint32_t)0);
-		if(rc!=MEMCACHED_SUCCESS)
+		}//if GATEWAY
+		else if(uType==PBX)
 		{
-			sprintf(cMsg,"SIP/2.0 500 Could not create transaction\n");
-			if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
+			sprintf(cKey,"outbound");
+			sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
+			if(rc!=MEMCACHED_SUCCESS)
 			{
-				if(guLogLevel>3)
+				sprintf(cMsg,"SIP/2.0 500 No outbound gateway");
+				if(iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort))
 				{
-					sprintf(gcQuery,"reply 500 sent to %s:%u",cSourceIP,uSourcePort);
-					logfileLine("readEv-process",gcQuery);
+					if(guLogLevel>3)
+						logfileLine("readEv-process 500 No outbound gateway",cKey);
+					return;
 				}
 			}
 			else
 			{
-				if(guLogLevel>1)
+				//Parse outbound gateway0
+				sscanf(cData,"cDestinationIP0=%[^;];uDestinationPort0=%u;",cDestinationIP,&uDestinationPort);
+				if(cDestinationIP[0]==0 || uDestinationPort==0)
 				{
-					sprintf(gcQuery,"reply 500 failed to %s:%u",cSourceIP,uSourcePort);
-					logfileLine("readEv-process",gcQuery);
+					logfileLine("readEv-process","cData incorrect");
+					logfileLine("readEv-process",cData);
+					return;
 				}
 			}
-			if(guLogLevel>3)
-				logfileLine("readEv-process 500 Could not create transaction",cKey);
+		}
+		else if(1)
+		{
+			logfileLine("readEv-process unexpected uType",cData);
 			return;
 		}
+
+		//Create or update transaction
+		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;",cSourceIP,uSourcePort);
+		rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),(time_t)0,(uint32_t)0);
+		if(rc!=MEMCACHED_SUCCESS)
+		{
+			sprintf(cMsg,"SIP/2.0 500 Could not create transaction");
+			if(iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort))
+			{
+				if(guLogLevel>3)
+					logfileLine("readEv-process 500 Could not create transaction",cKey);
+				return;
+			}
+		}
+
 	}//INVITE
 	else
 	{
