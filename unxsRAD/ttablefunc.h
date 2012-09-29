@@ -638,7 +638,7 @@ void AddDefaultFields(void)
 
 	//cLabel
 	sprintf(gcQuery,"INSERT INTO tField SET uTable=%u,uProject=%u,cLabel='cLabel',uOrder=2,"
-			"cTitle='Short label',uFieldType=%u,uSQLSize=32,uOwner=%u,"
+			"cTitle='Short label',uFieldType=%u,uSQLSize=32,uHtmlXSize=40,uHtmlYSize=1,uHtmlXSize=32,uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
