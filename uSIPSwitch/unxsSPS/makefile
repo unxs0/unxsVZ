@@ -31,8 +31,8 @@ unxssps.c: unxsrad.c
 	@ if [ ! -f unxssps.c ];then cp -i unxsrad.c unxssps.c; fi
 
 #included standard RAD4 objects
-unxsSPS.cgi: tpbx.o tdid.o tgateway.o trule.o tprefix.o tcarrier.o tcdr.o tcluster.o ttimeinterval.o tgroup.o tgroupglue.o tgrouptype.o tclient.o tauthorize.o tserver.o tstatus.o tconfiguration.o tjob.o tjobstatus.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o  mysqlconnect.o main.o cgi.o
-	cc tpbx.o tdid.o tgateway.o trule.o tprefix.o tcarrier.o tcdr.o tcluster.o ttimeinterval.o tgroup.o tgroupglue.o tgrouptype.o tclient.o tauthorize.o tserver.o tstatus.o tconfiguration.o tjob.o tjobstatus.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o  mysqlconnect.o main.o cgi.o -o unxsSPS.cgi $(LIBS) 
+unxsSPS.cgi: tpbx.o tdid.o tgateway.o trule.o tprefix.o tcarrier.o tcdr.o tcluster.o tgatewaytype.o ttimeinterval.o tgroup.o tgroupglue.o tgrouptype.o tclient.o tauthorize.o tserver.o tstatus.o tconfiguration.o tjob.o tjobstatus.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o  mysqlconnect.o main.o cgi.o
+	cc tpbx.o tdid.o tgateway.o trule.o tprefix.o tcarrier.o tcdr.o tcluster.o tgatewaytype.o ttimeinterval.o tgroup.o tgroupglue.o tgrouptype.o tclient.o tauthorize.o tserver.o tstatus.o tconfiguration.o tjob.o tjobstatus.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o  mysqlconnect.o main.o cgi.o -o unxsSPS.cgi $(LIBS) 
 
 tpbx.o: tpbx.c mysqlrad.h language.h tpbxfunc.h local.h
 	cc -c tpbx.c -o tpbx.o $(CFLAGS)
@@ -57,6 +57,9 @@ tcdr.o: tcdr.c mysqlrad.h language.h tcdrfunc.h local.h
 
 tcluster.o: tcluster.c mysqlrad.h language.h tclusterfunc.h local.h
 	cc -c tcluster.c -o tcluster.o $(CFLAGS)
+
+tgatewaytype.o: tgatewaytype.c mysqlrad.h language.h tgatewaytypefunc.h local.h
+	cc -c tgatewaytype.c -o tgatewaytype.o $(CFLAGS)
 
 ttimeinterval.o: ttimeinterval.c mysqlrad.h language.h ttimeintervalfunc.h local.h
 	cc -c ttimeinterval.c -o ttimeinterval.o $(CFLAGS)

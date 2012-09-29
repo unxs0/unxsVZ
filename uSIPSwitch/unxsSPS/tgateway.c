@@ -33,6 +33,8 @@ static unsigned uGateway=0;
 static char cLabel[33]={""};
 static char cAddress[33]={""};
 static char cHostname[33]={""};
+static unsigned uGatewayType=0;
+static char cuGatewayTypePullDown[256]={""};
 static unsigned uCarrier=0;
 static char cuCarrierPullDown[256]={""};
 static unsigned uPort=0;
@@ -49,7 +51,7 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
-#define VAR_LIST_tGateway "tGateway.uGateway,tGateway.cLabel,tGateway.cAddress,tGateway.cHostname,tGateway.uCarrier,tGateway.uPort,tGateway.uPriority,tGateway.uWeight,tGateway.uCluster,tGateway.cComment,tGateway.uOwner,tGateway.uCreatedBy,tGateway.uCreatedDate,tGateway.uModBy,tGateway.uModDate"
+#define VAR_LIST_tGateway "tGateway.uGateway,tGateway.cLabel,tGateway.cAddress,tGateway.cHostname,tGateway.uGatewayType,tGateway.uCarrier,tGateway.uPort,tGateway.uPriority,tGateway.uWeight,tGateway.uCluster,tGateway.cComment,tGateway.uOwner,tGateway.uCreatedBy,tGateway.uCreatedDate,tGateway.uModBy,tGateway.uModDate"
 
  //Local only
 void Insert_tGateway(void);
@@ -87,6 +89,13 @@ void ProcesstGatewayVars(pentry entries[], int x)
 			sprintf(cAddress,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cHostname"))
 			sprintf(cHostname,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uGatewayType"))
+			sscanf(entries[i].val,"%u",&uGatewayType);
+		else if(!strcmp(entries[i].name,"cuGatewayTypePullDown"))
+		{
+			sprintf(cuGatewayTypePullDown,"%.255s",entries[i].val);
+			uGatewayType=ReadPullDown("tGatewayType","cLabel",cuGatewayTypePullDown);
+		}
 		else if(!strcmp(entries[i].name,"uCarrier"))
 			sscanf(entries[i].val,"%u",&uCarrier);
 		else if(!strcmp(entries[i].name,"cuCarrierPullDown"))
@@ -221,17 +230,18 @@ void tGateway(const char *cResult)
 		sprintf(cLabel,"%.32s",field[1]);
 		sprintf(cAddress,"%.32s",field[2]);
 		sprintf(cHostname,"%.32s",field[3]);
-		sscanf(field[4],"%u",&uCarrier);
-		sscanf(field[5],"%u",&uPort);
-		sscanf(field[6],"%u",&uPriority);
-		sscanf(field[7],"%u",&uWeight);
-		sscanf(field[8],"%u",&uCluster);
-		sprintf(cComment,"%.32s",field[9]);
-		sscanf(field[10],"%u",&uOwner);
-		sscanf(field[11],"%u",&uCreatedBy);
-		sscanf(field[12],"%lu",&uCreatedDate);
-		sscanf(field[13],"%u",&uModBy);
-		sscanf(field[14],"%lu",&uModDate);
+		sscanf(field[4],"%u",&uGatewayType);
+		sscanf(field[5],"%u",&uCarrier);
+		sscanf(field[6],"%u",&uPort);
+		sscanf(field[7],"%u",&uPriority);
+		sscanf(field[8],"%u",&uWeight);
+		sscanf(field[9],"%u",&uCluster);
+		sprintf(cComment,"%.32s",field[10]);
+		sscanf(field[11],"%u",&uOwner);
+		sscanf(field[12],"%u",&uCreatedBy);
+		sscanf(field[13],"%lu",&uCreatedDate);
+		sscanf(field[14],"%u",&uModBy);
+		sscanf(field[15],"%lu",&uModDate);
 
 		}
 
@@ -346,6 +356,12 @@ void tGatewayInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cHostname value='%s'>\n",EncodeDoubleQuotes(cHostname));
 	}
+	//uGatewayType COLTYPE_SELECTTABLE
+	OpenRow(LANG_FL_tGateway_uGatewayType,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tGatewayType;cuGatewayTypePullDown","cLabel","cLabel",uGatewayType,1);
+	else
+		tTablePullDown("tGatewayType;cuGatewayTypePullDown","cLabel","cLabel",uGatewayType,0);
 	//uCarrier COLTYPE_SELECTTABLE
 	OpenRow(LANG_FL_tGateway_uCarrier,"black");
 	if(guPermLevel>=10 && uMode)
@@ -496,6 +512,7 @@ void Insert_tGateway(void)
 		"cLabel='%s',"
 		"cAddress='%s',"
 		"cHostname='%s',"
+		"uGatewayType=%u,"
 		"uCarrier=%u,"
 		"uPort=%u,"
 		"uPriority=%u,"
@@ -508,6 +525,7 @@ void Insert_tGateway(void)
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cAddress)
 			,TextAreaSave(cHostname)
+			,uGatewayType
 			,uCarrier
 			,uPort
 			,uPriority
@@ -529,6 +547,7 @@ void Update_tGateway(char *cRowid)
 		"cLabel='%s',"
 		"cAddress='%s',"
 		"cHostname='%s',"
+		"uGatewayType=%u,"
 		"uCarrier=%u,"
 		"uPort=%u,"
 		"uPriority=%u,"
@@ -542,6 +561,7 @@ void Update_tGateway(char *cRowid)
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cAddress)
 			,TextAreaSave(cHostname)
+			,uGatewayType
 			,uCarrier
 			,uPort
 			,uPriority
@@ -633,6 +653,7 @@ void tGatewayList(void)
 		"<td><font face=arial,helvetica color=white>cLabel"
 		"<td><font face=arial,helvetica color=white>cAddress"
 		"<td><font face=arial,helvetica color=white>cHostname"
+		"<td><font face=arial,helvetica color=white>uGatewayType"
 		"<td><font face=arial,helvetica color=white>uCarrier"
 		"<td><font face=arial,helvetica color=white>uPort"
 		"<td><font face=arial,helvetica color=white>uPriority"
@@ -662,35 +683,36 @@ void tGatewayList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-				time_t luTime12=strtoul(field[12],NULL,10);
-		char cBuf12[32];
-		if(luTime12)
-			ctime_r(&luTime12,cBuf12);
+				time_t luTime13=strtoul(field[13],NULL,10);
+		char cBuf13[32];
+		if(luTime13)
+			ctime_r(&luTime13,cBuf13);
 		else
-			sprintf(cBuf12,"---");
-		time_t luTime14=strtoul(field[14],NULL,10);
-		char cBuf14[32];
-		if(luTime14)
-			ctime_r(&luTime14,cBuf14);
+			sprintf(cBuf13,"---");
+		time_t luTime15=strtoul(field[15],NULL,10);
+		char cBuf15[32];
+		if(luTime15)
+			ctime_r(&luTime15,cBuf15);
 		else
-			sprintf(cBuf14,"---");
-		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tGateway&uGateway=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf15,"---");
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tGateway&uGateway=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
 			,field[2]
 			,field[3]
-			,ForeignKey("tCarrier","cLabel",strtoul(field[4],NULL,10))
-			,field[5]
+			,ForeignKey("tGatewayType","cLabel",strtoul(field[4],NULL,10))
+			,ForeignKey("tCarrier","cLabel",strtoul(field[5],NULL,10))
 			,field[6]
 			,field[7]
-			,ForeignKey("tCluster","cLabel",strtoul(field[8],NULL,10))
-			,field[9]
-			,ForeignKey("tClient","cLabel",strtoul(field[10],NULL,10))
+			,field[8]
+			,ForeignKey("tCluster","cLabel",strtoul(field[9],NULL,10))
+			,field[10]
 			,ForeignKey("tClient","cLabel",strtoul(field[11],NULL,10))
-			,cBuf12
-			,ForeignKey("tClient","cLabel",strtoul(field[13],NULL,10))
-			,cBuf14
+			,ForeignKey("tClient","cLabel",strtoul(field[12],NULL,10))
+			,cBuf13
+			,ForeignKey("tClient","cLabel",strtoul(field[14],NULL,10))
+			,cBuf15
 				);
 
 	}
@@ -708,6 +730,7 @@ void CreatetGateway(void)
 		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
 		"cAddress VARCHAR(32) NOT NULL DEFAULT '', INDEX (cAddress),"
 		"cHostname VARCHAR(32) NOT NULL DEFAULT '', INDEX (cHostname),"
+		"uGatewayType INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uGatewayType),"
 		"uCarrier INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uCarrier),"
 		"uPort INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uPriority INT UNSIGNED NOT NULL DEFAULT 0,"
