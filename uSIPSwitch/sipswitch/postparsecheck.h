@@ -18,6 +18,7 @@ AVAILABLE DATA FROM readEv() and parsemessage.h
 	char cGateway[100]={""};
 	unsigned uGatewayPort=0;
 	char cDID[32]={""};
+	char cCSeq[32]={""};
 
 */
 
@@ -29,12 +30,12 @@ AVAILABLE DATA FROM readEv() and parsemessage.h
 char cMsg[100]={""};
 if(!cCallID[0])
 {
-	sprintf(cMsg,"481 Call/Transaction Does Not Exist\n");
+	sprintf(cMsg,"400 Missing CallID\n");
 	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 	{
 		if(guLogLevel>3)
 		{
-			sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
+			sprintf(gcQuery,"reply 400 CallID sent to %s:%u",cSourceIP,uSourcePort);
 			logfileLine("readEv",gcQuery);
 		}
 	}
@@ -42,12 +43,12 @@ if(!cCallID[0])
 	{
 		if(guLogLevel>1)
 		{
-			sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
+			sprintf(gcQuery,"reply 400 CallID failed to %s:%u",cSourceIP,uSourcePort);
 			logfileLine("readEv",gcQuery);
 		}
 	}
 	if(guLogLevel>3)
-		logfileLine("readEv 481 Call/Transaction Does Not Exist",cSourceIP);	
+		logfileLine("readEv 400 Missing CallID",cSourceIP);	
 }
 
 if(!cGateway[0] || !cDID[0])
@@ -58,7 +59,7 @@ if(!cGateway[0] || !cDID[0])
 	{
 		if(guLogLevel>3)
 		{
-			sprintf(gcQuery,"reply 416 sent to %s:%u",cSourceIP,uSourcePort);
+			sprintf(gcQuery,"reply 416 URI sent to %s:%u",cSourceIP,uSourcePort);
 			logfileLine("readEv",gcQuery);
 		}
 	}
@@ -66,13 +67,38 @@ if(!cGateway[0] || !cDID[0])
 	{
 		if(guLogLevel>1)
 		{
-			sprintf(gcQuery,"reply 416 failed to %s:%u",cSourceIP,uSourcePort);
+			sprintf(gcQuery,"reply 416 URI failed to %s:%u",cSourceIP,uSourcePort);
 			logfileLine("readEv",gcQuery);
 		}
 	}
 	if(guLogLevel>3)
-		logfileLine("readEv cGateway or cDID 416 empty",cSourceIP);
+		logfileLine("readEv 416 cGateway or cDID empty",cSourceIP);
 	return;
 }
 
-//next section is process.h
+if(!cCSeq[0])
+{
+	//Empty cGateway
+	sprintf(cMsg,"SIP/2.0 400 Missing CSeq\n");
+	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
+	{
+		if(guLogLevel>3)
+		{
+			sprintf(gcQuery,"reply 400 CSeq sent to %s:%u",cSourceIP,uSourcePort);
+			logfileLine("readEv",gcQuery);
+		}
+	}
+	else
+	{
+		if(guLogLevel>1)
+		{
+			sprintf(gcQuery,"reply 400 CSeq failed to %s:%u",cSourceIP,uSourcePort);
+			logfileLine("readEv",gcQuery);
+		}
+	}
+	if(guLogLevel>3)
+		logfileLine("readEv 400 Missing CSeq",cSourceIP);
+	return;
+}
+
+//next section is sipswitch/process.h

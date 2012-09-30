@@ -18,6 +18,7 @@ DETAILS
 		cGatewayIP
 		uGatewayPort
 		cCallID
+		cCSeq
 		uMaxForwards
 
 AVAILABLE DATA FROM readEv()
@@ -48,6 +49,33 @@ Content-Type: application/sdp
 Content-Length: 336
 */
 
+int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
+{
+	char *cp;
+	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
+	{
+		if(guLogLevel>3)
+		{
+			if((cp=strchr(cMsg,'\r'))) *cp=0;
+			sprintf(gcQuery,"reply %.32s sent to %s:%u",cMsg+8,cSourceIP,uSourcePort);
+			logfileLine("readEv-process",gcQuery);
+		}
+		return(0);
+	}
+	else
+	{
+		if(guLogLevel>1)
+		{
+			if((cp=strchr(cMsg,'\r'))) *cp=0;
+			sprintf(gcQuery,"reply %.32s failed to %s:%u",cMsg+8,cSourceIP,uSourcePort);
+			logfileLine("readEv-process",gcQuery);
+		}
+	}
+	return(1);
+
+}//int iSendUDPMessageWrapper()
+
+
 //This is used for request/reply determination
 char *cp,*cp1;
 char cFirstLine[100]={""};
@@ -60,6 +88,22 @@ if((cp1=strchr(cMessage,'\r')))
 if(guLogLevel>3 && cFirstLine[0])
 	logfileLine("readEv cFirstLine",cFirstLine);
 //cFirstLine
+
+char cCSeq[32]={""};
+if((cp=strstr(cMessage,"CSeq: ")))
+{
+	if((cp1=strchr(cp+strlen("CSeq: "),'\r')))
+	{
+		*cp1=0;
+		sprintf(cCSeq,"%.31s",cp+strlen("CSeq: "));
+		*cp1='\r';
+	}
+}
+if(guLogLevel>3 && cCSeq[0])
+	logfileLine("readEv cCSeq",cCSeq);
+if(guLogLevel>1 && !cCSeq[0])
+	logfileLine("readEv","No cCSeq");
+//cCSeq
 
 char cCallID[100]={""};
 if((cp=strstr(cMessage,"Call-ID: ")))
@@ -112,4 +156,4 @@ if(guLogLevel>3)
 //return;
 
 
-//next section is "natpbx/postparsecheck.h"
+//next section is "sipswitch/postparsecheck.h"

@@ -3,7 +3,9 @@ FILE
 	unxsVZ/uSIPSwitch/sipswitch/process.h
 	$Id$
 PURPOSE
-	This is where the SIP state machine is implemented
+	This is where the SIP state machine, routing logic 
+	and SBC items (channel limits and CDR data gathering) 
+	are implemented.
 AUTHOR/LEGAL
 	(C) 2012 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
@@ -15,8 +17,22 @@ AVAILABLE DATA FROM readEv()
 	char cFirstLine[100]={""};
 	char cCallID[100]={""};
 	char cDID[32]={""};
+	char cCSeq[32]={""};
 	char cGateway[100]={""};
 	unsigned uGatewayPort=0;
+
+THINGS TO DO LIST
+	So many impossible to list all at this time	
+	Big ticket items:
+	1. Keep track of number of calls per PBX and limit to
+	unxsSPS.tPBX.uLines
+	2. Keep track of calls so as to have enough data
+	for CDRs.
+	Current next steps:
+	1. Add Via: header lines as required.
+	2. Add Route: header lines as required.
+	3. Add more header lines to proxy generated responses as required by
+	Asterisk and our test Carrier UASs. Not by the huge RFC list.
 
 */
 
@@ -35,33 +51,6 @@ unsigned uType=0;//1 is gateway, 2 is pbx, 0 is unknown
 size_t sizeData=255;
 uint32_t flags=0;
 memcached_return rc;
-
-
-int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
-{
-	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-	{
-		if(guLogLevel>3)
-		{
-			//chop \n
-			cMsg[strlen(cMsg)-1]=0;
-			sprintf(gcQuery,"reply %s sent to %s:%u",cMsg,cSourceIP,uSourcePort);
-			logfileLine("readEv-process",gcQuery);
-		}
-		return(0);
-	}
-	else
-	{
-		if(guLogLevel>1)
-		{
-			cMsg[strlen(cMsg)-1]=0;
-			sprintf(gcQuery,"reply %s failed to %s:%u",cMsg,cSourceIP,uSourcePort);
-			logfileLine("readEv-process",gcQuery);
-		}
-	}
-	return(1);
-
-}//int iSendUDPMessageWrapper()
 
 
 //Check to see if request is coming from valid source
@@ -96,7 +85,7 @@ if(rc!=MEMCACHED_SUCCESS)
 else if(rc==MEMCACHED_SUCCESS)
 {
 	//Found let other side know we are working on their request
-	sprintf(cMsg,"SIP/2.0 100 Trying\n");
+	sprintf(cMsg,"SIP/2.0 100 Trying\r\nCSeq: %s\r\n",cCSeq);//Send back same CSeq check this
 	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 	{
 		if(guLogLevel>3)
@@ -114,7 +103,7 @@ else if(rc==MEMCACHED_SUCCESS)
 		}
 		return;
 	}
-	sscanf(cData,"cDestinationIP=%[^;];uDestinationPort=%u;cType=%u;",cDestinationIP,&uDestinationPort,&uType);
+	sscanf(cData,"cDestinationIP=%[^;];uDestinationPort=%u;uType=%u;",cDestinationIP,&uDestinationPort,&uType);
 	if(cDestinationIP[0]==0 || uDestinationPort==0 || uType==0 )
 	{
 		logfileLine("readEv-process","cData incorrect");
@@ -142,7 +131,7 @@ if(!uReply)
 			if(rc!=MEMCACHED_SUCCESS)
 			{
 				//Not found
-				sprintf(cMsg,"SIP/2.0 404 User not found\n");
+				sprintf(cMsg,"SIP/2.0 404 User not found\r\nCSeq: %s\r\n",cCSeq);
 				if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 				{
 					if(guLogLevel>3)
@@ -192,7 +181,7 @@ if(!uReply)
 			sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
 			if(rc!=MEMCACHED_SUCCESS)
 			{
-				sprintf(cMsg,"SIP/2.0 500 No outbound gateway");
+				sprintf(cMsg,"SIP/2.0 500 No outbound gateway\r\nCSeq: %s\r\n",cCSeq);
 				if(iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort))
 				{
 					if(guLogLevel>3)
@@ -223,7 +212,7 @@ if(!uReply)
 		rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
-			sprintf(cMsg,"SIP/2.0 500 Could not create transaction");
+			sprintf(cMsg,"SIP/2.0 500 Could not create transaction\r\nCSeq: %s\r\n",cCSeq);
 			if(iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort))
 			{
 				if(guLogLevel>3)
@@ -235,23 +224,8 @@ if(!uReply)
 	}//INVITE
 	else
 	{
-		sprintf(cMsg,"SIP/2.0 405 Method Not Allowed\n");
-		if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-		{
-			if(guLogLevel>3)
-			{
-				sprintf(gcQuery,"reply 405 Method Not Allowed %.6s sent to %s:%u",cFirstLine,cSourceIP,uSourcePort);
-				logfileLine("readEv-process",gcQuery);
-			}
-		}
-		else
-		{
-			if(guLogLevel>1)
-			{
-				sprintf(gcQuery,"reply 405 Method Not Allowed %.6s failed to %s:%u",cFirstLine,cSourceIP,uSourcePort);
-				logfileLine("readEv-process",gcQuery);
-			}
-		}
+		sprintf(cMsg,"SIP/2.0 405 Method Not Allowed\r\nCSeq: %s\r\n",cCSeq);
+		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 		return;
 	}
 	
