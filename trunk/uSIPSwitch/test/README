@@ -1,0 +1,6 @@
+This directory will have test scripts that can be used to validate functionality
+and be used for simple regression testing.
+
+Initially sipsak will be used with test files. Some test files will
+be used as the source of SIP traffic and others with the expected results
+for simple diff result analysis.
