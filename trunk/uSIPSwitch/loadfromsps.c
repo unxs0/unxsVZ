@@ -44,6 +44,9 @@ int main(int iArgc, char *cArgv[])
 	iSetupAndTestMemcached();
 	TextConnectDb();
 
+	if(iArgc==4 && !strncmp(cArgv[3],"silent",6))
+		guSilent=1;
+
 	if(iArgc>=3)
 	{
 		if(!strncmp(cArgv[1],"AddPBXs",7))
@@ -75,9 +78,6 @@ int main(int iArgc, char *cArgv[])
 			goto CommonExit;
 		}
 	}
-
-	if(iArgc==4 && !strncmp(cArgv[3],"silent",6))
-		guSilent=1;
 
 	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddOutbound, AddRules, AddAll <cCluster> [silent]\n",gcProgram);
 
@@ -338,8 +338,9 @@ void AddOutbound(char const *cCluster)
 	unsigned uCount=0;
 
 	sprintf(gcQuery,"SELECT tGateway.cAddress,tGateway.uPort"
-			" FROM tGateway,tCluster"
+			" FROM tGateway,tCluster,tRule"
 			" WHERE tGateway.uCluster=tCluster.uCluster"
+			" AND tGateway.uGateway=tRule.uGateway"
 			" AND tGateway.uGatewayType=2"//PSTN Outbound
 			" AND tCluster.cLabel='%s'",cCluster);
 	mysql_query(&gMysql,gcQuery);
