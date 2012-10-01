@@ -72,7 +72,7 @@ void ProcesstGroupTypeVars(pentry entries[], int x)
 		if(!strcmp(entries[i].name,"uGroupType"))
 			sscanf(entries[i].val,"%u",&uGroupType);
 		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.0s",entries[i].val);
+			sprintf(cLabel,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -265,7 +265,7 @@ void tGroupTypeInput(unsigned uMode)
 	}
 	//cLabel uRADType=253
 	OpenRow(LANG_FL_tGroupType_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value='%s' size=0 maxlength=0 "
+	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
 		,LANG_FT_tGroupType_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
