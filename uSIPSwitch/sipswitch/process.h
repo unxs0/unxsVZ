@@ -61,23 +61,8 @@ sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&
 if(rc!=MEMCACHED_SUCCESS)
 {
 	//Not found
-	sprintf(cMsg,"SIP/2.0 403 Unregistered gateway\n");
-	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-	{
-		if(guLogLevel>3)
-		{
-			sprintf(gcQuery,"reply 403 Unregistered gateway sent to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv-process",gcQuery);
-		}
-	}
-	else
-	{
-		if(guLogLevel>1)
-		{
-			sprintf(gcQuery,"reply 403 Unregistered gateway failed to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv-process",gcQuery);
-		}
-	}
+	sprintf(cMsg,"SIP/2.0 403 Unregistered gateway\r\nCSeq: %s\r\n",cCSeq);
+	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 	if(guLogLevel>3)
 		logfileLine("readEv-process 403 Forbidden IP not registered",cKey);
 	return;
@@ -86,23 +71,8 @@ else if(rc==MEMCACHED_SUCCESS)
 {
 	//Found let other side know we are working on their request
 	sprintf(cMsg,"SIP/2.0 100 Trying\r\nCSeq: %s\r\n",cCSeq);//Send back same CSeq check this
-	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-	{
-		if(guLogLevel>3)
-		{
-			sprintf(gcQuery,"reply 100 Trying sent to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv-process",gcQuery);
-		}
-	}
-	else
-	{
-		if(guLogLevel>1)
-		{
-			sprintf(gcQuery,"reply 100 Trying failed to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv-process",gcQuery);
-		}
-		return;
-	}
+	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
+
 	sscanf(cData,"cDestinationIP=%[^;];uDestinationPort=%u;uType=%u;",cDestinationIP,&uDestinationPort,&uType);
 	if(cDestinationIP[0]==0 || uDestinationPort==0 || uType==0 )
 	{
@@ -132,22 +102,7 @@ if(!uReply)
 			{
 				//Not found
 				sprintf(cMsg,"SIP/2.0 404 User not found\r\nCSeq: %s\r\n",cCSeq);
-				if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-				{
-					if(guLogLevel>3)
-					{
-						sprintf(gcQuery,"reply 404 sent to %s:%u",cSourceIP,uSourcePort);
-						logfileLine("readEv-process",gcQuery);
-					}
-				}
-				else
-				{
-					if(guLogLevel>1)
-					{
-						sprintf(gcQuery,"reply 404 failed to %s:%u",cSourceIP,uSourcePort);
-						logfileLine("readEv-process",gcQuery);
-					}
-				}
+				iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 				if(guLogLevel>3)
 					logfileLine("readEv-process cToDomain/cFromDomain 404 not found",cKey);
 				return;
@@ -177,6 +132,8 @@ if(!uReply)
 		}//if GATEWAY
 		else if(uType==PBX)
 		{
+			//This is where all the rule code will go
+
 			sprintf(cKey,"outbound");
 			sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
 			if(rc!=MEMCACHED_SUCCESS)
@@ -195,9 +152,19 @@ if(!uReply)
 				sscanf(cData,"cDestinationIP0=%[^;];uDestinationPort0=%u;",cDestinationIP,&uDestinationPort);
 				if(cDestinationIP[0]==0 || uDestinationPort==0)
 				{
-					logfileLine("readEv-process","cData incorrect");
-					logfileLine("readEv-process",cData);
-					return;
+					if(guLogLevel>0)
+					{
+						logfileLine("readEv-process","cData incorrect");
+						logfileLine("readEv-process",cData);
+					}
+				}
+				else
+				{
+					if(guLogLevel>3)
+					{
+						logfileLine("readEv-process","cData ok");
+						logfileLine("readEv-process",cData);
+					}
 				}
 			}
 		}
@@ -240,23 +207,8 @@ else
 	sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
 	if(rc!=MEMCACHED_SUCCESS)
 	{
-		sprintf(cMsg,"SIP/2.0 481 Transaction Does Not Exist\n");
-		if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-		{
-			if(guLogLevel>3)
-			{
-				sprintf(gcQuery,"reply sent to %s:%u",cSourceIP,uSourcePort);
-				logfileLine("readEv-process",gcQuery);
-			}
-		}
-		else
-		{
-			if(guLogLevel>1)
-			{
-				sprintf(gcQuery,"reply failed to %s:%u",cSourceIP,uSourcePort);
-				logfileLine("readEv-process",gcQuery);
-			}
-		}
+		sprintf(cMsg,"SIP/2.0 481 Transaction Does Not Exist\r\nCSeq: %s\r\n",cCSeq);
+		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 		if(guLogLevel>3)
 			logfileLine("readEv-process 481 Transaction Does Not Exist",cCallID);
 	}
@@ -277,62 +229,17 @@ else
 //Forward unmodified packet
 if(cDestinationIP[0] && uDestinationPort)
 {
-	if(!iSendUDPMessage(cMessage,cDestinationIP,uDestinationPort))
+	if(iSendUDPMessageWrapper(cMessage,cDestinationIP,uDestinationPort))
 	{
-		if(guLogLevel>3)
-		{
-			sprintf(gcQuery,"message forwarded to %s:%u",cDestinationIP,uDestinationPort);
-			logfileLine("readEv-process",gcQuery);
-		}
-	}
-	else
-	{
-		if(guLogLevel>1)
-		{
-			sprintf(gcQuery,"forward failed to %s:%u",cDestinationIP,uDestinationPort);
-			logfileLine("readEv-process",gcQuery);
-		}
-		sprintf(cMsg,"SIP/2.0 500 Forward failed\n");
-		if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-		{
-			if(guLogLevel>3)
-			{
-				sprintf(gcQuery,"reply 500 sent to %s:%u",cSourceIP,uSourcePort);
-				logfileLine("readEv-process",gcQuery);
-			}
-		}
-		else
-		{
-			if(guLogLevel>1)
-			{
-				sprintf(gcQuery,"reply 500 failed to %s:%u",cSourceIP,uSourcePort);
-				logfileLine("readEv-process",gcQuery);
-			}
-		}
-		if(guLogLevel>3)
-			logfileLine("readEv-process 500 Forward failed",cDestinationIP);
+		sprintf(cMsg,"SIP/2.0 500 Forward failed\r\nCSeq: %s\r\n",cCSeq);
+		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 		return;
 	}
 }//if(cDestinationIP[0] && uDestinationPort)
 else
 {
-	sprintf(cMsg,"SIP/2.0 500 Forward failed\n");
-	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-	{
-		if(guLogLevel>3)
-		{
-			sprintf(gcQuery,"reply 500 sent to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv-process",gcQuery);
-		}
-	}
-	else
-	{
-		if(guLogLevel>1)
-		{
-			sprintf(gcQuery,"reply 500 failed to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv-process",gcQuery);
-		}
-	}
+	sprintf(cMsg,"SIP/2.0 500 Forward failed\r\nCSeq: %s\r\n",cCSeq);
+	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 	if(guLogLevel>3)
 		logfileLine("readEv-process unexpected no cDestinationIP/uDestinationPort",cCallID);
 }

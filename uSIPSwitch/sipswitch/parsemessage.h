@@ -57,7 +57,7 @@ int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
 		if(guLogLevel>3)
 		{
 			if((cp=strchr(cMsg,'\r'))) *cp=0;
-			sprintf(gcQuery,"reply %.32s sent to %s:%u",cMsg+8,cSourceIP,uSourcePort);
+			sprintf(gcQuery,"reply %.64s sent to %s:%u",cMsg,cSourceIP,uSourcePort);
 			logfileLine("readEv-process",gcQuery);
 		}
 		return(0);
@@ -67,7 +67,7 @@ int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
 		if(guLogLevel>1)
 		{
 			if((cp=strchr(cMsg,'\r'))) *cp=0;
-			sprintf(gcQuery,"reply %.32s failed to %s:%u",cMsg+8,cSourceIP,uSourcePort);
+			sprintf(gcQuery,"reply %.64s failed to %s:%u",cMsg,cSourceIP,uSourcePort);
 			logfileLine("readEv-process",gcQuery);
 		}
 	}

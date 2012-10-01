@@ -41,6 +41,10 @@ local.h: local.h.default
 clean:
 	rm -f *.o uSIPSwitch
 
+install-unxsLoadFromSPS: unxsLoadFromSPS
+	install -s unxsLoadFromSPS /usr/sbin/unxsLoadFromSPS
+	rm unxsLoadFromSPS
+
 install: uSIPSwitch
 	install -s uSIPSwitch /usr/sbin/uSIPSwitch
 	rm uSIPSwitch
