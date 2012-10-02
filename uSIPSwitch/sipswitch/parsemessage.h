@@ -57,8 +57,8 @@ int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
 		if(guLogLevel>3)
 		{
 			if((cp=strchr(cMsg,'\r'))) *cp=0;
-			sprintf(gcQuery,"reply %.64s sent to %s:%u",cMsg,cSourceIP,uSourcePort);
-			logfileLine("readEv-process",gcQuery);
+			sprintf(gcQuery,"%.64s sent to %s:%u",cMsg,cSourceIP,uSourcePort);
+			logfileLine("readEv-send",gcQuery);
 		}
 		return(0);
 	}
@@ -67,8 +67,8 @@ int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
 		if(guLogLevel>1)
 		{
 			if((cp=strchr(cMsg,'\r'))) *cp=0;
-			sprintf(gcQuery,"reply %.64s failed to %s:%u",cMsg,cSourceIP,uSourcePort);
-			logfileLine("readEv-process",gcQuery);
+			sprintf(gcQuery,"%.64s failed to %s:%u",cMsg,cSourceIP,uSourcePort);
+			logfileLine("readEv-send",gcQuery);
 		}
 	}
 	return(1);
@@ -86,7 +86,7 @@ if((cp1=strchr(cMessage,'\r')))
 	*cp1='\r';
 }
 if(guLogLevel>3 && cFirstLine[0])
-	logfileLine("readEv cFirstLine",cFirstLine);
+	logfileLine("readEv-parse cFirstLine",cFirstLine);
 //cFirstLine
 
 char cCSeq[32]={""};
@@ -100,9 +100,9 @@ if((cp=strstr(cMessage,"CSeq: ")))
 	}
 }
 if(guLogLevel>3 && cCSeq[0])
-	logfileLine("readEv cCSeq",cCSeq);
+	logfileLine("readEv-parse cCSeq",cCSeq);
 if(guLogLevel>1 && !cCSeq[0])
-	logfileLine("readEv","No cCSeq");
+	logfileLine("readEv-parse","No cCSeq");
 //cCSeq
 
 char cCallID[100]={""};
@@ -116,9 +116,9 @@ if((cp=strstr(cMessage,"Call-ID: ")))
 	}
 }
 if(guLogLevel>3 && cCallID[0])
-	logfileLine("readEv cCallID",cCallID);
+	logfileLine("readEv-parse cCallID",cCallID);
 if(guLogLevel>1 && !cCallID[0])
-	logfileLine("readEv","No Call-ID");
+	logfileLine("readEv-parse","No Call-ID");
 //cCallID
 
 //To: <sip:7073613110@64.2.142.90:5060>
@@ -149,7 +149,7 @@ if(cTo[0])
 if(guLogLevel>3)
 {
 	sprintf(gcQuery,"cTo:%s cDID:%s cGateway:%s:%u",cTo,cDID,cGateway,uGatewayPort);
-	logfileLine("readEv",gcQuery);
+	logfileLine("readEv-parse",gcQuery);
 }
 
 //debug only

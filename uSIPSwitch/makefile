@@ -8,6 +8,8 @@
 #	Support for non CentOS 5+ linux systems is not tested or supported yet.
 #
 
+#We code with all kinds of gcc allowed crazyness. Show our trangressions with pedantic flag
+#CFLAGS= -Wall -pedantic
 CFLAGS= -Wall
 LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so /usr/lib64/libevent.so
 LIBS2= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so
