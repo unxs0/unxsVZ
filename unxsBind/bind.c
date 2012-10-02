@@ -284,13 +284,13 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 
 		//master lock dir
 		struct stat statInfo;
-		if(!stat("/var/run/unxsBind.lock",&statInfo))
+		if(stat("/var/run/unxsBind.lock",&statInfo))
 		{
 			mkdir("/var/run/unxsBind.lock",S_IRWXU);
 		}
 		else
 		{
-			fprintf(stdout,"/tmp/unxsBind.lock exists exiting\n");
+			fprintf(stdout,"/var/run/unxsBind.lock exists exiting\n");
 			return;
 		}
 			
@@ -723,13 +723,13 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 
 	//master lock dir
 	struct stat statInfo;
-	if(!stat("/var/run/unxsBind.lock",&statInfo))
+	if(stat("/var/run/unxsBind.lock",&statInfo))
 	{
 		mkdir("/var/run/unxsBind.lock",S_IRWXU);
 	}
 	else
 	{
-		fprintf(stdout,"/tmp/unxsBind.lock exists exiting\n");
+		fprintf(stdout,"/var/run/unxsBind.lock exists exiting\n");
 		return;
 	}
 
@@ -1140,7 +1140,7 @@ void MasterJobQueue(char *cNameServer)
 #else
 	gLfp=stdout;
 #endif
-	
+
 	if(TextConnectDb())
 		exit(0);
 
