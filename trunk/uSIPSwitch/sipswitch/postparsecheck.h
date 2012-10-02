@@ -28,76 +28,32 @@ AVAILABLE DATA FROM readEv() and parsemessage.h
 //If anything is amiss send back an error message and return.
 //
 char cMsg[100]={""};
+
 if(!cCallID[0])
 {
-	sprintf(cMsg,"400 Missing CallID\n");
-	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-	{
-		if(guLogLevel>3)
-		{
-			sprintf(gcQuery,"reply 400 CallID sent to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv",gcQuery);
-		}
-	}
-	else
-	{
-		if(guLogLevel>1)
-		{
-			sprintf(gcQuery,"reply 400 CallID failed to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv",gcQuery);
-		}
-	}
+	sprintf(cMsg,"400 Missing CallID\r\nCSeq: %s\r\n",cCSeq);
+	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 	if(guLogLevel>3)
-		logfileLine("readEv 400 Missing CallID",cSourceIP);	
+		logfileLine("readEv-postparse 400 Missing CallID",cSourceIP);	
 }
 
 if(!cGateway[0] || !cDID[0])
 {
 	//Empty cGateway
-	sprintf(cMsg,"SIP/2.0 416 Unsupported URI\n");
-	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-	{
-		if(guLogLevel>3)
-		{
-			sprintf(gcQuery,"reply 416 URI sent to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv",gcQuery);
-		}
-	}
-	else
-	{
-		if(guLogLevel>1)
-		{
-			sprintf(gcQuery,"reply 416 URI failed to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv",gcQuery);
-		}
-	}
+	sprintf(cMsg,"SIP/2.0 416 Unsupported URI\r\nCSeq: %s\r\n",cCSeq);
+	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 	if(guLogLevel>3)
-		logfileLine("readEv 416 cGateway or cDID empty",cSourceIP);
+		logfileLine("readEv-postparse 416 cGateway or cDID empty",cSourceIP);
 	return;
 }
 
 if(!cCSeq[0])
 {
 	//Empty cGateway
-	sprintf(cMsg,"SIP/2.0 400 Missing CSeq\n");
-	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
-	{
-		if(guLogLevel>3)
-		{
-			sprintf(gcQuery,"reply 400 CSeq sent to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv",gcQuery);
-		}
-	}
-	else
-	{
-		if(guLogLevel>1)
-		{
-			sprintf(gcQuery,"reply 400 CSeq failed to %s:%u",cSourceIP,uSourcePort);
-			logfileLine("readEv",gcQuery);
-		}
-	}
+	sprintf(cMsg,"SIP/2.0 400 Missing CSeq\r\nCSeq: 0\r\n");
+	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 	if(guLogLevel>3)
-		logfileLine("readEv 400 Missing CSeq",cSourceIP);
+		logfileLine("readEv-postparse 400 Missing CSeq",cSourceIP);
 	return;
 }
 
