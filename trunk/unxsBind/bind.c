@@ -282,8 +282,21 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 			return;
 		}
 
+		//master lock dir
+		struct stat statInfo;
+		if(!stat("/var/run/unxsBind.lock",&statInfo))
+		{
+			mkdir("/var/run/unxsBind.lock",S_IRWXU);
+		}
+		else
+		{
+			fprintf(stdout,"/tmp/unxsBind.lock exists exiting\n");
+			return;
+		}
+			
 		if(!uDebug)
 		{
+
 			if(!(sfp=fopen("/usr/local/idns/named.d/master.zones","w")))
 			{
 				fprintf(stderr,"Could not open master.zones\n");
@@ -638,6 +651,7 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 	}//if uModDBFile
 
 	if(dnfp) fclose(dnfp);
+	rmdir("/var/run/unxsBind.lock");
 	logfileLine("CreateMasterFiles","Exit");
 
 }//void CreateMasterFiles()
@@ -704,6 +718,18 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 	if(mysql_num_rows(res)<1) 
 	{
 		logfileLine("CreateSlaveFiles","No zones found for slave");
+		return;
+	}
+
+	//master lock dir
+	struct stat statInfo;
+	if(!stat("/var/run/unxsBind.lock",&statInfo))
+	{
+		mkdir("/var/run/unxsBind.lock",S_IRWXU);
+	}
+	else
+	{
+		fprintf(stdout,"/tmp/unxsBind.lock exists exiting\n");
 		return;
 	}
 
@@ -794,6 +820,7 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 	fprintf(fp,"};\n");
 	mysql_free_result(res);
 	if(fp && !uDebug) fclose(fp);
+	rmdir("/var/run/unxsBind.lock");
 	logfileLine("CreateSlaveFiles","Exit");
 
 }//void CreateSlaveFiles();
