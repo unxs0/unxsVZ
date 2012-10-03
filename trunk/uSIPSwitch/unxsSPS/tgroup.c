@@ -31,6 +31,8 @@ TEMPLATE VARS AND FUNCTIONS
 //Table Variables
 static unsigned uGroup=0;
 static char cLabel[33]={""};
+static unsigned uGroupType=0;
+static char cuGroupTypePullDown[256]={""};
 static unsigned uOwner=0;
 #define StandardFields
 static unsigned uCreatedBy=0;
@@ -39,7 +41,7 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
-#define VAR_LIST_tGroup "tGroup.uGroup,tGroup.cLabel,tGroup.uOwner,tGroup.uCreatedBy,tGroup.uCreatedDate,tGroup.uModBy,tGroup.uModDate"
+#define VAR_LIST_tGroup "tGroup.uGroup,tGroup.cLabel,tGroup.uGroupType,tGroup.uOwner,tGroup.uCreatedBy,tGroup.uCreatedDate,tGroup.uModBy,tGroup.uModDate"
 
  //Local only
 void Insert_tGroup(void);
@@ -73,6 +75,13 @@ void ProcesstGroupVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uGroup);
 		else if(!strcmp(entries[i].name,"cLabel"))
 			sprintf(cLabel,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uGroupType"))
+			sscanf(entries[i].val,"%u",&uGroupType);
+		else if(!strcmp(entries[i].name,"cuGroupTypePullDown"))
+		{
+			sprintf(cuGroupTypePullDown,"%.255s",entries[i].val);
+			uGroupType=ReadPullDown("tGroupType","cLabel",cuGroupTypePullDown);
+		}
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -183,11 +192,12 @@ void tGroup(const char *cResult)
 			
 		sscanf(field[0],"%u",&uGroup);
 		sprintf(cLabel,"%.32s",field[1]);
-		sscanf(field[2],"%u",&uOwner);
-		sscanf(field[3],"%u",&uCreatedBy);
-		sscanf(field[4],"%lu",&uCreatedDate);
-		sscanf(field[5],"%u",&uModBy);
-		sscanf(field[6],"%lu",&uModDate);
+		sscanf(field[2],"%u",&uGroupType);
+		sscanf(field[3],"%u",&uOwner);
+		sscanf(field[4],"%u",&uCreatedBy);
+		sscanf(field[5],"%lu",&uCreatedDate);
+		sscanf(field[6],"%u",&uModBy);
+		sscanf(field[7],"%lu",&uModDate);
 
 		}
 
@@ -276,6 +286,12 @@ void tGroupInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
+	//uGroupType COLTYPE_SELECTTABLE
+	OpenRow(LANG_FL_tGroup_uGroupType,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tGroupType;cuGroupTypePullDown","cLabel","cLabel",uGroupType,1);
+	else
+		tTablePullDown("tGroupType;cuGroupTypePullDown","cLabel","cLabel",uGroupType,0);
 	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tGroup_uOwner,"black");
 	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
@@ -360,10 +376,12 @@ void Insert_tGroup(void)
 {
 	sprintf(gcQuery,"INSERT INTO tGroup SET "
 		"cLabel='%s',"
+		"uGroupType=%u,"
 		"uOwner=%u,"
 		"uCreatedBy=%u,"
 		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
 			,TextAreaSave(cLabel)
+			,uGroupType
 			,uOwner
 			,uCreatedBy
 		);
@@ -377,11 +395,13 @@ void Update_tGroup(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tGroup SET "
 		"cLabel='%s',"
+		"uGroupType=%u,"
 		"uOwner=%u,"
 		"uModBy=%u,"
 		"uModDate=UNIX_TIMESTAMP(NOW())"
 		" WHERE _rowid=%s"
 			,TextAreaSave(cLabel)
+			,uGroupType
 			,uOwner
 			,uModBy
 			,cRowid
@@ -465,6 +485,7 @@ void tGroupList(void)
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uGroup"
 		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>uGroupType"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
 		"<td><font face=arial,helvetica color=white>uCreatedDate"
@@ -488,27 +509,28 @@ void tGroupList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-				time_t luTime4=strtoul(field[4],NULL,10);
-		char cBuf4[32];
-		if(luTime4)
-			ctime_r(&luTime4,cBuf4);
+				time_t luTime5=strtoul(field[5],NULL,10);
+		char cBuf5[32];
+		if(luTime5)
+			ctime_r(&luTime5,cBuf5);
 		else
-			sprintf(cBuf4,"---");
-		time_t luTime6=strtoul(field[6],NULL,10);
-		char cBuf6[32];
-		if(luTime6)
-			ctime_r(&luTime6,cBuf6);
+			sprintf(cBuf5,"---");
+		time_t luTime7=strtoul(field[7],NULL,10);
+		char cBuf7[32];
+		if(luTime7)
+			ctime_r(&luTime7,cBuf7);
 		else
-			sprintf(cBuf6,"---");
-		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tGroup&uGroup=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf7,"---");
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tGroup&uGroup=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
-			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
+			,ForeignKey("tGroupType","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
-			,cBuf4
-			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
-			,cBuf6
+			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
+			,cBuf5
+			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
+			,cBuf7
 				);
 
 	}
@@ -524,6 +546,7 @@ void CreatetGroup(void)
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGroup ("
 		"uGroup INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
 		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+		"uGroupType INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uGroupType),"
 		"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
