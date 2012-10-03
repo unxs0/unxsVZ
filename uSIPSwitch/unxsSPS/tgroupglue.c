@@ -30,16 +30,13 @@ TEMPLATE VARS AND FUNCTIONS
 
 //Table Variables
 static unsigned uGroupGlue=0;
-static char cLabel[33]={""};
-static unsigned uOwner=0;
-#define StandardFields
-static unsigned uCreatedBy=0;
-static time_t uCreatedDate=0;
-static unsigned uModBy=0;
-static time_t uModDate=0;
+static unsigned uKey=0;
+static unsigned uTable=0;
+static unsigned uGroup=0;
+static char cuGroupPullDown[256]={""};
 
 
-#define VAR_LIST_tGroupGlue "tGroupGlue.uGroupGlue,tGroupGlue.cLabel,tGroupGlue.uOwner,tGroupGlue.uCreatedBy,tGroupGlue.uCreatedDate,tGroupGlue.uModBy,tGroupGlue.uModDate"
+#define VAR_LIST_tGroupGlue "tGroupGlue.uGroupGlue,tGroupGlue.uKey,tGroupGlue.uTable,tGroupGlue.uGroup"
 
  //Local only
 void Insert_tGroupGlue(void);
@@ -71,18 +68,17 @@ void ProcesstGroupGlueVars(pentry entries[], int x)
 		
 		if(!strcmp(entries[i].name,"uGroupGlue"))
 			sscanf(entries[i].val,"%u",&uGroupGlue);
-		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.0s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uOwner"))
-			sscanf(entries[i].val,"%u",&uOwner);
-		else if(!strcmp(entries[i].name,"uCreatedBy"))
-			sscanf(entries[i].val,"%u",&uCreatedBy);
-		else if(!strcmp(entries[i].name,"uCreatedDate"))
-			sscanf(entries[i].val,"%lu",&uCreatedDate);
-		else if(!strcmp(entries[i].name,"uModBy"))
-			sscanf(entries[i].val,"%u",&uModBy);
-		else if(!strcmp(entries[i].name,"uModDate"))
-			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uKey"))
+			sscanf(entries[i].val,"%u",&uKey);
+		else if(!strcmp(entries[i].name,"uTable"))
+			sscanf(entries[i].val,"%u",&uTable);
+		else if(!strcmp(entries[i].name,"uGroup"))
+			sscanf(entries[i].val,"%u",&uGroup);
+		else if(!strcmp(entries[i].name,"cuGroupPullDown"))
+		{
+			sprintf(cuGroupPullDown,"%.255s",entries[i].val);
+			uGroup=ReadPullDown("tGroup","cLabel",cuGroupPullDown);
+		}
 
 	}
 
@@ -182,12 +178,9 @@ void tGroupGlue(const char *cResult)
 			field=mysql_fetch_row(res);
 			
 		sscanf(field[0],"%u",&uGroupGlue);
-		sprintf(cLabel,"%.32s",field[1]);
-		sscanf(field[2],"%u",&uOwner);
-		sscanf(field[3],"%u",&uCreatedBy);
-		sscanf(field[4],"%lu",&uCreatedDate);
-		sscanf(field[5],"%u",&uModBy);
-		sscanf(field[6],"%lu",&uModDate);
+		sscanf(field[1],"%u",&uKey);
+		sscanf(field[2],"%u",&uTable);
+		sscanf(field[3],"%u",&uGroup);
 
 		}
 
@@ -263,42 +256,38 @@ void tGroupGlueInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=uGroupGlue value='%u' >\n",uGroupGlue);
 	}
-	//cLabel uRADType=253
-	OpenRow(LANG_FL_tGroupGlue_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value='%s' size=0 maxlength=0 "
-		,LANG_FT_tGroupGlue_cLabel,EncodeDoubleQuotes(cLabel));
-	if(guPermLevel>=0 && uMode)
+	//uKey uRADType=3
+	OpenRow(LANG_FL_tGroupGlue_uKey,"black");
+	printf("<input title='%s' type=text name=uKey value='%u' size=16 maxlength=10 "
+		,LANG_FT_tGroupGlue_uKey,uKey);
+	if(guPermLevel>=10 && uMode)
 	{
 		printf("></td></tr>\n");
 	}
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=uKey value='%u' >\n",uKey);
 	}
-	//uOwner COLTYPE_FOREIGNKEY
-	OpenRow(LANG_FL_tGroupGlue_uOwner,"black");
-	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	//uCreatedBy COLTYPE_FOREIGNKEY
-	OpenRow(LANG_FL_tGroupGlue_uCreatedBy,"black");
-	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
-	OpenRow(LANG_FL_tGroupGlue_uCreatedDate,"black");
-	if(uCreatedDate)
-		printf("%s\n\n",ctime(&uCreatedDate));
+	//uTable uRADType=3
+	OpenRow(LANG_FL_tGroupGlue_uTable,"black");
+	printf("<input title='%s' type=text name=uTable value='%u' size=16 maxlength=10 "
+		,LANG_FT_tGroupGlue_uTable,uTable);
+	if(guPermLevel>=10 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
 	else
-		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
-	//uModBy COLTYPE_FOREIGNKEY
-	OpenRow(LANG_FL_tGroupGlue_uModBy,"black");
-	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
-	OpenRow(LANG_FL_tGroupGlue_uModDate,"black");
-	if(uModDate)
-		printf("%s\n\n",ctime(&uModDate));
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uTable value='%u' >\n",uTable);
+	}
+	//uGroup COLTYPE_SELECTTABLE
+	OpenRow(LANG_FL_tGroupGlue_uGroup,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
 	else
-		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
+		tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,0);
 	printf("</tr>\n");
 
 }//void tGroupGlueInput(unsigned uMode)
@@ -359,13 +348,12 @@ void DeletetGroupGlue(void)
 void Insert_tGroupGlue(void)
 {
 	sprintf(gcQuery,"INSERT INTO tGroupGlue SET "
-		"cLabel='%s',"
-		"uOwner=%u,"
-		"uCreatedBy=%u,"
-		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
-			,TextAreaSave(cLabel)
-			,uOwner
-			,uCreatedBy
+		"uKey=%u,"
+		"uTable=%u,"
+		"uGroup=%u"
+			,uKey
+			,uTable
+			,uGroup
 		);
 
 	macro_mySQLQueryHTMLError;
@@ -376,14 +364,13 @@ void Insert_tGroupGlue(void)
 void Update_tGroupGlue(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tGroupGlue SET "
-		"cLabel='%s',"
-		"uOwner=%u,"
-		"uModBy=%u,"
-		"uModDate=UNIX_TIMESTAMP(NOW())"
+		"uKey=%u,"
+		"uTable=%u,"
+		"uGroup=%u"
 		" WHERE _rowid=%s"
-			,TextAreaSave(cLabel)
-			,uOwner
-			,uModBy
+			,uKey
+			,uTable
+			,uGroup
 			,cRowid
 		);
 
@@ -464,12 +451,9 @@ void tGroupGlueList(void)
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uGroupGlue"
-		"<td><font face=arial,helvetica color=white>cLabel"
-		"<td><font face=arial,helvetica color=white>uOwner"
-		"<td><font face=arial,helvetica color=white>uCreatedBy"
-		"<td><font face=arial,helvetica color=white>uCreatedDate"
-		"<td><font face=arial,helvetica color=white>uModBy"
-		"<td><font face=arial,helvetica color=white>uModDate"
+		"<td><font face=arial,helvetica color=white>uKey"
+		"<td><font face=arial,helvetica color=white>uTable"
+		"<td><font face=arial,helvetica color=white>uGroup"
 		"</tr>");
 
 
@@ -488,27 +472,12 @@ void tGroupGlueList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-				time_t luTime4=strtoul(field[4],NULL,10);
-		char cBuf4[32];
-		if(luTime4)
-			ctime_r(&luTime4,cBuf4);
-		else
-			sprintf(cBuf4,"---");
-		time_t luTime6=strtoul(field[6],NULL,10);
-		char cBuf6[32];
-		if(luTime6)
-			ctime_r(&luTime6,cBuf6);
-		else
-			sprintf(cBuf6,"---");
-		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupGlue&uGroupGlue=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+				printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupGlue&uGroupGlue=%s>%s</a><td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
-			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
-			,cBuf4
-			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
-			,cBuf6
+			,field[2]
+			,ForeignKey("tGroup","cLabel",strtoul(field[3],NULL,10))
 				);
 
 	}
@@ -523,12 +492,9 @@ void CreatetGroupGlue(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGroupGlue ("
 		"uGroupGlue INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
-		"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
-		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
-		"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
-		"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
-		"uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+		"uKey INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uKey),"
+		"uTable INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uTable),"
+		"uGroup INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uGroup) )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
