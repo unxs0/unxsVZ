@@ -15,8 +15,6 @@ TEMPLATE VARS AND FUNCTIONS
 
 
 
-void tGroupGlueNavList(void);
-
 void ExtProcesstGroupGlueVars(pentry entries[], int x)
 {
 	/*
@@ -166,7 +164,6 @@ void ExttGroupGlueButtons(void)
 			printf("<p><u>Operations</u><br>");
 			//printf("<br><input type=submit class=largeButton title='Sample button help'"
 			//		" name=gcCommand value='Sample Button'>");
-			tGroupGlueNavList();
 	}
 	CloseFieldSet();
 
@@ -347,51 +344,5 @@ void ExttGroupGlueNavBar(void)
 
 }//void ExttGroupGlueNavBar(void)
 
-
-void tGroupGlueNavList(void)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
-	if(guReseller==1) guReseller=0;//...except Root companies
-	
-#ifdef StandardFields
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uGroupGlue,cLabel FROM tGroupGlue ORDER BY cLabel");
-	else
-		sprintf(gcQuery,"SELECT tGroupGlue.uGroupGlue,"
-				" tGroupGlue.cLabel"
-				" FROM tGroupGlue,tClient"
-				" WHERE tGroupGlue.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				uContactParentCompany
-				,uContactParentCompany);
-#else
-	sprintf(gcQuery,"SELECT uGroupGlue,cLabel FROM tGroupGlue ORDER BY cLabel");
-#endif
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-        {
-        	printf("<p><u>tGroupGlueNavList</u><br>\n");
-                printf("%s",mysql_error(&gMysql));
-                return;
-        }
-
-        res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
-	{	
-        	printf("<p><u>tGroupGlueNavList</u><br>\n");
-
-	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupGlue"
-				"&uGroupGlue=%s>%s</a><br>\n",
-				field[0],field[1]);
-	}
-        mysql_free_result(res);
-
-}//void tGroupGlueNavList(void)
 
 
