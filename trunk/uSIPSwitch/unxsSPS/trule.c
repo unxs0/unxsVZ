@@ -31,10 +31,8 @@ TEMPLATE VARS AND FUNCTIONS
 //Table Variables
 static unsigned uRule=0;
 static char cLabel[33]={""};
-static unsigned uGateway=0;
-static char cuGatewayPullDown[256]={""};
-static unsigned uTimeInterval=0;
-static char cuTimeIntervalPullDown[256]={""};
+static unsigned uPriority=0;
+static char cPrefix[33]={""};
 static char cComment[33]={""};
 static unsigned uOwner=0;
 #define StandardFields
@@ -44,7 +42,7 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
-#define VAR_LIST_tRule "tRule.uRule,tRule.cLabel,tRule.uGateway,tRule.uTimeInterval,tRule.cComment,tRule.uOwner,tRule.uCreatedBy,tRule.uCreatedDate,tRule.uModBy,tRule.uModDate"
+#define VAR_LIST_tRule "tRule.uRule,tRule.cLabel,tRule.uPriority,tRule.cPrefix,tRule.cComment,tRule.uOwner,tRule.uCreatedBy,tRule.uCreatedDate,tRule.uModBy,tRule.uModDate"
 
  //Local only
 void Insert_tRule(void);
@@ -78,20 +76,10 @@ void ProcesstRuleVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uRule);
 		else if(!strcmp(entries[i].name,"cLabel"))
 			sprintf(cLabel,"%.40s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uGateway"))
-			sscanf(entries[i].val,"%u",&uGateway);
-		else if(!strcmp(entries[i].name,"cuGatewayPullDown"))
-		{
-			sprintf(cuGatewayPullDown,"%.255s",entries[i].val);
-			uGateway=ReadPullDown("tGateway","cLabel",cuGatewayPullDown);
-		}
-		else if(!strcmp(entries[i].name,"uTimeInterval"))
-			sscanf(entries[i].val,"%u",&uTimeInterval);
-		else if(!strcmp(entries[i].name,"cuTimeIntervalPullDown"))
-		{
-			sprintf(cuTimeIntervalPullDown,"%.255s",entries[i].val);
-			uTimeInterval=ReadPullDown("tTimeInterval","cLabel",cuTimeIntervalPullDown);
-		}
+		else if(!strcmp(entries[i].name,"uPriority"))
+			sscanf(entries[i].val,"%u",&uPriority);
+		else if(!strcmp(entries[i].name,"cPrefix"))
+			sprintf(cPrefix,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cComment"))
 			sprintf(cComment,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
@@ -204,8 +192,8 @@ void tRule(const char *cResult)
 			
 		sscanf(field[0],"%u",&uRule);
 		sprintf(cLabel,"%.32s",field[1]);
-		sscanf(field[2],"%u",&uGateway);
-		sscanf(field[3],"%u",&uTimeInterval);
+		sscanf(field[2],"%u",&uPriority);
+		sprintf(cPrefix,"%.32s",field[3]);
 		sprintf(cComment,"%.32s",field[4]);
 		sscanf(field[5],"%u",&uOwner);
 		sscanf(field[6],"%u",&uCreatedBy);
@@ -300,18 +288,32 @@ void tRuleInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
-	//uGateway COLTYPE_SELECTTABLE
-	OpenRow(LANG_FL_tRule_uGateway,"black");
+	//uPriority uRADType=3
+	OpenRow(LANG_FL_tRule_uPriority,"black");
+	printf("<input title='%s' type=text name=uPriority value='%u' size=16 maxlength=10 "
+		,LANG_FT_tRule_uPriority,uPriority);
 	if(guPermLevel>=10 && uMode)
-		tTablePullDown("tGateway;cuGatewayPullDown","cLabel","cLabel",uGateway,1);
+	{
+		printf("></td></tr>\n");
+	}
 	else
-		tTablePullDown("tGateway;cuGatewayPullDown","cLabel","cLabel",uGateway,0);
-	//uTimeInterval COLTYPE_SELECTTABLE
-	OpenRow(LANG_FL_tRule_uTimeInterval,"black");
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uPriority value='%u' >\n",uPriority);
+	}
+	//cPrefix uRADType=253
+	OpenRow(LANG_FL_tRule_cPrefix,"black");
+	printf("<input title='%s' type=text name=cPrefix value='%s' size=40 maxlength=31 "
+		,LANG_FT_tRule_cPrefix,EncodeDoubleQuotes(cPrefix));
 	if(guPermLevel>=10 && uMode)
-		tTablePullDown("tTimeInterval;cuTimeIntervalPullDown","cLabel","cLabel",uTimeInterval,1);
+	{
+		printf("></td></tr>\n");
+	}
 	else
-		tTablePullDown("tTimeInterval;cuTimeIntervalPullDown","cLabel","cLabel",uTimeInterval,0);
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cPrefix value='%s'>\n",EncodeDoubleQuotes(cPrefix));
+	}
 	//cComment uRADType=253
 	OpenRow(LANG_FL_tRule_cComment,"black");
 	printf("<input title='%s' type=text name=cComment value='%s' size=40 maxlength=31 "
@@ -409,15 +411,15 @@ void Insert_tRule(void)
 {
 	sprintf(gcQuery,"INSERT INTO tRule SET "
 		"cLabel='%s',"
-		"uGateway=%u,"
-		"uTimeInterval=%u,"
+		"uPriority=%u,"
+		"cPrefix='%s',"
 		"cComment='%s',"
 		"uOwner=%u,"
 		"uCreatedBy=%u,"
 		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
 			,TextAreaSave(cLabel)
-			,uGateway
-			,uTimeInterval
+			,uPriority
+			,TextAreaSave(cPrefix)
 			,TextAreaSave(cComment)
 			,uOwner
 			,uCreatedBy
@@ -432,16 +434,16 @@ void Update_tRule(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tRule SET "
 		"cLabel='%s',"
-		"uGateway=%u,"
-		"uTimeInterval=%u,"
+		"uPriority=%u,"
+		"cPrefix='%s',"
 		"cComment='%s',"
 		"uOwner=%u,"
 		"uModBy=%u,"
 		"uModDate=UNIX_TIMESTAMP(NOW())"
 		" WHERE _rowid=%s"
 			,TextAreaSave(cLabel)
-			,uGateway
-			,uTimeInterval
+			,uPriority
+			,TextAreaSave(cPrefix)
 			,TextAreaSave(cComment)
 			,uOwner
 			,uModBy
@@ -526,8 +528,8 @@ void tRuleList(void)
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uRule"
 		"<td><font face=arial,helvetica color=white>cLabel"
-		"<td><font face=arial,helvetica color=white>uGateway"
-		"<td><font face=arial,helvetica color=white>uTimeInterval"
+		"<td><font face=arial,helvetica color=white>uPriority"
+		"<td><font face=arial,helvetica color=white>cPrefix"
 		"<td><font face=arial,helvetica color=white>cComment"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
@@ -568,8 +570,8 @@ void tRuleList(void)
 			,field[0]
 			,field[0]
 			,field[1]
-			,ForeignKey("tGateway","cLabel",strtoul(field[2],NULL,10))
-			,ForeignKey("tTimeInterval","cLabel",strtoul(field[3],NULL,10))
+			,field[2]
+			,field[3]
 			,field[4]
 			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
@@ -591,8 +593,8 @@ void CreatetRule(void)
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tRule ("
 		"uRule INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
 		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
-		"uGateway INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uGateway),"
-		"uTimeInterval INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uTimeInterval),"
+		"uPriority INT UNSIGNED NOT NULL DEFAULT 0,"
+		"cPrefix VARCHAR(32) NOT NULL DEFAULT '',"
 		"cComment VARCHAR(32) NOT NULL DEFAULT '',"
 		"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"

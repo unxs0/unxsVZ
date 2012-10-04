@@ -31,8 +31,8 @@ unxssps.c: unxsrad.c
 	@ if [ ! -f unxssps.c ];then cp -i unxsrad.c unxssps.c; fi
 
 #included standard RAD4 objects
-unxsSPS.cgi: tpbx.o tdid.o tgateway.o trule.o tprefix.o tcarrier.o tcdr.o tcluster.o tgatewaytype.o ttimeinterval.o tgroup.o tgroupglue.o tgrouptype.o tclient.o tauthorize.o tserver.o tstatus.o tconfiguration.o tjob.o tjobstatus.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o  mysqlconnect.o main.o cgi.o
-	cc tpbx.o tdid.o tgateway.o trule.o tprefix.o tcarrier.o tcdr.o tcluster.o tgatewaytype.o ttimeinterval.o tgroup.o tgroupglue.o tgrouptype.o tclient.o tauthorize.o tserver.o tstatus.o tconfiguration.o tjob.o tjobstatus.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o  mysqlconnect.o main.o cgi.o -o unxsSPS.cgi $(LIBS) 
+unxsSPS.cgi: tpbx.o tdid.o tgateway.o trule.o tprefix.o tcarrier.o tcdr.o taddress.o tcluster.o tgatewaytype.o ttimeinterval.o tgroup.o tgroupglue.o tgrouptype.o tclient.o tauthorize.o tserver.o tstatus.o tconfiguration.o tjob.o tjobstatus.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o  mysqlconnect.o main.o cgi.o
+	cc tpbx.o tdid.o tgateway.o trule.o tprefix.o tcarrier.o tcdr.o taddress.o tcluster.o tgatewaytype.o ttimeinterval.o tgroup.o tgroupglue.o tgrouptype.o tclient.o tauthorize.o tserver.o tstatus.o tconfiguration.o tjob.o tjobstatus.o tglossary.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o  mysqlconnect.o main.o cgi.o -o unxsSPS.cgi $(LIBS) 
 
 tpbx.o: tpbx.c mysqlrad.h language.h tpbxfunc.h local.h
 	cc -c tpbx.c -o tpbx.o $(CFLAGS)
@@ -54,6 +54,9 @@ tcarrier.o: tcarrier.c mysqlrad.h language.h tcarrierfunc.h local.h
 
 tcdr.o: tcdr.c mysqlrad.h language.h tcdrfunc.h local.h
 	cc -c tcdr.c -o tcdr.o $(CFLAGS)
+
+taddress.o: taddress.c mysqlrad.h language.h taddressfunc.h local.h
+	cc -c taddress.c -o taddress.o $(CFLAGS)
 
 tcluster.o: tcluster.c mysqlrad.h language.h tclusterfunc.h local.h
 	cc -c tcluster.c -o tcluster.o $(CFLAGS)
