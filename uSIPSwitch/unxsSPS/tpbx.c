@@ -31,11 +31,7 @@ TEMPLATE VARS AND FUNCTIONS
 //Table Variables
 static unsigned uPBX=0;
 static char cLabel[33]={""};
-static char cAddress[65]={""};
 static char cHostname[65]={""};
-static unsigned uPort=0;
-static unsigned uPriority=0;
-static unsigned uWeight=0;
 static char cAttributes[65]={""};
 static char cDescription[65]={""};
 static unsigned uStatus=0;
@@ -53,7 +49,7 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
-#define VAR_LIST_tPBX "tPBX.uPBX,tPBX.cLabel,tPBX.cAddress,tPBX.cHostname,tPBX.uPort,tPBX.uPriority,tPBX.uWeight,tPBX.cAttributes,tPBX.cDescription,tPBX.uStatus,tPBX.uLines,tPBX.uStrip,tPBX.cPrefix,tPBX.uCluster,tPBX.cComment,tPBX.uOwner,tPBX.uCreatedBy,tPBX.uCreatedDate,tPBX.uModBy,tPBX.uModDate"
+#define VAR_LIST_tPBX "tPBX.uPBX,tPBX.cLabel,tPBX.cHostname,tPBX.cAttributes,tPBX.cDescription,tPBX.uStatus,tPBX.uLines,tPBX.uStrip,tPBX.cPrefix,tPBX.uCluster,tPBX.cComment,tPBX.uOwner,tPBX.uCreatedBy,tPBX.uCreatedDate,tPBX.uModBy,tPBX.uModDate"
 
  //Local only
 void Insert_tPBX(void);
@@ -87,16 +83,8 @@ void ProcesstPBXVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uPBX);
 		else if(!strcmp(entries[i].name,"cLabel"))
 			sprintf(cLabel,"%.40s",entries[i].val);
-		else if(!strcmp(entries[i].name,"cAddress"))
-			sprintf(cAddress,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cHostname"))
 			sprintf(cHostname,"%.40s",entries[i].val);
-		else if(!strcmp(entries[i].name,"uPort"))
-			sscanf(entries[i].val,"%u",&uPort);
-		else if(!strcmp(entries[i].name,"uPriority"))
-			sscanf(entries[i].val,"%u",&uPriority);
-		else if(!strcmp(entries[i].name,"uWeight"))
-			sscanf(entries[i].val,"%u",&uWeight);
 		else if(!strcmp(entries[i].name,"cAttributes"))
 			sprintf(cAttributes,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cDescription"))
@@ -228,24 +216,20 @@ void tPBX(const char *cResult)
 			
 		sscanf(field[0],"%u",&uPBX);
 		sprintf(cLabel,"%.32s",field[1]);
-		sprintf(cAddress,"%.64s",field[2]);
-		sprintf(cHostname,"%.64s",field[3]);
-		sscanf(field[4],"%u",&uPort);
-		sscanf(field[5],"%u",&uPriority);
-		sscanf(field[6],"%u",&uWeight);
-		sprintf(cAttributes,"%.64s",field[7]);
-		sprintf(cDescription,"%.64s",field[8]);
-		sscanf(field[9],"%u",&uStatus);
-		sscanf(field[10],"%u",&uLines);
-		sscanf(field[11],"%u",&uStrip);
-		sprintf(cPrefix,"%.32s",field[12]);
-		sscanf(field[13],"%u",&uCluster);
-		sprintf(cComment,"%.64s",field[14]);
-		sscanf(field[15],"%u",&uOwner);
-		sscanf(field[16],"%u",&uCreatedBy);
-		sscanf(field[17],"%lu",&uCreatedDate);
-		sscanf(field[18],"%u",&uModBy);
-		sscanf(field[19],"%lu",&uModDate);
+		sprintf(cHostname,"%.64s",field[2]);
+		sprintf(cAttributes,"%.64s",field[3]);
+		sprintf(cDescription,"%.64s",field[4]);
+		sscanf(field[5],"%u",&uStatus);
+		sscanf(field[6],"%u",&uLines);
+		sscanf(field[7],"%u",&uStrip);
+		sprintf(cPrefix,"%.32s",field[8]);
+		sscanf(field[9],"%u",&uCluster);
+		sprintf(cComment,"%.64s",field[10]);
+		sscanf(field[11],"%u",&uOwner);
+		sscanf(field[12],"%u",&uCreatedBy);
+		sscanf(field[13],"%lu",&uCreatedDate);
+		sscanf(field[14],"%u",&uModBy);
+		sscanf(field[15],"%lu",&uModDate);
 
 		}
 
@@ -334,19 +318,6 @@ void tPBXInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
-	//cAddress uRADType=253
-	OpenRow(LANG_FL_tPBX_cAddress,"black");
-	printf("<input title='%s' type=text name=cAddress value='%s' size=40 maxlength=63 "
-		,LANG_FT_tPBX_cAddress,EncodeDoubleQuotes(cAddress));
-	if(guPermLevel>=10 && uMode)
-	{
-		printf("></td></tr>\n");
-	}
-	else
-	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cAddress value='%s'>\n",EncodeDoubleQuotes(cAddress));
-	}
 	//cHostname uRADType=253
 	OpenRow(LANG_FL_tPBX_cHostname,"black");
 	printf("<input title='%s' type=text name=cHostname value='%s' size=40 maxlength=63 "
@@ -359,45 +330,6 @@ void tPBXInput(unsigned uMode)
 	{
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cHostname value='%s'>\n",EncodeDoubleQuotes(cHostname));
-	}
-	//uPort uRADType=3
-	OpenRow(LANG_FL_tPBX_uPort,"black");
-	printf("<input title='%s' type=text name=uPort value='%u' size=16 maxlength=10 "
-		,LANG_FT_tPBX_uPort,uPort);
-	if(guPermLevel>=10 && uMode)
-	{
-		printf("></td></tr>\n");
-	}
-	else
-	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uPort value='%u' >\n",uPort);
-	}
-	//uPriority uRADType=3
-	OpenRow(LANG_FL_tPBX_uPriority,"black");
-	printf("<input title='%s' type=text name=uPriority value='%u' size=16 maxlength=10 "
-		,LANG_FT_tPBX_uPriority,uPriority);
-	if(guPermLevel>=10 && uMode)
-	{
-		printf("></td></tr>\n");
-	}
-	else
-	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uPriority value='%u' >\n",uPriority);
-	}
-	//uWeight uRADType=3
-	OpenRow(LANG_FL_tPBX_uWeight,"black");
-	printf("<input title='%s' type=text name=uWeight value='%u' size=16 maxlength=10 "
-		,LANG_FT_tPBX_uWeight,uWeight);
-	if(guPermLevel>=10 && uMode)
-	{
-		printf("></td></tr>\n");
-	}
-	else
-	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uWeight value='%u' >\n",uWeight);
 	}
 	//cAttributes uRADType=253
 	OpenRow(LANG_FL_tPBX_cAttributes,"black");
@@ -580,11 +512,7 @@ void Insert_tPBX(void)
 {
 	sprintf(gcQuery,"INSERT INTO tPBX SET "
 		"cLabel='%s',"
-		"cAddress='%s',"
 		"cHostname='%s',"
-		"uPort=%u,"
-		"uPriority=%u,"
-		"uWeight=%u,"
 		"cAttributes='%s',"
 		"cDescription='%s',"
 		"uStatus=%u,"
@@ -597,11 +525,7 @@ void Insert_tPBX(void)
 		"uCreatedBy=%u,"
 		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
 			,TextAreaSave(cLabel)
-			,TextAreaSave(cAddress)
 			,TextAreaSave(cHostname)
-			,uPort
-			,uPriority
-			,uWeight
 			,TextAreaSave(cAttributes)
 			,TextAreaSave(cDescription)
 			,uStatus
@@ -623,11 +547,7 @@ void Update_tPBX(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tPBX SET "
 		"cLabel='%s',"
-		"cAddress='%s',"
 		"cHostname='%s',"
-		"uPort=%u,"
-		"uPriority=%u,"
-		"uWeight=%u,"
 		"cAttributes='%s',"
 		"cDescription='%s',"
 		"uStatus=%u,"
@@ -641,11 +561,7 @@ void Update_tPBX(char *cRowid)
 		"uModDate=UNIX_TIMESTAMP(NOW())"
 		" WHERE _rowid=%s"
 			,TextAreaSave(cLabel)
-			,TextAreaSave(cAddress)
 			,TextAreaSave(cHostname)
-			,uPort
-			,uPriority
-			,uWeight
 			,TextAreaSave(cAttributes)
 			,TextAreaSave(cDescription)
 			,uStatus
@@ -737,11 +653,7 @@ void tPBXList(void)
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uPBX"
 		"<td><font face=arial,helvetica color=white>cLabel"
-		"<td><font face=arial,helvetica color=white>cAddress"
 		"<td><font face=arial,helvetica color=white>cHostname"
-		"<td><font face=arial,helvetica color=white>uPort"
-		"<td><font face=arial,helvetica color=white>uPriority"
-		"<td><font face=arial,helvetica color=white>uWeight"
 		"<td><font face=arial,helvetica color=white>cAttributes"
 		"<td><font face=arial,helvetica color=white>cDescription"
 		"<td><font face=arial,helvetica color=white>uStatus"
@@ -773,19 +685,19 @@ void tPBXList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-				time_t luTime17=strtoul(field[17],NULL,10);
-		char cBuf17[32];
-		if(luTime17)
-			ctime_r(&luTime17,cBuf17);
+				time_t luTime13=strtoul(field[13],NULL,10);
+		char cBuf13[32];
+		if(luTime13)
+			ctime_r(&luTime13,cBuf13);
 		else
-			sprintf(cBuf17,"---");
-		time_t luTime19=strtoul(field[19],NULL,10);
-		char cBuf19[32];
-		if(luTime19)
-			ctime_r(&luTime19,cBuf19);
+			sprintf(cBuf13,"---");
+		time_t luTime15=strtoul(field[15],NULL,10);
+		char cBuf15[32];
+		if(luTime15)
+			ctime_r(&luTime15,cBuf15);
 		else
-			sprintf(cBuf19,"---");
-		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tPBX&uPBX=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf15,"---");
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tPBX&uPBX=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
@@ -796,17 +708,13 @@ void tPBXList(void)
 			,field[6]
 			,field[7]
 			,field[8]
-			,field[9]
+			,ForeignKey("tCluster","cLabel",strtoul(field[9],NULL,10))
 			,field[10]
-			,field[11]
-			,field[12]
-			,ForeignKey("tCluster","cLabel",strtoul(field[13],NULL,10))
-			,field[14]
-			,ForeignKey("tClient","cLabel",strtoul(field[15],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[16],NULL,10))
-			,cBuf17
-			,ForeignKey("tClient","cLabel",strtoul(field[18],NULL,10))
-			,cBuf19
+			,ForeignKey("tClient","cLabel",strtoul(field[11],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[12],NULL,10))
+			,cBuf13
+			,ForeignKey("tClient","cLabel",strtoul(field[14],NULL,10))
+			,cBuf15
 				);
 
 	}
@@ -822,11 +730,7 @@ void CreatetPBX(void)
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tPBX ("
 		"uPBX INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
 		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
-		"cAddress VARCHAR(64) NOT NULL DEFAULT '', INDEX (cAddress),"
 		"cHostname VARCHAR(64) NOT NULL DEFAULT '', INDEX (cHostname),"
-		"uPort INT UNSIGNED NOT NULL DEFAULT 0,"
-		"uPriority INT UNSIGNED NOT NULL DEFAULT 0,"
-		"uWeight INT UNSIGNED NOT NULL DEFAULT 0,"
 		"cAttributes VARCHAR(64) NOT NULL DEFAULT '',"
 		"cDescription VARCHAR(64) NOT NULL DEFAULT '',"
 		"uStatus INT UNSIGNED NOT NULL DEFAULT 0,"

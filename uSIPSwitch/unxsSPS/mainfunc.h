@@ -13,7 +13,7 @@ AUTHOR
 #include "local.h"
 char *strptime(const char *s, const char *format, struct tm *tm);
 
-static char cTableList[64][32]={"tPBX","tDID","tGateway","tRule","tPrefix","tCarrier","tCDR","tCluster","tGatewayType","tTimeInterval","tGroup","tGroupGlue","tGroupType","tClient","tAuthorize","tServer","tStatus","tConfiguration","tJob","tJobStatus","tGlossary","tTemplate","tTemplateSet","tTemplateType","tLog","tLogType","tLogMonth","tMonth",""};
+static char cTableList[64][32]={"tPBX","tDID","tGateway","tRule","tPrefix","tCarrier","tCDR","tAddress","tCluster","tGatewayType","tTimeInterval","tGroup","tGroupGlue","tGroupType","tClient","tAuthorize","tServer","tStatus","tConfiguration","tJob","tJobStatus","tGlossary","tTemplate","tTemplateSet","tTemplateType","tLog","tLogType","tLogMonth","tMonth",""};
 
 char cInitTableList[64][32]={"tConfiguration","tGlossary","tJobStatus","tLogType","tServer","tStatus","tTemplate","tTemplateSet","tTemplateType",""};
 
@@ -447,6 +447,7 @@ void Initialize(char *cPasswd)
 	CreatetPrefix();
 	CreatetCarrier();
 	CreatetCDR();
+	CreatetAddress();
 	CreatetCluster();
 	CreatetGatewayType();
 	CreatetTimeInterval();

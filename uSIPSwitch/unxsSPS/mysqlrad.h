@@ -270,6 +270,21 @@ void DeletetCDR(void);
 void ExttCDRGetHook(entry gentries[], int x);
 void ExttCDRNavBar(void);
 
+//tAddress
+int tAddressCommands(pentry entries[], int x);
+void tAddress(const char *results);
+void ProcesstAddressVars(pentry entries[], int x);
+void tAddressContent(void);
+void tAddressInputContent(void);
+void tAddressInput(unsigned uMode);
+void tAddressList(void);
+void NewtAddress(unsigned uMode);
+void ModtAddress(void);
+void CreatetAddress(void);
+void DeletetAddress(void);
+void ExttAddressGetHook(entry gentries[], int x);
+void ExttAddressNavBar(void);
+
 //tCluster
 int tClusterCommands(pentry entries[], int x);
 void tCluster(const char *results);

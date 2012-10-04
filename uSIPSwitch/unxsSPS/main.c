@@ -184,6 +184,8 @@ int main(int iArgc, char *cArgv[])
 				ExttCarrierGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tCDR"))
 				ExttCDRGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tAddress"))
+				ExttAddressGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tCluster"))
 				ExttClusterGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tGatewayType"))
@@ -272,6 +274,7 @@ int main(int iArgc, char *cArgv[])
 	tPrefixCommands(entries,x);
 	tCarrierCommands(entries,x);
 	tCDRCommands(entries,x);
+	tAddressCommands(entries,x);
 	tClusterCommands(entries,x);
 	tGatewayTypeCommands(entries,x);
 	tTimeIntervalCommands(entries,x);
@@ -617,6 +620,9 @@ void Header_ism3(char *title, int js)
 	else if(!strcmp(gcFunction,"tCDR") || !strcmp(gcFunction,"tCDRTools") ||
 			!strcmp(gcFunction,"tCDRList"))
 		ExttCDRNavBar();
+	else if(!strcmp(gcFunction,"tAddress") || !strcmp(gcFunction,"tAddressTools") ||
+			!strcmp(gcFunction,"tAddressList"))
+		ExttAddressNavBar();
 	else if(!strcmp(gcFunction,"tCluster") || !strcmp(gcFunction,"tClusterTools") ||
 			!strcmp(gcFunction,"tClusterList"))
 		ExttClusterNavBar();
@@ -801,6 +807,17 @@ void Header_ism3(char *title, int js)
 		  printf(" id=current>\n");
 	  printf("\t\t\t<a title='Call detail records' href=unxsSPS.cgi?gcFunction=tCDR>tCDR</a>\n");
 	}
+	//tAddress
+	if(guPermLevel>=7)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tAddress") && strcmp(gcFunction,"tAddressTools") &&
+			strcmp(gcFunction,"tAddressList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='IP addresses' href=unxsSPS.cgi?gcFunction=tAddress>tAddress</a>\n");
+	}
 	//tCluster
 	if(guPermLevel>=7)
 	{
@@ -835,7 +852,7 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<a title='Define time intervals with recurrence' href=unxsSPS.cgi?gcFunction=tTimeInterval>tTimeInterval</a>\n");
 	}
 	//tGroup
-	if(guPermLevel>=20)
+	if(guPermLevel>=7)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tGroup") && strcmp(gcFunction,"tGroupTools") &&
