@@ -355,12 +355,15 @@ void tAddressNavList(void)
 
 	//Only show gateways	
 	if(guLoginClient==1 && guPermLevel>11)
-		sprintf(gcQuery,"SELECT uAddress,cLabel,cIP,uPort FROM tAddress WHERE uPBX=0 ORDER BY cLabel");
+		sprintf(gcQuery,"SELECT tAddress.uAddress,tAddress.cLabel,tAddress.cIP,tAddress.uPort,tGateway.cLabel FROM tAddress,tGateway"
+				" WHERE tAddress.uGateway=tGateway.uGateway"
+				" ORDER BY tAddress.cLabel");
 	else
 		sprintf(gcQuery,"SELECT tAddress.uAddress,"
-				" tAddress.cLabel"
-				" FROM tAddress,tClient"
+				" tAddress.cLabel,tAddress.cIP,tAddress.uPort,tGateway.cLabel"
+				" FROM tAddress,tClient,tGateway"
 				" WHERE tAddress.uOwner=tClient.uClient"
+				" AND tAddress.uGateway=tGateway.uGateway"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
 					guCompany,guCompany);
         mysql_query(&gMysql,gcQuery);
@@ -378,8 +381,8 @@ void tAddressNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tAddress"
-				"&uAddress=%s>%s/%s/%s</a><br>\n",
-				field[0],field[1],field[2],field[3]);
+				"&uAddress=%s>%s/%s/%s/%s</a><br>\n",
+				field[0],field[1],field[2],field[3],field[4]);
 	}
         mysql_free_result(res);
 

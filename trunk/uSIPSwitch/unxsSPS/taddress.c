@@ -37,6 +37,7 @@ static unsigned uPriority=0;
 static unsigned uWeight=0;
 static unsigned uPBX=0;
 static unsigned uGateway=0;
+static char cuGatewayPullDown[256]={""};
 static unsigned uOwner=0;
 #define StandardFields
 static unsigned uCreatedBy=0;
@@ -91,6 +92,11 @@ void ProcesstAddressVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uPBX);
 		else if(!strcmp(entries[i].name,"uGateway"))
 			sscanf(entries[i].val,"%u",&uGateway);
+		else if(!strcmp(entries[i].name,"cuGatewayPullDown"))
+		{
+			sprintf(cuGatewayPullDown,"%.255s",entries[i].val);
+			uGateway=ReadPullDown("tGateway","cLabel",cuGatewayPullDown);
+		}
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -358,12 +364,12 @@ void tAddressInput(unsigned uMode)
 		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uPBX value='%u' >\n",LANG_FT_tAddress_uPBX,uPBX);
 	else
 		printf("<input title='%s' type=text value='%s' size=40 disabled><input type=hidden name='uPBX' value='%u' >\n",LANG_FT_tAddress_uPBX,ForeignKey("tPBX","cLabel",uPBX),uPBX);
-	//uGateway COLTYPE_FOREIGNKEY
+	//uGateway COLTYPE_SELECTTABLE
 	OpenRow(LANG_FL_tAddress_uGateway,"black");
 	if(guPermLevel>=0 && uMode)
-		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uGateway value='%u' >\n",LANG_FT_tAddress_uGateway,uGateway);
+		tTablePullDown("tGateway;cuGatewayPullDown","cLabel","cLabel",uGateway,1);
 	else
-		printf("<input title='%s' type=text value='%s' size=40 disabled><input type=hidden name='uGateway' value='%u' >\n",LANG_FT_tAddress_uGateway,ForeignKey("tGateway","cLabel",uGateway),uGateway);
+		tTablePullDown("tGateway;cuGatewayPullDown","cLabel","cLabel",uGateway,0);
 	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tAddress_uOwner,"black");
 	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
