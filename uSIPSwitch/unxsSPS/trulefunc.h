@@ -515,8 +515,10 @@ void tRuleGroupGlueNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
 
-	sprintf(gcQuery,"SELECT uGroupGlue,tTimeInterval.cLabel FROM tGroupGlue,tTimeInterval WHERE uGroup=%u"
+	sprintf(gcQuery,"SELECT tTimeInterval.uTimeInterval,tTimeInterval.cLabel FROM tGroupGlue,tTimeInterval WHERE tGroupGlue.uGroup=%u"
 			" AND tGroupGlue.uKey=tTimeInterval.uTimeInterval"
 			" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tTimeInterval' LIMIT 1)",uRule);
         mysql_query(&gMysql,gcQuery);
@@ -526,19 +528,18 @@ void tRuleGroupGlueNavList(void)
                 printf("%s",mysql_error(&gMysql));
                 return;
         }
-
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
         	printf("<p><u>Intervals</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupGlue"
-				"&uGroupGlue=%s>%s</a><br>\n",
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tTimeInterval"
+				"&utTimeInterval=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}
 
-	sprintf(gcQuery,"SELECT uGroupGlue,tGateway.cLabel FROM tGroupGlue,tGateway WHERE uGroup=%u"
+	sprintf(gcQuery,"SELECT tGateway.uGateway,tGateway.cLabel FROM tGroupGlue,tGateway WHERE tGroupGlue.uGroup=%u"
 			" AND tGroupGlue.uKey=tGateway.uGateway"
 			" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1)",uRule);
         mysql_query(&gMysql,gcQuery);
@@ -548,16 +549,32 @@ void tRuleGroupGlueNavList(void)
                 printf("%s",mysql_error(&gMysql));
                 return;
         }
-
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
         	printf("<p><u>Gateways</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupGlue"
-				"&uGroupGlue=%s>%s</a><br>\n",
+		{
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGateway"
+				"&uGateway=%s>%s</a><br>\n",
 				field[0],field[1]);
+
+			sprintf(gcQuery,"SELECT uAddress,cIP,uPort FROM tAddress WHERE uGateway=%s",field[0]);
+        		mysql_query(&gMysql,gcQuery);
+        		if(mysql_errno(&gMysql))
+        		{
+                		printf("%s",mysql_error(&gMysql));
+                		return;
+        		}
+        		res2=mysql_store_result(&gMysql);
+	        	while((field2=mysql_fetch_row(res2)))
+			{
+				printf(" &nbsp; <a class=darkLink href=unxsSPS.cgi?gcFunction=tAddress"
+				"&uAddress=%s>%s/%s</a><br>\n",
+				field2[0],field2[1],field2[2]);
+			}
+		}
 	}
         mysql_free_result(res);
 

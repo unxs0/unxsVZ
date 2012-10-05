@@ -352,30 +352,21 @@ void tAddressNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uContactParentCompany=0;
 
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
-	if(guReseller==1) guReseller=0;//...except Root companies
-	
-#ifdef StandardFields
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uAddress,cLabel FROM tAddress ORDER BY cLabel");
+	//Only show gateways	
+	if(guLoginClient==1 && guPermLevel>11)
+		sprintf(gcQuery,"SELECT uAddress,cLabel,cIP,uPort FROM tAddress WHERE uPBX=0 ORDER BY cLabel");
 	else
 		sprintf(gcQuery,"SELECT tAddress.uAddress,"
 				" tAddress.cLabel"
 				" FROM tAddress,tClient"
 				" WHERE tAddress.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				uContactParentCompany
-				,uContactParentCompany);
-#else
-	sprintf(gcQuery,"SELECT uAddress,cLabel FROM tAddress ORDER BY cLabel");
-#endif
+					guCompany,guCompany);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
-        	printf("<p><u>tAddressNavList</u><br>\n");
+        	printf("<p><u>tAddressNavList GWs only</u><br>\n");
                 printf("%s",mysql_error(&gMysql));
                 return;
         }
@@ -383,12 +374,12 @@ void tAddressNavList(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>tAddressNavList</u><br>\n");
+        	printf("<p><u>tAddressNavList GWs only</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tAddress"
-				"&uAddress=%s>%s</a><br>\n",
-				field[0],field[1]);
+				"&uAddress=%s>%s/%s/%s</a><br>\n",
+				field[0],field[1],field[2],field[3]);
 	}
         mysql_free_result(res);
 
