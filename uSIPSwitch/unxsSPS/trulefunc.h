@@ -535,7 +535,7 @@ void tRuleGroupGlueNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tTimeInterval"
-				"&utTimeInterval=%s>%s</a><br>\n",
+				"&uTimeInterval=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}
 
