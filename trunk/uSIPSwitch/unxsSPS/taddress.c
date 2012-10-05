@@ -35,6 +35,8 @@ static char cIP[33]={""};
 static unsigned uPort=0;
 static unsigned uPriority=0;
 static unsigned uWeight=0;
+static unsigned uPBX=0;
+static unsigned uGateway=0;
 static unsigned uOwner=0;
 #define StandardFields
 static unsigned uCreatedBy=0;
@@ -43,7 +45,7 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
-#define VAR_LIST_tAddress "tAddress.uAddress,tAddress.cLabel,tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight,tAddress.uOwner,tAddress.uCreatedBy,tAddress.uCreatedDate,tAddress.uModBy,tAddress.uModDate"
+#define VAR_LIST_tAddress "tAddress.uAddress,tAddress.cLabel,tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight,tAddress.uPBX,tAddress.uGateway,tAddress.uOwner,tAddress.uCreatedBy,tAddress.uCreatedDate,tAddress.uModBy,tAddress.uModDate"
 
  //Local only
 void Insert_tAddress(void);
@@ -85,6 +87,10 @@ void ProcesstAddressVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uPriority);
 		else if(!strcmp(entries[i].name,"uWeight"))
 			sscanf(entries[i].val,"%u",&uWeight);
+		else if(!strcmp(entries[i].name,"uPBX"))
+			sscanf(entries[i].val,"%u",&uPBX);
+		else if(!strcmp(entries[i].name,"uGateway"))
+			sscanf(entries[i].val,"%u",&uGateway);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -199,11 +205,13 @@ void tAddress(const char *cResult)
 		sscanf(field[3],"%u",&uPort);
 		sscanf(field[4],"%u",&uPriority);
 		sscanf(field[5],"%u",&uWeight);
-		sscanf(field[6],"%u",&uOwner);
-		sscanf(field[7],"%u",&uCreatedBy);
-		sscanf(field[8],"%lu",&uCreatedDate);
-		sscanf(field[9],"%u",&uModBy);
-		sscanf(field[10],"%lu",&uModDate);
+		sscanf(field[6],"%u",&uPBX);
+		sscanf(field[7],"%u",&uGateway);
+		sscanf(field[8],"%u",&uOwner);
+		sscanf(field[9],"%u",&uCreatedBy);
+		sscanf(field[10],"%lu",&uCreatedDate);
+		sscanf(field[11],"%u",&uModBy);
+		sscanf(field[12],"%lu",&uModDate);
 
 		}
 
@@ -344,6 +352,18 @@ void tAddressInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=uWeight value='%u' >\n",uWeight);
 	}
+	//uPBX COLTYPE_FOREIGNKEY
+	OpenRow(LANG_FL_tAddress_uPBX,"black");
+	if(guPermLevel>=0 && uMode)
+		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uPBX value='%u' >\n",LANG_FT_tAddress_uPBX,uPBX);
+	else
+		printf("<input title='%s' type=text value='%s' size=40 disabled><input type=hidden name='uPBX' value='%u' >\n",LANG_FT_tAddress_uPBX,ForeignKey("tPBX","cLabel",uPBX),uPBX);
+	//uGateway COLTYPE_FOREIGNKEY
+	OpenRow(LANG_FL_tAddress_uGateway,"black");
+	if(guPermLevel>=0 && uMode)
+		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uGateway value='%u' >\n",LANG_FT_tAddress_uGateway,uGateway);
+	else
+		printf("<input title='%s' type=text value='%s' size=40 disabled><input type=hidden name='uGateway' value='%u' >\n",LANG_FT_tAddress_uGateway,ForeignKey("tGateway","cLabel",uGateway),uGateway);
 	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tAddress_uOwner,"black");
 	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
@@ -432,6 +452,8 @@ void Insert_tAddress(void)
 		"uPort=%u,"
 		"uPriority=%u,"
 		"uWeight=%u,"
+		"uPBX=%u,"
+		"uGateway=%u,"
 		"uOwner=%u,"
 		"uCreatedBy=%u,"
 		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
@@ -440,6 +462,8 @@ void Insert_tAddress(void)
 			,uPort
 			,uPriority
 			,uWeight
+			,uPBX
+			,uGateway
 			,uOwner
 			,uCreatedBy
 		);
@@ -457,6 +481,8 @@ void Update_tAddress(char *cRowid)
 		"uPort=%u,"
 		"uPriority=%u,"
 		"uWeight=%u,"
+		"uPBX=%u,"
+		"uGateway=%u,"
 		"uOwner=%u,"
 		"uModBy=%u,"
 		"uModDate=UNIX_TIMESTAMP(NOW())"
@@ -466,6 +492,8 @@ void Update_tAddress(char *cRowid)
 			,uPort
 			,uPriority
 			,uWeight
+			,uPBX
+			,uGateway
 			,uOwner
 			,uModBy
 			,cRowid
@@ -553,6 +581,8 @@ void tAddressList(void)
 		"<td><font face=arial,helvetica color=white>uPort"
 		"<td><font face=arial,helvetica color=white>uPriority"
 		"<td><font face=arial,helvetica color=white>uWeight"
+		"<td><font face=arial,helvetica color=white>uPBX"
+		"<td><font face=arial,helvetica color=white>uGateway"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
 		"<td><font face=arial,helvetica color=white>uCreatedDate"
@@ -576,19 +606,19 @@ void tAddressList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-				time_t luTime8=strtoul(field[8],NULL,10);
-		char cBuf8[32];
-		if(luTime8)
-			ctime_r(&luTime8,cBuf8);
-		else
-			sprintf(cBuf8,"---");
-		time_t luTime10=strtoul(field[10],NULL,10);
+				time_t luTime10=strtoul(field[10],NULL,10);
 		char cBuf10[32];
 		if(luTime10)
 			ctime_r(&luTime10,cBuf10);
 		else
 			sprintf(cBuf10,"---");
-		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tAddress&uAddress=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		time_t luTime12=strtoul(field[12],NULL,10);
+		char cBuf12[32];
+		if(luTime12)
+			ctime_r(&luTime12,cBuf12);
+		else
+			sprintf(cBuf12,"---");
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tAddress&uAddress=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
@@ -596,11 +626,13 @@ void tAddressList(void)
 			,field[3]
 			,field[4]
 			,field[5]
-			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[7],NULL,10))
-			,cBuf8
+			,ForeignKey("tPBX","cLabel",strtoul(field[6],NULL,10))
+			,ForeignKey("tGateway","cLabel",strtoul(field[7],NULL,10))
+			,ForeignKey("tClient","cLabel",strtoul(field[8],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[9],NULL,10))
 			,cBuf10
+			,ForeignKey("tClient","cLabel",strtoul(field[11],NULL,10))
+			,cBuf12
 				);
 
 	}
@@ -620,6 +652,8 @@ void CreatetAddress(void)
 		"uPort INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uPriority INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uWeight INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uPBX INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uPBX),"
+		"uGateway INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uGateway),"
 		"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"

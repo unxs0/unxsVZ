@@ -786,7 +786,7 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<a title='DID prefixes for cost and other classification' href=unxsSPS.cgi?gcFunction=tPrefix>tPrefix</a>\n");
 	}
 	//tCarrier
-	if(guPermLevel>=7)
+	if(guPermLevel>=20)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tCarrier") && strcmp(gcFunction,"tCarrierTools") &&
@@ -797,7 +797,7 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<a title='Carrier information' href=unxsSPS.cgi?gcFunction=tCarrier>tCarrier</a>\n");
 	}
 	//tCDR
-	if(guPermLevel>=7)
+	if(guPermLevel>=20)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tCDR") && strcmp(gcFunction,"tCDRTools") &&
@@ -819,7 +819,7 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<a title='IP addresses' href=unxsSPS.cgi?gcFunction=tAddress>tAddress</a>\n");
 	}
 	//tCluster
-	if(guPermLevel>=7)
+	if(guPermLevel>=20)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tCluster") && strcmp(gcFunction,"tClusterTools") &&
@@ -885,7 +885,7 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<a title='Group types' href=unxsSPS.cgi?gcFunction=tGroupType>tGroupType</a>\n");
 	}
 	//tClient
-	if(guPermLevel>=7)
+	if(guPermLevel>=20)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tClient") && strcmp(gcFunction,"tClientTools") &&
@@ -940,7 +940,7 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<a title='Program settings' href=unxsSPS.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
 	}
 	//tJob
-	if(guPermLevel>=7)
+	if(guPermLevel>=20)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tJob") && strcmp(gcFunction,"tJobTools") &&

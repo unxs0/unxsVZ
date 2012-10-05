@@ -14,17 +14,34 @@ TEMPLATE VARS AND FUNCTIONS
 */
 
 
+static unsigned uTimeInterval=0;
+static char cuTimeIntervalPullDown[256]={""};
+static unsigned uGateway=0;
+static char cuGatewayPullDown[256]={""};
 
 void tRuleNavList(void);
+void tRuleGroupGlueNavList(void);
 
 void ExtProcesstRuleVars(pentry entries[], int x)
 {
-	/*
 	register int i;
 	for(i=0;i<x;i++)
 	{
+		if(!strcmp(entries[i].name,"uTimeInterval"))
+			sscanf(entries[i].val,"%u",&uTimeInterval);
+		else if(!strcmp(entries[i].name,"cuTimeIntervalPullDown"))
+		{
+			sprintf(cuTimeIntervalPullDown,"%.255s",entries[i].val);
+			uTimeInterval=ReadPullDown("tTimeInterval","cLabel",cuTimeIntervalPullDown);
+		}
+		if(!strcmp(entries[i].name,"uGateway"))
+			sscanf(entries[i].val,"%u",&uGateway);
+		else if(!strcmp(entries[i].name,"cuGatewayPullDown"))
+		{
+			sprintf(cuGatewayPullDown,"%.255s",entries[i].val);
+			uGateway=ReadPullDown("tGateway","cLabel",cuGatewayPullDown);
+		}
 	}
-	*/
 }//void ExtProcesstRuleVars(pentry entries[], int x)
 
 
@@ -58,12 +75,10 @@ void ExttRuleCommands(pentry entries[], int x)
                         	guMode=0;
 
 				uRule=0;
-#ifdef StandardFields
 				uCreatedBy=guLoginClient;
 				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
-#endif
 				NewtRule(0);
 			}
 			else
@@ -72,11 +87,7 @@ void ExttRuleCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstRuleVars(entries,x);
-#ifdef StandardFields
 			if(uAllowDel(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 	                        guMode=2001;
 				tRule(LANG_NB_CONFIRMDEL);
@@ -87,11 +98,7 @@ void ExttRuleCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstRuleVars(entries,x);
-#ifdef StandardFields
 			if(uAllowDel(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 				guMode=5;
 				DeletetRule();
@@ -102,11 +109,7 @@ void ExttRuleCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstRuleVars(entries,x);
-#ifdef StandardFields
 			if(uAllowMod(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 				guMode=2002;
 				tRule(LANG_NB_CONFIRMMOD);
@@ -117,24 +120,74 @@ void ExttRuleCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstRuleVars(entries,x);
-#ifdef StandardFields
 			if(uAllowMod(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
                         	guMode=2002;
 				//Check entries here
                         	guMode=0;
 
-#ifdef StandardFields
 				uModBy=guLoginClient;
-#endif
 				ModtRule();
 			}
 			else
 				tRule("<blink>Error</blink>: Denied by permissions settings");
                 }
+		//Custom operations
+		else if(!strcmp(gcCommand,"Add GW"))
+                {
+                        ProcesstRuleVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) && uRule)
+			{
+				if(uGateway)
+				{
+        				MYSQL_RES *res;
+
+					sprintf(gcQuery,"SELECT uGroupGlue FROM tGroupGlue WHERE uKey=%u"
+							" AND uTable=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule' LIMIT 1) AND uGroup=%u",
+								uGateway,uRule);
+        				mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tRule(gcQuery);
+				        res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)>0)
+						tRule("Gateway already has been added to tGroup");
+					//This will never work
+					//sprintf(gcQuery,"INSERT INTO tGroup SET uGroup=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,"
+					//		"uCreatedDate=UNIX_TIMESTAMP(NOW())",uRule,cLabel,guCompany,guLoginClient);
+        				//mysql_query(&gMysql,gcQuery);
+        				//if(mysql_errno(&gMysql))
+                			//	tRule(gcQuery);
+					sprintf(gcQuery,"INSERT INTO tGroupGlue SET uKey=%u,"
+							"uTable=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule' LIMIT 1),"
+							"uGroup=%u",uGateway,uRule);
+        				mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tRule(gcQuery);
+					tRule("Gateway added");
+				}
+				tRule("No key selected");
+			}
+			else
+				tRule("<blink>Error</blink>: Denied by permissions settings");
+		}
+		else if(!strcmp(gcCommand,"Del GW"))
+                {
+                        ProcesstRuleVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) && uRule)
+			{
+				if(uGateway)
+				{
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uKey=%u AND uGroup=%u LIMIT 1",uGateway,uRule);
+        				mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tRule(gcQuery);
+					tRule("Gateway deleted");
+				}
+				tRule("No key selected");
+			}
+			else
+				tRule("<blink>Error</blink>: Denied by permissions settings");
+		}
 	}
 
 }//void ExttRuleCommands(pentry entries[], int x)
@@ -163,9 +216,23 @@ void ExttRuleButtons(void)
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
-			printf("<p><u>Operations</u><br>");
-			//printf("<br><input type=submit class=largeButton title='Sample button help'"
-			//		" name=gcCommand value='Sample Button'>");
+			if(uRule)
+			{
+				tRuleGroupGlueNavList();
+				printf("<p><u>Add time interval to this rule</u><br>");
+				tTablePullDown("tTimeInterval;cuTimeIntervalPullDown","cLabel","cLabel",uTimeInterval,1);
+				printf("<br><input type=submit class=largeButton title='Add time interval record selected to current rule'"
+					"name=gcCommand value='Add TI'>");
+				printf("<br><input type=submit class=largeButton title='Del time interval record selected from current group'"
+					"name=gcCommand value='Del TI'>");
+
+				printf("<p><u>Add gateway to this rule</u><br>");
+				tTablePullDown("tGateway;cuGatewayPullDown","cLabel","cLabel",uGateway,1);
+				printf("<br><input type=submit class=largeButton title='Add time interval record selected to current rule'"
+					"name=gcCommand value='Add GW'>");
+				printf("<br><input type=submit class=largeButton title='Del time interval record selected from current group'"
+					"name=gcCommand value='Del GW'>");
+			}
 			tRuleNavList();
 	}
 	CloseFieldSet();
@@ -394,4 +461,32 @@ void tRuleNavList(void)
 
 }//void tRuleNavList(void)
 
+
+void tRuleGroupGlueNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT uGroupGlue,uKey FROM tGroupGlue WHERE uGroup=%u"
+			" AND uTable=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule' LIMIT 1)",uRule);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>Gateways</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Gateways</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupGlue"
+				"&uGroupGlue=%s>%s</a><br>\n",
+				field[0],field[1]);
+	}
+        mysql_free_result(res);
+
+}//void ttRuleGroupGlueNavList(void)
 
