@@ -144,7 +144,7 @@
 #define LANG_FL_tDID_uCluster "uCluster"
 #define LANG_FT_tDID_uCluster "SIP server cluster this DID has been assigned to"
 #define LANG_FL_tPBX_uStatus "uStatus"
-#define LANG_FT_tPBX_uStatus "Number of DIDs"
+#define LANG_FT_tPBX_uStatus "PBX status"
 #define LANG_FL_tDID_cComment "cComment"
 #define LANG_FT_tDID_cComment "Comment or other information"
 #define LANG_FL_tTimeInterval_cStartDate "cStartDate"

@@ -95,9 +95,10 @@ void AddGWs(char const *cCluster)
         MYSQL_ROW field;
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"SELECT tGateway.cAddress,tGateway.uPort"
-			" FROM tGateway,tCluster"
+	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort"
+			" FROM tGateway,tCluster,tAddress"
 			" WHERE tGateway.uCluster=tCluster.uCluster"
+			" AND tAddress.uGateway=tGateway.uGateway"
 			" AND tGateway.uGatewayType=1"//DID Inbound
 			" AND tCluster.cLabel='%s'",cCluster);
 	mysql_query(&gMysql,gcQuery);
