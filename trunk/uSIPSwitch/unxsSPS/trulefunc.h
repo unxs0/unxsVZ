@@ -268,7 +268,7 @@ void ExttRuleButtons(void)
 			if(uRule)
 			{
 				tRuleGroupGlueNavList();
-				printf("<p><u>Add time interval to this rule</u><br>");
+				printf("<p><u><a class=darkLink href=unxsSPS.cgi?gcFunction=tTimeInterval>Add time interval to this rule</a></u><br>");
 				tTablePullDown("tTimeInterval;cuTimeIntervalPullDown","cLabel","cLabel",uTimeInterval,1);
 				printf("<br><input type=submit class=largeButton title='Add time interval record selected to current rule'"
 					"name=gcCommand value='Add TI'>");
@@ -468,26 +468,16 @@ void tRuleNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
-	if(guReseller==1) guReseller=0;//...except Root companies
-	
-#ifdef StandardFields
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uRule,cLabel FROM tRule ORDER BY cLabel");
+		sprintf(gcQuery,"SELECT uRule,cLabel,cPrefix FROM tRule ORDER BY cLabel");
 	else
 		sprintf(gcQuery,"SELECT tRule.uRule,"
-				" tRule.cLabel"
+				" tRule.cLabel,tRule.cPrefix"
 				" FROM tRule,tClient"
 				" WHERE tRule.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				uContactParentCompany
-				,uContactParentCompany);
-#else
-	sprintf(gcQuery,"SELECT uRule,cLabel FROM tRule ORDER BY cLabel");
-#endif
+					guCompany
+					,guCompany);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -503,8 +493,8 @@ void tRuleNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tRule"
-				"&uRule=%s>%s</a><br>\n",
-				field[0],field[1]);
+				"&uRule=%s>%s/%s</a><br>\n",
+				field[0],field[1],field[2]);
 	}
         mysql_free_result(res);
 
@@ -522,38 +512,38 @@ void tRuleGroupGlueNavList(void)
 			" AND tGroupGlue.uKey=tTimeInterval.uTimeInterval"
 			" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tTimeInterval' LIMIT 1)",uRule);
         mysql_query(&gMysql,gcQuery);
+        printf("<p><u>Intervals</u><br>\n");
         if(mysql_errno(&gMysql))
         {
-        	printf("<p><u>Time Intervals</u><br>\n");
                 printf("%s",mysql_error(&gMysql));
                 return;
         }
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>Intervals</u><br>\n");
-
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tTimeInterval"
 				"&uTimeInterval=%s>%s</a><br>\n",
 				field[0],field[1]);
+	}
+	else
+	{
+        	printf("No intervals. Rule will not be loaded!\n");
 	}
 
 	sprintf(gcQuery,"SELECT tGateway.uGateway,tGateway.cLabel FROM tGroupGlue,tGateway WHERE tGroupGlue.uGroup=%u"
 			" AND tGroupGlue.uKey=tGateway.uGateway"
 			" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1)",uRule);
         mysql_query(&gMysql,gcQuery);
+        printf("<p><u>Gateways</u><br>\n");
         if(mysql_errno(&gMysql))
         {
-        	printf("<p><u>Gateways</u><br>\n");
                 printf("%s",mysql_error(&gMysql));
                 return;
         }
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>Gateways</u><br>\n");
-
 	        while((field=mysql_fetch_row(res)))
 		{
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGateway"
@@ -575,6 +565,10 @@ void tRuleGroupGlueNavList(void)
 				field2[0],field2[1],field2[2]);
 			}
 		}
+	}
+	else
+	{
+        	printf("No gateways. Rule will not be loaded!\n");
 	}
         mysql_free_result(res);
 
