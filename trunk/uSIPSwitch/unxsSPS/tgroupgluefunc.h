@@ -15,6 +15,8 @@ TEMPLATE VARS AND FUNCTIONS
 
 
 
+void tGroupGlueNavList(void);
+
 void ExtProcesstGroupGlueVars(pentry entries[], int x)
 {
 	/*
@@ -56,6 +58,12 @@ void ExttGroupGlueCommands(pentry entries[], int x)
                         	guMode=0;
 
 				uGroupGlue=0;
+#ifdef StandardFields
+				uCreatedBy=guLoginClient;
+				uOwner=uContactParentCompany;
+				uModBy=0;//Never modified
+				uModDate=0;//Never modified
+#endif
 				NewtGroupGlue(0);
 			}
 			else
@@ -64,7 +72,11 @@ void ExttGroupGlueCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstGroupGlueVars(entries,x);
+#ifdef StandardFields
+			if(uAllowDel(uOwner,uCreatedBy))
+#else
 			if(guPermLevel>=9)
+#endif
 			{
 	                        guMode=2001;
 				tGroupGlue(LANG_NB_CONFIRMDEL);
@@ -75,7 +87,11 @@ void ExttGroupGlueCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstGroupGlueVars(entries,x);
+#ifdef StandardFields
+			if(uAllowDel(uOwner,uCreatedBy))
+#else
 			if(guPermLevel>=9)
+#endif
 			{
 				guMode=5;
 				DeletetGroupGlue();
@@ -86,7 +102,11 @@ void ExttGroupGlueCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstGroupGlueVars(entries,x);
+#ifdef StandardFields
+			if(uAllowMod(uOwner,uCreatedBy))
+#else
 			if(guPermLevel>=9)
+#endif
 			{
 				guMode=2002;
 				tGroupGlue(LANG_NB_CONFIRMMOD);
@@ -97,11 +117,19 @@ void ExttGroupGlueCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstGroupGlueVars(entries,x);
+#ifdef StandardFields
+			if(uAllowMod(uOwner,uCreatedBy))
+#else
 			if(guPermLevel>=9)
+#endif
 			{
                         	guMode=2002;
 				//Check entries here
                         	guMode=0;
+
+#ifdef StandardFields
+				uModBy=guLoginClient;
+#endif
 				ModtGroupGlue();
 			}
 			else
@@ -135,40 +163,10 @@ void ExttGroupGlueButtons(void)
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
-			if(uGroupGlue && uGroupType && uKey && uGroup)
-			{
-				char cGroupTable[33]={""};
-				char cKeyTable[33]={""};
-				char *cp;
-        			MYSQL_RES *res;
-        			MYSQL_ROW field;
-
-				sprintf(cGroupTable,"%.64s",ForeignKey("tGroupType","cLabel",uGroupType));
-				if((cp=strchr(cGroupTable,':'))) *cp=0;
-				sprintf(cKeyTable,"%.32s",cp+1);
-
-				sprintf(gcQuery,"SELECT cLabel FROM %s WHERE _rowid=%u",cGroupTable,uGroup);
-        			mysql_query(&gMysql,gcQuery);
-        			if(mysql_errno(&gMysql))
-                			printf("%s",mysql_error(&gMysql));
-				else
-				{
-        				res=mysql_store_result(&gMysql);
-	        			if((field=mysql_fetch_row(res)))
-						printf("%s(%u)=%s<br>\n",cGroupTable,uGroup,field[0]);
-				}
-
-				sprintf(gcQuery,"SELECT cLabel FROM %s WHERE _rowid=%u",cKeyTable,uKey);
-        			mysql_query(&gMysql,gcQuery);
-        			if(mysql_errno(&gMysql))
-                			printf("%s",mysql_error(&gMysql));
-				else
-				{
-        				res=mysql_store_result(&gMysql);
-	        			if((field=mysql_fetch_row(res)))
-						printf("%s(%u)=%s<br>\n",cKeyTable,uKey,field[0]);
-				}
-			}
+			printf("<p><u>Operations</u><br>");
+			//printf("<br><input type=submit class=largeButton title='Sample button help'"
+			//		" name=gcCommand value='Sample Button'>");
+			tGroupGlueNavList();
 	}
 	CloseFieldSet();
 
@@ -200,14 +198,52 @@ void ExttGroupGlueGetHook(entry gentries[], int x)
 
 void ExttGroupGlueSelect(void)
 {
+
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tGroupGlue ORDER BY"
+				" uGroupGlue",
+				VAR_LIST_tGroupGlue);
+	else //If you own it, the company you work for owns the company that owns it,
+		//you created it, or your company owns it you can at least read access it
+		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
+	sprintf(gcQuery,"SELECT %s FROM tGroupGlue,tClient WHERE tGroupGlue.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY uGroupGlue",
+					VAR_LIST_tGroupGlue,uContactParentCompany,uContactParentCompany);
+#else
 	sprintf(gcQuery,"SELECT %s FROM tGroupGlue ORDER BY uGroupGlue",VAR_LIST_tGroupGlue);
+#endif
+					
 
 }//void ExttGroupGlueSelect(void)
 
 
 void ExttGroupGlueSelectRow(void)
 {
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tGroupGlue WHERE uGroupGlue=%u",
+			VAR_LIST_tGroupGlue,uGroupGlue);
+	else
+                sprintf(gcQuery,"SELECT %s FROM tGroupGlue,tClient"
+                                " WHERE tGroupGlue.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tGroupGlue.uGroupGlue=%u",
+                        		VAR_LIST_tGroupGlue
+					,uContactParentCompany,uContactParentCompany
+					,uGroupGlue);
+#else
 	sprintf(gcQuery,"SELECT %s FROM tGroupGlue WHERE uGroupGlue=%u",VAR_LIST_tGroupGlue,uGroupGlue);
+#endif
 
 }//void ExttGroupGlueSelectRow(void)
 
@@ -215,7 +251,24 @@ void ExttGroupGlueSelectRow(void)
 void ExttGroupGlueListSelect(void)
 {
 	char cCat[512];
+#ifdef StandardFields
+	unsigned uContactParentCompany=0;
+	
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %s FROM tGroupGlue",
+				VAR_LIST_tGroupGlue);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tGroupGlue,tClient"
+				" WHERE tGroupGlue.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				VAR_LIST_tGroupGlue
+				,uContactParentCompany
+				,uContactParentCompany);
+#else
 	sprintf(gcQuery,"SELECT %s FROM tGroupGlue",VAR_LIST_tGroupGlue);
+#endif
 
 	//Changes here must be reflected below in ExttGroupGlueListFilter()
         if(!strcmp(gcFilter,"uGroupGlue"))
@@ -267,13 +320,25 @@ void ExttGroupGlueNavBar(void)
 	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
+#ifdef StandardFields
+	if(uAllowMod(uOwner,uCreatedBy))
+#else
 	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_MODIFY);
 
+#ifdef StandardFields
+	if(uAllowDel(uOwner,uCreatedBy)) 
+#else
 	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_DELETE);
 
+#ifdef StandardFields
+	if(uOwner)
+#else
 	if(guPermLevel>=9)
+#endif
 		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
@@ -282,5 +347,51 @@ void ExttGroupGlueNavBar(void)
 
 }//void ExttGroupGlueNavBar(void)
 
+
+void tGroupGlueNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
+	
+#ifdef StandardFields
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT uGroupGlue,cLabel FROM tGroupGlue ORDER BY cLabel");
+	else
+		sprintf(gcQuery,"SELECT tGroupGlue.uGroupGlue,"
+				" tGroupGlue.cLabel"
+				" FROM tGroupGlue,tClient"
+				" WHERE tGroupGlue.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				uContactParentCompany
+				,uContactParentCompany);
+#else
+	sprintf(gcQuery,"SELECT uGroupGlue,cLabel FROM tGroupGlue ORDER BY cLabel");
+#endif
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tGroupGlueNavList</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>tGroupGlueNavList</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupGlue"
+				"&uGroupGlue=%s>%s</a><br>\n",
+				field[0],field[1]);
+	}
+        mysql_free_result(res);
+
+}//void tGroupGlueNavList(void)
 
 

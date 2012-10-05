@@ -16,6 +16,7 @@ TEMPLATE VARS AND FUNCTIONS
 
 
 void tGatewayNavList(void);
+void tGatewaytAddressNavList(void);
 
 void ExtProcesstGatewayVars(pentry entries[], int x)
 {
@@ -162,10 +163,12 @@ void ExttGatewayButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("<p><u>Record Context Info</u><br>");
-			printf("<p><u>Operations</u><br>");
+			//printf("<p><u>Record Context Info</u><br>");
+			//printf("<p><u>Operations</u><br>");
 			//printf("<br><input type=submit class=largeButton title='Sample button help'"
 			//		" name=gcCommand value='Sample Button'>");
+			if(uGateway)
+				tGatewaytAddressNavList();
 			tGatewayNavList();
 	}
 	CloseFieldSet();
@@ -394,4 +397,34 @@ void tGatewayNavList(void)
 
 }//void tGatewayNavList(void)
 
+
+
+void tGatewaytAddressNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uAddress,cLabel,cIP,uPort,uPriority,uWeight FROM tAddress WHERE uGateway=%u",uGateway);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>IP Addresses</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>IP Addresses</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tAddress"
+				"&uAddress=%s>%s/%s/%s/%s/%s</a><br>\n",
+				field[0],field[1],field[2],field[3],field[4],field[5]);
+	}
+
+        mysql_free_result(res);
+
+}//void tGatewayAddressNavList(void)
 
