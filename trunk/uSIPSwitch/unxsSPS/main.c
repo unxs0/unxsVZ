@@ -852,7 +852,7 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<a title='Define time intervals with recurrence' href=unxsSPS.cgi?gcFunction=tTimeInterval>tTimeInterval</a>\n");
 	}
 	//tGroup
-	if(guPermLevel>=7)
+	if(guPermLevel>=20)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tGroup") && strcmp(gcFunction,"tGroupTools") &&

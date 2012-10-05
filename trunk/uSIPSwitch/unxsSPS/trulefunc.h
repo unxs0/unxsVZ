@@ -143,22 +143,17 @@ void ExttRuleCommands(pentry entries[], int x)
         				MYSQL_RES *res;
 
 					sprintf(gcQuery,"SELECT uGroupGlue FROM tGroupGlue WHERE uKey=%u"
-							" AND uTable=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule' LIMIT 1) AND uGroup=%u",
+							" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1)"
+							" AND uGroup=%u",
 								uGateway,uRule);
         				mysql_query(&gMysql,gcQuery);
         				if(mysql_errno(&gMysql))
                 				tRule(gcQuery);
 				        res=mysql_store_result(&gMysql);
 					if(mysql_num_rows(res)>0)
-						tRule("Gateway already has been added to tGroup");
-					//This will never work
-					//sprintf(gcQuery,"INSERT INTO tGroup SET uGroup=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,"
-					//		"uCreatedDate=UNIX_TIMESTAMP(NOW())",uRule,cLabel,guCompany,guLoginClient);
-        				//mysql_query(&gMysql,gcQuery);
-        				//if(mysql_errno(&gMysql))
-                			//	tRule(gcQuery);
+						tRule("Gateway has already been added");
 					sprintf(gcQuery,"INSERT INTO tGroupGlue SET uKey=%u,"
-							"uTable=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule' LIMIT 1),"
+							"uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1),"
 							"uGroup=%u",uGateway,uRule);
         				mysql_query(&gMysql,gcQuery);
         				if(mysql_errno(&gMysql))
@@ -177,11 +172,65 @@ void ExttRuleCommands(pentry entries[], int x)
 			{
 				if(uGateway)
 				{
-					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uKey=%u AND uGroup=%u LIMIT 1",uGateway,uRule);
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uKey=%u AND uGroup=%u"
+						" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1)",
+							uGateway,uRule);
         				mysql_query(&gMysql,gcQuery);
         				if(mysql_errno(&gMysql))
                 				tRule(gcQuery);
 					tRule("Gateway deleted");
+				}
+				tRule("No key selected");
+			}
+			else
+				tRule("<blink>Error</blink>: Denied by permissions settings");
+		}
+		else if(!strcmp(gcCommand,"Add TI"))
+                {
+                        ProcesstRuleVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) && uRule)
+			{
+				if(uTimeInterval)
+				{
+        				MYSQL_RES *res;
+
+					sprintf(gcQuery,"SELECT uGroupGlue FROM tGroupGlue WHERE uKey=%u"
+							" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tTimeInterval' LIMIT 1)"
+							" AND uGroup=%u",
+								uTimeInterval,uRule);
+        				mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tRule(gcQuery);
+				        res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)>0)
+						tRule("Time interval has already been added");
+					sprintf(gcQuery,"INSERT INTO tGroupGlue SET uKey=%u,"
+							"uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tTimeInterval' LIMIT 1),"
+							"uGroup=%u",uTimeInterval,uRule);
+        				mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tRule(gcQuery);
+					tRule("Time interval added");
+				}
+				tRule("No key selected");
+			}
+			else
+				tRule("<blink>Error</blink>: Denied by permissions settings");
+		}
+		else if(!strcmp(gcCommand,"Del TI"))
+                {
+                        ProcesstRuleVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) && uRule)
+			{
+				if(uTimeInterval)
+				{
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uKey=%u AND uGroup=%u"
+						" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tTimeInterval' LIMIT 1)",
+							uTimeInterval,uRule);
+        				mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tRule(gcQuery);
+					tRule("Time interval deleted");
 				}
 				tRule("No key selected");
 			}
@@ -215,7 +264,7 @@ void ExttRuleButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("<p><u>Record Context Info</u><br>");
+			printf("Build a rule by adding at least one gateway. The default rule should be called that.");
 			if(uRule)
 			{
 				tRuleGroupGlueNavList();
@@ -466,8 +515,32 @@ void tRuleGroupGlueNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uGroupGlue,uKey FROM tGroupGlue WHERE uGroup=%u"
-			" AND uTable=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule' LIMIT 1)",uRule);
+
+	sprintf(gcQuery,"SELECT uGroupGlue,tTimeInterval.cLabel FROM tGroupGlue,tTimeInterval WHERE uGroup=%u"
+			" AND tGroupGlue.uKey=tTimeInterval.uTimeInterval"
+			" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tTimeInterval' LIMIT 1)",uRule);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>Time Intervals</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Intervals</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupGlue"
+				"&uGroupGlue=%s>%s</a><br>\n",
+				field[0],field[1]);
+	}
+
+	sprintf(gcQuery,"SELECT uGroupGlue,tGateway.cLabel FROM tGroupGlue,tGateway WHERE uGroup=%u"
+			" AND tGroupGlue.uKey=tGateway.uGateway"
+			" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1)",uRule);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -488,5 +561,5 @@ void tRuleGroupGlueNavList(void)
 	}
         mysql_free_result(res);
 
-}//void ttRuleGroupGlueNavList(void)
+}//void tRuleGroupGlueNavList(void)
 
