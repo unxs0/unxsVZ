@@ -206,9 +206,10 @@ void AddPBXs(char const *cCluster)
         MYSQL_ROW field;
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"SELECT tPBX.cAddress,tPBX.uPort"
-			" FROM tPBX,tCluster"
+	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort"
+			" FROM tPBX,tCluster,tAddress"
 			" WHERE tPBX.uCluster=tCluster.uCluster"
+			" AND tAddress.uPBX=tPBX.uPBX"
 			" AND tCluster.cLabel='%s'",cCluster);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -338,10 +339,14 @@ void AddOutbound(char const *cCluster)
         MYSQL_ROW field;
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"SELECT tGateway.cAddress,tGateway.uPort"
-			" FROM tGateway,tCluster,tRule"
+	// SELECT tGateway.uGateway,tAddress.cIP FROM tRule,tGroupGlue,tGateway,tAddress WHERE tGateway.uGateway=tGroupGlue.uKey AND tGroupGlue.uGroup=tRule.uRule AND tGroupGlue.uGroupType=2 AND tAddress.uGateway=tGateway.uGateway
+	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort"
+			" FROM tRule,tGroupGlue,tGateway,tAddress,tCluster"
 			" WHERE tGateway.uCluster=tCluster.uCluster"
-			" AND tGateway.uGateway=tRule.uGateway"
+			" AND tGateway.uGateway=tGroupGlue.uKey"
+			" AND tGroupGlue.uGroup=tRule.uRule"
+			" AND tAddress.uGateway=tGateway.uGateway"
+			" AND tGroupGlue.uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1)"
 			" AND tGateway.uGatewayType=2"//PSTN Outbound
 			" AND tCluster.cLabel='%s'",cCluster);
 	mysql_query(&gMysql,gcQuery);
