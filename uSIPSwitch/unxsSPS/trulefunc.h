@@ -264,7 +264,9 @@ void ExttRuleButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("Build a rule by adding at least one gateway. The default rule should be called that.");
+			printf("Build a rule by adding at least one gateway and one time interval."
+				" Add the highest priority GWs first. If more than one interval they are logically OR'd to cover the sum"
+				" of their intervals.");
 			if(uRule)
 			{
 				tRuleGroupGlueNavList();
@@ -535,7 +537,7 @@ void tRuleGroupGlueNavList(void)
 			" AND tGroupGlue.uKey=tGateway.uGateway"
 			" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1)",uRule);
         mysql_query(&gMysql,gcQuery);
-        printf("<p><u>Gateways</u><br>\n");
+        printf("<p><u>Gateways listed by priority</u><br>\n");
         if(mysql_errno(&gMysql))
         {
                 printf("%s",mysql_error(&gMysql));
