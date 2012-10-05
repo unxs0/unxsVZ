@@ -337,18 +337,23 @@ void AddOutbound(char const *cCluster)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
 	unsigned uCount=0;
+	char cData[1024]={""};
 
-	// SELECT tGateway.uGateway,tAddress.cIP FROM tRule,tGroupGlue,tGateway,tAddress WHERE tGateway.uGateway=tGroupGlue.uKey AND tGroupGlue.uGroup=tRule.uRule AND tGroupGlue.uGroupType=2 AND tAddress.uGateway=tGateway.uGateway
-	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort"
-			" FROM tRule,tGroupGlue,tGateway,tAddress,tCluster"
-			" WHERE tGateway.uCluster=tCluster.uCluster"
-			" AND tGateway.uGateway=tGroupGlue.uKey"
+	//SELECT cLabel,cStartTime,cEndTime,cDaysOfWeek FROM tTimeInterval
+	//WHERE TIME(NOW())>cStartTime
+	//AND TIME(NOW())<cEndTime
+	// AND INSTR(cDaysOfWeek,day(NOW()))>0;
+
+	sprintf(gcQuery,"SELECT uRule FROM tRule,tGroupGlue,tTimeInterval"
+			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
+			" AND tGroupGlue.uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tTimeInterval' LIMIT 1)"
 			" AND tGroupGlue.uGroup=tRule.uRule"
-			" AND tAddress.uGateway=tGateway.uGateway"
-			" AND tGroupGlue.uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1)"
-			" AND tGateway.uGatewayType=2"//PSTN Outbound
-			" AND tCluster.cLabel='%s'",cCluster);
+			" AND TIME(NOW())>tTimeInterval.cStartTime"
+			" AND TIME(NOW())<tTimeInterval.cEndTime"
+			" AND INSTR(tTimeInterval.cDaysOfWeek,day(NOW()))>0");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -357,38 +362,61 @@ void AddOutbound(char const *cCluster)
 		mysql_close(&gMysql);
 		exit(2);
 	}
-        res=mysql_store_result(&gMysql);
-	gcQuery[0]=0;
-	while((field=mysql_fetch_row(res)))
+        res2=mysql_store_result(&gMysql);
+	while((field2=mysql_fetch_row(res2)))
 	{
-		if(uCount>7) break;
-		char cValue[100]={""};
-		sprintf(cValue,"cDestinationIP%u=%.15s;uDestinationPort%u=%.5s;",uCount,field[0],uCount,field[1]);
-		strcat(gcQuery,cValue);
-		uCount++;
+		sprintf(gcQuery,"SELECT DISTINCT tAddress.cIP,tAddress.uPort"
+			" FROM tRule,tGroupGlue,tGateway,tAddress,tCluster"
+			" WHERE tGateway.uCluster=tCluster.uCluster"
+			" AND tGateway.uGateway=tGroupGlue.uKey"
+			" AND tGroupGlue.uGroup=tRule.uRule"
+			" AND tRule.uRule=%s"
+			" AND tAddress.uGateway=tGateway.uGateway"
+			" AND tGroupGlue.uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1)"
+			" AND tGateway.uGatewayType=2"//PSTN Outbound
+			" AND tCluster.cLabel='%s'",field2[0],cCluster);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf(gcQuery);
+			logfileLine("AddOutbound",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			if(uCount>7) break;
+			char cValue[100]={""};
+			sprintf(cValue,"cDestinationIP%u=%.15s;uDestinationPort%u=%.5s;",uCount,field[0],uCount,field[1]);
+			if((strlen(cData)+strlen(cValue))<sizeof(cData))
+				strcat(cData,cValue);
+			uCount++;
+		}
+		mysql_free_result(res);
 	}
-	mysql_free_result(res);
 
+	//We created the data string now commit to memcached
 	char cKey[100];
 	unsigned rc;
 
 	sprintf(cKey,"outbound");
-	rc=memcached_set(gsMemc,cKey,strlen(cKey),gcQuery,strlen(gcQuery),(time_t)0,(uint32_t)0);
+	rc=memcached_set(gsMemc,cKey,strlen(cKey),cData,strlen(cData),(time_t)0,(uint32_t)0);
 	if(rc!=MEMCACHED_SUCCESS)
 	{
 		if(guLogLevel>0)
 		{
 			logfileLine("AddOutbound error",cKey);
-			logfileLine("AddOutbound error",gcQuery);
+			logfileLine("AddOutbound error",cData);
 		}
 	}
 	if(!guSilent)
-		printf("%s %s\n",cKey,gcQuery);
+		printf("%s %s\n",cKey,cData);
 
 	if(guLogLevel>0)
 	{
 		sprintf(gcQuery,"Added 1 key with %u outbound servers",uCount);
-		logfileLine("AddOutbound",gcQuery);
+		logfileLine("AddOutbound",cData);
 	}
 
 }//void AddOutbound()
