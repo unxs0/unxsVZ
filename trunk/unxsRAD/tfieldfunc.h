@@ -10,6 +10,7 @@ AUTHOR
 */
 
 //ModuleFunctionProtos()
+void DeleteField(unsigned uField);
 
 static unsigned uTargetTable=0;
 
@@ -18,11 +19,35 @@ void tFieldNavList(void);
 void ExtProcesstFieldVars(pentry entries[], int x)
 {
 	register int i;
+	unsigned uGroupOp=0;
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(entries[i].name,"uTargetTable"))
 			sscanf(entries[i].val,"%u",&uTargetTable);
+		else if(!strncmp(entries[i].name,"CB",2))
+		{
+			//insider xss protection
+			if(guPermLevel<10)
+				continue;
+
+			unsigned uCBField=0;
+			sscanf(entries[i].name,"CB%u",&uCBField);
+			if(uCBField)
+			{
+				if(!strcmp(gcFunction,"tFieldTools"))
+				{
+					if(!strcmp(gcCommand,LANG_NB_DELETE))
+					{
+						DeleteField(uCBField);
+						uGroupOp++;
+					}
+				}
+			}
+		}
 	}
+
+	if(uGroupOp)
+		tField("Group operation done");
 	
 }//void ExtProcesstFieldVars(pentry entries[], int x)
 
@@ -55,6 +80,10 @@ void ExttFieldCommands(pentry entries[], int x)
 				
                         	guMode=2000;
 				//Check entries here
+				if(!cLabel[0])
+					tField("<blink>Error</blink>: cLabel empty");
+				if(strchr(cLabel,' '))
+					tField("<blink>Error</blink>: Blank in cLabel");
                         	guMode=0;
 
 				uField=0;
@@ -411,19 +440,38 @@ void tFieldNavList(void)
 	{	
 		char *cColor;
         	printf("<p><u>tFieldNavList</u><br>\n");
+		printf("<input type=checkbox name=all onClick='checkAll(document.formMain,this)'> Check all<br>\n");
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(atoi(field[0])==uField)
 				cColor="blue";
 			else
 				cColor="black";
-			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tField"
+			printf("<input type=checkbox name=CB%s >"
+				"<a class=darkLink href=unxsRAD.cgi?gcFunction=tField"
 				"&uField=%s><font color=%s>%s %s</font></a><br>\n",
-				field[0],cColor,field[1],field[2]);
+					field[0],field[0],cColor,field[1],field[2]);
 		}
 	}
         mysql_free_result(res);
 
 }//void tFieldNavList(void)
 
+
+void DeleteField(unsigned uField)
+{
+	sprintf(gcQuery,"DELETE FROM tField WHERE uField=%u AND ( uOwner=%u OR %u>9 )"
+					,uField,guLoginClient,guPermLevel);
+	macro_mySQLQueryHTMLError;
+	if(mysql_affected_rows(&gMysql)>0)
+	{
+		unxsRADLog(uField,"tField","Del");
+	}
+	else
+	{
+		unxsRADLog(uField,"tField","DelError");
+		tField(LANG_NBR_RECNOTDELETED);
+	}
+
+}//void DeleteField()
 

@@ -60,6 +60,8 @@ void ExttTableCommands(pentry entries[], int x)
 				//Check entries here
 				if(!cLabel[0])
 					tTable("<blink>Error</blink>: No cLabel");
+				if(strchr(cLabel,' '))
+					tTable("<blink>Error</blink>: No spaces in cLabel allowed");
                         	guMode=0;
 
 				uTable=0;
@@ -638,7 +640,7 @@ void AddDefaultFields(void)
 
 	//cLabel
 	sprintf(gcQuery,"INSERT INTO tField SET uTable=%u,uProject=%u,cLabel='cLabel',uOrder=2,"
-			"cTitle='Short label',uFieldType=%u,uSQLSize=32,uHtmlXSize=40,uHtmlYSize=1,uHtmlXSize=32,uOwner=%u,"
+			"cTitle='Short label',uFieldType=%u,uSQLSize=32,uHtmlXSize=40,uHtmlYSize=1,uHtmlMax=32,uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
