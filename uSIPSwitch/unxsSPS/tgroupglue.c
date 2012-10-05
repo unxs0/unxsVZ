@@ -31,12 +31,12 @@ TEMPLATE VARS AND FUNCTIONS
 //Table Variables
 static unsigned uGroupGlue=0;
 static unsigned uKey=0;
-static unsigned uTable=0;
+static unsigned uGroupType=0;
+static char cuGroupTypePullDown[256]={""};
 static unsigned uGroup=0;
-static char cuGroupPullDown[256]={""};
 
 
-#define VAR_LIST_tGroupGlue "tGroupGlue.uGroupGlue,tGroupGlue.uKey,tGroupGlue.uTable,tGroupGlue.uGroup"
+#define VAR_LIST_tGroupGlue "tGroupGlue.uGroupGlue,tGroupGlue.uKey,tGroupGlue.uGroupType,tGroupGlue.uGroup"
 
  //Local only
 void Insert_tGroupGlue(void);
@@ -70,15 +70,15 @@ void ProcesstGroupGlueVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uGroupGlue);
 		else if(!strcmp(entries[i].name,"uKey"))
 			sscanf(entries[i].val,"%u",&uKey);
-		else if(!strcmp(entries[i].name,"uTable"))
-			sscanf(entries[i].val,"%u",&uTable);
+		else if(!strcmp(entries[i].name,"uGroupType"))
+			sscanf(entries[i].val,"%u",&uGroupType);
+		else if(!strcmp(entries[i].name,"cuGroupTypePullDown"))
+		{
+			sprintf(cuGroupTypePullDown,"%.255s",entries[i].val);
+			uGroupType=ReadPullDown("tGroupType","cLabel",cuGroupTypePullDown);
+		}
 		else if(!strcmp(entries[i].name,"uGroup"))
 			sscanf(entries[i].val,"%u",&uGroup);
-		else if(!strcmp(entries[i].name,"cuGroupPullDown"))
-		{
-			sprintf(cuGroupPullDown,"%.255s",entries[i].val);
-			uGroup=ReadPullDown("tGroup","cLabel",cuGroupPullDown);
-		}
 
 	}
 
@@ -179,7 +179,7 @@ void tGroupGlue(const char *cResult)
 			
 		sscanf(field[0],"%u",&uGroupGlue);
 		sscanf(field[1],"%u",&uKey);
-		sscanf(field[2],"%u",&uTable);
+		sscanf(field[2],"%u",&uGroupType);
 		sscanf(field[3],"%u",&uGroup);
 
 		}
@@ -269,10 +269,16 @@ void tGroupGlueInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=uKey value='%u' >\n",uKey);
 	}
-	//uTable uRADType=3
-	OpenRow(LANG_FL_tGroupGlue_uTable,"black");
-	printf("<input title='%s' type=text name=uTable value='%u' size=16 maxlength=10 "
-		,LANG_FT_tGroupGlue_uTable,uTable);
+	//uGroupType COLTYPE_SELECTTABLE
+	OpenRow(LANG_FL_tGroupGlue_uGroupType,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tGroupType;cuGroupTypePullDown","cLabel","cLabel",uGroupType,1);
+	else
+		tTablePullDown("tGroupType;cuGroupTypePullDown","cLabel","cLabel",uGroupType,0);
+	//uGroup uRADType=3
+	OpenRow(LANG_FL_tGroupGlue_uGroup,"black");
+	printf("<input title='%s' type=text name=uGroup value='%u' size=16 maxlength=10 "
+		,LANG_FT_tGroupGlue_uGroup,uGroup);
 	if(guPermLevel>=10 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -280,14 +286,8 @@ void tGroupGlueInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uTable value='%u' >\n",uTable);
+		printf("<input type=hidden name=uGroup value='%u' >\n",uGroup);
 	}
-	//uGroup COLTYPE_SELECTTABLE
-	OpenRow(LANG_FL_tGroupGlue_uGroup,"black");
-	if(guPermLevel>=10 && uMode)
-		tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
-	else
-		tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,0);
 	printf("</tr>\n");
 
 }//void tGroupGlueInput(unsigned uMode)
@@ -307,9 +307,6 @@ void NewtGroupGlue(unsigned uMode)
 
 	Insert_tGroupGlue();
 	uGroupGlue=mysql_insert_id(&gMysql);
-#ifdef StandardFields
-	uCreatedDate=luGetCreatedDate("tGroupGlue",uGroupGlue);
-#endif
 	unxsSPSLog(uGroupGlue,"tGroupGlue","New");
 
 	if(!uMode)
@@ -323,13 +320,8 @@ void NewtGroupGlue(unsigned uMode)
 
 void DeletetGroupGlue(void)
 {
-#ifdef StandardFields
-	sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroupGlue=%u AND ( uOwner=%u OR %u>9 )"
-					,uGroupGlue,guLoginClient,guPermLevel);
-#else
 	sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroupGlue=%u AND %u>9 )"
 					,uGroupGlue,guPermLevel);
-#endif
 	macro_mySQLQueryHTMLError;
 	if(mysql_affected_rows(&gMysql)>0)
 	{
@@ -349,10 +341,10 @@ void Insert_tGroupGlue(void)
 {
 	sprintf(gcQuery,"INSERT INTO tGroupGlue SET "
 		"uKey=%u,"
-		"uTable=%u,"
+		"uGroupType=%u,"
 		"uGroup=%u"
 			,uKey
-			,uTable
+			,uGroupType
 			,uGroup
 		);
 
@@ -365,11 +357,11 @@ void Update_tGroupGlue(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tGroupGlue SET "
 		"uKey=%u,"
-		"uTable=%u,"
+		"uGroupType=%u,"
 		"uGroup=%u"
 		" WHERE _rowid=%s"
 			,uKey
-			,uTable
+			,uGroupType
 			,uGroup
 			,cRowid
 		);
@@ -385,27 +377,9 @@ void ModtGroupGlue(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-#ifdef StandardFields
-	unsigned uPreModDate=0;
-	//Mod select gcQuery
-	if(guPermLevel<10)
-	sprintf(gcQuery,"SELECT tGroupGlue.uGroupGlue,"
-				" tGroupGlue.uModDate"
-				" FROM tGroupGlue,tClient"
-				" WHERE tGroupGlue.uGroupGlue=%u"
-				" AND tGroupGlue.uOwner=tClient.uClient"
-				" AND (tClient.uOwner=%u OR tClient.uClient=%u)"
-					,uGroupGlue,guLoginClient,guLoginClient);
-	else
-	sprintf(gcQuery,"SELECT uGroupGlue,uModDate FROM tGroupGlue"
-				" WHERE uGroupGlue=%u"
-					,uGroupGlue);
-#else
 	sprintf(gcQuery,"SELECT uGroupGlue FROM tGroupGlue"
 				" WHERE uGroupGlue=%u"
 					,uGroupGlue);
-#endif
-
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -413,16 +387,9 @@ void ModtGroupGlue(void)
 	if(i>1) tGroupGlue(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef StandardFields
-	sscanf(field[1],"%u",&uPreModDate);
-	if(uPreModDate!=uModDate) tGroupGlue(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tGroupGlue(field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef StandardFields
-	uModDate=luGetModDate("tGroupGlue",uGroupGlue);
-#endif
 	unxsSPSLog(uGroupGlue,"tGroupGlue","Mod");
 	tGroupGlue(gcQuery);
 
@@ -452,11 +419,9 @@ void tGroupGlueList(void)
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uGroupGlue"
 		"<td><font face=arial,helvetica color=white>uKey"
-		"<td><font face=arial,helvetica color=white>uTable"
+		"<td><font face=arial,helvetica color=white>uGroupType"
 		"<td><font face=arial,helvetica color=white>uGroup"
 		"</tr>");
-
-
 
 	mysql_data_seek(res,guStart-1);
 
@@ -476,8 +441,8 @@ void tGroupGlueList(void)
 			,field[0]
 			,field[0]
 			,field[1]
-			,field[2]
-			,ForeignKey("tGroup","cLabel",strtoul(field[3],NULL,10))
+			,ForeignKey("tGroupType","cLabel",strtoul(field[2],NULL,10))
+			,field[3]
 				);
 
 	}
@@ -493,7 +458,7 @@ void CreatetGroupGlue(void)
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGroupGlue ("
 		"uGroupGlue INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
 		"uKey INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uKey),"
-		"uTable INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uTable),"
+		"uGroupType INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uGroupType),"
 		"uGroup INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uGroup) )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
