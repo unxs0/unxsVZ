@@ -35,6 +35,7 @@ static char cHostname[65]={""};
 static char cAttributes[65]={""};
 static char cDescription[65]={""};
 static unsigned uStatus=0;
+static char cuStatusPullDown[256]={""};
 static unsigned uLines=0;
 static unsigned uStrip=0;
 static char cPrefix[33]={""};
@@ -91,6 +92,11 @@ void ProcesstPBXVars(pentry entries[], int x)
 			sprintf(cDescription,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uStatus"))
 			sscanf(entries[i].val,"%u",&uStatus);
+		else if(!strcmp(entries[i].name,"cuStatusPullDown"))
+		{
+			sprintf(cuStatusPullDown,"%.255s",entries[i].val);
+			uStatus=ReadPullDown("tStatus","cLabel",cuStatusPullDown);
+		}
 		else if(!strcmp(entries[i].name,"uLines"))
 			sscanf(entries[i].val,"%u",&uLines);
 		else if(!strcmp(entries[i].name,"uStrip"))
@@ -357,19 +363,12 @@ void tPBXInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cDescription value='%s'>\n",EncodeDoubleQuotes(cDescription));
 	}
-	//uStatus uRADType=3
+	//uStatus COLTYPE_SELECTTABLE
 	OpenRow(LANG_FL_tPBX_uStatus,"black");
-	printf("<input title='%s' type=text name=uStatus value='%u' size=16 maxlength=10 "
-		,LANG_FT_tPBX_uStatus,uStatus);
-	if(guPermLevel>=20 && uMode)
-	{
-		printf("></td></tr>\n");
-	}
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tStatus;cuStatusPullDown","cLabel","cLabel",uStatus,1);
 	else
-	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uStatus value='%u' >\n",uStatus);
-	}
+		tTablePullDown("tStatus;cuStatusPullDown","cLabel","cLabel",uStatus,0);
 	//uLines uRADType=3
 	OpenRow(LANG_FL_tPBX_uLines,"black");
 	printf("<input title='%s' type=text name=uLines value='%u' size=16 maxlength=10 "
@@ -704,7 +703,7 @@ void tPBXList(void)
 			,field[2]
 			,field[3]
 			,field[4]
-			,field[5]
+			,ForeignKey("tStatus","cLabel",strtoul(field[5],NULL,10))
 			,field[6]
 			,field[7]
 			,field[8]
