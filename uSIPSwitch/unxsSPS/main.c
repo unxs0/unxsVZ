@@ -775,7 +775,7 @@ void Header_ism3(char *title, int js)
 	  printf("\t\t\t<a title='Rules for routing traffic to termination gateways' href=unxsSPS.cgi?gcFunction=tRule>tRule</a>\n");
 	}
 	//tPrefix
-	if(guPermLevel>=7)
+	if(guPermLevel>=20)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tPrefix") && strcmp(gcFunction,"tPrefixTools") &&
