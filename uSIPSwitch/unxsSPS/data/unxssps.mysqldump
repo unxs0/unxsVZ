@@ -16,6 +16,44 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `tAddress`
+--
+
+DROP TABLE IF EXISTS `tAddress`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tAddress` (
+  `uAddress` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(64) NOT NULL default '',
+  `cIP` varchar(32) NOT NULL default '',
+  `uPort` int(10) unsigned NOT NULL default '0',
+  `uPriority` int(10) unsigned NOT NULL default '0',
+  `uWeight` int(10) unsigned NOT NULL default '0',
+  `uPBX` int(10) unsigned NOT NULL default '0',
+  `uGateway` int(10) unsigned NOT NULL default '0',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uAddress`),
+  KEY `cLabel` (`cLabel`),
+  KEY `uPBX` (`uPBX`),
+  KEY `uGateway` (`uGateway`)
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tAddress`
+--
+
+LOCK TABLES `tAddress` WRITE;
+/*!40000 ALTER TABLE `tAddress` DISABLE KEYS */;
+INSERT INTO `tAddress` VALUES (1,'incoming.vitilety.net 1','64.2.142.90',5060,0,0,0,1,1,1,1349383442,1,1349447014),(2,'paulnewt2.callingcloud.net','64.62.134.36',5060,10,100,1,0,1,1,1349383515,0,0),(3,'outbound.vitelity.net 1','64.2.142.107',5060,10,100,0,2,1,1,1349445024,1,1349446934),(4,'outbound.vitelity.net 2','64.2.142.190',5060,10,100,0,2,1,1,1349445104,1,1349446370),(5,'incoming.vitilety.net 2','64.2.142.13',5060,0,0,0,1,1,1,1349447002,0,0);
+/*!40000 ALTER TABLE `tAddress` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `tAuthorize`
 --
 
@@ -169,7 +207,7 @@ CREATE TABLE `tCluster` (
 
 LOCK TABLES `tCluster` WRITE;
 /*!40000 ALTER TABLE `tCluster` DISABLE KEYS */;
-INSERT INTO `tCluster` VALUES (1,'Hurricane Electric','',1,1,1348784006,0,0);
+INSERT INTO `tCluster` VALUES (1,'HE','',1,1,1348784006,1,1349449277);
 /*!40000 ALTER TABLE `tCluster` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -241,7 +279,7 @@ CREATE TABLE `tDID` (
 
 LOCK TABLES `tDID` WRITE;
 /*!40000 ALTER TABLE `tDID` DISABLE KEYS */;
-INSERT INTO `tDID` VALUES (1,'+17073613110','+17073613110',1,1,1,'',1,1,1348784550,0,0);
+INSERT INTO `tDID` VALUES (1,'7073613110','7073613110',1,1,1,'',1,1,1348784550,1,1349445788);
 /*!40000 ALTER TABLE `tDID` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -255,12 +293,9 @@ DROP TABLE IF EXISTS `tGateway`;
 CREATE TABLE `tGateway` (
   `uGateway` int(10) unsigned NOT NULL auto_increment,
   `cLabel` varchar(32) NOT NULL default '',
-  `cAddress` varchar(32) NOT NULL default '',
   `cHostname` varchar(32) NOT NULL default '',
+  `uGatewayType` int(10) unsigned NOT NULL default '0',
   `uCarrier` int(10) unsigned NOT NULL default '0',
-  `uPort` int(10) unsigned NOT NULL default '0',
-  `uPriority` int(10) unsigned NOT NULL default '0',
-  `uWeight` int(10) unsigned NOT NULL default '0',
   `uCluster` int(10) unsigned NOT NULL default '0',
   `cComment` varchar(32) NOT NULL default '',
   `uOwner` int(10) unsigned NOT NULL default '0',
@@ -269,8 +304,8 @@ CREATE TABLE `tGateway` (
   `uModBy` int(10) unsigned NOT NULL default '0',
   `uModDate` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`uGateway`),
-  KEY `cAddress` (`cAddress`),
   KEY `cHostname` (`cHostname`),
+  KEY `uGatewayType` (`uGatewayType`),
   KEY `uCarrier` (`uCarrier`),
   KEY `uCluster` (`uCluster`)
 ) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
@@ -282,8 +317,37 @@ CREATE TABLE `tGateway` (
 
 LOCK TABLES `tGateway` WRITE;
 /*!40000 ALTER TABLE `tGateway` DISABLE KEYS */;
-INSERT INTO `tGateway` VALUES (1,'Vitelity primary inbound','64.2.142.90','',1,5060,0,0,1,'',1,1,1348784105,1,1348785459),(2,'Vitelity outbound','64.2.142.187','outbound.vitelity.net',1,5060,0,0,1,'',1,1,1348785439,0,0);
+INSERT INTO `tGateway` VALUES (1,'Vitelity DID Traffic','64.2.142.90',1,1,1,'If cHostname is IP no list used',1,1,1349359604,1,1349361754),(2,'Vitelity PSTN Termination','64.2.142.90',2,1,1,'If cHostname is IP no list used',1,1,1349407016,0,0);
 /*!40000 ALTER TABLE `tGateway` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tGatewayType`
+--
+
+DROP TABLE IF EXISTS `tGatewayType`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tGatewayType` (
+  `uGatewayType` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uGatewayType`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tGatewayType`
+--
+
+LOCK TABLES `tGatewayType` WRITE;
+/*!40000 ALTER TABLE `tGatewayType` DISABLE KEYS */;
+INSERT INTO `tGatewayType` VALUES (1,'DID Inbound',1,1,1349359443,0,0),(2,'PSTN Outbound',1,1,1349359462,0,0);
+/*!40000 ALTER TABLE `tGatewayType` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -327,13 +391,15 @@ DROP TABLE IF EXISTS `tGroup`;
 CREATE TABLE `tGroup` (
   `uGroup` int(10) unsigned NOT NULL auto_increment,
   `cLabel` varchar(32) NOT NULL default '',
+  `uGroupType` int(10) unsigned NOT NULL default '0',
   `uOwner` int(10) unsigned NOT NULL default '0',
   `uCreatedBy` int(10) unsigned NOT NULL default '0',
   `uCreatedDate` int(10) unsigned NOT NULL default '0',
   `uModBy` int(10) unsigned NOT NULL default '0',
   `uModDate` int(10) unsigned NOT NULL default '0',
-  PRIMARY KEY  (`uGroup`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+  PRIMARY KEY  (`uGroup`),
+  KEY `uGroupType` (`uGroupType`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -354,14 +420,14 @@ DROP TABLE IF EXISTS `tGroupGlue`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tGroupGlue` (
   `uGroupGlue` int(10) unsigned NOT NULL auto_increment,
-  `cLabel` varchar(32) NOT NULL default '',
-  `uOwner` int(10) unsigned NOT NULL default '0',
-  `uCreatedBy` int(10) unsigned NOT NULL default '0',
-  `uCreatedDate` int(10) unsigned NOT NULL default '0',
-  `uModBy` int(10) unsigned NOT NULL default '0',
-  `uModDate` int(10) unsigned NOT NULL default '0',
-  PRIMARY KEY  (`uGroupGlue`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+  `uKey` int(10) unsigned NOT NULL default '0',
+  `uGroupType` int(10) unsigned NOT NULL default '0',
+  `uGroup` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uGroupGlue`),
+  KEY `uKey` (`uKey`),
+  KEY `uGroupType` (`uGroupType`),
+  KEY `uGroup` (`uGroup`)
+) ENGINE=MyISAM AUTO_INCREMENT=22 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -370,6 +436,7 @@ CREATE TABLE `tGroupGlue` (
 
 LOCK TABLES `tGroupGlue` WRITE;
 /*!40000 ALTER TABLE `tGroupGlue` DISABLE KEYS */;
+INSERT INTO `tGroupGlue` VALUES (19,2,2,2),(20,2,1,2),(18,2,2,1),(21,3,1,2);
 /*!40000 ALTER TABLE `tGroupGlue` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -389,7 +456,7 @@ CREATE TABLE `tGroupType` (
   `uModBy` int(10) unsigned NOT NULL default '0',
   `uModDate` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`uGroupType`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -398,6 +465,7 @@ CREATE TABLE `tGroupType` (
 
 LOCK TABLES `tGroupType` WRITE;
 /*!40000 ALTER TABLE `tGroupType` DISABLE KEYS */;
+INSERT INTO `tGroupType` VALUES (1,'tRule:tTimeInterval',1,1,1349274371,1,1349408100),(2,'tRule:tGateway',1,1,1349394467,1,1349408114);
 /*!40000 ALTER TABLE `tGroupType` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -494,7 +562,7 @@ CREATE TABLE `tLog` (
   PRIMARY KEY  (`uLog`),
   KEY `uOwner` (`uOwner`),
   KEY `uLogType` (`uLogType`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=67 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -503,7 +571,7 @@ CREATE TABLE `tLog` (
 
 LOCK TABLES `tLog` WRITE;
 /*!40000 ALTER TABLE `tLog` DISABLE KEYS */;
-INSERT INTO `tLog` VALUES ('1','201.231.88.54',1,'Root',12,'tCluster',1,'New',1,1,1348784006,0,0,'3cb631611f53bc5ce3e17af804048c7e',1,'',''),('1','201.231.88.54',1,'Root',12,'tCarrier',2,'New',1,1,1348784026,0,0,'57be931503979ef6afcb70eb5577bd61',1,'',''),('1','201.231.88.54',1,'Root',12,'tGateway',3,'New',1,1,1348784105,0,0,'55448ef39d51657f60f2532d64eba959',1,'',''),('1','201.231.88.54',1,'Root',12,'tDID',4,'New',1,1,1348784550,0,0,'d8970c5fb4ef08e8dcafcafe2fe60cfc',1,'',''),('1','201.231.88.54',1,'Root',12,'tPBX',5,'New',1,1,1348784822,0,0,'d04af339a10f9226abe43ae8e175b6b8',1,'',''),('2','201.231.88.54',1,'Root',12,'tGateway',6,'New',1,1,1348785439,0,0,'c0e6304f4a6f9d8c5a40a1c2b7f93475',1,'',''),('1','201.231.88.54',1,'Root',12,'tGateway',7,'Mod',1,1,1348785459,0,0,'9424548af898214f75bf31fb1d6b88fd',1,'',''),('1','201.231.88.54',1,'Root',12,'tRule',8,'New',1,1,1348785491,0,0,'060fa69f1c8cf536920bf9af70a69429',1,'','');
+INSERT INTO `tLog` VALUES ('1','201.231.88.54',1,'Root',12,'tCluster',1,'New',1,1,1348784006,0,0,'3cb631611f53bc5ce3e17af804048c7e',1,'',''),('1','201.231.88.54',1,'Root',12,'tCarrier',2,'New',1,1,1348784026,0,0,'57be931503979ef6afcb70eb5577bd61',1,'',''),('1','201.231.88.54',1,'Root',12,'tGateway',3,'New',1,1,1348784105,0,0,'55448ef39d51657f60f2532d64eba959',1,'',''),('1','201.231.88.54',1,'Root',12,'tDID',4,'New',1,1,1348784550,0,0,'d8970c5fb4ef08e8dcafcafe2fe60cfc',1,'',''),('1','201.231.88.54',1,'Root',12,'tPBX',5,'New',1,1,1348784822,0,0,'d04af339a10f9226abe43ae8e175b6b8',1,'',''),('2','201.231.88.54',1,'Root',12,'tGateway',6,'New',1,1,1348785439,0,0,'c0e6304f4a6f9d8c5a40a1c2b7f93475',1,'',''),('1','201.231.88.54',1,'Root',12,'tGateway',7,'Mod',1,1,1348785459,0,0,'9424548af898214f75bf31fb1d6b88fd',1,'',''),('1','201.231.88.54',1,'Root',12,'tRule',8,'New',1,1,1348785491,0,0,'060fa69f1c8cf536920bf9af70a69429',1,'',''),('1054','201.231.88.54',1,'Root',12,'errno',9,'htmlPlainTextError',1,1,1349274277,0,0,'e250df03761153f1106159522f6ab5a4',4,'Unknown column \'tGroup.uGroupType\' in \'field list\' (INSERT INTO tLog SET cLa)','rc18.callingcloud.net'),('1054','201.231.88.54',1,'Root',12,'errno',10,'htmlPlainTextError',1,1,1349274292,0,0,'780e87aecc03cdae0909ddb65e07a250',4,'Unknown column \'tGroupGlue.uKey\' in \'field list\' (INSERT INTO tLog SET cLa)','rc18.callingcloud.net'),('1','201.231.88.54',1,'Root',12,'tGroupType',11,'New',1,1,1349274371,0,0,'8043d160e99e3613346d2532e4f3aa02',1,'',''),('1','201.231.88.54',1,'Root',12,'tGroup',12,'New',1,1,1349274493,0,0,'ad1f18536a4aabee66159b61cbf28bd7',1,'',''),('1','201.231.88.54',1,'Root',12,'tGroupGlue',13,'New',1,1,1349274577,0,0,'43eee5e1a6adf57fef8e2d9ef96aae58',1,'',''),('1054','201.231.88.50',1,'Root',12,'errno',14,'htmlPlainTextError',1,1,1349359278,0,0,'52ef449bdf4cce1b011c228e047ccb17',4,'Unknown column \'tGateway.uGatewayType\' in \'field list\' (INSERT INTO tLog SET cLa)','rc18.callingcloud.net'),('1','201.231.88.50',1,'Root',12,'tGatewayType',15,'New',1,1,1349359443,0,0,'97cf66b604bbbf6d171b434c99dbbc74',1,'',''),('2','201.231.88.50',1,'Root',12,'tGatewayType',16,'New',1,1,1349359462,0,0,'810be468069cc932f3bdfed5e1bbd9b8',1,'',''),('1','201.231.88.50',1,'Root',12,'tGateway',17,'New',1,1,1349359604,0,0,'776acaca11c81102ca8c17e7a943ca19',1,'',''),('1054','201.231.88.50',1,'Root',12,'errno',18,'htmlPlainTextError',1,1,1349359695,0,0,'b9bc67572d4038c1b7105a35d3ed3e04',4,'Unknown column \'tRule.uPriority\' in \'field list\' (INSERT INTO tLog SET cLa)','rc18.callingcloud.net'),('1','201.231.88.50',1,'Root',12,'tRule',19,'New',1,1,1349359778,0,0,'f75e9a5cec2ab93a7e1fcc469c424f90',1,'',''),('1','201.231.88.50',1,'Root',12,'tAddress',20,'New',1,1,1349361299,0,0,'0b9878459dc65bdb23100ecf8cb7c0f4',1,'',''),('2','201.231.88.50',1,'Root',12,'tAddress',21,'New',1,1,1349361350,0,0,'65481170c7f061a3304fede963c2c17f',1,'',''),('0','201.231.88.50',1,'Root',12,'tAddress',22,'DelError',1,1,1349361486,0,0,'b0a62865872ff8807a66812b2a3cd264',1,'',''),('1','201.231.88.50',1,'Root',12,'tAddress',23,'Mod',1,1,1349361671,0,0,'d5ef88864e47be4dc934f8ff194475a0',1,'',''),('1','201.231.88.50',1,'Root',12,'tGateway',24,'Mod',1,1,1349361754,0,0,'dc4291091d3a487b4488c35067ed53ee',1,'',''),('1','201.231.88.50',1,'Root',12,'tGroupType',25,'Mod',1,1,1349382061,0,0,'b53b004a0d4f21328c66dfb6cf641504',1,'',''),('1','201.231.88.50',1,'Root',12,'tAddress',26,'New',1,1,1349383442,0,0,'b62712f3cb595153d51a861dc9be43a1',1,'',''),('2','201.231.88.50',1,'Root',12,'tAddress',27,'New',1,1,1349383515,0,0,'9fd90e5d64fd5b4281fe3ee1407d989a',1,'',''),('1','201.231.88.50',1,'Root',12,'tGroupType',28,'Mod',1,1,1349383734,0,0,'d0be6667ea95c9e2c8287e9eec189931',1,'',''),('1','201.231.88.50',1,'Root',12,'tTimeInterval',29,'New',1,1,1349383994,0,0,'7de811a4a0e8d6d64fa5cd195a43c627',1,'',''),('2','201.231.88.50',1,'Root',12,'tGroupType',30,'New',1,1,1349394467,0,0,'0f7a648232ade1c4ef01c35fdc3f0b82',1,'',''),('2','190.228.244.77',1,'Root',12,'tGateway',31,'New',1,1,1349407016,0,0,'c4ac9a4dca219d903229d33c77a65e6c',1,'',''),('1064','190.228.244.77',1,'Root',12,'errno',32,'htmlPlainTextError',1,1,1349407057,0,0,'69693b3fdf0b14ace62d52375cee31be',4,'You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near \')\' at line 1 (INSERT INTO tLog SET cLa)','rc18.callingcloud.net'),('1','190.228.244.77',1,'Root',12,'tGroupType',33,'Mod',1,1,1349408100,0,0,'149c103f9e4f93de24889a3c01a3c226',1,'',''),('2','190.228.244.77',1,'Root',12,'tGroupType',34,'Mod',1,1,1349408114,0,0,'151786049d38a2b36448ac7f99cca442',1,'',''),('1054','190.228.244.77',1,'Root',12,'errno',35,'htmlPlainTextError',1,1,1349408328,0,0,'99d05f5a5c405b7085884b8ae3e8c9ca',4,'Unknown column \'tGroupGlue.uGroupType\' in \'field list\' (INSERT INTO tLog SET cLa)','rc18.callingcloud.net'),('1','190.228.244.77',1,'Root',12,'tGroupGlue',36,'New',1,1,1349408874,0,0,'af0f243cee5ff8d240e5ed5668dd77e8',1,'',''),('1','190.228.244.77',1,'Root',12,'tGroupGlue',37,'Mod',1,1,1349408897,0,0,'4860bf6d1820f5331a672ae02e81ac54',1,'',''),('1','190.228.244.77',1,'Root',12,'tGroupGlue',38,'Mod',1,1,1349408951,0,0,'a40482afe8163a29df1fea8616026e11',1,'',''),('3','190.228.244.77',1,'Root',12,'tGroupType',39,'New',1,1,1349411701,0,0,'df84c101e2cef6c1aad575579c40b4e1',1,'',''),('4','190.228.244.77',1,'Root',12,'tGroupType',40,'New',1,1,1349411722,0,0,'e9d1f48e3a6de5a9a9ea2dfeb4871760',1,'',''),('1','190.228.244.77',1,'Root',12,'tAddress',41,'Mod',1,1,1349412137,0,0,'4bdda5accc9da1852dc376d512c0e1f8',1,'',''),('1','190.228.244.77',1,'Root',12,'tAddress',42,'Mod',1,1,1349412210,0,0,'5e904378fea2b5c16f558c834011d8c2',1,'',''),('1','190.228.244.77',1,'Root',12,'tAddress',43,'Mod',1,1,1349412219,0,0,'7648923444103b18b0b2a2c96b6bc864',1,'',''),('3','190.228.244.77',1,'Root',12,'tGroupType',44,'Del',1,1,1349412277,0,0,'d20f9a54fa37b045672221e6961d2c0c',1,'',''),('4','190.228.244.77',1,'Root',12,'tGroupType',45,'Del',1,1,1349412286,0,0,'a6f4bfb3c17ab56e04f2b863c471407a',1,'',''),('1','190.228.244.77',1,'Root',12,'tAddress',46,'Mod',1,1,1349413014,0,0,'9ad9daee3d8cc123dc75827535f060c7',1,'',''),('1','190.228.244.77',1,'Root',12,'tPBX',47,'Mod',1,1,1349413758,0,0,'5f44bb29a41756c7b59b5e03147c64af',1,'',''),('3','201.231.88.50',1,'Root',12,'tAddress',48,'New',1,1,1349445024,0,0,'1d3b14bbcb315470915454759531fd83',1,'',''),('4','201.231.88.50',1,'Root',12,'tAddress',49,'New',1,1,1349445104,0,0,'c8e163880df7e15229523ca431bceff1',1,'',''),('1','201.231.88.50',1,'Root',12,'tDID',50,'Mod',1,1,1349445788,0,0,'f2cef51d58c1a46610cb5126952c019a',1,'',''),('1','201.231.88.50',1,'Root',12,'tAddress',51,'Mod',1,1,1349445907,0,0,'91fa0c8a2fd22c3d13634c20ff521f5c',1,'',''),('1','201.231.88.50',1,'Root',12,'tAddress',52,'Mod',1,1,1349445945,0,0,'3e51e127fae7cee399f6204e0b4dc558',1,'',''),('1','201.231.88.50',1,'Root',12,'tAddress',53,'Mod',1,1,1349445955,0,0,'56bedb707eb3268d9cda306ca8f433e2',1,'',''),('3','201.231.88.50',1,'Root',12,'tAddress',54,'Mod',1,1,1349446323,0,0,'31a1bfb71b50409332af9d90d693c473',1,'',''),('3','201.231.88.50',1,'Root',12,'tAddress',55,'Mod',1,1,1349446335,0,0,'f49908ef62e7e34733064aebe003db60',1,'',''),('4','201.231.88.50',1,'Root',12,'tAddress',56,'Mod',1,1,1349446370,0,0,'bcb7aa159f71beb5458158159defa1d6',1,'',''),('3','201.231.88.50',1,'Root',12,'tAddress',57,'Mod',1,1,1349446934,0,0,'28645ce604f4c220545332a1a002b624',1,'',''),('5','201.231.88.50',1,'Root',12,'tAddress',58,'New',1,1,1349447002,0,0,'84aa1d6081179b2f489d7a0d138c794e',1,'',''),('1','201.231.88.50',1,'Root',12,'tAddress',59,'Mod',1,1,1349447014,0,0,'436c030cf20b91afa6943deda567054b',1,'',''),('1','201.231.88.50',1,'Root',12,'tRule',60,'Mod',1,1,1349447136,0,0,'45091492455ebf08998c1face859cf9b',1,'',''),('2','201.231.88.50',1,'Root',12,'tRule',61,'New',1,1,1349447279,0,0,'e318c45b4a36ea9b013329b334a033d4',1,'',''),('2','201.231.88.50',1,'Root',12,'tTimeInterval',62,'New',1,1,1349447418,0,0,'b4a482ba4db0ecd1ead839f931ce8e93',1,'',''),('3','201.231.88.50',1,'Root',12,'tTimeInterval',63,'New',1,1,1349447451,0,0,'a1afb7ad8905a69572c519069b7ae3bf',1,'',''),('2','201.231.88.50',1,'Root',12,'tRule',64,'Mod',1,1,1349447473,0,0,'1a9b210558fd1c00f4f253cf07834c8e',1,'',''),('1','201.231.88.50',1,'Root',12,'tCluster',65,'Mod',1,1,1349449277,0,0,'90dcb9be02fbcbe9b5ac5b747203131a',1,'',''),('1','201.231.88.50',1,'Root',12,'tGroup',66,'Del',1,1,1349449323,0,0,'d4263fa97d375efa750b43ca93946cf7',1,'','');
 /*!40000 ALTER TABLE `tLog` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -647,7 +715,7 @@ CREATE TABLE `tPBX` (
 
 LOCK TABLES `tPBX` WRITE;
 /*!40000 ALTER TABLE `tPBX` DISABLE KEYS */;
-INSERT INTO `tPBX` VALUES (1,'paulnewt2','paulnewt2.callingcloud.net','64.62.134.36',5060,0,0,'','',0,1,0,'',1,'Test PBX on unxsVZ infrastructure',1,1,1348784822,0,0);
+INSERT INTO `tPBX` VALUES (1,'paulnewt2','paulnewt2.callingcloud.net','64.62.134.36',5060,0,0,'','',1,1,0,'',1,'Test PBX on unxsVZ infrastructure',1,1,1348784822,1,1349413758);
 /*!40000 ALTER TABLE `tPBX` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -689,18 +757,16 @@ DROP TABLE IF EXISTS `tRule`;
 CREATE TABLE `tRule` (
   `uRule` int(10) unsigned NOT NULL auto_increment,
   `cLabel` varchar(32) NOT NULL default '',
-  `uGateway` int(10) unsigned NOT NULL default '0',
-  `uTimeInterval` int(10) unsigned NOT NULL default '0',
+  `uPriority` int(10) unsigned NOT NULL default '0',
+  `cPrefix` varchar(32) NOT NULL default '',
   `cComment` varchar(32) NOT NULL default '',
   `uOwner` int(10) unsigned NOT NULL default '0',
   `uCreatedBy` int(10) unsigned NOT NULL default '0',
   `uCreatedDate` int(10) unsigned NOT NULL default '0',
   `uModBy` int(10) unsigned NOT NULL default '0',
   `uModDate` int(10) unsigned NOT NULL default '0',
-  PRIMARY KEY  (`uRule`),
-  KEY `uGateway` (`uGateway`),
-  KEY `uTimeInterval` (`uTimeInterval`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+  PRIMARY KEY  (`uRule`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -709,7 +775,7 @@ CREATE TABLE `tRule` (
 
 LOCK TABLES `tRule` WRITE;
 /*!40000 ALTER TABLE `tRule` DISABLE KEYS */;
-INSERT INTO `tRule` VALUES (1,'Default outbound',2,0,'',1,1,1348785491,0,0);
+INSERT INTO `tRule` VALUES (1,'Default',10,'','If no other rules match',1,1,1349359778,1,1349447136),(2,'Default Weekend',10,'','If no other rules match',1,1,1349447279,1,1349447473);
 /*!40000 ALTER TABLE `tRule` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -888,7 +954,7 @@ CREATE TABLE `tTimeInterval` (
   `uModBy` int(10) unsigned NOT NULL default '0',
   `uModDate` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`uTimeInterval`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -897,6 +963,7 @@ CREATE TABLE `tTimeInterval` (
 
 LOCK TABLES `tTimeInterval` WRITE;
 /*!40000 ALTER TABLE `tTimeInterval` DISABLE KEYS */;
+INSERT INTO `tTimeInterval` VALUES (1,'All Weekdays 12am-12pm','00:00:00','23:59:59','20120101','','1,2,3,4,5',1,1,1349383994,0,0),(2,'All Saturday and All Sunday','00:00:00','23:59:59','20120101','','6,7',1,1,1349447418,0,0),(3,'Friday Night','08:00:00','23:59:59','20120101','','5',1,1,1349447451,0,0);
 /*!40000 ALTER TABLE `tTimeInterval` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -909,4 +976,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-09-27 17:38:40
+-- Dump completed on 2012-10-05 10:04:02
