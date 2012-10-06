@@ -18,6 +18,7 @@ static unsigned uTimeInterval=0;
 static char cuTimeIntervalPullDown[256]={""};
 static unsigned uGateway=0;
 static char cuGatewayPullDown[256]={""};
+static char cTestNow[32]={""};
 
 void tRuleNavList(void);
 void tRuleGroupGlueNavList(void);
@@ -42,6 +43,8 @@ void ExtProcesstRuleVars(pentry entries[], int x)
 			sprintf(cuGatewayPullDown,"%.255s",entries[i].val);
 			uGateway=ReadPullDown("tGateway","cLabel",cuGatewayPullDown);
 		}
+		else if(!strcmp(entries[i].name,"cTestNow"))
+			sprintf(cTestNow,"%.31s",entries[i].val);
 	}
 }//void ExtProcesstRuleVars(pentry entries[], int x)
 
@@ -286,6 +289,8 @@ void ExttRuleButtons(void)
 					"name=gcCommand value='Del GW'>");
 			}
 			tRuleNavList();
+			printf("<p><input type=text title='enter a valid SQL now() format date-time string (e.g. 2012-10-06 11:31:39) for testing'"
+					"name=cTestNow value='%s'> cTestNow",cTestNow);
 			tRuleNowNavList();
 	}
 	CloseFieldSet();
@@ -578,13 +583,28 @@ void tRuleNowNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	if(cTestNow[0])
 	sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
 			" FROM tRule,tGroupGlue,tTimeInterval"
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
 			" AND tGroupGlue.uGroupType=1"
-			" AND TIME(NOW())>=tTimeInterval.cStartTime"
-			" AND TIME(NOW())<=tTimeInterval.cEndTime"
+			" AND IF(tTimeInterval.cStartDate='',1,DATE('%1$s')>=tTimeInterval.cStartDate)"
+			" AND IF(tTimeInterval.cEndDate='',1,DATE('%1$s')<=tTimeInterval.cEndDate)"
+			" AND IF(tTimeInterval.cStartTime='',1,TIME('%1$s')>=tTimeInterval.cStartTime)"
+			" AND IF(tTimeInterval.cEndTime='',1,TIME('%1$s')<=tTimeInterval.cEndTime)"
+			" AND INSTR(tTimeInterval.cDaysOfWeek,DAY('%1$s'))>0"
+			" ORDER BY tRule.uPriority DESC",cTestNow);
+	else
+	sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
+			" FROM tRule,tGroupGlue,tTimeInterval"
+			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
+			" AND tGroupGlue.uGroup=tRule.uRule"
+			" AND tGroupGlue.uGroupType=1"
+			" AND IF(tTimeInterval.cStartDate='',1,DATE(NOW())>=tTimeInterval.cStartDate)"
+			" AND IF(tTimeInterval.cEndDate='',1,DATE(NOW())<=tTimeInterval.cEndDate)"
+			" AND IF(tTimeInterval.cStartTime='',1,TIME(NOW())>=tTimeInterval.cStartTime)"
+			" AND IF(tTimeInterval.cEndTime='',1,TIME(NOW())<=tTimeInterval.cEndTime)"
 			" AND INSTR(tTimeInterval.cDaysOfWeek,DAY(NOW()))>0"
 			" ORDER BY tRule.uPriority DESC");
         mysql_query(&gMysql,gcQuery);
@@ -597,8 +617,11 @@ void tRuleNowNavList(void)
 
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
-	{	
-        	printf("<p><u>Rules that are active now()</u><br>\n");
+	{
+		if(cTestNow[0])
+        		printf("<p><u>Rules that would be active at %s</u><br>\n",cTestNow);
+		else
+        		printf("<p><u>Rules that are active now()</u><br>\n");
 
 		unsigned uPriority;
 	        while((field=mysql_fetch_row(res)))
