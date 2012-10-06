@@ -315,6 +315,14 @@ void ExttRuleGetHook(entry gentries[], int x)
 			sscanf(gentries[i].val,"%u",&uRule);
 			guMode=6;
 		}
+		else if(!strcmp(gentries[i].name,"GatewayUp"))
+		{
+			sscanf(gentries[i].val,"%u",&uGateway);
+		}
+		else if(!strcmp(gentries[i].name,"GatewayDown"))
+		{
+			sscanf(gentries[i].val,"%u",&uGateway);
+		}
 	}
 	tRule("");
 
@@ -550,9 +558,12 @@ void tRuleGroupGlueNavList(void)
 	{	
 	        while((field=mysql_fetch_row(res)))
 		{
-			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGateway"
-				"&uGateway=%s>%s</a><br>\n",
-				field[0],field[1]);
+			printf("<a href=unxsSPS.cgi?gcFunction=tRule&GatewayUp=%1$s&uRule=%3$u>"
+				"<img src=/images/arrow-up.png></a>"
+				"<a href=unxsSPS.cgi?gcFunction=tRule&GatewayDown=%1$s&uRule=%3$u>"
+				"<img src=/images/arrow-down.png></a>"
+				"<a class=darkLink href=unxsSPS.cgi?gcFunction=tGateway&uGateway=%1$s>%2$s</a><br>\n",
+					field[0],field[1],uRule);
 
 			sprintf(gcQuery,"SELECT uAddress,cIP,uPort FROM tAddress WHERE uGateway=%s",field[0]);
         		mysql_query(&gMysql,gcQuery);
