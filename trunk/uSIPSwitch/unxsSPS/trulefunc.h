@@ -21,6 +21,7 @@ static char cuGatewayPullDown[256]={""};
 
 void tRuleNavList(void);
 void tRuleGroupGlueNavList(void);
+void tRuleNowNavList(void);
 
 void ExtProcesstRuleVars(pentry entries[], int x)
 {
@@ -285,6 +286,7 @@ void ExttRuleButtons(void)
 					"name=gcCommand value='Del GW'>");
 			}
 			tRuleNavList();
+			tRuleNowNavList();
 	}
 	CloseFieldSet();
 
@@ -470,16 +472,7 @@ void tRuleNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uRule,cLabel,cPrefix FROM tRule ORDER BY cLabel");
-	else
-		sprintf(gcQuery,"SELECT tRule.uRule,"
-				" tRule.cLabel,tRule.cPrefix"
-				" FROM tRule,tClient"
-				" WHERE tRule.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-					guCompany
-					,guCompany);
+	sprintf(gcQuery,"SELECT uRule,cLabel,if(cPrefix='','Any',cPrefix),uPriority FROM tRule ORDER BY uPriority DESC");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -491,12 +484,16 @@ void tRuleNavList(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>tRuleNavList</u><br>\n");
+        	printf("<p><u>All rules with prefix () by priority []</u><br>\n");
 
+		unsigned uPriority;
 	        while((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[3],"%u",&uPriority);
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tRule"
-				"&uRule=%s>%s/%s</a><br>\n",
-				field[0],field[1],field[2]);
+				"&uRule=%s>[%3.3u] %s (%s)</a><br>\n",
+				field[0],uPriority,field[1],field[2]);
+		}
 	}
         mysql_free_result(res);
 
@@ -576,3 +573,42 @@ void tRuleGroupGlueNavList(void)
 
 }//void tRuleGroupGlueNavList(void)
 
+
+void tRuleNowNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
+			" FROM tRule,tGroupGlue,tTimeInterval"
+			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
+			" AND tGroupGlue.uGroup=tRule.uRule"
+			" AND tGroupGlue.uGroupType=1"
+			" AND TIME(NOW())>=tTimeInterval.cStartTime"
+			" AND TIME(NOW())<=tTimeInterval.cEndTime"
+			" AND INSTR(tTimeInterval.cDaysOfWeek,DAY(NOW()))>0"
+			" ORDER BY tRule.uPriority DESC");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tRuleNowNavList</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Rules that are active now()</u><br>\n");
+
+		unsigned uPriority;
+	        while((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[3],"%u",&uPriority);
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tRule"
+				"&uRule=%s>[%3.3u] %s (%s)</a><br>\n",
+				field[0],uPriority,field[1],field[2]);
+		}
+	}
+        mysql_free_result(res);
+
+}//void tRuleNavList(void)
