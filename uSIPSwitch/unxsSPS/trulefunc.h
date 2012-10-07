@@ -19,6 +19,7 @@ static char cuTimeIntervalPullDown[256]={""};
 static unsigned uGateway=0;
 static char cuGatewayPullDown[256]={""};
 static char cTestNow[32]={""};
+static char cTestDID[32]={""};
 
 void tRuleNavList(void);
 void tRuleGroupGlueNavList(void);
@@ -45,6 +46,8 @@ void ExtProcesstRuleVars(pentry entries[], int x)
 		}
 		else if(!strcmp(entries[i].name,"cTestNow"))
 			sprintf(cTestNow,"%.31s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cTestDID"))
+			sprintf(cTestDID,"%.31s",entries[i].val);
 	}
 }//void ExtProcesstRuleVars(pentry entries[], int x)
 
@@ -137,7 +140,7 @@ void ExttRuleCommands(pentry entries[], int x)
 				tRule("<blink>Error</blink>: Denied by permissions settings");
                 }
 		//Custom operations
-		else if(!strcmp(gcCommand,"Add GW"))
+		else if(!strcmp(gcCommand,"Add Gateway"))
                 {
                         ProcesstRuleVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy) && uRule)
@@ -169,7 +172,7 @@ void ExttRuleCommands(pentry entries[], int x)
 			else
 				tRule("<blink>Error</blink>: Denied by permissions settings");
 		}
-		else if(!strcmp(gcCommand,"Del GW"))
+		else if(!strcmp(gcCommand,"Del Gateway"))
                 {
                         ProcesstRuleVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy) && uRule)
@@ -189,7 +192,7 @@ void ExttRuleCommands(pentry entries[], int x)
 			else
 				tRule("<blink>Error</blink>: Denied by permissions settings");
 		}
-		else if(!strcmp(gcCommand,"Add TI"))
+		else if(!strcmp(gcCommand,"Add Time Interval"))
                 {
                         ProcesstRuleVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy) && uRule)
@@ -221,7 +224,7 @@ void ExttRuleCommands(pentry entries[], int x)
 			else
 				tRule("<blink>Error</blink>: Denied by permissions settings");
 		}
-		else if(!strcmp(gcCommand,"Del TI"))
+		else if(!strcmp(gcCommand,"Del Time Interval"))
                 {
                         ProcesstRuleVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy) && uRule)
@@ -277,20 +280,23 @@ void ExttRuleButtons(void)
 				printf("<p><u><a class=darkLink href=unxsSPS.cgi?gcFunction=tTimeInterval>Add time interval to this rule</a></u><br>");
 				tTablePullDown("tTimeInterval;cuTimeIntervalPullDown","cLabel","cLabel",uTimeInterval,1);
 				printf("<br><input type=submit class=largeButton title='Add time interval record selected to current rule'"
-					"name=gcCommand value='Add TI'>");
+					"name=gcCommand value='Add Time Interval'>");
 				printf("<br><input type=submit class=largeButton title='Del time interval record selected from current group'"
-					"name=gcCommand value='Del TI'>");
+					"name=gcCommand value='Del Time Interval'>");
 
 				printf("<p><u>Add gateway to this rule</u><br>");
 				tTablePullDown("tGateway;cuGatewayPullDown","cLabel","cLabel",uGateway,1);
 				printf("<br><input type=submit class=largeButton title='Add time interval record selected to current rule'"
-					"name=gcCommand value='Add GW'>");
+					"name=gcCommand value='Add Gateway'>");
 				printf("<br><input type=submit class=largeButton title='Del time interval record selected from current group'"
-					"name=gcCommand value='Del GW'>");
+					"name=gcCommand value='Del Gateway'>");
 			}
 			tRuleNavList();
-			printf("<p><input type=text title='enter a valid SQL now() format date-time string (e.g. 2012-10-06 11:31:39) for testing'"
+			printf("<p><u>Test now() time and test DID optional inputs</u><br>");
+			printf("<input type=text title='enter a valid SQL now() format date-time string (e.g. 2012-10-06 11:31:39) for testing'"
 					"name=cTestNow value='%s'> cTestNow",cTestNow);
+			printf("<br><input type=text title='enter a valid (e.g. 01133123485769) for routing simulation'"
+					"name=cTestDID value='%s'> cTestDID",cTestDID);
 			tRuleNowNavList();
 	}
 	CloseFieldSet();
@@ -307,6 +313,7 @@ void ExttRuleAuxTable(void)
 void ExttRuleGetHook(entry gentries[], int x)
 {
 	register int i;
+	unsigned uGatewayDown=0;
 
 	for(i=0;i<x;i++)
 	{
@@ -315,14 +322,27 @@ void ExttRuleGetHook(entry gentries[], int x)
 			sscanf(gentries[i].val,"%u",&uRule);
 			guMode=6;
 		}
-		else if(!strcmp(gentries[i].name,"GatewayUp"))
+		else if(!strcmp(gentries[i].name,"uGatewayDown"))
 		{
-			sscanf(gentries[i].val,"%u",&uGateway);
+			sscanf(gentries[i].val,"%u",&uGatewayDown);
 		}
-		else if(!strcmp(gentries[i].name,"GatewayDown"))
-		{
-			sscanf(gentries[i].val,"%u",&uGateway);
-		}
+	}
+
+	//Make lowest priority
+	if(uGatewayDown && uRule)
+	{
+		unsigned uGroupGlue=0;
+
+		sprintf(gcQuery,"INSERT INTO tGroupGlue SET uKey=%u,uGroupType=2,uGroup=%u",uGatewayDown,uRule);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+			tRule(gcQuery);
+		uGroupGlue=mysql_insert_id(&gMysql);
+		sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uKey=%u AND uGroupType=2 AND uGroup=%u AND uGroupGlue!=%u",
+					uGatewayDown,uRule,uGroupGlue);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+			tRule(gcQuery);
 	}
 	tRule("");
 
@@ -485,7 +505,7 @@ void tRuleNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uRule,cLabel,if(cPrefix='','Any',cPrefix),uPriority FROM tRule ORDER BY uPriority DESC");
+	sprintf(gcQuery,"SELECT uRule,cLabel,if(cPrefix='','Any',cPrefix),uPriority FROM tRule ORDER BY uPriority");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -545,7 +565,7 @@ void tRuleGroupGlueNavList(void)
 
 	sprintf(gcQuery,"SELECT tGateway.uGateway,tGateway.cLabel FROM tGroupGlue,tGateway WHERE tGroupGlue.uGroup=%u"
 			" AND tGroupGlue.uKey=tGateway.uGateway"
-			" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1)",uRule);
+			" AND uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1) ORDER BY tGroupGlue.uGroupGlue",uRule);
         mysql_query(&gMysql,gcQuery);
         printf("<p><u>Gateways listed by priority</u><br>\n");
         if(mysql_errno(&gMysql))
@@ -554,18 +574,19 @@ void tRuleGroupGlueNavList(void)
                 return;
         }
         res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	unsigned uNumRows,uRow=0;
+	if((uNumRows=mysql_num_rows(res)))
 	{	
 	        while((field=mysql_fetch_row(res)))
 		{
-			printf("<a href=unxsSPS.cgi?gcFunction=tRule&GatewayUp=%1$s&uRule=%3$u>"
-				"<img src=/images/arrow-up.png></a>"
-				"<a href=unxsSPS.cgi?gcFunction=tRule&GatewayDown=%1$s&uRule=%3$u>"
-				"<img src=/images/arrow-down.png></a>"
-				"<a class=darkLink href=unxsSPS.cgi?gcFunction=tGateway&uGateway=%1$s>%2$s</a><br>\n",
-					field[0],field[1],uRule);
+			if(++uRow!=uNumRows)
+				printf("<a title='Move gateway to lowest priority' ' href=unxsSPS.cgi?gcFunction=tRule&uGatewayDown=%s&uRule=%u>"
+					"<img src=/images/arrow-down.png></a>",
+					field[0],uRule);
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGateway&uGateway=%s>%s</a><br>\n",
+					field[0],field[1]);
 
-			sprintf(gcQuery,"SELECT uAddress,cIP,uPort FROM tAddress WHERE uGateway=%s",field[0]);
+			sprintf(gcQuery,"SELECT uAddress,cIP,uPort FROM tAddress WHERE uGateway=%s ORDER BY uPriority",field[0]);
         		mysql_query(&gMysql,gcQuery);
         		if(mysql_errno(&gMysql))
         		{
@@ -576,7 +597,7 @@ void tRuleGroupGlueNavList(void)
 	        	while((field2=mysql_fetch_row(res2)))
 			{
 				printf(" &nbsp; <a class=darkLink href=unxsSPS.cgi?gcFunction=tAddress"
-				"&uAddress=%s>%s/%s</a><br>\n",
+				"&uAddress=%s>%s:%s</a><br>\n",
 				field2[0],field2[1],field2[2]);
 			}
 		}
@@ -590,12 +611,36 @@ void tRuleGroupGlueNavList(void)
 }//void tRuleGroupGlueNavList(void)
 
 
+//Routing simulation
+typedef struct {
+	char cPrefix[32];
+	char cGatewayIP[32];
+	unsigned uPort;
+	unsigned uRule;
+} structRule;
+
+
 void tRuleNowNavList(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
+	structRule sRuleTest[32];
+	register int i;
+	if(cTestDID[0])
+	{
+		for(i=0;i<32;i++)
+		{
+			sRuleTest[i].cGatewayIP[0]=0;
+			sRuleTest[i].cPrefix[0]=0;
+			sRuleTest[i].uPort=0;
+			sRuleTest[i].uRule=0;
+		}
+	}
+
 	if(cTestNow[0])
-	sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
+		sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
 			" FROM tRule,tGroupGlue,tTimeInterval"
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
@@ -605,9 +650,9 @@ void tRuleNowNavList(void)
 			" AND IF(tTimeInterval.cStartTime='',1,TIME('%1$s')>=tTimeInterval.cStartTime)"
 			" AND IF(tTimeInterval.cEndTime='',1,TIME('%1$s')<=tTimeInterval.cEndTime)"
 			" AND INSTR(tTimeInterval.cDaysOfWeek,DAY('%1$s'))>0"
-			" ORDER BY tRule.uPriority DESC",cTestNow);
+			" ORDER BY tRule.uPriority",cTestNow);
 	else
-	sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
+		sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
 			" FROM tRule,tGroupGlue,tTimeInterval"
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
@@ -617,7 +662,7 @@ void tRuleNowNavList(void)
 			" AND IF(tTimeInterval.cStartTime='',1,TIME(NOW())>=tTimeInterval.cStartTime)"
 			" AND IF(tTimeInterval.cEndTime='',1,TIME(NOW())<=tTimeInterval.cEndTime)"
 			" AND INSTR(tTimeInterval.cDaysOfWeek,DAY(NOW()))>0"
-			" ORDER BY tRule.uPriority DESC");
+			" ORDER BY tRule.uPriority");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -635,14 +680,62 @@ void tRuleNowNavList(void)
         		printf("<p><u>Rules that are active now()</u><br>\n");
 
 		unsigned uPriority;
+		unsigned uCount=0;
 	        while((field=mysql_fetch_row(res)))
 		{
 			sscanf(field[3],"%u",&uPriority);
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tRule"
 				"&uRule=%s>[%3.3u] %s (%s)</a><br>\n",
 				field[0],uPriority,field[1],field[2]);
+			if(cTestDID[0])
+			{
+				sprintf(gcQuery,"SELECT DISTINCT tAddress.cIP,tAddress.uPort"
+					" FROM tRule,tGroupGlue,tGateway,tAddress"
+					" WHERE tGateway.uGateway=tGroupGlue.uKey"
+					" AND tGroupGlue.uGroup=tRule.uRule"
+					" AND tRule.uRule=%s"
+					" AND tAddress.uGateway=tGateway.uGateway"
+					" AND tGroupGlue.uGroupType=2"//GW type
+					" AND tGateway.uGatewayType=2"//PSTN Outbound
+					" ORDER BY tGroupGlue.uGroupGlue,tAddress.uPriority"
+							,field[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+        				printf("<p><u>tRuleNowNavList nested query</u><br>\n");
+                			printf("%s",mysql_error(&gMysql));
+                			return;
+				}
+				res2=mysql_store_result(&gMysql);
+				while((field2=mysql_fetch_row(res2)))
+				{
+					if(uCount>31) break;
+					sprintf(sRuleTest[uCount].cGatewayIP,"%.31s",field2[0]);
+					sprintf(sRuleTest[uCount].cPrefix,"%.31s",field[2]);
+					sscanf(field2[1],"%u",&sRuleTest[uCount].uPort);
+					sscanf(field[0],"%u",&sRuleTest[uCount].uRule);
+					uCount++;
+				}
+				mysql_free_result(res2);
+			}
 		}
 	}
         mysql_free_result(res);
 
-}//void tRuleNavList(void)
+	if(cTestDID[0])
+	{
+		char *cMatch;
+	
+        	printf("<p><u>Routing simulation for %s</u><br>\n",cTestDID);
+		for(i=0;i<32 && sRuleTest[i].cGatewayIP[0];i++)
+		{
+			if(!strncmp(cTestDID,sRuleTest[i].cPrefix,strlen(sRuleTest[i].cPrefix))|| sRuleTest[i].cPrefix[0]=='A')
+				cMatch="match";
+			else
+				cMatch="";
+			printf("%2.2d uRule=%u cPrefix=%s %s:%u %s<br>\n",
+				i,sRuleTest[i].uRule,sRuleTest[i].cPrefix,sRuleTest[i].cGatewayIP,sRuleTest[i].uPort,cMatch);
+		}
+	}
+
+}//void tRuleNowNavList(void)
