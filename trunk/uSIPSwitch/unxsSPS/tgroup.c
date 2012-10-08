@@ -262,7 +262,7 @@ void tGroupInput(unsigned uMode)
 	
 	//uGroup uRADType=1001
 	OpenRow(LANG_FL_tGroup_uGroup,"black");
-	printf("<input title='%s' type=text name=uGroup value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uGroup id=uGroup value='%u' size=16 maxlength=10 "
 		,LANG_FT_tGroup_uGroup,uGroup);
 	if(guPermLevel>=20 && uMode)
 	{
@@ -271,11 +271,11 @@ void tGroupInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uGroup value='%u' >\n",uGroup);
+		printf("<input type=hidden name=uGroup id=uGroup value='%u' >\n",uGroup);
 	}
 	//cLabel uRADType=253
 	OpenRow(LANG_FL_tGroup_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cLabel id=cLabel value='%s' size=40 maxlength=32 "
 		,LANG_FT_tGroup_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -284,7 +284,7 @@ void tGroupInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cLabel id=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
 	//uGroupType COLTYPE_SELECTTABLE
 	OpenRow(LANG_FL_tGroup_uGroupType,"black");
@@ -294,27 +294,27 @@ void tGroupInput(unsigned uMode)
 		tTablePullDown("tGroupType;cuGroupTypePullDown","cLabel","cLabel",uGroupType,0);
 	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tGroup_uOwner,"black");
-	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner id=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	//uCreatedBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tGroup_uCreatedBy,"black");
-	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy id=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tGroup_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
+	printf("<input type=hidden name=uCreatedDate id=uCreatedDate value='%lu' >\n",uCreatedDate);
 	//uModBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tGroup_uModBy,"black");
-	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy id=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tGroup_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
+	printf("<input type=hidden name=uModDate id=uModDate value='%lu' >\n",uModDate);
 	printf("</tr>\n");
 
 }//void tGroupInput(unsigned uMode)

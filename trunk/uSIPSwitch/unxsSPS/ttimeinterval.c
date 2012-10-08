@@ -272,7 +272,7 @@ void tTimeIntervalInput(unsigned uMode)
 	
 	//uTimeInterval uRADType=1001
 	OpenRow(LANG_FL_tTimeInterval_uTimeInterval,"black");
-	printf("<input title='%s' type=text name=uTimeInterval value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uTimeInterval id=uTimeInterval value='%u' size=16 maxlength=10 "
 		,LANG_FT_tTimeInterval_uTimeInterval,uTimeInterval);
 	if(guPermLevel>=20 && uMode)
 	{
@@ -281,11 +281,11 @@ void tTimeIntervalInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uTimeInterval value='%u' >\n",uTimeInterval);
+		printf("<input type=hidden name=uTimeInterval id=uTimeInterval value='%u' >\n",uTimeInterval);
 	}
 	//cLabel uRADType=253
 	OpenRow(LANG_FL_tTimeInterval_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cLabel id=cLabel value='%s' size=40 maxlength=32 "
 		,LANG_FT_tTimeInterval_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -294,11 +294,11 @@ void tTimeIntervalInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cLabel id=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
 	//cStartTime uRADType=253
 	OpenRow(LANG_FL_tTimeInterval_cStartTime,"black");
-	printf("<input title='%s' type=text name=cStartTime value='%s' size=40 maxlength=16 "
+	printf("<input title='%s' type=text name=cStartTime id=cStartTime value='%s' size=40 maxlength=16 "
 		,LANG_FT_tTimeInterval_cStartTime,EncodeDoubleQuotes(cStartTime));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -307,11 +307,11 @@ void tTimeIntervalInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cStartTime value='%s'>\n",EncodeDoubleQuotes(cStartTime));
+		printf("<input type=hidden name=cStartTime id=cStartTime value='%s'>\n",EncodeDoubleQuotes(cStartTime));
 	}
 	//cEndTime uRADType=253
 	OpenRow(LANG_FL_tTimeInterval_cEndTime,"black");
-	printf("<input title='%s' type=text name=cEndTime value='%s' size=40 maxlength=16 "
+	printf("<input title='%s' type=text name=cEndTime id=cEndTime value='%s' size=40 maxlength=16 "
 		,LANG_FT_tTimeInterval_cEndTime,EncodeDoubleQuotes(cEndTime));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -320,11 +320,11 @@ void tTimeIntervalInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cEndTime value='%s'>\n",EncodeDoubleQuotes(cEndTime));
+		printf("<input type=hidden name=cEndTime id=cEndTime value='%s'>\n",EncodeDoubleQuotes(cEndTime));
 	}
 	//cStartDate uRADType=253
 	OpenRow(LANG_FL_tTimeInterval_cStartDate,"black");
-	printf("<input title='%s' type=text name=cStartDate value='%s' size=40 maxlength=16 "
+	printf("<input title='%s' type=text name=cStartDate id=cStartDate value='%s' size=40 maxlength=16 "
 		,LANG_FT_tTimeInterval_cStartDate,EncodeDoubleQuotes(cStartDate));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -333,11 +333,11 @@ void tTimeIntervalInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cStartDate value='%s'>\n",EncodeDoubleQuotes(cStartDate));
+		printf("<input type=hidden name=cStartDate id=cStartDate value='%s'>\n",EncodeDoubleQuotes(cStartDate));
 	}
 	//cEndDate uRADType=253
 	OpenRow(LANG_FL_tTimeInterval_cEndDate,"black");
-	printf("<input title='%s' type=text name=cEndDate value='%s' size=40 maxlength=16 "
+	printf("<input title='%s' type=text name=cEndDate id=cEndDate value='%s' size=40 maxlength=16 "
 		,LANG_FT_tTimeInterval_cEndDate,EncodeDoubleQuotes(cEndDate));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -346,11 +346,11 @@ void tTimeIntervalInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cEndDate value='%s'>\n",EncodeDoubleQuotes(cEndDate));
+		printf("<input type=hidden name=cEndDate id=cEndDate value='%s'>\n",EncodeDoubleQuotes(cEndDate));
 	}
 	//cDaysOfWeek uRADType=253
 	OpenRow(LANG_FL_tTimeInterval_cDaysOfWeek,"black");
-	printf("<input title='%s' type=text name=cDaysOfWeek value='%s' size=40 maxlength=16 "
+	printf("<input title='%s' type=text name=cDaysOfWeek id=cDaysOfWeek value='%s' size=40 maxlength=16 "
 		,LANG_FT_tTimeInterval_cDaysOfWeek,EncodeDoubleQuotes(cDaysOfWeek));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -359,31 +359,31 @@ void tTimeIntervalInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cDaysOfWeek value='%s'>\n",EncodeDoubleQuotes(cDaysOfWeek));
+		printf("<input type=hidden name=cDaysOfWeek id=cDaysOfWeek value='%s'>\n",EncodeDoubleQuotes(cDaysOfWeek));
 	}
 	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tTimeInterval_uOwner,"black");
-	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner id=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	//uCreatedBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tTimeInterval_uCreatedBy,"black");
-	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy id=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tTimeInterval_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
+	printf("<input type=hidden name=uCreatedDate id=uCreatedDate value='%lu' >\n",uCreatedDate);
 	//uModBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tTimeInterval_uModBy,"black");
-	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy id=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tTimeInterval_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
+	printf("<input type=hidden name=uModDate id=uModDate value='%lu' >\n",uModDate);
 	printf("</tr>\n");
 
 }//void tTimeIntervalInput(unsigned uMode)

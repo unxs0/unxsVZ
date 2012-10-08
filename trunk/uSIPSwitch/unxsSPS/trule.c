@@ -264,7 +264,7 @@ void tRuleInput(unsigned uMode)
 	
 	//uRule uRADType=1001
 	OpenRow(LANG_FL_tRule_uRule,"black");
-	printf("<input title='%s' type=text name=uRule value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uRule id=uRule value='%u' size=16 maxlength=10 "
 		,LANG_FT_tRule_uRule,uRule);
 	if(guPermLevel>=20 && uMode)
 	{
@@ -273,11 +273,11 @@ void tRuleInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uRule value='%u' >\n",uRule);
+		printf("<input type=hidden name=uRule id=uRule value='%u' >\n",uRule);
 	}
 	//cLabel uRADType=253
 	OpenRow(LANG_FL_tRule_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cLabel id=cLabel value='%s' size=40 maxlength=32 "
 		,LANG_FT_tRule_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -286,11 +286,11 @@ void tRuleInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cLabel id=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
 	//uPriority uRADType=3
 	OpenRow(LANG_FL_tRule_uPriority,"black");
-	printf("<input title='%s' type=text name=uPriority value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uPriority id=uPriority value='%u' size=16 maxlength=10 "
 		,LANG_FT_tRule_uPriority,uPriority);
 	if(guPermLevel>=10 && uMode)
 	{
@@ -299,11 +299,11 @@ void tRuleInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uPriority value='%u' >\n",uPriority);
+		printf("<input type=hidden name=uPriority id=uPriority value='%u' >\n",uPriority);
 	}
 	//cPrefix uRADType=253
 	OpenRow(LANG_FL_tRule_cPrefix,"black");
-	printf("<input title='%s' type=text name=cPrefix value='%s' size=40 maxlength=31 "
+	printf("<input title='%s' type=text name=cPrefix id=cPrefix value='%s' size=40 maxlength=31 "
 		,LANG_FT_tRule_cPrefix,EncodeDoubleQuotes(cPrefix));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -312,11 +312,11 @@ void tRuleInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cPrefix value='%s'>\n",EncodeDoubleQuotes(cPrefix));
+		printf("<input type=hidden name=cPrefix id=cPrefix value='%s'>\n",EncodeDoubleQuotes(cPrefix));
 	}
 	//cComment uRADType=253
 	OpenRow(LANG_FL_tRule_cComment,"black");
-	printf("<input title='%s' type=text name=cComment value='%s' size=40 maxlength=31 "
+	printf("<input title='%s' type=text name=cComment id=cComment value='%s' size=40 maxlength=31 "
 		,LANG_FT_tRule_cComment,EncodeDoubleQuotes(cComment));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -325,31 +325,31 @@ void tRuleInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cComment value='%s'>\n",EncodeDoubleQuotes(cComment));
+		printf("<input type=hidden name=cComment id=cComment value='%s'>\n",EncodeDoubleQuotes(cComment));
 	}
 	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tRule_uOwner,"black");
-	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner id=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	//uCreatedBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tRule_uCreatedBy,"black");
-	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy id=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tRule_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
+	printf("<input type=hidden name=uCreatedDate id=uCreatedDate value='%lu' >\n",uCreatedDate);
 	//uModBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tRule_uModBy,"black");
-	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy id=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tRule_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
+	printf("<input type=hidden name=uModDate id=uModDate value='%lu' >\n",uModDate);
 	printf("</tr>\n");
 
 }//void tRuleInput(unsigned uMode)

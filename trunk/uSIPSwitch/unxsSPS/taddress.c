@@ -282,7 +282,7 @@ void tAddressInput(unsigned uMode)
 	
 	//uAddress uRADType=1001
 	OpenRow(LANG_FL_tAddress_uAddress,"black");
-	printf("<input title='%s' type=text name=uAddress value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uAddress id=uAddress value='%u' size=16 maxlength=10 "
 		,LANG_FT_tAddress_uAddress,uAddress);
 	if(guPermLevel>=20 && uMode)
 	{
@@ -291,11 +291,11 @@ void tAddressInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uAddress value='%u' >\n",uAddress);
+		printf("<input type=hidden name=uAddress id=uAddress value='%u' >\n",uAddress);
 	}
 	//cLabel uRADType=253
 	OpenRow(LANG_FL_tAddress_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=64 "
+	printf("<input title='%s' type=text name=cLabel id=cLabel value='%s' size=40 maxlength=64 "
 		,LANG_FT_tAddress_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -304,11 +304,11 @@ void tAddressInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cLabel id=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
 	//cIP uRADType=253
 	OpenRow(LANG_FL_tAddress_cIP,"black");
-	printf("<input title='%s' type=text name=cIP value='%s' size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cIP id=cIP value='%s' size=40 maxlength=32 "
 		,LANG_FT_tAddress_cIP,EncodeDoubleQuotes(cIP));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -317,11 +317,11 @@ void tAddressInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cIP value='%s'>\n",EncodeDoubleQuotes(cIP));
+		printf("<input type=hidden name=cIP id=cIP value='%s'>\n",EncodeDoubleQuotes(cIP));
 	}
 	//uPort uRADType=3
 	OpenRow(LANG_FL_tAddress_uPort,"black");
-	printf("<input title='%s' type=text name=uPort value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uPort id=uPort value='%u' size=16 maxlength=10 "
 		,LANG_FT_tAddress_uPort,uPort);
 	if(guPermLevel>=0 && uMode)
 	{
@@ -330,11 +330,11 @@ void tAddressInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uPort value='%u' >\n",uPort);
+		printf("<input type=hidden name=uPort id=uPort value='%u' >\n",uPort);
 	}
 	//uPriority uRADType=3
 	OpenRow(LANG_FL_tAddress_uPriority,"black");
-	printf("<input title='%s' type=text name=uPriority value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uPriority id=uPriority value='%u' size=16 maxlength=10 "
 		,LANG_FT_tAddress_uPriority,uPriority);
 	if(guPermLevel>=0 && uMode)
 	{
@@ -343,11 +343,11 @@ void tAddressInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uPriority value='%u' >\n",uPriority);
+		printf("<input type=hidden name=uPriority id=uPriority value='%u' >\n",uPriority);
 	}
 	//uWeight uRADType=3
 	OpenRow(LANG_FL_tAddress_uWeight,"black");
-	printf("<input title='%s' type=text name=uWeight value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uWeight id=uWeight value='%u' size=16 maxlength=10 "
 		,LANG_FT_tAddress_uWeight,uWeight);
 	if(guPermLevel>=0 && uMode)
 	{
@@ -356,12 +356,12 @@ void tAddressInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uWeight value='%u' >\n",uWeight);
+		printf("<input type=hidden name=uWeight id=uWeight value='%u' >\n",uWeight);
 	}
 	//uPBX COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tAddress_uPBX,"black");
 	if(guPermLevel>=0 && uMode)
-		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uPBX value='%u' >\n",LANG_FT_tAddress_uPBX,uPBX);
+		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uPBX id=uPBX value='%u' >\n",LANG_FT_tAddress_uPBX,uPBX);
 	else
 		printf("<input title='%s' type=text value='%s' size=40 disabled><input type=hidden name='uPBX' value='%u' >\n",LANG_FT_tAddress_uPBX,ForeignKey("tPBX","cLabel",uPBX),uPBX);
 	//uGateway COLTYPE_SELECTTABLE
@@ -372,27 +372,27 @@ void tAddressInput(unsigned uMode)
 		tTablePullDown("tGateway;cuGatewayPullDown","cLabel","cLabel",uGateway,0);
 	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tAddress_uOwner,"black");
-	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner id=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	//uCreatedBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tAddress_uCreatedBy,"black");
-	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy id=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tAddress_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
+	printf("<input type=hidden name=uCreatedDate id=uCreatedDate value='%lu' >\n",uCreatedDate);
 	//uModBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tAddress_uModBy,"black");
-	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy id=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tAddress_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
+	printf("<input type=hidden name=uModDate id=uModDate value='%lu' >\n",uModDate);
 	printf("</tr>\n");
 
 }//void tAddressInput(unsigned uMode)

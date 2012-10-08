@@ -300,7 +300,7 @@ void tPBXInput(unsigned uMode)
 	
 	//uPBX uRADType=1001
 	OpenRow(LANG_FL_tPBX_uPBX,"black");
-	printf("<input title='%s' type=text name=uPBX value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uPBX id=uPBX value='%u' size=16 maxlength=10 "
 		,LANG_FT_tPBX_uPBX,uPBX);
 	if(guPermLevel>=20 && uMode)
 	{
@@ -309,11 +309,11 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uPBX value='%u' >\n",uPBX);
+		printf("<input type=hidden name=uPBX id=uPBX value='%u' >\n",uPBX);
 	}
 	//cLabel uRADType=253
 	OpenRow(LANG_FL_tPBX_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cLabel id=cLabel value='%s' size=40 maxlength=32 "
 		,LANG_FT_tPBX_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -322,11 +322,11 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cLabel id=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
 	//cHostname uRADType=253
 	OpenRow(LANG_FL_tPBX_cHostname,"black");
-	printf("<input title='%s' type=text name=cHostname value='%s' size=40 maxlength=63 "
+	printf("<input title='%s' type=text name=cHostname id=cHostname value='%s' size=40 maxlength=63 "
 		,LANG_FT_tPBX_cHostname,EncodeDoubleQuotes(cHostname));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -335,11 +335,11 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cHostname value='%s'>\n",EncodeDoubleQuotes(cHostname));
+		printf("<input type=hidden name=cHostname id=cHostname value='%s'>\n",EncodeDoubleQuotes(cHostname));
 	}
 	//cAttributes uRADType=253
 	OpenRow(LANG_FL_tPBX_cAttributes,"black");
-	printf("<input title='%s' type=text name=cAttributes value='%s' size=40 maxlength=63 "
+	printf("<input title='%s' type=text name=cAttributes id=cAttributes value='%s' size=40 maxlength=63 "
 		,LANG_FT_tPBX_cAttributes,EncodeDoubleQuotes(cAttributes));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -348,11 +348,11 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cAttributes value='%s'>\n",EncodeDoubleQuotes(cAttributes));
+		printf("<input type=hidden name=cAttributes id=cAttributes value='%s'>\n",EncodeDoubleQuotes(cAttributes));
 	}
 	//cDescription uRADType=253
 	OpenRow(LANG_FL_tPBX_cDescription,"black");
-	printf("<input title='%s' type=text name=cDescription value='%s' size=40 maxlength=63 "
+	printf("<input title='%s' type=text name=cDescription id=cDescription value='%s' size=40 maxlength=63 "
 		,LANG_FT_tPBX_cDescription,EncodeDoubleQuotes(cDescription));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -361,7 +361,7 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cDescription value='%s'>\n",EncodeDoubleQuotes(cDescription));
+		printf("<input type=hidden name=cDescription id=cDescription value='%s'>\n",EncodeDoubleQuotes(cDescription));
 	}
 	//uStatus COLTYPE_SELECTTABLE
 	OpenRow(LANG_FL_tPBX_uStatus,"black");
@@ -371,7 +371,7 @@ void tPBXInput(unsigned uMode)
 		tTablePullDown("tStatus;cuStatusPullDown","cLabel","cLabel",uStatus,0);
 	//uLines uRADType=3
 	OpenRow(LANG_FL_tPBX_uLines,"black");
-	printf("<input title='%s' type=text name=uLines value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uLines id=uLines value='%u' size=16 maxlength=10 "
 		,LANG_FT_tPBX_uLines,uLines);
 	if(guPermLevel>=10 && uMode)
 	{
@@ -380,11 +380,11 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uLines value='%u' >\n",uLines);
+		printf("<input type=hidden name=uLines id=uLines value='%u' >\n",uLines);
 	}
 	//uStrip uRADType=3
 	OpenRow(LANG_FL_tPBX_uStrip,"black");
-	printf("<input title='%s' type=text name=uStrip value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uStrip id=uStrip value='%u' size=16 maxlength=10 "
 		,LANG_FT_tPBX_uStrip,uStrip);
 	if(guPermLevel>=10 && uMode)
 	{
@@ -393,11 +393,11 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uStrip value='%u' >\n",uStrip);
+		printf("<input type=hidden name=uStrip id=uStrip value='%u' >\n",uStrip);
 	}
 	//cPrefix uRADType=253
 	OpenRow(LANG_FL_tPBX_cPrefix,"black");
-	printf("<input title='%s' type=text name=cPrefix value='%s' size=40 maxlength=31 "
+	printf("<input title='%s' type=text name=cPrefix id=cPrefix value='%s' size=40 maxlength=31 "
 		,LANG_FT_tPBX_cPrefix,EncodeDoubleQuotes(cPrefix));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -406,7 +406,7 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cPrefix value='%s'>\n",EncodeDoubleQuotes(cPrefix));
+		printf("<input type=hidden name=cPrefix id=cPrefix value='%s'>\n",EncodeDoubleQuotes(cPrefix));
 	}
 	//uCluster COLTYPE_SELECTTABLE
 	OpenRow(LANG_FL_tPBX_uCluster,"black");
@@ -416,7 +416,7 @@ void tPBXInput(unsigned uMode)
 		tTablePullDown("tCluster;cuClusterPullDown","cLabel","cLabel",uCluster,0);
 	//cComment uRADType=253
 	OpenRow(LANG_FL_tPBX_cComment,"black");
-	printf("<input title='%s' type=text name=cComment value='%s' size=40 maxlength=63 "
+	printf("<input title='%s' type=text name=cComment id=cComment value='%s' size=40 maxlength=63 "
 		,LANG_FT_tPBX_cComment,EncodeDoubleQuotes(cComment));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -425,31 +425,31 @@ void tPBXInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cComment value='%s'>\n",EncodeDoubleQuotes(cComment));
+		printf("<input type=hidden name=cComment id=cComment value='%s'>\n",EncodeDoubleQuotes(cComment));
 	}
 	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tPBX_uOwner,"black");
-	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner id=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	//uCreatedBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tPBX_uCreatedBy,"black");
-	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy id=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tPBX_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
+	printf("<input type=hidden name=uCreatedDate id=uCreatedDate value='%lu' >\n",uCreatedDate);
 	//uModBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tPBX_uModBy,"black");
-	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy id=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tPBX_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
+	printf("<input type=hidden name=uModDate id=uModDate value='%lu' >\n",uModDate);
 	printf("</tr>\n");
 
 }//void tPBXInput(unsigned uMode)

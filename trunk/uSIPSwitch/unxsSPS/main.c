@@ -1259,7 +1259,7 @@ void CloseFieldSet(void)
 
 void OpenRow(const char *cFieldLabel, const char *cColor)
 {
-	printf("<tr><td width=20%% valign=top><font color=%.32s>%.32s</td><td>",cColor,cFieldLabel);
+	printf("<tr><td width=20%% valign=top><label for=%.32s><font color=%.32s>%.32s</font></label></td><td>",cFieldLabel,cColor,cFieldLabel);
 
 }//void OpenRow()
 
