@@ -284,7 +284,7 @@ void tDIDInput(unsigned uMode)
 	
 	//uDID uRADType=1001
 	OpenRow(LANG_FL_tDID_uDID,"black");
-	printf("<input title='%s' type=text name=uDID value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uDID id=uDID value='%u' size=16 maxlength=10 "
 		,LANG_FT_tDID_uDID,uDID);
 	if(guPermLevel>=20 && uMode)
 	{
@@ -293,11 +293,11 @@ void tDIDInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uDID value='%u' >\n",uDID);
+		printf("<input type=hidden name=uDID id=uDID value='%u' >\n",uDID);
 	}
 	//cLabel uRADType=253
 	OpenRow(LANG_FL_tDID_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value='%s' size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cLabel id=cLabel value='%s' size=40 maxlength=32 "
 		,LANG_FT_tDID_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -306,11 +306,11 @@ void tDIDInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
+		printf("<input type=hidden name=cLabel id=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
 	//cDID uRADType=253
 	OpenRow(LANG_FL_tDID_cDID,"black");
-	printf("<input title='%s' type=text name=cDID value='%s' size=40 maxlength=31 "
+	printf("<input title='%s' type=text name=cDID id=cDID value='%s' size=40 maxlength=31 "
 		,LANG_FT_tDID_cDID,EncodeDoubleQuotes(cDID));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -319,12 +319,12 @@ void tDIDInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cDID value='%s'>\n",EncodeDoubleQuotes(cDID));
+		printf("<input type=hidden name=cDID id=cDID value='%s'>\n",EncodeDoubleQuotes(cDID));
 	}
 	//uPBX COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tDID_uPBX,"black");
 	if(guPermLevel>=10 && uMode)
-		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uPBX value='%u' >\n",LANG_FT_tDID_uPBX,uPBX);
+		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uPBX id=uPBX value='%u' >\n",LANG_FT_tDID_uPBX,uPBX);
 	else
 		printf("<input title='%s' type=text value='%s' size=0 disabled><input type=hidden name='uPBX' value='%u' >\n",LANG_FT_tDID_uPBX,ForeignKey("tPBX","cLabel",uPBX),uPBX);
 	//uCarrier COLTYPE_SELECTTABLE
@@ -341,7 +341,7 @@ void tDIDInput(unsigned uMode)
 		tTablePullDown("tCluster;cuClusterPullDown","cLabel","cLabel",uCluster,0);
 	//cComment uRADType=253
 	OpenRow(LANG_FL_tDID_cComment,"black");
-	printf("<input title='%s' type=text name=cComment value='%s' size=40 maxlength=31 "
+	printf("<input title='%s' type=text name=cComment id=cComment value='%s' size=40 maxlength=31 "
 		,LANG_FT_tDID_cComment,EncodeDoubleQuotes(cComment));
 	if(guPermLevel>=10 && uMode)
 	{
@@ -350,31 +350,31 @@ void tDIDInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cComment value='%s'>\n",EncodeDoubleQuotes(cComment));
+		printf("<input type=hidden name=cComment id=cComment value='%s'>\n",EncodeDoubleQuotes(cComment));
 	}
 	//uOwner COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tDID_uOwner,"black");
-	printf("%s<input type=hidden name=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	printf("%s<input type=hidden name=uOwner id=uOwner value='%u' >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	//uCreatedBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tDID_uCreatedBy,"black");
-	printf("%s<input type=hidden name=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	printf("%s<input type=hidden name=uCreatedBy id=uCreatedBy value='%u' >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	//uCreatedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tDID_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uCreatedDate value='%lu' >\n",uCreatedDate);
+	printf("<input type=hidden name=uCreatedDate id=uCreatedDate value='%lu' >\n",uCreatedDate);
 	//uModBy COLTYPE_FOREIGNKEY
 	OpenRow(LANG_FL_tDID_uModBy,"black");
-	printf("%s<input type=hidden name=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	printf("%s<input type=hidden name=uModBy id=uModBy value='%u' >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	//uModDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
 	OpenRow(LANG_FL_tDID_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value='%lu' >\n",uModDate);
+	printf("<input type=hidden name=uModDate id=uModDate value='%lu' >\n",uModDate);
 	printf("</tr>\n");
 
 }//void tDIDInput(unsigned uMode)

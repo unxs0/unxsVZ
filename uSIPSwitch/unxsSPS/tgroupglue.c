@@ -245,7 +245,7 @@ void tGroupGlueInput(unsigned uMode)
 	
 	//uGroupGlue uRADType=1001
 	OpenRow(LANG_FL_tGroupGlue_uGroupGlue,"black");
-	printf("<input title='%s' type=text name=uGroupGlue value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uGroupGlue id=uGroupGlue value='%u' size=16 maxlength=10 "
 		,LANG_FT_tGroupGlue_uGroupGlue,uGroupGlue);
 	if(guPermLevel>=20 && uMode)
 	{
@@ -254,7 +254,7 @@ void tGroupGlueInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uGroupGlue value='%u' >\n",uGroupGlue);
+		printf("<input type=hidden name=uGroupGlue id=uGroupGlue value='%u' >\n",uGroupGlue);
 	}
 	//uGroupType COLTYPE_SELECTTABLE
 	OpenRow(LANG_FL_tGroupGlue_uGroupType,"black");
@@ -264,7 +264,7 @@ void tGroupGlueInput(unsigned uMode)
 		tTablePullDown("tGroupType;cuGroupTypePullDown","cLabel","cLabel",uGroupType,0);
 	//uGroup uRADType=3
 	OpenRow(LANG_FL_tGroupGlue_uGroup,"black");
-	printf("<input title='%s' type=text name=uGroup value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uGroup id=uGroup value='%u' size=16 maxlength=10 "
 		,LANG_FT_tGroupGlue_uGroup,uGroup);
 	if(guPermLevel>=10 && uMode)
 	{
@@ -273,11 +273,11 @@ void tGroupGlueInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uGroup value='%u' >\n",uGroup);
+		printf("<input type=hidden name=uGroup id=uGroup value='%u' >\n",uGroup);
 	}
 	//uKey uRADType=3
 	OpenRow(LANG_FL_tGroupGlue_uKey,"black");
-	printf("<input title='%s' type=text name=uKey value='%u' size=16 maxlength=10 "
+	printf("<input title='%s' type=text name=uKey id=uKey value='%u' size=16 maxlength=10 "
 		,LANG_FT_tGroupGlue_uKey,uKey);
 	if(guPermLevel>=10 && uMode)
 	{
@@ -286,7 +286,7 @@ void tGroupGlueInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uKey value='%u' >\n",uKey);
+		printf("<input type=hidden name=uKey id=uKey value='%u' >\n",uKey);
 	}
 	printf("</tr>\n");
 
