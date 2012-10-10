@@ -21,6 +21,7 @@ HELP
 
 //Global vars
 MYSQL gMysql;
+MYSQL gMysqlExt;
 char gcQuery[8192]={""};
 char *gcBuildInfo="$Id: unxsrad.c 2110 2012-09-17 21:23:47Z Gary $";
 static FILE *gLfp=NULL;//log file
@@ -31,6 +32,10 @@ int main(int iArgc, char *cArgv[]);
 void ProcessJobQueue(void);
 void DoSomeJob(unsigned uJob,char const *cJobData);
 void logfileLine(const char *cFunction,const char *cLogline);
+void LoadPBXsFromOpenSIPS(void);
+void GetConfiguration(const char *cName,char *cValue,unsigned ucValueLen,unsigned uServer);
+void TextConnectOpenSIPSDb(void);
+void LoadDIDsFromOpenSIPS(void);
 
 //external prototypes
 unsigned TextConnectDb(void); //mysqlconnect.c
@@ -62,10 +67,14 @@ int main(int iArgc, char *cArgv[])
 	{
 		if(!strcmp(cArgv[1],"ProcessJobQueue"))
 			ProcessJobQueue();
+		else if(!strcmp(cArgv[1],"LoadPBXsFromOpenSIPS"))
+			LoadPBXsFromOpenSIPS();
+		else if(!strcmp(cArgv[1],"LoadDIDsFromOpenSIPS"))
+			LoadDIDsFromOpenSIPS();
 	}
 	else if(1)
 	{
-		printf("usage: %s ProcessJobQueue\n",cArgv[0]);
+		printf("usage: %s ProcessJobQueue LoadPBXsFromOpenSIPS LoadDIDsFromOpenSIPS\n",cArgv[0]);
 	}
 	fclose(gLfp);
 	mysql_close(&gMysql);
@@ -159,3 +168,188 @@ void logfileLine(const char *cFunction,const char *cLogline)
 	fflush(gLfp);
 
 }//void logfileLine(char *cLogline)
+
+
+void LoadPBXsFromOpenSIPS(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	/*
+	char cOpenSIPS_Server[64]={""};
+	char cOpenSIPS_Db[64]={""};
+	char cOpenSIPS_Passwd[64]={""};
+	GetConfiguration("cOpenSIPS_Server",cOpenSIPS_Server,63,0);
+	GetConfiguration("cOpenSIPS_Db",cOpenSIPS_Db,63,0);
+	GetConfiguration("cOpenSIPS_Passwd",cOpenSIPS_Db,63,0);
+	*/
+
+	logfileLine("LoadPBXsFromOpenSIPS","start");
+
+	TextConnectOpenSIPSDb();
+
+	sprintf(gcQuery,"SELECT address,attrs,description,gwid FROM dr_gateways WHERE type=1");
+	mysql_query(&gMysqlExt,gcQuery);
+	if(mysql_errno(&gMysqlExt))
+	{
+		logfileLine("LoadPBXsFromOpenSIPS",mysql_error(&gMysqlExt));
+		return;
+	}
+        res=mysql_store_result(&gMysqlExt);
+	while((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		char cLabel[32]={""};
+		unsigned uLines=0;
+
+		printf("%s %s %s\n",field[0],field[1],field[2]);
+
+		sprintf(cLabel,"%.31s",field[0]);
+		if((cp=strchr(cLabel,'.'))) *cp=0;
+
+		if((cp=strchr(field[1],'|')))
+			sscanf(cp+1,"%u",&uLines);
+
+		sprintf(gcQuery,"INSERT INTO tPBX SET uPBX=%s,cLabel='%s',cHostname='%s',cAttributes='%s',cDescription='%s'"
+				",uLines=%u"
+				",uCluster=1"
+				",uStatus=1"
+				",cComment='LoadPBXsFromOpenSIPS()'"
+				",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				field[3],cLabel,field[0],field[1],field[2],
+				uLines);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("LoadPBXsFromOpenSIPS",mysql_error(&gMysql));
+			return;
+		}
+	}
+	mysql_free_result(res);
+
+	logfileLine("LoadPBXsFromOpenSIPS","end");
+
+}//void LoadPBXsFromOpenSIPS(void)
+
+
+void GetConfiguration(const char *cName,char *cValue,unsigned ucValueLen,unsigned uServer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+        char cQuery[256];
+	char cExtra[64]={""};
+	char cFormat[32]={"%.255s"};
+
+        sprintf(cQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='%.32s'",cName);
+	if(uServer)
+	{
+		sprintf(cExtra," AND uServer=%u",uServer);
+		strcat(cQuery,cExtra);
+	}
+        mysql_query(&gMysql,cQuery);
+        if(mysql_errno(&gMysql))
+	{
+		logfileLine("GetConfiguration",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if(ucValueLen)
+        	sprintf(cFormat,"%%.%us",ucValueLen);
+		
+        if((field=mysql_fetch_row(res)))
+        	sprintf(cValue,cFormat,field[0]);
+        mysql_free_result(res);
+
+}//void GetConfiguration()
+
+
+void TextConnectOpenSIPSDb(void)
+{
+
+        mysql_init(&gMysqlExt);
+        if (!mysql_real_connect(&gMysqlExt,NULL,"opensips","wsxedc","opensips",0,NULL,0))
+	{
+		logfileLine("TextConnectOpenSIPSDb","mysql_real_connect()");
+		exit(3);
+	}
+
+}//TextConnectOpenSIPSDb()
+
+
+void LoadDIDsFromOpenSIPS(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
+	/*
+	char cOpenSIPS_Server[64]={""};
+	char cOpenSIPS_Db[64]={""};
+	char cOpenSIPS_Passwd[64]={""};
+	GetConfiguration("cOpenSIPS_Server",cOpenSIPS_Server,63,0);
+	GetConfiguration("cOpenSIPS_Db",cOpenSIPS_Db,63,0);
+	GetConfiguration("cOpenSIPS_Passwd",cOpenSIPS_Db,63,0);
+	*/
+
+	logfileLine("LoadDIDsFromOpenSIPS","start");
+
+	TextConnectOpenSIPSDb();
+
+/*
++--------+---------+-------------+---------+----------+---------+--------+-------+-------------------------------------+
+| ruleid | groupid | prefix      | timerec | priority | routeid | gwlist | attrs | description                         |
++--------+---------+-------------+---------+----------+---------+--------+-------+-------------------------------------+
+|   7243 | 1       | 15122982130 |         |        0 |         | 388    | NULL  | Bandwidth |Reseller San Antonio GCS |
+|   7244 | 1       | 15122982131 |         |        0 |         | 388    | NULL  | Bandwidth |Reseller San Antonio GCS |
+|   7242 | 1       | 12063169001 |         |        0 |         | 263    | NULL  | Americas Locksmith | Bandwidth      |
+|     10 | 1       | 5084844730  |         |        0 | 0       | 19     |       | Nine Technologies                   |
+|     11 | 1       | 5084844731  |         |        0 | 0       | 19     |       | Nine Technologies                   |
+*/
+
+
+	sprintf(gcQuery,"SELECT prefix,gwlist,description FROM dr_rules"
+			" WHERE groupid=1"
+			" AND gwlist IS NOT NULL"
+			" AND gwlist!=''");
+	mysql_query(&gMysqlExt,gcQuery);
+	if(mysql_errno(&gMysqlExt))
+	{
+		logfileLine("LoadDIDsFromOpenSIPS",mysql_error(&gMysqlExt));
+		return;
+	}
+        res=mysql_store_result(&gMysqlExt);
+	while((field=mysql_fetch_row(res)))
+	{
+		unsigned uCarrier=0;
+
+		printf("%s %s %s\n",field[0],field[1],field[2]);
+
+		sprintf(gcQuery,"SELECT uCarrier FROM tCarrier WHERE INSTR('%s',cLabel)>0",field[2]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("LoadDIDsFromOpenSIPS",mysql_error(&gMysql));
+			return;
+		}
+        	res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+			sscanf(field2[0],"%u",&uCarrier);
+		sprintf(gcQuery,"INSERT INTO tDID SET cLabel='%s',cDID='%s',uPBX=%s"
+				",cComment='%s -ldfo'"
+				",uCluster=1"
+				",uCarrier=%u"
+				",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				field[0],field[0],field[1],field[2],uCarrier);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",gcQuery);
+			logfileLine("LoadDIDsFromOpenSIPS",mysql_error(&gMysql));
+		}
+	}
+	mysql_free_result(res);
+
+	logfileLine("LoadDIDsFromOpenSIPS","end");
+
+}//void LoadDIDsFromOpenSIPS(void)
+
