@@ -649,7 +649,7 @@ void tRuleNowNavList(void)
 			" AND IF(tTimeInterval.cEndDate='',1,DATE('%1$s')<=tTimeInterval.cEndDate)"
 			" AND IF(tTimeInterval.cStartTime='',1,TIME('%1$s')>=tTimeInterval.cStartTime)"
 			" AND IF(tTimeInterval.cEndTime='',1,TIME('%1$s')<=tTimeInterval.cEndTime)"
-			" AND INSTR(tTimeInterval.cDaysOfWeek,DAY('%1$s'))>0"
+			" AND INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK('%1$s'))>0"
 			" ORDER BY tRule.uPriority",cTestNow);
 	else
 		sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
@@ -661,7 +661,7 @@ void tRuleNowNavList(void)
 			" AND IF(tTimeInterval.cEndDate='',1,DATE(NOW())<=tTimeInterval.cEndDate)"
 			" AND IF(tTimeInterval.cStartTime='',1,TIME(NOW())>=tTimeInterval.cStartTime)"
 			" AND IF(tTimeInterval.cEndTime='',1,TIME(NOW())<=tTimeInterval.cEndTime)"
-			" AND INSTR(tTimeInterval.cDaysOfWeek,DAY(NOW()))>0"
+			" AND INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK(NOW()))>0"
 			" ORDER BY tRule.uPriority");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))

@@ -26,7 +26,7 @@ void AddDIDs(char const *cCluster);
 void AddGWs(char const *cCluster);
 void logfileLine(const char *cFunction,const char *cLogline);
 int iSetupAndTestMemcached(void);
-void AddOutbound(char const *cCluster);
+void AddRules(char const *cCluster);
 
 static FILE *gLfp=NULL;
 memcached_st *gsMemc;
@@ -64,9 +64,9 @@ int main(int iArgc, char *cArgv[])
 			AddGWs(cArgv[2]);
 			goto CommonExit;
 		}
-		else if(!strncmp(cArgv[1],"AddOutbound",10))
+		else if(!strncmp(cArgv[1],"AddRules",8))
 		{
-			AddOutbound(cArgv[2]);
+			AddRules(cArgv[2]);
 			goto CommonExit;
 		}
 		else if(!strncmp(cArgv[1],"AddAll",6))
@@ -74,12 +74,12 @@ int main(int iArgc, char *cArgv[])
 			AddPBXs(cArgv[2]);
 			AddDIDs(cArgv[2]);
 			AddGWs(cArgv[2]);
-			AddOutbound(cArgv[2]);
+			AddRules(cArgv[2]);
 			goto CommonExit;
 		}
 	}
 
-	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddOutbound, AddRules, AddAll <cCluster> [silent]\n",gcProgram);
+	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddRules, AddAll <cCluster> [silent]\n",gcProgram);
 
 CommonExit:
 	mysql_close(&gMysql);
@@ -89,18 +89,23 @@ CommonExit:
 }//main()
 
 
+//Inbound gateways
+//(the outbound gateways are added in the AddRules -rule)
 void AddGWs(char const *cCluster)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort"
+	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight"
 			" FROM tGateway,tCluster,tAddress"
 			" WHERE tGateway.uCluster=tCluster.uCluster"
 			" AND tAddress.uGateway=tGateway.uGateway"
 			" AND tGateway.uGatewayType=1"//DID Inbound
-			" AND tCluster.cLabel='%s'",cCluster);
+			" AND tCluster.cLabel='%s'"
+			" GROUP BY tGateway.uGateway"
+			" ORDER BY tAddress.uPriority,tAddress.uWeight"
+				,cCluster);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -117,7 +122,8 @@ void AddGWs(char const *cCluster)
 		unsigned rc;
 
 		sprintf(cKey,"%.90s-gw",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=1;",field[0],field[1]);
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=1;uPriority=%s;uWeight=%s;",
+				field[0],field[1],field[2],field[3]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -151,11 +157,15 @@ void AddDIDs(char const *cCluster)
         MYSQL_ROW field;
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"SELECT tDID.cDID,tPBX.cAddress,tPBX.uPort"
-			" FROM tPBX,tDID,tCluster"
+	sprintf(gcQuery,"SELECT tDID.cDID,tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight"
+			" FROM tAddress,tPBX,tDID,tCluster"
 			" WHERE tDID.uPBX=tPBX.uPBX"
+			" AND tPBX.uPBX=tAddress.uPBX"
 			" AND tDID.uCluster=tCluster.uCluster"
-			" AND tCluster.cLabel='%s'",cCluster);
+			" AND tCluster.cLabel='%s'"
+			" GROUP BY tDID.uDID"
+			" ORDER BY tAddress.uPriority,tAddress.uWeight"
+				,cCluster);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -172,10 +182,13 @@ void AddDIDs(char const *cCluster)
 		unsigned rc;
 
 		sprintf(cKey,"%.90s-did",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;",field[1],field[2]);
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uPriority=%s;uWeight=%s;",
+				field[1],field[2],field[3],field[4]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
+			if(!guSilent)
+				printf("Error: %s %s\n",cKey,cValue);
 			if(guLogLevel>0)
 			{
 				logfileLine("AddDIDs",cKey);
@@ -206,11 +219,14 @@ void AddPBXs(char const *cCluster)
         MYSQL_ROW field;
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort"
+	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight"
 			" FROM tPBX,tCluster,tAddress"
 			" WHERE tPBX.uCluster=tCluster.uCluster"
 			" AND tAddress.uPBX=tPBX.uPBX"
-			" AND tCluster.cLabel='%s'",cCluster);
+			" AND tCluster.cLabel='%s'"
+			" GROUP BY tPBX.uPBX"
+			" ORDER BY tAddress.uPriority,tAddress.uWeight"
+				,cCluster);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -228,7 +244,8 @@ void AddPBXs(char const *cCluster)
 
 		//PBXs are gateways too. This makes the server run faster.
 		sprintf(cKey,"%.90s-gw",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=2;",field[0],field[1]);
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=2;uPriority=%s;uWeight=%s;",
+				field[0],field[1],field[2],field[3]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -333,90 +350,96 @@ int iSetupAndTestMemcached(void)
 }//int iSetupAndTestMemcached(void)
 
 
-void AddOutbound(char const *cCluster)
+void AddRules(char const *cCluster)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
         MYSQL_RES *res2;
         MYSQL_ROW field2;
-	unsigned uCount=0;
-	char cData[1024]={""};
+	unsigned uRuleCount=0;
 
-	//SELECT cLabel,cStartTime,cEndTime,cDaysOfWeek FROM tTimeInterval
-	//WHERE TIME(NOW())>cStartTime
-	//AND TIME(NOW())<cEndTime
-	// AND INSTR(cDaysOfWeek,day(NOW()))>0;
-
-	sprintf(gcQuery,"SELECT uRule FROM tRule,tGroupGlue,tTimeInterval"
+	if(!guSilent) printf("AddRules() start\n");
+	sprintf(gcQuery,"SELECT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
+			" FROM tRule,tGroupGlue,tTimeInterval"
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
-			" AND tGroupGlue.uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tTimeInterval' LIMIT 1)"
 			" AND tGroupGlue.uGroup=tRule.uRule"
-			" AND TIME(NOW())>tTimeInterval.cStartTime"
-			" AND TIME(NOW())<tTimeInterval.cEndTime"
-			" AND INSTR(tTimeInterval.cDaysOfWeek,day(NOW()))>0");
+			" AND tGroupGlue.uGroupType=1"
+			" AND IF(tTimeInterval.cStartDate='',1,DATE(NOW())>=tTimeInterval.cStartDate)"
+			" AND IF(tTimeInterval.cEndDate='',1,DATE(NOW())<=tTimeInterval.cEndDate)"
+			" AND IF(tTimeInterval.cStartTime='',1,TIME(NOW())>=tTimeInterval.cStartTime)"
+			" AND IF(tTimeInterval.cEndTime='',1,TIME(NOW())<=tTimeInterval.cEndTime)"
+			" AND INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK(NOW()))>0"
+			" ORDER BY tRule.uPriority");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
 		printf(gcQuery);
-		logfileLine("AddOutbound",mysql_error(&gMysql));
+		logfileLine("AddRules",mysql_error(&gMysql));
 		mysql_close(&gMysql);
 		exit(2);
 	}
         res2=mysql_store_result(&gMysql);
 	while((field2=mysql_fetch_row(res2)))
 	{
-		sprintf(gcQuery,"SELECT DISTINCT tAddress.cIP,tAddress.uPort"
+		unsigned uCount=0;
+		char cData[1024]={""};
+		sprintf(cData,"uRule=%.16s;cLabel=%.32s;cPrefix=%.32s;uPriority=%.5s;\n",field2[0],field2[1],field2[2],field2[3]);
+
+		sprintf(gcQuery,"SELECT DISTINCT tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight"
 			" FROM tRule,tGroupGlue,tGateway,tAddress,tCluster"
 			" WHERE tGateway.uCluster=tCluster.uCluster"
 			" AND tGateway.uGateway=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
 			" AND tRule.uRule=%s"
 			" AND tAddress.uGateway=tGateway.uGateway"
-			" AND tGroupGlue.uGroupType=(SELECT uGroupType FROM tGroupType WHERE cLabel='tRule:tGateway' LIMIT 1)"
+			" AND tGroupGlue.uGroupType=2"
 			" AND tGateway.uGatewayType=2"//PSTN Outbound
-			" AND tCluster.cLabel='%s'",field2[0],cCluster);
+			" AND tCluster.cLabel='%s'"
+			" ORDER BY tAddress.uPriority,tAddress.uWeight"
+				,field2[0],cCluster);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
 			printf(gcQuery);
-			logfileLine("AddOutbound",mysql_error(&gMysql));
+			logfileLine("AddRules",mysql_error(&gMysql));
 			mysql_close(&gMysql);
 			exit(2);
 		}
 		res=mysql_store_result(&gMysql);
 		while((field=mysql_fetch_row(res)))
 		{
-			if(uCount>7) break;
-			char cValue[100]={""};
-			sprintf(cValue,"cDestinationIP%u=%.15s;uDestinationPort%u=%.5s;",uCount,field[0],uCount,field[1]);
+			if(uCount>8) break;
+			char cValue[128]={""};
+			sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uPriority=%.5s,uWeight=%.5s;\n",
+						field[0],field[1],field[2],field[3]);
 			if((strlen(cData)+strlen(cValue))<sizeof(cData))
 				strcat(cData,cValue);
 			uCount++;
-		}
+		}//while ips
 		mysql_free_result(res);
-	}
 
-	//We created the data string now commit to memcached
-	char cKey[100];
-	unsigned rc;
-
-	sprintf(cKey,"outbound");
-	rc=memcached_set(gsMemc,cKey,strlen(cKey),cData,strlen(cData),(time_t)0,(uint32_t)0);
-	if(rc!=MEMCACHED_SUCCESS)
-	{
-		if(guLogLevel>0)
+		//We created the data string now commit to memcached
+		char cKey[100];
+		unsigned rc;
+		sprintf(cKey,"%u-rule",uRuleCount++);
+		rc=memcached_set(gsMemc,cKey,strlen(cKey),cData,strlen(cData),(time_t)0,(uint32_t)0);
+		if(rc!=MEMCACHED_SUCCESS)
 		{
-			logfileLine("AddOutbound error",cKey);
-			logfileLine("AddOutbound error",cData);
+			if(guLogLevel>0)
+			{
+				logfileLine("AddRules error",cKey);
+				logfileLine("AddRules error",cData);
+			}
 		}
-	}
-	if(!guSilent)
-		printf("%s %s\n",cKey,cData);
+		if(!guSilent)
+			printf("%s %s\n",cKey,cData);
 
-	if(guLogLevel>0)
-	{
-		sprintf(gcQuery,"Added 1 key with %u outbound servers",uCount);
-		logfileLine("AddOutbound",cData);
-	}
+		if(guLogLevel>2)
+		{
+			sprintf(gcQuery,"Added 1 key with %u outbound servers",uCount);
+			logfileLine("AddRules",gcQuery);
+		}
+	}//while rules
+	if(!guSilent) printf("AddRules() end\n");
 
-}//void AddOutbound()
+}//void AddRules()
