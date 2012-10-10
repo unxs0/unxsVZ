@@ -156,14 +156,17 @@ void AddDIDs(char const *cCluster)
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uCount=0;
+	unsigned uDIDCount=0;
+	unsigned rc;
 
-	sprintf(gcQuery,"SELECT tDID.cDID,tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight"
+	if(!guSilent) printf("AddDIDs() start\n");
+
+	sprintf(gcQuery,"SELECT tDID.uDID,tDID.cDID,tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight"
 			" FROM tAddress,tPBX,tDID,tCluster"
 			" WHERE tDID.uPBX=tPBX.uPBX"
 			" AND tPBX.uPBX=tAddress.uPBX"
 			" AND tDID.uCluster=tCluster.uCluster"
 			" AND tCluster.cLabel='%s'"
-			" GROUP BY tDID.uDID"
 			" ORDER BY tAddress.uPriority,tAddress.uWeight"
 				,cCluster);
 	mysql_query(&gMysql,gcQuery);
@@ -175,40 +178,70 @@ void AddDIDs(char const *cCluster)
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
+	unsigned uFirstTime=1;
+	char cKey[100];
+	char cData[1028]={""};
+	char cCurrentDID[16]={"x"};
 	while((field=mysql_fetch_row(res)))
 	{
-		char cKey[100];
-		char cValue[100];
-		unsigned rc;
+		char cValue[128]={""};
 
-		sprintf(cKey,"%.90s-did",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uPriority=%s;uWeight=%s;",
-				field[1],field[2],field[3],field[4]);
-		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
-		if(rc!=MEMCACHED_SUCCESS)
+		if(uCount>8) break;
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uPriority=%.5s,uWeight=%.5s;\n",
+						field[2],field[3],field[4],field[5]);
+		if((strlen(cData)+strlen(cValue))<sizeof(cData))
+				strcat(cData,cValue);
+
+		if(strcmp(field[0],cCurrentDID))
 		{
-			if(!guSilent)
-				printf("Error: %s %s\n",cKey,cValue);
-			if(guLogLevel>0)
+			//New DID
+			sprintf(cCurrentDID,"%s",field[0]);
+			sprintf(cKey,"%.90s-did",field[1]);
+			if(!uFirstTime && cData[0])
 			{
-				logfileLine("AddDIDs",cKey);
-				logfileLine("AddDIDs",cValue);
+				rc=memcached_set(gsMemc,cKey,strlen(cKey),cData,strlen(cData),(time_t)0,(uint32_t)0);
+				if(rc!=MEMCACHED_SUCCESS)
+				{
+					if(guLogLevel>0)
+					{
+						logfileLine("AddDIDs",cKey);
+						logfileLine("AddDIDs",cValue);
+					}
+				}
+				cData[0]=0;
+				uCount=0;
+				uDIDCount++;
+				if(!guSilent)
+					printf("%s %s\n",cKey,cValue);
 			}
+			uFirstTime=0;
 		}
-		else
-		{
-			uCount++;
-		}
-		if(!guSilent)
-			printf("%s %s\n",cKey,cValue);
+
 	}
 	mysql_free_result(res);
 
+	rc=memcached_set(gsMemc,cKey,strlen(cKey),cData,strlen(cData),(time_t)0,(uint32_t)0);
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		if(guLogLevel>0)
+		{
+			logfileLine("AddDIDs",cKey);
+			logfileLine("AddDIDs",cData);
+		}
+	}
+	else
+	{
+		uDIDCount++;
+	}
+	if(!guSilent)
+		printf("%s %s\n",cKey,cData);
+
 	if(guLogLevel>0)
 	{
-		sprintf(gcQuery,"Added %u keys",uCount);
+		sprintf(gcQuery,"Added %u keys",uDIDCount);
 		logfileLine("AddDIDs",gcQuery);
 	}
+	if(!guSilent) printf("AddDIDs() end\n");
 
 }//void AddDIDs()
 
