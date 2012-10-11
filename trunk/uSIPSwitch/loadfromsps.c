@@ -91,20 +91,23 @@ CommonExit:
 
 //Inbound gateways
 //(the outbound gateways are added in the AddRules -rule)
+//Inbound gateways do not require that we keep track of multiple DNS SRV records
+//by their nature of being connection originators ONLY
 void AddGWs(char const *cCluster)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight"
+	if(!guSilent) printf("AddGWs() start\n");
+
+	//every ip is a gateway
+	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight,tGateway.cHostname"
 			" FROM tGateway,tCluster,tAddress"
 			" WHERE tGateway.uCluster=tCluster.uCluster"
 			" AND tAddress.uGateway=tGateway.uGateway"
 			" AND tGateway.uGatewayType=1"//DID Inbound
 			" AND tCluster.cLabel='%s'"
-			" GROUP BY tGateway.uGateway"
-			" ORDER BY tAddress.uPriority,tAddress.uWeight"
 				,cCluster);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -122,8 +125,8 @@ void AddGWs(char const *cCluster)
 		unsigned rc;
 
 		sprintf(cKey,"%.90s-gw",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=1;uPriority=%s;uWeight=%s;",
-				field[0],field[1],field[2],field[3]);
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=1;uPriority=%s;uWeight=%s;cHostname=%s;",
+				field[0],field[1],field[2],field[3],field[4]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -147,6 +150,8 @@ void AddGWs(char const *cCluster)
 		sprintf(gcQuery,"Added %u keys",uCount);
 		logfileLine("AddGWs",gcQuery);
 	}
+
+	if(!guSilent) printf("AddGWs() end\n");
 
 }//void AddGWs()
 
@@ -246,19 +251,23 @@ void AddDIDs(char const *cCluster)
 }//void AddDIDs()
 
 
+//Inbound gateways like PBXs do not require that we keep track of multiple DNS SRV records
+//by their nature of being connection originators ONLY
+//On the other hand we need to be able to try all available DNS records for PBXs when
+//the origination is based on a DID.
 void AddPBXs(char const *cCluster)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uCount=0;
 
-	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight"
+	if(!guSilent) printf("AddPBXs() start\n");
+
+	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight,tPBX.cHostname"
 			" FROM tPBX,tCluster,tAddress"
 			" WHERE tPBX.uCluster=tCluster.uCluster"
 			" AND tAddress.uPBX=tPBX.uPBX"
 			" AND tCluster.cLabel='%s'"
-			" GROUP BY tPBX.uPBX"
-			" ORDER BY tAddress.uPriority,tAddress.uWeight"
 				,cCluster);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -272,13 +281,13 @@ void AddPBXs(char const *cCluster)
 	while((field=mysql_fetch_row(res)))
 	{
 		char cKey[100];
-		char cValue[100];
+		char cValue[256];
 		unsigned rc;
 
 		//PBXs are gateways too. This makes the server run faster.
 		sprintf(cKey,"%.90s-gw",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=2;uPriority=%s;uWeight=%s;",
-				field[0],field[1],field[2],field[3]);
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=2;uPriority=%.5s;uWeight=%.5s;cHostname=%.64s;",
+				field[0],field[1],field[2],field[3],field[4]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -302,6 +311,8 @@ void AddPBXs(char const *cCluster)
 		sprintf(gcQuery,"Added %u keys",uCount);
 		logfileLine("AddPBXs",gcQuery);
 	}
+
+	if(!guSilent) printf("AddPBXs() end\n");
 
 }//void AddPBXs()
 
