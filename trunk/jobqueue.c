@@ -3598,7 +3598,7 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 		if(!cArpDevice[0])
 			GetConfiguration("cArpDevice",cArpDevice,0,0,0,0);//Last try global
 		else
-			sprintf(cArpDevice,"eth0");
+			sprintf(cArpDevice,"eth0");//default eth0
 	}
 	sprintf(gcQuery,"/usr/sbin/arpsend -c 3 -U -i %.15s %.15s",cIP,cArpDevice);
 	system(gcQuery);

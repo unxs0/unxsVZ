@@ -3033,7 +3033,14 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
 				guMode=5001;
-				tContainer("Provide container hostname and name");
+				if(uDatacenter==41 && uNode==81)
+				{
+					tContainer("Provide container hostname and name. Appliance case.");
+				}
+				else
+				{
+					tContainer("Provide container hostname and name");
+				}
 			}
 			else
 			{
@@ -3145,6 +3152,9 @@ void ExttContainerCommands(pentry entries[], int x)
         			mysql_query(&gMysql,gcQuery);
 			        if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
+				//Appliance case
+				if(uDatacenter==41 && uNode==81)
+					tContainer("Container updated.");
 				sprintf(cLabel,"%.31s",cWizLabel);
 				char cPrevHostname[100]={""};
 				sprintf(cPrevHostname,"%.99s",cHostname);
