@@ -12,7 +12,7 @@
 #CFLAGS= -Wall -pedantic
 CFLAGS= -Wall
 LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so /usr/lib64/libevent.so
-LIBS2= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so
+LIBS2= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so /usr/lib/openisp/libdns.a
 
 all: uSIPSwitch
 
@@ -74,3 +74,18 @@ libctest: ctest.c
 
 dltest: dltest.c
 	gcc -rdynamic -o dltest dltest.c -ldl
+
+libs: libdns.a
+
+libdns.a: dns.o dns.h
+	ar r libdns.a dns.o
+
+dns.o: dns.c dns.h
+	cc -c dns.c -o dns.o $(CFLAGS)
+
+install-libs: libdns.a dns.h
+	mkdir -p /usr/lib/openisp
+	mkdir -p /usr/include/openisp
+	install libdns.a /usr/lib/openisp/libdns.a
+	install dns.h /usr/include/openisp/dns.h
+	rm libdns.a

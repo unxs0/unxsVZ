@@ -12,6 +12,7 @@ NOTES
 */
 
 #include "sipproxy.h"
+#include "dns.h"
 
 MYSQL gMysql;
 char gcQuery[8192]={""};
@@ -21,6 +22,8 @@ unsigned guSilent=0;
 
 //TOC
 void TextConnectDb(void);//mysqlconnect.c
+void UpdatetAddressForPBX(unsigned uPBX,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight);
+void DNSUpdate(char const *cCluster,unsigned uPBX);
 void AddPBXs(char const *cCluster);
 void AddDIDs(char const *cCluster);
 void AddGWs(char const *cCluster);
@@ -49,7 +52,12 @@ int main(int iArgc, char *cArgv[])
 
 	if(iArgc>=3)
 	{
-		if(!strncmp(cArgv[1],"AddPBXs",7))
+		if(!strncmp(cArgv[1],"DNSUpdate",9))
+		{
+			DNSUpdate(cArgv[2],0);
+			goto CommonExit;
+		}
+		else if(!strncmp(cArgv[1],"AddPBXs",7))
 		{
 			AddPBXs(cArgv[2]);
 			goto CommonExit;
@@ -79,7 +87,7 @@ int main(int iArgc, char *cArgv[])
 		}
 	}
 
-	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddRules, AddAll <cCluster> [silent]\n",gcProgram);
+	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddRules, AddAll, DNSUpdate <cCluster> [silent]\n",gcProgram);
 
 CommonExit:
 	mysql_close(&gMysql);
@@ -87,6 +95,167 @@ CommonExit:
 	return(0);
 
 }//main()
+
+
+void UpdatetAddressForPBX(unsigned uPBX,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight)
+{
+	//We keep uOwner=0 as a marker
+	sprintf(gcQuery,"INSERT INTO tAddress"
+			" SET uPBX=%u,"
+			" cLabel='%s',"
+			" cIP='%s',"
+			" uPort=%u,"
+			" uPriority=%u,"
+			" uWeight=%u,"
+			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+			" uCreatedBy=1"
+				,uPBX,cIP,cIP,uPort,uPriority,uWeight);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf(gcQuery);
+		logfileLine("UpdatetAddress",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+}//void UpdatetAddressForPBX(unsigned uPBX,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight)
+
+
+//Can be used to resolv a single PBX if uPBX!=0
+void DNSUpdate(char const *cCluster,unsigned uPBX)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uCount=0;
+	unsigned uRRCount=0;
+
+	if(!guSilent) printf("DNSUpdate() start\n");
+
+	sprintf(gcQuery,"SELECT tPBX.cHostname,tPBX.uPBX"
+			" FROM tPBX,tCluster"
+			" WHERE tPBX.uCluster=tCluster.uCluster"
+			" AND tCluster.cLabel='%s'"
+			" AND IF(%u,tPBX.uPBX=%u,1)"
+				,cCluster,uPBX,uPBX);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf(gcQuery);
+		logfileLine("DNSUpdate",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		unsigned uA=0,uB=0,uC=0,uD=0;
+		if(!guSilent)
+			printf("%s\n",field[0]);
+
+		//This has to be done first
+		sscanf(field[1],"%u",&uPBX);
+
+		//This has to be done 2nd
+		//This needs to be improved. If resolver fails bye bye switch data.
+		//We keep records that have been added via backend web app.
+		sprintf(gcQuery,"DELETE FROM tAddress"
+				" WHERE tAddress.uPBX=%u AND uOwner=0"
+					,uPBX);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf(gcQuery);
+			logfileLine("UpdatetAddress",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+
+		//Handle special case where cDomain is an IPv4 number
+		if(sscanf(field[0],"%u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			//Not sure if this is an exact test see RFC
+			if(uA>0 && uA<256 && uB<256 && uC<256 && uD<256)
+			{
+				//5060,0,0 pattern it is not an A record
+				UpdatetAddressForPBX(uPBX,field[0],5060,0,0);
+				sprintf(gcQuery,"%s added as IP to %u\n",field[0],uPBX);
+				if(!guSilent)
+					printf(gcQuery);
+				if(guLogLevel>0)
+					logfileLine("DNSUpdate",gcQuery);
+				continue;
+			}
+			//Matches pattern but out of range values
+			logfileLine("DNSUpdate",field[0]);
+		}
+		uCount++;
+
+		//DNS
+		dns_host_t sDnsHost;
+		dns_host_t sDnsHostSave;
+		dns_srv_t sDnsSrv;
+		char cHostname[128]={""};
+
+		//SRV records
+		sprintf(cHostname,"_sip._udp.%.99s",field[0]);
+		sDnsHost=dns_resolve(cHostname,3);
+		sDnsHostSave=sDnsHost;
+		if(sDnsHost!=NULL)
+		{
+			if(!guSilent)
+				printf("SRV records\n");
+			sDnsSrv=(dns_srv_t)sDnsHost->rr;
+			UpdatetAddressForPBX(uPBX,sDnsSrv->name,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+			uRRCount++;
+			while(sDnsHost->next!=NULL)
+			{
+				sDnsHost=sDnsHost->next;
+				sDnsSrv=(dns_srv_t)sDnsHost->rr;
+				UpdatetAddressForPBX(uPBX,sDnsSrv->name,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+				uRRCount++;
+			}
+		}
+		else
+		{
+			if(guLogLevel>4)
+				logfileLine("DNSUpdate",cHostname);
+		}
+		dns_free(sDnsHostSave);
+
+		//A records
+		sprintf(cHostname,"%.99s",field[0]);
+		sDnsHost=dns_resolve(cHostname,1);
+		sDnsHostSave=sDnsHost;
+		if(sDnsHost!=NULL)
+		{
+			UpdatetAddressForPBX(uPBX,(char *)sDnsHost->rr,5060,1000,100);
+			uRRCount++;
+			while(sDnsHost->next!=NULL)
+			{
+				sDnsHost=sDnsHost->next;
+				UpdatetAddressForPBX(uPBX,(char *)sDnsHost->rr,5060,1000,100);
+				uRRCount++;
+			}
+		}
+		else
+		{
+			if(guLogLevel>0)
+				logfileLine("DNSUpdate",cHostname);
+			if(!guSilent)
+				printf("no A records\n");
+		}
+		dns_free(sDnsHostSave);
+	}
+	mysql_free_result(res);
+
+	if(guLogLevel>0)
+	{
+		sprintf(gcQuery,"Processed %u cHostnames updated %u tAddress records",uCount,uRRCount);
+		logfileLine("DNSUpdate",gcQuery);
+	}
+
+	if(!guSilent) printf("DNSUpdate() end\n");
+}//void DNSUpdate(char const *cCluster)
 
 
 //Inbound gateways

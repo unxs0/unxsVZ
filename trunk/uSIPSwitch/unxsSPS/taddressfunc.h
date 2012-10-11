@@ -58,12 +58,10 @@ void ExttAddressCommands(pentry entries[], int x)
                         	guMode=0;
 
 				uAddress=0;
-#ifdef StandardFields
 				uCreatedBy=guLoginClient;
 				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
-#endif
 				NewtAddress(0);
 			}
 			else
@@ -72,11 +70,7 @@ void ExttAddressCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstAddressVars(entries,x);
-#ifdef StandardFields
 			if(uAllowDel(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 	                        guMode=2001;
 				tAddress(LANG_NB_CONFIRMDEL);
@@ -87,11 +81,7 @@ void ExttAddressCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstAddressVars(entries,x);
-#ifdef StandardFields
 			if(uAllowDel(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 				guMode=5;
 				DeletetAddress();
@@ -102,11 +92,7 @@ void ExttAddressCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstAddressVars(entries,x);
-#ifdef StandardFields
 			if(uAllowMod(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 				guMode=2002;
 				tAddress(LANG_NB_CONFIRMMOD);
@@ -117,19 +103,13 @@ void ExttAddressCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstAddressVars(entries,x);
-#ifdef StandardFields
 			if(uAllowMod(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
                         	guMode=2002;
 				//Check entries here
                         	guMode=0;
 
-#ifdef StandardFields
 				uModBy=guLoginClient;
-#endif
 				ModtAddress();
 			}
 			else
@@ -198,38 +178,21 @@ void ExttAddressGetHook(entry gentries[], int x)
 
 void ExttAddressSelect(void)
 {
-
-#ifdef StandardFields
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT %s FROM tAddress ORDER BY"
 				" uAddress",
 				VAR_LIST_tAddress);
-	else //If you own it, the company you work for owns the company that owns it,
-		//you created it, or your company owns it you can at least read access it
-		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
-	sprintf(gcQuery,"SELECT %s FROM tAddress,tClient WHERE tAddress.uOwner=tClient.uClient"
+	else
+		sprintf(gcQuery,"SELECT %s FROM tAddress,tClient WHERE tAddress.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
 				" ORDER BY uAddress",
-					VAR_LIST_tAddress,uContactParentCompany,uContactParentCompany);
-#else
-	sprintf(gcQuery,"SELECT %s FROM tAddress ORDER BY uAddress",VAR_LIST_tAddress);
-#endif
-					
+					VAR_LIST_tAddress,guCompany,guCompany);
 
 }//void ExttAddressSelect(void)
 
 
 void ExttAddressSelectRow(void)
 {
-#ifdef StandardFields
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
                 sprintf(gcQuery,"SELECT %s FROM tAddress WHERE uAddress=%u",
 			VAR_LIST_tAddress,uAddress);
@@ -239,11 +202,8 @@ void ExttAddressSelectRow(void)
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
 				" AND tAddress.uAddress=%u",
                         		VAR_LIST_tAddress
-					,uContactParentCompany,uContactParentCompany
+					,guCompany,guCompany
 					,uAddress);
-#else
-	sprintf(gcQuery,"SELECT %s FROM tAddress WHERE uAddress=%u",VAR_LIST_tAddress,uAddress);
-#endif
 
 }//void ExttAddressSelectRow(void)
 
@@ -251,10 +211,6 @@ void ExttAddressSelectRow(void)
 void ExttAddressListSelect(void)
 {
 	char cCat[512];
-#ifdef StandardFields
-	unsigned uContactParentCompany=0;
-	
-	GetClientOwner(guLoginClient,&uContactParentCompany);
 
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT %s FROM tAddress",
@@ -263,14 +219,7 @@ void ExttAddressListSelect(void)
 		sprintf(gcQuery,"SELECT %s FROM tAddress,tClient"
 				" WHERE tAddress.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				VAR_LIST_tAddress
-				,uContactParentCompany
-				,uContactParentCompany);
-#else
-	sprintf(gcQuery,"SELECT %s FROM tAddress",VAR_LIST_tAddress);
-#endif
-
-	//Changes here must be reflected below in ExttAddressListFilter()
+				VAR_LIST_tAddress ,guCompany ,guCompany);
         if(!strcmp(gcFilter,"uAddress"))
         {
                 sscanf(gcCommand,"%u",&uAddress);
@@ -278,9 +227,26 @@ void ExttAddressListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tAddress.uAddress=%u"
-						" ORDER BY uAddress",
-						uAddress);
+		sprintf(cCat,"tAddress.uAddress=%u ORDER BY uAddress",uAddress);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"cIP"))
+        {
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tAddress.cIP LIKE '%s%%' ORDER BY tAddress.cIP",gcCommand);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uPBX"))
+        {
+                sscanf(gcCommand,"%u",&uPBX);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tAddress.uPBX=%u ORDER BY uPBX",uPBX);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -302,6 +268,14 @@ void ExttAddressListFilter(void)
                 printf("<option>uAddress</option>");
         else
                 printf("<option selected>uAddress</option>");
+        if(strcmp(gcFilter,"cIP"))
+                printf("<option>cIP</option>");
+        else
+                printf("<option selected>cIP</option>");
+        if(strcmp(gcFilter,"uPBX"))
+                printf("<option>uPBX</option>");
+        else
+                printf("<option selected>uPBX</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
@@ -320,25 +294,13 @@ void ExttAddressNavBar(void)
 	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-#ifdef StandardFields
 	if(uAllowMod(uOwner,uCreatedBy))
-#else
-	if(guPermLevel>=9)
-#endif
 		printf(LANG_NBB_MODIFY);
 
-#ifdef StandardFields
 	if(uAllowDel(uOwner,uCreatedBy)) 
-#else
-	if(guPermLevel>=9)
-#endif
 		printf(LANG_NBB_DELETE);
 
-#ifdef StandardFields
 	if(uOwner)
-#else
-	if(guPermLevel>=9)
-#endif
 		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
