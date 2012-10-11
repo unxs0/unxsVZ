@@ -72,11 +72,13 @@ int main(int iArgc, char *cArgv[])
 
 	if(iArgc<2)
 	{
-		printf("usage %s: cHostname\n",cArgv[0]);
+		printf("usage %s: cHostname (with no _sip._udp. prefix)\n",cArgv[0]);
 		exit(1);
 	}
 
-	sDnsHost=dns_resolve(cArgv[1],3);
+	char cHostname[128];
+	sprintf(cHostname,"_sip._udp.%.99s",cArgv[1]);
+	sDnsHost=dns_resolve(cHostname,3);
 	sDnsHostSave=sDnsHost;
 	if(sDnsHost!=NULL)
 	{
@@ -94,29 +96,25 @@ int main(int iArgc, char *cArgv[])
 		}
 	}
 	dns_free(sDnsHostSave);
+
+	//A record
+	sprintf(cHostname,"%.99s",cArgv[1]);
+	sDnsHost=dns_resolve(cHostname,1);
+	sDnsHostSave=sDnsHost;
+	if(sDnsHost!=NULL)
+	{
+		printf("type:%d class:%d ttl:%d\n",sDnsHost->type,sDnsHost->class,sDnsHost->ttl);
+		printf("raw rr:%s\n",(char *)sDnsHost->rr);
+		while(sDnsHost->next!=NULL)
+		{
+			sDnsHost=sDnsHost->next;
+			printf("type:%d class:%d ttl:%d\n",sDnsHost->type,sDnsHost->class,sDnsHost->ttl);
+			printf("raw rr:%s\n",(char *)sDnsHost->rr);
+		}
+	}
+	dns_free(sDnsHostSave);
 	return(0);
 }
-
-/* compare two srv structures, order by priority then by randomised weight */
-static int _srv_compare(const void *a, const void *b) {
-    dns_host_t ah = * (dns_host_t *) a, bh = * (dns_host_t *) b;
-    dns_srv_t arr, brr;
-
-    if(ah == NULL) return 1;
-    if(bh == NULL) return -1;
-
-    arr = (dns_srv_t) ah->rr;
-    brr = (dns_srv_t) bh->rr;
-
-    if(arr->priority > brr->priority) return 1;
-    if(arr->priority < brr->priority) return -1;
-
-    if(arr->rweight > brr->rweight) return -1;
-    if(arr->rweight < brr->rweight) return 1;
-    
-    return 0;
-}
-
 
 /* unix implementation */
 
@@ -159,10 +157,12 @@ static void *_srv_rr(dns_packet_t packet, unsigned char *eom, unsigned char **sc
     srv->port = port;
 
     /* add a random factor to the weight, for load balancing and such */
+/*
     if(weight != 0)
         srv->rweight = 1 + rand() % (10000 * weight);
     else
         srv->rweight = 0;
+*/
 
     strcpy(srv->name, host);
 
@@ -288,8 +288,8 @@ dns_host_t dns_resolve(const char *zone, int query_type) {
     }
 
     /* sort srv records them */
-    if(t_type == ns_t_srv)
-        qsort(reply, an, sizeof(dns_host_t), _srv_compare);
+    //if(t_type == ns_t_srv)
+     //   qsort(reply, an, sizeof(dns_host_t), _srv_compare);
 
     /* build a linked list out of the array elements */
     for(n = 0; n < an - 1; n++)
