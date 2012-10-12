@@ -601,12 +601,22 @@ void tDIDList(void)
 			ctime_r(&luTime11,cBuf11);
 		else
 			sprintf(cBuf11,"---");
-		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uDID=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tDID&uDID=%s>%s</a>"
+				"<td>%s"
+				"<td>%s"
+				"<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tPBX&uPBX=%s>%s</a>"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s</tr>"
+			,field[0],field[0]
 			,field[1]
 			,field[2]
-			,ForeignKey("tPBX","cLabel",strtoul(field[3],NULL,10))
+			,field[3],ForeignKey("tPBX","cLabel",strtoul(field[3],NULL,10))
 			,ForeignKey("tCarrier","cLabel",strtoul(field[4],NULL,10))
 			,ForeignKey("tCluster","cLabel",strtoul(field[5],NULL,10))
 			,field[6]

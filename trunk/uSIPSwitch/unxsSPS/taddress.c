@@ -624,16 +624,27 @@ void tAddressList(void)
 			ctime_r(&luTime12,cBuf12);
 		else
 			sprintf(cBuf12,"---");
-		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tAddress&uAddress=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tAddress&uAddress=%s>%s</a>"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tPBX&uPBX=%s>%s</a>"
+				"<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tGateway&uGateway=%s>%s</a>"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s</tr>"
+			,field[0],field[0]
 			,field[1]
 			,field[2]
 			,field[3]
 			,field[4]
 			,field[5]
-			,ForeignKey("tPBX","cLabel",strtoul(field[6],NULL,10))
-			,ForeignKey("tGateway","cLabel",strtoul(field[7],NULL,10))
+			,field[6],ForeignKey("tPBX","cLabel",strtoul(field[6],NULL,10))
+			,field[7],ForeignKey("tGateway","cLabel",strtoul(field[7],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[8],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[9],NULL,10))
 			,cBuf10

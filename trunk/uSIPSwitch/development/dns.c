@@ -68,6 +68,8 @@ int main(int iArgc, char *cArgv[])
 {
 	dns_host_t sDnsHost;
 	dns_host_t sDnsHostSave;
+	dns_host_t sDnsHost2;
+	dns_host_t sDnsHostSave2;
 	dns_srv_t sDnsSrv;
 
 	if(iArgc<2)
@@ -86,6 +88,20 @@ int main(int iArgc, char *cArgv[])
 		sDnsSrv=(dns_srv_t)sDnsHost->rr;
 		printf("name:%s priority:%d weight:%d port:%d rweight:%d\n",
 			sDnsSrv->name,sDnsSrv->priority,sDnsSrv->weight,sDnsSrv->port,sDnsSrv->rweight);
+		//Now get IP(s) of name
+		sprintf(cHostname,"%.99s",sDnsSrv->name);
+		sDnsHost2=dns_resolve(cHostname,1);
+		sDnsHostSave2=sDnsHost2;
+		if(sDnsHost2!=NULL)
+		{
+			printf("\traw rr:%s\n",(char *)sDnsHost2->rr);
+			while(sDnsHost2->next!=NULL)
+			{
+				sDnsHost2=sDnsHost2->next;
+				printf("\traw rr:%s\n",(char *)sDnsHost2->rr);
+			}
+		}
+		dns_free(sDnsHostSave2);
 		while(sDnsHost->next!=NULL)
 		{
 			sDnsHost=sDnsHost->next;
@@ -93,6 +109,21 @@ int main(int iArgc, char *cArgv[])
 			sDnsSrv=(dns_srv_t)sDnsHost->rr;
 			printf("name:%s priority:%d weight:%d port:%d rweight:%d\n",
 				sDnsSrv->name,sDnsSrv->priority,sDnsSrv->weight,sDnsSrv->port,sDnsSrv->rweight);
+
+			//Now get IP(s) of name
+			sprintf(cHostname,"%.99s",sDnsSrv->name);
+			sDnsHost2=dns_resolve(cHostname,1);
+			sDnsHostSave2=sDnsHost2;
+			if(sDnsHost2!=NULL)
+			{
+				printf("\traw rr:%s\n",(char *)sDnsHost2->rr);
+				while(sDnsHost2->next!=NULL)
+				{
+					sDnsHost2=sDnsHost2->next;
+					printf("\traw rr:%s\n",(char *)sDnsHost2->rr);
+				}
+			}
+			dns_free(sDnsHostSave2);
 		}
 	}
 	dns_free(sDnsHostSave);
