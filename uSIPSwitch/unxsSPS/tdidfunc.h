@@ -57,12 +57,10 @@ void ExttDIDCommands(pentry entries[], int x)
                         	guMode=0;
 
 				uDID=0;
-#ifdef StandardFields
 				uCreatedBy=guLoginClient;
 				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
-#endif
 				NewtDID(0);
 			}
 			else
@@ -71,11 +69,7 @@ void ExttDIDCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstDIDVars(entries,x);
-#ifdef StandardFields
 			if(uAllowDel(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 	                        guMode=2001;
 				tDID(LANG_NB_CONFIRMDEL);
@@ -86,11 +80,7 @@ void ExttDIDCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstDIDVars(entries,x);
-#ifdef StandardFields
 			if(uAllowDel(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 				guMode=5;
 				DeletetDID();
@@ -101,11 +91,7 @@ void ExttDIDCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstDIDVars(entries,x);
-#ifdef StandardFields
 			if(uAllowMod(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 				guMode=2002;
 				tDID(LANG_NB_CONFIRMMOD);
@@ -116,19 +102,12 @@ void ExttDIDCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstDIDVars(entries,x);
-#ifdef StandardFields
 			if(uAllowMod(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
                         	guMode=2002;
 				//Check entries here
                         	guMode=0;
-
-#ifdef StandardFields
 				uModBy=guLoginClient;
-#endif
 				ModtDID();
 			}
 			else
@@ -196,38 +175,20 @@ void ExttDIDGetHook(entry gentries[], int x)
 
 void ExttDIDSelect(void)
 {
-
-#ifdef StandardFields
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT %s FROM tDID ORDER BY"
 				" uDID",
 				VAR_LIST_tDID);
-	else //If you own it, the company you work for owns the company that owns it,
-		//you created it, or your company owns it you can at least read access it
-		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
-	sprintf(gcQuery,"SELECT %s FROM tDID,tClient WHERE tDID.uOwner=tClient.uClient"
+	else
+		sprintf(gcQuery,"SELECT %s FROM tDID,tClient WHERE tDID.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
 				" ORDER BY uDID",
-					VAR_LIST_tDID,uContactParentCompany,uContactParentCompany);
-#else
-	sprintf(gcQuery,"SELECT %s FROM tDID ORDER BY uDID",VAR_LIST_tDID);
-#endif
-					
-
+					VAR_LIST_tDID,guCompany,guCompany);
 }//void ExttDIDSelect(void)
 
 
 void ExttDIDSelectRow(void)
 {
-#ifdef StandardFields
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
                 sprintf(gcQuery,"SELECT %s FROM tDID WHERE uDID=%u",
 			VAR_LIST_tDID,uDID);
@@ -237,12 +198,8 @@ void ExttDIDSelectRow(void)
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
 				" AND tDID.uDID=%u",
                         		VAR_LIST_tDID
-					,uContactParentCompany,uContactParentCompany
+					,guCompany,guCompany
 					,uDID);
-#else
-	sprintf(gcQuery,"SELECT %s FROM tDID WHERE uDID=%u",VAR_LIST_tDID,uDID);
-#endif
-
 }//void ExttDIDSelectRow(void)
 
 
@@ -269,10 +226,10 @@ void ExttDIDListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tDID.uDID=%u ORDER BY uDID",uDID);
+		sprintf(cCat,"tDID.uDID=%u",uDID);
 		strcat(gcQuery,cCat);
         }
-        if(!strcmp(gcFilter,"cDID"))
+        else if(!strcmp(gcFilter,"cDID"))
         {
 		if(guPermLevel<10)
 			strcat(gcQuery," AND ");
@@ -281,6 +238,16 @@ void ExttDIDListSelect(void)
 		sprintf(cCat,"tDID.cDID LIKE '%s%%' ORDER BY cDID",gcCommand);
 		strcat(gcQuery,cCat);
 	}
+        else if(!strcmp(gcFilter,"uPBX"))
+        {
+                sscanf(gcCommand,"%u",&uPBX);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tDID.uPBX=%u",uPBX);
+		strcat(gcQuery,cCat);
+        }
         else if(1)
         {
                 //None NO FILTER
@@ -304,6 +271,10 @@ void ExttDIDListFilter(void)
                 printf("<option>cDID</option>");
         else
                 printf("<option selected>cDID</option>");
+        if(strcmp(gcFilter,"uPBX"))
+                printf("<option>uPBX</option>");
+        else
+                printf("<option selected>uPBX</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else

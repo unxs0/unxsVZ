@@ -193,6 +193,8 @@ void DNSUpdate(char const *cCluster,unsigned uPBX)
 		//DNS
 		dns_host_t sDnsHost;
 		dns_host_t sDnsHostSave;
+		dns_host_t sDnsHost2;
+		dns_host_t sDnsHostSave2;
 		dns_srv_t sDnsSrv;
 		char cHostname[128]={""};
 
@@ -205,20 +207,63 @@ void DNSUpdate(char const *cCluster,unsigned uPBX)
 			if(!guSilent)
 				printf("SRV records\n");
 			sDnsSrv=(dns_srv_t)sDnsHost->rr;
-			UpdatetAddressForPBX(uPBX,sDnsSrv->name,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+
+			//Nested get A record
+			sprintf(cHostname,"%.99s",sDnsSrv->name);
+			sDnsHost2=dns_resolve(cHostname,1);
+			sDnsHostSave2=sDnsHost2;
+			if(sDnsHost2!=NULL)
+			{
+				UpdatetAddressForPBX(uPBX,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+				if(guLogLevel>3)
+					logfileLine("DNSUpdate A",(char *)sDnsHost2->rr);
+				uRRCount++;
+				while(sDnsHost2->next!=NULL)
+				{
+					sDnsHost2=sDnsHost2->next;
+					UpdatetAddressForPBX(uPBX,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+					if(guLogLevel>3)
+						logfileLine("DNSUpdate A",(char *)sDnsHost2->rr);
+					uRRCount++;
+				}
+			}
+			//
+			if(guLogLevel>3)
+				logfileLine("DNSUpdate SRV",sDnsSrv->name);
 			uRRCount++;
 			while(sDnsHost->next!=NULL)
 			{
 				sDnsHost=sDnsHost->next;
 				sDnsSrv=(dns_srv_t)sDnsHost->rr;
-				UpdatetAddressForPBX(uPBX,sDnsSrv->name,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+				//Nested get A record
+				sprintf(cHostname,"%.99s",sDnsSrv->name);
+				sDnsHost2=dns_resolve(cHostname,1);
+				sDnsHostSave2=sDnsHost2;
+				if(sDnsHost2!=NULL)
+				{
+					UpdatetAddressForPBX(uPBX,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+					if(guLogLevel>3)
+						logfileLine("DNSUpdate A",(char *)sDnsHost2->rr);
+					uRRCount++;
+					while(sDnsHost2->next!=NULL)
+					{
+						sDnsHost2=sDnsHost2->next;
+						UpdatetAddressForPBX(uPBX,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+						if(guLogLevel>3)
+							logfileLine("DNSUpdate A",(char *)sDnsHost2->rr);
+						uRRCount++;
+					}
+			}
+			//
+				if(guLogLevel>3)
+					logfileLine("DNSUpdate SRV",sDnsSrv->name);
 				uRRCount++;
 			}
 		}
 		else
 		{
 			if(guLogLevel>4)
-				logfileLine("DNSUpdate",cHostname);
+				logfileLine("DNSUpdate No SRV",cHostname);
 		}
 		dns_free(sDnsHostSave);
 
@@ -229,20 +274,24 @@ void DNSUpdate(char const *cCluster,unsigned uPBX)
 		if(sDnsHost!=NULL)
 		{
 			UpdatetAddressForPBX(uPBX,(char *)sDnsHost->rr,5060,1000,100);
+			if(guLogLevel>3)
+				logfileLine("DNSUpdate A",(char *)sDnsHost->rr);
 			uRRCount++;
 			while(sDnsHost->next!=NULL)
 			{
 				sDnsHost=sDnsHost->next;
 				UpdatetAddressForPBX(uPBX,(char *)sDnsHost->rr,5060,1000,100);
+				if(guLogLevel>3)
+					logfileLine("DNSUpdate A",(char *)sDnsHost->rr);
 				uRRCount++;
 			}
 		}
 		else
 		{
 			if(guLogLevel>0)
-				logfileLine("DNSUpdate",cHostname);
+				logfileLine("DNSUpdate No A",cHostname);
 			if(!guSilent)
-				printf("no A records\n");
+				printf("No A records\n");
 		}
 		dns_free(sDnsHostSave);
 	}
@@ -394,26 +443,31 @@ void AddDIDs(char const *cCluster)
 	}
 	mysql_free_result(res);
 
-	rc=memcached_set(gsMemc,cKey,strlen(cKey),cData,strlen(cData),(time_t)0,(uint32_t)0);
-	if(rc!=MEMCACHED_SUCCESS)
+
+	if(cData[0])
 	{
-		if(guLogLevel>0)
+		rc=memcached_set(gsMemc,cKey,strlen(cKey),cData,strlen(cData),(time_t)0,(uint32_t)0);
+		if(rc!=MEMCACHED_SUCCESS)
 		{
-			logfileLine("AddDIDs",cKey);
-			logfileLine("AddDIDs",cData);
+			if(guLogLevel>0)
+			{
+				logfileLine("AddDIDs",cKey);
+				logfileLine("AddDIDs",cData);
+			}
 		}
+		else
+		{
+			uDIDCount++;
+		}
+		if(!guSilent)
+			printf("%s %s\n",cKey,cData);
 	}
-	else
-	{
-		uDIDCount++;
-	}
-	if(!guSilent)
-		printf("%s %s\n",cKey,cData);
 
 	if(guLogLevel>0)
 	{
 		sprintf(gcQuery,"Added %u keys",uDIDCount);
 		logfileLine("AddDIDs",gcQuery);
+		if(!guSilent) printf(gcQuery);
 	}
 	if(!guSilent) printf("AddDIDs() end\n");
 
