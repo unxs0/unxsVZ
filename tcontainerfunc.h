@@ -4217,6 +4217,10 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Creates job(s) with given commands to run via vzctl exec2'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Execute'>\n");
+			printf("&nbsp; <input title='Change status to stopped for awaiting failover containers."
+				" Any existing waiting FailoverFrom jobs will be canceled also.'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Status Stopped'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -5145,6 +5149,33 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group Migration
+
+				else if(!strcmp(gcCommand,"Group Status Stopped"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uAWAITFAIL)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						SetContainerStatus(uCtContainer,uSTOPPED);
+						
+						sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u WHERE uJobStatus=%u AND uContainer=%u"
+								" AND cJobName='FailoverFrom'"
+									,uCANCELED,uWAITING,uCtContainer);
+		        			mysql_query(&gMysql,gcQuery);
+		        			if(mysql_errno(&gMysql))
+							sprintf(cResult,"%.31s",mysql_error(&gMysql));
+						else
+							sprintf(cResult,"status changed to stopped");
+					}
+					else
+					{
+						sprintf(cResult,"group status change request ignored");
+					}
+					break;
+				}//Group Status Stopped
 
 				else if(1)
 				{
