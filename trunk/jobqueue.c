@@ -984,6 +984,7 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uVeth=0;
+	unsigned uNoRelease=0;
 
 	//Check 1-. Check to make sure container is on this node, if not 
 	//	give job back to queue
@@ -1032,6 +1033,9 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[1],"%u",&uVeth);
+
+		if(strstr(cJobData,"uNoRelease"))
+			uNoRelease=1;
 
 		sprintf(cIPNew,"%.31s",field[0]);
 		if(!cIPNew[0])	
@@ -1134,13 +1138,16 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 
 		//3-.
-		sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel='%.31s'",cIPOld);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
+		if(!uNoRelease)
 		{
-			logfileLine("ChangeIPContainer",mysql_error(&gMysql));
-			tJobErrorUpdate(uJob,"Release old IP from tIP failed");
-			goto CommonExit;
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel='%.31s'",cIPOld);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ChangeIPContainer",mysql_error(&gMysql));
+				tJobErrorUpdate(uJob,"Release old IP from tIP failed");
+				goto CommonExit;
+			}
 		}
 
 		if(!uVeth)

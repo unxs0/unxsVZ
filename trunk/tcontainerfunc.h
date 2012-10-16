@@ -121,6 +121,8 @@ unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname,unsigned uOwner,unsigned uLoginClient);
 unsigned IPContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 			unsigned uOwner,unsigned uLoginClient,char const *cIPOld);
+unsigned IPContainerJobNoRelease(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
+			unsigned uOwner,unsigned uLoginClient,char const *cIPOld);
 unsigned IPSameNodeContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer1,unsigned uContainer2,
 			unsigned uOwner,unsigned uLoginClient,char const *cIPOld1,char const *cIPOld2);
 unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer);
@@ -4221,6 +4223,9 @@ void ExttContainerAuxTable(void)
 				" Any existing waiting FailoverFrom jobs will be canceled also.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Status Stopped'>\n");
+			printf("&nbsp; <input title='Change IP for selected containers and DNS records is system is so configured'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Change IP'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -5176,6 +5181,119 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group Status Stopped
+
+				else if(!strcmp(gcCommand,"Group Change IP"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uSTOPPED)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						unsigned uNewIPv4=0;
+						char cunxsBindARecordJobZone[256]={""};
+						GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,sContainer.uDatacenter,0,0,0);
+						if(!cunxsBindARecordJobZone[0])
+						{
+							sprintf(cResult,"no cunxsBindARecordJobZone");
+							break;
+						}
+						
+						unsigned uHostnameLen=strlen(sContainer.cHostname);
+						if(!strstr(sContainer.cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),
+							cunxsBindARecordJobZone))
+						{
+							sprintf(cResult,"incorrect cunxsBindARecordJobZone for cHostname");
+							break;
+						}
+
+						char cIPOld[32]={""};
+						sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",sContainer.uIPv4));
+						if(!cIPOld[0] || cIPOld[0]=='-')
+						{
+							sprintf(cResult,"no cIPOld");
+							break;
+						}
+
+						//debug only
+						//sprintf(cResult,"%s",cIPOld);
+						//break;
+
+						//Get an available IP for this datacenter
+						//Check for datacenter property NewContainerIPRange e.g. 12.23.34.0/24
+						char cNewContainerIPRange[256]={""};
+						GetDatacenterProp(sContainer.uDatacenter,"NewContainerIPRange",cNewContainerIPRange);
+						if(!cNewContainerIPRange[0])
+						{
+							sprintf(cResult,"no cNewContainerIPRange");
+							break;
+						}
+
+						char *cp;
+						if((cp=strstr(cNewContainerIPRange,".0/24"))) *cp=0;
+						//debug only
+						//sprintf(cResult,"cNewContainerIPRange=%s",cNewContainerIPRange);
+						//break;
+
+			
+        					MYSQL_RES *res;
+						MYSQL_ROW field;
+						sprintf(gcQuery,"SELECT uIP FROM tIP "
+								" WHERE uAvailable=1"
+								" AND INSTR(cLabel,'%s')>0"
+								" AND uDatacenter=%u"
+									,cNewContainerIPRange,sContainer.uDatacenter);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							sprintf(cResult,"%.31s",mysql_error(&gMysql));
+							break;
+						}
+					        res=mysql_store_result(&gMysql);
+						if((field=mysql_fetch_row(res)))
+							sscanf(field[0],"%u",&uNewIPv4);
+						if(!uNewIPv4)
+						{
+							sprintf(cResult,"no uNewIPv4");
+							break;
+						}
+
+						//debug only
+						//sprintf(cResult,"uNewIPv4=%u",uNewIPv4);
+						//break;
+
+						sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u"
+								" WHERE uContainer=%u",uNewIPv4,uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+
+						sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+								" WHERE uIP=%u",uNewIPv4);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+
+						if(IPContainerJobNoRelease(sContainer.uDatacenter,sContainer.uNode,uCtContainer,
+								sContainer.uOwner,guLoginClient,cIPOld))
+						{
+							SetContainerStatus(uCtContainer,71);
+							CreateDNSJob(uNewIPv4,sContainer.uOwner,"",sContainer.cHostname,
+								sContainer.uDatacenter,guLoginClient);
+							sprintf(cResult,"change IP job created");
+						}
+						else
+						{
+							sprintf(cResult,"IPContainerJob() failed");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"change IP request ignored");
+					}
+					break;
+				}//Group Change IP
 
 				else if(1)
 				{
@@ -6186,6 +6304,31 @@ unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 	return(uCount);
 
 }//unsigned HostnameContainerJob()
+
+
+unsigned IPContainerJobNoRelease(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
+			unsigned uOwner,unsigned uLoginClient,char const *cIPOld)
+{
+	unsigned uCount=0;
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ChangeIPContainer(%u)',cJobName='ChangeIPContainer'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=1"
+			",cJobData='cIPOld=%.31s;\nuNoRelease'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,cIPOld,
+				uOwner,uLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","ChangeIP");
+	return(uCount);
+
+}//unsigned IPContainerJobNoRelease()
+
 
 
 unsigned IPContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
