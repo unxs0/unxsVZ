@@ -212,30 +212,57 @@ void ProcessIPCheck(unsigned uNode)
 	FILE *fp;
 	struct stat structStat;
 
-	sprintf(cCommand,"/usr/sbin/vzlist -H -a -o veid,ip 2> /dev/null",0);
+	sprintf(cCommand,"/usr/sbin/vzlist -H -a -o veid,ip 2> /dev/null");
 	if((fp=popen(cCommand,"r")))
 	{
-        	MYSQL_RES *res;
-        	MYSQL_ROW field;
-
-		unsigned uVEID=0,uA=0,uB=0,uC=0,uD=0;
-
-		if(fgets(cLine,255,fp)!=NULL)
+		while(fgets(cLine,255,fp)!=NULL)
 		{
+        		MYSQL_RES *res;
+        		MYSQL_ROW field;
+
+			unsigned uVEID=0,uA=0,uB=0,uC=0,uD=0;
+
 			if(sscanf(cLine,"%u %u.%u.%u.%u",&uVEID,&uA,&uB,&uC,&uD)!=5)
 			{
 				logfileLine("ProcessIPCheck","sscanf item count error",uVEID);
 			}
-		}
 
-		//debug only
-		printf("%u %u.%u.%u.%u\n",uVEID,uA,uB,uC,uD);
-
-		//Compare against unxsVZ data
-		//If VEID exists
-		//report if different into tProperty cOrg_Warning_IPNumber <ip>
-		//if VEID does not exist report in log file only.
-
+			char cIP[32]={""};
+			sprintf(cIP,"%u.%u.%u.%u",uA,uB,uC,uD);
+			//debug only
+			printf("%u %s\n",uVEID,cIP);
+	
+			//Compare against unxsVZ data
+			//If VEID exists
+			//report if different into tProperty cOrg_Warning_IPNumber <ip>
+			//if VEID does not exist report in log file only.
+			sprintf(gcQuery,"SELECT tIP.cLabel FROM tContainer,tIP WHERE uContainer=%u AND tContainer.uIPv4=tIP.uIP",uVEID);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessNodeOVZ",mysql_error(&gMysql),0);
+				mysql_close(&gMysql);
+				exit(2);
+			}
+		        res=mysql_store_result(&gMysql);
+			if(mysql_num_rows>0)
+			{
+				while((field=mysql_fetch_row(res)))
+				{
+					if(strcmp(field[0],cIP))
+					{
+						//debug only
+						printf("different %s\n",field[0]);
+					}
+				}
+			}
+			else
+			{
+				//debug only
+				printf("not found\n");
+			}
+			mysql_free_result(res);
+		}//while lines from vzlist
 		pclose(fp);
 	}
 	else
