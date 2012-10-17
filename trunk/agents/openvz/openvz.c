@@ -210,7 +210,6 @@ void ProcessIPCheck(unsigned uNode)
 	char cCommand[64];
 	char cLine[256];
 	FILE *fp;
-	struct stat structStat;
 
 	sprintf(cCommand,"/usr/sbin/vzlist -H -a -o veid,ip 2> /dev/null");
 	if((fp=popen(cCommand,"r")))
@@ -230,7 +229,7 @@ void ProcessIPCheck(unsigned uNode)
 			char cIP[32]={""};
 			sprintf(cIP,"%u.%u.%u.%u",uA,uB,uC,uD);
 			//debug only
-			printf("%u %s\n",uVEID,cIP);
+			//printf("%u %s\n",uVEID,cIP);
 	
 			//Compare against unxsVZ data
 			//If VEID exists
@@ -242,7 +241,7 @@ void ProcessIPCheck(unsigned uNode)
 			{
 				//debug only
 				printf("%s\n",mysql_error(&gMysql));
-				logfileLine("ProcessNodeOVZ",mysql_error(&gMysql),0);
+				logfileLine("ProcessIPCheck",mysql_error(&gMysql),uVEID);
 				mysql_close(&gMysql);
 				exit(2);
 			}
@@ -254,14 +253,16 @@ void ProcessIPCheck(unsigned uNode)
 					if(strcmp(field[0],cIP))
 					{
 						//debug only
-						printf("different %s\n",field[0]);
+						printf("%u:%s diff\n",uVEID,field[0]);
+						logfileLine("ProcessIPCheck diff",field[0],uVEID);
 					}
 				}
 			}
 			else
 			{
 				//debug only
-				printf("not found\n");
+				printf("%u:%s nf\n",uVEID,cIP);
+				logfileLine("ProcessIPCheck nf",cIP,uVEID);
 			}
 			mysql_free_result(res);
 		}//while lines from vzlist
