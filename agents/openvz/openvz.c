@@ -240,12 +240,14 @@ void ProcessIPCheck(unsigned uNode)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
+				//debug only
+				printf("%s\n",mysql_error(&gMysql));
 				logfileLine("ProcessNodeOVZ",mysql_error(&gMysql),0);
 				mysql_close(&gMysql);
 				exit(2);
 			}
 		        res=mysql_store_result(&gMysql);
-			if(mysql_num_rows>0)
+			if(mysql_num_rows(res)>0)
 			{
 				while((field=mysql_fetch_row(res)))
 				{
