@@ -18,10 +18,10 @@ all: unxsOVZ
 unxsOVZ: openvz.o mysqlconnect.o
 	cc openvz.o mysqlconnect.o -o unxsOVZ $(LIBS) 
 
-openvz.o: openvz.c ../../mysqlrad.h ../../local.h
+openvz.o: openvz.c mysqlrad.h local.h
 	cc -c openvz.c -o openvz.o $(CFLAGS)
 
-mysqlconnect.o: mysqlconnect.c ../../mysqlrad.h ../../local.h
+mysqlconnect.o: mysqlconnect.c mysqlrad.h local.h
 	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)
 
 clean:
@@ -30,3 +30,7 @@ clean:
 install: unxsOVZ
 	install -s unxsOVZ /usr/sbin/unxsOVZ
 	rm unxsOVZ
+
+local.h: local.h.default
+	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
+

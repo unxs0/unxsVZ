@@ -12,7 +12,7 @@ AUTHOR
 NOTES
 */
 
-#include "../../mysqlrad.h"
+#include "mysqlrad.h"
 #include <sys/sysinfo.h>
 
 #define cOVZLOGFILE "/var/log/unxsOVZ.log"
@@ -211,17 +211,18 @@ void ProcessIPCheck(unsigned uNode)
 	char cLine[256];
 	FILE *fp;
 
-	sprintf(cCommand,"/usr/sbin/vzlist -H -a -o veid,ip 2> /dev/null");
+	sprintf(cCommand,"/usr/sbin/vzlist -H -a -o veid,ip,hostname 2> /dev/null");
 	if((fp=popen(cCommand,"r")))
 	{
 		while(fgets(cLine,255,fp)!=NULL)
 		{
         		MYSQL_RES *res;
         		MYSQL_ROW field;
+			char cHostname[100]={""};
 
 			unsigned uVEID=0,uA=0,uB=0,uC=0,uD=0;
 
-			if(sscanf(cLine,"%u %u.%u.%u.%u",&uVEID,&uA,&uB,&uC,&uD)!=5)
+			if(sscanf(cLine,"%u %u.%u.%u.%u %s",&uVEID,&uA,&uB,&uC,&uD,cHostname)!=6)
 			{
 				logfileLine("ProcessIPCheck","sscanf item count error",uVEID);
 			}
@@ -253,7 +254,7 @@ void ProcessIPCheck(unsigned uNode)
 					if(strcmp(field[0],cIP))
 					{
 						//debug only
-						printf("%u:%s diff\n",uVEID,field[0]);
+						printf("%u:%s:%s diff\n",uVEID,field[0],cHostname);
 						logfileLine("ProcessIPCheck diff",field[0],uVEID);
 					}
 				}
@@ -261,8 +262,53 @@ void ProcessIPCheck(unsigned uNode)
 			else
 			{
 				//debug only
-				printf("%u:%s nf\n",uVEID,cIP);
+				printf("%u:%s:%s nf\n",uVEID,cIP,cHostname);
 				logfileLine("ProcessIPCheck nf",cIP,uVEID);
+
+        			MYSQL_RES *res;
+        			MYSQL_ROW field;
+				sprintf(gcQuery,"SELECT tContainer.cLabel,tIP.uIP,tIP.uAvailable"
+						" FROM tContainer,tIP WHERE tIP.cLabel='%s' AND tContainer.uIPv4=tIP.uIP",cIP);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					//debug only
+					printf("%s\n",mysql_error(&gMysql));
+					logfileLine("ProcessIPCheck",mysql_error(&gMysql),uVEID);
+					mysql_close(&gMysql);
+					exit(2);
+				}
+			        res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+
+					while((field=mysql_fetch_row(res)))
+					{
+						//debug only
+						printf("%u:%s:%s:%s:uAvailable=%s found in tIP\n",uVEID,field[0],cHostname,field[1],field[2]);
+					}
+				}
+				else
+				{
+					mysql_free_result(res);
+					sprintf(gcQuery,"SELECT tIP.uIP,tIP.uAvailable FROM tIP WHERE cLabel='%s'",cIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						//debug only
+						printf("%s\n",mysql_error(&gMysql));
+						logfileLine("ProcessIPCheck",mysql_error(&gMysql),uVEID);
+						mysql_close(&gMysql);
+						exit(2);
+					}
+			        	res=mysql_store_result(&gMysql);
+					while((field=mysql_fetch_row(res)))
+					{
+						//debug only
+						printf("%u:%s:%s:%s:uAvailable=%s found in tIP no container\n",uVEID,cIP,cHostname,field[0],field[1]);
+					}
+				}
+				mysql_free_result(res);
 			}
 			mysql_free_result(res);
 		}//while lines from vzlist
