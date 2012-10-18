@@ -272,8 +272,15 @@ void ExttRuleButtons(void)
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("Build a rule by adding at least one gateway and one time interval."
-				" Add the highest priority GWs first. If more than one interval they are logically OR'd to cover the sum"
+				" Add the highest priority GWs first. If more than one interval is assigned they are logically OR'd to cover the sum"
 				" of their intervals.");
+			printf("<p><u>How the outbound routes (PBXs to Carriers) are determined</u><br>");
+			printf("Rules with no prefix are default rules and are checked last, their priority is used to order them amongst themselves."
+				" Other rules are checked according to their priority (lowest numbers have first prorioty)."
+				" Only rules with time intervals that match the current system time are considered."
+				" If a rule has more than one time interval they are effectively all considered when determining if they are"
+				" active at a given system time. The proxy engine then MAY use the tAddress uPriority to decide weather"
+				" to send traffic to multiple IPs in parallel (forking) or to try serially.");
 			if(uRule)
 			{
 				tRuleGroupGlueNavList();
@@ -628,6 +635,8 @@ void tRuleNowNavList(void)
         MYSQL_ROW field2;
 	structRule sRuleTest[32];
 	register int i;
+
+/*
 	if(cTestDID[0])
 	{
 		for(i=0;i<32;i++)
@@ -638,6 +647,10 @@ void tRuleNowNavList(void)
 			sRuleTest[i].uRule=0;
 		}
 	}
+*/
+
+	//quick init
+	memset((void *)&sRuleTest[0],0,sizeof(structRule)*32);
 
 	if(cTestNow[0])
 		sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
@@ -652,7 +665,11 @@ void tRuleNowNavList(void)
 			" AND INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK('%1$s'))>0"
 			" ORDER BY tRule.uPriority",cTestNow);
 	else
-		sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
+		sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,"
+				"tRule.cLabel,"
+				"if(tRule.cPrefix='','Any',tRule.cPrefix),"
+				"tRule.uPriority,"
+				"if(tRule.cPrefix='','0','1') AS HasPrefix"
 			" FROM tRule,tGroupGlue,tTimeInterval"
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
@@ -662,7 +679,7 @@ void tRuleNowNavList(void)
 			" AND IF(tTimeInterval.cStartTime='',1,TIME(NOW())>=tTimeInterval.cStartTime)"
 			" AND IF(tTimeInterval.cEndTime='',1,TIME(NOW())<=tTimeInterval.cEndTime)"
 			" AND INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK(NOW()))>0"
-			" ORDER BY tRule.uPriority");
+			" ORDER BY HasPrefix DESC,tRule.uPriority");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -685,8 +702,8 @@ void tRuleNowNavList(void)
 		{
 			sscanf(field[3],"%u",&uPriority);
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tRule"
-				"&uRule=%s>[%3.3u] %s (%s)</a><br>\n",
-				field[0],uPriority,field[1],field[2]);
+				"&uRule=%s>[%3.3u] %s (%s/%s)</a><br>\n",
+				field[0],uPriority,field[1],field[2],field[4]);
 			if(cTestDID[0])
 			{
 				sprintf(gcQuery,"SELECT DISTINCT tAddress.cIP,tAddress.uPort"
