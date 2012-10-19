@@ -636,24 +636,15 @@ void tRuleNowNavList(void)
 	structRule sRuleTest[32];
 	register int i;
 
-/*
-	if(cTestDID[0])
-	{
-		for(i=0;i<32;i++)
-		{
-			sRuleTest[i].cGatewayIP[0]=0;
-			sRuleTest[i].cPrefix[0]=0;
-			sRuleTest[i].uPort=0;
-			sRuleTest[i].uRule=0;
-		}
-	}
-*/
-
 	//quick init
 	memset((void *)&sRuleTest[0],0,sizeof(structRule)*32);
 
 	if(cTestNow[0])
-		sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
+		sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,"
+				"tRule.cLabel,"
+				"if(tRule.cPrefix='','Any',tRule.cPrefix),"
+				"tRule.uPriority,"
+				"if(tRule.cPrefix='','0','1') AS HasPrefix"
 			" FROM tRule,tGroupGlue,tTimeInterval"
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
@@ -663,7 +654,7 @@ void tRuleNowNavList(void)
 			" AND IF(tTimeInterval.cStartTime='',1,TIME('%1$s')>=tTimeInterval.cStartTime)"
 			" AND IF(tTimeInterval.cEndTime='',1,TIME('%1$s')<=tTimeInterval.cEndTime)"
 			" AND INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK('%1$s'))>0"
-			" ORDER BY tRule.uPriority",cTestNow);
+			" ORDER BY HasPrefix DESC,tRule.uPriority",cTestNow);
 	else
 		sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,"
 				"tRule.cLabel,"

@@ -10,6 +10,9 @@ PURPOSE
 	CDR support.
 
 	Development info moved to NOTES file.
+DESIGN NOTES
+	No dynamic memory operations are used to avoid memory leakage and cleanup issues. 
+	We do not care about efficient memory use, we care about reliability and speed.
 	
 AUTHOR/LEGAL
 	(C) 2012 Gary Wallis for Unixservice, LLC.
@@ -27,7 +30,23 @@ FREE HELP
 
 #include "sipproxy.h"
 
+typedef struct {
+	char cIP[32];
+	unsigned uPort;
+	unsigned uPriority;
+	unsigned uWeight;
+} structAddr;
+
+#define MAX_ADDR 8
+typedef struct {
+	char cPrefix[32];
+	unsigned uRule;
+	structAddr sAddr[MAX_ADDR];
+} structRule;
+
 //Global data
+#define MAX_RULES 32
+structRule gsRuleTest[MAX_RULES];
 MYSQL gMysql; 
 unsigned guCount=0;
 unsigned guServerPort=5060;
@@ -46,6 +65,7 @@ void sigHandler(int iSignum);
 int iCheckLibEventVersion(void);
 int iSetupAndTestMemcached(void);
 int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort);
+void sigLoadRules(int iSigNum);
 
 
 void readEv(int fd,short event,void* arg)
@@ -195,6 +215,7 @@ int main(int iArgc, char *cArgv[])
 	if(guLogLevel>3)
 		logfileLine("main","forked");
 	signal(SIGINT,sigHandler);
+	signal(SIGHUP,sigLoadRules);
 	sprintf(gcQuery,"listening on %s:%u",gcServerIP,guServerPort);
 	logfileLine("main",gcQuery);
 
@@ -376,3 +397,117 @@ int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort)
 }//int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort)
 
 
+void sigLoadRules(int iSigNum)
+{
+	//quick init
+	memset((void *)&gsRuleTest[0],0,sizeof(structRule)*MAX_RULES);
+
+	register int i;
+	char cData[512];
+	char cKey[32];
+	size_t sizeData;
+	uint32_t flags;
+	unsigned uRule=0;
+	memcached_return rc;
+	for(i=0;i<MAX_RULES;i++)
+	{
+		//load from memcached
+		sprintf(cKey,"%d-rule",i);
+		sprintf(cData,"%.511s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
+		if(rc!=MEMCACHED_SUCCESS)
+		{
+			logfileLine("sigLoadRules",cKey);
+			break;
+		}
+		else
+		{
+			register int i;
+			unsigned uLine=0;
+			unsigned uAddr=0;
+			char *cp=cData;
+			for(i=0;i<512 && cData[i];i++)
+			{
+				if(cData[i]=='\n')
+				{
+					unsigned uRuleNum=0;
+					unsigned uA=0,uB=0,uC=0,uD=0;
+					unsigned uPort=0;
+					unsigned uPriority=0;
+					unsigned uWeight=0;
+					char cPrefix[32]={""};
+					char cIP[32]={""};
+					char *cp1,*cp2;
+					//process a line
+					cData[i]=0;
+					uLine++;
+					if(uLine>1)
+					{
+						sscanf(cp,"cDestinationIP=%u.%u.%u.%u;uDestinationPort=%u;uPriority=%u,uWeight=%u;",
+								&uA,&uB,&uC,&uD,&uPort,&uPriority,&uWeight);
+						logfileLine("sigLoadRules ln",cp);
+						sprintf(cIP,"%u.%u.%u.%u",uA,uB,uC,uD);
+						sprintf(gcQuery,"(%u) cIP=%s;uPort=%u;uPriority=%u,uWeight=%u;",
+								uAddr,
+								cIP,uPort,uPriority,uWeight);
+						if(uAddr<MAX_ADDR && uRule)
+						{
+							logfileLine("sigLoadRules",gcQuery);
+							gsRuleTest[uRule-1].sAddr[uAddr].uPort=uPort;
+							gsRuleTest[uRule-1].sAddr[uAddr].uPriority=uPriority;
+							gsRuleTest[uRule-1].sAddr[uAddr].uWeight=uWeight;
+							sprintf(gsRuleTest[uRule-1].sAddr[uAddr].cIP,"%.31s",cIP);
+							uAddr++;
+						}
+						else
+						{
+							logfileLine("sigLoadRules Ex",gcQuery);
+						}
+					}
+					else
+					{
+						sscanf(cp,"uRule=%u;",&uRuleNum);
+						if((cp1=strstr(cp,"cPrefix=")))
+						{
+							if((cp2=strchr(cp1+strlen("cPrefix="),';')))
+							{
+								*cp2=0;
+								sprintf(cPrefix,"%.32s",cp1+strlen("cPrefix="));
+							}
+						}
+						gsRuleTest[uRule].uRule=uRuleNum;
+						sprintf(gsRuleTest[uRule].cPrefix,"%.31s",cPrefix);
+						logfileLine("sigLoadRules l1",cp);
+						sprintf(gcQuery,"(%u) uRuleNum=%u;cPrefix=%s;",uRule,uRuleNum,cPrefix);
+						logfileLine("sigLoadRules",gcQuery);
+						uRule++;
+					}
+					cp=cData+i+1;
+				}//if newline
+			}
+		}
+	}
+
+	sprintf(gcQuery,"Loaded %d rules",i);
+	logfileLine("sigLoadRules",gcQuery);
+
+	//debug only
+	for(i=0;i<MAX_RULES;i++)
+	{
+		register int j=0;
+			
+		sprintf(gcQuery,"(%d) uRuleNum=%u;cPrefix=%s;",i,gsRuleTest[i].uRule,gsRuleTest[i].cPrefix);
+		logfileLine("sigLoadRules rreport",gcQuery);
+		for(j=0;j<MAX_ADDR;j++)
+		{
+			sprintf(gcQuery,"(%d) cIP=%s;uPort=%u;uPriority=%u,uWeight=%u;",
+					j,
+					gsRuleTest[i].sAddr[j].cIP,
+					gsRuleTest[i].sAddr[j].uPort,
+					gsRuleTest[i].sAddr[j].uPriority,
+					gsRuleTest[i].sAddr[j].uWeight);
+			logfileLine("sigLoadRules rreport",gcQuery);
+		}
+	}
+
+
+}//void sigLoadRules(int iSigNum)
