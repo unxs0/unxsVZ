@@ -626,7 +626,11 @@ void AddRules(char const *cCluster)
 	unsigned uRuleCount=0;
 
 	if(!guSilent) printf("AddRules() start\n");
-	sprintf(gcQuery,"SELECT tRule.uRule,tRule.cLabel,if(tRule.cPrefix='','Any',tRule.cPrefix),tRule.uPriority"
+	sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,"
+				"tRule.cLabel,"
+				"if(tRule.cPrefix='','Any',tRule.cPrefix),"
+				"tRule.uPriority,"
+				"if(tRule.cPrefix='','0','1') AS HasPrefix"
 			" FROM tRule,tGroupGlue,tTimeInterval"
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
@@ -636,7 +640,7 @@ void AddRules(char const *cCluster)
 			" AND IF(tTimeInterval.cStartTime='',1,TIME(NOW())>=tTimeInterval.cStartTime)"
 			" AND IF(tTimeInterval.cEndTime='',1,TIME(NOW())<=tTimeInterval.cEndTime)"
 			" AND INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK(NOW()))>0"
-			" ORDER BY tRule.uPriority");
+			" ORDER BY HasPrefix DESC,tRule.uPriority");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{

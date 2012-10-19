@@ -22,6 +22,8 @@ AVAILABLE DATA FROM readEv()
 	unsigned uGatewayPort=0;
 
 THINGS TO DO LIST
+	ASAP code new outgoing gateway determination.
+
 	So many that it is impossible to list all at this time	
 	Big ticket items:
 	1. Keep track of number of calls per PBX and limit to
@@ -33,6 +35,7 @@ THINGS TO DO LIST
 	2. Add Route: header lines as required.
 	3. Add more header lines to proxy generated responses as required by
 	Asterisk and our test Carrier UASs. Not by the huge RFC list.
+	4. Modify the Request-URI line for target.
 
 */
 
@@ -203,11 +206,21 @@ if(!uReply)
 		{
 			if(guLogLevel>4)
 				logfileLine("readEv-process PBX","");
-			//This is where all the rule code will go
 
-			sprintf(cKey,"outbound");
-			sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
-			if(rc!=MEMCACHED_SUCCESS)
+			cDestinationIP[0]=0;
+			uDestinationPort=0;
+			register int i;
+			for(i=0;i<MAX_RULES;i++)
+			{
+				//Find first rule that matches prefix
+				if(!strncmp(cDID,gsRuleTest[i].cPrefix,strlen(gsRuleTest[i].cPrefix)))
+				{
+					uDestinationPort=gsRuleTest[i].sAddr[0].uPort;
+					sprintf(cDestinationIP,"%.31s",gsRuleTest[i].sAddr[0].cIP);
+				}
+			}
+
+			if(!cDestinationIP[0] || !uDestinationPort)
 			{
 				sprintf(cMsg,"SIP/2.0 500 No outbound gateway\r\nCSeq: %s\r\n",cCSeq);
 				if(iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort))
@@ -215,27 +228,6 @@ if(!uReply)
 					if(guLogLevel>3)
 						logfileLine("readEv-process 500 No outbound gateway",cKey);
 					return;
-				}
-			}
-			else
-			{
-				//Parse outbound gateway0
-				sscanf(cData,"cDestinationIP0=%[^;];uDestinationPort0=%u;",cDestinationIP,&uDestinationPort);
-				if(cDestinationIP[0]==0 || uDestinationPort==0)
-				{
-					if(guLogLevel>0)
-					{
-						logfileLine("readEv-process","cData incorrect");
-						logfileLine("readEv-process",cData);
-					}
-				}
-				else
-				{
-					if(guLogLevel>3)
-					{
-						logfileLine("readEv-process","cData ok");
-						logfileLine("readEv-process",cData);
-					}
 				}
 			}
 		}
