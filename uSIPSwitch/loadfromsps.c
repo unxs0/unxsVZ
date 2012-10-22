@@ -486,8 +486,8 @@ void AddPBXs(char const *cCluster)
 
 	if(!guSilent) printf("AddPBXs() start\n");
 
-	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight,tPBX.cHostname"
-			" FROM tPBX,tCluster,tAddress"
+	sprintf(gcQuery,"SELECT tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight,tPBX.cHostname,IF(tGroupGlue.uGroup,tGroupGlue.uGroup,0)"
+			" FROM tPBX LEFT JOIN tGroupGlue ON tPBX.uPBX=tGroupGlue.uKey AND tGroupGlue.uGroupType=5,tCluster,tAddress"
 			" WHERE tPBX.uCluster=tCluster.uCluster"
 			" AND tAddress.uPBX=tPBX.uPBX"
 			" AND tCluster.cLabel='%s'"
@@ -509,8 +509,8 @@ void AddPBXs(char const *cCluster)
 
 		//PBXs are gateways too. This makes the server run faster.
 		sprintf(cKey,"%.90s-gw",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=2;uPriority=%.5s;uWeight=%.5s;cHostname=%.64s;",
-				field[0],field[1],field[2],field[3],field[4]);
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=2;uPriority=%.5s;uWeight=%.5s;cHostname=%.64s;uGroup=%s;",
+				field[0],field[1],field[2],field[3],field[4],field[5]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
