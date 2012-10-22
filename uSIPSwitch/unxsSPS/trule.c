@@ -33,6 +33,8 @@ static unsigned uRule=0;
 static char cLabel[33]={""};
 static unsigned uPriority=0;
 static char cPrefix[33]={""};
+static unsigned uInGroup=0;
+static unsigned uExGroup=0;
 static char cComment[33]={""};
 static unsigned uOwner=0;
 #define StandardFields
@@ -42,7 +44,7 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
-#define VAR_LIST_tRule "tRule.uRule,tRule.cLabel,tRule.uPriority,tRule.cPrefix,tRule.cComment,tRule.uOwner,tRule.uCreatedBy,tRule.uCreatedDate,tRule.uModBy,tRule.uModDate"
+#define VAR_LIST_tRule "tRule.uRule,tRule.cLabel,tRule.uPriority,tRule.cPrefix,tRule.uInGroup,tRule.uExGroup,tRule.cComment,tRule.uOwner,tRule.uCreatedBy,tRule.uCreatedDate,tRule.uModBy,tRule.uModDate"
 
  //Local only
 void Insert_tRule(void);
@@ -80,6 +82,10 @@ void ProcesstRuleVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uPriority);
 		else if(!strcmp(entries[i].name,"cPrefix"))
 			sprintf(cPrefix,"%.40s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uInGroup"))
+			sscanf(entries[i].val,"%u",&uInGroup);
+		else if(!strcmp(entries[i].name,"uExGroup"))
+			sscanf(entries[i].val,"%u",&uExGroup);
 		else if(!strcmp(entries[i].name,"cComment"))
 			sprintf(cComment,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
@@ -194,12 +200,14 @@ void tRule(const char *cResult)
 		sprintf(cLabel,"%.32s",field[1]);
 		sscanf(field[2],"%u",&uPriority);
 		sprintf(cPrefix,"%.32s",field[3]);
-		sprintf(cComment,"%.32s",field[4]);
-		sscanf(field[5],"%u",&uOwner);
-		sscanf(field[6],"%u",&uCreatedBy);
-		sscanf(field[7],"%lu",&uCreatedDate);
-		sscanf(field[8],"%u",&uModBy);
-		sscanf(field[9],"%lu",&uModDate);
+		sscanf(field[4],"%u",&uInGroup);
+		sscanf(field[5],"%u",&uExGroup);
+		sprintf(cComment,"%.32s",field[6]);
+		sscanf(field[7],"%u",&uOwner);
+		sscanf(field[8],"%u",&uCreatedBy);
+		sscanf(field[9],"%lu",&uCreatedDate);
+		sscanf(field[10],"%u",&uModBy);
+		sscanf(field[11],"%lu",&uModDate);
 
 		}
 
@@ -314,6 +322,18 @@ void tRuleInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cPrefix id=cPrefix value='%s'>\n",EncodeDoubleQuotes(cPrefix));
 	}
+	//uInGroup COLTYPE_FOREIGNKEY
+	OpenRow(LANG_FL_tRule_uInGroup,"black");
+	if(guPermLevel>=0 && uMode)
+		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uInGroup id=uInGroup value='%u' >\n",LANG_FT_tRule_uInGroup,uInGroup);
+	else
+		printf("<input title='%s' type=text value='%s' size=40 disabled><input type=hidden name='uInGroup' value='%u' >\n",LANG_FT_tRule_uInGroup,ForeignKey("tGroup","cLabel",uInGroup),uInGroup);
+	//uExGroup COLTYPE_FOREIGNKEY
+	OpenRow(LANG_FL_tRule_uExGroup,"black");
+	if(guPermLevel>=0 && uMode)
+		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uExGroup id=uExGroup value='%u' >\n",LANG_FT_tRule_uExGroup,uExGroup);
+	else
+		printf("<input title='%s' type=text value='%s' size=40 disabled><input type=hidden name='uExGroup' value='%u' >\n",LANG_FT_tRule_uExGroup,ForeignKey("tGroup","cLabel",uExGroup),uExGroup);
 	//cComment uRADType=253
 	OpenRow(LANG_FL_tRule_cComment,"black");
 	printf("<input title='%s' type=text name=cComment id=cComment value='%s' size=40 maxlength=31 "
@@ -413,6 +433,8 @@ void Insert_tRule(void)
 		"cLabel='%s',"
 		"uPriority=%u,"
 		"cPrefix='%s',"
+		"uInGroup=%u,"
+		"uExGroup=%u,"
 		"cComment='%s',"
 		"uOwner=%u,"
 		"uCreatedBy=%u,"
@@ -420,6 +442,8 @@ void Insert_tRule(void)
 			,TextAreaSave(cLabel)
 			,uPriority
 			,TextAreaSave(cPrefix)
+			,uInGroup
+			,uExGroup
 			,TextAreaSave(cComment)
 			,uOwner
 			,uCreatedBy
@@ -436,6 +460,8 @@ void Update_tRule(char *cRowid)
 		"cLabel='%s',"
 		"uPriority=%u,"
 		"cPrefix='%s',"
+		"uInGroup=%u,"
+		"uExGroup=%u,"
 		"cComment='%s',"
 		"uOwner=%u,"
 		"uModBy=%u,"
@@ -444,6 +470,8 @@ void Update_tRule(char *cRowid)
 			,TextAreaSave(cLabel)
 			,uPriority
 			,TextAreaSave(cPrefix)
+			,uInGroup
+			,uExGroup
 			,TextAreaSave(cComment)
 			,uOwner
 			,uModBy
@@ -530,6 +558,8 @@ void tRuleList(void)
 		"<td><font face=arial,helvetica color=white>cLabel"
 		"<td><font face=arial,helvetica color=white>uPriority"
 		"<td><font face=arial,helvetica color=white>cPrefix"
+		"<td><font face=arial,helvetica color=white>uInGroup"
+		"<td><font face=arial,helvetica color=white>uExGroup"
 		"<td><font face=arial,helvetica color=white>cComment"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
@@ -554,30 +584,32 @@ void tRuleList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-				time_t luTime7=strtoul(field[7],NULL,10);
-		char cBuf7[32];
-		if(luTime7)
-			ctime_r(&luTime7,cBuf7);
-		else
-			sprintf(cBuf7,"---");
-		time_t luTime9=strtoul(field[9],NULL,10);
+				time_t luTime9=strtoul(field[9],NULL,10);
 		char cBuf9[32];
 		if(luTime9)
 			ctime_r(&luTime9,cBuf9);
 		else
 			sprintf(cBuf9,"---");
-		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tRule&uRule=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		time_t luTime11=strtoul(field[11],NULL,10);
+		char cBuf11[32];
+		if(luTime11)
+			ctime_r(&luTime11,cBuf11);
+		else
+			sprintf(cBuf11,"---");
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tRule&uRule=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
 			,field[2]
 			,field[3]
-			,field[4]
-			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
-			,cBuf7
+			,ForeignKey("tGroup","cLabel",strtoul(field[4],NULL,10))
+			,ForeignKey("tGroup","cLabel",strtoul(field[5],NULL,10))
+			,field[6]
+			,ForeignKey("tClient","cLabel",strtoul(field[7],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[8],NULL,10))
 			,cBuf9
+			,ForeignKey("tClient","cLabel",strtoul(field[10],NULL,10))
+			,cBuf11
 				);
 
 	}
@@ -595,6 +627,8 @@ void CreatetRule(void)
 		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
 		"uPriority INT UNSIGNED NOT NULL DEFAULT 0,"
 		"cPrefix VARCHAR(32) NOT NULL DEFAULT '',"
+		"uInGroup INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uInGroup),"
+		"uExGroup INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uExGroup),"
 		"cComment VARCHAR(32) NOT NULL DEFAULT '',"
 		"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
