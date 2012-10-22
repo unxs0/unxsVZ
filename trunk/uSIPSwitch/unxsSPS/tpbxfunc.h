@@ -14,17 +14,25 @@ TEMPLATE VARS AND FUNCTIONS
 */
 
 
+static unsigned uInGroup=0;
+static char cuInGroupPullDown[256]={""};
 
 void tPBXtAddressNavList(void);
+void tPBXtGroupNavList(void);
 
 void ExtProcesstPBXVars(pentry entries[], int x)
 {
-	/*
 	register int i;
 	for(i=0;i<x;i++)
 	{
+		if(!strcmp(entries[i].name,"uInGroup"))
+			sscanf(entries[i].val,"%u",&uInGroup);
+		else if(!strcmp(entries[i].name,"cuInGroupPullDown"))
+		{
+			sprintf(cuInGroupPullDown,"%.255s",entries[i].val);
+			uInGroup=ReadPullDown("tGroup","cLabel",cuInGroupPullDown);
+		}
 	}
-	*/
 }//void ExtProcesstPBXVars(pentry entries[], int x)
 
 
@@ -58,12 +66,10 @@ void ExttPBXCommands(pentry entries[], int x)
                         	guMode=0;
 
 				uPBX=0;
-#ifdef StandardFields
 				uCreatedBy=guLoginClient;
 				uOwner=uContactParentCompany;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
-#endif
 				NewtPBX(0);
 			}
 			else
@@ -72,11 +78,7 @@ void ExttPBXCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstPBXVars(entries,x);
-#ifdef StandardFields
 			if(uAllowDel(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 	                        guMode=2001;
 				tPBX(LANG_NB_CONFIRMDEL);
@@ -87,11 +89,7 @@ void ExttPBXCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstPBXVars(entries,x);
-#ifdef StandardFields
 			if(uAllowDel(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 				guMode=5;
 				DeletetPBX();
@@ -102,11 +100,7 @@ void ExttPBXCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstPBXVars(entries,x);
-#ifdef StandardFields
 			if(uAllowMod(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
 				guMode=2002;
 				tPBX(LANG_NB_CONFIRMMOD);
@@ -117,24 +111,54 @@ void ExttPBXCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstPBXVars(entries,x);
-#ifdef StandardFields
 			if(uAllowMod(uOwner,uCreatedBy))
-#else
-			if(guPermLevel>=9)
-#endif
 			{
                         	guMode=2002;
 				//Check entries here
                         	guMode=0;
 
-#ifdef StandardFields
 				uModBy=guLoginClient;
-#endif
 				ModtPBX();
 			}
 			else
 				tPBX("<blink>Error</blink>: Denied by permissions settings");
                 }
+                else if(!strcmp(gcCommand,"Add/Remove Group"))
+		{
+                        ProcesstPBXVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+        			MYSQL_RES *res;
+
+				if(!uInGroup)
+					tPBX("<blink>Error</blink>: Must select a group");
+				sprintf(gcQuery,"SELECT uKey FROM tGroupGlue WHERE uKey=%u AND uGroup=%u AND uGroupType=5",uPBX,uInGroup);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+					tPBX("<blink>Error</blink>: Query error");
+        			res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res))
+				{
+					//remove
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uKey=%u AND uGroup=%u AND uGroupType=5",uPBX,uInGroup);
+					mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+						tPBX("<blink>Error</blink>: Query error");
+					tPBX("PBX deleted from group");
+				}
+				else
+				{
+					//add
+					sprintf(gcQuery,"INSERT INTO tGroupGlue SET uKey=%u,uGroup=%u,uGroupType=5",uPBX,uInGroup);
+					mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+						tPBX("<blink>Error</blink>: Query error");
+					tPBX("PBX added to group");
+				}
+			}
+			else
+				tPBX("<blink>Error</blink>: Denied by permissions settings");
+		}
 	}
 
 }//void ExttPBXCommands(pentry entries[], int x)
@@ -162,11 +186,15 @@ void ExttPBXButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			//printf("<p><u>Operations</u><br>");
-			//printf("<br><input type=submit class=largeButton title='Sample button help'"
-			//		" name=gcCommand value='Sample Button'>");
+			printf("<p><u>Operations</u><br>");
+			tTablePullDown("tGroup;cuInGroupPullDown","cLabel","cLabel",uInGroup,1);
+			printf("<br><input type=submit class=largeButton title='Add/remove this PBX to/from the selected group above'"
+					" name=gcCommand value='Add/Remove Group'>");
 			if(uPBX)
+			{
 				tPBXtAddressNavList();
+				tPBXtGroupNavList();
+			}
 	}
 	CloseFieldSet();
 
@@ -199,11 +227,6 @@ void ExttPBXGetHook(entry gentries[], int x)
 void ExttPBXSelect(void)
 {
 
-#ifdef StandardFields
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT %s FROM tPBX ORDER BY"
 				" uPBX",
@@ -214,22 +237,13 @@ void ExttPBXSelect(void)
 	sprintf(gcQuery,"SELECT %s FROM tPBX,tClient WHERE tPBX.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
 				" ORDER BY uPBX",
-					VAR_LIST_tPBX,uContactParentCompany,uContactParentCompany);
-#else
-	sprintf(gcQuery,"SELECT %s FROM tPBX ORDER BY uPBX",VAR_LIST_tPBX);
-#endif
-					
+					VAR_LIST_tPBX,guCompany,guCompany);
 
 }//void ExttPBXSelect(void)
 
 
 void ExttPBXSelectRow(void)
 {
-#ifdef StandardFields
-	unsigned uContactParentCompany=0;
-
-	GetClientOwner(guLoginClient,&uContactParentCompany);
-
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
                 sprintf(gcQuery,"SELECT %s FROM tPBX WHERE uPBX=%u",
 			VAR_LIST_tPBX,uPBX);
@@ -239,11 +253,8 @@ void ExttPBXSelectRow(void)
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
 				" AND tPBX.uPBX=%u",
                         		VAR_LIST_tPBX
-					,uContactParentCompany,uContactParentCompany
+					,guCompany,guCompany
 					,uPBX);
-#else
-	sprintf(gcQuery,"SELECT %s FROM tPBX WHERE uPBX=%u",VAR_LIST_tPBX,uPBX);
-#endif
 
 }//void ExttPBXSelectRow(void)
 
@@ -366,4 +377,37 @@ void tPBXtAddressNavList(void)
         mysql_free_result(res);
 
 }//void tPBXtAddressNavList(void)
+
+
+void tPBXtGroupNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tGroup.uGroup,cLabel FROM tGroupGlue,tGroup"
+			" WHERE tGroupGlue.uGroup=tGroup.uGroup"
+			" AND tGroupGlue.uKey=%u"
+			" AND tGroupGlue.uGroupType=5",uPBX);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tPBXtGroupNavList</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>tPBXtGroupNavList</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroup"
+				"&uGroup=%s>%s</a><br>\n",
+				field[0],field[1]);
+	}
+
+        mysql_free_result(res);
+
+}//void tPBXtGroupNavList(void)
 
