@@ -34,7 +34,9 @@ static char cLabel[33]={""};
 static unsigned uPriority=0;
 static char cPrefix[33]={""};
 static unsigned uInGroup=0;
+static char cuInGroupPullDown[256]={""};
 static unsigned uExGroup=0;
+static char cuExGroupPullDown[256]={""};
 static char cComment[33]={""};
 static unsigned uOwner=0;
 #define StandardFields
@@ -84,8 +86,18 @@ void ProcesstRuleVars(pentry entries[], int x)
 			sprintf(cPrefix,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uInGroup"))
 			sscanf(entries[i].val,"%u",&uInGroup);
+		else if(!strcmp(entries[i].name,"cuInGroupPullDown"))
+		{
+			sprintf(cuInGroupPullDown,"%.255s",entries[i].val);
+			uInGroup=ReadPullDown("tGroup","cLabel",cuInGroupPullDown);
+		}
 		else if(!strcmp(entries[i].name,"uExGroup"))
 			sscanf(entries[i].val,"%u",&uExGroup);
+		else if(!strcmp(entries[i].name,"cuExGroupPullDown"))
+		{
+			sprintf(cuExGroupPullDown,"%.255s",entries[i].val);
+			uExGroup=ReadPullDown("tGroup","cLabel",cuExGroupPullDown);
+		}
 		else if(!strcmp(entries[i].name,"cComment"))
 			sprintf(cComment,"%.40s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
@@ -322,18 +334,18 @@ void tRuleInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cPrefix id=cPrefix value='%s'>\n",EncodeDoubleQuotes(cPrefix));
 	}
-	//uInGroup COLTYPE_FOREIGNKEY
+	//uInGroup COLTYPE_SELECTTABLE
 	OpenRow(LANG_FL_tRule_uInGroup,"black");
 	if(guPermLevel>=0 && uMode)
-		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uInGroup id=uInGroup value='%u' >\n",LANG_FT_tRule_uInGroup,uInGroup);
+		tTablePullDown("tGroup;cuInGroupPullDown","cLabel","cLabel",uInGroup,1);
 	else
-		printf("<input title='%s' type=text value='%s' size=40 disabled><input type=hidden name='uInGroup' value='%u' >\n",LANG_FT_tRule_uInGroup,ForeignKey("tGroup","cLabel",uInGroup),uInGroup);
-	//uExGroup COLTYPE_FOREIGNKEY
+		tTablePullDown("tGroup;cuInGroupPullDown","cLabel","cLabel",uInGroup,0);
+	//uExGroup COLTYPE_SELECTTABLE
 	OpenRow(LANG_FL_tRule_uExGroup,"black");
 	if(guPermLevel>=0 && uMode)
-		printf("<!--FK AllowMod-->\n<input title='%s' type=text size=16 maxlength=20 name=uExGroup id=uExGroup value='%u' >\n",LANG_FT_tRule_uExGroup,uExGroup);
+		tTablePullDown("tGroup;cuExGroupPullDown","cLabel","cLabel",uExGroup,1);
 	else
-		printf("<input title='%s' type=text value='%s' size=40 disabled><input type=hidden name='uExGroup' value='%u' >\n",LANG_FT_tRule_uExGroup,ForeignKey("tGroup","cLabel",uExGroup),uExGroup);
+		tTablePullDown("tGroup;cuExGroupPullDown","cLabel","cLabel",uExGroup,0);
 	//cComment uRADType=253
 	OpenRow(LANG_FL_tRule_cComment,"black");
 	printf("<input title='%s' type=text name=cComment id=cComment value='%s' size=40 maxlength=31 "
@@ -627,8 +639,8 @@ void CreatetRule(void)
 		"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
 		"uPriority INT UNSIGNED NOT NULL DEFAULT 0,"
 		"cPrefix VARCHAR(32) NOT NULL DEFAULT '',"
-		"uInGroup INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uInGroup),"
-		"uExGroup INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uExGroup),"
+		"uInGroup INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uExGroup INT UNSIGNED NOT NULL DEFAULT 0,"
 		"cComment VARCHAR(32) NOT NULL DEFAULT '',"
 		"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
