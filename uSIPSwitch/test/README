@@ -4,3 +4,7 @@ and be used for simple regression testing.
 Initially sipsak will be used with test files. Some test files will
 be used as the source of SIP traffic and others with the expected results
 for simple diff result analysis.
+
+Example text whole readable packet capture:
+
+tcpdump -nnq -s 0 -A -vvv host 64.62.134.36 and port 5060
