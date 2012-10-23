@@ -339,7 +339,7 @@ void AddGWs(char const *cCluster)
 	while((field=mysql_fetch_row(res)))
 	{
 		char cKey[100];
-		char cValue[100];
+		char cValue[256];
 		unsigned rc;
 
 		sprintf(cKey,"%.90s-gw",field[0]);

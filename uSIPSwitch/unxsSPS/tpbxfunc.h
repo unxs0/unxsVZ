@@ -19,6 +19,7 @@ static char cuInGroupPullDown[256]={""};
 
 void tPBXtAddressNavList(void);
 void tPBXtGroupNavList(void);
+void tPBXtDIDNavList(void);
 
 void ExtProcesstPBXVars(pentry entries[], int x)
 {
@@ -194,6 +195,7 @@ void ExttPBXButtons(void)
 			{
 				tPBXtAddressNavList();
 				tPBXtGroupNavList();
+				tPBXtDIDNavList();
 			}
 	}
 	CloseFieldSet();
@@ -410,4 +412,35 @@ void tPBXtGroupNavList(void)
         mysql_free_result(res);
 
 }//void tPBXtGroupNavList(void)
+
+
+void tPBXtDIDNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uDID,cLabel FROM tDID"
+			" WHERE uPBX=%u",uPBX);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tPBXtDIDNavList</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>tPBXtDIDNavList</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tDID"
+				"&uDID=%s>%s</a><br>\n",
+				field[0],field[1]);
+	}
+
+        mysql_free_result(res);
+
+}//void tPBXtDIDNavList(void)
 
