@@ -75,6 +75,7 @@ void readEv(int fd,short event,void* arg)
 	//Load message
 	ssize_t len;
 	char cMessage[2048]={""};
+	char cMessageModified[2048]={""};
 	socklen_t l=sizeof(struct sockaddr);
 	struct sockaddr_in sourceAddr;
 	len=recvfrom(fd,(void *)cMessage,2047,0,(struct sockaddr*)&sourceAddr,&l);
