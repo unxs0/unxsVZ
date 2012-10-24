@@ -72,6 +72,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName);
 char *cShortenText(char *cText);
 void SetSessionCookie(void);
 void GetSessionCookie(void);
+char *FQDomainName2(char *cInput);
 
 int main(int argc, char *argv[])
 {
@@ -883,6 +884,23 @@ char *FQDomainName(char *cInput)
 	return(cInput);
 
 }//char *FQDomainName(char *cInput)
+
+
+char *FQDomainName2(char *cInput)
+{
+	register int i;
+
+	for(i=0;cInput[i];i++)
+	{
+		if(!isalnum(cInput[i]) && cInput[i]!='.'  && cInput[i]!='-' )
+			break;
+		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
+	}
+	cInput[i]=0;
+
+	return(cInput);
+
+}//char *FQDomainName2(char *cInput)
 
 
 void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
