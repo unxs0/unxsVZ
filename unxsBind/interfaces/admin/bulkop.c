@@ -33,6 +33,9 @@ unsigned uGetZoneOwner(unsigned uZone);
 //zone.c
 void SerialNum(char *cSerial);
 
+//main.c
+char *FQDomainName2(char *cInput);
+
 void ProcessBulkOpVars(pentry entries[], int x)
 {
 	register int i;
@@ -278,6 +281,8 @@ void BulkResourceImport(void)
 			if((cp=strchr(cLine,';')))
 				*cp=0;
 			sprintf(gcZone,"%.99s",cLine+6);
+			//strip trailing tabs or other white space.
+			FQDomainName2(gcZone);	
 			//Debug only
 			sprintf(cMsg,"%u: cZone=(%s)\n",uLineNumber,gcZone);
 			strcat(cImportMsg,cMsg);
