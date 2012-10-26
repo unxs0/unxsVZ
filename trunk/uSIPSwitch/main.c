@@ -46,14 +46,15 @@ typedef struct {
 
 //Global data
 #define MAX_RULES 32
+#define DEFAULT_SIP_PORT 5060
 structRule gsRuleTest[MAX_RULES];
 MYSQL gMysql; 
 unsigned guCount=0;
-unsigned guServerPort=5060;
+unsigned guServerPort=DEFAULT_SIP_PORT;
 char gcServerIP[16]={"127.0.0.1"};
 static FILE *gLfp=NULL;
 char gcQuery[1024];
-unsigned guLogLevel=5;//1 errors, 2 warnings, 3 info, 4 debug, 5 packet capture to log file
+unsigned guLogLevel=5;//1 errors, 2 warnings, 3 info, 4 debug, 5 packet capture to log file, 6 rule dump
 memcached_st *gsMemc;
 int giSock;
 
@@ -182,6 +183,9 @@ int main(int iArgc, char *cArgv[])
 		logfileLine("main","memcached failed");
 		exit(1);
 	}
+
+	//Preload rules
+	sigLoadRules(0);
 
 	int yes=1;
 	int len=sizeof(struct sockaddr);
@@ -445,14 +449,17 @@ void sigLoadRules(int iSigNum)
 					{
 						sscanf(cp,"cDestinationIP=%u.%u.%u.%u;uDestinationPort=%u;uPriority=%u,uWeight=%u;",
 								&uA,&uB,&uC,&uD,&uPort,&uPriority,&uWeight);
-						logfileLine("sigLoadRules ln",cp);
+						if(guLogLevel>3)
+							logfileLine("sigLoadRules ln",cp);
 						sprintf(cIP,"%u.%u.%u.%u",uA,uB,uC,uD);
-						sprintf(gcQuery,"(%u) cIP=%s;uPort=%u;uPriority=%u,uWeight=%u;",
+						if(guLogLevel>3)
+							sprintf(gcQuery,"(%u) cIP=%s;uPort=%u;uPriority=%u,uWeight=%u;",
 								uAddr,
 								cIP,uPort,uPriority,uWeight);
 						if(uAddr<MAX_ADDR && uRule)
 						{
-							logfileLine("sigLoadRules",gcQuery);
+							if(guLogLevel>3)
+								logfileLine("sigLoadRules",gcQuery);
 							gsRuleTest[uRule-1].sAddr[uAddr].uPort=uPort;
 							gsRuleTest[uRule-1].sAddr[uAddr].uPriority=uPriority;
 							gsRuleTest[uRule-1].sAddr[uAddr].uWeight=uWeight;
@@ -461,7 +468,8 @@ void sigLoadRules(int iSigNum)
 						}
 						else
 						{
-							logfileLine("sigLoadRules Ex",gcQuery);
+							if(guLogLevel>3)
+								logfileLine("sigLoadRules Ex",gcQuery);
 						}
 					}
 					else
@@ -477,9 +485,12 @@ void sigLoadRules(int iSigNum)
 						}
 						gsRuleTest[uRule].uRule=uRuleNum;
 						sprintf(gsRuleTest[uRule].cPrefix,"%.31s",cPrefix);
-						logfileLine("sigLoadRules l1",cp);
-						sprintf(gcQuery,"(%u) uRuleNum=%u;cPrefix=%s;",uRule,uRuleNum,cPrefix);
-						logfileLine("sigLoadRules",gcQuery);
+						if(guLogLevel>3)
+						{
+							logfileLine("sigLoadRules l1",cp);
+							sprintf(gcQuery,"(%u) uRuleNum=%u;cPrefix=%s;",uRule,uRuleNum,cPrefix);
+							logfileLine("sigLoadRules",gcQuery);
+						}
 						uRule++;
 					}
 					cp=cData+i+1;
@@ -488,27 +499,32 @@ void sigLoadRules(int iSigNum)
 		}
 	}
 
-	sprintf(gcQuery,"Loaded %d rules",i);
-	logfileLine("sigLoadRules",gcQuery);
-
-	//debug only
-	for(i=0;i<MAX_RULES;i++)
+	if(guLogLevel>1)
 	{
-		register int j=0;
-			
-		sprintf(gcQuery,"(%d) uRuleNum=%u;cPrefix=%s;",i,gsRuleTest[i].uRule,gsRuleTest[i].cPrefix);
-		logfileLine("sigLoadRules rreport",gcQuery);
-		for(j=0;j<MAX_ADDR;j++)
-		{
-			sprintf(gcQuery,"(%d) cIP=%s;uPort=%u;uPriority=%u,uWeight=%u;",
-					j,
-					gsRuleTest[i].sAddr[j].cIP,
-					gsRuleTest[i].sAddr[j].uPort,
-					gsRuleTest[i].sAddr[j].uPriority,
-					gsRuleTest[i].sAddr[j].uWeight);
-			logfileLine("sigLoadRules rreport",gcQuery);
-		}
+		sprintf(gcQuery,"Loaded %d rules",i);
+		logfileLine("sigLoadRules",gcQuery);
 	}
 
+	if(guLogLevel>5)
+	{
+		//debug only
+		for(i=0;i<MAX_RULES;i++)
+		{
+			register int j=0;
+			
+			sprintf(gcQuery,"(%d) uRuleNum=%u;cPrefix=%s;",i,gsRuleTest[i].uRule,gsRuleTest[i].cPrefix);
+			logfileLine("sigLoadRules rreport",gcQuery);
+			for(j=0;j<MAX_ADDR;j++)
+			{
+				sprintf(gcQuery,"(%d) cIP=%s;uPort=%u;uPriority=%u,uWeight=%u;",
+						j,
+						gsRuleTest[i].sAddr[j].cIP,
+						gsRuleTest[i].sAddr[j].uPort,
+						gsRuleTest[i].sAddr[j].uPriority,
+						gsRuleTest[i].sAddr[j].uWeight);
+				logfileLine("sigLoadRules rreport",gcQuery);
+			}
+		}
+	}
 
 }//void sigLoadRules(int iSigNum)
