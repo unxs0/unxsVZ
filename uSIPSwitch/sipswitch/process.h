@@ -50,6 +50,7 @@ if(cMessage[0]=='S') uReply=1;
 
 char cData[256]={""};
 char cKey[128]={""};
+char *cpMsg=cMessage;
 unsigned uType=0;//1 is gateway, 2 is pbx, 0 is unknown
 #define INVITE 1
 unsigned uRequestType=0;//1 is INVITE
@@ -107,9 +108,80 @@ int iModifyMessage(char *cMessage)
 	//and insert if non empty the new Record-Route on top of any exisiting ones.
 
 	//Return 0 if no errors, 1 otherwise
+	//Initial test just add a Record-Route so this proxy get's everything.
+	//The non changing URI does not seem to confuse the Asterisk PBX or Vitelity GW
+	//at this time. Maybe the adding of a Record-Route will affect this now?
+	if(uType==GATEWAY && uRequestType==INVITE)
+	{
+		if((cp=strchr(cMessage,'\n')))
+		{	//copy upto cp included
+			char cSave[1];
+			unsigned uLen=0;
+			strncpy(cSave,cp+1,1);
+			*(cp+1)=0;
+			strncat(cMessageModified,cMessage,2047);
+			uLen=strlen(cMessage);
+			*(cp+1)=cSave[0];
+
+			//add new content
+			strcat(cMessageModified,"Record-Route: <sip:");
+			uLen+=strlen("Record-Route: <sip:");
+			strcat(cMessageModified,gcServerIP);
+			uLen+=strlen(gcServerIP);
+			strcat(cMessageModified,";lr>\r\n");
+			uLen+=strlen(";lr>\r\n");
+
+			//copy rest
+			strncat(cMessageModified,cp+1,(2047-uLen));
+			uLen+=strlen(cp+1);
+			if(uLen>2047)
+				logfileLine("readEv-process error","cMessageModified len");
+			cpMsg=cMessageModified;
+		}
+	}
 	return(0);
 
 }//int iModifyMessage(char *cMessage)
+
+
+unsigned uLoadDestinationFromFirstLine(void)
+{
+	//ACK sip:13103566265@64.62.134.36:5060 SIP/2.0
+	if((cp=strchr(cFirstLine,'@')))
+	{
+		if(sscanf(cp+1,"%[0-9\\.]:%u ",cDestinationIP,&uDestinationPort)!=2)
+			return(1);
+	}
+	else
+	{
+		return(1);
+	}
+	return(0);
+}//unsigned uLoadDestinationFromFirstLine(void)
+
+
+//Direct load if not return;
+unsigned uLoadDestinationFromCallID(void)
+{
+	sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		sprintf(cMsg,"SIP/2.0 481 Transaction Does Not Exist\r\nCSeq: %s\r\n",cCSeq);
+		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
+		if(guLogLevel>3)
+			logfileLine("readEv-process 481 Transaction Does Not Exist",cCallID);
+		return(1);
+	}
+	if(guLogLevel>3 && cData[0])
+		logfileLine("readEv-process reply cData",cData);
+	sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;",cDestinationIP,&uDestinationPort);
+	if(guLogLevel>3)
+	{
+		sprintf(gcQuery,"cSourceIP:%s uSourcePort:%u",cDestinationIP,uDestinationPort);
+		logfileLine("readEv-process",gcQuery);
+	}
+	return(0);
+}//unsigned uLoadDestinationFromCallID(void)
 
 
 
@@ -215,8 +287,9 @@ if(!uReply)
 			register int i;
 			for(i=0;i<MAX_RULES;i++)
 			{
-				//Find first rule that matches prefix
-				if(!strncmp(cDID,gsRuleTest[i].cPrefix,strlen(gsRuleTest[i].cPrefix)))
+				//Find first rule that matches prefix the 'Any' default route 
+				//	cPrefix should come after all the number based ones.
+				if(!strncmp(cDID,gsRuleTest[i].cPrefix,strlen(gsRuleTest[i].cPrefix)) || gsRuleTest[i].cPrefix[0]=='A')
 				{
 					uDestinationPort=gsRuleTest[i].sAddr[0].uPort;
 					sprintf(cDestinationIP,"%.31s",gsRuleTest[i].sAddr[0].cIP);
@@ -260,22 +333,24 @@ if(!uReply)
 				return;
 			}
 		}
-
 	}//INVITE
-	else if(!strncmp(cFirstLine,"ACK",3) || !strncmp(cFirstLine,"BYE",3) || !strncmp(cFirstLine,"CANCEL",6))
+	else if(!strncmp(cFirstLine,"ACK",3))
 	{
 		if(guLogLevel>4)
-			logfileLine("readEv-process ACK/BYE/CANCEL","");
-
-
+			logfileLine("readEv-process ACK","");
 		//process like reply just forward if transaction exists
 		//BUT the ACKs from gateways must be sent to PBXs
-		if(uType==GATEWAY && !strncmp(cFirstLine,"ACK",3))
+		if(uType==GATEWAY)
 		{
-			//ACK sip:13103566265@64.62.134.36:5060 SIP/2.0
-			if((cp=strchr(cFirstLine,'@')))
+			if(!uLoadDestinationFromFirstLine())
 			{
-				sscanf(cp+1,"%[0-9\\.]:%u ",cDestinationIP,&uDestinationPort);
+				//Ignore ACK to this server
+				if(!strncmp(cDestinationIP,gcServerIP,strlen(gcServerIP)))
+				{
+					if(guLogLevel>3)
+						logfileLine("readEv-process ACK from GW to this server",cDestinationIP);
+					return;
+				}
 				if(guLogLevel>3)
 					logfileLine("readEv-process ACK from GW to PBX",cDestinationIP);
 			}
@@ -287,36 +362,31 @@ if(!uReply)
 		}
 		else
 		{
-
-			sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
-			if(rc!=MEMCACHED_SUCCESS)
-			{
-				//If the ACK is an answer to one of our 4xx messages just ignore.
-				if(!strncmp(cFirstLine,"ACK",3))
-				{
-					if(guLogLevel>3)
-						logfileLine("readEv-process Ignoring no transaction",cCSeq);
-					return;
-				}
-
-				sprintf(cMsg,"SIP/2.0 481 Transaction Does Not Exist\r\nCSeq: %s\r\n",cCSeq);
-				iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
-				if(guLogLevel>3)
-					logfileLine("readEv-process 481 Transaction Does Not Exist",cCallID);
-				return;
-			}
-			if(guLogLevel>3 && cData[0])
-				logfileLine("readEv-process reply cData",cData);
-			sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;",cDestinationIP,&uDestinationPort);
-			if(guLogLevel>3)
-			{
-				sprintf(gcQuery,"cSourceIP:%s uSourcePort:%u",cDestinationIP,uDestinationPort);
-				logfileLine("readEv-process",gcQuery);
-			}
+			if(uLoadDestinationFromCallID()) return;
 		}
-	}
+	}//ACK
+	else if(!strncmp(cFirstLine,"BYE",3))
+	{
+		if(guLogLevel>4)
+			logfileLine("readEv-process BYE","");
+		if(uLoadDestinationFromCallID())
+		{
+			if(uLoadDestinationFromFirstLine()) return;
+		}
+	}//BYE
+	else if(!strncmp(cFirstLine,"CANCEL",6))
+	{
+		if(guLogLevel>4)
+			logfileLine("readEv-process CANCEL","");
+		if(uLoadDestinationFromCallID())
+		{
+			if(uLoadDestinationFromFirstLine()) return;
+		}
+
+	}//CANCEL
 	else
 	{
+		//unknown or unsupported request
 		sprintf(cMsg,"SIP/2.0 405 Method Not Allowed\r\nCSeq: %s\r\n",cCSeq);
 		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 		return;
@@ -357,64 +427,31 @@ else
 
 //
 //Forward unmodified packet
-if(cDestinationIP[0] && uDestinationPort)
+if(cDestinationIP[0])
 {
-	char *cpMsg=cMessage;
+	if(!uDestinationPort) uDestinationPort=DEFAULT_SIP_PORT;
 
 	//Rewrite URI and Record-Route if required
 	//
 
-	//Initial test just add a Record-Route so this proxy get's everything.
-	//The non changing URI does not seem to confuse the Asterisk PBX or Vitelity GW
-	//at this time. Maybe the adding of a Record-Route will affect this now?
-	if(uType==GATEWAY && uRequestType==INVITE)
-	{
-		if((cp=strchr(cMessage,'\n')))
-		{	//copy upto cp included
-			char cSave[1];
-			unsigned uLen=0;
-			strncpy(cSave,cp+1,1);
-			*(cp+1)=0;
-			strncat(cMessageModified,cMessage,2047);
-			uLen=strlen(cMessage);
-			*(cp+1)=cSave[0];
-
-			//add new content
-			strcat(cMessageModified,"Record-Route: <sip:");
-			uLen+=strlen("Record-Route: <sip:");
-			strcat(cMessageModified,gcServerIP);
-			uLen+=strlen(gcServerIP);
-			strcat(cMessageModified,";lr>\r\n");
-			uLen+=strlen(";lr>\r\n");
-
-			//copy rest
-			strncat(cMessageModified,cp+1,(2047-uLen));
-			uLen+=strlen(cp+1);
-			if(uLen>2047)
-				logfileLine("readEv-process error","cMessageModified len");
-			cpMsg=cMessageModified;
-		}
-	}
-
-/*
 	if(iModifyMessage(cMessage))
 	{
-		sprintf(cMsg,"SIP/2.0 500 Forward failed\r\nCSeq: %s\r\n",cCSeq);
+		sprintf(cMsg,"SIP/2.0 500 Forward failed-0\r\nCSeq: %s\r\n",cCSeq);
 		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 		if(guLogLevel>3)
 			logfileLine("readEv-process iModifyMessage error",cCallID);
 	}
-*/
+
 	if(iSendUDPMessageWrapper(cpMsg,cDestinationIP,uDestinationPort))
 	{
-		sprintf(cMsg,"SIP/2.0 500 Forward failed\r\nCSeq: %s\r\n",cCSeq);
+		sprintf(cMsg,"SIP/2.0 500 Forward failed-1\r\nCSeq: %s\r\n",cCSeq);
 		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 		return;
 	}
 }//if(cDestinationIP[0] && uDestinationPort)
 else
 {
-	sprintf(cMsg,"SIP/2.0 500 Forward failed\r\nCSeq: %s\r\n",cCSeq);
+	sprintf(cMsg,"SIP/2.0 500 Forward failed-2\r\nCSeq: %s\r\n",cCSeq);
 	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 	if(guLogLevel>3)
 		logfileLine("readEv-process unexpected no cDestinationIP/uDestinationPort",cCallID);
