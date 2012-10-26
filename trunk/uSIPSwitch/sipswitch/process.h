@@ -161,6 +161,29 @@ unsigned uLoadDestinationFromFirstLine(void)
 
 
 //Direct load if not return;
+unsigned uLoadSourceFromCallID(void)
+{
+	sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		sprintf(cMsg,"SIP/2.0 481 Transaction Does Not Exist\r\nCSeq: %s\r\n",cCSeq);
+		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
+		if(guLogLevel>3)
+			logfileLine("readEv-process 481 Transaction Does Not Exist",cCallID);
+		return(1);
+	}
+	if(guLogLevel>4 && cData[0])
+		logfileLine("readEv-process uLoadSourceFromCallID() cData",cData);
+	sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;",cDestinationIP,&uDestinationPort);
+	if(guLogLevel>3)
+	{
+		sprintf(gcQuery,"cSourceIP:%s uSourcePort:%u",cDestinationIP,uDestinationPort);
+		logfileLine("readEv-process uLoadSourceFromCallID()",gcQuery);
+	}
+	return(0);
+}//unsigned uLoadSourceFromCallID(void)
+
+
 unsigned uLoadDestinationFromCallID(void)
 {
 	sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
@@ -173,12 +196,12 @@ unsigned uLoadDestinationFromCallID(void)
 		return(1);
 	}
 	if(guLogLevel>3 && cData[0])
-		logfileLine("readEv-process reply cData",cData);
-	sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;",cDestinationIP,&uDestinationPort);
+		logfileLine("readEv-process uLoadDestinationFromCallID cData",cData);
+	sscanf(cData,"cSourceIP=%*[^;];uSourcePort=%*u;cDestIP=%[^;];uDestPort=%u;",cDestinationIP,&uDestinationPort);
 	if(guLogLevel>3)
 	{
-		sprintf(gcQuery,"cSourceIP:%s uSourcePort:%u",cDestinationIP,uDestinationPort);
-		logfileLine("readEv-process",gcQuery);
+		sprintf(gcQuery,"cDestIP:%s uDestPort:%u",cDestinationIP,uDestinationPort);
+		logfileLine("readEv-process uLoadDestinationFromCallID()",gcQuery);
 	}
 	return(0);
 }//unsigned uLoadDestinationFromCallID(void)
@@ -318,10 +341,13 @@ if(!uReply)
 		sprintf(cMsg,"SIP/2.0 100 Trying\r\nCSeq: %s\r\n",cCSeq);//Send back same CSeq check this
 		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 
-		//Create or update transaction
+		//create or update transaction
+		//the initiator is the source for the duration of the callid based transaction
+		//an inbound gw can never be a destination  in the callid record
 		if(guLogLevel>4)
 			logfileLine("readEv-process set transaction","");
-		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;",cSourceIP,uSourcePort);
+		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;cDestIP=%.15s;uDestPort=%u;",
+			cSourceIP,uSourcePort,cDestinationIP,uDestinationPort);
 		rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -336,53 +362,156 @@ if(!uReply)
 	}//INVITE
 	else if(!strncmp(cFirstLine,"ACK",3))
 	{
-		if(guLogLevel>4)
-			logfileLine("readEv-process ACK","");
-		//process like reply just forward if transaction exists
-		//BUT the ACKs from gateways must be sent to PBXs
 		if(uType==GATEWAY)
 		{
-			if(!uLoadDestinationFromFirstLine())
+			if(guLogLevel>4)
+				logfileLine("readEv-process ACK GATEWAY","");
+			if(uLoadDestinationFromCallID())
 			{
-				//Ignore ACK to this server
-				if(!strncmp(cDestinationIP,gcServerIP,strlen(gcServerIP)))
-				{
-					if(guLogLevel>3)
-						logfileLine("readEv-process ACK from GW to this server",cDestinationIP);
-					return;
-				}
-				if(guLogLevel>3)
-					logfileLine("readEv-process ACK from GW to PBX",cDestinationIP);
+				if(uLoadDestinationFromFirstLine()) return;
 			}
-			else
-			{
-				logfileLine("readEv-process no cDestinationIP in",cFirstLine);
-				return;
-			}
+
 		}
 		else
 		{
-			if(uLoadDestinationFromCallID()) return;
+			if(guLogLevel>4)
+				logfileLine("readEv-process ACK PBX","");
+			if(uLoadSourceFromCallID())
+			{
+				if(uLoadDestinationFromFirstLine()) return;
+			}
+
+		}
+
+		//If the source and the destination as calculated is the same we need to try something else
+		if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
+		{
+			if(guLogLevel>3)
+				logfileLine("readEv-process ACK same dest as server trying cFirstLine",cSourceIP);
+			if(uLoadDestinationFromFirstLine()) return;
+			if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
+			{
+				if(guLogLevel>3)
+					logfileLine("readEv-process ACK same dest as server trying uLoadXFromCallID()",cSourceIP);
+				if(uType==GATEWAY)
+				{
+					if(uLoadSourceFromCallID()) return;
+				}
+				else
+				{
+					if(uLoadDestinationFromCallID()) return;
+				}
+				if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
+				{
+					if(guLogLevel>3)
+						logfileLine("readEv-process ACK same dest as server giving up",cSourceIP);
+					//giving up
+					return;
+				}
+			}
 		}
 	}//ACK
 	else if(!strncmp(cFirstLine,"BYE",3))
 	{
-		if(guLogLevel>4)
-			logfileLine("readEv-process BYE","");
-		if(uLoadDestinationFromCallID())
+		if(uType==GATEWAY)
 		{
+			if(guLogLevel>4)
+				logfileLine("readEv-process BYE GATEWAY","");
+			if(uLoadDestinationFromCallID())
+			{
+				if(uLoadDestinationFromFirstLine()) return;
+			}
+
+		}
+		else
+		{
+			if(guLogLevel>4)
+				logfileLine("readEv-process BYE PBX","");
+			if(uLoadSourceFromCallID())
+			{
+				if(uLoadDestinationFromFirstLine()) return;
+			}
+
+		}
+
+		//If the source and the destination as calculated is the same we need to try something else
+		if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
+		{
+			if(guLogLevel>3)
+				logfileLine("readEv-process BYE same dest as server trying cFirstLine",cSourceIP);
 			if(uLoadDestinationFromFirstLine()) return;
+			if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
+			{
+				if(guLogLevel>3)
+					logfileLine("readEv-process BYE same dest as server trying uLoadXFromCallID()",cSourceIP);
+				if(uType==GATEWAY)
+				{
+					if(uLoadSourceFromCallID()) return;
+				}
+				else
+				{
+					if(uLoadDestinationFromCallID()) return;
+				}
+				if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
+				{
+					if(guLogLevel>3)
+						logfileLine("readEv-process BYE same dest as server giving up",cSourceIP);
+					//giving up
+					return;
+				}
+			}
 		}
 	}//BYE
 	else if(!strncmp(cFirstLine,"CANCEL",6))
 	{
-		if(guLogLevel>4)
-			logfileLine("readEv-process CANCEL","");
-		if(uLoadDestinationFromCallID())
+		if(uType==GATEWAY)
 		{
-			if(uLoadDestinationFromFirstLine()) return;
+			if(guLogLevel>4)
+				logfileLine("readEv-process CANCEL GATEWAY","");
+			if(uLoadDestinationFromCallID())
+			{
+				if(uLoadDestinationFromFirstLine()) return;
+			}
+
+		}
+		else
+		{
+			if(guLogLevel>4)
+				logfileLine("readEv-process CANCEL PBX","");
+			if(uLoadSourceFromCallID())
+			{
+				if(uLoadDestinationFromFirstLine()) return;
+			}
+
 		}
 
+		//If the source and the destination as calculated is the same we need to try something else
+		if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
+		{
+			if(guLogLevel>3)
+				logfileLine("readEv-process CANCEL same dest as server trying cFirstLine",cSourceIP);
+			if(uLoadDestinationFromFirstLine()) return;
+			if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
+			{
+				if(guLogLevel>3)
+					logfileLine("readEv-process CANCEL same dest as server trying uLoadXFromCallID()",cSourceIP);
+				if(uType==GATEWAY)
+				{
+					if(uLoadSourceFromCallID()) return;
+				}
+				else
+				{
+					if(uLoadDestinationFromCallID()) return;
+				}
+				if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
+				{
+					if(guLogLevel>3)
+						logfileLine("readEv-process CANCEL same dest as server giving up",cSourceIP);
+					//giving up
+					return;
+				}
+			}
+		}
 	}//CANCEL
 	else
 	{
@@ -442,10 +571,15 @@ if(cDestinationIP[0])
 			logfileLine("readEv-process iModifyMessage error",cCallID);
 	}
 
-	if(iSendUDPMessageWrapper(cpMsg,cDestinationIP,uDestinationPort))
+	int iRetVal=0;
+	if((iRetVal=iSendUDPMessageWrapper(cpMsg,cDestinationIP,uDestinationPort)))
 	{
-		sprintf(cMsg,"SIP/2.0 500 Forward failed-1\r\nCSeq: %s\r\n",cCSeq);
-		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
+		//Can be 2 for sending to same server error
+		if(iRetVal==1)
+		{
+			sprintf(cMsg,"SIP/2.0 500 Forward failed-1\r\nCSeq: %s\r\n",cCSeq);
+			iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
+		}
 		return;
 	}
 }//if(cDestinationIP[0] && uDestinationPort)

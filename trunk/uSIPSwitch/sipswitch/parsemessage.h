@@ -51,6 +51,12 @@ Content-Length: 336
 
 int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
 {
+	if(!strncmp(cSourceIP,gcServerIP,strlen(gcServerIP)))
+	{
+		logfileLine("readEv-send to same server error",cSourceIP);
+		return(2);
+	}
+
 	char *cp;
 	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 	{
