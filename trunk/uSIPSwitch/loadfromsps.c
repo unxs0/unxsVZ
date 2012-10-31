@@ -311,6 +311,8 @@ void DNSUpdate(char const *cCluster,unsigned uPBX)
 //(the outbound gateways are added in the AddRules -rule)
 //Inbound gateways do not require that we keep track of multiple DNS SRV records
 //by their nature of being connection originators ONLY
+
+//Testing: Will add the outbound gateways also since this will simplify the routing core
 void AddGWs(char const *cCluster)
 {
         MYSQL_RES *res;
@@ -324,7 +326,7 @@ void AddGWs(char const *cCluster)
 			" FROM tGateway,tCluster,tAddress"
 			" WHERE tGateway.uCluster=tCluster.uCluster"
 			" AND tAddress.uGateway=tGateway.uGateway"
-			" AND tGateway.uGatewayType=1"//DID Inbound
+			//" AND tGateway.uGatewayType=1"//DID Inbound
 			" AND tCluster.cLabel='%s'"
 				,cCluster);
 	mysql_query(&gMysql,gcQuery);

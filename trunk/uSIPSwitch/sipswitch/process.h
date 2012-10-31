@@ -41,9 +41,6 @@ THINGS TO DO LIST
 
 //Previous section is postparsecheck.h
 
-#define GATEWAY 1
-#define PBX 2
-
 //Determine if message is a request or a reply
 unsigned uReply=0;
 if(cMessage[0]=='S') uReply=1;
@@ -51,6 +48,8 @@ if(cMessage[0]=='S') uReply=1;
 char cData[256]={""};
 char cKey[128]={""};
 char *cpMsg=cMessage;
+#define GATEWAY 1
+#define PBX 2
 unsigned uType=0;//1 is gateway, 2 is pbx, 0 is unknown
 #define INVITE 1
 unsigned uRequestType=0;//1 is INVITE
@@ -160,31 +159,7 @@ unsigned uLoadDestinationFromFirstLine(void)
 }//unsigned uLoadDestinationFromFirstLine(void)
 
 
-//Direct load if not return;
-unsigned uLoadSourceFromCallID(void)
-{
-	sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
-	if(rc!=MEMCACHED_SUCCESS)
-	{
-		sprintf(cMsg,"SIP/2.0 481 Transaction Does Not Exist\r\nCSeq: %s\r\n",cCSeq);
-		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
-		if(guLogLevel>3)
-			logfileLine("readEv-process 481 Transaction Does Not Exist",cCallID);
-		return(1);
-	}
-	if(guLogLevel>4 && cData[0])
-		logfileLine("readEv-process uLoadSourceFromCallID() cData",cData);
-	sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;",cDestinationIP,&uDestinationPort);
-	if(guLogLevel>3)
-	{
-		sprintf(gcQuery,"cSourceIP:%s uSourcePort:%u",cDestinationIP,uDestinationPort);
-		logfileLine("readEv-process uLoadSourceFromCallID()",gcQuery);
-	}
-	return(0);
-}//unsigned uLoadSourceFromCallID(void)
-
-
-unsigned uLoadDestinationFromCallID(void)
+unsigned uLoadGWFromCallID(void)
 {
 	sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
 	if(rc!=MEMCACHED_SUCCESS)
@@ -196,16 +171,50 @@ unsigned uLoadDestinationFromCallID(void)
 		return(1);
 	}
 	if(guLogLevel>3 && cData[0])
-		logfileLine("readEv-process uLoadDestinationFromCallID cData",cData);
-	sscanf(cData,"cSourceIP=%*[^;];uSourcePort=%*u;cDestIP=%[^;];uDestPort=%u;",cDestinationIP,&uDestinationPort);
+		logfileLine("readEv-process uLoadGWFromCallID cData",cData);
+	//uType=1=GATEWAY
+	if(strstr(cData,";uType=1;"))
+		//Initial INVITE by GW
+		sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;",cDestinationIP,&uDestinationPort);
+	else
+		//Initial INVITE by PBX
+		sscanf(cData,"cSourceIP=%*[^;];uSourcePort=%*u;cDestIP=%[^;];uDestPort=%u;",cDestinationIP,&uDestinationPort);
 	if(guLogLevel>3)
 	{
 		sprintf(gcQuery,"cDestIP:%s uDestPort:%u",cDestinationIP,uDestinationPort);
-		logfileLine("readEv-process uLoadDestinationFromCallID()",gcQuery);
+		logfileLine("readEv-process uLoadGWFromCallID()",gcQuery);
 	}
 	return(0);
-}//unsigned uLoadDestinationFromCallID(void)
+}//unsigned uLoadGWFromCallID(void)
 
+
+unsigned uLoadPBXFromCallID(void)
+{
+	sprintf(cData,"%.255s",memcached_get(gsMemc,cCallID,strlen(cCallID),&sizeData,&flags,&rc));
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		sprintf(cMsg,"SIP/2.0 481 Transaction Does Not Exist\r\nCSeq: %s\r\n",cCSeq);
+		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
+		if(guLogLevel>3)
+			logfileLine("readEv-process 481 Transaction Does Not Exist",cCallID);
+		return(1);
+	}
+	if(guLogLevel>3 && cData[0])
+		logfileLine("readEv-process uLoadPBXFromCallID cData",cData);
+	//uType=2=PBX
+	if(strstr(cData,";uType=2;"))
+		//Initial INVITE by PBX
+		sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;",cDestinationIP,&uDestinationPort);
+	else
+		//Initial INVITE by GW
+		sscanf(cData,"cSourceIP=%*[^;];uSourcePort=%*u;cDestIP=%[^;];uDestPort=%u;",cDestinationIP,&uDestinationPort);
+	if(guLogLevel>3)
+	{
+		sprintf(gcQuery,"cDestIP:%s uDestPort:%u",cDestinationIP,uDestinationPort);
+		logfileLine("readEv-process uLoadPBXFromCallID()",gcQuery);
+	}
+	return(0);
+}//unsigned uLoadPBXFromCallID(void)
 
 
 if(guLogLevel>4)
@@ -308,12 +317,15 @@ if(!uReply)
 			cDestinationIP[0]=0;
 			uDestinationPort=0;
 			register int i;
-			for(i=0;i<MAX_RULES;i++)
+			for(i=0;gsRuleTest[i].cPrefix[0] && i<MAX_RULES;i++)
 			{
 				//Find first rule that matches prefix the 'Any' default route 
 				//	cPrefix should come after all the number based ones.
 				if(!strncmp(cDID,gsRuleTest[i].cPrefix,strlen(gsRuleTest[i].cPrefix)) || gsRuleTest[i].cPrefix[0]=='A')
 				{
+					//We are looking at the first one only still.
+					//Need to add if first one fails try next
+					//Need to add marking "down" gateways
 					uDestinationPort=gsRuleTest[i].sAddr[0].uPort;
 					sprintf(cDestinationIP,"%.31s",gsRuleTest[i].sAddr[0].cIP);
 					break;
@@ -341,13 +353,15 @@ if(!uReply)
 		sprintf(cMsg,"SIP/2.0 100 Trying\r\nCSeq: %s\r\n",cCSeq);//Send back same CSeq check this
 		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 
-		//create or update transaction
+		//create transaction -it maybe updated if INVITE comes in again with same CALL-ID
+		//	but thsta should not matter.
 		//the initiator is the source for the duration of the callid based transaction
 		//an inbound gw can never be a destination  in the callid record
+		//the uType (save here at initial INVITE) can be used to determine whether the source or the dest is the GW
 		if(guLogLevel>4)
 			logfileLine("readEv-process set transaction","");
-		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;cDestIP=%.15s;uDestPort=%u;",
-			cSourceIP,uSourcePort,cDestinationIP,uDestinationPort);
+		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;cDestIP=%.15s;uDestPort=%u;uType=%u;",
+			cSourceIP,uSourcePort,cDestinationIP,uDestinationPort,uType);
 		rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -366,7 +380,7 @@ if(!uReply)
 		{
 			if(guLogLevel>4)
 				logfileLine("readEv-process ACK GATEWAY","");
-			if(uLoadDestinationFromCallID())
+			if(uLoadPBXFromCallID())
 			{
 				if(uLoadDestinationFromFirstLine()) return;
 			}
@@ -376,7 +390,7 @@ if(!uReply)
 		{
 			if(guLogLevel>4)
 				logfileLine("readEv-process ACK PBX","");
-			if(uLoadSourceFromCallID())
+			if(uLoadGWFromCallID())
 			{
 				if(uLoadDestinationFromFirstLine()) return;
 			}
@@ -392,22 +406,9 @@ if(!uReply)
 			if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
 			{
 				if(guLogLevel>3)
-					logfileLine("readEv-process ACK same dest as server trying uLoadXFromCallID()",cSourceIP);
-				if(uType==GATEWAY)
-				{
-					if(uLoadSourceFromCallID()) return;
-				}
-				else
-				{
-					if(uLoadDestinationFromCallID()) return;
-				}
-				if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
-				{
-					if(guLogLevel>3)
-						logfileLine("readEv-process ACK same dest as server giving up",cSourceIP);
-					//giving up
-					return;
-				}
+					logfileLine("readEv-process ACK same dest as server giving up",cSourceIP);
+				//giving up
+				return;
 			}
 		}
 	}//ACK
@@ -417,7 +418,7 @@ if(!uReply)
 		{
 			if(guLogLevel>4)
 				logfileLine("readEv-process BYE GATEWAY","");
-			if(uLoadDestinationFromCallID())
+			if(uLoadPBXFromCallID())
 			{
 				if(uLoadDestinationFromFirstLine()) return;
 			}
@@ -427,7 +428,7 @@ if(!uReply)
 		{
 			if(guLogLevel>4)
 				logfileLine("readEv-process BYE PBX","");
-			if(uLoadSourceFromCallID())
+			if(uLoadGWFromCallID())
 			{
 				if(uLoadDestinationFromFirstLine()) return;
 			}
@@ -443,32 +444,22 @@ if(!uReply)
 			if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
 			{
 				if(guLogLevel>3)
-					logfileLine("readEv-process BYE same dest as server trying uLoadXFromCallID()",cSourceIP);
-				if(uType==GATEWAY)
-				{
-					if(uLoadSourceFromCallID()) return;
-				}
-				else
-				{
-					if(uLoadDestinationFromCallID()) return;
-				}
-				if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
-				{
-					if(guLogLevel>3)
-						logfileLine("readEv-process BYE same dest as server giving up",cSourceIP);
-					//giving up
-					return;
-				}
+					logfileLine("readEv-process BYE same dest as server giving up",cSourceIP);
+				//giving up
+				return;
 			}
 		}
 	}//BYE
 	else if(!strncmp(cFirstLine,"CANCEL",6))
 	{
+		//if PBX did the invite then the call-id source is the PBX and destination is the GW.
+		//if the GW did the invite then the call-id source is the GW and the destination is the PBX.
+		//so to save time here we should identify the case in the call-id record.
 		if(uType==GATEWAY)
 		{
 			if(guLogLevel>4)
 				logfileLine("readEv-process CANCEL GATEWAY","");
-			if(uLoadDestinationFromCallID())
+			if(uLoadPBXFromCallID())
 			{
 				if(uLoadDestinationFromFirstLine()) return;
 			}
@@ -478,7 +469,7 @@ if(!uReply)
 		{
 			if(guLogLevel>4)
 				logfileLine("readEv-process CANCEL PBX","");
-			if(uLoadSourceFromCallID())
+			if(uLoadGWFromCallID())
 			{
 				if(uLoadDestinationFromFirstLine()) return;
 			}
@@ -494,22 +485,9 @@ if(!uReply)
 			if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
 			{
 				if(guLogLevel>3)
-					logfileLine("readEv-process CANCEL same dest as server trying uLoadXFromCallID()",cSourceIP);
-				if(uType==GATEWAY)
-				{
-					if(uLoadSourceFromCallID()) return;
-				}
-				else
-				{
-					if(uLoadDestinationFromCallID()) return;
-				}
-				if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
-				{
-					if(guLogLevel>3)
-						logfileLine("readEv-process CANCEL same dest as server giving up",cSourceIP);
+					logfileLine("readEv-process CANCEL same dest as server giving up",cSourceIP);
 					//giving up
 					return;
-				}
 			}
 		}
 	}//CANCEL
@@ -520,8 +498,6 @@ if(!uReply)
 		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 		return;
 	}
-	
-	
 }//if a request (e.g. commands like INVITE, ACK, BYE, CANCEL, OPTIONS, REGISTER and INFO)
 //
 //Process reply
