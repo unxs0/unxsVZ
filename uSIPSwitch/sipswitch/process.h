@@ -217,6 +217,107 @@ unsigned uLoadPBXFromCallID(void)
 }//unsigned uLoadPBXFromCallID(void)
 
 
+void CallEndCIU(void)
+{
+	//update or create a new record a.b.c.d-ciu (channels in use by PBX) where a.b.c.d is the IP of the PBX leg of call.
+	unsigned uChannelsInUse=0;
+	char cCIU[2048]={""};
+	char cBigData[2048]={""};
+	char cSearch[128]={""};
+	sprintf(cKey,"%s-ciu",cDestinationIP);
+
+	sprintf(cCIU,"%.2047s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
+	if(rc==MEMCACHED_SUCCESS)
+	{
+		//read top most CIU value
+		sscanf(cCIU,"uChannelsInUse=%u;",&uChannelsInUse);
+		if(guLogLevel>3)
+			logfileLine("readEv-CallEndCIU read",cKey);
+	}
+
+	sprintf(cSearch,";cCallID=%s;",cCallID);
+	if(cCIU[0] && strstr(cCIU,cSearch))
+	{
+		if(uChannelsInUse>0)
+		{
+			time_t luNow=0;
+			time(&luNow);
+			sprintf(cBigData,"uChannelsInUse=%u;cCallID=%s;CallEndCIU;luTime=%lu;",--uChannelsInUse,cCallID,luNow);
+			if(cCIU[0])
+			{
+				strncat(cBigData,"\n",1);
+				strncat(cBigData,cCIU,2047-(strlen(cBigData)+strlen(cCIU)));
+			}
+			rc=memcached_set(gsMemc,cKey,strlen(cKey),cBigData,strlen(cBigData),(time_t)0,(uint32_t)0);
+			if(rc!=MEMCACHED_SUCCESS)
+			{
+				if(guLogLevel>3)
+					logfileLine("readEv-CallEndCIU Could not create channels in use record",cKey);
+			}
+			else
+			{
+				if(guLogLevel>3)
+					logfileLine("readEv-CallEndCIU set",cKey);
+			}
+		}
+		else
+		{
+			if(guLogLevel>3)
+				logfileLine("readEv-CallEndCIU already zero",cCallID);
+		}
+	}
+	else
+	{
+		if(guLogLevel>3)
+			logfileLine("readEv-CallEndCIU cCallID not found",cCallID);
+	}
+
+}// void CallEndCIU(void)
+
+
+void CallStartCIU(void)
+{
+	//update or create a new record a.b.c.d-ciu (channels in use by PBX) where a.b.c.d is the IP of the PBX leg of call.
+	unsigned uChannelsInUse=0;
+	char cCIU[2048]={""};
+	char cBigData[2048]={""};
+	if(uType==PBX)
+		sprintf(cKey,"%s-ciu",cSourceIP);
+	else
+		sprintf(cKey,"%s-ciu",cDestinationIP);
+
+	sprintf(cCIU,"%.2047s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
+	if(rc==MEMCACHED_SUCCESS)
+	{
+		//read top most CIU value
+		sscanf(cCIU,"uChannelsInUse=%u;",&uChannelsInUse);
+		if(guLogLevel>3)
+			logfileLine("readEv-CallStartCIU read",cKey);
+	}
+
+	time_t luNow=0;
+	time(&luNow);
+	sprintf(cBigData,"uChannelsInUse=%u;cCallID=%s;CallStartCIU;luTime=%lu;",++uChannelsInUse,cCallID,luNow);
+	if(cCIU[0])
+	{
+		strncat(cBigData,"\n",1);
+		strncat(cBigData,cCIU,2047-(strlen(cBigData)+strlen(cCIU)));
+	}
+	rc=memcached_set(gsMemc,cKey,strlen(cKey),cBigData,strlen(cBigData),(time_t)0,(uint32_t)0);
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		if(guLogLevel>3)
+			logfileLine("readEv-CallStartCIU Could not create channels in use record",cKey);
+	}
+	else
+	{
+		if(guLogLevel>3)
+			logfileLine("readEv-CallStartCIU set",cKey);
+	}
+
+}// void CallStartCIU(void)
+
+
 if(guLogLevel>4)
 	logfileLine("readEv-process check source",cSourceIP);
 
@@ -369,11 +470,15 @@ if(!uReply)
 			if(iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort))
 			{
 				if(guLogLevel>3)
-					logfileLine("readEv-process 500 Could not create transaction",cKey);
+					logfileLine("readEv-process 500 Could not create transaction",cCallID);
 				return;
 			}
 		}
+
+		//update or create a new record a.b.c.d-ciu (channels in use by PBX) where a.b.c.d is the IP of the PBX leg of call.
+		CallStartCIU();
 	}//INVITE
+	//ACK
 	else if(!strncmp(cFirstLine,"ACK",3))
 	{
 		if(uType==GATEWAY)
@@ -412,17 +517,24 @@ if(!uReply)
 			}
 		}
 	}//ACK
+	//BYE
 	else if(!strncmp(cFirstLine,"BYE",3))
 	{
+		//always get PBX for ciu and cdr closing
+		if(!uLoadPBXFromCallID())
+		{
+			CallEndCIU();
+		}
+		else
+		{
+			if(uLoadDestinationFromFirstLine()) return;
+		}
+
 		if(uType==GATEWAY)
 		{
 			if(guLogLevel>4)
 				logfileLine("readEv-process BYE GATEWAY","");
-			if(uLoadPBXFromCallID())
-			{
-				if(uLoadDestinationFromFirstLine()) return;
-			}
-
+			//already have PBX IP from above
 		}
 		else
 		{
@@ -450,8 +562,18 @@ if(!uReply)
 			}
 		}
 	}//BYE
+	//CANCEL
 	else if(!strncmp(cFirstLine,"CANCEL",6))
 	{
+		//always get PBX for ciu and cdr closing
+		if(!uLoadPBXFromCallID())
+		{
+			CallEndCIU();
+		}
+		else
+		{
+			if(uLoadDestinationFromFirstLine()) return;
+		}
 		//if PBX did the invite then the call-id source is the PBX and destination is the GW.
 		//if the GW did the invite then the call-id source is the GW and the destination is the PBX.
 		//so to save time here we should identify the case in the call-id record.
@@ -459,11 +581,7 @@ if(!uReply)
 		{
 			if(guLogLevel>4)
 				logfileLine("readEv-process CANCEL GATEWAY","");
-			if(uLoadPBXFromCallID())
-			{
-				if(uLoadDestinationFromFirstLine()) return;
-			}
-
+			//already have destination IP from above
 		}
 		else
 		{
