@@ -187,7 +187,7 @@ void CloneReport(const char *cOptionalMsg)
 	macro_mySQLQueryErrorText
 	printf("</td></tr><tr><td></td><td><u>Source cLabel</u></td>"
 			"<td><u>Clone cLabel</u><td><u>Source cHostname</u></td>"
-			"<td><u>Clone Status/cuSyncPeriod</u></td><td><u>Clone Node</td><td><u>Datacenter</u></td>\n");
+			"<td><u>Clone Status/cuSyncPeriod</u></td><td><u>Clone Node</td><td><u>Datacenter/uNode</u></td>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		sprintf(gcQuery,"SELECT tContainer.uContainer,tStatus.cLabel,tContainer.cLabel,tContainer.cLabel,"
@@ -206,10 +206,10 @@ void CloneReport(const char *cOptionalMsg)
 			printf("<tr><td></td><td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
 				"<td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
 				"<td>%s</td><td>%s/%s</a>"
-				"</td><td>%s</td><td>%s</td>\n",mysqlField[2],mysqlField[0],
+				"</td><td>%s</td><td>%s/%s</td>\n",mysqlField[2],mysqlField[0],
 								mysqlField2[0],mysqlField2[2],
 								mysqlField[1],mysqlField2[1],cuSyncPeriod,
-								mysqlField2[4],mysqlField[5]);
+								mysqlField2[4],mysqlField[5],mysqlField[3]);
 		}
 		mysql_free_result(mysqlRes2);
 	}
