@@ -87,6 +87,7 @@ void GetConfiguration(const char *cName,char *cValue,
 void UpdateSchema(void);
 void RecoverMode(void);
 void ResetAllSyncPeriod(void);
+void AddBasicPropertiesToClones(void);
 void UpdateCloneHostnames(void);
 
 //jobqueue.c
@@ -698,6 +699,8 @@ void ExtMainShell(int argc, char *argv[])
                 RecoverMode();
         else if(argc==2 && !strcmp(argv[1],"ResetAllSyncPeriod"))
                 ResetAllSyncPeriod();
+        else if(argc==2 && !strcmp(argv[1],"AddBasicPropertiesToClones"))
+                AddBasicPropertiesToClones();
 	else if(argc==6 && !strcmp(argv[1],"ImportTemplateFile"))
                 ImportTemplateFile(argv[2],argv[3],argv[4],argv[5]);
 	else if(argc==3 && !strcmp(argv[1],"Initialize"))
@@ -730,6 +733,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tUpdateCloneHostnames\n");
 		printf("\tRecoverMode\n");
 		printf("\tResetAllSyncPeriod\n");
+		printf("\tAddBasicPropertiesToClones\n");
 		printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 		printf("\tImportRemoteDatacenter <local datacenter> <remote datacenter> <local node> <remote node>\n"
@@ -3731,3 +3735,96 @@ void MassCreateContainers(char *cConfigfileName)
 	printf("\nMassCreateContainers(): End\n");
 
 }//void MassCreateContainers(char *cConfigfileName)
+
+
+void AddBasicPropertiesToClones(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cHostname[100];
+	unsigned uNode=0,uDatacenter=0;
+
+	printf("AddBasicPropertiesToClones(): Start\n");
+
+	if(gethostname(cHostname,99)!=0)
+	{
+		printf("Could not determine cHostname\n");
+		exit(1);
+	}
+
+	if(TextConnectDb())
+		exit(1);
+
+	//Get node and datacenter via hostname
+	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
+	}
+	mysql_free_result(res);
+
+	//FQDN vs short name of 2nd NIC mess
+	if(!uNode)
+	{
+		char *cp;
+
+		if((cp=strchr(cHostname,'.')))
+			*cp=0;
+		sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uNode);
+			sscanf(field[1],"%u",&uDatacenter);
+		}
+		mysql_free_result(res);
+	}
+
+	if(!uNode)
+	{
+		printf("Could not determine uNode\n");
+		mysql_close(&gMysql);
+		exit(1);
+	}
+
+	//Take note if what we need to change/add
+	//This is based on expanded and incorrect schema of previous releases. Yes this sucks.
+	sprintf(gcQuery,"SELECT cHostname FROM tContainer"
+			" WHERE uSource>0"
+			" AND LOCATE('-clone',cLabel)>0"
+			" AND uDatacenter=%u AND uNode=%u",uDatacenter,uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(1);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("%s\n",field[0]);
+	}
+	mysql_free_result(res);
+
+	mysql_close(&gMysql);
+	printf("AddBasicPropertiesToClones(): End\n");
+
+}//void AddBasicPropertiesToClones(void)
+
