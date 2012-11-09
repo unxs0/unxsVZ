@@ -3741,6 +3741,8 @@ void AddBasicPropertiesToClones(void)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	MYSQL_RES *res2;
+	MYSQL_ROW field2;
 	char cHostname[100];
 	unsigned uNode=0,uDatacenter=0;
 
@@ -3805,7 +3807,7 @@ void AddBasicPropertiesToClones(void)
 
 	//Take note if what we need to change/add
 	//This is based on expanded and incorrect schema of previous releases. Yes this sucks.
-	sprintf(gcQuery,"SELECT cHostname FROM tContainer"
+	sprintf(gcQuery,"SELECT cHostname,uContainer FROM tContainer"
 			" WHERE uSource>0"
 			" AND LOCATE('-clone',cLabel)>0"
 			" AND uDatacenter=%u AND uNode=%u",uDatacenter,uNode);
@@ -3820,6 +3822,42 @@ void AddBasicPropertiesToClones(void)
 	while((field=mysql_fetch_row(res)))
 	{
 		printf("%s\n",field[0]);
+		sprintf(gcQuery,"SELECT cValue FROM tProperty"
+			" WHERE uKey=%s"
+			" AND cName='cuSyncPeriod'",field[1]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(1);
+		}
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			printf("%s\n",field2[0]);
+		}
+		else
+		{
+			sprintf(gcQuery,"INSERT INTO tProperty SET"
+					" cName='cuSyncPeriod',"
+					" cValue='1200',"
+					" uKey=%s,"
+					" uType=3,"
+					" uOwner=2,"
+					" uCreatedBy=1,"
+					" uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						,field[1]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				mysql_close(&gMysql);
+				exit(1);
+			}	
+			printf("%s\n",gcQuery);
+		}
+		mysql_free_result(res2);
 	}
 	mysql_free_result(res);
 
