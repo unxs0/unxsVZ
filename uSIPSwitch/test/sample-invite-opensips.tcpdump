@@ -1,10 +1,10 @@
-07:00:49.321385 IP (tos 0x0, ttl  51, id 0, offset 0, flags [DF], proto: UDP (17), length: 1176) 67.231.4.195.5060 > 173.120.136.137.5060: [udp sum ok] UDP, length 1148
-E.....@.3...C....y........(wINVITE sip:+14235098210@173.120.136.137 SIP/2.0
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+07:00:49.321385 IP (tos 0x0, ttl  51, id 0, offset 0, flags [DF], proto: UDP (17), length: 1176) didprovider-switch.5060 > opensips-proxy.5060: [udp sum ok] UDP, length 1148
+E.....@.3...C....y........(wINVITE sip:+14235098210@opensips-proxy SIP/2.0
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
 Accept: application/sdp
 Allow: INVITE,ACK,CANCEL,BYE
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.0
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0c907d195dff143f
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
@@ -34,9 +34,9 @@ a=fmtp:101 0-15
 a=sendrecv
 a=maxptime:30
 
-07:00:49.321919 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 478) 173.120.136.137.5060 > 67.231.4.195.5060: [bad udp cksum d6e7!] UDP, length 450
+07:00:49.321919 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 478) opensips-proxy.5060 > didprovider-switch.5060: [bad udp cksum d6e7!] UDP, length 450
 E.....@.@..R.y..C...........SIP/2.0 100 Giving a try
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.0
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0c907d195dff143f
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
@@ -47,15 +47,15 @@ Server: OpenSIPS (1.6.3-notls (x86_64/linux))
 Content-Length: 0
 
 
-07:00:49.596728 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 1317) 173.120.136.137.5060 > 49.96.5.104.5060: [bad udp cksum fd86!] UDP, length 1289
+07:00:49.596728 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 1317) opensips-proxy.5060 > asterisk-pbx.5060: [bad udp cksum fd86!] UDP, length 1289
 E..%..@.@....y..2a.h......s.INVITE sip:14235098210@americanrepublic.sipslayer.net SIP/2.0
-Record-Route: <sip:173.120.136.137;lr=on;did=d5f.9cf37075>
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+Record-Route: <sip:opensips-proxy;lr=on;did=d5f.9cf37075>
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
 Accept: application/sdp
 Allow: INVITE,ACK,CANCEL,BYE
-Via: SIP/2.0/UDP 173.120.136.137;branch=z9hG4bKb7bc.11c48765.0
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.0
+Via: SIP/2.0/UDP opensips-proxy;branch=z9hG4bKb7bc.11c48765.0
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0c907d195dff143f
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
@@ -85,14 +85,14 @@ a=fmtp:101 0-15
 a=sendrecv
 a=maxptime:30
 
-07:00:49.638609 IP (tos 0x0, ttl  55, id 42251, offset 0, flags [none], proto: UDP (17), length: 861) 49.96.5.104.5060 > 173.120.136.137.5060: [udp sum ok] UDP, length 833
+07:00:49.638609 IP (tos 0x0, ttl  55, id 42251, offset 0, flags [none], proto: UDP (17), length: 861) asterisk-pbx.5060 > opensips-proxy.5060: [udp sum ok] UDP, length 833
 E..]....7.l.2a.h.y.......I..SIP/2.0 100 Trying
-Via: SIP/2.0/UDP 173.120.136.137;branch=z9hG4bKb7bc.11c48765.0;received=173.120.136.137
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.0
+Via: SIP/2.0/UDP opensips-proxy;branch=z9hG4bKb7bc.11c48765.0;received=opensips-proxy
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0c907d195dff143f
-Record-Route: <sip:173.120.136.137;lr=on;did=d5f.9cf37075>
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+Record-Route: <sip:opensips-proxy;lr=on;did=d5f.9cf37075>
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
 To: <sip:+14235098210@67.231.4.93>
@@ -101,18 +101,18 @@ CSeq: 4088 INVITE
 Server: VoIP Carrier SIP v1.2.9
 Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO
 Supported: replaces, timer
-Contact: <sip:14235098210@49.96.5.104>
+Contact: <sip:14235098210@asterisk-pbx>
 Content-Length: 0
 
 
-07:00:49.673190 IP (tos 0x0, ttl  55, id 42252, offset 0, flags [none], proto: UDP (17), length: 877) 49.96.5.104.5060 > 173.120.136.137.5060: [udp sum ok] UDP, length 849
+07:00:49.673190 IP (tos 0x0, ttl  55, id 42252, offset 0, flags [none], proto: UDP (17), length: 877) asterisk-pbx.5060 > opensips-proxy.5060: [udp sum ok] UDP, length 849
 E..m....7.l.2a.h.y.......Y.OSIP/2.0 180 Ringing
-Via: SIP/2.0/UDP 173.120.136.137;branch=z9hG4bKb7bc.11c48765.0;received=173.120.136.137
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.0
+Via: SIP/2.0/UDP opensips-proxy;branch=z9hG4bKb7bc.11c48765.0;received=opensips-proxy
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0c907d195dff143f
-Record-Route: <sip:173.120.136.137;lr=on;did=d5f.9cf37075>
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+Record-Route: <sip:opensips-proxy;lr=on;did=d5f.9cf37075>
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
 To: <sip:+14235098210@67.231.4.93>;tag=as6759eda2
@@ -121,17 +121,17 @@ CSeq: 4088 INVITE
 Server: VoIP Carrier SIP v1.2.9
 Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO
 Supported: replaces, timer
-Contact: <sip:14235098210@49.96.5.104>
+Contact: <sip:14235098210@asterisk-pbx>
 Content-Length: 0
 
 
-07:00:49.673330 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 788) 173.120.136.137.5060 > 67.231.4.195.5060: [bad udp cksum 5542!] UDP, length 760
+07:00:49.673330 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 788) opensips-proxy.5060 > didprovider-switch.5060: [bad udp cksum 5542!] UDP, length 760
 E.....@.@....y..C...........SIP/2.0 180 Ringing
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.0
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0c907d195dff143f
-Record-Route: <sip:173.120.136.137;lr=on;did=d5f.9cf37075>
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+Record-Route: <sip:opensips-proxy;lr=on;did=d5f.9cf37075>
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
 To: <sip:+14235098210@67.231.4.93>;tag=as6759eda2
@@ -140,18 +140,18 @@ CSeq: 4088 INVITE
 Server: VoIP Carrier SIP v1.2.9
 Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO
 Supported: replaces, timer
-Contact: <sip:14235098210@49.96.5.104>
+Contact: <sip:14235098210@asterisk-pbx>
 Content-Length: 0
 
 
-07:00:50.016768 IP (tos 0x0, ttl  55, id 42253, offset 0, flags [none], proto: UDP (17), length: 877) 49.96.5.104.5060 > 173.120.136.137.5060: [udp sum ok] UDP, length 849
+07:00:50.016768 IP (tos 0x0, ttl  55, id 42253, offset 0, flags [none], proto: UDP (17), length: 877) asterisk-pbx.5060 > opensips-proxy.5060: [udp sum ok] UDP, length 849
 E..m...7.l.2a.h.y.......Y.OSIP/2.0 180 Ringing
-Via: SIP/2.0/UDP 173.120.136.137;branch=z9hG4bKb7bc.11c48765.0;received=173.120.136.137
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.0
+Via: SIP/2.0/UDP opensips-proxy;branch=z9hG4bKb7bc.11c48765.0;received=opensips-proxy
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0c907d195dff143f
-Record-Route: <sip:173.120.136.137;lr=on;did=d5f.9cf37075>
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+Record-Route: <sip:opensips-proxy;lr=on;did=d5f.9cf37075>
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
 To: <sip:+14235098210@67.231.4.93>;tag=as6759eda2
@@ -160,17 +160,17 @@ CSeq: 4088 INVITE
 Server: VoIP Carrier SIP v1.2.9
 Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO
 Supported: replaces, timer
-Contact: <sip:14235098210@49.96.5.104>
+Contact: <sip:14235098210@asterisk-pbx>
 Content-Length: 0
 
 
-07:00:50.017032 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 788) 173.120.136.137.5060 > 67.231.4.195.5060: [bad udp cksum 5542!] UDP, length 760
+07:00:50.017032 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 788) opensips-proxy.5060 > didprovider-switch.5060: [bad udp cksum 5542!] UDP, length 760
 E.....@.@....y..C...........SIP/2.0 180 Ringing
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.0
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0c907d195dff143f
-Record-Route: <sip:173.120.136.137;lr=on;did=d5f.9cf37075>
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+Record-Route: <sip:opensips-proxy;lr=on;did=d5f.9cf37075>
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
 To: <sip:+14235098210@67.231.4.93>;tag=as6759eda2
@@ -179,18 +179,18 @@ CSeq: 4088 INVITE
 Server: VoIP Carrier SIP v1.2.9
 Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO
 Supported: replaces, timer
-Contact: <sip:14235098210@49.96.5.104>
+Contact: <sip:14235098210@asterisk-pbx>
 Content-Length: 0
 
 
-07:01:19.676755 IP (tos 0x0, ttl  55, id 42255, offset 0, flags [none], proto: UDP (17), length: 1144) 49.96.5.104.5060 > 173.120.136.137.5060: [udp sum ok] UDP, length 1116
+07:01:19.676755 IP (tos 0x0, ttl  55, id 42255, offset 0, flags [none], proto: UDP (17), length: 1144) asterisk-pbx.5060 > opensips-proxy.5060: [udp sum ok] UDP, length 1116
 E..x....7.k.2a.h.y.......d..SIP/2.0 200 OK
-Via: SIP/2.0/UDP 173.120.136.137;branch=z9hG4bKb7bc.11c48765.0;received=173.120.136.137
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.0
+Via: SIP/2.0/UDP opensips-proxy;branch=z9hG4bKb7bc.11c48765.0;received=opensips-proxy
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0c907d195dff143f
-Record-Route: <sip:173.120.136.137;lr=on;did=d5f.9cf37075>
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+Record-Route: <sip:opensips-proxy;lr=on;did=d5f.9cf37075>
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
 To: <sip:+14235098210@67.231.4.93>;tag=as6759eda2
@@ -199,14 +199,14 @@ CSeq: 4088 INVITE
 Server: VoIP Carrier SIP v1.2.9
 Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO
 Supported: replaces, timer
-Contact: <sip:14235098210@49.96.5.104>
+Contact: <sip:14235098210@asterisk-pbx>
 Content-Type: application/sdp
 Content-Length: 239
 
 v=0
-o=root 1191426720 1191426720 IN IP4 49.96.5.104
+o=root 1191426720 1191426720 IN IP4 asterisk-pbx
 s=Asterisk PBX 1.6.2.18-rc1
-c=IN IP4 49.96.5.104
+c=IN IP4 asterisk-pbx
 t=0 0
 m=audio 13972 RTP/AVP 0 101
 a=rtpmap:0 PCMU/8000
@@ -215,13 +215,13 @@ a=fmtp:101 0-16
 a=ptime:20
 a=sendrecv
 
-07:01:19.677006 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 1055) 173.120.136.137.5060 > 67.231.4.195.5060: [bad udp cksum 77ea!] UDP, length 1027
+07:01:19.677006 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 1055) opensips-proxy.5060 > didprovider-switch.5060: [bad udp cksum 77ea!] UDP, length 1027
 E.....@.@....y..C...........SIP/2.0 200 OK
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.0
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0c907d195dff143f
-Record-Route: <sip:173.120.136.137;lr=on;did=d5f.9cf37075>
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+Record-Route: <sip:opensips-proxy;lr=on;did=d5f.9cf37075>
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
 To: <sip:+14235098210@67.231.4.93>;tag=as6759eda2
@@ -230,14 +230,14 @@ CSeq: 4088 INVITE
 Server: VoIP Carrier SIP v1.2.9
 Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO
 Supported: replaces, timer
-Contact: <sip:14235098210@49.96.5.104>
+Contact: <sip:14235098210@asterisk-pbx>
 Content-Type: application/sdp
 Content-Length: 239
 
 v=0
-o=root 1191426720 1191426720 IN IP4 49.96.5.104
+o=root 1191426720 1191426720 IN IP4 asterisk-pbx
 s=Asterisk PBX 1.6.2.18-rc1
-c=IN IP4 49.96.5.104
+c=IN IP4 asterisk-pbx
 t=0 0
 m=audio 13972 RTP/AVP 0 101
 a=rtpmap:0 PCMU/8000
@@ -246,11 +246,11 @@ a=fmtp:101 0-16
 a=ptime:20
 a=sendrecv
 
-07:01:19.761961 IP (tos 0x0, ttl  51, id 0, offset 0, flags [DF], proto: UDP (17), length: 645) 67.231.4.195.5060 > 173.120.136.137.5060: [udp sum ok] UDP, length 617
-E.....@.3...C....y.......q.5ACK sip:14235098210@49.96.5.104 SIP/2.0
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+07:01:19.761961 IP (tos 0x0, ttl  51, id 0, offset 0, flags [DF], proto: UDP (17), length: 645) didprovider-switch.5060 > opensips-proxy.5060: [udp sum ok] UDP, length 617
+E.....@.3...C....y.......q.5ACK sip:14235098210@asterisk-pbx SIP/2.0
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.2
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.2
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.2
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0ca46e95824cd678
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
@@ -258,16 +258,16 @@ To: <sip:+14235098210@67.231.4.93>;tag=as6759eda2
 Call-ID: 822537842_55629504@192.168.27.88
 CSeq: 4088 ACK
 Max-Forwards: 68
-Route: <sip:173.120.136.137:5060;lr=on;did=d5f.9cf37075>
+Route: <sip:opensips-proxy:5060;lr=on;did=d5f.9cf37075>
 Content-Length: 0
 
 
-07:01:19.762449 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 651) 173.120.136.137.5060 > 49.96.5.104.5060: [bad udp cksum 7d0f!] UDP, length 623
-E.....@.@....y..2a.h.....wqTACK sip:14235098210@49.96.5.104 SIP/2.0
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+07:01:19.762449 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 651) opensips-proxy.5060 > asterisk-pbx.5060: [bad udp cksum 7d0f!] UDP, length 623
+E.....@.@....y..2a.h.....wqTACK sip:14235098210@asterisk-pbx SIP/2.0
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
-Via: SIP/2.0/UDP 173.120.136.137;branch=z9hG4bKb7bc.11c48765.2
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKb7bc.002f7c81.2
+Via: SIP/2.0/UDP opensips-proxy;branch=z9hG4bKb7bc.11c48765.2
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKb7bc.002f7c81.2
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKb7bc.8c870333.2
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0ca46e95824cd678
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
@@ -278,11 +278,11 @@ Max-Forwards: 67
 Content-Length: 0
 
 
-07:01:51.805537 IP (tos 0x0, ttl  51, id 0, offset 0, flags [DF], proto: UDP (17), length: 645) 67.231.4.195.5060 > 173.120.136.137.5060: [udp sum ok] UDP, length 617
-E.....@.3...C....y.......q.BBYE sip:14235098210@49.96.5.104 SIP/2.0
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+07:01:51.805537 IP (tos 0x0, ttl  51, id 0, offset 0, flags [DF], proto: UDP (17), length: 645) didprovider-switch.5060 > opensips-proxy.5060: [udp sum ok] UDP, length 617
+E.....@.3...C....y.......q.BBYE sip:14235098210@asterisk-pbx SIP/2.0
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKa7bc.35ede7a3.0
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKa7bc.35ede7a3.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKa7bc.e52f07c5.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0cb21e35824cd678
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
@@ -290,16 +290,16 @@ To: <sip:+14235098210@67.231.4.93>;tag=as6759eda2
 Call-ID: 822537842_55629504@192.168.27.88
 CSeq: 4089 BYE
 Max-Forwards: 68
-Route: <sip:173.120.136.137:5060;lr=on;did=d5f.9cf37075>
+Route: <sip:opensips-proxy:5060;lr=on;did=d5f.9cf37075>
 Content-Length: 0
 
 
-07:01:51.806410 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 651) 173.120.136.137.5060 > 49.96.5.104.5060: [bad udp cksum 2a02!] UDP, length 623
-E.....@.@....y..2a.h.....wqTBYE sip:14235098210@49.96.5.104 SIP/2.0
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+07:01:51.806410 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 651) opensips-proxy.5060 > asterisk-pbx.5060: [bad udp cksum 2a02!] UDP, length 623
+E.....@.@....y..2a.h.....wqTBYE sip:14235098210@asterisk-pbx SIP/2.0
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
-Via: SIP/2.0/UDP 173.120.136.137;branch=z9hG4bKa7bc.1f65cbc6.0
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKa7bc.35ede7a3.0
+Via: SIP/2.0/UDP opensips-proxy;branch=z9hG4bKa7bc.1f65cbc6.0
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKa7bc.35ede7a3.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKa7bc.e52f07c5.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0cb21e35824cd678
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
@@ -310,13 +310,13 @@ Max-Forwards: 67
 Content-Length: 0
 
 
-07:01:51.848186 IP (tos 0x0, ttl  55, id 42260, offset 0, flags [none], proto: UDP (17), length: 769) 49.96.5.104.5060 > 173.120.136.137.5060: [udp sum ok] UDP, length 741
+07:01:51.848186 IP (tos 0x0, ttl  55, id 42260, offset 0, flags [none], proto: UDP (17), length: 769) asterisk-pbx.5060 > opensips-proxy.5060: [udp sum ok] UDP, length 741
 E.......7.m.2a.h.y........(.SIP/2.0 200 OK
-Via: SIP/2.0/UDP 173.120.136.137;branch=z9hG4bKa7bc.1f65cbc6.0;received=173.120.136.137
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKa7bc.35ede7a3.0
+Via: SIP/2.0/UDP opensips-proxy;branch=z9hG4bKa7bc.1f65cbc6.0;received=opensips-proxy
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKa7bc.35ede7a3.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKa7bc.e52f07c5.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0cb21e35824cd678
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
 To: <sip:+14235098210@67.231.4.93>;tag=as6759eda2
@@ -328,12 +328,12 @@ Supported: replaces, timer
 Content-Length: 0
 
 
-07:01:51.848321 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 680) 173.120.136.137.5060 > 67.231.4.195.5060: [bad udp cksum 2853!] UDP, length 652
+07:01:51.848321 IP (tos 0x10, ttl  64, id 0, offset 0, flags [DF], proto: UDP (17), length: 680) opensips-proxy.5060 > didprovider-switch.5060: [bad udp cksum 2853!] UDP, length 652
 E.....@.@....y..C..........RSIP/2.0 200 OK
-Via: SIP/2.0/UDP 67.231.4.195;branch=z9hG4bKa7bc.35ede7a3.0
+Via: SIP/2.0/UDP didprovider-switch;branch=z9hG4bKa7bc.35ede7a3.0
 Via: SIP/2.0/UDP 67.231.4.93;branch=z9hG4bKa7bc.e52f07c5.0
 Via: SIP/2.0/UDP 192.168.27.88:5060;branch=z9hG4bK06B0cb21e35824cd678
-Record-Route: <sip:67.231.4.195;lr=on;ftag=gK0600ae21>
+Record-Route: <sip:didprovider-switch;lr=on;ftag=gK0600ae21>
 Record-Route: <sip:67.231.4.93;lr=on;ftag=gK0600ae21>
 From: <sip:+17062733360@192.168.27.88;isup-oli=0>;tag=gK0600ae21
 To: <sip:+14235098210@67.231.4.93>;tag=as6759eda2
