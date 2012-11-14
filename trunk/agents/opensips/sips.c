@@ -132,7 +132,8 @@ void unxsVZJobs(char const *cServer)
 	sprintf(gcQuery,"SELECT uJob,uDatacenter,uNode,uContainer,uOwner,cJobName,cJobData FROM tJob"
 			" WHERE uJobStatus=10"
 			" AND cJobName LIKE 'unxsSIPS%%'"
-			" AND uJobDate<=UNIX_TIMESTAMP(NOW()) LIMIT 100");
+			" AND cJobData LIKE '%%cServer=%s;%%'"
+			" AND uJobDate<=UNIX_TIMESTAMP(NOW()) LIMIT 100",cServer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -169,8 +170,9 @@ void unxsVZJobs(char const *cServer)
 		//debug only
 		//logfileLine("unxsVZJobs cServer",cServer,0);
 		//logfileLine("unxsVZJobs cJobServer",cJobServer,0);
+		//logfileLine("unxsVZJobs cDID",cDID,uJob);
 		if(strcmp(cJobServer,cServer))
-			goto directExit;
+			continue;
 
 		if(!strncmp(cJobName,"unxsSIPSNewDID",14))
 		{
