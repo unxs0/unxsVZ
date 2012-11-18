@@ -47,6 +47,42 @@ int main(int iArgc, char *cArgv[])
 	float fJitterSendStd=0.0;
 	unsigned uFirst=1;
 	unsigned uNumCalls=0;
+	unsigned uDebug=0;
+	unsigned uRRDTool=0;
+
+	if(iArgc==1)
+	{
+		printf("usage: %s [--run] [--help] [--version] [--rrdtool] [--debug|--debug2]\n",cArgv[0]);
+		return(0);
+	}
+
+	//process command line args
+	register int i;
+	for(i=1;i<iArgc;i++)
+	{
+		if(strncmp(cArgv[i],"--version",9))
+		{
+			printf("$Id$\n");
+			return(0);
+		}
+		else if(strncmp(cArgv[i],"--help",6))
+		{
+			printf("usage: %s [--run] [--help] [--version] [--rrdtool] [--debug|--debug2]\n",cArgv[0]);
+			return(0);
+		}
+		else if(strncmp(cArgv[i],"--debug1",8))
+		{
+			uDebug=1;
+		}
+		else if(strncmp(cArgv[i],"--debug2",8))
+		{
+			uDebug=2;
+		}
+		else if(strncmp(cArgv[i],"--rrdtool",9))
+		{
+			uRRDTool=1;
+		}
+	}
 
 	if((fp=popen(ALLPBXScript,"r")))
 	{
@@ -71,7 +107,7 @@ int main(int iArgc, char *cArgv[])
 
 			if(isdigit(cLine[0])&&(isdigit(cLine[1])||cLine[1]=='.'))
 			{
-				if(iArgc>1)
+				if(uDebug>1)
 					printf("%s",cLine);
 /*
 Peer             Call ID      Duration Recv: Pack  Lost       (     %) Jitter Send: Pack  Lost       (     %) Jitter
@@ -83,12 +119,12 @@ fLossRecv=0.000000 fJitterRecv=0.000000 fLossSend=0.000000 fJitterSend=0.000400
 				char *cp;
 				if((cp=strchr(cLine,':')))
 					sscanf(cp-2,"%u:%u:%u",&uHrs,&uMins,&uSecs);
-				if(iArgc>2)
+				if(uDebug>0)
 					printf("uHrs=%u uMins=%u uSecs=%u fLossRecv=%f fJitterRecv=%f fLossSend=%f fJitterSend=%f\n",
 						uHrs,uMins,uSecs,fLossRecv,fJitterRecv,fLossSend,fJitterSend);
 					
 				unsigned uCallDuration=uSecs+uMins*60+uHrs*3600;
-				if(iArgc>2 && uCallDuration<60)
+				if(uDebug>0 && uCallDuration<60)
 					printf("Short called ignored\n");
 				if(uFields==4 && uCallDuration>59)
 				{
@@ -142,20 +178,20 @@ fLossRecv=0.000000 fJitterRecv=0.000000 fLossSend=0.000000 fJitterSend=0.000400
 	}
 
 
-	if(uNumCalls==0) return(0);
+	printf("uNumCalls=%u\n",uNumCalls);
+	if(uNumCalls==0) uNumCalls=1;
 
 	fLossRecvAvg=fLossRecvAvg/uNumCalls;
 	fJitterRecvAvg=fJitterRecvAvg/uNumCalls;
 	fLossSendAvg=fLossSendAvg/uNumCalls;
 	fJitterSendAvg=fJitterSendAvg/uNumCalls;
 
-	printf("uNumCalls=%u\n",uNumCalls);
 	printf("fLossRecvMin=%f fJitterRecvMin=%f fLossSendMin=%f fJitterSendMin=%f\n",
 				fLossRecvMin,fJitterRecvMin,fLossSendMin,fJitterSendMin);
 	printf("fLossRecvMax=%f fJitterRecvMax=%f fLossSendMax=%f fJitterSendMax=%f\n",
 				fLossRecvMax,fJitterRecvMax,fLossSendMax,fJitterSendMax);
-	printf("fLossRecvAvg=%f fJitterRecvAvg=%f fLossSendAvg=%f fJitterSendAvg=%f\n",
-				fLossRecvAvg,fJitterRecvAvg,fLossSendAvg,fJitterSendAvg);
+	printf("fLossRecvAvg=%.0f fJitterRecvAvg=%.0f fLossSendAvg=%.0f fJitterSendAvg=%.0f\n",
+				fLossRecvAvg,fJitterRecvAvg*1000,fLossSendAvg,fJitterSendAvg*1000);
 	printf("fLossRecvStd=%f fJitterRecvStd=%f fLossSendStd=%f fJitterSendStd=%f\n",
 				fLossRecvStd,fJitterRecvStd,fLossSendStd,fJitterSendStd);
 
