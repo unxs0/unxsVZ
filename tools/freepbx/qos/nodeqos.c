@@ -1,3 +1,21 @@
+/*
+FILE
+	nodeqos.c
+	$Id$
+PURPOSE
+	Gather Asterisk QOS data from every PBX on this node.
+AUTHOR
+	Gary Wallis for Unxiservice, LLC. (C) 2012.
+	GPLv2 License applies. See LICENSE file.
+NOTES
+	Graph on node via rrdtool script.
+	Provide Zabbix interface for remote logging and alert triggering.
+DEPENDENCIES
+	ALLPBXScript below
+*/
+
+#define ALLPBXScript "/usr/sbin/vzAllContainerCmd3.sh \"/usr/sbin/asterisk -rx 'sip show channelstats'\""
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -30,7 +48,7 @@ int main(int iArgc, char *cArgv[])
 	unsigned uFirst=1;
 	unsigned uNumCalls=0;
 
-	if((fp=popen("/usr/sbin/vzAllContainerCmd3.sh \"/usr/sbin/asterisk -rx 'sip show channelstats'\"","r")))
+	if((fp=popen(ALLPBXScript,"r")))
 	{
 		while(fgets(cLine,255,fp)!=NULL)
                 {
@@ -119,8 +137,6 @@ fLossRecv=0.000000 fJitterRecv=0.000000 fLossSend=0.000000 fJitterSend=0.000400
 
 					uNumCalls++;
 				}
-
-				
 			}
 		}
 	}
@@ -144,4 +160,4 @@ fLossRecv=0.000000 fJitterRecv=0.000000 fLossSend=0.000000 fJitterSend=0.000400
 				fLossRecvStd,fJitterRecvStd,fLossSendStd,fJitterSendStd);
 
 	return(0);
-}
+}//main()
