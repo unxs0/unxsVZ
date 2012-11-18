@@ -60,28 +60,33 @@ int main(int iArgc, char *cArgv[])
 	register int i;
 	for(i=1;i<iArgc;i++)
 	{
-		if(strncmp(cArgv[i],"--version",9))
+		if(!strncmp(cArgv[i],"--version",9))
 		{
 			printf("$Id$\n");
 			return(0);
 		}
-		else if(strncmp(cArgv[i],"--help",6))
+		else if(!strncmp(cArgv[i],"--help",6))
 		{
 			printf("usage: %s [--run] [--help] [--version] [--rrdtool] [--debug|--debug2]\n",cArgv[0]);
 			return(0);
 		}
-		else if(strncmp(cArgv[i],"--debug1",8))
+		else if(!strncmp(cArgv[i],"--debug1",8))
 		{
 			uDebug=1;
 		}
-		else if(strncmp(cArgv[i],"--debug2",8))
+		else if(!strncmp(cArgv[i],"--debug2",8))
 		{
 			uDebug=2;
 		}
-		else if(strncmp(cArgv[i],"--rrdtool",9))
+		else if(!strncmp(cArgv[i],"--rrdtool",9))
 		{
 			uRRDTool=1;
 		}
+	}
+
+	if(uDebug)
+	{
+		printf("uDebug=%u uRRDTool=%u\n",uDebug,uRRDTool);
 	}
 
 	if((fp=popen(ALLPBXScript,"r")))
@@ -97,6 +102,8 @@ int main(int iArgc, char *cArgv[])
 			unsigned uMins=0;
 			unsigned uSecs=0;
 
+			if(uDebug>1)
+				printf("%s",cLine);
 
 			if(strstr(cLine,"Peer"))
 				continue;
@@ -107,8 +114,6 @@ int main(int iArgc, char *cArgv[])
 
 			if(isdigit(cLine[0])&&(isdigit(cLine[1])||cLine[1]=='.'))
 			{
-				if(uDebug>1)
-					printf("%s",cLine);
 /*
 Peer             Call ID      Duration Recv: Pack  Lost       (     %) Jitter Send: Pack  Lost       (     %) Jitter
 174.121.136.137  1846308249_  00:10:36 0000029748  0000000000 ( 0.00%) 0.0000 0000029756  0000000000 ( 0.00%) 0.0004
@@ -175,6 +180,11 @@ fLossRecv=0.000000 fJitterRecv=0.000000 fLossSend=0.000000 fJitterSend=0.000400
 				}
 			}
 		}
+	}
+	else
+	{
+		printf("Could not popen()\n");
+		return(1);
 	}
 
 
