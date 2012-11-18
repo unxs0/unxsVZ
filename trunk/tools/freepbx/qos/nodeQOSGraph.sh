@@ -23,10 +23,11 @@ RRDFILE="/var/lib/rrd/$HOSTNAME-nodeQOS.rrd";
  
 if ! test -e $RRDFILE; then
 	/usr/bin/rrdtool create $RRDFILE --start N --step 300 \
-	DS:LossSend:DERIVE:600:0:100 \
-	DS:LossRecv:DERIVE:600:0:100 \
-	DS:JitterSend:DERIVE:600:0:100 \
-	DS:JitterRecv:DERIVE:600:0:100 \
+	DS:LossSend:DERIVE:600:0:10000 \
+	DS:LossRecv:DERIVE:600:0:10000 \
+	DS:JitterSend:DERIVE:600:0:10000 \
+	DS:JitterRecv:DERIVE:600:0:10000 \
+	DS:NumCalls:DERIVE:600:0:10000 \
 	RRA:AVERAGE:0.5:1:600 \
 	RRA:AVERAGE:0.5:6:700 \
 	RRA:AVERAGE:0.5:24:775 \
@@ -41,12 +42,17 @@ if ! test -e $RRDFILE; then
 	fi
 fi
 
-LossSend="12";
-LossRecv="34";
-JitterSend="50";
-JitterRecv="67";
+cData=`/usr/sbin/nodeQOS --rrdtool`;
+cDataArray=( $cData );
+LossSend=${cDataArray[0]};
+LossRecv=${cDataArray[1]};
+JitterSend=${cDataArray[2]};
+JitterRecv=${cDataArray[3]};
+NumCalls=${cDataArray[4]};
 
-nice /usr/bin/rrdtool update $RRDFILE N:$LossSend:$LossRecv:$JitterSend:$JitterRecv
+echo "$LossSend:$LossRecv:$JitterSend:$JitterRecv:$NumCalls";
+
+nice /usr/bin/rrdtool update $RRDFILE N:$LossSend:$LossRecv:$JitterSend:$JitterRecv:$NumCalls
 if [ $? != 0 ];then
 	fLog "rrdtool update $RRDFILE error";
 	exit 0;
@@ -69,10 +75,12 @@ nice /usr/bin/rrdtool graph $PNGFILE \
 		"DEF:LossRecv=$RRDFILE:LossRecv:MAX" \
 		"DEF:JitterSend=$RRDFILE:JitterSend:MAX" \
 		"DEF:JitterRecv=$RRDFILE:JitterRecv:MAX" \
+		"DEF:NumCalls=$RRDFILE:NumCalls:MAX" \
 		"LINE1:LossSend#00ff00:LossSend" \
 		"LINE1:LossRecv#0000ff:LossRecv" \
-		"LINE1:JitterSend#00f000:JitterSend" \
-		"LINE1:JitterRecv#0000f0:JitterRecv"
+		"LINE1:JitterSend#00a000:JitterSend" \
+		"LINE1:JitterRecv#0000a0:JitterRecv" \
+		"LINE1:NumCalls#a00000:NumCalls"
 		#"GPRINT:LossSend:MAX: Max LossSend\:%0.0lf" \
 		#"GPRINT:LossRecv:MAX:Max LossRecv\:%0.0lf" \
 		#"GPRINT:JitterSend:MAX: Max JitterSend\:%0.0lf" \

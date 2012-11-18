@@ -67,7 +67,7 @@ int main(int iArgc, char *cArgv[])
 		}
 		else if(!strncmp(cArgv[i],"--help",6))
 		{
-			printf("usage: %s [--run] [--help] [--version] [--rrdtool] [--debug|--debug2]\n",cArgv[0]);
+			printf("usage: %s [--run] [--help] [--version] [--rrdtool] [--debug1|--debug2]\n",cArgv[0]);
 			return(0);
 		}
 		else if(!strncmp(cArgv[i],"--debug1",8))
@@ -183,25 +183,36 @@ fLossRecv=0.000000 fJitterRecv=0.000000 fLossSend=0.000000 fJitterSend=0.000400
 	}
 	else
 	{
-		printf("Could not popen()\n");
+		printf("Could not popen() %s\n",ALLPBXScript);
 		return(1);
 	}
 
+	if(uNumCalls>0)
+	{
+		fLossRecvAvg=fLossRecvAvg/uNumCalls;
+		fJitterRecvAvg=fJitterRecvAvg/uNumCalls;
+		fLossSendAvg=fLossSendAvg/uNumCalls;
+		fJitterSendAvg=fJitterSendAvg/uNumCalls;
+	}
 
+	if(uRRDTool)
+	{
+		if(uDebug)
+			printf("fLossSendAvg fLossRecvAvg fJitterSendAvg*1000 fJitterRecvAvg*1000 uNumCalls\n");
+		printf("%.0f %.0f %.0f %.0f %u\n",
+				fLossSendAvg*100,fLossRecvAvg*100,fJitterSendAvg*100,fJitterRecvAvg*100,uNumCalls);
+		return(0);
+	}
+	
 	printf("uNumCalls=%u\n",uNumCalls);
-	if(uNumCalls==0) uNumCalls=1;
-
-	fLossRecvAvg=fLossRecvAvg/uNumCalls;
-	fJitterRecvAvg=fJitterRecvAvg/uNumCalls;
-	fLossSendAvg=fLossSendAvg/uNumCalls;
-	fJitterSendAvg=fJitterSendAvg/uNumCalls;
+	if(uNumCalls==0) return(0);
 
 	printf("fLossRecvMin=%f fJitterRecvMin=%f fLossSendMin=%f fJitterSendMin=%f\n",
 				fLossRecvMin,fJitterRecvMin,fLossSendMin,fJitterSendMin);
 	printf("fLossRecvMax=%f fJitterRecvMax=%f fLossSendMax=%f fJitterSendMax=%f\n",
 				fLossRecvMax,fJitterRecvMax,fLossSendMax,fJitterSendMax);
-	printf("fLossRecvAvg=%.0f fJitterRecvAvg=%.0f fLossSendAvg=%.0f fJitterSendAvg=%.0f\n",
-				fLossRecvAvg,fJitterRecvAvg*1000,fLossSendAvg,fJitterSendAvg*1000);
+	printf("fLossRecvAvg=%f fJitterRecvAvg=%f fLossSendAvg=%f fJitterSendAvg=%f\n",
+				fLossRecvAvg,fJitterRecvAvg,fLossSendAvg,fJitterSendAvg);
 	printf("fLossRecvStd=%f fJitterRecvStd=%f fLossSendStd=%f fJitterSendStd=%f\n",
 				fLossRecvStd,fJitterRecvStd,fLossSendStd,fJitterSendStd);
 
