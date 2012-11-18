@@ -61,7 +61,7 @@ fi
 PNGFILE="/var/www/unxs/html/traffic/$HOSTNAME-nodeQOS.png"
 
 nice /usr/bin/rrdtool graph $PNGFILE \
-		--title="$HOSTNAME node QOS" \
+		--title="$HOSTNAME QOS" \
 		--vertical-label="" \
 		--base=1000 \
 		--height=120 \
