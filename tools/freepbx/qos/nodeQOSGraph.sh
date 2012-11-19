@@ -61,26 +61,25 @@ fi
 PNGFILE="/var/www/unxs/html/traffic/$HOSTNAME-nodeQOS.png"
 
 nice /usr/bin/rrdtool graph $PNGFILE \
+		--start "end-8 hours" \
 		--title="$HOSTNAME QOS" \
-		--vertical-label="" \
-		--base=1000 \
-		--height=120 \
-		--width=500 \
+		--vertical-label="percent*100 ms*100" \
+		--height=240 \
+		--width=1000 \
 		--slope-mode \
 		--font TITLE:10: \
 		--font AXIS:6: \
 		--font LEGEND:8: \
 		--font UNIT:8: \
+		--right-axis 10:0 \
 		"DEF:LossSend=$RRDFILE:LossSend:MAX" \
 		"DEF:LossRecv=$RRDFILE:LossRecv:MAX" \
 		"DEF:JitterSend=$RRDFILE:JitterSend:MAX" \
 		"DEF:JitterRecv=$RRDFILE:JitterRecv:MAX" \
-		"DEF:NumCalls=$RRDFILE:NumCalls:MAX" \
-		"LINE1:LossSend#00ff00:LossSend" \
-		"LINE1:LossRecv#0000ff:LossRecv" \
-		"LINE1:JitterSend#00a000:JitterSend" \
-		"LINE1:JitterRecv#0000a0:JitterRecv" \
-		"LINE1:NumCalls#a00000:NumCalls"
+		"AREA:LossRecv#81BEF7:LossRecv" \
+		"LINE1:LossSend#0000FF:LossSend" \
+		"LINE1:JitterRecv#40FF00:JitterRecv" \
+		"LINE1:JitterSend#DF0101:JitterSend" 
 		#"GPRINT:LossSend:MAX: Max LossSend\:%0.0lf" \
 		#"GPRINT:LossRecv:MAX:Max LossRecv\:%0.0lf" \
 		#"GPRINT:JitterSend:MAX: Max JitterSend\:%0.0lf" \
@@ -89,6 +88,27 @@ nice /usr/bin/rrdtool graph $PNGFILE \
 		#"GPRINT:LossRecv:LAST:Last LossRecv\:%0.0lf" \
 		#"GPRINT:JitterSend:LAST:Last JitterSend\:%0.0lf" \
 		#"GPRINT:JitterRecv:LAST:Last JitterRecv\:%0.0lf";
+if [ $? != 0 ];then
+	fLog "rrdtool graph $PNGFILE error";
+	exit 0;
+fi
+
+PNGFILE="/var/www/unxs/html/traffic/$HOSTNAME-nodeQOS-calls.png"
+
+nice /usr/bin/rrdtool graph $PNGFILE \
+		--start "end-8 hours" \
+		--title="$HOSTNAME NumCalls" \
+		--vertical-label="NumCalls" \
+		--height=240 \
+		--width=1000 \
+		--right-axis 1:0 \
+		--slope-mode \
+		--font TITLE:10: \
+		--font AXIS:6: \
+		--font LEGEND:8: \
+		--font UNIT:8: \
+		"DEF:NumCalls=$RRDFILE:NumCalls:MAX" \
+		"LINE1:NumCalls#DF0101:NumCalls" 
 if [ $? != 0 ];then
 	fLog "rrdtool graph $PNGFILE error";
 	exit 0;
