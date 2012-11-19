@@ -26,5 +26,8 @@ clean:
 	rm -f *.o nodeQOS
 
 install: nodeQOS
-	install -s nodeQOS /usr/sbin/nodeQOS
-	rm nodeQOS
+	install -s nodeQOS /usr/sbin/nodeQOS;
+	cp -i nodeQOSGraph.sh /usr/sbin/;
+	cp -i qos.html /var/www/unxs/html/traffic/;
+	sed -i -e "s/s1/`hostname -s`/" /var/www/unxs/html/traffic/qos.html;
+	rm nodeQOS;
