@@ -30,4 +30,8 @@ install: nodeQOS
 	cp -i nodeQOSGraph.sh /usr/sbin/;
 	cp -i qos.html /var/www/unxs/html/traffic/;
 	sed -i -e "s/s1/`hostname -s`/" /var/www/unxs/html/traffic/qos.html;
+	grep nodeQOSGraph.sh /var/spool/cron/root >/dev/null;\
+	if [ $$? != 0 ];then\
+		echo '* * * * * /usr/sbin/nodeQOSGraph.sh > /dev/null;' >> /var/spool/cron/root;\
+	fi;
 	rm nodeQOS;
