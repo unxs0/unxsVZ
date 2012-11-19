@@ -12,6 +12,10 @@ NOTES
 	Provide Zabbix interface for remote logging and alert triggering.
 DEPENDENCIES
 	ALLPBXScript below
+CRON
+	#special
+	* * * * * /usr/sbin/nodeQOSGraph.sh > /dev/null;
+
 */
 
 #define ALLPBXScript "/usr/sbin/vzAllContainerCmd3.sh \"/usr/sbin/asterisk -rx 'sip show channelstats'\""
