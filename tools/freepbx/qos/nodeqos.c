@@ -200,7 +200,7 @@ fLossRecv=0.000000 fJitterRecv=0.000000 fLossSend=0.000000 fJitterSend=0.000400
 		if(uDebug)
 			printf("fLossSendAvg fLossRecvAvg fJitterSendAvg*1000 fJitterRecvAvg*1000 uNumCalls\n");
 		printf("%.0f %.0f %.0f %.0f %u\n",
-				fLossSendAvg*100,fLossRecvAvg*100,fJitterSendAvg*100,fJitterRecvAvg*100,uNumCalls);
+				fLossSendAvg*100,fLossRecvAvg*100,fJitterSendAvg*100,fJitterRecvAvg*100,uNumCalls*10);
 		return(0);
 	}
 	

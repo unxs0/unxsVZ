@@ -22,20 +22,20 @@ fi
 RRDFILE="/var/lib/rrd/$HOSTNAME-nodeQOS.rrd";
  
 if ! test -e $RRDFILE; then
-	/usr/bin/rrdtool create $RRDFILE --start N --step 300 \
-	DS:LossSend:DERIVE:600:0:10000 \
-	DS:LossRecv:DERIVE:600:0:10000 \
-	DS:JitterSend:DERIVE:600:0:10000 \
-	DS:JitterRecv:DERIVE:600:0:10000 \
-	DS:NumCalls:DERIVE:600:0:10000 \
-	RRA:AVERAGE:0.5:1:600 \
-	RRA:AVERAGE:0.5:6:700 \
-	RRA:AVERAGE:0.5:24:775 \
-	RRA:AVERAGE:0.5:288:797 \
-	RRA:MAX:0.5:1:600 \
-	RRA:MAX:0.5:6:700 \
-	RRA:MAX:0.5:24:775 \
-	RRA:MAX:0.5:288:797
+	/usr/bin/rrdtool create $RRDFILE --start N --step 60 \
+	DS:LossSend:GAUGE:120:0:10000 \
+	DS:LossRecv:GAUGE:120:0:10000 \
+	DS:JitterSend:GAUGE:120:0:10000 \
+	DS:JitterRecv:GAUGE:120:0:10000 \
+	DS:NumCalls:GAUGE:120:0:10000 \
+	RRA:AVERAGE:0.5:1:1440 \
+	RRA:AVERAGE:0.5:6:1680 \
+	RRA:AVERAGE:0.5:24:1800 \
+	RRA:AVERAGE:0.5:288:1825 \
+	RRA:MAX:0.5:1:1440 \
+	RRA:MAX:0.5:6:1680 \
+	RRA:MAX:0.5:24:1800 \
+	RRA:MAX:0.5:288:1825
 	if [ $? != 0 ];then
 		fLog "rrdtool create $RRDFILE error";
 		exit 0;
