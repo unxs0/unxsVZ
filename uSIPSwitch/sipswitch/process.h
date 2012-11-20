@@ -42,8 +42,14 @@ THINGS TO DO LIST
 //Previous section is postparsecheck.h
 
 //Determine if message is a request or a reply
+//Parse SIP reply code, e.g. 500 for:
+//	SIP/2.0 500 Server internal failure
 unsigned uReply=0;
-if(cMessage[0]=='S') uReply=1;
+if(cMessage[0]=='S')
+{
+	uReply=1;//mark as reply anyway in case sscanf fails
+	sscanf(cFirstLine,"SIP%*[A-Z0-9/\\.] %u",&uReply);
+}
 
 char cData[256]={""};
 char cKey[128]={""};
@@ -51,6 +57,8 @@ char *cpMsg=cMessage;
 #define GATEWAY 1
 #define PBX 2
 unsigned uType=0;//1 is gateway, 2 is pbx, 0 is unknown
+//PBXs have the max number of concurrent incoming and outgoing calls set
+unsigned uLines=0;
 #define INVITE 1
 unsigned uRequestType=0;//1 is INVITE
 size_t sizeData=255;
@@ -275,7 +283,7 @@ void CallEndCIU(void)
 }// void CallEndCIU(void)
 
 
-void CallStartCIU(void)
+int CallStartCIU(void)
 {
 	//update or create a new record a.b.c.d-ciu (channels in use by PBX) where a.b.c.d is the IP of the PBX leg of call.
 	unsigned uChannelsInUse=0;
@@ -293,6 +301,17 @@ void CallStartCIU(void)
 		sscanf(cCIU,"uChannelsInUse=%u;",&uChannelsInUse);
 		if(guLogLevel>3)
 			logfileLine("readEv-CallStartCIU read",cKey);
+	}
+
+	//if(uLines && uChannelsInUse && uChannelsInUse>uLines)
+	if(1)
+	{
+
+		//You must setup a media server that will provide announcements
+		//We are using the sems with announcement module only.
+		sprintf(cDestinationIP,"127.0.0.1");
+		uDestinationPort=5080;
+		return(0);
 	}
 
 	time_t luNow=0;
@@ -315,7 +334,9 @@ void CallStartCIU(void)
 			logfileLine("readEv-CallStartCIU set",cKey);
 	}
 
-}// void CallStartCIU(void)
+	return(0);
+
+}//int CallStartCIU(void)
 
 
 if(guLogLevel>4)
@@ -337,7 +358,7 @@ if(rc!=MEMCACHED_SUCCESS)
 }
 else if(rc==MEMCACHED_SUCCESS)
 {
-	sscanf(cData,"cDestinationIP=%[^;];uDestinationPort=%u;uType=%u;",cDestinationIP,&uDestinationPort,&uType);
+	sscanf(cData,"cDestinationIP=%[^;];uDestinationPort=%u;uType=%u;uLines=%u;",cDestinationIP,&uDestinationPort,&uType,&uLines);
 	if(cDestinationIP[0]==0 || uDestinationPort==0 || uType==0 )
 	{
 		logfileLine("readEv-process","cData incorrect");
@@ -450,10 +471,6 @@ if(!uReply)
 			return;
 		}
 
-		//after validation we let inviter know we are continuing.
-		sprintf(cMsg,"SIP/2.0 100 Trying\r\nCSeq: %s\r\n",cCSeq);//Send back same CSeq check this
-		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
-
 		//create transaction -it maybe updated if INVITE comes in again with same CALL-ID
 		//	but thsta should not matter.
 		//the initiator is the source for the duration of the callid based transaction
@@ -476,7 +493,18 @@ if(!uReply)
 		}
 
 		//update or create a new record a.b.c.d-ciu (channels in use by PBX) where a.b.c.d is the IP of the PBX leg of call.
-		CallStartCIU();
+		//returns non 0 value if no more lines or error.
+		if(CallStartCIU())
+		{
+			//we will end the call here so we need to clean up
+			CallEndCIU();
+			return;
+		}
+
+		//after validation we let inviter know we are continuing.
+		sprintf(cMsg,"SIP/2.0 100 Trying\r\nCSeq: %s\r\n",cCSeq);//Send back same CSeq check this
+		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
+
 	}//INVITE
 	//ACK
 	else if(!strncmp(cFirstLine,"ACK",3))
@@ -623,6 +651,17 @@ if(!uReply)
 //
 else
 {
+	//we need to clean up channel use here also.
+	//for example a 500 type error from GW
+	//perm errors we clean the PBX channels in use.
+	if(uReply>=400)
+	{
+		if(!uLoadPBXFromCallID())
+		{
+			CallEndCIU();
+		}
+	}
+
 	if(guLogLevel>4)
 		logfileLine("readEv-process reply","");
 
@@ -641,7 +680,7 @@ else
 	sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;",cDestinationIP,&uDestinationPort);
 	if(guLogLevel>3)
 	{
-		sprintf(gcQuery,"cSourceIP:%s uSourcePort:%u",cDestinationIP,uDestinationPort);
+		sprintf(gcQuery,"cSourceIP:%s uSourcePort:%u uReply=%u",cDestinationIP,uDestinationPort,uReply);
 		logfileLine("readEv-process",gcQuery);
 	}
 }//if a reply
