@@ -3,12 +3,21 @@
 # FILE
 #	/usr/sbin/GatherNodePropertyData.sh
 
+#
 #PURPOSE
-#	Set tProperty values for this node
-#	CPU
-#	RAM
-#	Kernel
-#	Disk
+#	Set tProperty values for this node.
+#
+#	cProcCPUInfo 8*Intel(R)Xeon(R)CPUX3450@2.67GHz
+#	cKernel 2.6.18-274.7.1.el5.028stab095.1
+#	cIPv4 rc12 (eth1 private cabinet LAN via IP or via /etc/hosts)
+#	luInstalledDiskSpace 650237688
+#	luInstalledRam 24624700
+#	NewContainerMode Active and Clone
+#	cIPMIPasswd
+#	cIPMIIPv4
+#	cRootPasswd
+#	(Phrase Passwds should be stored as short acronym
+#		 so as to keep the plain text private to non initiates)
 
 
 cHost="rc1.callingcloud.net";
@@ -35,7 +44,7 @@ if [ "$uNode" == "" ];then
 	exit 1;
 fi
 
-echo $uNode;
+echo uNode=$uNode;
 
 ###
 cProcCPU=`grep "model name" /proc/cpuinfo | head -n 1 | cut -f 2 -d : | tr -d ' '`;
@@ -44,6 +53,7 @@ cProcCPUInfo="$uNumCPUs*$cProcCPU";
 
 #cleanup
 #echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cProcCPUInfo'" | $cMySQLConnect;
+#echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cKernel'" | $cMySQLConnect;
 
 uProperty=`echo "SELECT uProperty FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cProcCPUInfo'" | $cMySQLConnect | grep -v uProperty`;
 if [ "$uProperty" == "" ];then
@@ -51,32 +61,32 @@ if [ "$uProperty" == "" ];then
 	if [ $? != 0 ];then
 		echo "mysql command 2 failed";
 	fi
-	echo Insert $cProcCPUInfo;
+	echo Insert cProcCPUInfo $cProcCPUInfo;
 else
 	echo "UPDATE tProperty SET cValue='$cProcCPUInfo',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uKey=$uNode AND uType=2 AND cName='cProcCPUInfo'" | $cMySQLConnect;
 	if [ $? != 0 ];then
 		echo "mysql command 2 failed";
 	fi
-	echo Update $cProcCPUInfo;
+	echo Update cProcCPUInfo $cProcCPUInfo;
 fi
 ###
 
 ###
-uInstalledRAM=`free | grep Mem: | awk -F' ' '{ print $2 }'`;
+luInstalledRam=`free | grep Mem: | awk -F' ' '{ printf $2 }'`;
 
-uProperty=`echo "SELECT uProperty FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='uInstalledRAM'" | $cMySQLConnect | grep -v uProperty`;
+uProperty=`echo "SELECT uProperty FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='luInstalledRam'" | $cMySQLConnect | grep -v uProperty`;
 if [ "$uProperty" == "" ];then
-	echo "INSERT INTO tProperty SET cName='uInstalledRAM',cValue='$uInstalledRAM',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+	echo "INSERT INTO tProperty SET cName='luInstalledRam',cValue='$luInstalledRam',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
 	if [ $? != 0 ];then
 		echo "mysql command 2 failed";
 	fi
-	echo Insert $uInstalledRAM;
+	echo Insert luInstalledRam $luInstalledRam;
 else
-	echo "UPDATE tProperty SET cValue='$uInstalledRAM',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uKey=$uNode AND uType=2 AND cName='uInstalledRAM'" | $cMySQLConnect;
+	echo "UPDATE tProperty SET cValue='$luInstalledRam',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uKey=$uNode AND uType=2 AND cName='luInstalledRam'" | $cMySQLConnect;
 	if [ $? != 0 ];then
 		echo "mysql command 2 failed";
 	fi
-	echo Update $uInstalledRAM;
+	echo Update luInstalledRam $luInstalledRam;
 fi
 ###
 
@@ -89,13 +99,103 @@ if [ "$uProperty" == "" ];then
 	if [ $? != 0 ];then
 		echo "mysql command 2 failed";
 	fi
-	echo Insert $cKernel;
+	echo Insert cKernel $cKernel;
 else
 	echo "UPDATE tProperty SET cValue='$cKernel',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uKey=$uNode AND uType=2 AND cName='cKernel'" | $cMySQLConnect;
 	if [ $? != 0 ];then
 		echo "mysql command 2 failed";
 	fi
-	echo Update $cKernel;
+	echo Update cKernel $cKernel;
+fi
+###
+
+###
+cIPv4=$cShortHostname;
+
+uProperty=`echo "SELECT uProperty FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cIPv4'" | $cMySQLConnect | grep -v uProperty`;
+if [ "$uProperty" == "" ];then
+	echo "INSERT INTO tProperty SET cName='cIPv4',cValue='$cIPv4',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+	if [ $? != 0 ];then
+		echo "mysql command 2 failed";
+	fi
+	echo Insert cIPv4 $cIPv4;
+else
+	echo "UPDATE tProperty SET cValue='$cIPv4',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uKey=$uNode AND uType=2 AND cName='cIPv4'" | $cMySQLConnect;
+	if [ $? != 0 ];then
+		echo "mysql command 2 failed";
+	fi
+	echo Update cIPv4 $cIPv4;
+fi
+###
+
+###
+NewContainerMode="Active and Clone";
+
+uProperty=`echo "SELECT uProperty FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='NewContainerMode'" | $cMySQLConnect | grep -v uProperty`;
+if [ "$uProperty" == "" ];then
+	echo "INSERT INTO tProperty SET cName='NewContainerMode',cValue='$NewContainerMode',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+	if [ $? != 0 ];then
+		echo "mysql command 2 failed";
+	fi
+	echo Insert NewContainerMode $NewContainerMode;
+fi
+###
+
+###
+luInstalledDiskSpace=`df -k /vz | grep vz | awk -F' ' '{ printf $1 }'`;
+
+uProperty=`echo "SELECT uProperty FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='luInstalledDiskSpace'" | $cMySQLConnect | grep -v uProperty`;
+if [ "$uProperty" == "" ];then
+	echo "INSERT INTO tProperty SET cName='luInstalledDiskSpace',cValue='$luInstalledDiskSpace',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+	if [ $? != 0 ];then
+		echo "mysql command 2 failed";
+	fi
+	echo Insert luInstalledDiskSpace $luInstalledDiskSpace;
+else
+	echo "UPDATE tProperty SET cValue='$luInstalledDiskSpace',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uKey=$uNode AND uType=2 AND cName='luInstalledDiskSpace'" | $cMySQLConnect;
+	if [ $? != 0 ];then
+		echo "mysql command 2 failed";
+	fi
+	echo Update luInstalledDiskSpace $luInstalledDiskSpace;
+fi
+###
+
+###
+cIPMIPasswd="NWGing";
+
+uProperty=`echo "SELECT uProperty FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cIPMIPasswd'" | $cMySQLConnect | grep -v uProperty`;
+if [ "$uProperty" == "" ];then
+	echo "INSERT INTO tProperty SET cName='cIPMIPasswd',cValue='$cIPMIPasswd',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+	if [ $? != 0 ];then
+		echo "mysql command 2 failed";
+	fi
+	echo Insert cIPMIPasswd $cIPMIPasswd;
+fi
+###
+
+###
+cIPMIIPv4="0.0.0.0";
+
+uProperty=`echo "SELECT uProperty FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cIPMIIPv4'" | $cMySQLConnect | grep -v uProperty`;
+if [ "$uProperty" == "" ];then
+	echo "INSERT INTO tProperty SET cName='cIPMIIPv4',cValue='$cIPMIIPv4',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+	if [ $? != 0 ];then
+		echo "mysql command 2 failed";
+	fi
+	echo Insert cIPMIIPv4 $cIPMIIPv4;
+fi
+###
+
+###
+cRootPasswd="Unknown";
+
+uProperty=`echo "SELECT uProperty FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cRootPasswd'" | $cMySQLConnect | grep -v uProperty`;
+if [ "$uProperty" == "" ];then
+	echo "INSERT INTO tProperty SET cName='cRootPasswd',cValue='$cRootPasswd',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+	if [ $? != 0 ];then
+		echo "mysql command 2 failed";
+	fi
+	echo Insert cRootPasswd $cRootPasswd;
 fi
 ###
 
