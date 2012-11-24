@@ -289,7 +289,7 @@ unsigned GetuServer(char *cLabel, char *cTable)
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 		return(0);
 	}
 	res=mysql_store_result(&gMysql);
@@ -312,7 +312,7 @@ unsigned GetuZone(char *cLabel, char *cTable)
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 		return(0);
 	}
 	res=mysql_store_result(&gMysql);
@@ -353,7 +353,7 @@ void InitializeParams(structExtJobParameters *structExtParam)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				exit(1);
 			}
 			res=mysql_store_result(&gMysql);
@@ -364,7 +364,7 @@ void InitializeParams(structExtJobParameters *structExtParam)
 
 		if(!uNSSet)
 		{
-			fprintf(stderr,"Undefined name server group. Please configure.\n");
+			fprintf(stdout,"Undefined name server group. Please configure.\n");
 			exit(1);
 		}
 
@@ -431,7 +431,7 @@ int InformExtISPJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,uns
 	mysql_query(&gMysql2,gcQuery);
 	if(mysql_errno(&gMysql2))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 		SubmitISPJob("iDNS.InformExtISPJob.Failed",
 				mysql_error(&gMysql2),cServer,0);
 		return(1);
@@ -450,7 +450,7 @@ int InformExtISPJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,uns
 	mysql_query(&gMysql2,gcQuery);
 	if(mysql_errno(&gMysql2))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 		return(1);
 	}
 	res=mysql_store_result(&gMysql2);
@@ -463,7 +463,7 @@ int InformExtISPJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,uns
 
 	if(!uJobGroup || !uInstance)
 	{
-		fprintf(stderr,"Unexpected missing uJobGroup/uInstance for uJob=%u\n"
+		fprintf(stdout,"Unexpected missing uJobGroup/uInstance for uJob=%u\n"
 						,uJob);
 		return(0);
 	}
@@ -474,7 +474,7 @@ int InformExtISPJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,uns
 	mysql_query(&gMysql2,gcQuery);
 	if(mysql_errno(&gMysql2))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 	}
 	else
 	{
@@ -495,7 +495,7 @@ int InformExtISPJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,uns
 				printf("%s\n",gcQuery);
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
-					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 			}
 		}
 		mysql_free_result(res);
@@ -515,7 +515,7 @@ int SubmitISPJob(const char *cJobName,const char *cJobData,const char *cServer,u
 	mysql_query(&gMysql2,gcQuery);
 	if(mysql_errno(&gMysql2))
 	{
-                fprintf(stderr,"%s\n",mysql_error(&gMysql));
+                fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 	return(0);
@@ -536,7 +536,7 @@ unsigned uGetClientOwner(unsigned uClient)
 
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s",mysql_error(&gMysql));
+		fprintf(stdout,"%s",mysql_error(&gMysql));
 		exit(0);
 	}
 	res=mysql_store_result(&gMysql);
@@ -586,7 +586,7 @@ void ProcessExtJobQueue(char *cServer)
 	mysql_query(&gMysql2,cQuery);
         if(mysql_errno(&gMysql2))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 		return;
 	}
 
@@ -613,7 +613,7 @@ void ProcessExtJobQueue(char *cServer)
 			mysql_query(&gMysql,cQuery);
 			if(mysql_errno(&gMysql))
         		{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				InformExtISPJob("Select query Web.New failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
@@ -674,7 +674,7 @@ void ProcessExtJobQueue(char *cServer)
 			mysql_query(&gMysql,cQuery);
 			if(mysql_errno(&gMysql))
         		{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				InformExtISPJob("Select query Mod failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
@@ -715,7 +715,7 @@ void ProcessExtJobQueue(char *cServer)
 			mysql_query(&gMysql,cQuery);
 			if(mysql_errno(&gMysql))
         		{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				InformExtISPJob("Select query Cancel failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
@@ -757,7 +757,7 @@ void ProcessExtJobQueue(char *cServer)
 			mysql_query(&gMysql,cQuery);
 			if(mysql_errno(&gMysql))
         		{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				InformExtISPJob("Select query OnHold failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
@@ -789,7 +789,7 @@ void ProcessExtJobQueue(char *cServer)
 			mysql_query(&gMysql,cQuery);
 			if(mysql_errno(&gMysql))
         		{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				InformExtISPJob("Select Zone.New failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
@@ -833,7 +833,7 @@ void ProcessExtJobQueue(char *cServer)
 			mysql_query(&gMysql,cQuery);
 			if(mysql_errno(&gMysql))
         		{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				InformExtISPJob("Select WebZone.New failed",
 						cServer,uJob,mysqlISP_Waiting);
 			}
@@ -871,7 +871,7 @@ void ProcessExtJobQueue(char *cServer)
 
 		else if(1)
 		{
-			fprintf(stderr,"Unknown job:%s\n",field[0]);
+			fprintf(stdout,"Unknown job:%s\n",field[0]);
 		}
 	}
 	mysql_free_result(res);
@@ -891,7 +891,7 @@ unsigned WebMod(structExtJobParameters *structExtParam,
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 	if(SubmitExtJob("ExtModify",structExtParam->uNSSet,structExtParam->cZone,0,0,uExtJob,uOwner))
@@ -918,7 +918,7 @@ unsigned ModZone(structExtJobParameters *structExtParam,
         		mysql_query(&gMysql,gcQuery);
         		if(mysql_errno(&gMysql))
 			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				return(1);
 			}
 		        res=mysql_store_result(&gMysql);
@@ -934,7 +934,7 @@ unsigned ModZone(structExtJobParameters *structExtParam,
         			mysql_query(&gMysql,gcQuery);
 	        		if(mysql_errno(&gMysql))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					return(1);
 				}
 			}
@@ -950,7 +950,7 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 	        			mysql_query(&gMysql,gcQuery);
 		        		if(mysql_errno(&gMysql))
 					{
-						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
 						return(1);
 					}
 				}
@@ -964,7 +964,7 @@ unsigned ModZone(structExtJobParameters *structExtParam,
         		mysql_query(&gMysql,gcQuery);
         		if(mysql_errno(&gMysql))
 			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				return(1);
 			}
 		        res=mysql_store_result(&gMysql);
@@ -980,7 +980,7 @@ unsigned ModZone(structExtJobParameters *structExtParam,
         			mysql_query(&gMysql,gcQuery);
 	        		if(mysql_errno(&gMysql))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					return(1);
 				}
 			}
@@ -996,7 +996,7 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 	        			mysql_query(&gMysql,gcQuery);
 		        		if(mysql_errno(&gMysql))
 					{
-						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
 						return(1);
 					}
 				}
@@ -1014,7 +1014,7 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 	
@@ -1027,14 +1027,14 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		 fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		 fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		 return(1);
 	}
 	
 	res=mysql_store_result(&gMysql);
 
 	if(!mysql_num_rows(res))
-		fprintf(stderr,"Warning: It seems there's no cMainAddress RR for uZone=%u\n",uZone);
+		fprintf(stdout,"Warning: It seems there's no cMainAddress RR for uZone=%u\n",uZone);
 	else
 	{
 		if((field=mysql_fetch_row(res)))
@@ -1046,7 +1046,7 @@ unsigned ModZone(structExtJobParameters *structExtParam,
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				fprintf(stderr,"%s (%s)\n",mysql_error(&gMysql),gcQuery);
+				fprintf(stdout,"%s (%s)\n",mysql_error(&gMysql),gcQuery);
 				return(1);
 			}
 		}
@@ -1068,7 +1068,7 @@ unsigned CancelZone(structExtJobParameters *structExtParam,
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
         {
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 
@@ -1078,7 +1078,7 @@ unsigned CancelZone(structExtJobParameters *structExtParam,
 		"DELETE FROM tResource WHERE uZone=%u",uZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
-			fprintf(stderr,"%s\n",mysql_error(&gMysql));
+			fprintf(stdout,"%s\n",mysql_error(&gMysql));
 
 		if(SubmitExtJob("ExtDelete",structExtParam->uNSSet,structExtParam->cZone,0,
 					0,uExtJob,uOwner))
@@ -1104,7 +1104,7 @@ int GetApacheIPNumber(MYSQL *mysql,char *cDomain,char *cMainAddress)
         mysql_query(mysql,cQuery);
         if(mysql_errno(mysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(mysql));
+		fprintf(stdout,"%s\n",mysql_error(mysql));
 		return(1);
 	}
         res=mysql_store_result(mysql);
@@ -1130,7 +1130,7 @@ unsigned WebNew(structExtJobParameters *structExtParam,unsigned uJob, char *cSer
 
 	if(!strcmp(structExtParam->cZone+strlen(structExtParam->cZone)-5,".arpa"))
 	{
-		fprintf(stderr,"Can't add .arpa zones via mysqlISP\n");
+		fprintf(stdout,"Can't add .arpa zones via mysqlISP\n");
 		return(1);
 	}
 
@@ -1169,7 +1169,7 @@ unsigned WebNew(structExtJobParameters *structExtParam,unsigned uJob, char *cSer
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 
@@ -1192,7 +1192,7 @@ unsigned WebNew(structExtJobParameters *structExtParam,unsigned uJob, char *cSer
        	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 
@@ -1215,20 +1215,20 @@ unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, cha
 	
 	if(!strcmp(structExtParam->cZone+strlen(structExtParam->cZone)-5,".arpa"))
 	{
-		fprintf(stderr,"Can't add .arpa zones via mysqlISP\n");
+		fprintf(stdout,"Can't add .arpa zones via mysqlISP\n");
 		return(1);
 	}
 	
 	if(!structExtParam->cMainAddress[0])
 	{
-		fprintf(stderr,"Can't setup zone without specifying cMainAddress\n");
+		fprintf(stdout,"Can't setup zone without specifying cMainAddress\n");
 		return(1);
 	}
 
 	//cClientName
 	if(!structExtParam->cClientName[0])
 	{
-		fprintf(stderr,"Can't setup zone without specifying cClientName\n");
+		fprintf(stdout,"Can't setup zone without specifying cClientName\n");
 		return(1);
 	}
 
@@ -1260,7 +1260,7 @@ unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, cha
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 	uZone=mysql_insert_id(&gMysql);
@@ -1274,7 +1274,7 @@ unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, cha
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 
@@ -1282,7 +1282,7 @@ unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, cha
 	{
 		if(PopulateArpaZone(structExtParam->cZone,structExtParam->cMainAddress,0,uZone,1,structExtParam->uNSSet))
 		{
-			fprintf(stderr,"PopulateArpaZone() call failed\n");
+			fprintf(stdout,"PopulateArpaZone() call failed\n");
 			return(1);
 		}
 	}
@@ -1302,7 +1302,7 @@ unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, cha
 	        	mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				return(1);
 			}
 		}//End of MX1 case
@@ -1319,7 +1319,7 @@ unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, cha
 	        	mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				return(1);
 			}
 		}//End of MX2 case
@@ -1327,7 +1327,7 @@ unsigned NewSimpleZone(structExtJobParameters *structExtParam,unsigned uJob, cha
 
 	if(SubmitExtJob("ExtNew",structExtParam->uNSSet,structExtParam->cZone,0,0,uJob,uOwner))
 	{
-		fprintf(stderr,"SubmitExtJob() call failed\n");
+		fprintf(stdout,"SubmitExtJob() call failed\n");
 		return(1);
 	}
 
@@ -1348,7 +1348,7 @@ void CreateWebZone(char *cDomain, char *cIP, char *cNameServer, char *cMailServe
 
 	if(GetuZone(cDomain,"tZone"))
 	{
-		fprintf(stderr,"tZone.cZone=%s already exists\n",cDomain);
+		fprintf(stdout,"tZone.cZone=%s already exists\n",cDomain);
 		return;
 	}
 
@@ -1393,20 +1393,20 @@ void CreateWebZone(char *cDomain, char *cIP, char *cNameServer, char *cMailServe
 
 	if(!strcmp(structExtParam.cZone+strlen(structExtParam.cZone)-5,".arpa"))
 	{
-		fprintf(stderr,"Can't add .arpa zones via CreateWebZone()\n");
+		fprintf(stdout,"Can't add .arpa zones via CreateWebZone()\n");
 		return;
 	}
 
 	if(!structExtParam.cMainAddress[0])
 	{
-		fprintf(stderr,"Can't setup zone without specifying cMainAddress\n");
+		fprintf(stdout,"Can't setup zone without specifying cMainAddress\n");
 		return;
 	}
 
 	//cClientName
 	if(!structExtParam.cClientName[0])
 	{
-		fprintf(stderr,"Can't setup zone without specifying cClientName\n");
+		fprintf(stdout,"Can't setup zone without specifying cClientName\n");
 		return;
 	}	
 	if(!structExtParam.cHostmaster[0])
@@ -1435,7 +1435,7 @@ void CreateWebZone(char *cDomain, char *cIP, char *cNameServer, char *cMailServe
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return;
 	}
 	uZone=mysql_insert_id(&gMysql);
@@ -1449,7 +1449,7 @@ void CreateWebZone(char *cDomain, char *cIP, char *cNameServer, char *cMailServe
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return;
 	}
 
@@ -1457,7 +1457,7 @@ void CreateWebZone(char *cDomain, char *cIP, char *cNameServer, char *cMailServe
 	{
 		if(PopulateArpaZone(structExtParam.cZone,structExtParam.cMainAddress,0,uZone,1,structExtParam.uNSSet))
 		{
-			fprintf(stderr,"PopulateArpaZone() call failed\n");
+			fprintf(stdout,"PopulateArpaZone() call failed\n");
 			return;
 		}
 	}
@@ -1471,13 +1471,13 @@ void CreateWebZone(char *cDomain, char *cIP, char *cNameServer, char *cMailServe
        	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return;
 	}
 
 	if(SubmitJob("New",structExtParam.uNSSet,structExtParam.cZone,0,0))
 	{
-		fprintf(stderr,"SubmitJob() failed.\n");
+		fprintf(stdout,"SubmitJob() failed.\n");
 		return;
 	}
 
@@ -1492,7 +1492,7 @@ void DropZone(char *cDomain, char *cNameServer)
 
 	if(!(uZone=GetuZone(cDomain,"tZone")))
 	{
-		fprintf(stderr,"tZone.cZone=%s not found\n",cDomain);
+		fprintf(stdout,"tZone.cZone=%s not found\n",cDomain);
 		return;
 	}
 
@@ -1515,7 +1515,7 @@ void DropZone(char *cDomain, char *cNameServer)
 
 	if(SubmitJob("Delete",uNSSet,cDomain,0,0))
 	{
-		fprintf(stderr,"SubmitJob() failed.\n");
+		fprintf(stdout,"SubmitJob() failed.\n");
 		return;
 	}
 
@@ -1523,14 +1523,14 @@ void DropZone(char *cDomain, char *cNameServer)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return;
 	}
 	sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%u",uZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return;
 	}
 
@@ -1547,7 +1547,7 @@ unsigned NewSimpleWebZone(structExtJobParameters *structExtParam,unsigned uJob,
 
 	if(!strcmp(structExtParam->cZone+strlen(structExtParam->cZone)-5,".arpa"))
 	{
-		fprintf(stderr,"Can't add .arpa zones via mysqlISP\n");
+		fprintf(stdout,"Can't add .arpa zones via mysqlISP\n");
 		return(1);
 	}
 
@@ -1579,7 +1579,7 @@ unsigned NewSimpleWebZone(structExtJobParameters *structExtParam,unsigned uJob,
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 	uZone=mysql_insert_id(&gMysql);
@@ -1609,7 +1609,7 @@ unsigned NewSimpleWebZone(structExtJobParameters *structExtParam,unsigned uJob,
 	        	mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				return(1);
 			}
 		}//End of MX1 case
@@ -1626,7 +1626,7 @@ unsigned NewSimpleWebZone(structExtJobParameters *structExtParam,unsigned uJob,
 	        	mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				return(1);
 			}
 		}//End of MX2 case
@@ -1640,7 +1640,7 @@ unsigned NewSimpleWebZone(structExtJobParameters *structExtParam,unsigned uJob,
        	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 	
@@ -1652,7 +1652,7 @@ unsigned NewSimpleWebZone(structExtJobParameters *structExtParam,unsigned uJob,
        	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 	
@@ -1684,7 +1684,7 @@ int SubmitExtJob(const char *cCommand, unsigned uNSSetArg, const char *cZoneArg,
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 	res2=mysql_store_result(&gMysql);
@@ -1706,7 +1706,7 @@ int SubmitExtJob(const char *cCommand, unsigned uNSSetArg, const char *cZoneArg,
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				return(1);
 			}
 		}
@@ -1729,7 +1729,7 @@ int SubmitSingleExtJob(const char *cCommand,const char *cZoneArg, unsigned uNSSe
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		return(1);
 	}
 	res=mysql_store_result(&gMysql);
@@ -1754,7 +1754,7 @@ int SubmitSingleExtJob(const char *cCommand,const char *cZoneArg, unsigned uNSSe
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			fprintf(stderr,"%s\n",mysql_error(&gMysql));
+			fprintf(stdout,"%s\n",mysql_error(&gMysql));
 			mysql_free_result(res);
 			return(1);
 		}
@@ -1763,7 +1763,7 @@ int SubmitSingleExtJob(const char *cCommand,const char *cZoneArg, unsigned uNSSe
 		{
 			uJob=*uMasterJob=mysql_insert_id(&gMysql);
 			if(!strstr(cTargetServer,"MASTER"))
-				fprintf(stderr,"MASTER must be first in cList\n");
+				fprintf(stdout,"MASTER must be first in cList\n");
 		}
 		else
 		{
@@ -1774,7 +1774,7 @@ int SubmitSingleExtJob(const char *cCommand,const char *cZoneArg, unsigned uNSSe
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			fprintf(stderr,"%s\n",mysql_error(&gMysql));
+			fprintf(stdout,"%s\n",mysql_error(&gMysql));
 			mysql_free_result(res);
 			return(1);
 		}
@@ -1802,7 +1802,7 @@ void CreateNewClient(structExtJobParameters *structExtParam)
 		mysql_query(&gMysql,cQuery);
 		if(mysql_errno(&gMysql))
 		{
-			fprintf(stderr,"%s\n",mysql_error(&gMysql));
+			fprintf(stdout,"%s\n",mysql_error(&gMysql));
 			return;
 		}
 
@@ -1815,7 +1815,7 @@ void CreateNewClient(structExtJobParameters *structExtParam)
 			mysql_query(&gMysql,cQuery);
 			if(mysql_errno(&gMysql))
 			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				mysql_free_result(res);
 				return;
 			}
@@ -1841,7 +1841,7 @@ void CreateNewClient(structExtJobParameters *structExtParam)
 			mysql_query(&gMysql,cQuery);
 			if(mysql_errno(&gMysql))
 			{
-				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				fprintf(stdout,"%s\n",mysql_error(&gMysql));
 				mysql_free_result(res);
 				return;
 			}
@@ -1860,7 +1860,7 @@ void ProcessVZJobQueue(void)
 	MYSQL gMysql2;
 
 	//debug only
-	//printf("ProcessVZJobQueue() start\n");
+	printf("ProcessVZJobQueue() start\n");
 	if(!TextConnectDb() && !TextConnectExtDb(&gMysql2,TEXT_CONNECT_UNXSVZ))
 	{
 		MYSQL_RES *res;
@@ -1870,20 +1870,21 @@ void ProcessVZJobQueue(void)
 		structExtJobParameters structExtParam;
 
 		//debug only
-		//printf("ProcessVZJobQueue() connected ok\n");
+		printf("ProcessVZJobQueue() connected ok\n");
 		gethostname(gcHostname,98);
 	
 		//mysqlISP_Waiting same as unxsVZ.tJobStatus.cLabel "RemoteWaiting" 10
 		sprintf(gcQuery,"SELECT cJobName,cJobData,uJob,uOwner FROM tJob WHERE"
 			" uJobStatus=%u AND uJobDate<=UNIX_TIMESTAMP(NOW())"
-			" AND cJobName LIKE 'unxsVZ%%' LIMIT 10",unxsVZ_uREMOTEWAITING);
+			" AND cJobName LIKE 'unxsVZ%%' LIMIT 64",unxsVZ_uREMOTEWAITING);
 		mysql_query(&gMysql2,gcQuery);
 	       	if(mysql_errno(&gMysql2))
 		{
-			fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+			fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 			return;
 		}
 		res=mysql_store_result(&gMysql2);
+		printf("ProcessVZJobQueue() cols=%lu\n",(long unsigned)mysql_num_rows(res));
 	        while((field=mysql_fetch_row(res)))
 		{
 			uJob=0;
@@ -1896,6 +1897,7 @@ void ProcessVZJobQueue(void)
 			InitializeParams(&structExtParam);
 			sscanf(field[2],"%u",&uJob);
 			sscanf(field[3],"%u",&uOwner);
+			printf("ProcessVZJobQueue() uJob=%u (%s)\n",uJob,field[0]);
 
 			if(!strcmp("unxsVZContainerDelSRVRR",field[0]))
 			{
@@ -1905,7 +1907,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 					goto ErrorExit;
 				}
 	
@@ -1923,20 +1925,20 @@ void ProcessVZJobQueue(void)
 				//cName must be FQDN
 				if(structExtParam.cName[strlen(structExtParam.cName)-1]!='.')
 				{
-					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cName);
+					fprintf(stdout,"%s does not end with a '.'\n",structExtParam.cName);
 					goto ErrorExit;
 				}
 				//cTarget must be FQDN
 				if(structExtParam.cTarget[strlen(structExtParam.cTarget)-1]!='.')
 				{
-					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cTarget);
+					fprintf(stdout,"%s does not end with a '.'\n",structExtParam.cTarget);
 					goto ErrorExit;
 				}
 				//cName must end in cZone.
 				if(!strcmp(structExtParam.cName+(strlen(structExtParam.cName)-strlen(structExtParam.cZone)-1),
 					structExtParam.cZone))
 				{
-					fprintf(stderr,"'%s' does not end with '%s'\n",structExtParam.cName,structExtParam.cZone);
+					fprintf(stdout,"'%s' does not end with '%s'\n",structExtParam.cName,structExtParam.cZone);
 					goto ErrorExit;
 				}
 
@@ -1951,7 +1953,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					goto ErrorExit;
 				}
 				res2=mysql_store_result(&gMysql);
@@ -1966,10 +1968,10 @@ void ProcessVZJobQueue(void)
 
 				if(!uZone)
 				{
-					fprintf(stderr,"No tZone.uZone for %s %s\n",
+					fprintf(stdout,"No tZone.uZone for %s %s\n",
 								structExtParam.cView,
 								structExtParam.cZone);
-					fprintf(stderr,"%s",gcQuery);
+					fprintf(stdout,"%s",gcQuery);
 					goto ErrorExit;
 				}
 				sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cName='%s' AND uZone=%u"
@@ -1982,7 +1984,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					goto ErrorExit;
 				}
 				res2=mysql_store_result(&gMysql);
@@ -1996,7 +1998,7 @@ void ProcessVZJobQueue(void)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
 						goto ErrorExit;
 					}
 					//debug only
@@ -2009,7 +2011,7 @@ void ProcessVZJobQueue(void)
 					guCompany=uOwner;
 					if(SubmitJob("Modify",uNSSet,structExtParam.cZone,0,0))
 					{
-						fprintf(stderr,"SubmitJob() failed.\n");
+						fprintf(stdout,"SubmitJob() failed.\n");
 						goto ErrorExit;
 					}
 					sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZContainerDelSRVRR ok'"
@@ -2028,10 +2030,11 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 					goto ErrorExit;
 				}
-				goto NormalExit;
+				//goto NormalExit;
+				continue;
 			}//unxsVZContainerDelSRVRR
 
 			//cName is a fully qualified DNS RR name, i.e. it ends in the zone name.
@@ -2046,7 +2049,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 					goto ErrorExit;
 				}
 	
@@ -2067,20 +2070,20 @@ void ProcessVZJobQueue(void)
 				//cName must be FQDN
 				if(structExtParam.cName[strlen(structExtParam.cName)-1]!='.')
 				{
-					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cName);
+					fprintf(stdout,"%s does not end with a '.'\n",structExtParam.cName);
 					goto ErrorExit;
 				}
 				//cTarget must be FQDN
 				if(structExtParam.cTarget[strlen(structExtParam.cTarget)-1]!='.')
 				{
-					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cTarget);
+					fprintf(stdout,"%s does not end with a '.'\n",structExtParam.cTarget);
 					goto ErrorExit;
 				}
 				//cName must end in cZone.
 				if(!strcmp(structExtParam.cName+(strlen(structExtParam.cName)-strlen(structExtParam.cZone)-1),
 					structExtParam.cZone))
 				{
-					fprintf(stderr,"'%s' does not end with '%s'\n",structExtParam.cName,structExtParam.cZone);
+					fprintf(stdout,"'%s' does not end with '%s'\n",structExtParam.cName,structExtParam.cZone);
 					goto ErrorExit;
 				}
 
@@ -2095,7 +2098,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					goto ErrorExit;
 				}
 				res2=mysql_store_result(&gMysql);
@@ -2110,10 +2113,10 @@ void ProcessVZJobQueue(void)
 
 				if(!uZone)
 				{
-					fprintf(stderr,"No tZone.uZone for %s %s\n",
+					fprintf(stdout,"No tZone.uZone for %s %s\n",
 								structExtParam.cView,
 								structExtParam.cZone);
-					fprintf(stderr,"%s",gcQuery);
+					fprintf(stdout,"%s",gcQuery);
 					goto ErrorExit;
 				}
 				//debug only
@@ -2129,7 +2132,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					goto ErrorExit;
 				}
 				res2=mysql_store_result(&gMysql);
@@ -2152,7 +2155,7 @@ void ProcessVZJobQueue(void)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
 						goto ErrorExit;
 					}
 					//debug only
@@ -2175,7 +2178,7 @@ void ProcessVZJobQueue(void)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
 						goto ErrorExit;
 					}
 					uResource=mysql_insert_id(&gMysql);
@@ -2188,7 +2191,7 @@ void ProcessVZJobQueue(void)
 				guCompany=uOwner;
 				if(SubmitJob("Modify",uNSSet,structExtParam.cZone,0,0))
 				{
-					fprintf(stderr,"SubmitJob() failed.\n");
+					fprintf(stdout,"SubmitJob() failed.\n");
 					goto ErrorExit;
 				}
 
@@ -2198,10 +2201,11 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 					goto ErrorExit;
 				}
-				goto NormalExit;
+				//goto NormalExit;
+				continue;
 			}//unxsVZContainerSRVRR
 
 			//cName is a fully qualified DNS RR name, i.e. it ends in the zone name.
@@ -2216,7 +2220,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 					goto ErrorExit;
 				}
 	
@@ -2237,14 +2241,14 @@ void ProcessVZJobQueue(void)
 				//cName must be FQDN
 				if(structExtParam.cName[strlen(structExtParam.cName)-1]!='.')
 				{
-					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cName);
+					fprintf(stdout,"%s does not end with a '.'\n",structExtParam.cName);
 					goto ErrorExit;
 				}
 				//cName must end in cZone.
 				if(!strcmp(structExtParam.cName+(strlen(structExtParam.cName)-strlen(structExtParam.cZone)-1),
 					structExtParam.cZone))
 				{
-					fprintf(stderr,"'%s' does not end with '%s'\n",structExtParam.cName,structExtParam.cZone);
+					fprintf(stdout,"'%s' does not end with '%s'\n",structExtParam.cName,structExtParam.cZone);
 					goto ErrorExit;
 				}
 
@@ -2259,7 +2263,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					goto ErrorExit;
 				}
 				res2=mysql_store_result(&gMysql);
@@ -2274,10 +2278,10 @@ void ProcessVZJobQueue(void)
 
 				if(!uZone)
 				{
-					fprintf(stderr,"No tZone.uZone for %s %s\n",
+					fprintf(stdout,"No tZone.uZone for %s %s\n",
 								structExtParam.cView,
 								structExtParam.cZone);
-					fprintf(stderr,"%s",gcQuery);
+					fprintf(stdout,"%s",gcQuery);
 					goto ErrorExit;
 				}
 				//debug only
@@ -2292,7 +2296,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					goto ErrorExit;
 				}
 				res2=mysql_store_result(&gMysql);
@@ -2310,7 +2314,7 @@ void ProcessVZJobQueue(void)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
 						goto ErrorExit;
 					}
 					//debug only
@@ -2328,7 +2332,7 @@ void ProcessVZJobQueue(void)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
 						goto ErrorExit;
 					}
 					uResource=mysql_insert_id(&gMysql);
@@ -2341,7 +2345,7 @@ void ProcessVZJobQueue(void)
 				guCompany=uOwner;
 				if(SubmitJob("Modify",uNSSet,structExtParam.cZone,0,0))
 				{
-					fprintf(stderr,"SubmitJob() failed.\n");
+					fprintf(stdout,"SubmitJob() failed.\n");
 					goto ErrorExit;
 				}
 
@@ -2351,10 +2355,11 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 					goto ErrorExit;
 				}
-				goto NormalExit;
+				//goto NormalExit;
+				continue;
 			}//unxsVZContainerARR
 
 			//Add or update a complete resource record
@@ -2367,7 +2372,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 					goto ErrorExit;
 				}
 	
@@ -2395,27 +2400,27 @@ void ProcessVZJobQueue(void)
 				//cName must be FQDN
 				if(!structExtParam.cParam1[0])
 				{
-					fprintf(stderr,"cParam1 is required\n");
+					fprintf(stdout,"cParam1 is required\n");
 					goto ErrorExit;
 				}
 
 				if(!structExtParam.cRRType[0])
 				{
-					fprintf(stderr,"cRRType is required\n");
+					fprintf(stdout,"cRRType is required\n");
 					goto ErrorExit;
 				}
 
 				//cName must be FQDN
 				if(structExtParam.cName[strlen(structExtParam.cName)-1]!='.')
 				{
-					fprintf(stderr,"%s does not end with a '.'\n",structExtParam.cName);
+					fprintf(stdout,"%s does not end with a '.'\n",structExtParam.cName);
 					goto ErrorExit;
 				}
 				//cName must end in cZone.
 				if(!strcmp(structExtParam.cName+(strlen(structExtParam.cName)-strlen(structExtParam.cZone)-1),
 					structExtParam.cZone))
 				{
-					fprintf(stderr,"'%s' does not end with '%s'\n",structExtParam.cName,structExtParam.cZone);
+					fprintf(stdout,"'%s' does not end with '%s'\n",structExtParam.cName,structExtParam.cZone);
 					goto ErrorExit;
 				}
 
@@ -2425,14 +2430,14 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					goto ErrorExit;
 				}
 				res2=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res2)!=1)
 				{
 					mysql_free_result(res2);
-					fprintf(stderr,"Valid cRRType is required\n");
+					fprintf(stdout,"Valid cRRType is required\n");
 					goto ErrorExit;
 				}
 				mysql_free_result(res2);
@@ -2448,7 +2453,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					goto ErrorExit;
 				}
 				res2=mysql_store_result(&gMysql);
@@ -2463,10 +2468,10 @@ void ProcessVZJobQueue(void)
 
 				if(!uZone)
 				{
-					fprintf(stderr,"No tZone.uZone for %s %s\n",
+					fprintf(stdout,"No tZone.uZone for %s %s\n",
 								structExtParam.cView,
 								structExtParam.cZone);
-					fprintf(stderr,"%s",gcQuery);
+					fprintf(stdout,"%s",gcQuery);
 					goto ErrorExit;
 				}
 				//debug only
@@ -2482,7 +2487,7 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
 					goto ErrorExit;
 				}
 				res2=mysql_store_result(&gMysql);
@@ -2504,7 +2509,7 @@ void ProcessVZJobQueue(void)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
 						goto ErrorExit;
 					}
 					uResource=mysql_insert_id(&gMysql);
@@ -2517,7 +2522,7 @@ void ProcessVZJobQueue(void)
 				guCompany=uOwner;
 				if(SubmitJob("Modify",uNSSet,structExtParam.cZone,0,0))
 				{
-					fprintf(stderr,"SubmitJob() failed.\n");
+					fprintf(stdout,"SubmitJob() failed.\n");
 					goto ErrorExit;
 				}
 
@@ -2527,10 +2532,11 @@ void ProcessVZJobQueue(void)
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
 				{
-					fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+					fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 					goto ErrorExit;
 				}
-				goto NormalExit;
+				//goto NormalExit;
+				continue;
 			}//unxsVZGenericRR
 		}//while
 		mysql_free_result(res);
@@ -2540,22 +2546,26 @@ void ProcessVZJobQueue(void)
 		printf("ProcessVZJobQueue() could not connect to db\n");
 		return;
 	}
+	//debug only
+	printf("ProcessVZJobQueue() done ok\n");
+	mysql_close(&gMysql);
+	return;
 
 //Organize this later with another function
 ErrorExit:
 	if(uJob)
 	{
-		fprintf(stderr,"ErrorExit uJob=%u\n",uJob);
+		fprintf(stdout,"ErrorExit uJob=%u\n",uJob);
 		sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsBind ext jobqueue error'"
 			" WHERE uJob=%u",unxsVZ_uERROR,uJob);
 		mysql_query(&gMysql2,gcQuery);
 		if(mysql_errno(&gMysql2))
-			fprintf(stderr,"%s\n",mysql_error(&gMysql2));
+			fprintf(stdout,"%s\n",mysql_error(&gMysql2));
 	}
-
-NormalExit:
 	//debug only
-	//printf("ProcessVZJobQueue() done\n");
+	printf("ProcessVZJobQueue() done error\n");
 	mysql_close(&gMysql);
+	return;
+
 
 }//void ProcessVZJobQueue(void)
