@@ -1,0 +1,99 @@
+#!/bin/bash
+#
+# chkconfig: 2345 99 01
+# description: script to start zabbix agent
+# Processname: zabbix_agentd
+# pidfile: /var/run/zabbix_agentd.pid
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+#
+#Based on Zabbix SIA init.d script in 1.8.3 release tar.gz.
+#Improvements by Unixservice, LLC.
+#Released into to the public domain 12/2010.
+#
+#FILE
+#	zabbix_agentd.init.d.script
+#INSTALL AS
+#	/etc/init.d/zabbix_agentd
+#PURPOSE
+#	Clean up very initial Zabbix version, with an also KISS version
+#	but a little cleaner (I hope.)
+#	and added /etc/zabbix/zabbix_agentd.conf hostname change on start.
+#	Since containers can come with preconfigured zabbix agentd conf for a generic
+#	server name, that needs to be set on initial start up.
+#DEPENDS ON
+#	hostname -f providing correct output 
+#	GNU sed with -i support.
+#	/etc/zabbix/zabbix_agentd.conf having standard Hostname=whatever.domain.dom line
+#
+
+function start {
+        echo -n "Starting zabbix_agentd: "
+	/bin/touch /var/log/zabbix_agentd.log;
+	if [ $? != 0 ];then
+		echo "could not start /var/log/zabbix_agentd.log";
+		return;
+	fi
+	/bin/chown zabbix:zabbix /var/log/zabbix_agentd.log;
+	if [ $? != 0 ];then
+		echo "could not start /bin/chown zabbix:zabbix";
+		return;
+	fi
+        daemon /usr/local/sbin/zabbix_agentd --config /etc/zabbix/zabbix_agentd.conf;
+	#/usr/local/sbin/zabbix_agentd --config /etc/zabbix/zabbix_agentd.conf  > /dev/null 2>&1;
+	RETVAL=$?;
+	if [ $? != 0 ];then
+		echo "could not start zabbix_agentd";
+		return;
+	fi
+	echo;
+        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/zabbix_agentd;
+}
+
+function stop {
+	if test "x`pidof zabbix_agentd`" != x; then
+		echo -n "Shutting down zabbix_agentd: ";
+		killproc zabbix_agentd;
+	fi
+	RETVAL=$?;
+	echo;
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/zabbix_agentd /var/run/zabbix_agentd.pid;
+}
+
+function change-hostname {
+	cHostname=`/bin/hostname -f`;
+	if [ "$cHostname" == "" ];then
+		echo "hostname -f failed";		
+		exit 1;
+	fi
+	/bin/sed -i -e "s/^Hostname=.*$/Hostname=$cHostname/" /etc/zabbix/zabbix_agentd.conf > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		echo "could not change-hostname";
+	fi
+}
+
+case $1 in
+
+	start)
+		change-hostname;
+		start;
+		;;
+	stop)
+		stop;
+		;;
+	restart)
+		stop;
+		start;
+		;;
+	status)
+		status zabbix_agentd
+		;;
+	change-hostname)
+		change-hostname;
+		;;
+	*)
+		echo "Usage: $0 start|stop|restart|status|change-hostname"
+esac
+
