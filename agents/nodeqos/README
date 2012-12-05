@@ -1,0 +1,4 @@
+This directory contains code for the collection of asterisk quality of service data
+for all virtual PBX containers on a hardware node.
+
+See tools/freepbx/qos for the precursor of this agent.
