@@ -466,7 +466,7 @@ void ProcessTShark(void)
 				if(guDebug)
 					printf("cSrcIP=%u.%s:%u cDstIP=%s:%u %2.2f\n",uA,cSrcIP,uSrcPort,cDstIP,uDstPort,fPacketLossPercent);
 
-				if(fPacketLossPercent>1.0)
+				if(fPacketLossPercent>2.0)
 				{
         				MYSQL_RES *res;
 					MYSQL_ROW field;
@@ -561,7 +561,7 @@ void ProcessTShark(void)
 						}
 						if(guDebug) printf("%s\n",gcQuery);
 					}
-				}//more than 1 percent
+				}//more than 2 percent
 			}
 			else
 			{
