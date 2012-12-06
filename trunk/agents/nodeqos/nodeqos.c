@@ -28,6 +28,7 @@ unsigned guTShark=0;
 unsigned guVEID=0;
 unsigned guNumCalls=0;
 unsigned guNode=0;
+unsigned guOwner=1;
 
 //report data
 float fLossRecvMax=0.0;
@@ -101,6 +102,8 @@ int main(int iArgc, char *cArgv[])
 				guDebug=1;
 			if(!strncmp(cArgv[i],"--veid",6))
 				sscanf(cArgv[i],"--veid=%u",&guVEID);
+			if(!strncmp(cArgv[i],"--owner",7))
+				sscanf(cArgv[i],"--owner=%u",&guOwner);
 			if(!strcmp(cArgv[i],"--help"))
 			{
 				printf("usage: %s [--help] [--version] [--tshark] [--rrdtool] [--veid=VEID] [--debug]\n",cArgv[0]);
@@ -547,10 +550,10 @@ void ProcessTShark(void)
 							" cName='cOrg_QOSIssue',"
 							" uKey=%u,"
 							" uType=3,"
-							" uOwner=1,"
+							" uOwner=%u,"
 							" uCreatedBy=1,"
 							" uCreatedDate=UNIX_TIMESTAMP(NOW())"
-								,fPacketLossPercent,cIP,uContainer);
+								,fPacketLossPercent,cIP,uContainer,guOwner);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 						{
