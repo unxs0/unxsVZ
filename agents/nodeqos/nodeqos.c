@@ -22,6 +22,7 @@ MYSQL gMysql;
 char gcQuery[8192]={""};
 char gcHostname[100]={""};
 char gcProgram[100]={""};
+char gcInterface[100]={"eth0"};
 unsigned guDebug=0;
 unsigned guRRDTool=0;
 unsigned guTShark=0;
@@ -104,9 +105,12 @@ int main(int iArgc, char *cArgv[])
 				sscanf(cArgv[i],"--veid=%u",&guVEID);
 			if(!strncmp(cArgv[i],"--owner",7))
 				sscanf(cArgv[i],"--owner=%u",&guOwner);
+			if(!strncmp(cArgv[i],"--interface",11))
+				sscanf(cArgv[i],"--interface=%[a-z0-9\\.]",gcInterface);
 			if(!strcmp(cArgv[i],"--help"))
 			{
-				printf("usage: %s [--help] [--version] [--tshark] [--rrdtool] [--veid=VEID] [--debug]\n",cArgv[0]);
+				printf("usage: %s [--help] [--version] [--tshark] [--owner=1]"
+					" [--interface=eth0] [--rrdtool] [--veid=VEID] [--debug]\n",cArgv[0]);
 				exit(0);
 			}
 			if(!strcmp(cArgv[i],"--version"))
@@ -440,8 +444,8 @@ void ProcessTShark(void)
 
 	char cCommand[256];
 	FILE *fp;
-	sprintf(cCommand,"/usr/sbin/tshark -a duration:55 -q -f 'udp portrange 16384-32768'"
-				" -o rtp.heuristic_rtp:TRUE -z rtp,streams -w /tmp/qoscap2 2> /dev/null | /bin/grep X");
+	sprintf(cCommand,"/usr/sbin/tshark -i %s -a duration:55 -q -f 'udp portrange 16384-32768'"
+				" -o rtp.heuristic_rtp:TRUE -z rtp,streams -w /tmp/qoscap2 2> /dev/null | /bin/grep X",gcInterface);
 	if(guDebug) printf("%s\n",cCommand);
 	if((fp=popen(cCommand,"r")))
 	{
