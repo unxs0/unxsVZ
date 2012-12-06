@@ -4,6 +4,7 @@ FILE
 	$Id$
 PURPOSE
 	Collection of Asterisk PBX QOS data from containers running on a hardware node.
+	Collection of tshark determined problem streams.
 AUTHOR
 	Gary Wallis for Unxiservice, LLC. (C) 2012-2013.
 	GPLv2 License applies. See LICENSE file.
@@ -23,8 +24,10 @@ char gcHostname[100]={""};
 char gcProgram[100]={""};
 unsigned guDebug=0;
 unsigned guRRDTool=0;
+unsigned guTShark=0;
 unsigned guVEID=0;
 unsigned guNumCalls=0;
+unsigned guNode=0;
 
 //report data
 float fLossRecvMax=0.0;
@@ -52,6 +55,7 @@ float fJitterSendStd=0.0;
 void TextConnectDb(void);
 void ProcessQOS(void);
 void ProcessSingleQOS(unsigned uContainer);
+void ProcessTShark(void);
 
 unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
@@ -89,6 +93,8 @@ int main(int iArgc, char *cArgv[])
 		register int i;
 		for(i=1;i<iArgc;i++)
 		{
+			if(!strcmp(cArgv[i],"--tshark"))
+				guTShark=1;
 			if(!strcmp(cArgv[i],"--rrdtool"))
 				guRRDTool=1;
 			if(!strcmp(cArgv[i],"--debug"))
@@ -97,7 +103,7 @@ int main(int iArgc, char *cArgv[])
 				sscanf(cArgv[i],"--veid=%u",&guVEID);
 			if(!strcmp(cArgv[i],"--help"))
 			{
-				printf("usage: %s [--help] [--version] [--veid=VEID] [--rrdtool] [--debug]\n",cArgv[0]);
+				printf("usage: %s [--help] [--version] [--tshark] [--rrdtool] [--veid=VEID] [--debug]\n",cArgv[0]);
 				exit(0);
 			}
 			if(!strcmp(cArgv[i],"--version"))
@@ -117,6 +123,7 @@ int main(int iArgc, char *cArgv[])
 		exit(1);
 	}
 		
+	logfileLine("main","start",0);
 	if(sysinfo(&structSysinfo))
 	{
 		logfileLine("main","sysinfo() failed",0);
@@ -128,6 +135,63 @@ int main(int iArgc, char *cArgv[])
 		exit(1);
 	}
 
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	if(gethostname(gcHostname,99)!=0)
+	{
+		logfileLine("main","gethostname() failed",0);
+		exit(1);
+	}
+
+	//Uses login data from local.h
+	TextConnectDb();
+
+	sprintf(gcQuery,"SELECT uNode FROM tNode WHERE cLabel='%.99s'",gcHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("main",mysql_error(&gMysql),0);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&guNode);
+	}
+	mysql_free_result(res);
+	if(!guNode)
+	{
+		char *cp;
+
+		//FQDN vs short name of 2nd NIC mess
+		if((cp=strchr(gcHostname,'.')))
+			*cp=0;
+		sprintf(gcQuery,"SELECT uNode FROM tNode WHERE cLabel='%.99s'",gcHostname);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("main",mysql_error(&gMysql),0);
+			mysql_close(&gMysql);
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&guNode);
+		}
+		mysql_free_result(res);
+	}
+
+	if(!guNode)
+	{
+		logfileLine("main","Could not determine guNode",0);
+		mysql_close(&gMysql);
+		exit(1);
+	}
+
+	//get lock
 	struct stat structStat;
 	if(!stat(cLockfile,&structStat))
 	{
@@ -140,45 +204,53 @@ int main(int iArgc, char *cArgv[])
 		return(1);
 	}
 
-	logfileLine("main","start",0);
-	if(guVEID)
-		ProcessSingleQOS(guVEID);
-	else
-		ProcessQOS();//For all node containers
-
-	//report section
-	if(guNumCalls>0)
+	if(guTShark)
 	{
-		fLossRecvAvg=fLossRecvAvg/guNumCalls;
-		fJitterRecvAvg=fJitterRecvAvg/guNumCalls;
-		fLossSendAvg=fLossSendAvg/guNumCalls;
-		fJitterSendAvg=fJitterSendAvg/guNumCalls;
-	}
-
-	if(guRRDTool)
-	{
-		if(guDebug)
-			printf("fLossSendAvg fLossRecvAvg fJitterSendAvg*1000 fJitterRecvAvg*1000 uNumCalls\n");
-		printf("%.0f %.0f %.0f %.0f %u\n",
-				fLossSendAvg*100,fLossRecvAvg*100,fJitterSendAvg*100,fJitterRecvAvg*100,guNumCalls);
+		ProcessTShark();
 	}
 	else
 	{
-	
-		printf("uNumCalls=%u\n",guNumCalls);
+
+		if(guVEID)
+			ProcessSingleQOS(guVEID);
+		else
+			ProcessQOS();//For all node containers
+
+		//report section
 		if(guNumCalls>0)
 		{
-			printf("fLossRecvMin=%f fJitterRecvMin=%f fLossSendMin=%f fJitterSendMin=%f\n",
-					fLossRecvMin,fJitterRecvMin,fLossSendMin,fJitterSendMin);
-			printf("fLossRecvMax=%f fJitterRecvMax=%f fLossSendMax=%f fJitterSendMax=%f\n",
-				fLossRecvMax,fJitterRecvMax,fLossSendMax,fJitterSendMax);
-			printf("fLossRecvAvg=%f fJitterRecvAvg=%f fLossSendAvg=%f fJitterSendAvg=%f\n",
-				fLossRecvAvg,fJitterRecvAvg,fLossSendAvg,fJitterSendAvg);
-			printf("fLossRecvStd=%f fJitterRecvStd=%f fLossSendStd=%f fJitterSendStd=%f\n",
-				fLossRecvStd,fJitterRecvStd,fLossSendStd,fJitterSendStd);
+			fLossRecvAvg=fLossRecvAvg/guNumCalls;
+			fJitterRecvAvg=fJitterRecvAvg/guNumCalls;
+			fLossSendAvg=fLossSendAvg/guNumCalls;
+			fJitterSendAvg=fJitterSendAvg/guNumCalls;
 		}
-	}
-	//end report section
+
+		if(guRRDTool)
+		{
+			if(guDebug)
+				printf("fLossSendAvg fLossRecvAvg fJitterSendAvg*1000 fJitterRecvAvg*1000 uNumCalls\n");
+			printf("%.0f %.0f %.0f %.0f %u\n",
+					fLossSendAvg*100,fLossRecvAvg*100,fJitterSendAvg*100,fJitterRecvAvg*100,guNumCalls);
+		}
+		else
+		{
+	
+			printf("uNumCalls=%u\n",guNumCalls);
+			if(guNumCalls>0)
+			{
+				printf("fLossRecvMin=%f fJitterRecvMin=%f fLossSendMin=%f fJitterSendMin=%f\n",
+						fLossRecvMin,fJitterRecvMin,fLossSendMin,fJitterSendMin);
+				printf("fLossRecvMax=%f fJitterRecvMax=%f fLossSendMax=%f fJitterSendMax=%f\n",
+					fLossRecvMax,fJitterRecvMax,fLossSendMax,fJitterSendMax);
+				printf("fLossRecvAvg=%f fJitterRecvAvg=%f fLossSendAvg=%f fJitterSendAvg=%f\n",
+					fLossRecvAvg,fJitterRecvAvg,fLossSendAvg,fJitterSendAvg);
+				printf("fLossRecvStd=%f fJitterRecvStd=%f fLossSendStd=%f fJitterSendStd=%f\n",
+					fLossRecvStd,fJitterRecvStd,fLossSendStd,fJitterSendStd);
+			}
+		}//end 	report section
+
+	}//end container based data
+	
 
 	if(rmdir(cLockfile))
 	{
@@ -194,64 +266,10 @@ void ProcessQOS(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uNode=0;
 	unsigned uContainer=0;
 
-	if(gethostname(gcHostname,99)!=0)
-	{
-		logfileLine("ProcessQOS","gethostname() failed",uContainer);
-		exit(1);
-	}
-
-	//Uses login data from local.h
-	TextConnectDb();
-
-	sprintf(gcQuery,"SELECT uNode FROM tNode WHERE cLabel='%.99s'",gcHostname);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessQOS",mysql_error(&gMysql),uContainer);
-		mysql_close(&gMysql);
-		exit(2);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u",&uNode);
-	}
-	mysql_free_result(res);
-	if(!uNode)
-	{
-		char *cp;
-
-		//FQDN vs short name of 2nd NIC mess
-		if((cp=strchr(gcHostname,'.')))
-			*cp=0;
-		sprintf(gcQuery,"SELECT uNode FROM tNode WHERE cLabel='%.99s'",gcHostname);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			logfileLine("ProcessQOS",mysql_error(&gMysql),uContainer);
-			mysql_close(&gMysql);
-			exit(2);
-		}
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			sscanf(field[0],"%u",&uNode);
-		}
-		mysql_free_result(res);
-	}
-
-	if(!uNode)
-	{
-		logfileLine("ProcessQOS","Could not determine uNode",uContainer);
-		mysql_close(&gMysql);
-		exit(1);
-	}
-
 	//Main loop. TODO use defines for tStatus.uStatus values.
-	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u AND uStatus=1",uNode);
+	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u AND uStatus=1",guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -282,7 +300,7 @@ void ProcessQOS(void)
 	mysql_free_result(res);
 	mysql_close(&gMysql);
 
-}//void ProcessUBC(void)
+}//void ProcessQOS(void)
 
 
 void ProcessSingleQOS(unsigned uContainer)
@@ -307,6 +325,7 @@ void ProcessSingleQOS(unsigned uContainer)
 			unsigned uHrs=0;
 			unsigned uMins=0;
 			unsigned uSecs=0;
+			char cCallID[256]={""};
 
 			if(guDebug)
 				printf("%s",cLine);
@@ -325,19 +344,36 @@ Peer             Call ID      Duration Recv: Pack  Lost       (     %) Jitter Se
 174.121.136.137  1846308249_  00:10:36 0000029748  0000000000 ( 0.00%) 0.0000 0000029756  0000000000 ( 0.00%) 0.0004
 fLossRecv=0.000000 fJitterRecv=0.000000 fLossSend=0.000000 fJitterSend=0.000400
 */
-				uFields=sscanf(cLine,"%*[a-zA-Z@0-9--_.: \\t]( %f%%) %f %*[a-zA-Z@0-9--_.: \\t]( %f%%) %f",
-										&fLossRecv,&fJitterRecv,&fLossSend,&fJitterSend);
+				uFields=sscanf(cLine,"%*[0-9.]\t%[a-zA-Z@0-9--_]\t%*[a-zA-Z@0-9--_.: \\t]( %f%%) %f %*[a-zA-Z@0-9--_.: \\t]( %f%%) %f",
+										cCallID,&fLossRecv,&fJitterRecv,&fLossSend,&fJitterSend);
 				char *cp;
 				if((cp=strchr(cLine,':')))
 					sscanf(cp-2,"%u:%u:%u",&uHrs,&uMins,&uSecs);
 				if(guDebug)
 					printf("uHrs=%u uMins=%u uSecs=%u fLossRecv=%f fJitterRecv=%f fLossSend=%f fJitterSend=%f\n",
 						uHrs,uMins,uSecs,fLossRecv,fJitterRecv,fLossSend,fJitterSend);
+				if(guDebug)
+				{
+					FILE *fp;
+					char cLine[256];
+					printf("cCallID=(%s)\n",cCallID);
+					sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'sip show channel %s'\"",
+						uContainer,cCallID);
+					if((fp=popen(cCommand,"r")))
+					{
+						while(fgets(cLine,255,fp)!=NULL)
+                				{
+							if(strstr(cLine,"Received") || strstr(cLine,"Audio"))
+							printf("%s",cLine);
+						}
+						pclose(fp);
+					}
+				}
 					
 				unsigned uCallDuration=uSecs+uMins*60+uHrs*3600;
 				if(guDebug && uCallDuration<60)
 					printf("Short called ignored\n");
-				if(uFields==4 && uCallDuration>59)
+				if(uFields==5 && uCallDuration>59)
 				{
 					if(uFirst)
 					{
@@ -393,4 +429,153 @@ fLossRecv=0.000000 fJitterRecv=0.000000 fLossSend=0.000000 fJitterSend=0.000400
 	logfileLine("ProcessSingleQOS","end",uContainer);
 
 }//void ProcessSingleQOS(void)
+
+
+void ProcessTShark(void)
+{
+	logfileLine("ProcessTShark","start",0);
+
+	char cCommand[256];
+	FILE *fp;
+	sprintf(cCommand,"/usr/sbin/tshark -a duration:55 -q -f 'udp portrange 16384-32768'"
+				" -o rtp.heuristic_rtp:TRUE -z rtp,streams -w /tmp/qoscap2 2> /dev/null | /bin/grep X");
+	if(guDebug) printf("%s\n",cCommand);
+	if((fp=popen(cCommand,"r")))
+	{
+		char cLine[256];
+		while(fgets(cLine,255,fp)!=NULL)
+                {
+			char cSrcIP[256]={""};
+			char cDstIP[256]={""};
+			unsigned uFields=0;
+			unsigned uDstPort=0;
+			unsigned uSrcPort=0;
+			unsigned uA=0;
+			float fPacketLossPercent=0.0;
+
+			if(guDebug) printf("%s",cLine);
+/*
+   75.148.66.17 11800 174.121.136.170 19108 0x0001A372 ITU-T G.711 PCMU  2603   117 (4.3%)           64.73            4.64            1.29 X
+  199.199.10.15 18058  174.121.136.11 12026 0x889F59A4 ITU-T G.711 PCMU  1407  -692 (-96.8%)           43.20          812.00            0.06 X
+*/
+			uFields=sscanf(cLine,"%u.%[0-9\\.]%*[ \\t]%u%*[ \\t]%[0-9\\.]%*[ \\t]%u%*[ \\t]%*[0-9A-Fx]"
+						"%*[ \\t]%*[A-Z--]%*[ \\t]%*[0-9A-Z\\.]%*[ \\t]%*[A-Z]%*[ \\t]%*d%*[ \\t]%*d%*[ \\t](%f%%)",
+							&uA,cSrcIP,&uSrcPort,cDstIP,&uDstPort,&fPacketLossPercent);
+			if(uFields==6)
+			{
+				if(guDebug)
+					printf("cSrcIP=%u.%s:%u cDstIP=%s:%u %2.2f\n",uA,cSrcIP,uSrcPort,cDstIP,uDstPort,fPacketLossPercent);
+
+				if(fPacketLossPercent>1.0)
+				{
+        				MYSQL_RES *res;
+					MYSQL_ROW field;
+					unsigned uContainer=0;
+					unsigned uProperty=0;
+					char cMatchIP[16]={""};
+					char cIP[16]={""};
+					sprintf(gcQuery,"SELECT uContainer,tIP.cLabel FROM tContainer,tIP"
+							" WHERE tContainer.uIPv4=tIP.uIP"
+							" AND tContainer.uNode=%u"
+							" AND tContainer.uStatus=1"
+							" AND (tIP.cLabel='%u.%s' OR tIP.cLabel='%s')"
+								,guNode,uA,cSrcIP,cDstIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						logfileLine("ProcessTShark",mysql_error(&gMysql),0);
+						if(guDebug) printf("%s\n",mysql_error(&gMysql));
+						mysql_close(&gMysql);
+						break;
+					}
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+					{
+						sscanf(field[0],"%u",&uContainer);
+						sprintf(cMatchIP,"%.15s",field[1]);
+						if(guDebug) printf("uContainer=%u\n",uContainer);
+					}
+
+					if(uContainer==0) continue;
+
+					sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+							" WHERE uKey=%u"
+							" AND uType=3"
+							" AND cName='cOrg_QOSIssue'"
+								,uContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						logfileLine("ProcessTShark",mysql_error(&gMysql),0);
+						if(guDebug) printf("%s\n",mysql_error(&gMysql));
+						mysql_close(&gMysql);
+						break;
+					}
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+					{
+						sscanf(field[0],"%u",&uProperty);
+						if(guDebug) printf("uProperty=%u\n",uProperty);
+					}
+
+					if(!strcmp(cDstIP,cMatchIP))
+						sprintf(cIP,"%u.%.12s",uA,cSrcIP);
+					else
+						sprintf(cIP,"%.15s",cDstIP);
+
+					if(uProperty)
+					{
+						sprintf(gcQuery,"UPDATE tProperty"
+							" SET cValue=CONCAT('%2.2f%% %s ',NOW()),"
+							" uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uProperty=%u"
+								,fPacketLossPercent,cIP,uProperty);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							logfileLine("ProcessTShark",mysql_error(&gMysql),0);
+							if(guDebug) printf("%s\n",mysql_error(&gMysql));
+							mysql_close(&gMysql);
+							break;
+						}
+						if(guDebug) printf("%s\n",gcQuery);
+					}
+					else
+					{
+						sprintf(gcQuery,"INSERT INTO tProperty"
+							" SET cValue=CONCAT('%2.2f%% %s ',NOW()),"
+							" cName='cOrg_QOSIssue',"
+							" uKey=%u,"
+							" uType=3,"
+							" uOwner=1,"
+							" uCreatedBy=1,"
+							" uCreatedDate=UNIX_TIMESTAMP(NOW())"
+								,fPacketLossPercent,cIP,uContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							logfileLine("ProcessTShark",mysql_error(&gMysql),0);
+							if(guDebug) printf("%s\n",mysql_error(&gMysql));
+							mysql_close(&gMysql);
+							break;
+						}
+						if(guDebug) printf("%s\n",gcQuery);
+					}
+				}//more than 1 percent
+			}
+			else
+			{
+				if(guDebug) printf("uFields=%u\n",uFields);
+			}
+		}//while lines
+		pclose(fp);
+	}//popen
+	else
+	{
+		if(guDebug) printf("%s",cCommand);
+	}
+
+	logfileLine("ProcessTShark","end",0);
+
+}//void ProcessTShark(void)
 
