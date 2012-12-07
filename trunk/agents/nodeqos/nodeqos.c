@@ -513,6 +513,26 @@ void ProcessTShark(void)
 					else
 						sprintf(cIP,"%.15s",cDstIP);
 
+					//determine if cIP is a registered phone
+					unsigned uPhone=0;
+					FILE *pp;
+					sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'sip show peers'|/bin/grep -c %s\"",
+									uContainer,cIP);
+					if(guDebug) printf("%s\n",cCommand);
+					if((pp=popen(cCommand,"r")))
+					{
+						char cPLine[256];
+						if(fgets(cPLine,255,pp)!=NULL)
+						{
+							sscanf(cPLine,"%u",&uPhone);
+							if(guDebug) printf("cpLine=%s",cPLine);
+						}
+						pclose(pp);
+					}
+					else
+					{
+						logfileLine("ProcessTShark","sip show peers",uContainer);
+					}
 
 					sprintf(gcQuery,"SELECT uProperty FROM tProperty"
 							" WHERE uKey=%u"
@@ -522,7 +542,7 @@ void ProcessTShark(void)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						logfileLine("ProcessTShark",mysql_error(&gMysql),0);
+						logfileLine("ProcessTShark",mysql_error(&gMysql),uContainer);
 						if(guDebug) printf("%s\n",mysql_error(&gMysql));
 						mysql_close(&gMysql);
 						break;
@@ -540,14 +560,14 @@ void ProcessTShark(void)
 					if(uProperty)
 					{
 						sprintf(gcQuery,"UPDATE tProperty"
-							" SET cValue=CONCAT('%2.2f%% ',NOW()),"
+							" SET cValue=CONCAT('%2.2f%% uPhone:%u ',NOW()),"
 							" uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
 							" WHERE uProperty=%u"
-								,fPacketLossPercent,uProperty);
+								,fPacketLossPercent,uPhone,uProperty);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 						{
-							logfileLine("ProcessTShark",mysql_error(&gMysql),0);
+							logfileLine("ProcessTShark",mysql_error(&gMysql),uContainer);
 							if(guDebug) printf("%s\n",mysql_error(&gMysql));
 							mysql_close(&gMysql);
 							break;
@@ -557,18 +577,18 @@ void ProcessTShark(void)
 					else
 					{
 						sprintf(gcQuery,"INSERT INTO tProperty"
-							" SET cValue=CONCAT('%2.2f%% ',NOW()),"
+							" SET cValue=CONCAT('%2.2f%% uPhone:%u ',NOW()),"
 							" cName='cOrg_QOSIssue%s',"
 							" uKey=%u,"
 							" uType=3,"
 							" uOwner=%u,"
 							" uCreatedBy=1,"
 							" uCreatedDate=UNIX_TIMESTAMP(NOW())"
-								,fPacketLossPercent,cIP,uContainer,guOwner);
+								,fPacketLossPercent,uPhone,cIP,uContainer,guOwner);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 						{
-							logfileLine("ProcessTShark",mysql_error(&gMysql),0);
+							logfileLine("ProcessTShark",mysql_error(&gMysql),uContainer);
 							if(guDebug) printf("%s\n",mysql_error(&gMysql));
 							mysql_close(&gMysql);
 							break;
