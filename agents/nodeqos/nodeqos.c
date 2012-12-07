@@ -12,6 +12,7 @@ NOTES
 */
 
 #include "../../mysqlrad.h"
+#include "local.h"
 #include <sys/sysinfo.h>
 #include <ctype.h>
 #include <math.h>
@@ -600,7 +601,6 @@ void ProcessTShark(void)
 
 }//void ProcessTShark(void)
 
-#define cSUBJECT "PbxQOS alert"
 
 void SendAlertEmail(char *cMsg)
 {
@@ -619,16 +619,16 @@ void SendAlertEmail(char *cMsg)
 	}
 			
 	//should be defined in local.h
-	fprintf(pp,"To: %s\n",cMAILTO);
-	if(cBCC!=NULL)
+	fprintf(pp,"To: %s\n",cQOS_MAILTO);
+	if(cQOS_BCC!=NULL)
 	{
 		char cBcc[512]={""};
-		sprintf(cBcc,"%.511s",cBCC);
+		sprintf(cBcc,"%.511s",cQOS_BCC);
 		if(cBcc[0])
 			fprintf(pp,"Bcc: %s\n",cBcc);
 	}
-	fprintf(pp,"From: %s\n",cFROM);
-	fprintf(pp,"Subject: %s %s\n",cSUBJECT,gcHostname);
+	fprintf(pp,"From: %s\n",cQOS_FROM);
+	fprintf(pp,"Subject: %s %s\n",cQOS_SUBJECT,gcHostname);
 
 	fprintf(pp,"%s\n",cMsg);
 

@@ -18,7 +18,7 @@ all: PbxQOS
 PbxQOS: nodeqos.o mysqlconnect.o
 	cc nodeqos.o mysqlconnect.o -o PbxQOS $(LIBS) 
 
-nodeqos.o: nodeqos.c ../../mysqlrad.h ../../local.h
+nodeqos.o: nodeqos.c ../../mysqlrad.h ../../local.h local.h
 	cc -c nodeqos.c -o nodeqos.o $(CFLAGS)
 
 mysqlconnect.o: mysqlconnect.c ../../mysqlrad.h ../../local.h
@@ -30,3 +30,7 @@ clean:
 install: PbxQOS
 	install -s PbxQOS /usr/sbin/PbxQOS
 	rm PbxQOS
+
+local.h: local.h.default
+	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
+
