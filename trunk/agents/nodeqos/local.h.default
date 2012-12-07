@@ -1,0 +1,5 @@
+#define cQOS_MAILTO "noc@someisp.net"
+#define cQOS_BCC ""
+#define cQOS_FROM "noc@someisp.net"
+#define cQOS_SUBJECT "PbxQOS message"
+
