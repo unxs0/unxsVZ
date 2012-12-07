@@ -442,6 +442,7 @@ void ProcessTShark(void)
 {
 	logfileLine("ProcessTShark","start",0);
 
+	unsigned uCount=0;
 	char cCommand[256];
 	FILE *fp;
 	sprintf(cCommand,"/usr/sbin/tshark -i %s -a duration:55 -q -f 'udp portrange 16384-32768'"
@@ -473,7 +474,7 @@ void ProcessTShark(void)
 				if(guDebug)
 					printf("cSrcIP=%u.%s:%u cDstIP=%s:%u %2.2f\n",uA,cSrcIP,uSrcPort,cDstIP,uDstPort,fPacketLossPercent);
 
-				if(fPacketLossPercent>2.0)
+				if(fPacketLossPercent>2.0 && fPacketLossPercent<90.0)
 				{
         				MYSQL_RES *res;
 					MYSQL_ROW field;
@@ -530,6 +531,9 @@ void ProcessTShark(void)
 					else
 						sprintf(cIP,"%.15s",cDstIP);
 
+					unsigned uPacketLossPercent=fPacketLossPercent;
+					sprintf(gcQuery,"cIP=%s uPacketLossPercent=%u",cIP,uPacketLossPercent);
+					logfileLine("ProcessTShark-cIP-PL",gcQuery,uContainer);
 					if(uProperty)
 					{
 						sprintf(gcQuery,"UPDATE tProperty"
@@ -568,7 +572,8 @@ void ProcessTShark(void)
 						}
 						if(guDebug) printf("%s\n",gcQuery);
 					}
-				}//more than 2 percent
+					uCount++;
+				}//more than 2 percent less than 90 percent
 			}
 			else
 			{
@@ -582,6 +587,8 @@ void ProcessTShark(void)
 		if(guDebug) printf("%s",cCommand);
 	}
 
+	
+	logfileLine("ProcessTShark","uCount",uCount);
 	logfileLine("ProcessTShark","end",0);
 
 }//void ProcessTShark(void)
