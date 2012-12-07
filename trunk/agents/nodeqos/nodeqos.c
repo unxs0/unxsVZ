@@ -58,6 +58,7 @@ void TextConnectDb(void);
 void ProcessQOS(void);
 void ProcessSingleQOS(unsigned uContainer);
 void ProcessTShark(void);
+void SendAlertEmail(char *cMsg);
 
 unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
@@ -506,11 +507,17 @@ void ProcessTShark(void)
 
 					if(uContainer==0) continue;
 
+					if(!strcmp(cDstIP,cMatchIP))
+						sprintf(cIP,"%u.%.12s",uA,cSrcIP);
+					else
+						sprintf(cIP,"%.15s",cDstIP);
+
+
 					sprintf(gcQuery,"SELECT uProperty FROM tProperty"
 							" WHERE uKey=%u"
 							" AND uType=3"
-							" AND cName='cOrg_QOSIssue'"
-								,uContainer);
+							" AND cName='cOrg_QOSIssue%s'"
+								,uContainer,cIP);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
@@ -526,21 +533,16 @@ void ProcessTShark(void)
 						if(guDebug) printf("uProperty=%u\n",uProperty);
 					}
 
-					if(!strcmp(cDstIP,cMatchIP))
-						sprintf(cIP,"%u.%.12s",uA,cSrcIP);
-					else
-						sprintf(cIP,"%.15s",cDstIP);
-
 					unsigned uPacketLossPercent=fPacketLossPercent;
 					sprintf(gcQuery,"cIP=%s uPacketLossPercent=%u",cIP,uPacketLossPercent);
 					logfileLine("ProcessTShark-cIP-PL",gcQuery,uContainer);
 					if(uProperty)
 					{
 						sprintf(gcQuery,"UPDATE tProperty"
-							" SET cValue=CONCAT('%2.2f%% %s ',NOW()),"
+							" SET cValue=CONCAT('%2.2f%% ',NOW()),"
 							" uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
 							" WHERE uProperty=%u"
-								,fPacketLossPercent,cIP,uProperty);
+								,fPacketLossPercent,uProperty);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 						{
@@ -554,8 +556,8 @@ void ProcessTShark(void)
 					else
 					{
 						sprintf(gcQuery,"INSERT INTO tProperty"
-							" SET cValue=CONCAT('%2.2f%% %s ',NOW()),"
-							" cName='cOrg_QOSIssue',"
+							" SET cValue=CONCAT('%2.2f%% ',NOW()),"
+							" cName='cOrg_QOSIssue%s',"
 							" uKey=%u,"
 							" uType=3,"
 							" uOwner=%u,"
@@ -589,7 +591,51 @@ void ProcessTShark(void)
 
 	
 	logfileLine("ProcessTShark","uCount",uCount);
+	if(uCount>10)
+	{
+		sprintf(gcQuery,"ProcessTShark has detected %u QOS issues.",uCount);
+		SendAlertEmail(gcQuery);
+	}
 	logfileLine("ProcessTShark","end",0);
 
 }//void ProcessTShark(void)
 
+#define cSUBJECT "PbxQOS alert"
+
+void SendAlertEmail(char *cMsg)
+{
+	FILE *pp;
+	pid_t pidChild;
+
+	pidChild=fork();
+	if(pidChild!=0)
+		return;
+
+	pp=popen("/usr/lib/sendmail -t","w");
+	if(pp==NULL)
+	{
+		logfileLine("SendAlertEmail","popen() /usr/lib/sendmail",0);
+		return;
+	}
+			
+	//should be defined in local.h
+	fprintf(pp,"To: %s\n",cMAILTO);
+	if(cBCC!=NULL)
+	{
+		char cBcc[512]={""};
+		sprintf(cBcc,"%.511s",cBCC);
+		if(cBcc[0])
+			fprintf(pp,"Bcc: %s\n",cBcc);
+	}
+	fprintf(pp,"From: %s\n",cFROM);
+	fprintf(pp,"Subject: %s %s\n",cSUBJECT,gcHostname);
+
+	fprintf(pp,"%s\n",cMsg);
+
+	fprintf(pp,".\n");
+
+	pclose(pp);
+
+	logfileLine("SendAlertEmail","email attempt ok",0);
+
+}//void SendAlertEmail(char *cMsg)
