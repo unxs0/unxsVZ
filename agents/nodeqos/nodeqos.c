@@ -537,7 +537,7 @@ void ProcessTShark(void)
 					sprintf(gcQuery,"SELECT uProperty FROM tProperty"
 							" WHERE uKey=%u"
 							" AND uType=3"
-							" AND cName='cOrg_QOSIssue%s'"
+							" AND cName=CONCAT('cOrg_QOSIssue',WEEKOFYEAR(NOW()),DAYNAME(NOW()),'%s')"
 								,uContainer,cIP);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
@@ -578,7 +578,7 @@ void ProcessTShark(void)
 					{
 						sprintf(gcQuery,"INSERT INTO tProperty"
 							" SET cValue=CONCAT('%2.2f%% uPhone:%u ',NOW()),"
-							" cName='cOrg_QOSIssue%s',"
+							" cName=CONCAT('cOrg_QOSIssue',WEEKOFYEAR(NOW()),DAYNAME(NOW()),'%s'),"
 							" uKey=%u,"
 							" uType=3,"
 							" uOwner=%u,"
