@@ -483,6 +483,7 @@ void ProcessTShark(void)
 					unsigned uContainer=0;
 					unsigned uProperty=0;
 					char cMatchIP[16]={""};
+					char cValue[256]={""};
 					char cIP[16]={""};
 					sprintf(gcQuery,"SELECT uContainer,tIP.cLabel FROM tContainer,tIP"
 							" WHERE tContainer.uIPv4=tIP.uIP"
@@ -534,7 +535,7 @@ void ProcessTShark(void)
 						logfileLine("ProcessTShark","sip show peers",uContainer);
 					}
 
-					sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+					sprintf(gcQuery,"SELECT uProperty,cValue FROM tProperty"
 							" WHERE uKey=%u"
 							" AND uType=3"
 							" AND cName=CONCAT('cOrg_QOS',WEEKOFYEAR(NOW()),SUBSTR(DAYNAME(NOW()),1,3),'%s')"
@@ -551,6 +552,7 @@ void ProcessTShark(void)
 					if((field=mysql_fetch_row(res)))
 					{
 						sscanf(field[0],"%u",&uProperty);
+						sprintf(cValue,"%.255s",field[1]);
 						if(guDebug) printf("uProperty=%u\n",uProperty);
 					}
 
@@ -559,11 +561,19 @@ void ProcessTShark(void)
 					logfileLine("ProcessTShark-cIP-PL",gcQuery,uContainer);
 					if(uProperty)
 					{
+						float fMax=0.0,fMin=0.0;
+						unsigned uCount=0;
+						sscanf(cValue,"Last=%*f%%; Max=%f%%; Min=%f%%; Count=%u;",&fMax,&fMin,&uCount);
+						if(fPacketLossPercent>fMax)
+							fMax=fPacketLossPercent;
+						else if(fPacketLossPercent<fMin)
+							fMin=fPacketLossPercent;
+						uCount++;
 						sprintf(gcQuery,"UPDATE tProperty"
-							" SET cValue=CONCAT('%2.2f%% uPhone:%u ',NOW()),"
+							" SET cValue=CONCAT('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=%u; CPE=%u;',NOW()),"
 							" uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
 							" WHERE uProperty=%u"
-								,fPacketLossPercent,uPhone,uProperty);
+								,fPacketLossPercent,fMax,fMin,uCount,uPhone,uProperty);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 						{
@@ -577,14 +587,14 @@ void ProcessTShark(void)
 					else
 					{
 						sprintf(gcQuery,"INSERT INTO tProperty"
-							" SET cValue=CONCAT('%2.2f%% uPhone:%u ',NOW()),"
+							" SET cValue=CONCAT('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=1; CPE=%u;',NOW()),"
 							" cName=CONCAT('cOrg_QOS',WEEKOFYEAR(NOW()),SUBSTR(DAYNAME(NOW()),1,3),'%s'),"
 							" uKey=%u,"
 							" uType=3,"
 							" uOwner=%u,"
 							" uCreatedBy=1,"
 							" uCreatedDate=UNIX_TIMESTAMP(NOW())"
-								,fPacketLossPercent,uPhone,cIP,uContainer,guOwner);
+								,fPacketLossPercent,fPacketLossPercent,fPacketLossPercent,uPhone,cIP,uContainer,guOwner);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 						{
