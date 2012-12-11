@@ -445,7 +445,8 @@ void ProcessTShark(void)
 {
 	logfileLine("ProcessTShark","start",0);
 
-	unsigned uCount=0;
+	unsigned uScanCount=0;
+	unsigned uDidNotSendMTREmail=0;
 	char cCommand[256];
 	FILE *fp;
 	sprintf(cCommand,"/usr/sbin/tshark -i %s -a duration:55 -q -f 'udp portrange 16384-32768'"
@@ -522,7 +523,7 @@ void ProcessTShark(void)
 					//rfc1918 ignore them not carriers issue with packets and/or PBX
 					unsigned uPhone=0;
 					unsigned uAc=0,uBc=0;
-					if(4==sscanf(cIP,"%u.%u.%*u.%*u",&uAc,&uBc))
+					if(2==sscanf(cIP,"%u.%u.%*u.%*u",&uAc,&uBc))
 					{
 						if( (uAc==192 && uBc==168) || (uAc==10) || (uAc==172 && uBc>=16 && uBc<32) )
 							uPhone=1;
@@ -630,11 +631,17 @@ void ProcessTShark(void)
 						}
 						if(guDebug) printf("%s\n",gcQuery);
 					}
-					uCount++;
+					uScanCount++;
 
 					//fork and create an mtr report and email it
 					if(fPacketLossPercent>20.0 && uPhone==0)
-						SendMTREmail(cIP);
+					{
+						//Node is busy enough
+						if(uScanCount<10)
+							SendMTREmail(cIP);
+						else
+							uDidNotSendMTREmail++;
+					}
 				}//more than 2 percent less than 90 percent
 			}
 			else
@@ -648,12 +655,14 @@ void ProcessTShark(void)
 	{
 		if(guDebug) printf("%s",cCommand);
 	}
-
 	
-	logfileLine("ProcessTShark","uCount",uCount);
-	if(uCount>10)
+	logfileLine("ProcessTShark","uScanCount",uScanCount);
+	if(uScanCount>10)
 	{
-		sprintf(gcQuery,"ProcessTShark has detected %u QOS issues.",uCount);
+		if(uDidNotSendMTREmail)
+			sprintf(gcQuery,"!%u QOS issues and %u MTRs were skipped!",uScanCount,uDidNotSendMTREmail);
+		else
+			sprintf(gcQuery,"ProcessTShark has detected %u QOS issues.",uScanCount);
 		SendAlertEmail(gcQuery);
 	}
 	logfileLine("ProcessTShark","end",0);
