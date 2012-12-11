@@ -539,6 +539,14 @@ void ProcessTShark(void)
 						logfileLine("ProcessTShark","sip show peers",uContainer);
 					}
 
+					//rfc1918 ignore them not carriers issue with packets and/or PBX
+					unsigned uA=0,uB=0;
+					if(uPhone==0 && 4==sscanf(cIP,"%u.%u.%*u.%*u",&uA,&uB))
+					{
+						if( (uA==192 && uB==168) || (uA==10) || (uA==172 && uB>=16 && uB<32) )
+							uPhone=1;
+					}
+
 					sprintf(gcQuery,"SELECT uProperty,cValue FROM tProperty"
 							" WHERE uKey=%u"
 							" AND uType=3"
