@@ -60,6 +60,7 @@ void ProcessQOS(void);
 void ProcessSingleQOS(unsigned uContainer);
 void ProcessTShark(void);
 void SendAlertEmail(char *cMsg);
+void SendMTREmail(char *cIP);
 
 unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
@@ -485,8 +486,10 @@ void ProcessTShark(void)
 					char cMatchIP[16]={""};
 					char cValue[256]={""};
 					char cIP[16]={""};
-					sprintf(gcQuery,"SELECT uContainer,tIP.cLabel FROM tContainer,tIP"
+					char cNode[32]={""};
+					sprintf(gcQuery,"SELECT uContainer,tIP.cLabel,tNode.cLabel FROM tContainer,tIP,tNode"
 							" WHERE tContainer.uIPv4=tIP.uIP"
+							" AND tContainer.uNode=tNode.uNode"
 							" AND tContainer.uNode=%u"
 							" AND tContainer.uStatus=1"
 							" AND (tIP.cLabel='%u.%s' OR tIP.cLabel='%s')"
@@ -504,6 +507,7 @@ void ProcessTShark(void)
 					{
 						sscanf(field[0],"%u",&uContainer);
 						sprintf(cMatchIP,"%.15s",field[1]);
+						sprintf(cNode,"%.31s",field[2]);
 						if(guDebug) printf("uContainer=%u\n",uContainer);
 					}
 
@@ -570,10 +574,10 @@ void ProcessTShark(void)
 							fMin=fPacketLossPercent;
 						uCount++;
 						sprintf(gcQuery,"UPDATE tProperty"
-							" SET cValue=CONCAT('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=%u; CPE=%u;',NOW()),"
+							" SET cValue=CONCAT('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=%u; CPE=%u; Node=%s;',NOW()),"
 							" uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
 							" WHERE uProperty=%u"
-								,fPacketLossPercent,fMax,fMin,uCount,uPhone,uProperty);
+								,fPacketLossPercent,fMax,fMin,uCount,uPhone,cNode,uProperty);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 						{
@@ -587,14 +591,15 @@ void ProcessTShark(void)
 					else
 					{
 						sprintf(gcQuery,"INSERT INTO tProperty"
-							" SET cValue=CONCAT('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=1; CPE=%u;',NOW()),"
+							" SET cValue=CONCAT('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=1; CPE=%u; Node=%s;',NOW()),"
 							" cName=CONCAT('cOrg_QOS',WEEKOFYEAR(NOW()),SUBSTR(DAYNAME(NOW()),1,3),'%s'),"
 							" uKey=%u,"
 							" uType=3,"
 							" uOwner=%u,"
 							" uCreatedBy=1,"
 							" uCreatedDate=UNIX_TIMESTAMP(NOW())"
-								,fPacketLossPercent,fPacketLossPercent,fPacketLossPercent,uPhone,cIP,uContainer,guOwner);
+								,fPacketLossPercent,fPacketLossPercent,fPacketLossPercent,uPhone,cNode,
+								cIP,uContainer,guOwner);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 						{
@@ -606,6 +611,10 @@ void ProcessTShark(void)
 						if(guDebug) printf("%s\n",gcQuery);
 					}
 					uCount++;
+
+					//fork and create an mtr report and email it
+					if(fPacketLossPercent>20.0 && uPhone==0)
+						SendMTREmail(cIP);
 				}//more than 2 percent less than 90 percent
 			}
 			else
@@ -669,3 +678,57 @@ void SendAlertEmail(char *cMsg)
 	logfileLine("SendAlertEmail","email attempt ok",0);
 
 }//void SendAlertEmail(char *cMsg)
+
+
+void SendMTREmail(char *cIP)
+{
+	FILE *pp;
+	pid_t pidChild;
+
+	pidChild=fork();
+	if(pidChild!=0)
+		return;
+
+	char cCommand[128];
+	char cReport[2048]={""};
+	sprintf(cCommand,"/usr/sbin/mtr -c 10 -r %.32s 2> /dev/null",cIP);
+	if((pp=popen(cCommand,"r")))
+	{
+		char cLine[256]={""};
+		unsigned uReportLen=0;
+		while(fgets(cLine,255,pp)!=NULL)
+		{
+			uReportLen=strlen(cLine);
+			if(uReportLen>2047) break;
+			strncat(cReport,cLine,255);
+		}
+		pclose(pp);
+	}
+
+	pp=popen("/usr/lib/sendmail -t","w");
+	if(pp==NULL)
+	{
+		logfileLine("SendMTREmail","popen() /usr/lib/sendmail",0);
+		return;
+	}
+			
+	//should be defined in local.h
+	fprintf(pp,"To: %s\n",cQOS_MAILTO);
+	if(cQOS_BCC!=NULL)
+	{
+		char cBcc[512]={""};
+		sprintf(cBcc,"%.511s",cQOS_BCC);
+		if(cBcc[0])
+			fprintf(pp,"Bcc: %s\n",cBcc);
+	}
+	fprintf(pp,"From: %s\n",cQOS_FROM);
+	fprintf(pp,"Subject: mtr report for %s from %s\n",cIP,gcHostname);
+
+	fprintf(pp,"%s",cReport);
+	fprintf(pp,".\n");
+
+	pclose(pp);
+
+	logfileLine("SendMTREmail","email attempt ok",0);
+
+}//void SendMTREmail(char *cIP)
