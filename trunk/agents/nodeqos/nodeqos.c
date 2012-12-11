@@ -519,32 +519,35 @@ void ProcessTShark(void)
 						sprintf(cIP,"%.15s",cDstIP);
 
 					//determine if cIP is a registered phone
-					unsigned uPhone=0;
-					FILE *pp;
-					sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'sip show peers'|/bin/grep -c %s\"",
-									uContainer,cIP);
-					if(guDebug) printf("%s\n",cCommand);
-					if((pp=popen(cCommand,"r")))
-					{
-						char cPLine[256];
-						if(fgets(cPLine,255,pp)!=NULL)
-						{
-							sscanf(cPLine,"%u",&uPhone);
-							if(guDebug) printf("cpLine=%s",cPLine);
-						}
-						pclose(pp);
-					}
-					else
-					{
-						logfileLine("ProcessTShark","sip show peers",uContainer);
-					}
-
 					//rfc1918 ignore them not carriers issue with packets and/or PBX
-					unsigned uA=0,uB=0;
-					if(uPhone==0 && 4==sscanf(cIP,"%u.%u.%*u.%*u",&uA,&uB))
+					unsigned uPhone=0;
+					unsigned uAc=0,uBc=0;
+					if(4==sscanf(cIP,"%u.%u.%*u.%*u",&uAc,&uBc))
 					{
-						if( (uA==192 && uB==168) || (uA==10) || (uA==172 && uB>=16 && uB<32) )
+						if( (uAc==192 && uBc==168) || (uAc==10) || (uAc==172 && uBc>=16 && uBc<32) )
 							uPhone=1;
+					}
+					//Dont waste time with expensive system call if packet had private lan ip
+					if(!uPhone)
+					{
+						FILE *pp;
+						sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'sip show peers'|/bin/grep -c %s\"",
+									uContainer,cIP);
+						if(guDebug) printf("%s\n",cCommand);
+						if((pp=popen(cCommand,"r")))
+						{
+							char cPLine[256];
+							if(fgets(cPLine,255,pp)!=NULL)
+							{
+								sscanf(cPLine,"%u",&uPhone);
+								if(guDebug) printf("cpLine=%s",cPLine);
+							}
+							pclose(pp);
+						}
+						else
+						{
+							logfileLine("ProcessTShark","sip show peers",uContainer);
+						}
 					}
 
 					sprintf(gcQuery,"SELECT uProperty,cValue FROM tProperty"
@@ -573,19 +576,27 @@ void ProcessTShark(void)
 					logfileLine("ProcessTShark-cIP-PL",gcQuery,uContainer);
 					if(uProperty)
 					{
-						float fMax=0.0,fMin=0.0;
+						float fMax=0.0,fMin=0.0,fAvg=0.0;
 						unsigned uCount=0;
-						sscanf(cValue,"Last=%*f%%; Max=%f%%; Min=%f%%; Count=%u;",&fMax,&fMin,&uCount);
+						sscanf(cValue,"Last=%*f%%; Max=%f%%; Min=%f%%; Count=%u; Avg=%f%%;",&fMax,&fMin,&uCount,&fAvg);
 						if(fPacketLossPercent>fMax)
 							fMax=fPacketLossPercent;
 						else if(fPacketLossPercent<fMin)
 							fMin=fPacketLossPercent;
 						uCount++;
+						//moving average
+						//mAvg(i)=mAvg(i-1)*(i-1)/i + x(i)/i
+						//fix old records with a wild estimated average
+						if(fAvg==0.0)
+							fAvg=(fMax+fMin)/2.0;
+						else
+							fAvg=((fAvg*(float)(uCount-1))/(float)uCount)+(fPacketLossPercent/(float)uCount);
 						sprintf(gcQuery,"UPDATE tProperty"
-							" SET cValue=CONCAT('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=%u; CPE=%u; Node=%s;',NOW()),"
+							" SET cValue=CONCAT"
+							"('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=%u; Avg=%2.2f%%; CPE=%u; Node=%s; ',TIME(NOW())),"
 							" uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
 							" WHERE uProperty=%u"
-								,fPacketLossPercent,fMax,fMin,uCount,uPhone,cNode,uProperty);
+								,fPacketLossPercent,fMax,fMin,uCount,fAvg,uPhone,cNode,uProperty);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 						{
@@ -599,14 +610,15 @@ void ProcessTShark(void)
 					else
 					{
 						sprintf(gcQuery,"INSERT INTO tProperty"
-							" SET cValue=CONCAT('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=1; CPE=%u; Node=%s;',NOW()),"
+							" SET cValue=CONCAT"
+							"('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=1; Avg=%2.2f%%; CPE=%u; Node=%s; ',TIME(NOW())),"
 							" cName=CONCAT('cOrg_QOS',WEEKOFYEAR(NOW()),SUBSTR(DAYNAME(NOW()),1,3),'%s'),"
 							" uKey=%u,"
 							" uType=3,"
 							" uOwner=%u,"
 							" uCreatedBy=1,"
 							" uCreatedDate=UNIX_TIMESTAMP(NOW())"
-								,fPacketLossPercent,fPacketLossPercent,fPacketLossPercent,uPhone,cNode,
+								,fPacketLossPercent,fPacketLossPercent,fPacketLossPercent,fPacketLossPercent,uPhone,cNode,
 								cIP,uContainer,guOwner);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
