@@ -495,7 +495,10 @@ void tPropertyList(void)
 	//Filter select drop down
 	ExttPropertyListFilter();
 
-	printf("<input type=text size=16 name=gcCommand maxlength=98 value=\"%s\" >",gcCommand);
+	printf("<input title='Enter numeric value or MySQL LIKE syntax filter string for selected field'"
+		" type=text size=32 name=gcCommand maxlength=98 value=\"%s\" >",gcCommand);
+	printf("<input title='Enter MySQL LIKE syntax filter string for cValue content'"
+		" type=text size=32 name=gcAuxFilter maxlength=99 value=\"%s\" >",gcAuxFilter);
 
 	printf("</table>\n");
 
@@ -538,14 +541,34 @@ void tPropertyList(void)
 			ctime_r(&luTime9,cBuf9);
 		else
 			sprintf(cBuf9,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td><textarea disabled>%s</textarea>"
-			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
+		unsigned uKey=strtoul(field[3],NULL,10);
+		char *cTable;
+		switch(uKey)
+		{
+			case 3:
+				cTable="tContainer&uContainer";
+			break;
+			case 2:
+				cTable="tNode&uNode";
+			break;
+			default:
+				cTable="tDatacenter&uDatacenter";
+		}
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s>%s</a>"
+			"<td>%s"
+			"<td><textarea disabled>%s</textarea>"
+			"<td>%s"
+			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=%s=%s>%s</a>"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s</tr>"
+			,field[0],field[0]
 			,field[1]
 			,field[2]
-			,ForeignKey("tType","cLabel",strtoul(field[3],NULL,10))
-			,field[4]
+			,ForeignKey("tType","cLabel",uKey)
+			,cTable,field[4],field[4]
 			,ForeignKey(TCLIENT,"cLabel",strtoul(field[5],NULL,10))
 			,ForeignKey(TCLIENT,"cLabel",strtoul(field[6],NULL,10))
 			,cBuf7

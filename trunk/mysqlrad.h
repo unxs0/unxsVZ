@@ -110,6 +110,7 @@ extern unsigned guI;
 extern unsigned guN;
 extern char gcCommand[];
 extern char gcFilter[];
+extern char gcAuxFilter[];
 extern char gcFind[];
 extern char gcTable[];
 extern unsigned guMode;

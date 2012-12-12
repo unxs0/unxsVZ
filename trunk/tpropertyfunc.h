@@ -499,13 +499,23 @@ void ExttPropertyListSelect(void)
 		sprintf(cCat,"tProperty.uProperty=%u ORDER BY uProperty",uProperty);
 		strcat(gcQuery,cCat);
         }
-        else if(!strcmp(gcFilter,"cName"))
+        else if(!strcmp(gcFilter,"cName") || !strcmp(gcFilter,"cName-NewFirst"))
         {
 		if(guLoginClient==1 && guPermLevel>11)
 			strcat(gcQuery," WHERE ");
 		else
 			strcat(gcQuery," AND ");
-		sprintf(cCat,"tProperty.cName LIKE '%s' ORDER BY cName,uProperty",gcCommand);
+
+        	if(gcAuxFilter[0])
+		{
+			sprintf(cCat,"tProperty.cValue LIKE '%.99s' AND ",gcAuxFilter);
+			strcat(gcQuery,cCat);
+		}
+
+        	if(strcmp(gcFilter,"cName-NewFirst"))
+			sprintf(cCat,"tProperty.cName LIKE '%.99s' ORDER BY cName,uProperty",gcCommand);
+		else
+			sprintf(cCat,"tProperty.cName LIKE '%.99s' ORDER BY uProperty DESC",gcCommand);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uType"))
@@ -561,6 +571,10 @@ void ExttPropertyListFilter(void)
                 printf("<option>cName</option>");
         else
                 printf("<option selected>cName</option>");
+        if(strcmp(gcFilter,"cName-NewFirst"))
+                printf("<option>cName-NewFirst</option>");
+        else
+                printf("<option selected>cName-NewFirst</option>");
         if(strcmp(gcFilter,"uType"))
                 printf("<option>uType</option>");
         else
