@@ -35,6 +35,7 @@ unsigned guN=SHOWPAGE;
 char gcCommand[100];
 static char cLogKey[16]={"Ksdj458jssdUjf79"};
 char gcFilter[100];
+char gcAuxFilter[100];
 char gcFind[100];
 unsigned guMode;
 
@@ -984,11 +985,13 @@ void ProcessControlVars(pentry entries[], int x)
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(entries[i].name,"gcFilter"))
-			strcpy(gcFilter,entries[i].val);
+			sprintf(gcFilter,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"gcAuxFilter"))
+			sprintf(gcAuxFilter,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gcCommand"))
-			strcpy(gcCommand,entries[i].val);
+			sprintf(gcCommand,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gcFind"))
-			strcpy(gcFind,entries[i].val);
+			sprintf(gcFind,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gluRowid"))
 			sscanf(entries[i].val,"%lu",&gluRowid);
 	}
