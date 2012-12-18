@@ -60,7 +60,7 @@ void ProcessQOS(void);
 void ProcessSingleQOS(unsigned uContainer);
 void ProcessTShark(void);
 void SendAlertEmail(char *cMsg);
-void SendMTREmail(char *cIP);
+void SendMTREmail(char *cIP,unsigned uContainer);
 
 unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
@@ -638,7 +638,7 @@ void ProcessTShark(void)
 					{
 						//Node is busy enough
 						if(uScanCount<10)
-							SendMTREmail(cIP);
+							SendMTREmail(cIP,uContainer);
 						else
 							uDidNotSendMTREmail++;
 					}
@@ -709,7 +709,7 @@ void SendAlertEmail(char *cMsg)
 }//void SendAlertEmail(char *cMsg)
 
 
-void SendMTREmail(char *cIP)
+void SendMTREmail(char *cIP,unsigned uContainer)
 {
 	FILE *pp;
 	pid_t pidChild;
@@ -720,18 +720,36 @@ void SendMTREmail(char *cIP)
 
 	char cCommand[128];
 	char cReport[2048]={""};
+	unsigned uReportLen=0;
 	sprintf(cCommand,"/usr/sbin/mtr -c 10 -r %.32s 2> /dev/null",cIP);
 	if((pp=popen(cCommand,"r")))
 	{
 		char cLine[256]={""};
-		unsigned uReportLen=0;
 		while(fgets(cLine,255,pp)!=NULL)
 		{
-			uReportLen=strlen(cLine);
+			uReportLen+=strlen(cLine);
 			if(uReportLen>2047) break;
 			strncat(cReport,cLine,255);
 		}
 		pclose(pp);
+	}
+
+	uReportLen+=strlen("\nCall information\n");
+	if(!(uReportLen>2047))
+	{
+		strncat(cReport,"\nCall information\n",32);
+		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'core show channels verbose'|/bin/grep trunk\"",uContainer);
+		if((pp=popen(cCommand,"r")))
+		{
+			char cLine[256]={""};
+			while(fgets(cLine,255,pp)!=NULL)
+			{
+				uReportLen+=strlen(cLine);
+				if(uReportLen>2047) break;
+				strncat(cReport,cLine,255);
+			}
+			pclose(pp);
+		}
 	}
 
 	pp=popen("/usr/lib/sendmail -t","w");
