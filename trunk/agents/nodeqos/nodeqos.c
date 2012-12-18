@@ -60,7 +60,7 @@ void ProcessQOS(void);
 void ProcessSingleQOS(unsigned uContainer);
 void ProcessTShark(void);
 void SendAlertEmail(char *cMsg);
-void SendMTREmail(char *cIP,unsigned uContainer);
+void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname);
 
 unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
@@ -488,7 +488,8 @@ void ProcessTShark(void)
 					char cValue[256]={""};
 					char cIP[16]={""};
 					char cNode[32]={""};
-					sprintf(gcQuery,"SELECT uContainer,tIP.cLabel,tNode.cLabel FROM tContainer,tIP,tNode"
+					char cHostname[100]={""};
+					sprintf(gcQuery,"SELECT uContainer,tIP.cLabel,tNode.cLabel,tContainer.cHostname FROM tContainer,tIP,tNode"
 							" WHERE tContainer.uIPv4=tIP.uIP"
 							" AND tContainer.uNode=tNode.uNode"
 							" AND tContainer.uNode=%u"
@@ -509,6 +510,7 @@ void ProcessTShark(void)
 						sscanf(field[0],"%u",&uContainer);
 						sprintf(cMatchIP,"%.15s",field[1]);
 						sprintf(cNode,"%.31s",field[2]);
+						sprintf(cHostname,"%.99s",field[3]);
 						if(guDebug) printf("uContainer=%u\n",uContainer);
 					}
 
@@ -632,16 +634,22 @@ void ProcessTShark(void)
 						if(guDebug) printf("%s\n",gcQuery);
 					}
 					uScanCount++;
+//#define DEBUG1 On
+#ifdef DEBUG1
+					//debug only
+					SendMTREmail(cIP,uContainer,cHostname);
+#else
 
 					//fork and create an mtr report and email it
-					if(fPacketLossPercent>20.0 && uPhone==0)
+					if(fPacketLossPercent>30.0 && uPhone==0)
 					{
 						//Node is busy enough
 						if(uScanCount<10)
-							SendMTREmail(cIP,uContainer);
+							SendMTREmail(cIP,uContainer,cHostname);
 						else
 							uDidNotSendMTREmail++;
 					}
+#endif
 				}//more than 2 percent less than 90 percent
 			}
 			else
@@ -709,7 +717,7 @@ void SendAlertEmail(char *cMsg)
 }//void SendAlertEmail(char *cMsg)
 
 
-void SendMTREmail(char *cIP,unsigned uContainer)
+void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname)
 {
 	FILE *pp;
 	pid_t pidChild;
@@ -734,13 +742,13 @@ void SendMTREmail(char *cIP,unsigned uContainer)
 		pclose(pp);
 	}
 
-	uReportLen+=strlen("\nCall information\n");
+	uReportLen+=strlen("\nCall information:\n");
 	if(!(uReportLen>2047))
 	{
-		strncat(cReport,"\nCall information\n",32);
 		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'core show channels verbose'|/bin/grep trunk\"",uContainer);
 		if((pp=popen(cCommand,"r")))
 		{
+			strncat(cReport,"\nCall information\n",32);
 			char cLine[256]={""};
 			while(fgets(cLine,255,pp)!=NULL)
 			{
@@ -769,13 +777,13 @@ void SendMTREmail(char *cIP,unsigned uContainer)
 			fprintf(pp,"Bcc: %s\n",cBcc);
 	}
 	fprintf(pp,"From: %s\n",cQOS_FROM);
-	fprintf(pp,"Subject: mtr report for %s from %s\n",cIP,gcHostname);
+	fprintf(pp,"Subject: mtr report for %s from %s:%s\n",cIP,gcHostname,cHostname);
 
-	fprintf(pp,"%s",cReport);
+	fprintf(pp,"\n%s (%u)\n%s",cHostname,uContainer,cReport);
 	fprintf(pp,".\n");
 
 	pclose(pp);
 
 	logfileLine("SendMTREmail","email attempt ok",0);
 
-}//void SendMTREmail(char *cIP)
+}//void SendMTREmail()
