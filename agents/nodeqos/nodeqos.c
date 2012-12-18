@@ -60,7 +60,7 @@ void ProcessQOS(void);
 void ProcessSingleQOS(unsigned uContainer);
 void ProcessTShark(void);
 void SendAlertEmail(char *cMsg);
-void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname);
+void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname,float fPacketLoss);
 
 unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
@@ -637,7 +637,7 @@ void ProcessTShark(void)
 //#define DEBUG1 On
 #ifdef DEBUG1
 					//debug only
-					SendMTREmail(cIP,uContainer,cHostname);
+					SendMTREmail(cIP,uContainer,cHostname,fPacketLossPercent);
 #else
 
 					//fork and create an mtr report and email it
@@ -645,7 +645,7 @@ void ProcessTShark(void)
 					{
 						//Node is busy enough
 						if(uScanCount<10)
-							SendMTREmail(cIP,uContainer,cHostname);
+							SendMTREmail(cIP,uContainer,cHostname,fPacketLossPercent);
 						else
 							uDidNotSendMTREmail++;
 					}
@@ -717,7 +717,7 @@ void SendAlertEmail(char *cMsg)
 }//void SendAlertEmail(char *cMsg)
 
 
-void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname)
+void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname,float fPacketLoss)
 {
 	FILE *pp;
 	pid_t pidChild;
@@ -782,7 +782,7 @@ void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname)
 	fprintf(pp,"From: %s\n",cQOS_FROM);
 	fprintf(pp,"Subject: mtr report for %s from %s:%s\n",cIP,gcHostname,cHostname);
 
-	fprintf(pp,"\n%s (%u)\n%s",cHostname,uContainer,cReport);
+	fprintf(pp,"\n%s (%u) Loss:%2.2f\n%s",cHostname,uContainer,fPacketLoss,cReport);
 	fprintf(pp,".\n");
 
 	pclose(pp);
