@@ -729,9 +729,12 @@ void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname)
 	char cCommand[128];
 	char cReport[2048]={""};
 	unsigned uReportLen=0;
-	sprintf(cCommand,"/usr/sbin/mtr -c 10 -r %.32s 2> /dev/null",cIP);
+
+	uReportLen+=strlen("\nCall information:\n");
+	sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'core show channels verbose'|/bin/grep trunk\"",uContainer);
 	if((pp=popen(cCommand,"r")))
 	{
+		strncat(cReport,"\nCall information\n",32);
 		char cLine[256]={""};
 		while(fgets(cLine,255,pp)!=NULL)
 		{
@@ -742,13 +745,13 @@ void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname)
 		pclose(pp);
 	}
 
-	uReportLen+=strlen("\nCall information:\n");
+	uReportLen+=strlen("\nmtr -c 10 -r:\n");
 	if(!(uReportLen>2047))
 	{
-		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'core show channels verbose'|/bin/grep trunk\"",uContainer);
+		strncat(cReport,"\nmtr -c 10 -r:\n",32);
+		sprintf(cCommand,"/usr/sbin/mtr -c 10 -r %.32s 2> /dev/null",cIP);
 		if((pp=popen(cCommand,"r")))
 		{
-			strncat(cReport,"\nCall information\n",32);
 			char cLine[256]={""};
 			while(fgets(cLine,255,pp)!=NULL)
 			{
