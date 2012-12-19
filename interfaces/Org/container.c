@@ -2114,7 +2114,7 @@ void funcContainerInfo(FILE *fp)
 	//SUBSTR based on 5 char cOrg_ prefix
 	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName LIKE 'cOrg_%%'"
 			" AND cName!='cOrg_Extension' AND cName!='cOrg_OpenSIPS_DID' AND cName!='cOrg_SIPTrunk'"
-			" AND cName NOT LIKE 'cOrg_MCS%%' ORDER BY cName",guContainer);
+			" AND cName NOT LIKE 'cOrg_MCS%%' AND cName NOT LIKE 'cOrg_QOS%%' ORDER BY cName",guContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2657,7 +2657,7 @@ void funcContainerQOS(FILE *fp)
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res)>0)
 		{
-			printf("<p><b>Specific container QOS issues. Unselect container for latest QOS issues report.</b>\n");
+			printf("<font size=1><p><b>Specific container QOS issues. Unselect container for latest QOS issues report.</b>\n");
 			while((field=mysql_fetch_row(res)))
 			{
 				printf("<p>%s %s\n",field[0],field[1]);

@@ -508,7 +508,7 @@ void ExttPropertyListSelect(void)
 
         	if(gcAuxFilter[0])
 		{
-			sprintf(cCat,"tProperty.cValue LIKE '%.99s' AND ",gcAuxFilter);
+			sprintf(cCat," %.255s AND ",gcAuxFilter);
 			strcat(gcQuery,cCat);
 		}
 
