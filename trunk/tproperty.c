@@ -497,8 +497,8 @@ void tPropertyList(void)
 
 	printf("<input title='Enter numeric value or MySQL LIKE syntax filter string for selected field'"
 		" type=text size=32 name=gcCommand maxlength=98 value=\"%s\" >",gcCommand);
-	printf("<input title='Enter MySQL LIKE syntax filter string for cValue content'"
-		" type=text size=32 name=gcAuxFilter maxlength=99 value=\"%s\" >",gcAuxFilter);
+	printf("<input title='Enter MySQL where condition. E.g. cValue LIKE `%%Node=rc7;%%`'"
+		" type=text size=128 name=gcAuxFilter maxlength=255 value=\"%s\" >",gcAuxFilter);
 
 	printf("</table>\n");
 
@@ -556,7 +556,7 @@ void tPropertyList(void)
 		}
 		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s>%s</a>"
 			"<td>%s"
-			"<td><textarea disabled>%s</textarea>"
+			"<td><textarea rows=1 cols=80 disabled>%s</textarea>"
 			"<td>%s"
 			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=%s=%s>%s</a>"
 			"<td>%s"

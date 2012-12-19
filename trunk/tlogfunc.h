@@ -78,8 +78,14 @@ void ExttLogGetHook(entry gentries[], int x)
 
 void ExttLogSelect(void)
 {
-	ExtSelect("tLog",VAR_LIST_tLog);
-
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+                sprintf(gcQuery,"SELECT %s FROM tLog ORDER BY uLog",VAR_LIST_tLog);
+        else
+                sprintf(gcQuery,"SELECT %s FROM tLog," TCLIENT
+                                " WHERE tLog.uOwner=tClient.uClient"
+                                " AND (tClient.uClient=%u OR tClient.uOwner"
+                                " IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u OR uClient=%u)) ORDER BY uLog",
+                                        VAR_LIST_tLog,guLoginClient,guCompany,guCompany);
 }//void ExttLogSelect(void)
 
 
