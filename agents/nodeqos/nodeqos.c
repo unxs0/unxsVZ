@@ -729,20 +729,31 @@ void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname,float fPacketLos
 	char cCommand[128];
 	char cReport[2048]={""};
 	unsigned uReportLen=0;
+	unsigned uOneTimeOnly=0;
 
 	uReportLen+=strlen("\nCall information:\n");
 	sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'core show channels verbose'|/bin/grep trunk\"",uContainer);
 	if((pp=popen(cCommand,"r")))
 	{
-		strncat(cReport,"\nCall information\n",32);
 		char cLine[256]={""};
 		while(fgets(cLine,255,pp)!=NULL)
 		{
+			if(!uOneTimeOnly++)
+			{
+				strncat(cReport,"\nCall information\n",32);
+				uReportLen=strlen("\nCall information\n");
+			}
 			uReportLen+=strlen(cLine);
 			if(uReportLen>2047) break;
 			strncat(cReport,cLine,255);
 		}
 		pclose(pp);
+	}
+
+	if(!uOneTimeOnly)
+	{
+		logfileLine("SendMTREmail","email attempt aborted no call info",0);
+		return;
 	}
 
 	uReportLen+=strlen("\nmtr -c 10 -r:\n");
