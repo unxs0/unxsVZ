@@ -626,6 +626,9 @@ void ExttIPAuxTable(void)
 			printf("&nbsp; <input title='Updates IPs to uAvailable=1 for IPs not in use by containers.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Make Available'>\n");
+			printf("&nbsp; <input title='Updates IPs to uAvailable=0. Adds comment use optionally IPv4 pattern field.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Make Not Available'>\n");
 			printf("&nbsp; <input title='Send one ping packet to IP. Check firewall settings use with care.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Ping'>\n");
@@ -754,7 +757,10 @@ while((field=mysql_fetch_row(res)))
 						break;
 					}
 
-					sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE uIP=%u AND uAvailable=0",uCtIP);
+					sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uIP=%u AND uAvailable=0",
+								guLoginClient,
+								uCtIP);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -764,6 +770,24 @@ while((field=mysql_fetch_row(res)))
 						cResult[0]=0;
 					break;
 				}//Group Make Available
+
+				//Group Make Not Available
+				else if(!strcmp(gcCommand,"Group Make Not Available"))
+				{
+					if(cIPv4Search[0]==0) sprintf(cIPv4Search,"Reserved via group command");
+					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uIP=%u AND uAvailable=1",
+								cIPv4Search,guLoginClient,
+								uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"make not available done");
+					else
+						cResult[0]=0;
+					break;
+				}//Group Make Not Available
 
 				//Group Ping
 				else if(!strcmp(gcCommand,"Group Ping"))
@@ -779,7 +803,7 @@ while((field=mysql_fetch_row(res)))
 	        			if((field=mysql_fetch_row(res)))
 					{
 						char cPingCommand[64];
-						sprintf(cPingCommand,"/bin/ping -c 1 %.15s",field[0]);
+						sprintf(cPingCommand,"/bin/ping -W 1 -c 1 %.15s",field[0]);
 						if(system(cPingCommand))
 							sprintf(cResult,"no ping response");
 						else
