@@ -725,14 +725,14 @@ void tTablePullDownResellers(unsigned uSelector,unsigned uMode)
 	if(guPermLevel>11)
 	{
 		sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT
-				" WHERE (cCode='Organization' OR SUBSTR(cCode,0,4)='COMP') AND uClient!=1"
+				" WHERE (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP') AND uClient!=1"
 				" ORDER BY cLabel");
 	}
 	else
 	{
 		sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT
 				" WHERE cLabel!='%s'"
-				" AND (cCode='Organization' OR SUBSTR(cCode,0,4)='COMP')" 
+				" AND (cCode='Organization' OR SUBSTR(cCode,1,4)='COMP')" 
 				" AND (uClient=%u OR uOwner"
 				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u OR uClient=%u))"
 				" ORDER BY cLabel",
