@@ -37,11 +37,12 @@ static char cExtLabel[16]={""};
 static char cuPerm[33]={ORG_ADMIN};
 static unsigned uPerm=0;
 static unsigned uOnlyASPs=0;
+static unsigned uCreateCompany=0;
 static char cSearch[100]={""};
 
 //Aux drop/pull downs
 static char cForClientPullDown[256]={"---"};
-static unsigned uForClient=0;
+static unsigned uForClient=0;//fix this mess someday
 
 
 unsigned IsAuthUser(char *cLabel, unsigned uOwner, unsigned uCertClient);
@@ -95,6 +96,8 @@ void ExtProcesstClientVars(pentry entries[], int x)
 			sprintf(cSearch,"%.99s",TextAreaSave(entries[i].val));
 		else if(!strcmp(entries[i].name,"uOnlyASPs"))
 			uOnlyASPs=1;
+		else if(!strcmp(entries[i].name,"uCreateCompany"))
+			uCreateCompany=1;
 	}
 
 }//void ExtProcesstClientVars(pentry entries[], int x)
@@ -134,7 +137,7 @@ void ExttClientCommands(pentry entries[], int x)
 
 				//Validate
 				guMode=2000;
-				if(guLoginClient!=1 && uMaxClientsReached(guCompany))
+				if(guLoginClient!=1 && uMaxClientsReached(guCompany) && !uCreateCompany)
 				{
 					guMode=0;
 					tClient("Your maximum of customers has been reached");
@@ -143,16 +146,11 @@ void ExttClientCommands(pentry entries[], int x)
 					tClient("<blink>Error</blink>: Invalid cLabel!");
 				guMode=0;
 
-				if(!uForClient)
-				{
-					uOwner=guCompany;
+				if(uCreateCompany)
 					sprintf(cCode,"Organization");
-				}
 				else
-				{
-					uOwner=uForClient;
 					sprintf(cCode,"Contact");
-				}
+
 				uClient=0;//Update .c this is dumb
 				uCreatedBy=guLoginClient;
 				//These just for GUI cleanup
@@ -364,6 +362,11 @@ void ExttClientButtons(void)
                 case 2000:
 			printf("<u>New: Step 1 Tips</u><br>");
 			printf("Here you would usually enter a new company name into cLabel. Optionally some standardized company info in cInfo, like addresses phone numbers and such. A main company email is usually helpful, cCode is used internally. <br>If you are creating a contact for an existing company select that company from the drop down select below and use cLabel for the contact name (Ex. Anne Flechter) and the cInfo would be the contacts personal phone numbers and or address etc.");
+			printf("<p>Create as a Company <input title='Create as a Company' type=checkbox name=uCreateCompany ");
+			if(uCreateCompany)
+				printf("checked><br>");
+			else
+				printf("><br>");
 			if(guPermLevel>7)
 			{
 				if(uOwner==1)
@@ -704,8 +707,10 @@ void tTablePullDownResellers(unsigned uSelector,unsigned uBanner)
         MYSQL_ROW field;
 
         register int i,n;
-    
-	if(guPermLevel>11)
+   
+	//hack 
+	//if(guPermLevel>11)
+	if(1)
 	{
 		sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT
 				" WHERE cCode='Organization' AND uClient!=1"
