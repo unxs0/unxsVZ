@@ -1801,24 +1801,31 @@ void funcSelectContainer(FILE *fp)
 	if(guPermLevel>5)
 	{
 		if(gcSearch[0])
-			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
-			"(uSource=0 OR uStatus=1) AND uOwner=%u AND cHostname LIKE '%s%%' "
-			"AND uStatus!=91 "
-			"ORDER BY cHostname  LIMIT 301",guOrg,gcSearch);
+			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
+			" (uSource=0 OR uStatus=1) AND"
+			" (uOwner IN (SELECT uClient FROM tClient WHERE ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
+			" cCode='Organization')) OR uOwner=%u) AND"
+			" cHostname LIKE '%s%%'"
+			" AND uStatus!=91"
+			" ORDER BY cHostname LIMIT 301",guOrg,guOrg,guOrg,gcSearch);
 		else
-			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
-			"uOwner=%u AND uStatus!=91 AND (uSource=0 OR uStatus=1) ORDER BY cHostname LIMIT 301",guOrg);
+			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
+			" (uOwner IN (SELECT uClient FROM tClient WHERE ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
+			" cCode='Organization')) OR uOwner=%u) AND"
+			" uStatus!=91 AND (uSource=0 OR uStatus=1) ORDER BY cHostname LIMIT 301",guOrg,guOrg,guOrg);
 	}
 	else
 	{
+		//Temp hack for low perm level onelogin users with no reseller model support.
 		if(gcSearch[0])
 			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
-			"uSource=0 AND uOwner=%u AND uCreatedBy=%u AND cHostname LIKE '%s%%' "
+			"uSource=0 AND ((uOwner=%u AND uCreatedBy=%u) OR uCreatedBy=%u) AND cHostname LIKE '%s%%' "
 			"AND uStatus!=91 "
-			"ORDER BY cHostname  LIMIT 301",guOrg,guLoginClient,gcSearch);
+			"ORDER BY cHostname  LIMIT 301",guOrg,guLoginClient,guOrg,gcSearch);
 		else
 			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
-			"uOwner=%u AND uCreatedBy=%u AND uSource=0 AND uStatus!=91 ORDER BY cHostname LIMIT 301",guOrg,guLoginClient);
+			"((uOwner=%u AND uCreatedBy=%u) OR uCreatedBy=%u) AND uSource=0 AND uStatus!=91 ORDER BY cHostname LIMIT 301",
+				guOrg,guLoginClient,guOrg);
 	}
 
 	mysql_query(&gMysql,gcQuery);
@@ -1906,9 +1913,11 @@ void funcContainerInfo(FILE *fp)
 
 	fprintf(fp,"<!-- funcContainerInfo (fp) Start -->\n");
 
+	//Temporary hack using uCreatedBy for access control
 	if(guPermLevel<6)
 	{
-		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uCreatedBy=%u AND uContainer=%u",guLoginClient,guContainer);
+		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (uCreatedBy=%u OR uCreatedBy=%u) AND uContainer=%u",
+			guLoginClient,guOrg,guContainer);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
