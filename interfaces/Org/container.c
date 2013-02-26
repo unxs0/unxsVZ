@@ -1663,6 +1663,7 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 	        MYSQL_ROW field;
 		unsigned uNoShow=0;
 
+/*
 		if(guPermLevel<6)
 		{
 			sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uCreatedBy=%u AND uContainer=%u",guLoginClient,guContainer);
@@ -1673,6 +1674,7 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 			if(mysql_num_rows(res)<1)
 				uNoShow=1;
 		}
+*/
 
 		TemplateSelectInterface(cTemplateName,uPLAINSET,uVDNSORGTYPE);
 		res=mysql_store_result(&gMysql);
@@ -1771,10 +1773,7 @@ void funcContainerImageTag(FILE *fp)
 	MYSQL_ROW field;
 
 	guStatus=0;
-	if(guPermLevel>5)
-		sprintf(gcQuery,"SELECT uStatus FROM tContainer WHERE uContainer=%u",guContainer);
-	else
-		sprintf(gcQuery,"SELECT uStatus FROM tContainer WHERE uContainer=%u AND uCreatedBy=%u",guContainer,guLoginClient);
+	sprintf(gcQuery,"SELECT uStatus FROM tContainer WHERE uContainer=%u",guContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1817,15 +1816,23 @@ void funcSelectContainer(FILE *fp)
 	else
 	{
 		//Temp hack for low perm level onelogin users with no reseller model support.
+		//Adding the above for dual mode
 		if(gcSearch[0])
-			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
-			"uSource=0 AND ((uOwner=%u AND uCreatedBy=%u) OR uCreatedBy=%u) AND cHostname LIKE '%s%%' "
-			"AND uStatus!=91 "
-			"ORDER BY cHostname  LIMIT 301",guOrg,guLoginClient,guOrg,gcSearch);
+			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
+			" uSource=0 AND"
+			" (uOwner IN (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
+			" cCode='Organization')) OR uOwner=%u) OR"
+			" (uOwner=%u OR uCreatedBy=%u)) AND cHostname LIKE '%s%%'"
+			" AND uStatus!=91"
+			" ORDER BY cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient,gcSearch);
 		else
-			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE "
-			"((uOwner=%u AND uCreatedBy=%u) OR uCreatedBy=%u) AND uSource=0 AND uStatus!=91 ORDER BY cHostname LIMIT 301",
-				guOrg,guLoginClient,guOrg);
+			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
+			" uSource=0 AND"
+			" (uOwner IN (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
+			" cCode='Organization')) OR uOwner=%u) OR"
+			" (uOwner=%u OR uCreatedBy=%u))"
+			" AND uStatus!=91"
+			" ORDER BY cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient);
 	}
 
 	mysql_query(&gMysql,gcQuery);
@@ -1877,10 +1884,7 @@ void SelectContainer(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	if(guPermLevel>5)
-		sprintf(gcQuery,"SELECT cLabel FROM tContainer WHERE uContainer=%u",guContainer);
-	else
-		sprintf(gcQuery,"SELECT cLabel FROM tContainer WHERE uContainer=%u AND uCreatedBy=%u",guContainer,guLoginClient);
+	sprintf(gcQuery,"SELECT cLabel FROM tContainer WHERE uContainer=%u",guContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1914,17 +1918,20 @@ void funcContainerInfo(FILE *fp)
 	fprintf(fp,"<!-- funcContainerInfo (fp) Start -->\n");
 
 	//Temporary hack using uCreatedBy for access control
-	if(guPermLevel<6)
-	{
-		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (uCreatedBy=%u OR uCreatedBy=%u) AND uContainer=%u",
-			guLoginClient,guOrg,guContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		if(mysql_num_rows(res)<1)
-			return;
-	}
+	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE"
+				" ("
+				" uCreatedBy=%u OR uCreatedBy=%u OR"
+				" (uOwner IN (SELECT uClient FROM tClient WHERE ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
+				" cCode='Organization')) OR uOwner=%u)"
+				" ) AND"
+				" uContainer=%u",
+					guLoginClient,guOrg,guOrg,guOrg,guOrg,guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)<1)
+		return;
 
 
 	//Datacenter
