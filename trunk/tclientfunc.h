@@ -121,7 +121,7 @@ void ExttClientCommands(pentry entries[], int x)
 				}
 				guMode=2000;
 				//These just for GUI cleanup
-				cCode[0]=0;
+				//cCode[0]=0;
 				uModDate=0;
 				uModBy=0;
 				tClient(LANG_NB_CONFIRMNEW);
@@ -381,7 +381,10 @@ void ExttClientButtons(void)
 				printf("><br>");
 			if(guPermLevel>7)
 			{
-				uForClient=uOwner;
+				if(strcmp(cCode,"Organization"))
+					uForClient=uOwner;
+				else
+					uForClient=uClient;
 				tTablePullDownResellers(uForClient,1);
 			}
                         printf(LANG_NBB_CONFIRMNEW);
@@ -901,7 +904,7 @@ void ContactsNavList(void)
 	tClientAuthorizeNavList();
 
 	//NavList proper
-	sprintf(gcQuery,"SELECT uClient,cLabel,cCode FROM " TCLIENT " WHERE uOwner=%u AND uOwner!=1",uClient);
+	sprintf(gcQuery,"SELECT uClient,cLabel,cCode FROM " TCLIENT " WHERE uOwner=%u AND uOwner!=1 ORDER BY cCode DESC,cLabel",uClient);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
