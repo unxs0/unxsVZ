@@ -151,6 +151,10 @@ void ExttClientCommands(pentry entries[], int x)
 				else
 					sprintf(cCode,"Contact");
 
+				if(uForClient)
+					uOwner=uForClient;
+				else
+					uOwner=guLoginClient;
 				uClient=0;//Update .c this is dumb
 				uCreatedBy=guLoginClient;
 				//These just for GUI cleanup
@@ -286,7 +290,7 @@ void ExttClientCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Authorize"))
                 {
                         ProcesstClientVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>9)
 			{
 				guMode=3000;
 				tClient("Enter login, passwd, user level and confirm."
@@ -298,13 +302,21 @@ void ExttClientCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Confirm Authorize"))
                 {
                         ProcesstClientVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>9)
 			{
 				time_t clock;
 				char cClrPasswd[33]={""};
 
 			        time(&clock);
-				
+		
+				//Fatal	
+				if(!uOwner)	
+				{
+					guMode=0;
+					tClient("Unexpected uOwner==0 error!");
+				}
+
+				//User can fix
 				if(strlen(cLogin)<6)
 				{
 					guMode=3000;
@@ -369,10 +381,8 @@ void ExttClientButtons(void)
 				printf("><br>");
 			if(guPermLevel>7)
 			{
-				if(uOwner==1)
-					tTablePullDownResellers(uClient,1);
-				else
-					tTablePullDownResellers(uOwner,1);
+				uForClient=uOwner;
+				tTablePullDownResellers(uForClient,1);
 			}
                         printf(LANG_NBB_CONFIRMNEW);
 			printf("<br>\n");
@@ -442,7 +452,7 @@ void ExttClientButtons(void)
 			}
 
 			if( strcmp(cCode,"Organization") && uClient && guPermLevel>9 && uClient!=guLoginClient 
-				&& !IsAuthUser(cLabel,uOwner,uClient) &&guMode!=5 && uOwner!=1)
+				&& !IsAuthUser(cLabel,uOwner,uClient) &&guMode!=5 && uOwner!=1 && cLabel[0] && uClient)
 			{
 				printf("<p><input class=largeButton title='Authorize %s to manage his company resources'"
 					"type=submit name=gcCommand value='Authorize'>",cLabel);
@@ -878,7 +888,7 @@ const char *cUserLevel(unsigned uPermLevel)
 }//const char *cUserLevel(unsigned uPermLevel)
 
 
-void tAuthorizeNavList(void);//tauthorizefunc.h
+void tClientAuthorizeNavList(void);
 void ContactsNavList(void)
 {
         MYSQL_RES *res;
@@ -888,13 +898,10 @@ void ContactsNavList(void)
 		return;
 
 	//Login info
-	if(uOwner!=1 && strcmp(cCode,"Organization"))
-	{
-		tAuthorizeNavList();
-	}
+	tClientAuthorizeNavList();
 
 	//NavList proper
-	sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT " WHERE uOwner=%u AND uOwner!=1",uClient);
+	sprintf(gcQuery,"SELECT uClient,cLabel,cCode FROM " TCLIENT " WHERE uOwner=%u AND uOwner!=1",uClient);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -916,7 +923,7 @@ void ContactsNavList(void)
 				spacetoplus(cSearch);
 				printf("&cSearch=%s",cSearch);
 			}
-			printf(">%s</a><br>",field[1]);
+			printf(">%s (%s)</a><br>",field[1],field[2]);
         	}
 	}
         mysql_free_result(res);
@@ -928,11 +935,12 @@ void htmlRecordContext(void)
 {
 	printf("<p><u>Record Context Info</u><br>");
 	if(uOwner>1 && strcmp(cCode,"Contact"))
-		printf("'%s' appears to be a reseller or ASP owned company or organization",cLabel);
+		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>"
+			" appears to be a reseller or ASP owned company or organization",uClient,cLabel);
 	else if(uOwner>1 && strcmp(cCode,"Organization"))
-		printf("'%s' appears to be a contact of <a class=darkLink"
+		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a> appears to be a contact of <a class=darkLink"
 			" href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",
-					cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
+					uClient,cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
 	else if(uOwner==1 && strcmp(cLabel,"Root"))
 		printf("'%s' appears to be an ASP root company",cLabel);
 	else if(uOwner==1 && !strcmp(cLabel,"Root"))
@@ -940,3 +948,50 @@ void htmlRecordContext(void)
 				" create ASP level companies. Make sure the passwd is changed"
 				" regularly via the tAuthorize table.");
 }//void htmlRecordContext(void)
+
+
+void tClientAuthorizeNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uClient==1) return;
+
+	if(!strcmp("Organization",cCode) && uClient)
+	{
+		sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient"
+				" FROM tAuthorize"
+				" WHERE uOwner=%u ORDER BY cLabel",uClient);
+	}
+	else if(uClient)
+	{
+		sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient"
+				" FROM tAuthorize"
+				" WHERE uCertClient=%u ORDER BY cLabel",uClient);
+	}
+	else if(1)
+	{
+		return;
+	}
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+        	printf("<p><u>tClientAuthorizeNavList</u><br>\n");
+        	while((field=mysql_fetch_row(res)))
+		{
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
+				"%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
+		}
+	}
+        mysql_free_result(res);
+
+}//void tClientAuthorizeNavList(void)
+

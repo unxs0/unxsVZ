@@ -1813,10 +1813,8 @@ void funcSelectContainer(FILE *fp)
 			" cCode='Organization')) OR uOwner=%u) AND"
 			" uStatus!=91 AND (uSource=0 OR uStatus=1) ORDER BY cHostname LIMIT 301",guOrg,guOrg,guOrg);
 	}
-	else
+	else if(guOrg!=2)//ASP uClient hack
 	{
-		//Temp hack for low perm level onelogin users with no reseller model support.
-		//Adding the above for dual mode
 		if(gcSearch[0])
 			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
 			" uSource=0 AND"
@@ -1833,6 +1831,21 @@ void funcSelectContainer(FILE *fp)
 			" (uOwner=%u OR uCreatedBy=%u))"
 			" AND uStatus!=91"
 			" ORDER BY cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient);
+	}
+	else
+	{
+		if(gcSearch[0])
+			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
+			" uSource=0 AND"
+			" uCreatedBy=%u AND cHostname LIKE '%s%%'"
+			" AND uStatus!=91"
+			" ORDER BY cHostname LIMIT 301",guLoginClient,gcSearch);
+		else
+			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
+			" uSource=0 AND"
+			" uCreatedBy=%u"
+			" AND uStatus!=91"
+			" ORDER BY cHostname LIMIT 301",guLoginClient);
 	}
 
 	mysql_query(&gMysql,gcQuery);

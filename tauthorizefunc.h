@@ -79,7 +79,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstAuthorizeVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>9)
 			{
 				guMode=2002;
 				tAuthorize(LANG_NB_CONFIRMMOD);
@@ -90,7 +90,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstAuthorizeVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>9)
 			{
 				//Place limits on what non root users can change.
 				if(uPerm>guPermLevel) uPerm=guPermLevel;
@@ -166,12 +166,11 @@ void ExttAuthorizeButtons(void)
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("Here you can change a passwd for a login of a contact or a non company affiliated login user. Other more complex changes can be done on other fields, but you should seek guidance from experienced users first. Clicking on the modify (new or delete) button will provide more details. All changes are two step operations so there is no danger on clicking on the 'New', 'Modify' or 'Delete' buttons.<p>\n");
+
 			printf("<u>Record Context Info</u><br>");
-			if(uCertClient>1 && uOwner>1)
-				printf("This login appears to belong to a <a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a> company contact '<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>%s</a>'.<br>The uPerm corresponds to permission level '%s'.",uOwner,ForeignKey("tClient","cLabel",uOwner),uCertClient,ForeignKey("tClient","cLabel",uCertClient),cUserLevel(uPerm));
-			else if(uOwner>1)
-				printf("This login appears to belong to a '<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>%s</a>' company contact, but that has been root aliased to usually run the back-office with complete permissions. <br>The uPerm corresponds to permission level '%s'.",uOwner,ForeignKey("tClient","cLabel",uOwner),cUserLevel(uPerm));
+			printf("This login appears to belong to a <a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a> company contact '<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>%s</a>'.<br>The uPerm corresponds to permission level '%s'.",uOwner,ForeignKey("tClient","cLabel",uOwner),uCertClient,ForeignKey("tClient","cLabel",uCertClient),cUserLevel(uPerm));
 			printf("<p>\n");
+
 			tAuthorizeNavList();
 	}
 
@@ -304,9 +303,18 @@ void tAuthorizeNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient FROM tAuthorize "
-			" WHERE uOwner=%u OR uOwner IN (SELECT uClient FROM " TCLIENT
-			" WHERE uOwner=%u)",guCompany,guCompany);
+	if(uOwner)
+	{
+		sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient"
+			" FROM tAuthorize"
+			" WHERE uOwner=%u ORDER BY cLabel",uOwner);
+	}
+	else
+	{
+		sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient"
+			" FROM tAuthorize"
+			" WHERE uCertClient=%u ORDER BY cLabel",guLoginClient);
+	}
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -321,8 +329,6 @@ void tAuthorizeNavList(void)
         	printf("<p><u>tAuthorizeNavList</u><br>\n");
         	while((field=mysql_fetch_row(res)))
 		{
-			//Root can find it self. This keeps the tClient tab cleaner.
-			if(strcmp(field[1],"Root"))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
 				"%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
 		}
