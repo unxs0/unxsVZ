@@ -2791,7 +2791,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
 				GetContainerProp(uContainer,"cOrg_PublicIP",gcUseThisIP);
-				if(gcUseThisIP)
+				if(gcUseThisIP[0])
 					tContainer("<blink>Error:</blink> NAT container remote migration not supported yet.");
 				guMode=10001;
 				tContainer("Select Migration Target");
