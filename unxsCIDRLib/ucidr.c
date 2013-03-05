@@ -93,13 +93,15 @@ unsigned uIpv4InCIDR4(const char *cIPv4, const char *cCIDR4)
 
 unsigned uInCIDR4Format(const char *cCIDR4,unsigned *uIPv4,unsigned *uCIDR4Mask)
 {
-	unsigned a=0,b=0,c=0,d=0,e=0;
-	sscanf(cCIDR4,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
+	unsigned a=0,b=0,c=0,d=0,e=0,uCount=0;
+	uCount=sscanf(cCIDR4,"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
 
 	//debug only
 	//printf("uInCIDR4Format() %s=%u.%u.%u.%u/%u\n",cCIDR4,a,b,c,d,e);
 
 	//basic sanity checks
+	if(uCount!=5)
+		return(0);
 	if(!a || !e)
 		return(0);
 	if(b>254)
@@ -121,13 +123,15 @@ unsigned uInCIDR4Format(const char *cCIDR4,unsigned *uIPv4,unsigned *uCIDR4Mask)
 
 unsigned uInIpv4Format(const char *cIPv4,unsigned *uIPv4)
 {
-	unsigned a=0,b=0,c=0,d=0;
-	sscanf(cIPv4,"%u.%u.%u.%u",&a,&b,&c,&d);
+	unsigned a=0,b=0,c=0,d=0,uCount=0;
+	uCount=sscanf(cIPv4,"%u.%u.%u.%u",&a,&b,&c,&d);
 
 	//debug only
 	//printf("uInIpv4Format() %s=%u.%u.%u.%u\n",cIPv4,a,b,c,d);
 
 	//basic sanity checks
+	if(uCount!=4)
+		return(0);
 	if(!a)
 		return(0);
 	if(b>254)
