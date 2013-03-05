@@ -22,7 +22,7 @@ ucidr.o: ucidr.c ucidr.h
 	cc -c ucidr.c -o ucidr.o $(CFLAGS)
 
 example: example.o
-	cc example.o -o example /usr/lib/openisp/libucidr.a
+	cc example.o -o example /usr/lib/openisp/libucidr.a -lm
 	rm -f example.o
 
 example.o: example.c ucidr.h
