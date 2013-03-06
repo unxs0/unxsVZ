@@ -30,16 +30,22 @@ int main(int iArgc, char *cArgv[])
 
 	//Example 1
 	//Given IPv4 in a given IPv4/CIDR4
+/*
 	uRetVal=uIpv4InCIDR4(cArgv[1],cArgv[2]);
 	if(uRetVal==1)
-		printf("%.16s is in %.20s\n",cArgv[1],cArgv[2]);
+		printf("%.16s is in %s\n",cArgv[1],cArgv[2]);
 	else if(uRetVal==0)
-		printf("%.16s is NOT in %.20s\n",cArgv[1],cArgv[2]);
+		printf("%.16s is NOT in %s\n",cArgv[1],cArgv[2]);
 	else if(uRetVal==2)
-		printf("Format error in %.20s\n",cArgv[2]);
+		printf("IPv4/CIDR format error in %s\n",cArgv[2]);
 	else if(uRetVal==3)
-		printf("Format error in %.16s\n",cArgv[1]);
+		printf("IPv4 format error in %s\n",cArgv[1]);
 
+*/
+	if(!uInIpv6Format(cArgv[1]))
+		printf("IPv6 Format error in %s\n",cArgv[1]);
+
+/*
 	//Example 2
 	//Expand into array of IPs in string/0 format.
 	sscanf(cArgv[2],"%*u.%*u.%*u.%*u/%u",&uMask);
@@ -54,6 +60,7 @@ int main(int iArgc, char *cArgv[])
 		printf("%s\n",cIPs[i]);
 		free(cIPs[i]);
 	}
+*/
 
 	return(0);
 

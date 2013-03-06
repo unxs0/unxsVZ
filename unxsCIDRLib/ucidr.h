@@ -22,4 +22,8 @@ unsigned uInIpv4Format(const char *cIPv4,unsigned *uIPv4);
 unsigned uGetNumIPs(char *cCIDR4);
 unsigned uGetNumNets(char *cCIDR4);
 
+//New IPv6 functions
+unsigned uInIpv6Format(const char *cIPv6);
+unsigned uInCIDR6Format(const char *cCIDR6);
+unsigned uIpv6InCIDR6(const char *cIPv6, const char *cCIDR6);
 

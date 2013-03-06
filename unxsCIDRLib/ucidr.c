@@ -19,6 +19,8 @@ TODO
 */
 
 #include "ucidr.h"
+#include <ctype.h>
+#include <string.h>
 
 static unsigned Version_2_0;
 
@@ -194,4 +196,274 @@ unsigned uGetNumNets(char *cCIDR4)
 	return(uNumNets);
 
 }//unsigned uGetuNumNets(char *cCIDR4)
+
+
+//New IPv6 functions
+//
+
+unsigned uInIpv6Format(const char *cIPv6)
+{
+	register int i;
+	unsigned h1=0;
+	unsigned h2=0;
+	unsigned h3=0;
+	unsigned h4=0;
+	unsigned h5=0;
+	unsigned h6=0;
+	unsigned h7=0;
+	unsigned h8=0;
+	unsigned uColonCount=0;
+	unsigned uRead=0;
+
+	for(i=0;cIPv6[i];i++)
+	{
+		if(cIPv6[i]==':')
+			uColonCount++;
+		if(cIPv6[i]!=':' && !isxdigit(cIPv6[i]))
+			//IPv6 can only have colons and hex digits
+			return(0);
+	}
+
+	switch(uColonCount)
+	{
+		case 0:
+		case 1:
+			//IPv6 too few colons: Min is 2!
+			//debug only
+			printf("err 1\n");
+			return(0);
+		break;
+
+		case 2:
+			uRead=sscanf(cIPv6,"%x::%x",&h1,&h8);
+			if(uRead!=2 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+			{
+				uRead=sscanf(cIPv6,"%x::",&h1);
+				if(uRead!=1)
+				{
+					//debug only
+					printf("err 2a\n");
+					return(0);
+				}
+			}
+			else if(uRead!=2)
+			{
+				//debug only
+				printf("err 2b\n");
+				return(0);
+			}
+		break;
+
+		//2001:4D78::1
+		case 3:
+			uRead=sscanf(cIPv6,"%x::%x:%x",&h1,&h7,&h8);
+			if(uRead!=3)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x",&h1,&h2,&h8);
+				if(uRead!=3 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+				{
+					uRead=sscanf(cIPv6,"%x:%x::",&h1,&h2);
+					if(uRead!=2)
+					{
+						//debug only
+						printf("err 3a\n");
+						return(0);
+					}
+				}
+				else if(uRead!=3)
+				{
+					//debug only
+					printf("err 3b\n");
+					return(0);
+				}
+			}
+		break;
+
+		case 4:
+			uRead=sscanf(cIPv6,"%x::%x:%x:%x",&h1,&h6,&h7,&h8);
+			if(uRead!=4)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x:%x",&h1,&h2,&h7,&h8);
+				if(uRead!=4)
+				{
+					uRead=sscanf(cIPv6,"%x:%x:%x::%x",&h1,&h2,&h3,&h8);
+					if(uRead!=4 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+					{
+						uRead=sscanf(cIPv6,"%x:%x:%x::",&h1,&h2,&h3);
+						if(uRead!=3)
+						{
+							//debug only
+							printf("err 4a\n");
+							return(0);
+						}
+					}
+					else if(uRead!=4)
+					{
+						//debug only
+						printf("err 4b\n");
+						return(0);
+					}
+				}
+			}
+		break;
+
+		case 5:
+			uRead=sscanf(cIPv6,"%x::%x:%x:%x:%x",&h1,&h5,&h6,&h7,&h8);
+			if(uRead!=5)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x:%x:%x",&h1,&h2,&h6,&h7,&h8);
+				if(uRead!=5)
+				{
+					uRead=sscanf(cIPv6,"%x:%x:%x::%x:%x",&h1,&h2,&h3,&h7,&h8);
+					if(uRead!=5)
+					{
+						uRead=sscanf(cIPv6,"%x:%x:%x:%x::%x",&h1,&h2,&h3,&h4,&h8);
+						if(uRead!=5 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+						{
+							uRead=sscanf(cIPv6,"%x:%x:%x:%x::",&h1,&h2,&h3,&h4);
+							if(uRead!=4)
+							{
+								//debug only
+								printf("err 5a\n");
+								return(0);
+							}
+						}
+						else if(uRead!=5)
+						{
+							//debug only
+							printf("err 5b\n");
+							return(0);
+						}
+					}
+				}
+			}
+		break;
+
+		case 6:
+			uRead=sscanf(cIPv6,"%x::%x:%x:%x:%x:%x",&h1,&h4,&h5,&h6,&h7,&h8);
+			if(uRead!=6)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x:%x:%x:%x",&h1,&h2,&h5,&h6,&h7,&h8);
+				if(uRead!=6)
+				{
+					uRead=sscanf(cIPv6,"%x:%x:%x::%x:%x:%x",&h1,&h2,&h3,&h6,&h7,&h8);
+					if(uRead!=6)
+					{
+						uRead=sscanf(cIPv6,"%x:%x:%x:%x::%x:%x",&h1,&h2,&h3,&h4,&h7,&h8);
+						if(uRead!=6)
+						{
+							uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x::%x",
+										&h1,&h2,&h3,&h4,&h5,&h8);
+							if(uRead!=6 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+							{
+								uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x::",&h1,&h2,&h3,&h4,&h5);
+								if(uRead!=5)
+								{
+									//debug only
+									printf("err 6a\n");
+									return(0);
+								}
+							}
+							else if(uRead!=6)
+							{
+								//debug only
+								printf("err 6b\n");
+								return(0);
+							}
+						}
+					}
+				}
+			}
+		break;
+
+
+		//1::2:3:4:5:6:7
+		//1:2::3:4:5:6:7
+		//1:2:3::4:5:6:7
+		//1:2:3:4::5:6:7
+		//1:2:3:4:5::6:7
+		//1:2:3:4:5:6::7
+		//1:2:3:4:5:6:7:8
+		//1:2:3:4:5:6::
+		case 7:
+			uRead=sscanf(cIPv6,"%x::%x:%x:%x:%x:%x:%x",&h1,&h3,&h4,&h5,&h6,&h7,&h8);
+			if(uRead!=7)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x:%x:%x:%x:%x",&h1,&h2,&h4,&h5,&h6,&h7,&h8);
+				if(uRead!=7)
+				{
+					uRead=sscanf(cIPv6,"%x:%x:%x::%x:%x:%x:%x",&h1,&h2,&h3,&h5,&h6,&h7,&h8);
+					if(uRead!=7)
+					{
+						uRead=sscanf(cIPv6,"%x:%x:%x:%x::%x:%x:%x",&h1,&h2,&h3,&h4,&h6,&h7,&h8);
+						if(uRead!=7)
+						{
+							uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x::%x:%x",&h1,&h2,&h3,&h4,&h5,&h7,&h8);
+							if(uRead!=7)
+							{
+								uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x:%x::%x",&h1,&h2,&h3,&h4,&h5,&h6,&h8);
+								if(uRead!=7)
+								{
+									uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
+									if(uRead!=8 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+									{
+										uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x:%x::",&h1,&h2,&h3,&h4,&h5,&h6);
+										if(uRead!=6)
+										{
+											//debug only
+											printf("err 7a\n");
+											return(0);
+										}
+									}
+									else if(uRead!=8)
+									{
+										//debug only
+										printf("err 7b\n");
+										return(0);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		break;
+
+		//1:2:3:4:5:6:7::
+		case 8:
+			uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x:%x:%x::",&h1,&h2,&h3,&h4,&h5,&h6,&h7);
+			if(uRead!=7)
+			{
+				//debug only
+				printf("err 8\n");
+				return(0);
+			}
+		break;
+
+		default:
+			//debug only
+			printf("err default\n");
+			return(0);
+		
+	}
+
+	//Passed all checks
+	//debug only
+	printf("%x:%x:%x:%x:%x:%x:%x:%x\n",h1,h2,h3,h4,h5,h6,h7,h8);
+
+	return(1);
+
+}//unsigned uInIpv6Format(const char *cIPv6)
+
+
+unsigned uInCIDR6Format(const char *cCIDR6)
+{
+	return(1);
+}//unsigned uInCIDR6Format(const char *cCIDR6)
+
+unsigned uIpv6InCIDR6(const char *cIPv6, const char *cCIDR6)
+{
+	return(1);
+}//unsigned uIpv6InCIDR6(const char *cIPv6, const char *cCIDR6)
+
 
