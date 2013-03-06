@@ -201,7 +201,7 @@ unsigned uGetNumNets(char *cCIDR4)
 //New IPv6 functions
 //
 
-unsigned uInIpv6Format(const char *cIPv6)
+unsigned uInIpv6Format(const char *cIPv6,__uint128_t *uIPv6)
 {
 	register int i;
 	unsigned h1=0;
@@ -447,23 +447,104 @@ unsigned uInIpv6Format(const char *cIPv6)
 		
 	}
 
+	//128 bit math 
+	__uint128_t uh1=h1,uh2=h2,uh3=h3,uh4=h4,uh5=h5,uh6=h6,uh7=h7,uh8=h8;
+	*uIPv6=uh8+(uh7<<16)+(uh6<<32)+(uh5<<48)+(uh4<<64)+(uh3<<80)+(uh2<<96)+(uh1<<112);
+
 	//Passed all checks
 	//debug only
-	printf("%x:%x:%x:%x:%x:%x:%x:%x\n",h1,h2,h3,h4,h5,h6,h7,h8);
+	printf("uInIpv6Format: %x:%x:%x:%x:%x:%x:%x:%x\n",h1,h2,h3,h4,h5,h6,h7,h8);
 
 	return(1);
 
-}//unsigned uInIpv6Format(const char *cIPv6)
+}//unsigned uInIpv6Format(const char *cIPv6,__uint128_t *uIPv6)
 
 
-unsigned uInCIDR6Format(const char *cCIDR6)
+unsigned uInCIDR6Format(const char *cCIDR6,__uint128_t *uIPv6,__uint128_t *uIPv6CIDR)
 {
+	char *cp;
+	unsigned uCIDR=0;
+
+	if((cp=strchr(cCIDR6,'/')))
+	{
+		unsigned uCount=0;
+
+		uCount=sscanf(cp,"/%u",&uCIDR);
+		if(!uCount || !isdigit(*(cp+1)))
+		{
+			//debug only
+			printf("err /(invalid CIDR mask)\n");
+			return(0);
+		}
+		else if(uCIDR>128)
+		{
+			//debug only
+			printf("err CIDR mask out of range 0-128\n");
+			return(0);
+		}
+		*cp=0;
+	}
+	else
+	{
+		//debug only
+		printf("err no /\n");
+		return(0);
+	}
+
+	if(!uInIpv6Format(cCIDR6,uIPv6))
+	{
+		//debug only
+		printf("err !uInIpv6Format\n");
+		return(0);
+	}
+	*cp='/';
+
+	__uint128_t uCIDRMask= -1;	
+	//uCIDRMask=!uCIDRMask;//set to all ones
+	*uIPv6CIDR = uCIDRMask << (128-uCIDR);//shift left by max bits minus the CIDR mask value
+
+	//debug only
+	printf("uInCIDR6Format: /%u\n",uCIDR);	
 	return(1);
-}//unsigned uInCIDR6Format(const char *cCIDR6)
+}//unsigned uInCIDR6Format(const char *cCIDR6,__uint128_t *uIPv6,__uint128_t *uIPv6CIDR)
+
 
 unsigned uIpv6InCIDR6(const char *cIPv6, const char *cCIDR6)
 {
-	return(1);
+	__uint128_t uCIDR6Mask=0;	
+	__uint128_t uCIDR6IP=0;	
+	__uint128_t uIPv6=0;	
+
+	__uint128_t uCIDR6Masked=0;	
+	__uint128_t uIPv6Masked=0;	
+
+	if(uInCIDR6Format(cCIDR6,&uCIDR6IP,&uCIDR6Mask) && uInIpv6Format(cIPv6,&uIPv6))
+	{
+		if(uCIDR6IP==0)
+			printf("uIpv6InCIDR6: uCIDR6IP==0\n");	
+		if(uCIDR6Mask==0)
+			printf("uIpv6InCIDR6: uCIDR6Mask==0\n");	
+		if(uIPv6==0)
+			printf("uIpv6InCIDR6: uIPv6==0\n");	
+
+		uCIDR6Masked=(uCIDR6IP & uCIDR6Mask);
+		uIPv6Masked=(uIPv6 & uCIDR6Mask);
+
+		if(uCIDR6Masked==0)
+			printf("uIpv6InCIDR6: uCIDR6Masked==0\n");	
+		if(uIPv6Masked==0)
+			printf("uIpv6InCIDR6: uIPv6Masked==0\n");	
+
+		if(uIPv6Masked==uCIDR6Masked)
+			return(1);
+		else
+			return(0);
+	}
+	else
+	{
+			return(0);
+	}
+
 }//unsigned uIpv6InCIDR6(const char *cIPv6, const char *cCIDR6)
 
 

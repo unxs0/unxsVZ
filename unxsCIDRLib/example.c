@@ -16,11 +16,13 @@ REQUIRES
 
 int main(int iArgc, char *cArgv[])
 {
-	register unsigned i;
-	unsigned uRetVal=0;
-	char *cIPs[4096];//Warning max 8 class C's or /21
-	unsigned uIPs=0;
-	unsigned uMask=0;
+	//register unsigned i;
+	//unsigned uRetVal=0;
+	//char *cIPs[4096];//Warning max 8 class C's or /21
+	//unsigned uIPs=0;
+	//unsigned uMask=0;
+
+	__uint128_t uIPv6=0,uCIDR6IP=0,uCIDR6Mask=0;
 
 	if(iArgc<3)
 	{
@@ -42,8 +44,17 @@ int main(int iArgc, char *cArgv[])
 		printf("IPv4 format error in %s\n",cArgv[1]);
 
 */
-	if(!uInIpv6Format(cArgv[1]))
-		printf("IPv6 Format error in %s\n",cArgv[1]);
+	if(!uInIpv6Format(cArgv[1],&uIPv6))
+		printf("IPv6 format error in %s\n",cArgv[1]);
+
+	if(!uInCIDR6Format(cArgv[2],&uCIDR6IP,&uCIDR6Mask))
+		printf("IPv6 with /CIDR format error in %s\n",cArgv[2]);
+
+	if(uIpv6InCIDR6(cArgv[1],cArgv[2]))
+		printf("%s is in %s\n",cArgv[1],cArgv[2]);
+	else
+		 printf("not\n");
+	
 
 /*
 	//Example 2
