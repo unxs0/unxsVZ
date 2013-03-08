@@ -551,7 +551,8 @@ unsigned uIpv6InCIDR6(const char *cIPv6, const char *cCIDR6)
 
 #endif
 
-unsigned uInIpv6Format32(const char *cIPv6,unsigned *h1,unsigned *h2,unsigned *h3,unsigned *h4,unsigned *h5,unsigned *h6,unsigned *h7,unsigned *h8)
+unsigned uInIpv6Format32(const char *cIPv6,unsigned *h1,unsigned *h2,unsigned *h3,unsigned *h4,
+					unsigned *h5,unsigned *h6,unsigned *h7,unsigned *h8)
 {
 	register int i;
 	unsigned uColonCount=0;
@@ -795,7 +796,8 @@ unsigned uInIpv6Format32(const char *cIPv6,unsigned *h1,unsigned *h2,unsigned *h
 
 	return(1);
 
-}//unsigned uInIpv6Format32(const char *cIPv6,unsigned *h1,unsigned *h2,unsigned *h3,unsigned *h4,unsigned *h5,unsigned *h6,unsigned *h7,unsigned *h8)
+}//unsigned uInIpv6Format32(const char *cIPv6,unsigned *h1,unsigned *h2,unsigned *h3,unsigned *h4,
+//					unsigned *h5,unsigned *h6,unsigned *h7,unsigned *h8)
 
 
 unsigned uInCIDR6Format32(const char *cCIDR6,unsigned *h1,unsigned *h2,unsigned *h3,unsigned *h4,
@@ -854,54 +856,130 @@ unsigned uIpv6InCIDR632(const char *cIPv6, const char *cCIDR6)
 	//based on uCIDR only mask a single word and ignore the ones to to the right of it.
 	//compare the words to the left
 
-	//first the easy cases with no word masking required
-	if(uCIDR==128)
+	unsigned uMask=0;
+	if(uCIDR<128 && uCIDR>112)
 	{
-		//we compare all words
-		if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5 && a6==b6 && a7==b7 && a8==b8)
-			return(1);
+		uMask=128-uCIDR;
+		uMask=~uMask;
+		a8=(a8&uMask);
+		b8=(b8&uMask);
+		uCIDR=128;
 	}
-	else if(uCIDR==112)
+	else if(uCIDR<112 && uCIDR>96)
 	{
-		//we compare all words except last
-		if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5 && a6==b6 && a7==b7)
-			return(1);
+		uMask=112-uCIDR;
+		uMask=~uMask;
+		a7=(a7&uMask);
+		b7=(b7&uMask);
+		uCIDR=112;
 	}
-	else if(uCIDR==96)
+	else if(uCIDR<96 && uCIDR>80)
 	{
-		//we compare all words except last two
-		if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5 && a6==b6)
-			return(1);
+		uMask=96-uCIDR;
+		uMask=~uMask;
+		a6=(a6&uMask);
+		b6=(b6&uMask);
+		uCIDR=96;
 	}
-	else if(uCIDR==80)
+	else if(uCIDR<80 && uCIDR>64)
 	{
-		//we compare all words except last three
-		if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5)
-			return(1);
+		uMask=80-uCIDR;
+		uMask=~uMask;
+		a5=(a5&uMask);
+		b5=(b5&uMask);
+		uCIDR=80;
 	}
-	else if(uCIDR==64)
+	else if(uCIDR<64 && uCIDR>48)
 	{
-		//we compare all words except last four
-		if(a1==b1 && a2==b2 && a3==b3 && a4==b4)
-			return(1);
+		uMask=64-uCIDR;
+		uMask=~uMask;
+		a4=(a4&uMask);
+		b4=(b4&uMask);
+		uCIDR=64;
 	}
-	else if(uCIDR==48)
+	else if(uCIDR<48 && uCIDR>32)
 	{
-		//we compare only first three words
-		if(a1==b1 && a2==b2 && a3==b3)
-			return(1);
+		uMask=48-uCIDR;
+		uMask=~uMask;
+		a3=(a3&uMask);
+		b3=(b3&uMask);
+		uCIDR=48;
 	}
-	else if(uCIDR==32)
+	else if(uCIDR<32 && uCIDR>16)
 	{
-		//we compare only first two words
-		if(a1==b1 && a2==b2)
-			return(1);
+		uMask=32-uCIDR;
+		uMask=~uMask;
+		a2=(a2&uMask);
+		b2=(b2&uMask);
+		uCIDR=32;
 	}
-	else if(uCIDR==16)
+	else if(uCIDR<16 && uCIDR>0)
 	{
-		//we compare only first word
-		if(a1==b1)
-			return(1);
+		uMask=16-uCIDR;
+		uMask=~uMask;
+		a1=(a1&uMask);
+		b1=(b1&uMask);
+		uCIDR=16;
+	}
+	else if(uCIDR==0)
+	{
+		//check this but /0 is sometimes defined as the whole range
+		return(1);
+	}
+	if(uMask)
+		//debug only
+		printf("~uMask=%4.4x\n",uMask);
+
+	//Once we mask if appliacable we can compare all the relevant words
+	//but only on word boundaries.
+	switch(uCIDR)
+	{
+		case 128:
+			//we compare all words
+			if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5 && a6==b6 && a7==b7 && a8==b8)
+				return(1);
+		break;
+
+		case 112:
+			//we compare all words except last
+			if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5 && a6==b6 && a7==b7)
+				return(1);
+		break;
+
+		case 96:
+			//we compare all words except last two
+			if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5 && a6==b6)
+				return(1);
+		break;
+	
+		case 80:
+			//we compare all words except last three
+			if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5)
+				return(1);
+		break;
+
+		case 64:
+			//we compare all words except last four
+			if(a1==b1 && a2==b2 && a3==b3 && a4==b4)
+				return(1);
+		break;
+	
+		case 48:
+			//we compare only first three words
+			if(a1==b1 && a2==b2 && a3==b3)
+				return(1);
+		break;
+
+		case 32:
+			//we compare only first two words
+			if(a1==b1 && a2==b2)
+				return(1);
+		break;
+	
+		case 16:
+			//we compare only first word
+			if(a1==b1)
+				return(1);
 	}
 
 	return(0);
