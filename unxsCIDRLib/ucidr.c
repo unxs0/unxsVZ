@@ -201,6 +201,8 @@ unsigned uGetNumNets(char *cCIDR4)
 //New IPv6 functions
 //
 
+#ifdef __uint128_t
+
 unsigned uInIpv6Format(const char *cIPv6,__uint128_t *uIPv6)
 {
 	register int i;
@@ -547,4 +549,361 @@ unsigned uIpv6InCIDR6(const char *cIPv6, const char *cCIDR6)
 
 }//unsigned uIpv6InCIDR6(const char *cIPv6, const char *cCIDR6)
 
+#endif
 
+unsigned uInIpv6Format32(const char *cIPv6,unsigned *h1,unsigned *h2,unsigned *h3,unsigned *h4,unsigned *h5,unsigned *h6,unsigned *h7,unsigned *h8)
+{
+	register int i;
+	unsigned uColonCount=0;
+	unsigned uRead=0;
+
+	for(i=0;cIPv6[i];i++)
+	{
+		if(cIPv6[i]==':')
+			uColonCount++;
+		if(cIPv6[i]!=':' && !isxdigit(cIPv6[i]))
+			//IPv6 can only have colons and hex digits
+			return(0);
+	}
+
+	switch(uColonCount)
+	{
+		case 0:
+		case 1:
+			//IPv6 too few colons: Min is 2!
+			//debug only
+			printf("err 1\n");
+			return(0);
+		break;
+
+		case 2:
+			uRead=sscanf(cIPv6,"%x::%x",h1,h8);
+			if(uRead!=2 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+			{
+				uRead=sscanf(cIPv6,"%x::",h1);
+				if(uRead!=1)
+				{
+					//debug only
+					printf("err 2a\n");
+					return(0);
+				}
+			}
+			else if(uRead!=2)
+			{
+				//debug only
+				printf("err 2b\n");
+				return(0);
+			}
+		break;
+
+		//2001:4D78::1
+		case 3:
+			uRead=sscanf(cIPv6,"%x::%x:%x",h1,h7,h8);
+			if(uRead!=3)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x",h1,h2,h8);
+				if(uRead!=3 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+				{
+					uRead=sscanf(cIPv6,"%x:%x::",h1,h2);
+					if(uRead!=2)
+					{
+						//debug only
+						printf("err 3a\n");
+						return(0);
+					}
+				}
+				else if(uRead!=3)
+				{
+					//debug only
+					printf("err 3b\n");
+					return(0);
+				}
+			}
+		break;
+
+		case 4:
+			uRead=sscanf(cIPv6,"%x::%x:%x:%x",h1,h6,h7,h8);
+			if(uRead!=4)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x:%x",h1,h2,h7,h8);
+				if(uRead!=4)
+				{
+					uRead=sscanf(cIPv6,"%x:%x:%x::%x",h1,h2,h3,h8);
+					if(uRead!=4 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+					{
+						uRead=sscanf(cIPv6,"%x:%x:%x::",h1,h2,h3);
+						if(uRead!=3)
+						{
+							//debug only
+							printf("err 4a\n");
+							return(0);
+						}
+					}
+					else if(uRead!=4)
+					{
+						//debug only
+						printf("err 4b\n");
+						return(0);
+					}
+				}
+			}
+		break;
+
+		case 5:
+			uRead=sscanf(cIPv6,"%x::%x:%x:%x:%x",h1,h5,h6,h7,h8);
+			if(uRead!=5)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x:%x:%x",h1,h2,h6,h7,h8);
+				if(uRead!=5)
+				{
+					uRead=sscanf(cIPv6,"%x:%x:%x::%x:%x",h1,h2,h3,h7,h8);
+					if(uRead!=5)
+					{
+						uRead=sscanf(cIPv6,"%x:%x:%x:%x::%x",h1,h2,h3,h4,h8);
+						if(uRead!=5 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+						{
+							uRead=sscanf(cIPv6,"%x:%x:%x:%x::",h1,h2,h3,h4);
+							if(uRead!=4)
+							{
+								//debug only
+								printf("err 5a\n");
+								return(0);
+							}
+						}
+						else if(uRead!=5)
+						{
+							//debug only
+							printf("err 5b\n");
+							return(0);
+						}
+					}
+				}
+			}
+		break;
+
+		case 6:
+			uRead=sscanf(cIPv6,"%x::%x:%x:%x:%x:%x",h1,h4,h5,h6,h7,h8);
+			if(uRead!=6)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x:%x:%x:%x",h1,h2,h5,h6,h7,h8);
+				if(uRead!=6)
+				{
+					uRead=sscanf(cIPv6,"%x:%x:%x::%x:%x:%x",h1,h2,h3,h6,h7,h8);
+					if(uRead!=6)
+					{
+						uRead=sscanf(cIPv6,"%x:%x:%x:%x::%x:%x",h1,h2,h3,h4,h7,h8);
+						if(uRead!=6)
+						{
+							uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x::%x",
+										h1,h2,h3,h4,h5,h8);
+							if(uRead!=6 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+							{
+								uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x::",h1,h2,h3,h4,h5);
+								if(uRead!=5)
+								{
+									//debug only
+									printf("err 6a\n");
+									return(0);
+								}
+							}
+							else if(uRead!=6)
+							{
+								//debug only
+								printf("err 6b\n");
+								return(0);
+							}
+						}
+					}
+				}
+			}
+		break;
+
+
+		//1::2:3:4:5:6:7
+		//1:2::3:4:5:6:7
+		//1:2:3::4:5:6:7
+		//1:2:3:4::5:6:7
+		//1:2:3:4:5::6:7
+		//1:2:3:4:5:6::7
+		//1:2:3:4:5:6:7:8
+		//1:2:3:4:5:6::
+		case 7:
+			uRead=sscanf(cIPv6,"%x::%x:%x:%x:%x:%x:%x",h1,h3,h4,h5,h6,h7,h8);
+			if(uRead!=7)
+			{
+				uRead=sscanf(cIPv6,"%x:%x::%x:%x:%x:%x:%x",h1,h2,h4,h5,h6,h7,h8);
+				if(uRead!=7)
+				{
+					uRead=sscanf(cIPv6,"%x:%x:%x::%x:%x:%x:%x",h1,h2,h3,h5,h6,h7,h8);
+					if(uRead!=7)
+					{
+						uRead=sscanf(cIPv6,"%x:%x:%x:%x::%x:%x:%x",h1,h2,h3,h4,h6,h7,h8);
+						if(uRead!=7)
+						{
+							uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x::%x:%x",h1,h2,h3,h4,h5,h7,h8);
+							if(uRead!=7)
+							{
+								uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x:%x::%x",h1,h2,h3,h4,h5,h6,h8);
+								if(uRead!=7)
+								{
+									uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x:%x:%x:%x",h1,h2,h3,h4,h5,h6,h7,h8);
+									if(uRead!=8 && !strncmp(cIPv6+strlen(cIPv6)-2,"::",2))
+									{
+										uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x:%x::",h1,h2,h3,h4,h5,h6);
+										if(uRead!=6)
+										{
+											//debug only
+											printf("err 7a\n");
+											return(0);
+										}
+									}
+									else if(uRead!=8)
+									{
+										//debug only
+										printf("err 7b\n");
+										return(0);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		break;
+
+		//1:2:3:4:5:6:7::
+		case 8:
+			uRead=sscanf(cIPv6,"%x:%x:%x:%x:%x:%x:%x::",h1,h2,h3,h4,h5,h6,h7);
+			if(uRead!=7)
+			{
+				//debug only
+				printf("err 8\n");
+				return(0);
+			}
+		break;
+
+		default:
+			//debug only
+			printf("err default\n");
+			return(0);
+		
+	}
+
+	//Passed all checks
+	//debug only
+	printf("uInIpv6Format32: %x:%x:%x:%x:%x:%x:%x:%x\n",*h1,*h2,*h3,*h4,*h5,*h6,*h7,*h8);
+
+	return(1);
+
+}//unsigned uInIpv6Format32(const char *cIPv6,unsigned *h1,unsigned *h2,unsigned *h3,unsigned *h4,unsigned *h5,unsigned *h6,unsigned *h7,unsigned *h8)
+
+
+unsigned uInCIDR6Format32(const char *cCIDR6,unsigned *h1,unsigned *h2,unsigned *h3,unsigned *h4,
+				unsigned *h5,unsigned *h6,unsigned *h7,unsigned *h8,unsigned *uCIDR)
+{
+	char *cp;
+
+	if((cp=strchr(cCIDR6,'/')))
+	{
+		unsigned uCount=0;
+
+		uCount=sscanf(cp,"/%u",uCIDR);
+		if(!uCount || !isdigit(*(cp+1)))
+		{
+			//debug only
+			printf("err /(invalid CIDR mask)\n");
+			return(0);
+		}
+		else if(*uCIDR>128)
+		{
+			//debug only
+			printf("err CIDR mask out of range 0-128\n");
+			return(0);
+		}
+		*cp=0;
+	}
+	else
+	{
+		//debug only
+		printf("err no /\n");
+		return(0);
+	}
+
+	if(!uInIpv6Format32(cCIDR6,h1,h2,h3,h4,h5,h6,h7,h8))
+	{
+		//debug only
+		printf("err !uInIpv6Format\n");
+		return(0);
+	}
+	*cp='/';
+
+	//debug only
+	printf("uInCIDR6Format32: /%u\n",*uCIDR);	
+	return(1);
+}//unsigned uInCIDR6Format32(const char *cCIDR6,unsigned *h1,unsigned *h2,unsigned *h3,unsigned *h4,
+//				unsigned *h5,unsigned *h6,unsigned *h7,unsigned *h8,unsigned *uCIDR)
+
+
+unsigned uIpv6InCIDR632(const char *cIPv6, const char *cCIDR6)
+{
+	unsigned a1=0,a2=0,a3=0,a4=0,a5=0,a6=0,a7=0,a8=0,uCIDR=0;
+	unsigned b1=0,b2=0,b3=0,b4=0,b5=0,b6=0,b7=0,b8=0;
+	uInIpv6Format32(cIPv6,&a1,&a2,&a3,&a4,&a5,&a6,&a7,&a8);
+	uInCIDR6Format32(cCIDR6,&b1,&b2,&b3,&b4,&b5,&b6,&b7,&b8,&uCIDR);
+
+	//based on uCIDR only mask a single word and ignore the ones to to the right of it.
+	//compare the words to the left
+
+	//first the easy cases with no word masking required
+	if(uCIDR==128)
+	{
+		//we compare all words
+		if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5 && a6==b6 && a7==b7 && a8==b8)
+			return(1);
+	}
+	else if(uCIDR==112)
+	{
+		//we compare all words except last
+		if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5 && a6==b6 && a7==b7)
+			return(1);
+	}
+	else if(uCIDR==96)
+	{
+		//we compare all words except last two
+		if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5 && a6==b6)
+			return(1);
+	}
+	else if(uCIDR==80)
+	{
+		//we compare all words except last three
+		if(a1==b1 && a2==b2 && a3==b3 && a4==b4 && a5==b5)
+			return(1);
+	}
+	else if(uCIDR==64)
+	{
+		//we compare all words except last four
+		if(a1==b1 && a2==b2 && a3==b3 && a4==b4)
+			return(1);
+	}
+	else if(uCIDR==48)
+	{
+		//we compare only first three words
+		if(a1==b1 && a2==b2 && a3==b3)
+			return(1);
+	}
+	else if(uCIDR==32)
+	{
+		//we compare only first two words
+		if(a1==b1 && a2==b2)
+			return(1);
+	}
+	else if(uCIDR==16)
+	{
+		//we compare only first word
+		if(a1==b1)
+			return(1);
+	}
+
+	return(0);
+
+}//unsigned uIpv6InCIDR632(const char *cIPv6, const char *cCIDR6)
