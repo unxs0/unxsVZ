@@ -23,7 +23,13 @@ unsigned uGetNumIPs(char *cCIDR4);
 unsigned uGetNumNets(char *cCIDR4);
 
 //New IPv6 functions
+#ifdef __uint128_t
 unsigned uIpv6InCIDR6(const char *cIPv6, const char *cCIDR6);
 unsigned uInCIDR6Format(const char *cCIDR6,__uint128_t *uIPv6,__uint128_t *uIPv6CIDR);
 unsigned uInIpv6Format(const char *cIPv6,__uint128_t *uIPv6);
+#endif
+unsigned uInIpv6Format32(const char *cIPv6,unsigned *h1,unsigned *h2,unsigned *h3,unsigned *h4,unsigned *h5,unsigned *h6,unsigned *h7,unsigned *h8);
+unsigned uInCIDR6Format32(const char *cCIDR6,unsigned *h1,unsigned *h2,unsigned *h3,unsigned *h4,
+				unsigned *h5,unsigned *h6,unsigned *h7,unsigned *h8,unsigned *uCIDR);
+unsigned uIpv6InCIDR632(const char *cIPv6, const char *cCIDR6);
 

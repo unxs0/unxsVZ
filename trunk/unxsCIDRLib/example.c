@@ -22,7 +22,9 @@ int main(int iArgc, char *cArgv[])
 	//unsigned uIPs=0;
 	//unsigned uMask=0;
 
+#ifdef __uint128_t
 	__uint128_t uIPv6=0,uCIDR6IP=0,uCIDR6Mask=0;
+#endif
 
 	if(iArgc<3)
 	{
@@ -30,8 +32,6 @@ int main(int iArgc, char *cArgv[])
 		exit(0);
 	}
 
-	//Example 1
-	//Given IPv4 in a given IPv4/CIDR4
 /*
 	uRetVal=uIpv4InCIDR4(cArgv[1],cArgv[2]);
 	if(uRetVal==1)
@@ -44,6 +44,8 @@ int main(int iArgc, char *cArgv[])
 		printf("IPv4 format error in %s\n",cArgv[1]);
 
 */
+//#ifdef __uint128_t
+#ifdef notdefined
 	if(!uInIpv6Format(cArgv[1],&uIPv6))
 		printf("IPv6 format error in %s\n",cArgv[1]);
 
@@ -54,6 +56,17 @@ int main(int iArgc, char *cArgv[])
 		printf("%s is in %s\n",cArgv[1],cArgv[2]);
 	else
 		 printf("not\n");
+#else
+	//unsigned a1=0,a2=0,a3=0,a4=0,a5=0,a6=0,a7=0,a8=0,uCIDR=0;
+	//if(!uInIpv6Format32(cArgv[1],&a1,&a2,&a3,&a4,&a5,&a6,&a7,&a8))
+	//	printf("IPv6 format error in %s\n",cArgv[1]);
+	//if(!uInCIDR6Format32(cArgv[2],&a1,&a2,&a3,&a4,&a5,&a6,&a7,&a8,&uCIDR))
+	//	printf("IPv6 with /CIDR format error in %s\n",cArgv[2]);
+	if(uIpv6InCIDR632(cArgv[1],cArgv[2]))
+		printf("%s is in %s\n",cArgv[1],cArgv[2]);
+	else
+		 printf("%s is NOT in %s\n",cArgv[1],cArgv[2]);
+#endif
 	
 
 /*
