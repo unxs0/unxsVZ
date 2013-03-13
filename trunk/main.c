@@ -624,7 +624,7 @@ void Header_ism3(const char *title, int iJs)
 	{
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>%s ",gcUser);
 		if(strcmp(gcUser,gcCompany)) printf("(%s) ",gcCompany);
-		printf("logged in from %s [%s]</font>",gcHost,cUserLevel(guPermLevel));
+		printf("logged in from %s [%s/%u]</font>",gcHost,cUserLevel(guPermLevel),guReseller);
 	}
 
 	//Logout link
