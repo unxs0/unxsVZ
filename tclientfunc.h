@@ -510,27 +510,32 @@ void ExttClientGetHook(entry gentries[], int x)
 
 void ExttClientSelect(void)
 {
+	//ACModel
 	if(cSearch[0])
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT 
+			sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM tClient" 
 						" WHERE cLabel LIKE '%s%%' ORDER BY cLabel",cSearch);
 		else 
-			sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT 
-						" WHERE (uClient=%1$u OR uOwner IN (SELECT uClient FROM " TCLIENT 
-						" WHERE uOwner=%1$u OR uClient=%1$u)) AND cLabel LIKE '%2$s%%'"
-						" ORDER BY cLabel",
+			sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM tClient WHERE"
+					" (uOwner IN (SELECT uClient FROM tClient WHERE"
+					" ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%1$u) OR uOwner=%1$u) AND"
+					" cCode='Organization')) OR uOwner=%1$u OR uClient=%1$u)"
+					" AND cLabel LIKE '%2$s%%'"
+					" ORDER BY cLabel",
 							guCompany,cSearch);
 	}
 	else
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT " ORDER BY uClient");
+			sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM tClient ORDER BY uClient");
 		else 
-			sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT
-				" WHERE (uClient=%1$u OR uOwner"
-				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-				" ORDER BY uClient",guCompany);
+			sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM tClient WHERE"
+					" (uOwner IN (SELECT uClient FROM tClient WHERE"
+					" ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%1$u) OR uOwner=%1$u) AND"
+					" cCode='Organization')) OR uOwner=%1$u OR uClient=%1$u)"
+					" ORDER BY cLabel",
+							guCompany);
 	}
 
 }//void ExttClientSelect(void)
@@ -538,37 +543,39 @@ void ExttClientSelect(void)
 
 void ExttClientSelectRow(void)
 {
-	ExtSelectRow("tClient",VAR_LIST_tClient,uClient);
+	//ACModel
+	//Note OR uClient= extension for seeing record of user's own company
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM tClient WHERE uClient=%u ORDER BY uClient",
-			uClient);
+		sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM tClient WHERE uClient=%u ORDER BY uClient",uClient);
 	else 
-		sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT
-				" WHERE uClient=%2$u AND (uClient=%1$u OR uOwner"
-				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-				" ORDER BY uClient",guCompany,uClient);
-
+		sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM tClient WHERE"
+				" (uOwner IN (SELECT uClient FROM tClient WHERE"
+				" ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%1$u) OR uOwner=%1$u) AND"
+				" cCode='Organization')) OR uOwner=%1$u OR uClient=%1$u)"
+				" AND uClient=%2$u"
+				" ORDER BY cLabel",
+						guCompany,uClient);
 }//void ExttClientSelectRow(void)
 
 
 void ExttClientListSelect(void)
 {
 	char cCat[512];
-
-	ExtListSelect("tClient",VAR_LIST_tClient);
+	//ACModel
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT);
+		sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM tClient");
 	else 
-		sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM " TCLIENT
-				" WHERE (uClient=%1$u OR uOwner"
-				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%1$u OR uClient=%1$u))"
-								,guCompany);
+		sprintf(gcQuery,"SELECT " VAR_LIST_tClient " FROM tClient WHERE"
+				" (uOwner IN (SELECT uClient FROM tClient WHERE"
+				" ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%1$u) OR uOwner=%1$u) AND"
+				" cCode='Organization')) OR uOwner=%1$u OR uClient=%1$u)",
+						guCompany);
 
 	//Changes here must be reflected below in ExttClientListFilter()
         if(!strcmp(gcFilter,"uClient"))
         {
                 sscanf(gcCommand,"%u",&uClient);
-		if(guPermLevel<10)
+		if(guPermLevel<12)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
@@ -578,7 +585,7 @@ void ExttClientListSelect(void)
         }
 	else if(!strcmp(gcFilter,"cLabel"))
         {
-		if(guPermLevel<10)
+		if(guPermLevel<12)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
@@ -720,26 +727,22 @@ void tTablePullDownResellers(unsigned uSelector,unsigned uBanner)
         MYSQL_ROW field;
 
         register int i,n;
-   
-	//hack 
-	//if(guPermLevel>11)
-	if(1)
+  
+	//ACModel 
+	if(guLoginClient==1 && guPermLevel>11)
 	{
-		sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT
-				" WHERE cCode='Organization' AND uClient!=1"
+		sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE"
+				" cCode='Organization'"
 				" ORDER BY cLabel");
 	}
 	else
 	{
-		sprintf(gcQuery,"SELECT uClient,cLabel FROM " TCLIENT
-				" WHERE cLabel!='%s'"
+		sprintf(gcQuery,"SELECT uClient,cLabel FROM tClient WHERE"
+				" (uOwner IN (SELECT uClient FROM tClient WHERE"
+				" ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%1$u) OR uOwner=%1$u) AND"
+				" cCode='Organization')) OR uOwner=%1$u OR uClient=%1$u)"
 				" AND cCode='Organization'"
-				" AND (uClient=%u OR uOwner"
-				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u OR uClient=%u))"
 				" ORDER BY cLabel",
-					gcUser,
-					guCompany,
-					guCompany,
 					guCompany);
 	}
 
@@ -798,6 +801,13 @@ void PermLevelDropDown(char *cuPerm)
 		else
 			printf(">");
 		printf("%s</option>\n",BO_CUSTOMER);
+
+		printf("<option ");
+		if(!strcmp(cuPerm,ORG_CUSTOMER))
+			printf("selected>");
+		else
+			printf(">");
+		printf("%s</option>\n",ORG_CUSTOMER);
 	}
 
 	//Allow admins to add resellers
@@ -897,7 +907,7 @@ void ContactsNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	if(guPermLevel<10 || !uClient)
+	if(!uClient)
 		return;
 
 	//Login info
@@ -945,7 +955,7 @@ void htmlRecordContext(void)
 			" href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",
 					uClient,cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
 	else if(uOwner==1 && strcmp(cLabel,"Root"))
-		printf("'%s' appears to be an ASP root company",cLabel);
+		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a> appears to be an ASP root company",uClient,cLabel);
 	else if(uOwner==1 && !strcmp(cLabel,"Root"))
 		printf("'Root' is the system created root user. This user is the only user that can"
 				" create ASP level companies. Make sure the passwd is changed"
