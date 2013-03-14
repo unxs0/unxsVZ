@@ -81,7 +81,7 @@ void DashBoard(const char *cOptionalMsg);
 void CloneReport(const char *cOptionalMsg);
 void ContainerReport(const char *cOptionalMsg);
 void EncryptPasswdMD5(char *pw);
-void GetConfiguration(const char *cName,char *cValue,
+unsigned GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
 		unsigned uNode,
 		unsigned uContainer,
@@ -2055,7 +2055,7 @@ void TextError(const char *cError, unsigned uContinue)
 }//void TextError(const char *cError, unsigned uContinue)
 
 
-void GetConfiguration(const char *cName,char *cValue,
+unsigned GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
 		unsigned uNode,
 		unsigned uContainer,
@@ -2066,8 +2066,9 @@ void GetConfiguration(const char *cName,char *cValue,
 
         char cQuery[1024];
 	char cExtra[100]={""};
+	unsigned uConfiguration=0;
 
-        sprintf(cQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='%s'",
+        sprintf(cQuery,"SELECT cValue,uConfiguration FROM tConfiguration WHERE cLabel='%s'",
 			cName);
 	if(uDatacenter)
 	{
@@ -2094,10 +2095,15 @@ void GetConfiguration(const char *cName,char *cValue,
 	}
         res=mysql_store_result(&gMysql);
         if((field=mysql_fetch_row(res)))
+	{
         	sprintf(cValue,"%.255s",field[0]);
+        	sscanf(field[1],"%u",&uConfiguration);
+	}
         mysql_free_result(res);
 
-}//void GetConfiguration(...)
+	return(uConfiguration);
+
+}//unsigned GetConfiguration(...)
 
 
 unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname,unsigned uOwner,unsigned uLoginClient);

@@ -145,6 +145,8 @@ unsigned CreateExecuteCommandsJob(unsigned uDatacenter,unsigned uNode,unsigned u
 unsigned uGetPrimaryContainerGroup(unsigned uContainer);
 unsigned uGetPrimaryContainerGroupGlueRecord(unsigned uContainer);
 unsigned UpdatePrimaryContainerGroup(unsigned uContainer,unsigned uNewGroup);
+unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
+			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -2850,6 +2852,11 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Create job for unxsBind,"
 								" but no cunxsBindARecordJobZone");
 
+				//Pre verify uNodeCommandJob script is in tConfiguration
+				char cPostRemoteMigrationNodeScript[256]={""};
+				unsigned uConfiguration=0;
+				uConfiguration=GetConfiguration("cPostRemoteMigrationNodeScript",cPostRemoteMigrationNodeScript,uTargetDatacenter,0,0,0);
+
 				//This code should be compatible with new -clone hostname scheme
 				char cPrevHostname[100]={""};
 				if(uSource)
@@ -2886,7 +2893,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					{
 						sprintf(cHostname,"%.32s.%.64s",cLabel,cp+1);
 					}
-				}
+				}//if(uSource) clone section
 
 				uHostnameLen=strlen(cHostname);
 				if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
@@ -2898,7 +2905,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
-				}
+				}//clone section
 
                         	guMode=0;
 
@@ -2942,11 +2949,15 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uSource)
 						HostnameContainerJob(uTargetDatacenter,uTargetNode,uContainer,cPrevHostname,uOwner,guLoginClient);
 
+					uNodeCommandJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,uConfiguration,
+						cPostRemoteMigrationNodeScript);
+
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 					tContainer("MigrateContainerJob() Done");
 				}
 				else
 				{
+					//TODO check need for any roll back
 					tContainer("<blink>Error:</blink> No jobs created!");
 				}
 			}
@@ -7396,3 +7407,28 @@ unsigned UpdatePrimaryContainerGroup(unsigned uContainer,unsigned uNewGroup)
 		return(1);
 
 }//unsigned UpdatePrimaryContainerGroup(unsigned uContainer,unsigned uNewGroup)
+
+
+unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
+			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs)
+{
+	unsigned uJob=0;
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='NodeCommandJob',cJobName='NodeCommandJob'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=1"
+			",cJobData='uConfiguration=%u;\ncArgs=%.128s;\n'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uDatacenter,uNode,uContainer,
+				uConfiguration,cArgs,
+				uOwner,uLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uJob=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","NodeCommandJob");
+	return(uJob);
+
+}//unsigned uNodeCommandJob()
+
