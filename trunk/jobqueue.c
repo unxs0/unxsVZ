@@ -96,11 +96,6 @@ unsigned TextConnectDb(void); //mysqlconnect.c
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter);
-void GetConfiguration(const char *cName,char *cValue,
-		unsigned uDatacenter,
-		unsigned uNode,
-		unsigned uContainer,
-		unsigned uHtml);
 
 //file scoped vars.
 static unsigned gfuNode=0;

@@ -107,11 +107,6 @@ void DashBoard(const char *cOptionalMsg);
 void CloneReport(const char *cOptionalMsg);
 void ContainerReport(const char *cOptionalMsg);
 void EncryptPasswdMD5(char *pw);
-void GetConfiguration(const char *cName,char *cValue,
-		unsigned uDatacenter,
-		unsigned uNode,
-		unsigned uContainer,
-		unsigned uHtml);
 void UpdateSchema(void);
 void RecoverMode(void);
 void ResetAllSyncPeriod(void);

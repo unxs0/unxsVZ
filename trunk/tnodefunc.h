@@ -900,8 +900,8 @@ void tNodeNavList(unsigned uDatacenter)
         MYSQL_ROW field;
 	unsigned uMysqlNumRows;
 	unsigned uNumRows=0;
-#define LIMIT " LIMIT 25"
-#define uLIMIT 24
+#define LIMIT " LIMIT 33"
+#define uLIMIT 32
 
 	if(uDatacenter)
 		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u"

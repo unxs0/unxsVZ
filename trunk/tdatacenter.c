@@ -11,11 +11,6 @@ PURPOSE
 
 
 #include "mysqlrad.h"
-void GetConfiguration(const char *cName,char *cValue,
-		unsigned uDatacenter,
-		unsigned uNode,
-		unsigned uContainer,
-		unsigned uHtml);
 
 //Table Variables
 //Table Variables
