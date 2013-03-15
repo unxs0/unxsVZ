@@ -139,7 +139,7 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
 				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient,unsigned uDebug);
 void htmlCloneInfo(unsigned uContainer);
-void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,
+unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,
 			char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
 unsigned CreateExecuteCommandsJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner,char *cCommands);
 unsigned uGetPrimaryContainerGroup(unsigned uContainer);
@@ -2913,7 +2913,9 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup)
 					UpdatePrimaryContainerGroup(uContainer,uGroup);
 
-				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient,uWizIPv4,uStatus))
+				unsigned uMigrateContainerJob=0;
+				if((uMigrateContainerJob=
+					MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient,uWizIPv4,uStatus)))
 				{
 					char cIPOld[32]={""};
 
@@ -2941,19 +2943,25 @@ void ExttContainerCommands(pentry entries[], int x)
 
 					//Note that these jobs are for new node
 					//Then this job must run after migration.
-					IPContainerJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,cIPOld);
+					unsigned uIPContainerJob=IPContainerJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,cIPOld);
 					//Create unxsBind DNS
-					CreateDNSJob(uWizIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient);
+					unsigned uCreateDNSJob=CreateDNSJob(uWizIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient);
 
 					//Create change hostname job
 					if(uSource)
 						HostnameContainerJob(uTargetDatacenter,uTargetNode,uContainer,cPrevHostname,uOwner,guLoginClient);
 
-					uNodeCommandJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,uConfiguration,
-						cPostRemoteMigrationNodeScript);
 
-					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
-					tContainer("MigrateContainerJob() Done");
+					if(cPostRemoteMigrationNodeScript[0] && uConfiguration)
+					{
+						char cArgs[256];
+						sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u\nuJob1=%u\nuJob2=%u\n",
+							cPostRemoteMigrationNodeScript,uMigrateContainerJob,uIPContainerJob,uCreateDNSJob);
+						uNodeCommandJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,uConfiguration,
+							cArgs);
+						sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+						tContainer("MigrateContainerJob() Done");
+					}
 				}
 				else
 				{
@@ -7172,7 +7180,7 @@ unsigned CommonCloneContainer(
 }//unsigned CommonCloneContainer()
 
 
-void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy)
+unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -7184,9 +7192,9 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 
 	//Sanity checks
 	if(!cHostname[0])
-		return;
+		return 0;
 	if(!uIPv4 && !cOptionalIPv4[0])
-		return;
+		return 0;
 
 	//If called in loop be efficient.
 	if(uOnlyOnce)
@@ -7198,7 +7206,7 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 
 	//Sanity checks
 	if(!cZone[0])
-		return;
+		return 0;
 
 	if(cOptionalIPv4!=NULL && cOptionalIPv4[0])
 	{
@@ -7219,7 +7227,7 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 
 	//Sanity checks
 	if(!cIPv4[0])
-		return;
+		return 0;
 
 	sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
 		"cIPv4=%.99s;\n"
@@ -7227,9 +7235,9 @@ void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char 
 		"cView=%.31s;\n",
 			cHostname,cIPv4,cZone,cView);
 
-	unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy);
+	return(unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy));
 
-}//void CreateDNSJob()
+}//unsigned CreateDNSJob()
 
 
 unsigned uGetSearchGroup(const char *gcUser,unsigned uGroupType)
@@ -7418,7 +7426,7 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"
-			",cJobData='uConfiguration=%u;\ncArgs=%.128s;\n'"
+			",cJobData='uConfiguration=%u;\n%.256s'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uDatacenter,uNode,uContainer,
 				uConfiguration,cArgs,
