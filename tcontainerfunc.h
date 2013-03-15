@@ -2796,7 +2796,35 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(gcUseThisIP[0])
 					tContainer("<blink>Error:</blink> NAT container remote migration not supported yet.");
 				guMode=10001;
-				tContainer("Select Migration Target");
+				tContainer("Select Migration Node");
+			}
+			else
+			{
+				tContainer("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Select Migration Node"))
+                {
+                        ProcesstContainerVars(entries,x);
+			if( (uStatus==uACTIVE||uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+
+                        	guMode=10001;
+				if(uTargetNode==uNode)
+					tContainer("<blink>Error:</blink> Can't migrate to same node. Try 'Template Wizard'");
+				if(uTargetNode==0)
+					tContainer("<blink>Error:</blink> Please select a valid target node");
+				sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
+				if(uTargetDatacenter==uDatacenter)
+					tContainer("<blink>Error:</blink> Can't migrate to same datacenter. Try 'Migration Wizard'");
+
+				guMode=10002;
+				tContainer("Confirm Remote Migration");
 			}
 			else
 			{
@@ -2808,7 +2836,6 @@ void ExttContainerCommands(pentry entries[], int x)
                         ProcesstContainerVars(entries,x);
 			if( (uStatus==uACTIVE||uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
-				unsigned uTargetDatacenter=0;
 				unsigned uIPv4Available=0;
                         	guMode=0;
 
@@ -2816,7 +2843,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
 
-                        	guMode=10001;
+                        	guMode=10002;
 				if(uTargetNode==uNode)
 					tContainer("<blink>Error:</blink> Can't migrate to same node. Try 'Template Wizard'");
 				if(uTargetNode==0)
@@ -2852,10 +2879,20 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Create job for unxsBind,"
 								" but no cunxsBindARecordJobZone");
 
+
 				//Pre verify uNodeCommandJob script is in tConfiguration
 				char cPostRemoteMigrationNodeScript[256]={""};
 				unsigned uConfiguration=0;
-				uConfiguration=GetConfiguration("cPostRemoteMigrationNodeScript",cPostRemoteMigrationNodeScript,uTargetDatacenter,0,0,0);
+				//First try most specific match datacenter and node
+				uConfiguration=GetConfiguration("cPostRemoteMigrationNodeScript",cPostRemoteMigrationNodeScript,
+						uTargetDatacenter,uTargetNode,0,0);
+				//If that fails try datacenter wide configuration
+				if(!uConfiguration)
+					uConfiguration=GetConfiguration("cPostRemoteMigrationNodeScript",cPostRemoteMigrationNodeScript,
+						uTargetDatacenter,0,0,0);
+
+				//debug only
+				tContainer(cPostRemoteMigrationNodeScript);
 
 				//This code should be compatible with new -clone hostname scheme
 				char cPrevHostname[100]={""};
@@ -3732,19 +3769,30 @@ void ExttContainerButtons(void)
                 break;
 
                 case 10001:
-                        printf("<p><u>Remote Migration</u><br>");
-			printf("Here you will select the hardware node target (must be on a different datacenter.)"
+                        printf("<p><u>Remote Migration (Step 1)</u><br>");
+			printf("Here you will select the hardware node target (must be in a different datacenter.)"
 				" If the selected node is"
 				" oversubscribed, not available, or scheduled for maintenance. You will"
 				" be informed at the next step\n<p>\n");
 			printf("<p>Target node<br>");
 			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
+			printf("<p><input title='Select the node for a remote migration job for the current container'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Select Migration Node'>\n");
+                break;
+
+                case 10002:
+                        printf("<p><u>Remote Migration (Last Step)</u><br>");
+			printf("Here you must select the new IP and optionally change the container primary group.\n<p>\n");
+			printf("<p>Target node<br>");
+			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,0);
 			printf("<p>Select new IPv4<br>");
-			tTablePullDownAvail("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1);
+			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
+				uTargetDatacenter,uOwner);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetPrimaryContainerGroup(uContainer);//0=not for node
 			tContainerGroupPullDown(uChangeGroup,1);
-			printf("<p><input title='Create a migration job for the current container'"
+			printf("<p><input title='Create a remote migration job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Remote Migration'>\n");
                 break;
