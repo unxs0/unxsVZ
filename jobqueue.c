@@ -90,6 +90,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneContainer);
 
 int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
+void NodeCommandJob(unsigned uJob,unsigned uContainer);
 
 //extern protos
 unsigned TextConnectDb(void); //mysqlconnect.c
@@ -462,6 +463,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"RecurringJob"))
 	{
 		RecurringJob(uJob,uDatacenter,uNode,uContainer,cJobData);
+	}
+	else if(!strcmp(cJobName,"NodeCommandJob"))
+	{
+		NodeCommandJob(uJob,uContainer);
 	}
 	else if(1)
 	{
@@ -5497,4 +5502,76 @@ void ExecuteCommands(unsigned uJob,unsigned uContainer,char *cJobData)
 	return;
 
 }//void ExecuteCommands()
+
+
+void NodeCommandJob(unsigned uJob,unsigned uContainer)
+{
+
+	//1-. Get script/command name
+	char cCommand[256]={""};
+
+	//2-. Make sure it is security valid
+	struct stat statInfo;
+
+	if(uNotValidSystemCallArg(cCommand))
+	{
+		logfileLine("NodeCommandJob","uNotValidSystemCallArg security alert");
+		tJobErrorUpdate(uJob,"security alert");
+		return;
+	}
+
+	//Only run if command is chmod 500 and owned by root for extra security reasons.
+	if(stat(cCommand,&statInfo))
+	{
+		logfileLine("NodeCommandJob","stat failed");
+		logfileLine("NodeCommandJob",cCommand);
+		tJobErrorUpdate(uJob,"stat failed");
+		return;
+	}
+	if(statInfo.st_uid!=0)
+	{
+		logfileLine("NodeCommandJob","not owned by root");
+		tJobErrorUpdate(uJob,"not owned by root");
+		return;
+	}
+	if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
+	{
+		logfileLine("NodeCommandJob","not chmod 500");
+		tJobErrorUpdate(uJob,"not chmod 500");
+		return;
+	}
+
+	//3-. Get basic container parameters
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	char cOnScriptCall[512];
+
+	sprintf(gcQuery,"SELECT tContainer.cHostname,tIP.cLabel"
+				" FROM tContainer,tIP WHERE tContainer.uIPv4=tIP.uIP AND tContainer.uContainer=%u",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("NodeCommandJob",mysql_error(&gMysql));
+		exit(2);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cHostname,"%.99s",field[0]);
+
+		sprintf(cOnScriptCall,"%.255s %u %s %s",cCommand,uContainer,field[0],field[1]);
+		if(system(cOnScriptCall))
+		{
+			logfileLine("NodeCommandJob",cOnScriptCall);
+			tJobErrorUpdate(uJob,"command failed");
+			return;
+		}
+	}
+	mysql_free_result(res);
+
+	//Everything ok
+	tJobDoneUpdate(uJob);
+
+
+}//void NodeCommandJob()
 

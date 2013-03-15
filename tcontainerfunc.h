@@ -2879,21 +2879,6 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Create job for unxsBind,"
 								" but no cunxsBindARecordJobZone");
 
-
-				//Pre verify uNodeCommandJob script is in tConfiguration
-				char cPostRemoteMigrationNodeScript[256]={""};
-				unsigned uConfiguration=0;
-				//First try most specific match datacenter and node
-				uConfiguration=GetConfiguration("cPostRemoteMigrationNodeScript",cPostRemoteMigrationNodeScript,
-						uTargetDatacenter,uTargetNode,0,0);
-				//If that fails try datacenter wide configuration
-				if(!uConfiguration)
-					uConfiguration=GetConfiguration("cPostRemoteMigrationNodeScript",cPostRemoteMigrationNodeScript,
-						uTargetDatacenter,0,0,0);
-
-				//debug only
-				tContainer(cPostRemoteMigrationNodeScript);
-
 				//This code should be compatible with new -clone hostname scheme
 				char cPrevHostname[100]={""};
 				if(uSource)
@@ -2935,6 +2920,12 @@ void ExttContainerCommands(pentry entries[], int x)
 				uHostnameLen=strlen(cHostname);
 				if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
 						tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+				//debug only
+				tContainer("s3");
+
+				//Things change from here on down
+                        	guMode=0;
+
 				if(uSource)
 				{
 					sprintf(gcQuery,"UPDATE tContainer SET cHostname='%s',cLabel='%s'"
@@ -2943,8 +2934,6 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
 				}//clone section
-
-                        	guMode=0;
 
 				//Optional change group.
 				if(uGroup)
@@ -2989,16 +2978,46 @@ void ExttContainerCommands(pentry entries[], int x)
 						HostnameContainerJob(uTargetDatacenter,uTargetNode,uContainer,cPrevHostname,uOwner,guLoginClient);
 
 
-					if(cPostRemoteMigrationNodeScript[0] && uConfiguration)
+					//Create optional job for source node
+					char cPostMigrationNodeScript[256]={""};
+					unsigned uConfiguration=0;
+					unsigned uCommandJob=0;
+					//First try most specific match datacenter and node
+					uConfiguration=GetConfiguration("cPostMigrationNodeScript",cPostMigrationNodeScript,
+						uDatacenter,uNode,0,0);
+					//If that fails try datacenter wide configuration
+					if(!uConfiguration)
+						uConfiguration=GetConfiguration("cPostMigrationNodeScript",
+							cPostMigrationNodeScript,uDatacenter,0,0,0);
+					if(cPostMigrationNodeScript[0] && uConfiguration)
 					{
 						char cArgs[256];
 						sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u\nuJob1=%u\nuJob2=%u\n",
-							cPostRemoteMigrationNodeScript,uMigrateContainerJob,uIPContainerJob,uCreateDNSJob);
+							cPostMigrationNodeScript,uMigrateContainerJob,uIPContainerJob,uCreateDNSJob);
+						uCommandJob=uNodeCommandJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient,uConfiguration,
+							cArgs);
+					}
+
+					//Create optional job for remote node
+					char cPostMigrationRemoteNodeScript[256]={""};
+					uConfiguration=0;
+					//First try most specific match datacenter and node
+					uConfiguration=GetConfiguration("cPostMigrationRemoteNodeScript",cPostMigrationRemoteNodeScript,
+						uDatacenter,uNode,0,0);
+					//If that fails try datacenter wide configuration
+					if(!uConfiguration)
+						uConfiguration=GetConfiguration("cPostMigrationRemoteNodeScript",
+							cPostMigrationRemoteNodeScript,uDatacenter,0,0,0);
+					if(cPostMigrationRemoteNodeScript[0] && uConfiguration)
+					{
+						char cArgs[256];
+						sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u\nuJob1=%u\nuJob2=%u\nuJob3=%u\n",
+							cPostMigrationRemoteNodeScript,uMigrateContainerJob,uIPContainerJob,uCreateDNSJob,uCommandJob);
 						uNodeCommandJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,uConfiguration,
 							cArgs);
-						sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
-						tContainer("MigrateContainerJob() Done");
 					}
+					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
+					tContainer("MigrateContainerJob() Done");
 				}
 				else
 				{
