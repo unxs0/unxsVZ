@@ -90,7 +90,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneContainer);
 
 int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
-void NodeCommandJob(unsigned uJob,unsigned uContainer);
+void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNode,unsigned uDatacenter);
 
 //extern protos
 unsigned TextConnectDb(void); //mysqlconnect.c
@@ -466,7 +466,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	}
 	else if(!strcmp(cJobName,"NodeCommandJob"))
 	{
-		NodeCommandJob(uJob,uContainer);
+		NodeCommandJob(uJob,uContainer,cJobData,uNode,uDatacenter);
 	}
 	else if(1)
 	{
@@ -5504,11 +5504,18 @@ void ExecuteCommands(unsigned uJob,unsigned uContainer,char *cJobData)
 }//void ExecuteCommands()
 
 
-void NodeCommandJob(unsigned uJob,unsigned uContainer)
+void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNode,unsigned uDatacenter)
 {
-
 	//1-. Get script/command name
 	char cCommand[256]={""};
+	unsigned uConfiguration=0;
+	sscanf(cJobData,"uConfiguration=%u;",&uConfiguration);
+	if(!uConfiguration)
+	{
+		logfileLine("NodeCommandJob","Could not determine uConfiguration");
+		tJobErrorUpdate(uJob,"uConfiguration==0");
+		return;
+	}
 
 	//2-. Make sure it is security valid
 	struct stat statInfo;
@@ -5541,9 +5548,65 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer)
 		return;
 	}
 
-	//3-. Get basic container parameters
+
+	//3-. Make sure any other uJobN=uJob; jobs have run ok.
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uJob0=0,uJob1=0,uJob2=0,uJob3=0;
+	sscanf(cJobData,"uJob0=%u;",&uJob0);
+	sscanf(cJobData,"uJob1=%u;",&uJob1);
+	sscanf(cJobData,"uJob2=%u;",&uJob2);
+	sscanf(cJobData,"uJob3=%u;",&uJob3);
+	if(uJob0)
+	{
+		sprintf(gcQuery,"SELECT SUM(uJobStatus) FROM tJob WHERE uJob=%u OR uJob=%u OR uJob=%u OR uJob=%u",
+			uJob0,uJob1,uJob2,uJob3);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("NodeCommandJob",mysql_error(&gMysql));
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			unsigned uSumJobStatus=0;
+			unsigned uCount=0;
+			sscanf(field[0],"%u",&uSumJobStatus);
+			if(uJob3 && uJob2 && uJob1 && uJob0)
+				uCount=4;
+			else if(uJob2 && uJob1 && uJob0)
+				uCount=3;
+			else if(uJob1 && uJob0)
+				uCount=2;
+			else if(uJob0)
+				uCount=1;
+
+			if(uSumJobStatus!=(uCount*3))
+			{
+				tJobWaitingUpdate(uJob);
+				mysql_free_result(res);
+				return;
+			}
+
+		}
+		else
+		{
+			logfileLine("NodeCommandJob","no uJobStatus");
+			tJobErrorUpdate(uJob,"no uJobStatus");
+			mysql_free_result(res);
+			return;
+		}
+		mysql_free_result(res);
+	}
+	else
+	{
+		logfileLine("NodeCommandJob","no uJob0 parameter");
+		tJobErrorUpdate(uJob,"no uJob0 parameters");
+		return;
+	}
+
+	//4-. Get basic container parameters and run the command
 	char cOnScriptCall[512];
 
 	sprintf(gcQuery,"SELECT tContainer.cHostname,tIP.cLabel"
@@ -5557,8 +5620,6 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer)
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		sprintf(cHostname,"%.99s",field[0]);
-
 		sprintf(cOnScriptCall,"%.255s %u %s %s",cCommand,uContainer,field[0],field[1]);
 		if(system(cOnScriptCall))
 		{
