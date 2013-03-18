@@ -16,3 +16,5 @@
 71	Awaiting IP Changes	1	1	1239317382	0	0
 81	Awaiting Clone	1	1	1245161509	0	0
 91	Awaiting Failover	1	1	1255030521	0	0
+101	Remote Appliance	1	1	1255030521	0	0
+111	Awaiting Restart	1	1	1255030521	0	0
