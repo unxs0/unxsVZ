@@ -102,6 +102,7 @@ unsigned CreateNewContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCon
 unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned DestroyContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned StopContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
+unsigned uRestartContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner);
 unsigned CancelContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uCancelMode);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
@@ -3017,7 +3018,15 @@ void ExttContainerCommands(pentry entries[], int x)
 							cArgs);
 					}
 					sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
-					tContainer("MigrateContainerJob() Done");
+
+					if(cPostMigrationRemoteNodeScript[0] && cPostMigrationNodeScript[0])
+						tContainer("MigrateContainerJob() done w/cPostMigration jobs created.");
+					else if(cPostMigrationNodeScript[0])
+						tContainer("MigrateContainerJob() done w/cPostMigration job created.");
+					else if(cPostMigrationRemoteNodeScript[0])
+						tContainer("MigrateContainerJob() done w/cPostMigrationRemote job created.");
+					else if(1)
+						tContainer("MigrateContainerJob() done.");
 				}
 				else
 				{
@@ -4289,6 +4298,9 @@ void ExttContainerAuxTable(void)
 				" are not clones themselves. Must configure tConfiguration AutoCloneNode, cAutoCloneSyncTime and cAutoCloneIPClass'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Clone'>\n");
+			printf("&nbsp; <input title='Creates job(s) for restarting active container(s).'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Restart'>\n");
 			printf("&nbsp; <input title='Creates job(s) for stopping active container(s).'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Stop'>\n");
@@ -4453,6 +4465,33 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group Stop
+
+				else if(!strcmp(gcCommand,"Group Restart"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uACTIVE)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						if(uRestartContainerJob(sContainer.uDatacenter,
+								sContainer.uNode,uCtContainer,guCompany))
+						{
+							SetContainerStatus(uCtContainer,uAWAITRESTART);
+							sprintf(cResult,"group restart job created");
+						}
+						else
+						{
+							sprintf(cResult,"group restart job not created!");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"group restart request ignored");
+					}
+					break;
+				}//Group Restart
 
 				//Group Destroy Uses guOpOnClones
 				else if(!strcmp(gcCommand,"Group Destroy"))
@@ -7506,4 +7545,27 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 	return(uJob);
 
 }//unsigned uNodeCommandJob()
+
+
+unsigned uRestartContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner)
+{
+	unsigned uCount=0;
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='RestartContainerJob(%u)',cJobName='RestartContainer'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=1"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				uOwner,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","Restart");
+	return(uCount);
+
+}//unsigned uRestartContainerJob()
+
 

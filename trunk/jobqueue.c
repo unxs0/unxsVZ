@@ -91,6 +91,7 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 
 int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
 void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNode,unsigned uDatacenter);
+void RestartContainer(unsigned uJob,unsigned uContainer);
 
 //extern protos
 unsigned TextConnectDb(void); //mysqlconnect.c
@@ -435,6 +436,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"StopContainer"))
 	{
 		StopContainer(uJob,uContainer);
+	}
+	else if(!strcmp(cJobName,"RestartContainer"))
+	{
+		RestartContainer(uJob,uContainer);
 	}
 	else if(!strcmp(cJobName,"DestroyContainer"))
 	{
@@ -5635,4 +5640,99 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 
 
 }//void NodeCommandJob()
+
+
+void RestartContainer(unsigned uJob,unsigned uContainer)
+{
+
+	//1-.
+	sprintf(gcQuery,"/usr/sbin/vzctl --verbose restart %u",uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("RestartContainer",gcQuery);
+		tJobErrorUpdate(uJob,"vzctl restart failed");
+		return;
+	}
+
+	//Optional group based script may exist to be executed.
+	//
+	//Primary group is oldest tGroupGlue entry.
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+			" AND tProperty.uKey=tGroupGlue.uGroup"
+			" AND tGroupGlue.uContainer=%u"
+			" AND tProperty.cName='cJob_OnRestartScript' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",uPROP_GROUP,uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("RestartContainer",mysql_error(&gMysql));
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		struct stat statInfo;
+		char cOnScriptCall[512];
+		char cCommand[256];
+		char *cp;
+
+		sprintf(cCommand,"%.255s",field[0]);
+
+		//Remove trailing junk
+		if((cp=strchr(cCommand,'\n')) || (cp=strchr(cCommand,'\r'))) *cp=0;
+
+		if(uNotValidSystemCallArg(cCommand))
+		{
+			logfileLine("RestartContainer","cJob_OnRestartScript security alert");
+			goto CommonExit2;
+		}
+
+		//Only run if command is chmod 500 and owned by root for extra security reasons.
+		if(stat(cCommand,&statInfo))
+		{
+			logfileLine("RestartContainer","stat failed for cJob_OnRestartScript");
+			logfileLine("RestartContainer",cCommand);
+			goto CommonExit2;
+		}
+		if(statInfo.st_uid!=0)
+		{
+			logfileLine("RestartContainer","cJob_OnRestartScript is not owned by root");
+			goto CommonExit2;
+		}
+		if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
+		{
+			logfileLine("RestartContainer","cJob_OnRestartScript is not chmod 500");
+			goto CommonExit2;
+		}
+
+		char cHostname[100]={""};
+		sprintf(gcQuery,"SELECT tContainer.cHostname"
+				" FROM tContainer WHERE uContainer=%u",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("",mysql_error(&gMysql));
+			exit(2);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cHostname,"%.99s",field[0]);
+
+			sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
+			if(system(cOnScriptCall))
+			{
+				logfileLine("RestartContainer",cOnScriptCall);
+			}
+		}
+	}
+CommonExit2:
+	mysql_free_result(res);
+
+	//Everything ok
+	SetContainerStatus(uContainer,uACTIVE);
+	tJobDoneUpdate(uJob);
+
+}//void RestartContainer()
 

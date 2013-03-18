@@ -51,6 +51,7 @@ AUTHOR
 #define uAWAITCLONE	81
 #define uAWAITFAIL	91
 #define uREMOTEAPPLIANCE 101
+#define uAWAITRESTART	111
 
 //tProperty fixed types aka constants
 //Actually tType constants
