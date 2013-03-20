@@ -5744,6 +5744,7 @@ CommonExit2:
 
 //Special migration of container that runs optional source node script.
 //and that is usually used for DNS based services running in container.
+//Code that create job must double check every resource that will be used.
 void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 {
 	char cTargetNodeIPv4[256]={""};
@@ -5780,7 +5781,6 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	sscanf(cJobData,"uTargetNode=%*u;\nuIPv4=%u;",&uIPv4);
 	if(uIPv4)
 	{
-		logfileLine("DNSMoveContainer","Migration with new IP");
 		sprintf(cIPv4,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
 		logfileLine("DNSMoveContainer",cIPv4);
 
@@ -5837,7 +5837,7 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
 
 
-	//1-. vzdump the container
+	//0-. Get configuration data
 	char cSnapshotDir[256]={""};
 	GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSnapshotDir[0])
@@ -5848,73 +5848,182 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 	if(uNotValidSystemCallArg(cSnapshotDir))
 		cSnapshotDir[0]=0;
-	//1-.
-	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u",uContainer);
-	else
-		sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir %s --snapshot %u",
-									cSnapshotDir,uContainer);
-	if(system(gcQuery))
-	{
-		logfileLine("DNSMoveContainer",gcQuery);
-		tJobErrorUpdate(uJob,"vzdump error1");
-		return;
-	}
-	//1b-.
-	//New vzdump uses new file format, E.G.: /var/vzdump/vzdump-openvz-10511-2011_02_03-07_37_01.tgz
-	//Quick fix (hackorama) just mv it to old format
-	//Added support for old vzdump
-	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"if [ ! -f /var/vzdump/vzdump-%u.tgz ];then"
-				" mv `ls -1 /vz/dump/vzdump*-%u-*.tgz | head -n 1` /vz/dump/vzdump-%u.tgz; fi;",
-					uContainer,uContainer,uContainer);
-	else
-		sprintf(gcQuery,"if [ -f /var/vzdump/vzdump-%u.tgz ] && [ \"%s\" != \"/var/vzdump\" ];then"
-				" mv /var/vzdump/vzdump-%u.tgz %s/vzdump-%u.tgz;else"
-				" if [ -f %s/vzdump*-%u-*.tgz ];then mv `ls -1 %s/vzdump*-%u-*.tgz | head -n 1` %s/vzdump-%u.tgz;fi;fi;",
-				uContainer,cSnapshotDir,
-				uContainer,cSnapshotDir,uContainer,
-				cSnapshotDir,uContainer,cSnapshotDir,uContainer,cSnapshotDir,uContainer);
-	if(system(gcQuery))
-	{
-		logfileLine("DNSMoveContainer",gcQuery);
-		tJobErrorUpdate(uJob,"error rename");
-		return;
-	}
-	//1c-. md5sum generation we stash in /vz/template/cache
+
+	//1-. vzdump the container unless it already exists and was created recently
 	struct stat statInfo;
-	if(!stat("/usr/bin/md5sum",&statInfo))
+	char cSnapshotFile[256]={""};
+	if(cSnapshotDir[0])
+		sprintf(cSnapshotFile,"%s/vzdump-%u.tgz",cSnapshotDir,uContainer);
+	else
+		sprintf(cSnapshotFile,"/var/vzdump/vzdump-%u.tgz",uContainer);
+	//if(stat(cSnapshotFile,&statInfo))
+	//TODO use mod time and figure out
+	if(1)
 	{
+
 		if(!cSnapshotDir[0])
-			sprintf(gcQuery,"/usr/bin/md5sum /var/vzdump/vzdump-%1$u.tgz >"
-				" /vz/template/cache/vzdump-%1$u.tgz.md5sum",uContainer);
+			sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u",uContainer);
 		else
-			sprintf(gcQuery,"/usr/bin/md5sum %1$s/vzdump-%2$u.tgz >"
-				" /vz/template/cache/vzdump-%2$u.tgz.md5sum",cSnapshotDir,uContainer);
+			sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir %s --snapshot %u",
+									cSnapshotDir,uContainer);
 		if(system(gcQuery))
 		{
 			logfileLine("DNSMoveContainer",gcQuery);
-			tJobErrorUpdate(uJob,"md5sum failed");
+			tJobErrorUpdate(uJob,"vzdump error1");
+			unlink("/var/run/vzdump.lock");
 			return;
 		}
-	}
+		unlink("/var/run/vzdump.lock");
+		//1b-.
+		//New vzdump uses new file format, E.G.: /var/vzdump/vzdump-openvz-10511-2011_02_03-07_37_01.tgz
+		//Quick fix (hackorama) just mv it to old format
+		//Added support for old vzdump
+		if(!cSnapshotDir[0])
+			sprintf(gcQuery,"if [ ! -f /var/vzdump/vzdump-%u.tgz ];then"
+					" mv `ls -1 /vz/dump/vzdump*-%u-*.tgz | head -n 1` /vz/dump/vzdump-%u.tgz; fi;",
+						uContainer,uContainer,uContainer);
+		else
+			sprintf(gcQuery,"if [ -f /var/vzdump/vzdump-%u.tgz ] && [ \"%s\" != \"/var/vzdump\" ];then"
+					" mv /var/vzdump/vzdump-%u.tgz %s/vzdump-%u.tgz;else"
+					" if [ -f %s/vzdump*-%u-*.tgz ];then mv `ls -1 %s/vzdump*-%u-*.tgz | head -n 1` %s/vzdump-%u.tgz;fi;fi;",
+					uContainer,cSnapshotDir,
+					uContainer,cSnapshotDir,uContainer,
+					cSnapshotDir,uContainer,cSnapshotDir,uContainer,cSnapshotDir,uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("DNSMoveContainer",gcQuery);
+			tJobErrorUpdate(uJob,"error rename");
+			return;
+		}
+
+		//1c-. md5sum generation we stash in /vz/template/cache
+		if(!stat("/usr/bin/md5sum",&statInfo))
+		{
+			if(!cSnapshotDir[0])
+				sprintf(gcQuery,"/usr/bin/md5sum /var/vzdump/vzdump-%1$u.tgz >"
+					" /var/vzdump/vzdump-%1$u.tgz.md5sum",uContainer);
+			else
+				sprintf(gcQuery,"/usr/bin/md5sum %1$s/vzdump-%2$u.tgz >"
+					" %1$s/vzdump-%2$u.tgz.md5sum",cSnapshotDir,uContainer);
+			if(system(gcQuery))
+			{
+				logfileLine("DNSMoveContainer",gcQuery);
+				tJobErrorUpdate(uJob,"md5sum failed");
+				return;
+			}
+		}
+		else
+		{
+			logfileLine("DNSMoveContainer",gcQuery);
+			tJobErrorUpdate(uJob,"no md5sum");
+			return;
+		}
+	}//If tgz file does not already exist
 	else
 	{
-		logfileLine("DNSMoveContainer",gcQuery);
-		tJobErrorUpdate(uJob,"no md5sum");
+			char cMsg[128]={""};
+			sprintf(cMsg,"%.99s already exists",cSnapshotFile);
+			logfileLine("DNSMoveContainer",cMsg);
+	}
+
+
+	//2-. Change container label after vzdump to avoid any confusion
+	sprintf(gcQuery,"UPDATE tContainer SET cLabel=CONCAT(cLabel,'-m') WHERE uContainer=%u AND LENGTH(cLabel)<30 AND cLabel NOT LIKE '%%-m'",
+				uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("DNSMoveContainer",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"Update cLabel error");
 		return;
 	}
 
-//Debug only
-logfileLine("DNSMoveContainer",gcQuery);
-tJobErrorUpdate(uJob,"debug stop 1");
-return;
-
-	//2-. Change container label and hostname after vzdump
-
 	//3-. SCP the dump to the new node.
+	logfileLine("DNSMoveContainer","scp start");
+	if(cSnapshotDir[0])
+	{
+		sprintf(gcQuery,"/usr/bin/ssh %s %s 'mkdir -p %s'",
+				cSSHOptions,cTargetNodeIPv4,cSnapshotDir);
+		if(system(gcQuery))
+		{
+			logfileLine("DNSMoveContainer",gcQuery);
+			tJobErrorUpdate(uJob,"ssh mkdir cSnapshotDir");
+			return;
+		}
+	}
+	sprintf(gcQuery,"/usr/bin/scp %s %s %s:%s",
+			cSCPOptions,cSnapshotFile,cTargetNodeIPv4,cSnapshotFile);
+	if(system(gcQuery))
+	{
+		logfileLine("DNSMoveContainer",gcQuery);
+		tJobErrorUpdate(uJob,"scp vzdump");
+		return;
+	}
+	//scp md5sum 
+	sprintf(gcQuery,"/usr/bin/scp %s %s.md5sum %s:%s.md5sum",
+			cSCPOptions,cSnapshotFile,cTargetNodeIPv4,cSnapshotFile);
+	if(system(gcQuery))
+	{
+		logfileLine("DNSMoveContainer",gcQuery);
+		tJobErrorUpdate(uJob,"scp md5sum");
+		return;
+	}
+	//Check scp via remote md5sum
+	sprintf(gcQuery,"ssh %s %s '/usr/bin/md5sum -c %s.md5sum'",
+				cSSHOptions,cTargetNodeIPv4,cSnapshotFile);
+	if(system(gcQuery))
+	{
+		logfileLine("DNSMoveContainer",gcQuery);
+		tJobErrorUpdate(uJob,"ssh md5sum");
+		return;
+	}
+	logfileLine("DNSMoveContainer","scp end");
 
-	//4-. Start the container on the new node.
+	//4-. Restore the container on the new node. Start if uPrevStatus=1;
+	logfileLine("DNSMoveContainer","vzrestore start");
+	sprintf(gcQuery,"ssh %s %s '/usr/sbin/vzrestore %s %u'",
+				cSSHOptions,cTargetNodeIPv4,cSnapshotFile,uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("DNSMoveContainer",gcQuery);
+		tJobErrorUpdate(uJob,"ssh vzrestore");
+		return;
+	}
+	logfileLine("DNSMoveContainer","vzrestore end");
+	//Change IP
+	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipdel all --save'",
+				cSSHOptions,cTargetNodeIPv4,uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("DNSMoveContainer",gcQuery);
+		tJobErrorUpdate(uJob,"ssh vzctl ipdel all");
+		return;
+	}
+	sprintf(gcQuery,"ssh %s %s 'vzctl set %u --ipadd %s --save'",
+				cSSHOptions,cTargetNodeIPv4,uContainer,cIPv4);
+	if(system(gcQuery))
+	{
+		logfileLine("DNSMoveContainer",gcQuery);
+		tJobErrorUpdate(uJob,"ssh vzctl ipadd");
+		return;
+	}
+	//Conditionally start
+	if(uPrevStatus==uACTIVE)
+	{
+		sprintf(gcQuery,"ssh %s %s '/usr/sbin/vzctl start %u'",
+				cSSHOptions,cTargetNodeIPv4,uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("DNSMoveContainer",gcQuery);
+			tJobErrorUpdate(uJob,"ssh vzctl start");
+			return;
+		}
+	}
+
+//Debug only
+logfileLine("DNSMoveContainer","debug stop 3");
+tJobErrorUpdate(uJob,"debug stop 3");
+return;
 
 	//5-. Change the DNS A record to the new IP of the new node.
 
