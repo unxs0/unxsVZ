@@ -148,6 +148,8 @@ unsigned uGetPrimaryContainerGroupGlueRecord(unsigned uContainer);
 unsigned UpdatePrimaryContainerGroup(unsigned uContainer,unsigned uNewGroup);
 unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs);
+unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner,
+			unsigned uTargetNode,unsigned uIPv4,unsigned uStatus);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -4311,6 +4313,10 @@ void ExttContainerAuxTable(void)
 				" Uses target and clone node selects above'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Migration'>\n");
+			printf("&nbsp; <input title='Creates job(s) moving container(s) with DNS change and optional source node script."
+				" Uses target node select and requires pre-configured and available IP numbers for destination node.'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group DNS Move'>\n");
 			printf("&nbsp; <input title='Creates job(s) for destroying active or stopped container(s) and optionally their clones.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Destroy'>\n");
@@ -4321,7 +4327,7 @@ void ExttContainerAuxTable(void)
 				" Any existing waiting FailoverFrom jobs will be canceled also.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Status Stopped'>\n");
-			printf("&nbsp; <input title='Change IP for selected containers and DNS records is system is so configured'"
+			printf("<p><input title='Change IP for selected containers and DNS records is system is so configured'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Change IP'>\n");
 			CloseFieldSet();
@@ -4492,6 +4498,33 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group Restart
+
+				else if(!strcmp(gcCommand,"Group DNS Move"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
+						&& (sContainer.uOwner==guCompany || guCompany==1) && uTargetNode && uTargetNode!=sContainer.uNode)
+					{
+						if(uDNSMoveJob(sContainer.uDatacenter,
+								sContainer.uNode,uCtContainer,guCompany,uTargetNode,0,sContainer.uStatus))
+						{
+							SetContainerStatus(uCtContainer,uAWAITDNSMIG);
+							sprintf(cResult,"group dnsmove job created");
+						}
+						else
+						{
+							sprintf(cResult,"group dnsmove job not created!");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"group dnsmove request ignored");
+					}
+					break;
+				}//Group DNS Move
 
 				//Group Destroy Uses guOpOnClones
 				else if(!strcmp(gcCommand,"Group Destroy"))
@@ -7567,5 +7600,30 @@ unsigned uRestartContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCo
 	return(uCount);
 
 }//unsigned uRestartContainerJob()
+
+
+unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner,
+			unsigned uTargetNode,unsigned uIPv4,unsigned uStatus)
+{
+	unsigned uCount=0;
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DNSMoveContainerJob(%u)',cJobName='DNSMoveContainer'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=1"
+			",cJobData='uTargetNode=%u;\nuIPv4=%u;\nuPrevStatus=%u;\n'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				uTargetNode,uIPv4,uStatus,
+				uOwner,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","DNSMove");
+	return(uCount);
+
+}//unsigned uDNSMoveJob()
 
 

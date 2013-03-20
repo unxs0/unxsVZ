@@ -51,6 +51,7 @@ void ExecuteCommands(unsigned uJob,unsigned uContainer,char *cJobData);
 void StopContainer(unsigned uJob,unsigned uContainer);
 void StartContainer(unsigned uJob,unsigned uContainer);
 void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData);
+void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
@@ -387,6 +388,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"FailoverFrom"))
 	{
 		FailoverFrom(uJob,uContainer,cJobData);
+	}
+	else if(!strcmp(cJobName,"DNSMoveContainer"))
+	{
+		DNSMoveContainer(uJob,uContainer,cJobData);
 	}
 	else if(!strcmp(cJobName,"MigrateContainer"))
 	{
@@ -5736,3 +5741,205 @@ CommonExit2:
 
 }//void RestartContainer()
 
+
+//Special migration of container that runs optional source node script.
+//and that is usually used for DNS based services running in container.
+void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData)
+{
+	char cTargetNodeIPv4[256]={""};
+	char cIPv4[32]={""};
+	unsigned uTargetNode=0;
+	unsigned uTargetDatacenter=0;
+	unsigned uIPv4=0;
+	unsigned uPrevStatus=0;
+
+	//Must wait for clone or template operations to finish.
+	if(access("/var/run/vzdump.lock",R_OK)==0)
+	{
+		logfileLine("DNSMoveContainer","/var/run/vzdump.lock exists");
+		tJobWaitingUpdate(uJob);
+		return;
+	}
+
+	sscanf(cJobData,"uTargetNode=%u;",&uTargetNode);
+	if(!uTargetNode)
+	{
+		logfileLine("DNSMoveContainer","Could not determine uTargetNode");
+		tJobErrorUpdate(uJob,"uTargetNode==0");
+		return;
+	}
+
+	sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
+	if(!uTargetDatacenter)
+	{
+		logfileLine("DNSMoveContainer","Could not determine uTargetDatacenter");
+		tJobErrorUpdate(uJob,"uTargetDatacenter==0");
+		return;
+	}
+
+	sscanf(cJobData,"uTargetNode=%*u;\nuIPv4=%u;",&uIPv4);
+	if(uIPv4)
+	{
+		logfileLine("DNSMoveContainer","Migration with new IP");
+		sprintf(cIPv4,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
+		logfileLine("DNSMoveContainer",cIPv4);
+
+		//Remote migration uses node name for ssh
+		sprintf(cTargetNodeIPv4,"%.255s",ForeignKey("tNode","cLabel",uTargetNode));
+	}
+	else
+	{
+		logfileLine("DNSMoveContainer","Could not determine uIPv4");
+		tJobErrorUpdate(uJob,"uIPv4==0");
+		return;
+	}
+
+	if(!cTargetNodeIPv4[0])
+	{
+		logfileLine("DNSMoveContainer","Could not determine cTargetNodeIPv4");
+		tJobErrorUpdate(uJob,"cTargetNodeIPv4");
+		return;
+	}
+
+	sscanf(cJobData,"uTargetNode=%*u;\nuIPv4=%*u;\nuPrevStatus=%u;",&uPrevStatus);
+	if(uPrevStatus!=uACTIVE && uPrevStatus!=uSTOPPED)
+	{
+		sprintf(gcQuery,"cJobData uPrevStatus not active or stopped. uPrevStatus=%u",uPrevStatus);
+		logfileLine("DNSMoveContainer",gcQuery);
+		tJobErrorUpdate(uJob,"uPrevStatus problem");
+		return;
+	}
+
+	//SSH and SCP options
+	char cSSHOptions[256]={""};
+	GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	if(!cSSHOptions[0])
+	{
+		GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSSHOptions[0])
+			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
+	}
+	if(uNotValidSystemCallArg(cSSHOptions))
+	{
+		logfileLine("DNSMoveContainer","security alert");
+		cSSHOptions[0]=0;
+	}
+	char cSCPOptions[256]={""};
+	GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	if(!cSCPOptions[0])
+	{
+		GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSCPOptions[0])
+			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
+	}
+	//Default for less conditions below
+	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
+		sprintf(cSCPOptions,"-P 22 -c arcfour");
+
+
+	//1-. vzdump the container
+	char cSnapshotDir[256]={""};
+	GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,gfuNode,0,0);//First try node specific
+	if(!cSnapshotDir[0])
+	{
+		GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,0,0,0);//Second try datacenter wide
+		if(!cSnapshotDir[0])
+			GetConfiguration("cSnapshotDir",cSnapshotDir,0,0,0,0);//Last try global
+	}
+	if(uNotValidSystemCallArg(cSnapshotDir))
+		cSnapshotDir[0]=0;
+	//1-.
+	if(!cSnapshotDir[0])
+		sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u",uContainer);
+	else
+		sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir %s --snapshot %u",
+									cSnapshotDir,uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("DNSMoveContainer",gcQuery);
+		tJobErrorUpdate(uJob,"vzdump error1");
+		return;
+	}
+	//1b-.
+	//New vzdump uses new file format, E.G.: /var/vzdump/vzdump-openvz-10511-2011_02_03-07_37_01.tgz
+	//Quick fix (hackorama) just mv it to old format
+	//Added support for old vzdump
+	if(!cSnapshotDir[0])
+		sprintf(gcQuery,"if [ ! -f /var/vzdump/vzdump-%u.tgz ];then"
+				" mv `ls -1 /vz/dump/vzdump*-%u-*.tgz | head -n 1` /vz/dump/vzdump-%u.tgz; fi;",
+					uContainer,uContainer,uContainer);
+	else
+		sprintf(gcQuery,"if [ -f /var/vzdump/vzdump-%u.tgz ] && [ \"%s\" != \"/var/vzdump\" ];then"
+				" mv /var/vzdump/vzdump-%u.tgz %s/vzdump-%u.tgz;else"
+				" if [ -f %s/vzdump*-%u-*.tgz ];then mv `ls -1 %s/vzdump*-%u-*.tgz | head -n 1` %s/vzdump-%u.tgz;fi;fi;",
+				uContainer,cSnapshotDir,
+				uContainer,cSnapshotDir,uContainer,
+				cSnapshotDir,uContainer,cSnapshotDir,uContainer,cSnapshotDir,uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("DNSMoveContainer",gcQuery);
+		tJobErrorUpdate(uJob,"error rename");
+		return;
+	}
+	//1c-. md5sum generation we stash in /vz/template/cache
+	struct stat statInfo;
+	if(!stat("/usr/bin/md5sum",&statInfo))
+	{
+		if(!cSnapshotDir[0])
+			sprintf(gcQuery,"/usr/bin/md5sum /var/vzdump/vzdump-%1$u.tgz >"
+				" /vz/template/cache/vzdump-%1$u.tgz.md5sum",uContainer);
+		else
+			sprintf(gcQuery,"/usr/bin/md5sum %1$s/vzdump-%2$u.tgz >"
+				" /vz/template/cache/vzdump-%2$u.tgz.md5sum",cSnapshotDir,uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("DNSMoveContainer",gcQuery);
+			tJobErrorUpdate(uJob,"md5sum failed");
+			return;
+		}
+	}
+	else
+	{
+		logfileLine("DNSMoveContainer",gcQuery);
+		tJobErrorUpdate(uJob,"no md5sum");
+		return;
+	}
+
+//Debug only
+logfileLine("DNSMoveContainer",gcQuery);
+tJobErrorUpdate(uJob,"debug stop 1");
+return;
+
+	//2-. Change container label and hostname after vzdump
+
+	//3-. SCP the dump to the new node.
+
+	//4-. Start the container on the new node.
+
+	//5-. Change the DNS A record to the new IP of the new node.
+
+	//6-. Run optional post dns change script on source node.
+	//	The script should internally wait until the DNS A record has changed.
+
+	//7-. If everything went well, destroy the local template.
+	//	And clean up our database.
+
+	//Other misc work
+	//If container rrd files exists in our standard fixed dir cp to new node
+	//Note that cleanup maybe required in the future
+	sprintf(gcQuery,"/var/lib/rrd/%u.rrd",uContainer);
+	if(!access(gcQuery,R_OK))
+	{
+		sprintf(gcQuery,"/usr/bin/scp %s /var/lib/rrd/%u.rrd %s:/var/lib/rrd/",
+			cSCPOptions,uContainer,cTargetNodeIPv4);
+		if(system(gcQuery))
+			logfileLine("DNSMoveContainer",gcQuery);
+	}
+
+	//Everything ok
+	SetContainerStatus(uContainer,uPrevStatus);//Previous to awaiting migration
+	SetContainerNode(uContainer,uTargetNode);//Migrated!
+	SetContainerDatacenter(uContainer,uTargetDatacenter);
+	tJobDoneUpdate(uJob);
+
+}//void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData)
