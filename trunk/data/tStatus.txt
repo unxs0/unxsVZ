@@ -18,3 +18,4 @@
 91	Awaiting Failover	1	1	1255030521	0	0
 101	Remote Appliance	1	1	1255030521	0	0
 111	Awaiting Restart	1	1	1255030521	0	0
+121	Awaiting DNS Migration	1	1	1255030521	0	0
