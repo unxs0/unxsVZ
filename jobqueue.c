@@ -5520,6 +5520,8 @@ void ExecuteCommands(unsigned uJob,unsigned uContainer,char *cJobData)
 void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNode,unsigned uDatacenter)
 {
 	//1-. Get script/command name
+        MYSQL_RES *res;
+        MYSQL_ROW field;
 	char cCommand[256]={""};
 	unsigned uConfiguration=0;
 	sscanf(cJobData,"uConfiguration=%u;",&uConfiguration);
@@ -5529,6 +5531,26 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 		tJobErrorUpdate(uJob,"uConfiguration==0");
 		return;
 	}
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uConfiguration=%u",uConfiguration);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("NodeCommandJob",mysql_error(&gMysql));
+		exit(2);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cCommand,"%.255s",field[0]);
+	}
+	else
+	{
+		logfileLine("NodeCommandJob",cCommand);
+		tJobErrorUpdate(uJob,"select cValue failed");
+		return;
+	}
+	mysql_free_result(res);
+
 
 	//2-. Make sure it is security valid
 	struct stat statInfo;
@@ -5563,13 +5585,15 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 
 
 	//3-. Make sure any other uJobN=uJob; jobs have run ok.
-        MYSQL_RES *res;
-        MYSQL_ROW field;
 	unsigned uJob0=0,uJob1=0,uJob2=0,uJob3=0;
 	unsigned uCount=0;
-	uCount=sscanf(cJobData,"uJob0=%u;\nuJob1=%u;\nuJob2=%u;\nuJob3=%u;",&uJob0,&uJob1,&uJob2,&uJob3);
-	sprintf(gcQuery,"uJob0=%u; uJob1=%u; uJob2=%u; uJob3=%u;",uJob0,uJob1,uJob2,uJob3);
-	logfileLine("NodeCommandJob",gcQuery);
+	char *cp;
+	if((cp=strstr(cJobData,"uJob0=")))
+	{
+		uCount=sscanf(cp,"uJob0=%u;\nuJob1=%u;\nuJob2=%u;\nuJob3=%u;",&uJob0,&uJob1,&uJob2,&uJob3);
+		sprintf(gcQuery,"uJob0=%u; uJob1=%u; uJob2=%u; uJob3=%u;",uJob0,uJob1,uJob2,uJob3);
+		logfileLine("NodeCommandJob",gcQuery);
+	}
 	if(uJob0)
 	{
 		sprintf(gcQuery,"SELECT SUM(uJobStatus) FROM tJob WHERE uJob=%u OR uJob=%u OR uJob=%u OR uJob=%u",
@@ -5634,9 +5658,9 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 	if((field=mysql_fetch_row(res)))
 	{
 		sprintf(cOnScriptCall,"%.255s %u %s %s",cCommand,uContainer,field[0],field[1]);
+		logfileLine("NodeCommandJob",cOnScriptCall);
 		if(system(cOnScriptCall))
 		{
-			logfileLine("NodeCommandJob",cOnScriptCall);
 			tJobErrorUpdate(uJob,"command failed");
 			return;
 		}
@@ -5933,7 +5957,7 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	//2-. Change container label after vzdump to avoid any confusion
 	//	first save for use in DNS section
 	char cHostname[128]={""};
-	sprintf(cHostname,"%.127s",ForeignKey("tContainer","cLabel",uContainer));
+	sprintf(cHostname,"%.127s",ForeignKey("tContainer","cHostname",uContainer));
 	sprintf(gcQuery,"UPDATE tContainer SET cLabel=CONCAT(cLabel,'-m') WHERE uContainer=%u AND LENGTH(cLabel)<30 AND cLabel NOT LIKE '%%-m'",
 				uContainer);
 	mysql_query(&gMysql,gcQuery);
@@ -6051,7 +6075,7 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 							cPostDNSNodeScript,uDatacenter,0,0,0);
 	if(cPostDNSNodeScript[0] && uConfiguration)
 	{
-		sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u\nuJob1=%u\nuJob2=%u\n",
+		sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u;\nuJob1=%u;\nuJob2=%u;\n",
 							cPostDNSNodeScript,uJob,uCreateDNSJob,0);
 		if(!uNodeCommandJob(uDatacenter,uNode,uContainer,1,1,uConfiguration,cArgs))
 		{
