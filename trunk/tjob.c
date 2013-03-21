@@ -749,7 +749,7 @@ void tJobList(void)
 			ctime_r(&luTime14,cBuf14);
 		else
 			sprintf(cBuf14,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tJob&uJob=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>"
 				"<textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
