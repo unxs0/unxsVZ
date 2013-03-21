@@ -2995,7 +2995,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(cPostMigrationNodeScript[0] && uConfiguration)
 					{
 						char cArgs[256];
-						sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u\nuJob1=%u\nuJob2=%u\n",
+						sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u;\nuJob1=%u;\nuJob2=%u;\n",
 							cPostMigrationNodeScript,uMigrateContainerJob,uIPContainerJob,uCreateDNSJob);
 						uCommandJob=uNodeCommandJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient,uConfiguration,
 							cArgs);
@@ -3014,7 +3014,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(cPostMigrationRemoteNodeScript[0] && uConfiguration)
 					{
 						char cArgs[256];
-						sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u\nuJob1=%u\nuJob2=%u\nuJob3=%u\n",
+						sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u;\nuJob1=%u;\nuJob2=%u;\nuJob3=%u;\n",
 							cPostMigrationRemoteNodeScript,uMigrateContainerJob,uIPContainerJob,uCreateDNSJob,uCommandJob);
 						uNodeCommandJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,uConfiguration,
 							cArgs);
