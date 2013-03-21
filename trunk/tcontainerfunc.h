@@ -4313,8 +4313,13 @@ void ExttContainerAuxTable(void)
 				" Uses target and clone node selects above'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Migration'>\n");
-			printf("&nbsp; <input title='Creates job(s) moving container(s) with DNS change and optional source node script."
-				" Uses target node select and requires pre-configured and available IP numbers for destination node.'"
+			printf("&nbsp; <input title='Creates jobs for moving containers to other datacenters with DNS change and with"
+				" optional source node script execution -tConfiguration cPostDNSNodeScript."
+				" Uses target node select and optionally guOpOnClones.'"
+				" If guOpOnClones is set then it also creates a job for each clone the container may have -in the same datacenter."
+				" tConfiguration cAutoCloneNode and cAutoCloneIPClass are used to set clone target nodes and get"
+				" available IP numbers from tIP. The node is checked to make sure it has enough disk space and vz"
+				" power -via vzcpucheck- as each job is created.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group DNS Move'>\n");
 			printf("&nbsp; <input title='Creates job(s) for destroying active or stopped container(s) and optionally their clones.'"
