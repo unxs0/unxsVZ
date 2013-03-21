@@ -51,7 +51,7 @@ void ExecuteCommands(unsigned uJob,unsigned uContainer,char *cJobData);
 void StopContainer(unsigned uJob,unsigned uContainer);
 void StartContainer(unsigned uJob,unsigned uContainer);
 void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData);
-void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData);
+void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uDatacenter,unsigned uNode);
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
@@ -99,6 +99,9 @@ unsigned TextConnectDb(void); //mysqlconnect.c
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter);
+unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
+unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
+			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs);
 
 //file scoped vars.
 static unsigned gfuNode=0;
@@ -391,7 +394,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	}
 	else if(!strcmp(cJobName,"DNSMoveContainer"))
 	{
-		DNSMoveContainer(uJob,uContainer,cJobData);
+		DNSMoveContainer(uJob,uContainer,cJobData,uDatacenter,uNode);
 	}
 	else if(!strcmp(cJobName,"MigrateContainer"))
 	{
@@ -5563,10 +5566,10 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uJob0=0,uJob1=0,uJob2=0,uJob3=0;
-	sscanf(cJobData,"uJob0=%u;",&uJob0);
-	sscanf(cJobData,"uJob1=%u;",&uJob1);
-	sscanf(cJobData,"uJob2=%u;",&uJob2);
-	sscanf(cJobData,"uJob3=%u;",&uJob3);
+	unsigned uCount=0;
+	uCount=sscanf(cJobData,"uJob0=%u;\nuJob1=%u;\nuJob2=%u;\nuJob3=%u;",&uJob0,&uJob1,&uJob2,&uJob3);
+	sprintf(gcQuery,"uJob0=%u; uJob1=%u; uJob2=%u; uJob3=%u;",uJob0,uJob1,uJob2,uJob3);
+	logfileLine("NodeCommandJob",gcQuery);
 	if(uJob0)
 	{
 		sprintf(gcQuery,"SELECT SUM(uJobStatus) FROM tJob WHERE uJob=%u OR uJob=%u OR uJob=%u OR uJob=%u",
@@ -5581,7 +5584,6 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 		if((field=mysql_fetch_row(res)))
 		{
 			unsigned uSumJobStatus=0;
-			unsigned uCount=0;
 			sscanf(field[0],"%u",&uSumJobStatus);
 			if(uJob3 && uJob2 && uJob1 && uJob0)
 				uCount=4;
@@ -5594,6 +5596,7 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 
 			if(uSumJobStatus!=(uCount*3))
 			{
+				logfileLine("NodeCommandJob","waiting for job");
 				tJobWaitingUpdate(uJob);
 				mysql_free_result(res);
 				return;
@@ -5745,7 +5748,7 @@ CommonExit2:
 //Special migration of container that runs optional source node script.
 //and that is usually used for DNS based services running in container.
 //Code that create job must double check every resource that will be used.
-void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData)
+void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uDatacenter,unsigned uNode)
 {
 	char cTargetNodeIPv4[256]={""};
 	char cIPv4[32]={""};
@@ -5928,6 +5931,9 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 
 	//2-. Change container label after vzdump to avoid any confusion
+	//	first save for use in DNS section
+	char cHostname[128]={""};
+	sprintf(cHostname,"%.127s",ForeignKey("tContainer","cLabel",uContainer));
 	sprintf(gcQuery,"UPDATE tContainer SET cLabel=CONCAT(cLabel,'-m') WHERE uContainer=%u AND LENGTH(cLabel)<30 AND cLabel NOT LIKE '%%-m'",
 				uContainer);
 	mysql_query(&gMysql,gcQuery);
@@ -6020,18 +6026,52 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 	}
 
-//Debug only
-logfileLine("DNSMoveContainer","debug stop 3");
-tJobErrorUpdate(uJob,"debug stop 3");
-return;
-
 	//5-. Change the DNS A record to the new IP of the new node.
+	unsigned uCreateDNSJob=0;
+	if(!(uCreateDNSJob=CreateDNSJob(0,1,cIPv4,cHostname,uTargetDatacenter,1)))
+	{
+		logfileLine("DNSMoveContainer","CreateDNSJob() error");
+		tJobErrorUpdate(uJob,"create dns job");
+		return;
+	}
 
 	//6-. Run optional post dns change script on source node.
 	//	The script should internally wait until the DNS A record has changed.
+	//	The script should also handle any cleanup required. Like in 7-.
+	//	Maybe we should create a job here? This will keep things neat and
+	//	and allow code reuse
+	char cPostDNSNodeScript[256]={""};
+	char cArgs[256];
+	unsigned uConfiguration=0;
+	//First try most specific match datacenter and node
+	uConfiguration=GetConfiguration("cPostDNSNodeScript",cPostDNSNodeScript,uDatacenter,uNode,0,0);
+	//If that fails try datacenter wide configuration
+	if(!uConfiguration)
+			uConfiguration=GetConfiguration("cPostDNSNodeScript",
+							cPostDNSNodeScript,uDatacenter,0,0,0);
+	if(cPostDNSNodeScript[0] && uConfiguration)
+	{
+		sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u\nuJob1=%u\nuJob2=%u\n",
+							cPostDNSNodeScript,uJob,uCreateDNSJob,0);
+		if(!uNodeCommandJob(uDatacenter,uNode,uContainer,1,1,uConfiguration,cArgs))
+		{
+			logfileLine("DNSMoveContainer","uNodeCommandJob() error");
+			tJobErrorUpdate(uJob,"create command job");
+			return;
+		}
+		logfileLine("DNSMoveContainer",cPostDNSNodeScript);
+	}
+	else
+	{
+		sprintf(cArgs,"No cPostDNSNodeScript found for uDatacenter=%u,uNode=%u,uConfiguration=%u,%s",
+					uDatacenter,uNode,uConfiguration,cPostDNSNodeScript);
+		logfileLine("DNSMoveContainer",cArgs);
+	}
 
-	//7-. If everything went well, destroy the local template.
+	//7-. If everything went well, destroy the local PBX
 	//	And clean up our database.
+
+	//!NO! we need to wait for all services to be moved.
 
 	//Other misc work
 	//If container rrd files exists in our standard fixed dir cp to new node
@@ -6048,6 +6088,7 @@ return;
 	//Everything ok
 	SetContainerStatus(uContainer,uPrevStatus);//Previous to awaiting migration
 	SetContainerNode(uContainer,uTargetNode);//Migrated!
+	SetContainerIP(uContainer,cIPv4);//Has new IP
 	SetContainerDatacenter(uContainer,uTargetDatacenter);
 	tJobDoneUpdate(uJob);
 
