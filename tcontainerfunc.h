@@ -157,6 +157,7 @@ unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, 
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 void DelProperties(unsigned uNode,unsigned uType);//tnodefunc.h
 time_t cStartDateToUnixTime(char *cStartDate);//tjobfunc.h
+time_t cStartTimeToUnixTime(char *cStartTime);
 
 #include <openisp/ucidr.h>
 #include <ctype.h>
@@ -4027,7 +4028,7 @@ void ExttContainerButtons(void)
 				tmTime=localtime(&luClock);
 				strftime(cStartTime,31,"%H:%M:%S",tmTime);
 			}
-			printf("<br>Job cStartTime<input title='Enter HH:MM:SS, e.g. 12:23:07. Leave blank for immediate job'"
+			printf("<br>Job cStartTime<input title='Enter HH:MM:SS, e.g. 12:23:07.'"
 				" type=text name=cStartTime value=%s>",cStartTime);
 
 			char cTime[32]={""};
@@ -7819,8 +7820,25 @@ unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, 
 			unsigned uTargetNode,unsigned uIPv4,unsigned uStatus)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
 
-	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DNSMoveContainerJob(%u)',cJobName='DNSMoveContainer'"
+	if(cStartTime[0] && cStartDate[0])
+		luJobDate=cStartTimeToUnixTime(cStartTime)+cStartDateToUnixTime(cStartDate);
+
+	if(luJobDate)	
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DNSMoveContainerJob(%u)',cJobName='DNSMoveContainer'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=%lu"
+			",uJobStatus=1"
+			",cJobData='uTargetNode=%u;\nuIPv4=%u;\nuPrevStatus=%u;\n'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				luJobDate,
+				uTargetNode,uIPv4,uStatus,
+				uOwner,guLoginClient);
+	else
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DNSMoveContainerJob(%u)',cJobName='DNSMoveContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=1"

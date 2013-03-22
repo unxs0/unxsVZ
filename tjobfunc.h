@@ -25,6 +25,7 @@ time_t luStartDate=0;
 void tJobNavList(void);
 char *strptime(const char *s, const char *format, struct tm *tm);
 time_t cStartDateToUnixTime(char *cStartDate);
+time_t cStartTimeToUnixTime(char *cStartTime);
 
 void ExtProcesstJobVars(pentry entries[], int x)
 {
@@ -548,4 +549,20 @@ time_t cStartDateToUnixTime(char *cStartDate)
         locTime.tm_hour = 0;
         res = mktime(&locTime);
         return(res);
-}//time_t cStartDateToUnixTime(char *cDate)
+}//time_t cStartDateToUnixTime(char *cStartDate)
+
+
+time_t cStartTimeToUnixTime(char *cStartTime)
+{
+        struct  tm locTime;
+        time_t  res;
+
+        bzero(&locTime, sizeof(struct tm));
+	if(strchr(cStartDate,'-'))
+        	strptime(cStartDate,"%H:%M:%S", &locTime);
+        locTime.tm_sec = 0;
+        locTime.tm_min = 0;
+        locTime.tm_hour = 0;
+        res = mktime(&locTime);
+        return(res);
+}//time_t cStartTimeToUnixTime(char *cStartTime)
