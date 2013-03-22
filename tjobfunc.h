@@ -542,7 +542,7 @@ time_t cStartDateToUnixTime(char *cStartDate)
 
         bzero(&locTime, sizeof(struct tm));
 	if(strchr(cStartDate,'-'))
-        	strptime(cStartDate,"%Y-%m-%d", &locTime);
+        	strptime(cStartDate,"%m/%d/%Y", &locTime);
         locTime.tm_sec = 0;
         locTime.tm_min = 0;
         locTime.tm_hour = 0;

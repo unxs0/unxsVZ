@@ -451,13 +451,31 @@ void StyleSheet(void)
 }//void StyleSheet(void)
 
 
+/*
+* Uses Clean Calendar
+* Copyright 2007-2009 Marc Grabanski (m@marcgrabanski.com) http://marcgrabanski.com
+* Project Page: http://marcgrabanski.com/article/clean-calendar
+* Under the MIT License
+*
+* Install only two files in your html/js dir
+*/
 void jsCalendarHeader(void)
 {
-        printf("<link rel='stylesheet' type='text/css' media='all' href='/css/calendar-blue.css'/>\n");
+        printf("<link rel='stylesheet' type='text/css' media='all' href='/js/calendar.css'/>\n");
         printf("<script type='text/javascript' src='/js/calendar.js'></script>\n");
-        printf("<script type='text/javascript' src='/js/calendar-en.js'></script>\n");
-        printf("<script type='text/javascript' src='/js/calendar-setup.js'></script>\n");
 }//void jsCalendarHeader(void)
+
+
+void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
+{
+        char cMode[16]={""};
+        if(!uMode)
+                sprintf(cMode,"disabled");
+
+	printf("<input type=text title='Enter date US style month/day/full-year'"
+			" class=calendarSelectDate name='%s' value='%s' %s ><div id=calendarDiv></div>",cInputName,cValue,cMode);
+
+}//void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 
 
 void jsToggleCheckboxes(void)
@@ -475,42 +493,6 @@ void jsToggleCheckboxes(void)
 }//void jsToggleCheckboxes(void)
 
 
-void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
-{
-        char cMode[16]={""};
-        if(!uMode)
-                sprintf(cMode,"disabled");
-
-        printf("<input id='%s' class='field_input' type='text' name='%s' value='%s' size=40 maxlength=31"
-		" style='display: ; vertical-align: middle; ' %s >\n",cInputName,cInputName,cValue,cMode);
-
-        if(uMode)
-        {
-                printf("<img date_trigger=1 class=record_button date_field='%s' id='date_trigger_%s_501'"
-			" src=\"/images/calendar.gif\""
-			//Can't find swapClass function have to ask Hugo...
-			//" onmouseout=\"swapClass(event); this.src='/images/calendar.gif'\""
-			//" onmouseover=\"swapClass(event); this.src='/images/calendar_mo.gif'\""
-			" onmousedown=\"this.style.top='1px'; this.style.left='1px'\""
-			" onmouseup=\"this.style.top='0px'; this.style.left='0px'\""
-			" style=\"position: relative; vertical-align: middle; display: ;\""
-			" title='Select date'/>\n",cInputName,cInputName);
-                printf("<script type='text/javascript'>\n" 
-                        "Calendar.setup({\n"
-                        "\tinputField     :    '%s',\n"
-                        "\tifFormat : '%%Y-%%m-%%d',\n"
-                        "\tbutton         :    'date_trigger_%s_501',\n"
-                        "\talign          :    'bR',\n"
-                        "\tsingleClick    :    true,\n"
-                        "\tweekNumbers    :    false,\n"
-                        "\tstep           :    1,\n"
-                        "\ttimeFormat : 12\n"
-                        "});</script>\n",cInputName,cInputName);
-        }
-        else
-                printf("<input type=hidden name='%s' value='%s'>\n",cInputName,cValue);
-
-}//void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 
 
 void Header_ism3(const char *title, int iJs)
@@ -520,11 +502,20 @@ void Header_ism3(const char *title, int iJs)
 			" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
         printf("<html><head><title>"HEADER_TITLE" %s %s </title>",gcHostname,title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
-	StyleSheet();
         if(iJs==1)
+	{
                 jsCalendarHeader();
+	}
         else if(iJs==2)
+	{
 		jsToggleCheckboxes();
+	}
+        else if(iJs==3)
+	{
+                jsCalendarHeader();
+		jsToggleCheckboxes();
+	}
+	StyleSheet();
 	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
 	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/unxsvz.ico>\n");
 	printf("</head><body><form name=formMain action=unxsVZ.cgi method=post><blockquote>\n");
