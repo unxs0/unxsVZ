@@ -81,6 +81,8 @@ static unsigned uSyncPeriod=0;
 static unsigned guSameNode=0;//Same node as right loaded container uNode.
 static unsigned guNoClones=0;
 static unsigned guOpOnClones=0;
+static char cStartDate[32]={""};
+static char cStartTime[32]={""};
 static unsigned guInitOnly=0;
 static char cSearch[32]={""};
 //static unsigned uGroupJobs=0;
@@ -154,6 +156,7 @@ unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 void DelProperties(unsigned uNode,unsigned uType);//tnodefunc.h
+time_t cStartDateToUnixTime(char *cStartDate);//tjobfunc.h
 
 #include <openisp/ucidr.h>
 #include <ctype.h>
@@ -424,6 +427,14 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"cIPv4Search"))
 		{
 			sprintf(cIPv4Search,"%.15s",entries[i].val);
+		}
+		else if(!strcmp(entries[i].name,"cStartDate"))
+		{
+			sprintf(cStartDate,"%.31s",entries[i].val);
+		}
+		else if(!strcmp(entries[i].name,"cStartTime"))
+		{
+			sprintf(cStartTime,"%.31s",entries[i].val);
 		}
 	}
 
@@ -3999,12 +4010,39 @@ void ExttContainerButtons(void)
 			tTablePullDown("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1);
 			printf("<br>Group");
 			tContainerGroupPullDown(uChangeGroup,1);
+
 			printf("<br><input title='For supported set operations (like Group Delete, Destroy or Migration)"
 				" apply same to their clone containers.'"
 				" type=checkbox name=guOpOnClonesNoCA");
 			if(guOpOnClones)
 				printf(" checked");
 			printf("> guOpOnClones");
+
+			time_t luClock;
+			const struct tm *tmTime;
+
+			if(!cStartTime[0])
+			{
+				time(&luClock);
+				tmTime=localtime(&luClock);
+				strftime(cStartTime,31,"%H:%M:%S",tmTime);
+			}
+			printf("<br>Job cStartTime<input title='Enter HH:MM:SS, e.g. 12:23:07. Leave blank for immediate job'"
+				" type=text name=cStartTime value=%s>",cStartTime);
+
+			char cTime[32]={""};
+			if(!cStartDate[0])
+			{
+				time(&luClock);
+				tmTime=localtime(&luClock);
+				strftime(cTime,31,"%m/%d/%Y",tmTime);
+			}
+			else
+			{
+				sprintf(cTime,"%.31s",cStartDate);
+			}
+			printf("<br>Job cStartDate");
+			jsCalendarInput("cStartDate",cTime,1);
 
                 break;
 

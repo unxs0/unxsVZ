@@ -368,7 +368,7 @@ void tJobNewStep(unsigned uStep)
 
 			time(&luClock);
 			tmTime=localtime(&luClock);
-			strftime(cTime,31,"%Y-%m-%d",tmTime);
+			strftime(cTime,31,"%m/%d/%Y",tmTime);
 		}
 		else
 		{
