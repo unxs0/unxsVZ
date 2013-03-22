@@ -4315,7 +4315,7 @@ void ExttContainerAuxTable(void)
 				" name=gcCommand value='Group Migration'>\n");
 			printf("&nbsp; <input title='Creates jobs for moving containers to other datacenters with DNS change and with"
 				" optional source node script execution -tConfiguration cPostDNSNodeScript."
-				" Uses target node select and optionally guOpOnClones.'"
+				" Uses target node select and optionally guOpOnClones."
 				" If guOpOnClones is set then it also creates a job for each clone the container may have -in the same datacenter."
 				" tConfiguration cAutoCloneNode and cAutoCloneIPClass are used to set clone target nodes and get"
 				" available IP numbers from tIP. The node is checked to make sure it has enough disk space and vz"
@@ -4359,7 +4359,7 @@ void ExttContainerAuxTable(void)
 		        res=mysql_store_result(&gMysql);
 			if((uNumRows=mysql_num_rows(res)))
 			{
-				char cResult[100]={""};
+				char cResult[256]={""};
 				char cCtLabel[100]={""};
 				unsigned uSourceContainer=0;
 				unsigned uSourceNode=0;
@@ -4513,11 +4513,125 @@ while((field=mysql_fetch_row(res)))
 					if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
 						&& (sContainer.uOwner==guCompany || guCompany==1) && uTargetNode && uTargetNode!=sContainer.uNode)
 					{
+       						MYSQL_RES *res;
+					        MYSQL_ROW field;
+						unsigned uIPv4=0;
+						unsigned uTargetDatacenter=0;
+						char cConfBuffer[256]={""};
+
+						//Get available IP via tIP and tConfiguration cAutoIPClass
+						sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
+						GetConfiguration("cAutoIPClass",cConfBuffer,uTargetDatacenter,uTargetNode,0,0);
+						//TODO we cant let root just grab anybodys IPs
+						if(guCompany==1)
+							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+								" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u LIMIT 1",
+									cConfBuffer,uTargetDatacenter);
+						else
+							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+									" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u AND"
+								" uOwner=%u LIMIT 1",cConfBuffer,uTargetDatacenter,guCompany);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						res=mysql_store_result(&gMysql);
+						if((field=mysql_fetch_row(res)))
+							sscanf(field[0],"%u",&uIPv4);
+						if(!uIPv4)
+						{
+							sprintf(cResult,"No IP available via cAutoIPClass");
+							break;
+						}
+
+						//Check target node for hard disk space and power
+						//TODO
+						unsigned uResourceLimit=1;
+						if(uResourceLimit)
+						{
+							sprintf(cResult,"No resources available on target node");
+							break;
+						}
+
 						if(uDNSMoveJob(sContainer.uDatacenter,
-								sContainer.uNode,uCtContainer,guCompany,uTargetNode,0,sContainer.uStatus))
+								sContainer.uNode,uCtContainer,guCompany,uTargetNode,uIPv4,sContainer.uStatus))
 						{
 							SetContainerStatus(uCtContainer,uAWAITDNSMIG);
 							sprintf(cResult,"group dnsmove job created");
+
+							if(guOpOnClones)
+							{
+								//Create jobs for every clone of this container in THIS DATACENTER
+								unsigned uContainer=0;
+								unsigned uNode=0;
+								unsigned uStatus=0;
+								unsigned uCloneTargetNode=0;
+
+								sprintf(gcQuery,"SELECT uNode,uContainer,uStatus FROM tContainer"
+									" WHERE uSource=%u AND uDatacenter=%u",uCtContainer,sContainer.uDatacenter);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+									htmlPlainTextError(mysql_error(&gMysql));
+					        		res=mysql_store_result(&gMysql);
+								while((field=mysql_fetch_row(res)))
+								{
+									//Get uCloneTargetNode from tConfiguration via uTargetNode
+									GetConfiguration("cAutoCloneNode",cConfBuffer,uTargetDatacenter,uTargetNode,0,0);
+									if(cConfBuffer[0])
+										uCloneTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
+
+									//Get available IP via tIP and tConfiguration cAutoCloneIPClass
+									GetConfiguration("cAutoCloneIPClass",cConfBuffer,uTargetDatacenter,
+															uCloneTargetNode,0,0);
+									//TODO we cant let root just grab anybodys IPs
+									if(guCompany==1)
+										sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+										" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u LIMIT 1",
+											cConfBuffer,uTargetDatacenter);
+									else
+										sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+										" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u AND"
+										" uOwner=%u LIMIT 1",cConfBuffer,uTargetDatacenter,guCompany);
+									mysql_query(&gMysql,gcQuery);
+									if(mysql_errno(&gMysql))
+										htmlPlainTextError(mysql_error(&gMysql));
+									res=mysql_store_result(&gMysql);
+									if((field=mysql_fetch_row(res)))
+										sscanf(field[0],"%u",&uIPv4);
+									if(!uIPv4)
+									{
+										if(sizeof(cResult)-strlen(cResult)-strlen(" +NoCloneIPAvail! ")>0)
+											strcat(cResult," +NoCloneIPAvail!");
+										continue;
+									}
+
+									//Check target node for hard disk space and power
+									//TODO
+									unsigned uResourceLimit=1;
+									if(uResourceLimit)
+									{
+										if(sizeof(cResult)-strlen(cResult)-strlen(" +NoCloneResourceAvail! ")>0)
+											strcat(cResult," +NoCloneResourceAvail!");
+										continue;
+									}
+
+									sscanf(field[0],"%u",&uNode);
+									sscanf(field[1],"%u",&uContainer);
+									sscanf(field[2],"%u",&uStatus);
+									if(uDNSMoveJob(sContainer.uDatacenter,uNode,uContainer,guCompany,
+										uCloneTargetNode,uIPv4,uStatus))
+									{
+										SetContainerStatus(uContainer,uAWAITDEL);
+										if(sizeof(cResult)-strlen(cResult)-strlen(" +clone ")>0)
+											strcat(cResult," +clone");
+									}
+									else
+									{
+										if(sizeof(cResult)-strlen(cResult)-strlen(" +cerror! ")>0)
+											strcat(cResult," +cerror!");
+									}
+								}//while clone exist
+								mysql_free_result(res);
+							}
 						}
 						else
 						{
@@ -4585,16 +4699,19 @@ while((field=mysql_fetch_row(res)))
 								if(DestroyContainerJob(uDatacenter,uNode,uContainer,guCompany))
 								{
 									SetContainerStatus(uContainer,uAWAITDEL);
-									strcat(cResult," +clone job");
+									if(sizeof(cResult)-strlen(cResult)-strlen(" +clone job ")>0)
+										strcat(cResult," +clone job");
 								}
 								else
 								{
-									strcat(cResult," +clone job error!");
+									if(sizeof(cResult)-strlen(cResult)-strlen(" +clone job error! ")>0)
+										strcat(cResult," +clone job error!");
 								}
 							}
 							else
 							{
-								strcat(cResult," +no clone job");
+								if(sizeof(cResult)-strlen(cResult)-strlen(" +no clone job ")>0)
+									strcat(cResult," +no clone job");
 							}
 						}
 						mysql_free_result(res);
@@ -4822,11 +4939,13 @@ while((field=mysql_fetch_row(res)))
 								if(mysql_errno(&gMysql))
 									htmlPlainTextError(mysql_error(&gMysql));
 								if(mysql_affected_rows(&gMysql)>0)
-									strcat(cResult," +clone delete");
+									if(sizeof(cResult)-strlen(cResult)-strlen(" +clone delete ")>0)
+										strcat(cResult," +clone delete");
 							}//if clone
 							else
 							{
-								strcat(cResult," +no clone deleted");
+								if(sizeof(cResult)-strlen(cResult)-strlen(" +no clone deleted ")>0)
+									strcat(cResult," +no clone deleted");
 							}
 						}//while
 						mysql_free_result(res);
@@ -5291,17 +5410,20 @@ while((field=mysql_fetch_row(res)))
 											uCloneOwner,guLoginClient,0,uCloneStatus))
 										{
 											SetContainerStatus(uCloneContainer,uAWAITMIG);
-											strcat(cResult," +clone job");
+											if(sizeof(cResult)-strlen(cResult)-strlen(" +clone job ")>0)
+												strcat(cResult," +clone job");
 
 										}
 										else
 										{
-											strcat(cResult," +clone job error");
+											if(sizeof(cResult)-strlen(cResult)-strlen(" +cerror! ")>0)
+												strcat(cResult," +cerror!");
 										}
 									}
 									else
 									{
-										strcat(cResult," +clone job ignored");
+										if(sizeof(cResult)-strlen(cResult)-strlen(" +clone job ignored ")>0)
+											strcat(cResult," +clone job ignored");
 									}
 								}
 							}
