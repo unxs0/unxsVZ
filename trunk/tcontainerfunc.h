@@ -4521,15 +4521,29 @@ while((field=mysql_fetch_row(res)))
 
 						//Get available IP via tIP and tConfiguration cAutoIPClass
 						sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
+						if(!uTargetDatacenter)
+						{
+							sprintf(cResult,"uTargetDatacenter error");
+							break;
+						}
 						GetConfiguration("cAutoIPClass",cConfBuffer,uTargetDatacenter,uTargetNode,0,0);
+						if(!cConfBuffer[0])
+						{
+							GetConfiguration("cAutoIPClass",cConfBuffer,uTargetDatacenter,0,0,0);
+							if(!cConfBuffer[0])
+							{
+								sprintf(cResult,"No cAutoIPClass");
+								break;
+							}
+						}
 						//TODO we cant let root just grab anybodys IPs
 						if(guCompany==1)
 							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-								" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u LIMIT 1",
+								" uAvailable=1 AND cLabel LIKE '%.31s.%%' AND uDatacenter=%u LIMIT 1",
 									cConfBuffer,uTargetDatacenter);
 						else
 							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-									" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u AND"
+									" uAvailable=1 AND cLabel LIKE '%.31s.%%' AND uDatacenter=%u AND"
 								" uOwner=%u LIMIT 1",cConfBuffer,uTargetDatacenter,guCompany);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
@@ -4545,7 +4559,7 @@ while((field=mysql_fetch_row(res)))
 
 						//Check target node for hard disk space and power
 						//TODO
-						unsigned uResourceLimit=1;
+						unsigned uResourceLimit=0;
 						if(uResourceLimit)
 						{
 							sprintf(cResult,"No resources available on target node");
@@ -4555,6 +4569,13 @@ while((field=mysql_fetch_row(res)))
 						if(uDNSMoveJob(sContainer.uDatacenter,
 								sContainer.uNode,uCtContainer,guCompany,uTargetNode,uIPv4,sContainer.uStatus))
 						{
+							//Mark uIPv4 used
+							sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+								" WHERE uIP=%u",uIPv4);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+
 							SetContainerStatus(uCtContainer,uAWAITDNSMIG);
 							sprintf(cResult,"group dnsmove job created");
 
@@ -4575,13 +4596,33 @@ while((field=mysql_fetch_row(res)))
 								while((field=mysql_fetch_row(res)))
 								{
 									//Get uCloneTargetNode from tConfiguration via uTargetNode
+									cConfBuffer[0]=0;
+									uCloneTargetNode=0;
 									GetConfiguration("cAutoCloneNode",cConfBuffer,uTargetDatacenter,uTargetNode,0,0);
-									if(cConfBuffer[0])
-										uCloneTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
+									if(!cConfBuffer[0])
+									{
+										if(sizeof(cResult)-strlen(cResult)-strlen(" +NocAutoCloneNode! ")>0)
+											strcat(cResult," +NocAutoCloneNode!");
+										continue;
+									}
+									uCloneTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
+									if(!uCloneTargetNode)
+									{
+										if(sizeof(cResult)-strlen(cResult)-strlen(" +NocAutoCloneNode! ")>0)
+											strcat(cResult," +NocAutoCloneNode!");
+										continue;
+									}
 
 									//Get available IP via tIP and tConfiguration cAutoCloneIPClass
+									cConfBuffer[0]=0;
 									GetConfiguration("cAutoCloneIPClass",cConfBuffer,uTargetDatacenter,
 															uCloneTargetNode,0,0);
+									if(!cConfBuffer[0])
+									{
+										if(sizeof(cResult)-strlen(cResult)-strlen(" +NocAutoCloneIPClass! ")>0)
+											strcat(cResult," +NocAutoCloneIPClass!");
+										continue;
+									}
 									//TODO we cant let root just grab anybodys IPs
 									if(guCompany==1)
 										sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
@@ -4606,7 +4647,7 @@ while((field=mysql_fetch_row(res)))
 
 									//Check target node for hard disk space and power
 									//TODO
-									unsigned uResourceLimit=1;
+									unsigned uResourceLimit=0;
 									if(uResourceLimit)
 									{
 										if(sizeof(cResult)-strlen(cResult)-strlen(" +NoCloneResourceAvail! ")>0)
@@ -4620,7 +4661,14 @@ while((field=mysql_fetch_row(res)))
 									if(uDNSMoveJob(sContainer.uDatacenter,uNode,uContainer,guCompany,
 										uCloneTargetNode,uIPv4,uStatus))
 									{
-										SetContainerStatus(uContainer,uAWAITDEL);
+										//Mark uIPv4 used
+										sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+											" WHERE uIP=%u",uIPv4);
+										mysql_query(&gMysql,gcQuery);
+										if(mysql_errno(&gMysql))
+											htmlPlainTextError(mysql_error(&gMysql));
+
+										SetContainerStatus(uContainer,uAWAITDNSMIG);
 										if(sizeof(cResult)-strlen(cResult)-strlen(" +clone ")>0)
 											strcat(cResult," +clone");
 									}
