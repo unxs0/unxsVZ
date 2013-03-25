@@ -6073,6 +6073,8 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	if(!uConfiguration)
 			uConfiguration=GetConfiguration("cPostDNSNodeScript",
 							cPostDNSNodeScript,uDatacenter,0,0,0);
+	//Please note that this means that the script must be installed for all nodes of
+	//any datacenter that has at least one tConfiguration for a specific uDatacenter+uNode
 	if(cPostDNSNodeScript[0] && uConfiguration)
 	{
 		sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u;\nuJob1=%u;\nuJob2=%u;\n",

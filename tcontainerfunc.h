@@ -4565,10 +4565,14 @@ while((field=mysql_fetch_row(res)))
 							sprintf(cResult,"uTargetDatacenter error");
 							break;
 						}
-						GetConfiguration("cAutoIPClass",cConfBuffer,uTargetDatacenter,uTargetNode,0,0);
+						//If we move standard clones we need to use clone IPs
+						char *cClass="cAutoIPClass";;
+						if(strstr(sContainer.cLabel,"-clone") && sContainer.uStatus==uSTOPPED)
+							cClass="cAutoCloneIPClass";
+						GetConfiguration(cClass,cConfBuffer,uTargetDatacenter,uTargetNode,0,0);
 						if(!cConfBuffer[0])
 						{
-							GetConfiguration("cAutoIPClass",cConfBuffer,uTargetDatacenter,0,0,0);
+							GetConfiguration(cClass,cConfBuffer,uTargetDatacenter,0,0,0);
 							if(!cConfBuffer[0])
 							{
 								sprintf(cResult,"No cAutoIPClass");
@@ -4590,6 +4594,7 @@ while((field=mysql_fetch_row(res)))
 						res=mysql_store_result(&gMysql);
 						if((field=mysql_fetch_row(res)))
 							sscanf(field[0],"%u",&uIPv4);
+						mysql_free_result(res);
 						if(!uIPv4)
 						{
 							sprintf(cResult,"No IP available via cAutoIPClass");
@@ -4616,10 +4621,13 @@ while((field=mysql_fetch_row(res)))
 								htmlPlainTextError(mysql_error(&gMysql));
 
 							SetContainerStatus(uCtContainer,uAWAITDNSMIG);
-							sprintf(cResult,"group dnsmove job created");
+							if((sizeof(cResult)-strlen(cResult)-strlen("group dnsmove job created "))>0)
+								sprintf(cResult,"group dnsmove job created");
 
 							if(guOpOnClones)
 							{
+       								MYSQL_RES *res2;
+					        		MYSQL_ROW field2;
 								//Create jobs for every clone of this container in THIS DATACENTER
 								unsigned uContainer=0;
 								unsigned uNode=0;
@@ -4640,14 +4648,14 @@ while((field=mysql_fetch_row(res)))
 									GetConfiguration("cAutoCloneNode",cConfBuffer,uTargetDatacenter,uTargetNode,0,0);
 									if(!cConfBuffer[0])
 									{
-										if(sizeof(cResult)-strlen(cResult)-strlen(" +NocAutoCloneNode! ")>0)
+										if((sizeof(cResult)-strlen(cResult)-strlen(" +NocAutoCloneNode! "))>0)
 											strcat(cResult," +NocAutoCloneNode!");
 										continue;
 									}
 									uCloneTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
 									if(!uCloneTargetNode)
 									{
-										if(sizeof(cResult)-strlen(cResult)-strlen(" +NocAutoCloneNode! ")>0)
+										if((sizeof(cResult)-strlen(cResult)-strlen(" +NocAutoCloneNode! "))>0)
 											strcat(cResult," +NocAutoCloneNode!");
 										continue;
 									}
@@ -4658,7 +4666,7 @@ while((field=mysql_fetch_row(res)))
 															uCloneTargetNode,0,0);
 									if(!cConfBuffer[0])
 									{
-										if(sizeof(cResult)-strlen(cResult)-strlen(" +NocAutoCloneIPClass! ")>0)
+										if((sizeof(cResult)-strlen(cResult)-strlen(" +NocAutoCloneIPClass! "))>0)
 											strcat(cResult," +NocAutoCloneIPClass!");
 										continue;
 									}
@@ -4674,12 +4682,13 @@ while((field=mysql_fetch_row(res)))
 									mysql_query(&gMysql,gcQuery);
 									if(mysql_errno(&gMysql))
 										htmlPlainTextError(mysql_error(&gMysql));
-									res=mysql_store_result(&gMysql);
-									if((field=mysql_fetch_row(res)))
-										sscanf(field[0],"%u",&uIPv4);
+									res2=mysql_store_result(&gMysql);
+									if((field2=mysql_fetch_row(res2)))
+										sscanf(field2[0],"%u",&uIPv4);
+									mysql_free_result(res2);
 									if(!uIPv4)
 									{
-										if(sizeof(cResult)-strlen(cResult)-strlen(" +NoCloneIPAvail! ")>0)
+										if((sizeof(cResult)-strlen(cResult)-strlen(" +NoCloneIPAvail! "))>0)
 											strcat(cResult," +NoCloneIPAvail!");
 										continue;
 									}
@@ -4689,7 +4698,7 @@ while((field=mysql_fetch_row(res)))
 									unsigned uResourceLimit=0;
 									if(uResourceLimit)
 									{
-										if(sizeof(cResult)-strlen(cResult)-strlen(" +NoCloneResourceAvail! ")>0)
+										if((sizeof(cResult)-strlen(cResult)-strlen(" +NoCloneResourceAvail! "))>0)
 											strcat(cResult," +NoCloneResourceAvail!");
 										continue;
 									}
@@ -4708,13 +4717,19 @@ while((field=mysql_fetch_row(res)))
 											htmlPlainTextError(mysql_error(&gMysql));
 
 										SetContainerStatus(uContainer,uAWAITDNSMIG);
-										if(sizeof(cResult)-strlen(cResult)-strlen(" +clone ")>0)
+										if((sizeof(cResult)-strlen(cResult)-strlen(" +clone "))>0)
+										{
 											strcat(cResult," +clone");
+											continue;
+										}
 									}
 									else
 									{
-										if(sizeof(cResult)-strlen(cResult)-strlen(" +cerror! ")>0)
+										if((sizeof(cResult)-strlen(cResult)-strlen(" +cerror! "))>0)
+										{
 											strcat(cResult," +cerror!");
+											continue;
+										}
 									}
 								}//while clone exist
 								mysql_free_result(res);
@@ -4786,18 +4801,18 @@ while((field=mysql_fetch_row(res)))
 								if(DestroyContainerJob(uDatacenter,uNode,uContainer,guCompany))
 								{
 									SetContainerStatus(uContainer,uAWAITDEL);
-									if(sizeof(cResult)-strlen(cResult)-strlen(" +clone job ")>0)
+									if((sizeof(cResult)-strlen(cResult)-strlen(" +clone job "))>0)
 										strcat(cResult," +clone job");
 								}
 								else
 								{
-									if(sizeof(cResult)-strlen(cResult)-strlen(" +clone job error! ")>0)
+									if((sizeof(cResult)-strlen(cResult)-strlen(" +clone job error! "))>0)
 										strcat(cResult," +clone job error!");
 								}
 							}
 							else
 							{
-								if(sizeof(cResult)-strlen(cResult)-strlen(" +no clone job ")>0)
+								if((sizeof(cResult)-strlen(cResult)-strlen(" +no clone job "))>0)
 									strcat(cResult," +no clone job");
 							}
 						}
@@ -5026,12 +5041,12 @@ while((field=mysql_fetch_row(res)))
 								if(mysql_errno(&gMysql))
 									htmlPlainTextError(mysql_error(&gMysql));
 								if(mysql_affected_rows(&gMysql)>0)
-									if(sizeof(cResult)-strlen(cResult)-strlen(" +clone delete ")>0)
+									if((sizeof(cResult)-strlen(cResult)-strlen(" +clone delete "))>0)
 										strcat(cResult," +clone delete");
 							}//if clone
 							else
 							{
-								if(sizeof(cResult)-strlen(cResult)-strlen(" +no clone deleted ")>0)
+								if((sizeof(cResult)-strlen(cResult)-strlen(" +no clone deleted "))>0)
 									strcat(cResult," +no clone deleted");
 							}
 						}//while
@@ -5497,19 +5512,19 @@ while((field=mysql_fetch_row(res)))
 											uCloneOwner,guLoginClient,0,uCloneStatus))
 										{
 											SetContainerStatus(uCloneContainer,uAWAITMIG);
-											if(sizeof(cResult)-strlen(cResult)-strlen(" +clone job ")>0)
+											if((sizeof(cResult)-strlen(cResult)-strlen(" +clone job "))>0)
 												strcat(cResult," +clone job");
 
 										}
 										else
 										{
-											if(sizeof(cResult)-strlen(cResult)-strlen(" +cerror! ")>0)
+											if((sizeof(cResult)-strlen(cResult)-strlen(" +cerror! "))>0)
 												strcat(cResult," +cerror!");
 										}
 									}
 									else
 									{
-										if(sizeof(cResult)-strlen(cResult)-strlen(" +clone job ignored ")>0)
+										if((sizeof(cResult)-strlen(cResult)-strlen(" +clone job ignored "))>0)
 											strcat(cResult," +clone job ignored");
 									}
 								}
@@ -7823,7 +7838,16 @@ unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, 
 	long unsigned luJobDate=0;
 
 	if(cStartTime[0] && cStartDate[0])
-		luJobDate=cStartTimeToUnixTime(cStartTime)+cStartDateToUnixTime(cStartDate);
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	if(luJobDate)	
 		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DNSMoveContainerJob(%u)',cJobName='DNSMoveContainer'"

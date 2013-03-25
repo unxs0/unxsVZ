@@ -239,13 +239,13 @@ void ExttJobCommands(pentry entries[], int x)
 					tJob("<blink>Error:</blink> Must specify a year-month-day start date for "
 								"initial job.");
 
-				sscanf(cStartDate,"%u-%u-%u",&uYear,&uMon,&uDay);
+				sscanf(cStartDate,"%u/%u/%u",&uMon,&uDay,&uYear);
 				if(uYear>3010 || uYear<2010)
-					tJob("<blink>Error:</blink> Year out-of-range, ex. 2010-01-22");
+					tJob("<blink>Error:</blink> Year out-of-range, ex. 3/15/2015");
 				if(uMon>12 || uMon<1)
-					tJob("<blink>Error:</blink> Mon out-of-range, ex. 2010-01-22");
+					tJob("<blink>Error:</blink> Mon out-of-range, ex. 01/22/2015");
 				if(uDay>31 || uDay<1)
-					tJob("<blink>Error:</blink> Day out-of-range, ex. 2010-01-22");
+					tJob("<blink>Error:</blink> Day out-of-range, ex. 12/1/2015");
 
 				luStartDate=cStartDateToUnixTime(cStartDate);
 				if(luStartDate == (time_t)(-1))
@@ -261,11 +261,12 @@ void ExttJobCommands(pentry entries[], int x)
 				cJobData=cBuffer;
 				uJobStatus=uWAITING;
 				sprintf(cJobData,"uMin=%u;\nuHour=%u;\nuDayOfWeek=%u;\nuDayOfMonth=%u;\nuMonth=%u;\n"
-						"cRecurringJob=%s;\n",
-						uMin,uHour,uDayOfWeek,uDayOfMonth,uMonth,cRecurringJobDropDown);
+						"cRecurringJob=%s;\nuJobDate=%u/%u/%u",
+						uMin,uHour,uDayOfWeek,uDayOfMonth,uMonth,cRecurringJobDropDown,uMon,uDay,uYear);
 				if(uHour==24) uHour=0;//Adjust for start after posting correct value above.
 				luStartDate+=(uMin*60)+(uHour*3600);
 				uJobDate=luStartDate;
+	                        tJob("d1");
 				NewtJob(1);
 				if(uJob)
 	                        	tJob("Recurring job added");
@@ -535,6 +536,20 @@ void tJobNavList(void)
 
 }//void tJobNavList(void)
 
+/*
+
+ struct tm {
+                      int     tm_sec;         //seconds
+                      int     tm_min;         //minutes
+                      int     tm_hour;        //hours
+                      int     tm_mday;        //day of the month
+                      int     tm_mon;         //month
+                      int     tm_year;        //year
+                      int     tm_wday;        //day of the week
+                      int     tm_yday;        //day in the year
+                      int     tm_isdst;       //daylight saving time
+              };
+*/
 
 time_t cStartDateToUnixTime(char *cStartDate)
 {
@@ -542,11 +557,9 @@ time_t cStartDateToUnixTime(char *cStartDate)
         time_t  res;
 
         bzero(&locTime, sizeof(struct tm));
-	if(strchr(cStartDate,'-'))
+	if(strchr(cStartDate,'/'))
         	strptime(cStartDate,"%m/%d/%Y", &locTime);
-        locTime.tm_sec = 0;
-        locTime.tm_min = 0;
-        locTime.tm_hour = 0;
+        locTime.tm_isdst = -1; //forces mktime to determine if DST is in effect
         res = mktime(&locTime);
         return(res);
 }//time_t cStartDateToUnixTime(char *cStartDate)
@@ -554,15 +567,11 @@ time_t cStartDateToUnixTime(char *cStartDate)
 
 time_t cStartTimeToUnixTime(char *cStartTime)
 {
-        struct  tm locTime;
         time_t  res;
+	unsigned uHr=0,uMin=0,uSec=0;	
 
-        bzero(&locTime, sizeof(struct tm));
-	if(strchr(cStartDate,'-'))
-        	strptime(cStartDate,"%H:%M:%S", &locTime);
-        locTime.tm_sec = 0;
-        locTime.tm_min = 0;
-        locTime.tm_hour = 0;
-        res = mktime(&locTime);
+	sscanf(cStartTime,"%u:%u:%u",&uHr,&uMin,&uSec);
+	res=uHr*3600+uMin*60+uSec;
+
         return(res);
 }//time_t cStartTimeToUnixTime(char *cStartTime)
