@@ -1686,7 +1686,8 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
 	//Default for less conditions below
-	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
+	//Configure normal default via /etc/ssh/ssh_config
+	if(uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
 
 
@@ -2517,7 +2518,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 	}
 	//Default for less conditions below
-	if(!cSSHOptions[0] || uNotValidSystemCallArg(cSSHOptions))
+	if(uNotValidSystemCallArg(cSSHOptions))
 		sprintf(cSSHOptions,"-p 22 -c arcfour");
 
 	char cSCPOptions[256]={""};
@@ -2528,8 +2529,9 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		if(!cSCPOptions[0])
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
-	//Default for less conditions below
-	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
+	//Default for security violation below
+	//Configure normal default via /etc/ssh/ssh_config
+	if(uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
 
 	char cSnapshotDir[256]={""};
@@ -2560,13 +2562,13 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//New vzdump uses new file format, E.G.: /var/vzdump/vzdump-openvz-10511-2011_02_03-07_37_01.tgz
 	//Quick fix (hackorama) just mv it to old format
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"if [ ! -f /var/vzdump/vzdump-%u.tgz ];then"
-				" mv `ls -1 /vz/dump/vzdump*-%u-*.tgz | head -n 1` /vz/dump/vzdump-%u.tgz; fi;",
-					uContainer,uContainer,uContainer);
+		sprintf(gcQuery,"if [ ! -f /var/vzdump/vzdump-%1$u.tgz ] && [ ! -f /vz/dump/vzdump-%1$u.tgz ];then"
+				" mv `ls -1 /vz/dump/vzdump*-%1$u*.tgz | head -n 1` /vz/dump/vzdump-%1$u.tgz; fi;",
+						uContainer);
 	else
 		sprintf(gcQuery,"if [ -f /var/vzdump/vzdump-%u.tgz ] && [ \"%s\" != \"/var/vzdump\" ];then"
 				" mv /var/vzdump/vzdump-%u.tgz %s/vzdump-%u.tgz;else"
-				" if [ -f %s/vzdump*-%u-*.tgz ];then mv `ls -1 %s/vzdump*-%u-*.tgz | head -n 1` %s/vzdump-%u.tgz;fi;fi;",
+				" if [ -f %s/vzdump*-%u*.tgz ];then mv `ls -1 %s/vzdump*-%u*.tgz | head -n 1` %s/vzdump-%u.tgz;fi;fi;",
 				uContainer,cSnapshotDir,
 				uContainer,cSnapshotDir,uContainer,
 				cSnapshotDir,uContainer,cSnapshotDir,uContainer,cSnapshotDir,uContainer);
@@ -3150,7 +3152,8 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
 	//Default for less conditions below
-	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
+	//Configure normal default via /etc/ssh/ssh_config
+	if(uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
 	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",gfuDatacenter,gfuNode);
 	mysql_query(&gMysql,gcQuery);
@@ -3255,7 +3258,8 @@ void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData)
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
 	//Default for less conditions below
-	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
+	//Configure normal default via /etc/ssh/ssh_config
+	if(uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
 	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",gfuDatacenter,gfuNode);
 	mysql_query(&gMysql,gcQuery);
@@ -4436,7 +4440,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 					GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 			}
 			//Default for less conditions below
-			if(!cSSHOptions[0] || uNotValidSystemCallArg(cSSHOptions))
+			if(uNotValidSystemCallArg(cSSHOptions))
 				sprintf(cSSHOptions,"-p 22 -c arcfour");
 			unsigned uSSHPort=22;
 			char *cp;
@@ -4832,7 +4836,7 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 					GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 			}
 			//Default for less conditions below
-			if(!cSSHOptions[0] || uNotValidSystemCallArg(cSSHOptions))
+			if(uNotValidSystemCallArg(cSSHOptions))
 				sprintf(cSSHOptions,"-p 22 -c arcfour");
 			unsigned uSSHPort=22;
 			char *cp;
@@ -5021,7 +5025,7 @@ void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsig
 			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 	}
 	//Default for less conditions below
-	if(!cSSHOptions[0] || uNotValidSystemCallArg(cSSHOptions))
+	if(uNotValidSystemCallArg(cSSHOptions))
 		sprintf(cSSHOptions,"-p 22 -c arcfour");
 
 	//debug only
@@ -5860,7 +5864,8 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
 	//Default for less conditions below
-	if(!cSCPOptions[0] || uNotValidSystemCallArg(cSCPOptions))
+	//Configure normal default via /etc/ssh/ssh_config
+	if(uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
 
 
