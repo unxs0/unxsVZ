@@ -495,6 +495,11 @@ void tContainerNewStep(unsigned uStep)
 		OpenRow("Selected node","black");
 		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
 
+		//uContainer
+		OpenRow(LANG_FL_tContainer_uContainer,"black");
+		printf("<input title='Optional uContainer leave as 0 in almost all cases'"
+			" type=text name=uContainer value=%u size=16 maxlength=10 ></td></tr>\n",uContainer);
+
 		//cLabel
 		OpenRow(LANG_FL_tContainer_cLabel,"black");
 		printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 ",

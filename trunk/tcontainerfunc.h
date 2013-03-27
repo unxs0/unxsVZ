@@ -1099,8 +1099,9 @@ void ExttContainerCommands(pentry entries[], int x)
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE ("
 							" cHostname REGEXP '^%s[0-9]+%s$'"
 							" OR cLabel REGEXP '%s[0-9]+$'"
+							" OR uContainer=%u"
 							" ) AND uDatacenter=%u LIMIT 1",
-								cLabel,cHostname,cLabel,uDatacenter);
+								cLabel,cHostname,cLabel,uContainer,uDatacenter);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -1378,7 +1379,6 @@ void ExttContainerCommands(pentry entries[], int x)
 				//Checks done commited to create
                        		guMode=0;
 				uStatus=uINITSETUP;//Initial setup
-				uContainer=0;
 				uCreatedBy=guLoginClient;
 				guCompany=uForClient;
 				uOwner=guCompany;
@@ -1392,7 +1392,6 @@ void ExttContainerCommands(pentry entries[], int x)
 
 
 				//This sets new file global uContainer
-				uContainer=0;
 				if(uCreateAppliance)
 					uSource=uApplianceContainer;
 				NewtContainer(1);

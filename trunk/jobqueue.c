@@ -5661,7 +5661,20 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		sprintf(cOnScriptCall,"%.255s %u %s %s",cCommand,uContainer,field[0],field[1]);
+	
+		char *cOptions;	
+
+	
+		if((cOptions=strstr(cJobData,"cOptions")))
+		{
+			char *cp;
+			if((cp=strchr(cOptions,'\n'))) *cp=0;
+		}
+		else
+		{
+			cOptions="";	
+		}
+		sprintf(cOnScriptCall,"%.255s %u %s %s %s",cCommand,uContainer,field[0],field[1],cOptions);
 		logfileLine("NodeCommandJob",cOnScriptCall);
 		if(system(cOnScriptCall))
 		{
@@ -6070,7 +6083,7 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	//	Maybe we should create a job here? This will keep things neat and
 	//	and allow code reuse
 	char cPostDNSNodeScript[256]={""};
-	char cArgs[256];
+	char cArgs[512];
 	unsigned uConfiguration=0;
 	//First try most specific match datacenter and node
 	uConfiguration=GetConfiguration("cPostDNSNodeScript",cPostDNSNodeScript,uDatacenter,uNode,0,0);
@@ -6082,8 +6095,9 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	//any datacenter that has at least one tConfiguration for a specific uDatacenter+uNode
 	if(cPostDNSNodeScript[0] && uConfiguration)
 	{
-		sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u;\nuJob1=%u;\nuJob2=%u;\n",
-							cPostDNSNodeScript,uJob,uCreateDNSJob,0);
+		sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u;\nuJob1=%u;\nuJob2=%u;\n"
+				"cOptions: cTargetNodeIPv4=%s; cIPv4=%s;\n",
+							cPostDNSNodeScript,uJob,uCreateDNSJob,0,cTargetNodeIPv4,cIPv4);
 		if(!uNodeCommandJob(uDatacenter,uNode,uContainer,1,1,uConfiguration,cArgs))
 		{
 			logfileLine("DNSMoveContainer","uNodeCommandJob() error");
