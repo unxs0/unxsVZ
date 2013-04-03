@@ -441,6 +441,8 @@ void tContainerSearchSet(unsigned uStep)
 	printf("> Not");
 	OpenRow("OSTemplate","black");
 	tTablePullDown("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1);
+	OpenRow("Primary group","black");
+	tContainerGroupPullDown(uChangeGroup,1);
 
 	if(uStep==1)
 	{
