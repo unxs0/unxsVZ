@@ -544,7 +544,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				}//if(cCommands[0])
 
 				if(cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
-						&& uForClient==0 && uOSTemplate==0)
+						&& uForClient==0 && uOSTemplate==0 && uChangeGroup==0)
 	                        	tContainer("You must specify at least one search parameter");
 
 
@@ -634,6 +634,12 @@ void ExttContainerCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
+				if(uChangeGroup)
+				{
+	                        	tContainer("Primary group can not be used to remove containers from search set");
+				}
+
+
 				strcat(gcQuery,")");
 				//debug only
 	                        //tContainer(gcQuery);
@@ -667,7 +673,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				unsigned uNumber=0;
 
 				if(cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
-						&& uForClient==0 && uOSTemplate==0 && cCommands[0]==0)
+						&& uForClient==0 && uOSTemplate==0 && cCommands[0]==0 && uChangeGroup==0 )
 	                        	tContainer("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,2))==0)
@@ -821,6 +827,15 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uLink)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," uOwner=%u",uForClient);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uChangeGroup)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uChangeGroup);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
