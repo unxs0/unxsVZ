@@ -5675,7 +5675,7 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 			cOptions="";	
 		}
 		if(cOptions[0])
-			sprintf(cOnScriptCall,"%.255s %u %s %s '%s'",cCommand,uContainer,field[0],field[1],cOptions);
+			sprintf(cOnScriptCall,"%.255s %u %s %s %s",cCommand,uContainer,field[0],field[1],cOptions+strlen("cOptions: "));
 		else
 			sprintf(cOnScriptCall,"%.255s %u %s %s",cCommand,uContainer,field[0],field[1]);
 		logfileLine("NodeCommandJob",cOnScriptCall);
@@ -6099,7 +6099,8 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	if(cPostDNSNodeScript[0] && uConfiguration)
 	{
 		sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u;\nuJob1=%u;\nuJob2=%u;\n"
-				"cOptions: cRemoteNodeIPv4=%s; cIPv4=%s;\n",
+				//"cOptions: cRemoteNodeIPv4=%s; cIPv4=%s;\n",
+				"cOptions: %s %s\n",
 							cPostDNSNodeScript,uJob,uCreateDNSJob,0,cTargetNodeIPv4,cIPv4);
 		if(!uNodeCommandJob(uDatacenter,uNode,uContainer,1,1,uConfiguration,cArgs))
 		{
