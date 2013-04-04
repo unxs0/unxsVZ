@@ -634,9 +634,17 @@ void ExttContainerCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
+				//Creates special temp copy table
 				if(uChangeGroup)
 				{
-	                        	tContainer("Primary group can not be used to remove containers from search set");
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uContainer IN (SELECT uContainer FROM tGroupGlueCopy WHERE uGroup=%u)",uChangeGroup);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+					mysql_query(&gMysql,"CREATE TEMPORARY TABLE tGroupGlueCopy AS (SELECT * FROM tGroupGlue)");
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
 				}
 
 
