@@ -5663,15 +5663,19 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 	{
 	
 		char *cOptions;	
+		char *cp;
 		unsigned uRetval=0;
 		unsigned uDestroyOnSuccess=0;
+		unsigned uReleaseOldIp=0;
 
 		if(strstr(cJobData,"DestroyContainer=yes"))
 			uDestroyOnSuccess=1;
 	
+		if((cp=strstr(cJobData,"ReleaseOldIp=")))
+			sscanf(cp+strlen("ReleaseOldIp="),"%u;",&uReleaseOldIp);
+	
 		if((cOptions=strstr(cJobData,"cOptions")))
 		{
-			char *cp;
 			if((cp=strchr(cOptions,'\n'))) *cp=0;
 		}
 		else
@@ -5696,12 +5700,23 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 
 		if(uDestroyOnSuccess)
 		{
-			sprintf(gcQuery,"/usr/sbin/vzctl --verbose destroy %u",uContainer);
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %1$u;/usr/sbin/vzctl --verbose destroy %1$u",uContainer);
 			if(system(gcQuery))
 			{
 				logfileLine("NodeCommandJob",gcQuery);
 				tJobErrorUpdate(uJob,"vzctl destroy failed");
 				return;
+			}
+
+			if(uReleaseOldIp)
+			{
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE uIP=%u",uReleaseOldIp);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("NodeCommandJob",mysql_error(&gMysql));
+				}
+				logfileLine("NodeCommandJob","uReleaseOldIp update done");
 			}
 		}
 	}
@@ -6127,12 +6142,18 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	//any datacenter that has at least one tConfiguration for a specific uDatacenter+uNode
 	if(cPostDNSNodeScript[0] && uConfiguration)
 	{
+		unsigned uIP=0;
+
+		sscanf(ForeignKey("tContainer","uIPv4",uContainer),"%u",&uIP);
 		sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u;\nuJob1=%u;\nuJob2=%u;\n"
 				//"cOptions: cRemoteNodeIPv4=%s; cIPv4=%s;\n",
 				"DestroyContainer=yes;\n"
+				"ReleaseOldIp=%u;\n"
 				//the next line must be last see NodeCommand
 				"cOptions: %s %s\n",
-							cPostDNSNodeScript,uJob,uCreateDNSJob,0,cTargetNodeIPv4,cIPv4);
+							cPostDNSNodeScript,uJob,uCreateDNSJob,0,
+							uIP,
+							cTargetNodeIPv4,cIPv4);
 		if(!uNodeCommandJob(uDatacenter,uNode,uContainer,1,1,uConfiguration,cArgs))
 		{
 			logfileLine("DNSMoveContainer","uNodeCommandJob() error");
