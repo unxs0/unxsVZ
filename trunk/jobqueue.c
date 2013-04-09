@@ -5663,7 +5663,11 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 	{
 	
 		char *cOptions;	
+		unsigned uRetval=0;
+		unsigned uDestroyOnSuccess=0;
 
+		if(strstr(cJobData,"DestroyContainer=yes"))
+			uDestroyOnSuccess=1;
 	
 		if((cOptions=strstr(cJobData,"cOptions")))
 		{
@@ -5679,10 +5683,26 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 		else
 			sprintf(cOnScriptCall,"%.255s %u %s %s",cCommand,uContainer,field[0],field[1]);
 		logfileLine("NodeCommandJob",cOnScriptCall);
-		if(system(cOnScriptCall))
+		//system returns retval of cOnScriptCall times 256.
+		//cOnScriptCall must return values only between 0 and 255.
+		if((uRetval=system(cOnScriptCall)))
 		{
+			char cMsg[32];
 			tJobErrorUpdate(uJob,"command failed");
+			sprintf(cMsg,"uRetval/256=%u",uRetval/256);
+			logfileLine("NodeCommandJob",cMsg);
 			return;
+		}
+
+		if(uDestroyOnSuccess)
+		{
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose destroy %u",uContainer);
+			if(system(gcQuery))
+			{
+				logfileLine("NodeCommandJob",gcQuery);
+				tJobErrorUpdate(uJob,"vzctl destroy failed");
+				return;
+			}
 		}
 	}
 	mysql_free_result(res);
@@ -6100,6 +6120,8 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	{
 		sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u;\nuJob1=%u;\nuJob2=%u;\n"
 				//"cOptions: cRemoteNodeIPv4=%s; cIPv4=%s;\n",
+				"DestroyContainer=yes;\n"
+				//the next line must be last see NodeCommand
 				"cOptions: %s %s\n",
 							cPostDNSNodeScript,uJob,uCreateDNSJob,0,cTargetNodeIPv4,cIPv4);
 		if(!uNodeCommandJob(uDatacenter,uNode,uContainer,1,1,uConfiguration,cArgs))
