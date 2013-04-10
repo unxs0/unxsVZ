@@ -5692,7 +5692,8 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 		if((uRetval=system(cOnScriptCall)))
 		{
 			char cMsg[32];
-			tJobErrorUpdate(uJob,"command failed");
+			tJobErrorUpdate(uJob,"cOnScriptCall failed");
+			logfileLine("NodeCommandJob","cOnScriptCall failed");
 			sprintf(cMsg,"uRetval/256=%u",uRetval/256);
 			logfileLine("NodeCommandJob",cMsg);
 			return;
@@ -5713,11 +5714,19 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE uIP=%u",uReleaseOldIp);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
-				{
 					logfileLine("NodeCommandJob",mysql_error(&gMysql));
-				}
 				logfileLine("NodeCommandJob","uReleaseOldIp update done");
 			}
+
+			//remove -m if everything went fine
+			char cHostname[128]={""};
+			sprintf(cHostname,"%.127s",ForeignKey("tContainer","cHostname",uContainer));
+			if((cp=strstr(cHostname+(strlen(cHostname)-2),"-m")))
+				*cp=0;
+			sprintf(gcQuery,"UPDATE tContainer SET cLabel=%s WHERE uContainer=%u",cHostname,uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				logfileLine("NodeCommandJob",mysql_error(&gMysql));
 		}
 	}
 	mysql_free_result(res);
