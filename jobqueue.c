@@ -5719,11 +5719,11 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 			}
 
 			//remove -m if everything went fine
-			char cHostname[128]={""};
-			sprintf(cHostname,"%.127s",ForeignKey("tContainer","cHostname",uContainer));
-			if((cp=strstr(cHostname+(strlen(cHostname)-2),"-m")))
+			char cLabel[64]={""};
+			sprintf(cLabel,"%.63s",ForeignKey("tContainer","cLabel",uContainer));
+			if((cp=strstr(cLabel+(strlen(cLabel)-2),"-m")))
 				*cp=0;
-			sprintf(gcQuery,"UPDATE tContainer SET cLabel=%s WHERE uContainer=%u",cHostname,uContainer);
+			sprintf(gcQuery,"UPDATE tContainer SET cLabel=%s WHERE uContainer=%u",cLabel,uContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				logfileLine("NodeCommandJob",mysql_error(&gMysql));
