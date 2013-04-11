@@ -484,6 +484,23 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
+		else if(!strcmp(gcCommand,"Clear Filter"))
+                {
+			ProcesstContainerVars(entries,x);
+                        guMode=12002;
+			cHostnameSearch[0]=0;
+			cIPv4Search[0]=0;
+			cCommands[0]=0;
+			uDatacenter=0;
+			uNode=0;
+			uForClient=0;
+			uSearchSource=0;
+			uSearchStatus=0;
+			uSearchStatusNot=0;
+			uOSTemplate=0;
+			uChangeGroup=0;
+			tContainer("Filter cleared");
+		}
 		else if(!strcmp(gcCommand,"Remove from Search Set"))
                 {
 			if(guPermLevel>=9)
@@ -4015,15 +4032,17 @@ void ExttContainerButtons(void)
 			printf("In the right panel you can select your search criteria. When refining you do not need"
 				" to reuse your initial search critieria. Your search set is persistent even across unxsVZ sessions.<p>");
 			printf("<input type=submit class=largeButton title='Create an initial or replace an existing search set'"
-				" name=gcCommand value='Create Search Set'>");
+				" name=gcCommand value='Create Search Set'>\n");
 			printf("<input type=submit class=largeButton title='Add the results to your current search set. Do not add the same search"
 				" over and over again it will not result in any change but may slow down processing.'"
 				" name=gcCommand value='Add to Search Set'>");
 			printf("<p><input type=submit class=largeButton title='Apply the right panel filter to refine your existing search set"
 				" by removing set elements that match the filter settings.'"
 				" name=gcCommand value='Remove from Search Set'>\n");
+			printf("<input type=submit class=largeButton title='Clear all right panel filter values'"
+				" name=gcCommand value='Clear Filter'>\n");
 			printf("<p><input type=submit class=largeButton title='Reload current search set. Good for checking for any new status updates'"
-				" name=gcCommand value='Reload Search Set'>");
+				" name=gcCommand value='Reload Search Set'>\n");
 			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
 				" name=gcCommand value='Cancel'>");
 			printf("<p><u>Set Operation Options</u>");
