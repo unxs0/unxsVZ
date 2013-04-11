@@ -566,7 +566,7 @@ void unxsVZJobs(char const *cServer)
 		{
 			logfileLine("unxsSIPSReload","done",0);
 			UpdateJob(3,0,uJob,"unxsSIPSReload initiated");
-			uDRReload=1;
+			uDRReload=uJob;
 		}
 	}
 	mysql_free_result(res);
