@@ -8,6 +8,59 @@ AUTHOR
 	Gary Wallis for Unxiservice, LLC. (C) 2011.
 	GPLv2 License applies. See LICENSE file.
 NOTES
+
+OpenSIPS 1.8 Changes
+
+mysql> describe dr_gateways;
++-------------+------------------+------+-----+---------+----------------+
+| Field       | Type             | Null | Key | Default | Extra          |
++-------------+------------------+------+-----+---------+----------------+
+| gwid        | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| type        | int(11) unsigned | NO   |     | 0       |                |
+| address     | char(128)        | NO   |     | NULL    |                |
+| strip       | int(11) unsigned | NO   |     | 0       |                |
+| pri_prefix  | char(16)         | YES  |     | NULL    |                |
+| attrs       | char(255)        | YES  |     | NULL    |                |
+| probe_mode  | int(11) unsigned | NO   |     | 0       |                |
+| description | char(128)        | NO   |     |         |                |
+| rating_plan | int(11)          | NO   |     | 1       |                |
++-------------+------------------+------+-----+---------+----------------+
+9 rows in set (0.00 sec)
+
+mysql> describe dr_gateways_1_8;
++-------------+------------------+------+-----+---------+-------+
+| Field       | Type             | Null | Key | Default | Extra |
++-------------+------------------+------+-----+---------+-------+
+| id          | int(10) unsigned | NO   |     | 0       |       |
+| gwid        | varchar(64)      | NO   |     |         |       |
+| type        | int(11) unsigned | NO   |     | 0       |       |
+| address     | char(128)        | NO   |     | NULL    |       |
+| strip       | int(11) unsigned | NO   |     | 0       |       |
+| pri_prefix  | char(16)         | YES  |     | NULL    |       |
+| attrs       | char(255)        | YES  |     | NULL    |       |
+| probe_mode  | int(11) unsigned | NO   |     | 0       |       |
+| description | char(128)        | NO   |     |         |       |
+| rating_plan | int(11)          | NO   |     | 1       |       |
++-------------+------------------+------+-----+---------+-------+
+10 rows in set (0.00 sec)
+
+No changes here:
+mysql> describe dr_rules;
++-------------+------------------+------+-----+---------+----------------+
+| Field       | Type             | Null | Key | Default | Extra          |
++-------------+------------------+------+-----+---------+----------------+
+| ruleid      | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| groupid     | char(255)        | NO   |     | NULL    |                |
+| prefix      | char(64)         | NO   |     | NULL    |                |
+| timerec     | char(255)        | NO   |     | NULL    |                |
+| priority    | int(11)          | NO   |     | 0       |                |
+| routeid     | char(255)        | NO   |     | NULL    |                |
+| gwlist      | char(255)        | NO   |     | NULL    |                |
+| attrs       | char(255)        | YES  |     | NULL    |                |
+| description | char(128)        | NO   |     |         |                |
++-------------+------------------+------+-----+---------+----------------+
+
+
 */
 
 #include "../../mysqlrad.h"
@@ -129,6 +182,8 @@ void unxsVZJobs(char const *cServer)
 	TextConnectOpenSIPSDb();
 	guLoginClient=1;//Root user
 
+	//logfileLine("unxsVZJobs cServer",cServer,0);
+
 	sprintf(gcQuery,"SELECT uJob,uDatacenter,uNode,uContainer,uOwner,cJobName,cJobData FROM tJob"
 			" WHERE uJobStatus=10"
 			" AND cJobName LIKE 'unxsSIPS%%'"
@@ -168,9 +223,8 @@ void unxsVZJobs(char const *cServer)
 		//for nodes only we added the cServer to the cJobData.
 		ParseDIDJobData(field[6],cDID,cHostname,cCustomerName,cJobServer);
 		//debug only
-		//logfileLine("unxsVZJobs cServer",cServer,0);
-		//logfileLine("unxsVZJobs cJobServer",cJobServer,0);
-		//logfileLine("unxsVZJobs cDID",cDID,uJob);
+		logfileLine("unxsVZJobs cJobServer",cJobServer,0);
+		logfileLine("unxsVZJobs cDID",cDID,uJob);
 		if(strcmp(cJobServer,cServer))
 			continue;
 
@@ -180,12 +234,13 @@ void unxsVZJobs(char const *cServer)
 			UpdateJob(2,uContainer,uJob,"");
 
 			//Make sure PBX is registered
+			//OpenSIPS v ok.
 			sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
 			mysql_query(&gMysqlExt,gcQuery);
 			if(mysql_errno(&gMysqlExt))
 			{
 				//Update tJob error
-				UpdateJob(14,uContainer,uJob,gcQuery);
+				UpdateJob(14,uContainer,uJob,"SELECT gwid,attrs FROM dr_gateways ERROR");
 				logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
@@ -210,7 +265,7 @@ void unxsVZJobs(char const *cServer)
 				if(mysql_errno(&gMysql))
 				{
 					//Update tJob error
-					UpdateJob(14,uContainer,uJob,gcQuery);
+					UpdateJob(14,uContainer,uJob,"SELECT cValue FROM tProperty w/cOrg_LinesContracted ERROR");
 					logfileLine("unxsSIPSNewDID",mysql_error(&gMysql),0);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
@@ -227,7 +282,7 @@ void unxsVZJobs(char const *cServer)
 				if(mysql_errno(&gMysql))
 				{
 					//Update tJob error
-					UpdateJob(14,uContainer,uJob,gcQuery);
+					UpdateJob(14,uContainer,uJob,"SELECT cValue FROM tProperty w/cOrg_CustomerName ERROR");
 					logfileLine("unxsSIPSNewDID",mysql_error(&gMysql),0);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
@@ -254,7 +309,7 @@ void unxsVZJobs(char const *cServer)
 					if(mysql_errno(&gMysqlExt))
 					{
 						//Update tJob error
-						UpdateJob(14,uContainer,uJob,gcQuery);
+						UpdateJob(14,uContainer,uJob,"INSERT INTO dr_gateways ERROR");
 						logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
 						mysql_close(&gMysql);
 						mysql_close(&gMysqlExt);
@@ -262,6 +317,11 @@ void unxsVZJobs(char const *cServer)
 					}
 					logfileLine("unxsSIPSNewDID","dr_gateways record added",uContainer);
 					uGwid=mysql_insert_id(&gMysqlExt);
+				}
+				else
+				{
+					logfileLine("unxsSIPSNewDID","No uLinesContracted job ignored",uContainer);
+					sprintf(cMessage,"Done");
 				}
 			}
 
@@ -274,7 +334,7 @@ void unxsVZJobs(char const *cServer)
 				if(mysql_errno(&gMysqlExt))
 				{
 					//Update tJob error
-					UpdateJob(14,uContainer,uJob,gcQuery);
+					UpdateJob(14,uContainer,uJob,"SELECT prefix FROM dr_rules ERROR");
 					logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
@@ -295,7 +355,7 @@ void unxsVZJobs(char const *cServer)
 					if(mysql_errno(&gMysqlExt))
 					{
 						//Update tJob error
-						UpdateJob(14,uContainer,uJob,gcQuery);
+						UpdateJob(14,uContainer,uJob,"INSERT INTO dr_rules ERROR");
 						logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
 						mysql_close(&gMysql);
 						mysql_close(&gMysqlExt);
@@ -318,8 +378,8 @@ void unxsVZJobs(char const *cServer)
 					if(mysql_errno(&gMysql))
 					{
 						//Update tJob error
-						UpdateJob(14,uContainer,uJob,gcQuery);
 						logfileLine("unxsSIPSNewDID",mysql_error(&gMysql),uContainer);
+						UpdateJob(14,uContainer,uJob,"UPDATE tProperty ERROR 1");
 						mysql_close(&gMysql);
 						mysql_close(&gMysqlExt);
 						exit(2);
@@ -355,7 +415,7 @@ void unxsVZJobs(char const *cServer)
 			if(mysql_errno(&gMysqlExt))
 			{
 				//Update tJob error
-				UpdateJob(14,uContainer,uJob,gcQuery);
+				UpdateJob(14,uContainer,uJob,"SELECT gwid,attrs FROM dr_gateways ERROR");
 				logfileLine("unxsSIPSRemoveDID",mysql_error(&gMysqlExt),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
@@ -375,7 +435,7 @@ void unxsVZJobs(char const *cServer)
 				if(mysql_errno(&gMysqlExt))
 				{
 					//Update tJob error
-					UpdateJob(14,uContainer,uJob,gcQuery);
+					UpdateJob(14,uContainer,uJob,"DELETE FROM dr_rules ERROR");
 					logfileLine("unxsSIPSRemoveDID",mysql_error(&gMysqlExt),uContainer);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
@@ -397,7 +457,7 @@ void unxsVZJobs(char const *cServer)
 				if(mysql_errno(&gMysql))
 				{
 					//Update tJob error
-					UpdateJob(14,uContainer,uJob,gcQuery);
+					UpdateJob(14,uContainer,uJob,"DELETE FROM tProperty ERROR");
 					logfileLine("unxsSIPSRemoveDID",mysql_error(&gMysql),uContainer);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
@@ -427,7 +487,7 @@ void unxsVZJobs(char const *cServer)
 			if(mysql_errno(&gMysqlExt))
 			{
 				//Update tJob error
-				UpdateJob(14,uContainer,uJob,gcQuery);
+				UpdateJob(14,uContainer,uJob,"SELECT gwid FROM dr_gateways");
 				logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
@@ -446,8 +506,8 @@ void unxsVZJobs(char const *cServer)
 				if(mysql_errno(&gMysqlExt))
 				{
 					//Update tJob error
-					UpdateJob(14,uContainer,uJob,gcQuery);
 					logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
+					UpdateJob(14,uContainer,uJob,"UPDATE dr_gateways ERROR");
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
@@ -462,8 +522,8 @@ void unxsVZJobs(char const *cServer)
 				if(mysql_errno(&gMysql))
 				{
 					//Update tJob error
-					UpdateJob(14,uContainer,uJob,gcQuery);
 					logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
+					UpdateJob(14,uContainer,uJob,"DELETE FROM tProperty ERROR");
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
@@ -479,8 +539,8 @@ void unxsVZJobs(char const *cServer)
 				if(mysql_errno(&gMysql))
 				{
 					//Update tJob error
-					UpdateJob(14,uContainer,uJob,gcQuery);
 					logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
+					UpdateJob(14,uContainer,uJob,"UPDATE tProperty ERROR 2");
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
@@ -502,8 +562,13 @@ void unxsVZJobs(char const *cServer)
 			logfileLine("unxsSIPSModCustomerName",cMessage,uContainer);
 
 		}//unxsSIPSModCustomerName
+		else if(!strncmp(cJobName,"unxsSIPSReload",14))
+		{
+			logfileLine("unxsSIPSReload","done",0);
+			UpdateJob(3,0,uJob,"unxsSIPSReload ok");
+			uDRReload=1;
+		}
 	}
-directExit:
 	mysql_free_result(res);
 
 	if(uDRReload)
@@ -705,15 +770,19 @@ void TextConnectOpenSIPSDb(void)
 
 void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage)
 {
+	char cQuery[512]={""};
+
 	//Update tJob running
-	sprintf(gcQuery,"UPDATE tJob SET"
+	sprintf(cQuery,"UPDATE tJob SET"
 			" uJobStatus=%u,"
-			" cRemoteMsg='%.100s',"
+			" cRemoteMsg='%.99s',"
 			" uModBy=1,"
 			" uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",uStatus,cMessage,uJob);
-	mysql_query(&gMysql,gcQuery);
+	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 	{
+		//debug only
+		fprintf(stderr,"Fatal error: %s\n",cQuery);
 		logfileLine("UpdateJob",mysql_error(&gMysql),uContainer);
 		mysql_close(&gMysql);
 		mysql_close(&gMysqlExt);
