@@ -5666,11 +5666,15 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 		char *cp;
 		unsigned uRetval=0;
 		unsigned uDestroyOnSuccess=0;
+		unsigned unxsSIPSJobs=0;
 		unsigned uReleaseOldIp=0;
 
 		if(strstr(cJobData,"DestroyContainer=yes"))
 			uDestroyOnSuccess=1;
 	
+		if(strstr(cJobData,"unxsSIPSJobs=yes"))
+			unxsSIPSJobs=1;
+
 		if((cp=strstr(cJobData,"ReleaseOldIp=")))
 			sscanf(cp+strlen("ReleaseOldIp="),"%u;",&uReleaseOldIp);
 	
@@ -5696,8 +5700,45 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 			logfileLine("NodeCommandJob","cOnScriptCall failed");
 			sprintf(cMsg,"uRetval/256=%u",uRetval/256);
 			logfileLine("NodeCommandJob",cMsg);
-			return;
+			uDestroyOnSuccess=0;
 		}
+
+	
+		if(unxsSIPSJobs)
+		{
+			//unxsSIPS jobs
+			register int i,j=0;
+			char cSIPProxyList[256];
+			char cServer[32];
+			GetConfiguration("cSIPProxyList",cSIPProxyList,0,0,0,0);
+			for(i=0;cSIPProxyList[i];i++)
+			{
+				if(cSIPProxyList[i]!=';')
+					continue;
+				cSIPProxyList[i]=0;
+				sprintf(cServer,"%.31s",cSIPProxyList+j);
+				j=i+1;//next beg if app
+				cSIPProxyList[i]=';';
+				sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSReload(%u)',cJobName='unxsSIPSReload'"
+						",uDatacenter=%u,uNode=%u,uContainer=%u"
+						",uJobDate=UNIX_TIMESTAMP(NOW())"
+						",uJobStatus=%u"
+						",cJobData='"
+						"cServer=%s;\n'"
+						",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							uContainer,
+							uDatacenter,
+							uNode,
+							uContainer,
+							uREMOTEWAITING,
+							cServer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					logfileLine("NodeCommandJob",mysql_error(&gMysql));
+				logfileLine("NodeCommandJob",cServer);
+			}
+		}
+
 
 		if(uDestroyOnSuccess)
 		{
@@ -6157,6 +6198,7 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 		sprintf(cArgs,"Configured script:%.127s\nRun after:\nuJob0=%u;\nuJob1=%u;\nuJob2=%u;\n"
 				//"cOptions: cRemoteNodeIPv4=%s; cIPv4=%s;\n",
 				"DestroyContainer=yes;\n"
+				"unxsSIPSJobs=yes;\n"
 				"ReleaseOldIp=%u;\n"
 				//the next line must be last see NodeCommand
 				"cOptions: %s %s\n",

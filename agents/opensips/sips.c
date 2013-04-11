@@ -565,7 +565,7 @@ void unxsVZJobs(char const *cServer)
 		else if(!strncmp(cJobName,"unxsSIPSReload",14))
 		{
 			logfileLine("unxsSIPSReload","done",0);
-			UpdateJob(3,0,uJob,"unxsSIPSReload ok");
+			UpdateJob(3,0,uJob,"unxsSIPSReload initiated");
 			uDRReload=1;
 		}
 	}
