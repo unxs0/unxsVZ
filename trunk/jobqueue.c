@@ -5764,7 +5764,7 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 			sprintf(cLabel,"%.63s",ForeignKey("tContainer","cLabel",uContainer));
 			if((cp=strstr(cLabel+(strlen(cLabel)-2),"-m")))
 				*cp=0;
-			sprintf(gcQuery,"UPDATE tContainer SET cLabel=%s WHERE uContainer=%u",cLabel,uContainer);
+			sprintf(gcQuery,"UPDATE tContainer SET cLabel='%s' WHERE uContainer=%u",cLabel,uContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				logfileLine("NodeCommandJob",mysql_error(&gMysql));
