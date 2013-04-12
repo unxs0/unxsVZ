@@ -6127,8 +6127,7 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	}
 	logfileLine("DNSMoveContainer","vzrestore end");
 	//Cleanup /var/vzdump/vzdump-32131.tgz
-	sprintf(gcQuery,"ssh %s %s 'rm -f /var/vzdump/vzdump-%u.tgz'",
-				cSSHOptions,cTargetNodeIPv4,uContainer);
+	sprintf(gcQuery,"rm -f /var/vzdump/vzdump-%u.tgz",uContainer);
 	if(system(gcQuery))
 	{	
 		//non fatal 
