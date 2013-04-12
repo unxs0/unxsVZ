@@ -85,6 +85,7 @@ void unxsVZJobs(char const *cServer);
 void TextConnectOpenSIPSDb(void);
 void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage);
 void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName,char *cServer);
+void Report(void);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -149,6 +150,11 @@ int main(int iArgc, char *cArgv[])
 			ProcessDR();
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"Report",9))
+		{
+			Report();
+			goto CommonExit;
+		}
 	}
 	else if(iArgc==3)
 	{
@@ -159,7 +165,7 @@ int main(int iArgc, char *cArgv[])
 		}
 	}
 
-	printf("Usage: %s ProcessDR|unxsVZJobs <cServer>\n",gcProgram);
+	printf("Usage: %s ProcessDR|unxsVZJobs|Report <cServer>\n",gcProgram);
 
 CommonExit:
 	fclose(gLfp);
@@ -834,3 +840,56 @@ void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerNa
 		}
 	}
 }//void ParseDIDJobData()
+
+
+void Report(void)
+{
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//Uses login data from local.h
+	TextConnectDb();
+	TextConnectOpenSIPSDb();
+	guLoginClient=1;//Root user
+
+	sprintf(gcQuery,"SELECT tContainer.cHostname,tIP.cLabel FROM tContainer,tIP"
+			" WHERE tIP.uIP=tContainer.uIPv4"
+			" AND tContainer.uStatus=%u",uACTIVE);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("Report",mysql_error(&gMysql),0);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("%s",field[0]);
+
+		sprintf(gcQuery,"SELECT gwid,attrs,description FROM dr_gateways WHERE type=1 AND address='%s'",field[0]);
+		mysql_query(&gMysqlExt,gcQuery);
+		if(mysql_errno(&gMysqlExt))
+		{
+			logfileLine("Report",mysql_error(&gMysqlExt),0);
+			mysql_close(&gMysql);
+			mysql_close(&gMysqlExt);
+			exit(2);
+		}
+		res2=mysql_store_result(&gMysqlExt);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			printf(" gwid:%s attrs:%s description:%s\n",field2[0],field2[1],field2[2]);
+		}
+		else
+		{
+			printf(" not found\n");
+		}
+	}
+	mysql_close(&gMysql);
+	mysql_close(&gMysqlExt);
+	exit(2);
+
+}//void Report(void)
