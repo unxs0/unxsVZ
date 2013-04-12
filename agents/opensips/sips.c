@@ -854,8 +854,11 @@ void Report(void)
 	TextConnectOpenSIPSDb();
 	guLoginClient=1;//Root user
 
-	sprintf(gcQuery,"SELECT tContainer.cHostname,tIP.cLabel FROM tContainer,tIP"
-			" WHERE tIP.uIP=tContainer.uIPv4"
+	sprintf(gcQuery,"SELECT tContainer.cHostname FROM tContainer,tGroupGlue,tGroup"
+			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
+			" AND tGroup.uGroup=tGroupGlue.uGroup"
+			" AND tGroup.cLabel LIKE '%%PBX%%'"
+			" AND tContainer.uSource=0"
 			" AND tContainer.uStatus=%u",uACTIVE);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
