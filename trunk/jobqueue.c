@@ -5739,24 +5739,34 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 			}
 		}
 
+		//always stop
+		sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("NodeCommandJob",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl stop failed");
+			return;
+		}
+
+		//always release old IP
+		if(uReleaseOldIp)
+		{
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE uIP=%u",uReleaseOldIp);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				logfileLine("NodeCommandJob",mysql_error(&gMysql));
+			logfileLine("NodeCommandJob","uReleaseOldIp update done");
+		}
+
 
 		if(uDestroyOnSuccess)
 		{
-			sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %1$u;/usr/sbin/vzctl --verbose destroy %1$u",uContainer);
+			sprintf(gcQuery,"/usr/sbin/vzctl --verbose destroy %u",uContainer);
 			if(system(gcQuery))
 			{
 				logfileLine("NodeCommandJob",gcQuery);
 				tJobErrorUpdate(uJob,"vzctl destroy failed");
 				return;
-			}
-
-			if(uReleaseOldIp)
-			{
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE uIP=%u",uReleaseOldIp);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					logfileLine("NodeCommandJob",mysql_error(&gMysql));
-				logfileLine("NodeCommandJob","uReleaseOldIp update done");
 			}
 
 			//remove -m if everything went fine
@@ -6126,8 +6136,15 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 		return;
 	}
 	logfileLine("DNSMoveContainer","vzrestore end");
-	//Cleanup /var/vzdump/vzdump-32131.tgz
+	//Local cleanup /var/vzdump/vzdump-32131.tgz
 	sprintf(gcQuery,"rm -f /var/vzdump/vzdump-%u.tgz",uContainer);
+	if(system(gcQuery))
+	{	
+		//non fatal 
+		logfileLine("DNSMoveContainer",gcQuery);
+	}
+	//Remote cleanup /var/vzdump/vzdump-32131.tgz
+	sprintf(gcQuery,"ssh %s %s 'rm -f /var/vzdump/vzdump-%u.tgz'",cSSHOptions,cTargetNodeIPv4,uContainer);
 	if(system(gcQuery))
 	{	
 		//non fatal 
