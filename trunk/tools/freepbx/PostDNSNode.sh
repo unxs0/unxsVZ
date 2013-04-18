@@ -11,8 +11,7 @@
 #OS
 #	Only tested on CentOS 5+ with OpenVZ
 #LEGAL
-#	Author Ricardo A. Armas 2013 
-#	Copyright Ricardo A. Armas, Unixservice, LLC., Voice Carrier, LLC.
+#	Copyright 2013 Ricardo A. Armas, Unixservice, LLC., Voice Carrier, LLC.
 #	GPLv2 license applies.
 #
 
@@ -31,7 +30,7 @@ destVid=$1
 ready="no"
 errorEmail="rosario@voicecarrier.com"
 emailSubject="[rebootContainerPhones] Error "
-emailBody="Failed extensions "
+emailBody="Failed extensions:\n "
 #echo $emailBody | /bin/mail -s "$emailSubject" "$errorEmail" 
 
 
@@ -81,6 +80,7 @@ if [[ $ready == "yes" ]]; then
 #Check that previous online extensions are online in new container, if their not log an error.
     for e in $extensions
     do
+	ssh $destNode vzctl exec2 $destVid 'service asterisk reload'
 	ssh $destNode vzctl exec2 $destVid 'asterisk -rx \"sip show peer '$e'\"' | grep Status |grep OK	
 	if [[ $? != 0 ]]; then
 	    error+="$e ${useragents[$e]} failed.\n"
@@ -88,10 +88,14 @@ if [[ $ready == "yes" ]]; then
 	fi
     done
     if [[ $failedExts != 0 ]]; then
-	emailBody=` echo -e $error `
-	echo $emailBody
-    	emailSubject.=$fqdn
-    	echo $emailBody | /bin/mail -s "$emailSubject" "$errorEmail"
+	emailBody+=$error
+	echo -e $emailBody
+    	emailSubject+="$fqdn"
+    	echo -e $emailBody | /bin/mail -s "$emailSubject" "$errorEmail"
+    else
+        emailbody="Ok."
+	emailSubject="[rebootContainerPhones] Success $fqdn"
+	echo -e $emailBody | /bin/mail -s "$emailSubject" "$errorEmail"
     fi
     exit $failedExts
     #vzctl exec2 $vid 'for a in `asterisk -rx "sip show peers"|grep OK|cut  -f1 -d/` ;do echo $a && asterisk -rx "sip notify yealink-check-cfg $a"; done; '
