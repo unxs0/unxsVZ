@@ -52,6 +52,7 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode);
 void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
 void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
 void ProcessSingleTraffic(unsigned uContainer);
+void SendEmail(char *cSubject,char *cMsg);
 
 unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
@@ -103,6 +104,7 @@ int main(int iArgc, char *cArgv[])
 			if(!strcmp(cArgv[i],"--version"))
 			{
 				printf("version: %s $Id$\n",cArgv[0]);
+				//SendEmail("ubc.c test","ubc.c test");
 				exit(0);
 			}
 		}
@@ -442,9 +444,11 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 								sprintf(gcQuery,"INSERT INTO tLog SET"
 								" cLabel='UBC Agent: luFailcnt++',"
 								"uLogType=4,uLoginClient=1,"
+								"uTablePK=%u,cTableName='tContainer',"
 								"cLogin='UBC Agent',cMessage=\"%s %lu>%lu %u:%u\","
 								"cServer='%s',uOwner=%u,uCreatedBy=1,"
 								"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+									uContainer,
 									cResource,luFailcnt,luPrevFailcnt,
 									uNode,uContainer,cHostname,guContainerOwner);
 								mysql_query(&gMysql,gcQuery);
@@ -1414,6 +1418,9 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource)
 		exit(2);
 	}
 
+	sprintf(gcQuery,"uDatacenter=%u,uNode=%u,uContainer=%u\ncResource=%s",uDatacenter,uNode,uContainer,cResource);
+	SendEmail("UpdateContainerUBCJob",gcQuery);
+
 }//void UpdateContainerUBCJob(...)
 
 
@@ -2032,3 +2039,22 @@ void ProcessSingleStatus(unsigned uContainer)
 	}
 
 }//void ProcessSingleStatus(unsigned uContainer)
+
+
+void SendEmail(char *cSubject,char *cMsg)
+{
+	FILE *fp;
+	char cFrom[100]={"ubc-agent"};
+	char cEmail[100]={"supportgrp@unixservice.com"};
+
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	{
+		fprintf(fp,"To: %s\n",cEmail);
+		fprintf(fp,"From: %s\n",cFrom);
+		fprintf(fp,"Subject: %s\n\n",cSubject);
+		fprintf(fp,"%s\n",cMsg);
+	}
+	pclose(fp);
+
+}//void SendEmail()
+
