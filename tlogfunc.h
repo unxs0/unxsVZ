@@ -116,7 +116,7 @@ void ExttLogListSelect(void)
         else if(!strcmp(gcFilter,"cLabel"))
         {
 		strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tLog.cLabel='%s' ORDER BY uLog",gcCommand);
+		sprintf(cCat,"tLog.cLabel LIKE '%s' ORDER BY uLog",gcCommand);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uLogType"))

@@ -278,6 +278,52 @@ void ExttJobCommands(pentry entries[], int x)
                 {
 			guMode=0;
 		}
+		else if(!strcmp(gcCommand,"Cancel DNS Migration"))
+                {
+			ProcesstJobVars(entries,x);
+			char *cp;
+			unsigned uStatus=0;
+			sscanf(ForeignKey("tContainer","uStatus",uContainer),"%u",&uStatus);
+			if(uJob && guPermLevel>=9 && uJobStatus==uERROR && uStatus==uAWAITDNSMIG && (cp=strstr(cJobData,"uPrevStatus=")))
+			{
+				long unsigned luActualModDate=-1;
+				sscanf(ForeignKey("tJob","uModDate",uJob),"%lu",&luActualModDate);
+				if(uModDate!=luActualModDate)
+					tJob("<blink>Error</blink>: This record was modified. Reload it!");
+
+				unsigned uPrevStatus=0;
+				sscanf(cp+strlen("uPrevStatus="),"%u",&uPrevStatus);
+
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u WHERE uJob=%u",
+					uCANCELED,guLoginClient,uJob);
+        			mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+                			tJob("SQL UPDATE failed");
+
+				if(uPrevStatus)
+				{
+					sprintf(gcQuery,"UPDATE tContainer SET uStatus=%u WHERE uContainer=%u",uPrevStatus,uContainer);
+        				mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tJob("SQL container update failed");
+				}
+				else
+				{
+                			tJob("uPrevStatus error");
+				}
+
+				//Update page items
+				uJobStatus=uCANCELED;
+				sscanf(ForeignKey("tJob","uModDate",uJob),"%lu",&uModDate);
+				uModBy=guLoginClient;
+                		tJob("Job canceled and container status reset");
+				
+			}
+			else
+			{
+				tJob("Operation denied");
+			}
+		}
 	}
 
 }//void ExttJobCommands(pentry entries[], int x)
@@ -339,6 +385,16 @@ void ExttJobButtons(void)
 			printf("<p><u>Record Context Info</u><br>");
 			if(uJob)
 				tJobNavList();
+
+			unsigned uStatus=0;
+			sscanf(ForeignKey("tContainer","uStatus",uContainer),"%u",&uStatus);
+			if(uJobStatus==uERROR && uStatus==uAWAITDNSMIG && strstr(cJobData,"uPrevStatus="))
+			{
+				printf("<p><input title='Cancel this job and return container to previous status'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Cancel DNS Migration'>\n");
+				
+			}
 	}
 	CloseFieldSet();
 
