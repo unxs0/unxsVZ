@@ -70,6 +70,7 @@ static unsigned uSearchStatus=0;
 static char cuSearchStatusPullDown[256]={""};
 static unsigned uSearchStatusNot=0;
 static char cHostnameSearch[64]={""};
+static char cLabelSearch[64]={""};
 static char cIPv4Search[16]={""};
 int ReadYesNoPullDownTriState(const char *cLabel);
 void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode);
@@ -412,15 +413,21 @@ void tContainer(const char *cResult)
 void tContainerSearchSet(unsigned uStep)
 {
 	OpenRow("<u>Set search parameters</u>","black");
+
+	OpenRow("Label pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cLabelSearch"
+			" value=\"%s\" size=40 maxlength=32 >",cLabelSearch);
+	//Temp placement
+	printf("<td><textarea title='cHostname list for remove/add (parameters are ignored) or group execute function commands'"
+			" cols=80 wrap=soft rows=1 name=cCommands>%s</textarea></td>",cCommands);
+
 	OpenRow("Hostname pattern","black");
 	//Usability: Transfer from main tContainer page any current search pattern
 	if(cSearch[0])
 		sprintf(cHostnameSearch,"%.31s",cSearch);
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cHostnameSearch"
 			" value=\"%s\" size=40 maxlength=63 >",cHostnameSearch);
-	//Temp placement
-	printf("<td><textarea title='cHostname list for remove/add (parameters are ignored) or group execute function commands'"
-			" cols=80 wrap=soft rows=1 name=cCommands>%s</textarea></td>",cCommands);
+
 
 	OpenRow("IPv4 pattern","black");
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"

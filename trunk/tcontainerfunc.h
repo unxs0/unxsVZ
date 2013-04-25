@@ -425,6 +425,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cHostnameSearch,"%.99s",entries[i].val);
 		}
+		else if(!strcmp(entries[i].name,"cLabelSearch"))
+		{
+			sprintf(cLabelSearch,"%.99s",entries[i].val);
+		}
 		else if(!strcmp(entries[i].name,"cIPv4Search"))
 		{
 			sprintf(cIPv4Search,"%.15s",entries[i].val);
@@ -489,6 +493,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			ProcesstContainerVars(entries,x);
                         guMode=12002;
 			cHostnameSearch[0]=0;
+			cLabelSearch[0]=0;
 			cIPv4Search[0]=0;
 			cCommands[0]=0;
 			uDatacenter=0;
@@ -560,7 +565,7 @@ void ExttContainerCommands(pentry entries[], int x)
 	                        	tContainer(gcQuery);
 				}//if(cCommands[0])
 
-				if(cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
+				if(cLabelSearch[0]==0 && cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
 						&& uForClient==0 && uOSTemplate==0 && uChangeGroup==0)
 	                        	tContainer("You must specify at least one search parameter");
 
@@ -579,6 +584,15 @@ void ExttContainerCommands(pentry entries[], int x)
 				else
 				{
 					uLink=0;
+				}
+
+				if(cLabelSearch[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cLabel LIKE '%s%%'",cLabelSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
 				}
 
 				if(cIPv4Search[0])
@@ -697,7 +711,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				unsigned uLink=0;
 				unsigned uNumber=0;
 
-				if(cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
+				if(cLabelSearch[0]==0 && cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
 						&& uForClient==0 && uOSTemplate==0 && cCommands[0]==0 && uChangeGroup==0 )
 	                        	tContainer("You must specify at least one search parameter");
 
@@ -784,6 +798,15 @@ void ExttContainerCommands(pentry entries[], int x)
 				else
 				{
 					uLink=0;
+				}
+
+				if(cLabelSearch[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cLabel LIKE '%s%%'",cLabelSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
 				}
 
 				if(cIPv4Search[0])
@@ -4412,9 +4435,12 @@ void ExttContainerAuxTable(void)
 				" Any existing waiting FailoverFrom jobs will be canceled also.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Status Stopped'>\n");
-			printf("<p><input title='Change IP for selected containers and DNS records is system is so configured'"
+			printf("<p><input title='Change IP for selected containers and DNS records if system is so configured'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Change IP'>\n");
+			printf("<input title='Change status to initial setup. Be wary!'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Initial Setup'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -5722,6 +5748,23 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group Change IP
+				else if(!strcmp(gcCommand,"Group Initial Setup"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uAWAITDEL )
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+							SetContainerStatus(uCtContainer,11);
+							sprintf(cResult,"SetContainerStatus done");
+					}
+					else
+					{
+						sprintf(cResult,"change status ignored");
+					}
+				}
 
 				else if(1)
 				{
