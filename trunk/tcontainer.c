@@ -1398,12 +1398,14 @@ void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFie
 
 
 	//Check for datacenter property NewContainerIPRange e.g. 12.23.34.0/24
-	char cNewContainerIPRange[256]={""};
-	GetDatacenterProp(uDatacenter,"NewContainerIPRange",cNewContainerIPRange);
-	if(cNewContainerIPRange[0])
+	char cAutoIPClass[256]={""};
+	GetConfiguration("cAutoIPClass",cAutoIPClass,uDatacenter,uNode,0,0);
+	if(!cAutoIPClass[0])
+		GetConfiguration("cAutoIPClass",cAutoIPClass,uDatacenter,0,0,0);
+	if(cAutoIPClass[0])
 	{
 		char *cp;
-		if((cp=strstr(cNewContainerIPRange,".0/24"))) *cp=0;
+		if((cp=strstr(cAutoIPClass,".0/24"))) *cp=0;
 			
 		sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
 				" WHERE uAvailable=1"
@@ -1411,7 +1413,7 @@ void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFie
 				" AND uDatacenter=%u"
 				" AND uOwner=%u ORDER BY %s",
 					cFieldName,cLocalTableName,
-					cNewContainerIPRange,
+					cAutoIPClass,
 					uDatacenter,
 						uClient,cOrderby);
 	}
@@ -1512,18 +1514,14 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 
 
 	//Check for node property NewContainerCloneIPRange e.g. 172.17.0.0/24
-	char cNewContainerCloneIPRange[256]={""};
-	GetNodeProp(uNode,"NewContainerCloneIPRange",cNewContainerCloneIPRange);
-	//debug only
-	//printf("cNewContainerCloneIPRange=%s uNode=%u uDatacenter=%u\n",cNewContainerCloneIPRange,uNode,uDatacenter);
-	//return;
-	//Most specific first if that fails  try datacenter property
-	if(!cNewContainerCloneIPRange[0])
-		GetDatacenterProp(uDatacenter,"NewContainerCloneIPRange",cNewContainerCloneIPRange);
-	if(cNewContainerCloneIPRange[0])
+	char cAutoCloneIPClass[256]={""};
+	GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,uNode,0,0);
+	if(!cAutoCloneIPClass[0])
+		GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,0,0,0);
+	if(cAutoCloneIPClass[0])
 	{
 		char *cp;
-		if((cp=strstr(cNewContainerCloneIPRange,".0/24"))) *cp=0;
+		if((cp=strstr(cAutoCloneIPClass,".0/24"))) *cp=0;
 			
 		sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
 				" WHERE uAvailable=1"
@@ -1531,7 +1529,7 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 				" AND uDatacenter=%u"
 				" AND uOwner=%u ORDER BY %s",
 					cFieldName,cLocalTableName,
-					cNewContainerCloneIPRange,
+					cAutoCloneIPClass,
 					uDatacenter,
 						uClient,cOrderby);
 	}
@@ -1542,6 +1540,7 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 	}
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
+	//if(1)
 	{
 		printf("%s\n",gcQuery);
 		return;
