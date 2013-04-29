@@ -93,6 +93,7 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
 void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNode,unsigned uDatacenter);
 void RestartContainer(unsigned uJob,unsigned uContainer);
+void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cValue);
 
 //extern protos
 unsigned TextConnectDb(void); //mysqlconnect.c
@@ -6196,14 +6197,22 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	//	Maybe we should create a job here? This will keep things neat and
 	//	and allow code reuse
 	char cPostDNSNodeScript[256]={""};
+	char cPostDNSNodeScriptName[256]={"cPostDNSNodeScript"};
 	char cArgs[512];
 	unsigned uConfiguration=0;
-	//First try most specific match datacenter and node
-	uConfiguration=GetConfiguration("cPostDNSNodeScript",cPostDNSNodeScript,uDatacenter,uNode,0,0);
+	//First see if based on container primary group a different cPostDNSNodeScriptName should be used
+	GetGroupBasedPropertyValue(uContainer,"cJob_DNSMoveScriptName",cPostDNSNodeScriptName);
+	if(strcmp("cPostDNSNodeScript",cPostDNSNodeScriptName))
+	{
+		logfileLine("DNSMoveContainer","using alternative cPostDNSNodeScriptName");
+		logfileLine("DNSMoveContainer",cPostDNSNodeScriptName);
+	}
+		
+	//Try most specific match datacenter and node first
+	uConfiguration=GetConfiguration(cPostDNSNodeScriptName,cPostDNSNodeScript,uDatacenter,uNode,0,0);
 	//If that fails try datacenter wide configuration
 	if(!uConfiguration)
-			uConfiguration=GetConfiguration("cPostDNSNodeScript",
-							cPostDNSNodeScript,uDatacenter,0,0,0);
+		uConfiguration=GetConfiguration(cPostDNSNodeScriptName,cPostDNSNodeScript,uDatacenter,0,0,0);
 	//Please note that this means that the script must be installed for all nodes of
 	//any datacenter that has at least one tConfiguration for a specific uDatacenter+uNode
 	if(cPostDNSNodeScript[0] && uConfiguration)
@@ -6261,3 +6270,37 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	tJobDoneUpdate(uJob);
 
 }//void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData)
+
+
+
+//returns script in cCommand 256 byte buffer on success else empty string or same string as on entry
+void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//Primary group is oldest tGroupGlue entry.
+	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+			" AND tProperty.uKey=tGroupGlue.uGroup"
+			" AND tGroupGlue.uContainer=%u"
+			" AND tProperty.cName='%s' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",uPROP_GROUP,uContainer,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("GetGroupBasedPropertyValue",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		struct stat statInfo;
+		char *cp;
+
+		sprintf(cValue,"%.255s",field[0]);
+		//Remove trailing junk
+		if((cp=strchr(cValue,'\n')) || (cp=strchr(cValue,'\r'))) *cp=0;
+	}
+
+	mysql_free_result(res);
+
+}//void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cValue)

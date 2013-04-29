@@ -2998,7 +2998,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
 						tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
 				//debug only
-				tContainer("s3");
+				//tContainer("s3");
 
 				//Things change from here on down
                         	guMode=0;
@@ -3079,6 +3079,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					char cPostMigrationRemoteNodeScript[256]={""};
 					uConfiguration=0;
 					//First try most specific match datacenter and node
+					//"cPostMigrationRemoteNodeScript" is not used see Group DNS Migration in jobqueue.c
 					uConfiguration=GetConfiguration("cPostMigrationRemoteNodeScript",cPostMigrationRemoteNodeScript,
 						uDatacenter,uNode,0,0);
 					//If that fails try datacenter wide configuration

@@ -632,6 +632,9 @@ void ExttIPAuxTable(void)
 			printf("&nbsp; <input title='Send one ping packet to IP. Check firewall settings use with care.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Ping'>\n");
+			printf("&nbsp; <input title='Change owner using filter uOwnerSearch select'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Change Owner'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -816,6 +819,24 @@ while((field=mysql_fetch_row(res)))
 					break;
 
 				}//Group Ping
+
+				//Group Change Owner
+				else if(!strcmp(gcCommand,"Group Change Owner") && uOwnerSearch)
+				{
+					sprintf(gcQuery,"UPDATE tIP SET uOwner=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uIP=%u",
+								uOwnerSearch,
+								guLoginClient,
+								uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"owner changed");
+					else
+						cResult[0]=0;
+					break;
+				}//Group Change Owner
 
 				else if(1)
 				{
