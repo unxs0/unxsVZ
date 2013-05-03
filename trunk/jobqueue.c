@@ -851,6 +851,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		{
 			sprintf(cHostname,"%.99s",field[0]);
 
+			//Please note that any script here must not use uStatus=1 as a condition.
 			sprintf(cOnScriptCall,"%.255s %.64s %u",cCommand,cHostname,uContainer);
 			if(system(cOnScriptCall))
 			{
@@ -885,7 +886,6 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 	{
 		logfileLine("DestroyContainer",gcQuery);
 		tJobErrorUpdate(uJob,"vzctl stop failed");
-		return;
 	}
 
 	//2-.
@@ -894,14 +894,6 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 	{
 		logfileLine("DestroyContainer",gcQuery);
 		tJobErrorUpdate(uJob,"vzctl destroy failed");
-
-		//Attempt roll back
-		sprintf(gcQuery,"/usr/sbin/vzctl --verbose start %u",uContainer);
-		if(system(gcQuery))
-		{
-			logfileLine("DestroyContainer",gcQuery);
-			tJobErrorUpdate(uJob,"vzctl start rollback failed");
-		}
 		return;
 	}
 
@@ -964,7 +956,7 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 		if(mysql_errno(&gMysql))
 		{
 			logfileLine("",mysql_error(&gMysql));
-			exit(2);
+			goto CommonExit3;
 		}
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
@@ -980,6 +972,7 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 	}
 CommonExit2:
 	mysql_free_result(res);
+CommonExit3:
 
 	//Everything ok
 	SetContainerStatus(uContainer,uINITSETUP);//Initial
@@ -6293,7 +6286,6 @@ void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cVal
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		struct stat statInfo;
 		char *cp;
 
 		sprintf(cValue,"%.255s",field[0]);
