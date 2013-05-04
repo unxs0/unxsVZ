@@ -136,6 +136,8 @@ void NoSuchFunction(void);
 void tContainerGroupPullDown(unsigned uGroup, unsigned uMode);
 void tTablePullDown(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
+void tTablePullDownActive(const char *cTableName, const char *cFieldName,
+                        const char *cOrderby, unsigned uSelector, unsigned uMode);
 void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
 void tTablePullDownReadOnly(const char *cTableName, const char *cFieldName,

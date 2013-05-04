@@ -94,6 +94,8 @@ void Update_tContainer(char *cRowid);
 void ProcesstContainerListVars(pentry entries[], int x);
 void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cFieldName,
 	const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter,unsigned uClient,unsigned uNode);
+void tTablePullDownOwnerAnyAvailDatacenter(const char *cTableName, const char *cFieldName,
+	const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter,unsigned uClient);
 
  //In tContainerfunc.h file included below
 void ExtProcesstContainerVars(pentry entries[], int x);
@@ -106,6 +108,8 @@ void ExttContainerSelectRow(void);
 void ExttContainerListSelect(void);
 void ExttContainerListFilter(void);
 void ExttContainerAuxTable(void);
+
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 
 #include "tcontainerfunc.h"
 
@@ -469,7 +473,7 @@ void tContainerNewStep(unsigned uStep)
 	if(uStep==1)
 	{
 		OpenRow("Select an available datacenter","black");
-		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+		tTablePullDownActive("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
 		//Helper
 		if(uNode)
 			printf("<input type=hidden name=uNode value=%u >\n",uNode);
@@ -616,7 +620,7 @@ void tContainerNewStep(unsigned uStep)
 
 			OpenRow("Clone start uIPv4","black");
 			tTablePullDownDatacenterCloneIPs("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
-				uTargetDatacenter,uForClient,uNode);
+				uTargetDatacenter,uForClient,uTargetNode);
 
 			OpenRow("Keep clone stopped","black");
 			printf("<input type=checkbox name=uCloneStop ");
@@ -1306,7 +1310,7 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 				" ORDER BY %s",
 					cFieldName,cLocalTableName,uType,cDatacenter,cOrderby);
 	else
-	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u ORDER BY %s",
+	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u and uStatus=1 ORDER BY %s",
 				cFieldName,cLocalTableName,uDatacenter,cOrderby);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1324,7 +1328,9 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 
         if(i>0)
         {
-		int unsigned field0;
+		int unsigned uField0;
+		char cStyle[32]={""};
+		char cValue[256]={""};
 
 		printf("<select name=%s %s>\n",cLabel,cMode);
 		//Default no selection
@@ -1332,18 +1338,28 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 
                 for(n=0;n<i;n++)
                 {
-
-			field0=0;
+			uField0=0;
                         mysqlField=mysql_fetch_row(mysqlRes);
-                        sscanf(mysqlField[0],"%u",&field0);
+                        sscanf(mysqlField[0],"%u",&uField0);
 
-                        if(uSelector != field0)
+			if(!strncmp(cTableName,"tNode",5))
+			{
+				cValue[0]=0;
+				GetNodeProp(uField0,"NewContainerMode",cValue);
+				if(strstr(cValue,"Clone Only"))
+					sprintf(cStyle," style='background-color: #ffff99'");
+				else
+					cStyle[0]=0;
+			}
+
+
+                        if(uSelector != uField0)
                         {
-                             printf("<option>%s</option>\n",mysqlField[1]);
+                             printf("<option%s>%s</option>\n",cStyle,mysqlField[1]);
                         }
                         else
                         {
-                             printf("<option selected>%s</option>\n",mysqlField[1]);
+                             printf("<option%s selected>%s</option>\n",cStyle,mysqlField[1]);
 			     if(!uMode)
 			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
 			     		cLabel,mysqlField[1]);
@@ -1593,4 +1609,94 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 		printf("%s",cHidden);
 
 }//tTablePullDownOwnerAvailDatacenter()
+
+
+void tTablePullDownOwnerAnyAvailDatacenter(const char *cTableName, const char *cFieldName,
+	const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter,unsigned uClient)
+{
+        register int i,n;
+        char cLabel[256];
+        MYSQL_RES *mysqlRes;         
+        MYSQL_ROW mysqlField;
+
+        char cSelectName[100]={""};
+	char cHidden[100]={""};
+        char cLocalTableName[256]={""};
+        char *cp;
+	char *cMode="";
+
+	if(!uMode)
+		cMode="disabled";
+      
+        if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
+        {
+                printf("Invalid input tTablePullDownAvailDatacenter()");
+                return;
+        }
+
+        //Extended functionality
+        strncpy(cLocalTableName,cTableName,255);
+        if((cp=strchr(cLocalTableName,';')))
+        {
+                strncpy(cSelectName,cp+1,99);
+                cSelectName[99]=0;
+                *cp=0;
+        }
+
+	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u ORDER BY %s",
+				cFieldName,cLocalTableName,uDatacenter,uClient,cOrderby);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",gcQuery);
+		return;
+	}
+	mysqlRes=mysql_store_result(&gMysql);
+	i=mysql_num_rows(mysqlRes);
+
+	if(cSelectName[0])
+                sprintf(cLabel,"%s",cSelectName);
+        else
+                sprintf(cLabel,"%s_%sPullDown",cLocalTableName,cFieldName);
+
+        if(i>0)
+        {
+		int unsigned field0;
+                printf("<select name=%s %s>\n",cLabel,cMode);
+
+                //Default no selection
+                printf("<option title='No selection'>---</option>\n");
+
+                for(n=0;n<i;n++)
+                {
+
+			field0=0;
+                        mysqlField=mysql_fetch_row(mysqlRes);
+                        sscanf(mysqlField[0],"%u",&field0);
+
+                        if(uSelector != field0)
+                        {
+                             printf("<option>%s</option>\n",mysqlField[1]);
+                        }
+                        else
+                        {
+                             printf("<option selected>%s</option>\n",mysqlField[1]);
+			     if(!uMode)
+			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
+			     		cLabel,mysqlField[1]);
+                        }
+                }
+        }
+        else
+        {
+		printf("<select name=%s %s><option title='No selection'>---</option></select>\n"
+                        ,cLabel,cMode);
+		if(!uMode)
+		sprintf(cHidden,"<input type=hidden name=%99s value='0'>\n",cLabel);
+        }
+        printf("</select>\n");
+	if(cHidden[0])
+		printf("%s",cHidden);
+
+}//tTablePullDownOwnerAnyAvailDatacenter()
 
