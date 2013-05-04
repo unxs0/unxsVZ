@@ -1274,6 +1274,8 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
         char cLocalTableName[256]={""};
         char *cp;
 	char *cMode="";
+	unsigned utNode=0;
+	unsigned utDatacenter=0;
 
 	if(!uMode)
 		cMode="disabled";
@@ -1291,6 +1293,10 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
                 sprintf(cSelectName,"%.99s",cp+1);
                 *cp=0;
         }
+	if(!strncmp(cTableName,"tNode",5))
+		utNode=1;
+	if(!strncmp(cTableName,"tDatacenter",11))
+		utDatacenter=1;
 
 	if(uType)
 		//This does not work in 5.0.77
@@ -1309,9 +1315,15 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 				" uType=%u AND (cValue='All Datacenters' OR LOCATE('%s',cValue)>0))"
 				" ORDER BY %s",
 					cFieldName,cLocalTableName,uType,cDatacenter,cOrderby);
-	else
+	else if(uDatacenter && (utDatacenter || utNode))
 	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u and uStatus=1 ORDER BY %s",
 				cFieldName,cLocalTableName,uDatacenter,cOrderby);
+	else if(uDatacenter)
+	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u ORDER BY %s",
+				cFieldName,cLocalTableName,uDatacenter,cOrderby);
+	else if(1)
+	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uStatus=1 ORDER BY %s",
+				cFieldName,cLocalTableName,cOrderby);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1332,7 +1344,7 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 		char cStyle[32]={""};
 		char cValue[256]={""};
 
-		printf("<select name=%s %s>\n",cLabel,cMode);
+		printf("<select title='If selecting nodes, light yellow items are configured as clone only.' name=%s %s>\n",cLabel,cMode);
 		//Default no selection
        		printf("<option title='No selection'>---</option>\n");
 
@@ -1342,7 +1354,7 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
                         mysqlField=mysql_fetch_row(mysqlRes);
                         sscanf(mysqlField[0],"%u",&uField0);
 
-			if(!strncmp(cTableName,"tNode",5))
+			if(utNode)
 			{
 				cValue[0]=0;
 				GetNodeProp(uField0,"NewContainerMode",cValue);

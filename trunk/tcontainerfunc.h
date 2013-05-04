@@ -152,6 +152,7 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs);
 unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner,
 			unsigned uTargetNode,unsigned uIPv4,unsigned uStatus);
+void SelectedNodeInformation(unsigned guCloneTargetNode);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -4071,46 +4072,16 @@ void ExttContainerButtons(void)
 				" name=gcCommand value='Reload Search Set'>\n");
 			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
 				" name=gcCommand value='Cancel'>");
-			printf("<p><u>Set Operation Options</u>");
-			printf("<br>Target node");
-			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
-			printf(" Clone target node");
-			tTablePullDown("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1);
-			printf("<br>Group");
-			tContainerGroupPullDown(uChangeGroup,1);
-
-			printf("<br><input title='For supported set operations (like Group Delete, Destroy or Migration)"
-				" apply same to their clone containers.'"
-				" type=checkbox name=guOpOnClonesNoCA");
-			if(guOpOnClones)
-				printf(" checked");
-			printf("> guOpOnClones");
-
-			time_t luClock;
-			const struct tm *tmTime;
-
-			if(!cStartTime[0])
+			if(uTargetNode)
 			{
-				time(&luClock);
-				tmTime=localtime(&luClock);
-				strftime(cStartTime,31,"%H:%M:%S",tmTime);
+				printf("<p><u>%s target node information</u><br>",cuTargetNodePullDown);
+				SelectedNodeInformation(uTargetNode);
 			}
-			printf("<br>Job cStartTime<input title='Enter HH:MM:SS, e.g. 12:23:07.'"
-				" type=text name=cStartTime value=%s>",cStartTime);
-
-			char cTime[32]={""};
-			if(!cStartDate[0])
+			if(guCloneTargetNode)
 			{
-				time(&luClock);
-				tmTime=localtime(&luClock);
-				strftime(cTime,31,"%m/%d/%Y",tmTime);
+				printf("<p><u>%s clone target node information</u><br>",cuCloneTargetNodePullDown);
+				SelectedNodeInformation(guCloneTargetNode);
 			}
-			else
-			{
-				sprintf(cTime,"%.31s",cStartDate);
-			}
-			printf("<br>Job cStartDate");
-			jsCalendarInput("cStartDate",cTime,1);
 
                 break;
 
@@ -4365,9 +4336,55 @@ void ExttContainerAuxTable(void)
 	{
 		case 12001:
 		case 12002:
-			//Set operation buttons
 			OpenFieldSet("Set Operations",100);
-			printf("<input title='Delete checked containers from your search set. They will still be visible but will"
+
+			//Set operation settings
+			printf("Target node ");
+			//tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
+			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,"",0,0);
+			printf("&nbsp;&nbsp;Clone target node ");
+			//tTablePullDown("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1);
+			tTablePullDownDatacenter("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1,"",0,0);
+			printf("&nbsp;&nbsp;Group ");
+			tContainerGroupPullDown(uChangeGroup,1);
+
+			printf("&nbsp;&nbsp;<input title='For supported set operations (like Group Delete, Destroy or Migration)"
+				" apply same to their clone containers.'"
+				" type=checkbox name=guOpOnClonesNoCA");
+			if(guOpOnClones)
+				printf(" checked");
+			printf("> guOpOnClones");
+
+
+			printf("&nbsp;&nbsp;");
+			time_t luClock;
+			const struct tm *tmTime;
+
+			if(!cStartTime[0])
+			{
+				time(&luClock);
+				tmTime=localtime(&luClock);
+				strftime(cStartTime,31,"%H:%M:%S",tmTime);
+			}
+			printf("&nbsp;&nbsp;Job cStartTime <input title='Enter HH:MM:SS, e.g. 12:23:07.'"
+				" type=text name=cStartTime value=%s>",cStartTime);
+
+			char cTime[32]={""};
+			if(!cStartDate[0])
+			{
+				time(&luClock);
+				tmTime=localtime(&luClock);
+				strftime(cTime,31,"%m/%d/%Y",tmTime);
+			}
+			else
+			{
+				sprintf(cTime,"%.31s",cStartDate);
+			}
+			printf("&nbsp;&nbsp;Job cStartDate ");
+			jsCalendarInput("cStartDate",cTime,1);
+
+			//Set operation buttons
+			printf("<p><input title='Delete checked containers from your search set. They will still be visible but will"
 				" marked deleted and will not be used in any subsequent set operation'"
 				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
 			printf("&nbsp; <input title='Cancels job(s) for container(s) waiting for activation, deletion or stop.'"
@@ -6728,6 +6745,13 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 		" <font color=%s>%lu/%lu</font><br>\n",
 		fRatio,cColor,luTotalUsage,luTotalSoftLimit);
 
+	if(uType==2)
+	{
+		char cValue[256]={""};
+		sprintf(cValue,"%2.2f%%",fRatio);
+		SetNodeProp("cContainerUsageRatio",cValue,uContainer);
+	}
+
 }//void htmlHealth(...)
 
 
@@ -7970,3 +7994,56 @@ unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, 
 }//unsigned uDNSMoveJob()
 
 
+//Provide information on node usage and configuration settings.
+void SelectedNodeInformation(unsigned uNode)
+{
+	char cValue[256]={""};
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uStatus=1",uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+			printf("Number of active containers is %s<br>",field[0]);
+
+	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uSource!=0",uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+			printf("Number of clone containers is %s<br>",field[0]);	
+
+	mysql_free_result(res);
+
+	GetNodeProp(uNode,"NewContainerMode",cValue);
+	printf("NewContainerMode is %s",cValue);
+
+	cValue[0]=0;
+	GetNodeProp(uNode,"luInstalledRam",cValue);
+	printf("<br>luInstalledRam is %s",cValue);
+
+	cValue[0]=0;
+	GetNodeProp(uNode,"luInstalledDiskSpace",cValue);
+	printf("<br>luInstalledDiskSpace is %s",cValue);
+
+	cValue[0]=0;
+	GetNodeProp(uNode,"cContainerUsageRatio",cValue);
+	printf("<br>cContainerUsageRatio is %s",cValue);
+
+	cValue[0]=0;
+	GetNodeProp(uNode,"cMaxHeldVmpagesRatio",cValue);
+	printf("<br>cMaxHeldVmpagesRatio is %s",cValue);
+
+	cValue[0]=0;
+	GetNodeProp(uNode,"cNodePowerRatio",cValue);
+	printf("<br>cNodePowerRatio %s",cValue);
+
+	cValue[0]=0;
+	GetNodeProp(uNode,"cRAMUsageRatio",cValue);
+	printf("<br>cRAMUsageRatio %s",cValue);
+
+}//void SelectedNodeInformation(unsigned uNode)
