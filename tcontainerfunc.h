@@ -3766,6 +3766,8 @@ void ExttContainerCommands(pentry entries[], int x)
 
 }//void ExttContainerCommands(pentry entries[], int x)
 
+void tTablePullDownOwnerAnyAvailDatacenter(const char *cTableName, const char *cFieldName,
+	const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter,unsigned uClient);
 
 void ExttContainerButtons(void)
 {
@@ -3778,7 +3780,7 @@ void ExttContainerButtons(void)
 			printf("Here you will can change the container's IPv4 number."
 				" <p>Container services may be affected or need reconfiguration for new IP.\n");
 			printf("<p>Select new IPv4<br>");
-			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
+			tTablePullDownOwnerAnyAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
 				uDatacenter,uOwner);
 			printf("<p>Or swap IPs with this container<br>");
 			tTablePullDownDatacenter("tContainer;cuWizContainerPullDown","cLabel","cLabel",uWizContainer,1,
@@ -3920,7 +3922,7 @@ void ExttContainerButtons(void)
 			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
 				cuTargetNodePullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
 			printf("<p>Select new IPv4<br>");
-			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
+			tTablePullDownOwnerAnyAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
 				uDatacenter,uOwner);
 
 			printf("<p>Select clone state<br>");
@@ -4130,9 +4132,10 @@ void ExttContainerButtons(void)
 			printf("<u>New Container Node</u><br>");
 			printf("In conjunction with your master plan; review node usage, traffic"
 				" and problem stats, in order to make an optimal node selection. Only nodes that belong"
-				" to the previously chosen datacenter are shown. Other factors may also limit the "
-				"available node list, such as autonomic or configuration imposed restrictions.<p>");
-			printf("<input type=submit class=largeButton title='Select hardware node'"
+				" to the previously chosen datacenter are shown.<br>"
+				" Nodes with property NewContainerMode that contains \"Clone Only\" are marked."
+				" Other factors may also limit the available node list, such as autonomic or configuration imposed restrictions.<p>");
+			printf("<input type=submit class=largeButton title='Select hardware node. Clone only nodes are marked in yellow'"
 				" name=gcCommand value='Select Node'>\n");
 			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
 				" name=gcCommand value='Cancel'>\n");
