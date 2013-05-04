@@ -170,6 +170,7 @@ void ExtSelectPublicOrder(const char *cTable,const char *cVarList,const char *cO
 void ExtSelectSearchPublic(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch);
 void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow);
 void CloneReport(const char *cOptionalMsg);
+void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
 void tTablePullDownResellers(unsigned uSelector,unsigned uBanner);
 unsigned GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,

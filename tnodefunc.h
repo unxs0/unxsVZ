@@ -31,6 +31,7 @@ unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned u
 			char *cLabel, char *cHostname,unsigned uOwner,unsigned uDebug);
 unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown,
 			unsigned uSyncPeriod,unsigned uCloneStop,unsigned uTargetDatacenter);
+void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
 
 //external
 //tcontainerfunc.h
@@ -1003,6 +1004,7 @@ void htmlNodeHealth(unsigned uNode)
 	long unsigned luTotalRAM=0;
 	long unsigned luInstalledRam=0;
 	char cluInstalledRam[256];
+	char cValue[256];
 
 	GetNodeProp(uNode,"luInstalledRam",cluInstalledRam);
 	sscanf(cluInstalledRam,"%lu",&luInstalledRam);
@@ -1046,6 +1048,8 @@ void htmlNodeHealth(unsigned uNode)
 		printf("Max held privvmpages ratio %2.2f%%:"
 			" <font color=%s>%lu/%lu</font><br>\n",
 				fRatio,cColor,luContainerPrivvmpagesMaxHeld,luInstalledRam);
+		sprintf(cValue,"%2.2f%%",fRatio);
+		SetNodeProp("cMaxHeldVmpagesRatio",cValue,uNode);
 	}
 NextSection:
 	mysql_free_result(res);
@@ -1087,6 +1091,8 @@ NextSection:
 		printf("Container/Node power %2.2f%%:"
 			" <font color=%s>%2.0f/%2.0f</font><br>\n",
 				fRatio,cColor,fAllContainerCPUUnits,fNodeCPUUnits);
+		sprintf(cValue,"%2.2f%%",fRatio);
+		SetNodeProp("cNodePowerRatio",cValue,uNode);
 	}
 NextSection2:
 	mysql_free_result(res);
@@ -1152,6 +1158,8 @@ NextSection2:
 		printf("Max RAM Util %2.2f%%:"
 			" <font color=%s>%lu/%lu</font><br>\n",
 				fRatio,cColor,luTotalRAM,luInstalledRam);
+	sprintf(cValue,"%2.2f%%",fRatio);
+	SetNodeProp("cRAMUsageRatio",cValue,uNode);
 
 	//4-.
 	//Check all active node activity via tProperty
@@ -1360,3 +1368,30 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 	return(0);
 
 }//unsigned CloneNode()
+
+	
+void SetNodeProp(char const *cName,char const *cValue,unsigned uNode)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",uNode,cName);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uProperty=%s",
+			cValue,guLoginClient,field[0]);
+        	mysql_query(&gMysql,gcQuery);
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,cName='%s',cValue='%s',uType=2,uOwner=%u,"
+				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uNode,
+					cName,cValue,guLoginClient,guLoginClient);
+        	mysql_query(&gMysql,gcQuery);
+	}
+}//void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
