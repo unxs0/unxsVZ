@@ -4131,6 +4131,10 @@ void ExttContainerButtons(void)
 				printf("<p>unxsBind interface is configured for selected datacenter and <i>%s</i> zone: DNS will be setup"
 					" automatically for you, unless you opt-out by un-checking the <i>Create job...</i>"
 					" checkbox in the right data panel.",cunxsBindARecordJobZone);
+
+			printf("<p><u>%s target node information</u><br>",cuNodePullDown);
+			SelectedNodeInformation(uNode);
+
 			printf("<p><input type=submit class=largeButton"
 				" title='Configure container and create a single container'"
 				" name=gcCommand value='Single Container Creation'>\n");
@@ -8040,10 +8044,10 @@ void SelectedNodeInformation(unsigned uNode)
 
 	cValue[0]=0;
 	GetNodeProp(uNode,"cNodePowerRatio",cValue);
-	printf("<br>cNodePowerRatio %s",cValue);
+	printf("<br>cNodePowerRatio is %s",cValue);
 
 	cValue[0]=0;
 	GetNodeProp(uNode,"cRAMUsageRatio",cValue);
-	printf("<br>cRAMUsageRatio %s",cValue);
+	printf("<br>cRAMUsageRatio is %s",cValue);
 
 }//void SelectedNodeInformation(unsigned uNode)
