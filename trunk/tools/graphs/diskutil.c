@@ -44,9 +44,9 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 	unsigned uNode=0;
 
 	if(uDatacenter)
-		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u ORDER BY uNode",uDatacenter);
+		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u AND uStatus=1 ORDER BY uNode",uDatacenter);
 	else
-		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE cLabel!='appliance' ORDER BY uDatacenter,uNode");
+		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE cLabel!='appliance' AND uStatus=1 ORDER BY uDatacenter,uNode");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		ErrorMsg(mysql_error(&gMysql));
@@ -143,16 +143,16 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 
 int main(int iArgc, char *cArgv[])
 {
-        float   a[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        float   b[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        float   c[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        float   d[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        char    *t[24]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+        float   a[32]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        float   b[32]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        float   c[32]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        float   d[32]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        char    *t[32]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
         unsigned long sc[4]={0xFF8080,0x8080FF,0x33CC66,0x999933};
         char cDatacenter[256]={""};
-        unsigned uNumNodes=24;
+        unsigned uNumNodes=32;
 	unsigned uDatacenter=0;//0 is all datacenters with active non appliance nodes
 	register unsigned i;
         MYSQL_RES *res;
@@ -165,7 +165,7 @@ int main(int iArgc, char *cArgv[])
 
 	if(uDatacenter)
 	{
-		sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE uDatacenter=%u",uDatacenter);
+		sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE uDatacenter=%u AND uStatus=1",uDatacenter);
 	        mysql_query(&gMysql,gcQuery);
 	        if(mysql_errno(&gMysql))
 			ErrorMsg(mysql_error(&gMysql));
@@ -177,7 +177,7 @@ int main(int iArgc, char *cArgv[])
 	}
 	else
 	{
-		sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE cLabel!='CustomerPremise' ORDER BY uDatacenter");
+		sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE cLabel!='CustomerPremise' AND uStatus=1 ORDER BY uDatacenter");
 	        mysql_query(&gMysql,gcQuery);
 	        if(mysql_errno(&gMysql))
 			ErrorMsg(mysql_error(&gMysql));
@@ -196,7 +196,7 @@ int main(int iArgc, char *cArgv[])
 
 	uNumNodes=GetDatacenterHealthData(uDatacenter,a,b,c,d,t);
 
-	if(uNumNodes>24) uNumNodes=24;
+	if(uNumNodes>32) uNumNodes=32;
 
         GDC_BGColor= 0xFFFFFFL;/* backgound color (white) */
         GDC_SetColor= sc;/* assign set colors */
@@ -210,7 +210,7 @@ int main(int iArgc, char *cArgv[])
         //x,y image, file, type, num of data points, array of x labels, number of data sets
         //data set 1..n float
         out_graph(1000,600,stdout,GDC_3DBAR,uNumNodes,t,4,a,b,c,d);
-	for(i=0;i<24 && t[i]!=NULL;i++)
+	for(i=0;i<32 && t[i]!=NULL;i++)
 		free(t[i]);
 
         return(0);

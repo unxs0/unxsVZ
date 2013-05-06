@@ -4134,6 +4134,11 @@ void ExttContainerButtons(void)
 
 			printf("<p><u>%s target node information</u><br>",cuNodePullDown);
 			SelectedNodeInformation(uNode);
+			if(uTargetNode)
+			{
+				printf("<p><u>%s clone target node information</u><br>",cuTargetNodePullDown);
+				SelectedNodeInformation(uTargetNode);
+			}
 
 			printf("<p><input type=submit class=largeButton"
 				" title='Configure container and create a single container'"
