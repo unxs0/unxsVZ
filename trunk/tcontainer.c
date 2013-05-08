@@ -1437,7 +1437,7 @@ void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFie
 			
 		sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
 				" WHERE uAvailable=1"
-				" AND INSTR(tIP.cLabel,'%s')>0"
+				" AND LOCATE('%s',tIP.cLabel)=1"
 				" AND uDatacenter=%u"
 				" AND uOwner=%u ORDER BY %s",
 					cFieldName,cLocalTableName,
@@ -1546,6 +1546,9 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 	GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,uNode,0,0);
 	if(!cAutoCloneIPClass[0])
 		GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,0,0,0);
+	//debug only
+	//printf("%s",cAutoCloneIPClass);
+	//return;
 	if(cAutoCloneIPClass[0])
 	{
 		char *cp;
@@ -1553,7 +1556,7 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 			
 		sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
 				" WHERE uAvailable=1"
-				" AND INSTR(tIP.cLabel,'%s')>0"
+				" AND LOCATE('%s',tIP.cLabel)=1"
 				" AND uDatacenter=%u"
 				" AND uOwner=%u ORDER BY %s",
 					cFieldName,cLocalTableName,
