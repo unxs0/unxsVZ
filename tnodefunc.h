@@ -547,8 +547,9 @@ void ExttNodeButtons(void)
 						uDatacenter,ForeignKey("tDatacenter","cLabel",uDatacenter));
 				htmlGroups(uNode,0);
 			}
-			printf("<p><u>Container Search</u><br>");
-			printf("<input title='Use [Search], enter cLabel start or MySQL LIKE pattern (%% or _ allowed)'"
+			printf("<p><u>Node Container Search</u><br>");
+			printf("<input title='Enter pattern then click on node link. Use [Search], enter cLabel start or MySQL LIKE pattern"
+					" (%% or _ allowed) to show a navgation list with containers that match pattern for a given node.'"
 					" type=text name=cSearch value='%s'>",cSearch);
 			tNodeNavList(0);
 			tContainerNavList(uNode,cSearch);

@@ -4180,7 +4180,16 @@ void ExttContainerButtons(void)
 				printf("unxsBind interface is configured for selected datacenter and <i>%s</i> zone: DNS will be setup"
 					" automatically for you, unless you opt-out by un-checking the <i>Create job...</i>"
 					" checkbox in the right data panel.<p>",cunxsBindARecordJobZone);
-			printf("<input type=submit class=largeButton"
+
+			printf("<p><u>%s target node information</u><br>",cuNodePullDown);
+			SelectedNodeInformation(uNode);
+			if(uTargetNode)
+			{
+				printf("<p><u>%s clone target node information</u><br>",cuTargetNodePullDown);
+				SelectedNodeInformation(uTargetNode);
+			}
+
+			printf("<p><input type=submit class=largeButton"
 				" title='Commit to creating multiple containers'"
 				" name=gcCommand value='Create Multiple Containers'>\n");
 			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
@@ -6234,7 +6243,7 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 
 		if(cSearch[0])
 		{
-			if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+			if( guPermLevel>11)//Root can read access all
 				sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cLabel,"
 					"tNode.cLabel,tStatus.cLabel"
 					" FROM tContainer,tNode,tStatus"
