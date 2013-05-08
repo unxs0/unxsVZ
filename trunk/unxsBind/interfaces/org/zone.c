@@ -88,7 +88,7 @@ void UpdateSerialNum(char *cZone);
 char *ParseTextAreaLines(char *cTextArea);
 void PrepDelToolsTestData(unsigned uNumIPs);
 unsigned idnsOnLineZoneCheck(void);
-
+unsigned uIpInUserBlock(char *cIPv4,char *cPrefix,unsigned uLoginClient,unsigned uCompany);
 
 
 void ProcessZoneVars(pentry entries[], int x)
@@ -732,7 +732,7 @@ void funcSelectZone(FILE *fp)
 					sprintf(cZone,"%u.%u.%u.in-addr.arpa",c+i,b,a);
 					if(!uGetuZone(cZone))
 						continue;
-					fprintf(fp,"<option ");
+					fprintf(fp,"<option title='/%u'",e);
 					if(!strcmp(gcZone,cZone)) fprintf(fp,"selected");
 					fprintf(fp,">%s</option>",cZone);
 				}
@@ -743,7 +743,7 @@ void funcSelectZone(FILE *fp)
 				sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 				if(!uGetuZone(cZone))
 						break;
-				fprintf(fp,"<option ");
+				fprintf(fp,"<option title='/%u'",e);
 				if(!strcmp(gcZone,cZone)) fprintf(fp,"selected");
 				fprintf(fp,">%s</option>",cZone);
 			}
@@ -771,8 +771,9 @@ void funcSelectBlock(FILE *fp)
 		htmlPlainTextError(mysql_error(&gMysql));
 	
 	res=mysql_store_result(&gMysql);
-	fprintf(fp,"<select name=cBlock class=type_textarea size=%u disabled>\n",
-			(unsigned)mysql_num_rows(res));
+	unsigned uSelectRows=(unsigned)mysql_num_rows(res);
+	if(uSelectRows>16) uSelectRows=16;
+	fprintf(fp,"<select name=cBlock class=type_textarea size=%u disabled>\n",uSelectRows);
 	while((field=mysql_fetch_row(res)))
 	{
 		fprintf(fp,"<option ");
@@ -784,10 +785,11 @@ void funcSelectBlock(FILE *fp)
 			fprintf(fp,">LIMIT REACHED CONTACT sysadmin</option>");
 		
 	}
+	mysql_free_result(res);
 
+	fprintf(fp,"\n</select>\n");
 	fprintf(fp,"<!-- funcSelectBlock(fp) End -->\n");
 
-	mysql_free_result(res);
 
 }//void funcSelectBlock(FILE *fp)
 
@@ -809,7 +811,7 @@ void funcSelectSecondary(FILE *fp)
 	uRows=mysql_num_rows(res);
 	if(uRows)
 	{
-		if(uRows>20) uRows=20;
+		if(uRows>16) uRows=16;
 		fprintf(fp,"<select name=cBlock class=type_textarea size=%u disabled>\n",uRows);
 		while((field=mysql_fetch_row(res)))
 		{
@@ -870,6 +872,33 @@ void funcRRs(FILE *fp)
 		}
 		else
 			sprintf(cLocalParam1,"%.255s",field[5]);
+
+
+		if(!strcmp(field[4],"PTR") && strstr(gcZone,".in-addr.arpa"))
+		{
+			unsigned a=0,b=0,c=0,d=0;
+			unsigned uCount=0;
+			char cIPv4[32]={""};
+			char cClassC[32]={""};
+			//we only show PTR in IPv4 tBlock
+			//create IP from PTR and zone name
+			uCount=sscanf(gcZone,"%u.%u.%u.in-addr.arpa",&c,&b,&a);
+			if(uCount==3)
+			{
+				uCount=sscanf(field[2],"%u",&d);
+				if(uCount==1)
+				{
+					sprintf(cIPv4,"%u.%u.%u.%u",a,b,c,d);
+					sprintf(cClassC,"%u.%u.%u",a,b,c);
+					//check to see if the IP is in a block that belongs to the user or the users company.
+					//debug only
+					//fprintf(fp,"\n<!-- uIpInUserBlock(%s,%s,%u,%u) -->\n",cIPv4,cClassC,guLoginClient,guOrg);
+					if(!uIpInUserBlock(cIPv4,cClassC,guLoginClient,guOrg))
+						continue;
+				}
+			}
+			
+		}
 		
 		fprintf(fp,"<tr>\n");
 		fprintf(fp,"<td valign=top><a class=darkLink href=idnsOrg.cgi?gcPage=Resource&uResource=%s"
@@ -2028,3 +2057,28 @@ char *ParseTextAreaLines2(char *cTextArea)
 	return("");
 }
 
+
+unsigned uIpInUserBlock(char *cIPv4,char *cPrefix,unsigned uLoginClient,unsigned uCompany)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel FROM tBlock WHERE cLabel LIKE '%s.%%' AND (uOwner=%u OR uOwner=%u)",
+				cPrefix,uLoginClient,uCompany);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uIpv4InCIDR4(cIPv4,field[0]))
+		{
+			mysql_free_result(res);
+			return(1);
+		}
+	}
+	mysql_free_result(res);
+	return(0);
+
+}//unsigned uIpInUserBlock(char *cIPv4,char *cPrefix,unsigned uLoginClient,unsigned uCompany)
