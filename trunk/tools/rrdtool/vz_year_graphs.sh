@@ -41,6 +41,11 @@ for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
 		echo "<img src=$veid.week.png><p>" >> $HTMLFILE;
 		echo "<img src=$veid.month.png><p>" >> $HTMLFILE;
 		echo "<img src=$veid.year.png>" >> $HTMLFILE;
+		/usr/sbin/allnodescp.sh $HTMLFILE > /dev/null 2>&1;
+		if [ $? != 0 ];then
+			fLog "allnodescp.sh $HTMLFILE error";
+			continue;
+		fi
 	fi
 
 
@@ -75,7 +80,7 @@ for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
 	fi
 
 	#Here you need to copy all graphics to all nodes that provide possible unxsVZ admin interfaces.
-	nice /usr/sbin/allnodescp.sh $PNGFILE --remotedatacenter > /dev/null 2>&1;
+	nice /usr/sbin/allnodescp.sh $PNGFILE > /dev/null 2>&1;
 	if [ $? != 0 ];then
 		fLog "allnodescp.sh $PNGFILE error";
 		continue;
