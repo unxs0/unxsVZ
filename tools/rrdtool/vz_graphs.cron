@@ -3,4 +3,3 @@
 7 * * * * root nice ionice -c2 -n5 /usr/local/sbin/vz_week_graphs.sh >> /var/log/unxsvzlog 2>&1;
 7 5,17 * * * root nice ionice -c2 -n5 /usr/local/sbin/vz_month_graphs.sh >> /var/log/unxsvzlog 2>&1;
 7 4 * * * root nice ionice -c2 -n5 /usr/local/sbin/vz_year_graphs.sh >> /var/log/unxsvzlog 2>&1;
-
