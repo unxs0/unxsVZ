@@ -27,6 +27,7 @@ char gcInterface[100]={"eth0"};
 unsigned guDebug=0;
 unsigned guRRDTool=0;
 unsigned guTShark=0;
+unsigned guNodeQOS=0;
 unsigned guVEID=0;
 unsigned guNumCalls=0;
 unsigned guNode=0;
@@ -58,9 +59,11 @@ float fJitterSendStd=0.0;
 void TextConnectDb(void);
 void ProcessQOS(void);
 void ProcessSingleQOS(unsigned uContainer);
+void ProcessAsteriskSingleQOS(unsigned uContainer);
 void ProcessTShark(void);
 void SendAlertEmail(char *cMsg);
 void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname,float fPacketLoss);
+void ProcessNodeQOS(void);
 
 unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
@@ -104,6 +107,8 @@ int main(int iArgc, char *cArgv[])
 				guRRDTool=1;
 			if(!strcmp(cArgv[i],"--debug"))
 				guDebug=1;
+			if(!strcmp(cArgv[i],"--nodeqos"))
+				guNodeQOS=1;
 			if(!strncmp(cArgv[i],"--veid",6))
 				sscanf(cArgv[i],"--veid=%u",&guVEID);
 			if(!strncmp(cArgv[i],"--owner",7))
@@ -112,7 +117,7 @@ int main(int iArgc, char *cArgv[])
 				sscanf(cArgv[i],"--interface=%[a-z0-9\\.]",gcInterface);
 			if(!strcmp(cArgv[i],"--help"))
 			{
-				printf("usage: %s [--help] [--version] [--tshark] [--owner=1]"
+				printf("usage: %s [--help] [--version] [--tshark] [--owner=1] [--nodeqos]"
 					" [--interface=eth0] [--rrdtool] [--veid=VEID] [--debug]\n",cArgv[0]);
 				exit(0);
 			}
@@ -201,28 +206,35 @@ int main(int iArgc, char *cArgv[])
 		exit(1);
 	}
 
-	//get lock
-	struct stat structStat;
-	if(!stat(cLockfile,&structStat))
+	//get lock unless
+	if(!guNodeQOS)
 	{
-		logfileLine("main","waiting for rmdir(cLockfile)",0);
-		return(1);
-	}
-	if(mkdir(cLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
-	{
-		logfileLine("main","could not open cLockfile dir",0);
-		return(1);
+		struct stat structStat;
+		if(!stat(cLockfile,&structStat))
+		{
+			logfileLine("main","waiting for rmdir(cLockfile)",0);
+			return(1);
+		}
+		if(mkdir(cLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
+		{
+			logfileLine("main","could not open cLockfile dir",0);
+			return(1);
+		}
 	}
 
 	if(guTShark)
 	{
 		ProcessTShark();
 	}
-	else
+	else if(guNodeQOS)
+	{
+		ProcessNodeQOS();
+	}
+	else if(1)
 	{
 
 		if(guVEID)
-			ProcessSingleQOS(guVEID);
+			ProcessAsteriskSingleQOS(guVEID);
 		else
 			ProcessQOS();//For all node containers
 
@@ -262,10 +274,13 @@ int main(int iArgc, char *cArgv[])
 	}//end container based data
 	
 
-	if(rmdir(cLockfile))
+	if(!guNodeQOS)
 	{
-		logfileLine("main","could not rmdir(cLockfile)",0);
-		return(1);
+		if(rmdir(cLockfile))
+		{
+			logfileLine("main","could not rmdir(cLockfile)",0);
+			return(1);
+		}
 	}
 	logfileLine("main","end",0);
 	return(0);
@@ -277,6 +292,8 @@ void ProcessQOS(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uContainer=0;
+
+	if(guDebug) printf("ProcessQOS() start\n");
 
 	//Main loop. TODO use defines for tStatus.uStatus values.
 	sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uNode=%u AND uStatus=1",guNode);
@@ -304,23 +321,25 @@ void ProcessQOS(void)
 		}
 
 		sscanf(field[0],"%u",&uContainer);
-		ProcessSingleQOS(uContainer);
+		ProcessAsteriskSingleQOS(uContainer);
 
 	}
 	mysql_free_result(res);
 	mysql_close(&gMysql);
 
+	if(guDebug) printf("ProcessQOS() end\n");
+
 }//void ProcessQOS(void)
 
 
-void ProcessSingleQOS(unsigned uContainer)
+void ProcessAsteriskSingleQOS(unsigned uContainer)
 {
 	char cCommand[256];
 	char cLine[256];
 	FILE *fp;
 	unsigned uFirst=1;
 
-	logfileLine("ProcessSingleQOS","start",uContainer);
+	logfileLine("ProcessAsteriskSingleQOS","start",uContainer);
 
 	sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'sip show channelstats'\"",uContainer);
 	if((fp=popen(cCommand,"r")))
@@ -436,9 +455,9 @@ fLossRecv=0.000000 fJitterRecv=0.000000 fLossSend=0.000000 fJitterSend=0.000400
 	}//popen
 
 
-	logfileLine("ProcessSingleQOS","end",uContainer);
+	logfileLine("ProcessAsteriskSingleQOS","end",uContainer);
 
-}//void ProcessSingleQOS(void)
+}//void ProcessAsteriskSingleQOS(void)
 
 
 void ProcessTShark(void)
@@ -801,3 +820,109 @@ void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname,float fPacketLos
 	logfileLine("SendMTREmail","email attempt ok",0);
 
 }//void SendMTREmail()
+
+
+void ProcessNodeQOS(void)
+{
+	logfileLine("ProcessNodeQOS","start",0);
+
+	char cCommand[256];
+	FILE *fp;
+	sprintf(cCommand,"/usr/sbin/tshark -i %s -a duration:55 -q -f 'udp portrange 16384-32768'"
+				" -o rtp.heuristic_rtp:TRUE -z rtp,streams -w /tmp/qoscap3 2> /dev/null",gcInterface);
+	if(guDebug) printf("%s\n",cCommand);
+	if((fp=popen(cCommand,"r")))
+	{
+		float fAvgPacketLossPercent=0.0;
+		float fAvgMaxDelta=0.0;
+		float fAvgMaxJitter=0.0;
+		float fAvgMeanJitter=0.0;
+		unsigned uCount=0;
+
+		char cLine[256];
+		while(fgets(cLine,255,fp)!=NULL)
+                {
+			float fPacketLossPercent=0.0;
+			float fMaxDelta=0.0;
+			float fMaxJitter=0.0;
+			float fMeanJitter=0.0;
+			unsigned uFields=0;
+
+			if(guDebug) printf("%s",cLine);
+/*
+  Src IP addr   Port  Dest IP addr    Port  SSRC       Payload           Pkts   Lost         Max Delta(ms)  Max Jitter(ms) Mean Jitter(ms) Problems?
+   75.148.66.17 11800 174.121.136.170 19108 0x0001A372 ITU-T G.711 PCMU  2603   117 (4.3%)   64.73          4.64           1.29		   X
+  199.199.10.15 18058 174.121.136.11  12026 0x889F59A4 ITU-T G.711 PCMU  1407  -692 (-96.8%) 43.20          812.00         0.06		   X
+*/
+			uFields=sscanf(cLine,"%*u." //first IP digit uA
+						"%*[0-9\\.]" //rest of first IP numbers and periods cSrcIP
+						"%*[ \\t]" //skip space and tabs
+						"%*u" //uSrcPort
+						"%*[ \\t]" //skip space and tabs
+						"%*[0-9\\.]" //second IP cDstIP
+						"%*[ \\t]" //skip space and tabs
+						"%*u" //uDstPort
+						"%*[ \\t]" //skip space and tabs
+						"%*[0-9A-Fx]" //skip hex code e.g. 0x0001A372
+						"%*[ \\t]" //
+						"%*[A-Z--]" //ITU code
+						"%*[ \\t]" //
+						"%*[0-9A-Z\\.]" //CODEC
+						"%*[ \\t]" //
+						"%*[A-Z]" //PCMU
+						"%*[ \\t]" //
+						"%*d" //Packets
+						"%*[ \\t]" //
+						"%*d" //Packets
+						"%*[ \\t]" //
+						" (%f%%)" //fPacketLossPercent
+						"%*[ \\t]" //
+						"%f" //max delta
+						"%*[ \\t]" //
+						"%f" // max jitter
+						"%*[ \\t]" //
+						"%f" // mean jitter
+							,&fPacketLossPercent,&fMaxDelta,&fMaxJitter,&fMeanJitter);
+			if(uFields==4)
+			{
+				if(guDebug)
+					printf("fPacketLossPercent:%2.2f fMaxDelta:%2.2f fMaxJitter:%2.2f fMeanJitter:%2.2f\n",
+						fPacketLossPercent,fMaxDelta,fMaxJitter,fMeanJitter);
+
+				if(fPacketLossPercent<100 && fMaxJitter<1000.0 && fMeanJitter < 1000.0)
+				{
+					fAvgPacketLossPercent+=fPacketLossPercent;
+					fAvgMaxDelta+=fMaxDelta;
+					fAvgMaxJitter+=fMaxJitter;
+					fAvgMeanJitter+=fMeanJitter;
+					uCount++;
+				}
+
+			}
+			else
+			{
+				if(guDebug) printf("uFields=%u\n",uFields);
+			}
+		}//while lines
+		if(uCount>1)
+		{
+			fAvgPacketLossPercent=fAvgPacketLossPercent/uCount;
+			fAvgMaxDelta=fAvgMaxDelta/uCount;
+			fAvgMaxJitter=fAvgMaxJitter/uCount;
+			fAvgMeanJitter=fAvgMeanJitter/uCount;
+		}
+		if(guDebug)
+			printf("fAvgPacketLossPercent:%2.2f fAvgMaxDelta:%2.2f fAvgMaxJitter:%2.2f fAvgMeanJitter:%2.2f uCount=%u\n",
+						fAvgPacketLossPercent,fAvgMaxDelta,fAvgMaxJitter,fAvgMeanJitter,uCount);
+		else
+			printf("%2.2f %2.2f %2.2f %2.2f %u\n",fAvgPacketLossPercent,fAvgMaxDelta,fAvgMaxJitter,fAvgMeanJitter,uCount);
+		pclose(fp);
+	}//popen
+	else
+	{
+		if(guDebug) printf("%s",cCommand);
+	}
+	
+	logfileLine("ProcessNodeQOS","end",0);
+
+}//void ProcessNodeQOS(void)
