@@ -208,20 +208,16 @@ int main(int iArgc, char *cArgv[])
 		exit(1);
 	}
 
-	//get lock unless
-	if(!guNodeQOS)
+	struct stat structStat;
+	if(!stat(cLockfile,&structStat))
 	{
-		struct stat structStat;
-		if(!stat(cLockfile,&structStat))
-		{
-			logfileLine("main","waiting for rmdir(cLockfile)",0);
-			return(1);
-		}
-		if(mkdir(cLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
-		{
-			logfileLine("main","could not open cLockfile dir",0);
-			return(1);
-		}
+		logfileLine("main","waiting for rmdir(cLockfile)",0);
+		return(1);
+	}
+	if(mkdir(cLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
+	{
+		logfileLine("main","could not open cLockfile dir",0);
+		return(1);
 	}
 
 	if(guTShark)
@@ -276,13 +272,10 @@ int main(int iArgc, char *cArgv[])
 	}//end container based data
 	
 
-	if(!guNodeQOS)
+	if(rmdir(cLockfile))
 	{
-		if(rmdir(cLockfile))
-		{
-			logfileLine("main","could not rmdir(cLockfile)",0);
-			return(1);
-		}
+		logfileLine("main","could not rmdir(cLockfile)",0);
+		return(1);
 	}
 	logfileLine("main","end",0);
 	return(0);
@@ -729,9 +722,9 @@ void ProcessNodeQOS(void)
 						"%*[ \\t]" //
 						"%f" // mean jitter
 						"%s" //
-							,&uA,cSrcIP,&uSrcPort,cDstIP,&uDstPort,&fPacketLossPercent,
-							&fMaxDelta,&fMaxJitter,&fMeanJitter,cProblems);
-			if(uFields==4)
+							,&uA,cSrcIP,&uSrcPort,cDstIP,&uDstPort,
+							&fPacketLossPercent,&fMaxDelta,&fMaxJitter,&fMeanJitter,cProblems);
+			if(uFields>=9)
 			{
 				if(guDebug)
 					printf("fPacketLossPercent:%2.2f fMaxDelta:%2.2f fMaxJitter:%2.2f fMeanJitter:%2.2f\n",

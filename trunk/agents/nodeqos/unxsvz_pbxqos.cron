@@ -1,0 +1,4 @@
+# this file should be placed in /etc/cron.d/
+# generate per node png graphs while running tshark based 
+# VOIP qos data gathering and reporting agent part of unxsVZ ecosystem.
+* * * * * root /usr/sbin/nodeQOSGraph.sh > /dev/null;
