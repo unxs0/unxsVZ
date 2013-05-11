@@ -2,3 +2,6 @@
 # generate per node png graphs while running tshark based 
 # VOIP qos data gathering and reporting agent part of unxsVZ ecosystem.
 * * * * * root /usr/sbin/nodeQOSGraph.sh > /dev/null;
+7 * * * * /usr/sbin/qos_week_graph.sh > /dev/null;
+8 7,19 * * * /usr/sbin/qos_month_graph.sh > /dev/null;
+9 7 * * * /usr/sbin/qos_year_graph.sh > /dev/null;
