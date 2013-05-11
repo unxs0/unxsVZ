@@ -64,6 +64,8 @@ void ProcessTShark(void);
 void SendAlertEmail(char *cMsg);
 void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname,float fPacketLoss);
 void ProcessNodeQOS(void);
+unsigned unxsVZModule(unsigned uA,char *cSrcIP,unsigned uSrcPort,char *cDstIP,unsigned uDstPort,float fPacketLossPercent,
+				unsigned uScanCount,unsigned uDidNotSendMTREmail);
 
 unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
@@ -497,179 +499,13 @@ void ProcessTShark(void)
 				if(guDebug)
 					printf("cSrcIP=%u.%s:%u cDstIP=%s:%u %2.2f\n",uA,cSrcIP,uSrcPort,cDstIP,uDstPort,fPacketLossPercent);
 
-				if(fPacketLossPercent>2.0 && fPacketLossPercent<90.0)
-				{
-        				MYSQL_RES *res;
-					MYSQL_ROW field;
-					unsigned uContainer=0;
-					unsigned uProperty=0;
-					char cMatchIP[16]={""};
-					char cValue[256]={""};
-					char cIP[16]={""};
-					char cNode[32]={""};
-					char cHostname[100]={""};
-					sprintf(gcQuery,"SELECT uContainer,tIP.cLabel,tNode.cLabel,tContainer.cHostname FROM tContainer,tIP,tNode"
-							" WHERE tContainer.uIPv4=tIP.uIP"
-							" AND tContainer.uNode=tNode.uNode"
-							" AND tContainer.uNode=%u"
-							" AND tContainer.uStatus=1"
-							" AND (tIP.cLabel='%u.%s' OR tIP.cLabel='%s')"
-								,guNode,uA,cSrcIP,cDstIP);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-					{
-						logfileLine("ProcessTShark",mysql_error(&gMysql),0);
-						if(guDebug) printf("%s\n",mysql_error(&gMysql));
-						mysql_close(&gMysql);
-						break;
-					}
-					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
-					{
-						sscanf(field[0],"%u",&uContainer);
-						sprintf(cMatchIP,"%.15s",field[1]);
-						sprintf(cNode,"%.31s",field[2]);
-						sprintf(cHostname,"%.99s",field[3]);
-						if(guDebug) printf("uContainer=%u\n",uContainer);
-					}
-
-					if(uContainer==0) continue;
-
-					if(!strcmp(cDstIP,cMatchIP))
-						sprintf(cIP,"%u.%.12s",uA,cSrcIP);
-					else
-						sprintf(cIP,"%.15s",cDstIP);
-
-					//determine if cIP is a registered phone
-					//rfc1918 ignore them not carriers issue with packets and/or PBX
-					unsigned uPhone=0;
-					unsigned uAc=0,uBc=0;
-					if(2==sscanf(cIP,"%u.%u.%*u.%*u",&uAc,&uBc))
-					{
-						if( (uAc==192 && uBc==168) || (uAc==10) || (uAc==172 && uBc>=16 && uBc<32) )
-							uPhone=1;
-					}
-					//Dont waste time with expensive system call if packet had private lan ip
-					if(!uPhone)
-					{
-						FILE *pp;
-						sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'sip show peers'|/bin/grep -c %s\"",
-									uContainer,cIP);
-						if(guDebug) printf("%s\n",cCommand);
-						if((pp=popen(cCommand,"r")))
-						{
-							char cPLine[256];
-							if(fgets(cPLine,255,pp)!=NULL)
-							{
-								sscanf(cPLine,"%u",&uPhone);
-								if(guDebug) printf("cpLine=%s",cPLine);
-							}
-							pclose(pp);
-						}
-						else
-						{
-							logfileLine("ProcessTShark","sip show peers",uContainer);
-						}
-					}
-
-					sprintf(gcQuery,"SELECT uProperty,cValue FROM tProperty"
-							" WHERE uKey=%u"
-							" AND uType=3"
-							" AND cName=CONCAT('cOrg_QOS',WEEKOFYEAR(NOW()),SUBSTR(DAYNAME(NOW()),1,3),'%s')"
-								,uContainer,cIP);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-					{
-						logfileLine("ProcessTShark",mysql_error(&gMysql),uContainer);
-						if(guDebug) printf("%s\n",mysql_error(&gMysql));
-						mysql_close(&gMysql);
-						break;
-					}
-					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
-					{
-						sscanf(field[0],"%u",&uProperty);
-						sprintf(cValue,"%.255s",field[1]);
-						if(guDebug) printf("uProperty=%u\n",uProperty);
-					}
-
-					unsigned uPacketLossPercent=fPacketLossPercent;
-					sprintf(gcQuery,"cIP=%s uPacketLossPercent=%u",cIP,uPacketLossPercent);
-					logfileLine("ProcessTShark-cIP-PL",gcQuery,uContainer);
-					if(uProperty)
-					{
-						float fMax=0.0,fMin=0.0,fAvg=0.0;
-						unsigned uCount=0;
-						sscanf(cValue,"Last=%*f%%; Max=%f%%; Min=%f%%; Count=%u; Avg=%f%%;",&fMax,&fMin,&uCount,&fAvg);
-						if(fPacketLossPercent>fMax)
-							fMax=fPacketLossPercent;
-						else if(fPacketLossPercent<fMin)
-							fMin=fPacketLossPercent;
-						uCount++;
-						//moving average
-						//mAvg(i)=mAvg(i-1)*(i-1)/i + x(i)/i
-						//fix old records with a wild estimated average
-						if(fAvg==0.0)
-							fAvg=(fMax+fMin)/2.0;
-						else
-							fAvg=((fAvg*(float)(uCount-1))/(float)uCount)+(fPacketLossPercent/(float)uCount);
-						sprintf(gcQuery,"UPDATE tProperty"
-							" SET cValue=CONCAT"
-							"('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=%u; Avg=%2.2f%%; CPE=%u; Node=%s; ',TIME(NOW())),"
-							" uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
-							" WHERE uProperty=%u"
-								,fPacketLossPercent,fMax,fMin,uCount,fAvg,uPhone,cNode,uProperty);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-						{
-							logfileLine("ProcessTShark",mysql_error(&gMysql),uContainer);
-							if(guDebug) printf("%s\n",mysql_error(&gMysql));
-							mysql_close(&gMysql);
-							break;
-						}
-						if(guDebug) printf("%s\n",gcQuery);
-					}
-					else
-					{
-						sprintf(gcQuery,"INSERT INTO tProperty"
-							" SET cValue=CONCAT"
-							"('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=1; Avg=%2.2f%%; CPE=%u; Node=%s; ',TIME(NOW())),"
-							" cName=CONCAT('cOrg_QOS',WEEKOFYEAR(NOW()),SUBSTR(DAYNAME(NOW()),1,3),'%s'),"
-							" uKey=%u,"
-							" uType=3,"
-							" uOwner=%u,"
-							" uCreatedBy=1,"
-							" uCreatedDate=UNIX_TIMESTAMP(NOW())"
-								,fPacketLossPercent,fPacketLossPercent,fPacketLossPercent,fPacketLossPercent,uPhone,cNode,
-								cIP,uContainer,guOwner);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-						{
-							logfileLine("ProcessTShark",mysql_error(&gMysql),uContainer);
-							if(guDebug) printf("%s\n",mysql_error(&gMysql));
-							mysql_close(&gMysql);
-							break;
-						}
-						if(guDebug) printf("%s\n",gcQuery);
-					}
-					uScanCount++;
-//#define DEBUG1 On
-#ifdef DEBUG1
-					//debug only
-					SendMTREmail(cIP,uContainer,cHostname,fPacketLossPercent);
-#else
-
-					//fork and create an mtr report and email it
-					if(fPacketLossPercent>30.0 && uPhone==0)
-					{
-						//Node is busy enough
-						if(uScanCount<10)
-							SendMTREmail(cIP,uContainer,cHostname,fPacketLossPercent);
-						else
-							uDidNotSendMTREmail++;
-					}
-#endif
-				}//more than 2 percent less than 90 percent
+				//unxsVZ integration function also has per container email report code
+				//	once loop is done another email report summary may need to be sent*
+				unsigned uRetVal=unxsVZModule(uA,cSrcIP,uSrcPort,cDstIP,uDstPort,fPacketLossPercent,uScanCount,uDidNotSendMTREmail);
+				if(uRetVal==1)
+					break;
+				else if(uRetVal==2)
+					continue;
 			}
 			else
 			{
@@ -682,7 +518,9 @@ void ProcessTShark(void)
 	{
 		if(guDebug) printf("%s",cCommand);
 	}
-	
+
+
+	//*this is also a unxsVZ integration required code block	
 	logfileLine("ProcessTShark","uScanCount",uScanCount);
 	if(uScanCount>10)
 	{
@@ -826,6 +664,8 @@ void ProcessNodeQOS(void)
 {
 	logfileLine("ProcessNodeQOS","start",0);
 
+	unsigned uScanCount=0;
+	unsigned uDidNotSendMTREmail=0;
 	char cCommand[256];
 	FILE *fp;
 	sprintf(cCommand,"/usr/sbin/tshark -i %s -a duration:55 -q -f 'udp portrange 16384-32768'"
@@ -842,11 +682,17 @@ void ProcessNodeQOS(void)
 		char cLine[256];
 		while(fgets(cLine,255,fp)!=NULL)
                 {
+			char cSrcIP[256]={""};
+			char cDstIP[256]={""};
+			unsigned uDstPort=0;
+			unsigned uSrcPort=0;
+			unsigned uA=0;
 			float fPacketLossPercent=0.0;
 			float fMaxDelta=0.0;
 			float fMaxJitter=0.0;
 			float fMeanJitter=0.0;
 			unsigned uFields=0;
+			char cProblems[256]={""};
 
 			if(guDebug) printf("%s",cLine);
 /*
@@ -854,14 +700,14 @@ void ProcessNodeQOS(void)
    75.148.66.17 11800 174.121.136.170 19108 0x0001A372 ITU-T G.711 PCMU  2603   117 (4.3%)   64.73          4.64           1.29		   X
   199.199.10.15 18058 174.121.136.11  12026 0x889F59A4 ITU-T G.711 PCMU  1407  -692 (-96.8%) 43.20          812.00         0.06		   X
 */
-			uFields=sscanf(cLine,"%*u." //first IP digit uA
-						"%*[0-9\\.]" //rest of first IP numbers and periods cSrcIP
+			uFields=sscanf(cLine,"%u." //first IP digit uA
+						"%[0-9\\.]" //rest of first IP numbers and periods cSrcIP
 						"%*[ \\t]" //skip space and tabs
-						"%*u" //uSrcPort
+						"%u" //uSrcPort
 						"%*[ \\t]" //skip space and tabs
-						"%*[0-9\\.]" //second IP cDstIP
+						"%[0-9\\.]" //second IP cDstIP
 						"%*[ \\t]" //skip space and tabs
-						"%*u" //uDstPort
+						"%u" //uDstPort
 						"%*[ \\t]" //skip space and tabs
 						"%*[0-9A-Fx]" //skip hex code e.g. 0x0001A372
 						"%*[ \\t]" //
@@ -882,7 +728,9 @@ void ProcessNodeQOS(void)
 						"%f" // max jitter
 						"%*[ \\t]" //
 						"%f" // mean jitter
-							,&fPacketLossPercent,&fMaxDelta,&fMaxJitter,&fMeanJitter);
+						"%s" //
+							,&uA,cSrcIP,&uSrcPort,cDstIP,&uDstPort,&fPacketLossPercent,
+							&fMaxDelta,&fMaxJitter,&fMeanJitter,cProblems);
 			if(uFields==4)
 			{
 				if(guDebug)
@@ -898,6 +746,16 @@ void ProcessNodeQOS(void)
 					uCount++;
 				}
 
+				if(guDebug)
+					printf("cProblems='%s'\n",cProblems);
+				if(strchr(cProblems,'X'))
+				{
+					//unxsVZ integration function also has per container email report code
+					//	once loop is done another email report summary may need to be sent*
+					unsigned uRetVal=unxsVZModule(uA,cSrcIP,uSrcPort,cDstIP,uDstPort,fPacketLossPercent,uScanCount,uDidNotSendMTREmail);
+					if(uRetVal==1)
+						break;
+				}
 			}
 			else
 			{
@@ -923,6 +781,200 @@ void ProcessNodeQOS(void)
 		if(guDebug) printf("%s",cCommand);
 	}
 	
+	//*this is also a unxsVZ integration required code block	
+	logfileLine("ProcessNodeQOS","uScanCount",uScanCount);
+	if(uScanCount>10)
+	{
+		if(uDidNotSendMTREmail)
+			sprintf(gcQuery,"!%u QOS issues and %u MTRs were skipped!",uScanCount,uDidNotSendMTREmail);
+		else
+			sprintf(gcQuery,"ProcessTShark has detected %u QOS issues.",uScanCount);
+		SendAlertEmail(gcQuery);
+	}
 	logfileLine("ProcessNodeQOS","end",0);
 
 }//void ProcessNodeQOS(void)
+
+
+unsigned unxsVZModule(unsigned uA,char *cSrcIP,unsigned uSrcPort,char *cDstIP,unsigned uDstPort,float fPacketLossPercent,
+				unsigned uScanCount,unsigned uDidNotSendMTREmail)
+{
+	if(fPacketLossPercent>2.0 && fPacketLossPercent<90.0)
+	{
+       		MYSQL_RES *res;
+		MYSQL_ROW field;
+		unsigned uContainer=0;
+		unsigned uProperty=0;
+		char cMatchIP[16]={""};
+		char cValue[256]={""};
+		char cIP[16]={""};
+		char cNode[32]={""};
+		char cHostname[100]={""};
+		sprintf(gcQuery,"SELECT uContainer,tIP.cLabel,tNode.cLabel,tContainer.cHostname FROM tContainer,tIP,tNode"
+				" WHERE tContainer.uIPv4=tIP.uIP"
+				" AND tContainer.uNode=tNode.uNode"
+				" AND tContainer.uNode=%u"
+				" AND tContainer.uStatus=1"
+				" AND (tIP.cLabel='%u.%s' OR tIP.cLabel='%s')"
+					,guNode,uA,cSrcIP,cDstIP);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessTShark",mysql_error(&gMysql),0);
+			if(guDebug) printf("%s\n",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			return(1);//break on return
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uContainer);
+			sprintf(cMatchIP,"%.15s",field[1]);
+			sprintf(cNode,"%.31s",field[2]);
+			sprintf(cHostname,"%.99s",field[3]);
+			if(guDebug) printf("uContainer=%u\n",uContainer);
+		}
+
+		if(uContainer==0)
+			return(1);//continue on return
+
+		if(!strcmp(cDstIP,cMatchIP))
+			sprintf(cIP,"%u.%.12s",uA,cSrcIP);
+		else
+			sprintf(cIP,"%.15s",cDstIP);
+
+		//determine if cIP is a registered phone
+		//rfc1918 ignore them not carriers issue with packets and/or PBX
+		unsigned uPhone=0;
+		unsigned uAc=0,uBc=0;
+		if(2==sscanf(cIP,"%u.%u.%*u.%*u",&uAc,&uBc))
+		{
+			if( (uAc==192 && uBc==168) || (uAc==10) || (uAc==172 && uBc>=16 && uBc<32) )
+				uPhone=1;
+		}
+		//Dont waste time with expensive system call if packet had private lan ip
+		if(!uPhone)
+		{
+			char cCommand[256];
+			FILE *pp;
+			sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'sip show peers'|/bin/grep -c %s\"",
+						uContainer,cIP);
+			if(guDebug) printf("%s\n",cCommand);
+			if((pp=popen(cCommand,"r")))
+			{
+				char cPLine[256];
+				if(fgets(cPLine,255,pp)!=NULL)
+				{
+					sscanf(cPLine,"%u",&uPhone);
+					if(guDebug) printf("cpLine=%s",cPLine);
+				}
+				pclose(pp);
+			}
+			else
+			{
+				logfileLine("ProcessTShark","sip show peers",uContainer);
+			}
+		}
+
+		sprintf(gcQuery,"SELECT uProperty,cValue FROM tProperty"
+				" WHERE uKey=%u"
+				" AND uType=3"
+				" AND cName=CONCAT('cOrg_QOS',WEEKOFYEAR(NOW()),SUBSTR(DAYNAME(NOW()),1,3),'%s')"
+					,uContainer,cIP);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessTShark",mysql_error(&gMysql),uContainer);
+			if(guDebug) printf("%s\n",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			return(1);//break
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uProperty);
+			sprintf(cValue,"%.255s",field[1]);
+			if(guDebug) printf("uProperty=%u\n",uProperty);
+		}
+
+		unsigned uPacketLossPercent=fPacketLossPercent;
+		sprintf(gcQuery,"cIP=%s uPacketLossPercent=%u",cIP,uPacketLossPercent);
+		logfileLine("ProcessTShark-cIP-PL",gcQuery,uContainer);
+		if(uProperty)
+		{
+			float fMax=0.0,fMin=0.0,fAvg=0.0;
+			unsigned uCount=0;
+			sscanf(cValue,"Last=%*f%%; Max=%f%%; Min=%f%%; Count=%u; Avg=%f%%;",&fMax,&fMin,&uCount,&fAvg);
+			if(fPacketLossPercent>fMax)
+				fMax=fPacketLossPercent;
+			else if(fPacketLossPercent<fMin)
+				fMin=fPacketLossPercent;
+			uCount++;
+			//moving average
+			//mAvg(i)=mAvg(i-1)*(i-1)/i + x(i)/i
+			//fix old records with a wild estimated average
+			if(fAvg==0.0)
+				fAvg=(fMax+fMin)/2.0;
+			else
+				fAvg=((fAvg*(float)(uCount-1))/(float)uCount)+(fPacketLossPercent/(float)uCount);
+			sprintf(gcQuery,"UPDATE tProperty"
+				" SET cValue=CONCAT"
+				"('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=%u; Avg=%2.2f%%; CPE=%u; Node=%s; ',TIME(NOW())),"
+				" uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uProperty=%u"
+					,fPacketLossPercent,fMax,fMin,uCount,fAvg,uPhone,cNode,uProperty);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessTShark",mysql_error(&gMysql),uContainer);
+				if(guDebug) printf("%s\n",mysql_error(&gMysql));
+				mysql_close(&gMysql);
+				return(1);//break
+			}
+			if(guDebug) printf("%s\n",gcQuery);
+		}
+		else
+		{
+			sprintf(gcQuery,"INSERT INTO tProperty"
+				" SET cValue=CONCAT"
+				"('Last=%2.2f%%; Max=%2.2f%%; Min=%2.2f%%; Count=1; Avg=%2.2f%%; CPE=%u; Node=%s; ',TIME(NOW())),"
+				" cName=CONCAT('cOrg_QOS',WEEKOFYEAR(NOW()),SUBSTR(DAYNAME(NOW()),1,3),'%s'),"
+				" uKey=%u,"
+				" uType=3,"
+				" uOwner=%u,"
+				" uCreatedBy=1,"
+				" uCreatedDate=UNIX_TIMESTAMP(NOW())"
+					,fPacketLossPercent,fPacketLossPercent,fPacketLossPercent,fPacketLossPercent,uPhone,cNode,
+					cIP,uContainer,guOwner);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessTShark",mysql_error(&gMysql),uContainer);
+				if(guDebug) printf("%s\n",mysql_error(&gMysql));
+				mysql_close(&gMysql);
+				return(1);//break
+			}
+			if(guDebug) printf("%s\n",gcQuery);
+		}
+		uScanCount++;
+//#define DEBUG1 On
+#ifdef DEBUG1
+		//debug only
+		SendMTREmail(cIP,uContainer,cHostname,fPacketLossPercent);
+#else
+
+		//fork and create an mtr report and email it
+		if(fPacketLossPercent>30.0 && uPhone==0)
+		{
+			//Node is busy enough
+			if(uScanCount<10)
+				SendMTREmail(cIP,uContainer,cHostname,fPacketLossPercent);
+			else
+				uDidNotSendMTREmail++;
+		}
+#endif
+	}//more than 2 percent less than 90 percent
+
+	return(0);//not break
+
+}//unsigned unxsVZModule()
