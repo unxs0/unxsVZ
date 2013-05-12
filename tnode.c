@@ -258,16 +258,40 @@ void tNodeInput(unsigned uMode)
 {
 	if(uNode && uDatacenter)
 	{
-		char cConfigBuffer[256]={""};
+		char cNodeTrafficDomainURL[256]={""};
+		char cNodeTrafficGraphHtml[256]={""};
+		char cTrafficDirURL[256]={""};
 
-		GetConfiguration("cNodeTrafficDirURL",cConfigBuffer,uDatacenter,0,0,0);
-		if(cConfigBuffer[0])
+		GetConfiguration("cNodeTrafficDomainURL",cNodeTrafficDomainURL,uDatacenter,0,0,0);
+		if(cNodeTrafficDomainURL[0])
 		{
 	
-			OpenRow("Graph","black");
-			printf("<a href=%s/%s.png><img src=%s/%s.png border=0></a>\n",
-					cConfigBuffer,cLabel,cConfigBuffer,cLabel);
-			printf("</td></tr>\n");
+			GetConfiguration("cNodeTrafficGraphHtml",cNodeTrafficGraphHtml,uDatacenter,uNode,0,0);
+			if(!cNodeTrafficGraphHtml[0])
+			{
+				GetConfiguration("cNodeTrafficGraphHtml",cNodeTrafficGraphHtml,uDatacenter,0,0,0);
+				if(!cNodeTrafficGraphHtml[0])
+					sprintf(cNodeTrafficGraphHtml,"%s.png",cLabel);
+			}
+			GetConfiguration("cTrafficDirURL",cTrafficDirURL,uDatacenter,0,0,0);
+			if(cTrafficDirURL[0])
+			{
+				OpenRow("Graph","black");
+				printf("<a href=https://%s.%s/%s><img src=%s/%s.png border=0></a>\n",
+					cLabel,cNodeTrafficDomainURL,cNodeTrafficGraphHtml,cTrafficDirURL,cLabel);
+				printf("</td></tr>\n");
+			}
+		}
+		else
+		{
+			GetConfiguration("cTrafficDirURL",cTrafficDirURL,uDatacenter,0,0,0);
+			if(cTrafficDirURL[0])
+			{
+				OpenRow("Graph","black");
+				printf("<a href=%s/%s.png><img src=%s/%s.png border=0></a>\n",
+					cTrafficDirURL,cLabel,cTrafficDirURL,cLabel);
+				printf("</td></tr>\n");
+			}
 		}
 	}
 
