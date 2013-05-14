@@ -569,17 +569,24 @@ void SendAlertEmail(char *cMsg)
 
 void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname,float fPacketLoss)
 {
-	FILE *pp;
 	pid_t pidChild;
-
-	pidChild=fork();
-	if(pidChild!=0)
-		return;
+	FILE *pp;
+	time_t luClock;
+	char cTime[32];
+	const struct tm *tmTime;
 
 	char cCommand[128];
 	char cReport[2048]={""};
 	unsigned uReportLen=0;
 	unsigned uOneTimeOnly=0;
+
+	pidChild=fork();
+	if(pidChild!=0)
+		return;
+
+	time(&luClock);
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
 
 	uReportLen+=strlen("\nCall information:\n");
 	sprintf(cCommand,"/usr/sbin/vzctl exec2 %u \"/usr/sbin/asterisk -rx 'core show channels verbose'|/bin/grep trunk\"",uContainer);
@@ -641,7 +648,7 @@ void SendMTREmail(char *cIP,unsigned uContainer,char *cHostname,float fPacketLos
 			fprintf(pp,"Bcc: %s\n",cBcc);
 	}
 	fprintf(pp,"From: %s\n",cQOS_FROM);
-	fprintf(pp,"Subject: mtr report for %s from %s:%s\n",cIP,gcHostname,cHostname);
+	fprintf(pp,"Subject: mtr report for %s from %s:%s %s\n",cIP,gcHostname,cHostname,cTime);
 
 	fprintf(pp,"\n%s (%u) Loss:%2.2f\n%s",cHostname,uContainer,fPacketLoss,cReport);
 	fprintf(pp,".\n");
