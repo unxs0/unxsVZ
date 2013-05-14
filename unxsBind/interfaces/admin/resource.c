@@ -2849,11 +2849,11 @@ unsigned idnsOnLineZoneCheck(void)
 		mysql_free_result(res2);
 		fclose(zfp);
 
-		sprintf(gcQuery,"/usr/sbin/named-checkzone -k warn %s %s 2>&1 > /dev/null",field[0],cZoneFile);
+		sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1 > /dev/null",field[0],cZoneFile);
 		if(system(gcQuery))
 		{
 			char cLine[100]={""};
-			sprintf(gcQuery,"/usr/sbin/named-checkzone -k warn %s %s 2>&1",field[0],cZoneFile);
+			sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1",field[0],cZoneFile);
 
 			if((zfp=popen(gcQuery,"r"))==NULL)
 				htmlPlainTextError("popen() failed");

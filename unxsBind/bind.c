@@ -629,7 +629,7 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 			int iRetVal;
 
 			uZoneOwner=uGetZoneOwner(uZone);
-			sprintf(gcQuery,"%s/named-checkzone -k warn -q %s %s",gcBinDir,field[0],cZoneFile);
+			sprintf(gcQuery,"%s/named-checkzone -q %s %s",gcBinDir,field[0],cZoneFile);
 			if((iRetVal=system(gcQuery))>0)
 			{
 				fprintf(stdout,"%s returned %d\n",gcQuery,iRetVal);

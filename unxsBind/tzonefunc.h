@@ -331,6 +331,10 @@ void ExttZoneCommands(pentry entries[], int x)
 						cJobType="Modify New";
 				}
 
+				//Optionally allow owner modification.
+				if(uDDClient)
+					uOwner=uDDClient;
+
 				if(SubmitJob(cJobType,uNSSet,cZone,0,0))
 					htmlPlainTextError(mysql_error(&gMysql));
 	                        ModtZone();
@@ -1017,6 +1021,9 @@ void ExttZoneButtons(void)
 
                 case 2002:
 			printf("<p><u>Review record data</u><br>");
+			printf("<p><u>Optionally change owner</u><br>");
+			CustomerDropDown(uDDClient);
+			printf("<p>");
                         printf(LANG_NBB_CONFIRMMOD);
                 break;
 		
@@ -2754,6 +2761,10 @@ void htmlMassResourceImport(void)
 	char *cp;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	unsigned uWipeRRs=0;
+	unsigned uAddNewZones=0;
+	unsigned uNewZone=0;
+	unsigned uCloneZone=0;
 	unsigned uDebug=0;
 	unsigned uZone;
 	unsigned uView=2;//external
@@ -2798,11 +2809,35 @@ void htmlMassResourceImport(void)
 			continue;
 		}
 
+		if(!strncmp(cLine,"uWipeRRs",8))
+		{
+			uWipeRRs=1;
+			printf("uWipeRRs on\n");
+			continue;
+		}
+
+		if(!strncmp(cLine,"uAddNewZones",12))
+		{
+			uAddNewZones=1;
+			printf("uAddNewZones on\n");
+			continue;
+		}
+
+		if(!strncmp(cLine,"uCloneZone=",11))
+		{
+			if((cp=strchr(cLine,';')))
+				*cp=0;
+			sscanf(cLine+11,"%u",&uCloneZone);
+			printf("uCloneZone=%u\n",uCloneZone);
+			continue;
+		}
+
 		//New zone
 		if(!strncmp(cLine,"cZone=",6))
 		{
 			uOnlyOncePerZone=0;
 			uZone=0;
+			uNewZone=0;
 			uZoneOwner=0;
 			uNSSet=0;
 			uZoneCount++;
@@ -2814,7 +2849,7 @@ void htmlMassResourceImport(void)
 			printf("cZone=(%s)\n",cZone);
 
 			//First check tZone
-			sprintf(gcQuery,"SELECT uZone,uNSSet,uOwner FROM tZoneImport WHERE cZone='%s' AND"
+			sprintf(gcQuery,"SELECT uZone,uNSSet,uOwner FROM tZone WHERE cZone='%s' AND"
 						" uSecondaryOnly=0 AND uView=%u",cZone,uView);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -2829,6 +2864,11 @@ void htmlMassResourceImport(void)
 				sscanf(field[1],"%u",&uNSSet);
 				sscanf(field[2],"%u",&uZoneOwner);
 			}
+			else if(uAddNewZones && uCloneZone)
+			{
+				printf("New zone created %s based on %u\n",cZone,uCloneZone);
+				uNewZone=1;
+			}
 			mysql_free_result(res);
 			if(!uZone || !uZoneOwner || !uNSSet)
 			{
@@ -2836,6 +2876,18 @@ void htmlMassResourceImport(void)
 				continue;
 
 			}
+
+			if(uWipeRRs && uZone && !uNewZone)
+			{
+				sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%u",uZone);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					exit(0);
+				}
+			}
+
 			uOnlyOncePerZone=1;
 			uZoneFoundCount++;
 		}
@@ -3347,7 +3399,7 @@ void htmlMassCheckZone(void)
 		//ParseTextAreaLines() required break;
 		if(cLine[0]==0) break;
 
-		sprintf(cCommand,"named-checkzone -k warn %.99s /usr/local/idns/named.d/master/external/%c/%.99s",
+		sprintf(cCommand,"named-checkzone %.99s /usr/local/idns/named.d/master/external/%c/%.99s",
 			cLine,cLine[0],cLine);
 		if((fp=popen(gcQuery,"r")))
 		{
@@ -3562,7 +3614,7 @@ void htmlMasterNamedCheckZone(void)
 
 	uPID=getpid();
 	sprintf(cTmpFile,"/tmp/iDNS.ncz.%u",uPID);
-	sprintf(cSystem,"/usr/sbin/named-checkzone -k warn %.64s /usr/local/idns/named.d/master/%.64s/%.1s/%.64s > %s 2>&1",
+	sprintf(cSystem,"/usr/sbin/named-checkzone %.64s /usr/local/idns/named.d/master/%.64s/%.1s/%.64s > %s 2>&1",
 		cZone,cView,cZone,cZone,cTmpFile);
 	system(cSystem);
 
@@ -3831,11 +3883,11 @@ unsigned OnLineZoneCheck(unsigned uZone,unsigned uCalledMode,unsigned uCalledFro
 		mysql_free_result(res2);
 		fclose(zfp);
 
-		sprintf(gcQuery,"/usr/sbin/named-checkzone -k warn %s %s 2>&1 > /dev/null",field[0],cZoneFile);
+		sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1 > /dev/null",field[0],cZoneFile);
 		if(system(gcQuery))
 		{
 			char cLine[1024]={""};
-			sprintf(gcQuery,"/usr/sbin/named-checkzone -k warn %s %s 2>&1",field[0],cZoneFile);
+			sprintf(gcQuery,"/usr/sbin/named-checkzone %s %s 2>&1",field[0],cZoneFile);
 
 			if((zfp=popen(gcQuery,"r"))==NULL)
 				htmlPlainTextError("popen() failed");
