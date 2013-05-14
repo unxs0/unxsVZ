@@ -36,7 +36,7 @@ void Tutorial(void);
 void NamedConf(void);
 void MasterZones(void);
 void Admin(void);
-void ListZones(void);
+void ListZones(unsigned uNSSet);
 void PerfQueryList(void);
 void UpdateSchema(void);
 void UpdateTables(void);
@@ -862,7 +862,7 @@ void PrintUsage(char *arg0)
 	printf("\tallfiles master|slave <fqdn ns> <master ip>\n");
 	printf("\tinstallbind <listen ipnum>\n");
 	printf("\texport <table> <filename>\n");
-	printf("\tListZones\n");
+	printf("\tListZones [<uNSSet>]\n");
 	printf("\tPerfQueryList\n");
 	printf("\tPrintNSList <cuNSSet>\n");
 	printf("\tPrintMXList <cuMailServer>\n");
@@ -934,7 +934,7 @@ void ExtMainShell(int argc, char *argv[])
 		}
 		else if(!strcmp(argv[1],"ListZones"))
 		{
-                	ListZones();
+                	ListZones(0);
 			exit(0);
 		}
         	else if(!strcmp(argv[1],"RestoreAll"))
@@ -1160,6 +1160,13 @@ void ExtMainShell(int argc, char *argv[])
                 	MonthUsageData(uSimile);
 			exit(0);
 		}
+		else if(!strcmp(argv[1],"ListZones"))
+		{
+			unsigned uNSSet=0;
+			sscanf(argv[2],"%u",&uNSSet);
+                	ListZones(uNSSet);
+			exit(0);
+		}
 		PrintUsage(argv[0]);
 	}
 	else if(argc==4)
@@ -1365,14 +1372,20 @@ void Admin(void)
 }//void Admin(void)
 
 //List zones for a given uNSSet
-void ListZones(void)
+void ListZones(unsigned uNSSet)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
 	if(TextConnectDb()) exit(0);
 
-	sprintf(gcQuery,"SELECT cZone,cLabel FROM tZone,tNSSet WHERE tZone.uNSSet=tNSSet.uNSSet");
+	if(uNSSet)
+		sprintf(gcQuery,"SELECT cZone,cLabel FROM tZone,tNSSet"
+					" WHERE tZone.uNSSet=tNSSet.uNSSet"
+					" AND tNSSet.uNSSet=%u ORDER BY tZone.cZone",uNSSet);
+	else
+		sprintf(gcQuery,"SELECT cZone FROM tZone ORDER BY cZone");
+		
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
 	{
@@ -1382,13 +1395,15 @@ void ListZones(void)
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res))) 
 	{
-		//printf("%s %s\n",field[0],field[1]);
-		printf("%s\n",field[0]);
+		if(uNSSet)
+			printf("%s %s\n",field[0],field[1]);
+		else
+			printf("%s\n",field[0]);
 	}
 	mysql_free_result(res);
 	exit(0);
 
-}//void ListZones(void)
+}//void ListZones()
 
 
 void CompareZones(char *cDNSServer1IP, char *cDNSServer2IP, char *cuOwner)
