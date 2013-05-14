@@ -713,8 +713,27 @@ void Update_tZone(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tZone SET uZone=%u,cZone='%s',uNSSet=%u,cHostmaster='%s',uSerial=%u,uExpire=%u,uRefresh=%u,uTTL=%u,uRetry=%u,uZoneTTL=%u,uMailServers=%u,uView=%u,cMainAddress='%s',uRegistrar=%u,uSecondaryOnly=%u,cOptions='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
-			uZone
+	sprintf(gcQuery,"UPDATE tZone SET uZone=%u,"
+				"cZone='%s',"
+				"uNSSet=%u,"
+				"cHostmaster='%s',"
+				"uSerial=%u,"
+				"uExpire=%u,"
+				"uRefresh=%u,"
+				"uTTL=%u,"
+				"uRetry=%u,"
+				"uZoneTTL=%u,"
+				"uMailServers=%u,"
+				"uView=%u,"
+				"cMainAddress='%s',"
+				"uRegistrar=%u,"
+				"uSecondaryOnly=%u,"
+				"cOptions='%s',"
+				"uModBy=%u,"
+				"uModDate=UNIX_TIMESTAMP(NOW()),"
+				"uOwner=%u"
+				" WHERE _rowid=%s"
+			,uZone
 			,TextAreaSave(cZone)
 			,uNSSet
 			,TextAreaSave(cHostmaster)
@@ -731,6 +750,7 @@ void Update_tZone(char *cRowid)
 			,uSecondaryOnly
 			,TextAreaSave(cOptions)
 			,uModBy
+			,uOwner
 			,cRowid);
 
 	mysql_query(&gMysql,gcQuery);
