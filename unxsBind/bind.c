@@ -72,6 +72,7 @@ int AutoAddPTRResourceIPv6(const char *cIPv6PTR,const char *cDomain,const unsign
 void UpdateSerialNum(unsigned uZone);//tzonefunc.h
 unsigned TextConnectDb(void);//mysqlconnect.c
 int InformExtISPJob(const char *cRemoteMsg,const char *cServer,unsigned uJob,unsigned uJobStatus);//extjobqueue.c
+unsigned uGetNSSet(char *cNameServer);//import.c
 
 
 void logfileLine(const char *cFunction,const char *cLogline)
@@ -225,6 +226,7 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 	unsigned uRRType=0;
 	char cTTL[16]={""};
 	unsigned uView=0,uCurrentView=0,uFirst=1;
+	unsigned uNSSet=0;
 
 	//printf("CreateMasterFiles() uModDBFiles=%u; uModStubs=%u\n",uModDBFiles,uModStubs);
 	//0 cZone
@@ -245,6 +247,10 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 	//15 tZone.cOptions
 	
 
+	uNSSet=uGetNSSet(cMasterNS);
+	if(!uNSSet)
+		logfileLine("CreateMasterFiles","error uNSSet==0");
+
 	if(uModStubs)
 	{
 		logfileLine("CreateMasterFiles","uModStubs");
@@ -264,8 +270,9 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 				"tView.cMaster,tView.uView,tZone.cOptions FROM tZone,tNSSet,tNS,tView WHERE"
 				" tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
 				" tZone.uView=tView.uView AND"
+				" tNSSet.uNSSet=%u AND"
 				" tNS.uNSType<4 AND tZone.uSecondaryOnly=0 ORDER BY" //4 is SLAVE last in fixed table
-				" tView.uOrder,tZone.cZone");
+				" tView.uOrder,tZone.cZone",uNSSet);
 		//debug only
 		//printf("(uModStubs)%s\n",gcQuery);
 		mysql_query(&gMysql,gcQuery);
@@ -419,14 +426,16 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 		GetConfiguration("cuGID",cuGID,0);
 		if(cuGID[0]) sscanf(cuGID,"%u",&uGID);
 
+
 		if(cZone[0])	
 		{
 			sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
 			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
 			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel,tZone.cOptions FROM tZone,tNSSet,tNS,tView"
 			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
+				" tNSSet.uNSSet=%u AND"
 			" tZone.uView=tView.uView AND tZone.cZone='%s'"
-							,cZone);
+						,uNSSet,cZone);
 		}
 		else
 		{
@@ -434,7 +443,8 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
 			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel,tZone.cOptions FROM tZone,tNSSet,tNS,tView"
 			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
-			" tZone.uView=tView.uView ORDER BY tZone.cZone");
+				" tNSSet.uNSSet=%u AND"
+			" tZone.uView=tView.uView ORDER BY tZone.cZone",uNSSet);
 		}
 
 		mysql_query(&gMysql,gcQuery);
