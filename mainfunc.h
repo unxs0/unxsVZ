@@ -395,6 +395,15 @@ void DashBoard(const char *cOptionalMsg)
 		else if(cConfigBuffer[0])
 			printf("<img src=%s>\n",cConfigBuffer);
 
+		cURL[0]=0;
+		cConfigBuffer[0]=0;
+		GetConfiguration("DashGraph3",cConfigBuffer,0,0,0,0);
+		GetConfiguration("DashGraph3URL",cURL,0,0,0,0);
+		if(cConfigBuffer[0] && cURL[0])
+			printf("<a href=%s><img src=%s border=0></a>\n",cURL,cConfigBuffer);
+		else if(cConfigBuffer[0])
+			printf("<img src=%s>\n",cConfigBuffer);
+
 
 		printf("</td>");
 	}
