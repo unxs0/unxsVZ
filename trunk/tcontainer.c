@@ -498,7 +498,6 @@ void tContainerNewStep(unsigned uStep)
 	}
 	else if(uStep==3 || uStep==4)
 	{
-
 		OpenRow("Selected datacenter","black");
 		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
 

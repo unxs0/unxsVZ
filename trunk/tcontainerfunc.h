@@ -5,7 +5,7 @@ FILE
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2013 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 NOTES
 	mySQL 5.0+ now required
@@ -153,6 +153,7 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner,
 			unsigned uTargetNode,unsigned uIPv4,unsigned uStatus);
 void SelectedNodeInformation(unsigned guCloneTargetNode);
+void CheckMaxContainers(unsigned uNumContainer);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -969,6 +970,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Selected node is not configured for active containers."
 							"Select another.");
 
+				CheckMaxContainers(1);//The argument is the number of containers to be created
+
                         	guMode=9003;
 	                        tContainer("New container step 3");
 			}
@@ -1015,6 +1018,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(cNCMNode[0] && !strstr(cNCMNode,"Active"))
 					tContainer("<blink>Error:</blink> Selected node is not configured for active containers."
 							"Select another.");
+				CheckMaxContainers(1);//The argument is the number of containers to be created
 
 				if((uLabelLen=strlen(cLabel))<2)
 					tContainer("<blink>Error:</blink> cLabel is too short");
@@ -1616,6 +1620,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Selected node is not configured for active containers."
 							"Select another.");
 
+				CheckMaxContainers(1);//The argument is the number of containers to be created
+
                         	guMode=9004;
 	                        tContainer("New container step 4");
 			}
@@ -1656,6 +1662,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> The maximum number of containers you can"
 							" create at once is 64");
 				}
+				CheckMaxContainers(uNumContainer);//The argument is the number of containers to be created
 				if(uDatacenter==0)
 					tContainer("<blink>Error:</blink> Unexpected uDatacenter==0!");
 				if(uNode==0)
@@ -8025,7 +8032,10 @@ void SelectedNodeInformation(unsigned uNode)
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-			printf("Number of active containers is %s<br>",field[0]);
+	{
+		printf("Number of active containers is %s<br>",field[0]);
+		SetNodeProp("ActiveContainers",field[0],uNode);
+	}
 
 	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uSource!=0",uNode);
 	mysql_query(&gMysql,gcQuery);
@@ -8033,7 +8043,10 @@ void SelectedNodeInformation(unsigned uNode)
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-			printf("Number of clone containers is %s<br>",field[0]);	
+	{
+		printf("Number of clone containers is %s<br>",field[0]);
+		SetNodeProp("CloneContainers",field[0],uNode);
+	}
 
 	mysql_free_result(res);
 
@@ -8065,3 +8078,26 @@ void SelectedNodeInformation(unsigned uNode)
 	printf("<br>cRAMUsageRatio is %s",cValue);
 
 }//void SelectedNodeInformation(unsigned uNode)
+
+
+//The argument is the number of containers to be created
+void CheckMaxContainers(unsigned uNumContainer)
+{
+	unsigned uMaxContainers=0;
+	char cBuffer[256]={""};
+	GetNodeProp(uNode,"MaxContainers",cBuffer);
+	if(cBuffer[0])
+	{
+		unsigned uActiveContainers=0;
+		sscanf(cBuffer,"%u",&uMaxContainers);
+		cBuffer[0]=0;
+		GetNodeProp(uNode,"ActiveContainers",cBuffer);
+		//debug only tContainer(cBuffer);
+		if(cBuffer[0])
+			sscanf(cBuffer,"%u",&uActiveContainers);
+
+		if(uActiveContainers && uMaxContainers && (uActiveContainers+uNumContainer)>uMaxContainers)
+			tContainer("<blink>Error:</blink> Max number of active containers would (or has been) exceeded. Select another node");
+	}
+
+}//void CheckMaxContainers(unsigned uNumContainer)
