@@ -154,6 +154,7 @@ unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, 
 			unsigned uTargetNode,unsigned uIPv4,unsigned uStatus);
 void SelectedNodeInformation(unsigned guCloneTargetNode);
 void CheckMaxContainers(unsigned uNumContainer);
+unsigned uCheckMaxContainers(unsigned uNode);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -4445,7 +4446,10 @@ void ExttContainerAuxTable(void)
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Replace Primary'>\n");
 
-			printf("<p><input title='Creates job(s) for cloning active or stopped container(s) that"
+			printf("<p><input title='Change owner using filter section \"uOwner\" select'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Change Owner'>\n");
+			printf("&nbsp; <input title='Creates job(s) for cloning active or stopped container(s) that"
 				" are not clones themselves. Must configure tConfiguration AutoCloneNode, cAutoCloneSyncTime and cAutoCloneIPClass'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Clone'>\n");
@@ -4477,11 +4481,12 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Creates job(s) with given commands to run via vzctl exec2'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Execute'>\n");
-			printf("&nbsp; <input title='Change status to stopped for awaiting failover containers."
+
+			printf("<p><input title='Change status to stopped for awaiting failover containers."
 				" Any existing waiting FailoverFrom jobs will be canceled also.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Status Stopped'>\n");
-			printf("<p><input title='Change IP for selected containers and DNS records if system is so configured'"
+			printf("&nbsp; <input title='Change IP for selected containers and DNS records if system is so configured'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Change IP'>\n");
 			printf("<input title='Change status to initial setup. Be wary!'"
@@ -4692,6 +4697,7 @@ while((field=mysql_fetch_row(res)))
 								break;
 							}
 						}
+
 						//TODO we cant let root just grab anybodys IPs
 						if(guCompany==1)
 							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
@@ -4720,6 +4726,13 @@ while((field=mysql_fetch_row(res)))
 						if(uResourceLimit)
 						{
 							sprintf(cResult,"No resources available on target node");
+							break;
+						}
+
+						//Capacity checking section start for active node
+						if(uCheckMaxContainers(uTargetNode))
+						{
+							sprintf(cResult,"MaxContainers limit reached");
 							break;
 						}
 
@@ -4808,6 +4821,12 @@ while((field=mysql_fetch_row(res)))
 
 									//Check target node for hard disk space and power
 									//TODO
+									if(uCheckMaxContainers(uCloneTargetNode))
+									{
+										sprintf(cResult,"+CloneMaxContainersLimit!");
+										continue;
+									}
+
 									unsigned uResourceLimit=0;
 									if(uResourceLimit)
 									{
@@ -5028,6 +5047,32 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group Del Group
+
+				//Group Change Owner
+				else if(!strcmp(gcCommand,"Group Change Owner"))
+				{
+					if(uForClient)
+					{
+						sprintf(gcQuery,"UPDATE tContainer SET uOwner=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uContainer=%u",
+								uForClient,
+								guLoginClient,
+								uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						if(mysql_affected_rows(&gMysql)>0)
+							sprintf(cResult,"owner changed");
+						else
+							cResult[0]=0;
+						break;
+					}
+					else
+					{
+						sprintf(cResult,"No new uOwner selected");
+					}
+					break;
+				}//Group Change Owner
 
 				//Group Delete Uses guOpOnClones
 				else if(!strcmp(gcCommand,"Group Delete"))
@@ -5583,6 +5628,12 @@ while((field=mysql_fetch_row(res)))
 					if( uTargetNode && (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
 						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
+						//Capacity checking section start
+						if(uCheckMaxContainers(uTargetNode))
+						{
+							sprintf(cResult,"MaxContainers limit reached");
+							break;
+						}
 
 						if(MigrateContainerJob(sContainer.uDatacenter,
 									sContainer.uNode,uCtContainer,uTargetNode,
@@ -5614,6 +5665,12 @@ while((field=mysql_fetch_row(res)))
 									sscanf(field[2],"%u",&uCloneContainer);
 									sscanf(field[3],"%u",&uCloneStatus);
 									sscanf(field[4],"%u",&uCloneOwner);
+									//Clone capacity checking section start
+									if(uCheckMaxContainers(guCloneTargetNode))
+									{
+										sprintf(cResult,"+CloneMaxContainersLimit!");
+										break;
+									}
 									if((uCloneStatus==uSTOPPED || uCloneStatus==uACTIVE)
 										&& (uCloneOwner==guCompany || guCompany==1)
 										//Do not create useless job if clone is already on
@@ -8101,3 +8158,40 @@ void CheckMaxContainers(unsigned uNumContainer)
 	}
 
 }//void CheckMaxContainers(unsigned uNumContainer)
+
+
+//This is for select set type one at a time checking.
+unsigned uCheckMaxContainers(unsigned uNode)
+{
+	unsigned uMaxContainers=0;
+	char cBuffer[256]={""};
+	GetNodeProp(uNode,"MaxContainers",cBuffer);
+	if(cBuffer[0])
+	{
+		//for now we update here also
+		MYSQL_RES *res;
+		MYSQL_ROW field;
+		char cBuffer2[128]={""};
+		sprintf(cBuffer2,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uStatus=1",uNode);
+		mysql_query(&gMysql,cBuffer2);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			SetNodeProp("ActiveContainers",field[0],uNode);
+		mysql_free_result(res);
+
+		unsigned uActiveContainers=0;
+		sscanf(cBuffer,"%u",&uMaxContainers);
+		cBuffer[0]=0;
+		GetNodeProp(uNode,"ActiveContainers",cBuffer);
+		//debug only tContainer(cBuffer);
+		if(cBuffer[0])
+			sscanf(cBuffer,"%u",&uActiveContainers);
+
+		if(uActiveContainers && uMaxContainers && uActiveContainers>=uMaxContainers)
+			return(1);
+	}
+	return(0);
+
+}//unsigned uCheckMaxContainers(unsigned uNode)

@@ -944,22 +944,72 @@ void ContactsNavList(void)
 }//void ContactsNavList(void)
 
 
+void htmlListContainers(unsigned uClient);
+void htmlListContainers(unsigned uClient)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uClient==1 || uOwner==1) return;
+
+	sprintf(gcQuery,"SELECT uContainer,cLabel"
+				" FROM tContainer WHERE"
+			" (uOwner IN (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
+			" cCode='Organization')) OR uOwner=%u) OR (uOwner=%u OR uCreatedBy=%u))"
+				" ORDER BY cLabel LIMIT 64",uClient,uClient,uClient,uClient,uClient);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	unsigned uCount=0;
+	if((uCount=mysql_num_rows(res)))
+	{
+        	printf("<p><u>Controlled tContainerNavList ");
+		if(uCount==64)
+        		printf("(Only first 64 shown)");
+        	printf("</u><br>\n");
+        	while((field=mysql_fetch_row(res)))
+		{
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s</a><br>\n",field[0],field[1]);
+		}
+	}
+        mysql_free_result(res);
+
+}//void htmlListContainers(unsigned uClient)
+
+
 void htmlRecordContext(void)
 {
 	printf("<p><u>Record Context Info</u><br>");
 	if(uOwner>1 && strcmp(cCode,"Contact"))
+	{
 		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>"
-			" appears to be a reseller or ASP owned company or organization",uClient,cLabel);
+			" appears to be a reseller or ASP owned company or organization"
+			" (see <a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>).",
+					uClient,cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
+		htmlListContainers(uClient);
+	}
 	else if(uOwner>1 && strcmp(cCode,"Organization"))
+	{
 		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a> appears to be a contact of <a class=darkLink"
 			" href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",
 					uClient,cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
+	}
 	else if(uOwner==1 && strcmp(cLabel,"Root"))
+	{
 		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a> appears to be an ASP root company",uClient,cLabel);
+	}
 	else if(uOwner==1 && !strcmp(cLabel,"Root"))
+	{
 		printf("'Root' is the system created root user. This user is the only user that can"
 				" create ASP level companies. Make sure the passwd is changed"
 				" regularly via the tAuthorize table.");
+	}
 }//void htmlRecordContext(void)
 
 
