@@ -1429,12 +1429,28 @@ void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFie
 	GetConfiguration("cAutoIPClass",cAutoIPClass,uDatacenter,uNode,0,0);
 	if(!cAutoIPClass[0])
 		GetConfiguration("cAutoIPClass",cAutoIPClass,uDatacenter,0,0,0);
+	//Allow optional 2nd class C
+	char cAutoIPClass2[256]={""};
+	GetConfiguration("cAutoIPClass2",cAutoIPClass2,uDatacenter,uNode,0,0);
+	if(!cAutoIPClass2[0])
+		GetConfiguration("cAutoIPClass2",cAutoIPClass2,uDatacenter,0,0,0);
 	if(cAutoIPClass[0])
 	{
 		char *cp;
 		if((cp=strstr(cAutoIPClass,".0/24"))) *cp=0;
 			
-		sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+		if(cAutoIPClass2[0])
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+				" WHERE uAvailable=1"
+				" AND (LOCATE('%s',tIP.cLabel)=1 OR LOCATE('%s',tIP.cLabel)=1)"
+				" AND uDatacenter=%u"
+				" AND uOwner=%u ORDER BY %s",
+					cFieldName,cLocalTableName,
+					cAutoIPClass,cAutoIPClass2,
+					uDatacenter,
+					uClient,cOrderby);
+		else
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
 				" WHERE uAvailable=1"
 				" AND LOCATE('%s',tIP.cLabel)=1"
 				" AND uDatacenter=%u"
@@ -1442,7 +1458,7 @@ void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFie
 					cFieldName,cLocalTableName,
 					cAutoIPClass,
 					uDatacenter,
-						uClient,cOrderby);
+					uClient,cOrderby);
 	}
 	else
 	{
@@ -1545,6 +1561,12 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 	GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,uNode,0,0);
 	if(!cAutoCloneIPClass[0])
 		GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,0,0,0);
+	//Allow for a second IP class
+	char cAutoCloneIPClass2[256]={""};
+	GetConfiguration("cAutoCloneIPClass2",cAutoCloneIPClass2,uDatacenter,uNode,0,0);
+	if(!cAutoCloneIPClass2[0])
+		GetConfiguration("cAutoCloneIPClass2",cAutoCloneIPClass2,uDatacenter,0,0,0);
+
 	//debug only
 	//printf("%s",cAutoCloneIPClass);
 	//return;
@@ -1552,8 +1574,20 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 	{
 		char *cp;
 		if((cp=strstr(cAutoCloneIPClass,".0/24"))) *cp=0;
+		
 			
-		sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+		if(cAutoCloneIPClass2[0])
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+				" WHERE uAvailable=1"
+				" AND (LOCATE('%s',tIP.cLabel)=1 OR LOCATE('%s',tIP.cLabel)=1)"
+				" AND uDatacenter=%u"
+				" AND uOwner=%u ORDER BY %s",
+					cFieldName,cLocalTableName,
+					cAutoCloneIPClass,cAutoCloneIPClass2,
+					uDatacenter,
+					uClient,cOrderby);
+		else
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
 				" WHERE uAvailable=1"
 				" AND LOCATE('%s',tIP.cLabel)=1"
 				" AND uDatacenter=%u"
@@ -1561,7 +1595,7 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 					cFieldName,cLocalTableName,
 					cAutoCloneIPClass,
 					uDatacenter,
-						uClient,cOrderby);
+					uClient,cOrderby);
 	}
 	else
 	{
