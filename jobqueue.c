@@ -1689,22 +1689,22 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	{
 		if(cSSHOptions[0])
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst --online -v -v %s %u",
+				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst --online -v %s %u",
 					cSSHOptions,cTargetNodeIPv4,uContainer);
 		else
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin;"
-				"/usr/sbin/vzmigrate --keep-dst --online -v -v %s %u",
+				"/usr/sbin/vzmigrate --keep-dst --online -v %s %u",
 					cTargetNodeIPv4,uContainer);
 	}
 	else
 	{
 		if(cSSHOptions[0])
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst -v -v %s %u",
+				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst -v %s %u",
 					cSSHOptions,cTargetNodeIPv4,uContainer);
 		else
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin;"
-				"/usr/sbin/vzmigrate --keep-dst -v -v %s %u",
+				"/usr/sbin/vzmigrate --keep-dst -v %s %u",
 					cTargetNodeIPv4,uContainer);
 	}
 
@@ -1715,11 +1715,11 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 		if(cSSHOptions[0])
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst -v -v %s %u",
+				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst -v %s %u",
 					cSSHOptions,cTargetNodeIPv4,uContainer);
 		else
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate --keep-dst -v -v %s %u",
+				"/usr/sbin/vzmigrate --keep-dst -v %s %u",
 					cTargetNodeIPv4,uContainer);
 		if(system(gcQuery))
 		{
