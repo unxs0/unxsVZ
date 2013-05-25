@@ -94,6 +94,8 @@ void UpdateCloneHostnames(void);
 
 //jobqueue.c
 void ProcessJobQueue(unsigned uDebug);
+//tcontainerfunc.h
+void SelectedNodeInformation(unsigned guCloneTargetNode,unsigned uHtmlMode);
 
 
 int iExtMainCommands(pentry entries[], int x)
@@ -732,6 +734,12 @@ void ExtMainShell(int argc, char *argv[])
                 ImportOSTemplates(argv[2],argv[3]);
 	else if(argc==3 && !strcmp(argv[1],"MassCreateContainers"))
                 MassCreateContainers(argv[2]);
+        else if(argc==2 && !strcmp(argv[1],"UpdateNodeInfo"))
+	{
+		if(TextConnectDb())
+			exit(1);
+		SelectedNodeInformation(0,0);
+	}
         else
 	{
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
@@ -742,6 +750,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tProcessJobQueueDebug\n");
 		//printf("\tProcessExtJobQueue <cServer>\n");
 		printf("\nSpecial Admin Ops:\n");
+		printf("\tUpdateNodeInfo\n");
 		printf("\tUpdateSchema\n");
 		printf("\tUpdateCloneHostnames\n");
 		printf("\tRecoverMode\n");
