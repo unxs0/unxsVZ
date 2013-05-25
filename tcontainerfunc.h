@@ -152,9 +152,10 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs);
 unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner,
 			unsigned uTargetNode,unsigned uIPv4,unsigned uStatus);
-void SelectedNodeInformation(unsigned guCloneTargetNode);
+void SelectedNodeInformation(unsigned guCloneTargetNode,unsigned uHtmlMode);
 void CheckMaxContainers(unsigned uNumContainer);
 unsigned uCheckMaxContainers(unsigned uNode);
+unsigned uCheckMaxCloneContainers(unsigned uNode);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -4083,12 +4084,12 @@ void ExttContainerButtons(void)
 			if(uTargetNode)
 			{
 				printf("<p><u>%s target node information</u><br>",cuTargetNodePullDown);
-				SelectedNodeInformation(uTargetNode);
+				SelectedNodeInformation(uTargetNode,1);
 			}
 			if(guCloneTargetNode)
 			{
 				printf("<p><u>%s clone target node information</u><br>",cuCloneTargetNodePullDown);
-				SelectedNodeInformation(guCloneTargetNode);
+				SelectedNodeInformation(guCloneTargetNode,1);
 			}
 
                 break;
@@ -4141,11 +4142,11 @@ void ExttContainerButtons(void)
 					" checkbox in the right data panel.",cunxsBindARecordJobZone);
 
 			printf("<p><u>%s target node information</u><br>",cuNodePullDown);
-			SelectedNodeInformation(uNode);
+			SelectedNodeInformation(uNode,1);
 			if(uTargetNode)
 			{
 				printf("<p><u>%s clone target node information</u><br>",cuTargetNodePullDown);
-				SelectedNodeInformation(uTargetNode);
+				SelectedNodeInformation(uTargetNode,1);
 			}
 
 			printf("<p><input type=submit class=largeButton"
@@ -4190,11 +4191,11 @@ void ExttContainerButtons(void)
 					" checkbox in the right data panel.<p>",cunxsBindARecordJobZone);
 
 			printf("<p><u>%s target node information</u><br>",cuNodePullDown);
-			SelectedNodeInformation(uNode);
+			SelectedNodeInformation(uNode,1);
 			if(uTargetNode)
 			{
 				printf("<p><u>%s clone target node information</u><br>",cuTargetNodePullDown);
-				SelectedNodeInformation(uTargetNode);
+				SelectedNodeInformation(uTargetNode,1);
 			}
 
 			printf("<p><input type=submit class=largeButton"
@@ -4450,7 +4451,11 @@ void ExttContainerAuxTable(void)
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Change Owner'>\n");
 			printf("&nbsp; <input title='Creates job(s) for cloning active or stopped container(s) that"
-				" are not clones themselves. Must configure tConfiguration AutoCloneNode, cAutoCloneSyncTime and cAutoCloneIPClass'"
+				" are not clones themselves in the same datacenter. tConfiguration"
+				" AutoCloneNode, cAutoCloneSyncTime and cAutoCloneIPClass must be configured correctly. Check!"
+				" If you use the clone target node select above and it matches a tConfiguration"
+				" cAutoCloneNodeRemote then a remote datacenter clone will be performed. In this case"
+				" cAutoCloneIPClassRemote must also be configured for the source node.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Clone'>\n");
 			printf("&nbsp; <input title='Creates job(s) for restarting active container(s).'"
@@ -5217,7 +5222,6 @@ while((field=mysql_fetch_row(res)))
 				if(!strcmp(gcCommand,"Group Clone"))
 				{
 					struct structContainer sContainer;
-					static unsigned uOnlyOnce=1;
 					char cConfBuffer[256]={""};
 					char cAutoCloneIPClass[256]={""};
 
@@ -5229,18 +5233,37 @@ while((field=mysql_fetch_row(res)))
 						//We can only fo this if tConfiguration has been setup
 						//with datacenter wide cAutoCloneNode=node1,cAutoCloneSyncTime=600
 						//for example.
-						uTargetNode=0;
-						GetConfiguration("cAutoCloneNode",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
-						if(cConfBuffer[0])
-							uTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
-						//We need the cuSyncPeriod
 						uSyncPeriod=3600;//default 1 hour rsync
-						GetConfiguration("cAutoCloneSyncTime",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
-						if(cConfBuffer[0])
-							sscanf(cConfBuffer,"%u",&uSyncPeriod);
 						cAutoCloneIPClass[0]=0;
-						GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,sContainer.uDatacenter,sContainer.uNode,0,0);
-						uOnlyOnce=0;
+						unsigned uTargetDatacenter=sContainer.uDatacenter;
+						if(guCloneTargetNode==0)
+						{
+							GetConfiguration("cAutoCloneNode",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
+							if(cConfBuffer[0])
+								uTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
+							//We need the cuSyncPeriod
+							GetConfiguration("cAutoCloneSyncTime",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
+							if(cConfBuffer[0])
+								sscanf(cConfBuffer,"%u",&uSyncPeriod);
+							GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,sContainer.uDatacenter,sContainer.uNode,0,0);
+						}
+						else
+						{
+							GetConfiguration("cAutoCloneNodeRemote",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
+							if(cConfBuffer[0])
+								uTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
+							GetConfiguration("cAutoCloneSyncTimeRemote",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
+							if(cConfBuffer[0])
+								sscanf(cConfBuffer,"%u",&uSyncPeriod);
+							if(uTargetNode!=guCloneTargetNode)
+							{
+								sprintf(cResult,"cAutoCloneNodeRemote!=guCloneTargetNode");
+								break;
+							}
+							sscanf(ForeignKey("tNode","uDatacenter",guCloneTargetNode),"%u",&uTargetDatacenter);
+							GetConfiguration("cAutoCloneIPClassRemote",
+								cAutoCloneIPClass,uTargetDatacenter,guCloneTargetNode,0,0);
+						}
 
 						//Some validation
 						if(!cAutoCloneIPClass[0])
@@ -5268,11 +5291,11 @@ while((field=mysql_fetch_row(res)))
 							if(guCompany==1)
 								sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
 								" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u LIMIT 1",
-									cAutoCloneIPClass,sContainer.uDatacenter);
+									cAutoCloneIPClass,uTargetDatacenter);
 							else
 								sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
 									" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u AND"
-								" uOwner=%u LIMIT 1",cAutoCloneIPClass,sContainer.uDatacenter,guCompany);
+								" uOwner=%u LIMIT 1",cAutoCloneIPClass,uTargetDatacenter,guCompany);
 							mysql_query(&gMysql,gcQuery);
 							if(mysql_errno(&gMysql))
 								htmlPlainTextError(mysql_error(&gMysql));
@@ -5283,6 +5306,33 @@ while((field=mysql_fetch_row(res)))
 
 							//
 							//We impose further abort conditions
+
+							//No second clone on same node
+							sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE"
+									" uSource=%u AND uNode=%u",uCtContainer,uTargetNode);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							res=mysql_store_result(&gMysql);
+							if((field=mysql_fetch_row(res)))
+							{
+								mysql_free_result(res);
+								sprintf(cResult,"Already has clone!");
+								break;
+							}
+							mysql_free_result(res);
+
+							//Make sure we enough resources on target node.
+							if(uCheckMaxCloneContainers(uTargetNode))
+							{
+								sprintf(cResult,"Max clone containers limit reached!");
+								break;
+							}
+							if(uCheckMaxContainers(uTargetNode))
+							{
+								sprintf(cResult,"Max active containers limit reached!");
+								break;
+							}
 
 							//Need valid clone IP
 							if(!uWizIPv4)
@@ -5340,7 +5390,7 @@ while((field=mysql_fetch_row(res)))
 									sContainer.uNameserver,
 									sContainer.uSearchdomain,
 									sContainer.uDatacenter,
-									sContainer.uDatacenter,
+									uTargetDatacenter,
 									sContainer.uOwner,
 									sContainer.cLabel,
 									sContainer.uNode,
@@ -8077,36 +8127,59 @@ unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, 
 
 
 //Provide information on node usage and configuration settings.
-void SelectedNodeInformation(unsigned uNode)
+void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 {
 	char cValue[256]={""};
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	unsigned uSetNode=0;
 
-	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uStatus=1",uNode);
+	if(uNode==0)
+		sprintf(gcQuery,"SELECT COUNT(uContainer),uNode FROM tContainer WHERE uStatus=1 GROUP BY uNode");
+	else
+		sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uStatus=1",uNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
+	while((field=mysql_fetch_row(res)))
 	{
-		printf("Number of active containers is %s<br>",field[0]);
-		SetNodeProp("ActiveContainers",field[0],uNode);
+		if(uHtmlMode)
+			printf("Number of active containers is %s<br>",field[0]);
+		if(uNode==0)
+		{
+			sscanf(field[1],"%u",&uSetNode);
+			//printf("uNode=%u ActiveContainers=%s\n",uSetNode,field[0]);
+		}
+		SetNodeProp("ActiveContainers",field[0],uSetNode);
+		if(uNode!=0) break;
 	}
 
-	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uSource!=0",uNode);
+	if(uNode==0)
+		sprintf(gcQuery,"SELECT COUNT(uContainer),uNode FROM tContainer WHERE uSource!=0 GROUP BY uNode");
+	else
+		sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uSource!=0",uNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
+	while((field=mysql_fetch_row(res)))
 	{
-		printf("Number of clone containers is %s<br>",field[0]);
-		SetNodeProp("CloneContainers",field[0],uNode);
+		if(uHtmlMode)
+			printf("Number of clone containers is %s<br>",field[0]);
+		if(uNode==0)
+		{
+			sscanf(field[1],"%u",&uSetNode);
+			//printf("uNode=%u CloneContainers=%s\n",uSetNode,field[0]);
+		}
+		SetNodeProp("CloneContainers",field[0],uSetNode);
+		if(uNode!=0) break;
 	}
 
 	mysql_free_result(res);
 
+	if(!uHtmlMode || !uNode)
+		return;
 	GetNodeProp(uNode,"NewContainerMode",cValue);
 	printf("NewContainerMode is %s",cValue);
 
@@ -8134,7 +8207,7 @@ void SelectedNodeInformation(unsigned uNode)
 	GetNodeProp(uNode,"cRAMUsageRatio",cValue);
 	printf("<br>cRAMUsageRatio is %s",cValue);
 
-}//void SelectedNodeInformation(unsigned uNode)
+}//void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 
 
 //The argument is the number of containers to be created
@@ -8195,3 +8268,40 @@ unsigned uCheckMaxContainers(unsigned uNode)
 	return(0);
 
 }//unsigned uCheckMaxContainers(unsigned uNode)
+
+
+//This is for select set type one at a time checking.
+unsigned uCheckMaxCloneContainers(unsigned uNode)
+{
+	unsigned uMaxCloneContainers=0;
+	char cBuffer[256]={""};
+	GetNodeProp(uNode,"MaxCloneContainers",cBuffer);
+	if(cBuffer[0])
+	{
+		//for now we update here also
+		MYSQL_RES *res;
+		MYSQL_ROW field;
+		char cBuffer2[128]={""};
+		sprintf(cBuffer2,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uSource!=0",uNode);
+		mysql_query(&gMysql,cBuffer2);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			SetNodeProp("CloneContainers",field[0],uNode);
+		mysql_free_result(res);
+
+		unsigned uCloneContainers=0;
+		sscanf(cBuffer,"%u",&uMaxCloneContainers);
+		cBuffer[0]=0;
+		GetNodeProp(uNode,"CloneContainers",cBuffer);
+		//debug only tContainer(cBuffer);
+		if(cBuffer[0])
+			sscanf(cBuffer,"%u",&uCloneContainers);
+
+		if(uCloneContainers && uMaxCloneContainers && uCloneContainers>=uMaxCloneContainers)
+			return(1);
+	}
+	return(0);
+
+}//unsigned uCheckMaxCloneContainers(unsigned uNode)
