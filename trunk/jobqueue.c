@@ -87,7 +87,10 @@ unsigned GetContainerNames(const unsigned uContainer,char *cHostname,char *cLabe
 unsigned GetContainerNodeStatus(const unsigned uContainer, unsigned *uStatus);
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 unsigned FailToJobDone(unsigned uJob);
+//Clone maintenance clone UPDATE functions
 unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneContainer);
+//This is experimental designed for remote sync, but is useless as is. On the other hand the remote
+//clone function makes some sense. Based on why move the whole OS template, when we have it on the remote node.
 unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneContainer);
 
 int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
@@ -103,6 +106,8 @@ void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter);
 unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
 unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs);
+unsigned uCheckMaxContainers(unsigned uNode);
+unsigned uCheckMaxCloneContainers(unsigned uNode);
 
 //file scoped vars.
 static unsigned gfuNode=0;
@@ -1609,6 +1614,20 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(!uTargetNode)
 	{
 		logfileLine("MigrateContainer","Could not determine uTargetNode");
+		tJobErrorUpdate(uJob,"uTargetNode==0");
+		return;
+	}
+
+	if(uCheckMaxContainers(uTargetNode))
+	{
+		logfileLine("MigrateContainer","Max limit containers reached");
+		tJobErrorUpdate(uJob,"uTargetNode==0");
+		return;
+	}
+
+	if(uCheckMaxCloneContainers(uTargetNode))
+	{
+		logfileLine("MigrateContainer","Max clone limit containers reached");
 		tJobErrorUpdate(uJob,"uTargetNode==0");
 		return;
 	}
@@ -4468,6 +4487,9 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 				return(5);
 			}
 
+
+			//Here we should run a script based on container primary group
+			//We need to determine group and get the script.
 			sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
 			if(guDebug)
 				logfileLine("ProcessCloneSyncJob",gcQuery);

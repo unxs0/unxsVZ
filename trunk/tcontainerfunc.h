@@ -5242,27 +5242,56 @@ while((field=mysql_fetch_row(res)))
 							if(cConfBuffer[0])
 								uTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
 							//We need the cuSyncPeriod
+							cConfBuffer[0]=0;
 							GetConfiguration("cAutoCloneSyncTime",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
 							if(cConfBuffer[0])
+							{
 								sscanf(cConfBuffer,"%u",&uSyncPeriod);
+							}
+							else
+							{
+								GetConfiguration("cAutoCloneSyncTime",cConfBuffer,sContainer.uDatacenter,0,0,0);
+								if(cConfBuffer[0])
+									sscanf(cConfBuffer,"%u",&uSyncPeriod);
+							}
 							GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,sContainer.uDatacenter,sContainer.uNode,0,0);
 						}
 						else
 						{
+							//Remote	
+							cConfBuffer[0]=0;
 							GetConfiguration("cAutoCloneNodeRemote",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
 							if(cConfBuffer[0])
 								uTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
+
+							//First more specific if not per node try per datacenter
+							cConfBuffer[0]=0;
 							GetConfiguration("cAutoCloneSyncTimeRemote",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
 							if(cConfBuffer[0])
+							{
 								sscanf(cConfBuffer,"%u",&uSyncPeriod);
+							}
+							else
+							{
+								GetConfiguration("cAutoCloneSyncTimeRemote",cConfBuffer,sContainer.uDatacenter,0,0,0);
+								if(cConfBuffer[0])
+									sscanf(cConfBuffer,"%u",&uSyncPeriod);
+							}
+
+							//Beta tests require manual match
 							if(uTargetNode!=guCloneTargetNode)
 							{
 								sprintf(cResult,"cAutoCloneNodeRemote!=guCloneTargetNode");
 								break;
 							}
+
 							sscanf(ForeignKey("tNode","uDatacenter",guCloneTargetNode),"%u",&uTargetDatacenter);
 							GetConfiguration("cAutoCloneIPClassRemote",
 								cAutoCloneIPClass,uTargetDatacenter,guCloneTargetNode,0,0);
+							//Try again less specific
+							if(!cAutoCloneIPClass[0])
+								GetConfiguration("cAutoCloneIPClassRemote",
+									cAutoCloneIPClass,uTargetDatacenter,0,0,0);
 						}
 
 						//Some validation
@@ -5679,9 +5708,9 @@ while((field=mysql_fetch_row(res)))
 						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
 						//Capacity checking section start
-						if(uCheckMaxContainers(uTargetNode))
+						if(uCheckMaxContainers(uTargetNode) || uCheckMaxCloneContainers(uTargetNode))
 						{
-							sprintf(cResult,"MaxContainers limit reached");
+							sprintf(cResult,"Max containers limit reached");
 							break;
 						}
 
@@ -8209,7 +8238,8 @@ void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 
 }//void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 
-
+//These functions need to be used correctly, for example in jobqueue.c when the container is not added to the node
+//until the job runs.
 //The argument is the number of containers to be created
 void CheckMaxContainers(unsigned uNumContainer)
 {
