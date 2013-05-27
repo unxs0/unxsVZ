@@ -559,6 +559,18 @@ void ExttZoneCommands(pentry entries[], int x)
 			ZoneCheck(2002);
 			GenerateArpaZones();
 		}
+		else if(!strcmp(gcCommand,"Search Set Operations"))
+                {
+			if(guPermLevel>=9)
+			{
+                        	guMode=12001;
+	                        tResource("Search Set Operations");
+			}
+			else
+			{
+				tZone("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
 		else if(!strcmp(gcCommand,"Mass Operations")
 				&& guPermLevel>9)
 		{
@@ -1115,7 +1127,11 @@ void ExttZoneButtons(void)
 			if(guPermLevel>9)
 			{
 				printf("<p><u>Other Tools</u><br>");
-				printf("<input class=largeButton title='Mass/Bulk operations' type=submit"
+				printf("<input type=submit class=largeButton title='Open RR search set page."
+					" There you can create search sets and operate"
+					" on selected resources of the loaded resource set.'"
+					" name=gcCommand value='Search Set Operations'>\n");
+				printf("<br><input class=largeButton title='Mass/Bulk operations' type=submit"
 					" name=gcCommand value='Mass Operations'><br>\n");
 				printf("<p><u>Clone Zone</u><br>");
 				printf("<input type=text name=cTargetZone size=30 title='Enter the name of the zone you "
