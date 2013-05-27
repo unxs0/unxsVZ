@@ -4358,6 +4358,7 @@ void ExttContainerAuxTable(void)
 	MYSQL_ROW field;
 	unsigned uGroup=0;
 	unsigned uNumRows=0;
+	unsigned uRow=0;
 
 	switch(guMode)
 	{
@@ -5973,7 +5974,13 @@ while((field=mysql_fetch_row(res)))
 				sprintf(cSourceNode,"%.31s",ForeignKey2("tNode","cLabel",uSourceNode));
 		}
 	}
-	printf("<tr>");
+	printf("<tr");
+	if((uRow++) % 2)
+		printf(" bgcolor=#E7F3F1 ");
+	else
+		printf(" bgcolor=#EFE7CF ");
+	printf(">");
+
 	printf(
 		"<td valign=top><input type=checkbox name=Ct%s ></td>"
 		"<td valign=top><a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"

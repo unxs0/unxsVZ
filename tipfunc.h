@@ -610,6 +610,7 @@ void ExttIPAuxTable(void)
 	MYSQL_ROW field;
 	unsigned uGroup=0;
 	unsigned uNumRows=0;
+	unsigned uRow=0;
 
 	switch(guMode)
 	{
@@ -847,7 +848,13 @@ while((field=mysql_fetch_row(res)))
 		}//end for()
 	}
 
-	printf("<tr>");
+	printf("<tr");
+	if((uRow++) % 2)
+		printf(" bgcolor=#E7F3F1 ");
+	else
+		printf(" bgcolor=#EFE7CF ");
+	printf(">");
+
 	printf("<td width=200 valign=top>"
 	"<input type=checkbox name=Ct%s >" //0
 	"<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>" //0 and 1
