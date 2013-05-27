@@ -1856,7 +1856,7 @@ unsigned ViewReloadZone(char *cZone)
 		if(uRetVal)
 		{
 			logfileLine("ViewReloadZone","uRetVal error trying straight reload");
-			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload > /tmp/unxsbindlog 2>&1",gcBinDir);
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload >> /tmp/unxsbindlog 2>&1",gcBinDir);
 			logfileLine("ViewReloadZone",cCmd);
 			uRetVal=system(cCmd);
 			if(uRetVal)
