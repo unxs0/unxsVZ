@@ -6502,14 +6502,28 @@ void tContainerNavList(unsigned uNode, char *cSearch)
 unsigned CreateNewContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateNewContainerJob(%u)',cJobName='NewContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -6523,14 +6537,28 @@ unsigned CreateNewContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCon
 unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateStartContainerJob(%u)',cJobName='StartContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -6545,14 +6573,28 @@ unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uC
 unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DestroyContainerJob(%u)',cJobName='DestroyContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -6567,14 +6609,28 @@ unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='StopContainerJob(%u)',cJobName='StopContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -6781,15 +6837,29 @@ unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 			unsigned uOwner, unsigned uLoginClient, unsigned uIPv4,unsigned uPrevStatus)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='MigrateContainerJob(%u-->%u)',cJobName='MigrateContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='uTargetNode=%u;\nuIPv4=%u;\nuPrevStatus=%u;\n'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,uTargetNode,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uTargetNode,
 				uIPv4,
 				uPrevStatus,
@@ -6926,16 +6996,30 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus,unsigned uOwner,char *cConfigLabel)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='TemplateContainerJob(%u)',cJobName='TemplateContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='tConfig.Label=%.31s;\n"
 			"uPrevStatus=%u;\n'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				cConfigLabel,
 				uStatus,
 				uOwner,guLoginClient);
@@ -6952,15 +7036,29 @@ unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname,unsigned uOwner,unsigned uLoginClient)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ChangeHostnameContainer(%u)',cJobName='ChangeHostnameContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='cPrevHostname=%s;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				cPrevHostname,
 				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
@@ -6977,15 +7075,30 @@ unsigned IPContainerJobNoRelease(unsigned uDatacenter,unsigned uNode,unsigned uC
 			unsigned uOwner,unsigned uLoginClient,char const *cIPOld)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ChangeIPContainer(%u)',cJobName='ChangeIPContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='cIPOld=%.31s;\nuNoRelease'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
-				uDatacenter,uNode,uContainer,cIPOld,
+				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
+				cIPOld,
 				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -7002,15 +7115,30 @@ unsigned IPContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 			unsigned uOwner,unsigned uLoginClient,char const *cIPOld)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ChangeIPContainer(%u)',cJobName='ChangeIPContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='cIPOld=%.31s;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
-				uDatacenter,uNode,uContainer,cIPOld,
+				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
+				cIPOld,
 				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -7026,15 +7154,30 @@ unsigned IPSameNodeContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCo
 			unsigned uOwner,unsigned uLoginClient,char const *cIPOld1,char const *cIPOld2)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='SwapIPContainer(%u)',cJobName='SwapIPContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='uContainer2=%u;\ncIPOld1=%.31s;\ncIPOld2=%.31s;\n'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
-				uDatacenter,uNode,uContainer1,uContainer2,cIPOld1,cIPOld2,
+				uDatacenter,uNode,uContainer1,
+				luJobDate,luJobDate,
+				uContainer2,cIPOld1,cIPOld2,
 				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -7050,6 +7193,19 @@ unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContai
 {
 	unsigned uCount=0;
 	char cTemplateName[256]={""};
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	GetContainerProp(uContainer,"cVEID.mount",cTemplateName);
 	if(!cTemplateName[0]) return(0);
@@ -7058,11 +7214,12 @@ unsigned ActionScriptsJob(unsigned uDatacenter, unsigned uNode, unsigned uContai
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ActionScripts(%u)',cJobName='ActionScripts'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -7079,10 +7236,23 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 				unsigned uOwner,unsigned uCreatedBy,unsigned uCloneStop)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CloneContainer(%u)',cJobName='CloneContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='"
 			"uTargetNode=%u;\n"
@@ -7092,6 +7262,7 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uTargetNode,
 				uNewVeid,
 				uCloneStop,
@@ -7357,6 +7528,19 @@ void CopyContainerProps(unsigned uSource, unsigned uTarget)
 unsigned FailoverToJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner,unsigned uLoginClient,unsigned uDebug)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	if(!uDatacenter || !uNode || !uContainer) return(0);
 
@@ -7368,20 +7552,22 @@ unsigned FailoverToJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,u
 	if(uDebug)
 		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverToJob(%u)',cJobName='FailoverToDEBUG'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uOwner,uLoginClient);
 	else
 		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverToJob(%u)',cJobName='FailoverTo'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -7397,6 +7583,19 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient,unsigned uDebug)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	if(!uDatacenter || !uNode || !uContainer) return(0);
 
@@ -7406,25 +7605,27 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 	if(uDebug)
 		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverFromJob(%u)',cJobName='FailoverFromDEBUG'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='uIPv4=%u;\ncLabel=%s;\ncHostname=%s;\nuSource=%u;\nuStatus=%u;\n"
 			"uFailToJob=%u;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uIPv4,cLabel,cHostname,uSource,uStatus,uFailToJob,
 				uOwner,uLoginClient);
 	else
 		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='FailoverFromJob(%u)',cJobName='FailoverFrom'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='uIPv4=%u;\ncLabel=%s;\ncHostname=%s;\nuSource=%u;\nuStatus=%u;\n"
 			"uFailToJob=%u;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uIPv4,cLabel,cHostname,uSource,uStatus,uFailToJob,
 				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
@@ -7564,15 +7765,29 @@ unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 	unsigned uOwner,unsigned uCreatedBy)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindARecordJob(%u)',cJobName='unxsVZContainerARR'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=%u"
 			",cJobData='%s'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uREMOTEWAITING,
 				cJobData,
 				uOwner,uCreatedBy);
@@ -7965,15 +8180,29 @@ int ReadYesNoPullDownTriState(const char *cLabel)
 unsigned CreateExecuteCommandsJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner,char *cCommands)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ExecuteCommandsJob(%u)',cJobName='ExecuteCommands'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='%.2047s'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				TextAreaSave(cCommands),
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
@@ -8069,14 +8298,28 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs)
 {
 	unsigned uJob=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='NodeCommandJob',cJobName='NodeCommandJob'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='uConfiguration=%u;\n%.256s'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uConfiguration,cArgs,
 				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
@@ -8092,14 +8335,28 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 unsigned uRestartContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner)
 {
 	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='RestartContainerJob(%u)',cJobName='RestartContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -8129,27 +8386,15 @@ unsigned uDNSMoveJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, 
 		luJobDate+=luJobTime;
 	}
 
-	if(luJobDate)	
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DNSMoveContainerJob(%u)',cJobName='DNSMoveContainer'"
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DNSMoveContainerJob(%u)',cJobName='DNSMoveContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=%lu"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
 			",cJobData='uTargetNode=%u;\nuIPv4=%u;\nuPrevStatus=%u;\n'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
-				luJobDate,
-				uTargetNode,uIPv4,uStatus,
-				uOwner,guLoginClient);
-	else
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DNSMoveContainerJob(%u)',cJobName='DNSMoveContainer'"
-			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
-			",uJobStatus=1"
-			",cJobData='uTargetNode=%u;\nuIPv4=%u;\nuPrevStatus=%u;\n'"
-			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				uContainer,
-				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
 				uTargetNode,uIPv4,uStatus,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
