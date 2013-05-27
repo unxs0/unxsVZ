@@ -1804,13 +1804,6 @@ void ExttResourceButtons(void)
 				" name=gcCommand value='Reload Search Set'>\n");
 			printf("<input type=submit class=largeButton title='Return to main tResource tab page'"
 				" name=gcCommand value='Cancel'>\n");
-			printf("<p><u>Set Operation Options</u>");
-			printf("<p><input title='For supported set operations (like Group Delete)"
-				" create the appropiate jobs for changes to go into effect.'"
-				" type=checkbox name=uSubmitJob");
-			if(uSubmitJob)
-				printf(" checked");
-			printf("> uSubmitJob");
                 break;
 
                 case 2000:
@@ -1935,6 +1928,8 @@ void ExttResourceAuxTable(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uGroup=0;
+	unsigned uRow=0;
+	unsigned uNumRows=0;
 
 	switch(guMode)
 	{
@@ -1942,7 +1937,13 @@ void ExttResourceAuxTable(void)
 		case 12002:
 			//Set operation buttons
 			OpenFieldSet("Set Operations",100);
-			printf("<input title='Delete checked resource records from your search set. They will still be visible but will"
+			printf("<input title='For supported set operations (like Group Delete)"
+				" create the appropiate jobs for changes to go into effect.'"
+				" type=checkbox name=uSubmitJob");
+			if(uSubmitJob)
+				printf(" checked");
+			printf("> uSubmitJob");
+			printf("<p><input title='Delete checked resource records from your search set. They will still be visible but will"
 				" marked deleted and will not be used in any subsequent set operation'"
 				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
 			printf("<input disabled title='Append comment to selected resource records.'"
@@ -1987,16 +1988,17 @@ void ExttResourceAuxTable(void)
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 		        res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res))
+			if((uNumRows=mysql_num_rows(res)))
 			{
 				char cResult[100]={""};
 				char cCtLabel[100]={""};
 
 				printf("<table>");
 				printf("<tr>");
-				printf("<td><u>cZone</u></td>"
-					"<td><u>View</u></td>"
+				printf("<td valign=top><input type=checkbox name=all onClick='checkAll(document.formMain,this)'></td>"
 					"<td><u>cName</u></td>"
+					"<td><u>cZone</u></td>"
+					"<td><u>View</u></td>"
 					"<td><u>uTTL</u></td>"
 					"<td><u>RRType</u></td>"
 					"<td><u>cParam1</u></td>"
@@ -2092,32 +2094,41 @@ while((field=mysql_fetch_row(res)))
 		}//end for()
 	}
 
-	printf("<tr>");
-	printf("<td width=200 valign=top>"
-		"<input type=checkbox name=Ct%s >"
-		"<a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s>%s</a>"
-		"</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>"
-		"<td>%.64s</td>\n",
-			field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],
+	printf("<tr");
+	if((uRow++) % 2)
+		printf(" bgcolor=#E7F3F1 ");
+	else
+		printf(" bgcolor=#EFE7CF ");
+	printf(">");
+
+		printf("<td valign=top><input type=checkbox name=Ct%s ></td>"
+		"<td valign=top><a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s>%s</a></td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>\n",
+			field[0],
+			field[0],field[3],
+			field[1],
+			field[2],
+			field[4],field[5],field[6],
 			field[7],field[8],field[9],field[10],field[11],field[12],field[13],cResult);
 	printf("</tr>");
 
 }//while()
 //Reset margin end
 
-			printf("<tr><td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> Check all</td></tr>\n");
+			printf("<tr><td valign=top><input type=checkbox name=all onClick='checkAll(document.formMain,this)'></td>"
+					"<td valign=top colspan=3>Check all %u containers</td></tr>\n",uNumRows);
 			printf("</table></form>");
 
 			}//If results
