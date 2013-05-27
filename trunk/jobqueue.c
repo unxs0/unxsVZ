@@ -4422,7 +4422,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 			logfileLine("ProcessCloneSyncJob",gcQuery);
 		}
 
-		sprintf(gcQuery,"SELECT tNode.cLabel FROM tContainer,tNode WHERE"
+		sprintf(gcQuery,"SELECT tNode.cLabel,tNode.uDatacenter FROM tContainer,tNode WHERE"
 				" tContainer.uNode=tNode.uNode AND"
 				" tNode.uStatus=1 AND"//Active NODE
 				" tContainer.uContainer=%u AND"
@@ -4436,6 +4436,10 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
+			unsigned uCloneDatacenter=0;
+
+			sscanf(field[1],"%u",&uCloneDatacenter);
+
 			if(uNotValidSystemCallArg(field[0]))
 			{
 				mysql_free_result(res);
@@ -4490,7 +4494,10 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 
 			//Here we should run a script based on container primary group
 			//We need to determine group and get the script.
-			sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
+			if(uCloneDatacenter==gfuDatacenter)
+				sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
+			else
+				sprintf(gcQuery,"/usr/sbin/clonesync-remote.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
 			if(guDebug)
 				logfileLine("ProcessCloneSyncJob",gcQuery);
 
@@ -4508,6 +4515,11 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 					return(7);
 				}
 				return(6);
+			}
+			else
+			{
+				logfileLine("ProcessCloneSyncJob","error running script");
+				logfileLine("ProcessCloneSyncJob",gcQuery);
 			}
 		}
 		mysql_free_result(res);
