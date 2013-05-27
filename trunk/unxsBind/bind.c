@@ -1836,25 +1836,32 @@ unsigned ViewReloadZone(char *cZone)
 		if(field[1][0]=='1')
 		{
 			if(cuControlPort[0])
-				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s retransfer %s in %s > /dev/null 2>&1",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s retransfer %s in %s > /tmp/unxsbindlog 2>&1",
 						gcBinDir,cuControlPort,cZone,field[0]);
 			else
-				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf retransfer %s in %s > /dev/null 2>&1",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf retransfer %s in %s > /tmp/unxsbindlog 2>&1",
 						gcBinDir,cZone,field[0]);
 		}
 		else
 		{
 			if(cuControlPort[0])
-				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload %s in %s > /dev/null 2>&1",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf -p %s reload %s in %s > /tmp/unxsbindlog 2>&1",
 						gcBinDir,cuControlPort,cZone,field[0]);
 			else
-				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload %s in %s > /dev/null 2>&1",
+				sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload %s in %s > /tmp/unxsbindlog 2>&1",
 						gcBinDir,cZone,field[0]);
 		}
 		logfileLine("ViewReloadZone",cCmd);
 		uRetVal=system(cCmd);
 		if(uRetVal)
-			logfileLine("ViewReloadZone","uRetVal error");
+		{
+			logfileLine("ViewReloadZone","uRetVal error trying straight reload");
+			sprintf(cCmd,"%s/rndc -c /etc/unxsbind-rndc.conf reload > /tmp/unxsbindlog 2>&1",gcBinDir);
+			logfileLine("ViewReloadZone",cCmd);
+			uRetVal=system(cCmd);
+			if(uRetVal)
+				logfileLine("ViewReloadZone","uRetVal error giving up!");
+		}
 	}
 	mysql_free_result(res);
 
