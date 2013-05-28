@@ -502,6 +502,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			cCommands[0]=0;
 			uDatacenter=0;
 			uNode=0;
+			uSourceNode=0;
 			uForClient=0;
 			uSearchSource=0;
 			uSearchStatus=0;
@@ -836,6 +837,15 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uLink)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," uNode=%u",uNode);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uSourceNode)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uSource IN (SELECT uContainer FROM tContainer WHERE uNode=%u)",uSourceNode);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}

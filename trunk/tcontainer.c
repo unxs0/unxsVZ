@@ -47,6 +47,8 @@ static char cuDatacenterPullDown[256]={""};
 //uNode: Running on this Node
 static unsigned uNode=0;
 static char cuNodePullDown[256]={""};
+static unsigned uSourceNode=0;
+static char cuSourceNodePullDown[256]={""};
 //uStatus: Status of Container
 static unsigned uStatus=0;
 //uOwner: Record owner
@@ -191,6 +193,13 @@ void ProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cuNodePullDown,"%.255s",entries[i].val);
 			uNode=ReadPullDown("tNode","cLabel",cuNodePullDown);
+		}
+		else if(!strcmp(entries[i].name,"uSourceNode"))
+			sscanf(entries[i].val,"%u",&uSourceNode);
+		else if(!strcmp(entries[i].name,"cuSourceNodePullDown"))
+		{
+			sprintf(cuSourceNodePullDown,"%.255s",entries[i].val);
+			uSourceNode=ReadPullDown("tNode","cLabel",cuSourceNodePullDown);
 		}
 		else if(!strcmp(entries[i].name,"uStatus"))
 			sscanf(entries[i].val,"%u",&uStatus);
@@ -454,6 +463,8 @@ void tContainerSearchSet(unsigned uStep)
 	tTablePullDown("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1);
 	OpenRow("Primary group","black");
 	tContainerGroupPullDown(uChangeGroup,1);
+	OpenRow("Source node","black");
+	tTablePullDown("tNode;cuSourceNodePullDown","cLabel","cLabel",uSourceNode,1);
 
 	if(uStep==1)
 	{
