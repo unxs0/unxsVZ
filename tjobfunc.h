@@ -580,9 +580,10 @@ void tJobNavList(void)
         }
 
         res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	unsigned uNumRows=0;
+	if((uNumRows=mysql_num_rows(res)))
 	{	
-        	printf("<p><u>tJobNavList (Waiting and Error)</u><br>\n");
+        	printf("<p><u>tJobNavList (Waiting and Error) %u</u><br>\n",uNumRows);
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tJob&uJob=%s>%s/%s/%s</a><br>\n",
