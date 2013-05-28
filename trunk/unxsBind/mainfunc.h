@@ -3236,7 +3236,7 @@ mysql> describe tZone;
 		//		backup 13.13.13.13
 		//	SRV for sip primary _sip._udp 10 1 5060 primary
 		//	SRV for sip backup	_sip._udp 20 1 5060 backup
-		unsigned uPrimaryPort=5060;
+		unsigned uMainPort=5060;
 		unsigned uBackupPort=5060;
 		unsigned uNSSet=11;//Get from tConfiguration
 		sprintf(gcQuery,"SELECT tContainer.cHostname,tIP.cLabel,tContainer.uContainer FROM tContainer,tIP,tGroup,tGroupGlue WHERE"
@@ -3277,7 +3277,7 @@ mysql> describe tZone;
 
 				printf("zone exists %s\n",field[0]);
 
-				//Main A record
+				//main A record
 				sprintf(gcQuery,"SELECT uResource FROM tResourceCopy WHERE"
 						" cName='%s.' AND"
 						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='A') AND"
@@ -3308,7 +3308,6 @@ mysql> describe tZone;
 				}
 				else
 				{
-					//main A record
 					sprintf(gcQuery,"INSERT INTO tResourceCopy SET"
 						" uZone=%s,"
 						" cName='%s.',"
@@ -3324,6 +3323,134 @@ mysql> describe tZone;
 						exit(1);
 					}
 				}
+				//end main A
+
+				//backup A record
+				sprintf(gcQuery,"SELECT uResource FROM tResourceCopy WHERE"
+						" cName='backup.%s.' AND"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='A') AND"
+						" uZone=%s",
+							field[0],field2[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					exit(1);
+				}
+				res3=mysql_store_result(&gMysql);
+				if((field3=mysql_fetch_row(res3))) 
+				{
+					printf("updating backup A RR%s\n",field3[0]);
+					sprintf(gcQuery,"UPDATE tResourceCopy SET"
+						" cParam1='%s',"
+						" cComment='CreatePBXZonesFromVZ',"
+						" uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uResource=%s",
+							field[1],field3[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql)) 
+					{
+						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						exit(1);
+					}
+				}
+				else
+				{
+					sprintf(gcQuery,"INSERT INTO tResourceCopy SET"
+						" uZone=%s,"
+						" cName='backup.%s.',"
+						" cParam1='%s',"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='A'),"
+						" cComment='CreatePBXZonesFromVZ',"
+						" uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							field2[0],field[0],field[1]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql)) 
+					{
+						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						exit(1);
+					}
+				}
+				//end backup A
+
+				//main SRV record
+				sprintf(gcQuery,"SELECT uResource FROM tResourceCopy WHERE"
+						" cName='_sip._udp.%s.' AND"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='SRV') AND"
+						" uZone=%s",
+							field[0],field2[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					exit(1);
+				}
+				res3=mysql_store_result(&gMysql);
+				if((field3=mysql_fetch_row(res3))) 
+				{
+					printf("No update for main SRV record\n");
+				}
+				else
+				{
+					sprintf(gcQuery,"INSERT INTO tResourceCopy SET"
+						" uZone=%s,"
+						" cName='_sip._udp.%s.',"
+						" cParam1='10',"
+						" cParam2='1',"
+						" cParam3='%u',"
+						" cParam4='%s.',"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='SRV'),"
+						" cComment='CreatePBXZonesFromVZ',"
+						" uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							field2[0],field[0],uMainPort,field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql)) 
+					{
+						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						exit(1);
+					}
+				}
+				//end main SRV
+
+				//backup SRV record
+				sprintf(gcQuery,"SELECT uResource FROM tResourceCopy WHERE"
+						" cName='_sip._udp.%s.' AND"
+						" cParam4='backup.%s.'"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='SRV') AND"
+						" uZone=%s",
+							field[0],field[0],field2[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					exit(1);
+				}
+				res3=mysql_store_result(&gMysql);
+				if((field3=mysql_fetch_row(res3))) 
+				{
+					printf("No update for backup SRV record\n");
+				}
+				else
+				{
+					sprintf(gcQuery,"INSERT INTO tResourceCopy SET"
+						" uZone=%s,"
+						" cName='_sip._udp.backup.%s.',"
+						" cParam1='20',"
+						" cParam2='1',"
+						" cParam3='%u',"
+						" cParam4='backup.%s.',"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='SRV'),"
+						" cComment='CreatePBXZonesFromVZ',"
+						" uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							field2[0],field[0],uBackupPort,field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql)) 
+					{
+						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						exit(1);
+					}
+				}
+				//end backup SRV
 			}
 			else
 			{
@@ -3361,6 +3488,54 @@ mysql> describe tZone;
 						" cComment='CreatePBXZonesFromVZ',"
 						" uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 							uZone,field[0],field[1]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					exit(1);
+				}
+				sprintf(gcQuery,"INSERT INTO tResourceCopy SET"
+						" uZone=%u,"
+						" cName='backup.%s.',"
+						" cParam1='%s',"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='A'),"
+						" cComment='CreatePBXZonesFromVZ',"
+						" uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							uZone,field[0],field[1]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					exit(1);
+				}
+				sprintf(gcQuery,"INSERT INTO tResourceCopy SET"
+						" uZone=%u,"
+						" cName='_sip._udp.%s.',"
+						" cParam1='10',"
+						" cParam2='1',"
+						" cParam3='%u',"
+						" cParam4='%s.',"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='SRV'),"
+						" cComment='CreatePBXZonesFromVZ',"
+						" uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							uZone,field[0],uMainPort,field[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					exit(1);
+				}
+				sprintf(gcQuery,"INSERT INTO tResourceCopy SET"
+						" uZone=%u,"
+						" cName='_sip._udp.%s.',"
+						" cParam1='20',"
+						" cParam2='1',"
+						" cParam3='%u',"
+						" cParam4='backup.%s.',"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='SRV'),"
+						" cComment='CreatePBXZonesFromVZ',"
+						" uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							uZone,field[0],uBackupPort,field[0]);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql)) 
 				{
