@@ -81,6 +81,7 @@ void ExportTable(char *cTable, char *cFile);
 time_t cDateToUnixTime(char *cDate);
 unsigned NewNSSet(char *cLabel,char *cMasterIPs,char *cuOwner);
 void NewNS(char *cFQDN,char *cNSType,unsigned uNSSet);
+void CreatePBXZonesFromVZ(void);
 
 //extern bind.c protos
 void CreateMasterFiles(char *cMasterNS, char *cZone,unsigned uModDBFiles,
@@ -897,6 +898,7 @@ void PrintUsage(char *arg0)
 	printf("\tImportSORRs\n");
 	printf("\tExportRRCSV <company> [out file] <mysql root passwd>\n");
 	printf("\tFixBlockOwnership\n");
+	printf("\tCreatePBXZonesFromVZ\n");
 	exit(0);
 
 }//void PrintUsage(char *arg0)
@@ -1071,6 +1073,11 @@ void ExtMainShell(int argc, char *argv[])
 		else if(!strcmp(argv[1],"ProcessVZJobQueue"))
 		{
 			ProcessVZJobQueue();
+			exit(0);
+		}
+		else if(!strcmp(argv[1],"CreatePBXZonesFromVZ"))
+		{
+			CreatePBXZonesFromVZ();
 			exit(0);
 		}
 	}
@@ -3144,3 +3151,229 @@ void PerfQueryList(void)
 	exit(0);
 
 }//void PerfQueryList(void)
+
+
+void CreatePBXZonesFromVZ(void)
+{
+	MYSQL gMysql2;
+
+	//debug only
+	printf("CreatePBXZonesFromVZ() start\n");
+	if(!TextConnectDb() && !TextConnectExtDb(&gMysql2,TEXT_CONNECT_UNXSVZ))
+	{
+		MYSQL_RES *res;
+		MYSQL_ROW field;
+
+		//debug only
+		printf("CreatePBXZonesFromVZ() connected ok\n");
+
+
+		//Quick way to make copies of tables for testing:
+		//CREATE TABLE tZoneCopy LIKE tZone;
+		//INSERT INTO tZoneCopy SELECT * FROM tZone;
+
+/*
+mysql> describe tResource;
++--------------+------------------+------+-----+---------+----------------+
+| Field        | Type             | Null | Key | Default | Extra          |
++--------------+------------------+------+-----+---------+----------------+
+| uResource    | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| cName        | varchar(100)     | NO   |     |         |                |
+| uOwner       | int(10) unsigned | NO   | MUL | 0       |                |
+| uCreatedBy   | int(10) unsigned | NO   |     | 0       |                |
+| uCreatedDate | int(10) unsigned | NO   |     | 0       |                |
+| uModBy       | int(10) unsigned | NO   |     | 0       |                |
+| uModDate     | int(10) unsigned | NO   |     | 0       |                |
+| uTTL         | int(10) unsigned | NO   |     | 0       |                |
+| uRRType      | int(10) unsigned | NO   |     | 0       |                |
+| cParam1      | varchar(255)     | NO   |     |         |                |
+| cParam2      | varchar(255)     | NO   |     |         |                |
+| cComment     | text             | NO   |     | NULL    |                |
+| uZone        | int(10) unsigned | NO   | MUL | 0       |                |
+| cParam3      | varchar(255)     | NO   |     |         |                |
+| cParam4      | varchar(255)     | NO   |     |         |                |
++--------------+------------------+------+-----+---------+----------------+
+15 rows in set (0.00 sec)
+
+mysql> describe tZone;
++----------------+------------------+------+-----+---------+----------------+
+| Field          | Type             | Null | Key | Default | Extra          |
++----------------+------------------+------+-----+---------+----------------+
+| uZone          | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| cZone          | varchar(100)     | NO   | MUL |         |                |
+| uOwner         | int(10) unsigned | NO   | MUL | 0       |                |
+| uCreatedBy     | int(10) unsigned | NO   |     | 0       |                |
+| uCreatedDate   | int(10) unsigned | NO   |     | 0       |                |
+| uModBy         | int(10) unsigned | NO   |     | 0       |                |
+| uModDate       | int(10) unsigned | NO   |     | 0       |                |
+| uNSSet         | int(10) unsigned | NO   | MUL | 0       |                |
+| cHostmaster    | varchar(100)     | NO   |     |         |                |
+| uSerial        | int(10) unsigned | NO   |     | 0       |                |
+| uExpire        | int(10) unsigned | NO   |     | 0       |                |
+| uRefresh       | int(10) unsigned | NO   |     | 0       |                |
+| uTTL           | int(10) unsigned | NO   |     | 0       |                |
+| uRetry         | int(10) unsigned | NO   |     | 0       |                |
+| uZoneTTL       | int(10) unsigned | NO   |     | 0       |                |
+| uMailServers   | int(10) unsigned | NO   |     | 0       |                |
+| cMainAddress   | varchar(16)      | NO   |     |         |                |
+| uView          | int(10) unsigned | NO   |     | 0       |                |
+| uRegistrar     | int(10) unsigned | NO   |     | 0       |                |
+| cOptions       | text             | NO   |     | NULL    |                |
+| uSecondaryOnly | int(10) unsigned | NO   |     | 0       |                |
+| uClient        | int(10) unsigned | NO   |     | 0       |                |
++----------------+------------------+------+-----+---------+----------------+
+*/
+
+
+		//get zone name
+		//get IP of primary container
+		//get IP of remote clone container
+		//get port numbers if they exist default 5060
+		//create zone
+		//add RRs
+		//	A's for primary and clone container
+		//		primary 12.12.12.12
+		//		backup 13.13.13.13
+		//	SRV for sip primary _sip._udp 10 1 5060 primary
+		//	SRV for sip backup	_sip._udp 20 1 5060 backup
+		unsigned uPrimaryPort=5060;
+		unsigned uBackupPort=5060;
+		unsigned uNSSet=11;//Get from tConfiguration
+		sprintf(gcQuery,"SELECT tContainer.cHostname,tIP.cLabel,tContainer.uContainer FROM tContainer,tIP,tGroup,tGroupGlue WHERE"
+			" tContainer.uIPv4=tIP.uIP AND"
+			" tGroupGlue.uGroup=tGroup.uGroup AND"
+			" tGroupGlue.uContainer=tContainer.uContainer AND"
+			" tGroup.cLabel='Production PBXs' AND"
+			" tContainer.uStatus=1 AND"
+			" tContainer.uSource=0 LIMIT 1");
+		mysql_query(&gMysql2,gcQuery);
+	       	if(mysql_errno(&gMysql2))
+		{
+			fprintf(stdout,"%s\n",mysql_error(&gMysql2));
+			return;
+		}
+		res=mysql_store_result(&gMysql2);
+	        while((field=mysql_fetch_row(res)))
+		{
+
+			MYSQL_RES *res2;
+			MYSQL_ROW field2;
+
+			sprintf(gcQuery,"SELECT uZone FROM tZoneCopy WHERE"
+					" cZone='%s' AND"
+					" uView=(SELECT uView FROM tView WHERE cLabel='external')",
+					field[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql)) 
+			{
+				fprintf(stderr,"%s\n",mysql_error(&gMysql));
+				exit(1);
+			}
+			res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2))) 
+			{
+				MYSQL_RES *res3;
+				MYSQL_ROW field3;
+
+				printf("zone exists %s\n",field[0]);
+
+				//Main A record
+				sprintf(gcQuery,"SELECT uResource FROM tResourceCopy WHERE"
+						" cName='%s.' AND"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='A') AND"
+						" uZone=%s",
+							field[0],field2[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					exit(1);
+				}
+				res3=mysql_store_result(&gMysql);
+				if((field3=mysql_fetch_row(res3))) 
+				{
+					printf("updating A RR%s\n",field3[0]);
+					sprintf(gcQuery,"UPDATE tResourceCopy SET"
+						" cParam1='%s',"
+						" cComment='CreatePBXZonesFromVZ',"
+						" uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uResource=%s",
+							field[1],field3[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql)) 
+					{
+						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						exit(1);
+					}
+				}
+				else
+				{
+					//main A record
+					sprintf(gcQuery,"INSERT INTO tResourceCopy SET"
+						" uZone=%s,"
+						" cName='%s.',"
+						" cParam1='%s',"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='A'),"
+						" cComment='CreatePBXZonesFromVZ',"
+						" uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							field2[0],field[0],field[1]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql)) 
+					{
+						fprintf(stderr,"%s\n",mysql_error(&gMysql));
+						exit(1);
+					}
+				}
+			}
+			else
+			{
+				printf("creating zone %s\n",field[0]);
+				sprintf(gcQuery,"INSERT INTO tZoneCopy SET"
+						" cZone='%s',"
+						" uNSSet=%u,"
+						" cHostmaster='support.isp.com',"
+						" uSerial=1,"
+						" uExpire=604800,"
+						" uRefresh=28800,"
+						" uTTL=300,"
+						" uRetry=7200,"
+						" uZoneTTL=86400,"
+						" uView=(SELECT uView FROM tView where cLabel='external'),"
+						" cMainAddress='0.0.0.0',"
+						" uRegistrar=14,"
+						" uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								field[0],uNSSet);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					exit(1);
+				}
+
+				unsigned uZone=mysql_insert_id(&gMysql);
+
+				//main A record
+				sprintf(gcQuery,"INSERT INTO tResourceCopy SET"
+						" uZone=%u,"
+						" cName='%s.',"
+						" cParam1='%s',"
+						" uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='A'),"
+						" cComment='CreatePBXZonesFromVZ',"
+						" uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							uZone,field[0],field[1]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql)) 
+				{
+					fprintf(stderr,"%s\n",mysql_error(&gMysql));
+					exit(1);
+				}
+			}
+			mysql_free_result(res2);
+		}
+		mysql_free_result(res);
+	}
+	exit(0);
+
+}//void CreatePBXZonesFromVZ(void)
+
+
