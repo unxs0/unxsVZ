@@ -245,9 +245,23 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 	//13 tView.cMaster
 	//14 tView.uView
 	//15 tZone.cOptions
-	
+
+	char *cp;
+	char cMasterNS2[100]={""};
+	unsigned uNSSet2=0;
+	if((cp=strchr(cMasterNS,',')))
+	{
+		*cp=0;
+		sprintf(cMasterNS2,"%.99s",cp+1);
+		logfileLine("CreateMasterFiles",cMasterNS);
+		logfileLine("CreateMasterFiles",cMasterNS2);
+		uNSSet2=uGetNSSet(cMasterNS2);
+	}
 
 	uNSSet=uGetNSSet(cMasterNS);
+	//debug only
+	//printf("(%s) (%s) uNSSet=%u uNSSet2=%u\n",cMasterNS,cMasterNS2,uNSSet,uNSSet2);
+	//return;
 	if(!uNSSet)
 		logfileLine("CreateMasterFiles","error uNSSet==0");
 
@@ -264,7 +278,18 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 
 		//included stub zone files can only be all for new view based system
 
-		sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
+		if(uNSSet2)
+			sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
+				"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,"
+				"tZone.uZoneTTL,tZone.uMailServers,tZone.cMainAddress,tView.cLabel,"
+				"tView.cMaster,tView.uView,tZone.cOptions FROM tZone,tNSSet,tNS,tView WHERE"
+				" tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
+				" tZone.uView=tView.uView AND"
+				" (tNSSet.uNSSet=%u OR tNSSet.uNSSet=%u) AND"
+				" tNS.uNSType<4 AND tZone.uSecondaryOnly=0 ORDER BY" //4 is SLAVE last in fixed table
+				" tView.uOrder,tZone.cZone",uNSSet,uNSSet2);
+		else
+			sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
 				"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,"
 				"tZone.uZoneTTL,tZone.uMailServers,tZone.cMainAddress,tView.cLabel,"
 				"tView.cMaster,tView.uView,tZone.cOptions FROM tZone,tNSSet,tNS,tView WHERE"
@@ -427,24 +452,49 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 		if(cuGID[0]) sscanf(cuGID,"%u",&uGID);
 
 
-		if(cZone[0])	
+		if(uNSSet2)
 		{
-			sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
-			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
-			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel,tZone.cOptions FROM tZone,tNSSet,tNS,tView"
-			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
-				" tNSSet.uNSSet=%u AND"
-			" tZone.uView=tView.uView AND tZone.cZone='%s'"
-						,uNSSet,cZone);
+			if(cZone[0])	
+			{
+				sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
+				"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
+				"tZone.uMailServers,tZone.cMainAddress,tView.cLabel,tZone.cOptions FROM tZone,tNSSet,tNS,tView"
+				" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
+					" (tNSSet.uNSSet=%u OR tNSSet.uNSSet=%u) AND"
+				" tZone.uView=tView.uView AND tZone.cZone='%s'"
+						,uNSSet,uNSSet2,cZone);
+			}
+			else
+			{
+				sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
+				"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
+				"tZone.uMailServers,tZone.cMainAddress,tView.cLabel,tZone.cOptions FROM tZone,tNSSet,tNS,tView"
+				" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
+				" (tNSSet.uNSSet=%u OR tNSSet.uNSSet=%u)  AND"
+				" tZone.uView=tView.uView ORDER BY tZone.cZone",uNSSet,uNSSet2);
+			}
 		}
 		else
 		{
-			sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
-			"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
-			"tZone.uMailServers,tZone.cMainAddress,tView.cLabel,tZone.cOptions FROM tZone,tNSSet,tNS,tView"
-			" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
-				" tNSSet.uNSSet=%u AND"
-			" tZone.uView=tView.uView ORDER BY tZone.cZone",uNSSet);
+			if(cZone[0])	
+			{
+				sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
+				"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
+				"tZone.uMailServers,tZone.cMainAddress,tView.cLabel,tZone.cOptions FROM tZone,tNSSet,tNS,tView"
+				" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
+					" tNSSet.uNSSet=%u AND"
+				" tZone.uView=tView.uView AND tZone.cZone='%s'"
+						,uNSSet,cZone);
+			}
+			else
+			{
+				sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tZone.uZone,tZone.uNSSet,tZone.cHostmaster,"
+				"tZone.uSerial,tZone.uTTL,tZone.uExpire,tZone.uRefresh,tZone.uRetry,tZone.uZoneTTL,"
+				"tZone.uMailServers,tZone.cMainAddress,tView.cLabel,tZone.cOptions FROM tZone,tNSSet,tNS,tView"
+				" WHERE tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
+					" tNSSet.uNSSet=%u AND"
+				" tZone.uView=tView.uView ORDER BY tZone.cZone",uNSSet);
+			}
 		}
 
 		mysql_query(&gMysql,gcQuery);

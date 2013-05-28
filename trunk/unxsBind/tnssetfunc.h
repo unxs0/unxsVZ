@@ -14,6 +14,7 @@ AUTHOR
 
 void tNSSetNavList(void);
 void tNSSetMembers(unsigned uNSSet);
+void tNSSetZones(unsigned uNSSet);
 
 void ExtProcesstNSSetVars(pentry entries[], int x)
 {
@@ -154,6 +155,11 @@ void ExttNSSetButtons(void)
 			printf("<p><u>Record Context Info</u><br>");
 			tNSSetMembers(uNSSet);
 			tNSSetNavList();
+			if(uNSSet)
+			{
+				printf("<p><u>First 100 zones with this uNSSet</u><br>");
+				tNSSetZones(uNSSet);
+			}
 	}
 	CloseFieldSet();
 
@@ -404,3 +410,35 @@ void tNSSetMembers(unsigned uNSSet)
         mysql_free_result(res);
 
 }//void tNSSetMembers(unsigned uNSSet)
+
+
+void tNSSetZones(unsigned uNSSet)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uNSSet==0) return;
+
+	sprintf(gcQuery,"SELECT tZone.uZone,tZone.cZone,tZone.uView FROM tZone,tNSSet WHERE"
+			" tZone.uNSSet=tNSSet.uNSSet"
+			" AND tNSSet.uNSSet=%u ORDER BY tZone.cZone LIMIT 100",uNSSet);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("tZone.cZone for loaded uNSSet:<br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tZone"
+				"&uZone=%s>%s (%s)</a><br>\n",
+				field[0],field[1],field[2]);
+	}
+        mysql_free_result(res);
+
+}//void tNSSetZones(unsigned uNSSet)
