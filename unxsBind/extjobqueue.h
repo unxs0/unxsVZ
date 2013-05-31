@@ -69,6 +69,14 @@ typedef struct {
 	char cParam4[255];
 	unsigned ucParam4;
 
+	//PBX SRV parameters
+	unsigned uMainPort;
+	unsigned uBackupPort;
+	char cMainIPv4[32];
+	unsigned ucMainIPv4;
+	char cBackupIPv4[32];
+	unsigned ucBackupIPv4;
+
 	//shared with Target=
 	//char cTarget[255];
 	unsigned ucTarget;
