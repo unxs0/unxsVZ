@@ -2798,7 +2798,7 @@ void htmlMassResourceImport(void)
 		//ParseTextAreaLines() required break;
 		if(cLine[0]==0) break;
 
-		//Comments ignore
+		//Comments ignored, note that empty lines cause above break.
 		if(cLine[0]=='#') continue;
 		if(cLine[0]==';') continue;
 
