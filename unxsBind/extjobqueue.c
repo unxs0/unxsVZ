@@ -1890,7 +1890,7 @@ void ProcessVZJobQueue(void)
 	MYSQL gMysql2;
 
 	//debug only
-	printf("ProcessVZJobQueue() start\n");
+	//printf("ProcessVZJobQueue() start\n");
 	if(!TextConnectDb() && !TextConnectExtDb(&gMysql2,TEXT_CONNECT_UNXSVZ))
 	{
 		MYSQL_RES *res;
@@ -1900,7 +1900,7 @@ void ProcessVZJobQueue(void)
 		structExtJobParameters structExtParam;
 
 		//debug only
-		printf("ProcessVZJobQueue() connected ok\n");
+		//printf("ProcessVZJobQueue() connected ok\n");
 		gethostname(gcHostname,98);
 	
 		//mysqlISP_Waiting same as unxsVZ.tJobStatus.cLabel "RemoteWaiting" 10
@@ -1914,7 +1914,8 @@ void ProcessVZJobQueue(void)
 			return;
 		}
 		res=mysql_store_result(&gMysql2);
-		printf("ProcessVZJobQueue() cols=%lu\n",(long unsigned)mysql_num_rows(res));
+		//debug only
+		//printf("ProcessVZJobQueue() cols=%lu\n",(long unsigned)mysql_num_rows(res));
 	        while((field=mysql_fetch_row(res)))
 		{
 			uJob=0;
@@ -2643,6 +2644,30 @@ void ProcessVZJobQueue(void)
 
 				if(!uZone)
 				{
+					//create zone from special preset zone
+					sprintf(gcQuery,"INSERT INTO tZone"
+							" (cZone,uNSSet,cHostmaster,uSerial,uExpire,uRefresh,"
+							" uTTL,uRetry,uZoneTTL,uMailServers,uClient,uOwner,"
+							" uCreatedBy,uCreatedDate,uView,cMainAddress,uRegistrar,"
+							" uSecondaryOnly,cOptions)"
+							" SELECT '%s',uNSSet,cHostmaster,2013000000,uExpire,uRefresh,"
+							" uTTL,uRetry,uZoneTTL,uMailServers,uClient,uOwner,"
+							" uCreatedBy,uCreatedDate,uView,cMainAddress,uRegistrar,"
+							" uSecondaryOnly,cOptions"
+							" FROM tZoneImport WHERE cZone='pbxsrvzone.template.com'",
+								structExtParam.cZone);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+					uZone=mysql_insert_id(&gMysql);
+					printf("Inserting new uZone=%u\n",uZone);
+				}
+
+				if(!uZone)
+				{
 					fprintf(stdout,"No tZone.uZone for %s %s\n",
 								structExtParam.cView,
 								structExtParam.cZone);
@@ -2945,7 +2970,7 @@ _sip._udp.delmetest.callingcloud.net.	 	SRV	20	1	5060	backup.delmetest.callingcl
 		return;
 	}
 	//debug only
-	printf("ProcessVZJobQueue() done ok\n");
+	//printf("ProcessVZJobQueue() done ok\n");
 	mysql_close(&gMysql);
 	return;
 
