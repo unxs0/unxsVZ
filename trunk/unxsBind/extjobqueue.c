@@ -2642,6 +2642,7 @@ void ProcessVZJobQueue(void)
 				}
 				mysql_free_result(res2);
 
+				unsigned uNewZone=0;
 				if(!uZone)
 				{
 					//create zone from special preset zone
@@ -2663,7 +2664,25 @@ void ProcessVZJobQueue(void)
 						goto ErrorExit;
 					}
 					uZone=mysql_insert_id(&gMysql);
+					//Get required data
+					sprintf(gcQuery,"SELECT uNSSet,uView,uOwner FROM tZone"
+						" WHERE uZone=%u LIMIT 1",uZone);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+					res2=mysql_store_result(&gMysql);
+					if((field2=mysql_fetch_row(res2)))
+					{
+						sscanf(field2[0],"%u",&uNSSet);
+						sscanf(field2[1],"%u",&uView);
+						sscanf(field2[2],"%u",&uOwner);
+					}
+					mysql_free_result(res2);
 					printf("Inserting new uZone=%u\n",uZone);
+					uNewZone=uZone;
 				}
 
 				if(!uZone)
@@ -2943,10 +2962,21 @@ _sip._udp.delmetest.callingcloud.net.	 	SRV	20	1	5060	backup.delmetest.callingcl
 				//Submit zone mod job
 				guLoginClient=1;
 				guCompany=uOwner;
-				if(SubmitJob("Modify",uNSSet,structExtParam.cZone,0,0))
+				if(uNewZone)
 				{
-					fprintf(stdout,"SubmitJob() failed.\n");
-					goto ErrorExit;
+					if(SubmitJob("New",uNSSet,structExtParam.cZone,0,0))
+					{
+						fprintf(stdout,"SubmitJob(New) failed.\n");
+						goto ErrorExit;
+					}
+				}
+				else
+				{
+					if(SubmitJob("Modify",uNSSet,structExtParam.cZone,0,0))
+					{
+						fprintf(stdout,"SubmitJob(Modify) failed.\n");
+						goto ErrorExit;
+					}
 				}
 
 				//Update remote job queue done ok
