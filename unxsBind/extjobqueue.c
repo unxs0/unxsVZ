@@ -401,6 +401,7 @@ void InitializeParams(structExtJobParameters *structExtParam)
 	structExtParam->cMailServer[0]=0;
 	structExtParam->cMX1[0]=0;
 	structExtParam->cMX2[0]=0;
+	structExtParam->cView[0]=0;
 	structExtParam->uRevDns=0;
 
 	structExtParam->uExpire=604800;
@@ -441,6 +442,7 @@ void InitializeParams(structExtJobParameters *structExtParam)
 	structExtParam->ucParam4=0;
 	structExtParam->ucMainIPv4=0;
 	structExtParam->ucBackupIPv4=0;
+	structExtParam->ucView=0;
 
 }//void InitializeParams(structExtJobParameters *structExtParam)
 
@@ -2597,7 +2599,7 @@ void ProcessVZJobQueue(void)
 					printf("\tcView=%s;\n",structExtParam.cView);
 				else
 				{
-					sprintf(structExtParam.cView,"external");
+					sprintf(structExtParam.cView,"%.31s","external");
 					printf("\tdefault cView=%s;\n",structExtParam.cView);
 				}
 
@@ -2647,16 +2649,15 @@ void ProcessVZJobQueue(void)
 					fprintf(stdout,"%s",gcQuery);
 					goto ErrorExit;
 				}
-				//debug only
-				//printf("uZone=%u uNSSet=%u uView=%u\n",uZone,uNSSet,uView);
 
-				//Do not add same record again
-				//No updating only adding
-				sprintf(gcQuery,"SELECT uResource FROM tResource WHERE cNAME='%s' AND uZone=%u"
-						" AND cParam1='%s' AND cParam2='%s' AND cParam3='%s' AND cParam4='%s'"
-						" AND uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='%s' LIMIT 1)",
-							structExtParam.cName,uZone,structExtParam.cParam1,structExtParam.cParam2,
-							structExtParam.cParam3,structExtParam.cParam4,structExtParam.cRRType);
+				//main A record
+				uResource=0;
+				sprintf(gcQuery,"SELECT uResource FROM tResource"
+						" WHERE cNAME='%s.'"
+						" AND uZone=%u"
+						" AND uRRType=1",
+							structExtParam.cZone,
+							uZone);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -2667,18 +2668,20 @@ void ProcessVZJobQueue(void)
 				if((field2=mysql_fetch_row(res2)))
 					sscanf(field2[0],"%u",&uResource);
 				mysql_free_result(res2);
-
 				if(!uResource)
 				{
-					sprintf(gcQuery,"INSERT tResource SET cName='%s',cParam1='%s',"
-							"cParam2='%s',cParam3='%s',cParam4='%s',"
+					sprintf(gcQuery,"INSERT tResource"
+							" SET cName='%s.',"
+							" cParam1='%s',"
 							"uOwner=%u,uCreatedBy=1,"
-							"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='unxsVZGenericRR',"
+							"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='unxsVZPBXSRVZone',"
 							"uTTL=0,"
 							"uZone=%u,"
-							"uRRType=(SELECT uRRType FROM tRRType WHERE cLabel='%s' LIMIT 1)",
-							structExtParam.cName,structExtParam.cParam1,structExtParam.cParam2,
-							structExtParam.cParam3,structExtParam.cParam4,uOwner,uZone,structExtParam.cRRType);
+							"uRRType=1",
+								structExtParam.cZone,
+								structExtParam.cMainIPv4,
+								uOwner,
+								uZone);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
@@ -2688,6 +2691,228 @@ void ProcessVZJobQueue(void)
 					uResource=mysql_insert_id(&gMysql);
 					printf("Inserting uResource=%u\n",uResource);
 				}
+				else
+				{
+					sprintf(gcQuery,"UPDATE tResource"
+							" SET cParam1='%s',"
+							" uOwner=%u,"
+							" uModBy=1,"
+							" uModDate=UNIX_TIMESTAMP(NOW()),"
+							" cComment='unxsVZPBXSRVZone'"
+							" WHERE uResource=%u LIMIT 1",
+								structExtParam.cMainIPv4,
+								uOwner,
+								uResource);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+					printf("Updating uResource=%u rows affected=%lu\n",uResource,(unsigned long)mysql_affected_rows(&gMysql));
+				}
+				//backup A record
+				uResource=0;
+				sprintf(gcQuery,"SELECT uResource FROM tResource"
+						" WHERE cNAME='backup.%s.'"
+						" AND uZone=%u"
+						" AND uRRType=1",
+							structExtParam.cZone,
+							uZone);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
+					goto ErrorExit;
+				}
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+					sscanf(field2[0],"%u",&uResource);
+				mysql_free_result(res2);
+				if(!uResource)
+				{
+					sprintf(gcQuery,"INSERT tResource"
+							" SET cName='backup.%s.',"
+							" cParam1='%s',"
+							"uOwner=%u,uCreatedBy=1,"
+							"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='unxsVZPBXSRVZone',"
+							"uTTL=0,"
+							"uZone=%u,"
+							"uRRType=1",
+								structExtParam.cZone,
+								structExtParam.cBackupIPv4,
+								uOwner,
+								uZone);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+					uResource=mysql_insert_id(&gMysql);
+					printf("Inserting uResource=%u\n",uResource);
+				}
+				else
+				{
+					sprintf(gcQuery,"UPDATE tResource"
+							" SET cParam1='%s',"
+							" uOwner=%u,"
+							" uModBy=1,"
+							" uModDate=UNIX_TIMESTAMP(NOW()),"
+							" cComment='unxsVZPBXSRVZone'"
+							" WHERE uResource=%u LIMIT 1",
+								structExtParam.cBackupIPv4,
+								uOwner,
+								uResource);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+					printf("Updating uResource=%u rows affected=%lu\n",uResource,(unsigned long)mysql_affected_rows(&gMysql));
+				}
+				//main SRV record
+				uResource=0;
+				sprintf(gcQuery,"SELECT uResource FROM tResource"
+						" WHERE cNAME='_sip._udp.%s.'"
+						" AND cParam4='%s.'"
+						" AND uZone=%u"
+						" AND uRRType=8",
+							structExtParam.cZone,
+							structExtParam.cZone,
+							uZone);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
+					goto ErrorExit;
+				}
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+					sscanf(field2[0],"%u",&uResource);
+				mysql_free_result(res2);
+				if(!uResource)
+				{
+					sprintf(gcQuery,"INSERT tResource"
+							" SET cName='_sip._udp.%s.',"
+							" cParam1='10',"
+							" cParam2='1',"
+							" cParam3='%u',"
+							" cParam4='%s.',"
+							"uOwner=%u,uCreatedBy=1,"
+							"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='unxsVZPBXSRVZone',"
+							"uTTL=0,"
+							"uZone=%u,"
+							"uRRType=8",
+								structExtParam.cZone,
+								structExtParam.uMainPort,
+								structExtParam.cZone,
+								uOwner,
+								uZone);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+					uResource=mysql_insert_id(&gMysql);
+					printf("Inserting uResource=%u\n",uResource);
+				}
+				else
+				{
+					sprintf(gcQuery,"UPDATE tResource"
+							" SET cParam3='%u',"
+							" uOwner=%u,"
+							" uModBy=1,"
+							" uModDate=UNIX_TIMESTAMP(NOW()),"
+							" cComment='unxsVZPBXSRVZone'"
+							" WHERE uResource=%u LIMIT 1",
+								structExtParam.uMainPort,
+								uOwner,
+								uResource);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+					printf("Updating uResource=%u rows affected=%lu\n",uResource,(unsigned long)mysql_affected_rows(&gMysql));
+				}
+/*
+delmetest.callingcloud.net.	 	A	12.12.12.12				
+backup.delmetest.callingcloud.net.	 	A	13.13.13.13				
+_sip._udp.delmetest.callingcloud.net.	 	SRV	10	1	5060	delmetest.callingcloud.net.
+_sip._udp.delmetest.callingcloud.net.	 	SRV	20	1	5060	backup.delmetest.callingcloud.net.	
+*/
+				//backup SRV record
+				uResource=0;
+				sprintf(gcQuery,"SELECT uResource FROM tResource"
+						" WHERE cNAME='_sip._udp.%s.'"
+						" AND cParam4='backup.%s.'"
+						" AND uZone=%u"
+						" AND uRRType=8",
+							structExtParam.cZone,
+							structExtParam.cZone,
+							uZone);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
+					goto ErrorExit;
+				}
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+					sscanf(field2[0],"%u",&uResource);
+				mysql_free_result(res2);
+				if(!uResource)
+				{
+					sprintf(gcQuery,"INSERT tResource"
+							" SET cName='_sip._udp.%s.',"
+							" cParam1='20',"
+							" cParam2='1',"
+							" cParam3='%u',"
+							" cParam4='backup.%s.',"
+							"uOwner=%u,uCreatedBy=1,"
+							"uCreatedDate=UNIX_TIMESTAMP(NOW()),cComment='unxsVZPBXSRVZone',"
+							"uTTL=0,"
+							"uZone=%u,"
+							"uRRType=8",
+								structExtParam.cZone,
+								structExtParam.uBackupPort,
+								structExtParam.cZone,
+								uOwner,
+								uZone);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+					uResource=mysql_insert_id(&gMysql);
+					printf("Inserting uResource=%u\n",uResource);
+				}
+				else
+				{
+					sprintf(gcQuery,"UPDATE tResource"
+							" SET cParam3='%u',"
+							" uOwner=%u,"
+							" uModBy=1,"
+							" uModDate=UNIX_TIMESTAMP(NOW()),"
+							" cComment='unxsVZPBXSRVZone'"
+							" WHERE uResource=%u LIMIT 1",
+								structExtParam.uBackupPort,
+								uOwner,
+								uResource);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+					printf("Updating uResource=%u rows affected=%lu\n",uResource,(unsigned long)mysql_affected_rows(&gMysql));
+				}
+
 				UpdateSerialNum(uZone);
 
 				//Submit zone mod job
@@ -2700,7 +2925,7 @@ void ProcessVZJobQueue(void)
 				}
 
 				//Update remote job queue done ok
-				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZGenericRR ok'"
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZPBXSRVZone ok'"
 						" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
