@@ -51,6 +51,8 @@ unsigned uGetGroup(unsigned uNode, unsigned uContainer);
 unsigned uGetSearchGroup(const char *gcUser,unsigned uGroupType);
 unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
 		unsigned uOwner,unsigned uCreatedBy);
+unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
+		unsigned uOwner,unsigned uCreatedBy);
 static unsigned uHideProps=0;
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
@@ -142,8 +144,6 @@ unsigned FailoverFromJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer
 				unsigned uIPv4,char *cLabel,char *cHostname,unsigned uSource,
 				unsigned uStatus,unsigned uFailToJob,unsigned uOwner,unsigned uLoginClient,unsigned uDebug);
 void htmlCloneInfo(unsigned uContainer);
-unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,
-			char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
 unsigned CreateExecuteCommandsJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner,char *cCommands);
 unsigned uGetPrimaryContainerGroup(unsigned uContainer);
 unsigned uGetPrimaryContainerGroupGlueRecord(unsigned uContainer);
@@ -623,6 +623,15 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uLink)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," uNode=%u",uNode);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uSourceNode)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uSource IN (SELECT uContainer FROM tContainer WHERE uNode=%u)",uSourceNode);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -1595,11 +1604,11 @@ void ExttContainerCommands(pentry entries[], int x)
 
 					//Create DNS job for clones also
 					if(uCreateDNSJob)
-						CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uNodeDatacenter,guLoginClient);
+						CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uNodeDatacenter,guLoginClient,uNewVeid);
 				}//cAutoCloneNode
 
 				if(uCreateDNSJob)
-					CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient);
+					CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient,uContainer);
 
 				tContainer("New container created");
 			}
@@ -2117,13 +2126,13 @@ void ExttContainerCommands(pentry entries[], int x)
 						}
 
 						if(uCreateDNSJob)
-							CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uTargetDatacenter,guLoginClient);
+							CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uTargetDatacenter,guLoginClient,uNewVeid);
 					}//cAutoCloneNode
 
 
 					//For some reason cHostname is cLabel at this point. TODO debug.
 					if(uCreateDNSJob)
-						CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient);
+						CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient,uContainer);
 
 					//Get next available uIPv4 only if not last loop iteration
 					if((i+1)<uNumContainer)
@@ -3068,7 +3077,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					//Then this job must run after migration.
 					unsigned uIPContainerJob=IPContainerJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,cIPOld);
 					//Create unxsBind DNS
-					unsigned uCreateDNSJob=CreateDNSJob(uWizIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient);
+					unsigned uCreateDNSJob=CreateDNSJob(uWizIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient,uContainer);
 
 					//Create change hostname job
 					if(uSource)
@@ -3345,9 +3354,9 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uCreateDNSJob)
 				{
 					if(uUsePublicIP && gcUseThisIP[0])
-						CreateDNSJob(uIPv4,uOwner,gcUseThisIP,cHostname,uDatacenter,guLoginClient);
+						CreateDNSJob(uIPv4,uOwner,gcUseThisIP,cHostname,uDatacenter,guLoginClient,uContainer);
 					else
-						CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient);
+						CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient,uContainer);
 				}
 				if(HostnameContainerJob(uDatacenter,uNode,uContainer,cPrevHostname,uOwner,guLoginClient))
 				{
@@ -3484,7 +3493,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						SetContainerStatus(uContainer,71);
 						sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 						if(uCreateDNSJob)
-							CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter,guLoginClient);
+							CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter,guLoginClient,uContainer);
 						tContainer("IPContainerJob() Done");
 					}
 					else
@@ -3539,7 +3548,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 							if(uCreateDNSJob)
 								CreateDNSJob(uWizIPv4,uOwner,cuWizIPv4PullDown,
-									cHostname,uDatacenter,guLoginClient);
+									cHostname,uDatacenter,guLoginClient,uContainer);
 						}
 						else
 						{
@@ -3576,7 +3585,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							{
 								CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,
 										ForeignKey("tContainer","cHostname",uWizContainer),
-											uDatacenter,guLoginClient);
+											uDatacenter,guLoginClient,uContainer);
 							}
 							tContainer("IPContainerJob() Done.");
 						}
@@ -3645,11 +3654,11 @@ void ExttContainerCommands(pentry entries[], int x)
 							if(uCreateDNSJob)
 							{
 								CreateDNSJob(uWizIPv4,uOwner,cuWizIPv4PullDown,
-									cHostname,uDatacenter,guLoginClient);
+									cHostname,uDatacenter,guLoginClient,uContainer);
 								CreateDNSJob(uIPv4,uOwner,
 										ForeignKey("tIP","cLabel",uIPv4),
 										ForeignKey("tContainer","cHostname",uWizContainer),
-											uDatacenter,guLoginClient);
+											uDatacenter,guLoginClient,uWizContainer);
 							}
 							tContainer("SwapIPContainer job created");
 						}
@@ -4714,15 +4723,14 @@ while((field=mysql_fetch_row(res)))
 							}
 						}
 
+
+						//New! Check for pre allocated IPs
 						//TODO we cant let root just grab anybodys IPs
-						if(guCompany==1)
-							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-								" uAvailable=1 AND cLabel LIKE '%.31s.%%' AND uDatacenter=%u LIMIT 1",
-									cConfBuffer,uTargetDatacenter);
-						else
-							sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-									" uAvailable=1 AND cLabel LIKE '%.31s.%%' AND uDatacenter=%u AND"
-								" uOwner=%u LIMIT 1",cConfBuffer,uTargetDatacenter,guCompany);
+						sprintf(gcQuery,"SELECT uIP FROM tIP"
+									" WHERE uAvailable=0"
+									" AND cComment='%s reserved GroupDNSMove'"
+									" AND uDatacenter=%u"
+									" LIMIT 1",sContainer.cHostname,uTargetDatacenter);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -4730,9 +4738,29 @@ while((field=mysql_fetch_row(res)))
 						if((field=mysql_fetch_row(res)))
 							sscanf(field[0],"%u",&uIPv4);
 						mysql_free_result(res);
+
 						if(!uIPv4)
 						{
-							sprintf(cResult,"No IP available via cAutoIPClass");
+							if(guCompany==1)
+								sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+									" uAvailable=1 AND cLabel LIKE '%.31s.%%' AND uDatacenter=%u LIMIT 1",
+										cConfBuffer,uTargetDatacenter);
+							else
+								sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+										" uAvailable=1 AND cLabel LIKE '%.31s.%%' AND uDatacenter=%u AND"
+									" uOwner=%u LIMIT 1",cConfBuffer,uTargetDatacenter,guCompany);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+								htmlPlainTextError(mysql_error(&gMysql));
+							res=mysql_store_result(&gMysql);
+							if((field=mysql_fetch_row(res)))
+								sscanf(field[0],"%u",&uIPv4);
+							mysql_free_result(res);
+						}
+
+						if(!uIPv4)
+						{
+							sprintf(cResult,"No IP available cAutoIPClass/tIP reserved");
 							break;
 						}
 
@@ -4775,6 +4803,7 @@ while((field=mysql_fetch_row(res)))
 								unsigned uNode=0;
 								unsigned uStatus=0;
 								unsigned uCloneTargetNode=0;
+								unsigned uIPv4=0;
 
 								sprintf(gcQuery,"SELECT uNode,uContainer,uStatus FROM tContainer"
 									" WHERE uSource=%u AND uDatacenter=%u",uCtContainer,sContainer.uDatacenter);
@@ -5927,7 +5956,7 @@ while((field=mysql_fetch_row(res)))
 						{
 							SetContainerStatus(uCtContainer,71);
 							CreateDNSJob(uNewIPv4,sContainer.uOwner,"",sContainer.cHostname,
-								sContainer.uDatacenter,guLoginClient);
+								sContainer.uDatacenter,guLoginClient,uCtContainer);
 							sprintf(cResult,"change IP job created");
 						}
 						else
@@ -8053,62 +8082,164 @@ unsigned CommonCloneContainer(
 }//unsigned CommonCloneContainer()
 
 
-unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy)
+//Create DNS job for unxsBind based on tContainer type.
+unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,
+				unsigned uDatacenter,unsigned uCreatedBy,unsigned uContainer)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	char cJobData[512];
-	char cIPv4[32]={""};
-	static char cView[256]={"external"};
-	static char cZone[256]={""};
+	char cContainerPrimaryGroup[100]={""};
 	static unsigned uOnlyOnce=1;
 
-	//Sanity checks
-	if(!cHostname[0])
-		return 0;
-	if(!uIPv4 && !cOptionalIPv4[0])
-		return 0;
 
-	//If called in loop be efficient.
-	if(uOnlyOnce)
+	//Get container type
+	unsigned uContainerPrimaryGroup=uGetPrimaryContainerGroup(uContainer);
+#define uPBXType 1
+	unsigned uContainerType=0;
+
+	sprintf(cContainerPrimaryGroup,"%.99s",ForeignKey("tGroup","cLabel",uContainerPrimaryGroup));
+	ToLower(cContainerPrimaryGroup);
+	if(strstr(cContainerPrimaryGroup,"pbx"))
+		uContainerType=uPBXType;
+
+	//Create DNS job based on type
+	if(uContainerType==uPBXType)
 	{
-		GetConfiguration("cunxsBindARecordJobZone",cZone,uDatacenter,0,0,0);
-		GetConfiguration("cunxsBindARecordJobView",cView,uDatacenter,0,0,0);
-		uOnlyOnce=0;
-	}
+		unsigned uMainPort=5060;
+		unsigned uBackupPort=5060;
+		char cMainIPv4[32]={""};
+		char cBackupIPv4[32]={""};
+		unsigned uCloneContainer=0;
 
-	//Sanity checks
-	if(!cZone[0])
-		return 0;
+		//validation checks
+		if(!uContainer)
+			return 0;
+		if(!uDatacenter)
+			return 0;
 
-	if(cOptionalIPv4!=NULL && cOptionalIPv4[0])
-	{
-		sprintf(cIPv4,"%.31s",cOptionalIPv4);
-
-	}
-	else if(uIPv4)
-	{
-		sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
+		//Gather IPs and ports
+		//Main container
+		sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer"
+				" WHERE tIP.uIP=tContainer.uIPv4"
+				" AND tContainer.uContainer=%u",uContainer);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
-			sprintf(cIPv4,"%.31s",field[0]);
+			sprintf(cMainIPv4,"%.31s",field[0]);
 		mysql_free_result(res);
+		sprintf(gcQuery,"SELECT tProperty.cValue FROM tContainer,tProperty"
+				" WHERE tProperty.uKey=tContainer.uContainer"
+				" AND tProperty.uType=3"//tType Container
+				" AND tProperty.cName='cOrg_SIPPort'"
+				" AND tContainer.uContainer=%u",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sscanf(field[0],"%u",&uMainPort);
+		mysql_free_result(res);
+		//Clone (backup) container
+		sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uContainer FROM tIP,tContainer"
+				" WHERE tIP.uIP=tContainer.uIPv4"
+				" AND tContainer.uDatacenter!=%u"//only first remote clone
+				" AND tContainer.uSource=%u",uDatacenter,uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cBackupIPv4,"%.31s",field[0]);
+			sscanf(field[1],"%u",&uCloneContainer);
+		}
+		mysql_free_result(res);
+		sprintf(gcQuery,"SELECT tProperty.cValue FROM tContainer,tProperty"
+				" WHERE tProperty.uKey=tContainer.uContainer"
+				" AND tProperty.uType=3"//tType Container
+				" AND tProperty.cName='cOrg_SIPPort'"
+				" AND tContainer.uContainer=%u",uCloneContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sscanf(field[0],"%u",&uBackupPort);
+		mysql_free_result(res);
+
+		//standalone sub zone with DNS SRV records 
+		//depending on remote datacenter clone use clone IP for backup
+		//priority SRV record
+		sprintf(cJobData,
+			"cZone=%.99s;\n"
+			"cMainIPv4=%.15s;\n"
+			"uMainPort=%u;\n"
+			"cBackupIPv4=%.15s;\n"
+			"uBackupPort=%u;\n"
+				,cHostname,
+				cMainIPv4,
+				uMainPort,
+				cBackupIPv4,
+				uBackupPort);
+		return(unxsBindPBXRecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy));
 	}
+	else
+	{
+		//standard A record job
+		char cIPv4[32]={""};
+		static char cView[256]={"external"};
+		static char cZone[256]={""};
 
-	//Sanity checks
-	if(!cIPv4[0])
-		return 0;
+		//validation checks
+		if(!cHostname[0])
+			return 0;
+		if(!uIPv4 && !cOptionalIPv4[0])
+			return 0;
 
-	sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
-		"cIPv4=%.99s;\n"
-		"cZone=%.99s;\n"
-		"cView=%.31s;\n",
-			cHostname,cIPv4,cZone,cView);
+		//if called in loop be efficient.
+		if(uOnlyOnce)
+		{
+			GetConfiguration("cunxsBindARecordJobZone",cZone,uDatacenter,0,0,0);
+			GetConfiguration("cunxsBindARecordJobView",cView,uDatacenter,0,0,0);
+			uOnlyOnce=0;
+		}
 
-	return(unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy));
+		//another check
+		if(!cZone[0])
+			return 0;
+
+		if(cOptionalIPv4!=NULL && cOptionalIPv4[0])
+		{
+			sprintf(cIPv4,"%.31s",cOptionalIPv4);
+
+		}
+		else if(uIPv4)
+		{
+			sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cIPv4,"%.31s",field[0]);
+			mysql_free_result(res);
+		}
+
+		//sanity checks
+		if(!cIPv4[0])
+			return 0;
+
+		sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
+			"cIPv4=%.99s;\n"
+			"cZone=%.99s;\n"
+			"cView=%.31s;\n",
+				cHostname,cIPv4,cZone,cView);
+		return(unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy));
+
+	}//standard A record job
 
 }//unsigned CreateDNSJob()
 
@@ -8597,3 +8728,43 @@ unsigned uCheckMaxCloneContainers(unsigned uNode)
 	return(0);
 
 }//unsigned uCheckMaxCloneContainers(unsigned uNode)
+
+
+unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
+	unsigned uOwner,unsigned uCreatedBy)
+{
+	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindPBXRecordJob(%u)',cJobName='unxsVZPBXSRVZone'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
+			",uJobStatus=%u"
+			",cJobData='%s'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
+				uREMOTEWAITING,
+				cJobData,
+				uOwner,uCreatedBy);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","unxsBindPBXRecordJob");
+	return(uCount);
+
+}//unsigned unxsBindPBXRecordJob()

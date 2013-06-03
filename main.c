@@ -1856,6 +1856,19 @@ char *FQDomainName(char *cInput)
 }//char *FQDomainName(char *cInput)
 
 
+char *ToLower(char *cInput)
+{
+	register int i;
+
+	for(i=0;cInput[i];i++)
+		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
+	cInput[i]=0;
+
+	return(cInput);
+
+}//char *ToLower(char *cInput)
+
+
 char *WordToLower(char *cInput)
 {
 	register int i;
