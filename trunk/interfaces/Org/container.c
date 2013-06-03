@@ -617,7 +617,9 @@ void ContainerCommands(pentry entries[], int x)
 			*/
 			//CreateOrgDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,
 			//	unsigned uDatacenter,unsigned uCreatedBy,unsigned uContainer,unsigned uNode)
-			CreateOrgDNSJob(0,guOrg,cIPv4,gcNewHostname,guDatacenter,guLoginClient,guNewContainer,guNode);
+			char cZone[100]={""};
+			sprintf(cZone,"%.31s.%.67s",gcNewHostname,cunxsBindARecordJobZone);
+			CreateOrgDNSJob(0,guOrg,cIPv4,cZone,guDatacenter,guLoginClient,guNewContainer,guNode);
 			//DNS job
 			//sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindARecordJob(%u)',cJobName='unxsVZContainerARR'"
 			//		",uDatacenter=%u,uNode=%u,uContainer=%u"
@@ -3330,6 +3332,8 @@ unsigned CreateOrgDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv
 			return 0;
 		if(!uDatacenter)
 			return 0;
+		if(!uNode)
+			return 0;
 
 		//Gather IPs and ports
 		//Main container
@@ -3473,17 +3477,15 @@ unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 		const char *cJobData,unsigned uOwner,unsigned uCreatedBy)
 {
 	unsigned uCount=0;
-	long unsigned luJobDate=0;
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindPBXRecordJob(%u)',cJobName='unxsVZPBXSRVZone'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 			",uJobStatus=%u"
 			",cJobData='%s'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
-				luJobDate,luJobDate,
 				uREMOTEWAITING,
 				cJobData,
 				uOwner,uCreatedBy);

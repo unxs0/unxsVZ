@@ -36,7 +36,6 @@ AUTHOR/LEGAL
 #include <openisp/ucidr.h>
 void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue);//tcontainerfunc.h
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
-void CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 char *strptime(const char *s, const char *format, struct tm *tm);
 
@@ -740,6 +739,14 @@ void ExtMainShell(int argc, char *argv[])
 			exit(1);
 		SelectedNodeInformation(0,0);
 	}
+        else if(argc==2 && !strcmp(argv[1],"Debug"))
+	{
+		printf("Debug start\n");
+		if(TextConnectDb())
+			exit(1);
+		unxsVZLog(0,"no table","debug1");
+		printf("Debug end\n");
+	}
         else
 	{
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
@@ -762,6 +769,7 @@ void ExtMainShell(int argc, char *argv[])
 			"\t\t<host> <user> <passwd> <local uOwner>\n");
 		printf("\tImportOSTemplates <path to templates e.g. /vz/template/cache/> <tClient.cLabel owner string>\n");
 		printf("\tMassCreateContainers <configuration file>\n");
+		printf("\tDebug\n");
 		printf("\n");
 	}
 	mysql_close(&gMysql);
@@ -3761,7 +3769,7 @@ void MassCreateContainers(char *cConfigfileName)
 				}//cAutoCloneNode
 
 				if(uDNSJob)
-					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,1);
+					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,1,uContainer);
 
 			}//valid hostname and label
 		}

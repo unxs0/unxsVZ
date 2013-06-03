@@ -103,7 +103,6 @@ unsigned TextConnectDb(void); //mysqlconnect.c
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter);
-unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,unsigned uDatacenter,unsigned uCreatedBy);
 unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs);
 unsigned uCheckMaxContainers(unsigned uNode);
@@ -4422,7 +4421,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 			logfileLine("ProcessCloneSyncJob",gcQuery);
 		}
 
-		sprintf(gcQuery,"SELECT tNode.cLabel,tNode.uDatacenter FROM tContainer,tNode WHERE"
+		sprintf(gcQuery,"SELECT tNode.cLabel,tNode.uDatacenter,tContainer.uStatus FROM tContainer,tNode WHERE"
 				" tContainer.uNode=tNode.uNode AND"
 				" tNode.uStatus=1 AND"//Active NODE
 				" tContainer.uContainer=%u AND"
@@ -4437,8 +4436,10 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 		if((field=mysql_fetch_row(res)))
 		{
 			unsigned uCloneDatacenter=0;
+			unsigned uCloneStatus=0;
 
 			sscanf(field[1],"%u",&uCloneDatacenter);
+			sscanf(field[2],"%u",&uCloneStatus);
 
 			if(uNotValidSystemCallArg(field[0]))
 			{
@@ -4494,10 +4495,11 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 
 			//Here we should run a script based on container primary group
 			//We need to determine group and get the script.
-			if(uCloneDatacenter==gfuDatacenter)
-				sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
+			//if(uCloneDatacenter==gfuDatacenter)
+			if(uCloneStatus==uACTIVE)
+				sprintf(gcQuery,"/usr/sbin/clonesync-active.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
 			else
-				sprintf(gcQuery,"/usr/sbin/clonesync-remote.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
+				sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
 			if(guDebug)
 				logfileLine("ProcessCloneSyncJob",gcQuery);
 
@@ -6211,7 +6213,7 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 
 	//5-. Change the DNS A record to the new IP of the new node.
 	unsigned uCreateDNSJob=0;
-	if(!(uCreateDNSJob=CreateDNSJob(0,1,cIPv4,cHostname,uTargetDatacenter,1)))
+	if(!(uCreateDNSJob=CreateDNSJob(0,1,cIPv4,cHostname,uTargetDatacenter,1,uContainer)))
 	{
 		logfileLine("DNSMoveContainer","CreateDNSJob() error");
 		tJobErrorUpdate(uJob,"create dns job");

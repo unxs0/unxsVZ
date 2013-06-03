@@ -192,6 +192,7 @@ void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 
  //Standard tInputFunc functions
 char *WordToLower(char *cInput);
+char *ToLower(char *cInput);
 char *IPNumber(char *cInput);
 char *IPv4All(char *cInput);
 char *IPv4Range(char *cInput);
@@ -284,6 +285,8 @@ void CopyContainerProps(unsigned uSource, unsigned uTarget);
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,
 				unsigned uOwner,unsigned uCreatedBy,unsigned uCloneStop);
+unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,
+				unsigned uDatacenter,unsigned uCreatedBy,unsigned uContainer);
 
 //tProperty
 int tPropertyCommands(pentry entries[], int x);
@@ -644,6 +647,10 @@ void CreatetConfiguration(void);
 void DeletetConfiguration(void);
 void ExttConfigurationGetHook(entry gentries[], int x);
 void ExttConfigurationNavBar(void);
+unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
+		unsigned uOwner,unsigned uCreatedBy);
+unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
+		unsigned uOwner,unsigned uCreatedBy);
 
 //glossary.c
 void GlossaryGetHook(entry gentries[],int x);
