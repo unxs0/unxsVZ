@@ -2612,6 +2612,10 @@ void ProcessVZJobQueue(void)
 					goto ErrorExit;
 				}
 
+				if(!structExtParam.cBackupIPv4[0])
+					sprintf(structExtParam.cBackupIPv4,"%.31s",structExtParam.cMainIPv4);
+
+
 				if(!structExtParam.cZone[0])
 				{
 					fprintf(stdout,"cZone is required\n");
