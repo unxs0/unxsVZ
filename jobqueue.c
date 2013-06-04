@@ -4577,8 +4577,8 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 			}
 			else
 			{
-				//if(guDebug)
-				if(1)
+				if(guDebug)
+				//if(1)
 				{
 					logfileLine("ProcessCloneSyncJob","clone sync script ok");
 					logfileLine("ProcessCloneSyncJob",cOnScriptCall);
