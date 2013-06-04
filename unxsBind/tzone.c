@@ -860,9 +860,29 @@ void tZoneList(void)
 			ctime_r(&luTime21,cBuf21);
 		else
 			sprintf(cBuf21,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
+		printf("<td><a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%s>%s</a>"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s</tr>"
+			,field[0],field[0]
 			,field[1]
 			,ForeignKey("tNSSet","cLabel",strtoul(field[2],NULL,10))
 			,field[3]
