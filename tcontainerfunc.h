@@ -8159,6 +8159,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 			sscanf(field[0],"%u",&uMainPort);
 		mysql_free_result(res);
 		//Clone (backup) container
+		sprintf(cBackupIPv4,"%.31s",cMainIPv4);
 		sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uContainer FROM tIP,tContainer"
 				" WHERE tIP.uIP=tContainer.uIPv4"
 				" AND tContainer.uDatacenter!=%u"//only first remote clone
@@ -8169,7 +8170,11 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			sprintf(cBackupIPv4,"%.31s",field[0]);
+			//exclude rfc1918 IPs
+                        unsigned uA=0,uB=0,uC=0;
+                        sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC);
+                        if( !( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA=10)) )
+                                sprintf(cBackupIPv4,"%.31s",field[0]);
 			sscanf(field[1],"%u",&uCloneContainer);
 		}
 		mysql_free_result(res);
@@ -8189,8 +8194,6 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		//standalone sub zone with DNS SRV records 
 		//depending on remote datacenter clone use clone IP for backup
 		//priority SRV record
-		if(!cBackupIPv4[0])
-			sprintf(cBackupIPv4,"%.31s",cMainIPv4);
 		sprintf(cJobData,
 			"cZone=%.99s;\n"
 			"cMainIPv4=%.15s;\n"
