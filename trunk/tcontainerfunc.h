@@ -1173,7 +1173,15 @@ void ExttContainerCommands(pentry entries[], int x)
 					{
 						GetDatacenterProp(uDatacenter,"NewContainerCloneRange2",cNCCloneRange);
 						if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
-							tContainer("<blink>Error:</blink> Clone start uIPv4 must be in datacenter clone IP range");
+						{
+							char cAutoCloneIPClass[256]={""};
+							GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,
+								uNodeDatacenter,uTargetNode,0,0);
+							if(!cAutoCloneIPClass[0] || 
+									strncmp(ForeignKey("tIP","cLabel",uWizIPv4),
+										cAutoCloneIPClass,strlen(cAutoCloneIPClass)))
+								tContainer("<blink>Error:</blink> Clone start uIPv4 must be in datacenter clone IP range");
+						}
 					}
 					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
 						tContainer("<blink>Error:</blink> Clone uSyncPeriod out of range:"
@@ -1807,8 +1815,16 @@ void ExttContainerCommands(pentry entries[], int x)
 						{
 							GetDatacenterProp(uTargetDatacenter,"NewContainerCloneRange3",cNCCloneRange);
 							if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
-								tContainer("<blink>Error:</blink> Clone start uIPv4 must be in datacenter"
+							{
+								char cAutoCloneIPClass[256]={""};
+								GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,
+									uTargetDatacenter,uTargetNode,0,0);
+								if(!cAutoCloneIPClass[0] || 
+										strncmp(ForeignKey("tIP","cLabel",uWizIPv4),
+											cAutoCloneIPClass,strlen(cAutoCloneIPClass)))
+									tContainer("<blink>Error:</blink> Clone start uIPv4 must be in datacenter"
 										" clone IP range (cmc)");
+							}
 						}
 					}
 					if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
@@ -8173,6 +8189,8 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		//standalone sub zone with DNS SRV records 
 		//depending on remote datacenter clone use clone IP for backup
 		//priority SRV record
+		if(!cBackupIPv4[0])
+			sprintf(cBackupIPv4,"%.31s",cMainIPv4);
 		sprintf(cJobData,
 			"cZone=%.99s;\n"
 			"cMainIPv4=%.15s;\n"
