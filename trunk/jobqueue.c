@@ -4494,19 +4494,74 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 
 
 			//Here we should run a script based on container primary group
-			//We need to determine group and get the script.
-			//if(uCloneDatacenter==gfuDatacenter)
+			//
+			//Primary group is oldest tGroupGlue entry.
+			char *cActivePostfix="";
+			char cOnScriptCall[512];
+			char cCommand[256]="/usr/sbin/clonesync.sh";//default non active
 			if(uCloneStatus==uACTIVE)
-				sprintf(gcQuery,"/usr/sbin/clonesync-active.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
-			else
-				sprintf(gcQuery,"/usr/sbin/clonesync.sh %u %u %s %u",uContainer,uCloneContainer,field[0],uSSHPort);
-			if(guDebug)
-				logfileLine("ProcessCloneSyncJob",gcQuery);
+			{
+				sprintf(cCommand,"/usr/sbin/clonesync-active.sh");//default active
+				cActivePostfix="Active";
+			}
+			//optional if so configured via tContainer primary group (lowest uGroupGlue)
+			sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+					" AND tProperty.uKey=tGroupGlue.uGroup"
+					" AND tGroupGlue.uContainer=%u"
+					" AND tProperty.cName='cJob_CloneSyncScript%s' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
+						uPROP_GROUP,uContainer,cActivePostfix);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
+				return(8);
+			}
+		        res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+			{
+				struct stat statInfo;
+				char *cp;
 
-			if(system(gcQuery))
+				sprintf(cCommand,"%.255s",field2[0]);
+				mysql_free_result(res2);
+				//Remove trailing junk
+				if((cp=strchr(cCommand,'\n')) || (cp=strchr(cCommand,'\r'))) *cp=0;
+
+				if(uNotValidSystemCallArg(cCommand))
+				{
+					logfileLine("ProcessCloneSyncJob","cJob_CloneSyncScript* security alert");
+					return(9);
+				}
+		
+				//Only run if command is chmod 500 and owned by root for extra security reasons.
+				if(stat(cCommand,&statInfo))
+				{
+					logfileLine("ProcessCloneSyncJob","stat failed for cJob_CloneSyncScript*");
+					logfileLine("ProcessCloneSyncJob",cCommand);
+					return(10);
+				}
+				if(statInfo.st_uid!=0)
+				{
+					logfileLine("ProcessCloneSyncJob","cJob_CloneSyncScript* is not owned by root");
+					return(11);
+				}
+				if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
+				{
+					logfileLine("RestartContainer","cJob_OnRestartScript is not chmod 500");
+					return(12);
+				}
+			}
+			else
+			{
+				mysql_free_result(res2);
+			}
+
+			sprintf(cOnScriptCall,"%.255s %u %u %s %u",cCommand,uContainer,uCloneContainer,field[0],uSSHPort);
+
+			if(system(cOnScriptCall))
 			{
 				mysql_free_result(res);
-				logfileLine("ProcessCloneSyncJob",gcQuery);
+				//Mark clone sync script error by not updating backup date.
 				sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=%u"
 						" WHERE uContainer=%u",uLastBackupDate,uCloneContainer);
 				mysql_query(&gMysql,gcQuery);
@@ -4517,11 +4572,17 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 					return(7);
 				}
 				return(6);
+				logfileLine("ProcessCloneSyncJob","clone sync script error");
+				logfileLine("ProcessCloneSyncJob",cOnScriptCall);
 			}
 			else
 			{
-				logfileLine("ProcessCloneSyncJob","error running script");
-				logfileLine("ProcessCloneSyncJob",gcQuery);
+				//if(guDebug)
+				if(1)
+				{
+					logfileLine("ProcessCloneSyncJob","clone sync script ok");
+					logfileLine("ProcessCloneSyncJob",cOnScriptCall);
+				}
 			}
 		}
 		mysql_free_result(res);
