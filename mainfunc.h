@@ -3398,6 +3398,11 @@ void MassCreateContainers(char *cConfigfileName)
 					printf("cLabel has at least one '.'\n");
 					continue;
 				}
+				if(strstr(cLabel,"-backup"))
+				{
+					printf("cLabel can't have '-backup'\n");
+					continue;
+				}
 				if(strstr(cLabel,"-clone"))
 				{
 					printf("cLabel can't have '-clone'\n");

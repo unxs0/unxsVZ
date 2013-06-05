@@ -156,6 +156,7 @@ void SelectedNodeInformation(unsigned guCloneTargetNode,unsigned uHtmlMode);
 void CheckMaxContainers(unsigned uNumContainer);
 unsigned uCheckMaxContainers(unsigned uNode);
 unsigned uCheckMaxCloneContainers(unsigned uNode);
+void UpdateNamesFromCloneToBackup(unsigned uContainer);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -752,6 +753,22 @@ void ExttContainerCommands(pentry entries[], int x)
                 		}
 
 				//We extend to this other optional list and ignore the other filter items
+				if(!strncmp(cCommands,"SpecialSearchSet=NoRemoteClones",sizeof("SpecialSearchSet=NoRemoteClones")) && uDatacenter)
+				{
+					sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uContainer)"
+							" SELECT %u,uContainer FROM tContainer WHERE uDatacenter=%u AND uSource=0"
+							" AND uContainer NOT IN (SELECT uSource FROM tContainer WHERE uSource!=0 AND uDatacenter!=%u)"
+												,uGroup,uDatacenter,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					uNumber+=mysql_affected_rows(&gMysql);
+
+	                        	sprintf(gcQuery,"%u container records added via cHostname NoRemoteClones",uNumber);
+	                        	tContainer(gcQuery);
+				}//cCommands SpecialSearchSet=NoRemoteClones 
+
+				//We extend to this other optional list and ignore the other filter items
 				if(cCommands[0])
 				{
 					register int i,j;
@@ -796,6 +813,9 @@ void ExttContainerCommands(pentry entries[], int x)
 	                        	sprintf(gcQuery,"%u container records added via cHostname list",uNumber);
 	                        	tContainer(gcQuery);
 				}//if(cCommands[0])
+
+
+
 
 				//Initial query section
 				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroupGlue,uGroup,uNode,uContainer)"
@@ -1047,6 +1067,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cLabel has at least one '.'");
 				if(strstr(cLabel,"-clone"))
 					tContainer("<blink>Error:</blink> cLabel can't have '-clone'");
+				if(strstr(cLabel,"-backup"))
+					tContainer("<blink>Error:</blink> cLabel can't have '-backup'");
 				if(uCreateAppliance)
 				{
 					if(!strstr(cLabel+(uLabelLen-strlen("-app")-1),"-app"))
@@ -1066,6 +1088,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cHostname can't end with a '.'");
 				if(strstr(cHostname,"-clone"))
 					tContainer("<blink>Error:</blink> cHostname can't have '-clone'");
+				if(strstr(cHostname,"-backup"))
+					tContainer("<blink>Error:</blink> cHostname can't have '-backup'");
 				//New rule: cLabel must be first part (first stop) of cHostname.
 				if(strncmp(cLabel,cHostname,uLabelLen))
 					tContainer("<blink>Error:</blink> cLabel must be first part of cHostname.");
@@ -1611,6 +1635,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					mysql_free_result(res);
 
 					//Create DNS job for clones also
+					//rfc1918 control in CreateDNSJob() prevents non public IP clones from getting zones.
 					if(uCreateDNSJob)
 						CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uNodeDatacenter,guLoginClient,uNewVeid);
 				}//cAutoCloneNode
@@ -1712,12 +1737,16 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cLabel has at least one '.'");
 				if(strstr(cLabel,"-clone"))
 					tContainer("<blink>Error:</blink> cLabel can't have '-clone'");
+				if(strstr(cLabel,"-backup"))
+					tContainer("<blink>Error:</blink> cLabel can't have '-backup'");
 				if((uHostnameLen=strlen(cHostname))<5)
 					tContainer("<blink>Error:</blink> cHostname is too short");
 				if(cHostname[uHostnameLen-1]=='.')
 					tContainer("<blink>Error:</blink> cHostname can't end with a '.'");
 				if(strstr(cHostname,"-clone"))
 					tContainer("<blink>Error:</blink> cHostname can't have '-clone'");
+				if(strstr(cHostname,"-backup"))
+					tContainer("<blink>Error:</blink> cHostname can't have '-backup'");
 				if(cHostname[0]!='.')
 					tContainer("<blink>Error:</blink> Multiple containers cHostname has"
 							" to start with '.'");
@@ -2141,6 +2170,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							mysql_free_result(res);
 						}
 
+						//rfc1918 control in CreateDNSJob() prevents non public IP clones from getting zones.
 						if(uCreateDNSJob)
 							CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uTargetDatacenter,guLoginClient,uNewVeid);
 					}//cAutoCloneNode
@@ -2357,6 +2387,10 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cLabel can't have '-clone'!");
 				if(strstr(cHostname,"-clone"))
 					tContainer("<blink>Error:</blink> cHostname can't have '-clone'!");
+				if(strstr(cLabel,"-backup"))
+					tContainer("<blink>Error:</blink> cLabel can't have '-backup'!");
+				if(strstr(cHostname,"-backup"))
+					tContainer("<blink>Error:</blink> cHostname can't have '-backup'!");
 				//No same names or hostnames for same datacenter allowed.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
 						" AND uContainer!=%u",
@@ -3283,6 +3317,10 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cLabel can't have '-clone'");
 				if(strstr(cWizHostname,"-clone"))
 					tContainer("<blink>Error:</blink> cHostname can't have '-clone'");
+				if(strstr(cWizLabel,"-backup"))
+					tContainer("<blink>Error:</blink> cLabel can't have '-backup'");
+				if(strstr(cWizHostname,"-backup"))
+					tContainer("<blink>Error:</blink> cHostname can't have '-backup'");
 				//New rule: cLabel must be first part (first stop) of cHostname.
 				if(strncmp(cWizLabel,cWizHostname,uLabelLen))
 					tContainer("<blink>Error:</blink> cLabel must be first part of cHostname.");
@@ -4309,12 +4347,12 @@ void ExttContainerButtons(void)
 				if(uStatus==uACTIVE)
 				{
 					htmlHealth(uContainer,3);
-					if(!strstr(cLabel,"-clone") && uSource==0)
-					printf("<p><input title='Clone a container to this or another hardware node."
-					" The clone will be an online container with another IP and hostname."
-					" It will be kept updated via rsync on a configurable basis.'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Clone Wizard'><br>\n");
+					if(!strstr(cLabel,"-clone") && !strstr(cLabel,"-backup") && uSource==0)
+						printf("<p><input title='Clone a container to this or another hardware node."
+						" The clone will be an online container with another IP and hostname."
+						" It will be kept updated via rsync on a configurable basis.'"
+						" type=submit class=largeButton"
+						" name=gcCommand value='Clone Wizard'><br>\n");
 					printf("<input title='Clone container to a remote datacenter hardware node."
 					" The clone will be an online container with another IP and hostname."
 					" It will be kept updated via rsync on a configurable basis.'"
@@ -4336,12 +4374,12 @@ void ExttContainerButtons(void)
 					printf("<p><input title='Creates a job for starting a stopped container.'"
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Start %.25s'><br>\n",cLabel);
-					if(!strstr(cLabel,"-clone") && uSource==0)
-					printf("<input title='Clone a container to this or another hardware node."
-					" The clone will be an online container with another IP and hostname."
-					" It will be kept updated via rsync on a configurable basis.'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Clone Wizard'><br>\n");
+					if(!strstr(cLabel,"-clone") && !strstr(cLabel,"-backup") && uSource==0)
+						printf("<input title='Clone a container to this or another hardware node."
+						" The clone will be an online container with another IP and hostname."
+						" It will be kept updated via rsync on a configurable basis.'"
+						" type=submit class=largeButton"
+						" name=gcCommand value='Clone Wizard'><br>\n");
 					printf("<input title='Clone container to a remote datacenter hardware node."
 					" The clone will be an online container with another IP and hostname."
 					" It will be kept updated via rsync on a configurable basis.'"
@@ -4486,12 +4524,12 @@ void ExttContainerAuxTable(void)
 			printf("<p><input title='Change owner using filter section \"uOwner\" select'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Change Owner'>\n");
-			printf("&nbsp; <input title='Creates job(s) for cloning active or stopped container(s) that"
-				" are not clones themselves in the same datacenter. tConfiguration"
-				" AutoCloneNode, cAutoCloneSyncTime and cAutoCloneIPClass must be configured correctly. Check!"
-				" If you use the clone target node select above and it matches a tConfiguration"
-				" cAutoCloneNodeRemote then a remote datacenter clone will be performed. In this case"
-				" cAutoCloneIPClassRemote must also be configured for the source node.'"
+			printf("&nbsp; <input title='Creates job(s) for cloning active and/or stopped container(s)."
+				" tConfiguration entries: AutoCloneNode, cAutoCloneSyncTime, cAutoCloneNodeRemote,"
+				" cAutoCloneIPClassRemote and cAutoCloneIPClass must be configured correctly. Check before use!"
+				" If you use the clone target node select above then"
+				" cAutoCloneNodeRemote will be used if configured and a remote datacenter clone will be performed."
+				" In this case cAutoCloneIPClassRemote must also be configured.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Clone'>\n");
 			printf("&nbsp; <input title='Creates job(s) for restarting active container(s).'"
@@ -5280,6 +5318,7 @@ while((field=mysql_fetch_row(res)))
 					struct structContainer sContainer;
 					char cConfBuffer[256]={""};
 					char cAutoCloneIPClass[256]={""};
+					char cTargetNode[32]={""};
 
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
@@ -5318,7 +5357,10 @@ while((field=mysql_fetch_row(res)))
 							cConfBuffer[0]=0;
 							GetConfiguration("cAutoCloneNodeRemote",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
 							if(cConfBuffer[0])
+							{
 								uTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
+								sprintf(cTargetNode,"%.31s",cConfBuffer);
+							}
 
 							//First more specific if not per node try per datacenter
 							cConfBuffer[0]=0;
@@ -5335,12 +5377,15 @@ while((field=mysql_fetch_row(res)))
 							}
 
 							//Beta tests require manual match
-							if(uTargetNode!=guCloneTargetNode)
-							{
-								sprintf(cResult,"cAutoCloneNodeRemote!=guCloneTargetNode");
-								break;
-							}
+							//if(uTargetNode!=guCloneTargetNode)
+							//{
+							//	sprintf(cResult,"cAutoCloneNodeRemote!=guCloneTargetNode");
+							//	break;
+							//}
+							guCloneTargetNode=uTargetNode;//automated now BUT still must select a clone target
+							//any will do
 
+							//get correct remote uTargetDatacenter
 							sscanf(ForeignKey("tNode","uDatacenter",guCloneTargetNode),"%u",&uTargetDatacenter);
 							GetConfiguration("cAutoCloneIPClassRemote",
 								cAutoCloneIPClass,uTargetDatacenter,guCloneTargetNode,0,0);
@@ -5410,24 +5455,24 @@ while((field=mysql_fetch_row(res)))
 							//Make sure we enough resources on target node.
 							if(uCheckMaxCloneContainers(uTargetNode))
 							{
-								sprintf(cResult,"Max clone containers limit reached!");
+								sprintf(cResult,"Max clone containers limit reached! %s",cTargetNode);
 								break;
 							}
 							if(uCheckMaxContainers(uTargetNode))
 							{
-								sprintf(cResult,"Max active containers limit reached!");
+								sprintf(cResult,"Max active containers limit reached! %s",cTargetNode);
 								break;
 							}
 
 							//Need valid clone IP
 							if(!uWizIPv4)
 							{
-								sprintf(cResult,"Need valid clone IP");
+								sprintf(cResult,"Need valid clone IP %s %s",cTargetNode,cAutoCloneIPClass);
 								break;
 							}
 							if(uWizIPv4==sContainer.uIPv4)
 							{
-								sprintf(cResult,"Invalid clone IP");
+								sprintf(cResult,"Invalid clone IP %s %s",cTargetNode,cAutoCloneIPClass);
 								break;
 							}
 
@@ -5501,7 +5546,7 @@ while((field=mysql_fetch_row(res)))
 							UpdatePrimaryContainerGroup(uNewVeid,uGroup);
 							SetContainerStatus(uCtContainer,uAWAITCLONE);
 							SetContainerStatus(uNewVeid,uAWAITCLONE);
-							sprintf(cResult,"Clone job created");
+							sprintf(cResult,"Clone job created for %s",cTargetNode);
 						}
 						else
 						{
@@ -5542,6 +5587,9 @@ while((field=mysql_fetch_row(res)))
 								sContainer.uNode,uCtContainer,sContainer.uOwner))
 							{
 								SetContainerStatus(uCtContainer,uAWAITACT);
+
+								//if container is a remote clone then we change it's name
+								//from -clone to -backup
 								sprintf(cResult,"Start job created for stopped container");
 							}
 						}
@@ -6620,6 +6668,9 @@ unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uC
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
 	unxsVZLog(uContainer,"tContainer","Start");
+
+	//This function only changes remote datacenter -clone container's names to -backup
+	UpdateNamesFromCloneToBackup(uContainer);
 	return(uCount);
 
 }//unsigned CreateStartContainerJob(...)
@@ -8127,6 +8178,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		char cMainIPv4[32]={""};
 		char cBackupIPv4[32]={""};
 		unsigned uCloneContainer=0;
+		unsigned uA=0,uB=0,uC=0;
 
 		//validation checks
 		if(!uContainer)
@@ -8146,6 +8198,12 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		if((field=mysql_fetch_row(res)))
 			sprintf(cMainIPv4,"%.31s",field[0]);
 		mysql_free_result(res);
+
+		//exclude rfc1918 IP clones from creating wasteful dns entries.
+		sscanf(cMainIPv4,"%u.%u.%u.%*u",&uA,&uB,&uC);
+		if( !( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA=10)) )
+			return(0);
+
 		sprintf(gcQuery,"SELECT tProperty.cValue FROM tContainer,tProperty"
 				" WHERE tProperty.uKey=tContainer.uContainer"
 				" AND tProperty.uType=3"//tType Container
@@ -8171,10 +8229,9 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		if((field=mysql_fetch_row(res)))
 		{
 			//exclude rfc1918 IPs
-                        unsigned uA=0,uB=0,uC=0;
-                        sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC);
-                        if( !( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA=10)) )
-                                sprintf(cBackupIPv4,"%.31s",field[0]);
+			sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC);
+			if( !( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA=10)) )
+				sprintf(cBackupIPv4,"%.31s",field[0]);
 			sscanf(field[1],"%u",&uCloneContainer);
 		}
 		mysql_free_result(res);
@@ -8789,3 +8846,34 @@ unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 	return(uCount);
 
 }//unsigned unxsBindPBXRecordJob()
+
+
+void UpdateNamesFromCloneToBackup(unsigned uContainer)
+{
+	if(!uContainer)
+		return;
+
+	unsigned uSource=0;
+	unsigned uSourceDatacenter=0;
+
+	sscanf(ForeignKey("tContainer","uSource",uContainer),"%u",&uSource);
+	if(!uSource)
+		return;
+
+	sscanf(ForeignKey("tContainer","uDatacenter",uSource),"%u",&uSourceDatacenter);
+	if(!uSourceDatacenter)
+		return;
+
+	sprintf(gcQuery,"UPDATE tContainer"
+			" SET cLabel=REPLACE(cLabel,'-clone','-backup'),"
+			" cHostname=REPLACE(cHostname,'-clone','-backup')"
+			" WHERE uContainer=%u"
+			" AND uSource!=0"
+			" AND uDatacenter!=%u",
+				uContainer,
+				uSourceDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		unxsVZLog(uContainer,"tContainer","UpdateNamesFromCloneToBackup() mysql_error");
+
+}//void UpdateNamesFromCloneToBackup(uContainer)

@@ -596,8 +596,12 @@ void ExttIPButtons(void)
 			printf("<p><u>Filter by cLabel</u><br>");
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
 					" name=cSearch value='%s'>",cSearch);
-			tIPNavList(0);
-			tIPUsedButAvailableNavList();
+
+			if(cSearch[0])
+			{
+				tIPNavList(0);
+				tIPUsedButAvailableNavList();
+			}
 	}
 	CloseFieldSet();
 
