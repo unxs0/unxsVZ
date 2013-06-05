@@ -218,6 +218,16 @@ void ExttAuthorizeSelectRow(void)
 void ExttAuthorizeListSelect(void)
 {
 	char cCat[512];
+	//ACModel
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT " VAR_LIST_tAuthorize " FROM tAuthorize");
+	else 
+		sprintf(gcQuery,"SELECT " VAR_LIST_tAuthorize " FROM tAuthorize WHERE"
+				" (uOwner IN (SELECT uClient FROM tClient WHERE"
+				" ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%1$u) OR uOwner=%1$u) AND"
+				" cCode='Organization')) OR uOwner=%1$u OR uClient=%1$u)",
+						guCompany);
+
 
 	ExtListSelect("tAuthorize",VAR_LIST_tAuthorize);
 	//Changes here must be reflected below in ExttAuthorizeListFilter()
@@ -228,17 +238,17 @@ void ExttAuthorizeListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tAuthorize.uAuthorize=%u ORDER BY uAuthorize",
+		sprintf(cCat,"tAuthorize.uAuthorize=%u ORDER BY tAuthorize.uAuthorize",
 						uAuthorize);
 		strcat(gcQuery,cCat);
         }
-        if(!strcmp(gcFilter,"cLabel"))
+        else if(!strcmp(gcFilter,"cLabel"))
         {
 		if(guPermLevel<10)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tAuthorize.cLabel LIKE '%s%%' ORDER BY cLabel",
+		sprintf(cCat,"tAuthorize.cLabel LIKE '%s%%' ORDER BY tAuthorize.cLabel",
 				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
@@ -246,7 +256,7 @@ void ExttAuthorizeListSelect(void)
         {
                 //None NO FILTER
                 strcpy(gcFilter,"None");
-		strcat(gcQuery," ORDER BY uAuthorize");
+		strcat(gcQuery," ORDER BY tAuthorize.uAuthorize");
         }
 
 }//void ExttAuthorizeListSelect(void)
