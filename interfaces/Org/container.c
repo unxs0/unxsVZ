@@ -3381,7 +3381,7 @@ unsigned CreateOrgDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv
 			//exclude rfc1918 IPs
 			unsigned uA=0,uB=0,uC=0;
 			sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC);
-			if( !( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA=10)) )
+			if( !( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10)) )
 				sprintf(cBackupIPv4,"%.31s",field[0]);
 			sscanf(field[1],"%u",&uCloneContainer);
 		}

@@ -4571,6 +4571,10 @@ void ExttContainerAuxTable(void)
 			printf("<input title='Change status to initial setup. Be wary!'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Initial Setup'>\n");
+			printf("&nbsp; <input title='Creates unxsBind job(s) for selected container(s). If so configured may"
+				" create or update special DNS SRV zones based on container primary group.'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group DNS Update'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -6049,6 +6053,27 @@ while((field=mysql_fetch_row(res)))
 					else
 					{
 						sprintf(cResult,"change status ignored");
+					}
+				}
+				else if(!strcmp(gcCommand,"Group DNS Update"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE )
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
+									sContainer.cHostname,sContainer.uDatacenter,
+									guLoginClient,uCtContainer))
+							sprintf(cResult,"DNS update done");
+						else
+							sprintf(cResult,"DNS update error");
+					}
+					else
+					{
+						sprintf(cResult,"DNS update ignored");
 					}
 				}
 
@@ -8200,9 +8225,11 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		mysql_free_result(res);
 
 		//exclude rfc1918 IP clones from creating wasteful dns entries.
-		sscanf(cMainIPv4,"%u.%u.%u.%*u",&uA,&uB,&uC);
-		if( !( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA=10)) )
-			return(0);
+		if(sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
+		{
+			if( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10) ) 
+				return(0);
+		}
 
 		sprintf(gcQuery,"SELECT tProperty.cValue FROM tContainer,tProperty"
 				" WHERE tProperty.uKey=tContainer.uContainer"
@@ -8229,9 +8256,11 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		if((field=mysql_fetch_row(res)))
 		{
 			//exclude rfc1918 IPs
-			sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC);
-			if( !( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA=10)) )
-				sprintf(cBackupIPv4,"%.31s",field[0]);
+			if(sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
+			{
+				if( !( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10)) )
+					sprintf(cBackupIPv4,"%.31s",field[0]);
+			}
 			sscanf(field[1],"%u",&uCloneContainer);
 		}
 		mysql_free_result(res);
