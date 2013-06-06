@@ -4568,13 +4568,17 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Change IP for selected containers and DNS records if system is so configured'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Change IP'>\n");
-			printf("<input title='Change status to initial setup. Be wary!'"
+			printf("&nbsp; <input title='Change status to initial setup. Be wary!'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Initial Setup'>\n");
 			printf("&nbsp; <input title='Creates unxsBind job(s) for selected container(s). If so configured may"
 				" create or update special DNS SRV zones based on container primary group.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group DNS Update'>\n");
+			printf("&nbsp; <input title='Creates job(s) for starting remote clone container of selected active container."
+				" Updates DNS records if so configured.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Activate Backup'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -5604,6 +5608,79 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group Start
+
+				//Start the remote clone of the selected source container
+				else if(!strcmp(gcCommand,"Group Activate Backup"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+
+					if((sContainer.uStatus==uACTIVE)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+        					MYSQL_RES *res;
+						MYSQL_ROW field;
+						unsigned uCloneContainer=0;
+						unsigned uCloneNode=0;
+						unsigned uCloneStatus=0;
+						unsigned uCloneDatacenter=0;
+						char cCloneLabel[32]={""};
+
+						sprintf(gcQuery,"SELECT uContainer,cLabel,uDatacenter,uNode,uStatus FROM tContainer"
+							" WHERE uDatacenter!=%u"//only first remote clone
+							" AND uSource=%u",sContainer.uDatacenter,uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							sprintf(cResult,mysql_error(&gMysql));
+							break;
+						}
+						res=mysql_store_result(&gMysql);
+						if((field=mysql_fetch_row(res)))
+						{
+							sscanf(field[0],"%u",&uCloneContainer);
+							sprintf(cCloneLabel,"%.31s",field[1]);
+							sscanf(field[2],"%u",&uCloneDatacenter);
+							sscanf(field[3],"%u",&uCloneNode);
+							sscanf(field[4],"%u",&uCloneStatus);
+						}
+						mysql_free_result(res);
+
+						if(!uCloneContainer)
+						{
+							sprintf(cResult,"No remote clone");
+							break;
+						}
+
+						if(uCloneStatus!=uSTOPPED)
+						{
+							sprintf(cResult,"Remote clone is not stopped");
+							break;
+						}
+
+						uOwner=guCompany;
+						if(CreateStartContainerJob(uCloneDatacenter,
+							uCloneNode,uCloneContainer,sContainer.uOwner))
+						{
+							SetContainerStatus(uCloneContainer,uAWAITACT);
+							sprintf(cResult,"Activate backup job created for %.31s",cCloneLabel);
+
+							if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
+								sContainer.cHostname,sContainer.uDatacenter,
+								guLoginClient,uCtContainer))
+									strcat(cResult," +DNS update done");
+							else
+								strcat(cResult," +DNS update error");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"Activate backup job not created");
+					}
+					break;
+				}//Group Activate Backup
 
 				//execute any commands in container(s)
 				else if(!strcmp(gcCommand,"Group Execute"))
@@ -8884,6 +8961,8 @@ void UpdateNamesFromCloneToBackup(unsigned uContainer)
 
 	unsigned uSource=0;
 	unsigned uSourceDatacenter=0;
+	char cSourceLabel[32]={""};
+	char cSourceHostname[64]={""};
 
 	sscanf(ForeignKey("tContainer","uSource",uContainer),"%u",&uSource);
 	if(!uSource)
@@ -8893,12 +8972,20 @@ void UpdateNamesFromCloneToBackup(unsigned uContainer)
 	if(!uSourceDatacenter)
 		return;
 
+	sprintf(cSourceLabel,"%.31s",ForeignKey("tContainer","cLabel",uSource));
+	sprintf(cSourceHostname,"%.63s",ForeignKey("tContainer","cHostname",uSource));
+	if(!cSourceHostname[0] || !cSourceLabel[0])
+		return;
+
+	//Note how we may clobber the front of the names but leave the -backup suffix intact
 	sprintf(gcQuery,"UPDATE tContainer"
-			" SET cLabel=REPLACE(cLabel,'-clone','-backup'),"
-			" cHostname=REPLACE(cHostname,'-clone','-backup')"
+			" SET cLabel='%.24s-backup',"
+			" cHostname='%.67s-backup'"
 			" WHERE uContainer=%u"
 			" AND uSource!=0"
 			" AND uDatacenter!=%u",
+				cSourceLabel,
+				cSourceHostname,
 				uContainer,
 				uSourceDatacenter);
 	mysql_query(&gMysql,gcQuery);
