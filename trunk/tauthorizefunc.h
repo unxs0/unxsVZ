@@ -79,7 +79,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstAuthorizeVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>9)
+			if(uAllowMod(uOwner,uCreatedBy) || uCreatedBy==guLoginClient || guPermLevel>9)
 			{
 				guMode=2002;
 				tAuthorize(LANG_NB_CONFIRMMOD);
@@ -293,7 +293,7 @@ void ExttAuthorizeNavBar(void)
 	if(guPermLevel>=12 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(uAllowMod(uOwner,uCreatedBy))
+	if(uAllowMod(uOwner,uCreatedBy)|| uCreatedBy==guLoginClient )
 		printf(LANG_NBB_MODIFY);
 
 	if(uAllowDel(uOwner,uCreatedBy))
