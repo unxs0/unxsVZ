@@ -133,7 +133,7 @@ void OpenFieldSet(char *cLabel, unsigned uWidth);
 void CloseFieldSet(void);
 void LoadConf(void);
 void NoSuchFunction(void);
-void tContainerGroupPullDown(unsigned uGroup, unsigned uMode);
+void tContainerGroupPullDown(unsigned uGroup, unsigned uMode, char *cSelectName);
 void tTablePullDown(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
 void tTablePullDownActive(const char *cTableName, const char *cFieldName,

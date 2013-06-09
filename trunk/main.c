@@ -94,7 +94,7 @@ void htmlSSLLogin(void);
 void CalledByAlias(int iArgc,char *cArgv[]);
 
 //Testing globalization
-pentry entries[256];
+pentry entries[512];
 entry gentries[16];
 int x;
 
@@ -129,7 +129,7 @@ int main(int iArgc, char *cArgv[])
 
 	        gcl = getenv("QUERY_STRING");
 
-	        for(x=0;gcl[0] != '\0' && x<8;x++)
+	        for(x=0;gcl[0] != '\0' && x<16;x++)
 		{
                		getword(gentries[x].val,gcl,'&');
                		plustospace(gentries[x].val);
@@ -236,7 +236,7 @@ int main(int iArgc, char *cArgv[])
 
 	//Post method interface
 	cl = atoi(getenv("CONTENT_LENGTH"));
-	for(x=0;cl && (!feof(stdin)) && x<256 ;x++)
+	for(x=0;cl && (!feof(stdin)) && x<512 ;x++)
 	{
 		entries[x].val = fmakeword(stdin,'&',&cl);
 		plustospace(entries[x].val);
@@ -2509,7 +2509,7 @@ void EncryptPasswd(char *pw)
 }//void EncryptPasswd(char *pw)
 
 
-void tContainerGroupPullDown(unsigned uGroup, unsigned uMode)
+void tContainerGroupPullDown(unsigned uGroup, unsigned uMode, char *cSelectName)
 {
         register int i,n;
         MYSQL_RES *mysqlRes;         
@@ -2520,13 +2520,17 @@ void tContainerGroupPullDown(unsigned uGroup, unsigned uMode)
 
 	if(!uMode)
 		cMode="disabled";
+
+	char *cName="ctContainerGroupPullDown";
+	if(cSelectName[0])
+		cName=cSelectName;
       
         sprintf(gcQuery,"SELECT uGroup,cLabel FROM tGroup WHERE uGroupType=1 ORDER BY cLabel");
 	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
 	i=mysql_num_rows(mysqlRes);
         if(i>0)
         {
-                printf("<select name=ctContainerGroupPullDown %s>\n",cMode);
+                printf("<select name=%s %s>\n",cName,cMode);
 
                 printf("<option title='No selection'>---</option>\n");
                 for(n=0;n<i;n++)
@@ -2543,16 +2547,16 @@ void tContainerGroupPullDown(unsigned uGroup, unsigned uMode)
                         {
                              printf("<option selected>%s</option>\n",mysqlField[1]);
 			     if(!uMode)
-				     sprintf(cHidden,"<input type=hidden name=ctContainerGroupPullDown value='%.99s'>\n",
-				     			mysqlField[1]);
+				     sprintf(cHidden,"<input type=hidden name=%s value='%.99s'>\n",
+							cName,mysqlField[1]);
                         }
                 }
         }
         else
         {
-		printf("<select name=ctContainerGroupPullDown %s><option title='No selection'>---</option></select>\n",cMode);
+		printf("<select name=%s %s><option title='No selection'>---</option></select>\n",cName,cMode);
 		if(!uMode)
-			sprintf(cHidden,"<input type=hidden name=ctContainerGroupPullDown value='0'>\n");
+			sprintf(cHidden,"<input type=hidden name=%s value='0'>\n",cName);
         }
         printf("</select>\n");
 	if(cHidden[0])
