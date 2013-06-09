@@ -2657,7 +2657,7 @@ void ProcessVZJobQueue(void)
 							" uSecondaryOnly,cOptions)"
 							" SELECT '%s',uNSSet,cHostmaster,2013000000,uExpire,uRefresh,"
 							" uTTL,uRetry,uZoneTTL,uMailServers,uClient,uOwner,"
-							" uCreatedBy,uCreatedDate,uView,cMainAddress,uRegistrar,"
+							" 1,UNIX_TIMESTAMP(NOW()),uView,cMainAddress,uRegistrar,"
 							" uSecondaryOnly,cOptions"
 							" FROM tZoneImport WHERE cZone='pbxsrvzone.template.com'",
 								structExtParam.cZone);

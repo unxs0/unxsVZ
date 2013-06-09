@@ -1037,7 +1037,7 @@ void ExttResourceCommands(pentry entries[], int x)
 
 				if(cZoneSearch[0]==0 && cParam1Search[0]==0 && cParam2Search[0]==0 && cParam3Search[0]==0 && 
 								cParam4Search[0]==0 && cCommentSearch[0]==0 && cNameSearch[0]==0 &&
-					uView==0 && uRRType==0 && uOwner==0)
+								uView==0 && uRRType==0 && uOwner==0 && uSelectNSSet==0)
 	                        	tResource("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser))==0)
@@ -1123,6 +1123,15 @@ void ExttResourceCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
+				if(uSelectNSSet)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE uNSSet=%u)",uSelectNSSet);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
 				if(uView)
 				{
 					if(uLink)
@@ -1174,8 +1183,9 @@ void ExttResourceCommands(pentry entries[], int x)
 				unsigned uLink=0;
 
 				if(cZoneSearch[0]==0 && cParam1Search[0]==0 && cParam2Search[0]==0 && cParam3Search[0]==0 && 
-								cParam4Search[0]==0 && cCommentSearch[0]==0 && cNameSearch[0]==0)
-	                        	tResource("You must specify at least one search parameter beyond record type, owner and view");
+								cParam4Search[0]==0 && cCommentSearch[0]==0 && cNameSearch[0]==0 &&
+								uView==0 && uRRType==0 && uOwner==0 && uSelectNSSet==0)
+	                        	tResource("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser))==0)
 				{
@@ -1275,6 +1285,15 @@ void ExttResourceCommands(pentry entries[], int x)
 					if(uLink)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," uOwner=%u",uForClient);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uSelectNSSet)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE uNSSet=%u)",uSelectNSSet);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -1930,6 +1949,7 @@ void ExttResourceAuxTable(void)
 	unsigned uGroup=0;
 	unsigned uRow=0;
 	unsigned uNumRows=0;
+	unsigned uOnlyOncePerSet=1;
 
 	switch(guMode)
 	{
@@ -1958,6 +1978,8 @@ void ExttResourceAuxTable(void)
 				" type=submit class=lwarnButton name=gcCommand value='Group Append cName'>\n");
 			printf("<input title='Delete selected resource records from tResource -no undo available'"
 				" type=submit class=lwarnButton name=gcCommand value='Group Delete'>\n");
+			printf("<input title='Delete all resource records and the parent zone from tZone and tResource -no undo available'"
+				" type=submit class=lwarnButton name=gcCommand value='Group Zone Delete'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -1977,13 +1999,15 @@ void ExttResourceAuxTable(void)
 					" tResource.cComment,"
 					" FROM_UNIXTIME(tResource.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
 					" tClient.cLabel,"
+					" tNSSet.cLabel,"
 					" tZone.uZone"
-					" FROM tResource,tZone,tRRType,tClient,tView"
+					" FROM tResource,tZone,tRRType,tClient,tView,tNSSet"
 					" WHERE tResource.uRRType=tRRType.uRRType"
 					" AND tResource.uOwner=tClient.uClient"
 					" AND tResource.uZone=tZone.uZone"
 					" AND tZone.uView=tView.uView"
-					" AND uResource IN (SELECT uResource FROM tGroupGlue WHERE uGroup=%u)",uGroup);
+					" AND tZone.uNSSet=tNSSet.uNSSet"
+					" AND uResource IN (SELECT uResource FROM tGroupGlue WHERE uGroup=%u) ORDER BY tZone.uZone",uGroup);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1996,7 +2020,7 @@ void ExttResourceAuxTable(void)
 				printf("<table>");
 				printf("<tr>");
 				printf("<td valign=top><input type=checkbox name=all onClick='checkAll(document.formMain,this)'></td>"
-					"<td><u>cName</u></td>"
+					"<td title='For display purposes only @ replaces the zone name'><u>cName</u></td>"
 					"<td><u>cZone</u></td>"
 					"<td><u>View</u></td>"
 					"<td><u>uTTL</u></td>"
@@ -2008,7 +2032,7 @@ void ExttResourceAuxTable(void)
 					"<td><u>cComment</u></td>"
 					"<td><u>uCreatedDate</u></td>"
 					"<td><u>Owner</u></td>"
-					"<td><u>uZone</u></td>"
+					"<td><u>NSSet</u></td>"
 					"<td><u>Set operation result</u></td></tr>");
 //Reset margin start
 while((field=mysql_fetch_row(res)))
@@ -2031,7 +2055,7 @@ while((field=mysql_fetch_row(res)))
 			{
 				unsigned uZone=0;
 
-				sscanf(field[13],"%u",&uZone);
+				sscanf(field[14],"%u",&uZone);
 
 				if(!strcmp(gcCommand,"Delete Checked"))
 				{
@@ -2085,6 +2109,70 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Group Delete
 		
+				else if(!strcmp(gcCommand,"Group Zone Delete"))
+				{
+					static unsigned uPrevZone=0;
+					unsigned uNSSet;
+
+					sscanf(ForeignKey("tZone","uNSSet",uZone),"%u",&uNSSet);
+
+					sprintf(gcQuery,"DELETE FROM tResource WHERE uResource=%u",uCtResource);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,mysql_error(&gMysql));
+						break;
+					}
+					if(mysql_affected_rows(&gMysql)>0)
+					{
+						unsigned uDelJob=0;
+						sprintf(cResult,"Deleted");
+
+						sprintf(gcQuery,"DELETE FROM tZone WHERE uZone=%u",uZone);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							sprintf(cResult,mysql_error(&gMysql));
+							break;
+						}
+						if(mysql_affected_rows(&gMysql)>0)
+						{
+							strcat(cResult," +zone-deleted");
+							//We only need one Delete job
+							if(uOnlyOncePerSet)
+							{
+								uDelJob=1;
+								uOnlyOncePerSet=0;
+							}
+						}
+						if(uZone && uPrevZone!=uZone && uSubmitJob)
+						{
+							time_t clock;
+	
+							time(&clock);
+							UpdateSerialNum(uZone);                      	
+							if(uDelJob)
+							{
+								if(SubmitJob("Delete",uNSSet,ForeignKey("tZone","cZone",uZone),0,clock+60))
+									strcat(cResult,mysql_error(&gMysql));
+								else
+									strcat(cResult," +SubmitJob(Delete)");
+							}
+							else
+							{
+								if(SubmitJob("Modify",uNSSet,ForeignKey("tZone","cZone",uZone),0,clock+60))
+									strcat(cResult,mysql_error(&gMysql));
+								else
+									strcat(cResult," +SubmitJob(Modify)");
+							}
+							uPrevZone=uZone;
+						}
+					}
+					else
+						sprintf(cResult,"Unexpected non deletion");
+					break;
+				}//Group Delete
+		
 				else if(1)
 				{
 					sprintf(cResult,"Unexpected gcCommand=%.64s",gcCommand);
@@ -2101,8 +2189,19 @@ while((field=mysql_fetch_row(res)))
 		printf(" bgcolor=#EFE7CF ");
 	printf(">");
 
+		char *cp;
+		if((cp=strstr(field[3],field[1])))
+		{
+			*(cp)=0;
+			if(!field[3][0])
+				sprintf(field[3],"@");
+			else
+				strcat(field[3],"@");
+		}
+			
 		printf("<td valign=top><input type=checkbox name=Ct%s ></td>"
 		"<td valign=top><a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s>%s</a></td>"
+		"<td valign=top><a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%s>%s</a></td>"
 		"<td valign=top>%.64s</td>"
 		"<td valign=top>%.64s</td>"
 		"<td valign=top>%.64s</td>"
@@ -2113,12 +2212,11 @@ while((field=mysql_fetch_row(res)))
 		"<td valign=top>%.64s</td>"
 		"<td valign=top>%.64s</td>"
 		"<td valign=top>%.64s</td>"
-		"<td valign=top>%.64s</td>"
-		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.31s</td>"
 		"<td valign=top>%.64s</td>\n",
 			field[0],
 			field[0],field[3],
-			field[1],
+			field[14],field[1],
 			field[2],
 			field[4],field[5],field[6],
 			field[7],field[8],field[9],field[10],field[11],field[12],field[13],cResult);
