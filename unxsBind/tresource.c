@@ -334,6 +334,9 @@ void tResourceSearchSet(unsigned uStep)
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cZoneSearch"
 			" value=\"%s\" size=40 maxlength=63 >",cZoneSearch);
 
+	OpenRow("NSSet","black");
+	tTablePullDown("tNSSet;cuNSSetPullDown","cLabel","cLabel",uSelectNSSet,1);
+
 	OpenRow("View","black");
 	tTablePullDown("tView;cuViewPullDown","cLabel","cLabel",uView,1);
 
