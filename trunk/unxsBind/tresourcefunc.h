@@ -2019,8 +2019,9 @@ void ExttResourceAuxTable(void)
 
 				printf("<table>");
 				printf("<tr>");
-				printf("<td valign=top><input type=checkbox name=all onClick='checkAll(document.formMain,this)'></td>"
-					"<td title='For display purposes only @ replaces the zone name'><u>cName</u></td>"
+				printf("<td valign=top>"
+					"<input title='Check all records' type=checkbox name=all onClick='checkAll(document.formMain,this)'></td>"
+					"<td title='For display purposes only: @ replaces the zone name'><u>cName</u></td>"
 					"<td><u>cZone</u></td>"
 					"<td><u>View</u></td>"
 					"<td><u>uTTL</u></td>"
@@ -2225,8 +2226,9 @@ while((field=mysql_fetch_row(res)))
 }//while()
 //Reset margin end
 
-			printf("<tr><td valign=top><input type=checkbox name=all onClick='checkAll(document.formMain,this)'></td>"
-					"<td valign=top colspan=3>Check all %u containers</td></tr>\n",uNumRows);
+			printf("<tr><td valign=top>"
+				"<input title='Check all records' type=checkbox name=all onClick='checkAll(document.formMain,this)'></td>"
+				"<td valign=top colspan=3>Check all %u resource records</td></tr>\n",uNumRows);
 			printf("</table></form>");
 
 			}//If results
