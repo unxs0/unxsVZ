@@ -93,6 +93,8 @@ static unsigned uGroup=0;
 static char cuGroupPullDown[256]={""};
 static unsigned uChangeGroup=0;
 static char ctContainerGroupPullDown[256]={""};
+static unsigned uSearchGroup=0;
+static char ctContainerSearchGroupPullDown[256]={""};
 //uForClient: Create for, on 'New;
 static unsigned uForClient=0;
 static unsigned uCreateDNSJob=0;
@@ -294,7 +296,12 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(ctContainerGroupPullDown,"%.255s",entries[i].val);
 			uChangeGroup=ReadPullDown("tGroup","uGroupType=1 AND cLabel",ctContainerGroupPullDown);
-			uGroup=uChangeGroup;//For legacy support TODO
+			uGroup=uChangeGroup;//TODO
+		}
+		else if(!strcmp(entries[i].name,"ctContainerSearchGroupPullDown"))
+		{
+			sprintf(ctContainerSearchGroupPullDown,"%.255s",entries[i].val);
+			uSearchGroup=ReadPullDown("tGroup","uGroupType=1 AND cLabel",ctContainerSearchGroupPullDown);
 		}
 		else if(!strcmp(entries[i].name,"guOpOnClonesNoCA"))
 		{
@@ -510,7 +517,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			uSearchStatus=0;
 			uSearchStatusNot=0;
 			uOSTemplate=0;
-			uChangeGroup=0;
+			uSearchGroup=0;
 			tContainer("Filter cleared");
 		}
 		else if(!strcmp(gcCommand,"Remove from Search Set"))
@@ -573,7 +580,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				}//if(cCommands[0])
 
 				if(cLabelSearch[0]==0 && cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
-						&& uForClient==0 && uOSTemplate==0 && uChangeGroup==0)
+						&& uForClient==0 && uOSTemplate==0 && uSearchGroup==0)
 	                        	tContainer("You must specify at least one search parameter");
 
 
@@ -682,11 +689,11 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 
 				//Creates special temp copy table
-				if(uChangeGroup)
+				if(uSearchGroup)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," uContainer IN (SELECT uContainer FROM tGroupGlueCopy WHERE uGroup=%u)",uChangeGroup);
+					sprintf(cQuerySection," uContainer IN (SELECT uContainer FROM tGroupGlueCopy WHERE uGroup=%u)",uSearchGroup);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 					mysql_query(&gMysql,"CREATE TEMPORARY TABLE tGroupGlueCopy AS (SELECT * FROM tGroupGlue)");
@@ -728,7 +735,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				unsigned uNumber=0;
 
 				if(cLabelSearch[0]==0 && cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
-						&& uForClient==0 && uOSTemplate==0 && cCommands[0]==0 && uChangeGroup==0 )
+						&& uForClient==0 && uOSTemplate==0 && cCommands[0]==0 && uSearchGroup==0 )
 	                        	tContainer("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,2))==0)
@@ -923,11 +930,11 @@ void ExttContainerCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
-				if(uChangeGroup)
+				if(uSearchGroup)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uChangeGroup);
+					sprintf(cQuerySection," uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uSearchGroup);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -3874,7 +3881,7 @@ void ExttContainerButtons(void)
 					" name=gcCommand value='Confirm IP Change'>\n");
 			printf("<p>Optional primary group change (if swap changes for both)<br>");
 			//uGroup=uGetPrimaryContainerGroup(uContainer);//0=not for node
-			tContainerGroupPullDown(uChangeGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 			if(cunxsBindARecordJobZone[0])
 			{
@@ -3901,7 +3908,7 @@ void ExttContainerButtons(void)
 					" name=gcCommand value='Confirm Hostname Change'>\n");
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetPrimaryContainerGroup(uContainer);//0=not for node
-			tContainerGroupPullDown(uChangeGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 			if(cunxsBindARecordJobZone[0])
 			{
@@ -3953,7 +3960,7 @@ void ExttContainerButtons(void)
 			tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetPrimaryContainerGroup(uContainer);//0=not for node
-			tContainerGroupPullDown(uChangeGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
 			printf("<p><input title='Create a migration job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Migration'>\n");
@@ -3982,7 +3989,7 @@ void ExttContainerButtons(void)
 				uTargetDatacenter,uOwner);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetPrimaryContainerGroup(uContainer);//0=not for node
-			tContainerGroupPullDown(uChangeGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
 			printf("<p><input title='Create a remote migration job for the current container'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Confirm Remote Migration'>\n");
@@ -4026,7 +4033,7 @@ void ExttContainerButtons(void)
 					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetPrimaryContainerGroup(uContainer);//0=not for node
-			tContainerGroupPullDown(uChangeGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
 			if(uGroup)
 				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
 			printf("<p><input title='Create a clone job for the current container'"
@@ -4091,7 +4098,7 @@ void ExttContainerButtons(void)
 					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetPrimaryContainerGroup(uContainer);//0=not for node
-			tContainerGroupPullDown(uChangeGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
 			if(uGroup)
 				printf("<input type=hidden name=uGroup value='%u'>",uGroup);
 			printf("<p><input title='Create a clone job for the current container'"
@@ -4133,7 +4140,7 @@ void ExttContainerButtons(void)
                         printf(LANG_NBB_CONFIRMMOD);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetPrimaryContainerGroup(uContainer);//0=not for node
-			tContainerGroupPullDown(uChangeGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
                 break;
 
                 case 12001:
@@ -4448,7 +4455,7 @@ void ExttContainerAuxTable(void)
 			//tTablePullDown("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1);
 			tTablePullDownDatacenter("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1,"",0,0);
 			printf("&nbsp;&nbsp;Group ");
-			tContainerGroupPullDown(uChangeGroup,1);
+			tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
 
 			printf("&nbsp;&nbsp;<input title='For supported set operations (like Group Delete, Destroy or Migration)"
 				" apply same to their clone containers.'"

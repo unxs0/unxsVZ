@@ -448,9 +448,11 @@ void tContainerSearchSet(unsigned uStep)
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
 			" value=\"%s\" size=40 maxlength=15 >",cIPv4Search);
 	OpenRow("Datacenter","black");
-	tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+	//tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+	tTablePullDownActive("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
 	OpenRow("Node","black");
-	tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
+	//tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
+	tTablePullDownActive("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
 	OpenRow("Owner","black");
 	tTablePullDownResellers(uForClient,0);
 	OpenRow("Clone","black");
@@ -464,7 +466,7 @@ void tContainerSearchSet(unsigned uStep)
 	OpenRow("OSTemplate","black");
 	tTablePullDown("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1);
 	OpenRow("Primary group","black");
-	tContainerGroupPullDown(uChangeGroup,1);
+	tContainerGroupPullDown(uSearchGroup,1,"ctContainerSearchGroupPullDown");
 	OpenRow("Source node","black");
 	tTablePullDown("tNode;cuSourceNodePullDown","cLabel","cLabel",uSourceNode,1);
 
