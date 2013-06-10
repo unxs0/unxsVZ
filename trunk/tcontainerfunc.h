@@ -160,6 +160,7 @@ unsigned uCheckMaxContainers(unsigned uNode);
 unsigned uCheckMaxCloneContainers(unsigned uNode);
 void UpdateNamesFromCloneToBackup(unsigned uContainer);
 void UpdateNamesFromBackupToClone(unsigned uContainer);
+unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -4591,6 +4592,10 @@ void ExttContainerAuxTable(void)
 				" Updates DNS records if so configured. Changes name back to -clone from -backup.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Deactivate Backup'>\n");
+			printf("&nbsp; <input title='Creates job(s) for configuring running container(s) to use NAT on a given hardware node."
+				" Updates DNS records if so configured. Uses primary container tGroup to select which script to run.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Activate NAT'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -5355,7 +5360,10 @@ while((field=mysql_fetch_row(res)))
 						{
 							GetConfiguration("cAutoCloneNode",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
 							if(cConfBuffer[0])
+							{
+								sprintf(cTargetNode,"%.31s",cConfBuffer);
 								uTargetNode=ReadPullDown("tNode","cLabel",cConfBuffer);
+							}
 							//We need the cuSyncPeriod
 							cConfBuffer[0]=0;
 							GetConfiguration("cAutoCloneSyncTime",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
@@ -5693,6 +5701,41 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group Activate Backup
+
+				//Configure container to use NAT
+				//Node must have at least one NAT IP configured.
+				//Container properties will be set and/or used for DNAT rules.
+				else if(!strcmp(gcCommand,"Group Activate NAT"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+
+					if((sContainer.uStatus==uACTIVE)
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						uOwner=guCompany;
+						if(CreateActivateNATContainerJob(sContainer.uDatacenter,
+							sContainer.uNode,uCtContainer,guCompany))
+						{
+							SetContainerStatus(uCtContainer,uAWAITACT);
+							sprintf(cResult,"Activate NAT job created");
+
+							if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
+								sContainer.cHostname,sContainer.uDatacenter,
+								guCompany,uCtContainer))
+									strcat(cResult," +DNS update done");
+							else
+								strcat(cResult," +DNS update error");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"Activate NAT job not created");
+					}
+					break;
+				}//Group Activate NAT
 
 				//Stop the remote clone of the selected source container
 				//	and change name back to -clone
@@ -9113,3 +9156,41 @@ void UpdateNamesFromBackupToClone(unsigned uContainer)
 		unxsVZLog(uContainer,"tContainer","UpdateNamesFromBackupToClone() mysql_error");
 
 }//void UpdateNamesFromBackupToClone(uContainer)
+
+
+unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner)
+{
+	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateActivateNATContainerJob(%u)',cJobName='ActivateNATContainer'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
+			",uJobStatus=1"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
+				uOwner,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","ActivateNAT");
+
+	return(uCount);
+
+}//unsigned CreateActivateNATContainerJob()
+
