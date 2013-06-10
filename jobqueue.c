@@ -97,6 +97,7 @@ int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
 void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNode,unsigned uDatacenter);
 void RestartContainer(unsigned uJob,unsigned uContainer);
 void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cValue);
+void ActivateNATContainer(unsigned uJob,unsigned uContainer);
 
 //extern protos
 unsigned TextConnectDb(void); //mysqlconnect.c
@@ -429,6 +430,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"StartContainer"))
 	{
 		StartContainer(uJob,uContainer);
+	}
+	else if(!strcmp(cJobName,"ActivateNATContainer"))
+	{
+		ActivateNATContainer(uJob,uContainer);
 	}
 	else if(!strcmp(cJobName,"ChangeHostnameContainer"))
 	{
@@ -2557,11 +2562,12 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if(uNotValidSystemCallArg(cSnapshotDir))
 		cSnapshotDir[0]=0;
 	//1-.
-	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u",uContainer);
-	else
-		sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir %s --snapshot %u",
-									cSnapshotDir,uContainer);
+	//if(!cSnapshotDir[0])
+		//sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u",uContainer);
+		sprintf(gcQuery,"/usr/sbin/vzdump --compress %u",uContainer);
+	//else
+	//	sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir %s --snapshot %u",
+	//									cSnapshotDir,uContainer);
 	if(system(gcQuery))
 	{
 		logfileLine("CloneContainer",gcQuery);
@@ -2569,6 +2575,8 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		goto CommonExit;
 	}
 
+	//debug test only
+	cSnapshotDir[0]=0;
 
 	//Support for old and new vzdump
 	//New vzdump uses new file format, E.G.: /var/vzdump/vzdump-openvz-10511-2011_02_03-07_37_01.tgz
@@ -6393,3 +6401,17 @@ void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cVal
 	mysql_free_result(res);
 
 }//void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cValue)
+
+
+void ActivateNATContainer(unsigned uJob,unsigned uContainer)
+{
+	logfileLine("ActivateNATContainer","start");
+
+	//Everything ok
+	SetContainerStatus(uContainer,uACTIVE);
+	tJobDoneUpdate(uJob);
+
+	logfileLine("ActivateNATContainer","end");
+
+}//void ActivateNATContainer()
+
