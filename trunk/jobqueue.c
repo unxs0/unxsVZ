@@ -6405,7 +6405,67 @@ void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cVal
 
 void ActivateNATContainer(unsigned uJob,unsigned uContainer)
 {
-	logfileLine("ActivateNATContainer","start");
+
+	//Optional group based script may exist to be executed.
+	//
+	//Primary group is oldest tGroupGlue entry.
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+			" AND tProperty.uKey=tGroupGlue.uGroup"
+			" AND tGroupGlue.uContainer=%u"
+			" AND tProperty.cName='cJob_ActivateNATScript' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",uPROP_GROUP,uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ActivateNATContainer",mysql_error(&gMysql));
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		struct stat statInfo;
+		char cOnScriptCall[512];
+		char cCommand[256]={"/usr/sbin/ActivateNATContainer.sh"};//default
+		char *cp;
+
+		sprintf(cCommand,"%.255s",field[0]);
+
+		//Remove trailing junk
+		if((cp=strchr(cCommand,'\n')) || (cp=strchr(cCommand,'\r'))) *cp=0;
+
+		if(uNotValidSystemCallArg(cCommand))
+		{
+			logfileLine("ActivateNATContainer","cJob_ActivateNATScript security alert");
+			goto CommonExit2;
+		}
+
+		//Only run if command is chmod 500 and owned by root for extra security reasons.
+		if(stat(cCommand,&statInfo))
+		{
+			logfileLine("ActivateNATContainer","stat failed for cJob_ActivateNATScript");
+			logfileLine("ActivateNATContainer",cCommand);
+			goto CommonExit2;
+		}
+		if(statInfo.st_uid!=0)
+		{
+			logfileLine("ActivateNATContainer","cJob_ActivateNATScript is not owned by root");
+			goto CommonExit2;
+		}
+		if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
+		{
+			logfileLine("ActivateNATContainer","cJob_ActivateNATScript is not chmod 500");
+			goto CommonExit2;
+		}
+
+		sprintf(cOnScriptCall,"%.255s %u",cCommand,uContainer);
+		logfileLine("ActivateNATContainer",cOnScriptCall);
+		if(system(cOnScriptCall))
+			logfileLine("ActivateNATContainer","cOnScriptCall error");
+		logfileLine("ActivateNATContainer","cOnScriptCall ok");
+	}
+CommonExit2:
+	mysql_free_result(res);
 
 	//Everything ok
 	SetContainerStatus(uContainer,uACTIVE);
