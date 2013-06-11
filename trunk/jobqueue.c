@@ -97,7 +97,7 @@ int CreateActionScripts(unsigned uContainer, unsigned uOverwrite);
 void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNode,unsigned uDatacenter);
 void RestartContainer(unsigned uJob,unsigned uContainer);
 void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cValue);
-void ActivateNATContainer(unsigned uJob,unsigned uContainer);
+void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode);
 
 //extern protos
 unsigned TextConnectDb(void); //mysqlconnect.c
@@ -433,7 +433,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	}
 	else if(!strcmp(cJobName,"ActivateNATContainer"))
 	{
-		ActivateNATContainer(uJob,uContainer);
+		ActivateNATContainer(uJob,uContainer,uNode);
 	}
 	else if(!strcmp(cJobName,"ChangeHostnameContainer"))
 	{
@@ -6403,9 +6403,31 @@ void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cVal
 }//void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cValue)
 
 
-void ActivateNATContainer(unsigned uJob,unsigned uContainer)
+void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 {
 
+	//Gather NAT data
+	char cPublicNATIP[256]={""};
+	GetNodeProp(uNode,"cPublicNATIP",cPublicNATIP);
+	if(!cPublicNATIP[0])
+	{
+		logfileLine("ActivateNATContainer","No cPublicNATIP");
+		tJobErrorUpdate(uJob,"No cPublicNATIP");
+		return;
+	}
+	logfileLine("ActivateNATContainer",cPublicNATIP);
+	
+	char cPrivateNATNetwork[256]={""};
+	GetNodeProp(uNode,"cPrivateNATNetwork",cPrivateNATNetwork);
+	if(!cPrivateNATNetwork[0])
+	{
+		logfileLine("ActivateNATContainer","No cPrivateNATNetwork");
+		tJobErrorUpdate(uJob,"No cPrivateNATNetwork");
+		return;
+	}
+	logfileLine("ActivateNATContainer",cPrivateNATNetwork);
+
+	//Execute node script
 	//Optional group based script may exist to be executed.
 	//
 	//Primary group is oldest tGroupGlue entry.
@@ -6419,59 +6441,58 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer)
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ActivateNATContainer",mysql_error(&gMysql));
-		exit(2);
+		tJobErrorUpdate(uJob,"mysql error");
+		return;
 	}
         res=mysql_store_result(&gMysql);
+	char cCommand[256]={"/usr/sbin/ActivateNATContainer.sh"};//default
 	if((field=mysql_fetch_row(res)))
-	{
-		struct stat statInfo;
-		char cOnScriptCall[512];
-		char cCommand[256]={"/usr/sbin/ActivateNATContainer.sh"};//default
-		char *cp;
-
 		sprintf(cCommand,"%.255s",field[0]);
-
-		//Remove trailing junk
-		if((cp=strchr(cCommand,'\n')) || (cp=strchr(cCommand,'\r'))) *cp=0;
-
-		if(uNotValidSystemCallArg(cCommand))
-		{
-			logfileLine("ActivateNATContainer","cJob_ActivateNATScript security alert");
-			goto CommonExit2;
-		}
-
-		//Only run if command is chmod 500 and owned by root for extra security reasons.
-		if(stat(cCommand,&statInfo))
-		{
-			logfileLine("ActivateNATContainer","stat failed for cJob_ActivateNATScript");
-			logfileLine("ActivateNATContainer",cCommand);
-			goto CommonExit2;
-		}
-		if(statInfo.st_uid!=0)
-		{
-			logfileLine("ActivateNATContainer","cJob_ActivateNATScript is not owned by root");
-			goto CommonExit2;
-		}
-		if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
-		{
-			logfileLine("ActivateNATContainer","cJob_ActivateNATScript is not chmod 500");
-			goto CommonExit2;
-		}
-
-		sprintf(cOnScriptCall,"%.255s %u",cCommand,uContainer);
-		logfileLine("ActivateNATContainer",cOnScriptCall);
-		if(system(cOnScriptCall))
-			logfileLine("ActivateNATContainer","cOnScriptCall error");
-		logfileLine("ActivateNATContainer","cOnScriptCall ok");
-	}
-CommonExit2:
 	mysql_free_result(res);
+
+	//Remove trailing junk
+	char *cp;
+	if((cp=strchr(cCommand,'\n')) || (cp=strchr(cCommand,'\r'))) *cp=0;
+
+	if(uNotValidSystemCallArg(cCommand))
+	{
+		logfileLine("ActivateNATContainer","cJob_ActivateNATScript security alert");
+		tJobErrorUpdate(uJob,"security violation");
+		return;
+	}
+
+	//Only run if command is chmod 500 and owned by root for extra security reasons.
+	struct stat statInfo;
+	if(stat(cCommand,&statInfo))
+	{
+		logfileLine("ActivateNATContainer","stat failed for cJob_ActivateNATScript");
+		logfileLine("ActivateNATContainer",cCommand);
+		tJobErrorUpdate(uJob,"security violation");
+		return;
+	}
+	if(statInfo.st_uid!=0)
+	{
+		logfileLine("ActivateNATContainer","cJob_ActivateNATScript is not owned by root");
+		tJobErrorUpdate(uJob,"security violation");
+		return;
+	}
+	if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
+	{
+		logfileLine("ActivateNATContainer","cJob_ActivateNATScript is not chmod 500");
+		tJobErrorUpdate(uJob,"security violation");
+		return;
+	}
+
+	char cOnScriptCall[512];
+	sprintf(cOnScriptCall,"%.255s %u %s %s",cCommand,uContainer,cPublicNATIP,cPrivateNATNetwork);
+	logfileLine("ActivateNATContainer",cOnScriptCall);
+	if(system(cOnScriptCall))
+			logfileLine("ActivateNATContainer","cOnScriptCall error");
+	logfileLine("ActivateNATContainer","cOnScriptCall ok");
 
 	//Everything ok
 	SetContainerStatus(uContainer,uACTIVE);
 	tJobDoneUpdate(uJob);
-
-	logfileLine("ActivateNATContainer","end");
 
 }//void ActivateNATContainer()
 
