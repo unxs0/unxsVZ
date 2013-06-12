@@ -217,12 +217,13 @@ void CreateIptablesData(char *cSourceIPv4)
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uContainer=0;
+	unsigned uStatus=0;
 	unsigned uD=1;
 
 	logfileLine("CreateIptablesData","start",uContainer);
 
 	//Only for remote datacenter backup containers that belong to a PBX group
-	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel,tContainer.uSource,tContainer.cLabel"
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel,tContainer.uSource,tContainer.cLabel,tContainer.uStatus"
 			" FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
@@ -231,8 +232,6 @@ void CreateIptablesData(char *cSourceIPv4)
 			" AND tContainer.uSource!=0"
 			" AND tContainer.uSource NOT IN (SELECT uContainer FROM tContainer WHERE uSource=0 AND uDatacenter=%u)"
 			" AND tContainer.uNode=%u ORDER BY tContainer.uContainer LIMIT 101",guDatacenter,guNode);
-			//previous port based on last octet of IP number
-			//" AND tContainer.uNode=%u ORDER BY tIP.uIP",guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -246,42 +245,18 @@ void CreateIptablesData(char *cSourceIPv4)
 	//if((field=mysql_fetch_row(res)))
 	unsigned uPort;
 	unsigned uRangeEnd;
+	unsigned uOnlyOnce=1;
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uContainer);
-
-/*
-		unsigned uSourceContainer=0;
-		unsigned uSourceDatacenter=0;
-		sscanf(field[2],"%u",&uSourceContainer);
-		if(!uSourceContainer)
+		sscanf(field[4],"%u",&uStatus);
+		//Only nat rfc1918 IPs
+		unsigned uA=0,uB=0,uC=0;
+		if(sscanf(field[1],"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
 		{
-			logfileLine("CreateIptablesData","no uSourceContainer",uContainer);
-			continue;
+			if( !((uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10)) ) 
+				continue;	
 		}
-		sscanf(ForeignKey("tContainer","uDatacenter",uSourceContainer),"%u",&uSourceDatacenter);
-		if(!uSourceDatacenter)
-		{
-			logfileLine("CreateIptablesData","no uSourceDatacenter",uContainer);
-			continue;
-		}
-
-		//Only for remote datacenter backup containers
-		if(uSourceDatacenter==guDatacenter)
-			continue;
-*/
-
-/*
-
-		//previous uD calc
-		sscanf(field[1],"%*u.%*u.%*u.%u",&uD);
-		if(!uD)
-		{
-			fprintf(stderr,"cIPv4 scan error\n");
-			logfileLine("CreateIptablesData",field[1],uContainer);
-			continue;
-		}
-*/
 
 		//Admin web port
 		uPort=8000+uD;
@@ -302,8 +277,9 @@ void CreateIptablesData(char *cSourceIPv4)
 		uPort=6000+uD;
 		sprintf(cPort,"%u",uPort);
 		SetContainerProp(uContainer,"cOrg_SIPPort",cPort);
-		printf("-A PREROUTING -d %s -p udp -m udp --dport %u -j DNAT --to-destination %s:%u\n",
-			cSourceIPv4,uPort,field[1],uPort);
+		//changed to std 5060
+		printf("-A PREROUTING -d %s -p udp -m udp --dport %u -j DNAT --to-destination %s:5060\n",
+			cSourceIPv4,uPort,field[1]);
 		//Asterisk rtp port range (100 ports ~25 concurrent calls)
 		uPort=10000+(uD-1)*100;
 		uRangeEnd=uPort+99;
@@ -311,6 +287,14 @@ void CreateIptablesData(char *cSourceIPv4)
 		SetContainerProp(uContainer,"cOrg_RTPRange",cPort);
 		printf("-A PREROUTING -d %s -p udp -m udp --dport %u:%u -j DNAT --to-destination %s\n",
 			cSourceIPv4,uPort,uRangeEnd,field[1]);
+		//special ping fwd to a single active container
+		//iptables -t nat -A PREROUTING -p ICMP  -d 67.210.243.22 -j DNAT --to-destination 10.4.0.51
+		if(uStatus==1 && uOnlyOnce)
+		{
+			printf("#\tall pings here\n-A PREROUTING -p ICMP -d %s -j DNAT --to-destination %s\n",cSourceIPv4,field[1]);
+			uOnlyOnce=0;
+		}
+
 		uD++;
 
 		if(uD==101)
@@ -350,6 +334,9 @@ void CreateIptablesData(char *cSourceIPv4)
 		unsigned uA=0,uB=0,uC=0;
 		char cClassC[32]={""};
 		unsigned uCount=sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC);
+		//Only nat rfc1918 IPs
+		if( !((uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10)) ) 
+				continue;	
 		if(uCount!=3)
 		{
 			sscanf(field[1],"%u",&uContainer);
