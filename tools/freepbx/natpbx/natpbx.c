@@ -7,10 +7,12 @@ PURPOSE
 	Create /etc/squid/squid.conf reverse proxy configuration file.
 	Create /vz/root/VEID/etc/asterisk/rtp.conf files
 AUTHOR
-	Gary Wallis for Unxiservice, LLC. (C) 2011.
+	Gary Wallis for Unxiservice, LLC. (C) 2011-2013
 	GPLv2 License applies. See LICENSE file.
 NOTES
 	Must run from dir that has the sipsettings.MYI and .MYD files.
+	Started changes for new remote backup PBX system.
+	Maximum number of NATs is 100 for now.
 */
 
 #include "../../../mysqlrad.h"
@@ -38,7 +40,7 @@ void CreateSquidData(char *cSourceIPv4);
 void UpdateBind(char *cSourceIPv4);
 void ChangeFreePBX(char *cExternalIP,char *cLAN);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
-void unxsBindARecordJob(unsigned uContainer,char const *cHostname,char const *cIPv4);
+void unxsBindARecordJob2(unsigned uContainer,char const *cHostname,char const *cIPv4);
 void unxsBindSIPSRVRecordJob(unsigned uContainer,char const *cHostname,unsigned uSIPPort);
 void UpdateNonNatPBXContainers(void);
 void GetTextConfiguration(const char *cName,char *cValue,
@@ -51,6 +53,7 @@ void DelSIPSRV(char *cHostname);
 void unxsBindSIPSRVDelRecordJob(unsigned uContainer,char const *cHostname,unsigned uSIPPort);
 void AddPublicIP(char *cSourceIPv4);
 void GetZabbixPort(char *cHostname);
+const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -214,13 +217,22 @@ void CreateIptablesData(char *cSourceIPv4)
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uContainer=0;
+	unsigned uD=1;
 
-	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
+	logfileLine("CreateIptablesData","start",uContainer);
+
+	//Only for remote datacenter backup containers that belong to a PBX group
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel,tContainer.uSource,tContainer.cLabel"
+			" FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
-			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
-			" AND tContainer.uNode=%u ORDER BY tIP.uIP",guNode);
+			" AND tGroup.cLabel LIKE '%%PBX%%'"
+			" AND tContainer.uSource!=0"
+			" AND tContainer.uSource NOT IN (SELECT uContainer FROM tContainer WHERE uSource=0 AND uDatacenter=%u)"
+			" AND tContainer.uNode=%u ORDER BY tContainer.uContainer LIMIT 101",guDatacenter,guNode);
+			//previous port based on last octet of IP number
+			//" AND tContainer.uNode=%u ORDER BY tIP.uIP",guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -238,7 +250,30 @@ void CreateIptablesData(char *cSourceIPv4)
 	{
 		sscanf(field[0],"%u",&uContainer);
 
-		unsigned uD=0;
+/*
+		unsigned uSourceContainer=0;
+		unsigned uSourceDatacenter=0;
+		sscanf(field[2],"%u",&uSourceContainer);
+		if(!uSourceContainer)
+		{
+			logfileLine("CreateIptablesData","no uSourceContainer",uContainer);
+			continue;
+		}
+		sscanf(ForeignKey("tContainer","uDatacenter",uSourceContainer),"%u",&uSourceDatacenter);
+		if(!uSourceDatacenter)
+		{
+			logfileLine("CreateIptablesData","no uSourceDatacenter",uContainer);
+			continue;
+		}
+
+		//Only for remote datacenter backup containers
+		if(uSourceDatacenter==guDatacenter)
+			continue;
+*/
+
+/*
+
+		//previous uD calc
 		sscanf(field[1],"%*u.%*u.%*u.%u",&uD);
 		if(!uD)
 		{
@@ -246,6 +281,7 @@ void CreateIptablesData(char *cSourceIPv4)
 			logfileLine("CreateIptablesData",field[1],uContainer);
 			continue;
 		}
+*/
 
 		//Admin web port
 		uPort=8000+uD;
@@ -254,8 +290,8 @@ void CreateIptablesData(char *cSourceIPv4)
 		sprintf(cPort,"%u",uPort);
 		SetContainerProp(uContainer,"cOrg_AdminPort",cPort);
 		SetContainerProp(uContainer,"cOrg_PublicIP",cSourceIPv4);
-		printf("#nat pbx %s\n-A PREROUTING -d %s -p tcp -m tcp --dport %u -j DNAT --to-destination %s:3321\n",
-			field[1],cSourceIPv4,uPort,field[1]);
+		printf("#nat pbx %s (%u)\n-A PREROUTING -d %s -p tcp -m tcp --dport %u -j DNAT --to-destination %s:3321\n",
+			field[3],uD,cSourceIPv4,uPort,field[1]);
 		//Zabbix port
 		uPort=9000+uD;
 		sprintf(cPort,"%u",uPort);
@@ -275,9 +311,62 @@ void CreateIptablesData(char *cSourceIPv4)
 		SetContainerProp(uContainer,"cOrg_RTPRange",cPort);
 		printf("-A PREROUTING -d %s -p udp -m udp --dport %u:%u -j DNAT --to-destination %s\n",
 			cSourceIPv4,uPort,uRangeEnd,field[1]);
+		uD++;
 
+		if(uD==101)
+		{
+			logfileLine("CreateIptablesData","number of allowed NATs exceeded",uContainer);
+			printf("#nat pbx %s (%u) exceeds limit of 100 per node\n",field[3],uD);
+			break;
+		}
 	}
+
+	//Only for remote datacenter backup containers that belong to a PBX group
+	sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uContainer"
+			" FROM tIP,tContainer,tGroupGlue,tGroup"
+			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
+			" AND tContainer.uIPv4=tIP.uIP"
+			" AND tGroup.uGroup=tGroupGlue.uGroup"
+			" AND tGroup.cLabel LIKE '%%PBX%%'"
+			" AND tContainer.uSource!=0"
+			" AND tContainer.uSource NOT IN (SELECT uContainer FROM tContainer WHERE uSource=0 AND uDatacenter=%u)"
+			" AND tContainer.uNode=%u ORDER BY tIP.cLabel LIMIT 101",guDatacenter,guNode);
+			//previous port based on last octet of IP number
+			//" AND tContainer.uNode=%u ORDER BY tIP.uIP",guNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,gcQuery);
+		logfileLine("CreateIptablesData",mysql_error(&gMysql),uContainer);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	char cPrevClassC[32]={""};
+	printf("#postrouting for each class C\n");
+	while((field=mysql_fetch_row(res)))
+	{
+		//-A POSTROUTING -s 10.0.4.0/255.255.255.0 -j SNAT --to-source $1
+		unsigned uA=0,uB=0,uC=0;
+		char cClassC[32]={""};
+		unsigned uCount=sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC);
+		if(uCount!=3)
+		{
+			sscanf(field[1],"%u",&uContainer);
+			logfileLine("CreateIptablesData","IP uCount!=3",uContainer);
+			continue;
+		}
+		sprintf(cClassC,"%u.%u.%u.0",uA,uB,uC);
+		if(strcmp(cClassC,cPrevClassC))
+		{
+			printf("-A POSTROUTING -s %s/24 -j SNAT --to-source %s\n",cClassC,cSourceIPv4);
+			strncpy(cPrevClassC,cClassC,31);
+		}
+	}
+
 	mysql_free_result(res);
+
+	logfileLine("CreateIptablesData","end",uContainer);
 
 }//void CreateIptablesData()
 
@@ -292,8 +381,10 @@ void CreateSquidData(char *cSourceIPv4)
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
-			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
-			" AND tContainer.uNode=%u",guNode);
+			" AND tGroup.cLabel LIKE '%%PBX%%'"
+			" AND tContainer.uSource!=0"
+			" AND tContainer.uSource NOT IN (SELECT uContainer FROM tContainer WHERE uSource=0 AND uDatacenter=%u)"
+			" AND tContainer.uNode=%u",guDatacenter,guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -371,8 +462,10 @@ void ChangeFreePBX(char *cExternalIP,char *cLAN)
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
-			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
-			" AND tContainer.uNode=%u",guNode);
+			" AND tGroup.cLabel LIKE '%%PBX%%'"
+			" AND tContainer.uSource!=0"
+			" AND tContainer.uSource NOT IN (SELECT uContainer FROM tContainer WHERE uSource=0 AND uDatacenter=%u)"
+			" AND tContainer.uNode=%u",guDatacenter,guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -423,8 +516,11 @@ rtpend=10999
 		}
 
 		//rtp rtcp port ranges
-		uPort=10000+(uD-1)*100;
-		uRangeEnd=uPort+99;
+		char cPort[32]={""};
+		uPort=10000;
+		uRangeEnd=20000;
+		GetContainerProp(uContainer,"cOrg_RTPRange",cPort);
+		sscanf(cPort,"%u:%u",&uPort,&uRangeEnd);
 		fprintf(fp,"[general]\n");
 		fprintf(fp,"rtpstart=%u\n",uPort);
 		fprintf(fp,"rtpend=%u\n",uRangeEnd);
@@ -436,7 +532,10 @@ rtpend=10999
 		//ListenPort=9010
 		sprintf(cFile,"/vz/root/%u/etc/zabbix/zabbix_agentd.conf",uContainer);
 
-		uPort=9000+uD;
+		uPort=10050;
+		cPort[0]=0;
+		GetContainerProp(uContainer,"cOrg_ZabbixPort",cPort);
+		sscanf(cPort,"%u",&uPort);
 		sprintf(cCommand,"grep -w ListenPort %s",cFile);
 		if(system(cCommand))
 		{
@@ -476,7 +575,10 @@ rtpend=10999
 			sprintf(cCommand,"/bin/cp ./sipsettings.MYI /vz/root/%u/var/lib/mysql/asterisk/",uContainer);
 			if(!system(cCommand))
 			{
-				uPort=6000+uD;
+				uPort=5060;
+				cPort[0]=0;
+				GetContainerProp(uContainer,"cOrg_SIPPort",cPort);
+				sscanf(cPort,"%u",&uPort);
 				sprintf(cCommand,"sed -i -e 's/6005/%u/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",uPort,uContainer);
 				system(cCommand);
 				sprintf(cCommand,"sed -i -e 's/10.0.4.0/%s/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",cLAN,uContainer);
@@ -592,7 +694,7 @@ void SetContainerProp(const unsigned uContainer,const char *cName,const char *cV
 }//void SetContainerProp()
 
 
-void unxsBindARecordJob(unsigned uContainer,char const *cHostname,char const *cIPv4)
+void unxsBindARecordJob2(unsigned uContainer,char const *cHostname,char const *cIPv4)
 {
 #define uREMOTEWAITING 10
 	char cJobData[512]={""};
@@ -732,9 +834,10 @@ void UpdateBind(char *cSourceIPv4)
 			continue;
 		}
 
-		unxsBindARecordJob(uContainer,field[2],cSourceIPv4);
+		//No dns required should be already setup via unxsVZ new zone system
+		//unxsBindARecordJob2(uContainer,field[2],cSourceIPv4);
 		uSIPPort=6000+uD;
-		unxsBindSIPSRVRecordJob(uContainer,field[2],uSIPPort);
+		//unxsBindSIPSRVRecordJob(uContainer,field[2],uSIPPort);
 	}
         mysql_free_result(res);
 
@@ -1031,3 +1134,37 @@ void GetZabbixPort(char *cHostname)
 	else
 		printf("10050\n");
 }//void GetZabbixPort(char *cHostname)
+
+
+const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+
+	static char scKey[16];
+
+        sprintf(gcQuery,"SELECT %s FROM %s WHERE _rowid=%u",
+                        cFieldName,cTableName,uKey);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql)) return(mysql_error(&gMysql));
+
+        mysqlRes=mysql_store_result(&gMysql);
+        if(mysql_num_rows(mysqlRes)==1)
+        {
+                mysqlField=mysql_fetch_row(mysqlRes);
+                return(mysqlField[0]);
+        }
+
+	if(!uKey)
+	{
+        	return("---");
+	}
+	else
+	{
+		sprintf(scKey,"%u",uKey);
+        	return(scKey);
+	}
+
+}//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+
+
