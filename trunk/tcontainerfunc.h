@@ -1646,11 +1646,11 @@ void ExttContainerCommands(pentry entries[], int x)
 					//Create DNS job for clones also
 					//rfc1918 control in CreateDNSJob() prevents non public IP clones from getting zones.
 					if(uCreateDNSJob)
-						CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uNodeDatacenter,guLoginClient,uNewVeid);
+						CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uNodeDatacenter,guLoginClient,uNewVeid,uTargetNode);
 				}//cAutoCloneNode
 
 				if(uCreateDNSJob)
-					CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient,uContainer);
+					CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient,uContainer,uNode);
 
 				tContainer("New container created");
 			}
@@ -2181,13 +2181,14 @@ void ExttContainerCommands(pentry entries[], int x)
 
 						//rfc1918 control in CreateDNSJob() prevents non public IP clones from getting zones.
 						if(uCreateDNSJob)
-							CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uTargetDatacenter,guLoginClient,uNewVeid);
+							CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uTargetDatacenter,guLoginClient,uNewVeid,
+										uTargetNode);
 					}//cAutoCloneNode
 
 
 					//For some reason cHostname is cLabel at this point. TODO debug.
 					if(uCreateDNSJob)
-						CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient,uContainer);
+						CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient,uContainer,uNode);
 
 					//Get next available uIPv4 only if not last loop iteration
 					if((i+1)<uNumContainer)
@@ -3136,7 +3137,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					//Then this job must run after migration.
 					unsigned uIPContainerJob=IPContainerJob(uTargetDatacenter,uTargetNode,uContainer,uOwner,guLoginClient,cIPOld);
 					//Create unxsBind DNS
-					unsigned uCreateDNSJob=CreateDNSJob(uWizIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient,uContainer);
+					unsigned uCreateDNSJob=CreateDNSJob(uWizIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient,uContainer,uNode);
 
 					//Create change hostname job
 					if(uSource)
@@ -3417,9 +3418,9 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uCreateDNSJob)
 				{
 					if(uUsePublicIP && gcUseThisIP[0])
-						CreateDNSJob(uIPv4,uOwner,gcUseThisIP,cHostname,uDatacenter,guLoginClient,uContainer);
+						CreateDNSJob(uIPv4,uOwner,gcUseThisIP,cHostname,uDatacenter,guLoginClient,uContainer,uNode);
 					else
-						CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient,uContainer);
+						CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient,uContainer,uNode);
 				}
 				if(HostnameContainerJob(uDatacenter,uNode,uContainer,cPrevHostname,uOwner,guLoginClient))
 				{
@@ -3556,7 +3557,8 @@ void ExttContainerCommands(pentry entries[], int x)
 						SetContainerStatus(uContainer,71);
 						sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 						if(uCreateDNSJob)
-							CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter,guLoginClient,uContainer);
+							CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,cHostname,uDatacenter,
+								guLoginClient,uContainer,uNode);
 						tContainer("IPContainerJob() Done");
 					}
 					else
@@ -3611,7 +3613,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uModDate);
 							if(uCreateDNSJob)
 								CreateDNSJob(uWizIPv4,uOwner,cuWizIPv4PullDown,
-									cHostname,uDatacenter,guLoginClient,uContainer);
+									cHostname,uDatacenter,guLoginClient,uContainer,uNode);
 						}
 						else
 						{
@@ -3648,7 +3650,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							{
 								CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,
 										ForeignKey("tContainer","cHostname",uWizContainer),
-											uDatacenter,guLoginClient,uContainer);
+											uDatacenter,guLoginClient,uContainer,uSwapNode);
 							}
 							tContainer("IPContainerJob() Done.");
 						}
@@ -3717,11 +3719,11 @@ void ExttContainerCommands(pentry entries[], int x)
 							if(uCreateDNSJob)
 							{
 								CreateDNSJob(uWizIPv4,uOwner,cuWizIPv4PullDown,
-									cHostname,uDatacenter,guLoginClient,uContainer);
+									cHostname,uDatacenter,guLoginClient,uContainer,uNode);
 								CreateDNSJob(uIPv4,uOwner,
 										ForeignKey("tIP","cLabel",uIPv4),
 										ForeignKey("tContainer","cHostname",uWizContainer),
-											uDatacenter,guLoginClient,uWizContainer);
+											uDatacenter,guLoginClient,uWizContainer,uNode);
 							}
 							tContainer("SwapIPContainer job created");
 						}
@@ -5689,7 +5691,7 @@ while((field=mysql_fetch_row(res)))
 
 							if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
 								sContainer.cHostname,sContainer.uDatacenter,
-								guLoginClient,uCtContainer))
+								guLoginClient,uCtContainer,uCloneNode))
 									strcat(cResult," +DNS update done");
 							else
 								strcat(cResult," +DNS update error");
@@ -5724,7 +5726,7 @@ while((field=mysql_fetch_row(res)))
 
 							if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
 								sContainer.cHostname,sContainer.uDatacenter,
-								guCompany,uCtContainer))
+								guCompany,uCtContainer,sContainer.uNode))
 									strcat(cResult," +DNS update done");
 							else
 								strcat(cResult," +DNS update error");
@@ -5798,7 +5800,7 @@ while((field=mysql_fetch_row(res)))
 
 							if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
 								sContainer.cHostname,sContainer.uDatacenter,
-								guLoginClient,uCtContainer))
+								guLoginClient,uCtContainer,sContainer.uNode))
 									strcat(cResult," +DNS update done");
 							else
 								strcat(cResult," +DNS update error");
@@ -6232,7 +6234,7 @@ while((field=mysql_fetch_row(res)))
 						{
 							SetContainerStatus(uCtContainer,71);
 							CreateDNSJob(uNewIPv4,sContainer.uOwner,"",sContainer.cHostname,
-								sContainer.uDatacenter,guLoginClient,uCtContainer);
+								sContainer.uDatacenter,guLoginClient,uCtContainer,sContainer.uNode);
 							sprintf(cResult,"change IP job created");
 						}
 						else
@@ -6274,7 +6276,7 @@ while((field=mysql_fetch_row(res)))
 					{
 						if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
 									sContainer.cHostname,sContainer.uDatacenter,
-									guLoginClient,uCtContainer))
+									guLoginClient,uCtContainer,sContainer.uNode))
 							sprintf(cResult,"DNS update done");
 						else
 							sprintf(cResult,"DNS update error");
@@ -8384,7 +8386,7 @@ unsigned CommonCloneContainer(
 
 //Create DNS job for unxsBind based on tContainer type.
 unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,
-				unsigned uDatacenter,unsigned uCreatedBy,unsigned uContainer)
+				unsigned uDatacenter,unsigned uCreatedBy,unsigned uContainer,unsigned uNode)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -8431,14 +8433,21 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		if((field=mysql_fetch_row(res)))
 			sprintf(cMainIPv4,"%.31s",field[0]);
 		mysql_free_result(res);
-
 		//exclude rfc1918 IP clones from creating wasteful dns entries.
-		if(sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
+		if(sscanf(cMainIPv4,"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
 		{
 			if( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10) ) 
-				return(0);
+			{
+				//a rfc1918 IP has been detected check for containter property
+				//	cOrg_PublicIP
+				char cOrg_PublicIP[256]={""};
+				GetContainerProp(uContainer,"cOrg_PublicIP",cOrg_PublicIP);
+				if(!cOrg_PublicIP[0])
+					return(0);
+				else
+					sprintf(cMainIPv4,"%.31s",cOrg_PublicIP);
+			}
 		}
-
 		sprintf(gcQuery,"SELECT tProperty.cValue FROM tContainer,tProperty"
 				" WHERE tProperty.uKey=tContainer.uContainer"
 				" AND tProperty.uType=3"//tType Container
@@ -8451,6 +8460,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		if((field=mysql_fetch_row(res)))
 			sscanf(field[0],"%u",&uMainPort);
 		mysql_free_result(res);
+
 		//Clone (backup) container
 		sprintf(cBackupIPv4,"%.31s",cMainIPv4);
 		sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uContainer FROM tIP,tContainer"
@@ -8463,15 +8473,25 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			//exclude rfc1918 IPs
-			if(sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
-			{
-				if( !( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10)) )
-					sprintf(cBackupIPv4,"%.31s",field[0]);
-			}
+			sprintf(cBackupIPv4,"%.31s",field[0]);
 			sscanf(field[1],"%u",&uCloneContainer);
 		}
 		mysql_free_result(res);
+		//exclude rfc1918 IP clones from creating wasteful dns entries.
+		if(sscanf(cBackupIPv4,"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
+		{
+			if( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10) ) 
+			{
+				//a rfc1918 IP has been detected check for containter property
+				//	cOrg_PublicIP
+				char cOrg_PublicIP[256]={""};
+				GetContainerProp(uCloneContainer,"cOrg_PublicIP",cOrg_PublicIP);
+				if(!cOrg_PublicIP[0])
+					return(0);
+				else
+					sprintf(cBackupIPv4,"%.31s",cOrg_PublicIP);
+			}
+		}
 		sprintf(gcQuery,"SELECT tProperty.cValue FROM tContainer,tProperty"
 				" WHERE tProperty.uKey=tContainer.uContainer"
 				" AND tProperty.uType=3"//tType Container

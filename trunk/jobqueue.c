@@ -6282,7 +6282,7 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 
 	//5-. Change the DNS A record to the new IP of the new node.
 	unsigned uCreateDNSJob=0;
-	if(!(uCreateDNSJob=CreateDNSJob(0,1,cIPv4,cHostname,uTargetDatacenter,1,uContainer)))
+	if(!(uCreateDNSJob=CreateDNSJob(0,1,cIPv4,cHostname,uTargetDatacenter,1,uContainer,uNode)))
 	{
 		logfileLine("DNSMoveContainer","CreateDNSJob() error");
 		tJobErrorUpdate(uJob,"create dns job");
