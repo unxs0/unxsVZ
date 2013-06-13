@@ -1715,30 +1715,6 @@ void ExttResourceCommands(pentry entries[], int x)
 			else
 				tResource("<blink>Error</blink>: Denied by permissions settings");
 		}
-                else if(!strcmp(gcCommand,"Delete Records"))
-                {
-                        ProcesstResourceVars(entries,x);
-			if(guPermLevel>=12 && guLoginClient==1) //Root only operation
-			{
-				sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%u",uZone);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					tResource(mysql_error(&gMysql));
-				tResource("Delete records done");
-			}
-			else
-				tResource("<blink>Error</blink>: Denied by permissions settings");
-		}
-/*
-                else if(!strcmp(gcCommand,"Delete Selected Records"))
-                {
-			if(guPermLevel>=12 && guLoginClient==1) //Root only operation
-			{
-				guGrpDelete=1;
-                        	ProcesstResourceVars(entries,x);
-			}
-		}
-*/
                 else if(!strncmp(gcCommand,"Group ",6) || !strncmp(gcCommand,"Delete Checked",14))
                 {
 			ProcesstResourceVars(entries,x);
@@ -1846,12 +1822,6 @@ void ExttResourceButtons(void)
                 case 2001:
 			printf("<p><u>Think twice</u><br>");
                         printf(LANG_NBB_CONFIRMDEL);
-			if(guPermLevel>11 && guLoginClient==1)
-			{
-				printf("<p><u>Are you sure you want to remove all RRs from this zone?</u><br>");
-				printf("<input title='Will remove all records for this zone' "
-					"class=lwarnButton type=submit name=gcCommand value='Delete Records'>");
-			}
                 break;
 
                 case 2002:
