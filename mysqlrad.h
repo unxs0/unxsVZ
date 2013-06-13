@@ -286,7 +286,7 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,
 				unsigned uOwner,unsigned uCreatedBy,unsigned uCloneStop);
 unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,
-				unsigned uDatacenter,unsigned uCreatedBy,unsigned uContainer);
+				unsigned uDatacenter,unsigned uCreatedBy,unsigned uContainer,unsigned uNode);
 
 //tProperty
 int tPropertyCommands(pentry entries[], int x);

@@ -3774,7 +3774,7 @@ void MassCreateContainers(char *cConfigfileName)
 				}//cAutoCloneNode
 
 				if(uDNSJob)
-					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,1,uContainer);
+					CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,1,uContainer,uNode);
 
 			}//valid hostname and label
 		}
