@@ -38,7 +38,7 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 void CreateIptablesData(char *cSourceIPv4);
 void CreateSquidData(char *cSourceIPv4);
 void UpdateBind(char *cSourceIPv4);
-void ChangeFreePBX(char *cExternalIP,char *cLAN);
+void ChangeFreePBX(void);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 void unxsBindARecordJob2(unsigned uContainer,char const *cHostname,char const *cIPv4);
 void unxsBindSIPSRVRecordJob(unsigned uContainer,char const *cHostname,unsigned uSIPPort);
@@ -54,6 +54,7 @@ void unxsBindSIPSRVDelRecordJob(unsigned uContainer,char const *cHostname,unsign
 void AddPublicIP(char *cSourceIPv4);
 void GetZabbixPort(char *cHostname);
 const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -152,6 +153,11 @@ int main(int iArgc, char *cArgv[])
 			UpdateNonNatPBXContainers();
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"ChangeFreePBX",13))
+		{
+			ChangeFreePBX();
+			goto CommonExit;
+		}
 	}
 	else if(iArgc==3)
 	{
@@ -191,19 +197,9 @@ int main(int iArgc, char *cArgv[])
 			goto CommonExit;
 		}
 	}
-	else if(iArgc==4)
-	{
-		if(!strncmp(cArgv[1],"ChangeFreePBX",13))
-		{
-			ChangeFreePBX(cArgv[2],cArgv[3]);
-			goto CommonExit;
-		}
-	}
-
 	printf("Usage: %s\nUpdateNonNatPBXContainers\nCreateIptablesData|CreateSquidData|UpdateBind|AddPublicIP <Source cIPv4>\n"
-		"ChangeFreePBX <External cIPv4> <LAN E.g. 10.0.0.0/255.255.255.0>\nAddSIPSRV <uVEID>\nDelSIPSRV <cHostname>\n"
+		"ChangeFreePBX\nAddSIPSRV <uVEID>\nDelSIPSRV <cHostname>\n"
 		"GetZabbixPort <cHostname>\n",gcProgram);
-
 CommonExit:
 	mysql_close(&gMysql);
 	fclose(gLfp);
@@ -431,79 +427,52 @@ acl our_sites dstdomain 72.52.75.235
 }//void CreateSquidData()
 
 
-void ChangeFreePBX(char *cExternalIP,char *cLAN)
+//This new version must be run AFTER CreateIptablesData()
+void ChangeFreePBX(void)
 {
-        MYSQL_RES *res;
-        MYSQL_ROW field;
 	unsigned uContainer=0;
-	char cMask[16];
-	unsigned uA=0,uB=0,uC=0,uD=0,umA=0,umB=0,umC=0,umD=0;
+	logfileLine("ChangeFreePBX","start",uContainer);
 
-	sscanf(cLAN,"%u.%u.%u.%u/%u.%u.%u.%u",&uA,&uB,&uC,&uD,&umA,&umB,&umC,&umD);
-	sprintf(cLAN,"%u.%u.%u.%u",uA,uB,uC,uD);
-	sprintf(cMask,"%u.%u.%u.%u",umA,umB,umC,umD);
-
-	printf("ChangeFreePBX() %s/%s\n",cLAN,cMask);
-
-	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel,tContainer.cHostname FROM tIP,tContainer,tGroupGlue,tGroup"
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
 			" AND tGroup.cLabel LIKE '%%PBX%%'"
 			" AND tContainer.uSource!=0"
+			" AND tContainer.uStatus=1"
 			" AND tContainer.uSource NOT IN (SELECT uContainer FROM tContainer WHERE uSource=0 AND uDatacenter=%u)"
 			" AND tContainer.uNode=%u",guDatacenter,guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		fprintf(stderr,gcQuery);
 		logfileLine("ChangeFreePBX",mysql_error(&gMysql),uContainer);
 		mysql_close(&gMysql);
 		exit(2);
 	}
+        MYSQL_RES *res;
+        MYSQL_ROW field;
         res=mysql_store_result(&gMysql);
-/*
-;
-; RTP Configuration
-;
-[general]
-;
-; RTP start and RTP end configure start and end addresses
-; These are the addresses where your system will RECEIVE audio and video streams.
-; If you have connections across a firewall, make sure that these are open.
-;
-rtpstart=10900
-rtpend=10999
-*/
-	unsigned uPort;
-	unsigned uRangeEnd;
-	FILE *fp;
-	char cCommand[128];
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uContainer);
 
-		unsigned uD=0;
-		sscanf(field[1],"%*u.%*u.%*u.%u",&uD);
-		if(!uD)
-		{
-			fprintf(stderr,"cIPv4 scan error\n");
-			logfileLine("ChangeFreePBX",field[1],uContainer);
-			continue;
-		}
-
+		//Data for asterisk rtp range file
+		FILE *fp;
 		char cFile[128];
-		sprintf(cFile,"/vz/root/%u/etc/asterisk/rtp.conf",uContainer);
+		sprintf(cFile,"/vz/root/%u/etc/unxsvz",uContainer);
+		mkdir(cFile,S_IRWXU);
+		sprintf(cFile,"/vz/root/%u/etc/unxsvz/asterisk",uContainer);
+		mkdir(cFile,S_IRWXU);
+		sprintf(cFile,"/vz/root/%u/etc/unxsvz/asterisk/rtp.conf",uContainer);
 		if((fp=fopen(cFile,"w"))==NULL)
 		{
-			sprintf(cCommand,"%.99s file open error\n",cFile);
-			fprintf(stderr,cCommand);
 			logfileLine("ChangeFreePBX",cFile,uContainer);
 			continue;
 		}
-
 		//rtp rtcp port ranges
 		char cPort[32]={""};
+		unsigned uPort;
+		unsigned uRangeEnd;
 		uPort=10000;
 		uRangeEnd=20000;
 		GetContainerProp(uContainer,"cOrg_RTPRange",cPort);
@@ -514,83 +483,54 @@ rtpend=10999
 		fclose(fp);
 
 
-		//Change /etc/zabbix/zabbix_agentd.conf
-		//Add or modify 
-		//ListenPort=9010
-		sprintf(cFile,"/vz/root/%u/etc/zabbix/zabbix_agentd.conf",uContainer);
-
+		//Data for /etc/zabbix/zabbix_agentd.conf
+		sprintf(cFile,"/vz/root/%u/etc/unxsvz/zabbix",uContainer);
+		mkdir(cFile,S_IRWXU);
+		sprintf(cFile,"/vz/root/%u/etc/unxsvz/zabbix/zabbix_agentd.conf",uContainer);
 		uPort=10050;
 		cPort[0]=0;
 		GetContainerProp(uContainer,"cOrg_ZabbixPort",cPort);
 		sscanf(cPort,"%u",&uPort);
-		sprintf(cCommand,"grep -w ListenPort %s",cFile);
-		if(system(cCommand))
+		if((fp=fopen(cFile,"w"))==NULL)
 		{
-			sprintf(cCommand,"echo 'ListenPort=%u' >> %s",uPort,cFile);
-			system(cCommand);
+			logfileLine("ChangeFreePBX",cFile,uContainer);
+			continue;
 		}
-		else
-		{
-			sprintf(cCommand,"sed -i -e 's/ListenPort=.*/ListenPort=%u/' %s",uPort,cFile);
-			system(cCommand);
-		}
-		
-		//restart 
-		sprintf(cCommand,"vzctl exec2 %u 'service iptables stop'",uContainer);
-		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 iptables off'",uContainer);
-		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'service fail2ban stop'",uContainer);
-		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 fail2ban off'",uContainer);
-		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'service sshd stop'",uContainer);
-		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 sshd off'",uContainer);
-		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'service zabbix_agentd restart'",uContainer);
-		system(cCommand);
-		sprintf(cCommand,"/usr/sbin/UpdateZabbixHostPort.sh %s %u",field[2],uPort);
-		system(cCommand);
+		fprintf(fp,"ListenPort=%u\n",uPort);
+		fclose(fp);
 
-		//Change FreePBX MySQL data
-		//Having problems with weird FreePBX table order this is a fast way to get things done.
-		//This will not port easy.
-		sprintf(cCommand,"/bin/cp ./sipsettings.MYD /vz/root/%u/var/lib/mysql/asterisk/",uContainer);
-		if(!system(cCommand))
+		//Data for NAT configuration of asterisk
+		char cOrg_PublicIP[256]={""};
+		sprintf(cFile,"/vz/root/%u/etc/unxsvz/asterisk/externip",uContainer);
+		GetContainerProp(uContainer,"cOrg_PublicIP",cOrg_PublicIP);
+		if((fp=fopen(cFile,"w"))==NULL)
 		{
-			sprintf(cCommand,"/bin/cp ./sipsettings.MYI /vz/root/%u/var/lib/mysql/asterisk/",uContainer);
-			if(!system(cCommand))
-			{
-				uPort=5060;
-				cPort[0]=0;
-				GetContainerProp(uContainer,"cOrg_SIPPort",cPort);
-				sscanf(cPort,"%u",&uPort);
-				sprintf(cCommand,"sed -i -e 's/6005/%u/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",uPort,uContainer);
-				system(cCommand);
-				sprintf(cCommand,"sed -i -e 's/10.0.4.0/%s/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",cLAN,uContainer);
-				system(cCommand);
-				sprintf(cCommand,"sed -i -e 's/255.255.255.0/%s/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",cMask,uContainer);
-				system(cCommand);
-				sprintf(cCommand,"sed -i -e 's/192.168.192.168/%s/' /vz/root/%u/var/lib/mysql/asterisk/sipsettings.MYD",
-						cExternalIP,uContainer);
-				system(cCommand);
-			}
-
-			//pull conf files from db
-			sprintf(cCommand,"vzctl exec2 %u '/var/lib/asterisk/bin/retrieve_conf'",uContainer);
-			system(cCommand);
+			logfileLine("ChangeFreePBX",cFile,uContainer);
+			continue;
 		}
-		else
+		fprintf(fp,"%s\n",cOrg_PublicIP);
+		fclose(fp);
+
+		char cPrivateNATNetwork[256]={""};
+		sprintf(cFile,"/vz/root/%u/etc/unxsvz/asterisk/localnet",uContainer);
+		GetNodeProp(guNode,"cPrivateNATNetwork",cPrivateNATNetwork);
+		if((fp=fopen(cFile,"w"))==NULL)
 		{
-			fprintf(stderr,"Missing ./sipsettings.MYD\n");
+			logfileLine("ChangeFreePBX",cFile,uContainer);
+			continue;
 		}
+	 	unsigned uA=0,uB=0,uC=0;
+		sscanf(field[1],"%u.%u.%u.%*u",&uA,&uB,&uC);
+		fprintf(fp,"%u.%u.%u.0/%s\n",uA,uB,uC,cPrivateNATNetwork);
+		fclose(fp);
 
-		//restart the whole thing ok since not in use supposedly
-		sprintf(cCommand,"vzctl exec2 %u 'service asterisk restart'",uContainer);
-		system(cCommand);
+		//debug only
+		//logfileLine("ChangeFreePBX","container",uContainer);
+		//break;
 	}
 	mysql_free_result(res);
+
+	logfileLine("ChangeFreePBX","end",uContainer);
 
 }//void ChangeFreePBX()
 
@@ -683,6 +623,7 @@ void SetContainerProp(const unsigned uContainer,const char *cName,const char *cV
 
 void unxsBindARecordJob2(unsigned uContainer,char const *cHostname,char const *cIPv4)
 {
+	return;//this should not be used yet.
 #define uREMOTEWAITING 10
 	char cJobData[512]={""};
 
@@ -789,6 +730,7 @@ void GetTextConfiguration(const char *cName,char *cValue,
 
 void UpdateBind(char *cSourceIPv4)
 {
+	return;//this should not be used yet.
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uContainer=0;
@@ -833,6 +775,7 @@ void UpdateBind(char *cSourceIPv4)
 
 void unxsBindSIPSRVRecordJob(unsigned uContainer,char const *cHostname,unsigned uSIPPort)
 {
+	return;//this should not be used yet.
 #define uREMOTEWAITING 10
 	char cJobData[512]={""};
 
@@ -900,6 +843,7 @@ void unxsBindSIPSRVRecordJob(unsigned uContainer,char const *cHostname,unsigned 
 
 void UpdateNonNatPBXContainers(void)
 {
+	return;//this should not be used yet.
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uContainer=0;
@@ -936,6 +880,7 @@ void UpdateNonNatPBXContainers(void)
 
 void AddSIPSRV(char *cuContainer)
 {
+	return;//this should not be used yet.
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uContainer=0;
@@ -979,6 +924,7 @@ void AddSIPSRV(char *cuContainer)
 
 void DelSIPSRV(char *cHostname)
 {
+	return;//this should not be used yet.
 	unxsBindSIPSRVDelRecordJob(0,cHostname,0);
 
 }//void DelSIPSRV()
@@ -986,6 +932,7 @@ void DelSIPSRV(char *cHostname)
 
 void unxsBindSIPSRVDelRecordJob(unsigned uContainer,char const *cHostname,unsigned uSIPPort)
 {
+	return;//this should not be used yet.
 	char cJobData[512]={""};
 
 	//If called in loop be efficient.
@@ -1056,6 +1003,8 @@ void AddPublicIP(char *cSourceIPv4)
         MYSQL_ROW field;
 	unsigned uContainer=0;
 
+	return;//this should not be used yet.
+
 	sprintf(gcQuery,"SELECT tContainer.uContainer FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
@@ -1066,7 +1015,7 @@ void AddPublicIP(char *cSourceIPv4)
 	if(mysql_errno(&gMysql))
 	{
 		fprintf(stderr,gcQuery);
-		logfileLine("CreateIptablesData",mysql_error(&gMysql),uContainer);
+		logfileLine("AddPublicIP",mysql_error(&gMysql),uContainer);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -1087,6 +1036,8 @@ void GetZabbixPort(char *cHostname)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+
+	return;//this should not be used yet.
 
 	sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
@@ -1155,3 +1106,30 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
 }//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
 
 
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uNode==0) return;
+
+	//2 is node
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",
+				uNode,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("GetNodeProp",mysql_error(&gMysql),0);
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetNodeProp()
