@@ -254,6 +254,10 @@ void CreateIptablesData(char *cSourceIPv4)
 				continue;	
 		}
 
+		//We may need to reference this later
+		//sprintf(cPort,"%u",uD);
+		//SetContainerProp(uContainer,"cOrg_uPortOffset",cPort);
+
 		//Admin web port
 		uPort=8000+uD;
 		//Also save port info in tProperty
@@ -291,7 +295,7 @@ void CreateIptablesData(char *cSourceIPv4)
 			uOnlyOnce=0;
 		}
 
-		uD++;
+		uD++;//Next port offset value
 
 		if(uD==101)
 		{
@@ -433,7 +437,7 @@ void ChangeFreePBX(void)
 	unsigned uContainer=0;
 	logfileLine("ChangeFreePBX","start",uContainer);
 
-	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel,tContainer.cHostname FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
@@ -499,6 +503,24 @@ void ChangeFreePBX(void)
 		fprintf(fp,"ListenPort=%u\n",uPort);
 		fclose(fp);
 
+		//Change /etc/zabbix/zabbix_agentd.conf
+		//Add or modify 
+		//ListenPort=9010
+		sprintf(cFile,"/vz/root/%u/etc/zabbix/zabbix_agentd.conf",uContainer);
+
+		char cCommand[256];//used in other system calls below
+		sprintf(cCommand,"grep -w ListenPort %s",cFile);
+		if(system(cCommand))
+		{
+			sprintf(cCommand,"echo 'ListenPort=%u' >> %s",uPort,cFile);
+			system(cCommand);
+		}
+		else
+		{
+			sprintf(cCommand,"sed -i -e 's/ListenPort=.*/ListenPort=%u/' %s",uPort,cFile);
+			system(cCommand);
+		}
+
 		//Data for NAT configuration of asterisk
 		char cOrg_PublicIP[256]={""};
 		sprintf(cFile,"/vz/root/%u/etc/unxsvz/asterisk/externip",uContainer);
@@ -527,6 +549,24 @@ void ChangeFreePBX(void)
 		//debug only
 		//logfileLine("ChangeFreePBX","container",uContainer);
 		//break;
+
+		//Turn off things not required or in the way
+		sprintf(cCommand,"vzctl exec2 %u 'service iptables stop'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 iptables off'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'service fail2ban stop'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 fail2ban off'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'service sshd stop'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 sshd off'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"vzctl exec2 %u 'service zabbix_agentd restart'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"/usr/sbin/UpdateZabbixHostPort.sh %s %u",field[2],uPort);
+		system(cCommand);
 	}
 	mysql_free_result(res);
 
