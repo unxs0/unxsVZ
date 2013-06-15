@@ -6406,6 +6406,22 @@ void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cVal
 void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 {
 
+	//Roadmap
+	//At group function in tcontainerfunc.h
+	//	Check to make sure container is of correct type
+	//	Check to make sure that required node properties exist
+	//	"cPublicNATIP" and "cPrivateNATNetwork"
+	//	Update container to private IP based on "cPrivateNATNetwork"
+	//	Create a single per node job to run the iptables setup of the unxsNAT program.
+	//	Optionally create a single job per node to run the reverse proxy setup of 
+	//	the unxsNAT program.
+	//Here:
+	//	We verify security for script
+	//	Create system command for script
+	//	Execute the script
+	//The script:
+	//	ChangeFreePBX part of unxsNAT program for a single container.
+
 	//Gather NAT data
 	char cPublicNATIP[256]={""};
 	GetNodeProp(uNode,"cPublicNATIP",cPublicNATIP);
@@ -6445,9 +6461,11 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 		return;
 	}
         res=mysql_store_result(&gMysql);
-	char cCommand[256]={"/usr/sbin/ActivateNATContainer.sh"};//default
+	char cCommand[256];
+	//default command setup	
+	sprintf(cCommand,"/usr/sbin/ActivateNATContainer.sh %u %.15s %.31s",uContainer,cPublicNATIP,cPrivateNATNetwork);
 	if((field=mysql_fetch_row(res)))
-		sprintf(cCommand,"%.255s",field[0]);
+		sprintf(cCommand,"%.255s %u %.15s %.31s",field[0],uContainer,cPublicNATIP,cPrivateNATNetwork);
 	mysql_free_result(res);
 
 	//Remove trailing junk
