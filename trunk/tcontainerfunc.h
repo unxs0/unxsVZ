@@ -513,6 +513,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			uDatacenter=0;
 			uNode=0;
 			uSourceNode=0;
+			uSourceDatacenter=0;
 			uForClient=0;
 			uSearchSource=0;
 			uSearchStatus=0;
@@ -581,7 +582,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				}//if(cCommands[0])
 
 				if(cLabelSearch[0]==0 && cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
-						&& uForClient==0 && uOSTemplate==0 && uSearchGroup==0)
+						&& uForClient==0 && uOSTemplate==0 && uSearchGroup==0 && uSourceNode==0 && uSourceDatacenter==0)
 	                        	tContainer("You must specify at least one search parameter");
 
 
@@ -637,7 +638,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
-				if(uSourceNode)
+				if(uSourceNode && !uSourceDatacenter)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
@@ -645,6 +646,16 @@ void ExttContainerCommands(pentry entries[], int x)
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
+
+				if(uSourceDatacenter && !uSourceNode)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uSource IN (SELECT uContainer FROM tContainer WHERE uDatacenter=%u)",uSourceDatacenter);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
 
 				if(uSearchStatus)
 				{
@@ -736,7 +747,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				unsigned uNumber=0;
 
 				if(cLabelSearch[0]==0 && cHostnameSearch[0]==0 && cIPv4Search[0]==0 && uDatacenter==0 && uNode==0 && uSearchStatus==0
-						&& uForClient==0 && uOSTemplate==0 && cCommands[0]==0 && uSearchGroup==0 )
+						&& uForClient==0 && uOSTemplate==0 && cCommands[0]==0 && uSearchGroup==0 && uSourceNode==0 && 
+							uSourceDatacenter==0)
 	                        	tContainer("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,2))==0)
@@ -879,11 +891,20 @@ void ExttContainerCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
-				if(uSourceNode)
+				if(uSourceNode && !uSourceDatacenter)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," uSource IN (SELECT uContainer FROM tContainer WHERE uNode=%u)",uSourceNode);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uSourceDatacenter && !uSourceNode)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uSource IN (SELECT uContainer FROM tContainer WHERE uDatacenter=%u)",uSourceDatacenter);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -6279,7 +6300,7 @@ while((field=mysql_fetch_row(res)))
 									guLoginClient,uCtContainer,sContainer.uNode))
 							sprintf(cResult,"DNS update done");
 						else
-							sprintf(cResult,"DNS update error");
+							sprintf(cResult,"DNS update error. No public IP?");
 					}
 					else
 					{
@@ -8486,10 +8507,10 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 				//	cOrg_PublicIP
 				char cOrg_PublicIP[256]={""};
 				GetContainerProp(uCloneContainer,"cOrg_PublicIP",cOrg_PublicIP);
-				if(!cOrg_PublicIP[0])
-					return(0);
-				else
+				if(cOrg_PublicIP[0])
 					sprintf(cBackupIPv4,"%.31s",cOrg_PublicIP);
+				else
+					sprintf(cBackupIPv4,"%.31s",cMainIPv4);
 			}
 		}
 		sprintf(gcQuery,"SELECT tProperty.cValue FROM tContainer,tProperty"

@@ -48,7 +48,9 @@ static char cuDatacenterPullDown[256]={""};
 static unsigned uNode=0;
 static char cuNodePullDown[256]={""};
 static unsigned uSourceNode=0;
+static unsigned uSourceDatacenter=0;
 static char cuSourceNodePullDown[256]={""};
+static char cuSourceDatacenterPullDown[256]={""};
 //uStatus: Status of Container
 static unsigned uStatus=0;
 //uOwner: Record owner
@@ -193,6 +195,13 @@ void ProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cuNodePullDown,"%.255s",entries[i].val);
 			uNode=ReadPullDown("tNode","cLabel",cuNodePullDown);
+		}
+		else if(!strcmp(entries[i].name,"uSourceDatacenter"))
+			sscanf(entries[i].val,"%u",&uSourceDatacenter);
+		else if(!strcmp(entries[i].name,"cuSourceDatacenterPullDown"))
+		{
+			sprintf(cuSourceDatacenterPullDown,"%.255s",entries[i].val);
+			uSourceDatacenter=ReadPullDown("tDatacenter","cLabel",cuSourceDatacenterPullDown);
 		}
 		else if(!strcmp(entries[i].name,"uSourceNode"))
 			sscanf(entries[i].val,"%u",&uSourceNode);
@@ -469,6 +478,8 @@ void tContainerSearchSet(unsigned uStep)
 	tContainerGroupPullDown(uSearchGroup,1,"ctContainerSearchGroupPullDown");
 	OpenRow("Source node","black");
 	tTablePullDown("tNode;cuSourceNodePullDown","cLabel","cLabel",uSourceNode,1);
+	OpenRow("Source datacenter","black");
+	tTablePullDown("tDatacenter;cuSourceDatacenterPullDown","cLabel","cLabel",uSourceDatacenter,1);
 
 	if(uStep==1)
 	{

@@ -13,6 +13,9 @@ if [ "$2" == "" ];then
 	exit 0;
 fi
 
+#set for your zabbix server and port
+cZabbixServer="zabbix.yourisp.net";
+
 #Set for your user and password
 #login
 cat << EOF > /tmp/login.json
@@ -20,8 +23,8 @@ cat << EOF > /tmp/login.json
 	"jsonrpc":"2.0",
 	"method":"user.login",
 	"params":{
-			"user":"apiuser",
-			"password":"changeme"
+			"user":"apiuser-change",
+			"password":"foobar-change"
 	},
 	"id":1
 }
@@ -29,7 +32,12 @@ EOF
 
 cAuth=`/usr/bin/wget --quiet --no-check-certificate --post-file=/tmp/login.json --output-document=-\
 	 --header='Content-Type: application/json-rpc'\
-	 https://c3.cloud.net:933/zabbix/api_jsonrpc.php | cut -f 3 -d : | cut -f 2 -d \"`;
+	 https://$cZabbixServer/zabbix/api_jsonrpc.php | cut -f 3 -d : | cut -f 2 -d \"`;
+
+#debug only
+#echo "$cAuth";
+#exit;
+
 if [ $? != 0 ];then
 	echo "wget error 0";
 	exit 1;
@@ -60,7 +68,7 @@ EOF
 
 uHostID=`/usr/bin/wget --quiet --no-check-certificate --post-file=/tmp/gethost.json --output-document=-\
 	 --header='Content-Type: application/json-rpc'\
-	 https://c3.cloud.net:933/zabbix/api_jsonrpc.php | cut -f 4 -d : | cut -f 2 -d \"`;
+	 https://$cZabbixServer/zabbix/api_jsonrpc.php | cut -f 4 -d : | cut -f 2 -d \"`;
 if [ $? != 0 ];then
 	echo "wget error 1";
 	exit 1;
@@ -84,7 +92,7 @@ EOF
 
 /usr/bin/wget --quiet --no-check-certificate --post-file=/tmp/hostupdateport.json --output-document=-\
 	 --header='Content-Type: application/json-rpc'\
-	 https://c3.cloud.net:933/zabbix/api_jsonrpc.php > /dev/null;
+	 https://$cZabbixServer/zabbix/api_jsonrpc.php > /dev/null;
 if [ $? != 0 ];then
 	echo "wget error 2";
 	exit 1;
