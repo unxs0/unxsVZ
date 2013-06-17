@@ -161,6 +161,7 @@ unsigned uCheckMaxCloneContainers(unsigned uNode);
 void UpdateNamesFromCloneToBackup(unsigned uContainer);
 void UpdateNamesFromBackupToClone(unsigned uContainer);
 unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
+unsigned uChangeContainerIPToPrivate(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -4615,8 +4616,10 @@ void ExttContainerAuxTable(void)
 				" Updates DNS records if so configured. Changes name back to -clone from -backup.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Deactivate Backup'>\n");
-			printf("&nbsp; <input title='Creates job(s) for configuring running container(s) to use NAT on a given hardware node."
-				" Updates DNS records if so configured. Uses primary container tGroup to select which script to run.'"
+			printf("&nbsp; <input title='Changes public IP to rfc1918 IP if required. Creates a single job"
+				" for configuring running container(s) to use NAT on a given hardware node."
+				" Updates DNS records if so configured. Optionally uses primary container tGroup to select"
+				" which node script to run, if none uses default /usr/sbin/ActivateNATContainer.sh script'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Activate NAT'>\n");
 			CloseFieldSet();
@@ -5738,6 +5741,31 @@ while((field=mysql_fetch_row(res)))
 					if((sContainer.uStatus==uACTIVE)
 						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
+						//Check to see of node is configured
+						char cBuffer[256]={""};
+						GetNodeProp(sContainer.uNode,"cPublicNATIP",cBuffer);
+						if(!cBuffer[0])
+						{
+							sprintf(cResult,"No cPublicNATIP for node");
+							break;
+						}
+	
+						GetNodeProp(sContainer.uNode,"cPrivateNATNetwork",cBuffer);
+						if(!cBuffer[0])
+						{
+							sprintf(cResult,"No cPrivateNATNetwork for node");
+							break;
+						}
+
+						//Change IP if required
+						if(uChangeContainerIPToPrivate(uCtContainer,sContainer.uDatacenter,sContainer.uNode,
+								sContainer.uIPv4,sContainer.uOwner))
+						{
+							sprintf(cResult,"ChangeContainerIPToPrivate error");
+							break;
+						}
+						
+
 						uOwner=guCompany;
 						if(CreateActivateNATContainerJob(sContainer.uDatacenter,
 							sContainer.uNode,uCtContainer,guCompany))
@@ -9216,6 +9244,25 @@ unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsig
 		luJobDate+=luJobTime;
 	}
 
+	//we only need one job per hardware node
+	MYSQL_RES *res;
+	sprintf(gcQuery,"SELECT uJob FROM tJob"
+			" WHERE cJobName='ActivateNATContainer'"
+			" AND uDatacenter=%u"
+			" AND uNode=%u"
+			" AND uJobStatus=1",//must still be waiting
+				uDatacenter,uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{
+		mysql_free_result(res);
+		return(0);
+	}
+	mysql_free_result(res);
+
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateActivateNATContainerJob(%u)',cJobName='ActivateNATContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
@@ -9235,3 +9282,55 @@ unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsig
 
 }//unsigned CreateActivateNATContainerJob()
 
+
+unsigned uChangeContainerIPToPrivate(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner)
+{
+	char cAutoCloneIPClass[256]={""};
+	GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,uNode,0,0);//First try node specific
+	if(!cAutoCloneIPClass[0])
+	{
+		GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,0,0,0);//Then datacenter
+	}
+
+	if(!cAutoCloneIPClass[0])
+		sprintf(cAutoCloneIPClass,"%%");
+
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uIP=0;
+	sprintf(gcQuery,"SELECT uIP FROM tIP"
+			" WHERE cIP LIKE '%s.%%'"
+			" AND (cIP LIKE '10.%%'"
+			" OR cIP LIKE '192.168.%%' OR cIP LIKE '172.16.%%.%%' OR"
+			" cIP LIKE '172.17.%%.%%' OR cIP LIKE '172.18.%%.%%')"
+			" AND uDatacenter=%u"
+			" AND uAvailable=1"
+			" AND uOwner=%u",
+				cAutoCloneIPClass,uDatacenter,uOwner);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return(2);
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uIP);
+	mysql_free_result(res);
+
+	if(!uIP)
+		return(1);
+
+	sprintf(gcQuery,"UPDATE tContainer WHERE uContainer=%u SET uIPv4=%u,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u",
+			uContainer,uIP,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return(3);
+	sprintf(gcQuery,"UPDATE tIP WHERE uIP=%u SET uAvailable=1,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u",uIPv4,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return(4);
+	sprintf(gcQuery,"UPDATE tIP WHERE uIP=%u SET uAvailable=0,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u",uIP,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return(5);
+
+	return(0);
+}//unsigned uChangeContainerIPToPrivate()
