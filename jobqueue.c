@@ -6411,16 +6411,16 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//	Check to make sure container is of correct type
 	//	Check to make sure that required node properties exist
 	//	"cPublicNATIP" and "cPrivateNATNetwork"
-	//	Update container to private IP based on "cPrivateNATNetwork"
+	//	Update container to private IP based on available rfc1918 IPs for the given node/datacenter
+	//	and if exists a tConfiguration cAutoCloneIPClass SQL pattern
 	//	Create a single per node job to run the iptables setup of the unxsNAT program.
-	//	Optionally create a single job per node to run the reverse proxy setup of 
-	//	the unxsNAT program.
 	//Here:
 	//	We verify security for script
 	//	Create system command for script
 	//	Execute the script
 	//The script:
 	//	ChangeFreePBX part of unxsNAT program for a single container.
+	//	Optionally run the reverse proxy setup of the unxsNAT program.
 
 	//Gather NAT data
 	char cPublicNATIP[256]={""};
