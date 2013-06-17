@@ -9285,6 +9285,13 @@ unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsig
 
 unsigned uChangeContainerIPToPrivate(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner)
 {
+	char cCurrentIP[32]={""};
+	unsigned uA=0,uB=0,uC=0;
+	sprintf(cCurrentIP,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
+	if(sscanf(cCurrentIP,"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
+		if( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10) ) 
+			return(0);//already rfc1918
+
 	char cAutoCloneIPClass[256]={""};
 	GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,uNode,0,0);//First try node specific
 	if(!cAutoCloneIPClass[0])
@@ -9299,10 +9306,10 @@ unsigned uChangeContainerIPToPrivate(unsigned uCtContainer,unsigned uDatacenter,
 	MYSQL_ROW field;
 	unsigned uIP=0;
 	sprintf(gcQuery,"SELECT uIP FROM tIP"
-			" WHERE cIP LIKE '%s.%%'"
-			" AND (cIP LIKE '10.%%'"
-			" OR cIP LIKE '192.168.%%' OR cIP LIKE '172.16.%%.%%' OR"
-			" cIP LIKE '172.17.%%.%%' OR cIP LIKE '172.18.%%.%%')"
+			" WHERE cLabel LIKE '%s.%%'"
+			" AND (cLabel LIKE '10.%%'"
+			" OR cLabel LIKE '192.168.%%' OR cLabel LIKE '172.16.%%.%%' OR"
+			" cLabel LIKE '172.17.%%.%%' OR cLabel LIKE '172.18.%%.%%')"
 			" AND uDatacenter=%u"
 			" AND uAvailable=1"
 			" AND uOwner=%u",
