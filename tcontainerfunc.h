@@ -4532,7 +4532,8 @@ void ExttContainerAuxTable(void)
 				" If active, containers may be stopped for several minutes if not setup for vzdump snapshot.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Template'>\n");
-			printf("&nbsp; <input title='Deletes initial setup or awaiting intial setup clone container(s) and optionally their clones.'"
+			printf("&nbsp; <input title='Deletes initial setup or awaiting intial setup clone containers."
+				" And optionally their clones by setting guOpOnClones checkbox.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Delete'>\n");
 			printf("&nbsp; <input title='Deletes any existing container group association then adds selected group to selected containers."
@@ -5255,6 +5256,9 @@ while((field=mysql_fetch_row(res)))
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
+						//debug only
+						//sprintf(cResult,"debug 4");
+						//break;
 						CancelContainerJob(sContainer.uDatacenter,sContainer.uNode,
 							uCtContainer,0);//0 is not specific cancel job attempt
 						//81=Awaiting clone. TODO properties of clones may
@@ -5264,8 +5268,9 @@ while((field=mysql_fetch_row(res)))
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
-						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer="
-						"(SELECT uContainer FROM tContainer WHERE uSource=%u AND uStatus=81)",uContainer);
+						//awaiting clone containers in groups
+						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer IN"
+						" (SELECT uContainer FROM tContainer WHERE uSource=%u AND uStatus=81)",uCtContainer);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -5338,7 +5343,7 @@ while((field=mysql_fetch_row(res)))
 								if(mysql_errno(&gMysql))
 									htmlPlainTextError(mysql_error(&gMysql));
 								sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE"
-										" uContainer=(SELECT uContainer FROM tContainer"
+										" uContainer IN (SELECT uContainer FROM tContainer"
 										" WHERE uSource=%u AND uStatus=81)",uContainer);
 								mysql_query(&gMysql,gcQuery);
 								if(mysql_errno(&gMysql))
@@ -6587,7 +6592,8 @@ void ExttContainerListSelect(void)
 			strcat(gcQuery," WHERE ");
 		else
 			strcat(gcQuery," AND ");
-		sprintf(cCat,"tContainer.uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u) ORDER BY uOwner,uContainer",uGroup);
+		sprintf(cCat,"tContainer.uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)"
+			" ORDER BY uOwner,uContainer",uGroup);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -7051,7 +7057,7 @@ unsigned CancelContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 
 	//Also cancel any jobs for uContainer's clones 1=Waiting 10=RemoteWaiting, 14=Error
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE"
-			" uContainer=(SELECT uContainer FROM tContainer WHERE uSource=%u) AND"
+			" uContainer IN (SELECT uContainer FROM tContainer WHERE uSource=%u) AND"
 			" (uJobStatus=1 OR uJobStatus=10 OR uJobStatus=14)",uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -7060,7 +7066,7 @@ unsigned CancelContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 
 	//Also cancel master container clone jobs
 	sprintf(gcQuery,"UPDATE tJob SET uJobStatus=7 WHERE"
-			" uContainer=(SELECT uSource FROM tContainer WHERE uContainer=%u) AND"
+			" uContainer IN (SELECT uSource FROM tContainer WHERE uContainer=%u) AND"
 			" (uJobStatus=1 OR uJobStatus=10 OR uJobStatus=14) AND cJobName='CloneContainer'",uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
