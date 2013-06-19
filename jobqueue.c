@@ -6410,7 +6410,7 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//At group function in tcontainerfunc.h
 	//	Check to make sure container is of correct type
 	//	Check to make sure that required node properties exist
-	//	"cPublicNATIP" and "cPrivateNATNetwork"
+	//		"cPublicNATIP" and "cPrivateNATNetwork"
 	//	Update container to private IP based on available rfc1918 IPs for the given node/datacenter
 	//	and if exists a tConfiguration cAutoCloneIPClass SQL pattern
 	//	Create a single per node job to run the iptables setup of the unxsNAT program.
@@ -6419,7 +6419,9 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//	Create system command for script
 	//	Execute the script
 	//The script:
-	//	ChangeFreePBX part of unxsNAT program for a single container.
+	//	CreateIptables part of unxsNAT program.
+	//	ChangeFreePBX part of unxsNAT program.
+	//	Optionally run the reverse proxy setup of unxsNAT program.
 	//	Optionally run the reverse proxy setup of the unxsNAT program.
 
 	//Gather NAT data
@@ -6463,6 +6465,8 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
         res=mysql_store_result(&gMysql);
 	char cCommand[256];
 	//default command setup	
+	//The args are not used currently by the iptables and change freepbx command of unxsNAT
+	//	but we add them anyway for future extensions.
 	sprintf(cCommand,"/usr/sbin/ActivateNATContainer.sh %u %.15s %.31s",uContainer,cPublicNATIP,cPrivateNATNetwork);
 	if((field=mysql_fetch_row(res)))
 		sprintf(cCommand,"%.255s %u %.15s %.31s",field[0],uContainer,cPublicNATIP,cPrivateNATNetwork);
