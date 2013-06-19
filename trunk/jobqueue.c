@@ -6467,9 +6467,9 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//default command setup	
 	//The args are not used currently by the iptables and change freepbx command of unxsNAT
 	//	but we add them anyway for future extensions.
-	sprintf(cCommand,"/usr/sbin/ActivateNATContainer.sh %u %.15s %.31s",uContainer,cPublicNATIP,cPrivateNATNetwork);
+	sprintf(cCommand,"/usr/sbin/ActivateNATContainer.sh");
 	if((field=mysql_fetch_row(res)))
-		sprintf(cCommand,"%.255s %u %.15s %.31s",field[0],uContainer,cPublicNATIP,cPrivateNATNetwork);
+		sprintf(cCommand,"%.255s",field[0]);
 	mysql_free_result(res);
 
 	//Remove trailing junk
@@ -6479,7 +6479,7 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	if(uNotValidSystemCallArg(cCommand))
 	{
 		logfileLine("ActivateNATContainer","cJob_ActivateNATScript security alert");
-		tJobErrorUpdate(uJob,"security violation");
+		tJobErrorUpdate(uJob,"security violation 1");
 		return;
 	}
 
@@ -6489,19 +6489,19 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	{
 		logfileLine("ActivateNATContainer","stat failed for cJob_ActivateNATScript");
 		logfileLine("ActivateNATContainer",cCommand);
-		tJobErrorUpdate(uJob,"security violation");
+		tJobErrorUpdate(uJob,"security violation 2");
 		return;
 	}
 	if(statInfo.st_uid!=0)
 	{
 		logfileLine("ActivateNATContainer","cJob_ActivateNATScript is not owned by root");
-		tJobErrorUpdate(uJob,"security violation");
+		tJobErrorUpdate(uJob,"security violation 3");
 		return;
 	}
 	if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
 	{
 		logfileLine("ActivateNATContainer","cJob_ActivateNATScript is not chmod 500");
-		tJobErrorUpdate(uJob,"security violation");
+		tJobErrorUpdate(uJob,"security violation 4");
 		return;
 	}
 
@@ -6509,7 +6509,11 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	sprintf(cOnScriptCall,"%.255s %u %s %s",cCommand,uContainer,cPublicNATIP,cPrivateNATNetwork);
 	logfileLine("ActivateNATContainer",cOnScriptCall);
 	if(system(cOnScriptCall))
-			logfileLine("ActivateNATContainer","cOnScriptCall error");
+	{
+		logfileLine("ActivateNATContainer","cOnScriptCall error");
+		tJobErrorUpdate(uJob,"cOnScriptCall error");
+		return;
+	}
 	logfileLine("ActivateNATContainer","cOnScriptCall ok");
 
 	//Everything ok
