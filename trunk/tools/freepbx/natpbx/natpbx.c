@@ -22,6 +22,7 @@ MYSQL gMysql;
 char gcQuery[8192]={""};
 char gcHostname[100]={""};
 char gcProgram[100]={""};
+unsigned guContainer=0;
 unsigned guNode=0;
 unsigned guDatacenter=0;
 
@@ -38,7 +39,7 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 void CreateIptablesData(char *cSourceIPv4);
 void CreateSquidData(char *cSourceIPv4);
 void UpdateBind(char *cSourceIPv4);
-void ChangeFreePBX(void);
+void ChangeFreePBX(unsigned uContainer);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 void unxsBindARecordJob2(unsigned uContainer,char const *cHostname,char const *cIPv4);
 void unxsBindSIPSRVRecordJob(unsigned uContainer,char const *cHostname,unsigned uSIPPort);
@@ -153,11 +154,6 @@ int main(int iArgc, char *cArgv[])
 			UpdateNonNatPBXContainers();
 			goto CommonExit;
 		}
-		else if(!strncmp(cArgv[1],"ChangeFreePBX",13))
-		{
-			ChangeFreePBX();
-			goto CommonExit;
-		}
 	}
 	else if(iArgc==3)
 	{
@@ -196,9 +192,15 @@ int main(int iArgc, char *cArgv[])
 			GetZabbixPort(cArgv[2]);
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"ChangeFreePBX",13))
+		{
+			sscanf(cArgv[2],"%u",&guContainer);
+			ChangeFreePBX(guContainer);
+			goto CommonExit;
+		}
 	}
 	printf("Usage: %s\nUpdateNonNatPBXContainers\nCreateIptablesData|CreateSquidData|UpdateBind|AddPublicIP <Source cIPv4>\n"
-		"ChangeFreePBX\nAddSIPSRV <uVEID>\nDelSIPSRV <cHostname>\n"
+		"ChangeFreePBX <uVEID>\nAddSIPSRV <uVEID>\nDelSIPSRV <cHostname>\n"
 		"GetZabbixPort <cHostname>\n",gcProgram);
 CommonExit:
 	mysql_close(&gMysql);
@@ -432,9 +434,8 @@ acl our_sites dstdomain 72.52.75.235
 
 
 //This new version must be run AFTER CreateIptablesData()
-void ChangeFreePBX(void)
+void ChangeFreePBX(unsigned uContainer)
 {
-	unsigned uContainer=0;
 	logfileLine("ChangeFreePBX","start",uContainer);
 
 	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel,tContainer.cHostname FROM tIP,tContainer,tGroupGlue,tGroup"
@@ -445,7 +446,9 @@ void ChangeFreePBX(void)
 			" AND tContainer.uSource!=0"
 			" AND tContainer.uStatus=1"
 			" AND tContainer.uSource NOT IN (SELECT uContainer FROM tContainer WHERE uSource=0 AND uDatacenter=%u)"
-			" AND tContainer.uNode=%u",guDatacenter,guNode);
+			" AND tContainer.uNode=%u"
+			" AND tContainer.uContainer=%u LIMIT 1"
+					,guDatacenter,guNode,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -458,8 +461,6 @@ void ChangeFreePBX(void)
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[0],"%u",&uContainer);
-
 		//Data for asterisk rtp range file
 		FILE *fp;
 		char cFile[128];
