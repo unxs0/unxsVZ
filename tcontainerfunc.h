@@ -160,6 +160,7 @@ unsigned uCheckMaxContainers(unsigned uNode);
 unsigned uCheckMaxCloneContainers(unsigned uNode);
 void UpdateNamesFromCloneToBackup(unsigned uContainer);
 void UpdateNamesFromBackupToClone(unsigned uContainer);
+unsigned CreateActivateNATNodeContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned uChangeContainerIPToPrivate(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner);
 
@@ -1723,7 +1724,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				MYSQL_ROW field;
 				unsigned uNewVeid=0;
 				register int i;
-				char cIPv4ClassC[32]={""};
+				char cIPv4ClassC[256]={""};
+				char cIPv4ClassC2[256]={""};
 				char cIPv4ClassCClone[32]={""};
 				unsigned uAvailableIPs=0;
 				char cGenLabel[32]={""};
@@ -1919,32 +1921,42 @@ void ExttContainerCommands(pentry entries[], int x)
 				//complex cleanup/rollback below
 				//First get class c mask will be used here and again in main loop below
 
-				//Get container IP cIPv4ClassC
-				sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
-						" AND uOwner=%u AND uDatacenter=%u",uIPv4,uForClient,uDatacenter);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-				res=mysql_store_result(&gMysql);
-				if((field=mysql_fetch_row(res)))
+				GetConfiguration("cAutoIPClass",cIPv4ClassC,uDatacenter,uNode,0,0);
+				if(!cIPv4ClassC[0])
+					GetConfiguration("cAutoIPClass",cIPv4ClassC,uDatacenter,0,0,0);
+				GetConfiguration("cAutoIPClass2",cIPv4ClassC2,uDatacenter,uNode,0,0);
+				if(!cIPv4ClassC2[0])
+					GetConfiguration("cAutoIPClass2",cIPv4ClassC2,uDatacenter,0,0,0);
+				if(!cIPv4ClassC[0] && !cIPv4ClassC2[0])
 				{
-					sprintf(cIPv4ClassC,"%.31s",field[0]);
-				}
-				else
-				{
-					tContainer("<blink>Error:</blink> Someone grabbed your IP"
-						", multiple container creation aborted -if Root select"
-						" a company with IPs!");
-				}
-				mysql_free_result(res);
-				for(i=strlen(cIPv4ClassC);i>0;i--)
-				{
-					if(cIPv4ClassC[i]=='.')
+					//Get container IP cIPv4ClassC
+					sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
+							" AND uOwner=%u AND uDatacenter=%u",uIPv4,uForClient,uDatacenter);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
 					{
-						cIPv4ClassC[i]=0;
-						break;
+						sprintf(cIPv4ClassC,"%.31s",field[0]);
 					}
-				}
+					else
+					{
+						tContainer("<blink>Error:</blink> Someone grabbed your IP"
+							", multiple container creation aborted -if Root select"
+							" a company with IPs!");
+					}
+					mysql_free_result(res);
+					for(i=strlen(cIPv4ClassC);i>0;i--)
+					{
+						if(cIPv4ClassC[i]=='.')
+						{
+							cIPv4ClassC[i]=0;
+							break;
+						}
+					}
+				}//If no cAutoIPClass
+
 				//Check IPs for clones first if so configured
 				if(cAutoCloneNode[0])
 				{
@@ -1997,8 +2009,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				//Count main IPs
 				uAvailableIPs=0;
 				sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-						" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
-								uForClient,cIPv4ClassC,uDatacenter);
+						" AND (cLabel LIKE '%s%%' OR cLabel LIKE '%s%%') AND uDatacenter=%u",
+								uForClient,cIPv4ClassC,cIPv4ClassC2,uDatacenter);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -2007,8 +2019,12 @@ void ExttContainerCommands(pentry entries[], int x)
 					sscanf(field[0],"%u",&uAvailableIPs);
 				mysql_free_result(res);
 				if(uNumContainer>uAvailableIPs)
-					tContainer("<blink>Error:</blink> Not enough IPs in given class C"
-						" available!");
+				{
+					static char cMsg[256];
+					sprintf(cMsg,"<blink>Error:</blink> Not enough IPs available!"
+							" cIPv4ClassC=%.31s cIPv4ClassC2=%.31s",cIPv4ClassC,cIPv4ClassC2);
+					tContainer(cMsg);
+				}
 
 				//User chooses to create a new group
 				if(cService3[0])
@@ -2216,8 +2232,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					if((i+1)<uNumContainer)
 					{
 						sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-						" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
-								uForClient,cIPv4ClassC,uDatacenter);
+						" AND (cLabel LIKE '%s%%' OR  cLabel LIKE '%s%%') AND uDatacenter=%u LIMIT 1",
+								uForClient,cIPv4ClassC,cIPv4ClassC2,uDatacenter);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -4619,7 +4635,8 @@ void ExttContainerAuxTable(void)
 				" name=gcCommand value='Group Deactivate Backup'>\n");
 			printf("&nbsp; <input title='Changes public IP to rfc1918 IP if required. Creates a single job"
 				" for configuring running container(s) to use NAT on a given hardware node."
-				" Updates DNS records if so configured. Optionally uses primary container tGroup to select"
+				" Updates DNS records both for selected container and for remote source container."
+				" Optionally uses primary container tGroup to select"
 				" which node script to run, if none uses default /usr/sbin/ActivateNATContainer.sh script'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Activate NAT'>\n");
@@ -5770,20 +5787,53 @@ while((field=mysql_fetch_row(res)))
 							break;
 						}
 						
-
 						uOwner=guCompany;
+						//single per node job, for iptables for example
+						if(CreateActivateNATNodeContainerJob(sContainer.uDatacenter,
+							sContainer.uNode,uCtContainer,guCompany))
+						{
+							SetContainerStatus(uCtContainer,uAWAITACT);
+							sprintf(cResult,"Node job created");
+
+						}
+
+						//per container job, for freepbx nat mods for example.
 						if(CreateActivateNATContainerJob(sContainer.uDatacenter,
 							sContainer.uNode,uCtContainer,guCompany))
 						{
 							SetContainerStatus(uCtContainer,uAWAITACT);
-							sprintf(cResult,"Activate NAT job created");
+							sprintf(cResult,"Container job created");
 
-							if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
+						}
+
+						if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
 								sContainer.cHostname,sContainer.uDatacenter,
 								guCompany,uCtContainer,sContainer.uNode))
-									strcat(cResult," +DNS update done");
-							else
-								strcat(cResult," +DNS update error");
+							strcat(cResult," +DNS update done");
+						else
+							strcat(cResult," +DNS update error");
+
+						//mod dns for remote datacenter source container
+						if(sContainer.uSource)
+						{
+							unsigned uRemoteDatacenter=0;
+							sscanf(ForeignKey("tContainer","uDatacenter",sContainer.uSource),"%u",&uRemoteDatacenter);
+							if(uRemoteDatacenter!=sContainer.uDatacenter)
+							{
+								unsigned uRemoteIPv4=0;
+								unsigned uRemoteNode=0;
+								char cRemoteHostname[65]={""};
+								sscanf(ForeignKey("tContainer","uIPv4",sContainer.uSource),"%u",&uRemoteIPv4);
+								sprintf(cRemoteHostname,"%.64s",
+									ForeignKey("tContainer","cHostname",sContainer.uSource));
+								sscanf(ForeignKey("tContainer","uNode",sContainer.uSource),"%u",&uRemoteNode);
+								if(CreateDNSJob(uRemoteIPv4,sContainer.uOwner,NULL,
+									cRemoteHostname,uRemoteDatacenter,
+									guCompany,sContainer.uSource,uRemoteNode))
+									strcat(cResult," +DNS remote source");
+								else
+									strcat(cResult," +DNS remote source error");
+							}
 						}
 					}
 					else
@@ -9233,7 +9283,7 @@ void UpdateNamesFromBackupToClone(unsigned uContainer)
 }//void UpdateNamesFromBackupToClone(uContainer)
 
 
-unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner)
+unsigned CreateActivateNATNodeContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner)
 {
 	unsigned uCount=0;
 	long unsigned luJobDate=0;
@@ -9253,7 +9303,7 @@ unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsig
 	//we only need one job per hardware node
 	MYSQL_RES *res;
 	sprintf(gcQuery,"SELECT uJob FROM tJob"
-			" WHERE cJobName='ActivateNATContainer'"
+			" WHERE cJobName='ActivateNATNodeContainer'"
 			" AND uDatacenter=%u"
 			" AND uNode=%u"
 			" AND uJobStatus=1",//must still be waiting
@@ -9261,13 +9311,50 @@ unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsig
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
-        res=mysql_store_result(&gMysql);
+	res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)>0)
 	{
 		mysql_free_result(res);
 		return(0);
 	}
 	mysql_free_result(res);
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateActivateNATNodeContainerJob(%u)',cJobName='ActivateNATNodeContainer'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
+			",uJobStatus=1"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
+				uOwner,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","ActivateNATNode");
+
+	return(uCount);
+
+}//unsigned CreateActivateNATNodeContainerJob()
+
+
+unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner)
+{
+	unsigned uCount=0;
+	long unsigned luJobDate=0;
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateActivateNATContainerJob(%u)',cJobName='ActivateNATContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
