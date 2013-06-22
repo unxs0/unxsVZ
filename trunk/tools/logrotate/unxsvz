@@ -1,6 +1,6 @@
 /var/log/unxsvzlog {
-    monthly
-    rotate 6
+    weekly
+    rotate 4
     copytruncate
     notifempty
     missingok

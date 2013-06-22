@@ -160,7 +160,7 @@ unsigned uCheckMaxContainers(unsigned uNode);
 unsigned uCheckMaxCloneContainers(unsigned uNode);
 void UpdateNamesFromCloneToBackup(unsigned uContainer);
 void UpdateNamesFromBackupToClone(unsigned uContainer);
-unsigned CreateActivateNATNodeContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
+unsigned CreateActivateNATNodeJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned uChangeContainerIPToPrivate(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner);
 
@@ -5789,7 +5789,7 @@ while((field=mysql_fetch_row(res)))
 						
 						uOwner=guCompany;
 						//single per node job, for iptables for example
-						if(CreateActivateNATNodeContainerJob(sContainer.uDatacenter,
+						if(CreateActivateNATNodeJob(sContainer.uDatacenter,
 							sContainer.uNode,uCtContainer,guCompany))
 						{
 							SetContainerStatus(uCtContainer,uAWAITACT);
@@ -9283,7 +9283,7 @@ void UpdateNamesFromBackupToClone(unsigned uContainer)
 }//void UpdateNamesFromBackupToClone(uContainer)
 
 
-unsigned CreateActivateNATNodeContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner)
+unsigned CreateActivateNATNodeJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner)
 {
 	unsigned uCount=0;
 	long unsigned luJobDate=0;
@@ -9303,7 +9303,7 @@ unsigned CreateActivateNATNodeContainerJob(unsigned uDatacenter,unsigned uNode,u
 	//we only need one job per hardware node
 	MYSQL_RES *res;
 	sprintf(gcQuery,"SELECT uJob FROM tJob"
-			" WHERE cJobName='ActivateNATNodeContainer'"
+			" WHERE cJobName='ActivateNATNode'"
 			" AND uDatacenter=%u"
 			" AND uNode=%u"
 			" AND uJobStatus=1",//must still be waiting
@@ -9319,7 +9319,7 @@ unsigned CreateActivateNATNodeContainerJob(unsigned uDatacenter,unsigned uNode,u
 	}
 	mysql_free_result(res);
 
-	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateActivateNATNodeContainerJob(%u)',cJobName='ActivateNATNodeContainer'"
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateActivateNATNodeJob(%u)',cJobName='ActivateNATNode'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
@@ -9336,7 +9336,7 @@ unsigned CreateActivateNATNodeContainerJob(unsigned uDatacenter,unsigned uNode,u
 
 	return(uCount);
 
-}//unsigned CreateActivateNATNodeContainerJob()
+}//unsigned CreateActivateNATNodeJob()
 
 
 unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner)

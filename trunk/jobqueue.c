@@ -98,7 +98,7 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 void RestartContainer(unsigned uJob,unsigned uContainer);
 void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cValue);
 void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode);
-void ActivateNATNodeContainer(unsigned uJob,unsigned uContainer,unsigned uNode);
+void ActivateNATNode(unsigned uJob,unsigned uContainer,unsigned uNode);
 
 //extern protos
 unsigned TextConnectDb(void); //mysqlconnect.c
@@ -436,9 +436,9 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	{
 		ActivateNATContainer(uJob,uContainer,uNode);
 	}
-	else if(!strcmp(cJobName,"ActivateNATNodeContainer"))
+	else if(!strcmp(cJobName,"ActivateNATNode"))
 	{
-		ActivateNATNodeContainer(uJob,uContainer,uNode);
+		ActivateNATNode(uJob,uContainer,uNode);
 	}
 	else if(!strcmp(cJobName,"ChangeHostnameContainer"))
 	{
@@ -6417,16 +6417,18 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//	Check to make sure that required node properties exist
 	//		"cPublicNATIP" and "cPrivateNATNetwork"
 	//	Update container to private IP based on available rfc1918 IPs for the given node/datacenter
-	//	and if exists a tConfiguration cAutoCloneIPClass SQL pattern
+	//		and if exists a tConfiguration cAutoCloneIPClass SQL pattern
+	//	Make sure container has the required properties setup. See unxsNAT natpbx.c
 	//	Create a single per node job to run the iptables setup of the unxsNAT program.
-	//	Create this job per container.
+	//		See ActivateNATNode() below.
+	//	Create this job once per node container.
 	//Here:
 	//	We verify security for script
 	//	Create system command for script
 	//	Execute the script
 	//The script:
-	//	CreateIptables part of unxsNAT program.
-	//	Optionally run the reverse proxy setup of the unxsNAT program.
+	//	ChangeFreePBX part of unxsNAT program.
+	//	Other per container required changes to be determined.
 
 	//Gather NAT data
 	char cPublicNATIP[256]={""};
@@ -6527,31 +6529,47 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 }//void ActivateNATContainer()
 
 
-void ActivateNATNodeContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
+void ActivateNATNode(unsigned uJob,unsigned uContainer,unsigned uNode)
 {
 
 	//Roadmap
+	//At group function in tcontainerfunc.h
+	//	Check to make sure container is of correct type
+	//	Check to make sure that required node properties exist
+	//		"cPublicNATIP" and "cPrivateNATNetwork"
+	//	Update container to private IP based on available rfc1918 IPs for the given node/datacenter
+	//	Create a per each container job to run the FreePBX asterisk setup of the unxsNAT program.
+	//		See ActivateNATContainer() above.
+	//	Create this job once per node container.
+	//Here:
+	//	We verify security for script
+	//	Create system command for script
+	//	Execute the script
+	//The script:
+	//	CreateIptables part of unxsNAT program.
+	//	Optionally run the reverse proxy setup of the unxsNAT program.
+	//	Run other per hardware node items to be determined.
 
 	//Gather NAT data
 	char cPublicNATIP[256]={""};
 	GetNodeProp(uNode,"cPublicNATIP",cPublicNATIP);
 	if(!cPublicNATIP[0])
 	{
-		logfileLine("ActivateNATNodeContainer","No cPublicNATIP");
+		logfileLine("ActivateNATNode","No cPublicNATIP");
 		tJobErrorUpdate(uJob,"No cPublicNATIP");
 		return;
 	}
-	logfileLine("ActivateNATNodeContainer",cPublicNATIP);
+	logfileLine("ActivateNATNode",cPublicNATIP);
 	
 	char cPrivateNATNetwork[256]={""};
 	GetNodeProp(uNode,"cPrivateNATNetwork",cPrivateNATNetwork);
 	if(!cPrivateNATNetwork[0])
 	{
-		logfileLine("ActivateNATNodeContainer","No cPrivateNATNetwork");
+		logfileLine("ActivateNATNode","No cPrivateNATNetwork");
 		tJobErrorUpdate(uJob,"No cPrivateNATNetwork");
 		return;
 	}
-	logfileLine("ActivateNATNodeContainer",cPrivateNATNetwork);
+	logfileLine("ActivateNATNode",cPrivateNATNetwork);
 
 	//Execute node script
 	//Optional group based script may exist to be executed.
@@ -6566,7 +6584,7 @@ void ActivateNATNodeContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("ActivateNATNodeContainer",mysql_error(&gMysql));
+		logfileLine("ActivateNATNode",mysql_error(&gMysql));
 		tJobErrorUpdate(uJob,"mysql error");
 		return;
 	}
@@ -6575,7 +6593,7 @@ void ActivateNATNodeContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//default command setup	
 	//The args are not used currently by the iptables and change freepbx command of unxsNAT
 	//	but we add them anyway for future extensions.
-	sprintf(cCommand,"/usr/sbin/ActivateNATNodeContainer.sh");
+	sprintf(cCommand,"/usr/sbin/ActivateNATNode.sh");
 	if((field=mysql_fetch_row(res)))
 		sprintf(cCommand,"%.255s",field[0]);
 	mysql_free_result(res);
@@ -6586,7 +6604,7 @@ void ActivateNATNodeContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 
 	if(uNotValidSystemCallArg(cCommand))
 	{
-		logfileLine("ActivateNATNodeContainer","cJob_ActivateNATNodeScript security alert");
+		logfileLine("ActivateNATNode","cJob_ActivateNATNodeScript security alert");
 		tJobErrorUpdate(uJob,"security violation 1");
 		return;
 	}
@@ -6595,38 +6613,39 @@ void ActivateNATNodeContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	struct stat statInfo;
 	if(stat(cCommand,&statInfo))
 	{
-		logfileLine("ActivateNATNodeContainer","stat failed for cJob_ActivateNATNodeScript");
-		logfileLine("ActivateNATNodeContainer",cCommand);
+		logfileLine("ActivateNATNode","stat failed for cJob_ActivateNATNodeScript");
+		logfileLine("ActivateNATNode",cCommand);
 		tJobErrorUpdate(uJob,"security violation 2");
 		return;
 	}
 	if(statInfo.st_uid!=0)
 	{
-		logfileLine("ActivateNATNodeContainer","cJob_ActivateNATNodeScript is not owned by root");
+		logfileLine("ActivateNATNode","cJob_ActivateNATNodeScript is not owned by root");
 		tJobErrorUpdate(uJob,"security violation 3");
 		return;
 	}
 	if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
 	{
-		logfileLine("ActivateNATNodeContainer","cJob_ActivateNATNodeScript is not chmod 500");
+		logfileLine("ActivateNATNode","cJob_ActivateNATNodeScript is not chmod 500");
 		tJobErrorUpdate(uJob,"security violation 4");
 		return;
 	}
 
 	char cOnScriptCall[512];
-	sprintf(cOnScriptCall,"%.255s %u %s %s",cCommand,uContainer,cPublicNATIP,cPrivateNATNetwork);
-	logfileLine("ActivateNATNodeContainer",cOnScriptCall);
+	//Eventhough supplied cPrivateNATNetwork not used by script at this time
+	sprintf(cOnScriptCall,"%.255s %s %s",cCommand,cPublicNATIP,cPrivateNATNetwork);
+	logfileLine("ActivateNATNode",cOnScriptCall);
 	if(system(cOnScriptCall))
 	{
-		logfileLine("ActivateNATNodeContainer","cOnScriptCall error");
+		logfileLine("ActivateNATNode","cOnScriptCall error");
 		tJobErrorUpdate(uJob,"cOnScriptCall error");
 		return;
 	}
-	logfileLine("ActivateNATNodeContainer","cOnScriptCall ok");
+	logfileLine("ActivateNATNode","cOnScriptCall ok");
 
 	//Everything ok
 	SetContainerStatus(uContainer,uACTIVE);
 	tJobDoneUpdate(uJob);
 
-}//void ActivateNATNodeContainer()
+}//void ActivateNATNode()
 
