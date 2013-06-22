@@ -162,7 +162,7 @@ void UpdateNamesFromCloneToBackup(unsigned uContainer);
 void UpdateNamesFromBackupToClone(unsigned uContainer);
 unsigned CreateActivateNATNodeJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
-unsigned uChangeContainerIPToPrivate(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner);
+unsigned uChangeContainerIPToNATIP(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -5780,7 +5780,7 @@ while((field=mysql_fetch_row(res)))
 						}
 
 						//Change IP if required
-						if(uChangeContainerIPToPrivate(uCtContainer,sContainer.uDatacenter,sContainer.uNode,
+						if(uChangeContainerIPToNATIP(uCtContainer,sContainer.uDatacenter,sContainer.uNode,
 								sContainer.uIPv4,sContainer.uOwner))
 						{
 							sprintf(cResult,"ChangeContainerIPToPrivate error");
@@ -9358,7 +9358,7 @@ unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsig
 
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateActivateNATContainerJob(%u)',cJobName='ActivateNATContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+120)"
 			",uJobStatus=1"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
@@ -9376,24 +9376,24 @@ unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsig
 }//unsigned CreateActivateNATContainerJob()
 
 
-unsigned uChangeContainerIPToPrivate(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner)
+unsigned uChangeContainerIPToNATIP(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner)
 {
+	char cAutoNATIPClass[256]={""};
+	GetConfiguration("cAutoNATIPClass",cAutoNATIPClass,uDatacenter,uNode,0,0);//First try node specific
+	if(!cAutoNATIPClass[0])
+		GetConfiguration("cAutoNATIPClass",cAutoNATIPClass,uDatacenter,0,0,0);//Then datacenter
+
+	//Already in NAT class C?
 	char cCurrentIP[32]={""};
-	unsigned uA=0,uB=0,uC=0;
+	char cNATIP[32]={""};
 	sprintf(cCurrentIP,"%.31s",ForeignKey("tIP","cLabel",uIPv4));
-	if(sscanf(cCurrentIP,"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
-		if( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10) ) 
-			return(0);//already rfc1918
+	sprintf(cNATIP,"%.30s.",cAutoNATIPClass);//add trailing dot
+	if(!strncmp(cCurrentIP,cNATIP,strlen(cNATIP)))
+		return(0);
 
-	char cAutoCloneIPClass[256]={""};
-	GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,uNode,0,0);//First try node specific
-	if(!cAutoCloneIPClass[0])
-	{
-		GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,0,0,0);//Then datacenter
-	}
-
-	if(!cAutoCloneIPClass[0])
-		sprintf(cAutoCloneIPClass,"%%");
+	//Allow use of any available rfc1918 IPs if system has not been setup correctly
+	if(!cAutoNATIPClass[0])
+		sprintf(cAutoNATIPClass,"%%");
 
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -9406,7 +9406,7 @@ unsigned uChangeContainerIPToPrivate(unsigned uCtContainer,unsigned uDatacenter,
 			" AND uDatacenter=%u"
 			" AND uAvailable=1"
 			" AND uOwner=%u",
-				cAutoCloneIPClass,uDatacenter,uOwner);
+				cAutoNATIPClass,uDatacenter,uOwner);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		return(2);
@@ -9433,4 +9433,4 @@ unsigned uChangeContainerIPToPrivate(unsigned uCtContainer,unsigned uDatacenter,
 		return(5);
 
 	return(0);
-}//unsigned uChangeContainerIPToPrivate()
+}//unsigned uChangeContainerIPToNATIP()

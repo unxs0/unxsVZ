@@ -1165,6 +1165,7 @@ void AddIPRange(char *cIPRange)
 	unsigned uCIDR4Mask=0;
 	unsigned uCIDR4IP=0;
 	register int i,uSkip=0;
+	unsigned uAvailable,uD;
         MYSQL_RES *res;
 
 	if(!uInCIDR4Format(cIPRange,&uCIDR4IP,&uCIDR4Mask))
@@ -1187,15 +1188,24 @@ void AddIPRange(char *cIPRange)
 		}
 		mysql_free_result(res);
 		
-		sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uOwner=%u,uCreatedBy=%u,uAvailable=1"
+		//auto reserve network, gw and broadcast IPs for class C
+		//10.5.0.0 
+		uAvailable=1;
+		if(sscanf(cIPs[i],"%*u.%*u.%*u.%u",&uD)==1)
+		{
+			if(uD==0 || uD==1 || uD==255)
+				uAvailable=0;
+		}
+		sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uOwner=%u,uCreatedBy=%u,uAvailable=%u"
 				",uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u",
-					cIPs[i],guCompany,guLoginClient,uDatacenter);
+					cIPs[i],guCompany,guLoginClient,uAvailable,uDatacenter);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 		free(cIPs[i]);
 	}
 	unxsVZLog(mysql_insert_id(&gMysql),"tIP","NewRange");
+	
 	if(!uSkip)
 		tIP("Complete cIPRange added");
 	else if(uSkip==i)

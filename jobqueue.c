@@ -6410,6 +6410,8 @@ void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cVal
 
 void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 {
+        MYSQL_RES *res;
+        MYSQL_ROW field;
 
 	//Roadmap
 	//At group function in tcontainerfunc.h
@@ -6417,10 +6419,11 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//	Check to make sure that required node properties exist
 	//		"cPublicNATIP" and "cPrivateNATNetwork"
 	//	Update container to private IP based on available rfc1918 IPs for the given node/datacenter
-	//		and if exists a tConfiguration cAutoCloneIPClass SQL pattern
+	//		and if exists a tConfiguration cAutoNATIPClass SQL pattern
 	//	Make sure container has the required properties setup. See unxsNAT natpbx.c
+	//		We will try to get ActivateNATNode() to always run first to avoid this issue.
 	//	Create a single per node job to run the iptables setup of the unxsNAT program.
-	//		See ActivateNATNode() below.
+	//		See ActivateNATNode() below. This must run first. This job must wait.
 	//	Create this job once per node container.
 	//Here:
 	//	We verify security for script
@@ -6451,12 +6454,31 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	}
 	logfileLine("ActivateNATContainer",cPrivateNATNetwork);
 
+	//Only run after the related node script has run
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uJobStatus=1"
+			" AND uNode=%u"
+			" AND cJob='ActivateNATNode'",uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ActivateNATContainer",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"mysql error");
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{
+		logfileLine("ActivateNATContainer","waiting for ActivateNATContainer");
+		tJobWaitingUpdate(uJob);
+		mysql_free_result(res);
+		return;
+	}
+	mysql_free_result(res);
+
 	//Execute node script
 	//Optional group based script may exist to be executed.
 	//
 	//Primary group is oldest tGroupGlue entry.
-        MYSQL_RES *res;
-        MYSQL_ROW field;
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
@@ -6531,6 +6553,8 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 
 void ActivateNATNode(unsigned uJob,unsigned uContainer,unsigned uNode)
 {
+        MYSQL_RES *res;
+        MYSQL_ROW field;
 
 	//Roadmap
 	//At group function in tcontainerfunc.h
@@ -6575,8 +6599,6 @@ void ActivateNATNode(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//Optional group based script may exist to be executed.
 	//
 	//Primary group is oldest tGroupGlue entry.
-        MYSQL_RES *res;
-        MYSQL_ROW field;
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
