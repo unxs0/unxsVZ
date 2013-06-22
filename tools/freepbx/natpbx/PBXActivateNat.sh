@@ -2,6 +2,8 @@
 
 #PURPOSE
 #	Setup FreePBX for NAT use
+#	This script needs to be FOR EACH CONTAINER
+#	The container needs to be setup previously with correct tProperties
 
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@" >> /tmp/ActivateNATContainer.sh.log; }
 

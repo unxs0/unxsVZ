@@ -12,7 +12,7 @@
 #	/sbin/iptables-restore < /etc/sysconfig/iptables.natpbx2
 #	must be run.
 
-fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@" >> /tmp/ActivateNATNodeContainer.sh.log; }
+fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@" >> /tmp/ActivateNATNode.sh.log; }
 
 if [ "$1" == "" ] ;then
 	echo "usage: $0 <cSourceIPv4>";
