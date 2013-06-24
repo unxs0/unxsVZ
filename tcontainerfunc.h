@@ -4633,11 +4633,14 @@ void ExttContainerAuxTable(void)
 				" Updates DNS records if so configured. Changes name back to -clone from -backup.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Deactivate Backup'>\n");
-			printf("&nbsp; <input title='Changes public IP to rfc1918 IP if required. Creates a single job"
-				" for configuring running container(s) to use NAT on a given hardware node."
-				" Updates DNS records both for selected container and for remote source container."
+			printf("&nbsp; <input title='Changes public IP to rfc1918 IP via tConfiguration:cAutoNATIPClass."
+				" Creates a single per node job(s), and other per each container job(s)."
+				" These jobs configure running container(s) to use NAT on a given hardware node."
+				" The hardware node must be pre configured via tProperty entries and have a virtual IP setup by the sysadmin."
+				" Updates DNS records both for selected container and for the remote source container."
 				" Optionally uses primary container tGroup to select"
-				" which node script to run, if none uses default /usr/sbin/ActivateNATContainer.sh script'"
+				" which scripts to run, if none will try default /usr/sbin/ActivateNATContainer.sh and"
+				" /usr/sbin/ActivateNATNode.sh hardware node scripts.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Activate NAT'>\n");
 			CloseFieldSet();
@@ -5780,14 +5783,23 @@ while((field=mysql_fetch_row(res)))
 						}
 
 						//Change IP if required
-						if(uChangeContainerIPToNATIP(uCtContainer,sContainer.uDatacenter,sContainer.uNode,
-								sContainer.uIPv4,sContainer.uOwner))
+						unsigned uRetVal=0;
+						if((uRetVal=uChangeContainerIPToNATIP(uCtContainer,sContainer.uDatacenter,sContainer.uNode,
+								sContainer.uIPv4,sContainer.uOwner)))
 						{
-							sprintf(cResult,"ChangeContainerIPToPrivate error");
+							if(uRetVal==1)
+								sprintf(cResult,"No IP");
+							else if(uRetVal==2)
+								sprintf(cResult,"ChangeContainerIPToNATIP mysql select error");
+							else if(uRetVal==3)
+								sprintf(cResult,"IP was snatched by another process");
+							else
+								sprintf(cResult,"ChangeContainerIPToNATIP mysql error");
 							break;
 						}
 						
 						uOwner=guCompany;
+						cResult[0]=0;
 						//single per node job, for iptables for example
 						if(CreateActivateNATNodeJob(sContainer.uDatacenter,
 							sContainer.uNode,uCtContainer,guCompany))
@@ -5802,7 +5814,10 @@ while((field=mysql_fetch_row(res)))
 							sContainer.uNode,uCtContainer,guCompany))
 						{
 							SetContainerStatus(uCtContainer,uAWAITACT);
-							sprintf(cResult,"Container job created");
+							if(cResult[0])
+								strcat(cResult," +Container job");
+							else
+								sprintf(cResult,"Container job created");
 
 						}
 
@@ -9376,7 +9391,7 @@ unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsig
 }//unsigned CreateActivateNATContainerJob()
 
 
-unsigned uChangeContainerIPToNATIP(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner)
+unsigned uChangeContainerIPToNATIP(unsigned uContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner)
 {
 	char cAutoNATIPClass[256]={""};
 	GetConfiguration("cAutoNATIPClass",cAutoNATIPClass,uDatacenter,uNode,0,0);//First try node specific
@@ -9398,7 +9413,8 @@ unsigned uChangeContainerIPToNATIP(unsigned uCtContainer,unsigned uDatacenter,un
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uIP=0;
-	sprintf(gcQuery,"SELECT uIP FROM tIP"
+	long unsigned luModDate=0;
+	sprintf(gcQuery,"SELECT uIP,uModDate FROM tIP"
 			" WHERE cLabel LIKE '%s.%%'"
 			" AND (cLabel LIKE '10.%%'"
 			" OR cLabel LIKE '192.168.%%' OR cLabel LIKE '172.16.%%.%%' OR"
@@ -9413,24 +9429,39 @@ unsigned uChangeContainerIPToNATIP(unsigned uCtContainer,unsigned uDatacenter,un
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&uIP);
+		sscanf(field[1],"%lu",&luModDate);
 	mysql_free_result(res);
 
 	if(!uIP)
 		return(1);
 
-	sprintf(gcQuery,"UPDATE tContainer WHERE uContainer=%u SET uIPv4=%u,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u",
-			uContainer,uIP,guLoginClient);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		return(3);
-	sprintf(gcQuery,"UPDATE tIP WHERE uIP=%u SET uAvailable=1,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u",uIPv4,guLoginClient);
+	//debug only
+	//printf("uIP=%u uIPv4=%u uContainer=%u",uIP,uIPv4,uContainer);
+	//	return(0);
+
+	//Mark not available
+	sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u WHERE uIP=%u AND uModeDate=%lu",
+			guLoginClient,uIP,luModDate);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		return(4);
-	sprintf(gcQuery,"UPDATE tIP WHERE uIP=%u SET uAvailable=0,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u",uIP,guLoginClient);
+	//If someother process modifies the IP DO NOT USE for resource fight avoidance
+	if(mysql_affected_rows(&gMysql)!=1)
+		return(3);
+	//Assign to container
+	sprintf(gcQuery,"UPDATE tContainer SET uIPv4=%u,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u WHERE uContainer=%u",
+			uIP,guLoginClient,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		return(5);
+
+	//If IP has changed create a job for it.
+	IPContainerJob(uDatacenter,uNode,uContainer,uOwner,guLoginClient,ForeignKey("tIP","cLabel",uIPv4));
+
+	//sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u WHERE uIP=%u",guLoginClient,uIPv4);
+	//mysql_query(&gMysql,gcQuery);
+	//if(mysql_errno(&gMysql))
+	//	return(4);
 
 	return(0);
 }//unsigned uChangeContainerIPToNATIP()
