@@ -6462,7 +6462,7 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ActivateNATContainer",mysql_error(&gMysql));
-		tJobErrorUpdate(uJob,"mysql error");
+		tJobErrorUpdate(uJob,"mysql error 1");
 		return;
 	}
         res=mysql_store_result(&gMysql);
@@ -6487,7 +6487,7 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ActivateNATContainer",mysql_error(&gMysql));
-		tJobErrorUpdate(uJob,"mysql error");
+		tJobErrorUpdate(uJob,"mysql error 2");
 		return;
 	}
         res=mysql_store_result(&gMysql);
@@ -6574,6 +6574,27 @@ void ActivateNATNode(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//	Optionally run the reverse proxy setup of the unxsNAT program.
 	//	Run other per hardware node items to be determined.
 
+	//Only run after any pending container change IP jobs are finished
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uJobStatus=1"
+			" AND uNode=%u"
+			" AND cJobName='ChangeIPContainer'",uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ActivateNATNode",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"mysql error 11");
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{
+		logfileLine("ActivateNATNode","waiting for ChangeIPContainer");
+		tJobWaitingUpdate(uJob);
+		mysql_free_result(res);
+		return;
+	}
+	mysql_free_result(res);
+
 	//Gather NAT data
 	char cPublicNATIP[256]={""};
 	GetNodeProp(uNode,"cPublicNATIP",cPublicNATIP);
@@ -6607,7 +6628,7 @@ void ActivateNATNode(unsigned uJob,unsigned uContainer,unsigned uNode)
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ActivateNATNode",mysql_error(&gMysql));
-		tJobErrorUpdate(uJob,"mysql error");
+		tJobErrorUpdate(uJob,"mysql error 3");
 		return;
 	}
         res=mysql_store_result(&gMysql);
