@@ -84,6 +84,56 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 }//void logfileLine()
 
 
+unsigned GetConfiguration2(const char *cName,char *cValue,
+		unsigned uDatacenter,
+		unsigned uNode,
+		unsigned uContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+        char cQuery[1024];
+	char cExtra[100]={""};
+	unsigned uConfiguration=0;
+
+        sprintf(cQuery,"SELECT cValue,uConfiguration FROM tConfiguration WHERE cLabel='%s'",
+			cName);
+	if(uDatacenter)
+	{
+		sprintf(cExtra," AND uDatacenter=%u",uDatacenter);
+		strcat(cQuery,cExtra);
+	}
+	if(uNode)
+	{
+		sprintf(cExtra," AND uNode=%u",uNode);
+		strcat(cQuery,cExtra);
+	}
+	if(uContainer)
+	{
+		sprintf(cExtra," AND uContainer=%u",uContainer);
+		strcat(cQuery,cExtra);
+	}
+        mysql_query(&gMysql,cQuery);
+        if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,cQuery);
+		logfileLine("main",mysql_error(&gMysql),0);
+		exit(1);
+	}
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+	{
+        	sprintf(cValue,"%.255s",field[0]);
+        	sscanf(field[1],"%u",&uConfiguration);
+	}
+        mysql_free_result(res);
+
+	return(uConfiguration);
+
+}//unsigned GetConfiguration2(...)
+
+
+
 int main(int iArgc, char *cArgv[])
 {
 	struct sysinfo structSysinfo;
@@ -216,20 +266,26 @@ void CreateIptablesData(char *cSourceIPv4)
         MYSQL_ROW field;
 	unsigned uContainer=0;
 	unsigned uStatus=0;
-	unsigned uD=1;
 
 	logfileLine("CreateIptablesData","start",uContainer);
+
+	char cAutoNATIPClass[256]={""};
+	GetConfiguration2("cAutoNATIPClass",cAutoNATIPClass,guDatacenter,guNode,0);//First try node specific
+	if(!cAutoNATIPClass[0])
+		GetConfiguration2("cAutoNATIPClass",cAutoNATIPClass,guDatacenter,0,0);//Then datacenter
+
 
 	//Only for remote datacenter backup containers that belong to a PBX group
 	sprintf(gcQuery,"SELECT tContainer.uContainer,tIP.cLabel,tContainer.uSource,tContainer.cLabel,tContainer.uStatus"
 			" FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
+			" AND INSTR(tIP.cLabel,'%s')=1"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
 			" AND tGroup.cLabel LIKE '%%PBX%%'"
 			" AND tContainer.uSource!=0"
 			" AND tContainer.uSource NOT IN (SELECT uContainer FROM tContainer WHERE uSource=0 AND uDatacenter=%u)"
-			" AND tContainer.uNode=%u ORDER BY tContainer.uContainer LIMIT 101",guDatacenter,guNode);
+			" AND tContainer.uNode=%u ORDER BY tContainer.uContainer LIMIT 101",cAutoNATIPClass,guDatacenter,guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -250,7 +306,8 @@ void CreateIptablesData(char *cSourceIPv4)
 		sscanf(field[4],"%u",&uStatus);
 		//Only nat rfc1918 IPs
 		unsigned uA=0,uB=0,uC=0;
-		if(sscanf(field[1],"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
+		unsigned uD=0;
+		if(sscanf(field[1],"%u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
 		{
 			if( !((uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10)) ) 
 				continue;	
@@ -297,8 +354,6 @@ void CreateIptablesData(char *cSourceIPv4)
 			uOnlyOnce=0;
 		}
 
-		uD++;//Next port offset value
-
 		if(uD==101)
 		{
 			logfileLine("CreateIptablesData","number of allowed NATs exceeded",uContainer);
@@ -312,11 +367,12 @@ void CreateIptablesData(char *cSourceIPv4)
 			" FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
+			" AND INSTR(tIP.cLabel,'%s')=1"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
 			" AND tGroup.cLabel LIKE '%%PBX%%'"
 			" AND tContainer.uSource!=0"
 			" AND tContainer.uSource NOT IN (SELECT uContainer FROM tContainer WHERE uSource=0 AND uDatacenter=%u)"
-			" AND tContainer.uNode=%u ORDER BY tIP.cLabel LIMIT 101",guDatacenter,guNode);
+			" AND tContainer.uNode=%u ORDER BY tIP.cLabel LIMIT 101",cAutoNATIPClass,guDatacenter,guNode);
 			//previous port based on last octet of IP number
 			//" AND tContainer.uNode=%u ORDER BY tIP.uIP",guNode);
 	mysql_query(&gMysql,gcQuery);
