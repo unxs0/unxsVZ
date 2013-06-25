@@ -1021,7 +1021,8 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//	container are done.
 	sprintf(gcQuery,"SELECT uJob FROM tJob"
 			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u) AND uJob!=%u"
-			" AND cJobName!='ChangeHostnameContainer'",
+			" AND cJobName!='ChangeHostnameContainer'"
+			" AND cJobName!='ActivateNATNode'",
 					uContainer,uWAITING,uRUNNING,uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -6457,7 +6458,7 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//Only run after the related node script has run
 	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uJobStatus=1"
 			" AND uNode=%u"
-			" AND cJob='ActivateNATNode'",uNode);
+			" AND cJobName='ActivateNATNode'",uNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{

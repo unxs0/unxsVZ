@@ -15,6 +15,7 @@ USEFUL SQL
 	UPDATE tIP SET uAvailable=1 WHERE uAvailable=0 AND uIP NOT IN (SELECT uIPv4 FROM tContainer); 
 */
 
+#define uPBXType 1
 #define macro_mySQLQueryExitText	mysql_query(&gMysql,gcQuery);\
 					if(mysql_errno(&gMysql))\
 					{\
@@ -163,6 +164,7 @@ void UpdateNamesFromBackupToClone(unsigned uContainer);
 unsigned CreateActivateNATNodeJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned uChangeContainerIPToNATIP(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner);
+void SetContainerProp(const unsigned uContainer,const char *cName,const char *cValue);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -5821,6 +5823,31 @@ while((field=mysql_fetch_row(res)))
 
 						}
 
+
+						//we need to set the cOrg_SIPPort here if applicable
+						//before we create the dns jobs
+						unsigned uContainerPrimaryGroup=uGetPrimaryContainerGroup(uCtContainer);
+						unsigned uContainerType=0;
+
+						char cContainerPrimaryGroup[100]={""};
+						sprintf(cContainerPrimaryGroup,"%.99s",ForeignKey("tGroup","cLabel",uContainerPrimaryGroup));
+						ToLower(cContainerPrimaryGroup);
+						if(strstr(cContainerPrimaryGroup,"pbx"))
+							uContainerType=uPBXType;
+
+						if(uContainerType==uPBXType)
+						{
+							unsigned uD=0;
+							char cOrg_SIPPort[32]={"5060"};
+							//We may have a new uIPv4
+							if(sscanf(ForeignKey("tContainer","uIPv4",uCtContainer),"%u",&uIPv4)==1)
+							{
+								if(sscanf(ForeignKey("tIP","cLabel",uIPv4),"%*u.%*u.%*u.%u",&uD)==1)
+									sprintf(cOrg_SIPPort,"%u",uD+6000);//6000 base sip port natpabx.c
+							}
+							SetContainerProp(uCtContainer,"cOrg_SIPPort",cOrg_SIPPort);
+						}
+
 						if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
 								sContainer.cHostname,sContainer.uDatacenter,
 								guCompany,uCtContainer,sContainer.uNode))
@@ -9465,3 +9492,36 @@ unsigned uChangeContainerIPToNATIP(unsigned uContainer,unsigned uDatacenter,unsi
 
 	return(0);
 }//unsigned uChangeContainerIPToNATIP()
+
+
+void SetContainerProp(const unsigned uContainer,const char *cName,const char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0 || !cName[0] || !cValue[0]) return;
+
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%u AND uType=3 AND cName='%s'",
+				uContainer,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return;
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%s",cValue,field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			return;
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET cName='%s',cValue='%s',uKey=%u,uType=3,uOwner=1,uCreatedBy=1,"
+										"uCreatedDate=UNIX_TIMESTAMP(NOW())",cName,cValue,uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			return;
+	}
+	mysql_free_result(res);
+
+}//void SetContainerProp()
