@@ -1022,7 +1022,8 @@ void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	sprintf(gcQuery,"SELECT uJob FROM tJob"
 			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u) AND uJob!=%u"
 			" AND cJobName!='ChangeHostnameContainer'"
-			" AND cJobName!='ActivateNATNode'",
+			" AND cJobName!='ActivateNATNode'"
+			" AND cJobName!='ActivateNATContainer'",
 					uContainer,uWAITING,uRUNNING,uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -6469,7 +6470,7 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)>0)
 	{
-		logfileLine("ActivateNATContainer","waiting for ActivateNATContainer");
+		logfileLine("ActivateNATContainer","waiting for ActivateNATNode");
 		tJobWaitingUpdate(uJob);
 		mysql_free_result(res);
 		return;
