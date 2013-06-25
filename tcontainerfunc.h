@@ -5795,6 +5795,10 @@ while((field=mysql_fetch_row(res)))
 								sprintf(cResult,"ChangeContainerIPToNATIP mysql select error");
 							else if(uRetVal==3)
 								sprintf(cResult,"IP was snatched by another process");
+							else if(uRetVal==4)
+								sprintf(cResult,"ChangeContainerIPToNATIP mysql error4");
+							else if(uRetVal==5)
+								sprintf(cResult,"ChangeContainerIPToNATIP mysql error5");
 							else
 								sprintf(cResult,"ChangeContainerIPToNATIP mysql error");
 							break;
@@ -9467,7 +9471,7 @@ unsigned uChangeContainerIPToNATIP(unsigned uContainer,unsigned uDatacenter,unsi
 	//	return(0);
 
 	//Mark not available
-	sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u WHERE uIP=%u AND uModeDate=%lu",
+	sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u WHERE uIP=%u AND uModDate=%lu",
 			guLoginClient,uIP,luModDate);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
