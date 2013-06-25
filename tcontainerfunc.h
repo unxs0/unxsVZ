@@ -5765,7 +5765,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 
-					if((sContainer.uStatus==uACTIVE)
+					if((sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
 						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
 						//Check to see of node is configured
@@ -5782,6 +5782,17 @@ while((field=mysql_fetch_row(res)))
 						{
 							sprintf(cResult,"No cPrivateNATNetwork for node");
 							break;
+						}
+
+
+						//Create a start job
+						//This will run first since IP change and the Activate jobs will wait if
+						//a start job exists for a given container.
+						if(sContainer.uStatus==uSTOPPED)
+						{
+							if(CreateStartContainerJob(sContainer.uDatacenter,sContainer.uNode,uCtContainer,
+												sContainer.uOwner))
+								SetContainerStatus(uCtContainer,uAWAITACT);
 						}
 
 						//Change IP if required
