@@ -159,7 +159,7 @@ void SelectedNodeInformation(unsigned guCloneTargetNode,unsigned uHtmlMode);
 void CheckMaxContainers(unsigned uNumContainer);
 unsigned uCheckMaxContainers(unsigned uNode);
 unsigned uCheckMaxCloneContainers(unsigned uNode);
-void UpdateNamesFromCloneToBackup(unsigned uContainer);
+unsigned uUpdateNamesFromCloneToBackup(unsigned uContainer);
 void UpdateNamesFromBackupToClone(unsigned uContainer);
 unsigned CreateActivateNATNodeJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
@@ -5792,7 +5792,22 @@ while((field=mysql_fetch_row(res)))
 						{
 							if(CreateStartContainerJob(sContainer.uDatacenter,sContainer.uNode,uCtContainer,
 												sContainer.uOwner))
+							{
 								SetContainerStatus(uCtContainer,uAWAITACT);
+								if(strcmp(sContainer.cHostname,ForeignKey("tContainer","cHostname",uCtContainer)))
+									HostnameContainerJob(sContainer.uDatacenter,sContainer.uNode,uCtContainer,
+										sContainer.cHostname,sContainer.uOwner,guLoginClient);
+							}
+						}
+						else
+						{
+							//even if active we allow fixing non -backup named containers here
+							if(uUpdateNamesFromCloneToBackup(uCtContainer))
+							{
+								if(HostnameContainerJob(sContainer.uDatacenter,sContainer.uNode,uCtContainer,
+									sContainer.cHostname,sContainer.uOwner,guLoginClient))
+										SetContainerStatus(uCtContainer,uAWAITHOST);
+							}
 						}
 
 						//Change IP if required
@@ -7067,7 +7082,7 @@ unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uC
 	unxsVZLog(uContainer,"tContainer","Start");
 
 	//This function only changes remote datacenter -clone container's names to -backup
-	UpdateNamesFromCloneToBackup(uContainer);
+	uUpdateNamesFromCloneToBackup(uContainer);
 	return(uCount);
 
 }//unsigned CreateStartContainerJob(...)
@@ -9267,45 +9282,59 @@ unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 }//unsigned unxsBindPBXRecordJob()
 
 
-void UpdateNamesFromCloneToBackup(unsigned uContainer)
+unsigned uUpdateNamesFromCloneToBackup(unsigned uContainer)
 {
 	if(!uContainer)
-		return;
+		return(0);
 
 	unsigned uSource=0;
 	unsigned uSourceDatacenter=0;
 	char cSourceLabel[32]={""};
 	char cSourceHostname[64]={""};
+	char *cp;
+	char cSourceDomain[64]={""};
 
 	sscanf(ForeignKey("tContainer","uSource",uContainer),"%u",&uSource);
 	if(!uSource)
-		return;
+		return(0);
 
 	sscanf(ForeignKey("tContainer","uDatacenter",uSource),"%u",&uSourceDatacenter);
 	if(!uSourceDatacenter)
-		return;
+		return(0);
 
 	sprintf(cSourceLabel,"%.31s",ForeignKey("tContainer","cLabel",uSource));
 	sprintf(cSourceHostname,"%.63s",ForeignKey("tContainer","cHostname",uSource));
 	if(!cSourceHostname[0] || !cSourceLabel[0])
-		return;
+		return(0);
+
+	//clean up (chop off) -m at end for dns move containers that require review.
+	if((cp=strstr(cSourceLabel+strlen(cSourceLabel)-2,"-m")))
+		*cp=0;
+
+	//first dot
+	if((cp=strchr(cSourceHostname,'.')))
+		sprintf(cSourceDomain,"%.63s",cp+1);
+	else
+		return(0);
 
 	//Note how we may clobber the front of the names but leave the -backup suffix intact
 	sprintf(gcQuery,"UPDATE tContainer"
 			" SET cLabel='%.24s-backup',"
-			" cHostname='%.67s-backup'"
+			" cHostname='%.24s-backup.%s'"
 			" WHERE uContainer=%u"
 			" AND uSource!=0"
 			" AND uDatacenter!=%u",
 				cSourceLabel,
-				cSourceHostname,
+				cSourceLabel,cSourceDomain,
 				uContainer,
 				uSourceDatacenter);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		unxsVZLog(uContainer,"tContainer","UpdateNamesFromCloneToBackup() mysql_error");
+		unxsVZLog(uContainer,"tContainer","uUpdateNamesFromCloneToBackup() mysql_error");
 
-}//void UpdateNamesFromCloneToBackup(uContainer)
+	return(mysql_affected_rows(&gMysql));
+
+}//unsigned uUpdateNamesFromCloneToBackup(uContainer)
 
 
 void UpdateNamesFromBackupToClone(unsigned uContainer)
