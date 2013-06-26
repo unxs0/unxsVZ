@@ -13,6 +13,9 @@ if [ "$2" == "" ];then
 	exit 0;
 fi
 
+cHost="$1";
+uPort="$2";
+
 #set for your zabbix server and port
 cZabbixServer="zabbix.isp.net";
 
@@ -23,12 +26,13 @@ cat << EOF > /tmp/login.json
 	"jsonrpc":"2.0",
 	"method":"user.login",
 	"params":{
-			"user":"apiuser-change",
+			"user":"apiuser",
 			"password":"foobar"
 	},
 	"id":1
 }
 EOF
+#you should not have to change anything under this line
 
 cAuth=`/usr/bin/wget --quiet --no-check-certificate --post-file=/tmp/login.json --output-document=-\
 	 --header='Content-Type: application/json-rpc'\
@@ -56,7 +60,7 @@ cat << EOF > /tmp/gethost.json
 			"output":"shorten",
 			"sortfield":"name",
 			"filter":{
-				"host":["$1"]
+				"host":["$cHost"]
 			},
 			"limit":8
 	},
@@ -64,7 +68,6 @@ cat << EOF > /tmp/gethost.json
 	"auth":"$cAuth"
 }
 EOF
-
 uHostID=`/usr/bin/wget --quiet --no-check-certificate --post-file=/tmp/gethost.json --output-document=-\
 	 --header='Content-Type: application/json-rpc'\
 	 https://$cZabbixServer/zabbix/api_jsonrpc.php | cut -f 4 -d : | cut -f 2 -d \"`;
@@ -77,18 +80,53 @@ if [ "$uHostID" == "" ] || [ "$uHostID" == "message" ] || [ "$uHostID" == "1}" ]
 	exit 1;
 fi
 
-#then delete the host
-echo "$uHostID";
+#now get interface id
+cat << EOF > /tmp/gethost.json
+{
+    "jsonrpc": "2.0",
+    "method": "hostinterface.get",
+    "params": {
+        "output": "extend",
+        "hostids": "$uHostID"
+    },
+    "auth": "$cAuth",
+    "id": 1
+}
+EOF
+uInterfaceID=`/usr/bin/wget --quiet --no-check-certificate --post-file=/tmp/gethost.json --output-document=-\
+	 --header='Content-Type: application/json-rpc'\
+	 https://$cZabbixServer/zabbix/api_jsonrpc.php | cut -f 4 -d : | cut -f 2 -d \"`;
+if [ $? != 0 ];then
+	echo "wget error 1";
+	exit 1;
+fi
+if [ "$uInterfaceID" == "" ] || [ "$uInterfaceID" == "message" ] || [ "$uInterfaceID" == "1}" ];then
+	echo "Could not get interface id";
+	exit 1;
+fi
+
+#then update the host
+echo "uInterfaceID:$uInterfaceID";
+echo "uHostID:$uHostID";
 cat << EOF > /tmp/hostupdateport.json
 {
 	"jsonrpc":"2.0",
 	"method":"host.update",
-	"params":[{"hostid":$uHostID,"port":$2}],
+	"params":[{"hostid":$uHostID,
+        "interfaces": {
+	    "interfaceid":"$uInterfaceID",
+            "dns": "$cHost",
+            "ip": "127.0.0.1",
+            "main": 1,
+            "port": "$uPort",
+            "type": 1,
+            "useip": 0
+	}
+        }],
 	"id":1,
 	"auth":"$cAuth"
 }
 EOF
-
 /usr/bin/wget --quiet --no-check-certificate --post-file=/tmp/hostupdateport.json --output-document=-\
 	 --header='Content-Type: application/json-rpc'\
 	 https://$cZabbixServer/zabbix/api_jsonrpc.php > /dev/null 2>&1;
