@@ -608,19 +608,21 @@ void ChangeFreePBX(unsigned uContainer)
 		//break;
 
 		//Turn off things not required or in the way
-		sprintf(cCommand,"vzctl exec2 %u 'service iptables stop'",uContainer);
+		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u '/sbin/service iptables stop'",uContainer);
 		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 iptables off'",uContainer);
+		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u '/sbin/chkconfig --level 3 iptables off'",uContainer);
 		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'service fail2ban stop'",uContainer);
+		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u '/sbin/service fail2ban stop'",uContainer);
 		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 fail2ban off'",uContainer);
+		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u '/sbin/chkconfig --level 3 fail2ban off'",uContainer);
 		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'service sshd stop'",uContainer);
+		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u '/sbin/service sshd stop'",uContainer);
 		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'chkconfig --level 3 sshd off'",uContainer);
+		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u '/sbin/chkconfig --level 3 sshd off'",uContainer);
 		system(cCommand);
-		sprintf(cCommand,"vzctl exec2 %u 'service zabbix_agentd restart'",uContainer);
+		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u '/sbin/service zabbix_agentd change-hostname'",uContainer);
+		system(cCommand);
+		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u '/sbin/service zabbix_agentd restart'",uContainer);
 		system(cCommand);
 		sprintf(cCommand,"/usr/sbin/UpdateZabbixHostPort.sh %s %u",field[2],uPort);
 		system(cCommand);
