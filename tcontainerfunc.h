@@ -5878,8 +5878,9 @@ while((field=mysql_fetch_row(res)))
 							SetContainerProp(uCtContainer,"cOrg_SIPPort",cOrg_SIPPort);
 						}
 
+						
 						if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
-								sContainer.cHostname,sContainer.uDatacenter,
+								ForeignKey("tContainer","cHostname",uCtContainer),sContainer.uDatacenter,
 								guCompany,uCtContainer,sContainer.uNode))
 							strcat(cResult," +DNS update done");
 						else
