@@ -5,7 +5,7 @@
 #PURPOSE
 #	Very simple script to update a given zabbix host's port.
 #AUTHOR
-#	(C) 2011,2012 Gary Wallis for Unixservice, LLC.
+#	(C) 2011,2013 Gary Wallis for Unixservice, LLC.
 #	GPLv3 license applies see root dir LICENSE
 
 if [ "$2" == "" ];then
@@ -14,7 +14,7 @@ if [ "$2" == "" ];then
 fi
 
 #set for your zabbix server and port
-cZabbixServer="zabbix.yourisp.net";
+cZabbixServer="zabbix.isp.net";
 
 #Set for your user and password
 #login
@@ -24,7 +24,7 @@ cat << EOF > /tmp/login.json
 	"method":"user.login",
 	"params":{
 			"user":"apiuser-change",
-			"password":"foobar-change"
+			"password":"foobar"
 	},
 	"id":1
 }
@@ -46,7 +46,6 @@ if [ "$cAuth" == "" ] || [ "$cAuth" == "code" ];then
 	echo "Could not login";
 	exit 1;
 fi
-#echo $cAuth;
 
 #first get host id
 cat << EOF > /tmp/gethost.json
@@ -73,7 +72,7 @@ if [ $? != 0 ];then
 	echo "wget error 1";
 	exit 1;
 fi
-if [ "$uHostID" == "" ] || [ "$uHostID" == "message" ];then
+if [ "$uHostID" == "" ] || [ "$uHostID" == "message" ] || [ "$uHostID" == "1}" ];then
 	echo "Could not get host id";
 	exit 1;
 fi
@@ -92,7 +91,7 @@ EOF
 
 /usr/bin/wget --quiet --no-check-certificate --post-file=/tmp/hostupdateport.json --output-document=-\
 	 --header='Content-Type: application/json-rpc'\
-	 https://$cZabbixServer/zabbix/api_jsonrpc.php > /dev/null;
+	 https://$cZabbixServer/zabbix/api_jsonrpc.php > /dev/null 2>&1;
 if [ $? != 0 ];then
 	echo "wget error 2";
 	exit 1;
