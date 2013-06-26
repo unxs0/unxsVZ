@@ -624,7 +624,13 @@ void ChangeFreePBX(unsigned uContainer)
 		system(cCommand);
 		sprintf(cCommand,"/usr/sbin/vzctl exec2 %u '/sbin/service zabbix_agentd restart'",uContainer);
 		system(cCommand);
-		sprintf(cCommand,"/usr/sbin/UpdateZabbixHostPort.sh %s %u",field[2],uPort);
+
+		pid_t pidChild;
+		pidChild=fork();
+		if(pidChild!=0)
+			return;
+		sleep(200);
+		sprintf(cCommand,"/usr/sbin/UpdateZabbixHostPort.sh %s %u > /tmp/UpdateZabbixHostPort.sh.log 2>&1",field[2],uPort);
 		system(cCommand);
 	}
 	mysql_free_result(res);
