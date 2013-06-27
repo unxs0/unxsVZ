@@ -1811,18 +1811,24 @@ void funcSelectContainer(FILE *fp)
 	if(guPermLevel>5)
 	{
 		if(gcSearch[0])
-			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
-			" (uSource=0 OR uStatus=1) AND"
-			" (uOwner IN (SELECT uClient FROM tClient WHERE ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
-			" cCode='Organization')) OR uOwner=%u) AND"
-			" cHostname LIKE '%s%%'"
-			" AND uStatus!=91"
-			" ORDER BY cHostname LIMIT 301",guOrg,guOrg,guOrg,gcSearch);
+			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer,tNode WHERE"
+			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
+			" (tContainer.uSource=0 OR tContainer.uStatus=1) AND"
+			" (tContainer.uOwner IN"
+			" (SELECT uClient FROM tClient WHERE"
+			" 	((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND cCode='Organization'))"
+			" OR tContainer.uOwner=%u) AND"
+			" tContainer.cHostname LIKE '%s%%'"
+			" AND tContainer.uStatus!=91"
+			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,gcSearch);
 		else
 			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
-			" (uOwner IN (SELECT uClient FROM tClient WHERE ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
-			" cCode='Organization')) OR uOwner=%u) AND"
-			" uStatus!=91 AND (uSource=0 OR uStatus=1) ORDER BY cHostname LIMIT 301",guOrg,guOrg,guOrg);
+			" (tContainer.uOwner IN"
+			" (SELECT uClient FROM tClient WHERE ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)"
+			" 	OR uOwner=%u) AND " " 	cCode='Organization'))"
+			" OR tContainer.uOwner=%u) AND"
+			" tContainer.uStatus!=91 AND"
+			" (tContainer.uSource=0 OR tContainer.uStatus=1) ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg);
 	}
 	else if(guOrg!=2)//ASP uClient hack
 	{
