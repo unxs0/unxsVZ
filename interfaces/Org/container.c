@@ -1811,7 +1811,7 @@ void funcSelectContainer(FILE *fp)
 	if(guPermLevel>5)
 	{
 		if(gcSearch[0])
-			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer,tNode WHERE"
+			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
 			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
 			" (tContainer.uSource=0 OR tContainer.uStatus=1) AND"
 			" (tContainer.uOwner IN"
@@ -1822,47 +1822,56 @@ void funcSelectContainer(FILE *fp)
 			" AND tContainer.uStatus!=91"
 			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,gcSearch);
 		else
-			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
+			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
+			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
+			" (tContainer.uSource=0 OR tContainer.uStatus=1) AND"
 			" (tContainer.uOwner IN"
 			" (SELECT uClient FROM tClient WHERE ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)"
 			" 	OR uOwner=%u) AND " " 	cCode='Organization'))"
 			" OR tContainer.uOwner=%u) AND"
-			" tContainer.uStatus!=91 AND"
-			" (tContainer.uSource=0 OR tContainer.uStatus=1) ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg);
+			" tContainer.uStatus!=91"
+			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg);
 	}
 	else if(guOrg!=2)//ASP uClient hack
 	{
 		if(gcSearch[0])
-			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
-			" uSource=0 AND"
-			" (uOwner IN (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
-			" cCode='Organization')) OR uOwner=%u) OR"
-			" (uOwner=%u OR uCreatedBy=%u)) AND cHostname LIKE '%s%%'"
-			" AND uStatus!=91"
-			" ORDER BY cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient,gcSearch);
+			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
+			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
+			" tContainer.uSource=0 AND"
+			" (tContainer.uOwner IN"
+			" (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
+			" 	cCode='Organization')) OR uOwner=%u)"
+			" OR (tContainer.uOwner=%u OR tContainer.uCreatedBy=%u)) AND"
+			" tContainer.cHostname LIKE '%s%%' AND"
+			" tContainer.uStatus!=91"
+			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient,gcSearch);
 		else
-			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
-			" uSource=0 AND"
-			" (uOwner IN (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
-			" cCode='Organization')) OR uOwner=%u) OR"
-			" (uOwner=%u OR uCreatedBy=%u))"
-			" AND uStatus!=91"
-			" ORDER BY cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient);
+			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
+			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
+			" tContainer.uSource=0 AND"
+			" (tContainer.uOwner IN"
+			" (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
+			" 	cCode='Organization')) OR uOwner=%u)"
+			" OR (tContainer.uOwner=%u OR tContainer.uCreatedBy=%u)) AND"
+			" tContainer.uStatus!=91"
+			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient);
 	}
 	else
 	{
 		if(gcSearch[0])
-			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
-			" uSource=0 AND"
-			" uCreatedBy=%u AND cHostname LIKE '%s%%'"
-			" AND uStatus!=91"
-			" ORDER BY cHostname LIMIT 301",guLoginClient,gcSearch);
+			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
+			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
+			" tContainer.uSource=0 AND"
+			" tContainer.uCreatedBy=%u AND tContainer.cHostname LIKE '%s%%'"
+			" AND tContainer.uStatus!=91"
+			" ORDER BY tContainer.cHostname LIMIT 301",guLoginClient,gcSearch);
 		else
-			sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE"
-			" uSource=0 AND"
-			" uCreatedBy=%u"
-			" AND uStatus!=91"
-			" ORDER BY cHostname LIMIT 301",guLoginClient);
+			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
+			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
+			" tContainer.uSource=0 AND"
+			" tContainer.uCreatedBy=%u"
+			" AND tContainer.uStatus!=91"
+			" ORDER BY tContainer.cHostname LIMIT 301",guLoginClient);
 	}
 
 	mysql_query(&gMysql,gcQuery);
