@@ -24,6 +24,7 @@ uRemoteContainer=$2;
 cTargetNode=$3;
 cLocalNetFileSpec="/etc/unxsvz/asterisk/localnet";
 cExternIpFileSpec="/etc/unxsvz/asterisk/externip";
+cBindPortFileSpec="/etc/unxsvz/asterisk/bindport";
 
 /usr/sbin/vzlist | grep $uContainer  > /dev/null 2>&1;
 if [ $? != 0 ];then
@@ -107,6 +108,22 @@ if [ $? != 0 ];then
         fi
 fi
 #externip setup end
+#
+
+#
+#bindport setup
+cBindPort=`/usr/bin/ssh $cTargetNode "/usr/sbin/vzctl exec $uRemoteContainer cat '$cBindPortFileSpec'"`;
+cSQL="INSERT INTO sipsettings SET keyword='\''bindport'\'',data='\''$cBindPort'\'',seq=8,type=9";
+funcQuery $cSQL;
+if [ $? != 0 ];then
+        cSQL="UPDATE sipsettings SET data='\''$cBindPort'\'',seq=8,type=9 WHERE keyword='\''bindport'\''";
+        funcQuery $cSQL;
+        if [ $? != 0 ];then
+                echo "insert and update failed";
+                exit 1;
+        fi
+fi
+#bindport setup end
 #
 
 #only log errors
