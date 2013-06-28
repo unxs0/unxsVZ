@@ -337,8 +337,8 @@ void CreateIptablesData(char *cSourceIPv4)
 		sprintf(cPort,"%u",uPort);
 		SetContainerProp(uContainer,"cOrg_SIPPort",cPort);
 		//changed to std 5060
-		printf("-A PREROUTING -d %s -p udp -m udp --dport %u -j DNAT --to-destination %s:5060\n",
-			cSourceIPv4,uPort,field[1]);
+		printf("-A PREROUTING -d %s -p udp -m udp --dport %u -j DNAT --to-destination %s:%u\n",
+			cSourceIPv4,uPort,field[1],uPort);
 		//Asterisk rtp port range (100 ports ~25 concurrent calls)
 		uPort=10000+(uD-1)*100;
 		uRangeEnd=uPort+99;
@@ -588,6 +588,17 @@ void ChangeFreePBX(unsigned uContainer)
 			continue;
 		}
 		fprintf(fp,"%s\n",cOrg_PublicIP);
+		fclose(fp);
+
+		char cOrg_SIPPort[256]={""};
+		sprintf(cFile,"/vz/root/%u/etc/unxsvz/asterisk/bindport",uContainer);
+		GetContainerProp(uContainer,"cOrg_SIPPort",cOrg_SIPPort);
+		if((fp=fopen(cFile,"w"))==NULL)
+		{
+			logfileLine("ChangeFreePBX",cFile,uContainer);
+			continue;
+		}
+		fprintf(fp,"%s\n",cOrg_SIPPort);
 		fclose(fp);
 
 		char cPrivateNATNetwork[256]={""};
