@@ -65,8 +65,14 @@ cAMPDBPASS=`/usr/sbin/vzctl exec2 $uContainer '/bin/grep "^AMPDBPASS=" /etc/ampo
 #functions
 funcQuery() { 
 
-	/usr/bin/ssh $cTargetNode "/usr/sbin/vzctl exec $uRemoteContainer \" echo '$@' | mysql -u $cAMPDBUSER -p$cAMPDBPASS asterisk \" >/dev/null 2>&1";
+	/usr/bin/ssh $cTargetNode "/usr/sbin/vzctl exec $uRemoteContainer \" echo '$@' | mysql -N -u $cAMPDBUSER -p$cAMPDBPASS asterisk \" >/dev/null 2>&1";
 }
+
+funcQuerySelect() {
+
+        /usr/bin/ssh $cTargetNode "/usr/sbin/vzctl exec $uRemoteContainer \" echo '$@' | mysql -N -u $cAMPDBUSER -p$cAMPDBPASS asterisk \" ";
+}
+
 
 #dump source sql
 /usr/sbin/vzctl exec2 $uContainer "/usr/bin/mysqldump -u $cAMPDBUSER --password=$cAMPDBPASS asterisk > /tmp/dump.sql";
@@ -78,13 +84,28 @@ funcQuery() {
 /usr/bin/ssh $cTargetNode "/usr/sbin/vzctl exec2 $uRemoteContainer \"cat /tmp/dump.sql | mysql -u $cAMPDBUSER --password=$cAMPDBPASS asterisk\";" \
 		2>> /tmp/clonesync-active.log 1> /dev/null
 
+#get last seq from sipsettings
+cSQL="SELECT max(seq) FROM sipsettings WHERE type=9"
+uLastSeq=` funcQuerySelect $cSQL `
+echo $uLastSeq
+
+if [ $uLastSeq = "NULL" ];then
+	uNextSeq=0;
+else
+	echo $uNextSeq
+	let uNextSeq=$uLastSeq+1;
+fi
+
+echo nextseq: $uNextSeq
+
+
 #
 #localnet setup
 cLocalNet=`/usr/bin/ssh $cTargetNode "/usr/sbin/vzctl exec $uRemoteContainer cat '$cLocalNetFileSpec'"`;
-cSQL="INSERT INTO sipsettings SET keyword='\''localnet'\'',data='\''$cLocalNet'\'',seq=6,type=9";
+cSQL="INSERT INTO sipsettings SET keyword='\''localnet'\'',data='\''$cLocalNet'\'',seq=$uNextSeq,type=9";
 funcQuery $cSQL;
 if [ $? != 0 ];then
-	cSQL="UPDATE sipsettings SET data='\''$cLocalNet'\'',seq=6,type=9 WHERE keyword='\''localnet'\''";
+	cSQL="UPDATE sipsettings SET data='\''$cLocalNet'\'',seq=0,type=9 WHERE keyword='\''localnet'\''";
 	funcQuery $cSQL;
 	if [ $? != 0 ];then
 		echo "insert and update failed";
@@ -96,11 +117,12 @@ fi
 
 #
 #externip setup
+let uNextSeq=$uNextSeq+1;
 cExternIp=`/usr/bin/ssh $cTargetNode "/usr/sbin/vzctl exec $uRemoteContainer cat '$cExternIpFileSpec'"`;
-cSQL="INSERT INTO sipsettings SET keyword='\''externip'\'',data='\''$cExternIp'\'',seq=7,type=9";
+cSQL="INSERT INTO sipsettings SET keyword='\''externip'\'',data='\''$cExternIp'\'',seq=$uNextSeq,type=9";
 funcQuery $cSQL;
 if [ $? != 0 ];then
-        cSQL="UPDATE sipsettings SET data='\''$cExternIp'\'',seq=7,type=9 WHERE keyword='\''externip'\''";
+        cSQL="UPDATE sipsettings SET data='\''$cExternIp'\'',seq=1,type=9 WHERE keyword='\''externip'\''";
         funcQuery $cSQL;
         if [ $? != 0 ];then
                 echo "insert and update failed";
@@ -112,11 +134,12 @@ fi
 
 #
 #bindport setup
+let uNextSeq=$uNextSeq+1;
 cBindPort=`/usr/bin/ssh $cTargetNode "/usr/sbin/vzctl exec $uRemoteContainer cat '$cBindPortFileSpec'"`;
-cSQL="INSERT INTO sipsettings SET keyword='\''bindport'\'',data='\''$cBindPort'\'',seq=8,type=9";
+cSQL="INSERT INTO sipsettings SET keyword='\''bindport'\'',data='\''$cBindPort'\'',seq=$uNextSeq,type=9";
 funcQuery $cSQL;
 if [ $? != 0 ];then
-        cSQL="UPDATE sipsettings SET data='\''$cBindPort'\'',seq=8,type=9 WHERE keyword='\''bindport'\''";
+        cSQL="UPDATE sipsettings SET data='\''$cBindPort'\'',seq=2,type=9 WHERE keyword='\''bindport'\''";
         funcQuery $cSQL;
         if [ $? != 0 ];then
                 echo "insert and update failed";
