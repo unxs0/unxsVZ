@@ -621,12 +621,13 @@ void tContainerNewStep(unsigned uStep)
 		if(cAutoCloneNode[0])
 		{
 			char cAutoCloneSyncTime[256]={""};
+
+
+/*
 			char cAutoCloneNode[256]={""};
 			unsigned uTargetDatacenter=0;
-
 			MYSQL_RES *res;
 			MYSQL_ROW field;
-
 			OpenRow("Clone target node","black");
 			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
 			if(!cAutoCloneNode[0])
@@ -644,6 +645,15 @@ void tContainerNewStep(unsigned uStep)
 				printf("Configuration error: '%s' %u %u",cAutoCloneNode,uDatacenter,uNode);
 			}
 
+			GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,uNode,0,0);
+			if(!cAutoCloneNodeRemote[0])
+				GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,0,0,0);
+			if(cAutoCloneNodeRemote[0])
+			{
+				OpenRow("Backup target node","black");
+				printf("%s",cAutoCloneNodeRemote);
+			}
+
 			OpenRow("Clone start uIPv4","black");
 			tTablePullDownDatacenterCloneIPs("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
 				uTargetDatacenter,uForClient,uTargetNode);
@@ -654,6 +664,7 @@ void tContainerNewStep(unsigned uStep)
 				printf("checked>");
 			else
 				printf(">");
+*/
 
 			OpenRow("Clone cuSyncPeriod","black");
 			GetConfiguration("cAutoCloneSyncTime",cAutoCloneSyncTime,uDatacenter,0,0,0);
