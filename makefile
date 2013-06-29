@@ -44,7 +44,7 @@ tdatacenter.o: tdatacenter.c mysqlrad.h language.h tdatacenterfunc.h local.h
 tnode.o: tnode.c mysqlrad.h language.h tnodefunc.h local.h
 	cc -c tnode.c -o tnode.o $(CFLAGS)
 
-tcontainer.o: tcontainer.c mysqlrad.h language.h tcontainerfunc.h local.h NewContainerCommand.c
+tcontainer.o: tcontainer.c mysqlrad.h language.h tcontainerfunc.h local.h tcontainerfunc-newcontainer.c
 	cc -c tcontainer.c -o tcontainer.o $(CFLAGS)
 
 tproperty.o: tproperty.c mysqlrad.h language.h tpropertyfunc.h local.h

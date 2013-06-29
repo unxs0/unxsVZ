@@ -83,6 +83,7 @@ static char cYesNouSearchSource[32]={""};
 
 static char cuClientPullDown[256]={""};
 static char cAutoCloneNode[256]={""};
+static char cAutoCloneNodeRemote[256]={""};
 static char cunxsBindARecordJobZone[256]={""};
 static char gcNewContainerTZ[64]={"PST8PDT"};
 
