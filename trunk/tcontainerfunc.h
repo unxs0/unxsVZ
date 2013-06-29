@@ -102,6 +102,7 @@ static unsigned uCreateDNSJob=0;
 static unsigned uUsePublicIP=0;
 static char gcUseThisIP[256]={""};
 static char cForClientPullDown[256]={""};
+static unsigned uRemoteNode=0;
 
 //ModuleFunctionProtos()
 void tContainerNavList(unsigned uNode, char *cSearch);//uNode is really a node mode
@@ -482,7 +483,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 
 //New container creation include file Multiple Container and Single Container
-#include "NewContainerCommand.c"
+#include "tcontainerfunc-newcontainer.c"
 
 		else if(!strcmp(gcCommand,"Reload Search Set"))
                 {
@@ -2992,8 +2993,11 @@ void ExttContainerButtons(void)
 			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
 			if(cAutoCloneNode[0])
 				printf("<p>Auto-clone subsystem is enabled for selected datacenter/node: Clone target node"
-					" must not match selected node. Similarly, clone start uIPv4"
-					" must not match uIPv4 or fall in same range -as defined per number of containers.");
+					" must not match selected node.");
+			GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,uNode,0,0);
+			if(cAutoCloneNodeRemote[0])
+				printf("<p>Auto-clone-remote subsystem is enabled for selected datacenter/node. Will use tConfiguration"
+					" entries for automatic setup.");
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 			if(cunxsBindARecordJobZone[0])
 				printf("<p>unxsBind interface is configured for selected datacenter and <i>%s</i> zone: DNS will be setup"
@@ -3002,10 +3006,17 @@ void ExttContainerButtons(void)
 
 			printf("<p><u>%s target node information</u><br>",cuNodePullDown);
 			SelectedNodeInformation(uNode,1);
+			uTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
 			if(uTargetNode)
 			{
-				printf("<p><u>%s clone target node information</u><br>",cuTargetNodePullDown);
+				printf("<p><u>%s clone target node information</u><br>",cAutoCloneNode);
 				SelectedNodeInformation(uTargetNode,1);
+			}
+			uRemoteNode=ReadPullDown("tNode","cLabel",cAutoCloneNodeRemote);
+			if(uRemoteNode)
+			{
+				printf("<p><u>%s remote clone target node information</u><br>",cAutoCloneNodeRemote);
+				SelectedNodeInformation(uRemoteNode,1);
 			}
 
 			printf("<p><input type=submit class=largeButton"
@@ -3041,8 +3052,11 @@ void ExttContainerButtons(void)
 			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
 			if(cAutoCloneNode[0])
 				printf("Auto-clone subsystem is enabled for selected datacenter: Clone target node"
-					" must not match selected node. Similarly, clone start uIPv4"
-					" must not match uIPv4 or fall in same range -as defined per number of containers.<p>");
+					" must not match selected node.<p>");
+			GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,uNode,0,0);
+			if(cAutoCloneNodeRemote[0])
+				printf("Auto-clone-remote subsystem is enabled for selected datacenter/node. Will use tConfiguration"
+					" entries for automatic setup.<p>");
 			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 			if(cunxsBindARecordJobZone[0])
 				printf("unxsBind interface is configured for selected datacenter and <i>%s</i> zone: DNS will be setup"
@@ -3051,10 +3065,17 @@ void ExttContainerButtons(void)
 
 			printf("<p><u>%s target node information</u><br>",cuNodePullDown);
 			SelectedNodeInformation(uNode,1);
+			uTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
 			if(uTargetNode)
 			{
-				printf("<p><u>%s clone target node information</u><br>",cuTargetNodePullDown);
+				printf("<p><u>%s clone target node information</u><br>",cAutoCloneNode);
 				SelectedNodeInformation(uTargetNode,1);
+			}
+			uRemoteNode=ReadPullDown("tNode","cLabel",cAutoCloneNodeRemote);
+			if(uRemoteNode)
+			{
+				printf("<p><u>%s remote clone target node information</u><br>",cAutoCloneNodeRemote);
+				SelectedNodeInformation(uRemoteNode,1);
 			}
 
 			printf("<p><input type=submit class=largeButton"

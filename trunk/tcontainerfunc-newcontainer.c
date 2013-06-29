@@ -10,6 +10,7 @@ AUTHOR/LEGAL
 NOTES
 */
 
+
 //step 1
 if(!strcmp(gcCommand,LANG_NB_NEW))
 {
@@ -24,6 +25,7 @@ if(!strcmp(gcCommand,LANG_NB_NEW))
 		tContainer("<blink>Error:</blink> Denied by permissions settings");
 	}
 }//LANG_NB_NEW
+
 
 //step 2
 else if(!strcmp(gcCommand,"Select Datacenter/Org"))
@@ -48,6 +50,7 @@ else if(!strcmp(gcCommand,"Select Datacenter/Org"))
 		tContainer("<blink>Error:</blink> Denied by permissions settings");
 	}
 }//Select Datacenter/Org
+
 
 //step 3
 else if(!strcmp(gcCommand,"Select Node"))
@@ -81,6 +84,7 @@ else if(!strcmp(gcCommand,"Select Node"))
 		tContainer("<blink>Error:</blink> Denied by permissions settings");
 	}
 }//Select Node
+
 
 //appliance and single container creation
 //lots of duplicate code in multiple container section
@@ -215,7 +219,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 				
 		}
 
-		//clone code section start
+		//clone code block start
 		//
 
 		//outline
@@ -289,7 +293,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		}//cAutoCloneNodeRemote
 
 		//
-		//clone code section end
+		//clone code block end
 
 		//TODO review this policy.
 		//No same names or hostnames for same datacenter allowed.
@@ -333,7 +337,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		}
 		mysql_free_result(res);
 
-		//Clone code section start
+		//clone code block start
 		//
 
 		//Check for available IP for local datacenter clone if so configured
@@ -375,7 +379,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		}//cAutoCloneNodeRemote
 
 		//
-		//Clone code section end
+		//clone code block end
 
 
 		//User chooses to create a new group
@@ -405,6 +409,9 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 			mysql_free_result(res);
 		}
 
+
+		//appliance code block start
+		//
 
 		unsigned uApplianceIPv4=0;
 		unsigned uApplianceDatacenter=41;//My current default for testing
@@ -559,6 +566,10 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		//This sets new file global uContainer
 		if(uCreateAppliance)
 			uSource=uApplianceContainer;
+		//
+		//appliance code block end
+
+		//Create the new main container
 		NewtContainer(1);
 
 		//tIP
@@ -636,7 +647,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 
 
 		//
-		//clone code section start
+		//clone code block start
 
 		if(cAutoCloneNode[0] && uCloneDatacenter && uCloneNode && uCloneIPv4)
 		{
@@ -674,7 +685,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 
 		if(cAutoCloneNodeRemote[0] && uRemoteDatacenter && uRemoteNode && uRemoteIPv4)
 		{
-			uCloneStop=0;//the -backup we keep running as default
+			uCloneStop=HOT_CLONE;//the -backup we keep running as default
 			uNewVeid=CommonCloneContainer(
 							uContainer,
 							uOSTemplate,
@@ -696,19 +707,27 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 							uSyncPeriod,
 							guLoginClient,
 							uCloneStop,0);
-			SetContainerStatus(uNewVeid,uINITSETUP);
 			if(uGroup)
 				UpdatePrimaryContainerGroup(uNewVeid,uGroup);
+			//change name to -backup
+			char cRemoteHostname[100]={""};
+			sprintf(cRemoteHostname,"%.99s",cWizHostname);
+			if(uUpdateNamesFromCloneToBackup(uNewVeid))
+			{
+				sprintf(cRemoteHostname,"%.99s",ForeignKey("tContainer","cHostname",uNewVeid));
+				if(HostnameContainerJob(uRemoteDatacenter,uRemoteNode,uNewVeid,cRemoteHostname,uForClient,guLoginClient))
+						SetContainerStatus(uNewVeid,uAWAITHOST);
+			}
 
 			//Create DNS job for clones also
 			//rfc1918 control in CreateDNSJob() prevents non public IP clones from getting zones.
 			if(uCreateDNSJob)
-				CreateDNSJob(uRemoteIPv4,uForClient,NULL,cWizHostname,uRemoteDatacenter,guLoginClient,uNewVeid,uRemoteNode);
+				CreateDNSJob(uRemoteIPv4,uForClient,NULL,cRemoteHostname,uRemoteDatacenter,guLoginClient,uNewVeid,uRemoteNode);
 		}//cAutoCloneNodeRemote
 
 
 		//
-		//clone code section end
+		//clone code block end
 
 		if(uCreateDNSJob)
 			CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient,uContainer,uNode);
