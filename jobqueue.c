@@ -872,6 +872,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 				logfileLine("NewContainer",cOnScriptCall);
 			}
 		}
+		//end 6-.
 	}
 
 //In this case the goto MIGHT be justified
@@ -2841,6 +2842,59 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//sprintf(gcQuery,"scp /var/vzquota/quota.%u %s:/var/vzquota/quota.%u",uContainer,cTargetNodeIPv4,uNewVeid);
 	//if(system(gcQuery))
 	//	logfileLine("CloneContainer",gcQuery);
+
+	//Run optional post clone script
+	//10-.
+	//Optional group based script may exist to be executed.
+	//
+	//Primary group is oldest tGroupGlue entry.
+	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+			" AND tProperty.uKey=tGroupGlue.uGroup"
+			" AND tGroupGlue.uContainer=%u"
+			" AND tProperty.cName='cJob_OnCloneScript' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",uPROP_GROUP,uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("CloneContainer",mysql_error(&gMysql));
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char cOnScriptCall[386];
+		char cCommand[256];
+		char *cp;
+
+		sprintf(cCommand,"%.255s",field[0]);
+
+		//Remove trailing junk
+		if((cp=strchr(cCommand,'\n')) || (cp=strchr(cCommand,'\r'))) *cp=0;
+
+		char cHostname[100]={""};
+		sprintf(gcQuery,"SELECT tContainer.cHostname"
+				" FROM tContainer WHERE uContainer=%u",uNewVeid);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("CloneContainer","mysql_error()");
+			logfileLine("CloneContainer",mysql_error(&gMysql));
+			goto CommonExit;
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cHostname,"%.99s",field[0]);
+
+			//Please note that any script here must not use uStatus=1 as a condition.
+			//note no security checks for remote script
+			sprintf(cOnScriptCall,"ssh %s %s '%.255s %.64s %u'",cSSHOptions,cTargetNodeIPv4,cCommand,cHostname,uNewVeid);
+			if(system(cOnScriptCall))
+			{
+				logfileLine("CloneContainer",cOnScriptCall);
+			}
+		}
+	}
+	//end 10-. optional clone script
 
 //This goto MIGHT be ok.
 CommonExit:

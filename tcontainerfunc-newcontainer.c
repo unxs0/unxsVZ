@@ -725,6 +725,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 							uSyncPeriod,
 							guLoginClient,
 							0,0);
+			SetContainerStatus(uContainer,uAWAITCLONE);
 			if(uGroup)
 				UpdatePrimaryContainerGroup(uNewVeid,uGroup);
 			//change name to -backup
