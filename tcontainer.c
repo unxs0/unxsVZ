@@ -86,6 +86,7 @@ static char cAutoCloneNode[256]={""};
 static char cAutoCloneNodeRemote[256]={""};
 static char cunxsBindARecordJobZone[256]={""};
 static char gcNewContainerTZ[64]={"PST8PDT"};
+static unsigned uEnableNAT=0;
 
 static char *cCommands={""};
 
@@ -583,8 +584,9 @@ void tContainerNewStep(unsigned uStep)
 
 		if(cunxsBindARecordJobZone[0])
 		{
-			OpenRow("Create job for unxsBind","black");
-			printf("<input type=checkbox name=uCreateDNSJob ");
+			OpenRow("Create job(s) for unxsBind","black");
+			printf("<input type=checkbox name=uCreateDNSJob title=\"You should usually leave this checked. If you don't"
+				" you will probably need to create DNS entries manually\"");
 			if(uCreateDNSJob || uStep==3)
 				printf("checked>");
 			else
@@ -674,6 +676,22 @@ void tContainerNewStep(unsigned uStep)
 					". You can change this at any time via the property panel.'"
 					" type=text size=10 maxlength=7"
 					" name=uSyncPeriod value='%u'>\n",uSyncPeriod);
+
+			char cAutoNATIPClass[256]={""};
+			unsigned uRemoteDatacenter=0;
+			sscanf(ForeignKey("tNode","uDatacenter",uRemoteNode),"%u",&uRemoteDatacenter);
+			GetConfiguration("cAutoNATIPClass",cAutoNATIPClass,uRemoteDatacenter,uRemoteNode,0,0);
+			if(!cAutoNATIPClass[0])
+				GetConfiguration("cAutoNATIPClass",cAutoNATIPClass,uRemoteDatacenter,0,0,0);
+			if(cAutoNATIPClass[0])
+			{
+				OpenRow("Enable NAT","black");
+				printf("<input type=checkbox name=uEnableNAT title='Enable NAT for remote clone container'");
+				if(uEnableNAT || uStep==3)
+					printf("checked>");
+				else
+					printf(">");
+			}
 		}
 
 		if(uStep==4)
@@ -1402,11 +1420,19 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 			}
 
 
-                        if(uSelector != uField0)
+			//Preselect if only one option.
+                        if(uSelector==0 && i==1)
+                        {
+                             printf("<option%s selected>%s</option>\n",cStyle,mysqlField[1]);
+			     if(!uMode)
+			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
+			     		cLabel,mysqlField[1]);
+                        }
+                        else if(uSelector != uField0)
                         {
                              printf("<option%s>%s</option>\n",cStyle,mysqlField[1]);
                         }
-                        else
+                        else if(1)
                         {
                              printf("<option%s selected>%s</option>\n",cStyle,mysqlField[1]);
 			     if(!uMode)
