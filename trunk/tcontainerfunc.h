@@ -166,6 +166,8 @@ unsigned CreateActivateNATNodeJob(unsigned uDatacenter,unsigned uNode,unsigned u
 unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned uChangeContainerIPToNATIP(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner);
 void SetContainerProp(const unsigned uContainer,const char *cName,const char *cValue);
+void SelectedDatacenterInformation(unsigned uDatacenter,unsigned uHtmlMode);
+void SetDatacenterProp(const char *cName,const char *cValue,const unsigned uDatacenter);
 
 //extern
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
@@ -376,6 +378,10 @@ void ExtProcesstContainerVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"gcUseThisIP"))
 		{
 			sprintf(gcUseThisIP,"%.31s",IPNumber(entries[i].val));
+		}
+		else if(!strcmp(entries[i].name,"uEnableNAT"))
+		{
+			uEnableNAT=1;
 		}
 		else if(!strcmp(entries[i].name,"uCloneStop"))
 		{
@@ -2979,6 +2985,8 @@ void ExttContainerButtons(void)
 				" name=gcCommand value='Select Node'>\n");
 			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
 				" name=gcCommand value='Cancel'>\n");
+			printf("<p><u>%s datacenter information</u><br>",cuDatacenterPullDown);
+			SelectedDatacenterInformation(uDatacenter,1);
                 break;
 
                 case 9003:
@@ -8362,3 +8370,136 @@ void SetContainerProp(const unsigned uContainer,const char *cName,const char *cV
 	mysql_free_result(res);
 
 }//void SetContainerProp()
+
+
+//Provide information datacenter usage
+void SelectedDatacenterInformation(unsigned uDatacenter,unsigned uHtmlMode)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uSetDatacenter=uDatacenter;
+
+	if(uDatacenter==0)
+		sprintf(gcQuery,"SELECT COUNT(uContainer),uDatacenter FROM tContainer WHERE uStatus=1 GROUP BY uDatacenter");
+	else
+		sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uDatacenter=%u AND uStatus=1",uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uHtmlMode)
+			printf("Number of active containers is %s<br>",field[0]);
+		if(uDatacenter==0)
+		{
+			sscanf(field[1],"%u",&uSetDatacenter);
+		}
+		SetDatacenterProp("ActiveContainers",field[0],uSetDatacenter);
+		if(uDatacenter!=0) break;
+	}
+
+	if(uDatacenter==0)
+		sprintf(gcQuery,"SELECT COUNT(uContainer),uDatacenter FROM tContainer WHERE uSource!=0 GROUP BY uDatacenter");
+	else
+		sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uDatacenter=%u AND uSource!=0",uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uHtmlMode)
+			printf("Number of clone containers is %s<br>",field[0]);
+		if(uDatacenter==0)
+		{
+			sscanf(field[1],"%u",&uSetDatacenter);
+		}
+		SetDatacenterProp("CloneContainers",field[0],uSetDatacenter);
+		if(uDatacenter!=0) break;
+	}
+
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uDatacenter=%u AND"
+				" uAvailable=1 AND"
+				" INSTR(cLabel,'10.')!=1 AND"
+				" INSTR(cLabel,'192.168.')!=1 AND"
+				" INSTR(cLabel,'172.')!=1",uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uHtmlMode)
+			printf("Number of available public IPs is %s<br>",field[0]);
+		if(uDatacenter==0)
+		{
+			sscanf(field[1],"%u",&uSetDatacenter);
+		}
+		SetDatacenterProp("AvailablePublicIPs",field[0],uSetDatacenter);
+		if(uDatacenter!=0) break;
+	}
+
+	sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uDatacenter=%u AND"
+				" uAvailable=1 AND"
+				" ( INSTR(cLabel,'10.')=1 OR" 
+				" INSTR(cLabel,'192.168.')=1 OR"
+				" INSTR(cLabel,'172.')=1 )",uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uHtmlMode)
+			printf("Number of available private (rfc1918) IPs is %s<br>",field[0]);
+		if(uDatacenter==0)
+		{
+			sscanf(field[1],"%u",&uSetDatacenter);
+		}
+		SetDatacenterProp("AvailablePrivateIPs",field[0],uSetDatacenter);
+		if(uDatacenter!=0) break;
+	}
+
+	mysql_free_result(res);
+
+	if(!uHtmlMode || !uDatacenter)
+		return;
+
+}//void SelectedDatacenterInformation(unsigned uDatacenter,unsigned uHtmlMode)
+
+
+void SetDatacenterProp(const char *cName,const char *cValue,const unsigned uDatacenter)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uDatacenter==0 || !cName[0] || !cValue[0]) return;
+
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%u AND uType=1 AND cName='%s'",
+				uDatacenter,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return;
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%s",cValue,field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			return;
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET cName='%s',cValue='%s',uKey=%u,uType=1,uOwner=1,uCreatedBy=1,"
+										"uCreatedDate=UNIX_TIMESTAMP(NOW())",cName,cValue,uDatacenter);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			return;
+	}
+	mysql_free_result(res);
+
+}//void SetDatacenterProp()
+

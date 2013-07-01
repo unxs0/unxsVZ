@@ -738,12 +738,71 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 						SetContainerStatus(uNewVeid,uAWAITHOST);
 			}
 
-			//Create DNS job for clones also
-			//rfc1918 control in CreateDNSJob() prevents non public IP clones from getting zones.
-			if(uCreateDNSJob)
-				CreateDNSJob(uRemoteIPv4,uForClient,NULL,cRemoteHostname,uRemoteDatacenter,guLoginClient,uNewVeid,uRemoteNode);
-		}//cAutoCloneNodeRemote
 
+			//Many conditions may cancel NAT activiation
+			if(uEnableNAT)
+			{
+				uEnableNAT=0;
+				//Check to see of node is configured
+				char cBuffer[256]={""};
+				GetNodeProp(uRemoteNode,"cPublicNATIP",cBuffer);
+				if(cBuffer[0])
+				{
+					GetNodeProp(uRemoteNode,"cPrivateNATNetwork",cBuffer);
+					if(cBuffer[0])
+					{
+						if(!uChangeContainerIPToNATIP(uNewVeid,uRemoteDatacenter,uRemoteNode,
+							uRemoteIPv4,guCompany))
+						{
+							if(CreateActivateNATNodeJob(uRemoteDatacenter,uRemoteNode,
+								uNewVeid,guCompany))
+							{
+
+								if(CreateActivateNATContainerJob(uRemoteDatacenter,uRemoteNode,
+								uNewVeid,guCompany))
+									uEnableNAT=1;
+							}
+
+						}
+					}
+				}
+			}
+
+			//de nest via uEnableNAT
+			if(uEnableNAT)
+			{
+				//everything was setup for NAT continue with special DNS OPs for backup container pairs.
+				//we need to set the cOrg_SIPPort here if applicable
+				//before we create the dns jobs
+				unsigned uContainerPrimaryGroup=uGetPrimaryContainerGroup(uNewVeid);
+				unsigned uContainerType=0;
+
+				char cContainerPrimaryGroup[100]={""};
+				sprintf(cContainerPrimaryGroup,"%.99s",ForeignKey("tGroup","cLabel",uContainerPrimaryGroup));
+				ToLower(cContainerPrimaryGroup);
+				if(strstr(cContainerPrimaryGroup,"pbx"))
+					uContainerType=uPBXType;
+
+				if(uContainerType==uPBXType)
+				{
+					unsigned uD=0;
+					char cOrg_SIPPort[32]={"5060"};
+					//We probably have a new uRemoteIPv4
+					if(sscanf(ForeignKey("tContainer","uIPv4",uNewVeid),"%u",&uRemoteIPv4)==1)
+					{
+						if(sscanf(ForeignKey("tIP","cLabel",uRemoteIPv4),"%*u.%*u.%*u.%u",&uD)==1)
+							sprintf(cOrg_SIPPort,"%u",uD+6000);//6000 base sip port natpabx.c
+					}
+					SetContainerProp(uNewVeid,"cOrg_SIPPort",cOrg_SIPPort);
+				}
+
+			}
+
+			//Create DNS job for clones also
+			if(uCreateDNSJob)
+				CreateDNSJob(uRemoteIPv4,uForClient,NULL,cRemoteHostname,uRemoteDatacenter,
+					guCompany,uNewVeid,uRemoteNode);
+		}//cAutoCloneNodeRemote
 
 		//
 		//clone code block end
@@ -751,8 +810,13 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		if(uCreateDNSJob)
 			CreateDNSJob(uIPv4,uForClient,NULL,cHostname,uDatacenter,guLoginClient,uContainer,uNode);
 		SetContainerStatus(uContainer,uINITSETUP);
+		if(CreateNewContainerJob(uDatacenter,uNode,uContainer,guCompany))
+		{
+			SetContainerStatus(uContainer,uAWAITACT);
+			tContainer("New container created being deployed");
+		}
 
-		tContainer("New container created");
+		tContainer("New container created must be deployed");
 	}
 	else
 	{
