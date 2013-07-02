@@ -748,6 +748,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 				GetNodeProp(uRemoteNode,"cPublicNATIP",cBuffer);
 				if(cBuffer[0])
 				{
+					SetContainerProp(uNewVeid,"cOrg_PublicIP",cBuffer);
 					GetNodeProp(uRemoteNode,"cPrivateNATNetwork",cBuffer);
 					if(cBuffer[0])
 					{
