@@ -16,8 +16,8 @@ CGINAME= unxsvzOrg.cgi
 CFLAGS=-Wall
 LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
 
-interface.cgi: main.o glossary.o container.o user.o ldap.o ../../cgi.o mysqlconnect.o
-	cc main.o glossary.o container.o user.o ldap.o ../../cgi.o mysqlconnect.o -o interface.cgi $(LIBS)
+interface.cgi: main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o
+	cc main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
@@ -27,6 +27,9 @@ glossary.o: glossary.c interface.h ../../local.h ../../mysqlrad.h
 
 container.o: container.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c container.c -o container.o $(CFLAGS)
+
+creatednsjob.o: creatednsjob.c interface.h ../../local.h ../../mysqlrad.h
+	cc -c creatednsjob.c -o creatednsjob.o $(CFLAGS)
 
 user.o: user.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c user.c -o user.o $(CFLAGS)

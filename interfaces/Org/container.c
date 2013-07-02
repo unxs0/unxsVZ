@@ -74,6 +74,7 @@ unsigned CreateOrgDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv
 unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 		const char *cJobData,unsigned uOwner,unsigned uCreatedBy);
 unsigned uGetPrimaryContainerGroup(unsigned uContainer);
+unsigned uUpdateNamesFromCloneToBackup(unsigned uContainer);
 
 
 
@@ -566,9 +567,6 @@ void ContainerCommands(pentry entries[], int x)
 				}
 			}
 
-			//for all the above
-			mysql_free_result(res);
-
 			//debug only
 			//gcMessage="Test mode";
 			//htmlContainer();
@@ -620,27 +618,55 @@ void ContainerCommands(pentry entries[], int x)
 			char cZone[100]={""};
 			sprintf(cZone,"%.31s.%.67s",gcNewHostname,cunxsBindARecordJobZone);
 			CreateOrgDNSJob(0,guOrg,cIPv4,cZone,guDatacenter,guLoginClient,guNewContainer,guNode);
-			//DNS job
-			//sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindARecordJob(%u)',cJobName='unxsVZContainerARR'"
-			//		",uDatacenter=%u,uNode=%u,uContainer=%u"
-			//		",uJobDate=UNIX_TIMESTAMP(NOW())+60"
-			//		",uJobStatus=%u"
-			//		",cJobData='"
-			//		"cName=%s.%s.;\n"
-			//		"cIPv4=%s;\n"
-			//		"cZone=%s;\n"
-			//		"cView=%s;\n'"
-			//		",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			//			guNewContainer,
-			//			guDatacenter,guNode,guNewContainer,
-			//			uREMOTEWAITING,
-			//			gcNewHostname,cunxsBindARecordJobZone,cIPv4,cunxsBindARecordJobZone,cunxsBindARecordJobView,
-			//			guOrg,guLoginClient);
+
+			//If container has a remote datacenter backup change it's name also
+			//	this will require hostname and dns jobs.
+			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.uDatacenter,tContainer.uNode,tIP.cLabel"
+					" FROM tContainer,tIP"
+					" WHERE tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.uSource=%u AND tContainer.uDatacenter!=%u",guNewContainer,guDatacenter);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				gcMessage="unxsBindARecordJob insert failed, contact sysadmin!";
+				gcMessage="Select remote backup failed, contact sysadmin!";
 				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				unsigned uRemoteBackupContainer=0;
+				unsigned uRemoteDatacenter=0;
+				unsigned uRemoteNode=0;
+				sscanf(field[0],"%u",&uRemoteBackupContainer);
+				sscanf(field[1],"%u",&uRemoteDatacenter);
+				sscanf(field[2],"%u",&uRemoteNode);
+				if(uRemoteBackupContainer)
+				{
+					sprintf(cPrevHostname,"%.63s",ForeignKey("tContainer","cHostname",uRemoteBackupContainer));
+					if(uUpdateNamesFromCloneToBackup(uRemoteBackupContainer))
+					{
+						
+						CreateOrgDNSJob(0,guOrg,field[3],ForeignKey("tContainer","cHostname",uRemoteBackupContainer),
+							uRemoteDatacenter,guLoginClient,uRemoteBackupContainer,uRemoteNode);
+						sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ChangeHostnameContainer(%u)',cJobName='ChangeHostnameContainer'"
+							",uDatacenter=%u,uNode=%u,uContainer=%u"
+							",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+							",uJobStatus=1"
+							",cJobData='cPrevHostname=%.99s;'"
+							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								uRemoteBackupContainer,
+								uRemoteDatacenter,uRemoteNode,uRemoteBackupContainer,
+								cPrevHostname,
+								guOrg,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							gcMessage="ChangeHostnameContainer insert failed, contact sysadmin!";
+							htmlContainer();
+						}
+						SetContainerStatus(uRemoteBackupContainer,61);
+					}
+				}
 			}
 
 			//Change group
@@ -700,6 +726,9 @@ void ContainerCommands(pentry entries[], int x)
 				gcMessage="Hostname change being attempted. Group not changed. Review new container status in a few minutes.";
 			else
 				gcMessage="Hostname change being attempted. Review new container status in a few minutes.";
+
+			//for all the above
+			mysql_free_result(res);
 
 			guContainer=guNewContainer;
 			htmlContainer();
@@ -3312,234 +3341,6 @@ void GetConfigurationValue(char const *cName,char *cValue,unsigned uDatacenter,u
 
 }//void GetConfigurationValue()
 
-//Create DNS job for unxsBind based on tContainer type.
-unsigned CreateOrgDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,
-				unsigned uDatacenter,unsigned uCreatedBy,unsigned uContainer,unsigned uNode)
-{
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-	char cJobData[512];
-	char cContainerPrimaryGroup[100]={""};
-	static unsigned uOnlyOnce=1;
-
-
-	//Get container type
-	unsigned uContainerPrimaryGroup=uGetPrimaryContainerGroup(uContainer);
-#define uPBXType 1
-	unsigned uContainerType=0;
-
-	sprintf(cContainerPrimaryGroup,"%.99s",ForeignKey("tGroup","cLabel",uContainerPrimaryGroup));
-	ToLower(cContainerPrimaryGroup);
-	if(strstr(cContainerPrimaryGroup,"pbx"))
-		uContainerType=uPBXType;
-
-	//Create DNS job based on type
-	if(uContainerType==uPBXType)
-	{
-		unsigned uMainPort=5060;
-		unsigned uBackupPort=5060;
-		char cMainIPv4[32]={""};
-		char cBackupIPv4[32]={""};
-		unsigned uCloneContainer=0;
-
-		//validation checks
-		if(!uContainer)
-			return 0;
-		if(!uDatacenter)
-			return 0;
-		if(!uNode)
-			return 0;
-
-		//Gather IPs and ports
-		//Main container
-		if(!uIPv4 && cOptionalIPv4[0] )
-		{
-			sprintf(cMainIPv4,"%.31s",cOptionalIPv4);
-		}
-		else
-		{
-			sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer"
-				" WHERE tIP.uIP=tContainer.uIPv4"
-				" AND tContainer.uContainer=%u",uContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-				sprintf(cMainIPv4,"%.31s",field[0]);
-			mysql_free_result(res);
-		}
-		sprintf(gcQuery,"SELECT tProperty.cValue FROM tContainer,tProperty"
-				" WHERE tProperty.uKey=tContainer.uContainer"
-				" AND tProperty.uType=3"//tType Container
-				" AND tProperty.cName='cOrg_SIPPort'"
-				" AND tContainer.uContainer=%u",uContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-			sscanf(field[0],"%u",&uMainPort);
-		mysql_free_result(res);
-		//Clone (backup) container
-		sprintf(cBackupIPv4,"%.31s",cMainIPv4);//default same as main
-		sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uContainer FROM tIP,tContainer"
-				" WHERE tIP.uIP=tContainer.uIPv4"
-				" AND tContainer.uDatacenter!=%u"//only first remote clone
-				" AND tContainer.uSource=%u",uDatacenter,uContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			//exclude rfc1918 IPs
-			unsigned uA=0,uB=0,uC=0;
-			sscanf(field[0],"%u.%u.%u.%*u",&uA,&uB,&uC);
-			if( !( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10)) )
-				sprintf(cBackupIPv4,"%.31s",field[0]);
-			sscanf(field[1],"%u",&uCloneContainer);
-		}
-		mysql_free_result(res);
-		sprintf(gcQuery,"SELECT tProperty.cValue FROM tContainer,tProperty"
-				" WHERE tProperty.uKey=tContainer.uContainer"
-				" AND tProperty.uType=3"//tType Container
-				" AND tProperty.cName='cOrg_SIPPort'"
-				" AND tContainer.uContainer=%u",uCloneContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-			sscanf(field[0],"%u",&uBackupPort);
-		mysql_free_result(res);
-
-		//standalone sub zone with DNS SRV records 
-		//depending on remote datacenter clone use clone IP for backup
-		//priority SRV record
-		sprintf(cJobData,
-			"cZone=%.99s;\n"
-			"cMainIPv4=%.15s;\n"
-			"uMainPort=%u;\n"
-			"cBackupIPv4=%.15s;\n"
-			"uBackupPort=%u;\n"
-				,cHostname,
-				cMainIPv4,
-				uMainPort,
-				cBackupIPv4,
-				uBackupPort);
-		return(unxsBindPBXRecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy));
-	}
-	else
-	{
-		//standard A record job
-		char cIPv4[32]={""};
-		static char cView[256]={"external"};
-		static char cZone[256]={""};
-
-		//validation checks
-		if(!cHostname[0])
-			return 0;
-		if(!uIPv4 && !cOptionalIPv4[0])
-			return 0;
-
-		//if called in loop be efficient.
-		if(uOnlyOnce)
-		{
-			GetConfiguration("cunxsBindARecordJobZone",cZone,uDatacenter,0,0,0);
-			GetConfiguration("cunxsBindARecordJobView",cView,uDatacenter,0,0,0);
-			uOnlyOnce=0;
-		}
-
-		//another check
-		if(!cZone[0])
-			return 0;
-
-		if(cOptionalIPv4!=NULL && cOptionalIPv4[0])
-		{
-			sprintf(cIPv4,"%.31s",cOptionalIPv4);
-
-		}
-		else if(uIPv4)
-		{
-			sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-				sprintf(cIPv4,"%.31s",field[0]);
-			mysql_free_result(res);
-		}
-
-		//sanity checks
-		if(!cIPv4[0])
-			return 0;
-
-		sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot
-			"cIPv4=%.99s;\n"
-			"cZone=%.99s;\n"
-			"cView=%.31s;\n",
-				cHostname,cIPv4,cZone,cView);
-		return(unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy));
-
-	}//standard A record job
-
-}//unsigned CreateOrgDNSJob()
-
-
-unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
-		const char *cJobData,unsigned uOwner,unsigned uCreatedBy)
-{
-	unsigned uCount=0;
-
-	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindPBXRecordJob(%u)',cJobName='unxsVZPBXSRVZone'"
-			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
-			",uJobStatus=%u"
-			",cJobData='%s'"
-			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				uContainer,
-				uDatacenter,uNode,uContainer,
-				uREMOTEWAITING,
-				cJobData,
-				uOwner,uCreatedBy);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	uCount=mysql_insert_id(&gMysql);
-	//unxsVZLog(uContainer,"tContainer","unxsBindPBXRecordJob");
-	return(uCount);
-
-}//unsigned unxsBindPBXRecordJob()
-
-
-unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
-	unsigned uOwner,unsigned uCreatedBy)
-{
-	unsigned uCount=0;
-	long unsigned luJobDate=0;
-
-	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindARecordJob(%u)',cJobName='unxsVZContainerARR'"
-			",uDatacenter=%u,uNode=%u,uContainer=%u"
-			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
-			",uJobStatus=%u"
-			",cJobData='%s'"
-			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				uContainer,
-				uDatacenter,uNode,uContainer,
-				luJobDate,luJobDate,
-				uREMOTEWAITING,
-				cJobData,
-				uOwner,uCreatedBy);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	uCount=mysql_insert_id(&gMysql);
-	//unxsVZLog(uContainer,"tContainer","unxsBindARecordJob");
-	return(uCount);
-
-}//unsigned unxsBindARecordJob(...)
 
 //DEFINITION
 //	The primary group is the first group that was assigned to
@@ -3626,4 +3427,60 @@ unsigned GetConfiguration(const char *cName,char *cValue,
 	return(uConfiguration);
 
 }//unsigned GetConfiguration(...)
+
+
+unsigned uUpdateNamesFromCloneToBackup(unsigned uContainer)
+{
+	if(!uContainer)
+		return(0);
+
+	unsigned uSource=0;
+	unsigned uSourceDatacenter=0;
+	char cSourceLabel[32]={""};
+	char cSourceHostname[64]={""};
+	char *cp;
+	char cSourceDomain[64]={""};
+
+	sscanf(ForeignKey("tContainer","uSource",uContainer),"%u",&uSource);
+	if(!uSource)
+		return(0);
+
+	sscanf(ForeignKey("tContainer","uDatacenter",uSource),"%u",&uSourceDatacenter);
+	if(!uSourceDatacenter)
+		return(0);
+
+	sprintf(cSourceLabel,"%.31s",ForeignKey("tContainer","cLabel",uSource));
+	sprintf(cSourceHostname,"%.63s",ForeignKey("tContainer","cHostname",uSource));
+	if(!cSourceHostname[0] || !cSourceLabel[0])
+		return(0);
+
+	//clean up (chop off) -m at end for dns move containers that require review.
+	if((cp=strstr(cSourceLabel+strlen(cSourceLabel)-2,"-m")))
+		*cp=0;
+
+	//first dot
+	if((cp=strchr(cSourceHostname,'.')))
+		sprintf(cSourceDomain,"%.63s",cp+1);
+	else
+		return(0);
+
+	//Note how we may clobber the front of the names but leave the -backup suffix intact
+	sprintf(gcQuery,"UPDATE tContainer"
+			" SET cLabel='%.24s-backup',"
+			" cHostname='%.24s-backup.%s'"
+			" WHERE uContainer=%u"
+			" AND uSource!=0"
+			" AND uDatacenter!=%u",
+				cSourceLabel,
+				cSourceLabel,cSourceDomain,
+				uContainer,
+				uSourceDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return(0);
+		//unxsVZLog(uContainer,"tContainer","uUpdateNamesFromCloneToBackup() mysql_error");
+
+	return(mysql_affected_rows(&gMysql));
+
+}//unsigned uUpdateNamesFromCloneToBackup(uContainer)
 
