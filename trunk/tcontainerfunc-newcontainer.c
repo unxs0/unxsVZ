@@ -671,7 +671,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		if(cAutoCloneNode[0] && uCloneDatacenter && uCloneNode && uCloneIPv4)
 		{
 			//TODO what about clone datacenter?
-			uNewVeid=CommonCloneContainer(
+			uNewVeid=CommonNewCloneContainer(
 							uContainer,
 							uOSTemplate,
 							uConfig,
@@ -704,7 +704,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 
 		if(cAutoCloneNodeRemote[0] && uRemoteDatacenter && uRemoteNode && uRemoteIPv4)
 		{
-			uNewVeid=CommonCloneContainer(
+			uNewVeid=CommonNewCloneContainer(
 							uContainer,
 							uOSTemplate,
 							uConfig,
@@ -732,11 +732,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 			char cRemoteHostname[100]={""};
 			sprintf(cRemoteHostname,"%.99s",cWizHostname);
 			if(uUpdateNamesFromCloneToBackup(uNewVeid))
-			{
 				sprintf(cRemoteHostname,"%.99s",ForeignKey("tContainer","cHostname",uNewVeid));
-				if(HostnameContainerJob(uRemoteDatacenter,uRemoteNode,uNewVeid,cRemoteHostname,uForClient,guLoginClient))
-						SetContainerStatus(uNewVeid,uAWAITHOST);
-			}
 
 
 			//Many conditions may cancel NAT activiation
