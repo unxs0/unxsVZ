@@ -25,6 +25,7 @@ static char gcNewContainerTZ[64]={"PST8PDT"};
 static unsigned guNode=0;
 static unsigned guDatacenter=0;
 //Container details
+//static unsigned guFlag=0;
 static char gcLabel[33]={""};
 static char gcNewHostname[33]={""};
 static char gcNewHostParam0[33]={""};
@@ -75,6 +76,7 @@ unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 		const char *cJobData,unsigned uOwner,unsigned uCreatedBy);
 unsigned uGetPrimaryContainerGroup(unsigned uContainer);
 unsigned uUpdateNamesFromCloneToBackup(unsigned uContainer);
+unsigned uUpdateNamesFromCloneToClone(unsigned uContainer);
 
 
 
@@ -589,7 +591,7 @@ void ContainerCommands(pentry entries[], int x)
 
 			//Change hostname job
 			//See HostnameContainerJob() in tcontainerfunc.h
-			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ChangeHostnameContainer(%u)',cJobName='ChangeHostnameContainer'"
+			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CHCOrgMain(%u)',cJobName='ChangeHostnameContainer'"
 					",uDatacenter=%u,uNode=%u,uContainer=%u"
 					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 					",uJobStatus=1"
@@ -621,6 +623,7 @@ void ContainerCommands(pentry entries[], int x)
 
 			//If container has a remote datacenter backup change it's name also
 			//	this will require hostname and dns jobs.
+			unsigned uRemoteBackupContainer=0;
 			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.uDatacenter,tContainer.uNode,tIP.cLabel"
 					" FROM tContainer,tIP"
 					" WHERE tContainer.uIPv4=tIP.uIP"
@@ -634,7 +637,6 @@ void ContainerCommands(pentry entries[], int x)
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
 			{
-				unsigned uRemoteBackupContainer=0;
 				unsigned uRemoteDatacenter=0;
 				unsigned uRemoteNode=0;
 				sscanf(field[0],"%u",&uRemoteBackupContainer);
@@ -648,7 +650,7 @@ void ContainerCommands(pentry entries[], int x)
 						
 						CreateOrgDNSJob(0,guOrg,field[3],ForeignKey("tContainer","cHostname",uRemoteBackupContainer),
 							uRemoteDatacenter,guLoginClient,uRemoteBackupContainer,uRemoteNode);
-						sprintf(gcQuery,"INSERT INTO tJob SET cLabel='ChangeHostnameContainer(%u)',cJobName='ChangeHostnameContainer'"
+						sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CHCOrgRemote(%u)',cJobName='ChangeHostnameContainer'"
 							",uDatacenter=%u,uNode=%u,uContainer=%u"
 							",uJobDate=UNIX_TIMESTAMP(NOW())+60"
 							",uJobStatus=1"
@@ -668,6 +670,56 @@ void ContainerCommands(pentry entries[], int x)
 					}
 				}
 			}
+
+			//If container has a local datacenter clone change it's name also
+			//	this will require hostname and dns jobs.
+			unsigned uLocalCloneContainer=0;
+			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.uDatacenter,tContainer.uNode,tIP.cLabel"
+					" FROM tContainer,tIP"
+					" WHERE tContainer.uIPv4=tIP.uIP"
+					" AND tContainer.uSource=%u AND tContainer.uDatacenter=%u",guNewContainer,guDatacenter);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select local clone failed, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				unsigned uLocalDatacenter=0;
+				unsigned uLocalNode=0;
+				sscanf(field[0],"%u",&uLocalCloneContainer);
+				sscanf(field[1],"%u",&uLocalDatacenter);
+				sscanf(field[2],"%u",&uLocalNode);
+				if(uLocalCloneContainer)
+				{
+					sprintf(cPrevHostname,"%.63s",ForeignKey("tContainer","cHostname",uLocalCloneContainer));
+					if(uUpdateNamesFromCloneToClone(uLocalCloneContainer))
+					{
+						CreateOrgDNSJob(0,guOrg,field[3],ForeignKey("tContainer","cHostname",uLocalCloneContainer),
+							uLocalDatacenter,guLoginClient,uLocalCloneContainer,uLocalNode);
+						sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CHCOrgLocal(%u)',cJobName='ChangeHostnameContainer'"
+							",uDatacenter=%u,uNode=%u,uContainer=%u"
+							",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+							",uJobStatus=1"
+							",cJobData='cPrevHostname=%.99s;'"
+							",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								uLocalCloneContainer,
+								uLocalDatacenter,uLocalNode,uLocalCloneContainer,
+								cPrevHostname,
+								guOrg,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							gcMessage="ChangeHostnameContainer insert failed, contact sysadmin!";
+							htmlContainer();
+						}
+						SetContainerStatus(uLocalCloneContainer,61);
+					}
+				}
+			}
+			//local clone update dns and name
 
 			//Change group
 			char cOrg_NewGroupLabel[32]={""};
@@ -722,10 +774,35 @@ void ContainerCommands(pentry entries[], int x)
 				gcMessage="Update tGroupGlue failed, contact sysadmin!";
 				htmlContainer();
 			}
-			if(mysql_affected_rows(&gMysql)<1)
-				gcMessage="Hostname change being attempted. Group not changed. Review new container status in a few minutes.";
-			else
-				gcMessage="Hostname change being attempted. Review new container status in a few minutes.";
+
+			//Attempt to change clone groups also.
+			if(uRemoteBackupContainer)
+			{
+				sprintf(gcQuery,"UPDATE tGroupGlue SET uGroup=(SELECT uGroup FROM tGroup WHERE cLabel='%s' LIMIT 1)"
+					" WHERE uContainer=%u AND uGroup=%u",cOrg_AfterNewGroupLabel,uRemoteBackupContainer,uGroup);
+				mysql_query(&gMysql,gcQuery);
+			}
+			if(uLocalCloneContainer)
+			{
+				sprintf(gcQuery,"UPDATE tGroupGlue SET uGroup=(SELECT uGroup FROM tGroup WHERE cLabel='%s' LIMIT 1)"
+					" WHERE uContainer=%u AND uGroup=%u",cOrg_AfterNewGroupLabel,uLocalCloneContainer,uGroup);
+				mysql_query(&gMysql,gcQuery);
+			}
+
+			//if(guFlag)
+			//{
+			//	static char cMessage[256];
+			//	sprintf(cMessage,"PBX repurpose in progress. guFlag=%u",guFlag);
+			//	gcMessage=cMessage;
+			//}
+			if(uRemoteBackupContainer && uLocalCloneContainer)
+				gcMessage="PBX repurpose in progress for master, clone and backup PBXs.";
+			else if(uRemoteBackupContainer)
+				gcMessage="PBX repurpose in progress for master and backup PBXs.";
+			else if(uLocalCloneContainer)
+				gcMessage="PBX repurpose in progress for master and clone PBXs.";
+			else if(1)
+				gcMessage="PBX repurpose in progress for master PBXs only.";
 
 			//for all the above
 			mysql_free_result(res);
@@ -3483,4 +3560,83 @@ unsigned uUpdateNamesFromCloneToBackup(unsigned uContainer)
 	return(mysql_affected_rows(&gMysql));
 
 }//unsigned uUpdateNamesFromCloneToBackup(uContainer)
+
+
+unsigned uUpdateNamesFromCloneToClone(unsigned uContainer)
+{
+	if(!uContainer)
+		return(0);
+
+	unsigned uSource=0;
+	unsigned uCloneNum=0;
+	char cuCloneNum[16]={""};
+	unsigned uSourceDatacenter=0;
+	char cSourceLabel[32]={""};
+	char cLabel[32]={""};
+	char cSourceHostname[64]={""};
+	char *cp;
+	char cSourceDomain[64]={""};
+
+	//guFlag=1;
+
+	sscanf(ForeignKey("tContainer","uSource",uContainer),"%u",&uSource);
+	if(!uSource)
+		return(0);
+
+	sscanf(ForeignKey("tContainer","uDatacenter",uSource),"%u",&uSourceDatacenter);
+	if(!uSourceDatacenter)
+		return(0);
+
+	//guFlag=2;
+
+	sprintf(cSourceLabel,"%.31s",ForeignKey("tContainer","cLabel",uSource));
+	sprintf(cLabel,"%.31s",ForeignKey("tContainer","cLabel",uContainer));
+	sprintf(cSourceHostname,"%.63s",ForeignKey("tContainer","cHostname",uSource));
+	if(!cSourceHostname[0] || !cSourceLabel[0])
+		return(0);
+
+	//guFlag=3;
+
+	//clean up (chop off) -m at end for dns move containers that require review.
+	if((cp=strstr(cSourceLabel+strlen(cSourceLabel)-2,"-m")))
+		*cp=0;
+
+	//first dot
+	if((cp=strchr(cSourceHostname,'.')))
+		sprintf(cSourceDomain,"%.63s",cp+1);
+	else
+		return(0);
+
+	//guFlag=4;
+
+	//use clone number if any
+	if((cp=strstr(cLabel,"-clone")))
+	{
+		sscanf(cp,"-clone%u",&uCloneNum);
+		if(uCloneNum)
+			sprintf(cuCloneNum,"%u",uCloneNum);
+	}
+
+	//guFlag=5;
+
+	//Note how we may clobber the front of the names but leave the -backup suffix intact
+	sprintf(gcQuery,"UPDATE tContainer"
+			" SET cLabel='%.24s-clone%s',"
+			" cHostname='%.24s-clone%s.%s'"
+			" WHERE uContainer=%u"
+			" AND uSource!=0"
+			" AND uDatacenter=%u",
+				cSourceLabel,cuCloneNum,
+				cSourceLabel,cuCloneNum,cSourceDomain,
+				uContainer,
+				uSourceDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return(0);
+
+	//guFlag=6;
+
+	return(mysql_affected_rows(&gMysql));
+
+}//unsigned uUpdateNamesFromCloneToClone(uContainer)
 
