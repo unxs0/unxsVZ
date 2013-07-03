@@ -116,6 +116,7 @@ void ExttContainerListFilter(void);
 void ExttContainerAuxTable(void);
 
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
+void GeneratePasswd(char *pw);//main.c
 
 #include "tcontainerfunc.h"
 
@@ -595,6 +596,8 @@ void tContainerNewStep(unsigned uStep)
 
 		//Select group or allow creation of new one.
 		OpenRow("Optional password","black");
+		if(!cService1[0])
+			GeneratePasswd(cService1);
 		printf("<input title='Optional container password set on deployment and saved in"
 			" container property table' type=text name=cService1 value='%s' maxlength=31><br>",cService1);
 

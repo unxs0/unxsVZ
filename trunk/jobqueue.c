@@ -1295,7 +1295,13 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 
 		//Everything ok
-		SetContainerStatus(uContainer,1);//Active
+		//This is not enough we need the previous status before awaiting hostname change.
+		char cDeployOptions[256]={""};
+		GetContainerProp(uContainer,"cDeployOptions",cDeployOptions);
+		if(strstr(cDeployOptions,"uDeployStopped=1;"))
+			SetContainerStatus(uContainer,uSTOPPED);//Active
+		else
+			SetContainerStatus(uContainer,uACTIVE);//Active
 		tJobDoneUpdate(uJob);
 	}
 	else

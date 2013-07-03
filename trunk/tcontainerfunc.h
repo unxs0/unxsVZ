@@ -4198,7 +4198,7 @@ while((field=mysql_fetch_row(res)))
 						//We can only fo this if tConfiguration has been setup
 						//with datacenter wide cAutoCloneNode=node1,cAutoCloneSyncTime=600
 						//for example.
-						uSyncPeriod=3600;//default 1 hour rsync
+						uSyncPeriod=14400;//default 4 hour rsync
 						cAutoCloneIPClass[0]=0;
 						unsigned uTargetDatacenter=sContainer.uDatacenter;
 						if(guCloneTargetNode==0)
