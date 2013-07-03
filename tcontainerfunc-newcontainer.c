@@ -271,6 +271,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 						" Max 30 days, min 5 minutes or 0 off.");
 		}//cAutoCloneNode
 
+		unsigned uRemoteSyncPeriod=14400;
 		if(cAutoCloneNodeRemote[0])
 		{
 			uRemoteNode=ReadPullDown("tNode","cLabel",cAutoCloneNodeRemote);
@@ -306,8 +307,15 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 				tContainer("<blink>Error:</blink> Not enough remote clone IPs available");
 			mysql_free_result(res);
 
-			if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
-				tContainer("<blink>Error:</blink> Clone uSyncPeriod out of range:"
+			char cAutoCloneSyncTimeRemote[256]={""};
+			GetConfiguration("cAutoCloneSyncTimeRemote",cAutoCloneSyncTimeRemote,uRemoteDatacenter,uRemoteNode,0,0);
+			if(!cAutoCloneSyncTimeRemote[0])
+				GetConfiguration("cAutoCloneSyncTimeRemote",cAutoCloneSyncTimeRemote,uRemoteDatacenter,0,0,0);
+			if(cAutoCloneSyncTimeRemote[0])
+				sscanf(cAutoCloneSyncTimeRemote,"%u",&uRemoteSyncPeriod);
+
+			if(uRemoteSyncPeriod>86400*30 || (uRemoteSyncPeriod && uRemoteSyncPeriod<300))
+				tContainer("<blink>Error:</blink> backup uRemoteSyncPeriod out of range:"
 						" Max 30 days, min 5 minutes or 0 off.");
 		}//cAutoCloneNodeRemote
 
@@ -693,6 +701,8 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 							guLoginClient,
 							1,0);
 			SetContainerStatus(uNewVeid,uAWAITCLONE);
+			//Local datacenter clone should always be stopped
+			SetContainerProp(uNewVeid,"cDeployOptions","uDeployStopped=1;");
 			if(uGroup)
 				UpdatePrimaryContainerGroup(uNewVeid,uGroup);
 
@@ -722,7 +732,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 							cWizLabel,
 							cWizHostname,
 							uRemoteNode,
-							uSyncPeriod,
+							uRemoteSyncPeriod,
 							guLoginClient,
 							0,0);
 			SetContainerStatus(uContainer,uAWAITCLONE);

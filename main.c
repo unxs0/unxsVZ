@@ -89,6 +89,7 @@ void SetLogin(void);
 void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt);
 void GetPLAndClient(char *cUser);
 void htmlSSLLogin(void);
+void GeneratePasswd(char *pw);
 
 //mainfunc.h for symbolic links to this program
 void CalledByAlias(int iArgc,char *cArgv[]);
@@ -2507,6 +2508,39 @@ void EncryptPasswd(char *pw)
 	sprintf(pw,"%.99s",cpw);
 
 }//void EncryptPasswd(char *pw)
+
+
+void GeneratePasswd(char *dest)
+{
+	static int srand_called=0;
+	size_t len=0;
+	char *p=dest;
+	int three_in_a_row=0;
+	int arr[128]={0x0};
+
+	if(!srand_called)
+	{
+		srandom(time(NULL));
+		srand_called=1;
+	}
+	*dest=0x0; /* int the destination string*/
+	for(len=6 + rand()%3; len; len--, p++) /* gen characters */
+	{
+		char *q=dest;
+		*p=(rand()%2)? rand()%26 + 97: rand()%10 + 48;
+		p[1]=0x0;
+		arr[(int) *p]++;                         /* check values */
+		if(arr[(int) *p]==3)
+		{
+			for(q=dest; q[2]>0 && !three_in_a_row; q++)	
+				if(*q==q[1] && q[1]==q[2])
+			   		three_in_a_row=1;
+		}
+		if(three_in_a_row || arr[(int) *p]> 3 )
+			GeneratePasswd(dest);        /* values do not pass try again */
+	}
+
+}//void GeneratePasswd(char *dest)
 
 
 void tContainerGroupPullDown(unsigned uGroup, unsigned uMode, char *cSelectName)
