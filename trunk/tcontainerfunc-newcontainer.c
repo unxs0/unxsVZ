@@ -107,6 +107,10 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		char cAutoCloneIPClassRemote[256]={""};
 		char cAutoCloneNode[256]={""};
 		char cAutoCloneNodeRemote[256]={""};
+		char cRemoteHostname[100]={""};
+		char cCloneHostname[100]={""};
+		char cRemoteLabel[32]={""};
+		char cCloneLabel[100]={""};
 
 		ProcesstContainerVars(entries,x);
 
@@ -150,7 +154,6 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 			if(a==0 || d==0)
 				tContainer("<blink>Error:</blink> Appliance requires valid gcIPv4.");
 		}
-
 		if((uHostnameLen=strlen(cHostname))<5)
 			tContainer("<blink>Error:</blink> cHostname is too short");
 		if(cHostname[uHostnameLen-1]=='.')
@@ -210,14 +213,6 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 			tContainer("<blink>Error:</blink> Optional password must be at least 6 chars");
 
 		//tProperty based datacenter checks
-		//VETH device
-		if(uVeth)
-		{
-			GetNodeProp(uNode,"Container-Type",cContainerType);
-			if(!strstr(cContainerType,"VETH"))
-				tContainer("<blink>Error:</blink> uNode selected does not support VETH");
-				
-		}
 
 		//clone code block start
 		//
@@ -649,26 +644,6 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 				htmlPlainTextError(mysql_error(&gMysql));
 		}
 
-		//Add property template entries for VETH device based container
-		if(uVeth)
-		{
-			sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-				",cName='cVEID.mount',cValue='defaultVETH.mount'",
-					uContainer,uForClient,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-
-			sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-				",cName='cVEID.start',cValue='defaultVETH.start'",
-					uContainer,uForClient,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-		}
-
 		if(uGroup)
 			UpdatePrimaryContainerGroup(uContainer,uGroup);
 
@@ -694,8 +669,8 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 							cHostname,
 							"",//do not check class C
 							uCloneIPv4,
-							cWizLabel,
-							cWizHostname,
+							cCloneLabel,
+							cCloneHostname,
 							uCloneNode,
 							uSyncPeriod,
 							guLoginClient,
@@ -709,7 +684,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 			//Create DNS job for clones also
 			//rfc1918 control in CreateDNSJob() prevents non public IP clones from getting zones.
 			if(uCreateDNSJob)
-				CreateDNSJob(uCloneIPv4,uForClient,NULL,cWizHostname,uCloneDatacenter,guLoginClient,uNewVeid,uCloneNode);
+				CreateDNSJob(uCloneIPv4,uForClient,NULL,cCloneHostname,uCloneDatacenter,guLoginClient,uNewVeid,uCloneNode);
 		}//cAutoCloneNode
 
 		if(cAutoCloneNodeRemote[0] && uRemoteDatacenter && uRemoteNode && uRemoteIPv4)
@@ -729,8 +704,8 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 							cHostname,
 							"",//do not check class C
 							uRemoteIPv4,
-							cWizLabel,
-							cWizHostname,
+							cRemoteLabel,
+							cRemoteHostname,
 							uRemoteNode,
 							uRemoteSyncPeriod,
 							guLoginClient,
@@ -739,8 +714,6 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 			if(uGroup)
 				UpdatePrimaryContainerGroup(uNewVeid,uGroup);
 			//change name to -backup
-			char cRemoteHostname[100]={""};
-			sprintf(cRemoteHostname,"%.99s",cWizHostname);
 			if(uUpdateNamesFromCloneToBackup(uNewVeid))
 				sprintf(cRemoteHostname,"%.99s",ForeignKey("tContainer","cHostname",uNewVeid));
 
@@ -859,7 +832,7 @@ else if(!strcmp(gcCommand,"Multiple Container Creation"))
 		CheckMaxContainers(1);//The argument is the number of containers to be created
 
                guMode=9004;
-               tContainer("New container step 4");
+               tContainer("New multiple containers");
 	}
 	else
 	{
@@ -876,30 +849,33 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 		register int i;
 		char cIPv4ClassC[256]={""};
 		char cIPv4ClassC2[256]={""};
-		char cIPv4ClassCClone[32]={""};
 		unsigned uAvailableIPs=0;
 		char cGenLabel[32]={""};
 		char cGenHostname[100]={""};
 		char cOrgLabel[32]={""};
 		char cOrgHostname[100]={""};
+		char cRemoteHostname[100]={""};
+		char cCloneHostname[100]={""};
+		char cRemoteLabel[100]={""};
+		char cCloneLabel[100]={""};
 		unsigned uHostnameLen=0;
 		unsigned uLabelLen=0;
-		unsigned uTargetDatacenter=0;
+		unsigned uCloneNode=uTargetNode;
+		unsigned uCloneDatacenter=0;
+		unsigned uRemoteNode=0;
+		unsigned uRemoteDatacenter=0;
+		unsigned uCloneIPv4=uWizIPv4;
+		unsigned uRemoteIPv4=0;
+		char cAutoCloneIPClass[256]={""};
+		char cAutoCloneIPClassRemote[256]={""};
+		char cAutoCloneNode[256]={""};
+		char cAutoCloneNodeRemote[256]={""};
 
 		ProcesstContainerVars(entries,x);
 		sscanf(cService2,"%u",&uNumContainer);
 
-               guMode=9004;
+		guMode=9004;
 		//Check entries here
-		if(uNumContainer==0)
-			tContainer("<blink>Error:</blink> You must specify the number of containers");
-		if(uNumContainer>64)
-		{
-			sprintf(cService2,"64");
-			tContainer("<blink>Error:</blink> The maximum number of containers you can"
-					" create at once is 64");
-		}
-		CheckMaxContainers(uNumContainer);//The argument is the number of containers to be created
 		if(uDatacenter==0)
 			tContainer("<blink>Error:</blink> Unexpected uDatacenter==0!");
 		if(uNode==0)
@@ -920,6 +896,8 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 			tContainer("<blink>Error:</blink> cLabel has at least one '.'");
 		if(strstr(cLabel,"-clone"))
 			tContainer("<blink>Error:</blink> cLabel can't have '-clone'");
+		if(strstr(cLabel,"-app"))
+			tContainer("<blink>Error:</blink> cLabel can't have '-app'");
 		if(strstr(cLabel,"-backup"))
 			tContainer("<blink>Error:</blink> cLabel can't have '-backup'");
 		if((uHostnameLen=strlen(cHostname))<5)
@@ -930,18 +908,15 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 			tContainer("<blink>Error:</blink> cHostname can't have '-clone'");
 		if(strstr(cHostname,"-backup"))
 			tContainer("<blink>Error:</blink> cHostname can't have '-backup'");
+		if(strstr(cHostname,"-app"))
+			tContainer("<blink>Error:</blink> cHostname can't have '-app'");
 		if(cHostname[0]!='.')
 			tContainer("<blink>Error:</blink> Multiple containers cHostname has"
 					" to start with '.'");
 		if((uHostnameLen+uLabelLen)>62)
 			tContainer("<blink>Error:</blink> Combined length of cLabel+cHostname is too long");
-
 		if(uIPv4==0)
 			tContainer("<blink>Error:</blink> You must select a uIPv4");
-		GetDatacenterProp(uDatacenter,"NewContainerCloneRange",cNCCloneRange);
-		if(cNCCloneRange[0] && uIpv4InCIDR4(ForeignKey("tIP","cLabel",uIPv4),cNCCloneRange))
-			tContainer("<blink>Error:</blink> uIPv4 must not be in datacenter clone IP range");
-
 		if(uOSTemplate==0)
 			tContainer("<blink>Error:</blink> You must select a uOSTemplate");
 		if(uConfig==0)
@@ -954,6 +929,15 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 			tContainer("<blink>Error:</blink> Group is now required");
 		if(uGroup!=0 && cService3[0]!=0)
 			tContainer("<blink>Error:</blink> Or select a group or create a new one, not both");
+		if(uNumContainer==0)
+			tContainer("<blink>Error:</blink> You must specify the number of containers");
+		if(uNumContainer>64)
+		{
+			sprintf(cService2,"64");
+			tContainer("<blink>Error:</blink> The maximum number of containers you can"
+					" create at once is 64");
+		}
+		CheckMaxContainers(uNumContainer);//The argument is the number of containers to be created
 
 		//DNS sanity check
 		if(uCreateDNSJob)
@@ -979,72 +963,111 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 		if(uDatacenter!=uNodeDatacenter)
 			tContainer("<blink>Error:</blink> The specified uNode does not "
 					"belong to the specified uDatacenter.");
+
 		//tProperty based datacenter checks
-		//VETH device
-		if(uVeth)
-		{
-			GetNodeProp(uNode,"Container-Type",cContainerType);
-			if(!strstr(cContainerType,"VETH"))
-				tContainer("<blink>Error:</blink> uNode selected does not support VETH");
-				
-		}
+
+		//clone code block start
+		//
+
+		//outline
+		//	In container creation both local and remote clones are created
+		//	as configured in tConfiguration.
+		//	In single container creation we allow user to select clone IP
+		//	but the backup IP is selected automatically from available pool.
 
 		//If auto clone setup check required values
 		GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
-		if(!cAutoCloneNode[0])
-			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+		GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,uNode,0,0);
+
 		if(cAutoCloneNode[0])
 		{
+			uCloneNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
 
-			if(uTargetNode==0)
-				tContainer("<blink>Error:</blink> Please select a valid target node"
-						" for the clone");
-			if(uTargetNode==uNode)
-				tContainer("<blink>Error:</blink> Can't clone to same node");
+			if(uCloneNode==0)
+				tContainer("<blink>Error:</blink> Please set tConfiguration:cAutoCloneNode correctly.");
+			if(uCloneNode==uNode)
+				tContainer("<blink>Error:</blink> Can't clone to same node.");
 
-			GetNodeProp(uTargetNode,"NewContainerMode",cNCMNode);
+			//extra check but maybe deprecated soon
+			GetNodeProp(uCloneNode,"NewContainerMode",cNCMNode);
 			if(cNCMNode[0] && !strstr(cNCMNode,"Clone"))
-			tContainer("<blink>Error:</blink> Selected node is not configured for clone containers."
+			tContainer("<blink>Error:</blink> Selected clone target node is not configured for clone containers."
 					"Select another.");
 
-			//We are moving to normal remote datacenter clone containers
-			sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
-			//if(uDatacenter!=uTargetDatacenter)
-			//	tContainer("<blink>Error:</blink> The specified clone uNode does not "
-			//		"belong to the specified uDatacenter.");
-			if(!uWizIPv4)
-				tContainer("<blink>Error:</blink> You must select an IP for the clone");
-			if(uWizIPv4==uIPv4)
-				tContainer("<blink>Error:</blink> You must select a different IP for the"
-								" clone");
-			sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
-			if(uTargetDatacenter!=uIPv4Datacenter)
-				tContainer("<blink>Error:</blink> The specified clone uIPv4 does not "
-					"belong to the specified uTargetDatacenter.");
-			GetDatacenterProp(uTargetDatacenter,"NewContainerCloneRange",cNCCloneRange);
-			if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
-			{
-				GetDatacenterProp(uTargetDatacenter,"NewContainerCloneRange2",cNCCloneRange);
-				if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
-				{
-					GetDatacenterProp(uTargetDatacenter,"NewContainerCloneRange3",cNCCloneRange);
-					if(cNCCloneRange[0] && !uIpv4InCIDR4(ForeignKey("tIP","cLabel",uWizIPv4),cNCCloneRange))
-					{
-						char cAutoCloneIPClass[256]={""};
-						GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,
-							uTargetDatacenter,uTargetNode,0,0);
-						if(!cAutoCloneIPClass[0] || 
-								strncmp(ForeignKey("tIP","cLabel",uWizIPv4),
-									cAutoCloneIPClass,strlen(cAutoCloneIPClass)))
-							tContainer("<blink>Error:</blink> Clone start uIPv4 must be in datacenter"
-								" clone IP range (cmc)");
-					}
-				}
-			}
+			sscanf(ForeignKey("tNode","uDatacenter",uCloneNode),"%u",&uCloneDatacenter);
+			GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uCloneDatacenter,uCloneNode,0,0);
+			if(!cAutoCloneIPClass[0])
+				GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uCloneDatacenter,0,0,0);
+			if(!cAutoCloneIPClass[0])
+				tContainer("<blink>Error:</blink> Please set tConfiguration:cAutoCloneIPClass correctly.");
+
+			//make sure IPs are available
+			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
+				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uForClient,uCloneDatacenter,cAutoCloneIPClass);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)<2)
+				tContainer("<blink>Error:</blink> Not enough clone IPs available");
+			mysql_free_result(res);
+
 			if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
 				tContainer("<blink>Error:</blink> Clone uSyncPeriod out of range:"
 						" Max 30 days, min 5 minutes or 0 off.");
-		}
+		}//cAutoCloneNode
+
+		unsigned uRemoteSyncPeriod=14400;
+		if(cAutoCloneNodeRemote[0])
+		{
+			uRemoteNode=ReadPullDown("tNode","cLabel",cAutoCloneNodeRemote);
+
+			if(uRemoteNode==0)
+				tContainer("<blink>Error:</blink> cAutoCloneNodeRemote but no uRemoteNode");
+			if(uRemoteNode==uNode)
+				tContainer("<blink>Error:</blink> Can't remote clone to same node.");
+
+			//extra check but maybe deprecated soon
+			GetNodeProp(uRemoteNode,"NewContainerMode",cNCMNode);
+			if(cNCMNode[0] && !strstr(cNCMNode,"Clone"))
+			tContainer("<blink>Error:</blink> Configured remote clone node is not configured for clone containers.");
+
+			sscanf(ForeignKey("tNode","uDatacenter",uRemoteNode),"%u",&uRemoteDatacenter);
+			if(uRemoteDatacenter==uDatacenter)
+				tContainer("<blink>Error:</blink> Configured remote datacenter same as local datacenter.");
+
+			//make sure IPs are available
+			GetConfiguration("cAutoCloneIPClassRemote",cAutoCloneIPClassRemote,uRemoteDatacenter,uRemoteNode,0,0);
+			if(!cAutoCloneIPClassRemote[0])
+				GetConfiguration("cAutoCloneIPClassRemote",cAutoCloneIPClassRemote,uRemoteDatacenter,0,0,0);
+			if(!cAutoCloneIPClassRemote[0])
+				tContainer("<blink>Error:</blink> Please set tConfiguration:cAutoCloneIPClassRemote correctly.");
+			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
+				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uForClient,uRemoteDatacenter,cAutoCloneIPClassRemote);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)<2)
+				tContainer("<blink>Error:</blink> Not enough remote clone IPs available");
+			mysql_free_result(res);
+
+			char cAutoCloneSyncTimeRemote[256]={""};
+			GetConfiguration("cAutoCloneSyncTimeRemote",cAutoCloneSyncTimeRemote,uRemoteDatacenter,uRemoteNode,0,0);
+			if(!cAutoCloneSyncTimeRemote[0])
+				GetConfiguration("cAutoCloneSyncTimeRemote",cAutoCloneSyncTimeRemote,uRemoteDatacenter,0,0,0);
+			if(cAutoCloneSyncTimeRemote[0])
+				sscanf(cAutoCloneSyncTimeRemote,"%u",&uRemoteSyncPeriod);
+
+			if(uRemoteSyncPeriod>86400*30 || (uRemoteSyncPeriod && uRemoteSyncPeriod<300))
+				tContainer("<blink>Error:</blink> backup uRemoteSyncPeriod out of range:"
+						" Max 30 days, min 5 minutes or 0 off.");
+		}//cAutoCloneNodeRemote
+
+		//
+		//clone code block end
 
 		//TODO review this policy.
 		//No same names or hostnames for same datacenter allowed.
@@ -1109,74 +1132,60 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 			}
 		}//If no cAutoIPClass
 
-		//Check IPs for clones first if so configured
+		//clone code block start
+		//
+
+		//Check for available IP for local datacenter clone if so configured
 		if(cAutoCloneNode[0])
 		{
-			sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u AND uAvailable=1"
-				" AND uOwner=%u AND uDatacenter=%u",uWizIPv4,uForClient,uTargetDatacenter);
+			unsigned uCloneIPv4Count=0;
+
+			sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1"
+				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uForClient,uCloneDatacenter,cAutoCloneIPClass);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
-			{
-				sprintf(cIPv4ClassCClone,"%.31s",field[0]);
-			}
+				sscanf(field[0],"%u",&uCloneIPv4Count);
 			else
-			{
-				tContainer("<blink>Error:</blink> Someone grabbed your clone IP"
-					", multiple container creation aborted -if Root select"
-					" a company with IPs!");
-			}
+				tContainer("<blink>Error:</blink> Clone IPs no longer available.");
 			mysql_free_result(res);
-			for(i=strlen(cIPv4ClassCClone);i>0;i--)
-			{
-				if(cIPv4ClassCClone[i]=='.')
-				{
-					cIPv4ClassCClone[i]=0;
-					break;
-				}
-			}
-			//TODO
-			if(!strcmp(cIPv4ClassCClone,cIPv4ClassC))
-				tContainer("<blink>Error:</blink> Clone IPs must belong to a different"
-						" class C");
-			//Count clone IPs
-			sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-					" AND cLabel LIKE '%s%%' AND uDatacenter=%u",
-						uForClient,cIPv4ClassCClone,uTargetDatacenter);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-				sscanf(field[0],"%u",&uAvailableIPs);
-			mysql_free_result(res);
-			if(uNumContainer>uAvailableIPs)
-				tContainer("<blink>Error:</blink> Not enough clone IPs in given"
-					" class C"
-					" available!");
+
+			if(uCloneIPv4Count<uNumContainer)
+				tContainer("<blink>Error:</blink> Not enough local clone IPs available.");
+
+			GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uCloneDatacenter,uCloneNode,0,0);
+			if(!cAutoCloneIPClass[0])
+				GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uCloneDatacenter,0,0,0);
 		}//cAutoCloneNode
 
-		//Count main IPs
-		uAvailableIPs=0;
-		sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
-				" AND (cLabel LIKE '%s%%' OR cLabel LIKE '%s%%') AND uDatacenter=%u",
-						uForClient,cIPv4ClassC,cIPv4ClassC2,uDatacenter);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-			sscanf(field[0],"%u",&uAvailableIPs);
-		mysql_free_result(res);
-		if(uNumContainer>uAvailableIPs)
+		//Check for available IP for backup remote clone if so configured
+		if(cAutoCloneNodeRemote[0] && uRemoteDatacenter && uRemoteNode)
 		{
-			static char cMsg[256];
-			sprintf(cMsg,"<blink>Error:</blink> Not enough IPs available!"
-					" cIPv4ClassC=%.31s cIPv4ClassC2=%.31s",cIPv4ClassC,cIPv4ClassC2);
-			tContainer(cMsg);
-		}
+			unsigned uRemoteIPv4Count=0;
+
+			sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1"
+				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uForClient,uRemoteDatacenter,cAutoCloneIPClassRemote);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uRemoteIPv4Count);
+			else
+				tContainer("<blink>Error:</blink> Remote clone IPs no longer available.");
+			mysql_free_result(res);
+
+			if(uRemoteIPv4Count<uNumContainer)
+				tContainer("<blink>Error:</blink> Not enough remote clone IPs available.");
+		}//cAutoCloneNodeRemote
+
+		//
+		//clone code block end
+
 
 		//User chooses to create a new group
 		if(cService3[0])
@@ -1216,7 +1225,7 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 		//
 
 		//Checks done commited to create
-                     		guMode=0;
+		guMode=0;
 		uStatus=uINITSETUP;//Initial setup
 		uContainer=0;
 		uCreatedBy=guLoginClient;
@@ -1228,6 +1237,70 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 		sprintf(cOrgHostname,"%.68s",cHostname);
 		//Convenience
 		sprintf(cSearch,"%.31s",cLabel);
+
+		//Count main IPs
+		uAvailableIPs=0;
+		sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+				" AND (cLabel LIKE '%s%%' OR cLabel LIKE '%s%%') AND uDatacenter=%u",
+						uForClient,cIPv4ClassC,cIPv4ClassC2,uDatacenter);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sscanf(field[0],"%u",&uAvailableIPs);
+		mysql_free_result(res);
+		if(uNumContainer>uAvailableIPs)
+		{
+			static char cMsg[256];
+			sprintf(cMsg,"<blink>Error:</blink> Not enough IPs available!"
+					" cIPv4ClassC=%.31s cIPv4ClassC2=%.31s",cIPv4ClassC,cIPv4ClassC2);
+			tContainer(cMsg);
+		}
+
+		//
+		//clone code block start
+
+		if(cAutoCloneNodeRemote[0])
+		{
+			//Get next available uRemoteIPv4
+			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+						" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
+							uForClient,cAutoCloneIPClassRemote,uRemoteDatacenter);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uRemoteIPv4);
+			else
+				tContainer("<blink>Error:</blink> No more remote clone IPs available"
+							", multiple container creation aborted!");
+			mysql_free_result(res);
+		}
+
+		if(cAutoCloneNode[0])
+		{
+			//Get next available uCloneIPv4
+			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+						" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
+							uForClient,cAutoCloneIPClass,uCloneDatacenter);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uCloneIPv4);
+			else
+				tContainer("<blink>Error:</blink> No more clone IPs available"
+							", multiple container creation aborted!");
+			mysql_free_result(res);
+		}
+
+		//
+		//clone code block end
+
+		tContainer("multiple container debug point");
 
 		//Loop creation
 		for(i=0;i<uNumContainer;i++)
@@ -1299,82 +1372,185 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 					htmlPlainTextError(mysql_error(&gMysql));
 			}
 
-			//Add property template entries for VETH device based container
-			if(uVeth)
-			{
-				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-				",cName='cVEID.mount',cValue='defaultVETH.mount'",
-					uContainer,uForClient,guLoginClient);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
-
-				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=3"
-				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-				",cName='cVEID.start',cValue='defaultVETH.start'",
-					uContainer,uForClient,guLoginClient);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
-			}
-
 			if(uGroup)
 				UpdatePrimaryContainerGroup(uContainer,uGroup);
 
-			if(cAutoCloneNode[0])
-			{
-				uNewVeid=CommonCloneContainer(
+		//
+		//clone code block start
+
+		if(cAutoCloneNode[0] && uCloneDatacenter && uCloneNode && uCloneIPv4)
+		{
+			//TODO what about clone datacenter?
+			uNewVeid=CommonNewCloneContainer(
 							uContainer,
 							uOSTemplate,
 							uConfig,
 							uNameserver,
 							uSearchdomain,
 							uDatacenter,
-							uTargetDatacenter,
+							uCloneDatacenter,
 							uForClient,
 							cLabel,
 							uNode,
 							uStatus,
 							cHostname,
-							cIPv4ClassCClone,
-							uWizIPv4,
-							cWizLabel,
-							cWizHostname,
-							uTargetNode,
+							"",//do not check class C
+							uCloneIPv4,
+							cCloneLabel,
+							cCloneHostname,
+							uCloneNode,
 							uSyncPeriod,
 							guLoginClient,
 							1,0);
-				SetContainerStatus(uContainer,uINITSETUP);
-				if(uGroup)
-					UpdatePrimaryContainerGroup(uNewVeid,uGroup);
+			SetContainerStatus(uNewVeid,uAWAITCLONE);
+			//Local datacenter clone should always be stopped
+			SetContainerProp(uNewVeid,"cDeployOptions","uDeployStopped=1;");
+			if(uGroup)
+				UpdatePrimaryContainerGroup(uNewVeid,uGroup);
 
-				//Get next available clone uIPv4 only if not last loop iteration
-				if((i+1)<uNumContainer)
-				{
-					//TODO cIPv4ClassCClone can't = cIPv4ClassC
-					//Get next available uWizIPv4
-					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+			//Create DNS job for clones also
+			//rfc1918 control in CreateDNSJob() prevents non public IP clones from getting zones.
+			if(uCreateDNSJob)
+				CreateDNSJob(uCloneIPv4,uForClient,NULL,cCloneHostname,uCloneDatacenter,guLoginClient,uNewVeid,uCloneNode);
+
+			//Get next available clone uIPv4 only if not last loop iteration
+			if((i+1)<uNumContainer)
+			{
+				//Get next available uCloneIPv4
+				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
 						" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
-							uForClient,cIPv4ClassCClone,uTargetDatacenter);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
-						sscanf(field[0],"%u",&uWizIPv4);
-					else
-						tContainer("<blink>Error:</blink> No more clone IPs available"
+							uForClient,cAutoCloneIPClass,uCloneDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uCloneIPv4);
+				else
+					tContainer("<blink>Error:</blink> No more clone IPs available"
 							", multiple container creation aborted!");
-					mysql_free_result(res);
+				mysql_free_result(res);
+			}
+		}//cAutoCloneNode
+
+		if(cAutoCloneNodeRemote[0] && uRemoteDatacenter && uRemoteNode && uRemoteIPv4)
+		{
+			uNewVeid=CommonNewCloneContainer(
+							uContainer,
+							uOSTemplate,
+							uConfig,
+							uNameserver,
+							uSearchdomain,
+							uDatacenter,
+							uRemoteDatacenter,
+							uForClient,
+							cLabel,
+							uNode,
+							uStatus,
+							cHostname,
+							"",//do not check class C
+							uRemoteIPv4,
+							cRemoteLabel,
+							cRemoteHostname,
+							uRemoteNode,
+							uRemoteSyncPeriod,
+							guLoginClient,
+							0,0);
+			SetContainerStatus(uContainer,uAWAITCLONE);
+			if(uGroup)
+				UpdatePrimaryContainerGroup(uNewVeid,uGroup);
+			//change name to -backup
+			if(uUpdateNamesFromCloneToBackup(uNewVeid))
+				sprintf(cRemoteHostname,"%.99s",ForeignKey("tContainer","cHostname",uNewVeid));
+
+
+			//Many conditions may cancel NAT activiation
+			if(uEnableNAT)
+			{
+				uEnableNAT=0;
+				//Check to see of node is configured
+				char cBuffer[256]={""};
+				GetNodeProp(uRemoteNode,"cPublicNATIP",cBuffer);
+				if(cBuffer[0])
+				{
+					SetContainerProp(uNewVeid,"cOrg_PublicIP",cBuffer);
+					GetNodeProp(uRemoteNode,"cPrivateNATNetwork",cBuffer);
+					if(cBuffer[0])
+					{
+						if(!uChangeContainerIPToNATIP(uNewVeid,uRemoteDatacenter,uRemoteNode,
+							uRemoteIPv4,guCompany))
+						{
+							if(CreateActivateNATNodeJob(uRemoteDatacenter,uRemoteNode,
+								uNewVeid,guCompany))
+							{
+
+								if(CreateActivateNATContainerJob(uRemoteDatacenter,uRemoteNode,
+								uNewVeid,guCompany))
+									uEnableNAT=1;
+							}
+
+						}
+					}
+				}
+			}
+
+			//de nest via uEnableNAT
+			if(uEnableNAT)
+			{
+				//everything was setup for NAT continue with special DNS OPs for backup container pairs.
+				//we need to set the cOrg_SIPPort here if applicable
+				//before we create the dns jobs
+				unsigned uContainerPrimaryGroup=uGetPrimaryContainerGroup(uNewVeid);
+				unsigned uContainerType=0;
+
+				char cContainerPrimaryGroup[100]={""};
+				sprintf(cContainerPrimaryGroup,"%.99s",ForeignKey("tGroup","cLabel",uContainerPrimaryGroup));
+				ToLower(cContainerPrimaryGroup);
+				if(strstr(cContainerPrimaryGroup,"pbx"))
+					uContainerType=uPBXType;
+
+				if(uContainerType==uPBXType)
+				{
+					unsigned uD=0;
+					char cOrg_SIPPort[32]={"5060"};
+					//We probably have a new uRemoteIPv4
+					if(sscanf(ForeignKey("tContainer","uIPv4",uNewVeid),"%u",&uRemoteIPv4)==1)
+					{
+						if(sscanf(ForeignKey("tIP","cLabel",uRemoteIPv4),"%*u.%*u.%*u.%u",&uD)==1)
+							sprintf(cOrg_SIPPort,"%u",uD+6000);//6000 base sip port natpabx.c
+					}
+					SetContainerProp(uNewVeid,"cOrg_SIPPort",cOrg_SIPPort);
 				}
 
-				//rfc1918 control in CreateDNSJob() prevents non public IP clones from getting zones.
-				if(uCreateDNSJob)
-					CreateDNSJob(uWizIPv4,uForClient,NULL,cWizHostname,uTargetDatacenter,guLoginClient,uNewVeid,
-								uTargetNode);
-			}//cAutoCloneNode
+			}
 
+			//Create DNS job for clones also
+			if(uCreateDNSJob)
+				CreateDNSJob(uRemoteIPv4,uForClient,NULL,cRemoteHostname,uRemoteDatacenter,
+					guCompany,uNewVeid,uRemoteNode);
+
+			//Get next available clone uIPv4 only if not last loop iteration
+			if((i+1)<uNumContainer)
+			{
+				//Get next available uRemoteIPv4
+				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+						" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
+							uForClient,cAutoCloneIPClassRemote,uRemoteDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uRemoteIPv4);
+				else
+					tContainer("<blink>Error:</blink> No more remote clone IPs available"
+							", multiple container creation aborted!");
+				mysql_free_result(res);
+			}
+		}//cAutoCloneNodeRemote
+
+		//
+		//clone code block end
 
 			//For some reason cHostname is cLabel at this point. TODO debug.
 			if(uCreateDNSJob)
@@ -1398,7 +1574,7 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 				mysql_free_result(res);
 			}
 
-		}//end of loop
+		}//end of loop i++
 
 		tContainer("New containers created");
 	}

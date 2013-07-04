@@ -537,9 +537,12 @@ void tContainerNewStep(unsigned uStep)
 		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
 
 		//uContainer
-		OpenRow(LANG_FL_tContainer_uContainer,"black");
-		printf("<input title='Optional uContainer leave as 0 in almost all cases'"
-			" type=text name=uContainer value=%u size=16 maxlength=10 ></td></tr>\n",uContainer);
+		if(uStep==3)
+		{
+			OpenRow(LANG_FL_tContainer_uContainer,"black");
+			printf("<input title='Optional uContainer leave as 0 in almost all cases'"
+				" type=text name=uContainer value=%u size=16 maxlength=10 ></td></tr>\n",uContainer);
+		}
 
 		//cLabel
 		OpenRow(LANG_FL_tContainer_cLabel,"black");
@@ -700,8 +703,12 @@ void tContainerNewStep(unsigned uStep)
 		if(uStep==4)
 		{
 			OpenRow("Number of containers","black");
+			char cActiveContainers[256]={""};
+			unsigned uActiveContainers=0;
+			GetNodeProp(uNode,"ActiveContainers",cActiveContainers);
+			sscanf(cActiveContainers,"%u",&uActiveContainers);
 			printf("<input title='Number of containers to be created'"
-				" type=text name=cService2 value='%s' maxlength=2><br>",cService2);
+				" type=text name=cService2 value='%s' maxlength=2> Recommended max:%u",cService2,80-uActiveContainers);
 		}
 
 	}//step 3 or 4

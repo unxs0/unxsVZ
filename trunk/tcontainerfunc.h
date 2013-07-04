@@ -505,7 +505,6 @@ void ExttContainerCommands(pentry entries[], int x)
 		char cContainerType[256]={""};
 		char cNCMDatacenter[256]={""};
 		char cNCMNode[256]={""};
-		char cNCCloneRange[256]={""};
 
 		uHideProps=1;
 
