@@ -87,16 +87,16 @@ funcQuerySelect() {
 #get last seq from sipsettings
 cSQL="SELECT max(seq) FROM sipsettings WHERE type=9"
 uLastSeq=` funcQuerySelect $cSQL `
-echo $uLastSeq
+#echo $uLastSeq
 
 if [ $uLastSeq = "NULL" ];then
 	uNextSeq=0;
 else
-	echo $uNextSeq
+	#echo $uNextSeq
 	let uNextSeq=$uLastSeq+1;
 fi
 
-echo nextseq: $uNextSeq
+#echo nextseq: $uNextSeq
 
 
 #
