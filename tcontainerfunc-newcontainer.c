@@ -595,9 +595,8 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		NewtContainer(1);
 
 		//tIP main IP
-		sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-				" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
-							uIPv4,uForClient,uDatacenter);
+		sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uIP=%u",guLoginClient,uIPv4);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -682,7 +681,8 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 				UpdatePrimaryContainerGroup(uNewVeid,uGroup);
 
 			//tIP clone IP
-			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0 WHERE uIP=%u",uCloneIPv4);
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+					" WHERE uIP=%u",guLoginClient,uCloneIPv4);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -724,7 +724,8 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 				sprintf(cRemoteHostname,"%.99s",ForeignKey("tContainer","cHostname",uNewVeid));
 
 			//tIP remote IP
-			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0 WHERE uIP=%u",uRemoteIPv4);
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+					" WHERE uIP=%u",guLoginClient,uRemoteIPv4);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1337,9 +1338,8 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 				SetContainerStatus(uContainer,uAWAITACT);
 
 			//tIP main IP
-			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-				" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
-							uIPv4,uForClient,uDatacenter);
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uIP=%u",guLoginClient,uIPv4);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1423,7 +1423,8 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 					UpdatePrimaryContainerGroup(uNewVeid,uGroup);
 	
 				//tIP clone IP
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0 WHERE uIP=%u",uCloneIPv4);
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uIP=%u",guLoginClient,uCloneIPv4);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -1484,7 +1485,8 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 					sprintf(cRemoteHostname,"%.99s",ForeignKey("tContainer","cHostname",uNewVeid));
 	
 				//tIP remote IP
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0 WHERE uIP=%u",uRemoteIPv4);
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uIP=%u",guLoginClient,uRemoteIPv4);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));

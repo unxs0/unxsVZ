@@ -162,6 +162,7 @@ unsigned uCheckMaxContainers(unsigned uNode);
 unsigned uCheckMaxCloneContainers(unsigned uNode);
 unsigned uUpdateNamesFromCloneToBackup(unsigned uContainer);
 void UpdateNamesFromBackupToClone(unsigned uContainer);
+unsigned uUpdateNamesFromCloneToClone(unsigned uContainer);
 unsigned CreateActivateNATNodeJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned CreateActivateNATContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned uChangeContainerIPToNATIP(unsigned uCtContainer,unsigned uDatacenter,unsigned uNode,unsigned uIPv4,unsigned uOwner);
@@ -1222,8 +1223,8 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=0;
 
 				//Set the selected IP as not available upon modify
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-						" WHERE uIP=%u AND uAvailable=1",uIPv4);
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uIP=%u AND uAvailable=1",guLoginClient,uIPv4);
 
 				//Optional change group.
 				if(uGroup)
@@ -1918,8 +1919,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					SetContainerStatus(uContainer,uAWAITMIG);//Awaiting Migration
 
 					//Mark IP used
-					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-								" WHERE uIP=%u and uAvailable=1",uWizIPv4);
+					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								" WHERE uIP=%u and uAvailable=1",guLoginClient,uWizIPv4);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -2175,8 +2176,8 @@ void ExttContainerCommands(pentry entries[], int x)
 						//Delete offline container with same name as
 						//the change to name. Only the first one is removed for now.
 						//Release IPs
-						sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
-								" WHERE uIP=%u and uAvailable=0",uOfflineIPv4);
+						sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								" WHERE uIP=%u and uAvailable=0",guLoginClient,uOfflineIPv4);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -2345,8 +2346,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					mysql_query(&gMysql,gcQuery);
 				        if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
-					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-							" WHERE uIP=%u",uWizIPv4);
+					sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uIP=%u",guLoginClient,uWizIPv4);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -3430,6 +3431,11 @@ void ExttContainerAuxTable(void)
 				" /usr/sbin/ActivateNATNode.sh hardware node scripts.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Activate NAT'>\n");
+			printf("&nbsp; <input title='If clone or backup container changes cLabel,cHostname to standard format. May create unxsBind"
+				" and change hostname job(s). If unxsVZ so configured may"
+				" create or update special DNS SRV zones based on container primary group.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Hostname Update'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -3703,8 +3709,8 @@ while((field=mysql_fetch_row(res)))
 								sContainer.uNode,uCtContainer,guCompany,uTargetNode,uIPv4,sContainer.uStatus))
 						{
 							//Mark uIPv4 used
-							sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-								" WHERE uIP=%u",uIPv4);
+							sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								" WHERE uIP=%u",guLoginClient,uIPv4);
 							mysql_query(&gMysql,gcQuery);
 							if(mysql_errno(&gMysql))
 								htmlPlainTextError(mysql_error(&gMysql));
@@ -3806,8 +3812,9 @@ while((field=mysql_fetch_row(res)))
 										uCloneTargetNode,uIPv4,uStatus))
 									{
 										//Mark uIPv4 used
-										sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-											" WHERE uIP=%u",uIPv4);
+										sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,"
+											"uModDate=UNIX_TIMESTAMP(NOW())"
+											" WHERE uIP=%u",guLoginClient,uIPv4);
 										mysql_query(&gMysql,gcQuery);
 										if(mysql_errno(&gMysql))
 											htmlPlainTextError(mysql_error(&gMysql));
@@ -4049,15 +4056,15 @@ while((field=mysql_fetch_row(res)))
 						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
 						//Release IPs
-						sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
-							" WHERE uIP=%u and uAvailable=0",sContainer.uIPv4);
+						sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uIP=%u and uAvailable=0",guLoginClient,sContainer.uIPv4);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
 						//Node IP if any MySQL5+
-						sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel IN"
-						" (SELECT cValue FROM tProperty WHERE uKey=%u"
-						" AND uType=3 AND cName='cNodeIP')",uCtContainer);
+						sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE cLabel IN (SELECT cValue FROM tProperty WHERE uKey=%u"
+						" AND uType=3 AND cName='cNodeIP')",guLoginClient,uCtContainer);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -4127,15 +4134,17 @@ while((field=mysql_fetch_row(res)))
 							if((uStatus==uINITSETUP) && (uOwner==guCompany || guCompany==1))
 							{
 								//Release IPs
-								sprintf(gcQuery,"UPDATE tIP SET uAvailable=1"
-									" WHERE uIP=%u and uAvailable=0",uIPv4);
+								sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,"
+									"uModDate=UNIX_TIMESTAMP(NOW())"
+									" WHERE uIP=%u and uAvailable=0",guLoginClient,uIPv4);
 								mysql_query(&gMysql,gcQuery);
 								if(mysql_errno(&gMysql))
 									htmlPlainTextError(mysql_error(&gMysql));
 								//Node IP if any MySQL5+
-								sprintf(gcQuery,"UPDATE tIP SET uAvailable=1 WHERE cLabel IN"
+								sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,"
+								" uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel IN"
 								" (SELECT cValue FROM tProperty WHERE uKey=%u"
-								" AND uType=3 AND cName='cNodeIP')",uContainer);
+								" AND uType=3 AND cName='cNodeIP')",guLoginClient,uContainer);
 								mysql_query(&gMysql,gcQuery);
 								if(mysql_errno(&gMysql))
 									htmlPlainTextError(mysql_error(&gMysql));
@@ -5191,8 +5200,8 @@ while((field=mysql_fetch_row(res)))
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
 
-						sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
-								" WHERE uIP=%u",uNewIPv4);
+						sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								" WHERE uIP=%u",guLoginClient,uNewIPv4);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
@@ -5254,8 +5263,70 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"DNS update ignored");
 					}
 				}
+				else if(!strcmp(gcCommand,"Group Hostname Update"))
+				{
+					struct structContainer sContainer;
 
-				else if(1)
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE )
+						&& sContainer.uSource
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						sscanf(ForeignKey("tContainer","uDatacenter",sContainer.uSource),"%u",&uSourceDatacenter);
+						if(sContainer.uDatacenter!=uSourceDatacenter)
+						{
+							if(uUpdateNamesFromCloneToBackup(uCtContainer))
+							{
+								if(HostnameContainerJob(sContainer.uDatacenter,sContainer.uNode,uCtContainer,
+									sContainer.cHostname,sContainer.uOwner,guLoginClient))
+								{
+									SetContainerStatus(uCtContainer,uAWAITHOST);
+									if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
+									sContainer.cHostname,sContainer.uDatacenter,
+									guLoginClient,uCtContainer,sContainer.uNode))
+										sprintf(cResult,"backup updated +hostname-job +dns-job");
+									else
+										sprintf(cResult,"backup updated +hostname-job");
+								}
+								else
+									sprintf(cResult,"backup updated");
+							}
+							else
+								sprintf(cResult,"no backup change");
+						}
+						else if(sContainer.uDatacenter==uSourceDatacenter)
+						{
+							if(uUpdateNamesFromCloneToClone(uCtContainer))
+							{
+								if(HostnameContainerJob(sContainer.uDatacenter,sContainer.uNode,uCtContainer,
+									sContainer.cHostname,sContainer.uOwner,guLoginClient))
+								{
+									SetContainerStatus(uCtContainer,uAWAITHOST);
+									if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
+									sContainer.cHostname,sContainer.uDatacenter,
+									guLoginClient,uCtContainer,sContainer.uNode))
+										sprintf(cResult,"clone updated +hostname-job +dns-job");
+									else
+										sprintf(cResult,"clone updated +hostname-job");
+								}
+								else
+									sprintf(cResult,"clone updated");
+							}
+							else
+								sprintf(cResult,"no clone change");
+						}
+						else
+							sprintf(cResult,"unexpected uSource");
+					}
+					else
+					{
+						sprintf(cResult,"hostname update ignored");
+					}
+				}
+
+
+				else if(strcmp(gcCommand,"Reload Search Set"))
 				{
 					sprintf(cResult,"Unexpected gcCommand=%.64s",gcCommand);
 					break;
@@ -5289,7 +5360,7 @@ while((field=mysql_fetch_row(res)))
 	uBackupContainer2=0;
         MYSQL_RES *res3;
         MYSQL_ROW field3;
-	sprintf(gcQuery,"SELECT cLabel,uContainer FROM tContainer WHERE uSource=%u AND uStatus=1 LIMIT 2",uCtContainer);
+	sprintf(gcQuery,"SELECT cLabel,uContainer FROM tContainer WHERE uSource=%s LIMIT 2",field[0]);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -6797,7 +6868,8 @@ void AddMountProps(unsigned uContainer)
 
 		//This needs the corresponding release code on delete/mod and delete container
 		//ops
-		sprintf(gcQuery,"UPDATE tIP SET uAvailable=0 WHERE cLabel='%s'",cuWizIPv4PullDown);
+		sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel='%s'",
+				guLoginClient,cuWizIPv4PullDown);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -7284,26 +7356,26 @@ unsigned CommonCloneContainer(
 		if(cClassC[0])
 		{
 			if(guCompany==1)
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uIP=%u AND uAvailable=1 AND cLabel LIKE '%s%%' AND uDatacenter=%u",
-					uWizIPv4,cClassC,uTargetDatacenter);
+					guLoginClient,uWizIPv4,cClassC,uTargetDatacenter);
 			else
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND cLabel LIKE '%s%%'"
 					" AND uDatacenter=%u",
-						uWizIPv4,uOwner,cClassC,uTargetDatacenter);
+						guLoginClient,uWizIPv4,uOwner,cClassC,uTargetDatacenter);
 		}
 		//Here no such class c check
 		else
 		{
 			if(guCompany==1)
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uIP=%u AND uAvailable=1 AND uDatacenter=%u",
-					uWizIPv4,uTargetDatacenter);
+					guLoginClient,uWizIPv4,uTargetDatacenter);
 			else
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
-						uWizIPv4,uOwner,uTargetDatacenter);
+						guLoginClient,uWizIPv4,uOwner,uTargetDatacenter);
 		}
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -8622,26 +8694,26 @@ unsigned CommonNewCloneContainer(
 		if(cClassC[0])
 		{
 			if(guCompany==1)
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uIP=%u AND uAvailable=1 AND cLabel LIKE '%s%%' AND uDatacenter=%u",
-					uWizIPv4,cClassC,uTargetDatacenter);
+					guLoginClient,uWizIPv4,cClassC,uTargetDatacenter);
 			else
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND cLabel LIKE '%s%%'"
 					" AND uDatacenter=%u",
-						uWizIPv4,uOwner,cClassC,uTargetDatacenter);
+						guLoginClient,uWizIPv4,uOwner,cClassC,uTargetDatacenter);
 		}
 		//Here no such class c check
 		else
 		{
 			if(guCompany==1)
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uIP=%u AND uAvailable=1 AND uDatacenter=%u",
-					uWizIPv4,uTargetDatacenter);
+					guLoginClient,uWizIPv4,uTargetDatacenter);
 			else
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0"
+				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
-						uWizIPv4,uOwner,uTargetDatacenter);
+						guLoginClient,uWizIPv4,uOwner,uTargetDatacenter);
 		}
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -8720,4 +8792,70 @@ unsigned CommonNewCloneContainer(
 
 }//unsigned CommonNewCloneContainer()
 
+
+unsigned uUpdateNamesFromCloneToClone(unsigned uContainer)
+{
+	if(!uContainer)
+		return(0);
+
+	unsigned uSource=0;
+	unsigned uCloneNum=0;
+	char cuCloneNum[16]={""};
+	unsigned uSourceDatacenter=0;
+	char cSourceLabel[32]={""};
+	char cLabel[32]={""};
+	char cSourceHostname[64]={""};
+	char *cp;
+	char cSourceDomain[64]={""};
+
+	sscanf(ForeignKey("tContainer","uSource",uContainer),"%u",&uSource);
+	if(!uSource)
+		return(0);
+
+	sscanf(ForeignKey("tContainer","uDatacenter",uSource),"%u",&uSourceDatacenter);
+	if(!uSourceDatacenter)
+		return(0);
+
+	sprintf(cSourceLabel,"%.31s",ForeignKey("tContainer","cLabel",uSource));
+	sprintf(cLabel,"%.31s",ForeignKey("tContainer","cLabel",uContainer));
+	sprintf(cSourceHostname,"%.63s",ForeignKey("tContainer","cHostname",uSource));
+	if(!cSourceHostname[0] || !cSourceLabel[0])
+		return(0);
+
+	//clean up (chop off) -m at end for dns move containers that require review.
+	if((cp=strstr(cSourceLabel+strlen(cSourceLabel)-2,"-m")))
+		*cp=0;
+
+	//first dot
+	if((cp=strchr(cSourceHostname,'.')))
+		sprintf(cSourceDomain,"%.63s",cp+1);
+	else
+		return(0);
+
+	//use clone number if any
+	if((cp=strstr(cLabel,"-clone")))
+	{
+		sscanf(cp,"-clone%u",&uCloneNum);
+		if(uCloneNum)
+			sprintf(cuCloneNum,"%u",uCloneNum);
+	}
+
+	//Note how we may clobber the front of the names but leave the -backup suffix intact
+	sprintf(gcQuery,"UPDATE tContainer"
+			" SET cLabel='%.24s-clone%s',"
+			" cHostname='%.24s-clone%s.%s'"
+			" WHERE uContainer=%u"
+			" AND uSource!=0"
+			" AND uDatacenter=%u",
+				cSourceLabel,cuCloneNum,
+				cSourceLabel,cuCloneNum,cSourceDomain,
+				uContainer,
+				uSourceDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return(0);
+
+	return(mysql_affected_rows(&gMysql));
+
+}//unsigned uUpdateNamesFromCloneToClone(uContainer)
 
