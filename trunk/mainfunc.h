@@ -69,6 +69,7 @@ void ImportRemoteDatacenter(
 			const char *cuOwner);
 void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath);
 void ExtractQOS(char *cMonth, char *cYear, char *cPasswd, char *cTablePath);
+void ExtracttJob(char *cMonth, char *cYear, char *cPasswd, char *cTablePath);
 time_t cDateToUnixTime(char *cDate);
 void CreatetLogTable(char *cTableName);
 void CreatetPropertyTable(char *cTableName);
@@ -727,6 +728,8 @@ void ExtMainShell(int argc, char *argv[])
                	ExtracttLog(argv[2],argv[3],argv[4],argv[5]);
 	else if(argc==6 && !strcmp(argv[1],"ExtractQOS"))
                	ExtractQOS(argv[2],argv[3],argv[4],argv[5]);
+	else if(argc==6 && !strcmp(argv[1],"ExtracttJob"))
+               	ExtracttJob(argv[2],argv[3],argv[4],argv[5]);
 	else if(argc==10 && !strcmp(argv[1],"ImportRemoteDatacenter"))
                 ImportRemoteDatacenter(argv[2],argv[3],argv[4],argv[5],argv[6],argv[7],argv[8],argv[9]);
 	else if(argc==4 && !strcmp(argv[1],"ImportOSTemplates"))
@@ -764,7 +767,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tResetAllSyncPeriod\n");
 		printf("\tAddBasicPropertiesToClones\n");
 		printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
-		printf("\tExtracttLog/ExtractQOS <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
+		printf("\tExtracttLog/ExtractQOS/ExtracttJob <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 		printf("\tImportRemoteDatacenter <local datacenter> <remote datacenter> <local node> <remote node>\n"
 			"\t\t<host> <user> <passwd> <local uOwner>\n");
 		printf("\tImportOSTemplates <path to templates e.g. /vz/template/cache/> <tClient.cLabel owner string>\n");
@@ -4014,11 +4017,6 @@ void ExtractQOS(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 	}
 
 	CreatetPropertyTable(cTableName);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(stderr,"%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
 
 	printf("Clearing data from %s...\n",cTableName);
 	sprintf(gcQuery,"DELETE FROM %s",cTableName);
@@ -4148,4 +4146,238 @@ void CreatetPropertyTable(char *cTableName)
 		exit(1);
 	}
 }//CreatetPropertyTable()
+
+
+void CreatetJobTable(char *cTableName)
+{
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS %s ( "
+			"uJob INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cLabel VARCHAR(100) NOT NULL DEFAULT '',"
+			"cJobName VARCHAR(64) NOT NULL DEFAULT '',"
+			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uDatacenter),"
+			"uNode INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uNode),"
+			"uContainer INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uContainer),"
+			"cJobData TEXT NOT NULL DEFAULT '',"
+			"uJobDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uJobStatus INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uJobStatus),"
+			"cRemoteMsg VARCHAR(64) NOT NULL DEFAULT '',"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0 )",cTableName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+}//CreatetJobTable()
+
+
+
+void ExtracttJob(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
+{
+	char cTableName[33]={""};
+	char cNextMonth[4]={""};
+	char cNextYear[8]={""};
+	char cThisYear[8]={""};
+	char cThisMonth[4]={""};
+	long uStart=0;
+	long uEnd=0;
+	unsigned uRows=0;
+	time_t clock;
+	struct tm *structTime;
+	struct stat info;
+
+	time(&clock);
+	structTime=localtime(&clock);
+	strftime(cThisYear,8,"%Y",structTime);
+	strftime(cThisMonth,4,"%b",structTime);
+
+	printf("ExtracttJob() Start\n");
+
+	if(isdigit(cMonth[0]) || strlen(cMonth)!=3)
+	{
+		printf("cMonth must be in 3 letter format\n");
+		exit(1);
+	}
+	if(!isupper(cMonth[0]) || isupper(cMonth[1]) || isupper(cMonth[2]))
+	{
+		printf("cMonth must be in 3 letter format with capital first letter, rest lower case.\n");
+		exit(1);
+	}
+
+	printf("cThisMonth:%s cThisYear:%s\n",cThisMonth,cThisYear);
+
+	if(!strcmp(cThisMonth,cMonth) && !strcmp(cThisYear,cYear))
+	{
+		fprintf(stderr,"Can't extract this months data!\n");
+		exit(1);
+	}
+
+	if(stat("/usr/bin/myisampack",&info) )
+	{
+		fprintf(stderr,"/usr/bin/myisampack is not installed!\n");
+		exit(1);
+	}
+
+	if(stat("/usr/bin/myisamchk",&info))
+	{
+		fprintf(stderr,"/usr/bin/myisamchk is not installed!\n");
+		exit(1);
+	}
+
+
+	mySQLRootConnect(cPasswd);
+	mysql_query(&gMysql,"USE unxsvz");
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+
+	//Log this operation
+	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttJob Start...',"
+			"cServer='%s',uLogType=4,uOwner=1,uCreatedBy=1,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
+        mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+
+	sprintf(cTableName,"tJob%.3s%.7s",cMonth,cYear);
+
+	sprintf(gcQuery,"1-%s-%s",cMonth,cYear);
+	uStart=cDateToUnixTime(gcQuery);
+	printf("Start: %s",ctime(&uStart));
+
+	if(uStart== -1 || !uStart)
+	{
+		fprintf(stderr,"Garbled month year input (uStart)\n");
+		exit(1);
+	}
+
+	NextMonthYear(cMonth,cYear,cNextMonth,cNextYear);
+	//Debug only
+	//printf("%s %s to %s %s\n",cMonth,cYear,cNextMonth,cNextYear);
+	//exit(0);
+
+	sprintf(gcQuery,"1-%s-%s",cNextMonth,cNextYear);
+	uEnd=cDateToUnixTime(gcQuery);
+	printf("End:   %s",ctime(&uEnd));
+	if(uEnd== -1 || !uEnd)
+	{
+		fprintf(stderr,"Garbled month year input (uEnd)\n");
+		exit(1);
+	}
+
+	CreatetJobTable(cTableName);
+
+	printf("Clearing data from %s...\n",cTableName);
+	sprintf(gcQuery,"DELETE FROM %s",cTableName);
+        mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+
+	printf("Getting data from tJob...\n");
+	sprintf(gcQuery,"INSERT %s (uJob,cLabel,cJobName,uDatacenter,uNode,uContainer,cJobData,uJobDate,"
+			" uJobStatus,cRemoteMsg,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate)"
+			" SELECT uJob,cLabel,cJobName,uDatacenter,uNode,uContainer,cJobData,uJobDate,"
+			" uJobStatus,cRemoteMsg,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate"
+			" FROM tJob WHERE uCreatedDate>=%lu AND uCreatedDate<%lu",
+				cTableName,uStart,uEnd);
+        mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+
+	//If 0 records inserted delete from tMonth and exit now
+	uRows=mysql_affected_rows(&gMysql);
+
+	printf("Number of rows found and inserted: %u\n",uRows);
+
+	if(uRows)
+	{
+
+		sprintf(gcQuery,"REPLACE tMonth SET cLabel='%s',uOwner=1,uCreatedBy=1,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW())",cTableName);
+        	mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			fprintf(stderr,"%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+	}
+	else
+	{
+		sprintf(gcQuery,"DELETE FROM tMonth WHERE cLabel='%s'",cTableName);
+        	mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			fprintf(stderr,"%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+
+		sprintf(gcQuery,"DROP TABLE %s",cTableName);
+        	mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			fprintf(stderr,"%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+
+
+		printf("Exiting early no data to be archived\n");
+		exit(0);
+	}
+
+	sprintf(gcQuery,"/usr/bin/myisampack %s/%s",cTablePath,cTableName);
+	if(system(gcQuery))
+	{
+		fprintf(stderr,"Failed: %s\n",gcQuery);
+		exit(1);
+	}
+
+	sprintf(gcQuery,"/usr/bin/myisamchk -rq %s/%s",cTablePath,cTableName);
+	if(system(gcQuery))
+	{
+		fprintf(stderr,"Failed: %s\n",gcQuery);
+		exit(1);
+	}
+
+	printf("Flushing compressed RO table...\n");
+	sprintf(gcQuery,"FLUSH TABLE %s",cTableName);
+        mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+
+	printf("Removing records from tJob...\n");
+	sprintf(gcQuery,"DELETE QUICK FROM tJob WHERE uCreatedDate>=%lu AND uCreatedDate<%lu AND uJobStatus!=%u AND uJobStatus!=%u",
+				uStart,uEnd,uWAITING,uREMOTEWAITING);
+        mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+
+
+	printf("Extracted and Archived. Table flushed: %s\n",cTableName);
+	printf("ExtracttLog() End\n");
+	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttJob() End',cServer='%s',uLogType=4,"
+			"uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
+        mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+	exit(0);
+
+}//void ExtracttJob(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 
