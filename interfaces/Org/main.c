@@ -161,23 +161,38 @@ int main(int argc, char *argv[])
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		sprintf(gcQuery,"SELECT uNode FROM tNode WHERE uStatus=1 AND uOwner=%u AND cLabel!='appliance'",guOrg);
+		//Note any status in case status changes ater an AllowAccess.
+		sprintf(gcQuery,"SELECT DISTINCT tContainer.uNode,tContainer.uDatacenter"
+				" FROM tContainer,tNode,tDatacenter"
+				" WHERE tContainer.uNode=tNode.uNode"
+				" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
+				" AND tDatacenter.uStatus=1"
+				" AND tNode.uStatus=1"
+				//Reseller control model
+				" AND (tContainer.uOwner IN (SELECT uClient FROM tClient WHERE"
+				" 	((uOwner IN (SELECT uClient FROM tClient WHERE"
+				" 	uOwner=%1$u) OR uOwner=%1$u) AND cCode='Organization')) OR tContainer.uOwner=%1$u)"
+				//
+				" AND tNode.cLabel!='appliance'",guOrg);
+
 		mysql_query(&gMysql,gcQuery);
 		res=mysql_store_result(&gMysql);
 		while((field=mysql_fetch_row(res)))
 		{
 			unsigned uNode=0;
+			unsigned uDatacenter=0;
 
 			sscanf(field[0],"%u",&uNode);
-			if(!uNode) continue;
+			sscanf(field[1],"%u",&uDatacenter);
 
 			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DenyAccess %u',cJobName='DenyAccess'"
-					",uDatacenter=0,uNode=%u,uContainer=0"//All datacenters
+					",uDatacenter=%u,uNode=%u,uContainer=0"//All datacenters
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1"
 					",cJobData='cIPv4=%.15s;'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						guLoginClient,
+						uDatacenter,
 						uNode,
 						gcHost,
 						guOrg,guLoginClient);
@@ -670,23 +685,42 @@ void SetLogin(void)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		sprintf(gcQuery,"SELECT uNode FROM tNode WHERE uStatus=1 AND uOwner=%u AND cLabel!='appliance'",guOrg);
+		//Allow access job for all active nodes that host active controlling company owned containers.
+		sprintf(gcQuery,"SELECT DISTINCT tContainer.uNode,tContainer.uDatacenter"
+				" FROM tContainer,tNode,tDatacenter"
+				" WHERE tContainer.uNode=tNode.uNode"
+				" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
+				" AND tDatacenter.uStatus=1"
+				" AND tNode.uStatus=1"
+				" AND tContainer.uStatus=1"
+				//Reseller control model
+				" AND (tContainer.uOwner IN (SELECT uClient FROM tClient WHERE"
+				" 	((uOwner IN (SELECT uClient FROM tClient WHERE"
+				" 	uOwner=%1$u) OR uOwner=%1$u) AND cCode='Organization')) OR tContainer.uOwner=%1$u)"
+				//
+				" AND tNode.cLabel!='appliance'",guOrg);
 		mysql_query(&gMysql,gcQuery);
 		res=mysql_store_result(&gMysql);
 		while((field=mysql_fetch_row(res)))
 		{
 			unsigned uNode=0;
+			unsigned uDatacenter=0;
 
 			sscanf(field[0],"%u",&uNode);
-			if(!uNode) continue;
+			sscanf(field[1],"%u",&uDatacenter);
 
+			//Allow access job for all nodes that host controlling company containers.
+			//The allow acces job should open FreePBX user and admin ports
+			//	it should also allow ssh port access and node ssh access based on perm level and tClient
+			//	hierarchy
 			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='AllowAccess %u',cJobName='AllowAccess'"
-					",uDatacenter=0,uNode=%u,uContainer=0"//All datacenters
+					",uDatacenter=%u,uNode=%u,uContainer=0"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1"
 					",cJobData='cIPv4=%.15s;'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						guLoginClient,
+						uDatacenter,
 						uNode,
 						gcHost,
 						guOrg,guLoginClient);
