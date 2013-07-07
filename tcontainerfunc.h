@@ -127,7 +127,8 @@ void htmlGroups(unsigned uNode, unsigned uContainer);
 char *cHtmlGroups(char const *cuContainer);
 unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus,
 		unsigned uOwner,char *cConfigLabel);
-unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname,unsigned uOwner,unsigned uLoginClient);
+unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname,
+	unsigned uOwner,unsigned uLoginClient,unsigned uPrevStatus);
 unsigned IPContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
 			unsigned uOwner,unsigned uLoginClient,char const *cIPOld);
 unsigned IPContainerJobNoRelease(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
@@ -1945,7 +1946,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 					//Create change hostname job
 					if(uSource)
-						HostnameContainerJob(uTargetDatacenter,uTargetNode,uContainer,cPrevHostname,uOwner,guLoginClient);
+						HostnameContainerJob(uTargetDatacenter,uTargetNode,uContainer,cPrevHostname,uOwner,guLoginClient,uStatus);
 
 
 					//Create optional job for source node
@@ -2226,7 +2227,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					else
 						CreateDNSJob(uIPv4,uOwner,NULL,cHostname,uDatacenter,guLoginClient,uContainer,uNode);
 				}
-				if(HostnameContainerJob(uDatacenter,uNode,uContainer,cPrevHostname,uOwner,guLoginClient))
+				if(HostnameContainerJob(uDatacenter,uNode,uContainer,cPrevHostname,uOwner,guLoginClient,uStatus))
 				{
 					uStatus=uAWAITHOST;
 					SetContainerStatus(uContainer,61);
@@ -4596,7 +4597,7 @@ while((field=mysql_fetch_row(res)))
 								SetContainerStatus(uCtContainer,uAWAITACT);
 								if(strcmp(sContainer.cHostname,ForeignKey("tContainer","cHostname",uCtContainer)))
 									HostnameContainerJob(sContainer.uDatacenter,sContainer.uNode,uCtContainer,
-										sContainer.cHostname,sContainer.uOwner,guLoginClient);
+										sContainer.cHostname,sContainer.uOwner,guLoginClient,uSTOPPED);
 							}
 						}
 						else
@@ -4605,7 +4606,7 @@ while((field=mysql_fetch_row(res)))
 							if(uUpdateNamesFromCloneToBackup(uCtContainer))
 							{
 								if(HostnameContainerJob(sContainer.uDatacenter,sContainer.uNode,uCtContainer,
-									sContainer.cHostname,sContainer.uOwner,guLoginClient))
+									sContainer.cHostname,sContainer.uOwner,guLoginClient,sContainer.uStatus))
 										SetContainerStatus(uCtContainer,uAWAITHOST);
 							}
 						}
@@ -5279,7 +5280,7 @@ while((field=mysql_fetch_row(res)))
 							if(uUpdateNamesFromCloneToBackup(uCtContainer))
 							{
 								if(HostnameContainerJob(sContainer.uDatacenter,sContainer.uNode,uCtContainer,
-									sContainer.cHostname,sContainer.uOwner,guLoginClient))
+									sContainer.cHostname,sContainer.uOwner,guLoginClient,sContainer.uStatus))
 								{
 									SetContainerStatus(uCtContainer,uAWAITHOST);
 									if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
@@ -5300,7 +5301,7 @@ while((field=mysql_fetch_row(res)))
 							if(uUpdateNamesFromCloneToClone(uCtContainer))
 							{
 								if(HostnameContainerJob(sContainer.uDatacenter,sContainer.uNode,uCtContainer,
-									sContainer.cHostname,sContainer.uOwner,guLoginClient))
+									sContainer.cHostname,sContainer.uOwner,guLoginClient,sContainer.uStatus))
 								{
 									SetContainerStatus(uCtContainer,uAWAITHOST);
 									if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
@@ -6444,7 +6445,8 @@ unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 }//unsigned TemplateContainerJob()
 
 
-unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname,unsigned uOwner,unsigned uLoginClient)
+unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname,
+	unsigned uOwner,unsigned uLoginClient,unsigned uPrevStatus)
 {
 	unsigned uCount=0;
 	long unsigned luJobDate=0;
