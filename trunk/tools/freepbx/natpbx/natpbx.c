@@ -1152,6 +1152,8 @@ void GetZabbixPort(char *cHostname)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uA=0,uB=0,uC=0;
+	unsigned uD=0;
 
 	sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
@@ -1169,17 +1171,19 @@ void GetZabbixPort(char *cHostname)
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
-	unsigned uD=0;
 	if((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[0],"%*u.%*u.%*u.%u",&uD);
-		if(!uD)
+		if(sscanf(field[0],"%u.%u.%u.%u",&uA,&uB,&uC,&uD)!=4)
 		{
 			fprintf(stderr,"cIPv4 scan error %s\n",cHostname);
 			logfileLine("GetZabbixPort",field[0],0);
 		}
 	}
 	mysql_free_result(res);
+
+	//Only nat rfc1918 IPs can have non standard port
+	if( !((uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10)) ) 
+		uD=0;
 
 	if(uD)
 		printf("%u\n",uD+9000);
