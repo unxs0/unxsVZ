@@ -109,6 +109,7 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs);
 unsigned uCheckMaxContainers(unsigned uNode);
 unsigned uCheckMaxCloneContainers(unsigned uNode);
+unsigned uContainerStatus(unsigned uContainer);
 
 //file scoped vars.
 static unsigned gfuNode=0;
@@ -1298,13 +1299,16 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		}
 
 		//Everything ok
-		//This is not enough we need the previous status before awaiting hostname change.
-		char cDeployOptions[256]={""};
-		GetContainerProp(uContainer,"cDeployOptions",cDeployOptions);
-		if(strstr(cDeployOptions,"uDeployStopped=1;") || uPrevStatus==uSTOPPED)
-			SetContainerStatus(uContainer,uSTOPPED);//Active
+		//If previous status exists AND is not uSTOPPED or uACTIVE we use it.
+		//otherwise we use the real status that can only be uSTOPPED or uACTIVE
+		//This allows us to keep transitional states but also allow
+		//to correct the system status when the real disk status is different from
+		//the syste, status
+		unsigned uRealStatus=uContainerStatus(uContainer);
+		if( uPrevStatus && (uPrevStatus!=uSTOPPED || uPrevStatus!=uACTIVE) )
+			SetContainerStatus(uContainer,uPrevStatus);
 		else
-			SetContainerStatus(uContainer,uACTIVE);//Active
+			SetContainerStatus(uContainer,uRealStatus);
 		tJobDoneUpdate(uJob);
 	}
 	else
@@ -6757,3 +6761,33 @@ void ActivateNATNode(unsigned uJob,unsigned uContainer,unsigned uNode)
 
 }//void ActivateNATNode()
 
+
+//get real vz container status
+unsigned uContainerStatus(unsigned uContainer)
+{
+	FILE *pfp;
+	char cResponse[16]={""};
+	unsigned uStatus=0;//unknown
+
+	sprintf(gcQuery,"/usr/sbin/vzlist --no-header --output status %u",uContainer);
+	if((pfp=popen(gcQuery,"r"))==NULL)
+	{
+		logfileLine("uContainerStatus","open error");
+		return(0);
+	}
+	if(fscanf(pfp,"%15s",cResponse)<0)
+	{
+		logfileLine("uContainerStatus","read error");
+		return(0);
+	}
+	if(pclose(pfp)<0)
+		logfileLine("uContainerStatus","pclose error");
+
+	logfileLine("uContainerStatus",cResponse);
+	if(strstr(cResponse,"run"))
+		uStatus=1;
+	else
+		uStatus=31;
+	return(uStatus);
+
+}//unsigned uContainerStatus(unsigned uContainer)

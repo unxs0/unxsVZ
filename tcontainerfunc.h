@@ -6467,12 +6467,12 @@ unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
-			",cJobData='cPrevHostname=%s;'"
+			",cJobData='cPrevHostname=%s;\nuPrevStatus=%u;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
 				luJobDate,luJobDate,
-				cPrevHostname,
+				cPrevHostname,uPrevStatus,
 				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
