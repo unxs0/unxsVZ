@@ -1232,7 +1232,9 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//	container are done.
 	sprintf(gcQuery,"SELECT uJob FROM tJob"
 			" WHERE uContainer=%u AND (uJobStatus=%u OR uJobStatus=%u) AND uJob!=%u"
-			" AND cJobName!='ChangeIPContainer'",
+			" AND cJobName!='ChangeIPContainer'"
+			" AND cJobName!='ActivateNATNode'"
+			" AND cJobName!='ActivateNATContainer'",
 					uContainer,uWAITING,uRUNNING,uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -6544,6 +6546,26 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	}
 	mysql_free_result(res);
 
+	//Only run once the container is running
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uJobStatus=1"
+			" AND uContainer=%u",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ActivateNATContainer",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"mysql error 1");
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{
+		logfileLine("ActivateNATContainer","waiting for container");
+		tJobWaitingUpdate(uJob);
+		mysql_free_result(res);
+		return;
+	}
+	mysql_free_result(res);
+
 	//Execute node script
 	//Optional group based script may exist to be executed.
 	//
@@ -6658,6 +6680,27 @@ void ActivateNATNode(unsigned uJob,unsigned uContainer,unsigned uNode)
 	if(mysql_num_rows(res)>0)
 	{
 		logfileLine("ActivateNATNode","waiting for ChangeIPContainer");
+		tJobWaitingUpdate(uJob);
+		mysql_free_result(res);
+		return;
+	}
+	mysql_free_result(res);
+
+	//Only run after any pending container change IP jobs are finished
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uJobStatus=1"
+			" AND uNode=%u"
+			" AND cJobName='ChangeHostnameContainer'",uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ActivateNATNode",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"mysql error 11");
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{
+		logfileLine("ActivateNATNode","waiting for ChangeHostnameContainer");
 		tJobWaitingUpdate(uJob);
 		mysql_free_result(res);
 		return;
