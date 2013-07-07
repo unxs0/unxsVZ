@@ -1215,6 +1215,7 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	char cTimezone[256]={""};
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uPrevStatus=0;
 
 	//Check 1-. Check to make sure container is on this node, if not 
 	//	give job back to queue
@@ -1255,6 +1256,8 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	sscanf(cJobData,"cPrevHostname=%99s;",cPrevHostname);
 	if((cp=strchr(cPrevHostname,';')))
 		*cp=0;
+	if((cp=strstr(cJobData,"uPrevStatus=")))
+		sscanf(cp+(strlen("uPrevStatus=")),"%u;",&uPrevStatus);
 
 	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname"
 			" FROM tContainer WHERE uContainer=%u",uContainer);
@@ -1298,7 +1301,7 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		//This is not enough we need the previous status before awaiting hostname change.
 		char cDeployOptions[256]={""};
 		GetContainerProp(uContainer,"cDeployOptions",cDeployOptions);
-		if(strstr(cDeployOptions,"uDeployStopped=1;"))
+		if(strstr(cDeployOptions,"uDeployStopped=1;") || uPrevStatus==uSTOPPED)
 			SetContainerStatus(uContainer,uSTOPPED);//Active
 		else
 			SetContainerStatus(uContainer,uACTIVE);//Active
