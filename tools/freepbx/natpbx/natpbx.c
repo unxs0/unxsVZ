@@ -1153,14 +1153,12 @@ void GetZabbixPort(char *cHostname)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	return;//this should not be used yet.
-
 	sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tContainer.uIPv4=tIP.uIP"
 			" AND tContainer.cHostname='%s'"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
-			" AND tGroup.cLabel LIKE '%%NatPBX%%'"
+			" AND tGroup.cLabel LIKE '%%PBX%%'"
 			" AND tContainer.uNode=%u ORDER BY tIP.uIP LIMIT 1",cHostname,guNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
