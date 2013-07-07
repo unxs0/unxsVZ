@@ -5284,7 +5284,7 @@ while((field=mysql_fetch_row(res)))
 								{
 									SetContainerStatus(uCtContainer,uAWAITHOST);
 									if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
-									sContainer.cHostname,sContainer.uDatacenter,
+									ForeignKey("tContainer","cHostname",uCtContainer),sContainer.uDatacenter,
 									guLoginClient,uCtContainer,sContainer.uNode))
 										sprintf(cResult,"backup updated +hostname-job +dns-job");
 									else
@@ -5305,7 +5305,7 @@ while((field=mysql_fetch_row(res)))
 								{
 									SetContainerStatus(uCtContainer,uAWAITHOST);
 									if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
-									sContainer.cHostname,sContainer.uDatacenter,
+									ForeignKey("tContainer","cHostname",uCtContainer),sContainer.uDatacenter,
 									guLoginClient,uCtContainer,sContainer.uNode))
 										sprintf(cResult,"clone updated +hostname-job +dns-job");
 									else
