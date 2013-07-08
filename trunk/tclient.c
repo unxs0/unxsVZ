@@ -545,7 +545,8 @@ void tClientList(void)
                         ctime_r(&luTime9,cBuf9);
                 else
                         sprintf(cBuf9,"---");
-                printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%s>"
+                	" %s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
                         ,field[0]
                         ,field[0]
                         ,field[1]
