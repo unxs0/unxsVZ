@@ -58,7 +58,7 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
 void ActionScripts(unsigned uJob,unsigned uContainer);
-void AllowAccess(unsigned uJob,const char *cJobData);
+void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void DenyAccess(unsigned uJob,const char *cJobData);
 void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNewVeid);
@@ -418,7 +418,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	}
 	else if(!strcmp(cJobName,"AllowAccess") && uNode)
 	{
-		AllowAccess(uJob,cJobData);
+		AllowAccess(uJob,cJobData,uDatacenter,uNode);
 	}
 	else if(!strcmp(cJobName,"DenyAccess") && uNode)
 	{
@@ -5562,7 +5562,7 @@ CommonExit:
 
 //These functions assume something like this at end part of /etc/sysconfig/iptables:
 // -A FORWARD -p tcp -m tcp --dport 443 -j REJECT --reject-with icmp-port-unreachable
-void AllowAccess(unsigned uJob,const char *cJobData)
+void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
 {
 	char cIPv4[16]={""};
 	char *cp;
@@ -5577,9 +5577,28 @@ void AllowAccess(unsigned uJob,const char *cJobData)
 		return;
 	}
 
-	//Test fixed rule for now
-	sprintf(gcQuery,"/sbin/iptables -L -n | grep %.15s > /dev/null; if [ $? != 0 ];then"
-			" /sbin/iptables -I FORWARD -s %.15s -p tcp -m tcp --dport 443 -j ACCEPT; fi;",cIPv4,cIPv4);
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	char cTemplate[512]={"/sbin/iptables -L -n | grep %%1$.15s > /dev/null; if [ $? != 0 ];then"
+			" /sbin/iptables -I FORWARD -s %%1$.15s -p tcp -m tcp --dport 443 -j ACCEPT; fi;"};
+
+	sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
+			//trick to get most specific datacenter node combo
+			" WHERE ((uDatacenter=%1$u AND uNode=%2$u) OR (uDatacenter=%1$u AND uNode=0))"
+			" AND cName='cAllowAccessTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",uDatacenter,uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("NodeCommandJob",mysql_error(&gMysql));
+	else
+	{
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sprintf(cTemplate,"%.512s",field[0]);
+		mysql_free_result(res);
+	}
+
+	sprintf(gcQuery,cTemplate,cIPv4);
 	if(system(gcQuery))
 	{
 		logfileLine("AllowAccess","iptables command failed");
@@ -5591,7 +5610,7 @@ void AllowAccess(unsigned uJob,const char *cJobData)
 	tJobDoneUpdate(uJob);
 	return;
 
-}//void AllowAccess(unsigned uJob,const char *cJobData)
+}//void AllowAccess()
 
 
 void DenyAccess(unsigned uJob,const char *cJobData)
@@ -5610,8 +5629,8 @@ void DenyAccess(unsigned uJob,const char *cJobData)
 	}
 
 	//Test fixed rule for now
-	sprintf(gcQuery,"/sbin/iptables -L -n | grep %.15s > /dev/null; if [ $? == 0 ];then"
-			" /sbin/iptables -D FORWARD -s %.15s -p tcp -m tcp --dport 443 -j ACCEPT; fi;",cIPv4,cIPv4);
+	sprintf(gcQuery,"/sbin/iptables -L -n | grep %1$.15s > /dev/null; if [ $? == 0 ];then"
+			" /sbin/iptables -D FORWARD -s %1$.15s -p tcp -m tcp --dport 443 -j ACCEPT; fi;",cIPv4);
 	if(system(gcQuery))
 		logfileLine("DenyAccess","iptables del command failed but ignored");
 
