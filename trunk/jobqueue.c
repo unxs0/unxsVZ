@@ -5604,7 +5604,10 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 	{
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
+		{
 			sprintf(cTemplate,"%.512s",field[0]);
+			logfileLine("AllowAccess","secure template used");
+		}
 		mysql_free_result(res);
 	}
 
@@ -5612,7 +5615,6 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 	//char cData[128];
 	//sprintf(cData,"uDatacenter=%u uNode=%u",uDatacenter,uNode);
 	//logfileLine("AllowAccess",cData);
-	logfileLine("AllowAccess",cTemplate);
 
 	sprintf(gcQuery,cTemplate,cIPv4,cIPv4);
 	if(system(gcQuery))
