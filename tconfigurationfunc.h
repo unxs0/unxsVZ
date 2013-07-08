@@ -12,6 +12,7 @@ AUTHOR/LEGAL
 void tConfigurationNavList(void);
 unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter,unsigned uNode,unsigned uContainer);
 void htmlGlossaryLink(char *cLabel);
+void UpdateVZKey(char *cComment);
 
 void ExtProcesstConfigurationVars(pentry entries[], int x)
 {
@@ -92,6 +93,11 @@ void ExttConfigurationCommands(pentry entries[], int x)
                         	guMode=2002;
 				//Check entries here
                         	guMode=0;
+
+
+				//Setup security with private key
+				if(strstr(cComment,"#unxsVZKey="))
+					UpdateVZKey(cComment);
 
 				uModBy=guLoginClient;
 				ModtConfiguration();
@@ -379,3 +385,38 @@ unsigned CreateConfigurationFileJob(unsigned uConfiguration,unsigned uDatacenter
 	return(uCount);
 
 }//unsigned CreateConfigurationFileJob()
+
+
+//cComment must be big enough
+void UpdateVZKey(char *cComment)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	FILE *fp;
+	char cPrivateKey[256]={"privatekey2"};
+
+	//If no private key file no security by default!
+	if((fp=fopen("/etc/unxsvz/unxsvz.key","r")))
+	{
+		if(fgets(cPrivateKey,255,fp)!=NULL)
+			cPrivateKey[strlen(cPrivateKey)-1]=0;//cut off /n
+		fclose(fp);
+	}
+
+	sprintf(gcQuery,"SELECT SHA1(CONCAT(LEFT('%s',LOCATE('#unxsVZKey=','%s')),'%s'))",
+			TextAreaSave(cComment),TextAreaSave(cComment),cPrivateKey);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char cKey[64]={""};
+		char *cp;
+		sprintf(cKey,"%.63s",field[0]);
+
+		if((cp=strstr(cComment,"#unxsVZKey=")))
+			sprintf(cp,"#unxsVZKey=%s",cKey);
+	}
+        mysql_free_result(res);
+}//void UpdateVZKey(char *cComment)

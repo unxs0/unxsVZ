@@ -5580,16 +5580,26 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	char cTemplate[512]={"/sbin/iptables -L -n | grep %%1$.15s > /dev/null; if [ $? != 0 ];then"
-			" /sbin/iptables -I FORWARD -s %%1$.15s -p tcp -m tcp --dport 443 -j ACCEPT; fi;"};
+	char cTemplate[512]={"/sbin/iptables -L -n | grep %s > /dev/null; if [ $? != 0 ];then"
+			" /sbin/iptables -I FORWARD -s %s -p tcp -m tcp --dport 443 -j ACCEPT; fi;"};
+
+	FILE *fp;
+	char cPrivateKey[256]={"privatekey"};
+	if((fp=fopen("/etc/unxsvz/unxsvz.key","r")))
+	{
+		if(fgets(cPrivateKey,255,fp)!=NULL)
+			cPrivateKey[strlen(cPrivateKey)-1]=0;//cut off /n
+		fclose(fp);
+	}
 
 	sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
 			//trick to get most specific datacenter node combo
-			" WHERE ((uDatacenter=%1$u AND uNode=%2$u) OR (uDatacenter=%1$u AND uNode=0))"
-			" AND cName='cAllowAccessTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",uDatacenter,uNode);
+			" WHERE SHA1(CONCAT(LEFT(cComment,LOCATE('#unxsVZKey=',cComment)),'%1$s'))=SUBSTR(cComment,LOCATE('#unxsVZKey=',cComment)+11)"
+			" AND ((uDatacenter=%2$u AND uNode=%3$u) OR (uDatacenter=%2$u AND uNode=0))"
+			" AND cLabel='cAllowAccessTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",cPrivateKey,uDatacenter,uNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		logfileLine("NodeCommandJob",mysql_error(&gMysql));
+		logfileLine("AllowAccess",mysql_error(&gMysql));
 	else
 	{
 		res=mysql_store_result(&gMysql);
@@ -5598,7 +5608,13 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 		mysql_free_result(res);
 	}
 
-	sprintf(gcQuery,cTemplate,cIPv4);
+	//debug only
+	//char cData[128];
+	//sprintf(cData,"uDatacenter=%u uNode=%u",uDatacenter,uNode);
+	//logfileLine("AllowAccess",cData);
+	logfileLine("AllowAccess",cTemplate);
+
+	sprintf(gcQuery,cTemplate,cIPv4,cIPv4);
 	if(system(gcQuery))
 	{
 		logfileLine("AllowAccess","iptables command failed");
