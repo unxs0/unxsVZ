@@ -154,7 +154,7 @@ void ProcessJobQueue(unsigned uDebug)
 		exit(1);
 	}
 #define LINUX_SYSINFO_LOADS_SCALE 65536
-#define JOBQUEUE_MAXLOAD 10 //This is equivalent to uptime 10.00 last 5 min avg load
+#define JOBQUEUE_MAXLOAD 20 //This is equivalent to uptime 10.00 last 5 min avg load
 	if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
 	{
 		sprintf(gcQuery,"structSysinfo.loads[1]=%lu larger than JOBQUEUE_MAXLOAD=%u",

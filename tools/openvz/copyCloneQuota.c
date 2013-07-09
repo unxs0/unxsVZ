@@ -164,10 +164,14 @@ void TransferQuotaFile(void)
 		sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tNode,tContainer"
 			" WHERE tProperty.uKey=tNode.uNode"
 			" AND tContainer.uNode=tNode.uNode"
-			" AND tProperty.cName='Name' AND tContainer.uContainer=%s AND tProperty.uType=2",field[1]);
+			" AND tProperty.cName='Name'"
+			" AND tContainer.uContainer=%s"
+			" AND (tContainer.uStatus=31 OR tContainer.uStatus=1)"
+			" AND tProperty.uType=2",field[1]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
+			strcat(gcQuery,"\n");
 			fprintf(stderr,gcQuery);
 			logfileLine("TransferQuotaFile",mysql_error(&gMysql),0);
 			mysql_close(&gMysql);
@@ -181,8 +185,10 @@ void TransferQuotaFile(void)
 
 		if(!cRemoteServer[0])
 		{
-			fprintf(stderr,"No cRemoteServer");
-			logfileLine("TransferQuotaFile","No cRemoteServer",0);
+			sprintf(gcQuery,"No cRemoteServer VEIDs Local:%s Remote:%s",field[0],field[1]);
+			logfileLine("TransferQuotaFile",gcQuery,0);
+			strcat(gcQuery,"\n");
+			fprintf(stderr,gcQuery);
 			continue;
 		}
 		sprintf(gcQuery,"scp %s:/var/vzquota/quota.%s /var/vzquota/quota.%s ",cRemoteServer,field[1],field[0]);
