@@ -36,10 +36,14 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//cOTPSecret: OATH TOPT or HOPT key
+static char cOTPSecret[65]={""};
+//uOTPExpire: Unix seconds date last when cOTPSecret is no longer valid. If 0 do not
+//require OTP
+static time_t uOTPExpire=0;
 
 
-
-#define VAR_LIST_tAuthorize "tAuthorize.uAuthorize,tAuthorize.cLabel,tAuthorize.cIpMask,tAuthorize.uPerm,tAuthorize.uCertClient,tAuthorize.cPasswd,tAuthorize.cClrPasswd,tAuthorize.uOwner,tAuthorize.uCreatedBy,tAuthorize.uCreatedDate,tAuthorize.uModBy,tAuthorize.uModDate"
+#define VAR_LIST_tAuthorize "tAuthorize.uAuthorize,tAuthorize.cLabel,tAuthorize.cIpMask,tAuthorize.uPerm,tAuthorize.uCertClient,tAuthorize.cPasswd,tAuthorize.cClrPasswd,tAuthorize.uOwner,tAuthorize.uCreatedBy,tAuthorize.uCreatedDate,tAuthorize.uModBy,tAuthorize.uModDate,tAuthorize.cOTPSecret,tAuthorize.uOTPExpire"
 
  //Local only
 void Insert_tAuthorize(void);
@@ -92,6 +96,10 @@ void ProcesstAuthorizeVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"cOTPSecret"))
+			sprintf(cOTPSecret,"%.64s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uOTPExpire"))
+			sscanf(entries[i].val,"%lu",&uOTPExpire);
 
 	}
 
@@ -201,6 +209,8 @@ void tAuthorize(const char *cResult)
 		sscanf(field[9],"%lu",&uCreatedDate);
 		sscanf(field[10],"%u",&uModBy);
 		sscanf(field[11],"%lu",&uModDate);
+		sprintf(cOTPSecret,"%.64s",field[12]);
+		sscanf(field[13],"%lu",&uOTPExpire);
 
 		}
 
@@ -397,6 +407,26 @@ void tAuthorizeInput(unsigned uMode)
 	else
 		printf("---\n\n");
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
+//cOTPSecret
+	OpenRow("cOTPSecret","black");
+	printf("<input title='%s' type=text name=cOTPSecret value=\"%s\" size=40 maxlength=64 ",
+						"liboath TOTP or HTOP base32 key",cOTPSecret);
+	if(guPermLevel>=0 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cOTPSecret value=\"%s\">\n",cOTPSecret);
+	}
+//uOTPExpire
+	OpenRow("uOTPExpire","black");
+	if(uOTPExpire)
+		printf("%s\n\n",ctime(&uOTPExpire));
+	else
+		printf("---\n\n");
+	printf("<input type=hidden name=uModDate value=%lu >\n",uOTPExpire);
 	printf("</tr>\n");
 
 
@@ -479,7 +509,7 @@ void Update_tAuthorize(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tAuthorize SET uAuthorize=%u,cLabel='%s',cIpMask='%s',uPerm=%u,uCertClient=%u,cPasswd='%s',cClrPasswd='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tAuthorize SET uAuthorize=%u,cLabel='%s',cIpMask='%s',uPerm=%u,uCertClient=%u,cPasswd='%s',cClrPasswd='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()),cOTPSecret='%s',uOTPExpire=%lu WHERE _rowid=%s",
 			uAuthorize
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cIpMask)
@@ -488,6 +518,8 @@ void Update_tAuthorize(char *cRowid)
 			,TextAreaSave(cPasswd)
 			,TextAreaSave(cClrPasswd)
 			,uModBy
+			,TextAreaSave(cOTPSecret)
+			,uOTPExpire
 			,cRowid);
 
 	macro_mySQLQueryHTMLError;
@@ -557,7 +589,22 @@ void tAuthorizeList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uAuthorize<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>cIpMask<td><font face=arial,helvetica color=white>uPerm<td><font face=arial,helvetica color=white>uCertClient<td><font face=arial,helvetica color=white>cPasswd<td><font face=arial,helvetica color=white>cClrPasswd<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uAuthorize"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>cIpMask"
+		"<td><font face=arial,helvetica color=white>uPerm"
+		"<td><font face=arial,helvetica color=white>uCertClient"
+		"<td><font face=arial,helvetica color=white>cPasswd"
+		"<td><font face=arial,helvetica color=white>cClrPasswd"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate"
+		"<td><font face=arial,helvetica color=white>cOTPSecret"
+		"<td><font face=arial,helvetica color=white>uOTPExpire"
+						"</tr>");
 
 
 
@@ -587,7 +634,14 @@ void tAuthorizeList(void)
 			ctime_r(&luTime11,cBuf11);
 		else
 			sprintf(cBuf11,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		time_t luTime13=strtoul(field[13],NULL,10);
+		char cBuf13[32];
+		if(luTime13)
+			ctime_r(&luTime13,cBuf13);
+		else
+			sprintf(cBuf13,"---");
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tAuthorize&uAuthorize=%s>%s"
+			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
@@ -601,6 +655,8 @@ void tAuthorizeList(void)
 			,cBuf9
 			,ForeignKey("tClient","cLabel",strtoul(field[10],NULL,10))
 			,cBuf11
+			,field[12]
+			,cBuf13
 				);
 
 	}
@@ -627,7 +683,9 @@ void CreatetAuthorize(void)
 			"uPerm INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uCertClient INT UNSIGNED NOT NULL DEFAULT 0,"
 			"cPasswd VARCHAR(100) NOT NULL DEFAULT '',"
-			"cClrPasswd VARCHAR(32) NOT NULL DEFAULT '' )");
+			"cClrPasswd VARCHAR(32) NOT NULL DEFAULT '',"
+			"cOTPSecret VARCHAR(64) NOT NULL DEFAULT '',"
+			"uOTPExpire INT UNSIGNED NOT NULL DEFAULT 0 )");
 	macro_mySQLQueryHTMLError;
 
 }//CreatetAuthorize()
