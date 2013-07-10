@@ -42,7 +42,7 @@ int main (int iArgc, char *cArgv[])
 		printf("generating one-time password failed (%d)",rc);
 	if(!strcmp(cArgv[2],otp))
 	{
-		printf("valid\n");
+		printf("valid 1 %s\n",otp);
 		return EXIT_SUCCESS;
 	}
 
@@ -51,7 +51,7 @@ int main (int iArgc, char *cArgv[])
 		printf("generating one-time password failed (%d)",rc);
 	if(!strcmp(cArgv[2],otp))
 	{
-		printf("valid\n");
+		printf("valid 2 %s\n",otp);
 		return EXIT_SUCCESS;
 	}
 
@@ -60,7 +60,7 @@ int main (int iArgc, char *cArgv[])
 		printf("generating one-time password failed (%d)",rc);
 	if(!strcmp(cArgv[2],otp))
 	{
-		printf("valid\n");
+		printf("valid 3 %s\n",otp);
 		return EXIT_SUCCESS;
 	}
 	printf("failed\n");
