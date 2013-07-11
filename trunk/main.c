@@ -53,6 +53,9 @@ char gcCookie[1024]={""};
 char gcLogin[100]={""};
 char gcPasswd[100]={""};
 unsigned guSSLCookieLogin=0;
+unsigned guRequireOTPLogin=0;
+char gcOTP[16]={""};
+char gcOTPInfo[64]={"Nothing yet"};
 
 char gcFunction[100]={""};
 unsigned guListMode=0;
@@ -256,6 +259,8 @@ int main(int iArgc, char *cArgv[])
 			sprintf(gcLogin,"%.99s",entries[x].val);
                 else if(!strcmp(entries[x].name,"gcPasswd"))
 			sprintf(gcPasswd,"%.99s",entries[x].val);
+                else if(!strcmp(entries[x].name,"gcOTP"))
+			sprintf(gcOTP,"%.15s",entries[x].val);
 	}
 
 	//SSLCookieLogin()
@@ -616,7 +621,7 @@ void Header_ism3(const char *title, int iJs)
 	{
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>%s ",gcUser);
 		if(strcmp(gcUser,gcCompany)) printf("(%s) ",gcCompany);
-		printf("logged in from %s [%s/%u]</font>",gcHost,cUserLevel(guPermLevel),guReseller);
+		printf("logged in from %s [%s/%u (%s)]</font>",gcHost,cUserLevel(guPermLevel),guReseller,gcOTPInfo);
 	}
 
 	//Logout link
@@ -1909,16 +1914,20 @@ void SetLogin(void)
 }//void SetLogin(void)
 
 
-char *cGetPasswd(char *gcLogin);
+char *cGetPasswd(char *gcLogin,char *cOTPSecret,unsigned long *uOTPExpire);
 int iValidLogin(int mode)
 {
 	char cSalt[16]={""};
 	char cPassword[100]={""};
 
 	//Notes:
-	//Mode=1 means we have encrypted passwd from cookie
+	//mode=1 means we have encrypted passwd from cookie
 
-	strcpy(cPassword,cGetPasswd(gcLogin));
+	char cOTPSecret[65]={""};
+	unsigned long uOTPExpire=0;
+	strcpy(cPassword,cGetPasswd(gcLogin,cOTPSecret,&uOTPExpire));
+	//debug only
+	sprintf(gcOTPInfo,"%s %lu",cOTPSecret,uOTPExpire);
 	if(cPassword[0])
 	{
 		if(!mode)
@@ -1975,18 +1984,82 @@ int iValidLogin(int mode)
 
 }//iValidLogin()
 
+#include <liboath/oath.h>
 
-char *cGetPasswd(char *gcLogin)
+unsigned uValidOTP(char *cOTPSecret,char *cOTP)
+{
+	char *secret;
+	size_t secretlen = 0;
+	int rc;
+	char otp[10];
+	time_t now;
+
+	rc=oath_init();
+	if(rc!=OATH_OK)
+		return(0);
+
+	now=time(NULL);
+
+	rc=oath_base32_decode(cOTPSecret,strlen(cOTPSecret),&secret,&secretlen);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+
+	//1.5 min window
+	rc=oath_totp_generate(secret,secretlen,now,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+	rc=oath_totp_generate(secret,secretlen,now-30,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+	rc=oath_totp_generate(secret,secretlen,now-60,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+gotoFail:
+	free(secret);
+	oath_done();
+	return(0);
+
+gotoMatch:
+	free(secret);
+	oath_done();
+	return(1);
+
+}//unsigned uValidOTP(char *cOTPSecret,char *cOTP)
+
+
+void UpdateOTPExpire(unsigned uAuthorize)
+{
+	//OTP login OK for 4 more hours. Change to configurable TODO.
+	sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=(UNIX_TIMESTAMP(NOW())+14400) WHERE uAuthorize=%u",
+			uAuthorize);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+}//void UpdateOTPExpire(unsigned uAuthorize)
+
+
+char *cGetPasswd(char *gcLogin,char *cOTPSecret,unsigned long *uOTPExpire)
 {
 	static char cPasswd[100]={""};
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 	char *cp;
+	time_t timeNow;
+
 
 	//SQL injection code
 	if((cp=strchr(gcLogin,'\''))) *cp=0;
 
-	sprintf(gcQuery,"SELECT cPasswd FROM " TAUTHORIZE " WHERE cLabel='%s'",
+	sprintf(gcQuery,"SELECT cPasswd,cOTPSecret,uOTPExpire,uAuthorize FROM " TAUTHORIZE " WHERE cLabel='%s'",
 			gcLogin);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1994,13 +2067,43 @@ char *cGetPasswd(char *gcLogin)
 	mysqlRes=mysql_store_result(&gMysql);
 	cPasswd[0]=0;
 	if((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
 		sprintf(cPasswd,"%.99s",mysqlField[0]);
+		if(mysqlField[1])
+		{
+			sprintf(cOTPSecret,"%.64s",mysqlField[1]);
+			sscanf(mysqlField[2],"%lu",uOTPExpire);
+			timeNow=time(NULL);
+			if((*uOTPExpire)<=timeNow || (*uOTPExpire)==0)
+			{
+				guRequireOTPLogin=1;
+				if(gcOTP[0])
+				{
+					if(!uValidOTP(cOTPSecret,gcOTP))
+					{
+						cPasswd[0]=0;
+					}
+					else
+					{
+						unsigned uAuthorize=0;
+						sscanf(mysqlField[3],"%u",&uAuthorize);
+						guRequireOTPLogin=0;
+						UpdateOTPExpire(uAuthorize);
+					}
+				}
+				else if((*uOTPExpire)!=0)
+				{
+					cPasswd[0]=0;
+				}
+			}
+		}
+	}
 	mysql_free_result(mysqlRes);
 
 	
 	return(cPasswd);
 
-}//char *cGetPasswd(char *gcLogin)
+}//char *cGetPasswd()
 
 
 void SSLCookieLogin(void)
@@ -2070,7 +2173,10 @@ void htmlSSLLogin(void)
 	printf("<p>\n");
 	printf("Login: <input type=text size=20 maxlength=98 name=gcLogin>\n");
 	printf(" Passwd: <input type=password size=20 maxlength=20 name=gcPasswd>\n");
+	if(guRequireOTPLogin)
+		printf(" OTP: <input type=text size=8 maxlength=8 name=gcOTP autocomplete=off >\n");
 	printf("<font size=1> <input type=submit name=gcFunction value=Login>\n");
+	printf("<p>debug info: %s %s\n",gcOTPInfo,gcOTP);
 
         Footer_ism3();
 

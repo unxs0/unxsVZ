@@ -158,10 +158,20 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 					if(iRc!=OATH_OK)
 						tAuthorize("cOTPSecret base32 decoding failed");
 
-					//set expire
-					time_t timeNow;
-					timeNow=time(NULL);
-					uOTPExpire=timeNow+90*86400;//90 days more
+					//login system explained:
+					//if cOTPSecret and uOTPExpire=0
+					//	must login with passwd and OTP
+					//if cOTPSecret is empty no login checks.
+					// else
+					//	every time we get login cookie we check to see
+					//	if now>=uOTPExpire;
+					//	if it is then we require login again.
+
+					
+					//set expire -this is done in main login code now.
+					//time_t timeNow;
+					//timeNow=time(NULL);
+					//uOTPExpire=timeNow+8*3600;//8 hours more
 				}
 				else
 					uOTPExpire=0;//cancel OTP
