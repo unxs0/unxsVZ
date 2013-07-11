@@ -103,7 +103,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 					iRc=oath_base32_encode(cRandom,sizeof(cRandom),&cSecret,&uSecretlen);
 					if(iRc!=OATH_OK)
 						tAuthorize("cOTPSecret base32 encoding failed");
-					sprintf(cOTPSecret,"%.20s",cSecret);
+					sprintf(cOTPSecret,"%.16s",cSecret);
 				}
 
 				guMode=2002;
