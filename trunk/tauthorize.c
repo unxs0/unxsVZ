@@ -417,7 +417,17 @@ void tAuthorizeInput(unsigned uMode)
 	}
 	else
 	{
-		printf("disabled></td></tr>\n");
+		printf("disabled>");
+		if(cOTPSecret[0] && cLabel[0])
+		{
+			char *cp;
+			if((cp=strchr(cLabel,' ')))
+				*cp=0;
+			printf(" <a href=\"https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl="
+					"otpauth://totp/%.31s%%3Fsecret%%3D%.20s\">QRCode link</a>",
+							cLabel,cOTPSecret);
+		}
+		printf("</td></tr>\n");
 		printf("<input type=hidden name=cOTPSecret value=\"%s\">\n",cOTPSecret);
 	}
 //uOTPExpire
@@ -426,10 +436,8 @@ void tAuthorizeInput(unsigned uMode)
 		printf("%s\n\n",ctime(&uOTPExpire));
 	else
 		printf("---\n\n");
-	printf("<input type=hidden name=uModDate value=%lu >\n",uOTPExpire);
+	printf("<input type=hidden name=uOTPExpire value=%lu >\n",uOTPExpire);
 	printf("</tr>\n");
-
-
 
 }//void tAuthorizeInput(unsigned uMode)
 
