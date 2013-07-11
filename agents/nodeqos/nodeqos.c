@@ -463,6 +463,7 @@ void ProcessTShark(void)
 	unsigned uDidNotSendMTREmail=0;
 	char cCommand[256];
 	FILE *fp;
+	//# /usr/sbin/tshark -i venet0 -a duration:55 -q -f 'udp portrange 16384-32768' -o rtp.heuristic_rtp:TRUE -z rtp,streams -w /tmp/qoscap2
 	sprintf(cCommand,"/usr/sbin/tshark -i %s -a duration:55 -q -f 'udp portrange 16384-32768'"
 				" -o rtp.heuristic_rtp:TRUE -z rtp,streams -w /tmp/qoscap2 2> /dev/null | /bin/grep X",gcInterface);
 	if(guDebug) printf("%s\n",cCommand);
