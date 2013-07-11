@@ -433,7 +433,10 @@ void tAuthorizeInput(unsigned uMode)
 //uOTPExpire
 	OpenRow("uOTPExpire","black");
 	if(uOTPExpire)
-		printf("%s\n\n",ctime(&uOTPExpire));
+	{
+		time_t timeNow=time(NULL);
+		printf("%s %lus left\n\n",ctime(&uOTPExpire),(uOTPExpire-timeNow));
+	}
 	else
 		printf("---\n\n");
 	printf("<input type=hidden name=uOTPExpire value=%lu >\n",uOTPExpire);
