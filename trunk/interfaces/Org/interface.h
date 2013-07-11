@@ -12,8 +12,8 @@ AUTHOR
 #include "../../local.h"
 #include <ctype.h>
 #include <openisp/template.h>
-#include <lber.h>
-#include <ldap.h>
+//#include <lber.h>
+//#include <ldap.h>
 
 //libtemplate required
 #define MAXPOSTVARS 64
@@ -122,6 +122,6 @@ void htmlGlossary(void);
 void htmlGlossaryPage(char *cTitle, char *cTemplateName);
 
 //ldap.c
-int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization);
-void ldapErrorLog(char *cMessage,LDAP *ld);
+//int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization);
+//void ldapErrorLog(char *cMessage,LDAP *ld);
 void logfileLine(const char *cFunction,const char *cLogline);

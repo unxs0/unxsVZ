@@ -40,6 +40,11 @@ char gcLogin[100]={""};
 char cLogKey[16]={"Ksdj458jssdUjf79"};
 char gcPasswd[100]={""};
 unsigned guSSLCookieLogin=0;
+unsigned guRequireOTPLogin=0;
+unsigned guOTPExpired=0;
+char gcOTP[16]={""};
+char gcOTPInfo[64]={"Nothing yet"};
+char gcOTPSecret[65]={""};
 
 int guPermLevel=0;
 char gcuPermLevel[4]={""};
@@ -67,6 +72,7 @@ void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization);
 #endif
 void htmlLogin(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
+void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
 
 
 
@@ -140,6 +146,8 @@ int main(int argc, char *argv[])
 				sprintf(gcLogin,"%.99s",entries[i].val);
 			else if(!strcmp(entries[i].name,"gcPasswd"))
 				sprintf(gcPasswd,"%.99s",entries[i].val);
+                	else if(!strcmp(entries[i].name,"gcOTP"))
+				sprintf(gcOTP,"%.15s",entries[i].val);
 		}
 	}
 
@@ -156,6 +164,11 @@ int main(int argc, char *argv[])
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 			mysql_query(&gMysql,gcQuery);
+			if(gcOTPSecret[0])
+			{
+				UpdateOTPExpire(0,guLoginClient);
+				guRequireOTPLogin=1;
+			}
 #define PERNODEFIREWALL 
 #ifdef PERNODEFIREWALL
         	MYSQL_RES *res;
@@ -229,7 +242,10 @@ int main(int argc, char *argv[])
 void htmlLogin(void)
 {
 	htmlHeader("unxsvzOrg","Header");
-	htmlLoginPage("unxsvzOrg","ZLogin.Body");
+	if(guRequireOTPLogin)
+		htmlLoginPage("unxsvzOrg","ZLoginOTP.Body");
+	else
+		htmlLoginPage("unxsvzOrg","ZLogin.Body");
 	htmlFooter("Footer");
 
 }//void htmlLogin(void)
@@ -403,7 +419,7 @@ void AppFunctions(FILE *fp,char *cFunction)
 
 //
 //Login functions section
-char *cGetPasswd(char *gcLogin)
+char *cGetPasswd(char *gcLogin,char *cOTPSecret,unsigned long *luOTPExpire,unsigned long *luSQLNow,unsigned *uAuthorize)
 {
 	static char cPasswd[100]={""};
         MYSQL_RES *mysqlRes;
@@ -413,7 +429,7 @@ char *cGetPasswd(char *gcLogin)
 	//SQL injection code
 	if((cp=strchr(gcLogin,'\''))) *cp=0;
 
-	sprintf(gcQuery,"SELECT cPasswd,uPerm FROM tAuthorize WHERE cLabel='%s'",
+	sprintf(gcQuery,"SELECT cPasswd,uPerm,cOTPSecret,uOTPExpire,UNIX_TIMESTAMP(NOW()),uAuthorize FROM tAuthorize WHERE cLabel='%s'",
 			gcLogin);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -425,15 +441,21 @@ char *cGetPasswd(char *gcLogin)
 	if((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		sprintf(cPasswd,"%.99s",mysqlField[0]);
+		//CHANGES A GLOBAL HERE!
 		sscanf(mysqlField[1],"%u",&guPermLevel);
-		//Do not allow admin users to use this end user interface
-		//if(guPermLevel>=10) htmlLogin();
+		if(mysqlField[2])
+		{
+			sprintf(cOTPSecret,"%.64s",mysqlField[2]);
+			sscanf(mysqlField[3],"%lu",luOTPExpire);
+			sscanf(mysqlField[4],"%lu",luSQLNow);
+			sscanf(mysqlField[5],"%u",uAuthorize);
+		}
 	}
 	mysql_free_result(mysqlRes);
 	
 	return(cPasswd);
 
-}//char *cGetPasswd(char *gcLogin)
+}//char *cGetPasswd()
 
 
 void SSLCookieLogin(void)
@@ -624,6 +646,86 @@ void EncryptPasswdWithSalt(char *pw, char *salt)
 }//void EncryptPasswdWithSalt(char *pw, char *salt)
 
 
+#include <liboath/oath.h>
+unsigned uValidOTP(char *cOTPSecret,char *cOTP)
+{
+	char *secret;
+	size_t secretlen = 0;
+	int rc;
+	char otp[10];
+	time_t now;
+
+	rc=oath_init();
+	if(rc!=OATH_OK)
+		return(0);
+
+	now=time(NULL);
+
+	rc=oath_base32_decode(cOTPSecret,strlen(cOTPSecret),&secret,&secretlen);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+
+	//2 min time skew window
+	rc=oath_totp_generate(secret,secretlen,now-60,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+	rc=oath_totp_generate(secret,secretlen,now-30,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+	rc=oath_totp_generate(secret,secretlen,now,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+	rc=oath_totp_generate(secret,secretlen,now+30,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+	rc=oath_totp_generate(secret,secretlen,now+60,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+gotoFail:
+	free(secret);
+	oath_done();
+	return(0);
+
+gotoMatch:
+	free(secret);
+	oath_done();
+	return(1);
+
+}//unsigned uValidOTP(char *cOTPSecret,char *cOTP)
+
+
+//with uAuthorize==0 it expires the OTP for a given guLoginClient
+void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient)
+{
+
+	//OTP login OK for 4 more hours. Change to configurable TODO.
+	if(!uAuthorize)
+		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=0 WHERE uCertClient=%u",
+			uClient);
+	else
+		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=(UNIX_TIMESTAMP(NOW())+14400) WHERE uAuthorize=%u",
+			uAuthorize);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+}//void UpdateOTPExpire()
+
+
 int iValidLogin(int mode)
 {
 	char cSalt[16]={""};
@@ -632,7 +734,14 @@ int iValidLogin(int mode)
 	//Notes:
 	//Mode=1 means we have encrypted passwd from cookie
 
-	sprintf(cPassword,"%.99s",cGetPasswd(gcLogin));
+	unsigned uAuthorize=0;
+	long unsigned luOTPExpire=0;
+	long unsigned luSQLNow=0;
+	strcpy(cPassword,cGetPasswd(gcLogin,gcOTPSecret,&luOTPExpire,&luSQLNow,&uAuthorize));
+	//If user has OTP secret then they must login with OTP every so often.
+	if(luOTPExpire<=luSQLNow && gcOTPSecret[0])
+		guOTPExpired=1;
+	sprintf(gcOTPInfo,"{%s}/[%s] %u unexpected case",gcOTPSecret,gcOTP,guOTPExpired);
 	if(cPassword[0])
 	{
 		if(!mode)
@@ -644,12 +753,64 @@ int iValidLogin(int mode)
 				sprintf(cSalt,"%.2s",cPassword);
 			EncryptPasswdWithSalt(gcPasswd,cSalt);
 			if(!strcmp(gcPasswd,cPassword))
-					return 1;
+			{
+				if(guOTPExpired && gcOTP[0] && gcOTPSecret[0])
+				{
+					if(!uValidOTP(gcOTPSecret,gcOTP))
+					{
+						guRequireOTPLogin=1;
+						sprintf(gcOTPInfo,"{%s}/[%s] %u login invalid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+						return(0);
+					}
+					else
+					{
+						guRequireOTPLogin=0;
+						guOTPExpired=0;
+						UpdateOTPExpire(uAuthorize,0);
+						sprintf(gcOTPInfo,"{%s}/[%s] %u login valid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+						return(1);
+					}
+				}
+				else if(guOTPExpired)
+				{
+					guRequireOTPLogin=1;
+					sprintf(gcOTPInfo,"{%s}/[%s] %u login valid but expired",gcOTPSecret,gcOTP,guOTPExpired);
+					return(0);
+				}
+				sprintf(gcOTPInfo,"{%s}/[%s] %u login valid",gcOTPSecret,gcOTP,guOTPExpired);
+				return(1);
+			}
 		}
 		else
 		{
 			if(!strcmp(gcPasswd,cPassword))
-					return 1;
+			{
+				if(guOTPExpired && gcOTP[0] && gcOTPSecret[0])
+				{
+					if(!uValidOTP(gcOTPSecret,gcOTP))
+					{
+						guRequireOTPLogin=1;
+						sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login expired invalid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+						return(0);
+					}
+					else
+					{
+						guOTPExpired=0;
+						guRequireOTPLogin=0;
+						UpdateOTPExpire(uAuthorize,0);
+						sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login valid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+						return(1);
+					}
+				}
+				else if(guOTPExpired)
+				{
+					guRequireOTPLogin=1;
+					sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login expired no gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+					return(0);
+				}
+				sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login valid",gcOTPSecret,gcOTP,guOTPExpired);
+				return(1);
+			}
 		}
 	}
 
@@ -660,6 +821,9 @@ int iValidLogin(int mode)
 			gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
 		mysql_query(&gMysql,gcQuery);
 	}
+	if(guOTPExpired)
+		guRequireOTPLogin=1;
+	sprintf(gcOTPInfo,"{%s}/[%s] %u invalid login",gcOTPSecret,gcOTP,guOTPExpired);
 	return 0;
 
 }//iValidLogin()
@@ -794,6 +958,8 @@ const char *cUserLevel(unsigned uPermLevel)
 		break;
 		case 6:
 			return(ORG_ADMIN);
+			//debug login system
+			//return(gcOTPInfo);
 		break;
 		case 5:
 			return(ORG_ACCT);
