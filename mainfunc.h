@@ -1539,6 +1539,42 @@ void UpdateSchema(void)
 			printf("Added INDEX uIP to tGroupGlue\n");
 	}
 
+	//tAuthorize section
+	unsigned uAuthorizecOTPSecret=0;
+	unsigned uAuthorizeuOTPExpire=0;
+	sprintf(gcQuery,"SHOW COLUMNS IN tAuthorize");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uOTPExpire"))
+			uAuthorizeuOTPExpire=1;
+		if(!strcmp(field[0],"cOTPSecret"))
+			uAuthorizecOTPSecret=1;
+	}
+       	mysql_free_result(res);
+	if(!uAuthorizeuOTPExpire)
+	{
+		sprintf(gcQuery,"ALTER TABLE tAuthorize ADD uOTPExpire INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uOTPExpires to tAuthorize\n");
+	}
+	if(!uAuthorizecOTPSecret)
+	{
+		sprintf(gcQuery,"ALTER TABLE tAuthorize ADD cOTPSecret VARCHAR(64) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uOTPExpires to tAuthorize\n");
+	}
+
 	//Please fix this TODO
 		sprintf(gcQuery,"ALTER TABLE tJob MODIFY cRemoteMsg VARCHAR(64) NOT NULL DEFAULT ''");
 		mysql_query(&gMysql,gcQuery);

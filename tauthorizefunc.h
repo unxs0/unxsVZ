@@ -10,6 +10,8 @@ AUTHOR
  
 */
 
+#include <liboath/oath.h>
+
 void ExtSelect2(const char *cTable,const char *cVarList,unsigned uMaxResults);
 void tAuthorizeNavList(void);
 
@@ -81,6 +83,29 @@ void ExttAuthorizeCommands(pentry entries[], int x)
                         ProcesstAuthorizeVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy) || uCreatedBy==guLoginClient || guPermLevel>9)
 			{
+				guMode=2001;
+
+
+				if(!cOTPSecret[0])
+				{
+					//generate a secret
+					size_t uSecretlen=0;
+					char *cSecret;
+					char cRandom[32];
+					int iRc;
+  					int fd=open("/dev/urandom",O_RDONLY);
+					if(fd<0)
+						tAuthorize("Failed to open \"/dev/urandom\"");
+					if(read(fd,cRandom,sizeof(cRandom))!=sizeof(cRandom))
+						tAuthorize("Failed to read from \"/dev/urandom\"");
+
+					//oath_base32_encode(const char *in, size_t inlen, char **out, size_t *outlen);
+					iRc=oath_base32_encode(cRandom,sizeof(cRandom),&cSecret,&uSecretlen);
+					if(iRc!=OATH_OK)
+						tAuthorize("cOTPSecret base32 encoding failed");
+					sprintf(cOTPSecret,"%.20s",cSecret);
+				}
+
 				guMode=2002;
 				tAuthorize(LANG_NB_CONFIRMMOD);
 			}
@@ -121,6 +146,25 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 					if(strncmp(cPasswd,"..",2) && strncmp(cPasswd,"$1$",3))
 						EncryptPasswd(cPasswd);
 				}
+
+				if(cOTPSecret[0])
+				{
+					char *cSecret;
+					size_t uSecretlen=0;
+					int iRc;
+
+					//validate
+					iRc=oath_base32_decode(cOTPSecret,strlen(cOTPSecret),&cSecret,&uSecretlen);
+					if(iRc!=OATH_OK)
+						tAuthorize("cOTPSecret base32 decoding failed");
+
+					//set expire
+					time_t timeNow;
+					timeNow=time(NULL);
+					uOTPExpire=timeNow+90*86400;//90 days more
+				}
+				else
+					uOTPExpire=0;//cancel OTP
 
 				uModBy=guLoginClient;
                         	ModtAuthorize();
