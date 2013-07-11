@@ -18,17 +18,22 @@ void tAuthorizeNavList(void);
 void EncryptPasswd(char *cPasswd);//main.c
 const char *cUserLevel(unsigned uPermLevel);//tclientfunc.h
 
+
+static unsigned uCopyToPermLevel=0;
+
 void ExtProcesstAuthorizeVars(pentry entries[], int x)
 {
 
-	/*
 	register int i;
 	
 	for(i=0;i<x;i++)
 	{
+		if(!strcmp(entries[i].name,"uCopyToPermLevel"))
+		{
+			sscanf(entries[i].val,"%u",&uCopyToPermLevel);
+		}
 	
 	}
-	*/
 
 }//void ExtProcesstAuthorizeVars(pentry entries[], int x)
 
@@ -172,6 +177,16 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 					//time_t timeNow;
 					//timeNow=time(NULL);
 					//uOTPExpire=timeNow+8*3600;//8 hours more
+
+					if(guPermLevel>10 && uCopyToPermLevel>0)
+					{
+						sprintf(gcQuery,"UPDATE tAuthorize SET cOTPSecret='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								" WHERE uPerm=%u AND cOTPSecret=''",
+							cOTPSecret,guLoginClient,uCopyToPermLevel);
+        					mysql_query(&gMysql,gcQuery);
+        					if(mysql_errno(&gMysql))
+							tAuthorize("<blink>Error</blink>: UPDATE error");
+					}
 				}
 				else
 					uOTPExpire=0;//cancel OTP
@@ -213,6 +228,13 @@ void ExttAuthorizeButtons(void)
 			printf("<u>Modify: Step 1 Tips</u><br>");
 			printf("Password changing: You have several choices for passwd changing: You can either enter a clear text passwd in cClrPasswd or enter a clear text passwd in cPasswd that will be encrypted into cPasswd and no cClrPasswd will be saved. And finally you can enter an MD5 $1$ prefixed encrypted password (or for backwards compatability a fixed '..' salt DES encrypted ) passwd into cPasswd.<p>\n");
 			printf("Other field changes: Unless you are absolutely sure what you need done, have 2nd level support (support@unixservice.com) do it for you.<p>\n");
+
+			if(cOTPSecret[0] && guPermLevel>10)
+				printf("<p><input type=text title='DANGER! Copies current cOTPSecret to all other"
+					" tAuthorize records with the given uPerm' jname=uCopyToPermLevel value=%u>"
+					" <font color=red>cOTPSecret uCopyToPermLevel</font>",
+						uCopyToPermLevel);
+			printf("<p>\n");
                         printf(LANG_NBB_CONFIRMMOD);
 			printf("<br>\n");
                 break;
@@ -292,8 +314,27 @@ void ExttAuthorizeListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tAuthorize.uAuthorize=%u ORDER BY tAuthorize.uAuthorize",
-						uAuthorize);
+		sprintf(cCat,"tAuthorize.uAuthorize=%u",uAuthorize);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uPerm"))
+        {
+                sscanf(gcCommand,"%u",&uPerm);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tAuthorize.uPerm=%u ORDER BY tAuthorize.cLabel",uPerm);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"cOTPSecret"))
+        {
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tAuthorize.cOTPSecret LIKE '%s%%' ORDER BY tAuthorize.cLabel",
+				TextAreaSave(gcCommand));
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cLabel"))
@@ -329,6 +370,14 @@ void ExttAuthorizeListFilter(void)
                 printf("<option>cLabel</option>");
         else
                 printf("<option selected>cLabel</option>");
+        if(strcmp(gcFilter,"uPerm"))
+                printf("<option>uPerm</option>");
+        else
+                printf("<option selected>uPerm</option>");
+        if(strcmp(gcFilter,"cOTPSecret"))
+                printf("<option>cOTPSecret</option>");
+        else
+                printf("<option selected>cOTPSecret</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
