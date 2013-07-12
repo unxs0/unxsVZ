@@ -310,7 +310,7 @@ void ExttAuthorizeListSelect(void)
         if(!strcmp(gcFilter,"uAuthorize"))
         {
                 sscanf(gcCommand,"%u",&uAuthorize);
-		if(guPermLevel<10)
+		if(guPermLevel<11)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
@@ -320,7 +320,7 @@ void ExttAuthorizeListSelect(void)
         else if(!strcmp(gcFilter,"uPerm"))
         {
                 sscanf(gcCommand,"%u",&uPerm);
-		if(guPermLevel<10)
+		if(guPermLevel<11)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
@@ -329,7 +329,7 @@ void ExttAuthorizeListSelect(void)
         }
         else if(!strcmp(gcFilter,"cOTPSecret"))
         {
-		if(guPermLevel<10)
+		if(guPermLevel<11)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
@@ -339,7 +339,7 @@ void ExttAuthorizeListSelect(void)
         }
         else if(!strcmp(gcFilter,"cLabel"))
         {
-		if(guPermLevel<10)
+		if(guPermLevel<11)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");

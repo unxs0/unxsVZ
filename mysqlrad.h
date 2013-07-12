@@ -23,6 +23,7 @@ AUTHOR
 #include "cgi.h"
 
 #include <mysql/mysql.h>
+#include <liboath/oath.h>
 
 #include <unistd.h>
 #include <locale.h>
