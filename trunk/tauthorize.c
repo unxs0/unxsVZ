@@ -420,12 +420,30 @@ void tAuthorizeInput(unsigned uMode)
 		printf("disabled>");
 		if(cOTPSecret[0] && cLabel[0])
 		{
+
 			char *cp;
 			if((cp=strchr(cLabel,' ')))
 				*cp=0;
 			printf(" <a href=\"https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl="
 					"otpauth://totp/%.31s%%3Fsecret%%3D%.20s\">QRCode link</a>",
 							cLabel,cOTPSecret);
+			char *secret;
+			size_t secretlen=0;
+			int rc;
+			char otp[10];
+			time_t now=time(NULL);
+
+			rc=oath_init();
+			if(rc==OATH_OK)
+			{
+				rc=oath_base32_decode(cOTPSecret,strlen(cOTPSecret),&secret,&secretlen);
+				if(rc==OATH_OK)
+				{
+					rc=oath_totp_generate(secret,secretlen,now,30,0,6,otp);
+					if(rc==OATH_OK)
+						printf(" Validation code: %s",otp);
+				}
+			}
 		}
 		printf("</td></tr>\n");
 		printf("<input type=hidden name=cOTPSecret value=\"%s\">\n",cOTPSecret);
