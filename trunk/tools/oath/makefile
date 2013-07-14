@@ -7,7 +7,8 @@
 #
 
 CFLAGS= -Wall
-LIBS= -L/usr/lib/oath -loath
+//LIBS= -L/usr/lib/oath -loath
+LIBS= -loath
 
 all: oathtool
 
