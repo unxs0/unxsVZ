@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-//#include <liboath/oath.h>
 
 namespace Ui {
 class MainWindow;
@@ -18,7 +17,6 @@ public:
     
 private:
     Ui::MainWindow *ui;
-    //int oath_init(void);
 
     //count down to new OTP
     unsigned uCounter;
@@ -28,9 +26,13 @@ private:
     char cOTPSecret[5][32];
     char cOTPName[5][32];
 
+    void updateOTP();
+    void loadData();
 
 public slots:
     void updateProgressBar();
+
+
 };
 
 #endif // MAINWINDOW_H
