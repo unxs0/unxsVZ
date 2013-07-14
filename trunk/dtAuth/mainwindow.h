@@ -17,6 +17,13 @@ public:
     
 private:
     Ui::MainWindow *ui;
+    //void updateProgressBar();
+    unsigned uCounter;
+
+
+
+public slots:
+    void updateProgressBar();
 };
 
 #endif // MAINWINDOW_H
