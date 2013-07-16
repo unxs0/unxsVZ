@@ -718,7 +718,7 @@ void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient)
 		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=0 WHERE uCertClient=%u",
 			uClient);
 	else
-		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=(UNIX_TIMESTAMP(NOW())+14400) WHERE uAuthorize=%u",
+		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=(UNIX_TIMESTAMP(NOW())+28800) WHERE uAuthorize=%u",
 			uAuthorize);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

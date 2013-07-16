@@ -68,7 +68,16 @@ void ExttPropertyCommands(pentry entries[], int x)
 
 				uProperty=0;
 				uCreatedBy=guLoginClient;
-				uOwner=guCompany;
+
+				if(guCompany!=1)
+					uOwner=guCompany;
+				else if(uType==1)
+					sscanf(ForeignKey("tDatacenter","uOwner",uKey),"%u",&uOwner);
+				else if(uType==2)
+					sscanf(ForeignKey("tNode","uOwner",uKey),"%u",&uOwner);
+				else if(uType==3)
+					sscanf(ForeignKey("tContainer","uOwner",uKey),"%u",&uOwner);
+
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
 				NewtProperty(0);
