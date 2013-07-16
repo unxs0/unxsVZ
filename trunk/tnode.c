@@ -36,6 +36,13 @@ static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
 
+static char cVendor[33]={""};
+static char cPurchaseOrder[65]={""};
+static char cMACeth0[33]={""};
+static char cMACeth1[33]={""};
+static char cProcCPUInfo[65]={""};
+static char cOtherName[33]={""};
+
 
 
 #define VAR_LIST_tNode "tNode.uNode,tNode.cLabel,tNode.uDatacenter,tNode.uStatus,tNode.uOwner,tNode.uCreatedBy,tNode.uCreatedDate,tNode.uModBy,tNode.uModDate"
@@ -56,6 +63,7 @@ void ExttNodeSelectRow(void);
 void ExttNodeListSelect(void);
 void ExttNodeListFilter(void);
 void ExttNodeAuxTable(void);
+void tNodeHardwareDataEntry(unsigned uMode);
 
 #include "tnodefunc.h"
 
@@ -237,10 +245,15 @@ void tNode(const char *cResult)
 	//
 	OpenFieldSet("tNode Record Data",100);
 
-	if(guMode==2000 || guMode==2002)
+	if(guMode==10000)
+		tNodeHardwareDataEntry(1);
+	else if(guMode==10001)
+		tNodeHardwareDataEntry(0);
+	else if(guMode==2000 || guMode==2002)
 		tNodeInput(1);
-	else
+	else if(1)
 		tNodeInput(0);
+
 
 	//
 	CloseFieldSet();
@@ -252,6 +265,94 @@ void tNode(const char *cResult)
 	Footer_ism3();
 
 }//end of tNode();
+
+
+void tNodeHardwareDataEntry(unsigned uMode)
+{
+	OpenRow(LANG_FL_tNode_uNode,"black");
+	printf("<input title='%s' type=text name=uNode value=%u size=16 maxlength=10 ",LANG_FT_tNode_uNode,uNode);
+	printf("disabled></td></tr>\n");
+	printf("<input type=hidden name=uNode value=%u >\n",uNode);
+
+	OpenRow(LANG_FL_tNode_cLabel,"black");
+	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 ",LANG_FT_tNode_cLabel,EncodeDoubleQuotes(cLabel));
+	printf("disabled></td></tr>\n");
+	printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
+
+	OpenRow("cVendor","black");
+	printf("<input title='Vendor name' type=text name=cVendor value='%s' size=40 maxlength=32 ",cVendor);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cVendor value='%s'>\n",cVendor);
+	}
+
+	OpenRow("cPurchaseOrder","black");
+	printf("<input title='Vendor and/or internal purchase order or invoice information'"
+		" type=text name=cPurchaseOrder value='%s' size=40 maxlength=64 ",cPurchaseOrder);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cPurchaseOrder value='%s'>\n",cPurchaseOrder);
+	}
+
+	OpenRow("cMACeth0","black");
+	printf("<input title='MAC number of eth0 NIC' type=text name=cMACeth0 value='%s' size=40 maxlength=32 ",cMACeth0);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cMACeth0 value='%s'>\n",cMACeth0);
+	}
+
+	OpenRow("cMACeth1","black");
+	printf("<input title='MAC number of eth1 NIC' type=text name=cMACeth1 value='%s' size=40 maxlength=32 ",cMACeth1);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cMACeth1 value='%s'>\n",cMACeth1);
+	}
+
+	OpenRow("cProcCPUInfo","black");
+	printf("<input title='Condensed /proc/cpuinfo information' type=text name=cProcCPUInfo value='%s' size=40 maxlength=64 ",cProcCPUInfo);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cProcCPUInfo value='%s'>\n",cProcCPUInfo);
+	}
+
+	OpenRow("cOtherName","black");
+	printf("<input title='Other datacenter name or rack position information' type=text name=cOtherName value='%s' size=40 maxlength=32 ",cOtherName);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cOtherName value='%s'>\n",cOtherName);
+	}
+
+}//void tNodeHardwareDataEntry(unsigned uMode)
 
 
 void tNodeInput(unsigned uMode)

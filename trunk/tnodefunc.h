@@ -276,6 +276,40 @@ void ExttNodeCommands(pentry entries[], int x)
 				guMode=9001;
 				tNode("");
 			}
+			else if(uAllowMod(uOwner,uCreatedBy))
+			{
+				tNode("<blink>Error</blink>: Denied by node status");
+			}
+			else
+			{
+				tNode("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Hardware Information"))
+                {
+                        ProcesstNodeVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+				guMode=10000;
+				tNode("Hardware inventory information");
+			}
+			else
+			{
+				tNode("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Save Hardware Information"))
+                {
+                        ProcesstNodeVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy))
+			{
+				guMode=10000;
+				//check
+				if(!uNode)
+					tNode("Node not specified");
+				guMode=10001;
+				tNode("Hardware inventory information saved");
+			}
 			else
 			{
 				tNode("<blink>Error</blink>: Denied by permissions settings");
@@ -294,6 +328,10 @@ void ExttNodeCommands(pentry entries[], int x)
 				
 				guMode=7001;
 				tNode("Select datacenter");
+			}
+			else if(uAllowMod(uOwner,uCreatedBy))
+			{
+				tNode("<blink>Error</blink>: Denied by node status");
 			}
 			else
 			{
@@ -317,6 +355,10 @@ void ExttNodeCommands(pentry entries[], int x)
 				
 				guMode=7002;
 				tNode("Select node, uIPv4 and more");
+			}
+			else if(uAllowMod(uOwner,uCreatedBy))
+			{
+				tNode("<blink>Error</blink>: Denied by node status");
 			}
 			else
 			{
@@ -426,6 +468,17 @@ void ExttNodeButtons(void)
 	OpenFieldSet("tNode Aux Panel",100);
 	switch(guMode)
         {
+                case 10000:
+                case 10001:
+			if(cLabel[0] && uNode)
+				printf("Back to <a href=unxsVZ.cgi?gcFunction=tNode"
+					"&uNode=%u>%s</a><br>\n",uNode,cLabel);
+                        printf("<p><u>Hardare Inventory Operations</u><br>");
+			printf("<p><input title='Commit hardware data database'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Save Hardware Information'>\n");
+                break;
+
                 case 9001:
                         printf("<p><u>Node Container Report</u><br>");
 			printf("See bottom panel.");
@@ -539,6 +592,8 @@ void ExttNodeButtons(void)
 				" at specific points in time to accomplish QoS or other system admin"
 				" created policies herein. uVeth='Yes' container traffic is not included"
 				"in the node graphs at this time.");
+				printf("<br><input type=submit class=largeButton title='Hardware inventory information and data entry for selected node.'"
+					" name=gcCommand value='Hardware Information'>");
 			printf("<p><u>Record Context Info</u><br>");
 			if(uDatacenter && uNode)
 			{
@@ -560,11 +615,10 @@ void ExttNodeButtons(void)
 				printf("<p><input type=submit class=largeButton title='Display node container"
 					" report'"
 					" name=gcCommand value='Node Container Report'><br>");
-				printf("<p><input type=submit class=largeButton title='Clone all containers"
-					" on this node to another node'"
+				printf("<p><input type=submit class=lwarnButton title='Clone all containers on this clone to another node.'"
 					" name=gcCommand value='Clone Node Wizard'><br>");
-				printf("<input type=submit class=largeButton title='Failover to this node`s clone containers"
-					" the master containers`s of down node'"
+				printf("<input type=submit class=lwarnButton title='Failover to this node`s clone containers"
+					" the master containers`s of down node.'"
 					" name=gcCommand value='Failover Node Wizard'><br>");
 			}
 	}
@@ -664,6 +718,48 @@ void ExttNodeAuxTable(void)
 				}
 				printf("<tr><td>Total disk space used: %lu</td></tr>",luTotalDiskSpace);
 			}
+			printf("</table>");
+			CloseFieldSet();
+		break;
+
+		case 10000:
+		case 10001:
+			OpenFieldSet("Hardware Inventory",100);
+			printf("<table>");
+			printf("<tr>"
+				"<td width=100><u>Node</u></td>"
+				"<td width=200><u>cName</u></td>"
+				"<td width=400><u>cValue</u></td>"
+				"</tr>");
+			sprintf(gcQuery,"SELECT tNode.cLabel,tProperty.cName,tProperty.cValue FROM tNode,tProperty"
+						" WHERE tProperty.uKey=tNode.uNode AND tProperty.uType=2"
+						" AND tNode.uStatus=1"
+						" AND tProperty.cName LIKE 'c%%'"
+						" AND tNode.cLabel!='appliance'"
+						" ORDER BY tNode.uNode");
+		        mysql_query(&gMysql,gcQuery);
+		        if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		        res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				char cPrevLabel[32]={""};
+				char cLabel[32]={""};
+				while((field=mysql_fetch_row(res)))
+				{
+					sprintf(cLabel,"%.31s",field[0]);
+					if(strcmp(cPrevLabel,field[0]))
+						sprintf(cPrevLabel,"%.31s",field[0]);
+					else
+						cLabel[0]=0;
+					printf("<tr>"
+						"<td>%s</td>"
+						"<td>%s</td>"
+						"<td>%s</td>"
+						"</tr>",cLabel,field[1],field[2]);
+				}
+			}
+			mysql_free_result(res);
 			printf("</table>");
 			CloseFieldSet();
 		break;
@@ -876,14 +972,17 @@ void ExttNodeNavBar(void)
 	printf(LANG_NBB_SKIPFIRST);
 	printf(LANG_NBB_SKIPBACK);
 
-	if(guPermLevel>=9 && !guListMode)
-		printf(LANG_NBB_NEW);
+	if(guMode<10000)
+	{
+		if(guPermLevel>=9 && !guListMode)
+			printf(LANG_NBB_NEW);
 
-	if(uAllowMod(uOwner,uCreatedBy))
-		printf(LANG_NBB_MODIFY);
+		if(uAllowMod(uOwner,uCreatedBy))
+			printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy))
-		printf(LANG_NBB_DELETE);
+		if(uAllowDel(uOwner,uCreatedBy))
+			printf(LANG_NBB_DELETE);
+	}
 
 	if(uOwner)
 		printf(LANG_NBB_LIST);
