@@ -243,7 +243,6 @@ void tNode(const char *cResult)
 
         printf("</td><td valign=top>");
 	//
-	OpenFieldSet("tNode Record Data",100);
 
 	if(guMode==10000)
 		tNodeHardwareDataEntry(1);
@@ -269,6 +268,8 @@ void tNode(const char *cResult)
 
 void tNodeHardwareDataEntry(unsigned uMode)
 {
+	OpenFieldSet("tNode Hardware Data Entry",100);
+
 	OpenRow(LANG_FL_tNode_uNode,"black");
 	printf("<input title='%s' type=text name=uNode value=%u size=16 maxlength=10 ",LANG_FT_tNode_uNode,uNode);
 	printf("disabled></td></tr>\n");
@@ -279,6 +280,10 @@ void tNodeHardwareDataEntry(unsigned uMode)
 	printf("disabled></td></tr>\n");
 	printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
 
+	OpenRow(LANG_FL_tNode_uDatacenter,"black");
+	tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+
+	GetNodeProp(uNode,"cVendor",cVendor);
 	OpenRow("cVendor","black");
 	printf("<input title='Vendor name' type=text name=cVendor value='%s' size=40 maxlength=32 ",cVendor);
 	if(guPermLevel>=6 && uMode)
@@ -291,6 +296,7 @@ void tNodeHardwareDataEntry(unsigned uMode)
 		printf("<input type=hidden name=cVendor value='%s'>\n",cVendor);
 	}
 
+	GetNodeProp(uNode,"cPurchaseOrder",cPurchaseOrder);
 	OpenRow("cPurchaseOrder","black");
 	printf("<input title='Vendor and/or internal purchase order or invoice information'"
 		" type=text name=cPurchaseOrder value='%s' size=40 maxlength=64 ",cPurchaseOrder);
@@ -304,6 +310,7 @@ void tNodeHardwareDataEntry(unsigned uMode)
 		printf("<input type=hidden name=cPurchaseOrder value='%s'>\n",cPurchaseOrder);
 	}
 
+	GetNodeProp(uNode,"cMACeth0",cMACeth0);
 	OpenRow("cMACeth0","black");
 	printf("<input title='MAC number of eth0 NIC' type=text name=cMACeth0 value='%s' size=40 maxlength=32 ",cMACeth0);
 	if(guPermLevel>=6 && uMode)
@@ -316,6 +323,7 @@ void tNodeHardwareDataEntry(unsigned uMode)
 		printf("<input type=hidden name=cMACeth0 value='%s'>\n",cMACeth0);
 	}
 
+	GetNodeProp(uNode,"cMACeth1",cMACeth1);
 	OpenRow("cMACeth1","black");
 	printf("<input title='MAC number of eth1 NIC' type=text name=cMACeth1 value='%s' size=40 maxlength=32 ",cMACeth1);
 	if(guPermLevel>=6 && uMode)
@@ -328,6 +336,7 @@ void tNodeHardwareDataEntry(unsigned uMode)
 		printf("<input type=hidden name=cMACeth1 value='%s'>\n",cMACeth1);
 	}
 
+	GetNodeProp(uNode,"cProcCPUInfo",cProcCPUInfo);
 	OpenRow("cProcCPUInfo","black");
 	printf("<input title='Condensed /proc/cpuinfo information' type=text name=cProcCPUInfo value='%s' size=40 maxlength=64 ",cProcCPUInfo);
 	if(guPermLevel>=6 && uMode)
@@ -340,6 +349,7 @@ void tNodeHardwareDataEntry(unsigned uMode)
 		printf("<input type=hidden name=cProcCPUInfo value='%s'>\n",cProcCPUInfo);
 	}
 
+	GetNodeProp(uNode,"cOtherName",cOtherName);
 	OpenRow("cOtherName","black");
 	printf("<input title='Other datacenter name or rack position information' type=text name=cOtherName value='%s' size=40 maxlength=32 ",cOtherName);
 	if(guPermLevel>=6 && uMode)
@@ -357,6 +367,7 @@ void tNodeHardwareDataEntry(unsigned uMode)
 
 void tNodeInput(unsigned uMode)
 {
+	OpenFieldSet("tNode Record Data",100);
 	if(uNode && uDatacenter)
 	{
 		char cNodeTrafficDomainURL[256]={""};
