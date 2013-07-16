@@ -56,18 +56,14 @@ void ExtProcesstNodeVars(pentry entries[], int x)
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(entries[i].name,"cSearch"))
-		{
 			sprintf(cSearch,"%.31s",TextAreaSave(entries[i].val));
-		}
 		else if(!strcmp(entries[i].name,"cForClientPullDown"))
 		{
 			strcpy(cForClientPullDown,entries[i].val);
 			uForClient=ReadPullDown(TCLIENT,"cLabel",cForClientPullDown);
 		}
 		else if(!strcmp(entries[i].name,"uClone")) 
-		{
 			uClone=1;
-		}
 		else if(!strcmp(entries[i].name,"cuTargetNodePullDown"))
 		{
 			sprintf(cuTargetNodePullDown,"%.255s",entries[i].val);
@@ -84,13 +80,21 @@ void ExtProcesstNodeVars(pentry entries[], int x)
 			uTargetDatacenter=ReadPullDown("tDatacenter","cLabel",cuTargetDatacenterPullDown);
 		}
 		else if(!strcmp(entries[i].name,"uCloneStop"))
-		{
 			sscanf(entries[i].val,"%u",&uCloneStop);
-		}
 		else if(!strcmp(entries[i].name,"uSyncPeriod"))
-		{
 			sscanf(entries[i].val,"%u",&uSyncPeriod);
-		}
+		else if(!strcmp(entries[i].name,"cVendor"))
+			sprintf(cVendor,"%.32s",TextAreaSave(entries[i].val));
+		else if(!strcmp(entries[i].name,"cPurchaseOrder"))
+			sprintf(cPurchaseOrder,"%.64s",TextAreaSave(entries[i].val));
+		else if(!strcmp(entries[i].name,"cMACeth0"))
+			sprintf(cMACeth0,"%.32s",TextAreaSave(entries[i].val));
+		else if(!strcmp(entries[i].name,"cMACeth1"))
+			sprintf(cMACeth1,"%.32s",TextAreaSave(entries[i].val));
+		else if(!strcmp(entries[i].name,"cOtherName"))
+			sprintf(cOtherName,"%.32s",TextAreaSave(entries[i].val));
+		else if(!strcmp(entries[i].name,"cProcCPUInfo"))
+			sprintf(cProcCPUInfo,"%.32s",TextAreaSave(entries[i].val));
 	}
 
 }//void ExtProcesstNodeVars(pentry entries[], int x)
@@ -288,7 +292,7 @@ void ExttNodeCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Hardware Information"))
                 {
                         ProcesstNodeVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>=6)
 			{
 				guMode=10000;
 				tNode("Hardware inventory information");
@@ -301,12 +305,31 @@ void ExttNodeCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Save Hardware Information"))
                 {
                         ProcesstNodeVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>=6)
 			{
 				guMode=10000;
 				//check
 				if(!uNode)
-					tNode("Node not specified");
+					tNode("uNode not specified");
+				if(!cVendor[0])
+					tNode("cVendor not specified");
+				if(!cPurchaseOrder[0])
+					tNode("cPurchaseOrder not specified");
+				if(!cProcCPUInfo[0])
+					tNode("cProcCPUInfo not specified");
+				if(!cMACeth0[0])
+					tNode("cMACeth0 not specified");
+				if(!cMACeth1[0])
+					tNode("cMACeth1 not specified");
+				if(!cOtherName[0])
+					tNode("cOtherName not specified");
+
+				SetNodeProp("cVendor",cVendor,uNode);
+				SetNodeProp("cPurchaseOrder",cPurchaseOrder,uNode);
+				SetNodeProp("cProcCPUInfo",cProcCPUInfo,uNode);
+				SetNodeProp("cMACeth0",cMACeth0,uNode);
+				SetNodeProp("cMACeth1",cMACeth1,uNode);
+				SetNodeProp("cOtherName",cOtherName,uNode);
 				guMode=10001;
 				tNode("Hardware inventory information saved");
 			}
@@ -465,13 +488,14 @@ void ExttNodeCommands(pentry entries[], int x)
 
 void ExttNodeButtons(void)
 {
-	OpenFieldSet("tNode Aux Panel",100);
 	switch(guMode)
         {
+		//Hardware Information
                 case 10000:
                 case 10001:
+			OpenFieldSet("tNode Hardware Panel",100);
 			if(cLabel[0] && uNode)
-				printf("Back to <a href=unxsVZ.cgi?gcFunction=tNode"
+				printf("Back to tNode <a href=unxsVZ.cgi?gcFunction=tNode"
 					"&uNode=%u>%s</a><br>\n",uNode,cLabel);
                         printf("<p><u>Hardare Inventory Operations</u><br>");
 			printf("<p><input title='Commit hardware data database'"
@@ -480,11 +504,13 @@ void ExttNodeButtons(void)
                 break;
 
                 case 9001:
+			OpenFieldSet("tNode Aux Panel",100);
                         printf("<p><u>Node Container Report</u><br>");
 			printf("See bottom panel.");
                 break;
 
                 case 7001:
+			OpenFieldSet("tNode Aux Panel",100);
                         printf("<p><u>Node Clone Wizard (Step 1/2)</u><br>");
 			printf("Here you will select the datacenter. If it is oversubscribed or not"
 				" configured for use, or otherwise unavailable you will have to select another.");
@@ -496,6 +522,7 @@ void ExttNodeButtons(void)
                 break;
 
                 case 7002:
+			OpenFieldSet("tNode Aux Panel",100);
                         printf("<p><u>Node Clone Wizard (Step 2/2)</u><br>");
 			printf("Here you will select the hardware node target. If the selected node is"
 				" oversubscribed, not available, or scheduled for maintenance. You will"
@@ -544,6 +571,7 @@ void ExttNodeButtons(void)
                 break;
 
                 case 8001:
+			OpenFieldSet("tNode Aux Panel",100);
                         printf("<p><u>Failover Node Wizard</u><br>");
 			printf("The current node should be down (or offline.)"
 				" Other nodes should have \"-clone\" (uSource!=0) containers that have been kept updated."
@@ -555,12 +583,14 @@ void ExttNodeButtons(void)
                 break;
 
                 case 8002:
+			OpenFieldSet("tNode Aux Panel",100);
                         printf("<p><u>Failover Node Wizard</u><br>");
 			printf("Failover jobs have been attempted to be created see panel below for results."
 				" See <a href=unxsVZ.cgi?gcFunction=tJob>tJob</a> for details.<p>");
                 break;
 
                 case 2000:
+			OpenFieldSet("tNode Aux Panel",100);
 			printf("<p><u>Enter/mod data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
 			if(uNode)
@@ -571,11 +601,13 @@ void ExttNodeButtons(void)
                 break;
 
                 case 2001:
+			OpenFieldSet("tNode Aux Panel",100);
                         printf("<p><u>Think twice</u><br>");
                         printf(LANG_NBB_CONFIRMDEL);
                 break;
 
                 case 2002:
+			OpenFieldSet("tNode Aux Panel",100);
 			printf("<p><u>Review changes</u><br>");
                         printf(LANG_NBB_CONFIRMMOD);
 			if(guPermLevel>11)
@@ -586,12 +618,14 @@ void ExttNodeButtons(void)
                 break;
 
 		default:
+			OpenFieldSet("tNode Aux Panel",100);
 			printf("<u>Table Tips</u><br>");
 			printf("Hardware nodes are defined here. Hardware nodes host containers, and allow"
 				" for the autonomic migration to other nodes that may be better suited"
 				" at specific points in time to accomplish QoS or other system admin"
 				" created policies herein. uVeth='Yes' container traffic is not included"
 				"in the node graphs at this time.");
+			if(uNode && uStatus==1)
 				printf("<br><input type=submit class=largeButton title='Hardware inventory information and data entry for selected node.'"
 					" name=gcCommand value='Hardware Information'>");
 			printf("<p><u>Record Context Info</u><br>");
@@ -722,6 +756,7 @@ void ExttNodeAuxTable(void)
 			CloseFieldSet();
 		break;
 
+		//Hardware Information
 		case 10000:
 		case 10001:
 			OpenFieldSet("Hardware Inventory",100);
@@ -731,12 +766,13 @@ void ExttNodeAuxTable(void)
 				"<td width=200><u>cName</u></td>"
 				"<td width=400><u>cValue</u></td>"
 				"</tr>");
-			sprintf(gcQuery,"SELECT tNode.cLabel,tProperty.cName,tProperty.cValue FROM tNode,tProperty"
+			sprintf(gcQuery,"SELECT tNode.cLabel,tProperty.cName,tProperty.cValue,tNode.uNode,tProperty.uProperty"
+						" FROM tNode,tProperty"
 						" WHERE tProperty.uKey=tNode.uNode AND tProperty.uType=2"
 						" AND tNode.uStatus=1"
 						" AND tProperty.cName LIKE 'c%%'"
 						" AND tNode.cLabel!='appliance'"
-						" ORDER BY tNode.uNode");
+						" ORDER BY tNode.uNode,tProperty.cName");
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -753,10 +789,10 @@ void ExttNodeAuxTable(void)
 					else
 						cLabel[0]=0;
 					printf("<tr>"
-						"<td>%s</td>"
-						"<td>%s</td>"
-						"<td>%s</td>"
-						"</tr>",cLabel,field[1],field[2]);
+						"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tNode&uNode=%s&uHardware>%s</a></td>"
+						"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s>%s</a></td>"
+						"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s>%s</a></td>"
+						"</tr>",field[3],cLabel,field[4],field[1],field[4],field[2]);
 				}
 			}
 			mysql_free_result(res);
@@ -898,9 +934,9 @@ void ExttNodeGetHook(entry gentries[], int x)
 			guMode=6;
 		}
 		else if(!strcmp(gentries[i].name,"cSearch"))
-		{
 			sprintf(cSearch,"%.31s",gentries[i].val);
-		}
+		else if(!strcmp(gentries[i].name,"uHardware"))
+			guMode=10000;
 	}
 	tNode("");
 

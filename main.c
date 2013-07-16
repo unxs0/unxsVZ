@@ -674,7 +674,7 @@ void Header_ism3(const char *title, int iJs)
 	  printf("\t\t\t<a title='Datacenter' href=unxsVZ.cgi?gcFunction=tDatacenter>tDatacenter</a>\n");
 	}
 	//tNode
-	if(guPermLevel>=7)
+	if(guPermLevel>=6)
 	{
 	  printf("\t\t\t<li");
 	  if(strcmp(gcFunction,"tNode") && strcmp(gcFunction,"tNodeTools") &&
@@ -1916,7 +1916,12 @@ void SetLogin(void)
 		strncpy(gcUser,gcLogin,41);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
-		unxsVZ("DashBoard");
+		if(guPermLevel>6)
+			unxsVZ("DashBoard");
+		else if(guPermLevel==6)
+			unxsVZ("Welcome Organization Admin");
+		else
+			unxsVZ("Welcome");
 	}
 	else
 	{
