@@ -689,7 +689,7 @@ void tContainerNewStep(unsigned uStep)
 			GetConfiguration("cAutoNATIPClass",cAutoNATIPClass,uRemoteDatacenter,uRemoteNode,0,0);
 			if(!cAutoNATIPClass[0])
 				GetConfiguration("cAutoNATIPClass",cAutoNATIPClass,uRemoteDatacenter,0,0,0);
-			if(cAutoNATIPClass[0])
+			if(cAutoNATIPClass[0] && uRemoteDatacenter)
 			{
 				OpenRow("Enable NAT","black");
 				printf("<input type=checkbox name=uEnableNAT title='Enable NAT for remote clone container'");
