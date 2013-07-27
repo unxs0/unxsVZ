@@ -42,6 +42,11 @@ static char cMACeth0[33]={""};
 static char cMACeth1[33]={""};
 static char cProcCPUInfo[65]={""};
 static char cOtherName[33]={""};
+static long unsigned luInstalledDiskSpace=0;
+static long unsigned luInstalledRam=0;
+static unsigned uMaxCloneContainers=0;
+static unsigned uMaxContainers=0;
+static char cNewContainerMode[32]={"Active Only"};
 
 
 
@@ -362,6 +367,63 @@ void tNodeHardwareDataEntry(unsigned uMode)
 		printf("<input type=hidden name=cOtherName value='%s'>\n",cOtherName);
 	}
 
+	char cluInstalledDiskSpace[16]={"0"};
+	GetNodeProp(uNode,"luInstalledDiskSpace",cluInstalledDiskSpace);
+	OpenRow("luInstalledDiskSpace","black");
+	sscanf(cluInstalledDiskSpace,"%lu",&luInstalledDiskSpace);
+	printf("<input title='/vz disk space' type=text name=luInstalledDiskSpace value='%lu' size=40 maxlength=15 ",luInstalledDiskSpace);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=luInstalledDiskSpace value='%lu'>\n",luInstalledDiskSpace);
+	}
+
+	char cluInstalledRam[16]={"0"};
+	GetNodeProp(uNode,"luInstalledRam",cluInstalledRam);
+	OpenRow("luInstalledRam","black");
+	sscanf(cluInstalledRam,"%lu",&luInstalledRam);
+	printf("<input title='total RAM via free command' type=text name=luInstalledRam value='%lu' size=40 maxlength=15 ",luInstalledRam);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=luInstalledRam value='%lu'>\n",luInstalledRam);
+	}
+
+	char cluInstalledDiskSpace[16]={"0"};
+	GetNodeProp(uNode,"luInstalledDiskSpace",cluInstalledDiskSpace);
+	OpenRow("luInstalledDiskSpace","black");
+	sscanf(cluInstalledDiskSpace,"%lu",&luInstalledDiskSpace);
+	printf("<input title='/vz disk space' type=text name=luInstalledDiskSpace value='%lu' size=40 maxlength=15 ",luInstalledDiskSpace);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=luInstalledDiskSpace value='%lu'>\n",luInstalledDiskSpace);
+	}
+	GetNodeProp(uNode,"NewContainerMode",cNewContainerMode);
+	OpenRow("NewContainerMode","black");
+	printf("<input title='What kinds of containers can be created on this node. Active and/or Clone can have Only qualifier.'"
+		" type=text name=cNewContainerMode value='%s' size=40 maxlength=15 ",cNewContainerMode);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cNewContainerMode value='%s'>\n",cNewContainerMode);
+	}
 }//void tNodeHardwareDataEntry(unsigned uMode)
 
 

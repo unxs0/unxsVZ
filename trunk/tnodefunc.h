@@ -770,7 +770,8 @@ void ExttNodeAuxTable(void)
 						" FROM tNode,tProperty"
 						" WHERE tProperty.uKey=tNode.uNode AND tProperty.uType=2"
 						" AND tNode.uStatus=1"
-						" AND tProperty.cName LIKE 'c%%'"
+						" AND ( tProperty.cName LIKE 'c%%' OR tProperty.cName LIKE 'Max%%'"
+						" OR tProperty.cName LIKE 'luInstalled%%')"
 						" AND tNode.cLabel!='appliance'"
 						" ORDER BY tNode.uNode,tProperty.cName");
 		        mysql_query(&gMysql,gcQuery);
