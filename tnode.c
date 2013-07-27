@@ -397,11 +397,12 @@ void tNodeHardwareDataEntry(unsigned uMode)
 		printf("<input type=hidden name=luInstalledRam value='%lu'>\n",luInstalledRam);
 	}
 
-	char cluInstalledDiskSpace[16]={"0"};
-	GetNodeProp(uNode,"luInstalledDiskSpace",cluInstalledDiskSpace);
-	OpenRow("luInstalledDiskSpace","black");
-	sscanf(cluInstalledDiskSpace,"%lu",&luInstalledDiskSpace);
-	printf("<input title='/vz disk space' type=text name=luInstalledDiskSpace value='%lu' size=40 maxlength=15 ",luInstalledDiskSpace);
+	char cuMaxCloneContainers[16]={"0"};
+	GetNodeProp(uNode,"MaxCloneContainers",cuMaxCloneContainers);
+	OpenRow("cuMaxCloneContainers","black");
+	sscanf(cuMaxCloneContainers,"%u",&uMaxCloneContainers);
+	printf("<input title='Maximum number of clone containers that can be created on this node'"
+			" type=text name=uMaxCloneContainers value='%u' size=40 maxlength=15 ",uMaxCloneContainers);
 	if(guPermLevel>=6 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -409,8 +410,25 @@ void tNodeHardwareDataEntry(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=luInstalledDiskSpace value='%lu'>\n",luInstalledDiskSpace);
+		printf("<input type=hidden name=uMaxCloneContainers value='%u'>\n",uMaxCloneContainers);
 	}
+
+	char cuMaxContainers[16]={"0"};
+	GetNodeProp(uNode,"MaxContainers",cuMaxContainers);
+	OpenRow("cuMaxContainers","black");
+	sscanf(cuMaxContainers,"%u",&uMaxContainers);
+	printf("<input title='Maximum number of active containers that can be created on this node'"
+			" type=text name=uMaxContainers value='%u' size=40 maxlength=15 ",uMaxContainers);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uMaxContainers value='%u'>\n",uMaxContainers);
+	}
+
 	GetNodeProp(uNode,"NewContainerMode",cNewContainerMode);
 	OpenRow("NewContainerMode","black");
 	printf("<input title='What kinds of containers can be created on this node. Active and/or Clone can have Only qualifier.'"

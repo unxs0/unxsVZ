@@ -501,6 +501,8 @@ void ExttNodeButtons(void)
 			printf("<p><input title='Commit hardware data database'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Save Hardware Information'>\n");
+			printf("<br><input type=submit class=largeButton title='Hardware inventory information and data entry for selected node.'"
+					" name=gcCommand value='Hardware Information'>");
                 break;
 
                 case 9001:
@@ -770,8 +772,12 @@ void ExttNodeAuxTable(void)
 						" FROM tNode,tProperty"
 						" WHERE tProperty.uKey=tNode.uNode AND tProperty.uType=2"
 						" AND tNode.uStatus=1"
-						" AND ( tProperty.cName LIKE 'c%%' OR tProperty.cName LIKE 'Max%%'"
-						" OR tProperty.cName LIKE 'luInstalled%%')"
+						" AND ("
+						" tProperty.cName LIKE 'c%%' OR tProperty.cName LIKE 'Max%%'"
+						" OR tProperty.cName LIKE 'luInstalled%%'"
+						" OR tProperty.cName='Name'"
+						" OR tProperty.cName LIKE 'Max%%Containers'"
+						")"
 						" AND tNode.cLabel!='appliance'"
 						" ORDER BY tNode.uNode,tProperty.cName");
 		        mysql_query(&gMysql,gcQuery);
