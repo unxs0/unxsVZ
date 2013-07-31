@@ -95,6 +95,28 @@ void ExtProcesstNodeVars(pentry entries[], int x)
 			sprintf(cOtherName,"%.32s",TextAreaSave(entries[i].val));
 		else if(!strcmp(entries[i].name,"cProcCPUInfo"))
 			sprintf(cProcCPUInfo,"%.32s",TextAreaSave(entries[i].val));
+		else if(!strcmp(entries[i].name,"uMaxCloneContainers"))
+		{
+			sscanf(entries[i].val,"%u",&uMaxCloneContainers);
+			sprintf(cuMaxCloneContainers,"%u",uMaxCloneContainers);
+		}
+		else if(!strcmp(entries[i].name,"uMaxContainers"))
+		{
+			sscanf(entries[i].val,"%u",&uMaxContainers);
+			sprintf(cuMaxContainers,"%u",uMaxContainers);
+		}
+		else if(!strcmp(entries[i].name,"cNewContainerMode"))
+			sprintf(cNewContainerMode,"%.32s",TextAreaSave(entries[i].val));
+		else if(!strcmp(entries[i].name,"luInstalledRam"))
+		{
+			sscanf(entries[i].val,"%lu",&luInstalledRam);
+			sprintf(cluInstalledRam,"%lu",luInstalledRam);
+		}
+		else if(!strcmp(entries[i].name,"luInstalledDiskSpace"))
+		{
+			sscanf(entries[i].val,"%lu",&luInstalledDiskSpace);
+			sprintf(cluInstalledDiskSpace,"%lu",luInstalledDiskSpace);
+		}
 	}
 
 }//void ExtProcesstNodeVars(pentry entries[], int x)
@@ -321,8 +343,14 @@ void ExttNodeCommands(pentry entries[], int x)
 					tNode("cMACeth0 not specified");
 				if(!cMACeth1[0])
 					tNode("cMACeth1 not specified");
-				if(!cOtherName[0])
-					tNode("cOtherName not specified");
+				if(!cluInstalledDiskSpace[0])
+					tNode("cluInstalledDiskSpace not specified");
+				if(!cluInstalledRam[0])
+					tNode("cluInstalledRam not specified");
+				if(!cuMaxContainers[0])
+					tNode("cuMaxContainers not specified");
+				if(!cNewContainerMode[0])
+					tNode("cNewContainerMode not specified");
 
 				SetNodeProp("cVendor",cVendor,uNode);
 				SetNodeProp("cPurchaseOrder",cPurchaseOrder,uNode);
@@ -330,6 +358,11 @@ void ExttNodeCommands(pentry entries[], int x)
 				SetNodeProp("cMACeth0",cMACeth0,uNode);
 				SetNodeProp("cMACeth1",cMACeth1,uNode);
 				SetNodeProp("cOtherName",cOtherName,uNode);
+				SetNodeProp("luInstalledDiskSpace",cluInstalledDiskSpace,uNode);
+				SetNodeProp("luInstalledRam",cluInstalledRam,uNode);
+				SetNodeProp("MaxCloneContainers",cuMaxCloneContainers,uNode);
+				SetNodeProp("MaxContainers",cuMaxContainers,uNode);
+				SetNodeProp("NewContainerMode",cNewContainerMode,uNode);
 				guMode=10001;
 				tNode("Hardware inventory information saved");
 			}

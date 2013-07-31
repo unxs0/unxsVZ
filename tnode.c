@@ -43,9 +43,13 @@ static char cMACeth1[33]={""};
 static char cProcCPUInfo[65]={""};
 static char cOtherName[33]={""};
 static long unsigned luInstalledDiskSpace=0;
+static char cluInstalledDiskSpace[16]={"0"};
 static long unsigned luInstalledRam=0;
+static char cluInstalledRam[16]={"0"};
 static unsigned uMaxCloneContainers=0;
+static char cuMaxCloneContainers[16]={"0"};
 static unsigned uMaxContainers=0;
+static char cuMaxContainers[16]={"0"};
 static char cNewContainerMode[32]={"Active Only"};
 
 
@@ -367,7 +371,6 @@ void tNodeHardwareDataEntry(unsigned uMode)
 		printf("<input type=hidden name=cOtherName value='%s'>\n",cOtherName);
 	}
 
-	char cluInstalledDiskSpace[16]={"0"};
 	GetNodeProp(uNode,"luInstalledDiskSpace",cluInstalledDiskSpace);
 	OpenRow("luInstalledDiskSpace","black");
 	sscanf(cluInstalledDiskSpace,"%lu",&luInstalledDiskSpace);
@@ -382,7 +385,6 @@ void tNodeHardwareDataEntry(unsigned uMode)
 		printf("<input type=hidden name=luInstalledDiskSpace value='%lu'>\n",luInstalledDiskSpace);
 	}
 
-	char cluInstalledRam[16]={"0"};
 	GetNodeProp(uNode,"luInstalledRam",cluInstalledRam);
 	OpenRow("luInstalledRam","black");
 	sscanf(cluInstalledRam,"%lu",&luInstalledRam);
@@ -397,7 +399,6 @@ void tNodeHardwareDataEntry(unsigned uMode)
 		printf("<input type=hidden name=luInstalledRam value='%lu'>\n",luInstalledRam);
 	}
 
-	char cuMaxCloneContainers[16]={"0"};
 	GetNodeProp(uNode,"MaxCloneContainers",cuMaxCloneContainers);
 	OpenRow("cuMaxCloneContainers","black");
 	sscanf(cuMaxCloneContainers,"%u",&uMaxCloneContainers);
@@ -413,7 +414,6 @@ void tNodeHardwareDataEntry(unsigned uMode)
 		printf("<input type=hidden name=uMaxCloneContainers value='%u'>\n",uMaxCloneContainers);
 	}
 
-	char cuMaxContainers[16]={"0"};
 	GetNodeProp(uNode,"MaxContainers",cuMaxContainers);
 	OpenRow("cuMaxContainers","black");
 	sscanf(cuMaxContainers,"%u",&uMaxContainers);
