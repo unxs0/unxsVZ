@@ -317,11 +317,11 @@ void tAuthorizeInput(unsigned uMode)
 ,LANG_FT_tAuthorize_uPerm,uPerm);
 	if(guPermLevel>=0 && uMode)
 	{
-		printf("></td></tr>\n");
+		printf("> %s</td></tr>\n",cUserLevel(uPerm));
 	}
 	else
 	{
-		printf("disabled></td></tr>\n");
+		printf("disabled> %s</td></tr>\n",cUserLevel(uPerm));
 		printf("<input type=hidden name=uPerm value=%u >\n",uPerm);
 	}
 //uCertClient
