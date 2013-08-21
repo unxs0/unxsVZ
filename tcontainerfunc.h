@@ -3763,9 +3763,15 @@ while((field=mysql_fetch_row(res)))
 															uCloneTargetNode,0,0);
 									if(!cConfBuffer[0])
 									{
-										if((sizeof(cResult)-strlen(cResult)-strlen(" +NocAutoCloneIPClass! "))>0)
-											strcat(cResult," +NocAutoCloneIPClass!");
-										continue;
+										GetConfiguration("cAutoCloneIPClass",cConfBuffer,uTargetDatacenter,
+															0,0,0);
+										if(!cConfBuffer[0])
+										{
+											if((sizeof(cResult)-
+												strlen(cResult)-strlen(" +NocAutoCloneIPClass! "))>0)
+													strcat(cResult," +NocAutoCloneIPClass!");
+											continue;
+										}
 									}
 									//TODO we cant let root just grab anybodys IPs
 									if(guCompany==1)
@@ -7488,6 +7494,8 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		char cMainIPv4[32]={""};
 		char cBackupIPv4[32]={""};
 		unsigned uCloneContainer=0;
+		unsigned uSource=0;
+		unsigned uStatus=0;
 		unsigned uA=0,uB=0,uC=0;
 
 		//validation checks
@@ -7498,7 +7506,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 
 		//Gather IPs and ports
 		//Main container
-		sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tContainer"
+		sprintf(gcQuery,"SELECT tIP.cLabel,tContainer.uSource,tContainer.uStatus FROM tIP,tContainer"
 				" WHERE tIP.uIP=tContainer.uIPv4"
 				" AND tContainer.uContainer=%u",uContainer);
 		mysql_query(&gMysql,gcQuery);
@@ -7506,8 +7514,18 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 			htmlPlainTextError(mysql_error(&gMysql));
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
+		{
 			sprintf(cMainIPv4,"%.31s",field[0]);
+			sscanf(field[1],"%u",&uSource);
+			sscanf(field[2],"%u",&uStatus);
+		}
 		mysql_free_result(res);
+
+		//Temp test hack
+		//If the container is a stopped clone we do not need a job created.
+		//Note broken reverse logic error
+		if(uSource && uStatus==uSTOPPED) return(1);
+
 		//exclude rfc1918 IP clones from creating wasteful dns entries.
 		if(sscanf(cMainIPv4,"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
 		{
