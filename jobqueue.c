@@ -6433,7 +6433,7 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 		uConfiguration=GetConfiguration(cPostDNSNodeScriptName,cPostDNSNodeScript,uDatacenter,0,0,0);
 	//Please note that this means that the script must be installed for all nodes of
 	//any datacenter that has at least one tConfiguration for a specific uDatacenter+uNode
-	if(cPostDNSNodeScript[0] && uConfiguration)
+	if(cPostDNSNodeScript[0] && uConfiguration && !uSource)
 	{
 		unsigned uIP=0;
 
@@ -6458,7 +6458,10 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	}
 	else
 	{
-		sprintf(cArgs,"No cPostDNSNodeScript found for uDatacenter=%u,uNode=%u,uConfiguration=%u,%s",
+		if(uSource)
+			sprintf(cArgs,"Script bypassed for uSource!=0 container");
+		else
+			sprintf(cArgs,"No cPostDNSNodeScript found for uDatacenter=%u,uNode=%u,uConfiguration=%u,%s",
 					uDatacenter,uNode,uConfiguration,cPostDNSNodeScript);
 		logfileLine("DNSMoveContainer",cArgs);
 	}
