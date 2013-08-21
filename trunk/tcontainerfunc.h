@@ -7530,7 +7530,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		//Temp test hack
 		//If the container is a stopped clone we do not need a job created.
 		//Note broken reverse logic error
-		if(uSource && uStatus==uSTOPPED) return(1);
+		if(uSource && uStatus==uAWAITDNSMIG) return(1);
 
 		//exclude rfc1918 IP clones from creating wasteful dns entries.
 		if(sscanf(cMainIPv4,"%u.%u.%u.%*u",&uA,&uB,&uC)==3)
@@ -7641,12 +7641,13 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 				cBackupIPv4,
 				uBackupPort);
 		}
-		if(!unxsBindPBXRecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy))
+		unsigned uRetVal=0;
+		if(!(uRetVal=unxsBindPBXRecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy)))
 		{
 			unxsVZLog(uContainer,"tContainer","CreateDNSJob-err4");
 			return(0);
 		}
-		return(1);
+		return(uRetVal);
 	}
 	else
 	{

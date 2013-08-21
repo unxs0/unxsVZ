@@ -5800,7 +5800,7 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 	}
 
 
-	//3-. Make sure any other uJobN=uJob; jobs have run ok.
+	//3-. Make sure any other uJobN=uJob; jobs have run ok. Unless uJob0==0
 	unsigned uJob0=0,uJob1=0,uJob2=0,uJob3=0;
 	unsigned uCount=0;
 	char *cp;
@@ -5854,9 +5854,10 @@ void NodeCommandJob(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uN
 	}
 	else
 	{
-		logfileLine("NodeCommandJob","no uJob0 parameter");
-		tJobErrorUpdate(uJob,"no uJob0 parameters");
-		return;
+		logfileLine("NodeCommandJob","no uJob0 parameter or uJob==0");
+		//We allow no dns jobs now
+		//tJobErrorUpdate(uJob,"no uJob0 parameters");
+		//return;
 	}
 
 	//4-. Get basic container parameters and run the command
@@ -6393,13 +6394,19 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 		}
 	}
 
-	//5-. Change the DNS A record to the new IP of the new node.
+	//5-. Change the DNS A record to the new IP of the new node. Unless stopped clone.
+	unsigned uSource=0;
+	sscanf(ForeignKey("tContainer","uSource",uContainer),"%u",&uSource);
 	unsigned uCreateDNSJob=0;
-	if(!(uCreateDNSJob=CreateDNSJob(0,1,cIPv4,cHostname,uTargetDatacenter,1,uContainer,uNode)))
+	if(!(uSource && uPrevStatus==uSTOPPED))
+	//ramifications: uCreateDNSJob will be zero in node job
 	{
-		logfileLine("DNSMoveContainer","CreateDNSJob() error");
-		tJobErrorUpdate(uJob,"create dns job");
-		return;
+		if(!(uCreateDNSJob=CreateDNSJob(0,1,cIPv4,cHostname,uTargetDatacenter,1,uContainer,uNode)))
+		{
+			logfileLine("DNSMoveContainer","CreateDNSJob() error");
+			tJobErrorUpdate(uJob,"create dns job");
+			return;
+		}
 	}
 
 	//6-. Run optional post dns change script on source node.
