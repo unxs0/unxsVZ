@@ -7500,9 +7500,15 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 
 		//validation checks
 		if(!uContainer)
+		{
+			unxsVZLog(uContainer,"tContainer","CreateDNSJob-err1");
 			return 0;
+		}
 		if(!uDatacenter)
+		{
+			unxsVZLog(uContainer,"tContainer","CreateDNSJob-err2");
 			return 0;
+		}
 
 		//Gather IPs and ports
 		//Main container
@@ -7536,9 +7542,14 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 				char cOrg_PublicIP[256]={""};
 				GetContainerProp(uContainer,"cOrg_PublicIP",cOrg_PublicIP);
 				if(!cOrg_PublicIP[0])
+				{
+					unxsVZLog(uContainer,"tContainer","CreateDNSJob-err3");
 					return(0);
+				}
 				else
+				{
 					sprintf(cMainIPv4,"%.31s",cOrg_PublicIP);
+				}
 			}
 		}
 		sprintf(gcQuery,"SELECT tProperty.cValue FROM tContainer,tProperty"
@@ -7630,7 +7641,12 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 				cBackupIPv4,
 				uBackupPort);
 		}
-		return(unxsBindPBXRecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy));
+		if(!unxsBindPBXRecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy))
+		{
+			unxsVZLog(uContainer,"tContainer","CreateDNSJob-err4");
+			return(0);
+		}
+		return(1);
 	}
 	else
 	{
@@ -7641,9 +7657,15 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 
 		//validation checks
 		if(!cHostname[0])
-			return 0;
+		{
+			unxsVZLog(uContainer,"tContainer","CreateDNSJob-err5");
+			return(0);
+		}
 		if(!uIPv4 && !cOptionalIPv4[0])
-			return 0;
+		{
+			unxsVZLog(uContainer,"tContainer","CreateDNSJob-err6");
+			return(0);
+		}
 
 		//if called in loop be efficient.
 		if(uOnlyOnce)
@@ -7655,7 +7677,10 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 
 		//another check
 		if(!cZone[0])
-			return 0;
+		{
+			unxsVZLog(uContainer,"tContainer","CreateDNSJob-err7");
+			return(0);
+		}
 
 		if(cOptionalIPv4!=NULL && cOptionalIPv4[0])
 		{
