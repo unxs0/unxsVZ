@@ -7581,7 +7581,24 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		//standalone sub zone with DNS SRV records 
 		//depending on remote datacenter clone use clone IP for backup
 		//priority SRV record
-		sprintf(cJobData,
+		if(cOptionalIPv4!=NULL && cOptionalIPv4[0])
+		{
+			//special case we use the optional IP twice. But use any port configs that exist.
+			sprintf(cJobData,
+			"cZone=%.99s;\n"
+			"cMainIPv4=%.15s;\n"
+			"uMainPort=%u;\n"
+			"cBackupIPv4=%.15s;\n"
+			"uBackupPort=%u;\n"
+				,cHostname,
+				cOptionalIPv4,
+				uMainPort,
+				cOptionalIPv4,
+				uBackupPort);
+		}
+		else
+		{
+			sprintf(cJobData,
 			"cZone=%.99s;\n"
 			"cMainIPv4=%.15s;\n"
 			"uMainPort=%u;\n"
@@ -7592,6 +7609,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 				uMainPort,
 				cBackupIPv4,
 				uBackupPort);
+		}
 		return(unxsBindPBXRecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy));
 	}
 	else
