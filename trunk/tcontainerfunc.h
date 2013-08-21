@@ -3841,12 +3841,14 @@ while((field=mysql_fetch_row(res)))
 						}
 						else
 						{
-							sprintf(cResult,"group dnsmove job not created!");
+							sprintf(cResult,"group dns move job not created!");
 						}
 					}
 					else
 					{
-						sprintf(cResult,"group dnsmove request ignored");
+						sprintf(cResult,"group dns move request ignored");
+						if(!uTargetNode)
+							strcat(cResult," no target node");
 					}
 					break;
 				}//Group DNS Move
