@@ -109,45 +109,66 @@ void ExttLogListSelect(void)
         if(!strcmp(gcFilter,"uLog"))
         {
                 sscanf(gcCommand,"%u",&uLog);
-		strcat(gcQuery," WHERE ");
+		if(guLoginClient!=1)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tLog.uLog=%u ORDER BY uLog",uLog);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cLabel"))
         {
-		strcat(gcQuery," WHERE ");
+		if(guLoginClient!=1)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tLog.cLabel LIKE '%s' ORDER BY uLog",gcCommand);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uLogType"))
         {
                 sscanf(gcCommand,"%u",&uLogType);
-		strcat(gcQuery," WHERE ");
+		if(guLoginClient!=1)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tLog.uLogType=%u ORDER BY uLog",uLogType);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uLoginClient"))
         {
                 sscanf(gcCommand,"%u",&uLoginClient);
-		strcat(gcQuery," WHERE ");
+		if(guLoginClient!=1)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tLog.uLoginClient=%u ORDER BY uLog",uLoginClient);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cLogin"))
         {
-		strcat(gcQuery," WHERE ");
+		if(guLoginClient!=1)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tLog.cLogin LIKE '%s' ORDER BY cLogin,uLog",gcCommand);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"cHost"))
         {
-		strcat(gcQuery," WHERE ");
+		if(guLoginClient!=1)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tLog.cHost LIKE '%s' ORDER BY cHost,uLog",gcCommand);
 		strcat(gcQuery,cCat);
         }
         else if(!strcmp(gcFilter,"uTablePK"))
         {
-		strcat(gcQuery," WHERE ");
+		if(guLoginClient!=1)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,"tLog.uTablePK=%s ORDER BY cTableName,uTablePK,uLog",gcCommand);
 		strcat(gcQuery,cCat);
         }
@@ -156,6 +177,10 @@ void ExttLogListSelect(void)
 		unsigned uZone=0;
 
                 sscanf(gcCommand,"%u",&uZone);
+		if(guLoginClient!=1)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
 		sprintf(cCat,",tResource WHERE tLog.uTablePK=tResource.uResource AND cTableName='tResource'"
 				" AND tResource.uZone=%u",uZone);
 		strcat(gcQuery,cCat);

@@ -3455,7 +3455,8 @@ void ExttContainerAuxTable(void)
 					" LEFT JOIN tStatus ON tC1.uStatus=tStatus.uStatus"
 					" LEFT JOIN tClient ON tC1.uOwner=tClient.uClient"
 					" LEFT JOIN tOSTemplate ON tC1.uOSTemplate=tOSTemplate.uOSTemplate"
-					" WHERE tC1.uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uGroup);
+					" WHERE tC1.uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)"
+					" ORDER BY tC1.cHostname",uGroup);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
