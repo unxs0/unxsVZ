@@ -93,7 +93,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
 				if(uPerm>guPermLevel) uPerm=guPermLevel;
-				if(uPerm<6 || uPerm>12)
+				if(uPerm<1 || uPerm>12)
 				{
 					guMode=2002;
 					sprintf(gcQuery,"uPerm level error:%u",uPerm);
