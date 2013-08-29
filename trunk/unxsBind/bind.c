@@ -689,20 +689,35 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 			int iRetVal;
 
 			uZoneOwner=uGetZoneOwner(uZone);
-			sprintf(gcQuery,"%s/named-checkzone -q %s %s",gcBinDir,field[0],cZoneFile);
-			if((iRetVal=system(gcQuery))>0)
+			if(!strchr(cZoneFile,' '))
 			{
-				fprintf(stdout,"%s returned %d\n",gcQuery,iRetVal);
+				sprintf(gcQuery,"%s/named-checkzone -q %s %s",gcBinDir,field[0],cZoneFile);
+				if((iRetVal=system(gcQuery))>0)
+				{
+					fprintf(stdout,"%s returned %d\n",gcQuery,iRetVal);
 
-				//Command failed, create tLog entry
-				sprintf(gcQuery,"INSERT INTO tLog SET uLogType=4,uPermLevel=12,uLoginClient=1,"
+					//Command failed, create tLog entry
+					sprintf(gcQuery,"INSERT INTO tLog SET uLogType=4,uPermLevel=12,uLoginClient=1,"
 					"cLogin='JobQueue',cHost ='127.0.0.1',uTablePK='%u',cTableName='tZone',"
 					"cMessage='Zone %.99s with errors',cServer='%s',uOwner=%u,uCreatedBy=1,"
 					"uCreatedDate=UNIX_TIMESTAMP(NOW()),cLabel='named-checkzone'",
 						uZone,field[0],cMasterNS,uZoneOwner);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
+			}
+			else
+			{
+					//Command failed, create tLog entry
+					sprintf(gcQuery,"INSERT INTO tLog SET uLogType=4,uPermLevel=12,uLoginClient=1,"
+					"cLogin='JobQueue',cHost ='127.0.0.1',uTablePK='%u',cTableName='tZone',"
+					"cMessage='Zone %.64s with space error',cServer='%s',uOwner=%u,uCreatedBy=1,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW()),cLabel='named-checkzone'",
+						uZone,field[0],cMasterNS,uZoneOwner);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
 			}
 
 		}
