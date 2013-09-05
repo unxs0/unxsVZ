@@ -20,6 +20,7 @@ static unsigned uDatacenter=0;
 static char cLabel[33]={""};
 //uStatus: Status of Datacenter
 static unsigned uStatus=0;
+static char cuStatusPullDown[256]={""};
 //uOwner: Record owner
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
@@ -78,6 +79,11 @@ void ProcesstDatacenterVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"cuStatusPullDown"))
+		{
+			sprintf(cuStatusPullDown,"%.255s",entries[i].val);
+			uStatus=ReadPullDown("tStatus","cLabel",cuStatusPullDown);
+		}
 
 	}
 
@@ -294,14 +300,10 @@ void tDatacenterInput(unsigned uMode)
 	}
 //uStatus
 	OpenRow(LANG_FL_tDatacenter_uStatus,"black");
-	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uStatus value=%u >\n",ForeignKey("tStatus","cLabel",uStatus),uStatus);
-	}
+	if(guPermLevel>=12 && uMode)
+		tTablePullDown("tStatus;cuStatusPullDown","cLabel","cLabel",uStatus,1);
 	else
-	{
-	printf("%s<input type=hidden name=uStatus value=%u >\n",ForeignKey("tStatus","cLabel",uStatus),uStatus);
-	}
+		tTablePullDown("tStatus;cuStatusPullDown","cLabel","cLabel",uStatus,0);
 //uOwner
 	OpenRow(LANG_FL_tDatacenter_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
