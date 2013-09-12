@@ -1,0 +1,3 @@
+#
+# in only one server per datacenter -special log file for debug
+*/5 * * * * root /usr/local/sbin/datacenter_traffic_log.sh  >> /var/log/datacenter_traffic_log 2>&1;
