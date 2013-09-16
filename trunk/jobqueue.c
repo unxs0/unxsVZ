@@ -895,6 +895,8 @@ CommonExit:
 
 void DestroyContainer(unsigned uJob,unsigned uContainer)
 {
+	unsigned uStopFailed=0;
+	struct stat statInfo;
 
 	//1-.
 	sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
@@ -902,6 +904,7 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 	{
 		logfileLine("DestroyContainer",gcQuery);
 		tJobErrorUpdate(uJob,"vzctl stop failed");
+		uStopFailed=1;
 	}
 
 	//2-.
@@ -910,7 +913,10 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 	{
 		logfileLine("DestroyContainer",gcQuery);
 		tJobErrorUpdate(uJob,"vzctl destroy failed");
-		return;
+		char cFileSpec[100]="";
+		sprintf(cFileSpec,"/vz/private/%u",uContainer);
+		if(!uStopFailed || !stat(cFileSpec,&statInfo))
+			return;
 	}
 
 	//Optional group based script may exist to be executed.
@@ -931,7 +937,6 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		struct stat statInfo;
 		char cOnScriptCall[512];
 		char cCommand[256];
 		char *cp;
