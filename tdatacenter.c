@@ -521,9 +521,9 @@ void tDatacenterList(void)
 			ctime_r(&luTime7,cBuf7);
 		else
 			sprintf(cBuf7,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
+		//printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tDatacenter&uDatacenter=%s>%s",field[0],field[1]);
+		printf("<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[1]
 			,ForeignKey("tStatus","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey(TCLIENT,"cLabel",strtoul(field[3],NULL,10))
@@ -543,7 +543,15 @@ void tDatacenterList(void)
 
 void CreatetDatacenter(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tDatacenter ( uDatacenter INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '',unique (cLabel), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uStatus INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tDatacenter ("
+			" uDatacenter INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cLabel VARCHAR(32) NOT NULL DEFAULT '',unique (cLabel),"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uStatus INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

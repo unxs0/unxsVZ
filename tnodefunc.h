@@ -1081,11 +1081,11 @@ void tNodeNavList(unsigned uDatacenter)
 #define uLIMIT 32
 
 	if(uDatacenter)
-		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u"
+		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u AND uStatus=1"
 				" ORDER BY cLabel" 
 				LIMIT,uDatacenter);
 	else
-		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode ORDER BY cLabel" 
+		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uStatus=1 ORDER BY cLabel" 
 				LIMIT);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -1098,7 +1098,7 @@ void tNodeNavList(unsigned uDatacenter)
         res=mysql_store_result(&gMysql);
 	if((uMysqlNumRows=mysql_num_rows(res)))
 	{	
-        	printf("<p><u>tNodeNavList(%u)</u><br>\n",uMysqlNumRows);
+        	printf("<p><u>Active tNodeNavList(%u)</u><br>\n",uMysqlNumRows);
 
 	        while((field=mysql_fetch_row(res)))
 		{
