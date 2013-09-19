@@ -1014,6 +1014,16 @@ void ExttNodeListSelect(void)
 		sprintf(cCat,"tNode.uNode=%u ORDER BY uNode",uNode);
 		strcat(gcQuery,cCat);
         }
+        else if(!strcmp(gcFilter,"uStatus"))
+        {
+                sscanf(gcCommand,"%u",&uStatus);
+		if(guLoginClient==1 && guPermLevel>11)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
+		sprintf(cCat,"tNode.uStatus=%u ORDER BY uNode",uStatus);
+		strcat(gcQuery,cCat);
+        }
         else if(1)
         {
                 //None NO FILTER
@@ -1028,11 +1038,15 @@ void ExttNodeListFilter(void)
 {
         //Filter
         printf("&nbsp;&nbsp;&nbsp;Filter on ");
-        printf("<select name=gcFilter>");
+        printf("<select title='Optionally filter results. E.g. uStatus=3 is offline' name=gcFilter>");
         if(strcmp(gcFilter,"uNode"))
                 printf("<option>uNode</option>");
         else
                 printf("<option selected>uNode</option>");
+        if(strcmp(gcFilter,"uStatus"))
+                printf("<option>uStatus</option>");
+        else
+                printf("<option selected>uStatus</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else

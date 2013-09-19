@@ -781,7 +781,8 @@ void tContainerInput(unsigned uMode)
 //uIPv4
 	OpenRow(LANG_FL_tContainer_uIPv4,"black");
 	if(guPermLevel>=7 && uMode)
-		tTablePullDownOwnerAvail("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1);
+		//tTablePullDownOwnerAvail("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1);
+		tTablePullDownOwnerAvailDatacenter("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1,uDatacenter,uForClient);
 	else
 		tTablePullDown("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,0);
 //uOSTemplate
@@ -1164,7 +1165,7 @@ void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
       
         if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
         {
-                printf("Invalid input tTablePullDown()");
+                printf("Invalid input tTablePullDownAvail()");
                 return;
         }
 
@@ -1178,12 +1179,24 @@ void tTablePullDownAvail(const char *cTableName, const char *cFieldName,
         }
 
 
-	if(guCompany==1)
-        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 ORDER BY %s",
-                                cFieldName,cLocalTableName,cOrderby);
+	if(uSelector && !uMode)
+	{
+		if(guCompany==1)
+        		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND _rowid=%u",
+                                cFieldName,cLocalTableName,uSelector);
+		else
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uOwner=%u AND _rowid=%u",
+				cFieldName,cLocalTableName,guCompany,uSelector);
+	}
 	else
-		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uOwner=%u ORDER BY %s",
+	{
+		if(guCompany==1)
+        		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 ORDER BY %s",
+                                cFieldName,cLocalTableName,cOrderby);
+		else
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uOwner=%u ORDER BY %s",
 				cFieldName,cLocalTableName,guCompany,cOrderby);
+	}
 
 	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
 	i=mysql_num_rows(mysqlRes);
@@ -1267,13 +1280,26 @@ void tTablePullDownOwnerAvail(const char *cTableName, const char *cFieldName,
         }
 
 
-	if(guLoginClient==1)
-        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 ORDER BY %s",
-                                cFieldName,cLocalTableName,cOrderby);
+	if(uSelector && !uMode)
+	{
+		if(guLoginClient==1)
+        		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND _rowid=%u",
+                                cFieldName,cLocalTableName,uSelector);
+		else
+        		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND ( uOwner=%u OR uOwner IN"
+				" (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u)) AND _rowid=%u",
+				cFieldName,cLocalTableName,guCompany,guCompany,uSelector);
+	}
 	else
-        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND ( uOwner=%u OR uOwner IN"
+	{
+		if(guLoginClient==1)
+        		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 ORDER BY %s",
+                                cFieldName,cLocalTableName,cOrderby);
+		else
+        		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND ( uOwner=%u OR uOwner IN"
 				" (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u)) ORDER BY %s",
 				cFieldName,cLocalTableName,guCompany,guCompany,cOrderby);
+	}
 
 	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
 	i=mysql_num_rows(mysqlRes);
@@ -1363,32 +1389,45 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 	if(!strncmp(cTableName,"tDatacenter",11))
 		utDatacenter=1;
 
-	if(uType)
-		//This does not work in 5.0.77
-	       	//sprintf(gcQuery,"SELECT _rowid AS uRowid,%s FROM %s WHERE"
-		//	" LOCATE('All Datacenters',"
-		//	"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=%u AND uKey=uRowid))>0"
-		//	" OR LOCATE('%s',"
-		//	"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=%u AND uKey=uRowid))>0"
-		//	" ORDER BY %s",
-		//		cFieldName,cLocalTableName,uType,cDatacenter,uType,cOrderby);
-
-		//SELECT _rowid,cLabel FROM tOSTemplate WHERE _rowid IN (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND uType=8 AND (cValue='All Datacenters' OR cValue='Wilshire1'));
-	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
+	if(uSelector && !uMode)
+	{
+		if(uType)
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
+				" _rowid IN"
+				" (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND"
+				" uType=%u AND (cValue='All Datacenters' OR LOCATE('%s',cValue)>0))"
+				" AND _rowid=%u",
+					cFieldName,cLocalTableName,uType,cDatacenter,uSelector);
+		else if(uDatacenter && (utDatacenter || utNode))
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u AND uStatus=1 AND _rowid=%u",
+				cFieldName,cLocalTableName,uDatacenter,uSelector);
+		else if(uDatacenter)
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u AND _rowid=%u",
+				cFieldName,cLocalTableName,uDatacenter,uSelector);
+		else if(1)
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uStatus=1 AND _rowid=%u",
+				cFieldName,cLocalTableName,uSelector);
+	}
+	else
+	{
+		if(uType)
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
 				" _rowid IN"
 				" (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND"
 				" uType=%u AND (cValue='All Datacenters' OR LOCATE('%s',cValue)>0))"
 				" ORDER BY %s",
 					cFieldName,cLocalTableName,uType,cDatacenter,cOrderby);
-	else if(uDatacenter && (utDatacenter || utNode))
-	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u and uStatus=1 ORDER BY %s",
+		else if(uDatacenter && (utDatacenter || utNode))
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u and uStatus=1 ORDER BY %s",
 				cFieldName,cLocalTableName,uDatacenter,cOrderby);
-	else if(uDatacenter)
-	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u ORDER BY %s",
+		else if(uDatacenter)
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u ORDER BY %s",
 				cFieldName,cLocalTableName,uDatacenter,cOrderby);
-	else if(1)
-	       	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uStatus=1 ORDER BY %s",
+		else if(1)
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uStatus=1 ORDER BY %s",
 				cFieldName,cLocalTableName,cOrderby);
+	}
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1512,31 +1551,61 @@ void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFie
 	{
 		char *cp;
 		if((cp=strstr(cAutoIPClass,".0/24"))) *cp=0;
-			
-		if(cAutoIPClass2[0])
-			sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
-				" WHERE uAvailable=1"
-				" AND (LOCATE('%s',tIP.cLabel)=1 OR LOCATE('%s',tIP.cLabel)=1)"
-				" AND uDatacenter=%u"
-				" AND uOwner=%u ORDER BY %s",
-					cFieldName,cLocalTableName,
-					cAutoIPClass,cAutoIPClass2,
-					uDatacenter,
-					uClient,cOrderby);
+
+		if(uSelector && !uMode)			
+		{
+			if(cAutoIPClass2[0])
+				sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+					" WHERE uAvailable=1"
+					" AND (LOCATE('%s',tIP.cLabel)=1 OR LOCATE('%s',tIP.cLabel)=1)"
+					" AND uDatacenter=%u"
+					" AND uOwner=%u AND _rowid=%u",
+						cFieldName,cLocalTableName,
+						cAutoIPClass,cAutoIPClass2,
+						uDatacenter,
+						uClient,uSelector);
+			else
+				sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+					" WHERE uAvailable=1"
+					" AND LOCATE('%s',tIP.cLabel)=1"
+					" AND uDatacenter=%u"
+					" AND uOwner=%u AND _rowid=%u",
+						cFieldName,cLocalTableName,
+						cAutoIPClass,
+						uDatacenter,
+						uClient,uSelector);
+		}
 		else
-			sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
-				" WHERE uAvailable=1"
-				" AND LOCATE('%s',tIP.cLabel)=1"
-				" AND uDatacenter=%u"
-				" AND uOwner=%u ORDER BY %s",
-					cFieldName,cLocalTableName,
-					cAutoIPClass,
-					uDatacenter,
-					uClient,cOrderby);
+		{
+			if(cAutoIPClass2[0])
+				sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+					" WHERE uAvailable=1"
+					" AND (LOCATE('%s',tIP.cLabel)=1 OR LOCATE('%s',tIP.cLabel)=1)"
+					" AND uDatacenter=%u"
+					" AND uOwner=%u ORDER BY %s",
+						cFieldName,cLocalTableName,
+						cAutoIPClass,cAutoIPClass2,
+						uDatacenter,
+						uClient,cOrderby);
+			else
+				sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+					" WHERE uAvailable=1"
+					" AND LOCATE('%s',tIP.cLabel)=1"
+					" AND uDatacenter=%u"
+					" AND uOwner=%u ORDER BY %s",
+						cFieldName,cLocalTableName,
+						cAutoIPClass,
+						uDatacenter,
+						uClient,cOrderby);
+		}
 	}
 	else
 	{
-		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u ORDER BY %s",
+		if(uSelector && !uMode)			
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u AND _rowid=%u",
+				cFieldName,cLocalTableName,uDatacenter,uClient,uSelector);
+		else
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u ORDER BY %s",
 				cFieldName,cLocalTableName,uDatacenter,uClient,cOrderby);
 	}
 
@@ -1616,7 +1685,7 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
       
         if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
         {
-                printf("Invalid input tTablePullDownAvailDatacenter()");
+                printf("Invalid input tTablePullDownDatacenterCloneIPs()");
                 return;
         }
 
@@ -1649,9 +1718,33 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 		char *cp;
 		if((cp=strstr(cAutoCloneIPClass,".0/24"))) *cp=0;
 		
-			
-		if(cAutoCloneIPClass2[0])
-			sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+		if(uSelector && !uMode)
+		{	
+			if(cAutoCloneIPClass2[0])
+				sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+				" WHERE uAvailable=1"
+				" AND (LOCATE('%s',tIP.cLabel)=1 OR LOCATE('%s',tIP.cLabel)=1)"
+				" AND uDatacenter=%u"
+				" AND uOwner=%u AND _rowid=%u",
+					cFieldName,cLocalTableName,
+					cAutoCloneIPClass,cAutoCloneIPClass2,
+					uDatacenter,
+					uClient,uSelector);
+			else
+				sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+				" WHERE uAvailable=1"
+				" AND LOCATE('%s',tIP.cLabel)=1"
+				" AND uDatacenter=%u"
+				" AND uOwner=%u AND _rowid=%u",
+					cFieldName,cLocalTableName,
+					cAutoCloneIPClass,
+					uDatacenter,
+					uClient,uSelector);
+		}
+		else
+		{	
+			if(cAutoCloneIPClass2[0])
+				sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
 				" WHERE uAvailable=1"
 				" AND (LOCATE('%s',tIP.cLabel)=1 OR LOCATE('%s',tIP.cLabel)=1)"
 				" AND uDatacenter=%u"
@@ -1660,8 +1753,8 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 					cAutoCloneIPClass,cAutoCloneIPClass2,
 					uDatacenter,
 					uClient,cOrderby);
-		else
-			sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
+			else
+				sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
 				" WHERE uAvailable=1"
 				" AND LOCATE('%s',tIP.cLabel)=1"
 				" AND uDatacenter=%u"
@@ -1670,10 +1763,15 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 					cAutoCloneIPClass,
 					uDatacenter,
 					uClient,cOrderby);
+		}
 	}
 	else
 	{
-		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u ORDER BY %s",
+		if(uSelector && !uMode)
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u AND _rowid=%u",
+				cFieldName,cLocalTableName,uDatacenter,uClient,uSelector);
+		else
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u ORDER BY %s",
 				cFieldName,cLocalTableName,uDatacenter,uClient,cOrderby);
 	}
 	mysql_query(&gMysql,gcQuery);
@@ -1730,7 +1828,7 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 	if(cHidden[0])
 		printf("%s",cHidden);
 
-}//tTablePullDownOwnerAvailDatacenter()
+}//tTablePullDownDatacenterCloneIPs()
 
 
 void tTablePullDownOwnerAnyAvailDatacenter(const char *cTableName, const char *cFieldName,
@@ -1752,7 +1850,7 @@ void tTablePullDownOwnerAnyAvailDatacenter(const char *cTableName, const char *c
       
         if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
         {
-                printf("Invalid input tTablePullDownAvailDatacenter()");
+                printf("Invalid input tTablePullDownOwnerAnyAvailDatacenter()");
                 return;
         }
 
@@ -1765,7 +1863,11 @@ void tTablePullDownOwnerAnyAvailDatacenter(const char *cTableName, const char *c
                 *cp=0;
         }
 
-	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u ORDER BY %s",
+	if(uSelector && !uMode)
+		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u AND _rowid=%u",
+				cFieldName,cLocalTableName,uDatacenter,uClient,uSelector);
+	else
+		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u ORDER BY %s",
 				cFieldName,cLocalTableName,uDatacenter,uClient,cOrderby);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

@@ -1222,7 +1222,7 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
       
         if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
         {
-                printf("Invalid input tTablePullDown()");
+                printf("Invalid input tTablePullDownOwner()");
                 return;
         }
 
@@ -1236,13 +1236,26 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
         }
 
 
-	if(guLoginClient==1)
-        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s ORDER BY %s",
-                                cFieldName,cLocalTableName,cOrderby);
+	if(uSelector && !uMode)
+	{
+		if(guLoginClient==1)
+        		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE _rowid=%u",
+                                cFieldName,cLocalTableName,uSelector);
+		else
+        		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uOwner=%u OR uOwner IN"
+				" (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u) AND _rowid=%u",
+				cFieldName,cLocalTableName,guCompany,guCompany,uSelector);
+	}
 	else
-        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uOwner=%u OR uOwner IN"
+	{
+		if(guLoginClient==1)
+        		sprintf(gcQuery,"SELECT _rowid,%s FROM %s ORDER BY %s",
+                                cFieldName,cLocalTableName,cOrderby);
+		else
+        		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uOwner=%u OR uOwner IN"
 				" (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u) ORDER BY %s",
 				cFieldName,cLocalTableName,guCompany,guCompany,cOrderby);
+	}
 
 	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
 	i=mysql_num_rows(mysqlRes);
@@ -1326,7 +1339,11 @@ void tTablePullDown(const char *cTableName, const char *cFieldName,
         }
 
 
-        sprintf(gcQuery,"SELECT _rowid,%s FROM %s ORDER BY %s",
+	if(uSelector && !uMode)
+        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE _rowid=%u",
+                                cFieldName,cLocalTableName,uSelector);
+	else
+        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s ORDER BY %s",
                                 cFieldName,cLocalTableName,cOrderby);
 
 	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
@@ -2799,7 +2816,7 @@ void tTablePullDownActive(const char *cTableName, const char *cFieldName,
       
         if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
         {
-                printf("Invalid input tTablePullDown()");
+                printf("Invalid input tTablePullDownActive()");
                 return;
         }
 
@@ -2813,7 +2830,11 @@ void tTablePullDownActive(const char *cTableName, const char *cFieldName,
         }
 
 
-        sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uStatus=1 ORDER BY %s",
+	if(uSelector && !uMode)
+        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uStatus=1 AND _rowid=%u",
+                                cFieldName,cLocalTableName,uSelector);
+	else
+        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uStatus=1 ORDER BY %s",
                                 cFieldName,cLocalTableName,cOrderby);
 
 	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
