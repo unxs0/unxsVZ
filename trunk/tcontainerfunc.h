@@ -1155,7 +1155,6 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
 
 				guMode=2002;
-
 				tContainer(LANG_NB_CONFIRMMOD);
 			}
 			else
@@ -1184,6 +1183,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uDatacenter!=uNodeDatacenter)
 					tContainer("<blink>Error:</blink> The specified uNode does not "
 							"belong to the specified uDatacenter.");
+				if(uIPv4==0 && uWizIPv4)
+					uIPv4=uWizIPv4;
 				if(uIPv4==0)
 					tContainer("<blink>Error:</blink> uIPv4==0!");
 				if(uOSTemplate==0)
@@ -2944,7 +2945,9 @@ void ExttContainerButtons(void)
 
                 case 2002:
 			printf("<p><u>Review changes</u><br>");
-			printf("If you change uIPv4 you will need to modify tIP<br>");
+			printf("If you change uIPv4 you will need to modify tIP."
+				" To keep current uIPv4 %s(%u) do not select any IP, e.g. use '---'.<br>",cuIPv4PullDown,uIPv4);
+			printf("<input type=hidden name=cuWizIPv4PullDown value='%s'>",cuIPv4PullDown);
                         printf(LANG_NBB_CONFIRMMOD);
 			printf("<p>Optional primary group change<br>");
 			uGroup=uGetPrimaryContainerGroup(uContainer);//0=not for node
