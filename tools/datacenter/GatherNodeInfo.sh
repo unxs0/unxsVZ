@@ -21,6 +21,9 @@ luInstalledRAM=`free | grep Mem: | awk -F' ' '{ print $2 }'`;
 luInstalledDiskSpace=`df | grep "\/vz" | awk -F' ' '{print $1}'`;
 cMACeth0=`ifconfig eth0 | grep HWaddr | awk -F' ' '{print $5}'`;
 cMACeth1=`ifconfig eth1 | grep HWaddr | awk -F' ' '{print $5}'`;
+cIPv4eth0=`ifconfig eth0 | grep -w inet | awk -F':' '{print $2}'|cut -f 1 -d' '`;
+cIPv4eth1=`ifconfig eth1 | grep -w inet | awk -F':' '{print $2}'|cut -f 1 -d' '`;
+cKernel=`uname -r`;
 
 if [ "$1" != "run" ];then
 	echo "usage: $0 run";
@@ -103,6 +106,58 @@ fi
 echo "INSERT INTO tProperty SET cName='cMACeth1',cValue='$cMACeth1',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
 if [ $? != 0 ];then
 	echo "mysql command 10 failed";
+fi
+#
+#
+
+#
+#cIPv4/cShortHostname
+echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cIPv4'" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 11 failed";
+fi
+echo "INSERT INTO tProperty SET cName='cIPv4',cValue='$cShortHostname',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 12 failed";
+fi
+#
+#
+
+#
+#cIPv4:eth0/cIPv4eth0
+echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cIPv4:eth0'" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 11 failed";
+fi
+echo "INSERT INTO tProperty SET cName='cIPv4:eth0',cValue='$cIPv4eth0',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 12 failed";
+fi
+#
+#
+
+#
+#cIPv4:eth1/cIPv4eth1
+echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cIPv4:eth1'" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 11 failed";
+fi
+echo "INSERT INTO tProperty SET cName='cIPv4:eth1',cValue='$cIPv4eth1',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 12 failed";
+fi
+#
+#
+
+#
+#cKernel
+echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cKernel'" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 11 failed";
+fi
+echo "INSERT INTO tProperty SET cName='cKernel',cValue='$cKernel',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 12 failed";
 fi
 #
 #
