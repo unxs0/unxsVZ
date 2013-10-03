@@ -27,13 +27,20 @@ cBindPortFileSpec="/etc/unxsvz/asterisk/bindport";
 
 uExitVal="0";
 
-fLog "start";
+fLog "start $uContainer to $cTargetNode:$uRemoteContainer";
 
 /usr/sbin/vzlist | grep $uContainer  > /dev/null 2>&1;
 if [ $? != 0 ];then
         fLog "$uContainer not running. Will not sync.";
 	#exit code 7 is temporary failure. Should be used by unxsVZ jobqueue.c to
 	#maek sure backup date is NOT updated!
+        exit 7;
+fi
+
+#check to see if remote is actually active
+cWhoAmI=`/usr/bin/ssh $cTargetNode "/usr/sbin/vzctl exec2 $uRemoteContainer whoami"`
+if [ "$cWhoAmI" != "root" ];then
+        fLog "$uRemoteContainer not running. Will not sync.";
         exit 7;
 fi
 
@@ -107,6 +114,9 @@ fi
 #get last seq from sipsettings
 cSQL="SELECT max(seq) FROM sipsettings WHERE type=9"
 uLastSeq=` funcQuerySelect $cSQL `
+if [ $? != 0 ];then
+	fLog "no sipsettings table?";
+fi
 #echo $uLastSeq
 if [ $uLastSeq = "NULL" ];then
 	uNextSeq=0;
@@ -136,7 +146,7 @@ if [ "$cLocalNet" != "" ];then
 		cSQL="UPDATE sipsettings SET data='\''$cLocalNet'\'',seq=0,type=9 WHERE keyword='\''localnet'\''";
 		funcQuery $cSQL;
 		if [ $? != 0 ];then
-			echo "insert and update failed";
+			fLog "insert and update failed";
 			rmdir $cContainerLock;
 			exit 10;
 		fi
@@ -154,7 +164,7 @@ if [ "$cLocalNet" != "" ];then
 	        cSQL="UPDATE sipsettings SET data='\''$cExternIp'\'',seq=1,type=9 WHERE keyword='\''externip'\''";
 	        funcQuery $cSQL;
 	        if [ $? != 0 ];then
-	                echo "insert and update failed";
+	                fLog "insert and update failed";
 			rmdir $cContainerLock;
 			exit 11;
 	        fi
@@ -172,7 +182,7 @@ if [ "$cLocalNet" != "" ];then
 	        cSQL="UPDATE sipsettings SET data='\''$cBindPort'\'',seq=2,type=9 WHERE keyword='\''bindport'\''";
 	        funcQuery $cSQL;
 	        if [ $? != 0 ];then
-	                echo "insert and update failed";
+	                fLog "insert and update failed";
 			rmdir $cContainerLock;
 			exit 12;
 	        fi
@@ -307,7 +317,7 @@ funcSetProperty() {
 				 WHERE uKey=$uContainer AND uType=3 AND cName='$cName'"
 		funcBEQuery $cSQL;
 		if [ $? != 0 ];then
-			echo "mysql command 3 failed";
+			fLog "mysql command 3 failed";
 			return;
 		fi
 	fi
@@ -346,5 +356,5 @@ funcSetProperty $uRemoteContainer "cOrg_FreePBXOperatorPasswd" $cOrg_FreePBXOper
 
 #everything ok clean exit
 rmdir $cContainerLock;
-fLog "end";
+fLog "end $uContainer";
 exit $uExitVal;

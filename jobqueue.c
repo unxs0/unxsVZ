@@ -4636,7 +4636,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 				}
 				if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
 				{
-					logfileLine("RestartContainer","cJob_OnRestartScript is not chmod 500");
+					logfileLine("ProcessCloneSyncJob","cJob_CloneSyncScript* is not chmod 500");
 					return(12);
 				}
 			}
