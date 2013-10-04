@@ -19,7 +19,7 @@ fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@" >> /tmp/clonesync.sh.log; }
 cUseLVM="No";
 
 if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
-	echo "usage: $0 <source VEID> <target VEID> <target node host>";
+	echo "usage: $0 <source VEID> <target VEID> <target node host> [<ssh port ignored> <rsync --bwlimit=numeric-value>]";
 	exit 0;
 fi
 #$4 is the not currently used ssh port
