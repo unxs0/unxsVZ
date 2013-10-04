@@ -4645,7 +4645,37 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 				mysql_free_result(res2);
 			}
 
-			sprintf(cOnScriptCall,"%.255s %u %u %s %u",cCommand,uContainer,uCloneContainer,field[0],uSSHPort);
+			//Get optional --bwlimit value for sync script
+			//New optional parameter, configured per container group cJob_CloneSyncRemoteBW*
+			//	 where * is empty str or "Active"
+			unsigned uBWLimit=0;//0 is no limit
+			unsigned uRemoteDatacenter=0;
+
+			sscanf(ForeignKey("tContainer","uDatacenter",uCloneContainer),"%u",&uRemoteDatacenter);	
+			if(uRemoteDatacenter && uRemoteDatacenter!=gfuDatacenter)
+			{
+				sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+					" AND tProperty.uKey=tGroupGlue.uGroup"
+					" AND tGroupGlue.uContainer=%u"
+					" AND tProperty.cName='cJob_CloneSyncRemoteBW%s' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
+						uPROP_GROUP,uContainer,cActivePostfix);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
+					return(8);
+				}
+		        	res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+				{
+					sscanf(field2[0],"%u",&uBWLimit);
+					//debug only
+					logfileLine("ProcessCloneSyncJob uBWLimit",field2[0]);
+				}
+				mysql_free_result(res2);
+			}
+
+			sprintf(cOnScriptCall,"%.255s %u %u %s %u %u",cCommand,uContainer,uCloneContainer,field[0],uSSHPort,uBWLimit);
 
 			if(system(cOnScriptCall))
 			{

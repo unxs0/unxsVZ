@@ -11,14 +11,10 @@
 #	For example an Asterix FreePBX container can be analyzed
 #	to see what actually changes over a long period and then
 #	have this script modified just for the service important items.
-#
-#	rsync and ssh depend on correct:
-#	/etc/ssh/ssh_config 
-#	and this must be consistent for all datacenters and nodes.
 
-fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
+fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@" >> /tmp/clonesync.sh.log; }
 
-#heavily loaded servers may experience too much io wait with LVM
+#Note that you must change the rsync line also. Since we have not had time to fix this.
 #cUseLVM="Yes";
 cUseLVM="No";
 
@@ -26,9 +22,15 @@ if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	echo "usage: $0 <source VEID> <target VEID> <target node host>";
 	exit 0;
 fi
+#$4 is the not currently used ssh port
+if [ "$5" != "" ] && [ "$5" != "0" ];then
+	cBWLimit="--bwlimit=$5";
+	fLog "$cBWLimit";
+else
+	cBWLimit="";
+fi
 
-#debug only
-#fLog "start $1 to $3:$2";
+fLog "start $1 to $3:$2";
 uRunning=`nice /bin/ps -ef | /bin/grep clonesync | /bin/grep -v /bin/grep | /usr/bin/wc -l`;
 if [ "$uRunning" -gt 5 ];then
 	fLog "clonesync is already running $uRunning times";
@@ -120,14 +122,18 @@ fi
 #change /etc/ssh/ssh_conf for non standard port
 #verbose for check
 #/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish' -avxlH --delete \
-/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish' -axlH --delete \
+#/usr/bin/rsync -e '/usr/bin/ssh -ax -c blowfish' -axlH --delete \
+#nice ionice with bwlimit and verbose for testing
+#/bin/nice /usr/bin/ionice -c2 -n5 /usr/bin/rsync -avxlH --bwlimit=1000 --rsh '/usr/bin/ssh -ax -c blowfish' --delete \
+#/usr/bin/rsync -axlH --rsh '/usr/bin/ssh -ax -c blowfish' --delete /vz/private/veid/ rc10:/vz/private/veid2
+/bin/nice /usr/bin/ionice -c2 -n5 /usr/bin/rsync -axlH $cBWLimit --rsh '/usr/bin/ssh -ax -c blowfish' --delete \
 			--exclude "/proc/" --exclude "/root/.ccache/" \
 			--exclude "/sys" --exclude "/dev" --exclude "/tmp" \
 			--exclude /etc/sysconfig/network \
 			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:0 \
 			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:1 \
 			--exclude /etc/sysconfig/network-scripts/ifcfg-venet0:2 \
-			/$cBaseDir/private/$1/ $3:/vz/private/$2
+			/$cBaseDir/private/$1/ $3:/vz/private/$2 >> /tmp/clonesync.sh.log 2>&1;
 #we can ignore return value 24:
 #rsync warning: some files vanished before they could be transferred (code 24) at main.c(892) [sender=2.6.8]
 uExitVal=0;
@@ -165,4 +171,5 @@ if [ "$cUseLVM" == "Yes" ];then
 fi
 
 rmdir $cContainerLock;
+fLog "end";
 exit $uExitVal;
