@@ -18,6 +18,13 @@ if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ];then
 	echo "usage: $0 <source VEID> <target VEID> <target node host>";
 	exit 0;
 fi
+#$4 is the not currently used ssh port
+if [ "$5" != "" ] && [ "$5" != "0" ];then
+	cBWLimit="--bwlimit=$5";
+	fLog "$cBWLimit";
+else
+	cBWLimit="";
+fi
 uContainer=$1;
 uRemoteContainer=$2;
 cTargetNode=$3;
@@ -118,7 +125,7 @@ if [ $? != 0 ];then
 	fLog "no sipsettings table?";
 fi
 #echo $uLastSeq
-if [ $uLastSeq = "NULL" ];then
+if [ "$uLastSeq" == "NULL" ];then
 	uNextSeq=0;
 else
 	#echo $uNextSeq
@@ -222,28 +229,28 @@ fi
 #and then only rsync if the checksum has changed.
 
 #sync etc/asterisk
-/usr/bin/rsync -axlH  --rsh '/usr/bin/ssh -ax -c arcfour' --delete /vz/private/$1/etc/asterisk/ $3:/vz/private/$2/etc/asterisk/\
+/usr/bin/rsync -axlH $cBWLimit --rsh '/usr/bin/ssh -ax -c arcfour' --delete /vz/private/$1/etc/asterisk/ $3:/vz/private/$2/etc/asterisk/\
 		2>> /tmp/clonesync-active.log 1> /dev/null
 if [ $? != 0 ];then
 	fLog "rsync /etc/asterisk/ failed";
 fi
 
 #sync spool
-/usr/bin/rsync -axlH  --rsh '/usr/bin/ssh -ax -c arcfour' --delete /vz/private/$1/var/spool/asterisk/ $3:/vz/private/$2/var/spool/asterisk\
+/usr/bin/rsync -axlH $cBWLimit --rsh '/usr/bin/ssh -ax -c arcfour' --delete /vz/private/$1/var/spool/asterisk/ $3:/vz/private/$2/var/spool/asterisk\
 		2>> /tmp/clonesync-active.log 1> /dev/null
 if [ $? != 0 ];then
 	fLog "rsync /var/spool/asterisk/ failed";
 fi
 
 #sync www
-/usr/bin/rsync -axlH  --rsh '/usr/bin/ssh -ax -c arcfour' --delete /vz/private/$1/var/www/ $3:/vz/private/$2/var/www/\
+/usr/bin/rsync -axlH $cBWLimit --rsh '/usr/bin/ssh -ax -c arcfour' --delete /vz/private/$1/var/www/ $3:/vz/private/$2/var/www/\
 		2>> /tmp/clonesync-active.log 1> /dev/null
 if [ $? != 0 ];then
 	fLog "rsync /var/www/ failed";
 fi
 
 #sync var/lib/asterisk
-/usr/bin/rsync -axlH  --rsh '/usr/bin/ssh -ax -c arcfour' --delete /vz/private/$1/var/lib/asterisk/ $3:/vz/private/$2/var/lib/asterisk/\
+/usr/bin/rsync -axlH $cBWLimit --rsh '/usr/bin/ssh -ax -c arcfour' --delete /vz/private/$1/var/lib/asterisk/ $3:/vz/private/$2/var/lib/asterisk/\
 		2>> /tmp/clonesync-active.log 1> /dev/null
 if [ $? != 0 ];then
 	fLog "rsync /var/lib/asterisk/ failed";
