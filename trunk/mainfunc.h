@@ -141,6 +141,7 @@ void CloneReport(const char *cOptionalMsg)
 			" FROM tContainer,tNode,tDatacenter"
 			" WHERE tContainer.uNode=tNode.uNode AND tContainer.uDatacenter=tDatacenter.uDatacenter"
 			" AND tContainer.uSource=0 AND (tContainer.uStatus=1 OR tContainer.uStatus=31)"
+			" AND tDatacenter.uStatus=1"
 			" ORDER BY tContainer.cLabel,tContainer.uDatacenter,tContainer.uNode");
 	macro_mySQLQueryErrorText
 	printf("</td></tr><tr><td></td><td><u>cLabel</u></td><td><u>cHostname</u></td>"
@@ -181,13 +182,14 @@ void CloneReport(const char *cOptionalMsg)
 	//Lets add a count
 	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td>\n",uCount);
 
-	//1=Active 31=Stopped TODO
+	//1=Active
 	uCount=0;
 	OpenRow("<p>","black");
-	OpenRow("<u>Containers with clones not updated in last 24 hours</u>","black");
+	OpenRow("<u>Active containers with clones not updated in last 24 hours</u>","black");
 	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tContainer.uContainer,tContainer.uNode,"
 				"tContainer.uDatacenter,tDatacenter.cLabel FROM tContainer,tDatacenter WHERE"
-				" tContainer.uSource=0 AND (tContainer.uStatus=1 OR tContainer.uStatus=31) AND"
+				" tContainer.uSource=0 AND tContainer.uStatus=1 AND"
+				" tDatacenter.uStatus=1 AND"
 				" tContainer.uDatacenter=tDatacenter.uDatacenter ORDER BY tContainer.cLabel");
 	macro_mySQLQueryErrorText
 	printf("</td></tr><tr><td></td><td><u>Source cLabel</u></td>"
@@ -228,6 +230,7 @@ void CloneReport(const char *cOptionalMsg)
 	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tContainer.uContainer,tContainer.uNode,"
 				"tContainer.uDatacenter,tDatacenter.cLabel FROM tContainer,tDatacenter WHERE"
 				" tContainer.uSource=0 AND (tContainer.uStatus=1 OR tContainer.uStatus=31) AND"
+				" tDatacenter.uStatus=1 AND"
 				" tContainer.uDatacenter=tDatacenter.uDatacenter ORDER BY tContainer.cLabel");
 	macro_mySQLQueryErrorText
 	printf("</td></tr><tr><td></td><td><u>Source cLabel</u></td>"

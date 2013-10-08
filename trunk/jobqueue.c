@@ -4526,9 +4526,71 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 		{
 			unsigned uCloneDatacenter=0;
 			unsigned uCloneStatus=0;
+        		MYSQL_RES *res2;
+			MYSQL_ROW field2;
 
 			sscanf(field[1],"%u",&uCloneDatacenter);
 			sscanf(field[2],"%u",&uCloneStatus);
+
+			//start of scheduler block
+			//If remote datacenter check for schedule limitations of backup traffic
+			if(uCloneDatacenter && uCloneDatacenter!=gfuDatacenter)
+			{
+				unsigned uCount=0;//should be two items
+				unsigned uCloneScheduleStart=0;//0hrs to 24hrs
+				unsigned uCloneScheduleWindow=0;//number of hours to add to above
+
+				//Get backup schedule	
+				sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+					" AND tProperty.uKey=tGroupGlue.uGroup"
+					" AND tGroupGlue.uContainer=%u"
+					" AND tProperty.cName='cJob_RemoteCloneSchedule' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
+						uPROP_GROUP,uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
+					return(8);
+				}
+		        	res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+				{
+					uCount=sscanf(field2[0],"From %uHS for %uHS",&uCloneScheduleStart,&uCloneScheduleWindow);
+					//debug only
+					logfileLine("ProcessCloneSyncJob cJob_RemoteCloneSchedule",field2[0]);
+
+					//We have a schedule limit
+					if(uCount==2)
+					{
+						//Get localtime hours
+						time_t luClock;
+						struct tm structTm;
+
+						time(&luClock);
+						localtime_r(&luClock,&structTm);
+
+						//Are we in the schedule window?
+						if(structTm.tm_hour>=uCloneScheduleStart && structTm.tm_hour < (uCloneScheduleStart+uCloneScheduleWindow))
+						{
+							logfileLine("ProcessCloneSyncJob","in schedulewindow continue");
+						}
+						else
+						{
+							logfileLine("ProcessCloneSyncJob","not in schedule end");
+							if(guDebug)
+								logfileLine("ProcessCloneSyncJob","End");
+							mysql_free_result(res2);
+							return(0);
+						}
+					}
+					else
+					{
+						logfileLine("ProcessCloneSyncJob","cJob_RemoteCloneSchedule format error");
+					}
+				}
+				mysql_free_result(res2);
+			}
+			//end of scheduler block
 
 			if(uNotValidSystemCallArg(field[0]))
 			{
@@ -4556,8 +4618,6 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 
 			//New uBackupDate
 			unsigned uLastBackupDate=0;
-        		MYSQL_RES *res2;
-			MYSQL_ROW field2;
 			sprintf(gcQuery,"SELECT uBackupDate FROM tContainer"
 						" WHERE uContainer=%u",uCloneContainer);
 			mysql_query(&gMysql,gcQuery);
@@ -4649,10 +4709,8 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 			//New optional parameter, configured per container group cJob_CloneSyncRemoteBW*
 			//	 where * is empty str or "Active"
 			unsigned uBWLimit=0;//0 is no limit
-			unsigned uRemoteDatacenter=0;
 
-			sscanf(ForeignKey("tContainer","uDatacenter",uCloneContainer),"%u",&uRemoteDatacenter);	
-			if(uRemoteDatacenter && uRemoteDatacenter!=gfuDatacenter)
+			if(uCloneDatacenter && uCloneDatacenter!=gfuDatacenter)
 			{
 				sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 					" AND tProperty.uKey=tGroupGlue.uGroup"
