@@ -4569,17 +4569,44 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 						time(&luClock);
 						localtime_r(&luClock,&structTm);
 
+						//debug only
+						char cMsg[256];
+						//sprintf(cMsg,"uCloneScheduleStart=%u uCloneScheduleWindow=%u structTm.tm_hour=%u %u %u",
+						//	uCloneScheduleStart,uCloneScheduleWindow,structTm.tm_hour,uContainer,uCloneContainer);
+						//logfileLine("ProcessCloneSyncJob",cMsg);
+
 						//Are we in the schedule window?
 						if(structTm.tm_hour>=uCloneScheduleStart && structTm.tm_hour < (uCloneScheduleStart+uCloneScheduleWindow))
 						{
-							logfileLine("ProcessCloneSyncJob","in schedulewindow continue");
+							logfileLine("ProcessCloneSyncJob","in schedule window continue");
 						}
 						else
 						{
-							logfileLine("ProcessCloneSyncJob","not in schedule end");
-							if(guDebug)
-								logfileLine("ProcessCloneSyncJob","End");
+							//here we randomly place next backup time in the schedule
+							(void)srand((int)time((time_t *)NULL));
+							//We need a random number of secs between uCloneScheduleStart and 
+							//based hour seconds uCloneScheduleStart+uCloneScheduleWindow
+							long unsigned uNewBackupSecs=(uCloneScheduleStart*3600)+(unsigned)((rand()/(RAND_MAX +1.0))*
+								(((uCloneScheduleStart+uCloneScheduleWindow)*3600)-(uCloneScheduleStart*3600)+1));
+							//debug only
+							//sprintf(cMsg,"Start=%u End=%u uNewBackupSecs=%lu",uCloneScheduleStart*3600,
+							//		(uCloneScheduleStart+uCloneScheduleWindow)*3600,uNewBackupSecs);
+							//logfileLine("ProcessCloneSyncJob",cMsg);
+
+							//Make it fall during schedule
+							uNewBackupSecs+=luClock-(uPeriod+(structTm.tm_hour*3600)+(structTm.tm_min*60)+structTm.tm_sec);
+							sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=%lu"
+								" WHERE uContainer=%u",uNewBackupSecs,uCloneContainer);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+							{
+								mysql_free_result(res);
+								logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
+								return(15);
+							}
 							mysql_free_result(res2);
+							sprintf(cMsg,"schedule adjusted for %u",uCloneContainer);
+							logfileLine("ProcessCloneSyncJob",cMsg);
 							return(0);
 						}
 					}
