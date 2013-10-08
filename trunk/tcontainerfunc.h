@@ -3440,6 +3440,9 @@ void ExttContainerAuxTable(void)
 				" create or update special DNS SRV zones based on container primary group.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Hostname Update'>\n");
+			printf("&nbsp; <input title='Changes uBackupDate to 24 hours back from now.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group BackupDate Adjust'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -5337,7 +5340,35 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"hostname update ignored");
 					}
 				}
+				else if(!strcmp(gcCommand,"Group BackupDate Adjust"))
+				{
+					struct structContainer sContainer;
 
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE )
+						&& sContainer.uSource
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=UNIX_TIMESTAMP(NOW())-86400"
+								" WHERE uContainer=%u",uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							sprintf(cResult,"%.31s",mysql_error(&gMysql));
+							break;
+						}
+
+						if(mysql_affected_rows(&gMysql)==1)
+							sprintf(cResult,"backupdate adjusted");
+						else
+							sprintf(cResult,"set backupdate ignored");
+					}
+					else
+					{
+						sprintf(cResult,"backupdate adjust ignored");
+					}
+				}
 
 				else if(strcmp(gcCommand,"Reload Search Set"))
 				{
