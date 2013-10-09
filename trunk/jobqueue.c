@@ -4775,9 +4775,9 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 					logfileLine("ProcessCloneSyncJob",mysql_error(&gMysql));
 					return(7);
 				}
-				return(6);
 				logfileLine("ProcessCloneSyncJob","clone sync script error");
 				logfileLine("ProcessCloneSyncJob",cOnScriptCall);
+				return(6);
 			}
 			else
 			{
