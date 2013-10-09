@@ -6,3 +6,34 @@
     missingok
 }
 
+/var/log/unxsUBC.log {
+    weekly
+    rotate 4
+    copytruncate
+    notifempty
+    missingok
+}
+
+/var/log/unxsvz_graphs_log {
+    weekly
+    rotate 4
+    copytruncate
+    notifempty
+    missingok
+}
+
+/tmp/clonesync-active.log {
+    weekly
+    rotate 4
+    copytruncate
+    notifempty
+    missingok
+}
+
+/tmp/clonesync.sh.log {
+    weekly
+    rotate 4
+    copytruncate
+    notifempty
+    missingok
+}
