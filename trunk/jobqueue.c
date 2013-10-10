@@ -1705,6 +1705,39 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		return;
 	}
 
+	//Optional bandwidth limit for inter datacenter transfers
+	char cVZMigrateBWLimit[32]={""};
+	char cSCPBWLimit[32]={""};
+	if(uTargetDatacenter && uTargetDatacenter!=gfuDatacenter)
+	{
+        	MYSQL_RES *res;
+        	MYSQL_ROW field;
+
+		sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+				" AND tProperty.uKey=tGroupGlue.uGroup"
+				" AND tGroupGlue.uContainer=%u"
+				" AND tProperty.cName='cJob_MigrateBW' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
+						uPROP_GROUP,uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("MigrateContainer",mysql_error(&gMysql));
+			tJobErrorUpdate(uJob,"cJob_MigrateBW error");
+			return;
+		}
+        	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			unsigned uBWLimit=0;//0 is no limit
+			sscanf(field[0],"%u",&uBWLimit);
+			sprintf(cSCPBWLimit," -l %u",uBWLimit);
+			sprintf(cVZMigrateBWLimit," --bwlimit=%u",uBWLimit);
+			//debug only
+			logfileLine("MigrateContainer uBWLimit",field[0]);
+		}
+		mysql_free_result(res);
+	}
+
 	//vzmigrate --online -v <destination_address> <veid>
 	//Most specific tConfiguration is used. This allows for some nodes to be set global
 	//and others specific. But is slower than the other option with what maybe
@@ -1764,10 +1797,10 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		//We may not want this optional behavior may violate QoS for given migration
 		logfileLine("MigrateContainer","Trying offline migration");
 
-		if(cSSHOptions[0])
+		if(cSSHOptions[0] || cVZMigrateBWLimit[0])
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst -v %s %u",
-					cSSHOptions,cTargetNodeIPv4,uContainer);
+				"/usr/sbin/vzmigrate --ssh=\"%s%s\" --keep-dst -v %s %u",
+					cSSHOptions,cVZMigrateBWLimit,cTargetNodeIPv4,uContainer);
 		else
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
 				"/usr/sbin/vzmigrate --keep-dst -v %s %u",
@@ -1785,8 +1818,8 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	sprintf(gcQuery,"/var/lib/rrd/%u.rrd",uContainer);
 	if(!access(gcQuery,R_OK))
 	{
-		sprintf(gcQuery,"/usr/bin/scp %s /var/lib/rrd/%u.rrd %s:/var/lib/rrd/",
-			cSCPOptions,uContainer,cTargetNodeIPv4);
+		sprintf(gcQuery,"/usr/bin/scp %s%s /var/lib/rrd/%u.rrd %s:/var/lib/rrd/",
+			cSCPOptions,cSCPBWLimit,uContainer,cTargetNodeIPv4);
 		if(system(gcQuery))
 			logfileLine("MigrateContainer",gcQuery);
 	}
@@ -2652,12 +2685,42 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		tJobErrorUpdate(uJob,"fail sec alert!");
 		goto CommonExit;
 	}
+	//Optional bandwidth limit for inter datacenter transfers
+	char cSCPBWLimit[32]={""};
+	if(uTargetDatacenter && uTargetDatacenter!=gfuDatacenter)
+	{
+        	MYSQL_RES *res;
+        	MYSQL_ROW field;
+
+		sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+				" AND tProperty.uKey=tGroupGlue.uGroup"
+				" AND tGroupGlue.uContainer=%u"
+				" AND tProperty.cName='cJob_CloneBW' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
+						uPROP_GROUP,uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("CloneContainer",mysql_error(&gMysql));
+			tJobErrorUpdate(uJob,"cJob_CloneBW error");
+			return;
+		}
+        	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			unsigned uBWLimit=0;//0 is no limit
+			sscanf(field[0],"%u",&uBWLimit);
+			sprintf(cSCPBWLimit," -l %u",uBWLimit);
+			//debug only
+			logfileLine("CloneContainer uBWLimit",field[0]);
+		}
+		mysql_free_result(res);
+	}
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"/usr/bin/scp %s /vz/dump/vzdump-%u.tgz %s:/vz/dump/vzdump-%u.tgz",
-				cSCPOptions,uContainer,cTargetNodeIPv4,uContainer);
+		sprintf(gcQuery,"/usr/bin/scp %s%s /vz/dump/vzdump-%u.tgz %s:/vz/dump/vzdump-%u.tgz",
+				cSCPOptions,cSCPBWLimit,uContainer,cTargetNodeIPv4,uContainer);
 	else
-		sprintf(gcQuery,"/usr/bin/scp %s %s/vzdump-%u.tgz %s:/vz/dump/vzdump-%u.tgz",
-				cSCPOptions,cSnapshotDir,uContainer,cTargetNodeIPv4,uContainer);
+		sprintf(gcQuery,"/usr/bin/scp %s%s %s/vzdump-%u.tgz %s:/vz/dump/vzdump-%u.tgz",
+				cSCPOptions,cSCPBWLimit,cSnapshotDir,uContainer,cTargetNodeIPv4,uContainer);
 	if(system(gcQuery))
 	{
 		logfileLine("CloneContainer",gcQuery);
@@ -2674,11 +2737,11 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 	//2a-. Need md5sum file moved to target. TODO
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"/usr/bin/scp %s /vz/dump/vzdump-%u.tgz.md5sum %s:/vz/dump/vzdump-%u.tgz.md5sum",
-				cSCPOptions,uContainer,cTargetNodeIPv4,uContainer);
+		sprintf(gcQuery,"/usr/bin/scp %s%s /vz/dump/vzdump-%u.tgz.md5sum %s:/vz/dump/vzdump-%u.tgz.md5sum",
+				cSCPOptions,cSCPBWLimit,uContainer,cTargetNodeIPv4,uContainer);
 	else
-		sprintf(gcQuery,"/usr/bin/scp %s %s/vzdump-%u.tgz.md5sum %s:/vz/dump/vzdump-%u.tgz.md5sum",
-				cSCPOptions,cSnapshotDir,uContainer,cTargetNodeIPv4,uContainer);
+		sprintf(gcQuery,"/usr/bin/scp %s%s %s/vzdump-%u.tgz.md5sum %s:/vz/dump/vzdump-%u.tgz.md5sum",
+				cSCPOptions,cSCPBWLimit,cSnapshotDir,uContainer,cTargetNodeIPv4,uContainer);
 	if(system(gcQuery))
 	{
 		logfileLine("CloneContainer",gcQuery);
@@ -6418,6 +6481,36 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	}
 
 	//3-. SCP the dump to the new node.
+	char cBWLimit[32]={""};
+	if(uTargetDatacenter && uTargetDatacenter!=uDatacenter)
+	{
+        	MYSQL_RES *res;
+        	MYSQL_ROW field;
+
+		sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+				" AND tProperty.uKey=tGroupGlue.uGroup"
+				" AND tGroupGlue.uContainer=%u"
+				" AND tProperty.cName='cJob_DNSMoveBW' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
+						uPROP_GROUP,uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("DNSMoveContainer",mysql_error(&gMysql));
+			tJobErrorUpdate(uJob,"cJob_DNSMoveBW error");
+			return;
+		}
+        	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			unsigned uBWLimit=0;//0 is no limit
+			sscanf(field[0],"%u",&uBWLimit);
+			sprintf(cBWLimit," -l %u",uBWLimit);
+			//debug only
+			logfileLine("DNSMoveContainer uBWLimit",field[0]);
+		}
+		mysql_free_result(res);
+	}
+
 	logfileLine("DNSMoveContainer","scp start");
 	if(cSnapshotDir[0])
 	{
@@ -6430,8 +6523,8 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 			return;
 		}
 	}
-	sprintf(gcQuery,"/usr/bin/scp %s %s %s:%s",
-			cSCPOptions,cSnapshotFile,cTargetNodeIPv4,cSnapshotFile);
+	sprintf(gcQuery,"/usr/bin/scp %s%s %s %s:%s",
+			cSCPOptions,cBWLimit,cSnapshotFile,cTargetNodeIPv4,cSnapshotFile);
 	if(system(gcQuery))
 	{
 		logfileLine("DNSMoveContainer",gcQuery);
@@ -6439,8 +6532,8 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 		return;
 	}
 	//scp md5sum 
-	sprintf(gcQuery,"/usr/bin/scp %s %s.md5sum %s:%s.md5sum",
-			cSCPOptions,cSnapshotFile,cTargetNodeIPv4,cSnapshotFile);
+	sprintf(gcQuery,"/usr/bin/scp %s%s %s.md5sum %s:%s.md5sum",
+			cSCPOptions,cBWLimit,cSnapshotFile,cTargetNodeIPv4,cSnapshotFile);
 	if(system(gcQuery))
 	{
 		logfileLine("DNSMoveContainer",gcQuery);
@@ -6597,8 +6690,8 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	sprintf(gcQuery,"/var/lib/rrd/%u.rrd",uContainer);
 	if(!access(gcQuery,R_OK))
 	{
-		sprintf(gcQuery,"/usr/bin/scp %s /var/lib/rrd/%u.rrd %s:/var/lib/rrd/",
-			cSCPOptions,uContainer,cTargetNodeIPv4);
+		sprintf(gcQuery,"/usr/bin/scp %s%s /var/lib/rrd/%u.rrd %s:/var/lib/rrd/",
+			cSCPOptions,cBWLimit,uContainer,cTargetNodeIPv4);
 		if(system(gcQuery))
 			logfileLine("DNSMoveContainer",gcQuery);
 	}
