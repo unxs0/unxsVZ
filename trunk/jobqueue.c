@@ -1707,7 +1707,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 	//Optional bandwidth limit for inter datacenter transfers
 	char cVZMigrateBWLimit[32]={""};
-	char cSCPBWLimit[32]={""};
+	char cSCPBWLimit[64]={""};
 	if(uTargetDatacenter && uTargetDatacenter!=gfuDatacenter)
 	{
         	MYSQL_RES *res;
@@ -1731,7 +1731,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 			unsigned uBWLimit=0;//0 is no limit
 			sscanf(field[0],"%u",&uBWLimit);
 			sprintf(cSCPBWLimit," -l %u",uBWLimit);
-			sprintf(cVZMigrateBWLimit," --bwlimit=%u",uBWLimit);
+			sprintf(cVZMigrateBWLimit,"--rsync=\" --bwlimit=%u\"",uBWLimit);
 			//debug only
 			logfileLine("MigrateContainer uBWLimit",field[0]);
 		}
@@ -1773,23 +1773,23 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	{
 		if(cSSHOptions[0])
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst --online -v %s %u",
-					cSSHOptions,cTargetNodeIPv4,uContainer);
+				"/usr/sbin/vzmigrate --ssh=\"%s\" %s --keep-dst --online -v %s %u",
+					cSSHOptions,cVZMigrateBWLimit,cTargetNodeIPv4,uContainer);
 		else
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin;"
-				"/usr/sbin/vzmigrate --keep-dst --online -v %s %u",
-					cTargetNodeIPv4,uContainer);
+				"/usr/sbin/vzmigrate %s --keep-dst --online -v %s %u",
+					cVZMigrateBWLimit,cTargetNodeIPv4,uContainer);
 	}
 	else
 	{
 		if(cSSHOptions[0])
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate --ssh=\"%s\" --keep-dst -v %s %u",
-					cSSHOptions,cTargetNodeIPv4,uContainer);
+				"/usr/sbin/vzmigrate --ssh=\"%s\" %s --keep-dst -v %s %u",
+					cSSHOptions,cVZMigrateBWLimit,cTargetNodeIPv4,uContainer);
 		else
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin;"
-				"/usr/sbin/vzmigrate --keep-dst -v %s %u",
-					cTargetNodeIPv4,uContainer);
+				"/usr/sbin/vzmigrate %s --keep-dst -v %s %u",
+					cVZMigrateBWLimit,cTargetNodeIPv4,uContainer);
 	}
 
 	if(system(gcQuery))
@@ -1797,17 +1797,18 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		//We may not want this optional behavior may violate QoS for given migration
 		logfileLine("MigrateContainer","Trying offline migration");
 
-		if(cSSHOptions[0] || cVZMigrateBWLimit[0])
+		if(cSSHOptions[0])
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate --ssh=\"%s%s\" --keep-dst -v %s %u",
+				"/usr/sbin/vzmigrate --ssh=\"%s\" %s --keep-dst -v %s %u",
 					cSSHOptions,cVZMigrateBWLimit,cTargetNodeIPv4,uContainer);
 		else
 			sprintf(gcQuery,"export PATH=/usr/sbin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin;"
-				"/usr/sbin/vzmigrate --keep-dst -v %s %u",
-					cTargetNodeIPv4,uContainer);
+				"/usr/sbin/vzmigrate %s --keep-dst -v %s %u",
+					cVZMigrateBWLimit,cTargetNodeIPv4,uContainer);
 		if(system(gcQuery))
 		{
 			logfileLine("MigrateContainer","Giving up!");
+			logfileLine("MigrateContainer error",gcQuery);
 			tJobErrorUpdate(uJob,"vzmigrate on/off-line failed");
 			return;
 		}
