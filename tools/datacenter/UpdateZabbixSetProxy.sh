@@ -17,7 +17,7 @@ cHost="$1";
 uProxyHostID="$2";
 
 #set for your zabbix server and port
-cZabbixServer="zabbix.callingcloud.net:9333";
+cZabbixServer="zabbix.isp.net:9333";
 
 #Set for your user and password
 #login
