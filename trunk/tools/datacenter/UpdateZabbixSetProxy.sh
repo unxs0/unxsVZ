@@ -27,7 +27,7 @@ cat << EOF > /tmp/login.json
 	"method":"user.login",
 	"params":{
 			"user":"apiuser",
-			"password":"crapola"
+			"password":"pwd"
 	},
 	"id":1
 }
