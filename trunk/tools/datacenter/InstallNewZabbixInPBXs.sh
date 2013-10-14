@@ -1,12 +1,15 @@
 #!/bin/bash
 
 #FILE
-#	/usr/sbin/InstallNewZabbixInPBXs.sh
+#      /usr/sbin/InstallNewZabbixInPBXs.sh
 #PURPOSE
-#	Very simple script to update a given zabbix host's proxy.
+#      Very simple script to update a given zabbix host's proxy.
 #AUTHOR
-#	(C) 2011,2013 Gary Wallis for Unixservice, LLC.
-#	GPLv3 license applies see root dir LICENSE
+#      (C) 2011,2013 Gary Wallis for Unixservice, LLC.
+#      GPLv3 license applies see root dir LICENSE
+
+#use this to run only the json api
+#cOnlySetProxy="true";
 
 if [ "$1" == "" ] || ( [ "$1" != "install" ] && [ "$1" != "help" ] );then
 	echo "usage: $0 <install|help> [<veid>]";
@@ -51,11 +54,15 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 	fi
 
 	#check local system
-	/usr/sbin/vzlist $uContainer;
+	cHostname=`/usr/sbin/vzlist -H -o hostname $uContainer`;
 	if [ "$?" != "0" ];then
 		echo "vzlist failed for $uContainer. next.";
 		continue;
 	fi
+
+  if [ "$cOnlySetProxy" != "true" ];then
+
+	echo $uContainer:$cHostname;
 
 	#install/update binary and provide backwords compatibility sym link
 	if [ -f /root/zabbix_agentd_upgrade/zabbix_agentd ];then
@@ -81,16 +88,22 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 	#update iptables. add new subnet for ping only once please
 	grep -w "65.49.53.0" /vz/private/$uContainer/etc/sysconfig/iptables > /dev/null;
 	if [ "$?" != "0" ];then
-		sed -i -e 's/-A INPUT -p icmp -m icmp -s 19.20.101.0\/24 -j ACCEPT/-A INPUT -p icmp -m icmp -s 19.20.101.0\/24 -j ACCEPT\n-A INPUT -p icmp -m icmp -s 6.4.5.0\/24 -j ACCEPT/g' \
+		sed -i -e 's/-A INPUT -p icmp -m icmp -s 19.20.11.0\/24 -j ACCEPT/-A INPUT -p icmp -m icmp -s 19.20.11.0\/24 -j ACCEPT\n-A INPUT -p icmp -m icmp -s 6.4.5.0\/24 -j ACCEPT/g' \
 			/vz/private/$uContainer/etc/sysconfig/iptables;
 	fi
 
 	#restart zabbix-agent /tmp/zabbix_agentd.pid
-	/usr/sbin/vzctl exec $uContainer "kill `cat /tmp/zabbix_agentd.pid`;sleep 1";
+	/usr/sbin/vzctl exec $uContainer 'kill `cat /tmp/zabbix_agentd.pid`;sleep 1';
 	/usr/sbin/vzctl exec $uContainer "service zabbix_agentd start";
 
 	#restart iptables
 	/usr/sbin/vzctl exec $uContainer "service iptables restart";
 
+  else
+
 	#now you need to change zabbix to use proxy
+	echo $cHostname;
+	/usr/sbin/UpdateZabbixSetProxy.sh $cHostname 14124;
+  fi
+
 done
