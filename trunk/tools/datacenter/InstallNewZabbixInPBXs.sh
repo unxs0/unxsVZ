@@ -1,5 +1,13 @@
 #!/bin/bash
 
+#FILE
+#	/usr/sbin/InstallNewZabbixInPBXs.sh
+#PURPOSE
+#	Very simple script to update a given zabbix host's proxy.
+#AUTHOR
+#	(C) 2011,2013 Gary Wallis for Unixservice, LLC.
+#	GPLv3 license applies see root dir LICENSE
+
 if [ "$1" == "" ] || ( [ "$1" != "install" ] && [ "$1" != "help" ] );then
 	echo "usage: $0 <install|help> [<veid>]";
 	exit 0;
@@ -67,13 +75,13 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 	fi
 
 	#update /etc/zabbix/ files only once please
-	sed -i -e 's/Server=zabbix.callingcloud.net$/Server=zabbix.callingcloud.net,zabbix-proxy0.callingcloud.net/g' \
+	sed -i -e 's/Server=zabbix.isp.net$/Server=zabbix.isp.net,zabbix-proxy0.isp.net/g' \
 			/vz/private/$uContainer/etc/zabbix/zabbix_agentd.conf;
 
 	#update iptables. add new subnet for ping only once please
 	grep -w "65.49.53.0" /vz/private/$uContainer/etc/sysconfig/iptables > /dev/null;
 	if [ "$?" != "0" ];then
-		sed -i -e 's/-A INPUT -p icmp -m icmp -s 199.200.101.0\/24 -j ACCEPT/-A INPUT -p icmp -m icmp -s 199.200.101.0\/24 -j ACCEPT\n-A INPUT -p icmp -m icmp -s 65.49.53.0\/24 -j ACCEPT/g' \
+		sed -i -e 's/-A INPUT -p icmp -m icmp -s 19.20.101.0\/24 -j ACCEPT/-A INPUT -p icmp -m icmp -s 19.20.101.0\/24 -j ACCEPT\n-A INPUT -p icmp -m icmp -s 6.4.5.0\/24 -j ACCEPT/g' \
 			/vz/private/$uContainer/etc/sysconfig/iptables;
 	fi
 
