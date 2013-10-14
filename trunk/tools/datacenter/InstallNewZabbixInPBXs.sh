@@ -86,7 +86,7 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 			/vz/private/$uContainer/etc/zabbix/zabbix_agentd.conf;
 
 	#update iptables. add new subnet for ping only once please
-	grep -w "65.49.53.0" /vz/private/$uContainer/etc/sysconfig/iptables > /dev/null;
+	grep -w "6.4.5.0" /vz/private/$uContainer/etc/sysconfig/iptables > /dev/null;
 	if [ "$?" != "0" ];then
 		sed -i -e 's/-A INPUT -p icmp -m icmp -s 19.20.11.0\/24 -j ACCEPT/-A INPUT -p icmp -m icmp -s 19.20.11.0\/24 -j ACCEPT\n-A INPUT -p icmp -m icmp -s 6.4.5.0\/24 -j ACCEPT/g' \
 			/vz/private/$uContainer/etc/sysconfig/iptables;
