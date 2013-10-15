@@ -22,6 +22,7 @@ NOTES
 #define cUBCLOGFILE "/var/log/unxsUBC.log"
 
 MYSQL gMysql;
+MYSQL gMysqlUBC;
 char gcQuery[8192]={""};
 unsigned guLoginClient=1;//Root user
 char cHostname[100]={""};
@@ -39,8 +40,14 @@ unsigned guRunMemCheck=1;
 unsigned guRunCPUCheck=1;
 unsigned guRunTraffic=1;
 
+char *gcUBCDBIP0=DBIP0;
+char *gcUBCDBIP1=DBIP1;
+char gcUBCDBIP0Buffer[32]={""};
+char gcUBCDBIP1Buffer[32]={""};
+
 //local protos
 void TextConnectDb(void);
+void TextConnectDbUBC(void);
 void ProcessSingleUBC(unsigned uContainer, unsigned uNode);
 void ProcessUBC(void);
 void ProcessNodeUBC(void);
@@ -53,6 +60,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
 void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
 void ProcessSingleTraffic(unsigned uContainer);
 void SendEmail(char *cSubject,char *cMsg);
+void ConnectToOptionalUBCDb(unsigned uDatacenter);
 
 unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
@@ -71,9 +79,14 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 		tmTime=localtime(&luClock);
 		strftime(cTime,31,"%b %d %T",tmTime);
 
-		fprintf(gLfp,"%s unxsUBC.%s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
+		fprintf(gLfp,"%s unxsUBC.%s[%u]: %s.",cTime,cFunction,pidThis,cLogline);
+		if(uContainer)
+			fprintf(gLfp," %u",uContainer);
+		fprintf(gLfp,"\n");
 		fflush(gLfp);
 	}
+	else
+		printf("%s\n",cLogline);
 
 }//void logfileLine()
 
@@ -98,13 +111,60 @@ int main(int iArgc, char *cArgv[])
 				guUBCOnly=1;
 			if(!strcmp(cArgv[i],"--help"))
 			{
-				printf("usage: %s [--parallel] [--noUBC] [--UBCOnly] [--help] [--version]\n",cArgv[0]);
+				printf("usage: %s [--parallel] [--noUBC] [--UBCOnly] [--help] [--version] [--initUBCDB]\n",cArgv[0]);
 				exit(0);
 			}
 			if(!strcmp(cArgv[i],"--version"))
 			{
 				printf("version: %s $Id$\n",cArgv[0]);
 				//SendEmail("ubc.c test","ubc.c test");
+				exit(0);
+			}
+			if(!strcmp(cArgv[i],"--initUBCDB"))
+			{
+        			MYSQL_RES *res;
+        			MYSQL_ROW field;
+				unsigned uDatacenter=0;
+				char *cp;
+
+				TextConnectDb();
+				gethostname(cHostname,99);
+				if((cp=strchr(cHostname,'.')))
+					*cp=0;
+				printf("Connected %s %s from %s\n",DBIP0,DBIP1,cHostname);
+
+				sprintf(gcQuery,"SELECT uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s",mysql_error(&gMysql));
+					mysql_close(&gMysql);
+					exit(2);
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uDatacenter);
+				mysql_free_result(res);
+
+				ConnectToOptionalUBCDb(uDatacenter);
+				sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tProperty ( "
+					"uProperty INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+					"cName VARCHAR(32) NOT NULL DEFAULT '', INDEX (cName),"
+					"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+					"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+					"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+					"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+					"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+					"cValue TEXT NOT NULL DEFAULT '',"
+					"uKey INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uKey),"
+					"uType INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uType) )");
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
+					printf("%s",mysql_error(&gMysqlUBC));
+				else
+					printf("Created tProperty table at %s for uDatacenter=%u\n",gcUBCDBIP0,uDatacenter);
+				mysql_close(&gMysqlUBC);
+				mysql_close(&gMysql);
 				exit(0);
 			}
 		}
@@ -164,8 +224,20 @@ int main(int iArgc, char *cArgv[])
 				exit(1);
 
 			case 0:
+			{
+				char cLockfile[64]={"/tmp/ubc.lock.fork1"};
+				if(!stat(cLockfile,&structStat))
+				{
+					logfileLine("main","waiting for rmdir(cLockfile) fork 1",0);
+					return(1);
+				}
+				if(mkdir(cLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
+				{
+					logfileLine("main","could not open cLockfile dir fork 1",0);
+					return(1);
+				}
 				//child
-				logfileLine("main","fork 1",uPID);
+				logfileLine("main","fork 1 guRunTraffic",uPID);
 				guRunUBC=0;
 				guRunQuota=0;
 				guRunStatus=0;
@@ -173,7 +245,14 @@ int main(int iArgc, char *cArgv[])
 				guRunCPUCheck=0;
 				guRunTraffic=1;
 				ProcessUBC();
+				if(rmdir(cLockfile))
+				{
+					logfileLine("main","could not rmdir(cLockfile) fork 1",0);
+					return(1);
+				}
+				logfileLine("main","end fork 1",uPID);
 				return(0);
+			}
 			break;
 		}
 		switch((uPID=fork()))
@@ -188,8 +267,20 @@ int main(int iArgc, char *cArgv[])
 				exit(1);
 
 			case 0:
+			{
+				char cLockfile[64]={"/tmp/ubc.lock.fork2"};
+				if(!stat(cLockfile,&structStat))
+				{
+					logfileLine("main","waiting for rmdir(cLockfile) fork 2",0);
+					return(1);
+				}
+				if(mkdir(cLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
+				{
+					logfileLine("main","could not open cLockfile dir fork 2",0);
+					return(1);
+				}
 				//child
-				logfileLine("main","fork 2",uPID);
+				logfileLine("main","fork 2 guRunCPUCheck",uPID);
 				guRunUBC=0;
 				guRunQuota=0;
 				guRunStatus=0;
@@ -197,7 +288,14 @@ int main(int iArgc, char *cArgv[])
 				guRunCPUCheck=1;
 				guRunTraffic=0;
 				ProcessUBC();
+				if(rmdir(cLockfile))
+				{
+					logfileLine("main","could not rmdir(cLockfile) fork 2",0);
+					return(1);
+				}
+				logfileLine("main","end fork 2",uPID);
 				return(0);
+			}
 			break;
 		}
 		switch((uPID=fork()))
@@ -212,8 +310,20 @@ int main(int iArgc, char *cArgv[])
 				exit(1);
 
 			case 0:
+			{
+				char cLockfile[64]={"/tmp/ubc.lock.fork3"};
+				if(!stat(cLockfile,&structStat))
+				{
+					logfileLine("main","waiting for rmdir(cLockfile) fork 3",0);
+					return(1);
+				}
+				if(mkdir(cLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
+				{
+					logfileLine("main","could not open cLockfile dir fork 3",0);
+					return(1);
+				}
 				//child
-				logfileLine("main","fork 3",uPID);
+				logfileLine("main","fork 3 guRunMemCheck",uPID);
 				guRunUBC=0;
 				guRunQuota=0;
 				guRunStatus=0;
@@ -221,7 +331,14 @@ int main(int iArgc, char *cArgv[])
 				guRunCPUCheck=0;
 				guRunTraffic=0;
 				ProcessUBC();
+				if(rmdir(cLockfile))
+				{
+					logfileLine("main","could not rmdir(cLockfile) fork 3",0);
+					return(1);
+				}
+				logfileLine("main","end fork 3",uPID);
 				return(0);
+			}
 			break;
 		}
 		switch((uPID=fork()))
@@ -236,8 +353,20 @@ int main(int iArgc, char *cArgv[])
 				exit(1);
 
 			case 0:
+			{
+				char cLockfile[64]={"/tmp/ubc.lock.fork4"};
+				if(!stat(cLockfile,&structStat))
+				{
+					logfileLine("main","waiting for rmdir(cLockfile) fork 4",0);
+					return(1);
+				}
+				if(mkdir(cLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
+				{
+					logfileLine("main","could not open cLockfile dir fork 4",0);
+					return(1);
+				}
 				//child
-				logfileLine("main","fork 4",uPID);
+				logfileLine("main","fork 4 guRunStatus",uPID);
 				guRunUBC=0;
 				guRunQuota=0;
 				guRunStatus=1;
@@ -245,7 +374,14 @@ int main(int iArgc, char *cArgv[])
 				guRunCPUCheck=0;
 				guRunTraffic=0;
 				ProcessUBC();
+				if(rmdir(cLockfile))
+				{
+					logfileLine("main","could not rmdir(cLockfile) fork 4",0);
+					return(1);
+				}
+				logfileLine("main","end fork 4",uPID);
 				return(0);
+			}
 			break;
 		}
 		switch((uPID=fork()))
@@ -260,8 +396,20 @@ int main(int iArgc, char *cArgv[])
 				exit(1);
 
 			case 0:
+			{
+				char cLockfile[64]={"/tmp/ubc.lock.fork5"};
+				if(!stat(cLockfile,&structStat))
+				{
+					logfileLine("main","waiting for rmdir(cLockfile) fork 5",0);
+					return(1);
+				}
+				if(mkdir(cLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
+				{
+					logfileLine("main","could not open cLockfile dir fork 5",0);
+					return(1);
+				}
 				//child
-				logfileLine("main","fork 5",uPID);
+				logfileLine("main","fork 5 guRunQuota",uPID);
 				guRunUBC=0;
 				guRunQuota=1;
 				guRunStatus=0;
@@ -269,7 +417,14 @@ int main(int iArgc, char *cArgv[])
 				guRunCPUCheck=0;
 				guRunTraffic=0;
 				ProcessUBC();
+				if(rmdir(cLockfile))
+				{
+					logfileLine("main","could not rmdir(cLockfile) fork 5",0);
+					return(1);
+				}
+				logfileLine("main","end fork 5",uPID);
 				return(0);
+			}
 			break;
 		}
 		switch((uPID=fork()))
@@ -284,8 +439,20 @@ int main(int iArgc, char *cArgv[])
 				exit(1);
 
 			case 0:
+			{
+				char cLockfile[64]={"/tmp/ubc.lock.fork6"};
+				if(!stat(cLockfile,&structStat))
+				{
+					logfileLine("main","waiting for rmdir(cLockfile) fork 6",0);
+					return(1);
+				}
+				if(mkdir(cLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
+				{
+					logfileLine("main","could not open cLockfile dir fork 6",0);
+					return(1);
+				}
 				//child
-				logfileLine("main","fork 6",uPID);
+				logfileLine("main","fork 6 guRunUBC",uPID);
 				guRunUBC=1;
 				guRunQuota=0;
 				guRunStatus=0;
@@ -293,7 +460,14 @@ int main(int iArgc, char *cArgv[])
 				guRunCPUCheck=0;
 				guRunTraffic=0;
 				ProcessUBC();
+				if(rmdir(cLockfile))
+				{
+					logfileLine("main","could not rmdir(cLockfile) fork 6",0);
+					return(1);
+				}
+				logfileLine("main","end fork 6",uPID);
 				return(0);
+			}
 			break;
 		}
 	}
@@ -415,13 +589,13 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 					sprintf(gcQuery,"SELECT uProperty,cValue FROM tProperty WHERE cName='%.63s.%.32s'"
 								" AND uKey=%u AND uType=%u",
 						cResource,cKnownUBCVals[i],uContainer,uType);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
+					mysql_query(&gMysqlUBC,gcQuery);
+					if(mysql_errno(&gMysqlUBC))
 					{
-						logfileLine("ProcessSingleUBC",mysql_error(&gMysql),uContainer);
+						logfileLine("ProcessSingleUBC",mysql_error(&gMysqlUBC),uContainer);
 						exit(2);
 					}
-			        	res=mysql_store_result(&gMysql);
+			        	res=mysql_store_result(&gMysqlUBC);
 					if((field=mysql_fetch_row(res)))
 					{
 						//luFailDelta calculation
@@ -476,11 +650,11 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 									,cResource
 									,cKnownUBCVals[i]
 									,field[0]);
-								mysql_query(&gMysql,gcQuery);
-								if(mysql_errno(&gMysql))
+								mysql_query(&gMysqlUBC,gcQuery);
+								if(mysql_errno(&gMysqlUBC))
 								{
 									logfileLine("ProcessSingleUBC",
-										mysql_error(&gMysql),uContainer);
+										mysql_error(&gMysqlUBC),uContainer);
 									exit(2);
 								}
 					}
@@ -500,10 +674,10 @@ void ProcessSingleUBC(unsigned uContainer, unsigned uNode)
 									,cKnownUBCVals[i]
 									,uType
 									,uContainer,guContainerOwner);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
+						mysql_query(&gMysqlUBC,gcQuery);
+						if(mysql_errno(&gMysqlUBC))
 						{
-							logfileLine("ProcessSingleUBC",mysql_error(&gMysql),
+							logfileLine("ProcessSingleUBC",mysql_error(&gMysqlUBC),
 									uContainer);
 							exit(2);
 						}
@@ -583,10 +757,13 @@ void ProcessUBC(void)
 
 	if(!uNode)
 	{
-		logfileLine("ProcessUBC","Could not determine uNode",uContainer);
+		logfileLine("ProcessUBC","Could not determine uNode",uDatacenter);
 		mysql_close(&gMysql);
 		exit(1);
 	}
+
+
+	ConnectToOptionalUBCDb(uDatacenter);
 
 	//debug only
 	//printf("ProcessUBC() for %s (uNode=%u,uDatacenter=%u)\n",
@@ -721,6 +898,7 @@ void ProcessNodeUBC(void)
 		exit(1);
 	}
 
+	ConnectToOptionalUBCDb(uDatacenter);
 
 	//Process  node
 	if(guLogLevel>2)
@@ -807,14 +985,14 @@ void ProcessSingleHDUsage(unsigned uContainer)
 
 		sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='1k-hdblocks.luUsage'"
 							" AND uKey=%u AND uType=3",uContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
 		{
-			logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql),uContainer);
+			logfileLine("ProcessSingleHDUsage",mysql_error(&gMysqlUBC),uContainer);
 			unlink("/tmp/ubchd");
 			exit(2);
 		}
-	       	res=mysql_store_result(&gMysql);
+	       	res=mysql_store_result(&gMysqlUBC);
 		if((field=mysql_fetch_row(res)))
 		{
 			sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
@@ -823,10 +1001,10 @@ void ProcessSingleHDUsage(unsigned uContainer)
 							,luUsage
 							,guContainerOwner
 							,field[0]);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysqlUBC),uContainer);
 				unlink("/tmp/ubchd");
 				exit(2);
 			}
@@ -843,10 +1021,10 @@ void ProcessSingleHDUsage(unsigned uContainer)
 						,luUsage
 						,uContainer
 						,guContainerOwner);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleHDUsage",mysql_error(&gMysqlUBC),uContainer);
 				unlink("/tmp/ubchd");
 				exit(2);
 			}
@@ -953,13 +1131,13 @@ void ProcessSingleQuota(unsigned uContainer)
 				sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='%.63s.%.32s'"
 							" AND uKey=%u AND uType=%u",
 					cResource,cKnownQuotaVals[i],uContainer,uType);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
-			       	res=mysql_store_result(&gMysql);
+			       	res=mysql_store_result(&gMysqlUBC);
 				if((field=mysql_fetch_row(res)))
 				{
 					sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
@@ -968,10 +1146,10 @@ void ProcessSingleQuota(unsigned uContainer)
 								,luKnownQuotaVals[i]
 								,guContainerOwner
 								,field[0]);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
+					mysql_query(&gMysqlUBC,gcQuery);
+					if(mysql_errno(&gMysqlUBC))
 					{
-						logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
 						exit(2);
 					}
 				}
@@ -990,10 +1168,10 @@ void ProcessSingleQuota(unsigned uContainer)
 								,uType
 								,uContainer
 								,guContainerOwner);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
+					mysql_query(&gMysqlUBC,gcQuery);
+					if(mysql_errno(&gMysqlUBC))
 					{
-						logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
 						exit(2);
 					}
 				}
@@ -1007,13 +1185,13 @@ void ProcessSingleQuota(unsigned uContainer)
 						" cName=CONCAT('%.63s.%.32s.',DAYOFWEEK(NOW()))"
 							" AND uKey=%u AND uType=%u",
 					cResource,cKnownQuotaVals[i],uContainer,uType);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
-			       	res=mysql_store_result(&gMysql);
+			       	res=mysql_store_result(&gMysqlUBC);
 				if((field=mysql_fetch_row(res)))
 				{
 					//Average
@@ -1023,10 +1201,10 @@ void ProcessSingleQuota(unsigned uContainer)
 								,luKnownQuotaVals[i]
 								,guContainerOwner
 								,field[0]);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
+					mysql_query(&gMysqlUBC,gcQuery);
+					if(mysql_errno(&gMysqlUBC))
 					{
-						logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
 						exit(2);
 					}
 				}
@@ -1045,10 +1223,10 @@ void ProcessSingleQuota(unsigned uContainer)
 								,uType
 								,uContainer
 								,guContainerOwner);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
+					mysql_query(&gMysqlUBC,gcQuery);
+					if(mysql_errno(&gMysqlUBC))
 					{
-						logfileLine("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
+						logfileLine("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
 						exit(2);
 					}
 				}
@@ -1154,13 +1332,13 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 				sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='%.63s.%.32s'"
 							" AND uKey=%u AND uType=%u",
 					cResource,cKnownVZVals[i],uKey,uType);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessVZMemCheck",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessVZMemCheck",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
-			       	res=mysql_store_result(&gMysql);
+			       	res=mysql_store_result(&gMysqlUBC);
 				if((field=mysql_fetch_row(res)))
 				{
 					sprintf(gcQuery,"UPDATE tProperty SET cValue=%2.2f,"
@@ -1171,10 +1349,10 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 								,cResource
 								,cKnownVZVals[i]
 								,field[0]);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
+					mysql_query(&gMysqlUBC,gcQuery);
+					if(mysql_errno(&gMysqlUBC))
 					{
-						logfileLine("ProcessVZMemCheck",mysql_error(&gMysql),uContainer);
+						logfileLine("ProcessVZMemCheck",mysql_error(&gMysqlUBC),uContainer);
 						exit(2);
 					}
 				}
@@ -1193,10 +1371,10 @@ void ProcessVZMemCheck(unsigned uContainer, unsigned uNode)
 								,uType
 								,uKey
 								,guContainerOwner);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
+					mysql_query(&gMysqlUBC,gcQuery);
+					if(mysql_errno(&gMysqlUBC))
 					{
-						logfileLine("ProcessVZMemCheck",mysql_error(&gMysql),uContainer);
+						logfileLine("ProcessVZMemCheck",mysql_error(&gMysqlUBC),uContainer);
 						exit(2);
 					}
 				}
@@ -1287,13 +1465,13 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 				sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='%.63s.%.32s'"
 							" AND uKey=%u AND uType=%u",
 					cResource,cKnownVZVals[i],uKey,uType);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessVZCPUCheck",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
-			       	res=mysql_store_result(&gMysql);
+			       	res=mysql_store_result(&gMysqlUBC);
 				if((field=mysql_fetch_row(res)))
 				{
 					sprintf(gcQuery,"UPDATE tProperty SET cValue=%2.2f,"
@@ -1304,10 +1482,10 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 								,cResource
 								,cKnownVZVals[i]
 								,field[0]);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
+					mysql_query(&gMysqlUBC,gcQuery);
+					if(mysql_errno(&gMysqlUBC))
 					{
-						logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql),uContainer);
+						logfileLine("ProcessVZCPUCheck",mysql_error(&gMysqlUBC),uContainer);
 						exit(2);
 					}
 				}
@@ -1326,10 +1504,10 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode)
 								,uType
 								,uKey
 								,guContainerOwner);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
+					mysql_query(&gMysqlUBC,gcQuery);
+					if(mysql_errno(&gMysqlUBC))
 					{
-						logfileLine("ProcessVZCPUCheck",mysql_error(&gMysql),uContainer);
+						logfileLine("ProcessVZCPUCheck",mysql_error(&gMysqlUBC),uContainer);
 						exit(2);
 					}
 				}
@@ -1475,13 +1653,13 @@ void ProcessSingleTraffic(unsigned uContainer)
 		//1-. IN Bytes
 		sprintf(gcQuery,"SELECT uProperty,uModDate,UNIX_TIMESTAMP(NOW()) FROM tProperty WHERE cName='Venet0.luInDelta'"
 							" AND uKey=%u AND uType=3",uContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
 		{
-			logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+			logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 			exit(2);
 		}
-	       	res=mysql_store_result(&gMysql);
+	       	res=mysql_store_result(&gMysqlUBC);
 		if((field=mysql_fetch_row(res)))
 		{
 			long unsigned luNewInDelta=0;
@@ -1495,13 +1673,13 @@ void ProcessSingleTraffic(unsigned uContainer)
 			//New delta is based on current traffic counter and previous Venet0.luOut counter
 			sprintf(gcQuery,"SELECT cValue,uProperty FROM tProperty WHERE cName='Venet0.luIn'"
 							" AND uKey=%u AND uType=3",uContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
-			res2=mysql_store_result(&gMysql);
+			res2=mysql_store_result(&gMysqlUBC);
 			if((field2=mysql_fetch_row(res2)))
 			{
 				sscanf(field2[0],"%lu",&luPrevIn);
@@ -1528,10 +1706,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 							,luNewInDelta
 							,guContainerOwner
 							,field[0]);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
 			//Update traffic counter
@@ -1541,10 +1719,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 							,luIn
 							,guContainerOwner
 							,uProperty);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
 
@@ -1560,13 +1738,13 @@ void ProcessSingleTraffic(unsigned uContainer)
 			sprintf(gcQuery,"SELECT cValue,uProperty,uCreatedDate"
 					" FROM tProperty WHERE cName='Venet0.luMaxDailyInDelta'"
 							" AND uKey=%u AND uType=3",uContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
-			res2=mysql_store_result(&gMysql);
+			res2=mysql_store_result(&gMysqlUBC);
 			if((field2=mysql_fetch_row(res2)))
 			{
 				sscanf(field2[0],"%lu",&luMaxDailyInDelta);
@@ -1587,13 +1765,13 @@ void ProcessSingleTraffic(unsigned uContainer)
 						",uCreatedDate=UNIX_TIMESTAMP(DATE(NOW()))"
 							,uContainer
 							,guContainerOwner);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
-				uMaxProperty=mysql_insert_id(&gMysql);
+				uMaxProperty=mysql_insert_id(&gMysqlUBC);
 			}
 			mysql_free_result(res2);
 
@@ -1609,10 +1787,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 					" uProperty=%u"
 							,guContainerOwner
 							,uMaxProperty);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
 				luMaxDailyInDelta=0;
@@ -1626,10 +1804,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 							,luNewInDelta
 							,guContainerOwner
 							,uMaxProperty);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
 			}
@@ -1646,10 +1824,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 					",uCreatedDate=UNIX_TIMESTAMP(NOW())"
 						,uContainer
 						,guContainerOwner);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
 
@@ -1664,10 +1842,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 						,luIn
 						,uContainer
 						,guContainerOwner);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
 		}
@@ -1676,13 +1854,13 @@ void ProcessSingleTraffic(unsigned uContainer)
 		//2-. OUT Bytes
 		sprintf(gcQuery,"SELECT uProperty,uModDate,UNIX_TIMESTAMP(NOW()) FROM tProperty WHERE cName='Venet0.luOutDelta'"
 							" AND uKey=%u AND uType=3",uContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
 		{
-			logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+			logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 			exit(2);
 		}
-	       	res=mysql_store_result(&gMysql);
+	       	res=mysql_store_result(&gMysqlUBC);
 		if((field=mysql_fetch_row(res)))
 		{
 			long unsigned luNewOutDelta=0;
@@ -1696,13 +1874,13 @@ void ProcessSingleTraffic(unsigned uContainer)
 			//New delta is based on current traffic counter and previous Venet0.luOut counter
 			sprintf(gcQuery,"SELECT cValue,uProperty FROM tProperty WHERE cName='Venet0.luOut'"
 							" AND uKey=%u AND uType=3",uContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
-			res2=mysql_store_result(&gMysql);
+			res2=mysql_store_result(&gMysqlUBC);
 			if((field2=mysql_fetch_row(res2)))
 			{
 				sscanf(field2[0],"%lu",&luPrevOut);
@@ -1729,10 +1907,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 							,luNewOutDelta
 							,guContainerOwner
 							,field[0]);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
 			//Update traffic counter
@@ -1742,10 +1920,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 							,luOut
 							,guContainerOwner
 							,uProperty);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
 
@@ -1761,13 +1939,13 @@ void ProcessSingleTraffic(unsigned uContainer)
 			sprintf(gcQuery,"SELECT cValue,uProperty,uCreatedDate"
 					" FROM tProperty WHERE cName='Venet0.luMaxDailyOutDelta'"
 							" AND uKey=%u AND uType=3",uContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
-			res2=mysql_store_result(&gMysql);
+			res2=mysql_store_result(&gMysqlUBC);
 			if((field2=mysql_fetch_row(res2)))
 			{
 				sscanf(field2[0],"%lu",&luMaxDailyOutDelta);
@@ -1787,13 +1965,13 @@ void ProcessSingleTraffic(unsigned uContainer)
 						",uCreatedDate=UNIX_TIMESTAMP(DATE(NOW()))"
 							,uContainer
 							,guContainerOwner);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
-				uMaxProperty=mysql_insert_id(&gMysql);
+				uMaxProperty=mysql_insert_id(&gMysqlUBC);
 			}
 			mysql_free_result(res2);
 
@@ -1804,10 +1982,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 					" uProperty=%u"
 							,guContainerOwner
 							,uMaxProperty);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
 				luMaxDailyOutDelta=0;
@@ -1821,10 +1999,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 							,luNewOutDelta
 							,guContainerOwner
 							,uMaxProperty);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
 			}
@@ -1841,10 +2019,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 					",uCreatedDate=UNIX_TIMESTAMP(NOW())"
 						,uContainer
 						,guContainerOwner);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
 
@@ -1859,10 +2037,10 @@ void ProcessSingleTraffic(unsigned uContainer)
 						,luOut
 						,uContainer
 						,guContainerOwner);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleTraffic",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleTraffic",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
 		}
@@ -1917,10 +2095,10 @@ void ProcessSingleStatus(unsigned uContainer)
 		//0-. Zero process vals
 		sprintf(gcQuery,"UPDATE tProperty SET cValue='0' WHERE cName='veinfo.uProcesses'"
 							" AND uKey=%u AND uType=3",uContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
 		{
-			logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
+			logfileLine("ProcessSingleStatus",mysql_error(&gMysqlUBC),uContainer);
 			exit(2);
 		}
 
@@ -1942,13 +2120,13 @@ void ProcessSingleStatus(unsigned uContainer)
 			//1-. veinfo.uProcesses
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='veinfo.uProcesses'"
 							" AND uKey=%u AND uType=3",uContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleStatus",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
-			res=mysql_store_result(&gMysql);
+			res=mysql_store_result(&gMysqlUBC);
 			if((field=mysql_fetch_row(res)))
 			{
 				sprintf(gcQuery,"UPDATE tProperty SET cValue=%u,"
@@ -1957,10 +2135,10 @@ void ProcessSingleStatus(unsigned uContainer)
 							,uProcesses
 							,guContainerOwner
 							,field[0]);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
 			}
@@ -1976,10 +2154,10 @@ void ProcessSingleStatus(unsigned uContainer)
 							,uProcesses
 							,uContainer
 							,guContainerOwner);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
 			}
@@ -1989,13 +2167,13 @@ void ProcessSingleStatus(unsigned uContainer)
 			//2-. veinfo.cIP
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='veinfo.cIP'"
 							" AND uKey=%u AND uType=3",uContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
+				logfileLine("ProcessSingleStatus",mysql_error(&gMysqlUBC),uContainer);
 				exit(2);
 			}
-			res=mysql_store_result(&gMysql);
+			res=mysql_store_result(&gMysqlUBC);
 			if((field=mysql_fetch_row(res)))
 			{
 				sprintf(gcQuery,"UPDATE tProperty SET cValue='%s',"
@@ -2004,10 +2182,10 @@ void ProcessSingleStatus(unsigned uContainer)
 							,cIP
 							,guContainerOwner
 							,field[0]);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
 			}
@@ -2023,10 +2201,10 @@ void ProcessSingleStatus(unsigned uContainer)
 							,cIP
 							,uContainer
 							,guContainerOwner);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
 				{
-					logfileLine("ProcessSingleStatus",mysql_error(&gMysql),uContainer);
+					logfileLine("ProcessSingleStatus",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
 			}
@@ -2057,4 +2235,59 @@ void SendEmail(char *cSubject,char *cMsg)
 	pclose(fp);
 
 }//void SendEmail()
+
+
+void ConnectToOptionalUBCDb(unsigned uDatacenter)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//UBC MySQL server per datacenter option. Get db IPs
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
+				" AND uType=1"
+				" AND cName='gcUBCDBIP0'"
+						,uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ProcessUBC",mysql_error(&gMysql),uDatacenter);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uA=0,uB=0,uC=0,uD=0;
+		if(sscanf(field[0],"%u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
+			gcUBCDBIP0=gcUBCDBIP0Buffer;
+		}
+	}
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
+				" AND uType=1"
+				" AND cName='gcUBCDBIP1'"
+						,uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ProcessUBC",mysql_error(&gMysql),uDatacenter);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uA=0,uB=0,uC=0,uD=0;
+		if(sscanf(field[0],"%u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			sprintf(gcUBCDBIP1Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
+			gcUBCDBIP1=gcUBCDBIP1Buffer;
+		}
+	}
+	//If gcUBCDBIP1 or gcUBCDBIP1 exist then we will use another MySQL db for UBC tProperty
+	//	data
+	TextConnectDbUBC();
+
+}//void ConnectToOptionalUBCDb()
 
