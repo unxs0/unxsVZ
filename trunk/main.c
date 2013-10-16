@@ -27,6 +27,13 @@ FREE HELP
 //Global vars
 #define SHOWPAGE 30
 MYSQL gMysql;
+MYSQL gMysqlUBC;
+char *gcUBCDBIP0;//must be set to DBIP0 to be used as alternative
+char *gcUBCDBIP1;
+char gcUBCDBIP0Buffer[32]={""};
+char gcUBCDBIP1Buffer[32]={""};
+FILE *gLfp=NULL;
+
 unsigned long gluRowid;
 unsigned guStart;
 unsigned guEnd;

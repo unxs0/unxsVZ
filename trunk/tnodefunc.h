@@ -32,6 +32,7 @@ unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned u
 unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown,
 			unsigned uSyncPeriod,unsigned uCloneStop,unsigned uTargetDatacenter);
 void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
+unsigned ConnectToOptionalUBCDb(unsigned uDatacenter);
 
 //external
 //tcontainerfunc.h
@@ -680,7 +681,9 @@ void ExttNodeButtons(void)
 			if(uNode)
 			{
 				htmlHealth(uNode,2);
-				htmlNodeHealth(uNode);
+				//hide health if node selected via get
+				if(guMode!=6)
+					htmlNodeHealth(uNode);
 				printf("<p><input type=submit class=largeButton title='Display node container"
 					" report'"
 					" name=gcCommand value='Node Container Report'><br>");
@@ -1353,15 +1356,29 @@ NextSection2:
 
 	//4-.
 	//Check all active node activity via tProperty
-	sprintf(gcQuery,"SELECT tNode.cLabel,FROM_UNIXTIME(MAX(tProperty.uModDate)),"
-			"(UNIX_TIMESTAMP(NOW()) - MAX(tProperty.uModDate) > 900 ) FROM"
-			" tProperty,tNode WHERE tProperty.uKey=tNode.uNode AND"
-			" tProperty.uType=2 AND tNode.uStatus=1 AND tProperty.cName='numiptent.luFailcnt' GROUP BY tProperty.uKey");
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
+	unsigned uPrevDatacenter=0;
+
+	char cLogfile[64]={"/tmp/unxsvzlog"};
+
+	if((gLfp=fopen(cLogfile,"a"))==NULL)
+        {
+                printf("Could not open logfile: %s\n",cLogfile);
+		return;
+        }
+
+	//Distributed UBC data may exist
+	//Check tDatacenter property gcUBCDBIP0/1
+	sprintf(gcQuery,"SELECT cLabel,uDatacenter,uNode"
+			" FROM tNode"
+			" WHERE uStatus=1"
+			" AND cLabel!='appliance'"
+			" ORDER BY uDatacenter,uNode");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
 		printf("%s",mysql_error(&gMysql));
-		mysql_free_result(res);
 		return;
 	}
         res=mysql_store_result(&gMysql);
@@ -1369,13 +1386,69 @@ NextSection2:
 		printf("<u>Node Roll Call</u><br>\n");
 	while((field=mysql_fetch_row(res)))
 	{
-		printf("<font color=");
-		if(field[2][0]=='1') 
-			printf("red>");
-		else
-			printf("black>");
-		printf("%s last contact: %s</font><br>\n",field[0],field[1]);
-	}
+		unsigned uDatacenter=0;
+		unsigned uNode=0;
+		static unsigned uCount=0;
+
+		uCount++;
+
+		//The following will associate gMysqlUBC with the main db or with an external UBC db server
+		sscanf(field[1],"%u",&uDatacenter);
+		sscanf(field[2],"%u",&uNode);
+		if(!uDatacenter) break;
+		if(!uNode) break;
+		//Note that we set the prev datacenter at the bottom of the loop
+		if(uPrevDatacenter!=uDatacenter)
+		{
+			if(uPrevDatacenter)
+			{
+				mysql_close(&gMysqlUBC);
+				//debug
+				//printf("closed %s %s<br>\n",gcUBCDBIP0Buffer,gcUBCDBIP1Buffer);
+			}
+			if(ConnectToOptionalUBCDb(uDatacenter))
+			{
+				printf("%s connect error %s %s<br>\n",field[0],gcUBCDBIP0Buffer,gcUBCDBIP1Buffer);
+				continue;
+			}
+			//debug
+			//printf("connected %s %s<br>\n",gcUBCDBIP0Buffer,gcUBCDBIP1Buffer);
+			uPrevDatacenter=uDatacenter;
+		}
+
+		sprintf(gcQuery,"SELECT FROM_UNIXTIME(MAX(tProperty.uModDate)),(UNIX_TIMESTAMP(NOW()) - MAX(tProperty.uModDate) > 900 )"
+			" FROM tProperty"
+			" WHERE tProperty.uKey=%u"
+			" AND tProperty.uType=2"
+			" AND tProperty.cName='numiptent.luFailcnt'",uNode);
+		mysql_query(&gMysqlUBC,gcQuery);
+        	if(mysql_errno(&gMysqlUBC))
+		{
+			printf("%s",mysql_error(&gMysqlUBC));
+			return;
+		}
+        	res2=mysql_store_result(&gMysqlUBC);
+
+		if((field2=mysql_fetch_row(res2)))
+		{
+			printf("<font color=");
+			if(field2[1]==NULL || field2[0]==NULL)
+			{
+				printf("red>%s no data</font><br>\n",field[0]);
+			}
+			else
+			{
+				if(field2[1][0]=='1') 
+					printf("red>");
+				else
+					printf("black>");
+				printf("%s last contact: %s</font><br>\n",field[0],field2[0]);
+			}
+		}
+		mysql_free_result(res2);
+
+
+	}//each node w/datacenter
 	mysql_free_result(res);
 
 }//void htmlNodeHealth(unsigned uNode)
@@ -1585,3 +1658,68 @@ void SetNodeProp(char const *cName,char const *cValue,unsigned uNode)
         	mysql_query(&gMysql,gcQuery);
 	}
 }//void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
+
+
+unsigned ConnectToOptionalUBCDb(unsigned uDatacenter)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(!uDatacenter) return(2);
+
+	//If no deal use main db as default
+	gcUBCDBIP0=DBIP0;
+	gcUBCDBIP1=DBIP1;
+
+	//UBC MySQL server per datacenter option. Get db IPs
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
+				" AND uType=1"
+				" AND cName='gcUBCDBIP0'"
+						,uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("unxsVZ:ConnectToOptionalUBCDb",mysql_error(&gMysql));
+		return(1);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uA=0,uB=0,uC=0,uD=0;
+		if(sscanf(field[0],"%*u.%*u.%*u.%*u Public %u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
+			gcUBCDBIP0=gcUBCDBIP0Buffer;
+			logfileLine("unxsVZ:ConnectToOptionalUBCDb",gcUBCDBIP0Buffer);
+		}
+	}
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
+				" AND uType=1"
+				" AND cName='gcUBCDBIP1'"
+						,uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("unxsVZ:ConnectToOptionalUBCDb",mysql_error(&gMysql));
+		return(1);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uA=0,uB=0,uC=0,uD=0;
+		if(sscanf(field[0],"%*u.%*u.%*u.%*u Public %u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			sprintf(gcUBCDBIP1Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
+			gcUBCDBIP1=gcUBCDBIP1Buffer;
+			logfileLine("unxsVZ:ConnectToOptionalUBCDb",gcUBCDBIP1Buffer);
+		}
+	}
+	//If gcUBCDBIP0 or gcUBCDBIP1 exist then we will use another MySQL db for UBC tProperty
+	//	data
+	//debug
+	//printf("connecting to %s %s\n",gcUBCDBIP0Buffer,gcUBCDBIP1Buffer);
+	return(ConnectDbUBC());
+		
+
+}//unsigned ConnectToOptionalUBCDb()
+
