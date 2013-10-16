@@ -20,7 +20,7 @@ NOTES
 #include <errno.h>
 
 //This is an important setting that depends on your network setup
-#define SELECT_TIMEOUT_USEC 300000
+#define SELECT_TIMEOUT_USEC 600000
 
 //extern protos
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer);
