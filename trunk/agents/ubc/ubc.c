@@ -66,27 +66,27 @@ unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
 {
+	FILE *fp=stdout;
+
 	if(gLfp!=NULL)
-	{
-		time_t luClock;
-		char cTime[32];
-		pid_t pidThis;
-		const struct tm *tmTime;
+		fp=gLfp;
 
-		pidThis=getpid();
+	time_t luClock;
+	char cTime[32];
+	pid_t pidThis;
+	const struct tm *tmTime;
 
-		time(&luClock);
-		tmTime=localtime(&luClock);
-		strftime(cTime,31,"%b %d %T",tmTime);
+	pidThis=getpid();
 
-		fprintf(gLfp,"%s unxsUBC.%s[%u]: %s.",cTime,cFunction,pidThis,cLogline);
-		if(uContainer)
-			fprintf(gLfp," %u",uContainer);
-		fprintf(gLfp,"\n");
-		fflush(gLfp);
-	}
-	else
-		printf("%s\n",cLogline);
+	time(&luClock);
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
+
+	fprintf(fp,"%s unxsUBC.%s[%u]: %s.",cTime,cFunction,pidThis,cLogline);
+	if(uContainer)
+		fprintf(fp," %u",uContainer);
+	fprintf(fp,"\n");
+	fflush(fp);
 
 }//void logfileLine()
 
@@ -131,7 +131,7 @@ int main(int iArgc, char *cArgv[])
 				gethostname(cHostname,99);
 				if((cp=strchr(cHostname,'.')))
 					*cp=0;
-				printf("Connected %s %s from %s\n",DBIP0,DBIP1,cHostname);
+				printf("Connected to %s %s from %s\n",DBIP0,DBIP1,cHostname);
 
 				sprintf(gcQuery,"SELECT uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
 				mysql_query(&gMysql,gcQuery);
@@ -161,7 +161,7 @@ int main(int iArgc, char *cArgv[])
 				mysql_query(&gMysqlUBC,gcQuery);
 				if(mysql_errno(&gMysqlUBC))
 					printf("%s",mysql_error(&gMysqlUBC));
-				else
+				else if(mysql_affected_rows(&gMysqlUBC))
 					printf("Created tProperty table at %s for uDatacenter=%u\n",gcUBCDBIP0,uDatacenter);
 				mysql_close(&gMysqlUBC);
 				mysql_close(&gMysql);
@@ -2250,7 +2250,7 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("ProcessUBC",mysql_error(&gMysql),uDatacenter);
+		logfileLine("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -2262,6 +2262,7 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 		{
 			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
 			gcUBCDBIP0=gcUBCDBIP0Buffer;
+			logfileLine("ConnectToOptionalUBCDb",gcUBCDBIP0Buffer,uDatacenter);
 		}
 	}
 	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
@@ -2271,7 +2272,7 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("ProcessUBC",mysql_error(&gMysql),uDatacenter);
+		logfileLine("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -2283,6 +2284,7 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 		{
 			sprintf(gcUBCDBIP1Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
 			gcUBCDBIP1=gcUBCDBIP1Buffer;
+			logfileLine("ConnectToOptionalUBCDb",gcUBCDBIP1Buffer,uDatacenter);
 		}
 	}
 	//If gcUBCDBIP1 or gcUBCDBIP1 exist then we will use another MySQL db for UBC tProperty
