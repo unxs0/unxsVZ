@@ -4247,6 +4247,9 @@ while((field=mysql_fetch_row(res)))
 									sscanf(cConfBuffer,"%u",&uSyncPeriod);
 							}
 							GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,sContainer.uDatacenter,sContainer.uNode,0,0);
+							//If none try less specific tConfiguration entry
+							if(!cAutoCloneIPClass[0])
+								GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,sContainer.uDatacenter,0,0,0);
 						}
 						else
 						{

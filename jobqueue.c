@@ -116,7 +116,6 @@ static unsigned gfuNode=0;
 static unsigned gfuDatacenter=0;
 static unsigned guDebug=0;
 static char cHostname[100]={""};//file scope
-static FILE *gLfp=NULL;//log file
 
 
 //Using the local server hostname get max 32 jobs for this node from the tJob queue.

@@ -25,6 +25,7 @@ NOTES
 //TOC protos
 void ConnectDb(void);
 unsigned TextConnectDb(void);
+unsigned ConnectDbUBC(void);
 
 
 void ConnectDb(void)
@@ -300,3 +301,145 @@ unsigned TextConnectDb(void)
 	return(1);
 
 }//unsigned TextConnectDb()
+
+
+unsigned ConnectDbUBC(void)
+{
+	//Handle quick cases first
+	//Port is irrelevant here. Make it clear.
+	mysql_init(&gMysqlUBC);
+	if(gcUBCDBIP0==NULL)
+	{
+		if (mysql_real_connect(&gMysqlUBC,gcUBCDBIP0,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
+			return(0);
+	}
+	if(gcUBCDBIP1==NULL)
+	{
+		if (mysql_real_connect(&gMysqlUBC,gcUBCDBIP1,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
+			return(0);
+	}
+
+	//Now we can use AF_INET/IPPROTO_TCP cases (TCP connections via IP number)
+	char cPort[16]={"3306"};//(*1)
+	int iSock,iConRes;
+	long lFcntlArg;
+	struct sockaddr_in sockaddr_inMySQLServer;
+	fd_set myset; 
+	struct timeval tv; 
+	int valopt;
+	socklen_t lon; 
+
+	//Default port should really be gathered from a different source
+	//but for now we use the known MySQL server CentOS default port (*1).
+	if(DBPORT!=0)
+		sprintf(cPort,"%u",DBPORT);
+
+	if(gcUBCDBIP0!=NULL)
+	{
+		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
+		{
+			logfileLine("unxsVZ:ConnectDbUBC","Could not create socket gcUBCDBIP0");
+			return(1);
+		}
+
+		// Set non-blocking 
+		lFcntlArg=fcntl(iSock,F_GETFL,NULL); 
+		lFcntlArg|=O_NONBLOCK; 
+		fcntl(iSock,F_SETFL,lFcntlArg); 
+
+		//DBIP0 has priority if we can create a connection we
+		//move forward immediately.
+		memset(&sockaddr_inMySQLServer,0,sizeof(sockaddr_inMySQLServer));
+		sockaddr_inMySQLServer.sin_family=AF_INET;
+		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(gcUBCDBIP0);
+		sockaddr_inMySQLServer.sin_port=htons(atoi(cPort));
+		iConRes=connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer));
+		if(iConRes<0)
+		{
+			if(errno==EINPROGRESS)
+			{
+				tv.tv_sec=0; 
+				tv.tv_usec=SELECT_TIMEOUT_USEC; 
+				FD_ZERO(&myset); 
+				FD_SET(iSock,&myset); 
+				if(select(iSock+1,NULL,&myset,NULL,&tv)>0)
+				{ 
+					lon=sizeof(int); 
+					getsockopt(iSock,SOL_SOCKET,SO_ERROR,(void*)(&valopt),&lon); 
+					if(!valopt)
+					{
+						//Valid fast connection
+						close(iSock);//Don't need anymore.
+						if(mysql_real_connect(&gMysqlUBC,gcUBCDBIP0,DBLOGIN,DBPASSWD,
+											DBNAME,DBPORT,DBSOCKET,0))
+							return(0);
+					}
+				} 
+			} 
+		}
+		close(iSock);//Don't need anymore.
+	}
+
+	if(gcUBCDBIP1!=NULL)
+	{
+		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
+		{
+			logfileLine("unxsVZ:ConnectDbUBC","Could not create socket gcUBCDBIP1");
+			return(1);
+		}
+
+		// Set non-blocking 
+		lFcntlArg=fcntl(iSock,F_GETFL,NULL); 
+		lFcntlArg|=O_NONBLOCK; 
+		fcntl(iSock,F_SETFL,lFcntlArg); 
+
+		//Fallback to DBIP1
+		memset(&sockaddr_inMySQLServer,0,sizeof(sockaddr_inMySQLServer));
+		sockaddr_inMySQLServer.sin_family=AF_INET;
+		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(gcUBCDBIP1);
+		sockaddr_inMySQLServer.sin_port=htons(atoi(cPort));
+		iConRes=connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer));
+		if(iConRes<0)
+		{
+			if(errno==EINPROGRESS)
+			{
+				tv.tv_sec=0; 
+				tv.tv_usec=SELECT_TIMEOUT_USEC; 
+				FD_ZERO(&myset); 
+				FD_SET(iSock,&myset); 
+				if(select(iSock+1,NULL,&myset,NULL,&tv)>0)
+				{ 
+					lon=sizeof(int); 
+					getsockopt(iSock,SOL_SOCKET,SO_ERROR,(void*)(&valopt),&lon); 
+					if(!valopt)
+					{
+						//Valid fast connection
+						close(iSock);//Don't need anymore.
+						if(mysql_real_connect(&gMysqlUBC,gcUBCDBIP1,DBLOGIN,DBPASSWD,
+											DBNAME,DBPORT,DBSOCKET,0))
+							return(0);
+					}
+				} 
+			} 
+		}
+		close(iSock);//Don't need anymore.
+	}
+
+	//Failure exit 4 cases
+	char cMessage[256];
+	if(gcUBCDBIP1!=NULL && gcUBCDBIP0!=NULL)
+		sprintf(cMessage,"Could not connect to gcUBCDBIP0:%1$s:%2$s or gcUBCDBIP1:%3$s:%2$s\n",gcUBCDBIP0Buffer,cPort,gcUBCDBIP1Buffer);
+	else if(gcUBCDBIP1==NULL && gcUBCDBIP0==NULL)
+		sprintf(cMessage,"Could not connect to local socket\n");
+	else if(gcUBCDBIP0!=NULL && gcUBCDBIP1==NULL)
+		sprintf(cMessage,"Could not connect to gcUBCDBIP0:%s:%s or local socket (gcUBCDBIP1)\n",gcUBCDBIP0Buffer,cPort);
+	else if(gcUBCDBIP0==NULL && gcUBCDBIP1!=NULL)
+		sprintf(cMessage,"Could not connect to gcUBCDBIP1:%s:%s or local socket (gcUBCDBIP0)\n",gcUBCDBIP1Buffer,cPort);
+	else if(1)
+		sprintf(cMessage,"Could not connect unexpected case\n");
+
+	logfileLine("unxsVZ:ConnectDbUBC",cMessage);
+	return(1);
+
+}//unsigned ConnectDbUBC()
+

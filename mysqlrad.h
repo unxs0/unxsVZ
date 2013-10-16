@@ -99,6 +99,7 @@ extern unsigned guLoginClient;
 extern unsigned guReseller; 
 extern unsigned guCompany;
 
+extern FILE *gLfp;
 extern char gcFunction[];
 extern unsigned guListMode; 
 extern char gcQuery[];
@@ -106,6 +107,12 @@ extern char *gcQstr;
 extern char *gcBuildInfo;
 extern char *gcRADStatus;
 extern MYSQL gMysql; 
+extern MYSQL gMysqlUBC;
+extern char *gcUBCDBIP0;
+extern char *gcUBCDBIP1;
+extern char gcUBCDBIP0Buffer[];
+extern char gcUBCDBIP1Buffer[];
+
 extern unsigned long gluRowid;
 extern unsigned guStart;
 extern unsigned guEnd;
@@ -126,6 +133,9 @@ extern int x;
 
 void unxsVZ(const char *cResult);
 void ConnectDb(void);
+unsigned TextConnectDb(void);
+unsigned ConnectDbUBC(void);
+void logfileLine(const char *cFunction,const char *cLogline);
 void Footer_ism3(void);
 void Header_ism3(const char *cMsg, int iJs);
 void ProcessControlVars(pentry entries[], int x);
