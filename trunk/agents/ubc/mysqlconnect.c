@@ -308,15 +308,15 @@ void TextConnectDbUBC(void)
 	//Failure exit 4 cases
 	char cMessage[256];
 	if(gcUBCDBIP1!=NULL && gcUBCDBIP0!=NULL)
-		sprintf(cMessage,"Could not connect to gcUBCDBIP0:%1$s:%2$s or gcUBCDBIP1:%3$s:%2$s\n",gcUBCDBIP0Buffer,cPort,gcUBCDBIP1Buffer);
+		sprintf(cMessage,"Could not connect to gcUBCDBIP0:%1$s:%2$s or gcUBCDBIP1:%3$s:%2$s",gcUBCDBIP0Buffer,cPort,gcUBCDBIP1Buffer);
 	else if(gcUBCDBIP1==NULL && gcUBCDBIP0==NULL)
-		sprintf(cMessage,"Could not connect to local socket\n");
+		sprintf(cMessage,"Could not connect to local socket");
 	else if(gcUBCDBIP0!=NULL && gcUBCDBIP1==NULL)
-		sprintf(cMessage,"Could not connect to gcUBCDBIP0:%s or local socket (gcUBCDBIP1)\n",cPort);
+		sprintf(cMessage,"Could not connect to gcUBCDBIP0:%s or local socket (gcUBCDBIP1)",cPort);
 	else if(gcUBCDBIP0==NULL && gcUBCDBIP1!=NULL)
-		sprintf(cMessage,"Could not connect to gcUBCDBIP1:%s or local socket (gcUBCDBIP0)\n",cPort);
+		sprintf(cMessage,"Could not connect to gcUBCDBIP1:%s or local socket (gcUBCDBIP0)",cPort);
 	else if(1)
-		sprintf(cMessage,"Could not connect unexpected case\n");
+		sprintf(cMessage,"Could not connect unexpected case");
 
 	logfileLine("TextConnectDbUBC",cMessage,0);
 	exit(1);

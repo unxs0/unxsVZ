@@ -163,6 +163,19 @@ int main(int iArgc, char *cArgv[])
 					printf("%s",mysql_error(&gMysqlUBC));
 				else if(mysql_affected_rows(&gMysqlUBC))
 					printf("Created tProperty table at %s for uDatacenter=%u\n",gcUBCDBIP0,uDatacenter);
+
+				sprintf(gcQuery,"SELECT COUNT(*) FROM tProperty");
+				mysql_query(&gMysqlUBC,gcQuery);
+				if(mysql_errno(&gMysqlUBC))
+					printf("%s",mysql_error(&gMysqlUBC));
+				else
+				{
+			        	res=mysql_store_result(&gMysqlUBC);
+					if((field=mysql_fetch_row(res)))
+						printf("tProperty rows=%s\n",field[0]);
+					mysql_free_result(res);
+				}
+
 				mysql_close(&gMysqlUBC);
 				mysql_close(&gMysql);
 				exit(0);
@@ -780,6 +793,7 @@ void ProcessUBC(void)
 	{
 		logfileLine("ProcessUBC",mysql_error(&gMysql),uContainer);
 		mysql_close(&gMysql);
+		mysql_close(&gMysqlUBC);
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
@@ -795,6 +809,7 @@ void ProcessUBC(void)
 			logfileLine("ProcessUBC","structSysinfo.loads[1] larger than JOBQUEUE_MAXLOAD",0);
 			mysql_free_result(res);
 			mysql_close(&gMysql);
+			mysql_close(&gMysqlUBC);
 			return;
 		}
 
@@ -829,6 +844,7 @@ void ProcessUBC(void)
 	}
 	mysql_free_result(res);
 	mysql_close(&gMysql);
+	mysql_close(&gMysqlUBC);
 
 }//void ProcessUBC(void)
 
@@ -917,6 +933,7 @@ void ProcessNodeUBC(void)
 		logfileLine("ProcessNodeUBC","end",uNode);
 
 	mysql_close(&gMysql);
+	mysql_close(&gMysqlUBC);
 
 }//void ProcessNodeUBC(void)
 
