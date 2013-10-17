@@ -13,15 +13,20 @@ static char cReturn[100]={""};
 static char cUBCName[100]={""};
 static long unsigned luBarrier=0;
 static long unsigned luLimit=0;
+static char cuDatacenterSelect[32]={""};
+static unsigned uTargetDatacenter=0;
 
 //ModuleFunctionProtos()
 unsigned SetUBCJob(unsigned uContainer,char *cSet);
 void htmlReturnLink(void);
 void htmlGlossaryLink(char *cLabel);
+void htmlUBCDatacenterSelect(char *cuDatacenterSelect,unsigned uMode);
 
 //jobqueue.c
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 
+//tnodefunc.h
+unsigned ConnectToOptionalUBCDb(unsigned uDatacenter);
 
 void ExtProcesstPropertyVars(pentry entries[], int x)
 {
@@ -36,6 +41,17 @@ void ExtProcesstPropertyVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%lu",&luLimit);
 		else if(!strcmp(entries[i].name,"cUBCName")) 
 			sprintf(cUBCName,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"htmlUBCDatacenterSelect") && entries[i].val[0]!='-') 
+		{
+			uTargetDatacenter=ReadPullDown("tDatacenter","cLabel",entries[i].val);
+			sprintf(cuDatacenterSelect,"%u",uTargetDatacenter);
+			char cLogfile[64]={"/tmp/unxsvzlog"};
+			if((gLfp=fopen(cLogfile,"a"))==NULL)
+                		tProperty("Could not open logfile");
+			if(uTargetDatacenter && ConnectToOptionalUBCDb(uTargetDatacenter))
+				tProperty("ConnectToOptionalUBCDb() error");
+			guUsingUBC=1;
+		}
 	}
 }//void ExtProcesstPropertyVars(pentry entries[], int x)
 
@@ -434,6 +450,9 @@ void ExttPropertyButtons(void)
                 break;
 
 		default:
+			printf("<u>Select external UBC server</u><br>");
+			htmlUBCDatacenterSelect(cuDatacenterSelect,1);
+			printf("<p>");
 			htmlReturnLink();
 			htmlGlossaryLink(cName);
 			printf("<u>Table Tips</u><br>");
@@ -698,3 +717,66 @@ void htmlGlossaryLink(char *cLabel)
 	mysql_free_result(res);
 
 }//void htmlGlossaryLink()
+
+
+void htmlUBCDatacenterSelect(char *cuDatacenterSelect,unsigned uMode)
+{
+        register int i,n;
+        MYSQL_RES *mysqlRes;         
+        MYSQL_ROW mysqlField;
+	char *cMode="";
+	char cHidden[128]={""};
+
+	if(!uMode)
+		cMode="disabled";
+      
+	sprintf(gcQuery,"SELECT DISTINCT tDatacenter.cLabel,tDatacenter.uDatacenter"
+			" FROM tProperty,tDatacenter"
+			" WHERE tProperty.uKey=tDatacenter.uDatacenter"
+			" AND tProperty.cName LIKE 'gcUBCDBIP_' AND tProperty.uType=1");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",gcQuery);
+		return;
+	}
+	mysqlRes=mysql_store_result(&gMysql);
+	i=mysql_num_rows(mysqlRes);
+        if(i>0)
+        {
+		char cuDatacenter[16]={""};
+                printf("<select name=htmlUBCDatacenterSelect %s>\n",cMode);
+
+                //Default no selection
+                printf("<option title='No selection'>---</option>\n");
+
+                for(n=0;n<i;n++)
+                {
+                        mysqlField=mysql_fetch_row(mysqlRes);
+			unsigned uA=0;
+			if(sscanf(mysqlField[1],"%u",&uA)==1)
+			{
+				sprintf(cuDatacenter,"%u",uA);
+				if(strcmp(cuDatacenter,cuDatacenterSelect))
+					printf("<option>%s</option>\n",mysqlField[0]);
+                        	else
+                        	{
+					printf("<option selected>%s</option>\n",mysqlField[0]);
+					if(!uMode)
+						sprintf(cHidden,"<input type=hidden name=htmlUBCDatacenterSelect value='%s'>\n",mysqlField[0]);
+                        	}
+			}
+                }
+        }
+        else
+        {
+		printf("<select name=htmlUBCDatacenterSelect %s><option title='No selection'>---</option></select>\n",cMode);
+		if(!uMode)
+			sprintf(cHidden,"<input type=hidden name=htmlUBCDatacenterSelect value='---'>\n");
+        }
+        printf("</select>\n");
+	if(cHidden[0])
+		printf("%s",cHidden);
+
+}//void htmlUBCDatacenterSelect(char *cuDatacenterSelect,unsigned uMode)
+
