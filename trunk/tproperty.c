@@ -39,7 +39,8 @@ static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
 
-
+//flag for marking gMysqlUBC as active
+static unsigned guUsingUBC=0;
 
 #define VAR_LIST_tProperty "tProperty.uProperty,tProperty.cName,tProperty.cValue,tProperty.uType,tProperty.uKey,tProperty.uOwner,tProperty.uCreatedBy,tProperty.uCreatedDate,tProperty.uModBy,tProperty.uModDate"
 
@@ -154,6 +155,11 @@ void tProperty(const char *cResult)
 	MYSQL_RES *res;
 	MYSQL_RES *res2;
 	MYSQL_ROW field;
+	MYSQL MysqlSave=gMysql;
+
+
+	if(guUsingUBC)
+		gMysql=gMysqlUBC;
 
 	//Internal skip reloading
 	if(!cResult[0])
@@ -206,6 +212,7 @@ void tProperty(const char *cResult)
 		}
 
 	}//Internal Skip
+	gMysql=MysqlSave;
 
 	Header_ism3(":: Shared property table",0);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
