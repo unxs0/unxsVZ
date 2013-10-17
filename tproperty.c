@@ -107,16 +107,31 @@ void ProcesstPropertyVars(pentry entries[], int x)
 
 void ProcesstPropertyListVars(pentry entries[], int x)
 {
+	char cLogfile[64]={"/tmp/unxsvzlog"};
+	if((gLfp=fopen(cLogfile,"a"))==NULL)
+        	tProperty("Could not open logfile");
         register int i;
 
         for(i=0;i<x;i++)
         {
+		//debug
+		//logfileLine("ProcesstPropertyListVars",entries[i].name);
+		//logfileLine("ProcesstPropertyListVars",entries[i].val);
                 if(!strncmp(entries[i].name,"ED",2))
                 {
                         sscanf(entries[i].name+2,"%u",&uProperty);
                         guMode=2002;
                         tProperty("");
                 }
+		else if(!strcmp(entries[i].name,"htmlUBCDatacenterSelect") && entries[i].val[0]!='-') 
+		{
+			sprintf(cDatacenterSelect,"%.63s",entries[i].val);
+			uTargetDatacenter=ReadPullDown("tDatacenter","cLabel",entries[i].val);
+			sprintf(cuDatacenterSelect,"%u",uTargetDatacenter);
+			if(uTargetDatacenter && ConnectToOptionalUBCDb(uTargetDatacenter))
+				tProperty("ConnectToOptionalUBCDb() error");
+			guUsingUBC=1;
+		}
         }
 }//void ProcesstPropertyListVars(pentry entries[], int x)
 
@@ -131,6 +146,7 @@ int tPropertyCommands(pentry entries[], int x)
 	{
 		if(!strcmp(gcFind,LANG_NB_LIST))
 		{
+			ProcesstPropertyListVars(entries,x);
 			tPropertyList();
 		}
 
@@ -140,7 +156,7 @@ int tPropertyCommands(pentry entries[], int x)
 	}
 	else if(!strcmp(gcFunction,"tPropertyList"))
 	{
-		ProcessControlVars(entries,x);
+		//ProcessControlVars(entries,x);
 		ProcesstPropertyListVars(entries,x);
 		tPropertyList();
 	}
@@ -492,6 +508,13 @@ void tPropertyList(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
+	MYSQL gMysqlSave;
+	if(guUsingUBC)
+	{
+		gMysqlSave=gMysql;
+		gMysql=gMysqlUBC;
+	}
+
 	ExttPropertyListSelect();
 
 	MYSQL_RUN_STORE(res);
@@ -506,6 +529,8 @@ void tPropertyList(void)
 		" type=text size=32 name=gcCommand maxlength=98 value=\"%s\" >",gcCommand);
 	printf("<input title='Enter MySQL where condition. E.g. cValue LIKE `%%Node=rc7;%%`'"
 		" type=text size=128 name=gcAuxFilter maxlength=255 value=\"%s\" >",gcAuxFilter);
+	if(cDatacenterSelect[0])
+		printf("<input type=hidden name=htmlUBCDatacenterSelect value='%s'>\n",cDatacenterSelect);
 
 	printf("</table>\n");
 
@@ -561,7 +586,14 @@ void tPropertyList(void)
 			default:
 				cTable="tDatacenter&uDatacenter";
 		}
-		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s>%s</a>"
+
+		char cLinkExtra[32]={""};
+		if(guUsingUBC)
+		{
+			gMysql=gMysqlSave;
+			sprintf(cLinkExtra,"&cuDatacenterSelect=%s",cuDatacenterSelect);
+		}
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s%s>%s</a>"
 			"<td>%s"
 			"<td><textarea rows=1 cols=80 disabled>%s</textarea>"
 			"<td>%s"
@@ -571,7 +603,7 @@ void tPropertyList(void)
 			"<td>%s"
 			"<td>%s"
 			"<td>%s</tr>"
-			,field[0],field[0]
+			,field[0],cLinkExtra,field[0]
 			,field[1]
 			,field[2]
 			,ForeignKey("tType","cLabel",uKey)
@@ -582,6 +614,8 @@ void tPropertyList(void)
 			,ForeignKey(TCLIENT,"cLabel",strtoul(field[8],NULL,10))
 			,cBuf9
 				);
+		if(guUsingUBC)
+			gMysql=gMysqlUBC;
 
 	}
 
