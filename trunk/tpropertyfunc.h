@@ -14,6 +14,7 @@ static char cUBCName[100]={""};
 static long unsigned luBarrier=0;
 static long unsigned luLimit=0;
 static char cuDatacenterSelect[32]={""};
+static char cDatacenterSelect[64]={""};//used in list in .c file
 static unsigned uTargetDatacenter=0;
 
 //ModuleFunctionProtos()
@@ -43,6 +44,7 @@ void ExtProcesstPropertyVars(pentry entries[], int x)
 			sprintf(cUBCName,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"htmlUBCDatacenterSelect") && entries[i].val[0]!='-') 
 		{
+			sprintf(cDatacenterSelect,"%.63s",entries[i].val);
 			uTargetDatacenter=ReadPullDown("tDatacenter","cLabel",entries[i].val);
 			sprintf(cuDatacenterSelect,"%u",uTargetDatacenter);
 			char cLogfile[64]={"/tmp/unxsvzlog"};
@@ -489,6 +491,18 @@ void ExttPropertyGetHook(entry gentries[], int x)
 		else if(!strcmp(gentries[i].name,"cReturn"))
 		{
 			sprintf(cReturn,"%.99s",gentries[i].val);
+		}
+		else if(!strcmp(gentries[i].name,"cuDatacenterSelect"))
+		{
+			sscanf(gentries[i].val,"%u",&uTargetDatacenter);
+			sprintf(cDatacenterSelect,"%.63s",ForeignKey("tDatacenter","cLabel",uTargetDatacenter));
+			sprintf(cuDatacenterSelect,"%u",uTargetDatacenter);
+			char cLogfile[64]={"/tmp/unxsvzlog"};
+			if((gLfp=fopen(cLogfile,"a"))==NULL)
+                		tProperty("Could not open logfile");
+			if(uTargetDatacenter && ConnectToOptionalUBCDb(uTargetDatacenter))
+				tProperty("ConnectToOptionalUBCDb() error");
+			guUsingUBC=1;
 		}
 	}
 	tProperty("");
