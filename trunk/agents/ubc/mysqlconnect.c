@@ -23,7 +23,7 @@ NOTES
 #define SELECT_TIMEOUT_USEC 600000
 
 //extern protos
-void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer);
+void logfileLine0(const char *cFunction,const char *cLogline,const unsigned uContainer);
 
 extern MYSQL gMysqlUBC;
 extern char *gcUBCDBIP0;
@@ -32,11 +32,11 @@ extern char gcUBCDBIP0Buffer[];
 extern char gcUBCDBIP1Buffer[];
 
 //TOC protos
-void TextConnectDb(void);
+void TextConnectDb0(void);
 void TextConnectDbUBC(void);
 
 
-void TextConnectDb(void)
+void TextConnectDb0(void)
 {
 	//Handle quick cases first
 	//Port is irrelevant here. Make it clear.
@@ -71,9 +71,9 @@ void TextConnectDb(void)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
-			logfileLine("TextConnectDb","Could not create TextConnectDb() socket DBIP0",0);
+			logfileLine0("TextConnectDb0","Could not create socket DBIP0",0);
 			if(rmdir("/tmp/ubc.lock"))
-				logfileLine("TextConnectDb","could not rmdir(/tmp/ubc.lock)",0);
+				logfileLine0("TextConnectDb0","could not rmdir(/tmp/ubc.lock)",0);
 			exit(1);
 		}
 
@@ -119,9 +119,9 @@ void TextConnectDb(void)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
-			logfileLine("TextConnectDb","Could not create TextConnectDB() socket DBIP1",0);
+			logfileLine0("TextConnectDb0","Could not create socket DBIP1",0);
 			if(rmdir("/tmp/ubc.lock"))
-				logfileLine("TextConnectDb","could not rmdir(/tmp/ubc.lock)",0);
+				logfileLine0("TextConnectDb0","could not rmdir(/tmp/ubc.lock)",0);
 			exit(1);
 		}
 
@@ -175,12 +175,12 @@ void TextConnectDb(void)
 	else if(1)
 		sprintf(cMessage,"Could not connect unexpected case\n");
 
-	logfileLine("TextConnectDb",cMessage,0);
+	logfileLine0("TextConnectDb0",cMessage,0);
 	if(rmdir("/tmp/ubc.lock"))
-		logfileLine("TextConnectDb","could not rmdir(/tmp/ubc.lock)",0);
+		logfileLine0("TextConnectDb0","could not rmdir(/tmp/ubc.lock)",0);
 	exit(1);
 
-}//TextConnectDb()
+}//TextConnectDb0()
 
 
 void TextConnectDbUBC(void)
@@ -218,7 +218,7 @@ void TextConnectDbUBC(void)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
-			logfileLine("TextConnectDbUBC","Could not create TextConnectDbUBC() socket gcUBCDBIP0",0);
+			logfileLine0("TextConnectDbUBC","Could not create TextConnectDbUBC() socket gcUBCDBIP0",0);
 			exit(1);
 		}
 
@@ -264,7 +264,7 @@ void TextConnectDbUBC(void)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
-			logfileLine("TextConnectDb","Could not create TextConnectDbUBC() socket gcUBCDBIP1",0);
+			logfileLine0("TextConnectDb","Could not create TextConnectDbUBC() socket gcUBCDBIP1",0);
 			exit(1);
 		}
 
@@ -318,7 +318,7 @@ void TextConnectDbUBC(void)
 	else if(1)
 		sprintf(cMessage,"Could not connect unexpected case");
 
-	logfileLine("TextConnectDbUBC",cMessage,0);
+	logfileLine0("TextConnectDbUBC",cMessage,0);
 	exit(1);
 
 }//TextConnectDbUBC()
