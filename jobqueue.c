@@ -54,6 +54,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uDatacenter,unsigned uNode);
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
+void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValue);
 void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
@@ -110,6 +111,7 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 unsigned uCheckMaxContainers(unsigned uNode);
 unsigned uCheckMaxCloneContainers(unsigned uNode);
 unsigned uContainerStatus(unsigned uContainer);
+unsigned ConnectToOptionalUBCDb(unsigned uDatacenter);//tnodefunc.h
 
 //file scoped vars.
 static unsigned gfuNode=0;
@@ -804,6 +806,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	//Optional group based script may exist to be executed.
 	//
 	//Primary group is oldest tGroupGlue entry.
+	//UBC safe
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
@@ -923,6 +926,7 @@ void DestroyContainer(unsigned uJob,unsigned uContainer)
 	//Primary group is oldest tGroupGlue entry.
         MYSQL_RES *res;
         MYSQL_ROW field;
+	//UBC safe
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
@@ -1327,6 +1331,7 @@ void ChangeHostnameContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//Optional group based script may exist to be executed.
 	//
 	//Primary group is oldest tGroupGlue entry.
+	//UBC safe
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
@@ -1442,6 +1447,7 @@ void StopContainer(unsigned uJob,unsigned uContainer)
 	//Optional group based script may exist to be executed.
 	//
 	//Primary group is oldest tGroupGlue entry.
+	//UBC safe
         MYSQL_RES *res;
         MYSQL_ROW field;
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
@@ -1552,6 +1558,7 @@ void StartContainer(unsigned uJob,unsigned uContainer)
 	//Primary group is oldest tGroupGlue entry.
         MYSQL_RES *res;
         MYSQL_ROW field;
+	//UBC safe
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
@@ -1712,6 +1719,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
         	MYSQL_RES *res;
         	MYSQL_ROW field;
 
+		//UBC safe
 		sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 				" AND tProperty.uKey=tGroupGlue.uGroup"
 				" AND tGroupGlue.uContainer=%u"
@@ -1835,6 +1843,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 
 
+//UBC safe
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue)
 {
         MYSQL_RES *res;
@@ -1898,6 +1907,56 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
 }//void GetContainerProp(...)
 
 
+//Only for UBC properties
+void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0) return;
+
+	unsigned uDatacenter=0;
+	sscanf(ForeignKey("tContainer","uDatacenter",uContainer),"%u",&uDatacenter);
+	if(!uDatacenter)
+	{
+		if(gLfp!=NULL)
+			logfileLine("GetContainerPropUBC","!uDatacenter error");
+		return;
+	}
+	if(ConnectToOptionalUBCDb(uDatacenter))
+	{
+		if(gLfp!=NULL)
+			logfileLine("GetContainerPropUBC","ConnectToOptionalUBCDb error");
+		return;
+	}
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='%s'",
+				uContainer,cName);
+	mysql_query(&gMysqlUBC,gcQuery);
+	if(mysql_errno(&gMysqlUBC))
+	{
+		if(gLfp!=NULL)
+		{
+			logfileLine("GetContainerPropUBC",mysql_error(&gMysqlUBC));
+			exit(2);
+		}
+		else
+		{
+			htmlPlainTextError(mysql_error(&gMysqlUBC));
+		}
+	}
+        res=mysql_store_result(&gMysqlUBC);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetContainerPropUBC()
+
+
 void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 {
 
@@ -1920,11 +1979,11 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 
 	sprintf(cUBC,"%.32s.luBarrier",cResource);
-	GetContainerProp(uContainer,cUBC,cBuf);
+	GetContainerPropUBC(uContainer,cUBC,cBuf);
 	sscanf(cBuf,"%f",&luBar);
 
 	sprintf(cUBC,"%.32s.luLimit",cResource);
-	GetContainerProp(uContainer,cUBC,cBuf);
+	GetContainerPropUBC(uContainer,cUBC,cBuf);
 	sscanf(cBuf,"%f",&luLimit);
 
 	//No PID control yet. 10% increase
@@ -2692,6 +2751,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
         	MYSQL_RES *res;
         	MYSQL_ROW field;
 
+		//UBC safe
 		sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 				" AND tProperty.uKey=tGroupGlue.uGroup"
 				" AND tGroupGlue.uContainer=%u"
@@ -2931,6 +2991,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//Optional group based script may exist to be executed.
 	//
 	//Primary group is oldest tGroupGlue entry.
+	//UBC safe
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
@@ -4132,6 +4193,7 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//This means that once the node is operational and we want to resume
 	//clone sync operations we need to copy the source container cuSyncPeriod
 	//to the clone container for sync operation to resume.
+	//UBC safe	
 	SetContainerProperty(uContainer,"cuSyncPeriod","0");
 
 	//Everything ok
@@ -4531,6 +4593,8 @@ void logfileLine(const char *cFunction,const char *cLogline)
 	tmTime=localtime(&luClock);
 	strftime(cTime,31,"%b %d %T",tmTime);
 
+	if(gLfp==NULL)
+		gLfp=stdout;
         fprintf(gLfp,"%s jobqueue.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
 	fflush(gLfp);
 

@@ -3329,7 +3329,8 @@ void ExttContainerAuxTable(void)
 			printf("<p><input title='Delete checked containers from your search set. They will still be visible but will"
 				" marked deleted and will not be used in any subsequent set operation'"
 				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
-			printf("&nbsp; <input title='Cancels job(s) for container(s) waiting for activation, deletion or stop.'"
+			printf("&nbsp; <input title='Cancels job(s) (if possible) for container(s) waiting for activation, deletion or stop."
+				" Changes status when possible.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Cancel'>\n");
 			printf("&nbsp; <input title='Creates job(s) for starting stopped or initial setup container(s).'"
@@ -3551,11 +3552,17 @@ while((field=mysql_fetch_row(res)))
 								SetContainerStatus(uCtContainer,uACTIVE);
 							else if(sContainer.uStatus==uAWAITACT)
 								SetContainerStatus(uCtContainer,uINITSETUP);
-							sprintf(cResult,"group cancel job created");
+							sprintf(cResult,"jobs canceled and status changed");
 						}
 						else
 						{
-							sprintf(cResult,"group cancel job not created!");
+							if(sContainer.uStatus==uAWAITACT)
+							{
+								SetContainerStatus(uCtContainer,uINITSETUP);
+								sprintf(cResult,"No jobs canceled! Status was changed");
+							}
+							else
+								sprintf(cResult,"No jobs canceled!");
 						}
 					}
 					else
