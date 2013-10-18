@@ -94,6 +94,7 @@ void UpdateCloneHostnames(void);
 
 //jobqueue.c
 void ProcessJobQueue(unsigned uDebug);
+void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValue);
 //tcontainerfunc.h
 void SelectedNodeInformation(unsigned guCloneTargetNode,unsigned uHtmlMode);
 
@@ -709,6 +710,17 @@ void ExtMainShell(int argc, char *argv[])
                 ProcessJobQueue(1);
         else if(argc==2 && !strcmp(argv[1],"UpdateSchema"))
                 UpdateSchema();
+        else if(argc==4 && !strcmp(argv[1],"GetContainerPropUBC"))
+	{
+		if(TextConnectDb())
+			exit(1);
+
+		unsigned uContainer=0;
+		char cValue[256]={""};
+		sscanf(argv[2],"%u",&uContainer);
+                GetContainerPropUBC(uContainer,argv[3],cValue);
+		printf("uContainer=%u cName=%s cValue=%s\n",uContainer,argv[3],cValue);
+	}
         else if(argc==2 && !strcmp(argv[1],"UpdateCloneHostnames"))
                 UpdateCloneHostnames();
         else if(argc==2 && !strcmp(argv[1],"RecoverMode"))
@@ -776,6 +788,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tImportOSTemplates <path to templates e.g. /vz/template/cache/> <tClient.cLabel owner string>\n");
 		printf("\tMassCreateContainers <configuration file>\n");
 		printf("\tDebug\n");
+		printf("\tGetContainerPropUBC <uContainer> <cName>\n");
 		printf("\n");
 	}
 	mysql_close(&gMysql);

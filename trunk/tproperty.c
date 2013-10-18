@@ -529,8 +529,8 @@ void tPropertyList(void)
 		" type=text size=32 name=gcCommand maxlength=98 value=\"%s\" >",gcCommand);
 	printf("<input title='Enter MySQL where condition. E.g. cValue LIKE `%%Node=rc7;%%`'"
 		" type=text size=128 name=gcAuxFilter maxlength=255 value=\"%s\" >",gcAuxFilter);
-	if(cDatacenterSelect[0])
-		printf("<input type=hidden name=htmlUBCDatacenterSelect value='%s'>\n",cDatacenterSelect);
+	if(cDatacenterSelect[0] && cDatacenterSelect[0]!='-')
+		printf("<input type=hidden name=htmlUBCDatacenterSelect value='%1$s'> %1$s\n",cDatacenterSelect);
 
 	printf("</table>\n");
 

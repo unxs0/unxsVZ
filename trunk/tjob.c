@@ -749,15 +749,27 @@ void tJobList(void)
 			ctime_r(&luTime14,cBuf14);
 		else
 			sprintf(cBuf14,"---");
-		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tJob&uJob=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>"
-				"<textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tJob&uJob=%s>%s</a>"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>"
+			"<td><textarea disabled>%s</textarea>"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s</tr>"
+			,field[0],field[0]
 			,field[1]
 			,field[2]
 			,ForeignKey("tDatacenter","cLabel",strtoul(field[3],NULL,10))
 			,ForeignKey("tNode","cLabel",strtoul(field[4],NULL,10))
-			,ForeignKey("tContainer","cLabel",strtoul(field[5],NULL,10))
+			,field[5],ForeignKey("tContainer","cLabel",strtoul(field[5],NULL,10))
 			,field[6]
 			,cBuf7
 			,ForeignKey("tJobStatus","cLabel",strtoul(field[8],NULL,10))
