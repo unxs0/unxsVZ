@@ -36,7 +36,7 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter);
 
 //external
 //tcontainerfunc.h
-void htmlHealth(unsigned uContainer,unsigned uType);
+void htmlHealth(unsigned uElement,unsigned uDatacenter,unsigned uType);
 void htmlNodeHealth(unsigned uNode);
 char *cRatioColor(float *fRatio);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
@@ -680,7 +680,7 @@ void ExttNodeButtons(void)
 			tContainerNavList(uNode,cSearch);
 			if(uNode)
 			{
-				htmlHealth(uNode,2);
+				htmlHealth(uNode,uDatacenter,2);
 				//hide health if node selected via get
 				if(guMode!=6)
 					htmlNodeHealth(uNode);
@@ -699,6 +699,7 @@ void ExttNodeButtons(void)
 }//void ExttNodeButtons(void)
 
 
+//UBC work required
 void ExttNodeAuxTable(void)
 {
 	MYSQL_RES *res;
@@ -1144,6 +1145,7 @@ void tNodeNavList(unsigned uDatacenter)
 
 
 
+//UBC safe
 void CopyProperties(unsigned uOldNode,unsigned uNewNode,unsigned uType)
 {
         MYSQL_RES *res;
@@ -1174,6 +1176,7 @@ void CopyProperties(unsigned uOldNode,unsigned uNewNode,unsigned uType)
 }//void CopyProperties(uNode,uNewNode)
 
 
+//UBC safe will not del UBCs if remote
 void DelProperties(unsigned uNode,unsigned uType)
 {
 	if(uNode==0 || uType==0) return;
@@ -1186,6 +1189,7 @@ void DelProperties(unsigned uNode,unsigned uType)
 }//void DelProperties()
 
 
+//UBC work required
 void htmlNodeHealth(unsigned uNode)
 {
         MYSQL_RES *res;
@@ -1632,7 +1636,8 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 
 }//unsigned CloneNode()
 
-	
+
+//UBC safe should not be used for UBCs	
 void SetNodeProp(char const *cName,char const *cValue,unsigned uNode)
 {
         MYSQL_RES *res;

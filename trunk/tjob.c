@@ -811,6 +811,8 @@ void CreatetJob(void)
 }//CreatetJob()
 
 
+/*
+candidate for non use removal
 void PropertyDropDown(const char *cTableName, const char *cFieldName,
 		const char *cOrderby, unsigned uSelector, unsigned uMode, const char *cDatacenter,
 		unsigned uType, unsigned uDatacenter)
@@ -845,6 +847,7 @@ void PropertyDropDown(const char *cTableName, const char *cFieldName,
 
 
 	if(uType)
+		//UBC safe
 	       	sprintf(gcQuery,"SELECT _rowid AS uRowid,%s FROM %s WHERE"
 			" LOCATE('All Datacenters',"
 			"(SELECT cValue FROM tProperty WHERE cName='cDatacenter' AND uType=%u AND uKey=uRowid))>0"
@@ -903,7 +906,7 @@ void PropertyDropDown(const char *cTableName, const char *cFieldName,
 		printf("%s",cHidden);
 
 }//PropertyDropDown()
-
+*/
 
 void RecurringJobDropDown(unsigned uSelector, unsigned uMode)
 {
@@ -915,7 +918,8 @@ void RecurringJobDropDown(unsigned uSelector, unsigned uMode)
 
 	if(!uMode)
 		cMode="disabled";
-      
+     
+	//UBC safe 
 	sprintf(gcQuery,"SELECT uProperty,cName FROM tProperty WHERE uType=%u and uKey=0",uPROP_RECJOB);
 
 	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
@@ -969,6 +973,7 @@ unsigned ReadRecurringDropDown(char *cRecurringJobDropDown)
 
         unsigned uRowid=0;//Not found
 
+	//UBC safe
         sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=0 AND uType=%u AND cName='%.99s'",
 			uPROP_RECJOB,cRecurringJobDropDown);
         MYSQL_RUN_STORE(mysqlRes);

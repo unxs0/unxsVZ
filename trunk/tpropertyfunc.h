@@ -434,18 +434,27 @@ void ExttPropertyButtons(void)
 	switch(guMode)
         {
                 case 2000:
+			printf("<u>Select external UBC server</u><br>");
+			htmlUBCDatacenterSelect(cuDatacenterSelect,0);
+			printf("<p>");
 			htmlReturnLink();
 			printf("<p><u>Enter/mod data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
                 break;
 
                 case 2001:
+			printf("<u>Select external UBC server</u><br>");
+			htmlUBCDatacenterSelect(cuDatacenterSelect,0);
+			printf("<p>");
 			htmlReturnLink();
                         printf("<p><u>Think twice</u><br>");
                         printf(LANG_NBB_CONFIRMDEL);
                 break;
 
                 case 2002:
+			printf("<u>Select external UBC server</u><br>");
+			htmlUBCDatacenterSelect(cuDatacenterSelect,0);
+			printf("<p>");
 			htmlReturnLink();
 			printf("<p><u>Review changes</u><br>");
                         printf(LANG_NBB_CONFIRMMOD);
