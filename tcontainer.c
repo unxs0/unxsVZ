@@ -1393,6 +1393,7 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 	if(uSelector && !uMode)
 	{
 		if(uType)
+			//UBC safe
 	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
 				" _rowid IN"
 				" (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND"
@@ -1412,6 +1413,7 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 	else
 	{
 		if(uType)
+			//UBC safe
 	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
 				" _rowid IN"
 				" (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND"

@@ -24,6 +24,14 @@ USEFUL SQL
 					}\
 					mysqlRes=mysql_store_result(&gMysql);
 
+#define macro_mySQLQueryExitTextUBC	mysql_query(&gMysqlUBC,gcQuery);\
+					if(mysql_errno(&gMysqlUBC))\
+					{\
+						printf("%s\n",mysql_error(&gMysqlUBC));\
+						exit(1);\
+					}\
+					mysqlRes=mysql_store_result(&gMysqlUBC);
+
 struct structContainer
 {
 	char cLabel[32];
@@ -54,7 +62,7 @@ unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 		unsigned uOwner,unsigned uCreatedBy);
 unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
 		unsigned uOwner,unsigned uCreatedBy);
-static unsigned uHideProps=0;
+static unsigned uHideProps=1;
 static unsigned uTargetNode=0;
 static char cuTargetNodePullDown[256]={""};
 static unsigned guCloneTargetNode=0;
@@ -122,7 +130,7 @@ unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 				unsigned uTargetNode, unsigned uNewVeid, unsigned uPrevStatus,
 				unsigned uOwner,unsigned uCreatedBy,unsigned uCloneStop);
-void htmlHealth(unsigned uContainer,unsigned uType);
+void htmlHealth(unsigned uElement,unsigned uDatacenter,unsigned uType);
 void htmlGroups(unsigned uNode, unsigned uContainer);
 char *cHtmlGroups(char const *cuContainer);
 unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus,
@@ -198,6 +206,7 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue
 void DelProperties(unsigned uNode,unsigned uType);//tnodefunc.h
 time_t cStartDateToUnixTime(char *cStartDate);//tjobfunc.h
 time_t cStartTimeToUnixTime(char *cStartTime);
+unsigned ConnectToOptionalUBCDb(unsigned uDatacenter);//tnodefunc.h
 
 #include <openisp/ucidr.h>
 #include <ctype.h>
@@ -507,9 +516,6 @@ void ExttContainerCommands(pentry entries[], int x)
 		char cContainerType[256]={""};
 		char cNCMDatacenter[256]={""};
 		char cNCMNode[256]={""};
-
-		uHideProps=1;
-
 
 //New container creation include file Multiple Container and Single Container
 #include "tcontainerfunc-newcontainer.c"
@@ -1107,6 +1113,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					htmlPlainTextError(mysql_error(&gMysql));
 				//TODO this operation may not be datacenter safe review
 				//Node IP if any MySQL5+
+				//UBC safe
 				sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel IN"
 						" (SELECT cValue FROM tProperty WHERE uKey=%u"
 						" AND uType=3 AND cName='cNodeIP')",guLoginClient,uContainer);
@@ -3187,7 +3194,7 @@ void ExttContainerButtons(void)
 			{
 				if(uStatus==uACTIVE)
 				{
-					htmlHealth(uContainer,3);
+					htmlHealth(uContainer,uDatacenter,3);
 					if(!strstr(cLabel,"-clone") && !strstr(cLabel,"-backup") && uSource==0)
 						printf("<p><input title='Clone a container to this or another hardware node."
 						" The clone will be an online container with another IP and hostname."
@@ -4085,6 +4092,7 @@ while((field=mysql_fetch_row(res)))
 						if(mysql_errno(&gMysql))
 							htmlPlainTextError(mysql_error(&gMysql));
 						//Node IP if any MySQL5+
+						//UBC safe
 						sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 						" WHERE cLabel IN (SELECT cValue FROM tProperty WHERE uKey=%u"
 						" AND uType=3 AND cName='cNodeIP')",guLoginClient,uCtContainer);
@@ -4164,6 +4172,7 @@ while((field=mysql_fetch_row(res)))
 								if(mysql_errno(&gMysql))
 									htmlPlainTextError(mysql_error(&gMysql));
 								//Node IP if any MySQL5+
+								//UBC safe
 								sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,"
 								" uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel IN"
 								" (SELECT cValue FROM tProperty WHERE uKey=%u"
@@ -5486,11 +5495,11 @@ while((field=mysql_fetch_row(res)))
 		break;
 
 		default:
-
 			if(uHideProps || !uContainer || (guMode!=0 && guMode!=6)) return;
 
-			sprintf(gcQuery,"%s Property Panel",cLabel);
+			sprintf(gcQuery,"Global %s Property Panel",cLabel);
 			OpenFieldSet(gcQuery,100);
+			//UBC safe
 			sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType=3"
 				" AND cName!='Notes' ORDER BY cName",uContainer);
 		        mysql_query(&gMysql,gcQuery);
@@ -5519,8 +5528,45 @@ while((field=mysql_fetch_row(res)))
 					" No backups may be available, the container is gone for good!'"
 					" type=submit class=lwarnButton"
 					" name=gcCommand value='Destroy %.24s'>\n",cLabel);
-
 			CloseFieldSet();
+
+			char cLogfile[64]={"/tmp/unxsvzlog"};
+			if(gLfp==NULL)
+			{
+				if( (gLfp=fopen(cLogfile,"a"))==NULL)
+                			tContainer("Could not open logfile");
+			}
+			if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter))
+				tContainer("ConnectToOptionalUBCDb() error");
+			if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
+			{
+				sprintf(gcQuery,"Distributed UBC %s Property Panel",cLabel);
+				OpenFieldSet(gcQuery,100);
+				//UBC safe
+				sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType=3"
+					" AND cName!='Notes' ORDER BY cName",uContainer);
+		        	mysql_query(&gMysqlUBC,gcQuery);
+		        	if(mysql_errno(&gMysqlUBC))
+					htmlPlainTextError(mysql_error(&gMysqlUBC));
+		        	res=mysql_store_result(&gMysqlUBC);
+				if(mysql_num_rows(res))
+				{
+					printf("<table>");
+					while((field=mysql_fetch_row(res)))
+					{
+						printf("<tr>");
+						printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+						"gcFunction=tProperty&uProperty=%s&cReturn=tContainer_%u&cuDatacenterSelect=%u>"
+						"%s</a></td><td>%s</td>\n",
+							field[0],uContainer,uDatacenter,field[1],field[2]);
+						printf("</tr>");
+					}
+					printf("</table>");
+				}
+				mysql_free_result(res);
+				CloseFieldSet();
+			}
+
 
 	}//switch(guMode)
 
@@ -5536,6 +5582,7 @@ void ExttContainerGetHook(entry gentries[], int x)
 		if(!strcmp(gentries[i].name,"uContainer"))
 		{
 			sscanf(gentries[i].val,"%u",&uContainer);
+			uHideProps=0;
 			guMode=6;
 		}
 		else if(!strcmp(gentries[i].name,"cSearch"))
@@ -6203,6 +6250,7 @@ void htmlContainerNotes(unsigned uContainer)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
+	//UBC safe
 	sprintf(gcQuery,"SELECT uProperty,cValue FROM tProperty WHERE uKey=%u AND uType=3"
 				" AND cName='Notes' ORDER BY uCreatedDate",uContainer);
         mysql_query(&gMysql,gcQuery);
@@ -6224,6 +6272,7 @@ void htmlContainerMount(unsigned uContainer)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
+	//UBC safe
 	sprintf(gcQuery,"SELECT uProperty,cValue FROM tProperty WHERE uKey=%u AND uType=3"
 				" AND cName LIKE 'cVEID.mount' ORDER BY uCreatedDate",uContainer);
         mysql_query(&gMysql,gcQuery);
@@ -6339,7 +6388,7 @@ unsigned MigrateContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 }//unsigned MigrateContainerJob(...)
 
 
-void htmlHealth(unsigned uContainer,unsigned uType)
+void htmlHealth(unsigned uElement,unsigned uDatacenter,unsigned uType)
 {
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
@@ -6348,24 +6397,43 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 	long unsigned luTotalUsage=0,luTotalSoftLimit=0;
 	float fRatio;
 	char *cTable={"tContainer"};
+	char cTitleExtra[32]={""};
+
+	if(uType>1)
+	{
+		char cLogfile[64]={"/tmp/unxsvzlog"};
+		if(gLfp==NULL)
+		{
+			if( (gLfp=fopen(cLogfile,"a"))==NULL)
+              			tContainer("Could not open logfile");
+		}
+		if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter))
+			tContainer("ConnectToOptionalUBCDb() error");
+
+		if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
+			sprintf(cTitleExtra," (external UBC)");
+	}
 
 	if(uType==3)
-		printf("<p><u>Container Health</u>");
+		printf("<p><u>Container Health%s</u>",cTitleExtra);
 	else if(uType==2)
-		printf("<p><u>Node and Container(s) Health</u>");
+		printf("<p><u>Node and Container(s) Health%s</u>",cTitleExtra);
 	else if(uType==1)
-		printf("<p><u>Datacenter Health</u>");
+		return;//not supported for now
+		//printf("<p><u>Datacenter Health</u>");
 	printf("<br>");
 
+
 	if(uType==2)
+	//UBC safe all in here
 	sprintf(gcQuery,"SELECT COUNT(uProperty) FROM tProperty WHERE cName LIKE '%%.luFailcnt'"
-				" AND (uKey IN (SELECT uContainer FROM tContainer WHERE uNode=%u)"
-				" OR uKey=%u)"
-				,uContainer,uContainer);
+				" AND (uKey IN (SELECT uContainer FROM tContainer WHERE uNode=%u) OR uKey=%u)"
+				" AND (uType=2 OR uType=3)"
+				,uElement,uElement);
 	else
 	sprintf(gcQuery,"SELECT COUNT(uProperty) FROM tProperty WHERE cName LIKE '%%.luFailcnt'"
-				" AND uKey=%u AND uType=%u",uContainer,uType);
-	macro_mySQLQueryExitText
+				" AND uKey=%u AND uType=%u",uElement,uType);
+	macro_mySQLQueryExitTextUBC
         if((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		sscanf(mysqlField[0],"%lu",&luTotalFailcnt);
@@ -6373,18 +6441,16 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 	mysql_free_result(mysqlRes);
 
 	if(uType==2)
-	sprintf(gcQuery,"SELECT cName,cValue,uProperty,uKey FROM tProperty,tType WHERE"
-				" tProperty.uType=tType.uType AND"
+	sprintf(gcQuery,"SELECT cName,cValue,uProperty,uKey FROM tProperty WHERE"
 				" cName LIKE '%%.luFail%%' AND cValue!='0'"
-				" AND (uKey IN (SELECT uContainer FROM tContainer WHERE uNode=%u)"
-				" OR uKey=%u)"
-				,uContainer,uContainer);
+				" AND (uKey IN (SELECT uContainer FROM tContainer WHERE uNode=%u) OR uKey=%u)"
+				" AND (uType=2 OR uType=3)"
+				,uElement,uElement);
 	else
-	sprintf(gcQuery,"SELECT cName,cValue,uProperty,uKey FROM tProperty,tType WHERE"
-				" tProperty.uType=tType.uType AND"
+	sprintf(gcQuery,"SELECT cName,cValue,uProperty,uKey FROM tProperty WHERE"
 				" cName LIKE '%%.luFail%%' AND cValue!='0'"
-				" AND uKey=%u AND tProperty.uType=%u",uContainer,uType);
-	macro_mySQLQueryExitText
+				" AND uKey=%u AND tProperty.uType=%u",uElement,uType);
+	macro_mySQLQueryExitTextUBC
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		if(strstr(mysqlField[4],"Node")) cTable="tNode";
@@ -6399,20 +6465,27 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 				" cName='1k-blocks.luUsage'"
 				" AND uType=3"
 				" AND uKey IN (SELECT uContainer FROM tContainer WHERE uNode=%u)"
-					,uContainer);
+					,uElement);
 	else if(uType==3)
 	sprintf(gcQuery,"SELECT SUM(CONVERT(cValue,UNSIGNED)) FROM tProperty WHERE"
 				" cName='1k-blocks.luUsage'"
-				" AND uKey=%u AND uType=%u",uContainer,uType);
+				" AND uKey=%u AND uType=3",uElement);
 	else if(1)
 		return;
-	macro_mySQLQueryExitText
+	macro_mySQLQueryExitTextUBC
         if((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
-		if(mysqlField[0]==NULL) return;
+		if(mysqlField[0]==NULL)
+		{
+			printf("Container usage ratio can not be calculated!");
+			return;
+		}
 
 		if(mysqlField[0]==0 || sscanf(mysqlField[0],"%lu",&luTotalUsage)!=1)
+		{
+			printf("Container usage ratio can not be calculated! (2)");
 			return;
+		}
 	}
 	mysql_free_result(mysqlRes);
 
@@ -6421,15 +6494,15 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 				" cName='1k-blocks.luSoftlimit'"
 				" AND uType=3"
 				" AND uKey IN (SELECT uContainer FROM tContainer WHERE uNode=%u)"
-					,uContainer);
+					,uElement);
 	else if(uType==3)
 	sprintf(gcQuery,"SELECT SUM(CONVERT(cValue,UNSIGNED)) FROM tProperty WHERE"
 				" cName='1k-blocks.luSoftlimit'"
-				" AND uKey=%u AND uType=%u",uContainer,uType);
+				" AND uKey=%u AND uType=3",uElement);
 	else if(1)
 		return;
 
-	macro_mySQLQueryExitText
+	macro_mySQLQueryExitTextUBC
         if((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		if(mysqlField[0]==NULL) return;
@@ -6452,10 +6525,10 @@ void htmlHealth(unsigned uContainer,unsigned uType)
 	{
 		char cValue[256]={""};
 		sprintf(cValue,"%2.2f%%",fRatio);
-		SetNodeProp("cContainerUsageRatio",cValue,uContainer);
+		SetNodeProp("cContainerUsageRatio",cValue,uElement);
 	}
 
-}//void htmlHealth(...)
+}//void htmlHealth()
 
 
 unsigned TemplateContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uStatus,unsigned uOwner,char *cConfigLabel)
@@ -6801,6 +6874,7 @@ void htmlMountTemplateSelect(unsigned uSelector)
 }//void htmlMountTemplateSelect(unsigned uSelector)
 
 
+//UBC safe
 void AddMountProps(unsigned uContainer)
 {
 	if(cService1[0])
@@ -6963,6 +7037,7 @@ void AddMountProps(unsigned uContainer)
 }//void AddMountProps(unsigned uContainer)
 
 
+//UBC safe
 void CopyContainerProps(unsigned uSource, unsigned uTarget)
 {
 	if(!uSource || !uTarget) return;
@@ -7460,6 +7535,7 @@ unsigned CommonCloneContainer(
 		}
 		CopyContainerProps(uContainer,uNewVeid);
 		//Update NAME
+		//UBC safe
 		sprintf(gcQuery,"DELETE FROM tProperty WHERE"
 				" cName='Name' AND uKey=%u AND uType=3",uNewVeid);
 		mysql_query(&gMysql,gcQuery);
@@ -7473,6 +7549,7 @@ unsigned CommonCloneContainer(
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 		//Default no sync period set
+		//UBC safe
 		sprintf(gcQuery,"DELETE FROM tProperty WHERE"
 				" cName='cuSyncPeriod' AND uKey=%u AND uType=3",uNewVeid);
 		mysql_query(&gMysql,gcQuery);
@@ -8543,6 +8620,7 @@ unsigned uChangeContainerIPToNATIP(unsigned uContainer,unsigned uDatacenter,unsi
 }//unsigned uChangeContainerIPToNATIP()
 
 
+//Do not use for UBC
 void SetContainerProp(const unsigned uContainer,const char *cName,const char *cValue)
 {
         MYSQL_RES *res;
@@ -8675,6 +8753,7 @@ void SelectedDatacenterInformation(unsigned uDatacenter,unsigned uHtmlMode)
 }//void SelectedDatacenterInformation(unsigned uDatacenter,unsigned uHtmlMode)
 
 
+//UBC safe
 void SetDatacenterProp(const char *cName,const char *cValue,const unsigned uDatacenter)
 {
         MYSQL_RES *res;
@@ -8853,7 +8932,8 @@ unsigned CommonNewCloneContainer(
 			}
 		}
 		CopyContainerProps(uContainer,uNewVeid);
-		//Update NAME
+		//Update NAM
+		//UBC safe
 		sprintf(gcQuery,"DELETE FROM tProperty WHERE"
 				" cName='Name' AND uKey=%u AND uType=3",uNewVeid);
 		mysql_query(&gMysql,gcQuery);
@@ -8867,6 +8947,7 @@ unsigned CommonNewCloneContainer(
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 		//Default no sync period set
+		//UBC safe
 		sprintf(gcQuery,"DELETE FROM tProperty WHERE"
 				" cName='cuSyncPeriod' AND uKey=%u AND uType=3",uNewVeid);
 		mysql_query(&gMysql,gcQuery);

@@ -204,7 +204,8 @@ void tProperty(const char *cResult)
 		{
 			if(guMode==6)
 			{
-			sprintf(gcQuery,"SELECT _rowid FROM tProperty WHERE uProperty=%u"
+				//UBC safe
+				sprintf(gcQuery,"SELECT _rowid FROM tProperty WHERE uProperty=%u"
 						,uProperty);
 				MYSQL_RUN_STORE(res2);
 				field=mysql_fetch_row(res2);
@@ -388,6 +389,14 @@ void NewtProperty(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
+	MYSQL gMysqlSave;
+	if(guUsingUBC)
+	{
+		gMysqlSave=gMysql;
+		gMysql=gMysqlUBC;
+	}
+
+	//Not UBC safe yet
 	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uProperty=%u",uProperty);
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
@@ -402,12 +411,14 @@ void NewtProperty(unsigned uMode)
 	//sprintf(gcQuery,"New record %u added");
 	uProperty=mysql_insert_id(&gMysql);
 	uCreatedDate=luGetCreatedDate("tProperty",uProperty);
+	if(guUsingUBC)
+		gMysql=gMysqlSave;
 	unxsVZLog(uProperty,"tProperty","New");
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uProperty);
-	tProperty(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uProperty);
+		tProperty(gcQuery);
 	}
 
 }//NewtProperty(unsigned uMode)
@@ -415,17 +426,29 @@ void NewtProperty(unsigned uMode)
 
 void DeletetProperty(void)
 {
+
+	MYSQL gMysqlSave;
+	if(guUsingUBC)
+	{
+		gMysqlSave=gMysql;
+		gMysql=gMysqlUBC;
+	}
+
 	sprintf(gcQuery,"DELETE FROM tProperty WHERE uProperty=%u AND ( uOwner=%u OR %u>9 )"
 					,uProperty,guLoginClient,guPermLevel);
 	MYSQL_RUN;
 	//tProperty("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
+		if(guUsingUBC)
+			gMysql=gMysqlSave;
 		unxsVZLog(uProperty,"tProperty","Del");
 		tProperty(LANG_NBR_RECDELETED);
 	}
 	else
 	{
+		if(guUsingUBC)
+			gMysql=gMysqlSave;
 		unxsVZLog(uProperty,"tProperty","DelError");
 		tProperty(LANG_NBR_RECNOTDELETED);
 	}
@@ -479,6 +502,13 @@ void ModtProperty(void)
 	MYSQL_ROW field;
 	unsigned uPreModDate=0;
 
+	MYSQL gMysqlSave;
+	if(guUsingUBC)
+	{
+		gMysqlSave=gMysql;
+		gMysql=gMysqlUBC;
+	}
+
 	sprintf(gcQuery,"SELECT uProperty,uModDate FROM tProperty WHERE uProperty=%u",uProperty);
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
@@ -497,6 +527,8 @@ void ModtProperty(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 	uModDate=luGetModDate("tProperty",uProperty);
+	if(guUsingUBC)
+		gMysql=gMysqlSave;
 	unxsVZLog(uProperty,"tProperty","Mod");
 	tProperty(gcQuery);
 
