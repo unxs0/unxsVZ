@@ -86,6 +86,7 @@ unsigned SetContainerHostname(const unsigned uContainer,
 			const char *cHostname,const char *cLabel);
 unsigned GetContainerNames(const unsigned uContainer,char *cHostname,char *cLabel);
 unsigned GetContainerNodeStatus(const unsigned uContainer, unsigned *uStatus);
+unsigned SetContainerPropertyUBC(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 unsigned FailToJobDone(unsigned uJob);
 //Clone maintenance clone UPDATE functions
@@ -1872,6 +1873,7 @@ void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue)
 }//void GetGroupProp(...)
 
 
+//Do not use for UBC props. Not distributed UBC safe. Use the below function.
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
 {
         MYSQL_RES *res;
@@ -1907,6 +1909,7 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
 }//void GetContainerProp(...)
 
 
+//UBC safe
 //Only for UBC properties
 void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValue)
 {
@@ -1919,14 +1922,12 @@ void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValu
 	sscanf(ForeignKey("tContainer","uDatacenter",uContainer),"%u",&uDatacenter);
 	if(!uDatacenter)
 	{
-		if(gLfp!=NULL)
-			logfileLine("GetContainerPropUBC","!uDatacenter error");
+		logfileLine("GetContainerPropUBC","!uDatacenter error");
 		return;
 	}
 	if(ConnectToOptionalUBCDb(uDatacenter))
 	{
-		if(gLfp!=NULL)
-			logfileLine("GetContainerPropUBC","ConnectToOptionalUBCDb error");
+		logfileLine("GetContainerPropUBC","ConnectToOptionalUBCDb error");
 		return;
 	}
 	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='%s'",
@@ -1934,15 +1935,8 @@ void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValu
 	mysql_query(&gMysqlUBC,gcQuery);
 	if(mysql_errno(&gMysqlUBC))
 	{
-		if(gLfp!=NULL)
-		{
-			logfileLine("GetContainerPropUBC",mysql_error(&gMysqlUBC));
-			exit(2);
-		}
-		else
-		{
-			htmlPlainTextError(mysql_error(&gMysqlUBC));
-		}
+		logfileLine("GetContainerPropUBC",mysql_error(&gMysqlUBC));
+		return;	
 	}
         res=mysql_store_result(&gMysqlUBC);
 	if((field=mysql_fetch_row(res)))
@@ -4429,6 +4423,72 @@ unsigned GetContainerNodeStatus(const unsigned uContainer, unsigned *uStatus)
 }//void GetContainerNodeStatus()
 
 
+//UBC safe
+unsigned SetContainerPropertyUBC(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0 || cPropertyName[0]==0 || cPropertyValue[0]==0)
+		return(1);
+
+	unsigned uDatacenter=0;
+	sscanf(ForeignKey("tContainer","uDatacenter",uContainer),"%u",&uDatacenter);
+	if(!uDatacenter)
+	{
+		logfileLine("SetContainerPropertyUBC","!uDatacenter error");
+		return(1);
+	}
+	if(ConnectToOptionalUBCDb(uDatacenter))
+	{
+		logfileLine("SetContainerPropertyUBC","ConnectToOptionalUBCDb error");
+		return(1);
+	}
+
+	//UBC safe
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND cName='%s'",
+					uContainer,cPropertyName);
+	mysql_query(&gMysqlUBC,gcQuery);
+	if(mysql_errno(&gMysqlUBC))
+	{
+		logfileLine("SetContainerPropertyUBC",mysql_error(&gMysqlUBC));
+		return(2);
+	}
+        res=mysql_store_result(&gMysqlUBC);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%s",
+					cPropertyValue,field[0]);
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
+		{
+			mysql_free_result(res);
+			logfileLine("SetContainerPropertyUBC",mysql_error(&gMysqlUBC));
+			return(3);
+		}
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET cName='%s',cValue='%s',uType=3,uKey=%u,"
+				"uOwner=(SELECT uOwner FROM tContainer WHERE uContainer=%u),"
+				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cPropertyName,cPropertyValue,uContainer,uContainer);
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
+		{
+			mysql_free_result(res);
+			logfileLine("SetContainerPropertyUBC",mysql_error(&gMysqlUBC));
+			return(4);
+		}
+	}
+	mysql_free_result(res);
+
+	return(0);
+
+}//void SetContainerPropertyUBC()
+
+
+//Not UBC safe use above function
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue)
 {
         MYSQL_RES *res;
@@ -4508,6 +4568,7 @@ unsigned FailToJobDone(unsigned uJob)
 }//unsigned FailToJobDone(unsigned uContainer)
 
 
+//Not UBC safe. Use function below
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 {
         MYSQL_RES *res;
@@ -4521,15 +4582,8 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		if(gLfp!=NULL)
-		{
-			logfileLine("GetNodeProp",mysql_error(&gMysql));
-			exit(2);
-		}
-		else
-		{
-			htmlPlainTextError(mysql_error(&gMysql));
-		}
+		logfileLine("GetNodeProp",mysql_error(&gMysql));
+		return;
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -4544,6 +4598,49 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 }//void GetNodeProp()
 
 
+//UBC safe
+void GetNodePropUBC(const unsigned uNode,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uNode==0) return;
+
+	unsigned uDatacenter=0;
+	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
+	if(!uDatacenter)
+	{
+		logfileLine("GetNodePropUBC","!uDatacenter error");
+		return;
+	}
+	if(ConnectToOptionalUBCDb(uDatacenter))
+	{
+		logfileLine("GetNodePropUBC","ConnectToOptionalUBCDb error");
+		return;
+	}
+	//2 is node
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",
+				uNode,cName);
+	mysql_query(&gMysqlUBC,gcQuery);
+	if(mysql_errno(&gMysqlUBC))
+	{
+		logfileLine("GetNodePropUBC",mysql_error(&gMysqlUBC));
+		return;
+	}
+        res=mysql_store_result(&gMysqlUBC);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetNodePropUBC()
+
+
+//UBC safe
 void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue)
 {
         MYSQL_RES *res;
@@ -4616,6 +4713,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 	//After failover cuSyncPeriod is 0 for clone (remote) container.
 	//This allows for safekeeping of potentially useful data.
 	//mainfunc RecoverMode recover cuSyncPeriod from source to clone.
+	//UBC safe
 	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cuSyncPeriod'",
 					uCloneContainer);
 	mysql_query(&gMysql,gcQuery);
@@ -4668,6 +4766,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 				unsigned uCloneScheduleWindow=0;//number of hours to add to above
 
 				//Get backup schedule	
+				//UBC safe
 				sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 					" AND tProperty.uKey=tGroupGlue.uGroup"
 					" AND tGroupGlue.uContainer=%u"
@@ -4808,6 +4907,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 				cActivePostfix="Active";
 			}
 			//optional if so configured via tContainer primary group (lowest uGroupGlue)
+			//UBC safe
 			sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 					" AND tProperty.uKey=tGroupGlue.uGroup"
 					" AND tGroupGlue.uContainer=%u"
@@ -4866,6 +4966,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 
 			if(uCloneDatacenter && uCloneDatacenter!=gfuDatacenter)
 			{
+				//UBC safe
 				sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 					" AND tProperty.uKey=tGroupGlue.uGroup"
 					" AND tGroupGlue.uContainer=%u"
@@ -5055,6 +5156,7 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 	//Passed all constraints run job
 	//Get command via cRecurringJob
 
+	//UBC safe
         sprintf(gcQuery,"SELECT TRIM(cValue) FROM tProperty WHERE uKey=0 AND uType=%u AND cName='%.99s'",
 										uPROP_RECJOB,cRecurringJob);
 	mysql_query(&gMysql,gcQuery);
@@ -5181,6 +5283,7 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 	unsigned uPeriod=0;
 	char cSyncMode[32]={""};
 
+	//UBC safe
 	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cSyncMode'",
 					uCloneContainer);
 	mysql_query(&gMysql,gcQuery);
@@ -5206,6 +5309,7 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 	//After failover cuSyncPeriod is 0 for clone (remote) container.
 	//This allows for safekeeping of potentially useful data.
 	//mainfunc RecoverMode recover cuSyncPeriod from source to clone.
+	//UBC safe
 	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cuSyncPeriod'",
 					uCloneContainer);
 	mysql_query(&gMysql,gcQuery);
@@ -6266,6 +6370,7 @@ void RestartContainer(unsigned uJob,unsigned uContainer)
 	//Primary group is oldest tGroupGlue entry.
         MYSQL_RES *res;
         MYSQL_ROW field;
+	//UBC safe
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
@@ -6550,7 +6655,7 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 	{
         	MYSQL_RES *res;
         	MYSQL_ROW field;
-
+		//UBC safe
 		sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 				" AND tProperty.uKey=tGroupGlue.uGroup"
 				" AND tGroupGlue.uContainer=%u"
@@ -6772,6 +6877,7 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 
 
 //returns script in cCommand 256 byte buffer on success else empty string or same string as on entry
+//UBC safe
 void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cValue)
 {
         MYSQL_RES *res;
@@ -6894,6 +7000,7 @@ void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//Optional group based script may exist to be executed.
 	//
 	//Primary group is oldest tGroupGlue entry.
+	//UBC safe
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
@@ -7056,6 +7163,7 @@ void ActivateNATNode(unsigned uJob,unsigned uContainer,unsigned uNode)
 	//Optional group based script may exist to be executed.
 	//
 	//Primary group is oldest tGroupGlue entry.
+	//UBC safe
 	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 			" AND tProperty.uKey=tGroupGlue.uGroup"
 			" AND tGroupGlue.uContainer=%u"
