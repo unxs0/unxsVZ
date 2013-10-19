@@ -37,11 +37,14 @@ unxsRamUtil.cgi: ramutil.o
 ramutil.o: ramutil.c ../../local.h
 	gcc -c ramutil.c -o ramutil.o $(CFLAGS)
 
-unxsDiskUtil.cgi: diskutil.o
-	gcc diskutil.o -o unxsDiskUtil.cgi $(LIBS)
+unxsDiskUtil.cgi: diskutil.o mysqlconnect.o
+	gcc diskutil.o mysqlconnect.o -o unxsDiskUtil.cgi $(LIBS)
 
-diskutil.o: diskutil.c ../../local.h
+diskutil.o: diskutil.c mysqlconnect.c ../../local.h
 	gcc -c diskutil.c -o diskutil.o $(CFLAGS)
+
+mysqlconnect.o: mysqlconnect.c ../../mysqlrad.h ../../local.h
+	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)
 
 clean:
 	rm -f *.o *.cgi
