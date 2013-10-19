@@ -21,6 +21,12 @@ REQUIRES
 #include <values.h>
 #include <mysql/mysql.h>
 #include <string.h>
+#include <sys/sysinfo.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <time.h>
+
+
 
 #include "/usr/include/gdc.h"
 #include "/usr/include/gdchart.h"
@@ -29,46 +35,94 @@ REQUIRES
 
 void ErrorMsg(const char *cErrorMsg);
 void ConnectDb(void);
+void ConnectDbUBC(void);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c,float *d,char *t[]);
+void TextConnectDb0(void);
+void TextConnectDbUBC(void);
+void ConnectToOptionalUBCDb(unsigned uDatacenter);
 
-static MYSQL gMysql;
+MYSQL gMysql;
+MYSQL gMysqlUBC;
+char *gcUBCDBIP0=DBIP0;
+char *gcUBCDBIP1=DBIP1;
+char gcUBCDBIP0Buffer[32]={""};
+char gcUBCDBIP1Buffer[32]={""};
+
 static char gcQuery[1024];
+
+#define cUBCLOGFILE "/tmp/unxsGraphsUBC.log"
+static FILE *gLfp0=NULL;
+void logfileLine0(const char *cFunction,const char *cLogline,const unsigned uContainer)
+{
+	FILE *fp=stdout;
+
+	if(gLfp0!=NULL)
+		fp=gLfp0;
+
+	time_t luClock;
+	char cTime[32];
+	pid_t pidThis;
+	const struct tm *tmTime;
+
+	pidThis=getpid();
+
+	time(&luClock);
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
+
+	fprintf(fp,"%s unxsDiskUtil.%s[%u]: %s.",cTime,cFunction,pidThis,cLogline);
+	if(uContainer)
+		fprintf(fp," %u",uContainer);
+	fprintf(fp,"\n");
+	fflush(fp);
+
+}//void logfileLine0()
 
 
 unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c,float *d,char *t[])
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
 	unsigned uCount=0;
-	unsigned uNode=0;
+	unsigned uPrevDatacenter=0;
+
+	if((gLfp0=fopen(cUBCLOGFILE,"a"))==NULL)
+		ErrorMsg(cUBCLOGFILE);
 
 	if(uDatacenter)
-		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u AND uStatus=1 ORDER BY uNode",uDatacenter);
+		sprintf(gcQuery,"SELECT uNode,cLabel,uDatacenter FROM tNode WHERE uDatacenter=%u AND uStatus=1 ORDER BY uNode",uDatacenter);
 	else
-		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE cLabel!='appliance' AND uStatus=1 ORDER BY uDatacenter,uNode");
+		sprintf(gcQuery,"SELECT uNode,cLabel,uDatacenter FROM tNode WHERE cLabel!='appliance' AND uStatus=1 ORDER BY uDatacenter,uNode");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		ErrorMsg(mysql_error(&gMysql));
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-
-        	MYSQL_RES *res2;
-	        MYSQL_ROW field2;
+		long unsigned luInstalledDiskSpace=0;
 		long unsigned luContainerDiskSpace=0;
 		long unsigned luHDDiskSpace=0;
 		long unsigned luContainerHardLimit=0;
-		long unsigned luInstalledDiskSpace=0;
 		char cluInstalledDiskSpace[256]={""};
 		char *cp;
-
+		unsigned uNode=0;
+		unsigned uDatacenter=0;
 		sscanf(field[0],"%u",&uNode);
-		t[uCount]=malloc(16);
-		if((cp=strchr(field[1],'.')))
-			*cp=0;
-		sprintf(t[uCount],"%.15s",field[1]);
+		sscanf(field[2],"%u",&uDatacenter);
 
+		logfileLine0("GetDatacenterHealthData","for node",uNode);
+		if(uDatacenter!=uPrevDatacenter)
+		{
+			ConnectToOptionalUBCDb(uDatacenter);
+		}
+
+		t[uCount]=malloc(16);
+		if((cp=strchr(field[1],'.'))) *cp=0;
+		sprintf(t[uCount],"%.15s",field[1]);
+	
 		GetNodeProp(uNode,"luInstalledDiskSpace",cluInstalledDiskSpace);
 		sscanf(cluInstalledDiskSpace,"%lu",&luInstalledDiskSpace);
 
@@ -79,10 +133,10 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 				" AND tProperty.uType=3"
 				" AND tProperty.uKey=tContainer.uContainer"
 				" AND tContainer.uNode=%u",uNode);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			ErrorMsg(mysql_error(&gMysql));
-		res2=mysql_store_result(&gMysql);
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
+			ErrorMsg(mysql_error(&gMysqlUBC));
+		res2=mysql_store_result(&gMysqlUBC);
 		if((field2=mysql_fetch_row(res2)))
 		{
 			if(field2[0]!=NULL)
@@ -97,10 +151,10 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 				" AND tProperty.uType=3"
 				" AND tProperty.uKey=tContainer.uContainer"
 				" AND tContainer.uNode=%u",uNode);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			ErrorMsg(mysql_error(&gMysql));
-		res2=mysql_store_result(&gMysql);
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
+			ErrorMsg(mysql_error(&gMysqlUBC));
+		res2=mysql_store_result(&gMysqlUBC);
 		if((field2=mysql_fetch_row(res2)))
 		{
 			if(field2[0]!=NULL)
@@ -115,10 +169,10 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 				" AND tProperty.uType=3"
 				" AND tProperty.uKey=tContainer.uContainer"
 				" AND tContainer.uNode=%u",uNode);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			ErrorMsg(mysql_error(&gMysql));
-		res2=mysql_store_result(&gMysql);
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
+			ErrorMsg(mysql_error(&gMysqlUBC));
+		res2=mysql_store_result(&gMysqlUBC);
 		if((field2=mysql_fetch_row(res2)))
 		{
 			if(field2[0]!=NULL)
@@ -126,14 +180,21 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c
 		}
 		mysql_free_result(res2);
 
-
-		a[uCount]=(float)luContainerDiskSpace/(float)(1024*1024);
-		b[uCount]=(float)luHDDiskSpace/(float)(1024*1024);
-		c[uCount]=(float)luContainerHardLimit/(float)(1024*1024);
+	
+		a[uCount]+=(float)luContainerDiskSpace/(float)(1024*1024);
+		b[uCount]+=(float)luHDDiskSpace/(float)(1024*1024);
+		c[uCount]+=(float)luContainerHardLimit/(float)(1024*1024);
 		d[uCount]=(float)luInstalledDiskSpace/(float)(1024*1024);
-
 		uCount++;
-	}
+
+		//Not first time
+		if(uPrevDatacenter && uDatacenter!=uPrevDatacenter)
+		{
+			mysql_close(&gMysqlUBC);
+			uPrevDatacenter=uDatacenter;
+		}
+
+	}//for each node
 	mysql_free_result(res);
 
 	return(uCount);
@@ -158,7 +219,7 @@ int main(int iArgc, char *cArgv[])
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-        ConnectDb();
+	TextConnectDb0();
 
 	if(iArgc>1)
 		sscanf(cArgv[1],"%u",&uDatacenter);
@@ -218,18 +279,6 @@ int main(int iArgc, char *cArgv[])
 }//main()
 
 
-void ConnectDb(void)
-{
-        mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,0,NULL,0))
-        {
-        	if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,0,NULL,0))
-			ErrorMsg("Database server unavailable");
-        }
-
-}//end of ConnectDb()
-
-
 void ErrorMsg(const char *cErrorMsg)
 {
         if(getenv("REQUEST_METHOD")!=NULL)
@@ -263,4 +312,61 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 	mysql_free_result(res);
 
 }//void GetNodeProp(...)
+
+
+void ConnectToOptionalUBCDb(unsigned uDatacenter)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//UBC MySQL server per datacenter option. Get db IPs
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
+				" AND uType=1"
+				" AND cName='gcUBCDBIP0'"
+						,uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine0("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uA=0,uB=0,uC=0,uD=0;
+		if(sscanf(field[0],"%*u.%*u.%*u.%*u Public %u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
+			gcUBCDBIP0=gcUBCDBIP0Buffer;
+			logfileLine0("ConnectToOptionalUBCDb",gcUBCDBIP0Buffer,uDatacenter);
+		}
+	}
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
+				" AND uType=1"
+				" AND cName='gcUBCDBIP1'"
+						,uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine0("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uA=0,uB=0,uC=0,uD=0;
+		if(sscanf(field[0],"%*u.%*u.%*u.%*u Public %u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			sprintf(gcUBCDBIP1Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
+			gcUBCDBIP1=gcUBCDBIP1Buffer;
+			logfileLine0("ConnectToOptionalUBCDb",gcUBCDBIP1Buffer,uDatacenter);
+		}
+	}
+	//If gcUBCDBIP1 or gcUBCDBIP1 exist then we will use another MySQL db for UBC tProperty
+	//	data
+	TextConnectDbUBC();
+
+}//void ConnectToOptionalUBCDb()
 
