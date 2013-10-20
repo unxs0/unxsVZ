@@ -19,28 +19,28 @@ LIBS= -L/usr/lib/mysql -lmysqlclient -lz -lm -lgdc -lgd -lpng -lfreetype -ljpeg 
 
 all: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi unxsDiskUtil.cgi
 
-unxsCpuCheck.cgi: cpucheck.o
-	gcc cpucheck.o -o unxsCpuCheck.cgi $(LIBS)
+unxsCpuCheck.cgi: cpucheck.o mysqlconnect.o
+	gcc cpucheck.o mysqlconnect.o -o unxsCpuCheck.cgi $(LIBS)
 
-cpucheck.o: cpucheck.c ../../local.h
+cpucheck.o: cpucheck.c ../../local.h mysqlconnect.h
 	gcc -c cpucheck.c -o cpucheck.o $(CFLAGS)
 
-unxsPrivmem.cgi: privmem.o
-	gcc privmem.o -o unxsPrivmem.cgi $(LIBS)
+unxsPrivmem.cgi: privmem.o mysqlconnect.o
+	gcc privmem.o mysqlconnect.o -o unxsPrivmem.cgi $(LIBS)
 
-privmem.o: privmem.c ../../local.h
+privmem.o: privmem.c ../../local.h mysqlconnect.h
 	gcc -c privmem.c -o privmem.o $(CFLAGS)
 
-unxsRamUtil.cgi: ramutil.o
-	gcc ramutil.o -o unxsRamUtil.cgi $(LIBS)
+unxsRamUtil.cgi: ramutil.o mysqlconnect.o
+	gcc ramutil.o mysqlconnect.o -o unxsRamUtil.cgi $(LIBS)
 
-ramutil.o: ramutil.c ../../local.h
+ramutil.o: ramutil.c ../../local.h mysqlconnect.h
 	gcc -c ramutil.c -o ramutil.o $(CFLAGS)
 
 unxsDiskUtil.cgi: diskutil.o mysqlconnect.o
 	gcc diskutil.o mysqlconnect.o -o unxsDiskUtil.cgi $(LIBS)
 
-diskutil.o: diskutil.c mysqlconnect.c ../../local.h
+diskutil.o: diskutil.c mysqlconnect.c ../../local.h mysqlconnect.h
 	gcc -c diskutil.c -o diskutil.o $(CFLAGS)
 
 mysqlconnect.o: mysqlconnect.c ../../mysqlrad.h ../../local.h

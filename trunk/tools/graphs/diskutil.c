@@ -8,7 +8,7 @@ PURPOSE
 	related data.
 
 AUTHOR
-        (C) 2005-2009, Gary Wallis for Unixservice, LLC. GPLv2 Licensed
+        (C) 2005-2013, Gary Wallis for Unixservice, LLC. GPLv2 Licensed
 REQUIRES
 	CentOS 5.2+
 	yum install gd gd-devel	
@@ -34,50 +34,10 @@ REQUIRES
 #include "../../local.h"
 
 void ErrorMsg(const char *cErrorMsg);
-void ConnectDb(void);
-void ConnectDbUBC(void);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c,float *d,char *t[]);
-void TextConnectDb0(void);
-void TextConnectDbUBC(void);
-void ConnectToOptionalUBCDb(unsigned uDatacenter);
 
-MYSQL gMysql;
-MYSQL gMysqlUBC;
-char *gcUBCDBIP0=DBIP0;
-char *gcUBCDBIP1=DBIP1;
-char gcUBCDBIP0Buffer[32]={""};
-char gcUBCDBIP1Buffer[32]={""};
-
-static char gcQuery[1024];
-
-#define cUBCLOGFILE "/tmp/unxsGraphsUBC.log"
-static FILE *gLfp0=NULL;
-void logfileLine0(const char *cFunction,const char *cLogline,const unsigned uContainer)
-{
-	FILE *fp=stdout;
-
-	if(gLfp0!=NULL)
-		fp=gLfp0;
-
-	time_t luClock;
-	char cTime[32];
-	pid_t pidThis;
-	const struct tm *tmTime;
-
-	pidThis=getpid();
-
-	time(&luClock);
-	tmTime=localtime(&luClock);
-	strftime(cTime,31,"%b %d %T",tmTime);
-
-	fprintf(fp,"%s unxsDiskUtil.%s[%u]: %s.",cTime,cFunction,pidThis,cLogline);
-	if(uContainer)
-		fprintf(fp," %u",uContainer);
-	fprintf(fp,"\n");
-	fflush(fp);
-
-}//void logfileLine0()
+#include "mysqlconnect.h"
 
 
 unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,float *c,float *d,char *t[])
@@ -313,60 +273,4 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 
 }//void GetNodeProp(...)
 
-
-void ConnectToOptionalUBCDb(unsigned uDatacenter)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	//UBC MySQL server per datacenter option. Get db IPs
-	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
-				" AND uType=1"
-				" AND cName='gcUBCDBIP0'"
-						,uDatacenter);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine0("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
-		mysql_close(&gMysql);
-		exit(2);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		unsigned uA=0,uB=0,uC=0,uD=0;
-		if(sscanf(field[0],"%*u.%*u.%*u.%*u Public %u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
-		{
-			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
-			gcUBCDBIP0=gcUBCDBIP0Buffer;
-			logfileLine0("ConnectToOptionalUBCDb",gcUBCDBIP0Buffer,uDatacenter);
-		}
-	}
-	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
-				" AND uType=1"
-				" AND cName='gcUBCDBIP1'"
-						,uDatacenter);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine0("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
-		mysql_close(&gMysql);
-		exit(2);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		unsigned uA=0,uB=0,uC=0,uD=0;
-		if(sscanf(field[0],"%*u.%*u.%*u.%*u Public %u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
-		{
-			sprintf(gcUBCDBIP1Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
-			gcUBCDBIP1=gcUBCDBIP1Buffer;
-			logfileLine0("ConnectToOptionalUBCDb",gcUBCDBIP1Buffer,uDatacenter);
-		}
-	}
-	//If gcUBCDBIP1 or gcUBCDBIP1 exist then we will use another MySQL db for UBC tProperty
-	//	data
-	TextConnectDbUBC();
-
-}//void ConnectToOptionalUBCDb()
 

@@ -30,10 +30,13 @@ extern char *gcUBCDBIP0;
 extern char *gcUBCDBIP1;
 extern char gcUBCDBIP0Buffer[];
 extern char gcUBCDBIP1Buffer[];
+extern FILE *gLfp0;
+extern char gcQuery[];
 
 //TOC protos
 void TextConnectDb0(void);
 void TextConnectDbUBC(void);
+void ConnectToOptionalUBCDb(unsigned uDatacenter);
 
 
 void TextConnectDb0(void)
@@ -322,3 +325,88 @@ void TextConnectDbUBC(void)
 	exit(1);
 
 }//TextConnectDbUBC()
+
+
+void ConnectToOptionalUBCDb(unsigned uDatacenter)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//UBC MySQL server per datacenter option. Get db IPs
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
+				" AND uType=1"
+				" AND cName='gcUBCDBIP0'"
+						,uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine0("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uA=0,uB=0,uC=0,uD=0;
+		if(sscanf(field[0],"%*u.%*u.%*u.%*u Public %u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
+			gcUBCDBIP0=gcUBCDBIP0Buffer;
+			logfileLine0("ConnectToOptionalUBCDb",gcUBCDBIP0Buffer,uDatacenter);
+		}
+	}
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
+				" AND uType=1"
+				" AND cName='gcUBCDBIP1'"
+						,uDatacenter);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine0("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uA=0,uB=0,uC=0,uD=0;
+		if(sscanf(field[0],"%*u.%*u.%*u.%*u Public %u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			sprintf(gcUBCDBIP1Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
+			gcUBCDBIP1=gcUBCDBIP1Buffer;
+			logfileLine0("ConnectToOptionalUBCDb",gcUBCDBIP1Buffer,uDatacenter);
+		}
+	}
+	//If gcUBCDBIP1 or gcUBCDBIP1 exist then we will use another MySQL db for UBC tProperty
+	//	data
+	TextConnectDbUBC();
+
+}//void ConnectToOptionalUBCDb()
+
+
+void logfileLine0(const char *cFunction,const char *cLogline,const unsigned uContainer)
+{
+	FILE *fp=stdout;
+
+	if(gLfp0!=NULL)
+		fp=gLfp0;
+
+	time_t luClock;
+	char cTime[32];
+	pid_t pidThis;
+	const struct tm *tmTime;
+
+	pidThis=getpid();
+
+	time(&luClock);
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
+
+	fprintf(fp,"%s unxsDiskUtil.%s[%u]: %s.",cTime,cFunction,pidThis,cLogline);
+	if(uContainer)
+		fprintf(fp," %u",uContainer);
+	fprintf(fp,"\n");
+	fflush(fp);
+
+}//void logfileLine0()
+
