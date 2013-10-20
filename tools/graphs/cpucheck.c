@@ -7,7 +7,7 @@ PURPOSE
         Create file or on the fly graphs for unxsVZ node container cpu power related data.
 
 AUTHOR
-        (C) 2005-2009, Gary Wallis for Unixservice, LLC. GPL2 Licensed
+        (C) 2005-2013, Gary Wallis for Unixservice, LLC. GPL2 Licensed
 REQUIRES
 	CentOS 5.2+
 	yum install gd gd-devel	
@@ -27,12 +27,10 @@ REQUIRES
 #include "../../local.h"
 
 void ErrorMsg(const char *cErrorMsg);
-void ConnectDb(void);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[]);
 
-static MYSQL gMysql;
-static char gcQuery[1024];
+#include "mysqlconnect.h"
 
 
 unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[])
@@ -40,12 +38,15 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uCount=0;
-	unsigned uNode=0;
+	unsigned uPrevDatacenter=0;
+
+	if((gLfp0=fopen(cUBCLOGFILE,"a"))==NULL)
+		ErrorMsg(cUBCLOGFILE);
 
 	if(uDatacenter)
-		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u AND uStatus=1 ORDER BY uNode",uDatacenter);
+		sprintf(gcQuery,"SELECT uNode,cLabel,uDatacenter FROM tNode WHERE uDatacenter=%u AND uStatus=1 ORDER BY uNode",uDatacenter);
 	else
-		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE cLabel!='appliance' AND uStatus=1 ORDER BY uDatacenter,uNode");
+		sprintf(gcQuery,"SELECT uNode,cLabel,uDatacenter FROM tNode WHERE cLabel!='appliance' AND uStatus=1 ORDER BY uDatacenter,uNode");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		ErrorMsg(mysql_error(&gMysql));
@@ -58,8 +59,18 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 		float fNodeCPUUnits=0.0;
 		char cfNodeCPUUnits[256];
 		char *cp;
+		unsigned uNode=0;
+		unsigned uDatacenter=0;
 
 		sscanf(field[0],"%u",&uNode);
+		sscanf(field[2],"%u",&uDatacenter);
+
+		logfileLine0("GetDatacenterHealthData","for node",uNode);
+		if(uDatacenter!=uPrevDatacenter)
+		{
+			ConnectToOptionalUBCDb(uDatacenter);
+		}
+
 		t[uCount]=malloc(16);
 		if((cp=strchr(field[1],'.')))
 			*cp=0;
@@ -76,10 +87,10 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 					" AND tContainer.uStatus!=11"//Probably active not initial setup
 					" AND tContainer.uStatus!=31"// and not stopped
 					" AND tContainer.uNode=%u",uNode);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		ErrorMsg(mysql_error(&gMysql));
-		res2=mysql_store_result(&gMysql);
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
+			ErrorMsg(mysql_error(&gMysqlUBC));
+		res2=mysql_store_result(&gMysqlUBC);
 		if((field2=mysql_fetch_row(res2)))
 		{
 			float fAllContainerCPUUnits=0.0;
@@ -90,8 +101,14 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 			b[uCount]=fNodeCPUUnits;
 		}
 		mysql_free_result(res2);
-
 		uCount++;
+
+		//Not first time
+		if(uPrevDatacenter && uDatacenter!=uPrevDatacenter)
+		{
+			mysql_close(&gMysqlUBC);
+			uPrevDatacenter=uDatacenter;
+		}
 	}
 	mysql_free_result(res);
 
@@ -116,7 +133,7 @@ int main(int iArgc, char *cArgv[])
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-        ConnectDb();
+        TextConnectDb0();
 
 	if(iArgc>1)
 		sscanf(cArgv[1],"%u",&uDatacenter);
@@ -174,18 +191,6 @@ int main(int iArgc, char *cArgv[])
         return(0);
 
 }//main()
-
-
-void ConnectDb(void)
-{
-        mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,0,NULL,0))
-        {
-        	if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,0,NULL,0))
-			ErrorMsg("Database server unavailable");
-        }
-
-}//end of ConnectDb()
 
 
 void ErrorMsg(const char *cErrorMsg)
