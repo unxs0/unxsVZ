@@ -238,6 +238,15 @@ void ExttConfigurationListSelect(void)
 		sprintf(cCat,"tConfiguration.uConfiguration=%u ORDER BY uConfiguration",uConfiguration);
 		strcat(gcQuery,cCat);
         }
+        else if(!strcmp(gcFilter,"cLabel"))
+        {
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tConfiguration.cLabel LIKE '%s' ORDER BY cLabel,uConfiguration",gcCommand);
+		strcat(gcQuery,cCat);
+	}
         else if(1)
         {
                 //None NO FILTER
@@ -257,6 +266,10 @@ void ExttConfigurationListFilter(void)
                 printf("<option>uConfiguration</option>");
         else
                 printf("<option selected>uConfiguration</option>");
+        if(strcmp(gcFilter,"cLabel"))
+                printf("<option>cLabel</option>");
+        else
+                printf("<option selected>cLabel</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else

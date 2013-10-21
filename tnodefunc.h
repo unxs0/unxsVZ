@@ -680,7 +680,7 @@ void ExttNodeButtons(void)
 			tContainerNavList(uNode,cSearch);
 			if(uNode)
 			{
-				htmlHealth(uNode,uDatacenter,2);
+				//htmlHealth(uNode,uDatacenter,2);
 				//hide health if node selected via get
 				if(guMode!=6)
 					htmlNodeHealth(uNode);
