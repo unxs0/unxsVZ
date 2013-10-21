@@ -410,11 +410,12 @@ void DashBoard(const char *cOptionalMsg)
 		else if(cConfigBuffer[0])
 			printf("<img src=%s>\n",cConfigBuffer);
 
-
 		printf("</td>");
 	}
 
 
+/*
+	Need to be changed for distributed UBC support
 
 	//
 	OpenRow("Global Cluster Health","black");
@@ -531,7 +532,7 @@ void DashBoard(const char *cOptionalMsg)
 		fRatio,luTotalUsage/1048576,luTotalSoftLimit/1048576,cColor);
 	//
 	//
-
+*/
 
 	if(guPermLevel>11 && guLoginClient==1)
 	{

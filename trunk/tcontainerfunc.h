@@ -4484,7 +4484,8 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 
-					if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uINITSETUP)
+					//allow starting active also
+					if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uINITSETUP || sContainer.uStatus==uACTIVE)
 						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
 						if(sContainer.uStatus==uINITSETUP)
@@ -6447,15 +6448,21 @@ void htmlHealth(unsigned uElement,unsigned uDatacenter,unsigned uType)
 				" AND (uType=2 OR uType=3)"
 				,uElement,uElement);
 	else
-	sprintf(gcQuery,"SELECT cName,cValue,uProperty,uKey FROM tProperty WHERE"
+	sprintf(gcQuery,"SELECT DISTINCT cName,cValue,uProperty,uKey FROM tProperty WHERE"
 				" cName LIKE '%%.luFail%%' AND cValue!='0'"
 				" AND uKey=%u AND tProperty.uType=%u",uElement,uType);
 	macro_mySQLQueryExitTextUBC
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		if(strstr(mysqlField[4],"Node")) cTable="tNode";
-		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s&cReturn=%s_%s>%s=%s"
-				"</a><br>\n",mysqlField[2],cTable,mysqlField[3],mysqlField[0],mysqlField[1]);
+		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s"
+			"&cReturn=%s_%s"
+			"&cuDatacenterSelect=%u"
+			">%s=%s</a><br>\n",
+				mysqlField[2],
+				cTable,mysqlField[3],
+				uDatacenter,
+				mysqlField[0],mysqlField[1]);
 	}
 	mysql_free_result(mysqlRes);
 

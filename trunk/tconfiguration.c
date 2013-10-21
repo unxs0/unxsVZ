@@ -589,7 +589,8 @@ void tConfigurationList(void)
 			ctime_r(&luTime9,cBuf9);
 		else
 			sprintf(cBuf9,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tConfiguration&uConfiguration=%s>%s</a>"
+			"<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,ForeignKey("tDatacenter","cLabel",strtoul(field[1],NULL,10))
@@ -615,8 +616,19 @@ void tConfigurationList(void)
 
 void CreatetConfiguration(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tConfiguration ( uModBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, cLabel VARCHAR(100) NOT NULL DEFAULT '', INDEX (cLabel), INDEX (uDatacenter), INDEX (uNode), INDEX (uContainer), uConfiguration INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cComment TEXT NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uModDate INT UNSIGNED NOT NULL DEFAULT 0, cValue VARCHAR(255) NOT NULL DEFAULT '', uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, uNode INT UNSIGNED NOT NULL DEFAULT 0, uContainer INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tConfiguration ("
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cLabel VARCHAR(100) NOT NULL DEFAULT '', INDEX (cLabel),"
+			" uConfiguration INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cComment TEXT NOT NULL DEFAULT '',"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cValue VARCHAR(255) NOT NULL DEFAULT '',"
+			" INDEX (uDatacenter), INDEX (uNode), INDEX (uContainer),"
+			" uDatacenter INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uNode INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uContainer INT UNSIGNED NOT NULL DEFAULT 0 )");
 	MYSQL_RUN;
 }//CreatetConfiguration()
-
-//perlSAR patch1

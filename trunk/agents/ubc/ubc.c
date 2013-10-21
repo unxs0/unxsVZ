@@ -131,7 +131,8 @@ int main(int iArgc, char *cArgv[])
 				gethostname(cHostname,99);
 				if((cp=strchr(cHostname,'.')))
 					*cp=0;
-				printf("Connected to %s %s from %s\n",DBIP0,DBIP1,cHostname);
+				//printf("Connected to %s %s from %s\n",DBIP0,DBIP1,cHostname);
+				printf("Connected from %s\n",cHostname);
 
 				sprintf(gcQuery,"SELECT uDatacenter FROM tNode WHERE cLabel='%.99s'",cHostname);
 				mysql_query(&gMysql,gcQuery);
