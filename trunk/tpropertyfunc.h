@@ -26,8 +26,6 @@ void htmlUBCDatacenterSelect(char *cuDatacenterSelect,unsigned uMode);
 //jobqueue.c
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 
-//tnodefunc.h
-unsigned ConnectToOptionalUBCDb(unsigned uDatacenter);
 
 void ExtProcesstPropertyVars(pentry entries[], int x)
 {
@@ -50,7 +48,7 @@ void ExtProcesstPropertyVars(pentry entries[], int x)
 			char cLogfile[64]={"/tmp/unxsvzlog"};
 			if((gLfp=fopen(cLogfile,"a"))==NULL)
                 		tProperty("Could not open logfile");
-			if(uTargetDatacenter && ConnectToOptionalUBCDb(uTargetDatacenter))
+			if(uTargetDatacenter && ConnectToOptionalUBCDb(uTargetDatacenter,0))
 				tProperty("ConnectToOptionalUBCDb() error");
 			guUsingUBC=1;
 		}
@@ -509,7 +507,7 @@ void ExttPropertyGetHook(entry gentries[], int x)
 			char cLogfile[64]={"/tmp/unxsvzlog"};
 			if((gLfp=fopen(cLogfile,"a"))==NULL)
                 		tProperty("Could not open logfile");
-			if(uTargetDatacenter && ConnectToOptionalUBCDb(uTargetDatacenter))
+			if(uTargetDatacenter && ConnectToOptionalUBCDb(uTargetDatacenter,0))
 				tProperty("ConnectToOptionalUBCDb() error");
 			guUsingUBC=1;
 		}

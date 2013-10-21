@@ -32,7 +32,7 @@ unsigned FailoverCloneContainer(unsigned uDatacenter, unsigned uNode, unsigned u
 unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,const char *cuWizIPv4PullDown,
 			unsigned uSyncPeriod,unsigned uCloneStop,unsigned uTargetDatacenter);
 void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
-unsigned ConnectToOptionalUBCDb(unsigned uDatacenter);
+unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate);
 
 //external
 //tcontainerfunc.h
@@ -1410,7 +1410,7 @@ NextSection2:
 				//debug
 				//printf("closed %s %s<br>\n",gcUBCDBIP0Buffer,gcUBCDBIP1Buffer);
 			}
-			if(ConnectToOptionalUBCDb(uDatacenter))
+			if(ConnectToOptionalUBCDb(uDatacenter,0))
 			{
 				printf("%s connect error %s %s<br>\n",field[0],gcUBCDBIP0Buffer,gcUBCDBIP1Buffer);
 				continue;
@@ -1665,7 +1665,7 @@ void SetNodeProp(char const *cName,char const *cValue,unsigned uNode)
 }//void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
 
 
-unsigned ConnectToOptionalUBCDb(unsigned uDatacenter)
+unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -1691,6 +1691,8 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter)
 	if((field=mysql_fetch_row(res)))
 	{
 		unsigned uA=0,uB=0,uC=0,uD=0;
+		char *cScan={"%*u.%*u.%*u.%*u Public %u.%u.%u.%u"};
+		if(uPrivate) cScan="%u.%u.%u.%u";
 		if(sscanf(field[0],"%*u.%*u.%*u.%*u Public %u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
 		{
 			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
@@ -1712,7 +1714,9 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter)
 	if((field=mysql_fetch_row(res)))
 	{
 		unsigned uA=0,uB=0,uC=0,uD=0;
-		if(sscanf(field[0],"%*u.%*u.%*u.%*u Public %u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		char *cScan={"%*u.%*u.%*u.%*u Public %u.%u.%u.%u"};
+		if(uPrivate) cScan="%u.%u.%u.%u";
+		if(sscanf(field[0],cScan,&uA,&uB,&uC,&uD)==4)
 		{
 			sprintf(gcUBCDBIP1Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
 			gcUBCDBIP1=gcUBCDBIP1Buffer;

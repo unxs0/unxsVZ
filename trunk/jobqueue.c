@@ -112,7 +112,6 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 unsigned uCheckMaxContainers(unsigned uNode);
 unsigned uCheckMaxCloneContainers(unsigned uNode);
 unsigned uContainerStatus(unsigned uContainer);
-unsigned ConnectToOptionalUBCDb(unsigned uDatacenter);//tnodefunc.h
 
 //file scoped vars.
 static unsigned gfuNode=0;
@@ -1925,7 +1924,7 @@ void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValu
 		logfileLine("GetContainerPropUBC","!uDatacenter error");
 		return;
 	}
-	if(ConnectToOptionalUBCDb(uDatacenter))
+	if(ConnectToOptionalUBCDb(uDatacenter,1))
 	{
 		logfileLine("GetContainerPropUBC","ConnectToOptionalUBCDb error");
 		return;
@@ -4439,7 +4438,7 @@ unsigned SetContainerPropertyUBC(const unsigned uContainer,const char *cProperty
 		logfileLine("SetContainerPropertyUBC","!uDatacenter error");
 		return(1);
 	}
-	if(ConnectToOptionalUBCDb(uDatacenter))
+	if(ConnectToOptionalUBCDb(uDatacenter,1))
 	{
 		logfileLine("SetContainerPropertyUBC","ConnectToOptionalUBCDb error");
 		return(1);
@@ -4613,7 +4612,7 @@ void GetNodePropUBC(const unsigned uNode,const char *cName,char *cValue)
 		logfileLine("GetNodePropUBC","!uDatacenter error");
 		return;
 	}
-	if(ConnectToOptionalUBCDb(uDatacenter))
+	if(ConnectToOptionalUBCDb(uDatacenter,1))
 	{
 		logfileLine("GetNodePropUBC","ConnectToOptionalUBCDb error");
 		return;

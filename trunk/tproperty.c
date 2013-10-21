@@ -128,7 +128,7 @@ void ProcesstPropertyListVars(pentry entries[], int x)
 			sprintf(cDatacenterSelect,"%.63s",entries[i].val);
 			uTargetDatacenter=ReadPullDown("tDatacenter","cLabel",entries[i].val);
 			sprintf(cuDatacenterSelect,"%u",uTargetDatacenter);
-			if(uTargetDatacenter && ConnectToOptionalUBCDb(uTargetDatacenter))
+			if(uTargetDatacenter && ConnectToOptionalUBCDb(uTargetDatacenter,0))
 				tProperty("ConnectToOptionalUBCDb() error");
 			guUsingUBC=1;
 		}

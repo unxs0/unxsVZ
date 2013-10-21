@@ -206,7 +206,6 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue
 void DelProperties(unsigned uNode,unsigned uType);//tnodefunc.h
 time_t cStartDateToUnixTime(char *cStartDate);//tjobfunc.h
 time_t cStartTimeToUnixTime(char *cStartTime);
-unsigned ConnectToOptionalUBCDb(unsigned uDatacenter);//tnodefunc.h
 
 #include <openisp/ucidr.h>
 #include <ctype.h>
@@ -5537,7 +5536,7 @@ while((field=mysql_fetch_row(res)))
 				if( (gLfp=fopen(cLogfile,"a"))==NULL)
                 			tContainer("Could not open logfile");
 			}
-			if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter))
+			if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter,0))
 				tContainer("ConnectToOptionalUBCDb() error");
 			if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
 			{
@@ -6408,7 +6407,7 @@ void htmlHealth(unsigned uElement,unsigned uDatacenter,unsigned uType)
 			if( (gLfp=fopen(cLogfile,"a"))==NULL)
               			tContainer("Could not open logfile");
 		}
-		if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter))
+		if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter,0))
 			tContainer("ConnectToOptionalUBCDb() error");
 
 		if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)

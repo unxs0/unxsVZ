@@ -2,7 +2,7 @@
 FILE
 	unxsVZ/mysqlrad.h
 AUTHOR
-	(C) 2001-2009 Gary Wallis for Unixservice.
+	(C) 2001-2013 Gary Wallis for Unixservice, LLC.
 */
 
 #include <stdio.h>
@@ -200,6 +200,7 @@ void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFie
 
 char *cURLEncode(char *cURL);
 void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
+unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate);//tnodefunc.h
 
  //Standard tInputFunc functions
 char *WordToLower(char *cInput);
