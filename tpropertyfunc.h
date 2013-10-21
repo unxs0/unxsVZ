@@ -331,6 +331,8 @@ void htmlUBCEdit(void)
         	MYSQL_RES *res;
         	MYSQL_ROW field;
 
+		if(!guUsingUBC)
+			gMysqlUBC=gMysql;
 
 		*cp=0;
 		sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE"
@@ -339,11 +341,11 @@ void htmlUBCEdit(void)
 				" AND (cName='%2$s.luLimit' OR cName='%2$s.luBarrier' OR"
 				" cName='%2$s.luHardlimit' OR cName='%2$s.luSoftlimit')"
 				" ORDER BY cName DESC",uKey,cUBCName);
-	        mysql_query(&gMysql,gcQuery);
-       		 if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+	        mysql_query(&gMysqlUBC,gcQuery);
+       		 if(mysql_errno(&gMysqlUBC))
+			htmlPlainTextError(mysql_error(&gMysqlUBC));
 
-		res=mysql_store_result(&gMysql);
+		res=mysql_store_result(&gMysqlUBC);
 		if(mysql_num_rows(res))
 		{
 			register unsigned uFirst=0;
@@ -398,17 +400,19 @@ void htmlUBCInfo(void)
         	MYSQL_RES *res;
         	MYSQL_ROW field;
 
+		if(!guUsingUBC)
+			gMysqlUBC=gMysql;
+			
 		*cp=0;
 		sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE"
 				" uType=3"
 				" AND uKey=%u"
 				" AND cName LIKE '%s.lu%%'"
 				" ORDER BY cName DESC",uKey,cUBCName);
-	        mysql_query(&gMysql,gcQuery);
-       		 if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-
-		res=mysql_store_result(&gMysql);
+	        mysql_query(&gMysqlUBC,gcQuery);
+       		 if(mysql_errno(&gMysqlUBC))
+			htmlPlainTextError(mysql_error(&gMysqlUBC));
+		res=mysql_store_result(&gMysqlUBC);
 		if(mysql_num_rows(res))
 		{
 			printf("<p><u>OpenVZ UBC Related Properties</u><br>");
