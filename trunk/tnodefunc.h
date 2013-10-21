@@ -1693,7 +1693,7 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
 		unsigned uA=0,uB=0,uC=0,uD=0;
 		char *cScan={"%*u.%*u.%*u.%*u Public %u.%u.%u.%u"};
 		if(uPrivate) cScan="%u.%u.%u.%u";
-		if(sscanf(field[0],"%*u.%*u.%*u.%*u Public %u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		if(sscanf(field[0],cScan,&uA,&uB,&uC,&uD)==4)
 		{
 			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
 			gcUBCDBIP0=gcUBCDBIP0Buffer;
