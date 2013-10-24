@@ -1,7 +1,7 @@
 //mysqlconnect.c
 void TextConnectDb0(void);
 void TextConnectDbUBC(void);
-void ConnectToOptionalUBCDb(unsigned uDatacenter);
+void ConnectToOptionalUBCDb0(unsigned uDatacenter);
 void logfileLine0(const char *cFunction,const char *cLogline,const unsigned uContainer);
 MYSQL gMysql;
 MYSQL gMysqlUBC;

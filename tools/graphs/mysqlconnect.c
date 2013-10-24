@@ -36,7 +36,7 @@ extern char gcQuery[];
 //TOC protos
 void TextConnectDb0(void);
 void TextConnectDbUBC(void);
-void ConnectToOptionalUBCDb(unsigned uDatacenter);
+void ConnectToOptionalUBCDb0(unsigned uDatacenter);
 
 
 void TextConnectDb0(void)
@@ -327,7 +327,7 @@ void TextConnectDbUBC(void)
 }//TextConnectDbUBC()
 
 
-void ConnectToOptionalUBCDb(unsigned uDatacenter)
+void ConnectToOptionalUBCDb0(unsigned uDatacenter)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -340,7 +340,7 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine0("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
+		logfileLine0("ConnectToOptionalUBCDb0",mysql_error(&gMysql),uDatacenter);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -352,7 +352,7 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 		{
 			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
 			gcUBCDBIP0=gcUBCDBIP0Buffer;
-			logfileLine0("ConnectToOptionalUBCDb",gcUBCDBIP0Buffer,uDatacenter);
+			logfileLine0("ConnectToOptionalUBCDb0",gcUBCDBIP0Buffer,uDatacenter);
 		}
 	}
 	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
@@ -362,7 +362,7 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine0("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
+		logfileLine0("ConnectToOptionalUBCDb0",mysql_error(&gMysql),uDatacenter);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -374,14 +374,14 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 		{
 			sprintf(gcUBCDBIP1Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
 			gcUBCDBIP1=gcUBCDBIP1Buffer;
-			logfileLine0("ConnectToOptionalUBCDb",gcUBCDBIP1Buffer,uDatacenter);
+			logfileLine0("ConnectToOptionalUBCDb0",gcUBCDBIP1Buffer,uDatacenter);
 		}
 	}
 	//If gcUBCDBIP1 or gcUBCDBIP1 exist then we will use another MySQL db for UBC tProperty
 	//	data
 	TextConnectDbUBC();
 
-}//void ConnectToOptionalUBCDb()
+}//void ConnectToOptionalUBCDb0()
 
 
 void logfileLine0(const char *cFunction,const char *cLogline,const unsigned uContainer)
