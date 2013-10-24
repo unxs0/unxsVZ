@@ -73,7 +73,7 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 		logfileLine0("GetDatacenterHealthData","for node",uNode);
 		if(uDatacenter!=uPrevDatacenter)
 		{
-			ConnectToOptionalUBCDb(uDatacenter);
+			ConnectToOptionalUBCDb0(uDatacenter);
 		}
 
 		t[uCount]=malloc(16);
@@ -202,6 +202,7 @@ int main(int iArgc, char *cArgv[])
 			NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
         unsigned long sc[4]={0xFF8080,0x8080FF,0x33CC66,0x999933};
         char cDatacenter[256]={""};
+        char cYTitle[64]={""};
         unsigned uNumNodes=32;
 	unsigned uDatacenter=0;
 	register unsigned i;
@@ -215,19 +216,22 @@ int main(int iArgc, char *cArgv[])
 
 	if(uDatacenter)
 	{
-		sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE uDatacenter=%u AND uStatus=1",uDatacenter);
+		sprintf(gcQuery,"SELECT cLabel,NOW() FROM tDatacenter WHERE uDatacenter=%u AND uStatus=1",uDatacenter);
 	        mysql_query(&gMysql,gcQuery);
 	        if(mysql_errno(&gMysql))
 			ErrorMsg(mysql_error(&gMysql));
 	        res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
+		{
 			sprintf(cDatacenter,"%.99s",field[0]);
+			sprintf(cYTitle,"Percent (%.31s)",field[1]);
+		}
 		mysql_free_result(res);
 
 	}
 	else
 	{
-		sprintf(gcQuery,"SELECT cLabel FROM tDatacenter WHERE cLabel!='CustomerPremise' AND uStatus=1 ORDER BY uDatacenter");
+		sprintf(gcQuery,"SELECT cLabel,NOW() FROM tDatacenter WHERE cLabel!='CustomerPremise' AND uStatus=1 ORDER BY uDatacenter");
 	        mysql_query(&gMysql,gcQuery);
 	        if(mysql_errno(&gMysql))
 			ErrorMsg(mysql_error(&gMysql));
@@ -237,6 +241,8 @@ int main(int iArgc, char *cArgv[])
 			strncat(cDatacenter,field[0],31);
 			strcat(cDatacenter," ");
 			if(strlen(cDatacenter)>(sizeof(cDatacenter)-32)) break;
+			if(!cYTitle[0])
+				sprintf(cYTitle,"Percent (%.31s)",field[1]);
 		}
 		mysql_free_result(res);
 	}
@@ -251,7 +257,7 @@ int main(int iArgc, char *cArgv[])
         GDC_BGColor= 0xFFFFFFL;/* backgound color (white) */
         GDC_SetColor= sc;/* assign set colors */
         GDC_title=cDatacenter;
-        GDC_ytitle="Percent";
+        GDC_ytitle=cYTitle;
         GDC_xtitle="Hardware nodes: Current ram vs max held ram/installed-ram ratio.";
         GDC_bar_width = 5;
 
