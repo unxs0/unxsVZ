@@ -33,6 +33,7 @@ void ErrorMsg(const char *cErrorMsg);
 void ConnectDb(void);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 unsigned GetDatacenterHealthData(unsigned uDatacenter, float *a, float *b,char *t[]);
+void SendEmail(char *cSubject,char *cMsg);
 
 
 unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[])
@@ -130,6 +131,13 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 		mysql_free_result(res2);
 		luTotalRAM=(luAllContainerPhyspages+luAllContainer)/1000;
 		a[uCount]=((float)luTotalRAM/(float)luInstalledRam) * 100.00;
+
+		//send email warning
+		if(a[uCount]>86.00)
+		{
+			sprintf(gcQuery,"%s %2.2f uDatacenter=%u,uNode=%u",t[uCount],a[uCount],uDatacenter,uNode);
+			SendEmail("RamUtil Warning!",gcQuery);
+		}
 
 		//3-. Max held
 		//Total RAM utilization http://wiki.openvz.org/UBC_systemwide_configuration
@@ -320,3 +328,20 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 
 }//void GetNodeProp(...)
 
+
+void SendEmail(char *cSubject,char *cMsg)
+{
+	FILE *fp;
+	char cFrom[100]={"unxsvz-agent"};
+	char cEmail[100]={"supportgrp@unixservice.com"};
+
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	{
+		fprintf(fp,"To: %s\n",cEmail);
+		fprintf(fp,"From: %s\n",cFrom);
+		fprintf(fp,"Subject: %s\n\n",cSubject);
+		fprintf(fp,"%s\n",cMsg);
+	}
+	pclose(fp);
+
+}//void SendEmail()

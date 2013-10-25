@@ -640,6 +640,9 @@ void ExttIPAuxTable(void)
 			printf("&nbsp; <input title='Change owner using filter uOwnerSearch select'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Change Owner'>\n");
+			printf("&nbsp; <input title='Change datacenter using filter uDatacenterSearch select'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Change Datacenter'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -842,6 +845,24 @@ while((field=mysql_fetch_row(res)))
 						cResult[0]=0;
 					break;
 				}//Group Change Owner
+
+				//Group Change Datacenter
+				else if(!strcmp(gcCommand,"Group Change Datacenter") && uDatacenterSearch)
+				{
+					sprintf(gcQuery,"UPDATE tIP SET uDatacenter=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uIP=%u",
+								uDatacenterSearch,
+								guLoginClient,
+								uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"datacenter changed");
+					else
+						cResult[0]=0;
+					break;
+				}//Group Change Datacenter
 
 				else if(1)
 				{

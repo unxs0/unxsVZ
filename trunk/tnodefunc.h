@@ -709,6 +709,20 @@ void ExttNodeAuxTable(void)
 	{
 		//Node Container Report
 		case 9001:
+		{
+			//UBC support
+			char cLogfile[64]={"/tmp/unxsvzlog"};
+			if(gLfp==NULL)
+			{
+				if( (gLfp=fopen(cLogfile,"a"))==NULL)
+                			tContainer("Could not open logfile");
+			}
+			if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter,0))
+				tContainer("ConnectToOptionalUBCDb() error");
+			if(gcUBCDBIP0==DBIP0 && gcUBCDBIP1==DBIP1)
+				gMysqlUBC=gMysql;
+
+				sprintf(gcQuery,"Distributed UBC %s Property Panel",cLabel);
 			sprintf(gcQuery,"Non clone %s Containers",cLabel);
 			OpenFieldSet(gcQuery,100);
 			printf("<table>");
@@ -776,10 +790,10 @@ void ExttNodeAuxTable(void)
 
 					sprintf(gcQuery,"SELECT cValue FROM tProperty"
 							" WHERE cName='1k-blocks.luUsage' AND uType=3 AND uKey=%s",field[0]);
-				        mysql_query(&gMysql,gcQuery);
-				        if(mysql_errno(&gMysql))
-						htmlPlainTextError(mysql_error(&gMysql));
-				        res2=mysql_store_result(&gMysql);
+				        mysql_query(&gMysqlUBC,gcQuery);
+				        if(mysql_errno(&gMysqlUBC))
+						htmlPlainTextError(mysql_error(&gMysqlUBC));
+				        res2=mysql_store_result(&gMysqlUBC);
 					if((field2=mysql_fetch_row(res2)))
 					{
 						luDiskSpace=0;
@@ -793,6 +807,7 @@ void ExttNodeAuxTable(void)
 			}
 			printf("</table>");
 			CloseFieldSet();
+		}
 		break;
 
 		//Hardware Information
@@ -936,7 +951,7 @@ void ExttNodeAuxTable(void)
 		default:
 			if(!uNode || guMode!=6) return;
 
-			sprintf(gcQuery,"%s Property Panel",cLabel);
+			sprintf(gcQuery,"Global %s Property Panel",cLabel);
 			OpenFieldSet(gcQuery,100);
 
 			sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE"
@@ -959,8 +974,45 @@ void ExttNodeAuxTable(void)
 				}
 				printf("</table>");
 			}
-
 			CloseFieldSet();
+
+
+			char cLogfile[64]={"/tmp/unxsvzlog"};
+			if(gLfp==NULL)
+			{
+				if( (gLfp=fopen(cLogfile,"a"))==NULL)
+                			tContainer("Could not open logfile");
+			}
+			if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter,0))
+				tContainer("ConnectToOptionalUBCDb() error");
+			if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
+			{
+				sprintf(gcQuery,"Distributed UBC %s Property Panel",cLabel);
+				OpenFieldSet(gcQuery,100);
+				//UBC safe
+				sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty"
+						" WHERE uKey=%u AND uType=2 ORDER BY cName",uNode);
+		        	mysql_query(&gMysqlUBC,gcQuery);
+		        	if(mysql_errno(&gMysqlUBC))
+					htmlPlainTextError(mysql_error(&gMysqlUBC));
+		        	res=mysql_store_result(&gMysqlUBC);
+				if(mysql_num_rows(res))
+				{
+					printf("<table>");
+					while((field=mysql_fetch_row(res)))
+					{
+						printf("<tr>");
+						printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+						"gcFunction=tProperty&uProperty=%s&cReturn=tNode_%u&cuDatacenterSelect=%u>"
+						"%s</a></td><td>%s</td>\n",
+							field[0],uNode,uDatacenter,field[1],field[2]);
+						printf("</tr>");
+					}
+					printf("</table>");
+				}
+				mysql_free_result(res);
+				CloseFieldSet();
+			}
 	}
 
 }//void ExttNodeAuxTable(void)
