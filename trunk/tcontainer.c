@@ -1371,6 +1371,8 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 
 	if(!uMode)
 		cMode="disabled";
+	else if(uMode==2)
+		cMode="onChange='submit()'";
       
         if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
         {

@@ -258,7 +258,7 @@ void ExttDatacenterButtons(void)
 					" It is in these containers that actual public services run."
 					" uVeth='Yes' container traffic is not included"
 					"in the datacenter graphs at this time.");
-			tGroupNavList();
+			//tGroupNavList();
 			tNodeNavList(uDatacenter);
 			tDatacenterNavList();
 			tDatacenterHealth();
@@ -412,7 +412,8 @@ void tDatacenterNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	ExtSelect("tDatacenter","tDatacenter.uDatacenter,tDatacenter.cLabel");
+	//ExtSelect("tDatacenter","tDatacenter.uDatacenter,tDatacenter.cLabel");
+	sprintf(gcQuery,"SELECT uDatacenter,cLabel FROM tDatacenter WHERE uStatus=1 AND cLabel!='CustomerPremise'  ORDER BY cLabel");
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -425,7 +426,7 @@ void tDatacenterNavList(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>tDatacenterNavList</u><br>\n");
+        	printf("<p><u>Active tDatacenterNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tDatacenter&uDatacenter=%s>"
@@ -442,9 +443,22 @@ void tDatacenterHealth(void)
         MYSQL_ROW field;
 
 
-	printf("<p>Select uNode<br>");
-	tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
-			"",0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+	//printf("<p>Select uNode for targeted health report<br>");
+	//mode==2 onChange='submit()'
+	//tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,2,
+	//		"",0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+
+
+	char cLogfile[64]={"/tmp/unxsvzlog"};
+	if(gLfp==NULL)
+	{
+		if( (gLfp=fopen(cLogfile,"a"))==NULL)
+			tDatacenter("Could not open logfile");
+	}
+		if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter,0))
+			tContainer("ConnectToOptionalUBCDb() error");
+	if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
+        	printf("<p><u>tDatacenterHealth Distributed UBC</u><br>\n");
 
 	//1-. Disk space usage/soft limit ratio
 	//1a-. Create temp table
@@ -471,14 +485,14 @@ void tDatacenterHealth(void)
 			" WHERE tProperty.uKey=tContainer.uContainer AND tProperty.uType=3 AND"
 			" tProperty.cName='1k-blocks.luUsage' AND tContainer.uDatacenter=%u"
 			" AND tContainer.uStatus=1",uDatacenter);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
         {
         	printf("<p><u>tDatacenterHealth</u><br>\n");
-                printf("0-. %s",mysql_error(&gMysql));
+                printf("0-. %s",mysql_error(&gMysqlUBC));
                 return;
         }
-        res=mysql_store_result(&gMysql);
+        res=mysql_store_result(&gMysqlUBC);
 	while((field=mysql_fetch_row(res)))
 	{	
 		sprintf(gcQuery,"INSERT INTO tDiskUsage SET uContainer=%s,luUsage=%s,cLabel='%.32s'",
@@ -504,14 +518,14 @@ void tDatacenterHealth(void)
 			" WHERE tProperty.uKey=tContainer.uContainer AND tProperty.uType=3 AND"
 			" tProperty.cName='1k-blocks.luSoftLimit' AND tContainer.uDatacenter=%u"
 			" AND tContainer.uStatus=1",uDatacenter);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
         {
         	printf("<p><u>tDatacenterHealth</u><br>\n");
-                printf("2-. %s",mysql_error(&gMysql));
+                printf("2-. %s",mysql_error(&gMysqlUBC));
                 return;
         }
-        res=mysql_store_result(&gMysql);
+        res=mysql_store_result(&gMysqlUBC);
 	while((field=mysql_fetch_row(res)))
 	{	
 		sprintf(gcQuery,"UPDATE tDiskUsage SET luSoftlimit=%s WHERE uContainer=%s",field[1],field[0]);
@@ -577,15 +591,15 @@ void tDatacenterHealth(void)
 			" tContainer.uDatacenter=%u AND"
 			" cValue!='0' AND uType=3 AND cName LIKE '%%.luFailcnt'"
 			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uDatacenter);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
         {
         	printf("<p><u>tDatacenterHealth</u><br>\n");
-                printf("5-. %s",mysql_error(&gMysql));
+                printf("5-. %s",mysql_error(&gMysqlUBC));
                 return;
         }
 
-        res=mysql_store_result(&gMysql);
+        res=mysql_store_result(&gMysqlUBC);
 	if(mysql_num_rows(res))
 	{	
         	printf("<p><u>Top 10 Containers by X.luFailcnt</u><br>\n");
@@ -614,14 +628,14 @@ void tDatacenterHealth(void)
 			" tContainer.uDatacenter=%u AND"
 			" cName='Venet0.luMaxDailyInDelta'"
 			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
         {
         	printf("<p><u>tDatacenterHealth</u><br>\n");
-                printf("5-. %s",mysql_error(&gMysql));
+                printf("5-. %s",mysql_error(&gMysqlUBC));
                 return;
         }
-        res=mysql_store_result(&gMysql);
+        res=mysql_store_result(&gMysqlUBC);
 	if(mysql_num_rows(res))
 	{	
         	printf("<p><u>Today's peak in talkers</u><br>\n");
@@ -650,14 +664,14 @@ void tDatacenterHealth(void)
 			" tContainer.uDatacenter=%u AND"
 			" cName='Venet0.luMaxDailyOutDelta'"
 			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
         {
         	printf("<p><u>tDatacenterHealth</u><br>\n");
-                printf("5-. %s",mysql_error(&gMysql));
+                printf("5-. %s",mysql_error(&gMysqlUBC));
                 return;
         }
-        res=mysql_store_result(&gMysql);
+        res=mysql_store_result(&gMysqlUBC);
 	if(mysql_num_rows(res))
 	{	
         	printf("<p><u>Today's peak out talkers</u><br>\n");
@@ -686,14 +700,14 @@ void tDatacenterHealth(void)
 			" tContainer.uDatacenter=%u AND"
 			" (cName='Venet0.luInDelta' OR cName='Venet0.luOutDelta')"
 			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
         {
         	printf("<p><u>tDatacenterHealth</u><br>\n");
-                printf("5-. %s",mysql_error(&gMysql));
+                printf("5-. %s",mysql_error(&gMysqlUBC));
                 return;
         }
-        res=mysql_store_result(&gMysql);
+        res=mysql_store_result(&gMysqlUBC);
 	if(mysql_num_rows(res))
 	{	
         	printf("<p><u>Last 5min top talkers</u><br>\n");
@@ -719,14 +733,14 @@ void tDatacenterHealth(void)
 			" t1.uKey=t2.uKey AND t1.uType=3 AND t1.cName='Venet0.luInDelta' AND"
 			" t2.uKey=t2.uKey AND t2.uType=3 AND t2.cName='Venet0.luOutDelta'"
 			" ORDER BY ABS(CONVERT(t2.cValue,SIGNED)-CONVERT(t1.cValue,SIGNED)) DESC LIMIT 10",uACTIVE,uDatacenter);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
         {
         	printf("<p><u>tDatacenterHealth</u><br>\n");
-                printf("5-. %s",mysql_error(&gMysql));
+                printf("5-. %s",mysql_error(&gMysqlUBC));
                 return;
         }
-        res=mysql_store_result(&gMysql);
+        res=mysql_store_result(&gMysqlUBC);
 	if(mysql_num_rows(res))
 	{	
         	printf("<p><u>Last 5min top diff</u><br>\n");
@@ -755,15 +769,15 @@ void tDatacenterHealth(void)
 			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
 			" (cName='Venet0.luIn' OR cName='Venet0.luOut')"
 			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
         {
         	printf("<p><u>tDatacenterHealth</u><br>\n");
-                printf("5-. %s",mysql_error(&gMysql));
+                printf("5-. %s",mysql_error(&gMysqlUBC));
                 return;
         }
 
-        res=mysql_store_result(&gMysql);
+        res=mysql_store_result(&gMysqlUBC);
 	if(mysql_num_rows(res))
 	{	
         	printf("<p><u>Historic top talkers</u><br>\n");

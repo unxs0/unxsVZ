@@ -11,7 +11,7 @@ AUTHOR/LEGAL
 
 #include <openisp/ucidr.h>
 
-void tIPReport(void);
+void tIPReport(char *cLabel, unsigned uAux);
 void tIPNavList(unsigned uAvailable);
 void tIPUsedButAvailableNavList(void);
 void tIPUsedButAvailableFix(void);
@@ -68,6 +68,36 @@ void ExttIPCommands(pentry entries[], int x)
 	                        ProcesstIPVars(entries,x);
                         	guMode=12002;
 	                        tIP("Search set reloaded");
+			}
+			else
+			{
+				tIP("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+		else if(!strcmp(gcCommand,"IP Report Single"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstIPVars(entries,x);
+                        	guMode=14001;
+				//tIPReport()
+	                        tIP("IP Report Single");
+			}
+			else
+			{
+				tIP("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+		else if(!strcmp(gcCommand,"IP Report All"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstIPVars(entries,x);
+				if(!uDatacenter)
+					tIP("<blink>Error:</blink> you need to select a datacenter");
+                        	guMode=15001;
+				//tIPReport()
+	                        tIP("IP Report All");
 			}
 			else
 			{
@@ -524,6 +554,12 @@ void ExttIPButtons(void)
 	OpenFieldSet("tIP Aux Panel",100);
 	switch(guMode)
         {
+
+		case 15001:
+		case 14001:
+			printf("<u>IP Report in bottom panel</u><br>");
+		break;
+
                 case 12001:
                 case 12002:
 			printf("<u>Create or refine your user search set</u><br>");
@@ -592,6 +628,11 @@ void ExttIPButtons(void)
 			printf("<p><input type=submit class=largeButton title='Open user search set page. There you can create search sets and operate"
 				" on selected containers of the loaded container set.'"
 				" name=gcCommand value='Search Set Operations'>\n");
+			printf("<p><input type=submit class=largeButton title='Create report on IP usage and errors for the loaded IP'"
+				" name=gcCommand value='IP Report Single'>\n");
+			printf("<p><input type=submit class=largeButton title='!Warning make take some time. Do not abuse!"
+				" Create report on assignment errors for all IPs of given datacenter'"
+				" name=gcCommand value='IP Report All'>\n");
 
 			printf("<p><u>Filter by cLabel</u><br>");
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
@@ -618,6 +659,16 @@ void ExttIPAuxTable(void)
 
 	switch(guMode)
 	{
+		case 15001:
+		case 14001:
+			OpenFieldSet("IP Report",100);
+			if(guMode==14001)
+				tIPReport(cLabel,uIP);
+			else
+				tIPReport("",uDatacenter);
+			CloseFieldSet();
+		break;
+
 		case 12001:
 		case 12002:
 			//Set operation buttons
@@ -1102,12 +1153,47 @@ void tIPNavList(unsigned uAvailable)
 }//void tIPNavList(unsigned uAvailable)
 
 
-void tIPReport(void)
+void tIPReport(char *cLabel, unsigned uAux)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE uIPv4=%u",uIP);
+	if(!cLabel[0])
+	{
+		sprintf(gcQuery,"SELECT tIP.uIP,tIP.cLabel,tContainer.cLabel,tContainer.uContainer"
+				" FROM tIP,tContainer WHERE tIP.uIP=tContainer.uIPv4 AND tIP.uIP IN"
+				" (SELECT tIP.uIP FROM tIP,tContainer"
+				" WHERE tIP.uIP=tContainer.uIPv4"
+				" AND tIP.uDatacenter=%u"
+				" GROUP BY (tIP.uIP) HAVING COUNT(*)>1)"
+				" ORDER BY tIP.uIP",uAux);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+        	{
+        		printf("<p><u>tIPReport Duplicate Use</u><br>\n");
+			printf("%s",mysql_error(&gMysql));
+			return;
+        	}
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res))
+		{	
+        		printf("<p><u>tIPReport Duplicate Use (uDatacenter=%u)</u><br>\n",uAux);
+			while((field=mysql_fetch_row(res)))
+			{
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP"
+					"&uIP=%s>%s</a>"
+					" used by <a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a><br>\n",
+						field[0],field[1],
+						field[3],field[2]);
+			}
+		}
+		mysql_free_result(res);
+
+	}
+	else
+	{
+
+	sprintf(gcQuery,"SELECT uContainer,cHostname FROM tContainer WHERE uIPv4=%u",uAux);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -1129,8 +1215,8 @@ void tIPReport(void)
 	}
         mysql_free_result(res);
 
-	sprintf(gcQuery,"SELECT tProperty.uKey,tContainer.cLabel FROM tProperty,tContainer"
-				" WHERE tProperty.uType=3 AND tProperty.cValue='%s'"
+	sprintf(gcQuery,"SELECT tProperty.uKey,tContainer.cLabel,tProperty.cName,tProperty.cValue FROM tProperty,tContainer"
+				" WHERE tProperty.uType=3 AND tProperty.cValue LIKE '%%%s%%'"
 				" AND tProperty.uKey=tContainer.uContainer",cLabel);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -1148,13 +1234,13 @@ void tIPReport(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
-					"&uContainer=%s>%s used by %s</a><br>\n",field[0],cLabel,field[1]);
+					"&uContainer=%s>%s used by %s %s=%s</a><br>\n",field[0],cLabel,field[1],field[2],field[3]);
 	        }
 	}
         mysql_free_result(res);
 
-	sprintf(gcQuery,"SELECT tProperty.uKey,tNode.cLabel FROM tProperty,tNode"
-				" WHERE tProperty.uType=2 AND tProperty.cValue='%s'"
+	sprintf(gcQuery,"SELECT tProperty.uKey,tNode.cLabel,tProperty.cName,tProperty.cValue FROM tProperty,tNode"
+				" WHERE tProperty.uType=2 AND tProperty.cValue LIKE '%%%s%%'"
 				" AND tProperty.uKey=tNode.uNode",cLabel);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -1172,12 +1258,38 @@ void tIPReport(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNode"
-					"&uNode=%s>%s used by %s</a><br>\n",field[0],cLabel,field[1]);
+					"&uNode=%s>%s used by %s %s=%s</a><br>\n",field[0],cLabel,field[1],field[2],field[3]);
 	        }
 	}
         mysql_free_result(res);
 
-}//void tIPReport(void)
+	sprintf(gcQuery,"SELECT tProperty.uKey,tDatacenter.cLabel,tProperty.cName,tProperty.cValue FROM tProperty,tDatacenter"
+				" WHERE tProperty.uType=1 AND tProperty.cValue LIKE '%%%s%%'"
+				" AND tProperty.uKey=tDatacenter.uDatacenter",cLabel);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tIPReport</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>tIPReport tDatacenter</u><br>\n");
+
+
+	        while((field=mysql_fetch_row(res)))
+		{
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tDatacenter"
+					"&uDatacenter=%s>%s used by %s %s=%s</a><br>\n",field[0],cLabel,field[1],field[2],field[3]);
+	        }
+	}
+        mysql_free_result(res);
+
+	}//if cLabel[0]
+
+}//void tIPReport()
 
 
 void AddIPRange(char *cIPRange)
