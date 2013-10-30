@@ -62,6 +62,7 @@ void ExttPropertyCommands(pentry entries[], int x)
 	if(!strcmp(gcFunction,"tPropertyTools"))
 	{
 		//ModuleFunctionProcess()
+		unsigned uForDC=0;
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -132,15 +133,39 @@ void ExttPropertyCommands(pentry entries[], int x)
 			else
 				tProperty("<blink>Error</blink>: Insufficient permision to mod");
                 }
-                else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
+                else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD) || (uForDC=!strcmp(gcCommand,"Confirm Modify Datacenter")))
                 {
                         ProcesstPropertyVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=2002;
+				if(!cValue[0])
+					tProperty("<blink>Error</blink>: cValue required");
+				if(!cName[0])
+					tProperty("<blink>Error</blink>: cName required");
 				//Check entries here
                         	guMode=0;
 
+				if(uForDC && uType==2)
+				{
+					unsigned uDatacenter=0;
+					sscanf(ForeignKey("tNode","uDatacenter",uKey),"%u",&uDatacenter);
+					if(!uDatacenter)
+						tProperty("<blink>Error</blink>: CModD: uDatacenter required");
+					sprintf(gcQuery,"UPDATE tProperty SET cValue='%s',uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
+							" WHERE cName='%s' AND uType=2"
+							" AND uKey IN (SELECT uNode FROM tNode WHERE uStatus=1 AND uDatacenter=%u)"
+								,cValue,guLoginClient,cName,uDatacenter);
+					//tProperty(gcQuery);
+	        			mysql_query(&gMysql,gcQuery);
+       		 			if(mysql_errno(&gMysql))
+						tProperty("<blink>Error</blink>: gcQuery error");
+					if(mysql_affected_rows(&gMysql))
+						tProperty("Confirm Modify Datacenter: Ok");
+					else
+						tProperty("Confirm Modify Datacenter: Nothing changed");
+				}
+				
 				uModBy=guLoginClient;
 				ModtProperty();
 			}
@@ -460,6 +485,10 @@ void ExttPropertyButtons(void)
 			htmlReturnLink();
 			printf("<p><u>Review changes</u><br>");
                         printf(LANG_NBB_CONFIRMMOD);
+			if(uType==2 && guPermLevel>10)
+				printf("<p><input type=submit class=lalertButton name=gcCommand"
+				" title='!Triple check! Modify this node property and all others at the same datacenter'"
+				" value='Confirm Modify Datacenter'>\n");
                 break;
 
 		default:
