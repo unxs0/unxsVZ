@@ -3726,6 +3726,19 @@ while((field=mysql_fetch_row(res)))
 							break;
 						}
 
+						//uIPv4 used incorrectly check
+						sprintf(gcQuery,"SELECT uIPv4,uContainer FROM tContainer WHERE uIPv4=%u",uIPv4);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						res=mysql_store_result(&gMysql);
+						if((field=mysql_fetch_row(res)))
+						{
+							sprintf(cResult,"uIPv4:%s in use by %s",field[0],field[1]);
+							break;
+						}
+						mysql_free_result(res);
+
 						if(uDNSMoveJob(sContainer.uDatacenter,
 								sContainer.uNode,uCtContainer,guCompany,uTargetNode,uIPv4,sContainer.uStatus))
 						{
