@@ -718,7 +718,10 @@ void ExttNodeAuxTable(void)
                 			tContainer("Could not open logfile");
 			}
 			if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter,0))
-				tContainer("ConnectToOptionalUBCDb() error");
+			{
+				printf("<p>ConnectToOptionalUBCDb() error<p>");
+				return;
+			}
 			if(gcUBCDBIP0==DBIP0 && gcUBCDBIP1==DBIP1)
 				gMysqlUBC=gMysql;
 
@@ -984,7 +987,10 @@ void ExttNodeAuxTable(void)
                 			tContainer("Could not open logfile");
 			}
 			if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter,0))
-				tContainer("ConnectToOptionalUBCDb() error");
+			{
+				printf("<p>ConnectToOptionalUBCDb() error<p>");
+				return;
+			}
 			if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
 			{
 				sprintf(gcQuery,"Distributed UBC %s Property Panel",cLabel);
