@@ -455,8 +455,11 @@ void tDatacenterHealth(void)
 		if( (gLfp=fopen(cLogfile,"a"))==NULL)
 			tDatacenter("Could not open logfile");
 	}
-		if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter,0))
-			tContainer("ConnectToOptionalUBCDb() error");
+	if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter,0))
+	{
+		printf("<p>ConnectToOptionalUBCDb() error<p>");
+		return;
+	}
 	if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
         	printf("<p><u>tDatacenterHealth Distributed UBC</u><br>\n");
 
