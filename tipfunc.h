@@ -115,7 +115,7 @@ void ExttIPCommands(pentry entries[], int x)
 				unsigned uGroup=0;
 
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
-						&& uOwnerSearch==0 && uIPv4Exclude==0)
+						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0)
 	                        	tIP("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,31))==0)
@@ -196,6 +196,15 @@ void ExttIPCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
+				if(cCommentSearch[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cComment LIKE '%s'",cCommentSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
 				strcat(gcQuery,")");
 				//debug only
 	                        //tIP(gcQuery);
@@ -230,7 +239,7 @@ void ExttIPCommands(pentry entries[], int x)
 				unsigned uGroup=0;
 
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
-						&& uOwnerSearch==0 && uIPv4Exclude==0)
+						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0)
 	                        	tIP("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,31))==0)
@@ -328,6 +337,15 @@ void ExttIPCommands(pentry entries[], int x)
 								" cLabel NOT LIKE '172.17.%%.%%' AND" 
 								" cLabel NOT LIKE '172.18.%%.%%' AND"
 								" cLabel NOT LIKE '192.168.%%.%%'");
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(cCommentSearch[0])
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," cComment LIKE '%s'",cCommentSearch);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}

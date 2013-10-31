@@ -43,6 +43,7 @@ static char *cComment={""};
 
 //Extensions for searching
 static char cIPv4Search[16]={""};
+static char cCommentSearch[33]={""};
 static unsigned uAvailableSearch=0;
 static char cYesNouAvailableSearch[8]={""};
 static unsigned uNodeSearch=0;
@@ -147,6 +148,8 @@ void ProcesstIPVars(pentry entries[], int x)
 			uNodeSearchNot=1;
 		else if(!strcmp(entries[i].name,"uIPv4ExcludeNoCA"))
 			uIPv4Exclude=1;
+		else if(!strcmp(entries[i].name,"cCommentSearch"))
+			sprintf(cCommentSearch,"%.32s",entries[i].val);
 
 	}
 
@@ -345,6 +348,9 @@ void tIPSearchSet(unsigned uStep)
 	OpenRow("Available","black");
 	YesNoPullDownTriState("uAvailableSearch",uAvailableSearch,1);
 
+	OpenRow("Comment pattern","black");
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cCommentSearch"
+			" value=\"%s\" size=40 maxlength=15 >",cCommentSearch);
 	if(uStep==1)
 	{
 		;
