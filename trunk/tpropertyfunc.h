@@ -444,9 +444,14 @@ void htmlUBCInfo(void)
 
 			while((field=mysql_fetch_row(res)))
 			{	
-				 printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s"
-				 	"&cReturn=%s>"
-				 	"%s=%s</a><br>\n",field[0],cReturn,field[1],field[2]);
+				if(cuDatacenterSelect[0])
+					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s"
+				 		"&cReturn=%s&cuDatacenterSelect=%s>"
+				 		"%s=%s</a><br>\n",field[0],cReturn,cuDatacenterSelect,field[1],field[2]);
+				else
+					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s"
+				 		"&cReturn=%s>"
+				 		"%s=%s</a><br>\n",field[0],cReturn,field[1],field[2]);
 			}
 		}
 		mysql_free_result(res);
