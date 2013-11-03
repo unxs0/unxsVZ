@@ -1,11 +1,11 @@
 /*
 FILE 
-	unxsVZ/uSIPSwitch/natpbx/process.h
+	unxsVZ/uSIPSwitch/natpbx/process.c
 	$Id$
 PURPOSE
 	This is where the SIP state machine is implemented
 AUTHOR/LEGAL
-	(C) 2012 Gary Wallis for Unixservice, LLC.
+	(C) 2012-2013 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 DETAILS
 AVAILABLE DATA FROM readEv()
@@ -24,7 +24,7 @@ AVAILABLE DATA FROM readEv()
 
 */
 
-//Previous section is postparsecheck.h
+//Previous section is postparsecheck.c
 
 //Determine if message is a request or a reply
 unsigned uReply=0;

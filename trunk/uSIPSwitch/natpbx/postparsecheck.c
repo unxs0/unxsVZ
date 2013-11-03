@@ -1,12 +1,12 @@
 /*
 FILE 
-	unxsVZ/uSIPSwitch/natpbx/postparsecheck.h
+	unxsVZ/uSIPSwitch/natpbx/postparsecheck.c
 	$Id$
 PURPOSE
 	After we parse SIP cMessage we can
 	check to make sure we have enough data to continue
 AUTHOR/LEGAL
-	(C) 2012 Gary Wallis for Unixservice, LLC.
+	(C) 2012-2013 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 DETAILS
 AVAILABLE DATA FROM readEv()
@@ -25,7 +25,7 @@ AVAILABLE DATA FROM readEv()
 
 */
 
-//Previous section is parsemessage.h
+//Previous section is parsemessage.c
 
 //
 //If anything is amiss send back an error message and return.
@@ -79,4 +79,4 @@ if(!cToDomain[0])
 	return;
 }
 
-//next section is process.h
+//next section is process.c
