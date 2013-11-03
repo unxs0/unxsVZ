@@ -85,6 +85,8 @@ Initial design notes:
 
 Development Prep
 ----------------
+setup repos: epel-testing.repo mirrors-rpmforge unxs.repo epel.repo rpmforge.repo vz.repo
+
 yum install libmemcached-devel.x86_64
 yum install memcached.x86_64
 yum install libevent-devel.x86_64

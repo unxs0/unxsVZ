@@ -1,0 +1,6 @@
+[unxsVZ]
+name=unxsVZ
+baseurl=http://unixservice.com/rpm/
+enabled=1
+gpgcheck=0
+md5check=1
