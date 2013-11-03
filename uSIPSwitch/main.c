@@ -15,7 +15,7 @@ DESIGN NOTES
 	We do not care about efficient memory use, we care about reliability and speed.
 	
 AUTHOR/LEGAL
-	(C) 2012 Gary Wallis for Unixservice, LLC.
+	(C) 2013 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 	Includes code based on public domain beej.us networking source code.
 	Libevent sections based on public domain libevent-test.c by Brian Smith
@@ -116,9 +116,9 @@ void readEv(int fd,short event,void* arg)
 		fprintf(gLfp,"[%s]\n",cMessage);
 
 //symbolic link your SIP implementation files to module
-#include "module/parsemessage.h"
-#include "module/postparsecheck.h"
-#include "module/process.h"
+#include "module/parsemessage.c"
+#include "module/postparsecheck.c"
+#include "module/process.c"
 
 }//void readEv(int fd,short event,void* arg)
 

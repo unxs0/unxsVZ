@@ -1,13 +1,13 @@
 /*
 FILE 
-	unxsVZ/uSIPSwitch/sipswitch/process.h
+	unxsVZ/uSIPSwitch/sipswitch/process.c
 	$Id$
 PURPOSE
 	This is where the SIP state machine, routing logic 
 	and SBC items (channel limits and CDR data gathering) 
 	are implemented.
 AUTHOR/LEGAL
-	(C) 2012 Gary Wallis for Unixservice, LLC.
+	(C) 2012-2013 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 DETAILS
 AVAILABLE DATA FROM readEv()
@@ -39,7 +39,7 @@ THINGS TO DO LIST
 
 */
 
-//Previous section is postparsecheck.h
+//Previous section is postparsecheck.c
 
 //Determine if message is a request or a reply
 //Parse SIP reply code, e.g. 500 for:

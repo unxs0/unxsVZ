@@ -25,7 +25,7 @@ unxsLoadNatPBX: loadnatpbx.o mysqlconnect.o
 unxsLoadFromSPS: loadfromsps.o mysqlconnect.o
 	cc loadfromsps.o mysqlconnect.o -o unxsLoadFromSPS $(LIBS2) 
 
-main.o: main.c sipproxy.h local.h module/parsemessage.h module/process.h module/postparsecheck.h
+main.o: main.c sipproxy.h local.h module/parsemessage.c module/process.c module/postparsecheck.c
 	cc -c main.c -o main.o $(CFLAGS)
 
 mysqlconnect.o: mysqlconnect.c sipproxy.h local.h
