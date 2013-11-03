@@ -1,15 +1,15 @@
 /*
 FILE 
-	unxsVZ/uSIPSwitch/sipswitch/postparsecheck.h
+	unxsVZ/uSIPSwitch/sipswitch/postparsecheck.c
 	$Id$
 PURPOSE
 	After we parse SIP cMessage we can
 	check to make sure we have enough data to continue
 AUTHOR/LEGAL
-	(C) 2012 Gary Wallis for Unixservice, LLC.
+	(C) 2012-2013 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 DETAILS
-AVAILABLE DATA FROM readEv() and parsemessage.h
+AVAILABLE DATA FROM readEv() and parsemessage.c
 	char cMessage[2048]={""};
 	char cSourceIP[INET_ADDRSTRLEN]={""};
 	unsigned uSourcePort=ntohs(sourceAddr.sin_port);
@@ -22,7 +22,7 @@ AVAILABLE DATA FROM readEv() and parsemessage.h
 
 */
 
-//Previous section is parsemessage.h
+//Previous section is parsemessage.c
 
 //
 //If anything is amiss send back an error message and return.
@@ -57,4 +57,4 @@ if(!cCSeq[0])
 	return;
 }
 
-//next section is sipswitch/process.h
+//next section is sipswitch/process.c
