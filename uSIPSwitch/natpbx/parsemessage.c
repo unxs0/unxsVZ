@@ -1,6 +1,6 @@
 /*
 FILE 
-	unxsVZ/uSIPSwitch/natpbx/parsemessage.h
+	unxsVZ/uSIPSwitch/natpbx/parsemessage.c
 	$Id$
 PURPOSE
 	Parse SIP cMessage	
@@ -8,7 +8,7 @@ PURPOSE
 	Use ln -s natpbx module
 	To compile uSIPSwitch with this module
 AUTHOR/LEGAL
-	(C) 2012 Gary Wallis for Unixservice, LLC.
+	(C) 2012-2013 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 DETAILS
 	NATPBX module requires that these values be parsed from header 
@@ -129,7 +129,7 @@ if(guLogLevel>3)
 }
 
 
-//next section is "natpbx/postparsecheck.h"
+//next section is "natpbx/postparsecheck.c"
 
 
 //Example cMessage
