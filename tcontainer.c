@@ -705,10 +705,14 @@ void tContainerNewStep(unsigned uStep)
 			OpenRow("Number of containers","black");
 			char cActiveContainers[256]={""};
 			unsigned uActiveContainers=0;
+			unsigned uMaxContainers=0;
 			GetNodeProp(uNode,"ActiveContainers",cActiveContainers);
 			sscanf(cActiveContainers,"%u",&uActiveContainers);
+			GetNodeProp(uNode,"MaxContainers",cActiveContainers);
+			sscanf(cActiveContainers,"%u",&uMaxContainers);
+			if(!uMaxContainers) uMaxContainers=uActiveContainers;
 			printf("<input title='Number of containers to be created'"
-				" type=text name=cService2 value='%s' maxlength=2> Recommended max:%u",cService2,80-uActiveContainers);
+				" type=text name=cService2 value='%s' maxlength=2> Recommended max:%u",cService2,uMaxContainers-uActiveContainers);
 		}
 
 	}//step 3 or 4
