@@ -17,13 +17,19 @@
 CFLAGS= -Wall -DHAVE_LIBFREETYPE -DHAVE_JPEG
 LIBS= -L/usr/lib/mysql -lmysqlclient -lz -lm -lgdc -lgd -lpng -lfreetype -ljpeg -lssl
 
-all: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi unxsDiskUtil.cgi
+all: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi unxsDiskUtil.cgi unxsPerNode.cgi
 
 unxsCpuCheck.cgi: cpucheck.o mysqlconnect.o
 	gcc cpucheck.o mysqlconnect.o -o unxsCpuCheck.cgi $(LIBS)
 
 cpucheck.o: cpucheck.c ../../local.h mysqlconnect.h
 	gcc -c cpucheck.c -o cpucheck.o $(CFLAGS)
+
+unxsPerNode.cgi: pernode.o mysqlconnect.o
+	gcc pernode.o mysqlconnect.o -o unxsPerNode.cgi $(LIBS)
+
+pernode.o: pernode.c ../../local.h mysqlconnect.h
+	gcc -c pernode.c -o pernode.o $(CFLAGS)
 
 unxsPrivmem.cgi: privmem.o mysqlconnect.o
 	gcc privmem.o mysqlconnect.o -o unxsPrivmem.cgi $(LIBS)
@@ -49,7 +55,7 @@ mysqlconnect.o: mysqlconnect.c ../../mysqlrad.h ../../local.h
 clean:
 	rm -f *.o *.cgi
 
-install: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi unxsDiskUtil.cgi
+install: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi unxsDiskUtil.cgi unxsPerNode.cgi
 	install -s unxsCpuCheck.cgi /var/www/unxs/cgi-bin/unxsCpuCheck.cgi
 	@ rm unxsCpuCheck.cgi
 	install -s unxsPrivmem.cgi /var/www/unxs/cgi-bin/unxsPrivmem.cgi
@@ -58,3 +64,5 @@ install: unxsCpuCheck.cgi unxsPrivmem.cgi unxsRamUtil.cgi unxsDiskUtil.cgi
 	@ rm unxsRamUtil.cgi
 	install -s unxsDiskUtil.cgi /var/www/unxs/cgi-bin/unxsDiskUtil.cgi
 	@ rm unxsDiskUtil.cgi
+	install -s unxsPerNode.cgi /var/www/unxs/cgi-bin/unxsPerNode.cgi
+	@ rm unxsPerNode.cgi
