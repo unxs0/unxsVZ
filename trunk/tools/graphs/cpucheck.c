@@ -27,7 +27,7 @@ REQUIRES
 #include "../../local.h"
 
 void ErrorMsg(const char *cErrorMsg);
-void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
+void GetNodePropUBC(const unsigned uNode,const char *cName,char *cValue);
 unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[]);
 
 #include "mysqlconnect.h"
@@ -76,7 +76,7 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 			*cp=0;
 		sprintf(t[uCount],"%.15s",field[1]);
 
-		GetNodeProp(uNode,"vzcpucheck-nodepwr.fCPUUnits",cfNodeCPUUnits);
+		GetNodePropUBC(uNode,"vzcpucheck-nodepwr.fCPUUnits",cfNodeCPUUnits);
 		sscanf(cfNodeCPUUnits,"%f",&fNodeCPUUnits);
 
 		//1-. Current absolute container cpu power
@@ -183,14 +183,15 @@ int main(int iArgc, char *cArgv[])
         GDC_SetColor= sc;/* assign set colors */
         GDC_title=cDatacenter;
         GDC_ytitle=cYTitle;
-        GDC_xtitle="Hardware nodes: total cpu units versus power of the node.";
+        GDC_xtitle="Hardware nodes: node versus configured cpu units.";
         GDC_bar_width = 5;
 
         if(getenv("REQUEST_METHOD")!=NULL)
                 printf( "Content-Type: image/gif\n\n" );
         //x,y image, file, type, num of data points, array of x labels, number of data sets
         //data set 1..n float
-        out_graph(1000,600,stdout,GDC_3DBAR,uNumNodes,t,2,a,b);
+	//a b reversed to show hardware first
+        out_graph(1000,600,stdout,GDC_3DBAR,uNumNodes,t,2,b,a);
 	for(i=0;i<32 && t[i]!=NULL;i++)
 		free(t[i]);
 
@@ -209,7 +210,7 @@ void ErrorMsg(const char *cErrorMsg)
 }
 
 
-void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
+void GetNodePropUBC(const unsigned uNode,const char *cName,char *cValue)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -218,10 +219,10 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 
 	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",
 				uNode,cName);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		ErrorMsg(mysql_error(&gMysql));
-        res=mysql_store_result(&gMysql);
+	mysql_query(&gMysqlUBC,gcQuery);
+	if(mysql_errno(&gMysqlUBC))
+		ErrorMsg(mysql_error(&gMysqlUBC));
+	res=mysql_store_result(&gMysqlUBC);
 	if((field=mysql_fetch_row(res)))
 	{
 		char *cp;
@@ -231,5 +232,5 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
 	}
 	mysql_free_result(res);
 
-}//void GetNodeProp(...)
+}//void GetNodePropUBC(
 
