@@ -3989,13 +3989,20 @@ void FailoverFrom(unsigned uJob,unsigned uContainer,const char *cJobData)
 		if(system(gcQuery))
 		{
 			logfileLine("FailoverFrom",gcQuery);
-			tJobErrorUpdate(uJob,"vzctl stop");
 
-			//rollback
-			sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
-			system(gcQuery);
-			//level 1 done
-			return;
+			//check again for some reason, system returns non zero but the stop
+			//actually takes place
+			sprintf(gcQuery,"sleep 10;/usr/sbin/vzlist -a %u | grep stopped",uContainer);
+			if(system(gcQuery))
+			{
+				//rollback
+				tJobErrorUpdate(uJob,"vzctl stop fail");
+				sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --ipadd %s --save",uContainer,cOrigIP);
+				system(gcQuery);
+				//level 1 done
+				return;
+			}
+			tJobErrorUpdate(uJob,"vzctl stop then ok");
 		}
 
 		//If we stop we keep stopped on reboot.
