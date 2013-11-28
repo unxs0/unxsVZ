@@ -33,11 +33,12 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 			unsigned uSyncPeriod,unsigned uCloneStop,unsigned uTargetDatacenter);
 void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
 unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate);
+void tNodeHealth(void);
 
 //external
 //tcontainerfunc.h
 void htmlHealth(unsigned uElement,unsigned uDatacenter,unsigned uType);
-void htmlNodeHealth(unsigned uNode);
+//void htmlNodeHealth(unsigned uNode);
 char *cRatioColor(float *fRatio);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 unsigned FailoverToJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,unsigned uOwner,unsigned uLoginClient,unsigned uDebug);
@@ -680,10 +681,11 @@ void ExttNodeButtons(void)
 			tContainerNavList(uNode,cSearch);
 			if(uNode)
 			{
+				tNodeHealth();
 				//htmlHealth(uNode,uDatacenter,2);
 				//hide health if node selected via get
-				if(guMode!=6)
-					htmlNodeHealth(uNode);
+				//if(guMode!=6)
+				//	htmlNodeHealth(uNode);
 				printf("<p><input type=submit class=largeButton title='Display node container"
 					" report'"
 					" name=gcCommand value='Node Container Report'><br>");
@@ -1789,4 +1791,293 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
 		
 
 }//unsigned ConnectToOptionalUBCDb()
+
+
+void tNodeHealth(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+
+	char cLogfile[64]={"/tmp/unxsvzlog"};
+	if(gLfp==NULL)
+	{
+		if( (gLfp=fopen(cLogfile,"a"))==NULL)
+			tDatacenter("Could not open logfile");
+	}
+	if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter,0))
+	{
+		printf("<p>ConnectToOptionalUBCDb() error<p>");
+		return;
+	}
+	if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
+        	printf("<p><u>tNodeHealth Distributed UBC</u><br>\n");
+
+	//1-. Disk space usage/soft limit ratio
+	//1a-. Create temp table
+	sprintf(gcQuery,"CREATE TEMPORARY TABLE tDiskUsage (uContainer INT UNSIGNED NOT NULL DEFAULT 0,"
+			" luUsage INT UNSIGNED NOT NULL DEFAULT 0, luSoftlimit INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cLabel VARCHAR(32) NOT NULL DEFAULT '')");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tNodeHealth</u><br>\n");
+                printf("a-. %s",mysql_error(&gMysql));
+                return;
+        }
+
+	//1b-. Populate with data per container
+	sprintf(gcQuery,"SELECT tProperty.uKey,tProperty.cValue,tContainer.cLabel FROM tProperty,tContainer"
+			" WHERE tProperty.uKey=tContainer.uContainer AND tProperty.uType=3 AND"
+			" tProperty.cName='1k-blocks.luUsage' AND tContainer.uDatacenter=%u"
+			" AND tContainer.uNode=%u"
+			" AND tContainer.uStatus=1",uDatacenter,uNode);
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
+        {
+        	printf("<p><u>tNodeHealth</u><br>\n");
+                printf("0-. %s",mysql_error(&gMysqlUBC));
+                return;
+        }
+        res=mysql_store_result(&gMysqlUBC);
+	while((field=mysql_fetch_row(res)))
+	{	
+		sprintf(gcQuery,"INSERT INTO tDiskUsage SET uContainer=%s,luUsage=%s,cLabel='%.32s'",
+			field[0],field[1],field[2]);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+        	{
+        		printf("<p><u>tNodeHealth</u><br>\n");
+			printf("1-. %s",mysql_error(&gMysql));
+			return;
+		}
+	}
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"SELECT tProperty.uKey,tProperty.cValue FROM tProperty,tContainer"
+			" WHERE tProperty.uKey=tContainer.uContainer AND tProperty.uType=3 AND"
+			" tProperty.cName='1k-blocks.luSoftLimit' AND tContainer.uDatacenter=%u"
+			" AND tContainer.uNode=%u"
+			" AND tContainer.uStatus=1",uDatacenter,uNode);
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
+        {
+        	printf("<p><u>tNodeHealth</u><br>\n");
+                printf("2-. %s",mysql_error(&gMysqlUBC));
+                return;
+        }
+        res=mysql_store_result(&gMysqlUBC);
+	while((field=mysql_fetch_row(res)))
+	{	
+		sprintf(gcQuery,"UPDATE tDiskUsage SET luSoftlimit=%s WHERE uContainer=%s",field[1],field[0]);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+        	{
+        		printf("<p><u>tNodeHealth</u><br>\n");
+			printf("3-. %s",mysql_error(&gMysql));
+			return;
+		}
+	}
+	mysql_free_result(res);
+
+	//1d-. Report
+	unsigned luSoftlimit;
+	unsigned luUsage;
+	float fRatio;
+	char *cColor;
+		
+	sprintf(gcQuery,"SELECT luSoftlimit,luUsage,uContainer,cLabel FROM tDiskUsage"
+			" WHERE ((luUsage/luSoftlimit)>0.5)"
+			" ORDER BY (luUsage/luSoftlimit) DESC LIMIT 20");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+		printf("4-. %s",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+        	printf("<p><u>Top 20 Containers by Usage Ratio (50%%+)</u><br>\n");
+	while((field=mysql_fetch_row(res)))
+	{
+		luSoftlimit=0;
+		luUsage=0;
+		sscanf(field[0],"%u",&luSoftlimit);
+		sscanf(field[1],"%u",&luUsage);
+		//Strange values hack
+		if(!luUsage)
+			luUsage=1;
+		if(!luSoftlimit)
+			luSoftlimit=luUsage;
+		fRatio= ((float) luUsage/ (float) luSoftlimit) * 100.00 ;
+		cColor=cRatioColor(&fRatio);
+
+		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"<font color=%s>%2.2f%% %s</font></a><br>\n",field[2],cColor,fRatio,field[3]);
+	}
+        mysql_free_result(res);
+
+
+	//2-. None zero historic fail counters
+	sprintf(gcQuery,"SELECT cValue,uKey,cLabel,cName FROM tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND"
+			" tContainer.uDatacenter=%u AND"
+			" tContainer.uNode=%u AND"
+			" cValue!='0' AND uType=3 AND cName LIKE '%%.luFailcnt'"
+			" ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uDatacenter,uNode);
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
+        {
+        	printf("<p><u>tNodeHealth</u><br>\n");
+                printf("5-. %s",mysql_error(&gMysqlUBC));
+                return;
+        }
+
+        res=mysql_store_result(&gMysqlUBC);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Top 10 Containers by X.luFailcnt</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s %s=%s</a><br>\n",field[1],field[2],field[3],field[0]);
+	}
+        mysql_free_result(res);
+
+	//3a-. Todays top in
+	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000),2),uKey,cHostname,TIME(FROM_UNIXTIME(tProperty.uModDate)) FROM"
+			" tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
+			" tContainer.uStatus=%u AND"
+			" tContainer.uDatacenter=%u AND"
+			" tContainer.uNode=%u AND"
+			" cName='Venet0.luMaxDailyInDelta'"
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter,uNode);
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
+        {
+        	printf("<p><u>tNodeHealth</u><br>\n");
+                printf("5-. %s",mysql_error(&gMysqlUBC));
+                return;
+        }
+        res=mysql_store_result(&gMysqlUBC);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Today's peak in talkers</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s/%s %sKB/s</a><br>\n",field[1],field[2],field[3],field[0]);
+	}
+        mysql_free_result(res);
+
+	//3b-. Todays top out
+	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000),2),uKey,cHostname,TIME(FROM_UNIXTIME(tProperty.uModDate)) FROM"
+			" tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
+			" tContainer.uStatus=%u AND"
+			" tContainer.uDatacenter=%u AND"
+			" tContainer.uNode=%u AND"
+			" cName='Venet0.luMaxDailyOutDelta'"
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter,uNode);
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
+        {
+        	printf("<p><u>tNodeHealth</u><br>\n");
+                printf("5-. %s",mysql_error(&gMysqlUBC));
+                return;
+        }
+        res=mysql_store_result(&gMysqlUBC);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Today's peak out talkers</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s/%s %sKB/s</a><br>\n",field[1],field[2],field[3],field[0]);
+	}
+        mysql_free_result(res);
+
+	//4-. Last 5 min top talkers
+	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/2000),2),uKey,cHostname FROM"
+			" tProperty,tContainer WHERE"
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
+			" tContainer.uStatus=%u AND"
+			" tContainer.uDatacenter=%u AND"
+			" tContainer.uNode=%u AND"
+			" (cName='Venet0.luInDelta' OR cName='Venet0.luOutDelta')"
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter,uNode);
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
+        {
+        	printf("<p><u>tNodeHealth</u><br>\n");
+                printf("5-. %s",mysql_error(&gMysqlUBC));
+                return;
+        }
+        res=mysql_store_result(&gMysqlUBC);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Last 5min top talkers</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s %sKB/s</a><br>\n",field[1],field[2],field[0]);
+	}
+        mysql_free_result(res);
+
+	//4b-. Last 5 min top diff talkers
+	sprintf(gcQuery,"SELECT ABS(CONVERT(t2.cValue,SIGNED)-CONVERT(t1.cValue,SIGNED)),t1.uKey,t1.uKey FROM"
+			" tProperty AS t1, tProperty AS t2 WHERE"
+			" t1.uKey IN (SELECT uContainer from tContainer where uStatus=%u AND uDatacenter=%u AND uNode=%u) AND"
+			" t1.uKey=t2.uKey AND t1.uType=3 AND t1.cName='Venet0.luInDelta' AND"
+			" t2.uKey=t2.uKey AND t2.uType=3 AND t2.cName='Venet0.luOutDelta'"
+			" ORDER BY ABS(CONVERT(t2.cValue,SIGNED)-CONVERT(t1.cValue,SIGNED)) DESC LIMIT 10",uACTIVE,uDatacenter,uNode);
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
+        {
+        	printf("<p><u>tNodeHealth</u><br>\n");
+                printf("5-. %s",mysql_error(&gMysqlUBC));
+                return;
+        }
+        res=mysql_store_result(&gMysqlUBC);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Last 5min top diff</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s %sB/s</a><br>\n",field[1],field[2],field[0]);
+	}
+        mysql_free_result(res);
+
+	//4-. Top talkers
+	sprintf(gcQuery,"SELECT FORMAT(SUM(cValue/1000000000),2),uKey,cHostname FROM"
+			" tProperty,tContainer WHERE"
+			" tContainer.uStatus=%u AND"
+			" tContainer.uDatacenter=%u AND"
+			" tContainer.uNode=%u AND"
+			" tProperty.uKey=tContainer.uContainer AND cValue!='0' AND uType=3 AND"
+			" (cName='Venet0.luIn' OR cName='Venet0.luOut')"
+			" GROUP BY uKey ORDER BY CONVERT(cValue,UNSIGNED) DESC LIMIT 10",uACTIVE,uDatacenter,uNode);
+        mysql_query(&gMysqlUBC,gcQuery);
+        if(mysql_errno(&gMysqlUBC))
+        {
+        	printf("<p><u>tNodeHealth</u><br>\n");
+                printf("5-. %s",mysql_error(&gMysqlUBC));
+                return;
+        }
+
+        res=mysql_store_result(&gMysqlUBC);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Historic top talkers</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s %sGB</a><br>\n",field[1],field[2],field[0]);
+	}
+        mysql_free_result(res);
+
+}//void tNodeHealth(void)
+
 

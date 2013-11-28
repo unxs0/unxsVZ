@@ -202,6 +202,7 @@ unsigned CommonNewCloneContainer(
 		unsigned uMode);
 
 //extern
+unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 void DelProperties(unsigned uNode,unsigned uType);//tnodefunc.h
 time_t cStartDateToUnixTime(char *cStartDate);//tjobfunc.h
@@ -3390,6 +3391,10 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Creates job(s) for switching over cloned container(s) of same datacenter.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Switchover'>\n");
+			printf("&nbsp; <input title='Creates external unxsBind DNS job(s) for switching service over to backup"
+				" container(s) on remote datacenter.'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group DNS Switchover'>\n");
 			printf("&nbsp; <input title='Creates job(s) for migrating container(s) and optionally their clones."
 				" Uses target and clone node selects above'"
 				" type=submit class=lwarnButton"
@@ -3406,11 +3411,11 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Creates job(s) for destroying active or stopped container(s) and optionally their clones.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Destroy'>\n");
-			printf("&nbsp; <input title='Creates job(s) with given commands to run via vzctl exec2'"
+
+			printf("<p><input title='Creates job(s) with given commands to run via vzctl exec2'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Execute'>\n");
-
-			printf("<p><input title='Change status to stopped for awaiting failover containers."
+			printf("&nbsp; <input title='Change status to stopped for awaiting failover containers."
 				" Any existing waiting FailoverFrom jobs will be canceled also.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Status Stopped'>\n");
@@ -3424,12 +3429,12 @@ void ExttContainerAuxTable(void)
 				" create or update special DNS SRV zones based on container primary group.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group DNS Update'>\n");
-			printf("&nbsp; <input title='Creates job(s) for starting remote clone container of selected active container."
+			printf("&nbsp; <input title='Creates job(s) for starting remote clone -backup container of selected active container."
 				" Updates DNS records if so configured.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Activate Backup'>\n");
-			printf("&nbsp; <input title='Creates job(s) for stopping remote clone container of selected active container."
-				" Updates DNS records if so configured. Changes name back to -clone from -backup.'"
+			printf("&nbsp; <input title='Creates job(s) for stopping remote clone -backup container of selected active container."
+				" Updates DNS records if so configured.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Deactivate Backup'>\n");
 			printf("&nbsp; <input title='Changes public IP to rfc1918 IP via tConfiguration:cAutoNATIPClass."
@@ -3447,7 +3452,8 @@ void ExttContainerAuxTable(void)
 				" create or update special DNS SRV zones based on container primary group.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Hostname Update'>\n");
-			printf("&nbsp; <input title='Changes uBackupDate to 24 hours back from now.'"
+
+			printf("<p><input title='Changes uBackupDate to 24 hours back from now.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group BackupDate Adjust'>\n");
 			CloseFieldSet();
@@ -4830,7 +4836,8 @@ while((field=mysql_fetch_row(res)))
 							else
 								strcat(cResult," +DNS update error");
 
-							UpdateNamesFromBackupToClone(uCloneContainer);
+							//We always name remote clones -backup
+							//UpdateNamesFromBackupToClone(uCloneContainer);
 						}
 					}
 					else
@@ -4989,6 +4996,63 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Group Switchover
 
+				//Create a DNS job but with switched IPs. The remote -backup clone
+				//	is the primary now
+				else if(!strcmp(gcCommand,"Group DNS Switchover"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( sContainer.uSource!=0 &&
+						(sContainer.uOwner==guCompany || guCompany==1 || guPermLevel>=12))
+					{
+						unsigned uSourceDatacenter=0;
+						sscanf(ForeignKey("tContainer","uDatacenter",sContainer.uSource),
+												"%u",&uSourceDatacenter);
+						if(uSourceDatacenter==sContainer.uDatacenter)
+						{
+							sprintf(cResult,"ignored same datacenter as source");
+							break;
+						}
+						unsigned uA=0,uB=0;
+						unsigned uSourceNode=0;
+						unsigned uSourceIPv4=0;
+						char cSourceHostname[100]={""};
+						char cSwitchedIP[32]={""};
+						sscanf(ForeignKey("tContainer","uNode",sContainer.uSource),
+												"%u",&uSourceNode);
+						sscanf(ForeignKey("tContainer","uIPv4",sContainer.uSource),
+												"%u",&uSourceIPv4);
+						sprintf(cSourceHostname,"%.99s",ForeignKey("tContainer","cHostname",sContainer.uSource));
+						//set the PBX ip to the remote backup IP
+						sprintf(cSwitchedIP,"%.31s",ForeignKey("tIP","cLabel",sContainer.uIPv4));
+						if(sscanf(cSwitchedIP,"%u.%u.%*u.%*u",&uA,&uB)==2)
+						{
+							if( (uA==172 && uB>=16 && uB<=31) || (uA==192 && uB==168) || (uA==10) ) 
+							{
+								sprintf(cResult,"ignored rfc1918 IP");
+								break;
+							}
+						}
+						if(CreateDNSJob(uSourceIPv4,sContainer.uOwner,cSwitchedIP,cSourceHostname,
+								uSourceDatacenter,guLoginClient,sContainer.uSource,uSourceNode))
+						{
+							SetContainerProperty(sContainer.uSource,"cDNSSwitchover",cSwitchedIP);
+							sprintf(cResult,"DNS Switchover job created");
+						}
+						else
+						{
+							sprintf(cResult,"Error dns job not created");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"DNS Switchover job ignored");
+					}
+					break;
+				}
+			
 				//Group Migration Uses guOpOnClones, uTargetNode and guCloneTargetNode
 				else if(!strcmp(gcCommand,"Group Migration"))
 				{
