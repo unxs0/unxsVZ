@@ -162,7 +162,7 @@ unsigned TextConnectDb(void)
 	else if(1)
 		sprintf(cMessage,"Could not connect unexpected case\n");
 
-	printf(cMessage);
+	fprintf(stderr,cMessage);
 	return(1);
 
 }//unsigned TextConnectDb()
