@@ -31,10 +31,11 @@ int main(int iArgc, char *cArgv[])
 
 	if(iArgc<3)
 	{
-		printf("usage: %s <mysql rlike expression for cZone> <uView> [<NOT rlike expression for cZone>]\n",cArgv[0]);
+		fprintf(stderr,"usage: %s <mysql rlike expression for cZone> <uView> [<NOT rlike expression for cZone>]\n",cArgv[0]);
 		return(0);
 	}
-        TextConnectDb();
+        if(TextConnectDb())
+		return(1);
 
 	if(iArgc>3 && cArgv[3])
 		sprintf(gcQuery,"SELECT tResource.cName,tResource.cParam1,tZone.cZone"
@@ -56,8 +57,8 @@ int main(int iArgc, char *cArgv[])
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		printf("%s\n",mysql_error(&gMysql));
-		printf("%s\n",gcQuery);
+		fprintf(stderr,"%s\n",mysql_error(&gMysql));
+		fprintf(stderr,"%s\n",gcQuery);
 		return(1);
 	}
 	res=mysql_store_result(&gMysql);
@@ -65,11 +66,13 @@ int main(int iArgc, char *cArgv[])
 	char cZone[129]={""};
 	while((field=mysql_fetch_row(res)))
 	{
+	/*
 		if(strcmp(field[2],cZone))
 		{
 			sprintf(cZone,"%.128s",field[2]);
 			printf("#cZone=%s\n",cZone);
 		}
+	*/
 		if((cp=strchr(field[0]+strlen(field[0])-1,'.')))
 			*cp=0;
 		printf("%.32s %.128s\n",field[1],field[0]);
