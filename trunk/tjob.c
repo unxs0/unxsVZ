@@ -436,14 +436,8 @@ void tJobInput(unsigned uMode)
 	}
 //uNode
 	OpenRow("uNode","black");
-	if(guPermLevel>=0 && uMode)
-	{
-		printf("%s<input type=hidden name=uNode value=%u >\n",ForeignKey("tNode","cLabel",uNode),uNode);
-	}
-	else
-	{
-		printf("%s<input type=hidden name=uNode value=%u >\n",ForeignKey("tNode","cLabel",uNode),uNode);
-	}
+	printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNode&uNode=%u>%s</a><input type=hidden name=uNode value=%u >\n",
+				uNode,ForeignKey("tNode","cLabel",uNode),uNode);
 //uContainer
 	OpenRow("uContainer","black");
 	printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>%s</a><input type=hidden name=uContainer value=%u >\n",
