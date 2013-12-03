@@ -3487,8 +3487,8 @@ void ExttContainerAuxTable(void)
 				unsigned uSourceContainer=0;
 				unsigned uSourceNode=0;
 				char cSourceNode[32]={""};
-				char cBackupContainer1[32]={""};
-				char cBackupContainer2[32]={""};
+				char cBackupContainer1[64]={""};
+				char cBackupContainer2[64]={""};
 				unsigned uBackupContainer1=0;
 				unsigned uBackupContainer2=0;
 				char cSource[32]={""};
@@ -5366,7 +5366,10 @@ while((field=mysql_fetch_row(res)))
 						if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
 									sContainer.cHostname,sContainer.uDatacenter,
 									guLoginClient,uCtContainer,sContainer.uNode))
+						{
+							SetContainerProperty(sContainer.uSource,"cDNSSwitchover","No");
 							sprintf(cResult,"DNS update done");
+						}
 						else
 							sprintf(cResult,"DNS update error. No public IP?");
 					}
@@ -5500,19 +5503,20 @@ while((field=mysql_fetch_row(res)))
 	uBackupContainer2=0;
         MYSQL_RES *res3;
         MYSQL_ROW field3;
-	sprintf(gcQuery,"SELECT cLabel,uContainer FROM tContainer WHERE uSource=%s LIMIT 2",field[0]);
+	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.uContainer,tContainer.uNode"
+			" FROM tContainer,tNode WHERE tContainer.uSource=%s AND tNode.uNode=tContainer.uNode LIMIT 2",field[0]);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
         res3=mysql_store_result(&gMysql);
 	if((field3=mysql_fetch_row(res3)))
 	{
-		sprintf(cBackupContainer1,"%.31s",field3[0]);
+		sprintf(cBackupContainer1,"%.31s/%.8s",field3[0],field3[2]);
 		sscanf(field3[1],"%u",&uBackupContainer1);
 	}
 	if((field3=mysql_fetch_row(res3)))
 	{
-		sprintf(cBackupContainer2,"%.31s",field3[0]);
+		sprintf(cBackupContainer2,"%.31s/%.8s",field3[0],field3[2]);
 		sscanf(field3[1],"%u",&uBackupContainer2);
 	}
 	mysql_free_result(res3);
