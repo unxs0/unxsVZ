@@ -200,6 +200,7 @@ unsigned CommonNewCloneContainer(
 		unsigned uLoginClient,
 		unsigned uCloneStop,
 		unsigned uMode);
+void htmlLatestJobInfo(unsigned uContainer);
 
 //extern
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
@@ -3170,6 +3171,9 @@ void ExttContainerButtons(void)
 				htmlContainerNotes(uContainer);
 				htmlContainerMount(uContainer);
 				htmlGroups(0,uContainer);
+
+
+				htmlLatestJobInfo(uContainer);
 			}
 			printf("<p><u>Container Search by cLabel</u><br>");
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
@@ -9144,3 +9148,24 @@ unsigned uUpdateNamesFromCloneToClone(unsigned uContainer)
 
 }//unsigned uUpdateNamesFromCloneToClone(uContainer)
 
+
+void htmlLatestJobInfo(unsigned uContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tJob.cJobName,tJob.uJob,tJobStatus.cLabel,tJob.cRemoteMsg FROM tJob,tJobStatus"
+			" WHERE tJob.uContainer=%u"
+			" AND tJobStatus.uJobStatus=tJob.uJobStatus"
+			" AND tJob.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400)",uContainer);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+		printf("<p><u>Latest jobs</u>\n");
+	while((field=mysql_fetch_row(res)))
+		printf("<br><a class=darkLink href=unxsVZ.cgi?gcFunction=tJob&uJob=%s>%s/%s/%s</a>\n",
+					field[1],field[0],field[2],field[3]);
+	mysql_free_result(res);
+}//void htmlLatestJobInfo(unsigned uContainer)
