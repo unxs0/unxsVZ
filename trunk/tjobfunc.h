@@ -10,6 +10,9 @@ AUTHOR/LEGAL
  
 */
 
+//extern
+void SetContainerStatus(unsigned uContainer,unsigned uStatus);
+
 //ModuleFunctionProtos()
 
 static unsigned uForClient=0;
@@ -324,6 +327,32 @@ void ExttJobCommands(pentry entries[], int x)
 				tJob("Operation denied");
 			}
 		}
+		else if(!strcmp(gcCommand,"Destroy Container Offline"))
+                {
+			ProcesstJobVars(entries,x);
+			//special handling of jobs with errors or waiting for inactive nodes
+			unsigned uStatus=0;
+			sscanf(ForeignKey("tContainer","uStatus",uContainer),"%u",&uStatus);
+			unsigned uNodeStatus=0;
+			sscanf(ForeignKey("tNode","uStatus",uNode),"%u",&uNodeStatus);
+			if(uJobStatus==uWAITING && uStatus==uAWAITDEL && (uNodeStatus==uOFFLINE || uNodeStatus==0))
+			{
+				//update container status
+				SetContainerStatus(uContainer,uINITSETUP);//Initial
+
+				//update job status
+				uJobStatus=uDONEOK;
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u WHERE uJob=%u",
+					uJobStatus,guLoginClient,uJob);
+        			mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+                			tJob("SQL UPDATE failed");
+
+                		tJob("Job simulated for offline or non existent node");
+			}
+                	tJob("Destroy Container Offline canceled, base conditions changed");
+		}
+				
 	}
 
 }//void ExttJobCommands(pentry entries[], int x)
@@ -386,6 +415,7 @@ void ExttJobButtons(void)
 			if(uJob)
 				tJobNavList();
 
+			//special handling of jobs with errors or waiting for inactive nodes
 			unsigned uStatus=0;
 			sscanf(ForeignKey("tContainer","uStatus",uContainer),"%u",&uStatus);
 			if(uJobStatus==uERROR && uStatus==uAWAITDNSMIG && strstr(cJobData,"uPrevStatus="))
@@ -393,7 +423,15 @@ void ExttJobButtons(void)
 				printf("<p><input title='Cancel this job and return container to previous status'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Cancel DNS Migration'>\n");
-				
+			}
+
+			unsigned uNodeStatus=0;
+			sscanf(ForeignKey("tNode","uStatus",uNode),"%u",&uNodeStatus);
+			if(uJobStatus==uWAITING && uStatus==uAWAITDEL && (uNodeStatus==uOFFLINE || uNodeStatus==0))
+			{
+				printf("<p><input title='Simulate that this job has been done correctly'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Destroy Container Offline'>\n");
 			}
 	}
 	CloseFieldSet();
