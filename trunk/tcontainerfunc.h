@@ -3439,7 +3439,7 @@ void ExttContainerAuxTable(void)
 				" name=gcCommand value='Group DNS Update'>\n");
 			printf("&nbsp; <input title='Creates job(s) for starting remote clone -backup container of selected"
 				" active containers. It also will activate -backup PBXs directly. In this last case, if the"
-				" current backup container IP is not in tConfiguration::cAutoCloneIPClassRemote then an"
+				" current backup container IP is not in tConfiguration::cAutoCloneIPClassBackup (of backup datacenter/node) then an"
 				" attempt to assign and unused IP of that ClassC will be attempted. In this last case"
 				" this operation will cancel NAT activation."
 				" Updates DNS records if so configured.'"
@@ -4597,19 +4597,19 @@ while((field=mysql_fetch_row(res)))
 							uCloneStatus=sContainer.uStatus;
 
 							//configurable IP change
-							char cAutoCloneIPClassRemote[256]={""};
+							char cAutoCloneIPClassBackup[256]={""};
 							char cIPOld[32]={""};
 							unsigned uNewIPv4=0;
-							GetConfiguration("cAutoCloneIPClassRemote",cAutoCloneIPClassRemote,uCloneDatacenter,uCloneNode,0,0);
-							if(!cAutoCloneIPClassRemote[0])
-								GetConfiguration("cAutoCloneIPClassRemote",cAutoCloneIPClassRemote,
+							GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,uCloneDatacenter,uCloneNode,0,0);
+							if(!cAutoCloneIPClassBackup[0])
+								GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,
 									uCloneDatacenter,0,0,0);
 
-							if(cAutoCloneIPClassRemote[0])
+							if(cAutoCloneIPClassBackup[0])
 							{
 								sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",sContainer.uIPv4));
 
-								if(strncmp(cIPOld,cAutoCloneIPClassRemote,strlen(cAutoCloneIPClassRemote)))
+								if(strncmp(cIPOld,cAutoCloneIPClassBackup,strlen(cAutoCloneIPClassBackup)))
 								{
 									//find a new ip and assign
         								MYSQL_RES *res;
@@ -4618,7 +4618,7 @@ while((field=mysql_fetch_row(res)))
 										" WHERE uAvailable=1"
 										" AND INSTR(cLabel,'%s')>0"
 										" AND uDatacenter=%u"
-											,cAutoCloneIPClassRemote,sContainer.uDatacenter);
+											,cAutoCloneIPClassBackup,sContainer.uDatacenter);
 									mysql_query(&gMysql,gcQuery);
 									if(mysql_errno(&gMysql))
 									{
@@ -5709,6 +5709,7 @@ while((field=mysql_fetch_row(res)))
 	cValue[0]=0;
 	unsigned uRowContainer=0;
 	sscanf(field[0],"%u",&uRowContainer);
+	//if(!uRowContainer) uRowContainer=uCtContainer;
 	GetContainerProp(uRowContainer,"cOrg_PublicIP",cValue);
 	if(cValue[0])
 		cNAT="*";
