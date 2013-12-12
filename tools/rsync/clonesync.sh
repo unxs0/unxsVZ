@@ -31,7 +31,14 @@ else
 fi
 
 fLog "start $1 to $3:$2";
-uRunning=`nice /bin/ps -ef | /bin/grep clonesync | /bin/grep -v /bin/grep | /usr/bin/wc -l`;
+
+#simple turn off
+if [ -f "/root/clonesync.sh.off" ];then
+	fLog "/root/clonesync.sh.off";
+	exit 1;
+fi
+
+uRunning=`nice /bin/ps -ef | /bin/grep clonesync.sh | /bin/grep -v /bin/grep | /usr/bin/wc -l`;
 if [ "$uRunning" -gt 5 ];then
 	fLog "clonesync is already running $uRunning times";
 	exit 1;
