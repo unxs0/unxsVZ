@@ -808,10 +808,20 @@ void ExttContainerCommands(pentry entries[], int x)
 				//We extend to this other optional list and ignore the other filter items
 				if(!strncmp(cCommands,"SpecialSearchSet=NoRemoteClones",sizeof("SpecialSearchSet=NoRemoteClones")) && uDatacenter)
 				{
+					uLink=1;
 					sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uContainer)"
 							" SELECT %u,uContainer FROM tContainer WHERE uDatacenter=%u AND uSource=0"
 							" AND uContainer NOT IN (SELECT uSource FROM tContainer WHERE uSource!=0 AND uDatacenter!=%u)"
 												,uGroup,uDatacenter,uDatacenter);
+					if(uSearchGroup)
+					{
+						if(uLink)
+							strcat(gcQuery," AND");
+						sprintf(cQuerySection," uContainer IN (SELECT uContainer FROM tGroupGlue WHERE uGroup=%u)",uSearchGroup);
+						strcat(gcQuery,cQuerySection);
+						uLink=1;
+					}
+
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -2966,8 +2976,9 @@ void ExttContainerButtons(void)
                 case 12002:
 			printf("<u>Create or refine your user search set</u><br>");
 			printf("In the right panel you can select your search criteria. When refining you do not need"
-				" to reuse your initial search critieria. Your search set is persistent even across unxsVZ sessions.<p>");
-			printf("<input type=submit class=largeButton title='Create an initial or replace an existing search set'"
+				" to reuse your initial search critieria. Your search set is persistent even across unxsVZ sessions."
+				" More options available, see top right command box.");
+			printf("<p><input type=submit class=largeButton title='Create an initial or replace an existing search set'"
 				" name=gcCommand value='Create Search Set'>\n");
 			printf("<input type=submit class=largeButton title='Add the results to your current search set. Do not add the same search"
 				" over and over again it will not result in any change but may slow down processing.'"
@@ -4279,6 +4290,7 @@ while((field=mysql_fetch_row(res)))
 						uSyncPeriod=14400;//default 4 hour rsync
 						cAutoCloneIPClass[0]=0;
 						unsigned uTargetDatacenter=sContainer.uDatacenter;
+						unsigned uRemote=0;
 						if(guCloneTargetNode==0)
 						{
 							GetConfiguration("cAutoCloneNode",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
@@ -4341,12 +4353,30 @@ while((field=mysql_fetch_row(res)))
 
 							//get correct remote uTargetDatacenter
 							sscanf(ForeignKey("tNode","uDatacenter",guCloneTargetNode),"%u",&uTargetDatacenter);
-							GetConfiguration("cAutoCloneIPClassRemote",
-								cAutoCloneIPClass,uTargetDatacenter,guCloneTargetNode,0,0);
+							//If this is set use it cAutoCloneIPClassBackup
+							//and also create the -backup clone active/running.
+							GetConfiguration("cAutoCloneIPClassBackup",
+									cAutoCloneIPClass,uTargetDatacenter,guCloneTargetNode,0,0);
 							//Try again less specific
 							if(!cAutoCloneIPClass[0])
+									GetConfiguration("cAutoCloneIPClassBackup",
+										cAutoCloneIPClass,uTargetDatacenter,0,0,0);
+							if(!cAutoCloneIPClass[0])
+							{
 								GetConfiguration("cAutoCloneIPClassRemote",
-									cAutoCloneIPClass,uTargetDatacenter,0,0,0);
+									cAutoCloneIPClass,uTargetDatacenter,guCloneTargetNode,0,0);
+								//Try again less specific
+								if(!cAutoCloneIPClass[0])
+									GetConfiguration("cAutoCloneIPClassRemote",
+										cAutoCloneIPClass,uTargetDatacenter,0,0,0);
+							}
+							else
+							{
+								uCloneStop=0;//-backup clones are active
+							}
+
+							//for -backup name change below
+							uRemote=1;
 						}
 
 						//Some validation
@@ -4497,6 +4527,9 @@ while((field=mysql_fetch_row(res)))
 									sprintf(cResult,"uNewVeid error");
 								break;
 							}
+							//Best effort
+							if(uRemote)
+								uUpdateNamesFromCloneToBackup(uNewVeid);
 							UpdatePrimaryContainerGroup(uNewVeid,uGroup);
 							SetContainerStatus(uCtContainer,uAWAITCLONE);
 							SetContainerStatus(uNewVeid,uAWAITCLONE);
@@ -7597,6 +7630,7 @@ unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 {
 	unsigned uCount=0;
 	long unsigned luJobDate=0;
+	char gcQuery[512];
 
 	if(cStartTime[0] && cStartDate[0])
 	{
@@ -8131,7 +8165,8 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		if(!(uRetVal=(unxsBindARecordJob(uDatacenter,uNode,uContainer,cJobData,uOwner,uCreatedBy))));
 		{
 			unxsVZLog(uContainer,"tContainer","CreateDNSJob-err9");
-			return(0);
+			//mysql_insert_id() is not returning uJob for some reason.
+			return(1);
 		}
 		return(uRetVal);
 
