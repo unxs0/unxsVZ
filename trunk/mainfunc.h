@@ -183,6 +183,42 @@ void CloneReport(const char *cOptionalMsg)
 	//Lets add a count
 	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td>\n",uCount);
 
+
+	OpenRow("<u>Containers with no remote backup clone</u>","black");
+	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tContainer.uContainer,"
+			"tNode.cLabel,tDatacenter.cLabel,tDatacenter.uDatacenter"
+			" FROM tContainer,tNode,tDatacenter"
+			" WHERE tContainer.uNode=tNode.uNode AND tContainer.uDatacenter=tDatacenter.uDatacenter"
+			" AND tContainer.uSource=0 AND (tContainer.uStatus=1 OR tContainer.uStatus=31)"
+			" AND tDatacenter.uStatus=1"
+			" ORDER BY tContainer.uDatacenter,tContainer.uNode,tContainer.cLabel");
+	macro_mySQLQueryErrorText
+	printf("</td></tr><tr><td></td><td><u>cLabel</u></td><td><u>cHostname</u></td>"
+			"<td><u>Node</td><td><u>Datacenter</u></td>\n");
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		cuContainer[0]=0;
+
+		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uSource=%s AND uDatacenter!=%s",mysqlField[2],mysqlField[5]);
+		macro_mySQLQueryErrorText2
+        	if((mysqlField2=mysql_fetch_row(mysqlRes2)))
+			sprintf(cuContainer,"%.15s",mysqlField2[0]);
+		mysql_free_result(mysqlRes2);
+
+		if(!cuContainer[0])
+		{
+			uCount++;
+			printf("<tr><td></td><td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
+				"<td>%s</td><td>%s</td><td>%s</td>\n",mysqlField[2],
+					mysqlField[0],mysqlField[1],mysqlField[3],mysqlField[4]);
+		}
+	}
+	mysql_free_result(mysqlRes);
+	//Lets add a count
+	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td>\n",uCount);
+	//no remote backup clone
+
+
 	//1=Active
 	uCount=0;
 	OpenRow("<p>","black");
@@ -225,6 +261,7 @@ void CloneReport(const char *cOptionalMsg)
 	//Lets add a count
 	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td>\n",uCount);
 
+/*
 	uCount=0;
 	OpenRow("<p>","black");
 	OpenRow("<u>Containers with remote clones</u>","black");
@@ -264,6 +301,7 @@ void CloneReport(const char *cOptionalMsg)
 	mysql_free_result(mysqlRes);
 	//Lets add a count
 	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td>\n",uCount);
+*/
 
 	CloseFieldSet();
 

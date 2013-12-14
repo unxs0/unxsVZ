@@ -445,7 +445,7 @@ void tContainerSearchSet(unsigned uStep)
 	//Temp placement
 	printf("<td><textarea title='Special commands, cHostname list for remove/add (parameters are ignored),"
 					" or group execute function commands. Special commands are: SpecialSearchSet=NoRemoteClones"
-					" (must specify uDatacenter, only for create).'"
+					" (must specify 'Datacenter', optionallly specify 'Primary Group', only for create).'"
 			" cols=80 wrap=soft rows=1 name=cCommands>%s</textarea></td>",cCommands);
 
 	OpenRow("Hostname pattern","black");
