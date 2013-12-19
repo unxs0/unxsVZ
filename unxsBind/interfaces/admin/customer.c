@@ -918,6 +918,7 @@ void funcZoneList(FILE *fp)
 	
 	if(!uClient) return;
 	
+	fprintf(fp,"<!-- funcZoneList(fp) Start -->\n");
 
 	sprintf(gcQuery,"SELECT tZone.cZone,tView.cLabel,tView.uView FROM tZone,tView WHERE "
 			"tZone.uView=tView.uView AND tZone.uOwner='%u' AND cZone NOT LIKE '%%in-addr.arpa' "
@@ -970,10 +971,10 @@ NextList:
 	if(mysql_num_rows(res) && !uHeader)
 		fprintf(fp,"<a title='List of zones owned by the loaded company' class=inputLink href=\"#\" "
 				"onClick=\"open_popup('?gcPage=Glossary&cLabel=Block Zone List')\"><strong>Block Assigned Zone List</strong></a><br>\n");
-
 	while((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[0],"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e);
+		if(5!=sscanf(field[0],"%u.%u.%u.%u/%u",&a,&b,&c,&d,&e))
+			continue;
 		sprintf(cZone,"%u.%u.%u.in-addr.arpa",c,b,a);
 		if(strcmp(cZone,cPrevZone))
 		{
@@ -987,7 +988,7 @@ NextList:
 				case 22:
 				case 21:
 				//Expand these three cases with basic CIDR math
-				for(i=0;i<((2^(24-e))-1);i++)
+				for(i=0;i<((2^(24-e))-1) && i<9;i++)
 				{
 					sprintf(cZone,"%u.%u.%u.in-addr.arpa",c+i,b,a);
 					uZone=uGetuZone(cZone,"2");
@@ -1008,13 +1009,15 @@ NextList:
 		}//if distinct
 	}
 	mysql_free_result(res);
+	fprintf(fp,"<!-- funcZoneList(fp) End -->\n");
+	return;
 
 }//void funcZoneList(FILE *fp)
 
 
 char *cZoneLink(unsigned uZone,unsigned uOwner)
 {
-	static char cRet[256]={""};
+	static char cRet[512]={"error"};
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 

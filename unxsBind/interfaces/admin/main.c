@@ -311,11 +311,11 @@ void htmlPlainTextError(const char *cError)
 	printf("Content-type: text/plain\n\n");
 	printf("Please report this idnsAdmin fatal error ASAP:\n%s\n",cError);
 	//Attempt to report error in tLog
-        sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,"
+	sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,"
 			"cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=%u,uCreatedBy=%u,"
 			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				guPermLevel,guLoginClient,gcLogin,gcHost,cError,gcHostname,guOrg,guLoginClient);
-        mysql_query(&gMysql,cQuery);
+	mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
 		printf("Another error occurred while attempting to log: %s\n",
 				mysql_error(&gMysql));
