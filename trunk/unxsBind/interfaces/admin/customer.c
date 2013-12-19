@@ -988,7 +988,7 @@ NextList:
 				case 22:
 				case 21:
 				//Expand these three cases with basic CIDR math
-				for(i=0;i<((2^(24-e))-1) && i<9;i++)
+				for(i=0;i<(2<<(24-e-1));i++)
 				{
 					sprintf(cZone,"%u.%u.%u.in-addr.arpa",c+i,b,a);
 					uZone=uGetuZone(cZone,"2");
