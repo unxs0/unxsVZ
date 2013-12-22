@@ -700,7 +700,7 @@ void ExtMainContent(void)
 	OpenFieldSet("System Information",100);
 
 	OpenRow("Hostname","black");
-	printf("<td>%s</td></tr>\n",gcHostname);
+	printf("<td>%s (dbservers: %s, %s)</td></tr>\n",gcHostname,(DBIP0==NULL)?"localhost":DBIP0,(DBIP1==NULL)?"localhost":DBIP1);
 
 	OpenRow("Build Information","black");
 	printf("<td>%s</td></tr>\n",gcBuildInfo);
