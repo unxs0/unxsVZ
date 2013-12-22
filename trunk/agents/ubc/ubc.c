@@ -60,7 +60,7 @@ void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
 void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
 void ProcessSingleTraffic(unsigned uContainer);
 void SendEmail(char *cSubject,char *cMsg);
-void ConnectToOptionalUBCDb(unsigned uDatacenter);
+void UBCConnectToOptionalUBCDb(unsigned uDatacenter);
 
 unsigned guLogLevel=3;
 static FILE *gLfp0=NULL;
@@ -147,7 +147,7 @@ int main(int iArgc, char *cArgv[])
 					sscanf(field[0],"%u",&uDatacenter);
 				mysql_free_result(res);
 
-				ConnectToOptionalUBCDb(uDatacenter);
+				UBCConnectToOptionalUBCDb(uDatacenter);
 				sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tProperty ( "
 					"uProperty INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
 					"cName VARCHAR(32) NOT NULL DEFAULT '', INDEX (cName),"
@@ -777,7 +777,7 @@ void ProcessUBC(void)
 	}
 
 
-	ConnectToOptionalUBCDb(uDatacenter);
+	UBCConnectToOptionalUBCDb(uDatacenter);
 
 	//debug only
 	//printf("ProcessUBC() for %s (uNode=%u,uDatacenter=%u)\n",
@@ -915,7 +915,7 @@ void ProcessNodeUBC(void)
 		exit(1);
 	}
 
-	ConnectToOptionalUBCDb(uDatacenter);
+	UBCConnectToOptionalUBCDb(uDatacenter);
 
 	//Process  node
 	if(guLogLevel>2)
@@ -2255,7 +2255,7 @@ void SendEmail(char *cSubject,char *cMsg)
 }//void SendEmail()
 
 
-void ConnectToOptionalUBCDb(unsigned uDatacenter)
+void UBCConnectToOptionalUBCDb(unsigned uDatacenter)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -2268,7 +2268,7 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine0("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
+		logfileLine0("UBCConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -2280,7 +2280,7 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 		{
 			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
 			gcUBCDBIP0=gcUBCDBIP0Buffer;
-			logfileLine0("ConnectToOptionalUBCDb",gcUBCDBIP0Buffer,uDatacenter);
+			logfileLine0("UBCConnectToOptionalUBCDb",gcUBCDBIP0Buffer,uDatacenter);
 		}
 	}
 	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
@@ -2290,7 +2290,7 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine0("ConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
+		logfileLine0("UBCConnectToOptionalUBCDb",mysql_error(&gMysql),uDatacenter);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -2302,12 +2302,12 @@ void ConnectToOptionalUBCDb(unsigned uDatacenter)
 		{
 			sprintf(gcUBCDBIP1Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
 			gcUBCDBIP1=gcUBCDBIP1Buffer;
-			logfileLine0("ConnectToOptionalUBCDb",gcUBCDBIP1Buffer,uDatacenter);
+			logfileLine0("UBCConnectToOptionalUBCDb",gcUBCDBIP1Buffer,uDatacenter);
 		}
 	}
 	//If gcUBCDBIP1 or gcUBCDBIP1 exist then we will use another MySQL db for UBC tProperty
 	//	data
 	TextConnectDbUBC();
 
-}//void ConnectToOptionalUBCDb()
+}//void UBCConnectToOptionalUBCDb()
 
