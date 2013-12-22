@@ -23,13 +23,13 @@ NOTES
 #define SELECT_TIMEOUT_USEC 300000
 
 //extern protos
-void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer);
+void SIPlogfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer);
 
 //TOC protos
-void TextConnectDb(void);
+void SIPTextConnectDb(void);
 
 
-void TextConnectDb(void)
+void SIPTextConnectDb(void)
 {
 	//Handle quick cases first
 	//Port is irrelevant here. Make it clear.
@@ -64,7 +64,7 @@ void TextConnectDb(void)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
-			logfileLine("TextConnectDb","Could not create TextConnectDB() socket DBIP0",0);
+			SIPlogfileLine("SIPTextConnectDb","Could not create SIPTextConnectDB() socket DBIP0",0);
 			exit(1);
 		}
 
@@ -110,7 +110,7 @@ void TextConnectDb(void)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
-			logfileLine("TextConnectDb","Could not create TextConnectDB() socket DBIP1",0);
+			SIPlogfileLine("SIPTextConnectDb","Could not create TextConnectDB() socket DBIP1",0);
 			exit(1);
 		}
 
@@ -164,7 +164,7 @@ void TextConnectDb(void)
 	else if(1)
 		sprintf(cMessage,"Could not connect unexpected case\n");
 
-	logfileLine("TextConnectDb",cMessage,0);
+	SIPlogfileLine("SIPTextConnectDb",cMessage,0);
 	exit(1);
 
-}//TextConnectDb()
+}//SIPTextConnectDb()
