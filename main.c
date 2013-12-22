@@ -11,7 +11,7 @@ AUTHOR/LEGAL
 	(C) 2001-2012 Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 OTHER
-	Only tested on CentOS 5 and Firefox browser (9.0.1).
+	Only tested on CentOS 5 with Firefox and Chrome browsers.
 FREE HELP
 	support @ openisp . net
 	supportgrp @ unixservice . com
