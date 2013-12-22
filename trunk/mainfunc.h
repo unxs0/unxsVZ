@@ -390,12 +390,13 @@ void DashBoard(const char *cOptionalMsg)
         MYSQL_ROW mysqlField;
 	time_t luClock;
 	char cConfigBuffer[256]={""};
-
+/*
 	long unsigned luTotalFailcnt=1;
 	long unsigned luFailcnt=0;
 	long unsigned luTotalUsage=1,luTotalSoftLimit=1;
 	double fRatio;
 	char *cColor={""};
+*/
 
 	//To handle error messages etc.
 	if(cOptionalMsg[0] && strcmp(cOptionalMsg,"DashBoard"))
