@@ -201,6 +201,8 @@ unsigned CommonNewCloneContainer(
 		unsigned uCloneStop,
 		unsigned uMode);
 void htmlLatestJobInfo(unsigned uContainer);
+void GetGroupProperty(unsigned uGroup,char const *cName,char *cValue);
+
 
 //extern
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
@@ -9409,3 +9411,24 @@ void htmlLatestJobInfo(unsigned uContainer)
 					field[1],field[0],field[2],field[3]);
 	mysql_free_result(res);
 }//void htmlLatestJobInfo(unsigned uContainer)
+
+
+void GetGroupProperty(unsigned uGroup,char const *cName,char *cValue)
+{
+	MYSQL_ROW field;
+	MYSQL_RES *res;
+
+	sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroup"
+			" WHERE tGroup.uGroup=%u"
+			" AND tProperty.uKey=tGroup.uGroup"
+			" AND tProperty.cName='%s'"
+			" AND tProperty.uType=4",uGroup,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cValue,"%.255s",field[0]);
+	mysql_free_result(res);
+
+}//void GetGroupProperty(unsigned uGroup,char const *cName,char *cValue)

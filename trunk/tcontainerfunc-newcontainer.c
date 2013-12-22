@@ -10,7 +10,6 @@ AUTHOR/LEGAL
 NOTES
 */
 
-
 //step 1
 if(!strcmp(gcCommand,LANG_NB_NEW))
 {
@@ -269,6 +268,14 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		unsigned uRemoteSyncPeriod=14400;
 		if(cAutoCloneNodeRemote[0])
 		{
+			//cCreateBackupContainer=no in group we override cAutoCloneNodeRemote
+			char cCreateBackupContainer[256]={"Yes"};
+			if(uGroup)
+				GetGroupProperty(uGroup,"cCreateBackupContainer",cCreateBackupContainer);
+			if(strncasecmp(cCreateBackupContainer,"No",2))
+			{
+
+			
 			uRemoteNode=ReadPullDown("tNode","cLabel",cAutoCloneNodeRemote);
 
 			if(uRemoteNode==0)
@@ -312,6 +319,12 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 			if(uRemoteSyncPeriod>86400*30 || (uRemoteSyncPeriod && uRemoteSyncPeriod<300))
 				tContainer("<blink>Error:</blink> backup uRemoteSyncPeriod out of range:"
 						" Max 30 days, min 5 minutes or 0 off.");
+
+			}
+			else
+			{
+				cAutoCloneNodeRemote[0]=0;
+			}
 		}//cAutoCloneNodeRemote
 
 		//
