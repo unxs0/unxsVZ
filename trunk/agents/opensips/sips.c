@@ -77,7 +77,7 @@ unsigned guContainerOwner=1;
 unsigned guStatus=0;//not a valid status
 
 //dir protos
-void TextConnectDb(void);
+void SIPTextConnectDb(void);
 
 //local protos
 void ProcessDR(void);
@@ -87,10 +87,10 @@ void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage
 void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName,char *cServer);
 void Report(void);
 
-static FILE *gLfp=NULL;
-void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
+static FILE *gSIPLfp=NULL;
+void SIPlogfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
 {
-	if(gLfp!=NULL)
+	if(gSIPLfp!=NULL)
 	{
 		time_t luClock;
 		char cTime[32];
@@ -103,15 +103,15 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 		tmTime=localtime(&luClock);
 		strftime(cTime,31,"%b %d %T",tmTime);
 
-		fprintf(gLfp,"%s unxsSIPS::%s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
-		fflush(gLfp);
+		fprintf(gSIPLfp,"%s unxsSIPS::%s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
+		fflush(gSIPLfp);
 	}
 	else
 	{
 		fprintf(stderr,"%s: unxsSIPS::%s. uContainer=%u\n",cFunction,cLogline,uContainer);
 	}
 
-}//void logfileLine()
+}//void SIPlogfileLine()
 
 
 int main(int iArgc, char *cArgv[])
@@ -120,22 +120,22 @@ int main(int iArgc, char *cArgv[])
 
 	sprintf(gcProgram,"%.99s",cArgv[0]);
 
-	if((gLfp=fopen(cLOGFILE,"a"))==NULL)
+	if((gSIPLfp=fopen(cLOGFILE,"a"))==NULL)
 	{
-		logfileLine("main","fopen logfile failed",0);
+		SIPlogfileLine("main","fopen logfile failed",0);
 		exit(1);
 	}
 
 	if(sysinfo(&structSysinfo))
 	{
-		logfileLine("main","sysinfo() failed",0);
+		SIPlogfileLine("main","sysinfo() failed",0);
 		exit(1);
 	}
 #define LINUX_SYSINFO_LOADS_SCALE 65536
 #define JOBQUEUE_MAXLOAD 20 //This is equivalent to uptime 20.00 last 1 min avg load
 	if(structSysinfo.loads[0]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
 	{
-		logfileLine("main","structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD",0);
+		SIPlogfileLine("main","structSysinfo.loads[0] larger than JOBQUEUE_MAXLOAD",0);
 		exit(1);
 	}
 	//Check to see if this program is still running. If it is exit.
@@ -168,7 +168,7 @@ int main(int iArgc, char *cArgv[])
 	printf("Usage: %s ProcessDR|unxsVZJobs|Report <cServer>\n",gcProgram);
 
 CommonExit:
-	fclose(gLfp);
+	fclose(gSIPLfp);
 	return(0);
 
 }//main()
@@ -184,11 +184,11 @@ void unxsVZJobs(char const *cServer)
 	unsigned uContainer;
 
 	//Uses login data from local.h
-	TextConnectDb();
+	SIPTextConnectDb();
 	TextConnectOpenSIPSDb();
 	guLoginClient=1;//Root user
 
-	//logfileLine("unxsVZJobs cServer",cServer,0);
+	//SIPlogfileLine("unxsVZJobs cServer",cServer,0);
 
 	sprintf(gcQuery,"SELECT uJob,uDatacenter,uNode,uContainer,uOwner,cJobName,cJobData FROM tJob"
 			" WHERE uJobStatus=10"
@@ -198,7 +198,7 @@ void unxsVZJobs(char const *cServer)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("unxsVZJobs",mysql_error(&gMysql),0);
+		SIPlogfileLine("unxsVZJobs",mysql_error(&gMysql),0);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -229,8 +229,8 @@ void unxsVZJobs(char const *cServer)
 		//for nodes only we added the cServer to the cJobData.
 		ParseDIDJobData(field[6],cDID,cHostname,cCustomerName,cJobServer);
 		//debug only
-		logfileLine("unxsVZJobs cJobServer",cJobServer,0);
-		logfileLine("unxsVZJobs cDID",cDID,uJob);
+		SIPlogfileLine("unxsVZJobs cJobServer",cJobServer,0);
+		SIPlogfileLine("unxsVZJobs cDID",cDID,uJob);
 		if(strcmp(cJobServer,cServer))
 			continue;
 
@@ -247,7 +247,7 @@ void unxsVZJobs(char const *cServer)
 			{
 				//Update tJob error
 				UpdateJob(14,uContainer,uJob,"SELECT gwid,attrs FROM dr_gateways ERROR");
-				logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
+				SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
 				exit(2);
@@ -272,7 +272,7 @@ void unxsVZJobs(char const *cServer)
 				{
 					//Update tJob error
 					UpdateJob(14,uContainer,uJob,"SELECT cValue FROM tProperty w/cOrg_LinesContracted ERROR");
-					logfileLine("unxsSIPSNewDID",mysql_error(&gMysql),0);
+					SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysql),0);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
@@ -289,7 +289,7 @@ void unxsVZJobs(char const *cServer)
 				{
 					//Update tJob error
 					UpdateJob(14,uContainer,uJob,"SELECT cValue FROM tProperty w/cOrg_CustomerName ERROR");
-					logfileLine("unxsSIPSNewDID",mysql_error(&gMysql),0);
+					SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysql),0);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
@@ -316,17 +316,17 @@ void unxsVZJobs(char const *cServer)
 					{
 						//Update tJob error
 						UpdateJob(14,uContainer,uJob,"INSERT INTO dr_gateways ERROR");
-						logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
+						SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
 						mysql_close(&gMysql);
 						mysql_close(&gMysqlExt);
 						exit(2);
 					}
-					logfileLine("unxsSIPSNewDID","dr_gateways record added",uContainer);
+					SIPlogfileLine("unxsSIPSNewDID","dr_gateways record added",uContainer);
 					uGwid=mysql_insert_id(&gMysqlExt);
 				}
 				else
 				{
-					logfileLine("unxsSIPSNewDID","No uLinesContracted job ignored",uContainer);
+					SIPlogfileLine("unxsSIPSNewDID","No uLinesContracted job ignored",uContainer);
 					sprintf(cMessage,"Done");
 				}
 			}
@@ -341,7 +341,7 @@ void unxsVZJobs(char const *cServer)
 				{
 					//Update tJob error
 					UpdateJob(14,uContainer,uJob,"SELECT prefix FROM dr_rules ERROR");
-					logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
+					SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
@@ -362,7 +362,7 @@ void unxsVZJobs(char const *cServer)
 					{
 						//Update tJob error
 						UpdateJob(14,uContainer,uJob,"INSERT INTO dr_rules ERROR");
-						logfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
+						SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
 						mysql_close(&gMysql);
 						mysql_close(&gMysqlExt);
 						exit(2);
@@ -384,7 +384,7 @@ void unxsVZJobs(char const *cServer)
 					if(mysql_errno(&gMysql))
 					{
 						//Update tJob error
-						logfileLine("unxsSIPSNewDID",mysql_error(&gMysql),uContainer);
+						SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysql),uContainer);
 						UpdateJob(14,uContainer,uJob,"UPDATE tProperty ERROR 1");
 						mysql_close(&gMysql);
 						mysql_close(&gMysqlExt);
@@ -407,7 +407,7 @@ void unxsVZJobs(char const *cServer)
 
 			//Update tJob OK
 			UpdateJob(3,uContainer,uJob,cMessage);
-			logfileLine("unxsSIPSNewDID",cMessage,uContainer);
+			SIPlogfileLine("unxsSIPSNewDID",cMessage,uContainer);
 
 		}//unxsSIPSNewDID
 		else if(!strncmp(cJobName,"unxsSIPSRemoveDID",14))
@@ -422,7 +422,7 @@ void unxsVZJobs(char const *cServer)
 			{
 				//Update tJob error
 				UpdateJob(14,uContainer,uJob,"SELECT gwid,attrs FROM dr_gateways ERROR");
-				logfileLine("unxsSIPSRemoveDID",mysql_error(&gMysqlExt),uContainer);
+				SIPlogfileLine("unxsSIPSRemoveDID",mysql_error(&gMysqlExt),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
 				exit(2);
@@ -442,7 +442,7 @@ void unxsVZJobs(char const *cServer)
 				{
 					//Update tJob error
 					UpdateJob(14,uContainer,uJob,"DELETE FROM dr_rules ERROR");
-					logfileLine("unxsSIPSRemoveDID",mysql_error(&gMysqlExt),uContainer);
+					SIPlogfileLine("unxsSIPSRemoveDID",mysql_error(&gMysqlExt),uContainer);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
@@ -464,7 +464,7 @@ void unxsVZJobs(char const *cServer)
 				{
 					//Update tJob error
 					UpdateJob(14,uContainer,uJob,"DELETE FROM tProperty ERROR");
-					logfileLine("unxsSIPSRemoveDID",mysql_error(&gMysql),uContainer);
+					SIPlogfileLine("unxsSIPSRemoveDID",mysql_error(&gMysql),uContainer);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
@@ -479,7 +479,7 @@ void unxsVZJobs(char const *cServer)
 
 			//Update tJob OK
 			UpdateJob(3,uContainer,uJob,cMessage);
-			logfileLine("unxsSIPSRemoveDID",cMessage,uContainer);
+			SIPlogfileLine("unxsSIPSRemoveDID",cMessage,uContainer);
 
 		}//unxsSIPSRemoveDID
 		else if(!strncmp(cJobName,"unxsSIPSModCustomerName",22))
@@ -494,7 +494,7 @@ void unxsVZJobs(char const *cServer)
 			{
 				//Update tJob error
 				UpdateJob(14,uContainer,uJob,"SELECT gwid FROM dr_gateways");
-				logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
+				SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
 				exit(2);
@@ -512,7 +512,7 @@ void unxsVZJobs(char const *cServer)
 				if(mysql_errno(&gMysqlExt))
 				{
 					//Update tJob error
-					logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
+					SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
 					UpdateJob(14,uContainer,uJob,"UPDATE dr_gateways ERROR");
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
@@ -528,7 +528,7 @@ void unxsVZJobs(char const *cServer)
 				if(mysql_errno(&gMysql))
 				{
 					//Update tJob error
-					logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
+					SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
 					UpdateJob(14,uContainer,uJob,"DELETE FROM tProperty ERROR");
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
@@ -545,7 +545,7 @@ void unxsVZJobs(char const *cServer)
 				if(mysql_errno(&gMysql))
 				{
 					//Update tJob error
-					logfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
+					SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
 					UpdateJob(14,uContainer,uJob,"UPDATE tProperty ERROR 2");
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
@@ -565,12 +565,12 @@ void unxsVZJobs(char const *cServer)
 
 			//Update tJob OK
 			UpdateJob(3,uContainer,uJob,cMessage);
-			logfileLine("unxsSIPSModCustomerName",cMessage,uContainer);
+			SIPlogfileLine("unxsSIPSModCustomerName",cMessage,uContainer);
 
 		}//unxsSIPSModCustomerName
 		else if(!strncmp(cJobName,"unxsSIPSReload",14))
 		{
-			logfileLine("unxsSIPSReload","done",0);
+			SIPlogfileLine("unxsSIPSReload","done",0);
 			UpdateJob(3,0,uJob,"unxsSIPSReload initiated");
 			uDRReload=uJob;
 		}
@@ -582,11 +582,11 @@ void unxsVZJobs(char const *cServer)
 		//debug only
 		//printf("Reloading DR rules...\n");
 		//sprintf(gcQuery,"/usr/sbin/opensipsctl fifo dr_reload");	
-		//logfileLine("unxsVZJobs","opensipsctl fifo dr_reload has been turned off",uContainer);
+		//SIPlogfileLine("unxsVZJobs","opensipsctl fifo dr_reload has been turned off",uContainer);
 		sprintf(gcQuery,"/usr/sbin/dr_reload.py");	
 		if(system(gcQuery))
 		{
-			logfileLine("unxsVZJobs",gcQuery,uContainer);
+			SIPlogfileLine("unxsVZJobs",gcQuery,uContainer);
 			//debug only
 			//printf("Failed!\n");
 			//At least mark the last one (uDRReload=tJob.uJob) as error to notify operator
@@ -594,7 +594,7 @@ void unxsVZJobs(char const *cServer)
 		}
 		else
 		{
-			logfileLine("unxsVZJobs","DR rules reloaded ok",uContainer);
+			SIPlogfileLine("unxsVZJobs","DR rules reloaded ok",uContainer);
 			//debug only
 			//printf("Done\n");
 		}
@@ -623,7 +623,7 @@ void ProcessDR(void)
 	char cPrefix[65];//OpenSIPS schema
 
 	//Uses login data from local.h
-	TextConnectDb();
+	SIPTextConnectDb();
 	TextConnectOpenSIPSDb();
 	guLoginClient=1;//Root user
 
@@ -635,7 +635,7 @@ void ProcessDR(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
+		SIPlogfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -660,7 +660,7 @@ void ProcessDR(void)
 		mysql_query(&gMysqlExt,gcQuery);
 		if(mysql_errno(&gMysqlExt))
 		{
-			logfileLine("ProcessDR",mysql_error(&gMysqlExt),uContainer);
+			SIPlogfileLine("ProcessDR",mysql_error(&gMysqlExt),uContainer);
 			mysql_close(&gMysql);
 			mysql_close(&gMysqlExt);
 			exit(2);
@@ -680,7 +680,7 @@ void ProcessDR(void)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
+				SIPlogfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
 				exit(2);
@@ -692,7 +692,7 @@ void ProcessDR(void)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
+				SIPlogfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
 				exit(2);
@@ -705,7 +705,7 @@ void ProcessDR(void)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
+				SIPlogfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
 				exit(2);
@@ -720,7 +720,7 @@ void ProcessDR(void)
 			mysql_query(&gMysqlExt,gcQuery);
 			if(mysql_errno(&gMysqlExt))
 			{
-				logfileLine("ProcessDR",mysql_error(&gMysqlExt),uContainer);
+				SIPlogfileLine("ProcessDR",mysql_error(&gMysqlExt),uContainer);
 				mysql_close(&gMysql);
 				mysql_close(&gMysqlExt);
 				exit(2);
@@ -734,7 +734,7 @@ void ProcessDR(void)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					logfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
+					SIPlogfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
@@ -767,7 +767,7 @@ void TextConnectOpenSIPSDb(void)
         mysql_init(&gMysqlExt);
         if (!mysql_real_connect(&gMysqlExt,NULL,"opensips",OPENSIPSPWD,"opensips",0,NULL,0))
 	{
-		logfileLine("TextConnectOpenSIPSDb","mysql_real_connect()",0);
+		SIPlogfileLine("TextConnectOpenSIPSDb","mysql_real_connect()",0);
 		exit(3);
 	}
 
@@ -789,7 +789,7 @@ void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage
 	{
 		//debug only
 		fprintf(stderr,"Fatal error: %s\n",cQuery);
-		logfileLine("UpdateJob",mysql_error(&gMysql),uContainer);
+		SIPlogfileLine("UpdateJob",mysql_error(&gMysql),uContainer);
 		mysql_close(&gMysql);
 		mysql_close(&gMysqlExt);
 		exit(2);
@@ -850,7 +850,7 @@ void Report(void)
         MYSQL_ROW field;
 
 	//Uses login data from local.h
-	TextConnectDb();
+	SIPTextConnectDb();
 	TextConnectOpenSIPSDb();
 	guLoginClient=1;//Root user
 
@@ -863,7 +863,7 @@ void Report(void)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("Report",mysql_error(&gMysql),0);
+		SIPlogfileLine("Report",mysql_error(&gMysql),0);
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -876,7 +876,7 @@ void Report(void)
 		mysql_query(&gMysqlExt,gcQuery);
 		if(mysql_errno(&gMysqlExt))
 		{
-			logfileLine("Report",mysql_error(&gMysqlExt),0);
+			SIPlogfileLine("Report",mysql_error(&gMysqlExt),0);
 			mysql_close(&gMysql);
 			mysql_close(&gMysqlExt);
 			exit(2);
