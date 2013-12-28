@@ -133,7 +133,7 @@ unsigned GetDatacenterHealthData(unsigned uDatacenter,float *a,float *b,char *t[
 		a[uCount]=((float)luTotalRAM/(float)luInstalledRam) * 100.00;
 
 		//send email warning
-		if(a[uCount]>75.00)
+		if(a[uCount]>85.00)
 		{
 			sprintf(gcQuery,"%s %2.2f uDatacenter=%u,uNode=%u",t[uCount],a[uCount],uDatacenter,uNode);
 			SendEmail("RamUtil Warning!",gcQuery);
