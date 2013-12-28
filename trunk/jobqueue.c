@@ -634,6 +634,10 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		}
 
 
+		//rename out of the way old conf file
+		sprintf(gcQuery,"mv /etc/vz/conf/%1$u.conf /etc/vz/conf/%1$u.conf.NewContainer > /dev/null 2>&1",uContainer);
+		system(gcQuery);
+
 		if(uVeth)
 			sprintf(gcQuery,"/usr/sbin/vzctl --verbose create %u --ostemplate %s --hostname %s"
 				" --name %s --config %s",
