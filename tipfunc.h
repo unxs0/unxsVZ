@@ -12,6 +12,7 @@ AUTHOR/LEGAL
 #include <openisp/ucidr.h>
 
 void tIPReport(char *cLabel, unsigned uAux);
+void tDatacenterIPReport(void);
 void tIPNavList(unsigned uAvailable);
 void tIPUsedButAvailableNavList(void);
 void tIPUsedButAvailableFix(void);
@@ -68,6 +69,19 @@ void ExttIPCommands(pentry entries[], int x)
 	                        ProcesstIPVars(entries,x);
                         	guMode=12002;
 	                        tIP("Search set reloaded");
+			}
+			else
+			{
+				tIP("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+		else if(!strcmp(gcCommand,"Datacenter IP Report"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstIPVars(entries,x);
+                        	guMode=16001;
+	                        tIP("Datacenter IP Report");
 			}
 			else
 			{
@@ -574,6 +588,7 @@ void ExttIPButtons(void)
         {
 
 		case 15001:
+		case 16001:
 		case 14001:
 			printf("<u>IP Report in bottom panel</u><br>");
 		break;
@@ -651,6 +666,8 @@ void ExttIPButtons(void)
 			printf("<p><input type=submit class=largeButton title='!Warning make take some time. Do not abuse!"
 				" Create report on assignment errors for all IPs of given datacenter'"
 				" name=gcCommand value='IP Report All'>\n");
+			printf("<p><input type=submit class=largeButton title='Non rfc-1918 class C's in use by active datacenters'"
+				" name=gcCommand value='Datacenter IP Report'>\n");
 
 			printf("<p><u>Filter by cLabel</u><br>");
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
@@ -677,13 +694,16 @@ void ExttIPAuxTable(void)
 
 	switch(guMode)
 	{
+		case 16001:
 		case 15001:
 		case 14001:
 			OpenFieldSet("IP Report",100);
 			if(guMode==14001)
 				tIPReport(cLabel,uIP);
-			else
+			else if(guMode==15001)
 				tIPReport("",uDatacenter);
+			else if(guMode==16001)
+				tDatacenterIPReport();
 			CloseFieldSet();
 		break;
 
@@ -1524,3 +1544,39 @@ void tIPUsedButAvailableFix(void)
 
 }//void tIPUsedButAvailableFix()
 
+
+void tDatacenterIPReport()
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//LEFT(tIP.cLabel,LENGTH(tIP.cLabel)-LENGTH(SUBSTRING_INDEX(tIP.cLabel,'.',-1))-1)
+	sprintf(gcQuery,"SELECT DISTINCT LEFT(tIP.cLabel,LENGTH(tIP.cLabel)-LENGTH(SUBSTRING_INDEX(tIP.cLabel,'.',-1))-1),"
+			" tDatacenter.cLabel FROM tIP,tDatacenter"
+			" WHERE tIP.uDatacenter=tDatacenter.uDatacenter"
+			" AND tIP.cLabel NOT LIKE '10.%%.%%.%%' AND"
+			" tIP.cLabel NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
+			" tIP.cLabel NOT LIKE '172.17.%%.%%' AND" 
+			" tIP.cLabel NOT LIKE '172.18.%%.%%' AND"
+			" tIP.cLabel NOT LIKE '192.168.%%.%%'"
+			" AND tDatacenter.uStatus=1"
+			" ORDER BY tIP.uDatacenter,tIP.uIP");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tDatacenterIPReport</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>tDatacenterIPReport</u><br>\n");
+	        while((field=mysql_fetch_row(res)))
+		{
+			printf("%s.0/24 %s<br>\n",field[0],field[1]);
+	        }
+	}
+        mysql_free_result(res);
+
+}//void tDatacenterIPReport()
