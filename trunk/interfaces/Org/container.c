@@ -77,6 +77,7 @@ unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 unsigned uGetPrimaryContainerGroup(unsigned uContainer);
 unsigned uUpdateNamesFromCloneToBackup(unsigned uContainer);
 unsigned uUpdateNamesFromCloneToClone(unsigned uContainer);
+void GetContainerPropertyValue(char const *cName,char *cValue,unsigned uContainer);
 
 
 
@@ -1094,9 +1095,20 @@ void ContainerCommands(pentry entries[], int x)
 
 			//unxsSIPS jobs
 			register int i,j=0;
-			char cSIPProxyList[256];
-			GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
-			for(i=0;cSIPProxyList[i];i++)
+			char cSIPProxyList[256]={""};
+			//Provide flexible but complete config control.
+			//First we start with most specific cases. tContainer tProperty trumps tConfiguration w/uContainer.
+			//Only a few cases covered so far.
+			GetContainerPropertyValue("cSIPProxyList",cSIPProxyList,guContainer);
+			if(!cSIPProxyList[0])
+			{
+				GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,guContainer);
+				if(!cSIPProxyList[0])
+				{
+					GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
+				}
+			}
+			for(i=0;cSIPProxyList[i] && cSIPProxyList[i]!='#' && cSIPProxyList[i]!='\r';i++)
 			{
 				if(cSIPProxyList[i]!=';')
 					continue;
@@ -1232,11 +1244,22 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//unxsSIPS jobs
+			//unxsSIPS jobs "Add DID"
 			register int i,j=0;
-			char cSIPProxyList[256];
-			GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
-			for(i=0;cSIPProxyList[i];i++)
+			char cSIPProxyList[256]={""};
+			//Provide flexible but complete config control.
+			//First we start with most specific cases. tContainer tProperty trumps tConfiguration w/uContainer.
+			//Only a few cases covered so far.
+			GetContainerPropertyValue("cSIPProxyList",cSIPProxyList,guContainer);
+			if(!cSIPProxyList[0])
+			{
+				GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,guContainer);
+				if(!cSIPProxyList[0])
+				{
+					GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
+				}
+			}
+			for(i=0;cSIPProxyList[i] && cSIPProxyList[i]!='#' && cSIPProxyList[i]!='\r';i++)
 			{
 				if(cSIPProxyList[i]!=';')
 					continue;
@@ -1336,9 +1359,20 @@ void ContainerCommands(pentry entries[], int x)
 
 			//unxsSIPS jobs
 			register int i,j=0;
-			char cSIPProxyList[256];
-			GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
-			for(i=0;cSIPProxyList[i];i++)
+			char cSIPProxyList[256]={""};
+			//Provide flexible but complete config control.
+			//First we start with most specific cases. tContainer tProperty trumps tConfiguration w/uContainer.
+			//Only a few cases covered so far.
+			GetContainerPropertyValue("cSIPProxyList",cSIPProxyList,guContainer);
+			if(!cSIPProxyList[0])
+			{
+				GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,guContainer);
+				if(!cSIPProxyList[0])
+				{
+					GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
+				}
+			}
+			for(i=0;cSIPProxyList[i] && cSIPProxyList[i]!='#' && cSIPProxyList[i]!='\r';i++)
 			{
 				if(cSIPProxyList[i]!=';')
 					continue;
@@ -3091,9 +3125,20 @@ void BulkDIDAdd(void)
 
 		//unxsSIPS jobs
 		register int i,j=0;
-		char cSIPProxyList[256];
-		GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
-		for(i=0;cSIPProxyList[i];i++)
+		char cSIPProxyList[256]={""};
+		//Provide flexible but complete config control.
+		//First we start with most specific cases. tContainer tProperty trumps tConfiguration w/uContainer.
+		//Only a few cases covered so far.
+		GetContainerPropertyValue("cSIPProxyList",cSIPProxyList,guContainer);
+		if(!cSIPProxyList[0])
+		{
+			GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,guContainer);
+			if(!cSIPProxyList[0])
+			{
+				GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
+			}
+		}
+		for(i=0;cSIPProxyList[i] && cSIPProxyList[i]!='#' && cSIPProxyList[i]!='\r';i++)
 		{
 			if(cSIPProxyList[i]!=';')
 				continue;
@@ -3211,9 +3256,20 @@ void BulkDIDRemove(void)
 
 		//unxsSIPS jobs
 		register int i,j=0;
-		char cSIPProxyList[256];
-		GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
-		for(i=0;cSIPProxyList[i];i++)
+		char cSIPProxyList[256]={""};
+		//Provide flexible but complete config control.
+		//First we start with most specific cases. tContainer tProperty trumps tConfiguration w/uContainer.
+		//Only a few cases covered so far.
+		GetContainerPropertyValue("cSIPProxyList",cSIPProxyList,guContainer);
+		if(!cSIPProxyList[0])
+		{
+			GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,guContainer);
+			if(!cSIPProxyList[0])
+			{
+				GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
+			}
+		}
+		for(i=0;cSIPProxyList[i] && cSIPProxyList[i]!='#' && cSIPProxyList[i]!='\r';i++)
 		{
 			if(cSIPProxyList[i]!=';')
 				continue;
@@ -3640,3 +3696,20 @@ unsigned uUpdateNamesFromCloneToClone(unsigned uContainer)
 
 }//unsigned uUpdateNamesFromCloneToClone(uContainer)
 
+
+void GetContainerPropertyValue(char const *cName,char *cValue,unsigned uContainer)
+{
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	cValue[0]=0;
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='%s'",uContainer,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return;
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cValue,"%.255s",field[0]);
+	mysql_free_result(res);
+
+}//void GetContainerPropertyValue()
