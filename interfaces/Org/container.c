@@ -2291,7 +2291,7 @@ void funcContainerInfo(FILE *fp)
 				(strncmp(field[0],"FreePBXEngPasswd",16) || guPermLevel>=10 || guPermLevel==2) &&
 				(strncmp(field[0],"FreePBXOperatorPasswd",21) || guPermLevel>=1) &&
 				(strncmp(field[0],"MySQLAsteriskPasswd",19) || guPermLevel>=6 || guPermLevel==2) &&
-				(strncmp(field[0],"SSHPort",7) || guPermLevel>=10 || guPermLevel==2) &&
+				(strncmp(field[0],"SSHPort",7) || guPermLevel>=6 || guPermLevel==2) &&
 				(strncmp(field[0],"FreePBXAdminPasswd",18) || guPermLevel>=5 || guPermLevel==2)
 			)
 			printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('unxsvzOrg.cgi?gcPage=Glossary&cLabel=%s')\">"
