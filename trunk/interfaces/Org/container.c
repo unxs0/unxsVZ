@@ -78,6 +78,7 @@ unsigned uGetPrimaryContainerGroup(unsigned uContainer);
 unsigned uUpdateNamesFromCloneToBackup(unsigned uContainer);
 unsigned uUpdateNamesFromCloneToClone(unsigned uContainer);
 void GetContainerPropertyValue(char const *cName,char *cValue,unsigned uContainer);
+void GetSIPProxyList(char *cSIPProxyList,unsigned guDatacenter,unsigned guNode,unsigned guContainer);
 
 
 
@@ -1081,6 +1082,14 @@ void ContainerCommands(pentry entries[], int x)
 			}
 			mysql_free_result(res);
 
+			char cSIPProxyList[256]={""};
+			GetSIPProxyList(cSIPProxyList,guDatacenter,guNode,guContainer);
+			if(!cSIPProxyList[0])
+			{
+				gcMessage="No cSIPProxyList, contact sysadmin!";
+				htmlContainer();
+			}
+
 			sprintf(gcQuery,"INSERT INTO tProperty"
 					" SET cValue='%s',"
 					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
@@ -1093,21 +1102,9 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//unxsSIPS jobs
+			//unxsSIPS jobs customer mod limit change for example
 			register int i,j=0;
-			char cSIPProxyList[256]={""};
-			//Provide flexible but complete config control.
-			//First we start with most specific cases. tContainer tProperty trumps tConfiguration w/uContainer.
-			//Only a few cases covered so far.
-			GetContainerPropertyValue("cSIPProxyList",cSIPProxyList,guContainer);
-			if(!cSIPProxyList[0])
-			{
-				GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,guContainer);
-				if(!cSIPProxyList[0])
-				{
-					GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
-				}
-			}
+			unsigned uDelayInSecs=0;
 			for(i=0;cSIPProxyList[i] && cSIPProxyList[i]!='#' && cSIPProxyList[i]!='\r';i++)
 			{
 				if(cSIPProxyList[i]!=';')
@@ -1117,9 +1114,10 @@ void ContainerCommands(pentry entries[], int x)
 				j=i+1;//next beg if app
 				cSIPProxyList[i]=';';
 				sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+				uDelayInSecs+=60;
 				sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSModCustomerName(%u)',cJobName='unxsSIPSModCustomerName'"
 						",uDatacenter=%u,uNode=%u,uContainer=%u"
-						",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+						",uJobDate=UNIX_TIMESTAMP(NOW())+%u"
 						",uJobStatus=%u"
 						",cJobData='"
 						"cServer=%s;\n"
@@ -1130,6 +1128,7 @@ void ContainerCommands(pentry entries[], int x)
 							guDatacenter,
 							guNode,
 							guContainer,
+							uDelayInSecs,
 							uREMOTEWAITING,
 							gcServer,
 							gcCustomerName,
@@ -1231,7 +1230,29 @@ void ContainerCommands(pentry entries[], int x)
 				gcMessage="DID not added, already in property table.";
 				htmlContainer();
 			}
+
+			sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tContainer WHERE uContainer=%u",guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select uNode error, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&guNode);
+				sscanf(field[1],"%u",&guDatacenter);
+			}
 			mysql_free_result(res);
+
+			char cSIPProxyList[256]={""};
+			GetSIPProxyList(cSIPProxyList,guDatacenter,guNode,guContainer);
+			if(!cSIPProxyList[0])
+			{
+				gcMessage="No cSIPProxyList, contact sysadmin!";
+				htmlContainer();
+			}
 
 			sprintf(gcQuery,"INSERT INTO tProperty"
 					" SET uKey=%u,uType=3,cName='cOrg_Pending_DID',cValue='%s'"
@@ -1246,19 +1267,7 @@ void ContainerCommands(pentry entries[], int x)
 
 			//unxsSIPS jobs "Add DID"
 			register int i,j=0;
-			char cSIPProxyList[256]={""};
-			//Provide flexible but complete config control.
-			//First we start with most specific cases. tContainer tProperty trumps tConfiguration w/uContainer.
-			//Only a few cases covered so far.
-			GetContainerPropertyValue("cSIPProxyList",cSIPProxyList,guContainer);
-			if(!cSIPProxyList[0])
-			{
-				GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,guContainer);
-				if(!cSIPProxyList[0])
-				{
-					GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
-				}
-			}
+			unsigned uDelayInSecs=0;
 			for(i=0;cSIPProxyList[i] && cSIPProxyList[i]!='#' && cSIPProxyList[i]!='\r';i++)
 			{
 				if(cSIPProxyList[i]!=';')
@@ -1268,9 +1277,10 @@ void ContainerCommands(pentry entries[], int x)
 				j=i+1;//next beg if app
 				cSIPProxyList[i]=';';
 				sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+				uDelayInSecs+=60;
 				sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSNewDID(%u)',cJobName='unxsSIPSNewDID'"
 						",uDatacenter=%u,uNode=%u,uContainer=%u"
-						",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+						",uJobDate=UNIX_TIMESTAMP(NOW())+%u"
 						",uJobStatus=%u"
 						",cJobData='"
 						"cServer=%s;\n"
@@ -1281,6 +1291,7 @@ void ContainerCommands(pentry entries[], int x)
 							guDatacenter,
 							guNode,
 							guContainer,
+							uDelayInSecs,
 							uREMOTEWAITING,
 							gcServer,
 							gcDID,
@@ -1345,7 +1356,29 @@ void ContainerCommands(pentry entries[], int x)
 				gcMessage="DID not removed, not in property table.";
 				htmlContainer();
 			}
+
+			sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tContainer WHERE uContainer=%u",guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select uNode error, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&guNode);
+				sscanf(field[1],"%u",&guDatacenter);
+			}
 			mysql_free_result(res);
+
+			char cSIPProxyList[256]={""};
+			GetSIPProxyList(cSIPProxyList,guDatacenter,guNode,guContainer);
+			if(!cSIPProxyList[0])
+			{
+				gcMessage="No cSIPProxyList, contact sysadmin!";
+				htmlContainer();
+			}
 
 			sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_Remove_DID',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 					" WHERE uKey=%u AND uType=3 AND cValue='%s' AND cName='cOrg_OpenSIPS_DID'",
@@ -1357,21 +1390,10 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			//unxsSIPS jobs
+			//unxsSIPS jobs Remove DID
 			register int i,j=0;
-			char cSIPProxyList[256]={""};
-			//Provide flexible but complete config control.
-			//First we start with most specific cases. tContainer tProperty trumps tConfiguration w/uContainer.
-			//Only a few cases covered so far.
-			GetContainerPropertyValue("cSIPProxyList",cSIPProxyList,guContainer);
-			if(!cSIPProxyList[0])
-			{
-				GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,guContainer);
-				if(!cSIPProxyList[0])
-				{
-					GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
-				}
-			}
+			unsigned uDelayInSecs=0;
+
 			for(i=0;cSIPProxyList[i] && cSIPProxyList[i]!='#' && cSIPProxyList[i]!='\r';i++)
 			{
 				if(cSIPProxyList[i]!=';')
@@ -1381,9 +1403,10 @@ void ContainerCommands(pentry entries[], int x)
 				j=i+1;//next beg if app
 				cSIPProxyList[i]=';';
 				sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+				uDelayInSecs+=60;
 				sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSRemoveDID(%u)',cJobName='unxsSIPSRemoveDID'"
 						",uDatacenter=%u,uNode=%u,uContainer=%u"
-						",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+						",uJobDate=UNIX_TIMESTAMP(NOW())+%u"
 						",uJobStatus=%u"
 						",cJobData='"
 						"cServer=%s;\n"
@@ -1394,6 +1417,7 @@ void ContainerCommands(pentry entries[], int x)
 							guDatacenter,
 							guNode,
 							guContainer,
+							uDelayInSecs,
 							uREMOTEWAITING,
 							gcServer,
 							gcDID,
@@ -3112,6 +3136,35 @@ void BulkDIDAdd(void)
 		}
 		mysql_free_result(res);
 
+		if(!guNode || !guDatacenter)
+		{
+        		MYSQL_RES *res;
+	        	MYSQL_ROW field;
+
+			sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tContainer WHERE uContainer=%u",guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				strncat(cReply," select error 2\n",15);
+				htmlContainerBulk();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&guNode);
+				sscanf(field[1],"%u",&guDatacenter);
+			}
+			mysql_free_result(res);
+		}
+
+		char cSIPProxyList[256]={""};
+		GetSIPProxyList(cSIPProxyList,guDatacenter,guNode,guContainer);
+		if(!cSIPProxyList[0])
+		{
+			strncat(cReply," No cSIPProxyList!\n",18);
+			continue;
+		}
+
 		sprintf(gcQuery,"INSERT INTO tProperty"
 					" SET uKey=%u,uType=3,cName='cOrg_Pending_DID',cValue='%s'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -3123,21 +3176,10 @@ void BulkDIDAdd(void)
 			continue;
 		}
 
-		//unxsSIPS jobs
+		//unxsSIPS jobs mass update Add DID
 		register int i,j=0;
-		char cSIPProxyList[256]={""};
-		//Provide flexible but complete config control.
-		//First we start with most specific cases. tContainer tProperty trumps tConfiguration w/uContainer.
-		//Only a few cases covered so far.
-		GetContainerPropertyValue("cSIPProxyList",cSIPProxyList,guContainer);
-		if(!cSIPProxyList[0])
-		{
-			GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,guContainer);
-			if(!cSIPProxyList[0])
-			{
-				GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
-			}
-		}
+		unsigned uDelayInSecs=0;
+
 		for(i=0;cSIPProxyList[i] && cSIPProxyList[i]!='#' && cSIPProxyList[i]!='\r';i++)
 		{
 			if(cSIPProxyList[i]!=';')
@@ -3147,9 +3189,10 @@ void BulkDIDAdd(void)
 			j=i+1;//next beg if app
 			cSIPProxyList[i]=';';
 			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+			uDelayInSecs+=60;
 			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSNewDID(%u)',cJobName='unxsSIPSNewDID'"
 					",uDatacenter=%u,uNode=%u,uContainer=%u"
-					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+					",uJobDate=UNIX_TIMESTAMP(NOW())+%u"
 					",uJobStatus=%u"
 					",cJobData='"
 					"cServer=%s;\n"
@@ -3160,6 +3203,7 @@ void BulkDIDAdd(void)
 						guDatacenter,
 						guNode,
 						guContainer,
+						uDelayInSecs,
 						uREMOTEWAITING,
 						gcServer,
 						gcDID,
@@ -3252,23 +3296,38 @@ void BulkDIDRemove(void)
 			continue;
 		}
 
+		if(!guNode || !guDatacenter)
+		{
+        		MYSQL_RES *res;
+	        	MYSQL_ROW field;
 
+			sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tContainer WHERE uContainer=%u",guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				strncat(cReply," select error 2\n",15);
+				htmlContainerBulk();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&guNode);
+				sscanf(field[1],"%u",&guDatacenter);
+			}
+			mysql_free_result(res);
+		}
 
-		//unxsSIPS jobs
+		//unxsSIPS jobs mass update Remove DIDs
 		register int i,j=0;
+		unsigned uDelayInSecs=0;
 		char cSIPProxyList[256]={""};
-		//Provide flexible but complete config control.
-		//First we start with most specific cases. tContainer tProperty trumps tConfiguration w/uContainer.
-		//Only a few cases covered so far.
-		GetContainerPropertyValue("cSIPProxyList",cSIPProxyList,guContainer);
+		GetSIPProxyList(cSIPProxyList,guDatacenter,guNode,guContainer);
 		if(!cSIPProxyList[0])
 		{
-			GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,guContainer);
-			if(!cSIPProxyList[0])
-			{
-				GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
-			}
+			strncat(cReply," No cSIPProxyList!\n",18);
+			continue;
 		}
+
 		for(i=0;cSIPProxyList[i] && cSIPProxyList[i]!='#' && cSIPProxyList[i]!='\r';i++)
 		{
 			if(cSIPProxyList[i]!=';')
@@ -3279,9 +3338,10 @@ void BulkDIDRemove(void)
 			cSIPProxyList[i]=';';
 			//unxsSIPS job
 			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+			uDelayInSecs+=60;
 			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSRemoveDID(%u)',cJobName='unxsSIPSRemoveDID'"
 					",uDatacenter=%u,uNode=%u,uContainer=%u"
-					",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+					",uJobDate=UNIX_TIMESTAMP(NOW())+%u"
 					",uJobStatus=%u"
 					",cJobData='"
 					"cServer=%s;\n"
@@ -3292,6 +3352,7 @@ void BulkDIDRemove(void)
 						guDatacenter,
 						guNode,
 						guContainer,
+						uDelayInSecs,
 						uREMOTEWAITING,
 						gcServer,
 						gcDID,
@@ -3713,3 +3774,33 @@ void GetContainerPropertyValue(char const *cName,char *cValue,unsigned uContaine
 	mysql_free_result(res);
 
 }//void GetContainerPropertyValue()
+
+
+void GetSIPProxyList(char *cSIPProxyList,unsigned guDatacenter,unsigned guNode,unsigned guContainer)
+{
+	//Provide flexible but complete config control.
+
+	//1 container property
+	GetContainerPropertyValue("cSIPProxyList",cSIPProxyList,guContainer);
+	if(!cSIPProxyList[0])
+	{
+		//2 container configuration
+		GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,guContainer);
+		if(!cSIPProxyList[0])
+		{
+			//3 node configuration
+			GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,guNode,0);
+			if(!cSIPProxyList[0])
+			{
+				//4 datacenter configuration
+				GetConfigurationValue("cSIPProxyList",cSIPProxyList,guDatacenter,0,0);
+				if(!cSIPProxyList[0])
+				{
+					//5 global configuration
+					GetConfigurationValue("cSIPProxyList",cSIPProxyList,0,0,0);
+				}
+			}
+		}
+	}
+
+}//void GetSIPProxyList(char *cSIPProxyList,unsigned guDatacenter,unsigned guNode,unsigned guContainer)
