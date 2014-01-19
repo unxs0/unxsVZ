@@ -1114,7 +1114,7 @@ void ContainerCommands(pentry entries[], int x)
 				j=i+1;//next beg if app
 				cSIPProxyList[i]=';';
 				sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
-				uDelayInSecs+=60;
+				uDelayInSecs+=60;//space cluster one minute to help avoid replication fail issues in master-master systems.
 				sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSModCustomerName(%u)',cJobName='unxsSIPSModCustomerName'"
 						",uDatacenter=%u,uNode=%u,uContainer=%u"
 						",uJobDate=UNIX_TIMESTAMP(NOW())+%u"
@@ -3006,19 +3006,22 @@ void funcContainerBulk(FILE *fp)
 	if(guMode==0)
 	{
 		fprintf(fp,"<p><input type=submit class=largeButton"
-			" title='Add DIDs only -no comments or other characters allowed, add only one per line.'"
+			" title='Add DIDs to current PBX, one per line."
+			" Lines that start with anything other than a number are ignored.'"
 			" name=gcFunction value='Bulk Add DIDs'>\n");
 		fprintf(fp,"<p><input type=submit class=largeButton"
-			" title='Remove DIDs specified one per line from currently loaded PBX container'"
+			" title='Remove DIDs specified one per line from currently loaded PBX container."
+			" Lines that start with anything other than a number are ignored.'"
 			" name=gcFunction value='Bulk Remove DIDs'>\n");
 		fprintf(fp,"<p><input type=submit class=largeButton"
-			" title='Load all active and pending backend registered DIDs'"
+			" title='Load all active and pending backend registered DIDs into bulk data panel.'"
 			" name=gcFunction value='Load All DIDs'>\n");
 	}
 	else if(guMode==1)
 	{
 		fprintf(fp,"<p><input type=submit class=lwarnButton"
-			" title='Remove DIDs specified one per line from currently loaded PBX container'"
+			" title='Remove DIDs specified one per line from currently loaded PBX container."
+			" Lines that start with anything other than a number are ignored.'"
 			" name=gcFunction value='Confirm Bulk Remove DIDs'>\n");
 	}
 	printf("</fieldset>");
@@ -3043,6 +3046,19 @@ char *ParseTextAreaLines(char *cTextArea)
 		{
 			char cSave[1];
 
+			/*
+			if(cTextArea[uEnd+1]=='\n' || cTextArea[uEnd+1]=='\r' || cTextArea[uEnd+1]==0
+				|| cTextArea[uEnd+1]==10 || cTextArea[uEnd+1]==13 )
+			{
+				uEnd++;
+				memcpy(cSave,cTextArea+uEnd,1);
+				cTextArea[uEnd]=0;
+				sprintf(cRetVal,"%.511s",cTextArea+uStart);
+				memcpy(cTextArea+uEnd,cSave,1);
+				return(cRetVal);
+			}
+			*/
+
 			if(cTextArea[uEnd]==0)
 				break;
 
@@ -3051,16 +3067,17 @@ char *ParseTextAreaLines(char *cTextArea)
 			sprintf(cRetVal,"%.511s",cTextArea+uStart);
 			memcpy(cTextArea+uEnd,cSave,1);
 
-			if(cRetVal[0]=='\n' || cRetVal[0]==13)
-			{
-				uStart=uEnd=0;
-				return("");
-			}
-
 			if(cTextArea[uEnd+1]==10)
 				uEnd+=2;
 			else
 				uEnd++;
+
+			//empty line call again recursively
+			//or comment line anything that starts without a number
+			if(cRetVal[0]=='\n' || cRetVal[0]==13 || !isdigit(cRetVal[0]) )
+			{
+				ParseTextAreaLines(cTextArea);
+			}
 
 			return(cRetVal);
 		}
