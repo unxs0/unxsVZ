@@ -41,6 +41,7 @@
 
 <form method=post action={{cCGI}} style="margin:0px;">
 <input type=hidden name="gcPage" value="Container">
+<input type=hidden name="guContainer" value="{{guContainer}}">
 <table width=1200  border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td>
