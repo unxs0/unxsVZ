@@ -34,6 +34,7 @@ static char gcServer[32]={""};
 static char gcDID[17]={""};
 static char *gcBulkData={""};
 static char gcCustomerName[33]={""};
+static char gcCustomerLimit[16]={""};
 static char gcNewLogin[33]={"John Doe"};
 static char gcNewPasswd[33]={""};
 static char gcAuthCode[33]={""};
@@ -125,6 +126,8 @@ void ProcessContainerVars(pentry entries[], int x)
 			sprintf(gcDID,"%.16s",cNumbersOnly(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcCustomerName"))
 			sprintf(gcCustomerName,"%.32s",CustomerName(entries[i].val));
+		else if(!strcmp(entries[i].name,"gcCustomerLimit"))
+			sprintf(gcCustomerLimit,"%.15s",CustomerName(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcAuthCode"))
 			sprintf(gcAuthCode,"%.32s",CustomerName(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcShowDetails"))
@@ -998,7 +1001,7 @@ void ContainerCommands(pentry entries[], int x)
 			gcMessage="cancel break point 1";
 			htmlContainer();
 		}
-		else if(!strcmp(gcFunction,"Mod CustomerName") && gcCustomerName[0] && guPermLevel>5)
+		else if(!strcmp(gcFunction,"Mod CustomerName") && ( gcCustomerName[0] || gcCustomerLimit[0]) && guPermLevel>5)
 		{
 			char gcQuery[1024];
 
@@ -1007,9 +1010,21 @@ void ContainerCommands(pentry entries[], int x)
 				gcMessage="Must select a container.";
 				htmlContainer();
 			}
-			if((uLen=strlen(gcCustomerName))<3)
+			unsigned uCustomerLimit=0;
+			sscanf(gcCustomerLimit,"%u",&uCustomerLimit);
+			if((uLen=strlen(gcCustomerName))<3 && !uCustomerLimit)
 			{
 				gcMessage="Customer name must be at least 3 characters long.";
+				htmlContainer();
+			}
+			if(!gcCustomerName[0] && !uCustomerLimit)
+			{
+				gcMessage="Must provide valid numeric customer line limit if not providing new customer name.";
+				htmlContainer();
+			}
+			if(uCustomerLimit>32)
+			{
+				gcMessage="Special authorization required for limits above 32";
 				htmlContainer();
 			}
 			if(uLen>32)
@@ -1063,24 +1078,87 @@ void ContainerCommands(pentry entries[], int x)
 			}
 			mysql_free_result(res);
 
-			//Check to see if customer name is already in property table
-			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
-					" WHERE uKey=%u AND uType=3 AND cName='cOrg_CustomerName'"
-					" AND cValue='%s'",guContainer,gcCustomerName);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			//check to stop extra work
+			if(!uCustomerLimit && gcCustomerName[0])
 			{
-				gcMessage="Check for cOrg_CustomerName failed, contact sysadmin!";
-				htmlContainer();
-			}
-			res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res)>0)
-			{
+				//Check to see if customer name is already in property table
+				sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+						" WHERE uKey=%u AND uType=3 AND cName='cOrg_CustomerName'"
+						" AND cValue='%s'",guContainer,gcCustomerName);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Check for cOrg_CustomerName failed, contact sysadmin!";
+					htmlContainer();
+				}
+				res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+					mysql_free_result(res);
+					gcMessage="Customer name not changed, already in property table.";
+					htmlContainer();
+				}
 				mysql_free_result(res);
-				gcMessage="Customer name not changed, already in property table.";
-				htmlContainer();
 			}
-			mysql_free_result(res);
+			else if(uCustomerLimit && !gcCustomerName[0])
+			{
+				//Check to see if customer limit is already in property table
+				sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+						" WHERE uKey=%u AND uType=3 AND cName='cOrg_LinesContracted'"
+						" AND cValue='%u'",guContainer,uCustomerLimit);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Check for cOrg_CustomerLimit failed, contact sysadmin!";
+					htmlContainer();
+				}
+				res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+					mysql_free_result(res);
+					gcMessage="Customer limit not changed, already in property table.";
+					htmlContainer();
+				}
+				mysql_free_result(res);
+			}
+			else if(uCustomerLimit && gcCustomerName[0])
+			{
+				//Check to see if customer name is already in property table
+				sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+						" WHERE uKey=%u AND uType=3 AND cName='cOrg_LinesContracted'"
+						" AND cValue='%u'",guContainer,uCustomerLimit);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Check for cOrg_CustomerLimit failed, contact sysadmin!";
+					htmlContainer();
+				}
+				res=mysql_store_result(&gMysql);
+				if(mysql_num_rows(res)>0)
+				{
+					mysql_free_result(res);
+					gcMessage="Customer limit not changed, already in property table.";
+					//Check to see if customer name is already in property table
+					sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+						" WHERE uKey=%u AND uType=3 AND cName='cOrg_CustomerName'"
+						" AND cValue='%s'",guContainer,gcCustomerName);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						gcMessage="Check for cOrg_CustomerName failed, contact sysadmin!";
+						htmlContainer();
+					}
+					res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)>0)
+					{
+						mysql_free_result(res);
+						gcMessage="Customer name and limit have not changed, already in property table.";
+						htmlContainer();
+					}
+					mysql_free_result(res);
+				}
+				mysql_free_result(res);
+			}
 
 			char cSIPProxyList[256]={""};
 			GetSIPProxyList(cSIPProxyList,guDatacenter,guNode,guContainer);
@@ -1090,16 +1168,38 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			sprintf(gcQuery,"INSERT INTO tProperty"
+			//both cases if not specifying new gcCustomerName we use the old one.
+			if(gcCustomerName[0])
+				sprintf(gcQuery,"INSERT INTO tProperty"
 					" SET cValue='%s',"
 					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
 					"uKey=%u,uType=3,cName='cOrg_CustomerMod'"
 						,gcCustomerName,guOrg,guLoginClient,guContainer);
+			else
+				sprintf(gcQuery,"INSERT INTO tProperty"
+					" SET cValue='new limit=%u',"
+					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+					"uKey=%u,uType=3,cName='cOrg_CustomerMod'"
+						,uCustomerLimit,guOrg,guLoginClient,guContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="INSERT for cOrg_CustomerMod failed, contact sysadmin!";
 				htmlContainer();
+			}
+
+			if(uCustomerLimit)
+			{
+				sprintf(gcQuery,"UPDATE tProperty"
+					" SET cValue='%u'"
+					" WHERE uKey=%u AND uType=3 AND cName='cOrg_LinesContracted'"
+						,uCustomerLimit,guContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="UPDATE for cOrg_LinesContracted failed, contact sysadmin!";
+					htmlContainer();
+				}
 			}
 
 			//unxsSIPS jobs customer mod limit change for example
@@ -1122,6 +1222,7 @@ void ContainerCommands(pentry entries[], int x)
 						",cJobData='"
 						"cServer=%s;\n"
 						"cCustomerName=%s;\n"
+						"uCustomerLimit=%u;\n"
 						"cHostname=%s;\n'"
 						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 							guContainer,
@@ -1132,6 +1233,7 @@ void ContainerCommands(pentry entries[], int x)
 							uREMOTEWAITING,
 							gcServer,
 							gcCustomerName,
+							uCustomerLimit,
 							gcCtHostname,
 							guOrg,guLoginClient);
 				mysql_query(&gMysql,gcQuery);
@@ -2726,7 +2828,7 @@ char *CustomerName(char *cInput)
 
 	for(i=0;cInput[i];i++)
 		if(!isalnum(cInput[i]) && cInput[i]!=' ' 
-			&& cInput[i]!='.' && cInput[i]!=',') break;
+			&& cInput[i]!='.' && cInput[i]!=',' && cInput[i]!='-') break;
 	cInput[i]=0;
 
 	return(cInput);
@@ -2809,8 +2911,11 @@ void funcContainer(FILE *fp)
 	fprintf(fp,"<input type=text class=type_fields"
 			" title='Enter a valid customer name'"
 			" name=gcCustomerName value='%s' size=16 maxlength=32> Customer name",gcCustomerName);
+	fprintf(fp,"<br><input type=text class=type_fields"
+			" title='Enter new number of lines limit'"
+			" name=gcCustomerLimit value='%s' size=16 maxlength=32> Line limit",gcCustomerLimit);
 	fprintf(fp,"<p><input type=submit class=largeButton"
-			" title='Modify currently loaded PBX container customer name'"
+			" title='Modify currently loaded PBX container customer name and/or number of lines limit'"
 			" name=gcFunction value='Mod CustomerName'>\n");
 	printf("</fieldset>");
 
@@ -3165,6 +3270,7 @@ void BulkDIDAdd(void)
 			continue;
 		}
 
+		unsigned uInsert=1;//normally insert
 		sprintf(gcQuery,"SELECT uProperty FROM tProperty"
 					" WHERE uKey=%u AND uType=3 AND (cName='cOrg_OpenSIPS_DID' OR cName='cOrg_Pending_DID')"
 					" AND cValue='%s'",guContainer,gcDID);
@@ -3177,9 +3283,11 @@ void BulkDIDAdd(void)
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res)>0)
 		{
-			mysql_free_result(res);
-			strncat(cReply," already added\n",15);
-			continue;
+			uInsert=0;//do not insert
+			//force adding again. why not!
+			//strncat(cReply," already added\n",15);
+			//mysql_free_result(res);
+			//continue;
 		}
 		mysql_free_result(res);
 
@@ -3212,15 +3320,18 @@ void BulkDIDAdd(void)
 			continue;
 		}
 
-		sprintf(gcQuery,"INSERT INTO tProperty"
+		if(uInsert)
+		{
+			sprintf(gcQuery,"INSERT INTO tProperty"
 					" SET uKey=%u,uType=3,cName='cOrg_Pending_DID',cValue='%s'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						guContainer,gcDID,guOrg,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			strncat(cReply," insert error 1\n",15);
-			continue;
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				strncat(cReply," insert error 1\n",15);
+				continue;
+			}
 		}
 
 		//unxsSIPS jobs mass update Add DID
@@ -3333,6 +3444,7 @@ void BulkDIDRemove(void)
 		}
 		mysql_free_result(res);
 
+		//Update for temporary status
 		sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_Remove_DID',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 					" WHERE uKey=%u AND uType=3 AND cValue='%s' AND cName='cOrg_OpenSIPS_DID'",
 						guLoginClient,guContainer,gcDID);
@@ -3340,6 +3452,16 @@ void BulkDIDRemove(void)
 		if(mysql_errno(&gMysql))
 		{
 			strncat(cReply," update error 1\n",15);
+			continue;
+		}
+
+		//Remove pending. We let any pending jobs continue? Yeah why not. The new job created here will wipe SIP server
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE uKey=%u AND uType=3 AND cValue='%s' AND cName='cOrg_Pending_DID'",
+						guContainer,gcDID);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			strncat(cReply," delete error 1\n",15);
 			continue;
 		}
 
