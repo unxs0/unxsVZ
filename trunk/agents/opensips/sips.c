@@ -84,7 +84,7 @@ void ProcessDR(void);
 void unxsVZJobs(char const *cServer);
 void TextConnectOpenSIPSDb(void);
 void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage);
-void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName,char *cServer);
+void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName,char *cServer, unsigned *uCustomerLimit);
 void Report(void);
 
 static FILE *gSIPLfp=NULL;
@@ -214,6 +214,7 @@ void unxsVZJobs(char const *cServer)
 		unsigned uJob=0;
 		unsigned uDatacenter=0;
 		unsigned uNode=0;
+		unsigned uCustomerLimit=0;
 		uContainer=0;
 		unsigned uOwner=0;
 		unsigned uGwid=0;//OpenSIPS schema
@@ -227,7 +228,7 @@ void unxsVZJobs(char const *cServer)
 
 		//We only run jobs for us. Since the tJob queue was designed for
 		//for nodes only we added the cServer to the cJobData.
-		ParseDIDJobData(field[6],cDID,cHostname,cCustomerName,cJobServer);
+		ParseDIDJobData(field[6],cDID,cHostname,cCustomerName,cJobServer,&uCustomerLimit);
 		//debug only
 		SIPlogfileLine("unxsVZJobs cJobServer",cJobServer,0);
 		SIPlogfileLine("unxsVZJobs cDID",cDID,uJob);
@@ -506,17 +507,63 @@ void unxsVZJobs(char const *cServer)
 
 			if(uGwid)
 			{
-				//Update description
-				sprintf(gcQuery,"UPDATE dr_gateways SET description='%s' WHERE gwid='%u'",cCustomerName,uGwid);
-				mysql_query(&gMysqlExt,gcQuery);
-				if(mysql_errno(&gMysqlExt))
+
+				if(cCustomerName[0])
 				{
-					//Update tJob error
-					SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
-					UpdateJob(14,uContainer,uJob,"UPDATE dr_gateways ERROR");
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
+					//Update description
+					sprintf(gcQuery,"UPDATE dr_gateways SET description='%s' WHERE gwid='%u'",cCustomerName,uGwid);
+					mysql_query(&gMysqlExt,gcQuery);
+					if(mysql_errno(&gMysqlExt))
+					{
+						//Update tJob error
+						SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
+						UpdateJob(14,uContainer,uJob,"UPDATE dr_gateways ERROR1");
+						mysql_close(&gMysql);
+						mysql_close(&gMysqlExt);
+						exit(2);
+					}
+				}
+
+				if(uCustomerLimit)
+				{
+					//Update attrs
+					if(cCustomerName[0])
+						sprintf(gcQuery,"UPDATE dr_gateways SET attrs='%.12s|%u'"
+									" WHERE gwid='%u'",cCustomerName,uCustomerLimit,uGwid);
+					else
+						sprintf(gcQuery,"UPDATE dr_gateways SET attrs=CONCAT(SUBSTR(attrs,1,LOCATE('|',attrs)-1),'|%u')"
+									" WHERE gwid='%u'",uCustomerLimit,uGwid);
+					mysql_query(&gMysqlExt,gcQuery);
+					if(mysql_errno(&gMysqlExt))
+					{
+						//Update tJob error
+						SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
+						UpdateJob(14,uContainer,uJob,"UPDATE dr_gateways ERROR2");
+						mysql_close(&gMysql);
+						mysql_close(&gMysqlExt);
+						exit(2);
+					}
+					uDRReload=uJob;
+					//Update unxsVZ OpenSIPS_Attrs
+					if(cCustomerName[0])
+						sprintf(gcQuery,"UPDATE tProperty SET cValue='%.12s|%u' WHERE cName='cOrg_OpenSIPS_Attrs'"
+							" AND uKey=%u"
+							" AND uType=3",cCustomerName,uCustomerLimit,uContainer);
+					else
+						sprintf(gcQuery,"UPDATE tProperty SET cValue=CONCAT(SUBSTR(cValue,1,LOCATE('|',cValue)-1),'|%u')"
+							" WHERE cName='cOrg_OpenSIPS_Attrs'"
+							" AND uKey=%u"
+							" AND uType=3",uCustomerLimit,uContainer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						//Update tJob error
+						UpdateJob(14,uContainer,uJob,"UPDATE tProperty ERROR");
+						SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
+						mysql_close(&gMysql);
+						mysql_close(&gMysqlExt);
+						exit(2);
+					}
 				}
 
 				//Delete previous
@@ -535,12 +582,18 @@ void unxsVZJobs(char const *cServer)
 					exit(2);
 				}
 
+
 				//Rename pending name change
-				sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_CustomerName',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+				if(cCustomerName[0])
+					sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_CustomerName',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),cValue='%s'"
 						" WHERE cName='cOrg_CustomerMod'"
-						" AND cValue='%s'"
 						" AND uKey=%u"
 						" AND uType=3",cCustomerName,uContainer);
+				else
+					sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_CustomerName',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE cName='cOrg_CustomerMod'"
+						" AND uKey=%u"
+						" AND uType=3",uContainer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -552,7 +605,7 @@ void unxsVZJobs(char const *cServer)
 					exit(2);
 				}
 
-				sprintf(cMessage,"Updated %.11s for %.32s",cCustomerName,cHostname);
+				sprintf(cMessage,"Updated %.11s for %.32s/%u",cCustomerName,cHostname,uCustomerLimit);
 				//debug only
 				//printf("%s\n",cMessage);
 			}
@@ -798,7 +851,7 @@ void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage
 }//void UpdateJob()
 
 
-void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName,char *cServer)
+void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName,char *cServer, unsigned *uCustomerLimit)
 {
 	char *cp;
 	char *cp2;
@@ -839,6 +892,10 @@ void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerNa
 			*cp2=';';
 		}
 	}
+	if((cp=strstr(cJobData,"uCustomerLimit=")))
+	{
+		sscanf(cp+15,"%u;",uCustomerLimit);
+	}
 }//void ParseDIDJobData()
 
 
@@ -854,6 +911,8 @@ void Report(void)
 	TextConnectOpenSIPSDb();
 	guLoginClient=1;//Root user
 
+	//Here we need to limit this to PBX containers that have been assigned via tConfiguration or tProperty
+	//to use the SIP server this is run on via hostname cHostname.
 	sprintf(gcQuery,"SELECT tContainer.cHostname FROM tContainer,tGroupGlue,tGroup"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
