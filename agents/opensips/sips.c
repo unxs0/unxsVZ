@@ -411,7 +411,7 @@ void unxsVZJobs(char const *cServer)
 			SIPlogfileLine("unxsSIPSNewDID",cMessage,uContainer);
 
 		}//unxsSIPSNewDID
-		else if(!strncmp(cJobName,"unxsSIPSRemoveDID",14))
+		else if(!strncmp(cJobName,"unxsSIPSRemoveDID",17))
 		{
 			//Update tJob running
 			UpdateJob(2,uContainer,uJob,"");
@@ -483,6 +483,79 @@ void unxsVZJobs(char const *cServer)
 			SIPlogfileLine("unxsSIPSRemoveDID",cMessage,uContainer);
 
 		}//unxsSIPSRemoveDID
+		else if(!strncmp(cJobName,"unxsSIPSRemoveFromProxy",23))
+		{
+			//Update tJob running
+			UpdateJob(2,uContainer,uJob,"");
+
+			//Make sure PBX is registered
+			sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				//Update tJob error
+				UpdateJob(14,uContainer,uJob,"SELECT gwid,attrs FROM dr_gateways ERROR");
+				SIPlogfileLine("unxsSIPSRemoveFromProxy",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res2=mysql_store_result(&gMysqlExt);
+			if((field2=mysql_fetch_row(res2)))
+				sscanf(field2[0],"%u",&uGwid);
+			mysql_free_result(res2);
+
+			if(uGwid)
+			{
+				//Remove ALL DIDs
+				sprintf(gcQuery,"DELETE FROM dr_rules WHERE gwlist='%u'",uGwid);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					//Update tJob error
+					UpdateJob(14,uContainer,uJob,"DELETE FROM dr_rules ERROR");
+					SIPlogfileLine("unxsSIPSRemoveFromProxy",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+
+				sprintf(cMessage,"Removed all DIDs from %.32s",cHostname);
+				//debug only
+				//printf("%s\n",cMessage);
+
+				//Remove GW
+				sprintf(gcQuery,"DELETE FROM dr_gateways WHERE gwid='%u'",uGwid);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					//Update tJob error
+					UpdateJob(14,uContainer,uJob,"DELETE FROM dr_gateways ERROR");
+					SIPlogfileLine("unxsSIPSRemoveFromProxy",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+
+				sprintf(cMessage,"Removed %.32s",cHostname);
+				//debug only
+				//printf("%s\n",cMessage);
+
+				uDRReload=uJob;
+
+			}
+			else
+			{
+				sprintf(cMessage,"%.32s not in dr_gateways",cHostname);
+				//debug only
+				//printf("%s\n",cMessage);
+			}
+
+			//Update tJob OK
+			UpdateJob(3,uContainer,uJob,cMessage);
+			SIPlogfileLine("unxsSIPSRemoveFromProxy",cMessage,uContainer);
+
+		}//unxsSIPSRemoveFromProxy
 		else if(!strncmp(cJobName,"unxsSIPSModCustomerName",22))
 		{
 			//Update tJob running
