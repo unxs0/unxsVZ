@@ -2068,6 +2068,127 @@ void ProcessVZJobQueue(void)
 				continue;
 			}//unxsVZContainerDelSRVRR
 
+
+			//Must be 2nd level zone
+			else if(!strcmp("unxsVZRemoveContainer",field[0]))
+			{
+				//Update remote job queue running
+				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='%.32s'"
+						" WHERE uJob=%u",unxsVZ_uRUNNING,gcHostname,uJob);
+				mysql_query(&gMysql2,gcQuery);
+				if(mysql_errno(&gMysql2))
+				{
+					fprintf(stdout,"%s\n",mysql_error(&gMysql2));
+					goto ErrorExit;
+				}
+	
+				ParseExtParams(&structExtParam,field[1]);
+				//debug only
+				printf("%s(%u) data:\n",field[0],uJob);
+				printf("\tcZone=%s;\n",structExtParam.cZone);
+				printf("\tcView=%s;\n\n",structExtParam.cView);
+
+
+				//validation of job data
+				if(structExtParam.cZone[0]=='.')
+				{
+					fprintf(stdout,"%s ends with a period.\n",structExtParam.cZone);
+					goto ErrorExit;
+				}
+
+				int i;
+				unsigned uPeriodCount=0;
+				for(i=0;structExtParam.cZone[i] && i<100;i++)
+				{
+					if(structExtParam.cZone[i]=='.')
+						uPeriodCount++;
+				}
+				if(uPeriodCount<2)
+				{
+					fprintf(stdout,"%s does not have at least two periods.\n",structExtParam.cZone);
+					goto ErrorExit;
+				}
+
+				//Get required data
+				sprintf(gcQuery,"SELECT uZone,uNSSet,uView,uOwner FROM tZone WHERE"
+						" uView=(SELECT uView FROM tView WHERE cLabel='%s' LIMIT 1) AND"
+						" cZone='%s' LIMIT 1",
+							structExtParam.cView,
+							structExtParam.cZone);
+				//debug only
+				//printf("%s\n",gcQuery);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(stdout,"%s\n",mysql_error(&gMysql));
+					goto ErrorExit;
+				}
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+				{
+					sscanf(field2[0],"%u",&uZone);
+					sscanf(field2[1],"%u",&uNSSet);
+					sscanf(field2[2],"%u",&uView);
+					sscanf(field2[3],"%u",&uOwner);
+				}
+				mysql_free_result(res2);
+
+				if(uZone)
+				{
+
+					//remove all zone resources
+					sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%u",uZone);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+
+					//remove zone
+					sprintf(gcQuery,"DELETE FROM tZone WHERE uZone=%u",uZone);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(stdout,"%s\n",mysql_error(&gMysql));
+						goto ErrorExit;
+					}
+
+					//Submit zone del job
+					guLoginClient=1;
+					guCompany=uOwner;
+					if(SubmitJob("Delete",uNSSet,structExtParam.cZone,0,0))
+					{
+						fprintf(stdout,"SubmitJob() failed.\n");
+						goto ErrorExit;
+					}
+
+					sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZContainerDelSRVRR ok'"
+						" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
+				}
+				else
+				{
+					fprintf(stdout,"No tZone.uZone for %s %s\n",
+								structExtParam.cView,
+								structExtParam.cZone);
+					fprintf(stdout,"%s",gcQuery);
+					//We can ignore no such uZone
+					//since we can assume that it has been deleted or never existed.
+					//debug only
+					sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='No uZone'"
+						" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
+				}
+
+				mysql_query(&gMysql2,gcQuery);
+				if(mysql_errno(&gMysql2))
+				{
+					fprintf(stdout,"%s\n",mysql_error(&gMysql2));
+					goto ErrorExit;
+				}
+				//goto NormalExit;
+				continue;
+			}//unxsVZRemoveContainer
+
 			//cName is a fully qualified DNS RR name, i.e. it ends in the zone name.
 			else if(!strcmp("unxsVZContainerSRVRR",field[0]))
 			{
