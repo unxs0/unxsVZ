@@ -202,6 +202,8 @@ unsigned CommonNewCloneContainer(
 		unsigned uMode);
 void htmlLatestJobInfo(unsigned uContainer);
 void GetGroupProperty(unsigned uGroup,char const *cName,char *cValue);
+unsigned unxsBindRemoveContainer(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
+	unsigned uOwner,unsigned uCreatedBy);
 
 
 //extern
@@ -6429,9 +6431,66 @@ unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 		htmlPlainTextError(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
 	unxsVZLog(uContainer,"tContainer","Destroy");
+
+	//Attempt to remove DNS entries
+	char cView[32]={"external"};
+	char cJobData[256]={""};
+	GetConfiguration("cunxsBindARecordJobView",cView,uDatacenter,0,0,0);
+	sprintf(cJobData,"cZone=%.99s;\n"
+			"cView=%.31s;\n",
+				ForeignKey("tContainer","cHostname",uContainer),cView);
+	if(!unxsBindRemoveContainer(uDatacenter,uNode,uContainer,cJobData,uOwner,guLoginClient));
+			unxsVZLog(uContainer,"tContainer","unxsBindRemoveContainer");
 	return(uCount);
 
 }//unsigned DestroyContainerJob()
+
+
+//Pull job for unxsBind
+//Sample cJobData
+/*
+cZone=delthis.ZoneOrArecord.net.;
+cView=external;
+*/
+unsigned unxsBindRemoveContainer(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
+	unsigned uOwner,unsigned uCreatedBy)
+{
+	unsigned uCount=0;
+	long unsigned luJobDate=0;
+	char gcQuery[512];
+
+	if(cStartTime[0] && cStartDate[0])
+	{
+		long unsigned luJobTime=0;
+		luJobDate=cStartDateToUnixTime(cStartDate);
+		if(luJobDate== -1)
+			luJobDate=0;
+		luJobTime=cStartTimeToUnixTime(cStartTime);
+		if(luJobTime== -1)
+			luJobTime=0;
+		luJobDate+=luJobTime;
+	}
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindRemoveContainer(%u)',cJobName='unxsVZRemoveContainer'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
+			",uJobStatus=%u"
+			",cJobData='%s'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				luJobDate,luJobDate,
+				uREMOTEWAITING,
+				cJobData,
+				uOwner,uCreatedBy);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	uCount=mysql_insert_id(&gMysql);
+	unxsVZLog(uContainer,"tContainer","unxsBindRemoveContainer");
+	return(uCount);
+
+}//unsigned unxsBindRemoveContainer()
 
 
 unsigned StopContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner)
