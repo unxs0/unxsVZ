@@ -740,6 +740,9 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 				sprintf(gcQuery,"/usr/sbin/vzctl --verbose stop %u",uContainer);
 				if(system(gcQuery))
 					logfileLine("NewContainer",gcQuery);
+				sprintf(gcQuery,"/usr/sbin/vzctl --verbose set %u --onboot=no --save",uContainer);
+				if(system(gcQuery))
+					logfileLine("NewContainer",gcQuery);
 			}
 		}
 		else

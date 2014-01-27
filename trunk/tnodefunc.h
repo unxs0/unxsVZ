@@ -833,6 +833,7 @@ void ExttNodeAuxTable(void)
 						" tProperty.cName LIKE 'c%%' OR tProperty.cName LIKE 'Max%%'"
 						" OR tProperty.cName LIKE 'luInstalled%%'"
 						" OR tProperty.cName='Name'"
+						" OR tProperty.cName='NewContainerMode'"
 						" OR tProperty.cName LIKE 'Max%%Containers'"
 						")"
 						" AND tNode.cLabel!='appliance'"
