@@ -675,6 +675,9 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		GetContainerProp(uContainer,"cDeployOptions",cDeployOptions);
 		if(strstr(cDeployOptions,"uDeployStopped=1;"))
 			uDeployStopped=1;
+		//always deploy stopped clone containers
+		if(strstr(field[0],"-clone"))
+			uDeployStopped=1;
 		if(uVeth)
 		{
 			char cIPv4[32]={""};
