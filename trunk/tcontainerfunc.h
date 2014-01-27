@@ -5539,7 +5539,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uAWAITDEL || 
-							sContainer.uStatus==uAWAITACT || sContainer.uStatus==uAWAITCREATE )
+							sContainer.uStatus==uAWAITACT )
 						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
 							SetContainerStatus(uCtContainer,11);
