@@ -438,7 +438,7 @@ void tNodeHardwareDataEntry(unsigned uMode)
 	GetNodeProp(uNode,"NewContainerMode",cNewContainerMode);
 	OpenRow("NewContainerMode","black");
 	printf("<input title='What kinds of containers can be created on this node. Active and/or Clone can have Only qualifier.'"
-		" type=text name=cNewContainerMode value='%s' size=40 maxlength=15 ",cNewContainerMode);
+		" type=text name=cNewContainerMode value='%s' size=40 maxlength=31 ",cNewContainerMode);
 	if(guPermLevel>=6 && uMode)
 	{
 		printf("></td></tr>\n");

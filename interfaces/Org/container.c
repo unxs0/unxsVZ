@@ -1316,6 +1316,7 @@ void ContainerCommands(pentry entries[], int x)
 			DIDOpsCommonChecking();
 
 			//Check to see if DID is already in property table
+			unsigned uInsert=1;//normally insert
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
 					" WHERE uKey=%u AND uType=3 AND (cName='cOrg_OpenSIPS_DID' OR cName='cOrg_Pending_DID')"
 					" AND cValue='%s'",guContainer,gcDID);
@@ -1328,8 +1329,27 @@ void ContainerCommands(pentry entries[], int x)
 			res=mysql_store_result(&gMysql);
 			if(mysql_num_rows(res)>0)
 			{
+				uInsert=0;
+				//mysql_free_result(res);
+				//gcMessage="DID not added, already in property table.";
+				//htmlContainer();
+			}
+
+			//business logic rule: no two containers can deploy same DID
+			sprintf(gcQuery,"SELECT uProperty,uKey FROM tProperty"
+					" WHERE uKey!=%u AND uType=3 AND (cName='cOrg_OpenSIPS_DID' OR cName='cOrg_Pending_DID')"
+					" AND cValue='%s'",guContainer,gcDID);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				strncat(cReply," select error 1\n",15);
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)>0)
+			{
 				mysql_free_result(res);
-				gcMessage="DID not added, already in property table.";
+				gcMessage="DUP DID not added, already in property table for other container.";
 				htmlContainer();
 			}
 
@@ -1356,15 +1376,18 @@ void ContainerCommands(pentry entries[], int x)
 				htmlContainer();
 			}
 
-			sprintf(gcQuery,"INSERT INTO tProperty"
-					" SET uKey=%u,uType=3,cName='cOrg_Pending_DID',cValue='%s'"
-					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						guContainer,gcDID,guOrg,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
+			if(uInsert)
 			{
-				gcMessage="INSERT for new cOrg_OpenSIPS_DID failed, contact sysadmin!";
-				htmlContainer();
+				sprintf(gcQuery,"INSERT INTO tProperty"
+						" SET uKey=%u,uType=3,cName='cOrg_Pending_DID',cValue='%s'"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							guContainer,gcDID,guOrg,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="INSERT for new cOrg_OpenSIPS_DID failed, contact sysadmin!";
+					htmlContainer();
+				}
 			}
 
 			//unxsSIPS jobs "Add DID"
@@ -1410,6 +1433,84 @@ void ContainerCommands(pentry entries[], int x)
 			gcMessage="Remote 'Add DID' task created for OpenSIPS.";
 			htmlContainer();
 		}//Add DID
+		else if(!strcmp(gcFunction,"Remove from Proxy") && guPermLevel>5)
+		{
+			char gcQuery[1024];
+
+			if(!guContainer)
+			{
+				gcMessage="Must select a container.";
+				htmlContainer();
+			}
+
+			DIDOpsCommonChecking();
+
+			sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tContainer WHERE uContainer=%u",guContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select uNode error, contact sysadmin!";
+				htmlContainer();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&guNode);
+				sscanf(field[1],"%u",&guDatacenter);
+			}
+			mysql_free_result(res);
+
+			char cSIPProxyList[256]={""};
+			GetSIPProxyList(cSIPProxyList,guDatacenter,guNode,guContainer);
+			if(!cSIPProxyList[0])
+			{
+				gcMessage="No cSIPProxyList, contact sysadmin!";
+				htmlContainer();
+			}
+
+			//unxsSIPS jobs Remove
+			register int i,j=0;
+			unsigned uDelayInSecs=0;
+
+			for(i=0;cSIPProxyList[i] && cSIPProxyList[i]!='#' && cSIPProxyList[i]!='\r';i++)
+			{
+				if(cSIPProxyList[i]!=';')
+					continue;
+				cSIPProxyList[i]=0;
+				sprintf(gcServer,"%.31s",cSIPProxyList+j);
+				j=i+1;//next beg if app
+				cSIPProxyList[i]=';';
+				sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
+				uDelayInSecs+=60;
+				sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsSIPSRemoveFromProxy(%u)',cJobName='unxsSIPSRemoveFromProxy'"
+						",uDatacenter=%u,uNode=%u,uContainer=%u"
+						",uJobDate=UNIX_TIMESTAMP(NOW())+%u"
+						",uJobStatus=%u"
+						",cJobData='"
+						"cServer=%s;\n"
+						"cHostname=%s;\n'"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							guContainer,
+							guDatacenter,
+							guNode,
+							guContainer,
+							uDelayInSecs,
+							uREMOTEWAITING,
+							gcServer,
+							gcCtHostname,
+							guOrg,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="unxsSIPSRemoveFromProxy tJob insert failed, contact sysadmin!";
+					htmlContainer();
+				}
+			}
+
+			gcMessage="Remote 'RemoveFromProxy' task created for OpenSIPS.";
+			htmlContainer();
+
+		}
 		else if(!strcmp(gcFunction,"Remove DID") && gcDID[0] && guPermLevel>5)
 		{
 			char gcQuery[1024];
@@ -2905,6 +3006,9 @@ void funcContainer(FILE *fp)
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Remove a DID from currently loaded PBX container'"
 			" name=gcFunction value='Remove DID'>\n");
+	fprintf(fp,"<p><input type=submit class=largeButton"
+			" title='Remove container from SIP proxy or SIP proxy cluster'"
+			" name=gcFunction value='Remove from Proxy'>\n");
 	printf("</fieldset>");
 
 	printf("<fieldset><legend>CustomerName OPs</b></legend>");
@@ -3288,6 +3392,29 @@ void BulkDIDAdd(void)
 			//strncat(cReply," already added\n",15);
 			//mysql_free_result(res);
 			//continue;
+		}
+		mysql_free_result(res);
+
+		//business logic rule: no two containers can deploy same DID
+		sprintf(gcQuery,"SELECT uProperty,uKey FROM tProperty"
+					" WHERE uKey!=%u AND uType=3 AND (cName='cOrg_OpenSIPS_DID' OR cName='cOrg_Pending_DID')"
+					" AND cValue='%s'",guContainer,gcDID);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			strncat(cReply," select error 1\n",15);
+			htmlContainerBulk();
+		}
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)>0)
+		{
+	        	MYSQL_ROW field;
+			uInsert=0;//do not insert
+			strncat(cReply," dup uContainer=",16);
+			if((field=mysql_fetch_row(res)))
+				strncat(cReply,field[1],10);
+			mysql_free_result(res);
+			continue;
 		}
 		mysql_free_result(res);
 
