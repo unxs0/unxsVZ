@@ -764,6 +764,13 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 					goto CommonExit;
 				}
 			}
+			else
+			{
+				sprintf(gcQuery,"/usr/sbin/vzctl set %u --onboot no --save",uContainer);
+				//warn via logfile only
+				if(system(gcQuery))
+					logfileLine("NewContainer",gcQuery);
+			}
 		}
 	}
 	else
