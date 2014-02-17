@@ -81,6 +81,8 @@ unsigned uUpdateNamesFromCloneToClone(unsigned uContainer);
 void GetContainerPropertyValue(char const *cName,char *cValue,unsigned uContainer);
 void GetSIPProxyList(char *cSIPProxyList,unsigned guDatacenter,unsigned guNode,unsigned guContainer);
 
+unsigned unxsBindRemoveContainer(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
+	unsigned uOwner,unsigned uCreatedBy);
 
 
 unsigned uPower10(unsigned uI)
@@ -625,6 +627,15 @@ void ContainerCommands(pentry entries[], int x)
 			char cZone[100]={""};
 			sprintf(cZone,"%.31s.%.67s",gcNewHostname,cunxsBindARecordJobZone);
 			CreateOrgDNSJob(0,guOrg,cIPv4,cZone,guDatacenter,guLoginClient,guNewContainer,guNode);
+
+			//remove old dns entry
+			char cView[32]={"external"};
+			char cJobData[256]={""};
+			GetConfiguration("cunxsBindARecordJobView",cView,guDatacenter,0,0,0);
+			sprintf(cJobData,"cZone=%.99s;\n"
+				"cView=%.31s;\n",
+				cPrevHostname,cView);
+			unxsBindRemoveContainer(guDatacenter,guNode,guNewContainer,cJobData,guOrg,guLoginClient);
 
 			//If container has a remote datacenter backup change it's name also
 			//	this will require hostname and dns jobs.

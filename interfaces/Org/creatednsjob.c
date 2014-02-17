@@ -14,6 +14,10 @@ PURPOSE
 unsigned uGetPrimaryContainerGroup(unsigned uContainer);
 void GetConfigurationValue(char const *cName,char *cValue,unsigned uDatacenter,unsigned uNode,unsigned uContainer);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
+unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,
+		const char *cJobData,unsigned uOwner,unsigned uCreatedBy);
+unsigned unxsBindRemoveContainer(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
+	unsigned uOwner,unsigned uCreatedBy);
 
 unsigned CreateOrgDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,
 				unsigned uDatacenter,unsigned uCreatedBy,unsigned uContainer,unsigned uNode)
@@ -286,4 +290,37 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
 	mysql_free_result(res);
 
 }//void GetContainerProp(...)
+
+
+//Pull job for unxsBind
+//Sample cJobData
+/*
+cZone=delthis.ZoneOrArecord.net.;
+cView=external;
+*/
+unsigned unxsBindRemoveContainer(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
+	unsigned uOwner,unsigned uCreatedBy)
+{
+	unsigned uCount=0;
+	char gcQuery[512];
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='unxsBindRemoveContainer(%u)',cJobName='unxsVZRemoveContainer'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=%u"
+			",cJobData='%s'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				uREMOTEWAITING,
+				cJobData,
+				uOwner,uCreatedBy);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return(0);
+	uCount=mysql_insert_id(&gMysql);
+	//unxsVZLog(uContainer,"tContainer","unxsBindRemoveContainer");
+	return(uCount);
+
+}//unsigned unxsBindRemoveContainer()
 

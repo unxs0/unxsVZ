@@ -87,6 +87,10 @@ void ExtProcesstNodeVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uSyncPeriod);
 		else if(!strcmp(entries[i].name,"cVendor"))
 			sprintf(cVendor,"%.32s",TextAreaSave(entries[i].val));
+		else if(!strcmp(entries[i].name,"cIPMIIPv4"))
+			sprintf(cIPMIIPv4,"%.32s",TextAreaSave(entries[i].val));
+		else if(!strcmp(entries[i].name,"cIPMIPasswd"))
+			sprintf(cIPMIPasswd,"%.32s",TextAreaSave(entries[i].val));
 		else if(!strcmp(entries[i].name,"cPurchaseOrder"))
 			sprintf(cPurchaseOrder,"%.64s",TextAreaSave(entries[i].val));
 		else if(!strcmp(entries[i].name,"cMACeth0"))
@@ -337,6 +341,10 @@ void ExttNodeCommands(pentry entries[], int x)
 					tNode("uNode not specified");
 				if(!cVendor[0])
 					tNode("cVendor not specified");
+				if(!cIPMIPasswd[0])
+					tNode("cIPMIPasswd not specified");
+				if(!cIPMIIPv4[0])
+					tNode("cIPMIIPv4 not specified");
 				if(!cPurchaseOrder[0])
 					tNode("cPurchaseOrder not specified");
 				if(!cProcCPUInfo[0])
@@ -355,6 +363,8 @@ void ExttNodeCommands(pentry entries[], int x)
 					tNode("cNewContainerMode not specified");
 
 				SetNodeProp("cVendor",cVendor,uNode);
+				SetNodeProp("cIPMIPasswd",cIPMIPasswd,uNode);
+				SetNodeProp("cIPMIIPv4",cIPMIIPv4,uNode);
 				SetNodeProp("cPurchaseOrder",cPurchaseOrder,uNode);
 				SetNodeProp("cProcCPUInfo",cProcCPUInfo,uNode);
 				SetNodeProp("cMACeth0",cMACeth0,uNode);
@@ -1156,8 +1166,8 @@ void tNodeNavList(unsigned uDatacenter)
         MYSQL_ROW field;
 	unsigned uMysqlNumRows;
 	unsigned uNumRows=0;
-#define LIMIT " LIMIT 33"
-#define uLIMIT 32
+#define LIMIT " LIMIT 65"
+#define uLIMIT 64
 
 	if(uDatacenter)
 		sprintf(gcQuery,"SELECT uNode,cLabel FROM tNode WHERE uDatacenter=%u AND uStatus=1"
@@ -1185,11 +1195,11 @@ void tNodeNavList(unsigned uDatacenter)
 			
 			if(cSearch[0])
 				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNode"
-					"&uNode=%s&cSearch=%s>%s</a><br>\n",
+					"&uNode=%s&cSearch=%s>%s</a> &nbsp;\n",
 							field[0],cURLEncode(cSearch),field[1]);
 			else
 				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNode"
-					"&uNode=%s>%s</a><br>\n",
+					"&uNode=%s>%s</a> &nbsp;\n",
 							field[0],field[1]);
 
 			if(++uNumRows>=uLIMIT)

@@ -430,7 +430,7 @@ void tDatacenterNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tDatacenter&uDatacenter=%s>"
-				"%s</a><br>\n",field[0],field[1]);
+				"%s</a> &nbsp;\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 
