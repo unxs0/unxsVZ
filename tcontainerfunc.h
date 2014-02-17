@@ -8628,6 +8628,30 @@ void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 	GetNodeProp(uNode,"cRAMUsageRatio",cValue);
 	printf("<br>cRAMUsageRatio is %s",cValue);
 
+	//Detail for cAutoCloneIPClassBackup
+	char cAutoCloneIPClassBackup[256]={""};
+	unsigned uDatacenter=0;
+	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
+	GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,uDatacenter,uNode,0,0);
+	if(!cAutoCloneIPClassBackup[0])
+		GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,uDatacenter,0,0,0);
+	if(cAutoCloneIPClassBackup[0])
+	{
+		sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uDatacenter=%u AND"
+				" uAvailable=1 AND"
+				" INSTR(cLabel,'%s')=1",uDatacenter,cAutoCloneIPClassBackup);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			if(uHtmlMode)
+				printf("Number of available cAutoCloneIPClassBackup(%s) IPs is %s<br>",cAutoCloneIPClassBackup,field[0]);
+		}
+		mysql_free_result(res);
+	}
+
 }//void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 
 //These functions need to be used correctly, for example in jobqueue.c when the container is not added to the node
@@ -9121,12 +9145,7 @@ void SelectedDatacenterInformation(unsigned uDatacenter,unsigned uHtmlMode)
 	{
 		if(uHtmlMode)
 			printf("Number of available public IPs is %s<br>",field[0]);
-		if(uDatacenter==0)
-		{
-			sscanf(field[1],"%u",&uSetDatacenter);
-		}
 		SetDatacenterProp("AvailablePublicIPs",field[0],uSetDatacenter);
-		if(uDatacenter!=0) break;
 	}
 
 	sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uDatacenter=%u AND"
@@ -9142,12 +9161,28 @@ void SelectedDatacenterInformation(unsigned uDatacenter,unsigned uHtmlMode)
 	{
 		if(uHtmlMode)
 			printf("Number of available private (rfc1918) IPs is %s<br>",field[0]);
-		if(uDatacenter==0)
-		{
-			sscanf(field[1],"%u",&uSetDatacenter);
-		}
 		SetDatacenterProp("AvailablePrivateIPs",field[0],uSetDatacenter);
-		if(uDatacenter!=0) break;
+	}
+
+
+	//Detail for cAutoCloneIPClassBackup
+	char cAutoCloneIPClassBackup[256]={""};
+	GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,uDatacenter,0,0,0);
+	if(cAutoCloneIPClassBackup[0])
+	{
+		sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uDatacenter=%u AND"
+				" uAvailable=1 AND"
+				" INSTR(cLabel,'%s')=1",uDatacenter,cAutoCloneIPClassBackup);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			if(uHtmlMode)
+				printf("Number of available cAutoCloneIPClassBackup(%s) IPs is %s<br>",cAutoCloneIPClassBackup,field[0]);
+			SetDatacenterProp("AvailableBackupIPs",field[0],uSetDatacenter);
+		}
 	}
 
 	mysql_free_result(res);
