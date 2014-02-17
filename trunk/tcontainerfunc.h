@@ -3399,10 +3399,10 @@ void ExttContainerAuxTable(void)
 				" name=gcCommand value='Group Change Owner'>\n");
 			printf("&nbsp; <input title='Creates job(s) for cloning active and/or stopped container(s)."
 				" tConfiguration entries: AutoCloneNode, cAutoCloneSyncTime, cAutoCloneNodeRemote,"
-				" cAutoCloneIPClassRemote and cAutoCloneIPClass must be configured correctly. Check before use!"
+				" cAutoCloneIPClassBackup and cAutoCloneIPClass must be configured correctly. Check before use!"
 				" If you use the clone target node select above then"
 				" cAutoCloneNodeRemote will be used if configured and a remote datacenter clone will be performed."
-				" In this case cAutoCloneIPClassRemote must also be configured.'"
+				" In this case cAutoCloneIPClassBackup must also be configured.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Clone'>\n");
 			printf("&nbsp; <input title='Creates job(s) for restarting active container(s).'"
@@ -4367,11 +4367,11 @@ while((field=mysql_fetch_row(res)))
 										cAutoCloneIPClass,uTargetDatacenter,0,0,0);
 							if(!cAutoCloneIPClass[0])
 							{
-								GetConfiguration("cAutoCloneIPClassRemote",
+								GetConfiguration("cAutoCloneIPClassBackup",
 									cAutoCloneIPClass,uTargetDatacenter,guCloneTargetNode,0,0);
 								//Try again less specific
 								if(!cAutoCloneIPClass[0])
-									GetConfiguration("cAutoCloneIPClassRemote",
+									GetConfiguration("cAutoCloneIPClassBackup",
 										cAutoCloneIPClass,uTargetDatacenter,0,0,0);
 							}
 							else

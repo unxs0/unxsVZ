@@ -103,7 +103,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		unsigned uCloneIPv4=uWizIPv4;
 		unsigned uRemoteIPv4=0;
 		char cAutoCloneIPClass[256]={""};
-		char cAutoCloneIPClassRemote[256]={""};
+		char cAutoCloneIPClassBackup[256]={""};
 		char cAutoCloneNode[256]={""};
 		char cAutoCloneNodeRemote[256]={""};
 		char cRemoteHostname[100]={""};
@@ -293,14 +293,14 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 				tContainer("<blink>Error:</blink> Configured remote datacenter same as local datacenter.");
 
 			//make sure IPs are available
-			GetConfiguration("cAutoCloneIPClassRemote",cAutoCloneIPClassRemote,uRemoteDatacenter,uRemoteNode,0,0);
-			if(!cAutoCloneIPClassRemote[0])
-				GetConfiguration("cAutoCloneIPClassRemote",cAutoCloneIPClassRemote,uRemoteDatacenter,0,0,0);
-			if(!cAutoCloneIPClassRemote[0])
-				tContainer("<blink>Error:</blink> Please set tConfiguration:cAutoCloneIPClassRemote correctly.");
+			GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,uRemoteDatacenter,uRemoteNode,0,0);
+			if(!cAutoCloneIPClassBackup[0])
+				GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,uRemoteDatacenter,0,0,0);
+			if(!cAutoCloneIPClassBackup[0])
+				tContainer("<blink>Error:</blink> Please set tConfiguration:cAutoCloneIPClassBackup correctly.");
 			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
 				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uRemoteDatacenter,cAutoCloneIPClassRemote);
+					uForClient,uRemoteDatacenter,cAutoCloneIPClassBackup);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -589,7 +589,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		{
 			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
 				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uRemoteDatacenter,cAutoCloneIPClassRemote);
+					uForClient,uRemoteDatacenter,cAutoCloneIPClassBackup);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -892,7 +892,7 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 		unsigned uCloneIPv4=uWizIPv4;
 		unsigned uRemoteIPv4=0;
 		char cAutoCloneIPClass[256]={""};
-		char cAutoCloneIPClassRemote[256]={""};
+		char cAutoCloneIPClassBackup[256]={""};
 		char cAutoCloneNode[256]={""};
 		char cAutoCloneNodeRemote[256]={""};
 
@@ -1063,14 +1063,14 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 				tContainer("<blink>Error:</blink> Configured remote datacenter same as local datacenter.");
 
 			//make sure IPs are available
-			GetConfiguration("cAutoCloneIPClassRemote",cAutoCloneIPClassRemote,uRemoteDatacenter,uRemoteNode,0,0);
-			if(!cAutoCloneIPClassRemote[0])
-				GetConfiguration("cAutoCloneIPClassRemote",cAutoCloneIPClassRemote,uRemoteDatacenter,0,0,0);
-			if(!cAutoCloneIPClassRemote[0])
-				tContainer("<blink>Error:</blink> Please set tConfiguration:cAutoCloneIPClassRemote correctly.");
+			GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,uRemoteDatacenter,uRemoteNode,0,0);
+			if(!cAutoCloneIPClassBackup[0])
+				GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,uRemoteDatacenter,0,0,0);
+			if(!cAutoCloneIPClassBackup[0])
+				tContainer("<blink>Error:</blink> Please set tConfiguration:cAutoCloneIPClassBackup correctly.");
 			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
 				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uRemoteDatacenter,cAutoCloneIPClassRemote);
+					uForClient,uRemoteDatacenter,cAutoCloneIPClassBackup);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1193,7 +1193,7 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 
 			sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1"
 				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uRemoteDatacenter,cAutoCloneIPClassRemote);
+					uForClient,uRemoteDatacenter,cAutoCloneIPClassBackup);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1293,7 +1293,7 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 			//Get next available uRemoteIPv4
 			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
 						" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
-							uForClient,cAutoCloneIPClassRemote,uRemoteDatacenter);
+							uForClient,cAutoCloneIPClassBackup,uRemoteDatacenter);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1575,7 +1575,7 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 					//Get next available uRemoteIPv4
 					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
 							" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
-								uForClient,cAutoCloneIPClassRemote,uRemoteDatacenter);
+								uForClient,cAutoCloneIPClassBackup,uRemoteDatacenter);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
