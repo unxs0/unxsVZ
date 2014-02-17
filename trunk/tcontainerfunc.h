@@ -5257,14 +5257,20 @@ while((field=mysql_fetch_row(res)))
 				//optionally a guCloneTargetNode that must be set in the left panel
 					struct structContainer sContainer;
 
+					if(!uTargetNode)
+					{
+						sprintf(cResult,"Must specify uTargetNode");
+						break;
+					}
+
 					//debug
 					//sprintf(gcQuery,"d1: target node %u clone target node %u",uTargetNode,guCloneTargetNode);
 					//tContainer(gcQuery);
 					if(uTargetNode==guCloneTargetNode)
 					{
-						sprintf(gcQuery,"<blink>Error</blink> target node (%u) is the same as clone target node!",
+						sprintf(cResult,"Target node (%u) is the same as clone target node!",
 							uTargetNode);
-						tContainer(gcQuery);
+						break;
 					}
 					//More validation
 					//Get most specific cAutoCloneNode
@@ -5272,9 +5278,9 @@ while((field=mysql_fetch_row(res)))
 					sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
 					if(!uTargetDatacenter)
 					{
-						sprintf(gcQuery,"<blink>Error</blink> target node (%u) has no"
+						sprintf(cResult,"Target node (%u) has no"
 								" datacenter configured",uTargetNode);
-						tContainer(gcQuery);
+						break;
 					}
 					if(guCloneTargetNode && guOpOnClones)
 					{
@@ -5284,25 +5290,25 @@ while((field=mysql_fetch_row(res)))
 							GetConfiguration("cAutoCloneNode",cAutoCloneNode,uTargetDatacenter,0,0,0);
 						if(!cAutoCloneNode[0])
 						{
-							sprintf(gcQuery,"<blink>Error</blink> target node (%u) has no"
+							sprintf(cResult,"Target node (%u) has no"
 									" tConfiguration cAutoCloneNode configured",uTargetNode);
-							tContainer(gcQuery);
+							break;
 						}
 						unsigned uCloneTargetNode=0;
 						uCloneTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
 						if(!uCloneTargetNode)
 						{
-							sprintf(gcQuery,"<blink>Error</blink> cAutoCloneNode %s has no"
+							sprintf(cResult,"cAutoCloneNode %s has no"
 									" tNode entry!",cAutoCloneNode);
-							tContainer(gcQuery);
+							break;
 						}
 						if(uCloneTargetNode!=guCloneTargetNode)
 						{
-							sprintf(gcQuery,"<blink>Error</blink> Target node auto clone target %s (%u)"
+							sprintf(cResult,"Target node auto clone target %s (%u)"
 									" does not match provided"
 									" guCloneTargetNode (%u)!",
 										cAutoCloneNode,uCloneTargetNode,guCloneTargetNode);
-							tContainer(gcQuery);
+							break;
 						}
 					}
 

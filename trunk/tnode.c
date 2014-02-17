@@ -37,6 +37,8 @@ static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
 
+static char cIPMIIPv4[33]={""};
+static char cIPMIPasswd[33]={""};
 static char cVendor[33]={""};
 static char cPurchaseOrder[65]={""};
 static char cMACeth0[33]={""};
@@ -297,6 +299,32 @@ void tNodeHardwareDataEntry(unsigned uMode)
 
 	OpenRow(LANG_FL_tNode_uDatacenter,"black");
 	tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+
+	GetNodeProp(uNode,"cIPMIIPv4",cIPMIIPv4);
+	OpenRow("cIPMIIPv4","black");
+	printf("<input title='IPMI IPv4 number and port E.g. 12.123.34.201:17234' type=text name=cIPMIIPv4 value='%s' size=40 maxlength=32 ",cIPMIIPv4);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cIPMIIPv4 value='%s'>\n",cIPMIIPv4);
+	}
+
+	GetNodeProp(uNode,"cIPMIPasswd",cIPMIPasswd);
+	OpenRow("cIPMIPasswd","black");
+	printf("<input title='IPMI Password' type=text name=cIPMIPasswd value='%s' size=40 maxlength=32 ",cIPMIPasswd);
+	if(guPermLevel>=6 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cIPMIPasswd value='%s'>\n",cIPMIPasswd);
+	}
 
 	GetNodeProp(uNode,"cVendor",cVendor);
 	OpenRow("cVendor","black");
