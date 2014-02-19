@@ -15,16 +15,19 @@ AUTHOR
 void tGroupNavList(void);
 void tGroupMemberNavList(void);
 void voidCopyGroupType(unsigned uGroupType,unsigned uGroup);	
+void voidCopyGroupProps(unsigned uFromGroup,unsigned uGroup);	
 void voidDelGroupProperties(unsigned uGroup);
+
+unsigned uCopyProperties=0;
 
 void ExtProcesstGroupVars(pentry entries[], int x)
 {
-	/*
 	register int i;
 	for(i=0;i<x;i++)
 	{
+		if(!strncmp(entries[i].name,"uCopyProperties",15))
+			uCopyProperties=1;
 	}
-	*/
 }//void ExtProcesstGroupVars(pentry entries[], int x)
 
 
@@ -49,14 +52,18 @@ void ExttGroupCommands(pentry entries[], int x)
 			if(guPermLevel>=10)
 			{
                         	ProcesstGroupVars(entries,x);
+				unsigned uLoadedGroup=uGroup;	
 
                         	guMode=2000;
 				//Check entries here
 				if(strlen(cLabel)<4)
 					tGroup("<blink>Error</blink>: cLabel too short");
+				if(!strcmp(cLabel,ForeignKey("tGroup","cLabel",uGroup)))
+					tGroup("<blink>Error</blink>: cLabel same as source group");
 				if(!uGroupType)
 					tGroup("<blink>Error</blink>: uGroupType must be selected");
                         	guMode=0;
+
 
 				uGroup=0;
 				uCreatedBy=guLoginClient;
@@ -64,11 +71,28 @@ void ExttGroupCommands(pentry entries[], int x)
 				uOwner=guReseller;
 				uModBy=0;//Never modified
 				uModDate=0;//Never modified
-			
+		
 				NewtGroup(1);
-				mysql_insert_id(&gMysql);
-				voidCopyGroupType(uGroupType,uGroup);	
-				tGroup("New group created properties copied from group type");
+				//char cData[256];
+				//sprintf(cData,"uGroup=%u uLoadedGroup=%u",uGroup,uLoadedGroup);
+				//tGroup(cData);
+				if(uCopyProperties && uLoadedGroup && uGroup)
+				{
+					voidCopyGroupProps(uLoadedGroup,uGroup);
+					if(mysql_affected_rows(&gMysql)>0)
+						tGroup("New group created, properties copied from previous group");
+					else
+						tGroup("New group created, no properties copied");
+				}
+				else if(!uCopyProperties && uGroupType && uGroup)
+				{
+					voidCopyGroupType(uGroupType,uGroup);
+					if(mysql_affected_rows(&gMysql)>0)
+						tGroup("New group created, properties copied from group type");
+					else
+						tGroup("New group created, no properties copied from group type");
+				}
+				tGroup("New group created");
 			}
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
@@ -137,6 +161,10 @@ void ExttGroupButtons(void)
                 case 2000:
 			printf("<p><u>Enter/mod data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
+			if(uGroup)
+			printf("<p><input title='Copy the properties from the previously loaded group (uGroup=%u), if any,"
+				" and as shown in property panel below'"
+				" type=checkbox name=uCopyProperties checked> Copy properties from (uGroup=%u) below<br>",uGroup,uGroup);
                 break;
 
                 case 2001:
@@ -333,7 +361,7 @@ void tGroupNavList(void)
         	printf("<p><u>tGroupNavList</u><br>\n");
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tGroup"
-				"&uGroup=%s>%s</a><br>\n",field[0],field[1]);
+				"&uGroup=%s>%s</a> &nbsp;\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 
@@ -384,7 +412,7 @@ void tGroupMemberNavList(void)
 			        res2=mysql_store_result(&gMysql);
 	        		if((field2=mysql_fetch_row(res2)))
 					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer"
-					"&uContainer=%u>%s</a><br>\n",uContainer,field2[0]);
+					"&uContainer=%u>%s</a> &nbsp;\n",uContainer,field2[0]);
 				mysql_free_result(res2);
 			}
 			else if(uNode)
@@ -400,7 +428,7 @@ void tGroupMemberNavList(void)
 			        res2=mysql_store_result(&gMysql);
 	        		if((field2=mysql_fetch_row(res2)))
 					printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tNode"
-					"&uNode=%u>%s</a><br>\n",uNode,field2[0]);
+					"&uNode=%u>%s</a> &nbsp;\n",uNode,field2[0]);
 				mysql_free_result(res2);
 			}
 		}
@@ -433,3 +461,17 @@ void voidDelGroupProperties(unsigned uGroup)
 		htmlPlainTextError(mysql_error(&gMysql));
 
 }//void voidDelGroupProperties(unsigned uGroup)
+
+
+void voidCopyGroupProps(unsigned uFromGroup,unsigned uGroup)
+{
+	sprintf(gcQuery,"INSERT INTO tProperty (cName,cValue,uType,uKey,uOwner,uCreatedBy,uCreatedDate)"
+			" SELECT cName,cValue,uType,%u,%u,%u,UNIX_TIMESTAMP(NOW()) FROM"
+			" tProperty WHERE uKey=%u AND uType="
+			PROP_GROUP
+					,uGroup,guLoginClient,guCompany,uFromGroup);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+		
+}//void voidCopyGroupProps(unsigned uFromGroup,unsigned uGroup)
