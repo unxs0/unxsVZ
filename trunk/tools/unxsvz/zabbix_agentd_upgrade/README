@@ -1,0 +1,4 @@
+This dir is installed in /etc/unxsvz/
+Script unxsvzUpdateZabbixPBX.sh uses files in it.
+
+You will need to install zabbix_agentd binary file in the install directory (/etc/unxsvz/zabbix_agentd_upgrade) before using.
