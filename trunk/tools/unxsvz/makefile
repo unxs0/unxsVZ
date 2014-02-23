@@ -11,7 +11,7 @@
 CFLAGS=-Wall
 LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate -loath
 
-all: install-local.sh install-scripts
+all: install-local.sh install-scripts install-dir
 
 mysql.local.sh: mysql.local.sh.default
 	@ if [ ! -f mysql.local.sh ];then cp -i mysql.local.sh.default mysql.local.sh; fi
@@ -25,3 +25,6 @@ install-local.sh: mysql.local.sh iptables.local.sh
 
 install-scripts: sbin/unxsvzUpdateZabbixPBX.sh
 	@ if [ ! -f /usr/sbin/unxsvzUpdateZabbixPBX.sh ];then install sbin/unxsvzUpdateZabbixPBX.sh /usr/sbin/unxsvzUpdateZabbixPBX.sh;else echo "/usr/sbin/unxsvzUpdateZabbixPBX.sh already installed";fi
+
+install-dir: zabbix_agentd_upgrade/README
+	@ if [ ! -d /etc/unxsvz/zabbix_agentd_upgrade ];then mkdir -p /etc/unxsvz/zabbix_agentd_upgrade; install zabbix_agentd_upgrade/README /etc/unxsvz/zabbix_agentd_upgrade/README;else echo "/etc/unxsvz/zabbix_agentd_upgrade already exists";fi
