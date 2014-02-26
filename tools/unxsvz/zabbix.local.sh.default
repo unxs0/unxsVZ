@@ -19,3 +19,29 @@
 
 cZabbixServer="zabbix.isp.net:443";
 cZabbixPassword="ksjdcb8347ksjdc";
+
+
+#used by unxsvzUpdateZabbixPBX.sh
+fAuxLocalFunc() {
+
+	if [ "$@" == "" ];then
+		echo "no fAuxLocalFunc uContainer";
+		exit;
+	fi
+	uContainer="$@";
+
+	#eliminate dns noise
+	sed -i -e "/^1.2.1.3 zabbix.isp.net/d" /vz/private/$uContainer/etc/hosts;
+	sed -i -e "/^6.4.5.1 zabbix-proxy0.isp.net/d" /vz/private/$uContainer/etc/hosts;
+	sed -i -e "/^::2 zabbix.isp.net/d" /vz/private/$uContainer/etc/hosts;
+	sed -i -e "/^::3 zabbix-proxy0.isp.net/d" /vz/private/$uContainer/etc/hosts;
+	echo "1.2.1.3 zabbix.isp.net" >> /vz/private/$uContainer/etc/hosts;
+	echo "6.4.5.1 zabbix-proxy0.isp.net" >> /vz/private/$uContainer/etc/hosts;
+	echo "::2 zabbix.isp.net" >> /vz/private/$uContainer/etc/hosts;
+	echo "::3 zabbix-proxy0.isp.net" >> /vz/private/$uContainer/etc/hosts;
+	echo "adding /etc/hosts entries";
+
+	echo "fAuxLocalFunc ran";
+}
+
+
