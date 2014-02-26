@@ -31,6 +31,12 @@ else
 	echo "no /etc/unxsvz/iptables.local.sh";
 	exit 1;
 fi
+if [ -f "/etc/unxsvz/zabbix.local.sh" ];then
+	source /etc/unxsvz/zabbix.local.sh;
+else
+	echo "no /etc/unxsvz/zabbix.local.sh";
+	exit 1;
+fi
 
 #functions
 
@@ -148,6 +154,9 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 
 	#fix iptables
 	fUpdateIptables $uContainer;
+
+	#fix local items
+	fAuxLocalFunc $uContainer;
 
 
 	#
