@@ -10,7 +10,7 @@
 #	/etc/unxsvz/ config and zabbix files
 #	These two files need to be changed to unxsvzFormat scripts ASAP:
 #	/usr/sbin/UpdateZabbixSetProxy.sh
-#	/usr/sbin/DeleteZabbixHost.sh
+#	/usr/sbin/unxsvzDeleteZabbixHost.sh
 #	
 #AUTHOR
 #	(C) 2011-2014 Gary Wallis for Unixservice, LLC.
@@ -142,7 +142,7 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 	#but only if we remove it here.
 	#timing is hard we need to wait for new containers to register.
 	if [ "$3" != "new-container" ];then
-		/usr/sbin/DeleteZabbixHost.sh $cHostname;
+		/usr/sbin/unxsvzDeleteZabbixHost.sh $cHostname;
 	fi
 
 
