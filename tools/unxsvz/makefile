@@ -19,12 +19,18 @@ mysql.local.sh: mysql.local.sh.default
 iptables.local.sh: iptables.local.sh.default
 	@ if [ ! -f iptables.local.sh ];then cp -i iptables.local.sh.default iptables.local.sh; fi
 
-install-local.sh: mysql.local.sh iptables.local.sh
+zabbix.local.sh: zabbix.local.sh.default
+	@ if [ ! -f zabbix.local.sh ];then cp -i zabbix.local.sh.default zabbix.local.sh; fi
+
+install-local.sh: mysql.local.sh iptables.local.sh zabbix.local.sh
 	@ if [ ! -f /etc/unxsvz/mysql.local.sh ];then install mysql.local.sh /etc/unxsvz/mysql.local.sh;else echo "/etc/unxsvz/mysql.local.sh already installed";fi
 	@ if [ ! -f /etc/unxsvz/iptables.local.sh ];then install iptables.local.sh /etc/unxsvz/iptables.local.sh;else echo "/etc/unxsvz/iptables.local.sh already installed";fi
+	@ if [ ! -f /etc/unxsvz/zabbix.local.sh ];then install zabbix.local.sh /etc/unxsvz/zabbix.local.sh;else echo "/etc/unxsvz/zabbix.local.sh already installed";fi
+	@ rm -f *.sh
 
 install-scripts: sbin/unxsvzUpdateZabbixPBX.sh
 	@ if [ ! -f /usr/sbin/unxsvzUpdateZabbixPBX.sh ];then install sbin/unxsvzUpdateZabbixPBX.sh /usr/sbin/unxsvzUpdateZabbixPBX.sh;else echo "/usr/sbin/unxsvzUpdateZabbixPBX.sh already installed";fi
+	@ if [ ! -f /usr/sbin/unxsvzDeleteZabbixHost.sh ];then install sbin/unxsvzDeleteZabbixHost.sh /usr/sbin/unxsvzDeleteZabbixHost.sh;else echo "/usr/sbin/unxsvzDeleteZabbixHost.sh already installed";fi
 
 install-dir: zabbix_agentd_upgrade/README
 	@ if [ ! -d /etc/unxsvz/zabbix_agentd_upgrade ];then mkdir -p /etc/unxsvz/zabbix_agentd_upgrade; install zabbix_agentd_upgrade/README /etc/unxsvz/zabbix_agentd_upgrade/README;else echo "/etc/unxsvz/zabbix_agentd_upgrade already exists";fi

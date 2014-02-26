@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #FILE
-#	/etc/unxsvz/iptables.local.sh
+#	/etc/unxsvz/zabbix.local.sh
 #PURPOSE
-#	To be used by node/datacenter unxsVZ scripts that modify iptables
+#	To be used by node/datacenter unxsVZ scripts that interface with Zabbix monitoring API
 #EXAMPLE
 #	The distributed scripts will have a top section with default settings.
 #	The scripts will source this file for localization of said settings.
@@ -17,14 +17,5 @@
 
 #This file contains confidential info keep secure!
 
-#/etc/sysconfig/iptables
-cNewRange="12.34.56.78";#this is current datacenter proxy class C base
-cRefRange="1.2.3.4";#this is what is in the template /etc/sysconfig/iptables file that need to be replaced
-cRefRange2="2.3.4.5";#this also maybe found in the template
-
-#datacenter wide
-cDomain="isp.net";
-cZabbixActiveServer="zabbix-proxy-datacenter0";
-
-#this is the proxy server ID get from zabbix
-uZabbixId="12345";
+cZabbixServer="zabbix.isp.net:443";
+cZabbixPassword="ksjdcb8347ksjdc";
