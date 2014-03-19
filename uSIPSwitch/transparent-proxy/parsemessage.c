@@ -128,20 +128,97 @@ if(guLogLevel>1 && !cCallID[0])
 	logfileLine("readEv-parse","No Call-ID");
 //cCallID
 
+//Copy Via: lines
+char cVia[10][100]={"","","","","","","","","",""};
+unsigned uVia=0;
+//These will point inside cMessage
+char *cpViaSectionStart=NULL;
+char *cpViaSectionEnd=NULL;
+
+//First Via
+if((cp=strstr(cMessage,"Via: ")))
+{
+	if((cp1=strchr(cp+strlen("Via: "),'\r')))
+	{
+		*cp1=0;
+		sprintf(cVia[uVia],"%.99s",cp+strlen("Via: "));
+		uVia++;
+		*cp1='\r';
+
+		cpViaSectionStart=cp;
+	}
+	else
+	{
+		cp1=NULL;
+	}
+}
+else
+{
+	cp1=NULL;
+}
+//Second and more Vias max 9
+while(cp1!=NULL && uVia<9)
+{
+	if((cp=strstr(cp1+1,"Via: ")))
+	{
+		if((cp1=strchr(cp+strlen("Via: "),'\r')))
+		{
+			*cp1=0;
+			sprintf(cVia[uVia],"%.99s",cp+strlen("Via: "));
+			uVia++;
+			*cp1='\r';
+
+			cpViaSectionEnd=cp1;
+		}
+		else
+		{
+			cp1=NULL;
+		}
+	}
+	else
+	{
+		cp1=NULL;
+	}
+}//while(cp1 && uVia<9)
+
 char cPBXIP[32]={""};
 unsigned uPBXPort=0;
+if(cVia[uVia-1][0])
+{
+	//Via: SIP/2.0/UDP 64.2.142.90;branch=z9hG4bKf6a8.e2464312.0
+	if((cp=strstr(cVia[uVia-1],"UDP ")))
+	{
+		sscanf(cp+strlen("UDP "),"%[0-9\\.]:%u",cPBXIP,&uPBXPort);
+	}
+}//cPBXIP,uPBXPort
+
+if(guLogLevel>3)
+{
+	register int i;
+	for(i=0;cVia[i] && i<uVia;i++)
+	{
+		sprintf(gcQuery,"cVia[%d]:%s",i,cVia[i]);
+		logfileLine("readEv-parse",gcQuery);
+	}
+	sprintf(gcQuery,"uVia=%u cPBXIP:%s uPBXPort:%u",uVia,cPBXIP,uPBXPort);
+	logfileLine("readEv-parse",gcQuery);
+}
+//cVia
+
+char cCallIDPBXIP[32]={""};
+unsigned uCallIDPBXPort=0;
 if(cCallID[0])
 {
 	if((cp=strchr(cCallID,'@')))
 	{
 		*cp=0;
-		sscanf(cp+1,"%[0-9\\.]:%u",cPBXIP,&uPBXPort);
+		sscanf(cp+1,"%[0-9\\.]:%u",cCallIDPBXIP,&uCallIDPBXPort);
 	}
-}//cDID cGateway uGatewayPort
+}//cCallIDPBXIP,uCallIDPBXPort
 
 if(guLogLevel>3)
 {
-	sprintf(gcQuery,"cCallID:%s cPBXIP:%s:%u",cCallID,cPBXIP,uPBXPort);
+	sprintf(gcQuery,"cCallID:%s cPBXIP:%s:%u",cCallID,cCallIDPBXIP,uCallIDPBXPort);
 	logfileLine("readEv-parse",gcQuery);
 }
 
