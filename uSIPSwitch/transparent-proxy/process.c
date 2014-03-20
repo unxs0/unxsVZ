@@ -27,9 +27,6 @@ unsigned uSend=0;
 char *cpMsg=cMessage;
 char gcGWIP[32]={"174.121.136.137"};
 
-//Rewrite the FIRST LINE for correct IP:Port
-//todo
-
 //Remove Via: section and rebuild
 if(cpViaSectionStart!=NULL && cpViaSectionEnd!=NULL)
 {
@@ -69,10 +66,6 @@ if(cpViaSectionStart!=NULL && cpViaSectionEnd!=NULL)
 	//danger how can we do this correctly and easily?
 	strncat(cMessageModified,cpViaSectionEnd+1,(2047-strlen(cMessageModified)-strlen(cpViaSectionEnd)));
 
-
-	if(guLogLevel>3 && gLfp!=NULL)
-		fprintf(gLfp,"[%s]\n",cMessageModified);
-
 	cpMsg=cMessageModified;
 	uSend=1;
 }
@@ -83,6 +76,11 @@ if(uSend && cDestinationIP[0])
 {
 	uSend=0;//reset
 	if(!uDestinationPort) uDestinationPort=DEFAULT_SIP_PORT;
+
+	uRewriteIPAndPortSIPLine(cpMsg,cDestinationIP,uDestinationPort);
+
+	if(guLogLevel>4 && gLfp!=NULL)
+		fprintf(gLfp,"[%s]\n",cpMsg);
 
 	int iRetVal=0;
 	if((iRetVal=iSendUDPMessageWrapper(cpMsg,cDestinationIP,uDestinationPort)))
