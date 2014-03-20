@@ -11,8 +11,20 @@ AUTHOR/LEGAL
 	(C) 2012-2014 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 DETAILS
-	If packet comes from PBX we do not need to parse anything.
-	If packet comes from GW we need to parse the PBX IP.
+	Transparent proxy functionality:
+	Packets from PBX need to be forwarded with added Via: to a
+	static SIP server (GW) that will deal with them.
+	Packets from the static SIP server (GW) will be forwarded 
+	to the correct PBX based on the initial Via:. The Via: with 
+	this transparent proxy IP number will be removed before fwd.
+
+	Via: processing plan:
+
+	We parse the Via: from the header and save in simple datastructure.
+	We remove them from the message.
+	At process stage we add them Via section back adding new or removing as
+	the case maybe.
+	
 AVAILABLE DATA FROM readEv()
 	char cMessage[2048]={""};
 	char cSourceIP[INET_ADDRSTRLEN]={""};
@@ -136,16 +148,17 @@ char *cpViaSectionStart=NULL;
 char *cpViaSectionEnd=NULL;
 
 //First Via
-if((cp=strstr(cMessage,"Via: ")))
+if((cp=strstr(cMessage,"\nVia: ")))
 {
-	if((cp1=strchr(cp+strlen("Via: "),'\r')))
+	if((cp1=strchr(cp+strlen("\nVia: "),'\r')))
 	{
 		*cp1=0;
-		sprintf(cVia[uVia],"%.99s",cp+strlen("Via: "));
+		sprintf(cVia[uVia],"%.99s",cp+strlen("\nVia: "));
 		uVia++;
 		*cp1='\r';
 
 		cpViaSectionStart=cp;
+		cpViaSectionEnd=cp1;
 	}
 	else
 	{
@@ -156,15 +169,16 @@ else
 {
 	cp1=NULL;
 }
+
 //Second and more Vias max 9
 while(cp1!=NULL && uVia<9)
 {
-	if((cp=strstr(cp1+1,"Via: ")))
+	if((cp=strstr(cp1+1,"\nVia: ")))
 	{
-		if((cp1=strchr(cp+strlen("Via: "),'\r')))
+		if((cp1=strchr(cp+strlen("\nVia: "),'\r')))
 		{
 			*cp1=0;
-			sprintf(cVia[uVia],"%.99s",cp+strlen("Via: "));
+			sprintf(cVia[uVia],"%.99s",cp+strlen("\nVia: "));
 			uVia++;
 			*cp1='\r';
 
@@ -183,7 +197,7 @@ while(cp1!=NULL && uVia<9)
 
 char cPBXIP[32]={""};
 unsigned uPBXPort=0;
-if(cVia[uVia-1][0])
+if(uVia && cVia[uVia-1][0])
 {
 	//Via: SIP/2.0/UDP 64.2.142.90;branch=z9hG4bKf6a8.e2464312.0
 	if((cp=strstr(cVia[uVia-1],"UDP ")))
@@ -192,9 +206,9 @@ if(cVia[uVia-1][0])
 	}
 }//cPBXIP,uPBXPort
 
+register int i;
 if(guLogLevel>3)
 {
-	register int i;
 	for(i=0;cVia[i] && i<uVia;i++)
 	{
 		sprintf(gcQuery,"cVia[%d]:%s",i,cVia[i]);
@@ -218,7 +232,7 @@ if(cCallID[0])
 
 if(guLogLevel>3)
 {
-	sprintf(gcQuery,"cCallID:%s cPBXIP:%s:%u",cCallID,cCallIDPBXIP,uCallIDPBXPort);
+	sprintf(gcQuery,"cCallID:%s cCallIDPBXIP:%s:%u",cCallID,cCallIDPBXIP,uCallIDPBXPort);
 	logfileLine("readEv-parse",gcQuery);
 }
 
@@ -226,6 +240,4 @@ if(guLogLevel>3)
 
 if(guLogLevel>4)
 	logfileLine("readEv-parse","end");
-//debug only
-return;
 //next section is "sipswitch/postparsecheck.c"
