@@ -31,6 +31,76 @@ AVAILABLE DATA FROM readEv()
 	unsigned uSourcePort=ntohs(sourceAddr.sin_port);
 */
 
+//TODO Check RFC
+//Rewrite the FIRST LINE for correct IP:Port
+//Only for INVITE, CANCEL and OPTIONS
+unsigned uRewriteIPAndPortSIPLine(char *cSIPMessage,const char *cNewIP, unsigned uNewPort)
+{
+
+	//cSIPMessage should point to a 2048 char message buffer.
+
+	//line formats we are aware of
+	// sip:something@a.b.c.d
+	// sip:something@a.b.c.d:n
+	// sip:@a.b.c.d
+	// sip:@a.b.c.d:n
+	// sip:a.b.c.d
+	// sip:a.b.c.d:n
+	// sip:<fqdn>
+	// sip:<fqdn>:n
+	// sip:@<fqdn>:n
+	// sip:@<fqdn>
+	// sip:something@<fqdn>
+	// sip:something@<fqdn>:n
+	//the only formats we care about are the ones with something@
+	//we always rewrite the complete sip: part and if the something exists then we add use it 
+
+	char *cp;
+	char *cp1;
+	char *cpNextLine;
+	char cSomething[100]={""};
+	char cPrefix[100]={""};
+	char cSIPLine[256]={""};
+	char cMessage[2048]={""};
+
+	if((cp=strchr(cSIPMessage,'\r')))
+	{
+		cpNextLine=cp+1;
+		*cp=0;
+		sprintf(cSIPLine,"%.255s",cSIPMessage);
+		*cp='\r';
+	}
+	else
+		return(1);
+
+	if(!(strstr(cSIPLine,"INVITE ") || strstr(cSIPLine,"CANCEL ") || strstr(cSIPLine,"OPTIONS ")))
+		return(2);
+
+	cp=strstr(cSIPLine,"sip:");
+	*cp=0;
+	sprintf(cPrefix,"%.99s",cSIPLine);
+
+	if((cp1=strchr(cp+strlen("sip:"),'@')))
+	{
+		*cp1=0;
+		sprintf(cSomething,"%.99s",cp+strlen("sip:"));
+	}
+
+	if(!uNewPort)
+		uNewPort=5060;
+
+	if(cSomething[0])
+		sprintf(cSIPLine,"%ssip:%s@%s:%u SIP/2.0\r",cPrefix,cSomething,cNewIP,uNewPort);
+	else
+		sprintf(cSIPLine,"%ssip:%s:%u SIP/2.0\r",cPrefix,cNewIP,uNewPort);
+
+	sprintf(cMessage,"%.2047s",cpNextLine);
+	char cFormat[16]={""};
+	sprintf(cFormat,"%%s%%.%us",(unsigned)(2047-strlen(cSIPLine)));
+	sprintf(cSIPMessage,cFormat,cSIPLine,cMessage);
+
+	return(0);
+}//unsigned uRewriteIPAndPortSIPLine(char *cSIPLine,char *cNewIP, unsigned uNewPort)
 
 
 //Example cMessages
