@@ -247,15 +247,16 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 	//15 tZone.cOptions
 
 	char *cp;
-	char cMasterNS2[100]={""};
+	char cMasterNS2[100]={""};//cNameServer2
 	unsigned uNSSet2=0;
 	if((cp=strchr(cMasterNS,',')))
 	{
 		*cp=0;
 		sprintf(cMasterNS2,"%.99s",cp+1);
-		logfileLine("CreateMasterFiles",cMasterNS);
-		logfileLine("CreateMasterFiles",cMasterNS2);
-		uNSSet2=uGetNSSet(cMasterNS2);
+		logfileLine("CreateMasterFiles",cMasterNS);//cNameServer2
+		logfileLine("CreateMasterFiles",cMasterNS2);//cNameServer2
+		uNSSet2=uGetNSSet(cMasterNS2);//cNameServer2
+		*cp=',';//will be used again!
 	}
 
 	uNSSet=uGetNSSet(cMasterNS);
@@ -1258,6 +1259,10 @@ void MasterJobQueue(char *cNameServer)
 		fprintf(stdout,"%s\n",mysql_error(&gMysql));
 		exit(1);
 	}
+
+	//debug only
+	//printf("debug 1. cNameServer:%s cNameServer2:%s\n",cNameServer,cNameServer2);
+	//exit(0);
 
 	res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)) 
