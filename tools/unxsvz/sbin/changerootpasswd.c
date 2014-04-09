@@ -1,3 +1,24 @@
+/*
+FILE
+	unxsVZ/tools/unxsvz/sbin/changerootpasswd.c
+	(C) 2014 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies
+PURPOSE
+	Simple but safe way to programatically change /etc/shadow root passwd.
+	Used by scripts that change the hardware node passwds or container
+	passwds to a secure random string and log them to unxsVZ tNode tProperty table.
+SEE
+	unxsvzChangeRootPasswd.sh
+REQUIRES
+	Linux
+	Modern /bin/sed
+BUILD
+	gcc -o changerootpasswd changerootpasswd.c -lcrypt
+*/
+
+
+
+
 #include <shadow.h>
 #include <stdio.h>
 #include <crypt.h>
@@ -66,7 +87,6 @@ void escape_shell_cmd(char *cmd) {
 }
 
 
-//gcc -o changerootpasswd changerootpasswd.c -lcrypt
 int main(int iArgc, char *cArgv[])
 {
 
