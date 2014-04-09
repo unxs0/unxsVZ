@@ -31,11 +31,11 @@ void EncryptPasswd(char *pw)
         char *cpw;
 	char cMethod[16] ={""}; 
 
-		char cSalt[] = "$1$01234567$";
-	    	(void)srand((int)time((time_t *)NULL));
-    		to64(&cSalt[3],rand(),8);
-		cpw = crypt(pw,cSalt);
-		// error not verified, str NULL ("") returned	
+	char cSalt[] = "$1$01234567$";
+    	(void)srand((int)time((time_t *)NULL));
+	to64(&cSalt[3],rand(),8);
+	cpw = crypt(pw,cSalt);
+	// error not verified, str NULL ("") returned	
 	sprintf(pw,"%.99s",cpw);
 
 }//void EncryptPasswd(char *pw)
@@ -70,11 +70,18 @@ void escape_shell_cmd(char *cmd) {
 int main(int iArgc, char *cArgv[])
 {
 
+	if(iArgc!=2)
+	{
+		printf("usage: %s <new root passwd>\n",cArgv[0]);
+		return(0);
+	}
+
 	if(!lckpwdf())
 	{
-		char cPasswd[256]={"barftime"};
+		char cPasswd[256]={""};
+		sprintf(cPasswd,"%.32s",cArgv[1]);
 		EncryptPasswd(cPasswd);
-		printf("%s\n",cPasswd);
+		//printf("%s\n",cPasswd);
 		escape_shell_cmd(cPasswd);
 		//printf("%s\n",cPasswd);
 		char cSystem[256];
