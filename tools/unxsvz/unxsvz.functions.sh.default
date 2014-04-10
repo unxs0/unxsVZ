@@ -1,0 +1,18 @@
+#!/bin/bash
+
+#FILE
+#	/etc/unxsvz/unxsvz.functions.local.sh
+#PURPOSE
+#	Common bash functions to be used by node/datacenter unxsVZ scripts
+#EXAMPLE
+#	The distributed scripts will have a top section with default settings.
+#	The scripts will source this file for localization of said settings.
+#AUTHOR
+#	Gary Wallis for Unixservice, LLC. Copyright 2014.
+#NOTES
+#	All /usr/sbin/*.sh scripts need to be changed to use this file.
+#	This file contains confidential info keep secure!
+#	Set chmod 500
+
+#standard out log file message function
+fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }

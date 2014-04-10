@@ -13,6 +13,9 @@ LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -lz -lcry
 
 all: install-local.sh install-scripts install-dir
 
+unxsvz.functions.sh: unxsvz.functions.sh.default
+	@ if [ ! -f unxsvz.functions.sh ];then cp -i unxsvz.functions.sh.default unxsvz.functions.sh; fi
+
 mysql.local.sh: mysql.local.sh.default
 	@ if [ ! -f mysql.local.sh ];then cp -i mysql.local.sh.default mysql.local.sh; fi
 
@@ -22,15 +25,17 @@ iptables.local.sh: iptables.local.sh.default
 zabbix.local.sh: zabbix.local.sh.default
 	@ if [ ! -f zabbix.local.sh ];then cp -i zabbix.local.sh.default zabbix.local.sh; fi
 
-install-local.sh: mysql.local.sh iptables.local.sh zabbix.local.sh
+install-local.sh: mysql.local.sh iptables.local.sh zabbix.local.sh unxsvz.functions.sh
+	@ if [ ! -f /etc/unxsvz/unxsvz.functions.sh ];then install unxsvz.functions.sh /etc/unxsvz/unxsvz.functions.sh;else echo "/etc/unxsvz/unxsvz.functions.sh already installed";fi
 	@ if [ ! -f /etc/unxsvz/mysql.local.sh ];then install mysql.local.sh /etc/unxsvz/mysql.local.sh;else echo "/etc/unxsvz/mysql.local.sh already installed";fi
 	@ if [ ! -f /etc/unxsvz/iptables.local.sh ];then install iptables.local.sh /etc/unxsvz/iptables.local.sh;else echo "/etc/unxsvz/iptables.local.sh already installed";fi
 	@ if [ ! -f /etc/unxsvz/zabbix.local.sh ];then install zabbix.local.sh /etc/unxsvz/zabbix.local.sh;else echo "/etc/unxsvz/zabbix.local.sh already installed";fi
 	@ rm -f *.sh
 
-install-scripts: sbin/unxsvzUpdateZabbixPBX.sh
+install-scripts: sbin/unxsvzUpdateZabbixPBX.sh sbin/unxsvzDeleteZabbixHost.sh sbin/unxsvzChangeRootPasswd.sh
 	@ if [ ! -f /usr/sbin/unxsvzUpdateZabbixPBX.sh ];then install sbin/unxsvzUpdateZabbixPBX.sh /usr/sbin/unxsvzUpdateZabbixPBX.sh;else echo "/usr/sbin/unxsvzUpdateZabbixPBX.sh already installed";fi
 	@ if [ ! -f /usr/sbin/unxsvzDeleteZabbixHost.sh ];then install sbin/unxsvzDeleteZabbixHost.sh /usr/sbin/unxsvzDeleteZabbixHost.sh;else echo "/usr/sbin/unxsvzDeleteZabbixHost.sh already installed";fi
+	@ if [ ! -f /usr/sbin/unxsvzChangeRootPasswd.sh ];then install sbin/unxsvzChangeRootPasswd.sh /usr/sbin/unxsvzChangeRootPasswd.sh;else echo "/usr/sbin/unxsvzChangeRootPasswd.sh already installed";fi
 
 install-dir: zabbix_agentd_upgrade/README
 	@ if [ ! -d /etc/unxsvz/zabbix_agentd_upgrade ];then mkdir -p /etc/unxsvz/zabbix_agentd_upgrade; install zabbix_agentd_upgrade/README /etc/unxsvz/zabbix_agentd_upgrade/README;else echo "/etc/unxsvz/zabbix_agentd_upgrade already exists";fi
