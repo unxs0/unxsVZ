@@ -83,5 +83,5 @@ if [ $? != 0 ];then
 fi
 
 #fLog "saved in db";
-fLog "Ok $cNewRootPasswd for $cNode/$uNode";
+fLog "Ok new passwd for $cNode/$uNode";
 exit;
