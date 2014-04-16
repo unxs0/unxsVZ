@@ -138,7 +138,7 @@ void ProcessZoneVars(pentry entries[], int x)
 		if( !strcmp(entries[i].name,"uZone"))
 			sprintf(cuZone,"%.99s",entries[i].val);
 		else if( !strcmp(entries[i].name,"cZone"))
-			sprintf(gcZone,"%.99s",entries[i].val);
+			sprintf(gcZone,"%.99s",FQDomainName2(entries[i].val));
 		else if(!strcmp(entries[i].name,"cMainAddress"))
 			sprintf(cMainAddress,"%.16s",IPNumber(entries[i].val));
 		else if(!strcmp(entries[i].name,"cHostmaster"))
