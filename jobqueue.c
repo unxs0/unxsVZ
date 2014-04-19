@@ -168,6 +168,27 @@ void ProcessJobQueue(unsigned uDebug)
 	//logfileLine("structSysinfo.loads",gcQuery);
 	//exit(0);
 
+
+	char cRandom[8]={""};
+	int fd=open("/dev/urandom",O_RDONLY);
+	if(fd>0)
+	{
+		if(!read(fd,cRandom,sizeof(cRandom))!=sizeof(cRandom))
+			(void)srand((unsigned)cRandom);
+	}
+
+	if(!cRandom[0])
+	{
+		logfileLine("ProcessJobQueue","/dev/urandom error");
+		(void)srand((int)time((time_t *)NULL));
+	}
+
+	unsigned uDelay=0;
+    	uDelay=rand() % 60;
+	sprintf(gcQuery,"random delay of %us added",uDelay);
+	logfileLine("ProcessJobQueue",gcQuery);
+	sleep(uDelay);
+
 	//Uses login data from local.h
 	if(TextConnectDb())
 		exit(1);
