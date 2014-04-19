@@ -724,6 +724,27 @@ void ProcessUBC(void)
 		exit(1);
 	}
 
+	char cRandom[8]={""};
+	int fd=open("/dev/urandom",O_RDONLY);
+	if(fd>0)
+	{
+		if(!read(fd,cRandom,sizeof(cRandom))!=sizeof(cRandom))
+			(void)srand((unsigned)cRandom);
+	}
+
+	if(!cRandom[0])
+	{
+		logfileLine0("ProcessJobQueue","/dev/urandom error",uContainer);
+		(void)srand((int)time((time_t *)NULL));
+	}
+
+	unsigned uDelay=0;
+    	uDelay=rand() % 60;
+	sprintf(gcQuery,"random delay of %us added",uDelay);
+	logfileLine0("ProcessJobQueue",gcQuery,uContainer);
+	sleep(uDelay);
+
+
 	//Uses login data from local.h
 	TextConnectDb0();
 	guLoginClient=1;//Root user
