@@ -746,7 +746,8 @@ void ExttIPAuxTable(void)
 					" IFNULL(tContainer.cHostname,''),"
 					" tClient.cLabel,"
 					" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
-					" tIP.cComment"
+					" tIP.cComment,"
+					" tContainer.uContainer"
 					" FROM tIP"
 					" LEFT JOIN tContainer ON tContainer.uIPv4=tIP.uIP"
 					" LEFT JOIN tDatacenter ON tIP.uDatacenter=tDatacenter.uDatacenter"
@@ -969,6 +970,9 @@ while((field=mysql_fetch_row(res)))
 		printf(" bgcolor=#EFE7CF ");
 	printf(">");
 
+	char cContainerURL[256]={""};
+	if(field[5][0])
+		sprintf(cContainerURL,"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>",field[9],field[5]);
 	printf("<td width=200 valign=top>"
 	"<input type=checkbox name=Ct%s >" //0
 	"<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>" //0 and 1
@@ -981,7 +985,9 @@ while((field=mysql_fetch_row(res)))
 	"<td>%s</td>" //7
 	"<td>%s</td>" //8
 	"<td>%s</td>\n", //cResult
-		field[0],field[0],field[1],field[2],field[3],field[4],field[5],field[6],field[7],field[8],cResult);
+		field[0],field[0],field[1],field[2],field[3],field[4],
+				cContainerURL,//5 with 9
+		field[6],field[7],field[8],cResult);
 	printf("</tr>");
 
 }//while()
