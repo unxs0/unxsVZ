@@ -1,27 +1,27 @@
 /*
 FILE
-	unxsVZ/tools/unxsvz/sbin/changerootpasswd.c
+	unxsVZ/tools/unxsvz/sbin/changestaffpasswd.c
 	(C) 2014 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies
 PURPOSE
-	Simple but safe way to programatically change /etc/shadow root passwd.
+	Simple but safe way to programatically change /etc/shadow staff passwd.
 	Used by scripts that change the hardware node passwds or container
 	passwds to a secure random string and log them to unxsVZ tNode tProperty table.
 SEE
-	unxsvzChangeRootPasswd.sh
+	unxsvzChangeStaffPasswd.sh
 REQUIRES
 	Linux
 	Modern /bin/sed
 BUILD
-	gcc -Wall -o changerootpasswd changerootpasswd.c -lcrypt
+	gcc -o changestaffpasswd changestaffpasswd.c -lcrypt
 */
 
 
 
 
+#include <stdlib.h>
 #include <shadow.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <crypt.h>
 #include <time.h>
 #include <string.h>
@@ -88,24 +88,30 @@ void escape_shell_cmd(char *cmd) {
 int main(int iArgc, char *cArgv[])
 {
 
-	if(iArgc!=2)
+	if(iArgc!=3)
 	{
-		printf("usage: %s <new root passwd>\n",cArgv[0]);
+		printf("usage: %s <non root user> <new passwd>\n",cArgv[0]);
+		return(0);
+	}
+
+	if(strstr(cArgv[1],"root"))
+	{
+		printf("usage: %s <non root user> <new passwd>\n",cArgv[0]);
 		return(0);
 	}
 
 	if(!lckpwdf())
 	{
 		char cPasswd[256]={""};
-		sprintf(cPasswd,"%.32s",cArgv[1]);
+		sprintf(cPasswd,"%.32s",cArgv[2]);
 		EncryptPasswd(cPasswd);
 		//printf("%s\n",cPasswd);
 		escape_shell_cmd(cPasswd);
 		//printf("%s\n",cPasswd);
 		char cSystem[256];
 		sprintf(cSystem,"/bin/sed -i -e "
-				"'s/^root:$1$[a-zA-Z0-9/\\.]*$[a-zA-Z0-9/\\.]*:"
-				"/root:%s:/' /etc/shadow",cPasswd);
+				"'s/^%s:$1$[a-zA-Z0-9/\\.]*$[a-zA-Z0-9/\\.]*:"
+				"/%s:%s:/' /etc/shadow",cArgv[1],cArgv[1],cPasswd);
 		if(system(cSystem))
 		{
 			fprintf(stderr,"could not modify shadow file\n");
