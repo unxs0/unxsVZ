@@ -1,2 +1,2 @@
 ##Change hardware node passwd daily
-7 3 * * * root sleep $[ ( $RANDOM % 60 )  + 1 ];/usr/sbin/unxsvzChangeRootPasswd.sh changepasswd > /tmp/unxsvzChangeRootPasswd.sh.log 2>&1;
+7 3 * * * root sleep $[ ( $RANDOM \% 60 )  + 1 ];/usr/sbin/unxsvzChangeRootPasswd.sh changepasswd > /tmp/unxsvzChangeRootPasswd.sh.log 2>&1;
