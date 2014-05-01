@@ -334,6 +334,8 @@ void unxsVZ(const char *cResult)
 			CloneReport(cResult);
 		else if(!strcmp(cResult,"ContainerReport"))
 			ContainerReport(cResult);
+		else if(!strcmp(cResult,"CapacityReport"))
+			CapacityReport(cResult);
 		else
 			DashBoard(cResult);
 	}
@@ -2643,7 +2645,7 @@ void ExtSelect2(const char *cTable,const char *cVarList,unsigned uMaxResults)
 
 void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow)
 {
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+	if(guLoginClient==1 && guPermLevel>11)//Root users can read access all
 		//sprintf(gcQuery,"SELECT %s FROM %s WHERE u%s=%u ORDER BY u%s",
 		sprintf(gcQuery,"SELECT %s FROM %s WHERE u%s=%u",
 					//cVarList,cTable,cTable+1,uRow,cTable+1);

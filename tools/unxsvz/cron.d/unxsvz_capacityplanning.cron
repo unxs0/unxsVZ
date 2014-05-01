@@ -1,0 +1,2 @@
+##Send report daily eary AM
+2 2 * * * root /usr/sbin/unxsvzCapacityPlanning.sh generate > /tmp/unxsvzCapacityPlanning.sh.log 2>&1;

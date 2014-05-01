@@ -80,6 +80,7 @@ unsigned TextConnectDb(void);//mysqlconnect.c
 void DashBoard(const char *cOptionalMsg);
 void CloneReport(const char *cOptionalMsg);
 void ContainerReport(const char *cOptionalMsg);
+void CapacityReport(const char *cOptionalMsg);
 void EncryptPasswdMD5(char *pw);
 unsigned GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
@@ -110,6 +111,10 @@ int iExtMainCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,"ContainerReport"))
 		{
 			unxsVZ("ContainerReport");
+		}
+		else if(!strcmp(gcCommand,"CapacityReport"))
+		{
+			unxsVZ("CapacityReport");
 		}
 	}
 	return(0);
@@ -308,6 +313,284 @@ void CloneReport(const char *cOptionalMsg)
 }//void CloneReport(const char *cOptionalMsg)
 
 
+void CapacityReport(const char *cOptionalMsg)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uNodeCount=0;
+	unsigned uTotalNodeCount=0;
+	unsigned uContainerCount=0;
+	unsigned uTotalContainerCount=0;
+	unsigned uOpenSlots=0;
+	unsigned uTotalOpenSlots=0;
+	unsigned uTotalDatacenters=0;
+
+	OpenFieldSet("CapacityReport",100);
+	OpenRow("<u>Container slots available</u>","black");
+	sprintf(gcQuery,"SELECT COUNT(tContainer.uContainer),tDatacenter.cLabel,tDatacenter.uDatacenter"
+			" FROM tContainer,tDatacenter,tNode"
+			" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1 AND tContainer.uStatus=1"
+			" AND tContainer.uSource=0"
+			" AND tContainer.uNode=tNode.uNode"
+			" AND tNode.uDatacenter=tDatacenter.uDatacenter"
+				" GROUP BY tDatacenter.uDatacenter");
+	macro_mySQLQueryErrorText
+	printf("</td></tr><tr><td>(based on 80 per production server)</td>"
+		"<td><u>Open Slots</u></td>"
+		"<td><u>Container Count</u></td>"
+		"<td><u>Node Count</u></td>"
+		"<td><u>Datacenter Label</u></td>\n");
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%s AND uType=1 AND cName='NoCapacityPlanning'",mysqlField[2]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				continue;
+
+			uContainerCount=0;
+			sscanf(mysqlField[0],"%u",&uContainerCount);
+
+			uNodeCount=0;
+			sprintf(gcQuery,"SELECT COUNT(uNode) FROM tNode WHERE uDatacenter=%s AND uStatus=1",mysqlField[2]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uNodeCount);
+		
+			uOpenSlots=0;	
+			if(uNodeCount && uContainerCount)
+				uOpenSlots=(((uNodeCount/2)*80)-uContainerCount);
+
+			uTotalOpenSlots+=uOpenSlots;
+			uTotalNodeCount+=uNodeCount;
+			uTotalContainerCount+=uContainerCount;
+			uTotalDatacenters++;
+			printf("<tr><td></td>"
+				"<td>%u</td>"
+				"<td>%u</td>"
+				"<td>%u</td>"
+				"<td>%s</td>\n",
+						uOpenSlots,uContainerCount,uNodeCount,mysqlField[1]);
+	}
+	mysql_free_result(mysqlRes);
+	printf("<tr><td bgcolor=lightgray>Totals</td>"
+				"<td bgcolor=lightgray>%u</td>"
+				"<td bgcolor=lightgray>%u</td>"
+				"<td bgcolor=lightgray>%u</td>"
+				"<td bgcolor=lightgray>%u</td>\n",
+						uTotalOpenSlots,uTotalContainerCount,uTotalNodeCount,uTotalDatacenters);
+
+	OpenRow("<p>&nbsp;<p><u>Containers created</u>","black");
+	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uStatus=1 AND uSource=0"
+			" AND uCreatedDate > (UNIX_TIMESTAMP(NOW())-(86400*7))");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		CloseFieldSet();
+		return;
+		
+	}
+	res=mysql_store_result(&gMysql);
+	uContainerCount=0;
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uContainerCount);
+	printf("<tr><td bgcolor=lightgray>Last 7 days</td>"
+				"<td bgcolor=lightgray>%u</td>",uContainerCount);
+	unsigned uWeeklyContainerCount=uContainerCount;
+
+	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uStatus=1 AND uSource=0"
+			" AND uCreatedDate > (UNIX_TIMESTAMP(NOW())-(86400*30))");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		CloseFieldSet();
+		return;
+		
+	}
+	res=mysql_store_result(&gMysql);
+	uContainerCount=0;
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uContainerCount);
+	printf("<tr><td bgcolor=lightgray>Last 30 days</td>"
+				"<td bgcolor=lightgray>%u (%u per week)</td>",uContainerCount,uContainerCount/4);
+		
+	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uStatus=1 AND uSource=0"
+			" AND uCreatedDate > (UNIX_TIMESTAMP(NOW())-(86400*180))");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		CloseFieldSet();
+		return;
+		
+	}
+	res=mysql_store_result(&gMysql);
+	uContainerCount=0;
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uContainerCount);
+	printf("<tr><td bgcolor=lightgray>Last 180 days</td>"
+				"<td bgcolor=lightgray>%u (%u per week)</td>",uContainerCount,uContainerCount/24);
+
+	
+	printf("<tr><td bgcolor=lightgray>Slots will be filled in</td>"
+				"<td bgcolor=lightgray>%u days (at %u per week)</td>",uTotalOpenSlots*7/uWeeklyContainerCount,uWeeklyContainerCount);
+		
+	OpenRow("<p>&nbsp;<p><u>Remote Backups</u>","black");
+	sprintf(gcQuery,"SELECT COUNT(tContainer.uContainer),tDatacenter.cLabel,tDatacenter.uDatacenter"
+			" FROM tContainer,tDatacenter,tNode"
+			" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1 AND tContainer.uStatus=1"
+			" AND tContainer.cLabel LIKE '%%-backup'"
+			" AND tContainer.uSource!=0"
+			" AND tContainer.uNode=tNode.uNode"
+			" AND tNode.uDatacenter=tDatacenter.uDatacenter"
+				" GROUP BY tDatacenter.uDatacenter");
+	macro_mySQLQueryErrorText
+	printf("</td></tr><tr><td>(active -backup containers)</td>"
+		"<td><u>Container Count</u></td>"
+		"<td><u>Datacenter Label</u></td>\n");
+	uTotalContainerCount=0;
+	uTotalDatacenters=0;
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%s AND uType=1 AND cName='NoCapacityPlanning'",mysqlField[2]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				continue;
+
+			uContainerCount=0;
+			sscanf(mysqlField[0],"%u",&uContainerCount);
+
+			uTotalContainerCount+=uContainerCount;
+			uTotalDatacenters++;
+			printf("<tr><td></td>"
+				"<td>%u</td>"
+				"<td>%s</td>\n",
+						uContainerCount,mysqlField[1]);
+	}
+	mysql_free_result(mysqlRes);
+	printf("<tr><td bgcolor=lightgray>Totals</td>"
+				"<td bgcolor=lightgray>%u</td>"
+				"<td bgcolor=lightgray>%u</td>\n",
+						uTotalContainerCount,uTotalDatacenters);
+
+
+	OpenRow("<p>&nbsp;<p><u>Local Backups</u>","black");
+	sprintf(gcQuery,"SELECT COUNT(tContainer.uContainer),tDatacenter.cLabel,tDatacenter.uDatacenter"
+			" FROM tContainer,tDatacenter,tNode"
+			" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1 AND tContainer.uStatus=31"
+			" AND tContainer.cLabel LIKE '%%-clone%%'"
+			" AND tContainer.uSource!=0"
+			" AND tContainer.uNode=tNode.uNode"
+			" AND tNode.uDatacenter=tDatacenter.uDatacenter"
+				" GROUP BY tDatacenter.uDatacenter");
+	macro_mySQLQueryErrorText
+	printf("</td></tr><tr><td>(stopped -clone containers)</td>"
+		"<td><u>Container Count</u></td>"
+		"<td><u>Datacenter Label</u></td>\n");
+	uTotalContainerCount=0;
+	uTotalDatacenters=0;
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%s AND uType=1 AND cName='NoCapacityPlanning'",mysqlField[2]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				continue;
+
+			uContainerCount=0;
+			sscanf(mysqlField[0],"%u",&uContainerCount);
+
+			uTotalContainerCount+=uContainerCount;
+			uTotalDatacenters++;
+			printf("<tr><td></td>"
+				"<td>%u</td>"
+				"<td>%s</td>\n",
+						uContainerCount,mysqlField[1]);
+	}
+	mysql_free_result(mysqlRes);
+	printf("<tr><td bgcolor=lightgray>Totals</td>"
+				"<td bgcolor=lightgray>%u</td>"
+				"<td bgcolor=lightgray>%u</td>\n",
+						uTotalContainerCount,uTotalDatacenters);
+
+	OpenRow("<p>&nbsp;<p><u>IP Number Stock</u>","black");
+	sprintf(gcQuery,"SELECT COUNT(tIP.uIP),tDatacenter.cLabel,tDatacenter.uDatacenter"
+			" FROM tIP,tDatacenter"
+			" WHERE tDatacenter.uStatus=1 AND tIP.uAvailable=1"
+			" AND tIP.uDatacenter=tDatacenter.uDatacenter"
+			" AND tIP.cLabel NOT LIKE '10.%%.%%.%%' AND"
+			" tIP.cLabel NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
+			" tIP.cLabel NOT LIKE '172.17.%%.%%' AND" 
+			" tIP.cLabel NOT LIKE '172.18.%%.%%' AND"
+			" tIP.cLabel NOT LIKE '192.168.%%.%%'"
+			" AND tDatacenter.uStatus=1"
+				" GROUP BY tDatacenter.uDatacenter");
+	macro_mySQLQueryErrorText
+	printf("</td></tr><tr><td>(available)</td>"
+		"<td><u>IP Number Count</u></td>"
+		"<td><u>Datacenter Label</u></td>\n");
+	uTotalContainerCount=0;
+	uTotalDatacenters=0;
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%s AND uType=1 AND cName='NoCapacityPlanning'",mysqlField[2]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				continue;
+
+			uContainerCount=0;
+			sscanf(mysqlField[0],"%u",&uContainerCount);
+
+			uTotalContainerCount+=uContainerCount;
+			uTotalDatacenters++;
+			printf("<tr><td></td>"
+				"<td>%u</td>"
+				"<td>%s</td>\n",
+						uContainerCount,mysqlField[1]);
+	}
+	mysql_free_result(mysqlRes);
+	printf("<tr><td bgcolor=lightgray>Totals</td>"
+				"<td bgcolor=lightgray>%u</td>"
+				"<td bgcolor=lightgray>%u</td>\n",
+						uTotalContainerCount,uTotalDatacenters);
+
+	CloseFieldSet();
+
+}//void CapacityReport(const char *cOptionalMsg)
+
+
 void ContainerReport(const char *cOptionalMsg)
 {
         MYSQL_RES *mysqlRes;
@@ -326,10 +609,12 @@ void ContainerReport(const char *cOptionalMsg)
 		return;
 	}
 
+	gLfp=fopen("/tmp/unxsvzlog","a");
+
 	OpenFieldSet("ContainerReport",100);
 
-	OpenRow("<u>Container Comparison Report</u>","black");
-	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter,uStatus FROM tContainer "
+	OpenRow("<u>Active Container Comparison Report</u>","black");
+	sprintf(gcQuery,"SELECT cLabel,cHostname,uContainer,uNode,uDatacenter,uStatus FROM tContainer WHERE uStatus=1"
 				" ORDER BY cLabel,uDatacenter,uNode");
 	macro_mySQLQueryErrorText
 	printf("</td></tr><tr><td>(requires new veinfo.uProcesses)</td><td><u>uContainer</u></td><td><u>cLabel</u></td>"
@@ -347,7 +632,7 @@ void ContainerReport(const char *cOptionalMsg)
 
 		if(!uContainer) continue;
 
-		GetContainerProp(uContainer,"veinfo.uProcesses",cuProcesses);
+		GetContainerPropUBC(uContainer,"veinfo.uProcesses",cuProcesses);
 		if(cuProcesses[0])
 		{
 			uProcesses=0;
@@ -371,6 +656,16 @@ void ContainerReport(const char *cOptionalMsg)
 						mysqlField[2],mysqlField[0],mysqlField[1],
 						cStatus,
 						uProcesses,
+						uStatus,
+						mysqlField[3],mysqlField[4]);
+		}
+		else
+		{
+			sprintf(cStatus,"Unknown status");
+			printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>---</td><td>%u</td><td>%s</td>"
+						"<td>%s</td>\n",
+						mysqlField[2],mysqlField[0],mysqlField[1],
+						cStatus,
 						uStatus,
 						mysqlField[3],mysqlField[4]);
 		}
@@ -727,7 +1022,9 @@ void ExtMainContent(void)
 		printf(" <input title='Find containers not being cloned' class=largeButton type=submit name=gcCommand"
 			" value=CloneReport > \n");
 		printf(" <input title='Find inconsistencies between actual node vz containers and unxsVZ status'"
-			" class=largeButton type=submit name=gcCommand value=ContainerReport ></td></tr>\n");
+			" class=largeButton type=submit name=gcCommand value=ContainerReport > \n");
+		printf(" <input title='Find out hoy many containers can be deployed'"
+			" class=largeButton type=submit name=gcCommand value=CapacityReport ></td></tr>\n");
 	}
 
 	CloseFieldSet();

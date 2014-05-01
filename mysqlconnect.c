@@ -21,6 +21,7 @@ NOTES
 
 //This is an important setting that depends on your network setup
 #define SELECT_TIMEOUT_USEC 500000
+#define SELECT_UBC_TIMEOUT_USEC 800000
 
 //TOC protos
 void ConnectDb(void);
@@ -359,7 +360,7 @@ unsigned ConnectDbUBC(void)
 			if(errno==EINPROGRESS)
 			{
 				tv.tv_sec=0; 
-				tv.tv_usec=SELECT_TIMEOUT_USEC; 
+				tv.tv_usec=SELECT_UBC_TIMEOUT_USEC; 
 				FD_ZERO(&myset); 
 				FD_SET(iSock,&myset); 
 				if(select(iSock+1,NULL,&myset,NULL,&tv)>0)
@@ -404,7 +405,7 @@ unsigned ConnectDbUBC(void)
 			if(errno==EINPROGRESS)
 			{
 				tv.tv_sec=0; 
-				tv.tv_usec=SELECT_TIMEOUT_USEC; 
+				tv.tv_usec=SELECT_UBC_TIMEOUT_USEC; 
 				FD_ZERO(&myset); 
 				FD_SET(iSock,&myset); 
 				if(select(iSock+1,NULL,&myset,NULL,&tv)>0)

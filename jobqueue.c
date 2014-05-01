@@ -1962,7 +1962,10 @@ void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValu
 		logfileLine("GetContainerPropUBC","!uDatacenter error");
 		return;
 	}
-	if(ConnectToOptionalUBCDb(uDatacenter,1))
+	unsigned uPrivate=0;
+	if(gfuDatacenter && gfuDatacenter==uDatacenter)
+		uPrivate=1;
+	if(ConnectToOptionalUBCDb(uDatacenter,uPrivate))
 	{
 		logfileLine("GetContainerPropUBC","ConnectToOptionalUBCDb error");
 		return;
@@ -1984,6 +1987,7 @@ void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValu
 		sprintf(cValue,"%.255s",field[0]);
 	}
 	mysql_free_result(res);
+	mysql_close(&gMysqlUBC);
 
 }//void GetContainerPropUBC()
 

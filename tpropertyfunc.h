@@ -557,14 +557,14 @@ void ExttPropertyGetHook(entry gentries[], int x)
 
 void ExttPropertySelect(void)
 {
-	ExtSelect("tProperty",VAR_LIST_tProperty);
+	ExtSelectPublic("tProperty",VAR_LIST_tProperty);
 
 }//void ExttPropertySelect(void)
 
 
 void ExttPropertySelectRow(void)
 {
-	ExtSelectRow("tProperty",VAR_LIST_tProperty,uProperty);
+	ExtSelectRowPublic("tProperty",VAR_LIST_tProperty,uProperty);
 
 }//void ExttPropertySelectRow(void)
 
