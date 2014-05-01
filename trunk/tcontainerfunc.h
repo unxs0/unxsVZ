@@ -3483,6 +3483,9 @@ void ExttContainerAuxTable(void)
 			printf("<p><input title='Changes uBackupDate to 24 hours back from now.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group BackupDate Adjust'>\n");
+			printf("&nbsp; <input title='Fix missing global properties'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Fix Properties'>\n");
 			CloseFieldSet();
 
 			//Delete all of these
@@ -5672,6 +5675,76 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"backupdate adjust ignored");
 					}
 				}
+				else if(!strcmp(gcCommand,"Group Fix Properties"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uOwner==guCompany || guCompany==1))
+					{
+       						MYSQL_RES *res;
+					        MYSQL_ROW field;
+						unsigned uNumProps=0;
+
+						sprintf(gcQuery,"SELECT COUNT(uProperty) FROM tProperty"
+								" WHERE uKey=%u AND uType=3",uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							sprintf(cResult,"%.31s",mysql_error(&gMysql));
+							break;
+						}
+						res=mysql_store_result(&gMysql);
+						if((field=mysql_fetch_row(res)))
+						{
+							sscanf(field[0],"%u",&uNumProps);
+						}
+						else
+						{
+							sprintf(cResult,"unexpected condition");
+							break;
+						}
+						mysql_free_result(res);
+
+						//Add basic properties
+						/*
+						cDeployOptions	uDeployStopped=1;
+						cOrg_TimeZone	PST8PDT
+						cuSyncPeriod	2400
+						*/
+						if(uNumProps==0)
+						{
+							char cAutoCloneSyncTime[256]={"2400"};
+							GetConfiguration("cAutoCloneSyncTime",cAutoCloneSyncTime,uDatacenter,0,0,0);
+						
+							sprintf(gcQuery,"INSERT INTO tProperty"
+									" SET cName='cuSyncPeriod',cValue='%s',"
+									"uKey=%u,uType=3,"
+									" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+										cAutoCloneSyncTime,uCtContainer,sContainer.uOwner,guLoginClient);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+							{
+								sprintf(cResult,"%.31s",mysql_error(&gMysql));
+								break;
+							}
+							if(mysql_affected_rows(&gMysql)==1)
+								sprintf(cResult,"property added");
+							else
+								sprintf(cResult,"no property added");
+						}
+						else
+						{
+								sprintf(cResult,"has properties");
+						}
+					}
+					else
+					{
+						sprintf(cResult,"fix properties ignored");
+					}
+				}
+
 
 				else if(strcmp(gcCommand,"Reload Search Set"))
 				{
