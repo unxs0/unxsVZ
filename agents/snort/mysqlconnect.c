@@ -28,6 +28,7 @@ void logfileLine(const char *cFunction,const char *cLogline);
 //TOC protos
 void TextConnectDb(void);
 
+MYSQL gMysqlExt;
 
 void TextConnectDb(void)
 {

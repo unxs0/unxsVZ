@@ -123,26 +123,98 @@ void ProcessBarnyard(void)
 	TextConnectDb();
 	guLoginClient=1;//Root user
 
+	MYSQL gMysqlLocal;
+	MYSQL_RES *resLocal;
+	MYSQL_ROW fieldLocal;
+        mysql_init(&gMysqlLocal);
+        if(!mysql_real_connect(&gMysqlLocal,NULL,"unxsvz","wsxedc","snort",0,NULL,0))
+        {
+		logfileLine("ProcessBarnyard","Could not connect to local db");
+		return;
+        }
+
+	//Check last 60 seconds event for priorty 1 events.
+	//If any get the IP or IPs to block.
+	sprintf(gcQuery,"SELECT DISTINCT INET_NTOA(iphdr.ip_src) FROM event,iphdr,signature"
+			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id"
+			" AND event.timestamp>(NOW()-60)"
+			//debug only
+			//" AND signature.sig_priority<3 LIMIT 16");
+			" AND signature.sig_priority<2 LIMIT 16");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+	{
+		logfileLine("ProcessBarnyard",mysql_error(&gMysqlLocal));
+		mysql_close(&gMysqlLocal);
+		return;
+	}
+        resLocal=mysql_store_result(&gMysqlLocal);
+	unsigned uIndex=0;
+	char cIP[16][16]={"","","","","","","","","","","","","","","",""};
+	while((fieldLocal=mysql_fetch_row(resLocal)))
+	{
+		if(uIndex>15) break;
+		sprintf(cIP[uIndex++],"%.15s",fieldLocal[0]);
+	}
+	mysql_free_result(resLocal);
+	mysql_close(&gMysqlLocal);
+
+	//Create a BlockAccess tJob for each active tNode
 	sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
 			" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1"
+			" AND tDatacenter.cLabel!='CustomerPremise'"
 			" AND tNode.uDatacenter=tDatacenter.uDatacenter");
+	//		debug only
+	//		" AND tNode.uDatacenter=tDatacenter.uDatacenter LIMIT 1");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ProcessBarnyard",mysql_error(&gMysql));
 		mysql_close(&gMysql);
-		exit(2);
+		return;
 	}
         res=mysql_store_result(&gMysql);
+	unsigned uCount=0;
 	unsigned uNode=0;
 	unsigned uDatacenter=0;
-	if((field=mysql_fetch_row(res)))
+	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uNode);
 		sscanf(field[1],"%u",&uDatacenter);
+		for(uIndex=0;uIndex<16 && cIP[uIndex][0];uIndex++)
+		{
+			sprintf(gcQuery,"INSERT INTO tJob"
+			" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			",cLabel='BlockAccess unxsSnort'"
+			",cJobName='BlockAccess'"
+			",uDatacenter=%u,uNode=%u"
+			",cJobData='cIPv4=%.15s;'"
+			",uJobDate=UNIX_TIMESTAMP(NOW())"
+			",uJobStatus=1",
+					uDatacenter,
+					uNode,
+					cIP[uIndex]);
+			//debug only
+			//printf("%s\n",gcQuery);
+			//continue;
+			//return;
+
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessBarnyard",mysql_error(&gMysql));
+				mysql_close(&gMysql);
+				return;
+			}
+			uCount++;
+		}
+	}
+	if(uCount)
+	{
+		sprintf(gcQuery,"Created %u tJob entries",uCount);
+		logfileLine("ProcessBarnyard",gcQuery);
 	}
 	mysql_free_result(res);
-
 	mysql_close(&gMysql);
 	logfileLine("ProcessBarnyard","end");
 
