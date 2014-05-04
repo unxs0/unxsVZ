@@ -5993,7 +5993,7 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 			" /sbin/iptables -I FORWARD -s %s -p tcp -m tcp --dport 443 -j ACCEPT; fi;"};
 
 	FILE *fp;
-	char cPrivateKey[256]={"privatekey"};
+	char cPrivateKey[256]={""};
 	if((fp=fopen("/etc/unxsvz/unxsvz.key","r")))
 	{
 		if(fgets(cPrivateKey,255,fp)!=NULL)
@@ -6001,23 +6001,26 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 		fclose(fp);
 	}
 
-	sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
+	if(cPrivateKey[0])
+	{
+		sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
 			//trick to get most specific datacenter node combo
 			" WHERE SHA1(CONCAT(LEFT(cComment,LOCATE('#unxsVZKey=',cComment)),'%1$s'))=SUBSTR(cComment,LOCATE('#unxsVZKey=',cComment)+11)"
 			" AND ((uDatacenter=%2$u AND uNode=%3$u) OR (uDatacenter=%2$u AND uNode=0))"
 			" AND cLabel='cAllowAccessTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",cPrivateKey,uDatacenter,uNode);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		logfileLine("AllowAccess",mysql_error(&gMysql));
-	else
-	{
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			logfileLine("AllowAccess",mysql_error(&gMysql));
+		else
 		{
-			sprintf(cTemplate,"%.512s",field[0]);
-			logfileLine("AllowAccess","secure template used");
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(cTemplate,"%.512s",field[0]);
+				logfileLine("AllowAccess","secure template used");
+			}
+			mysql_free_result(res);
 		}
-		mysql_free_result(res);
 	}
 
 	//debug only
@@ -7348,7 +7351,7 @@ void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 			" /sbin/iptables -I FORWARD -s %s -j DROP; fi;"};
 
 	FILE *fp;
-	char cPrivateKey[256]={"privatekey"};
+	char cPrivateKey[256]={""};
 	if((fp=fopen("/etc/unxsvz/unxsvz.key","r")))
 	{
 		if(fgets(cPrivateKey,255,fp)!=NULL)
@@ -7356,23 +7359,26 @@ void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 		fclose(fp);
 	}
 
-	sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
+	if(cPrivateKey[0])
+	{
+		sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
 			//trick to get most specific datacenter node combo
 			" WHERE SHA1(CONCAT(LEFT(cComment,LOCATE('#unxsVZKey=',cComment)),'%1$s'))=SUBSTR(cComment,LOCATE('#unxsVZKey=',cComment)+11)"
 			" AND ((uDatacenter=%2$u AND uNode=%3$u) OR (uDatacenter=%2$u AND uNode=0))"
 			" AND cLabel='cBlockAccessTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",cPrivateKey,uDatacenter,uNode);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		logfileLine("BlockAccess",mysql_error(&gMysql));
-	else
-	{
-		res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			logfileLine("BlockAccess",mysql_error(&gMysql));
+		else
 		{
-			sprintf(cTemplate,"%.512s",field[0]);
-			logfileLine("BlockAccess","secure template used");
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(cTemplate,"%.512s",field[0]);
+				logfileLine("BlockAccess","secure template used");
+			}
+			mysql_free_result(res);
 		}
-		mysql_free_result(res);
 	}
 
 	//debug only
