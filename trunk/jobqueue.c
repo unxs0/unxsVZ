@@ -60,6 +60,8 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
 void ActionScripts(unsigned uJob,unsigned uContainer);
 void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
+void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
+void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void DenyAccess(unsigned uJob,const char *cJobData);
 void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNewVeid);
@@ -174,7 +176,7 @@ void ProcessJobQueue(unsigned uDebug)
 	if(fd>0)
 	{
 		if(!read(fd,cRandom,sizeof(cRandom))!=sizeof(cRandom))
-			(void)srand((unsigned)cRandom);
+			(void)srand((unsigned int)cRandom[0]);
 	}
 
 	if(!cRandom[0])
@@ -441,6 +443,14 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"AllowAccess") && uNode)
 	{
 		AllowAccess(uJob,cJobData,uDatacenter,uNode);
+	}
+	else if(!strcmp(cJobName,"UndoBlockAccess") && uNode)
+	{
+		UndoBlockAccess(uJob,cJobData,uDatacenter,uNode);
+	}
+	else if(!strcmp(cJobName,"BlockAccess") && uNode)
+	{
+		BlockAccess(uJob,cJobData,uDatacenter,uNode);
 	}
 	else if(!strcmp(cJobName,"DenyAccess") && uNode)
 	{
@@ -7314,3 +7324,145 @@ unsigned uContainerStatus(unsigned uContainer)
 	return(uStatus);
 
 }//unsigned uContainerStatus(unsigned uContainer)
+
+
+void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
+{
+	char cIPv4[16]={""};
+	char *cp;
+
+	sscanf(cJobData,"cIPv4=%15s;",cIPv4);
+	if((cp=strchr(cIPv4,';')))
+		*cp=0;
+	if(!cIPv4[0])
+	{
+		logfileLine("BlockAccess","Could not determine cIPv4");
+		tJobErrorUpdate(uJob,"cIPv4[0]==0");
+		return;
+	}
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	char cTemplate[512]={"/sbin/iptables -L -n | grep %s > /dev/null; if [ $? != 0 ];then"
+			" /sbin/iptables -I FORWARD -s %s -j DROP; fi;"};
+
+	FILE *fp;
+	char cPrivateKey[256]={"privatekey"};
+	if((fp=fopen("/etc/unxsvz/unxsvz.key","r")))
+	{
+		if(fgets(cPrivateKey,255,fp)!=NULL)
+			cPrivateKey[strlen(cPrivateKey)-1]=0;//cut off /n
+		fclose(fp);
+	}
+
+	sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
+			//trick to get most specific datacenter node combo
+			" WHERE SHA1(CONCAT(LEFT(cComment,LOCATE('#unxsVZKey=',cComment)),'%1$s'))=SUBSTR(cComment,LOCATE('#unxsVZKey=',cComment)+11)"
+			" AND ((uDatacenter=%2$u AND uNode=%3$u) OR (uDatacenter=%2$u AND uNode=0))"
+			" AND cLabel='cBlockAccessTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",cPrivateKey,uDatacenter,uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("BlockAccess",mysql_error(&gMysql));
+	else
+	{
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cTemplate,"%.512s",field[0]);
+			logfileLine("BlockAccess","secure template used");
+		}
+		mysql_free_result(res);
+	}
+
+	//debug only
+	//char cData[128];
+	//sprintf(cData,"uDatacenter=%u uNode=%u",uDatacenter,uNode);
+	//logfileLine("BlockAccess",cData);
+
+	sprintf(gcQuery,cTemplate,cIPv4,cIPv4);
+	if(system(gcQuery))
+	{
+		logfileLine("BlockAccess","iptables command failed");
+		tJobErrorUpdate(uJob,"iptables command failed");
+		return;
+	}
+
+	logfileLine("BlockAccess","iptables command ok");
+	tJobDoneUpdate(uJob);
+	return;
+
+}//void BlockAccess()
+
+
+void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
+{
+	char cIPv4[16]={""};
+	char *cp;
+
+	sscanf(cJobData,"cIPv4=%15s;",cIPv4);
+	if((cp=strchr(cIPv4,';')))
+		*cp=0;
+	if(!cIPv4[0])
+	{
+		logfileLine("UndoBlockAccess","Could not determine cIPv4");
+		tJobErrorUpdate(uJob,"cIPv4[0]==0");
+		return;
+	}
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	char cTemplate[512]={"/sbin/iptables -L -n | grep %s > /dev/null; if [ $? == 0 ];then"
+			" /sbin/iptables -D FORWARD -s %s -j DROP; fi;"};
+
+	FILE *fp;
+	char cPrivateKey[256]={""};
+	if((fp=fopen("/etc/unxsvz/unxsvz.key","r")))
+	{
+		if(fgets(cPrivateKey,255,fp)!=NULL)
+			cPrivateKey[strlen(cPrivateKey)-1]=0;//cut off /n
+		fclose(fp);
+	}
+
+	if(cPrivateKey[0])
+	{
+		sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
+			//trick to get most specific datacenter node combo
+			" WHERE SHA1(CONCAT(LEFT(cComment,LOCATE('#unxsVZKey=',cComment)),'%1$s'))=SUBSTR(cComment,LOCATE('#unxsVZKey=',cComment)+11)"
+			" AND ((uDatacenter=%2$u AND uNode=%3$u) OR (uDatacenter=%2$u AND uNode=0))"
+			" AND cLabel='cUndoBlockAccessTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",cPrivateKey,uDatacenter,uNode);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			logfileLine("UndoBlockAccess",mysql_error(&gMysql));
+		else
+		{
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(cTemplate,"%.512s",field[0]);
+				logfileLine("UndoBlockAccess","secure template used");
+			}
+			mysql_free_result(res);
+		}
+	}
+
+	//debug only
+	//char cData[128];
+	//sprintf(cData,"uDatacenter=%u uNode=%u",uDatacenter,uNode);
+	//logfileLine("UndoBlockAccess",cData);
+
+	sprintf(gcQuery,cTemplate,cIPv4,cIPv4);
+	if(system(gcQuery))
+	{
+		logfileLine("UndoBlockAccess","iptables command failed");
+		tJobErrorUpdate(uJob,"iptables command failed");
+		return;
+	}
+
+	logfileLine("UndoBlockAccess","iptables command ok");
+	tJobDoneUpdate(uJob);
+	return;
+
+}//void UndoBlockAccess()
+
