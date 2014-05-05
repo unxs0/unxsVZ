@@ -26,9 +26,11 @@ unsigned guNodeOwner=0;
 
 //local protos
 void logfileLine(const char *cFunction,const char *cLogline);
-void ProcessBarnyard(void);
+void ProcessBarnyard(unsigned uPriority);
 void CreateGeoIPTable(void);
 void CreateBlockedIPTable(void);
+void ForkPostAddScript(char *cMsg);
+unsigned CheckIP(char *cIP);
 //external protos
 void TextConnectDb(void);
 
@@ -70,7 +72,8 @@ int main(int iArgc, char *cArgv[])
 		{
 			if(!strcmp(cArgv[i],"--help"))
 			{
-				printf("usage: %s [--help] [--version] [--create-geoip] [--create-blockedip]\n",cArgv[0]);
+				printf("usage: %s [--help] [--check-ip <ip dotted quad>]"
+					" [--version] [--create-geoip] [--create-blockedip]\n",cArgv[0]);
 				exit(0);
 			}
 			if(!strcmp(cArgv[i],"--version"))
@@ -86,6 +89,15 @@ int main(int iArgc, char *cArgv[])
 			if(!strcmp(cArgv[i],"--create-blockedip"))
 			{
 				CreateBlockedIPTable();
+				exit(0);
+			}
+			if(!strcmp(cArgv[i],"--check-ip"))
+			{
+				if(iArgc==i+2 && strchr(cArgv[i+1],'.'))
+					exit(CheckIP(cArgv[i+1]));
+				else
+					printf("usage: %s [--help] [--check-ip <ip dotted quad>]"
+						" [--version] [--create-geoip] [--create-blockedip]\n",cArgv[0]);
 				exit(0);
 			}
 		}
@@ -111,7 +123,8 @@ int main(int iArgc, char *cArgv[])
 		return(1);
 	}
 
-	ProcessBarnyard();
+	ProcessBarnyard(1);
+	ProcessBarnyard(2);//requires tGeoIP tables
 
 	if(rmdir(cLockfile))
 	{
@@ -123,7 +136,7 @@ int main(int iArgc, char *cArgv[])
 }//main()
 
 
-void ProcessBarnyard(void)
+void ProcessBarnyard(unsigned uPriority)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -151,14 +164,20 @@ void ProcessBarnyard(void)
 
 	//Check last 60 seconds event for priorty 1 events.
 	//If any get the IP or IPs to block.
-	sprintf(gcQuery,"SELECT DISTINCT INET_NTOA(iphdr.ip_src) FROM event,iphdr,signature"
+	if(uPriority==1)
+		sprintf(gcQuery,"SELECT DISTINCT INET_NTOA(iphdr.ip_src),iphdr.ip_src FROM event,iphdr,signature"
 			" WHERE event.cid=iphdr.cid"
 			" AND event.signature=signature.sig_id"
 			" AND iphdr.ip_src NOT IN (SELECT uBlockedIP FROM tBlockedIP)"
-			" AND event.timestamp>(NOW()-600)"
-			//debug only
-			//" AND signature.sig_priority<3 LIMIT 16");
-			" AND signature.sig_priority<2 LIMIT 16");
+			" AND event.timestamp>(NOW()-61)"
+			" AND signature.sig_priority=1 LIMIT 16");
+	else
+		sprintf(gcQuery,"SELECT DISTINCT INET_NTOA(iphdr.ip_src),iphdr.ip_src FROM event,iphdr,signature"
+			" WHERE event.cid=iphdr.cid"
+			" AND event.signature=signature.sig_id"
+			" AND iphdr.ip_src NOT IN (SELECT uBlockedIP FROM tBlockedIP)"
+			" AND event.timestamp>(NOW()-61)"
+			" AND signature.sig_priority>1 LIMIT 16");
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
@@ -169,10 +188,12 @@ void ProcessBarnyard(void)
         resLocal=mysql_store_result(&gMysqlLocal);
 	unsigned uIndex=0;
 	char cIP[16][16]={"","","","","","","","","","","","","","","",""};
+	unsigned uIP[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	while((fieldLocal=mysql_fetch_row(resLocal)))
 	{
 		if(uIndex>15) break;
 		sprintf(cIP[uIndex],"%.15s",fieldLocal[0]);
+		sscanf(fieldLocal[1],"%u",uIP+uIndex);
 		logfileLine("ProcessBarnyard",cIP[uIndex]);
 		uIndex++;
 	}
@@ -202,18 +223,58 @@ void ProcessBarnyard(void)
 		sscanf(field[1],"%u",&uDatacenter);
 		for(uIndex=0;uIndex<16 && cIP[uIndex][0];uIndex++)
 		{
-			sprintf(gcQuery,"INSERT INTO tJob"
-			" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-			",cLabel='BlockAccess unxsSnort %u'"
-			",cJobName='BlockAccess'"
-			",uDatacenter=%u,uNode=%u"
-			",cJobData='cIPv4=%.15s;'"
-			",uJobDate=UNIX_TIMESTAMP(NOW())"
-			",uJobStatus=1",
-					uIndex,
-					uDatacenter,
-					uNode,
-					cIP[uIndex]);
+			unsigned uGeoIPCountryCode=0;
+			sprintf(gcQuery,"SELECT uGeoIPCountryCode FROM tGeoIP WHERE uEndIP>=%u LIMIT 1",uIP[uIndex]);
+			mysql_query(&gMysqlLocal,gcQuery);
+			if(mysql_errno(&gMysqlLocal))
+			{
+				logfileLine("ProcessBarnyard-s1",mysql_error(&gMysqlLocal));
+				mysql_free_result(res);
+				mysql_close(&gMysqlLocal);
+				mysql_close(&gMysql);
+				return;
+			}
+        		resLocal=mysql_store_result(&gMysqlLocal);
+			if((fieldLocal=mysql_fetch_row(resLocal)))
+			{
+				sscanf(fieldLocal[0],"%u",&uGeoIPCountryCode);
+				//low priority events that are fom US IPs are ignored at this time
+				if(uPriority>1 && uGeoIPCountryCode==33)
+				{
+					//logfileLine("ProcessBarnyard-continue",cIP[uIndex]);
+					//logfileLine("ProcessBarnyard-continue",fieldLocal[0]);
+					//sprintf(gcQuery,"%u",uIP[uIndex]);
+					//logfileLine("ProcessBarnyard-continue",gcQuery);
+					continue;
+				}
+			}
+
+			if(uPriority>1)
+				sprintf(gcQuery,"INSERT INTO tJob"
+					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+					",cLabel='TestBlockAccess unxsSnort %u'"
+					",cJobName='TestBlockAccess'"
+					",uDatacenter=%u,uNode=%u"
+					",cJobData='cIPv4=%.15s;\nuGeoIPCountryCode=%u;'"
+					",uJobDate=UNIX_TIMESTAMP(NOW())"
+					",uJobStatus=1",
+						uIndex,
+						uDatacenter,
+						uNode,
+						cIP[uIndex],uGeoIPCountryCode);
+			else
+				sprintf(gcQuery,"INSERT INTO tJob"
+					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+					",cLabel='BlockAccess unxsSnort %u'"
+					",cJobName='BlockAccess'"
+					",uDatacenter=%u,uNode=%u"
+					",cJobData='cIPv4=%.15s;\nuGeoIPCountryCode=%u;'"
+					",uJobDate=UNIX_TIMESTAMP(NOW())"
+					",uJobStatus=1",
+						uIndex,
+						uDatacenter,
+						uNode,
+						cIP[uIndex],uGeoIPCountryCode);
 			//debug only
 			//printf("%s\n",gcQuery);
 			//continue;
@@ -222,7 +283,7 @@ void ProcessBarnyard(void)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessBarnyard",mysql_error(&gMysql));
+				logfileLine("ProcessBarnyard-s2",mysql_error(&gMysql));
 				mysql_close(&gMysql);
 				return;
 			}
@@ -232,19 +293,38 @@ void ProcessBarnyard(void)
 			//debug only
 			//if(mysql_errno(&gMysqlLocal))
 			//	logfileLine("ProcessBarnyard",mysql_error(&gMysqlLocal));
-		}
-	}
+		}//for each IP
+	}//while for each server
 	if(uCount)
 	{
 		sprintf(gcQuery,"Created %u tJob entries",uCount);
 		logfileLine("ProcessBarnyard",gcQuery);
+		char cMsg[512]={""};
+		unsigned uFirst=1;
+		register unsigned uIndex2;
+		//sprintf(cMsg,"%s %s %s %s %s %s %s %u",cIP[0],cIP[1],cIP[2],cIP[3],cIP[4],cIP[5],cIP[6],uIndex);
+		//logfileLine("ProcessBarnyard-dbg1",cMsg);
+		cMsg[0]=0;
+		for(uIndex2=0;uIndex2<uIndex;uIndex2++)
+		{
+			if(!uFirst)
+				strncat(cMsg,",",1);
+			strncat(cMsg,cIP[uIndex2],15);
+			//logfileLine("ProcessBarnyard-dbg2",cMsg);
+			uFirst=0;
+		}
+		if(cMsg[strlen(cMsg)-1]==',') cMsg[strlen(cMsg)-1]=0;
+		logfileLine("ProcessBarnyard",cMsg);
+		ForkPostAddScript(cMsg);
 	}
+	//debug only
+	//ForkPostAddScript("testing,123,testing,123");
 	mysql_free_result(res);
 	mysql_close(&gMysql);
 	mysql_close(&gMysqlLocal);
 	logfileLine("ProcessBarnyard","end");
 
-}//void ProcessBarnyard(void)
+}//void ProcessBarnyard(unsigned uPriority)
 
 
 void CreateGeoIPTable(void)
@@ -263,14 +343,30 @@ void CreateGeoIPTable(void)
 		return;
         }
 
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGeoIP( "
-			"uGeoIP INT UNSIGNED PRIMARY KEY AUTO_INCREMENT");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGeoIPCountryCode ("
+			" uGeoIPCountryCode TINYINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,"
+			" cCountryCode CHAR(2) NOT NULL,"
+			" cCountryName VARCHAR(50) NOT NULL )");
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 		logfileLine("CreateGeoIPTable",mysql_error(&gMysqlLocal));
-	if(mysql_affected_rows(&gMysqlLocal))
-		logfileLine("CreateGeoIPTable","Ok");
+
+	logfileLine("CreateGeoIPTable","tGeoIPCountryCode Ok");
+
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGeoIP ("
+			" uStartIP INT UNSIGNED NOT NULL,"
+			" uEndIP INT UNSIGNED NOT NULL, UNIQUE (uEndIP),"
+			" uGeoIPCountryCode TINYINT UNSIGNED NOT NULL )");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+		logfileLine("CreateGeoIPTable",mysql_error(&gMysqlLocal));
+
+	logfileLine("CreateGeoIPTable","tGeoIP Ok");
+
 	mysql_close(&gMysqlLocal);
+
+	printf("tGeoIPCountryCode and tGeoIP tables exist or have been created\n");
+
 }//void CreateGeoIPTable(void)
 
 
@@ -317,3 +413,74 @@ void CreateBlockedIPTable(void)
 	logfileLine("CreateBlockedIPTable","end");
 
 }//void CreateBlockedIPTable(void)
+
+
+void ForkPostAddScript(char *cMsg)
+{
+	pid_t pidChild;
+
+	pidChild=fork();
+	if(pidChild!=0)
+		return;
+
+	struct stat statInfo;
+	char gcQuery[512]={""};
+	if(!stat("/usr/sbin/unxsSnortPostAddJob.sh",&statInfo))
+	{
+		if(statInfo.st_uid!=0)
+		{
+			logfileLine("ForkPostAddScript","script not owned by root");
+			exit(0);
+		}
+		if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
+		{
+			logfileLine("ForkPostAddScript","script not chmod 500");
+			exit(0);
+		}
+		sprintf(gcQuery,"/usr/sbin/unxsSnortPostAddJob.sh %.255s",cMsg);
+		if(!system(gcQuery))
+			logfileLine("ForkPostAddScript","ran ok");
+		else
+			logfileLine("ForkPostAddScript","ran with errors");
+			
+	}
+
+	exit(0);
+
+}//void ForkPostAddScript(char *cMsg)
+
+
+unsigned CheckIP(char *cIP)
+{
+	unsigned uRetVal=0;
+	MYSQL gMysqlLocal;
+	MYSQL_RES *resLocal;
+	MYSQL_ROW fieldLocal;
+        mysql_init(&gMysqlLocal);
+        if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
+        {
+		printf("CheckIP() Could not connect to local db\n");
+		return(1);
+        }
+
+	sprintf(gcQuery,"SELECT cCountryCode,cCountryName,uGeoIPCountryCode"
+			" FROM tGeoIPCountryCode"
+			" WHERE uGeoIPCountryCode="
+			"(SELECT uGeoIPCountryCode FROM tGeoIP WHERE uEndIP>=INET_ATON('%s') LIMIT 1)",cIP);
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+	{
+		printf("CheckIP(%s) error: %s\n",cIP,mysql_error(&gMysqlLocal));
+		return(1);
+	}
+        resLocal=mysql_store_result(&gMysqlLocal);
+	if((fieldLocal=mysql_fetch_row(resLocal)))
+		printf("%s %s(%s) %s\n",cIP,fieldLocal[0],fieldLocal[2],fieldLocal[1]);
+	else
+		uRetVal=1;	
+	mysql_free_result(resLocal);
+	mysql_close(&gMysqlLocal);
+
+	return(uRetVal);
+
+}//unsigned CheckIP(char *cIP)
