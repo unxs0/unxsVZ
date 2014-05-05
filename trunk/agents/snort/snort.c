@@ -27,8 +27,14 @@ unsigned guNodeOwner=0;
 //local protos
 void logfileLine(const char *cFunction,const char *cLogline);
 void ProcessBarnyard(void);
+void CreateGeoIPTable(void);
+void CreateBlockedIPTable(void);
 //external protos
 void TextConnectDb(void);
+
+#define gcLocalUser	"unxsvz"
+#define gcLocalPasswd	"wsxedc"
+#define gcLocalDb	"snort"
 void TextLocalConnectDb(void);
 
 unsigned guLogLevel=3;
@@ -56,6 +62,7 @@ void logfileLine(const char *cFunction,const char *cLogline)
 
 int main(int iArgc, char *cArgv[])
 {
+	sprintf(gcProgram,"%.31s",cArgv[0]);
 	if(iArgc>1)
 	{
 		register int i;
@@ -63,7 +70,7 @@ int main(int iArgc, char *cArgv[])
 		{
 			if(!strcmp(cArgv[i],"--help"))
 			{
-				printf("usage: %s [--help] [--version]\n",cArgv[0]);
+				printf("usage: %s [--help] [--version] [--create-geoip] [--create-blockedip]\n",cArgv[0]);
 				exit(0);
 			}
 			if(!strcmp(cArgv[i],"--version"))
@@ -71,12 +78,21 @@ int main(int iArgc, char *cArgv[])
 				printf("version: %s $Id$\n",cArgv[0]);
 				exit(0);
 			}
+			if(!strcmp(cArgv[i],"--create-geoip"))
+			{
+				CreateGeoIPTable();
+				exit(0);
+			}
+			if(!strcmp(cArgv[i],"--create-blockedip"))
+			{
+				CreateBlockedIPTable();
+				exit(0);
+			}
 		}
 	}
 
 	char cLockfile[64]={"/tmp/snort.lock"};
 
-	sprintf(gcProgram,"%.31s",cArgv[0]);
 	if((gLfp=fopen(cSNORTLOGFILE,"a"))==NULL)
 	{
 		fprintf(stderr,"%s main() fopen logfile error\n",gcProgram);
@@ -127,7 +143,7 @@ void ProcessBarnyard(void)
 	MYSQL_RES *resLocal;
 	MYSQL_ROW fieldLocal;
         mysql_init(&gMysqlLocal);
-        if(!mysql_real_connect(&gMysqlLocal,NULL,"unxsvz","wsxedc","snort",0,NULL,0))
+        if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
         {
 		logfileLine("ProcessBarnyard","Could not connect to local db");
 		return;
@@ -136,8 +152,10 @@ void ProcessBarnyard(void)
 	//Check last 60 seconds event for priorty 1 events.
 	//If any get the IP or IPs to block.
 	sprintf(gcQuery,"SELECT DISTINCT INET_NTOA(iphdr.ip_src) FROM event,iphdr,signature"
-			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id"
-			" AND event.timestamp>(NOW()-60)"
+			" WHERE event.cid=iphdr.cid"
+			" AND event.signature=signature.sig_id"
+			" AND iphdr.ip_src NOT IN (SELECT uBlockedIP FROM tBlockedIP)"
+			" AND event.timestamp>(NOW()-600)"
 			//debug only
 			//" AND signature.sig_priority<3 LIMIT 16");
 			" AND signature.sig_priority<2 LIMIT 16");
@@ -154,10 +172,11 @@ void ProcessBarnyard(void)
 	while((fieldLocal=mysql_fetch_row(resLocal)))
 	{
 		if(uIndex>15) break;
-		sprintf(cIP[uIndex++],"%.15s",fieldLocal[0]);
+		sprintf(cIP[uIndex],"%.15s",fieldLocal[0]);
+		logfileLine("ProcessBarnyard",cIP[uIndex]);
+		uIndex++;
 	}
 	mysql_free_result(resLocal);
-	mysql_close(&gMysqlLocal);
 
 	//Create a BlockAccess tJob for each active tNode
 	sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
@@ -185,12 +204,13 @@ void ProcessBarnyard(void)
 		{
 			sprintf(gcQuery,"INSERT INTO tJob"
 			" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-			",cLabel='BlockAccess unxsSnort'"
+			",cLabel='BlockAccess unxsSnort %u'"
 			",cJobName='BlockAccess'"
 			",uDatacenter=%u,uNode=%u"
 			",cJobData='cIPv4=%.15s;'"
 			",uJobDate=UNIX_TIMESTAMP(NOW())"
 			",uJobStatus=1",
+					uIndex,
 					uDatacenter,
 					uNode,
 					cIP[uIndex]);
@@ -207,6 +227,11 @@ void ProcessBarnyard(void)
 				return;
 			}
 			uCount++;
+			sprintf(gcQuery,"INSERT INTO tBlockedIP SET uBlockedIP=INET_ATON('%s')",cIP[uIndex]);
+			mysql_query(&gMysqlLocal,gcQuery);
+			//debug only
+			//if(mysql_errno(&gMysqlLocal))
+			//	logfileLine("ProcessBarnyard",mysql_error(&gMysqlLocal));
 		}
 	}
 	if(uCount)
@@ -216,8 +241,79 @@ void ProcessBarnyard(void)
 	}
 	mysql_free_result(res);
 	mysql_close(&gMysql);
+	mysql_close(&gMysqlLocal);
 	logfileLine("ProcessBarnyard","end");
 
 }//void ProcessBarnyard(void)
 
 
+void CreateGeoIPTable(void)
+{
+	if((gLfp=fopen(cSNORTLOGFILE,"a"))==NULL)
+	{
+		fprintf(stderr,"%s main() fopen logfile error\n",gcProgram);
+		exit(1);
+	}
+		
+	MYSQL gMysqlLocal;
+        mysql_init(&gMysqlLocal);
+        if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
+        {
+		logfileLine("CreateGeoIPTable","Could not connect to local db");
+		return;
+        }
+
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGeoIP( "
+			"uGeoIP INT UNSIGNED PRIMARY KEY AUTO_INCREMENT");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+		logfileLine("CreateGeoIPTable",mysql_error(&gMysqlLocal));
+	if(mysql_affected_rows(&gMysqlLocal))
+		logfileLine("CreateGeoIPTable","Ok");
+	mysql_close(&gMysqlLocal);
+}//void CreateGeoIPTable(void)
+
+
+void CreateBlockedIPTable(void)
+{
+	if((gLfp=fopen(cSNORTLOGFILE,"a"))==NULL)
+	{
+		fprintf(stderr,"%s main() fopen logfile error\n",gcProgram);
+		exit(1);
+	}
+	logfileLine("CreateBlockedIPTable","start");
+		
+	MYSQL gMysqlLocal;
+        mysql_init(&gMysqlLocal);
+        if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
+        {
+		logfileLine("CreateBlockedIPTable","Could not connect to local db");
+		return;
+        }
+
+	sprintf(gcQuery,"DROP TABLE tBlockedIP");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+	{
+		logfileLine("CreateBlockedIPTable","error");
+		logfileLine("CreateBlockedIPTable",mysql_error(&gMysqlLocal));
+		mysql_close(&gMysqlLocal);
+		return;
+	}
+
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tBlockedIP ( "
+			"uBlockedIP INT UNSIGNED PRIMARY KEY DEFAULT 0 ) ENGINE=MEMORY");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+	{
+		logfileLine("CreateBlockedIPTable","error");
+		logfileLine("CreateBlockedIPTable",mysql_error(&gMysqlLocal));
+		mysql_close(&gMysqlLocal);
+		return;
+	}
+
+	logfileLine("CreateBlockedIPTable","Ok");
+	mysql_close(&gMysqlLocal);
+	logfileLine("CreateBlockedIPTable","end");
+
+}//void CreateBlockedIPTable(void)
