@@ -1,0 +1,14 @@
+SQL configuration
+-----------------
+
+unxsVZ grants required:
+
+grant SELECT,INSERT,UPDATE on unxsvz.tJob to unxsvz@1.2.3.4 identified by 'wsxedc';
+grant SELECT on unxsvz.tNode to unxsvz@1.2.3.4 identified by 'wsxedc';
+grant SELECT on unxsvz.tDatacenter to unxsvz@1.2.3.4 identified by 'wsxedc';
+grant SELECT,UPDATE,INSERT,DELETE on unxsvz.tIP to unxsvz@1.2.3.4 identified by 'wsxedc';
+
+local snort grants required:
+
+grant SELECT,CREATE on snort.* to unxsvz@localhost identified by 'wsxedc';
+grant INSERT,SELECT,DROP,DELETE on snort.tBlockedIP to unxsvz@localhost identified by 'wsxedc';
