@@ -18,6 +18,8 @@ NOTES
 #define cSNORTLOGFILE "/var/log/unxsSnortLog"
 
 MYSQL gMysql;
+MYSQL gMysqlLocal;
+unsigned guMysqlLocal=0;
 char gcQuery[8192]={""};
 unsigned guLoginClient=1;//Root user
 char cHostname[100]={""};
@@ -30,7 +32,7 @@ void ProcessBarnyard(unsigned uPriority);
 void CreateGeoIPTable(void);
 void CreateBlockedIPTable(void);
 void ForkPostAddScript(char *cMsg);
-unsigned CheckIP(char *cIP);
+unsigned CheckIP(const char *cIP,char *cReport);
 //external protos
 void TextConnectDb(void);
 
@@ -94,7 +96,15 @@ int main(int iArgc, char *cArgv[])
 			if(!strcmp(cArgv[i],"--check-ip"))
 			{
 				if(iArgc==i+2 && strchr(cArgv[i+1],'.'))
-					exit(CheckIP(cArgv[i+1]));
+				{
+					char cReport[256]={""};
+					unsigned uRetVal=CheckIP(cArgv[i+1],cReport);
+					if(!uRetVal)
+						printf("%s %s\n",cArgv[i+1],cReport);
+					else
+						printf("%s no match\n",cArgv[i+1]);
+					exit(uRetVal);
+				}
 				else
 					printf("usage: %s [--help] [--check-ip <ip dotted quad>]"
 						" [--version] [--create-geoip] [--create-blockedip]\n",cArgv[0]);
@@ -152,7 +162,6 @@ void ProcessBarnyard(unsigned uPriority)
 	TextConnectDb();
 	guLoginClient=1;//Root user
 
-	MYSQL gMysqlLocal;
 	MYSQL_RES *resLocal;
 	MYSQL_ROW fieldLocal;
         mysql_init(&gMysqlLocal);
@@ -161,6 +170,7 @@ void ProcessBarnyard(unsigned uPriority)
 		logfileLine("ProcessBarnyard","Could not connect to local db");
 		return;
         }
+	guMysqlLocal=1;
 
 	//Check last 60 seconds event for priorty 1 events.
 	//If any get the IP or IPs to block.
@@ -245,6 +255,7 @@ void ProcessBarnyard(unsigned uPriority)
 					//logfileLine("ProcessBarnyard-continue",fieldLocal[0]);
 					//sprintf(gcQuery,"%u",uIP[uIndex]);
 					//logfileLine("ProcessBarnyard-continue",gcQuery);
+					cIP[uIndex][0]=0;//mark as not to be counted
 					continue;
 				}
 			}
@@ -299,7 +310,7 @@ void ProcessBarnyard(unsigned uPriority)
 	{
 		sprintf(gcQuery,"Created %u tJob entries",uCount);
 		logfileLine("ProcessBarnyard",gcQuery);
-		char cMsg[512]={""};
+		char cMsg[1024]={""};
 		unsigned uFirst=1;
 		register unsigned uIndex2;
 		//sprintf(cMsg,"%s %s %s %s %s %s %s %u",cIP[0],cIP[1],cIP[2],cIP[3],cIP[4],cIP[5],cIP[6],uIndex);
@@ -307,9 +318,16 @@ void ProcessBarnyard(unsigned uPriority)
 		cMsg[0]=0;
 		for(uIndex2=0;uIndex2<uIndex;uIndex2++)
 		{
+			if(!cIP[uIndex2][0]) continue;
 			if(!uFirst)
 				strncat(cMsg,",",1);
 			strncat(cMsg,cIP[uIndex2],15);
+
+			char cReport[64]={"-No country match"};
+			if(!CheckIP(cIP[uIndex2],cReport))
+				strncat(cMsg,"-",1);
+			strncat(cMsg,cReport,64);
+
 			//logfileLine("ProcessBarnyard-dbg2",cMsg);
 			uFirst=0;
 		}
@@ -335,7 +353,6 @@ void CreateGeoIPTable(void)
 		exit(1);
 	}
 		
-	MYSQL gMysqlLocal;
         mysql_init(&gMysqlLocal);
         if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
         {
@@ -379,7 +396,6 @@ void CreateBlockedIPTable(void)
 	}
 	logfileLine("CreateBlockedIPTable","start");
 		
-	MYSQL gMysqlLocal;
         mysql_init(&gMysqlLocal);
         if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
         {
@@ -424,7 +440,7 @@ void ForkPostAddScript(char *cMsg)
 		return;
 
 	struct stat statInfo;
-	char gcQuery[512]={""};
+	char gcQuery[1024]={""};
 	if(!stat("/usr/sbin/unxsSnortPostAddJob.sh",&statInfo))
 	{
 		if(statInfo.st_uid!=0)
@@ -437,7 +453,7 @@ void ForkPostAddScript(char *cMsg)
 			logfileLine("ForkPostAddScript","script not chmod 500");
 			exit(0);
 		}
-		sprintf(gcQuery,"/usr/sbin/unxsSnortPostAddJob.sh %.255s",cMsg);
+		sprintf(gcQuery,"/usr/sbin/unxsSnortPostAddJob.sh \"%.768s\"",cMsg);
 		if(!system(gcQuery))
 			logfileLine("ForkPostAddScript","ran ok");
 		else
@@ -450,18 +466,21 @@ void ForkPostAddScript(char *cMsg)
 }//void ForkPostAddScript(char *cMsg)
 
 
-unsigned CheckIP(char *cIP)
+unsigned CheckIP(const char *cIP,char *cReport)
 {
 	unsigned uRetVal=0;
-	MYSQL gMysqlLocal;
 	MYSQL_RES *resLocal;
 	MYSQL_ROW fieldLocal;
-        mysql_init(&gMysqlLocal);
-        if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
-        {
-		printf("CheckIP() Could not connect to local db\n");
-		return(1);
-        }
+
+	if(!guMysqlLocal)
+	{
+        	mysql_init(&gMysqlLocal);
+        	if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
+        	{
+			return(1);
+        	}
+		guMysqlLocal=1;
+	}
 
 	sprintf(gcQuery,"SELECT cCountryCode,cCountryName,uGeoIPCountryCode"
 			" FROM tGeoIPCountryCode"
@@ -470,12 +489,11 @@ unsigned CheckIP(char *cIP)
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
-		printf("CheckIP(%s) error: %s\n",cIP,mysql_error(&gMysqlLocal));
 		return(1);
 	}
         resLocal=mysql_store_result(&gMysqlLocal);
 	if((fieldLocal=mysql_fetch_row(resLocal)))
-		printf("%s %s(%s) %s\n",cIP,fieldLocal[0],fieldLocal[2],fieldLocal[1]);
+		sprintf(cReport,"%.2s(%.10s) %.50s",fieldLocal[0],fieldLocal[2],fieldLocal[1]);
 	else
 		uRetVal=1;	
 	mysql_free_result(resLocal);
@@ -483,4 +501,4 @@ unsigned CheckIP(char *cIP)
 
 	return(uRetVal);
 
-}//unsigned CheckIP(char *cIP)
+}//unsigned CheckIP()
