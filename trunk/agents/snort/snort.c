@@ -103,6 +103,7 @@ int main(int iArgc, char *cArgv[])
 						printf("%s %s\n",cArgv[i+1],cReport);
 					else
 						printf("%s no match\n",cArgv[i+1]);
+					mysql_close(&gMysqlLocal);
 					exit(uRetVal);
 				}
 				else
@@ -497,7 +498,6 @@ unsigned CheckIP(const char *cIP,char *cReport)
 	else
 		uRetVal=1;	
 	mysql_free_result(resLocal);
-	mysql_close(&gMysqlLocal);
 
 	return(uRetVal);
 
