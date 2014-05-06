@@ -62,6 +62,7 @@ void ActionScripts(unsigned uJob,unsigned uContainer);
 void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
+void TestBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void DenyAccess(unsigned uJob,const char *cJobData);
 void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNewVeid);
@@ -443,6 +444,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"AllowAccess") && uNode)
 	{
 		AllowAccess(uJob,cJobData,uDatacenter,uNode);
+	}
+	else if(!strcmp(cJobName,"TestBlockAccess") && uNode)
+	{
+		TestBlockAccess(uJob,cJobData,uDatacenter,uNode);
 	}
 	else if(!strcmp(cJobName,"UndoBlockAccess") && uNode)
 	{
@@ -7471,4 +7476,13 @@ void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,uns
 	return;
 
 }//void UndoBlockAccess()
+
+
+void TestBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
+{
+	logfileLine("TestBlockAccess","iptables command ok");
+	tJobDoneUpdate(uJob);
+	return;
+
+}//void TestBlockAccess()
 
