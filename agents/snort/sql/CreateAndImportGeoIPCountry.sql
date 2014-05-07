@@ -13,6 +13,7 @@ CREATE TABLE tGeoIPFromCSV (
 DROP TABLE IF EXISTS tGeoIPCountryCode;
 CREATE TABLE IF NOT EXISTS tGeoIPCountryCode (
         uGeoIPCountryCode TINYINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+        /* uGeoIPCountryCode TINYINT UNSIGNED NOT NULL, */
         cCountryCode CHAR(2) NOT NULL,
         cCountryName VARCHAR(50) NOT NULL
         );
@@ -30,7 +31,8 @@ LOAD DATA INFILE '/home/unxs/GeoIPCountryWhois.csv'
         LINES TERMINATED BY '\n' STARTING BY '' 
         ;
 
-INSERT INTO tGeoIPCountryCode SELECT DISTINCT NULL,cCountryCode,cCountryName FROM tGeoIPFromCSV;
+SET @uCount=0;
+INSERT INTO tGeoIPCountryCode SELECT DISTINCT (@uCount:=@uCount+1),cCountryCode,cCountryName FROM tGeoIPFromCSV;
 
 INSERT INTO tGeoIP SELECT uStartIP,uEndIP,uGeoIPCountryCode FROM tGeoIPFromCSV NATURAL JOIN tGeoIPCountryCode;
 
