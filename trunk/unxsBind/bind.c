@@ -256,10 +256,14 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 		logfileLine("CreateMasterFiles",cMasterNS);//cNameServer2
 		logfileLine("CreateMasterFiles",cMasterNS2);//cNameServer2
 		uNSSet2=uGetNSSet(cMasterNS2);//cNameServer2
-		*cp=',';//will be used again!
+		uNSSet=uGetNSSet(cMasterNS);
+		*cp=',';//cMasterNS will be used again!
+	}
+	else
+	{
+		uNSSet=uGetNSSet(cMasterNS);
 	}
 
-	uNSSet=uGetNSSet(cMasterNS);
 	//debug only
 	//printf("(%s) (%s) uNSSet=%u uNSSet2=%u\n",cMasterNS,cMasterNS2,uNSSet,uNSSet2);
 	//return;
